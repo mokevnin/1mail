@@ -1,0 +1,6 @@
+spring:
+  application:
+    name: onemail
+  mvc:
+    problemdetails:
+      enabled: true

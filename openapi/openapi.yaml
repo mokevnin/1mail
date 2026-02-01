@@ -1,0 +1,986 @@
+openapi: 3.0.0
+info:
+  title: (title)
+  version: 0.0.0
+tags:
+  - name: Contacts
+  - name: Segments
+  - name: Broadcasts
+paths:
+  /api/contacts:
+    post:
+      operationId: Contacts_create
+      description: Create a contact
+      parameters: []
+      responses:
+        '201':
+          description: The request has succeeded and a new resource has been created as a result.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Contact'
+        '422':
+          description: Validation error
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        default:
+          description: RFC 7807 Problem Details response
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+      tags:
+        - Contacts
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateContactRequest'
+    get:
+      operationId: Contacts_list
+      description: List contacts with pagination
+      parameters:
+        - name: status
+          in: query
+          required: false
+          description: Filter by status
+          schema:
+            $ref: '#/components/schemas/ContactStatus'
+          explode: false
+        - name: page
+          in: query
+          required: false
+          description: Page number (0-based)
+          schema:
+            type: integer
+            format: int32
+            default: 0
+          explode: false
+        - name: size
+          in: query
+          required: false
+          description: Page size
+          schema:
+            type: integer
+            format: int32
+            default: 25
+          explode: false
+        - name: sort
+          in: query
+          required: false
+          description: Sorting criteria (e.g. name,asc). Can be repeated.
+          schema:
+            type: array
+            items:
+              type: string
+          explode: true
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContactPage'
+        '422':
+          description: Validation error
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        default:
+          description: RFC 7807 Problem Details response
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+      tags:
+        - Contacts
+  /api/contacts/{id}:
+    get:
+      operationId: Contacts_get
+      description: Get a contact by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Contact'
+        default:
+          description: RFC 7807 Problem Details response
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+      tags:
+        - Contacts
+    put:
+      operationId: Contacts_update
+      description: Update a contact
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Contact'
+        '422':
+          description: Validation error
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        default:
+          description: RFC 7807 Problem Details response
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+      tags:
+        - Contacts
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateContactRequest'
+    delete:
+      operationId: Contacts_delete
+      description: Delete a contact
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '204':
+          description: 'There is no content to send for this request, but the headers may be useful. '
+        default:
+          description: RFC 7807 Problem Details response
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+      tags:
+        - Contacts
+  /api/segments:
+    post:
+      operationId: Segments_create
+      description: Create a segment
+      parameters: []
+      responses:
+        '201':
+          description: The request has succeeded and a new resource has been created as a result.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Segment'
+        '422':
+          description: Validation error
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        default:
+          description: RFC 7807 Problem Details response
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+      tags:
+        - Segments
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSegmentRequest'
+    get:
+      operationId: Segments_list
+      description: List segments with pagination
+      parameters:
+        - name: page
+          in: query
+          required: false
+          description: Page number (0-based)
+          schema:
+            type: integer
+            format: int32
+            default: 0
+          explode: false
+        - name: size
+          in: query
+          required: false
+          description: Page size
+          schema:
+            type: integer
+            format: int32
+            default: 25
+          explode: false
+        - name: sort
+          in: query
+          required: false
+          description: Sorting criteria (e.g. name,asc). Can be repeated.
+          schema:
+            type: array
+            items:
+              type: string
+          explode: true
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SegmentPage'
+        '422':
+          description: Validation error
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        default:
+          description: RFC 7807 Problem Details response
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+      tags:
+        - Segments
+  /api/segments/{id}:
+    get:
+      operationId: Segments_get
+      description: Get a segment by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Segment'
+        default:
+          description: RFC 7807 Problem Details response
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+      tags:
+        - Segments
+    put:
+      operationId: Segments_update
+      description: Update a segment
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Segment'
+        '422':
+          description: Validation error
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        default:
+          description: RFC 7807 Problem Details response
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+      tags:
+        - Segments
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateSegmentRequest'
+    delete:
+      operationId: Segments_delete
+      description: Delete a segment
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '204':
+          description: 'There is no content to send for this request, but the headers may be useful. '
+        default:
+          description: RFC 7807 Problem Details response
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+      tags:
+        - Segments
+  /api/broadcasts:
+    post:
+      operationId: Broadcasts_create
+      description: Create a broadcast
+      parameters: []
+      responses:
+        '201':
+          description: The request has succeeded and a new resource has been created as a result.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Broadcast'
+        '422':
+          description: Validation error
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        default:
+          description: RFC 7807 Problem Details response
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+      tags:
+        - Broadcasts
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateBroadcastRequest'
+    get:
+      operationId: Broadcasts_list
+      description: List broadcasts with pagination
+      parameters:
+        - name: page
+          in: query
+          required: false
+          description: Page number (0-based)
+          schema:
+            type: integer
+            format: int32
+            default: 0
+          explode: false
+        - name: size
+          in: query
+          required: false
+          description: Page size
+          schema:
+            type: integer
+            format: int32
+            default: 25
+          explode: false
+        - name: sort
+          in: query
+          required: false
+          description: Sorting criteria (e.g. name,asc). Can be repeated.
+          schema:
+            type: array
+            items:
+              type: string
+          explode: true
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BroadcastPage'
+        '422':
+          description: Validation error
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        default:
+          description: RFC 7807 Problem Details response
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+      tags:
+        - Broadcasts
+  /api/broadcasts/{id}:
+    get:
+      operationId: Broadcasts_get
+      description: Get a broadcast by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Broadcast'
+        default:
+          description: RFC 7807 Problem Details response
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+      tags:
+        - Broadcasts
+    put:
+      operationId: Broadcasts_update
+      description: Update a broadcast
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Broadcast'
+        '422':
+          description: Validation error
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        default:
+          description: RFC 7807 Problem Details response
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+      tags:
+        - Broadcasts
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateBroadcastRequest'
+    delete:
+      operationId: Broadcasts_delete
+      description: Delete a broadcast
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: 'There is no content to send for this request, but the headers may be useful. '
+        default:
+          description: RFC 7807 Problem Details response
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+      tags:
+        - Broadcasts
+components:
+  schemas:
+    CreateContactRequest:
+      type: object
+      required:
+        - email
+      properties:
+        email:
+          type: string
+          description: Email address (used as upsert key)
+        firstName:
+          type: string
+          description: First name
+        lastName:
+          type: string
+          description: Last name
+        timeZone:
+          type: string
+          description: IANA time zone identifier
+        customFields:
+          type: object
+          additionalProperties:
+            type: string
+          description: Custom fields as key-value pairs
+      description: Request body for creating a contact
+    ProblemDetails:
+      type: object
+      properties:
+        type:
+          type: string
+          description: A URI reference that identifies the problem type
+        title:
+          type: string
+          description: A short, human-readable summary of the problem type
+        status:
+          type: integer
+          format: int32
+          description: HTTP status code
+        detail:
+          type: string
+          description: A human-readable explanation specific to this occurrence
+        instance:
+          type: string
+          description: A URI reference that identifies the specific occurrence
+        errors:
+          type: object
+          description: Validation errors grouped by field
+          additionalProperties:
+            type: array
+            items:
+              type: string
+      description: RFC 7807 Problem Details
+    Contact:
+      type: object
+      required:
+        - id
+        - email
+        - status
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: Unique identifier
+        email:
+          type: string
+          description: Email address
+        firstName:
+          type: string
+          description: First name
+        lastName:
+          type: string
+          description: Last name
+        status:
+          allOf:
+            - $ref: '#/components/schemas/ContactStatus'
+          description: Current status
+        timeZone:
+          type: string
+          description: IANA time zone identifier
+        customFields:
+          type: object
+          additionalProperties:
+            type: string
+          description: Custom fields as key-value pairs
+        createdAt:
+          type: string
+          description: Creation timestamp (ISO 8601)
+        updatedAt:
+          type: string
+          description: Last update timestamp (ISO 8601)
+      description: Contact resource
+    Sort:
+      type: object
+      description: Spring Data sort descriptor
+      properties:
+        sorted:
+          type: boolean
+          description: Whether sorting is enabled
+        unsorted:
+          type: boolean
+          description: Whether sorting is unsorted
+        empty:
+          type: boolean
+          description: Whether sorting is empty
+    Pageable:
+      type: object
+      description: Spring Data pageable descriptor
+      properties:
+        pageSize:
+          type: integer
+          format: int32
+          description: Page size
+        pageNumber:
+          type: integer
+          format: int32
+          description: Page number (0-based)
+        offset:
+          type: integer
+          format: int64
+          description: Offset
+        paged:
+          type: boolean
+          description: Whether the page is paged
+        unpaged:
+          type: boolean
+          description: Whether the page is unpaged
+        sort:
+          $ref: '#/components/schemas/Sort'
+          description: Sorting information
+    ContactPage:
+      type: object
+      description: Spring Data paginated response
+      required:
+        - content
+        - totalElements
+        - totalPages
+        - size
+        - number
+        - numberOfElements
+        - first
+        - last
+        - empty
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/Contact'
+          description: List of contacts
+        pageable:
+          $ref: '#/components/schemas/Pageable'
+          description: Paging information
+        totalElements:
+          type: integer
+          format: int64
+          description: Total number of elements
+        totalPages:
+          type: integer
+          format: int32
+          description: Total number of pages
+        size:
+          type: integer
+          format: int32
+          description: Page size
+        number:
+          type: integer
+          format: int32
+          description: Page number (0-based)
+        numberOfElements:
+          type: integer
+          format: int32
+          description: Number of elements in current page
+        first:
+          type: boolean
+          description: Whether this is the first page
+        last:
+          type: boolean
+          description: Whether this is the last page
+        empty:
+          type: boolean
+          description: Whether content is empty
+        sort:
+          $ref: '#/components/schemas/Sort'
+          description: Sorting information
+    ContactStatus:
+      type: string
+      enum:
+        - active
+        - unsubscribed
+      description: Contact status
+    UpdateContactRequest:
+      type: object
+      properties:
+        firstName:
+          type: string
+          nullable: true
+          description: First name
+        lastName:
+          type: string
+          nullable: true
+          description: Last name
+        timeZone:
+          type: string
+          nullable: true
+          description: IANA time zone identifier
+        customFields:
+          type: object
+          additionalProperties:
+            type: string
+          nullable: true
+          description: Custom fields as key-value pairs
+      description: Request body for updating a contact
+    SegmentType:
+      type: string
+      enum:
+        - rule
+        - snapshot
+      description: Segment type
+    Segment:
+      type: object
+      required:
+        - id
+        - name
+        - type
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: Unique identifier
+        name:
+          type: string
+          description: Segment name
+        type:
+          allOf:
+            - $ref: '#/components/schemas/SegmentType'
+          description: Segment type
+        definition:
+          type: string
+          description: Segment definition (rule or descriptor)
+        createdAt:
+          type: string
+          description: Creation timestamp (ISO 8601)
+        updatedAt:
+          type: string
+          description: Last update timestamp (ISO 8601)
+      description: Segment resource
+    CreateSegmentRequest:
+      type: object
+      required:
+        - name
+        - type
+      properties:
+        name:
+          type: string
+          description: Segment name
+        type:
+          allOf:
+            - $ref: '#/components/schemas/SegmentType'
+          description: Segment type
+        definition:
+          type: string
+          description: Segment definition (required for rule segments)
+      description: Request body for creating a segment
+    UpdateSegmentRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          nullable: true
+          description: Segment name
+        type:
+          allOf:
+            - $ref: '#/components/schemas/SegmentType'
+          nullable: true
+          description: Segment type
+        definition:
+          type: string
+          nullable: true
+          description: Segment definition
+      description: Request body for updating a segment
+    SegmentPage:
+      type: object
+      description: Spring Data paginated response
+      required:
+        - content
+        - totalElements
+        - totalPages
+        - size
+        - number
+        - numberOfElements
+        - first
+        - last
+        - empty
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/Segment'
+          description: List of segments
+        pageable:
+          $ref: '#/components/schemas/Pageable'
+          description: Paging information
+        totalElements:
+          type: integer
+          format: int64
+          description: Total number of elements
+        totalPages:
+          type: integer
+          format: int32
+          description: Total number of pages
+        size:
+          type: integer
+          format: int32
+          description: Page size
+        number:
+          type: integer
+          format: int32
+          description: Page number (0-based)
+        numberOfElements:
+          type: integer
+          format: int32
+          description: Number of elements in current page
+        first:
+          type: boolean
+          description: Whether this is the first page
+        last:
+          type: boolean
+          description: Whether this is the last page
+        empty:
+          type: boolean
+          description: Whether content is empty
+        sort:
+          $ref: '#/components/schemas/Sort'
+          description: Sorting information
+    BroadcastStatus:
+      type: string
+      enum:
+        - draft
+        - scheduled
+        - sent
+      description: Broadcast status
+    Broadcast:
+      type: object
+      required:
+        - id
+        - name
+        - segmentId
+        - status
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: Unique identifier
+        name:
+          type: string
+          description: Broadcast name
+        segmentId:
+          type: integer
+          format: int64
+          description: Segment ID
+        status:
+          allOf:
+            - $ref: '#/components/schemas/BroadcastStatus'
+          description: Broadcast status
+        createdAt:
+          type: string
+          description: Creation timestamp (ISO 8601)
+        updatedAt:
+          type: string
+          description: Last update timestamp (ISO 8601)
+      description: Broadcast resource
+    CreateBroadcastRequest:
+      type: object
+      required:
+        - name
+        - segmentId
+        - status
+      properties:
+        name:
+          type: string
+          description: Broadcast name
+        segmentId:
+          type: integer
+          format: int64
+          description: Segment ID
+        status:
+          allOf:
+            - $ref: '#/components/schemas/BroadcastStatus'
+          description: Broadcast status
+      description: Request body for creating a broadcast
+    UpdateBroadcastRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          nullable: true
+          description: Broadcast name
+        segmentId:
+          type: integer
+          format: int64
+          nullable: true
+          description: Segment ID
+        status:
+          allOf:
+            - $ref: '#/components/schemas/BroadcastStatus'
+          nullable: true
+          description: Broadcast status
+      description: Request body for updating a broadcast
+    BroadcastPage:
+      type: object
+      description: Spring Data paginated response
+      required:
+        - content
+        - totalElements
+        - totalPages
+        - size
+        - number
+        - numberOfElements
+        - first
+        - last
+        - empty
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/Broadcast'
+          description: List of broadcasts
+        pageable:
+          $ref: '#/components/schemas/Pageable'
+          description: Paging information
+        totalElements:
+          type: integer
+          format: int64
+          description: Total number of elements
+        totalPages:
+          type: integer
+          format: int32
+          description: Total number of pages
+        size:
+          type: integer
+          format: int32
+          description: Page size
+        number:
+          type: integer
+          format: int32
+          description: Page number (0-based)
+        numberOfElements:
+          type: integer
+          format: int32
+          description: Number of elements in current page
+        first:
+          type: boolean
+          description: Whether this is the first page
+        last:
+          type: boolean
+          description: Whether this is the last page
+        empty:
+          type: boolean
+          description: Whether content is empty
+        sort:
+          $ref: '#/components/schemas/Sort'
+          description: Sorting information

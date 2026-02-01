@@ -1,2 +1,2 @@
 web: pnpm vite
-api: ./gradlew bootRun
+api: ./gradlew bootRun --args='--spring.profiles.active=dev'

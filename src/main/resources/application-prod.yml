@@ -1,0 +1,16 @@
+spring:
+  datasource:
+    url: ${DATABASE_URL}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: validate
+  modulith:
+    events:
+      jdbc:
+        schema-initialization:
+          enabled: false
+      completion-mode: delete
+  liquibase:
+    enabled: true
+    change-log: classpath:db/changelog/db.changelog-master.yml
