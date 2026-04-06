@@ -7,8 +7,15 @@ dev:
 test:
 	./gradlew test
 
-upgrade:
+update-gradle:
 	./gradlew wrapper --gradle-version latest
+
+update-npm-deps:
+	npx ncu -u
+	pnpm update
+
+update-gradle-deps:
+	./gradlew replaceOutdatedDependencies --no-configuration-cache
 
 generate:
 	npx tsp compile typespec/

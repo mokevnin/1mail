@@ -1,4 +1,5 @@
 plugins {
+    alias(libs.plugins.caupain)
     alias(libs.plugins.kotlinJvm)
     alias(libs.plugins.kotlinSpring)
     alias(libs.plugins.kotlinJpa)
@@ -20,7 +21,7 @@ java {
 
 dependencyManagement {
     imports {
-        mavenBom("org.springframework.modulith:spring-modulith-bom:2.1.0-SNAPSHOT")
+        mavenBom("org.springframework.modulith:spring-modulith-bom:${libs.versions.springModulith.get()}")
     }
 }
 
@@ -28,24 +29,24 @@ dependencies {
     implementation(libs.springBootWeb)
     implementation(libs.springBootDataJpa)
     implementation(libs.springBootValidation)
-    implementation("org.springframework:spring-aop")
-    implementation("org.jetbrains.kotlin:kotlin-reflect")
+    implementation(libs.springAop)
+    implementation(libs.kotlinReflect)
     implementation(libs.jacksonKotlin)
     implementation(libs.jacksonNullable)
     implementation(libs.springBootSecurity)
     implementation(libs.springSecurityResourceServer)
     // springdoc-openapi currently not compatible with Spring Boot 4
     implementation(libs.mapstruct)
-    implementation("org.springframework.modulith:spring-modulith-starter-core")
-    implementation("org.springframework.modulith:spring-modulith-starter-jpa")
+    implementation(libs.springModulithStarterCore)
+    implementation(libs.springModulithStarterJpa)
 
     runtimeOnly(libs.h2)
     runtimeOnly(libs.postgresql)
 
     testImplementation(libs.springBootWebTest)
     testImplementation(libs.kotlinTestJunit5)
-    testImplementation("org.instancio:instancio-junit:5.4.1")
-    testImplementation("org.springframework.security:spring-security-test")
+    testImplementation(libs.instancioJunit)
+    testImplementation(libs.springSecurityTest)
     testRuntimeOnly(libs.junitPlatformLauncher)
 
     kapt(libs.mapstructProcessor)
@@ -68,7 +69,7 @@ tasks.withType<Test> {
 
 // OpenAPI Generator
 openApiGenerate {
-    generatorName.set("spring")
+    generatorName.set("kotlin-spring")
     inputSpec.set("$projectDir/openapi/openapi.yaml")
     outputDir.set(
         layout.buildDirectory
@@ -81,11 +82,12 @@ openApiGenerate {
     configOptions.set(
         mapOf(
             "interfaceOnly" to "true",
-            "useSpringBoot3" to "true",
+            "useSpringBoot4" to "true",
             "useTags" to "true",
             "documentationProvider" to "none",
             "serializationLibrary" to "jackson",
             "openApiNullable" to "true",
+            "useJackson3" to "false",
             "useBeanValidation" to "true",
             "enumPropertyNaming" to "original",
         ),
@@ -94,7 +96,7 @@ openApiGenerate {
 
 sourceSets {
     main {
-        java.srcDir(layout.buildDirectory.dir("generated/src/main/java"))
+        kotlin.srcDir(layout.buildDirectory.dir("generated/src/main/kotlin"))
     }
 }
 

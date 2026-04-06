@@ -1,0 +1,43 @@
+[versions]
+"caupain" = "1.9.1"
+"dependencyManagement" = "1.1.7"
+"jackson" = "2.21.2"
+"jacksonNullable" = "0.2.10"
+"kotlin" = "2.3.20"
+"mapstruct" = "1.6.3"
+"openapiGenerator" = "7.21.0"
+"springBoot" = "4.0.5"
+"springModulith" = "2.1.0-SNAPSHOT"
+"instancio" = "5.5.1"
+
+[libraries]
+"h2" = { module = "com.h2database:h2" }
+"jacksonKotlin" = { module = "com.fasterxml.jackson.module:jackson-module-kotlin", version.ref = "jackson" }
+"jacksonNullable" = { module = "org.openapitools:jackson-databind-nullable", version.ref = "jacksonNullable" }
+"junitPlatformLauncher" = { module = "org.junit.platform:junit-platform-launcher" }
+"kotlinReflect" = { module = "org.jetbrains.kotlin:kotlin-reflect" }
+"kotlinTestJunit5" = { module = "org.jetbrains.kotlin:kotlin-test-junit5" }
+"mapstruct" = { module = "org.mapstruct:mapstruct", version.ref = "mapstruct" }
+"mapstructProcessor" = { module = "org.mapstruct:mapstruct-processor", version.ref = "mapstruct" }
+"postgresql" = { module = "org.postgresql:postgresql" }
+"springAop" = { module = "org.springframework:spring-aop" }
+"springBootDataJpa" = { module = "org.springframework.boot:spring-boot-starter-data-jpa" }
+"springBootSecurity" = { module = "org.springframework.boot:spring-boot-starter-security" }
+"springBootValidation" = { module = "org.springframework.boot:spring-boot-starter-validation" }
+"springBootWeb" = { module = "org.springframework.boot:spring-boot-starter-web" }
+"springBootWebTest" = { module = "org.springframework.boot:spring-boot-starter-webmvc-test" }
+"springModulithStarterCore" = { module = "org.springframework.modulith:spring-modulith-starter-core" }
+"springModulithStarterJpa" = { module = "org.springframework.modulith:spring-modulith-starter-jpa" }
+"springSecurityResourceServer" = { module = "org.springframework.security:spring-security-oauth2-resource-server" }
+"springSecurityTest" = { module = "org.springframework.security:spring-security-test" }
+"instancioJunit" = { module = "org.instancio:instancio-junit", version.ref = "instancio" }
+
+[plugins]
+"caupain" = { id = "com.deezer.caupain", version.ref = "caupain" }
+"dependencyManagement" = { id = "io.spring.dependency-management", version.ref = "dependencyManagement" }
+"kotlinJvm" = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+"kotlinJpa" = { id = "org.jetbrains.kotlin.plugin.jpa", version.ref = "kotlin" }
+"kotlinKapt" = { id = "org.jetbrains.kotlin.kapt", version.ref = "kotlin" }
+"kotlinSpring" = { id = "org.jetbrains.kotlin.plugin.spring", version.ref = "kotlin" }
+"openapiGenerator" = { id = "org.openapi.generator", version.ref = "openapiGenerator" }
+"springBoot" = { id = "org.springframework.boot", version.ref = "springBoot" }
