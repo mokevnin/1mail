@@ -1,6 +1,8 @@
 # Repository Guidelines
 
 ## Project Structure & Module Organization
+- `openapi/openapi.yaml` - структура api
+- `typespec/main.tsp` - TypeSpec из которого генерируется `/openapi/openapi.yaml`
 - `src/main/kotlin/` contains the Spring Boot application code (entry point at `src/main/kotlin/com/example/_mail/DemoApplication.kt`).
 - `src/test/kotlin/` holds JVM tests (JUnit 5).
 - `src/main/resources/` includes server resources; static assets live under `src/main/resources/static/` and templates under `src/main/resources/templates/`.
