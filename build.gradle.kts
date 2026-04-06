@@ -1,11 +1,9 @@
 plugins {
     alias(libs.plugins.caupain)
+    alias(libs.plugins.dependencyManagement)
     alias(libs.plugins.kotlinJvm)
     alias(libs.plugins.kotlinSpring)
-    alias(libs.plugins.kotlinJpa)
-    alias(libs.plugins.kotlinKapt)
     alias(libs.plugins.springBoot)
-    alias(libs.plugins.dependencyManagement)
     alias(libs.plugins.openapiGenerator)
 }
 
@@ -19,37 +17,15 @@ java {
     }
 }
 
-dependencyManagement {
-    imports {
-        mavenBom("org.springframework.modulith:spring-modulith-bom:${libs.versions.springModulith.get()}")
-    }
-}
-
 dependencies {
     implementation(libs.springBootWeb)
-    implementation(libs.springBootDataJpa)
     implementation(libs.springBootValidation)
-    implementation(libs.springAop)
     implementation(libs.kotlinReflect)
     implementation(libs.jacksonKotlin)
-    implementation(libs.jacksonNullable)
-    implementation(libs.springBootSecurity)
-    implementation(libs.springSecurityResourceServer)
-    // springdoc-openapi currently not compatible with Spring Boot 4
-    implementation(libs.mapstruct)
-    implementation(libs.springModulithStarterCore)
-    implementation(libs.springModulithStarterJpa)
-
-    runtimeOnly(libs.h2)
-    runtimeOnly(libs.postgresql)
 
     testImplementation(libs.springBootWebTest)
     testImplementation(libs.kotlinTestJunit5)
-    testImplementation(libs.instancioJunit)
-    testImplementation(libs.springSecurityTest)
     testRuntimeOnly(libs.junitPlatformLauncher)
-
-    kapt(libs.mapstructProcessor)
 }
 
 kotlin {
@@ -81,7 +57,7 @@ openApiGenerate {
     modelPackage.set("io.onemail.model")
     configOptions.set(
         mapOf(
-            "interfaceOnly" to "true",
+            "delegatePattern" to "true",
             "useSpringBoot4" to "true",
             "useTags" to "true",
             "documentationProvider" to "none",
@@ -102,12 +78,4 @@ sourceSets {
 
 tasks.named("compileKotlin") {
     dependsOn("openApiGenerate")
-}
-
-tasks.matching { it.name.startsWith("kapt") }.configureEach {
-    dependsOn("openApiGenerate")
-}
-
-kapt {
-    correctErrorTypes = true
 }

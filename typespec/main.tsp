@@ -175,7 +175,7 @@ model ProblemDetails {
   instance?: string;
 
   /** Validation errors grouped by field */
-  errors?: Record<string, string[]>;
+  // errors?: Record<string, string[]>;
 }
 
 /** RFC 7807 Problem Details response */
