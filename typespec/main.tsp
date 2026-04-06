@@ -7,15 +7,11 @@ using TypeSpec.Http;
 using TypeSpec.Rest;
 using TypeSpec.OpenAPI;
 
-@service(#{})
+@service(#{ title: "OneMail API" })
+@info(#{ version: "1.0.0" })
 @route("/api")
-namespace OneMail;
-
-// ─── Auth ───────────────────────────────────────────────────────────────────
-
 @useAuth(BearerAuth)
-namespace Authenticated {
-}
+namespace OneMail;
 
 // ─── Models ─────────────────────────────────────────────────────────────────
 
@@ -25,8 +21,22 @@ enum ContactStatus {
   unsubscribed,
 }
 
-/** Contact resource */
-model Contact {
+/** Contact response resource */
+@example(#{
+  id: 101,
+  email: "alice@example.com",
+  firstName: "Alice",
+  lastName: "Johnson",
+  status: ContactStatus.active,
+  timeZone: "America/New_York",
+  customFields: #{
+    plan: "pro",
+    source: "import",
+  },
+  createdAt: "2026-04-01T10:15:30Z",
+  updatedAt: "2026-04-03T08:45:00Z",
+})
+model ContactResponse {
   /** Unique identifier */
   id: int64;
 
@@ -56,6 +66,16 @@ model Contact {
 }
 
 /** Request body for creating a contact */
+@example(#{
+  email: "alice@example.com",
+  firstName: "Alice",
+  lastName: "Johnson",
+  timeZone: "America/New_York",
+  customFields: #{
+    plan: "pro",
+    source: "import",
+  },
+})
 model CreateContactRequest {
   /** Email address */
   email: string;
@@ -74,6 +94,13 @@ model CreateContactRequest {
 }
 
 /** Request body for updating a contact */
+@example(#{
+  firstName: "Alicia",
+  timeZone: "Europe/Berlin",
+  customFields: #{
+    plan: "enterprise",
+  },
+})
 model UpdateContactRequest {
   /** First name */
   firstName?: string | null;
@@ -122,9 +149,52 @@ model Pageable {
 }
 
 /** Spring Data paginated response */
-model ContactPage {
+@example(#{
+  content: #[
+    #{
+      id: 101,
+      email: "alice@example.com",
+      firstName: "Alice",
+      lastName: "Johnson",
+      status: ContactStatus.active,
+      timeZone: "America/New_York",
+      customFields: #{
+        plan: "pro",
+        source: "import",
+      },
+      createdAt: "2026-04-01T10:15:30Z",
+      updatedAt: "2026-04-03T08:45:00Z",
+    },
+  ],
+  pageable: #{
+    pageSize: 25,
+    pageNumber: 0,
+    offset: 0,
+    paged: true,
+    unpaged: false,
+    sort: #{
+      sorted: true,
+      unsorted: false,
+      empty: false,
+    },
+  },
+  totalElements: 1,
+  totalPages: 1,
+  size: 25,
+  number: 0,
+  numberOfElements: 1,
+  first: true,
+  last: true,
+  empty: false,
+  sort: #{
+    sorted: true,
+    unsorted: false,
+    empty: false,
+  },
+})
+model ContactPageResponse {
   /** List of contacts */
-  content: Contact[];
+  content: ContactResponse[];
 
   /** Paging information */
   pageable?: Pageable;
@@ -157,7 +227,19 @@ model ContactPage {
   sort?: Sort;
 }
 
+alias ValidationErrors = Record<string[]>;
+
 /** RFC 7807 Problem Details */
+@example(#{
+  type: "https://onemail.dev/problems/validation-error",
+  title: "Validation error",
+  status: 422,
+  detail: "Request validation failed",
+  instance: "/api/contacts",
+  errors: #{
+    email: #["must be a well-formed email address"],
+  },
+})
 model ProblemDetails {
   /** A URI reference that identifies the problem type */
   type?: string;
@@ -175,12 +257,40 @@ model ProblemDetails {
   instance?: string;
 
   /** Validation errors grouped by field */
-  // errors?: Record<string, string[]>;
+  errors?: ValidationErrors;
 }
 
-/** RFC 7807 Problem Details response */
+/** RFC 7807 bad request response */
 @error
-model ProblemDetailsResponse {
+model BadRequestProblem is Response<400> {
+  @header contentType: "application/problem+json";
+  @body body: ProblemDetails;
+}
+
+/** RFC 7807 unauthorized response */
+@error
+model UnauthorizedProblem is Response<401> {
+  @header contentType: "application/problem+json";
+  @body body: ProblemDetails;
+}
+
+/** RFC 7807 conflict response */
+@error
+model ConflictProblem is Response<409> {
+  @header contentType: "application/problem+json";
+  @body body: ProblemDetails;
+}
+
+/** RFC 7807 not found response */
+@error
+model NotFoundProblem is Response<404> {
+  @header contentType: "application/problem+json";
+  @body body: ProblemDetails;
+}
+
+/** RFC 7807 validation response */
+@error
+model UnprocessableEntityProblem is Response<422> {
   @header contentType: "application/problem+json";
   @body body: ProblemDetails;
 }
@@ -192,16 +302,95 @@ model ProblemDetailsResponse {
 namespace Contacts {
   /** Create a contact */
   @post
+  @opExample(#{
+    parameters: #{
+      body: #{
+        email: "alice@example.com",
+        firstName: "Alice",
+        lastName: "Johnson",
+        timeZone: "America/New_York",
+        customFields: #{
+          plan: "pro",
+          source: "import",
+        },
+      },
+    },
+    returnType: #{
+      statusCode: 201,
+      body: #{
+        id: 101,
+        email: "alice@example.com",
+        firstName: "Alice",
+        lastName: "Johnson",
+        status: ContactStatus.active,
+        timeZone: "America/New_York",
+        customFields: #{
+          plan: "pro",
+          source: "import",
+        },
+        createdAt: "2026-04-01T10:15:30Z",
+        updatedAt: "2026-04-03T08:45:00Z",
+      },
+    },
+  }, #{ title: "Create contact" })
   op create(@body body: CreateContactRequest): {
     @statusCode statusCode: 201;
-    @body body: Contact;
-  } | {
-    @statusCode statusCode: 422;
-    @body body: ProblemDetails;
-  } | ProblemDetailsResponse;
+    @body body: ContactResponse;
+  } | UnauthorizedProblem | ConflictProblem | UnprocessableEntityProblem;
 
   /** List contacts with pagination */
   @get
+  @opExample(#{
+    parameters: #{
+      page: 0,
+      size: 25,
+      sort: #["email,asc"],
+      status: ContactStatus.active,
+    },
+    returnType: #{
+      content: #[
+        #{
+          id: 101,
+          email: "alice@example.com",
+          firstName: "Alice",
+          lastName: "Johnson",
+          status: ContactStatus.active,
+          timeZone: "America/New_York",
+          customFields: #{
+            plan: "pro",
+            source: "import",
+          },
+          createdAt: "2026-04-01T10:15:30Z",
+          updatedAt: "2026-04-03T08:45:00Z",
+        },
+      ],
+      pageable: #{
+        pageSize: 25,
+        pageNumber: 0,
+        offset: 0,
+        paged: true,
+        unpaged: false,
+        sort: #{
+          sorted: true,
+          unsorted: false,
+          empty: false,
+        },
+      },
+      totalElements: 1,
+      totalPages: 1,
+      size: 25,
+      number: 0,
+      numberOfElements: 1,
+      first: true,
+      last: true,
+      empty: false,
+      sort: #{
+        sorted: true,
+        unsorted: false,
+        empty: false,
+      },
+    },
+  }, #{ title: "List contacts" })
   op list(
     /** Page number (0-based) */
     @query page?: int32 = 0,
@@ -214,30 +403,66 @@ namespace Contacts {
 
     /** Filter by status */
     @query status?: ContactStatus,
-  ): ContactPage | ProblemDetailsResponse | {
-    @statusCode statusCode: 422;
-    @body body: ProblemDetails;
-  };
+  ): ContactPageResponse | BadRequestProblem | UnauthorizedProblem | UnprocessableEntityProblem;
 
   /** Get a contact by ID */
   @get
   @route("/{id}")
-  op get(@path id: int64): Contact | ProblemDetailsResponse;
+  @opExample(#{
+    parameters: #{
+      id: 101,
+    },
+    returnType: #{
+      id: 101,
+      email: "alice@example.com",
+      firstName: "Alice",
+      lastName: "Johnson",
+      status: ContactStatus.active,
+      timeZone: "America/New_York",
+      customFields: #{
+        plan: "pro",
+        source: "import",
+      },
+      createdAt: "2026-04-01T10:15:30Z",
+      updatedAt: "2026-04-03T08:45:00Z",
+    },
+  }, #{ title: "Get contact" })
+  op get(@path id: int64): ContactResponse | BadRequestProblem | UnauthorizedProblem | NotFoundProblem;
 
   /** Update a contact */
   @put
   @route("/{id}")
-  op update(@path id: int64, @body body: UpdateContactRequest): Contact | ProblemDetailsResponse | {
-    @statusCode statusCode: 422;
-    @body body: ProblemDetails;
-  };
+  @opExample(#{
+    parameters: #{
+      id: 101,
+      body: #{
+        firstName: "Alicia",
+        timeZone: "Europe/Berlin",
+        customFields: #{
+          plan: "enterprise",
+        },
+      },
+    },
+    returnType: #{
+      id: 101,
+      email: "alice@example.com",
+      firstName: "Alicia",
+      lastName: "Johnson",
+      status: ContactStatus.active,
+      timeZone: "Europe/Berlin",
+      customFields: #{
+        plan: "enterprise",
+      },
+      createdAt: "2026-04-01T10:15:30Z",
+      updatedAt: "2026-04-06T12:00:00Z",
+    },
+  }, #{ title: "Update contact" })
+  op update(@path id: int64, @body body: UpdateContactRequest): ContactResponse | BadRequestProblem | UnauthorizedProblem | NotFoundProblem | ConflictProblem | UnprocessableEntityProblem;
 
   /** Delete a contact */
   @delete
   @route("/{id}")
-  op delete(@path id: int64): {
-    @statusCode statusCode: 204;
-  } | ProblemDetailsResponse;
+  op delete(@path id: int64): NoContentResponse | BadRequestProblem | UnauthorizedProblem | NotFoundProblem;
 }
 
 // ─── Segments API ───────────────────────────────────────────────────────────
@@ -249,6 +474,14 @@ enum SegmentType {
 }
 
 /** Segment resource */
+@example(#{
+  id: 301,
+  name: "Recent signups",
+  type: SegmentType.rule,
+  definition: "createdAt >= now() - P30D",
+  createdAt: "2026-04-01T12:00:00Z",
+  updatedAt: "2026-04-03T09:00:00Z",
+})
 model Segment {
   /** Unique identifier */
   id: int64;
@@ -270,6 +503,11 @@ model Segment {
 }
 
 /** Request body for creating a segment */
+@example(#{
+  name: "Recent signups",
+  type: SegmentType.rule,
+  definition: "createdAt >= now() - P30D",
+})
 model CreateSegmentRequest {
   /** Segment name */
   name: string;
@@ -282,6 +520,10 @@ model CreateSegmentRequest {
 }
 
 /** Request body for updating a segment */
+@example(#{
+  name: "Warm leads",
+  definition: "score >= 50",
+})
 model UpdateSegmentRequest {
   /** Segment name */
   name?: string | null;
@@ -294,6 +536,43 @@ model UpdateSegmentRequest {
 }
 
 /** Spring Data paginated response */
+@example(#{
+  content: #[
+    #{
+      id: 301,
+      name: "Recent signups",
+      type: SegmentType.rule,
+      definition: "createdAt >= now() - P30D",
+      createdAt: "2026-04-01T12:00:00Z",
+      updatedAt: "2026-04-03T09:00:00Z",
+    },
+  ],
+  pageable: #{
+    pageSize: 25,
+    pageNumber: 0,
+    offset: 0,
+    paged: true,
+    unpaged: false,
+    sort: #{
+      sorted: true,
+      unsorted: false,
+      empty: false,
+    },
+  },
+  totalElements: 1,
+  totalPages: 1,
+  size: 25,
+  number: 0,
+  numberOfElements: 1,
+  first: true,
+  last: true,
+  empty: false,
+  sort: #{
+    sorted: true,
+    unsorted: false,
+    empty: false,
+  },
+})
 model SegmentPage {
   /** List of segments */
   content: Segment[];
@@ -334,16 +613,77 @@ model SegmentPage {
 namespace Segments {
   /** Create a segment */
   @post
+  @opExample(#{
+    parameters: #{
+      body: #{
+        name: "Recent signups",
+        type: SegmentType.rule,
+        definition: "createdAt >= now() - P30D",
+      },
+    },
+    returnType: #{
+      statusCode: 201,
+      body: #{
+        id: 301,
+        name: "Recent signups",
+        type: SegmentType.rule,
+        definition: "createdAt >= now() - P30D",
+        createdAt: "2026-04-01T12:00:00Z",
+        updatedAt: "2026-04-03T09:00:00Z",
+      },
+    },
+  }, #{ title: "Create segment" })
   op create(@body body: CreateSegmentRequest): {
     @statusCode statusCode: 201;
     @body body: Segment;
-  } | {
-    @statusCode statusCode: 422;
-    @body body: ProblemDetails;
-  } | ProblemDetailsResponse;
+  } | UnauthorizedProblem | UnprocessableEntityProblem;
 
   /** List segments with pagination */
   @get
+  @opExample(#{
+    parameters: #{
+      page: 0,
+      size: 25,
+      sort: #["name,asc"],
+    },
+    returnType: #{
+      content: #[
+        #{
+          id: 301,
+          name: "Recent signups",
+          type: SegmentType.rule,
+          definition: "createdAt >= now() - P30D",
+          createdAt: "2026-04-01T12:00:00Z",
+          updatedAt: "2026-04-03T09:00:00Z",
+        },
+      ],
+      pageable: #{
+        pageSize: 25,
+        pageNumber: 0,
+        offset: 0,
+        paged: true,
+        unpaged: false,
+        sort: #{
+          sorted: true,
+          unsorted: false,
+          empty: false,
+        },
+      },
+      totalElements: 1,
+      totalPages: 1,
+      size: 25,
+      number: 0,
+      numberOfElements: 1,
+      first: true,
+      last: true,
+      empty: false,
+      sort: #{
+        sorted: true,
+        unsorted: false,
+        empty: false,
+      },
+    },
+  }, #{ title: "List segments" })
   op list(
     /** Page number (0-based) */
     @query page?: int32 = 0,
@@ -353,30 +693,52 @@ namespace Segments {
 
     /** Sorting criteria (e.g. name,asc). Can be repeated. */
     @query sort?: string[],
-  ): SegmentPage | ProblemDetailsResponse | {
-    @statusCode statusCode: 422;
-    @body body: ProblemDetails;
-  };
+  ): SegmentPage | BadRequestProblem | UnauthorizedProblem | UnprocessableEntityProblem;
 
   /** Get a segment by ID */
   @get
   @route("/{id}")
-  op get(@path id: int64): Segment | ProblemDetailsResponse;
+  @opExample(#{
+    parameters: #{
+      id: 301,
+    },
+    returnType: #{
+      id: 301,
+      name: "Recent signups",
+      type: SegmentType.rule,
+      definition: "createdAt >= now() - P30D",
+      createdAt: "2026-04-01T12:00:00Z",
+      updatedAt: "2026-04-03T09:00:00Z",
+    },
+  }, #{ title: "Get segment" })
+  op get(@path id: int64): Segment | BadRequestProblem | UnauthorizedProblem | NotFoundProblem;
 
   /** Update a segment */
   @put
   @route("/{id}")
-  op update(@path id: int64, @body body: UpdateSegmentRequest): Segment | ProblemDetailsResponse | {
-    @statusCode statusCode: 422;
-    @body body: ProblemDetails;
-  };
+  @opExample(#{
+    parameters: #{
+      id: 301,
+      body: #{
+        name: "Warm leads",
+        definition: "score >= 50",
+      },
+    },
+    returnType: #{
+      id: 301,
+      name: "Warm leads",
+      type: SegmentType.rule,
+      definition: "score >= 50",
+      createdAt: "2026-04-01T12:00:00Z",
+      updatedAt: "2026-04-06T12:00:00Z",
+    },
+  }, #{ title: "Update segment" })
+  op update(@path id: int64, @body body: UpdateSegmentRequest): Segment | BadRequestProblem | UnauthorizedProblem | NotFoundProblem | UnprocessableEntityProblem;
 
   /** Delete a segment */
   @delete
   @route("/{id}")
-  op delete(@path id: int64): {
-    @statusCode statusCode: 204;
-  } | ProblemDetailsResponse;
+  op delete(@path id: int64): NoContentResponse | BadRequestProblem | UnauthorizedProblem | NotFoundProblem;
 }
 
 // ─── Broadcasts API ─────────────────────────────────────────────────────────
@@ -389,6 +751,14 @@ enum BroadcastStatus {
 }
 
 /** Broadcast resource */
+@example(#{
+  id: 501,
+  name: "April product update",
+  segmentId: 301,
+  status: BroadcastStatus.draft,
+  createdAt: "2026-04-02T08:00:00Z",
+  updatedAt: "2026-04-04T16:30:00Z",
+})
 model Broadcast {
   /** Unique identifier */
   id: int64;
@@ -410,6 +780,11 @@ model Broadcast {
 }
 
 /** Request body for creating a broadcast */
+@example(#{
+  name: "April product update",
+  segmentId: 301,
+  status: BroadcastStatus.draft,
+})
 model CreateBroadcastRequest {
   /** Broadcast name */
   name: string;
@@ -422,6 +797,11 @@ model CreateBroadcastRequest {
 }
 
 /** Request body for updating a broadcast */
+@example(#{
+  name: "April product update v2",
+  segmentId: 301,
+  status: BroadcastStatus.scheduled,
+})
 model UpdateBroadcastRequest {
   /** Broadcast name */
   name?: string | null;
@@ -434,6 +814,43 @@ model UpdateBroadcastRequest {
 }
 
 /** Spring Data paginated response */
+@example(#{
+  content: #[
+    #{
+      id: 501,
+      name: "April product update",
+      segmentId: 301,
+      status: BroadcastStatus.draft,
+      createdAt: "2026-04-02T08:00:00Z",
+      updatedAt: "2026-04-04T16:30:00Z",
+    },
+  ],
+  pageable: #{
+    pageSize: 25,
+    pageNumber: 0,
+    offset: 0,
+    paged: true,
+    unpaged: false,
+    sort: #{
+      sorted: true,
+      unsorted: false,
+      empty: false,
+    },
+  },
+  totalElements: 1,
+  totalPages: 1,
+  size: 25,
+  number: 0,
+  numberOfElements: 1,
+  first: true,
+  last: true,
+  empty: false,
+  sort: #{
+    sorted: true,
+    unsorted: false,
+    empty: false,
+  },
+})
 model BroadcastPage {
   /** List of broadcasts */
   content: Broadcast[];
@@ -474,16 +891,77 @@ model BroadcastPage {
 namespace Broadcasts {
   /** Create a broadcast */
   @post
+  @opExample(#{
+    parameters: #{
+      body: #{
+        name: "April product update",
+        segmentId: 301,
+        status: BroadcastStatus.draft,
+      },
+    },
+    returnType: #{
+      statusCode: 201,
+      body: #{
+        id: 501,
+        name: "April product update",
+        segmentId: 301,
+        status: BroadcastStatus.draft,
+        createdAt: "2026-04-02T08:00:00Z",
+        updatedAt: "2026-04-04T16:30:00Z",
+      },
+    },
+  }, #{ title: "Create broadcast" })
   op create(@body body: CreateBroadcastRequest): {
     @statusCode statusCode: 201;
     @body body: Broadcast;
-  } | {
-    @statusCode statusCode: 422;
-    @body body: ProblemDetails;
-  } | ProblemDetailsResponse;
+  } | UnauthorizedProblem | UnprocessableEntityProblem;
 
   /** List broadcasts with pagination */
   @get
+  @opExample(#{
+    parameters: #{
+      page: 0,
+      size: 25,
+      sort: #["createdAt,desc"],
+    },
+    returnType: #{
+      content: #[
+        #{
+          id: 501,
+          name: "April product update",
+          segmentId: 301,
+          status: BroadcastStatus.draft,
+          createdAt: "2026-04-02T08:00:00Z",
+          updatedAt: "2026-04-04T16:30:00Z",
+        },
+      ],
+      pageable: #{
+        pageSize: 25,
+        pageNumber: 0,
+        offset: 0,
+        paged: true,
+        unpaged: false,
+        sort: #{
+          sorted: true,
+          unsorted: false,
+          empty: false,
+        },
+      },
+      totalElements: 1,
+      totalPages: 1,
+      size: 25,
+      number: 0,
+      numberOfElements: 1,
+      first: true,
+      last: true,
+      empty: false,
+      sort: #{
+        sorted: true,
+        unsorted: false,
+        empty: false,
+      },
+    },
+  }, #{ title: "List broadcasts" })
   op list(
     /** Page number (0-based) */
     @query page?: int32 = 0,
@@ -493,28 +971,51 @@ namespace Broadcasts {
 
     /** Sorting criteria (e.g. name,asc). Can be repeated. */
     @query sort?: string[],
-  ): BroadcastPage | ProblemDetailsResponse | {
-    @statusCode statusCode: 422;
-    @body body: ProblemDetails;
-  };
+  ): BroadcastPage | BadRequestProblem | UnauthorizedProblem | UnprocessableEntityProblem;
 
   /** Get a broadcast by ID */
   @get
   @route("/{id}")
-  op get(@path id: int64): Broadcast | ProblemDetailsResponse;
+  @opExample(#{
+    parameters: #{
+      id: 501,
+    },
+    returnType: #{
+      id: 501,
+      name: "April product update",
+      segmentId: 301,
+      status: BroadcastStatus.draft,
+      createdAt: "2026-04-02T08:00:00Z",
+      updatedAt: "2026-04-04T16:30:00Z",
+    },
+  }, #{ title: "Get broadcast" })
+  op get(@path id: int64): Broadcast | BadRequestProblem | UnauthorizedProblem | NotFoundProblem;
 
   /** Update a broadcast */
   @put
   @route("/{id}")
-  op update(@path id: int64, @body body: UpdateBroadcastRequest): Broadcast | ProblemDetailsResponse | {
-    @statusCode statusCode: 422;
-    @body body: ProblemDetails;
-  };
+  @opExample(#{
+    parameters: #{
+      id: 501,
+      body: #{
+        name: "April product update v2",
+        segmentId: 301,
+        status: BroadcastStatus.scheduled,
+      },
+    },
+    returnType: #{
+      id: 501,
+      name: "April product update v2",
+      segmentId: 301,
+      status: BroadcastStatus.scheduled,
+      createdAt: "2026-04-02T08:00:00Z",
+      updatedAt: "2026-04-06T12:00:00Z",
+    },
+  }, #{ title: "Update broadcast" })
+  op update(@path id: int64, @body body: UpdateBroadcastRequest): Broadcast | BadRequestProblem | UnauthorizedProblem | NotFoundProblem | UnprocessableEntityProblem;
 
   /** Delete a broadcast */
   @delete
   @route("/{id}")
-  op delete(@path id: int64): {
-    @statusCode statusCode: 204;
-  } | ProblemDetailsResponse;
+  op delete(@path id: int64): NoContentResponse | BadRequestProblem | UnauthorizedProblem | NotFoundProblem;
 }

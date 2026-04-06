@@ -1,6 +1,8 @@
 plugins {
     alias(libs.plugins.caupain)
     alias(libs.plugins.dependencyManagement)
+    alias(libs.plugins.kotlinJpa)
+    alias(libs.plugins.kotlinKapt)
     alias(libs.plugins.kotlinJvm)
     alias(libs.plugins.kotlinSpring)
     alias(libs.plugins.springBoot)
@@ -18,11 +20,18 @@ java {
 }
 
 dependencies {
+    implementation(libs.springBootDataJpa)
     implementation(libs.springBootWeb)
     implementation(libs.springBootValidation)
     implementation(libs.kotlinReflect)
     implementation(libs.jacksonKotlin)
+    implementation(libs.mapstruct)
 
+    kapt(libs.mapstructProcessor)
+    runtimeOnly(libs.h2)
+
+    testImplementation("org.springframework.boot:spring-boot-starter-test")
+    testImplementation(libs.instancioJunit)
     testImplementation(libs.springBootWebTest)
     testImplementation(libs.kotlinTestJunit5)
     testRuntimeOnly(libs.junitPlatformLauncher)
@@ -58,6 +67,7 @@ openApiGenerate {
     configOptions.set(
         mapOf(
             "delegatePattern" to "true",
+            "autoXSpringPaginated" to "true",
             "useSpringBoot4" to "true",
             "useTags" to "true",
             "documentationProvider" to "none",
@@ -76,6 +86,6 @@ sourceSets {
     }
 }
 
-tasks.named("compileKotlin") {
+tasks.matching { it.name in setOf("compileKotlin", "kaptKotlin", "kaptGenerateStubsKotlin") }.configureEach {
     dependsOn("openApiGenerate")
 }

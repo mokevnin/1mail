@@ -20,6 +20,7 @@ update-gradle-deps:
 generate:
 	npx tsp compile typespec/
 	./gradlew openApiGenerate
+	./gradlew clean openApiGenerate
 
 format:
 	ktlint --format
