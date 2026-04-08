@@ -7,6 +7,8 @@ dev:
 test:
 	./gradlew test
 
+update: update-gradle update-gradle-deps update-npm-deps
+
 update-gradle:
 	./gradlew wrapper --gradle-version latest
 
