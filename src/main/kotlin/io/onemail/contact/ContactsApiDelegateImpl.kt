@@ -1,23 +1,23 @@
 package io.onemail.contact
 
 import io.onemail.api.ContactsApiDelegate
-import io.onemail.model.ContactPageResponse
-import io.onemail.model.ContactResponse
+import io.onemail.model.ContactPage
+import io.onemail.model.ContactResource
 import io.onemail.model.ContactStatus
-import io.onemail.model.CreateContactRequest
-import io.onemail.model.UpdateContactRequest
+import io.onemail.model.CreateContactInput
+import io.onemail.model.UpdateContactInput
+import org.springframework.data.domain.Pageable
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Service
-import org.springframework.data.domain.Pageable
 
 @Service
 class ContactsApiDelegateImpl(
     private val contactService: ContactService,
 ) : ContactsApiDelegate {
 
-    override fun contactsCreate(createContactRequest: CreateContactRequest): ResponseEntity<ContactResponse> {
-        return ResponseEntity.status(HttpStatus.CREATED).body(contactService.create(createContactRequest))
+    override fun contactsCreate(createContactInput: CreateContactInput): ResponseEntity<ContactResource> {
+        return ResponseEntity.status(HttpStatus.CREATED).body(contactService.create(createContactInput))
     }
 
     override fun contactsDelete(id: Long): ResponseEntity<Unit> {
@@ -25,18 +25,18 @@ class ContactsApiDelegateImpl(
         return ResponseEntity.noContent().build()
     }
 
-    override fun contactsGet(id: Long): ResponseEntity<ContactResponse> {
+    override fun contactsGet(id: Long): ResponseEntity<ContactResource> {
         return ResponseEntity.ok(contactService.get(id))
     }
 
     override fun contactsList(
         status: ContactStatus?,
         pageable: Pageable,
-    ): ResponseEntity<ContactPageResponse> {
+    ): ResponseEntity<ContactPage> {
         return ResponseEntity.ok(contactService.list(pageable, status))
     }
 
-    override fun contactsUpdate(id: Long, updateContactRequest: UpdateContactRequest): ResponseEntity<ContactResponse> {
-        return ResponseEntity.ok(contactService.update(id, updateContactRequest))
+    override fun contactsUpdate(id: Long, updateContactInput: UpdateContactInput): ResponseEntity<ContactResource> {
+        return ResponseEntity.ok(contactService.update(id, updateContactInput))
     }
 }

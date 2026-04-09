@@ -1,8 +1,8 @@
 package io.onemail.contact
 
 import io.onemail.model.ContactStatus
-import io.onemail.model.CreateContactRequest
-import io.onemail.model.UpdateContactRequest
+import io.onemail.model.CreateContactInput
+import io.onemail.model.UpdateContactInput
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import org.instancio.junit.Given
@@ -27,7 +27,7 @@ class ContactsApiDelegateImplTest {
 
     @Test
     fun `contacts crud flow works`(@Given createContact: Contact, @Given updateContact: Contact) {
-        val createRequest = CreateContactRequest(
+        val createRequest = CreateContactInput(
             email = createContact.email,
             firstName = createContact.firstName,
             lastName = createContact.lastName,
@@ -48,7 +48,7 @@ class ContactsApiDelegateImplTest {
         assertEquals(1, list.totalElements)
         assertEquals(createRequest.email, list.content.single().email)
 
-        val updateRequest = UpdateContactRequest(
+        val updateRequest = UpdateContactInput(
             firstName = updateContact.firstName,
             lastName = updateContact.lastName,
             timeZone = updateContact.timeZone,

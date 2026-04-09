@@ -20,7 +20,7 @@ enum SegmentType {
   createdAt: "2026-04-01T12:00:00Z",
   updatedAt: "2026-04-03T09:00:00Z",
 })
-model Segment {
+model SegmentResource {
   /** Unique identifier */
   @key
   id: int64;
@@ -111,13 +111,13 @@ model UpdateSegmentInput {
     empty: false,
   },
 })
-model SegmentPage is Page<Segment> {}
+model SegmentPage is Page<SegmentResource> {}
 
 @route("/segments")
 @tag("Segments")
 namespace Segments {
   /** Create a segment */
-  @createsResource(Segment)
+  @createsResource(SegmentResource)
   @post
   @opExample(#{
     parameters: #{
@@ -141,11 +141,11 @@ namespace Segments {
   }, #{ title: "Create segment" })
   op create(@body body: CreateSegmentInput): {
     @statusCode statusCode: 201;
-    @body body: Segment;
+    @body body: SegmentResource;
   } | UnauthorizedProblem | UnprocessableEntityProblem;
 
   /** List segments with pagination */
-  @listsResource(Segment)
+  @listsResource(SegmentResource)
   @get
   @opExample(#{
     parameters: #{
@@ -194,7 +194,7 @@ namespace Segments {
   op list(...PageQuery): SegmentPage | BadRequestProblem | UnauthorizedProblem | UnprocessableEntityProblem;
 
   /** Get a segment by ID */
-  @readsResource(Segment)
+  @readsResource(SegmentResource)
   @get
   @autoRoute
   @opExample(#{
@@ -210,10 +210,10 @@ namespace Segments {
       updatedAt: "2026-04-03T09:00:00Z",
     },
   }, #{ title: "Get segment" })
-  op get(@path id: int64): Segment | BadRequestProblem | UnauthorizedProblem | NotFoundProblem;
+  op get(@path id: int64): SegmentResource | BadRequestProblem | UnauthorizedProblem | NotFoundProblem;
 
   /** Update a segment */
-  @updatesResource(Segment)
+  @updatesResource(SegmentResource)
   @put
   @autoRoute
   @opExample(#{
@@ -233,10 +233,10 @@ namespace Segments {
       updatedAt: "2026-04-06T12:00:00Z",
     },
   }, #{ title: "Update segment" })
-  op update(@path id: int64, @body body: UpdateSegmentInput): Segment | BadRequestProblem | UnauthorizedProblem | NotFoundProblem | UnprocessableEntityProblem;
+  op update(@path id: int64, @body body: UpdateSegmentInput): SegmentResource | BadRequestProblem | UnauthorizedProblem | NotFoundProblem | UnprocessableEntityProblem;
 
   /** Delete a segment */
-  @deletesResource(Segment)
+  @deletesResource(SegmentResource)
   @delete
   @autoRoute
   op delete(@path id: int64): NoContentResponse | BadRequestProblem | UnauthorizedProblem | NotFoundProblem;

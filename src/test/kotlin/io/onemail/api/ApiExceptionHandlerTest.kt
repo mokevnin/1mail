@@ -1,11 +1,8 @@
 package io.onemail
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import io.onemail.model.CreateContactRequest
-import org.instancio.junit.Given
-import org.instancio.junit.InstancioExtension
+import io.onemail.model.CreateContactInput
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.extension.ExtendWith
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc
@@ -18,7 +15,6 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
-@ExtendWith(InstancioExtension::class)
 class ApiExceptionHandlerTest {
     private val objectMapper = jacksonObjectMapper()
 
@@ -26,17 +22,24 @@ class ApiExceptionHandlerTest {
     private lateinit var mockMvc: MockMvc
 
     @Test
-    fun `duplicate contact email returns conflict problem details`(@Given request: CreateContactRequest) {
+    fun `duplicate contact email returns conflict problem details`() {
+        val request = CreateContactInput(
+            email = "duplicate@example.com",
+            firstName = "Alice",
+            lastName = "Johnson",
+            timeZone = "America/New_York",
+            customFields = mapOf("source" to "test"),
+        )
         val requestBody = objectMapper.writeValueAsString(request)
 
         mockMvc.perform(
-            post("/api/contacts")
+            post("/contacts")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(requestBody),
         ).andExpect(status().isCreated)
 
         mockMvc.perform(
-            post("/api/contacts")
+            post("/contacts")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(requestBody),
         )

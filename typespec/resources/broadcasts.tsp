@@ -21,7 +21,7 @@ enum BroadcastStatus {
   createdAt: "2026-04-02T08:00:00Z",
   updatedAt: "2026-04-04T16:30:00Z",
 })
-model Broadcast {
+model BroadcastResource {
   /** Unique identifier */
   @key
   id: int64;
@@ -113,13 +113,13 @@ model UpdateBroadcastInput {
     empty: false,
   },
 })
-model BroadcastPage is Page<Broadcast> {}
+model BroadcastPage is Page<BroadcastResource> {}
 
 @route("/broadcasts")
 @tag("Broadcasts")
 namespace Broadcasts {
   /** Create a broadcast */
-  @createsResource(Broadcast)
+  @createsResource(BroadcastResource)
   @post
   @opExample(#{
     parameters: #{
@@ -143,11 +143,11 @@ namespace Broadcasts {
   }, #{ title: "Create broadcast" })
   op create(@body body: CreateBroadcastInput): {
     @statusCode statusCode: 201;
-    @body body: Broadcast;
+    @body body: BroadcastResource;
   } | UnauthorizedProblem | UnprocessableEntityProblem;
 
   /** List broadcasts with pagination */
-  @listsResource(Broadcast)
+  @listsResource(BroadcastResource)
   @get
   @opExample(#{
     parameters: #{
@@ -196,7 +196,7 @@ namespace Broadcasts {
   op list(...PageQuery): BroadcastPage | BadRequestProblem | UnauthorizedProblem | UnprocessableEntityProblem;
 
   /** Get a broadcast by ID */
-  @readsResource(Broadcast)
+  @readsResource(BroadcastResource)
   @get
   @autoRoute
   @opExample(#{
@@ -212,10 +212,10 @@ namespace Broadcasts {
       updatedAt: "2026-04-04T16:30:00Z",
     },
   }, #{ title: "Get broadcast" })
-  op get(@path id: int64): Broadcast | BadRequestProblem | UnauthorizedProblem | NotFoundProblem;
+  op get(@path id: int64): BroadcastResource | BadRequestProblem | UnauthorizedProblem | NotFoundProblem;
 
   /** Update a broadcast */
-  @updatesResource(Broadcast)
+  @updatesResource(BroadcastResource)
   @put
   @autoRoute
   @opExample(#{
@@ -236,10 +236,10 @@ namespace Broadcasts {
       updatedAt: "2026-04-06T12:00:00Z",
     },
   }, #{ title: "Update broadcast" })
-  op update(@path id: int64, @body body: UpdateBroadcastInput): Broadcast | BadRequestProblem | UnauthorizedProblem | NotFoundProblem | UnprocessableEntityProblem;
+  op update(@path id: int64, @body body: UpdateBroadcastInput): BroadcastResource | BadRequestProblem | UnauthorizedProblem | NotFoundProblem | UnprocessableEntityProblem;
 
   /** Delete a broadcast */
-  @deletesResource(Broadcast)
+  @deletesResource(BroadcastResource)
   @delete
   @autoRoute
   op delete(@path id: int64): NoContentResponse | BadRequestProblem | UnauthorizedProblem | NotFoundProblem;

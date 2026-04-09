@@ -1,17 +1,19 @@
 package io.onemail.contact
 
-import io.onemail.model.ContactPageResponse
-import io.onemail.model.ContactResponse
-import io.onemail.model.CreateContactRequest
+import io.onemail.model.ContactPage
+import io.onemail.model.ContactResource
+import io.onemail.model.CreateContactInput
 import io.onemail.model.Pageable
 import io.onemail.model.Sort
-import io.onemail.model.UpdateContactRequest
+import io.onemail.model.UpdateContactInput
 import org.mapstruct.Mapper
 import org.mapstruct.Mapping
 import org.mapstruct.MappingTarget
 import org.mapstruct.Named
 import org.springframework.data.domain.Page
 import java.time.Instant
+import java.time.OffsetDateTime
+import java.time.ZoneOffset
 
 @Mapper(componentModel = "spring")
 interface ContactMapper {
@@ -21,7 +23,7 @@ interface ContactMapper {
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
     @Mapping(target = "customFields", source = "customFields", qualifiedByName = ["toMutableMap"])
-    fun toEntity(request: CreateContactRequest): Contact
+    fun toEntity(request: CreateContactInput): Contact
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "email", ignore = true)
@@ -29,16 +31,16 @@ interface ContactMapper {
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
     @Mapping(target = "customFields", source = "customFields", qualifiedByName = ["toMutableMap"])
-    fun updateEntity(request: UpdateContactRequest, @MappingTarget contact: Contact)
+    fun updateEntity(request: UpdateContactInput, @MappingTarget contact: Contact)
 
     @Mapping(target = "id", expression = "java(java.util.Objects.requireNonNull(contact.getId()))")
-    @Mapping(target = "createdAt", source = "createdAt", qualifiedByName = ["instantToString"])
-    @Mapping(target = "updatedAt", source = "updatedAt", qualifiedByName = ["instantToString"])
+    @Mapping(target = "createdAt", source = "createdAt", qualifiedByName = ["instantToOffsetDateTime"])
+    @Mapping(target = "updatedAt", source = "updatedAt", qualifiedByName = ["instantToOffsetDateTime"])
     @Mapping(target = "customFields", source = "customFields", qualifiedByName = ["emptyMapToNull"])
-    fun toResponse(contact: Contact): ContactResponse
+    fun toResponse(contact: Contact): ContactResource
 
-    fun toPageResponse(page: Page<Contact>): ContactPageResponse {
-        return ContactPageResponse(
+    fun toPageResponse(page: Page<Contact>): ContactPage {
+        return ContactPage(
             content = page.content.map(::toResponse),
             totalElements = page.totalElements,
             totalPages = page.totalPages,
@@ -72,9 +74,9 @@ interface ContactMapper {
         )
     }
 
-    @Named("instantToString")
-    fun instantToString(value: Instant): String {
-        return value.toString()
+    @Named("instantToOffsetDateTime")
+    fun instantToOffsetDateTime(value: Instant): OffsetDateTime {
+        return value.atOffset(ZoneOffset.UTC)
     }
 
     @Named("emptyMapToNull")

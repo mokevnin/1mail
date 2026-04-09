@@ -26,7 +26,7 @@ enum ContactStatus {
   createdAt: "2026-04-01T10:15:30Z",
   updatedAt: "2026-04-03T08:45:00Z",
 })
-model Contact {
+model ContactResource {
   /** Unique identifier */
   @key
   id: int64;
@@ -149,13 +149,13 @@ model UpdateContactInput {
     empty: false,
   },
 })
-model ContactPage is Page<Contact> {}
+model ContactPage is Page<ContactResource> {}
 
 @route("/contacts")
 @tag("Contacts")
 namespace Contacts {
   /** Create a contact */
-  @createsResource(Contact)
+  @createsResource(ContactResource)
   @post
   @opExample(#{
     parameters: #{
@@ -190,11 +190,11 @@ namespace Contacts {
   }, #{ title: "Create contact" })
   op create(@body body: CreateContactInput): {
     @statusCode statusCode: 201;
-    @body body: Contact;
+    @body body: ContactResource;
   } | UnauthorizedProblem | ConflictProblem | UnprocessableEntityProblem;
 
   /** List contacts with pagination */
-  @listsResource(Contact)
+  @listsResource(ContactResource)
   @get
   @opExample(#{
     parameters: #{
@@ -255,7 +255,7 @@ namespace Contacts {
   ): ContactPage | BadRequestProblem | UnauthorizedProblem | UnprocessableEntityProblem;
 
   /** Get a contact by ID */
-  @readsResource(Contact)
+  @readsResource(ContactResource)
   @get
   @autoRoute
   @opExample(#{
@@ -277,10 +277,10 @@ namespace Contacts {
       updatedAt: "2026-04-03T08:45:00Z",
     },
   }, #{ title: "Get contact" })
-  op get(@path id: int64): Contact | BadRequestProblem | UnauthorizedProblem | NotFoundProblem;
+  op get(@path id: int64): ContactResource | BadRequestProblem | UnauthorizedProblem | NotFoundProblem;
 
   /** Update a contact */
-  @updatesResource(Contact)
+  @updatesResource(ContactResource)
   @put
   @autoRoute
   @opExample(#{
@@ -308,10 +308,10 @@ namespace Contacts {
       updatedAt: "2026-04-06T12:00:00Z",
     },
   }, #{ title: "Update contact" })
-  op update(@path id: int64, @body body: UpdateContactInput): Contact | BadRequestProblem | UnauthorizedProblem | NotFoundProblem | ConflictProblem | UnprocessableEntityProblem;
+  op update(@path id: int64, @body body: UpdateContactInput): ContactResource | BadRequestProblem | UnauthorizedProblem | NotFoundProblem | ConflictProblem | UnprocessableEntityProblem;
 
   /** Delete a contact */
-  @deletesResource(Contact)
+  @deletesResource(ContactResource)
   @delete
   @autoRoute
   op delete(@path id: int64): NoContentResponse | BadRequestProblem | UnauthorizedProblem | NotFoundProblem;

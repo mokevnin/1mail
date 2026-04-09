@@ -1,10 +1,10 @@
 package io.onemail.contact
 
-import io.onemail.model.ContactPageResponse
-import io.onemail.model.ContactResponse
+import io.onemail.model.ContactPage
+import io.onemail.model.ContactResource
 import io.onemail.model.ContactStatus
-import io.onemail.model.CreateContactRequest
-import io.onemail.model.UpdateContactRequest
+import io.onemail.model.CreateContactInput
+import io.onemail.model.UpdateContactInput
 import org.springframework.data.domain.Pageable
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
@@ -17,10 +17,10 @@ class ContactService(
     private val contactMapper: ContactMapper,
 ) {
     @Transactional
-    fun create(request: CreateContactRequest): ContactResponse = save(contactMapper.toEntity(request))
+    fun create(request: CreateContactInput): ContactResource = save(contactMapper.toEntity(request))
 
     @Transactional(readOnly = true)
-    fun get(id: Long): ContactResponse =
+    fun get(id: Long): ContactResource =
         contactRepository
             .findById(id)
             .map(contactMapper::toResponse)
@@ -30,13 +30,13 @@ class ContactService(
     fun list(
         pageable: Pageable,
         status: ContactStatus?,
-    ): ContactPageResponse = contactMapper.toPageResponse(contactRepository.findAll(pageable))
+    ): ContactPage = contactMapper.toPageResponse(contactRepository.findAll(pageable))
 
     @Transactional
     fun update(
         id: Long,
-        request: UpdateContactRequest,
-    ): ContactResponse {
+        request: UpdateContactInput,
+    ): ContactResource {
         val entity =
             contactRepository
                 .findById(id)
@@ -57,7 +57,7 @@ class ContactService(
         contactRepository.delete(entity)
     }
 
-    private fun save(entity: Contact): ContactResponse = contactMapper.toResponse(contactRepository.save(entity))
+    private fun save(entity: Contact): ContactResource = contactMapper.toResponse(contactRepository.save(entity))
 
     private fun notFound(id: Long): ResponseStatusException = ResponseStatusException(HttpStatus.NOT_FOUND, "Contact $id was not found")
 }
