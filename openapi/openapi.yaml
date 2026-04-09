@@ -7,7 +7,7 @@ tags:
   - name: Segments
   - name: Broadcasts
 paths:
-  /api/broadcasts:
+  /broadcasts:
     post:
       operationId: Broadcasts_create
       description: Create a broadcast
@@ -48,7 +48,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateBroadcastRequest'
+              $ref: '#/components/schemas/CreateBroadcastInput'
             examples:
               Create broadcast:
                 summary: Create broadcast
@@ -60,33 +60,9 @@ paths:
       operationId: Broadcasts_list
       description: List broadcasts with pagination
       parameters:
-        - name: page
-          in: query
-          required: false
-          description: Page number (0-based)
-          schema:
-            type: integer
-            format: int32
-            default: 0
-          explode: false
-        - name: size
-          in: query
-          required: false
-          description: Page size
-          schema:
-            type: integer
-            format: int32
-            default: 25
-          explode: false
-        - name: sort
-          in: query
-          required: false
-          description: Sorting criteria (e.g. name,asc). Can be repeated.
-          schema:
-            type: array
-            items:
-              type: string
-          explode: false
+        - $ref: '#/components/parameters/PageQuery.page'
+        - $ref: '#/components/parameters/PageQuery.size'
+        - $ref: '#/components/parameters/PageQuery.sort'
       responses:
         '200':
           description: The request has succeeded.
@@ -147,7 +123,7 @@ paths:
                 $ref: '#/components/schemas/ProblemDetails'
       tags:
         - Broadcasts
-  /api/broadcasts/{id}:
+  /broadcasts/{id}:
     get:
       operationId: Broadcasts_get
       description: Get a broadcast by ID
@@ -253,7 +229,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UpdateBroadcastRequest'
+              $ref: '#/components/schemas/UpdateBroadcastInput'
             examples:
               Update broadcast:
                 summary: Update broadcast
@@ -294,7 +270,7 @@ paths:
                 $ref: '#/components/schemas/ProblemDetails'
       tags:
         - Broadcasts
-  /api/contacts:
+  /contacts:
     post:
       operationId: Contacts_create
       description: Create a contact
@@ -305,7 +281,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ContactResponse'
+                $ref: '#/components/schemas/Contact'
               examples:
                 Create contact:
                   summary: Create contact
@@ -346,7 +322,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateContactRequest'
+              $ref: '#/components/schemas/CreateContactInput'
             examples:
               Create contact:
                 summary: Create contact
@@ -362,33 +338,9 @@ paths:
       operationId: Contacts_list
       description: List contacts with pagination
       parameters:
-        - name: page
-          in: query
-          required: false
-          description: Page number (0-based)
-          schema:
-            type: integer
-            format: int32
-            default: 0
-          explode: false
-        - name: size
-          in: query
-          required: false
-          description: Page size
-          schema:
-            type: integer
-            format: int32
-            default: 25
-          explode: false
-        - name: sort
-          in: query
-          required: false
-          description: Sorting criteria (e.g. name,asc). Can be repeated.
-          schema:
-            type: array
-            items:
-              type: string
-          explode: false
+        - $ref: '#/components/parameters/PageQuery.page'
+        - $ref: '#/components/parameters/PageQuery.size'
+        - $ref: '#/components/parameters/PageQuery.sort'
         - name: status
           in: query
           required: false
@@ -402,7 +354,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ContactPageResponse'
+                $ref: '#/components/schemas/ContactPage'
               examples:
                 List contacts:
                   summary: List contacts
@@ -461,7 +413,7 @@ paths:
                 $ref: '#/components/schemas/ProblemDetails'
       tags:
         - Contacts
-  /api/contacts/{id}:
+  /contacts/{id}:
     get:
       operationId: Contacts_get
       description: Get a contact by ID
@@ -478,7 +430,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ContactResponse'
+                $ref: '#/components/schemas/Contact'
               examples:
                 Get contact:
                   summary: Get contact
@@ -530,7 +482,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ContactResponse'
+                $ref: '#/components/schemas/Contact'
               examples:
                 Update contact:
                   summary: Update contact
@@ -582,7 +534,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UpdateContactRequest'
+              $ref: '#/components/schemas/UpdateContactInput'
             examples:
               Update contact:
                 summary: Update contact
@@ -624,7 +576,7 @@ paths:
                 $ref: '#/components/schemas/ProblemDetails'
       tags:
         - Contacts
-  /api/segments:
+  /segments:
     post:
       operationId: Segments_create
       description: Create a segment
@@ -665,7 +617,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateSegmentRequest'
+              $ref: '#/components/schemas/CreateSegmentInput'
             examples:
               Create segment:
                 summary: Create segment
@@ -677,33 +629,9 @@ paths:
       operationId: Segments_list
       description: List segments with pagination
       parameters:
-        - name: page
-          in: query
-          required: false
-          description: Page number (0-based)
-          schema:
-            type: integer
-            format: int32
-            default: 0
-          explode: false
-        - name: size
-          in: query
-          required: false
-          description: Page size
-          schema:
-            type: integer
-            format: int32
-            default: 25
-          explode: false
-        - name: sort
-          in: query
-          required: false
-          description: Sorting criteria (e.g. name,asc). Can be repeated.
-          schema:
-            type: array
-            items:
-              type: string
-          explode: false
+        - $ref: '#/components/parameters/PageQuery.page'
+        - $ref: '#/components/parameters/PageQuery.size'
+        - $ref: '#/components/parameters/PageQuery.sort'
       responses:
         '200':
           description: The request has succeeded.
@@ -764,7 +692,7 @@ paths:
                 $ref: '#/components/schemas/ProblemDetails'
       tags:
         - Segments
-  /api/segments/{id}:
+  /segments/{id}:
     get:
       operationId: Segments_get
       description: Get a segment by ID
@@ -870,7 +798,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UpdateSegmentRequest'
+              $ref: '#/components/schemas/UpdateSegmentInput'
             examples:
               Update segment:
                 summary: Update segment
@@ -913,6 +841,37 @@ paths:
 security:
   - BearerAuth: []
 components:
+  parameters:
+    PageQuery.page:
+      name: page
+      in: query
+      required: false
+      description: Page number (0-based)
+      schema:
+        type: integer
+        format: int32
+        default: 0
+      explode: false
+    PageQuery.size:
+      name: size
+      in: query
+      required: false
+      description: Page size
+      schema:
+        type: integer
+        format: int32
+        default: 25
+      explode: false
+    PageQuery.sort:
+      name: sort
+      in: query
+      required: false
+      description: Sorting criteria (e.g. name,asc). Can be repeated.
+      schema:
+        type: array
+        items:
+          type: string
+      explode: false
   schemas:
     Broadcast:
       type: object
@@ -940,11 +899,13 @@ components:
             - $ref: '#/components/schemas/BroadcastStatus'
           description: Broadcast status
         createdAt:
-          type: string
-          description: Creation timestamp (ISO 8601)
+          allOf:
+            - $ref: '#/components/schemas/Timestamp'
+          description: Creation timestamp
         updatedAt:
-          type: string
-          description: Last update timestamp (ISO 8601)
+          allOf:
+            - $ref: '#/components/schemas/Timestamp'
+          description: Last update timestamp
       description: Broadcast resource
       example:
         id: 501
@@ -970,7 +931,7 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Broadcast'
-          description: List of broadcasts
+          description: List of items
         pageable:
           allOf:
             - $ref: '#/components/schemas/Pageable'
@@ -1046,7 +1007,64 @@ components:
         - scheduled
         - sent
       description: Broadcast status
-    ContactPageResponse:
+    Contact:
+      type: object
+      required:
+        - id
+        - email
+        - status
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: Unique identifier
+        email:
+          allOf:
+            - $ref: '#/components/schemas/EmailAddress'
+          description: Email address
+        firstName:
+          type: string
+          description: First name
+        lastName:
+          type: string
+          description: Last name
+        status:
+          allOf:
+            - $ref: '#/components/schemas/ContactStatus'
+          description: Current status
+        timeZone:
+          allOf:
+            - $ref: '#/components/schemas/TimeZoneName'
+          description: IANA time zone identifier
+        customFields:
+          type: object
+          additionalProperties:
+            type: string
+          description: Custom fields as key-value pairs
+        createdAt:
+          allOf:
+            - $ref: '#/components/schemas/Timestamp'
+          description: Creation timestamp
+        updatedAt:
+          allOf:
+            - $ref: '#/components/schemas/Timestamp'
+          description: Last update timestamp
+      description: Contact resource
+      example:
+        id: 101
+        email: alice@example.com
+        firstName: Alice
+        lastName: Johnson
+        status: active
+        timeZone: America/New_York
+        customFields:
+          plan: pro
+          source: import
+        createdAt: '2026-04-01T10:15:30Z'
+        updatedAt: '2026-04-03T08:45:00Z'
+    ContactPage:
       type: object
       required:
         - content
@@ -1062,8 +1080,8 @@ components:
         content:
           type: array
           items:
-            $ref: '#/components/schemas/ContactResponse'
-          description: List of contacts
+            $ref: '#/components/schemas/Contact'
+          description: List of items
         pageable:
           allOf:
             - $ref: '#/components/schemas/Pageable'
@@ -1137,66 +1155,13 @@ components:
           sorted: true
           unsorted: false
           empty: false
-    ContactResponse:
-      type: object
-      required:
-        - id
-        - email
-        - status
-        - createdAt
-        - updatedAt
-      properties:
-        id:
-          type: integer
-          format: int64
-          description: Unique identifier
-        email:
-          type: string
-          description: Email address
-        firstName:
-          type: string
-          description: First name
-        lastName:
-          type: string
-          description: Last name
-        status:
-          allOf:
-            - $ref: '#/components/schemas/ContactStatus'
-          description: Current status
-        timeZone:
-          type: string
-          description: IANA time zone identifier
-        customFields:
-          type: object
-          additionalProperties:
-            type: string
-          description: Custom fields as key-value pairs
-        createdAt:
-          type: string
-          description: Creation timestamp (ISO 8601)
-        updatedAt:
-          type: string
-          description: Last update timestamp (ISO 8601)
-      description: Contact response resource
-      example:
-        id: 101
-        email: alice@example.com
-        firstName: Alice
-        lastName: Johnson
-        status: active
-        timeZone: America/New_York
-        customFields:
-          plan: pro
-          source: import
-        createdAt: '2026-04-01T10:15:30Z'
-        updatedAt: '2026-04-03T08:45:00Z'
     ContactStatus:
       type: string
       enum:
         - active
         - unsubscribed
       description: Contact status
-    CreateBroadcastRequest:
+    CreateBroadcastInput:
       type: object
       required:
         - name
@@ -1219,13 +1184,14 @@ components:
         name: April product update
         segmentId: 301
         status: draft
-    CreateContactRequest:
+    CreateContactInput:
       type: object
       required:
         - email
       properties:
         email:
-          type: string
+          allOf:
+            - $ref: '#/components/schemas/EmailAddress'
           description: Email address
         firstName:
           type: string
@@ -1234,7 +1200,8 @@ components:
           type: string
           description: Last name
         timeZone:
-          type: string
+          allOf:
+            - $ref: '#/components/schemas/TimeZoneName'
           description: IANA time zone identifier
         customFields:
           type: object
@@ -1250,7 +1217,7 @@ components:
         customFields:
           plan: pro
           source: import
-    CreateSegmentRequest:
+    CreateSegmentInput:
       type: object
       required:
         - name
@@ -1271,6 +1238,9 @@ components:
         name: Recent signups
         type: rule
         definition: createdAt >= now() - P30D
+    EmailAddress:
+      type: string
+      format: email
     Pageable:
       type: object
       properties:
@@ -1329,7 +1299,7 @@ components:
         title: Validation error
         status: 422
         detail: Request validation failed
-        instance: /api/contacts
+        instance: /contacts
         errors:
           email:
             - must be a well-formed email address
@@ -1357,11 +1327,13 @@ components:
           type: string
           description: Segment definition (rule or descriptor)
         createdAt:
-          type: string
-          description: Creation timestamp (ISO 8601)
+          allOf:
+            - $ref: '#/components/schemas/Timestamp'
+          description: Creation timestamp
         updatedAt:
-          type: string
-          description: Last update timestamp (ISO 8601)
+          allOf:
+            - $ref: '#/components/schemas/Timestamp'
+          description: Last update timestamp
       description: Segment resource
       example:
         id: 301
@@ -1387,7 +1359,7 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Segment'
-          description: List of segments
+          description: List of items
         pageable:
           allOf:
             - $ref: '#/components/schemas/Pageable'
@@ -1475,7 +1447,12 @@ components:
           type: boolean
           description: Whether sorting is empty
       description: Spring Data sort descriptor
-    UpdateBroadcastRequest:
+    TimeZoneName:
+      type: string
+    Timestamp:
+      type: string
+      format: date-time
+    UpdateBroadcastInput:
       type: object
       properties:
         name:
@@ -1497,7 +1474,7 @@ components:
         name: April product update v2
         segmentId: 301
         status: scheduled
-    UpdateContactRequest:
+    UpdateContactInput:
       type: object
       properties:
         firstName:
@@ -1510,6 +1487,8 @@ components:
           description: Last name
         timeZone:
           type: string
+          allOf:
+            - $ref: '#/components/schemas/TimeZoneName'
           nullable: true
           description: IANA time zone identifier
         customFields:
@@ -1524,7 +1503,7 @@ components:
         timeZone: Europe/Berlin
         customFields:
           plan: enterprise
-    UpdateSegmentRequest:
+    UpdateSegmentInput:
       type: object
       properties:
         name:
@@ -1544,7 +1523,18 @@ components:
       example:
         name: Warm leads
         definition: score >= 50
+    Versions:
+      type: string
+      enum:
+        - 1.0.0
   securitySchemes:
     BearerAuth:
       type: http
       scheme: Bearer
+servers:
+  - url: http://localhost:8080
+    description: Local development API
+    variables: {}
+  - url: https://api.onemail.dev
+    description: Production API
+    variables: {}

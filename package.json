@@ -1,5 +1,8 @@
 {
   "type": "module",
+  "scripts": {
+    "typespec:compile": "tsp compile typespec"
+  },
   "devDependencies": {
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
