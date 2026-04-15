@@ -1,9 +1,23 @@
 {
   "type": "module",
   "scripts": {
-    "typespec:compile": "tsp compile typespec"
+    "typespec:compile": "tsp compile typespec",
+    "test": "node --env-file=.env --test test/**/*.test.ts",
+    "start": "node --env-file=.env ./node_modules/.bin/fastify start -l info app.ts",
+    "dev:api": "node --env-file=.env ./node_modules/.bin/fastify start -w -l info -P app.ts",
+    "dev:web": "node --env-file=.env ./node_modules/.bin/vite",
+    "dev": "overmind start",
+    "lint": "biome lint .",
+    "format": "biome format --write .",
+    "check": "biome check .",
+    "check:apply": "biome check --write .",
+    "build": "vite build"
   },
   "devDependencies": {
+    "@biomejs/biome": "^2.4.12",
+    "@types/node": "^25.6.0",
+    "@types/path-browserify": "^1.0.3",
+    "@types/pg": "^8.20.0",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@typespec/compiler": "^1.11.0",
@@ -13,6 +27,8 @@
     "@typespec/rest": "^0.81.0",
     "@typespec/versioning": "^0.81.0",
     "@vitejs/plugin-react": "^6.0.1",
+    "drizzle-kit": "^0.31.10",
+    "fastify-cli": "^7.4.1",
     "postcss": "^8.5.9",
     "postcss-preset-mantine": "^1.18.0",
     "postcss-simple-vars": "^7.0.1",
@@ -20,9 +36,43 @@
     "vite": "^8.0.8"
   },
   "dependencies": {
+    "@fastify/autoload": "^6.0.0",
+    "@fastify/cors": "^11.2.0",
+    "@fastify/sensible": "^6.0.0",
     "@mantine/core": "^9.0.2",
     "@mantine/hooks": "^9.0.2",
+    "@platformatic/job-queue": "^0.5.0",
+    "@tanstack/react-query": "^5.99.0",
+    "@trpc/client": "^11.16.0",
+    "@trpc/react-query": "^11.16.0",
+    "@trpc/server": "^11.16.0",
+    "@trpc/tanstack-react-query": "^11.16.0",
+    "client-only": "^0.0.1",
+    "drizzle-orm": "1.0.0-beta.21",
+    "fastify": "^5.8.5",
+    "fastify-openapi-glue": "^4.10.2",
+    "fastify-plugin": "^5.0.0",
+    "pg": "^8.20.0",
     "react": "^19.2.5",
-    "react-dom": "^19.2.5"
-  }
+    "react-dom": "^19.2.5",
+    "zod": "^4.3.6"
+  },
+  "name": "1mail",
+  "version": "1.0.0",
+  "description": "This project was bootstrapped with Fastify-CLI.",
+  "main": "app.js",
+  "directories": {
+    "test": "test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mokevnin/1mail.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/mokevnin/1mail/issues"
+  },
+  "homepage": "https://github.com/mokevnin/1mail#readme"
 }

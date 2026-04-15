@@ -1,28 +1,31 @@
 setup:
-	./gradlew build 
+	pnpm install
 
 dev:
-	overmind start
+	pnpm run dev
 
 test:
-	./gradlew test
+	pnpm run test
 
-update: update-gradle update-gradle-deps update-npm-deps
-
-update-gradle:
-	./gradlew wrapper --gradle-version latest
+update: update-npm-deps
 
 update-npm-deps:
 	npx ncu -u
 	pnpm update
 
-update-gradle-deps:
-	./gradlew replaceOutdatedDependencies --no-configuration-cache
-
 generate:
-	npx tsp compile typespec/
-	./gradlew openApiGenerate
-	./gradlew clean openApiGenerate
+	pnpm run typespec:compile
 
 format:
-	ktlint --format
+	pnpm run format
+
+lint:
+	pnpm run lint
+
+check:
+	pnpm run check:apply
+
+build:
+	pnpm run build
+
+.PHONY: test
