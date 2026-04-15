@@ -15,7 +15,7 @@ update-npm-deps:
 
 generate:
 	pnpm run typespec:compile
-	# pnpm run openapi-glue openapi/openapi.yaml
+	pnpm run openapi-ts
 
 format:
 	pnpm run format

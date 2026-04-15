@@ -1,20 +1,22 @@
 import path from 'node:path'
 import type { AutoloadPluginOptions } from '@fastify/autoload'
 import AutoLoad from '@fastify/autoload'
+import { TypeBoxValidatorCompiler } from '@fastify/type-provider-typebox'
 import type { FastifyPluginAsync, FastifyServerOptions } from 'fastify'
 
 export interface AppOptions extends FastifyServerOptions, Partial<AutoloadPluginOptions> {}
 
 const options: AppOptions = {
-  ajv: {
-    customOptions: {
-      keywords: ['example'],
-    },
-  },
+  // ajv: {
+  //   customOptions: {
+  //     keywords: ['example'],
+  //   },
+  // },
 }
 
 const app: FastifyPluginAsync<AppOptions> = async (fastify, opts): Promise<void> => {
   // Place here your custom code!
+  fastify.setValidatorCompiler(TypeBoxValidatorCompiler)
 
   // Do not touch the following lines
 

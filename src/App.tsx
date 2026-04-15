@@ -1,4 +1,4 @@
-import { trpc } from './utils/trpc.ts'
+import { trpc } from '../trpc/client.ts'
 
 export default function App() {
   const hello = trpc.hello.useQuery({ name: 'TanStack' })

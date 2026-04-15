@@ -1,6 +1,7 @@
+import type { FastifyPluginOptions } from 'fastify'
 import fp from 'fastify-plugin'
 
-export type SupportPluginOptions = Record<string, never>
+export type SupportPluginOptions = FastifyPluginOptions
 
 // The use of fastify-plugin is required to be able
 // to export the decorators to the outer scope
@@ -8,10 +9,3 @@ export type SupportPluginOptions = Record<string, never>
 export default fp<SupportPluginOptions>(async (fastify, _opts) => {
   fastify.decorate('someSupport', () => 'hugs')
 })
-
-// When using .decorate you have to specify the type injection
-declare module 'fastify' {
-  export interface FastifyInstance {
-    someSupport(): string
-  }
-}
