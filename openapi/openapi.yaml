@@ -929,36 +929,6 @@ components:
             - $ref: '#/components/schemas/Sort'
           description: Sorting information
       description: Spring Data paginated response
-      example:
-        content:
-          - id: 501
-            name: April product update
-            segmentId: 301
-            status: draft
-            createdAt: '2026-04-02T08:00:00Z'
-            updatedAt: '2026-04-04T16:30:00Z'
-        pageable:
-          pageSize: 25
-          pageNumber: 0
-          offset: 0
-          paged: true
-          unpaged: false
-          sort:
-            sorted: true
-            unsorted: false
-            empty: false
-        totalElements: 1
-        totalPages: 1
-        size: 25
-        number: 0
-        numberOfElements: 1
-        first: true
-        last: true
-        empty: false
-        sort:
-          sorted: true
-          unsorted: false
-          empty: false
     BroadcastResource:
       type: object
       required:
@@ -993,13 +963,6 @@ components:
             - $ref: '#/components/schemas/Timestamp'
           description: Last update timestamp
       description: Broadcast resource
-      example:
-        id: 501
-        name: April product update
-        segmentId: 301
-        status: draft
-        createdAt: '2026-04-02T08:00:00Z'
-        updatedAt: '2026-04-04T16:30:00Z'
     BroadcastStatus:
       type: string
       enum:
@@ -1063,41 +1026,6 @@ components:
             - $ref: '#/components/schemas/Sort'
           description: Sorting information
       description: Spring Data paginated response
-      example:
-        content:
-          - id: 101
-            email: alice@example.com
-            firstName: Alice
-            lastName: Johnson
-            status: active
-            timeZone: America/New_York
-            customFields:
-              plan: pro
-              source: import
-            createdAt: '2026-04-01T10:15:30Z'
-            updatedAt: '2026-04-03T08:45:00Z'
-        pageable:
-          pageSize: 25
-          pageNumber: 0
-          offset: 0
-          paged: true
-          unpaged: false
-          sort:
-            sorted: true
-            unsorted: false
-            empty: false
-        totalElements: 1
-        totalPages: 1
-        size: 25
-        number: 0
-        numberOfElements: 1
-        first: true
-        last: true
-        empty: false
-        sort:
-          sorted: true
-          unsorted: false
-          empty: false
     ContactResource:
       type: object
       required:
@@ -1143,18 +1071,6 @@ components:
             - $ref: '#/components/schemas/Timestamp'
           description: Last update timestamp
       description: Contact resource
-      example:
-        id: 101
-        email: alice@example.com
-        firstName: Alice
-        lastName: Johnson
-        status: active
-        timeZone: America/New_York
-        customFields:
-          plan: pro
-          source: import
-        createdAt: '2026-04-01T10:15:30Z'
-        updatedAt: '2026-04-03T08:45:00Z'
     ContactStatus:
       type: string
       enum:
@@ -1180,10 +1096,6 @@ components:
             - $ref: '#/components/schemas/BroadcastStatus'
           description: Broadcast status
       description: Request body for creating a broadcast
-      example:
-        name: April product update
-        segmentId: 301
-        status: draft
     CreateContactInput:
       type: object
       required:
@@ -1209,14 +1121,6 @@ components:
             type: string
           description: Custom fields as key-value pairs
       description: Request body for creating a contact
-      example:
-        email: alice@example.com
-        firstName: Alice
-        lastName: Johnson
-        timeZone: America/New_York
-        customFields:
-          plan: pro
-          source: import
     CreateSegmentInput:
       type: object
       required:
@@ -1234,10 +1138,6 @@ components:
           type: string
           description: Segment definition (required for rule segments)
       description: Request body for creating a segment
-      example:
-        name: Recent signups
-        type: rule
-        definition: createdAt >= now() - P30D
     EmailAddress:
       type: string
       format: email
@@ -1294,15 +1194,6 @@ components:
               type: string
           description: Validation errors grouped by field
       description: RFC 7807 Problem Details
-      example:
-        type: https://onemail.dev/problems/validation-error
-        title: Validation error
-        status: 422
-        detail: Request validation failed
-        instance: /contacts
-        errors:
-          email:
-            - must be a well-formed email address
     SegmentPage:
       type: object
       required:
@@ -1359,36 +1250,6 @@ components:
             - $ref: '#/components/schemas/Sort'
           description: Sorting information
       description: Spring Data paginated response
-      example:
-        content:
-          - id: 301
-            name: Recent signups
-            type: rule
-            definition: createdAt >= now() - P30D
-            createdAt: '2026-04-01T12:00:00Z'
-            updatedAt: '2026-04-03T09:00:00Z'
-        pageable:
-          pageSize: 25
-          pageNumber: 0
-          offset: 0
-          paged: true
-          unpaged: false
-          sort:
-            sorted: true
-            unsorted: false
-            empty: false
-        totalElements: 1
-        totalPages: 1
-        size: 25
-        number: 0
-        numberOfElements: 1
-        first: true
-        last: true
-        empty: false
-        sort:
-          sorted: true
-          unsorted: false
-          empty: false
     SegmentResource:
       type: object
       required:
@@ -1421,13 +1282,6 @@ components:
             - $ref: '#/components/schemas/Timestamp'
           description: Last update timestamp
       description: Segment resource
-      example:
-        id: 301
-        name: Recent signups
-        type: rule
-        definition: createdAt >= now() - P30D
-        createdAt: '2026-04-01T12:00:00Z'
-        updatedAt: '2026-04-03T09:00:00Z'
     SegmentType:
       type: string
       enum:
@@ -1467,13 +1321,8 @@ components:
         status:
           allOf:
             - $ref: '#/components/schemas/BroadcastStatus'
-          nullable: true
           description: Broadcast status
       description: Request body for updating a broadcast
-      example:
-        name: April product update v2
-        segmentId: 301
-        status: scheduled
     UpdateContactInput:
       type: object
       properties:
@@ -1498,11 +1347,6 @@ components:
           nullable: true
           description: Custom fields as key-value pairs
       description: Request body for updating a contact
-      example:
-        firstName: Alicia
-        timeZone: Europe/Berlin
-        customFields:
-          plan: enterprise
     UpdateSegmentInput:
       type: object
       properties:
@@ -1513,16 +1357,12 @@ components:
         type:
           allOf:
             - $ref: '#/components/schemas/SegmentType'
-          nullable: true
           description: Segment type
         definition:
           type: string
           nullable: true
           description: Segment definition
       description: Request body for updating a segment
-      example:
-        name: Warm leads
-        definition: score >= 50
     Versions:
       type: string
       enum:

@@ -1,11 +1,17 @@
 import path from 'node:path'
-import AutoLoad from '@fastify/autoload'
 import type { AutoloadPluginOptions } from '@fastify/autoload'
+import AutoLoad from '@fastify/autoload'
 import type { FastifyPluginAsync, FastifyServerOptions } from 'fastify'
 
 export interface AppOptions extends FastifyServerOptions, Partial<AutoloadPluginOptions> {}
 
-const options: AppOptions = {}
+const options: AppOptions = {
+  ajv: {
+    customOptions: {
+      keywords: ['example'],
+    },
+  },
+}
 
 const app: FastifyPluginAsync<AppOptions> = async (fastify, opts): Promise<void> => {
   // Place here your custom code!

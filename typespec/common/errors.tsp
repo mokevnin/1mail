@@ -5,16 +5,6 @@ namespace OneMail;
 alias ValidationErrors = Record<string[]>;
 
 /** RFC 7807 Problem Details */
-@example(#{
-  type: "https://onemail.dev/problems/validation-error",
-  title: "Validation error",
-  status: 422,
-  detail: "Request validation failed",
-  instance: "/contacts",
-  errors: #{
-    email: #["must be a well-formed email address"],
-  },
-})
 model ProblemDetails {
   /** A URI reference that identifies the problem type */
   type?: string;

@@ -15,12 +15,17 @@ update-npm-deps:
 
 generate:
 	pnpm run typespec:compile
+	# pnpm run openapi-glue openapi/openapi.yaml
 
 format:
 	pnpm run format
 
 lint:
 	pnpm run lint
+
+lint-fix:
+	pnpm run lint:fix
+	pnpm run typespec:format
 
 check:
 	pnpm run check:apply
