@@ -1,18 +1,8 @@
 import type { FastifyRequest } from 'fastify'
 import fp from 'fastify-plugin'
 
-import type { AppDatabase } from '../db/runtime.ts'
-import type { PaginationQuery } from '../lib/pagination.ts'
-import { buildPage, resolvePagination } from '../lib/pagination.ts'
-
-type CountSource = Parameters<AppDatabase['$count']>[0]
-
-type PaginationBuilder<TItem> = {
-  as(alias: string): unknown
-  limit(limit: number): {
-    offset(offset: number): Promise<TItem[]>
-  }
-}
+import type { PaginationBuilder } from '../lib/pagination.ts'
+import { paginateQuery } from '../lib/pagination.ts'
 
 type PaginateInput<TTable, TItem, TResult = TItem> = {
   table: TTable
@@ -27,22 +17,12 @@ export default fp(
       TItem,
       TResult = TItem,
     >(this: FastifyRequest, { table, query, map }: PaginateInput<TTable, TItem, TResult>) {
-      const { page, pageSize, offset } = resolvePagination(
-        this.query as PaginationQuery | undefined,
-      )
-
-      const buildQuery = () => query(table)
-
-      const [totalItems, rows] = await Promise.all([
-        fastify.db.$count(buildQuery().as('paginated_items') as CountSource),
-        buildQuery().limit(pageSize).offset(offset),
-      ])
-
-      return buildPage({
-        items: rows.map((row) => map?.(row) ?? (row as unknown as TResult)),
-        page,
-        pageSize,
-        totalItems,
+      return paginateQuery({
+        db: fastify.db,
+        pagination: this.query,
+        table,
+        query,
+        map,
       })
     })
   },

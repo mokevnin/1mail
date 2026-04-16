@@ -1,14 +1,14 @@
-import { jsonb, pgTable, serial, text, timestamp } from 'drizzle-orm/pg-core'
+import { bigserial, jsonb, pgTable, text, timestamp } from 'drizzle-orm/pg-core'
 
 export const users = pgTable('users', {
-  id: serial('id').primaryKey(),
+  id: bigserial('id', { mode: 'bigint' }).primaryKey(),
   name: text('name').notNull(),
   email: text('email').notNull().unique(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 })
 
 export const contacts = pgTable('contacts', {
-  id: serial('id').primaryKey(),
+  id: bigserial('id', { mode: 'bigint' }).primaryKey(),
   email: text('email').notNull().unique(),
   firstName: text('first_name'),
   lastName: text('last_name'),

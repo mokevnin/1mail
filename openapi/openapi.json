@@ -82,7 +82,38 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/BroadcastPage"
+                  "type": "object",
+                  "required": ["items", "page", "pageSize", "totalItems", "totalPages"],
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/BroadcastResource"
+                      },
+                      "description": "List of items"
+                    },
+                    "page": {
+                      "type": "integer",
+                      "format": "int32",
+                      "description": "Page number (1-based)"
+                    },
+                    "pageSize": {
+                      "type": "integer",
+                      "format": "int32",
+                      "description": "Page size"
+                    },
+                    "totalItems": {
+                      "type": "integer",
+                      "format": "int64",
+                      "description": "Total number of elements"
+                    },
+                    "totalPages": {
+                      "type": "integer",
+                      "format": "int32",
+                      "description": "Total number of pages"
+                    }
+                  },
+                  "description": "Paginated response"
                 }
               }
             }
@@ -131,8 +162,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "integer",
-              "format": "int64"
+              "$ref": "#/components/schemas/EntityId"
             }
           }
         ],
@@ -189,8 +219,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "integer",
-              "format": "int64"
+              "$ref": "#/components/schemas/EntityId"
             }
           }
         ],
@@ -267,8 +296,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "integer",
-              "format": "int64"
+              "$ref": "#/components/schemas/EntityId"
             }
           }
         ],
@@ -396,7 +424,38 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ContactPage"
+                  "type": "object",
+                  "required": ["items", "page", "pageSize", "totalItems", "totalPages"],
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/ContactResource"
+                      },
+                      "description": "List of items"
+                    },
+                    "page": {
+                      "type": "integer",
+                      "format": "int32",
+                      "description": "Page number (1-based)"
+                    },
+                    "pageSize": {
+                      "type": "integer",
+                      "format": "int32",
+                      "description": "Page size"
+                    },
+                    "totalItems": {
+                      "type": "integer",
+                      "format": "int64",
+                      "description": "Total number of elements"
+                    },
+                    "totalPages": {
+                      "type": "integer",
+                      "format": "int32",
+                      "description": "Total number of pages"
+                    }
+                  },
+                  "description": "Paginated response"
                 }
               }
             }
@@ -445,8 +504,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "integer",
-              "format": "int64"
+              "$ref": "#/components/schemas/EntityId"
             }
           }
         ],
@@ -503,8 +561,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "integer",
-              "format": "int64"
+              "$ref": "#/components/schemas/EntityId"
             }
           }
         ],
@@ -591,8 +648,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "integer",
-              "format": "int64"
+              "$ref": "#/components/schemas/EntityId"
             }
           }
         ],
@@ -700,7 +756,38 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SegmentPage"
+                  "type": "object",
+                  "required": ["items", "page", "pageSize", "totalItems", "totalPages"],
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/SegmentResource"
+                      },
+                      "description": "List of items"
+                    },
+                    "page": {
+                      "type": "integer",
+                      "format": "int32",
+                      "description": "Page number (1-based)"
+                    },
+                    "pageSize": {
+                      "type": "integer",
+                      "format": "int32",
+                      "description": "Page size"
+                    },
+                    "totalItems": {
+                      "type": "integer",
+                      "format": "int64",
+                      "description": "Total number of elements"
+                    },
+                    "totalPages": {
+                      "type": "integer",
+                      "format": "int32",
+                      "description": "Total number of pages"
+                    }
+                  },
+                  "description": "Paginated response"
                 }
               }
             }
@@ -749,8 +836,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "integer",
-              "format": "int64"
+              "$ref": "#/components/schemas/EntityId"
             }
           }
         ],
@@ -807,8 +893,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "integer",
-              "format": "int64"
+              "$ref": "#/components/schemas/EntityId"
             }
           }
         ],
@@ -885,8 +970,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "integer",
-              "format": "int64"
+              "$ref": "#/components/schemas/EntityId"
             }
           }
         ],
@@ -962,47 +1046,16 @@
       }
     },
     "schemas": {
-      "BroadcastPage": {
-        "type": "object",
-        "required": ["items", "page", "pageSize", "totalItems", "totalPages"],
-        "properties": {
-          "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/BroadcastResource"
-            },
-            "description": "List of items"
-          },
-          "page": {
-            "type": "integer",
-            "format": "int32",
-            "description": "Page number (1-based)"
-          },
-          "pageSize": {
-            "type": "integer",
-            "format": "int32",
-            "description": "Page size"
-          },
-          "totalItems": {
-            "type": "integer",
-            "format": "int64",
-            "description": "Total number of elements"
-          },
-          "totalPages": {
-            "type": "integer",
-            "format": "int32",
-            "description": "Total number of pages"
-          }
-        },
-        "description": "Paginated response"
-      },
       "BroadcastResource": {
         "type": "object",
         "required": ["id", "createdAt", "updatedAt"],
         "properties": {
           "id": {
-            "type": "integer",
-            "format": "int64",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EntityId"
+              }
+            ],
             "description": "Unique identifier"
           },
           "createdAt": {
@@ -1077,47 +1130,16 @@
         },
         "description": "Shared writable fields for contact"
       },
-      "ContactPage": {
-        "type": "object",
-        "required": ["items", "page", "pageSize", "totalItems", "totalPages"],
-        "properties": {
-          "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ContactResource"
-            },
-            "description": "List of items"
-          },
-          "page": {
-            "type": "integer",
-            "format": "int32",
-            "description": "Page number (1-based)"
-          },
-          "pageSize": {
-            "type": "integer",
-            "format": "int32",
-            "description": "Page size"
-          },
-          "totalItems": {
-            "type": "integer",
-            "format": "int64",
-            "description": "Total number of elements"
-          },
-          "totalPages": {
-            "type": "integer",
-            "format": "int32",
-            "description": "Total number of pages"
-          }
-        },
-        "description": "Paginated response"
-      },
       "ContactResource": {
         "type": "object",
         "required": ["id", "status", "createdAt", "updatedAt"],
         "properties": {
           "id": {
-            "type": "integer",
-            "format": "int64",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EntityId"
+              }
+            ],
             "description": "Unique identifier"
           },
           "status": {
@@ -1200,8 +1222,11 @@
             "description": "Broadcast name"
           },
           "segmentId": {
-            "type": "integer",
-            "format": "int64",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EntityId"
+              }
+            ],
             "description": "Segment ID"
           },
           "status": {
@@ -1251,6 +1276,10 @@
         "type": "string",
         "format": "email"
       },
+      "EntityId": {
+        "type": "string",
+        "pattern": "^[0-9]+$"
+      },
       "ProblemDetails": {
         "type": "object",
         "properties": {
@@ -1288,47 +1317,16 @@
         },
         "description": "RFC 7807 Problem Details"
       },
-      "SegmentPage": {
-        "type": "object",
-        "required": ["items", "page", "pageSize", "totalItems", "totalPages"],
-        "properties": {
-          "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/SegmentResource"
-            },
-            "description": "List of items"
-          },
-          "page": {
-            "type": "integer",
-            "format": "int32",
-            "description": "Page number (1-based)"
-          },
-          "pageSize": {
-            "type": "integer",
-            "format": "int32",
-            "description": "Page size"
-          },
-          "totalItems": {
-            "type": "integer",
-            "format": "int64",
-            "description": "Total number of elements"
-          },
-          "totalPages": {
-            "type": "integer",
-            "format": "int32",
-            "description": "Total number of pages"
-          }
-        },
-        "description": "Paginated response"
-      },
       "SegmentResource": {
         "type": "object",
         "required": ["id", "createdAt", "updatedAt"],
         "properties": {
           "id": {
-            "type": "integer",
-            "format": "int64",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EntityId"
+              }
+            ],
             "description": "Unique identifier"
           },
           "createdAt": {
@@ -1375,8 +1373,11 @@
             "description": "Broadcast name"
           },
           "segmentId": {
-            "type": "integer",
-            "format": "int64",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EntityId"
+              }
+            ],
             "description": "Segment ID"
           },
           "status": {

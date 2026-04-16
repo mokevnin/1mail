@@ -1,9 +1,10 @@
 import { Result } from 'better-result'
 import { eq } from 'drizzle-orm'
+import type { z } from 'zod'
 
 import { type AppDatabase, isUniqueViolation } from '../db/runtime.ts'
 import { type ContactRecord, contacts } from '../db/schema.ts'
-import type { CreateContactInput, UpdateContactInput } from '../generated/handlers/index.ts'
+import type { zContactsCreateBody, zContactsUpdateBody } from '../generated/handlers/zod.gen.ts'
 import {
   ContactAlreadyExistsError,
   type ContactCreateError,
@@ -11,6 +12,9 @@ import {
   ContactNotFoundError,
   type ContactUpdateError,
 } from './contacts.errors.ts'
+
+type CreateContactInput = z.output<typeof zContactsCreateBody>
+type UpdateContactInput = z.output<typeof zContactsUpdateBody>
 
 export async function createContact(
   db: AppDatabase,
@@ -35,7 +39,7 @@ export async function createContact(
 
 export async function updateContact(
   db: AppDatabase,
-  id: number,
+  id: bigint,
   input: UpdateContactInput,
 ): Promise<Result<ContactRecord, ContactUpdateError>> {
   const [updated] = await db.update(contacts).set(input).where(eq(contacts.id, id)).returning()

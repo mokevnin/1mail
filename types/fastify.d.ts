@@ -18,7 +18,12 @@ interface PaginateInput<TTable, TItem, TResult = TItem> {
 
 declare module 'fastify' {
   interface AppGuard {
-    found<T extends { id: number }>(value: T | null | undefined): asserts value is T
+    found<T extends { id: bigint }>(value: T | null | undefined): asserts value is T
+  }
+
+  interface AppHelpers {
+    guard: AppGuard
+    throwHttpError(error: import('../types/errors.ts').UseCaseError): never
   }
 
   interface FastifyRequest {
@@ -28,8 +33,8 @@ declare module 'fastify' {
   }
 
   interface FastifyInstance {
+    app: AppHelpers
     db: AppDatabase
-    guard: AppGuard
     queue: Queue<Record<string, unknown>, { success: true }>
     someSupport(): string
   }

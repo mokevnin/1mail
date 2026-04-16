@@ -1,14 +1,2 @@
-import { initTRPC } from '@trpc/server'
-import { z } from 'zod'
-
-const t = initTRPC.create()
-
-export const router = t.router({
-  hello: t.procedure.input(z.object({ name: z.string() })).query(({ input }) => {
-    return {
-      greeting: `Hello ${input.name}`,
-    }
-  }),
-})
-
-export type AppRouter = typeof router
+export type { AppRouter } from './routers/index.ts'
+export { appRouter as router } from './routers/index.ts'

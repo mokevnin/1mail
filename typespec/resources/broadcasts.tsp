@@ -16,7 +16,7 @@ enum BroadcastStatus {
 model BroadcastResource extends CreateBroadcastInput {
   /** Unique identifier */
   @key
-  id: int64;
+  id: EntityId;
 
   /** Creation timestamp */
   createdAt: Timestamp;
@@ -31,7 +31,7 @@ model CreateBroadcastInput {
   name: string;
 
   /** Segment ID */
-  segmentId: int64;
+  segmentId: EntityId;
 
   /** Broadcast status */
   status: BroadcastStatus;
@@ -43,13 +43,11 @@ model UpdateBroadcastInput {
   name?: string;
 
   /** Segment ID */
-  segmentId?: int64;
+  segmentId?: EntityId;
 
   /** Broadcast status */
   status?: BroadcastStatus;
 }
-
-model BroadcastPage is Page<BroadcastResource>;
 
 @route("/broadcasts")
 @tag("Broadcasts")
@@ -57,19 +55,16 @@ namespace Broadcasts {
   /** Create a broadcast */
   @createsResource(BroadcastResource)
   @post
-  op create(@body body: CreateBroadcastInput):
-    | {
-        @statusCode statusCode: 201;
-        @body body: BroadcastResource;
-      }
-    | UnauthorizedProblem
-    | UnprocessableEntityProblem;
+  op create(@body body: CreateBroadcastInput): {
+    @statusCode statusCode: 201;
+    @body body: BroadcastResource;
+  } | UnauthorizedProblem | UnprocessableEntityProblem;
 
   /** List broadcasts with pagination */
   @listsResource(BroadcastResource)
   @get
   op list(...PageQuery):
-    | BroadcastPage
+    | Page<BroadcastResource>
     | BadRequestProblem
     | UnauthorizedProblem
     | UnprocessableEntityProblem;
@@ -78,7 +73,7 @@ namespace Broadcasts {
   @readsResource(BroadcastResource)
   @get
   @autoRoute
-  op get(@path id: int64):
+  op get(@path id: EntityId):
     | BroadcastResource
     | BadRequestProblem
     | UnauthorizedProblem
@@ -88,7 +83,7 @@ namespace Broadcasts {
   @updatesResource(BroadcastResource)
   @put
   @autoRoute
-  op update(@path id: int64, @body body: UpdateBroadcastInput):
+  op update(@path id: EntityId, @body body: UpdateBroadcastInput):
     | BroadcastResource
     | BadRequestProblem
     | UnauthorizedProblem
@@ -99,7 +94,7 @@ namespace Broadcasts {
   @deletesResource(BroadcastResource)
   @delete
   @autoRoute
-  op delete(@path id: int64):
+  op delete(@path id: EntityId):
     | NoContentResponse
     | BadRequestProblem
     | UnauthorizedProblem

@@ -15,7 +15,7 @@ enum SegmentType {
 model SegmentResource extends CreateSegmentInput {
   /** Unique identifier */
   @key
-  id: int64;
+  id: EntityId;
 
   /** Creation timestamp */
   createdAt: Timestamp;
@@ -48,27 +48,22 @@ model UpdateSegmentInput {
   definition?: string;
 }
 
-model SegmentPage is Page<SegmentResource>;
-
 @route("/segments")
 @tag("Segments")
 namespace Segments {
   /** Create a segment */
   @createsResource(SegmentResource)
   @post
-  op create(@body body: CreateSegmentInput):
-    | {
-        @statusCode statusCode: 201;
-        @body body: SegmentResource;
-      }
-    | UnauthorizedProblem
-    | UnprocessableEntityProblem;
+  op create(@body body: CreateSegmentInput): {
+    @statusCode statusCode: 201;
+    @body body: SegmentResource;
+  } | UnauthorizedProblem | UnprocessableEntityProblem;
 
   /** List segments with pagination */
   @listsResource(SegmentResource)
   @get
   op list(...PageQuery):
-    | SegmentPage
+    | Page<SegmentResource>
     | BadRequestProblem
     | UnauthorizedProblem
     | UnprocessableEntityProblem;
@@ -77,7 +72,7 @@ namespace Segments {
   @readsResource(SegmentResource)
   @get
   @autoRoute
-  op get(@path id: int64):
+  op get(@path id: EntityId):
     | SegmentResource
     | BadRequestProblem
     | UnauthorizedProblem
@@ -87,7 +82,7 @@ namespace Segments {
   @updatesResource(SegmentResource)
   @put
   @autoRoute
-  op update(@path id: int64, @body body: UpdateSegmentInput):
+  op update(@path id: EntityId, @body body: UpdateSegmentInput):
     | SegmentResource
     | BadRequestProblem
     | UnauthorizedProblem
@@ -98,7 +93,7 @@ namespace Segments {
   @deletesResource(SegmentResource)
   @delete
   @autoRoute
-  op delete(@path id: int64):
+  op delete(@path id: EntityId):
     | NoContentResponse
     | BadRequestProblem
     | UnauthorizedProblem

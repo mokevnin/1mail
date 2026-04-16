@@ -48,7 +48,7 @@ model ContactUpdatableFields {
 model ContactResource extends ContactFields {
   /** Unique identifier */
   @key
-  id: int64;
+  id: EntityId;
 
   /** Current status */
   status: ContactStatus;
@@ -65,8 +65,6 @@ model CreateContactInput extends ContactFields {}
 
 /** Request body for updating a contact */
 model UpdateContactInput extends ContactUpdatableFields {}
-
-model ContactPage is Page<ContactResource>;
 
 @route("/contacts")
 @tag("Contacts")
@@ -92,7 +90,7 @@ namespace Contacts {
     /** Filter by status */
     @query status?: ContactStatus,
   ):
-    | ContactPage
+    | Page<ContactResource>
     | BadRequestProblem
     | UnauthorizedProblem
     | UnprocessableEntityProblem;
@@ -101,7 +99,7 @@ namespace Contacts {
   @readsResource(ContactResource)
   @get
   @autoRoute
-  op get(@path id: int64):
+  op get(@path id: EntityId):
     | ContactResource
     | BadRequestProblem
     | UnauthorizedProblem
@@ -111,7 +109,7 @@ namespace Contacts {
   @updatesResource(ContactResource)
   @put
   @autoRoute
-  op update(@path id: int64, @body body: UpdateContactInput):
+  op update(@path id: EntityId, @body body: UpdateContactInput):
     | ContactResource
     | BadRequestProblem
     | UnauthorizedProblem
@@ -123,7 +121,7 @@ namespace Contacts {
   @deletesResource(ContactResource)
   @delete
   @autoRoute
-  op delete(@path id: int64):
+  op delete(@path id: EntityId):
     | NoContentResponse
     | BadRequestProblem
     | UnauthorizedProblem

@@ -7,3 +7,6 @@ scalar EmailAddress extends string;
 scalar Timestamp extends string;
 
 scalar TimeZoneName extends string;
+
+@pattern("^[0-9]+$")
+scalar EntityId extends string;

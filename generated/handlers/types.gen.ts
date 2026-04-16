@@ -33,23 +33,11 @@ export type BroadcastPage = {
 /**
  * Broadcast resource
  */
-export type BroadcastResource = {
+export type BroadcastResource = CreateBroadcastInput & {
     /**
      * Unique identifier
      */
-    id: number;
-    /**
-     * Broadcast name
-     */
-    name: string;
-    /**
-     * Segment ID
-     */
-    segmentId: number;
-    /**
-     * Broadcast status
-     */
-    status: BroadcastStatus;
+    id: EntityId;
     /**
      * Creation timestamp
      */
@@ -126,7 +114,7 @@ export type ContactResource = ContactFields & {
     /**
      * Unique identifier
      */
-    id: number;
+    id: EntityId;
     /**
      * Current status
      */
@@ -181,7 +169,7 @@ export type CreateBroadcastInput = {
     /**
      * Segment ID
      */
-    segmentId: number;
+    segmentId: EntityId;
     /**
      * Broadcast status
      */
@@ -212,6 +200,8 @@ export type CreateSegmentInput = {
 };
 
 export type EmailAddress = string;
+
+export type EntityId = string;
 
 /**
  * RFC 7807 Problem Details
@@ -254,7 +244,7 @@ export type SegmentPage = {
      */
     items: Array<SegmentResource>;
     /**
-     * Page number (0-based)
+     * Page number (1-based)
      */
     page: number;
     /**
@@ -274,23 +264,11 @@ export type SegmentPage = {
 /**
  * Segment resource
  */
-export type SegmentResource = {
+export type SegmentResource = CreateSegmentInput & {
     /**
      * Unique identifier
      */
-    id: number;
-    /**
-     * Segment name
-     */
-    name: string;
-    /**
-     * Segment type
-     */
-    type: SegmentType;
-    /**
-     * Segment definition (rule or descriptor)
-     */
-    definition?: string;
+    id: EntityId;
     /**
      * Creation timestamp
      */
@@ -317,11 +295,11 @@ export type UpdateBroadcastInput = {
     /**
      * Broadcast name
      */
-    name?: string | null;
+    name?: string;
     /**
      * Segment ID
      */
-    segmentId?: number | null;
+    segmentId?: EntityId;
     /**
      * Broadcast status
      */
@@ -340,7 +318,7 @@ export type UpdateSegmentInput = {
     /**
      * Segment name
      */
-    name?: string | null;
+    name?: string;
     /**
      * Segment type
      */
@@ -348,7 +326,7 @@ export type UpdateSegmentInput = {
     /**
      * Segment definition
      */
-    definition?: string | null;
+    definition?: string;
 };
 
 export type Versions = '1.0.0';
@@ -437,7 +415,7 @@ export type BroadcastsCreateResponse = BroadcastsCreateResponses[keyof Broadcast
 export type BroadcastsDeleteData = {
     body?: never;
     path: {
-        id: number;
+        id: EntityId;
     };
     query?: never;
     url: '/broadcasts/{id}';
@@ -472,7 +450,7 @@ export type BroadcastsDeleteResponse = BroadcastsDeleteResponses[keyof Broadcast
 export type BroadcastsGetData = {
     body?: never;
     path: {
-        id: number;
+        id: EntityId;
     };
     query?: never;
     url: '/broadcasts/{id}';
@@ -507,7 +485,7 @@ export type BroadcastsGetResponse = BroadcastsGetResponses[keyof BroadcastsGetRe
 export type BroadcastsUpdateData = {
     body: UpdateBroadcastInput;
     path: {
-        id: number;
+        id: EntityId;
     };
     query?: never;
     url: '/broadcasts/{id}';
@@ -625,7 +603,7 @@ export type ContactsCreateResponse = ContactsCreateResponses[keyof ContactsCreat
 export type ContactsDeleteData = {
     body?: never;
     path: {
-        id: number;
+        id: EntityId;
     };
     query?: never;
     url: '/contacts/{id}';
@@ -660,7 +638,7 @@ export type ContactsDeleteResponse = ContactsDeleteResponses[keyof ContactsDelet
 export type ContactsGetData = {
     body?: never;
     path: {
-        id: number;
+        id: EntityId;
     };
     query?: never;
     url: '/contacts/{id}';
@@ -695,7 +673,7 @@ export type ContactsGetResponse = ContactsGetResponses[keyof ContactsGetResponse
 export type ContactsUpdateData = {
     body: UpdateContactInput;
     path: {
-        id: number;
+        id: EntityId;
     };
     query?: never;
     url: '/contacts/{id}';
@@ -809,7 +787,7 @@ export type SegmentsCreateResponse = SegmentsCreateResponses[keyof SegmentsCreat
 export type SegmentsDeleteData = {
     body?: never;
     path: {
-        id: number;
+        id: EntityId;
     };
     query?: never;
     url: '/segments/{id}';
@@ -844,7 +822,7 @@ export type SegmentsDeleteResponse = SegmentsDeleteResponses[keyof SegmentsDelet
 export type SegmentsGetData = {
     body?: never;
     path: {
-        id: number;
+        id: EntityId;
     };
     query?: never;
     url: '/segments/{id}';
@@ -879,7 +857,7 @@ export type SegmentsGetResponse = SegmentsGetResponses[keyof SegmentsGetResponse
 export type SegmentsUpdateData = {
     body: UpdateSegmentInput;
     path: {
-        id: number;
+        id: EntityId;
     };
     query?: never;
     url: '/segments/{id}';

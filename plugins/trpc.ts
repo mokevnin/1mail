@@ -1,7 +1,8 @@
 import cors from '@fastify/cors'
 import { fastifyTRPCPlugin } from '@trpc/server/adapters/fastify'
 import fp from 'fastify-plugin'
-import { router as appRouter } from '../trpc/router.ts'
+import { createTrpcContext } from '../trpc/context.ts'
+import { appRouter } from '../trpc/routers/index.ts'
 
 export default fp(async (fastify) => {
   await fastify.register(cors, {
@@ -12,7 +13,7 @@ export default fp(async (fastify) => {
     prefix: '/trpc',
     trpcOptions: {
       router: appRouter,
-      createContext: () => ({}),
+      createContext: () => createTrpcContext(fastify),
     },
   })
 })

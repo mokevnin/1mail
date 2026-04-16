@@ -3,14 +3,8 @@ import type { FastifyInstance, FastifyPluginAsync } from 'fastify'
 
 import { contacts } from '../../db/schema.ts'
 import type { RouteHandlers } from '../../generated/handlers/fastify.gen.ts'
-import type { ContactPage } from '../../generated/handlers/index.ts'
 import { toFastifySchema } from '../../lib/openapi.ts'
 import { toContactResource } from '../../resources/contacts.ts'
-import {
-  ContactAlreadyExistsError,
-  ContactCreateFailedError,
-  ContactNotFoundError,
-} from '../../use-cases/contacts.errors.ts'
 import { createContact, updateContact } from '../../use-cases/contacts.ts'
 
 const contactsPlugin: FastifyPluginAsync = async (
@@ -23,7 +17,7 @@ const contactsPlugin: FastifyPluginAsync = async (
         ? eq(contacts.status, request.query.status)
         : undefined
 
-      const response: ContactPage = await request.paginate({
+      const response = await request.paginate({
         table: contacts,
         query: (table) => fastify.db.select().from(table).where(whereClause).orderBy(asc(table.id)),
         map: toContactResource,
@@ -34,55 +28,39 @@ const contactsPlugin: FastifyPluginAsync = async (
 
     contactsCreate: async (request, reply) => {
       const result = await createContact(fastify.db, request.body)
+      const response = result.map(toContactResource).match({
+        ok: (contact) => reply.code(201).send(contact),
+        err: fastify.app.throwHttpError,
+      })
 
-      if (result.isErr()) {
-        if (ContactAlreadyExistsError.is(result.error)) {
-          throw fastify.httpErrors.conflict(result.error.message)
-        }
-
-        if (ContactCreateFailedError.is(result.error)) {
-          throw fastify.httpErrors.internalServerError(result.error.message)
-        }
-
-        throw result.error
-      }
-
-      return reply.code(201).send(toContactResource(result.value))
+      return response
     },
 
     contactsGet: async (request, reply) => {
-      const [contact] = await fastify.db
-        .select()
-        .from(contacts)
-        .where(eq(contacts.id, request.params.id))
-        .limit(1)
+      const id = BigInt(request.params.id)
+      const [contact] = await fastify.db.select().from(contacts).where(eq(contacts.id, id)).limit(1)
 
-      fastify.guard.found(contact)
+      fastify.app.guard.found(contact)
 
       return reply.code(200).send(toContactResource(contact))
     },
 
     contactsUpdate: async (request, reply) => {
-      const result = await updateContact(fastify.db, request.params.id, request.body)
+      const id = BigInt(request.params.id)
+      const result = await updateContact(fastify.db, id, request.body)
+      const response = result.map(toContactResource).match({
+        ok: (contact) => reply.code(200).send(contact),
+        err: fastify.app.throwHttpError,
+      })
 
-      if (result.isErr()) {
-        if (ContactNotFoundError.is(result.error)) {
-          throw fastify.httpErrors.notFound(result.error.message)
-        }
-
-        throw result.error
-      }
-
-      return reply.code(200).send(toContactResource(result.value))
+      return response
     },
 
     contactsDelete: async (request, reply) => {
-      const [deleted] = await fastify.db
-        .delete(contacts)
-        .where(eq(contacts.id, request.params.id))
-        .returning()
+      const id = BigInt(request.params.id)
+      const [deleted] = await fastify.db.delete(contacts).where(eq(contacts.id, id)).returning()
 
-      fastify.guard.found(deleted)
+      fastify.app.guard.found(deleted)
 
       return reply.code(204).send()
     },

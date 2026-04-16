@@ -5,6 +5,7 @@ import { toTimestamp } from '../lib/utils.ts'
 export function toContactResource(contact: ContactRecord): ContactResource {
   return {
     ...contact,
+    id: contact.id.toString(),
     createdAt: toTimestamp(contact.createdAt),
     updatedAt: toTimestamp(contact.updatedAt),
   }
