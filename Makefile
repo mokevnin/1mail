@@ -31,10 +31,7 @@ update-npm-deps:
 generate-typespec:
 	npx tsp compile typespec
 
-generate-typebox:
-	npx openapi-box openapi/openapi.yaml -o generated/openapi-box.js
-
-generate: generate-typespec generate-typebox lint-fix
+generate: generate-typespec check-fix
 
 check:
 	npx tsgo --noEmit
@@ -47,4 +44,4 @@ check-fix:
 build:
 	pnpm run build
 
-.PHONY: test test-watch db-generate db-migrate
+.PHONY: test test-watch db-generate db-migrate generate generate-typespec

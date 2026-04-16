@@ -1,7 +1,7 @@
 import { defineConfig } from '@hey-api/openapi-ts'
 
 export default defineConfig({
-  input: './openapi/openapi.yaml',
+  input: './openapi/openapi.json',
   output: './generated/handlers',
   plugins: ['fastify'],
 })

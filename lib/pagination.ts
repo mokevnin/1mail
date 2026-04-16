@@ -42,5 +42,5 @@ export function buildPage<T>({ items, page, pageSize, totalItems }: BuildPageInp
   }
 }
 
-export { DEFAULT_PAGE, DEFAULT_PAGE_SIZE }
 export type { Page, PaginationQuery }
+export { DEFAULT_PAGE, DEFAULT_PAGE_SIZE }

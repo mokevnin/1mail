@@ -1,6 +1,5 @@
-import type { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { asc, eq } from 'drizzle-orm'
-import type { FastifyInstance } from 'fastify'
+import type { FastifyInstance, FastifyPluginAsync } from 'fastify'
 
 import { contacts } from '../../db/schema.ts'
 import type { RouteHandlers } from '../../generated/handlers/fastify.gen.ts'
@@ -14,7 +13,7 @@ import {
 } from '../../use-cases/contacts.errors.ts'
 import { createContact, updateContact } from '../../use-cases/contacts.ts'
 
-const contactsPlugin: FastifyPluginAsyncTypebox = async (
+const contactsPlugin: FastifyPluginAsync = async (
   fastify: FastifyInstance,
   _opts,
 ): Promise<void> => {
