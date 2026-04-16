@@ -1,5 +1,5 @@
 import type { FastifyInstance } from 'fastify'
-import type { AppDatabase } from '../db/runtime.ts'
+import type { AppDatabase } from '../../db/runtime.ts'
 
 export type TrpcContext = {
   db: AppDatabase

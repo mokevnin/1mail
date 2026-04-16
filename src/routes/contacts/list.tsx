@@ -6,7 +6,7 @@ import { useNavigate } from '@tanstack/react-router'
 import { DataTable } from 'mantine-datatable'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { trpc } from '../../../trpc/client.ts'
+import { trpc } from '../../../server/trpc/client.ts'
 
 type ContactStatusFilter = 'all' | 'active' | 'unsubscribed'
 

@@ -30,10 +30,11 @@
 - Do not hand-edit generated files under `generated/`.
 
 ## Architecture Notes (only what is easy to miss)
-- Backend entrypoint is `app.ts`; Fastify autoloads everything from `plugins/` and `routes/`.
-- Implemented module is `routes/contacts/index.ts`; `routes/segments/index.ts` and `routes/broadcasts/index.ts` are placeholders that throw `not implemented`.
+- Backend entrypoint is `app.ts`; Fastify autoloads plugins from `plugins/` and external HTTP API routes from `server/http/`.
+- Implemented external API module is `server/http/contacts/index.ts`; `server/http/segments/index.ts` and `server/http/broadcasts/index.ts` are placeholders that throw `not implemented`.
+- Internal frontend API lives in `server/trpc/`; frontend page routes live in `src/routes/`.
 - Contacts handlers are typed from generated OpenAPI types (`RouteHandlers`) and use `toFastifySchema(...)` from `lib/openapi.ts`.
-- Route files under `routes/<name>/index.ts` are mounted with the folder prefix. Inside them, register relative paths (`/`, `/:id`) to avoid doubled paths.
+- Route files under `server/http/<name>/index.ts` are mounted with the folder prefix. Inside them, register relative paths (`/`, `/:id`) to avoid doubled paths.
 
 ## Repo-Specific Quirks
 - `.npmrc` sets `node-options="--experimental-strip-types"`, so TS files are executed directly by node-based tooling here.

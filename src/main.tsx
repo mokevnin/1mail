@@ -6,7 +6,7 @@ import { RouterProvider } from '@tanstack/react-router'
 import { httpBatchLink } from '@trpc/client'
 import { StrictMode, useState } from 'react'
 import { createRoot } from 'react-dom/client'
-import { trpc } from '../trpc/client.ts'
+import { trpc } from '../server/trpc/client.ts'
 import './i18n.ts'
 import { router } from './router.tsx'
 

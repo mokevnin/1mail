@@ -1,5 +1,5 @@
 import type { FastifyPluginAsync } from 'fastify'
-import type { RouteHandlers } from '../../generated/handlers/fastify.gen.ts'
+import type { RouteHandlers } from '../../../generated/handlers/fastify.gen.ts'
 
 const handlers = {
   segmentsList: async (_request, _reply) => {

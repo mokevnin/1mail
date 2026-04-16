@@ -1,7 +1,7 @@
 import { asc, eq } from 'drizzle-orm'
 import { z } from 'zod'
 
-import { contacts } from '../../../db/schema.ts'
+import { contacts } from '../../../../db/schema.ts'
 import {
   zContactsCreateBody,
   zContactsDeletePath,
@@ -9,10 +9,10 @@ import {
   zContactsListQuery,
   zContactsUpdateBody,
   zContactsUpdatePath,
-} from '../../../generated/handlers/zod.gen.ts'
-import { paginateQuery } from '../../../lib/pagination.ts'
-import { toContactResource } from '../../../resources/contacts.ts'
-import { createContact, updateContact } from '../../../use-cases/contacts.ts'
+} from '../../../../generated/handlers/zod.gen.ts'
+import { paginateQuery } from '../../../../lib/pagination.ts'
+import { toContactResource } from '../../../../resources/contacts.ts'
+import { createContact, updateContact } from '../../../../use-cases/contacts.ts'
 import { throwTrpcError } from '../../errors.ts'
 import { t } from '../../init.ts'
 import { trpcGuard } from '../../utils.ts'

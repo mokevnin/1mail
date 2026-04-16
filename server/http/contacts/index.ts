@@ -1,11 +1,11 @@
 import { asc, eq } from 'drizzle-orm'
 import type { FastifyInstance, FastifyPluginAsync } from 'fastify'
 
-import { contacts } from '../../db/schema.ts'
-import type { RouteHandlers } from '../../generated/handlers/fastify.gen.ts'
-import { toFastifySchema } from '../../lib/openapi.ts'
-import { toContactResource } from '../../resources/contacts.ts'
-import { createContact, updateContact } from '../../use-cases/contacts.ts'
+import { contacts } from '../../../db/schema.ts'
+import type { RouteHandlers } from '../../../generated/handlers/fastify.gen.ts'
+import { toFastifySchema } from '../../../lib/openapi.ts'
+import { toContactResource } from '../../../resources/contacts.ts'
+import { createContact, updateContact } from '../../../use-cases/contacts.ts'
 
 const contactsPlugin: FastifyPluginAsync = async (
   fastify: FastifyInstance,

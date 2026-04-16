@@ -4,7 +4,7 @@ import { notifications } from '@mantine/notifications'
 import { useNavigate, useParams } from '@tanstack/react-router'
 import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { trpc } from '../../../trpc/client.ts'
+import { trpc } from '../../../server/trpc/client.ts'
 import { EMPTY_CONTACT_FORM, toUpdateNullableField } from './form.ts'
 
 function parseContactId(contactId: string): string | null {

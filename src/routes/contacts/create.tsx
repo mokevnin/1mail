@@ -3,7 +3,7 @@ import { useForm } from '@mantine/form'
 import { notifications } from '@mantine/notifications'
 import { useNavigate } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
-import { trpc } from '../../../trpc/client.ts'
+import { trpc } from '../../../server/trpc/client.ts'
 import { EMPTY_CONTACT_FORM, toCreateNullableField } from './form.ts'
 
 export function ContactCreatePage() {

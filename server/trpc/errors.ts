@@ -1,6 +1,6 @@
 import { TRPCError } from '@trpc/server'
 
-import type { UseCaseError } from '../types/errors.ts'
+import type { UseCaseError } from '../../types/errors.ts'
 
 const trpcErrorCodeByUseCaseCode = {
   conflict: 'CONFLICT',

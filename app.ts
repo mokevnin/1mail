@@ -24,10 +24,9 @@ const app: FastifyPluginAsync<AppOptions> = async (fastify, opts): Promise<void>
     options: Object.assign({}, opts),
   })
 
-  // This loads all plugins defined in routes
-  // define your routes in one of these
+  // This loads all public HTTP API routes
   fastify.register(AutoLoad, {
-    dir: path.join(import.meta.dirname, 'routes'),
+    dir: path.join(import.meta.dirname, 'server/http'),
     options: Object.assign({}, opts),
   })
 }
