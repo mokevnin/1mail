@@ -10,6 +10,8 @@ import "./common/versions.tsp";
 import "./resources/contacts.tsp";
 import "./resources/segments.tsp";
 import "./resources/broadcasts.tsp";
+import "./resources/events.tsp";
+import "./resources/auth.tsp";
 
 using TypeSpec.Http;
 using TypeSpec.OpenAPI;

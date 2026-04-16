@@ -39,3 +39,7 @@
 ## Repo-Specific Quirks
 - `.npmrc` sets `node-options="--experimental-strip-types"`, so TS files are executed directly by node-based tooling here.
 - `README.md` is Fastify boilerplate and does not describe the current workflow.
+
+## Rules
+
+- Test only http endpoints (server/http). Check only status code.

@@ -2,9 +2,28 @@
 
 import type { RouteHandler } from 'fastify';
 
-import type { BroadcastsCreateData, BroadcastsCreateErrors, BroadcastsCreateResponses, BroadcastsDeleteData, BroadcastsDeleteErrors, BroadcastsDeleteResponses, BroadcastsGetData, BroadcastsGetErrors, BroadcastsGetResponses, BroadcastsListData, BroadcastsListErrors, BroadcastsListResponses, BroadcastsUpdateData, BroadcastsUpdateErrors, BroadcastsUpdateResponses, ContactsCreateData, ContactsCreateErrors, ContactsCreateResponses, ContactsDeleteData, ContactsDeleteErrors, ContactsDeleteResponses, ContactsGetData, ContactsGetErrors, ContactsGetResponses, ContactsListData, ContactsListErrors, ContactsListResponses, ContactsUpdateData, ContactsUpdateErrors, ContactsUpdateResponses, SegmentsCreateData, SegmentsCreateErrors, SegmentsCreateResponses, SegmentsDeleteData, SegmentsDeleteErrors, SegmentsDeleteResponses, SegmentsGetData, SegmentsGetErrors, SegmentsGetResponses, SegmentsListData, SegmentsListErrors, SegmentsListResponses, SegmentsUpdateData, SegmentsUpdateErrors, SegmentsUpdateResponses } from './types.gen.js';
+import type { AuthMeGetErrors, AuthMeGetResponses, AuthTokensBootstrapData, AuthTokensBootstrapErrors, AuthTokensBootstrapResponses, AuthTokensCreateData, AuthTokensCreateErrors, AuthTokensCreateResponses, AuthTokensDeleteData, AuthTokensDeleteErrors, AuthTokensDeleteResponses, AuthTokensListErrors, AuthTokensListResponses, BroadcastsCreateData, BroadcastsCreateErrors, BroadcastsCreateResponses, BroadcastsDeleteData, BroadcastsDeleteErrors, BroadcastsDeleteResponses, BroadcastsGetData, BroadcastsGetErrors, BroadcastsGetResponses, BroadcastsListData, BroadcastsListErrors, BroadcastsListResponses, BroadcastsUpdateData, BroadcastsUpdateErrors, BroadcastsUpdateResponses, ContactsCreateData, ContactsCreateErrors, ContactsCreateResponses, ContactsDeleteData, ContactsDeleteErrors, ContactsDeleteResponses, ContactsGetData, ContactsGetErrors, ContactsGetResponses, ContactsListData, ContactsListErrors, ContactsListResponses, ContactsUpdateData, ContactsUpdateErrors, ContactsUpdateResponses, EventActionsListData, EventActionsListErrors, EventActionsListResponses, EventsCreateData, EventsCreateErrors, EventsCreateResponses, SegmentsCreateData, SegmentsCreateErrors, SegmentsCreateResponses, SegmentsDeleteData, SegmentsDeleteErrors, SegmentsDeleteResponses, SegmentsGetData, SegmentsGetErrors, SegmentsGetResponses, SegmentsListData, SegmentsListErrors, SegmentsListResponses, SegmentsUpdateData, SegmentsUpdateErrors, SegmentsUpdateResponses } from './types.gen.js';
 
 export type RouteHandlers = {
+    authMeGet: RouteHandler<{
+        Reply: AuthMeGetErrors & AuthMeGetResponses;
+    }>;
+    authTokensList: RouteHandler<{
+        Reply: AuthTokensListErrors & AuthTokensListResponses;
+    }>;
+    authTokensCreate: RouteHandler<{
+        Body: AuthTokensCreateData['body'];
+        Reply: AuthTokensCreateErrors & AuthTokensCreateResponses;
+    }>;
+    authTokensBootstrap: RouteHandler<{
+        Body: AuthTokensBootstrapData['body'];
+        Headers: AuthTokensBootstrapData['headers'];
+        Reply: AuthTokensBootstrapErrors & AuthTokensBootstrapResponses;
+    }>;
+    authTokensDelete: RouteHandler<{
+        Params: AuthTokensDeleteData['path'];
+        Reply: AuthTokensDeleteErrors & AuthTokensDeleteResponses;
+    }>;
     broadcastsList: RouteHandler<{
         Querystring?: BroadcastsListData['query'];
         Reply: BroadcastsListErrors & BroadcastsListResponses;
@@ -46,6 +65,14 @@ export type RouteHandlers = {
         Body: ContactsUpdateData['body'];
         Params: ContactsUpdateData['path'];
         Reply: ContactsUpdateErrors & ContactsUpdateResponses;
+    }>;
+    eventActionsList: RouteHandler<{
+        Querystring?: EventActionsListData['query'];
+        Reply: EventActionsListErrors & EventActionsListResponses;
+    }>;
+    eventsCreate: RouteHandler<{
+        Body: EventsCreateData['body'];
+        Reply: EventsCreateErrors & EventsCreateResponses;
     }>;
     segmentsList: RouteHandler<{
         Querystring?: SegmentsListData['query'];

@@ -34,6 +34,7 @@
   "dependencies": {
     "@electric-sql/pglite": "^0.4.4",
     "@fastify/autoload": "^6.3.1",
+    "@fastify/auth": "^5.0.3",
     "@fastify/cors": "^11.2.0",
     "@fastify/sensible": "^6.0.4",
     "@mantine/core": "^9.0.2",
@@ -48,6 +49,7 @@
     "@trpc/react-query": "^11.16.0",
     "@trpc/server": "^11.16.0",
     "@trpc/tanstack-react-query": "^11.16.0",
+    "bcryptjs": "^3.0.2",
     "better-result": "^2.8.2",
     "better-sqlite3": "^12.9.0",
     "client-only": "^0.0.1",
@@ -58,6 +60,7 @@
     "fastify-plugin": "^5.1.0",
     "i18next": "^26.0.5",
     "mantine-datatable": "^8.3.13",
+    "nanoid": "^5.1.6",
     "pg": "^8.20.0",
     "react": "^19.2.5",
     "react-dom": "^19.2.5",

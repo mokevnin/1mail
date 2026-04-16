@@ -1,14 +1,17 @@
 import { eq } from 'drizzle-orm'
 import { expect, test } from 'vitest'
 import { contacts } from '../../db/schema.ts'
-import { build } from '../helper.ts'
+import { authHeader, bootstrapApiToken, build } from '../helper.ts'
 
 test('contacts CRUD works with pglite', async (t) => {
   const app = await build(t)
+  const bootstrapResponse = await bootstrapApiToken(app)
+  const { token } = bootstrapResponse.json()
 
   const createResponse = await app.inject({
     method: 'POST',
     url: '/contacts',
+    headers: authHeader(token),
     payload: {
       email: 'alice@example.com',
       firstName: 'Alice',
@@ -25,6 +28,7 @@ test('contacts CRUD works with pglite', async (t) => {
   const getResponse = await app.inject({
     method: 'GET',
     url: '/contacts/1',
+    headers: authHeader(token),
   })
 
   expect(getResponse.statusCode).toBe(200)
@@ -32,6 +36,7 @@ test('contacts CRUD works with pglite', async (t) => {
   const updateResponse = await app.inject({
     method: 'PUT',
     url: '/contacts/1',
+    headers: authHeader(token),
     payload: {
       firstName: 'Alicia',
       lastName: null,
@@ -47,6 +52,7 @@ test('contacts CRUD works with pglite', async (t) => {
   const deleteResponse = await app.inject({
     method: 'DELETE',
     url: '/contacts/1',
+    headers: authHeader(token),
   })
 
   expect(deleteResponse.statusCode).toBe(204)
@@ -54,6 +60,7 @@ test('contacts CRUD works with pglite', async (t) => {
   const missingResponse = await app.inject({
     method: 'GET',
     url: '/contacts/1',
+    headers: authHeader(token),
   })
 
   expect(missingResponse.statusCode).toBe(404)
@@ -61,10 +68,13 @@ test('contacts CRUD works with pglite', async (t) => {
 
 test('contacts reject duplicate email', async (t) => {
   const app = await build(t)
+  const bootstrapResponse = await bootstrapApiToken(app)
+  const { token } = bootstrapResponse.json()
 
   await app.inject({
     method: 'POST',
     url: '/contacts',
+    headers: authHeader(token),
     payload: {
       email: 'duplicate@example.com',
     },
@@ -73,6 +83,7 @@ test('contacts reject duplicate email', async (t) => {
   const duplicateResponse = await app.inject({
     method: 'POST',
     url: '/contacts',
+    headers: authHeader(token),
     payload: {
       email: 'duplicate@example.com',
     },
@@ -83,10 +94,13 @@ test('contacts reject duplicate email', async (t) => {
 
 test('contacts list supports pagination and status filter', async (t) => {
   const app = await build(t)
+  const bootstrapResponse = await bootstrapApiToken(app)
+  const { token } = bootstrapResponse.json()
 
   await app.inject({
     method: 'POST',
     url: '/contacts',
+    headers: authHeader(token),
     payload: {
       email: 'first@example.com',
     },
@@ -95,6 +109,7 @@ test('contacts list supports pagination and status filter', async (t) => {
   const secondCreateResponse = await app.inject({
     method: 'POST',
     url: '/contacts',
+    headers: authHeader(token),
     payload: {
       email: 'second@example.com',
     },
@@ -110,6 +125,7 @@ test('contacts list supports pagination and status filter', async (t) => {
   const filteredResponse = await app.inject({
     method: 'GET',
     url: '/contacts?status=unsubscribed&page=1&pageSize=1',
+    headers: authHeader(token),
   })
 
   expect(filteredResponse.statusCode).toBe(200)

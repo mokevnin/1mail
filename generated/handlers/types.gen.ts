@@ -4,31 +4,22 @@ export type ClientOptions = {
     baseUrl: 'http://localhost:8080' | 'https://api.onemail.dev' | (string & {});
 };
 
-/**
- * Paginated response
- */
-export type BroadcastPage = {
-    /**
-     * List of items
-     */
-    items: Array<BroadcastResource>;
-    /**
-     * Page number (1-based)
-     */
-    page: number;
-    /**
-     * Page size
-     */
-    pageSize: number;
-    /**
-     * Total number of elements
-     */
-    totalItems: number;
-    /**
-     * Total number of pages
-     */
-    totalPages: number;
+export type ApiTokenInfo = {
+    id: EntityId;
+    name: string;
+    scopes: Array<ApiTokenScope>;
+    expiresAt?: Timestamp | null;
+    revokedAt?: Timestamp | null;
+    lastUsedAt?: Timestamp | null;
+    createdAt: Timestamp;
+    updatedAt: Timestamp;
 };
+
+export type ApiTokenListResponse = {
+    items: Array<ApiTokenInfo>;
+};
+
+export type ApiTokenScope = 'contacts:read' | 'contacts:write' | 'segments:read' | 'segments:write' | 'broadcasts:read' | 'broadcasts:write' | 'tokens:manage';
 
 /**
  * Broadcast resource
@@ -82,32 +73,6 @@ export type ContactFields = {
 };
 
 /**
- * Paginated response
- */
-export type ContactPage = {
-    /**
-     * List of items
-     */
-    items: Array<ContactResource>;
-    /**
-     * Page number (1-based)
-     */
-    page: number;
-    /**
-     * Page size
-     */
-    pageSize: number;
-    /**
-     * Total number of elements
-     */
-    totalItems: number;
-    /**
-     * Total number of pages
-     */
-    totalPages: number;
-};
-
-/**
  * Contact resource
  */
 export type ContactResource = ContactFields & {
@@ -158,6 +123,17 @@ export type ContactUpdatableFields = {
     } | null;
 };
 
+export type CreateApiTokenInput = {
+    name: string;
+    scopes: Array<ApiTokenScope>;
+    expiresAt?: Timestamp | null;
+};
+
+export type CreateApiTokenResponse = {
+    token: string;
+    tokenInfo: ApiTokenInfo;
+};
+
 /**
  * Request body for creating a broadcast
  */
@@ -204,6 +180,52 @@ export type EmailAddress = string;
 export type EntityId = string;
 
 /**
+ * Distinct event action
+ */
+export type EventActionResource = {
+    /**
+     * Event action
+     */
+    action: string;
+};
+
+/**
+ * Event payload
+ */
+export type EventInput = {
+    /**
+     * Canonical subject identifier
+     */
+    subjectId: string;
+    /**
+     * Event action
+     */
+    action: string;
+    /**
+     * Email address associated with the event
+     */
+    email?: EmailAddress | null;
+    /**
+     * Phone number associated with the event
+     */
+    phone?: string | null;
+    /**
+     * Prospect flag
+     */
+    prospect?: boolean | null;
+    /**
+     * Event properties
+     */
+    properties?: {
+        [key: string]: unknown;
+    } | null;
+    /**
+     * Event occurrence timestamp
+     */
+    occurredAt?: Timestamp | null;
+};
+
+/**
  * RFC 7807 Problem Details
  */
 export type ProblemDetails = {
@@ -236,29 +258,13 @@ export type ProblemDetails = {
 };
 
 /**
- * Paginated response
+ * Request body for recording events
  */
-export type SegmentPage = {
+export type RecordEventsInput = {
     /**
-     * List of items
+     * Events to record
      */
-    items: Array<SegmentResource>;
-    /**
-     * Page number (1-based)
-     */
-    page: number;
-    /**
-     * Page size
-     */
-    pageSize: number;
-    /**
-     * Total number of elements
-     */
-    totalItems: number;
-    /**
-     * Total number of pages
-     */
-    totalPages: number;
+    events: Array<EventInput>;
 };
 
 /**
@@ -341,6 +347,172 @@ export type PageQueryPage = number;
  */
 export type PageQueryPageSize = number;
 
+export type AuthMeGetData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/auth/me';
+};
+
+export type AuthMeGetErrors = {
+    /**
+     * RFC 7807 unauthorized response
+     */
+    401: ProblemDetails;
+    /**
+     * RFC 7807 not found response
+     */
+    404: ProblemDetails;
+};
+
+export type AuthMeGetError = AuthMeGetErrors[keyof AuthMeGetErrors];
+
+export type AuthMeGetResponses = {
+    /**
+     * The request has succeeded.
+     */
+    200: ApiTokenInfo;
+};
+
+export type AuthMeGetResponse = AuthMeGetResponses[keyof AuthMeGetResponses];
+
+export type AuthTokensListData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/auth/tokens';
+};
+
+export type AuthTokensListErrors = {
+    /**
+     * RFC 7807 unauthorized response
+     */
+    401: ProblemDetails;
+    /**
+     * RFC 7807 forbidden response
+     */
+    403: ProblemDetails;
+};
+
+export type AuthTokensListError = AuthTokensListErrors[keyof AuthTokensListErrors];
+
+export type AuthTokensListResponses = {
+    /**
+     * The request has succeeded.
+     */
+    200: ApiTokenListResponse;
+};
+
+export type AuthTokensListResponse = AuthTokensListResponses[keyof AuthTokensListResponses];
+
+export type AuthTokensCreateData = {
+    body: CreateApiTokenInput;
+    path?: never;
+    query?: never;
+    url: '/auth/tokens';
+};
+
+export type AuthTokensCreateErrors = {
+    /**
+     * RFC 7807 bad request response
+     */
+    400: ProblemDetails;
+    /**
+     * RFC 7807 unauthorized response
+     */
+    401: ProblemDetails;
+    /**
+     * RFC 7807 forbidden response
+     */
+    403: ProblemDetails;
+};
+
+export type AuthTokensCreateError = AuthTokensCreateErrors[keyof AuthTokensCreateErrors];
+
+export type AuthTokensCreateResponses = {
+    /**
+     * The request has succeeded and a new resource has been created as a result.
+     */
+    201: CreateApiTokenResponse;
+};
+
+export type AuthTokensCreateResponse = AuthTokensCreateResponses[keyof AuthTokensCreateResponses];
+
+export type AuthTokensBootstrapData = {
+    body: CreateApiTokenInput;
+    headers: {
+        'X-Bootstrap-Token': string;
+    };
+    path?: never;
+    query?: never;
+    url: '/auth/tokens/bootstrap';
+};
+
+export type AuthTokensBootstrapErrors = {
+    /**
+     * RFC 7807 bad request response
+     */
+    400: ProblemDetails;
+    /**
+     * RFC 7807 unauthorized response
+     */
+    401: ProblemDetails;
+    /**
+     * RFC 7807 forbidden response
+     */
+    403: ProblemDetails;
+};
+
+export type AuthTokensBootstrapError = AuthTokensBootstrapErrors[keyof AuthTokensBootstrapErrors];
+
+export type AuthTokensBootstrapResponses = {
+    /**
+     * The request has succeeded and a new resource has been created as a result.
+     */
+    201: CreateApiTokenResponse;
+};
+
+export type AuthTokensBootstrapResponse = AuthTokensBootstrapResponses[keyof AuthTokensBootstrapResponses];
+
+export type AuthTokensDeleteData = {
+    body?: never;
+    path: {
+        id: EntityId;
+    };
+    query?: never;
+    url: '/auth/tokens/{id}';
+};
+
+export type AuthTokensDeleteErrors = {
+    /**
+     * RFC 7807 bad request response
+     */
+    400: ProblemDetails;
+    /**
+     * RFC 7807 unauthorized response
+     */
+    401: ProblemDetails;
+    /**
+     * RFC 7807 forbidden response
+     */
+    403: ProblemDetails;
+    /**
+     * RFC 7807 not found response
+     */
+    404: ProblemDetails;
+};
+
+export type AuthTokensDeleteError = AuthTokensDeleteErrors[keyof AuthTokensDeleteErrors];
+
+export type AuthTokensDeleteResponses = {
+    /**
+     * There is no content to send for this request, but the headers may be useful.
+     */
+    204: void;
+};
+
+export type AuthTokensDeleteResponse = AuthTokensDeleteResponses[keyof AuthTokensDeleteResponses];
+
 export type BroadcastsListData = {
     body?: never;
     path?: never;
@@ -376,9 +548,30 @@ export type BroadcastsListError = BroadcastsListErrors[keyof BroadcastsListError
 
 export type BroadcastsListResponses = {
     /**
-     * The request has succeeded.
+     * Paginated response
      */
-    200: BroadcastPage;
+    200: {
+        /**
+         * List of items
+         */
+        items: Array<BroadcastResource>;
+        /**
+         * Page number (1-based)
+         */
+        page: number;
+        /**
+         * Page size
+         */
+        pageSize: number;
+        /**
+         * Total number of elements
+         */
+        totalItems: number;
+        /**
+         * Total number of pages
+         */
+        totalPages: number;
+    };
 };
 
 export type BroadcastsListResponse = BroadcastsListResponses[keyof BroadcastsListResponses];
@@ -560,9 +753,30 @@ export type ContactsListError = ContactsListErrors[keyof ContactsListErrors];
 
 export type ContactsListResponses = {
     /**
-     * The request has succeeded.
+     * Paginated response
      */
-    200: ContactPage;
+    200: {
+        /**
+         * List of items
+         */
+        items: Array<ContactResource>;
+        /**
+         * Page number (1-based)
+         */
+        page: number;
+        /**
+         * Page size
+         */
+        pageSize: number;
+        /**
+         * Total number of elements
+         */
+        totalItems: number;
+        /**
+         * Total number of pages
+         */
+        totalPages: number;
+    };
 };
 
 export type ContactsListResponse = ContactsListResponses[keyof ContactsListResponses];
@@ -713,6 +927,98 @@ export type ContactsUpdateResponses = {
 
 export type ContactsUpdateResponse = ContactsUpdateResponses[keyof ContactsUpdateResponses];
 
+export type EventActionsListData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * Page number (1-based)
+         */
+        page?: number;
+        /**
+         * Page size
+         */
+        pageSize?: number;
+    };
+    url: '/event-actions';
+};
+
+export type EventActionsListErrors = {
+    /**
+     * RFC 7807 bad request response
+     */
+    400: ProblemDetails;
+    /**
+     * RFC 7807 unauthorized response
+     */
+    401: ProblemDetails;
+    /**
+     * RFC 7807 validation response
+     */
+    422: ProblemDetails;
+};
+
+export type EventActionsListError = EventActionsListErrors[keyof EventActionsListErrors];
+
+export type EventActionsListResponses = {
+    /**
+     * Paginated response
+     */
+    200: {
+        /**
+         * List of items
+         */
+        items: Array<EventActionResource>;
+        /**
+         * Page number (1-based)
+         */
+        page: number;
+        /**
+         * Page size
+         */
+        pageSize: number;
+        /**
+         * Total number of elements
+         */
+        totalItems: number;
+        /**
+         * Total number of pages
+         */
+        totalPages: number;
+    };
+};
+
+export type EventActionsListResponse = EventActionsListResponses[keyof EventActionsListResponses];
+
+export type EventsCreateData = {
+    body: RecordEventsInput;
+    path?: never;
+    query?: never;
+    url: '/events';
+};
+
+export type EventsCreateErrors = {
+    /**
+     * RFC 7807 unauthorized response
+     */
+    401: ProblemDetails;
+    /**
+     * RFC 7807 validation response
+     */
+    422: ProblemDetails;
+};
+
+export type EventsCreateError = EventsCreateErrors[keyof EventsCreateErrors];
+
+export type EventsCreateResponses = {
+    /**
+     * There is no content to send for this request, but the headers may be useful.
+     */
+    204: void;
+};
+
+export type EventsCreateResponse = EventsCreateResponses[keyof EventsCreateResponses];
+
 export type SegmentsListData = {
     body?: never;
     path?: never;
@@ -748,9 +1054,30 @@ export type SegmentsListError = SegmentsListErrors[keyof SegmentsListErrors];
 
 export type SegmentsListResponses = {
     /**
-     * The request has succeeded.
+     * Paginated response
      */
-    200: SegmentPage;
+    200: {
+        /**
+         * List of items
+         */
+        items: Array<SegmentResource>;
+        /**
+         * Page number (1-based)
+         */
+        page: number;
+        /**
+         * Page size
+         */
+        pageSize: number;
+        /**
+         * Total number of elements
+         */
+        totalItems: number;
+        /**
+         * Total number of pages
+         */
+        totalPages: number;
+    };
 };
 
 export type SegmentsListResponse = SegmentsListResponses[keyof SegmentsListResponses];

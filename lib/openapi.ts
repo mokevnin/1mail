@@ -1,3 +1,5 @@
+import { isPlainObject } from 'es-toolkit/compat'
+
 import openapi from '../openapi/openapi.json' with { type: 'json' }
 
 type OpenApiDocument = typeof openapi
@@ -23,8 +25,12 @@ type FastifySchema = {
   params?: unknown
 }
 
-function isObject(value: unknown): value is JsonObject {
-  return value !== null && typeof value === 'object' && !Array.isArray(value)
+function isJsonObject(value: unknown): value is JsonObject {
+  return isPlainObject(value)
+}
+
+function isParameterObject(value: unknown): value is ParameterObject {
+  return isJsonObject(value) && typeof value.in === 'string' && typeof value.name === 'string'
 }
 
 function resolveLocalRef(ref: string): unknown {
@@ -36,7 +42,7 @@ function resolveLocalRef(ref: string): unknown {
   let current: unknown = openapi
 
   for (const part of parts) {
-    if (!isObject(current) || !(part in current)) {
+    if (!isJsonObject(current) || !(part in current)) {
       throw new Error(`Cannot resolve OpenAPI ref: ${ref}`)
     }
 
@@ -51,7 +57,7 @@ function resolveSchema(value: unknown): unknown {
     return value.map(resolveSchema)
   }
 
-  if (!isObject(value)) {
+  if (!isJsonObject(value)) {
     return value
   }
 
@@ -84,11 +90,11 @@ function resolveSchema(value: unknown): unknown {
 function resolveParameter(value: unknown): ParameterObject | undefined {
   const resolved = resolveSchema(value)
 
-  if (!isObject(resolved) || typeof resolved.in !== 'string' || typeof resolved.name !== 'string') {
+  if (!isParameterObject(resolved)) {
     return undefined
   }
 
-  return resolved as ParameterObject
+  return resolved
 }
 
 function buildParameterSchema(parameters: unknown[] | undefined, kind: ParameterObject['in']) {
@@ -129,17 +135,17 @@ function resolveRequestBodySchema(operation: JsonObject): unknown {
   const requestBodyValue = operation.requestBody
   const requestBody = resolveSchema(requestBodyValue)
 
-  if (!isObject(requestBody)) {
+  if (!isJsonObject(requestBody)) {
     return undefined
   }
 
   const content = requestBody.content
-  if (!isObject(content)) {
+  if (!isJsonObject(content)) {
     return undefined
   }
 
   const jsonContent = content['application/json']
-  if (!isObject(jsonContent)) {
+  if (!isJsonObject(jsonContent)) {
     return undefined
   }
 
@@ -150,10 +156,14 @@ export const toFastifySchema = <Path extends OpenApiPath>(
   path: Path,
   method: OpenApiMethod,
 ): FastifySchema => {
-  const pathItem = openapi.paths[path] as JsonObject
+  const pathItem: unknown = openapi.paths[path]
+  if (!isJsonObject(pathItem)) {
+    throw new Error(`OpenAPI path not found: ${String(path)}`)
+  }
+
   const operationValue = pathItem[method.toLowerCase()]
 
-  if (!isObject(operationValue)) {
+  if (!isJsonObject(operationValue)) {
     throw new Error(`OpenAPI operation not found: ${method} ${String(path)}`)
   }
 

@@ -5,6 +5,7 @@ import { contacts } from '../../../db/schema.ts'
 import type { RouteHandlers } from '../../../generated/handlers/fastify.gen.ts'
 import { toFastifySchema } from '../../../lib/openapi.ts'
 import { toContactResource } from '../../../resources/contacts.ts'
+import { requireScope } from '../../../use-cases/api-tokens.ts'
 import { createContact, updateContact } from '../../../use-cases/contacts.ts'
 
 const contactsPlugin: FastifyPluginAsync = async (
@@ -13,6 +14,8 @@ const contactsPlugin: FastifyPluginAsync = async (
 ): Promise<void> => {
   const handlers = {
     contactsList: async (request, reply) => {
+      requireScope(request.auth, 'contacts:read')
+
       const whereClause = request.query?.status
         ? eq(contacts.status, request.query.status)
         : undefined
@@ -27,6 +30,8 @@ const contactsPlugin: FastifyPluginAsync = async (
     },
 
     contactsCreate: async (request, reply) => {
+      requireScope(request.auth, 'contacts:write')
+
       const createResult = await createContact(fastify.db, request.body)
       const result = createResult.map(toContactResource)
 
@@ -38,6 +43,8 @@ const contactsPlugin: FastifyPluginAsync = async (
     },
 
     contactsGet: async (request, reply) => {
+      requireScope(request.auth, 'contacts:read')
+
       const id = BigInt(request.params.id)
       const [contact] = await fastify.db.select().from(contacts).where(eq(contacts.id, id)).limit(1)
 
@@ -47,6 +54,8 @@ const contactsPlugin: FastifyPluginAsync = async (
     },
 
     contactsUpdate: async (request, reply) => {
+      requireScope(request.auth, 'contacts:write')
+
       const id = BigInt(request.params.id)
       const updateResult = await updateContact(fastify.db, id, request.body)
       const result = updateResult.map(toContactResource)
@@ -59,6 +68,8 @@ const contactsPlugin: FastifyPluginAsync = async (
     },
 
     contactsDelete: async (request, reply) => {
+      requireScope(request.auth, 'contacts:write')
+
       const id = BigInt(request.params.id)
       const [deleted] = await fastify.db.delete(contacts).where(eq(contacts.id, id)).returning()
 

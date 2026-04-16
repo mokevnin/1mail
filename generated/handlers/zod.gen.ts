@@ -2,6 +2,16 @@
 
 import * as z from 'zod';
 
+export const zApiTokenScope = z.enum([
+    'contacts:read',
+    'contacts:write',
+    'segments:read',
+    'segments:write',
+    'broadcasts:read',
+    'broadcasts:write',
+    'tokens:manage'
+]);
+
 /**
  * Broadcast status
  */
@@ -27,6 +37,13 @@ export const zCreateBroadcastInput = z.object({
     name: z.string(),
     segmentId: zEntityId,
     status: zBroadcastStatus
+});
+
+/**
+ * Distinct event action
+ */
+export const zEventActionResource = z.object({
+    action: z.string()
 });
 
 /**
@@ -85,6 +102,21 @@ export const zCreateContactInput = zContactFields;
 
 export const zTimestamp = z.iso.datetime();
 
+export const zApiTokenInfo = z.object({
+    id: zEntityId,
+    name: z.string(),
+    scopes: z.array(zApiTokenScope),
+    expiresAt: zTimestamp.nullish(),
+    revokedAt: zTimestamp.nullish(),
+    lastUsedAt: zTimestamp.nullish(),
+    createdAt: zTimestamp,
+    updatedAt: zTimestamp
+});
+
+export const zApiTokenListResponse = z.object({
+    items: z.array(zApiTokenInfo)
+});
+
 /**
  * Broadcast resource
  */
@@ -93,17 +125,6 @@ export const zBroadcastResource = zCreateBroadcastInput.and(z.object({
     createdAt: zTimestamp,
     updatedAt: zTimestamp
 }));
-
-/**
- * Paginated response
- */
-export const zBroadcastPage = z.object({
-    items: z.array(zBroadcastResource),
-    page: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
-    pageSize: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
-    totalItems: z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }),
-    totalPages: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' })
-});
 
 /**
  * Contact resource
@@ -115,15 +136,35 @@ export const zContactResource = zContactFields.and(z.object({
     updatedAt: zTimestamp
 }));
 
+export const zCreateApiTokenInput = z.object({
+    name: z.string(),
+    scopes: z.array(zApiTokenScope),
+    expiresAt: zTimestamp.nullish()
+});
+
+export const zCreateApiTokenResponse = z.object({
+    token: z.string(),
+    tokenInfo: zApiTokenInfo
+});
+
 /**
- * Paginated response
+ * Event payload
  */
-export const zContactPage = z.object({
-    items: z.array(zContactResource),
-    page: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
-    pageSize: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
-    totalItems: z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }),
-    totalPages: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' })
+export const zEventInput = z.object({
+    subjectId: z.string(),
+    action: z.string(),
+    email: zEmailAddress.nullish(),
+    phone: z.string().nullish(),
+    prospect: z.boolean().nullish(),
+    properties: z.record(z.string(), z.unknown()).nullish(),
+    occurredAt: zTimestamp.nullish()
+});
+
+/**
+ * Request body for recording events
+ */
+export const zRecordEventsInput = z.object({
+    events: z.array(zEventInput)
 });
 
 /**
@@ -134,17 +175,6 @@ export const zSegmentResource = zCreateSegmentInput.and(z.object({
     createdAt: zTimestamp,
     updatedAt: zTimestamp
 }));
-
-/**
- * Paginated response
- */
-export const zSegmentPage = z.object({
-    items: z.array(zSegmentResource),
-    page: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
-    pageSize: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
-    totalItems: z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }),
-    totalPages: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' })
-});
 
 /**
  * Request body for updating a broadcast
@@ -181,15 +211,58 @@ export const zPageQueryPage = z.int().min(-2147483648, { error: 'Invalid value: 
  */
 export const zPageQueryPageSize = z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).default(25);
 
+/**
+ * The request has succeeded.
+ */
+export const zAuthMeGetResponse = zApiTokenInfo;
+
+/**
+ * The request has succeeded.
+ */
+export const zAuthTokensListResponse = zApiTokenListResponse;
+
+export const zAuthTokensCreateBody = zCreateApiTokenInput;
+
+/**
+ * The request has succeeded and a new resource has been created as a result.
+ */
+export const zAuthTokensCreateResponse = zCreateApiTokenResponse;
+
+export const zAuthTokensBootstrapBody = zCreateApiTokenInput;
+
+export const zAuthTokensBootstrapHeaders = z.object({
+    'X-Bootstrap-Token': z.string()
+});
+
+/**
+ * The request has succeeded and a new resource has been created as a result.
+ */
+export const zAuthTokensBootstrapResponse = zCreateApiTokenResponse;
+
+export const zAuthTokensDeletePath = z.object({
+    id: zEntityId
+});
+
+/**
+ * There is no content to send for this request, but the headers may be useful.
+ */
+export const zAuthTokensDeleteResponse = z.void();
+
 export const zBroadcastsListQuery = z.object({
     page: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).optional().default(1),
     pageSize: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).optional().default(25)
 });
 
 /**
- * The request has succeeded.
+ * Paginated response
  */
-export const zBroadcastsListResponse = zBroadcastPage;
+export const zBroadcastsListResponse = z.object({
+    items: z.array(zBroadcastResource),
+    page: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
+    pageSize: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
+    totalItems: z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }),
+    totalPages: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' })
+});
 
 export const zBroadcastsCreateBody = zCreateBroadcastInput;
 
@@ -234,9 +307,15 @@ export const zContactsListQuery = z.object({
 });
 
 /**
- * The request has succeeded.
+ * Paginated response
  */
-export const zContactsListResponse = zContactPage;
+export const zContactsListResponse = z.object({
+    items: z.array(zContactResource),
+    page: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
+    pageSize: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
+    totalItems: z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }),
+    totalPages: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' })
+});
 
 export const zContactsCreateBody = zCreateContactInput;
 
@@ -274,15 +353,44 @@ export const zContactsUpdatePath = z.object({
  */
 export const zContactsUpdateResponse = zContactResource;
 
+export const zEventActionsListQuery = z.object({
+    page: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).optional().default(1),
+    pageSize: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).optional().default(25)
+});
+
+/**
+ * Paginated response
+ */
+export const zEventActionsListResponse = z.object({
+    items: z.array(zEventActionResource),
+    page: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
+    pageSize: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
+    totalItems: z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }),
+    totalPages: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' })
+});
+
+export const zEventsCreateBody = zRecordEventsInput;
+
+/**
+ * There is no content to send for this request, but the headers may be useful.
+ */
+export const zEventsCreateResponse = z.void();
+
 export const zSegmentsListQuery = z.object({
     page: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).optional().default(1),
     pageSize: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).optional().default(25)
 });
 
 /**
- * The request has succeeded.
+ * Paginated response
  */
-export const zSegmentsListResponse = zSegmentPage;
+export const zSegmentsListResponse = z.object({
+    items: z.array(zSegmentResource),
+    page: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
+    pageSize: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
+    totalItems: z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }),
+    totalPages: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' })
+});
 
 export const zSegmentsCreateBody = zCreateSegmentInput;
 

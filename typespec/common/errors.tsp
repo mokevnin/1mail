@@ -53,6 +53,13 @@ model NotFoundProblem is Response<404> {
   @body body: ProblemDetails;
 }
 
+/** RFC 7807 forbidden response */
+@error
+model ForbiddenProblem is Response<403> {
+  @header contentType: "application/problem+json";
+  @body body: ProblemDetails;
+}
+
 /** RFC 7807 validation response */
 @error
 model UnprocessableEntityProblem is Response<422> {
