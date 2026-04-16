@@ -48,23 +48,25 @@ export const contactsRouter = t.router({
   }),
 
   create: t.procedure.input(zContactsCreateBody).mutation(async ({ ctx, input }) => {
-    const respond = (await createContact(ctx.db, input)).map(toContactResource).match({
-      ok: (contact) => () => contact,
-      err: (error) => () => throwTrpcError(error),
-    })
+    const createResult = await createContact(ctx.db, input)
+    const result = createResult.map(toContactResource)
 
-    return respond()
+    if (result.isErr()) {
+      throwTrpcError(result.error)
+    }
+
+    return result.value
   }),
 
   update: t.procedure.input(zContactsUpdateInput).mutation(async ({ ctx, input }) => {
-    const respond = (await updateContact(ctx.db, BigInt(input.id), input.data))
-      .map(toContactResource)
-      .match({
-        ok: (contact) => () => contact,
-        err: (error) => () => throwTrpcError(error),
-      })
+    const updateResult = await updateContact(ctx.db, BigInt(input.id), input.data)
+    const result = updateResult.map(toContactResource)
 
-    return respond()
+    if (result.isErr()) {
+      throwTrpcError(result.error)
+    }
+
+    return result.value
   }),
 
   delete: t.procedure.input(zContactsDeletePath).mutation(async ({ ctx, input }) => {

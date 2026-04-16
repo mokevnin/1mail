@@ -27,13 +27,14 @@ const contactsPlugin: FastifyPluginAsync = async (
     },
 
     contactsCreate: async (request, reply) => {
-      const result = await createContact(fastify.db, request.body)
-      const response = result.map(toContactResource).match({
-        ok: (contact) => reply.code(201).send(contact),
-        err: fastify.app.throwHttpError,
-      })
+      const createResult = await createContact(fastify.db, request.body)
+      const result = createResult.map(toContactResource)
 
-      return response
+      if (result.isErr()) {
+        return fastify.app.throwHttpError(result.error)
+      }
+
+      return reply.code(201).send(result.value)
     },
 
     contactsGet: async (request, reply) => {
@@ -47,13 +48,14 @@ const contactsPlugin: FastifyPluginAsync = async (
 
     contactsUpdate: async (request, reply) => {
       const id = BigInt(request.params.id)
-      const result = await updateContact(fastify.db, id, request.body)
-      const response = result.map(toContactResource).match({
-        ok: (contact) => reply.code(200).send(contact),
-        err: fastify.app.throwHttpError,
-      })
+      const updateResult = await updateContact(fastify.db, id, request.body)
+      const result = updateResult.map(toContactResource)
 
-      return response
+      if (result.isErr()) {
+        return fastify.app.throwHttpError(result.error)
+      }
+
+      return reply.code(200).send(result.value)
     },
 
     contactsDelete: async (request, reply) => {
