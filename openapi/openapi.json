@@ -53,9 +53,7 @@
             }
           }
         },
-        "tags": [
-          "Broadcasts"
-        ],
+        "tags": ["Broadcasts"],
         "requestBody": {
           "required": true,
           "content": {
@@ -120,9 +118,7 @@
             }
           }
         },
-        "tags": [
-          "Broadcasts"
-        ]
+        "tags": ["Broadcasts"]
       }
     },
     "/broadcasts/{id}": {
@@ -182,9 +178,7 @@
             }
           }
         },
-        "tags": [
-          "Broadcasts"
-        ]
+        "tags": ["Broadcasts"]
       },
       "put": {
         "operationId": "Broadcasts_update",
@@ -252,9 +246,7 @@
             }
           }
         },
-        "tags": [
-          "Broadcasts"
-        ],
+        "tags": ["Broadcasts"],
         "requestBody": {
           "required": true,
           "content": {
@@ -315,9 +307,7 @@
             }
           }
         },
-        "tags": [
-          "Broadcasts"
-        ]
+        "tags": ["Broadcasts"]
       }
     },
     "/contacts": {
@@ -367,9 +357,7 @@
             }
           }
         },
-        "tags": [
-          "Contacts"
-        ],
+        "tags": ["Contacts"],
         "requestBody": {
           "required": true,
           "content": {
@@ -444,9 +432,7 @@
             }
           }
         },
-        "tags": [
-          "Contacts"
-        ]
+        "tags": ["Contacts"]
       }
     },
     "/contacts/{id}": {
@@ -506,9 +492,7 @@
             }
           }
         },
-        "tags": [
-          "Contacts"
-        ]
+        "tags": ["Contacts"]
       },
       "put": {
         "operationId": "Contacts_update",
@@ -586,9 +570,7 @@
             }
           }
         },
-        "tags": [
-          "Contacts"
-        ],
+        "tags": ["Contacts"],
         "requestBody": {
           "required": true,
           "content": {
@@ -649,9 +631,7 @@
             }
           }
         },
-        "tags": [
-          "Contacts"
-        ]
+        "tags": ["Contacts"]
       }
     },
     "/segments": {
@@ -691,9 +671,7 @@
             }
           }
         },
-        "tags": [
-          "Segments"
-        ],
+        "tags": ["Segments"],
         "requestBody": {
           "required": true,
           "content": {
@@ -758,9 +736,7 @@
             }
           }
         },
-        "tags": [
-          "Segments"
-        ]
+        "tags": ["Segments"]
       }
     },
     "/segments/{id}": {
@@ -820,9 +796,7 @@
             }
           }
         },
-        "tags": [
-          "Segments"
-        ]
+        "tags": ["Segments"]
       },
       "put": {
         "operationId": "Segments_update",
@@ -890,9 +864,7 @@
             }
           }
         },
-        "tags": [
-          "Segments"
-        ],
+        "tags": ["Segments"],
         "requestBody": {
           "required": true,
           "content": {
@@ -953,9 +925,7 @@
             }
           }
         },
-        "tags": [
-          "Segments"
-        ]
+        "tags": ["Segments"]
       }
     }
   },
@@ -994,13 +964,7 @@
     "schemas": {
       "BroadcastPage": {
         "type": "object",
-        "required": [
-          "items",
-          "page",
-          "pageSize",
-          "totalItems",
-          "totalPages"
-        ],
+        "required": ["items", "page", "pageSize", "totalItems", "totalPages"],
         "properties": {
           "items": {
             "type": "array",
@@ -1034,11 +998,7 @@
       },
       "BroadcastResource": {
         "type": "object",
-        "required": [
-          "id",
-          "createdAt",
-          "updatedAt"
-        ],
+        "required": ["id", "createdAt", "updatedAt"],
         "properties": {
           "id": {
             "type": "integer",
@@ -1071,18 +1031,12 @@
       },
       "BroadcastStatus": {
         "type": "string",
-        "enum": [
-          "draft",
-          "scheduled",
-          "sent"
-        ],
+        "enum": ["draft", "scheduled", "sent"],
         "description": "Broadcast status"
       },
       "ContactFields": {
         "type": "object",
-        "required": [
-          "email"
-        ],
+        "required": ["email"],
         "properties": {
           "email": {
             "allOf": [
@@ -1125,13 +1079,7 @@
       },
       "ContactPage": {
         "type": "object",
-        "required": [
-          "items",
-          "page",
-          "pageSize",
-          "totalItems",
-          "totalPages"
-        ],
+        "required": ["items", "page", "pageSize", "totalItems", "totalPages"],
         "properties": {
           "items": {
             "type": "array",
@@ -1165,12 +1113,7 @@
       },
       "ContactResource": {
         "type": "object",
-        "required": [
-          "id",
-          "status",
-          "createdAt",
-          "updatedAt"
-        ],
+        "required": ["id", "status", "createdAt", "updatedAt"],
         "properties": {
           "id": {
             "type": "integer",
@@ -1211,10 +1154,7 @@
       },
       "ContactStatus": {
         "type": "string",
-        "enum": [
-          "active",
-          "unsubscribed"
-        ],
+        "enum": ["active", "unsubscribed"],
         "description": "Contact status"
       },
       "ContactUpdatableFields": {
@@ -1253,11 +1193,7 @@
       },
       "CreateBroadcastInput": {
         "type": "object",
-        "required": [
-          "name",
-          "segmentId",
-          "status"
-        ],
+        "required": ["name", "segmentId", "status"],
         "properties": {
           "name": {
             "type": "string",
@@ -1290,10 +1226,7 @@
       },
       "CreateSegmentInput": {
         "type": "object",
-        "required": [
-          "name",
-          "type"
-        ],
+        "required": ["name", "type"],
         "properties": {
           "name": {
             "type": "string",
@@ -1357,13 +1290,7 @@
       },
       "SegmentPage": {
         "type": "object",
-        "required": [
-          "items",
-          "page",
-          "pageSize",
-          "totalItems",
-          "totalPages"
-        ],
+        "required": ["items", "page", "pageSize", "totalItems", "totalPages"],
         "properties": {
           "items": {
             "type": "array",
@@ -1397,11 +1324,7 @@
       },
       "SegmentResource": {
         "type": "object",
-        "required": [
-          "id",
-          "createdAt",
-          "updatedAt"
-        ],
+        "required": ["id", "createdAt", "updatedAt"],
         "properties": {
           "id": {
             "type": "integer",
@@ -1434,10 +1357,7 @@
       },
       "SegmentType": {
         "type": "string",
-        "enum": [
-          "rule",
-          "snapshot"
-        ],
+        "enum": ["rule", "snapshot"],
         "description": "Segment type"
       },
       "TimeZoneName": {
@@ -1503,9 +1423,7 @@
       },
       "Versions": {
         "type": "string",
-        "enum": [
-          "1.0.0"
-        ]
+        "enum": ["1.0.0"]
       }
     },
     "securitySchemes": {
