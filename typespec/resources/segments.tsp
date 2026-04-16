@@ -12,19 +12,10 @@ enum SegmentType {
 /** Segment resource */
 @resource("segments")
 @segment("segments")
-model SegmentResource {
+model SegmentResource extends CreateSegmentInput {
   /** Unique identifier */
   @key
   id: int64;
-
-  /** Segment name */
-  name: string;
-
-  /** Segment type */
-  type: SegmentType;
-
-  /** Segment definition (rule or descriptor) */
-  definition?: string;
 
   /** Creation timestamp */
   createdAt: Timestamp;
@@ -48,13 +39,13 @@ model CreateSegmentInput {
 /** Request body for updating a segment */
 model UpdateSegmentInput {
   /** Segment name */
-  name?: string | null;
+  name?: string;
 
   /** Segment type */
   type?: SegmentType;
 
   /** Segment definition */
-  definition?: string | null;
+  definition?: string;
 }
 
 model SegmentPage is Page<SegmentResource>;
@@ -65,72 +56,17 @@ namespace Segments {
   /** Create a segment */
   @createsResource(SegmentResource)
   @post
-  @opExample(
-    #{
-      parameters: #{
-        body: #{
-          name: "Recent signups",
-          type: SegmentType.rule,
-          definition: "createdAt >= now() - P30D",
-        },
-      },
-      returnType: #{
-        statusCode: 201,
-        body: #{
-          id: 301,
-          name: "Recent signups",
-          type: SegmentType.rule,
-          definition: "createdAt >= now() - P30D",
-          createdAt: "2026-04-01T12:00:00Z",
-          updatedAt: "2026-04-03T09:00:00Z",
-        },
-      },
-    },
-    #{ title: "Create segment" }
-  )
-  op create(@body body: CreateSegmentInput): {
-    @statusCode statusCode: 201;
-    @body body: SegmentResource;
-  } | UnauthorizedProblem | UnprocessableEntityProblem;
+  op create(@body body: CreateSegmentInput):
+    | {
+        @statusCode statusCode: 201;
+        @body body: SegmentResource;
+      }
+    | UnauthorizedProblem
+    | UnprocessableEntityProblem;
 
   /** List segments with pagination */
   @listsResource(SegmentResource)
   @get
-  @opExample(
-    #{
-      parameters: #{ page: 0, size: 25, sort: #["name,asc"] },
-      returnType: #{
-        content: #[
-          #{
-            id: 301,
-            name: "Recent signups",
-            type: SegmentType.rule,
-            definition: "createdAt >= now() - P30D",
-            createdAt: "2026-04-01T12:00:00Z",
-            updatedAt: "2026-04-03T09:00:00Z",
-          }
-        ],
-        pageable: #{
-          pageSize: 25,
-          pageNumber: 0,
-          offset: 0,
-          paged: true,
-          unpaged: false,
-          sort: #{ sorted: true, unsorted: false, empty: false },
-        },
-        totalElements: 1,
-        totalPages: 1,
-        size: 25,
-        number: 0,
-        numberOfElements: 1,
-        first: true,
-        last: true,
-        empty: false,
-        sort: #{ sorted: true, unsorted: false, empty: false },
-      },
-    },
-    #{ title: "List segments" }
-  )
   op list(...PageQuery):
     | SegmentPage
     | BadRequestProblem
@@ -141,20 +77,6 @@ namespace Segments {
   @readsResource(SegmentResource)
   @get
   @autoRoute
-  @opExample(
-    #{
-      parameters: #{ id: 301 },
-      returnType: #{
-        id: 301,
-        name: "Recent signups",
-        type: SegmentType.rule,
-        definition: "createdAt >= now() - P30D",
-        createdAt: "2026-04-01T12:00:00Z",
-        updatedAt: "2026-04-03T09:00:00Z",
-      },
-    },
-    #{ title: "Get segment" }
-  )
   op get(@path id: int64):
     | SegmentResource
     | BadRequestProblem
@@ -165,23 +87,6 @@ namespace Segments {
   @updatesResource(SegmentResource)
   @put
   @autoRoute
-  @opExample(
-    #{
-      parameters: #{
-        id: 301,
-        body: #{ name: "Warm leads", definition: "score >= 50" },
-      },
-      returnType: #{
-        id: 301,
-        name: "Warm leads",
-        type: SegmentType.rule,
-        definition: "score >= 50",
-        createdAt: "2026-04-01T12:00:00Z",
-        updatedAt: "2026-04-06T12:00:00Z",
-      },
-    },
-    #{ title: "Update segment" }
-  )
   op update(@path id: int64, @body body: UpdateSegmentInput):
     | SegmentResource
     | BadRequestProblem

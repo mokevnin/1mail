@@ -1,8 +1,10 @@
+import { schema as openapiSchema } from '../generated/openapi-box.js'
+
 export type OpenapiResponseSchema = {
   'x-status-code'?: string | number
 }
 
-export type OpenapiOperation = {
+type OpenapiOperation = {
   args: { properties: Record<string, unknown> }
   data?: OpenapiResponseSchema
   error?: {
@@ -10,7 +12,16 @@ export type OpenapiOperation = {
   }
 }
 
-export const buildResponseSchema = (
+type FastifySchema = {
+  querystring?: unknown
+  body?: unknown
+  params?: unknown
+  response: Record<number, OpenapiResponseSchema>
+}
+
+type OpenapiSchema = typeof openapiSchema
+
+const buildResponseSchema = (
   operation: OpenapiOperation,
 ): Record<number, OpenapiResponseSchema> => {
   const responseSchema: Record<number, OpenapiResponseSchema> = {}
@@ -21,13 +32,37 @@ export const buildResponseSchema = (
     responseSchema[Number(dataStatus)] = dataSchema
   }
 
-  for (const errorSchema of operation.error?.anyOf ?? []) {
-    const errorStatus = errorSchema['x-status-code']
-
-    if (errorStatus !== undefined) {
-      responseSchema[Number(errorStatus)] = errorSchema
-    }
-  }
+  // Error payloads are produced by Fastify/@fastify/sensible and can include
+  // framework-specific fields (e.g. message). Keeping runtime validation only
+  // for success responses avoids stripping those fields from error bodies.
 
   return responseSchema
+}
+
+export const toFastifySchema = <
+  Path extends keyof OpenapiSchema,
+  Method extends keyof OpenapiSchema[Path],
+>(
+  path: Path,
+  method: Method,
+): FastifySchema => {
+  const operation = openapiSchema[path][method] as OpenapiOperation
+  const argsProperties = operation.args.properties
+  const schema: FastifySchema = {
+    response: buildResponseSchema(operation),
+  }
+
+  if ('query' in argsProperties) {
+    schema.querystring = argsProperties.query
+  }
+
+  if ('body' in argsProperties) {
+    schema.body = argsProperties.body
+  }
+
+  if ('params' in argsProperties) {
+    schema.params = argsProperties.params
+  }
+
+  return schema
 }

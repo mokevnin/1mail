@@ -19,16 +19,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/BroadcastResource'
-              examples:
-                Create broadcast:
-                  summary: Create broadcast
-                  value:
-                    id: 501
-                    name: April product update
-                    segmentId: 301
-                    status: draft
-                    createdAt: '2026-04-02T08:00:00Z'
-                    updatedAt: '2026-04-04T16:30:00Z'
         '401':
           description: RFC 7807 unauthorized response
           content:
@@ -49,20 +39,12 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/CreateBroadcastInput'
-            examples:
-              Create broadcast:
-                summary: Create broadcast
-                value:
-                  name: April product update
-                  segmentId: 301
-                  status: draft
     get:
       operationId: Broadcasts_list
       description: List broadcasts with pagination
       parameters:
         - $ref: '#/components/parameters/PageQuery.page'
-        - $ref: '#/components/parameters/PageQuery.size'
-        - $ref: '#/components/parameters/PageQuery.sort'
+        - $ref: '#/components/parameters/PageQuery.pageSize'
       responses:
         '200':
           description: The request has succeeded.
@@ -70,39 +52,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/BroadcastPage'
-              examples:
-                List broadcasts:
-                  summary: List broadcasts
-                  value:
-                    content:
-                      - id: 501
-                        name: April product update
-                        segmentId: 301
-                        status: draft
-                        createdAt: '2026-04-02T08:00:00Z'
-                        updatedAt: '2026-04-04T16:30:00Z'
-                    pageable:
-                      pageSize: 25
-                      pageNumber: 0
-                      offset: 0
-                      paged: true
-                      unpaged: false
-                      sort:
-                        sorted: true
-                        unsorted: false
-                        empty: false
-                    totalElements: 1
-                    totalPages: 1
-                    size: 25
-                    number: 0
-                    numberOfElements: 1
-                    first: true
-                    last: true
-                    empty: false
-                    sort:
-                      sorted: true
-                      unsorted: false
-                      empty: false
         '400':
           description: RFC 7807 bad request response
           content:
@@ -141,16 +90,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/BroadcastResource'
-              examples:
-                Get broadcast:
-                  summary: Get broadcast
-                  value:
-                    id: 501
-                    name: April product update
-                    segmentId: 301
-                    status: draft
-                    createdAt: '2026-04-02T08:00:00Z'
-                    updatedAt: '2026-04-04T16:30:00Z'
         '400':
           description: RFC 7807 bad request response
           content:
@@ -188,16 +127,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/BroadcastResource'
-              examples:
-                Update broadcast:
-                  summary: Update broadcast
-                  value:
-                    id: 501
-                    name: April product update v2
-                    segmentId: 301
-                    status: scheduled
-                    createdAt: '2026-04-02T08:00:00Z'
-                    updatedAt: '2026-04-06T12:00:00Z'
         '400':
           description: RFC 7807 bad request response
           content:
@@ -230,13 +159,6 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/UpdateBroadcastInput'
-            examples:
-              Update broadcast:
-                summary: Update broadcast
-                value:
-                  name: April product update v2
-                  segmentId: 301
-                  status: scheduled
     delete:
       operationId: Broadcasts_delete
       description: Delete a broadcast
@@ -282,21 +204,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ContactResource'
-              examples:
-                Create contact:
-                  summary: Create contact
-                  value:
-                    id: 101
-                    email: alice@example.com
-                    firstName: Alice
-                    lastName: Johnson
-                    status: active
-                    timeZone: America/New_York
-                    customFields:
-                      plan: pro
-                      source: import
-                    createdAt: '2026-04-01T10:15:30Z'
-                    updatedAt: '2026-04-03T08:45:00Z'
         '401':
           description: RFC 7807 unauthorized response
           content:
@@ -323,24 +230,12 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/CreateContactInput'
-            examples:
-              Create contact:
-                summary: Create contact
-                value:
-                  email: alice@example.com
-                  firstName: Alice
-                  lastName: Johnson
-                  timeZone: America/New_York
-                  customFields:
-                    plan: pro
-                    source: import
     get:
       operationId: Contacts_list
       description: List contacts with pagination
       parameters:
         - $ref: '#/components/parameters/PageQuery.page'
-        - $ref: '#/components/parameters/PageQuery.size'
-        - $ref: '#/components/parameters/PageQuery.sort'
+        - $ref: '#/components/parameters/PageQuery.pageSize'
         - name: status
           in: query
           required: false
@@ -355,44 +250,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ContactPage'
-              examples:
-                List contacts:
-                  summary: List contacts
-                  value:
-                    content:
-                      - id: 101
-                        email: alice@example.com
-                        firstName: Alice
-                        lastName: Johnson
-                        status: active
-                        timeZone: America/New_York
-                        customFields:
-                          plan: pro
-                          source: import
-                        createdAt: '2026-04-01T10:15:30Z'
-                        updatedAt: '2026-04-03T08:45:00Z'
-                    pageable:
-                      pageSize: 25
-                      pageNumber: 0
-                      offset: 0
-                      paged: true
-                      unpaged: false
-                      sort:
-                        sorted: true
-                        unsorted: false
-                        empty: false
-                    totalElements: 1
-                    totalPages: 1
-                    size: 25
-                    number: 0
-                    numberOfElements: 1
-                    first: true
-                    last: true
-                    empty: false
-                    sort:
-                      sorted: true
-                      unsorted: false
-                      empty: false
         '400':
           description: RFC 7807 bad request response
           content:
@@ -431,21 +288,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ContactResource'
-              examples:
-                Get contact:
-                  summary: Get contact
-                  value:
-                    id: 101
-                    email: alice@example.com
-                    firstName: Alice
-                    lastName: Johnson
-                    status: active
-                    timeZone: America/New_York
-                    customFields:
-                      plan: pro
-                      source: import
-                    createdAt: '2026-04-01T10:15:30Z'
-                    updatedAt: '2026-04-03T08:45:00Z'
         '400':
           description: RFC 7807 bad request response
           content:
@@ -483,20 +325,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ContactResource'
-              examples:
-                Update contact:
-                  summary: Update contact
-                  value:
-                    id: 101
-                    email: alice@example.com
-                    firstName: Alicia
-                    lastName: Johnson
-                    status: active
-                    timeZone: Europe/Berlin
-                    customFields:
-                      plan: enterprise
-                    createdAt: '2026-04-01T10:15:30Z'
-                    updatedAt: '2026-04-06T12:00:00Z'
         '400':
           description: RFC 7807 bad request response
           content:
@@ -535,14 +363,6 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/UpdateContactInput'
-            examples:
-              Update contact:
-                summary: Update contact
-                value:
-                  firstName: Alicia
-                  timeZone: Europe/Berlin
-                  customFields:
-                    plan: enterprise
     delete:
       operationId: Contacts_delete
       description: Delete a contact
@@ -588,16 +408,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/SegmentResource'
-              examples:
-                Create segment:
-                  summary: Create segment
-                  value:
-                    id: 301
-                    name: Recent signups
-                    type: rule
-                    definition: createdAt >= now() - P30D
-                    createdAt: '2026-04-01T12:00:00Z'
-                    updatedAt: '2026-04-03T09:00:00Z'
         '401':
           description: RFC 7807 unauthorized response
           content:
@@ -618,20 +428,12 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/CreateSegmentInput'
-            examples:
-              Create segment:
-                summary: Create segment
-                value:
-                  name: Recent signups
-                  type: rule
-                  definition: createdAt >= now() - P30D
     get:
       operationId: Segments_list
       description: List segments with pagination
       parameters:
         - $ref: '#/components/parameters/PageQuery.page'
-        - $ref: '#/components/parameters/PageQuery.size'
-        - $ref: '#/components/parameters/PageQuery.sort'
+        - $ref: '#/components/parameters/PageQuery.pageSize'
       responses:
         '200':
           description: The request has succeeded.
@@ -639,39 +441,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/SegmentPage'
-              examples:
-                List segments:
-                  summary: List segments
-                  value:
-                    content:
-                      - id: 301
-                        name: Recent signups
-                        type: rule
-                        definition: createdAt >= now() - P30D
-                        createdAt: '2026-04-01T12:00:00Z'
-                        updatedAt: '2026-04-03T09:00:00Z'
-                    pageable:
-                      pageSize: 25
-                      pageNumber: 0
-                      offset: 0
-                      paged: true
-                      unpaged: false
-                      sort:
-                        sorted: true
-                        unsorted: false
-                        empty: false
-                    totalElements: 1
-                    totalPages: 1
-                    size: 25
-                    number: 0
-                    numberOfElements: 1
-                    first: true
-                    last: true
-                    empty: false
-                    sort:
-                      sorted: true
-                      unsorted: false
-                      empty: false
         '400':
           description: RFC 7807 bad request response
           content:
@@ -710,16 +479,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/SegmentResource'
-              examples:
-                Get segment:
-                  summary: Get segment
-                  value:
-                    id: 301
-                    name: Recent signups
-                    type: rule
-                    definition: createdAt >= now() - P30D
-                    createdAt: '2026-04-01T12:00:00Z'
-                    updatedAt: '2026-04-03T09:00:00Z'
         '400':
           description: RFC 7807 bad request response
           content:
@@ -757,16 +516,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/SegmentResource'
-              examples:
-                Update segment:
-                  summary: Update segment
-                  value:
-                    id: 301
-                    name: Warm leads
-                    type: rule
-                    definition: score >= 50
-                    createdAt: '2026-04-01T12:00:00Z'
-                    updatedAt: '2026-04-06T12:00:00Z'
         '400':
           description: RFC 7807 bad request response
           content:
@@ -799,12 +548,6 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/UpdateSegmentInput'
-            examples:
-              Update segment:
-                summary: Update segment
-                value:
-                  name: Warm leads
-                  definition: score >= 50
     delete:
       operationId: Segments_delete
       description: Delete a segment
@@ -846,14 +589,14 @@ components:
       name: page
       in: query
       required: false
-      description: Page number (0-based)
+      description: Page number (1-based)
       schema:
         type: integer
         format: int32
-        default: 0
+        default: 1
       explode: false
-    PageQuery.size:
-      name: size
+    PageQuery.pageSize:
+      name: pageSize
       in: query
       required: false
       description: Page size
@@ -862,40 +605,30 @@ components:
         format: int32
         default: 25
       explode: false
-    PageQuery.sort:
-      name: sort
-      in: query
-      required: false
-      description: Sorting criteria (e.g. name,asc). Can be repeated.
-      schema:
-        type: array
-        items:
-          type: string
-      explode: false
   schemas:
     BroadcastPage:
       type: object
       required:
-        - content
-        - totalElements
+        - items
+        - page
+        - pageSize
+        - totalItems
         - totalPages
-        - size
-        - number
-        - numberOfElements
-        - first
-        - last
-        - empty
       properties:
-        content:
+        items:
           type: array
           items:
             $ref: '#/components/schemas/BroadcastResource'
           description: List of items
-        pageable:
-          allOf:
-            - $ref: '#/components/schemas/Pageable'
-          description: Paging information
-        totalElements:
+        page:
+          type: integer
+          format: int32
+          description: Page number (1-based)
+        pageSize:
+          type: integer
+          format: int32
+          description: Page size
+        totalItems:
           type: integer
           format: int64
           description: Total number of elements
@@ -903,39 +636,11 @@ components:
           type: integer
           format: int32
           description: Total number of pages
-        size:
-          type: integer
-          format: int32
-          description: Page size
-        number:
-          type: integer
-          format: int32
-          description: Page number (0-based)
-        numberOfElements:
-          type: integer
-          format: int32
-          description: Number of elements in current page
-        first:
-          type: boolean
-          description: Whether this is the first page
-        last:
-          type: boolean
-          description: Whether this is the last page
-        empty:
-          type: boolean
-          description: Whether content is empty
-        sort:
-          allOf:
-            - $ref: '#/components/schemas/Sort'
-          description: Sorting information
-      description: Spring Data paginated response
+      description: Paginated response
     BroadcastResource:
       type: object
       required:
         - id
-        - name
-        - segmentId
-        - status
         - createdAt
         - updatedAt
       properties:
@@ -943,17 +648,6 @@ components:
           type: integer
           format: int64
           description: Unique identifier
-        name:
-          type: string
-          description: Broadcast name
-        segmentId:
-          type: integer
-          format: int64
-          description: Segment ID
-        status:
-          allOf:
-            - $ref: '#/components/schemas/BroadcastStatus'
-          description: Broadcast status
         createdAt:
           allOf:
             - $ref: '#/components/schemas/Timestamp'
@@ -962,6 +656,8 @@ components:
           allOf:
             - $ref: '#/components/schemas/Timestamp'
           description: Last update timestamp
+      allOf:
+        - $ref: '#/components/schemas/CreateBroadcastInput'
       description: Broadcast resource
     BroadcastStatus:
       type: string
@@ -970,29 +666,59 @@ components:
         - scheduled
         - sent
       description: Broadcast status
+    ContactFields:
+      type: object
+      required:
+        - email
+      properties:
+        email:
+          allOf:
+            - $ref: '#/components/schemas/EmailAddress'
+          description: Email address
+        firstName:
+          type: string
+          nullable: true
+          description: First name
+        lastName:
+          type: string
+          nullable: true
+          description: Last name
+        timeZone:
+          type: string
+          allOf:
+            - $ref: '#/components/schemas/TimeZoneName'
+          nullable: true
+          description: IANA time zone identifier
+        customFields:
+          type: object
+          additionalProperties:
+            type: string
+          nullable: true
+          description: Custom fields as key-value pairs
+      description: Shared writable fields for contact
     ContactPage:
       type: object
       required:
-        - content
-        - totalElements
+        - items
+        - page
+        - pageSize
+        - totalItems
         - totalPages
-        - size
-        - number
-        - numberOfElements
-        - first
-        - last
-        - empty
       properties:
-        content:
+        items:
           type: array
           items:
             $ref: '#/components/schemas/ContactResource'
           description: List of items
-        pageable:
-          allOf:
-            - $ref: '#/components/schemas/Pageable'
-          description: Paging information
-        totalElements:
+        page:
+          type: integer
+          format: int32
+          description: Page number (1-based)
+        pageSize:
+          type: integer
+          format: int32
+          description: Page size
+        totalItems:
           type: integer
           format: int64
           description: Total number of elements
@@ -1000,37 +726,11 @@ components:
           type: integer
           format: int32
           description: Total number of pages
-        size:
-          type: integer
-          format: int32
-          description: Page size
-        number:
-          type: integer
-          format: int32
-          description: Page number (0-based)
-        numberOfElements:
-          type: integer
-          format: int32
-          description: Number of elements in current page
-        first:
-          type: boolean
-          description: Whether this is the first page
-        last:
-          type: boolean
-          description: Whether this is the last page
-        empty:
-          type: boolean
-          description: Whether content is empty
-        sort:
-          allOf:
-            - $ref: '#/components/schemas/Sort'
-          description: Sorting information
-      description: Spring Data paginated response
+      description: Paginated response
     ContactResource:
       type: object
       required:
         - id
-        - email
         - status
         - createdAt
         - updatedAt
@@ -1039,29 +739,10 @@ components:
           type: integer
           format: int64
           description: Unique identifier
-        email:
-          allOf:
-            - $ref: '#/components/schemas/EmailAddress'
-          description: Email address
-        firstName:
-          type: string
-          description: First name
-        lastName:
-          type: string
-          description: Last name
         status:
           allOf:
             - $ref: '#/components/schemas/ContactStatus'
           description: Current status
-        timeZone:
-          allOf:
-            - $ref: '#/components/schemas/TimeZoneName'
-          description: IANA time zone identifier
-        customFields:
-          type: object
-          additionalProperties:
-            type: string
-          description: Custom fields as key-value pairs
         createdAt:
           allOf:
             - $ref: '#/components/schemas/Timestamp'
@@ -1070,6 +751,8 @@ components:
           allOf:
             - $ref: '#/components/schemas/Timestamp'
           description: Last update timestamp
+      allOf:
+        - $ref: '#/components/schemas/ContactFields'
       description: Contact resource
     ContactStatus:
       type: string
@@ -1077,6 +760,30 @@ components:
         - active
         - unsubscribed
       description: Contact status
+    ContactUpdatableFields:
+      type: object
+      properties:
+        firstName:
+          type: string
+          nullable: true
+          description: First name
+        lastName:
+          type: string
+          nullable: true
+          description: Last name
+        timeZone:
+          type: string
+          allOf:
+            - $ref: '#/components/schemas/TimeZoneName'
+          nullable: true
+          description: IANA time zone identifier
+        customFields:
+          type: object
+          additionalProperties:
+            type: string
+          nullable: true
+          description: Custom fields as key-value pairs
+      description: Shared updatable fields for contact
     CreateBroadcastInput:
       type: object
       required:
@@ -1098,28 +805,8 @@ components:
       description: Request body for creating a broadcast
     CreateContactInput:
       type: object
-      required:
-        - email
-      properties:
-        email:
-          allOf:
-            - $ref: '#/components/schemas/EmailAddress'
-          description: Email address
-        firstName:
-          type: string
-          description: First name
-        lastName:
-          type: string
-          description: Last name
-        timeZone:
-          allOf:
-            - $ref: '#/components/schemas/TimeZoneName'
-          description: IANA time zone identifier
-        customFields:
-          type: object
-          additionalProperties:
-            type: string
-          description: Custom fields as key-value pairs
+      allOf:
+        - $ref: '#/components/schemas/ContactFields'
       description: Request body for creating a contact
     CreateSegmentInput:
       type: object
@@ -1141,32 +828,6 @@ components:
     EmailAddress:
       type: string
       format: email
-    Pageable:
-      type: object
-      properties:
-        pageSize:
-          type: integer
-          format: int32
-          description: Page size
-        pageNumber:
-          type: integer
-          format: int32
-          description: Page number (0-based)
-        offset:
-          type: integer
-          format: int64
-          description: Offset
-        paged:
-          type: boolean
-          description: Whether the page is paged
-        unpaged:
-          type: boolean
-          description: Whether the page is unpaged
-        sort:
-          allOf:
-            - $ref: '#/components/schemas/Sort'
-          description: Sorting information
-      description: Spring Data pageable descriptor
     ProblemDetails:
       type: object
       properties:
@@ -1197,26 +858,26 @@ components:
     SegmentPage:
       type: object
       required:
-        - content
-        - totalElements
+        - items
+        - page
+        - pageSize
+        - totalItems
         - totalPages
-        - size
-        - number
-        - numberOfElements
-        - first
-        - last
-        - empty
       properties:
-        content:
+        items:
           type: array
           items:
             $ref: '#/components/schemas/SegmentResource'
           description: List of items
-        pageable:
-          allOf:
-            - $ref: '#/components/schemas/Pageable'
-          description: Paging information
-        totalElements:
+        page:
+          type: integer
+          format: int32
+          description: Page number (1-based)
+        pageSize:
+          type: integer
+          format: int32
+          description: Page size
+        totalItems:
           type: integer
           format: int64
           description: Total number of elements
@@ -1224,38 +885,11 @@ components:
           type: integer
           format: int32
           description: Total number of pages
-        size:
-          type: integer
-          format: int32
-          description: Page size
-        number:
-          type: integer
-          format: int32
-          description: Page number (0-based)
-        numberOfElements:
-          type: integer
-          format: int32
-          description: Number of elements in current page
-        first:
-          type: boolean
-          description: Whether this is the first page
-        last:
-          type: boolean
-          description: Whether this is the last page
-        empty:
-          type: boolean
-          description: Whether content is empty
-        sort:
-          allOf:
-            - $ref: '#/components/schemas/Sort'
-          description: Sorting information
-      description: Spring Data paginated response
+      description: Paginated response
     SegmentResource:
       type: object
       required:
         - id
-        - name
-        - type
         - createdAt
         - updatedAt
       properties:
@@ -1263,16 +897,6 @@ components:
           type: integer
           format: int64
           description: Unique identifier
-        name:
-          type: string
-          description: Segment name
-        type:
-          allOf:
-            - $ref: '#/components/schemas/SegmentType'
-          description: Segment type
-        definition:
-          type: string
-          description: Segment definition (rule or descriptor)
         createdAt:
           allOf:
             - $ref: '#/components/schemas/Timestamp'
@@ -1281,6 +905,8 @@ components:
           allOf:
             - $ref: '#/components/schemas/Timestamp'
           description: Last update timestamp
+      allOf:
+        - $ref: '#/components/schemas/CreateSegmentInput'
       description: Segment resource
     SegmentType:
       type: string
@@ -1288,19 +914,6 @@ components:
         - rule
         - snapshot
       description: Segment type
-    Sort:
-      type: object
-      properties:
-        sorted:
-          type: boolean
-          description: Whether sorting is enabled
-        unsorted:
-          type: boolean
-          description: Whether sorting is unsorted
-        empty:
-          type: boolean
-          description: Whether sorting is empty
-      description: Spring Data sort descriptor
     TimeZoneName:
       type: string
     Timestamp:
@@ -1311,12 +924,10 @@ components:
       properties:
         name:
           type: string
-          nullable: true
           description: Broadcast name
         segmentId:
           type: integer
           format: int64
-          nullable: true
           description: Segment ID
         status:
           allOf:
@@ -1325,34 +936,14 @@ components:
       description: Request body for updating a broadcast
     UpdateContactInput:
       type: object
-      properties:
-        firstName:
-          type: string
-          nullable: true
-          description: First name
-        lastName:
-          type: string
-          nullable: true
-          description: Last name
-        timeZone:
-          type: string
-          allOf:
-            - $ref: '#/components/schemas/TimeZoneName'
-          nullable: true
-          description: IANA time zone identifier
-        customFields:
-          type: object
-          additionalProperties:
-            type: string
-          nullable: true
-          description: Custom fields as key-value pairs
+      allOf:
+        - $ref: '#/components/schemas/ContactUpdatableFields'
       description: Request body for updating a contact
     UpdateSegmentInput:
       type: object
       properties:
         name:
           type: string
-          nullable: true
           description: Segment name
         type:
           allOf:
@@ -1360,7 +951,6 @@ components:
           description: Segment type
         definition:
           type: string
-          nullable: true
           description: Segment definition
       description: Request body for updating a segment
     Versions:

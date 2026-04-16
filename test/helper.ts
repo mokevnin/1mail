@@ -1,7 +1,7 @@
 import path from 'node:path'
-import type { TestContext } from 'node:test'
 import type { FastifyInstance } from 'fastify'
 import { build as buildApplication } from 'fastify-cli/helper.js'
+import type { TestContext } from 'vitest'
 
 const AppPath = path.join(import.meta.dirname, '..', 'app.ts')
 
@@ -24,7 +24,7 @@ async function build(t: TestContext): Promise<FastifyInstance> {
   const app = (await buildApplication(argv, config())) as FastifyInstance
 
   // close the app after we are done
-  t.after(() => app.close())
+  t.onTestFinished(() => app.close())
 
   return app
 }

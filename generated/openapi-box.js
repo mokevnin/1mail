@@ -125,91 +125,27 @@ const ComponentsSchemasCreateBroadcastInput = T.Object({
   status: T.Intersect([CloneType(ComponentsSchemasBroadcastStatus)])
 })
 const ComponentsParametersPageQueryPage = T.Any()
-const ComponentsParametersPageQuerySize = T.Any()
-const ComponentsParametersPageQuerySort = T.Any()
-const ComponentsSchemasSort = T.Object({
-  sorted: T.Optional(T.Boolean()),
-  unsorted: T.Optional(T.Boolean()),
-  empty: T.Optional(T.Boolean())
-})
-const ComponentsSchemasPageable = T.Object({
-  pageSize: T.Optional(T.Integer({ format: 'int32' })),
-  pageNumber: T.Optional(T.Integer({ format: 'int32' })),
-  offset: T.Optional(T.Integer({ format: 'int64' })),
-  paged: T.Optional(T.Boolean()),
-  unpaged: T.Optional(T.Boolean()),
-  sort: T.Optional(T.Intersect([CloneType(ComponentsSchemasSort)]))
-})
+const ComponentsParametersPageQueryPageSize = T.Any()
 const ComponentsSchemasBroadcastPage = T.Object({
-  content: T.Array(CloneType(ComponentsSchemasBroadcastResource)),
-  pageable: T.Optional(T.Intersect([CloneType(ComponentsSchemasPageable)])),
-  totalElements: T.Integer({ format: 'int64' }),
-  totalPages: T.Integer({ format: 'int32' }),
-  size: T.Integer({ format: 'int32' }),
-  number: T.Integer({ format: 'int32' }),
-  numberOfElements: T.Integer({ format: 'int32' }),
-  first: T.Boolean(),
-  last: T.Boolean(),
-  empty: T.Boolean(),
-  sort: T.Optional(T.Intersect([CloneType(ComponentsSchemasSort)]))
+  items: T.Array(CloneType(ComponentsSchemasBroadcastResource)),
+  page: T.Integer({ format: 'int32' }),
+  pageSize: T.Integer({ format: 'int32' }),
+  totalItems: T.Integer({ format: 'int64' }),
+  totalPages: T.Integer({ format: 'int32' })
 })
 const ComponentsSchemasUpdateBroadcastInput = T.Object({
   name: T.Optional(T.Union([T.Null(), T.String()])),
   segmentId: T.Optional(T.Union([T.Null(), T.Integer({ format: 'int64' })])),
   status: T.Optional(T.Intersect([CloneType(ComponentsSchemasBroadcastStatus)]))
 })
-const ComponentsSchemasEmailAddress = T.String({ format: 'email' })
 const ComponentsSchemasContactStatus = T.Union([
   T.Literal('active'),
   T.Literal('unsubscribed')
 ])
+const ComponentsSchemasEmailAddress = T.String({ format: 'email' })
 const ComponentsSchemasTimeZoneName = T.String()
-const ComponentsSchemasContactResource = T.Object({
-  id: T.Integer({ format: 'int64' }),
+const ComponentsSchemasContactFields = T.Object({
   email: T.Intersect([CloneType(ComponentsSchemasEmailAddress)]),
-  firstName: T.Optional(T.String()),
-  lastName: T.Optional(T.String()),
-  status: T.Intersect([CloneType(ComponentsSchemasContactStatus)]),
-  timeZone: T.Optional(T.Intersect([CloneType(ComponentsSchemasTimeZoneName)])),
-  customFields: T.Optional(
-    T.Object(
-      {},
-      {
-        additionalProperties: T.String()
-      }
-    )
-  ),
-  createdAt: T.Intersect([CloneType(ComponentsSchemasTimestamp)]),
-  updatedAt: T.Intersect([CloneType(ComponentsSchemasTimestamp)])
-})
-const ComponentsSchemasCreateContactInput = T.Object({
-  email: T.Intersect([CloneType(ComponentsSchemasEmailAddress)]),
-  firstName: T.Optional(T.String()),
-  lastName: T.Optional(T.String()),
-  timeZone: T.Optional(T.Intersect([CloneType(ComponentsSchemasTimeZoneName)])),
-  customFields: T.Optional(
-    T.Object(
-      {},
-      {
-        additionalProperties: T.String()
-      }
-    )
-  )
-})
-const ComponentsSchemasContactPage = T.Object({
-  content: T.Array(CloneType(ComponentsSchemasContactResource)),
-  pageable: T.Optional(T.Intersect([CloneType(ComponentsSchemasPageable)])),
-  totalElements: T.Integer({ format: 'int64' }),
-  totalPages: T.Integer({ format: 'int32' }),
-  size: T.Integer({ format: 'int32' }),
-  number: T.Integer({ format: 'int32' }),
-  numberOfElements: T.Integer({ format: 'int32' }),
-  first: T.Boolean(),
-  last: T.Boolean(),
-  empty: T.Boolean(),
-  sort: T.Optional(T.Intersect([CloneType(ComponentsSchemasSort)]))
-})
-const ComponentsSchemasUpdateContactInput = T.Object({
   firstName: T.Optional(T.Union([T.Null(), T.String()])),
   lastName: T.Optional(T.Union([T.Null(), T.String()])),
   timeZone: T.Optional(
@@ -227,6 +163,46 @@ const ComponentsSchemasUpdateContactInput = T.Object({
     ])
   )
 })
+const ComponentsSchemasContactResource = T.Intersect([
+  CloneType(ComponentsSchemasContactFields),
+  T.Object({
+    id: T.Integer({ format: 'int64' }),
+    status: T.Intersect([CloneType(ComponentsSchemasContactStatus)]),
+    createdAt: T.Intersect([CloneType(ComponentsSchemasTimestamp)]),
+    updatedAt: T.Intersect([CloneType(ComponentsSchemasTimestamp)])
+  })
+])
+const ComponentsSchemasCreateContactInput = T.Intersect([
+  CloneType(ComponentsSchemasContactFields)
+])
+const ComponentsSchemasContactPage = T.Object({
+  items: T.Array(CloneType(ComponentsSchemasContactResource)),
+  page: T.Integer({ format: 'int32' }),
+  pageSize: T.Integer({ format: 'int32' }),
+  totalItems: T.Integer({ format: 'int64' }),
+  totalPages: T.Integer({ format: 'int32' })
+})
+const ComponentsSchemasContactUpdatableFields = T.Object({
+  firstName: T.Optional(T.Union([T.Null(), T.String()])),
+  lastName: T.Optional(T.Union([T.Null(), T.String()])),
+  timeZone: T.Optional(
+    T.Union([T.Null(), T.Intersect([CloneType(ComponentsSchemasTimeZoneName)])])
+  ),
+  customFields: T.Optional(
+    T.Union([
+      T.Null(),
+      T.Object(
+        {},
+        {
+          additionalProperties: T.String()
+        }
+      )
+    ])
+  )
+})
+const ComponentsSchemasUpdateContactInput = T.Intersect([
+  CloneType(ComponentsSchemasContactUpdatableFields)
+])
 const ComponentsSchemasSegmentType = T.Union([
   T.Literal('rule'),
   T.Literal('snapshot')
@@ -245,17 +221,11 @@ const ComponentsSchemasCreateSegmentInput = T.Object({
   definition: T.Optional(T.String())
 })
 const ComponentsSchemasSegmentPage = T.Object({
-  content: T.Array(CloneType(ComponentsSchemasSegmentResource)),
-  pageable: T.Optional(T.Intersect([CloneType(ComponentsSchemasPageable)])),
-  totalElements: T.Integer({ format: 'int64' }),
-  totalPages: T.Integer({ format: 'int32' }),
-  size: T.Integer({ format: 'int32' }),
-  number: T.Integer({ format: 'int32' }),
-  numberOfElements: T.Integer({ format: 'int32' }),
-  first: T.Boolean(),
-  last: T.Boolean(),
-  empty: T.Boolean(),
-  sort: T.Optional(T.Intersect([CloneType(ComponentsSchemasSort)]))
+  items: T.Array(CloneType(ComponentsSchemasSegmentResource)),
+  page: T.Integer({ format: 'int32' }),
+  pageSize: T.Integer({ format: 'int32' }),
+  totalItems: T.Integer({ format: 'int64' }),
+  totalPages: T.Integer({ format: 'int32' })
 })
 const ComponentsSchemasUpdateSegmentInput = T.Object({
   name: T.Optional(T.Union([T.Null(), T.String()])),
@@ -292,12 +262,11 @@ const schema = {
           query: T.Optional(
             T.Object({
               page: T.Optional(
-                T.Integer({ format: 'int32', default: 0, 'x-in': 'query' })
+                T.Integer({ format: 'int32', default: 1, 'x-in': 'query' })
               ),
-              size: T.Optional(
+              pageSize: T.Optional(
                 T.Integer({ format: 'int32', default: 25, 'x-in': 'query' })
-              ),
-              sort: T.Optional(T.Array(T.String(), { 'x-in': 'query' }))
+              )
             })
           )
         })
@@ -435,12 +404,11 @@ const schema = {
           query: T.Optional(
             T.Object({
               page: T.Optional(
-                T.Integer({ format: 'int32', default: 0, 'x-in': 'query' })
+                T.Integer({ format: 'int32', default: 1, 'x-in': 'query' })
               ),
-              size: T.Optional(
+              pageSize: T.Optional(
                 T.Integer({ format: 'int32', default: 25, 'x-in': 'query' })
               ),
-              sort: T.Optional(T.Array(T.String(), { 'x-in': 'query' })),
               status: T.Optional(
                 CloneType(ComponentsSchemasContactStatus, { 'x-in': 'query' })
               )
@@ -581,12 +549,11 @@ const schema = {
           query: T.Optional(
             T.Object({
               page: T.Optional(
-                T.Integer({ format: 'int32', default: 0, 'x-in': 'query' })
+                T.Integer({ format: 'int32', default: 1, 'x-in': 'query' })
               ),
-              size: T.Optional(
+              pageSize: T.Optional(
                 T.Integer({ format: 'int32', default: 25, 'x-in': 'query' })
-              ),
-              sort: T.Optional(T.Array(T.String(), { 'x-in': 'query' }))
+              )
             })
           )
         })
@@ -699,30 +666,29 @@ const _components = {
     'PageQuery.page': T.Optional(
       T.Integer({ format: 'int32', default: 0, 'x-in': 'query' })
     ),
-    'PageQuery.size': T.Optional(
+    'PageQuery.pageSize': T.Optional(
       T.Integer({ format: 'int32', default: 25, 'x-in': 'query' })
-    ),
-    'PageQuery.sort': T.Optional(T.Array(T.String(), { 'x-in': 'query' }))
+    )
   },
   schemas: {
     BroadcastPage: CloneType(ComponentsSchemasBroadcastPage),
     BroadcastResource: CloneType(ComponentsSchemasBroadcastResource),
     BroadcastStatus: CloneType(ComponentsSchemasBroadcastStatus),
+    ContactFields: CloneType(ComponentsSchemasContactFields),
     ContactPage: CloneType(ComponentsSchemasContactPage),
     ContactResource: CloneType(ComponentsSchemasContactResource),
     ContactStatus: CloneType(ComponentsSchemasContactStatus, {
       'x-in': 'query'
     }),
+    ContactUpdatableFields: CloneType(ComponentsSchemasContactUpdatableFields),
     CreateBroadcastInput: CloneType(ComponentsSchemasCreateBroadcastInput),
     CreateContactInput: CloneType(ComponentsSchemasCreateContactInput),
     CreateSegmentInput: CloneType(ComponentsSchemasCreateSegmentInput),
     EmailAddress: CloneType(ComponentsSchemasEmailAddress),
-    Pageable: CloneType(ComponentsSchemasPageable),
     ProblemDetails: CloneType(ComponentsSchemasProblemDetails),
     SegmentPage: CloneType(ComponentsSchemasSegmentPage),
     SegmentResource: CloneType(ComponentsSchemasSegmentResource),
     SegmentType: CloneType(ComponentsSchemasSegmentType),
-    Sort: CloneType(ComponentsSchemasSort),
     TimeZoneName: CloneType(ComponentsSchemasTimeZoneName),
     Timestamp: CloneType(ComponentsSchemasTimestamp),
     UpdateBroadcastInput: CloneType(ComponentsSchemasUpdateBroadcastInput),

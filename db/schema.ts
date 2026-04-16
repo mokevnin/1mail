@@ -16,5 +16,13 @@ export const contacts = pgTable('contacts', {
   timeZone: text('time_zone'),
   customFields: jsonb('custom_fields').$type<Record<string, string>>(),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
-  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true })
+    .defaultNow()
+    .notNull()
+    .$onUpdate(() => new Date()),
 })
+
+export type UserRecord = typeof users.$inferSelect
+export type UserInsert = typeof users.$inferInsert
+export type ContactRecord = typeof contacts.$inferSelect
+export type ContactInsert = typeof contacts.$inferInsert

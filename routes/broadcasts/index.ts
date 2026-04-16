@@ -1,6 +1,5 @@
 import type { FastifyPluginAsync } from 'fastify'
-
-import type { RouteHandlers } from '../../types/handlers/fastify.gen.js'
+import type { RouteHandlers } from '../../generated/handlers/fastify.gen.ts'
 
 const handlers = {
   broadcastsList: async (_request, _reply) => {

@@ -5,53 +5,29 @@ export type ClientOptions = {
 };
 
 /**
- * Spring Data paginated response
+ * Paginated response
  */
 export type BroadcastPage = {
     /**
      * List of items
      */
-    content: Array<BroadcastResource>;
+    items: Array<BroadcastResource>;
     /**
-     * Paging information
+     * Page number (1-based)
      */
-    pageable?: Pageable;
+    page: number;
+    /**
+     * Page size
+     */
+    pageSize: number;
     /**
      * Total number of elements
      */
-    totalElements: number;
+    totalItems: number;
     /**
      * Total number of pages
      */
     totalPages: number;
-    /**
-     * Page size
-     */
-    size: number;
-    /**
-     * Page number (0-based)
-     */
-    number: number;
-    /**
-     * Number of elements in current page
-     */
-    numberOfElements: number;
-    /**
-     * Whether this is the first page
-     */
-    first: boolean;
-    /**
-     * Whether this is the last page
-     */
-    last: boolean;
-    /**
-     * Whether content is empty
-     */
-    empty: boolean;
-    /**
-     * Sorting information
-     */
-    sort?: Sort;
 };
 
 /**
@@ -90,63 +66,9 @@ export type BroadcastResource = {
 export type BroadcastStatus = 'draft' | 'scheduled' | 'sent';
 
 /**
- * Spring Data paginated response
+ * Shared writable fields for contact
  */
-export type ContactPage = {
-    /**
-     * List of items
-     */
-    content: Array<ContactResource>;
-    /**
-     * Paging information
-     */
-    pageable?: Pageable;
-    /**
-     * Total number of elements
-     */
-    totalElements: number;
-    /**
-     * Total number of pages
-     */
-    totalPages: number;
-    /**
-     * Page size
-     */
-    size: number;
-    /**
-     * Page number (0-based)
-     */
-    number: number;
-    /**
-     * Number of elements in current page
-     */
-    numberOfElements: number;
-    /**
-     * Whether this is the first page
-     */
-    first: boolean;
-    /**
-     * Whether this is the last page
-     */
-    last: boolean;
-    /**
-     * Whether content is empty
-     */
-    empty: boolean;
-    /**
-     * Sorting information
-     */
-    sort?: Sort;
-};
-
-/**
- * Contact resource
- */
-export type ContactResource = {
-    /**
-     * Unique identifier
-     */
-    id: number;
+export type ContactFields = {
     /**
      * Email address
      */
@@ -154,25 +76,61 @@ export type ContactResource = {
     /**
      * First name
      */
-    firstName?: string;
+    firstName?: string | null;
     /**
      * Last name
      */
-    lastName?: string;
-    /**
-     * Current status
-     */
-    status: ContactStatus;
+    lastName?: string | null;
     /**
      * IANA time zone identifier
      */
-    timeZone?: TimeZoneName;
+    timeZone?: TimeZoneName | null;
     /**
      * Custom fields as key-value pairs
      */
     customFields?: {
         [key: string]: string;
-    };
+    } | null;
+};
+
+/**
+ * Paginated response
+ */
+export type ContactPage = {
+    /**
+     * List of items
+     */
+    items: Array<ContactResource>;
+    /**
+     * Page number (1-based)
+     */
+    page: number;
+    /**
+     * Page size
+     */
+    pageSize: number;
+    /**
+     * Total number of elements
+     */
+    totalItems: number;
+    /**
+     * Total number of pages
+     */
+    totalPages: number;
+};
+
+/**
+ * Contact resource
+ */
+export type ContactResource = ContactFields & {
+    /**
+     * Unique identifier
+     */
+    id: number;
+    /**
+     * Current status
+     */
+    status: ContactStatus;
     /**
      * Creation timestamp
      */
@@ -187,6 +145,30 @@ export type ContactResource = {
  * Contact status
  */
 export type ContactStatus = 'active' | 'unsubscribed';
+
+/**
+ * Shared updatable fields for contact
+ */
+export type ContactUpdatableFields = {
+    /**
+     * First name
+     */
+    firstName?: string | null;
+    /**
+     * Last name
+     */
+    lastName?: string | null;
+    /**
+     * IANA time zone identifier
+     */
+    timeZone?: TimeZoneName | null;
+    /**
+     * Custom fields as key-value pairs
+     */
+    customFields?: {
+        [key: string]: string;
+    } | null;
+};
 
 /**
  * Request body for creating a broadcast
@@ -209,30 +191,7 @@ export type CreateBroadcastInput = {
 /**
  * Request body for creating a contact
  */
-export type CreateContactInput = {
-    /**
-     * Email address
-     */
-    email: EmailAddress;
-    /**
-     * First name
-     */
-    firstName?: string;
-    /**
-     * Last name
-     */
-    lastName?: string;
-    /**
-     * IANA time zone identifier
-     */
-    timeZone?: TimeZoneName;
-    /**
-     * Custom fields as key-value pairs
-     */
-    customFields?: {
-        [key: string]: string;
-    };
-};
+export type CreateContactInput = ContactFields;
 
 /**
  * Request body for creating a segment
@@ -253,36 +212,6 @@ export type CreateSegmentInput = {
 };
 
 export type EmailAddress = string;
-
-/**
- * Spring Data pageable descriptor
- */
-export type Pageable = {
-    /**
-     * Page size
-     */
-    pageSize?: number;
-    /**
-     * Page number (0-based)
-     */
-    pageNumber?: number;
-    /**
-     * Offset
-     */
-    offset?: number;
-    /**
-     * Whether the page is paged
-     */
-    paged?: boolean;
-    /**
-     * Whether the page is unpaged
-     */
-    unpaged?: boolean;
-    /**
-     * Sorting information
-     */
-    sort?: Sort;
-};
 
 /**
  * RFC 7807 Problem Details
@@ -317,53 +246,29 @@ export type ProblemDetails = {
 };
 
 /**
- * Spring Data paginated response
+ * Paginated response
  */
 export type SegmentPage = {
     /**
      * List of items
      */
-    content: Array<SegmentResource>;
+    items: Array<SegmentResource>;
     /**
-     * Paging information
+     * Page number (0-based)
      */
-    pageable?: Pageable;
+    page: number;
+    /**
+     * Page size
+     */
+    pageSize: number;
     /**
      * Total number of elements
      */
-    totalElements: number;
+    totalItems: number;
     /**
      * Total number of pages
      */
     totalPages: number;
-    /**
-     * Page size
-     */
-    size: number;
-    /**
-     * Page number (0-based)
-     */
-    number: number;
-    /**
-     * Number of elements in current page
-     */
-    numberOfElements: number;
-    /**
-     * Whether this is the first page
-     */
-    first: boolean;
-    /**
-     * Whether this is the last page
-     */
-    last: boolean;
-    /**
-     * Whether content is empty
-     */
-    empty: boolean;
-    /**
-     * Sorting information
-     */
-    sort?: Sort;
 };
 
 /**
@@ -401,24 +306,6 @@ export type SegmentResource = {
  */
 export type SegmentType = 'rule' | 'snapshot';
 
-/**
- * Spring Data sort descriptor
- */
-export type Sort = {
-    /**
-     * Whether sorting is enabled
-     */
-    sorted?: boolean;
-    /**
-     * Whether sorting is unsorted
-     */
-    unsorted?: boolean;
-    /**
-     * Whether sorting is empty
-     */
-    empty?: boolean;
-};
-
 export type TimeZoneName = string;
 
 export type Timestamp = string;
@@ -444,26 +331,7 @@ export type UpdateBroadcastInput = {
 /**
  * Request body for updating a contact
  */
-export type UpdateContactInput = {
-    /**
-     * First name
-     */
-    firstName?: string | null;
-    /**
-     * Last name
-     */
-    lastName?: string | null;
-    /**
-     * IANA time zone identifier
-     */
-    timeZone?: TimeZoneName | null;
-    /**
-     * Custom fields as key-value pairs
-     */
-    customFields?: {
-        [key: string]: string;
-    } | null;
-};
+export type UpdateContactInput = ContactUpdatableFields;
 
 /**
  * Request body for updating a segment
@@ -486,36 +354,27 @@ export type UpdateSegmentInput = {
 export type Versions = '1.0.0';
 
 /**
- * Page number (0-based)
+ * Page number (1-based)
  */
 export type PageQueryPage = number;
 
 /**
  * Page size
  */
-export type PageQuerySize = number;
-
-/**
- * Sorting criteria (e.g. name,asc). Can be repeated.
- */
-export type PageQuerySort = Array<string>;
+export type PageQueryPageSize = number;
 
 export type BroadcastsListData = {
     body?: never;
     path?: never;
     query?: {
         /**
-         * Page number (0-based)
+         * Page number (1-based)
          */
         page?: number;
         /**
          * Page size
          */
-        size?: number;
-        /**
-         * Sorting criteria (e.g. name,asc). Can be repeated.
-         */
-        sort?: Array<string>;
+        pageSize?: number;
     };
     url: '/broadcasts';
 };
@@ -689,17 +548,13 @@ export type ContactsListData = {
     path?: never;
     query?: {
         /**
-         * Page number (0-based)
+         * Page number (1-based)
          */
         page?: number;
         /**
          * Page size
          */
-        size?: number;
-        /**
-         * Sorting criteria (e.g. name,asc). Can be repeated.
-         */
-        sort?: Array<string>;
+        pageSize?: number;
         /**
          * Filter by status
          */
@@ -885,17 +740,13 @@ export type SegmentsListData = {
     path?: never;
     query?: {
         /**
-         * Page number (0-based)
+         * Page number (1-based)
          */
         page?: number;
         /**
          * Page size
          */
-        size?: number;
-        /**
-         * Sorting criteria (e.g. name,asc). Can be repeated.
-         */
-        sort?: Array<string>;
+        pageSize?: number;
     };
     url: '/segments';
 };

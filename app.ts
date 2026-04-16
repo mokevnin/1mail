@@ -1,8 +1,8 @@
 import path from 'node:path'
 import type { AutoloadPluginOptions } from '@fastify/autoload'
 import AutoLoad from '@fastify/autoload'
-import { TypeBoxValidatorCompiler } from '@fastify/type-provider-typebox'
 import type { FastifyPluginAsync, FastifyServerOptions } from 'fastify'
+import { SinclairTypeBoxValidatorCompiler } from './lib/typebox-validator.ts'
 
 export interface AppOptions extends FastifyServerOptions, Partial<AutoloadPluginOptions> {}
 
@@ -16,7 +16,7 @@ const options: AppOptions = {
 
 const app: FastifyPluginAsync<AppOptions> = async (fastify, opts): Promise<void> => {
   // Place here your custom code!
-  fastify.setValidatorCompiler(TypeBoxValidatorCompiler)
+  fastify.setValidatorCompiler(SinclairTypeBoxValidatorCompiler)
 
   // Do not touch the following lines
 

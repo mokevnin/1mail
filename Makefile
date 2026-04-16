@@ -1,11 +1,26 @@
 setup:
 	pnpm install
 
+db-generate:
+	pnpm exec drizzle-kit generate
+
+db-migrate:
+	pnpm exec drizzle-kit migrate
+
+dev-frontend:
+	npx vite
+
+dev-backend:
+	npx fastify start -w -l info -P app.ts
+
 dev:
-	pnpm run dev
+	overmind start
 
 test:
-	pnpm run test
+	pnpm exec vitest run
+
+test-watch:
+	pnpm exec vitest
 
 update: update-npm-deps
 
@@ -13,24 +28,23 @@ update-npm-deps:
 	npx ncu -u
 	pnpm update
 
-generate:
-	pnpm run typespec:compile
-	pnpm run openapi-ts
+generate-typespec:
+	npx tsp compile typespec
 
-format:
-	pnpm run format
+generate-typebox:
+	npx openapi-box openapi/openapi.yaml -o generated/openapi-box.js
 
-lint:
-	pnpm run lint
-
-lint-fix:
-	pnpm run lint:fix
-	pnpm run typespec:format
+generate: generate-typespec generate-typebox lint-fix
 
 check:
-	pnpm run check:apply
+	npx tsgo --noEmit
+	npx biome check .
+
+check-fix:
+	pnpx @biomejs/biome check --write
+	npx tsp format typespec
 
 build:
 	pnpm run build
 
-.PHONY: test
+.PHONY: test test-watch db-generate db-migrate

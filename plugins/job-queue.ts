@@ -1,20 +1,28 @@
-import { PgStorage, Queue } from '@platformatic/job-queue'
+import { MemoryStorage, PgStorage, Queue } from '@platformatic/job-queue'
 import fp from 'fastify-plugin'
+import { resolveDbDriver } from '../db/runtime.ts'
 
 type JobPayload = Record<string, unknown>
 type JobResult = { success: true }
 type QueueJob = Parameters<Parameters<Queue<JobPayload, JobResult>['execute']>[0]>[0]
 
 export default fp(async (fastify) => {
-  const connectionString = process.env.DATABASE_URL
-  if (!connectionString) {
-    throw new Error('DATABASE_URL is required')
-  }
+  const driver = resolveDbDriver()
+  const storage = (() => {
+    if (driver !== 'postgres') {
+      return new MemoryStorage()
+    }
 
-  const storage = new PgStorage({
-    connectionString,
-    tablePrefix: 'job_queue_',
-  })
+    const connectionString = process.env.DATABASE_URL
+    if (!connectionString) {
+      throw new Error('DATABASE_URL is required when DB_DRIVER=postgres')
+    }
+
+    return new PgStorage({
+      connectionString,
+      tablePrefix: 'job_queue_',
+    })
+  })()
 
   const queue = new Queue<JobPayload, JobResult>({
     storage,
