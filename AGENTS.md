@@ -30,15 +30,17 @@
 - Do not hand-edit generated files under `generated/`.
 
 ## Architecture Notes (only what is easy to miss)
-- Backend entrypoint is `app.ts`; Fastify autoloads plugins from `plugins/` and external HTTP API routes from `server/http/`.
-- Implemented external API module is `server/http/contacts/index.ts`; `server/http/segments/index.ts` and `server/http/broadcasts/index.ts` are placeholders that throw `not implemented`.
+- Backend entrypoint is `app.ts`; Fastify autoloads support plugins from `plugins/`, browser collection routes from `server/collect/` under `/collect`, and external HTTP API routes from `server/http/`.
+- Implemented external HTTP modules currently include `root`, `contacts`, `events`, `event-actions`, and `auth`; `server/http/segments/index.ts` and `server/http/broadcasts/index.ts` are placeholders that throw `not implemented`.
 - Internal frontend API lives in `server/trpc/`; frontend page routes live in `src/routes/`.
-- Contacts handlers are typed from generated OpenAPI types (`RouteHandlers`) and use `toFastifySchema(...)` from `lib/openapi.ts`.
+- HTTP handlers are typed from generated OpenAPI types (`RouteHandlers`) and validate requests with generated Zod schemas from `generated/handlers/zod.gen.ts`.
 - Route files under `server/http/<name>/index.ts` are mounted with the folder prefix. Inside them, register relative paths (`/`, `/:id`) to avoid doubled paths.
+- `resources/` is outbound-only: use it for `entity -> resource(dto) -> client` mapping. Request normalization, input shaping, and DB insert/update conversion belong in `use-cases/`, `lib/`, or transport-local helpers, not in `resources/`. If reusable DB record converters become common, put them under `records/`; keep one-off use-case-specific converters near their use-case/lib until that pattern emerges.
 
 ## Repo-Specific Quirks
 - `.npmrc` sets `node-options="--experimental-strip-types"`, so TS files are executed directly by node-based tooling here.
 - `README.md` is Fastify boilerplate and does not describe the current workflow.
+- `make build` is currently not usable as a verification step because `package.json` does not define a `build` script.
 
 ## Rules
 

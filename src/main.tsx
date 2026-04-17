@@ -6,9 +6,11 @@ import { RouterProvider } from '@tanstack/react-router'
 import { httpBatchLink } from '@trpc/client'
 import { StrictMode, useState } from 'react'
 import { createRoot } from 'react-dom/client'
-import { trpc } from '../server/trpc/client.ts'
+import superjson from 'superjson'
 import './i18n.ts'
 import { router } from './router.tsx'
+import { initTracking } from './tracking.ts'
+import { trpc } from './trpc.ts'
 
 import '@mantine/core/styles.css'
 import '@mantine/notifications/styles.css'
@@ -21,6 +23,7 @@ function Root() {
     trpc.createClient({
       links: [
         httpBatchLink({
+          transformer: superjson,
           url: 'http://localhost:3000/trpc',
         }),
       ],
@@ -45,6 +48,8 @@ const container = document.getElementById('root')
 if (!container) {
   throw new Error('Root element not found')
 }
+
+initTracking()
 
 createRoot(container).render(
   <StrictMode>

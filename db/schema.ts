@@ -1,4 +1,4 @@
-import { bigserial, boolean, jsonb, pgTable, text, timestamp } from 'drizzle-orm/pg-core'
+import { bigint, bigserial, boolean, jsonb, pgTable, text, timestamp } from 'drizzle-orm/pg-core'
 
 export const apiTokenScopes = [
   'contacts:read',
@@ -62,11 +62,42 @@ export const events = pgTable('events', {
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
 })
 
+export const trackingProfiles = pgTable('tracking_profiles', {
+  id: bigserial('id', { mode: 'bigint' }).primaryKey(),
+  subjectId: text('subject_id').notNull().unique(),
+  email: text('email').unique(),
+  phone: text('phone').unique(),
+  traits: jsonb('traits').$type<Record<string, unknown>>().notNull().default({}),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true })
+    .defaultNow()
+    .notNull()
+    .$onUpdate(() => new Date()),
+})
+
+export const trackingVisitors = pgTable('tracking_visitors', {
+  id: bigserial('id', { mode: 'bigint' }).primaryKey(),
+  visitorId: text('visitor_id').notNull().unique(),
+  profileId: bigint('profile_id', { mode: 'bigint' }).references(() => trackingProfiles.id, {
+    onDelete: 'set null',
+  }),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true })
+    .defaultNow()
+    .notNull()
+    .$onUpdate(() => new Date()),
+  lastSeenAt: timestamp('last_seen_at', { withTimezone: true }).defaultNow().notNull(),
+})
+
 export type UserRecord = typeof users.$inferSelect
 export type UserInsert = typeof users.$inferInsert
 export type ContactRecord = typeof contacts.$inferSelect
 export type ContactInsert = typeof contacts.$inferInsert
 export type EventRecord = typeof events.$inferSelect
 export type EventInsert = typeof events.$inferInsert
+export type TrackingProfileRecord = typeof trackingProfiles.$inferSelect
+export type TrackingProfileInsert = typeof trackingProfiles.$inferInsert
+export type TrackingVisitorRecord = typeof trackingVisitors.$inferSelect
+export type TrackingVisitorInsert = typeof trackingVisitors.$inferInsert
 export type ApiTokenRecord = typeof apiTokens.$inferSelect
 export type ApiTokenInsert = typeof apiTokens.$inferInsert

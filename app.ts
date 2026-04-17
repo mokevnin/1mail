@@ -24,6 +24,12 @@ const app: FastifyPluginAsync<AppOptions> = async (fastify, opts): Promise<void>
     options: Object.assign({}, opts),
   })
 
+  // This loads public event collection routes used by browser clients
+  fastify.register(AutoLoad, {
+    dir: path.join(import.meta.dirname, 'server/collect'),
+    options: Object.assign({ prefix: '/collect' }, opts),
+  })
+
   // This loads all public HTTP API routes
   fastify.register(AutoLoad, {
     dir: path.join(import.meta.dirname, 'server/http'),

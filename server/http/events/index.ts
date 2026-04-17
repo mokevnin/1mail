@@ -1,14 +1,13 @@
 import type { FastifyInstance, FastifyPluginAsync } from 'fastify'
 
-import { events } from '../../../db/schema.ts'
-import type { RouteHandlers } from '../../../generated/handlers/fastify.gen.ts'
-import { toFastifySchema } from '../../../lib/openapi.ts'
-import { toEventRecordInsert } from '../../../resources/events.ts'
+import { events } from '#/db/schema.ts'
+import type { RouteHandlers } from '#/generated/handlers/fastify.gen.ts'
+import { zRecordEventsBodyInput } from '#/lib/http-zod.ts'
 
 const eventsPlugin: FastifyPluginAsync = async (fastify: FastifyInstance, _opts): Promise<void> => {
   const handlers = {
     eventsCreate: async (request, reply) => {
-      const values = request.body.events.map(toEventRecordInsert)
+      const values = request.body.events
 
       if (values.length > 0) {
         await fastify.db.insert(events).values(values)
@@ -21,7 +20,9 @@ const eventsPlugin: FastifyPluginAsync = async (fastify: FastifyInstance, _opts)
   fastify.post(
     '/',
     {
-      schema: toFastifySchema('/events', 'POST'),
+      schema: {
+        body: zRecordEventsBodyInput,
+      },
     },
     handlers.eventsCreate,
   )

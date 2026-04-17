@@ -23,7 +23,7 @@ model Page<T> {
   pageSize: int32;
 
   /** Total number of elements */
-  totalItems: int64;
+  totalItems: int32;
 
   /** Total number of pages */
   totalPages: int32;

@@ -2,7 +2,7 @@ import type { Queue } from '@platformatic/job-queue'
 import 'fastify'
 import type { AppDatabase } from '../db/runtime.ts'
 import type { Page } from '../lib/pagination.ts'
-import type { ApiTokenAuth } from '../use-cases/api-tokens.ts'
+import type { ApiTokenAuth } from './api-tokens.ts'
 
 interface PaginationBuilder<TItem> {
   as(alias: string): unknown

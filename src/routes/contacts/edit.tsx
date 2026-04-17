@@ -4,7 +4,8 @@ import { notifications } from '@mantine/notifications'
 import { useNavigate, useParams } from '@tanstack/react-router'
 import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { trpc } from '../../../server/trpc/client.ts'
+import { track } from '../../tracking.ts'
+import { trpc } from '../../trpc.ts'
 import { EMPTY_CONTACT_FORM, toUpdateNullableField } from './form.ts'
 
 function parseContactId(contactId: string): string | null {
@@ -45,6 +46,10 @@ export function ContactEditPage() {
         utils.contacts.list.invalidate(),
         utils.contacts.get.invalidate({ id: updated.id }),
       ])
+      await track('contact.updated', {
+        contactId: updated.id,
+        email: updated.email,
+      })
 
       notifications.show({
         color: 'teal',

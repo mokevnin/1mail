@@ -1,10 +1,10 @@
 import { asc } from 'drizzle-orm'
 import type { FastifyInstance, FastifyPluginAsync } from 'fastify'
 
-import { events } from '../../../db/schema.ts'
-import type { RouteHandlers } from '../../../generated/handlers/fastify.gen.ts'
-import { toFastifySchema } from '../../../lib/openapi.ts'
-import { toEventActionResource } from '../../../resources/events.ts'
+import { events } from '#/db/schema.ts'
+import type { RouteHandlers } from '#/generated/handlers/fastify.gen.ts'
+import { zPageQueryInput } from '#/lib/http-zod.ts'
+import { toEventActionResource } from '#/resources/events.ts'
 
 const eventActionsPlugin: FastifyPluginAsync = async (
   fastify: FastifyInstance,
@@ -29,7 +29,9 @@ const eventActionsPlugin: FastifyPluginAsync = async (
   fastify.get(
     '/',
     {
-      schema: toFastifySchema('/event-actions', 'GET'),
+      schema: {
+        querystring: zPageQueryInput,
+      },
     },
     handlers.eventActionsList,
   )

@@ -18,6 +18,9 @@
       "name": "Events"
     },
     {
+      "name": "Collect"
+    },
+    {
       "name": "Auth"
     }
   ],
@@ -375,7 +378,7 @@
                     },
                     "totalItems": {
                       "type": "integer",
-                      "format": "int64",
+                      "format": "int32",
                       "description": "Total number of elements"
                     },
                     "totalPages": {
@@ -609,6 +612,115 @@
         "tags": ["Broadcasts"]
       }
     },
+    "/collect/events": {
+      "post": {
+        "operationId": "CollectEvents_create",
+        "parameters": [
+          {
+            "name": "x-collect-key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "There is no content to send for this request, but the headers may be useful."
+          },
+          "401": {
+            "description": "RFC 7807 unauthorized response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "RFC 7807 validation response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Collect"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CollectEventsInput"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/collect/identify": {
+      "post": {
+        "operationId": "CollectIdentify_create",
+        "parameters": [
+          {
+            "name": "x-collect-key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request has succeeded.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CollectOkResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "RFC 7807 unauthorized response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "RFC 7807 validation response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Collect"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CollectIdentifyInput"
+              }
+            }
+          }
+        }
+      }
+    },
     "/contacts": {
       "post": {
         "operationId": "Contacts_create",
@@ -717,7 +829,7 @@
                     },
                     "totalItems": {
                       "type": "integer",
-                      "format": "int64",
+                      "format": "int32",
                       "description": "Total number of elements"
                     },
                     "totalPages": {
@@ -1001,7 +1113,7 @@
                     },
                     "totalItems": {
                       "type": "integer",
-                      "format": "int64",
+                      "format": "int32",
                       "description": "Total number of elements"
                     },
                     "totalPages": {
@@ -1180,7 +1292,7 @@
                     },
                     "totalItems": {
                       "type": "integer",
-                      "format": "int64",
+                      "format": "int32",
                       "description": "Total number of elements"
                     },
                     "totalPages": {
@@ -1563,6 +1675,85 @@
         "type": "string",
         "enum": ["draft", "scheduled", "sent"],
         "description": "Broadcast status"
+      },
+      "CollectEventInput": {
+        "type": "object",
+        "required": ["visitorId", "action"],
+        "properties": {
+          "visitorId": {
+            "type": "string"
+          },
+          "action": {
+            "type": "string"
+          },
+          "properties": {
+            "type": "object",
+            "additionalProperties": {},
+            "nullable": true
+          },
+          "occurredAt": {
+            "type": "string",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Timestamp"
+              }
+            ],
+            "nullable": true
+          }
+        }
+      },
+      "CollectEventsInput": {
+        "type": "object",
+        "required": ["events"],
+        "properties": {
+          "events": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CollectEventInput"
+            }
+          }
+        }
+      },
+      "CollectIdentifyInput": {
+        "type": "object",
+        "required": ["visitorId"],
+        "properties": {
+          "visitorId": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EmailAddress"
+              }
+            ],
+            "nullable": true
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true
+          },
+          "subjectId": {
+            "type": "string",
+            "nullable": true
+          },
+          "traits": {
+            "type": "object",
+            "additionalProperties": {},
+            "nullable": true
+          }
+        }
+      },
+      "CollectOkResponse": {
+        "type": "object",
+        "required": ["ok"],
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "enum": [true]
+          }
+        }
       },
       "ContactFields": {
         "type": "object",

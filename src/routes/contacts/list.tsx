@@ -6,7 +6,8 @@ import { useNavigate } from '@tanstack/react-router'
 import { DataTable } from 'mantine-datatable'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { trpc } from '../../../server/trpc/client.ts'
+import { track } from '../../tracking.ts'
+import { trpc } from '../../trpc.ts'
 
 type ContactStatusFilter = 'all' | 'active' | 'unsubscribed'
 
@@ -39,8 +40,11 @@ export function ContactsListPage() {
   })
 
   const deleteContactMutation = trpc.contacts.delete.useMutation({
-    onSuccess: async () => {
+    onSuccess: async (_result, variables) => {
       await utils.contacts.list.invalidate()
+      await track('contact.deleted', {
+        contactId: variables.id,
+      })
       notifications.show({
         color: 'teal',
         title: t(($) => $.notifications.successTitle),

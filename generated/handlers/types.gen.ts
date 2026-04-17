@@ -44,6 +44,33 @@ export type BroadcastResource = CreateBroadcastInput & {
  */
 export type BroadcastStatus = 'draft' | 'scheduled' | 'sent';
 
+export type CollectEventInput = {
+    visitorId: string;
+    action: string;
+    properties?: {
+        [key: string]: unknown;
+    } | null;
+    occurredAt?: Timestamp | null;
+};
+
+export type CollectEventsInput = {
+    events: Array<CollectEventInput>;
+};
+
+export type CollectIdentifyInput = {
+    visitorId: string;
+    email?: EmailAddress | null;
+    phone?: string | null;
+    subjectId?: string | null;
+    traits?: {
+        [key: string]: unknown;
+    } | null;
+};
+
+export type CollectOkResponse = {
+    ok: true;
+};
+
 /**
  * Shared writable fields for contact
  */
@@ -292,7 +319,7 @@ export type SegmentType = 'rule' | 'snapshot';
 
 export type TimeZoneName = string;
 
-export type Timestamp = string;
+export type Timestamp = Date;
 
 /**
  * Request body for updating a broadcast
@@ -713,6 +740,70 @@ export type BroadcastsUpdateResponses = {
 };
 
 export type BroadcastsUpdateResponse = BroadcastsUpdateResponses[keyof BroadcastsUpdateResponses];
+
+export type CollectEventsCreateData = {
+    body: CollectEventsInput;
+    headers: {
+        'x-collect-key': string;
+    };
+    path?: never;
+    query?: never;
+    url: '/collect/events';
+};
+
+export type CollectEventsCreateErrors = {
+    /**
+     * RFC 7807 unauthorized response
+     */
+    401: ProblemDetails;
+    /**
+     * RFC 7807 validation response
+     */
+    422: ProblemDetails;
+};
+
+export type CollectEventsCreateError = CollectEventsCreateErrors[keyof CollectEventsCreateErrors];
+
+export type CollectEventsCreateResponses = {
+    /**
+     * There is no content to send for this request, but the headers may be useful.
+     */
+    204: void;
+};
+
+export type CollectEventsCreateResponse = CollectEventsCreateResponses[keyof CollectEventsCreateResponses];
+
+export type CollectIdentifyCreateData = {
+    body: CollectIdentifyInput;
+    headers: {
+        'x-collect-key': string;
+    };
+    path?: never;
+    query?: never;
+    url: '/collect/identify';
+};
+
+export type CollectIdentifyCreateErrors = {
+    /**
+     * RFC 7807 unauthorized response
+     */
+    401: ProblemDetails;
+    /**
+     * RFC 7807 validation response
+     */
+    422: ProblemDetails;
+};
+
+export type CollectIdentifyCreateError = CollectIdentifyCreateErrors[keyof CollectIdentifyCreateErrors];
+
+export type CollectIdentifyCreateResponses = {
+    /**
+     * The request has succeeded.
+     */
+    200: CollectOkResponse;
+};
+
+export type CollectIdentifyCreateResponse = CollectIdentifyCreateResponses[keyof CollectIdentifyCreateResponses];
 
 export type ContactsListData = {
     body?: never;

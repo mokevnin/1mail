@@ -1,5 +1,11 @@
 {
   "type": "module",
+  "imports": {
+    "#/*": "./*"
+  },
+  "engines": {
+    "node": ">=25.5.0"
+  },
   "scripts": {
     "i18n:extract": "i18next-cli extract",
     "i18n:types": "i18next-cli types"
@@ -13,7 +19,7 @@
     "@types/pg": "^8.20.0",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
-    "@typescript/native-preview": "7.0.0-dev.20260415.1",
+    "@typescript/native-preview": "7.0.0-dev.20260416.2",
     "@typespec/compiler": "^1.11.0",
     "@typespec/http": "^1.11.0",
     "@typespec/openapi": "^1.11.0",
@@ -33,8 +39,8 @@
   },
   "dependencies": {
     "@electric-sql/pglite": "^0.4.4",
+    "@fastify/auth": "^5.0.4",
     "@fastify/autoload": "^6.3.1",
-    "@fastify/auth": "^5.0.3",
     "@fastify/cors": "^11.2.0",
     "@fastify/sensible": "^6.0.4",
     "@mantine/core": "^9.0.2",
@@ -49,7 +55,7 @@
     "@trpc/react-query": "^11.16.0",
     "@trpc/server": "^11.16.0",
     "@trpc/tanstack-react-query": "^11.16.0",
-    "bcryptjs": "^3.0.2",
+    "bcryptjs": "^3.0.3",
     "better-result": "^2.8.2",
     "better-sqlite3": "^12.9.0",
     "client-only": "^0.0.1",
@@ -58,13 +64,15 @@
     "es-toolkit": "^1.45.1",
     "fastify": "^5.8.5",
     "fastify-plugin": "^5.1.0",
+    "fastify-type-provider-zod": "^6.1.0",
     "i18next": "^26.0.5",
     "mantine-datatable": "^8.3.13",
-    "nanoid": "^5.1.6",
+    "nanoid": "^5.1.9",
     "pg": "^8.20.0",
     "react": "^19.2.5",
     "react-dom": "^19.2.5",
     "react-i18next": "^17.0.3",
+    "superjson": "^2.2.6",
     "zod": "^4.3.6"
   },
   "name": "1mail",

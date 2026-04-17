@@ -5,10 +5,12 @@ import type { TestContext } from 'vitest'
 
 const AppPath = path.join(import.meta.dirname, '..', 'app.ts')
 const DefaultBootstrapToken = 'test-bootstrap-token'
+const DefaultCollectSiteKey = 'test-collect-site-key'
 
 type BuildOptions = {
   bootstrapEnabled?: boolean
   bootstrapToken?: string
+  collectSiteKey?: string
 }
 
 // Fill in this config with all the configurations
@@ -23,9 +25,11 @@ function config() {
 async function build(t: TestContext, options: BuildOptions = {}): Promise<FastifyInstance> {
   const previousBootstrapEnabled = process.env.BOOTSTRAP_ENABLED
   const previousBootstrapToken = process.env.BOOTSTRAP_TOKEN
+  const previousCollectSiteKey = process.env.COLLECT_SITE_KEY
 
   process.env.BOOTSTRAP_ENABLED = String(options.bootstrapEnabled ?? true)
   process.env.BOOTSTRAP_TOKEN = options.bootstrapToken ?? DefaultBootstrapToken
+  process.env.COLLECT_SITE_KEY = options.collectSiteKey ?? DefaultCollectSiteKey
 
   // you can set all the options supported by the fastify CLI command
   const argv = [AppPath]
@@ -39,6 +43,7 @@ async function build(t: TestContext, options: BuildOptions = {}): Promise<Fastif
   t.onTestFinished(async () => {
     process.env.BOOTSTRAP_ENABLED = previousBootstrapEnabled
     process.env.BOOTSTRAP_TOKEN = previousBootstrapToken
+    process.env.COLLECT_SITE_KEY = previousCollectSiteKey
 
     await app.close()
   })
@@ -49,6 +54,14 @@ async function build(t: TestContext, options: BuildOptions = {}): Promise<Fastif
 function authHeader(token: string) {
   return {
     authorization: `Bearer ${token}`,
+  }
+}
+
+function collectHeaders(
+  collectKey: string = process.env.COLLECT_SITE_KEY ?? DefaultCollectSiteKey,
+) {
+  return {
+    'x-collect-key': collectKey,
   }
 }
 
@@ -78,4 +91,12 @@ async function bootstrapApiToken(
   return response
 }
 
-export { authHeader, bootstrapApiToken, build, config, DefaultBootstrapToken }
+export {
+  authHeader,
+  bootstrapApiToken,
+  build,
+  collectHeaders,
+  config,
+  DefaultBootstrapToken,
+  DefaultCollectSiteKey,
+}

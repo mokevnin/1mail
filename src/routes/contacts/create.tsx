@@ -3,7 +3,8 @@ import { useForm } from '@mantine/form'
 import { notifications } from '@mantine/notifications'
 import { useNavigate } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
-import { trpc } from '../../../server/trpc/client.ts'
+import { track } from '../../tracking.ts'
+import { trpc } from '../../trpc.ts'
 import { EMPTY_CONTACT_FORM, toCreateNullableField } from './form.ts'
 
 export function ContactCreatePage() {
@@ -17,6 +18,10 @@ export function ContactCreatePage() {
   const createContactMutation = trpc.contacts.create.useMutation({
     onSuccess: async (created) => {
       await utils.contacts.list.invalidate()
+      await track('contact.created', {
+        contactId: created.id,
+        email: created.email,
+      })
       notifications.show({
         color: 'teal',
         title: t(($) => $.notifications.successTitle),

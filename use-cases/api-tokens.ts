@@ -14,25 +14,12 @@ import {
   parseApiToken,
   verifyTokenSecret,
 } from '../lib/api-tokens.ts'
-
-export type ApiTokenAuth = {
-  tokenId: bigint
-  name: string
-  scopes: ApiTokenScope[]
-}
-
-export type ApiTokenMetadata = Omit<ApiTokenRecord, 'secretHash'>
-
-export type CreateApiTokenInput = {
-  name: string
-  scopes: ApiTokenScope[]
-  expiresAt?: Date | null
-}
-
-export type CreatedApiToken = {
-  token: string
-  record: ApiTokenMetadata
-}
+import type {
+  ApiTokenAuth,
+  ApiTokenMetadata,
+  CreateApiTokenInput,
+  CreatedApiToken,
+} from '../types/api-tokens.ts'
 
 export function toApiTokenMetadata(record: ApiTokenRecord): ApiTokenMetadata {
   const { secretHash: _secretHash, ...metadata } = record

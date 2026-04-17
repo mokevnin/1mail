@@ -1,36 +1,16 @@
 import type { FastifyInstance, FastifyPluginAsync } from 'fastify'
-import { type ApiTokenScope, apiTokenScopes } from '../../../db/schema.ts'
-import type { RouteHandlers } from '../../../generated/handlers/fastify.gen.ts'
-import { toFastifySchema } from '../../../lib/openapi.ts'
+import { type ApiTokenScope, apiTokenScopes } from '#/db/schema.ts'
+import type { RouteHandlers } from '#/generated/handlers/fastify.gen.ts'
+import { zAuthTokensDeletePath } from '#/generated/handlers/zod.gen.ts'
+import { zCreateApiTokenBodyInput } from '#/lib/http-zod.ts'
+import { toApiTokenInfo } from '#/resources/auth.ts'
 import {
-  type ApiTokenMetadata,
   createApiToken,
   getApiTokenById,
   listApiTokens,
   requireScope,
   revokeApiToken,
-} from '../../../use-cases/api-tokens.ts'
-
-function toApiTokenResponse(token: ApiTokenMetadata) {
-  return {
-    id: token.id.toString(),
-    name: token.name,
-    scopes: token.scopes,
-    expiresAt: token.expiresAt?.toISOString() ?? null,
-    revokedAt: token.revokedAt?.toISOString() ?? null,
-    lastUsedAt: token.lastUsedAt?.toISOString() ?? null,
-    createdAt: token.createdAt.toISOString(),
-    updatedAt: token.updatedAt.toISOString(),
-  }
-}
-
-function parseOptionalDate(value: string | null | undefined): Date | null {
-  if (!value) {
-    return null
-  }
-
-  return new Date(value)
-}
+} from '#/use-cases/api-tokens.ts'
 
 function isApiTokenScope(value: string): value is ApiTokenScope {
   return apiTokenScopes.includes(value as ApiTokenScope)
@@ -75,12 +55,12 @@ const authPlugin: FastifyPluginAsync = async (fastify: FastifyInstance, _opts): 
       const created = await createApiToken(fastify.db, {
         name: request.body.name,
         scopes: parseScopes(request.body.scopes),
-        expiresAt: parseOptionalDate(request.body.expiresAt),
+        expiresAt: request.body.expiresAt ?? null,
       })
 
       return reply.code(201).send({
         token: created.token,
-        tokenInfo: toApiTokenResponse(created.record),
+        tokenInfo: toApiTokenInfo(created.record),
       })
     },
 
@@ -89,7 +69,7 @@ const authPlugin: FastifyPluginAsync = async (fastify: FastifyInstance, _opts): 
 
       const items = await listApiTokens(fastify.db)
 
-      return reply.code(200).send({ items: items.map(toApiTokenResponse) })
+      return reply.code(200).send({ items: items.map(toApiTokenInfo) })
     },
 
     authTokensDelete: async (request, reply) => {
@@ -111,7 +91,7 @@ const authPlugin: FastifyPluginAsync = async (fastify: FastifyInstance, _opts): 
         throw new Error('Current token not found')
       }
 
-      return reply.code(200).send(toApiTokenResponse(token))
+      return reply.code(200).send(toApiTokenInfo(token))
     },
 
     authTokensBootstrap: async (request, reply) => {
@@ -120,12 +100,12 @@ const authPlugin: FastifyPluginAsync = async (fastify: FastifyInstance, _opts): 
       const created = await createApiToken(fastify.db, {
         name: request.body.name,
         scopes: parseScopes(request.body.scopes),
-        expiresAt: parseOptionalDate(request.body.expiresAt),
+        expiresAt: request.body.expiresAt ?? null,
       })
 
       return reply.code(201).send({
         token: created.token,
-        tokenInfo: toApiTokenResponse(created.record),
+        tokenInfo: toApiTokenInfo(created.record),
       })
     },
   } satisfies Pick<
@@ -136,36 +116,30 @@ const authPlugin: FastifyPluginAsync = async (fastify: FastifyInstance, _opts): 
   fastify.post(
     '/tokens',
     {
-      schema: toFastifySchema('/auth/tokens', 'POST'),
+      schema: {
+        body: zCreateApiTokenBodyInput,
+      },
     },
     handlers.authTokensCreate,
   )
-  fastify.get(
-    '/tokens',
-    {
-      schema: toFastifySchema('/auth/tokens', 'GET'),
-    },
-    handlers.authTokensList,
-  )
+  fastify.get('/tokens', handlers.authTokensList)
   fastify.delete(
     '/tokens/:id',
     {
-      schema: toFastifySchema('/auth/tokens/{id}', 'DELETE'),
+      schema: {
+        params: zAuthTokensDeletePath,
+      },
     },
     handlers.authTokensDelete,
   )
-  fastify.get(
-    '/me',
-    {
-      schema: toFastifySchema('/auth/me', 'GET'),
-    },
-    handlers.authMeGet,
-  )
+  fastify.get('/me', handlers.authMeGet)
   fastify.post(
     '/tokens/bootstrap',
     {
       config: { auth: false },
-      schema: toFastifySchema('/auth/tokens/bootstrap', 'POST'),
+      schema: {
+        body: zCreateApiTokenBodyInput,
+      },
     },
     handlers.authTokensBootstrap,
   )

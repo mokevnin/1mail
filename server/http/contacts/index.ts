@@ -1,12 +1,19 @@
 import { asc, eq } from 'drizzle-orm'
 import type { FastifyInstance, FastifyPluginAsync } from 'fastify'
 
-import { contacts } from '../../../db/schema.ts'
-import type { RouteHandlers } from '../../../generated/handlers/fastify.gen.ts'
-import { toFastifySchema } from '../../../lib/openapi.ts'
-import { toContactResource } from '../../../resources/contacts.ts'
-import { requireScope } from '../../../use-cases/api-tokens.ts'
-import { createContact, updateContact } from '../../../use-cases/contacts.ts'
+import { contacts } from '#/db/schema.ts'
+import type { RouteHandlers } from '#/generated/handlers/fastify.gen.ts'
+import {
+  zContactsCreateBody,
+  zContactsDeletePath,
+  zContactsGetPath,
+  zContactsUpdateBody,
+  zContactsUpdatePath,
+} from '#/generated/handlers/zod.gen.ts'
+import { zContactsListQueryInput } from '#/lib/http-zod.ts'
+import { toContactResource } from '#/resources/contacts.ts'
+import { requireScope } from '#/use-cases/api-tokens.ts'
+import { createContact, updateContact } from '#/use-cases/contacts.ts'
 
 const contactsPlugin: FastifyPluginAsync = async (
   fastify: FastifyInstance,
@@ -85,35 +92,46 @@ const contactsPlugin: FastifyPluginAsync = async (
   fastify.get(
     '/',
     {
-      schema: toFastifySchema('/contacts', 'GET'),
+      schema: {
+        querystring: zContactsListQueryInput,
+      },
     },
     handlers.contactsList,
   )
   fastify.post(
     '/',
     {
-      schema: toFastifySchema('/contacts', 'POST'),
+      schema: {
+        body: zContactsCreateBody,
+      },
     },
     handlers.contactsCreate,
   )
   fastify.get(
     '/:id',
     {
-      schema: toFastifySchema('/contacts/{id}', 'GET'),
+      schema: {
+        params: zContactsGetPath,
+      },
     },
     handlers.contactsGet,
   )
   fastify.put(
     '/:id',
     {
-      schema: toFastifySchema('/contacts/{id}', 'PUT'),
+      schema: {
+        body: zContactsUpdateBody,
+        params: zContactsUpdatePath,
+      },
     },
     handlers.contactsUpdate,
   )
   fastify.delete(
     '/:id',
     {
-      schema: toFastifySchema('/contacts/{id}', 'DELETE'),
+      schema: {
+        params: zContactsDeletePath,
+      },
     },
     handlers.contactsDelete,
   )

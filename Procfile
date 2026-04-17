@@ -1,2 +1,2 @@
-web: pnpm run dev:frontend
-api: pnpm run dev:backend
+frontend: make dev-frontend
+backend: make dev-backend

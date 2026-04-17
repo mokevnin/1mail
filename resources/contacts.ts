@@ -1,12 +1,9 @@
-import type { ContactRecord } from '../db/schema.ts'
-import type { ContactResource } from '../generated/handlers/index.ts'
-import { toTimestamp } from '../lib/utils.ts'
+import type { ContactRecord } from '#/db/schema.ts'
+import type { ContactResource } from '#/generated/handlers/index.ts'
 
 export function toContactResource(contact: ContactRecord): ContactResource {
   return {
     ...contact,
     id: contact.id.toString(),
-    createdAt: toTimestamp(contact.createdAt),
-    updatedAt: toTimestamp(contact.updatedAt),
   }
 }

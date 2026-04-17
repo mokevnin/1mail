@@ -2,7 +2,7 @@
 
 import type { RouteHandler } from 'fastify';
 
-import type { AuthMeGetErrors, AuthMeGetResponses, AuthTokensBootstrapData, AuthTokensBootstrapErrors, AuthTokensBootstrapResponses, AuthTokensCreateData, AuthTokensCreateErrors, AuthTokensCreateResponses, AuthTokensDeleteData, AuthTokensDeleteErrors, AuthTokensDeleteResponses, AuthTokensListErrors, AuthTokensListResponses, BroadcastsCreateData, BroadcastsCreateErrors, BroadcastsCreateResponses, BroadcastsDeleteData, BroadcastsDeleteErrors, BroadcastsDeleteResponses, BroadcastsGetData, BroadcastsGetErrors, BroadcastsGetResponses, BroadcastsListData, BroadcastsListErrors, BroadcastsListResponses, BroadcastsUpdateData, BroadcastsUpdateErrors, BroadcastsUpdateResponses, ContactsCreateData, ContactsCreateErrors, ContactsCreateResponses, ContactsDeleteData, ContactsDeleteErrors, ContactsDeleteResponses, ContactsGetData, ContactsGetErrors, ContactsGetResponses, ContactsListData, ContactsListErrors, ContactsListResponses, ContactsUpdateData, ContactsUpdateErrors, ContactsUpdateResponses, EventActionsListData, EventActionsListErrors, EventActionsListResponses, EventsCreateData, EventsCreateErrors, EventsCreateResponses, SegmentsCreateData, SegmentsCreateErrors, SegmentsCreateResponses, SegmentsDeleteData, SegmentsDeleteErrors, SegmentsDeleteResponses, SegmentsGetData, SegmentsGetErrors, SegmentsGetResponses, SegmentsListData, SegmentsListErrors, SegmentsListResponses, SegmentsUpdateData, SegmentsUpdateErrors, SegmentsUpdateResponses } from './types.gen.js';
+import type { AuthMeGetErrors, AuthMeGetResponses, AuthTokensBootstrapData, AuthTokensBootstrapErrors, AuthTokensBootstrapResponses, AuthTokensCreateData, AuthTokensCreateErrors, AuthTokensCreateResponses, AuthTokensDeleteData, AuthTokensDeleteErrors, AuthTokensDeleteResponses, AuthTokensListErrors, AuthTokensListResponses, BroadcastsCreateData, BroadcastsCreateErrors, BroadcastsCreateResponses, BroadcastsDeleteData, BroadcastsDeleteErrors, BroadcastsDeleteResponses, BroadcastsGetData, BroadcastsGetErrors, BroadcastsGetResponses, BroadcastsListData, BroadcastsListErrors, BroadcastsListResponses, BroadcastsUpdateData, BroadcastsUpdateErrors, BroadcastsUpdateResponses, CollectEventsCreateData, CollectEventsCreateErrors, CollectEventsCreateResponses, CollectIdentifyCreateData, CollectIdentifyCreateErrors, CollectIdentifyCreateResponses, ContactsCreateData, ContactsCreateErrors, ContactsCreateResponses, ContactsDeleteData, ContactsDeleteErrors, ContactsDeleteResponses, ContactsGetData, ContactsGetErrors, ContactsGetResponses, ContactsListData, ContactsListErrors, ContactsListResponses, ContactsUpdateData, ContactsUpdateErrors, ContactsUpdateResponses, EventActionsListData, EventActionsListErrors, EventActionsListResponses, EventsCreateData, EventsCreateErrors, EventsCreateResponses, SegmentsCreateData, SegmentsCreateErrors, SegmentsCreateResponses, SegmentsDeleteData, SegmentsDeleteErrors, SegmentsDeleteResponses, SegmentsGetData, SegmentsGetErrors, SegmentsGetResponses, SegmentsListData, SegmentsListErrors, SegmentsListResponses, SegmentsUpdateData, SegmentsUpdateErrors, SegmentsUpdateResponses } from './types.gen.js';
 
 export type RouteHandlers = {
     authMeGet: RouteHandler<{
@@ -44,6 +44,16 @@ export type RouteHandlers = {
         Body: BroadcastsUpdateData['body'];
         Params: BroadcastsUpdateData['path'];
         Reply: BroadcastsUpdateErrors & BroadcastsUpdateResponses;
+    }>;
+    collectEventsCreate: RouteHandler<{
+        Body: CollectEventsCreateData['body'];
+        Headers: CollectEventsCreateData['headers'];
+        Reply: CollectEventsCreateErrors & CollectEventsCreateResponses;
+    }>;
+    collectIdentifyCreate: RouteHandler<{
+        Body: CollectIdentifyCreateData['body'];
+        Headers: CollectIdentifyCreateData['headers'];
+        Reply: CollectIdentifyCreateErrors & CollectIdentifyCreateResponses;
     }>;
     contactsList: RouteHandler<{
         Querystring?: ContactsListData['query'];
