@@ -34,7 +34,7 @@
 ## Architecture Notes (only what is easy to miss)
 - Backend entrypoint is `app.ts`; Fastify autoloads support plugins from `plugins/`, browser collection routes from `server/collect/` under `/collect`, and external HTTP API routes from `server/http/`.
 - Implemented external HTTP modules currently include `root`, `contacts`, `events`, `event-actions`, and `auth`; `server/http/segments/index.ts` and `server/http/broadcasts/index.ts` are placeholders that throw `not implemented`.
-- Internal frontend API lives in `server/trpc/`; frontend page routes live in `src/routes/`.
+- Internal frontend API lives in `server/orpc/`; frontend page routes live in `src/routes/`.
 - HTTP handlers are typed from generated OpenAPI types (`RouteHandlers`) and validate requests with generated Zod schemas from `generated/handlers/zod.gen.ts`.
 - Route files under `server/http/<name>/index.ts` are mounted with the folder prefix. Inside them, register relative paths (`/`, `/:id`) to avoid doubled paths.
 - `resources/` is outbound-only: use it for `entity -> resource(dto) -> client` mapping. Request normalization, input shaping, and DB insert/update conversion belong in `use-cases/`, `lib/`, or transport-local helpers, not in `resources/`. If reusable DB record converters become common, put them under `records/`; keep one-off use-case-specific converters near their use-case/lib until that pattern emerges.

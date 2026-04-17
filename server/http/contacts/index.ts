@@ -4,13 +4,15 @@ import type { FastifyInstance, FastifyPluginAsync } from 'fastify'
 import { contacts } from '#/db/schema.ts'
 import type { RouteHandlers } from '#/generated/handlers/fastify.gen.ts'
 import {
-  zContactsCreateBody,
   zContactsDeletePath,
   zContactsGetPath,
-  zContactsUpdateBody,
   zContactsUpdatePath,
 } from '#/generated/handlers/zod.gen.ts'
-import { zContactsListQueryInput } from '#/lib/http-zod.ts'
+import {
+  zContactsCreateBodyInput,
+  zContactsListQueryInput,
+  zContactsUpdateBodyInput,
+} from '#/lib/http-zod.ts'
 import { toContactResource } from '#/resources/contacts.ts'
 import { requireScope } from '#/use-cases/api-tokens.ts'
 import { createContact, updateContact } from '#/use-cases/contacts.ts'
@@ -102,7 +104,7 @@ const contactsPlugin: FastifyPluginAsync = async (
     '/',
     {
       schema: {
-        body: zContactsCreateBody,
+        body: zContactsCreateBodyInput,
       },
     },
     handlers.contactsCreate,
@@ -120,7 +122,7 @@ const contactsPlugin: FastifyPluginAsync = async (
     '/:id',
     {
       schema: {
-        body: zContactsUpdateBody,
+        body: zContactsUpdateBodyInput,
         params: zContactsUpdatePath,
       },
     },

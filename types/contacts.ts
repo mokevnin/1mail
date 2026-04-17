@@ -1,6 +1,6 @@
 import type { z } from 'zod'
 
-import type { zContactsCreateBody, zContactsUpdateBody } from '../generated/handlers/zod.gen.ts'
+import type { zContactsCreateBodyInput, zContactsUpdateBodyInput } from '../lib/http-zod.ts'
 
-export type CreateContactInput = z.output<typeof zContactsCreateBody>
-export type UpdateContactInput = z.output<typeof zContactsUpdateBody>
+export type CreateContactInput = z.output<typeof zContactsCreateBodyInput>
+export type UpdateContactInput = z.output<typeof zContactsUpdateBodyInput>

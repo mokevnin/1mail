@@ -51,7 +51,7 @@ export default fp(
     fastify.decorate('requireAuth', fastify.auth([fastify.verifyApiToken]))
 
     fastify.addHook('onRoute', (routeOptions) => {
-      if (routeOptions.url.startsWith('/trpc')) {
+      if (routeOptions.url.startsWith('/orpc')) {
         return
       }
 

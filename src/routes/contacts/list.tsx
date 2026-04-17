@@ -2,20 +2,21 @@ import { Alert, Button, Group, Loader, Select, Stack, Text } from '@mantine/core
 import { useCounter } from '@mantine/hooks'
 import { modals } from '@mantine/modals'
 import { notifications } from '@mantine/notifications'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
 import type { TFunction } from 'i18next'
 import { DataTable } from 'mantine-datatable'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import type { ContactStatus } from '../../../generated/handlers/types.gen.ts'
+import type { SiteContactStatus } from '../../../generated/site/types.gen.ts'
+import { orpc } from '../../orpc/client.ts'
 import { track } from '../../tracking.ts'
-import { trpc } from '../../trpc.ts'
 
-type ContactStatusFilter = 'all' | ContactStatus
+type ContactStatusFilter = 'all' | SiteContactStatus
 
 const PAGE_SIZE = 10
 
-function translateStatus(t: TFunction, status: ContactStatus): string {
+function translateStatus(t: TFunction, status: SiteContactStatus): string {
   if (status === 'active') {
     return t(($) => $.status.active)
   }
@@ -26,38 +27,48 @@ function translateStatus(t: TFunction, status: ContactStatus): string {
 export function ContactsListPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
-  const utils = trpc.useUtils()
+  const queryClient = useQueryClient()
   const [page, pageHandlers] = useCounter(1, { min: 1 })
   const [status, setStatus] = useState<ContactStatusFilter>('all')
 
   const statusForQuery = status === 'all' ? undefined : status
 
-  const contactsList = trpc.contacts.list.useQuery({
-    page,
-    pageSize: PAGE_SIZE,
-    ...(statusForQuery ? { status: statusForQuery } : {}),
-  })
+  const contactsList = useQuery(
+    orpc.siteContactsList.queryOptions({
+      input: {
+        query: {
+          page,
+          pageSize: PAGE_SIZE,
+          ...(statusForQuery ? { status: statusForQuery } : {}),
+        },
+      },
+    }),
+  )
 
-  const deleteContactMutation = trpc.contacts.delete.useMutation({
-    onSuccess: async (_result, variables) => {
-      await utils.contacts.list.invalidate()
-      await track('contact.deleted', {
-        contactId: variables.id,
-      })
-      notifications.show({
-        color: 'teal',
-        title: t(($) => $.notifications.successTitle),
-        message: t(($) => $.notifications.contactDeleted),
-      })
-    },
-    onError: (error) => {
-      notifications.show({
-        color: 'red',
-        title: t(($) => $.alerts.deleteErrorTitle),
-        message: error.message,
-      })
-    },
-  })
+  const deleteContactMutation = useMutation(
+    orpc.siteContactsDelete.mutationOptions({
+      onSuccess: async (_result, variables) => {
+        await queryClient.invalidateQueries({
+          queryKey: orpc.siteContactsList.key(),
+        })
+        await track('contact.deleted', {
+          contactId: variables.params.id,
+        })
+        notifications.show({
+          color: 'teal',
+          title: t(($) => $.notifications.successTitle),
+          message: t(($) => $.notifications.contactDeleted),
+        })
+      },
+      onError: (error) => {
+        notifications.show({
+          color: 'red',
+          title: t(($) => $.alerts.deleteErrorTitle),
+          message: error.message,
+        })
+      },
+    }),
+  )
 
   const totalItems = contactsList.data?.totalItems ?? 0
   const records = contactsList.data?.items ?? []
@@ -78,7 +89,7 @@ export function ContactsListPage() {
       },
       confirmProps: { color: 'red' },
       onConfirm: () => {
-        deleteContactMutation.mutate({ id: contactId })
+        deleteContactMutation.mutate({ params: { id: contactId } })
       },
     })
   }

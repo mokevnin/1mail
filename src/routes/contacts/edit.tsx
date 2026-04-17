@@ -1,12 +1,13 @@
 import { Alert, Button, Group, Loader, Stack, TextInput, Title } from '@mantine/core'
 import { useForm } from '@mantine/form'
 import { notifications } from '@mantine/notifications'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate, useParams } from '@tanstack/react-router'
 import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
+import { orpc } from '../../orpc/client.ts'
 import { track } from '../../tracking.ts'
-import { trpc } from '../../trpc.ts'
-import { EMPTY_CONTACT_FORM, toUpdateNullableField } from './form.ts'
+import { EMPTY_CONTACT_FORM } from './form.ts'
 
 function parseContactId(contactId: string): string | null {
   return /^\d+$/.test(contactId) ? contactId : null
@@ -17,14 +18,20 @@ export function ContactEditPage() {
   const navigate = useNavigate()
   const { contactId } = useParams({ from: '/contacts/$contactId/edit' })
   const parsedContactId = parseContactId(contactId)
-  const utils = trpc.useUtils()
+  const queryClient = useQueryClient()
   const form = useForm({
     initialValues: EMPTY_CONTACT_FORM,
   })
 
-  const getContactQuery = trpc.contacts.get.useQuery(
-    { id: parsedContactId ?? '0' },
-    { enabled: parsedContactId !== null },
+  const getContactQuery = useQuery(
+    orpc.siteContactsGet.queryOptions({
+      enabled: parsedContactId !== null,
+      input: {
+        params: {
+          id: parsedContactId ?? '0',
+        },
+      },
+    }),
   )
 
   useEffect(() => {
@@ -40,31 +47,43 @@ export function ContactEditPage() {
     })
   }, [form, getContactQuery.data])
 
-  const updateContactMutation = trpc.contacts.update.useMutation({
-    onSuccess: async (updated) => {
-      await Promise.all([
-        utils.contacts.list.invalidate(),
-        utils.contacts.get.invalidate({ id: updated.id }),
-      ])
-      await track('contact.updated', {
-        contactId: updated.id,
-        email: updated.email,
-      })
+  const updateContactMutation = useMutation(
+    orpc.siteContactsUpdate.mutationOptions({
+      onSuccess: async (updated) => {
+        await Promise.all([
+          queryClient.invalidateQueries({
+            queryKey: orpc.siteContactsList.key(),
+          }),
+          queryClient.invalidateQueries({
+            queryKey: orpc.siteContactsGet.key({
+              input: {
+                params: {
+                  id: updated.id,
+                },
+              },
+            }),
+          }),
+        ])
+        await track('contact.updated', {
+          contactId: updated.id,
+          email: updated.email,
+        })
 
-      notifications.show({
-        color: 'teal',
-        title: t(($) => $.notifications.successTitle),
-        message: t(($) => $.notifications.contactUpdated),
-      })
-    },
-    onError: (error) => {
-      notifications.show({
-        color: 'red',
-        title: t(($) => $.alerts.saveErrorTitle),
-        message: error.message,
-      })
-    },
-  })
+        notifications.show({
+          color: 'teal',
+          title: t(($) => $.notifications.successTitle),
+          message: t(($) => $.notifications.contactUpdated),
+        })
+      },
+      onError: (error) => {
+        notifications.show({
+          color: 'red',
+          title: t(($) => $.alerts.saveErrorTitle),
+          message: error.message,
+        })
+      },
+    }),
+  )
 
   const onSubmit = form.onSubmit((values) => {
     if (parsedContactId === null) {
@@ -72,11 +91,13 @@ export function ContactEditPage() {
     }
 
     updateContactMutation.mutate({
-      id: parsedContactId,
-      data: {
-        firstName: toUpdateNullableField(values.firstName),
-        lastName: toUpdateNullableField(values.lastName),
-        timeZone: toUpdateNullableField(values.timeZone),
+      body: {
+        firstName: values.firstName,
+        lastName: values.lastName,
+        timeZone: values.timeZone,
+      },
+      params: {
+        id: parsedContactId,
       },
     })
   })

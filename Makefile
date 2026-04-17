@@ -36,7 +36,15 @@ generate-typespec-site:
 
 generate-typespec: generate-typespec-external generate-typespec-site
 
-generate: generate-typespec check-fix
+generate-openapi-external:
+	pnpm exec openapi-ts -f openapi-ts.config.ts
+
+generate-openapi-site:
+	pnpm exec openapi-ts -f openapi-ts.site.config.ts
+
+generate-openapi: generate-openapi-external generate-openapi-site
+
+generate: generate-typespec generate-openapi check-fix
 
 check:
 	npx tsgo --noEmit
@@ -49,4 +57,4 @@ check-fix:
 build:
 	pnpm run build
 
-.PHONY: test test-watch db-generate db-migrate generate generate-typespec generate-typespec-external generate-typespec-site
+.PHONY: test test-watch db-generate db-migrate generate generate-openapi generate-openapi-external generate-openapi-site generate-typespec generate-typespec-external generate-typespec-site

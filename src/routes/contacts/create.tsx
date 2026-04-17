@@ -1,52 +1,57 @@
 import { Button, Group, Stack, TextInput, Title } from '@mantine/core'
 import { useForm } from '@mantine/form'
 import { notifications } from '@mantine/notifications'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
+import { orpc } from '../../orpc/client.ts'
 import { track } from '../../tracking.ts'
-import { trpc } from '../../trpc.ts'
-import { EMPTY_CONTACT_FORM, toCreateNullableField } from './form.ts'
+import { EMPTY_CONTACT_FORM } from './form.ts'
 
 export function ContactCreatePage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
-  const utils = trpc.useUtils()
+  const queryClient = useQueryClient()
   const form = useForm({
     initialValues: EMPTY_CONTACT_FORM,
   })
 
-  const createContactMutation = trpc.contacts.create.useMutation({
-    onSuccess: async (created) => {
-      await utils.contacts.list.invalidate()
-      await track('contact.created', {
-        contactId: created.id,
-        email: created.email,
-      })
-      notifications.show({
-        color: 'teal',
-        title: t(($) => $.notifications.successTitle),
-        message: t(($) => $.notifications.contactCreated),
-      })
-      await navigate({
-        to: '/contacts/$contactId/edit',
-        params: { contactId: created.id },
-      })
-    },
-    onError: (error) => {
-      notifications.show({
-        color: 'red',
-        title: t(($) => $.alerts.saveErrorTitle),
-        message: error.message,
-      })
-    },
-  })
+  const createContactMutation = useMutation(
+    orpc.siteContactsCreate.mutationOptions({
+      onSuccess: async (created) => {
+        await queryClient.invalidateQueries({
+          queryKey: orpc.siteContactsList.key(),
+        })
+        await track('contact.created', {
+          contactId: created.id,
+          email: created.email,
+        })
+        notifications.show({
+          color: 'teal',
+          title: t(($) => $.notifications.successTitle),
+          message: t(($) => $.notifications.contactCreated),
+        })
+        await navigate({
+          to: '/contacts/$contactId/edit',
+          params: { contactId: created.id },
+        })
+      },
+      onError: (error) => {
+        notifications.show({
+          color: 'red',
+          title: t(($) => $.alerts.saveErrorTitle),
+          message: error.message,
+        })
+      },
+    }),
+  )
 
   const onSubmit = form.onSubmit((values) => {
     createContactMutation.mutate({
-      email: values.email.trim(),
-      firstName: toCreateNullableField(values.firstName),
-      lastName: toCreateNullableField(values.lastName),
-      timeZone: toCreateNullableField(values.timeZone),
+      body: {
+        ...values,
+        email: values.email.trim(),
+      },
     })
   })
 
