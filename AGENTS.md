@@ -25,7 +25,9 @@
 
 ## API Contract + Generated Code
 - Source of truth for API shape is TypeSpec in `typespec/`.
-- Generate OpenAPI: `make generate-typespec` -> writes `openapi/openapi.json`.
+- External SDK API entrypoint: `typespec/external/main.tsp` -> `openapi/external.openapi.json`.
+- Site API entrypoint: `typespec/site/main.tsp` -> `openapi/site.openapi.json`.
+- Generate OpenAPI: `make generate-typespec` -> writes both OpenAPI files.
 - Generate typed handlers/types: `pnpm exec openapi-ts -f openapi-ts.config.ts` -> writes `generated/handlers/*`.
 - Do not hand-edit generated files under `generated/`.
 

@@ -1,7 +1,7 @@
 {
   "openapi": "3.0.0",
   "info": {
-    "title": "OneMail API",
+    "title": "OneMail External API",
     "version": "1.0.0"
   },
   "tags": [

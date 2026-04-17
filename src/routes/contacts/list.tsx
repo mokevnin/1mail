@@ -3,20 +3,19 @@ import { useCounter } from '@mantine/hooks'
 import { modals } from '@mantine/modals'
 import { notifications } from '@mantine/notifications'
 import { useNavigate } from '@tanstack/react-router'
+import type { TFunction } from 'i18next'
 import { DataTable } from 'mantine-datatable'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import type { ContactStatus } from '../../../generated/handlers/types.gen.ts'
 import { track } from '../../tracking.ts'
 import { trpc } from '../../trpc.ts'
 
-type ContactStatusFilter = 'all' | 'active' | 'unsubscribed'
+type ContactStatusFilter = 'all' | ContactStatus
 
 const PAGE_SIZE = 10
 
-function translateStatus(
-  t: ReturnType<typeof useTranslation>['t'],
-  status: 'active' | 'unsubscribed',
-): string {
+function translateStatus(t: TFunction, status: ContactStatus): string {
   if (status === 'active') {
     return t(($) => $.status.active)
   }
