@@ -61,7 +61,7 @@
     "client-only": "^0.0.1",
     "drizzle-orm": "1.0.0-beta.22-41a7d21",
     "drizzle-zod": "^0.8.3",
-    "es-toolkit": "^1.45.1",
+    "es-toolkit": "^1.46.0",
     "fastify": "^5.8.5",
     "fastify-plugin": "^5.1.0",
     "fastify-type-provider-zod": "^6.1.0",
