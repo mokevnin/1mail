@@ -53,7 +53,7 @@
     "@orpc/server": "^1.13.14",
     "@orpc/tanstack-query": "^1.13.14",
     "@platformatic/job-queue": "^0.5.0",
-    "@tanstack/react-query": "^5.99.0",
+    "@tanstack/react-query": "^5.99.2",
     "@tanstack/react-router": "^1.168.22",
     "bcryptjs": "^3.0.3",
     "better-result": "^2.8.2",
