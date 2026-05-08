@@ -1,6 +1,6 @@
 env "local" {
   src = "ent://ent/schema"
-  dev = "docker://postgres/16/dev"
+  dev = "docker://postgres/18/dev"
   migration {
     dir = "file://migrations"
   }
