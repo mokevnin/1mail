@@ -18,9 +18,6 @@
       "name": "Events"
     },
     {
-      "name": "Collect"
-    },
-    {
       "name": "Auth"
     }
   ],
@@ -61,7 +58,9 @@
             }
           }
         },
-        "tags": ["Auth"]
+        "tags": [
+          "Auth"
+        ]
       }
     },
     "/auth/tokens": {
@@ -110,7 +109,9 @@
             }
           }
         },
-        "tags": ["Auth"],
+        "tags": [
+          "Auth"
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -157,7 +158,9 @@
             }
           }
         },
-        "tags": ["Auth"]
+        "tags": [
+          "Auth"
+        ]
       }
     },
     "/auth/tokens/bootstrap": {
@@ -215,7 +218,9 @@
             }
           }
         },
-        "tags": ["Auth"],
+        "tags": [
+          "Auth"
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -226,7 +231,9 @@
             }
           }
         },
-        "security": [{}]
+        "security": [
+          {}
+        ]
       }
     },
     "/auth/tokens/{id}": {
@@ -287,7 +294,9 @@
             }
           }
         },
-        "tags": ["Auth"]
+        "tags": [
+          "Auth"
+        ]
       }
     },
     "/broadcasts": {
@@ -327,7 +336,9 @@
             }
           }
         },
-        "tags": ["Broadcasts"],
+        "tags": [
+          "Broadcasts"
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -357,7 +368,13 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "required": ["items", "page", "pageSize", "totalItems", "totalPages"],
+                  "required": [
+                    "items",
+                    "page",
+                    "pageSize",
+                    "totalItems",
+                    "totalPages"
+                  ],
                   "properties": {
                     "items": {
                       "type": "array",
@@ -423,7 +440,9 @@
             }
           }
         },
-        "tags": ["Broadcasts"]
+        "tags": [
+          "Broadcasts"
+        ]
       }
     },
     "/broadcasts/{id}": {
@@ -482,7 +501,9 @@
             }
           }
         },
-        "tags": ["Broadcasts"]
+        "tags": [
+          "Broadcasts"
+        ]
       },
       "put": {
         "operationId": "Broadcasts_update",
@@ -549,7 +570,9 @@
             }
           }
         },
-        "tags": ["Broadcasts"],
+        "tags": [
+          "Broadcasts"
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -609,116 +632,9 @@
             }
           }
         },
-        "tags": ["Broadcasts"]
-      }
-    },
-    "/collect/events": {
-      "post": {
-        "operationId": "CollectEvents_create",
-        "parameters": [
-          {
-            "name": "x-collect-key",
-            "in": "header",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": "There is no content to send for this request, but the headers may be useful."
-          },
-          "401": {
-            "description": "RFC 7807 unauthorized response",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "RFC 7807 validation response",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          }
-        },
-        "tags": ["Collect"],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CollectEventsInput"
-              }
-            }
-          }
-        }
-      }
-    },
-    "/collect/identify": {
-      "post": {
-        "operationId": "CollectIdentify_create",
-        "parameters": [
-          {
-            "name": "x-collect-key",
-            "in": "header",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "The request has succeeded.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CollectOkResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "RFC 7807 unauthorized response",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "RFC 7807 validation response",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          }
-        },
-        "tags": ["Collect"],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CollectIdentifyInput"
-              }
-            }
-          }
-        }
+        "tags": [
+          "Broadcasts"
+        ]
       }
     },
     "/contacts": {
@@ -768,7 +684,9 @@
             }
           }
         },
-        "tags": ["Contacts"],
+        "tags": [
+          "Contacts"
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -808,7 +726,13 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "required": ["items", "page", "pageSize", "totalItems", "totalPages"],
+                  "required": [
+                    "items",
+                    "page",
+                    "pageSize",
+                    "totalItems",
+                    "totalPages"
+                  ],
                   "properties": {
                     "items": {
                       "type": "array",
@@ -874,7 +798,9 @@
             }
           }
         },
-        "tags": ["Contacts"]
+        "tags": [
+          "Contacts"
+        ]
       }
     },
     "/contacts/{id}": {
@@ -933,7 +859,9 @@
             }
           }
         },
-        "tags": ["Contacts"]
+        "tags": [
+          "Contacts"
+        ]
       },
       "put": {
         "operationId": "Contacts_update",
@@ -1010,7 +938,9 @@
             }
           }
         },
-        "tags": ["Contacts"],
+        "tags": [
+          "Contacts"
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -1070,7 +1000,9 @@
             }
           }
         },
-        "tags": ["Contacts"]
+        "tags": [
+          "Contacts"
+        ]
       }
     },
     "/event-actions": {
@@ -1092,7 +1024,13 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "required": ["items", "page", "pageSize", "totalItems", "totalPages"],
+                  "required": [
+                    "items",
+                    "page",
+                    "pageSize",
+                    "totalItems",
+                    "totalPages"
+                  ],
                   "properties": {
                     "items": {
                       "type": "array",
@@ -1158,7 +1096,9 @@
             }
           }
         },
-        "tags": ["Events"]
+        "tags": [
+          "Events"
+        ]
       }
     },
     "/events": {
@@ -1191,7 +1131,9 @@
             }
           }
         },
-        "tags": ["Events"],
+        "tags": [
+          "Events"
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -1241,7 +1183,9 @@
             }
           }
         },
-        "tags": ["Segments"],
+        "tags": [
+          "Segments"
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -1271,7 +1215,13 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "required": ["items", "page", "pageSize", "totalItems", "totalPages"],
+                  "required": [
+                    "items",
+                    "page",
+                    "pageSize",
+                    "totalItems",
+                    "totalPages"
+                  ],
                   "properties": {
                     "items": {
                       "type": "array",
@@ -1337,7 +1287,9 @@
             }
           }
         },
-        "tags": ["Segments"]
+        "tags": [
+          "Segments"
+        ]
       }
     },
     "/segments/{id}": {
@@ -1396,7 +1348,9 @@
             }
           }
         },
-        "tags": ["Segments"]
+        "tags": [
+          "Segments"
+        ]
       },
       "put": {
         "operationId": "Segments_update",
@@ -1463,7 +1417,9 @@
             }
           }
         },
-        "tags": ["Segments"],
+        "tags": [
+          "Segments"
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -1523,7 +1479,9 @@
             }
           }
         },
-        "tags": ["Segments"]
+        "tags": [
+          "Segments"
+        ]
       }
     }
   },
@@ -1562,7 +1520,13 @@
     "schemas": {
       "ApiTokenInfo": {
         "type": "object",
-        "required": ["id", "name", "scopes", "createdAt", "updatedAt"],
+        "required": [
+          "id",
+          "name",
+          "scopes",
+          "createdAt",
+          "updatedAt"
+        ],
         "properties": {
           "id": {
             "$ref": "#/components/schemas/EntityId"
@@ -1613,7 +1577,9 @@
       },
       "ApiTokenListResponse": {
         "type": "object",
-        "required": ["items"],
+        "required": [
+          "items"
+        ],
         "properties": {
           "items": {
             "type": "array",
@@ -1637,7 +1603,11 @@
       },
       "BroadcastResource": {
         "type": "object",
-        "required": ["id", "createdAt", "updatedAt"],
+        "required": [
+          "id",
+          "createdAt",
+          "updatedAt"
+        ],
         "properties": {
           "id": {
             "allOf": [
@@ -1673,25 +1643,119 @@
       },
       "BroadcastStatus": {
         "type": "string",
-        "enum": ["draft", "scheduled", "sent"],
+        "enum": [
+          "draft",
+          "scheduled",
+          "sent"
+        ],
         "description": "Broadcast status"
       },
-      "CollectEventInput": {
+      "ContactResource": {
         "type": "object",
-        "required": ["visitorId", "action"],
+        "required": [
+          "id",
+          "email",
+          "status",
+          "createdAt",
+          "updatedAt"
+        ],
         "properties": {
-          "visitorId": {
-            "type": "string"
+          "id": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EntityId"
+              }
+            ],
+            "description": "Unique identifier"
           },
-          "action": {
-            "type": "string"
+          "email": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EmailAddress"
+              }
+            ],
+            "description": "Email address"
           },
-          "properties": {
+          "firstName": {
+            "type": "string",
+            "nullable": true,
+            "description": "First name"
+          },
+          "lastName": {
+            "type": "string",
+            "nullable": true,
+            "description": "Last name"
+          },
+          "timeZone": {
+            "type": "string",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TimeZoneName"
+              }
+            ],
+            "nullable": true,
+            "description": "IANA time zone identifier"
+          },
+          "customFields": {
             "type": "object",
-            "additionalProperties": {},
-            "nullable": true
+            "additionalProperties": {
+              "type": "string"
+            },
+            "nullable": true,
+            "description": "Custom fields as key-value pairs"
           },
-          "occurredAt": {
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ContactStatus"
+              }
+            ],
+            "description": "Current status"
+          },
+          "createdAt": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Timestamp"
+              }
+            ],
+            "description": "Creation timestamp"
+          },
+          "updatedAt": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Timestamp"
+              }
+            ],
+            "description": "Last update timestamp"
+          }
+        },
+        "description": "Contact resource"
+      },
+      "ContactStatus": {
+        "type": "string",
+        "enum": [
+          "active",
+          "unsubscribed"
+        ],
+        "description": "Contact status"
+      },
+      "CreateApiTokenInput": {
+        "type": "object",
+        "required": [
+          "name",
+          "scopes"
+        ],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "scopes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ApiTokenScope"
+            }
+          },
+          "expiresAt": {
             "type": "string",
             "allOf": [
               {
@@ -1702,62 +1766,57 @@
           }
         }
       },
-      "CollectEventsInput": {
+      "CreateApiTokenResponse": {
         "type": "object",
-        "required": ["events"],
+        "required": [
+          "token",
+          "tokenInfo"
+        ],
         "properties": {
-          "events": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/CollectEventInput"
-            }
-          }
-        }
-      },
-      "CollectIdentifyInput": {
-        "type": "object",
-        "required": ["visitorId"],
-        "properties": {
-          "visitorId": {
+          "token": {
             "type": "string"
           },
-          "email": {
+          "tokenInfo": {
+            "$ref": "#/components/schemas/ApiTokenInfo"
+          }
+        }
+      },
+      "CreateBroadcastInput": {
+        "type": "object",
+        "required": [
+          "name",
+          "segmentId",
+          "status"
+        ],
+        "properties": {
+          "name": {
             "type": "string",
+            "description": "Broadcast name"
+          },
+          "segmentId": {
             "allOf": [
               {
-                "$ref": "#/components/schemas/EmailAddress"
+                "$ref": "#/components/schemas/EntityId"
               }
             ],
-            "nullable": true
+            "description": "Segment ID"
           },
-          "phone": {
-            "type": "string",
-            "nullable": true
-          },
-          "subjectId": {
-            "type": "string",
-            "nullable": true
-          },
-          "traits": {
-            "type": "object",
-            "additionalProperties": {},
-            "nullable": true
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/BroadcastStatus"
+              }
+            ],
+            "description": "Broadcast status"
           }
-        }
+        },
+        "description": "Request body for creating a broadcast"
       },
-      "CollectOkResponse": {
+      "CreateContactInput": {
         "type": "object",
-        "required": ["ok"],
-        "properties": {
-          "ok": {
-            "type": "boolean",
-            "enum": [true]
-          }
-        }
-      },
-      "ContactFields": {
-        "type": "object",
-        "required": ["email"],
+        "required": [
+          "email"
+        ],
         "properties": {
           "email": {
             "allOf": [
@@ -1796,166 +1855,14 @@
             "description": "Custom fields as key-value pairs"
           }
         },
-        "description": "Shared writable fields for contact"
-      },
-      "ContactResource": {
-        "type": "object",
-        "required": ["id", "status", "createdAt", "updatedAt"],
-        "properties": {
-          "id": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/EntityId"
-              }
-            ],
-            "description": "Unique identifier"
-          },
-          "status": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ContactStatus"
-              }
-            ],
-            "description": "Current status"
-          },
-          "createdAt": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/Timestamp"
-              }
-            ],
-            "description": "Creation timestamp"
-          },
-          "updatedAt": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/Timestamp"
-              }
-            ],
-            "description": "Last update timestamp"
-          }
-        },
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/ContactFields"
-          }
-        ],
-        "description": "Contact resource"
-      },
-      "ContactStatus": {
-        "type": "string",
-        "enum": ["active", "unsubscribed"],
-        "description": "Contact status"
-      },
-      "ContactUpdatableFields": {
-        "type": "object",
-        "properties": {
-          "firstName": {
-            "type": "string",
-            "nullable": true,
-            "description": "First name"
-          },
-          "lastName": {
-            "type": "string",
-            "nullable": true,
-            "description": "Last name"
-          },
-          "timeZone": {
-            "type": "string",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/TimeZoneName"
-              }
-            ],
-            "nullable": true,
-            "description": "IANA time zone identifier"
-          },
-          "customFields": {
-            "type": "object",
-            "additionalProperties": {
-              "type": "string"
-            },
-            "nullable": true,
-            "description": "Custom fields as key-value pairs"
-          }
-        },
-        "description": "Shared updatable fields for contact"
-      },
-      "CreateApiTokenInput": {
-        "type": "object",
-        "required": ["name", "scopes"],
-        "properties": {
-          "name": {
-            "type": "string"
-          },
-          "scopes": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ApiTokenScope"
-            }
-          },
-          "expiresAt": {
-            "type": "string",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/Timestamp"
-              }
-            ],
-            "nullable": true
-          }
-        }
-      },
-      "CreateApiTokenResponse": {
-        "type": "object",
-        "required": ["token", "tokenInfo"],
-        "properties": {
-          "token": {
-            "type": "string"
-          },
-          "tokenInfo": {
-            "$ref": "#/components/schemas/ApiTokenInfo"
-          }
-        }
-      },
-      "CreateBroadcastInput": {
-        "type": "object",
-        "required": ["name", "segmentId", "status"],
-        "properties": {
-          "name": {
-            "type": "string",
-            "description": "Broadcast name"
-          },
-          "segmentId": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/EntityId"
-              }
-            ],
-            "description": "Segment ID"
-          },
-          "status": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/BroadcastStatus"
-              }
-            ],
-            "description": "Broadcast status"
-          }
-        },
-        "description": "Request body for creating a broadcast"
-      },
-      "CreateContactInput": {
-        "type": "object",
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/ContactFields"
-          }
-        ],
         "description": "Request body for creating a contact"
       },
       "CreateSegmentInput": {
         "type": "object",
-        "required": ["name", "type"],
+        "required": [
+          "name",
+          "type"
+        ],
         "properties": {
           "name": {
             "type": "string",
@@ -1986,7 +1893,9 @@
       },
       "EventActionResource": {
         "type": "object",
-        "required": ["action"],
+        "required": [
+          "action"
+        ],
         "properties": {
           "action": {
             "type": "string",
@@ -1997,7 +1906,10 @@
       },
       "EventInput": {
         "type": "object",
-        "required": ["subjectId", "action"],
+        "required": [
+          "subjectId",
+          "action"
+        ],
         "properties": {
           "subjectId": {
             "type": "string",
@@ -2085,7 +1997,9 @@
       },
       "RecordEventsInput": {
         "type": "object",
-        "required": ["events"],
+        "required": [
+          "events"
+        ],
         "properties": {
           "events": {
             "type": "array",
@@ -2099,7 +2013,11 @@
       },
       "SegmentResource": {
         "type": "object",
-        "required": ["id", "createdAt", "updatedAt"],
+        "required": [
+          "id",
+          "createdAt",
+          "updatedAt"
+        ],
         "properties": {
           "id": {
             "allOf": [
@@ -2135,7 +2053,10 @@
       },
       "SegmentType": {
         "type": "string",
-        "enum": ["rule", "snapshot"],
+        "enum": [
+          "rule",
+          "snapshot"
+        ],
         "description": "Segment type"
       },
       "TimeZoneName": {
@@ -2173,11 +2094,36 @@
       },
       "UpdateContactInput": {
         "type": "object",
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/ContactUpdatableFields"
+        "properties": {
+          "firstName": {
+            "type": "string",
+            "nullable": true,
+            "description": "First name"
+          },
+          "lastName": {
+            "type": "string",
+            "nullable": true,
+            "description": "Last name"
+          },
+          "timeZone": {
+            "type": "string",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TimeZoneName"
+              }
+            ],
+            "nullable": true,
+            "description": "IANA time zone identifier"
+          },
+          "customFields": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "nullable": true,
+            "description": "Custom fields as key-value pairs"
           }
-        ],
+        },
         "description": "Request body for updating a contact"
       },
       "UpdateSegmentInput": {
@@ -2204,7 +2150,9 @@
       },
       "Versions": {
         "type": "string",
-        "enum": ["1.0.0"]
+        "enum": [
+          "1.0.0"
+        ]
       }
     },
     "securitySchemes": {

@@ -5,9 +5,12 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { RouterProvider } from '@tanstack/react-router'
 import { StrictMode, useState } from 'react'
 import { createRoot } from 'react-dom/client'
+import { client } from '../generated/site/client.gen.ts'
 import './i18n.ts'
 import { router } from './router.tsx'
 import { initTracking } from './tracking.ts'
+
+client.setConfig({ baseUrl: '/site' })
 
 import '@mantine/core/styles.css'
 import '@mantine/notifications/styles.css'

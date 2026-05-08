@@ -9,8 +9,41 @@ enum SiteContactStatus {
   unsubscribed,
 }
 
-/** Writable contact fields used by the site UI */
-model SiteContactFields {
+/** Contact resource used by the site UI */
+@resource("contacts")
+@segment("contacts")
+model SiteContactResource {
+  /** Unique identifier */
+  @key
+  id: EntityId;
+
+  /** Email address */
+  email: EmailAddress;
+
+  /** First name */
+  firstName?: string | null;
+
+  /** Last name */
+  lastName?: string | null;
+
+  /** IANA time zone identifier */
+  timeZone?: TimeZoneName | null;
+
+  /** Custom fields as key-value pairs */
+  customFields?: Record<string> | null;
+
+  /** Current status */
+  status: SiteContactStatus;
+
+  /** Creation timestamp */
+  createdAt: Timestamp;
+
+  /** Last update timestamp */
+  updatedAt: Timestamp;
+}
+
+/** Site request body for creating a contact */
+model SiteCreateContactInput {
   /** Email address */
   email: EmailAddress;
 
@@ -27,8 +60,8 @@ model SiteContactFields {
   customFields?: Record<string> | null;
 }
 
-/** Updatable contact fields used by the site UI */
-model SiteContactUpdatableFields {
+/** Site request body for updating a contact */
+model SiteUpdateContactInput {
   /** First name */
   firstName?: string | null;
 
@@ -41,30 +74,6 @@ model SiteContactUpdatableFields {
   /** Custom fields as key-value pairs */
   customFields?: Record<string> | null;
 }
-
-/** Contact resource used by the site UI */
-@resource("contacts")
-@segment("contacts")
-model SiteContactResource extends SiteContactFields {
-  /** Unique identifier */
-  @key
-  id: EntityId;
-
-  /** Current status */
-  status: SiteContactStatus;
-
-  /** Creation timestamp */
-  createdAt: Timestamp;
-
-  /** Last update timestamp */
-  updatedAt: Timestamp;
-}
-
-/** Site request body for creating a contact */
-model SiteCreateContactInput extends SiteContactFields {}
-
-/** Site request body for updating a contact */
-model SiteUpdateContactInput extends SiteContactUpdatableFields {}
 
 @route("/contacts")
 @tag("Site Contacts")

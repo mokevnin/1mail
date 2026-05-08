@@ -1,2 +1,2 @@
-frontend: make dev-frontend
 backend: make dev-backend
+frontend: make dev-frontend

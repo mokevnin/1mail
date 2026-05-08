@@ -4,12 +4,17 @@ import { modals } from '@mantine/modals'
 import { notifications } from '@mantine/notifications'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
+import { contactsCreateRoute, contactsEditRoute } from '../../router.tsx'
 import type { TFunction } from 'i18next'
 import { DataTable } from 'mantine-datatable'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import {
+  siteContactsDeleteMutation,
+  siteContactsListOptions,
+  siteContactsListQueryKey,
+} from '../../../generated/site/@tanstack/react-query.gen.ts'
 import type { SiteContactStatus } from '../../../generated/site/types.gen.ts'
-import { orpc } from '../../orpc/client.ts'
 import { track } from '../../tracking.ts'
 
 type ContactStatusFilter = 'all' | SiteContactStatus
@@ -34,41 +39,34 @@ export function ContactsListPage() {
   const statusForQuery = status === 'all' ? undefined : status
 
   const contactsList = useQuery(
-    orpc.siteContactsList.queryOptions({
-      input: {
-        query: {
-          page,
-          pageSize: PAGE_SIZE,
-          ...(statusForQuery ? { status: statusForQuery } : {}),
-        },
+    siteContactsListOptions({
+      query: {
+        page,
+        pageSize: PAGE_SIZE,
+        ...(statusForQuery !== undefined ? { status: statusForQuery } : {}),
       },
     }),
   )
 
-  const deleteContactMutation = useMutation(
-    orpc.siteContactsDelete.mutationOptions({
-      onSuccess: async (_result, variables) => {
-        await queryClient.invalidateQueries({
-          queryKey: orpc.siteContactsList.key(),
-        })
-        await track('contact.deleted', {
-          contactId: variables.params.id,
-        })
-        notifications.show({
-          color: 'teal',
-          title: t(($) => $.notifications.successTitle),
-          message: t(($) => $.notifications.contactDeleted),
-        })
-      },
-      onError: (error) => {
-        notifications.show({
-          color: 'red',
-          title: t(($) => $.alerts.deleteErrorTitle),
-          message: error.message,
-        })
-      },
-    }),
-  )
+  const deleteContactMutation = useMutation({
+    ...siteContactsDeleteMutation(),
+    onSuccess: async (_result, variables) => {
+      await queryClient.invalidateQueries({ queryKey: siteContactsListQueryKey() })
+      await track('contact.deleted', { contactId: variables.path.id })
+      notifications.show({
+        color: 'teal',
+        title: t(($) => $.notifications.successTitle),
+        message: t(($) => $.notifications.contactDeleted),
+      })
+    },
+    onError: (error) => {
+      notifications.show({
+        color: 'red',
+        title: t(($) => $.alerts.deleteErrorTitle),
+        message: error.detail ?? error.title,
+      })
+    },
+  })
 
   const totalItems = contactsList.data?.totalItems ?? 0
   const records = contactsList.data?.items ?? []
@@ -89,7 +87,7 @@ export function ContactsListPage() {
       },
       confirmProps: { color: 'red' },
       onConfirm: () => {
-        deleteContactMutation.mutate({ params: { id: contactId } })
+        deleteContactMutation.mutate({ path: { id: contactId } })
       },
     })
   }
@@ -109,14 +107,14 @@ export function ContactsListPage() {
           w={220}
         />
 
-        <Button onClick={() => navigate({ to: '/contacts/new' })}>
+        <Button onClick={() => navigate({ to: contactsCreateRoute.to })}>
           {t(($) => $.contacts.addContact)}
         </Button>
       </Group>
 
       {contactsList.isError ? (
         <Alert color="red" title={t(($) => $.alerts.loadErrorTitle)}>
-          {contactsList.error.message}
+          {contactsList.error.detail ?? contactsList.error.title}
         </Alert>
       ) : null}
 
@@ -144,7 +142,7 @@ export function ContactsListPage() {
                   size="compact-sm"
                   onClick={() =>
                     navigate({
-                      to: '/contacts/$contactId/edit',
+                      to: contactsEditRoute.to,
                       params: { contactId: record.id },
                     })
                   }

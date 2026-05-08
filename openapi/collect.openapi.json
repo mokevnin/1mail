@@ -1,0 +1,310 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "OneMail Collect API",
+    "version": "1.0.0"
+  },
+  "tags": [
+    {
+      "name": "Collect"
+    }
+  ],
+  "paths": {
+    "/events": {
+      "post": {
+        "operationId": "CollectEvents_create",
+        "parameters": [],
+        "responses": {
+          "204": {
+            "description": "There is no content to send for this request, but the headers may be useful."
+          },
+          "401": {
+            "description": "RFC 7807 unauthorized response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "RFC 7807 validation response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Collect"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CollectEventsInput"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/identify": {
+      "post": {
+        "operationId": "CollectIdentify_create",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "The request has succeeded.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CollectOkResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "RFC 7807 unauthorized response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "RFC 7807 validation response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Collect"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CollectIdentifyInput"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "BadRequestProblem": {
+        "type": "object",
+        "required": [
+          "body"
+        ],
+        "properties": {
+          "body": {
+            "$ref": "#/components/schemas/ProblemDetails"
+          }
+        },
+        "description": "RFC 7807 bad request response"
+      },
+      "CollectEventInput": {
+        "type": "object",
+        "required": [
+          "visitorId",
+          "action"
+        ],
+        "properties": {
+          "visitorId": {
+            "type": "string"
+          },
+          "action": {
+            "type": "string"
+          },
+          "properties": {
+            "type": "object",
+            "additionalProperties": {},
+            "nullable": true
+          },
+          "occurredAt": {
+            "type": "string",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Timestamp"
+              }
+            ],
+            "nullable": true
+          }
+        }
+      },
+      "CollectEventsInput": {
+        "type": "object",
+        "required": [
+          "events"
+        ],
+        "properties": {
+          "events": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CollectEventInput"
+            }
+          }
+        }
+      },
+      "CollectIdentifyInput": {
+        "type": "object",
+        "required": [
+          "visitorId"
+        ],
+        "properties": {
+          "visitorId": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EmailAddress"
+              }
+            ],
+            "nullable": true
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true
+          },
+          "subjectId": {
+            "type": "string",
+            "nullable": true
+          },
+          "traits": {
+            "type": "object",
+            "additionalProperties": {},
+            "nullable": true
+          }
+        }
+      },
+      "CollectOkResponse": {
+        "type": "object",
+        "required": [
+          "ok"
+        ],
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
+          }
+        }
+      },
+      "ConflictProblem": {
+        "type": "object",
+        "required": [
+          "body"
+        ],
+        "properties": {
+          "body": {
+            "$ref": "#/components/schemas/ProblemDetails"
+          }
+        },
+        "description": "RFC 7807 conflict response"
+      },
+      "EmailAddress": {
+        "type": "string",
+        "format": "email"
+      },
+      "EntityId": {
+        "type": "string",
+        "pattern": "^[0-9]+$"
+      },
+      "ForbiddenProblem": {
+        "type": "object",
+        "required": [
+          "body"
+        ],
+        "properties": {
+          "body": {
+            "$ref": "#/components/schemas/ProblemDetails"
+          }
+        },
+        "description": "RFC 7807 forbidden response"
+      },
+      "NotFoundProblem": {
+        "type": "object",
+        "required": [
+          "body"
+        ],
+        "properties": {
+          "body": {
+            "$ref": "#/components/schemas/ProblemDetails"
+          }
+        },
+        "description": "RFC 7807 not found response"
+      },
+      "ProblemDetails": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "A URI reference that identifies the problem type"
+          },
+          "title": {
+            "type": "string",
+            "description": "A short, human-readable summary of the problem type"
+          },
+          "status": {
+            "type": "integer",
+            "format": "int32",
+            "description": "HTTP status code"
+          },
+          "detail": {
+            "type": "string",
+            "description": "A human-readable explanation specific to this occurrence"
+          },
+          "instance": {
+            "type": "string",
+            "description": "A URI reference that identifies the specific occurrence"
+          },
+          "errors": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "description": "Validation errors grouped by field"
+          }
+        },
+        "description": "RFC 7807 Problem Details"
+      },
+      "TimeZoneName": {
+        "type": "string"
+      },
+      "Timestamp": {
+        "type": "string",
+        "format": "date-time"
+      }
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3000/collect",
+      "description": "Local development collect API",
+      "variables": {}
+    }
+  ]
+}

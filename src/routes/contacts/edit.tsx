@@ -3,9 +3,15 @@ import { useForm } from '@mantine/form'
 import { notifications } from '@mantine/notifications'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate, useParams } from '@tanstack/react-router'
+import { contactsRoute } from '../../router.tsx'
 import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { orpc } from '../../orpc/client.ts'
+import {
+  siteContactsGetOptions,
+  siteContactsGetQueryKey,
+  siteContactsListQueryKey,
+  siteContactsUpdateMutation,
+} from '../../../generated/site/@tanstack/react-query.gen.ts'
 import { track } from '../../tracking.ts'
 import { EMPTY_CONTACT_FORM } from './form.ts'
 
@@ -23,16 +29,10 @@ export function ContactEditPage() {
     initialValues: EMPTY_CONTACT_FORM,
   })
 
-  const getContactQuery = useQuery(
-    orpc.siteContactsGet.queryOptions({
-      enabled: parsedContactId !== null,
-      input: {
-        params: {
-          id: parsedContactId ?? '0',
-        },
-      },
-    }),
-  )
+  const getContactQuery = useQuery({
+    ...siteContactsGetOptions({ path: { id: parsedContactId ?? '0' } }),
+    enabled: parsedContactId !== null,
+  })
 
   useEffect(() => {
     if (!getContactQuery.data) {
@@ -45,45 +45,35 @@ export function ContactEditPage() {
       lastName: getContactQuery.data.lastName ?? '',
       timeZone: getContactQuery.data.timeZone ?? '',
     })
-  }, [form, getContactQuery.data])
+  }, [getContactQuery.data])
 
-  const updateContactMutation = useMutation(
-    orpc.siteContactsUpdate.mutationOptions({
-      onSuccess: async (updated) => {
-        await Promise.all([
-          queryClient.invalidateQueries({
-            queryKey: orpc.siteContactsList.key(),
-          }),
-          queryClient.invalidateQueries({
-            queryKey: orpc.siteContactsGet.key({
-              input: {
-                params: {
-                  id: updated.id,
-                },
-              },
-            }),
-          }),
-        ])
-        await track('contact.updated', {
-          contactId: updated.id,
-          email: updated.email,
-        })
-
-        notifications.show({
-          color: 'teal',
-          title: t(($) => $.notifications.successTitle),
-          message: t(($) => $.notifications.contactUpdated),
-        })
-      },
-      onError: (error) => {
-        notifications.show({
-          color: 'red',
-          title: t(($) => $.alerts.saveErrorTitle),
-          message: error.message,
-        })
-      },
-    }),
-  )
+  const updateContactMutation = useMutation({
+    ...siteContactsUpdateMutation(),
+    onSuccess: async (updated) => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: siteContactsListQueryKey() }),
+        queryClient.invalidateQueries({
+          queryKey: siteContactsGetQueryKey({ path: { id: updated.id } }),
+        }),
+      ])
+      await track('contact.updated', {
+        contactId: updated.id,
+        email: updated.email,
+      })
+      notifications.show({
+        color: 'teal',
+        title: t(($) => $.notifications.successTitle),
+        message: t(($) => $.notifications.contactUpdated),
+      })
+    },
+    onError: (error) => {
+      notifications.show({
+        color: 'red',
+        title: t(($) => $.alerts.saveErrorTitle),
+        message: error.detail ?? error.title,
+      })
+    },
+  })
 
   const onSubmit = form.onSubmit((values) => {
     if (parsedContactId === null) {
@@ -91,13 +81,11 @@ export function ContactEditPage() {
     }
 
     updateContactMutation.mutate({
+      path: { id: parsedContactId },
       body: {
         firstName: values.firstName,
         lastName: values.lastName,
         timeZone: values.timeZone,
-      },
-      params: {
-        id: parsedContactId,
       },
     })
   })
@@ -117,7 +105,7 @@ export function ContactEditPage() {
   if (getContactQuery.isError) {
     return (
       <Alert color="red" title={t(($) => $.alerts.loadErrorTitle)}>
-        {getContactQuery.error.message}
+        {getContactQuery.error.detail ?? getContactQuery.error.title}
       </Alert>
     )
   }
@@ -134,7 +122,7 @@ export function ContactEditPage() {
           <TextInput label={t(($) => $.table.timeZone)} {...form.getInputProps('timeZone')} />
 
           <Group justify="flex-end">
-            <Button variant="default" type="button" onClick={() => navigate({ to: '/contacts' })}>
+            <Button variant="default" type="button" onClick={() => navigate({ to: contactsRoute.to })}>
               {t(($) => $.actions.cancel)}
             </Button>
             <Button type="submit" loading={updateContactMutation.isPending}>

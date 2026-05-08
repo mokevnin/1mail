@@ -1,4 +1,4 @@
-import { $, defineConfig } from '@hey-api/openapi-ts'
+import { defineConfig } from '@hey-api/openapi-ts'
 
 export default defineConfig({
   input: './openapi/site.openapi.json',
@@ -8,23 +8,11 @@ export default defineConfig({
   },
   plugins: [
     '@hey-api/typescript',
+    '@hey-api/client-fetch',
     {
-      dates: true,
-      name: '@hey-api/transformers',
-    },
-    {
-      name: 'zod',
-      '~resolvers': {
-        string: ({ schema, symbols }) => {
-          if (schema.format === 'date-time') {
-            return $(symbols.z).attr('date').call()
-          }
-        },
-      },
-    },
-    {
-      name: 'orpc',
-      validator: 'zod',
+      name: '@tanstack/react-query',
+      queryOptions: true,
+      mutationOptions: true,
     },
   ],
 })

@@ -16,19 +16,19 @@ const indexRoute = createRoute({
   },
 })
 
-const contactsRoute = createRoute({
+export const contactsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/contacts',
   component: ContactsListPage,
 })
 
-const contactsCreateRoute = createRoute({
+export const contactsCreateRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/contacts/new',
   component: ContactCreatePage,
 })
 
-const contactsEditRoute = createRoute({
+export const contactsEditRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/contacts/$contactId/edit',
   component: ContactEditPage,

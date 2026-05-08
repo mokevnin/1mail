@@ -9,8 +9,41 @@ enum ContactStatus {
   unsubscribed,
 }
 
-/** Shared writable fields for contact */
-model ContactFields {
+/** Contact resource */
+@resource("contacts")
+@segment("contacts")
+model ContactResource {
+  /** Unique identifier */
+  @key
+  id: EntityId;
+
+  /** Email address */
+  email: EmailAddress;
+
+  /** First name */
+  firstName?: string | null;
+
+  /** Last name */
+  lastName?: string | null;
+
+  /** IANA time zone identifier */
+  timeZone?: TimeZoneName | null;
+
+  /** Custom fields as key-value pairs */
+  customFields?: Record<string> | null;
+
+  /** Current status */
+  status: ContactStatus;
+
+  /** Creation timestamp */
+  createdAt: Timestamp;
+
+  /** Last update timestamp */
+  updatedAt: Timestamp;
+}
+
+/** Request body for creating a contact */
+model CreateContactInput {
   /** Email address */
   email: EmailAddress;
 
@@ -27,8 +60,8 @@ model ContactFields {
   customFields?: Record<string> | null;
 }
 
-/** Shared updatable fields for contact */
-model ContactUpdatableFields {
+/** Request body for updating a contact */
+model UpdateContactInput {
   /** First name */
   firstName?: string | null;
 
@@ -41,30 +74,6 @@ model ContactUpdatableFields {
   /** Custom fields as key-value pairs */
   customFields?: Record<string> | null;
 }
-
-/** Contact resource */
-@resource("contacts")
-@segment("contacts")
-model ContactResource extends ContactFields {
-  /** Unique identifier */
-  @key
-  id: EntityId;
-
-  /** Current status */
-  status: ContactStatus;
-
-  /** Creation timestamp */
-  createdAt: Timestamp;
-
-  /** Last update timestamp */
-  updatedAt: Timestamp;
-}
-
-/** Request body for creating a contact */
-model CreateContactInput extends ContactFields {}
-
-/** Request body for updating a contact */
-model UpdateContactInput extends ContactUpdatableFields {}
 
 @route("/contacts")
 @tag("Contacts")

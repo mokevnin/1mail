@@ -3,8 +3,12 @@ import { useForm } from '@mantine/form'
 import { notifications } from '@mantine/notifications'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
+import { contactsEditRoute, contactsRoute } from '../../router.tsx'
 import { useTranslation } from 'react-i18next'
-import { orpc } from '../../orpc/client.ts'
+import {
+  siteContactsCreateMutation,
+  siteContactsListQueryKey,
+} from '../../../generated/site/@tanstack/react-query.gen.ts'
 import { track } from '../../tracking.ts'
 import { EMPTY_CONTACT_FORM } from './form.ts'
 
@@ -16,35 +20,32 @@ export function ContactCreatePage() {
     initialValues: EMPTY_CONTACT_FORM,
   })
 
-  const createContactMutation = useMutation(
-    orpc.siteContactsCreate.mutationOptions({
-      onSuccess: async (created) => {
-        await queryClient.invalidateQueries({
-          queryKey: orpc.siteContactsList.key(),
-        })
-        await track('contact.created', {
-          contactId: created.id,
-          email: created.email,
-        })
-        notifications.show({
-          color: 'teal',
-          title: t(($) => $.notifications.successTitle),
-          message: t(($) => $.notifications.contactCreated),
-        })
-        await navigate({
-          to: '/contacts/$contactId/edit',
-          params: { contactId: created.id },
-        })
-      },
-      onError: (error) => {
-        notifications.show({
-          color: 'red',
-          title: t(($) => $.alerts.saveErrorTitle),
-          message: error.message,
-        })
-      },
-    }),
-  )
+  const createContactMutation = useMutation({
+    ...siteContactsCreateMutation(),
+    onSuccess: async (created) => {
+      await queryClient.invalidateQueries({ queryKey: siteContactsListQueryKey() })
+      await track('contact.created', {
+        contactId: created.id,
+        email: created.email,
+      })
+      notifications.show({
+        color: 'teal',
+        title: t(($) => $.notifications.successTitle),
+        message: t(($) => $.notifications.contactCreated),
+      })
+      await navigate({
+        to: contactsEditRoute.to,
+        params: { contactId: created.id },
+      })
+    },
+    onError: (error) => {
+      notifications.show({
+        color: 'red',
+        title: t(($) => $.alerts.saveErrorTitle),
+        message: error.detail ?? error.title,
+      })
+    },
+  })
 
   const onSubmit = form.onSubmit((values) => {
     createContactMutation.mutate({
@@ -67,7 +68,7 @@ export function ContactCreatePage() {
           <TextInput label={t(($) => $.table.timeZone)} {...form.getInputProps('timeZone')} />
 
           <Group justify="flex-end">
-            <Button variant="default" type="button" onClick={() => navigate({ to: '/contacts' })}>
+            <Button variant="default" type="button" onClick={() => navigate({ to: contactsRoute.to })}>
               {t(($) => $.actions.cancel)}
             </Button>
             <Button type="submit" loading={createContactMutation.isPending}>

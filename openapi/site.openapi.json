@@ -47,7 +47,9 @@
             }
           }
         },
-        "tags": ["Site Contacts"],
+        "tags": [
+          "Site Contacts"
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -87,7 +89,13 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "required": ["items", "page", "pageSize", "totalItems", "totalPages"],
+                  "required": [
+                    "items",
+                    "page",
+                    "pageSize",
+                    "totalItems",
+                    "totalPages"
+                  ],
                   "properties": {
                     "items": {
                       "type": "array",
@@ -143,7 +151,9 @@
             }
           }
         },
-        "tags": ["Site Contacts"]
+        "tags": [
+          "Site Contacts"
+        ]
       }
     },
     "/contacts/{id}": {
@@ -192,7 +202,9 @@
             }
           }
         },
-        "tags": ["Site Contacts"]
+        "tags": [
+          "Site Contacts"
+        ]
       },
       "put": {
         "operationId": "SiteContacts_update",
@@ -259,7 +271,9 @@
             }
           }
         },
-        "tags": ["Site Contacts"],
+        "tags": [
+          "Site Contacts"
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -309,7 +323,9 @@
             }
           }
         },
-        "tags": ["Site Contacts"]
+        "tags": [
+          "Site Contacts"
+        ]
       }
     }
   },
@@ -351,7 +367,9 @@
       },
       "ForbiddenProblem": {
         "type": "object",
-        "required": ["body"],
+        "required": [
+          "body"
+        ],
         "properties": {
           "body": {
             "$ref": "#/components/schemas/ProblemDetails"
@@ -396,9 +414,100 @@
         },
         "description": "RFC 7807 Problem Details"
       },
-      "SiteContactFields": {
+      "SiteContactResource": {
         "type": "object",
-        "required": ["email"],
+        "required": [
+          "id",
+          "email",
+          "status",
+          "createdAt",
+          "updatedAt"
+        ],
+        "properties": {
+          "id": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EntityId"
+              }
+            ],
+            "description": "Unique identifier"
+          },
+          "email": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EmailAddress"
+              }
+            ],
+            "description": "Email address"
+          },
+          "firstName": {
+            "type": "string",
+            "nullable": true,
+            "description": "First name"
+          },
+          "lastName": {
+            "type": "string",
+            "nullable": true,
+            "description": "Last name"
+          },
+          "timeZone": {
+            "type": "string",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TimeZoneName"
+              }
+            ],
+            "nullable": true,
+            "description": "IANA time zone identifier"
+          },
+          "customFields": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "nullable": true,
+            "description": "Custom fields as key-value pairs"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SiteContactStatus"
+              }
+            ],
+            "description": "Current status"
+          },
+          "createdAt": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Timestamp"
+              }
+            ],
+            "description": "Creation timestamp"
+          },
+          "updatedAt": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Timestamp"
+              }
+            ],
+            "description": "Last update timestamp"
+          }
+        },
+        "description": "Contact resource used by the site UI"
+      },
+      "SiteContactStatus": {
+        "type": "string",
+        "enum": [
+          "active",
+          "unsubscribed"
+        ],
+        "description": "Contact status for site UI"
+      },
+      "SiteCreateContactInput": {
+        "type": "object",
+        "required": [
+          "email"
+        ],
         "properties": {
           "email": {
             "allOf": [
@@ -437,58 +546,9 @@
             "description": "Custom fields as key-value pairs"
           }
         },
-        "description": "Writable contact fields used by the site UI"
+        "description": "Site request body for creating a contact"
       },
-      "SiteContactResource": {
-        "type": "object",
-        "required": ["id", "status", "createdAt", "updatedAt"],
-        "properties": {
-          "id": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/EntityId"
-              }
-            ],
-            "description": "Unique identifier"
-          },
-          "status": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/SiteContactStatus"
-              }
-            ],
-            "description": "Current status"
-          },
-          "createdAt": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/Timestamp"
-              }
-            ],
-            "description": "Creation timestamp"
-          },
-          "updatedAt": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/Timestamp"
-              }
-            ],
-            "description": "Last update timestamp"
-          }
-        },
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/SiteContactFields"
-          }
-        ],
-        "description": "Contact resource used by the site UI"
-      },
-      "SiteContactStatus": {
-        "type": "string",
-        "enum": ["active", "unsubscribed"],
-        "description": "Contact status for site UI"
-      },
-      "SiteContactUpdatableFields": {
+      "SiteUpdateContactInput": {
         "type": "object",
         "properties": {
           "firstName": {
@@ -520,24 +580,6 @@
             "description": "Custom fields as key-value pairs"
           }
         },
-        "description": "Updatable contact fields used by the site UI"
-      },
-      "SiteCreateContactInput": {
-        "type": "object",
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/SiteContactFields"
-          }
-        ],
-        "description": "Site request body for creating a contact"
-      },
-      "SiteUpdateContactInput": {
-        "type": "object",
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/SiteContactUpdatableFields"
-          }
-        ],
         "description": "Site request body for updating a contact"
       },
       "TimeZoneName": {
@@ -549,7 +591,9 @@
       },
       "UnauthorizedProblem": {
         "type": "object",
-        "required": ["body"],
+        "required": [
+          "body"
+        ],
         "properties": {
           "body": {
             "$ref": "#/components/schemas/ProblemDetails"

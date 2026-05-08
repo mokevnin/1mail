@@ -205,7 +205,7 @@ export async function identify(payload: IdentifyPayload): Promise<void> {
       }
 
       const queue = window._omq as unknown as QueueCommand[]
-      queue.push(['identify', payload])
+      Array.prototype.push.call(queue, ['identify', payload])
     }
 
     return
@@ -236,7 +236,7 @@ export async function track(
       }
 
       const queue = window._omq as unknown as QueueCommand[]
-      queue.push(['track', action, properties])
+      Array.prototype.push.call(queue, ['track', action, properties])
     }
 
     return

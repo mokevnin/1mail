@@ -48,9 +48,58 @@ export type ProblemDetails = {
 };
 
 /**
- * Writable contact fields used by the site UI
+ * Contact resource used by the site UI
  */
-export type SiteContactFields = {
+export type SiteContactResource = {
+    /**
+     * Unique identifier
+     */
+    id: EntityId;
+    /**
+     * Email address
+     */
+    email: EmailAddress;
+    /**
+     * First name
+     */
+    firstName?: string | null;
+    /**
+     * Last name
+     */
+    lastName?: string | null;
+    /**
+     * IANA time zone identifier
+     */
+    timeZone?: TimeZoneName | null;
+    /**
+     * Custom fields as key-value pairs
+     */
+    customFields?: {
+        [key: string]: string;
+    } | null;
+    /**
+     * Current status
+     */
+    status: SiteContactStatus;
+    /**
+     * Creation timestamp
+     */
+    createdAt: Timestamp;
+    /**
+     * Last update timestamp
+     */
+    updatedAt: Timestamp;
+};
+
+/**
+ * Contact status for site UI
+ */
+export type SiteContactStatus = 'active' | 'unsubscribed';
+
+/**
+ * Site request body for creating a contact
+ */
+export type SiteCreateContactInput = {
     /**
      * Email address
      */
@@ -76,36 +125,9 @@ export type SiteContactFields = {
 };
 
 /**
- * Contact resource used by the site UI
+ * Site request body for updating a contact
  */
-export type SiteContactResource = SiteContactFields & {
-    /**
-     * Unique identifier
-     */
-    id: EntityId;
-    /**
-     * Current status
-     */
-    status: SiteContactStatus;
-    /**
-     * Creation timestamp
-     */
-    createdAt: Timestamp;
-    /**
-     * Last update timestamp
-     */
-    updatedAt: Timestamp;
-};
-
-/**
- * Contact status for site UI
- */
-export type SiteContactStatus = 'active' | 'unsubscribed';
-
-/**
- * Updatable contact fields used by the site UI
- */
-export type SiteContactUpdatableFields = {
+export type SiteUpdateContactInput = {
     /**
      * First name
      */
@@ -126,19 +148,9 @@ export type SiteContactUpdatableFields = {
     } | null;
 };
 
-/**
- * Site request body for creating a contact
- */
-export type SiteCreateContactInput = SiteContactFields;
-
-/**
- * Site request body for updating a contact
- */
-export type SiteUpdateContactInput = SiteContactUpdatableFields;
-
 export type TimeZoneName = string;
 
-export type Timestamp = Date;
+export type Timestamp = string;
 
 /**
  * RFC 7807 unauthorized response

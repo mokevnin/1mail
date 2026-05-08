@@ -41,7 +41,11 @@ profile-*
 
 # mac files
 .DS_Store
+
+# env files — local overrides are gitignored, shared envs are not
 .env
+.env.local
+.env.*.local
 
 # vim swap files
 *.swp
