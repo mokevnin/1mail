@@ -4,7 +4,6 @@ import { modals } from '@mantine/modals'
 import { notifications } from '@mantine/notifications'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
-import { contactsCreateRoute, contactsEditRoute } from '../../router.tsx'
 import type { TFunction } from 'i18next'
 import { DataTable } from 'mantine-datatable'
 import { useState } from 'react'
@@ -13,8 +12,9 @@ import {
   siteContactsDeleteMutation,
   siteContactsListOptions,
   siteContactsListQueryKey,
-} from '../../../generated/site/@tanstack/react-query.gen.ts'
-import type { SiteContactStatus } from '../../../generated/site/types.gen.ts'
+} from '../../generated/site/@tanstack/react-query.gen.ts'
+import type { SiteContactStatus } from '../../generated/site/types.gen.ts'
+import { contactsCreateRoute, contactsEditRoute } from '../../router.tsx'
 import { track } from '../../tracking.ts'
 
 type ContactStatusFilter = 'all' | SiteContactStatus

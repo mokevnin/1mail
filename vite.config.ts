@@ -7,6 +7,8 @@ export default defineConfig({
     proxy: {
       '/site': { target: 'http://localhost:3300', changeOrigin: true },
       '/collect': { target: 'http://localhost:3300', changeOrigin: true },
+      '/auth': { target: 'http://localhost:3300', changeOrigin: true },
+      '/avatar': { target: 'http://localhost:3300', changeOrigin: true },
     },
   },
   test: {

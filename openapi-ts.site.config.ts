@@ -4,7 +4,7 @@ export default defineConfig({
   input: './openapi/site.openapi.json',
   output: {
     importFileExtension: '.ts',
-    path: './generated/site',
+    path: './src/generated/site',
   },
   plugins: [
     '@hey-api/typescript',

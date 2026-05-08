@@ -3,12 +3,12 @@ import { useForm } from '@mantine/form'
 import { notifications } from '@mantine/notifications'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
-import { contactsEditRoute, contactsRoute } from '../../router.tsx'
 import { useTranslation } from 'react-i18next'
 import {
   siteContactsCreateMutation,
   siteContactsListQueryKey,
-} from '../../../generated/site/@tanstack/react-query.gen.ts'
+} from '../../generated/site/@tanstack/react-query.gen.ts'
+import { contactsEditRoute, contactsRoute } from '../../router.tsx'
 import { track } from '../../tracking.ts'
 import { EMPTY_CONTACT_FORM } from './form.ts'
 
@@ -68,7 +68,11 @@ export function ContactCreatePage() {
           <TextInput label={t(($) => $.table.timeZone)} {...form.getInputProps('timeZone')} />
 
           <Group justify="flex-end">
-            <Button variant="default" type="button" onClick={() => navigate({ to: contactsRoute.to })}>
+            <Button
+              variant="default"
+              type="button"
+              onClick={() => navigate({ to: contactsRoute.to })}
+            >
               {t(($) => $.actions.cancel)}
             </Button>
             <Button type="submit" loading={createContactMutation.isPending}>

@@ -6,6 +6,7 @@ import "../common/scalars.tsp";
 import "../common/pagination.tsp";
 import "../common/errors.tsp";
 import "./resources/contacts.tsp";
+import "./resources/auth.tsp";
 
 using TypeSpec.OpenAPI;
 using TypeSpec.Http;

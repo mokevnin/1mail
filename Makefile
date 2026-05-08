@@ -1,36 +1,45 @@
-setup: install db-create db-create-test db-migrate-dev
+setup: install db-create db-create-test db-migrate
 
 install:
 	pnpm install
-	cd backend && go mod download
+	go mod download
 
 db-create:
-	psql "postgres://postgres:postgres@localhost:5432/postgres" -c 'CREATE DATABASE "1mail"' 2>/dev/null || true
+	. .env && go run ./cmd/db/... create
 
 db-create-test:
-	psql "postgres://postgres:postgres@localhost:5432/postgres" -c 'CREATE DATABASE "1mail_test"' 2>/dev/null || true
+	. .env.test && go run ./cmd/db/... create
 
-db-generate:
-	cd backend && atlas migrate diff --env local --name $(name)
+db-drop:
+	. .env && go run ./cmd/db/... drop
+
+db-drop-test:
+	. .env.test && go run ./cmd/db/... drop
 
 db-migrate:
-	cd backend && atlas migrate apply --env local --url $$DATABASE_URL --allow-dirty
-	cd backend && river migrate-up --database-url $$DATABASE_URL
+	. .env && atlas migrate apply --env local --url $$DATABASE_URL --allow-dirty
 
-db-migrate-dev:
-	. .env && cd backend && atlas migrate apply --env local --url $$DATABASE_URL --allow-dirty && river migrate-up --database-url $$DATABASE_URL
+db-seed:
+	. .env && go run ./cmd/seed/...
+
+db-reset: db-drop db-create db-migrate
+
+db-reset-test: db-drop-test db-create-test
+
+db-generate:
+	atlas migrate diff --env local $(name)
 
 dev-frontend:
 	npx vite
 
 dev-backend:
-	cd backend && air
+	air
 
 dev:
 	overmind start
 
 test: db-create-test
-	cd backend && go test ./...
+	go test ./...
 
 test-watch:
 	pnpm exec vitest
@@ -42,7 +51,7 @@ update-npm:
 	pnpm update
 
 update-go:
-	cd backend && go get -u ./... && go mod tidy
+	go get -u ./... && go mod tidy
 
 generate-typespec-external:
 	npx tsp compile typespec/external
@@ -60,22 +69,32 @@ generate-openapi-external:
 
 generate-openapi-site:
 	pnpm exec openapi-ts -f openapi-ts.site.config.ts
+	node scripts/add-ts-nocheck.mjs src/generated/site
 
 generate-openapi: generate-openapi-external generate-openapi-site
 
-generate: generate-typespec generate-openapi check-fix
+generate-i18n-types:
+	pnpm run i18n:types
+
+generate-backend:
+	cd ent && go run -mod=mod entc.go
+	oapi-codegen --package=siteapi --generate=echo-server,strict-server,models,embedded-spec -o gen/site/site.gen.go openapi/site.openapi.json
+	oapi-codegen --package=externalapi --generate=echo-server,strict-server,models,embedded-spec -o gen/external/external.gen.go openapi/external.openapi.json
+	oapi-codegen --package=collectapi --generate=echo-server,strict-server,models,embedded-spec -o gen/collect/collect.gen.go openapi/collect.openapi.json
+
+generate: generate-typespec generate-openapi generate-backend generate-i18n-types check-fix
 
 check:
 	npx tsgo --noEmit
 	npx biome check .
-	cd backend && go vet ./...
+	go vet ./...
 
 check-fix:
 	pnpx @biomejs/biome check --write
 	npx tsp format typespec
-	cd backend && go fmt ./...
+	go fmt ./...
 
 build:
-	cd backend && go build ./...
+	go build ./...
 
-.PHONY: setup install db-create db-create-test db-generate db-migrate db-migrate-dev dev-frontend dev-backend dev test test-watch update update-npm update-go generate generate-openapi generate-openapi-external generate-openapi-site generate-typespec generate-typespec-external generate-typespec-site generate-typespec-collect check check-fix build
+.PHONY: setup install db-create db-create-test db-drop db-drop-test db-migrate db-seed db-reset db-reset-test db-generate dev-frontend dev-backend dev test test-watch update update-npm update-go generate generate-backend generate-openapi generate-openapi-external generate-openapi-site generate-typespec generate-typespec-external generate-typespec-site generate-typespec-collect generate-i18n-types check check-fix build

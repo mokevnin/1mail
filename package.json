@@ -58,7 +58,7 @@
   },
   "name": "1mail",
   "version": "1.0.0",
-  "description": "This project was bootstrapped with Fastify-CLI.",
+  "description": "Marketing Automation",
   "main": "app.js",
   "directories": {
     "test": "test"

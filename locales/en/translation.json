@@ -1,4 +1,21 @@
 {
+  "login": {
+    "title": "Sign in",
+    "emailLabel": "Email",
+    "passwordLabel": "Password",
+    "submitButton": "Sign in",
+    "registerLink": "Create account",
+    "errorTitle": "Sign in failed"
+  },
+  "registration": {
+    "title": "Create account",
+    "nameLabel": "Name",
+    "emailLabel": "Email",
+    "passwordLabel": "Password",
+    "submitButton": "Register",
+    "successMessage": "Account created successfully",
+    "errorTitle": "Registration failed"
+  },
   "actions": {
     "cancel": "Cancel",
     "delete": "Delete",

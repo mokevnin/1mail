@@ -3,7 +3,6 @@ import { useForm } from '@mantine/form'
 import { notifications } from '@mantine/notifications'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate, useParams } from '@tanstack/react-router'
-import { contactsRoute } from '../../router.tsx'
 import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
@@ -11,7 +10,8 @@ import {
   siteContactsGetQueryKey,
   siteContactsListQueryKey,
   siteContactsUpdateMutation,
-} from '../../../generated/site/@tanstack/react-query.gen.ts'
+} from '../../generated/site/@tanstack/react-query.gen.ts'
+import { contactsRoute } from '../../router.tsx'
 import { track } from '../../tracking.ts'
 import { EMPTY_CONTACT_FORM } from './form.ts'
 
@@ -34,12 +34,10 @@ export function ContactEditPage() {
     enabled: parsedContactId !== null,
   })
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: form.initialize is stable
   useEffect(() => {
-    if (!getContactQuery.data) {
-      return
-    }
-
-    form.setValues({
+    if (!getContactQuery.data) return
+    form.initialize({
       email: getContactQuery.data.email,
       firstName: getContactQuery.data.firstName ?? '',
       lastName: getContactQuery.data.lastName ?? '',
@@ -122,7 +120,11 @@ export function ContactEditPage() {
           <TextInput label={t(($) => $.table.timeZone)} {...form.getInputProps('timeZone')} />
 
           <Group justify="flex-end">
-            <Button variant="default" type="button" onClick={() => navigate({ to: contactsRoute.to })}>
+            <Button
+              variant="default"
+              type="button"
+              onClick={() => navigate({ to: contactsRoute.to })}
+            >
               {t(($) => $.actions.cancel)}
             </Button>
             <Button type="submit" loading={updateContactMutation.isPending}>

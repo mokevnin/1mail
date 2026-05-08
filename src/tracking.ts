@@ -75,6 +75,7 @@ function readCookie(name: string): string | null {
 }
 
 function writeCookie(name: string, value: string): void {
+  // biome-ignore lint/suspicious/noDocumentCookie: Cookie Store API is async and not suitable here
   document.cookie = `${name}=${encodeURIComponent(value)}; Path=/; Max-Age=${60 * 60 * 24 * 365}; SameSite=Lax`
 }
 

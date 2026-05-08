@@ -81,13 +81,10 @@ namespace SiteContacts {
   /** Create a contact from the site UI */
   @createsResource(SiteContactResource)
   @post
-  op create(@body body: SiteCreateContactInput):
-    | {
-        @statusCode statusCode: 201;
-        @body body: SiteContactResource;
-      }
-    | ConflictProblem
-    | UnprocessableEntityProblem;
+  op create(@body body: SiteCreateContactInput): {
+    @statusCode statusCode: 201;
+    @body body: SiteContactResource;
+  } | ConflictProblem | UnprocessableEntityProblem;
 
   /** List contacts for the site UI */
   @listsResource(SiteContactResource)
@@ -97,19 +94,15 @@ namespace SiteContacts {
 
     /** Filter by status */
     @query status?: SiteContactStatus,
-  ):
-    | Page<SiteContactResource>
-    | BadRequestProblem
-    | UnprocessableEntityProblem;
+  ): Page<SiteContactResource> | BadRequestProblem | UnprocessableEntityProblem;
 
   /** Get a contact by ID for the site UI */
   @readsResource(SiteContactResource)
   @get
   @autoRoute
-  op get(@path id: EntityId):
-    | SiteContactResource
-    | BadRequestProblem
-    | NotFoundProblem;
+  op get(
+    @path id: EntityId,
+  ): SiteContactResource | BadRequestProblem | NotFoundProblem;
 
   /** Update a contact from the site UI */
   @updatesResource(SiteContactResource)
@@ -126,8 +119,7 @@ namespace SiteContacts {
   @deletesResource(SiteContactResource)
   @delete
   @autoRoute
-  op delete(@path id: EntityId):
-    | NoContentResponse
-    | BadRequestProblem
-    | NotFoundProblem;
+  op delete(
+    @path id: EntityId,
+  ): NoContentResponse | BadRequestProblem | NotFoundProblem;
 }

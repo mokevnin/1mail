@@ -64,3 +64,4 @@ profile*
 
 .gemini/
 gha-creds-*.json
+tmp/
