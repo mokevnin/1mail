@@ -22,12 +22,16 @@ const (
 	FieldPhone = "phone"
 	// FieldTraits holds the string denoting the traits field in the database.
 	FieldTraits = "traits"
+	// FieldWorkspaceProjectID holds the string denoting the workspace_project_id field in the database.
+	FieldWorkspaceProjectID = "workspace_project_id"
 	// FieldCreatedAt holds the string denoting the created_at field in the database.
 	FieldCreatedAt = "created_at"
 	// FieldUpdatedAt holds the string denoting the updated_at field in the database.
 	FieldUpdatedAt = "updated_at"
 	// EdgeVisitors holds the string denoting the visitors edge name in mutations.
 	EdgeVisitors = "visitors"
+	// EdgeProject holds the string denoting the project edge name in mutations.
+	EdgeProject = "project"
 	// Table holds the table name of the trackingprofile in the database.
 	Table = "tracking_profiles"
 	// VisitorsTable is the table that holds the visitors relation/edge.
@@ -37,6 +41,13 @@ const (
 	VisitorsInverseTable = "tracking_visitors"
 	// VisitorsColumn is the table column denoting the visitors relation/edge.
 	VisitorsColumn = "profile_id"
+	// ProjectTable is the table that holds the project relation/edge.
+	ProjectTable = "tracking_profiles"
+	// ProjectInverseTable is the table name for the Project entity.
+	// It exists in this package in order to avoid circular dependency with the "project" package.
+	ProjectInverseTable = "projects"
+	// ProjectColumn is the table column denoting the project relation/edge.
+	ProjectColumn = "workspace_project_id"
 )
 
 // Columns holds all SQL columns for trackingprofile fields.
@@ -46,6 +57,7 @@ var Columns = []string{
 	FieldEmail,
 	FieldPhone,
 	FieldTraits,
+	FieldWorkspaceProjectID,
 	FieldCreatedAt,
 	FieldUpdatedAt,
 }
@@ -96,6 +108,11 @@ func ByPhone(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldPhone, opts...).ToFunc()
 }
 
+// ByWorkspaceProjectID orders the results by the workspace_project_id field.
+func ByWorkspaceProjectID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldWorkspaceProjectID, opts...).ToFunc()
+}
+
 // ByCreatedAt orders the results by the created_at field.
 func ByCreatedAt(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldCreatedAt, opts...).ToFunc()
@@ -119,10 +136,24 @@ func ByVisitors(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newVisitorsStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
+
+// ByProjectField orders the results by project field.
+func ByProjectField(field string, opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newProjectStep(), sql.OrderByField(field, opts...))
+	}
+}
 func newVisitorsStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(VisitorsInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2M, false, VisitorsTable, VisitorsColumn),
+	)
+}
+func newProjectStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(ProjectInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.M2O, true, ProjectTable, ProjectColumn),
 	)
 }

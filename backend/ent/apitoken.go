@@ -11,6 +11,7 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
 	"github.com/mokevnin/1mail/backend/ent/apitoken"
+	"github.com/mokevnin/1mail/backend/ent/project"
 )
 
 // ApiToken is the model entity for the ApiToken schema.
@@ -35,8 +36,33 @@ type ApiToken struct {
 	// CreatedAt holds the value of the "created_at" field.
 	CreatedAt time.Time `json:"created_at,omitempty"`
 	// UpdatedAt holds the value of the "updated_at" field.
-	UpdatedAt    time.Time `json:"updated_at,omitempty"`
+	UpdatedAt time.Time `json:"updated_at,omitempty"`
+	// WorkspaceProjectID holds the value of the "workspace_project_id" field.
+	WorkspaceProjectID *int64 `json:"workspace_project_id,omitempty"`
+	// Edges holds the relations/edges for other nodes in the graph.
+	// The values are being populated by the ApiTokenQuery when eager-loading is set.
+	Edges        ApiTokenEdges `json:"edges"`
 	selectValues sql.SelectValues
+}
+
+// ApiTokenEdges holds the relations/edges for other nodes in the graph.
+type ApiTokenEdges struct {
+	// Project holds the value of the project edge.
+	Project *Project `json:"project,omitempty"`
+	// loadedTypes holds the information for reporting if a
+	// type was loaded (or requested) in eager-loading or not.
+	loadedTypes [1]bool
+}
+
+// ProjectOrErr returns the Project value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e ApiTokenEdges) ProjectOrErr() (*Project, error) {
+	if e.Project != nil {
+		return e.Project, nil
+	} else if e.loadedTypes[0] {
+		return nil, &NotFoundError{label: project.Label}
+	}
+	return nil, &NotLoadedError{edge: "project"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -46,7 +72,7 @@ func (*ApiToken) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case apitoken.FieldScopes:
 			values[i] = new([]byte)
-		case apitoken.FieldID:
+		case apitoken.FieldID, apitoken.FieldWorkspaceProjectID:
 			values[i] = new(sql.NullInt64)
 		case apitoken.FieldName, apitoken.FieldPrefix, apitoken.FieldSecretHash:
 			values[i] = new(sql.NullString)
@@ -132,6 +158,13 @@ func (_m *ApiToken) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				_m.UpdatedAt = value.Time
 			}
+		case apitoken.FieldWorkspaceProjectID:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field workspace_project_id", values[i])
+			} else if value.Valid {
+				_m.WorkspaceProjectID = new(int64)
+				*_m.WorkspaceProjectID = value.Int64
+			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
 		}
@@ -143,6 +176,11 @@ func (_m *ApiToken) assignValues(columns []string, values []any) error {
 // This includes values selected through modifiers, order, etc.
 func (_m *ApiToken) Value(name string) (ent.Value, error) {
 	return _m.selectValues.Get(name)
+}
+
+// QueryProject queries the "project" edge of the ApiToken entity.
+func (_m *ApiToken) QueryProject() *ProjectQuery {
+	return NewApiTokenClient(_m.config).QueryProject(_m)
 }
 
 // Update returns a builder for updating this ApiToken.
@@ -199,6 +237,11 @@ func (_m *ApiToken) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("updated_at=")
 	builder.WriteString(_m.UpdatedAt.Format(time.ANSIC))
+	builder.WriteString(", ")
+	if v := _m.WorkspaceProjectID; v != nil {
+		builder.WriteString("workspace_project_id=")
+		builder.WriteString(fmt.Sprintf("%v", *v))
+	}
 	builder.WriteByte(')')
 	return builder.String()
 }

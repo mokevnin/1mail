@@ -15,9 +15,12 @@ import (
 	"github.com/mokevnin/1mail/backend/ent/apitoken"
 	"github.com/mokevnin/1mail/backend/ent/contact"
 	"github.com/mokevnin/1mail/backend/ent/event"
+	"github.com/mokevnin/1mail/backend/ent/project"
 	"github.com/mokevnin/1mail/backend/ent/trackingprofile"
 	"github.com/mokevnin/1mail/backend/ent/trackingvisitor"
 	"github.com/mokevnin/1mail/backend/ent/user"
+	"github.com/mokevnin/1mail/backend/ent/workspace"
+	"github.com/mokevnin/1mail/backend/ent/workspacemembership"
 )
 
 // ent aliases to avoid import conflicts in user's code.
@@ -78,12 +81,15 @@ var (
 func checkColumn(t, c string) error {
 	initCheck.Do(func() {
 		columnCheck = sql.NewColumnCheck(map[string]func(string) bool{
-			apitoken.Table:        apitoken.ValidColumn,
-			contact.Table:         contact.ValidColumn,
-			event.Table:           event.ValidColumn,
-			trackingprofile.Table: trackingprofile.ValidColumn,
-			trackingvisitor.Table: trackingvisitor.ValidColumn,
-			user.Table:            user.ValidColumn,
+			apitoken.Table:            apitoken.ValidColumn,
+			contact.Table:             contact.ValidColumn,
+			event.Table:               event.ValidColumn,
+			project.Table:             project.ValidColumn,
+			trackingprofile.Table:     trackingprofile.ValidColumn,
+			trackingvisitor.Table:     trackingvisitor.ValidColumn,
+			user.Table:                user.ValidColumn,
+			workspace.Table:           workspace.ValidColumn,
+			workspacemembership.Table: workspacemembership.ValidColumn,
 		})
 	})
 	return columnCheck(t, c)

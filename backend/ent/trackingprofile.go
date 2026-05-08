@@ -10,6 +10,7 @@ import (
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
+	"github.com/mokevnin/1mail/backend/ent/project"
 	"github.com/mokevnin/1mail/backend/ent/trackingprofile"
 )
 
@@ -26,6 +27,8 @@ type TrackingProfile struct {
 	Phone *string `json:"phone,omitempty"`
 	// Traits holds the value of the "traits" field.
 	Traits map[string]interface{} `json:"traits,omitempty"`
+	// WorkspaceProjectID holds the value of the "workspace_project_id" field.
+	WorkspaceProjectID *int64 `json:"workspace_project_id,omitempty"`
 	// CreatedAt holds the value of the "created_at" field.
 	CreatedAt time.Time `json:"created_at,omitempty"`
 	// UpdatedAt holds the value of the "updated_at" field.
@@ -40,9 +43,11 @@ type TrackingProfile struct {
 type TrackingProfileEdges struct {
 	// Visitors holds the value of the visitors edge.
 	Visitors []*TrackingVisitor `json:"visitors,omitempty"`
+	// Project holds the value of the project edge.
+	Project *Project `json:"project,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [1]bool
+	loadedTypes [2]bool
 }
 
 // VisitorsOrErr returns the Visitors value or an error if the edge
@@ -54,6 +59,17 @@ func (e TrackingProfileEdges) VisitorsOrErr() ([]*TrackingVisitor, error) {
 	return nil, &NotLoadedError{edge: "visitors"}
 }
 
+// ProjectOrErr returns the Project value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e TrackingProfileEdges) ProjectOrErr() (*Project, error) {
+	if e.Project != nil {
+		return e.Project, nil
+	} else if e.loadedTypes[1] {
+		return nil, &NotFoundError{label: project.Label}
+	}
+	return nil, &NotLoadedError{edge: "project"}
+}
+
 // scanValues returns the types for scanning values from sql.Rows.
 func (*TrackingProfile) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
@@ -61,7 +77,7 @@ func (*TrackingProfile) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case trackingprofile.FieldTraits:
 			values[i] = new([]byte)
-		case trackingprofile.FieldID:
+		case trackingprofile.FieldID, trackingprofile.FieldWorkspaceProjectID:
 			values[i] = new(sql.NullInt64)
 		case trackingprofile.FieldSubjectID, trackingprofile.FieldEmail, trackingprofile.FieldPhone:
 			values[i] = new(sql.NullString)
@@ -116,6 +132,13 @@ func (_m *TrackingProfile) assignValues(columns []string, values []any) error {
 					return fmt.Errorf("unmarshal field traits: %w", err)
 				}
 			}
+		case trackingprofile.FieldWorkspaceProjectID:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field workspace_project_id", values[i])
+			} else if value.Valid {
+				_m.WorkspaceProjectID = new(int64)
+				*_m.WorkspaceProjectID = value.Int64
+			}
 		case trackingprofile.FieldCreatedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
 				return fmt.Errorf("unexpected type %T for field created_at", values[i])
@@ -144,6 +167,11 @@ func (_m *TrackingProfile) Value(name string) (ent.Value, error) {
 // QueryVisitors queries the "visitors" edge of the TrackingProfile entity.
 func (_m *TrackingProfile) QueryVisitors() *TrackingVisitorQuery {
 	return NewTrackingProfileClient(_m.config).QueryVisitors(_m)
+}
+
+// QueryProject queries the "project" edge of the TrackingProfile entity.
+func (_m *TrackingProfile) QueryProject() *ProjectQuery {
+	return NewTrackingProfileClient(_m.config).QueryProject(_m)
 }
 
 // Update returns a builder for updating this TrackingProfile.
@@ -184,6 +212,11 @@ func (_m *TrackingProfile) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("traits=")
 	builder.WriteString(fmt.Sprintf("%v", _m.Traits))
+	builder.WriteString(", ")
+	if v := _m.WorkspaceProjectID; v != nil {
+		builder.WriteString("workspace_project_id=")
+		builder.WriteString(fmt.Sprintf("%v", *v))
+	}
 	builder.WriteString(", ")
 	builder.WriteString("created_at=")
 	builder.WriteString(_m.CreatedAt.Format(time.ANSIC))

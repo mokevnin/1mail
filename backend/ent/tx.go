@@ -18,12 +18,18 @@ type Tx struct {
 	Contact *ContactClient
 	// Event is the client for interacting with the Event builders.
 	Event *EventClient
+	// Project is the client for interacting with the Project builders.
+	Project *ProjectClient
 	// TrackingProfile is the client for interacting with the TrackingProfile builders.
 	TrackingProfile *TrackingProfileClient
 	// TrackingVisitor is the client for interacting with the TrackingVisitor builders.
 	TrackingVisitor *TrackingVisitorClient
 	// User is the client for interacting with the User builders.
 	User *UserClient
+	// Workspace is the client for interacting with the Workspace builders.
+	Workspace *WorkspaceClient
+	// WorkspaceMembership is the client for interacting with the WorkspaceMembership builders.
+	WorkspaceMembership *WorkspaceMembershipClient
 
 	// lazily loaded.
 	client     *Client
@@ -158,9 +164,12 @@ func (tx *Tx) init() {
 	tx.ApiToken = NewApiTokenClient(tx.config)
 	tx.Contact = NewContactClient(tx.config)
 	tx.Event = NewEventClient(tx.config)
+	tx.Project = NewProjectClient(tx.config)
 	tx.TrackingProfile = NewTrackingProfileClient(tx.config)
 	tx.TrackingVisitor = NewTrackingVisitorClient(tx.config)
 	tx.User = NewUserClient(tx.config)
+	tx.Workspace = NewWorkspaceClient(tx.config)
+	tx.WorkspaceMembership = NewWorkspaceMembershipClient(tx.config)
 }
 
 // txDriver wraps the given dialect.Tx with a nop dialect.Driver implementation.

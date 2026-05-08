@@ -13,15 +13,17 @@ import (
 	"entgo.io/ent/schema/field"
 	"github.com/mokevnin/1mail/backend/ent/contact"
 	"github.com/mokevnin/1mail/backend/ent/predicate"
+	"github.com/mokevnin/1mail/backend/ent/project"
 )
 
 // ContactQuery is the builder for querying Contact entities.
 type ContactQuery struct {
 	config
-	ctx        *QueryContext
-	order      []contact.OrderOption
-	inters     []Interceptor
-	predicates []predicate.Contact
+	ctx         *QueryContext
+	order       []contact.OrderOption
+	inters      []Interceptor
+	predicates  []predicate.Contact
+	withProject *ProjectQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -56,6 +58,28 @@ func (_q *ContactQuery) Unique(unique bool) *ContactQuery {
 func (_q *ContactQuery) Order(o ...contact.OrderOption) *ContactQuery {
 	_q.order = append(_q.order, o...)
 	return _q
+}
+
+// QueryProject chains the current query on the "project" edge.
+func (_q *ContactQuery) QueryProject() *ProjectQuery {
+	query := (&ProjectClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(contact.Table, contact.FieldID, selector),
+			sqlgraph.To(project.Table, project.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, contact.ProjectTable, contact.ProjectColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
 }
 
 // First returns the first Contact entity from the query.
@@ -245,15 +269,27 @@ func (_q *ContactQuery) Clone() *ContactQuery {
 		return nil
 	}
 	return &ContactQuery{
-		config:     _q.config,
-		ctx:        _q.ctx.Clone(),
-		order:      append([]contact.OrderOption{}, _q.order...),
-		inters:     append([]Interceptor{}, _q.inters...),
-		predicates: append([]predicate.Contact{}, _q.predicates...),
+		config:      _q.config,
+		ctx:         _q.ctx.Clone(),
+		order:       append([]contact.OrderOption{}, _q.order...),
+		inters:      append([]Interceptor{}, _q.inters...),
+		predicates:  append([]predicate.Contact{}, _q.predicates...),
+		withProject: _q.withProject.Clone(),
 		// clone intermediate query.
 		sql:  _q.sql.Clone(),
 		path: _q.path,
 	}
+}
+
+// WithProject tells the query-builder to eager-load the nodes that are connected to
+// the "project" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *ContactQuery) WithProject(opts ...func(*ProjectQuery)) *ContactQuery {
+	query := (&ProjectClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withProject = query
+	return _q
 }
 
 // GroupBy is used to group vertices by one or more fields/columns.
@@ -332,8 +368,11 @@ func (_q *ContactQuery) prepareQuery(ctx context.Context) error {
 
 func (_q *ContactQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Contact, error) {
 	var (
-		nodes = []*Contact{}
-		_spec = _q.querySpec()
+		nodes       = []*Contact{}
+		_spec       = _q.querySpec()
+		loadedTypes = [1]bool{
+			_q.withProject != nil,
+		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
 		return (*Contact).scanValues(nil, columns)
@@ -341,6 +380,7 @@ func (_q *ContactQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Cont
 	_spec.Assign = func(columns []string, values []any) error {
 		node := &Contact{config: _q.config}
 		nodes = append(nodes, node)
+		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(columns, values)
 	}
 	for i := range hooks {
@@ -352,7 +392,46 @@ func (_q *ContactQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Cont
 	if len(nodes) == 0 {
 		return nodes, nil
 	}
+	if query := _q.withProject; query != nil {
+		if err := _q.loadProject(ctx, query, nodes, nil,
+			func(n *Contact, e *Project) { n.Edges.Project = e }); err != nil {
+			return nil, err
+		}
+	}
 	return nodes, nil
+}
+
+func (_q *ContactQuery) loadProject(ctx context.Context, query *ProjectQuery, nodes []*Contact, init func(*Contact), assign func(*Contact, *Project)) error {
+	ids := make([]int64, 0, len(nodes))
+	nodeids := make(map[int64][]*Contact)
+	for i := range nodes {
+		if nodes[i].WorkspaceProjectID == nil {
+			continue
+		}
+		fk := *nodes[i].WorkspaceProjectID
+		if _, ok := nodeids[fk]; !ok {
+			ids = append(ids, fk)
+		}
+		nodeids[fk] = append(nodeids[fk], nodes[i])
+	}
+	if len(ids) == 0 {
+		return nil
+	}
+	query.Where(project.IDIn(ids...))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nodeids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected foreign-key "workspace_project_id" returned %v`, n.ID)
+		}
+		for i := range nodes {
+			assign(nodes[i], n)
+		}
+	}
+	return nil
 }
 
 func (_q *ContactQuery) sqlCount(ctx context.Context) (int, error) {
@@ -379,6 +458,9 @@ func (_q *ContactQuery) querySpec() *sqlgraph.QuerySpec {
 			if fields[i] != contact.FieldID {
 				_spec.Node.Columns = append(_spec.Node.Columns, fields[i])
 			}
+		}
+		if _q.withProject != nil {
+			_spec.Node.AddColumnOnce(contact.FieldWorkspaceProjectID)
 		}
 	}
 	if ps := _q.predicates; len(ps) > 0 {

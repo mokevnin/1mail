@@ -11,6 +11,7 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/mokevnin/1mail/backend/ent/event"
+	"github.com/mokevnin/1mail/backend/ent/project"
 )
 
 // EventCreate is the builder for creating a Event entity.
@@ -94,6 +95,20 @@ func (_c *EventCreate) SetNillableProspect(v *bool) *EventCreate {
 	return _c
 }
 
+// SetWorkspaceProjectID sets the "workspace_project_id" field.
+func (_c *EventCreate) SetWorkspaceProjectID(v int64) *EventCreate {
+	_c.mutation.SetWorkspaceProjectID(v)
+	return _c
+}
+
+// SetNillableWorkspaceProjectID sets the "workspace_project_id" field if the given value is not nil.
+func (_c *EventCreate) SetNillableWorkspaceProjectID(v *int64) *EventCreate {
+	if v != nil {
+		_c.SetWorkspaceProjectID(*v)
+	}
+	return _c
+}
+
 // SetCreatedAt sets the "created_at" field.
 func (_c *EventCreate) SetCreatedAt(v time.Time) *EventCreate {
 	_c.mutation.SetCreatedAt(v)
@@ -106,6 +121,25 @@ func (_c *EventCreate) SetNillableCreatedAt(v *time.Time) *EventCreate {
 		_c.SetCreatedAt(*v)
 	}
 	return _c
+}
+
+// SetProjectID sets the "project" edge to the Project entity by ID.
+func (_c *EventCreate) SetProjectID(id int64) *EventCreate {
+	_c.mutation.SetProjectID(id)
+	return _c
+}
+
+// SetNillableProjectID sets the "project" edge to the Project entity by ID if the given value is not nil.
+func (_c *EventCreate) SetNillableProjectID(id *int64) *EventCreate {
+	if id != nil {
+		_c = _c.SetProjectID(*id)
+	}
+	return _c
+}
+
+// SetProject sets the "project" edge to the Project entity.
+func (_c *EventCreate) SetProject(v *Project) *EventCreate {
+	return _c.SetProjectID(v.ID)
 }
 
 // Mutation returns the EventMutation object of the builder.
@@ -227,6 +261,23 @@ func (_c *EventCreate) createSpec() (*Event, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.CreatedAt(); ok {
 		_spec.SetField(event.FieldCreatedAt, field.TypeTime, value)
 		_node.CreatedAt = value
+	}
+	if nodes := _c.mutation.ProjectIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   event.ProjectTable,
+			Columns: []string{event.ProjectColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(project.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.WorkspaceProjectID = &nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec
 }

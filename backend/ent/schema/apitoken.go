@@ -6,6 +6,7 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/entsql"
 	"entgo.io/ent/schema"
+	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
 )
 
@@ -47,5 +48,17 @@ func (ApiToken) Fields() []ent.Field {
 		field.Time("updated_at").
 			Default(time.Now).
 			UpdateDefault(time.Now),
+		field.Int64("workspace_project_id").
+			Optional().
+			Nillable(),
+	}
+}
+
+func (ApiToken) Edges() []ent.Edge {
+	return []ent.Edge{
+		edge.From("project", Project.Type).
+			Ref("api_tokens").
+			Field("workspace_project_id").
+			Unique(),
 	}
 }

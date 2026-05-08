@@ -11,6 +11,7 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/mokevnin/1mail/backend/ent/user"
+	"github.com/mokevnin/1mail/backend/ent/workspacemembership"
 )
 
 // UserCreate is the builder for creating a User entity.
@@ -44,6 +45,21 @@ func (_c *UserCreate) SetNillableCreatedAt(v *time.Time) *UserCreate {
 		_c.SetCreatedAt(*v)
 	}
 	return _c
+}
+
+// AddWorkspaceMembershipIDs adds the "workspace_memberships" edge to the WorkspaceMembership entity by IDs.
+func (_c *UserCreate) AddWorkspaceMembershipIDs(ids ...int64) *UserCreate {
+	_c.mutation.AddWorkspaceMembershipIDs(ids...)
+	return _c
+}
+
+// AddWorkspaceMemberships adds the "workspace_memberships" edges to the WorkspaceMembership entity.
+func (_c *UserCreate) AddWorkspaceMemberships(v ...*WorkspaceMembership) *UserCreate {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddWorkspaceMembershipIDs(ids...)
 }
 
 // Mutation returns the UserMutation object of the builder.
@@ -145,6 +161,22 @@ func (_c *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.CreatedAt(); ok {
 		_spec.SetField(user.FieldCreatedAt, field.TypeTime, value)
 		_node.CreatedAt = value
+	}
+	if nodes := _c.mutation.WorkspaceMembershipsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.WorkspaceMembershipsTable,
+			Columns: []string{user.WorkspaceMembershipsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(workspacemembership.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec
 }

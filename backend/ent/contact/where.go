@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"entgo.io/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/mokevnin/1mail/backend/ent/predicate"
 )
 
@@ -72,6 +73,11 @@ func LastName(v string) predicate.Contact {
 // TimeZone applies equality check predicate on the "time_zone" field. It's identical to TimeZoneEQ.
 func TimeZone(v string) predicate.Contact {
 	return predicate.Contact(sql.FieldEQ(FieldTimeZone, v))
+}
+
+// WorkspaceProjectID applies equality check predicate on the "workspace_project_id" field. It's identical to WorkspaceProjectIDEQ.
+func WorkspaceProjectID(v int64) predicate.Contact {
+	return predicate.Contact(sql.FieldEQ(FieldWorkspaceProjectID, v))
 }
 
 // CreatedAt applies equality check predicate on the "created_at" field. It's identical to CreatedAtEQ.
@@ -404,6 +410,36 @@ func CustomFieldsNotNil() predicate.Contact {
 	return predicate.Contact(sql.FieldNotNull(FieldCustomFields))
 }
 
+// WorkspaceProjectIDEQ applies the EQ predicate on the "workspace_project_id" field.
+func WorkspaceProjectIDEQ(v int64) predicate.Contact {
+	return predicate.Contact(sql.FieldEQ(FieldWorkspaceProjectID, v))
+}
+
+// WorkspaceProjectIDNEQ applies the NEQ predicate on the "workspace_project_id" field.
+func WorkspaceProjectIDNEQ(v int64) predicate.Contact {
+	return predicate.Contact(sql.FieldNEQ(FieldWorkspaceProjectID, v))
+}
+
+// WorkspaceProjectIDIn applies the In predicate on the "workspace_project_id" field.
+func WorkspaceProjectIDIn(vs ...int64) predicate.Contact {
+	return predicate.Contact(sql.FieldIn(FieldWorkspaceProjectID, vs...))
+}
+
+// WorkspaceProjectIDNotIn applies the NotIn predicate on the "workspace_project_id" field.
+func WorkspaceProjectIDNotIn(vs ...int64) predicate.Contact {
+	return predicate.Contact(sql.FieldNotIn(FieldWorkspaceProjectID, vs...))
+}
+
+// WorkspaceProjectIDIsNil applies the IsNil predicate on the "workspace_project_id" field.
+func WorkspaceProjectIDIsNil() predicate.Contact {
+	return predicate.Contact(sql.FieldIsNull(FieldWorkspaceProjectID))
+}
+
+// WorkspaceProjectIDNotNil applies the NotNil predicate on the "workspace_project_id" field.
+func WorkspaceProjectIDNotNil() predicate.Contact {
+	return predicate.Contact(sql.FieldNotNull(FieldWorkspaceProjectID))
+}
+
 // CreatedAtEQ applies the EQ predicate on the "created_at" field.
 func CreatedAtEQ(v time.Time) predicate.Contact {
 	return predicate.Contact(sql.FieldEQ(FieldCreatedAt, v))
@@ -482,6 +518,29 @@ func UpdatedAtLT(v time.Time) predicate.Contact {
 // UpdatedAtLTE applies the LTE predicate on the "updated_at" field.
 func UpdatedAtLTE(v time.Time) predicate.Contact {
 	return predicate.Contact(sql.FieldLTE(FieldUpdatedAt, v))
+}
+
+// HasProject applies the HasEdge predicate on the "project" edge.
+func HasProject() predicate.Contact {
+	return predicate.Contact(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, ProjectTable, ProjectColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasProjectWith applies the HasEdge predicate on the "project" edge with a given conditions (other predicates).
+func HasProjectWith(preds ...predicate.Project) predicate.Contact {
+	return predicate.Contact(func(s *sql.Selector) {
+		step := newProjectStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
 }
 
 // And groups predicates with the AND operator between them.

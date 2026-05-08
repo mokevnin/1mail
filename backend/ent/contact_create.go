@@ -11,6 +11,7 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/mokevnin/1mail/backend/ent/contact"
+	"github.com/mokevnin/1mail/backend/ent/project"
 )
 
 // ContactCreate is the builder for creating a Contact entity.
@@ -88,6 +89,20 @@ func (_c *ContactCreate) SetCustomFields(v map[string]string) *ContactCreate {
 	return _c
 }
 
+// SetWorkspaceProjectID sets the "workspace_project_id" field.
+func (_c *ContactCreate) SetWorkspaceProjectID(v int64) *ContactCreate {
+	_c.mutation.SetWorkspaceProjectID(v)
+	return _c
+}
+
+// SetNillableWorkspaceProjectID sets the "workspace_project_id" field if the given value is not nil.
+func (_c *ContactCreate) SetNillableWorkspaceProjectID(v *int64) *ContactCreate {
+	if v != nil {
+		_c.SetWorkspaceProjectID(*v)
+	}
+	return _c
+}
+
 // SetCreatedAt sets the "created_at" field.
 func (_c *ContactCreate) SetCreatedAt(v time.Time) *ContactCreate {
 	_c.mutation.SetCreatedAt(v)
@@ -114,6 +129,25 @@ func (_c *ContactCreate) SetNillableUpdatedAt(v *time.Time) *ContactCreate {
 		_c.SetUpdatedAt(*v)
 	}
 	return _c
+}
+
+// SetProjectID sets the "project" edge to the Project entity by ID.
+func (_c *ContactCreate) SetProjectID(id int64) *ContactCreate {
+	_c.mutation.SetProjectID(id)
+	return _c
+}
+
+// SetNillableProjectID sets the "project" edge to the Project entity by ID if the given value is not nil.
+func (_c *ContactCreate) SetNillableProjectID(id *int64) *ContactCreate {
+	if id != nil {
+		_c = _c.SetProjectID(*id)
+	}
+	return _c
+}
+
+// SetProject sets the "project" edge to the Project entity.
+func (_c *ContactCreate) SetProject(v *Project) *ContactCreate {
+	return _c.SetProjectID(v.ID)
 }
 
 // Mutation returns the ContactMutation object of the builder.
@@ -246,6 +280,23 @@ func (_c *ContactCreate) createSpec() (*Contact, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.UpdatedAt(); ok {
 		_spec.SetField(contact.FieldUpdatedAt, field.TypeTime, value)
 		_node.UpdatedAt = value
+	}
+	if nodes := _c.mutation.ProjectIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   contact.ProjectTable,
+			Columns: []string{contact.ProjectColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(project.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.WorkspaceProjectID = &nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec
 }
