@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"entgo.io/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql/sqlgraph"
 )
 
 const (
@@ -26,12 +27,23 @@ const (
 	FieldTimeZone = "time_zone"
 	// FieldCustomFields holds the string denoting the custom_fields field in the database.
 	FieldCustomFields = "custom_fields"
+	// FieldWorkspaceProjectID holds the string denoting the workspace_project_id field in the database.
+	FieldWorkspaceProjectID = "workspace_project_id"
 	// FieldCreatedAt holds the string denoting the created_at field in the database.
 	FieldCreatedAt = "created_at"
 	// FieldUpdatedAt holds the string denoting the updated_at field in the database.
 	FieldUpdatedAt = "updated_at"
+	// EdgeProject holds the string denoting the project edge name in mutations.
+	EdgeProject = "project"
 	// Table holds the table name of the contact in the database.
 	Table = "contacts"
+	// ProjectTable is the table that holds the project relation/edge.
+	ProjectTable = "contacts"
+	// ProjectInverseTable is the table name for the Project entity.
+	// It exists in this package in order to avoid circular dependency with the "project" package.
+	ProjectInverseTable = "projects"
+	// ProjectColumn is the table column denoting the project relation/edge.
+	ProjectColumn = "workspace_project_id"
 )
 
 // Columns holds all SQL columns for contact fields.
@@ -43,6 +55,7 @@ var Columns = []string{
 	FieldStatus,
 	FieldTimeZone,
 	FieldCustomFields,
+	FieldWorkspaceProjectID,
 	FieldCreatedAt,
 	FieldUpdatedAt,
 }
@@ -127,6 +140,11 @@ func ByTimeZone(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldTimeZone, opts...).ToFunc()
 }
 
+// ByWorkspaceProjectID orders the results by the workspace_project_id field.
+func ByWorkspaceProjectID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldWorkspaceProjectID, opts...).ToFunc()
+}
+
 // ByCreatedAt orders the results by the created_at field.
 func ByCreatedAt(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldCreatedAt, opts...).ToFunc()
@@ -135,4 +153,18 @@ func ByCreatedAt(opts ...sql.OrderTermOption) OrderOption {
 // ByUpdatedAt orders the results by the updated_at field.
 func ByUpdatedAt(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldUpdatedAt, opts...).ToFunc()
+}
+
+// ByProjectField orders the results by project field.
+func ByProjectField(field string, opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newProjectStep(), sql.OrderByField(field, opts...))
+	}
+}
+func newProjectStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(ProjectInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.M2O, true, ProjectTable, ProjectColumn),
+	)
 }

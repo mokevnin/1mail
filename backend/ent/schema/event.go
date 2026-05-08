@@ -6,6 +6,7 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/entsql"
 	"entgo.io/ent/schema"
+	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
 )
 
@@ -39,8 +40,20 @@ func (Event) Fields() []ent.Field {
 		field.Bool("prospect").
 			Optional().
 			Nillable(),
+		field.Int64("workspace_project_id").
+			Optional().
+			Nillable(),
 		field.Time("created_at").
 			Default(time.Now).
 			Immutable(),
+	}
+}
+
+func (Event) Edges() []ent.Edge {
+	return []ent.Edge{
+		edge.From("project", Project.Type).
+			Ref("events").
+			Field("workspace_project_id").
+			Unique(),
 	}
 }

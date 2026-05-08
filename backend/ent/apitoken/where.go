@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"entgo.io/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/mokevnin/1mail/backend/ent/predicate"
 )
 
@@ -92,6 +93,11 @@ func CreatedAt(v time.Time) predicate.ApiToken {
 // UpdatedAt applies equality check predicate on the "updated_at" field. It's identical to UpdatedAtEQ.
 func UpdatedAt(v time.Time) predicate.ApiToken {
 	return predicate.ApiToken(sql.FieldEQ(FieldUpdatedAt, v))
+}
+
+// WorkspaceProjectID applies equality check predicate on the "workspace_project_id" field. It's identical to WorkspaceProjectIDEQ.
+func WorkspaceProjectID(v int64) predicate.ApiToken {
+	return predicate.ApiToken(sql.FieldEQ(FieldWorkspaceProjectID, v))
 }
 
 // NameEQ applies the EQ predicate on the "name" field.
@@ -517,6 +523,59 @@ func UpdatedAtLT(v time.Time) predicate.ApiToken {
 // UpdatedAtLTE applies the LTE predicate on the "updated_at" field.
 func UpdatedAtLTE(v time.Time) predicate.ApiToken {
 	return predicate.ApiToken(sql.FieldLTE(FieldUpdatedAt, v))
+}
+
+// WorkspaceProjectIDEQ applies the EQ predicate on the "workspace_project_id" field.
+func WorkspaceProjectIDEQ(v int64) predicate.ApiToken {
+	return predicate.ApiToken(sql.FieldEQ(FieldWorkspaceProjectID, v))
+}
+
+// WorkspaceProjectIDNEQ applies the NEQ predicate on the "workspace_project_id" field.
+func WorkspaceProjectIDNEQ(v int64) predicate.ApiToken {
+	return predicate.ApiToken(sql.FieldNEQ(FieldWorkspaceProjectID, v))
+}
+
+// WorkspaceProjectIDIn applies the In predicate on the "workspace_project_id" field.
+func WorkspaceProjectIDIn(vs ...int64) predicate.ApiToken {
+	return predicate.ApiToken(sql.FieldIn(FieldWorkspaceProjectID, vs...))
+}
+
+// WorkspaceProjectIDNotIn applies the NotIn predicate on the "workspace_project_id" field.
+func WorkspaceProjectIDNotIn(vs ...int64) predicate.ApiToken {
+	return predicate.ApiToken(sql.FieldNotIn(FieldWorkspaceProjectID, vs...))
+}
+
+// WorkspaceProjectIDIsNil applies the IsNil predicate on the "workspace_project_id" field.
+func WorkspaceProjectIDIsNil() predicate.ApiToken {
+	return predicate.ApiToken(sql.FieldIsNull(FieldWorkspaceProjectID))
+}
+
+// WorkspaceProjectIDNotNil applies the NotNil predicate on the "workspace_project_id" field.
+func WorkspaceProjectIDNotNil() predicate.ApiToken {
+	return predicate.ApiToken(sql.FieldNotNull(FieldWorkspaceProjectID))
+}
+
+// HasProject applies the HasEdge predicate on the "project" edge.
+func HasProject() predicate.ApiToken {
+	return predicate.ApiToken(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, ProjectTable, ProjectColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasProjectWith applies the HasEdge predicate on the "project" edge with a given conditions (other predicates).
+func HasProjectWith(preds ...predicate.Project) predicate.ApiToken {
+	return predicate.ApiToken(func(s *sql.Selector) {
+		step := newProjectStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
 }
 
 // And groups predicates with the AND operator between them.

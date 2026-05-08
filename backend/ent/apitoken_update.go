@@ -14,6 +14,7 @@ import (
 	"entgo.io/ent/schema/field"
 	"github.com/mokevnin/1mail/backend/ent/apitoken"
 	"github.com/mokevnin/1mail/backend/ent/predicate"
+	"github.com/mokevnin/1mail/backend/ent/project"
 )
 
 // ApiTokenUpdate is the builder for updating ApiToken entities.
@@ -135,9 +136,54 @@ func (_u *ApiTokenUpdate) SetUpdatedAt(v time.Time) *ApiTokenUpdate {
 	return _u
 }
 
+// SetWorkspaceProjectID sets the "workspace_project_id" field.
+func (_u *ApiTokenUpdate) SetWorkspaceProjectID(v int64) *ApiTokenUpdate {
+	_u.mutation.SetWorkspaceProjectID(v)
+	return _u
+}
+
+// SetNillableWorkspaceProjectID sets the "workspace_project_id" field if the given value is not nil.
+func (_u *ApiTokenUpdate) SetNillableWorkspaceProjectID(v *int64) *ApiTokenUpdate {
+	if v != nil {
+		_u.SetWorkspaceProjectID(*v)
+	}
+	return _u
+}
+
+// ClearWorkspaceProjectID clears the value of the "workspace_project_id" field.
+func (_u *ApiTokenUpdate) ClearWorkspaceProjectID() *ApiTokenUpdate {
+	_u.mutation.ClearWorkspaceProjectID()
+	return _u
+}
+
+// SetProjectID sets the "project" edge to the Project entity by ID.
+func (_u *ApiTokenUpdate) SetProjectID(id int64) *ApiTokenUpdate {
+	_u.mutation.SetProjectID(id)
+	return _u
+}
+
+// SetNillableProjectID sets the "project" edge to the Project entity by ID if the given value is not nil.
+func (_u *ApiTokenUpdate) SetNillableProjectID(id *int64) *ApiTokenUpdate {
+	if id != nil {
+		_u = _u.SetProjectID(*id)
+	}
+	return _u
+}
+
+// SetProject sets the "project" edge to the Project entity.
+func (_u *ApiTokenUpdate) SetProject(v *Project) *ApiTokenUpdate {
+	return _u.SetProjectID(v.ID)
+}
+
 // Mutation returns the ApiTokenMutation object of the builder.
 func (_u *ApiTokenUpdate) Mutation() *ApiTokenMutation {
 	return _u.mutation
+}
+
+// ClearProject clears the "project" edge to the Project entity.
+func (_u *ApiTokenUpdate) ClearProject() *ApiTokenUpdate {
+	_u.mutation.ClearProject()
+	return _u
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -237,6 +283,35 @@ func (_u *ApiTokenUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	}
 	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(apitoken.FieldUpdatedAt, field.TypeTime, value)
+	}
+	if _u.mutation.ProjectCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   apitoken.ProjectTable,
+			Columns: []string{apitoken.ProjectColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(project.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.ProjectIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   apitoken.ProjectTable,
+			Columns: []string{apitoken.ProjectColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(project.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -364,9 +439,54 @@ func (_u *ApiTokenUpdateOne) SetUpdatedAt(v time.Time) *ApiTokenUpdateOne {
 	return _u
 }
 
+// SetWorkspaceProjectID sets the "workspace_project_id" field.
+func (_u *ApiTokenUpdateOne) SetWorkspaceProjectID(v int64) *ApiTokenUpdateOne {
+	_u.mutation.SetWorkspaceProjectID(v)
+	return _u
+}
+
+// SetNillableWorkspaceProjectID sets the "workspace_project_id" field if the given value is not nil.
+func (_u *ApiTokenUpdateOne) SetNillableWorkspaceProjectID(v *int64) *ApiTokenUpdateOne {
+	if v != nil {
+		_u.SetWorkspaceProjectID(*v)
+	}
+	return _u
+}
+
+// ClearWorkspaceProjectID clears the value of the "workspace_project_id" field.
+func (_u *ApiTokenUpdateOne) ClearWorkspaceProjectID() *ApiTokenUpdateOne {
+	_u.mutation.ClearWorkspaceProjectID()
+	return _u
+}
+
+// SetProjectID sets the "project" edge to the Project entity by ID.
+func (_u *ApiTokenUpdateOne) SetProjectID(id int64) *ApiTokenUpdateOne {
+	_u.mutation.SetProjectID(id)
+	return _u
+}
+
+// SetNillableProjectID sets the "project" edge to the Project entity by ID if the given value is not nil.
+func (_u *ApiTokenUpdateOne) SetNillableProjectID(id *int64) *ApiTokenUpdateOne {
+	if id != nil {
+		_u = _u.SetProjectID(*id)
+	}
+	return _u
+}
+
+// SetProject sets the "project" edge to the Project entity.
+func (_u *ApiTokenUpdateOne) SetProject(v *Project) *ApiTokenUpdateOne {
+	return _u.SetProjectID(v.ID)
+}
+
 // Mutation returns the ApiTokenMutation object of the builder.
 func (_u *ApiTokenUpdateOne) Mutation() *ApiTokenMutation {
 	return _u.mutation
+}
+
+// ClearProject clears the "project" edge to the Project entity.
+func (_u *ApiTokenUpdateOne) ClearProject() *ApiTokenUpdateOne {
+	_u.mutation.ClearProject()
+	return _u
 }
 
 // Where appends a list predicates to the ApiTokenUpdate builder.
@@ -496,6 +616,35 @@ func (_u *ApiTokenUpdateOne) sqlSave(ctx context.Context) (_node *ApiToken, err 
 	}
 	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(apitoken.FieldUpdatedAt, field.TypeTime, value)
+	}
+	if _u.mutation.ProjectCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   apitoken.ProjectTable,
+			Columns: []string{apitoken.ProjectColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(project.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.ProjectIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   apitoken.ProjectTable,
+			Columns: []string{apitoken.ProjectColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(project.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	_node = &ApiToken{config: _u.config}
 	_spec.Assign = _node.assignValues

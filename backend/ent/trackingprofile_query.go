@@ -13,6 +13,7 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/mokevnin/1mail/backend/ent/predicate"
+	"github.com/mokevnin/1mail/backend/ent/project"
 	"github.com/mokevnin/1mail/backend/ent/trackingprofile"
 	"github.com/mokevnin/1mail/backend/ent/trackingvisitor"
 )
@@ -25,6 +26,7 @@ type TrackingProfileQuery struct {
 	inters       []Interceptor
 	predicates   []predicate.TrackingProfile
 	withVisitors *TrackingVisitorQuery
+	withProject  *ProjectQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -76,6 +78,28 @@ func (_q *TrackingProfileQuery) QueryVisitors() *TrackingVisitorQuery {
 			sqlgraph.From(trackingprofile.Table, trackingprofile.FieldID, selector),
 			sqlgraph.To(trackingvisitor.Table, trackingvisitor.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, trackingprofile.VisitorsTable, trackingprofile.VisitorsColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryProject chains the current query on the "project" edge.
+func (_q *TrackingProfileQuery) QueryProject() *ProjectQuery {
+	query := (&ProjectClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(trackingprofile.Table, trackingprofile.FieldID, selector),
+			sqlgraph.To(project.Table, project.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, trackingprofile.ProjectTable, trackingprofile.ProjectColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
@@ -276,6 +300,7 @@ func (_q *TrackingProfileQuery) Clone() *TrackingProfileQuery {
 		inters:       append([]Interceptor{}, _q.inters...),
 		predicates:   append([]predicate.TrackingProfile{}, _q.predicates...),
 		withVisitors: _q.withVisitors.Clone(),
+		withProject:  _q.withProject.Clone(),
 		// clone intermediate query.
 		sql:  _q.sql.Clone(),
 		path: _q.path,
@@ -290,6 +315,17 @@ func (_q *TrackingProfileQuery) WithVisitors(opts ...func(*TrackingVisitorQuery)
 		opt(query)
 	}
 	_q.withVisitors = query
+	return _q
+}
+
+// WithProject tells the query-builder to eager-load the nodes that are connected to
+// the "project" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *TrackingProfileQuery) WithProject(opts ...func(*ProjectQuery)) *TrackingProfileQuery {
+	query := (&ProjectClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withProject = query
 	return _q
 }
 
@@ -371,8 +407,9 @@ func (_q *TrackingProfileQuery) sqlAll(ctx context.Context, hooks ...queryHook) 
 	var (
 		nodes       = []*TrackingProfile{}
 		_spec       = _q.querySpec()
-		loadedTypes = [1]bool{
+		loadedTypes = [2]bool{
 			_q.withVisitors != nil,
+			_q.withProject != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
@@ -397,6 +434,12 @@ func (_q *TrackingProfileQuery) sqlAll(ctx context.Context, hooks ...queryHook) 
 		if err := _q.loadVisitors(ctx, query, nodes,
 			func(n *TrackingProfile) { n.Edges.Visitors = []*TrackingVisitor{} },
 			func(n *TrackingProfile, e *TrackingVisitor) { n.Edges.Visitors = append(n.Edges.Visitors, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := _q.withProject; query != nil {
+		if err := _q.loadProject(ctx, query, nodes, nil,
+			func(n *TrackingProfile, e *Project) { n.Edges.Project = e }); err != nil {
 			return nil, err
 		}
 	}
@@ -436,6 +479,38 @@ func (_q *TrackingProfileQuery) loadVisitors(ctx context.Context, query *Trackin
 	}
 	return nil
 }
+func (_q *TrackingProfileQuery) loadProject(ctx context.Context, query *ProjectQuery, nodes []*TrackingProfile, init func(*TrackingProfile), assign func(*TrackingProfile, *Project)) error {
+	ids := make([]int64, 0, len(nodes))
+	nodeids := make(map[int64][]*TrackingProfile)
+	for i := range nodes {
+		if nodes[i].WorkspaceProjectID == nil {
+			continue
+		}
+		fk := *nodes[i].WorkspaceProjectID
+		if _, ok := nodeids[fk]; !ok {
+			ids = append(ids, fk)
+		}
+		nodeids[fk] = append(nodeids[fk], nodes[i])
+	}
+	if len(ids) == 0 {
+		return nil
+	}
+	query.Where(project.IDIn(ids...))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nodeids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected foreign-key "workspace_project_id" returned %v`, n.ID)
+		}
+		for i := range nodes {
+			assign(nodes[i], n)
+		}
+	}
+	return nil
+}
 
 func (_q *TrackingProfileQuery) sqlCount(ctx context.Context) (int, error) {
 	_spec := _q.querySpec()
@@ -461,6 +536,9 @@ func (_q *TrackingProfileQuery) querySpec() *sqlgraph.QuerySpec {
 			if fields[i] != trackingprofile.FieldID {
 				_spec.Node.Columns = append(_spec.Node.Columns, fields[i])
 			}
+		}
+		if _q.withProject != nil {
+			_spec.Node.AddColumnOnce(trackingprofile.FieldWorkspaceProjectID)
 		}
 	}
 	if ps := _q.predicates; len(ps) > 0 {

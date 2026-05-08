@@ -8,10 +8,13 @@ import (
 	"github.com/mokevnin/1mail/backend/ent/apitoken"
 	"github.com/mokevnin/1mail/backend/ent/contact"
 	"github.com/mokevnin/1mail/backend/ent/event"
+	"github.com/mokevnin/1mail/backend/ent/project"
 	"github.com/mokevnin/1mail/backend/ent/schema"
 	"github.com/mokevnin/1mail/backend/ent/trackingprofile"
 	"github.com/mokevnin/1mail/backend/ent/trackingvisitor"
 	"github.com/mokevnin/1mail/backend/ent/user"
+	"github.com/mokevnin/1mail/backend/ent/workspace"
+	"github.com/mokevnin/1mail/backend/ent/workspacemembership"
 )
 
 // The init function reads all schema descriptors with runtime code
@@ -53,11 +56,11 @@ func init() {
 	// contact.EmailValidator is a validator for the "email" field. It is called by the builders before save.
 	contact.EmailValidator = contactDescEmail.Validators[0].(func(string) error)
 	// contactDescCreatedAt is the schema descriptor for created_at field.
-	contactDescCreatedAt := contactFields[6].Descriptor()
+	contactDescCreatedAt := contactFields[7].Descriptor()
 	// contact.DefaultCreatedAt holds the default value on creation for the created_at field.
 	contact.DefaultCreatedAt = contactDescCreatedAt.Default.(func() time.Time)
 	// contactDescUpdatedAt is the schema descriptor for updated_at field.
-	contactDescUpdatedAt := contactFields[7].Descriptor()
+	contactDescUpdatedAt := contactFields[8].Descriptor()
 	// contact.DefaultUpdatedAt holds the default value on creation for the updated_at field.
 	contact.DefaultUpdatedAt = contactDescUpdatedAt.Default.(func() time.Time)
 	// contact.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
@@ -73,9 +76,25 @@ func init() {
 	// event.ActionValidator is a validator for the "action" field. It is called by the builders before save.
 	event.ActionValidator = eventDescAction.Validators[0].(func(string) error)
 	// eventDescCreatedAt is the schema descriptor for created_at field.
-	eventDescCreatedAt := eventFields[7].Descriptor()
+	eventDescCreatedAt := eventFields[8].Descriptor()
 	// event.DefaultCreatedAt holds the default value on creation for the created_at field.
 	event.DefaultCreatedAt = eventDescCreatedAt.Default.(func() time.Time)
+	projectFields := schema.Project{}.Fields()
+	_ = projectFields
+	// projectDescName is the schema descriptor for name field.
+	projectDescName := projectFields[0].Descriptor()
+	// project.NameValidator is a validator for the "name" field. It is called by the builders before save.
+	project.NameValidator = projectDescName.Validators[0].(func(string) error)
+	// projectDescCreatedAt is the schema descriptor for created_at field.
+	projectDescCreatedAt := projectFields[2].Descriptor()
+	// project.DefaultCreatedAt holds the default value on creation for the created_at field.
+	project.DefaultCreatedAt = projectDescCreatedAt.Default.(func() time.Time)
+	// projectDescUpdatedAt is the schema descriptor for updated_at field.
+	projectDescUpdatedAt := projectFields[3].Descriptor()
+	// project.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	project.DefaultUpdatedAt = projectDescUpdatedAt.Default.(func() time.Time)
+	// project.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	project.UpdateDefaultUpdatedAt = projectDescUpdatedAt.UpdateDefault.(func() time.Time)
 	trackingprofileFields := schema.TrackingProfile{}.Fields()
 	_ = trackingprofileFields
 	// trackingprofileDescSubjectID is the schema descriptor for subject_id field.
@@ -87,11 +106,11 @@ func init() {
 	// trackingprofile.DefaultTraits holds the default value on creation for the traits field.
 	trackingprofile.DefaultTraits = trackingprofileDescTraits.Default.(map[string]interface{})
 	// trackingprofileDescCreatedAt is the schema descriptor for created_at field.
-	trackingprofileDescCreatedAt := trackingprofileFields[4].Descriptor()
+	trackingprofileDescCreatedAt := trackingprofileFields[5].Descriptor()
 	// trackingprofile.DefaultCreatedAt holds the default value on creation for the created_at field.
 	trackingprofile.DefaultCreatedAt = trackingprofileDescCreatedAt.Default.(func() time.Time)
 	// trackingprofileDescUpdatedAt is the schema descriptor for updated_at field.
-	trackingprofileDescUpdatedAt := trackingprofileFields[5].Descriptor()
+	trackingprofileDescUpdatedAt := trackingprofileFields[6].Descriptor()
 	// trackingprofile.DefaultUpdatedAt holds the default value on creation for the updated_at field.
 	trackingprofile.DefaultUpdatedAt = trackingprofileDescUpdatedAt.Default.(func() time.Time)
 	// trackingprofile.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
@@ -130,4 +149,30 @@ func init() {
 	userDescCreatedAt := userFields[2].Descriptor()
 	// user.DefaultCreatedAt holds the default value on creation for the created_at field.
 	user.DefaultCreatedAt = userDescCreatedAt.Default.(func() time.Time)
+	workspaceFields := schema.Workspace{}.Fields()
+	_ = workspaceFields
+	// workspaceDescName is the schema descriptor for name field.
+	workspaceDescName := workspaceFields[0].Descriptor()
+	// workspace.NameValidator is a validator for the "name" field. It is called by the builders before save.
+	workspace.NameValidator = workspaceDescName.Validators[0].(func(string) error)
+	// workspaceDescSlug is the schema descriptor for slug field.
+	workspaceDescSlug := workspaceFields[1].Descriptor()
+	// workspace.SlugValidator is a validator for the "slug" field. It is called by the builders before save.
+	workspace.SlugValidator = workspaceDescSlug.Validators[0].(func(string) error)
+	// workspaceDescCreatedAt is the schema descriptor for created_at field.
+	workspaceDescCreatedAt := workspaceFields[2].Descriptor()
+	// workspace.DefaultCreatedAt holds the default value on creation for the created_at field.
+	workspace.DefaultCreatedAt = workspaceDescCreatedAt.Default.(func() time.Time)
+	// workspaceDescUpdatedAt is the schema descriptor for updated_at field.
+	workspaceDescUpdatedAt := workspaceFields[3].Descriptor()
+	// workspace.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	workspace.DefaultUpdatedAt = workspaceDescUpdatedAt.Default.(func() time.Time)
+	// workspace.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	workspace.UpdateDefaultUpdatedAt = workspaceDescUpdatedAt.UpdateDefault.(func() time.Time)
+	workspacemembershipFields := schema.WorkspaceMembership{}.Fields()
+	_ = workspacemembershipFields
+	// workspacemembershipDescCreatedAt is the schema descriptor for created_at field.
+	workspacemembershipDescCreatedAt := workspacemembershipFields[3].Descriptor()
+	// workspacemembership.DefaultCreatedAt holds the default value on creation for the created_at field.
+	workspacemembership.DefaultCreatedAt = workspacemembershipDescCreatedAt.Default.(func() time.Time)
 }

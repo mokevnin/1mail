@@ -10,6 +10,7 @@ import (
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/mokevnin/1mail/backend/ent/project"
 	"github.com/mokevnin/1mail/backend/ent/trackingprofile"
 	"github.com/mokevnin/1mail/backend/ent/trackingvisitor"
 )
@@ -61,6 +62,20 @@ func (_c *TrackingProfileCreate) SetTraits(v map[string]interface{}) *TrackingPr
 	return _c
 }
 
+// SetWorkspaceProjectID sets the "workspace_project_id" field.
+func (_c *TrackingProfileCreate) SetWorkspaceProjectID(v int64) *TrackingProfileCreate {
+	_c.mutation.SetWorkspaceProjectID(v)
+	return _c
+}
+
+// SetNillableWorkspaceProjectID sets the "workspace_project_id" field if the given value is not nil.
+func (_c *TrackingProfileCreate) SetNillableWorkspaceProjectID(v *int64) *TrackingProfileCreate {
+	if v != nil {
+		_c.SetWorkspaceProjectID(*v)
+	}
+	return _c
+}
+
 // SetCreatedAt sets the "created_at" field.
 func (_c *TrackingProfileCreate) SetCreatedAt(v time.Time) *TrackingProfileCreate {
 	_c.mutation.SetCreatedAt(v)
@@ -102,6 +117,25 @@ func (_c *TrackingProfileCreate) AddVisitors(v ...*TrackingVisitor) *TrackingPro
 		ids[i] = v[i].ID
 	}
 	return _c.AddVisitorIDs(ids...)
+}
+
+// SetProjectID sets the "project" edge to the Project entity by ID.
+func (_c *TrackingProfileCreate) SetProjectID(id int64) *TrackingProfileCreate {
+	_c.mutation.SetProjectID(id)
+	return _c
+}
+
+// SetNillableProjectID sets the "project" edge to the Project entity by ID if the given value is not nil.
+func (_c *TrackingProfileCreate) SetNillableProjectID(id *int64) *TrackingProfileCreate {
+	if id != nil {
+		_c = _c.SetProjectID(*id)
+	}
+	return _c
+}
+
+// SetProject sets the "project" edge to the Project entity.
+func (_c *TrackingProfileCreate) SetProject(v *Project) *TrackingProfileCreate {
+	return _c.SetProjectID(v.ID)
 }
 
 // Mutation returns the TrackingProfileMutation object of the builder.
@@ -236,6 +270,23 @@ func (_c *TrackingProfileCreate) createSpec() (*TrackingProfile, *sqlgraph.Creat
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.ProjectIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   trackingprofile.ProjectTable,
+			Columns: []string{trackingprofile.ProjectColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(project.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.WorkspaceProjectID = &nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec

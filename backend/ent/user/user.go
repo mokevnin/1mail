@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"entgo.io/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql/sqlgraph"
 )
 
 const (
@@ -19,8 +20,17 @@ const (
 	FieldEmail = "email"
 	// FieldCreatedAt holds the string denoting the created_at field in the database.
 	FieldCreatedAt = "created_at"
+	// EdgeWorkspaceMemberships holds the string denoting the workspace_memberships edge name in mutations.
+	EdgeWorkspaceMemberships = "workspace_memberships"
 	// Table holds the table name of the user in the database.
 	Table = "users"
+	// WorkspaceMembershipsTable is the table that holds the workspace_memberships relation/edge.
+	WorkspaceMembershipsTable = "workspace_memberships"
+	// WorkspaceMembershipsInverseTable is the table name for the WorkspaceMembership entity.
+	// It exists in this package in order to avoid circular dependency with the "workspacemembership" package.
+	WorkspaceMembershipsInverseTable = "workspace_memberships"
+	// WorkspaceMembershipsColumn is the table column denoting the workspace_memberships relation/edge.
+	WorkspaceMembershipsColumn = "user_id"
 )
 
 // Columns holds all SQL columns for user fields.
@@ -71,4 +81,25 @@ func ByEmail(opts ...sql.OrderTermOption) OrderOption {
 // ByCreatedAt orders the results by the created_at field.
 func ByCreatedAt(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldCreatedAt, opts...).ToFunc()
+}
+
+// ByWorkspaceMembershipsCount orders the results by workspace_memberships count.
+func ByWorkspaceMembershipsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newWorkspaceMembershipsStep(), opts...)
+	}
+}
+
+// ByWorkspaceMemberships orders the results by workspace_memberships terms.
+func ByWorkspaceMemberships(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newWorkspaceMembershipsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+func newWorkspaceMembershipsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(WorkspaceMembershipsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, WorkspaceMembershipsTable, WorkspaceMembershipsColumn),
+	)
 }

@@ -13,6 +13,7 @@ import (
 	"entgo.io/ent/schema/field"
 	"github.com/mokevnin/1mail/backend/ent/contact"
 	"github.com/mokevnin/1mail/backend/ent/predicate"
+	"github.com/mokevnin/1mail/backend/ent/project"
 )
 
 // ContactUpdate is the builder for updating Contact entities.
@@ -128,15 +129,60 @@ func (_u *ContactUpdate) ClearCustomFields() *ContactUpdate {
 	return _u
 }
 
+// SetWorkspaceProjectID sets the "workspace_project_id" field.
+func (_u *ContactUpdate) SetWorkspaceProjectID(v int64) *ContactUpdate {
+	_u.mutation.SetWorkspaceProjectID(v)
+	return _u
+}
+
+// SetNillableWorkspaceProjectID sets the "workspace_project_id" field if the given value is not nil.
+func (_u *ContactUpdate) SetNillableWorkspaceProjectID(v *int64) *ContactUpdate {
+	if v != nil {
+		_u.SetWorkspaceProjectID(*v)
+	}
+	return _u
+}
+
+// ClearWorkspaceProjectID clears the value of the "workspace_project_id" field.
+func (_u *ContactUpdate) ClearWorkspaceProjectID() *ContactUpdate {
+	_u.mutation.ClearWorkspaceProjectID()
+	return _u
+}
+
 // SetUpdatedAt sets the "updated_at" field.
 func (_u *ContactUpdate) SetUpdatedAt(v time.Time) *ContactUpdate {
 	_u.mutation.SetUpdatedAt(v)
 	return _u
 }
 
+// SetProjectID sets the "project" edge to the Project entity by ID.
+func (_u *ContactUpdate) SetProjectID(id int64) *ContactUpdate {
+	_u.mutation.SetProjectID(id)
+	return _u
+}
+
+// SetNillableProjectID sets the "project" edge to the Project entity by ID if the given value is not nil.
+func (_u *ContactUpdate) SetNillableProjectID(id *int64) *ContactUpdate {
+	if id != nil {
+		_u = _u.SetProjectID(*id)
+	}
+	return _u
+}
+
+// SetProject sets the "project" edge to the Project entity.
+func (_u *ContactUpdate) SetProject(v *Project) *ContactUpdate {
+	return _u.SetProjectID(v.ID)
+}
+
 // Mutation returns the ContactMutation object of the builder.
 func (_u *ContactUpdate) Mutation() *ContactMutation {
 	return _u.mutation
+}
+
+// ClearProject clears the "project" edge to the Project entity.
+func (_u *ContactUpdate) ClearProject() *ContactUpdate {
+	_u.mutation.ClearProject()
+	return _u
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -234,6 +280,35 @@ func (_u *ContactUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	}
 	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(contact.FieldUpdatedAt, field.TypeTime, value)
+	}
+	if _u.mutation.ProjectCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   contact.ProjectTable,
+			Columns: []string{contact.ProjectColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(project.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.ProjectIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   contact.ProjectTable,
+			Columns: []string{contact.ProjectColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(project.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -355,15 +430,60 @@ func (_u *ContactUpdateOne) ClearCustomFields() *ContactUpdateOne {
 	return _u
 }
 
+// SetWorkspaceProjectID sets the "workspace_project_id" field.
+func (_u *ContactUpdateOne) SetWorkspaceProjectID(v int64) *ContactUpdateOne {
+	_u.mutation.SetWorkspaceProjectID(v)
+	return _u
+}
+
+// SetNillableWorkspaceProjectID sets the "workspace_project_id" field if the given value is not nil.
+func (_u *ContactUpdateOne) SetNillableWorkspaceProjectID(v *int64) *ContactUpdateOne {
+	if v != nil {
+		_u.SetWorkspaceProjectID(*v)
+	}
+	return _u
+}
+
+// ClearWorkspaceProjectID clears the value of the "workspace_project_id" field.
+func (_u *ContactUpdateOne) ClearWorkspaceProjectID() *ContactUpdateOne {
+	_u.mutation.ClearWorkspaceProjectID()
+	return _u
+}
+
 // SetUpdatedAt sets the "updated_at" field.
 func (_u *ContactUpdateOne) SetUpdatedAt(v time.Time) *ContactUpdateOne {
 	_u.mutation.SetUpdatedAt(v)
 	return _u
 }
 
+// SetProjectID sets the "project" edge to the Project entity by ID.
+func (_u *ContactUpdateOne) SetProjectID(id int64) *ContactUpdateOne {
+	_u.mutation.SetProjectID(id)
+	return _u
+}
+
+// SetNillableProjectID sets the "project" edge to the Project entity by ID if the given value is not nil.
+func (_u *ContactUpdateOne) SetNillableProjectID(id *int64) *ContactUpdateOne {
+	if id != nil {
+		_u = _u.SetProjectID(*id)
+	}
+	return _u
+}
+
+// SetProject sets the "project" edge to the Project entity.
+func (_u *ContactUpdateOne) SetProject(v *Project) *ContactUpdateOne {
+	return _u.SetProjectID(v.ID)
+}
+
 // Mutation returns the ContactMutation object of the builder.
 func (_u *ContactUpdateOne) Mutation() *ContactMutation {
 	return _u.mutation
+}
+
+// ClearProject clears the "project" edge to the Project entity.
+func (_u *ContactUpdateOne) ClearProject() *ContactUpdateOne {
+	_u.mutation.ClearProject()
+	return _u
 }
 
 // Where appends a list predicates to the ContactUpdate builder.
@@ -491,6 +611,35 @@ func (_u *ContactUpdateOne) sqlSave(ctx context.Context) (_node *Contact, err er
 	}
 	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(contact.FieldUpdatedAt, field.TypeTime, value)
+	}
+	if _u.mutation.ProjectCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   contact.ProjectTable,
+			Columns: []string{contact.ProjectColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(project.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.ProjectIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   contact.ProjectTable,
+			Columns: []string{contact.ProjectColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(project.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	_node = &Contact{config: _u.config}
 	_spec.Assign = _node.assignValues

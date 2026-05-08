@@ -11,6 +11,7 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
 	"github.com/mokevnin/1mail/backend/ent/contact"
+	"github.com/mokevnin/1mail/backend/ent/project"
 )
 
 // Contact is the model entity for the Contact schema.
@@ -30,11 +31,36 @@ type Contact struct {
 	TimeZone *string `json:"time_zone,omitempty"`
 	// CustomFields holds the value of the "custom_fields" field.
 	CustomFields map[string]string `json:"custom_fields,omitempty"`
+	// WorkspaceProjectID holds the value of the "workspace_project_id" field.
+	WorkspaceProjectID *int64 `json:"workspace_project_id,omitempty"`
 	// CreatedAt holds the value of the "created_at" field.
 	CreatedAt time.Time `json:"created_at,omitempty"`
 	// UpdatedAt holds the value of the "updated_at" field.
-	UpdatedAt    time.Time `json:"updated_at,omitempty"`
+	UpdatedAt time.Time `json:"updated_at,omitempty"`
+	// Edges holds the relations/edges for other nodes in the graph.
+	// The values are being populated by the ContactQuery when eager-loading is set.
+	Edges        ContactEdges `json:"edges"`
 	selectValues sql.SelectValues
+}
+
+// ContactEdges holds the relations/edges for other nodes in the graph.
+type ContactEdges struct {
+	// Project holds the value of the project edge.
+	Project *Project `json:"project,omitempty"`
+	// loadedTypes holds the information for reporting if a
+	// type was loaded (or requested) in eager-loading or not.
+	loadedTypes [1]bool
+}
+
+// ProjectOrErr returns the Project value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e ContactEdges) ProjectOrErr() (*Project, error) {
+	if e.Project != nil {
+		return e.Project, nil
+	} else if e.loadedTypes[0] {
+		return nil, &NotFoundError{label: project.Label}
+	}
+	return nil, &NotLoadedError{edge: "project"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -44,7 +70,7 @@ func (*Contact) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case contact.FieldCustomFields:
 			values[i] = new([]byte)
-		case contact.FieldID:
+		case contact.FieldID, contact.FieldWorkspaceProjectID:
 			values[i] = new(sql.NullInt64)
 		case contact.FieldEmail, contact.FieldFirstName, contact.FieldLastName, contact.FieldStatus, contact.FieldTimeZone:
 			values[i] = new(sql.NullString)
@@ -112,6 +138,13 @@ func (_m *Contact) assignValues(columns []string, values []any) error {
 					return fmt.Errorf("unmarshal field custom_fields: %w", err)
 				}
 			}
+		case contact.FieldWorkspaceProjectID:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field workspace_project_id", values[i])
+			} else if value.Valid {
+				_m.WorkspaceProjectID = new(int64)
+				*_m.WorkspaceProjectID = value.Int64
+			}
 		case contact.FieldCreatedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
 				return fmt.Errorf("unexpected type %T for field created_at", values[i])
@@ -135,6 +168,11 @@ func (_m *Contact) assignValues(columns []string, values []any) error {
 // This includes values selected through modifiers, order, etc.
 func (_m *Contact) Value(name string) (ent.Value, error) {
 	return _m.selectValues.Get(name)
+}
+
+// QueryProject queries the "project" edge of the Contact entity.
+func (_m *Contact) QueryProject() *ProjectQuery {
+	return NewContactClient(_m.config).QueryProject(_m)
 }
 
 // Update returns a builder for updating this Contact.
@@ -183,6 +221,11 @@ func (_m *Contact) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("custom_fields=")
 	builder.WriteString(fmt.Sprintf("%v", _m.CustomFields))
+	builder.WriteString(", ")
+	if v := _m.WorkspaceProjectID; v != nil {
+		builder.WriteString("workspace_project_id=")
+		builder.WriteString(fmt.Sprintf("%v", *v))
+	}
 	builder.WriteString(", ")
 	builder.WriteString("created_at=")
 	builder.WriteString(_m.CreatedAt.Format(time.ANSIC))

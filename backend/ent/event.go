@@ -11,6 +11,7 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
 	"github.com/mokevnin/1mail/backend/ent/event"
+	"github.com/mokevnin/1mail/backend/ent/project"
 )
 
 // Event is the model entity for the Event schema.
@@ -32,9 +33,34 @@ type Event struct {
 	OccurredAt *time.Time `json:"occurred_at,omitempty"`
 	// Prospect holds the value of the "prospect" field.
 	Prospect *bool `json:"prospect,omitempty"`
+	// WorkspaceProjectID holds the value of the "workspace_project_id" field.
+	WorkspaceProjectID *int64 `json:"workspace_project_id,omitempty"`
 	// CreatedAt holds the value of the "created_at" field.
-	CreatedAt    time.Time `json:"created_at,omitempty"`
+	CreatedAt time.Time `json:"created_at,omitempty"`
+	// Edges holds the relations/edges for other nodes in the graph.
+	// The values are being populated by the EventQuery when eager-loading is set.
+	Edges        EventEdges `json:"edges"`
 	selectValues sql.SelectValues
+}
+
+// EventEdges holds the relations/edges for other nodes in the graph.
+type EventEdges struct {
+	// Project holds the value of the project edge.
+	Project *Project `json:"project,omitempty"`
+	// loadedTypes holds the information for reporting if a
+	// type was loaded (or requested) in eager-loading or not.
+	loadedTypes [1]bool
+}
+
+// ProjectOrErr returns the Project value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e EventEdges) ProjectOrErr() (*Project, error) {
+	if e.Project != nil {
+		return e.Project, nil
+	} else if e.loadedTypes[0] {
+		return nil, &NotFoundError{label: project.Label}
+	}
+	return nil, &NotLoadedError{edge: "project"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -46,7 +72,7 @@ func (*Event) scanValues(columns []string) ([]any, error) {
 			values[i] = new([]byte)
 		case event.FieldProspect:
 			values[i] = new(sql.NullBool)
-		case event.FieldID:
+		case event.FieldID, event.FieldWorkspaceProjectID:
 			values[i] = new(sql.NullInt64)
 		case event.FieldSubjectID, event.FieldEmail, event.FieldPhone, event.FieldAction:
 			values[i] = new(sql.NullString)
@@ -121,6 +147,13 @@ func (_m *Event) assignValues(columns []string, values []any) error {
 				_m.Prospect = new(bool)
 				*_m.Prospect = value.Bool
 			}
+		case event.FieldWorkspaceProjectID:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field workspace_project_id", values[i])
+			} else if value.Valid {
+				_m.WorkspaceProjectID = new(int64)
+				*_m.WorkspaceProjectID = value.Int64
+			}
 		case event.FieldCreatedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
 				return fmt.Errorf("unexpected type %T for field created_at", values[i])
@@ -138,6 +171,11 @@ func (_m *Event) assignValues(columns []string, values []any) error {
 // This includes values selected through modifiers, order, etc.
 func (_m *Event) Value(name string) (ent.Value, error) {
 	return _m.selectValues.Get(name)
+}
+
+// QueryProject queries the "project" edge of the Event entity.
+func (_m *Event) QueryProject() *ProjectQuery {
+	return NewEventClient(_m.config).QueryProject(_m)
 }
 
 // Update returns a builder for updating this Event.
@@ -189,6 +227,11 @@ func (_m *Event) String() string {
 	builder.WriteString(", ")
 	if v := _m.Prospect; v != nil {
 		builder.WriteString("prospect=")
+		builder.WriteString(fmt.Sprintf("%v", *v))
+	}
+	builder.WriteString(", ")
+	if v := _m.WorkspaceProjectID; v != nil {
+		builder.WriteString("workspace_project_id=")
 		builder.WriteString(fmt.Sprintf("%v", *v))
 	}
 	builder.WriteString(", ")

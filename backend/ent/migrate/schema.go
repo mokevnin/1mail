@@ -21,17 +21,26 @@ var (
 		{Name: "last_used_at", Type: field.TypeTime, Nullable: true},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "workspace_project_id", Type: field.TypeInt64, Nullable: true},
 	}
 	// APITokensTable holds the schema information for the "api_tokens" table.
 	APITokensTable = &schema.Table{
 		Name:       "api_tokens",
 		Columns:    APITokensColumns,
 		PrimaryKey: []*schema.Column{APITokensColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "api_tokens_projects_api_tokens",
+				Columns:    []*schema.Column{APITokensColumns[10]},
+				RefColumns: []*schema.Column{ProjectsColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
 	}
 	// ContactsColumns holds the columns for the "contacts" table.
 	ContactsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt64, Increment: true},
-		{Name: "email", Type: field.TypeString, Unique: true},
+		{Name: "email", Type: field.TypeString},
 		{Name: "first_name", Type: field.TypeString, Nullable: true},
 		{Name: "last_name", Type: field.TypeString, Nullable: true},
 		{Name: "status", Type: field.TypeEnum, Enums: []string{"active", "unsubscribed"}, Default: "active"},
@@ -39,12 +48,28 @@ var (
 		{Name: "custom_fields", Type: field.TypeJSON, Nullable: true},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "workspace_project_id", Type: field.TypeInt64, Nullable: true},
 	}
 	// ContactsTable holds the schema information for the "contacts" table.
 	ContactsTable = &schema.Table{
 		Name:       "contacts",
 		Columns:    ContactsColumns,
 		PrimaryKey: []*schema.Column{ContactsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "contacts_projects_contacts",
+				Columns:    []*schema.Column{ContactsColumns[9]},
+				RefColumns: []*schema.Column{ProjectsColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "contact_email_workspace_project_id",
+				Unique:  true,
+				Columns: []*schema.Column{ContactsColumns[1], ContactsColumns[9]},
+			},
+		},
 	}
 	// EventsColumns holds the columns for the "events" table.
 	EventsColumns = []*schema.Column{
@@ -57,28 +82,85 @@ var (
 		{Name: "occurred_at", Type: field.TypeTime, Nullable: true},
 		{Name: "prospect", Type: field.TypeBool, Nullable: true},
 		{Name: "created_at", Type: field.TypeTime},
+		{Name: "workspace_project_id", Type: field.TypeInt64, Nullable: true},
 	}
 	// EventsTable holds the schema information for the "events" table.
 	EventsTable = &schema.Table{
 		Name:       "events",
 		Columns:    EventsColumns,
 		PrimaryKey: []*schema.Column{EventsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "events_projects_events",
+				Columns:    []*schema.Column{EventsColumns[9]},
+				RefColumns: []*schema.Column{ProjectsColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
+	}
+	// ProjectsColumns holds the columns for the "projects" table.
+	ProjectsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt64, Increment: true},
+		{Name: "name", Type: field.TypeString},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "workspace_id", Type: field.TypeInt64, Nullable: true},
+	}
+	// ProjectsTable holds the schema information for the "projects" table.
+	ProjectsTable = &schema.Table{
+		Name:       "projects",
+		Columns:    ProjectsColumns,
+		PrimaryKey: []*schema.Column{ProjectsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "projects_workspaces_projects",
+				Columns:    []*schema.Column{ProjectsColumns[4]},
+				RefColumns: []*schema.Column{WorkspacesColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
 	}
 	// TrackingProfilesColumns holds the columns for the "tracking_profiles" table.
 	TrackingProfilesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt64, Increment: true},
-		{Name: "subject_id", Type: field.TypeString, Unique: true},
-		{Name: "email", Type: field.TypeString, Unique: true, Nullable: true},
-		{Name: "phone", Type: field.TypeString, Unique: true, Nullable: true},
+		{Name: "subject_id", Type: field.TypeString},
+		{Name: "email", Type: field.TypeString, Nullable: true},
+		{Name: "phone", Type: field.TypeString, Nullable: true},
 		{Name: "traits", Type: field.TypeJSON},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "workspace_project_id", Type: field.TypeInt64, Nullable: true},
 	}
 	// TrackingProfilesTable holds the schema information for the "tracking_profiles" table.
 	TrackingProfilesTable = &schema.Table{
 		Name:       "tracking_profiles",
 		Columns:    TrackingProfilesColumns,
 		PrimaryKey: []*schema.Column{TrackingProfilesColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "tracking_profiles_projects_tracking_profiles",
+				Columns:    []*schema.Column{TrackingProfilesColumns[7]},
+				RefColumns: []*schema.Column{ProjectsColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "trackingprofile_subject_id_workspace_project_id",
+				Unique:  true,
+				Columns: []*schema.Column{TrackingProfilesColumns[1], TrackingProfilesColumns[7]},
+			},
+			{
+				Name:    "trackingprofile_email_workspace_project_id",
+				Unique:  true,
+				Columns: []*schema.Column{TrackingProfilesColumns[2], TrackingProfilesColumns[7]},
+			},
+			{
+				Name:    "trackingprofile_phone_workspace_project_id",
+				Unique:  true,
+				Columns: []*schema.Column{TrackingProfilesColumns[3], TrackingProfilesColumns[7]},
+			},
+		},
 	}
 	// TrackingVisitorsColumns holds the columns for the "tracking_visitors" table.
 	TrackingVisitorsColumns = []*schema.Column{
@@ -116,27 +198,87 @@ var (
 		Columns:    UsersColumns,
 		PrimaryKey: []*schema.Column{UsersColumns[0]},
 	}
+	// WorkspacesColumns holds the columns for the "workspaces" table.
+	WorkspacesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt64, Increment: true},
+		{Name: "name", Type: field.TypeString},
+		{Name: "slug", Type: field.TypeString, Unique: true},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+	}
+	// WorkspacesTable holds the schema information for the "workspaces" table.
+	WorkspacesTable = &schema.Table{
+		Name:       "workspaces",
+		Columns:    WorkspacesColumns,
+		PrimaryKey: []*schema.Column{WorkspacesColumns[0]},
+	}
+	// WorkspaceMembershipsColumns holds the columns for the "workspace_memberships" table.
+	WorkspaceMembershipsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt64, Increment: true},
+		{Name: "role", Type: field.TypeEnum, Enums: []string{"owner", "admin", "member"}, Default: "member"},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "user_id", Type: field.TypeInt64, Nullable: true},
+		{Name: "workspace_id", Type: field.TypeInt64, Nullable: true},
+	}
+	// WorkspaceMembershipsTable holds the schema information for the "workspace_memberships" table.
+	WorkspaceMembershipsTable = &schema.Table{
+		Name:       "workspace_memberships",
+		Columns:    WorkspaceMembershipsColumns,
+		PrimaryKey: []*schema.Column{WorkspaceMembershipsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "workspace_memberships_users_workspace_memberships",
+				Columns:    []*schema.Column{WorkspaceMembershipsColumns[3]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+			{
+				Symbol:     "workspace_memberships_workspaces_memberships",
+				Columns:    []*schema.Column{WorkspaceMembershipsColumns[4]},
+				RefColumns: []*schema.Column{WorkspacesColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "workspacemembership_user_id_workspace_id",
+				Unique:  true,
+				Columns: []*schema.Column{WorkspaceMembershipsColumns[3], WorkspaceMembershipsColumns[4]},
+			},
+		},
+	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
 		APITokensTable,
 		ContactsTable,
 		EventsTable,
+		ProjectsTable,
 		TrackingProfilesTable,
 		TrackingVisitorsTable,
 		UsersTable,
+		WorkspacesTable,
+		WorkspaceMembershipsTable,
 	}
 )
 
 func init() {
+	APITokensTable.ForeignKeys[0].RefTable = ProjectsTable
 	APITokensTable.Annotation = &entsql.Annotation{
 		Table: "api_tokens",
 	}
+	ContactsTable.ForeignKeys[0].RefTable = ProjectsTable
 	ContactsTable.Annotation = &entsql.Annotation{
 		Table: "contacts",
 	}
+	EventsTable.ForeignKeys[0].RefTable = ProjectsTable
 	EventsTable.Annotation = &entsql.Annotation{
 		Table: "events",
 	}
+	ProjectsTable.ForeignKeys[0].RefTable = WorkspacesTable
+	ProjectsTable.Annotation = &entsql.Annotation{
+		Table: "projects",
+	}
+	TrackingProfilesTable.ForeignKeys[0].RefTable = ProjectsTable
 	TrackingProfilesTable.Annotation = &entsql.Annotation{
 		Table: "tracking_profiles",
 	}
@@ -146,5 +288,13 @@ func init() {
 	}
 	UsersTable.Annotation = &entsql.Annotation{
 		Table: "users",
+	}
+	WorkspacesTable.Annotation = &entsql.Annotation{
+		Table: "workspaces",
+	}
+	WorkspaceMembershipsTable.ForeignKeys[0].RefTable = UsersTable
+	WorkspaceMembershipsTable.ForeignKeys[1].RefTable = WorkspacesTable
+	WorkspaceMembershipsTable.Annotation = &entsql.Annotation{
+		Table: "workspace_memberships",
 	}
 }

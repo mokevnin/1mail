@@ -12,6 +12,7 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/mokevnin/1mail/backend/ent/predicate"
+	"github.com/mokevnin/1mail/backend/ent/project"
 	"github.com/mokevnin/1mail/backend/ent/trackingprofile"
 	"github.com/mokevnin/1mail/backend/ent/trackingvisitor"
 )
@@ -89,6 +90,26 @@ func (_u *TrackingProfileUpdate) SetTraits(v map[string]interface{}) *TrackingPr
 	return _u
 }
 
+// SetWorkspaceProjectID sets the "workspace_project_id" field.
+func (_u *TrackingProfileUpdate) SetWorkspaceProjectID(v int64) *TrackingProfileUpdate {
+	_u.mutation.SetWorkspaceProjectID(v)
+	return _u
+}
+
+// SetNillableWorkspaceProjectID sets the "workspace_project_id" field if the given value is not nil.
+func (_u *TrackingProfileUpdate) SetNillableWorkspaceProjectID(v *int64) *TrackingProfileUpdate {
+	if v != nil {
+		_u.SetWorkspaceProjectID(*v)
+	}
+	return _u
+}
+
+// ClearWorkspaceProjectID clears the value of the "workspace_project_id" field.
+func (_u *TrackingProfileUpdate) ClearWorkspaceProjectID() *TrackingProfileUpdate {
+	_u.mutation.ClearWorkspaceProjectID()
+	return _u
+}
+
 // SetUpdatedAt sets the "updated_at" field.
 func (_u *TrackingProfileUpdate) SetUpdatedAt(v time.Time) *TrackingProfileUpdate {
 	_u.mutation.SetUpdatedAt(v)
@@ -108,6 +129,25 @@ func (_u *TrackingProfileUpdate) AddVisitors(v ...*TrackingVisitor) *TrackingPro
 		ids[i] = v[i].ID
 	}
 	return _u.AddVisitorIDs(ids...)
+}
+
+// SetProjectID sets the "project" edge to the Project entity by ID.
+func (_u *TrackingProfileUpdate) SetProjectID(id int64) *TrackingProfileUpdate {
+	_u.mutation.SetProjectID(id)
+	return _u
+}
+
+// SetNillableProjectID sets the "project" edge to the Project entity by ID if the given value is not nil.
+func (_u *TrackingProfileUpdate) SetNillableProjectID(id *int64) *TrackingProfileUpdate {
+	if id != nil {
+		_u = _u.SetProjectID(*id)
+	}
+	return _u
+}
+
+// SetProject sets the "project" edge to the Project entity.
+func (_u *TrackingProfileUpdate) SetProject(v *Project) *TrackingProfileUpdate {
+	return _u.SetProjectID(v.ID)
 }
 
 // Mutation returns the TrackingProfileMutation object of the builder.
@@ -134,6 +174,12 @@ func (_u *TrackingProfileUpdate) RemoveVisitors(v ...*TrackingVisitor) *Tracking
 		ids[i] = v[i].ID
 	}
 	return _u.RemoveVisitorIDs(ids...)
+}
+
+// ClearProject clears the "project" edge to the Project entity.
+func (_u *TrackingProfileUpdate) ClearProject() *TrackingProfileUpdate {
+	_u.mutation.ClearProject()
+	return _u
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -260,6 +306,35 @@ func (_u *TrackingProfileUpdate) sqlSave(ctx context.Context) (_node int, err er
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	if _u.mutation.ProjectCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   trackingprofile.ProjectTable,
+			Columns: []string{trackingprofile.ProjectColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(project.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.ProjectIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   trackingprofile.ProjectTable,
+			Columns: []string{trackingprofile.ProjectColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(project.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{trackingprofile.Label}
@@ -340,6 +415,26 @@ func (_u *TrackingProfileUpdateOne) SetTraits(v map[string]interface{}) *Trackin
 	return _u
 }
 
+// SetWorkspaceProjectID sets the "workspace_project_id" field.
+func (_u *TrackingProfileUpdateOne) SetWorkspaceProjectID(v int64) *TrackingProfileUpdateOne {
+	_u.mutation.SetWorkspaceProjectID(v)
+	return _u
+}
+
+// SetNillableWorkspaceProjectID sets the "workspace_project_id" field if the given value is not nil.
+func (_u *TrackingProfileUpdateOne) SetNillableWorkspaceProjectID(v *int64) *TrackingProfileUpdateOne {
+	if v != nil {
+		_u.SetWorkspaceProjectID(*v)
+	}
+	return _u
+}
+
+// ClearWorkspaceProjectID clears the value of the "workspace_project_id" field.
+func (_u *TrackingProfileUpdateOne) ClearWorkspaceProjectID() *TrackingProfileUpdateOne {
+	_u.mutation.ClearWorkspaceProjectID()
+	return _u
+}
+
 // SetUpdatedAt sets the "updated_at" field.
 func (_u *TrackingProfileUpdateOne) SetUpdatedAt(v time.Time) *TrackingProfileUpdateOne {
 	_u.mutation.SetUpdatedAt(v)
@@ -359,6 +454,25 @@ func (_u *TrackingProfileUpdateOne) AddVisitors(v ...*TrackingVisitor) *Tracking
 		ids[i] = v[i].ID
 	}
 	return _u.AddVisitorIDs(ids...)
+}
+
+// SetProjectID sets the "project" edge to the Project entity by ID.
+func (_u *TrackingProfileUpdateOne) SetProjectID(id int64) *TrackingProfileUpdateOne {
+	_u.mutation.SetProjectID(id)
+	return _u
+}
+
+// SetNillableProjectID sets the "project" edge to the Project entity by ID if the given value is not nil.
+func (_u *TrackingProfileUpdateOne) SetNillableProjectID(id *int64) *TrackingProfileUpdateOne {
+	if id != nil {
+		_u = _u.SetProjectID(*id)
+	}
+	return _u
+}
+
+// SetProject sets the "project" edge to the Project entity.
+func (_u *TrackingProfileUpdateOne) SetProject(v *Project) *TrackingProfileUpdateOne {
+	return _u.SetProjectID(v.ID)
 }
 
 // Mutation returns the TrackingProfileMutation object of the builder.
@@ -385,6 +499,12 @@ func (_u *TrackingProfileUpdateOne) RemoveVisitors(v ...*TrackingVisitor) *Track
 		ids[i] = v[i].ID
 	}
 	return _u.RemoveVisitorIDs(ids...)
+}
+
+// ClearProject clears the "project" edge to the Project entity.
+func (_u *TrackingProfileUpdateOne) ClearProject() *TrackingProfileUpdateOne {
+	_u.mutation.ClearProject()
+	return _u
 }
 
 // Where appends a list predicates to the TrackingProfileUpdate builder.
@@ -534,6 +654,35 @@ func (_u *TrackingProfileUpdateOne) sqlSave(ctx context.Context) (_node *Trackin
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(trackingvisitor.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.ProjectCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   trackingprofile.ProjectTable,
+			Columns: []string{trackingprofile.ProjectColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(project.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.ProjectIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   trackingprofile.ProjectTable,
+			Columns: []string{trackingprofile.ProjectColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(project.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {

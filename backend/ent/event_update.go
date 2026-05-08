@@ -13,6 +13,7 @@ import (
 	"entgo.io/ent/schema/field"
 	"github.com/mokevnin/1mail/backend/ent/event"
 	"github.com/mokevnin/1mail/backend/ent/predicate"
+	"github.com/mokevnin/1mail/backend/ent/project"
 )
 
 // EventUpdate is the builder for updating Event entities.
@@ -148,9 +149,54 @@ func (_u *EventUpdate) ClearProspect() *EventUpdate {
 	return _u
 }
 
+// SetWorkspaceProjectID sets the "workspace_project_id" field.
+func (_u *EventUpdate) SetWorkspaceProjectID(v int64) *EventUpdate {
+	_u.mutation.SetWorkspaceProjectID(v)
+	return _u
+}
+
+// SetNillableWorkspaceProjectID sets the "workspace_project_id" field if the given value is not nil.
+func (_u *EventUpdate) SetNillableWorkspaceProjectID(v *int64) *EventUpdate {
+	if v != nil {
+		_u.SetWorkspaceProjectID(*v)
+	}
+	return _u
+}
+
+// ClearWorkspaceProjectID clears the value of the "workspace_project_id" field.
+func (_u *EventUpdate) ClearWorkspaceProjectID() *EventUpdate {
+	_u.mutation.ClearWorkspaceProjectID()
+	return _u
+}
+
+// SetProjectID sets the "project" edge to the Project entity by ID.
+func (_u *EventUpdate) SetProjectID(id int64) *EventUpdate {
+	_u.mutation.SetProjectID(id)
+	return _u
+}
+
+// SetNillableProjectID sets the "project" edge to the Project entity by ID if the given value is not nil.
+func (_u *EventUpdate) SetNillableProjectID(id *int64) *EventUpdate {
+	if id != nil {
+		_u = _u.SetProjectID(*id)
+	}
+	return _u
+}
+
+// SetProject sets the "project" edge to the Project entity.
+func (_u *EventUpdate) SetProject(v *Project) *EventUpdate {
+	return _u.SetProjectID(v.ID)
+}
+
 // Mutation returns the EventMutation object of the builder.
 func (_u *EventUpdate) Mutation() *EventMutation {
 	return _u.mutation
+}
+
+// ClearProject clears the "project" edge to the Project entity.
+func (_u *EventUpdate) ClearProject() *EventUpdate {
+	_u.mutation.ClearProject()
+	return _u
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -242,6 +288,35 @@ func (_u *EventUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	}
 	if _u.mutation.ProspectCleared() {
 		_spec.ClearField(event.FieldProspect, field.TypeBool)
+	}
+	if _u.mutation.ProjectCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   event.ProjectTable,
+			Columns: []string{event.ProjectColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(project.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.ProjectIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   event.ProjectTable,
+			Columns: []string{event.ProjectColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(project.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -383,9 +458,54 @@ func (_u *EventUpdateOne) ClearProspect() *EventUpdateOne {
 	return _u
 }
 
+// SetWorkspaceProjectID sets the "workspace_project_id" field.
+func (_u *EventUpdateOne) SetWorkspaceProjectID(v int64) *EventUpdateOne {
+	_u.mutation.SetWorkspaceProjectID(v)
+	return _u
+}
+
+// SetNillableWorkspaceProjectID sets the "workspace_project_id" field if the given value is not nil.
+func (_u *EventUpdateOne) SetNillableWorkspaceProjectID(v *int64) *EventUpdateOne {
+	if v != nil {
+		_u.SetWorkspaceProjectID(*v)
+	}
+	return _u
+}
+
+// ClearWorkspaceProjectID clears the value of the "workspace_project_id" field.
+func (_u *EventUpdateOne) ClearWorkspaceProjectID() *EventUpdateOne {
+	_u.mutation.ClearWorkspaceProjectID()
+	return _u
+}
+
+// SetProjectID sets the "project" edge to the Project entity by ID.
+func (_u *EventUpdateOne) SetProjectID(id int64) *EventUpdateOne {
+	_u.mutation.SetProjectID(id)
+	return _u
+}
+
+// SetNillableProjectID sets the "project" edge to the Project entity by ID if the given value is not nil.
+func (_u *EventUpdateOne) SetNillableProjectID(id *int64) *EventUpdateOne {
+	if id != nil {
+		_u = _u.SetProjectID(*id)
+	}
+	return _u
+}
+
+// SetProject sets the "project" edge to the Project entity.
+func (_u *EventUpdateOne) SetProject(v *Project) *EventUpdateOne {
+	return _u.SetProjectID(v.ID)
+}
+
 // Mutation returns the EventMutation object of the builder.
 func (_u *EventUpdateOne) Mutation() *EventMutation {
 	return _u.mutation
+}
+
+// ClearProject clears the "project" edge to the Project entity.
+func (_u *EventUpdateOne) ClearProject() *EventUpdateOne {
+	_u.mutation.ClearProject()
+	return _u
 }
 
 // Where appends a list predicates to the EventUpdate builder.
@@ -507,6 +627,35 @@ func (_u *EventUpdateOne) sqlSave(ctx context.Context) (_node *Event, err error)
 	}
 	if _u.mutation.ProspectCleared() {
 		_spec.ClearField(event.FieldProspect, field.TypeBool)
+	}
+	if _u.mutation.ProjectCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   event.ProjectTable,
+			Columns: []string{event.ProjectColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(project.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.ProjectIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   event.ProjectTable,
+			Columns: []string{event.ProjectColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(project.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	_node = &Event{config: _u.config}
 	_spec.Assign = _node.assignValues

@@ -11,6 +11,7 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/mokevnin/1mail/backend/ent/apitoken"
+	"github.com/mokevnin/1mail/backend/ent/project"
 )
 
 // ApiTokenCreate is the builder for creating a ApiToken entity.
@@ -112,6 +113,39 @@ func (_c *ApiTokenCreate) SetNillableUpdatedAt(v *time.Time) *ApiTokenCreate {
 		_c.SetUpdatedAt(*v)
 	}
 	return _c
+}
+
+// SetWorkspaceProjectID sets the "workspace_project_id" field.
+func (_c *ApiTokenCreate) SetWorkspaceProjectID(v int64) *ApiTokenCreate {
+	_c.mutation.SetWorkspaceProjectID(v)
+	return _c
+}
+
+// SetNillableWorkspaceProjectID sets the "workspace_project_id" field if the given value is not nil.
+func (_c *ApiTokenCreate) SetNillableWorkspaceProjectID(v *int64) *ApiTokenCreate {
+	if v != nil {
+		_c.SetWorkspaceProjectID(*v)
+	}
+	return _c
+}
+
+// SetProjectID sets the "project" edge to the Project entity by ID.
+func (_c *ApiTokenCreate) SetProjectID(id int64) *ApiTokenCreate {
+	_c.mutation.SetProjectID(id)
+	return _c
+}
+
+// SetNillableProjectID sets the "project" edge to the Project entity by ID if the given value is not nil.
+func (_c *ApiTokenCreate) SetNillableProjectID(id *int64) *ApiTokenCreate {
+	if id != nil {
+		_c = _c.SetProjectID(*id)
+	}
+	return _c
+}
+
+// SetProject sets the "project" edge to the Project entity.
+func (_c *ApiTokenCreate) SetProject(v *Project) *ApiTokenCreate {
+	return _c.SetProjectID(v.ID)
 }
 
 // Mutation returns the ApiTokenMutation object of the builder.
@@ -259,6 +293,23 @@ func (_c *ApiTokenCreate) createSpec() (*ApiToken, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.UpdatedAt(); ok {
 		_spec.SetField(apitoken.FieldUpdatedAt, field.TypeTime, value)
 		_node.UpdatedAt = value
+	}
+	if nodes := _c.mutation.ProjectIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   apitoken.ProjectTable,
+			Columns: []string{apitoken.ProjectColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(project.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.WorkspaceProjectID = &nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec
 }

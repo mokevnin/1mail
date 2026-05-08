@@ -70,6 +70,11 @@ func Phone(v string) predicate.TrackingProfile {
 	return predicate.TrackingProfile(sql.FieldEQ(FieldPhone, v))
 }
 
+// WorkspaceProjectID applies equality check predicate on the "workspace_project_id" field. It's identical to WorkspaceProjectIDEQ.
+func WorkspaceProjectID(v int64) predicate.TrackingProfile {
+	return predicate.TrackingProfile(sql.FieldEQ(FieldWorkspaceProjectID, v))
+}
+
 // CreatedAt applies equality check predicate on the "created_at" field. It's identical to CreatedAtEQ.
 func CreatedAt(v time.Time) predicate.TrackingProfile {
 	return predicate.TrackingProfile(sql.FieldEQ(FieldCreatedAt, v))
@@ -295,6 +300,36 @@ func PhoneContainsFold(v string) predicate.TrackingProfile {
 	return predicate.TrackingProfile(sql.FieldContainsFold(FieldPhone, v))
 }
 
+// WorkspaceProjectIDEQ applies the EQ predicate on the "workspace_project_id" field.
+func WorkspaceProjectIDEQ(v int64) predicate.TrackingProfile {
+	return predicate.TrackingProfile(sql.FieldEQ(FieldWorkspaceProjectID, v))
+}
+
+// WorkspaceProjectIDNEQ applies the NEQ predicate on the "workspace_project_id" field.
+func WorkspaceProjectIDNEQ(v int64) predicate.TrackingProfile {
+	return predicate.TrackingProfile(sql.FieldNEQ(FieldWorkspaceProjectID, v))
+}
+
+// WorkspaceProjectIDIn applies the In predicate on the "workspace_project_id" field.
+func WorkspaceProjectIDIn(vs ...int64) predicate.TrackingProfile {
+	return predicate.TrackingProfile(sql.FieldIn(FieldWorkspaceProjectID, vs...))
+}
+
+// WorkspaceProjectIDNotIn applies the NotIn predicate on the "workspace_project_id" field.
+func WorkspaceProjectIDNotIn(vs ...int64) predicate.TrackingProfile {
+	return predicate.TrackingProfile(sql.FieldNotIn(FieldWorkspaceProjectID, vs...))
+}
+
+// WorkspaceProjectIDIsNil applies the IsNil predicate on the "workspace_project_id" field.
+func WorkspaceProjectIDIsNil() predicate.TrackingProfile {
+	return predicate.TrackingProfile(sql.FieldIsNull(FieldWorkspaceProjectID))
+}
+
+// WorkspaceProjectIDNotNil applies the NotNil predicate on the "workspace_project_id" field.
+func WorkspaceProjectIDNotNil() predicate.TrackingProfile {
+	return predicate.TrackingProfile(sql.FieldNotNull(FieldWorkspaceProjectID))
+}
+
 // CreatedAtEQ applies the EQ predicate on the "created_at" field.
 func CreatedAtEQ(v time.Time) predicate.TrackingProfile {
 	return predicate.TrackingProfile(sql.FieldEQ(FieldCreatedAt, v))
@@ -390,6 +425,29 @@ func HasVisitors() predicate.TrackingProfile {
 func HasVisitorsWith(preds ...predicate.TrackingVisitor) predicate.TrackingProfile {
 	return predicate.TrackingProfile(func(s *sql.Selector) {
 		step := newVisitorsStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasProject applies the HasEdge predicate on the "project" edge.
+func HasProject() predicate.TrackingProfile {
+	return predicate.TrackingProfile(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, ProjectTable, ProjectColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasProjectWith applies the HasEdge predicate on the "project" edge with a given conditions (other predicates).
+func HasProjectWith(preds ...predicate.Project) predicate.TrackingProfile {
+	return predicate.TrackingProfile(func(s *sql.Selector) {
+		step := newProjectStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)
