@@ -23,6 +23,9 @@ func (Contact) Annotations() []schema.Annotation {
 
 func (Contact) Fields() []ent.Field {
 	return []ent.Field{
+		field.Int64("id").
+			StorageKey("id").
+			Immutable(),
 		field.String("email").
 			NotEmpty(),
 		field.String("first_name").

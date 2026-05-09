@@ -22,6 +22,9 @@ func (Workspace) Annotations() []schema.Annotation {
 
 func (Workspace) Fields() []ent.Field {
 	return []ent.Field{
+		field.Int64("id").
+			StorageKey("id").
+			Immutable(),
 		field.String("name").
 			NotEmpty(),
 		field.String("slug").

@@ -22,6 +22,9 @@ func (Event) Annotations() []schema.Annotation {
 
 func (Event) Fields() []ent.Field {
 	return []ent.Field{
+		field.Int64("id").
+			StorageKey("id").
+			Immutable(),
 		field.String("subject_id").
 			NotEmpty(),
 		field.String("email").

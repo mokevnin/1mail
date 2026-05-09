@@ -123,6 +123,12 @@ func (_c *EventCreate) SetNillableCreatedAt(v *time.Time) *EventCreate {
 	return _c
 }
 
+// SetID sets the "id" field.
+func (_c *EventCreate) SetID(v int64) *EventCreate {
+	_c.mutation.SetID(v)
+	return _c
+}
+
 // SetWorkspace sets the "workspace" edge to the Workspace entity.
 func (_c *EventCreate) SetWorkspace(v *Workspace) *EventCreate {
 	return _c.SetWorkspaceID(v.ID)
@@ -204,8 +210,10 @@ func (_c *EventCreate) sqlSave(ctx context.Context) (*Event, error) {
 		}
 		return nil, err
 	}
-	id := _spec.ID.Value.(int64)
-	_node.ID = int64(id)
+	if _spec.ID.Value != _node.ID {
+		id := _spec.ID.Value.(int64)
+		_node.ID = int64(id)
+	}
 	_c.mutation.id = &_node.ID
 	_c.mutation.done = true
 	return _node, nil
@@ -216,6 +224,10 @@ func (_c *EventCreate) createSpec() (*Event, *sqlgraph.CreateSpec) {
 		_node = &Event{config: _c.config}
 		_spec = sqlgraph.NewCreateSpec(event.Table, sqlgraph.NewFieldSpec(event.FieldID, field.TypeInt64))
 	)
+	if id, ok := _c.mutation.ID(); ok {
+		_node.ID = id
+		_spec.ID.Value = id
+	}
 	if value, ok := _c.mutation.SubjectID(); ok {
 		_spec.SetField(event.FieldSubjectID, field.TypeString, value)
 		_node.SubjectID = value
@@ -313,7 +325,7 @@ func (_c *EventCreateBulk) Save(ctx context.Context) ([]*Event, error) {
 					return nil, err
 				}
 				mutation.id = &nodes[i].ID
-				if specs[i].ID.Value != nil {
+				if specs[i].ID.Value != nil && nodes[i].ID == 0 {
 					id := specs[i].ID.Value.(int64)
 					nodes[i].ID = int64(id)
 				}

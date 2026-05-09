@@ -129,6 +129,12 @@ func (_c *ApiTokenCreate) SetNillableWorkspaceID(v *int64) *ApiTokenCreate {
 	return _c
 }
 
+// SetID sets the "id" field.
+func (_c *ApiTokenCreate) SetID(v int64) *ApiTokenCreate {
+	_c.mutation.SetID(v)
+	return _c
+}
+
 // SetWorkspace sets the "workspace" edge to the Workspace entity.
 func (_c *ApiTokenCreate) SetWorkspace(v *Workspace) *ApiTokenCreate {
 	return _c.SetWorkspaceID(v.ID)
@@ -232,8 +238,10 @@ func (_c *ApiTokenCreate) sqlSave(ctx context.Context) (*ApiToken, error) {
 		}
 		return nil, err
 	}
-	id := _spec.ID.Value.(int64)
-	_node.ID = int64(id)
+	if _spec.ID.Value != _node.ID {
+		id := _spec.ID.Value.(int64)
+		_node.ID = int64(id)
+	}
 	_c.mutation.id = &_node.ID
 	_c.mutation.done = true
 	return _node, nil
@@ -244,6 +252,10 @@ func (_c *ApiTokenCreate) createSpec() (*ApiToken, *sqlgraph.CreateSpec) {
 		_node = &ApiToken{config: _c.config}
 		_spec = sqlgraph.NewCreateSpec(apitoken.Table, sqlgraph.NewFieldSpec(apitoken.FieldID, field.TypeInt64))
 	)
+	if id, ok := _c.mutation.ID(); ok {
+		_node.ID = id
+		_spec.ID.Value = id
+	}
 	if value, ok := _c.mutation.Name(); ok {
 		_spec.SetField(apitoken.FieldName, field.TypeString, value)
 		_node.Name = value
@@ -345,7 +357,7 @@ func (_c *ApiTokenCreateBulk) Save(ctx context.Context) ([]*ApiToken, error) {
 					return nil, err
 				}
 				mutation.id = &nodes[i].ID
-				if specs[i].ID.Value != nil {
+				if specs[i].ID.Value != nil && nodes[i].ID == 0 {
 					id := specs[i].ID.Value.(int64)
 					nodes[i].ID = int64(id)
 				}

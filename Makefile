@@ -3,24 +3,25 @@ setup: install db-create db-create-test db-migrate
 install:
 	pnpm install
 	go mod download
+	# mise use -g air
 
 db-create:
-	. .env && go run ./cmd/db/... create
+	go run ./cmd/db create
 
 db-create-test:
-	. .env.test && go run ./cmd/db/... create
+	APP_ENV=test go run ./cmd/db create
 
 db-drop:
-	. .env && go run ./cmd/db/... drop
+	go run ./cmd/db drop
 
 db-drop-test:
-	. .env.test && go run ./cmd/db/... drop
+	APP_ENV=test go run ./cmd/db drop
 
 db-migrate:
 	. .env && atlas migrate apply --env local --url $$DATABASE_URL --allow-dirty
 
 db-seed:
-	. .env && go run ./cmd/seed/...
+	go run ./cmd/seed
 
 db-reset: db-drop db-create db-migrate
 

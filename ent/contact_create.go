@@ -131,6 +131,12 @@ func (_c *ContactCreate) SetNillableUpdatedAt(v *time.Time) *ContactCreate {
 	return _c
 }
 
+// SetID sets the "id" field.
+func (_c *ContactCreate) SetID(v int64) *ContactCreate {
+	_c.mutation.SetID(v)
+	return _c
+}
+
 // SetWorkspace sets the "workspace" edge to the Workspace entity.
 func (_c *ContactCreate) SetWorkspace(v *Workspace) *ContactCreate {
 	return _c.SetWorkspaceID(v.ID)
@@ -223,8 +229,10 @@ func (_c *ContactCreate) sqlSave(ctx context.Context) (*Contact, error) {
 		}
 		return nil, err
 	}
-	id := _spec.ID.Value.(int64)
-	_node.ID = int64(id)
+	if _spec.ID.Value != _node.ID {
+		id := _spec.ID.Value.(int64)
+		_node.ID = int64(id)
+	}
 	_c.mutation.id = &_node.ID
 	_c.mutation.done = true
 	return _node, nil
@@ -235,6 +243,10 @@ func (_c *ContactCreate) createSpec() (*Contact, *sqlgraph.CreateSpec) {
 		_node = &Contact{config: _c.config}
 		_spec = sqlgraph.NewCreateSpec(contact.Table, sqlgraph.NewFieldSpec(contact.FieldID, field.TypeInt64))
 	)
+	if id, ok := _c.mutation.ID(); ok {
+		_node.ID = id
+		_spec.ID.Value = id
+	}
 	if value, ok := _c.mutation.Email(); ok {
 		_spec.SetField(contact.FieldEmail, field.TypeString, value)
 		_node.Email = value
@@ -332,7 +344,7 @@ func (_c *ContactCreateBulk) Save(ctx context.Context) ([]*Contact, error) {
 					return nil, err
 				}
 				mutation.id = &nodes[i].ID
-				if specs[i].ID.Value != nil {
+				if specs[i].ID.Value != nil && nodes[i].ID == 0 {
 					id := specs[i].ID.Value.(int64)
 					nodes[i].ID = int64(id)
 				}

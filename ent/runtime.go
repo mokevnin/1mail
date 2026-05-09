@@ -22,27 +22,27 @@ func init() {
 	apitokenFields := schema.ApiToken{}.Fields()
 	_ = apitokenFields
 	// apitokenDescName is the schema descriptor for name field.
-	apitokenDescName := apitokenFields[0].Descriptor()
+	apitokenDescName := apitokenFields[1].Descriptor()
 	// apitoken.NameValidator is a validator for the "name" field. It is called by the builders before save.
 	apitoken.NameValidator = apitokenDescName.Validators[0].(func(string) error)
 	// apitokenDescPrefix is the schema descriptor for prefix field.
-	apitokenDescPrefix := apitokenFields[1].Descriptor()
+	apitokenDescPrefix := apitokenFields[2].Descriptor()
 	// apitoken.PrefixValidator is a validator for the "prefix" field. It is called by the builders before save.
 	apitoken.PrefixValidator = apitokenDescPrefix.Validators[0].(func(string) error)
 	// apitokenDescSecretHash is the schema descriptor for secret_hash field.
-	apitokenDescSecretHash := apitokenFields[2].Descriptor()
+	apitokenDescSecretHash := apitokenFields[3].Descriptor()
 	// apitoken.SecretHashValidator is a validator for the "secret_hash" field. It is called by the builders before save.
 	apitoken.SecretHashValidator = apitokenDescSecretHash.Validators[0].(func(string) error)
 	// apitokenDescScopes is the schema descriptor for scopes field.
-	apitokenDescScopes := apitokenFields[3].Descriptor()
+	apitokenDescScopes := apitokenFields[4].Descriptor()
 	// apitoken.DefaultScopes holds the default value on creation for the scopes field.
 	apitoken.DefaultScopes = apitokenDescScopes.Default.([]string)
 	// apitokenDescCreatedAt is the schema descriptor for created_at field.
-	apitokenDescCreatedAt := apitokenFields[7].Descriptor()
+	apitokenDescCreatedAt := apitokenFields[8].Descriptor()
 	// apitoken.DefaultCreatedAt holds the default value on creation for the created_at field.
 	apitoken.DefaultCreatedAt = apitokenDescCreatedAt.Default.(func() time.Time)
 	// apitokenDescUpdatedAt is the schema descriptor for updated_at field.
-	apitokenDescUpdatedAt := apitokenFields[8].Descriptor()
+	apitokenDescUpdatedAt := apitokenFields[9].Descriptor()
 	// apitoken.DefaultUpdatedAt holds the default value on creation for the updated_at field.
 	apitoken.DefaultUpdatedAt = apitokenDescUpdatedAt.Default.(func() time.Time)
 	// apitoken.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
@@ -50,15 +50,15 @@ func init() {
 	contactFields := schema.Contact{}.Fields()
 	_ = contactFields
 	// contactDescEmail is the schema descriptor for email field.
-	contactDescEmail := contactFields[0].Descriptor()
+	contactDescEmail := contactFields[1].Descriptor()
 	// contact.EmailValidator is a validator for the "email" field. It is called by the builders before save.
 	contact.EmailValidator = contactDescEmail.Validators[0].(func(string) error)
 	// contactDescCreatedAt is the schema descriptor for created_at field.
-	contactDescCreatedAt := contactFields[7].Descriptor()
+	contactDescCreatedAt := contactFields[8].Descriptor()
 	// contact.DefaultCreatedAt holds the default value on creation for the created_at field.
 	contact.DefaultCreatedAt = contactDescCreatedAt.Default.(func() time.Time)
 	// contactDescUpdatedAt is the schema descriptor for updated_at field.
-	contactDescUpdatedAt := contactFields[8].Descriptor()
+	contactDescUpdatedAt := contactFields[9].Descriptor()
 	// contact.DefaultUpdatedAt holds the default value on creation for the updated_at field.
 	contact.DefaultUpdatedAt = contactDescUpdatedAt.Default.(func() time.Time)
 	// contact.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
@@ -66,15 +66,15 @@ func init() {
 	eventFields := schema.Event{}.Fields()
 	_ = eventFields
 	// eventDescSubjectID is the schema descriptor for subject_id field.
-	eventDescSubjectID := eventFields[0].Descriptor()
+	eventDescSubjectID := eventFields[1].Descriptor()
 	// event.SubjectIDValidator is a validator for the "subject_id" field. It is called by the builders before save.
 	event.SubjectIDValidator = eventDescSubjectID.Validators[0].(func(string) error)
 	// eventDescAction is the schema descriptor for action field.
-	eventDescAction := eventFields[3].Descriptor()
+	eventDescAction := eventFields[4].Descriptor()
 	// event.ActionValidator is a validator for the "action" field. It is called by the builders before save.
 	event.ActionValidator = eventDescAction.Validators[0].(func(string) error)
 	// eventDescCreatedAt is the schema descriptor for created_at field.
-	eventDescCreatedAt := eventFields[8].Descriptor()
+	eventDescCreatedAt := eventFields[9].Descriptor()
 	// event.DefaultCreatedAt holds the default value on creation for the created_at field.
 	event.DefaultCreatedAt = eventDescCreatedAt.Default.(func() time.Time)
 	trackingprofileFields := schema.TrackingProfile{}.Fields()
@@ -100,53 +100,57 @@ func init() {
 	trackingvisitorFields := schema.TrackingVisitor{}.Fields()
 	_ = trackingvisitorFields
 	// trackingvisitorDescVisitorID is the schema descriptor for visitor_id field.
-	trackingvisitorDescVisitorID := trackingvisitorFields[0].Descriptor()
+	trackingvisitorDescVisitorID := trackingvisitorFields[1].Descriptor()
 	// trackingvisitor.VisitorIDValidator is a validator for the "visitor_id" field. It is called by the builders before save.
 	trackingvisitor.VisitorIDValidator = trackingvisitorDescVisitorID.Validators[0].(func(string) error)
 	// trackingvisitorDescCreatedAt is the schema descriptor for created_at field.
-	trackingvisitorDescCreatedAt := trackingvisitorFields[2].Descriptor()
+	trackingvisitorDescCreatedAt := trackingvisitorFields[3].Descriptor()
 	// trackingvisitor.DefaultCreatedAt holds the default value on creation for the created_at field.
 	trackingvisitor.DefaultCreatedAt = trackingvisitorDescCreatedAt.Default.(func() time.Time)
 	// trackingvisitorDescUpdatedAt is the schema descriptor for updated_at field.
-	trackingvisitorDescUpdatedAt := trackingvisitorFields[3].Descriptor()
+	trackingvisitorDescUpdatedAt := trackingvisitorFields[4].Descriptor()
 	// trackingvisitor.DefaultUpdatedAt holds the default value on creation for the updated_at field.
 	trackingvisitor.DefaultUpdatedAt = trackingvisitorDescUpdatedAt.Default.(func() time.Time)
 	// trackingvisitor.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	trackingvisitor.UpdateDefaultUpdatedAt = trackingvisitorDescUpdatedAt.UpdateDefault.(func() time.Time)
 	// trackingvisitorDescLastSeenAt is the schema descriptor for last_seen_at field.
-	trackingvisitorDescLastSeenAt := trackingvisitorFields[4].Descriptor()
+	trackingvisitorDescLastSeenAt := trackingvisitorFields[5].Descriptor()
 	// trackingvisitor.DefaultLastSeenAt holds the default value on creation for the last_seen_at field.
 	trackingvisitor.DefaultLastSeenAt = trackingvisitorDescLastSeenAt.Default.(func() time.Time)
 	userFields := schema.User{}.Fields()
 	_ = userFields
 	// userDescName is the schema descriptor for name field.
-	userDescName := userFields[0].Descriptor()
+	userDescName := userFields[1].Descriptor()
 	// user.NameValidator is a validator for the "name" field. It is called by the builders before save.
 	user.NameValidator = userDescName.Validators[0].(func(string) error)
 	// userDescEmail is the schema descriptor for email field.
-	userDescEmail := userFields[1].Descriptor()
+	userDescEmail := userFields[2].Descriptor()
 	// user.EmailValidator is a validator for the "email" field. It is called by the builders before save.
 	user.EmailValidator = userDescEmail.Validators[0].(func(string) error)
+	// userDescUpdatedAt is the schema descriptor for updated_at field.
+	userDescUpdatedAt := userFields[4].Descriptor()
+	// user.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	user.DefaultUpdatedAt = userDescUpdatedAt.Default.(func() time.Time)
 	// userDescCreatedAt is the schema descriptor for created_at field.
-	userDescCreatedAt := userFields[3].Descriptor()
+	userDescCreatedAt := userFields[5].Descriptor()
 	// user.DefaultCreatedAt holds the default value on creation for the created_at field.
 	user.DefaultCreatedAt = userDescCreatedAt.Default.(func() time.Time)
 	workspaceFields := schema.Workspace{}.Fields()
 	_ = workspaceFields
 	// workspaceDescName is the schema descriptor for name field.
-	workspaceDescName := workspaceFields[0].Descriptor()
+	workspaceDescName := workspaceFields[1].Descriptor()
 	// workspace.NameValidator is a validator for the "name" field. It is called by the builders before save.
 	workspace.NameValidator = workspaceDescName.Validators[0].(func(string) error)
 	// workspaceDescSlug is the schema descriptor for slug field.
-	workspaceDescSlug := workspaceFields[1].Descriptor()
+	workspaceDescSlug := workspaceFields[2].Descriptor()
 	// workspace.SlugValidator is a validator for the "slug" field. It is called by the builders before save.
 	workspace.SlugValidator = workspaceDescSlug.Validators[0].(func(string) error)
 	// workspaceDescCreatedAt is the schema descriptor for created_at field.
-	workspaceDescCreatedAt := workspaceFields[3].Descriptor()
+	workspaceDescCreatedAt := workspaceFields[4].Descriptor()
 	// workspace.DefaultCreatedAt holds the default value on creation for the created_at field.
 	workspace.DefaultCreatedAt = workspaceDescCreatedAt.Default.(func() time.Time)
 	// workspaceDescUpdatedAt is the schema descriptor for updated_at field.
-	workspaceDescUpdatedAt := workspaceFields[4].Descriptor()
+	workspaceDescUpdatedAt := workspaceFields[5].Descriptor()
 	// workspace.DefaultUpdatedAt holds the default value on creation for the updated_at field.
 	workspace.DefaultUpdatedAt = workspaceDescUpdatedAt.Default.(func() time.Time)
 	// workspace.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.

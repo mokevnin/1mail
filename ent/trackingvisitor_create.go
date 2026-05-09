@@ -83,6 +83,12 @@ func (_c *TrackingVisitorCreate) SetNillableLastSeenAt(v *time.Time) *TrackingVi
 	return _c
 }
 
+// SetID sets the "id" field.
+func (_c *TrackingVisitorCreate) SetID(v int64) *TrackingVisitorCreate {
+	_c.mutation.SetID(v)
+	return _c
+}
+
 // SetProfile sets the "profile" edge to the TrackingProfile entity.
 func (_c *TrackingVisitorCreate) SetProfile(v *TrackingProfile) *TrackingVisitorCreate {
 	return _c.SetProfileID(v.ID)
@@ -170,8 +176,10 @@ func (_c *TrackingVisitorCreate) sqlSave(ctx context.Context) (*TrackingVisitor,
 		}
 		return nil, err
 	}
-	id := _spec.ID.Value.(int64)
-	_node.ID = int64(id)
+	if _spec.ID.Value != _node.ID {
+		id := _spec.ID.Value.(int64)
+		_node.ID = int64(id)
+	}
 	_c.mutation.id = &_node.ID
 	_c.mutation.done = true
 	return _node, nil
@@ -182,6 +190,10 @@ func (_c *TrackingVisitorCreate) createSpec() (*TrackingVisitor, *sqlgraph.Creat
 		_node = &TrackingVisitor{config: _c.config}
 		_spec = sqlgraph.NewCreateSpec(trackingvisitor.Table, sqlgraph.NewFieldSpec(trackingvisitor.FieldID, field.TypeInt64))
 	)
+	if id, ok := _c.mutation.ID(); ok {
+		_node.ID = id
+		_spec.ID.Value = id
+	}
 	if value, ok := _c.mutation.VisitorID(); ok {
 		_spec.SetField(trackingvisitor.FieldVisitorID, field.TypeString, value)
 		_node.VisitorID = value
@@ -263,7 +275,7 @@ func (_c *TrackingVisitorCreateBulk) Save(ctx context.Context) ([]*TrackingVisit
 					return nil, err
 				}
 				mutation.id = &nodes[i].ID
-				if specs[i].ID.Value != nil {
+				if specs[i].ID.Value != nil && nodes[i].ID == 0 {
 					id := specs[i].ID.Value.(int64)
 					nodes[i].ID = int64(id)
 				}

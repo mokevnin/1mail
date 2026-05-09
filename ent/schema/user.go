@@ -22,6 +22,9 @@ func (User) Annotations() []schema.Annotation {
 
 func (User) Fields() []ent.Field {
 	return []ent.Field{
+		field.Int64("id").
+			StorageKey("id").
+			Immutable(),
 		field.String("name").
 			NotEmpty(),
 		field.String("email").
@@ -30,6 +33,9 @@ func (User) Fields() []ent.Field {
 		field.String("password_hash").
 			Sensitive().
 			Optional(),
+		field.Time("updated_at").
+			Default(time.Now).
+			Immutable(),
 		field.Time("created_at").
 			Default(time.Now).
 			Immutable(),

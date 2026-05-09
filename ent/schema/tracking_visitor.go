@@ -22,6 +22,9 @@ func (TrackingVisitor) Annotations() []schema.Annotation {
 
 func (TrackingVisitor) Fields() []ent.Field {
 	return []ent.Field{
+		field.Int64("id").
+			StorageKey("id").
+			Immutable(),
 		field.String("visitor_id").
 			NotEmpty().
 			Unique(),

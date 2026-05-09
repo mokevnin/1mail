@@ -22,6 +22,9 @@ func (ApiToken) Annotations() []schema.Annotation {
 
 func (ApiToken) Fields() []ent.Field {
 	return []ent.Field{
+		field.Int64("id").
+			StorageKey("id").
+			Immutable(),
 		field.String("name").
 			NotEmpty(),
 		field.String("prefix").
