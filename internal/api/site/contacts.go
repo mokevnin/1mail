@@ -10,6 +10,7 @@ import (
 	"github.com/mokevnin/1mail/internal/pagination"
 	"github.com/mokevnin/1mail/internal/pubsub"
 	"github.com/mokevnin/1mail/internal/service"
+	"github.com/samber/lo"
 )
 
 type Handlers struct {
@@ -42,10 +43,9 @@ func (h *Handlers) SiteContactsList(ctx context.Context, req siteapi.SiteContact
 		return nil, err
 	}
 
-	resources := make([]siteapi.SiteContactResource, len(items))
-	for i, c := range items {
-		resources[i] = toResource(c)
-	}
+	resources := lo.Map(items, func(c *ent.Contact, _ int) siteapi.SiteContactResource {
+		return toResource(c)
+	})
 
 	return siteapi.SiteContactsList200JSONResponse{
 		Items:      resources,
@@ -69,7 +69,9 @@ func (h *Handlers) SiteContactsCreate(ctx context.Context, req siteapi.SiteConta
 		CustomFields: customFields,
 	})
 	if service.IsUniqueViolation(err) {
-		return siteapi.SiteContactsCreate409ApplicationProblemPlusJSONResponse(conflict("email already exists")), nil
+		return siteapi.SiteContactsCreate409ApplicationProblemPlusJSONResponse(conflictWithErrors("email already exists", fieldErrors{
+			"email": {"email already exists"},
+		})), nil
 	}
 	if err != nil {
 		return nil, err
@@ -158,8 +160,14 @@ func ptr[T any](v T) *T { return &v }
 
 func strptr(s string) *string { return &s }
 
+type fieldErrors map[string][]string
+
 func conflict(detail string) siteapi.ProblemDetails {
 	return problem(409, "Conflict", detail)
+}
+
+func conflictWithErrors(detail string, errors fieldErrors) siteapi.ProblemDetails {
+	return problemWithErrors(409, "Conflict", detail, errors)
 }
 
 func notFound(detail string) siteapi.ProblemDetails {
@@ -176,6 +184,12 @@ func problem(status int32, title, detail string) siteapi.ProblemDetails {
 		Title:  strptr(title),
 		Detail: strptr(detail),
 	}
+}
+
+func problemWithErrors(status int32, title, detail string, errors fieldErrors) siteapi.ProblemDetails {
+	p := problem(status, title, detail)
+	p.Errors = ptr(map[string][]string(errors))
+	return p
 }
 
 // ensure Handlers implements the interface

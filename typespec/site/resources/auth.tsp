@@ -15,6 +15,32 @@ model SiteRegisterResult {
   createdAt: Timestamp;
 }
 
+model SiteDirectLoginInput {
+  user: string;
+  passwd: string;
+}
+
+model SiteDirectLoginResult {
+  name: string;
+  id: string;
+  picture?: string;
+  aud?: string;
+  ip?: string;
+  email?: string;
+  attrs?: Record<unknown>;
+  role?: string;
+}
+
+model SiteDirectLoginError {
+  error: string;
+}
+
+@error
+model SiteDirectLoginForbidden is Response<403> {
+  @header contentType: "application/json";
+  @body body: SiteDirectLoginError;
+}
+
 @route("/auth")
 @tag("Site Auth")
 namespace SiteAuth {
@@ -24,4 +50,11 @@ namespace SiteAuth {
     @statusCode statusCode: 201;
     @body body: SiteRegisterResult;
   } | ConflictProblem | UnprocessableEntityProblem;
+
+  @post
+  @route("/direct/login")
+  op directLogin(@body body: SiteDirectLoginInput): {
+    @statusCode statusCode: 200;
+    @body body: SiteDirectLoginResult;
+  } | SiteDirectLoginForbidden | BadRequestProblem;
 }

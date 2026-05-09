@@ -8,6 +8,7 @@ import (
 	"github.com/mokevnin/1mail/ent"
 	externalapi "github.com/mokevnin/1mail/gen/external"
 	"github.com/mokevnin/1mail/internal/service"
+	"github.com/samber/lo"
 )
 
 func (h *Handlers) AuthMeGet(ctx context.Context, req externalapi.AuthMeGetRequestObject) (externalapi.AuthMeGetResponseObject, error) {
@@ -35,10 +36,9 @@ func (h *Handlers) AuthTokensList(ctx context.Context, req externalapi.AuthToken
 		return nil, err
 	}
 
-	items := make([]externalapi.ApiTokenInfo, len(tokens))
-	for i, t := range tokens {
-		items[i] = toTokenInfo(t)
-	}
+	items := lo.Map(tokens, func(t *ent.ApiToken, _ int) externalapi.ApiTokenInfo {
+		return toTokenInfo(t)
+	})
 	return externalapi.AuthTokensList200JSONResponse{Items: items}, nil
 }
 
@@ -59,10 +59,7 @@ func (h *Handlers) AuthTokensBootstrap(ctx context.Context, req externalapi.Auth
 		return externalapi.AuthTokensBootstrap401ApplicationProblemPlusJSONResponse(unauthorized("invalid bootstrap token")), nil
 	}
 
-	scopes := make([]externalapi.ApiTokenScope, len(req.Body.Scopes))
-	copy(scopes, req.Body.Scopes)
-
-	resp, err := createToken(ctx, h.ent, req.Body.Name, scopes, req.Body.ExpiresAt)
+	resp, err := createToken(ctx, h.ent, req.Body.Name, req.Body.Scopes, req.Body.ExpiresAt)
 	if err != nil {
 		return nil, err
 	}
@@ -104,10 +101,9 @@ func createToken(ctx context.Context, client *ent.Client, name string, scopes []
 		return nil, err
 	}
 
-	scopeStrings := make([]string, len(scopes))
-	for i, s := range scopes {
-		scopeStrings[i] = string(s)
-	}
+	scopeStrings := lo.Map(scopes, func(s externalapi.ApiTokenScope, _ int) string {
+		return string(s)
+	})
 
 	q := client.ApiToken.Create().
 		SetName(name).

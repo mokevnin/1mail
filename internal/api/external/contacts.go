@@ -9,6 +9,7 @@ import (
 	externalapi "github.com/mokevnin/1mail/gen/external"
 	"github.com/mokevnin/1mail/internal/pagination"
 	"github.com/mokevnin/1mail/internal/service"
+	"github.com/samber/lo"
 )
 
 func (h *Handlers) ContactsList(ctx context.Context, req externalapi.ContactsListRequestObject) (externalapi.ContactsListResponseObject, error) {
@@ -36,10 +37,9 @@ func (h *Handlers) ContactsList(ctx context.Context, req externalapi.ContactsLis
 		return nil, err
 	}
 
-	resources := make([]externalapi.ContactResource, len(items))
-	for i, c := range items {
-		resources[i] = toContactResource(c)
-	}
+	resources := lo.Map(items, func(c *ent.Contact, _ int) externalapi.ContactResource {
+		return toContactResource(c)
+	})
 
 	return externalapi.ContactsList200JSONResponse{
 		Items:      resources,
@@ -67,7 +67,9 @@ func (h *Handlers) ContactsCreate(ctx context.Context, req externalapi.ContactsC
 		CustomFields: customFields,
 	})
 	if service.IsUniqueViolation(err) {
-		return externalapi.ContactsCreate409ApplicationProblemPlusJSONResponse(conflict("email already exists")), nil
+		return externalapi.ContactsCreate409ApplicationProblemPlusJSONResponse(conflictWithErrors("email already exists", fieldErrors{
+			"email": {"email already exists"},
+		})), nil
 	}
 	if err != nil {
 		return nil, err

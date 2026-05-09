@@ -11,6 +11,7 @@ import (
 	"github.com/mokevnin/1mail/ent/apitoken"
 	externalapi "github.com/mokevnin/1mail/gen/external"
 	"github.com/mokevnin/1mail/internal/service"
+	"github.com/samber/lo"
 )
 
 type TokenAuth struct {
@@ -36,12 +37,7 @@ func hasScope(auth *TokenAuth, scope string) bool {
 	if auth == nil {
 		return false
 	}
-	for _, s := range auth.Scopes {
-		if s == scope {
-			return true
-		}
-	}
-	return false
+	return lo.Contains(auth.Scopes, scope)
 }
 
 func MakeTokenValidator(client *ent.Client) middleware.KeyAuthValidator {
@@ -123,10 +119,9 @@ func toContactResource(c *ent.Contact) externalapi.ContactResource {
 }
 
 func toTokenInfo(t *ent.ApiToken) externalapi.ApiTokenInfo {
-	scopes := make([]externalapi.ApiTokenScope, len(t.Scopes))
-	for i, s := range t.Scopes {
-		scopes[i] = externalapi.ApiTokenScope(s)
-	}
+	scopes := lo.Map(t.Scopes, func(s string, _ int) externalapi.ApiTokenScope {
+		return externalapi.ApiTokenScope(s)
+	})
 	return externalapi.ApiTokenInfo{
 		Id:         itoa(t.ID),
 		Name:       t.Name,
@@ -143,7 +138,12 @@ func itoa(id int64) string {
 	return externalapi.EntityId(strconv.FormatInt(id, 10))
 }
 
-func conflict(detail string) externalapi.ProblemDetails   { return problem(409, "Conflict", detail) }
+type fieldErrors map[string][]string
+
+func conflict(detail string) externalapi.ProblemDetails { return problem(409, "Conflict", detail) }
+func conflictWithErrors(detail string, errors fieldErrors) externalapi.ProblemDetails {
+	return problemWithErrors(409, "Conflict", detail, errors)
+}
 func notFound(detail string) externalapi.ProblemDetails   { return problem(404, "Not Found", detail) }
 func badRequest(detail string) externalapi.ProblemDetails { return problem(400, "Bad Request", detail) }
 func forbidden(detail string) externalapi.ProblemDetails  { return problem(403, "Forbidden", detail) }
@@ -159,6 +159,14 @@ func problem(status int32, title, detail string) externalapi.ProblemDetails {
 	}
 }
 
+func problemWithErrors(status int32, title, detail string, errors fieldErrors) externalapi.ProblemDetails {
+	p := problem(status, title, detail)
+	p.Errors = ptr(map[string][]string(errors))
+	return p
+}
+
 func strptr(s string) *string { return &s }
+
+func ptr[T any](v T) *T { return &v }
 
 var _ externalapi.StrictServerInterface = (*Handlers)(nil)

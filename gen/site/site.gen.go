@@ -118,6 +118,29 @@ type SiteCreateContactInput struct {
 	TimeZone *TimeZoneName `json:"timeZone,omitempty"`
 }
 
+// SiteDirectLoginError defines model for SiteDirectLoginError.
+type SiteDirectLoginError struct {
+	Error string `json:"error"`
+}
+
+// SiteDirectLoginInput defines model for SiteDirectLoginInput.
+type SiteDirectLoginInput struct {
+	Passwd string `json:"passwd"`
+	User   string `json:"user"`
+}
+
+// SiteDirectLoginResult defines model for SiteDirectLoginResult.
+type SiteDirectLoginResult struct {
+	Attrs   *map[string]interface{} `json:"attrs,omitempty"`
+	Aud     *string                 `json:"aud,omitempty"`
+	Email   *string                 `json:"email,omitempty"`
+	Id      string                  `json:"id"`
+	Ip      *string                 `json:"ip,omitempty"`
+	Name    string                  `json:"name"`
+	Picture *string                 `json:"picture,omitempty"`
+	Role    *string                 `json:"role,omitempty"`
+}
+
 // SiteRegisterInput defines model for SiteRegisterInput.
 type SiteRegisterInput struct {
 	Email    EmailAddress `json:"email"`
@@ -172,6 +195,9 @@ type SiteContactsListParams struct {
 	Status *SiteContactStatus `form:"status,omitempty" json:"status,omitempty"`
 }
 
+// SiteAuthDirectLoginJSONRequestBody defines body for SiteAuthDirectLogin for application/json ContentType.
+type SiteAuthDirectLoginJSONRequestBody = SiteDirectLoginInput
+
 // SiteAuthRegisterJSONRequestBody defines body for SiteAuthRegister for application/json ContentType.
 type SiteAuthRegisterJSONRequestBody = SiteRegisterInput
 
@@ -183,6 +209,9 @@ type SiteContactsUpdateJSONRequestBody = SiteUpdateContactInput
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
+
+	// (POST /auth/direct/login)
+	SiteAuthDirectLogin(ctx echo.Context) error
 
 	// (POST /auth/register)
 	SiteAuthRegister(ctx echo.Context) error
@@ -206,6 +235,15 @@ type ServerInterface interface {
 // ServerInterfaceWrapper converts echo contexts to parameters.
 type ServerInterfaceWrapper struct {
 	Handler ServerInterface
+}
+
+// SiteAuthDirectLogin converts echo context to params.
+func (w *ServerInterfaceWrapper) SiteAuthDirectLogin(ctx echo.Context) error {
+	var err error
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.SiteAuthDirectLogin(ctx)
+	return err
 }
 
 // SiteAuthRegister converts echo context to params.
@@ -353,6 +391,7 @@ func RegisterHandlersWithOptions(router EchoRouter, si ServerInterface, options 
 		Handler: si,
 	}
 
+	router.POST(options.BaseURL+"/auth/direct/login", wrapper.SiteAuthDirectLogin, options.OperationMiddlewares["SiteAuth_directLogin"]...)
 	router.POST(options.BaseURL+"/auth/register", wrapper.SiteAuthRegister, options.OperationMiddlewares["SiteAuth_register"]...)
 	router.GET(options.BaseURL+"/contacts", wrapper.SiteContactsList, options.OperationMiddlewares["SiteContacts_list"]...)
 	router.POST(options.BaseURL+"/contacts", wrapper.SiteContactsCreate, options.OperationMiddlewares["SiteContacts_create"]...)
@@ -360,6 +399,56 @@ func RegisterHandlersWithOptions(router EchoRouter, si ServerInterface, options 
 	router.GET(options.BaseURL+"/contacts/:id", wrapper.SiteContactsGet, options.OperationMiddlewares["SiteContacts_get"]...)
 	router.PUT(options.BaseURL+"/contacts/:id", wrapper.SiteContactsUpdate, options.OperationMiddlewares["SiteContacts_update"]...)
 
+}
+
+type SiteAuthDirectLoginRequestObject struct {
+	Body *SiteAuthDirectLoginJSONRequestBody
+}
+
+type SiteAuthDirectLoginResponseObject interface {
+	VisitSiteAuthDirectLoginResponse(w http.ResponseWriter) error
+}
+
+type SiteAuthDirectLogin200JSONResponse SiteDirectLoginResult
+
+func (response SiteAuthDirectLogin200JSONResponse) VisitSiteAuthDirectLoginResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SiteAuthDirectLogin400ApplicationProblemPlusJSONResponse ProblemDetails
+
+func (response SiteAuthDirectLogin400ApplicationProblemPlusJSONResponse) VisitSiteAuthDirectLoginResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SiteAuthDirectLogin403JSONResponse SiteDirectLoginError
+
+func (response SiteAuthDirectLogin403JSONResponse) VisitSiteAuthDirectLoginResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
 }
 
 type SiteAuthRegisterRequestObject struct {
@@ -703,6 +792,9 @@ func (response SiteContactsUpdate422ApplicationProblemPlusJSONResponse) VisitSit
 // StrictServerInterface represents all server handlers.
 type StrictServerInterface interface {
 
+	// (POST /auth/direct/login)
+	SiteAuthDirectLogin(ctx context.Context, request SiteAuthDirectLoginRequestObject) (SiteAuthDirectLoginResponseObject, error)
+
 	// (POST /auth/register)
 	SiteAuthRegister(ctx context.Context, request SiteAuthRegisterRequestObject) (SiteAuthRegisterResponseObject, error)
 
@@ -732,6 +824,35 @@ func NewStrictHandler(ssi StrictServerInterface, middlewares []StrictMiddlewareF
 type strictHandler struct {
 	ssi         StrictServerInterface
 	middlewares []StrictMiddlewareFunc
+}
+
+// SiteAuthDirectLogin operation middleware
+func (sh *strictHandler) SiteAuthDirectLogin(ctx echo.Context) error {
+	var request SiteAuthDirectLoginRequestObject
+
+	var body SiteAuthDirectLoginJSONRequestBody
+	if err := ctx.Bind(&body); err != nil {
+		return err
+	}
+	request.Body = &body
+
+	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.SiteAuthDirectLogin(ctx.Request().Context(), request.(SiteAuthDirectLoginRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "SiteAuthDirectLogin")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		return err
+	} else if validResponse, ok := response.(SiteAuthDirectLoginResponseObject); ok {
+		return validResponse.VisitSiteAuthDirectLoginResponse(ctx.Response())
+	} else if response != nil {
+		return fmt.Errorf("unexpected response type: %T", response)
+	}
+	return nil
 }
 
 // SiteAuthRegister operation middleware
@@ -903,33 +1024,35 @@ func (sh *strictHandler) SiteContactsUpdate(ctx echo.Context, id EntityId) error
 // const string: with thousands of chunks the chained `+` fold is several
 // times slower for the Go compiler than parsing a slice literal.
 var swaggerSpec = []string{
-	"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",
+	"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",
 }
 
 // decodeSpec returns the embedded OpenAPI spec as raw JSON bytes,

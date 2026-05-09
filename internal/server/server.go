@@ -19,6 +19,7 @@ import (
 	apiexternal "github.com/mokevnin/1mail/internal/api/external"
 	apisite "github.com/mokevnin/1mail/internal/api/site"
 	"github.com/mokevnin/1mail/internal/pubsub"
+	"github.com/samber/lo"
 )
 
 func New(cfg *config.Config, client *ent.Client, ps *pubsub.PubSub) *echo.Echo {
@@ -64,6 +65,10 @@ func New(cfg *config.Config, client *ent.Client, ps *pubsub.PubSub) *echo.Echo {
 	siteGroup.Use(echo.WrapMiddleware(skipAuth(m.Auth, "/site/auth/register")))
 	siteHandlers := siteapi.NewStrictHandler(apisite.NewHandlers(client, ps), nil)
 	siteapi.RegisterHandlers(siteGroup, siteHandlers)
+	e.POST("/site/auth/direct/login", func(c echo.Context) error {
+		authHandler.ServeHTTP(c.Response(), c.Request())
+		return nil
+	})
 
 	// External API — /api (Bearer token auth)
 	extGroup := e.Group("/api")
@@ -93,10 +98,9 @@ func New(cfg *config.Config, client *ent.Client, ps *pubsub.PubSub) *echo.Echo {
 
 // skipAuth wraps an auth middleware but bypasses it for specified exact paths.
 func skipAuth(authMW func(http.Handler) http.Handler, paths ...string) func(http.Handler) http.Handler {
-	skip := make(map[string]struct{}, len(paths))
-	for _, p := range paths {
-		skip[p] = struct{}{}
-	}
+	skip := lo.SliceToMap(paths, func(p string) (string, struct{}) {
+		return p, struct{}{}
+	})
 	return func(next http.Handler) http.Handler {
 		protected := authMW(next)
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

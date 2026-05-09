@@ -13,6 +13,55 @@
     }
   ],
   "paths": {
+    "/auth/direct/login": {
+      "post": {
+        "operationId": "SiteAuth_directLogin",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "The request has succeeded.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SiteDirectLoginResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "RFC 7807 bad request response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access is forbidden.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SiteDirectLoginError"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Site Auth"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SiteDirectLoginInput"
+              }
+            }
+          }
+        }
+      }
+    },
     "/auth/register": {
       "post": {
         "operationId": "SiteAuth_register",
@@ -570,6 +619,58 @@
           }
         },
         "description": "Site request body for creating a contact"
+      },
+      "SiteDirectLoginError": {
+        "type": "object",
+        "required": ["error"],
+        "properties": {
+          "error": {
+            "type": "string"
+          }
+        }
+      },
+      "SiteDirectLoginInput": {
+        "type": "object",
+        "required": ["user", "passwd"],
+        "properties": {
+          "user": {
+            "type": "string"
+          },
+          "passwd": {
+            "type": "string"
+          }
+        }
+      },
+      "SiteDirectLoginResult": {
+        "type": "object",
+        "required": ["name", "id"],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "picture": {
+            "type": "string"
+          },
+          "aud": {
+            "type": "string"
+          },
+          "ip": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "attrs": {
+            "type": "object",
+            "additionalProperties": {}
+          },
+          "role": {
+            "type": "string"
+          }
+        }
       },
       "SiteRegisterInput": {
         "type": "object",

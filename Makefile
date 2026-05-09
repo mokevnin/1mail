@@ -70,7 +70,6 @@ generate-openapi-external:
 
 generate-openapi-site:
 	pnpm exec openapi-ts -f openapi-ts.site.config.ts
-	node scripts/add-ts-nocheck.mjs src/generated/site
 
 generate-openapi: generate-openapi-external generate-openapi-site
 

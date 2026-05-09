@@ -10,6 +10,7 @@ import (
 	"github.com/mokevnin/1mail/ent"
 	"github.com/mokevnin/1mail/ent/trackingprofile"
 	"github.com/mokevnin/1mail/ent/trackingvisitor"
+	"github.com/samber/lo"
 )
 
 type IdentifyInput struct {
@@ -17,13 +18,13 @@ type IdentifyInput struct {
 	Email     *string
 	Phone     *string
 	SubjectID *string
-	Traits    map[string]interface{}
+	Traits    map[string]any
 }
 
 type CollectEventInput struct {
 	VisitorID  string
 	Action     string
-	Properties map[string]interface{}
+	Properties map[string]any
 	OccurredAt *time.Time
 }
 
@@ -134,7 +135,7 @@ func findOrCreateVisitor(ctx context.Context, client *ent.Client, visitorID stri
 		Save(ctx)
 }
 
-func upsertProfile(ctx context.Context, client *ent.Client, subjectID string, email, phone *string, traits map[string]interface{}) (*ent.TrackingProfile, error) {
+func upsertProfile(ctx context.Context, client *ent.Client, subjectID string, email, phone *string, traits map[string]any) (*ent.TrackingProfile, error) {
 	existing, err := findProfile(ctx, client, subjectID, email, phone)
 	if err != nil {
 		return nil, err
@@ -207,15 +208,8 @@ func deriveCanonicalSubjectID(subjectID string, email, phone *string) (string, e
 	return "", fmt.Errorf("identify requires subjectId, email, or phone")
 }
 
-func mergeTraits(existing, incoming map[string]interface{}) map[string]interface{} {
-	result := make(map[string]interface{}, len(existing)+len(incoming))
-	for k, v := range existing {
-		result[k] = v
-	}
-	for k, v := range incoming {
-		result[k] = v
-	}
-	return result
+func mergeTraits(existing, incoming map[string]any) map[string]any {
+	return lo.Assign(existing, incoming)
 }
 
 func normalizeString(s *string) string {
@@ -251,9 +245,9 @@ func normalizeOptional(s *string) *string {
 	return &v
 }
 
-func normalizeTraits(t map[string]interface{}) map[string]interface{} {
+func normalizeTraits(t map[string]any) map[string]any {
 	if t == nil {
-		return map[string]interface{}{}
+		return map[string]any{}
 	}
 	return t
 }

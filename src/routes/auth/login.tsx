@@ -1,9 +1,11 @@
 import { Anchor, Button, Group, PasswordInput, Stack, TextInput, Title } from '@mantine/core'
 import { useForm } from '@mantine/form'
 import { notifications } from '@mantine/notifications'
+import { useMutation } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
-import { registerRoute } from '../../router.tsx'
+import { siteAuthDirectLoginMutation } from '../../generated/site/@tanstack/react-query.gen.ts'
+import { contactsRoute, registerRoute } from '../../router.tsx'
 
 export function LoginPage() {
   const { t } = useTranslation()
@@ -16,18 +18,27 @@ export function LoginPage() {
     },
   })
 
-  const onSubmit = form.onSubmit(async (values) => {
-    const params = new URLSearchParams({ user: values.email, passwd: values.password })
-    const res = await fetch(`/auth/direct/login?${params}`, { credentials: 'include' })
-    if (res.ok) {
-      await navigate({ to: '/contacts' })
-    } else {
+  const loginMutation = useMutation({
+    ...siteAuthDirectLoginMutation(),
+    onSuccess: async () => {
+      await navigate({ to: contactsRoute.to })
+    },
+    onError: (error) => {
       notifications.show({
         color: 'red',
         title: t(($) => $.login.errorTitle),
-        message: res.statusText || String(res.status),
+        message: 'error' in error ? error.error : (error.detail ?? error.title),
       })
-    }
+    },
+  })
+
+  const onSubmit = form.onSubmit((values) => {
+    loginMutation.mutate({
+      body: {
+        user: values.email.trim(),
+        passwd: values.password,
+      },
+    })
   })
 
   return (
@@ -52,7 +63,7 @@ export function LoginPage() {
             <Anchor component="a" href={registerRoute.to} size="sm">
               {t(($) => $.login.registerLink)}
             </Anchor>
-            <Button type="submit" loading={form.submitting}>
+            <Button type="submit" loading={loginMutation.isPending}>
               {t(($) => $.login.submitButton)}
             </Button>
           </Group>

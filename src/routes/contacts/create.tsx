@@ -8,6 +8,7 @@ import {
   siteContactsCreateMutation,
   siteContactsListQueryKey,
 } from '../../generated/site/@tanstack/react-query.gen.ts'
+import { useApiFormErrors } from '../../hooks/use-api-form-errors.ts'
 import { contactsEditRoute, contactsRoute } from '../../router.tsx'
 import { track } from '../../tracking.ts'
 import { EMPTY_CONTACT_FORM } from './form.ts'
@@ -19,33 +20,36 @@ export function ContactCreatePage() {
   const form = useForm({
     initialValues: EMPTY_CONTACT_FORM,
   })
+  const withFormErrors = useApiFormErrors(form)
 
-  const createContactMutation = useMutation({
-    ...siteContactsCreateMutation(),
-    onSuccess: async (created) => {
-      await queryClient.invalidateQueries({ queryKey: siteContactsListQueryKey() })
-      await track('contact.created', {
-        contactId: created.id,
-        email: created.email,
-      })
-      notifications.show({
-        color: 'teal',
-        title: t(($) => $.notifications.successTitle),
-        message: t(($) => $.notifications.contactCreated),
-      })
-      await navigate({
-        to: contactsEditRoute.to,
-        params: { contactId: created.id },
-      })
-    },
-    onError: (error) => {
-      notifications.show({
-        color: 'red',
-        title: t(($) => $.alerts.saveErrorTitle),
-        message: error.detail ?? error.title,
-      })
-    },
-  })
+  const createContactMutation = useMutation(
+    withFormErrors({
+      ...siteContactsCreateMutation(),
+      onSuccess: async (created) => {
+        await queryClient.invalidateQueries({ queryKey: siteContactsListQueryKey() })
+        await track('contact.created', {
+          contactId: created.id,
+          email: created.email,
+        })
+        notifications.show({
+          color: 'teal',
+          title: t(($) => $.notifications.successTitle),
+          message: t(($) => $.notifications.contactCreated),
+        })
+        await navigate({
+          to: contactsEditRoute.to,
+          params: { contactId: created.id },
+        })
+      },
+      onError: (error) => {
+        notifications.show({
+          color: 'red',
+          title: t(($) => $.alerts.saveErrorTitle),
+          message: error.detail ?? error.title,
+        })
+      },
+    }),
+  )
 
   const onSubmit = form.onSubmit((values) => {
     createContactMutation.mutate({

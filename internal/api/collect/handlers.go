@@ -7,6 +7,7 @@ import (
 	"github.com/mokevnin/1mail/ent"
 	collectapi "github.com/mokevnin/1mail/gen/collect"
 	"github.com/mokevnin/1mail/internal/service"
+	"github.com/samber/lo"
 )
 
 type Handlers struct {
@@ -18,8 +19,7 @@ func NewHandlers(client *ent.Client) *Handlers {
 }
 
 func (h *Handlers) CollectEventsCreate(ctx context.Context, req collectapi.CollectEventsCreateRequestObject) (collectapi.CollectEventsCreateResponseObject, error) {
-	events := make([]service.CollectEventInput, len(req.Body.Events))
-	for i, e := range req.Body.Events {
+	events := lo.Map(req.Body.Events, func(e collectapi.CollectEventInput, _ int) service.CollectEventInput {
 		evt := service.CollectEventInput{
 			VisitorID: e.VisitorId,
 			Action:    e.Action,
@@ -31,8 +31,8 @@ func (h *Handlers) CollectEventsCreate(ctx context.Context, req collectapi.Colle
 		if e.Properties != nil {
 			evt.Properties = *e.Properties
 		}
-		events[i] = evt
-	}
+		return evt
+	})
 
 	if err := service.CollectEvents(ctx, h.ent, events); err != nil {
 		return nil, err

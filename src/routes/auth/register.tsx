@@ -5,6 +5,7 @@ import { useMutation } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 import { siteAuthRegisterMutation } from '../../generated/site/@tanstack/react-query.gen.ts'
+import { useApiFormErrors } from '../../hooks/use-api-form-errors.ts'
 
 export function RegisterPage() {
   const { t } = useTranslation()
@@ -17,25 +18,28 @@ export function RegisterPage() {
       password: '',
     },
   })
+  const withFormErrors = useApiFormErrors(form)
 
-  const registerMutation = useMutation({
-    ...siteAuthRegisterMutation(),
-    onSuccess: async () => {
-      notifications.show({
-        color: 'teal',
-        title: t(($) => $.notifications.successTitle),
-        message: t(($) => $.registration.successMessage),
-      })
-      await navigate({ to: '/contacts' })
-    },
-    onError: (error) => {
-      notifications.show({
-        color: 'red',
-        title: t(($) => $.registration.errorTitle),
-        message: error.detail ?? error.title,
-      })
-    },
-  })
+  const registerMutation = useMutation(
+    withFormErrors({
+      ...siteAuthRegisterMutation(),
+      onSuccess: async () => {
+        notifications.show({
+          color: 'teal',
+          title: t(($) => $.notifications.successTitle),
+          message: t(($) => $.registration.successMessage),
+        })
+        await navigate({ to: '/contacts' })
+      },
+      onError: (error) => {
+        notifications.show({
+          color: 'red',
+          title: t(($) => $.registration.errorTitle),
+          message: error.detail ?? error.title,
+        })
+      },
+    }),
+  )
 
   const onSubmit = form.onSubmit((values) => {
     registerMutation.mutate({

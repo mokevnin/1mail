@@ -35,7 +35,7 @@ func (User) Fields() []ent.Field {
 			Optional(),
 		field.Time("updated_at").
 			Default(time.Now).
-			Immutable(),
+			UpdateDefault(time.Now),
 		field.Time("created_at").
 			Default(time.Now).
 			Immutable(),

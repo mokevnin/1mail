@@ -8,6 +8,7 @@ import (
 	"github.com/mokevnin/1mail/ent/event"
 	externalapi "github.com/mokevnin/1mail/gen/external"
 	"github.com/mokevnin/1mail/internal/pagination"
+	"github.com/samber/lo"
 )
 
 func (h *Handlers) EventsCreate(ctx context.Context, req externalapi.EventsCreateRequestObject) (externalapi.EventsCreateResponseObject, error) {
@@ -15,8 +16,7 @@ func (h *Handlers) EventsCreate(ctx context.Context, req externalapi.EventsCreat
 		return externalapi.EventsCreate401ApplicationProblemPlusJSONResponse(unauthorized("insufficient scope")), nil
 	}
 
-	builders := make([]*ent.EventCreate, len(req.Body.Events))
-	for i, e := range req.Body.Events {
+	builders := lo.Map(req.Body.Events, func(e externalapi.EventInput, _ int) *ent.EventCreate {
 		b := h.ent.Event.Create().
 			SetSubjectID(e.SubjectId).
 			SetAction(e.Action).
@@ -31,8 +31,8 @@ func (h *Handlers) EventsCreate(ctx context.Context, req externalapi.EventsCreat
 		if e.Properties != nil {
 			b = b.SetProperties(*e.Properties)
 		}
-		builders[i] = b
-	}
+		return b
+	})
 
 	_, err := h.ent.Event.CreateBulk(builders...).Save(ctx)
 	if err != nil {
@@ -64,10 +64,9 @@ func (h *Handlers) EventActionsList(ctx context.Context, req externalapi.EventAc
 	}
 
 	slice := actions[start:end]
-	items := make([]externalapi.EventActionResource, len(slice))
-	for i, a := range slice {
-		items[i] = externalapi.EventActionResource{Action: a}
-	}
+	items := lo.Map(slice, func(a string, _ int) externalapi.EventActionResource {
+		return externalapi.EventActionResource{Action: a}
+	})
 
 	return externalapi.EventActionsList200JSONResponse{
 		Items:      items,

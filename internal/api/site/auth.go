@@ -19,7 +19,17 @@ func (h *Handlers) SiteAuthRegister(ctx context.Context, req siteapi.SiteAuthReg
 	password := req.Body.Password
 
 	if name == "" || email == "" || password == "" {
-		return siteapi.SiteAuthRegister422ApplicationProblemPlusJSONResponse(unprocessable("name, email and password are required")), nil
+		errors := fieldErrors{}
+		if name == "" {
+			errors["name"] = []string{"name is required"}
+		}
+		if email == "" {
+			errors["email"] = []string{"email is required"}
+		}
+		if password == "" {
+			errors["password"] = []string{"password is required"}
+		}
+		return siteapi.SiteAuthRegister422ApplicationProblemPlusJSONResponse(unprocessableWithErrors("name, email and password are required", errors)), nil
 	}
 
 	hash, err := bcrypt.GenerateFromPassword([]byte(password), 12)
@@ -33,7 +43,9 @@ func (h *Handlers) SiteAuthRegister(ctx context.Context, req siteapi.SiteAuthReg
 		SetPasswordHash(string(hash)).
 		Save(ctx)
 	if service.IsUniqueViolation(err) {
-		return siteapi.SiteAuthRegister409ApplicationProblemPlusJSONResponse(conflict("email already exists")), nil
+		return siteapi.SiteAuthRegister409ApplicationProblemPlusJSONResponse(conflictWithErrors("email already exists", fieldErrors{
+			"email": {"email already exists"},
+		})), nil
 	}
 	if err != nil {
 		return nil, err
@@ -53,8 +65,16 @@ func (h *Handlers) SiteAuthRegister(ctx context.Context, req siteapi.SiteAuthReg
 	}, nil
 }
 
+func (h *Handlers) SiteAuthDirectLogin(_ context.Context, _ siteapi.SiteAuthDirectLoginRequestObject) (siteapi.SiteAuthDirectLoginResponseObject, error) {
+	return siteapi.SiteAuthDirectLogin400ApplicationProblemPlusJSONResponse(badRequest("direct login is handled by auth provider")), nil
+}
+
 func unprocessable(detail string) siteapi.ProblemDetails {
 	return problem(422, "Unprocessable Entity", detail)
+}
+
+func unprocessableWithErrors(detail string, errors fieldErrors) siteapi.ProblemDetails {
+	return problemWithErrors(422, "Unprocessable Entity", detail, errors)
 }
 
 // CredChecker validates email/password against the users table for go-pkgz/auth.

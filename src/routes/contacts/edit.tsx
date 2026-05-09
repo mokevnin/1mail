@@ -11,6 +11,7 @@ import {
   siteContactsListQueryKey,
   siteContactsUpdateMutation,
 } from '../../generated/site/@tanstack/react-query.gen.ts'
+import { useApiFormErrors } from '../../hooks/use-api-form-errors.ts'
 import { contactsRoute } from '../../router.tsx'
 import { track } from '../../tracking.ts'
 import { EMPTY_CONTACT_FORM } from './form.ts'
@@ -28,6 +29,7 @@ export function ContactEditPage() {
   const form = useForm({
     initialValues: EMPTY_CONTACT_FORM,
   })
+  const withFormErrors = useApiFormErrors(form)
 
   const getContactQuery = useQuery({
     ...siteContactsGetOptions({ path: { id: parsedContactId ?? '0' } }),
@@ -45,33 +47,35 @@ export function ContactEditPage() {
     })
   }, [getContactQuery.data])
 
-  const updateContactMutation = useMutation({
-    ...siteContactsUpdateMutation(),
-    onSuccess: async (updated) => {
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: siteContactsListQueryKey() }),
-        queryClient.invalidateQueries({
-          queryKey: siteContactsGetQueryKey({ path: { id: updated.id } }),
-        }),
-      ])
-      await track('contact.updated', {
-        contactId: updated.id,
-        email: updated.email,
-      })
-      notifications.show({
-        color: 'teal',
-        title: t(($) => $.notifications.successTitle),
-        message: t(($) => $.notifications.contactUpdated),
-      })
-    },
-    onError: (error) => {
-      notifications.show({
-        color: 'red',
-        title: t(($) => $.alerts.saveErrorTitle),
-        message: error.detail ?? error.title,
-      })
-    },
-  })
+  const updateContactMutation = useMutation(
+    withFormErrors({
+      ...siteContactsUpdateMutation(),
+      onSuccess: async (updated) => {
+        await Promise.all([
+          queryClient.invalidateQueries({ queryKey: siteContactsListQueryKey() }),
+          queryClient.invalidateQueries({
+            queryKey: siteContactsGetQueryKey({ path: { id: updated.id } }),
+          }),
+        ])
+        await track('contact.updated', {
+          contactId: updated.id,
+          email: updated.email,
+        })
+        notifications.show({
+          color: 'teal',
+          title: t(($) => $.notifications.successTitle),
+          message: t(($) => $.notifications.contactUpdated),
+        })
+      },
+      onError: (error) => {
+        notifications.show({
+          color: 'red',
+          title: t(($) => $.alerts.saveErrorTitle),
+          message: error.detail ?? error.title,
+        })
+      },
+    }),
+  )
 
   const onSubmit = form.onSubmit((values) => {
     if (parsedContactId === null) {
