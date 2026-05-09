@@ -1,8 +1,8 @@
+import { Stack, Title } from '@mantine/core'
 import { useForm } from '@mantine/form'
 import { notifications } from '@mantine/notifications'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
-import { Stack, Title } from '@mantine/core'
 import { useTranslation } from 'react-i18next'
 import {
   siteContactsCreateMutation,
@@ -11,14 +11,14 @@ import {
 import { contactsEditRoute } from '../../router.tsx'
 import { track } from '../../tracking.ts'
 import { getApiErrorMessage } from '../../utils/apiErrors.ts'
-import { ContactForm } from './ContactForm.tsx'
+import { ContactForm, type ContactFormValues } from './ContactForm.tsx'
 
 export function ContactCreatePage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
 
-  const form = useForm({
+  const form = useForm<ContactFormValues>({
     initialValues: { email: '', firstName: '', lastName: '', timeZone: '' },
   })
 

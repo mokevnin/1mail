@@ -1,8 +1,8 @@
-import { Alert, Loader, Stack, Title } from '@mantine/core'
+import { getContrastColor, Loader, Stack, Title } from '@mantine/core'
 import { useForm } from '@mantine/form'
 import { notifications } from '@mantine/notifications'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useEffect } from 'react'
+import { useEffect, useEffectEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ApiErrorAlert } from '../../components/ApiErrorAlert.tsx'
 import {
@@ -11,39 +11,42 @@ import {
   siteContactsListQueryKey,
   siteContactsUpdateMutation,
 } from '../../generated/site/@tanstack/react-query.gen.ts'
+import type { SiteContactResource } from '../../generated/site/types.gen.ts'
 import { contactsEditRoute } from '../../router.tsx'
 import { track } from '../../tracking.ts'
 import { getApiErrorMessage } from '../../utils/apiErrors.ts'
-import { ContactForm } from './ContactForm.tsx'
+import { ContactForm, type ContactFormValues } from './ContactForm.tsx'
 
 export function ContactEditPage() {
   const { t } = useTranslation()
   const { contactId } = contactsEditRoute.useParams()
   const queryClient = useQueryClient()
 
-  const form = useForm({
+  const form = useForm<ContactFormValues>({
     initialValues: { email: '', firstName: '', lastName: '', timeZone: '' },
   })
 
   const getContactQuery = useQuery(siteContactsGetOptions({ path: { id: contactId } }))
 
-  useEffect(() => {
-    if (!getContactQuery.data) return
+  const applyContactData = useEffectEvent((data: SiteContactResource | undefined) => {
+    if (!data) return
     form.setValues({
-      email: getContactQuery.data.email,
-      firstName: getContactQuery.data.firstName ?? '',
-      lastName: getContactQuery.data.lastName ?? '',
-      timeZone: getContactQuery.data.timeZone ?? '',
+      email: data.email,
+      firstName: data.firstName ?? '',
+      lastName: data.lastName ?? '',
+      timeZone: data.timeZone ?? '',
     })
+  })
+
+  useEffect(() => {
+    applyContactData(getContactQuery.data)
   }, [getContactQuery.data])
 
   const updateMutation = useMutation({
     ...siteContactsUpdateMutation(),
     onSuccess: async (updated) => {
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: siteContactsListQueryKey() }),
-        queryClient.invalidateQueries({ queryKey: siteContactsGetQueryKey({ path: { id: updated.id } }) }),
-      ])
+      await queryClient.invalidateQueries({ queryKey: siteContactsListQueryKey() })
+      await queryClient.invalidateQueries({ queryKey: siteContactsGetQueryKey({ path: { id: updated.id } }) })
       await track('contact.updated', { contactId: updated.id, email: updated.email })
       notifications.show({
         color: 'teal',
@@ -55,7 +58,10 @@ export function ContactEditPage() {
       notifications.show({
         color: 'red',
         title: t(($) => $.alerts.saveErrorTitle),
-        message: getApiErrorMessage(error, t(($) => $.alerts.saveErrorTitle)),
+        message: getApiErrorMessage(
+          error,
+          t(($) => $.alerts.saveErrorTitle),
+        ),
       })
     },
   })
@@ -80,7 +86,10 @@ export function ContactEditPage() {
         emailEditable={false}
         isPending={updateMutation.isPending}
         onSubmit={({ firstName, lastName, timeZone }) =>
-          updateMutation.mutate({ path: { id: contactId }, body: { firstName, lastName, timeZone } })
+          updateMutation.mutate({
+            path: { id: contactId },
+            body: { firstName, lastName, timeZone },
+          })
         }
       />
     </Stack>

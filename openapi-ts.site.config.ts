@@ -14,9 +14,14 @@ export default defineConfig({
     },
     '@hey-api/client-fetch',
     {
+      name: '@hey-api/sdk',
+      validator: { request: 'zod' },
+    },
+    {
       name: '@tanstack/react-query',
       queryOptions: true,
       mutationOptions: true,
     },
+    'zod',
   ],
 })

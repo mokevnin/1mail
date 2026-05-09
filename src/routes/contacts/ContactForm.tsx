@@ -1,9 +1,14 @@
 import { Button, Group, Stack, TextInput } from '@mantine/core'
-import { useForm } from '@mantine/form'
+import type { useForm } from '@mantine/form'
 import { useNavigate } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
+import type { SiteCreateContactInput } from '../../generated/site/types.gen.ts'
 import { contactsRoute } from '../../router.tsx'
-import type { ContactFormValues } from './form.ts'
+
+export type ContactFormValues = Record<
+  keyof Pick<SiteCreateContactInput, 'email' | 'firstName' | 'lastName' | 'timeZone'>,
+  string
+>
 
 type ContactFormInstance = ReturnType<typeof useForm<ContactFormValues>>
 
@@ -32,7 +37,11 @@ export function ContactForm({ form, emailEditable = true, isPending, onSubmit }:
         <TextInput label={t(($) => $.table.timeZone)} {...form.getInputProps('timeZone')} />
 
         <Group justify="flex-end">
-          <Button variant="default" type="button" onClick={() => navigate({ to: contactsRoute.to })}>
+          <Button
+            variant="default"
+            type="button"
+            onClick={() => navigate({ to: contactsRoute.to })}
+          >
             {t(($) => $.actions.cancel)}
           </Button>
           <Button type="submit" loading={isPending}>

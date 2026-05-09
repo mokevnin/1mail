@@ -1,110 +1,81 @@
 import { Button, Group, PasswordInput, Stack, TextInput, Title } from '@mantine/core'
+import { useForm } from '@mantine/form'
 import { notifications } from '@mantine/notifications'
-import { useForm } from '@tanstack/react-form'
+import { useMutation } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 import { siteAuthRegister } from '../../generated/site/sdk.gen.ts'
+import { type SiteRegisterInput } from '../../generated/site/types.gen.ts'
+import { contactsRoute } from '../../router.tsx'
 import { getApiErrorMessage } from '../../utils/apiErrors.ts'
 
 export function RegisterPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
 
-  const { Field, Subscribe, handleSubmit } = useForm({
-    defaultValues: {
+  const registerMutation = useMutation({
+    mutationFn: (body: SiteRegisterInput) => siteAuthRegister({ body }),
+  })
+
+  const form = useForm<SiteRegisterInput>({
+    initialValues: {
       name: '',
       email: '',
       password: '',
     },
-    validators: {
-      onSubmitAsync: async ({ value }) => {
-        const { error } = await siteAuthRegister({
-          body: {
-            name: value.name.trim(),
-            email: value.email.trim(),
-            password: value.password,
-          },
-        })
-
-        if (error) {
-          notifications.show({
-            color: 'red',
-            title: t(($) => $.registration.errorTitle),
-            message: getApiErrorMessage(
-              error,
-              t(($) => $.registration.errorTitle),
-            ),
-          })
-          return error
-        }
-
-        notifications.show({
-          color: 'teal',
-          title: t(($) => $.notifications.successTitle),
-          message: t(($) => $.registration.successMessage),
-        })
-        await navigate({ to: '/contacts' })
-      },
-    },
   })
+
+  const handleSubmit = async (values: SiteRegisterInput) => {
+    const { error } = await registerMutation.mutateAsync({
+      name: values.name.trim(),
+      email: values.email.trim(),
+      password: values.password,
+    })
+
+    if (error) {
+      notifications.show({
+        color: 'red',
+        title: t(($) => $.registration.errorTitle),
+        message: getApiErrorMessage(error, t(($) => $.registration.errorTitle)),
+      })
+      return
+    }
+
+    notifications.show({
+      color: 'teal',
+      title: t(($) => $.notifications.successTitle),
+      message: t(($) => $.registration.successMessage),
+    })
+    await navigate({ to: contactsRoute.to })
+  }
 
   return (
     <Stack maw={400} mx="auto" mt="xl">
       <Title order={3}>{t(($) => $.registration.title)}</Title>
 
-      <form
-        onSubmit={(event) => {
-          event.preventDefault()
-          void handleSubmit()
-        }}
-      >
+      <form onSubmit={form.onSubmit(handleSubmit)}>
         <Stack>
-          <Field name="name">
-            {({ state, handleChange, handleBlur }) => (
-              <TextInput
-                label={t(($) => $.registration.nameLabel)}
-                value={state.value}
-                onBlur={handleBlur}
-                onChange={(event) => handleChange(event.currentTarget.value)}
-                error={state.meta.errors.join(', ') || undefined}
-                required
-              />
-            )}
-          </Field>
-          <Field name="email">
-            {({ state, handleChange, handleBlur }) => (
-              <TextInput
-                label={t(($) => $.registration.emailLabel)}
-                type="email"
-                value={state.value}
-                onBlur={handleBlur}
-                onChange={(event) => handleChange(event.currentTarget.value)}
-                error={state.meta.errors.join(', ') || undefined}
-                required
-              />
-            )}
-          </Field>
-          <Field name="password">
-            {({ state, handleChange, handleBlur }) => (
-              <PasswordInput
-                label={t(($) => $.registration.passwordLabel)}
-                value={state.value}
-                onBlur={handleBlur}
-                onChange={(event) => handleChange(event.currentTarget.value)}
-                error={state.meta.errors.join(', ') || undefined}
-                required
-              />
-            )}
-          </Field>
+          <TextInput
+            label={t(($) => $.registration.nameLabel)}
+            required
+            {...form.getInputProps('name')}
+          />
+          <TextInput
+            label={t(($) => $.registration.emailLabel)}
+            type="email"
+            required
+            {...form.getInputProps('email')}
+          />
+          <PasswordInput
+            label={t(($) => $.registration.passwordLabel)}
+            required
+            {...form.getInputProps('password')}
+          />
 
           <Group justify="flex-end">
-            <Subscribe selector={(state) => state.isSubmitting}>
-              {(isSubmitting) => (
-                <Button type="submit" loading={isSubmitting}>
-                  {t(($) => $.registration.submitButton)}
-                </Button>
-              )}
-            </Subscribe>
+            <Button type="submit" loading={registerMutation.isPending}>
+              {t(($) => $.registration.submitButton)}
+            </Button>
           </Group>
         </Stack>
       </form>
