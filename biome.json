@@ -1,7 +1,7 @@
 {
   "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
   "files": {
-    "includes": ["**", "!generated", "!drizzle"]
+    "includes": ["**", "!src/generated", "!drizzle"]
   },
   "vcs": {
     "enabled": false,

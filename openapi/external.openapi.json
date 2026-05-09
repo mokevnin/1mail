@@ -58,9 +58,7 @@
             }
           }
         },
-        "tags": [
-          "Auth"
-        ]
+        "tags": ["Auth"]
       }
     },
     "/auth/tokens": {
@@ -109,9 +107,7 @@
             }
           }
         },
-        "tags": [
-          "Auth"
-        ],
+        "tags": ["Auth"],
         "requestBody": {
           "required": true,
           "content": {
@@ -158,9 +154,7 @@
             }
           }
         },
-        "tags": [
-          "Auth"
-        ]
+        "tags": ["Auth"]
       }
     },
     "/auth/tokens/bootstrap": {
@@ -218,9 +212,7 @@
             }
           }
         },
-        "tags": [
-          "Auth"
-        ],
+        "tags": ["Auth"],
         "requestBody": {
           "required": true,
           "content": {
@@ -231,9 +223,7 @@
             }
           }
         },
-        "security": [
-          {}
-        ]
+        "security": [{}]
       }
     },
     "/auth/tokens/{id}": {
@@ -294,9 +284,7 @@
             }
           }
         },
-        "tags": [
-          "Auth"
-        ]
+        "tags": ["Auth"]
       }
     },
     "/broadcasts": {
@@ -336,9 +324,7 @@
             }
           }
         },
-        "tags": [
-          "Broadcasts"
-        ],
+        "tags": ["Broadcasts"],
         "requestBody": {
           "required": true,
           "content": {
@@ -368,13 +354,7 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "required": [
-                    "items",
-                    "page",
-                    "pageSize",
-                    "totalItems",
-                    "totalPages"
-                  ],
+                  "required": ["items", "page", "pageSize", "totalItems", "totalPages"],
                   "properties": {
                     "items": {
                       "type": "array",
@@ -440,9 +420,7 @@
             }
           }
         },
-        "tags": [
-          "Broadcasts"
-        ]
+        "tags": ["Broadcasts"]
       }
     },
     "/broadcasts/{id}": {
@@ -501,9 +479,7 @@
             }
           }
         },
-        "tags": [
-          "Broadcasts"
-        ]
+        "tags": ["Broadcasts"]
       },
       "put": {
         "operationId": "Broadcasts_update",
@@ -570,9 +546,7 @@
             }
           }
         },
-        "tags": [
-          "Broadcasts"
-        ],
+        "tags": ["Broadcasts"],
         "requestBody": {
           "required": true,
           "content": {
@@ -632,9 +606,7 @@
             }
           }
         },
-        "tags": [
-          "Broadcasts"
-        ]
+        "tags": ["Broadcasts"]
       }
     },
     "/contacts": {
@@ -684,9 +656,7 @@
             }
           }
         },
-        "tags": [
-          "Contacts"
-        ],
+        "tags": ["Contacts"],
         "requestBody": {
           "required": true,
           "content": {
@@ -726,13 +696,7 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "required": [
-                    "items",
-                    "page",
-                    "pageSize",
-                    "totalItems",
-                    "totalPages"
-                  ],
+                  "required": ["items", "page", "pageSize", "totalItems", "totalPages"],
                   "properties": {
                     "items": {
                       "type": "array",
@@ -798,9 +762,7 @@
             }
           }
         },
-        "tags": [
-          "Contacts"
-        ]
+        "tags": ["Contacts"]
       }
     },
     "/contacts/{id}": {
@@ -859,9 +821,7 @@
             }
           }
         },
-        "tags": [
-          "Contacts"
-        ]
+        "tags": ["Contacts"]
       },
       "put": {
         "operationId": "Contacts_update",
@@ -938,9 +898,7 @@
             }
           }
         },
-        "tags": [
-          "Contacts"
-        ],
+        "tags": ["Contacts"],
         "requestBody": {
           "required": true,
           "content": {
@@ -1000,9 +958,7 @@
             }
           }
         },
-        "tags": [
-          "Contacts"
-        ]
+        "tags": ["Contacts"]
       }
     },
     "/event-actions": {
@@ -1024,13 +980,7 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "required": [
-                    "items",
-                    "page",
-                    "pageSize",
-                    "totalItems",
-                    "totalPages"
-                  ],
+                  "required": ["items", "page", "pageSize", "totalItems", "totalPages"],
                   "properties": {
                     "items": {
                       "type": "array",
@@ -1096,9 +1046,7 @@
             }
           }
         },
-        "tags": [
-          "Events"
-        ]
+        "tags": ["Events"]
       }
     },
     "/events": {
@@ -1131,9 +1079,7 @@
             }
           }
         },
-        "tags": [
-          "Events"
-        ],
+        "tags": ["Events"],
         "requestBody": {
           "required": true,
           "content": {
@@ -1183,9 +1129,7 @@
             }
           }
         },
-        "tags": [
-          "Segments"
-        ],
+        "tags": ["Segments"],
         "requestBody": {
           "required": true,
           "content": {
@@ -1215,13 +1159,7 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "required": [
-                    "items",
-                    "page",
-                    "pageSize",
-                    "totalItems",
-                    "totalPages"
-                  ],
+                  "required": ["items", "page", "pageSize", "totalItems", "totalPages"],
                   "properties": {
                     "items": {
                       "type": "array",
@@ -1287,9 +1225,7 @@
             }
           }
         },
-        "tags": [
-          "Segments"
-        ]
+        "tags": ["Segments"]
       }
     },
     "/segments/{id}": {
@@ -1348,9 +1284,7 @@
             }
           }
         },
-        "tags": [
-          "Segments"
-        ]
+        "tags": ["Segments"]
       },
       "put": {
         "operationId": "Segments_update",
@@ -1417,9 +1351,7 @@
             }
           }
         },
-        "tags": [
-          "Segments"
-        ],
+        "tags": ["Segments"],
         "requestBody": {
           "required": true,
           "content": {
@@ -1479,9 +1411,7 @@
             }
           }
         },
-        "tags": [
-          "Segments"
-        ]
+        "tags": ["Segments"]
       }
     }
   },
@@ -1520,13 +1450,7 @@
     "schemas": {
       "ApiTokenInfo": {
         "type": "object",
-        "required": [
-          "id",
-          "name",
-          "scopes",
-          "createdAt",
-          "updatedAt"
-        ],
+        "required": ["id", "name", "scopes", "createdAt", "updatedAt"],
         "properties": {
           "id": {
             "$ref": "#/components/schemas/EntityId"
@@ -1577,9 +1501,7 @@
       },
       "ApiTokenListResponse": {
         "type": "object",
-        "required": [
-          "items"
-        ],
+        "required": ["items"],
         "properties": {
           "items": {
             "type": "array",
@@ -1603,11 +1525,7 @@
       },
       "BroadcastResource": {
         "type": "object",
-        "required": [
-          "id",
-          "createdAt",
-          "updatedAt"
-        ],
+        "required": ["id", "createdAt", "updatedAt"],
         "properties": {
           "id": {
             "allOf": [
@@ -1643,22 +1561,12 @@
       },
       "BroadcastStatus": {
         "type": "string",
-        "enum": [
-          "draft",
-          "scheduled",
-          "sent"
-        ],
+        "enum": ["draft", "scheduled", "sent"],
         "description": "Broadcast status"
       },
       "ContactResource": {
         "type": "object",
-        "required": [
-          "id",
-          "email",
-          "status",
-          "createdAt",
-          "updatedAt"
-        ],
+        "required": ["id", "email", "status", "createdAt", "updatedAt"],
         "properties": {
           "id": {
             "allOf": [
@@ -1733,18 +1641,12 @@
       },
       "ContactStatus": {
         "type": "string",
-        "enum": [
-          "active",
-          "unsubscribed"
-        ],
+        "enum": ["active", "unsubscribed"],
         "description": "Contact status"
       },
       "CreateApiTokenInput": {
         "type": "object",
-        "required": [
-          "name",
-          "scopes"
-        ],
+        "required": ["name", "scopes"],
         "properties": {
           "name": {
             "type": "string"
@@ -1768,10 +1670,7 @@
       },
       "CreateApiTokenResponse": {
         "type": "object",
-        "required": [
-          "token",
-          "tokenInfo"
-        ],
+        "required": ["token", "tokenInfo"],
         "properties": {
           "token": {
             "type": "string"
@@ -1783,11 +1682,7 @@
       },
       "CreateBroadcastInput": {
         "type": "object",
-        "required": [
-          "name",
-          "segmentId",
-          "status"
-        ],
+        "required": ["name", "segmentId", "status"],
         "properties": {
           "name": {
             "type": "string",
@@ -1814,9 +1709,7 @@
       },
       "CreateContactInput": {
         "type": "object",
-        "required": [
-          "email"
-        ],
+        "required": ["email"],
         "properties": {
           "email": {
             "allOf": [
@@ -1859,10 +1752,7 @@
       },
       "CreateSegmentInput": {
         "type": "object",
-        "required": [
-          "name",
-          "type"
-        ],
+        "required": ["name", "type"],
         "properties": {
           "name": {
             "type": "string",
@@ -1893,9 +1783,7 @@
       },
       "EventActionResource": {
         "type": "object",
-        "required": [
-          "action"
-        ],
+        "required": ["action"],
         "properties": {
           "action": {
             "type": "string",
@@ -1906,10 +1794,7 @@
       },
       "EventInput": {
         "type": "object",
-        "required": [
-          "subjectId",
-          "action"
-        ],
+        "required": ["subjectId", "action"],
         "properties": {
           "subjectId": {
             "type": "string",
@@ -1997,9 +1882,7 @@
       },
       "RecordEventsInput": {
         "type": "object",
-        "required": [
-          "events"
-        ],
+        "required": ["events"],
         "properties": {
           "events": {
             "type": "array",
@@ -2013,11 +1896,7 @@
       },
       "SegmentResource": {
         "type": "object",
-        "required": [
-          "id",
-          "createdAt",
-          "updatedAt"
-        ],
+        "required": ["id", "createdAt", "updatedAt"],
         "properties": {
           "id": {
             "allOf": [
@@ -2053,10 +1932,7 @@
       },
       "SegmentType": {
         "type": "string",
-        "enum": [
-          "rule",
-          "snapshot"
-        ],
+        "enum": ["rule", "snapshot"],
         "description": "Segment type"
       },
       "TimeZoneName": {
@@ -2150,9 +2026,7 @@
       },
       "Versions": {
         "type": "string",
-        "enum": [
-          "1.0.0"
-        ]
+        "enum": ["1.0.0"]
       }
     },
     "securitySchemes": {
