@@ -39,7 +39,9 @@
             }
           }
         },
-        "tags": ["Collect"],
+        "tags": [
+          "Collect"
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -88,7 +90,9 @@
             }
           }
         },
-        "tags": ["Collect"],
+        "tags": [
+          "Collect"
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -106,7 +110,9 @@
     "schemas": {
       "BadRequestProblem": {
         "type": "object",
-        "required": ["body"],
+        "required": [
+          "body"
+        ],
         "properties": {
           "body": {
             "$ref": "#/components/schemas/ProblemDetails"
@@ -116,7 +122,10 @@
       },
       "CollectEventInput": {
         "type": "object",
-        "required": ["visitorId", "action"],
+        "required": [
+          "visitorId",
+          "action"
+        ],
         "properties": {
           "visitorId": {
             "type": "string"
@@ -142,7 +151,9 @@
       },
       "CollectEventsInput": {
         "type": "object",
-        "required": ["events"],
+        "required": [
+          "events"
+        ],
         "properties": {
           "events": {
             "type": "array",
@@ -154,7 +165,9 @@
       },
       "CollectIdentifyInput": {
         "type": "object",
-        "required": ["visitorId"],
+        "required": [
+          "visitorId"
+        ],
         "properties": {
           "visitorId": {
             "type": "string"
@@ -185,17 +198,23 @@
       },
       "CollectOkResponse": {
         "type": "object",
-        "required": ["ok"],
+        "required": [
+          "ok"
+        ],
         "properties": {
           "ok": {
             "type": "boolean",
-            "enum": [true]
+            "enum": [
+              true
+            ]
           }
         }
       },
       "ConflictProblem": {
         "type": "object",
-        "required": ["body"],
+        "required": [
+          "body"
+        ],
         "properties": {
           "body": {
             "$ref": "#/components/schemas/ProblemDetails"
@@ -213,7 +232,9 @@
       },
       "ForbiddenProblem": {
         "type": "object",
-        "required": ["body"],
+        "required": [
+          "body"
+        ],
         "properties": {
           "body": {
             "$ref": "#/components/schemas/ProblemDetails"
@@ -223,7 +244,9 @@
       },
       "NotFoundProblem": {
         "type": "object",
-        "required": ["body"],
+        "required": [
+          "body"
+        ],
         "properties": {
           "body": {
             "$ref": "#/components/schemas/ProblemDetails"
@@ -264,6 +287,17 @@
               }
             },
             "description": "Validation errors grouped by field"
+          },
+          "form": {
+            "type": "string",
+            "description": "Form-level validation error"
+          },
+          "fields": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Field validation errors"
           }
         },
         "description": "RFC 7807 Problem Details"

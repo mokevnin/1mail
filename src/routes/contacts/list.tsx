@@ -1,6 +1,5 @@
-import { Alert, Button, Group, Loader, Select, Stack, Text } from '@mantine/core'
+import { Button, Group, Loader, Select, Stack, Text } from '@mantine/core'
 import { useCounter } from '@mantine/hooks'
-import { modals } from '@mantine/modals'
 import { notifications } from '@mantine/notifications'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
@@ -8,42 +7,44 @@ import type { TFunction } from 'i18next'
 import { DataTable } from 'mantine-datatable'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { ApiErrorAlert } from '../../components/ApiErrorAlert.tsx'
 import {
   siteContactsDeleteMutation,
   siteContactsListOptions,
   siteContactsListQueryKey,
 } from '../../generated/site/@tanstack/react-query.gen.ts'
-import type { SiteContactStatus } from '../../generated/site/types.gen.ts'
+import { SiteContactStatus } from '../../generated/site/types.gen.ts'
+import { useDeleteConfirmation } from '../../hooks/useDeleteConfirmation.tsx'
 import { contactsCreateRoute, contactsEditRoute } from '../../router.tsx'
 import { track } from '../../tracking.ts'
+import { getApiErrorMessage } from '../../utils/apiErrors.ts'
 
 type ContactStatusFilter = 'all' | SiteContactStatus
 
 const PAGE_SIZE = 10
+const contactStatusFilterValues: ContactStatusFilter[] = [
+  'all',
+  ...Object.values(SiteContactStatus),
+]
 
-function translateStatus(t: TFunction, status: SiteContactStatus): string {
-  if (status === 'active') {
-    return t(($) => $.status.active)
-  }
-
-  return t(($) => $.status.unsubscribed)
+function translateStatus(t: TFunction, status: ContactStatusFilter): string {
+  return t(($) => $.status[status])
 }
 
 export function ContactsListPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
+  const confirmDelete = useDeleteConfirmation()
   const [page, pageHandlers] = useCounter(1, { min: 1 })
   const [status, setStatus] = useState<ContactStatusFilter>('all')
-
-  const statusForQuery = status === 'all' ? undefined : status
 
   const contactsList = useQuery(
     siteContactsListOptions({
       query: {
         page,
         pageSize: PAGE_SIZE,
-        ...(statusForQuery !== undefined ? { status: statusForQuery } : {}),
+        ...(status !== 'all' ? { status } : {}),
       },
     }),
   )
@@ -63,7 +64,10 @@ export function ContactsListPage() {
       notifications.show({
         color: 'red',
         title: t(($) => $.alerts.deleteErrorTitle),
-        message: error.detail ?? error.title,
+        message: getApiErrorMessage(
+          error,
+          t(($) => $.alerts.deleteErrorTitle),
+        ),
       })
     },
   })
@@ -78,14 +82,7 @@ export function ContactsListPage() {
 
   const onDeleteClick = (contactId: string) => {
     deleteContactMutation.reset()
-    modals.openConfirmModal({
-      title: t(($) => $.form.deleteTitle),
-      children: <Text>{t(($) => $.form.deleteDescription)}</Text>,
-      labels: {
-        cancel: t(($) => $.actions.cancel),
-        confirm: t(($) => $.actions.delete),
-      },
-      confirmProps: { color: 'red' },
+    confirmDelete({
       onConfirm: () => {
         deleteContactMutation.mutate({ path: { id: contactId } })
       },
@@ -97,11 +94,10 @@ export function ContactsListPage() {
       <Group justify="space-between" align="flex-end">
         <Select
           label={t(($) => $.contacts.statusFilter)}
-          data={[
-            { value: 'all', label: t(($) => $.status.all) },
-            { value: 'active', label: t(($) => $.status.active) },
-            { value: 'unsubscribed', label: t(($) => $.status.unsubscribed) },
-          ]}
+          data={contactStatusFilterValues.map((value) => ({
+            value,
+            label: translateStatus(t, value),
+          }))}
           value={status}
           onChange={onStatusChange}
           w={220}
@@ -113,9 +109,11 @@ export function ContactsListPage() {
       </Group>
 
       {contactsList.isError ? (
-        <Alert color="red" title={t(($) => $.alerts.loadErrorTitle)}>
-          {contactsList.error.detail ?? contactsList.error.title}
-        </Alert>
+        <ApiErrorAlert
+          error={contactsList.error}
+          title={t(($) => $.alerts.loadErrorTitle)}
+          fallback={t(($) => $.alerts.loadErrorTitle)}
+        />
       ) : null}
 
       {contactsList.isLoading ? <Loader /> : null}

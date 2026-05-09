@@ -1,90 +1,58 @@
-import { Button, Group, Stack, TextInput, Title } from '@mantine/core'
 import { useForm } from '@mantine/form'
 import { notifications } from '@mantine/notifications'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
+import { Stack, Title } from '@mantine/core'
 import { useTranslation } from 'react-i18next'
 import {
   siteContactsCreateMutation,
   siteContactsListQueryKey,
 } from '../../generated/site/@tanstack/react-query.gen.ts'
-import { useApiFormErrors } from '../../hooks/use-api-form-errors.ts'
-import { contactsEditRoute, contactsRoute } from '../../router.tsx'
+import { contactsEditRoute } from '../../router.tsx'
 import { track } from '../../tracking.ts'
-import { EMPTY_CONTACT_FORM } from './form.ts'
+import { getApiErrorMessage } from '../../utils/apiErrors.ts'
+import { ContactForm } from './ContactForm.tsx'
 
 export function ContactCreatePage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
+
   const form = useForm({
-    initialValues: EMPTY_CONTACT_FORM,
+    initialValues: { email: '', firstName: '', lastName: '', timeZone: '' },
   })
-  const withFormErrors = useApiFormErrors(form)
 
-  const createContactMutation = useMutation(
-    withFormErrors({
-      ...siteContactsCreateMutation(),
-      onSuccess: async (created) => {
-        await queryClient.invalidateQueries({ queryKey: siteContactsListQueryKey() })
-        await track('contact.created', {
-          contactId: created.id,
-          email: created.email,
-        })
-        notifications.show({
-          color: 'teal',
-          title: t(($) => $.notifications.successTitle),
-          message: t(($) => $.notifications.contactCreated),
-        })
-        await navigate({
-          to: contactsEditRoute.to,
-          params: { contactId: created.id },
-        })
-      },
-      onError: (error) => {
-        notifications.show({
-          color: 'red',
-          title: t(($) => $.alerts.saveErrorTitle),
-          message: error.detail ?? error.title,
-        })
-      },
-    }),
-  )
-
-  const onSubmit = form.onSubmit((values) => {
-    createContactMutation.mutate({
-      body: {
-        ...values,
-        email: values.email.trim(),
-      },
-    })
+  const createMutation = useMutation({
+    ...siteContactsCreateMutation(),
+    onSuccess: async (created) => {
+      await queryClient.invalidateQueries({ queryKey: siteContactsListQueryKey() })
+      await track('contact.created', { contactId: created.id, email: created.email })
+      notifications.show({
+        color: 'teal',
+        title: t(($) => $.notifications.successTitle),
+        message: t(($) => $.notifications.contactCreated),
+      })
+      await navigate({ to: contactsEditRoute.to, params: { contactId: created.id } })
+    },
+    onError: (error) => {
+      notifications.show({
+        color: 'red',
+        title: t(($) => $.alerts.saveErrorTitle),
+        message: getApiErrorMessage(error, t(($) => $.alerts.saveErrorTitle)),
+      })
+    },
   })
 
   return (
     <Stack>
       <Title order={4}>{t(($) => $.form.createTitle)}</Title>
-
-      <form onSubmit={onSubmit}>
-        <Stack>
-          <TextInput label="Email" {...form.getInputProps('email')} required />
-          <TextInput label={t(($) => $.table.firstName)} {...form.getInputProps('firstName')} />
-          <TextInput label={t(($) => $.table.lastName)} {...form.getInputProps('lastName')} />
-          <TextInput label={t(($) => $.table.timeZone)} {...form.getInputProps('timeZone')} />
-
-          <Group justify="flex-end">
-            <Button
-              variant="default"
-              type="button"
-              onClick={() => navigate({ to: contactsRoute.to })}
-            >
-              {t(($) => $.actions.cancel)}
-            </Button>
-            <Button type="submit" loading={createContactMutation.isPending}>
-              {t(($) => $.actions.save)}
-            </Button>
-          </Group>
-        </Stack>
-      </form>
+      <ContactForm
+        form={form}
+        isPending={createMutation.isPending}
+        onSubmit={(values) =>
+          createMutation.mutate({ body: { ...values, email: values.email.trim() } })
+        }
+      />
     </Stack>
   )
 }

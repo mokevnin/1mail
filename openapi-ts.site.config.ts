@@ -8,7 +8,10 @@ export default defineConfig({
     path: './src/generated/site',
   },
   plugins: [
-    '@hey-api/typescript',
+    {
+      enums: 'javascript',
+      name: '@hey-api/typescript',
+    },
     '@hey-api/client-fetch',
     {
       name: '@tanstack/react-query',

@@ -12,6 +12,10 @@ export default interface Resources {
       loadErrorTitle: 'Failed to load contacts'
       saveErrorTitle: 'Failed to save contact'
     }
+    confirmations: {
+      deleteDescription: 'This action cannot be undone.'
+      deleteTitle: 'Are you sure?'
+    }
     contacts: {
       addContact: 'Add contact'
       emptyState: 'Create your first contact.'
@@ -26,11 +30,28 @@ export default interface Resources {
       editTitle: 'Edit contact'
       invalidId: 'Invalid contact id'
     }
+    login: {
+      emailLabel: 'Email'
+      errorTitle: 'Sign in failed'
+      passwordLabel: 'Password'
+      registerLink: 'Create account'
+      submitButton: 'Sign in'
+      title: 'Sign in'
+    }
     notifications: {
       contactCreated: 'Contact created'
       contactDeleted: 'Contact deleted'
       contactUpdated: 'Contact updated'
       successTitle: 'Success'
+    }
+    registration: {
+      emailLabel: 'Email'
+      errorTitle: 'Registration failed'
+      nameLabel: 'Name'
+      passwordLabel: 'Password'
+      submitButton: 'Register'
+      successMessage: 'Account created successfully'
+      title: 'Create account'
     }
     status: {
       active: 'Active'

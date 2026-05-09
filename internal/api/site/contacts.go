@@ -7,20 +7,12 @@ import (
 	"github.com/mokevnin/1mail/ent"
 	"github.com/mokevnin/1mail/ent/contact"
 	siteapi "github.com/mokevnin/1mail/gen/site"
+	"github.com/mokevnin/1mail/internal/api/problems"
+	"github.com/mokevnin/1mail/internal/api/resources"
 	"github.com/mokevnin/1mail/internal/pagination"
-	"github.com/mokevnin/1mail/internal/pubsub"
 	"github.com/mokevnin/1mail/internal/service"
 	"github.com/samber/lo"
 )
-
-type Handlers struct {
-	ent    *ent.Client
-	pubsub *pubsub.PubSub
-}
-
-func NewHandlers(client *ent.Client, ps *pubsub.PubSub) *Handlers {
-	return &Handlers{ent: client, pubsub: ps}
-}
 
 func (h *Handlers) SiteContactsList(ctx context.Context, req siteapi.SiteContactsListRequestObject) (siteapi.SiteContactsListResponseObject, error) {
 	page, pageSize := pagination.Normalize(req.Params.Page, req.Params.PageSize)
@@ -43,12 +35,12 @@ func (h *Handlers) SiteContactsList(ctx context.Context, req siteapi.SiteContact
 		return nil, err
 	}
 
-	resources := lo.Map(items, func(c *ent.Contact, _ int) siteapi.SiteContactResource {
-		return toResource(c)
+	contactResources := lo.Map(items, func(c *ent.Contact, _ int) siteapi.SiteContactResource {
+		return resources.SiteContact(c)
 	})
 
 	return siteapi.SiteContactsList200JSONResponse{
-		Items:      resources,
+		Items:      contactResources,
 		Page:       int32(page),
 		PageSize:   int32(pageSize),
 		TotalItems: int32(total),
@@ -57,140 +49,77 @@ func (h *Handlers) SiteContactsList(ctx context.Context, req siteapi.SiteContact
 }
 
 func (h *Handlers) SiteContactsCreate(ctx context.Context, req siteapi.SiteContactsCreateRequestObject) (siteapi.SiteContactsCreateResponseObject, error) {
-	var customFields map[string]string
+	q := h.ent.Contact.Create().
+		SetEmail(string(req.Body.Email)).
+		SetNillableFirstName(req.Body.FirstName).
+		SetNillableLastName(req.Body.LastName).
+		SetNillableTimeZone(req.Body.TimeZone)
 	if req.Body.CustomFields != nil {
-		customFields = *req.Body.CustomFields
+		q = q.SetCustomFields(*req.Body.CustomFields)
 	}
-	c, err := service.CreateContact(ctx, h.ent, service.CreateContactInput{
-		Email:        string(req.Body.Email),
-		FirstName:    req.Body.FirstName,
-		LastName:     req.Body.LastName,
-		TimeZone:     req.Body.TimeZone,
-		CustomFields: customFields,
-	})
+	c, err := q.Save(ctx)
 	if service.IsUniqueViolation(err) {
-		return siteapi.SiteContactsCreate409ApplicationProblemPlusJSONResponse(conflictWithErrors("email already exists", fieldErrors{
+		return siteapi.SiteContactsCreate409ApplicationProblemPlusJSONResponse(problems.ConflictWithErrors("email already exists", problems.FieldErrors{
 			"email": {"email already exists"},
-		})), nil
+		}).Site()), nil
 	}
 	if err != nil {
 		return nil, err
 	}
-	return siteapi.SiteContactsCreate201JSONResponse(toResource(c)), nil
+	return siteapi.SiteContactsCreate201JSONResponse(resources.SiteContact(c)), nil
 }
 
 func (h *Handlers) SiteContactsGet(ctx context.Context, req siteapi.SiteContactsGetRequestObject) (siteapi.SiteContactsGetResponseObject, error) {
 	id, err := strconv.ParseInt(req.Id, 10, 64)
 	if err != nil {
-		return siteapi.SiteContactsGet400ApplicationProblemPlusJSONResponse(badRequest("invalid id")), nil
+		return siteapi.SiteContactsGet400ApplicationProblemPlusJSONResponse(problems.BadRequest("invalid id").Site()), nil
 	}
 	c, err := h.ent.Contact.Get(ctx, id)
 	if ent.IsNotFound(err) {
-		return siteapi.SiteContactsGet404ApplicationProblemPlusJSONResponse(notFound("contact not found")), nil
+		return siteapi.SiteContactsGet404ApplicationProblemPlusJSONResponse(problems.NotFound("contact not found").Site()), nil
 	}
 	if err != nil {
 		return nil, err
 	}
-	return siteapi.SiteContactsGet200JSONResponse(toResource(c)), nil
+	return siteapi.SiteContactsGet200JSONResponse(resources.SiteContact(c)), nil
 }
 
 func (h *Handlers) SiteContactsUpdate(ctx context.Context, req siteapi.SiteContactsUpdateRequestObject) (siteapi.SiteContactsUpdateResponseObject, error) {
 	id, err := strconv.ParseInt(req.Id, 10, 64)
 	if err != nil {
-		return siteapi.SiteContactsUpdate400ApplicationProblemPlusJSONResponse(badRequest("invalid id")), nil
+		return siteapi.SiteContactsUpdate400ApplicationProblemPlusJSONResponse(problems.BadRequest("invalid id").Site()), nil
 	}
-	var customFields map[string]string
-	hasCustomFields := req.Body.CustomFields != nil
-	if hasCustomFields {
-		customFields = *req.Body.CustomFields
+	q := h.ent.Contact.UpdateOneID(id).
+		SetNillableFirstName(req.Body.FirstName).
+		SetNillableLastName(req.Body.LastName).
+		SetNillableTimeZone(req.Body.TimeZone)
+	if req.Body.CustomFields != nil {
+		q = q.SetCustomFields(*req.Body.CustomFields)
 	}
-	c, err := service.UpdateContact(ctx, h.ent, id, service.UpdateContactInput{
-		FirstName:       req.Body.FirstName,
-		LastName:        req.Body.LastName,
-		TimeZone:        req.Body.TimeZone,
-		CustomFields:    customFields,
-		HasCustomFields: hasCustomFields,
-	})
+	c, err := q.Save(ctx)
 	if service.IsUniqueViolation(err) {
-		return siteapi.SiteContactsUpdate409ApplicationProblemPlusJSONResponse(conflict("email already exists")), nil
+		return siteapi.SiteContactsUpdate409ApplicationProblemPlusJSONResponse(problems.Conflict("email already exists").Site()), nil
 	}
 	if ent.IsNotFound(err) {
-		return siteapi.SiteContactsUpdate404ApplicationProblemPlusJSONResponse(notFound("contact not found")), nil
+		return siteapi.SiteContactsUpdate404ApplicationProblemPlusJSONResponse(problems.NotFound("contact not found").Site()), nil
 	}
 	if err != nil {
 		return nil, err
 	}
-	return siteapi.SiteContactsUpdate200JSONResponse(toResource(c)), nil
+	return siteapi.SiteContactsUpdate200JSONResponse(resources.SiteContact(c)), nil
 }
 
 func (h *Handlers) SiteContactsDelete(ctx context.Context, req siteapi.SiteContactsDeleteRequestObject) (siteapi.SiteContactsDeleteResponseObject, error) {
 	id, err := strconv.ParseInt(req.Id, 10, 64)
 	if err != nil {
-		return siteapi.SiteContactsDelete400ApplicationProblemPlusJSONResponse(badRequest("invalid id")), nil
+		return siteapi.SiteContactsDelete400ApplicationProblemPlusJSONResponse(problems.BadRequest("invalid id").Site()), nil
 	}
 	err = h.ent.Contact.DeleteOneID(id).Exec(ctx)
 	if ent.IsNotFound(err) {
-		return siteapi.SiteContactsDelete404ApplicationProblemPlusJSONResponse(notFound("contact not found")), nil
+		return siteapi.SiteContactsDelete404ApplicationProblemPlusJSONResponse(problems.NotFound("contact not found").Site()), nil
 	}
 	if err != nil {
 		return nil, err
 	}
 	return siteapi.SiteContactsDelete204Response{}, nil
 }
-
-func toResource(c *ent.Contact) siteapi.SiteContactResource {
-	r := siteapi.SiteContactResource{
-		Id:        strconv.FormatInt(c.ID, 10),
-		Email:     siteapi.EmailAddress(c.Email),
-		Status:    siteapi.SiteContactStatus(c.Status),
-		CreatedAt: c.CreatedAt,
-		UpdatedAt: c.UpdatedAt,
-		FirstName: c.FirstName,
-		LastName:  c.LastName,
-		TimeZone:  c.TimeZone,
-	}
-	if c.CustomFields != nil {
-		cf := map[string]string(c.CustomFields)
-		r.CustomFields = &cf
-	}
-	return r
-}
-
-func ptr[T any](v T) *T { return &v }
-
-func strptr(s string) *string { return &s }
-
-type fieldErrors map[string][]string
-
-func conflict(detail string) siteapi.ProblemDetails {
-	return problem(409, "Conflict", detail)
-}
-
-func conflictWithErrors(detail string, errors fieldErrors) siteapi.ProblemDetails {
-	return problemWithErrors(409, "Conflict", detail, errors)
-}
-
-func notFound(detail string) siteapi.ProblemDetails {
-	return problem(404, "Not Found", detail)
-}
-
-func badRequest(detail string) siteapi.ProblemDetails {
-	return problem(400, "Bad Request", detail)
-}
-
-func problem(status int32, title, detail string) siteapi.ProblemDetails {
-	return siteapi.ProblemDetails{
-		Status: &status,
-		Title:  strptr(title),
-		Detail: strptr(detail),
-	}
-}
-
-func problemWithErrors(status int32, title, detail string, errors fieldErrors) siteapi.ProblemDetails {
-	p := problem(status, title, detail)
-	p.Errors = ptr(map[string][]string(errors))
-	return p
-}
-
-// ensure Handlers implements the interface
-var _ siteapi.StrictServerInterface = (*Handlers)(nil)

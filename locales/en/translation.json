@@ -34,6 +34,10 @@
     "statusFilter": "Filter by status",
     "title": "Contacts"
   },
+  "confirmations": {
+    "deleteDescription": "This action cannot be undone.",
+    "deleteTitle": "Are you sure?"
+  },
   "form": {
     "createTitle": "New contact",
     "deleteDescription": "The contact will be deleted permanently.",

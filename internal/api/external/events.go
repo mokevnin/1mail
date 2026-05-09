@@ -7,13 +7,15 @@ import (
 	"github.com/mokevnin/1mail/ent"
 	"github.com/mokevnin/1mail/ent/event"
 	externalapi "github.com/mokevnin/1mail/gen/external"
+	apiauth "github.com/mokevnin/1mail/internal/api/auth"
+	"github.com/mokevnin/1mail/internal/api/problems"
 	"github.com/mokevnin/1mail/internal/pagination"
 	"github.com/samber/lo"
 )
 
 func (h *Handlers) EventsCreate(ctx context.Context, req externalapi.EventsCreateRequestObject) (externalapi.EventsCreateResponseObject, error) {
-	if !hasScope(GetTokenAuth(ctx), "events:write") {
-		return externalapi.EventsCreate401ApplicationProblemPlusJSONResponse(unauthorized("insufficient scope")), nil
+	if !apiauth.HasScope(apiauth.GetTokenAuth(ctx), "events:write") {
+		return externalapi.EventsCreate401ApplicationProblemPlusJSONResponse(problems.Unauthorized("insufficient scope").External()), nil
 	}
 
 	builders := lo.Map(req.Body.Events, func(e externalapi.EventInput, _ int) *ent.EventCreate {
@@ -42,8 +44,8 @@ func (h *Handlers) EventsCreate(ctx context.Context, req externalapi.EventsCreat
 }
 
 func (h *Handlers) EventActionsList(ctx context.Context, req externalapi.EventActionsListRequestObject) (externalapi.EventActionsListResponseObject, error) {
-	if !hasScope(GetTokenAuth(ctx), "events:read") {
-		return externalapi.EventActionsList401ApplicationProblemPlusJSONResponse(unauthorized("insufficient scope")), nil
+	if !apiauth.HasScope(apiauth.GetTokenAuth(ctx), "events:read") {
+		return externalapi.EventActionsList401ApplicationProblemPlusJSONResponse(problems.Unauthorized("insufficient scope").External()), nil
 	}
 
 	page, pageSize := pagination.Normalize(req.Params.Page, req.Params.PageSize)

@@ -1,45 +1,35 @@
-import { Alert, Button, Group, Loader, Stack, TextInput, Title } from '@mantine/core'
+import { Alert, Loader, Stack, Title } from '@mantine/core'
 import { useForm } from '@mantine/form'
 import { notifications } from '@mantine/notifications'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useNavigate, useParams } from '@tanstack/react-router'
 import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
+import { ApiErrorAlert } from '../../components/ApiErrorAlert.tsx'
 import {
   siteContactsGetOptions,
   siteContactsGetQueryKey,
   siteContactsListQueryKey,
   siteContactsUpdateMutation,
 } from '../../generated/site/@tanstack/react-query.gen.ts'
-import { useApiFormErrors } from '../../hooks/use-api-form-errors.ts'
-import { contactsRoute } from '../../router.tsx'
+import { contactsEditRoute } from '../../router.tsx'
 import { track } from '../../tracking.ts'
-import { EMPTY_CONTACT_FORM } from './form.ts'
-
-function parseContactId(contactId: string): string | null {
-  return /^\d+$/.test(contactId) ? contactId : null
-}
+import { getApiErrorMessage } from '../../utils/apiErrors.ts'
+import { ContactForm } from './ContactForm.tsx'
 
 export function ContactEditPage() {
   const { t } = useTranslation()
-  const navigate = useNavigate()
-  const { contactId } = useParams({ from: '/contacts/$contactId/edit' })
-  const parsedContactId = parseContactId(contactId)
+  const { contactId } = contactsEditRoute.useParams()
   const queryClient = useQueryClient()
+
   const form = useForm({
-    initialValues: EMPTY_CONTACT_FORM,
-  })
-  const withFormErrors = useApiFormErrors(form)
-
-  const getContactQuery = useQuery({
-    ...siteContactsGetOptions({ path: { id: parsedContactId ?? '0' } }),
-    enabled: parsedContactId !== null,
+    initialValues: { email: '', firstName: '', lastName: '', timeZone: '' },
   })
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: form.initialize is stable
+  const getContactQuery = useQuery(siteContactsGetOptions({ path: { id: contactId } }))
+
   useEffect(() => {
     if (!getContactQuery.data) return
-    form.initialize({
+    form.setValues({
       email: getContactQuery.data.email,
       firstName: getContactQuery.data.firstName ?? '',
       lastName: getContactQuery.data.lastName ?? '',
@@ -47,96 +37,52 @@ export function ContactEditPage() {
     })
   }, [getContactQuery.data])
 
-  const updateContactMutation = useMutation(
-    withFormErrors({
-      ...siteContactsUpdateMutation(),
-      onSuccess: async (updated) => {
-        await Promise.all([
-          queryClient.invalidateQueries({ queryKey: siteContactsListQueryKey() }),
-          queryClient.invalidateQueries({
-            queryKey: siteContactsGetQueryKey({ path: { id: updated.id } }),
-          }),
-        ])
-        await track('contact.updated', {
-          contactId: updated.id,
-          email: updated.email,
-        })
-        notifications.show({
-          color: 'teal',
-          title: t(($) => $.notifications.successTitle),
-          message: t(($) => $.notifications.contactUpdated),
-        })
-      },
-      onError: (error) => {
-        notifications.show({
-          color: 'red',
-          title: t(($) => $.alerts.saveErrorTitle),
-          message: error.detail ?? error.title,
-        })
-      },
-    }),
-  )
-
-  const onSubmit = form.onSubmit((values) => {
-    if (parsedContactId === null) {
-      return
-    }
-
-    updateContactMutation.mutate({
-      path: { id: parsedContactId },
-      body: {
-        firstName: values.firstName,
-        lastName: values.lastName,
-        timeZone: values.timeZone,
-      },
-    })
+  const updateMutation = useMutation({
+    ...siteContactsUpdateMutation(),
+    onSuccess: async (updated) => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: siteContactsListQueryKey() }),
+        queryClient.invalidateQueries({ queryKey: siteContactsGetQueryKey({ path: { id: updated.id } }) }),
+      ])
+      await track('contact.updated', { contactId: updated.id, email: updated.email })
+      notifications.show({
+        color: 'teal',
+        title: t(($) => $.notifications.successTitle),
+        message: t(($) => $.notifications.contactUpdated),
+      })
+    },
+    onError: (error) => {
+      notifications.show({
+        color: 'red',
+        title: t(($) => $.alerts.saveErrorTitle),
+        message: getApiErrorMessage(error, t(($) => $.alerts.saveErrorTitle)),
+      })
+    },
   })
 
-  if (parsedContactId === null) {
-    return (
-      <Alert color="red" title={t(($) => $.alerts.loadErrorTitle)}>
-        {t(($) => $.form.invalidId)}
-      </Alert>
-    )
-  }
-
-  if (getContactQuery.isLoading) {
-    return <Loader />
-  }
+  if (getContactQuery.isLoading) return <Loader />
 
   if (getContactQuery.isError) {
     return (
-      <Alert color="red" title={t(($) => $.alerts.loadErrorTitle)}>
-        {getContactQuery.error.detail ?? getContactQuery.error.title}
-      </Alert>
+      <ApiErrorAlert
+        error={getContactQuery.error}
+        title={t(($) => $.alerts.loadErrorTitle)}
+        fallback={t(($) => $.alerts.loadErrorTitle)}
+      />
     )
   }
 
   return (
     <Stack>
       <Title order={4}>{t(($) => $.form.editTitle)}</Title>
-
-      <form onSubmit={onSubmit}>
-        <Stack>
-          <TextInput label="Email" {...form.getInputProps('email')} disabled />
-          <TextInput label={t(($) => $.table.firstName)} {...form.getInputProps('firstName')} />
-          <TextInput label={t(($) => $.table.lastName)} {...form.getInputProps('lastName')} />
-          <TextInput label={t(($) => $.table.timeZone)} {...form.getInputProps('timeZone')} />
-
-          <Group justify="flex-end">
-            <Button
-              variant="default"
-              type="button"
-              onClick={() => navigate({ to: contactsRoute.to })}
-            >
-              {t(($) => $.actions.cancel)}
-            </Button>
-            <Button type="submit" loading={updateContactMutation.isPending}>
-              {t(($) => $.actions.save)}
-            </Button>
-          </Group>
-        </Stack>
-      </form>
+      <ContactForm
+        form={form}
+        emailEditable={false}
+        isPending={updateMutation.isPending}
+        onSubmit={({ firstName, lastName, timeZone }) =>
+          updateMutation.mutate({ path: { id: contactId }, body: { firstName, lastName, timeZone } })
+        }
+      />
     </Stack>
   )
 }

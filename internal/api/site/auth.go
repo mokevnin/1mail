@@ -5,9 +5,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/mokevnin/1mail/ent"
-	entuser "github.com/mokevnin/1mail/ent/user"
 	siteapi "github.com/mokevnin/1mail/gen/site"
+	"github.com/mokevnin/1mail/internal/api/problems"
 	"github.com/mokevnin/1mail/internal/pubsub"
 	"github.com/mokevnin/1mail/internal/service"
 	"golang.org/x/crypto/bcrypt"
@@ -19,7 +18,7 @@ func (h *Handlers) SiteAuthRegister(ctx context.Context, req siteapi.SiteAuthReg
 	password := req.Body.Password
 
 	if name == "" || email == "" || password == "" {
-		errors := fieldErrors{}
+		errors := problems.FieldErrors{}
 		if name == "" {
 			errors["name"] = []string{"name is required"}
 		}
@@ -29,7 +28,7 @@ func (h *Handlers) SiteAuthRegister(ctx context.Context, req siteapi.SiteAuthReg
 		if password == "" {
 			errors["password"] = []string{"password is required"}
 		}
-		return siteapi.SiteAuthRegister422ApplicationProblemPlusJSONResponse(unprocessableWithErrors("name, email and password are required", errors)), nil
+		return siteapi.SiteAuthRegister422ApplicationProblemPlusJSONResponse(problems.UnprocessableWithErrors("name, email and password are required", errors).Site()), nil
 	}
 
 	hash, err := bcrypt.GenerateFromPassword([]byte(password), 12)
@@ -43,9 +42,9 @@ func (h *Handlers) SiteAuthRegister(ctx context.Context, req siteapi.SiteAuthReg
 		SetPasswordHash(string(hash)).
 		Save(ctx)
 	if service.IsUniqueViolation(err) {
-		return siteapi.SiteAuthRegister409ApplicationProblemPlusJSONResponse(conflictWithErrors("email already exists", fieldErrors{
+		return siteapi.SiteAuthRegister409ApplicationProblemPlusJSONResponse(problems.ConflictWithErrors("email already exists", problems.FieldErrors{
 			"email": {"email already exists"},
-		})), nil
+		}).Site()), nil
 	}
 	if err != nil {
 		return nil, err
@@ -66,37 +65,5 @@ func (h *Handlers) SiteAuthRegister(ctx context.Context, req siteapi.SiteAuthReg
 }
 
 func (h *Handlers) SiteAuthDirectLogin(_ context.Context, _ siteapi.SiteAuthDirectLoginRequestObject) (siteapi.SiteAuthDirectLoginResponseObject, error) {
-	return siteapi.SiteAuthDirectLogin400ApplicationProblemPlusJSONResponse(badRequest("direct login is handled by auth provider")), nil
-}
-
-func unprocessable(detail string) siteapi.ProblemDetails {
-	return problem(422, "Unprocessable Entity", detail)
-}
-
-func unprocessableWithErrors(detail string, errors fieldErrors) siteapi.ProblemDetails {
-	return problemWithErrors(422, "Unprocessable Entity", detail, errors)
-}
-
-// CredChecker validates email/password against the users table for go-pkgz/auth.
-type CredChecker struct {
-	ent *ent.Client
-}
-
-func NewCredChecker(client *ent.Client) *CredChecker {
-	return &CredChecker{ent: client}
-}
-
-func (c *CredChecker) Check(user, password string) (bool, error) {
-	u, err := c.ent.User.Query().Where(entuser.Email(user)).Only(context.Background())
-	if ent.IsNotFound(err) {
-		return false, nil
-	}
-	if err != nil {
-		return false, err
-	}
-	if u.PasswordHash == "" {
-		return false, nil
-	}
-	err = bcrypt.CompareHashAndPassword([]byte(u.PasswordHash), []byte(password))
-	return err == nil, nil
+	return siteapi.SiteAuthDirectLogin400ApplicationProblemPlusJSONResponse(problems.BadRequest("direct login is handled by auth provider").Site()), nil
 }

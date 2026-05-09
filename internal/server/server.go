@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/go-pkgz/auth/v2"
+	goauth "github.com/go-pkgz/auth/v2"
 	"github.com/go-pkgz/auth/v2/avatar"
 	"github.com/go-pkgz/auth/v2/token"
 	"github.com/labstack/echo/v4"
@@ -15,11 +15,13 @@ import (
 	collectapi "github.com/mokevnin/1mail/gen/collect"
 	externalapi "github.com/mokevnin/1mail/gen/external"
 	siteapi "github.com/mokevnin/1mail/gen/site"
+	apiauth "github.com/mokevnin/1mail/internal/api/auth"
 	apicollect "github.com/mokevnin/1mail/internal/api/collect"
 	apiexternal "github.com/mokevnin/1mail/internal/api/external"
 	apisite "github.com/mokevnin/1mail/internal/api/site"
 	"github.com/mokevnin/1mail/internal/pubsub"
 	"github.com/samber/lo"
+	"github.com/samber/oops"
 )
 
 func New(cfg *config.Config, client *ent.Client, ps *pubsub.PubSub) *echo.Echo {
@@ -42,7 +44,7 @@ func New(cfg *config.Config, client *ent.Client, ps *pubsub.PubSub) *echo.Echo {
 	e.HTTPErrorHandler = problemErrorHandler
 
 	// Auth service (go-pkgz/auth)
-	authSvc := auth.NewService(auth.Opts{
+	authSvc := goauth.NewService(goauth.Opts{
 		SecretReader:   token.SecretFunc(func(string) (string, error) { return cfg.JWTSecret, nil }),
 		TokenDuration:  time.Hour,
 		CookieDuration: 24 * time.Hour,
@@ -52,7 +54,7 @@ func New(cfg *config.Config, client *ent.Client, ps *pubsub.PubSub) *echo.Echo {
 		URL:            cfg.AppURL,
 		AvatarStore:    avatar.NewLocalFS("/tmp/1mail-avatars"),
 	})
-	authSvc.AddDirectProvider("direct", apisite.NewCredChecker(client))
+	authSvc.AddDirectProvider("direct", apiauth.NewCredChecker(client))
 
 	authHandler, avatarHandler := authSvc.Handlers()
 	e.Any("/auth/*", echo.WrapHandler(authHandler))
@@ -75,7 +77,7 @@ func New(cfg *config.Config, client *ent.Client, ps *pubsub.PubSub) *echo.Echo {
 	extGroup.Use(middleware.KeyAuthWithConfig(middleware.KeyAuthConfig{
 		KeyLookup:  "header:Authorization",
 		AuthScheme: "Bearer",
-		Validator:  apiexternal.MakeTokenValidator(client),
+		Validator:  apiauth.MakeTokenValidator(client),
 		Skipper: func(c echo.Context) bool {
 			return c.Path() == "/api/auth/tokens/bootstrap"
 		},
@@ -88,7 +90,7 @@ func New(cfg *config.Config, client *ent.Client, ps *pubsub.PubSub) *echo.Echo {
 	collectGroup := e.Group("/collect")
 	collectGroup.Use(middleware.KeyAuthWithConfig(middleware.KeyAuthConfig{
 		KeyLookup: "header:x-collect-key",
-		Validator: apiexternal.MakeCollectKeyValidator(cfg.CollectSiteKey),
+		Validator: apiauth.MakeCollectKeyValidator(cfg.CollectSiteKey),
 	}))
 	collectHandlers := collectapi.NewStrictHandler(apicollect.NewHandlers(client), nil)
 	collectapi.RegisterHandlers(collectGroup, collectHandlers)
@@ -125,6 +127,11 @@ func problemErrorHandler(err error, c echo.Context) {
 			b, _ := json.Marshal(he.Message)
 			msg = string(b)
 		}
+	} else if oopsErr, ok := oops.AsOops(err); ok {
+		if status, ok := oopsErr.Code().(int); ok && status >= 400 && status <= 599 {
+			code = status
+		}
+		msg = oops.GetPublic(err, err.Error())
 	} else {
 		msg = err.Error()
 	}

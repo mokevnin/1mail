@@ -49,7 +49,9 @@
             }
           }
         },
-        "tags": ["Site Auth"],
+        "tags": [
+          "Site Auth"
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -98,7 +100,9 @@
             }
           }
         },
-        "tags": ["Site Auth"],
+        "tags": [
+          "Site Auth"
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -148,7 +152,9 @@
             }
           }
         },
-        "tags": ["Site Contacts"],
+        "tags": [
+          "Site Contacts"
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -188,7 +194,13 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "required": ["items", "page", "pageSize", "totalItems", "totalPages"],
+                  "required": [
+                    "items",
+                    "page",
+                    "pageSize",
+                    "totalItems",
+                    "totalPages"
+                  ],
                   "properties": {
                     "items": {
                       "type": "array",
@@ -244,7 +256,9 @@
             }
           }
         },
-        "tags": ["Site Contacts"]
+        "tags": [
+          "Site Contacts"
+        ]
       }
     },
     "/contacts/{id}": {
@@ -293,7 +307,9 @@
             }
           }
         },
-        "tags": ["Site Contacts"]
+        "tags": [
+          "Site Contacts"
+        ]
       },
       "put": {
         "operationId": "SiteContacts_update",
@@ -360,7 +376,9 @@
             }
           }
         },
-        "tags": ["Site Contacts"],
+        "tags": [
+          "Site Contacts"
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -410,7 +428,9 @@
             }
           }
         },
-        "tags": ["Site Contacts"]
+        "tags": [
+          "Site Contacts"
+        ]
       }
     }
   },
@@ -452,7 +472,9 @@
       },
       "ForbiddenProblem": {
         "type": "object",
-        "required": ["body"],
+        "required": [
+          "body"
+        ],
         "properties": {
           "body": {
             "$ref": "#/components/schemas/ProblemDetails"
@@ -493,13 +515,30 @@
               }
             },
             "description": "Validation errors grouped by field"
+          },
+          "form": {
+            "type": "string",
+            "description": "Form-level validation error"
+          },
+          "fields": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Field validation errors"
           }
         },
         "description": "RFC 7807 Problem Details"
       },
       "SiteContactResource": {
         "type": "object",
-        "required": ["id", "email", "status", "createdAt", "updatedAt"],
+        "required": [
+          "id",
+          "email",
+          "status",
+          "createdAt",
+          "updatedAt"
+        ],
         "properties": {
           "id": {
             "allOf": [
@@ -574,12 +613,17 @@
       },
       "SiteContactStatus": {
         "type": "string",
-        "enum": ["active", "unsubscribed"],
+        "enum": [
+          "active",
+          "unsubscribed"
+        ],
         "description": "Contact status for site UI"
       },
       "SiteCreateContactInput": {
         "type": "object",
-        "required": ["email"],
+        "required": [
+          "email"
+        ],
         "properties": {
           "email": {
             "allOf": [
@@ -622,7 +666,9 @@
       },
       "SiteDirectLoginError": {
         "type": "object",
-        "required": ["error"],
+        "required": [
+          "error"
+        ],
         "properties": {
           "error": {
             "type": "string"
@@ -631,7 +677,10 @@
       },
       "SiteDirectLoginInput": {
         "type": "object",
-        "required": ["user", "passwd"],
+        "required": [
+          "user",
+          "passwd"
+        ],
         "properties": {
           "user": {
             "type": "string"
@@ -643,7 +692,10 @@
       },
       "SiteDirectLoginResult": {
         "type": "object",
-        "required": ["name", "id"],
+        "required": [
+          "name",
+          "id"
+        ],
         "properties": {
           "name": {
             "type": "string"
@@ -674,7 +726,11 @@
       },
       "SiteRegisterInput": {
         "type": "object",
-        "required": ["name", "email", "password"],
+        "required": [
+          "name",
+          "email",
+          "password"
+        ],
         "properties": {
           "name": {
             "type": "string"
@@ -689,7 +745,12 @@
       },
       "SiteRegisterResult": {
         "type": "object",
-        "required": ["id", "name", "email", "createdAt"],
+        "required": [
+          "id",
+          "name",
+          "email",
+          "createdAt"
+        ],
         "properties": {
           "id": {
             "$ref": "#/components/schemas/EntityId"
@@ -748,7 +809,9 @@
       },
       "UnauthorizedProblem": {
         "type": "object",
-        "required": ["body"],
+        "required": [
+          "body"
+        ],
         "properties": {
           "body": {
             "$ref": "#/components/schemas/ProblemDetails"

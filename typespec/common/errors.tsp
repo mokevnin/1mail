@@ -3,6 +3,7 @@ using TypeSpec.Http;
 namespace OneMail;
 
 alias ValidationErrors = Record<string[]>;
+alias FormValidationFields = Record<string>;
 
 /** RFC 7807 Problem Details */
 model ProblemDetails {
@@ -23,6 +24,12 @@ model ProblemDetails {
 
   /** Validation errors grouped by field */
   errors?: ValidationErrors;
+
+  /** Form-level validation error */
+  form?: string;
+
+  /** Field validation errors */
+  fields?: FormValidationFields;
 }
 
 /** RFC 7807 bad request response */

@@ -46,6 +46,16 @@ export type ProblemDetails = {
     errors?: {
         [key: string]: Array<string>;
     };
+    /**
+     * Form-level validation error
+     */
+    form?: string;
+    /**
+     * Field validation errors
+     */
+    fields?: {
+        [key: string]: string;
+    };
 };
 
 /**
@@ -95,7 +105,12 @@ export type SiteContactResource = {
 /**
  * Contact status for site UI
  */
-export type SiteContactStatus = 'active' | 'unsubscribed';
+export const SiteContactStatus = { ACTIVE: 'active', UNSUBSCRIBED: 'unsubscribed' } as const;
+
+/**
+ * Contact status for site UI
+ */
+export type SiteContactStatus = typeof SiteContactStatus[keyof typeof SiteContactStatus];
 
 /**
  * Site request body for creating a contact

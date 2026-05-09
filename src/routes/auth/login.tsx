@@ -1,71 +1,96 @@
 import { Anchor, Button, Group, PasswordInput, Stack, TextInput, Title } from '@mantine/core'
-import { useForm } from '@mantine/form'
 import { notifications } from '@mantine/notifications'
+import { useForm } from '@tanstack/react-form'
 import { useMutation } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 import { siteAuthDirectLoginMutation } from '../../generated/site/@tanstack/react-query.gen.ts'
 import { contactsRoute, registerRoute } from '../../router.tsx'
+import { type ApiErrorLike, getApiErrorMessage } from '../../utils/apiErrors.ts'
 
 export function LoginPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
 
-  const form = useForm({
-    initialValues: {
+  const loginMutation = useMutation(siteAuthDirectLoginMutation())
+
+  const { Field, Subscribe, handleSubmit } = useForm({
+    defaultValues: {
       email: '',
       password: '',
     },
-  })
-
-  const loginMutation = useMutation({
-    ...siteAuthDirectLoginMutation(),
-    onSuccess: async () => {
-      await navigate({ to: contactsRoute.to })
-    },
-    onError: (error) => {
-      notifications.show({
-        color: 'red',
-        title: t(($) => $.login.errorTitle),
-        message: 'error' in error ? error.error : (error.detail ?? error.title),
-      })
-    },
-  })
-
-  const onSubmit = form.onSubmit((values) => {
-    loginMutation.mutate({
-      body: {
-        user: values.email.trim(),
-        passwd: values.password,
+    validators: {
+      onSubmitAsync: async ({ value }) => {
+        try {
+          await loginMutation.mutateAsync({
+            body: {
+              user: value.email.trim(),
+              passwd: value.password,
+            },
+          })
+          await navigate({ to: contactsRoute.to })
+        } catch (error) {
+          notifications.show({
+            color: 'red',
+            title: t(($) => $.login.errorTitle),
+            message: getApiErrorMessage(
+              error as ApiErrorLike,
+              t(($) => $.login.errorTitle),
+            ),
+          })
+        }
       },
-    })
+    },
   })
 
   return (
     <Stack maw={400} mx="auto" mt="xl">
       <Title order={3}>{t(($) => $.login.title)}</Title>
 
-      <form onSubmit={onSubmit}>
+      <form
+        onSubmit={(event) => {
+          event.preventDefault()
+          void handleSubmit()
+        }}
+      >
         <Stack>
-          <TextInput
-            label={t(($) => $.login.emailLabel)}
-            type="email"
-            {...form.getInputProps('email')}
-            required
-          />
-          <PasswordInput
-            label={t(($) => $.login.passwordLabel)}
-            {...form.getInputProps('password')}
-            required
-          />
+          <Field name="email">
+            {({ state, handleChange, handleBlur }) => (
+              <TextInput
+                label={t(($) => $.login.emailLabel)}
+                type="email"
+                value={state.value}
+                onBlur={handleBlur}
+                onChange={(event) => handleChange(event.currentTarget.value)}
+                error={state.meta.errors.join(', ') || undefined}
+                required
+              />
+            )}
+          </Field>
+          <Field name="password">
+            {({ state, handleChange, handleBlur }) => (
+              <PasswordInput
+                label={t(($) => $.login.passwordLabel)}
+                value={state.value}
+                onBlur={handleBlur}
+                onChange={(event) => handleChange(event.currentTarget.value)}
+                error={state.meta.errors.join(', ') || undefined}
+                required
+              />
+            )}
+          </Field>
 
           <Group justify="space-between" align="center">
             <Anchor component="a" href={registerRoute.to} size="sm">
               {t(($) => $.login.registerLink)}
             </Anchor>
-            <Button type="submit" loading={loginMutation.isPending}>
-              {t(($) => $.login.submitButton)}
-            </Button>
+            <Subscribe selector={(state) => state.isSubmitting}>
+              {(isSubmitting) => (
+                <Button type="submit" loading={isSubmitting}>
+                  {t(($) => $.login.submitButton)}
+                </Button>
+              )}
+            </Subscribe>
           </Group>
         </Stack>
       </form>

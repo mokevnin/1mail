@@ -77,6 +77,12 @@ type ProblemDetails struct {
 	// Errors Validation errors grouped by field
 	Errors *map[string][]string `json:"errors,omitempty"`
 
+	// Fields Field validation errors
+	Fields *map[string]string `json:"fields,omitempty"`
+
+	// Form Form-level validation error
+	Form *string `json:"form,omitempty"`
+
 	// Instance A URI reference that identifies the specific occurrence
 	Instance *string `json:"instance,omitempty"`
 
@@ -363,21 +369,21 @@ func (sh *strictHandler) CollectIdentifyCreate(ctx echo.Context) error {
 // const string: with thousands of chunks the chained `+` fold is several
 // times slower for the Go compiler than parsing a slice literal.
 var swaggerSpec = []string{
-	"7FZNb9w2EP0rBNtbFa9iB0ihm+um6AItbBjbXgwfuOTIYkyR7HC46Hah/16Q0kb7oV07RdBcchOo4cyb",
-	"9+aDGy5d650FS4FXGx5kA63InzfOGJD0YQWW5tZHSocenQckDdlESNLOpi9ae+AVD4TaPvGu4E7KiAjq",
-	"Ol8TxtzWvHrY8O8Ral7x72Zj3NkQdLbQLQQSrefdY8FtNEYsDfCKMEJxHOIAi1I6oRHmbve8O+nILT+C",
-	"pORopYMmh3M1kUlXcIS/okZQvHrYMS222T9OeNzlLpwgD1Zb0jVBmz/OkXMsR/cpsEAU6yOsQ4Az+OYK",
-	"LOl6fQphK7R5vXwfkvm1UgghvFLBxllIAV60DDFj7yV60ZpQaPoqVXGG7Nvnewje2QDHTLvnzLeNLa8e",
-	"Ep7Rz9I5A8IexXTPk8H2RKg2vHbYCuLVIOYEWXfolgban4GENvmOgiBR+763+f0vN+z9j+V7NhiyreVh",
-	"B6p8fuzgmjWxFfYNglCJcQZ/eyOsSL9Z8CB1rSUjx6jRgQ2Dw0qYAguIDs8pOzbTcVXsNUtxgPJPYbTq",
-	"MfVB2BO66EGx5ZrVGoziE3RrG0gkrBNZ/3E/Zwg15GQYNYKY7htOQ2DUwJj8+aQDCYoTyvy6WNyx/ieT",
-	"TqW7n+TWlq4uR2faEjwBZho0mUm8oXFIxaFYIbatwDVzdYbshyLIfotTJP8XMs577ibIH/fFbqErQfCG",
-	"dDvlJCtWu1wePQ381sLvQhs2dCm7vpvzgq8AQw/97UV5UeaN5sEKr3nFr/JRwb2gJssyG2e5dyFP0lSS",
-	"uZrS/NjfBzcIghK61M4Q6Cen1umKdJbA9vvSe6Nlvj/7GPoV24/Zz1kTw+bp9kdHGi/5oB9GGfVl+e5Y",
-	"tEUDCEwHZh0bsKUuDWAVqx327TrkULBlpCxjA0IBBtaKNVsCiwHqaC4Sge/Kt2fSHOT/4fPSPRheOdUT",
-	"4ytaEalxqP8BxbbZZ1yXl18T12ocPCOqVO7iKaRBPyjKH9PhbGia9Yu1tt3t/0e17b8jXlVv5ZfGsLNe",
-	"J9heNLAtVdaIwEKUEkCB+laZX6Qy05YCTFMzPxP3Hf7mpDBMwQqM820aI3Jv2EY0vOINka9mM5OMGxeo",
-	"uirLcjZY5vfkEHfDrWhhrHTePXb/BgAA//8=",
+	"7FZNb+M2EP0rBNtbldibLLCFbmm6QQO0SBC4vQQ50OQo4oZfHQ6Nuob/e0FKXn9IdrLFonvpTaCGM4/v",
+	"Pc5wxaW3wTtwFHm94lG2YEX5vPbGgKSPC3B060KivBjQB0DSUEKEJO1d/qJlAF7zSKjdM19X3EuZEEFd",
+	"lW3CmLuG148r/j1Cw2v+3WRbd9IXncy0hUjCBr5+qrhLxoi5AV4TJqiGJQ6wKKUzGmHud9fXRxP5+SeQ",
+	"lBMtdNTk8VaNnGRdcYQ/k0ZQvH7cCa02p38aybjLXTxCHiw2pGsCWz5OkTOUY/25sEAUywHWvsAJfLcK",
+	"HOlmeQyhFdq8Xb6POfxKKYQY36hg6x3kAq9GxlSwdxK9Gk0oNH0TV5wg++7lAWLwLsKQaf9S+HbJ8vox",
+	"49nmmXtvQLhBTf8yWmxPhHrFG49WEK97MUfIukc/N2B/BhLalD0KokQdurvNH26u2Ycfpx9YH8g2kYc3",
+	"UJX1YYIr1iYr3BmCUJlxBn8FI5zIv1kMIHWjJSPPqNWR9Y3DSRgDC4geTym7vUxDV+xdluoA5R/CaNVh",
+	"6oqwZ/QpgGLzJWs0GMVH6C4/TuIZwNgve5MTsMVh8dFaHu2Q3RuP9szAAswgyxiB2kUSmdwRmX5/uGUI",
+	"DRT2GbWCmO46hIbIqIWtWqdViiQojVjpl9nsnnU/mfQq7/3sT+3o8mKbTDuCZ8CimyYzije2Hqk6dFdM",
+	"1gpcMt8UyKF3bclbHXPFvyHjdOb1iILbAbd7M5UgOCNtx5IUxRpfjNTRwO8c/Ca0YX1bYVf3t7ziC8DY",
+	"QX93Pj2flhEcwImgec0vy1LFg6C2yDLZDp/gY2n92bPFO7nh7Q+wawRBGV3uPxDpJ6+WeYv0jsB1Az4E",
+	"o2XZP/kUuzdBNxe+ZK71o3K93+tyPywLXfcsqC+m74eizVpAYDoy51mPLbeVCE6xxmPXX/ozVGyeqMjY",
+	"glCAkVmxZHNgKUKTzHkm8P303Ylj9vL/8GXHPei25ahH+m1yIlHrUf8Nim1OX3BdXHxLXDttZosq2108",
+	"xzyZekX5U16c9Jdm+arXNo+R/8Jt+w+fN/lt+rUx7LwHRtietbCxKmtFZDFJCaBA/e/Mr+LMPKUAc9cs",
+	"79r9hL96KQxTeaj6YHMbkXvNNqHhNW+JQj2ZmBzc+kj15XQ6nfSR5QHc111xJyxsnc7XT+t/AgAA//8=",
 }
 
 // decodeSpec returns the embedded OpenAPI spec as raw JSON bytes,
