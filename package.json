@@ -50,7 +50,7 @@
     "better-result": "^2.9.2",
     "client-only": "^0.0.1",
     "es-toolkit": "^1.46.1",
-    "i18next": "^26.0.10",
+    "i18next": "^26.1.0",
     "mantine-datatable": "^8.3.13",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
