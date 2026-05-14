@@ -11,7 +11,7 @@
     "i18n:types": "i18next-cli types"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.4.14",
+    "@biomejs/biome": "^2.4.15",
     "@hey-api/openapi-ts": "0.97.1",
     "@types/node": "^25.6.2",
     "@types/path-browserify": "^1.0.3",
