@@ -40,7 +40,7 @@ dev:
 	overmind start
 
 test: db-create-test
-	go test ./...
+	go test -p 1 ./...
 
 test-watch:
 	pnpm exec vitest
@@ -75,9 +75,9 @@ generate-i18n-types:
 
 generate-backend:
 	cd ent && go run -mod=mod entc.go
-	oapi-codegen --package=siteapi --generate=echo-server,strict-server,models,embedded-spec -o gen/site/site.gen.go openapi/site.openapi.json
-	oapi-codegen --package=externalapi --generate=echo-server,strict-server,models,embedded-spec -o gen/external/external.gen.go openapi/external.openapi.json
-	oapi-codegen --package=collectapi --generate=echo-server,strict-server,models,embedded-spec -o gen/collect/collect.gen.go openapi/collect.openapi.json
+	go tool ogen --target gen/site     --package siteapi     --clean openapi/site.openapi.json
+	go tool ogen --target gen/external --package externalapi --clean openapi/external.openapi.json
+	go tool ogen --target gen/collect  --package collectapi  --clean openapi/collect.openapi.json
 
 generate: generate-typespec generate-openapi generate-backend generate-i18n-types check-fix
 

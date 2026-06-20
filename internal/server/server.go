@@ -1,15 +1,18 @@
 package server
 
 import (
+	"context"
+	"crypto/rand"
+	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"net/http"
+	"strings"
 	"time"
 
 	goauth "github.com/go-pkgz/auth/v2"
 	"github.com/go-pkgz/auth/v2/avatar"
 	"github.com/go-pkgz/auth/v2/token"
-	"github.com/labstack/echo/v4"
-	"github.com/labstack/echo/v4/middleware"
 	"github.com/mokevnin/1mail/config"
 	"github.com/mokevnin/1mail/ent"
 	collectapi "github.com/mokevnin/1mail/gen/collect"
@@ -20,30 +23,15 @@ import (
 	apiexternal "github.com/mokevnin/1mail/internal/api/external"
 	apisite "github.com/mokevnin/1mail/internal/api/site"
 	"github.com/mokevnin/1mail/internal/pubsub"
-	"github.com/samber/lo"
-	"github.com/samber/oops"
+	"github.com/ogen-go/ogen/ogenerrors"
 )
 
-func New(cfg *config.Config, client *ent.Client, ps *pubsub.PubSub) *echo.Echo {
-	e := echo.New()
-	e.HideBanner = true
+// New builds the top-level net/http handler wiring the three ogen-generated
+// API servers (site, external, collect) plus go-pkgz/auth endpoints.
+func New(cfg *config.Config, client *ent.Client, ps *pubsub.PubSub) (http.Handler, error) {
+	mux := http.NewServeMux()
 
-	e.Use(middleware.RequestID())
-	e.Use(middleware.Logger())
-	e.Use(middleware.Recover())
-	e.Use(middleware.Secure())
-	e.Use(middleware.Gzip())
-	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
-		AllowOrigins:     cfg.CORSOrigins,
-		AllowMethods:     []string{http.MethodGet, http.MethodPost, http.MethodPut, http.MethodDelete, http.MethodOptions},
-		AllowHeaders:     []string{echo.HeaderAuthorization, echo.HeaderContentType},
-		AllowCredentials: true,
-	}))
-	e.Use(middleware.ContextTimeout(30 * time.Second))
-
-	e.HTTPErrorHandler = problemErrorHandler
-
-	// Auth service (go-pkgz/auth)
+	// Auth service (go-pkgz/auth) — JWT issuance + direct (email/password) provider.
 	authSvc := goauth.NewService(goauth.Opts{
 		SecretReader:   token.SecretFunc(func(string) (string, error) { return cfg.JWTSecret, nil }),
 		TokenDuration:  time.Hour,
@@ -55,100 +43,152 @@ func New(cfg *config.Config, client *ent.Client, ps *pubsub.PubSub) *echo.Echo {
 		AvatarStore:    avatar.NewLocalFS("/tmp/1mail-avatars"),
 	})
 	authSvc.AddDirectProvider("direct", apiauth.NewCredChecker(client))
-
 	authHandler, avatarHandler := authSvc.Handlers()
-	e.Any("/auth/*", echo.WrapHandler(authHandler))
-	e.GET("/avatar/*", echo.WrapHandler(avatarHandler))
+	mux.Handle("/auth/", authHandler)
+	mux.Handle("/avatar/", avatarHandler)
 
-	m := authSvc.Middleware()
+	// Site API — /site (JWT cookie via generated SecurityHandler; register and
+	// direct-login are public per the spec).
+	siteSrv, err := siteapi.NewServer(
+		apisite.NewHandlers(client, ps),
+		apiauth.NewSiteSecurityHandler(cfg.JWTSecret),
+		siteapi.WithPathPrefix("/site"),
+		siteapi.WithErrorHandler(problemErrorHandler),
+	)
+	if err != nil {
+		return nil, err
+	}
+	mux.Handle("/site/", siteSrv)
 
-	// Site API — /site (JWT auth, register endpoint is public)
-	siteGroup := e.Group("/site")
-	siteGroup.Use(echo.WrapMiddleware(skipAuth(m.Auth, "/site/auth/register")))
-	siteHandlers := siteapi.NewStrictHandler(apisite.NewHandlers(client, ps), nil)
-	siteapi.RegisterHandlers(siteGroup, siteHandlers)
-	e.POST("/site/auth/direct/login", func(c echo.Context) error {
-		authHandler.ServeHTTP(c.Response(), c.Request())
-		return nil
-	})
+	// External API — /api (Bearer token auth via ogen SecurityHandler).
+	extSrv, err := externalapi.NewServer(
+		apiexternal.NewHandlers(client, cfg.BootstrapToken),
+		apiauth.NewExternalSecurityHandler(client),
+		externalapi.WithPathPrefix("/api"),
+		externalapi.WithErrorHandler(problemErrorHandler),
+	)
+	if err != nil {
+		return nil, err
+	}
+	mux.Handle("/api/", extSrv)
 
-	// External API — /api (Bearer token auth)
-	extGroup := e.Group("/api")
-	extGroup.Use(middleware.KeyAuthWithConfig(middleware.KeyAuthConfig{
-		KeyLookup:  "header:Authorization",
-		AuthScheme: "Bearer",
-		Validator:  apiauth.MakeTokenValidator(client),
-		Skipper: func(c echo.Context) bool {
-			return c.Path() == "/api/auth/tokens/bootstrap"
-		},
-	}))
-	extGroup.Use(middleware.BodyLimit("1M"))
-	externalHandlers := externalapi.NewStrictHandler(apiexternal.NewHandlers(client, cfg.BootstrapToken), nil)
-	externalapi.RegisterHandlers(extGroup, externalHandlers)
+	// Collect API — /collect (x-collect-key via generated SecurityHandler).
+	colSrv, err := collectapi.NewServer(
+		apicollect.NewHandlers(client),
+		apiauth.NewCollectSecurityHandler(cfg.CollectSiteKey),
+		collectapi.WithPathPrefix("/collect"),
+		collectapi.WithErrorHandler(problemErrorHandler),
+	)
+	if err != nil {
+		return nil, err
+	}
+	mux.Handle("/collect/", colSrv)
 
-	// Collect API — x-collect-key
-	collectGroup := e.Group("/collect")
-	collectGroup.Use(middleware.KeyAuthWithConfig(middleware.KeyAuthConfig{
-		KeyLookup: "header:x-collect-key",
-		Validator: apiauth.MakeCollectKeyValidator(cfg.CollectSiteKey),
-	}))
-	collectHandlers := collectapi.NewStrictHandler(apicollect.NewHandlers(client), nil)
-	collectapi.RegisterHandlers(collectGroup, collectHandlers)
-
-	return e
+	return chain(mux, recoverer, requestID, timeout(30*time.Second), cors(cfg.CORSOrigins)), nil
 }
 
-// skipAuth wraps an auth middleware but bypasses it for specified exact paths.
-func skipAuth(authMW func(http.Handler) http.Handler, paths ...string) func(http.Handler) http.Handler {
-	skip := lo.SliceToMap(paths, func(p string) (string, struct{}) {
-		return p, struct{}{}
+// problemErrorHandler renders ogen errors as RFC 7807 application/problem+json.
+func problemErrorHandler(_ context.Context, w http.ResponseWriter, _ *http.Request, err error) {
+	code := http.StatusInternalServerError
+	var oe ogenerrors.Error
+	if errors.As(err, &oe) {
+		code = oe.Code()
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(code)
+	prob := map[string]any{
+		"status": code,
+		"title":  http.StatusText(code),
+	}
+	if code < http.StatusInternalServerError {
+		prob["detail"] = err.Error()
+	}
+	_ = json.NewEncoder(w).Encode(prob)
+}
+
+func writeProblem(w http.ResponseWriter, code int, detail string) {
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(code)
+	_ = json.NewEncoder(w).Encode(map[string]any{
+		"status": code,
+		"title":  http.StatusText(code),
+		"detail": detail,
 	})
-	return func(next http.Handler) http.Handler {
-		protected := authMW(next)
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			if _, ok := skip[r.URL.Path]; ok {
-				next.ServeHTTP(w, r)
-				return
+}
+
+// --- cross-cutting net/http middleware ---
+
+func chain(h http.Handler, mws ...func(http.Handler) http.Handler) http.Handler {
+	for i := len(mws) - 1; i >= 0; i-- {
+		h = mws[i](h)
+	}
+	return h
+}
+
+func recoverer(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		defer func() {
+			if rec := recover(); rec != nil {
+				writeProblem(w, http.StatusInternalServerError, "internal server error")
 			}
-			protected.ServeHTTP(w, r)
+		}()
+		next.ServeHTTP(w, r)
+	})
+}
+
+// timeout bounds every request's context (hang protection; replaces echo ContextTimeout).
+func timeout(d time.Duration) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			ctx, cancel := context.WithTimeout(r.Context(), d)
+			defer cancel()
+			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}
 }
 
-func problemErrorHandler(err error, c echo.Context) {
-	code := http.StatusInternalServerError
-	var msg string
+func requestID(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		id := r.Header.Get("X-Request-Id")
+		if id == "" {
+			id = randomID()
+		}
+		w.Header().Set("X-Request-Id", id)
+		next.ServeHTTP(w, r)
+	})
+}
 
-	if he, ok := err.(*echo.HTTPError); ok {
-		code = he.Code
-		if m, ok := he.Message.(string); ok {
-			msg = m
-		} else {
-			b, _ := json.Marshal(he.Message)
-			msg = string(b)
-		}
-	} else if oopsErr, ok := oops.AsOops(err); ok {
-		if status, ok := oopsErr.Code().(int); ok && status >= 400 && status <= 599 {
-			code = status
-		}
-		msg = oops.GetPublic(err, err.Error())
-	} else {
-		msg = err.Error()
+func randomID() string {
+	b := make([]byte, 8)
+	if _, err := rand.Read(b); err != nil {
+		return "req"
 	}
+	return hex.EncodeToString(b)
+}
 
-	if !c.Response().Committed {
-		c.Response().Header().Set(echo.HeaderContentType, "application/problem+json")
-		status := int32(code)
-		prob := struct {
-			Status int32   `json:"status"`
-			Title  *string `json:"title,omitempty"`
-			Detail *string `json:"detail,omitempty"`
-		}{
-			Status: status,
-			Detail: &msg,
-		}
-		title := http.StatusText(code)
-		prob.Title = &title
-		_ = c.JSON(code, prob)
+func cors(origins []string) func(http.Handler) http.Handler {
+	allowed := make(map[string]struct{}, len(origins))
+	for _, o := range origins {
+		allowed[o] = struct{}{}
+	}
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			origin := r.Header.Get("Origin")
+			if origin != "" {
+				_, ok := allowed[origin]
+				if ok || len(origins) == 0 {
+					w.Header().Set("Access-Control-Allow-Origin", origin)
+					w.Header().Set("Access-Control-Allow-Credentials", "true")
+					w.Header().Set("Vary", "Origin")
+				}
+			}
+			if r.Method == http.MethodOptions {
+				w.Header().Set("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS")
+				w.Header().Set("Access-Control-Allow-Headers", strings.Join([]string{"Authorization", "Content-Type", "x-collect-key", "x-bootstrap-token"}, ","))
+				w.WriteHeader(http.StatusNoContent)
+				return
+			}
+			next.ServeHTTP(w, r)
+		})
 	}
 }

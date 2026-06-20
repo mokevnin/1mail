@@ -44,6 +44,7 @@ model SiteDirectLoginForbidden is Response<403> {
 @route("/auth")
 @tag("Site Auth")
 namespace SiteAuth {
+  @useAuth(NoAuth)
   @post
   @route("/register")
   op register(@body body: SiteRegisterInput): {
@@ -51,6 +52,7 @@ namespace SiteAuth {
     @body body: SiteRegisterResult;
   } | ConflictProblem | UnprocessableEntityProblem;
 
+  @useAuth(NoAuth)
   @post
   @route("/direct/login")
   op directLogin(@body body: SiteDirectLoginInput): {

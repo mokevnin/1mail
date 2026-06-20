@@ -61,7 +61,10 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {}
+        ]
       }
     },
     "/auth/register": {
@@ -112,7 +115,10 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {}
+        ]
       }
     },
     "/contacts": {
@@ -434,6 +440,11 @@
       }
     }
   },
+  "security": [
+    {
+      "ApiKeyAuth": []
+    }
+  ],
   "components": {
     "parameters": {
       "PageQuery.page": {
@@ -818,6 +829,13 @@
           }
         },
         "description": "RFC 7807 unauthorized response"
+      }
+    },
+    "securitySchemes": {
+      "ApiKeyAuth": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "JWT"
       }
     }
   },

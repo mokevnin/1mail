@@ -2,53 +2,72 @@ package external
 
 import (
 	"context"
+	"encoding/json"
+	"net/http"
 	"time"
 
 	"github.com/mokevnin/1mail/ent"
 	"github.com/mokevnin/1mail/ent/event"
 	externalapi "github.com/mokevnin/1mail/gen/external"
-	apiauth "github.com/mokevnin/1mail/internal/api/auth"
-	"github.com/mokevnin/1mail/internal/api/problems"
+	"github.com/mokevnin/1mail/internal/api/auth"
 	"github.com/mokevnin/1mail/internal/pagination"
-	"github.com/samber/lo"
 )
 
-func (h *Handlers) EventsCreate(ctx context.Context, req externalapi.EventsCreateRequestObject) (externalapi.EventsCreateResponseObject, error) {
-	if !apiauth.HasScope(apiauth.GetTokenAuth(ctx), "events:write") {
-		return externalapi.EventsCreate401ApplicationProblemPlusJSONResponse(problems.Unauthorized("insufficient scope").External()), nil
+func (h *Handlers) EventsCreate(ctx context.Context, req *externalapi.RecordEventsInput) (externalapi.EventsCreateRes, error) {
+	if !auth.HasScope(auth.GetTokenAuth(ctx), "events:write") {
+		res := externalapi.EventsCreateUnauthorized(problem(http.StatusUnauthorized, "insufficient scope"))
+		return &res, nil
 	}
 
-	builders := lo.Map(req.Body.Events, func(e externalapi.EventInput, _ int) *ent.EventCreate {
+	builders := make([]*ent.EventCreate, len(req.Events))
+	for i := range req.Events {
+		e := req.Events[i]
 		b := h.ent.Event.Create().
 			SetSubjectID(e.SubjectId).
-			SetAction(e.Action).
-			SetNillableEmail((*string)(e.Email)).
-			SetNillablePhone(e.Phone).
-			SetNillableProspect(e.Prospect)
+			SetAction(e.Action)
 
-		if e.OccurredAt != nil {
-			t := time.Time(*e.OccurredAt)
-			b = b.SetOccurredAt(t)
+		if v, ok := e.Email.Get(); ok {
+			s := string(v)
+			b = b.SetNillableEmail(&s)
 		}
-		if e.Properties != nil {
-			b = b.SetProperties(*e.Properties)
+		if v, ok := e.Phone.Get(); ok {
+			b = b.SetNillablePhone(&v)
 		}
-		return b
-	})
+		if v, ok := e.Prospect.Get(); ok {
+			b = b.SetNillableProspect(&v)
+		}
+		if v, ok := e.OccurredAt.Get(); ok {
+			b = b.SetOccurredAt(time.Time(v))
+		}
+		if props, ok := e.Properties.Get(); ok {
+			converted := make(map[string]interface{}, len(props))
+			for key, raw := range props {
+				var value interface{}
+				if err := json.Unmarshal([]byte(raw), &value); err != nil {
+					return nil, err
+				}
+				converted[key] = value
+			}
+			b = b.SetProperties(converted)
+		}
+
+		builders[i] = b
+	}
 
 	_, err := h.ent.Event.CreateBulk(builders...).Save(ctx)
 	if err != nil {
 		return nil, err
 	}
-	return externalapi.EventsCreate204Response{}, nil
+	return &externalapi.EventsCreateNoContent{}, nil
 }
 
-func (h *Handlers) EventActionsList(ctx context.Context, req externalapi.EventActionsListRequestObject) (externalapi.EventActionsListResponseObject, error) {
-	if !apiauth.HasScope(apiauth.GetTokenAuth(ctx), "events:read") {
-		return externalapi.EventActionsList401ApplicationProblemPlusJSONResponse(problems.Unauthorized("insufficient scope").External()), nil
+func (h *Handlers) EventActionsList(ctx context.Context, params externalapi.EventActionsListParams) (externalapi.EventActionsListRes, error) {
+	if !auth.HasScope(auth.GetTokenAuth(ctx), "events:read") {
+		res := externalapi.EventActionsListUnauthorized(problem(http.StatusUnauthorized, "insufficient scope"))
+		return &res, nil
 	}
 
-	page, pageSize := pagination.Normalize(req.Params.Page, req.Params.PageSize)
+	page, pageSize := pagination.Normalize(optInt32Ptr(params.Page), optInt32Ptr(params.PageSize))
 
 	actions := h.ent.Event.Query().
 		Order(ent.Asc(event.FieldAction)).
@@ -58,19 +77,20 @@ func (h *Handlers) EventActionsList(ctx context.Context, req externalapi.EventAc
 	total := len(actions)
 	start := pagination.Offset(page, pageSize)
 	end := start + pageSize
-	if end > total {
-		end = total
-	}
 	if start > total {
 		start = total
 	}
+	if end > total {
+		end = total
+	}
 
 	slice := actions[start:end]
-	items := lo.Map(slice, func(a string, _ int) externalapi.EventActionResource {
-		return externalapi.EventActionResource{Action: a}
-	})
+	items := make([]externalapi.EventActionResource, len(slice))
+	for i, a := range slice {
+		items[i] = externalapi.EventActionResource{Action: a}
+	}
 
-	return externalapi.EventActionsList200JSONResponse{
+	return &externalapi.EventActionsListOK{
 		Items:      items,
 		Page:       int32(page),
 		PageSize:   int32(pageSize),

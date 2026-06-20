@@ -2,33 +2,38 @@ package site
 
 import (
 	"context"
+	"net/http"
 	"strconv"
 	"strings"
 
 	siteapi "github.com/mokevnin/1mail/gen/site"
-	"github.com/mokevnin/1mail/internal/api/problems"
 	"github.com/mokevnin/1mail/internal/pubsub"
 	"github.com/mokevnin/1mail/internal/service"
 	"golang.org/x/crypto/bcrypt"
 )
 
-func (h *Handlers) SiteAuthRegister(ctx context.Context, req siteapi.SiteAuthRegisterRequestObject) (siteapi.SiteAuthRegisterResponseObject, error) {
-	name := strings.TrimSpace(req.Body.Name)
-	email := strings.TrimSpace(string(req.Body.Email))
-	password := req.Body.Password
+func (h *Handlers) SiteAuthRegister(ctx context.Context, req *siteapi.SiteRegisterInput) (siteapi.SiteAuthRegisterRes, error) {
+	name := strings.TrimSpace(req.Name)
+	email := strings.TrimSpace(string(req.Email))
+	password := req.Password
 
 	if name == "" || email == "" || password == "" {
-		errors := problems.FieldErrors{}
+		fieldErrors := map[string][]string{}
 		if name == "" {
-			errors["name"] = []string{"name is required"}
+			fieldErrors["name"] = []string{"name is required"}
 		}
 		if email == "" {
-			errors["email"] = []string{"email is required"}
+			fieldErrors["email"] = []string{"email is required"}
 		}
 		if password == "" {
-			errors["password"] = []string{"password is required"}
+			fieldErrors["password"] = []string{"password is required"}
 		}
-		return siteapi.SiteAuthRegister422ApplicationProblemPlusJSONResponse(problems.UnprocessableWithErrors("name, email and password are required", errors).Site()), nil
+		v := siteapi.SiteAuthRegisterUnprocessableEntity(problemWithErrors(
+			http.StatusUnprocessableEntity,
+			"name, email and password are required",
+			fieldErrors,
+		))
+		return &v, nil
 	}
 
 	hash, err := bcrypt.GenerateFromPassword([]byte(password), 12)
@@ -42,9 +47,12 @@ func (h *Handlers) SiteAuthRegister(ctx context.Context, req siteapi.SiteAuthReg
 		SetPasswordHash(string(hash)).
 		Save(ctx)
 	if service.IsUniqueViolation(err) {
-		return siteapi.SiteAuthRegister409ApplicationProblemPlusJSONResponse(problems.ConflictWithErrors("email already exists", problems.FieldErrors{
-			"email": {"email already exists"},
-		}).Site()), nil
+		v := siteapi.SiteAuthRegisterConflict(problemWithErrors(
+			http.StatusConflict,
+			"email already exists",
+			map[string][]string{"email": {"email already exists"}},
+		))
+		return &v, nil
 	}
 	if err != nil {
 		return nil, err
@@ -56,14 +64,15 @@ func (h *Handlers) SiteAuthRegister(ctx context.Context, req siteapi.SiteAuthReg
 		Email:  u.Email,
 	})
 
-	return siteapi.SiteAuthRegister201JSONResponse{
-		Id:        strconv.FormatInt(u.ID, 10),
+	return &siteapi.SiteRegisterResult{
+		ID:        siteapi.EntityId(strconv.FormatInt(u.ID, 10)),
 		Name:      u.Name,
 		Email:     siteapi.EmailAddress(u.Email),
-		CreatedAt: u.CreatedAt,
+		CreatedAt: siteapi.Timestamp(u.CreatedAt),
 	}, nil
 }
 
-func (h *Handlers) SiteAuthDirectLogin(_ context.Context, _ siteapi.SiteAuthDirectLoginRequestObject) (siteapi.SiteAuthDirectLoginResponseObject, error) {
-	return siteapi.SiteAuthDirectLogin400ApplicationProblemPlusJSONResponse(problems.BadRequest("direct login is handled by auth provider").Site()), nil
+func (h *Handlers) SiteAuthDirectLogin(_ context.Context, _ *siteapi.SiteDirectLoginInput) (siteapi.SiteAuthDirectLoginRes, error) {
+	v := problem(http.StatusBadRequest, "direct login is handled by auth provider")
+	return &v, nil
 }

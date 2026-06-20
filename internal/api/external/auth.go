@@ -2,37 +2,40 @@ package external
 
 import (
 	"context"
-	"strconv"
+	"net/http"
 	"time"
 
 	"github.com/mokevnin/1mail/ent"
 	externalapi "github.com/mokevnin/1mail/gen/external"
-	apiauth "github.com/mokevnin/1mail/internal/api/auth"
-	"github.com/mokevnin/1mail/internal/api/problems"
-	"github.com/mokevnin/1mail/internal/api/resources"
+	"github.com/mokevnin/1mail/internal/api/auth"
 	"github.com/mokevnin/1mail/internal/service"
-	"github.com/samber/lo"
 	"github.com/samber/oops"
 )
 
-func (h *Handlers) AuthMeGet(ctx context.Context, req externalapi.AuthMeGetRequestObject) (externalapi.AuthMeGetResponseObject, error) {
-	auth := apiauth.GetTokenAuth(ctx)
-	if auth == nil {
-		return externalapi.AuthMeGet401ApplicationProblemPlusJSONResponse(problems.Unauthorized("missing token").External()), nil
+func (h *Handlers) AuthMeGet(ctx context.Context) (externalapi.AuthMeGetRes, error) {
+	a := auth.GetTokenAuth(ctx)
+	if a == nil {
+		res := externalapi.AuthMeGetUnauthorized(problem(http.StatusUnauthorized, "missing token"))
+		return &res, nil
 	}
-	token, err := h.ent.ApiToken.Get(ctx, auth.TokenID)
+
+	token, err := h.ent.ApiToken.Get(ctx, a.TokenID)
 	if ent.IsNotFound(err) {
-		return externalapi.AuthMeGet404ApplicationProblemPlusJSONResponse(problems.NotFound("token not found").External()), nil
+		res := externalapi.AuthMeGetNotFound(problem(http.StatusNotFound, "token not found"))
+		return &res, nil
 	}
 	if err != nil {
 		return nil, err
 	}
-	return externalapi.AuthMeGet200JSONResponse(resources.ExternalTokenInfo(token)), nil
+
+	info := apiTokenInfo(token)
+	return &info, nil
 }
 
-func (h *Handlers) AuthTokensList(ctx context.Context, req externalapi.AuthTokensListRequestObject) (externalapi.AuthTokensListResponseObject, error) {
-	if !apiauth.HasScope(apiauth.GetTokenAuth(ctx), "tokens:read") {
-		return externalapi.AuthTokensList403ApplicationProblemPlusJSONResponse(problems.Forbidden("insufficient scope").External()), nil
+func (h *Handlers) AuthTokensList(ctx context.Context) (externalapi.AuthTokensListRes, error) {
+	if !auth.HasScope(auth.GetTokenAuth(ctx), "tokens:read") {
+		res := externalapi.AuthTokensListForbidden(problem(http.StatusForbidden, "insufficient scope"))
+		return &res, nil
 	}
 
 	tokens, err := h.ent.ApiToken.Query().All(ctx)
@@ -40,58 +43,63 @@ func (h *Handlers) AuthTokensList(ctx context.Context, req externalapi.AuthToken
 		return nil, err
 	}
 
-	items := lo.Map(tokens, func(t *ent.ApiToken, _ int) externalapi.ApiTokenInfo {
-		return resources.ExternalTokenInfo(t)
-	})
-	return externalapi.AuthTokensList200JSONResponse{Items: items}, nil
+	items := make([]externalapi.ApiTokenInfo, len(tokens))
+	for i, t := range tokens {
+		items[i] = apiTokenInfo(t)
+	}
+	return &externalapi.ApiTokenListResponse{Items: items}, nil
 }
 
-func (h *Handlers) AuthTokensCreate(ctx context.Context, req externalapi.AuthTokensCreateRequestObject) (externalapi.AuthTokensCreateResponseObject, error) {
-	if !apiauth.HasScope(apiauth.GetTokenAuth(ctx), "tokens:write") {
-		return externalapi.AuthTokensCreate403ApplicationProblemPlusJSONResponse(problems.Forbidden("insufficient scope").External()), nil
+func (h *Handlers) AuthTokensCreate(ctx context.Context, req *externalapi.CreateApiTokenInput) (externalapi.AuthTokensCreateRes, error) {
+	if !auth.HasScope(auth.GetTokenAuth(ctx), "tokens:write") {
+		res := externalapi.AuthTokensCreateForbidden(problem(http.StatusForbidden, "insufficient scope"))
+		return &res, nil
 	}
 
-	resp, err := createToken(ctx, h.ent, req.Body.Name, req.Body.Scopes, req.Body.ExpiresAt)
+	resp, err := createToken(ctx, h.ent, req.Name, req.Scopes, req.ExpiresAt)
 	if err != nil {
 		return nil, err
 	}
-	return externalapi.AuthTokensCreate201JSONResponse(*resp), nil
+	return resp, nil
 }
 
-func (h *Handlers) AuthTokensBootstrap(ctx context.Context, req externalapi.AuthTokensBootstrapRequestObject) (externalapi.AuthTokensBootstrapResponseObject, error) {
-	if h.bootstrapToken == "" || req.Params.XBootstrapToken != h.bootstrapToken {
-		return externalapi.AuthTokensBootstrap401ApplicationProblemPlusJSONResponse(problems.Unauthorized("invalid bootstrap token").External()), nil
+func (h *Handlers) AuthTokensBootstrap(ctx context.Context, req *externalapi.CreateApiTokenInput, params externalapi.AuthTokensBootstrapParams) (externalapi.AuthTokensBootstrapRes, error) {
+	if h.bootstrapToken == "" || params.XBootstrapToken != h.bootstrapToken {
+		res := externalapi.AuthTokensBootstrapUnauthorized(problem(http.StatusUnauthorized, "invalid bootstrap token"))
+		return &res, nil
 	}
 
-	resp, err := createToken(ctx, h.ent, req.Body.Name, req.Body.Scopes, req.Body.ExpiresAt)
+	resp, err := createToken(ctx, h.ent, req.Name, req.Scopes, req.ExpiresAt)
 	if err != nil {
 		return nil, err
 	}
-	return externalapi.AuthTokensBootstrap201JSONResponse(*resp), nil
+	return resp, nil
 }
 
-func (h *Handlers) AuthTokensDelete(ctx context.Context, req externalapi.AuthTokensDeleteRequestObject) (externalapi.AuthTokensDeleteResponseObject, error) {
-	if !apiauth.HasScope(apiauth.GetTokenAuth(ctx), "tokens:write") {
-		return externalapi.AuthTokensDelete403ApplicationProblemPlusJSONResponse(problems.Forbidden("insufficient scope").External()), nil
+func (h *Handlers) AuthTokensDelete(ctx context.Context, params externalapi.AuthTokensDeleteParams) (externalapi.AuthTokensDeleteRes, error) {
+	if !auth.HasScope(auth.GetTokenAuth(ctx), "tokens:write") {
+		res := externalapi.AuthTokensDeleteForbidden(problem(http.StatusForbidden, "insufficient scope"))
+		return &res, nil
 	}
 
-	id, err := strconv.ParseInt(string(req.Id), 10, 64)
+	id, err := parseEntityID(params.ID)
 	if err != nil {
-		return externalapi.AuthTokensDelete400ApplicationProblemPlusJSONResponse(problems.BadRequest("invalid id").External()), nil
+		res := externalapi.AuthTokensDeleteBadRequest(problem(http.StatusBadRequest, "invalid id"))
+		return &res, nil
 	}
 
-	now := time.Now()
-	_, err = h.ent.ApiToken.UpdateOneID(id).SetRevokedAt(now).Save(ctx)
+	_, err = h.ent.ApiToken.UpdateOneID(id).SetRevokedAt(time.Now()).Save(ctx)
 	if ent.IsNotFound(err) {
-		return externalapi.AuthTokensDelete404ApplicationProblemPlusJSONResponse(problems.NotFound("token not found").External()), nil
+		res := externalapi.AuthTokensDeleteNotFound(problem(http.StatusNotFound, "token not found"))
+		return &res, nil
 	}
 	if err != nil {
 		return nil, err
 	}
-	return externalapi.AuthTokensDelete204Response{}, nil
+	return &externalapi.AuthTokensDeleteNoContent{}, nil
 }
 
-func createToken(ctx context.Context, client *ent.Client, name string, scopes []externalapi.ApiTokenScope, expiresAt *externalapi.Timestamp) (*externalapi.CreateApiTokenResponse, error) {
+func createToken(ctx context.Context, client *ent.Client, name string, scopes []externalapi.ApiTokenScope, expiresAt externalapi.OptNilTimestamp) (*externalapi.CreateApiTokenResponse, error) {
 	prefix, err := service.GenerateTokenPrefix()
 	if err != nil {
 		return nil, oops.In("external-auth").Public("could not create token").Wrap(err)
@@ -105,9 +113,10 @@ func createToken(ctx context.Context, client *ent.Client, name string, scopes []
 		return nil, oops.In("external-auth").Public("could not create token").Wrap(err)
 	}
 
-	scopeStrings := lo.Map(scopes, func(s externalapi.ApiTokenScope, _ int) string {
-		return string(s)
-	})
+	scopeStrings := make([]string, len(scopes))
+	for i, s := range scopes {
+		scopeStrings[i] = string(s)
+	}
 
 	q := client.ApiToken.Create().
 		SetName(name).
@@ -115,9 +124,8 @@ func createToken(ctx context.Context, client *ent.Client, name string, scopes []
 		SetSecretHash(hash).
 		SetScopes(scopeStrings)
 
-	if expiresAt != nil {
-		t := time.Time(*expiresAt)
-		q = q.SetExpiresAt(t)
+	if v, ok := expiresAt.Get(); ok {
+		q = q.SetExpiresAt(time.Time(v))
 	}
 
 	token, err := q.Save(ctx)
@@ -127,6 +135,6 @@ func createToken(ctx context.Context, client *ent.Client, name string, scopes []
 
 	return &externalapi.CreateApiTokenResponse{
 		Token:     service.TokenValue(prefix, secret),
-		TokenInfo: resources.ExternalTokenInfo(token),
+		TokenInfo: apiTokenInfo(token),
 	}, nil
 }

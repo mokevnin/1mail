@@ -1,7 +1,0 @@
-# oapi-codegen --package=externalapi --generate=echo-server,strict-server,models,embedded-spec -o gen/external/external.gen.go ../openapi/external.openapi.json
-package: externalapi
-generate:
-  echo-server: true
-  strict-server: true
-  models: true
-  embedded-spec: true

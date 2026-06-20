@@ -3,9 +3,10 @@ package app
 import (
 	"context"
 	"database/sql"
+	"net/http"
 	"sync"
+	"time"
 
-	"github.com/labstack/echo/v4"
 	"github.com/mokevnin/1mail/config"
 	"github.com/mokevnin/1mail/ent"
 	"github.com/mokevnin/1mail/internal/db"
@@ -19,7 +20,7 @@ import (
 
 type App struct {
 	Config *config.Config
-	Server *echo.Echo
+	Server *http.Server
 
 	injector       *do.RootScope
 	pubSub         *pubSub
@@ -61,7 +62,7 @@ func New(env string) (*App, error) {
 		return nil, err
 	}
 
-	e, err := do.Invoke[*echo.Echo](injector)
+	handler, err := do.Invoke[http.Handler](injector)
 	if err != nil {
 		injector.Shutdown()
 		return nil, err
@@ -74,8 +75,12 @@ func New(env string) (*App, error) {
 	}
 
 	return &App{
-		Config:   cfg,
-		Server:   e,
+		Config: cfg,
+		Server: &http.Server{
+			Addr:              ":" + cfg.Port,
+			Handler:           handler,
+			ReadHeaderTimeout: 5 * time.Second,
+		},
 		injector: injector,
 		pubSub:   ps,
 	}, nil
@@ -148,7 +153,7 @@ func register(injector do.Injector, env string) {
 		return &pubSub{PubSub: ps}, nil
 	})
 
-	do.Provide(injector, func(i do.Injector) (*echo.Echo, error) {
+	do.Provide(injector, func(i do.Injector) (http.Handler, error) {
 		cfg, err := do.Invoke[*config.Config](i)
 		if err != nil {
 			return nil, err
@@ -162,6 +167,6 @@ func register(injector do.Injector, env string) {
 			return nil, err
 		}
 
-		return server.New(cfg, client.Client, ps.PubSub), nil
+		return server.New(cfg, client.Client, ps.PubSub)
 	})
 }

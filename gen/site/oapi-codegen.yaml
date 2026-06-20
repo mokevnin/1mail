@@ -1,7 +1,0 @@
-# oapi-codegen --package=siteapi --generate=echo-server,strict-server,models,embedded-spec -o gen/site/site.gen.go ../openapi/site.openapi.json
-package: siteapi
-generate:
-  echo-server: true
-  strict-server: true
-  models: true
-  embedded-spec: true

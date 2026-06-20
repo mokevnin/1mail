@@ -15,4 +15,4 @@ func NewHandlers(client *ent.Client, ps *pubsub.PubSub) *Handlers {
 	return &Handlers{ent: client, pubsub: ps}
 }
 
-var _ siteapi.StrictServerInterface = (*Handlers)(nil)
+var _ siteapi.Handler = (*Handlers)(nil)

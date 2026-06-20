@@ -1,7 +1,0 @@
-# oapi-codegen --package=collectapi --generate=echo-server,strict-server,models,embedded-spec -o gen/collect/collect.gen.go ../openapi/collect.openapi.json
-package: collectapi
-generate:
-  echo-server: true
-  strict-server: true
-  models: true
-  embedded-spec: true

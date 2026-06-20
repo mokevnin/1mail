@@ -37,13 +37,14 @@ func main() {
 		<-ctx.Done()
 		shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
+		_ = application.Server.Shutdown(shutdownCtx)
 		report := application.Shutdown(shutdownCtx)
 		if !report.Succeed {
 			log.Printf("shutdown: %v", report)
 		}
 	}()
 
-	if err := application.Server.Start(":" + application.Config.Port); err != nil && !errors.Is(err, http.ErrServerClosed) {
+	if err := application.Server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 		log.Printf("server stopped: %v", err)
 	}
 
