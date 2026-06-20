@@ -4,18 +4,16 @@ import { notifications } from '@mantine/notifications'
 import { useMutation } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
-import { siteAuthRegister } from '../../generated/site/sdk.gen.ts'
+import { siteAuthRegisterMutation } from '../../generated/site/@tanstack/react-query.gen.ts'
 import type { SiteRegisterInput } from '../../generated/site/types.gen.ts'
 import { contactsRoute } from '../../router.tsx'
-import { getApiErrorMessage } from '../../utils/apiErrors.ts'
+import { type ApiErrorLike, getApiErrorMessage } from '../../utils/apiErrors.ts'
 
 export function RegisterPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
 
-  const registerMutation = useMutation({
-    mutationFn: (body: SiteRegisterInput) => siteAuthRegister({ body }),
-  })
+  const registerMutation = useMutation(siteAuthRegisterMutation())
 
   const form = useForm<SiteRegisterInput>({
     initialValues: {
@@ -26,18 +24,20 @@ export function RegisterPage() {
   })
 
   const handleSubmit = async (values: SiteRegisterInput) => {
-    const { error } = await registerMutation.mutateAsync({
-      name: values.name.trim(),
-      email: values.email.trim(),
-      password: values.password,
-    })
-
-    if (error) {
+    try {
+      await registerMutation.mutateAsync({
+        body: {
+          name: values.name.trim(),
+          email: values.email.trim(),
+          password: values.password,
+        },
+      })
+    } catch (error) {
       notifications.show({
         color: 'red',
         title: t(($) => $.registration.errorTitle),
         message: getApiErrorMessage(
-          error,
+          error as ApiErrorLike,
           t(($) => $.registration.errorTitle),
         ),
       })
