@@ -3,6 +3,7 @@
   "files": {
     "includes": [
       "**",
+      "!dist",
       "!src/generated",
       "!packages/*/src/generated",
       "!packages/*/dist",

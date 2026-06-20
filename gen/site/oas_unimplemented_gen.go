@@ -31,8 +31,8 @@ func (UnimplementedHandler) SiteAuthRegister(ctx context.Context, req *SiteRegis
 //
 // Create a contact from the site UI.
 //
-// POST /contacts
-func (UnimplementedHandler) SiteContactsCreate(ctx context.Context, req *SiteCreateContactInput) (r SiteContactsCreateRes, _ error) {
+// POST /w/{workspaceSlug}/contacts
+func (UnimplementedHandler) SiteContactsCreate(ctx context.Context, req *SiteCreateContactInput, params SiteContactsCreateParams) (r SiteContactsCreateRes, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -40,7 +40,7 @@ func (UnimplementedHandler) SiteContactsCreate(ctx context.Context, req *SiteCre
 //
 // Delete a contact from the site UI.
 //
-// DELETE /contacts/{id}
+// DELETE /w/{workspaceSlug}/contacts/{id}
 func (UnimplementedHandler) SiteContactsDelete(ctx context.Context, params SiteContactsDeleteParams) (r SiteContactsDeleteRes, _ error) {
 	return r, ht.ErrNotImplemented
 }
@@ -49,7 +49,7 @@ func (UnimplementedHandler) SiteContactsDelete(ctx context.Context, params SiteC
 //
 // Get a contact by ID for the site UI.
 //
-// GET /contacts/{id}
+// GET /w/{workspaceSlug}/contacts/{id}
 func (UnimplementedHandler) SiteContactsGet(ctx context.Context, params SiteContactsGetParams) (r SiteContactsGetRes, _ error) {
 	return r, ht.ErrNotImplemented
 }
@@ -58,7 +58,7 @@ func (UnimplementedHandler) SiteContactsGet(ctx context.Context, params SiteCont
 //
 // List contacts for the site UI.
 //
-// GET /contacts
+// GET /w/{workspaceSlug}/contacts
 func (UnimplementedHandler) SiteContactsList(ctx context.Context, params SiteContactsListParams) (r SiteContactsListRes, _ error) {
 	return r, ht.ErrNotImplemented
 }
@@ -67,7 +67,16 @@ func (UnimplementedHandler) SiteContactsList(ctx context.Context, params SiteCon
 //
 // Update a contact from the site UI.
 //
-// PUT /contacts/{id}
+// PUT /w/{workspaceSlug}/contacts/{id}
 func (UnimplementedHandler) SiteContactsUpdate(ctx context.Context, req *SiteUpdateContactInput, params SiteContactsUpdateParams) (r SiteContactsUpdateRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// SiteWorkspacesList implements SiteWorkspaces_list operation.
+//
+// List workspaces owned by the authenticated user.
+//
+// GET /workspaces
+func (UnimplementedHandler) SiteWorkspacesList(ctx context.Context) (r []SiteWorkspaceResource, _ error) {
 	return r, ht.ErrNotImplemented
 }

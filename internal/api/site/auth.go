@@ -58,6 +58,10 @@ func (h *Handlers) SiteAuthRegister(ctx context.Context, req *siteapi.SiteRegist
 		return nil, err
 	}
 
+	if _, err := h.createDefaultWorkspace(ctx, u.ID, name); err != nil {
+		return nil, err
+	}
+
 	_ = pubsub.Publish(h.pubsub, pubsub.TopicUserRegistered, pubsub.UserRegisteredEvent{
 		UserID: u.ID,
 		Name:   u.Name,

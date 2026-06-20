@@ -39,6 +39,7 @@ var operationRolesApiKeyAuth = map[string][]string{
 	SiteContactsGetOperation:    []string{},
 	SiteContactsListOperation:   []string{},
 	SiteContactsUpdateOperation: []string{},
+	SiteWorkspacesListOperation: []string{},
 }
 
 // GetRolesForApiKeyAuth returns the required roles for the given operation.

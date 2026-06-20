@@ -10,6 +10,9 @@
     },
     {
       "name": "Site Auth"
+    },
+    {
+      "name": "Site Workspaces"
     }
   ],
   "paths": {
@@ -113,11 +116,20 @@
         "security": [{}]
       }
     },
-    "/contacts": {
+    "/w/{workspaceSlug}/contacts": {
       "post": {
         "operationId": "SiteContacts_create",
         "description": "Create a contact from the site UI",
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "workspaceSlug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "201": {
             "description": "The request has succeeded and a new resource has been created as a result.",
@@ -125,6 +137,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/SiteContactResource"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "RFC 7807 not found response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -166,6 +188,14 @@
         "operationId": "SiteContacts_list",
         "description": "List contacts for the site UI",
         "parameters": [
+          {
+            "name": "workspaceSlug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
           {
             "$ref": "#/components/parameters/PageQuery.page"
           },
@@ -235,6 +265,16 @@
               }
             }
           },
+          "404": {
+            "description": "RFC 7807 not found response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
           "422": {
             "description": "RFC 7807 validation response",
             "content": {
@@ -249,11 +289,19 @@
         "tags": ["Site Contacts"]
       }
     },
-    "/contacts/{id}": {
+    "/w/{workspaceSlug}/contacts/{id}": {
       "get": {
         "operationId": "SiteContacts_get",
         "description": "Get a contact by ID for the site UI",
         "parameters": [
+          {
+            "name": "workspaceSlug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
           {
             "name": "id",
             "in": "path",
@@ -301,6 +349,14 @@
         "operationId": "SiteContacts_update",
         "description": "Update a contact from the site UI",
         "parameters": [
+          {
+            "name": "workspaceSlug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
           {
             "name": "id",
             "in": "path",
@@ -379,6 +435,14 @@
         "description": "Delete a contact from the site UI",
         "parameters": [
           {
+            "name": "workspaceSlug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "name": "id",
             "in": "path",
             "required": true,
@@ -413,6 +477,29 @@
           }
         },
         "tags": ["Site Contacts"]
+      }
+    },
+    "/workspaces": {
+      "get": {
+        "operationId": "SiteWorkspaces_list",
+        "description": "List workspaces owned by the authenticated user",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "The request has succeeded.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SiteWorkspaceResource"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Site Workspaces"]
       }
     }
   },
@@ -756,6 +843,37 @@
           }
         },
         "description": "Site request body for updating a contact"
+      },
+      "SiteWorkspaceResource": {
+        "type": "object",
+        "required": ["id", "name", "slug", "createdAt"],
+        "properties": {
+          "id": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EntityId"
+              }
+            ],
+            "description": "Unique identifier"
+          },
+          "name": {
+            "type": "string",
+            "description": "Display name"
+          },
+          "slug": {
+            "type": "string",
+            "description": "URL-safe unique slug (used in /w/{slug} routes)"
+          },
+          "createdAt": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Timestamp"
+              }
+            ],
+            "description": "Creation timestamp"
+          }
+        },
+        "description": "Workspace the current user belongs to"
       },
       "TimeZoneName": {
         "type": "string"

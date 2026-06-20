@@ -20,32 +20,38 @@ type Handler interface {
 	//
 	// Create a contact from the site UI.
 	//
-	// POST /contacts
-	SiteContactsCreate(ctx context.Context, req *SiteCreateContactInput) (SiteContactsCreateRes, error)
+	// POST /w/{workspaceSlug}/contacts
+	SiteContactsCreate(ctx context.Context, req *SiteCreateContactInput, params SiteContactsCreateParams) (SiteContactsCreateRes, error)
 	// SiteContactsDelete implements SiteContacts_delete operation.
 	//
 	// Delete a contact from the site UI.
 	//
-	// DELETE /contacts/{id}
+	// DELETE /w/{workspaceSlug}/contacts/{id}
 	SiteContactsDelete(ctx context.Context, params SiteContactsDeleteParams) (SiteContactsDeleteRes, error)
 	// SiteContactsGet implements SiteContacts_get operation.
 	//
 	// Get a contact by ID for the site UI.
 	//
-	// GET /contacts/{id}
+	// GET /w/{workspaceSlug}/contacts/{id}
 	SiteContactsGet(ctx context.Context, params SiteContactsGetParams) (SiteContactsGetRes, error)
 	// SiteContactsList implements SiteContacts_list operation.
 	//
 	// List contacts for the site UI.
 	//
-	// GET /contacts
+	// GET /w/{workspaceSlug}/contacts
 	SiteContactsList(ctx context.Context, params SiteContactsListParams) (SiteContactsListRes, error)
 	// SiteContactsUpdate implements SiteContacts_update operation.
 	//
 	// Update a contact from the site UI.
 	//
-	// PUT /contacts/{id}
+	// PUT /w/{workspaceSlug}/contacts/{id}
 	SiteContactsUpdate(ctx context.Context, req *SiteUpdateContactInput, params SiteContactsUpdateParams) (SiteContactsUpdateRes, error)
+	// SiteWorkspacesList implements SiteWorkspaces_list operation.
+	//
+	// List workspaces owned by the authenticated user.
+	//
+	// GET /workspaces
+	SiteWorkspacesList(ctx context.Context) ([]SiteWorkspaceResource, error)
 }
 
 // Server implements http server based on OpenAPI v3 specification and

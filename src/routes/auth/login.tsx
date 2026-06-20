@@ -6,7 +6,7 @@ import { useNavigate } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 import { siteAuthDirectLoginMutation } from '../../generated/site/@tanstack/react-query.gen.ts'
 import type { SiteDirectLoginInput } from '../../generated/site/types.gen.ts'
-import { contactsRoute, registerRoute } from '../../router.tsx'
+import { indexRoute, registerRoute } from '../../router.tsx'
 import { type ApiErrorLike, getApiErrorMessage } from '../../utils/apiErrors.ts'
 
 export function LoginPage() {
@@ -30,7 +30,7 @@ export function LoginPage() {
           passwd: values.passwd,
         },
       })
-      await navigate({ to: contactsRoute.to })
+      await navigate({ to: indexRoute.to })
     } catch (error) {
       notifications.show({
         color: 'red',

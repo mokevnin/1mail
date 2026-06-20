@@ -14,12 +14,85 @@ import (
 	"github.com/ogen-go/ogen/validate"
 )
 
+// SiteContactsCreateParams is parameters of SiteContacts_create operation.
+type SiteContactsCreateParams struct {
+	WorkspaceSlug string
+}
+
+func unpackSiteContactsCreateParams(packed middleware.Parameters) (params SiteContactsCreateParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "workspaceSlug",
+			In:   "path",
+		}
+		params.WorkspaceSlug = packed[key].(string)
+	}
+	return params
+}
+
+func decodeSiteContactsCreateParams(args [1]string, argsEscaped bool, r *http.Request) (params SiteContactsCreateParams, _ error) {
+	// Decode path: workspaceSlug.
+	if err := func() error {
+		param := args[0]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[0])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "workspaceSlug",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToString(val)
+				if err != nil {
+					return err
+				}
+
+				params.WorkspaceSlug = c
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "workspaceSlug",
+			In:   "path",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
 // SiteContactsDeleteParams is parameters of SiteContacts_delete operation.
 type SiteContactsDeleteParams struct {
-	ID EntityId
+	WorkspaceSlug string
+	ID            EntityId
 }
 
 func unpackSiteContactsDeleteParams(packed middleware.Parameters) (params SiteContactsDeleteParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "workspaceSlug",
+			In:   "path",
+		}
+		params.WorkspaceSlug = packed[key].(string)
+	}
 	{
 		key := middleware.ParameterKey{
 			Name: "id",
@@ -30,12 +103,57 @@ func unpackSiteContactsDeleteParams(packed middleware.Parameters) (params SiteCo
 	return params
 }
 
-func decodeSiteContactsDeleteParams(args [1]string, argsEscaped bool, r *http.Request) (params SiteContactsDeleteParams, _ error) {
-	// Decode path: id.
+func decodeSiteContactsDeleteParams(args [2]string, argsEscaped bool, r *http.Request) (params SiteContactsDeleteParams, _ error) {
+	// Decode path: workspaceSlug.
 	if err := func() error {
 		param := args[0]
 		if argsEscaped {
 			unescaped, err := url.PathUnescape(args[0])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "workspaceSlug",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToString(val)
+				if err != nil {
+					return err
+				}
+
+				params.WorkspaceSlug = c
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "workspaceSlug",
+			In:   "path",
+			Err:  err,
+		}
+	}
+	// Decode path: id.
+	if err := func() error {
+		param := args[1]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[1])
 			if err != nil {
 				return errors.Wrap(err, "unescape path")
 			}
@@ -96,10 +214,18 @@ func decodeSiteContactsDeleteParams(args [1]string, argsEscaped bool, r *http.Re
 
 // SiteContactsGetParams is parameters of SiteContacts_get operation.
 type SiteContactsGetParams struct {
-	ID EntityId
+	WorkspaceSlug string
+	ID            EntityId
 }
 
 func unpackSiteContactsGetParams(packed middleware.Parameters) (params SiteContactsGetParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "workspaceSlug",
+			In:   "path",
+		}
+		params.WorkspaceSlug = packed[key].(string)
+	}
 	{
 		key := middleware.ParameterKey{
 			Name: "id",
@@ -110,12 +236,57 @@ func unpackSiteContactsGetParams(packed middleware.Parameters) (params SiteConta
 	return params
 }
 
-func decodeSiteContactsGetParams(args [1]string, argsEscaped bool, r *http.Request) (params SiteContactsGetParams, _ error) {
-	// Decode path: id.
+func decodeSiteContactsGetParams(args [2]string, argsEscaped bool, r *http.Request) (params SiteContactsGetParams, _ error) {
+	// Decode path: workspaceSlug.
 	if err := func() error {
 		param := args[0]
 		if argsEscaped {
 			unescaped, err := url.PathUnescape(args[0])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "workspaceSlug",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToString(val)
+				if err != nil {
+					return err
+				}
+
+				params.WorkspaceSlug = c
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "workspaceSlug",
+			In:   "path",
+			Err:  err,
+		}
+	}
+	// Decode path: id.
+	if err := func() error {
+		param := args[1]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[1])
 			if err != nil {
 				return errors.Wrap(err, "unescape path")
 			}
@@ -176,6 +347,7 @@ func decodeSiteContactsGetParams(args [1]string, argsEscaped bool, r *http.Reque
 
 // SiteContactsListParams is parameters of SiteContacts_list operation.
 type SiteContactsListParams struct {
+	WorkspaceSlug string
 	// Page number (1-based).
 	Page OptInt32 `json:",omitempty,omitzero"`
 	// Page size.
@@ -185,6 +357,13 @@ type SiteContactsListParams struct {
 }
 
 func unpackSiteContactsListParams(packed middleware.Parameters) (params SiteContactsListParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "workspaceSlug",
+			In:   "path",
+		}
+		params.WorkspaceSlug = packed[key].(string)
+	}
 	{
 		key := middleware.ParameterKey{
 			Name: "page",
@@ -215,8 +394,53 @@ func unpackSiteContactsListParams(packed middleware.Parameters) (params SiteCont
 	return params
 }
 
-func decodeSiteContactsListParams(args [0]string, argsEscaped bool, r *http.Request) (params SiteContactsListParams, _ error) {
+func decodeSiteContactsListParams(args [1]string, argsEscaped bool, r *http.Request) (params SiteContactsListParams, _ error) {
 	q := uri.NewQueryDecoder(r.URL.Query())
+	// Decode path: workspaceSlug.
+	if err := func() error {
+		param := args[0]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[0])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "workspaceSlug",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToString(val)
+				if err != nil {
+					return err
+				}
+
+				params.WorkspaceSlug = c
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "workspaceSlug",
+			In:   "path",
+			Err:  err,
+		}
+	}
 	// Set default value for query: page.
 	{
 		val := int32(1)
@@ -370,10 +594,18 @@ func decodeSiteContactsListParams(args [0]string, argsEscaped bool, r *http.Requ
 
 // SiteContactsUpdateParams is parameters of SiteContacts_update operation.
 type SiteContactsUpdateParams struct {
-	ID EntityId
+	WorkspaceSlug string
+	ID            EntityId
 }
 
 func unpackSiteContactsUpdateParams(packed middleware.Parameters) (params SiteContactsUpdateParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "workspaceSlug",
+			In:   "path",
+		}
+		params.WorkspaceSlug = packed[key].(string)
+	}
 	{
 		key := middleware.ParameterKey{
 			Name: "id",
@@ -384,12 +616,57 @@ func unpackSiteContactsUpdateParams(packed middleware.Parameters) (params SiteCo
 	return params
 }
 
-func decodeSiteContactsUpdateParams(args [1]string, argsEscaped bool, r *http.Request) (params SiteContactsUpdateParams, _ error) {
-	// Decode path: id.
+func decodeSiteContactsUpdateParams(args [2]string, argsEscaped bool, r *http.Request) (params SiteContactsUpdateParams, _ error) {
+	// Decode path: workspaceSlug.
 	if err := func() error {
 		param := args[0]
 		if argsEscaped {
 			unescaped, err := url.PathUnescape(args[0])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "workspaceSlug",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToString(val)
+				if err != nil {
+					return err
+				}
+
+				params.WorkspaceSlug = c
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "workspaceSlug",
+			In:   "path",
+			Err:  err,
+		}
+	}
+	// Decode path: id.
+	if err := func() error {
+		param := args[1]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[1])
 			if err != nil {
 				return errors.Wrap(err, "unescape path")
 			}

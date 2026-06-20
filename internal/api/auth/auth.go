@@ -121,28 +121,61 @@ func (h *CollectSecurityHandler) HandleApiKeyAuth(ctx context.Context, _ collect
 	return ctx, nil
 }
 
-// SiteSecurityHandler implements siteapi.SecurityHandler: validates the JWT
-// cookie issued by go-pkgz/auth, using the same secret/issuer.
-type SiteSecurityHandler struct {
-	tokens *gptoken.Service
+// SiteAuth holds the authenticated dashboard user resolved from the JWT cookie.
+type SiteAuth struct {
+	UserID int64
+	Email  string
 }
 
-func NewSiteSecurityHandler(jwtSecret string) *SiteSecurityHandler {
+var siteAuthKey = struct{ name string }{"siteAuth"}
+
+func WithSiteAuth(ctx context.Context, auth *SiteAuth) context.Context {
+	return context.WithValue(ctx, siteAuthKey, auth)
+}
+
+func GetSiteAuth(ctx context.Context) *SiteAuth {
+	v, _ := ctx.Value(siteAuthKey).(*SiteAuth)
+	return v
+}
+
+// SiteSecurityHandler implements siteapi.SecurityHandler: validates the JWT
+// cookie issued by go-pkgz/auth and resolves the dashboard user from it.
+type SiteSecurityHandler struct {
+	tokens *gptoken.Service
+	ent    *ent.Client
+}
+
+func NewSiteSecurityHandler(jwtSecret string, client *ent.Client) *SiteSecurityHandler {
 	svc := gptoken.NewService(gptoken.Opts{
 		SecretReader: gptoken.SecretFunc(func(string) (string, error) { return jwtSecret, nil }),
 		Issuer:       "1mail",
 		DisableXSRF:  true,
 	})
-	return &SiteSecurityHandler{tokens: svc}
+	return &SiteSecurityHandler{tokens: svc, ent: client}
 }
 
 var _ siteapi.SecurityHandler = (*SiteSecurityHandler)(nil)
 
 func (h *SiteSecurityHandler) HandleApiKeyAuth(ctx context.Context, _ siteapi.OperationName, t siteapi.ApiKeyAuth) (context.Context, error) {
-	if _, err := h.tokens.Parse(t.APIKey); err != nil {
+	claims, err := h.tokens.Parse(t.APIKey)
+	if err != nil || claims.User == nil {
 		return ctx, ErrUnauthorized
 	}
-	return ctx, nil
+
+	// The direct provider stores the login (email) in User.Name; resolve the ent user by it.
+	email := claims.User.Name
+	if email == "" {
+		email = claims.User.Email
+	}
+	u, err := h.ent.User.Query().Where(entuser.Email(email)).Only(ctx)
+	if ent.IsNotFound(err) {
+		return ctx, ErrUnauthorized
+	}
+	if err != nil {
+		return ctx, err
+	}
+
+	return WithSiteAuth(ctx, &SiteAuth{UserID: u.ID, Email: u.Email}), nil
 }
 
 // CredChecker verifies user credentials for go-pkgz/auth direct provider.

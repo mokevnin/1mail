@@ -6,7 +6,7 @@ import { useNavigate } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 import { siteAuthRegisterMutation } from '../../generated/site/@tanstack/react-query.gen.ts'
 import type { SiteRegisterInput } from '../../generated/site/types.gen.ts'
-import { contactsRoute } from '../../router.tsx'
+import { indexRoute } from '../../router.tsx'
 import { type ApiErrorLike, getApiErrorMessage } from '../../utils/apiErrors.ts'
 
 export function RegisterPage() {
@@ -49,7 +49,7 @@ export function RegisterPage() {
       title: t(($) => $.notifications.successTitle),
       message: t(($) => $.registration.successMessage),
     })
-    await navigate({ to: contactsRoute.to })
+    await navigate({ to: indexRoute.to })
   }
 
   return (

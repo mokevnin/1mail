@@ -5,8 +5,8 @@ import * as z from 'zod';
 
 import { client } from './client.gen.ts';
 import type { Client, ClientMeta, Options as Options2, RequestResult, TDataShape } from './client/index.ts';
-import type { SiteAuthDirectLoginData, SiteAuthDirectLoginErrors, SiteAuthDirectLoginResponses, SiteAuthRegisterData, SiteAuthRegisterErrors, SiteAuthRegisterResponses, SiteContactsCreateData, SiteContactsCreateErrors, SiteContactsCreateResponses, SiteContactsDeleteData, SiteContactsDeleteErrors, SiteContactsDeleteResponses, SiteContactsGetData, SiteContactsGetErrors, SiteContactsGetResponses, SiteContactsListData, SiteContactsListErrors, SiteContactsListResponses, SiteContactsUpdateData, SiteContactsUpdateErrors, SiteContactsUpdateResponses } from './types.gen.ts';
-import { zSiteAuthDirectLoginBody, zSiteAuthRegisterBody, zSiteContactsCreateBody, zSiteContactsDeletePath, zSiteContactsGetPath, zSiteContactsListQuery, zSiteContactsUpdateBody, zSiteContactsUpdatePath } from './zod.gen.ts';
+import type { SiteAuthDirectLoginData, SiteAuthDirectLoginErrors, SiteAuthDirectLoginResponses, SiteAuthRegisterData, SiteAuthRegisterErrors, SiteAuthRegisterResponses, SiteContactsCreateData, SiteContactsCreateErrors, SiteContactsCreateResponses, SiteContactsDeleteData, SiteContactsDeleteErrors, SiteContactsDeleteResponses, SiteContactsGetData, SiteContactsGetErrors, SiteContactsGetResponses, SiteContactsListData, SiteContactsListErrors, SiteContactsListResponses, SiteContactsUpdateData, SiteContactsUpdateErrors, SiteContactsUpdateResponses, SiteWorkspacesListData, SiteWorkspacesListResponses } from './types.gen.ts';
+import { zSiteAuthDirectLoginBody, zSiteAuthRegisterBody, zSiteContactsCreateBody, zSiteContactsCreatePath, zSiteContactsDeletePath, zSiteContactsGetPath, zSiteContactsListPath, zSiteContactsListQuery, zSiteContactsUpdateBody, zSiteContactsUpdatePath } from './zod.gen.ts';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -53,10 +53,10 @@ export const siteAuthRegister = <ThrowOnError extends boolean = false>(options: 
 /**
  * List contacts for the site UI
  */
-export const siteContactsList = <ThrowOnError extends boolean = false>(options?: Options<SiteContactsListData, ThrowOnError>): RequestResult<SiteContactsListResponses, SiteContactsListErrors, ThrowOnError> => (options?.client ?? client).get<SiteContactsListResponses, SiteContactsListErrors, ThrowOnError>({
+export const siteContactsList = <ThrowOnError extends boolean = false>(options: Options<SiteContactsListData, ThrowOnError>): RequestResult<SiteContactsListResponses, SiteContactsListErrors, ThrowOnError> => (options.client ?? client).get<SiteContactsListResponses, SiteContactsListErrors, ThrowOnError>({
     requestValidator: async (data) => await z.object({
         body: z.never().optional(),
-        path: z.never().optional(),
+        path: zSiteContactsListPath,
         query: zSiteContactsListQuery.optional()
     }).parseAsync(data),
     security: [{
@@ -64,7 +64,7 @@ export const siteContactsList = <ThrowOnError extends boolean = false>(options?:
             name: 'JWT',
             type: 'apiKey'
         }],
-    url: '/contacts',
+    url: '/w/{workspaceSlug}/contacts',
     ...options
 });
 
@@ -74,7 +74,7 @@ export const siteContactsList = <ThrowOnError extends boolean = false>(options?:
 export const siteContactsCreate = <ThrowOnError extends boolean = false>(options: Options<SiteContactsCreateData, ThrowOnError>): RequestResult<SiteContactsCreateResponses, SiteContactsCreateErrors, ThrowOnError> => (options.client ?? client).post<SiteContactsCreateResponses, SiteContactsCreateErrors, ThrowOnError>({
     requestValidator: async (data) => await z.object({
         body: zSiteContactsCreateBody,
-        path: z.never().optional(),
+        path: zSiteContactsCreatePath,
         query: z.never().optional()
     }).parseAsync(data),
     security: [{
@@ -82,7 +82,7 @@ export const siteContactsCreate = <ThrowOnError extends boolean = false>(options
             name: 'JWT',
             type: 'apiKey'
         }],
-    url: '/contacts',
+    url: '/w/{workspaceSlug}/contacts',
     ...options,
     headers: {
         'Content-Type': 'application/json',
@@ -104,7 +104,7 @@ export const siteContactsDelete = <ThrowOnError extends boolean = false>(options
             name: 'JWT',
             type: 'apiKey'
         }],
-    url: '/contacts/{id}',
+    url: '/w/{workspaceSlug}/contacts/{id}',
     ...options
 });
 
@@ -122,7 +122,7 @@ export const siteContactsGet = <ThrowOnError extends boolean = false>(options: O
             name: 'JWT',
             type: 'apiKey'
         }],
-    url: '/contacts/{id}',
+    url: '/w/{workspaceSlug}/contacts/{id}',
     ...options
 });
 
@@ -140,10 +140,28 @@ export const siteContactsUpdate = <ThrowOnError extends boolean = false>(options
             name: 'JWT',
             type: 'apiKey'
         }],
-    url: '/contacts/{id}',
+    url: '/w/{workspaceSlug}/contacts/{id}',
     ...options,
     headers: {
         'Content-Type': 'application/json',
         ...options.headers
     }
+});
+
+/**
+ * List workspaces owned by the authenticated user
+ */
+export const siteWorkspacesList = <ThrowOnError extends boolean = false>(options?: Options<SiteWorkspacesListData, ThrowOnError>): RequestResult<SiteWorkspacesListResponses, unknown, ThrowOnError> => (options?.client ?? client).get<SiteWorkspacesListResponses, unknown, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: z.never().optional(),
+        path: z.never().optional(),
+        query: z.never().optional()
+    }).parseAsync(data),
+    security: [{
+            in: 'cookie',
+            name: 'JWT',
+            type: 'apiKey'
+        }],
+    url: '/workspaces',
+    ...options
 });

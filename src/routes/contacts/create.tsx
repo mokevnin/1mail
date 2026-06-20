@@ -9,7 +9,7 @@ import {
   siteContactsCreateMutation,
   siteContactsListQueryKey,
 } from '../../generated/site/@tanstack/react-query.gen.ts'
-import { contactsEditRoute } from '../../router.tsx'
+import { contactsCreateRoute, contactsEditRoute } from '../../router.tsx'
 import { getApiErrorMessage } from '../../utils/apiErrors.ts'
 import { ContactForm, type ContactFormValues } from './ContactForm.tsx'
 
@@ -17,6 +17,7 @@ export function ContactCreatePage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
+  const { slug } = contactsCreateRoute.useParams()
 
   const form = useForm<ContactFormValues>({
     initialValues: { email: '', firstName: '', lastName: '', timeZone: '' },
@@ -25,14 +26,16 @@ export function ContactCreatePage() {
   const createMutation = useMutation({
     ...siteContactsCreateMutation(),
     onSuccess: async (created) => {
-      await queryClient.invalidateQueries({ queryKey: siteContactsListQueryKey() })
+      await queryClient.invalidateQueries({
+        queryKey: siteContactsListQueryKey({ path: { workspaceSlug: slug } }),
+      })
       await track('contact.created', { contactId: created.id, email: created.email })
       notifications.show({
         color: 'teal',
         title: t(($) => $.notifications.successTitle),
         message: t(($) => $.notifications.contactCreated),
       })
-      await navigate({ to: contactsEditRoute.to, params: { contactId: created.id } })
+      await navigate({ to: contactsEditRoute.to, params: { slug, contactId: created.id } })
     },
     onError: (error) => {
       notifications.show({
@@ -53,7 +56,10 @@ export function ContactCreatePage() {
         form={form}
         isPending={createMutation.isPending}
         onSubmit={(values) =>
-          createMutation.mutate({ body: { ...values, email: values.email.trim() } })
+          createMutation.mutate({
+            path: { workspaceSlug: slug },
+            body: { ...values, email: values.email.trim() },
+          })
         }
       />
     </Stack>

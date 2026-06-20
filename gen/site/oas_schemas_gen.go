@@ -965,6 +965,10 @@ type SiteContactsCreateConflict ProblemDetails
 
 func (*SiteContactsCreateConflict) siteContactsCreateRes() {}
 
+type SiteContactsCreateNotFound ProblemDetails
+
+func (*SiteContactsCreateNotFound) siteContactsCreateRes() {}
+
 type SiteContactsCreateUnprocessableEntity ProblemDetails
 
 func (*SiteContactsCreateUnprocessableEntity) siteContactsCreateRes() {}
@@ -993,6 +997,10 @@ func (*SiteContactsGetNotFound) siteContactsGetRes() {}
 type SiteContactsListBadRequest ProblemDetails
 
 func (*SiteContactsListBadRequest) siteContactsListRes() {}
+
+type SiteContactsListNotFound ProblemDetails
+
+func (*SiteContactsListNotFound) siteContactsListRes() {}
 
 // Paginated response.
 type SiteContactsListOK struct {
@@ -1455,6 +1463,59 @@ func (s *SiteUpdateContactInputCustomFields) init() SiteUpdateContactInputCustom
 		*s = m
 	}
 	return m
+}
+
+// Workspace the current user belongs to.
+// Ref: #/components/schemas/SiteWorkspaceResource
+type SiteWorkspaceResource struct {
+	// Unique identifier.
+	ID EntityId `json:"id"`
+	// Display name.
+	Name string `json:"name"`
+	// URL-safe unique slug (used in /w/{slug} routes).
+	Slug string `json:"slug"`
+	// Creation timestamp.
+	CreatedAt Timestamp `json:"createdAt"`
+}
+
+// GetID returns the value of ID.
+func (s *SiteWorkspaceResource) GetID() EntityId {
+	return s.ID
+}
+
+// GetName returns the value of Name.
+func (s *SiteWorkspaceResource) GetName() string {
+	return s.Name
+}
+
+// GetSlug returns the value of Slug.
+func (s *SiteWorkspaceResource) GetSlug() string {
+	return s.Slug
+}
+
+// GetCreatedAt returns the value of CreatedAt.
+func (s *SiteWorkspaceResource) GetCreatedAt() Timestamp {
+	return s.CreatedAt
+}
+
+// SetID sets the value of ID.
+func (s *SiteWorkspaceResource) SetID(val EntityId) {
+	s.ID = val
+}
+
+// SetName sets the value of Name.
+func (s *SiteWorkspaceResource) SetName(val string) {
+	s.Name = val
+}
+
+// SetSlug sets the value of Slug.
+func (s *SiteWorkspaceResource) SetSlug(val string) {
+	s.Slug = val
+}
+
+// SetCreatedAt sets the value of CreatedAt.
+func (s *SiteWorkspaceResource) SetCreatedAt(val Timestamp) {
+	s.CreatedAt = val
 }
 
 type TimeZoneName string

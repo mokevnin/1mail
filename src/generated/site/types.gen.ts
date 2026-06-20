@@ -199,6 +199,28 @@ export type SiteUpdateContactInput = {
     } | null;
 };
 
+/**
+ * Workspace the current user belongs to
+ */
+export type SiteWorkspaceResource = {
+    /**
+     * Unique identifier
+     */
+    id: EntityId;
+    /**
+     * Display name
+     */
+    name: string;
+    /**
+     * URL-safe unique slug (used in /w/{slug} routes)
+     */
+    slug: string;
+    /**
+     * Creation timestamp
+     */
+    createdAt: Timestamp;
+};
+
 export type TimeZoneName = string;
 
 export type Timestamp = string;
@@ -280,7 +302,9 @@ export type SiteAuthRegisterResponse = SiteAuthRegisterResponses[keyof SiteAuthR
 
 export type SiteContactsListData = {
     body?: never;
-    path?: never;
+    path: {
+        workspaceSlug: string;
+    };
     query?: {
         /**
          * Page number (1-based)
@@ -295,7 +319,7 @@ export type SiteContactsListData = {
          */
         status?: SiteContactStatus;
     };
-    url: '/contacts';
+    url: '/w/{workspaceSlug}/contacts';
 };
 
 export type SiteContactsListErrors = {
@@ -303,6 +327,10 @@ export type SiteContactsListErrors = {
      * RFC 7807 bad request response
      */
     400: ProblemDetails;
+    /**
+     * RFC 7807 not found response
+     */
+    404: ProblemDetails;
     /**
      * RFC 7807 validation response
      */
@@ -343,12 +371,18 @@ export type SiteContactsListResponse = SiteContactsListResponses[keyof SiteConta
 
 export type SiteContactsCreateData = {
     body: SiteCreateContactInput;
-    path?: never;
+    path: {
+        workspaceSlug: string;
+    };
     query?: never;
-    url: '/contacts';
+    url: '/w/{workspaceSlug}/contacts';
 };
 
 export type SiteContactsCreateErrors = {
+    /**
+     * RFC 7807 not found response
+     */
+    404: ProblemDetails;
     /**
      * RFC 7807 conflict response
      */
@@ -373,10 +407,11 @@ export type SiteContactsCreateResponse = SiteContactsCreateResponses[keyof SiteC
 export type SiteContactsDeleteData = {
     body?: never;
     path: {
+        workspaceSlug: string;
         id: EntityId;
     };
     query?: never;
-    url: '/contacts/{id}';
+    url: '/w/{workspaceSlug}/contacts/{id}';
 };
 
 export type SiteContactsDeleteErrors = {
@@ -404,10 +439,11 @@ export type SiteContactsDeleteResponse = SiteContactsDeleteResponses[keyof SiteC
 export type SiteContactsGetData = {
     body?: never;
     path: {
+        workspaceSlug: string;
         id: EntityId;
     };
     query?: never;
-    url: '/contacts/{id}';
+    url: '/w/{workspaceSlug}/contacts/{id}';
 };
 
 export type SiteContactsGetErrors = {
@@ -435,10 +471,11 @@ export type SiteContactsGetResponse = SiteContactsGetResponses[keyof SiteContact
 export type SiteContactsUpdateData = {
     body: SiteUpdateContactInput;
     path: {
+        workspaceSlug: string;
         id: EntityId;
     };
     query?: never;
-    url: '/contacts/{id}';
+    url: '/w/{workspaceSlug}/contacts/{id}';
 };
 
 export type SiteContactsUpdateErrors = {
@@ -470,3 +507,19 @@ export type SiteContactsUpdateResponses = {
 };
 
 export type SiteContactsUpdateResponse = SiteContactsUpdateResponses[keyof SiteContactsUpdateResponses];
+
+export type SiteWorkspacesListData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/workspaces';
+};
+
+export type SiteWorkspacesListResponses = {
+    /**
+     * The request has succeeded.
+     */
+    200: Array<SiteWorkspaceResource>;
+};
+
+export type SiteWorkspacesListResponse = SiteWorkspacesListResponses[keyof SiteWorkspacesListResponses];

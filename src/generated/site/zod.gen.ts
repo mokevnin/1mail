@@ -107,6 +107,16 @@ export const zSiteRegisterResult = z.object({
 });
 
 /**
+ * Workspace the current user belongs to
+ */
+export const zSiteWorkspaceResource = z.object({
+    id: zEntityId,
+    name: z.string(),
+    slug: z.string(),
+    createdAt: zTimestamp
+});
+
+/**
  * RFC 7807 unauthorized response
  */
 export const zUnauthorizedProblem = z.object({
@@ -137,6 +147,10 @@ export const zSiteAuthRegisterBody = zSiteRegisterInput;
  */
 export const zSiteAuthRegisterResponse = zSiteRegisterResult;
 
+export const zSiteContactsListPath = z.object({
+    workspaceSlug: z.string()
+});
+
 export const zSiteContactsListQuery = z.object({
     page: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).optional().default(1),
     pageSize: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).optional().default(25),
@@ -156,12 +170,17 @@ export const zSiteContactsListResponse = z.object({
 
 export const zSiteContactsCreateBody = zSiteCreateContactInput;
 
+export const zSiteContactsCreatePath = z.object({
+    workspaceSlug: z.string()
+});
+
 /**
  * The request has succeeded and a new resource has been created as a result.
  */
 export const zSiteContactsCreateResponse = zSiteContactResource;
 
 export const zSiteContactsDeletePath = z.object({
+    workspaceSlug: z.string(),
     id: zEntityId
 });
 
@@ -171,6 +190,7 @@ export const zSiteContactsDeletePath = z.object({
 export const zSiteContactsDeleteResponse = z.void();
 
 export const zSiteContactsGetPath = z.object({
+    workspaceSlug: z.string(),
     id: zEntityId
 });
 
@@ -182,6 +202,7 @@ export const zSiteContactsGetResponse = zSiteContactResource;
 export const zSiteContactsUpdateBody = zSiteUpdateContactInput;
 
 export const zSiteContactsUpdatePath = z.object({
+    workspaceSlug: z.string(),
     id: zEntityId
 });
 
@@ -189,3 +210,8 @@ export const zSiteContactsUpdatePath = z.object({
  * The request has succeeded.
  */
 export const zSiteContactsUpdateResponse = zSiteContactResource;
+
+/**
+ * The request has succeeded.
+ */
+export const zSiteWorkspacesListResponse = z.array(zSiteWorkspaceResource);

@@ -1,9 +1,15 @@
 package site
 
 import (
+	"context"
+	"fmt"
+
 	"github.com/mokevnin/1mail/ent"
+	"github.com/mokevnin/1mail/ent/workspace"
 	siteapi "github.com/mokevnin/1mail/gen/site"
+	"github.com/mokevnin/1mail/internal/api/auth"
 	"github.com/mokevnin/1mail/internal/pubsub"
+	"github.com/mokevnin/1mail/internal/service"
 )
 
 type Handlers struct {
@@ -16,3 +22,55 @@ func NewHandlers(client *ent.Client, ps *pubsub.PubSub) *Handlers {
 }
 
 var _ siteapi.Handler = (*Handlers)(nil)
+
+// workspaceID resolves the workspace addressed by the /w/{slug} path segment,
+// scoped to the authenticated user. Returns an ent NotFound error (so callers
+// can map it to 404) when the slug does not exist or is not owned by the user.
+func (h *Handlers) workspaceID(ctx context.Context, slug string) (int64, error) {
+	a := auth.GetSiteAuth(ctx)
+	if a == nil {
+		return 0, &ent.NotFoundError{}
+	}
+	ws, err := h.ent.Workspace.Query().
+		Where(workspace.Slug(slug), workspace.UserID(a.UserID)).
+		Only(ctx)
+	if err != nil {
+		return 0, err
+	}
+	return ws.ID, nil
+}
+
+// createDefaultWorkspace creates the user's initial workspace with a unique slug
+// derived from name (falling back to "workspace"). Workspace slugs are globally
+// unique, so on collision a numeric suffix is appended.
+func (h *Handlers) createDefaultWorkspace(ctx context.Context, userID int64, name string) (*ent.Workspace, error) {
+	base := service.Slugify(name)
+	if base == "" {
+		base = "workspace"
+	}
+	for i := 0; ; i++ {
+		slug := base
+		if i > 0 {
+			slug = fmt.Sprintf("%s-%d", base, i+1)
+		}
+		exists, err := h.ent.Workspace.Query().Where(workspace.Slug(slug)).Exist(ctx)
+		if err != nil {
+			return nil, err
+		}
+		if exists {
+			continue
+		}
+		ws, err := h.ent.Workspace.Create().
+			SetName(name).
+			SetSlug(slug).
+			SetUserID(userID).
+			Save(ctx)
+		if service.IsUniqueViolation(err) {
+			continue // lost a race on the slug; try the next suffix
+		}
+		if err != nil {
+			return nil, err
+		}
+		return ws, nil
+	}
+}

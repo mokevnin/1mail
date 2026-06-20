@@ -19,14 +19,16 @@ import { ContactForm, type ContactFormValues } from './ContactForm.tsx'
 
 export function ContactEditPage() {
   const { t } = useTranslation()
-  const { contactId } = contactsEditRoute.useParams()
+  const { slug, contactId } = contactsEditRoute.useParams()
   const queryClient = useQueryClient()
 
   const form = useForm<ContactFormValues>({
     initialValues: { email: '', firstName: '', lastName: '', timeZone: '' },
   })
 
-  const getContactQuery = useQuery(siteContactsGetOptions({ path: { id: contactId } }))
+  const getContactQuery = useQuery(
+    siteContactsGetOptions({ path: { workspaceSlug: slug, id: contactId } }),
+  )
 
   const applyContactData = useEffectEvent((data: SiteContactResource | undefined) => {
     if (!data) return
@@ -45,9 +47,11 @@ export function ContactEditPage() {
   const updateMutation = useMutation({
     ...siteContactsUpdateMutation(),
     onSuccess: async (updated) => {
-      await queryClient.invalidateQueries({ queryKey: siteContactsListQueryKey() })
       await queryClient.invalidateQueries({
-        queryKey: siteContactsGetQueryKey({ path: { id: updated.id } }),
+        queryKey: siteContactsListQueryKey({ path: { workspaceSlug: slug } }),
+      })
+      await queryClient.invalidateQueries({
+        queryKey: siteContactsGetQueryKey({ path: { workspaceSlug: slug, id: updated.id } }),
       })
       await track('contact.updated', { contactId: updated.id, email: updated.email })
       notifications.show({
@@ -89,7 +93,7 @@ export function ContactEditPage() {
         isPending={updateMutation.isPending}
         onSubmit={({ firstName, lastName, timeZone }) =>
           updateMutation.mutate({
-            path: { id: contactId },
+            path: { workspaceSlug: slug, id: contactId },
             body: { firstName, lastName, timeZone },
           })
         }

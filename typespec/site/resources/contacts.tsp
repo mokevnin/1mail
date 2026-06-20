@@ -75,40 +75,42 @@ model SiteUpdateContactInput {
   customFields?: Record<string> | null;
 }
 
-@route("/contacts")
+@route("/w/{workspaceSlug}/contacts")
 @tag("Site Contacts")
 namespace SiteContacts {
   /** Create a contact from the site UI */
   @createsResource(SiteContactResource)
   @post
-  op create(@body body: SiteCreateContactInput): {
+  op create(@path workspaceSlug: string, @body body: SiteCreateContactInput): {
     @statusCode statusCode: 201;
     @body body: SiteContactResource;
-  } | ConflictProblem | UnprocessableEntityProblem;
+  } | NotFoundProblem | ConflictProblem | UnprocessableEntityProblem;
 
   /** List contacts for the site UI */
   @listsResource(SiteContactResource)
   @get
   op list(
+    @path workspaceSlug: string,
     ...PageQuery,
 
     /** Filter by status */
     @query status?: SiteContactStatus,
-  ): Page<SiteContactResource> | BadRequestProblem | UnprocessableEntityProblem;
+  ): Page<SiteContactResource> | BadRequestProblem | NotFoundProblem | UnprocessableEntityProblem;
 
   /** Get a contact by ID for the site UI */
   @readsResource(SiteContactResource)
   @get
-  @autoRoute
+  @route("/{id}")
   op get(
+    @path workspaceSlug: string,
     @path id: EntityId,
   ): SiteContactResource | BadRequestProblem | NotFoundProblem;
 
   /** Update a contact from the site UI */
   @updatesResource(SiteContactResource)
   @put
-  @autoRoute
-  op update(@path id: EntityId, @body body: SiteUpdateContactInput):
+  @route("/{id}")
+  op update(@path workspaceSlug: string, @path id: EntityId, @body body: SiteUpdateContactInput):
     | SiteContactResource
     | BadRequestProblem
     | NotFoundProblem
@@ -118,8 +120,9 @@ namespace SiteContacts {
   /** Delete a contact from the site UI */
   @deletesResource(SiteContactResource)
   @delete
-  @autoRoute
+  @route("/{id}")
   op delete(
+    @path workspaceSlug: string,
     @path id: EntityId,
   ): NoContentResponse | BadRequestProblem | NotFoundProblem;
 }

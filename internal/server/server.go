@@ -51,7 +51,7 @@ func New(cfg *config.Config, client *ent.Client, ps *pubsub.PubSub) (http.Handle
 	// direct-login are public per the spec).
 	siteSrv, err := siteapi.NewServer(
 		apisite.NewHandlers(client, ps),
-		apiauth.NewSiteSecurityHandler(cfg.JWTSecret),
+		apiauth.NewSiteSecurityHandler(cfg.JWTSecret, client),
 		siteapi.WithPathPrefix("/site"),
 		siteapi.WithErrorHandler(problemErrorHandler),
 	)

@@ -16,7 +16,7 @@ import {
 } from '../../generated/site/@tanstack/react-query.gen.ts'
 import { SiteContactStatus } from '../../generated/site/types.gen.ts'
 import { useDeleteConfirmation } from '../../hooks/useDeleteConfirmation.tsx'
-import { contactsCreateRoute, contactsEditRoute } from '../../router.tsx'
+import { contactsCreateRoute, contactsEditRoute, contactsRoute } from '../../router.tsx'
 import { getApiErrorMessage } from '../../utils/apiErrors.ts'
 
 type ContactStatusFilter = 'all' | SiteContactStatus
@@ -36,11 +36,13 @@ export function ContactsListPage() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const confirmDelete = useDeleteConfirmation()
+  const { slug } = contactsRoute.useParams()
   const [page, pageHandlers] = useCounter(1, { min: 1 })
   const [status, setStatus] = useState<ContactStatusFilter>('all')
 
   const contactsList = useQuery(
     siteContactsListOptions({
+      path: { workspaceSlug: slug },
       query: {
         page,
         pageSize: PAGE_SIZE,
@@ -52,7 +54,9 @@ export function ContactsListPage() {
   const deleteContactMutation = useMutation({
     ...siteContactsDeleteMutation(),
     onSuccess: async (_result, variables) => {
-      await queryClient.invalidateQueries({ queryKey: siteContactsListQueryKey() })
+      await queryClient.invalidateQueries({
+        queryKey: siteContactsListQueryKey({ path: { workspaceSlug: slug } }),
+      })
       await track('contact.deleted', { contactId: variables.path.id })
       notifications.show({
         color: 'teal',
@@ -84,7 +88,7 @@ export function ContactsListPage() {
     deleteContactMutation.reset()
     confirmDelete({
       onConfirm: () => {
-        deleteContactMutation.mutate({ path: { id: contactId } })
+        deleteContactMutation.mutate({ path: { workspaceSlug: slug, id: contactId } })
       },
     })
   }
@@ -103,7 +107,7 @@ export function ContactsListPage() {
           w={220}
         />
 
-        <Button onClick={() => navigate({ to: contactsCreateRoute.to })}>
+        <Button onClick={() => navigate({ to: contactsCreateRoute.to, params: { slug } })}>
           {t(($) => $.contacts.addContact)}
         </Button>
       </Group>
@@ -141,7 +145,7 @@ export function ContactsListPage() {
                   onClick={() =>
                     navigate({
                       to: contactsEditRoute.to,
-                      params: { contactId: record.id },
+                      params: { slug, contactId: record.id },
                     })
                   }
                 >

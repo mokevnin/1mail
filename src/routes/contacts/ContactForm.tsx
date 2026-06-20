@@ -1,6 +1,6 @@
 import { Button, Group, Stack, TextInput } from '@mantine/core'
 import type { useForm } from '@mantine/form'
-import { useNavigate } from '@tanstack/react-router'
+import { useNavigate, useParams } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 import type { SiteCreateContactInput } from '../../generated/site/types.gen.ts'
 import { contactsRoute } from '../../router.tsx'
@@ -22,6 +22,7 @@ interface ContactFormProps {
 export function ContactForm({ form, emailEditable = true, isPending, onSubmit }: ContactFormProps) {
   const { t } = useTranslation()
   const navigate = useNavigate()
+  const { slug } = useParams({ strict: false })
 
   return (
     <form onSubmit={form.onSubmit(onSubmit)}>
@@ -40,7 +41,7 @@ export function ContactForm({ form, emailEditable = true, isPending, onSubmit }:
           <Button
             variant="default"
             type="button"
-            onClick={() => navigate({ to: contactsRoute.to })}
+            onClick={() => slug && navigate({ to: contactsRoute.to, params: { slug } })}
           >
             {t(($) => $.actions.cancel)}
           </Button>
