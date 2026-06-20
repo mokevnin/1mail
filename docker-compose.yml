@@ -29,7 +29,6 @@ services:
       - pnpm-store:/app/.pnpm-store # same FS as node_modules → pnpm hardlinks work
     environment:
       PNPM_STORE_DIR: /app/.pnpm-store
-      BACKEND_URL: http://backend:3300 # used by the vite proxy fallback
     ports:
       - "5173:5173" # optional direct access; normal entry is via Caddy
 
