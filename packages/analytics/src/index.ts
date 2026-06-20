@@ -1,37 +1,40 @@
+import type {
+  CollectEventInput,
+  CollectEventsInput,
+  CollectIdentifyInput,
+} from './generated/collect/types.gen.ts'
+
 const VISITOR_COOKIE_NAME = 'om_vid'
 const FLUSH_DELAY_MS = 200
 
-type IdentifyPayload = {
-  email?: string | null
-  phone?: string | null
-  subjectId?: string | null
-  traits?: Record<string, unknown> | null
+// SSR guard: the package is imported on the server (Next/Remix/TanStack Start).
+// `typeof window` never throws when undefined, so this is safe at module load,
+// and every exported entry point below short-circuits to a no-op on the server.
+const isBrowser = typeof window !== 'undefined'
+
+export type TrackerConfig = {
+  collectKey: string
+  baseUrl: string
 }
 
-type TrackPayload = {
-  visitorId: string
-  action: string
-  properties?: Record<string, unknown> | null
-  occurredAt?: string | null
-}
+// Public payload shapes are derived from the generated collect contract;
+// visitorId is supplied internally, so consumers never pass it.
+type IdentifyInput = Omit<CollectIdentifyInput, 'visitorId'>
+type EventProperties = CollectEventInput['properties']
 
 type QueueCommand =
-  | ['identify', IdentifyPayload]
-  | ['track', string, Record<string, unknown> | null | undefined]
+  | ['init', TrackerConfig]
+  | ['identify', IdentifyInput]
+  | ['track', string, EventProperties | undefined]
 
 type QueueApi = QueueCommand[] & {
   push: (...items: QueueCommand[]) => number
 }
 
-type TrackerConfig = {
-  baseUrl: string
-  collectKey: string
-}
-
 type Runtime = {
   config: TrackerConfig
   visitorId: string
-  pendingEvents: TrackPayload[]
+  pendingEvents: CollectEventInput[]
   flushTimer: number | null
 }
 
@@ -43,15 +46,30 @@ declare global {
 
 let runtime: Runtime | null = null
 
-function getTrackerConfig(): TrackerConfig | null {
-  const collectKey = import.meta.env.VITE_COLLECT_SITE_KEY?.trim()
-  const baseUrl = (import.meta.env.VITE_COLLECT_BASE_URL?.trim() || '').replace(/\/$/, '')
+function normalizeConfig(config: TrackerConfig | null | undefined): TrackerConfig | null {
+  const collectKey = config?.collectKey?.trim()
 
   if (!collectKey) {
     return null
   }
 
-  return { baseUrl, collectKey }
+  const baseUrl = (config?.baseUrl?.trim() || '').replace(/\/$/, '')
+
+  return { collectKey, baseUrl }
+}
+
+function findConfigInQueue(commands: QueueCommand[]): TrackerConfig | null {
+  for (const command of commands) {
+    if (command[0] === 'init') {
+      const normalized = normalizeConfig(command[1])
+
+      if (normalized) {
+        return normalized
+      }
+    }
+  }
+
+  return null
 }
 
 function randomVisitorId(): string {
@@ -128,11 +146,12 @@ async function flushEvents(): Promise<void> {
   }
 
   const events = runtime.pendingEvents.splice(0, runtime.pendingEvents.length)
+  const body: CollectEventsInput = { events }
 
   await fetch(collectUrl(runtime.config, '/collect/events'), {
     method: 'POST',
     headers: buildHeaders(runtime.config),
-    body: JSON.stringify({ events }),
+    body: JSON.stringify(body),
     keepalive: true,
   }).catch(() => {
     runtime?.pendingEvents.unshift(...events)
@@ -148,6 +167,11 @@ function flushEventsOnPageHide(): void {
 }
 
 function processQueueCommand(command: QueueCommand): void {
+  if (command[0] === 'init') {
+    // Config is resolved during initTracking; ignore late init commands.
+    return
+  }
+
   if (command[0] === 'identify') {
     void identify(command[1] ?? {})
     return
@@ -170,22 +194,23 @@ function createQueueApi(initial: QueueCommand[]): QueueApi {
   return queue
 }
 
-export function initTracking(): void {
-  if (typeof window === 'undefined' || runtime) {
+export function initTracking(config?: TrackerConfig): void {
+  if (!isBrowser || runtime) {
     return
   }
 
-  const config = getTrackerConfig()
   const initialQueue = Array.isArray(window._omq) ? [...window._omq] : []
 
   window._omq = createQueueApi([])
 
-  if (!config) {
+  const resolved = normalizeConfig(config) ?? findConfigInQueue(initialQueue)
+
+  if (!resolved) {
     return
   }
 
   runtime = {
-    config,
+    config: resolved,
     visitorId: getOrCreateVisitorId(),
     pendingEvents: [],
     flushTimer: null,
@@ -198,9 +223,9 @@ export function initTracking(): void {
   window.addEventListener('pagehide', flushEventsOnPageHide)
 }
 
-export async function identify(payload: IdentifyPayload): Promise<void> {
+export async function identify(payload: IdentifyInput): Promise<void> {
   if (!runtime) {
-    if (typeof window !== 'undefined') {
+    if (isBrowser) {
       if (!window._omq) {
         window._omq = [] as unknown as QueueApi
       }
@@ -212,26 +237,25 @@ export async function identify(payload: IdentifyPayload): Promise<void> {
     return
   }
 
+  const body: CollectIdentifyInput = {
+    visitorId: runtime.visitorId,
+    email: payload.email ?? null,
+    phone: payload.phone ?? null,
+    subjectId: payload.subjectId ?? null,
+    traits: payload.traits ?? null,
+  }
+
   await fetch(collectUrl(runtime.config, '/collect/identify'), {
     method: 'POST',
     headers: buildHeaders(runtime.config),
-    body: JSON.stringify({
-      visitorId: runtime.visitorId,
-      email: payload.email ?? null,
-      phone: payload.phone ?? null,
-      subjectId: payload.subjectId ?? null,
-      traits: payload.traits ?? null,
-    }),
+    body: JSON.stringify(body),
     keepalive: true,
   }).catch(() => undefined)
 }
 
-export async function track(
-  action: string,
-  properties?: Record<string, unknown> | null,
-): Promise<void> {
+export async function track(action: string, properties?: EventProperties): Promise<void> {
   if (!runtime) {
-    if (typeof window !== 'undefined') {
+    if (isBrowser) {
       if (!window._omq) {
         window._omq = [] as unknown as QueueApi
       }

@@ -1,8 +1,8 @@
+import { trackPageView } from '@1mail/analytics'
 import { AppShell, Group, Title } from '@mantine/core'
 import { Outlet, useLocation } from '@tanstack/react-router'
 import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { trackPageView } from './tracking.ts'
 
 function RouteTracking() {
   const location = useLocation()

@@ -59,6 +59,11 @@ export const siteContactsList = <ThrowOnError extends boolean = false>(options?:
         path: z.never().optional(),
         query: zSiteContactsListQuery.optional()
     }).parseAsync(data),
+    security: [{
+            in: 'cookie',
+            name: 'JWT',
+            type: 'apiKey'
+        }],
     url: '/contacts',
     ...options
 });
@@ -72,6 +77,11 @@ export const siteContactsCreate = <ThrowOnError extends boolean = false>(options
         path: z.never().optional(),
         query: z.never().optional()
     }).parseAsync(data),
+    security: [{
+            in: 'cookie',
+            name: 'JWT',
+            type: 'apiKey'
+        }],
     url: '/contacts',
     ...options,
     headers: {
@@ -89,6 +99,11 @@ export const siteContactsDelete = <ThrowOnError extends boolean = false>(options
         path: zSiteContactsDeletePath,
         query: z.never().optional()
     }).parseAsync(data),
+    security: [{
+            in: 'cookie',
+            name: 'JWT',
+            type: 'apiKey'
+        }],
     url: '/contacts/{id}',
     ...options
 });
@@ -102,6 +117,11 @@ export const siteContactsGet = <ThrowOnError extends boolean = false>(options: O
         path: zSiteContactsGetPath,
         query: z.never().optional()
     }).parseAsync(data),
+    security: [{
+            in: 'cookie',
+            name: 'JWT',
+            type: 'apiKey'
+        }],
     url: '/contacts/{id}',
     ...options
 });
@@ -115,6 +135,11 @@ export const siteContactsUpdate = <ThrowOnError extends boolean = false>(options
         path: zSiteContactsUpdatePath,
         query: z.never().optional()
     }).parseAsync(data),
+    security: [{
+            in: 'cookie',
+            name: 'JWT',
+            type: 'apiKey'
+        }],
     url: '/contacts/{id}',
     ...options,
     headers: {

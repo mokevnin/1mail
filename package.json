@@ -8,6 +8,8 @@
     "node": ">=25.5.0"
   },
   "scripts": {
+    "build": "vite build",
+    "build:tracker": "pnpm --filter @1mail/analytics build",
     "i18n:extract": "i18next-cli extract",
     "i18n:types": "i18next-cli types"
   },
@@ -36,6 +38,7 @@
     "vitest": "^4.1.9"
   },
   "dependencies": {
+    "@1mail/analytics": "workspace:*",
     "@electric-sql/pglite": "^0.5.3",
     "@mantine/core": "^9.3.2",
     "@mantine/form": "^9.3.2",

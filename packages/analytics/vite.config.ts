@@ -1,0 +1,17 @@
+import { defineConfig } from 'vite'
+
+// Builds the standalone browser snippet (IIFE) served as /t.js and from CDN.
+// The module entry (src/index.ts) is consumed directly as source by workspace consumers.
+export default defineConfig({
+  build: {
+    outDir: 'dist',
+    emptyOutDir: true,
+    minify: true,
+    lib: {
+      entry: 'src/iife.ts',
+      formats: ['iife'],
+      name: '__omAnalytics',
+      fileName: () => 't.js',
+    },
+  },
+})

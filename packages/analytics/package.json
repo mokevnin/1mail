@@ -1,0 +1,22 @@
+{
+  "name": "@1mail/analytics",
+  "version": "0.0.0",
+  "description": "1mail tracking SDK — module + browser snippet",
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "import": "./src/index.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "unpkg": "./dist/t.js",
+  "jsdelivr": "./dist/t.js",
+  "scripts": {
+    "build": "vite build"
+  }
+}

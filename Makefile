@@ -64,6 +64,7 @@ generate-typespec-collect:
 
 generate-typespec: generate-typespec-external generate-typespec-site generate-typespec-collect
 
+# Generates both the site client and the collect types (single config, two jobs).
 generate-openapi-site:
 	pnpm exec openapi-ts -f openapi-ts.config.ts
 
@@ -90,7 +91,12 @@ check-fix:
 	npx tsp format typespec
 	go fmt ./...
 
-build:
+# Builds the standalone tracker (IIFE) and copies it into the Go embed tree.
+build-tracker:
+	pnpm build:tracker
+	cp packages/analytics/dist/t.js internal/server/assets/t.js
+
+build: build-tracker
 	go build ./...
 
-.PHONY: setup install db-create db-create-test db-drop db-drop-test db-migrate db-seed db-reset db-reset-test db-generate dev dev-down test test-watch update update-npm update-go generate generate-backend generate-openapi generate-openapi-site generate-typespec generate-typespec-external generate-typespec-site generate-typespec-collect generate-i18n-types check check-fix build
+.PHONY: setup install db-create db-create-test db-drop db-drop-test db-migrate db-seed db-reset db-reset-test db-generate dev dev-down test test-watch update update-npm update-go generate generate-backend generate-openapi generate-openapi-site generate-typespec generate-typespec-external generate-typespec-site generate-typespec-collect generate-i18n-types check check-fix build-tracker build

@@ -1,3 +1,4 @@
+import { track } from '@1mail/analytics'
 import { Loader, Stack, Title } from '@mantine/core'
 import { useForm } from '@mantine/form'
 import { notifications } from '@mantine/notifications'
@@ -13,7 +14,6 @@ import {
 } from '../../generated/site/@tanstack/react-query.gen.ts'
 import type { SiteContactResource } from '../../generated/site/types.gen.ts'
 import { contactsEditRoute } from '../../router.tsx'
-import { track } from '../../tracking.ts'
 import { getApiErrorMessage } from '../../utils/apiErrors.ts'
 import { ContactForm, type ContactFormValues } from './ContactForm.tsx'
 

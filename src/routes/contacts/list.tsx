@@ -1,3 +1,4 @@
+import { track } from '@1mail/analytics'
 import { Button, Group, Loader, Select, Stack, Text } from '@mantine/core'
 import { useCounter } from '@mantine/hooks'
 import { notifications } from '@mantine/notifications'
@@ -16,7 +17,6 @@ import {
 import { SiteContactStatus } from '../../generated/site/types.gen.ts'
 import { useDeleteConfirmation } from '../../hooks/useDeleteConfirmation.tsx'
 import { contactsCreateRoute, contactsEditRoute } from '../../router.tsx'
-import { track } from '../../tracking.ts'
 import { getApiErrorMessage } from '../../utils/apiErrors.ts'
 
 type ContactStatusFilter = 'all' | SiteContactStatus

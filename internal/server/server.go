@@ -84,6 +84,9 @@ func New(cfg *config.Config, client *ent.Client, ps *pubsub.PubSub) (http.Handle
 	}
 	mux.Handle("/collect/", colSrv)
 
+	// Public tracking snippet (no auth) — embedded IIFE bundle.
+	mux.Handle("/t.js", trackerHandler())
+
 	return chain(mux, recoverer, requestID, timeout(30*time.Second), cors(cfg.CORSOrigins)), nil
 }
 
@@ -175,8 +178,14 @@ func cors(origins []string) func(http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			origin := r.Header.Get("Origin")
 			if origin != "" {
-				_, ok := allowed[origin]
-				if ok || len(origins) == 0 {
+				if strings.HasPrefix(r.URL.Path, "/collect/") {
+					// Public ingestion from arbitrary customer sites: the collect
+					// key is public, so allow any origin. No credentials (cookies
+					// are first-party on the customer's own domain), which lets us
+					// echo the origin instead of being stuck with a static list.
+					w.Header().Set("Access-Control-Allow-Origin", origin)
+					w.Header().Set("Vary", "Origin")
+				} else if _, ok := allowed[origin]; ok || len(origins) == 0 {
 					w.Header().Set("Access-Control-Allow-Origin", origin)
 					w.Header().Set("Access-Control-Allow-Credentials", "true")
 					w.Header().Set("Vary", "Origin")

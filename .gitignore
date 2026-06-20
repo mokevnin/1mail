@@ -67,3 +67,7 @@ profile*
 gha-creds-*.json
 tmp/
 npm-cache
+
+# build artifacts
+dist
+packages/*/dist
