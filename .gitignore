@@ -65,3 +65,4 @@ profile*
 .gemini/
 gha-creds-*.json
 tmp/
+npm-cache
