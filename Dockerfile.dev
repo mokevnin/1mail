@@ -1,0 +1,14 @@
+# Dev image for the frontend (Vite).
+# Dependencies live on the host and are bind-mounted in (see docker-compose.yml),
+# so this image ships only the toolchain — no COPY of sources or node_modules.
+FROM node:25-alpine
+
+RUN npm install -g pnpm@11
+
+WORKDIR /app
+
+# node-options from .npmrc (--experimental-strip-types) are picked up at runtime
+# once the repo is mounted at /app.
+EXPOSE 5173
+
+CMD ["pnpm", "exec", "vite"]

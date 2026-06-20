@@ -1,0 +1,70 @@
+# Dev stack — replaces overmind/Procfile.
+#
+# Dependencies live on the HOST and are bind-mounted in, so editor LSPs
+# (gopls / TS language server) resolve imports. Install them via the container:
+#   docker compose run --rm frontend pnpm install
+#
+# Entry point: https://1mail.localhost (TLS terminated by Caddy).
+services:
+  caddy:
+    image: caddy:2-alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data # local CA + certs persist across restarts
+      - caddy-config:/config
+    depends_on:
+      - frontend
+      - backend
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    working_dir: /app
+    volumes:
+      - .:/app # repo (incl. node_modules) lives on the host
+      - pnpm-store:/app/.pnpm-store # same FS as node_modules → pnpm hardlinks work
+    environment:
+      PNPM_STORE_DIR: /app/.pnpm-store
+      BACKEND_URL: http://backend:3300 # used by the vite proxy fallback
+    ports:
+      - "5173:5173" # optional direct access; normal entry is via Caddy
+
+  # Placeholder while the Go server is being rewritten. Caddy routes the API
+  # paths here so the proxy doesn't error. Replace with the real `backend`
+  # service (bind-mounted source) once the rewrite lands. To route to a backend
+  # running on the host instead, point Caddy at host.docker.internal:3300.
+  backend:
+    image: traefik/whoami
+    command: ["--port", "3300"]
+
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: 1mail_development
+    ports:
+      - "5432:5432" # host-side Go dev / atlas connect here
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  mailpit:
+    image: axllent/mailpit
+    ports:
+      - "1025:1025" # SMTP
+      - "8025:8025" # web UI
+
+volumes:
+  caddy-data:
+  caddy-config:
+  pnpm-store:
+  db-data:

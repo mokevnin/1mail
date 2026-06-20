@@ -1,0 +1,23 @@
+# Secrets — never bake env files into an image. config.Load merges .env files
+# before AutomaticEnv, so a stray .env would silently override real env vars.
+.env
+.env.*
+
+.git
+.github
+
+# Dependencies / build caches (provided via bind-mount or installed in-image)
+node_modules
+.pnpm-store
+tmp
+npm-cache
+.npm
+
+# Large committed dev binary
+seed
+
+# Editor / OS
+.idea
+.vscode
+.DS_Store
+*.log

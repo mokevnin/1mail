@@ -1,9 +1,11 @@
 setup: install db-create db-create-test db-migrate
 
+# Frontend deps are installed via the container into the bind-mounted tree
+# (Linux-native binaries on the host), so they run in compose while host LSPs
+# still resolve them. Go deps stay on the host for gopls.
 install:
-	pnpm install
+	docker compose run --rm frontend pnpm install
 	go mod download
-	# mise use -g air
 
 db-create:
 	go run ./cmd/db create
@@ -30,14 +32,11 @@ db-reset-test: db-drop-test db-create-test
 db-generate:
 	atlas migrate diff --env local $(name)
 
-dev-frontend:
-	npx vite
-
-dev-backend:
-	air
-
 dev:
-	overmind start
+	docker compose up
+
+dev-down:
+	docker compose down
 
 test: db-create-test
 	go test -p 1 ./...
@@ -94,4 +93,4 @@ check-fix:
 build:
 	go build ./...
 
-.PHONY: setup install db-create db-create-test db-drop db-drop-test db-migrate db-seed db-reset db-reset-test db-generate dev-frontend dev-backend dev test test-watch update update-npm update-go generate generate-backend generate-openapi generate-openapi-site generate-typespec generate-typespec-external generate-typespec-site generate-typespec-collect generate-i18n-types check check-fix build
+.PHONY: setup install db-create db-create-test db-drop db-drop-test db-migrate db-seed db-reset db-reset-test db-generate dev dev-down test test-watch update update-npm update-go generate generate-backend generate-openapi generate-openapi-site generate-typespec generate-typespec-external generate-typespec-site generate-typespec-collect generate-i18n-types check check-fix build

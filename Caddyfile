@@ -1,0 +1,10 @@
+1mail.localhost {
+	tls internal
+
+	# API → Go backend (currently a stub; replaced after the server rewrite)
+	@api path /site* /collect* /auth* /avatar* /api*
+	reverse_proxy @api backend:3300
+
+	# Everything else → Vite dev server (includes HMR websocket upgrade)
+	reverse_proxy frontend:5173
+}
