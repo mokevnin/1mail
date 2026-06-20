@@ -4,7 +4,7 @@
 import * as z from 'zod';
 
 import { client } from './client.gen.ts';
-import type { Client, Options as Options2, TDataShape } from './client/index.ts';
+import type { Client, ClientMeta, Options as Options2, RequestResult, TDataShape } from './client/index.ts';
 import type { SiteAuthDirectLoginData, SiteAuthDirectLoginErrors, SiteAuthDirectLoginResponses, SiteAuthRegisterData, SiteAuthRegisterErrors, SiteAuthRegisterResponses, SiteContactsCreateData, SiteContactsCreateErrors, SiteContactsCreateResponses, SiteContactsDeleteData, SiteContactsDeleteErrors, SiteContactsDeleteResponses, SiteContactsGetData, SiteContactsGetErrors, SiteContactsGetResponses, SiteContactsListData, SiteContactsListErrors, SiteContactsListResponses, SiteContactsUpdateData, SiteContactsUpdateErrors, SiteContactsUpdateResponses } from './types.gen.ts';
 import { zSiteAuthDirectLoginBody, zSiteAuthRegisterBody, zSiteContactsCreateBody, zSiteContactsDeletePath, zSiteContactsGetPath, zSiteContactsListQuery, zSiteContactsUpdateBody, zSiteContactsUpdatePath } from './zod.gen.ts';
 
@@ -19,10 +19,10 @@ export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends 
      * You can pass arbitrary values through the `meta` object. This can be
      * used to access values that aren't defined as part of the SDK function.
      */
-    meta?: Record<string, unknown>;
+    meta?: keyof ClientMeta extends never ? Record<string, unknown> : ClientMeta;
 };
 
-export const siteAuthDirectLogin = <ThrowOnError extends boolean = false>(options: Options<SiteAuthDirectLoginData, ThrowOnError>) => (options.client ?? client).post<SiteAuthDirectLoginResponses, SiteAuthDirectLoginErrors, ThrowOnError>({
+export const siteAuthDirectLogin = <ThrowOnError extends boolean = false>(options: Options<SiteAuthDirectLoginData, ThrowOnError>): RequestResult<SiteAuthDirectLoginResponses, SiteAuthDirectLoginErrors, ThrowOnError> => (options.client ?? client).post<SiteAuthDirectLoginResponses, SiteAuthDirectLoginErrors, ThrowOnError>({
     requestValidator: async (data) => await z.object({
         body: zSiteAuthDirectLoginBody,
         path: z.never().optional(),
@@ -36,7 +36,7 @@ export const siteAuthDirectLogin = <ThrowOnError extends boolean = false>(option
     }
 });
 
-export const siteAuthRegister = <ThrowOnError extends boolean = false>(options: Options<SiteAuthRegisterData, ThrowOnError>) => (options.client ?? client).post<SiteAuthRegisterResponses, SiteAuthRegisterErrors, ThrowOnError>({
+export const siteAuthRegister = <ThrowOnError extends boolean = false>(options: Options<SiteAuthRegisterData, ThrowOnError>): RequestResult<SiteAuthRegisterResponses, SiteAuthRegisterErrors, ThrowOnError> => (options.client ?? client).post<SiteAuthRegisterResponses, SiteAuthRegisterErrors, ThrowOnError>({
     requestValidator: async (data) => await z.object({
         body: zSiteAuthRegisterBody,
         path: z.never().optional(),
@@ -53,7 +53,7 @@ export const siteAuthRegister = <ThrowOnError extends boolean = false>(options: 
 /**
  * List contacts for the site UI
  */
-export const siteContactsList = <ThrowOnError extends boolean = false>(options?: Options<SiteContactsListData, ThrowOnError>) => (options?.client ?? client).get<SiteContactsListResponses, SiteContactsListErrors, ThrowOnError>({
+export const siteContactsList = <ThrowOnError extends boolean = false>(options?: Options<SiteContactsListData, ThrowOnError>): RequestResult<SiteContactsListResponses, SiteContactsListErrors, ThrowOnError> => (options?.client ?? client).get<SiteContactsListResponses, SiteContactsListErrors, ThrowOnError>({
     requestValidator: async (data) => await z.object({
         body: z.never().optional(),
         path: z.never().optional(),
@@ -66,7 +66,7 @@ export const siteContactsList = <ThrowOnError extends boolean = false>(options?:
 /**
  * Create a contact from the site UI
  */
-export const siteContactsCreate = <ThrowOnError extends boolean = false>(options: Options<SiteContactsCreateData, ThrowOnError>) => (options.client ?? client).post<SiteContactsCreateResponses, SiteContactsCreateErrors, ThrowOnError>({
+export const siteContactsCreate = <ThrowOnError extends boolean = false>(options: Options<SiteContactsCreateData, ThrowOnError>): RequestResult<SiteContactsCreateResponses, SiteContactsCreateErrors, ThrowOnError> => (options.client ?? client).post<SiteContactsCreateResponses, SiteContactsCreateErrors, ThrowOnError>({
     requestValidator: async (data) => await z.object({
         body: zSiteContactsCreateBody,
         path: z.never().optional(),
@@ -83,7 +83,7 @@ export const siteContactsCreate = <ThrowOnError extends boolean = false>(options
 /**
  * Delete a contact from the site UI
  */
-export const siteContactsDelete = <ThrowOnError extends boolean = false>(options: Options<SiteContactsDeleteData, ThrowOnError>) => (options.client ?? client).delete<SiteContactsDeleteResponses, SiteContactsDeleteErrors, ThrowOnError>({
+export const siteContactsDelete = <ThrowOnError extends boolean = false>(options: Options<SiteContactsDeleteData, ThrowOnError>): RequestResult<SiteContactsDeleteResponses, SiteContactsDeleteErrors, ThrowOnError> => (options.client ?? client).delete<SiteContactsDeleteResponses, SiteContactsDeleteErrors, ThrowOnError>({
     requestValidator: async (data) => await z.object({
         body: z.never().optional(),
         path: zSiteContactsDeletePath,
@@ -96,7 +96,7 @@ export const siteContactsDelete = <ThrowOnError extends boolean = false>(options
 /**
  * Get a contact by ID for the site UI
  */
-export const siteContactsGet = <ThrowOnError extends boolean = false>(options: Options<SiteContactsGetData, ThrowOnError>) => (options.client ?? client).get<SiteContactsGetResponses, SiteContactsGetErrors, ThrowOnError>({
+export const siteContactsGet = <ThrowOnError extends boolean = false>(options: Options<SiteContactsGetData, ThrowOnError>): RequestResult<SiteContactsGetResponses, SiteContactsGetErrors, ThrowOnError> => (options.client ?? client).get<SiteContactsGetResponses, SiteContactsGetErrors, ThrowOnError>({
     requestValidator: async (data) => await z.object({
         body: z.never().optional(),
         path: zSiteContactsGetPath,
@@ -109,7 +109,7 @@ export const siteContactsGet = <ThrowOnError extends boolean = false>(options: O
 /**
  * Update a contact from the site UI
  */
-export const siteContactsUpdate = <ThrowOnError extends boolean = false>(options: Options<SiteContactsUpdateData, ThrowOnError>) => (options.client ?? client).put<SiteContactsUpdateResponses, SiteContactsUpdateErrors, ThrowOnError>({
+export const siteContactsUpdate = <ThrowOnError extends boolean = false>(options: Options<SiteContactsUpdateData, ThrowOnError>): RequestResult<SiteContactsUpdateResponses, SiteContactsUpdateErrors, ThrowOnError> => (options.client ?? client).put<SiteContactsUpdateResponses, SiteContactsUpdateErrors, ThrowOnError>({
     requestValidator: async (data) => await z.object({
         body: zSiteContactsUpdateBody,
         path: zSiteContactsUpdatePath,

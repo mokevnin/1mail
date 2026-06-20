@@ -65,13 +65,10 @@ generate-typespec-collect:
 
 generate-typespec: generate-typespec-external generate-typespec-site generate-typespec-collect
 
-generate-openapi-external:
+generate-openapi-site:
 	pnpm exec openapi-ts -f openapi-ts.config.ts
 
-generate-openapi-site:
-	pnpm exec openapi-ts -f openapi-ts.site.config.ts
-
-generate-openapi: generate-openapi-external generate-openapi-site
+generate-openapi: generate-openapi-site
 
 generate-i18n-types:
 	pnpm run i18n:types
@@ -97,4 +94,4 @@ check-fix:
 build:
 	go build ./...
 
-.PHONY: setup install db-create db-create-test db-drop db-drop-test db-migrate db-seed db-reset db-reset-test db-generate dev-frontend dev-backend dev test test-watch update update-npm update-go generate generate-backend generate-openapi generate-openapi-external generate-openapi-site generate-typespec generate-typespec-external generate-typespec-site generate-typespec-collect generate-i18n-types check check-fix build
+.PHONY: setup install db-create db-create-test db-drop db-drop-test db-migrate db-seed db-reset db-reset-test db-generate dev-frontend dev-backend dev test test-watch update update-npm update-go generate generate-backend generate-openapi generate-openapi-site generate-typespec generate-typespec-external generate-typespec-site generate-typespec-collect generate-i18n-types check check-fix build

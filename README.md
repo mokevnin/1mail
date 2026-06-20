@@ -1,23 +1,40 @@
-# Getting Started with [Fastify-CLI](https://www.npmjs.com/package/fastify-cli)
-This project was bootstrapped with Fastify-CLI.
+# 1mail
 
-## Available Scripts
+Marketing Automation.
 
-In the project directory, you can run:
+## Стек
 
-### `npm run dev`
+- **Бэкенд** — Go + [echo](https://echo.labstack.com/), ORM [ent](https://entgo.io/),
+  очереди [river](https://riverqueue.com/), pub/sub [watermill](https://watermill.io/).
+- **Фронтенд** — React + Vite, [Mantine](https://mantine.dev/),
+  [TanStack Router/Query](https://tanstack.com/), [oRPC](https://orpc.unnoq.com/).
+- **API-контракты** — [TypeSpec](https://typespec.io/) как источник правды.
 
-To start the app in dev mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+## Генерация кода
 
-### `npm start`
+Пайплайн односторонний: TypeSpec → OpenAPI → код.
 
-For production mode
+```
+typespec/{external,site,collect}
+  └─ tsp compile ─▶ openapi/*.openapi.json
+       ├─ oapi-codegen ───────▶ gen/{external,site,collect}/*.gen.go  (Go echo-сервер)
+       └─ @hey-api/openapi-ts ▶ src/generated/site                     (TS-клиент фронтенда)
+```
 
-### `npm run test`
+Запуск:
 
-Run the test cases.
+```sh
+make generate          # полный цикл: typespec → openapi → backend + frontend → i18n → форматирование
+make generate-typespec # только typespec → openapi
+make generate-backend  # только openapi → Go (ent + oapi-codegen)
+make generate-openapi  # только openapi → TS-клиент
+```
 
-## Learn More
+## Разработка
 
-To learn Fastify, check out the [Fastify documentation](https://fastify.dev/docs/latest/).
+```sh
+make setup   # установка зависимостей и создание БД
+make dev     # overmind: фронтенд + бэкенд
+make test    # go test ./...
+make check   # tsgo --noEmit, biome, go vet
+```
