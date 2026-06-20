@@ -18,9 +18,10 @@ func (h *Handlers) ContactsList(ctx context.Context, params externalapi.Contacts
 		return &res, nil
 	}
 
+	ws := auth.WorkspaceID(auth.GetTokenAuth(ctx))
 	page, pageSize := pagination.Normalize(optInt32Ptr(params.Page), optInt32Ptr(params.PageSize))
 
-	q := h.ent.Contact.Query()
+	q := h.ent.Contact.Query().Where(contact.WorkspaceID(ws))
 	if status, ok := params.Status.Get(); ok {
 		q = q.Where(contact.StatusEQ(contact.Status(string(status))))
 	}
@@ -59,6 +60,7 @@ func (h *Handlers) ContactsCreate(ctx context.Context, req *externalapi.CreateCo
 	}
 
 	q := h.ent.Contact.Create().
+		SetWorkspaceID(auth.WorkspaceID(auth.GetTokenAuth(ctx))).
 		SetEmail(string(req.Email)).
 		SetNillableFirstName(optNilStringPtr(req.FirstName)).
 		SetNillableLastName(optNilStringPtr(req.LastName)).
@@ -92,7 +94,10 @@ func (h *Handlers) ContactsGet(ctx context.Context, params externalapi.ContactsG
 		return &res, nil
 	}
 
-	c, err := h.ent.Contact.Get(ctx, id)
+	ws := auth.WorkspaceID(auth.GetTokenAuth(ctx))
+	c, err := h.ent.Contact.Query().
+		Where(contact.IDEQ(id), contact.WorkspaceID(ws)).
+		Only(ctx)
 	if ent.IsNotFound(err) {
 		res := externalapi.ContactsGetNotFound(problem(http.StatusNotFound, "contact not found"))
 		return &res, nil
@@ -117,7 +122,9 @@ func (h *Handlers) ContactsUpdate(ctx context.Context, req *externalapi.UpdateCo
 		return &res, nil
 	}
 
+	ws := auth.WorkspaceID(auth.GetTokenAuth(ctx))
 	q := h.ent.Contact.UpdateOneID(id).
+		Where(contact.WorkspaceID(ws)).
 		SetNillableFirstName(optNilStringPtr(req.FirstName)).
 		SetNillableLastName(optNilStringPtr(req.LastName)).
 		SetNillableTimeZone(optNilTimeZonePtr(req.TimeZone))
@@ -154,7 +161,8 @@ func (h *Handlers) ContactsDelete(ctx context.Context, params externalapi.Contac
 		return &res, nil
 	}
 
-	err = h.ent.Contact.DeleteOneID(id).Exec(ctx)
+	ws := auth.WorkspaceID(auth.GetTokenAuth(ctx))
+	err = h.ent.Contact.DeleteOneID(id).Where(contact.WorkspaceID(ws)).Exec(ctx)
 	if ent.IsNotFound(err) {
 		res := externalapi.ContactsDeleteNotFound(problem(http.StatusNotFound, "contact not found"))
 		return &res, nil

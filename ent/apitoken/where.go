@@ -545,16 +545,6 @@ func WorkspaceIDNotIn(vs ...int64) predicate.ApiToken {
 	return predicate.ApiToken(sql.FieldNotIn(FieldWorkspaceID, vs...))
 }
 
-// WorkspaceIDIsNil applies the IsNil predicate on the "workspace_id" field.
-func WorkspaceIDIsNil() predicate.ApiToken {
-	return predicate.ApiToken(sql.FieldIsNull(FieldWorkspaceID))
-}
-
-// WorkspaceIDNotNil applies the NotNil predicate on the "workspace_id" field.
-func WorkspaceIDNotNil() predicate.ApiToken {
-	return predicate.ApiToken(sql.FieldNotNull(FieldWorkspaceID))
-}
-
 // HasWorkspace applies the HasEdge predicate on the "workspace" edge.
 func HasWorkspace() predicate.ApiToken {
 	return predicate.ApiToken(func(s *sql.Selector) {

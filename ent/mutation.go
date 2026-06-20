@@ -562,7 +562,7 @@ func (m *ApiTokenMutation) WorkspaceID() (r int64, exists bool) {
 // OldWorkspaceID returns the old "workspace_id" field's value of the ApiToken entity.
 // If the ApiToken object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *ApiTokenMutation) OldWorkspaceID(ctx context.Context) (v *int64, err error) {
+func (m *ApiTokenMutation) OldWorkspaceID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldWorkspaceID is only allowed on UpdateOne operations")
 	}
@@ -576,22 +576,9 @@ func (m *ApiTokenMutation) OldWorkspaceID(ctx context.Context) (v *int64, err er
 	return oldValue.WorkspaceID, nil
 }
 
-// ClearWorkspaceID clears the value of the "workspace_id" field.
-func (m *ApiTokenMutation) ClearWorkspaceID() {
-	m.workspace = nil
-	m.clearedFields[apitoken.FieldWorkspaceID] = struct{}{}
-}
-
-// WorkspaceIDCleared returns if the "workspace_id" field was cleared in this mutation.
-func (m *ApiTokenMutation) WorkspaceIDCleared() bool {
-	_, ok := m.clearedFields[apitoken.FieldWorkspaceID]
-	return ok
-}
-
 // ResetWorkspaceID resets all changes to the "workspace_id" field.
 func (m *ApiTokenMutation) ResetWorkspaceID() {
 	m.workspace = nil
-	delete(m.clearedFields, apitoken.FieldWorkspaceID)
 }
 
 // ClearWorkspace clears the "workspace" edge to the Workspace entity.
@@ -602,7 +589,7 @@ func (m *ApiTokenMutation) ClearWorkspace() {
 
 // WorkspaceCleared reports if the "workspace" edge to the Workspace entity was cleared.
 func (m *ApiTokenMutation) WorkspaceCleared() bool {
-	return m.WorkspaceIDCleared() || m.clearedworkspace
+	return m.clearedworkspace
 }
 
 // WorkspaceIDs returns the "workspace" edge IDs in the mutation.
@@ -864,9 +851,6 @@ func (m *ApiTokenMutation) ClearedFields() []string {
 	if m.FieldCleared(apitoken.FieldLastUsedAt) {
 		fields = append(fields, apitoken.FieldLastUsedAt)
 	}
-	if m.FieldCleared(apitoken.FieldWorkspaceID) {
-		fields = append(fields, apitoken.FieldWorkspaceID)
-	}
 	return fields
 }
 
@@ -889,9 +873,6 @@ func (m *ApiTokenMutation) ClearField(name string) error {
 		return nil
 	case apitoken.FieldLastUsedAt:
 		m.ClearLastUsedAt()
-		return nil
-	case apitoken.FieldWorkspaceID:
-		m.ClearWorkspaceID()
 		return nil
 	}
 	return fmt.Errorf("unknown ApiToken nullable field %s", name)
@@ -1420,7 +1401,7 @@ func (m *ContactMutation) WorkspaceID() (r int64, exists bool) {
 // OldWorkspaceID returns the old "workspace_id" field's value of the Contact entity.
 // If the Contact object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *ContactMutation) OldWorkspaceID(ctx context.Context) (v *int64, err error) {
+func (m *ContactMutation) OldWorkspaceID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldWorkspaceID is only allowed on UpdateOne operations")
 	}
@@ -1434,22 +1415,9 @@ func (m *ContactMutation) OldWorkspaceID(ctx context.Context) (v *int64, err err
 	return oldValue.WorkspaceID, nil
 }
 
-// ClearWorkspaceID clears the value of the "workspace_id" field.
-func (m *ContactMutation) ClearWorkspaceID() {
-	m.workspace = nil
-	m.clearedFields[contact.FieldWorkspaceID] = struct{}{}
-}
-
-// WorkspaceIDCleared returns if the "workspace_id" field was cleared in this mutation.
-func (m *ContactMutation) WorkspaceIDCleared() bool {
-	_, ok := m.clearedFields[contact.FieldWorkspaceID]
-	return ok
-}
-
 // ResetWorkspaceID resets all changes to the "workspace_id" field.
 func (m *ContactMutation) ResetWorkspaceID() {
 	m.workspace = nil
-	delete(m.clearedFields, contact.FieldWorkspaceID)
 }
 
 // SetCreatedAt sets the "created_at" field.
@@ -1532,7 +1500,7 @@ func (m *ContactMutation) ClearWorkspace() {
 
 // WorkspaceCleared reports if the "workspace" edge to the Workspace entity was cleared.
 func (m *ContactMutation) WorkspaceCleared() bool {
-	return m.WorkspaceIDCleared() || m.clearedworkspace
+	return m.clearedworkspace
 }
 
 // WorkspaceIDs returns the "workspace" edge IDs in the mutation.
@@ -1783,9 +1751,6 @@ func (m *ContactMutation) ClearedFields() []string {
 	if m.FieldCleared(contact.FieldCustomFields) {
 		fields = append(fields, contact.FieldCustomFields)
 	}
-	if m.FieldCleared(contact.FieldWorkspaceID) {
-		fields = append(fields, contact.FieldWorkspaceID)
-	}
 	return fields
 }
 
@@ -1811,9 +1776,6 @@ func (m *ContactMutation) ClearField(name string) error {
 		return nil
 	case contact.FieldCustomFields:
 		m.ClearCustomFields()
-		return nil
-	case contact.FieldWorkspaceID:
-		m.ClearWorkspaceID()
 		return nil
 	}
 	return fmt.Errorf("unknown Contact nullable field %s", name)

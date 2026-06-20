@@ -150,12 +150,6 @@ func (_u *ApiTokenUpdate) SetNillableWorkspaceID(v *int64) *ApiTokenUpdate {
 	return _u
 }
 
-// ClearWorkspaceID clears the value of the "workspace_id" field.
-func (_u *ApiTokenUpdate) ClearWorkspaceID() *ApiTokenUpdate {
-	_u.mutation.ClearWorkspaceID()
-	return _u
-}
-
 // SetWorkspace sets the "workspace" edge to the Workspace entity.
 func (_u *ApiTokenUpdate) SetWorkspace(v *Workspace) *ApiTokenUpdate {
 	return _u.SetWorkspaceID(v.ID)
@@ -219,6 +213,9 @@ func (_u *ApiTokenUpdate) check() error {
 		if err := apitoken.SecretHashValidator(v); err != nil {
 			return &ValidationError{Name: "secret_hash", err: fmt.Errorf(`ent: validator failed for field "ApiToken.secret_hash": %w`, err)}
 		}
+	}
+	if _u.mutation.WorkspaceCleared() && len(_u.mutation.WorkspaceIDs()) > 0 {
+		return errors.New(`ent: clearing a required unique edge "ApiToken.workspace"`)
 	}
 	return nil
 }
@@ -439,12 +436,6 @@ func (_u *ApiTokenUpdateOne) SetNillableWorkspaceID(v *int64) *ApiTokenUpdateOne
 	return _u
 }
 
-// ClearWorkspaceID clears the value of the "workspace_id" field.
-func (_u *ApiTokenUpdateOne) ClearWorkspaceID() *ApiTokenUpdateOne {
-	_u.mutation.ClearWorkspaceID()
-	return _u
-}
-
 // SetWorkspace sets the "workspace" edge to the Workspace entity.
 func (_u *ApiTokenUpdateOne) SetWorkspace(v *Workspace) *ApiTokenUpdateOne {
 	return _u.SetWorkspaceID(v.ID)
@@ -521,6 +512,9 @@ func (_u *ApiTokenUpdateOne) check() error {
 		if err := apitoken.SecretHashValidator(v); err != nil {
 			return &ValidationError{Name: "secret_hash", err: fmt.Errorf(`ent: validator failed for field "ApiToken.secret_hash": %w`, err)}
 		}
+	}
+	if _u.mutation.WorkspaceCleared() && len(_u.mutation.WorkspaceIDs()) > 0 {
+		return errors.New(`ent: clearing a required unique edge "ApiToken.workspace"`)
 	}
 	return nil
 }

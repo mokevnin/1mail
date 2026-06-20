@@ -25,6 +25,7 @@ func seedToken(t *testing.T, db *ent.Client, scopes []string) string {
 
 	_, err = db.ApiToken.Create().
 		SetName("test-token").SetPrefix(prefix).SetSecretHash(hash).SetScopes(scopes).
+		SetWorkspaceID(1).
 		Save(context.Background())
 	require.NoError(t, err)
 	return service.TokenValue(prefix, secret)

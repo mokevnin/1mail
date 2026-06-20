@@ -143,12 +143,6 @@ func (_u *ContactUpdate) SetNillableWorkspaceID(v *int64) *ContactUpdate {
 	return _u
 }
 
-// ClearWorkspaceID clears the value of the "workspace_id" field.
-func (_u *ContactUpdate) ClearWorkspaceID() *ContactUpdate {
-	_u.mutation.ClearWorkspaceID()
-	return _u
-}
-
 // SetUpdatedAt sets the "updated_at" field.
 func (_u *ContactUpdate) SetUpdatedAt(v time.Time) *ContactUpdate {
 	_u.mutation.SetUpdatedAt(v)
@@ -218,6 +212,9 @@ func (_u *ContactUpdate) check() error {
 		if err := contact.StatusValidator(v); err != nil {
 			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "Contact.status": %w`, err)}
 		}
+	}
+	if _u.mutation.WorkspaceCleared() && len(_u.mutation.WorkspaceIDs()) > 0 {
+		return errors.New(`ent: clearing a required unique edge "Contact.workspace"`)
 	}
 	return nil
 }
@@ -430,12 +427,6 @@ func (_u *ContactUpdateOne) SetNillableWorkspaceID(v *int64) *ContactUpdateOne {
 	return _u
 }
 
-// ClearWorkspaceID clears the value of the "workspace_id" field.
-func (_u *ContactUpdateOne) ClearWorkspaceID() *ContactUpdateOne {
-	_u.mutation.ClearWorkspaceID()
-	return _u
-}
-
 // SetUpdatedAt sets the "updated_at" field.
 func (_u *ContactUpdateOne) SetUpdatedAt(v time.Time) *ContactUpdateOne {
 	_u.mutation.SetUpdatedAt(v)
@@ -518,6 +509,9 @@ func (_u *ContactUpdateOne) check() error {
 		if err := contact.StatusValidator(v); err != nil {
 			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "Contact.status": %w`, err)}
 		}
+	}
+	if _u.mutation.WorkspaceCleared() && len(_u.mutation.WorkspaceIDs()) > 0 {
+		return errors.New(`ent: clearing a required unique edge "Contact.workspace"`)
 	}
 	return nil
 }

@@ -42,9 +42,7 @@ func (Contact) Fields() []ent.Field {
 			Nillable(),
 		field.JSON("custom_fields", map[string]string{}).
 			Optional(),
-		field.Int64("workspace_id").
-			Optional().
-			Nillable(),
+		field.Int64("workspace_id"),
 		field.Time("created_at").
 			Default(time.Now).
 			Immutable(),
@@ -59,6 +57,7 @@ func (Contact) Edges() []ent.Edge {
 		edge.From("workspace", Workspace.Type).
 			Ref("contacts").
 			Field("workspace_id").
+			Required().
 			Unique(),
 	}
 }

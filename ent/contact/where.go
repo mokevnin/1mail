@@ -430,16 +430,6 @@ func WorkspaceIDNotIn(vs ...int64) predicate.Contact {
 	return predicate.Contact(sql.FieldNotIn(FieldWorkspaceID, vs...))
 }
 
-// WorkspaceIDIsNil applies the IsNil predicate on the "workspace_id" field.
-func WorkspaceIDIsNil() predicate.Contact {
-	return predicate.Contact(sql.FieldIsNull(FieldWorkspaceID))
-}
-
-// WorkspaceIDNotNil applies the NotNil predicate on the "workspace_id" field.
-func WorkspaceIDNotNil() predicate.Contact {
-	return predicate.Contact(sql.FieldNotNull(FieldWorkspaceID))
-}
-
 // CreatedAtEQ applies the EQ predicate on the "created_at" field.
 func CreatedAtEQ(v time.Time) predicate.Contact {
 	return predicate.Contact(sql.FieldEQ(FieldCreatedAt, v))

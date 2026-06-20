@@ -121,14 +121,6 @@ func (_c *ApiTokenCreate) SetWorkspaceID(v int64) *ApiTokenCreate {
 	return _c
 }
 
-// SetNillableWorkspaceID sets the "workspace_id" field if the given value is not nil.
-func (_c *ApiTokenCreate) SetNillableWorkspaceID(v *int64) *ApiTokenCreate {
-	if v != nil {
-		_c.SetWorkspaceID(*v)
-	}
-	return _c
-}
-
 // SetID sets the "id" field.
 func (_c *ApiTokenCreate) SetID(v int64) *ApiTokenCreate {
 	_c.mutation.SetID(v)
@@ -224,6 +216,12 @@ func (_c *ApiTokenCreate) check() error {
 	if _, ok := _c.mutation.UpdatedAt(); !ok {
 		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "ApiToken.updated_at"`)}
 	}
+	if _, ok := _c.mutation.WorkspaceID(); !ok {
+		return &ValidationError{Name: "workspace_id", err: errors.New(`ent: missing required field "ApiToken.workspace_id"`)}
+	}
+	if len(_c.mutation.WorkspaceIDs()) == 0 {
+		return &ValidationError{Name: "workspace", err: errors.New(`ent: missing required edge "ApiToken.workspace"`)}
+	}
 	return nil
 }
 
@@ -306,7 +304,7 @@ func (_c *ApiTokenCreate) createSpec() (*ApiToken, *sqlgraph.CreateSpec) {
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_node.WorkspaceID = &nodes[0]
+		_node.WorkspaceID = nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec

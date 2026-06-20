@@ -5,10 +5,10 @@ import (
 	"errors"
 	"time"
 
+	gptoken "github.com/go-pkgz/auth/v2/token"
 	"github.com/mokevnin/1mail/ent"
 	"github.com/mokevnin/1mail/ent/apitoken"
 	entuser "github.com/mokevnin/1mail/ent/user"
-	gptoken "github.com/go-pkgz/auth/v2/token"
 	collectapi "github.com/mokevnin/1mail/gen/collect"
 	externalapi "github.com/mokevnin/1mail/gen/external"
 	siteapi "github.com/mokevnin/1mail/gen/site"
@@ -22,9 +22,10 @@ var ErrUnauthorized = errors.New("unauthorized")
 
 // TokenAuth holds the authenticated api-token context for external API requests.
 type TokenAuth struct {
-	TokenID int64
-	Name    string
-	Scopes  []string
+	TokenID     int64
+	WorkspaceID int64
+	Name        string
+	Scopes      []string
 }
 
 type contextKey struct{}
@@ -45,6 +46,14 @@ func HasScope(auth *TokenAuth, scope string) bool {
 		return false
 	}
 	return lo.Contains(auth.Scopes, scope)
+}
+
+// WorkspaceID returns the workspace the authenticated token belongs to (0 if unauthenticated).
+func WorkspaceID(auth *TokenAuth) int64 {
+	if auth == nil {
+		return 0
+	}
+	return auth.WorkspaceID
 }
 
 // ExternalSecurityHandler implements externalapi.SecurityHandler (Bearer token auth).
@@ -86,9 +95,10 @@ func (h *ExternalSecurityHandler) HandleBearerAuth(ctx context.Context, _ extern
 	}
 
 	auth := &TokenAuth{
-		TokenID: token.ID,
-		Name:    token.Name,
-		Scopes:  token.Scopes,
+		TokenID:     token.ID,
+		WorkspaceID: token.WorkspaceID,
+		Name:        token.Name,
+		Scopes:      token.Scopes,
 	}
 	return WithTokenAuth(ctx, auth), nil
 }

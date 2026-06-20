@@ -51,9 +51,7 @@ func (ApiToken) Fields() []ent.Field {
 		field.Time("updated_at").
 			Default(time.Now).
 			UpdateDefault(time.Now),
-		field.Int64("workspace_id").
-			Optional().
-			Nillable(),
+		field.Int64("workspace_id"),
 	}
 }
 
@@ -62,6 +60,7 @@ func (ApiToken) Edges() []ent.Edge {
 		edge.From("workspace", Workspace.Type).
 			Ref("api_tokens").
 			Field("workspace_id").
+			Required().
 			Unique(),
 	}
 }
