@@ -108,4 +108,6 @@ the host (`:3300`) or swap the service in.
 ## Conventions
 
 - Commit directly to `main` (no feature branches).
+- Commit messages follow **Conventional Commits** (`feat:`, `fix:`, `chore:`, `docs:`,
+  `refactor:`, `ci:` …) — release-please uses them for versioning/changelog.
 - After changing TypeSpec or `ent/schema`, run `make generate` and commit the generated output.
