@@ -5,7 +5,7 @@ import { useMutation } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 import { siteAuthRegister } from '../../generated/site/sdk.gen.ts'
-import { type SiteRegisterInput } from '../../generated/site/types.gen.ts'
+import type { SiteRegisterInput } from '../../generated/site/types.gen.ts'
 import { contactsRoute } from '../../router.tsx'
 import { getApiErrorMessage } from '../../utils/apiErrors.ts'
 
@@ -36,7 +36,10 @@ export function RegisterPage() {
       notifications.show({
         color: 'red',
         title: t(($) => $.registration.errorTitle),
-        message: getApiErrorMessage(error, t(($) => $.registration.errorTitle)),
+        message: getApiErrorMessage(
+          error,
+          t(($) => $.registration.errorTitle),
+        ),
       })
       return
     }

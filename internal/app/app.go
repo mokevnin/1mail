@@ -58,19 +58,19 @@ func New(env string) (*App, error) {
 
 	cfg, err := do.Invoke[*config.Config](injector)
 	if err != nil {
-		injector.Shutdown()
+		_ = injector.Shutdown()
 		return nil, err
 	}
 
 	handler, err := do.Invoke[http.Handler](injector)
 	if err != nil {
-		injector.Shutdown()
+		_ = injector.Shutdown()
 		return nil, err
 	}
 
 	ps, err := do.Invoke[*pubSub](injector)
 	if err != nil {
-		injector.Shutdown()
+		_ = injector.Shutdown()
 		return nil, err
 	}
 

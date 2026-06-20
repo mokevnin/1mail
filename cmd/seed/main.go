@@ -19,7 +19,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("open database: %v", err)
 	}
-	defer sqlDB.Close()
+	defer func() { _ = sqlDB.Close() }()
 
 	loader, err := testfixtures.New(
 		testfixtures.Database(sqlDB),

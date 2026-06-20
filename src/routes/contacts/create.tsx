@@ -38,7 +38,10 @@ export function ContactCreatePage() {
       notifications.show({
         color: 'red',
         title: t(($) => $.alerts.saveErrorTitle),
-        message: getApiErrorMessage(error, t(($) => $.alerts.saveErrorTitle)),
+        message: getApiErrorMessage(
+          error,
+          t(($) => $.alerts.saveErrorTitle),
+        ),
       })
     },
   })

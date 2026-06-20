@@ -31,7 +31,7 @@ func Publish[T any](ps *PubSub, topic string, payload T) error {
 }
 
 func RegisterHandlers(ps *PubSub, emailSender *email.Sender) {
-	ps.Router.AddNoPublisherHandler(
+	ps.Router.AddConsumerHandler(
 		"log_contact_created",
 		TopicContactCreated,
 		ps.Subscriber,
@@ -45,7 +45,7 @@ func RegisterHandlers(ps *PubSub, emailSender *email.Sender) {
 		},
 	)
 
-	ps.Router.AddNoPublisherHandler(
+	ps.Router.AddConsumerHandler(
 		"send_welcome_email",
 		TopicUserRegistered,
 		ps.Subscriber,

@@ -46,7 +46,9 @@ export function ContactEditPage() {
     ...siteContactsUpdateMutation(),
     onSuccess: async (updated) => {
       await queryClient.invalidateQueries({ queryKey: siteContactsListQueryKey() })
-      await queryClient.invalidateQueries({ queryKey: siteContactsGetQueryKey({ path: { id: updated.id } }) })
+      await queryClient.invalidateQueries({
+        queryKey: siteContactsGetQueryKey({ path: { id: updated.id } }),
+      })
       await track('contact.updated', { contactId: updated.id, email: updated.email })
       notifications.show({
         color: 'teal',

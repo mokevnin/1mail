@@ -48,7 +48,7 @@ func initBaseline() {
 			loadErr = err
 			return
 		}
-		defer sqlDB.Close()
+		defer func() { _ = sqlDB.Close() }()
 
 		if err := db.NewEntClient(sqlDB).Schema.Create(context.Background()); err != nil {
 			loadErr = err

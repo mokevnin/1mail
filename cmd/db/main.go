@@ -39,7 +39,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("open admin db: %v", err)
 	}
-	defer adminDB.Close()
+	defer func() { _ = adminDB.Close() }()
 
 	switch os.Args[1] {
 	case "create":

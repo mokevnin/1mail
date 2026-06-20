@@ -84,7 +84,7 @@ generate: generate-typespec generate-openapi generate-backend generate-i18n-type
 check:
 	npx tsgo --noEmit
 	npx biome check .
-	go vet ./...
+	golangci-lint run ./...
 
 check-fix:
 	pnpx @biomejs/biome check --write

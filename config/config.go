@@ -37,7 +37,9 @@ func Load(envName string) (*Config, error) {
 		sub.SetConfigFile(file)
 		sub.SetConfigType("env")
 		if err := sub.ReadInConfig(); err == nil {
-			v.MergeConfigMap(sub.AllSettings())
+			if err := v.MergeConfigMap(sub.AllSettings()); err != nil {
+				return nil, fmt.Errorf("merge config %s: %w", file, err)
+			}
 		}
 	}
 

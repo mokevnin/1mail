@@ -36,5 +36,15 @@ make generate-openapi  # только openapi → TS-клиент
 make setup   # установка зависимостей и создание БД
 make dev     # overmind: фронтенд + бэкенд
 make test    # go test ./...
-make check   # tsgo --noEmit, biome, go vet
+make check   # tsgo --noEmit, biome, golangci-lint
 ```
+
+`make check` requires [golangci-lint](https://golangci-lint.run/) (v2). The version is
+pinned in `.mise.toml`, so the easiest way is [mise](https://mise.jdx.dev/):
+
+```sh
+mise install
+```
+
+Any other install method works too — it only needs to be on your `PATH`, e.g.
+`brew install golangci-lint`.
