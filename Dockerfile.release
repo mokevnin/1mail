@@ -1,0 +1,10 @@
+# Minimal runtime image used by GoReleaser (dockers_v2). GoReleaser builds the
+# binaries on the host (frontend + Go, embed_spa) and lays them out per platform
+# under $TARGETPLATFORM, so here we only wrap the prebuilt binary. For building
+# straight from source, use the top-level Dockerfile instead.
+FROM alpine:3.23
+RUN apk add --no-cache ca-certificates tzdata
+ARG TARGETPLATFORM
+COPY $TARGETPLATFORM/1mail /usr/local/bin/1mail
+EXPOSE 3000
+ENTRYPOINT ["1mail"]

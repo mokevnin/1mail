@@ -1,0 +1,63 @@
+# GoReleaser builds the cross-platform binaries and the multi-arch Docker image.
+# It is driven from the release-please workflow (only when a release is cut), so
+# it appends artifacts to the GitHub Release that release-please already created
+# and leaves the changelog to release-please.
+version: 2
+
+project_name: 1mail
+
+# Vite already owns ./dist, so keep GoReleaser's output elsewhere.
+dist: dist-release
+
+before:
+  hooks:
+    # Build the embedded assets (SPA + tracker) before cross-compiling.
+    - make build-tracker
+    - make build-spa
+
+builds:
+  - id: onemail
+    main: ./cmd/server
+    binary: 1mail
+    flags:
+      - -tags=embed_spa
+    env:
+      - CGO_ENABLED=0
+    ldflags:
+      - -s -w -X main.version={{ .Version }} -X main.commit={{ .ShortCommit }} -X main.date={{ .Date }}
+    goos:
+      - linux
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+
+archives:
+  - id: default
+    formats: [tar.gz]
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+
+checksum:
+  name_template: checksums.txt
+
+# dockers_v2 builds the multi-arch image and pushes the manifest in one step,
+# reusing the prebuilt binaries (Dockerfile.release just copies them in).
+dockers_v2:
+  - images:
+      - ghcr.io/mokevnin/1mail
+    tags:
+      - "{{ .Version }}"
+      - latest
+    dockerfile: Dockerfile.release
+    platforms:
+      - linux/amd64
+      - linux/arm64
+    ids:
+      - onemail
+
+# release-please owns the GitHub Release + changelog; just attach artifacts.
+release:
+  mode: append
+
+changelog:
+  disable: true

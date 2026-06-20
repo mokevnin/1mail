@@ -71,3 +71,12 @@ npm-cache
 # build artifacts
 dist
 packages/*/dist
+# built SPA copied into the Go embed tree by `make build-spa` (release only)
+internal/server/assets/spa/
+
+# compiled Go binaries / goreleaser output
+bin/
+/dist-release/
+
+# compiled seed binary
+/seed

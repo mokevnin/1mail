@@ -96,7 +96,21 @@ build-tracker:
 	pnpm build:tracker
 	cp packages/analytics/dist/t.js internal/server/assets/t.js
 
-build: build-tracker
-	go build ./...
+# Builds the SPA (Vite) and copies dist/ into the Go embed tree so the binary
+# can serve the frontend itself. Gitignored; populated only for release builds.
+build-spa:
+	pnpm build
+	rm -rf internal/server/assets/spa
+	mkdir -p internal/server/assets/spa
+	cp -R dist/. internal/server/assets/spa/
 
-.PHONY: setup install db-create db-create-test db-drop db-drop-test db-migrate db-seed db-reset db-reset-test db-generate dev dev-down test test-watch update update-npm update-go generate generate-backend generate-openapi generate-openapi-site generate-typespec generate-typespec-external generate-typespec-site generate-typespec-collect generate-i18n-types check check-fix build-tracker build
+VERSION ?= dev
+COMMIT  := $(shell git rev-parse --short HEAD 2>/dev/null || echo none)
+DATE    := $(shell date -u +%Y-%m-%dT%H:%M:%SZ)
+LDFLAGS := -s -w -X main.version=$(VERSION) -X main.commit=$(COMMIT) -X main.date=$(DATE)
+
+# Produces the self-contained release binary: tracker + SPA embedded.
+build: build-tracker build-spa
+	go build -tags embed_spa -ldflags "$(LDFLAGS)" -o bin/1mail ./cmd/server
+
+.PHONY: setup install db-create db-create-test db-drop db-drop-test db-migrate db-seed db-reset db-reset-test db-generate dev dev-down test test-watch update update-npm update-go generate generate-backend generate-openapi generate-openapi-site generate-typespec generate-typespec-external generate-typespec-site generate-typespec-collect generate-i18n-types check check-fix build-tracker build-spa build

@@ -87,6 +87,10 @@ func New(cfg *config.Config, client *ent.Client, ps *pubsub.PubSub) (http.Handle
 	// Public tracking snippet (no auth) — embedded IIFE bundle.
 	mux.Handle("/t.js", trackerHandler())
 
+	// Catch-all: the embedded SPA (release builds with -tags embed_spa). Most
+	// specific pattern wins, so this never shadows the API prefixes above.
+	mux.Handle("/", spaHandler())
+
 	return chain(mux, recoverer, requestID, timeout(30*time.Second), cors(cfg.CORSOrigins)), nil
 }
 

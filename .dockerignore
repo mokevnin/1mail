@@ -16,6 +16,13 @@ npm-cache
 # Large committed dev binary
 seed
 
+# Build outputs (rebuilt inside the image)
+dist
+dist-release
+bin
+packages/*/dist
+internal/server/assets/spa
+
 # Editor / OS
 .idea
 .vscode

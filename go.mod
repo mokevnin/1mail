@@ -3,6 +3,7 @@ module github.com/mokevnin/1mail
 go 1.26.3
 
 require (
+	ariga.io/atlas v1.2.2
 	entgo.io/ent v0.14.6
 	github.com/DATA-DOG/go-txdb v0.2.1
 	github.com/ThreeDotsLabs/watermill v1.5.2
@@ -11,6 +12,7 @@ require (
 	github.com/go-faster/jx v1.2.0
 	github.com/go-pkgz/auth/v2 v2.1.4
 	github.com/go-testfixtures/testfixtures/v3 v3.19.0
+	github.com/golang-jwt/jwt/v5 v5.3.1
 	github.com/jackc/pgx/v5 v5.10.0
 	github.com/ogen-go/ogen v1.22.0
 	github.com/riverqueue/river v0.39.0
@@ -28,7 +30,6 @@ require (
 )
 
 require (
-	ariga.io/atlas v1.2.2 // indirect
 	cloud.google.com/go/compute/metadata v0.9.0 // indirect
 	github.com/agext/levenshtein v1.2.3 // indirect
 	github.com/apparentlymart/go-textseg/v15 v15.0.0 // indirect
@@ -50,7 +51,6 @@ require (
 	github.com/go-test/deep v1.0.8 // indirect
 	github.com/go-viper/mapstructure/v2 v2.5.0 // indirect
 	github.com/goccy/go-yaml v1.19.2 // indirect
-	github.com/golang-jwt/jwt/v5 v5.3.1 // indirect
 	github.com/golang/snappy v1.0.0 // indirect
 	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
