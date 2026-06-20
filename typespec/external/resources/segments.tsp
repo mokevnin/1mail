@@ -54,10 +54,13 @@ namespace Segments {
   /** Create a segment */
   @createsResource(SegmentResource)
   @post
-  op create(@body body: CreateSegmentInput): {
-    @statusCode statusCode: 201;
-    @body body: SegmentResource;
-  } | UnauthorizedProblem | UnprocessableEntityProblem;
+  op create(@body body: CreateSegmentInput):
+    | {
+        @statusCode statusCode: 201;
+        @body body: SegmentResource;
+      }
+    | UnauthorizedProblem
+    | UnprocessableEntityProblem;
 
   /** List segments with pagination */
   @listsResource(SegmentResource)

@@ -163,12 +163,6 @@ func (_u *EventUpdate) SetNillableWorkspaceID(v *int64) *EventUpdate {
 	return _u
 }
 
-// ClearWorkspaceID clears the value of the "workspace_id" field.
-func (_u *EventUpdate) ClearWorkspaceID() *EventUpdate {
-	_u.mutation.ClearWorkspaceID()
-	return _u
-}
-
 // SetWorkspace sets the "workspace" edge to the Workspace entity.
 func (_u *EventUpdate) SetWorkspace(v *Workspace) *EventUpdate {
 	return _u.SetWorkspaceID(v.ID)
@@ -223,6 +217,9 @@ func (_u *EventUpdate) check() error {
 		if err := event.ActionValidator(v); err != nil {
 			return &ValidationError{Name: "action", err: fmt.Errorf(`ent: validator failed for field "Event.action": %w`, err)}
 		}
+	}
+	if _u.mutation.WorkspaceCleared() && len(_u.mutation.WorkspaceIDs()) > 0 {
+		return errors.New(`ent: clearing a required unique edge "Event.workspace"`)
 	}
 	return nil
 }
@@ -458,12 +455,6 @@ func (_u *EventUpdateOne) SetNillableWorkspaceID(v *int64) *EventUpdateOne {
 	return _u
 }
 
-// ClearWorkspaceID clears the value of the "workspace_id" field.
-func (_u *EventUpdateOne) ClearWorkspaceID() *EventUpdateOne {
-	_u.mutation.ClearWorkspaceID()
-	return _u
-}
-
 // SetWorkspace sets the "workspace" edge to the Workspace entity.
 func (_u *EventUpdateOne) SetWorkspace(v *Workspace) *EventUpdateOne {
 	return _u.SetWorkspaceID(v.ID)
@@ -531,6 +522,9 @@ func (_u *EventUpdateOne) check() error {
 		if err := event.ActionValidator(v); err != nil {
 			return &ValidationError{Name: "action", err: fmt.Errorf(`ent: validator failed for field "Event.action": %w`, err)}
 		}
+	}
+	if _u.mutation.WorkspaceCleared() && len(_u.mutation.WorkspaceIDs()) > 0 {
+		return errors.New(`ent: clearing a required unique edge "Event.workspace"`)
 	}
 	return nil
 }

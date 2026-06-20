@@ -82,7 +82,7 @@ var (
 		{Name: "occurred_at", Type: field.TypeTime, Nullable: true},
 		{Name: "prospect", Type: field.TypeBool, Nullable: true},
 		{Name: "created_at", Type: field.TypeTime},
-		{Name: "workspace_id", Type: field.TypeInt64, Nullable: true},
+		{Name: "workspace_id", Type: field.TypeInt64},
 	}
 	// EventsTable holds the schema information for the "events" table.
 	EventsTable = &schema.Table{
@@ -94,7 +94,7 @@ var (
 				Symbol:     "events_workspaces_events",
 				Columns:    []*schema.Column{EventsColumns[9]},
 				RefColumns: []*schema.Column{WorkspacesColumns[0]},
-				OnDelete:   schema.SetNull,
+				OnDelete:   schema.NoAction,
 			},
 		},
 	}
@@ -107,7 +107,7 @@ var (
 		{Name: "traits", Type: field.TypeJSON},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
-		{Name: "workspace_id", Type: field.TypeInt64, Nullable: true},
+		{Name: "workspace_id", Type: field.TypeInt64},
 	}
 	// TrackingProfilesTable holds the schema information for the "tracking_profiles" table.
 	TrackingProfilesTable = &schema.Table{
@@ -119,7 +119,7 @@ var (
 				Symbol:     "tracking_profiles_workspaces_tracking_profiles",
 				Columns:    []*schema.Column{TrackingProfilesColumns[7]},
 				RefColumns: []*schema.Column{WorkspacesColumns[0]},
-				OnDelete:   schema.SetNull,
+				OnDelete:   schema.NoAction,
 			},
 		},
 		Indexes: []*schema.Index{
@@ -143,11 +143,12 @@ var (
 	// TrackingVisitorsColumns holds the columns for the "tracking_visitors" table.
 	TrackingVisitorsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt64, Increment: true},
-		{Name: "visitor_id", Type: field.TypeString, Unique: true},
+		{Name: "visitor_id", Type: field.TypeString},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
 		{Name: "last_seen_at", Type: field.TypeTime},
 		{Name: "profile_id", Type: field.TypeInt64, Nullable: true},
+		{Name: "workspace_id", Type: field.TypeInt64},
 	}
 	// TrackingVisitorsTable holds the schema information for the "tracking_visitors" table.
 	TrackingVisitorsTable = &schema.Table{
@@ -160,6 +161,19 @@ var (
 				Columns:    []*schema.Column{TrackingVisitorsColumns[5]},
 				RefColumns: []*schema.Column{TrackingProfilesColumns[0]},
 				OnDelete:   schema.SetNull,
+			},
+			{
+				Symbol:     "tracking_visitors_workspaces_tracking_visitors",
+				Columns:    []*schema.Column{TrackingVisitorsColumns[6]},
+				RefColumns: []*schema.Column{WorkspacesColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "tracking_visitors_visitor_id_workspace_id",
+				Unique:  true,
+				Columns: []*schema.Column{TrackingVisitorsColumns[1], TrackingVisitorsColumns[6]},
 			},
 		},
 	}
@@ -183,6 +197,7 @@ var (
 		{Name: "id", Type: field.TypeInt64, Increment: true},
 		{Name: "name", Type: field.TypeString},
 		{Name: "slug", Type: field.TypeString, Unique: true},
+		{Name: "collect_key", Type: field.TypeString, Unique: true},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
 		{Name: "user_id", Type: field.TypeInt64, Nullable: true},
@@ -195,7 +210,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "workspaces_users_workspaces",
-				Columns:    []*schema.Column{WorkspacesColumns[5]},
+				Columns:    []*schema.Column{WorkspacesColumns[6]},
 				RefColumns: []*schema.Column{UsersColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
@@ -231,6 +246,7 @@ func init() {
 		Table: "tracking_profiles",
 	}
 	TrackingVisitorsTable.ForeignKeys[0].RefTable = TrackingProfilesTable
+	TrackingVisitorsTable.ForeignKeys[1].RefTable = WorkspacesTable
 	TrackingVisitorsTable.Annotation = &entsql.Annotation{
 		Table: "tracking_visitors",
 	}

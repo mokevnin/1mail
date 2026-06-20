@@ -60,6 +60,11 @@ func VisitorID(v string) predicate.TrackingVisitor {
 	return predicate.TrackingVisitor(sql.FieldEQ(FieldVisitorID, v))
 }
 
+// WorkspaceID applies equality check predicate on the "workspace_id" field. It's identical to WorkspaceIDEQ.
+func WorkspaceID(v int64) predicate.TrackingVisitor {
+	return predicate.TrackingVisitor(sql.FieldEQ(FieldWorkspaceID, v))
+}
+
 // ProfileID applies equality check predicate on the "profile_id" field. It's identical to ProfileIDEQ.
 func ProfileID(v int64) predicate.TrackingVisitor {
 	return predicate.TrackingVisitor(sql.FieldEQ(FieldProfileID, v))
@@ -143,6 +148,26 @@ func VisitorIDEqualFold(v string) predicate.TrackingVisitor {
 // VisitorIDContainsFold applies the ContainsFold predicate on the "visitor_id" field.
 func VisitorIDContainsFold(v string) predicate.TrackingVisitor {
 	return predicate.TrackingVisitor(sql.FieldContainsFold(FieldVisitorID, v))
+}
+
+// WorkspaceIDEQ applies the EQ predicate on the "workspace_id" field.
+func WorkspaceIDEQ(v int64) predicate.TrackingVisitor {
+	return predicate.TrackingVisitor(sql.FieldEQ(FieldWorkspaceID, v))
+}
+
+// WorkspaceIDNEQ applies the NEQ predicate on the "workspace_id" field.
+func WorkspaceIDNEQ(v int64) predicate.TrackingVisitor {
+	return predicate.TrackingVisitor(sql.FieldNEQ(FieldWorkspaceID, v))
+}
+
+// WorkspaceIDIn applies the In predicate on the "workspace_id" field.
+func WorkspaceIDIn(vs ...int64) predicate.TrackingVisitor {
+	return predicate.TrackingVisitor(sql.FieldIn(FieldWorkspaceID, vs...))
+}
+
+// WorkspaceIDNotIn applies the NotIn predicate on the "workspace_id" field.
+func WorkspaceIDNotIn(vs ...int64) predicate.TrackingVisitor {
+	return predicate.TrackingVisitor(sql.FieldNotIn(FieldWorkspaceID, vs...))
 }
 
 // ProfileIDEQ applies the EQ predicate on the "profile_id" field.
@@ -310,6 +335,29 @@ func HasProfile() predicate.TrackingVisitor {
 func HasProfileWith(preds ...predicate.TrackingProfile) predicate.TrackingVisitor {
 	return predicate.TrackingVisitor(func(s *sql.Selector) {
 		step := newProfileStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasWorkspace applies the HasEdge predicate on the "workspace" edge.
+func HasWorkspace() predicate.TrackingVisitor {
+	return predicate.TrackingVisitor(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, WorkspaceTable, WorkspaceColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasWorkspaceWith applies the HasEdge predicate on the "workspace" edge with a given conditions (other predicates).
+func HasWorkspaceWith(preds ...predicate.Workspace) predicate.TrackingVisitor {
+	return predicate.TrackingVisitor(func(s *sql.Selector) {
+		step := newWorkspaceStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)

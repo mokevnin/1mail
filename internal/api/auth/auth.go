@@ -9,6 +9,7 @@ import (
 	"github.com/mokevnin/1mail/ent"
 	"github.com/mokevnin/1mail/ent/apitoken"
 	entuser "github.com/mokevnin/1mail/ent/user"
+	"github.com/mokevnin/1mail/ent/workspace"
 	collectapi "github.com/mokevnin/1mail/gen/collect"
 	externalapi "github.com/mokevnin/1mail/gen/external"
 	siteapi "github.com/mokevnin/1mail/gen/site"
@@ -103,22 +104,54 @@ func (h *ExternalSecurityHandler) HandleBearerAuth(ctx context.Context, _ extern
 	return WithTokenAuth(ctx, auth), nil
 }
 
-// CollectSecurityHandler implements collectapi.SecurityHandler (x-collect-key).
-type CollectSecurityHandler struct {
-	key string
+// CollectAuth holds the workspace resolved from the per-workspace collect key.
+type CollectAuth struct {
+	WorkspaceID int64
 }
 
-func NewCollectSecurityHandler(key string) *CollectSecurityHandler {
-	return &CollectSecurityHandler{key: key}
+var collectAuthKey = struct{ name string }{"collectAuth"}
+
+func WithCollectAuth(ctx context.Context, auth *CollectAuth) context.Context {
+	return context.WithValue(ctx, collectAuthKey, auth)
+}
+
+func GetCollectAuth(ctx context.Context) *CollectAuth {
+	v, _ := ctx.Value(collectAuthKey).(*CollectAuth)
+	return v
+}
+
+// CollectWorkspaceID returns the workspace resolved from the collect key (0 if unauthenticated).
+func CollectWorkspaceID(ctx context.Context) int64 {
+	if a := GetCollectAuth(ctx); a != nil {
+		return a.WorkspaceID
+	}
+	return 0
+}
+
+// CollectSecurityHandler implements collectapi.SecurityHandler: resolves the
+// per-workspace collect write-key (x-collect-key) to its workspace.
+type CollectSecurityHandler struct {
+	ent *ent.Client
+}
+
+func NewCollectSecurityHandler(client *ent.Client) *CollectSecurityHandler {
+	return &CollectSecurityHandler{ent: client}
 }
 
 var _ collectapi.SecurityHandler = (*CollectSecurityHandler)(nil)
 
 func (h *CollectSecurityHandler) HandleApiKeyAuth(ctx context.Context, _ collectapi.OperationName, t collectapi.ApiKeyAuth) (context.Context, error) {
-	if h.key == "" || t.APIKey != h.key {
+	if t.APIKey == "" {
 		return ctx, ErrUnauthorized
 	}
-	return ctx, nil
+	ws, err := h.ent.Workspace.Query().Where(workspace.CollectKey(t.APIKey)).Only(ctx)
+	if ent.IsNotFound(err) {
+		return ctx, ErrUnauthorized
+	}
+	if err != nil {
+		return ctx, err
+	}
+	return WithCollectAuth(ctx, &CollectAuth{WorkspaceID: ws.ID}), nil
 }
 
 // SiteAuth holds the authenticated dashboard user resolved from the JWT cookie.

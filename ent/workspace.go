@@ -22,6 +22,8 @@ type Workspace struct {
 	Name string `json:"name,omitempty"`
 	// Slug holds the value of the "slug" field.
 	Slug string `json:"slug,omitempty"`
+	// CollectKey holds the value of the "collect_key" field.
+	CollectKey string `json:"-"`
 	// UserID holds the value of the "user_id" field.
 	UserID *int64 `json:"user_id,omitempty"`
 	// CreatedAt holds the value of the "created_at" field.
@@ -42,13 +44,15 @@ type WorkspaceEdges struct {
 	Events []*Event `json:"events,omitempty"`
 	// TrackingProfiles holds the value of the tracking_profiles edge.
 	TrackingProfiles []*TrackingProfile `json:"tracking_profiles,omitempty"`
+	// TrackingVisitors holds the value of the tracking_visitors edge.
+	TrackingVisitors []*TrackingVisitor `json:"tracking_visitors,omitempty"`
 	// APITokens holds the value of the api_tokens edge.
 	APITokens []*ApiToken `json:"api_tokens,omitempty"`
 	// User holds the value of the user edge.
 	User *User `json:"user,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [5]bool
+	loadedTypes [6]bool
 }
 
 // ContactsOrErr returns the Contacts value or an error if the edge
@@ -78,10 +82,19 @@ func (e WorkspaceEdges) TrackingProfilesOrErr() ([]*TrackingProfile, error) {
 	return nil, &NotLoadedError{edge: "tracking_profiles"}
 }
 
+// TrackingVisitorsOrErr returns the TrackingVisitors value or an error if the edge
+// was not loaded in eager-loading.
+func (e WorkspaceEdges) TrackingVisitorsOrErr() ([]*TrackingVisitor, error) {
+	if e.loadedTypes[3] {
+		return e.TrackingVisitors, nil
+	}
+	return nil, &NotLoadedError{edge: "tracking_visitors"}
+}
+
 // APITokensOrErr returns the APITokens value or an error if the edge
 // was not loaded in eager-loading.
 func (e WorkspaceEdges) APITokensOrErr() ([]*ApiToken, error) {
-	if e.loadedTypes[3] {
+	if e.loadedTypes[4] {
 		return e.APITokens, nil
 	}
 	return nil, &NotLoadedError{edge: "api_tokens"}
@@ -92,7 +105,7 @@ func (e WorkspaceEdges) APITokensOrErr() ([]*ApiToken, error) {
 func (e WorkspaceEdges) UserOrErr() (*User, error) {
 	if e.User != nil {
 		return e.User, nil
-	} else if e.loadedTypes[4] {
+	} else if e.loadedTypes[5] {
 		return nil, &NotFoundError{label: user.Label}
 	}
 	return nil, &NotLoadedError{edge: "user"}
@@ -105,7 +118,7 @@ func (*Workspace) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case workspace.FieldID, workspace.FieldUserID:
 			values[i] = new(sql.NullInt64)
-		case workspace.FieldName, workspace.FieldSlug:
+		case workspace.FieldName, workspace.FieldSlug, workspace.FieldCollectKey:
 			values[i] = new(sql.NullString)
 		case workspace.FieldCreatedAt, workspace.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
@@ -141,6 +154,12 @@ func (_m *Workspace) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field slug", values[i])
 			} else if value.Valid {
 				_m.Slug = value.String
+			}
+		case workspace.FieldCollectKey:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field collect_key", values[i])
+			} else if value.Valid {
+				_m.CollectKey = value.String
 			}
 		case workspace.FieldUserID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
@@ -189,6 +208,11 @@ func (_m *Workspace) QueryTrackingProfiles() *TrackingProfileQuery {
 	return NewWorkspaceClient(_m.config).QueryTrackingProfiles(_m)
 }
 
+// QueryTrackingVisitors queries the "tracking_visitors" edge of the Workspace entity.
+func (_m *Workspace) QueryTrackingVisitors() *TrackingVisitorQuery {
+	return NewWorkspaceClient(_m.config).QueryTrackingVisitors(_m)
+}
+
 // QueryAPITokens queries the "api_tokens" edge of the Workspace entity.
 func (_m *Workspace) QueryAPITokens() *ApiTokenQuery {
 	return NewWorkspaceClient(_m.config).QueryAPITokens(_m)
@@ -227,6 +251,8 @@ func (_m *Workspace) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("slug=")
 	builder.WriteString(_m.Slug)
+	builder.WriteString(", ")
+	builder.WriteString("collect_key=<sensitive>")
 	builder.WriteString(", ")
 	if v := _m.UserID; v != nil {
 		builder.WriteString("user_id=")

@@ -44,9 +44,10 @@ model EventActionResource {
 namespace Events {
   /** Record events in batch */
   @post
-  op create(
-    @body body: RecordEventsInput,
-  ): NoContentResponse | UnauthorizedProblem | UnprocessableEntityProblem;
+  op create(@body body: RecordEventsInput):
+    | NoContentResponse
+    | UnauthorizedProblem
+    | UnprocessableEntityProblem;
 }
 
 @route("/event-actions")

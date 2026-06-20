@@ -14,11 +14,11 @@ import (
 	"github.com/DATA-DOG/go-txdb"
 	"github.com/go-testfixtures/testfixtures/v3"
 	_ "github.com/jackc/pgx/v5/stdlib"
-	ht "github.com/ogen-go/ogen/http"
 	"github.com/mokevnin/1mail/config"
 	"github.com/mokevnin/1mail/ent"
 	"github.com/mokevnin/1mail/internal/db"
 	"github.com/mokevnin/1mail/internal/server"
+	ht "github.com/ogen-go/ogen/http"
 	"github.com/stretchr/testify/require"
 )
 
@@ -121,4 +121,3 @@ func (c injectClient) Do(r *http.Request) (*http.Response, error) {
 	c.handler.ServeHTTP(rec, r)
 	return rec.Result(), nil
 }
-

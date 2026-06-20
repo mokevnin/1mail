@@ -36,9 +36,7 @@ func (TrackingProfile) Fields() []ent.Field {
 			Nillable(),
 		field.JSON("traits", map[string]interface{}{}).
 			Default(map[string]interface{}{}),
-		field.Int64("workspace_id").
-			Optional().
-			Nillable(),
+		field.Int64("workspace_id"),
 		field.Time("created_at").
 			Default(time.Now).
 			Immutable(),
@@ -54,6 +52,7 @@ func (TrackingProfile) Edges() []ent.Edge {
 		edge.From("workspace", Workspace.Type).
 			Ref("tracking_profiles").
 			Field("workspace_id").
+			Required().
 			Unique(),
 	}
 }

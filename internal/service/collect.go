@@ -28,7 +28,7 @@ type CollectEventInput struct {
 	OccurredAt *time.Time
 }
 
-func IdentifyVisitor(ctx context.Context, client *ent.Client, input IdentifyInput) error {
+func IdentifyVisitor(ctx context.Context, client *ent.Client, workspaceID int64, input IdentifyInput) error {
 	visitorID := normalizeStringVal(input.VisitorID)
 	if visitorID == "" {
 		return errors.New("visitorId is required")
@@ -43,12 +43,12 @@ func IdentifyVisitor(ctx context.Context, client *ent.Client, input IdentifyInpu
 		return err
 	}
 
-	profile, err := upsertProfile(ctx, client, canonicalSubjectID, email, phone, traits)
+	profile, err := upsertProfile(ctx, client, workspaceID, canonicalSubjectID, email, phone, traits)
 	if err != nil {
 		return err
 	}
 
-	visitor, err := findOrCreateVisitor(ctx, client, visitorID)
+	visitor, err := findOrCreateVisitor(ctx, client, workspaceID, visitorID)
 	if err != nil {
 		return err
 	}
@@ -59,15 +59,16 @@ func IdentifyVisitor(ctx context.Context, client *ent.Client, input IdentifyInpu
 		Exec(ctx)
 }
 
-func CollectEvents(ctx context.Context, client *ent.Client, events []CollectEventInput) error {
+func CollectEvents(ctx context.Context, client *ent.Client, workspaceID int64, events []CollectEventInput) error {
 	for _, evt := range events {
 		visitorID := normalizeStringVal(evt.VisitorID)
-		resolution, err := resolveTrackingIdentity(ctx, client, visitorID)
+		resolution, err := resolveTrackingIdentity(ctx, client, workspaceID, visitorID)
 		if err != nil {
 			return err
 		}
 
 		q := client.Event.Create().
+			SetWorkspaceID(workspaceID).
 			SetSubjectID(resolution.subjectID).
 			SetAction(evt.Action)
 		if resolution.email != "" {
@@ -95,8 +96,8 @@ type trackingResolution struct {
 	phone     string
 }
 
-func resolveTrackingIdentity(ctx context.Context, client *ent.Client, visitorID string) (*trackingResolution, error) {
-	visitor, err := findOrCreateVisitor(ctx, client, visitorID)
+func resolveTrackingIdentity(ctx context.Context, client *ent.Client, workspaceID int64, visitorID string) (*trackingResolution, error) {
+	visitor, err := findOrCreateVisitor(ctx, client, workspaceID, visitorID)
 	if err != nil {
 		return nil, err
 	}
@@ -117,9 +118,9 @@ func resolveTrackingIdentity(ctx context.Context, client *ent.Client, visitorID 
 	return res, nil
 }
 
-func findOrCreateVisitor(ctx context.Context, client *ent.Client, visitorID string) (*ent.TrackingVisitor, error) {
+func findOrCreateVisitor(ctx context.Context, client *ent.Client, workspaceID int64, visitorID string) (*ent.TrackingVisitor, error) {
 	existing, err := client.TrackingVisitor.Query().
-		Where(trackingvisitor.VisitorID(visitorID)).
+		Where(trackingvisitor.VisitorID(visitorID), trackingvisitor.WorkspaceID(workspaceID)).
 		First(ctx)
 	if err == nil {
 		return client.TrackingVisitor.UpdateOneID(existing.ID).
@@ -130,13 +131,14 @@ func findOrCreateVisitor(ctx context.Context, client *ent.Client, visitorID stri
 		return nil, err
 	}
 	return client.TrackingVisitor.Create().
+		SetWorkspaceID(workspaceID).
 		SetVisitorID(visitorID).
 		SetLastSeenAt(time.Now()).
 		Save(ctx)
 }
 
-func upsertProfile(ctx context.Context, client *ent.Client, subjectID string, email, phone *string, traits map[string]any) (*ent.TrackingProfile, error) {
-	existing, err := findProfile(ctx, client, subjectID, email, phone)
+func upsertProfile(ctx context.Context, client *ent.Client, workspaceID int64, subjectID string, email, phone *string, traits map[string]any) (*ent.TrackingProfile, error) {
+	existing, err := findProfile(ctx, client, workspaceID, subjectID, email, phone)
 	if err != nil {
 		return nil, err
 	}
@@ -151,7 +153,10 @@ func upsertProfile(ctx context.Context, client *ent.Client, subjectID string, em
 		}
 		return q.Save(ctx)
 	}
-	q := client.TrackingProfile.Create().SetSubjectID(subjectID).SetTraits(traits)
+	q := client.TrackingProfile.Create().
+		SetWorkspaceID(workspaceID).
+		SetSubjectID(subjectID).
+		SetTraits(traits)
 	if email != nil {
 		q = q.SetEmail(*email)
 	}
@@ -161,10 +166,10 @@ func upsertProfile(ctx context.Context, client *ent.Client, subjectID string, em
 	return q.Save(ctx)
 }
 
-func findProfile(ctx context.Context, client *ent.Client, subjectID string, email, phone *string) (*ent.TrackingProfile, error) {
+func findProfile(ctx context.Context, client *ent.Client, workspaceID int64, subjectID string, email, phone *string) (*ent.TrackingProfile, error) {
 	if subjectID != "" {
 		p, err := client.TrackingProfile.Query().
-			Where(trackingprofile.SubjectID(subjectID)).First(ctx)
+			Where(trackingprofile.SubjectID(subjectID), trackingprofile.WorkspaceID(workspaceID)).First(ctx)
 		if err == nil {
 			return p, nil
 		}
@@ -174,7 +179,7 @@ func findProfile(ctx context.Context, client *ent.Client, subjectID string, emai
 	}
 	if email != nil {
 		p, err := client.TrackingProfile.Query().
-			Where(trackingprofile.Email(*email)).First(ctx)
+			Where(trackingprofile.Email(*email), trackingprofile.WorkspaceID(workspaceID)).First(ctx)
 		if err == nil {
 			return p, nil
 		}
@@ -184,7 +189,7 @@ func findProfile(ctx context.Context, client *ent.Client, subjectID string, emai
 	}
 	if phone != nil {
 		p, err := client.TrackingProfile.Query().
-			Where(trackingprofile.Phone(*phone)).First(ctx)
+			Where(trackingprofile.Phone(*phone), trackingprofile.WorkspaceID(workspaceID)).First(ctx)
 		if err == nil {
 			return p, nil
 		}

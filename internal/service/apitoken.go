@@ -38,6 +38,17 @@ func TokenValue(prefix, secret string) string {
 	return tokenPrefix + "_" + prefix + "_" + secret
 }
 
+const collectKeyPrefix = "omck"
+
+// GenerateCollectKey returns a per-workspace collect write-key (x-collect-key).
+func GenerateCollectKey() (string, error) {
+	secret, err := randomString(urlSafeAlphabet, secretLen)
+	if err != nil {
+		return "", err
+	}
+	return collectKeyPrefix + "_" + secret, nil
+}
+
 func HashTokenSecret(secret string) (string, error) {
 	h, err := bcrypt.GenerateFromPassword([]byte(secret), bcryptCost)
 	if err != nil {

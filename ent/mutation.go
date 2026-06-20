@@ -2350,7 +2350,7 @@ func (m *EventMutation) WorkspaceID() (r int64, exists bool) {
 // OldWorkspaceID returns the old "workspace_id" field's value of the Event entity.
 // If the Event object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *EventMutation) OldWorkspaceID(ctx context.Context) (v *int64, err error) {
+func (m *EventMutation) OldWorkspaceID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldWorkspaceID is only allowed on UpdateOne operations")
 	}
@@ -2364,22 +2364,9 @@ func (m *EventMutation) OldWorkspaceID(ctx context.Context) (v *int64, err error
 	return oldValue.WorkspaceID, nil
 }
 
-// ClearWorkspaceID clears the value of the "workspace_id" field.
-func (m *EventMutation) ClearWorkspaceID() {
-	m.workspace = nil
-	m.clearedFields[event.FieldWorkspaceID] = struct{}{}
-}
-
-// WorkspaceIDCleared returns if the "workspace_id" field was cleared in this mutation.
-func (m *EventMutation) WorkspaceIDCleared() bool {
-	_, ok := m.clearedFields[event.FieldWorkspaceID]
-	return ok
-}
-
 // ResetWorkspaceID resets all changes to the "workspace_id" field.
 func (m *EventMutation) ResetWorkspaceID() {
 	m.workspace = nil
-	delete(m.clearedFields, event.FieldWorkspaceID)
 }
 
 // SetCreatedAt sets the "created_at" field.
@@ -2426,7 +2413,7 @@ func (m *EventMutation) ClearWorkspace() {
 
 // WorkspaceCleared reports if the "workspace" edge to the Workspace entity was cleared.
 func (m *EventMutation) WorkspaceCleared() bool {
-	return m.WorkspaceIDCleared() || m.clearedworkspace
+	return m.clearedworkspace
 }
 
 // WorkspaceIDs returns the "workspace" edge IDs in the mutation.
@@ -2680,9 +2667,6 @@ func (m *EventMutation) ClearedFields() []string {
 	if m.FieldCleared(event.FieldProspect) {
 		fields = append(fields, event.FieldProspect)
 	}
-	if m.FieldCleared(event.FieldWorkspaceID) {
-		fields = append(fields, event.FieldWorkspaceID)
-	}
 	return fields
 }
 
@@ -2711,9 +2695,6 @@ func (m *EventMutation) ClearField(name string) error {
 		return nil
 	case event.FieldProspect:
 		m.ClearProspect()
-		return nil
-	case event.FieldWorkspaceID:
-		m.ClearWorkspaceID()
 		return nil
 	}
 	return fmt.Errorf("unknown Event nullable field %s", name)
@@ -3142,7 +3123,7 @@ func (m *TrackingProfileMutation) WorkspaceID() (r int64, exists bool) {
 // OldWorkspaceID returns the old "workspace_id" field's value of the TrackingProfile entity.
 // If the TrackingProfile object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *TrackingProfileMutation) OldWorkspaceID(ctx context.Context) (v *int64, err error) {
+func (m *TrackingProfileMutation) OldWorkspaceID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldWorkspaceID is only allowed on UpdateOne operations")
 	}
@@ -3156,22 +3137,9 @@ func (m *TrackingProfileMutation) OldWorkspaceID(ctx context.Context) (v *int64,
 	return oldValue.WorkspaceID, nil
 }
 
-// ClearWorkspaceID clears the value of the "workspace_id" field.
-func (m *TrackingProfileMutation) ClearWorkspaceID() {
-	m.workspace = nil
-	m.clearedFields[trackingprofile.FieldWorkspaceID] = struct{}{}
-}
-
-// WorkspaceIDCleared returns if the "workspace_id" field was cleared in this mutation.
-func (m *TrackingProfileMutation) WorkspaceIDCleared() bool {
-	_, ok := m.clearedFields[trackingprofile.FieldWorkspaceID]
-	return ok
-}
-
 // ResetWorkspaceID resets all changes to the "workspace_id" field.
 func (m *TrackingProfileMutation) ResetWorkspaceID() {
 	m.workspace = nil
-	delete(m.clearedFields, trackingprofile.FieldWorkspaceID)
 }
 
 // SetCreatedAt sets the "created_at" field.
@@ -3308,7 +3276,7 @@ func (m *TrackingProfileMutation) ClearWorkspace() {
 
 // WorkspaceCleared reports if the "workspace" edge to the Workspace entity was cleared.
 func (m *TrackingProfileMutation) WorkspaceCleared() bool {
-	return m.WorkspaceIDCleared() || m.clearedworkspace
+	return m.clearedworkspace
 }
 
 // WorkspaceIDs returns the "workspace" edge IDs in the mutation.
@@ -3525,9 +3493,6 @@ func (m *TrackingProfileMutation) ClearedFields() []string {
 	if m.FieldCleared(trackingprofile.FieldPhone) {
 		fields = append(fields, trackingprofile.FieldPhone)
 	}
-	if m.FieldCleared(trackingprofile.FieldWorkspaceID) {
-		fields = append(fields, trackingprofile.FieldWorkspaceID)
-	}
 	return fields
 }
 
@@ -3547,9 +3512,6 @@ func (m *TrackingProfileMutation) ClearField(name string) error {
 		return nil
 	case trackingprofile.FieldPhone:
 		m.ClearPhone()
-		return nil
-	case trackingprofile.FieldWorkspaceID:
-		m.ClearWorkspaceID()
 		return nil
 	}
 	return fmt.Errorf("unknown TrackingProfile nullable field %s", name)
@@ -3689,19 +3651,21 @@ func (m *TrackingProfileMutation) ResetEdge(name string) error {
 // TrackingVisitorMutation represents an operation that mutates the TrackingVisitor nodes in the graph.
 type TrackingVisitorMutation struct {
 	config
-	op             Op
-	typ            string
-	id             *int64
-	visitor_id     *string
-	created_at     *time.Time
-	updated_at     *time.Time
-	last_seen_at   *time.Time
-	clearedFields  map[string]struct{}
-	profile        *int64
-	clearedprofile bool
-	done           bool
-	oldValue       func(context.Context) (*TrackingVisitor, error)
-	predicates     []predicate.TrackingVisitor
+	op               Op
+	typ              string
+	id               *int64
+	visitor_id       *string
+	created_at       *time.Time
+	updated_at       *time.Time
+	last_seen_at     *time.Time
+	clearedFields    map[string]struct{}
+	profile          *int64
+	clearedprofile   bool
+	workspace        *int64
+	clearedworkspace bool
+	done             bool
+	oldValue         func(context.Context) (*TrackingVisitor, error)
+	predicates       []predicate.TrackingVisitor
 }
 
 var _ ent.Mutation = (*TrackingVisitorMutation)(nil)
@@ -3842,6 +3806,42 @@ func (m *TrackingVisitorMutation) OldVisitorID(ctx context.Context) (v string, e
 // ResetVisitorID resets all changes to the "visitor_id" field.
 func (m *TrackingVisitorMutation) ResetVisitorID() {
 	m.visitor_id = nil
+}
+
+// SetWorkspaceID sets the "workspace_id" field.
+func (m *TrackingVisitorMutation) SetWorkspaceID(i int64) {
+	m.workspace = &i
+}
+
+// WorkspaceID returns the value of the "workspace_id" field in the mutation.
+func (m *TrackingVisitorMutation) WorkspaceID() (r int64, exists bool) {
+	v := m.workspace
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldWorkspaceID returns the old "workspace_id" field's value of the TrackingVisitor entity.
+// If the TrackingVisitor object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TrackingVisitorMutation) OldWorkspaceID(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldWorkspaceID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldWorkspaceID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldWorkspaceID: %w", err)
+	}
+	return oldValue.WorkspaceID, nil
+}
+
+// ResetWorkspaceID resets all changes to the "workspace_id" field.
+func (m *TrackingVisitorMutation) ResetWorkspaceID() {
+	m.workspace = nil
 }
 
 // SetProfileID sets the "profile_id" field.
@@ -4028,6 +4028,33 @@ func (m *TrackingVisitorMutation) ResetProfile() {
 	m.clearedprofile = false
 }
 
+// ClearWorkspace clears the "workspace" edge to the Workspace entity.
+func (m *TrackingVisitorMutation) ClearWorkspace() {
+	m.clearedworkspace = true
+	m.clearedFields[trackingvisitor.FieldWorkspaceID] = struct{}{}
+}
+
+// WorkspaceCleared reports if the "workspace" edge to the Workspace entity was cleared.
+func (m *TrackingVisitorMutation) WorkspaceCleared() bool {
+	return m.clearedworkspace
+}
+
+// WorkspaceIDs returns the "workspace" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// WorkspaceID instead. It exists only for internal usage by the builders.
+func (m *TrackingVisitorMutation) WorkspaceIDs() (ids []int64) {
+	if id := m.workspace; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetWorkspace resets all changes to the "workspace" edge.
+func (m *TrackingVisitorMutation) ResetWorkspace() {
+	m.workspace = nil
+	m.clearedworkspace = false
+}
+
 // Where appends a list predicates to the TrackingVisitorMutation builder.
 func (m *TrackingVisitorMutation) Where(ps ...predicate.TrackingVisitor) {
 	m.predicates = append(m.predicates, ps...)
@@ -4062,9 +4089,12 @@ func (m *TrackingVisitorMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *TrackingVisitorMutation) Fields() []string {
-	fields := make([]string, 0, 5)
+	fields := make([]string, 0, 6)
 	if m.visitor_id != nil {
 		fields = append(fields, trackingvisitor.FieldVisitorID)
+	}
+	if m.workspace != nil {
+		fields = append(fields, trackingvisitor.FieldWorkspaceID)
 	}
 	if m.profile != nil {
 		fields = append(fields, trackingvisitor.FieldProfileID)
@@ -4088,6 +4118,8 @@ func (m *TrackingVisitorMutation) Field(name string) (ent.Value, bool) {
 	switch name {
 	case trackingvisitor.FieldVisitorID:
 		return m.VisitorID()
+	case trackingvisitor.FieldWorkspaceID:
+		return m.WorkspaceID()
 	case trackingvisitor.FieldProfileID:
 		return m.ProfileID()
 	case trackingvisitor.FieldCreatedAt:
@@ -4107,6 +4139,8 @@ func (m *TrackingVisitorMutation) OldField(ctx context.Context, name string) (en
 	switch name {
 	case trackingvisitor.FieldVisitorID:
 		return m.OldVisitorID(ctx)
+	case trackingvisitor.FieldWorkspaceID:
+		return m.OldWorkspaceID(ctx)
 	case trackingvisitor.FieldProfileID:
 		return m.OldProfileID(ctx)
 	case trackingvisitor.FieldCreatedAt:
@@ -4130,6 +4164,13 @@ func (m *TrackingVisitorMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetVisitorID(v)
+		return nil
+	case trackingvisitor.FieldWorkspaceID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetWorkspaceID(v)
 		return nil
 	case trackingvisitor.FieldProfileID:
 		v, ok := value.(int64)
@@ -4223,6 +4264,9 @@ func (m *TrackingVisitorMutation) ResetField(name string) error {
 	case trackingvisitor.FieldVisitorID:
 		m.ResetVisitorID()
 		return nil
+	case trackingvisitor.FieldWorkspaceID:
+		m.ResetWorkspaceID()
+		return nil
 	case trackingvisitor.FieldProfileID:
 		m.ResetProfileID()
 		return nil
@@ -4241,9 +4285,12 @@ func (m *TrackingVisitorMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *TrackingVisitorMutation) AddedEdges() []string {
-	edges := make([]string, 0, 1)
+	edges := make([]string, 0, 2)
 	if m.profile != nil {
 		edges = append(edges, trackingvisitor.EdgeProfile)
+	}
+	if m.workspace != nil {
+		edges = append(edges, trackingvisitor.EdgeWorkspace)
 	}
 	return edges
 }
@@ -4256,13 +4303,17 @@ func (m *TrackingVisitorMutation) AddedIDs(name string) []ent.Value {
 		if id := m.profile; id != nil {
 			return []ent.Value{*id}
 		}
+	case trackingvisitor.EdgeWorkspace:
+		if id := m.workspace; id != nil {
+			return []ent.Value{*id}
+		}
 	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *TrackingVisitorMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 1)
+	edges := make([]string, 0, 2)
 	return edges
 }
 
@@ -4274,9 +4325,12 @@ func (m *TrackingVisitorMutation) RemovedIDs(name string) []ent.Value {
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *TrackingVisitorMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 1)
+	edges := make([]string, 0, 2)
 	if m.clearedprofile {
 		edges = append(edges, trackingvisitor.EdgeProfile)
+	}
+	if m.clearedworkspace {
+		edges = append(edges, trackingvisitor.EdgeWorkspace)
 	}
 	return edges
 }
@@ -4287,6 +4341,8 @@ func (m *TrackingVisitorMutation) EdgeCleared(name string) bool {
 	switch name {
 	case trackingvisitor.EdgeProfile:
 		return m.clearedprofile
+	case trackingvisitor.EdgeWorkspace:
+		return m.clearedworkspace
 	}
 	return false
 }
@@ -4298,6 +4354,9 @@ func (m *TrackingVisitorMutation) ClearEdge(name string) error {
 	case trackingvisitor.EdgeProfile:
 		m.ClearProfile()
 		return nil
+	case trackingvisitor.EdgeWorkspace:
+		m.ClearWorkspace()
+		return nil
 	}
 	return fmt.Errorf("unknown TrackingVisitor unique edge %s", name)
 }
@@ -4308,6 +4367,9 @@ func (m *TrackingVisitorMutation) ResetEdge(name string) error {
 	switch name {
 	case trackingvisitor.EdgeProfile:
 		m.ResetProfile()
+		return nil
+	case trackingvisitor.EdgeWorkspace:
+		m.ResetWorkspace()
 		return nil
 	}
 	return fmt.Errorf("unknown TrackingVisitor edge %s", name)
@@ -4984,6 +5046,7 @@ type WorkspaceMutation struct {
 	id                       *int64
 	name                     *string
 	slug                     *string
+	collect_key              *string
 	created_at               *time.Time
 	updated_at               *time.Time
 	clearedFields            map[string]struct{}
@@ -4996,6 +5059,9 @@ type WorkspaceMutation struct {
 	tracking_profiles        map[int64]struct{}
 	removedtracking_profiles map[int64]struct{}
 	clearedtracking_profiles bool
+	tracking_visitors        map[int64]struct{}
+	removedtracking_visitors map[int64]struct{}
+	clearedtracking_visitors bool
 	api_tokens               map[int64]struct{}
 	removedapi_tokens        map[int64]struct{}
 	clearedapi_tokens        bool
@@ -5180,6 +5246,42 @@ func (m *WorkspaceMutation) OldSlug(ctx context.Context) (v string, err error) {
 // ResetSlug resets all changes to the "slug" field.
 func (m *WorkspaceMutation) ResetSlug() {
 	m.slug = nil
+}
+
+// SetCollectKey sets the "collect_key" field.
+func (m *WorkspaceMutation) SetCollectKey(s string) {
+	m.collect_key = &s
+}
+
+// CollectKey returns the value of the "collect_key" field in the mutation.
+func (m *WorkspaceMutation) CollectKey() (r string, exists bool) {
+	v := m.collect_key
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCollectKey returns the old "collect_key" field's value of the Workspace entity.
+// If the Workspace object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WorkspaceMutation) OldCollectKey(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCollectKey is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCollectKey requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCollectKey: %w", err)
+	}
+	return oldValue.CollectKey, nil
+}
+
+// ResetCollectKey resets all changes to the "collect_key" field.
+func (m *WorkspaceMutation) ResetCollectKey() {
+	m.collect_key = nil
 }
 
 // SetUserID sets the "user_id" field.
@@ -5465,6 +5567,60 @@ func (m *WorkspaceMutation) ResetTrackingProfiles() {
 	m.removedtracking_profiles = nil
 }
 
+// AddTrackingVisitorIDs adds the "tracking_visitors" edge to the TrackingVisitor entity by ids.
+func (m *WorkspaceMutation) AddTrackingVisitorIDs(ids ...int64) {
+	if m.tracking_visitors == nil {
+		m.tracking_visitors = make(map[int64]struct{})
+	}
+	for i := range ids {
+		m.tracking_visitors[ids[i]] = struct{}{}
+	}
+}
+
+// ClearTrackingVisitors clears the "tracking_visitors" edge to the TrackingVisitor entity.
+func (m *WorkspaceMutation) ClearTrackingVisitors() {
+	m.clearedtracking_visitors = true
+}
+
+// TrackingVisitorsCleared reports if the "tracking_visitors" edge to the TrackingVisitor entity was cleared.
+func (m *WorkspaceMutation) TrackingVisitorsCleared() bool {
+	return m.clearedtracking_visitors
+}
+
+// RemoveTrackingVisitorIDs removes the "tracking_visitors" edge to the TrackingVisitor entity by IDs.
+func (m *WorkspaceMutation) RemoveTrackingVisitorIDs(ids ...int64) {
+	if m.removedtracking_visitors == nil {
+		m.removedtracking_visitors = make(map[int64]struct{})
+	}
+	for i := range ids {
+		delete(m.tracking_visitors, ids[i])
+		m.removedtracking_visitors[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedTrackingVisitors returns the removed IDs of the "tracking_visitors" edge to the TrackingVisitor entity.
+func (m *WorkspaceMutation) RemovedTrackingVisitorsIDs() (ids []int64) {
+	for id := range m.removedtracking_visitors {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// TrackingVisitorsIDs returns the "tracking_visitors" edge IDs in the mutation.
+func (m *WorkspaceMutation) TrackingVisitorsIDs() (ids []int64) {
+	for id := range m.tracking_visitors {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetTrackingVisitors resets all changes to the "tracking_visitors" edge.
+func (m *WorkspaceMutation) ResetTrackingVisitors() {
+	m.tracking_visitors = nil
+	m.clearedtracking_visitors = false
+	m.removedtracking_visitors = nil
+}
+
 // AddAPITokenIDs adds the "api_tokens" edge to the ApiToken entity by ids.
 func (m *WorkspaceMutation) AddAPITokenIDs(ids ...int64) {
 	if m.api_tokens == nil {
@@ -5580,12 +5736,15 @@ func (m *WorkspaceMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *WorkspaceMutation) Fields() []string {
-	fields := make([]string, 0, 5)
+	fields := make([]string, 0, 6)
 	if m.name != nil {
 		fields = append(fields, workspace.FieldName)
 	}
 	if m.slug != nil {
 		fields = append(fields, workspace.FieldSlug)
+	}
+	if m.collect_key != nil {
+		fields = append(fields, workspace.FieldCollectKey)
 	}
 	if m.user != nil {
 		fields = append(fields, workspace.FieldUserID)
@@ -5608,6 +5767,8 @@ func (m *WorkspaceMutation) Field(name string) (ent.Value, bool) {
 		return m.Name()
 	case workspace.FieldSlug:
 		return m.Slug()
+	case workspace.FieldCollectKey:
+		return m.CollectKey()
 	case workspace.FieldUserID:
 		return m.UserID()
 	case workspace.FieldCreatedAt:
@@ -5627,6 +5788,8 @@ func (m *WorkspaceMutation) OldField(ctx context.Context, name string) (ent.Valu
 		return m.OldName(ctx)
 	case workspace.FieldSlug:
 		return m.OldSlug(ctx)
+	case workspace.FieldCollectKey:
+		return m.OldCollectKey(ctx)
 	case workspace.FieldUserID:
 		return m.OldUserID(ctx)
 	case workspace.FieldCreatedAt:
@@ -5655,6 +5818,13 @@ func (m *WorkspaceMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetSlug(v)
+		return nil
+	case workspace.FieldCollectKey:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCollectKey(v)
 		return nil
 	case workspace.FieldUserID:
 		v, ok := value.(int64)
@@ -5744,6 +5914,9 @@ func (m *WorkspaceMutation) ResetField(name string) error {
 	case workspace.FieldSlug:
 		m.ResetSlug()
 		return nil
+	case workspace.FieldCollectKey:
+		m.ResetCollectKey()
+		return nil
 	case workspace.FieldUserID:
 		m.ResetUserID()
 		return nil
@@ -5759,7 +5932,7 @@ func (m *WorkspaceMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *WorkspaceMutation) AddedEdges() []string {
-	edges := make([]string, 0, 5)
+	edges := make([]string, 0, 6)
 	if m.contacts != nil {
 		edges = append(edges, workspace.EdgeContacts)
 	}
@@ -5768,6 +5941,9 @@ func (m *WorkspaceMutation) AddedEdges() []string {
 	}
 	if m.tracking_profiles != nil {
 		edges = append(edges, workspace.EdgeTrackingProfiles)
+	}
+	if m.tracking_visitors != nil {
+		edges = append(edges, workspace.EdgeTrackingVisitors)
 	}
 	if m.api_tokens != nil {
 		edges = append(edges, workspace.EdgeAPITokens)
@@ -5800,6 +5976,12 @@ func (m *WorkspaceMutation) AddedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case workspace.EdgeTrackingVisitors:
+		ids := make([]ent.Value, 0, len(m.tracking_visitors))
+		for id := range m.tracking_visitors {
+			ids = append(ids, id)
+		}
+		return ids
 	case workspace.EdgeAPITokens:
 		ids := make([]ent.Value, 0, len(m.api_tokens))
 		for id := range m.api_tokens {
@@ -5816,7 +5998,7 @@ func (m *WorkspaceMutation) AddedIDs(name string) []ent.Value {
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *WorkspaceMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 5)
+	edges := make([]string, 0, 6)
 	if m.removedcontacts != nil {
 		edges = append(edges, workspace.EdgeContacts)
 	}
@@ -5825,6 +6007,9 @@ func (m *WorkspaceMutation) RemovedEdges() []string {
 	}
 	if m.removedtracking_profiles != nil {
 		edges = append(edges, workspace.EdgeTrackingProfiles)
+	}
+	if m.removedtracking_visitors != nil {
+		edges = append(edges, workspace.EdgeTrackingVisitors)
 	}
 	if m.removedapi_tokens != nil {
 		edges = append(edges, workspace.EdgeAPITokens)
@@ -5854,6 +6039,12 @@ func (m *WorkspaceMutation) RemovedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case workspace.EdgeTrackingVisitors:
+		ids := make([]ent.Value, 0, len(m.removedtracking_visitors))
+		for id := range m.removedtracking_visitors {
+			ids = append(ids, id)
+		}
+		return ids
 	case workspace.EdgeAPITokens:
 		ids := make([]ent.Value, 0, len(m.removedapi_tokens))
 		for id := range m.removedapi_tokens {
@@ -5866,7 +6057,7 @@ func (m *WorkspaceMutation) RemovedIDs(name string) []ent.Value {
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *WorkspaceMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 5)
+	edges := make([]string, 0, 6)
 	if m.clearedcontacts {
 		edges = append(edges, workspace.EdgeContacts)
 	}
@@ -5875,6 +6066,9 @@ func (m *WorkspaceMutation) ClearedEdges() []string {
 	}
 	if m.clearedtracking_profiles {
 		edges = append(edges, workspace.EdgeTrackingProfiles)
+	}
+	if m.clearedtracking_visitors {
+		edges = append(edges, workspace.EdgeTrackingVisitors)
 	}
 	if m.clearedapi_tokens {
 		edges = append(edges, workspace.EdgeAPITokens)
@@ -5895,6 +6089,8 @@ func (m *WorkspaceMutation) EdgeCleared(name string) bool {
 		return m.clearedevents
 	case workspace.EdgeTrackingProfiles:
 		return m.clearedtracking_profiles
+	case workspace.EdgeTrackingVisitors:
+		return m.clearedtracking_visitors
 	case workspace.EdgeAPITokens:
 		return m.clearedapi_tokens
 	case workspace.EdgeUser:
@@ -5926,6 +6122,9 @@ func (m *WorkspaceMutation) ResetEdge(name string) error {
 		return nil
 	case workspace.EdgeTrackingProfiles:
 		m.ResetTrackingProfiles()
+		return nil
+	case workspace.EdgeTrackingVisitors:
+		m.ResetTrackingVisitors()
 		return nil
 	case workspace.EdgeAPITokens:
 		m.ResetAPITokens()

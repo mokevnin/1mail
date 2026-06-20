@@ -68,14 +68,6 @@ func (_c *TrackingProfileCreate) SetWorkspaceID(v int64) *TrackingProfileCreate 
 	return _c
 }
 
-// SetNillableWorkspaceID sets the "workspace_id" field if the given value is not nil.
-func (_c *TrackingProfileCreate) SetNillableWorkspaceID(v *int64) *TrackingProfileCreate {
-	if v != nil {
-		_c.SetWorkspaceID(*v)
-	}
-	return _c
-}
-
 // SetCreatedAt sets the "created_at" field.
 func (_c *TrackingProfileCreate) SetCreatedAt(v time.Time) *TrackingProfileCreate {
 	_c.mutation.SetCreatedAt(v)
@@ -192,11 +184,17 @@ func (_c *TrackingProfileCreate) check() error {
 	if _, ok := _c.mutation.Traits(); !ok {
 		return &ValidationError{Name: "traits", err: errors.New(`ent: missing required field "TrackingProfile.traits"`)}
 	}
+	if _, ok := _c.mutation.WorkspaceID(); !ok {
+		return &ValidationError{Name: "workspace_id", err: errors.New(`ent: missing required field "TrackingProfile.workspace_id"`)}
+	}
 	if _, ok := _c.mutation.CreatedAt(); !ok {
 		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "TrackingProfile.created_at"`)}
 	}
 	if _, ok := _c.mutation.UpdatedAt(); !ok {
 		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "TrackingProfile.updated_at"`)}
+	}
+	if len(_c.mutation.WorkspaceIDs()) == 0 {
+		return &ValidationError{Name: "workspace", err: errors.New(`ent: missing required edge "TrackingProfile.workspace"`)}
 	}
 	return nil
 }
@@ -284,7 +282,7 @@ func (_c *TrackingProfileCreate) createSpec() (*TrackingProfile, *sqlgraph.Creat
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_node.WorkspaceID = &nodes[0]
+		_node.WorkspaceID = nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec

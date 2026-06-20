@@ -81,10 +81,14 @@ namespace SiteContacts {
   /** Create a contact from the site UI */
   @createsResource(SiteContactResource)
   @post
-  op create(@path workspaceSlug: string, @body body: SiteCreateContactInput): {
-    @statusCode statusCode: 201;
-    @body body: SiteContactResource;
-  } | NotFoundProblem | ConflictProblem | UnprocessableEntityProblem;
+  op create(@path workspaceSlug: string, @body body: SiteCreateContactInput):
+    | {
+        @statusCode statusCode: 201;
+        @body body: SiteContactResource;
+      }
+    | NotFoundProblem
+    | ConflictProblem
+    | UnprocessableEntityProblem;
 
   /** List contacts for the site UI */
   @listsResource(SiteContactResource)
@@ -95,22 +99,30 @@ namespace SiteContacts {
 
     /** Filter by status */
     @query status?: SiteContactStatus,
-  ): Page<SiteContactResource> | BadRequestProblem | NotFoundProblem | UnprocessableEntityProblem;
+  ):
+    | Page<SiteContactResource>
+    | BadRequestProblem
+    | NotFoundProblem
+    | UnprocessableEntityProblem;
 
   /** Get a contact by ID for the site UI */
   @readsResource(SiteContactResource)
   @get
   @route("/{id}")
-  op get(
-    @path workspaceSlug: string,
-    @path id: EntityId,
-  ): SiteContactResource | BadRequestProblem | NotFoundProblem;
+  op get(@path workspaceSlug: string, @path id: EntityId):
+    | SiteContactResource
+    | BadRequestProblem
+    | NotFoundProblem;
 
   /** Update a contact from the site UI */
   @updatesResource(SiteContactResource)
   @put
   @route("/{id}")
-  op update(@path workspaceSlug: string, @path id: EntityId, @body body: SiteUpdateContactInput):
+  op update(
+    @path workspaceSlug: string,
+    @path id: EntityId,
+    @body body: SiteUpdateContactInput,
+  ):
     | SiteContactResource
     | BadRequestProblem
     | NotFoundProblem
@@ -121,8 +133,8 @@ namespace SiteContacts {
   @deletesResource(SiteContactResource)
   @delete
   @route("/{id}")
-  op delete(
-    @path workspaceSlug: string,
-    @path id: EntityId,
-  ): NoContentResponse | BadRequestProblem | NotFoundProblem;
+  op delete(@path workspaceSlug: string, @path id: EntityId):
+    | NoContentResponse
+    | BadRequestProblem
+    | NotFoundProblem;
 }

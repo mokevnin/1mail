@@ -43,9 +43,7 @@ func (Event) Fields() []ent.Field {
 		field.Bool("prospect").
 			Optional().
 			Nillable(),
-		field.Int64("workspace_id").
-			Optional().
-			Nillable(),
+		field.Int64("workspace_id"),
 		field.Time("created_at").
 			Default(time.Now).
 			Immutable(),
@@ -57,6 +55,7 @@ func (Event) Edges() []ent.Edge {
 		edge.From("workspace", Workspace.Type).
 			Ref("events").
 			Field("workspace_id").
+			Required().
 			Unique(),
 	}
 }

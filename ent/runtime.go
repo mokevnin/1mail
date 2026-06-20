@@ -104,17 +104,17 @@ func init() {
 	// trackingvisitor.VisitorIDValidator is a validator for the "visitor_id" field. It is called by the builders before save.
 	trackingvisitor.VisitorIDValidator = trackingvisitorDescVisitorID.Validators[0].(func(string) error)
 	// trackingvisitorDescCreatedAt is the schema descriptor for created_at field.
-	trackingvisitorDescCreatedAt := trackingvisitorFields[3].Descriptor()
+	trackingvisitorDescCreatedAt := trackingvisitorFields[4].Descriptor()
 	// trackingvisitor.DefaultCreatedAt holds the default value on creation for the created_at field.
 	trackingvisitor.DefaultCreatedAt = trackingvisitorDescCreatedAt.Default.(func() time.Time)
 	// trackingvisitorDescUpdatedAt is the schema descriptor for updated_at field.
-	trackingvisitorDescUpdatedAt := trackingvisitorFields[4].Descriptor()
+	trackingvisitorDescUpdatedAt := trackingvisitorFields[5].Descriptor()
 	// trackingvisitor.DefaultUpdatedAt holds the default value on creation for the updated_at field.
 	trackingvisitor.DefaultUpdatedAt = trackingvisitorDescUpdatedAt.Default.(func() time.Time)
 	// trackingvisitor.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	trackingvisitor.UpdateDefaultUpdatedAt = trackingvisitorDescUpdatedAt.UpdateDefault.(func() time.Time)
 	// trackingvisitorDescLastSeenAt is the schema descriptor for last_seen_at field.
-	trackingvisitorDescLastSeenAt := trackingvisitorFields[5].Descriptor()
+	trackingvisitorDescLastSeenAt := trackingvisitorFields[6].Descriptor()
 	// trackingvisitor.DefaultLastSeenAt holds the default value on creation for the last_seen_at field.
 	trackingvisitor.DefaultLastSeenAt = trackingvisitorDescLastSeenAt.Default.(func() time.Time)
 	userFields := schema.User{}.Fields()
@@ -147,12 +147,16 @@ func init() {
 	workspaceDescSlug := workspaceFields[2].Descriptor()
 	// workspace.SlugValidator is a validator for the "slug" field. It is called by the builders before save.
 	workspace.SlugValidator = workspaceDescSlug.Validators[0].(func(string) error)
+	// workspaceDescCollectKey is the schema descriptor for collect_key field.
+	workspaceDescCollectKey := workspaceFields[3].Descriptor()
+	// workspace.CollectKeyValidator is a validator for the "collect_key" field. It is called by the builders before save.
+	workspace.CollectKeyValidator = workspaceDescCollectKey.Validators[0].(func(string) error)
 	// workspaceDescCreatedAt is the schema descriptor for created_at field.
-	workspaceDescCreatedAt := workspaceFields[4].Descriptor()
+	workspaceDescCreatedAt := workspaceFields[5].Descriptor()
 	// workspace.DefaultCreatedAt holds the default value on creation for the created_at field.
 	workspace.DefaultCreatedAt = workspaceDescCreatedAt.Default.(func() time.Time)
 	// workspaceDescUpdatedAt is the schema descriptor for updated_at field.
-	workspaceDescUpdatedAt := workspaceFields[5].Descriptor()
+	workspaceDescUpdatedAt := workspaceFields[6].Descriptor()
 	// workspace.DefaultUpdatedAt holds the default value on creation for the updated_at field.
 	workspace.DefaultUpdatedAt = workspaceDescUpdatedAt.Default.(func() time.Time)
 	// workspace.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.

@@ -991,6 +991,22 @@ func (c *TrackingVisitorClient) QueryProfile(_m *TrackingVisitor) *TrackingProfi
 	return query
 }
 
+// QueryWorkspace queries the workspace edge of a TrackingVisitor.
+func (c *TrackingVisitorClient) QueryWorkspace(_m *TrackingVisitor) *WorkspaceQuery {
+	query := (&WorkspaceClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(trackingvisitor.Table, trackingvisitor.FieldID, id),
+			sqlgraph.To(workspace.Table, workspace.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, trackingvisitor.WorkspaceTable, trackingvisitor.WorkspaceColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *TrackingVisitorClient) Hooks() []Hook {
 	return c.hooks.TrackingVisitor
@@ -1314,6 +1330,22 @@ func (c *WorkspaceClient) QueryTrackingProfiles(_m *Workspace) *TrackingProfileQ
 			sqlgraph.From(workspace.Table, workspace.FieldID, id),
 			sqlgraph.To(trackingprofile.Table, trackingprofile.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, workspace.TrackingProfilesTable, workspace.TrackingProfilesColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryTrackingVisitors queries the tracking_visitors edge of a Workspace.
+func (c *WorkspaceClient) QueryTrackingVisitors(_m *Workspace) *TrackingVisitorQuery {
+	query := (&TrackingVisitorClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workspace.Table, workspace.FieldID, id),
+			sqlgraph.To(trackingvisitor.Table, trackingvisitor.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, workspace.TrackingVisitorsTable, workspace.TrackingVisitorsColumn),
 		)
 		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
 		return fromV, nil

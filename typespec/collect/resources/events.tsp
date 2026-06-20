@@ -17,7 +17,8 @@ model CollectEventsInput {
 @tag("Collect")
 namespace CollectEvents {
   @post
-  op create(
-    @body body: CollectEventsInput,
-  ): NoContentResponse | UnauthorizedProblem | UnprocessableEntityProblem;
+  op create(@body body: CollectEventsInput):
+    | NoContentResponse
+    | UnauthorizedProblem
+    | UnprocessableEntityProblem;
 }

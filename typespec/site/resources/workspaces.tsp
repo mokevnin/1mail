@@ -13,6 +13,9 @@ model SiteWorkspaceResource {
   /** URL-safe unique slug (used in /w/{slug} routes) */
   slug: string;
 
+  /** Per-workspace collect write-key (x-collect-key) for the tracking snippet */
+  collectKey: string;
+
   /** Creation timestamp */
   createdAt: Timestamp;
 }

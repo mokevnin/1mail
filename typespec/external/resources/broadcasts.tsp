@@ -55,10 +55,13 @@ namespace Broadcasts {
   /** Create a broadcast */
   @createsResource(BroadcastResource)
   @post
-  op create(@body body: CreateBroadcastInput): {
-    @statusCode statusCode: 201;
-    @body body: BroadcastResource;
-  } | UnauthorizedProblem | UnprocessableEntityProblem;
+  op create(@body body: CreateBroadcastInput):
+    | {
+        @statusCode statusCode: 201;
+        @body body: BroadcastResource;
+      }
+    | UnauthorizedProblem
+    | UnprocessableEntityProblem;
 
   /** List broadcasts with pagination */
   @listsResource(BroadcastResource)

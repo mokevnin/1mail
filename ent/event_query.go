@@ -405,10 +405,7 @@ func (_q *EventQuery) loadWorkspace(ctx context.Context, query *WorkspaceQuery, 
 	ids := make([]int64, 0, len(nodes))
 	nodeids := make(map[int64][]*Event)
 	for i := range nodes {
-		if nodes[i].WorkspaceID == nil {
-			continue
-		}
-		fk := *nodes[i].WorkspaceID
+		fk := nodes[i].WorkspaceID
 		if _, ok := nodeids[fk]; !ok {
 			ids = append(ids, fk)
 		}

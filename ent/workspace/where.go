@@ -65,6 +65,11 @@ func Slug(v string) predicate.Workspace {
 	return predicate.Workspace(sql.FieldEQ(FieldSlug, v))
 }
 
+// CollectKey applies equality check predicate on the "collect_key" field. It's identical to CollectKeyEQ.
+func CollectKey(v string) predicate.Workspace {
+	return predicate.Workspace(sql.FieldEQ(FieldCollectKey, v))
+}
+
 // UserID applies equality check predicate on the "user_id" field. It's identical to UserIDEQ.
 func UserID(v int64) predicate.Workspace {
 	return predicate.Workspace(sql.FieldEQ(FieldUserID, v))
@@ -208,6 +213,71 @@ func SlugEqualFold(v string) predicate.Workspace {
 // SlugContainsFold applies the ContainsFold predicate on the "slug" field.
 func SlugContainsFold(v string) predicate.Workspace {
 	return predicate.Workspace(sql.FieldContainsFold(FieldSlug, v))
+}
+
+// CollectKeyEQ applies the EQ predicate on the "collect_key" field.
+func CollectKeyEQ(v string) predicate.Workspace {
+	return predicate.Workspace(sql.FieldEQ(FieldCollectKey, v))
+}
+
+// CollectKeyNEQ applies the NEQ predicate on the "collect_key" field.
+func CollectKeyNEQ(v string) predicate.Workspace {
+	return predicate.Workspace(sql.FieldNEQ(FieldCollectKey, v))
+}
+
+// CollectKeyIn applies the In predicate on the "collect_key" field.
+func CollectKeyIn(vs ...string) predicate.Workspace {
+	return predicate.Workspace(sql.FieldIn(FieldCollectKey, vs...))
+}
+
+// CollectKeyNotIn applies the NotIn predicate on the "collect_key" field.
+func CollectKeyNotIn(vs ...string) predicate.Workspace {
+	return predicate.Workspace(sql.FieldNotIn(FieldCollectKey, vs...))
+}
+
+// CollectKeyGT applies the GT predicate on the "collect_key" field.
+func CollectKeyGT(v string) predicate.Workspace {
+	return predicate.Workspace(sql.FieldGT(FieldCollectKey, v))
+}
+
+// CollectKeyGTE applies the GTE predicate on the "collect_key" field.
+func CollectKeyGTE(v string) predicate.Workspace {
+	return predicate.Workspace(sql.FieldGTE(FieldCollectKey, v))
+}
+
+// CollectKeyLT applies the LT predicate on the "collect_key" field.
+func CollectKeyLT(v string) predicate.Workspace {
+	return predicate.Workspace(sql.FieldLT(FieldCollectKey, v))
+}
+
+// CollectKeyLTE applies the LTE predicate on the "collect_key" field.
+func CollectKeyLTE(v string) predicate.Workspace {
+	return predicate.Workspace(sql.FieldLTE(FieldCollectKey, v))
+}
+
+// CollectKeyContains applies the Contains predicate on the "collect_key" field.
+func CollectKeyContains(v string) predicate.Workspace {
+	return predicate.Workspace(sql.FieldContains(FieldCollectKey, v))
+}
+
+// CollectKeyHasPrefix applies the HasPrefix predicate on the "collect_key" field.
+func CollectKeyHasPrefix(v string) predicate.Workspace {
+	return predicate.Workspace(sql.FieldHasPrefix(FieldCollectKey, v))
+}
+
+// CollectKeyHasSuffix applies the HasSuffix predicate on the "collect_key" field.
+func CollectKeyHasSuffix(v string) predicate.Workspace {
+	return predicate.Workspace(sql.FieldHasSuffix(FieldCollectKey, v))
+}
+
+// CollectKeyEqualFold applies the EqualFold predicate on the "collect_key" field.
+func CollectKeyEqualFold(v string) predicate.Workspace {
+	return predicate.Workspace(sql.FieldEqualFold(FieldCollectKey, v))
+}
+
+// CollectKeyContainsFold applies the ContainsFold predicate on the "collect_key" field.
+func CollectKeyContainsFold(v string) predicate.Workspace {
+	return predicate.Workspace(sql.FieldContainsFold(FieldCollectKey, v))
 }
 
 // UserIDEQ applies the EQ predicate on the "user_id" field.
@@ -381,6 +451,29 @@ func HasTrackingProfiles() predicate.Workspace {
 func HasTrackingProfilesWith(preds ...predicate.TrackingProfile) predicate.Workspace {
 	return predicate.Workspace(func(s *sql.Selector) {
 		step := newTrackingProfilesStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasTrackingVisitors applies the HasEdge predicate on the "tracking_visitors" edge.
+func HasTrackingVisitors() predicate.Workspace {
+	return predicate.Workspace(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, TrackingVisitorsTable, TrackingVisitorsColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasTrackingVisitorsWith applies the HasEdge predicate on the "tracking_visitors" edge with a given conditions (other predicates).
+func HasTrackingVisitorsWith(preds ...predicate.TrackingVisitor) predicate.Workspace {
+	return predicate.Workspace(func(s *sql.Selector) {
+		step := newTrackingVisitorsStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)

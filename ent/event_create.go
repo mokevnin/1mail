@@ -101,14 +101,6 @@ func (_c *EventCreate) SetWorkspaceID(v int64) *EventCreate {
 	return _c
 }
 
-// SetNillableWorkspaceID sets the "workspace_id" field if the given value is not nil.
-func (_c *EventCreate) SetNillableWorkspaceID(v *int64) *EventCreate {
-	if v != nil {
-		_c.SetWorkspaceID(*v)
-	}
-	return _c
-}
-
 // SetCreatedAt sets the "created_at" field.
 func (_c *EventCreate) SetCreatedAt(v time.Time) *EventCreate {
 	_c.mutation.SetCreatedAt(v)
@@ -193,8 +185,14 @@ func (_c *EventCreate) check() error {
 			return &ValidationError{Name: "action", err: fmt.Errorf(`ent: validator failed for field "Event.action": %w`, err)}
 		}
 	}
+	if _, ok := _c.mutation.WorkspaceID(); !ok {
+		return &ValidationError{Name: "workspace_id", err: errors.New(`ent: missing required field "Event.workspace_id"`)}
+	}
 	if _, ok := _c.mutation.CreatedAt(); !ok {
 		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "Event.created_at"`)}
+	}
+	if len(_c.mutation.WorkspaceIDs()) == 0 {
+		return &ValidationError{Name: "workspace", err: errors.New(`ent: missing required edge "Event.workspace"`)}
 	}
 	return nil
 }
@@ -274,7 +272,7 @@ func (_c *EventCreate) createSpec() (*Event, *sqlgraph.CreateSpec) {
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_node.WorkspaceID = &nodes[0]
+		_node.WorkspaceID = nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec

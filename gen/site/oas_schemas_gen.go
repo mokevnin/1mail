@@ -1474,6 +1474,8 @@ type SiteWorkspaceResource struct {
 	Name string `json:"name"`
 	// URL-safe unique slug (used in /w/{slug} routes).
 	Slug string `json:"slug"`
+	// Per-workspace collect write-key (x-collect-key) for the tracking snippet.
+	CollectKey string `json:"collectKey"`
 	// Creation timestamp.
 	CreatedAt Timestamp `json:"createdAt"`
 }
@@ -1491,6 +1493,11 @@ func (s *SiteWorkspaceResource) GetName() string {
 // GetSlug returns the value of Slug.
 func (s *SiteWorkspaceResource) GetSlug() string {
 	return s.Slug
+}
+
+// GetCollectKey returns the value of CollectKey.
+func (s *SiteWorkspaceResource) GetCollectKey() string {
+	return s.CollectKey
 }
 
 // GetCreatedAt returns the value of CreatedAt.
@@ -1511,6 +1518,11 @@ func (s *SiteWorkspaceResource) SetName(val string) {
 // SetSlug sets the value of Slug.
 func (s *SiteWorkspaceResource) SetSlug(val string) {
 	s.Slug = val
+}
+
+// SetCollectKey sets the value of CollectKey.
+func (s *SiteWorkspaceResource) SetCollectKey(val string) {
+	s.CollectKey = val
 }
 
 // SetCreatedAt sets the value of CreatedAt.

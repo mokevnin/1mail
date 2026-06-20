@@ -12,6 +12,7 @@ import (
 	"entgo.io/ent/schema/field"
 	"github.com/mokevnin/1mail/ent/trackingprofile"
 	"github.com/mokevnin/1mail/ent/trackingvisitor"
+	"github.com/mokevnin/1mail/ent/workspace"
 )
 
 // TrackingVisitorCreate is the builder for creating a TrackingVisitor entity.
@@ -24,6 +25,12 @@ type TrackingVisitorCreate struct {
 // SetVisitorID sets the "visitor_id" field.
 func (_c *TrackingVisitorCreate) SetVisitorID(v string) *TrackingVisitorCreate {
 	_c.mutation.SetVisitorID(v)
+	return _c
+}
+
+// SetWorkspaceID sets the "workspace_id" field.
+func (_c *TrackingVisitorCreate) SetWorkspaceID(v int64) *TrackingVisitorCreate {
+	_c.mutation.SetWorkspaceID(v)
 	return _c
 }
 
@@ -94,6 +101,11 @@ func (_c *TrackingVisitorCreate) SetProfile(v *TrackingProfile) *TrackingVisitor
 	return _c.SetProfileID(v.ID)
 }
 
+// SetWorkspace sets the "workspace" edge to the Workspace entity.
+func (_c *TrackingVisitorCreate) SetWorkspace(v *Workspace) *TrackingVisitorCreate {
+	return _c.SetWorkspaceID(v.ID)
+}
+
 // Mutation returns the TrackingVisitorMutation object of the builder.
 func (_c *TrackingVisitorCreate) Mutation() *TrackingVisitorMutation {
 	return _c.mutation
@@ -153,6 +165,9 @@ func (_c *TrackingVisitorCreate) check() error {
 			return &ValidationError{Name: "visitor_id", err: fmt.Errorf(`ent: validator failed for field "TrackingVisitor.visitor_id": %w`, err)}
 		}
 	}
+	if _, ok := _c.mutation.WorkspaceID(); !ok {
+		return &ValidationError{Name: "workspace_id", err: errors.New(`ent: missing required field "TrackingVisitor.workspace_id"`)}
+	}
 	if _, ok := _c.mutation.CreatedAt(); !ok {
 		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "TrackingVisitor.created_at"`)}
 	}
@@ -161,6 +176,9 @@ func (_c *TrackingVisitorCreate) check() error {
 	}
 	if _, ok := _c.mutation.LastSeenAt(); !ok {
 		return &ValidationError{Name: "last_seen_at", err: errors.New(`ent: missing required field "TrackingVisitor.last_seen_at"`)}
+	}
+	if len(_c.mutation.WorkspaceIDs()) == 0 {
+		return &ValidationError{Name: "workspace", err: errors.New(`ent: missing required edge "TrackingVisitor.workspace"`)}
 	}
 	return nil
 }
@@ -225,6 +243,23 @@ func (_c *TrackingVisitorCreate) createSpec() (*TrackingVisitor, *sqlgraph.Creat
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_node.ProfileID = &nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.WorkspaceIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   trackingvisitor.WorkspaceTable,
+			Columns: []string{trackingvisitor.WorkspaceColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(workspace.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.WorkspaceID = nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec

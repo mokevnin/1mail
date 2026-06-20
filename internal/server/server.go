@@ -75,7 +75,7 @@ func New(cfg *config.Config, client *ent.Client, ps *pubsub.PubSub) (http.Handle
 	// Collect API — /collect (x-collect-key via generated SecurityHandler).
 	colSrv, err := collectapi.NewServer(
 		apicollect.NewHandlers(client),
-		apiauth.NewCollectSecurityHandler(cfg.CollectSiteKey),
+		apiauth.NewCollectSecurityHandler(client),
 		collectapi.WithPathPrefix("/collect"),
 		collectapi.WithErrorHandler(problemErrorHandler),
 	)

@@ -18,7 +18,8 @@ model CollectOkResponse {
 @tag("Collect")
 namespace CollectIdentify {
   @post
-  op create(
-    @body body: CollectIdentifyInput,
-  ): CollectOkResponse | UnauthorizedProblem | UnprocessableEntityProblem;
+  op create(@body body: CollectIdentifyInput):
+    | CollectOkResponse
+    | UnauthorizedProblem
+    | UnprocessableEntityProblem;
 }

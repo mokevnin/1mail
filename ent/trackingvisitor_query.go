@@ -14,16 +14,18 @@ import (
 	"github.com/mokevnin/1mail/ent/predicate"
 	"github.com/mokevnin/1mail/ent/trackingprofile"
 	"github.com/mokevnin/1mail/ent/trackingvisitor"
+	"github.com/mokevnin/1mail/ent/workspace"
 )
 
 // TrackingVisitorQuery is the builder for querying TrackingVisitor entities.
 type TrackingVisitorQuery struct {
 	config
-	ctx         *QueryContext
-	order       []trackingvisitor.OrderOption
-	inters      []Interceptor
-	predicates  []predicate.TrackingVisitor
-	withProfile *TrackingProfileQuery
+	ctx           *QueryContext
+	order         []trackingvisitor.OrderOption
+	inters        []Interceptor
+	predicates    []predicate.TrackingVisitor
+	withProfile   *TrackingProfileQuery
+	withWorkspace *WorkspaceQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -75,6 +77,28 @@ func (_q *TrackingVisitorQuery) QueryProfile() *TrackingProfileQuery {
 			sqlgraph.From(trackingvisitor.Table, trackingvisitor.FieldID, selector),
 			sqlgraph.To(trackingprofile.Table, trackingprofile.FieldID),
 			sqlgraph.Edge(sqlgraph.M2O, true, trackingvisitor.ProfileTable, trackingvisitor.ProfileColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryWorkspace chains the current query on the "workspace" edge.
+func (_q *TrackingVisitorQuery) QueryWorkspace() *WorkspaceQuery {
+	query := (&WorkspaceClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(trackingvisitor.Table, trackingvisitor.FieldID, selector),
+			sqlgraph.To(workspace.Table, workspace.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, trackingvisitor.WorkspaceTable, trackingvisitor.WorkspaceColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
@@ -269,12 +293,13 @@ func (_q *TrackingVisitorQuery) Clone() *TrackingVisitorQuery {
 		return nil
 	}
 	return &TrackingVisitorQuery{
-		config:      _q.config,
-		ctx:         _q.ctx.Clone(),
-		order:       append([]trackingvisitor.OrderOption{}, _q.order...),
-		inters:      append([]Interceptor{}, _q.inters...),
-		predicates:  append([]predicate.TrackingVisitor{}, _q.predicates...),
-		withProfile: _q.withProfile.Clone(),
+		config:        _q.config,
+		ctx:           _q.ctx.Clone(),
+		order:         append([]trackingvisitor.OrderOption{}, _q.order...),
+		inters:        append([]Interceptor{}, _q.inters...),
+		predicates:    append([]predicate.TrackingVisitor{}, _q.predicates...),
+		withProfile:   _q.withProfile.Clone(),
+		withWorkspace: _q.withWorkspace.Clone(),
 		// clone intermediate query.
 		sql:  _q.sql.Clone(),
 		path: _q.path,
@@ -289,6 +314,17 @@ func (_q *TrackingVisitorQuery) WithProfile(opts ...func(*TrackingProfileQuery))
 		opt(query)
 	}
 	_q.withProfile = query
+	return _q
+}
+
+// WithWorkspace tells the query-builder to eager-load the nodes that are connected to
+// the "workspace" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *TrackingVisitorQuery) WithWorkspace(opts ...func(*WorkspaceQuery)) *TrackingVisitorQuery {
+	query := (&WorkspaceClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withWorkspace = query
 	return _q
 }
 
@@ -370,8 +406,9 @@ func (_q *TrackingVisitorQuery) sqlAll(ctx context.Context, hooks ...queryHook) 
 	var (
 		nodes       = []*TrackingVisitor{}
 		_spec       = _q.querySpec()
-		loadedTypes = [1]bool{
+		loadedTypes = [2]bool{
 			_q.withProfile != nil,
+			_q.withWorkspace != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
@@ -395,6 +432,12 @@ func (_q *TrackingVisitorQuery) sqlAll(ctx context.Context, hooks ...queryHook) 
 	if query := _q.withProfile; query != nil {
 		if err := _q.loadProfile(ctx, query, nodes, nil,
 			func(n *TrackingVisitor, e *TrackingProfile) { n.Edges.Profile = e }); err != nil {
+			return nil, err
+		}
+	}
+	if query := _q.withWorkspace; query != nil {
+		if err := _q.loadWorkspace(ctx, query, nodes, nil,
+			func(n *TrackingVisitor, e *Workspace) { n.Edges.Workspace = e }); err != nil {
 			return nil, err
 		}
 	}
@@ -433,6 +476,35 @@ func (_q *TrackingVisitorQuery) loadProfile(ctx context.Context, query *Tracking
 	}
 	return nil
 }
+func (_q *TrackingVisitorQuery) loadWorkspace(ctx context.Context, query *WorkspaceQuery, nodes []*TrackingVisitor, init func(*TrackingVisitor), assign func(*TrackingVisitor, *Workspace)) error {
+	ids := make([]int64, 0, len(nodes))
+	nodeids := make(map[int64][]*TrackingVisitor)
+	for i := range nodes {
+		fk := nodes[i].WorkspaceID
+		if _, ok := nodeids[fk]; !ok {
+			ids = append(ids, fk)
+		}
+		nodeids[fk] = append(nodeids[fk], nodes[i])
+	}
+	if len(ids) == 0 {
+		return nil
+	}
+	query.Where(workspace.IDIn(ids...))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nodeids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected foreign-key "workspace_id" returned %v`, n.ID)
+		}
+		for i := range nodes {
+			assign(nodes[i], n)
+		}
+	}
+	return nil
+}
 
 func (_q *TrackingVisitorQuery) sqlCount(ctx context.Context) (int, error) {
 	_spec := _q.querySpec()
@@ -461,6 +533,9 @@ func (_q *TrackingVisitorQuery) querySpec() *sqlgraph.QuerySpec {
 		}
 		if _q.withProfile != nil {
 			_spec.Node.AddColumnOnce(trackingvisitor.FieldProfileID)
+		}
+		if _q.withWorkspace != nil {
+			_spec.Node.AddColumnOnce(trackingvisitor.FieldWorkspaceID)
 		}
 	}
 	if ps := _q.predicates; len(ps) > 0 {

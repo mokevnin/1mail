@@ -320,16 +320,6 @@ func WorkspaceIDNotIn(vs ...int64) predicate.TrackingProfile {
 	return predicate.TrackingProfile(sql.FieldNotIn(FieldWorkspaceID, vs...))
 }
 
-// WorkspaceIDIsNil applies the IsNil predicate on the "workspace_id" field.
-func WorkspaceIDIsNil() predicate.TrackingProfile {
-	return predicate.TrackingProfile(sql.FieldIsNull(FieldWorkspaceID))
-}
-
-// WorkspaceIDNotNil applies the NotNil predicate on the "workspace_id" field.
-func WorkspaceIDNotNil() predicate.TrackingProfile {
-	return predicate.TrackingProfile(sql.FieldNotNull(FieldWorkspaceID))
-}
-
 // CreatedAtEQ applies the EQ predicate on the "created_at" field.
 func CreatedAtEQ(v time.Time) predicate.TrackingProfile {
 	return predicate.TrackingProfile(sql.FieldEQ(FieldCreatedAt, v))

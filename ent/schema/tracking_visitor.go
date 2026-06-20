@@ -8,6 +8,7 @@ import (
 	"entgo.io/ent/schema"
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
+	"entgo.io/ent/schema/index"
 )
 
 type TrackingVisitor struct {
@@ -26,8 +27,8 @@ func (TrackingVisitor) Fields() []ent.Field {
 			StorageKey("id").
 			Immutable(),
 		field.String("visitor_id").
-			NotEmpty().
-			Unique(),
+			NotEmpty(),
+		field.Int64("workspace_id"),
 		field.Int64("profile_id").
 			Optional().
 			Nillable(),
@@ -48,5 +49,16 @@ func (TrackingVisitor) Edges() []ent.Edge {
 			Ref("visitors").
 			Field("profile_id").
 			Unique(),
+		edge.From("workspace", Workspace.Type).
+			Ref("tracking_visitors").
+			Field("workspace_id").
+			Required().
+			Unique(),
+	}
+}
+
+func (TrackingVisitor) Indexes() []ent.Index {
+	return []ent.Index{
+		index.Fields("visitor_id", "workspace_id").Unique().StorageKey("tracking_visitors_visitor_id_workspace_id"),
 	}
 }

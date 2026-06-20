@@ -104,12 +104,6 @@ func (_u *TrackingProfileUpdate) SetNillableWorkspaceID(v *int64) *TrackingProfi
 	return _u
 }
 
-// ClearWorkspaceID clears the value of the "workspace_id" field.
-func (_u *TrackingProfileUpdate) ClearWorkspaceID() *TrackingProfileUpdate {
-	_u.mutation.ClearWorkspaceID()
-	return _u
-}
-
 // SetUpdatedAt sets the "updated_at" field.
 func (_u *TrackingProfileUpdate) SetUpdatedAt(v time.Time) *TrackingProfileUpdate {
 	_u.mutation.SetUpdatedAt(v)
@@ -210,6 +204,9 @@ func (_u *TrackingProfileUpdate) check() error {
 		if err := trackingprofile.SubjectIDValidator(v); err != nil {
 			return &ValidationError{Name: "subject_id", err: fmt.Errorf(`ent: validator failed for field "TrackingProfile.subject_id": %w`, err)}
 		}
+	}
+	if _u.mutation.WorkspaceCleared() && len(_u.mutation.WorkspaceIDs()) > 0 {
+		return errors.New(`ent: clearing a required unique edge "TrackingProfile.workspace"`)
 	}
 	return nil
 }
@@ -415,12 +412,6 @@ func (_u *TrackingProfileUpdateOne) SetNillableWorkspaceID(v *int64) *TrackingPr
 	return _u
 }
 
-// ClearWorkspaceID clears the value of the "workspace_id" field.
-func (_u *TrackingProfileUpdateOne) ClearWorkspaceID() *TrackingProfileUpdateOne {
-	_u.mutation.ClearWorkspaceID()
-	return _u
-}
-
 // SetUpdatedAt sets the "updated_at" field.
 func (_u *TrackingProfileUpdateOne) SetUpdatedAt(v time.Time) *TrackingProfileUpdateOne {
 	_u.mutation.SetUpdatedAt(v)
@@ -534,6 +525,9 @@ func (_u *TrackingProfileUpdateOne) check() error {
 		if err := trackingprofile.SubjectIDValidator(v); err != nil {
 			return &ValidationError{Name: "subject_id", err: fmt.Errorf(`ent: validator failed for field "TrackingProfile.subject_id": %w`, err)}
 		}
+	}
+	if _u.mutation.WorkspaceCleared() && len(_u.mutation.WorkspaceIDs()) > 0 {
+		return errors.New(`ent: clearing a required unique edge "TrackingProfile.workspace"`)
 	}
 	return nil
 }

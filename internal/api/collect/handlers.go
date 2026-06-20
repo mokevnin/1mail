@@ -8,6 +8,7 @@ import (
 	"github.com/go-faster/jx"
 	"github.com/mokevnin/1mail/ent"
 	collectapi "github.com/mokevnin/1mail/gen/collect"
+	"github.com/mokevnin/1mail/internal/api/auth"
 	"github.com/mokevnin/1mail/internal/service"
 	"github.com/samber/lo"
 )
@@ -54,7 +55,7 @@ func (h *Handlers) CollectEventsCreate(ctx context.Context, req *collectapi.Coll
 		return evt
 	})
 
-	if err := service.CollectEvents(ctx, h.ent, events); err != nil {
+	if err := service.CollectEvents(ctx, h.ent, auth.CollectWorkspaceID(ctx), events); err != nil {
 		return nil, err
 	}
 	return &collectapi.CollectEventsCreateNoContent{}, nil
@@ -80,7 +81,7 @@ func (h *Handlers) CollectIdentifyCreate(ctx context.Context, req *collectapi.Co
 		input.Traits = rawMap(traits)
 	}
 
-	if err := service.IdentifyVisitor(ctx, h.ent, input); err != nil {
+	if err := service.IdentifyVisitor(ctx, h.ent, auth.CollectWorkspaceID(ctx), input); err != nil {
 		return nil, err
 	}
 	return &collectapi.CollectOkResponse{Ok: collectapi.CollectOkResponseOkTrue}, nil

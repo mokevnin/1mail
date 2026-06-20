@@ -113,6 +113,7 @@ export const zSiteWorkspaceResource = z.object({
     id: zEntityId,
     name: z.string(),
     slug: z.string(),
+    collectKey: z.string(),
     createdAt: zTimestamp
 });
 

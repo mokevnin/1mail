@@ -47,16 +47,22 @@ namespace SiteAuth {
   @useAuth(NoAuth)
   @post
   @route("/register")
-  op register(@body body: SiteRegisterInput): {
-    @statusCode statusCode: 201;
-    @body body: SiteRegisterResult;
-  } | ConflictProblem | UnprocessableEntityProblem;
+  op register(@body body: SiteRegisterInput):
+    | {
+        @statusCode statusCode: 201;
+        @body body: SiteRegisterResult;
+      }
+    | ConflictProblem
+    | UnprocessableEntityProblem;
 
   @useAuth(NoAuth)
   @post
   @route("/direct/login")
-  op directLogin(@body body: SiteDirectLoginInput): {
-    @statusCode statusCode: 200;
-    @body body: SiteDirectLoginResult;
-  } | SiteDirectLoginForbidden | BadRequestProblem;
+  op directLogin(@body body: SiteDirectLoginInput):
+    | {
+        @statusCode statusCode: 200;
+        @body body: SiteDirectLoginResult;
+      }
+    | SiteDirectLoginForbidden
+    | BadRequestProblem;
 }

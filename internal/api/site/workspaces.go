@@ -28,10 +28,11 @@ func (h *Handlers) SiteWorkspacesList(ctx context.Context) ([]siteapi.SiteWorksp
 	resources := make([]siteapi.SiteWorkspaceResource, len(items))
 	for i, w := range items {
 		resources[i] = siteapi.SiteWorkspaceResource{
-			ID:        siteapi.EntityId(strconv.FormatInt(w.ID, 10)),
-			Name:      w.Name,
-			Slug:      w.Slug,
-			CreatedAt: siteapi.Timestamp(w.CreatedAt),
+			ID:         siteapi.EntityId(strconv.FormatInt(w.ID, 10)),
+			Name:       w.Name,
+			Slug:       w.Slug,
+			CollectKey: w.CollectKey,
+			CreatedAt:  siteapi.Timestamp(w.CreatedAt),
 		}
 	}
 	return resources, nil

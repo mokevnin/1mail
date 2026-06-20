@@ -30,6 +30,10 @@ func (Workspace) Fields() []ent.Field {
 		field.String("slug").
 			NotEmpty().
 			Unique(),
+		field.String("collect_key").
+			NotEmpty().
+			Unique().
+			Sensitive(),
 		field.Int64("user_id").
 			Optional().
 			Nillable(),
@@ -47,6 +51,7 @@ func (Workspace) Edges() []ent.Edge {
 		edge.To("contacts", Contact.Type),
 		edge.To("events", Event.Type),
 		edge.To("tracking_profiles", TrackingProfile.Type),
+		edge.To("tracking_visitors", TrackingVisitor.Type),
 		edge.To("api_tokens", ApiToken.Type),
 		edge.From("user", User.Type).
 			Ref("workspaces").

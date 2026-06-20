@@ -216,6 +216,10 @@ export type SiteWorkspaceResource = {
      */
     slug: string;
     /**
+     * Per-workspace collect write-key (x-collect-key) for the tracking snippet
+     */
+    collectKey: string;
+    /**
      * Creation timestamp
      */
     createdAt: Timestamp;

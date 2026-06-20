@@ -17,6 +17,7 @@ import (
 	"github.com/mokevnin/1mail/ent/event"
 	"github.com/mokevnin/1mail/ent/predicate"
 	"github.com/mokevnin/1mail/ent/trackingprofile"
+	"github.com/mokevnin/1mail/ent/trackingvisitor"
 	"github.com/mokevnin/1mail/ent/user"
 	"github.com/mokevnin/1mail/ent/workspace"
 )
@@ -31,6 +32,7 @@ type WorkspaceQuery struct {
 	withContacts         *ContactQuery
 	withEvents           *EventQuery
 	withTrackingProfiles *TrackingProfileQuery
+	withTrackingVisitors *TrackingVisitorQuery
 	withAPITokens        *ApiTokenQuery
 	withUser             *UserQuery
 	// intermediate query (i.e. traversal path).
@@ -128,6 +130,28 @@ func (_q *WorkspaceQuery) QueryTrackingProfiles() *TrackingProfileQuery {
 			sqlgraph.From(workspace.Table, workspace.FieldID, selector),
 			sqlgraph.To(trackingprofile.Table, trackingprofile.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, workspace.TrackingProfilesTable, workspace.TrackingProfilesColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryTrackingVisitors chains the current query on the "tracking_visitors" edge.
+func (_q *WorkspaceQuery) QueryTrackingVisitors() *TrackingVisitorQuery {
+	query := (&TrackingVisitorClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workspace.Table, workspace.FieldID, selector),
+			sqlgraph.To(trackingvisitor.Table, trackingvisitor.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, workspace.TrackingVisitorsTable, workspace.TrackingVisitorsColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
@@ -374,6 +398,7 @@ func (_q *WorkspaceQuery) Clone() *WorkspaceQuery {
 		withContacts:         _q.withContacts.Clone(),
 		withEvents:           _q.withEvents.Clone(),
 		withTrackingProfiles: _q.withTrackingProfiles.Clone(),
+		withTrackingVisitors: _q.withTrackingVisitors.Clone(),
 		withAPITokens:        _q.withAPITokens.Clone(),
 		withUser:             _q.withUser.Clone(),
 		// clone intermediate query.
@@ -412,6 +437,17 @@ func (_q *WorkspaceQuery) WithTrackingProfiles(opts ...func(*TrackingProfileQuer
 		opt(query)
 	}
 	_q.withTrackingProfiles = query
+	return _q
+}
+
+// WithTrackingVisitors tells the query-builder to eager-load the nodes that are connected to
+// the "tracking_visitors" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *WorkspaceQuery) WithTrackingVisitors(opts ...func(*TrackingVisitorQuery)) *WorkspaceQuery {
+	query := (&TrackingVisitorClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withTrackingVisitors = query
 	return _q
 }
 
@@ -515,10 +551,11 @@ func (_q *WorkspaceQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Wo
 	var (
 		nodes       = []*Workspace{}
 		_spec       = _q.querySpec()
-		loadedTypes = [5]bool{
+		loadedTypes = [6]bool{
 			_q.withContacts != nil,
 			_q.withEvents != nil,
 			_q.withTrackingProfiles != nil,
+			_q.withTrackingVisitors != nil,
 			_q.withAPITokens != nil,
 			_q.withUser != nil,
 		}
@@ -559,6 +596,13 @@ func (_q *WorkspaceQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Wo
 		if err := _q.loadTrackingProfiles(ctx, query, nodes,
 			func(n *Workspace) { n.Edges.TrackingProfiles = []*TrackingProfile{} },
 			func(n *Workspace, e *TrackingProfile) { n.Edges.TrackingProfiles = append(n.Edges.TrackingProfiles, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := _q.withTrackingVisitors; query != nil {
+		if err := _q.loadTrackingVisitors(ctx, query, nodes,
+			func(n *Workspace) { n.Edges.TrackingVisitors = []*TrackingVisitor{} },
+			func(n *Workspace, e *TrackingVisitor) { n.Edges.TrackingVisitors = append(n.Edges.TrackingVisitors, e) }); err != nil {
 			return nil, err
 		}
 	}
@@ -630,12 +674,9 @@ func (_q *WorkspaceQuery) loadEvents(ctx context.Context, query *EventQuery, nod
 	}
 	for _, n := range neighbors {
 		fk := n.WorkspaceID
-		if fk == nil {
-			return fmt.Errorf(`foreign-key "workspace_id" is nil for node %v`, n.ID)
-		}
-		node, ok := nodeids[*fk]
+		node, ok := nodeids[fk]
 		if !ok {
-			return fmt.Errorf(`unexpected referenced foreign-key "workspace_id" returned %v for node %v`, *fk, n.ID)
+			return fmt.Errorf(`unexpected referenced foreign-key "workspace_id" returned %v for node %v`, fk, n.ID)
 		}
 		assign(node, n)
 	}
@@ -663,12 +704,39 @@ func (_q *WorkspaceQuery) loadTrackingProfiles(ctx context.Context, query *Track
 	}
 	for _, n := range neighbors {
 		fk := n.WorkspaceID
-		if fk == nil {
-			return fmt.Errorf(`foreign-key "workspace_id" is nil for node %v`, n.ID)
-		}
-		node, ok := nodeids[*fk]
+		node, ok := nodeids[fk]
 		if !ok {
-			return fmt.Errorf(`unexpected referenced foreign-key "workspace_id" returned %v for node %v`, *fk, n.ID)
+			return fmt.Errorf(`unexpected referenced foreign-key "workspace_id" returned %v for node %v`, fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (_q *WorkspaceQuery) loadTrackingVisitors(ctx context.Context, query *TrackingVisitorQuery, nodes []*Workspace, init func(*Workspace), assign func(*Workspace, *TrackingVisitor)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[int64]*Workspace)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(trackingvisitor.FieldWorkspaceID)
+	}
+	query.Where(predicate.TrackingVisitor(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(workspace.TrackingVisitorsColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.WorkspaceID
+		node, ok := nodeids[fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "workspace_id" returned %v for node %v`, fk, n.ID)
 		}
 		assign(node, n)
 	}

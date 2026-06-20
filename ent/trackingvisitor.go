@@ -11,6 +11,7 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"github.com/mokevnin/1mail/ent/trackingprofile"
 	"github.com/mokevnin/1mail/ent/trackingvisitor"
+	"github.com/mokevnin/1mail/ent/workspace"
 )
 
 // TrackingVisitor is the model entity for the TrackingVisitor schema.
@@ -20,6 +21,8 @@ type TrackingVisitor struct {
 	ID int64 `json:"id,omitempty"`
 	// VisitorID holds the value of the "visitor_id" field.
 	VisitorID string `json:"visitor_id,omitempty"`
+	// WorkspaceID holds the value of the "workspace_id" field.
+	WorkspaceID int64 `json:"workspace_id,omitempty"`
 	// ProfileID holds the value of the "profile_id" field.
 	ProfileID *int64 `json:"profile_id,omitempty"`
 	// CreatedAt holds the value of the "created_at" field.
@@ -38,9 +41,11 @@ type TrackingVisitor struct {
 type TrackingVisitorEdges struct {
 	// Profile holds the value of the profile edge.
 	Profile *TrackingProfile `json:"profile,omitempty"`
+	// Workspace holds the value of the workspace edge.
+	Workspace *Workspace `json:"workspace,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [1]bool
+	loadedTypes [2]bool
 }
 
 // ProfileOrErr returns the Profile value or an error if the edge
@@ -54,12 +59,23 @@ func (e TrackingVisitorEdges) ProfileOrErr() (*TrackingProfile, error) {
 	return nil, &NotLoadedError{edge: "profile"}
 }
 
+// WorkspaceOrErr returns the Workspace value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e TrackingVisitorEdges) WorkspaceOrErr() (*Workspace, error) {
+	if e.Workspace != nil {
+		return e.Workspace, nil
+	} else if e.loadedTypes[1] {
+		return nil, &NotFoundError{label: workspace.Label}
+	}
+	return nil, &NotLoadedError{edge: "workspace"}
+}
+
 // scanValues returns the types for scanning values from sql.Rows.
 func (*TrackingVisitor) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case trackingvisitor.FieldID, trackingvisitor.FieldProfileID:
+		case trackingvisitor.FieldID, trackingvisitor.FieldWorkspaceID, trackingvisitor.FieldProfileID:
 			values[i] = new(sql.NullInt64)
 		case trackingvisitor.FieldVisitorID:
 			values[i] = new(sql.NullString)
@@ -91,6 +107,12 @@ func (_m *TrackingVisitor) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field visitor_id", values[i])
 			} else if value.Valid {
 				_m.VisitorID = value.String
+			}
+		case trackingvisitor.FieldWorkspaceID:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field workspace_id", values[i])
+			} else if value.Valid {
+				_m.WorkspaceID = value.Int64
 			}
 		case trackingvisitor.FieldProfileID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
@@ -135,6 +157,11 @@ func (_m *TrackingVisitor) QueryProfile() *TrackingProfileQuery {
 	return NewTrackingVisitorClient(_m.config).QueryProfile(_m)
 }
 
+// QueryWorkspace queries the "workspace" edge of the TrackingVisitor entity.
+func (_m *TrackingVisitor) QueryWorkspace() *WorkspaceQuery {
+	return NewTrackingVisitorClient(_m.config).QueryWorkspace(_m)
+}
+
 // Update returns a builder for updating this TrackingVisitor.
 // Note that you need to call TrackingVisitor.Unwrap() before calling this method if this TrackingVisitor
 // was returned from a transaction, and the transaction was committed or rolled back.
@@ -160,6 +187,9 @@ func (_m *TrackingVisitor) String() string {
 	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
 	builder.WriteString("visitor_id=")
 	builder.WriteString(_m.VisitorID)
+	builder.WriteString(", ")
+	builder.WriteString("workspace_id=")
+	builder.WriteString(fmt.Sprintf("%v", _m.WorkspaceID))
 	builder.WriteString(", ")
 	if v := _m.ProfileID; v != nil {
 		builder.WriteString("profile_id=")

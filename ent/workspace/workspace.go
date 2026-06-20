@@ -18,6 +18,8 @@ const (
 	FieldName = "name"
 	// FieldSlug holds the string denoting the slug field in the database.
 	FieldSlug = "slug"
+	// FieldCollectKey holds the string denoting the collect_key field in the database.
+	FieldCollectKey = "collect_key"
 	// FieldUserID holds the string denoting the user_id field in the database.
 	FieldUserID = "user_id"
 	// FieldCreatedAt holds the string denoting the created_at field in the database.
@@ -30,6 +32,8 @@ const (
 	EdgeEvents = "events"
 	// EdgeTrackingProfiles holds the string denoting the tracking_profiles edge name in mutations.
 	EdgeTrackingProfiles = "tracking_profiles"
+	// EdgeTrackingVisitors holds the string denoting the tracking_visitors edge name in mutations.
+	EdgeTrackingVisitors = "tracking_visitors"
 	// EdgeAPITokens holds the string denoting the api_tokens edge name in mutations.
 	EdgeAPITokens = "api_tokens"
 	// EdgeUser holds the string denoting the user edge name in mutations.
@@ -57,6 +61,13 @@ const (
 	TrackingProfilesInverseTable = "tracking_profiles"
 	// TrackingProfilesColumn is the table column denoting the tracking_profiles relation/edge.
 	TrackingProfilesColumn = "workspace_id"
+	// TrackingVisitorsTable is the table that holds the tracking_visitors relation/edge.
+	TrackingVisitorsTable = "tracking_visitors"
+	// TrackingVisitorsInverseTable is the table name for the TrackingVisitor entity.
+	// It exists in this package in order to avoid circular dependency with the "trackingvisitor" package.
+	TrackingVisitorsInverseTable = "tracking_visitors"
+	// TrackingVisitorsColumn is the table column denoting the tracking_visitors relation/edge.
+	TrackingVisitorsColumn = "workspace_id"
 	// APITokensTable is the table that holds the api_tokens relation/edge.
 	APITokensTable = "api_tokens"
 	// APITokensInverseTable is the table name for the ApiToken entity.
@@ -78,6 +89,7 @@ var Columns = []string{
 	FieldID,
 	FieldName,
 	FieldSlug,
+	FieldCollectKey,
 	FieldUserID,
 	FieldCreatedAt,
 	FieldUpdatedAt,
@@ -98,6 +110,8 @@ var (
 	NameValidator func(string) error
 	// SlugValidator is a validator for the "slug" field. It is called by the builders before save.
 	SlugValidator func(string) error
+	// CollectKeyValidator is a validator for the "collect_key" field. It is called by the builders before save.
+	CollectKeyValidator func(string) error
 	// DefaultCreatedAt holds the default value on creation for the "created_at" field.
 	DefaultCreatedAt func() time.Time
 	// DefaultUpdatedAt holds the default value on creation for the "updated_at" field.
@@ -122,6 +136,11 @@ func ByName(opts ...sql.OrderTermOption) OrderOption {
 // BySlug orders the results by the slug field.
 func BySlug(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldSlug, opts...).ToFunc()
+}
+
+// ByCollectKey orders the results by the collect_key field.
+func ByCollectKey(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldCollectKey, opts...).ToFunc()
 }
 
 // ByUserID orders the results by the user_id field.
@@ -181,6 +200,20 @@ func ByTrackingProfiles(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption 
 	}
 }
 
+// ByTrackingVisitorsCount orders the results by tracking_visitors count.
+func ByTrackingVisitorsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newTrackingVisitorsStep(), opts...)
+	}
+}
+
+// ByTrackingVisitors orders the results by tracking_visitors terms.
+func ByTrackingVisitors(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newTrackingVisitorsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+
 // ByAPITokensCount orders the results by api_tokens count.
 func ByAPITokensCount(opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
@@ -220,6 +253,13 @@ func newTrackingProfilesStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(TrackingProfilesInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2M, false, TrackingProfilesTable, TrackingProfilesColumn),
+	)
+}
+func newTrackingVisitorsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(TrackingVisitorsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, TrackingVisitorsTable, TrackingVisitorsColumn),
 	)
 }
 func newAPITokensStep() *sqlgraph.Step {

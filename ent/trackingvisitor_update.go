@@ -14,6 +14,7 @@ import (
 	"github.com/mokevnin/1mail/ent/predicate"
 	"github.com/mokevnin/1mail/ent/trackingprofile"
 	"github.com/mokevnin/1mail/ent/trackingvisitor"
+	"github.com/mokevnin/1mail/ent/workspace"
 )
 
 // TrackingVisitorUpdate is the builder for updating TrackingVisitor entities.
@@ -39,6 +40,20 @@ func (_u *TrackingVisitorUpdate) SetVisitorID(v string) *TrackingVisitorUpdate {
 func (_u *TrackingVisitorUpdate) SetNillableVisitorID(v *string) *TrackingVisitorUpdate {
 	if v != nil {
 		_u.SetVisitorID(*v)
+	}
+	return _u
+}
+
+// SetWorkspaceID sets the "workspace_id" field.
+func (_u *TrackingVisitorUpdate) SetWorkspaceID(v int64) *TrackingVisitorUpdate {
+	_u.mutation.SetWorkspaceID(v)
+	return _u
+}
+
+// SetNillableWorkspaceID sets the "workspace_id" field if the given value is not nil.
+func (_u *TrackingVisitorUpdate) SetNillableWorkspaceID(v *int64) *TrackingVisitorUpdate {
+	if v != nil {
+		_u.SetWorkspaceID(*v)
 	}
 	return _u
 }
@@ -88,6 +103,11 @@ func (_u *TrackingVisitorUpdate) SetProfile(v *TrackingProfile) *TrackingVisitor
 	return _u.SetProfileID(v.ID)
 }
 
+// SetWorkspace sets the "workspace" edge to the Workspace entity.
+func (_u *TrackingVisitorUpdate) SetWorkspace(v *Workspace) *TrackingVisitorUpdate {
+	return _u.SetWorkspaceID(v.ID)
+}
+
 // Mutation returns the TrackingVisitorMutation object of the builder.
 func (_u *TrackingVisitorUpdate) Mutation() *TrackingVisitorMutation {
 	return _u.mutation
@@ -96,6 +116,12 @@ func (_u *TrackingVisitorUpdate) Mutation() *TrackingVisitorMutation {
 // ClearProfile clears the "profile" edge to the TrackingProfile entity.
 func (_u *TrackingVisitorUpdate) ClearProfile() *TrackingVisitorUpdate {
 	_u.mutation.ClearProfile()
+	return _u
+}
+
+// ClearWorkspace clears the "workspace" edge to the Workspace entity.
+func (_u *TrackingVisitorUpdate) ClearWorkspace() *TrackingVisitorUpdate {
+	_u.mutation.ClearWorkspace()
 	return _u
 }
 
@@ -141,6 +167,9 @@ func (_u *TrackingVisitorUpdate) check() error {
 		if err := trackingvisitor.VisitorIDValidator(v); err != nil {
 			return &ValidationError{Name: "visitor_id", err: fmt.Errorf(`ent: validator failed for field "TrackingVisitor.visitor_id": %w`, err)}
 		}
+	}
+	if _u.mutation.WorkspaceCleared() && len(_u.mutation.WorkspaceIDs()) > 0 {
+		return errors.New(`ent: clearing a required unique edge "TrackingVisitor.workspace"`)
 	}
 	return nil
 }
@@ -195,6 +224,35 @@ func (_u *TrackingVisitorUpdate) sqlSave(ctx context.Context) (_node int, err er
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	if _u.mutation.WorkspaceCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   trackingvisitor.WorkspaceTable,
+			Columns: []string{trackingvisitor.WorkspaceColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(workspace.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.WorkspaceIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   trackingvisitor.WorkspaceTable,
+			Columns: []string{trackingvisitor.WorkspaceColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(workspace.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{trackingvisitor.Label}
@@ -225,6 +283,20 @@ func (_u *TrackingVisitorUpdateOne) SetVisitorID(v string) *TrackingVisitorUpdat
 func (_u *TrackingVisitorUpdateOne) SetNillableVisitorID(v *string) *TrackingVisitorUpdateOne {
 	if v != nil {
 		_u.SetVisitorID(*v)
+	}
+	return _u
+}
+
+// SetWorkspaceID sets the "workspace_id" field.
+func (_u *TrackingVisitorUpdateOne) SetWorkspaceID(v int64) *TrackingVisitorUpdateOne {
+	_u.mutation.SetWorkspaceID(v)
+	return _u
+}
+
+// SetNillableWorkspaceID sets the "workspace_id" field if the given value is not nil.
+func (_u *TrackingVisitorUpdateOne) SetNillableWorkspaceID(v *int64) *TrackingVisitorUpdateOne {
+	if v != nil {
+		_u.SetWorkspaceID(*v)
 	}
 	return _u
 }
@@ -274,6 +346,11 @@ func (_u *TrackingVisitorUpdateOne) SetProfile(v *TrackingProfile) *TrackingVisi
 	return _u.SetProfileID(v.ID)
 }
 
+// SetWorkspace sets the "workspace" edge to the Workspace entity.
+func (_u *TrackingVisitorUpdateOne) SetWorkspace(v *Workspace) *TrackingVisitorUpdateOne {
+	return _u.SetWorkspaceID(v.ID)
+}
+
 // Mutation returns the TrackingVisitorMutation object of the builder.
 func (_u *TrackingVisitorUpdateOne) Mutation() *TrackingVisitorMutation {
 	return _u.mutation
@@ -282,6 +359,12 @@ func (_u *TrackingVisitorUpdateOne) Mutation() *TrackingVisitorMutation {
 // ClearProfile clears the "profile" edge to the TrackingProfile entity.
 func (_u *TrackingVisitorUpdateOne) ClearProfile() *TrackingVisitorUpdateOne {
 	_u.mutation.ClearProfile()
+	return _u
+}
+
+// ClearWorkspace clears the "workspace" edge to the Workspace entity.
+func (_u *TrackingVisitorUpdateOne) ClearWorkspace() *TrackingVisitorUpdateOne {
+	_u.mutation.ClearWorkspace()
 	return _u
 }
 
@@ -340,6 +423,9 @@ func (_u *TrackingVisitorUpdateOne) check() error {
 		if err := trackingvisitor.VisitorIDValidator(v); err != nil {
 			return &ValidationError{Name: "visitor_id", err: fmt.Errorf(`ent: validator failed for field "TrackingVisitor.visitor_id": %w`, err)}
 		}
+	}
+	if _u.mutation.WorkspaceCleared() && len(_u.mutation.WorkspaceIDs()) > 0 {
+		return errors.New(`ent: clearing a required unique edge "TrackingVisitor.workspace"`)
 	}
 	return nil
 }
@@ -404,6 +490,35 @@ func (_u *TrackingVisitorUpdateOne) sqlSave(ctx context.Context) (_node *Trackin
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(trackingprofile.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.WorkspaceCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   trackingvisitor.WorkspaceTable,
+			Columns: []string{trackingvisitor.WorkspaceColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(workspace.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.WorkspaceIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   trackingvisitor.WorkspaceTable,
+			Columns: []string{trackingvisitor.WorkspaceColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(workspace.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {

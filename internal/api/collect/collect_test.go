@@ -13,7 +13,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-const collectKey = "test-collect-key"
+// collectKey is the per-workspace write-key seeded for workspace "acme" (id 1).
+const collectKey = "omck_test_acme_collect_key"
 
 // apiKey is the client-side SecuritySource supplying the x-collect-key value.
 type apiKey struct{ key string }
@@ -30,7 +31,6 @@ func client(t *testing.T, env *testhelper.TestEnv, key string) *collectapi.Clien
 }
 
 func TestCollectKeyAuth(t *testing.T) {
-	t.Setenv("COLLECT_SITE_KEY", collectKey)
 	env := testhelper.Setup(t)
 	ctx := context.Background()
 
@@ -44,7 +44,6 @@ func TestCollectKeyAuth(t *testing.T) {
 }
 
 func TestCollectIdentifyAndEvents(t *testing.T) {
-	t.Setenv("COLLECT_SITE_KEY", collectKey)
 	env := testhelper.Setup(t)
 	c := client(t, env, collectKey)
 	ctx := context.Background()
@@ -66,6 +65,7 @@ func TestCollectIdentifyAndEvents(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, "pro", profile.Traits["plan"])
 	assert.Equal(t, float64(3), profile.Traits["visits"]) // JSON numbers → float64
+	assert.Equal(t, int64(1), profile.WorkspaceID)        // scoped to the key's workspace
 
 	// Events with properties — same conversion path.
 	evRes, err := c.CollectEventsCreate(ctx, &collectapi.CollectEventsInput{
@@ -86,4 +86,5 @@ func TestCollectIdentifyAndEvents(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, "/pricing", evt.Properties["url"])
 	assert.Equal(t, float64(5), evt.Properties["n"])
+	assert.Equal(t, int64(1), evt.WorkspaceID) // scoped to the key's workspace
 }

@@ -475,16 +475,6 @@ func WorkspaceIDNotIn(vs ...int64) predicate.Event {
 	return predicate.Event(sql.FieldNotIn(FieldWorkspaceID, vs...))
 }
 
-// WorkspaceIDIsNil applies the IsNil predicate on the "workspace_id" field.
-func WorkspaceIDIsNil() predicate.Event {
-	return predicate.Event(sql.FieldIsNull(FieldWorkspaceID))
-}
-
-// WorkspaceIDNotNil applies the NotNil predicate on the "workspace_id" field.
-func WorkspaceIDNotNil() predicate.Event {
-	return predicate.Event(sql.FieldNotNull(FieldWorkspaceID))
-}
-
 // CreatedAtEQ applies the EQ predicate on the "created_at" field.
 func CreatedAtEQ(v time.Time) predicate.Event {
 	return predicate.Event(sql.FieldEQ(FieldCreatedAt, v))

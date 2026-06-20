@@ -14,6 +14,7 @@ import (
 	"github.com/mokevnin/1mail/ent/contact"
 	"github.com/mokevnin/1mail/ent/event"
 	"github.com/mokevnin/1mail/ent/trackingprofile"
+	"github.com/mokevnin/1mail/ent/trackingvisitor"
 	"github.com/mokevnin/1mail/ent/user"
 	"github.com/mokevnin/1mail/ent/workspace"
 )
@@ -34,6 +35,12 @@ func (_c *WorkspaceCreate) SetName(v string) *WorkspaceCreate {
 // SetSlug sets the "slug" field.
 func (_c *WorkspaceCreate) SetSlug(v string) *WorkspaceCreate {
 	_c.mutation.SetSlug(v)
+	return _c
+}
+
+// SetCollectKey sets the "collect_key" field.
+func (_c *WorkspaceCreate) SetCollectKey(v string) *WorkspaceCreate {
+	_c.mutation.SetCollectKey(v)
 	return _c
 }
 
@@ -130,6 +137,21 @@ func (_c *WorkspaceCreate) AddTrackingProfiles(v ...*TrackingProfile) *Workspace
 	return _c.AddTrackingProfileIDs(ids...)
 }
 
+// AddTrackingVisitorIDs adds the "tracking_visitors" edge to the TrackingVisitor entity by IDs.
+func (_c *WorkspaceCreate) AddTrackingVisitorIDs(ids ...int64) *WorkspaceCreate {
+	_c.mutation.AddTrackingVisitorIDs(ids...)
+	return _c
+}
+
+// AddTrackingVisitors adds the "tracking_visitors" edges to the TrackingVisitor entity.
+func (_c *WorkspaceCreate) AddTrackingVisitors(v ...*TrackingVisitor) *WorkspaceCreate {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddTrackingVisitorIDs(ids...)
+}
+
 // AddAPITokenIDs adds the "api_tokens" edge to the ApiToken entity by IDs.
 func (_c *WorkspaceCreate) AddAPITokenIDs(ids ...int64) *WorkspaceCreate {
 	_c.mutation.AddAPITokenIDs(ids...)
@@ -213,6 +235,14 @@ func (_c *WorkspaceCreate) check() error {
 			return &ValidationError{Name: "slug", err: fmt.Errorf(`ent: validator failed for field "Workspace.slug": %w`, err)}
 		}
 	}
+	if _, ok := _c.mutation.CollectKey(); !ok {
+		return &ValidationError{Name: "collect_key", err: errors.New(`ent: missing required field "Workspace.collect_key"`)}
+	}
+	if v, ok := _c.mutation.CollectKey(); ok {
+		if err := workspace.CollectKeyValidator(v); err != nil {
+			return &ValidationError{Name: "collect_key", err: fmt.Errorf(`ent: validator failed for field "Workspace.collect_key": %w`, err)}
+		}
+	}
 	if _, ok := _c.mutation.CreatedAt(); !ok {
 		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "Workspace.created_at"`)}
 	}
@@ -258,6 +288,10 @@ func (_c *WorkspaceCreate) createSpec() (*Workspace, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.Slug(); ok {
 		_spec.SetField(workspace.FieldSlug, field.TypeString, value)
 		_node.Slug = value
+	}
+	if value, ok := _c.mutation.CollectKey(); ok {
+		_spec.SetField(workspace.FieldCollectKey, field.TypeString, value)
+		_node.CollectKey = value
 	}
 	if value, ok := _c.mutation.CreatedAt(); ok {
 		_spec.SetField(workspace.FieldCreatedAt, field.TypeTime, value)
@@ -308,6 +342,22 @@ func (_c *WorkspaceCreate) createSpec() (*Workspace, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(trackingprofile.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.TrackingVisitorsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   workspace.TrackingVisitorsTable,
+			Columns: []string{workspace.TrackingVisitorsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(trackingvisitor.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {

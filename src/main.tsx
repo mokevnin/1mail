@@ -7,7 +7,6 @@ import { StrictMode, useState } from 'react'
 import { createRoot } from 'react-dom/client'
 import { client } from './generated/site/client.gen.ts'
 import './i18n.ts'
-import { initTracking } from '@1mail/analytics'
 import { router } from './router.tsx'
 
 client.setConfig({ baseUrl: '/site' })
@@ -36,11 +35,6 @@ const container = document.getElementById('root')
 if (!container) {
   throw new Error('Root element not found')
 }
-
-initTracking({
-  collectKey: import.meta.env.VITE_COLLECT_SITE_KEY ?? '',
-  baseUrl: import.meta.env.VITE_COLLECT_BASE_URL ?? '',
-})
 
 createRoot(container).render(
   <StrictMode>

@@ -54,8 +54,10 @@ namespace Auth {
 
   @get
   @route("/tokens")
-  op tokensList(
-  ): ApiTokenListResponse | UnauthorizedProblem | ForbiddenProblem;
+  op tokensList():
+    | ApiTokenListResponse
+    | UnauthorizedProblem
+    | ForbiddenProblem;
 
   @delete
   @route("/tokens/{id}")

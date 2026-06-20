@@ -16,6 +16,8 @@ const (
 	FieldID = "id"
 	// FieldVisitorID holds the string denoting the visitor_id field in the database.
 	FieldVisitorID = "visitor_id"
+	// FieldWorkspaceID holds the string denoting the workspace_id field in the database.
+	FieldWorkspaceID = "workspace_id"
 	// FieldProfileID holds the string denoting the profile_id field in the database.
 	FieldProfileID = "profile_id"
 	// FieldCreatedAt holds the string denoting the created_at field in the database.
@@ -26,6 +28,8 @@ const (
 	FieldLastSeenAt = "last_seen_at"
 	// EdgeProfile holds the string denoting the profile edge name in mutations.
 	EdgeProfile = "profile"
+	// EdgeWorkspace holds the string denoting the workspace edge name in mutations.
+	EdgeWorkspace = "workspace"
 	// Table holds the table name of the trackingvisitor in the database.
 	Table = "tracking_visitors"
 	// ProfileTable is the table that holds the profile relation/edge.
@@ -35,12 +39,20 @@ const (
 	ProfileInverseTable = "tracking_profiles"
 	// ProfileColumn is the table column denoting the profile relation/edge.
 	ProfileColumn = "profile_id"
+	// WorkspaceTable is the table that holds the workspace relation/edge.
+	WorkspaceTable = "tracking_visitors"
+	// WorkspaceInverseTable is the table name for the Workspace entity.
+	// It exists in this package in order to avoid circular dependency with the "workspace" package.
+	WorkspaceInverseTable = "workspaces"
+	// WorkspaceColumn is the table column denoting the workspace relation/edge.
+	WorkspaceColumn = "workspace_id"
 )
 
 // Columns holds all SQL columns for trackingvisitor fields.
 var Columns = []string{
 	FieldID,
 	FieldVisitorID,
+	FieldWorkspaceID,
 	FieldProfileID,
 	FieldCreatedAt,
 	FieldUpdatedAt,
@@ -83,6 +95,11 @@ func ByVisitorID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldVisitorID, opts...).ToFunc()
 }
 
+// ByWorkspaceID orders the results by the workspace_id field.
+func ByWorkspaceID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldWorkspaceID, opts...).ToFunc()
+}
+
 // ByProfileID orders the results by the profile_id field.
 func ByProfileID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldProfileID, opts...).ToFunc()
@@ -109,10 +126,24 @@ func ByProfileField(field string, opts ...sql.OrderTermOption) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newProfileStep(), sql.OrderByField(field, opts...))
 	}
 }
+
+// ByWorkspaceField orders the results by workspace field.
+func ByWorkspaceField(field string, opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newWorkspaceStep(), sql.OrderByField(field, opts...))
+	}
+}
 func newProfileStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(ProfileInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.M2O, true, ProfileTable, ProfileColumn),
+	)
+}
+func newWorkspaceStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(WorkspaceInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.M2O, true, WorkspaceTable, WorkspaceColumn),
 	)
 }
