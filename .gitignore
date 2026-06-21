@@ -17,6 +17,10 @@ coverage
 # nyc test coverage
 .nyc_output
 
+# Vitest Browser Mode failure screenshots / attachments
+**/__screenshots__/
+.vitest-attachments/
+
 # Grunt intermediate storage (http://gruntjs.com/creating-plugins#storing-task-files)
 .grunt
 

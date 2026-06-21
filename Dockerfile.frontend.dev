@@ -10,6 +10,14 @@ FROM node:25-slim
 
 RUN npm install -g pnpm@11
 
+# Chromium for Vitest Browser Mode (`make test-watch` / `make test-frontend`). The
+# tooling containers run `--rm` with HOME=/tmp and only the repo bind-mounted, so a
+# browser downloaded at runtime would evaporate every run — bake it into the image at
+# a fixed PLAYWRIGHT_BROWSERS_PATH (outside the /app bind mount) instead. The version
+# tracks the `playwright` devDependency in package.json.
+ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+RUN npx --yes playwright@1.61.0 install --with-deps chromium
+
 WORKDIR /app
 
 # node-options from .npmrc (--experimental-strip-types) are picked up at runtime

@@ -1,4 +1,5 @@
 import react from '@vitejs/plugin-react'
+import { playwright } from '@vitest/browser-playwright'
 import { defineConfig } from 'vitest/config'
 
 // The app is reached via Caddy at https://1mail.localhost, which terminates TLS
@@ -14,5 +15,12 @@ export default defineConfig({
   },
   test: {
     testTimeout: 10_000,
+    setupFiles: ['./src/test/setup.tsx'],
+    browser: {
+      enabled: true,
+      provider: playwright(),
+      instances: [{ browser: 'chromium' }],
+      headless: true, // the dev/CI container has no display
+    },
   },
 })

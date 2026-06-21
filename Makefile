@@ -71,6 +71,10 @@ test: db-create-test
 test-watch:
 	$(RUN_FE) pnpm exec vitest
 
+# One-shot frontend run (Vitest Browser Mode, headless Chromium) for CI.
+test-frontend:
+	$(RUN_FE) pnpm exec vitest run
+
 update: update-npm update-go
 
 update-npm:
@@ -137,4 +141,4 @@ LDFLAGS := -s -w -X main.version=$(VERSION) -X main.commit=$(COMMIT) -X main.dat
 build: build-tracker build-spa
 	$(RUN_GO) go build -tags embed_spa -ldflags "$(LDFLAGS)" -o bin/1mail ./cmd/server
 
-.PHONY: setup install db-create db-create-test db-create-atlas db-drop db-drop-test db-migrate db-seed db-reset db-reset-test db-generate dev dev-down test test-watch update update-npm update-go generate generate-backend generate-openapi generate-openapi-site generate-typespec generate-typespec-external generate-typespec-site generate-typespec-collect generate-i18n-types check check-fix build-tracker build-spa build
+.PHONY: setup install db-create db-create-test db-create-atlas db-drop db-drop-test db-migrate db-seed db-reset db-reset-test db-generate dev dev-down test test-watch test-frontend update update-npm update-go generate generate-backend generate-openapi generate-openapi-site generate-typespec generate-typespec-external generate-typespec-site generate-typespec-collect generate-i18n-types check check-fix build-tracker build-spa build

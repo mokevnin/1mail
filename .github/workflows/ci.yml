@@ -68,3 +68,32 @@ jobs:
 
       - name: Run tests
         run: make test RUN_FE= RUN_GO= RUN_GO_DB= TEST_DB_URL="postgres://postgres:postgres@localhost:5432/1mail_test?sslmode=disable"
+
+  test-frontend:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 25.5
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          version: 10
+          run_install: false
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # Vitest Browser Mode needs a real Chromium; install it natively here
+      # (the dev container bakes it in, but CI bypasses the container).
+      - name: Install Playwright Chromium
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Run frontend tests
+        run: make test-frontend RUN_FE=
