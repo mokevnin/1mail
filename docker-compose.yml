@@ -91,7 +91,10 @@ services:
     ports:
       - "5432:5432" # host-side Go dev / atlas connect here
     volumes:
-      - db-data:/var/lib/postgresql/data
+      # postgres:18 layout: mount the whole dir; PGDATA defaults to a
+      # version-specific subdir (/var/lib/postgresql/18/docker), which supports
+      # in-place `pg_upgrade --link` on future major bumps.
+      - db-data:/var/lib/postgresql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
