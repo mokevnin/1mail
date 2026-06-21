@@ -19,10 +19,13 @@ func (h *Handlers) EventsCreate(ctx context.Context, req *externalapi.RecordEven
 		return &res, nil
 	}
 
+	ws := auth.WorkspaceID(auth.GetTokenAuth(ctx))
+
 	builders := make([]*ent.EventCreate, len(req.Events))
 	for i := range req.Events {
 		e := req.Events[i]
 		b := h.ent.Event.Create().
+			SetWorkspaceID(ws).
 			SetSubjectID(e.SubjectId).
 			SetAction(e.Action)
 
@@ -67,9 +70,11 @@ func (h *Handlers) EventActionsList(ctx context.Context, params externalapi.Even
 		return &res, nil
 	}
 
+	ws := auth.WorkspaceID(auth.GetTokenAuth(ctx))
 	page, pageSize := pagination.Normalize(optInt32Ptr(params.Page), optInt32Ptr(params.PageSize))
 
 	actions := h.ent.Event.Query().
+		Where(event.WorkspaceID(ws)).
 		Order(ent.Asc(event.FieldAction)).
 		GroupBy(event.FieldAction).
 		StringsX(ctx)

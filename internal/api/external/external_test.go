@@ -3,8 +3,11 @@ package external_test
 import (
 	"context"
 	"testing"
+	"time"
 
+	"github.com/go-faster/jx"
 	"github.com/mokevnin/1mail/ent"
+	"github.com/mokevnin/1mail/ent/event"
 	externalapi "github.com/mokevnin/1mail/gen/external"
 	"github.com/mokevnin/1mail/internal/service"
 	"github.com/mokevnin/1mail/internal/testhelper"
@@ -112,6 +115,136 @@ func TestExternalAuthAndScopes(t *testing.T) {
 	listRes, err := ro.ContactsList(ctx, externalapi.ContactsListParams{})
 	require.NoError(t, err)
 	assert.IsType(t, &externalapi.ContactsListOK{}, listRes)
+}
+
+// TestExternalEventsCreate verifies a batch ingest persists events scoped to the
+// token's workspace with all optional fields mapped — querying the DB afterwards
+// is what catches the NOT-NULL workspace_id bug (a bare 204 assertion would not).
+func TestExternalEventsCreate(t *testing.T) {
+	env := testhelper.Setup(t)
+	c := client(t, env, seedToken(t, env.DB, []string{"events:write"}))
+	ctx := context.Background()
+
+	occurred := time.Date(2026, 6, 1, 12, 0, 0, 0, time.UTC)
+	res, err := c.EventsCreate(ctx, &externalapi.RecordEventsInput{
+		Events: []externalapi.EventInput{
+			{
+				SubjectId:  "user:dave@example.com",
+				Action:     "signup",
+				Email:      externalapi.NewOptNilEmailAddress("dave@example.com"),
+				Prospect:   externalapi.NewOptNilBool(true),
+				OccurredAt: externalapi.NewOptNilTimestamp(externalapi.Timestamp(occurred)),
+				Properties: externalapi.NewOptNilEventInputProperties(externalapi.EventInputProperties{
+					"plan":   jx.Raw(`"pro"`),
+					"amount": jx.Raw(`42`),
+				}),
+			},
+			{SubjectId: "user:erin@example.com", Action: "login"},
+		},
+	})
+	require.NoError(t, err)
+	require.IsType(t, &externalapi.EventsCreateNoContent{}, res)
+
+	// Token belongs to workspace 1; both events must land there.
+	created, err := env.DB.Event.Query().
+		Where(event.WorkspaceID(1), event.SubjectID("user:dave@example.com")).
+		Only(ctx)
+	require.NoError(t, err)
+	assert.Equal(t, "signup", created.Action)
+	require.NotNil(t, created.Email)
+	assert.Equal(t, "dave@example.com", *created.Email)
+	require.NotNil(t, created.Prospect)
+	assert.True(t, *created.Prospect)
+	require.NotNil(t, created.OccurredAt)
+	assert.True(t, created.OccurredAt.Equal(occurred))
+	assert.Equal(t, "pro", created.Properties["plan"])
+	assert.EqualValues(t, 42, created.Properties["amount"])
+
+	login, err := env.DB.Event.Query().
+		Where(event.WorkspaceID(1), event.SubjectID("user:erin@example.com")).
+		Only(ctx)
+	require.NoError(t, err)
+	assert.Equal(t, "login", login.Action)
+}
+
+// TestExternalEventsScopes verifies events:write/read scopes are enforced.
+func TestExternalEventsScopes(t *testing.T) {
+	env := testhelper.Setup(t)
+	ctx := context.Background()
+
+	// events:read cannot write.
+	ro := client(t, env, seedToken(t, env.DB, []string{"events:read"}))
+	createRes, err := ro.EventsCreate(ctx, &externalapi.RecordEventsInput{
+		Events: []externalapi.EventInput{{SubjectId: "s", Action: "a"}},
+	})
+	require.NoError(t, err)
+	assert.IsType(t, &externalapi.EventsCreateUnauthorized{}, createRes)
+
+	// events:write cannot read actions.
+	wo := client(t, env, seedToken(t, env.DB, []string{"events:write"}))
+	listRes, err := wo.EventActionsList(ctx, externalapi.EventActionsListParams{})
+	require.NoError(t, err)
+	assert.IsType(t, &externalapi.EventActionsListUnauthorized{}, listRes)
+}
+
+// TestExternalEventActionsList verifies distinct actions for the token's
+// workspace are returned, sorted, with correct pagination totals. The two
+// fixture events (page_view, purchase) belong to workspace 1.
+func TestExternalEventActionsList(t *testing.T) {
+	env := testhelper.Setup(t)
+	c := client(t, env, seedToken(t, env.DB, []string{"events:read"}))
+
+	res, err := c.EventActionsList(context.Background(), externalapi.EventActionsListParams{})
+	require.NoError(t, err)
+	ok, isOK := res.(*externalapi.EventActionsListOK)
+	require.Truef(t, isOK, "got %T", res)
+
+	assert.Equal(t, int32(2), ok.TotalItems)
+	actions := make([]string, len(ok.Items))
+	for i, item := range ok.Items {
+		actions[i] = item.Action
+	}
+	assert.Equal(t, []string{"page_view", "purchase"}, actions)
+}
+
+// TestExternalEventsWorkspaceIsolation verifies event reads and writes are
+// scoped to the token's workspace and never leak across tenants.
+func TestExternalEventsWorkspaceIsolation(t *testing.T) {
+	env := testhelper.Setup(t)
+	ctx := context.Background()
+
+	// A second workspace with an event carrying an action unique to it.
+	ws2, err := env.DB.Workspace.Create().
+		SetName("Globex").SetSlug("globex").SetCollectKey("globex-collect-key").
+		Save(ctx)
+	require.NoError(t, err)
+	_, err = env.DB.Event.Create().
+		SetWorkspaceID(ws2.ID).
+		SetSubjectID("user:other@example.com").
+		SetAction("ws2_only_action").
+		Save(ctx)
+	require.NoError(t, err)
+
+	// seedToken always binds to workspace 1.
+	c := client(t, env, seedToken(t, env.DB, []string{"events:read", "events:write"}))
+
+	// Listing for workspace 1 must not surface workspace 2's action.
+	res, err := c.EventActionsList(ctx, externalapi.EventActionsListParams{})
+	require.NoError(t, err)
+	ok := res.(*externalapi.EventActionsListOK)
+	for _, item := range ok.Items {
+		assert.NotEqual(t, "ws2_only_action", item.Action)
+	}
+	assert.Equal(t, int32(2), ok.TotalItems)
+
+	// Writes land in workspace 1, not the token-agnostic global pool.
+	_, err = c.EventsCreate(ctx, &externalapi.RecordEventsInput{
+		Events: []externalapi.EventInput{{SubjectId: "user:fred@example.com", Action: "ws1_write"}},
+	})
+	require.NoError(t, err)
+	got, err := env.DB.Event.Query().Where(event.SubjectID("user:fred@example.com")).Only(ctx)
+	require.NoError(t, err)
+	assert.Equal(t, int64(1), got.WorkspaceID)
 }
 
 func TestExternalRequestValidation(t *testing.T) {
