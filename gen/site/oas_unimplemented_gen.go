@@ -98,3 +98,12 @@ func (UnimplementedHandler) SiteUserUpdateMe(ctx context.Context, req *SiteUpdat
 func (UnimplementedHandler) SiteWorkspacesList(ctx context.Context) (r []SiteWorkspaceResource, _ error) {
 	return r, ht.ErrNotImplemented
 }
+
+// SiteWorkspacesUpdate implements SiteWorkspaces_update operation.
+//
+// Rename a workspace owned by the authenticated user.
+//
+// PUT /workspaces/{slug}
+func (UnimplementedHandler) SiteWorkspacesUpdate(ctx context.Context, req *SiteUpdateWorkspaceInput, params SiteWorkspacesUpdateParams) (r SiteWorkspacesUpdateRes, _ error) {
+	return r, ht.ErrNotImplemented
+}

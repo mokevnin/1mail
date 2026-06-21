@@ -64,6 +64,12 @@ type Handler interface {
 	//
 	// GET /workspaces
 	SiteWorkspacesList(ctx context.Context) ([]SiteWorkspaceResource, error)
+	// SiteWorkspacesUpdate implements SiteWorkspaces_update operation.
+	//
+	// Rename a workspace owned by the authenticated user.
+	//
+	// PUT /workspaces/{slug}
+	SiteWorkspacesUpdate(ctx context.Context, req *SiteUpdateWorkspaceInput, params SiteWorkspacesUpdateParams) (SiteWorkspacesUpdateRes, error)
 }
 
 // Server implements http server based on OpenAPI v3 specification and

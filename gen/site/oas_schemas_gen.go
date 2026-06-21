@@ -1507,6 +1507,24 @@ func (s *SiteUpdateMeInput) SetNewPassword(val OptString) {
 	s.NewPassword = val
 }
 
+// Update a workspace. The slug is immutable (it is the route key and globally unique); only the
+// display name can change.
+// Ref: #/components/schemas/SiteUpdateWorkspaceInput
+type SiteUpdateWorkspaceInput struct {
+	// New display name.
+	Name string `json:"name"`
+}
+
+// GetName returns the value of Name.
+func (s *SiteUpdateWorkspaceInput) GetName() string {
+	return s.Name
+}
+
+// SetName sets the value of Name.
+func (s *SiteUpdateWorkspaceInput) SetName(val string) {
+	s.Name = val
+}
+
 // The authenticated dashboard user.
 // Ref: #/components/schemas/SiteUserResource
 type SiteUserResource struct {
@@ -1634,6 +1652,16 @@ func (s *SiteWorkspaceResource) SetCollectKey(val string) {
 func (s *SiteWorkspaceResource) SetCreatedAt(val Timestamp) {
 	s.CreatedAt = val
 }
+
+func (*SiteWorkspaceResource) siteWorkspacesUpdateRes() {}
+
+type SiteWorkspacesUpdateNotFound ProblemDetails
+
+func (*SiteWorkspacesUpdateNotFound) siteWorkspacesUpdateRes() {}
+
+type SiteWorkspacesUpdateUnprocessableEntity ProblemDetails
+
+func (*SiteWorkspacesUpdateUnprocessableEntity) siteWorkspacesUpdateRes() {}
 
 type TimeZoneName string
 

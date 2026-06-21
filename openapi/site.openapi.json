@@ -572,6 +572,65 @@
         },
         "tags": ["Site Workspaces"]
       }
+    },
+    "/workspaces/{slug}": {
+      "put": {
+        "operationId": "SiteWorkspaces_update",
+        "description": "Rename a workspace owned by the authenticated user",
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request has succeeded.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SiteWorkspaceResource"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "RFC 7807 not found response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "RFC 7807 validation response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Site Workspaces"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SiteUpdateWorkspaceInput"
+              }
+            }
+          }
+        }
+      }
     }
   },
   "security": [
@@ -922,6 +981,17 @@
           }
         },
         "description": "Update the authenticated user's profile. To change the password, provide\nboth currentPassword and newPassword."
+      },
+      "SiteUpdateWorkspaceInput": {
+        "type": "object",
+        "required": ["name"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "New display name"
+          }
+        },
+        "description": "Update a workspace. The slug is immutable (it is the route key and globally\nunique); only the display name can change."
       },
       "SiteUserResource": {
         "type": "object",

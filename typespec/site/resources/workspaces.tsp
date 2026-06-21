@@ -20,6 +20,13 @@ model SiteWorkspaceResource {
   createdAt: Timestamp;
 }
 
+/** Update a workspace. The slug is immutable (it is the route key and globally
+ * unique); only the display name can change. */
+model SiteUpdateWorkspaceInput {
+  /** New display name */
+  name: string;
+}
+
 @route("/workspaces")
 @tag("Site Workspaces")
 namespace SiteWorkspaces {
@@ -29,4 +36,12 @@ namespace SiteWorkspaces {
     @statusCode statusCode: 200;
     @body body: SiteWorkspaceResource[];
   };
+
+  /** Rename a workspace owned by the authenticated user */
+  @put
+  @route("/{slug}")
+  op update(@path slug: string, @body body: SiteUpdateWorkspaceInput):
+    | SiteWorkspaceResource
+    | NotFoundProblem
+    | UnprocessableEntityProblem;
 }

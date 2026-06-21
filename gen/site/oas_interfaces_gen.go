@@ -32,3 +32,7 @@ type SiteContactsUpdateRes interface {
 type SiteUserUpdateMeRes interface {
 	siteUserUpdateMeRes()
 }
+
+type SiteWorkspacesUpdateRes interface {
+	siteWorkspacesUpdateRes()
+}

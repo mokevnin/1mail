@@ -6,14 +6,15 @@ package siteapi
 type OperationName = string
 
 const (
-	SiteAuthDirectLoginOperation OperationName = "SiteAuthDirectLogin"
-	SiteAuthRegisterOperation    OperationName = "SiteAuthRegister"
-	SiteContactsCreateOperation  OperationName = "SiteContactsCreate"
-	SiteContactsDeleteOperation  OperationName = "SiteContactsDelete"
-	SiteContactsGetOperation     OperationName = "SiteContactsGet"
-	SiteContactsListOperation    OperationName = "SiteContactsList"
-	SiteContactsUpdateOperation  OperationName = "SiteContactsUpdate"
-	SiteUserGetMeOperation       OperationName = "SiteUserGetMe"
-	SiteUserUpdateMeOperation    OperationName = "SiteUserUpdateMe"
-	SiteWorkspacesListOperation  OperationName = "SiteWorkspacesList"
+	SiteAuthDirectLoginOperation  OperationName = "SiteAuthDirectLogin"
+	SiteAuthRegisterOperation     OperationName = "SiteAuthRegister"
+	SiteContactsCreateOperation   OperationName = "SiteContactsCreate"
+	SiteContactsDeleteOperation   OperationName = "SiteContactsDelete"
+	SiteContactsGetOperation      OperationName = "SiteContactsGet"
+	SiteContactsListOperation     OperationName = "SiteContactsList"
+	SiteContactsUpdateOperation   OperationName = "SiteContactsUpdate"
+	SiteUserGetMeOperation        OperationName = "SiteUserGetMe"
+	SiteUserUpdateMeOperation     OperationName = "SiteUserUpdateMe"
+	SiteWorkspacesListOperation   OperationName = "SiteWorkspacesList"
+	SiteWorkspacesUpdateOperation OperationName = "SiteWorkspacesUpdate"
 )

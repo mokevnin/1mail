@@ -86,6 +86,20 @@ export default interface Resources {
       "successMessage": "Account created successfully",
       "title": "Create account"
     },
+    "settings": {
+      "apiKeysComingSoon": "API key management is coming soon.",
+      "apiKeysTitle": "API keys",
+      "copied": "Copied",
+      "copy": "Copy",
+      "errorTitle": "Failed to update workspace",
+      "generalTitle": "General",
+      "loadErrorTitle": "Failed to load workspace",
+      "nameLabel": "Workspace name",
+      "saved": "Workspace updated",
+      "title": "Settings",
+      "trackingDescription": "Paste this snippet into the <head> of your site to start collecting events.",
+      "trackingTitle": "Tracking snippet"
+    },
     "status": {
       "active": "Active",
       "all": "All",
@@ -98,6 +112,9 @@ export default interface Resources {
       "lastName": "Last name",
       "status": "Status",
       "timeZone": "Time zone"
+    },
+    "theme": {
+      "toggleLabel": "Toggle color scheme"
     },
     "userMenu": {
       "logout": "Sign out",

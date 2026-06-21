@@ -212,6 +212,17 @@ export type SiteUpdateMeInput = {
 };
 
 /**
+ * Update a workspace. The slug is immutable (it is the route key and globally
+ * unique); only the display name can change.
+ */
+export type SiteUpdateWorkspaceInput = {
+    /**
+     * New display name
+     */
+    name: string;
+};
+
+/**
  * The authenticated dashboard user
  */
 export type SiteUserResource = {
@@ -606,3 +617,34 @@ export type SiteWorkspacesListResponses = {
 };
 
 export type SiteWorkspacesListResponse = SiteWorkspacesListResponses[keyof SiteWorkspacesListResponses];
+
+export type SiteWorkspacesUpdateData = {
+    body: SiteUpdateWorkspaceInput;
+    path: {
+        slug: string;
+    };
+    query?: never;
+    url: '/workspaces/{slug}';
+};
+
+export type SiteWorkspacesUpdateErrors = {
+    /**
+     * RFC 7807 not found response
+     */
+    404: ProblemDetails;
+    /**
+     * RFC 7807 validation response
+     */
+    422: ProblemDetails;
+};
+
+export type SiteWorkspacesUpdateError = SiteWorkspacesUpdateErrors[keyof SiteWorkspacesUpdateErrors];
+
+export type SiteWorkspacesUpdateResponses = {
+    /**
+     * The request has succeeded.
+     */
+    200: SiteWorkspaceResource;
+};
+
+export type SiteWorkspacesUpdateResponse = SiteWorkspacesUpdateResponses[keyof SiteWorkspacesUpdateResponses];

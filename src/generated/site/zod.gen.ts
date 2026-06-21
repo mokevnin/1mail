@@ -62,6 +62,14 @@ export const zSiteUpdateMeInput = z.object({
     newPassword: z.string().optional()
 });
 
+/**
+ * Update a workspace. The slug is immutable (it is the route key and globally
+ * unique); only the display name can change.
+ */
+export const zSiteUpdateWorkspaceInput = z.object({
+    name: z.string()
+});
+
 export const zTimeZoneName = z.string();
 
 /**
@@ -241,3 +249,14 @@ export const zSiteContactsUpdateResponse = zSiteContactResource;
  * The request has succeeded.
  */
 export const zSiteWorkspacesListResponse = z.array(zSiteWorkspaceResource);
+
+export const zSiteWorkspacesUpdateBody = zSiteUpdateWorkspaceInput;
+
+export const zSiteWorkspacesUpdatePath = z.object({
+    slug: z.string()
+});
+
+/**
+ * The request has succeeded.
+ */
+export const zSiteWorkspacesUpdateResponse = zSiteWorkspaceResource;
