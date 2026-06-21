@@ -1,5 +1,17 @@
 packages:
   - 'packages/*'
+# Install platform-native binaries (biome, tsgo, esbuild…) for every target: the
+# glibc dev container, the darwin host (so host LSP/CLI works), and both CPUs / CI.
+supportedArchitectures:
+  os:
+    - linux
+    - darwin
+  cpu:
+    - x64
+    - arm64
+  libc:
+    - glibc
+    - musl
 allowBuilds:
   '@swc/core': true
   better-sqlite3: true

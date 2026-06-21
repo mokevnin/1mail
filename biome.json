@@ -8,7 +8,9 @@
       "!packages/*/src/generated",
       "!packages/*/dist",
       "!internal/server/assets",
-      "!drizzle"
+      "!drizzle",
+      "!.cache",
+      "!tmp"
     ]
   },
   "vcs": {

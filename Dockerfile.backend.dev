@@ -1,12 +1,24 @@
 # Dev image for the Go server (Vite's counterpart is Dockerfile.frontend.dev).
 # Ships only the toolchain + air (hot reload); sources are bind-mounted from
 # the host (see docker-compose.yml), so no COPY of sources here.
+#
+# The same image backs the `make` tooling recipes (`docker compose run backend …`),
+# so it also carries golangci-lint and the atlas CLI. ogen (a go tool in go.mod)
+# and entc (`go run ./ent/entc.go`) need only the Go toolchain already present.
 FROM golang:1.26-alpine
 
-RUN apk add --no-cache git
+RUN apk add --no-cache git curl
 
 # Bake air in so it isn't refetched on every container start.
 RUN go install github.com/air-verse/air@latest
+
+# golangci-lint v2 (matches .mise.toml) for `make check`. Built from source with
+# this image's Go toolchain — a prebuilt binary built with an older Go is rejected
+# when the project targets a newer Go (go.mod is 1.26).
+RUN go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@latest
+
+# atlas CLI for `make db-migrate` / `make db-generate`.
+RUN curl -sSf https://atlasgo.sh | sh
 
 WORKDIR /app
 

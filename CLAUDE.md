@@ -30,28 +30,37 @@ ent/schema/*.go     ──entc──▶ ent/*           (Go ORM)
 
 ## Common commands
 
+Every recipe runs its toolchain **inside the dev containers** (docker-compose.yml), so a
+host with only Docker works. The runner vars are overridable — CI runs everything natively
+with `make <target> RUN_FE= RUN_GO= RUN_GO_DB=`.
+
 ```sh
-make setup          # install deps + create dev & test DBs + migrate
-make install        # pnpm install (via container) + go mod download
+make setup          # build images, install deps, create dev/test/atlas DBs + migrate
+make install        # pnpm install + go mod download (both in containers)
 make dev            # docker compose up — full dev stack
 make test           # creates test DB, then `go test -p 1 ./...`
-make check          # tsgo --noEmit + biome check + golangci-lint (what CI runs)
+make check          # tsgo --noEmit + biome check + golangci-lint
 make check-fix      # biome --write + tsp format + go fmt
 ```
 
+Runner vars (Makefile): `RUN_FE` (node tools, frontend image), `RUN_GO` (go tools, no DB),
+`RUN_GO_DB` (go tools that need Postgres — starts the `db` service). Recipes that need a
+specific env (`APP_ENV=test`, a test/atlas DB URL) wrap the command in `sh -c '…'` so the
+assignment works both in-container and on the CI-native override path.
+
 Run a single Go test:
 ```sh
-go test ./internal/api/site -run TestSiteContactsRequireAuth
+docker compose run --rm backend go test ./internal/api/site -run TestSiteContactsRequireAuth
 ```
-Frontend tests use vitest: `make test-watch` or `pnpm exec vitest`.
-
-`make check` needs golangci-lint v2 (pinned in `.mise.toml`; `mise install` or `brew install golangci-lint`).
+Frontend tests: `make test-watch`.
 
 ## Database & migrations
 
 - ORM is **ent**; schemas live in `ent/schema/*.go`, generated code in `ent/`.
-- Migrations are managed by **Atlas** (`atlas.hcl`, dir `migrations/`), diffed from the
-  ent schema: `make db-generate name=<desc>` then `make db-migrate`.
+- Migrations are managed by **Atlas** (`atlas.hcl`, dir `migrations/`), run in the backend
+  container, diffed from the ent schema: `make db-generate name=<desc>` then `make db-migrate`.
+  Atlas reads its target/dev DB URLs from the environment (`DATABASE_URL` / `ATLAS_DEV_URL`),
+  using a scratch `atlas_dev` database on the compose `db` service instead of `docker://`.
 - `make db-reset` / `db-reset-test` to rebuild local DBs.
 - Test DB is separate (`APP_ENV=test`); tests create schema via `ent` `Schema.Create`, not Atlas.
 
@@ -100,11 +109,13 @@ transport (`env.Transport(headers)`) — no sockets. See `internal/api/site/cont
 
 `make dev` runs docker compose (`docker-compose.yml`) behind Caddy with HTTPS at
 **https://1mail.localhost**. Services: caddy, frontend (vite), backend, postgres, mailpit
-(SMTP UI at :8025). Deps are bind-mounted from the host so editor LSPs resolve imports —
-install via `make install` (runs pnpm inside the container). The compose `backend` runs
-the real Go server (`Dockerfile.backend.dev`, `golang:1.26-alpine` + air) on `:3300` with
-sources bind-mounted and hot reload via air. DB schema is still managed on the host with
-atlas (`make db-migrate`); the backend service does not self-migrate.
+(SMTP UI at :8025). Deps and the Go module cache are bind-mounted from the host
+(`node_modules` in the repo, the module cache under `./.cache/go-mod`) so host editor LSPs
+resolve imports — install via `make install` (runs in the containers). The compose
+`backend` runs the real Go server (`Dockerfile.backend.dev`, `golang:1.26-alpine` + air,
+plus golangci-lint + atlas for the tooling recipes) on `:3300` with sources bind-mounted
+and hot reload via air. Migrations run via atlas in the container (`make db-migrate`); the
+backend service does not self-migrate.
 
 ## Conventions
 

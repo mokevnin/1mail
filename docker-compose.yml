@@ -1,8 +1,18 @@
 # Dev stack — replaces overmind/Procfile.
 #
-# Dependencies live on the HOST and are bind-mounted in, so editor LSPs
-# (gopls / TS language server) resolve imports. Install them via the container:
+# Everything runs in containers: a host with only Docker can build, lint, test,
+# generate, and run the stack (see the Makefile `RUN_FE`/`RUN_GO*` runners).
+# Dependencies and tool caches live on the HOST under the repo bind mount
+# (node_modules, .pnpm-store, .cache/go-mod, .cache/go-build), so editor LSPs
+# (gopls / TS language server) resolve imports too. Install deps via the container:
 #   docker compose run --rm frontend pnpm install
+#   docker compose run --rm backend  go mod download
+#
+# Containers run as the host UID/GID (the Makefile exports COMPOSE_UID/COMPOSE_GID
+# from `id`), so files written into the bind mount — generated code, caches — are
+# owned by you, not root. On a native-Linux host this is what keeps generated files
+# editable without sudo; on macOS Docker Desktop maps ownership either way. Raw
+# `docker compose` calls without those vars fall back to root (0:0).
 #
 # Entry point: https://1mail.localhost (TLS terminated by Caddy).
 services:
@@ -24,35 +34,48 @@ services:
       context: .
       dockerfile: Dockerfile.frontend.dev
     working_dir: /app
+    user: "${COMPOSE_UID:-0}:${COMPOSE_GID:-0}"
     volumes:
-      - .:/app # repo (incl. node_modules) lives on the host
-      - pnpm-store:/app/.pnpm-store # same FS as node_modules → pnpm hardlinks work
+      - .:/app # repo (incl. node_modules + .pnpm-store) lives on the host
     environment:
-      PNPM_STORE_DIR: /app/.pnpm-store
+      HOME: /tmp # writable home for a non-root host UID (pnpm global state)
+      PNPM_STORE_DIR: /app/.pnpm-store # same FS as node_modules → pnpm hardlinks work
     ports:
       - "5173:5173" # optional direct access; normal entry is via Caddy
 
-  # Go server. Like the frontend, the image ships only the toolchain (+ air for
-  # hot reload); sources are bind-mounted from the host and air rebuilds/restarts
-  # on change. DB schema is managed on the host (atlas, `make db-migrate`); this
-  # service only runs the server, so don't set AUTO_MIGRATE here.
+  # Go server, and the image that backs the `make` tooling recipes
+  # (`docker compose run backend …`): it carries go + air + golangci-lint + atlas.
+  # Sources are bind-mounted from the host and air rebuilds/restarts on change.
+  # Migrations run via atlas (`make db-migrate`); the server itself does not
+  # self-migrate, so don't set AUTO_MIGRATE here.
   backend:
     build:
       context: .
       dockerfile: Dockerfile.backend.dev
     working_dir: /app
+    user: "${COMPOSE_UID:-0}:${COMPOSE_GID:-0}"
     environment:
       APP_ENV: development
       CGO_ENABLED: "0" # alpine has no gcc; the server is pure Go (pgx stdlib)
       PORT: "3300"
       DATABASE_URL: postgres://postgres:postgres@db:5432/1mail_development?sslmode=disable
+      # Dev-only secret so a fresh clone (no host .env) authenticates out of the box.
+      JWT_SECRET: dev-secret-change-in-production
+      # Scratch DB atlas uses to compute migration diffs (see atlas.hcl).
+      ATLAS_DEV_URL: postgres://postgres:postgres@db:5432/atlas_dev?sslmode=disable
       SMTP_HOST: mailpit
       SMTP_PORT: "1025"
       APP_URL: https://1mail.localhost
+      HOME: /tmp # writable home for a non-root host UID
+      # Caches under the repo bind mount → host-owned (writable by a non-root UID)
+      # and visible to host gopls (point it at ./.cache/go-mod via GOMODCACHE).
+      # GOPATH must be writable too — go writes its sumdb client state under it
+      # (the prebuilt tools stay on PATH at /go/bin regardless).
+      GOPATH: /app/.cache/go
+      GOMODCACHE: /app/.cache/go-mod
+      GOCACHE: /app/.cache/go-build
     volumes:
-      - .:/app # repo (sources) lives on the host
-      - go-mod:/go/pkg/mod # module + air cache
-      - go-build:/root/.cache/go-build # compile cache
+      - .:/app # repo + caches (.cache/*) live on the host
     depends_on:
       db:
         condition: service_healthy
@@ -84,7 +107,4 @@ services:
 volumes:
   caddy-data:
   caddy-config:
-  pnpm-store:
   db-data:
-  go-mod: # go module cache (persists across restarts)
-  go-build: # go compile cache (fast rebuilds)

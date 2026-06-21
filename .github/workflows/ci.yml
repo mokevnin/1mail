@@ -36,8 +36,9 @@ jobs:
       - name: Setup mise
         uses: jdx/mise-action@v2
 
+      # CI installs the toolchains natively (above), so bypass the dev containers.
       - name: Run linter
-        run: make check
+        run: make check RUN_FE= RUN_GO= RUN_GO_DB=
 
   test:
     runs-on: ubuntu-latest
@@ -66,4 +67,4 @@ jobs:
           go-version-file: go.mod
 
       - name: Run tests
-        run: make test
+        run: make test RUN_FE= RUN_GO= RUN_GO_DB= TEST_DB_URL="postgres://postgres:postgres@localhost:5432/1mail_test?sslmode=disable"

@@ -1,105 +1,129 @@
-setup: install db-create db-create-test db-migrate
+# All tooling runs inside the dev containers (docker-compose.yml) so a host with
+# only Docker installed can build, lint, test, and generate. The runner vars below
+# are overridable: CI (which installs native toolchains) runs everything natively
+# with `make check RUN_FE= RUN_GO= RUN_GO_DB=`.
+#
+#   RUN_FE    — node tooling (frontend image): tsgo, biome, tsp, openapi-ts, pnpm
+#   RUN_GO    — go tooling, no DB needed: golangci-lint, go fmt, entc, ogen, go mod
+#   RUN_GO_DB — go tooling that needs Postgres: cmd/db, atlas, go test (starts `db`)
+# Run containers as the host user so files written into the bind mount (generated
+# code, caches) are owned by you, not root (matters on native-Linux hosts).
+export COMPOSE_UID ?= $(shell id -u)
+export COMPOSE_GID ?= $(shell id -g)
 
-# Frontend deps are installed via the container into the bind-mounted tree
-# (Linux-native binaries on the host), so they run in compose while host LSPs
-# still resolve them. Go deps stay on the host for gopls.
+DC        ?= docker compose
+RUN_FE    ?= $(DC) run --rm --no-deps frontend
+RUN_GO    ?= $(DC) run --rm --no-deps backend
+RUN_GO_DB ?= $(DC) run --rm backend
+
+# Connection strings default to the compose `db` service. Override the host part
+# for a host-native run, e.g. `make test RUN_GO_DB= TEST_DB_URL=postgres://...@localhost:5432/1mail_test?sslmode=disable`.
+TEST_DB_URL  ?= postgres://postgres:postgres@db:5432/1mail_test?sslmode=disable
+ATLAS_DB_URL ?= postgres://postgres:postgres@db:5432/atlas_dev?sslmode=disable
+
+setup: install db-create db-create-test db-create-atlas db-migrate
+
+# Frontend deps install into the bind-mounted node_modules (Linux-native, run in
+# compose). Go modules download into the host-bind-mounted cache (./.cache/go-mod)
+# so host gopls resolves imports. Neither needs a host toolchain.
 install:
-	docker compose run --rm frontend pnpm install
-	go mod download
+	$(RUN_FE) pnpm install
+	$(RUN_GO) go mod download
 
 db-create:
-	go run ./cmd/db create
+	$(RUN_GO_DB) go run ./cmd/db create
 
 db-create-test:
-	APP_ENV=test go run ./cmd/db create
+	$(RUN_GO_DB) sh -c 'APP_ENV=test DATABASE_URL=$(TEST_DB_URL) go run ./cmd/db create'
+
+# Scratch DB atlas uses to compute migration diffs (see atlas.hcl `dev`).
+db-create-atlas:
+	$(RUN_GO_DB) sh -c 'DATABASE_URL=$(ATLAS_DB_URL) go run ./cmd/db create'
 
 db-drop:
-	go run ./cmd/db drop
+	$(RUN_GO_DB) go run ./cmd/db drop
 
 db-drop-test:
-	APP_ENV=test go run ./cmd/db drop
+	$(RUN_GO_DB) sh -c 'APP_ENV=test DATABASE_URL=$(TEST_DB_URL) go run ./cmd/db drop'
 
 db-migrate:
-	. .env && atlas migrate apply --env local --url $$DATABASE_URL --allow-dirty
+	$(RUN_GO_DB) atlas migrate apply --env local --allow-dirty
 
 db-seed:
-	go run ./cmd/seed
+	$(RUN_GO_DB) go run ./cmd/seed
 
 db-reset: db-drop db-create db-migrate
 
 db-reset-test: db-drop-test db-create-test
 
 db-generate:
-	atlas migrate diff --env local $(name)
+	$(RUN_GO_DB) atlas migrate diff --env local $(name)
 
 dev:
-	docker compose up
+	$(DC) up
 
 dev-down:
-	docker compose down
+	$(DC) down
 
 test: db-create-test
-	go test -p 1 ./...
+	$(RUN_GO_DB) sh -c 'APP_ENV=test DATABASE_URL=$(TEST_DB_URL) go test -p 1 ./...'
 
 test-watch:
-	pnpm exec vitest
+	$(RUN_FE) pnpm exec vitest
 
 update: update-npm update-go
 
 update-npm:
-	npx ncu -u
-	pnpm update
+	$(RUN_FE) sh -c 'npx ncu -u && pnpm update'
 
 update-go:
-	go get -u ./... && go mod tidy
+	$(RUN_GO) sh -c 'go get -u ./... && go mod tidy'
 
 generate-typespec-external:
-	npx tsp compile typespec/external
+	$(RUN_FE) npx tsp compile typespec/external
 
 generate-typespec-site:
-	npx tsp compile typespec/site
+	$(RUN_FE) npx tsp compile typespec/site
 
 generate-typespec-collect:
-	npx tsp compile typespec/collect
+	$(RUN_FE) npx tsp compile typespec/collect
 
 generate-typespec: generate-typespec-external generate-typespec-site generate-typespec-collect
 
 # Generates both the site client and the collect types (single config, two jobs).
 generate-openapi-site:
-	pnpm exec openapi-ts -f openapi-ts.config.ts
+	$(RUN_FE) pnpm exec openapi-ts -f openapi-ts.config.ts
 
 generate-openapi: generate-openapi-site
 
 generate-i18n-types:
-	pnpm run i18n:types
+	$(RUN_FE) pnpm run i18n:types
 
 generate-backend:
-	cd ent && go run -mod=mod entc.go
-	go tool ogen --target gen/site     --package siteapi     --clean openapi/site.openapi.json
-	go tool ogen --target gen/external --package externalapi --clean openapi/external.openapi.json
-	go tool ogen --target gen/collect  --package collectapi  --clean openapi/collect.openapi.json
+	$(RUN_GO) sh -c 'cd ent && go run -mod=mod entc.go'
+	$(RUN_GO) sh -c 'go tool ogen --target gen/site     --package siteapi     --clean openapi/site.openapi.json && \
+		go tool ogen --target gen/external --package externalapi --clean openapi/external.openapi.json && \
+		go tool ogen --target gen/collect  --package collectapi  --clean openapi/collect.openapi.json'
 
 generate: generate-typespec generate-openapi generate-backend generate-i18n-types check-fix
 
 check:
-	npx tsgo --noEmit
-	npx biome check .
-	golangci-lint run ./...
+	$(RUN_FE) sh -c 'npx tsgo --noEmit && npx biome check .'
+	$(RUN_GO) golangci-lint run ./...
 
 check-fix:
-	pnpx @biomejs/biome check --write
-	npx tsp format typespec
-	go fmt ./...
+	$(RUN_FE) sh -c 'pnpx @biomejs/biome check --write && npx tsp format typespec'
+	$(RUN_GO) go fmt ./...
 
 # Builds the standalone tracker (IIFE) and copies it into the Go embed tree.
 build-tracker:
-	pnpm build:tracker
+	$(RUN_FE) pnpm build:tracker
 	cp packages/analytics/dist/t.js internal/server/assets/t.js
 
 # Builds the SPA (Vite) and copies dist/ into the Go embed tree so the binary
 # can serve the frontend itself. Gitignored; populated only for release builds.
 build-spa:
-	pnpm build
+	$(RUN_FE) pnpm build
 	rm -rf internal/server/assets/spa
 	mkdir -p internal/server/assets/spa
 	cp -R dist/. internal/server/assets/spa/
@@ -111,6 +135,6 @@ LDFLAGS := -s -w -X main.version=$(VERSION) -X main.commit=$(COMMIT) -X main.dat
 
 # Produces the self-contained release binary: tracker + SPA embedded.
 build: build-tracker build-spa
-	go build -tags embed_spa -ldflags "$(LDFLAGS)" -o bin/1mail ./cmd/server
+	$(RUN_GO) go build -tags embed_spa -ldflags "$(LDFLAGS)" -o bin/1mail ./cmd/server
 
-.PHONY: setup install db-create db-create-test db-drop db-drop-test db-migrate db-seed db-reset db-reset-test db-generate dev dev-down test test-watch update update-npm update-go generate generate-backend generate-openapi generate-openapi-site generate-typespec generate-typespec-external generate-typespec-site generate-typespec-collect generate-i18n-types check check-fix build-tracker build-spa build
+.PHONY: setup install db-create db-create-test db-create-atlas db-drop db-drop-test db-migrate db-seed db-reset db-reset-test db-generate dev dev-down test test-watch update update-npm update-go generate generate-backend generate-openapi generate-openapi-site generate-typespec generate-typespec-external generate-typespec-site generate-typespec-collect generate-i18n-types check check-fix build-tracker build-spa build

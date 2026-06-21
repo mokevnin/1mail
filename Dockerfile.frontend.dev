@@ -1,7 +1,12 @@
-# Dev image for the frontend (Vite).
-# Dependencies live on the host and are bind-mounted in (see docker-compose.yml),
-# so this image ships only the toolchain — no COPY of sources or node_modules.
-FROM node:25-alpine
+# Dev image for the frontend (Vite) and the node tooling recipes (tsgo, biome,
+# tsp, openapi-ts). Dependencies live on the host and are bind-mounted in (see
+# docker-compose.yml), so this image ships only the toolchain — no COPY of sources
+# or node_modules.
+#
+# glibc (Debian), not alpine/musl: biome's Rust binary overflows musl's small
+# default thread stack ("stack overflow" in workspace_worker), so the node tools
+# must run on a glibc base.
+FROM node:25-slim
 
 RUN npm install -g pnpm@11
 

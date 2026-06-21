@@ -39,44 +39,41 @@ After changing TypeSpec or `ent/schema`, run `make generate` and commit the gene
 
 ## Development
 
-Prerequisites: Docker + Docker Compose, Go 1.26, Node ≥ 25, pnpm 11.
+**The only prerequisite is Docker + Docker Compose.** Every `make` target runs its
+toolchain (Go, Node/pnpm, golangci-lint, atlas) inside the dev containers, so you don't
+need any of them installed on the host.
 
 ```sh
-make setup   # install deps + create dev & test DBs + migrate
+make setup   # build images, install deps, create dev/test/atlas DBs + migrate
 make dev     # docker compose up — full dev stack
 make test    # creates test DB, then `go test -p 1 ./...`
-make check   # tsgo --noEmit, biome check, golangci-lint (what CI runs)
+make check   # tsgo --noEmit, biome check, golangci-lint
+make generate # regenerate TypeSpec → OpenAPI → Go + TS
 ```
 
-`make check` requires [golangci-lint](https://golangci-lint.run/) (v2). The version is
-pinned in `.mise.toml`, so the easiest way is [mise](https://mise.jdx.dev/):
+Dependencies and the Go module cache are bind-mounted to the host (`node_modules` in the
+repo, the module cache under `./.cache/go-mod`). So if you *do* run a host editor, gopls
+and the TS language server resolve imports — point gopls at the module cache with
+`go env -w GOMODCACHE=$PWD/.cache/go-mod` (optional; only needed for host LSP).
 
-```sh
-mise install
-```
-
-Any other install method works too — it only needs to be on your `PATH`, e.g.
-`brew install golangci-lint`.
+> CI installs the toolchains natively and runs the same targets without containers by
+> overriding the runner vars, e.g. `make check RUN_FE= RUN_GO= RUN_GO_DB=`.
 
 ## Deployment (development)
 
 The local stack runs via Docker Compose behind [Caddy](https://caddyserver.com/) with HTTPS.
 
-1. Copy the env sample and adjust if needed:
-
-   ```sh
-   cp .env.sample .env            # host-run backend
-   # or, for the containerized backend:
-   cp .env.docker.sample .env.local
-   ```
-
-2. Install deps, create the dev & test databases, and migrate:
+1. Build images, install deps, create the dev/test/atlas databases, and migrate:
 
    ```sh
    make setup
    ```
 
-3. Start the stack:
+   No `.env` is required — the Compose `backend` service supplies `DATABASE_URL`,
+   `JWT_SECRET`, SMTP, etc. (Copy `.env.sample` only if you want to run the backend on the
+   host instead of in a container.)
+
+2. Start the stack:
 
    ```sh
    make dev        # docker compose up
@@ -95,8 +92,9 @@ Services:
 
 > The Compose `backend` service runs the real Go server (`Dockerfile.backend.dev`,
 > `golang:1.26-alpine` + [air](https://github.com/air-verse/air) for hot reload) with
-> sources bind-mounted from the host. The database schema is managed on the host with the
-> Atlas CLI (`make db-migrate`); the dev backend does not self-migrate.
+> sources bind-mounted from the host. The same image carries golangci-lint and the Atlas
+> CLI, so it also backs the `make` tooling recipes. Migrations run via Atlas in the
+> container (`make db-migrate`); the dev backend itself does not self-migrate.
 
 ## Deployment (production)
 

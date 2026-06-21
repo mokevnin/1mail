@@ -68,6 +68,9 @@ gha-creds-*.json
 tmp/
 npm-cache
 
+# host-bind-mounted tool caches for the dev containers (see docker-compose.yml)
+.cache/
+
 # build artifacts
 dist
 packages/*/dist
