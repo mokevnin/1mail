@@ -63,7 +63,7 @@ profile-*
 *code-workspace
 
 # clinic
-profile*
+/profile*
 *clinic*
 *flamegraph*
 

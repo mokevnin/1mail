@@ -16,6 +16,39 @@
     "successMessage": "Account created successfully",
     "errorTitle": "Registration failed"
   },
+  "nav": {
+    "overview": "Overview",
+    "contacts": "Contacts",
+    "activity": "Activity",
+    "settings": "Settings",
+    "campaigns": "Campaigns",
+    "automations": "Automations",
+    "segments": "Segments",
+    "soon": "Soon"
+  },
+  "userMenu": {
+    "profile": "Profile",
+    "workspaceSettings": "Workspace settings",
+    "logout": "Sign out",
+    "logoutErrorTitle": "Sign out failed"
+  },
+  "account": {
+    "title": "Account",
+    "backToDashboard": "Dashboard",
+    "profile": "Profile"
+  },
+  "overview": {
+    "title": "Overview",
+    "contactsCount": "Contacts",
+    "viewContacts": "View contacts",
+    "viewActivity": "View activity",
+    "viewSettings": "Settings",
+    "comingSoon": "More metrics coming soon"
+  },
+  "comingSoon": {
+    "title": "Coming soon",
+    "description": "This section is not available yet."
+  },
   "actions": {
     "cancel": "Cancel",
     "delete": "Delete",

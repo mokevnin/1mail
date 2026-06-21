@@ -1,0 +1,85 @@
+import { Badge, NavLink, Stack } from '@mantine/core'
+import {
+  IconActivity,
+  IconLayoutDashboard,
+  IconMailbox,
+  IconRobot,
+  IconSettings,
+  IconUsers,
+  IconUsersGroup,
+} from '@tabler/icons-react'
+import { useMatchRoute, useNavigate } from '@tanstack/react-router'
+import { useTranslation } from 'react-i18next'
+import { activityRoute, contactsRoute, overviewRoute, settingsRoute } from '../router.tsx'
+
+// AppNavbar renders the workspace-scoped sidebar. Active sections are built
+// real now; roadmap sections are disabled placeholders that signal direction.
+export function AppNavbar({ slug }: { slug: string }) {
+  const { t } = useTranslation()
+  const navigate = useNavigate()
+  const matchRoute = useMatchRoute()
+
+  const sections = [
+    {
+      key: 'overview',
+      label: t(($) => $.nav.overview),
+      icon: <IconLayoutDashboard size={18} />,
+      active: Boolean(matchRoute({ to: overviewRoute.to, params: { slug } })),
+      onClick: () => navigate({ to: overviewRoute.to, params: { slug } }),
+    },
+    {
+      key: 'contacts',
+      label: t(($) => $.nav.contacts),
+      icon: <IconUsers size={18} />,
+      active: Boolean(matchRoute({ to: contactsRoute.to, params: { slug }, fuzzy: true })),
+      onClick: () => navigate({ to: contactsRoute.to, params: { slug } }),
+    },
+    {
+      key: 'activity',
+      label: t(($) => $.nav.activity),
+      icon: <IconActivity size={18} />,
+      active: Boolean(matchRoute({ to: activityRoute.to, params: { slug }, fuzzy: true })),
+      onClick: () => navigate({ to: activityRoute.to, params: { slug } }),
+    },
+    {
+      key: 'settings',
+      label: t(($) => $.nav.settings),
+      icon: <IconSettings size={18} />,
+      active: Boolean(matchRoute({ to: settingsRoute.to, params: { slug }, fuzzy: true })),
+      onClick: () => navigate({ to: settingsRoute.to, params: { slug } }),
+    },
+  ]
+
+  const roadmap = [
+    { key: 'campaigns', label: t(($) => $.nav.campaigns), icon: <IconMailbox size={18} /> },
+    { key: 'automations', label: t(($) => $.nav.automations), icon: <IconRobot size={18} /> },
+    { key: 'segments', label: t(($) => $.nav.segments), icon: <IconUsersGroup size={18} /> },
+  ]
+
+  return (
+    <Stack gap="xs">
+      {sections.map((s) => (
+        <NavLink
+          key={s.key}
+          label={s.label}
+          leftSection={s.icon}
+          active={s.active}
+          onClick={s.onClick}
+        />
+      ))}
+      {roadmap.map((s) => (
+        <NavLink
+          key={s.key}
+          label={s.label}
+          leftSection={s.icon}
+          disabled
+          rightSection={
+            <Badge size="xs" variant="light" color="gray">
+              {t(($) => $.nav.soon)}
+            </Badge>
+          }
+        />
+      ))}
+    </Stack>
+  )
+}
