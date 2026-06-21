@@ -46,6 +46,11 @@ func New(cfg *config.Config, client *ent.Client, ps *pubsub.PubSub) (http.Handle
 	authHandler, avatarHandler := authSvc.Handlers()
 	mux.Handle("/auth/", authHandler)
 	mux.Handle("/avatar/", avatarHandler)
+	// The SPA's generated client posts to /site/auth/direct/login (baseUrl "/site");
+	// route that exact path to the go-pkgz/auth direct provider, which issues the JWT
+	// cookie. go-pkgz/auth routes by path suffix, so the /site prefix is harmless, and
+	// the exact pattern outranks the /site/ subtree below without shadowing /site/auth/register.
+	mux.Handle("/site/auth/direct/login", authHandler)
 
 	// Site API — /site (JWT cookie via generated SecurityHandler; register and
 	// direct-login are public per the spec).

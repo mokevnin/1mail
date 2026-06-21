@@ -76,6 +76,10 @@ func (h *Handlers) SiteAuthRegister(ctx context.Context, req *siteapi.SiteRegist
 	}, nil
 }
 
+// SiteAuthDirectLogin is unreachable in practice: the server mux routes
+// /site/auth/direct/login to the go-pkgz/auth direct provider (see internal/server.New),
+// which issues the JWT cookie. This stub only exists to satisfy the ogen Handler
+// interface and acts as a defensive fallback if that route is ever removed.
 func (h *Handlers) SiteAuthDirectLogin(_ context.Context, _ *siteapi.SiteDirectLoginInput) (siteapi.SiteAuthDirectLoginRes, error) {
 	v := problem(http.StatusBadRequest, "direct login is handled by auth provider")
 	return &v, nil
