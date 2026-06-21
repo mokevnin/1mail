@@ -32,7 +32,7 @@ function WorkspaceSwitcher({
           navigate({ to: overviewRoute.to, params: { slug: value } })
         }
       }}
-      w={220}
+      w={{ base: 140, sm: 220 }}
     />
   )
 }

@@ -14,14 +14,13 @@ client.setConfig({ baseUrl: '/site' })
 import '@mantine/core/styles.css'
 import '@mantine/notifications/styles.css'
 import 'mantine-datatable/styles.css'
-import './main.css'
 
 function Root() {
   const [queryClient] = useState(() => new QueryClient())
 
   return (
     <QueryClientProvider client={queryClient}>
-      <MantineProvider>
+      <MantineProvider defaultColorScheme="auto">
         <ModalsProvider>
           <Notifications position="top-right" />
           <RouterProvider router={router} />

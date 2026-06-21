@@ -95,7 +95,7 @@ export function ContactsListPage() {
 
   return (
     <Stack>
-      <Group justify="space-between" align="flex-end">
+      <Group justify="space-between" align="flex-end" wrap="wrap">
         <Select
           label={t(($) => $.contacts.statusFilter)}
           data={contactStatusFilterValues.map((value) => ({
@@ -104,7 +104,7 @@ export function ContactsListPage() {
           }))}
           value={status}
           onChange={onStatusChange}
-          w={220}
+          w={{ base: '100%', xs: 220 }}
         />
 
         <Button onClick={() => navigate({ to: contactsCreateRoute.to, params: { slug } })}>

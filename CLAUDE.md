@@ -123,3 +123,12 @@ backend service does not self-migrate.
 - Commit messages follow **Conventional Commits** (`feat:`, `fix:`, `chore:`, `docs:`,
   `refactor:`, `ci:` …) — release-please uses them for versioning/changelog.
 - After changing TypeSpec or `ent/schema`, run `make generate` and commit the generated output.
+- **No custom CSS.** Style the frontend exclusively through Mantine — components, style
+  props (`p`, `c`, `w`, responsive object syntax), the color system, the theme, and the
+  configured breakpoints. Do not add custom `.css`/CSS-module files, inline `style={{…}}`,
+  hardcoded colors, or CSS-in-JS (styled-components/emotion). The only CSS imports are the
+  library stylesheets in `src/main.tsx`.
+- **Theming & responsiveness.** Light and dark color schemes are supported via
+  `MantineProvider` (`defaultColorScheme="auto"`) + `ColorSchemeScript` in `index.html`;
+  the UI must be responsive using Mantine primitives (responsive props,
+  `visibleFrom`/`hiddenFrom`, `AppShell` breakpoints, `SimpleGrid` cols) — never custom CSS.
