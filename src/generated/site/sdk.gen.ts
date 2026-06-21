@@ -5,8 +5,8 @@ import * as z from 'zod';
 
 import { client } from './client.gen.ts';
 import type { Client, ClientMeta, Options as Options2, RequestResult, TDataShape } from './client/index.ts';
-import type { SiteAuthDirectLoginData, SiteAuthDirectLoginErrors, SiteAuthDirectLoginResponses, SiteAuthRegisterData, SiteAuthRegisterErrors, SiteAuthRegisterResponses, SiteContactsCreateData, SiteContactsCreateErrors, SiteContactsCreateResponses, SiteContactsDeleteData, SiteContactsDeleteErrors, SiteContactsDeleteResponses, SiteContactsGetData, SiteContactsGetErrors, SiteContactsGetResponses, SiteContactsListData, SiteContactsListErrors, SiteContactsListResponses, SiteContactsUpdateData, SiteContactsUpdateErrors, SiteContactsUpdateResponses, SiteWorkspacesListData, SiteWorkspacesListResponses } from './types.gen.ts';
-import { zSiteAuthDirectLoginBody, zSiteAuthRegisterBody, zSiteContactsCreateBody, zSiteContactsCreatePath, zSiteContactsDeletePath, zSiteContactsGetPath, zSiteContactsListPath, zSiteContactsListQuery, zSiteContactsUpdateBody, zSiteContactsUpdatePath } from './zod.gen.ts';
+import type { SiteAuthDirectLoginData, SiteAuthDirectLoginErrors, SiteAuthDirectLoginResponses, SiteAuthRegisterData, SiteAuthRegisterErrors, SiteAuthRegisterResponses, SiteContactsCreateData, SiteContactsCreateErrors, SiteContactsCreateResponses, SiteContactsDeleteData, SiteContactsDeleteErrors, SiteContactsDeleteResponses, SiteContactsGetData, SiteContactsGetErrors, SiteContactsGetResponses, SiteContactsListData, SiteContactsListErrors, SiteContactsListResponses, SiteContactsUpdateData, SiteContactsUpdateErrors, SiteContactsUpdateResponses, SiteUserGetMeData, SiteUserGetMeResponses, SiteUserUpdateMeData, SiteUserUpdateMeErrors, SiteUserUpdateMeResponses, SiteWorkspacesListData, SiteWorkspacesListResponses } from './types.gen.ts';
+import { zSiteAuthDirectLoginBody, zSiteAuthRegisterBody, zSiteContactsCreateBody, zSiteContactsCreatePath, zSiteContactsDeletePath, zSiteContactsGetPath, zSiteContactsListPath, zSiteContactsListQuery, zSiteContactsUpdateBody, zSiteContactsUpdatePath, zSiteUserUpdateMeBody } from './zod.gen.ts';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -43,6 +43,46 @@ export const siteAuthRegister = <ThrowOnError extends boolean = false>(options: 
         query: z.never().optional()
     }).parseAsync(data),
     url: '/auth/register',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Get the authenticated user's profile
+ */
+export const siteUserGetMe = <ThrowOnError extends boolean = false>(options?: Options<SiteUserGetMeData, ThrowOnError>): RequestResult<SiteUserGetMeResponses, unknown, ThrowOnError> => (options?.client ?? client).get<SiteUserGetMeResponses, unknown, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: z.never().optional(),
+        path: z.never().optional(),
+        query: z.never().optional()
+    }).parseAsync(data),
+    security: [{
+            in: 'cookie',
+            name: 'JWT',
+            type: 'apiKey'
+        }],
+    url: '/me',
+    ...options
+});
+
+/**
+ * Update the authenticated user's profile (name and/or password)
+ */
+export const siteUserUpdateMe = <ThrowOnError extends boolean = false>(options: Options<SiteUserUpdateMeData, ThrowOnError>): RequestResult<SiteUserUpdateMeResponses, SiteUserUpdateMeErrors, ThrowOnError> => (options.client ?? client).put<SiteUserUpdateMeResponses, SiteUserUpdateMeErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: zSiteUserUpdateMeBody,
+        path: z.never().optional(),
+        query: z.never().optional()
+    }).parseAsync(data),
+    security: [{
+            in: 'cookie',
+            name: 'JWT',
+            type: 'apiKey'
+        }],
+    url: '/me',
     ...options,
     headers: {
         'Content-Type': 'application/json',

@@ -37,6 +37,17 @@
     "backToDashboard": "Dashboard",
     "profile": "Profile"
   },
+  "profile": {
+    "title": "Profile",
+    "nameLabel": "Name",
+    "emailLabel": "Email",
+    "passwordSectionTitle": "Change password",
+    "currentPasswordLabel": "Current password",
+    "newPasswordLabel": "New password",
+    "updated": "Profile updated",
+    "errorTitle": "Failed to update profile",
+    "loadErrorTitle": "Failed to load profile"
+  },
   "overview": {
     "title": "Overview",
     "contactsCount": "Contacts",

@@ -17,6 +17,9 @@ var (
 	rn3AllowedHeaders = map[string]string{
 		"POST": "Content-Type",
 	}
+	rn10AllowedHeaders = map[string]string{
+		"PUT": "Content-Type",
+	}
 	rn7AllowedHeaders = map[string]string{
 		"POST": "Content-Type",
 	}
@@ -138,6 +141,33 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 						return
 					}
 
+				}
+
+			case 'm': // Prefix: "me"
+
+				if l := len("me"); len(elem) >= l && elem[0:l] == "me" {
+					elem = elem[l:]
+				} else {
+					break
+				}
+
+				if len(elem) == 0 {
+					// Leaf node.
+					switch r.Method {
+					case "GET":
+						s.handleSiteUserGetMeRequest([0]string{}, elemIsEscaped, w, r)
+					case "PUT":
+						s.handleSiteUserUpdateMeRequest([0]string{}, elemIsEscaped, w, r)
+					default:
+						s.notAllowed(w, r, notAllowedParams{
+							allowedMethods: "GET,PUT",
+							allowedHeaders: rn10AllowedHeaders,
+							acceptPost:     "",
+							acceptPatch:    "",
+						})
+					}
+
+					return
 				}
 
 			case 'w': // Prefix: "w"
@@ -443,6 +473,40 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 						}
 					}
 
+				}
+
+			case 'm': // Prefix: "me"
+
+				if l := len("me"); len(elem) >= l && elem[0:l] == "me" {
+					elem = elem[l:]
+				} else {
+					break
+				}
+
+				if len(elem) == 0 {
+					// Leaf node.
+					switch method {
+					case "GET":
+						r.name = SiteUserGetMeOperation
+						r.summary = ""
+						r.operationID = "SiteUser_getMe"
+						r.operationGroup = ""
+						r.pathPattern = "/me"
+						r.args = args
+						r.count = 0
+						return r, true
+					case "PUT":
+						r.name = SiteUserUpdateMeOperation
+						r.summary = ""
+						r.operationID = "SiteUser_updateMe"
+						r.operationGroup = ""
+						r.pathPattern = "/me"
+						r.args = args
+						r.count = 0
+						return r, true
+					default:
+						return
+					}
 				}
 
 			case 'w': // Prefix: "w"

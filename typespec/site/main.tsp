@@ -8,6 +8,7 @@ import "../common/errors.tsp";
 import "./resources/contacts.tsp";
 import "./resources/auth.tsp";
 import "./resources/workspaces.tsp";
+import "./resources/me.tsp";
 
 using TypeSpec.OpenAPI;
 using TypeSpec.Http;

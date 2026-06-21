@@ -1465,6 +1465,111 @@ func (s *SiteUpdateContactInputCustomFields) init() SiteUpdateContactInputCustom
 	return m
 }
 
+// Update the authenticated user's profile. To change the password, provide both currentPassword and
+// newPassword.
+// Ref: #/components/schemas/SiteUpdateMeInput
+type SiteUpdateMeInput struct {
+	// New display name.
+	Name OptString `json:"name"`
+	// Current password — required when changing the password.
+	CurrentPassword OptString `json:"currentPassword"`
+	// New password.
+	NewPassword OptString `json:"newPassword"`
+}
+
+// GetName returns the value of Name.
+func (s *SiteUpdateMeInput) GetName() OptString {
+	return s.Name
+}
+
+// GetCurrentPassword returns the value of CurrentPassword.
+func (s *SiteUpdateMeInput) GetCurrentPassword() OptString {
+	return s.CurrentPassword
+}
+
+// GetNewPassword returns the value of NewPassword.
+func (s *SiteUpdateMeInput) GetNewPassword() OptString {
+	return s.NewPassword
+}
+
+// SetName sets the value of Name.
+func (s *SiteUpdateMeInput) SetName(val OptString) {
+	s.Name = val
+}
+
+// SetCurrentPassword sets the value of CurrentPassword.
+func (s *SiteUpdateMeInput) SetCurrentPassword(val OptString) {
+	s.CurrentPassword = val
+}
+
+// SetNewPassword sets the value of NewPassword.
+func (s *SiteUpdateMeInput) SetNewPassword(val OptString) {
+	s.NewPassword = val
+}
+
+// The authenticated dashboard user.
+// Ref: #/components/schemas/SiteUserResource
+type SiteUserResource struct {
+	// Unique identifier.
+	ID EntityId `json:"id"`
+	// Display name.
+	Name string `json:"name"`
+	// Email address (login identity; not editable here).
+	Email EmailAddress `json:"email"`
+	// Creation timestamp.
+	CreatedAt Timestamp `json:"createdAt"`
+}
+
+// GetID returns the value of ID.
+func (s *SiteUserResource) GetID() EntityId {
+	return s.ID
+}
+
+// GetName returns the value of Name.
+func (s *SiteUserResource) GetName() string {
+	return s.Name
+}
+
+// GetEmail returns the value of Email.
+func (s *SiteUserResource) GetEmail() EmailAddress {
+	return s.Email
+}
+
+// GetCreatedAt returns the value of CreatedAt.
+func (s *SiteUserResource) GetCreatedAt() Timestamp {
+	return s.CreatedAt
+}
+
+// SetID sets the value of ID.
+func (s *SiteUserResource) SetID(val EntityId) {
+	s.ID = val
+}
+
+// SetName sets the value of Name.
+func (s *SiteUserResource) SetName(val string) {
+	s.Name = val
+}
+
+// SetEmail sets the value of Email.
+func (s *SiteUserResource) SetEmail(val EmailAddress) {
+	s.Email = val
+}
+
+// SetCreatedAt sets the value of CreatedAt.
+func (s *SiteUserResource) SetCreatedAt(val Timestamp) {
+	s.CreatedAt = val
+}
+
+func (*SiteUserResource) siteUserUpdateMeRes() {}
+
+type SiteUserUpdateMeForbidden ProblemDetails
+
+func (*SiteUserUpdateMeForbidden) siteUserUpdateMeRes() {}
+
+type SiteUserUpdateMeUnprocessableEntity ProblemDetails
+
+func (*SiteUserUpdateMeUnprocessableEntity) siteUserUpdateMeRes() {}
+
 // Workspace the current user belongs to.
 // Ref: #/components/schemas/SiteWorkspaceResource
 type SiteWorkspaceResource struct {

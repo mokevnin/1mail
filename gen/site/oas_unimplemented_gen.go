@@ -72,6 +72,24 @@ func (UnimplementedHandler) SiteContactsUpdate(ctx context.Context, req *SiteUpd
 	return r, ht.ErrNotImplemented
 }
 
+// SiteUserGetMe implements SiteUser_getMe operation.
+//
+// Get the authenticated user's profile.
+//
+// GET /me
+func (UnimplementedHandler) SiteUserGetMe(ctx context.Context) (r *SiteUserResource, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// SiteUserUpdateMe implements SiteUser_updateMe operation.
+//
+// Update the authenticated user's profile (name and/or password).
+//
+// PUT /me
+func (UnimplementedHandler) SiteUserUpdateMe(ctx context.Context, req *SiteUpdateMeInput) (r SiteUserUpdateMeRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // SiteWorkspacesList implements SiteWorkspaces_list operation.
 //
 // List workspaces owned by the authenticated user.

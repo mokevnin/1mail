@@ -4,8 +4,8 @@
 import { type DefaultError, type InfiniteData, infiniteQueryOptions, queryOptions, type UseMutationOptions } from '@tanstack/react-query';
 
 import { client } from '../client.gen.ts';
-import { type Options, siteAuthDirectLogin, siteAuthRegister, siteContactsCreate, siteContactsDelete, siteContactsGet, siteContactsList, siteContactsUpdate, siteWorkspacesList } from '../sdk.gen.ts';
-import type { SiteAuthDirectLoginData, SiteAuthDirectLoginError, SiteAuthDirectLoginResponse, SiteAuthRegisterData, SiteAuthRegisterError, SiteAuthRegisterResponse, SiteContactsCreateData, SiteContactsCreateError, SiteContactsCreateResponse, SiteContactsDeleteData, SiteContactsDeleteError, SiteContactsDeleteResponse, SiteContactsGetData, SiteContactsGetError, SiteContactsGetResponse, SiteContactsListData, SiteContactsListError, SiteContactsListResponse, SiteContactsUpdateData, SiteContactsUpdateError, SiteContactsUpdateResponse, SiteWorkspacesListData, SiteWorkspacesListResponse } from '../types.gen.ts';
+import { type Options, siteAuthDirectLogin, siteAuthRegister, siteContactsCreate, siteContactsDelete, siteContactsGet, siteContactsList, siteContactsUpdate, siteUserGetMe, siteUserUpdateMe, siteWorkspacesList } from '../sdk.gen.ts';
+import type { SiteAuthDirectLoginData, SiteAuthDirectLoginError, SiteAuthDirectLoginResponse, SiteAuthRegisterData, SiteAuthRegisterError, SiteAuthRegisterResponse, SiteContactsCreateData, SiteContactsCreateError, SiteContactsCreateResponse, SiteContactsDeleteData, SiteContactsDeleteError, SiteContactsDeleteResponse, SiteContactsGetData, SiteContactsGetError, SiteContactsGetResponse, SiteContactsListData, SiteContactsListError, SiteContactsListResponse, SiteContactsUpdateData, SiteContactsUpdateError, SiteContactsUpdateResponse, SiteUserGetMeData, SiteUserGetMeResponse, SiteUserUpdateMeData, SiteUserUpdateMeError, SiteUserUpdateMeResponse, SiteWorkspacesListData, SiteWorkspacesListResponse } from '../types.gen.ts';
 
 export const siteAuthDirectLoginMutation = (options?: Partial<Options<SiteAuthDirectLoginData>>): UseMutationOptions<SiteAuthDirectLoginResponse, SiteAuthDirectLoginError, Options<SiteAuthDirectLoginData>> => {
     const mutationOptions: UseMutationOptions<SiteAuthDirectLoginResponse, SiteAuthDirectLoginError, Options<SiteAuthDirectLoginData>> = {
@@ -66,6 +66,41 @@ const createQueryKey = <TOptions extends Options>(id: string, options?: TOptions
         params.query = options.query;
     }
     return [params];
+};
+
+export const siteUserGetMeQueryKey = (options?: Options<SiteUserGetMeData>) => createQueryKey('siteUserGetMe', options);
+
+/**
+ * Get the authenticated user's profile
+ */
+export const siteUserGetMeOptions = (options?: Options<SiteUserGetMeData>) => queryOptions<SiteUserGetMeResponse, DefaultError, SiteUserGetMeResponse, ReturnType<typeof siteUserGetMeQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await siteUserGetMe({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: siteUserGetMeQueryKey(options)
+});
+
+/**
+ * Update the authenticated user's profile (name and/or password)
+ */
+export const siteUserUpdateMeMutation = (options?: Partial<Options<SiteUserUpdateMeData>>): UseMutationOptions<SiteUserUpdateMeResponse, SiteUserUpdateMeError, Options<SiteUserUpdateMeData>> => {
+    const mutationOptions: UseMutationOptions<SiteUserUpdateMeResponse, SiteUserUpdateMeError, Options<SiteUserUpdateMeData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await siteUserUpdateMe({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
 };
 
 export const siteContactsListQueryKey = (options: Options<SiteContactsListData>) => createQueryKey('siteContactsList', options);

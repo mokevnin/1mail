@@ -10,13 +10,6 @@ export type EmailAddress = string;
 export type EntityId = string;
 
 /**
- * RFC 7807 forbidden response
- */
-export type ForbiddenProblem = {
-    body: ProblemDetails;
-};
-
-/**
  * RFC 7807 Problem Details
  */
 export type ProblemDetails = {
@@ -200,6 +193,47 @@ export type SiteUpdateContactInput = {
 };
 
 /**
+ * Update the authenticated user's profile. To change the password, provide
+ * both currentPassword and newPassword.
+ */
+export type SiteUpdateMeInput = {
+    /**
+     * New display name
+     */
+    name?: string;
+    /**
+     * Current password — required when changing the password
+     */
+    currentPassword?: string;
+    /**
+     * New password
+     */
+    newPassword?: string;
+};
+
+/**
+ * The authenticated dashboard user
+ */
+export type SiteUserResource = {
+    /**
+     * Unique identifier
+     */
+    id: EntityId;
+    /**
+     * Display name
+     */
+    name: string;
+    /**
+     * Email address (login identity; not editable here)
+     */
+    email: EmailAddress;
+    /**
+     * Creation timestamp
+     */
+    createdAt: Timestamp;
+};
+
+/**
  * Workspace the current user belongs to
  */
 export type SiteWorkspaceResource = {
@@ -303,6 +337,51 @@ export type SiteAuthRegisterResponses = {
 };
 
 export type SiteAuthRegisterResponse = SiteAuthRegisterResponses[keyof SiteAuthRegisterResponses];
+
+export type SiteUserGetMeData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/me';
+};
+
+export type SiteUserGetMeResponses = {
+    /**
+     * The request has succeeded.
+     */
+    200: SiteUserResource;
+};
+
+export type SiteUserGetMeResponse = SiteUserGetMeResponses[keyof SiteUserGetMeResponses];
+
+export type SiteUserUpdateMeData = {
+    body: SiteUpdateMeInput;
+    path?: never;
+    query?: never;
+    url: '/me';
+};
+
+export type SiteUserUpdateMeErrors = {
+    /**
+     * RFC 7807 forbidden response
+     */
+    403: ProblemDetails;
+    /**
+     * RFC 7807 validation response
+     */
+    422: ProblemDetails;
+};
+
+export type SiteUserUpdateMeError = SiteUserUpdateMeErrors[keyof SiteUserUpdateMeErrors];
+
+export type SiteUserUpdateMeResponses = {
+    /**
+     * The request has succeeded.
+     */
+    200: SiteUserResource;
+};
+
+export type SiteUserUpdateMeResponse = SiteUserUpdateMeResponses[keyof SiteUserUpdateMeResponses];
 
 export type SiteContactsListData = {
     body?: never;

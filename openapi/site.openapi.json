@@ -13,6 +13,9 @@
     },
     {
       "name": "Site Workspaces"
+    },
+    {
+      "name": "Site User"
     }
   ],
   "paths": {
@@ -114,6 +117,74 @@
           }
         },
         "security": [{}]
+      }
+    },
+    "/me": {
+      "get": {
+        "operationId": "SiteUser_getMe",
+        "description": "Get the authenticated user's profile",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "The request has succeeded.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SiteUserResource"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Site User"]
+      },
+      "put": {
+        "operationId": "SiteUser_updateMe",
+        "description": "Update the authenticated user's profile (name and/or password)",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "The request has succeeded.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SiteUserResource"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "RFC 7807 forbidden response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "RFC 7807 validation response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Site User"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SiteUpdateMeInput"
+              }
+            }
+          }
+        }
       }
     },
     "/w/{workspaceSlug}/contacts": {
@@ -544,16 +615,6 @@
         "type": "string",
         "pattern": "^[0-9]+$"
       },
-      "ForbiddenProblem": {
-        "type": "object",
-        "required": ["body"],
-        "properties": {
-          "body": {
-            "$ref": "#/components/schemas/ProblemDetails"
-          }
-        },
-        "description": "RFC 7807 forbidden response"
-      },
       "ProblemDetails": {
         "type": "object",
         "properties": {
@@ -843,6 +904,59 @@
           }
         },
         "description": "Site request body for updating a contact"
+      },
+      "SiteUpdateMeInput": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "New display name"
+          },
+          "currentPassword": {
+            "type": "string",
+            "description": "Current password — required when changing the password"
+          },
+          "newPassword": {
+            "type": "string",
+            "description": "New password"
+          }
+        },
+        "description": "Update the authenticated user's profile. To change the password, provide\nboth currentPassword and newPassword."
+      },
+      "SiteUserResource": {
+        "type": "object",
+        "required": ["id", "name", "email", "createdAt"],
+        "properties": {
+          "id": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EntityId"
+              }
+            ],
+            "description": "Unique identifier"
+          },
+          "name": {
+            "type": "string",
+            "description": "Display name"
+          },
+          "email": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EmailAddress"
+              }
+            ],
+            "description": "Email address (login identity; not editable here)"
+          },
+          "createdAt": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Timestamp"
+              }
+            ],
+            "description": "Creation timestamp"
+          }
+        },
+        "description": "The authenticated dashboard user"
       },
       "SiteWorkspaceResource": {
         "type": "object",

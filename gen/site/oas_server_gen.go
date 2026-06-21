@@ -46,6 +46,18 @@ type Handler interface {
 	//
 	// PUT /w/{workspaceSlug}/contacts/{id}
 	SiteContactsUpdate(ctx context.Context, req *SiteUpdateContactInput, params SiteContactsUpdateParams) (SiteContactsUpdateRes, error)
+	// SiteUserGetMe implements SiteUser_getMe operation.
+	//
+	// Get the authenticated user's profile.
+	//
+	// GET /me
+	SiteUserGetMe(ctx context.Context) (*SiteUserResource, error)
+	// SiteUserUpdateMe implements SiteUser_updateMe operation.
+	//
+	// Update the authenticated user's profile (name and/or password).
+	//
+	// PUT /me
+	SiteUserUpdateMe(ctx context.Context, req *SiteUpdateMeInput) (SiteUserUpdateMeRes, error)
 	// SiteWorkspacesList implements SiteWorkspaces_list operation.
 	//
 	// List workspaces owned by the authenticated user.

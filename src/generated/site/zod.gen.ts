@@ -22,13 +22,6 @@ export const zProblemDetails = z.object({
 });
 
 /**
- * RFC 7807 forbidden response
- */
-export const zForbiddenProblem = z.object({
-    body: zProblemDetails
-});
-
-/**
  * Contact status for site UI
  */
 export const zSiteContactStatus = z.enum(['active', 'unsubscribed']);
@@ -57,6 +50,16 @@ export const zSiteRegisterInput = z.object({
     name: z.string(),
     email: zEmailAddress,
     password: z.string()
+});
+
+/**
+ * Update the authenticated user's profile. To change the password, provide
+ * both currentPassword and newPassword.
+ */
+export const zSiteUpdateMeInput = z.object({
+    name: z.string().optional(),
+    currentPassword: z.string().optional(),
+    newPassword: z.string().optional()
 });
 
 export const zTimeZoneName = z.string();
@@ -107,6 +110,16 @@ export const zSiteRegisterResult = z.object({
 });
 
 /**
+ * The authenticated dashboard user
+ */
+export const zSiteUserResource = z.object({
+    id: zEntityId,
+    name: z.string(),
+    email: zEmailAddress,
+    createdAt: zTimestamp
+});
+
+/**
  * Workspace the current user belongs to
  */
 export const zSiteWorkspaceResource = z.object({
@@ -147,6 +160,18 @@ export const zSiteAuthRegisterBody = zSiteRegisterInput;
  * The request has succeeded and a new resource has been created as a result.
  */
 export const zSiteAuthRegisterResponse = zSiteRegisterResult;
+
+/**
+ * The request has succeeded.
+ */
+export const zSiteUserGetMeResponse = zSiteUserResource;
+
+export const zSiteUserUpdateMeBody = zSiteUpdateMeInput;
+
+/**
+ * The request has succeeded.
+ */
+export const zSiteUserUpdateMeResponse = zSiteUserResource;
 
 export const zSiteContactsListPath = z.object({
     workspaceSlug: z.string()

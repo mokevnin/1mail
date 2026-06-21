@@ -71,6 +71,17 @@ export default interface Resources {
       viewContacts: 'View contacts'
       viewSettings: 'Settings'
     }
+    profile: {
+      currentPasswordLabel: 'Current password'
+      emailLabel: 'Email'
+      errorTitle: 'Failed to update profile'
+      loadErrorTitle: 'Failed to load profile'
+      nameLabel: 'Name'
+      newPasswordLabel: 'New password'
+      passwordSectionTitle: 'Change password'
+      title: 'Profile'
+      updated: 'Profile updated'
+    }
     registration: {
       emailLabel: 'Email'
       errorTitle: 'Registration failed'
