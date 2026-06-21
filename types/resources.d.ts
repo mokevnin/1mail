@@ -11,6 +11,15 @@ export default interface Resources {
       "edit": "Edit",
       "save": "Save"
     },
+    "activity": {
+      "action": "Action",
+      "loadErrorTitle": "Failed to load activity",
+      "noRecords": "No events yet",
+      "properties": "Properties",
+      "subject": "Subject",
+      "time": "Time",
+      "title": "Activity"
+    },
     "alerts": {
       "deleteErrorTitle": "Failed to delete contact",
       "loadErrorTitle": "Failed to load contacts",

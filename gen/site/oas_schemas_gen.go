@@ -220,6 +220,74 @@ func (o OptNilSiteCreateContactInputCustomFields) Or(d SiteCreateContactInputCus
 	return d
 }
 
+// NewOptNilSiteEventResourceProperties returns new OptNilSiteEventResourceProperties with value set to v.
+func NewOptNilSiteEventResourceProperties(v SiteEventResourceProperties) OptNilSiteEventResourceProperties {
+	return OptNilSiteEventResourceProperties{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptNilSiteEventResourceProperties is optional nullable SiteEventResourceProperties.
+type OptNilSiteEventResourceProperties struct {
+	Value SiteEventResourceProperties
+	Set   bool
+	Null  bool
+}
+
+// IsSet returns true if OptNilSiteEventResourceProperties was set.
+func (o OptNilSiteEventResourceProperties) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptNilSiteEventResourceProperties) Reset() {
+	var v SiteEventResourceProperties
+	o.Value = v
+	o.Set = false
+	o.Null = false
+}
+
+// SetTo sets value to v.
+func (o *OptNilSiteEventResourceProperties) SetTo(v SiteEventResourceProperties) {
+	o.Set = true
+	o.Null = false
+	o.Value = v
+}
+
+// IsNull returns true if value is Null.
+func (o OptNilSiteEventResourceProperties) IsNull() bool { return o.Null }
+
+// SetToNull sets value to null.
+func (o *OptNilSiteEventResourceProperties) SetToNull() {
+	o.Set = true
+	o.Null = true
+	var v SiteEventResourceProperties
+	o.Value = v
+}
+
+// IsEmpty returns true if the field was omitted from the payload (not Set and not Null).
+func (o OptNilSiteEventResourceProperties) IsEmpty() bool {
+	return !o.Set && !o.Null
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptNilSiteEventResourceProperties) Get() (v SiteEventResourceProperties, ok bool) {
+	if o.Null {
+		return v, false
+	}
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptNilSiteEventResourceProperties) Or(d SiteEventResourceProperties) SiteEventResourceProperties {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
 // NewOptNilSiteUpdateContactInputCustomFields returns new OptNilSiteUpdateContactInputCustomFields with value set to v.
 func NewOptNilSiteUpdateContactInputCustomFields(v SiteUpdateContactInputCustomFields) OptNilSiteUpdateContactInputCustomFields {
 	return OptNilSiteUpdateContactInputCustomFields{
@@ -418,6 +486,74 @@ func (o OptNilTimeZoneName) Get() (v TimeZoneName, ok bool) {
 
 // Or returns value if set, or given parameter if does not.
 func (o OptNilTimeZoneName) Or(d TimeZoneName) TimeZoneName {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptNilTimestamp returns new OptNilTimestamp with value set to v.
+func NewOptNilTimestamp(v Timestamp) OptNilTimestamp {
+	return OptNilTimestamp{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptNilTimestamp is optional nullable Timestamp.
+type OptNilTimestamp struct {
+	Value Timestamp
+	Set   bool
+	Null  bool
+}
+
+// IsSet returns true if OptNilTimestamp was set.
+func (o OptNilTimestamp) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptNilTimestamp) Reset() {
+	var v Timestamp
+	o.Value = v
+	o.Set = false
+	o.Null = false
+}
+
+// SetTo sets value to v.
+func (o *OptNilTimestamp) SetTo(v Timestamp) {
+	o.Set = true
+	o.Null = false
+	o.Value = v
+}
+
+// IsNull returns true if value is Null.
+func (o OptNilTimestamp) IsNull() bool { return o.Null }
+
+// SetToNull sets value to null.
+func (o *OptNilTimestamp) SetToNull() {
+	o.Set = true
+	o.Null = true
+	var v Timestamp
+	o.Value = v
+}
+
+// IsEmpty returns true if the field was omitted from the payload (not Set and not Null).
+func (o OptNilTimestamp) IsEmpty() bool {
+	return !o.Set && !o.Null
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptNilTimestamp) Get() (v Timestamp, ok bool) {
+	if o.Null {
+		return v, false
+	}
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptNilTimestamp) Or(d Timestamp) Timestamp {
 	if v, ok := o.Get(); ok {
 		return v
 	}
@@ -756,6 +892,7 @@ func (s *ProblemDetails) SetFields(val OptProblemDetailsFields) {
 }
 
 func (*ProblemDetails) siteAuthDirectLoginRes() {}
+func (*ProblemDetails) siteEventsListRes()      {}
 
 // Validation errors grouped by field.
 type ProblemDetailsErrors map[string][]string
@@ -1312,6 +1449,173 @@ func (s *SiteDirectLoginResultAttrs) init() SiteDirectLoginResultAttrs {
 	}
 	return m
 }
+
+// A tracked event shown in the activity feed.
+// Ref: #/components/schemas/SiteEventResource
+type SiteEventResource struct {
+	// Unique identifier.
+	ID EntityId `json:"id"`
+	// Subject (tracking profile / visitor) the event belongs to.
+	SubjectId string `json:"subjectId"`
+	// Email associated with the event, if known.
+	Email OptNilString `json:"email"`
+	// Event action / name.
+	Action string `json:"action"`
+	// Arbitrary event properties.
+	Properties OptNilSiteEventResourceProperties `json:"properties"`
+	// When the event occurred at the source, if provided.
+	OccurredAt OptNilTimestamp `json:"occurredAt"`
+	// When the event was recorded.
+	CreatedAt Timestamp `json:"createdAt"`
+}
+
+// GetID returns the value of ID.
+func (s *SiteEventResource) GetID() EntityId {
+	return s.ID
+}
+
+// GetSubjectId returns the value of SubjectId.
+func (s *SiteEventResource) GetSubjectId() string {
+	return s.SubjectId
+}
+
+// GetEmail returns the value of Email.
+func (s *SiteEventResource) GetEmail() OptNilString {
+	return s.Email
+}
+
+// GetAction returns the value of Action.
+func (s *SiteEventResource) GetAction() string {
+	return s.Action
+}
+
+// GetProperties returns the value of Properties.
+func (s *SiteEventResource) GetProperties() OptNilSiteEventResourceProperties {
+	return s.Properties
+}
+
+// GetOccurredAt returns the value of OccurredAt.
+func (s *SiteEventResource) GetOccurredAt() OptNilTimestamp {
+	return s.OccurredAt
+}
+
+// GetCreatedAt returns the value of CreatedAt.
+func (s *SiteEventResource) GetCreatedAt() Timestamp {
+	return s.CreatedAt
+}
+
+// SetID sets the value of ID.
+func (s *SiteEventResource) SetID(val EntityId) {
+	s.ID = val
+}
+
+// SetSubjectId sets the value of SubjectId.
+func (s *SiteEventResource) SetSubjectId(val string) {
+	s.SubjectId = val
+}
+
+// SetEmail sets the value of Email.
+func (s *SiteEventResource) SetEmail(val OptNilString) {
+	s.Email = val
+}
+
+// SetAction sets the value of Action.
+func (s *SiteEventResource) SetAction(val string) {
+	s.Action = val
+}
+
+// SetProperties sets the value of Properties.
+func (s *SiteEventResource) SetProperties(val OptNilSiteEventResourceProperties) {
+	s.Properties = val
+}
+
+// SetOccurredAt sets the value of OccurredAt.
+func (s *SiteEventResource) SetOccurredAt(val OptNilTimestamp) {
+	s.OccurredAt = val
+}
+
+// SetCreatedAt sets the value of CreatedAt.
+func (s *SiteEventResource) SetCreatedAt(val Timestamp) {
+	s.CreatedAt = val
+}
+
+// Arbitrary event properties.
+type SiteEventResourceProperties map[string]jx.Raw
+
+func (s *SiteEventResourceProperties) init() SiteEventResourceProperties {
+	m := *s
+	if m == nil {
+		m = map[string]jx.Raw{}
+		*s = m
+	}
+	return m
+}
+
+// Paginated response.
+type SiteEventsListOK struct {
+	// List of items.
+	Items []SiteEventResource `json:"items"`
+	// Page number (1-based).
+	Page int32 `json:"page"`
+	// Page size.
+	PageSize int32 `json:"pageSize"`
+	// Total number of elements.
+	TotalItems int32 `json:"totalItems"`
+	// Total number of pages.
+	TotalPages int32 `json:"totalPages"`
+}
+
+// GetItems returns the value of Items.
+func (s *SiteEventsListOK) GetItems() []SiteEventResource {
+	return s.Items
+}
+
+// GetPage returns the value of Page.
+func (s *SiteEventsListOK) GetPage() int32 {
+	return s.Page
+}
+
+// GetPageSize returns the value of PageSize.
+func (s *SiteEventsListOK) GetPageSize() int32 {
+	return s.PageSize
+}
+
+// GetTotalItems returns the value of TotalItems.
+func (s *SiteEventsListOK) GetTotalItems() int32 {
+	return s.TotalItems
+}
+
+// GetTotalPages returns the value of TotalPages.
+func (s *SiteEventsListOK) GetTotalPages() int32 {
+	return s.TotalPages
+}
+
+// SetItems sets the value of Items.
+func (s *SiteEventsListOK) SetItems(val []SiteEventResource) {
+	s.Items = val
+}
+
+// SetPage sets the value of Page.
+func (s *SiteEventsListOK) SetPage(val int32) {
+	s.Page = val
+}
+
+// SetPageSize sets the value of PageSize.
+func (s *SiteEventsListOK) SetPageSize(val int32) {
+	s.PageSize = val
+}
+
+// SetTotalItems sets the value of TotalItems.
+func (s *SiteEventsListOK) SetTotalItems(val int32) {
+	s.TotalItems = val
+}
+
+// SetTotalPages sets the value of TotalPages.
+func (s *SiteEventsListOK) SetTotalPages(val int32) {
+	s.TotalPages = val
+}
+
+func (*SiteEventsListOK) siteEventsListRes() {}
 
 // Ref: #/components/schemas/SiteRegisterInput
 type SiteRegisterInput struct {

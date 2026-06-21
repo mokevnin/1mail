@@ -155,6 +155,42 @@ export type SiteDirectLoginResult = {
     role?: string;
 };
 
+/**
+ * A tracked event shown in the activity feed
+ */
+export type SiteEventResource = {
+    /**
+     * Unique identifier
+     */
+    id: EntityId;
+    /**
+     * Subject (tracking profile / visitor) the event belongs to
+     */
+    subjectId: string;
+    /**
+     * Email associated with the event, if known
+     */
+    email?: string | null;
+    /**
+     * Event action / name
+     */
+    action: string;
+    /**
+     * Arbitrary event properties
+     */
+    properties?: {
+        [key: string]: unknown;
+    } | null;
+    /**
+     * When the event occurred at the source, if provided
+     */
+    occurredAt?: Timestamp | null;
+    /**
+     * When the event was recorded
+     */
+    createdAt: Timestamp;
+};
+
 export type SiteRegisterInput = {
     name: string;
     email: EmailAddress;
@@ -601,6 +637,63 @@ export type SiteContactsUpdateResponses = {
 };
 
 export type SiteContactsUpdateResponse = SiteContactsUpdateResponses[keyof SiteContactsUpdateResponses];
+
+export type SiteEventsListData = {
+    body?: never;
+    path: {
+        workspaceSlug: string;
+    };
+    query?: {
+        /**
+         * Page number (1-based)
+         */
+        page?: number;
+        /**
+         * Page size
+         */
+        pageSize?: number;
+    };
+    url: '/w/{workspaceSlug}/events';
+};
+
+export type SiteEventsListErrors = {
+    /**
+     * RFC 7807 not found response
+     */
+    404: ProblemDetails;
+};
+
+export type SiteEventsListError = SiteEventsListErrors[keyof SiteEventsListErrors];
+
+export type SiteEventsListResponses = {
+    /**
+     * Paginated response
+     */
+    200: {
+        /**
+         * List of items
+         */
+        items: Array<SiteEventResource>;
+        /**
+         * Page number (1-based)
+         */
+        page: number;
+        /**
+         * Page size
+         */
+        pageSize: number;
+        /**
+         * Total number of elements
+         */
+        totalItems: number;
+        /**
+         * Total number of pages
+         */
+        totalPages: number;
+    };
+};
+
+export type SiteEventsListResponse = SiteEventsListResponses[keyof SiteEventsListResponses];
 
 export type SiteWorkspacesListData = {
     body?: never;

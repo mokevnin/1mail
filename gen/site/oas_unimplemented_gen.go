@@ -72,6 +72,15 @@ func (UnimplementedHandler) SiteContactsUpdate(ctx context.Context, req *SiteUpd
 	return r, ht.ErrNotImplemented
 }
 
+// SiteEventsList implements SiteEvents_list operation.
+//
+// List events for the site UI (most recent first).
+//
+// GET /w/{workspaceSlug}/events
+func (UnimplementedHandler) SiteEventsList(ctx context.Context, params SiteEventsListParams) (r SiteEventsListRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // SiteUserGetMe implements SiteUser_getMe operation.
 //
 // Get the authenticated user's profile.

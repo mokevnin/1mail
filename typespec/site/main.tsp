@@ -9,6 +9,7 @@ import "./resources/contacts.tsp";
 import "./resources/auth.tsp";
 import "./resources/workspaces.tsp";
 import "./resources/me.tsp";
+import "./resources/events.tsp";
 
 using TypeSpec.OpenAPI;
 using TypeSpec.Http;

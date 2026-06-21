@@ -110,6 +110,19 @@ export const zSiteContactResource = z.object({
     updatedAt: zTimestamp
 });
 
+/**
+ * A tracked event shown in the activity feed
+ */
+export const zSiteEventResource = z.object({
+    id: zEntityId,
+    subjectId: z.string(),
+    email: z.string().nullish(),
+    action: z.string(),
+    properties: z.record(z.string(), z.unknown()).nullish(),
+    occurredAt: zTimestamp.nullish(),
+    createdAt: zTimestamp
+});
+
 export const zSiteRegisterResult = z.object({
     id: zEntityId,
     name: z.string(),
@@ -244,6 +257,26 @@ export const zSiteContactsUpdatePath = z.object({
  * The request has succeeded.
  */
 export const zSiteContactsUpdateResponse = zSiteContactResource;
+
+export const zSiteEventsListPath = z.object({
+    workspaceSlug: z.string()
+});
+
+export const zSiteEventsListQuery = z.object({
+    page: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).optional().default(1),
+    pageSize: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).optional().default(25)
+});
+
+/**
+ * Paginated response
+ */
+export const zSiteEventsListResponse = z.object({
+    items: z.array(zSiteEventResource),
+    page: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
+    pageSize: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
+    totalItems: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
+    totalPages: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' })
+});
 
 /**
  * The request has succeeded.

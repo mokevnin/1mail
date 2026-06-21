@@ -13,6 +13,7 @@ const (
 	SiteContactsGetOperation      OperationName = "SiteContactsGet"
 	SiteContactsListOperation     OperationName = "SiteContactsList"
 	SiteContactsUpdateOperation   OperationName = "SiteContactsUpdate"
+	SiteEventsListOperation       OperationName = "SiteEventsList"
 	SiteUserGetMeOperation        OperationName = "SiteUserGetMe"
 	SiteUserUpdateMeOperation     OperationName = "SiteUserUpdateMe"
 	SiteWorkspacesListOperation   OperationName = "SiteWorkspacesList"

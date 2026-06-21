@@ -16,6 +16,9 @@
     },
     {
       "name": "Site User"
+    },
+    {
+      "name": "Site Events"
     }
   ],
   "paths": {
@@ -550,6 +553,82 @@
         "tags": ["Site Contacts"]
       }
     },
+    "/w/{workspaceSlug}/events": {
+      "get": {
+        "operationId": "SiteEvents_list",
+        "description": "List events for the site UI (most recent first)",
+        "parameters": [
+          {
+            "name": "workspaceSlug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/PageQuery.page"
+          },
+          {
+            "$ref": "#/components/parameters/PageQuery.pageSize"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request has succeeded.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["items", "page", "pageSize", "totalItems", "totalPages"],
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/SiteEventResource"
+                      },
+                      "description": "List of items"
+                    },
+                    "page": {
+                      "type": "integer",
+                      "format": "int32",
+                      "description": "Page number (1-based)"
+                    },
+                    "pageSize": {
+                      "type": "integer",
+                      "format": "int32",
+                      "description": "Page size"
+                    },
+                    "totalItems": {
+                      "type": "integer",
+                      "format": "int32",
+                      "description": "Total number of elements"
+                    },
+                    "totalPages": {
+                      "type": "integer",
+                      "format": "int32",
+                      "description": "Total number of pages"
+                    }
+                  },
+                  "description": "Paginated response"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "RFC 7807 not found response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Site Events"]
+      }
+    },
     "/workspaces": {
       "get": {
         "operationId": "SiteWorkspaces_list",
@@ -896,6 +975,58 @@
             "type": "string"
           }
         }
+      },
+      "SiteEventResource": {
+        "type": "object",
+        "required": ["id", "subjectId", "action", "createdAt"],
+        "properties": {
+          "id": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EntityId"
+              }
+            ],
+            "description": "Unique identifier"
+          },
+          "subjectId": {
+            "type": "string",
+            "description": "Subject (tracking profile / visitor) the event belongs to"
+          },
+          "email": {
+            "type": "string",
+            "nullable": true,
+            "description": "Email associated with the event, if known"
+          },
+          "action": {
+            "type": "string",
+            "description": "Event action / name"
+          },
+          "properties": {
+            "type": "object",
+            "additionalProperties": {},
+            "nullable": true,
+            "description": "Arbitrary event properties"
+          },
+          "occurredAt": {
+            "type": "string",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Timestamp"
+              }
+            ],
+            "nullable": true,
+            "description": "When the event occurred at the source, if provided"
+          },
+          "createdAt": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Timestamp"
+              }
+            ],
+            "description": "When the event was recorded"
+          }
+        },
+        "description": "A tracked event shown in the activity feed"
       },
       "SiteRegisterInput": {
         "type": "object",

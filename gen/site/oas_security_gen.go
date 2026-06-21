@@ -39,6 +39,7 @@ var operationRolesApiKeyAuth = map[string][]string{
 	SiteContactsGetOperation:      []string{},
 	SiteContactsListOperation:     []string{},
 	SiteContactsUpdateOperation:   []string{},
+	SiteEventsListOperation:       []string{},
 	SiteUserGetMeOperation:        []string{},
 	SiteUserUpdateMeOperation:     []string{},
 	SiteWorkspacesListOperation:   []string{},

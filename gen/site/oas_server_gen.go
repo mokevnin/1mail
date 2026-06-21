@@ -46,6 +46,12 @@ type Handler interface {
 	//
 	// PUT /w/{workspaceSlug}/contacts/{id}
 	SiteContactsUpdate(ctx context.Context, req *SiteUpdateContactInput, params SiteContactsUpdateParams) (SiteContactsUpdateRes, error)
+	// SiteEventsList implements SiteEvents_list operation.
+	//
+	// List events for the site UI (most recent first).
+	//
+	// GET /w/{workspaceSlug}/events
+	SiteEventsList(ctx context.Context, params SiteEventsListParams) (SiteEventsListRes, error)
 	// SiteUserGetMe implements SiteUser_getMe operation.
 	//
 	// Get the authenticated user's profile.

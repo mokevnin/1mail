@@ -29,6 +29,10 @@ type SiteContactsUpdateRes interface {
 	siteContactsUpdateRes()
 }
 
+type SiteEventsListRes interface {
+	siteEventsListRes()
+}
+
 type SiteUserUpdateMeRes interface {
 	siteUserUpdateMeRes()
 }

@@ -17,7 +17,7 @@ var (
 	rn3AllowedHeaders = map[string]string{
 		"POST": "Content-Type",
 	}
-	rn10AllowedHeaders = map[string]string{
+	rn12AllowedHeaders = map[string]string{
 		"PUT": "Content-Type",
 	}
 	rn7AllowedHeaders = map[string]string{
@@ -26,7 +26,7 @@ var (
 	rn9AllowedHeaders = map[string]string{
 		"PUT": "Content-Type",
 	}
-	rn14AllowedHeaders = map[string]string{
+	rn16AllowedHeaders = map[string]string{
 		"PUT": "Content-Type",
 	}
 )
@@ -164,7 +164,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 					default:
 						s.notAllowed(w, r, notAllowedParams{
 							allowedMethods: "GET,PUT",
-							allowedHeaders: rn10AllowedHeaders,
+							allowedHeaders: rn12AllowedHeaders,
 							acceptPost:     "",
 							acceptPatch:    "",
 						})
@@ -206,75 +206,116 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 						break
 					}
 					switch elem[0] {
-					case '/': // Prefix: "/contacts"
+					case '/': // Prefix: "/"
 
-						if l := len("/contacts"); len(elem) >= l && elem[0:l] == "/contacts" {
+						if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
 							elem = elem[l:]
 						} else {
 							break
 						}
 
 						if len(elem) == 0 {
-							switch r.Method {
-							case "GET":
-								s.handleSiteContactsListRequest([1]string{
-									args[0],
-								}, elemIsEscaped, w, r)
-							case "POST":
-								s.handleSiteContactsCreateRequest([1]string{
-									args[0],
-								}, elemIsEscaped, w, r)
-							default:
-								s.notAllowed(w, r, notAllowedParams{
-									allowedMethods: "GET,POST",
-									allowedHeaders: rn7AllowedHeaders,
-									acceptPost:     "application/json",
-									acceptPatch:    "",
-								})
-							}
-
-							return
+							break
 						}
 						switch elem[0] {
-						case '/': // Prefix: "/"
+						case 'c': // Prefix: "contacts"
 
-							if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
+							if l := len("contacts"); len(elem) >= l && elem[0:l] == "contacts" {
 								elem = elem[l:]
 							} else {
 								break
 							}
 
-							// Param: "id"
-							// Leaf parameter, slashes are prohibited
-							idx := strings.IndexByte(elem, '/')
-							if idx >= 0 {
+							if len(elem) == 0 {
+								switch r.Method {
+								case "GET":
+									s.handleSiteContactsListRequest([1]string{
+										args[0],
+									}, elemIsEscaped, w, r)
+								case "POST":
+									s.handleSiteContactsCreateRequest([1]string{
+										args[0],
+									}, elemIsEscaped, w, r)
+								default:
+									s.notAllowed(w, r, notAllowedParams{
+										allowedMethods: "GET,POST",
+										allowedHeaders: rn7AllowedHeaders,
+										acceptPost:     "application/json",
+										acceptPatch:    "",
+									})
+								}
+
+								return
+							}
+							switch elem[0] {
+							case '/': // Prefix: "/"
+
+								if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
+									elem = elem[l:]
+								} else {
+									break
+								}
+
+								// Param: "id"
+								// Leaf parameter, slashes are prohibited
+								idx := strings.IndexByte(elem, '/')
+								if idx >= 0 {
+									break
+								}
+								args[1] = elem
+								elem = ""
+
+								if len(elem) == 0 {
+									// Leaf node.
+									switch r.Method {
+									case "DELETE":
+										s.handleSiteContactsDeleteRequest([2]string{
+											args[0],
+											args[1],
+										}, elemIsEscaped, w, r)
+									case "GET":
+										s.handleSiteContactsGetRequest([2]string{
+											args[0],
+											args[1],
+										}, elemIsEscaped, w, r)
+									case "PUT":
+										s.handleSiteContactsUpdateRequest([2]string{
+											args[0],
+											args[1],
+										}, elemIsEscaped, w, r)
+									default:
+										s.notAllowed(w, r, notAllowedParams{
+											allowedMethods: "DELETE,GET,PUT",
+											allowedHeaders: rn9AllowedHeaders,
+											acceptPost:     "",
+											acceptPatch:    "",
+										})
+									}
+
+									return
+								}
+
+							}
+
+						case 'e': // Prefix: "events"
+
+							if l := len("events"); len(elem) >= l && elem[0:l] == "events" {
+								elem = elem[l:]
+							} else {
 								break
 							}
-							args[1] = elem
-							elem = ""
 
 							if len(elem) == 0 {
 								// Leaf node.
 								switch r.Method {
-								case "DELETE":
-									s.handleSiteContactsDeleteRequest([2]string{
-										args[0],
-										args[1],
-									}, elemIsEscaped, w, r)
 								case "GET":
-									s.handleSiteContactsGetRequest([2]string{
+									s.handleSiteEventsListRequest([1]string{
 										args[0],
-										args[1],
-									}, elemIsEscaped, w, r)
-								case "PUT":
-									s.handleSiteContactsUpdateRequest([2]string{
-										args[0],
-										args[1],
 									}, elemIsEscaped, w, r)
 								default:
 									s.notAllowed(w, r, notAllowedParams{
-										allowedMethods: "DELETE,GET,PUT",
-										allowedHeaders: rn9AllowedHeaders,
+										allowedMethods: "GET",
+										allowedHeaders: nil,
 										acceptPost:     "",
 										acceptPatch:    "",
 									})
@@ -338,7 +379,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 							default:
 								s.notAllowed(w, r, notAllowedParams{
 									allowedMethods: "PUT",
-									allowedHeaders: rn14AllowedHeaders,
+									allowedHeaders: rn16AllowedHeaders,
 									acceptPost:     "",
 									acceptPatch:    "",
 								})
@@ -582,85 +623,124 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 						break
 					}
 					switch elem[0] {
-					case '/': // Prefix: "/contacts"
+					case '/': // Prefix: "/"
 
-						if l := len("/contacts"); len(elem) >= l && elem[0:l] == "/contacts" {
+						if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
 							elem = elem[l:]
 						} else {
 							break
 						}
 
 						if len(elem) == 0 {
-							switch method {
-							case "GET":
-								r.name = SiteContactsListOperation
-								r.summary = ""
-								r.operationID = "SiteContacts_list"
-								r.operationGroup = ""
-								r.pathPattern = "/w/{workspaceSlug}/contacts"
-								r.args = args
-								r.count = 1
-								return r, true
-							case "POST":
-								r.name = SiteContactsCreateOperation
-								r.summary = ""
-								r.operationID = "SiteContacts_create"
-								r.operationGroup = ""
-								r.pathPattern = "/w/{workspaceSlug}/contacts"
-								r.args = args
-								r.count = 1
-								return r, true
-							default:
-								return
-							}
+							break
 						}
 						switch elem[0] {
-						case '/': // Prefix: "/"
+						case 'c': // Prefix: "contacts"
 
-							if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
+							if l := len("contacts"); len(elem) >= l && elem[0:l] == "contacts" {
 								elem = elem[l:]
 							} else {
 								break
 							}
 
-							// Param: "id"
-							// Leaf parameter, slashes are prohibited
-							idx := strings.IndexByte(elem, '/')
-							if idx >= 0 {
+							if len(elem) == 0 {
+								switch method {
+								case "GET":
+									r.name = SiteContactsListOperation
+									r.summary = ""
+									r.operationID = "SiteContacts_list"
+									r.operationGroup = ""
+									r.pathPattern = "/w/{workspaceSlug}/contacts"
+									r.args = args
+									r.count = 1
+									return r, true
+								case "POST":
+									r.name = SiteContactsCreateOperation
+									r.summary = ""
+									r.operationID = "SiteContacts_create"
+									r.operationGroup = ""
+									r.pathPattern = "/w/{workspaceSlug}/contacts"
+									r.args = args
+									r.count = 1
+									return r, true
+								default:
+									return
+								}
+							}
+							switch elem[0] {
+							case '/': // Prefix: "/"
+
+								if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
+									elem = elem[l:]
+								} else {
+									break
+								}
+
+								// Param: "id"
+								// Leaf parameter, slashes are prohibited
+								idx := strings.IndexByte(elem, '/')
+								if idx >= 0 {
+									break
+								}
+								args[1] = elem
+								elem = ""
+
+								if len(elem) == 0 {
+									// Leaf node.
+									switch method {
+									case "DELETE":
+										r.name = SiteContactsDeleteOperation
+										r.summary = ""
+										r.operationID = "SiteContacts_delete"
+										r.operationGroup = ""
+										r.pathPattern = "/w/{workspaceSlug}/contacts/{id}"
+										r.args = args
+										r.count = 2
+										return r, true
+									case "GET":
+										r.name = SiteContactsGetOperation
+										r.summary = ""
+										r.operationID = "SiteContacts_get"
+										r.operationGroup = ""
+										r.pathPattern = "/w/{workspaceSlug}/contacts/{id}"
+										r.args = args
+										r.count = 2
+										return r, true
+									case "PUT":
+										r.name = SiteContactsUpdateOperation
+										r.summary = ""
+										r.operationID = "SiteContacts_update"
+										r.operationGroup = ""
+										r.pathPattern = "/w/{workspaceSlug}/contacts/{id}"
+										r.args = args
+										r.count = 2
+										return r, true
+									default:
+										return
+									}
+								}
+
+							}
+
+						case 'e': // Prefix: "events"
+
+							if l := len("events"); len(elem) >= l && elem[0:l] == "events" {
+								elem = elem[l:]
+							} else {
 								break
 							}
-							args[1] = elem
-							elem = ""
 
 							if len(elem) == 0 {
 								// Leaf node.
 								switch method {
-								case "DELETE":
-									r.name = SiteContactsDeleteOperation
-									r.summary = ""
-									r.operationID = "SiteContacts_delete"
-									r.operationGroup = ""
-									r.pathPattern = "/w/{workspaceSlug}/contacts/{id}"
-									r.args = args
-									r.count = 2
-									return r, true
 								case "GET":
-									r.name = SiteContactsGetOperation
+									r.name = SiteEventsListOperation
 									r.summary = ""
-									r.operationID = "SiteContacts_get"
+									r.operationID = "SiteEvents_list"
 									r.operationGroup = ""
-									r.pathPattern = "/w/{workspaceSlug}/contacts/{id}"
+									r.pathPattern = "/w/{workspaceSlug}/events"
 									r.args = args
-									r.count = 2
-									return r, true
-								case "PUT":
-									r.name = SiteContactsUpdateOperation
-									r.summary = ""
-									r.operationID = "SiteContacts_update"
-									r.operationGroup = ""
-									r.pathPattern = "/w/{workspaceSlug}/contacts/{id}"
-									r.args = args
-									r.count = 2
+									r.count = 1
 									return r, true
 								default:
 									return
