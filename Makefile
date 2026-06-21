@@ -21,7 +21,7 @@ RUN_GO_DB ?= $(DC) run --rm backend
 TEST_DB_URL  ?= postgres://postgres:postgres@db:5432/1mail_test?sslmode=disable
 ATLAS_DB_URL ?= postgres://postgres:postgres@db:5432/atlas_dev?sslmode=disable
 
-setup: install db-create db-create-test db-create-atlas db-migrate
+setup: install db-create db-create-test db-create-atlas db-migrate db-seed
 
 # Frontend deps install into the bind-mounted node_modules (Linux-native, run in
 # compose). Go modules download into the host-bind-mounted cache (./.cache/go-mod)
