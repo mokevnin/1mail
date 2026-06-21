@@ -96,7 +96,6 @@ export default interface Resources {
       "title": "Create account"
     },
     "settings": {
-      "apiKeysComingSoon": "API key management is coming soon.",
       "apiKeysTitle": "API keys",
       "copied": "Copied",
       "copy": "Copy",
@@ -106,6 +105,21 @@ export default interface Resources {
       "nameLabel": "Workspace name",
       "saved": "Workspace updated",
       "title": "Settings",
+      "tokens": {
+        "create": "Create token",
+        "createError": "Failed to create token",
+        "created": "Created",
+        "empty": "No API keys yet",
+        "loadError": "Failed to load tokens",
+        "nameLabel": "Token name",
+        "prefix": "Prefix",
+        "revoke": "Revoke",
+        "revokeConfirmDescription": "Applications using this token will immediately lose access.",
+        "revokeConfirmTitle": "Revoke token?",
+        "revokeError": "Failed to revoke token",
+        "scopesLabel": "Scopes",
+        "secretNotice": "Copy this token now — it won't be shown again."
+      },
       "trackingDescription": "Paste this snippet into the <head> of your site to start collecting events.",
       "trackingTitle": "Tracking snippet"
     },

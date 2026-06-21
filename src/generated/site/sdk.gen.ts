@@ -5,8 +5,8 @@ import * as z from 'zod';
 
 import { client } from './client.gen.ts';
 import type { Client, ClientMeta, Options as Options2, RequestResult, TDataShape } from './client/index.ts';
-import type { SiteAuthDirectLoginData, SiteAuthDirectLoginErrors, SiteAuthDirectLoginResponses, SiteAuthRegisterData, SiteAuthRegisterErrors, SiteAuthRegisterResponses, SiteContactsCreateData, SiteContactsCreateErrors, SiteContactsCreateResponses, SiteContactsDeleteData, SiteContactsDeleteErrors, SiteContactsDeleteResponses, SiteContactsGetData, SiteContactsGetErrors, SiteContactsGetResponses, SiteContactsListData, SiteContactsListErrors, SiteContactsListResponses, SiteContactsUpdateData, SiteContactsUpdateErrors, SiteContactsUpdateResponses, SiteEventsListData, SiteEventsListErrors, SiteEventsListResponses, SiteUserGetMeData, SiteUserGetMeResponses, SiteUserUpdateMeData, SiteUserUpdateMeErrors, SiteUserUpdateMeResponses, SiteWorkspacesListData, SiteWorkspacesListResponses, SiteWorkspacesUpdateData, SiteWorkspacesUpdateErrors, SiteWorkspacesUpdateResponses } from './types.gen.ts';
-import { zSiteAuthDirectLoginBody, zSiteAuthRegisterBody, zSiteContactsCreateBody, zSiteContactsCreatePath, zSiteContactsDeletePath, zSiteContactsGetPath, zSiteContactsListPath, zSiteContactsListQuery, zSiteContactsUpdateBody, zSiteContactsUpdatePath, zSiteEventsListPath, zSiteEventsListQuery, zSiteUserUpdateMeBody, zSiteWorkspacesUpdateBody, zSiteWorkspacesUpdatePath } from './zod.gen.ts';
+import type { SiteAuthDirectLoginData, SiteAuthDirectLoginErrors, SiteAuthDirectLoginResponses, SiteAuthRegisterData, SiteAuthRegisterErrors, SiteAuthRegisterResponses, SiteContactsCreateData, SiteContactsCreateErrors, SiteContactsCreateResponses, SiteContactsDeleteData, SiteContactsDeleteErrors, SiteContactsDeleteResponses, SiteContactsGetData, SiteContactsGetErrors, SiteContactsGetResponses, SiteContactsListData, SiteContactsListErrors, SiteContactsListResponses, SiteContactsUpdateData, SiteContactsUpdateErrors, SiteContactsUpdateResponses, SiteEventsListData, SiteEventsListErrors, SiteEventsListResponses, SiteTokensCreateData, SiteTokensCreateErrors, SiteTokensCreateResponses, SiteTokensDeleteData, SiteTokensDeleteErrors, SiteTokensDeleteResponses, SiteTokensListData, SiteTokensListErrors, SiteTokensListResponses, SiteUserGetMeData, SiteUserGetMeResponses, SiteUserUpdateMeData, SiteUserUpdateMeErrors, SiteUserUpdateMeResponses, SiteWorkspacesListData, SiteWorkspacesListResponses, SiteWorkspacesUpdateData, SiteWorkspacesUpdateErrors, SiteWorkspacesUpdateResponses } from './types.gen.ts';
+import { zSiteAuthDirectLoginBody, zSiteAuthRegisterBody, zSiteContactsCreateBody, zSiteContactsCreatePath, zSiteContactsDeletePath, zSiteContactsGetPath, zSiteContactsListPath, zSiteContactsListQuery, zSiteContactsUpdateBody, zSiteContactsUpdatePath, zSiteEventsListPath, zSiteEventsListQuery, zSiteTokensCreateBody, zSiteTokensCreatePath, zSiteTokensDeletePath, zSiteTokensListPath, zSiteUserUpdateMeBody, zSiteWorkspacesUpdateBody, zSiteWorkspacesUpdatePath } from './zod.gen.ts';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -203,6 +203,64 @@ export const siteEventsList = <ThrowOnError extends boolean = false>(options: Op
             type: 'apiKey'
         }],
     url: '/w/{workspaceSlug}/events',
+    ...options
+});
+
+/**
+ * List active (non-revoked) API tokens for the workspace
+ */
+export const siteTokensList = <ThrowOnError extends boolean = false>(options: Options<SiteTokensListData, ThrowOnError>): RequestResult<SiteTokensListResponses, SiteTokensListErrors, ThrowOnError> => (options.client ?? client).get<SiteTokensListResponses, SiteTokensListErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: z.never().optional(),
+        path: zSiteTokensListPath,
+        query: z.never().optional()
+    }).parseAsync(data),
+    security: [{
+            in: 'cookie',
+            name: 'JWT',
+            type: 'apiKey'
+        }],
+    url: '/w/{workspaceSlug}/tokens',
+    ...options
+});
+
+/**
+ * Create an API token; the full secret is returned once
+ */
+export const siteTokensCreate = <ThrowOnError extends boolean = false>(options: Options<SiteTokensCreateData, ThrowOnError>): RequestResult<SiteTokensCreateResponses, SiteTokensCreateErrors, ThrowOnError> => (options.client ?? client).post<SiteTokensCreateResponses, SiteTokensCreateErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: zSiteTokensCreateBody,
+        path: zSiteTokensCreatePath,
+        query: z.never().optional()
+    }).parseAsync(data),
+    security: [{
+            in: 'cookie',
+            name: 'JWT',
+            type: 'apiKey'
+        }],
+    url: '/w/{workspaceSlug}/tokens',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Revoke an API token
+ */
+export const siteTokensDelete = <ThrowOnError extends boolean = false>(options: Options<SiteTokensDeleteData, ThrowOnError>): RequestResult<SiteTokensDeleteResponses, SiteTokensDeleteErrors, ThrowOnError> => (options.client ?? client).delete<SiteTokensDeleteResponses, SiteTokensDeleteErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: z.never().optional(),
+        path: zSiteTokensDeletePath,
+        query: z.never().optional()
+    }).parseAsync(data),
+    security: [{
+            in: 'cookie',
+            name: 'JWT',
+            type: 'apiKey'
+        }],
+    url: '/w/{workspaceSlug}/tokens/{id}',
     ...options
 });
 

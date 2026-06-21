@@ -52,6 +52,40 @@ export type ProblemDetails = {
 };
 
 /**
+ * A workspace API token (secret shown only once, at creation)
+ */
+export type SiteApiTokenResource = {
+    /**
+     * Unique identifier
+     */
+    id: EntityId;
+    /**
+     * Human-readable label
+     */
+    name: string;
+    /**
+     * Public prefix (the secret is never returned after creation)
+     */
+    prefix: string;
+    /**
+     * Granted scopes
+     */
+    scopes: Array<string>;
+    /**
+     * Last time the token authenticated, if ever
+     */
+    lastUsedAt?: Timestamp | null;
+    /**
+     * Expiry, if set
+     */
+    expiresAt?: Timestamp | null;
+    /**
+     * Creation timestamp
+     */
+    createdAt: Timestamp;
+};
+
+/**
  * Contact resource used by the site UI
  */
 export type SiteContactResource = {
@@ -131,6 +165,23 @@ export type SiteCreateContactInput = {
     customFields?: {
         [key: string]: string;
     } | null;
+};
+
+/**
+ * Create a workspace API token
+ */
+export type SiteCreateTokenInput = {
+    name: string;
+    scopes: Array<string>;
+    expiresAt?: Timestamp | null;
+};
+
+/**
+ * Token creation result — `token` is the full secret, shown only once
+ */
+export type SiteCreateTokenResponse = {
+    token: string;
+    resource: SiteApiTokenResource;
 };
 
 export type SiteDirectLoginError = {
@@ -694,6 +745,96 @@ export type SiteEventsListResponses = {
 };
 
 export type SiteEventsListResponse = SiteEventsListResponses[keyof SiteEventsListResponses];
+
+export type SiteTokensListData = {
+    body?: never;
+    path: {
+        workspaceSlug: string;
+    };
+    query?: never;
+    url: '/w/{workspaceSlug}/tokens';
+};
+
+export type SiteTokensListErrors = {
+    /**
+     * RFC 7807 not found response
+     */
+    404: ProblemDetails;
+};
+
+export type SiteTokensListError = SiteTokensListErrors[keyof SiteTokensListErrors];
+
+export type SiteTokensListResponses = {
+    /**
+     * The request has succeeded.
+     */
+    200: Array<SiteApiTokenResource>;
+};
+
+export type SiteTokensListResponse = SiteTokensListResponses[keyof SiteTokensListResponses];
+
+export type SiteTokensCreateData = {
+    body: SiteCreateTokenInput;
+    path: {
+        workspaceSlug: string;
+    };
+    query?: never;
+    url: '/w/{workspaceSlug}/tokens';
+};
+
+export type SiteTokensCreateErrors = {
+    /**
+     * RFC 7807 not found response
+     */
+    404: ProblemDetails;
+    /**
+     * RFC 7807 validation response
+     */
+    422: ProblemDetails;
+};
+
+export type SiteTokensCreateError = SiteTokensCreateErrors[keyof SiteTokensCreateErrors];
+
+export type SiteTokensCreateResponses = {
+    /**
+     * The request has succeeded and a new resource has been created as a result.
+     */
+    201: SiteCreateTokenResponse;
+};
+
+export type SiteTokensCreateResponse = SiteTokensCreateResponses[keyof SiteTokensCreateResponses];
+
+export type SiteTokensDeleteData = {
+    body?: never;
+    path: {
+        workspaceSlug: string;
+        id: EntityId;
+    };
+    query?: never;
+    url: '/w/{workspaceSlug}/tokens/{id}';
+};
+
+export type SiteTokensDeleteErrors = {
+    /**
+     * RFC 7807 bad request response
+     */
+    400: ProblemDetails;
+    /**
+     * RFC 7807 not found response
+     */
+    404: ProblemDetails;
+};
+
+export type SiteTokensDeleteError = SiteTokensDeleteErrors[keyof SiteTokensDeleteErrors];
+
+export type SiteTokensDeleteResponses = {
+    /**
+     * There is no content to send for this request, but the headers may be useful.
+     */
+    204: void;
+};
+
+export type SiteTokensDeleteResponse = SiteTokensDeleteResponses[keyof SiteTokensDeleteResponses];
 
 export type SiteWorkspacesListData = {
     body?: never;

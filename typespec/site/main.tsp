@@ -10,6 +10,7 @@ import "./resources/auth.tsp";
 import "./resources/workspaces.tsp";
 import "./resources/me.tsp";
 import "./resources/events.tsp";
+import "./resources/tokens.tsp";
 
 using TypeSpec.OpenAPI;
 using TypeSpec.Http;

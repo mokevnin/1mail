@@ -19,6 +19,9 @@
     },
     {
       "name": "Site Events"
+    },
+    {
+      "name": "Site Tokens"
     }
   ],
   "paths": {
@@ -629,6 +632,155 @@
         "tags": ["Site Events"]
       }
     },
+    "/w/{workspaceSlug}/tokens": {
+      "get": {
+        "operationId": "SiteTokens_list",
+        "description": "List active (non-revoked) API tokens for the workspace",
+        "parameters": [
+          {
+            "name": "workspaceSlug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request has succeeded.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SiteApiTokenResource"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "RFC 7807 not found response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Site Tokens"]
+      },
+      "post": {
+        "operationId": "SiteTokens_create",
+        "description": "Create an API token; the full secret is returned once",
+        "parameters": [
+          {
+            "name": "workspaceSlug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "The request has succeeded and a new resource has been created as a result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SiteCreateTokenResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "RFC 7807 not found response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "RFC 7807 validation response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Site Tokens"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SiteCreateTokenInput"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/w/{workspaceSlug}/tokens/{id}": {
+      "delete": {
+        "operationId": "SiteTokens_delete",
+        "description": "Revoke an API token",
+        "parameters": [
+          {
+            "name": "workspaceSlug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/EntityId"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "There is no content to send for this request, but the headers may be useful."
+          },
+          "400": {
+            "description": "RFC 7807 bad request response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "RFC 7807 not found response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Site Tokens"]
+      }
+    },
     "/workspaces": {
       "get": {
         "operationId": "SiteWorkspaces_list",
@@ -801,6 +953,64 @@
         },
         "description": "RFC 7807 Problem Details"
       },
+      "SiteApiTokenResource": {
+        "type": "object",
+        "required": ["id", "name", "prefix", "scopes", "createdAt"],
+        "properties": {
+          "id": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EntityId"
+              }
+            ],
+            "description": "Unique identifier"
+          },
+          "name": {
+            "type": "string",
+            "description": "Human-readable label"
+          },
+          "prefix": {
+            "type": "string",
+            "description": "Public prefix (the secret is never returned after creation)"
+          },
+          "scopes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Granted scopes"
+          },
+          "lastUsedAt": {
+            "type": "string",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Timestamp"
+              }
+            ],
+            "nullable": true,
+            "description": "Last time the token authenticated, if ever"
+          },
+          "expiresAt": {
+            "type": "string",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Timestamp"
+              }
+            ],
+            "nullable": true,
+            "description": "Expiry, if set"
+          },
+          "createdAt": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Timestamp"
+              }
+            ],
+            "description": "Creation timestamp"
+          }
+        },
+        "description": "A workspace API token (secret shown only once, at creation)"
+      },
       "SiteContactResource": {
         "type": "object",
         "required": ["id", "email", "status", "createdAt", "updatedAt"],
@@ -923,6 +1133,44 @@
           }
         },
         "description": "Site request body for creating a contact"
+      },
+      "SiteCreateTokenInput": {
+        "type": "object",
+        "required": ["name", "scopes"],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "scopes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "expiresAt": {
+            "type": "string",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Timestamp"
+              }
+            ],
+            "nullable": true
+          }
+        },
+        "description": "Create a workspace API token"
+      },
+      "SiteCreateTokenResponse": {
+        "type": "object",
+        "required": ["token", "resource"],
+        "properties": {
+          "token": {
+            "type": "string"
+          },
+          "resource": {
+            "$ref": "#/components/schemas/SiteApiTokenResource"
+          }
+        },
+        "description": "Token creation result — `token` is the full secret, shown only once"
       },
       "SiteDirectLoginError": {
         "type": "object",

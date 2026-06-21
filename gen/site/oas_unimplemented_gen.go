@@ -81,6 +81,33 @@ func (UnimplementedHandler) SiteEventsList(ctx context.Context, params SiteEvent
 	return r, ht.ErrNotImplemented
 }
 
+// SiteTokensCreate implements SiteTokens_create operation.
+//
+// Create an API token; the full secret is returned once.
+//
+// POST /w/{workspaceSlug}/tokens
+func (UnimplementedHandler) SiteTokensCreate(ctx context.Context, req *SiteCreateTokenInput, params SiteTokensCreateParams) (r SiteTokensCreateRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// SiteTokensDelete implements SiteTokens_delete operation.
+//
+// Revoke an API token.
+//
+// DELETE /w/{workspaceSlug}/tokens/{id}
+func (UnimplementedHandler) SiteTokensDelete(ctx context.Context, params SiteTokensDeleteParams) (r SiteTokensDeleteRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// SiteTokensList implements SiteTokens_list operation.
+//
+// List active (non-revoked) API tokens for the workspace.
+//
+// GET /w/{workspaceSlug}/tokens
+func (UnimplementedHandler) SiteTokensList(ctx context.Context, params SiteTokensListParams) (r SiteTokensListRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // SiteUserGetMe implements SiteUser_getMe operation.
 //
 // Get the authenticated user's profile.

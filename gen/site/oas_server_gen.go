@@ -52,6 +52,24 @@ type Handler interface {
 	//
 	// GET /w/{workspaceSlug}/events
 	SiteEventsList(ctx context.Context, params SiteEventsListParams) (SiteEventsListRes, error)
+	// SiteTokensCreate implements SiteTokens_create operation.
+	//
+	// Create an API token; the full secret is returned once.
+	//
+	// POST /w/{workspaceSlug}/tokens
+	SiteTokensCreate(ctx context.Context, req *SiteCreateTokenInput, params SiteTokensCreateParams) (SiteTokensCreateRes, error)
+	// SiteTokensDelete implements SiteTokens_delete operation.
+	//
+	// Revoke an API token.
+	//
+	// DELETE /w/{workspaceSlug}/tokens/{id}
+	SiteTokensDelete(ctx context.Context, params SiteTokensDeleteParams) (SiteTokensDeleteRes, error)
+	// SiteTokensList implements SiteTokens_list operation.
+	//
+	// List active (non-revoked) API tokens for the workspace.
+	//
+	// GET /w/{workspaceSlug}/tokens
+	SiteTokensList(ctx context.Context, params SiteTokensListParams) (SiteTokensListRes, error)
 	// SiteUserGetMe implements SiteUser_getMe operation.
 	//
 	// Get the authenticated user's profile.

@@ -4,8 +4,8 @@
 import { type DefaultError, type InfiniteData, infiniteQueryOptions, queryOptions, type UseMutationOptions } from '@tanstack/react-query';
 
 import { client } from '../client.gen.ts';
-import { type Options, siteAuthDirectLogin, siteAuthRegister, siteContactsCreate, siteContactsDelete, siteContactsGet, siteContactsList, siteContactsUpdate, siteEventsList, siteUserGetMe, siteUserUpdateMe, siteWorkspacesList, siteWorkspacesUpdate } from '../sdk.gen.ts';
-import type { SiteAuthDirectLoginData, SiteAuthDirectLoginError, SiteAuthDirectLoginResponse, SiteAuthRegisterData, SiteAuthRegisterError, SiteAuthRegisterResponse, SiteContactsCreateData, SiteContactsCreateError, SiteContactsCreateResponse, SiteContactsDeleteData, SiteContactsDeleteError, SiteContactsDeleteResponse, SiteContactsGetData, SiteContactsGetError, SiteContactsGetResponse, SiteContactsListData, SiteContactsListError, SiteContactsListResponse, SiteContactsUpdateData, SiteContactsUpdateError, SiteContactsUpdateResponse, SiteEventsListData, SiteEventsListError, SiteEventsListResponse, SiteUserGetMeData, SiteUserGetMeResponse, SiteUserUpdateMeData, SiteUserUpdateMeError, SiteUserUpdateMeResponse, SiteWorkspacesListData, SiteWorkspacesListResponse, SiteWorkspacesUpdateData, SiteWorkspacesUpdateError, SiteWorkspacesUpdateResponse } from '../types.gen.ts';
+import { type Options, siteAuthDirectLogin, siteAuthRegister, siteContactsCreate, siteContactsDelete, siteContactsGet, siteContactsList, siteContactsUpdate, siteEventsList, siteTokensCreate, siteTokensDelete, siteTokensList, siteUserGetMe, siteUserUpdateMe, siteWorkspacesList, siteWorkspacesUpdate } from '../sdk.gen.ts';
+import type { SiteAuthDirectLoginData, SiteAuthDirectLoginError, SiteAuthDirectLoginResponse, SiteAuthRegisterData, SiteAuthRegisterError, SiteAuthRegisterResponse, SiteContactsCreateData, SiteContactsCreateError, SiteContactsCreateResponse, SiteContactsDeleteData, SiteContactsDeleteError, SiteContactsDeleteResponse, SiteContactsGetData, SiteContactsGetError, SiteContactsGetResponse, SiteContactsListData, SiteContactsListError, SiteContactsListResponse, SiteContactsUpdateData, SiteContactsUpdateError, SiteContactsUpdateResponse, SiteEventsListData, SiteEventsListError, SiteEventsListResponse, SiteTokensCreateData, SiteTokensCreateError, SiteTokensCreateResponse, SiteTokensDeleteData, SiteTokensDeleteError, SiteTokensDeleteResponse, SiteTokensListData, SiteTokensListError, SiteTokensListResponse, SiteUserGetMeData, SiteUserGetMeResponse, SiteUserUpdateMeData, SiteUserUpdateMeError, SiteUserUpdateMeResponse, SiteWorkspacesListData, SiteWorkspacesListResponse, SiteWorkspacesUpdateData, SiteWorkspacesUpdateError, SiteWorkspacesUpdateResponse } from '../types.gen.ts';
 
 export const siteAuthDirectLoginMutation = (options?: Partial<Options<SiteAuthDirectLoginData>>): UseMutationOptions<SiteAuthDirectLoginResponse, SiteAuthDirectLoginError, Options<SiteAuthDirectLoginData>> => {
     const mutationOptions: UseMutationOptions<SiteAuthDirectLoginResponse, SiteAuthDirectLoginError, Options<SiteAuthDirectLoginData>> = {
@@ -290,6 +290,58 @@ export const siteEventsListInfiniteOptions = (options: Options<SiteEventsListDat
     },
     queryKey: siteEventsListInfiniteQueryKey(options)
 });
+
+export const siteTokensListQueryKey = (options: Options<SiteTokensListData>) => createQueryKey('siteTokensList', options);
+
+/**
+ * List active (non-revoked) API tokens for the workspace
+ */
+export const siteTokensListOptions = (options: Options<SiteTokensListData>) => queryOptions<SiteTokensListResponse, SiteTokensListError, SiteTokensListResponse, ReturnType<typeof siteTokensListQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await siteTokensList({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: siteTokensListQueryKey(options)
+});
+
+/**
+ * Create an API token; the full secret is returned once
+ */
+export const siteTokensCreateMutation = (options?: Partial<Options<SiteTokensCreateData>>): UseMutationOptions<SiteTokensCreateResponse, SiteTokensCreateError, Options<SiteTokensCreateData>> => {
+    const mutationOptions: UseMutationOptions<SiteTokensCreateResponse, SiteTokensCreateError, Options<SiteTokensCreateData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await siteTokensCreate({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Revoke an API token
+ */
+export const siteTokensDeleteMutation = (options?: Partial<Options<SiteTokensDeleteData>>): UseMutationOptions<SiteTokensDeleteResponse, SiteTokensDeleteError, Options<SiteTokensDeleteData>> => {
+    const mutationOptions: UseMutationOptions<SiteTokensDeleteResponse, SiteTokensDeleteError, Options<SiteTokensDeleteData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await siteTokensDelete({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
 
 export const siteWorkspacesListQueryKey = (options?: Options<SiteWorkspacesListData>) => createQueryKey('siteWorkspacesList', options);
 

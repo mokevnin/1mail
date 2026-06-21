@@ -19,6 +19,10 @@ test('renames the workspace and shows the tracking snippet', async () => {
       puts.push(await req.clone().text())
       return jsonResponse({ ...workspace, name: 'Acme Inc' })
     }
+    // The settings page also lists API tokens for its keys section.
+    if (req.url.includes('/tokens')) {
+      return jsonResponse([])
+    }
     return jsonResponse([workspace])
   })
 

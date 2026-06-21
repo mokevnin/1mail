@@ -17,7 +17,7 @@ var (
 	rn3AllowedHeaders = map[string]string{
 		"POST": "Content-Type",
 	}
-	rn12AllowedHeaders = map[string]string{
+	rn15AllowedHeaders = map[string]string{
 		"PUT": "Content-Type",
 	}
 	rn7AllowedHeaders = map[string]string{
@@ -26,7 +26,10 @@ var (
 	rn9AllowedHeaders = map[string]string{
 		"PUT": "Content-Type",
 	}
-	rn16AllowedHeaders = map[string]string{
+	rn12AllowedHeaders = map[string]string{
+		"POST": "Content-Type",
+	}
+	rn19AllowedHeaders = map[string]string{
 		"PUT": "Content-Type",
 	}
 )
@@ -164,7 +167,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 					default:
 						s.notAllowed(w, r, notAllowedParams{
 							allowedMethods: "GET,PUT",
-							allowedHeaders: rn12AllowedHeaders,
+							allowedHeaders: rn15AllowedHeaders,
 							acceptPost:     "",
 							acceptPatch:    "",
 						})
@@ -324,6 +327,75 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 								return
 							}
 
+						case 't': // Prefix: "tokens"
+
+							if l := len("tokens"); len(elem) >= l && elem[0:l] == "tokens" {
+								elem = elem[l:]
+							} else {
+								break
+							}
+
+							if len(elem) == 0 {
+								switch r.Method {
+								case "GET":
+									s.handleSiteTokensListRequest([1]string{
+										args[0],
+									}, elemIsEscaped, w, r)
+								case "POST":
+									s.handleSiteTokensCreateRequest([1]string{
+										args[0],
+									}, elemIsEscaped, w, r)
+								default:
+									s.notAllowed(w, r, notAllowedParams{
+										allowedMethods: "GET,POST",
+										allowedHeaders: rn12AllowedHeaders,
+										acceptPost:     "application/json",
+										acceptPatch:    "",
+									})
+								}
+
+								return
+							}
+							switch elem[0] {
+							case '/': // Prefix: "/"
+
+								if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
+									elem = elem[l:]
+								} else {
+									break
+								}
+
+								// Param: "id"
+								// Leaf parameter, slashes are prohibited
+								idx := strings.IndexByte(elem, '/')
+								if idx >= 0 {
+									break
+								}
+								args[1] = elem
+								elem = ""
+
+								if len(elem) == 0 {
+									// Leaf node.
+									switch r.Method {
+									case "DELETE":
+										s.handleSiteTokensDeleteRequest([2]string{
+											args[0],
+											args[1],
+										}, elemIsEscaped, w, r)
+									default:
+										s.notAllowed(w, r, notAllowedParams{
+											allowedMethods: "DELETE",
+											allowedHeaders: nil,
+											acceptPost:     "",
+											acceptPatch:    "",
+										})
+									}
+
+									return
+								}
+
+							}
+
 						}
 
 					}
@@ -379,7 +451,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 							default:
 								s.notAllowed(w, r, notAllowedParams{
 									allowedMethods: "PUT",
-									allowedHeaders: rn16AllowedHeaders,
+									allowedHeaders: rn19AllowedHeaders,
 									acceptPost:     "",
 									acceptPatch:    "",
 								})
@@ -745,6 +817,75 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 								default:
 									return
 								}
+							}
+
+						case 't': // Prefix: "tokens"
+
+							if l := len("tokens"); len(elem) >= l && elem[0:l] == "tokens" {
+								elem = elem[l:]
+							} else {
+								break
+							}
+
+							if len(elem) == 0 {
+								switch method {
+								case "GET":
+									r.name = SiteTokensListOperation
+									r.summary = ""
+									r.operationID = "SiteTokens_list"
+									r.operationGroup = ""
+									r.pathPattern = "/w/{workspaceSlug}/tokens"
+									r.args = args
+									r.count = 1
+									return r, true
+								case "POST":
+									r.name = SiteTokensCreateOperation
+									r.summary = ""
+									r.operationID = "SiteTokens_create"
+									r.operationGroup = ""
+									r.pathPattern = "/w/{workspaceSlug}/tokens"
+									r.args = args
+									r.count = 1
+									return r, true
+								default:
+									return
+								}
+							}
+							switch elem[0] {
+							case '/': // Prefix: "/"
+
+								if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
+									elem = elem[l:]
+								} else {
+									break
+								}
+
+								// Param: "id"
+								// Leaf parameter, slashes are prohibited
+								idx := strings.IndexByte(elem, '/')
+								if idx >= 0 {
+									break
+								}
+								args[1] = elem
+								elem = ""
+
+								if len(elem) == 0 {
+									// Leaf node.
+									switch method {
+									case "DELETE":
+										r.name = SiteTokensDeleteOperation
+										r.summary = ""
+										r.operationID = "SiteTokens_delete"
+										r.operationGroup = ""
+										r.pathPattern = "/w/{workspaceSlug}/tokens/{id}"
+										r.args = args
+										r.count = 2
+										return r, true
+									default:
+										return
+									}
+								}
+
 							}
 
 						}

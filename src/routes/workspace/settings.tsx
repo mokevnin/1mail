@@ -23,6 +23,7 @@ import {
 } from '../../generated/site/@tanstack/react-query.gen.ts'
 import type { SiteWorkspaceResource } from '../../generated/site/types.gen.ts'
 import { getApiErrorMessage } from '../../utils/apiErrors.ts'
+import { ApiKeysSection } from './ApiKeysSection.tsx'
 
 // GeneralSection is split out so the rename form seeds its initial value from the
 // loaded workspace without an effect.
@@ -132,14 +133,7 @@ export function SettingsPage() {
         <>
           <GeneralSection workspace={workspace} />
           <TrackingSection collectKey={workspace.collectKey} />
-          <Card withBorder>
-            <Title order={4} mb="xs">
-              {t(($) => $.settings.apiKeysTitle)}
-            </Title>
-            <Text c="dimmed" size="sm">
-              {t(($) => $.settings.apiKeysComingSoon)}
-            </Text>
-          </Card>
+          <ApiKeysSection slug={workspace.slug} />
         </>
       ) : null}
     </Stack>

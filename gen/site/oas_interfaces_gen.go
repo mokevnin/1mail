@@ -33,6 +33,18 @@ type SiteEventsListRes interface {
 	siteEventsListRes()
 }
 
+type SiteTokensCreateRes interface {
+	siteTokensCreateRes()
+}
+
+type SiteTokensDeleteRes interface {
+	siteTokensDeleteRes()
+}
+
+type SiteTokensListRes interface {
+	siteTokensListRes()
+}
+
 type SiteUserUpdateMeRes interface {
 	siteUserUpdateMeRes()
 }

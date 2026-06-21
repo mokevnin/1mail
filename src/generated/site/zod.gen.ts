@@ -96,6 +96,19 @@ export const zSiteUpdateContactInput = z.object({
 export const zTimestamp = z.iso.datetime();
 
 /**
+ * A workspace API token (secret shown only once, at creation)
+ */
+export const zSiteApiTokenResource = z.object({
+    id: zEntityId,
+    name: z.string(),
+    prefix: z.string(),
+    scopes: z.array(z.string()),
+    lastUsedAt: zTimestamp.nullish(),
+    expiresAt: zTimestamp.nullish(),
+    createdAt: zTimestamp
+});
+
+/**
  * Contact resource used by the site UI
  */
 export const zSiteContactResource = z.object({
@@ -108,6 +121,23 @@ export const zSiteContactResource = z.object({
     status: zSiteContactStatus,
     createdAt: zTimestamp,
     updatedAt: zTimestamp
+});
+
+/**
+ * Create a workspace API token
+ */
+export const zSiteCreateTokenInput = z.object({
+    name: z.string(),
+    scopes: z.array(z.string()),
+    expiresAt: zTimestamp.nullish()
+});
+
+/**
+ * Token creation result — `token` is the full secret, shown only once
+ */
+export const zSiteCreateTokenResponse = z.object({
+    token: z.string(),
+    resource: zSiteApiTokenResource
 });
 
 /**
@@ -277,6 +307,36 @@ export const zSiteEventsListResponse = z.object({
     totalItems: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
     totalPages: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' })
 });
+
+export const zSiteTokensListPath = z.object({
+    workspaceSlug: z.string()
+});
+
+/**
+ * The request has succeeded.
+ */
+export const zSiteTokensListResponse = z.array(zSiteApiTokenResource);
+
+export const zSiteTokensCreateBody = zSiteCreateTokenInput;
+
+export const zSiteTokensCreatePath = z.object({
+    workspaceSlug: z.string()
+});
+
+/**
+ * The request has succeeded and a new resource has been created as a result.
+ */
+export const zSiteTokensCreateResponse = zSiteCreateTokenResponse;
+
+export const zSiteTokensDeletePath = z.object({
+    workspaceSlug: z.string(),
+    id: zEntityId
+});
+
+/**
+ * There is no content to send for this request, but the headers may be useful.
+ */
+export const zSiteTokensDeleteResponse = z.void();
 
 /**
  * The request has succeeded.

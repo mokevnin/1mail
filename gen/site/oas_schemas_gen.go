@@ -893,6 +893,7 @@ func (s *ProblemDetails) SetFields(val OptProblemDetailsFields) {
 
 func (*ProblemDetails) siteAuthDirectLoginRes() {}
 func (*ProblemDetails) siteEventsListRes()      {}
+func (*ProblemDetails) siteTokensListRes()      {}
 
 // Validation errors grouped by field.
 type ProblemDetailsErrors map[string][]string
@@ -916,6 +917,95 @@ func (s *ProblemDetailsFields) init() ProblemDetailsFields {
 		*s = m
 	}
 	return m
+}
+
+// A workspace API token (secret shown only once, at creation).
+// Ref: #/components/schemas/SiteApiTokenResource
+type SiteApiTokenResource struct {
+	// Unique identifier.
+	ID EntityId `json:"id"`
+	// Human-readable label.
+	Name string `json:"name"`
+	// Public prefix (the secret is never returned after creation).
+	Prefix string `json:"prefix"`
+	// Granted scopes.
+	Scopes []string `json:"scopes"`
+	// Last time the token authenticated, if ever.
+	LastUsedAt OptNilTimestamp `json:"lastUsedAt"`
+	// Expiry, if set.
+	ExpiresAt OptNilTimestamp `json:"expiresAt"`
+	// Creation timestamp.
+	CreatedAt Timestamp `json:"createdAt"`
+}
+
+// GetID returns the value of ID.
+func (s *SiteApiTokenResource) GetID() EntityId {
+	return s.ID
+}
+
+// GetName returns the value of Name.
+func (s *SiteApiTokenResource) GetName() string {
+	return s.Name
+}
+
+// GetPrefix returns the value of Prefix.
+func (s *SiteApiTokenResource) GetPrefix() string {
+	return s.Prefix
+}
+
+// GetScopes returns the value of Scopes.
+func (s *SiteApiTokenResource) GetScopes() []string {
+	return s.Scopes
+}
+
+// GetLastUsedAt returns the value of LastUsedAt.
+func (s *SiteApiTokenResource) GetLastUsedAt() OptNilTimestamp {
+	return s.LastUsedAt
+}
+
+// GetExpiresAt returns the value of ExpiresAt.
+func (s *SiteApiTokenResource) GetExpiresAt() OptNilTimestamp {
+	return s.ExpiresAt
+}
+
+// GetCreatedAt returns the value of CreatedAt.
+func (s *SiteApiTokenResource) GetCreatedAt() Timestamp {
+	return s.CreatedAt
+}
+
+// SetID sets the value of ID.
+func (s *SiteApiTokenResource) SetID(val EntityId) {
+	s.ID = val
+}
+
+// SetName sets the value of Name.
+func (s *SiteApiTokenResource) SetName(val string) {
+	s.Name = val
+}
+
+// SetPrefix sets the value of Prefix.
+func (s *SiteApiTokenResource) SetPrefix(val string) {
+	s.Prefix = val
+}
+
+// SetScopes sets the value of Scopes.
+func (s *SiteApiTokenResource) SetScopes(val []string) {
+	s.Scopes = val
+}
+
+// SetLastUsedAt sets the value of LastUsedAt.
+func (s *SiteApiTokenResource) SetLastUsedAt(val OptNilTimestamp) {
+	s.LastUsedAt = val
+}
+
+// SetExpiresAt sets the value of ExpiresAt.
+func (s *SiteApiTokenResource) SetExpiresAt(val OptNilTimestamp) {
+	s.ExpiresAt = val
+}
+
+// SetCreatedAt sets the value of CreatedAt.
+func (s *SiteApiTokenResource) SetCreatedAt(val Timestamp) {
+	s.CreatedAt = val
 }
 
 type SiteAuthRegisterConflict ProblemDetails
@@ -1301,6 +1391,73 @@ func (s *SiteCreateContactInputCustomFields) init() SiteCreateContactInputCustom
 	}
 	return m
 }
+
+// Create a workspace API token.
+// Ref: #/components/schemas/SiteCreateTokenInput
+type SiteCreateTokenInput struct {
+	Name      string          `json:"name"`
+	Scopes    []string        `json:"scopes"`
+	ExpiresAt OptNilTimestamp `json:"expiresAt"`
+}
+
+// GetName returns the value of Name.
+func (s *SiteCreateTokenInput) GetName() string {
+	return s.Name
+}
+
+// GetScopes returns the value of Scopes.
+func (s *SiteCreateTokenInput) GetScopes() []string {
+	return s.Scopes
+}
+
+// GetExpiresAt returns the value of ExpiresAt.
+func (s *SiteCreateTokenInput) GetExpiresAt() OptNilTimestamp {
+	return s.ExpiresAt
+}
+
+// SetName sets the value of Name.
+func (s *SiteCreateTokenInput) SetName(val string) {
+	s.Name = val
+}
+
+// SetScopes sets the value of Scopes.
+func (s *SiteCreateTokenInput) SetScopes(val []string) {
+	s.Scopes = val
+}
+
+// SetExpiresAt sets the value of ExpiresAt.
+func (s *SiteCreateTokenInput) SetExpiresAt(val OptNilTimestamp) {
+	s.ExpiresAt = val
+}
+
+// Token creation result — `token` is the full secret, shown only once.
+// Ref: #/components/schemas/SiteCreateTokenResponse
+type SiteCreateTokenResponse struct {
+	Token    string               `json:"token"`
+	Resource SiteApiTokenResource `json:"resource"`
+}
+
+// GetToken returns the value of Token.
+func (s *SiteCreateTokenResponse) GetToken() string {
+	return s.Token
+}
+
+// GetResource returns the value of Resource.
+func (s *SiteCreateTokenResponse) GetResource() SiteApiTokenResource {
+	return s.Resource
+}
+
+// SetToken sets the value of Token.
+func (s *SiteCreateTokenResponse) SetToken(val string) {
+	s.Token = val
+}
+
+// SetResource sets the value of Resource.
+func (s *SiteCreateTokenResponse) SetResource(val SiteApiTokenResource) {
+	s.Resource = val
+}
+
+func (*SiteCreateTokenResponse) siteTokensCreateRes() {}
 
 // Ref: #/components/schemas/SiteDirectLoginError
 type SiteDirectLoginError struct {
@@ -1703,6 +1860,31 @@ func (s *SiteRegisterResult) SetCreatedAt(val Timestamp) {
 }
 
 func (*SiteRegisterResult) siteAuthRegisterRes() {}
+
+type SiteTokensCreateNotFound ProblemDetails
+
+func (*SiteTokensCreateNotFound) siteTokensCreateRes() {}
+
+type SiteTokensCreateUnprocessableEntity ProblemDetails
+
+func (*SiteTokensCreateUnprocessableEntity) siteTokensCreateRes() {}
+
+type SiteTokensDeleteBadRequest ProblemDetails
+
+func (*SiteTokensDeleteBadRequest) siteTokensDeleteRes() {}
+
+// SiteTokensDeleteNoContent is response for SiteTokensDelete operation.
+type SiteTokensDeleteNoContent struct{}
+
+func (*SiteTokensDeleteNoContent) siteTokensDeleteRes() {}
+
+type SiteTokensDeleteNotFound ProblemDetails
+
+func (*SiteTokensDeleteNotFound) siteTokensDeleteRes() {}
+
+type SiteTokensListOKApplicationJSON []SiteApiTokenResource
+
+func (*SiteTokensListOKApplicationJSON) siteTokensListRes() {}
 
 // Site request body for updating a contact.
 // Ref: #/components/schemas/SiteUpdateContactInput
