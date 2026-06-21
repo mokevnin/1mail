@@ -5,6 +5,7 @@
       "**",
       "!dist",
       "!src/generated",
+      "!types/resources.d.ts",
       "!packages/*/src/generated",
       "!packages/*/dist",
       "!internal/server/assets",

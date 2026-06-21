@@ -109,14 +109,33 @@ generate-backend:
 		go tool ogen --target gen/external --package externalapi --clean openapi/external.openapi.json && \
 		go tool ogen --target gen/collect  --package collectapi  --clean openapi/collect.openapi.json'
 
-generate: generate-typespec generate-openapi generate-backend generate-i18n-types check-fix
+generate: generate-typespec generate-openapi generate-backend check-fix
 
-check:
-	$(RUN_FE) sh -c 'npx tsgo --noEmit && npx biome check .'
+check: check-fe check-i18n check-be
+
+check-fe:
+	$(RUN_FE) pnpm exec tsgo --noEmit
+	$(RUN_FE) pnpm exec biome check .
+
+# Read-only: --dry-run never writes, --ci exits non-zero on drift.
+check-i18n:
+	$(RUN_FE) pnpm exec i18next-cli extract --ci --dry-run
+	$(RUN_FE) pnpm exec i18next-cli types --ci
+
+check-be:
 	$(RUN_GO) golangci-lint run ./...
 
-check-fix:
-	$(RUN_FE) sh -c 'pnpx @biomejs/biome check --write && npx tsp format typespec'
+# i18n runs first so biome formats the freshly extracted JSON.
+check-fix: check-fix-i18n check-fix-fe check-fix-be
+
+check-fix-i18n:
+	$(RUN_FE) pnpm exec i18next-cli extract --with-types
+
+check-fix-fe:
+	$(RUN_FE) pnpm exec biome check --write
+	$(RUN_FE) pnpm exec tsp format typespec
+
+check-fix-be:
 	$(RUN_GO) go fmt ./...
 
 # Builds the standalone tracker (IIFE) and copies it into the Go embed tree.
@@ -141,4 +160,4 @@ LDFLAGS := -s -w -X main.version=$(VERSION) -X main.commit=$(COMMIT) -X main.dat
 build: build-tracker build-spa
 	$(RUN_GO) go build -tags embed_spa -ldflags "$(LDFLAGS)" -o bin/1mail ./cmd/server
 
-.PHONY: setup install db-create db-create-test db-create-atlas db-drop db-drop-test db-migrate db-seed db-reset db-reset-test db-generate dev dev-down test test-watch test-frontend update update-npm update-go generate generate-backend generate-openapi generate-openapi-site generate-typespec generate-typespec-external generate-typespec-site generate-typespec-collect generate-i18n-types check check-fix build-tracker build-spa build
+.PHONY: setup install db-create db-create-test db-create-atlas db-drop db-drop-test db-migrate db-seed db-reset db-reset-test db-generate dev dev-down test test-watch test-frontend update update-npm update-go generate generate-backend generate-openapi generate-openapi-site generate-typespec generate-typespec-external generate-typespec-site generate-typespec-collect generate-i18n-types check check-fe check-i18n check-be check-fix check-fix-i18n check-fix-fe check-fix-be build-tracker build-spa build

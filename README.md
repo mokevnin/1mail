@@ -44,15 +44,12 @@ toolchain (Go, Node/pnpm, golangci-lint, atlas) inside the dev containers, so yo
 need any of them installed on the host.
 
 ```sh
-make setup   # build images, install deps, create DBs, migrate, seed dev data
+make setup   # build images, install deps, create dev/test/atlas DBs + migrate
 make dev     # docker compose up — full dev stack
 make test    # creates test DB, then `go test -p 1 ./...`
 make check   # tsgo --noEmit, biome check, golangci-lint
 make generate # regenerate TypeSpec → OpenAPI → Go + TS
 ```
-
-> Log in at https://1mail.localhost with **info@1mail.com** / **password** — the seed
-> user from `fixtures/users.yml`. `make setup` seeds it; re-seed anytime with `make db-seed`.
 
 Dependencies and the Go module cache are bind-mounted to the host (`node_modules` in the
 repo, the module cache under `./.cache/go-mod`). So if you *do* run a host editor, gopls
