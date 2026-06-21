@@ -7,6 +7,9 @@ export default defineConfig({
     output: 'locales/{{language}}/{{namespace}}.json',
     defaultNS: 'translation',
     keySeparator: '.',
+    // Keep keys the extractor can't see statically (e.g. dynamic lookups like
+    // t(($) => $.status[status])); we maintain those by hand.
+    removeUnusedKeys: false,
   },
   types: {
     input: 'locales/en/**/*.json',

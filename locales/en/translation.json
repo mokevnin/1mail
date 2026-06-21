@@ -1,64 +1,7 @@
 {
-  "login": {
-    "title": "Sign in",
-    "emailLabel": "Email",
-    "passwordLabel": "Password",
-    "submitButton": "Sign in",
-    "registerLink": "Create account",
-    "errorTitle": "Sign in failed"
-  },
-  "registration": {
-    "title": "Create account",
-    "nameLabel": "Name",
-    "emailLabel": "Email",
-    "passwordLabel": "Password",
-    "submitButton": "Register",
-    "successMessage": "Account created successfully",
-    "errorTitle": "Registration failed"
-  },
-  "nav": {
-    "overview": "Overview",
-    "contacts": "Contacts",
-    "activity": "Activity",
-    "settings": "Settings",
-    "campaigns": "Campaigns",
-    "automations": "Automations",
-    "segments": "Segments",
-    "soon": "Soon"
-  },
-  "userMenu": {
-    "profile": "Profile",
-    "workspaceSettings": "Workspace settings",
-    "logout": "Sign out",
-    "logoutErrorTitle": "Sign out failed"
-  },
   "account": {
-    "title": "Account",
     "backToDashboard": "Dashboard",
     "profile": "Profile"
-  },
-  "profile": {
-    "title": "Profile",
-    "nameLabel": "Name",
-    "emailLabel": "Email",
-    "passwordSectionTitle": "Change password",
-    "currentPasswordLabel": "Current password",
-    "newPasswordLabel": "New password",
-    "updated": "Profile updated",
-    "errorTitle": "Failed to update profile",
-    "loadErrorTitle": "Failed to load profile"
-  },
-  "overview": {
-    "title": "Overview",
-    "contactsCount": "Contacts",
-    "viewContacts": "View contacts",
-    "viewActivity": "View activity",
-    "viewSettings": "Settings",
-    "comingSoon": "More metrics coming soon"
-  },
-  "comingSoon": {
-    "title": "Coming soon",
-    "description": "This section is not available yet."
   },
   "actions": {
     "cancel": "Cancel",
@@ -71,29 +14,75 @@
     "loadErrorTitle": "Failed to load contacts",
     "saveErrorTitle": "Failed to save contact"
   },
-  "contacts": {
-    "addContact": "Add contact",
-    "emptyState": "Create your first contact.",
-    "noRecords": "No contacts yet",
-    "statusFilter": "Filter by status",
-    "title": "Contacts"
+  "comingSoon": {
+    "description": "This section is not available yet.",
+    "title": "Coming soon"
   },
   "confirmations": {
     "deleteDescription": "This action cannot be undone.",
     "deleteTitle": "Are you sure?"
   },
+  "contacts": {
+    "addContact": "Add contact",
+    "emptyState": "Create your first contact.",
+    "noRecords": "No contacts yet",
+    "statusFilter": "Filter by status"
+  },
   "form": {
     "createTitle": "New contact",
-    "deleteDescription": "The contact will be deleted permanently.",
-    "deleteTitle": "Delete contact",
-    "editTitle": "Edit contact",
-    "invalidId": "Invalid contact id"
+    "editTitle": "Edit contact"
+  },
+  "login": {
+    "emailLabel": "Email",
+    "errorTitle": "Sign in failed",
+    "passwordLabel": "Password",
+    "registerLink": "Create account",
+    "submitButton": "Sign in",
+    "title": "Sign in"
+  },
+  "nav": {
+    "activity": "Activity",
+    "automations": "Automations",
+    "campaigns": "Campaigns",
+    "contacts": "Contacts",
+    "overview": "Overview",
+    "segments": "Segments",
+    "settings": "Settings",
+    "soon": "Soon"
   },
   "notifications": {
     "contactCreated": "Contact created",
     "contactDeleted": "Contact deleted",
     "contactUpdated": "Contact updated",
     "successTitle": "Success"
+  },
+  "overview": {
+    "comingSoon": "More metrics coming soon",
+    "contactsCount": "Contacts",
+    "title": "Overview",
+    "viewActivity": "View activity",
+    "viewContacts": "View contacts",
+    "viewSettings": "Settings"
+  },
+  "profile": {
+    "currentPasswordLabel": "Current password",
+    "emailLabel": "Email",
+    "errorTitle": "Failed to update profile",
+    "loadErrorTitle": "Failed to load profile",
+    "nameLabel": "Name",
+    "newPasswordLabel": "New password",
+    "passwordSectionTitle": "Change password",
+    "title": "Profile",
+    "updated": "Profile updated"
+  },
+  "registration": {
+    "emailLabel": "Email",
+    "errorTitle": "Registration failed",
+    "nameLabel": "Name",
+    "passwordLabel": "Password",
+    "submitButton": "Register",
+    "successMessage": "Account created successfully",
+    "title": "Create account"
   },
   "status": {
     "active": "Active",
@@ -107,5 +96,11 @@
     "lastName": "Last name",
     "status": "Status",
     "timeZone": "Time zone"
+  },
+  "userMenu": {
+    "logout": "Sign out",
+    "logoutErrorTitle": "Sign out failed",
+    "profile": "Profile",
+    "workspaceSettings": "Workspace settings"
   }
 }
