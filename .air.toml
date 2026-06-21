@@ -7,7 +7,7 @@ tmp_dir = "tmp"
   cmd = "go build -o ./tmp/server ./cmd/server"
   bin = "./tmp/server"
   include_ext = ["go"]
-  exclude_dir = ["node_modules", "tmp", "dist", "openapi", "packages", "src", "locales", ".git"]
+  exclude_dir = [".cache", "node_modules", "npm-cache", "tmp", "dist", "openapi", "packages", "src", "locales", ".git"]
   delay = 500
   stop_on_error = true
 
