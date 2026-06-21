@@ -22,7 +22,7 @@ services:
   frontend:
     build:
       context: .
-      dockerfile: Dockerfile.dev
+      dockerfile: Dockerfile.frontend.dev
     working_dir: /app
     volumes:
       - .:/app # repo (incl. node_modules) lives on the host
@@ -32,16 +32,35 @@ services:
     ports:
       - "5173:5173" # optional direct access; normal entry is via Caddy
 
-  # Placeholder while the Go server is being rewritten. Caddy routes the API
-  # paths here so the proxy doesn't error. Replace with the real `backend`
-  # service (bind-mounted source) once the rewrite lands. To route to a backend
-  # running on the host instead, point Caddy at host.docker.internal:3300.
+  # Go server. Like the frontend, the image ships only the toolchain (+ air for
+  # hot reload); sources are bind-mounted from the host and air rebuilds/restarts
+  # on change. DB schema is managed on the host (atlas, `make db-migrate`); this
+  # service only runs the server, so don't set AUTO_MIGRATE here.
   backend:
-    image: traefik/whoami
-    command: ["--port", "3300"]
+    build:
+      context: .
+      dockerfile: Dockerfile.backend.dev
+    working_dir: /app
+    environment:
+      APP_ENV: development
+      CGO_ENABLED: "0" # alpine has no gcc; the server is pure Go (pgx stdlib)
+      PORT: "3300"
+      DATABASE_URL: postgres://postgres:postgres@db:5432/1mail_development?sslmode=disable
+      SMTP_HOST: mailpit
+      SMTP_PORT: "1025"
+      APP_URL: https://1mail.localhost
+    volumes:
+      - .:/app # repo (sources) lives on the host
+      - go-mod:/go/pkg/mod # module + air cache
+      - go-build:/root/.cache/go-build # compile cache
+    depends_on:
+      db:
+        condition: service_healthy
+      mailpit:
+        condition: service_started
 
   db:
-    image: postgres:16
+    image: postgres:18
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
@@ -67,3 +86,5 @@ volumes:
   caddy-config:
   pnpm-store:
   db-data:
+  go-mod: # go module cache (persists across restarts)
+  go-build: # go compile cache (fast rebuilds)

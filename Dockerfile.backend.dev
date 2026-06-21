@@ -1,0 +1,15 @@
+# Dev image for the Go server (Vite's counterpart is Dockerfile.frontend.dev).
+# Ships only the toolchain + air (hot reload); sources are bind-mounted from
+# the host (see docker-compose.yml), so no COPY of sources here.
+FROM golang:1.26-alpine
+
+RUN apk add --no-cache git
+
+# Bake air in so it isn't refetched on every container start.
+RUN go install github.com/air-verse/air@latest
+
+WORKDIR /app
+
+EXPOSE 3300
+
+CMD ["air"]

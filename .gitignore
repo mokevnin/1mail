@@ -77,6 +77,3 @@ internal/server/assets/spa/
 # compiled Go binaries / goreleaser output
 bin/
 /dist-release/
-
-# compiled seed binary
-/seed

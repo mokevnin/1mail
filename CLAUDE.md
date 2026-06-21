@@ -101,9 +101,10 @@ transport (`env.Transport(headers)`) — no sockets. See `internal/api/site/cont
 `make dev` runs docker compose (`docker-compose.yml`) behind Caddy with HTTPS at
 **https://1mail.localhost**. Services: caddy, frontend (vite), backend, postgres, mailpit
 (SMTP UI at :8025). Deps are bind-mounted from the host so editor LSPs resolve imports —
-install via `make install` (runs pnpm inside the container). The compose `backend` is
-currently a `traefik/whoami` placeholder during the Go rewrite; run the real Go server on
-the host (`:3300`) or swap the service in.
+install via `make install` (runs pnpm inside the container). The compose `backend` runs
+the real Go server (`Dockerfile.backend.dev`, `golang:1.26-alpine` + air) on `:3300` with
+sources bind-mounted and hot reload via air. DB schema is still managed on the host with
+atlas (`make db-migrate`); the backend service does not self-migrate.
 
 ## Conventions
 

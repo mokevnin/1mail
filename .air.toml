@@ -1,0 +1,15 @@
+# Hot-reload for the Go dev server (used by the `backend` compose service).
+# Rebuilds and restarts cmd/server on source changes.
+root = "."
+tmp_dir = "tmp"
+
+[build]
+  cmd = "go build -o ./tmp/server ./cmd/server"
+  bin = "./tmp/server"
+  include_ext = ["go"]
+  exclude_dir = ["node_modules", "tmp", "dist", "openapi", "packages", "src", "locales", ".git"]
+  delay = 500
+  stop_on_error = true
+
+[log]
+  time = true

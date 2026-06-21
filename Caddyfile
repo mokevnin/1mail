@@ -1,7 +1,7 @@
 1mail.localhost {
 	tls internal
 
-	# API → Go backend (currently a stub; replaced after the server rewrite)
+	# API → Go backend
 	@api path /site* /collect* /auth* /avatar* /api*
 	reverse_proxy @api backend:3300
 
