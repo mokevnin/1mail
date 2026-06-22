@@ -108,7 +108,11 @@ transport (`env.Transport(headers)`) — no sockets. See `internal/api/site/cont
 ## Dev environment
 
 `make dev` runs docker compose (`docker-compose.yml`) behind Caddy with HTTPS at
-**https://1mail.localhost**. Services: caddy, frontend (vite), backend, postgres, mailpit
+**https://1mail.localhost**. The external API is also exposed at
+**https://api.1mail.localhost** — Caddy rewrites `/*` → `/api/*` to the same backend, so
+the subdomain root mirrors the binary's `/api` path (RudderStack-style edge; the binary
+stays path-based). In prod the ingress in front of the binary does the same rewrite for
+`api.onemail.dev`. Services: caddy, frontend (vite), backend, postgres, mailpit
 (SMTP UI at :8025). Deps and the Go module cache are bind-mounted from the host
 (`node_modules` in the repo, the module cache under `./.cache/go-mod`) so host editor LSPs
 resolve imports — install via `make install` (runs in the containers). The compose

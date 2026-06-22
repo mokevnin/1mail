@@ -8,3 +8,12 @@
 	# Everything else → Vite dev server (includes HMR websocket upgrade)
 	reverse_proxy frontend:5173
 }
+
+api.1mail.localhost {
+	tls internal
+
+	# Subdomain root maps to the binary's /api path prefix (RudderStack-style edge).
+	# The Go binary stays path-based (/api); the public subdomain lives only here.
+	rewrite * /api{uri}
+	reverse_proxy backend:3300
+}
