@@ -16,6 +16,14 @@ func (h *Handlers) SiteAuthRegister(ctx context.Context, req *siteapi.SiteRegist
 	email := strings.TrimSpace(string(req.Email))
 	password := req.Password
 
+	// Required-field validation is hand-rolled here (and likewise in
+	// SiteTokensCreate, SiteWorkspacesUpdate, SiteUserUpdateMe) rather than
+	// declared as TypeSpec @minLength on the input models. ogen enforces spec
+	// constraints in the request decoder *before* the handler runs, which would
+	// collapse these into a generic 400 — untyped in the generated client,
+	// since these operations only declare 422 — and drop the per-field error
+	// map below. Hand-rolling also lets us TrimSpace and reject blank /
+	// whitespace-only values, which @minLength(1) would accept. Keep it here.
 	if name == "" || email == "" || password == "" {
 		fieldErrors := map[string][]string{}
 		if name == "" {
