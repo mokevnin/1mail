@@ -9,7 +9,9 @@ import (
 	siteapi "github.com/mokevnin/1mail/gen/site"
 	"github.com/mokevnin/1mail/internal/api/auth"
 	"github.com/mokevnin/1mail/internal/api/site/sitemap"
+	"github.com/mokevnin/1mail/internal/messaging"
 	"github.com/mokevnin/1mail/internal/pubsub"
+	"github.com/mokevnin/1mail/internal/secrets"
 	"github.com/mokevnin/1mail/internal/service"
 )
 
@@ -17,12 +19,14 @@ import (
 var mapper = &sitemap.ConverterImpl{}
 
 type Handlers struct {
-	ent    *ent.Client
-	pubsub *pubsub.PubSub
+	ent     *ent.Client
+	pubsub  *pubsub.PubSub
+	cipher  *secrets.Cipher
+	catalog *messaging.Catalog
 }
 
-func NewHandlers(client *ent.Client, ps *pubsub.PubSub) *Handlers {
-	return &Handlers{ent: client, pubsub: ps}
+func NewHandlers(client *ent.Client, ps *pubsub.PubSub, cipher *secrets.Cipher, catalog *messaging.Catalog) *Handlers {
+	return &Handlers{ent: client, pubsub: ps, cipher: cipher, catalog: catalog}
 }
 
 var _ siteapi.Handler = (*Handlers)(nil)

@@ -15,6 +15,7 @@ import (
 	"github.com/mokevnin/1mail/ent/apitoken"
 	"github.com/mokevnin/1mail/ent/contact"
 	"github.com/mokevnin/1mail/ent/event"
+	"github.com/mokevnin/1mail/ent/integration"
 	"github.com/mokevnin/1mail/ent/predicate"
 	"github.com/mokevnin/1mail/ent/segment"
 	"github.com/mokevnin/1mail/ent/trackingprofile"
@@ -36,6 +37,7 @@ type WorkspaceQuery struct {
 	withTrackingProfiles *TrackingProfileQuery
 	withTrackingVisitors *TrackingVisitorQuery
 	withAPITokens        *ApiTokenQuery
+	withIntegrations     *IntegrationQuery
 	withUser             *UserQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
@@ -198,6 +200,28 @@ func (_q *WorkspaceQuery) QueryAPITokens() *ApiTokenQuery {
 			sqlgraph.From(workspace.Table, workspace.FieldID, selector),
 			sqlgraph.To(apitoken.Table, apitoken.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, workspace.APITokensTable, workspace.APITokensColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryIntegrations chains the current query on the "integrations" edge.
+func (_q *WorkspaceQuery) QueryIntegrations() *IntegrationQuery {
+	query := (&IntegrationClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workspace.Table, workspace.FieldID, selector),
+			sqlgraph.To(integration.Table, integration.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, workspace.IntegrationsTable, workspace.IntegrationsColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
@@ -425,6 +449,7 @@ func (_q *WorkspaceQuery) Clone() *WorkspaceQuery {
 		withTrackingProfiles: _q.withTrackingProfiles.Clone(),
 		withTrackingVisitors: _q.withTrackingVisitors.Clone(),
 		withAPITokens:        _q.withAPITokens.Clone(),
+		withIntegrations:     _q.withIntegrations.Clone(),
 		withUser:             _q.withUser.Clone(),
 		// clone intermediate query.
 		sql:  _q.sql.Clone(),
@@ -495,6 +520,17 @@ func (_q *WorkspaceQuery) WithAPITokens(opts ...func(*ApiTokenQuery)) *Workspace
 		opt(query)
 	}
 	_q.withAPITokens = query
+	return _q
+}
+
+// WithIntegrations tells the query-builder to eager-load the nodes that are connected to
+// the "integrations" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *WorkspaceQuery) WithIntegrations(opts ...func(*IntegrationQuery)) *WorkspaceQuery {
+	query := (&IntegrationClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withIntegrations = query
 	return _q
 }
 
@@ -587,13 +623,14 @@ func (_q *WorkspaceQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Wo
 	var (
 		nodes       = []*Workspace{}
 		_spec       = _q.querySpec()
-		loadedTypes = [7]bool{
+		loadedTypes = [8]bool{
 			_q.withContacts != nil,
 			_q.withSegments != nil,
 			_q.withEvents != nil,
 			_q.withTrackingProfiles != nil,
 			_q.withTrackingVisitors != nil,
 			_q.withAPITokens != nil,
+			_q.withIntegrations != nil,
 			_q.withUser != nil,
 		}
 	)
@@ -654,6 +691,13 @@ func (_q *WorkspaceQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Wo
 		if err := _q.loadAPITokens(ctx, query, nodes,
 			func(n *Workspace) { n.Edges.APITokens = []*ApiToken{} },
 			func(n *Workspace, e *ApiToken) { n.Edges.APITokens = append(n.Edges.APITokens, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := _q.withIntegrations; query != nil {
+		if err := _q.loadIntegrations(ctx, query, nodes,
+			func(n *Workspace) { n.Edges.Integrations = []*Integration{} },
+			func(n *Workspace, e *Integration) { n.Edges.Integrations = append(n.Edges.Integrations, e) }); err != nil {
 			return nil, err
 		}
 	}
@@ -831,6 +875,36 @@ func (_q *WorkspaceQuery) loadAPITokens(ctx context.Context, query *ApiTokenQuer
 	}
 	query.Where(predicate.ApiToken(func(s *sql.Selector) {
 		s.Where(sql.InValues(s.C(workspace.APITokensColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.WorkspaceID
+		node, ok := nodeids[fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "workspace_id" returned %v for node %v`, fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (_q *WorkspaceQuery) loadIntegrations(ctx context.Context, query *IntegrationQuery, nodes []*Workspace, init func(*Workspace), assign func(*Workspace, *Integration)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[int64]*Workspace)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(integration.FieldWorkspaceID)
+	}
+	query.Where(predicate.Integration(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(workspace.IntegrationsColumn), fks...))
 	}))
 	neighbors, err := query.All(ctx)
 	if err != nil {

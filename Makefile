@@ -59,6 +59,10 @@ db-reset-test: db-drop-test db-create-test
 db-generate:
 	$(RUN_GO_DB) atlas migrate diff --env local $(name)
 
+# Mint a fresh ENCRYPTION_KEY (base64 Tink keyset) to paste into your .env.
+gen-encryption-key:
+	$(RUN_GO) go run ./cmd/genkey
+
 dev:
 	$(DC) up
 
@@ -84,13 +88,13 @@ update-go:
 	$(RUN_GO) sh -c 'go get -u ./... && go mod tidy'
 
 generate-typespec-external:
-	$(RUN_FE) npx tsp compile typespec/external
+	$(RUN_FE) pnpm exec tsp compile typespec/external
 
 generate-typespec-site:
-	$(RUN_FE) npx tsp compile typespec/site
+	$(RUN_FE) pnpm exec tsp compile typespec/site
 
 generate-typespec-collect:
-	$(RUN_FE) npx tsp compile typespec/collect
+	$(RUN_FE) pnpm exec tsp compile typespec/collect
 
 generate-typespec: generate-typespec-external generate-typespec-site generate-typespec-collect
 

@@ -4,8 +4,8 @@
 import { type DefaultError, type InfiniteData, infiniteQueryOptions, queryOptions, type UseMutationOptions } from '@tanstack/react-query';
 
 import { client } from '../client.gen.ts';
-import { type Options, siteAuthDirectLogin, siteAuthRegister, siteContactsCreate, siteContactsDelete, siteContactsGet, siteContactsList, siteContactsUpdate, siteEventsList, siteSegmentsCreate, siteSegmentsDelete, siteSegmentsGet, siteSegmentsList, siteSegmentsUpdate, siteTokensCreate, siteTokensDelete, siteTokensList, siteUserGetMe, siteUserUpdateMe, siteWorkspacesList, siteWorkspacesUpdate } from '../sdk.gen.ts';
-import type { SiteAuthDirectLoginData, SiteAuthDirectLoginError, SiteAuthDirectLoginResponse, SiteAuthRegisterData, SiteAuthRegisterError, SiteAuthRegisterResponse, SiteContactsCreateData, SiteContactsCreateError, SiteContactsCreateResponse, SiteContactsDeleteData, SiteContactsDeleteError, SiteContactsDeleteResponse, SiteContactsGetData, SiteContactsGetError, SiteContactsGetResponse, SiteContactsListData, SiteContactsListError, SiteContactsListResponse, SiteContactsUpdateData, SiteContactsUpdateError, SiteContactsUpdateResponse, SiteEventsListData, SiteEventsListError, SiteEventsListResponse, SiteSegmentsCreateData, SiteSegmentsCreateError, SiteSegmentsCreateResponse, SiteSegmentsDeleteData, SiteSegmentsDeleteError, SiteSegmentsDeleteResponse, SiteSegmentsGetData, SiteSegmentsGetError, SiteSegmentsGetResponse, SiteSegmentsListData, SiteSegmentsListError, SiteSegmentsListResponse, SiteSegmentsUpdateData, SiteSegmentsUpdateError, SiteSegmentsUpdateResponse, SiteTokensCreateData, SiteTokensCreateError, SiteTokensCreateResponse, SiteTokensDeleteData, SiteTokensDeleteError, SiteTokensDeleteResponse, SiteTokensListData, SiteTokensListError, SiteTokensListResponse, SiteUserGetMeData, SiteUserGetMeResponse, SiteUserUpdateMeData, SiteUserUpdateMeError, SiteUserUpdateMeResponse, SiteWorkspacesListData, SiteWorkspacesListResponse, SiteWorkspacesUpdateData, SiteWorkspacesUpdateError, SiteWorkspacesUpdateResponse } from '../types.gen.ts';
+import { type Options, siteAuthDirectLogin, siteAuthRegister, siteContactsCreate, siteContactsDelete, siteContactsGet, siteContactsList, siteContactsUpdate, siteEventsList, siteIntegrationsCreate, siteIntegrationsDelete, siteIntegrationsGet, siteIntegrationsList, siteIntegrationsUpdate, siteSegmentsCreate, siteSegmentsDelete, siteSegmentsGet, siteSegmentsList, siteSegmentsUpdate, siteTokensCreate, siteTokensDelete, siteTokensList, siteUserGetMe, siteUserUpdateMe, siteWorkspacesList, siteWorkspacesUpdate } from '../sdk.gen.ts';
+import type { SiteAuthDirectLoginData, SiteAuthDirectLoginError, SiteAuthDirectLoginResponse, SiteAuthRegisterData, SiteAuthRegisterError, SiteAuthRegisterResponse, SiteContactsCreateData, SiteContactsCreateError, SiteContactsCreateResponse, SiteContactsDeleteData, SiteContactsDeleteError, SiteContactsDeleteResponse, SiteContactsGetData, SiteContactsGetError, SiteContactsGetResponse, SiteContactsListData, SiteContactsListError, SiteContactsListResponse, SiteContactsUpdateData, SiteContactsUpdateError, SiteContactsUpdateResponse, SiteEventsListData, SiteEventsListError, SiteEventsListResponse, SiteIntegrationsCreateData, SiteIntegrationsCreateError, SiteIntegrationsCreateResponse, SiteIntegrationsDeleteData, SiteIntegrationsDeleteError, SiteIntegrationsDeleteResponse, SiteIntegrationsGetData, SiteIntegrationsGetError, SiteIntegrationsGetResponse, SiteIntegrationsListData, SiteIntegrationsListError, SiteIntegrationsListResponse, SiteIntegrationsUpdateData, SiteIntegrationsUpdateError, SiteIntegrationsUpdateResponse, SiteSegmentsCreateData, SiteSegmentsCreateError, SiteSegmentsCreateResponse, SiteSegmentsDeleteData, SiteSegmentsDeleteError, SiteSegmentsDeleteResponse, SiteSegmentsGetData, SiteSegmentsGetError, SiteSegmentsGetResponse, SiteSegmentsListData, SiteSegmentsListError, SiteSegmentsListResponse, SiteSegmentsUpdateData, SiteSegmentsUpdateError, SiteSegmentsUpdateResponse, SiteTokensCreateData, SiteTokensCreateError, SiteTokensCreateResponse, SiteTokensDeleteData, SiteTokensDeleteError, SiteTokensDeleteResponse, SiteTokensListData, SiteTokensListError, SiteTokensListResponse, SiteUserGetMeData, SiteUserGetMeResponse, SiteUserUpdateMeData, SiteUserUpdateMeError, SiteUserUpdateMeResponse, SiteWorkspacesListData, SiteWorkspacesListResponse, SiteWorkspacesUpdateData, SiteWorkspacesUpdateError, SiteWorkspacesUpdateResponse } from '../types.gen.ts';
 
 export const siteAuthDirectLoginMutation = (options?: Partial<Options<SiteAuthDirectLoginData>>): UseMutationOptions<SiteAuthDirectLoginResponse, SiteAuthDirectLoginError, Options<SiteAuthDirectLoginData>> => {
     const mutationOptions: UseMutationOptions<SiteAuthDirectLoginResponse, SiteAuthDirectLoginError, Options<SiteAuthDirectLoginData>> = {
@@ -295,6 +295,93 @@ export const siteEventsListInfiniteOptions = (options: Options<SiteEventsListDat
         queryKey: siteEventsListInfiniteQueryKey(options)
     });
     return opts as Omit<typeof opts, 'initialData'>;
+};
+
+export const siteIntegrationsListQueryKey = (options: Options<SiteIntegrationsListData>) => createQueryKey('siteIntegrationsList', options);
+
+/**
+ * List the workspace's sending-provider integrations
+ */
+export const siteIntegrationsListOptions = (options: Options<SiteIntegrationsListData>) => queryOptions<SiteIntegrationsListResponse, SiteIntegrationsListError, SiteIntegrationsListResponse, ReturnType<typeof siteIntegrationsListQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await siteIntegrationsList({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: siteIntegrationsListQueryKey(options)
+});
+
+/**
+ * Create an integration
+ */
+export const siteIntegrationsCreateMutation = (options?: Partial<Options<SiteIntegrationsCreateData>>): UseMutationOptions<SiteIntegrationsCreateResponse, SiteIntegrationsCreateError, Options<SiteIntegrationsCreateData>> => {
+    const mutationOptions: UseMutationOptions<SiteIntegrationsCreateResponse, SiteIntegrationsCreateError, Options<SiteIntegrationsCreateData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await siteIntegrationsCreate({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Delete an integration
+ */
+export const siteIntegrationsDeleteMutation = (options?: Partial<Options<SiteIntegrationsDeleteData>>): UseMutationOptions<SiteIntegrationsDeleteResponse, SiteIntegrationsDeleteError, Options<SiteIntegrationsDeleteData>> => {
+    const mutationOptions: UseMutationOptions<SiteIntegrationsDeleteResponse, SiteIntegrationsDeleteError, Options<SiteIntegrationsDeleteData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await siteIntegrationsDelete({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const siteIntegrationsGetQueryKey = (options: Options<SiteIntegrationsGetData>) => createQueryKey('siteIntegrationsGet', options);
+
+/**
+ * Get an integration by id
+ */
+export const siteIntegrationsGetOptions = (options: Options<SiteIntegrationsGetData>) => queryOptions<SiteIntegrationsGetResponse, SiteIntegrationsGetError, SiteIntegrationsGetResponse, ReturnType<typeof siteIntegrationsGetQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await siteIntegrationsGet({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: siteIntegrationsGetQueryKey(options)
+});
+
+/**
+ * Update an integration
+ */
+export const siteIntegrationsUpdateMutation = (options?: Partial<Options<SiteIntegrationsUpdateData>>): UseMutationOptions<SiteIntegrationsUpdateResponse, SiteIntegrationsUpdateError, Options<SiteIntegrationsUpdateData>> => {
+    const mutationOptions: UseMutationOptions<SiteIntegrationsUpdateResponse, SiteIntegrationsUpdateError, Options<SiteIntegrationsUpdateData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await siteIntegrationsUpdate({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
 };
 
 export const siteSegmentsListQueryKey = (options: Options<SiteSegmentsListData>) => createQueryKey('siteSegmentsList', options);

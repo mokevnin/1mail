@@ -8,6 +8,7 @@ import (
 	"github.com/mokevnin/1mail/ent/apitoken"
 	"github.com/mokevnin/1mail/ent/contact"
 	"github.com/mokevnin/1mail/ent/event"
+	"github.com/mokevnin/1mail/ent/integration"
 	"github.com/mokevnin/1mail/ent/schema"
 	"github.com/mokevnin/1mail/ent/segment"
 	"github.com/mokevnin/1mail/ent/trackingprofile"
@@ -78,6 +79,30 @@ func init() {
 	eventDescCreatedAt := eventFields[9].Descriptor()
 	// event.DefaultCreatedAt holds the default value on creation for the created_at field.
 	event.DefaultCreatedAt = eventDescCreatedAt.Default.(func() time.Time)
+	integrationFields := schema.Integration{}.Fields()
+	_ = integrationFields
+	// integrationDescName is the schema descriptor for name field.
+	integrationDescName := integrationFields[1].Descriptor()
+	// integration.NameValidator is a validator for the "name" field. It is called by the builders before save.
+	integration.NameValidator = integrationDescName.Validators[0].(func(string) error)
+	// integrationDescEnabled is the schema descriptor for enabled field.
+	integrationDescEnabled := integrationFields[5].Descriptor()
+	// integration.DefaultEnabled holds the default value on creation for the enabled field.
+	integration.DefaultEnabled = integrationDescEnabled.Default.(bool)
+	// integrationDescIsDefault is the schema descriptor for is_default field.
+	integrationDescIsDefault := integrationFields[6].Descriptor()
+	// integration.DefaultIsDefault holds the default value on creation for the is_default field.
+	integration.DefaultIsDefault = integrationDescIsDefault.Default.(bool)
+	// integrationDescCreatedAt is the schema descriptor for created_at field.
+	integrationDescCreatedAt := integrationFields[8].Descriptor()
+	// integration.DefaultCreatedAt holds the default value on creation for the created_at field.
+	integration.DefaultCreatedAt = integrationDescCreatedAt.Default.(func() time.Time)
+	// integrationDescUpdatedAt is the schema descriptor for updated_at field.
+	integrationDescUpdatedAt := integrationFields[9].Descriptor()
+	// integration.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	integration.DefaultUpdatedAt = integrationDescUpdatedAt.Default.(func() time.Time)
+	// integration.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	integration.UpdateDefaultUpdatedAt = integrationDescUpdatedAt.UpdateDefault.(func() time.Time)
 	segmentFields := schema.Segment{}.Fields()
 	_ = segmentFields
 	// segmentDescName is the schema descriptor for name field.

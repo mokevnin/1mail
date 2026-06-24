@@ -1,0 +1,202 @@
+package site_test
+
+import (
+	"context"
+	"strconv"
+	"testing"
+
+	"github.com/mokevnin/1mail/ent/integration"
+	siteapi "github.com/mokevnin/1mail/gen/site"
+	"github.com/mokevnin/1mail/internal/testhelper"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+)
+
+func smtpInput(host, password string) siteapi.SiteIntegrationConfigInput {
+	return siteapi.SiteIntegrationConfigInput{
+		OneOf: siteapi.NewSiteSmtpConfigInputSiteIntegrationConfigInputSum(siteapi.SiteSmtpConfigInput{
+			Kind:     siteapi.SiteSmtpConfigInputKindSMTP,
+			Host:     host,
+			Port:     587,
+			Username: siteapi.NewOptNilString("smtp-user"),
+			Password: siteapi.NewOptNilString(password),
+			From:     "noreply@acme.test",
+		}),
+	}
+}
+
+func sesInput(region, accessKey, secret string) siteapi.SiteIntegrationConfigInput {
+	return siteapi.SiteIntegrationConfigInput{
+		OneOf: siteapi.NewSiteSesConfigInputSiteIntegrationConfigInputSum(siteapi.SiteSesConfigInput{
+			Kind:            siteapi.SiteSesConfigInputKindSes,
+			Region:          region,
+			AccessKeyId:     accessKey,
+			SecretAccessKey: secret,
+			From:            "noreply@acme.test",
+		}),
+	}
+}
+
+func TestSiteIntegrationsCRUD(t *testing.T) {
+	env := testhelper.Setup(t)
+	c := siteClient(t, env, "info@1mail.com")
+	ctx := context.Background()
+	params := siteapi.SiteIntegrationsCreateParams{WorkspaceSlug: "acme"}
+
+	created, err := c.SiteIntegrationsCreate(ctx, &siteapi.SiteCreateIntegrationInput{
+		Name:   "Primary SMTP",
+		Config: smtpInput("smtp.example.com", "s3cret-pass"),
+	}, params)
+	require.NoError(t, err)
+	res, ok := created.(*siteapi.SiteIntegrationResource)
+	require.Truef(t, ok, "got %T", created)
+	assert.Equal(t, siteapi.SiteIntegrationProviderSMTP, res.Provider)
+	assert.Equal(t, siteapi.SiteIntegrationChannelEmail, res.Channel)
+	assert.True(t, res.Enabled)
+
+	// The returned config is the redacted SMTP variant: host is present, and the
+	// type itself has no password field, so the secret cannot leak.
+	smtpOut, ok := res.Config.OneOf.GetSiteSmtpConfig()
+	require.Truef(t, ok, "config is smtp")
+	assert.Equal(t, "smtp.example.com", smtpOut.Host)
+	assert.Equal(t, "smtp-user", smtpOut.Username.Or(""))
+
+	// Stored config must be ciphertext, never the plaintext password.
+	rowID, err := strconv.ParseInt(string(res.ID), 10, 64)
+	require.NoError(t, err)
+	row, err := env.DB.Integration.Get(ctx, rowID)
+	require.NoError(t, err)
+	assert.NotEmpty(t, row.ConfigEncrypted)
+	assert.NotContains(t, row.ConfigEncrypted, "s3cret-pass", "password is not stored in cleartext")
+	assert.NotContains(t, row.ConfigEncrypted, "smtp.example.com", "config is encrypted, not cleartext")
+
+	// Get round-trips.
+	got, err := c.SiteIntegrationsGet(ctx, siteapi.SiteIntegrationsGetParams{WorkspaceSlug: "acme", ID: res.ID})
+	require.NoError(t, err)
+	assert.IsType(t, &siteapi.SiteIntegrationResource{}, got)
+
+	// Update name + re-supply credentials.
+	updated, err := c.SiteIntegrationsUpdate(ctx, &siteapi.SiteUpdateIntegrationInput{
+		Name:   siteapi.NewOptString("Renamed SMTP"),
+		Config: siteapi.NewOptNilSiteIntegrationConfigInput(smtpInput("smtp2.example.com", "new-pass")),
+	}, siteapi.SiteIntegrationsUpdateParams{WorkspaceSlug: "acme", ID: res.ID})
+	require.NoError(t, err)
+	updRes := updated.(*siteapi.SiteIntegrationResource)
+	assert.Equal(t, "Renamed SMTP", updRes.Name)
+
+	// List shows the one integration.
+	listed, err := c.SiteIntegrationsList(ctx, siteapi.SiteIntegrationsListParams{WorkspaceSlug: "acme"})
+	require.NoError(t, err)
+	list := listed.(*siteapi.SiteIntegrationsListOKApplicationJSON)
+	require.Len(t, *list, 1)
+
+	// Delete removes it.
+	del, err := c.SiteIntegrationsDelete(ctx, siteapi.SiteIntegrationsDeleteParams{WorkspaceSlug: "acme", ID: res.ID})
+	require.NoError(t, err)
+	assert.IsType(t, &siteapi.SiteIntegrationsDeleteNoContent{}, del)
+}
+
+func TestSiteIntegrationsRejectsWrongProviderOnUpdate(t *testing.T) {
+	env := testhelper.Setup(t)
+	c := siteClient(t, env, "info@1mail.com")
+	ctx := context.Background()
+
+	created, err := c.SiteIntegrationsCreate(ctx, &siteapi.SiteCreateIntegrationInput{
+		Name:   "SMTP",
+		Config: smtpInput("smtp.example.com", "pw"),
+	}, siteapi.SiteIntegrationsCreateParams{WorkspaceSlug: "acme"})
+	require.NoError(t, err)
+	res := created.(*siteapi.SiteIntegrationResource)
+
+	// Swapping the config to a different provider kind is rejected.
+	got, err := c.SiteIntegrationsUpdate(ctx, &siteapi.SiteUpdateIntegrationInput{
+		Config: siteapi.NewOptNilSiteIntegrationConfigInput(sesInput("eu-west-1", "AKIA", "secret")),
+	}, siteapi.SiteIntegrationsUpdateParams{WorkspaceSlug: "acme", ID: res.ID})
+	require.NoError(t, err)
+	assert.IsType(t, &siteapi.SiteIntegrationsUpdateUnprocessableEntity{}, got)
+}
+
+func TestSiteIntegrationsSingleDefaultPerChannel(t *testing.T) {
+	env := testhelper.Setup(t)
+	c := siteClient(t, env, "info@1mail.com")
+	ctx := context.Background()
+	params := siteapi.SiteIntegrationsCreateParams{WorkspaceSlug: "acme"}
+
+	first, err := c.SiteIntegrationsCreate(ctx, &siteapi.SiteCreateIntegrationInput{
+		Name:      "First",
+		IsDefault: siteapi.NewOptBool(true),
+		Config:    smtpInput("smtp1.example.com", "pw"),
+	}, params)
+	require.NoError(t, err)
+	firstID := first.(*siteapi.SiteIntegrationResource).ID
+
+	second, err := c.SiteIntegrationsCreate(ctx, &siteapi.SiteCreateIntegrationInput{
+		Name:      "Second",
+		IsDefault: siteapi.NewOptBool(true),
+		Config:    sesInput("eu-west-1", "AKIA1234", "secret"),
+	}, params)
+	require.NoError(t, err)
+	secondRes := second.(*siteapi.SiteIntegrationResource)
+	assert.True(t, secondRes.IsDefault)
+
+	// Promoting the second default must have demoted the first.
+	gotFirst, err := c.SiteIntegrationsGet(ctx, siteapi.SiteIntegrationsGetParams{WorkspaceSlug: "acme", ID: firstID})
+	require.NoError(t, err)
+	assert.False(t, gotFirst.(*siteapi.SiteIntegrationResource).IsDefault, "only one default per channel")
+
+	// Exactly one row is default for the email channel.
+	n, err := env.DB.Integration.Query().
+		Where(integration.ChannelEQ(integration.ChannelEmail), integration.IsDefault(true)).
+		Count(ctx)
+	require.NoError(t, err)
+	assert.Equal(t, 1, n)
+}
+
+func TestSiteIntegrationsPromoteViaUpdate(t *testing.T) {
+	env := testhelper.Setup(t)
+	c := siteClient(t, env, "info@1mail.com")
+	ctx := context.Background()
+	params := siteapi.SiteIntegrationsCreateParams{WorkspaceSlug: "acme"}
+
+	first, err := c.SiteIntegrationsCreate(ctx, &siteapi.SiteCreateIntegrationInput{
+		Name:      "First",
+		IsDefault: siteapi.NewOptBool(true),
+		Config:    smtpInput("smtp1.example.com", "pw"),
+	}, params)
+	require.NoError(t, err)
+	firstID := first.(*siteapi.SiteIntegrationResource).ID
+
+	second, err := c.SiteIntegrationsCreate(ctx, &siteapi.SiteCreateIntegrationInput{
+		Name:   "Second",
+		Config: sesInput("eu-west-1", "AKIA1234", "secret"),
+	}, params)
+	require.NoError(t, err)
+	secondID := second.(*siteapi.SiteIntegrationResource).ID
+
+	// Promote the second to default via update; this must demote the first in the
+	// same transaction (see promote path in SiteIntegrationsUpdate).
+	updated, err := c.SiteIntegrationsUpdate(ctx, &siteapi.SiteUpdateIntegrationInput{
+		IsDefault: siteapi.NewOptBool(true),
+	}, siteapi.SiteIntegrationsUpdateParams{WorkspaceSlug: "acme", ID: secondID})
+	require.NoError(t, err)
+	assert.True(t, updated.(*siteapi.SiteIntegrationResource).IsDefault)
+
+	gotFirst, err := c.SiteIntegrationsGet(ctx, siteapi.SiteIntegrationsGetParams{WorkspaceSlug: "acme", ID: firstID})
+	require.NoError(t, err)
+	assert.False(t, gotFirst.(*siteapi.SiteIntegrationResource).IsDefault, "promoting the second demotes the first")
+
+	n, err := env.DB.Integration.Query().
+		Where(integration.ChannelEQ(integration.ChannelEmail), integration.IsDefault(true)).
+		Count(ctx)
+	require.NoError(t, err)
+	assert.Equal(t, 1, n)
+}
+
+func TestSiteIntegrationsScopedToWorkspace(t *testing.T) {
+	env := testhelper.Setup(t)
+	c := siteClient(t, env, "info@1mail.com")
+
+	res, err := c.SiteIntegrationsList(context.Background(), siteapi.SiteIntegrationsListParams{WorkspaceSlug: "does-not-exist"})
+	require.NoError(t, err)
+	assert.IsType(t, &siteapi.ProblemDetails{}, res)
+}

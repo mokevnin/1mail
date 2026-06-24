@@ -21,6 +21,7 @@ type Config struct {
 	SMTPUser       string
 	SMTPPass       string
 	SMTPFrom       string
+	EncryptionKey  string
 	AutoMigrate    bool
 }
 
@@ -63,6 +64,7 @@ func Load(envName string) (*Config, error) {
 		SMTPUser:       v.GetString("SMTP_USER"),
 		SMTPPass:       v.GetString("SMTP_PASS"),
 		SMTPFrom:       v.GetString("SMTP_FROM"),
+		EncryptionKey:  v.GetString("ENCRYPTION_KEY"),
 		AutoMigrate:    v.GetBool("AUTO_MIGRATE"),
 	}, nil
 }

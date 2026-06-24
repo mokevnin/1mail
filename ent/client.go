@@ -18,6 +18,7 @@ import (
 	"github.com/mokevnin/1mail/ent/apitoken"
 	"github.com/mokevnin/1mail/ent/contact"
 	"github.com/mokevnin/1mail/ent/event"
+	"github.com/mokevnin/1mail/ent/integration"
 	"github.com/mokevnin/1mail/ent/segment"
 	"github.com/mokevnin/1mail/ent/trackingprofile"
 	"github.com/mokevnin/1mail/ent/trackingvisitor"
@@ -36,6 +37,8 @@ type Client struct {
 	Contact *ContactClient
 	// Event is the client for interacting with the Event builders.
 	Event *EventClient
+	// Integration is the client for interacting with the Integration builders.
+	Integration *IntegrationClient
 	// Segment is the client for interacting with the Segment builders.
 	Segment *SegmentClient
 	// TrackingProfile is the client for interacting with the TrackingProfile builders.
@@ -60,6 +63,7 @@ func (c *Client) init() {
 	c.ApiToken = NewApiTokenClient(c.config)
 	c.Contact = NewContactClient(c.config)
 	c.Event = NewEventClient(c.config)
+	c.Integration = NewIntegrationClient(c.config)
 	c.Segment = NewSegmentClient(c.config)
 	c.TrackingProfile = NewTrackingProfileClient(c.config)
 	c.TrackingVisitor = NewTrackingVisitorClient(c.config)
@@ -160,6 +164,7 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		ApiToken:        NewApiTokenClient(cfg),
 		Contact:         NewContactClient(cfg),
 		Event:           NewEventClient(cfg),
+		Integration:     NewIntegrationClient(cfg),
 		Segment:         NewSegmentClient(cfg),
 		TrackingProfile: NewTrackingProfileClient(cfg),
 		TrackingVisitor: NewTrackingVisitorClient(cfg),
@@ -187,6 +192,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		ApiToken:        NewApiTokenClient(cfg),
 		Contact:         NewContactClient(cfg),
 		Event:           NewEventClient(cfg),
+		Integration:     NewIntegrationClient(cfg),
 		Segment:         NewSegmentClient(cfg),
 		TrackingProfile: NewTrackingProfileClient(cfg),
 		TrackingVisitor: NewTrackingVisitorClient(cfg),
@@ -221,8 +227,8 @@ func (c *Client) Close() error {
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
 	for _, n := range []interface{ Use(...Hook) }{
-		c.ApiToken, c.Contact, c.Event, c.Segment, c.TrackingProfile, c.TrackingVisitor,
-		c.User, c.Workspace,
+		c.ApiToken, c.Contact, c.Event, c.Integration, c.Segment, c.TrackingProfile,
+		c.TrackingVisitor, c.User, c.Workspace,
 	} {
 		n.Use(hooks...)
 	}
@@ -232,8 +238,8 @@ func (c *Client) Use(hooks ...Hook) {
 // In order to add interceptors to a specific client, call: `client.Node.Intercept(...)`.
 func (c *Client) Intercept(interceptors ...Interceptor) {
 	for _, n := range []interface{ Intercept(...Interceptor) }{
-		c.ApiToken, c.Contact, c.Event, c.Segment, c.TrackingProfile, c.TrackingVisitor,
-		c.User, c.Workspace,
+		c.ApiToken, c.Contact, c.Event, c.Integration, c.Segment, c.TrackingProfile,
+		c.TrackingVisitor, c.User, c.Workspace,
 	} {
 		n.Intercept(interceptors...)
 	}
@@ -248,6 +254,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.Contact.mutate(ctx, m)
 	case *EventMutation:
 		return c.Event.mutate(ctx, m)
+	case *IntegrationMutation:
+		return c.Integration.mutate(ctx, m)
 	case *SegmentMutation:
 		return c.Segment.mutate(ctx, m)
 	case *TrackingProfileMutation:
@@ -707,6 +715,155 @@ func (c *EventClient) mutate(ctx context.Context, m *EventMutation) (Value, erro
 		return (&EventDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("ent: unknown Event mutation op: %q", m.Op())
+	}
+}
+
+// IntegrationClient is a client for the Integration schema.
+type IntegrationClient struct {
+	config
+}
+
+// NewIntegrationClient returns a client for the Integration from the given config.
+func NewIntegrationClient(c config) *IntegrationClient {
+	return &IntegrationClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `integration.Hooks(f(g(h())))`.
+func (c *IntegrationClient) Use(hooks ...Hook) {
+	c.hooks.Integration = append(c.hooks.Integration, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `integration.Intercept(f(g(h())))`.
+func (c *IntegrationClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Integration = append(c.inters.Integration, interceptors...)
+}
+
+// Create returns a builder for creating a Integration entity.
+func (c *IntegrationClient) Create() *IntegrationCreate {
+	mutation := newIntegrationMutation(c.config, OpCreate)
+	return &IntegrationCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Integration entities.
+func (c *IntegrationClient) CreateBulk(builders ...*IntegrationCreate) *IntegrationCreateBulk {
+	return &IntegrationCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *IntegrationClient) MapCreateBulk(slice any, setFunc func(*IntegrationCreate, int)) *IntegrationCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &IntegrationCreateBulk{err: fmt.Errorf("calling to IntegrationClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*IntegrationCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &IntegrationCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Integration.
+func (c *IntegrationClient) Update() *IntegrationUpdate {
+	mutation := newIntegrationMutation(c.config, OpUpdate)
+	return &IntegrationUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *IntegrationClient) UpdateOne(_m *Integration) *IntegrationUpdateOne {
+	mutation := newIntegrationMutation(c.config, OpUpdateOne, withIntegration(_m))
+	return &IntegrationUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *IntegrationClient) UpdateOneID(id int64) *IntegrationUpdateOne {
+	mutation := newIntegrationMutation(c.config, OpUpdateOne, withIntegrationID(id))
+	return &IntegrationUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Integration.
+func (c *IntegrationClient) Delete() *IntegrationDelete {
+	mutation := newIntegrationMutation(c.config, OpDelete)
+	return &IntegrationDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *IntegrationClient) DeleteOne(_m *Integration) *IntegrationDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *IntegrationClient) DeleteOneID(id int64) *IntegrationDeleteOne {
+	builder := c.Delete().Where(integration.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &IntegrationDeleteOne{builder}
+}
+
+// Query returns a query builder for Integration.
+func (c *IntegrationClient) Query() *IntegrationQuery {
+	return &IntegrationQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeIntegration},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Integration entity by its id.
+func (c *IntegrationClient) Get(ctx context.Context, id int64) (*Integration, error) {
+	return c.Query().Where(integration.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *IntegrationClient) GetX(ctx context.Context, id int64) *Integration {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryWorkspace queries the workspace edge of a Integration.
+func (c *IntegrationClient) QueryWorkspace(_m *Integration) *WorkspaceQuery {
+	query := (&WorkspaceClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(integration.Table, integration.FieldID, id),
+			sqlgraph.To(workspace.Table, workspace.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, integration.WorkspaceTable, integration.WorkspaceColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *IntegrationClient) Hooks() []Hook {
+	return c.hooks.Integration
+}
+
+// Interceptors returns the client interceptors.
+func (c *IntegrationClient) Interceptors() []Interceptor {
+	return c.inters.Integration
+}
+
+func (c *IntegrationClient) mutate(ctx context.Context, m *IntegrationMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&IntegrationCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&IntegrationUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&IntegrationUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&IntegrationDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown Integration mutation op: %q", m.Op())
 	}
 }
 
@@ -1542,6 +1699,22 @@ func (c *WorkspaceClient) QueryAPITokens(_m *Workspace) *ApiTokenQuery {
 	return query
 }
 
+// QueryIntegrations queries the integrations edge of a Workspace.
+func (c *WorkspaceClient) QueryIntegrations(_m *Workspace) *IntegrationQuery {
+	query := (&IntegrationClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workspace.Table, workspace.FieldID, id),
+			sqlgraph.To(integration.Table, integration.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, workspace.IntegrationsTable, workspace.IntegrationsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // QueryUser queries the user edge of a Workspace.
 func (c *WorkspaceClient) QueryUser(_m *Workspace) *UserQuery {
 	query := (&UserClient{config: c.config}).Query()
@@ -1586,11 +1759,11 @@ func (c *WorkspaceClient) mutate(ctx context.Context, m *WorkspaceMutation) (Val
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		ApiToken, Contact, Event, Segment, TrackingProfile, TrackingVisitor, User,
-		Workspace []ent.Hook
+		ApiToken, Contact, Event, Integration, Segment, TrackingProfile,
+		TrackingVisitor, User, Workspace []ent.Hook
 	}
 	inters struct {
-		ApiToken, Contact, Event, Segment, TrackingProfile, TrackingVisitor, User,
-		Workspace []ent.Interceptor
+		ApiToken, Contact, Event, Integration, Segment, TrackingProfile,
+		TrackingVisitor, User, Workspace []ent.Interceptor
 	}
 )

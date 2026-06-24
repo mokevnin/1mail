@@ -168,6 +168,16 @@ export type SiteCreateContactInput = {
 };
 
 /**
+ * Create a workspace integration. The provider/channel are derived from `config.kind`.
+ */
+export type SiteCreateIntegrationInput = {
+    name: string;
+    enabled?: boolean;
+    isDefault?: boolean;
+    config: SiteIntegrationConfigInput;
+};
+
+/**
  * Site request body for creating a segment
  */
 export type SiteCreateSegmentInput = {
@@ -260,6 +270,86 @@ export type SiteEventResource = {
     createdAt: Timestamp;
 };
 
+/**
+ * Delivery channel an integration belongs to
+ */
+export const SiteIntegrationChannel = { EMAIL: 'email', SMS: 'sms' } as const;
+
+/**
+ * Delivery channel an integration belongs to
+ */
+export type SiteIntegrationChannel = typeof SiteIntegrationChannel[keyof typeof SiteIntegrationChannel];
+
+/**
+ * Provider config returned to the UI, discriminated by `kind`. Secrets are omitted.
+ */
+export type SiteIntegrationConfig = ({
+    kind: 'smtp';
+} & SiteSmtpConfig) | ({
+    kind: 'ses';
+} & SiteSesConfig);
+
+/**
+ * Provider config submitted by the UI, discriminated by `kind`.
+ */
+export type SiteIntegrationConfigInput = ({
+    kind: 'smtp';
+} & SiteSmtpConfigInput) | ({
+    kind: 'ses';
+} & SiteSesConfigInput);
+
+/**
+ * Concrete sending provider
+ */
+export const SiteIntegrationProvider = { SMTP: 'smtp', SES: 'ses' } as const;
+
+/**
+ * Concrete sending provider
+ */
+export type SiteIntegrationProvider = typeof SiteIntegrationProvider[keyof typeof SiteIntegrationProvider];
+
+/**
+ * A workspace sending-provider integration
+ */
+export type SiteIntegrationResource = {
+    /**
+     * Unique identifier
+     */
+    id: EntityId;
+    /**
+     * Human-readable label
+     */
+    name: string;
+    /**
+     * Delivery channel
+     */
+    channel: SiteIntegrationChannel;
+    /**
+     * Concrete provider
+     */
+    provider: SiteIntegrationProvider;
+    /**
+     * Whether this integration may be used for sending
+     */
+    enabled: boolean;
+    /**
+     * Whether this is the default provider for its channel
+     */
+    isDefault: boolean;
+    /**
+     * Provider config (secrets redacted)
+     */
+    config: SiteIntegrationConfig;
+    /**
+     * Creation timestamp
+     */
+    createdAt: Timestamp;
+    /**
+     * Last update timestamp
+     */
+    updatedAt: Timestamp;
+};
+
 export type SiteRegisterInput = {
     name: string;
     email: EmailAddress;
@@ -314,6 +404,57 @@ export const SiteSegmentType = { RULE: 'rule', SNAPSHOT: 'snapshot' } as const;
 export type SiteSegmentType = typeof SiteSegmentType[keyof typeof SiteSegmentType];
 
 /**
+ * SES config without the secret access key
+ */
+export type SiteSesConfig = {
+    kind: 'ses';
+    region: string;
+    from: EmailAddress;
+    fromName?: string | null;
+    /**
+     * Last 4 chars of the access key id, for recognition
+     */
+    accessKeyIdLast4?: string | null;
+};
+
+/**
+ * SES credentials
+ */
+export type SiteSesConfigInput = {
+    kind: 'ses';
+    region: string;
+    accessKeyId: string;
+    secretAccessKey: string;
+    from: EmailAddress;
+    fromName?: string | null;
+};
+
+/**
+ * SMTP config without the password
+ */
+export type SiteSmtpConfig = {
+    kind: 'smtp';
+    host: string;
+    port: number;
+    username?: string | null;
+    from: EmailAddress;
+    fromName?: string | null;
+};
+
+/**
+ * SMTP credentials
+ */
+export type SiteSmtpConfigInput = {
+    kind: 'smtp';
+    host: string;
+    port: number;
+    username?: string | null;
+    password?: string | null;
+    from: EmailAddress;
+    fromName?: string | null;
+};
+
+/**
  * Site request body for updating a contact
  */
 export type SiteUpdateContactInput = {
@@ -335,6 +476,16 @@ export type SiteUpdateContactInput = {
     customFields?: {
         [key: string]: string;
     } | null;
+};
+
+/**
+ * Update a workspace integration. Omit `config` to keep stored credentials.
+ */
+export type SiteUpdateIntegrationInput = {
+    name?: string;
+    enabled?: boolean;
+    isDefault?: boolean;
+    config?: SiteIntegrationConfigInput | null;
 };
 
 /**
@@ -825,6 +976,172 @@ export type SiteEventsListResponses = {
 };
 
 export type SiteEventsListResponse = SiteEventsListResponses[keyof SiteEventsListResponses];
+
+export type SiteIntegrationsListData = {
+    body?: never;
+    path: {
+        workspaceSlug: string;
+    };
+    query?: never;
+    url: '/w/{workspaceSlug}/integrations';
+};
+
+export type SiteIntegrationsListErrors = {
+    /**
+     * RFC 7807 not found response
+     */
+    404: ProblemDetails;
+};
+
+export type SiteIntegrationsListError = SiteIntegrationsListErrors[keyof SiteIntegrationsListErrors];
+
+export type SiteIntegrationsListResponses = {
+    /**
+     * The request has succeeded.
+     */
+    200: Array<SiteIntegrationResource>;
+};
+
+export type SiteIntegrationsListResponse = SiteIntegrationsListResponses[keyof SiteIntegrationsListResponses];
+
+export type SiteIntegrationsCreateData = {
+    body: SiteCreateIntegrationInput;
+    path: {
+        workspaceSlug: string;
+    };
+    query?: never;
+    url: '/w/{workspaceSlug}/integrations';
+};
+
+export type SiteIntegrationsCreateErrors = {
+    /**
+     * RFC 7807 not found response
+     */
+    404: ProblemDetails;
+    /**
+     * RFC 7807 conflict response
+     */
+    409: ProblemDetails;
+    /**
+     * RFC 7807 validation response
+     */
+    422: ProblemDetails;
+};
+
+export type SiteIntegrationsCreateError = SiteIntegrationsCreateErrors[keyof SiteIntegrationsCreateErrors];
+
+export type SiteIntegrationsCreateResponses = {
+    /**
+     * The request has succeeded and a new resource has been created as a result.
+     */
+    201: SiteIntegrationResource;
+};
+
+export type SiteIntegrationsCreateResponse = SiteIntegrationsCreateResponses[keyof SiteIntegrationsCreateResponses];
+
+export type SiteIntegrationsDeleteData = {
+    body?: never;
+    path: {
+        workspaceSlug: string;
+        id: EntityId;
+    };
+    query?: never;
+    url: '/w/{workspaceSlug}/integrations/{id}';
+};
+
+export type SiteIntegrationsDeleteErrors = {
+    /**
+     * RFC 7807 bad request response
+     */
+    400: ProblemDetails;
+    /**
+     * RFC 7807 not found response
+     */
+    404: ProblemDetails;
+};
+
+export type SiteIntegrationsDeleteError = SiteIntegrationsDeleteErrors[keyof SiteIntegrationsDeleteErrors];
+
+export type SiteIntegrationsDeleteResponses = {
+    /**
+     * There is no content to send for this request, but the headers may be useful.
+     */
+    204: void;
+};
+
+export type SiteIntegrationsDeleteResponse = SiteIntegrationsDeleteResponses[keyof SiteIntegrationsDeleteResponses];
+
+export type SiteIntegrationsGetData = {
+    body?: never;
+    path: {
+        workspaceSlug: string;
+        id: EntityId;
+    };
+    query?: never;
+    url: '/w/{workspaceSlug}/integrations/{id}';
+};
+
+export type SiteIntegrationsGetErrors = {
+    /**
+     * RFC 7807 bad request response
+     */
+    400: ProblemDetails;
+    /**
+     * RFC 7807 not found response
+     */
+    404: ProblemDetails;
+};
+
+export type SiteIntegrationsGetError = SiteIntegrationsGetErrors[keyof SiteIntegrationsGetErrors];
+
+export type SiteIntegrationsGetResponses = {
+    /**
+     * The request has succeeded.
+     */
+    200: SiteIntegrationResource;
+};
+
+export type SiteIntegrationsGetResponse = SiteIntegrationsGetResponses[keyof SiteIntegrationsGetResponses];
+
+export type SiteIntegrationsUpdateData = {
+    body: SiteUpdateIntegrationInput;
+    path: {
+        workspaceSlug: string;
+        id: EntityId;
+    };
+    query?: never;
+    url: '/w/{workspaceSlug}/integrations/{id}';
+};
+
+export type SiteIntegrationsUpdateErrors = {
+    /**
+     * RFC 7807 bad request response
+     */
+    400: ProblemDetails;
+    /**
+     * RFC 7807 not found response
+     */
+    404: ProblemDetails;
+    /**
+     * RFC 7807 conflict response
+     */
+    409: ProblemDetails;
+    /**
+     * RFC 7807 validation response
+     */
+    422: ProblemDetails;
+};
+
+export type SiteIntegrationsUpdateError = SiteIntegrationsUpdateErrors[keyof SiteIntegrationsUpdateErrors];
+
+export type SiteIntegrationsUpdateResponses = {
+    /**
+     * The request has succeeded.
+     */
+    200: SiteIntegrationResource;
+};
+
+export type SiteIntegrationsUpdateResponse = SiteIntegrationsUpdateResponses[keyof SiteIntegrationsUpdateResponses];
 
 export type SiteSegmentsListData = {
     body?: never;

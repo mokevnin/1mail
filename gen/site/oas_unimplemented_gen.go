@@ -81,6 +81,51 @@ func (UnimplementedHandler) SiteEventsList(ctx context.Context, params SiteEvent
 	return r, ht.ErrNotImplemented
 }
 
+// SiteIntegrationsCreate implements SiteIntegrations_create operation.
+//
+// Create an integration.
+//
+// POST /w/{workspaceSlug}/integrations
+func (UnimplementedHandler) SiteIntegrationsCreate(ctx context.Context, req *SiteCreateIntegrationInput, params SiteIntegrationsCreateParams) (r SiteIntegrationsCreateRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// SiteIntegrationsDelete implements SiteIntegrations_delete operation.
+//
+// Delete an integration.
+//
+// DELETE /w/{workspaceSlug}/integrations/{id}
+func (UnimplementedHandler) SiteIntegrationsDelete(ctx context.Context, params SiteIntegrationsDeleteParams) (r SiteIntegrationsDeleteRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// SiteIntegrationsGet implements SiteIntegrations_get operation.
+//
+// Get an integration by id.
+//
+// GET /w/{workspaceSlug}/integrations/{id}
+func (UnimplementedHandler) SiteIntegrationsGet(ctx context.Context, params SiteIntegrationsGetParams) (r SiteIntegrationsGetRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// SiteIntegrationsList implements SiteIntegrations_list operation.
+//
+// List the workspace's sending-provider integrations.
+//
+// GET /w/{workspaceSlug}/integrations
+func (UnimplementedHandler) SiteIntegrationsList(ctx context.Context, params SiteIntegrationsListParams) (r SiteIntegrationsListRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// SiteIntegrationsUpdate implements SiteIntegrations_update operation.
+//
+// Update an integration.
+//
+// PUT /w/{workspaceSlug}/integrations/{id}
+func (UnimplementedHandler) SiteIntegrationsUpdate(ctx context.Context, req *SiteUpdateIntegrationInput, params SiteIntegrationsUpdateParams) (r SiteIntegrationsUpdateRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // SiteSegmentsCreate implements SiteSegments_create operation.
 //
 // Create a segment from the site UI.

@@ -52,6 +52,36 @@ type Handler interface {
 	//
 	// GET /w/{workspaceSlug}/events
 	SiteEventsList(ctx context.Context, params SiteEventsListParams) (SiteEventsListRes, error)
+	// SiteIntegrationsCreate implements SiteIntegrations_create operation.
+	//
+	// Create an integration.
+	//
+	// POST /w/{workspaceSlug}/integrations
+	SiteIntegrationsCreate(ctx context.Context, req *SiteCreateIntegrationInput, params SiteIntegrationsCreateParams) (SiteIntegrationsCreateRes, error)
+	// SiteIntegrationsDelete implements SiteIntegrations_delete operation.
+	//
+	// Delete an integration.
+	//
+	// DELETE /w/{workspaceSlug}/integrations/{id}
+	SiteIntegrationsDelete(ctx context.Context, params SiteIntegrationsDeleteParams) (SiteIntegrationsDeleteRes, error)
+	// SiteIntegrationsGet implements SiteIntegrations_get operation.
+	//
+	// Get an integration by id.
+	//
+	// GET /w/{workspaceSlug}/integrations/{id}
+	SiteIntegrationsGet(ctx context.Context, params SiteIntegrationsGetParams) (SiteIntegrationsGetRes, error)
+	// SiteIntegrationsList implements SiteIntegrations_list operation.
+	//
+	// List the workspace's sending-provider integrations.
+	//
+	// GET /w/{workspaceSlug}/integrations
+	SiteIntegrationsList(ctx context.Context, params SiteIntegrationsListParams) (SiteIntegrationsListRes, error)
+	// SiteIntegrationsUpdate implements SiteIntegrations_update operation.
+	//
+	// Update an integration.
+	//
+	// PUT /w/{workspaceSlug}/integrations/{id}
+	SiteIntegrationsUpdate(ctx context.Context, req *SiteUpdateIntegrationInput, params SiteIntegrationsUpdateParams) (SiteIntegrationsUpdateRes, error)
 	// SiteSegmentsCreate implements SiteSegments_create operation.
 	//
 	// Create a segment from the site UI.

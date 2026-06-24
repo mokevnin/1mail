@@ -66,6 +66,34 @@ func encodeSiteContactsUpdateRequest(
 	return nil
 }
 
+func encodeSiteIntegrationsCreateRequest(
+	req *SiteCreateIntegrationInput,
+	r *http.Request,
+) error {
+	const contentType = "application/json"
+	e := new(jx.Encoder)
+	{
+		req.Encode(e)
+	}
+	encoded := e.Bytes()
+	ht.SetBody(r, bytes.NewReader(encoded), contentType)
+	return nil
+}
+
+func encodeSiteIntegrationsUpdateRequest(
+	req *SiteUpdateIntegrationInput,
+	r *http.Request,
+) error {
+	const contentType = "application/json"
+	e := new(jx.Encoder)
+	{
+		req.Encode(e)
+	}
+	encoded := e.Bytes()
+	ht.SetBody(r, bytes.NewReader(encoded), contentType)
+	return nil
+}
+
 func encodeSiteSegmentsCreateRequest(
 	req *SiteCreateSegmentInput,
 	r *http.Request,

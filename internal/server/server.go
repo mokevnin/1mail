@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"strings"
 	"time"
@@ -22,13 +23,23 @@ import (
 	apicollect "github.com/mokevnin/1mail/internal/api/collect"
 	apiexternal "github.com/mokevnin/1mail/internal/api/external"
 	apisite "github.com/mokevnin/1mail/internal/api/site"
+	"github.com/mokevnin/1mail/internal/messaging/registry"
 	"github.com/mokevnin/1mail/internal/pubsub"
+	"github.com/mokevnin/1mail/internal/secrets"
 	"github.com/ogen-go/ogen/ogenerrors"
 )
 
 // New builds the top-level net/http handler wiring the three ogen-generated
 // API servers (site, external, collect) plus go-pkgz/auth endpoints.
 func New(cfg *config.Config, client *ent.Client, ps *pubsub.PubSub) (http.Handler, error) {
+	// Credential encryption is mandatory: fail fast at boot if the key is
+	// missing or malformed rather than at first provider write.
+	cipher, err := secrets.NewCipher(cfg.EncryptionKey)
+	if err != nil {
+		return nil, fmt.Errorf("encryption key: %w", err)
+	}
+	providerCatalog := registry.Default()
+
 	mux := http.NewServeMux()
 
 	// Auth service (go-pkgz/auth) — JWT issuance + direct (email/password) provider.
@@ -55,7 +66,7 @@ func New(cfg *config.Config, client *ent.Client, ps *pubsub.PubSub) (http.Handle
 	// Site API — /site (JWT cookie via generated SecurityHandler; register and
 	// direct-login are public per the spec).
 	siteSrv, err := siteapi.NewServer(
-		apisite.NewHandlers(client, ps),
+		apisite.NewHandlers(client, ps, cipher, providerCatalog),
 		apiauth.NewSiteSecurityHandler(cfg.JWTSecret, client),
 		siteapi.WithPathPrefix("/site"),
 		siteapi.WithErrorHandler(problemErrorHandler),

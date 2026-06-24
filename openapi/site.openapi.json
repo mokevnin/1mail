@@ -25,6 +25,9 @@
     },
     {
       "name": "Site Tokens"
+    },
+    {
+      "name": "Site Integrations"
     }
   ],
   "paths": {
@@ -64,7 +67,9 @@
             }
           }
         },
-        "tags": ["Site Auth"],
+        "tags": [
+          "Site Auth"
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -75,7 +80,9 @@
             }
           }
         },
-        "security": [{}]
+        "security": [
+          {}
+        ]
       }
     },
     "/auth/register": {
@@ -114,7 +121,9 @@
             }
           }
         },
-        "tags": ["Site Auth"],
+        "tags": [
+          "Site Auth"
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -125,7 +134,9 @@
             }
           }
         },
-        "security": [{}]
+        "security": [
+          {}
+        ]
       }
     },
     "/me": {
@@ -145,7 +156,9 @@
             }
           }
         },
-        "tags": ["Site User"]
+        "tags": [
+          "Site User"
+        ]
       },
       "put": {
         "operationId": "SiteUser_updateMe",
@@ -183,7 +196,9 @@
             }
           }
         },
-        "tags": ["Site User"],
+        "tags": [
+          "Site User"
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -252,7 +267,9 @@
             }
           }
         },
-        "tags": ["Site Contacts"],
+        "tags": [
+          "Site Contacts"
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -300,7 +317,13 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "required": ["items", "page", "pageSize", "totalItems", "totalPages"],
+                  "required": [
+                    "items",
+                    "page",
+                    "pageSize",
+                    "totalItems",
+                    "totalPages"
+                  ],
                   "properties": {
                     "items": {
                       "type": "array",
@@ -366,7 +389,9 @@
             }
           }
         },
-        "tags": ["Site Contacts"]
+        "tags": [
+          "Site Contacts"
+        ]
       }
     },
     "/w/{workspaceSlug}/contacts/{id}": {
@@ -423,7 +448,9 @@
             }
           }
         },
-        "tags": ["Site Contacts"]
+        "tags": [
+          "Site Contacts"
+        ]
       },
       "put": {
         "operationId": "SiteContacts_update",
@@ -498,7 +525,9 @@
             }
           }
         },
-        "tags": ["Site Contacts"],
+        "tags": [
+          "Site Contacts"
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -556,7 +585,9 @@
             }
           }
         },
-        "tags": ["Site Contacts"]
+        "tags": [
+          "Site Contacts"
+        ]
       }
     },
     "/w/{workspaceSlug}/events": {
@@ -596,7 +627,13 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "required": ["items", "page", "pageSize", "totalItems", "totalPages"],
+                  "required": [
+                    "items",
+                    "page",
+                    "pageSize",
+                    "totalItems",
+                    "totalPages"
+                  ],
                   "properties": {
                     "items": {
                       "type": "array",
@@ -642,7 +679,318 @@
             }
           }
         },
-        "tags": ["Site Events"]
+        "tags": [
+          "Site Events"
+        ]
+      }
+    },
+    "/w/{workspaceSlug}/integrations": {
+      "get": {
+        "operationId": "SiteIntegrations_list",
+        "description": "List the workspace's sending-provider integrations",
+        "parameters": [
+          {
+            "name": "workspaceSlug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request has succeeded.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SiteIntegrationResource"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "RFC 7807 not found response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Site Integrations"
+        ]
+      },
+      "post": {
+        "operationId": "SiteIntegrations_create",
+        "description": "Create an integration",
+        "parameters": [
+          {
+            "name": "workspaceSlug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "The request has succeeded and a new resource has been created as a result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SiteIntegrationResource"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "RFC 7807 not found response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "RFC 7807 conflict response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "RFC 7807 validation response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Site Integrations"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SiteCreateIntegrationInput"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/w/{workspaceSlug}/integrations/{id}": {
+      "get": {
+        "operationId": "SiteIntegrations_get",
+        "description": "Get an integration by id",
+        "parameters": [
+          {
+            "name": "workspaceSlug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/EntityId"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request has succeeded.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SiteIntegrationResource"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "RFC 7807 bad request response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "RFC 7807 not found response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Site Integrations"
+        ]
+      },
+      "put": {
+        "operationId": "SiteIntegrations_update",
+        "description": "Update an integration",
+        "parameters": [
+          {
+            "name": "workspaceSlug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/EntityId"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request has succeeded.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SiteIntegrationResource"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "RFC 7807 bad request response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "RFC 7807 not found response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "RFC 7807 conflict response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "RFC 7807 validation response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Site Integrations"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SiteUpdateIntegrationInput"
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "SiteIntegrations_delete",
+        "description": "Delete an integration",
+        "parameters": [
+          {
+            "name": "workspaceSlug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/EntityId"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "There is no content to send for this request, but the headers may be useful."
+          },
+          "400": {
+            "description": "RFC 7807 bad request response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "RFC 7807 not found response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Site Integrations"
+        ]
       }
     },
     "/w/{workspaceSlug}/segments": {
@@ -691,7 +1039,9 @@
             }
           }
         },
-        "tags": ["Site Segments"],
+        "tags": [
+          "Site Segments"
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -729,7 +1079,13 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "required": ["items", "page", "pageSize", "totalItems", "totalPages"],
+                  "required": [
+                    "items",
+                    "page",
+                    "pageSize",
+                    "totalItems",
+                    "totalPages"
+                  ],
                   "properties": {
                     "items": {
                       "type": "array",
@@ -795,7 +1151,9 @@
             }
           }
         },
-        "tags": ["Site Segments"]
+        "tags": [
+          "Site Segments"
+        ]
       }
     },
     "/w/{workspaceSlug}/segments/{id}": {
@@ -852,7 +1210,9 @@
             }
           }
         },
-        "tags": ["Site Segments"]
+        "tags": [
+          "Site Segments"
+        ]
       },
       "put": {
         "operationId": "SiteSegments_update",
@@ -917,7 +1277,9 @@
             }
           }
         },
-        "tags": ["Site Segments"],
+        "tags": [
+          "Site Segments"
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -975,7 +1337,9 @@
             }
           }
         },
-        "tags": ["Site Segments"]
+        "tags": [
+          "Site Segments"
+        ]
       }
     },
     "/w/{workspaceSlug}/tokens": {
@@ -1017,7 +1381,9 @@
             }
           }
         },
-        "tags": ["Site Tokens"]
+        "tags": [
+          "Site Tokens"
+        ]
       },
       "post": {
         "operationId": "SiteTokens_create",
@@ -1064,7 +1430,9 @@
             }
           }
         },
-        "tags": ["Site Tokens"],
+        "tags": [
+          "Site Tokens"
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -1124,7 +1492,9 @@
             }
           }
         },
-        "tags": ["Site Tokens"]
+        "tags": [
+          "Site Tokens"
+        ]
       }
     },
     "/workspaces": {
@@ -1147,7 +1517,9 @@
             }
           }
         },
-        "tags": ["Site Workspaces"]
+        "tags": [
+          "Site Workspaces"
+        ]
       }
     },
     "/workspaces/{slug}": {
@@ -1196,7 +1568,9 @@
             }
           }
         },
-        "tags": ["Site Workspaces"],
+        "tags": [
+          "Site Workspaces"
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -1301,7 +1675,13 @@
       },
       "SiteApiTokenResource": {
         "type": "object",
-        "required": ["id", "name", "prefix", "scopes", "createdAt"],
+        "required": [
+          "id",
+          "name",
+          "prefix",
+          "scopes",
+          "createdAt"
+        ],
         "properties": {
           "id": {
             "allOf": [
@@ -1359,7 +1739,13 @@
       },
       "SiteContactResource": {
         "type": "object",
-        "required": ["id", "email", "status", "createdAt", "updatedAt"],
+        "required": [
+          "id",
+          "email",
+          "status",
+          "createdAt",
+          "updatedAt"
+        ],
         "properties": {
           "id": {
             "allOf": [
@@ -1434,12 +1820,17 @@
       },
       "SiteContactStatus": {
         "type": "string",
-        "enum": ["active", "unsubscribed"],
+        "enum": [
+          "active",
+          "unsubscribed"
+        ],
         "description": "Contact status for site UI"
       },
       "SiteCreateContactInput": {
         "type": "object",
-        "required": ["email"],
+        "required": [
+          "email"
+        ],
         "properties": {
           "email": {
             "allOf": [
@@ -1480,9 +1871,34 @@
         },
         "description": "Site request body for creating a contact"
       },
+      "SiteCreateIntegrationInput": {
+        "type": "object",
+        "required": [
+          "name",
+          "config"
+        ],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "isDefault": {
+            "type": "boolean"
+          },
+          "config": {
+            "$ref": "#/components/schemas/SiteIntegrationConfigInput"
+          }
+        },
+        "description": "Create a workspace integration. The provider/channel are derived from `config.kind`."
+      },
       "SiteCreateSegmentInput": {
         "type": "object",
-        "required": ["name", "type"],
+        "required": [
+          "name",
+          "type"
+        ],
         "properties": {
           "name": {
             "type": "string",
@@ -1506,7 +1922,10 @@
       },
       "SiteCreateTokenInput": {
         "type": "object",
-        "required": ["name", "scopes"],
+        "required": [
+          "name",
+          "scopes"
+        ],
         "properties": {
           "name": {
             "type": "string"
@@ -1531,7 +1950,10 @@
       },
       "SiteCreateTokenResponse": {
         "type": "object",
-        "required": ["token", "resource"],
+        "required": [
+          "token",
+          "resource"
+        ],
         "properties": {
           "token": {
             "type": "string"
@@ -1544,7 +1966,9 @@
       },
       "SiteDirectLoginError": {
         "type": "object",
-        "required": ["error"],
+        "required": [
+          "error"
+        ],
         "properties": {
           "error": {
             "type": "string"
@@ -1553,7 +1977,10 @@
       },
       "SiteDirectLoginInput": {
         "type": "object",
-        "required": ["user", "passwd"],
+        "required": [
+          "user",
+          "passwd"
+        ],
         "properties": {
           "user": {
             "type": "string"
@@ -1565,7 +1992,10 @@
       },
       "SiteDirectLoginResult": {
         "type": "object",
-        "required": ["name", "id"],
+        "required": [
+          "name",
+          "id"
+        ],
         "properties": {
           "name": {
             "type": "string"
@@ -1596,7 +2026,12 @@
       },
       "SiteEventResource": {
         "type": "object",
-        "required": ["id", "subjectId", "action", "createdAt"],
+        "required": [
+          "id",
+          "subjectId",
+          "action",
+          "createdAt"
+        ],
         "properties": {
           "id": {
             "allOf": [
@@ -1646,9 +2081,144 @@
         },
         "description": "A tracked event shown in the activity feed"
       },
+      "SiteIntegrationChannel": {
+        "type": "string",
+        "enum": [
+          "email",
+          "sms"
+        ],
+        "description": "Delivery channel an integration belongs to"
+      },
+      "SiteIntegrationConfig": {
+        "type": "object",
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/SiteSmtpConfig"
+          },
+          {
+            "$ref": "#/components/schemas/SiteSesConfig"
+          }
+        ],
+        "discriminator": {
+          "propertyName": "kind",
+          "mapping": {
+            "smtp": "#/components/schemas/SiteSmtpConfig",
+            "ses": "#/components/schemas/SiteSesConfig"
+          }
+        },
+        "description": "Provider config returned to the UI, discriminated by `kind`. Secrets are omitted."
+      },
+      "SiteIntegrationConfigInput": {
+        "type": "object",
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/SiteSmtpConfigInput"
+          },
+          {
+            "$ref": "#/components/schemas/SiteSesConfigInput"
+          }
+        ],
+        "discriminator": {
+          "propertyName": "kind",
+          "mapping": {
+            "smtp": "#/components/schemas/SiteSmtpConfigInput",
+            "ses": "#/components/schemas/SiteSesConfigInput"
+          }
+        },
+        "description": "Provider config submitted by the UI, discriminated by `kind`."
+      },
+      "SiteIntegrationProvider": {
+        "type": "string",
+        "enum": [
+          "smtp",
+          "ses"
+        ],
+        "description": "Concrete sending provider"
+      },
+      "SiteIntegrationResource": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "channel",
+          "provider",
+          "enabled",
+          "isDefault",
+          "config",
+          "createdAt",
+          "updatedAt"
+        ],
+        "properties": {
+          "id": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EntityId"
+              }
+            ],
+            "description": "Unique identifier"
+          },
+          "name": {
+            "type": "string",
+            "description": "Human-readable label"
+          },
+          "channel": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SiteIntegrationChannel"
+              }
+            ],
+            "description": "Delivery channel"
+          },
+          "provider": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SiteIntegrationProvider"
+              }
+            ],
+            "description": "Concrete provider"
+          },
+          "enabled": {
+            "type": "boolean",
+            "description": "Whether this integration may be used for sending"
+          },
+          "isDefault": {
+            "type": "boolean",
+            "description": "Whether this is the default provider for its channel"
+          },
+          "config": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SiteIntegrationConfig"
+              }
+            ],
+            "description": "Provider config (secrets redacted)"
+          },
+          "createdAt": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Timestamp"
+              }
+            ],
+            "description": "Creation timestamp"
+          },
+          "updatedAt": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Timestamp"
+              }
+            ],
+            "description": "Last update timestamp"
+          }
+        },
+        "description": "A workspace sending-provider integration"
+      },
       "SiteRegisterInput": {
         "type": "object",
-        "required": ["name", "email", "password"],
+        "required": [
+          "name",
+          "email",
+          "password"
+        ],
         "properties": {
           "name": {
             "type": "string"
@@ -1663,7 +2233,12 @@
       },
       "SiteRegisterResult": {
         "type": "object",
-        "required": ["id", "name", "email", "createdAt"],
+        "required": [
+          "id",
+          "name",
+          "email",
+          "createdAt"
+        ],
         "properties": {
           "id": {
             "$ref": "#/components/schemas/EntityId"
@@ -1681,7 +2256,13 @@
       },
       "SiteSegmentResource": {
         "type": "object",
-        "required": ["id", "name", "type", "createdAt", "updatedAt"],
+        "required": [
+          "id",
+          "name",
+          "type",
+          "createdAt",
+          "updatedAt"
+        ],
         "properties": {
           "id": {
             "allOf": [
@@ -1729,8 +2310,154 @@
       },
       "SiteSegmentType": {
         "type": "string",
-        "enum": ["rule", "snapshot"],
+        "enum": [
+          "rule",
+          "snapshot"
+        ],
         "description": "Segment type for site UI"
+      },
+      "SiteSesConfig": {
+        "type": "object",
+        "required": [
+          "kind",
+          "region",
+          "from"
+        ],
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "ses"
+            ]
+          },
+          "region": {
+            "type": "string"
+          },
+          "from": {
+            "$ref": "#/components/schemas/EmailAddress"
+          },
+          "fromName": {
+            "type": "string",
+            "nullable": true
+          },
+          "accessKeyIdLast4": {
+            "type": "string",
+            "nullable": true,
+            "description": "Last 4 chars of the access key id, for recognition"
+          }
+        },
+        "description": "SES config without the secret access key"
+      },
+      "SiteSesConfigInput": {
+        "type": "object",
+        "required": [
+          "kind",
+          "region",
+          "accessKeyId",
+          "secretAccessKey",
+          "from"
+        ],
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "ses"
+            ]
+          },
+          "region": {
+            "type": "string"
+          },
+          "accessKeyId": {
+            "type": "string"
+          },
+          "secretAccessKey": {
+            "type": "string"
+          },
+          "from": {
+            "$ref": "#/components/schemas/EmailAddress"
+          },
+          "fromName": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "description": "SES credentials"
+      },
+      "SiteSmtpConfig": {
+        "type": "object",
+        "required": [
+          "kind",
+          "host",
+          "port",
+          "from"
+        ],
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "smtp"
+            ]
+          },
+          "host": {
+            "type": "string"
+          },
+          "port": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "username": {
+            "type": "string",
+            "nullable": true
+          },
+          "from": {
+            "$ref": "#/components/schemas/EmailAddress"
+          },
+          "fromName": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "description": "SMTP config without the password"
+      },
+      "SiteSmtpConfigInput": {
+        "type": "object",
+        "required": [
+          "kind",
+          "host",
+          "port",
+          "from"
+        ],
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "smtp"
+            ]
+          },
+          "host": {
+            "type": "string"
+          },
+          "port": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "username": {
+            "type": "string",
+            "nullable": true
+          },
+          "password": {
+            "type": "string",
+            "nullable": true
+          },
+          "from": {
+            "$ref": "#/components/schemas/EmailAddress"
+          },
+          "fromName": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "description": "SMTP credentials"
       },
       "SiteUpdateContactInput": {
         "type": "object",
@@ -1765,6 +2492,29 @@
           }
         },
         "description": "Site request body for updating a contact"
+      },
+      "SiteUpdateIntegrationInput": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "isDefault": {
+            "type": "boolean"
+          },
+          "config": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SiteIntegrationConfigInput"
+              }
+            ],
+            "nullable": true
+          }
+        },
+        "description": "Update a workspace integration. Omit `config` to keep stored credentials."
       },
       "SiteUpdateMeInput": {
         "type": "object",
@@ -1809,7 +2559,9 @@
       },
       "SiteUpdateWorkspaceInput": {
         "type": "object",
-        "required": ["name"],
+        "required": [
+          "name"
+        ],
         "properties": {
           "name": {
             "type": "string",
@@ -1820,7 +2572,12 @@
       },
       "SiteUserResource": {
         "type": "object",
-        "required": ["id", "name", "email", "createdAt"],
+        "required": [
+          "id",
+          "name",
+          "email",
+          "createdAt"
+        ],
         "properties": {
           "id": {
             "allOf": [
@@ -1855,7 +2612,13 @@
       },
       "SiteWorkspaceResource": {
         "type": "object",
-        "required": ["id", "name", "slug", "collectKey", "createdAt"],
+        "required": [
+          "id",
+          "name",
+          "slug",
+          "collectKey",
+          "createdAt"
+        ],
         "properties": {
           "id": {
             "allOf": [
@@ -1897,7 +2660,9 @@
       },
       "UnauthorizedProblem": {
         "type": "object",
-        "required": ["body"],
+        "required": [
+          "body"
+        ],
         "properties": {
           "body": {
             "$ref": "#/components/schemas/ProblemDetails"

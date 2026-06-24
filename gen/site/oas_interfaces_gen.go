@@ -33,6 +33,26 @@ type SiteEventsListRes interface {
 	siteEventsListRes()
 }
 
+type SiteIntegrationsCreateRes interface {
+	siteIntegrationsCreateRes()
+}
+
+type SiteIntegrationsDeleteRes interface {
+	siteIntegrationsDeleteRes()
+}
+
+type SiteIntegrationsGetRes interface {
+	siteIntegrationsGetRes()
+}
+
+type SiteIntegrationsListRes interface {
+	siteIntegrationsListRes()
+}
+
+type SiteIntegrationsUpdateRes interface {
+	siteIntegrationsUpdateRes()
+}
+
 type SiteSegmentsCreateRes interface {
 	siteSegmentsCreateRes()
 }

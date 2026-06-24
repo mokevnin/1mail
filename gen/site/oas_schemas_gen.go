@@ -38,6 +38,52 @@ type EmailAddress string
 
 type EntityId string
 
+// NewOptBool returns new OptBool with value set to v.
+func NewOptBool(v bool) OptBool {
+	return OptBool{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptBool is optional bool.
+type OptBool struct {
+	Value bool
+	Set   bool
+}
+
+// IsSet returns true if OptBool was set.
+func (o OptBool) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptBool) Reset() {
+	var v bool
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptBool) SetTo(v bool) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptBool) Get() (v bool, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptBool) Or(d bool) bool {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
 // NewOptInt32 returns new OptInt32 with value set to v.
 func NewOptInt32(v int32) OptInt32 {
 	return OptInt32{
@@ -282,6 +328,74 @@ func (o OptNilSiteEventResourceProperties) Get() (v SiteEventResourceProperties,
 
 // Or returns value if set, or given parameter if does not.
 func (o OptNilSiteEventResourceProperties) Or(d SiteEventResourceProperties) SiteEventResourceProperties {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptNilSiteIntegrationConfigInput returns new OptNilSiteIntegrationConfigInput with value set to v.
+func NewOptNilSiteIntegrationConfigInput(v SiteIntegrationConfigInput) OptNilSiteIntegrationConfigInput {
+	return OptNilSiteIntegrationConfigInput{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptNilSiteIntegrationConfigInput is optional nullable SiteIntegrationConfigInput.
+type OptNilSiteIntegrationConfigInput struct {
+	Value SiteIntegrationConfigInput
+	Set   bool
+	Null  bool
+}
+
+// IsSet returns true if OptNilSiteIntegrationConfigInput was set.
+func (o OptNilSiteIntegrationConfigInput) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptNilSiteIntegrationConfigInput) Reset() {
+	var v SiteIntegrationConfigInput
+	o.Value = v
+	o.Set = false
+	o.Null = false
+}
+
+// SetTo sets value to v.
+func (o *OptNilSiteIntegrationConfigInput) SetTo(v SiteIntegrationConfigInput) {
+	o.Set = true
+	o.Null = false
+	o.Value = v
+}
+
+// IsNull returns true if value is Null.
+func (o OptNilSiteIntegrationConfigInput) IsNull() bool { return o.Null }
+
+// SetToNull sets value to null.
+func (o *OptNilSiteIntegrationConfigInput) SetToNull() {
+	o.Set = true
+	o.Null = true
+	var v SiteIntegrationConfigInput
+	o.Value = v
+}
+
+// IsEmpty returns true if the field was omitted from the payload (not Set and not Null).
+func (o OptNilSiteIntegrationConfigInput) IsEmpty() bool {
+	return !o.Set && !o.Null
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptNilSiteIntegrationConfigInput) Get() (v SiteIntegrationConfigInput, ok bool) {
+	if o.Null {
+		return v, false
+	}
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptNilSiteIntegrationConfigInput) Or(d SiteIntegrationConfigInput) SiteIntegrationConfigInput {
 	if v, ok := o.Get(); ok {
 		return v
 	}
@@ -937,9 +1051,10 @@ func (s *ProblemDetails) SetFields(val OptProblemDetailsFields) {
 	s.Fields = val
 }
 
-func (*ProblemDetails) siteAuthDirectLoginRes() {}
-func (*ProblemDetails) siteEventsListRes()      {}
-func (*ProblemDetails) siteTokensListRes()      {}
+func (*ProblemDetails) siteAuthDirectLoginRes()  {}
+func (*ProblemDetails) siteEventsListRes()       {}
+func (*ProblemDetails) siteIntegrationsListRes() {}
+func (*ProblemDetails) siteTokensListRes()       {}
 
 // Validation errors grouped by field.
 type ProblemDetailsErrors map[string][]string
@@ -1438,6 +1553,55 @@ func (s *SiteCreateContactInputCustomFields) init() SiteCreateContactInputCustom
 	return m
 }
 
+// Create a workspace integration. The provider/channel are derived from `config.kind`.
+// Ref: #/components/schemas/SiteCreateIntegrationInput
+type SiteCreateIntegrationInput struct {
+	Name      string                     `json:"name"`
+	Enabled   OptBool                    `json:"enabled"`
+	IsDefault OptBool                    `json:"isDefault"`
+	Config    SiteIntegrationConfigInput `json:"config"`
+}
+
+// GetName returns the value of Name.
+func (s *SiteCreateIntegrationInput) GetName() string {
+	return s.Name
+}
+
+// GetEnabled returns the value of Enabled.
+func (s *SiteCreateIntegrationInput) GetEnabled() OptBool {
+	return s.Enabled
+}
+
+// GetIsDefault returns the value of IsDefault.
+func (s *SiteCreateIntegrationInput) GetIsDefault() OptBool {
+	return s.IsDefault
+}
+
+// GetConfig returns the value of Config.
+func (s *SiteCreateIntegrationInput) GetConfig() SiteIntegrationConfigInput {
+	return s.Config
+}
+
+// SetName sets the value of Name.
+func (s *SiteCreateIntegrationInput) SetName(val string) {
+	s.Name = val
+}
+
+// SetEnabled sets the value of Enabled.
+func (s *SiteCreateIntegrationInput) SetEnabled(val OptBool) {
+	s.Enabled = val
+}
+
+// SetIsDefault sets the value of IsDefault.
+func (s *SiteCreateIntegrationInput) SetIsDefault(val OptBool) {
+	s.IsDefault = val
+}
+
+// SetConfig sets the value of Config.
+func (s *SiteCreateIntegrationInput) SetConfig(val SiteIntegrationConfigInput) {
+	s.Config = val
+}
+
 // Site request body for creating a segment.
 // Ref: #/components/schemas/SiteCreateSegmentInput
 type SiteCreateSegmentInput struct {
@@ -1861,6 +2025,432 @@ func (s *SiteEventsListOK) SetTotalPages(val int32) {
 
 func (*SiteEventsListOK) siteEventsListRes() {}
 
+// Delivery channel an integration belongs to.
+// Ref: #/components/schemas/SiteIntegrationChannel
+type SiteIntegrationChannel string
+
+const (
+	SiteIntegrationChannelEmail SiteIntegrationChannel = "email"
+	SiteIntegrationChannelSMS   SiteIntegrationChannel = "sms"
+)
+
+// AllValues returns all SiteIntegrationChannel values.
+func (SiteIntegrationChannel) AllValues() []SiteIntegrationChannel {
+	return []SiteIntegrationChannel{
+		SiteIntegrationChannelEmail,
+		SiteIntegrationChannelSMS,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s SiteIntegrationChannel) MarshalText() ([]byte, error) {
+	switch s {
+	case SiteIntegrationChannelEmail:
+		return []byte(s), nil
+	case SiteIntegrationChannelSMS:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *SiteIntegrationChannel) UnmarshalText(data []byte) error {
+	switch SiteIntegrationChannel(data) {
+	case SiteIntegrationChannelEmail:
+		*s = SiteIntegrationChannelEmail
+		return nil
+	case SiteIntegrationChannelSMS:
+		*s = SiteIntegrationChannelSMS
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// Provider config returned to the UI, discriminated by `kind`. Secrets are omitted.
+// Ref: #/components/schemas/SiteIntegrationConfig
+type SiteIntegrationConfig struct {
+	OneOf SiteIntegrationConfigSum
+}
+
+// GetOneOf returns the value of OneOf.
+func (s *SiteIntegrationConfig) GetOneOf() SiteIntegrationConfigSum {
+	return s.OneOf
+}
+
+// SetOneOf sets the value of OneOf.
+func (s *SiteIntegrationConfig) SetOneOf(val SiteIntegrationConfigSum) {
+	s.OneOf = val
+}
+
+// Provider config submitted by the UI, discriminated by `kind`.
+// Ref: #/components/schemas/SiteIntegrationConfigInput
+type SiteIntegrationConfigInput struct {
+	OneOf SiteIntegrationConfigInputSum
+}
+
+// GetOneOf returns the value of OneOf.
+func (s *SiteIntegrationConfigInput) GetOneOf() SiteIntegrationConfigInputSum {
+	return s.OneOf
+}
+
+// SetOneOf sets the value of OneOf.
+func (s *SiteIntegrationConfigInput) SetOneOf(val SiteIntegrationConfigInputSum) {
+	s.OneOf = val
+}
+
+// SiteIntegrationConfigInputSum represents sum type.
+type SiteIntegrationConfigInputSum struct {
+	// Type selects the active sum variant, switch on this field.
+	Type                SiteIntegrationConfigInputSumType
+	SiteSmtpConfigInput SiteSmtpConfigInput
+	SiteSesConfigInput  SiteSesConfigInput
+}
+
+// SiteIntegrationConfigInputSumType is oneOf type of SiteIntegrationConfigInputSum.
+type SiteIntegrationConfigInputSumType string
+
+// Possible values for SiteIntegrationConfigInputSumType.
+const (
+	SiteSmtpConfigInputSiteIntegrationConfigInputSum SiteIntegrationConfigInputSumType = "smtp"
+	SiteSesConfigInputSiteIntegrationConfigInputSum  SiteIntegrationConfigInputSumType = "ses"
+)
+
+// IsSiteSmtpConfigInput reports whether SiteIntegrationConfigInputSum is SiteSmtpConfigInput.
+func (s SiteIntegrationConfigInputSum) IsSiteSmtpConfigInput() bool {
+	return s.Type == SiteSmtpConfigInputSiteIntegrationConfigInputSum
+}
+
+// IsSiteSesConfigInput reports whether SiteIntegrationConfigInputSum is SiteSesConfigInput.
+func (s SiteIntegrationConfigInputSum) IsSiteSesConfigInput() bool {
+	return s.Type == SiteSesConfigInputSiteIntegrationConfigInputSum
+}
+
+// SetSiteSmtpConfigInput sets SiteIntegrationConfigInputSum to SiteSmtpConfigInput.
+func (s *SiteIntegrationConfigInputSum) SetSiteSmtpConfigInput(v SiteSmtpConfigInput) {
+	s.Type = SiteSmtpConfigInputSiteIntegrationConfigInputSum
+	s.SiteSmtpConfigInput = v
+}
+
+// GetSiteSmtpConfigInput returns SiteSmtpConfigInput and true boolean if SiteIntegrationConfigInputSum is SiteSmtpConfigInput.
+func (s SiteIntegrationConfigInputSum) GetSiteSmtpConfigInput() (v SiteSmtpConfigInput, ok bool) {
+	if !s.IsSiteSmtpConfigInput() {
+		return v, false
+	}
+	return s.SiteSmtpConfigInput, true
+}
+
+// NewSiteSmtpConfigInputSiteIntegrationConfigInputSum returns new SiteIntegrationConfigInputSum from SiteSmtpConfigInput.
+func NewSiteSmtpConfigInputSiteIntegrationConfigInputSum(v SiteSmtpConfigInput) SiteIntegrationConfigInputSum {
+	var s SiteIntegrationConfigInputSum
+	s.SetSiteSmtpConfigInput(v)
+	return s
+}
+
+// SetSiteSesConfigInput sets SiteIntegrationConfigInputSum to SiteSesConfigInput.
+func (s *SiteIntegrationConfigInputSum) SetSiteSesConfigInput(v SiteSesConfigInput) {
+	s.Type = SiteSesConfigInputSiteIntegrationConfigInputSum
+	s.SiteSesConfigInput = v
+}
+
+// GetSiteSesConfigInput returns SiteSesConfigInput and true boolean if SiteIntegrationConfigInputSum is SiteSesConfigInput.
+func (s SiteIntegrationConfigInputSum) GetSiteSesConfigInput() (v SiteSesConfigInput, ok bool) {
+	if !s.IsSiteSesConfigInput() {
+		return v, false
+	}
+	return s.SiteSesConfigInput, true
+}
+
+// NewSiteSesConfigInputSiteIntegrationConfigInputSum returns new SiteIntegrationConfigInputSum from SiteSesConfigInput.
+func NewSiteSesConfigInputSiteIntegrationConfigInputSum(v SiteSesConfigInput) SiteIntegrationConfigInputSum {
+	var s SiteIntegrationConfigInputSum
+	s.SetSiteSesConfigInput(v)
+	return s
+}
+
+// SiteIntegrationConfigSum represents sum type.
+type SiteIntegrationConfigSum struct {
+	// Type selects the active sum variant, switch on this field.
+	Type           SiteIntegrationConfigSumType
+	SiteSmtpConfig SiteSmtpConfig
+	SiteSesConfig  SiteSesConfig
+}
+
+// SiteIntegrationConfigSumType is oneOf type of SiteIntegrationConfigSum.
+type SiteIntegrationConfigSumType string
+
+// Possible values for SiteIntegrationConfigSumType.
+const (
+	SiteSmtpConfigSiteIntegrationConfigSum SiteIntegrationConfigSumType = "smtp"
+	SiteSesConfigSiteIntegrationConfigSum  SiteIntegrationConfigSumType = "ses"
+)
+
+// IsSiteSmtpConfig reports whether SiteIntegrationConfigSum is SiteSmtpConfig.
+func (s SiteIntegrationConfigSum) IsSiteSmtpConfig() bool {
+	return s.Type == SiteSmtpConfigSiteIntegrationConfigSum
+}
+
+// IsSiteSesConfig reports whether SiteIntegrationConfigSum is SiteSesConfig.
+func (s SiteIntegrationConfigSum) IsSiteSesConfig() bool {
+	return s.Type == SiteSesConfigSiteIntegrationConfigSum
+}
+
+// SetSiteSmtpConfig sets SiteIntegrationConfigSum to SiteSmtpConfig.
+func (s *SiteIntegrationConfigSum) SetSiteSmtpConfig(v SiteSmtpConfig) {
+	s.Type = SiteSmtpConfigSiteIntegrationConfigSum
+	s.SiteSmtpConfig = v
+}
+
+// GetSiteSmtpConfig returns SiteSmtpConfig and true boolean if SiteIntegrationConfigSum is SiteSmtpConfig.
+func (s SiteIntegrationConfigSum) GetSiteSmtpConfig() (v SiteSmtpConfig, ok bool) {
+	if !s.IsSiteSmtpConfig() {
+		return v, false
+	}
+	return s.SiteSmtpConfig, true
+}
+
+// NewSiteSmtpConfigSiteIntegrationConfigSum returns new SiteIntegrationConfigSum from SiteSmtpConfig.
+func NewSiteSmtpConfigSiteIntegrationConfigSum(v SiteSmtpConfig) SiteIntegrationConfigSum {
+	var s SiteIntegrationConfigSum
+	s.SetSiteSmtpConfig(v)
+	return s
+}
+
+// SetSiteSesConfig sets SiteIntegrationConfigSum to SiteSesConfig.
+func (s *SiteIntegrationConfigSum) SetSiteSesConfig(v SiteSesConfig) {
+	s.Type = SiteSesConfigSiteIntegrationConfigSum
+	s.SiteSesConfig = v
+}
+
+// GetSiteSesConfig returns SiteSesConfig and true boolean if SiteIntegrationConfigSum is SiteSesConfig.
+func (s SiteIntegrationConfigSum) GetSiteSesConfig() (v SiteSesConfig, ok bool) {
+	if !s.IsSiteSesConfig() {
+		return v, false
+	}
+	return s.SiteSesConfig, true
+}
+
+// NewSiteSesConfigSiteIntegrationConfigSum returns new SiteIntegrationConfigSum from SiteSesConfig.
+func NewSiteSesConfigSiteIntegrationConfigSum(v SiteSesConfig) SiteIntegrationConfigSum {
+	var s SiteIntegrationConfigSum
+	s.SetSiteSesConfig(v)
+	return s
+}
+
+// Concrete sending provider.
+// Ref: #/components/schemas/SiteIntegrationProvider
+type SiteIntegrationProvider string
+
+const (
+	SiteIntegrationProviderSMTP SiteIntegrationProvider = "smtp"
+	SiteIntegrationProviderSes  SiteIntegrationProvider = "ses"
+)
+
+// AllValues returns all SiteIntegrationProvider values.
+func (SiteIntegrationProvider) AllValues() []SiteIntegrationProvider {
+	return []SiteIntegrationProvider{
+		SiteIntegrationProviderSMTP,
+		SiteIntegrationProviderSes,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s SiteIntegrationProvider) MarshalText() ([]byte, error) {
+	switch s {
+	case SiteIntegrationProviderSMTP:
+		return []byte(s), nil
+	case SiteIntegrationProviderSes:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *SiteIntegrationProvider) UnmarshalText(data []byte) error {
+	switch SiteIntegrationProvider(data) {
+	case SiteIntegrationProviderSMTP:
+		*s = SiteIntegrationProviderSMTP
+		return nil
+	case SiteIntegrationProviderSes:
+		*s = SiteIntegrationProviderSes
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// A workspace sending-provider integration.
+// Ref: #/components/schemas/SiteIntegrationResource
+type SiteIntegrationResource struct {
+	// Unique identifier.
+	ID EntityId `json:"id"`
+	// Human-readable label.
+	Name string `json:"name"`
+	// Delivery channel.
+	Channel SiteIntegrationChannel `json:"channel"`
+	// Concrete provider.
+	Provider SiteIntegrationProvider `json:"provider"`
+	// Whether this integration may be used for sending.
+	Enabled bool `json:"enabled"`
+	// Whether this is the default provider for its channel.
+	IsDefault bool `json:"isDefault"`
+	// Provider config (secrets redacted).
+	Config SiteIntegrationConfig `json:"config"`
+	// Creation timestamp.
+	CreatedAt Timestamp `json:"createdAt"`
+	// Last update timestamp.
+	UpdatedAt Timestamp `json:"updatedAt"`
+}
+
+// GetID returns the value of ID.
+func (s *SiteIntegrationResource) GetID() EntityId {
+	return s.ID
+}
+
+// GetName returns the value of Name.
+func (s *SiteIntegrationResource) GetName() string {
+	return s.Name
+}
+
+// GetChannel returns the value of Channel.
+func (s *SiteIntegrationResource) GetChannel() SiteIntegrationChannel {
+	return s.Channel
+}
+
+// GetProvider returns the value of Provider.
+func (s *SiteIntegrationResource) GetProvider() SiteIntegrationProvider {
+	return s.Provider
+}
+
+// GetEnabled returns the value of Enabled.
+func (s *SiteIntegrationResource) GetEnabled() bool {
+	return s.Enabled
+}
+
+// GetIsDefault returns the value of IsDefault.
+func (s *SiteIntegrationResource) GetIsDefault() bool {
+	return s.IsDefault
+}
+
+// GetConfig returns the value of Config.
+func (s *SiteIntegrationResource) GetConfig() SiteIntegrationConfig {
+	return s.Config
+}
+
+// GetCreatedAt returns the value of CreatedAt.
+func (s *SiteIntegrationResource) GetCreatedAt() Timestamp {
+	return s.CreatedAt
+}
+
+// GetUpdatedAt returns the value of UpdatedAt.
+func (s *SiteIntegrationResource) GetUpdatedAt() Timestamp {
+	return s.UpdatedAt
+}
+
+// SetID sets the value of ID.
+func (s *SiteIntegrationResource) SetID(val EntityId) {
+	s.ID = val
+}
+
+// SetName sets the value of Name.
+func (s *SiteIntegrationResource) SetName(val string) {
+	s.Name = val
+}
+
+// SetChannel sets the value of Channel.
+func (s *SiteIntegrationResource) SetChannel(val SiteIntegrationChannel) {
+	s.Channel = val
+}
+
+// SetProvider sets the value of Provider.
+func (s *SiteIntegrationResource) SetProvider(val SiteIntegrationProvider) {
+	s.Provider = val
+}
+
+// SetEnabled sets the value of Enabled.
+func (s *SiteIntegrationResource) SetEnabled(val bool) {
+	s.Enabled = val
+}
+
+// SetIsDefault sets the value of IsDefault.
+func (s *SiteIntegrationResource) SetIsDefault(val bool) {
+	s.IsDefault = val
+}
+
+// SetConfig sets the value of Config.
+func (s *SiteIntegrationResource) SetConfig(val SiteIntegrationConfig) {
+	s.Config = val
+}
+
+// SetCreatedAt sets the value of CreatedAt.
+func (s *SiteIntegrationResource) SetCreatedAt(val Timestamp) {
+	s.CreatedAt = val
+}
+
+// SetUpdatedAt sets the value of UpdatedAt.
+func (s *SiteIntegrationResource) SetUpdatedAt(val Timestamp) {
+	s.UpdatedAt = val
+}
+
+func (*SiteIntegrationResource) siteIntegrationsCreateRes() {}
+func (*SiteIntegrationResource) siteIntegrationsGetRes()    {}
+func (*SiteIntegrationResource) siteIntegrationsUpdateRes() {}
+
+type SiteIntegrationsCreateConflict ProblemDetails
+
+func (*SiteIntegrationsCreateConflict) siteIntegrationsCreateRes() {}
+
+type SiteIntegrationsCreateNotFound ProblemDetails
+
+func (*SiteIntegrationsCreateNotFound) siteIntegrationsCreateRes() {}
+
+type SiteIntegrationsCreateUnprocessableEntity ProblemDetails
+
+func (*SiteIntegrationsCreateUnprocessableEntity) siteIntegrationsCreateRes() {}
+
+type SiteIntegrationsDeleteBadRequest ProblemDetails
+
+func (*SiteIntegrationsDeleteBadRequest) siteIntegrationsDeleteRes() {}
+
+// SiteIntegrationsDeleteNoContent is response for SiteIntegrationsDelete operation.
+type SiteIntegrationsDeleteNoContent struct{}
+
+func (*SiteIntegrationsDeleteNoContent) siteIntegrationsDeleteRes() {}
+
+type SiteIntegrationsDeleteNotFound ProblemDetails
+
+func (*SiteIntegrationsDeleteNotFound) siteIntegrationsDeleteRes() {}
+
+type SiteIntegrationsGetBadRequest ProblemDetails
+
+func (*SiteIntegrationsGetBadRequest) siteIntegrationsGetRes() {}
+
+type SiteIntegrationsGetNotFound ProblemDetails
+
+func (*SiteIntegrationsGetNotFound) siteIntegrationsGetRes() {}
+
+type SiteIntegrationsListOKApplicationJSON []SiteIntegrationResource
+
+func (*SiteIntegrationsListOKApplicationJSON) siteIntegrationsListRes() {}
+
+type SiteIntegrationsUpdateBadRequest ProblemDetails
+
+func (*SiteIntegrationsUpdateBadRequest) siteIntegrationsUpdateRes() {}
+
+type SiteIntegrationsUpdateConflict ProblemDetails
+
+func (*SiteIntegrationsUpdateConflict) siteIntegrationsUpdateRes() {}
+
+type SiteIntegrationsUpdateNotFound ProblemDetails
+
+func (*SiteIntegrationsUpdateNotFound) siteIntegrationsUpdateRes() {}
+
+type SiteIntegrationsUpdateUnprocessableEntity ProblemDetails
+
+func (*SiteIntegrationsUpdateUnprocessableEntity) siteIntegrationsUpdateRes() {}
+
 // Ref: #/components/schemas/SiteRegisterInput
 type SiteRegisterInput struct {
 	Name     string       `json:"name"`
@@ -2191,6 +2781,427 @@ type SiteSegmentsUpdateUnprocessableEntity ProblemDetails
 
 func (*SiteSegmentsUpdateUnprocessableEntity) siteSegmentsUpdateRes() {}
 
+// SES config without the secret access key.
+// Ref: #/components/schemas/SiteSesConfig
+type SiteSesConfig struct {
+	Kind     SiteSesConfigKind `json:"kind"`
+	Region   string            `json:"region"`
+	From     EmailAddress      `json:"from"`
+	FromName OptNilString      `json:"fromName"`
+	// Last 4 chars of the access key id, for recognition.
+	AccessKeyIdLast4 OptNilString `json:"accessKeyIdLast4"`
+}
+
+// GetKind returns the value of Kind.
+func (s *SiteSesConfig) GetKind() SiteSesConfigKind {
+	return s.Kind
+}
+
+// GetRegion returns the value of Region.
+func (s *SiteSesConfig) GetRegion() string {
+	return s.Region
+}
+
+// GetFrom returns the value of From.
+func (s *SiteSesConfig) GetFrom() EmailAddress {
+	return s.From
+}
+
+// GetFromName returns the value of FromName.
+func (s *SiteSesConfig) GetFromName() OptNilString {
+	return s.FromName
+}
+
+// GetAccessKeyIdLast4 returns the value of AccessKeyIdLast4.
+func (s *SiteSesConfig) GetAccessKeyIdLast4() OptNilString {
+	return s.AccessKeyIdLast4
+}
+
+// SetKind sets the value of Kind.
+func (s *SiteSesConfig) SetKind(val SiteSesConfigKind) {
+	s.Kind = val
+}
+
+// SetRegion sets the value of Region.
+func (s *SiteSesConfig) SetRegion(val string) {
+	s.Region = val
+}
+
+// SetFrom sets the value of From.
+func (s *SiteSesConfig) SetFrom(val EmailAddress) {
+	s.From = val
+}
+
+// SetFromName sets the value of FromName.
+func (s *SiteSesConfig) SetFromName(val OptNilString) {
+	s.FromName = val
+}
+
+// SetAccessKeyIdLast4 sets the value of AccessKeyIdLast4.
+func (s *SiteSesConfig) SetAccessKeyIdLast4(val OptNilString) {
+	s.AccessKeyIdLast4 = val
+}
+
+// SES credentials.
+// Ref: #/components/schemas/SiteSesConfigInput
+type SiteSesConfigInput struct {
+	Kind            SiteSesConfigInputKind `json:"kind"`
+	Region          string                 `json:"region"`
+	AccessKeyId     string                 `json:"accessKeyId"`
+	SecretAccessKey string                 `json:"secretAccessKey"`
+	From            EmailAddress           `json:"from"`
+	FromName        OptNilString           `json:"fromName"`
+}
+
+// GetKind returns the value of Kind.
+func (s *SiteSesConfigInput) GetKind() SiteSesConfigInputKind {
+	return s.Kind
+}
+
+// GetRegion returns the value of Region.
+func (s *SiteSesConfigInput) GetRegion() string {
+	return s.Region
+}
+
+// GetAccessKeyId returns the value of AccessKeyId.
+func (s *SiteSesConfigInput) GetAccessKeyId() string {
+	return s.AccessKeyId
+}
+
+// GetSecretAccessKey returns the value of SecretAccessKey.
+func (s *SiteSesConfigInput) GetSecretAccessKey() string {
+	return s.SecretAccessKey
+}
+
+// GetFrom returns the value of From.
+func (s *SiteSesConfigInput) GetFrom() EmailAddress {
+	return s.From
+}
+
+// GetFromName returns the value of FromName.
+func (s *SiteSesConfigInput) GetFromName() OptNilString {
+	return s.FromName
+}
+
+// SetKind sets the value of Kind.
+func (s *SiteSesConfigInput) SetKind(val SiteSesConfigInputKind) {
+	s.Kind = val
+}
+
+// SetRegion sets the value of Region.
+func (s *SiteSesConfigInput) SetRegion(val string) {
+	s.Region = val
+}
+
+// SetAccessKeyId sets the value of AccessKeyId.
+func (s *SiteSesConfigInput) SetAccessKeyId(val string) {
+	s.AccessKeyId = val
+}
+
+// SetSecretAccessKey sets the value of SecretAccessKey.
+func (s *SiteSesConfigInput) SetSecretAccessKey(val string) {
+	s.SecretAccessKey = val
+}
+
+// SetFrom sets the value of From.
+func (s *SiteSesConfigInput) SetFrom(val EmailAddress) {
+	s.From = val
+}
+
+// SetFromName sets the value of FromName.
+func (s *SiteSesConfigInput) SetFromName(val OptNilString) {
+	s.FromName = val
+}
+
+type SiteSesConfigInputKind string
+
+const (
+	SiteSesConfigInputKindSes SiteSesConfigInputKind = "ses"
+)
+
+// AllValues returns all SiteSesConfigInputKind values.
+func (SiteSesConfigInputKind) AllValues() []SiteSesConfigInputKind {
+	return []SiteSesConfigInputKind{
+		SiteSesConfigInputKindSes,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s SiteSesConfigInputKind) MarshalText() ([]byte, error) {
+	switch s {
+	case SiteSesConfigInputKindSes:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *SiteSesConfigInputKind) UnmarshalText(data []byte) error {
+	switch SiteSesConfigInputKind(data) {
+	case SiteSesConfigInputKindSes:
+		*s = SiteSesConfigInputKindSes
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+type SiteSesConfigKind string
+
+const (
+	SiteSesConfigKindSes SiteSesConfigKind = "ses"
+)
+
+// AllValues returns all SiteSesConfigKind values.
+func (SiteSesConfigKind) AllValues() []SiteSesConfigKind {
+	return []SiteSesConfigKind{
+		SiteSesConfigKindSes,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s SiteSesConfigKind) MarshalText() ([]byte, error) {
+	switch s {
+	case SiteSesConfigKindSes:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *SiteSesConfigKind) UnmarshalText(data []byte) error {
+	switch SiteSesConfigKind(data) {
+	case SiteSesConfigKindSes:
+		*s = SiteSesConfigKindSes
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// SMTP config without the password.
+// Ref: #/components/schemas/SiteSmtpConfig
+type SiteSmtpConfig struct {
+	Kind     SiteSmtpConfigKind `json:"kind"`
+	Host     string             `json:"host"`
+	Port     int32              `json:"port"`
+	Username OptNilString       `json:"username"`
+	From     EmailAddress       `json:"from"`
+	FromName OptNilString       `json:"fromName"`
+}
+
+// GetKind returns the value of Kind.
+func (s *SiteSmtpConfig) GetKind() SiteSmtpConfigKind {
+	return s.Kind
+}
+
+// GetHost returns the value of Host.
+func (s *SiteSmtpConfig) GetHost() string {
+	return s.Host
+}
+
+// GetPort returns the value of Port.
+func (s *SiteSmtpConfig) GetPort() int32 {
+	return s.Port
+}
+
+// GetUsername returns the value of Username.
+func (s *SiteSmtpConfig) GetUsername() OptNilString {
+	return s.Username
+}
+
+// GetFrom returns the value of From.
+func (s *SiteSmtpConfig) GetFrom() EmailAddress {
+	return s.From
+}
+
+// GetFromName returns the value of FromName.
+func (s *SiteSmtpConfig) GetFromName() OptNilString {
+	return s.FromName
+}
+
+// SetKind sets the value of Kind.
+func (s *SiteSmtpConfig) SetKind(val SiteSmtpConfigKind) {
+	s.Kind = val
+}
+
+// SetHost sets the value of Host.
+func (s *SiteSmtpConfig) SetHost(val string) {
+	s.Host = val
+}
+
+// SetPort sets the value of Port.
+func (s *SiteSmtpConfig) SetPort(val int32) {
+	s.Port = val
+}
+
+// SetUsername sets the value of Username.
+func (s *SiteSmtpConfig) SetUsername(val OptNilString) {
+	s.Username = val
+}
+
+// SetFrom sets the value of From.
+func (s *SiteSmtpConfig) SetFrom(val EmailAddress) {
+	s.From = val
+}
+
+// SetFromName sets the value of FromName.
+func (s *SiteSmtpConfig) SetFromName(val OptNilString) {
+	s.FromName = val
+}
+
+// SMTP credentials.
+// Ref: #/components/schemas/SiteSmtpConfigInput
+type SiteSmtpConfigInput struct {
+	Kind     SiteSmtpConfigInputKind `json:"kind"`
+	Host     string                  `json:"host"`
+	Port     int32                   `json:"port"`
+	Username OptNilString            `json:"username"`
+	Password OptNilString            `json:"password"`
+	From     EmailAddress            `json:"from"`
+	FromName OptNilString            `json:"fromName"`
+}
+
+// GetKind returns the value of Kind.
+func (s *SiteSmtpConfigInput) GetKind() SiteSmtpConfigInputKind {
+	return s.Kind
+}
+
+// GetHost returns the value of Host.
+func (s *SiteSmtpConfigInput) GetHost() string {
+	return s.Host
+}
+
+// GetPort returns the value of Port.
+func (s *SiteSmtpConfigInput) GetPort() int32 {
+	return s.Port
+}
+
+// GetUsername returns the value of Username.
+func (s *SiteSmtpConfigInput) GetUsername() OptNilString {
+	return s.Username
+}
+
+// GetPassword returns the value of Password.
+func (s *SiteSmtpConfigInput) GetPassword() OptNilString {
+	return s.Password
+}
+
+// GetFrom returns the value of From.
+func (s *SiteSmtpConfigInput) GetFrom() EmailAddress {
+	return s.From
+}
+
+// GetFromName returns the value of FromName.
+func (s *SiteSmtpConfigInput) GetFromName() OptNilString {
+	return s.FromName
+}
+
+// SetKind sets the value of Kind.
+func (s *SiteSmtpConfigInput) SetKind(val SiteSmtpConfigInputKind) {
+	s.Kind = val
+}
+
+// SetHost sets the value of Host.
+func (s *SiteSmtpConfigInput) SetHost(val string) {
+	s.Host = val
+}
+
+// SetPort sets the value of Port.
+func (s *SiteSmtpConfigInput) SetPort(val int32) {
+	s.Port = val
+}
+
+// SetUsername sets the value of Username.
+func (s *SiteSmtpConfigInput) SetUsername(val OptNilString) {
+	s.Username = val
+}
+
+// SetPassword sets the value of Password.
+func (s *SiteSmtpConfigInput) SetPassword(val OptNilString) {
+	s.Password = val
+}
+
+// SetFrom sets the value of From.
+func (s *SiteSmtpConfigInput) SetFrom(val EmailAddress) {
+	s.From = val
+}
+
+// SetFromName sets the value of FromName.
+func (s *SiteSmtpConfigInput) SetFromName(val OptNilString) {
+	s.FromName = val
+}
+
+type SiteSmtpConfigInputKind string
+
+const (
+	SiteSmtpConfigInputKindSMTP SiteSmtpConfigInputKind = "smtp"
+)
+
+// AllValues returns all SiteSmtpConfigInputKind values.
+func (SiteSmtpConfigInputKind) AllValues() []SiteSmtpConfigInputKind {
+	return []SiteSmtpConfigInputKind{
+		SiteSmtpConfigInputKindSMTP,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s SiteSmtpConfigInputKind) MarshalText() ([]byte, error) {
+	switch s {
+	case SiteSmtpConfigInputKindSMTP:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *SiteSmtpConfigInputKind) UnmarshalText(data []byte) error {
+	switch SiteSmtpConfigInputKind(data) {
+	case SiteSmtpConfigInputKindSMTP:
+		*s = SiteSmtpConfigInputKindSMTP
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+type SiteSmtpConfigKind string
+
+const (
+	SiteSmtpConfigKindSMTP SiteSmtpConfigKind = "smtp"
+)
+
+// AllValues returns all SiteSmtpConfigKind values.
+func (SiteSmtpConfigKind) AllValues() []SiteSmtpConfigKind {
+	return []SiteSmtpConfigKind{
+		SiteSmtpConfigKindSMTP,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s SiteSmtpConfigKind) MarshalText() ([]byte, error) {
+	switch s {
+	case SiteSmtpConfigKindSMTP:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *SiteSmtpConfigKind) UnmarshalText(data []byte) error {
+	switch SiteSmtpConfigKind(data) {
+	case SiteSmtpConfigKindSMTP:
+		*s = SiteSmtpConfigKindSMTP
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
 type SiteTokensCreateNotFound ProblemDetails
 
 func (*SiteTokensCreateNotFound) siteTokensCreateRes() {}
@@ -2279,6 +3290,55 @@ func (s *SiteUpdateContactInputCustomFields) init() SiteUpdateContactInputCustom
 		*s = m
 	}
 	return m
+}
+
+// Update a workspace integration. Omit `config` to keep stored credentials.
+// Ref: #/components/schemas/SiteUpdateIntegrationInput
+type SiteUpdateIntegrationInput struct {
+	Name      OptString                        `json:"name"`
+	Enabled   OptBool                          `json:"enabled"`
+	IsDefault OptBool                          `json:"isDefault"`
+	Config    OptNilSiteIntegrationConfigInput `json:"config"`
+}
+
+// GetName returns the value of Name.
+func (s *SiteUpdateIntegrationInput) GetName() OptString {
+	return s.Name
+}
+
+// GetEnabled returns the value of Enabled.
+func (s *SiteUpdateIntegrationInput) GetEnabled() OptBool {
+	return s.Enabled
+}
+
+// GetIsDefault returns the value of IsDefault.
+func (s *SiteUpdateIntegrationInput) GetIsDefault() OptBool {
+	return s.IsDefault
+}
+
+// GetConfig returns the value of Config.
+func (s *SiteUpdateIntegrationInput) GetConfig() OptNilSiteIntegrationConfigInput {
+	return s.Config
+}
+
+// SetName sets the value of Name.
+func (s *SiteUpdateIntegrationInput) SetName(val OptString) {
+	s.Name = val
+}
+
+// SetEnabled sets the value of Enabled.
+func (s *SiteUpdateIntegrationInput) SetEnabled(val OptBool) {
+	s.Enabled = val
+}
+
+// SetIsDefault sets the value of IsDefault.
+func (s *SiteUpdateIntegrationInput) SetIsDefault(val OptBool) {
+	s.IsDefault = val
+}
+
+// SetConfig sets the value of Config.
+func (s *SiteUpdateIntegrationInput) SetConfig(val OptNilSiteIntegrationConfigInput) {
+	s.Config = val
 }
 
 // Update the authenticated user's profile. To change the password, provide both currentPassword and

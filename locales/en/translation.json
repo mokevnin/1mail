@@ -150,6 +150,37 @@
       "scopesLabel": "Scopes",
       "secretNotice": "Copy this token now — it won't be shown again."
     },
+    "integrations": {
+      "title": "Sending providers",
+      "description": "Connect an email provider so this workspace can send mail.",
+      "empty": "No providers connected yet",
+      "loadError": "Failed to load providers",
+      "createError": "Failed to save provider",
+      "deleteError": "Failed to delete provider",
+      "saved": "Provider saved",
+      "create": "Connect provider",
+      "delete": "Delete",
+      "deleteConfirmTitle": "Delete provider?",
+      "deleteConfirmDescription": "This workspace will no longer be able to send through it.",
+      "nameLabel": "Name",
+      "providerLabel": "Provider",
+      "channel": "Channel",
+      "default": "Default",
+      "enabled": "Enabled",
+      "makeDefault": "Set as default",
+      "secretKept": "Leave blank to keep the stored secret",
+      "fields": {
+        "host": "SMTP host",
+        "port": "Port",
+        "username": "Username",
+        "password": "Password",
+        "from": "From address",
+        "fromName": "From name",
+        "region": "AWS region",
+        "accessKeyId": "Access key ID",
+        "secretAccessKey": "Secret access key"
+      }
+    },
     "trackingDescription": "Paste this snippet into the <head> of your site to start collecting events.",
     "trackingTitle": "Tracking snippet",
     "viewActivity": "Open activity feed"

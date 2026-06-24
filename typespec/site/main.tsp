@@ -12,6 +12,7 @@ import "./resources/workspaces.tsp";
 import "./resources/me.tsp";
 import "./resources/events.tsp";
 import "./resources/tokens.tsp";
+import "./resources/integrations.tsp";
 
 using TypeSpec.OpenAPI;
 using TypeSpec.Http;

@@ -14,6 +14,7 @@ import (
 	"github.com/mokevnin/1mail/ent/apitoken"
 	"github.com/mokevnin/1mail/ent/contact"
 	"github.com/mokevnin/1mail/ent/event"
+	"github.com/mokevnin/1mail/ent/integration"
 	"github.com/mokevnin/1mail/ent/predicate"
 	"github.com/mokevnin/1mail/ent/segment"
 	"github.com/mokevnin/1mail/ent/trackingprofile"
@@ -193,6 +194,21 @@ func (_u *WorkspaceUpdate) AddAPITokens(v ...*ApiToken) *WorkspaceUpdate {
 	return _u.AddAPITokenIDs(ids...)
 }
 
+// AddIntegrationIDs adds the "integrations" edge to the Integration entity by IDs.
+func (_u *WorkspaceUpdate) AddIntegrationIDs(ids ...int64) *WorkspaceUpdate {
+	_u.mutation.AddIntegrationIDs(ids...)
+	return _u
+}
+
+// AddIntegrations adds the "integrations" edges to the Integration entity.
+func (_u *WorkspaceUpdate) AddIntegrations(v ...*Integration) *WorkspaceUpdate {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddIntegrationIDs(ids...)
+}
+
 // SetUser sets the "user" edge to the User entity.
 func (_u *WorkspaceUpdate) SetUser(v *User) *WorkspaceUpdate {
 	return _u.SetUserID(v.ID)
@@ -327,6 +343,27 @@ func (_u *WorkspaceUpdate) RemoveAPITokens(v ...*ApiToken) *WorkspaceUpdate {
 		ids[i] = v[i].ID
 	}
 	return _u.RemoveAPITokenIDs(ids...)
+}
+
+// ClearIntegrations clears all "integrations" edges to the Integration entity.
+func (_u *WorkspaceUpdate) ClearIntegrations() *WorkspaceUpdate {
+	_u.mutation.ClearIntegrations()
+	return _u
+}
+
+// RemoveIntegrationIDs removes the "integrations" edge to Integration entities by IDs.
+func (_u *WorkspaceUpdate) RemoveIntegrationIDs(ids ...int64) *WorkspaceUpdate {
+	_u.mutation.RemoveIntegrationIDs(ids...)
+	return _u
+}
+
+// RemoveIntegrations removes "integrations" edges to Integration entities.
+func (_u *WorkspaceUpdate) RemoveIntegrations(v ...*Integration) *WorkspaceUpdate {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveIntegrationIDs(ids...)
 }
 
 // ClearUser clears the "user" edge to the User entity.
@@ -685,6 +722,51 @@ func (_u *WorkspaceUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	if _u.mutation.IntegrationsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   workspace.IntegrationsTable,
+			Columns: []string{workspace.IntegrationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(integration.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedIntegrationsIDs(); len(nodes) > 0 && !_u.mutation.IntegrationsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   workspace.IntegrationsTable,
+			Columns: []string{workspace.IntegrationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(integration.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.IntegrationsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   workspace.IntegrationsTable,
+			Columns: []string{workspace.IntegrationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(integration.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if _u.mutation.UserCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
@@ -892,6 +974,21 @@ func (_u *WorkspaceUpdateOne) AddAPITokens(v ...*ApiToken) *WorkspaceUpdateOne {
 	return _u.AddAPITokenIDs(ids...)
 }
 
+// AddIntegrationIDs adds the "integrations" edge to the Integration entity by IDs.
+func (_u *WorkspaceUpdateOne) AddIntegrationIDs(ids ...int64) *WorkspaceUpdateOne {
+	_u.mutation.AddIntegrationIDs(ids...)
+	return _u
+}
+
+// AddIntegrations adds the "integrations" edges to the Integration entity.
+func (_u *WorkspaceUpdateOne) AddIntegrations(v ...*Integration) *WorkspaceUpdateOne {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddIntegrationIDs(ids...)
+}
+
 // SetUser sets the "user" edge to the User entity.
 func (_u *WorkspaceUpdateOne) SetUser(v *User) *WorkspaceUpdateOne {
 	return _u.SetUserID(v.ID)
@@ -1026,6 +1123,27 @@ func (_u *WorkspaceUpdateOne) RemoveAPITokens(v ...*ApiToken) *WorkspaceUpdateOn
 		ids[i] = v[i].ID
 	}
 	return _u.RemoveAPITokenIDs(ids...)
+}
+
+// ClearIntegrations clears all "integrations" edges to the Integration entity.
+func (_u *WorkspaceUpdateOne) ClearIntegrations() *WorkspaceUpdateOne {
+	_u.mutation.ClearIntegrations()
+	return _u
+}
+
+// RemoveIntegrationIDs removes the "integrations" edge to Integration entities by IDs.
+func (_u *WorkspaceUpdateOne) RemoveIntegrationIDs(ids ...int64) *WorkspaceUpdateOne {
+	_u.mutation.RemoveIntegrationIDs(ids...)
+	return _u
+}
+
+// RemoveIntegrations removes "integrations" edges to Integration entities.
+func (_u *WorkspaceUpdateOne) RemoveIntegrations(v ...*Integration) *WorkspaceUpdateOne {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveIntegrationIDs(ids...)
 }
 
 // ClearUser clears the "user" edge to the User entity.
@@ -1407,6 +1525,51 @@ func (_u *WorkspaceUpdateOne) sqlSave(ctx context.Context) (_node *Workspace, er
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(apitoken.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.IntegrationsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   workspace.IntegrationsTable,
+			Columns: []string{workspace.IntegrationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(integration.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedIntegrationsIDs(); len(nodes) > 0 && !_u.mutation.IntegrationsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   workspace.IntegrationsTable,
+			Columns: []string{workspace.IntegrationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(integration.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.IntegrationsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   workspace.IntegrationsTable,
+			Columns: []string{workspace.IntegrationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(integration.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {

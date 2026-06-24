@@ -46,6 +46,16 @@ export const zSiteDirectLoginResult = z.object({
     role: z.string().optional()
 });
 
+/**
+ * Delivery channel an integration belongs to
+ */
+export const zSiteIntegrationChannel = z.enum(['email', 'sms']);
+
+/**
+ * Concrete sending provider
+ */
+export const zSiteIntegrationProvider = z.enum(['smtp', 'ses']);
+
 export const zSiteRegisterInput = z.object({
     name: z.string(),
     email: zEmailAddress,
@@ -64,6 +74,90 @@ export const zSiteCreateSegmentInput = z.object({
     name: z.string(),
     type: zSiteSegmentType,
     definition: z.string().nullish()
+});
+
+/**
+ * SES config without the secret access key
+ */
+export const zSiteSesConfig = z.object({
+    kind: z.enum(['ses']),
+    region: z.string(),
+    from: zEmailAddress,
+    fromName: z.string().nullish(),
+    accessKeyIdLast4: z.string().nullish()
+});
+
+/**
+ * SES credentials
+ */
+export const zSiteSesConfigInput = z.object({
+    kind: z.enum(['ses']),
+    region: z.string(),
+    accessKeyId: z.string(),
+    secretAccessKey: z.string(),
+    from: zEmailAddress,
+    fromName: z.string().nullish()
+});
+
+/**
+ * SMTP config without the password
+ */
+export const zSiteSmtpConfig = z.object({
+    kind: z.enum(['smtp']),
+    host: z.string(),
+    port: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
+    username: z.string().nullish(),
+    from: zEmailAddress,
+    fromName: z.string().nullish()
+});
+
+/**
+ * Provider config returned to the UI, discriminated by `kind`. Secrets are omitted.
+ */
+export const zSiteIntegrationConfig = z.discriminatedUnion('kind', [
+    zSiteSmtpConfig.extend({ kind: z.literal('smtp') }),
+    zSiteSesConfig.extend({ kind: z.literal('ses') })
+]);
+
+/**
+ * SMTP credentials
+ */
+export const zSiteSmtpConfigInput = z.object({
+    kind: z.enum(['smtp']),
+    host: z.string(),
+    port: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
+    username: z.string().nullish(),
+    password: z.string().nullish(),
+    from: zEmailAddress,
+    fromName: z.string().nullish()
+});
+
+/**
+ * Provider config submitted by the UI, discriminated by `kind`.
+ */
+export const zSiteIntegrationConfigInput = z.discriminatedUnion('kind', [
+    zSiteSmtpConfigInput.extend({ kind: z.literal('smtp') }),
+    zSiteSesConfigInput.extend({ kind: z.literal('ses') })
+]);
+
+/**
+ * Create a workspace integration. The provider/channel are derived from `config.kind`.
+ */
+export const zSiteCreateIntegrationInput = z.object({
+    name: z.string(),
+    enabled: z.boolean().optional(),
+    isDefault: z.boolean().optional(),
+    config: zSiteIntegrationConfigInput
+});
+
+/**
+ * Update a workspace integration. Omit `config` to keep stored credentials.
+ */
+export const zSiteUpdateIntegrationInput = z.object({
+    name: z.string().optional(),
+    enabled: z.boolean().optional(),
+    isDefault: z.boolean().optional(),
+    config: zSiteIntegrationConfigInput.nullish()
 });
 
 /**
@@ -174,6 +268,21 @@ export const zSiteEventResource = z.object({
     properties: z.record(z.string(), z.unknown()).nullish(),
     occurredAt: zTimestamp.nullish(),
     createdAt: zTimestamp
+});
+
+/**
+ * A workspace sending-provider integration
+ */
+export const zSiteIntegrationResource = z.object({
+    id: zEntityId,
+    name: z.string(),
+    channel: zSiteIntegrationChannel,
+    provider: zSiteIntegrationProvider,
+    enabled: z.boolean(),
+    isDefault: z.boolean(),
+    config: zSiteIntegrationConfig,
+    createdAt: zTimestamp,
+    updatedAt: zTimestamp
 });
 
 export const zSiteRegisterResult = z.object({
@@ -343,6 +452,58 @@ export const zSiteEventsListResponse = z.object({
     totalItems: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
     totalPages: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' })
 });
+
+export const zSiteIntegrationsListPath = z.object({
+    workspaceSlug: z.string()
+});
+
+/**
+ * The request has succeeded.
+ */
+export const zSiteIntegrationsListResponse = z.array(zSiteIntegrationResource);
+
+export const zSiteIntegrationsCreateBody = zSiteCreateIntegrationInput;
+
+export const zSiteIntegrationsCreatePath = z.object({
+    workspaceSlug: z.string()
+});
+
+/**
+ * The request has succeeded and a new resource has been created as a result.
+ */
+export const zSiteIntegrationsCreateResponse = zSiteIntegrationResource;
+
+export const zSiteIntegrationsDeletePath = z.object({
+    workspaceSlug: z.string(),
+    id: zEntityId
+});
+
+/**
+ * There is no content to send for this request, but the headers may be useful.
+ */
+export const zSiteIntegrationsDeleteResponse = z.void();
+
+export const zSiteIntegrationsGetPath = z.object({
+    workspaceSlug: z.string(),
+    id: zEntityId
+});
+
+/**
+ * The request has succeeded.
+ */
+export const zSiteIntegrationsGetResponse = zSiteIntegrationResource;
+
+export const zSiteIntegrationsUpdateBody = zSiteUpdateIntegrationInput;
+
+export const zSiteIntegrationsUpdatePath = z.object({
+    workspaceSlug: z.string(),
+    id: zEntityId
+});
+
+/**
+ * The request has succeeded.
+ */
+export const zSiteIntegrationsUpdateResponse = zSiteIntegrationResource;
 
 export const zSiteSegmentsListPath = z.object({
     workspaceSlug: z.string()
