@@ -1,3 +1,15 @@
 /gradlew text eol=lf
 *.bat text eol=crlf
 *.jar binary
+
+# --- Generated code (linguist collapses in diffs + drops from language stats) ---
+# Later/more-specific patterns win, so hand-written exceptions follow the broad rule.
+ent/**                               linguist-generated=true
+ent/schema/**                        linguist-generated=false
+ent/entc.go                          linguist-generated=false
+ent/generate.go                      linguist-generated=false
+gen/**                               linguist-generated=true
+openapi/*.openapi.json               linguist-generated=true
+src/generated/**                     linguist-generated=true
+packages/analytics/src/generated/**  linguist-generated=true
+**/*_gen.go                          linguist-generated=true

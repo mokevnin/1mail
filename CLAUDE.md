@@ -35,6 +35,22 @@ ent + gen/{site,external}  ──goverter──▶ internal/api/{site/sitemap,ex
 - The README claims echo + oapi-codegen; that is **outdated**. The HTTP stack is **ogen**
   (`gen/*` are ogen servers, wired in `internal/server/server.go`).
 
+### What is generated vs hand-written
+
+Generated files carry a header (`Code generated … DO NOT EDIT`, or `// @ts-nocheck` on the
+frontend) and are flagged `linguist-generated` in `.gitattributes` (GitHub collapses them in
+diffs). Generated code lives in dedicated dirs — `internal/` is otherwise hand-written, its
+only generated files being the two `converter_gen.go`.
+
+| Path | Generator | Regen via | Hand-written source |
+|---|---|---|---|
+| `ent/` (except `schema/`, `entc.go`, `generate.go`) | ent/entc | `make generate-backend` | `ent/schema/*.go`, `ent/entc.go` |
+| `gen/{site,external,collect}/` | ogen | `make generate-backend` | — (from `openapi/`) |
+| `internal/api/{site/sitemap,external/externalmap}/converter_gen.go` | goverter | `make generate-backend` | sibling `*map.go` (interface + extend helpers) |
+| `openapi/*.openapi.json` | TypeSpec | `make generate-typespec` | `typespec/{site,external,collect}/` |
+| `src/generated/site/` | @hey-api/openapi-ts | `make generate-openapi` | — (from `openapi/`) |
+| `packages/analytics/src/generated/collect/` | @hey-api/openapi-ts | `make generate-openapi` | — (from `openapi/`) |
+
 ## Common commands
 
 Every recipe runs its toolchain **inside the dev containers** (docker-compose.yml), so a
