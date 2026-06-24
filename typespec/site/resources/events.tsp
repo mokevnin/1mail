@@ -31,7 +31,13 @@ model SiteEventResource {
 namespace SiteEvents {
   /** List events for the site UI (most recent first) */
   @get
-  op list(@path workspaceSlug: string, ...PageQuery):
+  op list(
+    @path workspaceSlug: string,
+    ...PageQuery,
+
+    /** Filter by event action */
+    @query action?: string,
+  ):
     | Page<SiteEventResource>
     | NotFoundProblem;
 }

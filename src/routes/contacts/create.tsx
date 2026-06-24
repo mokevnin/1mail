@@ -1,4 +1,3 @@
-import { track } from '@1mail/analytics'
 import { Stack, Title } from '@mantine/core'
 import { useForm } from '@mantine/form'
 import { notifications } from '@mantine/notifications'
@@ -29,7 +28,6 @@ export function ContactCreatePage() {
       await queryClient.invalidateQueries({
         queryKey: siteContactsListQueryKey({ path: { workspaceSlug: slug } }),
       })
-      await track('contact.created', { contactId: created.id, email: created.email })
       notifications.show({
         color: 'teal',
         title: t(($) => $.notifications.successTitle),

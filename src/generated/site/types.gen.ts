@@ -703,6 +703,10 @@ export type SiteEventsListData = {
          * Page size
          */
         pageSize?: number;
+        /**
+         * Filter by event action
+         */
+        action?: string;
     };
     url: '/w/{workspaceSlug}/events';
 };

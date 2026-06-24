@@ -13,10 +13,16 @@ export default interface Resources {
     },
     "activity": {
       "action": "Action",
+      "createdAt": "Recorded at",
+      "details": "Event details",
+      "filterActionPlaceholder": "Filter by action",
+      "live": "Live",
       "loadErrorTitle": "Failed to load activity",
       "noRecords": "No events yet",
+      "occurredAt": "Occurred at",
       "properties": "Properties",
       "subject": "Subject",
+      "subjectId": "Subject ID",
       "time": "Time",
       "title": "Activity"
     },
@@ -101,9 +107,14 @@ export default interface Resources {
       "copy": "Copy",
       "errorTitle": "Failed to update workspace",
       "generalTitle": "General",
+      "installStatusReceived": "Events are arriving",
+      "installStatusTitle": "Installation status",
+      "installStatusWaiting": "Waiting for the first event…",
       "loadErrorTitle": "Failed to load workspace",
       "nameLabel": "Workspace name",
       "saved": "Workspace updated",
+      "testEventDescription": "Send a test event from your terminal, then watch it appear in the activity feed.",
+      "testEventTitle": "Send a test event",
       "title": "Settings",
       "tokens": {
         "create": "Create token",
@@ -121,7 +132,8 @@ export default interface Resources {
         "secretNotice": "Copy this token now — it won't be shown again."
       },
       "trackingDescription": "Paste this snippet into the <head> of your site to start collecting events.",
-      "trackingTitle": "Tracking snippet"
+      "trackingTitle": "Tracking snippet",
+      "viewActivity": "Open activity feed"
     },
     "status": {
       "active": "Active",

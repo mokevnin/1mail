@@ -2,43 +2,13 @@ package site
 
 import (
 	"context"
-	"encoding/json"
 	"net/http"
-	"strconv"
 
-	"github.com/go-faster/jx"
 	"github.com/mokevnin/1mail/ent"
 	"github.com/mokevnin/1mail/ent/event"
 	siteapi "github.com/mokevnin/1mail/gen/site"
 	"github.com/mokevnin/1mail/internal/pagination"
 )
-
-func toEventResource(e *ent.Event) siteapi.SiteEventResource {
-	res := siteapi.SiteEventResource{
-		ID:        siteapi.EntityId(strconv.FormatInt(e.ID, 10)),
-		SubjectId: e.SubjectID,
-		Action:    e.Action,
-		CreatedAt: siteapi.Timestamp(e.CreatedAt),
-	}
-	if e.Email != nil {
-		res.Email = siteapi.NewOptNilString(*e.Email)
-	}
-	if e.OccurredAt != nil {
-		res.OccurredAt = siteapi.NewOptNilTimestamp(siteapi.Timestamp(*e.OccurredAt))
-	}
-	if len(e.Properties) > 0 {
-		props := make(siteapi.SiteEventResourceProperties, len(e.Properties))
-		for k, v := range e.Properties {
-			b, err := json.Marshal(v)
-			if err != nil {
-				continue
-			}
-			props[k] = jx.Raw(b)
-		}
-		res.Properties = siteapi.NewOptNilSiteEventResourceProperties(props)
-	}
-	return res
-}
 
 // SiteEventsList returns the workspace's events, most recent first.
 func (h *Handlers) SiteEventsList(ctx context.Context, params siteapi.SiteEventsListParams) (siteapi.SiteEventsListRes, error) {
@@ -61,6 +31,9 @@ func (h *Handlers) SiteEventsList(ctx context.Context, params siteapi.SiteEvents
 	page, pageSize := pagination.Normalize(pagePtr, pageSizePtr)
 
 	q := h.ent.Event.Query().Where(event.WorkspaceID(ws))
+	if v, ok := params.Action.Get(); ok && v != "" {
+		q = q.Where(event.ActionEQ(v))
+	}
 	total, err := q.Count(ctx)
 	if err != nil {
 		return nil, err
@@ -76,7 +49,7 @@ func (h *Handlers) SiteEventsList(ctx context.Context, params siteapi.SiteEvents
 
 	resources := make([]siteapi.SiteEventResource, len(items))
 	for i, e := range items {
-		resources[i] = toEventResource(e)
+		resources[i] = mapper.EventToResource(e)
 	}
 
 	return &siteapi.SiteEventsListOK{

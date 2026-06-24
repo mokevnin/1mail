@@ -1459,6 +1459,10 @@ func (s *Server) handleSiteEventsListRequest(args [1]string, argsEscaped bool, w
 					Name: "pageSize",
 					In:   "query",
 				}: params.PageSize,
+				{
+					Name: "action",
+					In:   "query",
+				}: params.Action,
 			},
 			Raw: r,
 		}

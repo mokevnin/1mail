@@ -26,6 +26,23 @@ func TestSiteEventsListMostRecentFirst(t *testing.T) {
 	assert.Equal(t, "page_view", ok.Items[1].Action)
 }
 
+func TestSiteEventsListFilterByAction(t *testing.T) {
+	env := testhelper.Setup(t)
+	c := siteClient(t, env, "info@1mail.com")
+
+	res, err := c.SiteEventsList(context.Background(), siteapi.SiteEventsListParams{
+		WorkspaceSlug: "acme",
+		Action:        siteapi.NewOptString("purchase"),
+	})
+	require.NoError(t, err)
+	ok, isOK := res.(*siteapi.SiteEventsListOK)
+	require.Truef(t, isOK, "got %T", res)
+
+	assert.Equal(t, int32(1), ok.TotalItems)
+	require.Len(t, ok.Items, 1)
+	assert.Equal(t, "purchase", ok.Items[0].Action)
+}
+
 func TestSiteEventsListUnknownWorkspace(t *testing.T) {
 	env := testhelper.Setup(t)
 	c := siteClient(t, env, "info@1mail.com")

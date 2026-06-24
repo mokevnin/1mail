@@ -1,4 +1,3 @@
-import { track } from '@1mail/analytics'
 import { Button, Group, Loader, Select, Stack, Text } from '@mantine/core'
 import { useCounter } from '@mantine/hooks'
 import { notifications } from '@mantine/notifications'
@@ -53,11 +52,10 @@ export function ContactsListPage() {
 
   const deleteContactMutation = useMutation({
     ...siteContactsDeleteMutation(),
-    onSuccess: async (_result, variables) => {
+    onSuccess: async () => {
       await queryClient.invalidateQueries({
         queryKey: siteContactsListQueryKey({ path: { workspaceSlug: slug } }),
       })
-      await track('contact.deleted', { contactId: variables.path.id })
       notifications.show({
         color: 'teal',
         title: t(($) => $.notifications.successTitle),

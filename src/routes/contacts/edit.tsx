@@ -1,4 +1,3 @@
-import { track } from '@1mail/analytics'
 import { Loader, Stack, Title } from '@mantine/core'
 import { useForm } from '@mantine/form'
 import { notifications } from '@mantine/notifications'
@@ -53,7 +52,6 @@ export function ContactEditPage() {
       await queryClient.invalidateQueries({
         queryKey: siteContactsGetQueryKey({ path: { workspaceSlug: slug, id: updated.id } }),
       })
-      await track('contact.updated', { contactId: updated.id, email: updated.email })
       notifications.show({
         color: 'teal',
         title: t(($) => $.notifications.successTitle),

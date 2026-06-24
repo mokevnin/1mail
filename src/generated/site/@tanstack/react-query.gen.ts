@@ -155,27 +155,30 @@ export const siteContactsListInfiniteQueryKey = (options: Options<SiteContactsLi
 /**
  * List contacts for the site UI
  */
-export const siteContactsListInfiniteOptions = (options: Options<SiteContactsListData>) => infiniteQueryOptions<SiteContactsListResponse, SiteContactsListError, InfiniteData<SiteContactsListResponse>, QueryKey<Options<SiteContactsListData>>, number | Pick<QueryKey<Options<SiteContactsListData>>[0], 'body' | 'headers' | 'path' | 'query'>>(
-// @ts-ignore
-{
-    queryFn: async ({ pageParam, queryKey, signal }) => {
-        // @ts-ignore
-        const page: Pick<QueryKey<Options<SiteContactsListData>>[0], 'body' | 'headers' | 'path' | 'query'> = typeof pageParam === 'object' ? pageParam : {
-            query: {
-                page: pageParam
-            }
-        };
-        const params = createInfiniteParams(queryKey, page);
-        const { data } = await siteContactsList({
-            ...options,
-            ...params,
-            signal,
-            throwOnError: true
-        });
-        return data;
-    },
-    queryKey: siteContactsListInfiniteQueryKey(options)
-});
+export const siteContactsListInfiniteOptions = (options: Options<SiteContactsListData>) => {
+    const opts = infiniteQueryOptions<SiteContactsListResponse, SiteContactsListError, InfiniteData<SiteContactsListResponse>, QueryKey<Options<SiteContactsListData>>, number | Pick<QueryKey<Options<SiteContactsListData>>[0], 'body' | 'headers' | 'path' | 'query'>>(
+    // @ts-ignore
+    {
+        queryFn: async ({ pageParam, queryKey, signal }) => {
+            // @ts-ignore
+            const page: Pick<QueryKey<Options<SiteContactsListData>>[0], 'body' | 'headers' | 'path' | 'query'> = typeof pageParam === 'object' ? pageParam : {
+                query: {
+                    page: pageParam
+                }
+            };
+            const params = createInfiniteParams(queryKey, page);
+            const { data } = await siteContactsList({
+                ...options,
+                ...params,
+                signal,
+                throwOnError: true
+            });
+            return data;
+        },
+        queryKey: siteContactsListInfiniteQueryKey(options)
+    });
+    return opts as Omit<typeof opts, 'initialData'>;
+};
 
 /**
  * Create a contact from the site UI
@@ -269,27 +272,30 @@ export const siteEventsListInfiniteQueryKey = (options: Options<SiteEventsListDa
 /**
  * List events for the site UI (most recent first)
  */
-export const siteEventsListInfiniteOptions = (options: Options<SiteEventsListData>) => infiniteQueryOptions<SiteEventsListResponse, SiteEventsListError, InfiniteData<SiteEventsListResponse>, QueryKey<Options<SiteEventsListData>>, number | Pick<QueryKey<Options<SiteEventsListData>>[0], 'body' | 'headers' | 'path' | 'query'>>(
-// @ts-ignore
-{
-    queryFn: async ({ pageParam, queryKey, signal }) => {
-        // @ts-ignore
-        const page: Pick<QueryKey<Options<SiteEventsListData>>[0], 'body' | 'headers' | 'path' | 'query'> = typeof pageParam === 'object' ? pageParam : {
-            query: {
-                page: pageParam
-            }
-        };
-        const params = createInfiniteParams(queryKey, page);
-        const { data } = await siteEventsList({
-            ...options,
-            ...params,
-            signal,
-            throwOnError: true
-        });
-        return data;
-    },
-    queryKey: siteEventsListInfiniteQueryKey(options)
-});
+export const siteEventsListInfiniteOptions = (options: Options<SiteEventsListData>) => {
+    const opts = infiniteQueryOptions<SiteEventsListResponse, SiteEventsListError, InfiniteData<SiteEventsListResponse>, QueryKey<Options<SiteEventsListData>>, number | Pick<QueryKey<Options<SiteEventsListData>>[0], 'body' | 'headers' | 'path' | 'query'>>(
+    // @ts-ignore
+    {
+        queryFn: async ({ pageParam, queryKey, signal }) => {
+            // @ts-ignore
+            const page: Pick<QueryKey<Options<SiteEventsListData>>[0], 'body' | 'headers' | 'path' | 'query'> = typeof pageParam === 'object' ? pageParam : {
+                query: {
+                    page: pageParam
+                }
+            };
+            const params = createInfiniteParams(queryKey, page);
+            const { data } = await siteEventsList({
+                ...options,
+                ...params,
+                signal,
+                throwOnError: true
+            });
+            return data;
+        },
+        queryKey: siteEventsListInfiniteQueryKey(options)
+    });
+    return opts as Omit<typeof opts, 'initialData'>;
+};
 
 export const siteTokensListQueryKey = (options: Options<SiteTokensListData>) => createQueryKey('siteTokensList', options);
 

@@ -1,8 +1,6 @@
-import { initTracking } from '@1mail/analytics'
 import { Group, Select } from '@mantine/core'
 import { useQuery } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
-import { useEffect } from 'react'
 import { AppNavbar } from '../components/AppNavbar.tsx'
 import { UserMenu } from '../components/UserMenu.tsx'
 import { siteWorkspacesListOptions } from '../generated/site/@tanstack/react-query.gen.ts'
@@ -43,18 +41,6 @@ export function WorkspaceLayout() {
   const { slug } = workspaceRoute.useParams()
   const workspacesQuery = useQuery(siteWorkspacesListOptions())
   const workspaces = workspacesQuery.data ?? []
-  const active = workspaces.find((w) => w.slug === slug)
-
-  // Initialize dashboard self-tracking with the active workspace's collect key
-  // (initTracking is idempotent — the first resolved workspace wins per session).
-  useEffect(() => {
-    if (active) {
-      initTracking({
-        collectKey: active.collectKey,
-        baseUrl: import.meta.env.VITE_COLLECT_BASE_URL ?? '',
-      })
-    }
-  }, [active])
 
   return (
     <DashboardShell

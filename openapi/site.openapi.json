@@ -574,6 +574,16 @@
           },
           {
             "$ref": "#/components/parameters/PageQuery.pageSize"
+          },
+          {
+            "name": "action",
+            "in": "query",
+            "required": false,
+            "description": "Filter by event action",
+            "schema": {
+              "type": "string"
+            },
+            "explode": false
           }
         ],
         "responses": {
