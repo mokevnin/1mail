@@ -3,23 +3,12 @@ package site
 import (
 	"context"
 	"net/http"
-	"strconv"
 	"strings"
 
-	"github.com/mokevnin/1mail/ent"
 	siteapi "github.com/mokevnin/1mail/gen/site"
 	"github.com/mokevnin/1mail/internal/api/auth"
 	"github.com/mokevnin/1mail/internal/service"
 )
-
-func toUserResource(u *ent.User) *siteapi.SiteUserResource {
-	return &siteapi.SiteUserResource{
-		ID:        siteapi.EntityId(strconv.FormatInt(u.ID, 10)),
-		Name:      u.Name,
-		Email:     siteapi.EmailAddress(u.Email),
-		CreatedAt: siteapi.Timestamp(u.CreatedAt),
-	}
-}
 
 // SiteUserGetMe returns the authenticated user's profile. Auth is enforced by
 // the security handler, so SiteAuth is always present here.
@@ -32,7 +21,7 @@ func (h *Handlers) SiteUserGetMe(ctx context.Context) (*siteapi.SiteUserResource
 	if err != nil {
 		return nil, err
 	}
-	return toUserResource(u), nil
+	return mapper.UserToResource(u), nil
 }
 
 // SiteUserUpdateMe updates the authenticated user's name and/or password. Email
@@ -96,5 +85,5 @@ func (h *Handlers) SiteUserUpdateMe(ctx context.Context, req *siteapi.SiteUpdate
 		}
 	}
 
-	return toUserResource(u), nil
+	return mapper.UserToResource(u), nil
 }

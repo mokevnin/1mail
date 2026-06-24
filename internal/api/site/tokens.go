@@ -13,23 +13,6 @@ import (
 	"github.com/mokevnin/1mail/internal/service"
 )
 
-func toTokenResource(t *ent.ApiToken) siteapi.SiteApiTokenResource {
-	res := siteapi.SiteApiTokenResource{
-		ID:        siteapi.EntityId(strconv.FormatInt(t.ID, 10)),
-		Name:      t.Name,
-		Prefix:    t.Prefix,
-		Scopes:    t.Scopes,
-		CreatedAt: siteapi.Timestamp(t.CreatedAt),
-	}
-	if t.LastUsedAt != nil {
-		res.LastUsedAt = siteapi.NewOptNilTimestamp(siteapi.Timestamp(*t.LastUsedAt))
-	}
-	if t.ExpiresAt != nil {
-		res.ExpiresAt = siteapi.NewOptNilTimestamp(siteapi.Timestamp(*t.ExpiresAt))
-	}
-	return res
-}
-
 // SiteTokensList returns the workspace's active (non-revoked) API tokens.
 func (h *Handlers) SiteTokensList(ctx context.Context, params siteapi.SiteTokensListParams) (siteapi.SiteTokensListRes, error) {
 	ws, err := h.workspaceID(ctx, params.WorkspaceSlug)
@@ -51,7 +34,7 @@ func (h *Handlers) SiteTokensList(ctx context.Context, params siteapi.SiteTokens
 
 	items := make(siteapi.SiteTokensListOKApplicationJSON, len(tokens))
 	for i, t := range tokens {
-		items[i] = toTokenResource(t)
+		items[i] = mapper.TokenToResource(t)
 	}
 	return &items, nil
 }
@@ -107,7 +90,7 @@ func (h *Handlers) SiteTokensCreate(ctx context.Context, req *siteapi.SiteCreate
 
 	return &siteapi.SiteCreateTokenResponse{
 		Token:    service.TokenValue(prefix, secret),
-		Resource: toTokenResource(token),
+		Resource: mapper.TokenToResource(token),
 	}, nil
 }
 

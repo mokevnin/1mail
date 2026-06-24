@@ -12,8 +12,9 @@ Go backend + React/Vite frontend in a single repo. The data model is workspace-s
 ## Codegen pipeline (read this first)
 
 API contracts are **one-directional**: TypeSpec → OpenAPI → generated Go + TS. Never
-hand-edit anything under `openapi/`, `gen/`, `ent/` (except `ent/schema/`), or
-`src/generated/` / `packages/analytics/src/generated/` — regenerate instead.
+hand-edit anything under `openapi/`, `gen/`, `ent/` (except `ent/schema/`),
+`src/generated/` / `packages/analytics/src/generated/`, or the `*_gen.go` files in the
+`sitemap`/`externalmap` packages — regenerate instead.
 
 ```
 typespec/{site,external,collect}   ──tsp compile──▶  openapi/*.openapi.json
@@ -21,7 +22,13 @@ typespec/{site,external,collect}   ──tsp compile──▶  openapi/*.openapi
   openapi/external  ──ogen──▶ gen/external    (Go server)
   openapi/collect   ──ogen──▶ gen/collect     (Go server)  ──openapi-ts──▶ packages/analytics/src/generated/collect (types only)
 ent/schema/*.go     ──entc──▶ ent/*           (Go ORM)
+ent + gen/{site,external}  ──goverter──▶ internal/api/{site/sitemap,external/externalmap}/converter_gen.go
 ```
+
+- **goverter** maps ent entities → ogen resource DTOs. The `Converter` interface and its
+  `// goverter:extend` helpers (ids, timestamps, optionals) are hand-written in
+  `sitemap.go` / `externalmap.go`; the impl (`ConverterImpl`) is generated. Adding a DTO
+  field that has no source mapping fails generation — that completeness check is the point.
 
 - `make generate` — full cycle: typespec → openapi → backend (ent + ogen) → frontend → i18n types → format.
 - `make generate-typespec` / `make generate-backend` / `make generate-openapi` — partial regens.

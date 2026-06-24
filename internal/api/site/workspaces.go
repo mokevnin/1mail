@@ -3,7 +3,6 @@ package site
 import (
 	"context"
 	"net/http"
-	"strconv"
 	"strings"
 
 	"github.com/mokevnin/1mail/ent"
@@ -11,16 +10,6 @@ import (
 	siteapi "github.com/mokevnin/1mail/gen/site"
 	"github.com/mokevnin/1mail/internal/api/auth"
 )
-
-func toWorkspaceResource(w *ent.Workspace) siteapi.SiteWorkspaceResource {
-	return siteapi.SiteWorkspaceResource{
-		ID:         siteapi.EntityId(strconv.FormatInt(w.ID, 10)),
-		Name:       w.Name,
-		Slug:       w.Slug,
-		CollectKey: w.CollectKey,
-		CreatedAt:  siteapi.Timestamp(w.CreatedAt),
-	}
-}
 
 // SiteWorkspacesList returns the workspaces owned by the authenticated user.
 func (h *Handlers) SiteWorkspacesList(ctx context.Context) ([]siteapi.SiteWorkspaceResource, error) {
@@ -39,7 +28,7 @@ func (h *Handlers) SiteWorkspacesList(ctx context.Context) ([]siteapi.SiteWorksp
 
 	resources := make([]siteapi.SiteWorkspaceResource, len(items))
 	for i, w := range items {
-		resources[i] = toWorkspaceResource(w)
+		resources[i] = mapper.WorkspaceToResource(w)
 	}
 	return resources, nil
 }
@@ -70,6 +59,6 @@ func (h *Handlers) SiteWorkspacesUpdate(ctx context.Context, req *siteapi.SiteUp
 	if err != nil {
 		return nil, err
 	}
-	resource := toWorkspaceResource(w)
+	resource := mapper.WorkspaceToResource(w)
 	return &resource, nil
 }

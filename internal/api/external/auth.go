@@ -28,7 +28,7 @@ func (h *Handlers) AuthMeGet(ctx context.Context) (externalapi.AuthMeGetRes, err
 		return nil, err
 	}
 
-	info := apiTokenInfo(token)
+	info := mapper.ApiTokenToInfo(token)
 	return &info, nil
 }
 
@@ -45,7 +45,7 @@ func (h *Handlers) AuthTokensList(ctx context.Context) (externalapi.AuthTokensLi
 
 	items := make([]externalapi.ApiTokenInfo, len(tokens))
 	for i, t := range tokens {
-		items[i] = apiTokenInfo(t)
+		items[i] = mapper.ApiTokenToInfo(t)
 	}
 	return &externalapi.ApiTokenListResponse{Items: items}, nil
 }
@@ -135,6 +135,6 @@ func createToken(ctx context.Context, client *ent.Client, name string, scopes []
 
 	return &externalapi.CreateApiTokenResponse{
 		Token:     service.TokenValue(prefix, secret),
-		TokenInfo: apiTokenInfo(token),
+		TokenInfo: mapper.ApiTokenToInfo(token),
 	}, nil
 }

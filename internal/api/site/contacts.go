@@ -52,7 +52,7 @@ func (h *Handlers) SiteContactsList(ctx context.Context, params siteapi.SiteCont
 
 	resources := make([]siteapi.SiteContactResource, len(items))
 	for i, c := range items {
-		resources[i] = toContactResource(c)
+		resources[i] = mapper.ContactToResource(c)
 	}
 
 	return &siteapi.SiteContactsListOK{
@@ -93,7 +93,7 @@ func (h *Handlers) SiteContactsCreate(ctx context.Context, req *siteapi.SiteCrea
 	if err != nil {
 		return nil, err
 	}
-	res := toContactResource(c)
+	res := mapper.ContactToResource(c)
 	return &res, nil
 }
 
@@ -122,7 +122,7 @@ func (h *Handlers) SiteContactsGet(ctx context.Context, params siteapi.SiteConta
 	if err != nil {
 		return nil, err
 	}
-	res := toContactResource(c)
+	res := mapper.ContactToResource(c)
 	return &res, nil
 }
 
@@ -161,7 +161,7 @@ func (h *Handlers) SiteContactsUpdate(ctx context.Context, req *siteapi.SiteUpda
 	if err != nil {
 		return nil, err
 	}
-	res := toContactResource(c)
+	res := mapper.ContactToResource(c)
 	return &res, nil
 }
 
@@ -189,30 +189,6 @@ func (h *Handlers) SiteContactsDelete(ctx context.Context, params siteapi.SiteCo
 		return nil, err
 	}
 	return &siteapi.SiteContactsDeleteNoContent{}, nil
-}
-
-// toContactResource maps an ent.Contact to the site API resource representation.
-func toContactResource(c *ent.Contact) siteapi.SiteContactResource {
-	res := siteapi.SiteContactResource{
-		ID:        siteapi.EntityId(strconv.FormatInt(c.ID, 10)),
-		Email:     siteapi.EmailAddress(c.Email),
-		Status:    siteapi.SiteContactStatus(string(c.Status)),
-		CreatedAt: siteapi.Timestamp(c.CreatedAt),
-		UpdatedAt: siteapi.Timestamp(c.UpdatedAt),
-	}
-	if c.FirstName != nil {
-		res.FirstName = siteapi.NewOptNilString(*c.FirstName)
-	}
-	if c.LastName != nil {
-		res.LastName = siteapi.NewOptNilString(*c.LastName)
-	}
-	if c.TimeZone != nil {
-		res.TimeZone = siteapi.NewOptNilTimeZoneName(siteapi.TimeZoneName(*c.TimeZone))
-	}
-	if c.CustomFields != nil {
-		res.CustomFields = siteapi.NewOptNilSiteContactResourceCustomFields(siteapi.SiteContactResourceCustomFields(c.CustomFields))
-	}
-	return res
 }
 
 // problem builds a ProblemDetails with status, title and detail.

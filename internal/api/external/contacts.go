@@ -42,7 +42,7 @@ func (h *Handlers) ContactsList(ctx context.Context, params externalapi.Contacts
 
 	resources := make([]externalapi.ContactResource, len(items))
 	for i, c := range items {
-		resources[i] = contactResource(c)
+		resources[i] = mapper.ContactToResource(c)
 	}
 
 	return &externalapi.ContactsListOK{
@@ -79,7 +79,7 @@ func (h *Handlers) ContactsCreate(ctx context.Context, req *externalapi.CreateCo
 		return nil, err
 	}
 
-	resource := contactResource(c)
+	resource := mapper.ContactToResource(c)
 	return &resource, nil
 }
 
@@ -107,7 +107,7 @@ func (h *Handlers) ContactsGet(ctx context.Context, params externalapi.ContactsG
 		return nil, err
 	}
 
-	resource := contactResource(c)
+	resource := mapper.ContactToResource(c)
 	return &resource, nil
 }
 
@@ -146,7 +146,7 @@ func (h *Handlers) ContactsUpdate(ctx context.Context, req *externalapi.UpdateCo
 		return nil, err
 	}
 
-	resource := contactResource(c)
+	resource := mapper.ContactToResource(c)
 	return &resource, nil
 }
 
