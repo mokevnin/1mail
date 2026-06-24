@@ -9,7 +9,7 @@ import (
 	"github.com/mokevnin/1mail/ent"
 	siteapi "github.com/mokevnin/1mail/gen/site"
 	"github.com/mokevnin/1mail/internal/api/auth"
-	"golang.org/x/crypto/bcrypt"
+	"github.com/mokevnin/1mail/internal/service"
 )
 
 func toUserResource(u *ent.User) *siteapi.SiteUserResource {
@@ -77,16 +77,15 @@ func (h *Handlers) SiteUserUpdateMe(ctx context.Context, req *siteapi.SiteUpdate
 			return &v, nil
 		}
 		// Verify the current password the same way the direct login provider does.
-		if u.PasswordHash == "" ||
-			bcrypt.CompareHashAndPassword([]byte(u.PasswordHash), []byte(currentPassword)) != nil {
+		if u.PasswordHash == "" || !service.VerifyPassword(u.PasswordHash, currentPassword) {
 			v := siteapi.SiteUserUpdateMeForbidden(problem(http.StatusForbidden, "current password is incorrect"))
 			return &v, nil
 		}
-		hash, err := bcrypt.GenerateFromPassword([]byte(newPassword), 12)
+		hash, err := service.HashPassword(newPassword)
 		if err != nil {
 			return nil, err
 		}
-		upd = upd.SetPasswordHash(string(hash))
+		upd = upd.SetPasswordHash(hash)
 		changed = true
 	}
 

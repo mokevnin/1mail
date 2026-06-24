@@ -15,7 +15,6 @@ import (
 	siteapi "github.com/mokevnin/1mail/gen/site"
 	"github.com/mokevnin/1mail/internal/service"
 	"github.com/samber/lo"
-	"golang.org/x/crypto/bcrypt"
 )
 
 // ErrUnauthorized is returned by security handlers when a request is not authorized.
@@ -231,6 +230,5 @@ func (c *CredChecker) Check(user, password string) (bool, error) {
 	if u.PasswordHash == "" {
 		return false, nil
 	}
-	err = bcrypt.CompareHashAndPassword([]byte(u.PasswordHash), []byte(password))
-	return err == nil, nil
+	return service.VerifyPassword(u.PasswordHash, password), nil
 }

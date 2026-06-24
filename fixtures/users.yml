@@ -1,6 +1,6 @@
 - id: 1
   name: John
   email: info@1mail.com
-  password_hash: "$2a$12$CJCmiDfpM9ufmwUu7xA5xOIqgGIh50RrVnZ.aU1lc6e1NCjVqo7D."
+  password_hash: "$argon2id$v=19$m=65536,t=3,p=4$fFjVW1n2MMDnLnlbkrzKLw$tp6jMfX95/TGifKVJ6y4WJXP3Vdm3hKQmE8FVGp1Ezk"
   created_at: "2026-01-01 00:00:00"
   updated_at: "2026-01-01 00:00:00"

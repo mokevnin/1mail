@@ -9,7 +9,6 @@ import (
 	siteapi "github.com/mokevnin/1mail/gen/site"
 	"github.com/mokevnin/1mail/internal/pubsub"
 	"github.com/mokevnin/1mail/internal/service"
-	"golang.org/x/crypto/bcrypt"
 )
 
 func (h *Handlers) SiteAuthRegister(ctx context.Context, req *siteapi.SiteRegisterInput) (siteapi.SiteAuthRegisterRes, error) {
@@ -36,7 +35,7 @@ func (h *Handlers) SiteAuthRegister(ctx context.Context, req *siteapi.SiteRegist
 		return &v, nil
 	}
 
-	hash, err := bcrypt.GenerateFromPassword([]byte(password), 12)
+	hash, err := service.HashPassword(password)
 	if err != nil {
 		return nil, err
 	}
@@ -44,7 +43,7 @@ func (h *Handlers) SiteAuthRegister(ctx context.Context, req *siteapi.SiteRegist
 	u, err := h.ent.User.Create().
 		SetName(name).
 		SetEmail(email).
-		SetPasswordHash(string(hash)).
+		SetPasswordHash(hash).
 		Save(ctx)
 	if service.IsUniqueViolation(err) {
 		v := siteapi.SiteAuthRegisterConflict(problemWithErrors(
