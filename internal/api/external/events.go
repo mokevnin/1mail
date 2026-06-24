@@ -10,6 +10,7 @@ import (
 	"github.com/mokevnin/1mail/ent/event"
 	externalapi "github.com/mokevnin/1mail/gen/external"
 	"github.com/mokevnin/1mail/internal/api/auth"
+	"github.com/mokevnin/1mail/internal/convert"
 	"github.com/mokevnin/1mail/internal/pagination"
 )
 
@@ -71,7 +72,7 @@ func (h *Handlers) EventActionsList(ctx context.Context, params externalapi.Even
 	}
 
 	ws := auth.WorkspaceID(auth.GetTokenAuth(ctx))
-	page, pageSize := pagination.Normalize(optInt32Ptr(params.Page), optInt32Ptr(params.PageSize))
+	page, pageSize := pagination.Normalize(convert.Ptr(params.Page), convert.Ptr(params.PageSize))
 
 	actions := h.ent.Event.Query().
 		Where(event.WorkspaceID(ws)).

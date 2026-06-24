@@ -8,6 +8,7 @@ import (
 	"github.com/mokevnin/1mail/ent"
 	"github.com/mokevnin/1mail/ent/contact"
 	siteapi "github.com/mokevnin/1mail/gen/site"
+	"github.com/mokevnin/1mail/internal/convert"
 	"github.com/mokevnin/1mail/internal/pagination"
 	"github.com/mokevnin/1mail/internal/service"
 )
@@ -76,9 +77,9 @@ func (h *Handlers) SiteContactsCreate(ctx context.Context, req *siteapi.SiteCrea
 	q := h.ent.Contact.Create().
 		SetWorkspaceID(ws).
 		SetEmail(string(req.Email)).
-		SetNillableFirstName(optNilString(req.FirstName)).
-		SetNillableLastName(optNilString(req.LastName)).
-		SetNillableTimeZone(optNilTimeZone(req.TimeZone))
+		SetNillableFirstName(convert.StringPtr(req.FirstName)).
+		SetNillableLastName(convert.StringPtr(req.LastName)).
+		SetNillableTimeZone(convert.StringPtr(req.TimeZone))
 	if v, ok := req.CustomFields.Get(); ok {
 		q = q.SetCustomFields(map[string]string(v))
 	}
@@ -142,9 +143,9 @@ func (h *Handlers) SiteContactsUpdate(ctx context.Context, req *siteapi.SiteUpda
 	}
 	q := h.ent.Contact.UpdateOneID(id).
 		Where(contact.WorkspaceID(ws)).
-		SetNillableFirstName(optNilString(req.FirstName)).
-		SetNillableLastName(optNilString(req.LastName)).
-		SetNillableTimeZone(optNilTimeZone(req.TimeZone))
+		SetNillableFirstName(convert.StringPtr(req.FirstName)).
+		SetNillableLastName(convert.StringPtr(req.LastName)).
+		SetNillableTimeZone(convert.StringPtr(req.TimeZone))
 	if v, ok := req.CustomFields.Get(); ok {
 		q = q.SetCustomFields(map[string]string(v))
 	}
@@ -212,23 +213,6 @@ func toContactResource(c *ent.Contact) siteapi.SiteContactResource {
 		res.CustomFields = siteapi.NewOptNilSiteContactResourceCustomFields(siteapi.SiteContactResourceCustomFields(c.CustomFields))
 	}
 	return res
-}
-
-// optNilString converts an optional nullable string input into a *string for ent setters.
-func optNilString(o siteapi.OptNilString) *string {
-	if v, ok := o.Get(); ok {
-		return &v
-	}
-	return nil
-}
-
-// optNilTimeZone converts an optional nullable time zone input into a *string for ent setters.
-func optNilTimeZone(o siteapi.OptNilTimeZoneName) *string {
-	if v, ok := o.Get(); ok {
-		s := string(v)
-		return &s
-	}
-	return nil
 }
 
 // problem builds a ProblemDetails with status, title and detail.

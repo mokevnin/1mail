@@ -30,31 +30,6 @@ func problem(code int, detail string) externalapi.ProblemDetails {
 	}
 }
 
-// optInt32Ptr converts an OptInt32 into a *int32 (nil when unset).
-func optInt32Ptr(o externalapi.OptInt32) *int32 {
-	if v, ok := o.Get(); ok {
-		return &v
-	}
-	return nil
-}
-
-// optNilStringPtr converts an OptNilString into a *string (nil when unset or null).
-func optNilStringPtr(o externalapi.OptNilString) *string {
-	if v, ok := o.Get(); ok {
-		return &v
-	}
-	return nil
-}
-
-// optNilTimeZonePtr converts an OptNilTimeZoneName into a *string (nil when unset or null).
-func optNilTimeZonePtr(o externalapi.OptNilTimeZoneName) *string {
-	if v, ok := o.Get(); ok {
-		s := string(v)
-		return &s
-	}
-	return nil
-}
-
 // optNilStringFromPtr maps a *string into an OptNilString (unset when nil).
 func optNilStringFromPtr(v *string) externalapi.OptNilString {
 	if v == nil {

@@ -4,7 +4,6 @@ import (
 	"crypto/rand"
 	"math/big"
 	"regexp"
-	"strings"
 
 	"golang.org/x/crypto/bcrypt"
 )
@@ -79,5 +78,5 @@ func randomString(alphabet string, n int) (string, error) {
 		}
 		b[i] = alphabet[idx.Int64()]
 	}
-	return strings.NewReplacer().Replace(string(b)), nil
+	return string(b), nil
 }

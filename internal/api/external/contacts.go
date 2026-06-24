@@ -8,6 +8,7 @@ import (
 	"github.com/mokevnin/1mail/ent/contact"
 	externalapi "github.com/mokevnin/1mail/gen/external"
 	"github.com/mokevnin/1mail/internal/api/auth"
+	"github.com/mokevnin/1mail/internal/convert"
 	"github.com/mokevnin/1mail/internal/pagination"
 	"github.com/mokevnin/1mail/internal/service"
 )
@@ -19,7 +20,7 @@ func (h *Handlers) ContactsList(ctx context.Context, params externalapi.Contacts
 	}
 
 	ws := auth.WorkspaceID(auth.GetTokenAuth(ctx))
-	page, pageSize := pagination.Normalize(optInt32Ptr(params.Page), optInt32Ptr(params.PageSize))
+	page, pageSize := pagination.Normalize(convert.Ptr(params.Page), convert.Ptr(params.PageSize))
 
 	q := h.ent.Contact.Query().Where(contact.WorkspaceID(ws))
 	if status, ok := params.Status.Get(); ok {
@@ -62,9 +63,9 @@ func (h *Handlers) ContactsCreate(ctx context.Context, req *externalapi.CreateCo
 	q := h.ent.Contact.Create().
 		SetWorkspaceID(auth.WorkspaceID(auth.GetTokenAuth(ctx))).
 		SetEmail(string(req.Email)).
-		SetNillableFirstName(optNilStringPtr(req.FirstName)).
-		SetNillableLastName(optNilStringPtr(req.LastName)).
-		SetNillableTimeZone(optNilTimeZonePtr(req.TimeZone))
+		SetNillableFirstName(convert.StringPtr(req.FirstName)).
+		SetNillableLastName(convert.StringPtr(req.LastName)).
+		SetNillableTimeZone(convert.StringPtr(req.TimeZone))
 	if v, ok := req.CustomFields.Get(); ok {
 		q = q.SetCustomFields(map[string]string(v))
 	}
@@ -125,9 +126,9 @@ func (h *Handlers) ContactsUpdate(ctx context.Context, req *externalapi.UpdateCo
 	ws := auth.WorkspaceID(auth.GetTokenAuth(ctx))
 	q := h.ent.Contact.UpdateOneID(id).
 		Where(contact.WorkspaceID(ws)).
-		SetNillableFirstName(optNilStringPtr(req.FirstName)).
-		SetNillableLastName(optNilStringPtr(req.LastName)).
-		SetNillableTimeZone(optNilTimeZonePtr(req.TimeZone))
+		SetNillableFirstName(convert.StringPtr(req.FirstName)).
+		SetNillableLastName(convert.StringPtr(req.LastName)).
+		SetNillableTimeZone(convert.StringPtr(req.TimeZone))
 	if v, ok := req.CustomFields.Get(); ok {
 		q = q.SetCustomFields(map[string]string(v))
 	}
