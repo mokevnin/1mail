@@ -45,6 +45,18 @@ func (f EventFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.EventMutation", m)
 }
 
+// The SegmentFunc type is an adapter to allow the use of ordinary
+// function as Segment mutator.
+type SegmentFunc func(context.Context, *ent.SegmentMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f SegmentFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.SegmentMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.SegmentMutation", m)
+}
+
 // The TrackingProfileFunc type is an adapter to allow the use of ordinary
 // function as TrackingProfile mutator.
 type TrackingProfileFunc func(context.Context, *ent.TrackingProfileMutation) (ent.Value, error)

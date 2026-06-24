@@ -53,6 +53,20 @@ export const zSiteRegisterInput = z.object({
 });
 
 /**
+ * Segment type for site UI
+ */
+export const zSiteSegmentType = z.enum(['rule', 'snapshot']);
+
+/**
+ * Site request body for creating a segment
+ */
+export const zSiteCreateSegmentInput = z.object({
+    name: z.string(),
+    type: zSiteSegmentType,
+    definition: z.string().nullish()
+});
+
+/**
  * Update the authenticated user's profile. To change the password, provide
  * both currentPassword and newPassword.
  */
@@ -60,6 +74,15 @@ export const zSiteUpdateMeInput = z.object({
     name: z.string().optional(),
     currentPassword: z.string().optional(),
     newPassword: z.string().optional()
+});
+
+/**
+ * Site request body for updating a segment
+ */
+export const zSiteUpdateSegmentInput = z.object({
+    name: z.string().optional(),
+    type: zSiteSegmentType.optional(),
+    definition: z.string().nullish()
 });
 
 /**
@@ -158,6 +181,18 @@ export const zSiteRegisterResult = z.object({
     name: z.string(),
     email: zEmailAddress,
     createdAt: zTimestamp
+});
+
+/**
+ * Segment resource used by the site UI
+ */
+export const zSiteSegmentResource = z.object({
+    id: zEntityId,
+    name: z.string(),
+    type: zSiteSegmentType,
+    definition: z.string().nullish(),
+    createdAt: zTimestamp,
+    updatedAt: zTimestamp
 });
 
 /**
@@ -308,6 +343,69 @@ export const zSiteEventsListResponse = z.object({
     totalItems: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
     totalPages: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' })
 });
+
+export const zSiteSegmentsListPath = z.object({
+    workspaceSlug: z.string()
+});
+
+export const zSiteSegmentsListQuery = z.object({
+    page: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).optional().default(1),
+    pageSize: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).optional().default(25)
+});
+
+/**
+ * Paginated response
+ */
+export const zSiteSegmentsListResponse = z.object({
+    items: z.array(zSiteSegmentResource),
+    page: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
+    pageSize: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
+    totalItems: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
+    totalPages: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' })
+});
+
+export const zSiteSegmentsCreateBody = zSiteCreateSegmentInput;
+
+export const zSiteSegmentsCreatePath = z.object({
+    workspaceSlug: z.string()
+});
+
+/**
+ * The request has succeeded and a new resource has been created as a result.
+ */
+export const zSiteSegmentsCreateResponse = zSiteSegmentResource;
+
+export const zSiteSegmentsDeletePath = z.object({
+    workspaceSlug: z.string(),
+    id: zEntityId
+});
+
+/**
+ * There is no content to send for this request, but the headers may be useful.
+ */
+export const zSiteSegmentsDeleteResponse = z.void();
+
+export const zSiteSegmentsGetPath = z.object({
+    workspaceSlug: z.string(),
+    id: zEntityId
+});
+
+/**
+ * The request has succeeded.
+ */
+export const zSiteSegmentsGetResponse = zSiteSegmentResource;
+
+export const zSiteSegmentsUpdateBody = zSiteUpdateSegmentInput;
+
+export const zSiteSegmentsUpdatePath = z.object({
+    workspaceSlug: z.string(),
+    id: zEntityId
+});
+
+/**
+ * The request has succeeded.
+ */
+export const zSiteSegmentsUpdateResponse = zSiteSegmentResource;
 
 export const zSiteTokensListPath = z.object({
     workspaceSlug: z.string()

@@ -10,6 +10,9 @@ import { RegisterPage } from './routes/auth/register.tsx'
 import { ContactCreatePage } from './routes/contacts/create.tsx'
 import { ContactEditPage } from './routes/contacts/edit.tsx'
 import { ContactsListPage } from './routes/contacts/list.tsx'
+import { SegmentCreatePage } from './routes/segments/create.tsx'
+import { SegmentEditPage } from './routes/segments/edit.tsx'
+import { SegmentsListPage } from './routes/segments/list.tsx'
 import { ActivityPage } from './routes/workspace/activity.tsx'
 import { OverviewPage } from './routes/workspace/overview.tsx'
 import { SettingsPage } from './routes/workspace/settings.tsx'
@@ -72,6 +75,24 @@ export const contactsRoute = createRoute({
   getParentRoute: () => workspaceRoute,
   path: 'contacts',
   component: ContactsListPage,
+})
+
+export const segmentsRoute = createRoute({
+  getParentRoute: () => workspaceRoute,
+  path: 'segments',
+  component: SegmentsListPage,
+})
+
+export const segmentsCreateRoute = createRoute({
+  getParentRoute: () => workspaceRoute,
+  path: 'segments/new',
+  component: SegmentCreatePage,
+})
+
+export const segmentsEditRoute = createRoute({
+  getParentRoute: () => workspaceRoute,
+  path: 'segments/$segmentId/edit',
+  component: SegmentEditPage,
 })
 
 export const activityRoute = createRoute({
@@ -137,6 +158,9 @@ const routeTree = rootRoute.addChildren([
     contactsRoute,
     contactsCreateRoute,
     contactsEditRoute,
+    segmentsRoute,
+    segmentsCreateRoute,
+    segmentsEditRoute,
     activityRoute,
     settingsRoute,
   ]),

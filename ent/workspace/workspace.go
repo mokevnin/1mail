@@ -28,6 +28,8 @@ const (
 	FieldUpdatedAt = "updated_at"
 	// EdgeContacts holds the string denoting the contacts edge name in mutations.
 	EdgeContacts = "contacts"
+	// EdgeSegments holds the string denoting the segments edge name in mutations.
+	EdgeSegments = "segments"
 	// EdgeEvents holds the string denoting the events edge name in mutations.
 	EdgeEvents = "events"
 	// EdgeTrackingProfiles holds the string denoting the tracking_profiles edge name in mutations.
@@ -47,6 +49,13 @@ const (
 	ContactsInverseTable = "contacts"
 	// ContactsColumn is the table column denoting the contacts relation/edge.
 	ContactsColumn = "workspace_id"
+	// SegmentsTable is the table that holds the segments relation/edge.
+	SegmentsTable = "segments"
+	// SegmentsInverseTable is the table name for the Segment entity.
+	// It exists in this package in order to avoid circular dependency with the "segment" package.
+	SegmentsInverseTable = "segments"
+	// SegmentsColumn is the table column denoting the segments relation/edge.
+	SegmentsColumn = "workspace_id"
 	// EventsTable is the table that holds the events relation/edge.
 	EventsTable = "events"
 	// EventsInverseTable is the table name for the Event entity.
@@ -172,6 +181,20 @@ func ByContacts(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 	}
 }
 
+// BySegmentsCount orders the results by segments count.
+func BySegmentsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newSegmentsStep(), opts...)
+	}
+}
+
+// BySegments orders the results by segments terms.
+func BySegments(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newSegmentsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+
 // ByEventsCount orders the results by events count.
 func ByEventsCount(opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
@@ -239,6 +262,13 @@ func newContactsStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(ContactsInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2M, false, ContactsTable, ContactsColumn),
+	)
+}
+func newSegmentsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(SegmentsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, SegmentsTable, SegmentsColumn),
 	)
 }
 func newEventsStep() *sqlgraph.Step {

@@ -168,6 +168,24 @@ export type SiteCreateContactInput = {
 };
 
 /**
+ * Site request body for creating a segment
+ */
+export type SiteCreateSegmentInput = {
+    /**
+     * Segment name
+     */
+    name: string;
+    /**
+     * Segment type
+     */
+    type: SiteSegmentType;
+    /**
+     * Segment definition (used by rule segments)
+     */
+    definition?: string | null;
+};
+
+/**
  * Create a workspace API token
  */
 export type SiteCreateTokenInput = {
@@ -256,6 +274,46 @@ export type SiteRegisterResult = {
 };
 
 /**
+ * Segment resource used by the site UI
+ */
+export type SiteSegmentResource = {
+    /**
+     * Unique identifier
+     */
+    id: EntityId;
+    /**
+     * Segment name
+     */
+    name: string;
+    /**
+     * Segment type
+     */
+    type: SiteSegmentType;
+    /**
+     * Segment definition (used by rule segments)
+     */
+    definition?: string | null;
+    /**
+     * Creation timestamp
+     */
+    createdAt: Timestamp;
+    /**
+     * Last update timestamp
+     */
+    updatedAt: Timestamp;
+};
+
+/**
+ * Segment type for site UI
+ */
+export const SiteSegmentType = { RULE: 'rule', SNAPSHOT: 'snapshot' } as const;
+
+/**
+ * Segment type for site UI
+ */
+export type SiteSegmentType = typeof SiteSegmentType[keyof typeof SiteSegmentType];
+
+/**
  * Site request body for updating a contact
  */
 export type SiteUpdateContactInput = {
@@ -296,6 +354,24 @@ export type SiteUpdateMeInput = {
      * New password
      */
     newPassword?: string;
+};
+
+/**
+ * Site request body for updating a segment
+ */
+export type SiteUpdateSegmentInput = {
+    /**
+     * Segment name
+     */
+    name?: string;
+    /**
+     * Segment type
+     */
+    type?: SiteSegmentType;
+    /**
+     * Segment definition (used by rule segments)
+     */
+    definition?: string | null;
 };
 
 /**
@@ -749,6 +825,202 @@ export type SiteEventsListResponses = {
 };
 
 export type SiteEventsListResponse = SiteEventsListResponses[keyof SiteEventsListResponses];
+
+export type SiteSegmentsListData = {
+    body?: never;
+    path: {
+        workspaceSlug: string;
+    };
+    query?: {
+        /**
+         * Page number (1-based)
+         */
+        page?: number;
+        /**
+         * Page size
+         */
+        pageSize?: number;
+    };
+    url: '/w/{workspaceSlug}/segments';
+};
+
+export type SiteSegmentsListErrors = {
+    /**
+     * RFC 7807 bad request response
+     */
+    400: ProblemDetails;
+    /**
+     * RFC 7807 not found response
+     */
+    404: ProblemDetails;
+    /**
+     * RFC 7807 validation response
+     */
+    422: ProblemDetails;
+};
+
+export type SiteSegmentsListError = SiteSegmentsListErrors[keyof SiteSegmentsListErrors];
+
+export type SiteSegmentsListResponses = {
+    /**
+     * Paginated response
+     */
+    200: {
+        /**
+         * List of items
+         */
+        items: Array<SiteSegmentResource>;
+        /**
+         * Page number (1-based)
+         */
+        page: number;
+        /**
+         * Page size
+         */
+        pageSize: number;
+        /**
+         * Total number of elements
+         */
+        totalItems: number;
+        /**
+         * Total number of pages
+         */
+        totalPages: number;
+    };
+};
+
+export type SiteSegmentsListResponse = SiteSegmentsListResponses[keyof SiteSegmentsListResponses];
+
+export type SiteSegmentsCreateData = {
+    body: SiteCreateSegmentInput;
+    path: {
+        workspaceSlug: string;
+    };
+    query?: never;
+    url: '/w/{workspaceSlug}/segments';
+};
+
+export type SiteSegmentsCreateErrors = {
+    /**
+     * RFC 7807 not found response
+     */
+    404: ProblemDetails;
+    /**
+     * RFC 7807 validation response
+     */
+    422: ProblemDetails;
+};
+
+export type SiteSegmentsCreateError = SiteSegmentsCreateErrors[keyof SiteSegmentsCreateErrors];
+
+export type SiteSegmentsCreateResponses = {
+    /**
+     * The request has succeeded and a new resource has been created as a result.
+     */
+    201: SiteSegmentResource;
+};
+
+export type SiteSegmentsCreateResponse = SiteSegmentsCreateResponses[keyof SiteSegmentsCreateResponses];
+
+export type SiteSegmentsDeleteData = {
+    body?: never;
+    path: {
+        workspaceSlug: string;
+        id: EntityId;
+    };
+    query?: never;
+    url: '/w/{workspaceSlug}/segments/{id}';
+};
+
+export type SiteSegmentsDeleteErrors = {
+    /**
+     * RFC 7807 bad request response
+     */
+    400: ProblemDetails;
+    /**
+     * RFC 7807 not found response
+     */
+    404: ProblemDetails;
+};
+
+export type SiteSegmentsDeleteError = SiteSegmentsDeleteErrors[keyof SiteSegmentsDeleteErrors];
+
+export type SiteSegmentsDeleteResponses = {
+    /**
+     * There is no content to send for this request, but the headers may be useful.
+     */
+    204: void;
+};
+
+export type SiteSegmentsDeleteResponse = SiteSegmentsDeleteResponses[keyof SiteSegmentsDeleteResponses];
+
+export type SiteSegmentsGetData = {
+    body?: never;
+    path: {
+        workspaceSlug: string;
+        id: EntityId;
+    };
+    query?: never;
+    url: '/w/{workspaceSlug}/segments/{id}';
+};
+
+export type SiteSegmentsGetErrors = {
+    /**
+     * RFC 7807 bad request response
+     */
+    400: ProblemDetails;
+    /**
+     * RFC 7807 not found response
+     */
+    404: ProblemDetails;
+};
+
+export type SiteSegmentsGetError = SiteSegmentsGetErrors[keyof SiteSegmentsGetErrors];
+
+export type SiteSegmentsGetResponses = {
+    /**
+     * The request has succeeded.
+     */
+    200: SiteSegmentResource;
+};
+
+export type SiteSegmentsGetResponse = SiteSegmentsGetResponses[keyof SiteSegmentsGetResponses];
+
+export type SiteSegmentsUpdateData = {
+    body: SiteUpdateSegmentInput;
+    path: {
+        workspaceSlug: string;
+        id: EntityId;
+    };
+    query?: never;
+    url: '/w/{workspaceSlug}/segments/{id}';
+};
+
+export type SiteSegmentsUpdateErrors = {
+    /**
+     * RFC 7807 bad request response
+     */
+    400: ProblemDetails;
+    /**
+     * RFC 7807 not found response
+     */
+    404: ProblemDetails;
+    /**
+     * RFC 7807 validation response
+     */
+    422: ProblemDetails;
+};
+
+export type SiteSegmentsUpdateError = SiteSegmentsUpdateErrors[keyof SiteSegmentsUpdateErrors];
+
+export type SiteSegmentsUpdateResponses = {
+    /**
+     * The request has succeeded.
+     */
+    200: SiteSegmentResource;
+};
+
+export type SiteSegmentsUpdateResponse = SiteSegmentsUpdateResponses[keyof SiteSegmentsUpdateResponses];
 
 export type SiteTokensListData = {
     body?: never;

@@ -4,8 +4,8 @@
 import { type DefaultError, type InfiniteData, infiniteQueryOptions, queryOptions, type UseMutationOptions } from '@tanstack/react-query';
 
 import { client } from '../client.gen.ts';
-import { type Options, siteAuthDirectLogin, siteAuthRegister, siteContactsCreate, siteContactsDelete, siteContactsGet, siteContactsList, siteContactsUpdate, siteEventsList, siteTokensCreate, siteTokensDelete, siteTokensList, siteUserGetMe, siteUserUpdateMe, siteWorkspacesList, siteWorkspacesUpdate } from '../sdk.gen.ts';
-import type { SiteAuthDirectLoginData, SiteAuthDirectLoginError, SiteAuthDirectLoginResponse, SiteAuthRegisterData, SiteAuthRegisterError, SiteAuthRegisterResponse, SiteContactsCreateData, SiteContactsCreateError, SiteContactsCreateResponse, SiteContactsDeleteData, SiteContactsDeleteError, SiteContactsDeleteResponse, SiteContactsGetData, SiteContactsGetError, SiteContactsGetResponse, SiteContactsListData, SiteContactsListError, SiteContactsListResponse, SiteContactsUpdateData, SiteContactsUpdateError, SiteContactsUpdateResponse, SiteEventsListData, SiteEventsListError, SiteEventsListResponse, SiteTokensCreateData, SiteTokensCreateError, SiteTokensCreateResponse, SiteTokensDeleteData, SiteTokensDeleteError, SiteTokensDeleteResponse, SiteTokensListData, SiteTokensListError, SiteTokensListResponse, SiteUserGetMeData, SiteUserGetMeResponse, SiteUserUpdateMeData, SiteUserUpdateMeError, SiteUserUpdateMeResponse, SiteWorkspacesListData, SiteWorkspacesListResponse, SiteWorkspacesUpdateData, SiteWorkspacesUpdateError, SiteWorkspacesUpdateResponse } from '../types.gen.ts';
+import { type Options, siteAuthDirectLogin, siteAuthRegister, siteContactsCreate, siteContactsDelete, siteContactsGet, siteContactsList, siteContactsUpdate, siteEventsList, siteSegmentsCreate, siteSegmentsDelete, siteSegmentsGet, siteSegmentsList, siteSegmentsUpdate, siteTokensCreate, siteTokensDelete, siteTokensList, siteUserGetMe, siteUserUpdateMe, siteWorkspacesList, siteWorkspacesUpdate } from '../sdk.gen.ts';
+import type { SiteAuthDirectLoginData, SiteAuthDirectLoginError, SiteAuthDirectLoginResponse, SiteAuthRegisterData, SiteAuthRegisterError, SiteAuthRegisterResponse, SiteContactsCreateData, SiteContactsCreateError, SiteContactsCreateResponse, SiteContactsDeleteData, SiteContactsDeleteError, SiteContactsDeleteResponse, SiteContactsGetData, SiteContactsGetError, SiteContactsGetResponse, SiteContactsListData, SiteContactsListError, SiteContactsListResponse, SiteContactsUpdateData, SiteContactsUpdateError, SiteContactsUpdateResponse, SiteEventsListData, SiteEventsListError, SiteEventsListResponse, SiteSegmentsCreateData, SiteSegmentsCreateError, SiteSegmentsCreateResponse, SiteSegmentsDeleteData, SiteSegmentsDeleteError, SiteSegmentsDeleteResponse, SiteSegmentsGetData, SiteSegmentsGetError, SiteSegmentsGetResponse, SiteSegmentsListData, SiteSegmentsListError, SiteSegmentsListResponse, SiteSegmentsUpdateData, SiteSegmentsUpdateError, SiteSegmentsUpdateResponse, SiteTokensCreateData, SiteTokensCreateError, SiteTokensCreateResponse, SiteTokensDeleteData, SiteTokensDeleteError, SiteTokensDeleteResponse, SiteTokensListData, SiteTokensListError, SiteTokensListResponse, SiteUserGetMeData, SiteUserGetMeResponse, SiteUserUpdateMeData, SiteUserUpdateMeError, SiteUserUpdateMeResponse, SiteWorkspacesListData, SiteWorkspacesListResponse, SiteWorkspacesUpdateData, SiteWorkspacesUpdateError, SiteWorkspacesUpdateResponse } from '../types.gen.ts';
 
 export const siteAuthDirectLoginMutation = (options?: Partial<Options<SiteAuthDirectLoginData>>): UseMutationOptions<SiteAuthDirectLoginResponse, SiteAuthDirectLoginError, Options<SiteAuthDirectLoginData>> => {
     const mutationOptions: UseMutationOptions<SiteAuthDirectLoginResponse, SiteAuthDirectLoginError, Options<SiteAuthDirectLoginData>> = {
@@ -295,6 +295,123 @@ export const siteEventsListInfiniteOptions = (options: Options<SiteEventsListDat
         queryKey: siteEventsListInfiniteQueryKey(options)
     });
     return opts as Omit<typeof opts, 'initialData'>;
+};
+
+export const siteSegmentsListQueryKey = (options: Options<SiteSegmentsListData>) => createQueryKey('siteSegmentsList', options);
+
+/**
+ * List segments for the site UI
+ */
+export const siteSegmentsListOptions = (options: Options<SiteSegmentsListData>) => queryOptions<SiteSegmentsListResponse, SiteSegmentsListError, SiteSegmentsListResponse, ReturnType<typeof siteSegmentsListQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await siteSegmentsList({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: siteSegmentsListQueryKey(options)
+});
+
+export const siteSegmentsListInfiniteQueryKey = (options: Options<SiteSegmentsListData>): QueryKey<Options<SiteSegmentsListData>> => createQueryKey('siteSegmentsList', options, true);
+
+/**
+ * List segments for the site UI
+ */
+export const siteSegmentsListInfiniteOptions = (options: Options<SiteSegmentsListData>) => {
+    const opts = infiniteQueryOptions<SiteSegmentsListResponse, SiteSegmentsListError, InfiniteData<SiteSegmentsListResponse>, QueryKey<Options<SiteSegmentsListData>>, number | Pick<QueryKey<Options<SiteSegmentsListData>>[0], 'body' | 'headers' | 'path' | 'query'>>(
+    // @ts-ignore
+    {
+        queryFn: async ({ pageParam, queryKey, signal }) => {
+            // @ts-ignore
+            const page: Pick<QueryKey<Options<SiteSegmentsListData>>[0], 'body' | 'headers' | 'path' | 'query'> = typeof pageParam === 'object' ? pageParam : {
+                query: {
+                    page: pageParam
+                }
+            };
+            const params = createInfiniteParams(queryKey, page);
+            const { data } = await siteSegmentsList({
+                ...options,
+                ...params,
+                signal,
+                throwOnError: true
+            });
+            return data;
+        },
+        queryKey: siteSegmentsListInfiniteQueryKey(options)
+    });
+    return opts as Omit<typeof opts, 'initialData'>;
+};
+
+/**
+ * Create a segment from the site UI
+ */
+export const siteSegmentsCreateMutation = (options?: Partial<Options<SiteSegmentsCreateData>>): UseMutationOptions<SiteSegmentsCreateResponse, SiteSegmentsCreateError, Options<SiteSegmentsCreateData>> => {
+    const mutationOptions: UseMutationOptions<SiteSegmentsCreateResponse, SiteSegmentsCreateError, Options<SiteSegmentsCreateData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await siteSegmentsCreate({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Delete a segment from the site UI
+ */
+export const siteSegmentsDeleteMutation = (options?: Partial<Options<SiteSegmentsDeleteData>>): UseMutationOptions<SiteSegmentsDeleteResponse, SiteSegmentsDeleteError, Options<SiteSegmentsDeleteData>> => {
+    const mutationOptions: UseMutationOptions<SiteSegmentsDeleteResponse, SiteSegmentsDeleteError, Options<SiteSegmentsDeleteData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await siteSegmentsDelete({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const siteSegmentsGetQueryKey = (options: Options<SiteSegmentsGetData>) => createQueryKey('siteSegmentsGet', options);
+
+/**
+ * Get a segment by ID for the site UI
+ */
+export const siteSegmentsGetOptions = (options: Options<SiteSegmentsGetData>) => queryOptions<SiteSegmentsGetResponse, SiteSegmentsGetError, SiteSegmentsGetResponse, ReturnType<typeof siteSegmentsGetQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await siteSegmentsGet({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: siteSegmentsGetQueryKey(options)
+});
+
+/**
+ * Update a segment from the site UI
+ */
+export const siteSegmentsUpdateMutation = (options?: Partial<Options<SiteSegmentsUpdateData>>): UseMutationOptions<SiteSegmentsUpdateResponse, SiteSegmentsUpdateError, Options<SiteSegmentsUpdateData>> => {
+    const mutationOptions: UseMutationOptions<SiteSegmentsUpdateResponse, SiteSegmentsUpdateError, Options<SiteSegmentsUpdateData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await siteSegmentsUpdate({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
 };
 
 export const siteTokensListQueryKey = (options: Options<SiteTokensListData>) => createQueryKey('siteTokensList', options);

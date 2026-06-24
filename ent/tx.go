@@ -18,6 +18,8 @@ type Tx struct {
 	Contact *ContactClient
 	// Event is the client for interacting with the Event builders.
 	Event *EventClient
+	// Segment is the client for interacting with the Segment builders.
+	Segment *SegmentClient
 	// TrackingProfile is the client for interacting with the TrackingProfile builders.
 	TrackingProfile *TrackingProfileClient
 	// TrackingVisitor is the client for interacting with the TrackingVisitor builders.
@@ -160,6 +162,7 @@ func (tx *Tx) init() {
 	tx.ApiToken = NewApiTokenClient(tx.config)
 	tx.Contact = NewContactClient(tx.config)
 	tx.Event = NewEventClient(tx.config)
+	tx.Segment = NewSegmentClient(tx.config)
 	tx.TrackingProfile = NewTrackingProfileClient(tx.config)
 	tx.TrackingVisitor = NewTrackingVisitorClient(tx.config)
 	tx.User = NewUserClient(tx.config)

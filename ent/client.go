@@ -18,6 +18,7 @@ import (
 	"github.com/mokevnin/1mail/ent/apitoken"
 	"github.com/mokevnin/1mail/ent/contact"
 	"github.com/mokevnin/1mail/ent/event"
+	"github.com/mokevnin/1mail/ent/segment"
 	"github.com/mokevnin/1mail/ent/trackingprofile"
 	"github.com/mokevnin/1mail/ent/trackingvisitor"
 	"github.com/mokevnin/1mail/ent/user"
@@ -35,6 +36,8 @@ type Client struct {
 	Contact *ContactClient
 	// Event is the client for interacting with the Event builders.
 	Event *EventClient
+	// Segment is the client for interacting with the Segment builders.
+	Segment *SegmentClient
 	// TrackingProfile is the client for interacting with the TrackingProfile builders.
 	TrackingProfile *TrackingProfileClient
 	// TrackingVisitor is the client for interacting with the TrackingVisitor builders.
@@ -57,6 +60,7 @@ func (c *Client) init() {
 	c.ApiToken = NewApiTokenClient(c.config)
 	c.Contact = NewContactClient(c.config)
 	c.Event = NewEventClient(c.config)
+	c.Segment = NewSegmentClient(c.config)
 	c.TrackingProfile = NewTrackingProfileClient(c.config)
 	c.TrackingVisitor = NewTrackingVisitorClient(c.config)
 	c.User = NewUserClient(c.config)
@@ -156,6 +160,7 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		ApiToken:        NewApiTokenClient(cfg),
 		Contact:         NewContactClient(cfg),
 		Event:           NewEventClient(cfg),
+		Segment:         NewSegmentClient(cfg),
 		TrackingProfile: NewTrackingProfileClient(cfg),
 		TrackingVisitor: NewTrackingVisitorClient(cfg),
 		User:            NewUserClient(cfg),
@@ -182,6 +187,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		ApiToken:        NewApiTokenClient(cfg),
 		Contact:         NewContactClient(cfg),
 		Event:           NewEventClient(cfg),
+		Segment:         NewSegmentClient(cfg),
 		TrackingProfile: NewTrackingProfileClient(cfg),
 		TrackingVisitor: NewTrackingVisitorClient(cfg),
 		User:            NewUserClient(cfg),
@@ -215,8 +221,8 @@ func (c *Client) Close() error {
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
 	for _, n := range []interface{ Use(...Hook) }{
-		c.ApiToken, c.Contact, c.Event, c.TrackingProfile, c.TrackingVisitor, c.User,
-		c.Workspace,
+		c.ApiToken, c.Contact, c.Event, c.Segment, c.TrackingProfile, c.TrackingVisitor,
+		c.User, c.Workspace,
 	} {
 		n.Use(hooks...)
 	}
@@ -226,8 +232,8 @@ func (c *Client) Use(hooks ...Hook) {
 // In order to add interceptors to a specific client, call: `client.Node.Intercept(...)`.
 func (c *Client) Intercept(interceptors ...Interceptor) {
 	for _, n := range []interface{ Intercept(...Interceptor) }{
-		c.ApiToken, c.Contact, c.Event, c.TrackingProfile, c.TrackingVisitor, c.User,
-		c.Workspace,
+		c.ApiToken, c.Contact, c.Event, c.Segment, c.TrackingProfile, c.TrackingVisitor,
+		c.User, c.Workspace,
 	} {
 		n.Intercept(interceptors...)
 	}
@@ -242,6 +248,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.Contact.mutate(ctx, m)
 	case *EventMutation:
 		return c.Event.mutate(ctx, m)
+	case *SegmentMutation:
+		return c.Segment.mutate(ctx, m)
 	case *TrackingProfileMutation:
 		return c.TrackingProfile.mutate(ctx, m)
 	case *TrackingVisitorMutation:
@@ -699,6 +707,155 @@ func (c *EventClient) mutate(ctx context.Context, m *EventMutation) (Value, erro
 		return (&EventDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("ent: unknown Event mutation op: %q", m.Op())
+	}
+}
+
+// SegmentClient is a client for the Segment schema.
+type SegmentClient struct {
+	config
+}
+
+// NewSegmentClient returns a client for the Segment from the given config.
+func NewSegmentClient(c config) *SegmentClient {
+	return &SegmentClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `segment.Hooks(f(g(h())))`.
+func (c *SegmentClient) Use(hooks ...Hook) {
+	c.hooks.Segment = append(c.hooks.Segment, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `segment.Intercept(f(g(h())))`.
+func (c *SegmentClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Segment = append(c.inters.Segment, interceptors...)
+}
+
+// Create returns a builder for creating a Segment entity.
+func (c *SegmentClient) Create() *SegmentCreate {
+	mutation := newSegmentMutation(c.config, OpCreate)
+	return &SegmentCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Segment entities.
+func (c *SegmentClient) CreateBulk(builders ...*SegmentCreate) *SegmentCreateBulk {
+	return &SegmentCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *SegmentClient) MapCreateBulk(slice any, setFunc func(*SegmentCreate, int)) *SegmentCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &SegmentCreateBulk{err: fmt.Errorf("calling to SegmentClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*SegmentCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &SegmentCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Segment.
+func (c *SegmentClient) Update() *SegmentUpdate {
+	mutation := newSegmentMutation(c.config, OpUpdate)
+	return &SegmentUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *SegmentClient) UpdateOne(_m *Segment) *SegmentUpdateOne {
+	mutation := newSegmentMutation(c.config, OpUpdateOne, withSegment(_m))
+	return &SegmentUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *SegmentClient) UpdateOneID(id int64) *SegmentUpdateOne {
+	mutation := newSegmentMutation(c.config, OpUpdateOne, withSegmentID(id))
+	return &SegmentUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Segment.
+func (c *SegmentClient) Delete() *SegmentDelete {
+	mutation := newSegmentMutation(c.config, OpDelete)
+	return &SegmentDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *SegmentClient) DeleteOne(_m *Segment) *SegmentDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *SegmentClient) DeleteOneID(id int64) *SegmentDeleteOne {
+	builder := c.Delete().Where(segment.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &SegmentDeleteOne{builder}
+}
+
+// Query returns a query builder for Segment.
+func (c *SegmentClient) Query() *SegmentQuery {
+	return &SegmentQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeSegment},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Segment entity by its id.
+func (c *SegmentClient) Get(ctx context.Context, id int64) (*Segment, error) {
+	return c.Query().Where(segment.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *SegmentClient) GetX(ctx context.Context, id int64) *Segment {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryWorkspace queries the workspace edge of a Segment.
+func (c *SegmentClient) QueryWorkspace(_m *Segment) *WorkspaceQuery {
+	query := (&WorkspaceClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(segment.Table, segment.FieldID, id),
+			sqlgraph.To(workspace.Table, workspace.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, segment.WorkspaceTable, segment.WorkspaceColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *SegmentClient) Hooks() []Hook {
+	return c.hooks.Segment
+}
+
+// Interceptors returns the client interceptors.
+func (c *SegmentClient) Interceptors() []Interceptor {
+	return c.inters.Segment
+}
+
+func (c *SegmentClient) mutate(ctx context.Context, m *SegmentMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&SegmentCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&SegmentUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&SegmentUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&SegmentDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown Segment mutation op: %q", m.Op())
 	}
 }
 
@@ -1305,6 +1462,22 @@ func (c *WorkspaceClient) QueryContacts(_m *Workspace) *ContactQuery {
 	return query
 }
 
+// QuerySegments queries the segments edge of a Workspace.
+func (c *WorkspaceClient) QuerySegments(_m *Workspace) *SegmentQuery {
+	query := (&SegmentClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workspace.Table, workspace.FieldID, id),
+			sqlgraph.To(segment.Table, segment.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, workspace.SegmentsTable, workspace.SegmentsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // QueryEvents queries the events edge of a Workspace.
 func (c *WorkspaceClient) QueryEvents(_m *Workspace) *EventQuery {
 	query := (&EventClient{config: c.config}).Query()
@@ -1413,11 +1586,11 @@ func (c *WorkspaceClient) mutate(ctx context.Context, m *WorkspaceMutation) (Val
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		ApiToken, Contact, Event, TrackingProfile, TrackingVisitor, User,
+		ApiToken, Contact, Event, Segment, TrackingProfile, TrackingVisitor, User,
 		Workspace []ent.Hook
 	}
 	inters struct {
-		ApiToken, Contact, Event, TrackingProfile, TrackingVisitor, User,
+		ApiToken, Contact, Event, Segment, TrackingProfile, TrackingVisitor, User,
 		Workspace []ent.Interceptor
 	}
 )

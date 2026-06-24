@@ -15,6 +15,9 @@ type Contact func(*sql.Selector)
 // Event is the predicate function for event builders.
 type Event func(*sql.Selector)
 
+// Segment is the predicate function for segment builders.
+type Segment func(*sql.Selector)
+
 // TrackingProfile is the predicate function for trackingprofile builders.
 type TrackingProfile func(*sql.Selector)
 

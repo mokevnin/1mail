@@ -9,6 +9,7 @@ import (
 	"github.com/mokevnin/1mail/ent/contact"
 	"github.com/mokevnin/1mail/ent/event"
 	"github.com/mokevnin/1mail/ent/schema"
+	"github.com/mokevnin/1mail/ent/segment"
 	"github.com/mokevnin/1mail/ent/trackingprofile"
 	"github.com/mokevnin/1mail/ent/trackingvisitor"
 	"github.com/mokevnin/1mail/ent/user"
@@ -77,6 +78,22 @@ func init() {
 	eventDescCreatedAt := eventFields[9].Descriptor()
 	// event.DefaultCreatedAt holds the default value on creation for the created_at field.
 	event.DefaultCreatedAt = eventDescCreatedAt.Default.(func() time.Time)
+	segmentFields := schema.Segment{}.Fields()
+	_ = segmentFields
+	// segmentDescName is the schema descriptor for name field.
+	segmentDescName := segmentFields[1].Descriptor()
+	// segment.NameValidator is a validator for the "name" field. It is called by the builders before save.
+	segment.NameValidator = segmentDescName.Validators[0].(func(string) error)
+	// segmentDescCreatedAt is the schema descriptor for created_at field.
+	segmentDescCreatedAt := segmentFields[5].Descriptor()
+	// segment.DefaultCreatedAt holds the default value on creation for the created_at field.
+	segment.DefaultCreatedAt = segmentDescCreatedAt.Default.(func() time.Time)
+	// segmentDescUpdatedAt is the schema descriptor for updated_at field.
+	segmentDescUpdatedAt := segmentFields[6].Descriptor()
+	// segment.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	segment.DefaultUpdatedAt = segmentDescUpdatedAt.Default.(func() time.Time)
+	// segment.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	segment.UpdateDefaultUpdatedAt = segmentDescUpdatedAt.UpdateDefault.(func() time.Time)
 	trackingprofileFields := schema.TrackingProfile{}.Fields()
 	_ = trackingprofileFields
 	// trackingprofileDescSubjectID is the schema descriptor for subject_id field.

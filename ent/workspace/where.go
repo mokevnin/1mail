@@ -413,6 +413,29 @@ func HasContactsWith(preds ...predicate.Contact) predicate.Workspace {
 	})
 }
 
+// HasSegments applies the HasEdge predicate on the "segments" edge.
+func HasSegments() predicate.Workspace {
+	return predicate.Workspace(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, SegmentsTable, SegmentsColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasSegmentsWith applies the HasEdge predicate on the "segments" edge with a given conditions (other predicates).
+func HasSegmentsWith(preds ...predicate.Segment) predicate.Workspace {
+	return predicate.Workspace(func(s *sql.Selector) {
+		step := newSegmentsStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // HasEvents applies the HasEdge predicate on the "events" edge.
 func HasEvents() predicate.Workspace {
 	return predicate.Workspace(func(s *sql.Selector) {

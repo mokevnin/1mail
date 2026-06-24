@@ -10,7 +10,13 @@ import {
 } from '@tabler/icons-react'
 import { useMatchRoute, useNavigate } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
-import { activityRoute, contactsRoute, overviewRoute, settingsRoute } from '../router.tsx'
+import {
+  activityRoute,
+  contactsRoute,
+  overviewRoute,
+  segmentsRoute,
+  settingsRoute,
+} from '../router.tsx'
 
 // AppNavbar renders the workspace-scoped sidebar. Active sections are built
 // real now; roadmap sections are disabled placeholders that signal direction.
@@ -35,6 +41,13 @@ export function AppNavbar({ slug }: { slug: string }) {
       onClick: () => navigate({ to: contactsRoute.to, params: { slug } }),
     },
     {
+      key: 'segments',
+      label: t(($) => $.nav.segments),
+      icon: <IconUsersGroup size={18} />,
+      active: Boolean(matchRoute({ to: segmentsRoute.to, params: { slug }, fuzzy: true })),
+      onClick: () => navigate({ to: segmentsRoute.to, params: { slug } }),
+    },
+    {
       key: 'activity',
       label: t(($) => $.nav.activity),
       icon: <IconActivity size={18} />,
@@ -53,7 +66,6 @@ export function AppNavbar({ slug }: { slug: string }) {
   const roadmap = [
     { key: 'campaigns', label: t(($) => $.nav.campaigns), icon: <IconMailbox size={18} /> },
     { key: 'automations', label: t(($) => $.nav.automations), icon: <IconRobot size={18} /> },
-    { key: 'segments', label: t(($) => $.nav.segments), icon: <IconUsersGroup size={18} /> },
   ]
 
   return (

@@ -5,8 +5,8 @@ import * as z from 'zod';
 
 import { client } from './client.gen.ts';
 import type { Client, ClientMeta, Options as Options2, RequestResult, TDataShape } from './client/index.ts';
-import type { SiteAuthDirectLoginData, SiteAuthDirectLoginErrors, SiteAuthDirectLoginResponses, SiteAuthRegisterData, SiteAuthRegisterErrors, SiteAuthRegisterResponses, SiteContactsCreateData, SiteContactsCreateErrors, SiteContactsCreateResponses, SiteContactsDeleteData, SiteContactsDeleteErrors, SiteContactsDeleteResponses, SiteContactsGetData, SiteContactsGetErrors, SiteContactsGetResponses, SiteContactsListData, SiteContactsListErrors, SiteContactsListResponses, SiteContactsUpdateData, SiteContactsUpdateErrors, SiteContactsUpdateResponses, SiteEventsListData, SiteEventsListErrors, SiteEventsListResponses, SiteTokensCreateData, SiteTokensCreateErrors, SiteTokensCreateResponses, SiteTokensDeleteData, SiteTokensDeleteErrors, SiteTokensDeleteResponses, SiteTokensListData, SiteTokensListErrors, SiteTokensListResponses, SiteUserGetMeData, SiteUserGetMeResponses, SiteUserUpdateMeData, SiteUserUpdateMeErrors, SiteUserUpdateMeResponses, SiteWorkspacesListData, SiteWorkspacesListResponses, SiteWorkspacesUpdateData, SiteWorkspacesUpdateErrors, SiteWorkspacesUpdateResponses } from './types.gen.ts';
-import { zSiteAuthDirectLoginBody, zSiteAuthRegisterBody, zSiteContactsCreateBody, zSiteContactsCreatePath, zSiteContactsDeletePath, zSiteContactsGetPath, zSiteContactsListPath, zSiteContactsListQuery, zSiteContactsUpdateBody, zSiteContactsUpdatePath, zSiteEventsListPath, zSiteEventsListQuery, zSiteTokensCreateBody, zSiteTokensCreatePath, zSiteTokensDeletePath, zSiteTokensListPath, zSiteUserUpdateMeBody, zSiteWorkspacesUpdateBody, zSiteWorkspacesUpdatePath } from './zod.gen.ts';
+import type { SiteAuthDirectLoginData, SiteAuthDirectLoginErrors, SiteAuthDirectLoginResponses, SiteAuthRegisterData, SiteAuthRegisterErrors, SiteAuthRegisterResponses, SiteContactsCreateData, SiteContactsCreateErrors, SiteContactsCreateResponses, SiteContactsDeleteData, SiteContactsDeleteErrors, SiteContactsDeleteResponses, SiteContactsGetData, SiteContactsGetErrors, SiteContactsGetResponses, SiteContactsListData, SiteContactsListErrors, SiteContactsListResponses, SiteContactsUpdateData, SiteContactsUpdateErrors, SiteContactsUpdateResponses, SiteEventsListData, SiteEventsListErrors, SiteEventsListResponses, SiteSegmentsCreateData, SiteSegmentsCreateErrors, SiteSegmentsCreateResponses, SiteSegmentsDeleteData, SiteSegmentsDeleteErrors, SiteSegmentsDeleteResponses, SiteSegmentsGetData, SiteSegmentsGetErrors, SiteSegmentsGetResponses, SiteSegmentsListData, SiteSegmentsListErrors, SiteSegmentsListResponses, SiteSegmentsUpdateData, SiteSegmentsUpdateErrors, SiteSegmentsUpdateResponses, SiteTokensCreateData, SiteTokensCreateErrors, SiteTokensCreateResponses, SiteTokensDeleteData, SiteTokensDeleteErrors, SiteTokensDeleteResponses, SiteTokensListData, SiteTokensListErrors, SiteTokensListResponses, SiteUserGetMeData, SiteUserGetMeResponses, SiteUserUpdateMeData, SiteUserUpdateMeErrors, SiteUserUpdateMeResponses, SiteWorkspacesListData, SiteWorkspacesListResponses, SiteWorkspacesUpdateData, SiteWorkspacesUpdateErrors, SiteWorkspacesUpdateResponses } from './types.gen.ts';
+import { zSiteAuthDirectLoginBody, zSiteAuthRegisterBody, zSiteContactsCreateBody, zSiteContactsCreatePath, zSiteContactsDeletePath, zSiteContactsGetPath, zSiteContactsListPath, zSiteContactsListQuery, zSiteContactsUpdateBody, zSiteContactsUpdatePath, zSiteEventsListPath, zSiteEventsListQuery, zSiteSegmentsCreateBody, zSiteSegmentsCreatePath, zSiteSegmentsDeletePath, zSiteSegmentsGetPath, zSiteSegmentsListPath, zSiteSegmentsListQuery, zSiteSegmentsUpdateBody, zSiteSegmentsUpdatePath, zSiteTokensCreateBody, zSiteTokensCreatePath, zSiteTokensDeletePath, zSiteTokensListPath, zSiteUserUpdateMeBody, zSiteWorkspacesUpdateBody, zSiteWorkspacesUpdatePath } from './zod.gen.ts';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -204,6 +204,104 @@ export const siteEventsList = <ThrowOnError extends boolean = false>(options: Op
         }],
     url: '/w/{workspaceSlug}/events',
     ...options
+});
+
+/**
+ * List segments for the site UI
+ */
+export const siteSegmentsList = <ThrowOnError extends boolean = false>(options: Options<SiteSegmentsListData, ThrowOnError>): RequestResult<SiteSegmentsListResponses, SiteSegmentsListErrors, ThrowOnError> => (options.client ?? client).get<SiteSegmentsListResponses, SiteSegmentsListErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: z.never().optional(),
+        path: zSiteSegmentsListPath,
+        query: zSiteSegmentsListQuery.optional()
+    }).parseAsync(data),
+    security: [{
+            in: 'cookie',
+            name: 'JWT',
+            type: 'apiKey'
+        }],
+    url: '/w/{workspaceSlug}/segments',
+    ...options
+});
+
+/**
+ * Create a segment from the site UI
+ */
+export const siteSegmentsCreate = <ThrowOnError extends boolean = false>(options: Options<SiteSegmentsCreateData, ThrowOnError>): RequestResult<SiteSegmentsCreateResponses, SiteSegmentsCreateErrors, ThrowOnError> => (options.client ?? client).post<SiteSegmentsCreateResponses, SiteSegmentsCreateErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: zSiteSegmentsCreateBody,
+        path: zSiteSegmentsCreatePath,
+        query: z.never().optional()
+    }).parseAsync(data),
+    security: [{
+            in: 'cookie',
+            name: 'JWT',
+            type: 'apiKey'
+        }],
+    url: '/w/{workspaceSlug}/segments',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Delete a segment from the site UI
+ */
+export const siteSegmentsDelete = <ThrowOnError extends boolean = false>(options: Options<SiteSegmentsDeleteData, ThrowOnError>): RequestResult<SiteSegmentsDeleteResponses, SiteSegmentsDeleteErrors, ThrowOnError> => (options.client ?? client).delete<SiteSegmentsDeleteResponses, SiteSegmentsDeleteErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: z.never().optional(),
+        path: zSiteSegmentsDeletePath,
+        query: z.never().optional()
+    }).parseAsync(data),
+    security: [{
+            in: 'cookie',
+            name: 'JWT',
+            type: 'apiKey'
+        }],
+    url: '/w/{workspaceSlug}/segments/{id}',
+    ...options
+});
+
+/**
+ * Get a segment by ID for the site UI
+ */
+export const siteSegmentsGet = <ThrowOnError extends boolean = false>(options: Options<SiteSegmentsGetData, ThrowOnError>): RequestResult<SiteSegmentsGetResponses, SiteSegmentsGetErrors, ThrowOnError> => (options.client ?? client).get<SiteSegmentsGetResponses, SiteSegmentsGetErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: z.never().optional(),
+        path: zSiteSegmentsGetPath,
+        query: z.never().optional()
+    }).parseAsync(data),
+    security: [{
+            in: 'cookie',
+            name: 'JWT',
+            type: 'apiKey'
+        }],
+    url: '/w/{workspaceSlug}/segments/{id}',
+    ...options
+});
+
+/**
+ * Update a segment from the site UI
+ */
+export const siteSegmentsUpdate = <ThrowOnError extends boolean = false>(options: Options<SiteSegmentsUpdateData, ThrowOnError>): RequestResult<SiteSegmentsUpdateResponses, SiteSegmentsUpdateErrors, ThrowOnError> => (options.client ?? client).put<SiteSegmentsUpdateResponses, SiteSegmentsUpdateErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: zSiteSegmentsUpdateBody,
+        path: zSiteSegmentsUpdatePath,
+        query: z.never().optional()
+    }).parseAsync(data),
+    security: [{
+            in: 'cookie',
+            name: 'JWT',
+            type: 'apiKey'
+        }],
+    url: '/w/{workspaceSlug}/segments/{id}',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
 });
 
 /**

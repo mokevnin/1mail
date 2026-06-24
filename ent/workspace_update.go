@@ -15,6 +15,7 @@ import (
 	"github.com/mokevnin/1mail/ent/contact"
 	"github.com/mokevnin/1mail/ent/event"
 	"github.com/mokevnin/1mail/ent/predicate"
+	"github.com/mokevnin/1mail/ent/segment"
 	"github.com/mokevnin/1mail/ent/trackingprofile"
 	"github.com/mokevnin/1mail/ent/trackingvisitor"
 	"github.com/mokevnin/1mail/ent/user"
@@ -117,6 +118,21 @@ func (_u *WorkspaceUpdate) AddContacts(v ...*Contact) *WorkspaceUpdate {
 	return _u.AddContactIDs(ids...)
 }
 
+// AddSegmentIDs adds the "segments" edge to the Segment entity by IDs.
+func (_u *WorkspaceUpdate) AddSegmentIDs(ids ...int64) *WorkspaceUpdate {
+	_u.mutation.AddSegmentIDs(ids...)
+	return _u
+}
+
+// AddSegments adds the "segments" edges to the Segment entity.
+func (_u *WorkspaceUpdate) AddSegments(v ...*Segment) *WorkspaceUpdate {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddSegmentIDs(ids...)
+}
+
 // AddEventIDs adds the "events" edge to the Event entity by IDs.
 func (_u *WorkspaceUpdate) AddEventIDs(ids ...int64) *WorkspaceUpdate {
 	_u.mutation.AddEventIDs(ids...)
@@ -206,6 +222,27 @@ func (_u *WorkspaceUpdate) RemoveContacts(v ...*Contact) *WorkspaceUpdate {
 		ids[i] = v[i].ID
 	}
 	return _u.RemoveContactIDs(ids...)
+}
+
+// ClearSegments clears all "segments" edges to the Segment entity.
+func (_u *WorkspaceUpdate) ClearSegments() *WorkspaceUpdate {
+	_u.mutation.ClearSegments()
+	return _u
+}
+
+// RemoveSegmentIDs removes the "segments" edge to Segment entities by IDs.
+func (_u *WorkspaceUpdate) RemoveSegmentIDs(ids ...int64) *WorkspaceUpdate {
+	_u.mutation.RemoveSegmentIDs(ids...)
+	return _u
+}
+
+// RemoveSegments removes "segments" edges to Segment entities.
+func (_u *WorkspaceUpdate) RemoveSegments(v ...*Segment) *WorkspaceUpdate {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveSegmentIDs(ids...)
 }
 
 // ClearEvents clears all "events" edges to the Event entity.
@@ -416,6 +453,51 @@ func (_u *WorkspaceUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(contact.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.SegmentsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   workspace.SegmentsTable,
+			Columns: []string{workspace.SegmentsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(segment.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedSegmentsIDs(); len(nodes) > 0 && !_u.mutation.SegmentsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   workspace.SegmentsTable,
+			Columns: []string{workspace.SegmentsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(segment.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.SegmentsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   workspace.SegmentsTable,
+			Columns: []string{workspace.SegmentsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(segment.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {
@@ -735,6 +817,21 @@ func (_u *WorkspaceUpdateOne) AddContacts(v ...*Contact) *WorkspaceUpdateOne {
 	return _u.AddContactIDs(ids...)
 }
 
+// AddSegmentIDs adds the "segments" edge to the Segment entity by IDs.
+func (_u *WorkspaceUpdateOne) AddSegmentIDs(ids ...int64) *WorkspaceUpdateOne {
+	_u.mutation.AddSegmentIDs(ids...)
+	return _u
+}
+
+// AddSegments adds the "segments" edges to the Segment entity.
+func (_u *WorkspaceUpdateOne) AddSegments(v ...*Segment) *WorkspaceUpdateOne {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddSegmentIDs(ids...)
+}
+
 // AddEventIDs adds the "events" edge to the Event entity by IDs.
 func (_u *WorkspaceUpdateOne) AddEventIDs(ids ...int64) *WorkspaceUpdateOne {
 	_u.mutation.AddEventIDs(ids...)
@@ -824,6 +921,27 @@ func (_u *WorkspaceUpdateOne) RemoveContacts(v ...*Contact) *WorkspaceUpdateOne 
 		ids[i] = v[i].ID
 	}
 	return _u.RemoveContactIDs(ids...)
+}
+
+// ClearSegments clears all "segments" edges to the Segment entity.
+func (_u *WorkspaceUpdateOne) ClearSegments() *WorkspaceUpdateOne {
+	_u.mutation.ClearSegments()
+	return _u
+}
+
+// RemoveSegmentIDs removes the "segments" edge to Segment entities by IDs.
+func (_u *WorkspaceUpdateOne) RemoveSegmentIDs(ids ...int64) *WorkspaceUpdateOne {
+	_u.mutation.RemoveSegmentIDs(ids...)
+	return _u
+}
+
+// RemoveSegments removes "segments" edges to Segment entities.
+func (_u *WorkspaceUpdateOne) RemoveSegments(v ...*Segment) *WorkspaceUpdateOne {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveSegmentIDs(ids...)
 }
 
 // ClearEvents clears all "events" edges to the Event entity.
@@ -1064,6 +1182,51 @@ func (_u *WorkspaceUpdateOne) sqlSave(ctx context.Context) (_node *Workspace, er
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(contact.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.SegmentsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   workspace.SegmentsTable,
+			Columns: []string{workspace.SegmentsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(segment.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedSegmentsIDs(); len(nodes) > 0 && !_u.mutation.SegmentsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   workspace.SegmentsTable,
+			Columns: []string{workspace.SegmentsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(segment.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.SegmentsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   workspace.SegmentsTable,
+			Columns: []string{workspace.SegmentsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(segment.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {

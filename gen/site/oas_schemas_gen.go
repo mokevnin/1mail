@@ -744,6 +744,52 @@ func (o OptSiteDirectLoginResultAttrs) Or(d SiteDirectLoginResultAttrs) SiteDire
 	return d
 }
 
+// NewOptSiteSegmentType returns new OptSiteSegmentType with value set to v.
+func NewOptSiteSegmentType(v SiteSegmentType) OptSiteSegmentType {
+	return OptSiteSegmentType{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptSiteSegmentType is optional SiteSegmentType.
+type OptSiteSegmentType struct {
+	Value SiteSegmentType
+	Set   bool
+}
+
+// IsSet returns true if OptSiteSegmentType was set.
+func (o OptSiteSegmentType) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptSiteSegmentType) Reset() {
+	var v SiteSegmentType
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptSiteSegmentType) SetTo(v SiteSegmentType) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptSiteSegmentType) Get() (v SiteSegmentType, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptSiteSegmentType) Or(d SiteSegmentType) SiteSegmentType {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
 // NewOptString returns new OptString with value set to v.
 func NewOptString(v string) OptString {
 	return OptString{
@@ -1392,6 +1438,47 @@ func (s *SiteCreateContactInputCustomFields) init() SiteCreateContactInputCustom
 	return m
 }
 
+// Site request body for creating a segment.
+// Ref: #/components/schemas/SiteCreateSegmentInput
+type SiteCreateSegmentInput struct {
+	// Segment name.
+	Name string `json:"name"`
+	// Segment type.
+	Type SiteSegmentType `json:"type"`
+	// Segment definition (used by rule segments).
+	Definition OptNilString `json:"definition"`
+}
+
+// GetName returns the value of Name.
+func (s *SiteCreateSegmentInput) GetName() string {
+	return s.Name
+}
+
+// GetType returns the value of Type.
+func (s *SiteCreateSegmentInput) GetType() SiteSegmentType {
+	return s.Type
+}
+
+// GetDefinition returns the value of Definition.
+func (s *SiteCreateSegmentInput) GetDefinition() OptNilString {
+	return s.Definition
+}
+
+// SetName sets the value of Name.
+func (s *SiteCreateSegmentInput) SetName(val string) {
+	s.Name = val
+}
+
+// SetType sets the value of Type.
+func (s *SiteCreateSegmentInput) SetType(val SiteSegmentType) {
+	s.Type = val
+}
+
+// SetDefinition sets the value of Definition.
+func (s *SiteCreateSegmentInput) SetDefinition(val OptNilString) {
+	s.Definition = val
+}
+
 // Create a workspace API token.
 // Ref: #/components/schemas/SiteCreateTokenInput
 type SiteCreateTokenInput struct {
@@ -1861,6 +1948,249 @@ func (s *SiteRegisterResult) SetCreatedAt(val Timestamp) {
 
 func (*SiteRegisterResult) siteAuthRegisterRes() {}
 
+// Segment resource used by the site UI.
+// Ref: #/components/schemas/SiteSegmentResource
+type SiteSegmentResource struct {
+	// Unique identifier.
+	ID EntityId `json:"id"`
+	// Segment name.
+	Name string `json:"name"`
+	// Segment type.
+	Type SiteSegmentType `json:"type"`
+	// Segment definition (used by rule segments).
+	Definition OptNilString `json:"definition"`
+	// Creation timestamp.
+	CreatedAt Timestamp `json:"createdAt"`
+	// Last update timestamp.
+	UpdatedAt Timestamp `json:"updatedAt"`
+}
+
+// GetID returns the value of ID.
+func (s *SiteSegmentResource) GetID() EntityId {
+	return s.ID
+}
+
+// GetName returns the value of Name.
+func (s *SiteSegmentResource) GetName() string {
+	return s.Name
+}
+
+// GetType returns the value of Type.
+func (s *SiteSegmentResource) GetType() SiteSegmentType {
+	return s.Type
+}
+
+// GetDefinition returns the value of Definition.
+func (s *SiteSegmentResource) GetDefinition() OptNilString {
+	return s.Definition
+}
+
+// GetCreatedAt returns the value of CreatedAt.
+func (s *SiteSegmentResource) GetCreatedAt() Timestamp {
+	return s.CreatedAt
+}
+
+// GetUpdatedAt returns the value of UpdatedAt.
+func (s *SiteSegmentResource) GetUpdatedAt() Timestamp {
+	return s.UpdatedAt
+}
+
+// SetID sets the value of ID.
+func (s *SiteSegmentResource) SetID(val EntityId) {
+	s.ID = val
+}
+
+// SetName sets the value of Name.
+func (s *SiteSegmentResource) SetName(val string) {
+	s.Name = val
+}
+
+// SetType sets the value of Type.
+func (s *SiteSegmentResource) SetType(val SiteSegmentType) {
+	s.Type = val
+}
+
+// SetDefinition sets the value of Definition.
+func (s *SiteSegmentResource) SetDefinition(val OptNilString) {
+	s.Definition = val
+}
+
+// SetCreatedAt sets the value of CreatedAt.
+func (s *SiteSegmentResource) SetCreatedAt(val Timestamp) {
+	s.CreatedAt = val
+}
+
+// SetUpdatedAt sets the value of UpdatedAt.
+func (s *SiteSegmentResource) SetUpdatedAt(val Timestamp) {
+	s.UpdatedAt = val
+}
+
+func (*SiteSegmentResource) siteSegmentsCreateRes() {}
+func (*SiteSegmentResource) siteSegmentsGetRes()    {}
+func (*SiteSegmentResource) siteSegmentsUpdateRes() {}
+
+// Segment type for site UI.
+// Ref: #/components/schemas/SiteSegmentType
+type SiteSegmentType string
+
+const (
+	SiteSegmentTypeRule     SiteSegmentType = "rule"
+	SiteSegmentTypeSnapshot SiteSegmentType = "snapshot"
+)
+
+// AllValues returns all SiteSegmentType values.
+func (SiteSegmentType) AllValues() []SiteSegmentType {
+	return []SiteSegmentType{
+		SiteSegmentTypeRule,
+		SiteSegmentTypeSnapshot,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s SiteSegmentType) MarshalText() ([]byte, error) {
+	switch s {
+	case SiteSegmentTypeRule:
+		return []byte(s), nil
+	case SiteSegmentTypeSnapshot:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *SiteSegmentType) UnmarshalText(data []byte) error {
+	switch SiteSegmentType(data) {
+	case SiteSegmentTypeRule:
+		*s = SiteSegmentTypeRule
+		return nil
+	case SiteSegmentTypeSnapshot:
+		*s = SiteSegmentTypeSnapshot
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+type SiteSegmentsCreateNotFound ProblemDetails
+
+func (*SiteSegmentsCreateNotFound) siteSegmentsCreateRes() {}
+
+type SiteSegmentsCreateUnprocessableEntity ProblemDetails
+
+func (*SiteSegmentsCreateUnprocessableEntity) siteSegmentsCreateRes() {}
+
+type SiteSegmentsDeleteBadRequest ProblemDetails
+
+func (*SiteSegmentsDeleteBadRequest) siteSegmentsDeleteRes() {}
+
+// SiteSegmentsDeleteNoContent is response for SiteSegmentsDelete operation.
+type SiteSegmentsDeleteNoContent struct{}
+
+func (*SiteSegmentsDeleteNoContent) siteSegmentsDeleteRes() {}
+
+type SiteSegmentsDeleteNotFound ProblemDetails
+
+func (*SiteSegmentsDeleteNotFound) siteSegmentsDeleteRes() {}
+
+type SiteSegmentsGetBadRequest ProblemDetails
+
+func (*SiteSegmentsGetBadRequest) siteSegmentsGetRes() {}
+
+type SiteSegmentsGetNotFound ProblemDetails
+
+func (*SiteSegmentsGetNotFound) siteSegmentsGetRes() {}
+
+type SiteSegmentsListBadRequest ProblemDetails
+
+func (*SiteSegmentsListBadRequest) siteSegmentsListRes() {}
+
+type SiteSegmentsListNotFound ProblemDetails
+
+func (*SiteSegmentsListNotFound) siteSegmentsListRes() {}
+
+// Paginated response.
+type SiteSegmentsListOK struct {
+	// List of items.
+	Items []SiteSegmentResource `json:"items"`
+	// Page number (1-based).
+	Page int32 `json:"page"`
+	// Page size.
+	PageSize int32 `json:"pageSize"`
+	// Total number of elements.
+	TotalItems int32 `json:"totalItems"`
+	// Total number of pages.
+	TotalPages int32 `json:"totalPages"`
+}
+
+// GetItems returns the value of Items.
+func (s *SiteSegmentsListOK) GetItems() []SiteSegmentResource {
+	return s.Items
+}
+
+// GetPage returns the value of Page.
+func (s *SiteSegmentsListOK) GetPage() int32 {
+	return s.Page
+}
+
+// GetPageSize returns the value of PageSize.
+func (s *SiteSegmentsListOK) GetPageSize() int32 {
+	return s.PageSize
+}
+
+// GetTotalItems returns the value of TotalItems.
+func (s *SiteSegmentsListOK) GetTotalItems() int32 {
+	return s.TotalItems
+}
+
+// GetTotalPages returns the value of TotalPages.
+func (s *SiteSegmentsListOK) GetTotalPages() int32 {
+	return s.TotalPages
+}
+
+// SetItems sets the value of Items.
+func (s *SiteSegmentsListOK) SetItems(val []SiteSegmentResource) {
+	s.Items = val
+}
+
+// SetPage sets the value of Page.
+func (s *SiteSegmentsListOK) SetPage(val int32) {
+	s.Page = val
+}
+
+// SetPageSize sets the value of PageSize.
+func (s *SiteSegmentsListOK) SetPageSize(val int32) {
+	s.PageSize = val
+}
+
+// SetTotalItems sets the value of TotalItems.
+func (s *SiteSegmentsListOK) SetTotalItems(val int32) {
+	s.TotalItems = val
+}
+
+// SetTotalPages sets the value of TotalPages.
+func (s *SiteSegmentsListOK) SetTotalPages(val int32) {
+	s.TotalPages = val
+}
+
+func (*SiteSegmentsListOK) siteSegmentsListRes() {}
+
+type SiteSegmentsListUnprocessableEntity ProblemDetails
+
+func (*SiteSegmentsListUnprocessableEntity) siteSegmentsListRes() {}
+
+type SiteSegmentsUpdateBadRequest ProblemDetails
+
+func (*SiteSegmentsUpdateBadRequest) siteSegmentsUpdateRes() {}
+
+type SiteSegmentsUpdateNotFound ProblemDetails
+
+func (*SiteSegmentsUpdateNotFound) siteSegmentsUpdateRes() {}
+
+type SiteSegmentsUpdateUnprocessableEntity ProblemDetails
+
+func (*SiteSegmentsUpdateUnprocessableEntity) siteSegmentsUpdateRes() {}
+
 type SiteTokensCreateNotFound ProblemDetails
 
 func (*SiteTokensCreateNotFound) siteTokensCreateRes() {}
@@ -1991,6 +2321,47 @@ func (s *SiteUpdateMeInput) SetCurrentPassword(val OptString) {
 // SetNewPassword sets the value of NewPassword.
 func (s *SiteUpdateMeInput) SetNewPassword(val OptString) {
 	s.NewPassword = val
+}
+
+// Site request body for updating a segment.
+// Ref: #/components/schemas/SiteUpdateSegmentInput
+type SiteUpdateSegmentInput struct {
+	// Segment name.
+	Name OptString `json:"name"`
+	// Segment type.
+	Type OptSiteSegmentType `json:"type"`
+	// Segment definition (used by rule segments).
+	Definition OptNilString `json:"definition"`
+}
+
+// GetName returns the value of Name.
+func (s *SiteUpdateSegmentInput) GetName() OptString {
+	return s.Name
+}
+
+// GetType returns the value of Type.
+func (s *SiteUpdateSegmentInput) GetType() OptSiteSegmentType {
+	return s.Type
+}
+
+// GetDefinition returns the value of Definition.
+func (s *SiteUpdateSegmentInput) GetDefinition() OptNilString {
+	return s.Definition
+}
+
+// SetName sets the value of Name.
+func (s *SiteUpdateSegmentInput) SetName(val OptString) {
+	s.Name = val
+}
+
+// SetType sets the value of Type.
+func (s *SiteUpdateSegmentInput) SetType(val OptSiteSegmentType) {
+	s.Type = val
+}
+
+// SetDefinition sets the value of Definition.
+func (s *SiteUpdateSegmentInput) SetDefinition(val OptNilString) {
+	s.Definition = val
 }
 
 // Update a workspace. The slug is immutable (it is the route key and globally unique); only the

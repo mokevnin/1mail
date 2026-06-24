@@ -81,6 +81,51 @@ func (UnimplementedHandler) SiteEventsList(ctx context.Context, params SiteEvent
 	return r, ht.ErrNotImplemented
 }
 
+// SiteSegmentsCreate implements SiteSegments_create operation.
+//
+// Create a segment from the site UI.
+//
+// POST /w/{workspaceSlug}/segments
+func (UnimplementedHandler) SiteSegmentsCreate(ctx context.Context, req *SiteCreateSegmentInput, params SiteSegmentsCreateParams) (r SiteSegmentsCreateRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// SiteSegmentsDelete implements SiteSegments_delete operation.
+//
+// Delete a segment from the site UI.
+//
+// DELETE /w/{workspaceSlug}/segments/{id}
+func (UnimplementedHandler) SiteSegmentsDelete(ctx context.Context, params SiteSegmentsDeleteParams) (r SiteSegmentsDeleteRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// SiteSegmentsGet implements SiteSegments_get operation.
+//
+// Get a segment by ID for the site UI.
+//
+// GET /w/{workspaceSlug}/segments/{id}
+func (UnimplementedHandler) SiteSegmentsGet(ctx context.Context, params SiteSegmentsGetParams) (r SiteSegmentsGetRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// SiteSegmentsList implements SiteSegments_list operation.
+//
+// List segments for the site UI.
+//
+// GET /w/{workspaceSlug}/segments
+func (UnimplementedHandler) SiteSegmentsList(ctx context.Context, params SiteSegmentsListParams) (r SiteSegmentsListRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// SiteSegmentsUpdate implements SiteSegments_update operation.
+//
+// Update a segment from the site UI.
+//
+// PUT /w/{workspaceSlug}/segments/{id}
+func (UnimplementedHandler) SiteSegmentsUpdate(ctx context.Context, req *SiteUpdateSegmentInput, params SiteSegmentsUpdateParams) (r SiteSegmentsUpdateRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // SiteTokensCreate implements SiteTokens_create operation.
 //
 // Create an API token; the full secret is returned once.

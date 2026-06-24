@@ -31,6 +31,7 @@ import (
 // goverter:extend eventProperties
 type Converter interface {
 	ContactToResource(source *ent.Contact) siteapi.SiteContactResource
+	SegmentToResource(source *ent.Segment) siteapi.SiteSegmentResource
 	TokenToResource(source *ent.ApiToken) siteapi.SiteApiTokenResource
 	UserToResource(source *ent.User) *siteapi.SiteUserResource
 	WorkspaceToResource(source *ent.Workspace) siteapi.SiteWorkspaceResource

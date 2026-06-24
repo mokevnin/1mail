@@ -15,6 +15,7 @@ import (
 	"github.com/mokevnin/1mail/ent/contact"
 	"github.com/mokevnin/1mail/ent/event"
 	"github.com/mokevnin/1mail/ent/predicate"
+	"github.com/mokevnin/1mail/ent/segment"
 	"github.com/mokevnin/1mail/ent/trackingprofile"
 	"github.com/mokevnin/1mail/ent/trackingvisitor"
 	"github.com/mokevnin/1mail/ent/user"
@@ -33,6 +34,7 @@ const (
 	TypeApiToken        = "ApiToken"
 	TypeContact         = "Contact"
 	TypeEvent           = "Event"
+	TypeSegment         = "Segment"
 	TypeTrackingProfile = "TrackingProfile"
 	TypeTrackingVisitor = "TrackingVisitor"
 	TypeUser            = "User"
@@ -2809,6 +2811,687 @@ func (m *EventMutation) ResetEdge(name string) error {
 	return fmt.Errorf("unknown Event edge %s", name)
 }
 
+// SegmentMutation represents an operation that mutates the Segment nodes in the graph.
+type SegmentMutation struct {
+	config
+	op               Op
+	typ              string
+	id               *int64
+	name             *string
+	_type            *segment.Type
+	definition       *string
+	created_at       *time.Time
+	updated_at       *time.Time
+	clearedFields    map[string]struct{}
+	workspace        *int64
+	clearedworkspace bool
+	done             bool
+	oldValue         func(context.Context) (*Segment, error)
+	predicates       []predicate.Segment
+}
+
+var _ ent.Mutation = (*SegmentMutation)(nil)
+
+// segmentOption allows management of the mutation configuration using functional options.
+type segmentOption func(*SegmentMutation)
+
+// newSegmentMutation creates new mutation for the Segment entity.
+func newSegmentMutation(c config, op Op, opts ...segmentOption) *SegmentMutation {
+	m := &SegmentMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeSegment,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withSegmentID sets the ID field of the mutation.
+func withSegmentID(id int64) segmentOption {
+	return func(m *SegmentMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *Segment
+		)
+		m.oldValue = func(ctx context.Context) (*Segment, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().Segment.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withSegment sets the old Segment of the mutation.
+func withSegment(node *Segment) segmentOption {
+	return func(m *SegmentMutation) {
+		m.oldValue = func(context.Context) (*Segment, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m SegmentMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m SegmentMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of Segment entities.
+func (m *SegmentMutation) SetID(id int64) {
+	m.id = &id
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *SegmentMutation) ID() (id int64, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *SegmentMutation) IDs(ctx context.Context) ([]int64, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []int64{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().Segment.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetName sets the "name" field.
+func (m *SegmentMutation) SetName(s string) {
+	m.name = &s
+}
+
+// Name returns the value of the "name" field in the mutation.
+func (m *SegmentMutation) Name() (r string, exists bool) {
+	v := m.name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldName returns the old "name" field's value of the Segment entity.
+// If the Segment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *SegmentMutation) OldName(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldName: %w", err)
+	}
+	return oldValue.Name, nil
+}
+
+// ResetName resets all changes to the "name" field.
+func (m *SegmentMutation) ResetName() {
+	m.name = nil
+}
+
+// SetType sets the "type" field.
+func (m *SegmentMutation) SetType(s segment.Type) {
+	m._type = &s
+}
+
+// GetType returns the value of the "type" field in the mutation.
+func (m *SegmentMutation) GetType() (r segment.Type, exists bool) {
+	v := m._type
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldType returns the old "type" field's value of the Segment entity.
+// If the Segment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *SegmentMutation) OldType(ctx context.Context) (v segment.Type, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldType is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldType requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldType: %w", err)
+	}
+	return oldValue.Type, nil
+}
+
+// ResetType resets all changes to the "type" field.
+func (m *SegmentMutation) ResetType() {
+	m._type = nil
+}
+
+// SetDefinition sets the "definition" field.
+func (m *SegmentMutation) SetDefinition(s string) {
+	m.definition = &s
+}
+
+// Definition returns the value of the "definition" field in the mutation.
+func (m *SegmentMutation) Definition() (r string, exists bool) {
+	v := m.definition
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldDefinition returns the old "definition" field's value of the Segment entity.
+// If the Segment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *SegmentMutation) OldDefinition(ctx context.Context) (v *string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldDefinition is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldDefinition requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldDefinition: %w", err)
+	}
+	return oldValue.Definition, nil
+}
+
+// ClearDefinition clears the value of the "definition" field.
+func (m *SegmentMutation) ClearDefinition() {
+	m.definition = nil
+	m.clearedFields[segment.FieldDefinition] = struct{}{}
+}
+
+// DefinitionCleared returns if the "definition" field was cleared in this mutation.
+func (m *SegmentMutation) DefinitionCleared() bool {
+	_, ok := m.clearedFields[segment.FieldDefinition]
+	return ok
+}
+
+// ResetDefinition resets all changes to the "definition" field.
+func (m *SegmentMutation) ResetDefinition() {
+	m.definition = nil
+	delete(m.clearedFields, segment.FieldDefinition)
+}
+
+// SetWorkspaceID sets the "workspace_id" field.
+func (m *SegmentMutation) SetWorkspaceID(i int64) {
+	m.workspace = &i
+}
+
+// WorkspaceID returns the value of the "workspace_id" field in the mutation.
+func (m *SegmentMutation) WorkspaceID() (r int64, exists bool) {
+	v := m.workspace
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldWorkspaceID returns the old "workspace_id" field's value of the Segment entity.
+// If the Segment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *SegmentMutation) OldWorkspaceID(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldWorkspaceID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldWorkspaceID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldWorkspaceID: %w", err)
+	}
+	return oldValue.WorkspaceID, nil
+}
+
+// ResetWorkspaceID resets all changes to the "workspace_id" field.
+func (m *SegmentMutation) ResetWorkspaceID() {
+	m.workspace = nil
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *SegmentMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *SegmentMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the Segment entity.
+// If the Segment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *SegmentMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *SegmentMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (m *SegmentMutation) SetUpdatedAt(t time.Time) {
+	m.updated_at = &t
+}
+
+// UpdatedAt returns the value of the "updated_at" field in the mutation.
+func (m *SegmentMutation) UpdatedAt() (r time.Time, exists bool) {
+	v := m.updated_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUpdatedAt returns the old "updated_at" field's value of the Segment entity.
+// If the Segment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *SegmentMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUpdatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUpdatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUpdatedAt: %w", err)
+	}
+	return oldValue.UpdatedAt, nil
+}
+
+// ResetUpdatedAt resets all changes to the "updated_at" field.
+func (m *SegmentMutation) ResetUpdatedAt() {
+	m.updated_at = nil
+}
+
+// ClearWorkspace clears the "workspace" edge to the Workspace entity.
+func (m *SegmentMutation) ClearWorkspace() {
+	m.clearedworkspace = true
+	m.clearedFields[segment.FieldWorkspaceID] = struct{}{}
+}
+
+// WorkspaceCleared reports if the "workspace" edge to the Workspace entity was cleared.
+func (m *SegmentMutation) WorkspaceCleared() bool {
+	return m.clearedworkspace
+}
+
+// WorkspaceIDs returns the "workspace" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// WorkspaceID instead. It exists only for internal usage by the builders.
+func (m *SegmentMutation) WorkspaceIDs() (ids []int64) {
+	if id := m.workspace; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetWorkspace resets all changes to the "workspace" edge.
+func (m *SegmentMutation) ResetWorkspace() {
+	m.workspace = nil
+	m.clearedworkspace = false
+}
+
+// Where appends a list predicates to the SegmentMutation builder.
+func (m *SegmentMutation) Where(ps ...predicate.Segment) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the SegmentMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *SegmentMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.Segment, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *SegmentMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *SegmentMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (Segment).
+func (m *SegmentMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *SegmentMutation) Fields() []string {
+	fields := make([]string, 0, 6)
+	if m.name != nil {
+		fields = append(fields, segment.FieldName)
+	}
+	if m._type != nil {
+		fields = append(fields, segment.FieldType)
+	}
+	if m.definition != nil {
+		fields = append(fields, segment.FieldDefinition)
+	}
+	if m.workspace != nil {
+		fields = append(fields, segment.FieldWorkspaceID)
+	}
+	if m.created_at != nil {
+		fields = append(fields, segment.FieldCreatedAt)
+	}
+	if m.updated_at != nil {
+		fields = append(fields, segment.FieldUpdatedAt)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *SegmentMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case segment.FieldName:
+		return m.Name()
+	case segment.FieldType:
+		return m.GetType()
+	case segment.FieldDefinition:
+		return m.Definition()
+	case segment.FieldWorkspaceID:
+		return m.WorkspaceID()
+	case segment.FieldCreatedAt:
+		return m.CreatedAt()
+	case segment.FieldUpdatedAt:
+		return m.UpdatedAt()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *SegmentMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case segment.FieldName:
+		return m.OldName(ctx)
+	case segment.FieldType:
+		return m.OldType(ctx)
+	case segment.FieldDefinition:
+		return m.OldDefinition(ctx)
+	case segment.FieldWorkspaceID:
+		return m.OldWorkspaceID(ctx)
+	case segment.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	case segment.FieldUpdatedAt:
+		return m.OldUpdatedAt(ctx)
+	}
+	return nil, fmt.Errorf("unknown Segment field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *SegmentMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case segment.FieldName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetName(v)
+		return nil
+	case segment.FieldType:
+		v, ok := value.(segment.Type)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetType(v)
+		return nil
+	case segment.FieldDefinition:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetDefinition(v)
+		return nil
+	case segment.FieldWorkspaceID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetWorkspaceID(v)
+		return nil
+	case segment.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	case segment.FieldUpdatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUpdatedAt(v)
+		return nil
+	}
+	return fmt.Errorf("unknown Segment field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *SegmentMutation) AddedFields() []string {
+	var fields []string
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *SegmentMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *SegmentMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	}
+	return fmt.Errorf("unknown Segment numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *SegmentMutation) ClearedFields() []string {
+	var fields []string
+	if m.FieldCleared(segment.FieldDefinition) {
+		fields = append(fields, segment.FieldDefinition)
+	}
+	return fields
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *SegmentMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *SegmentMutation) ClearField(name string) error {
+	switch name {
+	case segment.FieldDefinition:
+		m.ClearDefinition()
+		return nil
+	}
+	return fmt.Errorf("unknown Segment nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *SegmentMutation) ResetField(name string) error {
+	switch name {
+	case segment.FieldName:
+		m.ResetName()
+		return nil
+	case segment.FieldType:
+		m.ResetType()
+		return nil
+	case segment.FieldDefinition:
+		m.ResetDefinition()
+		return nil
+	case segment.FieldWorkspaceID:
+		m.ResetWorkspaceID()
+		return nil
+	case segment.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	case segment.FieldUpdatedAt:
+		m.ResetUpdatedAt()
+		return nil
+	}
+	return fmt.Errorf("unknown Segment field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *SegmentMutation) AddedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.workspace != nil {
+		edges = append(edges, segment.EdgeWorkspace)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *SegmentMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case segment.EdgeWorkspace:
+		if id := m.workspace; id != nil {
+			return []ent.Value{*id}
+		}
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *SegmentMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 1)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *SegmentMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *SegmentMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.clearedworkspace {
+		edges = append(edges, segment.EdgeWorkspace)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *SegmentMutation) EdgeCleared(name string) bool {
+	switch name {
+	case segment.EdgeWorkspace:
+		return m.clearedworkspace
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *SegmentMutation) ClearEdge(name string) error {
+	switch name {
+	case segment.EdgeWorkspace:
+		m.ClearWorkspace()
+		return nil
+	}
+	return fmt.Errorf("unknown Segment unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *SegmentMutation) ResetEdge(name string) error {
+	switch name {
+	case segment.EdgeWorkspace:
+		m.ResetWorkspace()
+		return nil
+	}
+	return fmt.Errorf("unknown Segment edge %s", name)
+}
+
 // TrackingProfileMutation represents an operation that mutates the TrackingProfile nodes in the graph.
 type TrackingProfileMutation struct {
 	config
@@ -5053,6 +5736,9 @@ type WorkspaceMutation struct {
 	contacts                 map[int64]struct{}
 	removedcontacts          map[int64]struct{}
 	clearedcontacts          bool
+	segments                 map[int64]struct{}
+	removedsegments          map[int64]struct{}
+	clearedsegments          bool
 	events                   map[int64]struct{}
 	removedevents            map[int64]struct{}
 	clearedevents            bool
@@ -5457,6 +6143,60 @@ func (m *WorkspaceMutation) ResetContacts() {
 	m.contacts = nil
 	m.clearedcontacts = false
 	m.removedcontacts = nil
+}
+
+// AddSegmentIDs adds the "segments" edge to the Segment entity by ids.
+func (m *WorkspaceMutation) AddSegmentIDs(ids ...int64) {
+	if m.segments == nil {
+		m.segments = make(map[int64]struct{})
+	}
+	for i := range ids {
+		m.segments[ids[i]] = struct{}{}
+	}
+}
+
+// ClearSegments clears the "segments" edge to the Segment entity.
+func (m *WorkspaceMutation) ClearSegments() {
+	m.clearedsegments = true
+}
+
+// SegmentsCleared reports if the "segments" edge to the Segment entity was cleared.
+func (m *WorkspaceMutation) SegmentsCleared() bool {
+	return m.clearedsegments
+}
+
+// RemoveSegmentIDs removes the "segments" edge to the Segment entity by IDs.
+func (m *WorkspaceMutation) RemoveSegmentIDs(ids ...int64) {
+	if m.removedsegments == nil {
+		m.removedsegments = make(map[int64]struct{})
+	}
+	for i := range ids {
+		delete(m.segments, ids[i])
+		m.removedsegments[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedSegments returns the removed IDs of the "segments" edge to the Segment entity.
+func (m *WorkspaceMutation) RemovedSegmentsIDs() (ids []int64) {
+	for id := range m.removedsegments {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// SegmentsIDs returns the "segments" edge IDs in the mutation.
+func (m *WorkspaceMutation) SegmentsIDs() (ids []int64) {
+	for id := range m.segments {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetSegments resets all changes to the "segments" edge.
+func (m *WorkspaceMutation) ResetSegments() {
+	m.segments = nil
+	m.clearedsegments = false
+	m.removedsegments = nil
 }
 
 // AddEventIDs adds the "events" edge to the Event entity by ids.
@@ -5932,9 +6672,12 @@ func (m *WorkspaceMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *WorkspaceMutation) AddedEdges() []string {
-	edges := make([]string, 0, 6)
+	edges := make([]string, 0, 7)
 	if m.contacts != nil {
 		edges = append(edges, workspace.EdgeContacts)
+	}
+	if m.segments != nil {
+		edges = append(edges, workspace.EdgeSegments)
 	}
 	if m.events != nil {
 		edges = append(edges, workspace.EdgeEvents)
@@ -5961,6 +6704,12 @@ func (m *WorkspaceMutation) AddedIDs(name string) []ent.Value {
 	case workspace.EdgeContacts:
 		ids := make([]ent.Value, 0, len(m.contacts))
 		for id := range m.contacts {
+			ids = append(ids, id)
+		}
+		return ids
+	case workspace.EdgeSegments:
+		ids := make([]ent.Value, 0, len(m.segments))
+		for id := range m.segments {
 			ids = append(ids, id)
 		}
 		return ids
@@ -5998,9 +6747,12 @@ func (m *WorkspaceMutation) AddedIDs(name string) []ent.Value {
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *WorkspaceMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 6)
+	edges := make([]string, 0, 7)
 	if m.removedcontacts != nil {
 		edges = append(edges, workspace.EdgeContacts)
+	}
+	if m.removedsegments != nil {
+		edges = append(edges, workspace.EdgeSegments)
 	}
 	if m.removedevents != nil {
 		edges = append(edges, workspace.EdgeEvents)
@@ -6024,6 +6776,12 @@ func (m *WorkspaceMutation) RemovedIDs(name string) []ent.Value {
 	case workspace.EdgeContacts:
 		ids := make([]ent.Value, 0, len(m.removedcontacts))
 		for id := range m.removedcontacts {
+			ids = append(ids, id)
+		}
+		return ids
+	case workspace.EdgeSegments:
+		ids := make([]ent.Value, 0, len(m.removedsegments))
+		for id := range m.removedsegments {
 			ids = append(ids, id)
 		}
 		return ids
@@ -6057,9 +6815,12 @@ func (m *WorkspaceMutation) RemovedIDs(name string) []ent.Value {
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *WorkspaceMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 6)
+	edges := make([]string, 0, 7)
 	if m.clearedcontacts {
 		edges = append(edges, workspace.EdgeContacts)
+	}
+	if m.clearedsegments {
+		edges = append(edges, workspace.EdgeSegments)
 	}
 	if m.clearedevents {
 		edges = append(edges, workspace.EdgeEvents)
@@ -6085,6 +6846,8 @@ func (m *WorkspaceMutation) EdgeCleared(name string) bool {
 	switch name {
 	case workspace.EdgeContacts:
 		return m.clearedcontacts
+	case workspace.EdgeSegments:
+		return m.clearedsegments
 	case workspace.EdgeEvents:
 		return m.clearedevents
 	case workspace.EdgeTrackingProfiles:
@@ -6116,6 +6879,9 @@ func (m *WorkspaceMutation) ResetEdge(name string) error {
 	switch name {
 	case workspace.EdgeContacts:
 		m.ResetContacts()
+		return nil
+	case workspace.EdgeSegments:
+		m.ResetSegments()
 		return nil
 	case workspace.EdgeEvents:
 		m.ResetEvents()

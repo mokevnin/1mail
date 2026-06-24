@@ -1,0 +1,103 @@
+import { Loader, Stack, Title } from '@mantine/core'
+import { useForm } from '@mantine/form'
+import { notifications } from '@mantine/notifications'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useEffect, useEffectEvent } from 'react'
+import { useTranslation } from 'react-i18next'
+import { ApiErrorAlert } from '../../components/ApiErrorAlert.tsx'
+import {
+  siteSegmentsGetOptions,
+  siteSegmentsGetQueryKey,
+  siteSegmentsListQueryKey,
+  siteSegmentsUpdateMutation,
+} from '../../generated/site/@tanstack/react-query.gen.ts'
+import { type SiteSegmentResource, SiteSegmentType } from '../../generated/site/types.gen.ts'
+import { segmentsEditRoute } from '../../router.tsx'
+import { getApiErrorMessage } from '../../utils/apiErrors.ts'
+import { SegmentForm, type SegmentFormValues } from './SegmentForm.tsx'
+
+export function SegmentEditPage() {
+  const { t } = useTranslation()
+  const { slug, segmentId } = segmentsEditRoute.useParams()
+  const queryClient = useQueryClient()
+
+  const form = useForm<SegmentFormValues>({
+    initialValues: { name: '', type: SiteSegmentType.RULE, definition: '' },
+  })
+
+  const getSegmentQuery = useQuery(
+    siteSegmentsGetOptions({ path: { workspaceSlug: slug, id: segmentId } }),
+  )
+
+  const applySegmentData = useEffectEvent((data: SiteSegmentResource | undefined) => {
+    if (!data) return
+    form.setValues({
+      name: data.name,
+      type: data.type,
+      definition: data.definition ?? '',
+    })
+  })
+
+  useEffect(() => {
+    applySegmentData(getSegmentQuery.data)
+  }, [getSegmentQuery.data])
+
+  const updateMutation = useMutation({
+    ...siteSegmentsUpdateMutation(),
+    onSuccess: async (updated) => {
+      await queryClient.invalidateQueries({
+        queryKey: siteSegmentsListQueryKey({ path: { workspaceSlug: slug } }),
+      })
+      await queryClient.invalidateQueries({
+        queryKey: siteSegmentsGetQueryKey({ path: { workspaceSlug: slug, id: updated.id } }),
+      })
+      notifications.show({
+        color: 'teal',
+        title: t(($) => $.notifications.successTitle),
+        message: t(($) => $.notifications.segmentUpdated),
+      })
+    },
+    onError: (error) => {
+      notifications.show({
+        color: 'red',
+        title: t(($) => $.alerts.segmentSaveErrorTitle),
+        message: getApiErrorMessage(
+          error,
+          t(($) => $.alerts.segmentSaveErrorTitle),
+        ),
+      })
+    },
+  })
+
+  if (getSegmentQuery.isLoading) return <Loader />
+
+  if (getSegmentQuery.isError) {
+    return (
+      <ApiErrorAlert
+        error={getSegmentQuery.error}
+        title={t(($) => $.alerts.segmentLoadErrorTitle)}
+        fallback={t(($) => $.alerts.segmentLoadErrorTitle)}
+      />
+    )
+  }
+
+  return (
+    <Stack>
+      <Title order={4}>{t(($) => $.segments.editTitle)}</Title>
+      <SegmentForm
+        form={form}
+        isPending={updateMutation.isPending}
+        onSubmit={(values) =>
+          updateMutation.mutate({
+            path: { workspaceSlug: slug, id: segmentId },
+            body: {
+              name: values.name.trim(),
+              type: values.type,
+              definition: values.definition.trim() || null,
+            },
+          })
+        }
+      />
+    </Stack>
+  )
+}

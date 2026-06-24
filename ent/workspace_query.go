@@ -16,6 +16,7 @@ import (
 	"github.com/mokevnin/1mail/ent/contact"
 	"github.com/mokevnin/1mail/ent/event"
 	"github.com/mokevnin/1mail/ent/predicate"
+	"github.com/mokevnin/1mail/ent/segment"
 	"github.com/mokevnin/1mail/ent/trackingprofile"
 	"github.com/mokevnin/1mail/ent/trackingvisitor"
 	"github.com/mokevnin/1mail/ent/user"
@@ -30,6 +31,7 @@ type WorkspaceQuery struct {
 	inters               []Interceptor
 	predicates           []predicate.Workspace
 	withContacts         *ContactQuery
+	withSegments         *SegmentQuery
 	withEvents           *EventQuery
 	withTrackingProfiles *TrackingProfileQuery
 	withTrackingVisitors *TrackingVisitorQuery
@@ -86,6 +88,28 @@ func (_q *WorkspaceQuery) QueryContacts() *ContactQuery {
 			sqlgraph.From(workspace.Table, workspace.FieldID, selector),
 			sqlgraph.To(contact.Table, contact.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, workspace.ContactsTable, workspace.ContactsColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QuerySegments chains the current query on the "segments" edge.
+func (_q *WorkspaceQuery) QuerySegments() *SegmentQuery {
+	query := (&SegmentClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workspace.Table, workspace.FieldID, selector),
+			sqlgraph.To(segment.Table, segment.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, workspace.SegmentsTable, workspace.SegmentsColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
@@ -396,6 +420,7 @@ func (_q *WorkspaceQuery) Clone() *WorkspaceQuery {
 		inters:               append([]Interceptor{}, _q.inters...),
 		predicates:           append([]predicate.Workspace{}, _q.predicates...),
 		withContacts:         _q.withContacts.Clone(),
+		withSegments:         _q.withSegments.Clone(),
 		withEvents:           _q.withEvents.Clone(),
 		withTrackingProfiles: _q.withTrackingProfiles.Clone(),
 		withTrackingVisitors: _q.withTrackingVisitors.Clone(),
@@ -415,6 +440,17 @@ func (_q *WorkspaceQuery) WithContacts(opts ...func(*ContactQuery)) *WorkspaceQu
 		opt(query)
 	}
 	_q.withContacts = query
+	return _q
+}
+
+// WithSegments tells the query-builder to eager-load the nodes that are connected to
+// the "segments" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *WorkspaceQuery) WithSegments(opts ...func(*SegmentQuery)) *WorkspaceQuery {
+	query := (&SegmentClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withSegments = query
 	return _q
 }
 
@@ -551,8 +587,9 @@ func (_q *WorkspaceQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Wo
 	var (
 		nodes       = []*Workspace{}
 		_spec       = _q.querySpec()
-		loadedTypes = [6]bool{
+		loadedTypes = [7]bool{
 			_q.withContacts != nil,
+			_q.withSegments != nil,
 			_q.withEvents != nil,
 			_q.withTrackingProfiles != nil,
 			_q.withTrackingVisitors != nil,
@@ -582,6 +619,13 @@ func (_q *WorkspaceQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Wo
 		if err := _q.loadContacts(ctx, query, nodes,
 			func(n *Workspace) { n.Edges.Contacts = []*Contact{} },
 			func(n *Workspace, e *Contact) { n.Edges.Contacts = append(n.Edges.Contacts, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := _q.withSegments; query != nil {
+		if err := _q.loadSegments(ctx, query, nodes,
+			func(n *Workspace) { n.Edges.Segments = []*Segment{} },
+			func(n *Workspace, e *Segment) { n.Edges.Segments = append(n.Edges.Segments, e) }); err != nil {
 			return nil, err
 		}
 	}
@@ -637,6 +681,36 @@ func (_q *WorkspaceQuery) loadContacts(ctx context.Context, query *ContactQuery,
 	}
 	query.Where(predicate.Contact(func(s *sql.Selector) {
 		s.Where(sql.InValues(s.C(workspace.ContactsColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.WorkspaceID
+		node, ok := nodeids[fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "workspace_id" returned %v for node %v`, fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (_q *WorkspaceQuery) loadSegments(ctx context.Context, query *SegmentQuery, nodes []*Workspace, init func(*Workspace), assign func(*Workspace, *Segment)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[int64]*Workspace)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(segment.FieldWorkspaceID)
+	}
+	query.Where(predicate.Segment(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(workspace.SegmentsColumn), fks...))
 	}))
 	neighbors, err := query.All(ctx)
 	if err != nil {

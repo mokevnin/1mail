@@ -98,6 +98,30 @@ var (
 			},
 		},
 	}
+	// SegmentsColumns holds the columns for the "segments" table.
+	SegmentsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt64, Increment: true},
+		{Name: "name", Type: field.TypeString},
+		{Name: "type", Type: field.TypeEnum, Enums: []string{"rule", "snapshot"}, Default: "rule"},
+		{Name: "definition", Type: field.TypeString, Nullable: true},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "workspace_id", Type: field.TypeInt64},
+	}
+	// SegmentsTable holds the schema information for the "segments" table.
+	SegmentsTable = &schema.Table{
+		Name:       "segments",
+		Columns:    SegmentsColumns,
+		PrimaryKey: []*schema.Column{SegmentsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "segments_workspaces_segments",
+				Columns:    []*schema.Column{SegmentsColumns[6]},
+				RefColumns: []*schema.Column{WorkspacesColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+	}
 	// TrackingProfilesColumns holds the columns for the "tracking_profiles" table.
 	TrackingProfilesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt64, Increment: true},
@@ -221,6 +245,7 @@ var (
 		APITokensTable,
 		ContactsTable,
 		EventsTable,
+		SegmentsTable,
 		TrackingProfilesTable,
 		TrackingVisitorsTable,
 		UsersTable,
@@ -240,6 +265,10 @@ func init() {
 	EventsTable.ForeignKeys[0].RefTable = WorkspacesTable
 	EventsTable.Annotation = &entsql.Annotation{
 		Table: "events",
+	}
+	SegmentsTable.ForeignKeys[0].RefTable = WorkspacesTable
+	SegmentsTable.Annotation = &entsql.Annotation{
+		Table: "segments",
 	}
 	TrackingProfilesTable.ForeignKeys[0].RefTable = WorkspacesTable
 	TrackingProfilesTable.Annotation = &entsql.Annotation{

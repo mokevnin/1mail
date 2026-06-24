@@ -40,6 +40,8 @@ type Workspace struct {
 type WorkspaceEdges struct {
 	// Contacts holds the value of the contacts edge.
 	Contacts []*Contact `json:"contacts,omitempty"`
+	// Segments holds the value of the segments edge.
+	Segments []*Segment `json:"segments,omitempty"`
 	// Events holds the value of the events edge.
 	Events []*Event `json:"events,omitempty"`
 	// TrackingProfiles holds the value of the tracking_profiles edge.
@@ -52,7 +54,7 @@ type WorkspaceEdges struct {
 	User *User `json:"user,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [6]bool
+	loadedTypes [7]bool
 }
 
 // ContactsOrErr returns the Contacts value or an error if the edge
@@ -64,10 +66,19 @@ func (e WorkspaceEdges) ContactsOrErr() ([]*Contact, error) {
 	return nil, &NotLoadedError{edge: "contacts"}
 }
 
+// SegmentsOrErr returns the Segments value or an error if the edge
+// was not loaded in eager-loading.
+func (e WorkspaceEdges) SegmentsOrErr() ([]*Segment, error) {
+	if e.loadedTypes[1] {
+		return e.Segments, nil
+	}
+	return nil, &NotLoadedError{edge: "segments"}
+}
+
 // EventsOrErr returns the Events value or an error if the edge
 // was not loaded in eager-loading.
 func (e WorkspaceEdges) EventsOrErr() ([]*Event, error) {
-	if e.loadedTypes[1] {
+	if e.loadedTypes[2] {
 		return e.Events, nil
 	}
 	return nil, &NotLoadedError{edge: "events"}
@@ -76,7 +87,7 @@ func (e WorkspaceEdges) EventsOrErr() ([]*Event, error) {
 // TrackingProfilesOrErr returns the TrackingProfiles value or an error if the edge
 // was not loaded in eager-loading.
 func (e WorkspaceEdges) TrackingProfilesOrErr() ([]*TrackingProfile, error) {
-	if e.loadedTypes[2] {
+	if e.loadedTypes[3] {
 		return e.TrackingProfiles, nil
 	}
 	return nil, &NotLoadedError{edge: "tracking_profiles"}
@@ -85,7 +96,7 @@ func (e WorkspaceEdges) TrackingProfilesOrErr() ([]*TrackingProfile, error) {
 // TrackingVisitorsOrErr returns the TrackingVisitors value or an error if the edge
 // was not loaded in eager-loading.
 func (e WorkspaceEdges) TrackingVisitorsOrErr() ([]*TrackingVisitor, error) {
-	if e.loadedTypes[3] {
+	if e.loadedTypes[4] {
 		return e.TrackingVisitors, nil
 	}
 	return nil, &NotLoadedError{edge: "tracking_visitors"}
@@ -94,7 +105,7 @@ func (e WorkspaceEdges) TrackingVisitorsOrErr() ([]*TrackingVisitor, error) {
 // APITokensOrErr returns the APITokens value or an error if the edge
 // was not loaded in eager-loading.
 func (e WorkspaceEdges) APITokensOrErr() ([]*ApiToken, error) {
-	if e.loadedTypes[4] {
+	if e.loadedTypes[5] {
 		return e.APITokens, nil
 	}
 	return nil, &NotLoadedError{edge: "api_tokens"}
@@ -105,7 +116,7 @@ func (e WorkspaceEdges) APITokensOrErr() ([]*ApiToken, error) {
 func (e WorkspaceEdges) UserOrErr() (*User, error) {
 	if e.User != nil {
 		return e.User, nil
-	} else if e.loadedTypes[5] {
+	} else if e.loadedTypes[6] {
 		return nil, &NotFoundError{label: user.Label}
 	}
 	return nil, &NotLoadedError{edge: "user"}
@@ -196,6 +207,11 @@ func (_m *Workspace) Value(name string) (ent.Value, error) {
 // QueryContacts queries the "contacts" edge of the Workspace entity.
 func (_m *Workspace) QueryContacts() *ContactQuery {
 	return NewWorkspaceClient(_m.config).QueryContacts(_m)
+}
+
+// QuerySegments queries the "segments" edge of the Workspace entity.
+func (_m *Workspace) QuerySegments() *SegmentQuery {
+	return NewWorkspaceClient(_m.config).QuerySegments(_m)
 }
 
 // QueryEvents queries the "events" edge of the Workspace entity.

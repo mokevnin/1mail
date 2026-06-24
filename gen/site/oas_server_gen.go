@@ -52,6 +52,36 @@ type Handler interface {
 	//
 	// GET /w/{workspaceSlug}/events
 	SiteEventsList(ctx context.Context, params SiteEventsListParams) (SiteEventsListRes, error)
+	// SiteSegmentsCreate implements SiteSegments_create operation.
+	//
+	// Create a segment from the site UI.
+	//
+	// POST /w/{workspaceSlug}/segments
+	SiteSegmentsCreate(ctx context.Context, req *SiteCreateSegmentInput, params SiteSegmentsCreateParams) (SiteSegmentsCreateRes, error)
+	// SiteSegmentsDelete implements SiteSegments_delete operation.
+	//
+	// Delete a segment from the site UI.
+	//
+	// DELETE /w/{workspaceSlug}/segments/{id}
+	SiteSegmentsDelete(ctx context.Context, params SiteSegmentsDeleteParams) (SiteSegmentsDeleteRes, error)
+	// SiteSegmentsGet implements SiteSegments_get operation.
+	//
+	// Get a segment by ID for the site UI.
+	//
+	// GET /w/{workspaceSlug}/segments/{id}
+	SiteSegmentsGet(ctx context.Context, params SiteSegmentsGetParams) (SiteSegmentsGetRes, error)
+	// SiteSegmentsList implements SiteSegments_list operation.
+	//
+	// List segments for the site UI.
+	//
+	// GET /w/{workspaceSlug}/segments
+	SiteSegmentsList(ctx context.Context, params SiteSegmentsListParams) (SiteSegmentsListRes, error)
+	// SiteSegmentsUpdate implements SiteSegments_update operation.
+	//
+	// Update a segment from the site UI.
+	//
+	// PUT /w/{workspaceSlug}/segments/{id}
+	SiteSegmentsUpdate(ctx context.Context, req *SiteUpdateSegmentInput, params SiteSegmentsUpdateParams) (SiteSegmentsUpdateRes, error)
 	// SiteTokensCreate implements SiteTokens_create operation.
 	//
 	// Create an API token; the full secret is returned once.

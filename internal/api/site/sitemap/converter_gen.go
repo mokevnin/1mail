@@ -38,6 +38,18 @@ func (c *ConverterImpl) EventToResource(source *ent.Event) site.SiteEventResourc
 	}
 	return siteapiSiteEventResource
 }
+func (c *ConverterImpl) SegmentToResource(source *ent.Segment) site.SiteSegmentResource {
+	var siteapiSiteSegmentResource site.SiteSegmentResource
+	if source != nil {
+		siteapiSiteSegmentResource.ID = entityID((*source).ID)
+		siteapiSiteSegmentResource.Name = (*source).Name
+		siteapiSiteSegmentResource.Type = site.SiteSegmentType((*source).Type)
+		siteapiSiteSegmentResource.Definition = optNilString((*source).Definition)
+		siteapiSiteSegmentResource.CreatedAt = timestamp((*source).CreatedAt)
+		siteapiSiteSegmentResource.UpdatedAt = timestamp((*source).UpdatedAt)
+	}
+	return siteapiSiteSegmentResource
+}
 func (c *ConverterImpl) TokenToResource(source *ent.ApiToken) site.SiteApiTokenResource {
 	var siteapiSiteApiTokenResource site.SiteApiTokenResource
 	if source != nil {

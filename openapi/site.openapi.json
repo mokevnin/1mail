@@ -9,6 +9,9 @@
       "name": "Site Contacts"
     },
     {
+      "name": "Site Segments"
+    },
+    {
       "name": "Site Auth"
     },
     {
@@ -642,6 +645,339 @@
         "tags": ["Site Events"]
       }
     },
+    "/w/{workspaceSlug}/segments": {
+      "post": {
+        "operationId": "SiteSegments_create",
+        "description": "Create a segment from the site UI",
+        "parameters": [
+          {
+            "name": "workspaceSlug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "The request has succeeded and a new resource has been created as a result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SiteSegmentResource"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "RFC 7807 not found response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "RFC 7807 validation response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Site Segments"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SiteCreateSegmentInput"
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "operationId": "SiteSegments_list",
+        "description": "List segments for the site UI",
+        "parameters": [
+          {
+            "name": "workspaceSlug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/PageQuery.page"
+          },
+          {
+            "$ref": "#/components/parameters/PageQuery.pageSize"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request has succeeded.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["items", "page", "pageSize", "totalItems", "totalPages"],
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/SiteSegmentResource"
+                      },
+                      "description": "List of items"
+                    },
+                    "page": {
+                      "type": "integer",
+                      "format": "int32",
+                      "description": "Page number (1-based)"
+                    },
+                    "pageSize": {
+                      "type": "integer",
+                      "format": "int32",
+                      "description": "Page size"
+                    },
+                    "totalItems": {
+                      "type": "integer",
+                      "format": "int32",
+                      "description": "Total number of elements"
+                    },
+                    "totalPages": {
+                      "type": "integer",
+                      "format": "int32",
+                      "description": "Total number of pages"
+                    }
+                  },
+                  "description": "Paginated response"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "RFC 7807 bad request response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "RFC 7807 not found response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "RFC 7807 validation response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Site Segments"]
+      }
+    },
+    "/w/{workspaceSlug}/segments/{id}": {
+      "get": {
+        "operationId": "SiteSegments_get",
+        "description": "Get a segment by ID for the site UI",
+        "parameters": [
+          {
+            "name": "workspaceSlug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/EntityId"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request has succeeded.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SiteSegmentResource"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "RFC 7807 bad request response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "RFC 7807 not found response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Site Segments"]
+      },
+      "put": {
+        "operationId": "SiteSegments_update",
+        "description": "Update a segment from the site UI",
+        "parameters": [
+          {
+            "name": "workspaceSlug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/EntityId"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request has succeeded.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SiteSegmentResource"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "RFC 7807 bad request response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "RFC 7807 not found response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "RFC 7807 validation response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Site Segments"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SiteUpdateSegmentInput"
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "SiteSegments_delete",
+        "description": "Delete a segment from the site UI",
+        "parameters": [
+          {
+            "name": "workspaceSlug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/EntityId"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "There is no content to send for this request, but the headers may be useful."
+          },
+          "400": {
+            "description": "RFC 7807 bad request response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "RFC 7807 not found response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Site Segments"]
+      }
+    },
     "/w/{workspaceSlug}/tokens": {
       "get": {
         "operationId": "SiteTokens_list",
@@ -1144,6 +1480,30 @@
         },
         "description": "Site request body for creating a contact"
       },
+      "SiteCreateSegmentInput": {
+        "type": "object",
+        "required": ["name", "type"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Segment name"
+          },
+          "type": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SiteSegmentType"
+              }
+            ],
+            "description": "Segment type"
+          },
+          "definition": {
+            "type": "string",
+            "nullable": true,
+            "description": "Segment definition (used by rule segments)"
+          }
+        },
+        "description": "Site request body for creating a segment"
+      },
       "SiteCreateTokenInput": {
         "type": "object",
         "required": ["name", "scopes"],
@@ -1319,6 +1679,59 @@
           }
         }
       },
+      "SiteSegmentResource": {
+        "type": "object",
+        "required": ["id", "name", "type", "createdAt", "updatedAt"],
+        "properties": {
+          "id": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EntityId"
+              }
+            ],
+            "description": "Unique identifier"
+          },
+          "name": {
+            "type": "string",
+            "description": "Segment name"
+          },
+          "type": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SiteSegmentType"
+              }
+            ],
+            "description": "Segment type"
+          },
+          "definition": {
+            "type": "string",
+            "nullable": true,
+            "description": "Segment definition (used by rule segments)"
+          },
+          "createdAt": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Timestamp"
+              }
+            ],
+            "description": "Creation timestamp"
+          },
+          "updatedAt": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Timestamp"
+              }
+            ],
+            "description": "Last update timestamp"
+          }
+        },
+        "description": "Segment resource used by the site UI"
+      },
+      "SiteSegmentType": {
+        "type": "string",
+        "enum": ["rule", "snapshot"],
+        "description": "Segment type for site UI"
+      },
       "SiteUpdateContactInput": {
         "type": "object",
         "properties": {
@@ -1370,6 +1783,29 @@
           }
         },
         "description": "Update the authenticated user's profile. To change the password, provide\nboth currentPassword and newPassword."
+      },
+      "SiteUpdateSegmentInput": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Segment name"
+          },
+          "type": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SiteSegmentType"
+              }
+            ],
+            "description": "Segment type"
+          },
+          "definition": {
+            "type": "string",
+            "nullable": true,
+            "description": "Segment definition (used by rule segments)"
+          }
+        },
+        "description": "Site request body for updating a segment"
       },
       "SiteUpdateWorkspaceInput": {
         "type": "object",

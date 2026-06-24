@@ -1,0 +1,13 @@
+- id: 1
+  name: Active subscribers
+  type: rule
+  definition: "status == 'active'"
+  workspace_id: 1
+  created_at: "2026-01-01 00:00:00"
+  updated_at: "2026-01-01 00:00:00"
+- id: 2
+  name: Newsletter snapshot
+  type: snapshot
+  workspace_id: 1
+  created_at: "2026-01-02 00:00:00"
+  updated_at: "2026-01-02 00:00:00"

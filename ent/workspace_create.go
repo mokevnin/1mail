@@ -13,6 +13,7 @@ import (
 	"github.com/mokevnin/1mail/ent/apitoken"
 	"github.com/mokevnin/1mail/ent/contact"
 	"github.com/mokevnin/1mail/ent/event"
+	"github.com/mokevnin/1mail/ent/segment"
 	"github.com/mokevnin/1mail/ent/trackingprofile"
 	"github.com/mokevnin/1mail/ent/trackingvisitor"
 	"github.com/mokevnin/1mail/ent/user"
@@ -105,6 +106,21 @@ func (_c *WorkspaceCreate) AddContacts(v ...*Contact) *WorkspaceCreate {
 		ids[i] = v[i].ID
 	}
 	return _c.AddContactIDs(ids...)
+}
+
+// AddSegmentIDs adds the "segments" edge to the Segment entity by IDs.
+func (_c *WorkspaceCreate) AddSegmentIDs(ids ...int64) *WorkspaceCreate {
+	_c.mutation.AddSegmentIDs(ids...)
+	return _c
+}
+
+// AddSegments adds the "segments" edges to the Segment entity.
+func (_c *WorkspaceCreate) AddSegments(v ...*Segment) *WorkspaceCreate {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddSegmentIDs(ids...)
 }
 
 // AddEventIDs adds the "events" edge to the Event entity by IDs.
@@ -310,6 +326,22 @@ func (_c *WorkspaceCreate) createSpec() (*Workspace, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(contact.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.SegmentsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   workspace.SegmentsTable,
+			Columns: []string{workspace.SegmentsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(segment.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {

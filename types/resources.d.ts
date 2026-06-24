@@ -29,7 +29,10 @@ export default interface Resources {
     "alerts": {
       "deleteErrorTitle": "Failed to delete contact",
       "loadErrorTitle": "Failed to load contacts",
-      "saveErrorTitle": "Failed to save contact"
+      "saveErrorTitle": "Failed to save contact",
+      "segmentDeleteErrorTitle": "Failed to delete segment",
+      "segmentLoadErrorTitle": "Failed to load segments",
+      "segmentSaveErrorTitle": "Failed to save segment"
     },
     "comingSoon": {
       "description": "This section is not available yet.",
@@ -71,6 +74,9 @@ export default interface Resources {
       "contactCreated": "Contact created",
       "contactDeleted": "Contact deleted",
       "contactUpdated": "Contact updated",
+      "segmentCreated": "Segment created",
+      "segmentDeleted": "Segment deleted",
+      "segmentUpdated": "Segment updated",
       "successTitle": "Success"
     },
     "overview": {
@@ -100,6 +106,21 @@ export default interface Resources {
       "submitButton": "Register",
       "successMessage": "Account created successfully",
       "title": "Create account"
+    },
+    "segments": {
+      "addSegment": "Add segment",
+      "createTitle": "New segment",
+      "definitionHint": "For rule segments, the expression that selects matching contacts.",
+      "definitionLabel": "Definition",
+      "editTitle": "Edit segment",
+      "emptyState": "Create your first segment.",
+      "nameLabel": "Name",
+      "noRecords": "No segments yet",
+      "type": {
+        "rule": "Rule",
+        "snapshot": "Snapshot"
+      },
+      "typeLabel": "Type"
     },
     "settings": {
       "apiKeysTitle": "API keys",
