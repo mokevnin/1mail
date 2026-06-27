@@ -67,9 +67,7 @@
             }
           }
         },
-        "tags": [
-          "Site Auth"
-        ],
+        "tags": ["Site Auth"],
         "requestBody": {
           "required": true,
           "content": {
@@ -80,9 +78,7 @@
             }
           }
         },
-        "security": [
-          {}
-        ]
+        "security": [{}]
       }
     },
     "/auth/register": {
@@ -121,9 +117,7 @@
             }
           }
         },
-        "tags": [
-          "Site Auth"
-        ],
+        "tags": ["Site Auth"],
         "requestBody": {
           "required": true,
           "content": {
@@ -134,9 +128,7 @@
             }
           }
         },
-        "security": [
-          {}
-        ]
+        "security": [{}]
       }
     },
     "/me": {
@@ -156,9 +148,7 @@
             }
           }
         },
-        "tags": [
-          "Site User"
-        ]
+        "tags": ["Site User"]
       },
       "put": {
         "operationId": "SiteUser_updateMe",
@@ -196,9 +186,7 @@
             }
           }
         },
-        "tags": [
-          "Site User"
-        ],
+        "tags": ["Site User"],
         "requestBody": {
           "required": true,
           "content": {
@@ -267,9 +255,7 @@
             }
           }
         },
-        "tags": [
-          "Site Contacts"
-        ],
+        "tags": ["Site Contacts"],
         "requestBody": {
           "required": true,
           "content": {
@@ -317,13 +303,7 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "required": [
-                    "items",
-                    "page",
-                    "pageSize",
-                    "totalItems",
-                    "totalPages"
-                  ],
+                  "required": ["items", "page", "pageSize", "totalItems", "totalPages"],
                   "properties": {
                     "items": {
                       "type": "array",
@@ -389,9 +369,7 @@
             }
           }
         },
-        "tags": [
-          "Site Contacts"
-        ]
+        "tags": ["Site Contacts"]
       }
     },
     "/w/{workspaceSlug}/contacts/{id}": {
@@ -448,9 +426,7 @@
             }
           }
         },
-        "tags": [
-          "Site Contacts"
-        ]
+        "tags": ["Site Contacts"]
       },
       "put": {
         "operationId": "SiteContacts_update",
@@ -525,9 +501,7 @@
             }
           }
         },
-        "tags": [
-          "Site Contacts"
-        ],
+        "tags": ["Site Contacts"],
         "requestBody": {
           "required": true,
           "content": {
@@ -585,9 +559,7 @@
             }
           }
         },
-        "tags": [
-          "Site Contacts"
-        ]
+        "tags": ["Site Contacts"]
       }
     },
     "/w/{workspaceSlug}/events": {
@@ -627,13 +599,7 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "required": [
-                    "items",
-                    "page",
-                    "pageSize",
-                    "totalItems",
-                    "totalPages"
-                  ],
+                  "required": ["items", "page", "pageSize", "totalItems", "totalPages"],
                   "properties": {
                     "items": {
                       "type": "array",
@@ -679,9 +645,7 @@
             }
           }
         },
-        "tags": [
-          "Site Events"
-        ]
+        "tags": ["Site Events"]
       }
     },
     "/w/{workspaceSlug}/integrations": {
@@ -723,9 +687,7 @@
             }
           }
         },
-        "tags": [
-          "Site Integrations"
-        ]
+        "tags": ["Site Integrations"]
       },
       "post": {
         "operationId": "SiteIntegrations_create",
@@ -782,9 +744,7 @@
             }
           }
         },
-        "tags": [
-          "Site Integrations"
-        ],
+        "tags": ["Site Integrations"],
         "requestBody": {
           "required": true,
           "content": {
@@ -851,9 +811,7 @@
             }
           }
         },
-        "tags": [
-          "Site Integrations"
-        ]
+        "tags": ["Site Integrations"]
       },
       "put": {
         "operationId": "SiteIntegrations_update",
@@ -928,9 +886,7 @@
             }
           }
         },
-        "tags": [
-          "Site Integrations"
-        ],
+        "tags": ["Site Integrations"],
         "requestBody": {
           "required": true,
           "content": {
@@ -988,9 +944,7 @@
             }
           }
         },
-        "tags": [
-          "Site Integrations"
-        ]
+        "tags": ["Site Integrations"]
       }
     },
     "/w/{workspaceSlug}/segments": {
@@ -1039,9 +993,7 @@
             }
           }
         },
-        "tags": [
-          "Site Segments"
-        ],
+        "tags": ["Site Segments"],
         "requestBody": {
           "required": true,
           "content": {
@@ -1079,13 +1031,7 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "required": [
-                    "items",
-                    "page",
-                    "pageSize",
-                    "totalItems",
-                    "totalPages"
-                  ],
+                  "required": ["items", "page", "pageSize", "totalItems", "totalPages"],
                   "properties": {
                     "items": {
                       "type": "array",
@@ -1151,9 +1097,7 @@
             }
           }
         },
-        "tags": [
-          "Site Segments"
-        ]
+        "tags": ["Site Segments"]
       }
     },
     "/w/{workspaceSlug}/segments/{id}": {
@@ -1210,9 +1154,7 @@
             }
           }
         },
-        "tags": [
-          "Site Segments"
-        ]
+        "tags": ["Site Segments"]
       },
       "put": {
         "operationId": "SiteSegments_update",
@@ -1277,9 +1219,7 @@
             }
           }
         },
-        "tags": [
-          "Site Segments"
-        ],
+        "tags": ["Site Segments"],
         "requestBody": {
           "required": true,
           "content": {
@@ -1337,9 +1277,7 @@
             }
           }
         },
-        "tags": [
-          "Site Segments"
-        ]
+        "tags": ["Site Segments"]
       }
     },
     "/w/{workspaceSlug}/tokens": {
@@ -1381,9 +1319,7 @@
             }
           }
         },
-        "tags": [
-          "Site Tokens"
-        ]
+        "tags": ["Site Tokens"]
       },
       "post": {
         "operationId": "SiteTokens_create",
@@ -1430,9 +1366,7 @@
             }
           }
         },
-        "tags": [
-          "Site Tokens"
-        ],
+        "tags": ["Site Tokens"],
         "requestBody": {
           "required": true,
           "content": {
@@ -1492,9 +1426,7 @@
             }
           }
         },
-        "tags": [
-          "Site Tokens"
-        ]
+        "tags": ["Site Tokens"]
       }
     },
     "/workspaces": {
@@ -1517,9 +1449,7 @@
             }
           }
         },
-        "tags": [
-          "Site Workspaces"
-        ]
+        "tags": ["Site Workspaces"]
       }
     },
     "/workspaces/{slug}": {
@@ -1568,9 +1498,7 @@
             }
           }
         },
-        "tags": [
-          "Site Workspaces"
-        ],
+        "tags": ["Site Workspaces"],
         "requestBody": {
           "required": true,
           "content": {
@@ -1675,13 +1603,7 @@
       },
       "SiteApiTokenResource": {
         "type": "object",
-        "required": [
-          "id",
-          "name",
-          "prefix",
-          "scopes",
-          "createdAt"
-        ],
+        "required": ["id", "name", "prefix", "scopes", "createdAt"],
         "properties": {
           "id": {
             "allOf": [
@@ -1739,13 +1661,7 @@
       },
       "SiteContactResource": {
         "type": "object",
-        "required": [
-          "id",
-          "email",
-          "status",
-          "createdAt",
-          "updatedAt"
-        ],
+        "required": ["id", "email", "status", "createdAt", "updatedAt"],
         "properties": {
           "id": {
             "allOf": [
@@ -1820,17 +1736,12 @@
       },
       "SiteContactStatus": {
         "type": "string",
-        "enum": [
-          "active",
-          "unsubscribed"
-        ],
+        "enum": ["active", "unsubscribed"],
         "description": "Contact status for site UI"
       },
       "SiteCreateContactInput": {
         "type": "object",
-        "required": [
-          "email"
-        ],
+        "required": ["email"],
         "properties": {
           "email": {
             "allOf": [
@@ -1873,10 +1784,7 @@
       },
       "SiteCreateIntegrationInput": {
         "type": "object",
-        "required": [
-          "name",
-          "config"
-        ],
+        "required": ["name", "config"],
         "properties": {
           "name": {
             "type": "string"
@@ -1895,10 +1803,7 @@
       },
       "SiteCreateSegmentInput": {
         "type": "object",
-        "required": [
-          "name",
-          "type"
-        ],
+        "required": ["name", "type"],
         "properties": {
           "name": {
             "type": "string",
@@ -1922,10 +1827,7 @@
       },
       "SiteCreateTokenInput": {
         "type": "object",
-        "required": [
-          "name",
-          "scopes"
-        ],
+        "required": ["name", "scopes"],
         "properties": {
           "name": {
             "type": "string"
@@ -1950,10 +1852,7 @@
       },
       "SiteCreateTokenResponse": {
         "type": "object",
-        "required": [
-          "token",
-          "resource"
-        ],
+        "required": ["token", "resource"],
         "properties": {
           "token": {
             "type": "string"
@@ -1966,9 +1865,7 @@
       },
       "SiteDirectLoginError": {
         "type": "object",
-        "required": [
-          "error"
-        ],
+        "required": ["error"],
         "properties": {
           "error": {
             "type": "string"
@@ -1977,10 +1874,7 @@
       },
       "SiteDirectLoginInput": {
         "type": "object",
-        "required": [
-          "user",
-          "passwd"
-        ],
+        "required": ["user", "passwd"],
         "properties": {
           "user": {
             "type": "string"
@@ -1992,10 +1886,7 @@
       },
       "SiteDirectLoginResult": {
         "type": "object",
-        "required": [
-          "name",
-          "id"
-        ],
+        "required": ["name", "id"],
         "properties": {
           "name": {
             "type": "string"
@@ -2026,12 +1917,7 @@
       },
       "SiteEventResource": {
         "type": "object",
-        "required": [
-          "id",
-          "subjectId",
-          "action",
-          "createdAt"
-        ],
+        "required": ["id", "subjectId", "action", "createdAt"],
         "properties": {
           "id": {
             "allOf": [
@@ -2083,10 +1969,7 @@
       },
       "SiteIntegrationChannel": {
         "type": "string",
-        "enum": [
-          "email",
-          "sms"
-        ],
+        "enum": ["email", "sms"],
         "description": "Delivery channel an integration belongs to"
       },
       "SiteIntegrationConfig": {
@@ -2129,10 +2012,7 @@
       },
       "SiteIntegrationProvider": {
         "type": "string",
-        "enum": [
-          "smtp",
-          "ses"
-        ],
+        "enum": ["smtp", "ses"],
         "description": "Concrete sending provider"
       },
       "SiteIntegrationResource": {
@@ -2214,11 +2094,7 @@
       },
       "SiteRegisterInput": {
         "type": "object",
-        "required": [
-          "name",
-          "email",
-          "password"
-        ],
+        "required": ["name", "email", "password"],
         "properties": {
           "name": {
             "type": "string"
@@ -2233,12 +2109,7 @@
       },
       "SiteRegisterResult": {
         "type": "object",
-        "required": [
-          "id",
-          "name",
-          "email",
-          "createdAt"
-        ],
+        "required": ["id", "name", "email", "createdAt"],
         "properties": {
           "id": {
             "$ref": "#/components/schemas/EntityId"
@@ -2256,13 +2127,7 @@
       },
       "SiteSegmentResource": {
         "type": "object",
-        "required": [
-          "id",
-          "name",
-          "type",
-          "createdAt",
-          "updatedAt"
-        ],
+        "required": ["id", "name", "type", "createdAt", "updatedAt"],
         "properties": {
           "id": {
             "allOf": [
@@ -2310,25 +2175,16 @@
       },
       "SiteSegmentType": {
         "type": "string",
-        "enum": [
-          "rule",
-          "snapshot"
-        ],
+        "enum": ["rule", "snapshot"],
         "description": "Segment type for site UI"
       },
       "SiteSesConfig": {
         "type": "object",
-        "required": [
-          "kind",
-          "region",
-          "from"
-        ],
+        "required": ["kind", "region", "from"],
         "properties": {
           "kind": {
             "type": "string",
-            "enum": [
-              "ses"
-            ]
+            "enum": ["ses"]
           },
           "region": {
             "type": "string"
@@ -2350,19 +2206,11 @@
       },
       "SiteSesConfigInput": {
         "type": "object",
-        "required": [
-          "kind",
-          "region",
-          "accessKeyId",
-          "secretAccessKey",
-          "from"
-        ],
+        "required": ["kind", "region", "accessKeyId", "secretAccessKey", "from"],
         "properties": {
           "kind": {
             "type": "string",
-            "enum": [
-              "ses"
-            ]
+            "enum": ["ses"]
           },
           "region": {
             "type": "string"
@@ -2385,18 +2233,11 @@
       },
       "SiteSmtpConfig": {
         "type": "object",
-        "required": [
-          "kind",
-          "host",
-          "port",
-          "from"
-        ],
+        "required": ["kind", "host", "port", "from"],
         "properties": {
           "kind": {
             "type": "string",
-            "enum": [
-              "smtp"
-            ]
+            "enum": ["smtp"]
           },
           "host": {
             "type": "string"
@@ -2421,18 +2262,11 @@
       },
       "SiteSmtpConfigInput": {
         "type": "object",
-        "required": [
-          "kind",
-          "host",
-          "port",
-          "from"
-        ],
+        "required": ["kind", "host", "port", "from"],
         "properties": {
           "kind": {
             "type": "string",
-            "enum": [
-              "smtp"
-            ]
+            "enum": ["smtp"]
           },
           "host": {
             "type": "string"
@@ -2559,9 +2393,7 @@
       },
       "SiteUpdateWorkspaceInput": {
         "type": "object",
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "properties": {
           "name": {
             "type": "string",
@@ -2572,12 +2404,7 @@
       },
       "SiteUserResource": {
         "type": "object",
-        "required": [
-          "id",
-          "name",
-          "email",
-          "createdAt"
-        ],
+        "required": ["id", "name", "email", "createdAt"],
         "properties": {
           "id": {
             "allOf": [
@@ -2612,13 +2439,7 @@
       },
       "SiteWorkspaceResource": {
         "type": "object",
-        "required": [
-          "id",
-          "name",
-          "slug",
-          "collectKey",
-          "createdAt"
-        ],
+        "required": ["id", "name", "slug", "collectKey", "createdAt"],
         "properties": {
           "id": {
             "allOf": [
@@ -2660,9 +2481,7 @@
       },
       "UnauthorizedProblem": {
         "type": "object",
-        "required": [
-          "body"
-        ],
+        "required": ["body"],
         "properties": {
           "body": {
             "$ref": "#/components/schemas/ProblemDetails"

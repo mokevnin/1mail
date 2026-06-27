@@ -7,8 +7,6 @@ import {
   Group,
   Loader,
   MultiSelect,
-  Stack,
-  Text,
   TextInput,
   Title,
 } from '@mantine/core'

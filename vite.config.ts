@@ -7,12 +7,18 @@ import { defineConfig } from 'vitest/config'
 // /avatar, /api) to the Go backend. Vite serves only the SPA + HMR here.
 export default defineConfig({
   plugins: [react()],
-  server: {
-    host: true,
-    allowedHosts: ['1mail.localhost'],
-    // HMR runs through Caddy's HTTPS origin, so the client connects over wss:443.
-    hmr: { protocol: 'wss', host: '1mail.localhost', clientPort: 443 },
-  },
+  // Under Vitest browser mode the page loads @vite/client, which would try to open
+  // the dev HMR websocket below (wss://1mail.localhost:443 — unreachable in CI) and
+  // race the teardown with an unhandled "WebSocket closed without opened" rejection.
+  // Disable HMR entirely during tests; keep the Caddy dev config for `make dev`.
+  server: process.env.VITEST
+    ? { hmr: false }
+    : {
+        host: true,
+        allowedHosts: ['1mail.localhost'],
+        // HMR runs through Caddy's HTTPS origin, so the client connects over wss:443.
+        hmr: { protocol: 'wss', host: '1mail.localhost', clientPort: 443 },
+      },
   test: {
     testTimeout: 10_000,
     setupFiles: ['./src/test/setup.tsx'],
