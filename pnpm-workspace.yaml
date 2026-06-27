@@ -40,3 +40,14 @@ minimumReleaseAgeExclude:
   - playwright-core@1.61.1
   - playwright@1.61.1
   - vite@8.1.0
+  - '@tanstack/query-core@5.101.2'
+  - '@tanstack/react-query@5.101.2'
+  - '@typescript/native-preview-darwin-arm64@7.0.0-dev.20260627.2'
+  - '@typescript/native-preview-darwin-x64@7.0.0-dev.20260627.2'
+  - '@typescript/native-preview-linux-arm64@7.0.0-dev.20260627.2'
+  - '@typescript/native-preview-linux-arm@7.0.0-dev.20260627.2'
+  - '@typescript/native-preview-linux-x64@7.0.0-dev.20260627.2'
+  - '@typescript/native-preview-win32-arm64@7.0.0-dev.20260627.2'
+  - '@typescript/native-preview-win32-x64@7.0.0-dev.20260627.2'
+  - '@typescript/native-preview@7.0.0-dev.20260627.2'
+  - npm-check-updates@22.2.8

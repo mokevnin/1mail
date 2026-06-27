@@ -82,7 +82,7 @@ test-frontend:
 update: update-npm update-go
 
 update-npm:
-	$(RUN_FE) sh -c 'npx ncu -u && pnpm update'
+	$(RUN_FE) sh -c 'pnpm exec ncu -u && pnpm update'
 
 update-go:
 	$(RUN_GO) sh -c 'go get -u ./... && go mod tidy'
