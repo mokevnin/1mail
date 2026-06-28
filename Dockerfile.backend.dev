@@ -9,6 +9,13 @@ FROM golang:1.26-alpine
 
 RUN apk add --no-cache git curl
 
+# The repo is bind-mounted from the host, so its .git is owned by the host user
+# while commands may run as root (or a different uid). Git then refuses with
+# "detected dubious ownership", which makes `go build` fail to stamp VCS info
+# (air's build dies with "error obtaining VCS status"). Trust the bind-mount path
+# for every user in this dev image.
+RUN git config --system --add safe.directory /app
+
 # Bake air in so it isn't refetched on every container start.
 RUN go install github.com/air-verse/air@latest
 
