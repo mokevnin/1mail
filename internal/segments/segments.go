@@ -1,0 +1,207 @@
+// Package segments is a domain-agnostic engine that compiles a react-querybuilder
+// definition (the JSON shape the UI emits) into an ent SQL predicate. It depends
+// only on entgo.io/ent's general-purpose SQL builder — not on any generated
+// entity — so it can be lifted into a standalone library. The application-side
+// glue that binds it to our Contact entity lives in contact.go (the only file
+// here that imports the project's ent package); drop that file when extracting.
+//
+// Definition format (recursive): a group {combinator: and|or, not, rules[]}
+// where each rules[] entry is either a nested group or a leaf {field, operator,
+// value}. A caller supplies a Schema that whitelists which fields may be used
+// and maps them to SQL columns (plain or JSON), which keeps a stored definition
+// from referencing arbitrary columns.
+package segments
+
+import (
+	"encoding/json"
+	"fmt"
+	"strings"
+
+	"entgo.io/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql/sqljson"
+)
+
+// Group is a react-querybuilder RuleGroupType. Each rules[] entry is decoded
+// lazily because it is either a nested Group or a leaf Rule.
+type Group struct {
+	Combinator string            `json:"combinator"`
+	Not        bool              `json:"not,omitempty"`
+	Rules      []json.RawMessage `json:"rules"`
+}
+
+// Rule is a react-querybuilder leaf rule.
+type Rule struct {
+	Field    string `json:"field"`
+	Operator string `json:"operator"`
+	Value    string `json:"value"`
+}
+
+// Schema whitelists the fields a definition may reference and maps them to SQL.
+// Columns maps a field name to a plain column. JSONColumns maps a field-name
+// prefix (e.g. "custom:") to a JSON column; the path is the field after the
+// prefix (e.g. "custom:plan" -> column custom_fields, path "plan").
+type Schema struct {
+	Columns     map[string]string
+	JSONColumns map[string]string
+}
+
+// Predicate is the compiled output: a selector mutator, assignment-compatible
+// with ent's generated predicate.<Entity> type (also func(*sql.Selector)).
+type Predicate = func(*sql.Selector)
+
+// builder defers predicate construction until a selector is available (so plain
+// columns can be table-qualified via s.C).
+type builder func(*sql.Selector) *sql.Predicate
+
+// Parse decodes a definition string into a Group. A blank definition is a valid
+// "match everyone" group.
+func Parse(def string) (Group, error) {
+	g := Group{Combinator: "and"}
+	if strings.TrimSpace(def) == "" {
+		return g, nil
+	}
+	if err := json.Unmarshal([]byte(def), &g); err != nil {
+		return g, fmt.Errorf("invalid segment definition: %w", err)
+	}
+	return g, nil
+}
+
+// Validate parses and fully compiles a definition against schema.
+func Validate(def string, schema Schema) error {
+	g, err := Parse(def)
+	if err != nil {
+		return err
+	}
+	_, err = Compile(g, schema)
+	return err
+}
+
+// Compile turns a definition group into a selector predicate. An empty rule set
+// matches everyone (an empty negated group matches no one) — deliberate, so an
+// empty rule is never a silent "nobody".
+func Compile(g Group, schema Schema) (Predicate, error) {
+	b, err := compileGroup(g, schema)
+	if err != nil {
+		return nil, err
+	}
+	return func(s *sql.Selector) { s.Where(b(s)) }, nil
+}
+
+func compileGroup(g Group, schema Schema) (builder, error) {
+	builders := make([]builder, 0, len(g.Rules))
+	for i, raw := range g.Rules {
+		b, err := compileEntry(raw, schema)
+		if err != nil {
+			return nil, fmt.Errorf("rule %d: %w", i, err)
+		}
+		builders = append(builders, b)
+	}
+
+	if len(builders) == 0 {
+		expr := "TRUE"
+		if g.Not {
+			expr = "FALSE"
+		}
+		return func(*sql.Selector) *sql.Predicate { return sql.ExprP(expr) }, nil
+	}
+
+	or := strings.EqualFold(g.Combinator, "or")
+	return func(s *sql.Selector) *sql.Predicate {
+		preds := make([]*sql.Predicate, len(builders))
+		for i, b := range builders {
+			preds[i] = b(s)
+		}
+		var p *sql.Predicate
+		if or {
+			p = sql.Or(preds...)
+		} else {
+			p = sql.And(preds...)
+		}
+		if g.Not {
+			p = sql.Not(p)
+		}
+		return p
+	}, nil
+}
+
+// compileEntry decodes a rules[] entry: a nested group when it carries a
+// combinator (or has no field), a leaf rule otherwise.
+func compileEntry(raw json.RawMessage, schema Schema) (builder, error) {
+	var probe struct {
+		Combinator string `json:"combinator"`
+		Field      string `json:"field"`
+	}
+	if err := json.Unmarshal(raw, &probe); err != nil {
+		return nil, fmt.Errorf("malformed rule: %w", err)
+	}
+	if probe.Combinator != "" || probe.Field == "" {
+		var g Group
+		if err := json.Unmarshal(raw, &g); err != nil {
+			return nil, fmt.Errorf("malformed group: %w", err)
+		}
+		return compileGroup(g, schema)
+	}
+	var r Rule
+	if err := json.Unmarshal(raw, &r); err != nil {
+		return nil, fmt.Errorf("malformed rule: %w", err)
+	}
+	return compileRule(r, schema)
+}
+
+func compileRule(r Rule, schema Schema) (builder, error) {
+	if col, path, ok := resolveJSON(r.Field, schema); ok {
+		return compileJSON(col, path, r.Operator, r.Value)
+	}
+	col, ok := schema.Columns[r.Field]
+	if !ok {
+		return nil, fmt.Errorf("unknown field %q", r.Field)
+	}
+	switch r.Operator {
+	case "=":
+		return func(s *sql.Selector) *sql.Predicate { return sql.EQ(s.C(col), r.Value) }, nil
+	case "!=":
+		return func(s *sql.Selector) *sql.Predicate { return sql.NEQ(s.C(col), r.Value) }, nil
+	case "contains":
+		return func(s *sql.Selector) *sql.Predicate { return sql.ContainsFold(s.C(col), r.Value) }, nil
+	case "beginsWith":
+		return func(s *sql.Selector) *sql.Predicate { return sql.HasPrefix(s.C(col), r.Value) }, nil
+	case "null":
+		return func(s *sql.Selector) *sql.Predicate { return sql.IsNull(s.C(col)) }, nil
+	case "notNull":
+		return func(s *sql.Selector) *sql.Predicate { return sql.NotNull(s.C(col)) }, nil
+	default:
+		return nil, fmt.Errorf("unsupported operator %q", r.Operator)
+	}
+}
+
+func compileJSON(col, path, op, value string) (builder, error) {
+	var p *sql.Predicate
+	switch op {
+	case "=":
+		p = sqljson.ValueEQ(col, value, sqljson.Path(path))
+	case "!=":
+		p = sqljson.ValueNEQ(col, value, sqljson.Path(path))
+	case "contains":
+		p = sqljson.ValueContains(col, value, sqljson.Path(path))
+	case "notNull":
+		p = sqljson.HasKey(col, sqljson.Path(path))
+	default:
+		return nil, fmt.Errorf("unsupported operator %q for json field", op)
+	}
+	return func(*sql.Selector) *sql.Predicate { return p }, nil
+}
+
+// resolveJSON reports whether field maps to a JSON column via a schema prefix,
+// returning the column and the JSON path (the field minus the prefix).
+func resolveJSON(field string, schema Schema) (col, path string, ok bool) {
+	for prefix, column := range schema.JSONColumns {
+		if strings.HasPrefix(field, prefix) {
+			p := strings.TrimPrefix(field, prefix)
+			if p == "" {
+				return "", "", false
+			}
+			return column, p, true
+		}
+	}
+	return "", "", false
+}
