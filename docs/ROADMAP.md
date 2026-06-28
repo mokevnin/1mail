@@ -49,17 +49,19 @@ tracking.
 |---|---|---|---|---|
 | **1** | **Broadcasts MVP** | ✅ Done | — | One-off email campaigns end-to-end + delivery tracking (opens/clicks/unsub) + per-campaign report. Audience = all active contacts (+ rule segment). |
 | **2** | **Segment engine** | ✅ Done | 1 | react-querybuilder rule definition compiled to an ent predicate (attributes + custom fields), preview count, usable as broadcast audience. Events-based conditions still to come. |
-| 3 | Email templates + builder | ⬜ Next | 1 | Reusable templates, merge tags / Liquid, test sends, a proper editor. |
-| 4 | Automations / Workflows | ⬜ | 1, 2, 3 | Schema (workflow/node/run) + engine (trigger → action → delay → branch → goal) + visual builder (React Flow). The heart of drip. |
+| **3** | **Email templates + MJML** | ✅ Done | 1 | Reusable templates; single body format — **MJML** everywhere (liquid → MJML compile → text), test sends. A proper visual MJML editor is still to come (body is an MJML textarea for now). |
+| 4 | Automations / Workflows | ⬜ Next | 1, 2, 3 | Schema (workflow/node/run) + engine (trigger → action → delay → branch → goal) + visual builder (@workflowbuilder/sdk, xyflow). The heart of drip. |
 | 5 | Forms & onsite | ⬜ | 1, 2 | Signup forms/popups, embed, feeding into contacts/events (on top of Collect API + tracker). |
 | 6 | Analytics + deliverability | ⬜ | 1, 4 | Dashboards (aggregates over campaigns/automations), sending domains + DKIM/SPF, suppression/bounce handling, A/B. |
 | 7 (later) | E-commerce | ⬜ | 2, 4 | Shopify/Woo connectors, product catalog, purchase/cart events, revenue attribution. Enabled architecturally via the events model from Phase 1. |
 
-> **Progress:** Phases 1–2 are implemented, tested, and on `main`. Phase 2 added a
+> **Progress:** Phases 1–3 are implemented, tested, and on `main`. Phase 2 added a
 > standalone, domain-agnostic rule engine (`internal/segments`) compiling the
-> react-querybuilder format to SQL; segment-based targeting and a deliverable-count
-> preview are wired into broadcasts. Remaining for Phase 2 later: event-based
-> conditions ("performed action X") and snapshot (static-list) segments.
+> react-querybuilder format to SQL; segment targeting + a deliverable-count preview
+> are wired into broadcasts. Phase 3 made email bodies **MJML-only** (compiled via
+> gomjml on send) with reusable templates and test-sends — one format, no dual editor.
+> Remaining later: Phase 2 event-based conditions + snapshot segments; Phase 3 a
+> visual MJML editor (body is a textarea today).
 
 ---
 
