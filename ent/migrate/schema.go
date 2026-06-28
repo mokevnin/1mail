@@ -272,6 +272,7 @@ var (
 	// EventsColumns holds the columns for the "events" table.
 	EventsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt64, Increment: true},
+		{Name: "source_id", Type: field.TypeString, Unique: true, Nullable: true},
 		{Name: "subject_id", Type: field.TypeString},
 		{Name: "email", Type: field.TypeString, Nullable: true},
 		{Name: "phone", Type: field.TypeString, Nullable: true},
@@ -290,7 +291,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "events_workspaces_events",
-				Columns:    []*schema.Column{EventsColumns[9]},
+				Columns:    []*schema.Column{EventsColumns[10]},
 				RefColumns: []*schema.Column{WorkspacesColumns[0]},
 				OnDelete:   schema.NoAction,
 			},

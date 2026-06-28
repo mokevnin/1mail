@@ -17,6 +17,7 @@ func main() {
 		IDType:  &field.TypeInfo{Type: field.TypeInt64},
 		Features: []gen.Feature{
 			gen.FeatureSnapshot,
+			gen.FeatureUpsert,
 		},
 	})
 	if err != nil {

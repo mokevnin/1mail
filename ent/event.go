@@ -19,6 +19,8 @@ type Event struct {
 	config `json:"-"`
 	// ID of the ent.
 	ID int64 `json:"id,omitempty"`
+	// SourceID holds the value of the "source_id" field.
+	SourceID *string `json:"source_id,omitempty"`
 	// SubjectID holds the value of the "subject_id" field.
 	SubjectID string `json:"subject_id,omitempty"`
 	// Email holds the value of the "email" field.
@@ -74,7 +76,7 @@ func (*Event) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullBool)
 		case event.FieldID, event.FieldWorkspaceID:
 			values[i] = new(sql.NullInt64)
-		case event.FieldSubjectID, event.FieldEmail, event.FieldPhone, event.FieldAction:
+		case event.FieldSourceID, event.FieldSubjectID, event.FieldEmail, event.FieldPhone, event.FieldAction:
 			values[i] = new(sql.NullString)
 		case event.FieldOccurredAt, event.FieldCreatedAt:
 			values[i] = new(sql.NullTime)
@@ -99,6 +101,13 @@ func (_m *Event) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field id", value)
 			}
 			_m.ID = int64(value.Int64)
+		case event.FieldSourceID:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field source_id", values[i])
+			} else if value.Valid {
+				_m.SourceID = new(string)
+				*_m.SourceID = value.String
+			}
 		case event.FieldSubjectID:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field subject_id", values[i])
@@ -200,6 +209,11 @@ func (_m *Event) String() string {
 	var builder strings.Builder
 	builder.WriteString("Event(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
+	if v := _m.SourceID; v != nil {
+		builder.WriteString("source_id=")
+		builder.WriteString(*v)
+	}
+	builder.WriteString(", ")
 	builder.WriteString("subject_id=")
 	builder.WriteString(_m.SubjectID)
 	builder.WriteString(", ")

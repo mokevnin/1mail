@@ -7184,6 +7184,7 @@ type EventMutation struct {
 	op               Op
 	typ              string
 	id               *int64
+	source_id        *string
 	subject_id       *string
 	email            *string
 	phone            *string
@@ -7302,6 +7303,55 @@ func (m *EventMutation) IDs(ctx context.Context) ([]int64, error) {
 	default:
 		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
 	}
+}
+
+// SetSourceID sets the "source_id" field.
+func (m *EventMutation) SetSourceID(s string) {
+	m.source_id = &s
+}
+
+// SourceID returns the value of the "source_id" field in the mutation.
+func (m *EventMutation) SourceID() (r string, exists bool) {
+	v := m.source_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSourceID returns the old "source_id" field's value of the Event entity.
+// If the Event object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *EventMutation) OldSourceID(ctx context.Context) (v *string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSourceID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSourceID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSourceID: %w", err)
+	}
+	return oldValue.SourceID, nil
+}
+
+// ClearSourceID clears the value of the "source_id" field.
+func (m *EventMutation) ClearSourceID() {
+	m.source_id = nil
+	m.clearedFields[event.FieldSourceID] = struct{}{}
+}
+
+// SourceIDCleared returns if the "source_id" field was cleared in this mutation.
+func (m *EventMutation) SourceIDCleared() bool {
+	_, ok := m.clearedFields[event.FieldSourceID]
+	return ok
+}
+
+// ResetSourceID resets all changes to the "source_id" field.
+func (m *EventMutation) ResetSourceID() {
+	m.source_id = nil
+	delete(m.clearedFields, event.FieldSourceID)
 }
 
 // SetSubjectID sets the "subject_id" field.
@@ -7754,7 +7804,10 @@ func (m *EventMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *EventMutation) Fields() []string {
-	fields := make([]string, 0, 9)
+	fields := make([]string, 0, 10)
+	if m.source_id != nil {
+		fields = append(fields, event.FieldSourceID)
+	}
 	if m.subject_id != nil {
 		fields = append(fields, event.FieldSubjectID)
 	}
@@ -7790,6 +7843,8 @@ func (m *EventMutation) Fields() []string {
 // schema.
 func (m *EventMutation) Field(name string) (ent.Value, bool) {
 	switch name {
+	case event.FieldSourceID:
+		return m.SourceID()
 	case event.FieldSubjectID:
 		return m.SubjectID()
 	case event.FieldEmail:
@@ -7817,6 +7872,8 @@ func (m *EventMutation) Field(name string) (ent.Value, bool) {
 // database failed.
 func (m *EventMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
 	switch name {
+	case event.FieldSourceID:
+		return m.OldSourceID(ctx)
 	case event.FieldSubjectID:
 		return m.OldSubjectID(ctx)
 	case event.FieldEmail:
@@ -7844,6 +7901,13 @@ func (m *EventMutation) OldField(ctx context.Context, name string) (ent.Value, e
 // type.
 func (m *EventMutation) SetField(name string, value ent.Value) error {
 	switch name {
+	case event.FieldSourceID:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSourceID(v)
+		return nil
 	case event.FieldSubjectID:
 		v, ok := value.(string)
 		if !ok {
@@ -7940,6 +8004,9 @@ func (m *EventMutation) AddField(name string, value ent.Value) error {
 // mutation.
 func (m *EventMutation) ClearedFields() []string {
 	var fields []string
+	if m.FieldCleared(event.FieldSourceID) {
+		fields = append(fields, event.FieldSourceID)
+	}
 	if m.FieldCleared(event.FieldEmail) {
 		fields = append(fields, event.FieldEmail)
 	}
@@ -7969,6 +8036,9 @@ func (m *EventMutation) FieldCleared(name string) bool {
 // error if the field is not defined in the schema.
 func (m *EventMutation) ClearField(name string) error {
 	switch name {
+	case event.FieldSourceID:
+		m.ClearSourceID()
+		return nil
 	case event.FieldEmail:
 		m.ClearEmail()
 		return nil
@@ -7992,6 +8062,9 @@ func (m *EventMutation) ClearField(name string) error {
 // It returns an error if the field is not defined in the schema.
 func (m *EventMutation) ResetField(name string) error {
 	switch name {
+	case event.FieldSourceID:
+		m.ResetSourceID()
+		return nil
 	case event.FieldSubjectID:
 		m.ResetSubjectID()
 		return nil

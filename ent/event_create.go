@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"time"
 
+	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/mokevnin/1mail/ent/event"
@@ -19,6 +20,21 @@ type EventCreate struct {
 	config
 	mutation *EventMutation
 	hooks    []Hook
+	conflict []sql.ConflictOption
+}
+
+// SetSourceID sets the "source_id" field.
+func (_c *EventCreate) SetSourceID(v string) *EventCreate {
+	_c.mutation.SetSourceID(v)
+	return _c
+}
+
+// SetNillableSourceID sets the "source_id" field if the given value is not nil.
+func (_c *EventCreate) SetNillableSourceID(v *string) *EventCreate {
+	if v != nil {
+		_c.SetSourceID(*v)
+	}
+	return _c
 }
 
 // SetSubjectID sets the "subject_id" field.
@@ -222,9 +238,14 @@ func (_c *EventCreate) createSpec() (*Event, *sqlgraph.CreateSpec) {
 		_node = &Event{config: _c.config}
 		_spec = sqlgraph.NewCreateSpec(event.Table, sqlgraph.NewFieldSpec(event.FieldID, field.TypeInt64))
 	)
+	_spec.OnConflict = _c.conflict
 	if id, ok := _c.mutation.ID(); ok {
 		_node.ID = id
 		_spec.ID.Value = id
+	}
+	if value, ok := _c.mutation.SourceID(); ok {
+		_spec.SetField(event.FieldSourceID, field.TypeString, value)
+		_node.SourceID = &value
 	}
 	if value, ok := _c.mutation.SubjectID(); ok {
 		_spec.SetField(event.FieldSubjectID, field.TypeString, value)
@@ -278,11 +299,457 @@ func (_c *EventCreate) createSpec() (*Event, *sqlgraph.CreateSpec) {
 	return _node, _spec
 }
 
+// OnConflict allows configuring the `ON CONFLICT` / `ON DUPLICATE KEY` clause
+// of the `INSERT` statement. For example:
+//
+//	client.Event.Create().
+//		SetSourceID(v).
+//		OnConflict(
+//			// Update the row with the new values
+//			// the was proposed for insertion.
+//			sql.ResolveWithNewValues(),
+//		).
+//		// Override some of the fields with custom
+//		// update values.
+//		Update(func(u *ent.EventUpsert) {
+//			SetSourceID(v+v).
+//		}).
+//		Exec(ctx)
+func (_c *EventCreate) OnConflict(opts ...sql.ConflictOption) *EventUpsertOne {
+	_c.conflict = opts
+	return &EventUpsertOne{
+		create: _c,
+	}
+}
+
+// OnConflictColumns calls `OnConflict` and configures the columns
+// as conflict target. Using this option is equivalent to using:
+//
+//	client.Event.Create().
+//		OnConflict(sql.ConflictColumns(columns...)).
+//		Exec(ctx)
+func (_c *EventCreate) OnConflictColumns(columns ...string) *EventUpsertOne {
+	_c.conflict = append(_c.conflict, sql.ConflictColumns(columns...))
+	return &EventUpsertOne{
+		create: _c,
+	}
+}
+
+type (
+	// EventUpsertOne is the builder for "upsert"-ing
+	//  one Event node.
+	EventUpsertOne struct {
+		create *EventCreate
+	}
+
+	// EventUpsert is the "OnConflict" setter.
+	EventUpsert struct {
+		*sql.UpdateSet
+	}
+)
+
+// SetSourceID sets the "source_id" field.
+func (u *EventUpsert) SetSourceID(v string) *EventUpsert {
+	u.Set(event.FieldSourceID, v)
+	return u
+}
+
+// UpdateSourceID sets the "source_id" field to the value that was provided on create.
+func (u *EventUpsert) UpdateSourceID() *EventUpsert {
+	u.SetExcluded(event.FieldSourceID)
+	return u
+}
+
+// ClearSourceID clears the value of the "source_id" field.
+func (u *EventUpsert) ClearSourceID() *EventUpsert {
+	u.SetNull(event.FieldSourceID)
+	return u
+}
+
+// SetSubjectID sets the "subject_id" field.
+func (u *EventUpsert) SetSubjectID(v string) *EventUpsert {
+	u.Set(event.FieldSubjectID, v)
+	return u
+}
+
+// UpdateSubjectID sets the "subject_id" field to the value that was provided on create.
+func (u *EventUpsert) UpdateSubjectID() *EventUpsert {
+	u.SetExcluded(event.FieldSubjectID)
+	return u
+}
+
+// SetEmail sets the "email" field.
+func (u *EventUpsert) SetEmail(v string) *EventUpsert {
+	u.Set(event.FieldEmail, v)
+	return u
+}
+
+// UpdateEmail sets the "email" field to the value that was provided on create.
+func (u *EventUpsert) UpdateEmail() *EventUpsert {
+	u.SetExcluded(event.FieldEmail)
+	return u
+}
+
+// ClearEmail clears the value of the "email" field.
+func (u *EventUpsert) ClearEmail() *EventUpsert {
+	u.SetNull(event.FieldEmail)
+	return u
+}
+
+// SetPhone sets the "phone" field.
+func (u *EventUpsert) SetPhone(v string) *EventUpsert {
+	u.Set(event.FieldPhone, v)
+	return u
+}
+
+// UpdatePhone sets the "phone" field to the value that was provided on create.
+func (u *EventUpsert) UpdatePhone() *EventUpsert {
+	u.SetExcluded(event.FieldPhone)
+	return u
+}
+
+// ClearPhone clears the value of the "phone" field.
+func (u *EventUpsert) ClearPhone() *EventUpsert {
+	u.SetNull(event.FieldPhone)
+	return u
+}
+
+// SetAction sets the "action" field.
+func (u *EventUpsert) SetAction(v string) *EventUpsert {
+	u.Set(event.FieldAction, v)
+	return u
+}
+
+// UpdateAction sets the "action" field to the value that was provided on create.
+func (u *EventUpsert) UpdateAction() *EventUpsert {
+	u.SetExcluded(event.FieldAction)
+	return u
+}
+
+// SetProperties sets the "properties" field.
+func (u *EventUpsert) SetProperties(v map[string]interface{}) *EventUpsert {
+	u.Set(event.FieldProperties, v)
+	return u
+}
+
+// UpdateProperties sets the "properties" field to the value that was provided on create.
+func (u *EventUpsert) UpdateProperties() *EventUpsert {
+	u.SetExcluded(event.FieldProperties)
+	return u
+}
+
+// ClearProperties clears the value of the "properties" field.
+func (u *EventUpsert) ClearProperties() *EventUpsert {
+	u.SetNull(event.FieldProperties)
+	return u
+}
+
+// SetOccurredAt sets the "occurred_at" field.
+func (u *EventUpsert) SetOccurredAt(v time.Time) *EventUpsert {
+	u.Set(event.FieldOccurredAt, v)
+	return u
+}
+
+// UpdateOccurredAt sets the "occurred_at" field to the value that was provided on create.
+func (u *EventUpsert) UpdateOccurredAt() *EventUpsert {
+	u.SetExcluded(event.FieldOccurredAt)
+	return u
+}
+
+// ClearOccurredAt clears the value of the "occurred_at" field.
+func (u *EventUpsert) ClearOccurredAt() *EventUpsert {
+	u.SetNull(event.FieldOccurredAt)
+	return u
+}
+
+// SetProspect sets the "prospect" field.
+func (u *EventUpsert) SetProspect(v bool) *EventUpsert {
+	u.Set(event.FieldProspect, v)
+	return u
+}
+
+// UpdateProspect sets the "prospect" field to the value that was provided on create.
+func (u *EventUpsert) UpdateProspect() *EventUpsert {
+	u.SetExcluded(event.FieldProspect)
+	return u
+}
+
+// ClearProspect clears the value of the "prospect" field.
+func (u *EventUpsert) ClearProspect() *EventUpsert {
+	u.SetNull(event.FieldProspect)
+	return u
+}
+
+// SetWorkspaceID sets the "workspace_id" field.
+func (u *EventUpsert) SetWorkspaceID(v int64) *EventUpsert {
+	u.Set(event.FieldWorkspaceID, v)
+	return u
+}
+
+// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
+func (u *EventUpsert) UpdateWorkspaceID() *EventUpsert {
+	u.SetExcluded(event.FieldWorkspaceID)
+	return u
+}
+
+// UpdateNewValues updates the mutable fields using the new values that were set on create except the ID field.
+// Using this option is equivalent to using:
+//
+//	client.Event.Create().
+//		OnConflict(
+//			sql.ResolveWithNewValues(),
+//			sql.ResolveWith(func(u *sql.UpdateSet) {
+//				u.SetIgnore(event.FieldID)
+//			}),
+//		).
+//		Exec(ctx)
+func (u *EventUpsertOne) UpdateNewValues() *EventUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(s *sql.UpdateSet) {
+		if _, exists := u.create.mutation.ID(); exists {
+			s.SetIgnore(event.FieldID)
+		}
+		if _, exists := u.create.mutation.CreatedAt(); exists {
+			s.SetIgnore(event.FieldCreatedAt)
+		}
+	}))
+	return u
+}
+
+// Ignore sets each column to itself in case of conflict.
+// Using this option is equivalent to using:
+//
+//	client.Event.Create().
+//	    OnConflict(sql.ResolveWithIgnore()).
+//	    Exec(ctx)
+func (u *EventUpsertOne) Ignore() *EventUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithIgnore())
+	return u
+}
+
+// DoNothing configures the conflict_action to `DO NOTHING`.
+// Supported only by SQLite and PostgreSQL.
+func (u *EventUpsertOne) DoNothing() *EventUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.DoNothing())
+	return u
+}
+
+// Update allows overriding fields `UPDATE` values. See the EventCreate.OnConflict
+// documentation for more info.
+func (u *EventUpsertOne) Update(set func(*EventUpsert)) *EventUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(update *sql.UpdateSet) {
+		set(&EventUpsert{UpdateSet: update})
+	}))
+	return u
+}
+
+// SetSourceID sets the "source_id" field.
+func (u *EventUpsertOne) SetSourceID(v string) *EventUpsertOne {
+	return u.Update(func(s *EventUpsert) {
+		s.SetSourceID(v)
+	})
+}
+
+// UpdateSourceID sets the "source_id" field to the value that was provided on create.
+func (u *EventUpsertOne) UpdateSourceID() *EventUpsertOne {
+	return u.Update(func(s *EventUpsert) {
+		s.UpdateSourceID()
+	})
+}
+
+// ClearSourceID clears the value of the "source_id" field.
+func (u *EventUpsertOne) ClearSourceID() *EventUpsertOne {
+	return u.Update(func(s *EventUpsert) {
+		s.ClearSourceID()
+	})
+}
+
+// SetSubjectID sets the "subject_id" field.
+func (u *EventUpsertOne) SetSubjectID(v string) *EventUpsertOne {
+	return u.Update(func(s *EventUpsert) {
+		s.SetSubjectID(v)
+	})
+}
+
+// UpdateSubjectID sets the "subject_id" field to the value that was provided on create.
+func (u *EventUpsertOne) UpdateSubjectID() *EventUpsertOne {
+	return u.Update(func(s *EventUpsert) {
+		s.UpdateSubjectID()
+	})
+}
+
+// SetEmail sets the "email" field.
+func (u *EventUpsertOne) SetEmail(v string) *EventUpsertOne {
+	return u.Update(func(s *EventUpsert) {
+		s.SetEmail(v)
+	})
+}
+
+// UpdateEmail sets the "email" field to the value that was provided on create.
+func (u *EventUpsertOne) UpdateEmail() *EventUpsertOne {
+	return u.Update(func(s *EventUpsert) {
+		s.UpdateEmail()
+	})
+}
+
+// ClearEmail clears the value of the "email" field.
+func (u *EventUpsertOne) ClearEmail() *EventUpsertOne {
+	return u.Update(func(s *EventUpsert) {
+		s.ClearEmail()
+	})
+}
+
+// SetPhone sets the "phone" field.
+func (u *EventUpsertOne) SetPhone(v string) *EventUpsertOne {
+	return u.Update(func(s *EventUpsert) {
+		s.SetPhone(v)
+	})
+}
+
+// UpdatePhone sets the "phone" field to the value that was provided on create.
+func (u *EventUpsertOne) UpdatePhone() *EventUpsertOne {
+	return u.Update(func(s *EventUpsert) {
+		s.UpdatePhone()
+	})
+}
+
+// ClearPhone clears the value of the "phone" field.
+func (u *EventUpsertOne) ClearPhone() *EventUpsertOne {
+	return u.Update(func(s *EventUpsert) {
+		s.ClearPhone()
+	})
+}
+
+// SetAction sets the "action" field.
+func (u *EventUpsertOne) SetAction(v string) *EventUpsertOne {
+	return u.Update(func(s *EventUpsert) {
+		s.SetAction(v)
+	})
+}
+
+// UpdateAction sets the "action" field to the value that was provided on create.
+func (u *EventUpsertOne) UpdateAction() *EventUpsertOne {
+	return u.Update(func(s *EventUpsert) {
+		s.UpdateAction()
+	})
+}
+
+// SetProperties sets the "properties" field.
+func (u *EventUpsertOne) SetProperties(v map[string]interface{}) *EventUpsertOne {
+	return u.Update(func(s *EventUpsert) {
+		s.SetProperties(v)
+	})
+}
+
+// UpdateProperties sets the "properties" field to the value that was provided on create.
+func (u *EventUpsertOne) UpdateProperties() *EventUpsertOne {
+	return u.Update(func(s *EventUpsert) {
+		s.UpdateProperties()
+	})
+}
+
+// ClearProperties clears the value of the "properties" field.
+func (u *EventUpsertOne) ClearProperties() *EventUpsertOne {
+	return u.Update(func(s *EventUpsert) {
+		s.ClearProperties()
+	})
+}
+
+// SetOccurredAt sets the "occurred_at" field.
+func (u *EventUpsertOne) SetOccurredAt(v time.Time) *EventUpsertOne {
+	return u.Update(func(s *EventUpsert) {
+		s.SetOccurredAt(v)
+	})
+}
+
+// UpdateOccurredAt sets the "occurred_at" field to the value that was provided on create.
+func (u *EventUpsertOne) UpdateOccurredAt() *EventUpsertOne {
+	return u.Update(func(s *EventUpsert) {
+		s.UpdateOccurredAt()
+	})
+}
+
+// ClearOccurredAt clears the value of the "occurred_at" field.
+func (u *EventUpsertOne) ClearOccurredAt() *EventUpsertOne {
+	return u.Update(func(s *EventUpsert) {
+		s.ClearOccurredAt()
+	})
+}
+
+// SetProspect sets the "prospect" field.
+func (u *EventUpsertOne) SetProspect(v bool) *EventUpsertOne {
+	return u.Update(func(s *EventUpsert) {
+		s.SetProspect(v)
+	})
+}
+
+// UpdateProspect sets the "prospect" field to the value that was provided on create.
+func (u *EventUpsertOne) UpdateProspect() *EventUpsertOne {
+	return u.Update(func(s *EventUpsert) {
+		s.UpdateProspect()
+	})
+}
+
+// ClearProspect clears the value of the "prospect" field.
+func (u *EventUpsertOne) ClearProspect() *EventUpsertOne {
+	return u.Update(func(s *EventUpsert) {
+		s.ClearProspect()
+	})
+}
+
+// SetWorkspaceID sets the "workspace_id" field.
+func (u *EventUpsertOne) SetWorkspaceID(v int64) *EventUpsertOne {
+	return u.Update(func(s *EventUpsert) {
+		s.SetWorkspaceID(v)
+	})
+}
+
+// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
+func (u *EventUpsertOne) UpdateWorkspaceID() *EventUpsertOne {
+	return u.Update(func(s *EventUpsert) {
+		s.UpdateWorkspaceID()
+	})
+}
+
+// Exec executes the query.
+func (u *EventUpsertOne) Exec(ctx context.Context) error {
+	if len(u.create.conflict) == 0 {
+		return errors.New("ent: missing options for EventCreate.OnConflict")
+	}
+	return u.create.Exec(ctx)
+}
+
+// ExecX is like Exec, but panics if an error occurs.
+func (u *EventUpsertOne) ExecX(ctx context.Context) {
+	if err := u.create.Exec(ctx); err != nil {
+		panic(err)
+	}
+}
+
+// Exec executes the UPSERT query and returns the inserted/updated ID.
+func (u *EventUpsertOne) ID(ctx context.Context) (id int64, err error) {
+	node, err := u.create.Save(ctx)
+	if err != nil {
+		return id, err
+	}
+	return node.ID, nil
+}
+
+// IDX is like ID, but panics if an error occurs.
+func (u *EventUpsertOne) IDX(ctx context.Context) int64 {
+	id, err := u.ID(ctx)
+	if err != nil {
+		panic(err)
+	}
+	return id
+}
+
 // EventCreateBulk is the builder for creating many Event entities in bulk.
 type EventCreateBulk struct {
 	config
 	err      error
 	builders []*EventCreate
+	conflict []sql.ConflictOption
 }
 
 // Save creates the Event entities in the database.
@@ -312,6 +779,7 @@ func (_c *EventCreateBulk) Save(ctx context.Context) ([]*Event, error) {
 					_, err = mutators[i+1].Mutate(root, _c.builders[i+1].mutation)
 				} else {
 					spec := &sqlgraph.BatchCreateSpec{Nodes: specs}
+					spec.OnConflict = _c.conflict
 					// Invoke the actual operation on the latest mutation in the chain.
 					if err = sqlgraph.BatchCreate(ctx, _c.driver, spec); err != nil {
 						if sqlgraph.IsConstraintError(err) {
@@ -362,6 +830,291 @@ func (_c *EventCreateBulk) Exec(ctx context.Context) error {
 // ExecX is like Exec, but panics if an error occurs.
 func (_c *EventCreateBulk) ExecX(ctx context.Context) {
 	if err := _c.Exec(ctx); err != nil {
+		panic(err)
+	}
+}
+
+// OnConflict allows configuring the `ON CONFLICT` / `ON DUPLICATE KEY` clause
+// of the `INSERT` statement. For example:
+//
+//	client.Event.CreateBulk(builders...).
+//		OnConflict(
+//			// Update the row with the new values
+//			// the was proposed for insertion.
+//			sql.ResolveWithNewValues(),
+//		).
+//		// Override some of the fields with custom
+//		// update values.
+//		Update(func(u *ent.EventUpsert) {
+//			SetSourceID(v+v).
+//		}).
+//		Exec(ctx)
+func (_c *EventCreateBulk) OnConflict(opts ...sql.ConflictOption) *EventUpsertBulk {
+	_c.conflict = opts
+	return &EventUpsertBulk{
+		create: _c,
+	}
+}
+
+// OnConflictColumns calls `OnConflict` and configures the columns
+// as conflict target. Using this option is equivalent to using:
+//
+//	client.Event.Create().
+//		OnConflict(sql.ConflictColumns(columns...)).
+//		Exec(ctx)
+func (_c *EventCreateBulk) OnConflictColumns(columns ...string) *EventUpsertBulk {
+	_c.conflict = append(_c.conflict, sql.ConflictColumns(columns...))
+	return &EventUpsertBulk{
+		create: _c,
+	}
+}
+
+// EventUpsertBulk is the builder for "upsert"-ing
+// a bulk of Event nodes.
+type EventUpsertBulk struct {
+	create *EventCreateBulk
+}
+
+// UpdateNewValues updates the mutable fields using the new values that
+// were set on create. Using this option is equivalent to using:
+//
+//	client.Event.Create().
+//		OnConflict(
+//			sql.ResolveWithNewValues(),
+//			sql.ResolveWith(func(u *sql.UpdateSet) {
+//				u.SetIgnore(event.FieldID)
+//			}),
+//		).
+//		Exec(ctx)
+func (u *EventUpsertBulk) UpdateNewValues() *EventUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(s *sql.UpdateSet) {
+		for _, b := range u.create.builders {
+			if _, exists := b.mutation.ID(); exists {
+				s.SetIgnore(event.FieldID)
+			}
+			if _, exists := b.mutation.CreatedAt(); exists {
+				s.SetIgnore(event.FieldCreatedAt)
+			}
+		}
+	}))
+	return u
+}
+
+// Ignore sets each column to itself in case of conflict.
+// Using this option is equivalent to using:
+//
+//	client.Event.Create().
+//		OnConflict(sql.ResolveWithIgnore()).
+//		Exec(ctx)
+func (u *EventUpsertBulk) Ignore() *EventUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithIgnore())
+	return u
+}
+
+// DoNothing configures the conflict_action to `DO NOTHING`.
+// Supported only by SQLite and PostgreSQL.
+func (u *EventUpsertBulk) DoNothing() *EventUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.DoNothing())
+	return u
+}
+
+// Update allows overriding fields `UPDATE` values. See the EventCreateBulk.OnConflict
+// documentation for more info.
+func (u *EventUpsertBulk) Update(set func(*EventUpsert)) *EventUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(update *sql.UpdateSet) {
+		set(&EventUpsert{UpdateSet: update})
+	}))
+	return u
+}
+
+// SetSourceID sets the "source_id" field.
+func (u *EventUpsertBulk) SetSourceID(v string) *EventUpsertBulk {
+	return u.Update(func(s *EventUpsert) {
+		s.SetSourceID(v)
+	})
+}
+
+// UpdateSourceID sets the "source_id" field to the value that was provided on create.
+func (u *EventUpsertBulk) UpdateSourceID() *EventUpsertBulk {
+	return u.Update(func(s *EventUpsert) {
+		s.UpdateSourceID()
+	})
+}
+
+// ClearSourceID clears the value of the "source_id" field.
+func (u *EventUpsertBulk) ClearSourceID() *EventUpsertBulk {
+	return u.Update(func(s *EventUpsert) {
+		s.ClearSourceID()
+	})
+}
+
+// SetSubjectID sets the "subject_id" field.
+func (u *EventUpsertBulk) SetSubjectID(v string) *EventUpsertBulk {
+	return u.Update(func(s *EventUpsert) {
+		s.SetSubjectID(v)
+	})
+}
+
+// UpdateSubjectID sets the "subject_id" field to the value that was provided on create.
+func (u *EventUpsertBulk) UpdateSubjectID() *EventUpsertBulk {
+	return u.Update(func(s *EventUpsert) {
+		s.UpdateSubjectID()
+	})
+}
+
+// SetEmail sets the "email" field.
+func (u *EventUpsertBulk) SetEmail(v string) *EventUpsertBulk {
+	return u.Update(func(s *EventUpsert) {
+		s.SetEmail(v)
+	})
+}
+
+// UpdateEmail sets the "email" field to the value that was provided on create.
+func (u *EventUpsertBulk) UpdateEmail() *EventUpsertBulk {
+	return u.Update(func(s *EventUpsert) {
+		s.UpdateEmail()
+	})
+}
+
+// ClearEmail clears the value of the "email" field.
+func (u *EventUpsertBulk) ClearEmail() *EventUpsertBulk {
+	return u.Update(func(s *EventUpsert) {
+		s.ClearEmail()
+	})
+}
+
+// SetPhone sets the "phone" field.
+func (u *EventUpsertBulk) SetPhone(v string) *EventUpsertBulk {
+	return u.Update(func(s *EventUpsert) {
+		s.SetPhone(v)
+	})
+}
+
+// UpdatePhone sets the "phone" field to the value that was provided on create.
+func (u *EventUpsertBulk) UpdatePhone() *EventUpsertBulk {
+	return u.Update(func(s *EventUpsert) {
+		s.UpdatePhone()
+	})
+}
+
+// ClearPhone clears the value of the "phone" field.
+func (u *EventUpsertBulk) ClearPhone() *EventUpsertBulk {
+	return u.Update(func(s *EventUpsert) {
+		s.ClearPhone()
+	})
+}
+
+// SetAction sets the "action" field.
+func (u *EventUpsertBulk) SetAction(v string) *EventUpsertBulk {
+	return u.Update(func(s *EventUpsert) {
+		s.SetAction(v)
+	})
+}
+
+// UpdateAction sets the "action" field to the value that was provided on create.
+func (u *EventUpsertBulk) UpdateAction() *EventUpsertBulk {
+	return u.Update(func(s *EventUpsert) {
+		s.UpdateAction()
+	})
+}
+
+// SetProperties sets the "properties" field.
+func (u *EventUpsertBulk) SetProperties(v map[string]interface{}) *EventUpsertBulk {
+	return u.Update(func(s *EventUpsert) {
+		s.SetProperties(v)
+	})
+}
+
+// UpdateProperties sets the "properties" field to the value that was provided on create.
+func (u *EventUpsertBulk) UpdateProperties() *EventUpsertBulk {
+	return u.Update(func(s *EventUpsert) {
+		s.UpdateProperties()
+	})
+}
+
+// ClearProperties clears the value of the "properties" field.
+func (u *EventUpsertBulk) ClearProperties() *EventUpsertBulk {
+	return u.Update(func(s *EventUpsert) {
+		s.ClearProperties()
+	})
+}
+
+// SetOccurredAt sets the "occurred_at" field.
+func (u *EventUpsertBulk) SetOccurredAt(v time.Time) *EventUpsertBulk {
+	return u.Update(func(s *EventUpsert) {
+		s.SetOccurredAt(v)
+	})
+}
+
+// UpdateOccurredAt sets the "occurred_at" field to the value that was provided on create.
+func (u *EventUpsertBulk) UpdateOccurredAt() *EventUpsertBulk {
+	return u.Update(func(s *EventUpsert) {
+		s.UpdateOccurredAt()
+	})
+}
+
+// ClearOccurredAt clears the value of the "occurred_at" field.
+func (u *EventUpsertBulk) ClearOccurredAt() *EventUpsertBulk {
+	return u.Update(func(s *EventUpsert) {
+		s.ClearOccurredAt()
+	})
+}
+
+// SetProspect sets the "prospect" field.
+func (u *EventUpsertBulk) SetProspect(v bool) *EventUpsertBulk {
+	return u.Update(func(s *EventUpsert) {
+		s.SetProspect(v)
+	})
+}
+
+// UpdateProspect sets the "prospect" field to the value that was provided on create.
+func (u *EventUpsertBulk) UpdateProspect() *EventUpsertBulk {
+	return u.Update(func(s *EventUpsert) {
+		s.UpdateProspect()
+	})
+}
+
+// ClearProspect clears the value of the "prospect" field.
+func (u *EventUpsertBulk) ClearProspect() *EventUpsertBulk {
+	return u.Update(func(s *EventUpsert) {
+		s.ClearProspect()
+	})
+}
+
+// SetWorkspaceID sets the "workspace_id" field.
+func (u *EventUpsertBulk) SetWorkspaceID(v int64) *EventUpsertBulk {
+	return u.Update(func(s *EventUpsert) {
+		s.SetWorkspaceID(v)
+	})
+}
+
+// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
+func (u *EventUpsertBulk) UpdateWorkspaceID() *EventUpsertBulk {
+	return u.Update(func(s *EventUpsert) {
+		s.UpdateWorkspaceID()
+	})
+}
+
+// Exec executes the query.
+func (u *EventUpsertBulk) Exec(ctx context.Context) error {
+	if u.create.err != nil {
+		return u.create.err
+	}
+	for i, b := range u.create.builders {
+		if len(b.conflict) != 0 {
+			return fmt.Errorf("ent: OnConflict was set for builder %d. Set it on the EventCreateBulk instead", i)
+		}
+	}
+	if len(u.create.conflict) == 0 {
+		return errors.New("ent: missing options for EventCreateBulk.OnConflict")
+	}
+	return u.create.Exec(ctx)
+}
+
+// ExecX is like Exec, but panics if an error occurs.
+func (u *EventUpsertBulk) ExecX(ctx context.Context) {
+	if err := u.create.Exec(ctx); err != nil {
 		panic(err)
 	}
 }

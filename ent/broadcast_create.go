@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"time"
 
+	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/mokevnin/1mail/ent/broadcast"
@@ -20,6 +21,7 @@ type BroadcastCreate struct {
 	config
 	mutation *BroadcastMutation
 	hooks    []Hook
+	conflict []sql.ConflictOption
 }
 
 // SetName sets the "name" field.
@@ -512,6 +514,7 @@ func (_c *BroadcastCreate) createSpec() (*Broadcast, *sqlgraph.CreateSpec) {
 		_node = &Broadcast{config: _c.config}
 		_spec = sqlgraph.NewCreateSpec(broadcast.Table, sqlgraph.NewFieldSpec(broadcast.FieldID, field.TypeInt64))
 	)
+	_spec.OnConflict = _c.conflict
 	if id, ok := _c.mutation.ID(); ok {
 		_node.ID = id
 		_spec.ID.Value = id
@@ -628,11 +631,821 @@ func (_c *BroadcastCreate) createSpec() (*Broadcast, *sqlgraph.CreateSpec) {
 	return _node, _spec
 }
 
+// OnConflict allows configuring the `ON CONFLICT` / `ON DUPLICATE KEY` clause
+// of the `INSERT` statement. For example:
+//
+//	client.Broadcast.Create().
+//		SetName(v).
+//		OnConflict(
+//			// Update the row with the new values
+//			// the was proposed for insertion.
+//			sql.ResolveWithNewValues(),
+//		).
+//		// Override some of the fields with custom
+//		// update values.
+//		Update(func(u *ent.BroadcastUpsert) {
+//			SetName(v+v).
+//		}).
+//		Exec(ctx)
+func (_c *BroadcastCreate) OnConflict(opts ...sql.ConflictOption) *BroadcastUpsertOne {
+	_c.conflict = opts
+	return &BroadcastUpsertOne{
+		create: _c,
+	}
+}
+
+// OnConflictColumns calls `OnConflict` and configures the columns
+// as conflict target. Using this option is equivalent to using:
+//
+//	client.Broadcast.Create().
+//		OnConflict(sql.ConflictColumns(columns...)).
+//		Exec(ctx)
+func (_c *BroadcastCreate) OnConflictColumns(columns ...string) *BroadcastUpsertOne {
+	_c.conflict = append(_c.conflict, sql.ConflictColumns(columns...))
+	return &BroadcastUpsertOne{
+		create: _c,
+	}
+}
+
+type (
+	// BroadcastUpsertOne is the builder for "upsert"-ing
+	//  one Broadcast node.
+	BroadcastUpsertOne struct {
+		create *BroadcastCreate
+	}
+
+	// BroadcastUpsert is the "OnConflict" setter.
+	BroadcastUpsert struct {
+		*sql.UpdateSet
+	}
+)
+
+// SetName sets the "name" field.
+func (u *BroadcastUpsert) SetName(v string) *BroadcastUpsert {
+	u.Set(broadcast.FieldName, v)
+	return u
+}
+
+// UpdateName sets the "name" field to the value that was provided on create.
+func (u *BroadcastUpsert) UpdateName() *BroadcastUpsert {
+	u.SetExcluded(broadcast.FieldName)
+	return u
+}
+
+// SetSubject sets the "subject" field.
+func (u *BroadcastUpsert) SetSubject(v string) *BroadcastUpsert {
+	u.Set(broadcast.FieldSubject, v)
+	return u
+}
+
+// UpdateSubject sets the "subject" field to the value that was provided on create.
+func (u *BroadcastUpsert) UpdateSubject() *BroadcastUpsert {
+	u.SetExcluded(broadcast.FieldSubject)
+	return u
+}
+
+// SetFromName sets the "from_name" field.
+func (u *BroadcastUpsert) SetFromName(v string) *BroadcastUpsert {
+	u.Set(broadcast.FieldFromName, v)
+	return u
+}
+
+// UpdateFromName sets the "from_name" field to the value that was provided on create.
+func (u *BroadcastUpsert) UpdateFromName() *BroadcastUpsert {
+	u.SetExcluded(broadcast.FieldFromName)
+	return u
+}
+
+// ClearFromName clears the value of the "from_name" field.
+func (u *BroadcastUpsert) ClearFromName() *BroadcastUpsert {
+	u.SetNull(broadcast.FieldFromName)
+	return u
+}
+
+// SetFromEmail sets the "from_email" field.
+func (u *BroadcastUpsert) SetFromEmail(v string) *BroadcastUpsert {
+	u.Set(broadcast.FieldFromEmail, v)
+	return u
+}
+
+// UpdateFromEmail sets the "from_email" field to the value that was provided on create.
+func (u *BroadcastUpsert) UpdateFromEmail() *BroadcastUpsert {
+	u.SetExcluded(broadcast.FieldFromEmail)
+	return u
+}
+
+// ClearFromEmail clears the value of the "from_email" field.
+func (u *BroadcastUpsert) ClearFromEmail() *BroadcastUpsert {
+	u.SetNull(broadcast.FieldFromEmail)
+	return u
+}
+
+// SetBody sets the "body" field.
+func (u *BroadcastUpsert) SetBody(v string) *BroadcastUpsert {
+	u.Set(broadcast.FieldBody, v)
+	return u
+}
+
+// UpdateBody sets the "body" field to the value that was provided on create.
+func (u *BroadcastUpsert) UpdateBody() *BroadcastUpsert {
+	u.SetExcluded(broadcast.FieldBody)
+	return u
+}
+
+// SetBodyText sets the "body_text" field.
+func (u *BroadcastUpsert) SetBodyText(v string) *BroadcastUpsert {
+	u.Set(broadcast.FieldBodyText, v)
+	return u
+}
+
+// UpdateBodyText sets the "body_text" field to the value that was provided on create.
+func (u *BroadcastUpsert) UpdateBodyText() *BroadcastUpsert {
+	u.SetExcluded(broadcast.FieldBodyText)
+	return u
+}
+
+// SetSegmentID sets the "segment_id" field.
+func (u *BroadcastUpsert) SetSegmentID(v int64) *BroadcastUpsert {
+	u.Set(broadcast.FieldSegmentID, v)
+	return u
+}
+
+// UpdateSegmentID sets the "segment_id" field to the value that was provided on create.
+func (u *BroadcastUpsert) UpdateSegmentID() *BroadcastUpsert {
+	u.SetExcluded(broadcast.FieldSegmentID)
+	return u
+}
+
+// AddSegmentID adds v to the "segment_id" field.
+func (u *BroadcastUpsert) AddSegmentID(v int64) *BroadcastUpsert {
+	u.Add(broadcast.FieldSegmentID, v)
+	return u
+}
+
+// ClearSegmentID clears the value of the "segment_id" field.
+func (u *BroadcastUpsert) ClearSegmentID() *BroadcastUpsert {
+	u.SetNull(broadcast.FieldSegmentID)
+	return u
+}
+
+// SetIntegrationID sets the "integration_id" field.
+func (u *BroadcastUpsert) SetIntegrationID(v int64) *BroadcastUpsert {
+	u.Set(broadcast.FieldIntegrationID, v)
+	return u
+}
+
+// UpdateIntegrationID sets the "integration_id" field to the value that was provided on create.
+func (u *BroadcastUpsert) UpdateIntegrationID() *BroadcastUpsert {
+	u.SetExcluded(broadcast.FieldIntegrationID)
+	return u
+}
+
+// AddIntegrationID adds v to the "integration_id" field.
+func (u *BroadcastUpsert) AddIntegrationID(v int64) *BroadcastUpsert {
+	u.Add(broadcast.FieldIntegrationID, v)
+	return u
+}
+
+// ClearIntegrationID clears the value of the "integration_id" field.
+func (u *BroadcastUpsert) ClearIntegrationID() *BroadcastUpsert {
+	u.SetNull(broadcast.FieldIntegrationID)
+	return u
+}
+
+// SetStatus sets the "status" field.
+func (u *BroadcastUpsert) SetStatus(v broadcast.Status) *BroadcastUpsert {
+	u.Set(broadcast.FieldStatus, v)
+	return u
+}
+
+// UpdateStatus sets the "status" field to the value that was provided on create.
+func (u *BroadcastUpsert) UpdateStatus() *BroadcastUpsert {
+	u.SetExcluded(broadcast.FieldStatus)
+	return u
+}
+
+// SetScheduledAt sets the "scheduled_at" field.
+func (u *BroadcastUpsert) SetScheduledAt(v time.Time) *BroadcastUpsert {
+	u.Set(broadcast.FieldScheduledAt, v)
+	return u
+}
+
+// UpdateScheduledAt sets the "scheduled_at" field to the value that was provided on create.
+func (u *BroadcastUpsert) UpdateScheduledAt() *BroadcastUpsert {
+	u.SetExcluded(broadcast.FieldScheduledAt)
+	return u
+}
+
+// ClearScheduledAt clears the value of the "scheduled_at" field.
+func (u *BroadcastUpsert) ClearScheduledAt() *BroadcastUpsert {
+	u.SetNull(broadcast.FieldScheduledAt)
+	return u
+}
+
+// SetSentAt sets the "sent_at" field.
+func (u *BroadcastUpsert) SetSentAt(v time.Time) *BroadcastUpsert {
+	u.Set(broadcast.FieldSentAt, v)
+	return u
+}
+
+// UpdateSentAt sets the "sent_at" field to the value that was provided on create.
+func (u *BroadcastUpsert) UpdateSentAt() *BroadcastUpsert {
+	u.SetExcluded(broadcast.FieldSentAt)
+	return u
+}
+
+// ClearSentAt clears the value of the "sent_at" field.
+func (u *BroadcastUpsert) ClearSentAt() *BroadcastUpsert {
+	u.SetNull(broadcast.FieldSentAt)
+	return u
+}
+
+// SetRecipientsTotal sets the "recipients_total" field.
+func (u *BroadcastUpsert) SetRecipientsTotal(v int) *BroadcastUpsert {
+	u.Set(broadcast.FieldRecipientsTotal, v)
+	return u
+}
+
+// UpdateRecipientsTotal sets the "recipients_total" field to the value that was provided on create.
+func (u *BroadcastUpsert) UpdateRecipientsTotal() *BroadcastUpsert {
+	u.SetExcluded(broadcast.FieldRecipientsTotal)
+	return u
+}
+
+// AddRecipientsTotal adds v to the "recipients_total" field.
+func (u *BroadcastUpsert) AddRecipientsTotal(v int) *BroadcastUpsert {
+	u.Add(broadcast.FieldRecipientsTotal, v)
+	return u
+}
+
+// SetSentCount sets the "sent_count" field.
+func (u *BroadcastUpsert) SetSentCount(v int) *BroadcastUpsert {
+	u.Set(broadcast.FieldSentCount, v)
+	return u
+}
+
+// UpdateSentCount sets the "sent_count" field to the value that was provided on create.
+func (u *BroadcastUpsert) UpdateSentCount() *BroadcastUpsert {
+	u.SetExcluded(broadcast.FieldSentCount)
+	return u
+}
+
+// AddSentCount adds v to the "sent_count" field.
+func (u *BroadcastUpsert) AddSentCount(v int) *BroadcastUpsert {
+	u.Add(broadcast.FieldSentCount, v)
+	return u
+}
+
+// SetOpenedCount sets the "opened_count" field.
+func (u *BroadcastUpsert) SetOpenedCount(v int) *BroadcastUpsert {
+	u.Set(broadcast.FieldOpenedCount, v)
+	return u
+}
+
+// UpdateOpenedCount sets the "opened_count" field to the value that was provided on create.
+func (u *BroadcastUpsert) UpdateOpenedCount() *BroadcastUpsert {
+	u.SetExcluded(broadcast.FieldOpenedCount)
+	return u
+}
+
+// AddOpenedCount adds v to the "opened_count" field.
+func (u *BroadcastUpsert) AddOpenedCount(v int) *BroadcastUpsert {
+	u.Add(broadcast.FieldOpenedCount, v)
+	return u
+}
+
+// SetClickedCount sets the "clicked_count" field.
+func (u *BroadcastUpsert) SetClickedCount(v int) *BroadcastUpsert {
+	u.Set(broadcast.FieldClickedCount, v)
+	return u
+}
+
+// UpdateClickedCount sets the "clicked_count" field to the value that was provided on create.
+func (u *BroadcastUpsert) UpdateClickedCount() *BroadcastUpsert {
+	u.SetExcluded(broadcast.FieldClickedCount)
+	return u
+}
+
+// AddClickedCount adds v to the "clicked_count" field.
+func (u *BroadcastUpsert) AddClickedCount(v int) *BroadcastUpsert {
+	u.Add(broadcast.FieldClickedCount, v)
+	return u
+}
+
+// SetUnsubscribedCount sets the "unsubscribed_count" field.
+func (u *BroadcastUpsert) SetUnsubscribedCount(v int) *BroadcastUpsert {
+	u.Set(broadcast.FieldUnsubscribedCount, v)
+	return u
+}
+
+// UpdateUnsubscribedCount sets the "unsubscribed_count" field to the value that was provided on create.
+func (u *BroadcastUpsert) UpdateUnsubscribedCount() *BroadcastUpsert {
+	u.SetExcluded(broadcast.FieldUnsubscribedCount)
+	return u
+}
+
+// AddUnsubscribedCount adds v to the "unsubscribed_count" field.
+func (u *BroadcastUpsert) AddUnsubscribedCount(v int) *BroadcastUpsert {
+	u.Add(broadcast.FieldUnsubscribedCount, v)
+	return u
+}
+
+// SetFailedCount sets the "failed_count" field.
+func (u *BroadcastUpsert) SetFailedCount(v int) *BroadcastUpsert {
+	u.Set(broadcast.FieldFailedCount, v)
+	return u
+}
+
+// UpdateFailedCount sets the "failed_count" field to the value that was provided on create.
+func (u *BroadcastUpsert) UpdateFailedCount() *BroadcastUpsert {
+	u.SetExcluded(broadcast.FieldFailedCount)
+	return u
+}
+
+// AddFailedCount adds v to the "failed_count" field.
+func (u *BroadcastUpsert) AddFailedCount(v int) *BroadcastUpsert {
+	u.Add(broadcast.FieldFailedCount, v)
+	return u
+}
+
+// SetWorkspaceID sets the "workspace_id" field.
+func (u *BroadcastUpsert) SetWorkspaceID(v int64) *BroadcastUpsert {
+	u.Set(broadcast.FieldWorkspaceID, v)
+	return u
+}
+
+// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
+func (u *BroadcastUpsert) UpdateWorkspaceID() *BroadcastUpsert {
+	u.SetExcluded(broadcast.FieldWorkspaceID)
+	return u
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (u *BroadcastUpsert) SetUpdatedAt(v time.Time) *BroadcastUpsert {
+	u.Set(broadcast.FieldUpdatedAt, v)
+	return u
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *BroadcastUpsert) UpdateUpdatedAt() *BroadcastUpsert {
+	u.SetExcluded(broadcast.FieldUpdatedAt)
+	return u
+}
+
+// UpdateNewValues updates the mutable fields using the new values that were set on create except the ID field.
+// Using this option is equivalent to using:
+//
+//	client.Broadcast.Create().
+//		OnConflict(
+//			sql.ResolveWithNewValues(),
+//			sql.ResolveWith(func(u *sql.UpdateSet) {
+//				u.SetIgnore(broadcast.FieldID)
+//			}),
+//		).
+//		Exec(ctx)
+func (u *BroadcastUpsertOne) UpdateNewValues() *BroadcastUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(s *sql.UpdateSet) {
+		if _, exists := u.create.mutation.ID(); exists {
+			s.SetIgnore(broadcast.FieldID)
+		}
+		if _, exists := u.create.mutation.CreatedAt(); exists {
+			s.SetIgnore(broadcast.FieldCreatedAt)
+		}
+	}))
+	return u
+}
+
+// Ignore sets each column to itself in case of conflict.
+// Using this option is equivalent to using:
+//
+//	client.Broadcast.Create().
+//	    OnConflict(sql.ResolveWithIgnore()).
+//	    Exec(ctx)
+func (u *BroadcastUpsertOne) Ignore() *BroadcastUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithIgnore())
+	return u
+}
+
+// DoNothing configures the conflict_action to `DO NOTHING`.
+// Supported only by SQLite and PostgreSQL.
+func (u *BroadcastUpsertOne) DoNothing() *BroadcastUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.DoNothing())
+	return u
+}
+
+// Update allows overriding fields `UPDATE` values. See the BroadcastCreate.OnConflict
+// documentation for more info.
+func (u *BroadcastUpsertOne) Update(set func(*BroadcastUpsert)) *BroadcastUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(update *sql.UpdateSet) {
+		set(&BroadcastUpsert{UpdateSet: update})
+	}))
+	return u
+}
+
+// SetName sets the "name" field.
+func (u *BroadcastUpsertOne) SetName(v string) *BroadcastUpsertOne {
+	return u.Update(func(s *BroadcastUpsert) {
+		s.SetName(v)
+	})
+}
+
+// UpdateName sets the "name" field to the value that was provided on create.
+func (u *BroadcastUpsertOne) UpdateName() *BroadcastUpsertOne {
+	return u.Update(func(s *BroadcastUpsert) {
+		s.UpdateName()
+	})
+}
+
+// SetSubject sets the "subject" field.
+func (u *BroadcastUpsertOne) SetSubject(v string) *BroadcastUpsertOne {
+	return u.Update(func(s *BroadcastUpsert) {
+		s.SetSubject(v)
+	})
+}
+
+// UpdateSubject sets the "subject" field to the value that was provided on create.
+func (u *BroadcastUpsertOne) UpdateSubject() *BroadcastUpsertOne {
+	return u.Update(func(s *BroadcastUpsert) {
+		s.UpdateSubject()
+	})
+}
+
+// SetFromName sets the "from_name" field.
+func (u *BroadcastUpsertOne) SetFromName(v string) *BroadcastUpsertOne {
+	return u.Update(func(s *BroadcastUpsert) {
+		s.SetFromName(v)
+	})
+}
+
+// UpdateFromName sets the "from_name" field to the value that was provided on create.
+func (u *BroadcastUpsertOne) UpdateFromName() *BroadcastUpsertOne {
+	return u.Update(func(s *BroadcastUpsert) {
+		s.UpdateFromName()
+	})
+}
+
+// ClearFromName clears the value of the "from_name" field.
+func (u *BroadcastUpsertOne) ClearFromName() *BroadcastUpsertOne {
+	return u.Update(func(s *BroadcastUpsert) {
+		s.ClearFromName()
+	})
+}
+
+// SetFromEmail sets the "from_email" field.
+func (u *BroadcastUpsertOne) SetFromEmail(v string) *BroadcastUpsertOne {
+	return u.Update(func(s *BroadcastUpsert) {
+		s.SetFromEmail(v)
+	})
+}
+
+// UpdateFromEmail sets the "from_email" field to the value that was provided on create.
+func (u *BroadcastUpsertOne) UpdateFromEmail() *BroadcastUpsertOne {
+	return u.Update(func(s *BroadcastUpsert) {
+		s.UpdateFromEmail()
+	})
+}
+
+// ClearFromEmail clears the value of the "from_email" field.
+func (u *BroadcastUpsertOne) ClearFromEmail() *BroadcastUpsertOne {
+	return u.Update(func(s *BroadcastUpsert) {
+		s.ClearFromEmail()
+	})
+}
+
+// SetBody sets the "body" field.
+func (u *BroadcastUpsertOne) SetBody(v string) *BroadcastUpsertOne {
+	return u.Update(func(s *BroadcastUpsert) {
+		s.SetBody(v)
+	})
+}
+
+// UpdateBody sets the "body" field to the value that was provided on create.
+func (u *BroadcastUpsertOne) UpdateBody() *BroadcastUpsertOne {
+	return u.Update(func(s *BroadcastUpsert) {
+		s.UpdateBody()
+	})
+}
+
+// SetBodyText sets the "body_text" field.
+func (u *BroadcastUpsertOne) SetBodyText(v string) *BroadcastUpsertOne {
+	return u.Update(func(s *BroadcastUpsert) {
+		s.SetBodyText(v)
+	})
+}
+
+// UpdateBodyText sets the "body_text" field to the value that was provided on create.
+func (u *BroadcastUpsertOne) UpdateBodyText() *BroadcastUpsertOne {
+	return u.Update(func(s *BroadcastUpsert) {
+		s.UpdateBodyText()
+	})
+}
+
+// SetSegmentID sets the "segment_id" field.
+func (u *BroadcastUpsertOne) SetSegmentID(v int64) *BroadcastUpsertOne {
+	return u.Update(func(s *BroadcastUpsert) {
+		s.SetSegmentID(v)
+	})
+}
+
+// AddSegmentID adds v to the "segment_id" field.
+func (u *BroadcastUpsertOne) AddSegmentID(v int64) *BroadcastUpsertOne {
+	return u.Update(func(s *BroadcastUpsert) {
+		s.AddSegmentID(v)
+	})
+}
+
+// UpdateSegmentID sets the "segment_id" field to the value that was provided on create.
+func (u *BroadcastUpsertOne) UpdateSegmentID() *BroadcastUpsertOne {
+	return u.Update(func(s *BroadcastUpsert) {
+		s.UpdateSegmentID()
+	})
+}
+
+// ClearSegmentID clears the value of the "segment_id" field.
+func (u *BroadcastUpsertOne) ClearSegmentID() *BroadcastUpsertOne {
+	return u.Update(func(s *BroadcastUpsert) {
+		s.ClearSegmentID()
+	})
+}
+
+// SetIntegrationID sets the "integration_id" field.
+func (u *BroadcastUpsertOne) SetIntegrationID(v int64) *BroadcastUpsertOne {
+	return u.Update(func(s *BroadcastUpsert) {
+		s.SetIntegrationID(v)
+	})
+}
+
+// AddIntegrationID adds v to the "integration_id" field.
+func (u *BroadcastUpsertOne) AddIntegrationID(v int64) *BroadcastUpsertOne {
+	return u.Update(func(s *BroadcastUpsert) {
+		s.AddIntegrationID(v)
+	})
+}
+
+// UpdateIntegrationID sets the "integration_id" field to the value that was provided on create.
+func (u *BroadcastUpsertOne) UpdateIntegrationID() *BroadcastUpsertOne {
+	return u.Update(func(s *BroadcastUpsert) {
+		s.UpdateIntegrationID()
+	})
+}
+
+// ClearIntegrationID clears the value of the "integration_id" field.
+func (u *BroadcastUpsertOne) ClearIntegrationID() *BroadcastUpsertOne {
+	return u.Update(func(s *BroadcastUpsert) {
+		s.ClearIntegrationID()
+	})
+}
+
+// SetStatus sets the "status" field.
+func (u *BroadcastUpsertOne) SetStatus(v broadcast.Status) *BroadcastUpsertOne {
+	return u.Update(func(s *BroadcastUpsert) {
+		s.SetStatus(v)
+	})
+}
+
+// UpdateStatus sets the "status" field to the value that was provided on create.
+func (u *BroadcastUpsertOne) UpdateStatus() *BroadcastUpsertOne {
+	return u.Update(func(s *BroadcastUpsert) {
+		s.UpdateStatus()
+	})
+}
+
+// SetScheduledAt sets the "scheduled_at" field.
+func (u *BroadcastUpsertOne) SetScheduledAt(v time.Time) *BroadcastUpsertOne {
+	return u.Update(func(s *BroadcastUpsert) {
+		s.SetScheduledAt(v)
+	})
+}
+
+// UpdateScheduledAt sets the "scheduled_at" field to the value that was provided on create.
+func (u *BroadcastUpsertOne) UpdateScheduledAt() *BroadcastUpsertOne {
+	return u.Update(func(s *BroadcastUpsert) {
+		s.UpdateScheduledAt()
+	})
+}
+
+// ClearScheduledAt clears the value of the "scheduled_at" field.
+func (u *BroadcastUpsertOne) ClearScheduledAt() *BroadcastUpsertOne {
+	return u.Update(func(s *BroadcastUpsert) {
+		s.ClearScheduledAt()
+	})
+}
+
+// SetSentAt sets the "sent_at" field.
+func (u *BroadcastUpsertOne) SetSentAt(v time.Time) *BroadcastUpsertOne {
+	return u.Update(func(s *BroadcastUpsert) {
+		s.SetSentAt(v)
+	})
+}
+
+// UpdateSentAt sets the "sent_at" field to the value that was provided on create.
+func (u *BroadcastUpsertOne) UpdateSentAt() *BroadcastUpsertOne {
+	return u.Update(func(s *BroadcastUpsert) {
+		s.UpdateSentAt()
+	})
+}
+
+// ClearSentAt clears the value of the "sent_at" field.
+func (u *BroadcastUpsertOne) ClearSentAt() *BroadcastUpsertOne {
+	return u.Update(func(s *BroadcastUpsert) {
+		s.ClearSentAt()
+	})
+}
+
+// SetRecipientsTotal sets the "recipients_total" field.
+func (u *BroadcastUpsertOne) SetRecipientsTotal(v int) *BroadcastUpsertOne {
+	return u.Update(func(s *BroadcastUpsert) {
+		s.SetRecipientsTotal(v)
+	})
+}
+
+// AddRecipientsTotal adds v to the "recipients_total" field.
+func (u *BroadcastUpsertOne) AddRecipientsTotal(v int) *BroadcastUpsertOne {
+	return u.Update(func(s *BroadcastUpsert) {
+		s.AddRecipientsTotal(v)
+	})
+}
+
+// UpdateRecipientsTotal sets the "recipients_total" field to the value that was provided on create.
+func (u *BroadcastUpsertOne) UpdateRecipientsTotal() *BroadcastUpsertOne {
+	return u.Update(func(s *BroadcastUpsert) {
+		s.UpdateRecipientsTotal()
+	})
+}
+
+// SetSentCount sets the "sent_count" field.
+func (u *BroadcastUpsertOne) SetSentCount(v int) *BroadcastUpsertOne {
+	return u.Update(func(s *BroadcastUpsert) {
+		s.SetSentCount(v)
+	})
+}
+
+// AddSentCount adds v to the "sent_count" field.
+func (u *BroadcastUpsertOne) AddSentCount(v int) *BroadcastUpsertOne {
+	return u.Update(func(s *BroadcastUpsert) {
+		s.AddSentCount(v)
+	})
+}
+
+// UpdateSentCount sets the "sent_count" field to the value that was provided on create.
+func (u *BroadcastUpsertOne) UpdateSentCount() *BroadcastUpsertOne {
+	return u.Update(func(s *BroadcastUpsert) {
+		s.UpdateSentCount()
+	})
+}
+
+// SetOpenedCount sets the "opened_count" field.
+func (u *BroadcastUpsertOne) SetOpenedCount(v int) *BroadcastUpsertOne {
+	return u.Update(func(s *BroadcastUpsert) {
+		s.SetOpenedCount(v)
+	})
+}
+
+// AddOpenedCount adds v to the "opened_count" field.
+func (u *BroadcastUpsertOne) AddOpenedCount(v int) *BroadcastUpsertOne {
+	return u.Update(func(s *BroadcastUpsert) {
+		s.AddOpenedCount(v)
+	})
+}
+
+// UpdateOpenedCount sets the "opened_count" field to the value that was provided on create.
+func (u *BroadcastUpsertOne) UpdateOpenedCount() *BroadcastUpsertOne {
+	return u.Update(func(s *BroadcastUpsert) {
+		s.UpdateOpenedCount()
+	})
+}
+
+// SetClickedCount sets the "clicked_count" field.
+func (u *BroadcastUpsertOne) SetClickedCount(v int) *BroadcastUpsertOne {
+	return u.Update(func(s *BroadcastUpsert) {
+		s.SetClickedCount(v)
+	})
+}
+
+// AddClickedCount adds v to the "clicked_count" field.
+func (u *BroadcastUpsertOne) AddClickedCount(v int) *BroadcastUpsertOne {
+	return u.Update(func(s *BroadcastUpsert) {
+		s.AddClickedCount(v)
+	})
+}
+
+// UpdateClickedCount sets the "clicked_count" field to the value that was provided on create.
+func (u *BroadcastUpsertOne) UpdateClickedCount() *BroadcastUpsertOne {
+	return u.Update(func(s *BroadcastUpsert) {
+		s.UpdateClickedCount()
+	})
+}
+
+// SetUnsubscribedCount sets the "unsubscribed_count" field.
+func (u *BroadcastUpsertOne) SetUnsubscribedCount(v int) *BroadcastUpsertOne {
+	return u.Update(func(s *BroadcastUpsert) {
+		s.SetUnsubscribedCount(v)
+	})
+}
+
+// AddUnsubscribedCount adds v to the "unsubscribed_count" field.
+func (u *BroadcastUpsertOne) AddUnsubscribedCount(v int) *BroadcastUpsertOne {
+	return u.Update(func(s *BroadcastUpsert) {
+		s.AddUnsubscribedCount(v)
+	})
+}
+
+// UpdateUnsubscribedCount sets the "unsubscribed_count" field to the value that was provided on create.
+func (u *BroadcastUpsertOne) UpdateUnsubscribedCount() *BroadcastUpsertOne {
+	return u.Update(func(s *BroadcastUpsert) {
+		s.UpdateUnsubscribedCount()
+	})
+}
+
+// SetFailedCount sets the "failed_count" field.
+func (u *BroadcastUpsertOne) SetFailedCount(v int) *BroadcastUpsertOne {
+	return u.Update(func(s *BroadcastUpsert) {
+		s.SetFailedCount(v)
+	})
+}
+
+// AddFailedCount adds v to the "failed_count" field.
+func (u *BroadcastUpsertOne) AddFailedCount(v int) *BroadcastUpsertOne {
+	return u.Update(func(s *BroadcastUpsert) {
+		s.AddFailedCount(v)
+	})
+}
+
+// UpdateFailedCount sets the "failed_count" field to the value that was provided on create.
+func (u *BroadcastUpsertOne) UpdateFailedCount() *BroadcastUpsertOne {
+	return u.Update(func(s *BroadcastUpsert) {
+		s.UpdateFailedCount()
+	})
+}
+
+// SetWorkspaceID sets the "workspace_id" field.
+func (u *BroadcastUpsertOne) SetWorkspaceID(v int64) *BroadcastUpsertOne {
+	return u.Update(func(s *BroadcastUpsert) {
+		s.SetWorkspaceID(v)
+	})
+}
+
+// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
+func (u *BroadcastUpsertOne) UpdateWorkspaceID() *BroadcastUpsertOne {
+	return u.Update(func(s *BroadcastUpsert) {
+		s.UpdateWorkspaceID()
+	})
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (u *BroadcastUpsertOne) SetUpdatedAt(v time.Time) *BroadcastUpsertOne {
+	return u.Update(func(s *BroadcastUpsert) {
+		s.SetUpdatedAt(v)
+	})
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *BroadcastUpsertOne) UpdateUpdatedAt() *BroadcastUpsertOne {
+	return u.Update(func(s *BroadcastUpsert) {
+		s.UpdateUpdatedAt()
+	})
+}
+
+// Exec executes the query.
+func (u *BroadcastUpsertOne) Exec(ctx context.Context) error {
+	if len(u.create.conflict) == 0 {
+		return errors.New("ent: missing options for BroadcastCreate.OnConflict")
+	}
+	return u.create.Exec(ctx)
+}
+
+// ExecX is like Exec, but panics if an error occurs.
+func (u *BroadcastUpsertOne) ExecX(ctx context.Context) {
+	if err := u.create.Exec(ctx); err != nil {
+		panic(err)
+	}
+}
+
+// Exec executes the UPSERT query and returns the inserted/updated ID.
+func (u *BroadcastUpsertOne) ID(ctx context.Context) (id int64, err error) {
+	node, err := u.create.Save(ctx)
+	if err != nil {
+		return id, err
+	}
+	return node.ID, nil
+}
+
+// IDX is like ID, but panics if an error occurs.
+func (u *BroadcastUpsertOne) IDX(ctx context.Context) int64 {
+	id, err := u.ID(ctx)
+	if err != nil {
+		panic(err)
+	}
+	return id
+}
+
 // BroadcastCreateBulk is the builder for creating many Broadcast entities in bulk.
 type BroadcastCreateBulk struct {
 	config
 	err      error
 	builders []*BroadcastCreate
+	conflict []sql.ConflictOption
 }
 
 // Save creates the Broadcast entities in the database.
@@ -662,6 +1475,7 @@ func (_c *BroadcastCreateBulk) Save(ctx context.Context) ([]*Broadcast, error) {
 					_, err = mutators[i+1].Mutate(root, _c.builders[i+1].mutation)
 				} else {
 					spec := &sqlgraph.BatchCreateSpec{Nodes: specs}
+					spec.OnConflict = _c.conflict
 					// Invoke the actual operation on the latest mutation in the chain.
 					if err = sqlgraph.BatchCreate(ctx, _c.driver, spec); err != nil {
 						if sqlgraph.IsConstraintError(err) {
@@ -712,6 +1526,487 @@ func (_c *BroadcastCreateBulk) Exec(ctx context.Context) error {
 // ExecX is like Exec, but panics if an error occurs.
 func (_c *BroadcastCreateBulk) ExecX(ctx context.Context) {
 	if err := _c.Exec(ctx); err != nil {
+		panic(err)
+	}
+}
+
+// OnConflict allows configuring the `ON CONFLICT` / `ON DUPLICATE KEY` clause
+// of the `INSERT` statement. For example:
+//
+//	client.Broadcast.CreateBulk(builders...).
+//		OnConflict(
+//			// Update the row with the new values
+//			// the was proposed for insertion.
+//			sql.ResolveWithNewValues(),
+//		).
+//		// Override some of the fields with custom
+//		// update values.
+//		Update(func(u *ent.BroadcastUpsert) {
+//			SetName(v+v).
+//		}).
+//		Exec(ctx)
+func (_c *BroadcastCreateBulk) OnConflict(opts ...sql.ConflictOption) *BroadcastUpsertBulk {
+	_c.conflict = opts
+	return &BroadcastUpsertBulk{
+		create: _c,
+	}
+}
+
+// OnConflictColumns calls `OnConflict` and configures the columns
+// as conflict target. Using this option is equivalent to using:
+//
+//	client.Broadcast.Create().
+//		OnConflict(sql.ConflictColumns(columns...)).
+//		Exec(ctx)
+func (_c *BroadcastCreateBulk) OnConflictColumns(columns ...string) *BroadcastUpsertBulk {
+	_c.conflict = append(_c.conflict, sql.ConflictColumns(columns...))
+	return &BroadcastUpsertBulk{
+		create: _c,
+	}
+}
+
+// BroadcastUpsertBulk is the builder for "upsert"-ing
+// a bulk of Broadcast nodes.
+type BroadcastUpsertBulk struct {
+	create *BroadcastCreateBulk
+}
+
+// UpdateNewValues updates the mutable fields using the new values that
+// were set on create. Using this option is equivalent to using:
+//
+//	client.Broadcast.Create().
+//		OnConflict(
+//			sql.ResolveWithNewValues(),
+//			sql.ResolveWith(func(u *sql.UpdateSet) {
+//				u.SetIgnore(broadcast.FieldID)
+//			}),
+//		).
+//		Exec(ctx)
+func (u *BroadcastUpsertBulk) UpdateNewValues() *BroadcastUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(s *sql.UpdateSet) {
+		for _, b := range u.create.builders {
+			if _, exists := b.mutation.ID(); exists {
+				s.SetIgnore(broadcast.FieldID)
+			}
+			if _, exists := b.mutation.CreatedAt(); exists {
+				s.SetIgnore(broadcast.FieldCreatedAt)
+			}
+		}
+	}))
+	return u
+}
+
+// Ignore sets each column to itself in case of conflict.
+// Using this option is equivalent to using:
+//
+//	client.Broadcast.Create().
+//		OnConflict(sql.ResolveWithIgnore()).
+//		Exec(ctx)
+func (u *BroadcastUpsertBulk) Ignore() *BroadcastUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithIgnore())
+	return u
+}
+
+// DoNothing configures the conflict_action to `DO NOTHING`.
+// Supported only by SQLite and PostgreSQL.
+func (u *BroadcastUpsertBulk) DoNothing() *BroadcastUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.DoNothing())
+	return u
+}
+
+// Update allows overriding fields `UPDATE` values. See the BroadcastCreateBulk.OnConflict
+// documentation for more info.
+func (u *BroadcastUpsertBulk) Update(set func(*BroadcastUpsert)) *BroadcastUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(update *sql.UpdateSet) {
+		set(&BroadcastUpsert{UpdateSet: update})
+	}))
+	return u
+}
+
+// SetName sets the "name" field.
+func (u *BroadcastUpsertBulk) SetName(v string) *BroadcastUpsertBulk {
+	return u.Update(func(s *BroadcastUpsert) {
+		s.SetName(v)
+	})
+}
+
+// UpdateName sets the "name" field to the value that was provided on create.
+func (u *BroadcastUpsertBulk) UpdateName() *BroadcastUpsertBulk {
+	return u.Update(func(s *BroadcastUpsert) {
+		s.UpdateName()
+	})
+}
+
+// SetSubject sets the "subject" field.
+func (u *BroadcastUpsertBulk) SetSubject(v string) *BroadcastUpsertBulk {
+	return u.Update(func(s *BroadcastUpsert) {
+		s.SetSubject(v)
+	})
+}
+
+// UpdateSubject sets the "subject" field to the value that was provided on create.
+func (u *BroadcastUpsertBulk) UpdateSubject() *BroadcastUpsertBulk {
+	return u.Update(func(s *BroadcastUpsert) {
+		s.UpdateSubject()
+	})
+}
+
+// SetFromName sets the "from_name" field.
+func (u *BroadcastUpsertBulk) SetFromName(v string) *BroadcastUpsertBulk {
+	return u.Update(func(s *BroadcastUpsert) {
+		s.SetFromName(v)
+	})
+}
+
+// UpdateFromName sets the "from_name" field to the value that was provided on create.
+func (u *BroadcastUpsertBulk) UpdateFromName() *BroadcastUpsertBulk {
+	return u.Update(func(s *BroadcastUpsert) {
+		s.UpdateFromName()
+	})
+}
+
+// ClearFromName clears the value of the "from_name" field.
+func (u *BroadcastUpsertBulk) ClearFromName() *BroadcastUpsertBulk {
+	return u.Update(func(s *BroadcastUpsert) {
+		s.ClearFromName()
+	})
+}
+
+// SetFromEmail sets the "from_email" field.
+func (u *BroadcastUpsertBulk) SetFromEmail(v string) *BroadcastUpsertBulk {
+	return u.Update(func(s *BroadcastUpsert) {
+		s.SetFromEmail(v)
+	})
+}
+
+// UpdateFromEmail sets the "from_email" field to the value that was provided on create.
+func (u *BroadcastUpsertBulk) UpdateFromEmail() *BroadcastUpsertBulk {
+	return u.Update(func(s *BroadcastUpsert) {
+		s.UpdateFromEmail()
+	})
+}
+
+// ClearFromEmail clears the value of the "from_email" field.
+func (u *BroadcastUpsertBulk) ClearFromEmail() *BroadcastUpsertBulk {
+	return u.Update(func(s *BroadcastUpsert) {
+		s.ClearFromEmail()
+	})
+}
+
+// SetBody sets the "body" field.
+func (u *BroadcastUpsertBulk) SetBody(v string) *BroadcastUpsertBulk {
+	return u.Update(func(s *BroadcastUpsert) {
+		s.SetBody(v)
+	})
+}
+
+// UpdateBody sets the "body" field to the value that was provided on create.
+func (u *BroadcastUpsertBulk) UpdateBody() *BroadcastUpsertBulk {
+	return u.Update(func(s *BroadcastUpsert) {
+		s.UpdateBody()
+	})
+}
+
+// SetBodyText sets the "body_text" field.
+func (u *BroadcastUpsertBulk) SetBodyText(v string) *BroadcastUpsertBulk {
+	return u.Update(func(s *BroadcastUpsert) {
+		s.SetBodyText(v)
+	})
+}
+
+// UpdateBodyText sets the "body_text" field to the value that was provided on create.
+func (u *BroadcastUpsertBulk) UpdateBodyText() *BroadcastUpsertBulk {
+	return u.Update(func(s *BroadcastUpsert) {
+		s.UpdateBodyText()
+	})
+}
+
+// SetSegmentID sets the "segment_id" field.
+func (u *BroadcastUpsertBulk) SetSegmentID(v int64) *BroadcastUpsertBulk {
+	return u.Update(func(s *BroadcastUpsert) {
+		s.SetSegmentID(v)
+	})
+}
+
+// AddSegmentID adds v to the "segment_id" field.
+func (u *BroadcastUpsertBulk) AddSegmentID(v int64) *BroadcastUpsertBulk {
+	return u.Update(func(s *BroadcastUpsert) {
+		s.AddSegmentID(v)
+	})
+}
+
+// UpdateSegmentID sets the "segment_id" field to the value that was provided on create.
+func (u *BroadcastUpsertBulk) UpdateSegmentID() *BroadcastUpsertBulk {
+	return u.Update(func(s *BroadcastUpsert) {
+		s.UpdateSegmentID()
+	})
+}
+
+// ClearSegmentID clears the value of the "segment_id" field.
+func (u *BroadcastUpsertBulk) ClearSegmentID() *BroadcastUpsertBulk {
+	return u.Update(func(s *BroadcastUpsert) {
+		s.ClearSegmentID()
+	})
+}
+
+// SetIntegrationID sets the "integration_id" field.
+func (u *BroadcastUpsertBulk) SetIntegrationID(v int64) *BroadcastUpsertBulk {
+	return u.Update(func(s *BroadcastUpsert) {
+		s.SetIntegrationID(v)
+	})
+}
+
+// AddIntegrationID adds v to the "integration_id" field.
+func (u *BroadcastUpsertBulk) AddIntegrationID(v int64) *BroadcastUpsertBulk {
+	return u.Update(func(s *BroadcastUpsert) {
+		s.AddIntegrationID(v)
+	})
+}
+
+// UpdateIntegrationID sets the "integration_id" field to the value that was provided on create.
+func (u *BroadcastUpsertBulk) UpdateIntegrationID() *BroadcastUpsertBulk {
+	return u.Update(func(s *BroadcastUpsert) {
+		s.UpdateIntegrationID()
+	})
+}
+
+// ClearIntegrationID clears the value of the "integration_id" field.
+func (u *BroadcastUpsertBulk) ClearIntegrationID() *BroadcastUpsertBulk {
+	return u.Update(func(s *BroadcastUpsert) {
+		s.ClearIntegrationID()
+	})
+}
+
+// SetStatus sets the "status" field.
+func (u *BroadcastUpsertBulk) SetStatus(v broadcast.Status) *BroadcastUpsertBulk {
+	return u.Update(func(s *BroadcastUpsert) {
+		s.SetStatus(v)
+	})
+}
+
+// UpdateStatus sets the "status" field to the value that was provided on create.
+func (u *BroadcastUpsertBulk) UpdateStatus() *BroadcastUpsertBulk {
+	return u.Update(func(s *BroadcastUpsert) {
+		s.UpdateStatus()
+	})
+}
+
+// SetScheduledAt sets the "scheduled_at" field.
+func (u *BroadcastUpsertBulk) SetScheduledAt(v time.Time) *BroadcastUpsertBulk {
+	return u.Update(func(s *BroadcastUpsert) {
+		s.SetScheduledAt(v)
+	})
+}
+
+// UpdateScheduledAt sets the "scheduled_at" field to the value that was provided on create.
+func (u *BroadcastUpsertBulk) UpdateScheduledAt() *BroadcastUpsertBulk {
+	return u.Update(func(s *BroadcastUpsert) {
+		s.UpdateScheduledAt()
+	})
+}
+
+// ClearScheduledAt clears the value of the "scheduled_at" field.
+func (u *BroadcastUpsertBulk) ClearScheduledAt() *BroadcastUpsertBulk {
+	return u.Update(func(s *BroadcastUpsert) {
+		s.ClearScheduledAt()
+	})
+}
+
+// SetSentAt sets the "sent_at" field.
+func (u *BroadcastUpsertBulk) SetSentAt(v time.Time) *BroadcastUpsertBulk {
+	return u.Update(func(s *BroadcastUpsert) {
+		s.SetSentAt(v)
+	})
+}
+
+// UpdateSentAt sets the "sent_at" field to the value that was provided on create.
+func (u *BroadcastUpsertBulk) UpdateSentAt() *BroadcastUpsertBulk {
+	return u.Update(func(s *BroadcastUpsert) {
+		s.UpdateSentAt()
+	})
+}
+
+// ClearSentAt clears the value of the "sent_at" field.
+func (u *BroadcastUpsertBulk) ClearSentAt() *BroadcastUpsertBulk {
+	return u.Update(func(s *BroadcastUpsert) {
+		s.ClearSentAt()
+	})
+}
+
+// SetRecipientsTotal sets the "recipients_total" field.
+func (u *BroadcastUpsertBulk) SetRecipientsTotal(v int) *BroadcastUpsertBulk {
+	return u.Update(func(s *BroadcastUpsert) {
+		s.SetRecipientsTotal(v)
+	})
+}
+
+// AddRecipientsTotal adds v to the "recipients_total" field.
+func (u *BroadcastUpsertBulk) AddRecipientsTotal(v int) *BroadcastUpsertBulk {
+	return u.Update(func(s *BroadcastUpsert) {
+		s.AddRecipientsTotal(v)
+	})
+}
+
+// UpdateRecipientsTotal sets the "recipients_total" field to the value that was provided on create.
+func (u *BroadcastUpsertBulk) UpdateRecipientsTotal() *BroadcastUpsertBulk {
+	return u.Update(func(s *BroadcastUpsert) {
+		s.UpdateRecipientsTotal()
+	})
+}
+
+// SetSentCount sets the "sent_count" field.
+func (u *BroadcastUpsertBulk) SetSentCount(v int) *BroadcastUpsertBulk {
+	return u.Update(func(s *BroadcastUpsert) {
+		s.SetSentCount(v)
+	})
+}
+
+// AddSentCount adds v to the "sent_count" field.
+func (u *BroadcastUpsertBulk) AddSentCount(v int) *BroadcastUpsertBulk {
+	return u.Update(func(s *BroadcastUpsert) {
+		s.AddSentCount(v)
+	})
+}
+
+// UpdateSentCount sets the "sent_count" field to the value that was provided on create.
+func (u *BroadcastUpsertBulk) UpdateSentCount() *BroadcastUpsertBulk {
+	return u.Update(func(s *BroadcastUpsert) {
+		s.UpdateSentCount()
+	})
+}
+
+// SetOpenedCount sets the "opened_count" field.
+func (u *BroadcastUpsertBulk) SetOpenedCount(v int) *BroadcastUpsertBulk {
+	return u.Update(func(s *BroadcastUpsert) {
+		s.SetOpenedCount(v)
+	})
+}
+
+// AddOpenedCount adds v to the "opened_count" field.
+func (u *BroadcastUpsertBulk) AddOpenedCount(v int) *BroadcastUpsertBulk {
+	return u.Update(func(s *BroadcastUpsert) {
+		s.AddOpenedCount(v)
+	})
+}
+
+// UpdateOpenedCount sets the "opened_count" field to the value that was provided on create.
+func (u *BroadcastUpsertBulk) UpdateOpenedCount() *BroadcastUpsertBulk {
+	return u.Update(func(s *BroadcastUpsert) {
+		s.UpdateOpenedCount()
+	})
+}
+
+// SetClickedCount sets the "clicked_count" field.
+func (u *BroadcastUpsertBulk) SetClickedCount(v int) *BroadcastUpsertBulk {
+	return u.Update(func(s *BroadcastUpsert) {
+		s.SetClickedCount(v)
+	})
+}
+
+// AddClickedCount adds v to the "clicked_count" field.
+func (u *BroadcastUpsertBulk) AddClickedCount(v int) *BroadcastUpsertBulk {
+	return u.Update(func(s *BroadcastUpsert) {
+		s.AddClickedCount(v)
+	})
+}
+
+// UpdateClickedCount sets the "clicked_count" field to the value that was provided on create.
+func (u *BroadcastUpsertBulk) UpdateClickedCount() *BroadcastUpsertBulk {
+	return u.Update(func(s *BroadcastUpsert) {
+		s.UpdateClickedCount()
+	})
+}
+
+// SetUnsubscribedCount sets the "unsubscribed_count" field.
+func (u *BroadcastUpsertBulk) SetUnsubscribedCount(v int) *BroadcastUpsertBulk {
+	return u.Update(func(s *BroadcastUpsert) {
+		s.SetUnsubscribedCount(v)
+	})
+}
+
+// AddUnsubscribedCount adds v to the "unsubscribed_count" field.
+func (u *BroadcastUpsertBulk) AddUnsubscribedCount(v int) *BroadcastUpsertBulk {
+	return u.Update(func(s *BroadcastUpsert) {
+		s.AddUnsubscribedCount(v)
+	})
+}
+
+// UpdateUnsubscribedCount sets the "unsubscribed_count" field to the value that was provided on create.
+func (u *BroadcastUpsertBulk) UpdateUnsubscribedCount() *BroadcastUpsertBulk {
+	return u.Update(func(s *BroadcastUpsert) {
+		s.UpdateUnsubscribedCount()
+	})
+}
+
+// SetFailedCount sets the "failed_count" field.
+func (u *BroadcastUpsertBulk) SetFailedCount(v int) *BroadcastUpsertBulk {
+	return u.Update(func(s *BroadcastUpsert) {
+		s.SetFailedCount(v)
+	})
+}
+
+// AddFailedCount adds v to the "failed_count" field.
+func (u *BroadcastUpsertBulk) AddFailedCount(v int) *BroadcastUpsertBulk {
+	return u.Update(func(s *BroadcastUpsert) {
+		s.AddFailedCount(v)
+	})
+}
+
+// UpdateFailedCount sets the "failed_count" field to the value that was provided on create.
+func (u *BroadcastUpsertBulk) UpdateFailedCount() *BroadcastUpsertBulk {
+	return u.Update(func(s *BroadcastUpsert) {
+		s.UpdateFailedCount()
+	})
+}
+
+// SetWorkspaceID sets the "workspace_id" field.
+func (u *BroadcastUpsertBulk) SetWorkspaceID(v int64) *BroadcastUpsertBulk {
+	return u.Update(func(s *BroadcastUpsert) {
+		s.SetWorkspaceID(v)
+	})
+}
+
+// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
+func (u *BroadcastUpsertBulk) UpdateWorkspaceID() *BroadcastUpsertBulk {
+	return u.Update(func(s *BroadcastUpsert) {
+		s.UpdateWorkspaceID()
+	})
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (u *BroadcastUpsertBulk) SetUpdatedAt(v time.Time) *BroadcastUpsertBulk {
+	return u.Update(func(s *BroadcastUpsert) {
+		s.SetUpdatedAt(v)
+	})
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *BroadcastUpsertBulk) UpdateUpdatedAt() *BroadcastUpsertBulk {
+	return u.Update(func(s *BroadcastUpsert) {
+		s.UpdateUpdatedAt()
+	})
+}
+
+// Exec executes the query.
+func (u *BroadcastUpsertBulk) Exec(ctx context.Context) error {
+	if u.create.err != nil {
+		return u.create.err
+	}
+	for i, b := range u.create.builders {
+		if len(b.conflict) != 0 {
+			return fmt.Errorf("ent: OnConflict was set for builder %d. Set it on the BroadcastCreateBulk instead", i)
+		}
+	}
+	if len(u.create.conflict) == 0 {
+		return errors.New("ent: missing options for BroadcastCreateBulk.OnConflict")
+	}
+	return u.create.Exec(ctx)
+}
+
+// ExecX is like Exec, but panics if an error occurs.
+func (u *BroadcastUpsertBulk) ExecX(ctx context.Context) {
+	if err := u.create.Exec(ctx); err != nil {
 		panic(err)
 	}
 }

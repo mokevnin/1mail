@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"time"
 
+	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/mokevnin/1mail/ent/segment"
@@ -19,6 +20,7 @@ type SegmentCreate struct {
 	config
 	mutation *SegmentMutation
 	hooks    []Hook
+	conflict []sql.ConflictOption
 }
 
 // SetName sets the "name" field.
@@ -207,6 +209,7 @@ func (_c *SegmentCreate) createSpec() (*Segment, *sqlgraph.CreateSpec) {
 		_node = &Segment{config: _c.config}
 		_spec = sqlgraph.NewCreateSpec(segment.Table, sqlgraph.NewFieldSpec(segment.FieldID, field.TypeInt64))
 	)
+	_spec.OnConflict = _c.conflict
 	if id, ok := _c.mutation.ID(); ok {
 		_node.ID = id
 		_spec.ID.Value = id
@@ -251,11 +254,288 @@ func (_c *SegmentCreate) createSpec() (*Segment, *sqlgraph.CreateSpec) {
 	return _node, _spec
 }
 
+// OnConflict allows configuring the `ON CONFLICT` / `ON DUPLICATE KEY` clause
+// of the `INSERT` statement. For example:
+//
+//	client.Segment.Create().
+//		SetName(v).
+//		OnConflict(
+//			// Update the row with the new values
+//			// the was proposed for insertion.
+//			sql.ResolveWithNewValues(),
+//		).
+//		// Override some of the fields with custom
+//		// update values.
+//		Update(func(u *ent.SegmentUpsert) {
+//			SetName(v+v).
+//		}).
+//		Exec(ctx)
+func (_c *SegmentCreate) OnConflict(opts ...sql.ConflictOption) *SegmentUpsertOne {
+	_c.conflict = opts
+	return &SegmentUpsertOne{
+		create: _c,
+	}
+}
+
+// OnConflictColumns calls `OnConflict` and configures the columns
+// as conflict target. Using this option is equivalent to using:
+//
+//	client.Segment.Create().
+//		OnConflict(sql.ConflictColumns(columns...)).
+//		Exec(ctx)
+func (_c *SegmentCreate) OnConflictColumns(columns ...string) *SegmentUpsertOne {
+	_c.conflict = append(_c.conflict, sql.ConflictColumns(columns...))
+	return &SegmentUpsertOne{
+		create: _c,
+	}
+}
+
+type (
+	// SegmentUpsertOne is the builder for "upsert"-ing
+	//  one Segment node.
+	SegmentUpsertOne struct {
+		create *SegmentCreate
+	}
+
+	// SegmentUpsert is the "OnConflict" setter.
+	SegmentUpsert struct {
+		*sql.UpdateSet
+	}
+)
+
+// SetName sets the "name" field.
+func (u *SegmentUpsert) SetName(v string) *SegmentUpsert {
+	u.Set(segment.FieldName, v)
+	return u
+}
+
+// UpdateName sets the "name" field to the value that was provided on create.
+func (u *SegmentUpsert) UpdateName() *SegmentUpsert {
+	u.SetExcluded(segment.FieldName)
+	return u
+}
+
+// SetType sets the "type" field.
+func (u *SegmentUpsert) SetType(v segment.Type) *SegmentUpsert {
+	u.Set(segment.FieldType, v)
+	return u
+}
+
+// UpdateType sets the "type" field to the value that was provided on create.
+func (u *SegmentUpsert) UpdateType() *SegmentUpsert {
+	u.SetExcluded(segment.FieldType)
+	return u
+}
+
+// SetDefinition sets the "definition" field.
+func (u *SegmentUpsert) SetDefinition(v string) *SegmentUpsert {
+	u.Set(segment.FieldDefinition, v)
+	return u
+}
+
+// UpdateDefinition sets the "definition" field to the value that was provided on create.
+func (u *SegmentUpsert) UpdateDefinition() *SegmentUpsert {
+	u.SetExcluded(segment.FieldDefinition)
+	return u
+}
+
+// ClearDefinition clears the value of the "definition" field.
+func (u *SegmentUpsert) ClearDefinition() *SegmentUpsert {
+	u.SetNull(segment.FieldDefinition)
+	return u
+}
+
+// SetWorkspaceID sets the "workspace_id" field.
+func (u *SegmentUpsert) SetWorkspaceID(v int64) *SegmentUpsert {
+	u.Set(segment.FieldWorkspaceID, v)
+	return u
+}
+
+// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
+func (u *SegmentUpsert) UpdateWorkspaceID() *SegmentUpsert {
+	u.SetExcluded(segment.FieldWorkspaceID)
+	return u
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (u *SegmentUpsert) SetUpdatedAt(v time.Time) *SegmentUpsert {
+	u.Set(segment.FieldUpdatedAt, v)
+	return u
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *SegmentUpsert) UpdateUpdatedAt() *SegmentUpsert {
+	u.SetExcluded(segment.FieldUpdatedAt)
+	return u
+}
+
+// UpdateNewValues updates the mutable fields using the new values that were set on create except the ID field.
+// Using this option is equivalent to using:
+//
+//	client.Segment.Create().
+//		OnConflict(
+//			sql.ResolveWithNewValues(),
+//			sql.ResolveWith(func(u *sql.UpdateSet) {
+//				u.SetIgnore(segment.FieldID)
+//			}),
+//		).
+//		Exec(ctx)
+func (u *SegmentUpsertOne) UpdateNewValues() *SegmentUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(s *sql.UpdateSet) {
+		if _, exists := u.create.mutation.ID(); exists {
+			s.SetIgnore(segment.FieldID)
+		}
+		if _, exists := u.create.mutation.CreatedAt(); exists {
+			s.SetIgnore(segment.FieldCreatedAt)
+		}
+	}))
+	return u
+}
+
+// Ignore sets each column to itself in case of conflict.
+// Using this option is equivalent to using:
+//
+//	client.Segment.Create().
+//	    OnConflict(sql.ResolveWithIgnore()).
+//	    Exec(ctx)
+func (u *SegmentUpsertOne) Ignore() *SegmentUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithIgnore())
+	return u
+}
+
+// DoNothing configures the conflict_action to `DO NOTHING`.
+// Supported only by SQLite and PostgreSQL.
+func (u *SegmentUpsertOne) DoNothing() *SegmentUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.DoNothing())
+	return u
+}
+
+// Update allows overriding fields `UPDATE` values. See the SegmentCreate.OnConflict
+// documentation for more info.
+func (u *SegmentUpsertOne) Update(set func(*SegmentUpsert)) *SegmentUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(update *sql.UpdateSet) {
+		set(&SegmentUpsert{UpdateSet: update})
+	}))
+	return u
+}
+
+// SetName sets the "name" field.
+func (u *SegmentUpsertOne) SetName(v string) *SegmentUpsertOne {
+	return u.Update(func(s *SegmentUpsert) {
+		s.SetName(v)
+	})
+}
+
+// UpdateName sets the "name" field to the value that was provided on create.
+func (u *SegmentUpsertOne) UpdateName() *SegmentUpsertOne {
+	return u.Update(func(s *SegmentUpsert) {
+		s.UpdateName()
+	})
+}
+
+// SetType sets the "type" field.
+func (u *SegmentUpsertOne) SetType(v segment.Type) *SegmentUpsertOne {
+	return u.Update(func(s *SegmentUpsert) {
+		s.SetType(v)
+	})
+}
+
+// UpdateType sets the "type" field to the value that was provided on create.
+func (u *SegmentUpsertOne) UpdateType() *SegmentUpsertOne {
+	return u.Update(func(s *SegmentUpsert) {
+		s.UpdateType()
+	})
+}
+
+// SetDefinition sets the "definition" field.
+func (u *SegmentUpsertOne) SetDefinition(v string) *SegmentUpsertOne {
+	return u.Update(func(s *SegmentUpsert) {
+		s.SetDefinition(v)
+	})
+}
+
+// UpdateDefinition sets the "definition" field to the value that was provided on create.
+func (u *SegmentUpsertOne) UpdateDefinition() *SegmentUpsertOne {
+	return u.Update(func(s *SegmentUpsert) {
+		s.UpdateDefinition()
+	})
+}
+
+// ClearDefinition clears the value of the "definition" field.
+func (u *SegmentUpsertOne) ClearDefinition() *SegmentUpsertOne {
+	return u.Update(func(s *SegmentUpsert) {
+		s.ClearDefinition()
+	})
+}
+
+// SetWorkspaceID sets the "workspace_id" field.
+func (u *SegmentUpsertOne) SetWorkspaceID(v int64) *SegmentUpsertOne {
+	return u.Update(func(s *SegmentUpsert) {
+		s.SetWorkspaceID(v)
+	})
+}
+
+// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
+func (u *SegmentUpsertOne) UpdateWorkspaceID() *SegmentUpsertOne {
+	return u.Update(func(s *SegmentUpsert) {
+		s.UpdateWorkspaceID()
+	})
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (u *SegmentUpsertOne) SetUpdatedAt(v time.Time) *SegmentUpsertOne {
+	return u.Update(func(s *SegmentUpsert) {
+		s.SetUpdatedAt(v)
+	})
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *SegmentUpsertOne) UpdateUpdatedAt() *SegmentUpsertOne {
+	return u.Update(func(s *SegmentUpsert) {
+		s.UpdateUpdatedAt()
+	})
+}
+
+// Exec executes the query.
+func (u *SegmentUpsertOne) Exec(ctx context.Context) error {
+	if len(u.create.conflict) == 0 {
+		return errors.New("ent: missing options for SegmentCreate.OnConflict")
+	}
+	return u.create.Exec(ctx)
+}
+
+// ExecX is like Exec, but panics if an error occurs.
+func (u *SegmentUpsertOne) ExecX(ctx context.Context) {
+	if err := u.create.Exec(ctx); err != nil {
+		panic(err)
+	}
+}
+
+// Exec executes the UPSERT query and returns the inserted/updated ID.
+func (u *SegmentUpsertOne) ID(ctx context.Context) (id int64, err error) {
+	node, err := u.create.Save(ctx)
+	if err != nil {
+		return id, err
+	}
+	return node.ID, nil
+}
+
+// IDX is like ID, but panics if an error occurs.
+func (u *SegmentUpsertOne) IDX(ctx context.Context) int64 {
+	id, err := u.ID(ctx)
+	if err != nil {
+		panic(err)
+	}
+	return id
+}
+
 // SegmentCreateBulk is the builder for creating many Segment entities in bulk.
 type SegmentCreateBulk struct {
 	config
 	err      error
 	builders []*SegmentCreate
+	conflict []sql.ConflictOption
 }
 
 // Save creates the Segment entities in the database.
@@ -285,6 +565,7 @@ func (_c *SegmentCreateBulk) Save(ctx context.Context) ([]*Segment, error) {
 					_, err = mutators[i+1].Mutate(root, _c.builders[i+1].mutation)
 				} else {
 					spec := &sqlgraph.BatchCreateSpec{Nodes: specs}
+					spec.OnConflict = _c.conflict
 					// Invoke the actual operation on the latest mutation in the chain.
 					if err = sqlgraph.BatchCreate(ctx, _c.driver, spec); err != nil {
 						if sqlgraph.IsConstraintError(err) {
@@ -335,6 +616,200 @@ func (_c *SegmentCreateBulk) Exec(ctx context.Context) error {
 // ExecX is like Exec, but panics if an error occurs.
 func (_c *SegmentCreateBulk) ExecX(ctx context.Context) {
 	if err := _c.Exec(ctx); err != nil {
+		panic(err)
+	}
+}
+
+// OnConflict allows configuring the `ON CONFLICT` / `ON DUPLICATE KEY` clause
+// of the `INSERT` statement. For example:
+//
+//	client.Segment.CreateBulk(builders...).
+//		OnConflict(
+//			// Update the row with the new values
+//			// the was proposed for insertion.
+//			sql.ResolveWithNewValues(),
+//		).
+//		// Override some of the fields with custom
+//		// update values.
+//		Update(func(u *ent.SegmentUpsert) {
+//			SetName(v+v).
+//		}).
+//		Exec(ctx)
+func (_c *SegmentCreateBulk) OnConflict(opts ...sql.ConflictOption) *SegmentUpsertBulk {
+	_c.conflict = opts
+	return &SegmentUpsertBulk{
+		create: _c,
+	}
+}
+
+// OnConflictColumns calls `OnConflict` and configures the columns
+// as conflict target. Using this option is equivalent to using:
+//
+//	client.Segment.Create().
+//		OnConflict(sql.ConflictColumns(columns...)).
+//		Exec(ctx)
+func (_c *SegmentCreateBulk) OnConflictColumns(columns ...string) *SegmentUpsertBulk {
+	_c.conflict = append(_c.conflict, sql.ConflictColumns(columns...))
+	return &SegmentUpsertBulk{
+		create: _c,
+	}
+}
+
+// SegmentUpsertBulk is the builder for "upsert"-ing
+// a bulk of Segment nodes.
+type SegmentUpsertBulk struct {
+	create *SegmentCreateBulk
+}
+
+// UpdateNewValues updates the mutable fields using the new values that
+// were set on create. Using this option is equivalent to using:
+//
+//	client.Segment.Create().
+//		OnConflict(
+//			sql.ResolveWithNewValues(),
+//			sql.ResolveWith(func(u *sql.UpdateSet) {
+//				u.SetIgnore(segment.FieldID)
+//			}),
+//		).
+//		Exec(ctx)
+func (u *SegmentUpsertBulk) UpdateNewValues() *SegmentUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(s *sql.UpdateSet) {
+		for _, b := range u.create.builders {
+			if _, exists := b.mutation.ID(); exists {
+				s.SetIgnore(segment.FieldID)
+			}
+			if _, exists := b.mutation.CreatedAt(); exists {
+				s.SetIgnore(segment.FieldCreatedAt)
+			}
+		}
+	}))
+	return u
+}
+
+// Ignore sets each column to itself in case of conflict.
+// Using this option is equivalent to using:
+//
+//	client.Segment.Create().
+//		OnConflict(sql.ResolveWithIgnore()).
+//		Exec(ctx)
+func (u *SegmentUpsertBulk) Ignore() *SegmentUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithIgnore())
+	return u
+}
+
+// DoNothing configures the conflict_action to `DO NOTHING`.
+// Supported only by SQLite and PostgreSQL.
+func (u *SegmentUpsertBulk) DoNothing() *SegmentUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.DoNothing())
+	return u
+}
+
+// Update allows overriding fields `UPDATE` values. See the SegmentCreateBulk.OnConflict
+// documentation for more info.
+func (u *SegmentUpsertBulk) Update(set func(*SegmentUpsert)) *SegmentUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(update *sql.UpdateSet) {
+		set(&SegmentUpsert{UpdateSet: update})
+	}))
+	return u
+}
+
+// SetName sets the "name" field.
+func (u *SegmentUpsertBulk) SetName(v string) *SegmentUpsertBulk {
+	return u.Update(func(s *SegmentUpsert) {
+		s.SetName(v)
+	})
+}
+
+// UpdateName sets the "name" field to the value that was provided on create.
+func (u *SegmentUpsertBulk) UpdateName() *SegmentUpsertBulk {
+	return u.Update(func(s *SegmentUpsert) {
+		s.UpdateName()
+	})
+}
+
+// SetType sets the "type" field.
+func (u *SegmentUpsertBulk) SetType(v segment.Type) *SegmentUpsertBulk {
+	return u.Update(func(s *SegmentUpsert) {
+		s.SetType(v)
+	})
+}
+
+// UpdateType sets the "type" field to the value that was provided on create.
+func (u *SegmentUpsertBulk) UpdateType() *SegmentUpsertBulk {
+	return u.Update(func(s *SegmentUpsert) {
+		s.UpdateType()
+	})
+}
+
+// SetDefinition sets the "definition" field.
+func (u *SegmentUpsertBulk) SetDefinition(v string) *SegmentUpsertBulk {
+	return u.Update(func(s *SegmentUpsert) {
+		s.SetDefinition(v)
+	})
+}
+
+// UpdateDefinition sets the "definition" field to the value that was provided on create.
+func (u *SegmentUpsertBulk) UpdateDefinition() *SegmentUpsertBulk {
+	return u.Update(func(s *SegmentUpsert) {
+		s.UpdateDefinition()
+	})
+}
+
+// ClearDefinition clears the value of the "definition" field.
+func (u *SegmentUpsertBulk) ClearDefinition() *SegmentUpsertBulk {
+	return u.Update(func(s *SegmentUpsert) {
+		s.ClearDefinition()
+	})
+}
+
+// SetWorkspaceID sets the "workspace_id" field.
+func (u *SegmentUpsertBulk) SetWorkspaceID(v int64) *SegmentUpsertBulk {
+	return u.Update(func(s *SegmentUpsert) {
+		s.SetWorkspaceID(v)
+	})
+}
+
+// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
+func (u *SegmentUpsertBulk) UpdateWorkspaceID() *SegmentUpsertBulk {
+	return u.Update(func(s *SegmentUpsert) {
+		s.UpdateWorkspaceID()
+	})
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (u *SegmentUpsertBulk) SetUpdatedAt(v time.Time) *SegmentUpsertBulk {
+	return u.Update(func(s *SegmentUpsert) {
+		s.SetUpdatedAt(v)
+	})
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *SegmentUpsertBulk) UpdateUpdatedAt() *SegmentUpsertBulk {
+	return u.Update(func(s *SegmentUpsert) {
+		s.UpdateUpdatedAt()
+	})
+}
+
+// Exec executes the query.
+func (u *SegmentUpsertBulk) Exec(ctx context.Context) error {
+	if u.create.err != nil {
+		return u.create.err
+	}
+	for i, b := range u.create.builders {
+		if len(b.conflict) != 0 {
+			return fmt.Errorf("ent: OnConflict was set for builder %d. Set it on the SegmentCreateBulk instead", i)
+		}
+	}
+	if len(u.create.conflict) == 0 {
+		return errors.New("ent: missing options for SegmentCreateBulk.OnConflict")
+	}
+	return u.create.Exec(ctx)
+}
+
+// ExecX is like Exec, but panics if an error occurs.
+func (u *SegmentUpsertBulk) ExecX(ctx context.Context) {
+	if err := u.create.Exec(ctx); err != nil {
 		panic(err)
 	}
 }

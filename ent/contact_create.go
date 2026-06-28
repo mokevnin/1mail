@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"time"
 
+	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/mokevnin/1mail/ent/contact"
@@ -19,6 +20,7 @@ type ContactCreate struct {
 	config
 	mutation *ContactMutation
 	hooks    []Hook
+	conflict []sql.ConflictOption
 }
 
 // SetEmail sets the "email" field.
@@ -241,6 +243,7 @@ func (_c *ContactCreate) createSpec() (*Contact, *sqlgraph.CreateSpec) {
 		_node = &Contact{config: _c.config}
 		_spec = sqlgraph.NewCreateSpec(contact.Table, sqlgraph.NewFieldSpec(contact.FieldID, field.TypeInt64))
 	)
+	_spec.OnConflict = _c.conflict
 	if id, ok := _c.mutation.ID(); ok {
 		_node.ID = id
 		_spec.ID.Value = id
@@ -297,11 +300,405 @@ func (_c *ContactCreate) createSpec() (*Contact, *sqlgraph.CreateSpec) {
 	return _node, _spec
 }
 
+// OnConflict allows configuring the `ON CONFLICT` / `ON DUPLICATE KEY` clause
+// of the `INSERT` statement. For example:
+//
+//	client.Contact.Create().
+//		SetEmail(v).
+//		OnConflict(
+//			// Update the row with the new values
+//			// the was proposed for insertion.
+//			sql.ResolveWithNewValues(),
+//		).
+//		// Override some of the fields with custom
+//		// update values.
+//		Update(func(u *ent.ContactUpsert) {
+//			SetEmail(v+v).
+//		}).
+//		Exec(ctx)
+func (_c *ContactCreate) OnConflict(opts ...sql.ConflictOption) *ContactUpsertOne {
+	_c.conflict = opts
+	return &ContactUpsertOne{
+		create: _c,
+	}
+}
+
+// OnConflictColumns calls `OnConflict` and configures the columns
+// as conflict target. Using this option is equivalent to using:
+//
+//	client.Contact.Create().
+//		OnConflict(sql.ConflictColumns(columns...)).
+//		Exec(ctx)
+func (_c *ContactCreate) OnConflictColumns(columns ...string) *ContactUpsertOne {
+	_c.conflict = append(_c.conflict, sql.ConflictColumns(columns...))
+	return &ContactUpsertOne{
+		create: _c,
+	}
+}
+
+type (
+	// ContactUpsertOne is the builder for "upsert"-ing
+	//  one Contact node.
+	ContactUpsertOne struct {
+		create *ContactCreate
+	}
+
+	// ContactUpsert is the "OnConflict" setter.
+	ContactUpsert struct {
+		*sql.UpdateSet
+	}
+)
+
+// SetEmail sets the "email" field.
+func (u *ContactUpsert) SetEmail(v string) *ContactUpsert {
+	u.Set(contact.FieldEmail, v)
+	return u
+}
+
+// UpdateEmail sets the "email" field to the value that was provided on create.
+func (u *ContactUpsert) UpdateEmail() *ContactUpsert {
+	u.SetExcluded(contact.FieldEmail)
+	return u
+}
+
+// SetFirstName sets the "first_name" field.
+func (u *ContactUpsert) SetFirstName(v string) *ContactUpsert {
+	u.Set(contact.FieldFirstName, v)
+	return u
+}
+
+// UpdateFirstName sets the "first_name" field to the value that was provided on create.
+func (u *ContactUpsert) UpdateFirstName() *ContactUpsert {
+	u.SetExcluded(contact.FieldFirstName)
+	return u
+}
+
+// ClearFirstName clears the value of the "first_name" field.
+func (u *ContactUpsert) ClearFirstName() *ContactUpsert {
+	u.SetNull(contact.FieldFirstName)
+	return u
+}
+
+// SetLastName sets the "last_name" field.
+func (u *ContactUpsert) SetLastName(v string) *ContactUpsert {
+	u.Set(contact.FieldLastName, v)
+	return u
+}
+
+// UpdateLastName sets the "last_name" field to the value that was provided on create.
+func (u *ContactUpsert) UpdateLastName() *ContactUpsert {
+	u.SetExcluded(contact.FieldLastName)
+	return u
+}
+
+// ClearLastName clears the value of the "last_name" field.
+func (u *ContactUpsert) ClearLastName() *ContactUpsert {
+	u.SetNull(contact.FieldLastName)
+	return u
+}
+
+// SetStatus sets the "status" field.
+func (u *ContactUpsert) SetStatus(v contact.Status) *ContactUpsert {
+	u.Set(contact.FieldStatus, v)
+	return u
+}
+
+// UpdateStatus sets the "status" field to the value that was provided on create.
+func (u *ContactUpsert) UpdateStatus() *ContactUpsert {
+	u.SetExcluded(contact.FieldStatus)
+	return u
+}
+
+// SetTimeZone sets the "time_zone" field.
+func (u *ContactUpsert) SetTimeZone(v string) *ContactUpsert {
+	u.Set(contact.FieldTimeZone, v)
+	return u
+}
+
+// UpdateTimeZone sets the "time_zone" field to the value that was provided on create.
+func (u *ContactUpsert) UpdateTimeZone() *ContactUpsert {
+	u.SetExcluded(contact.FieldTimeZone)
+	return u
+}
+
+// ClearTimeZone clears the value of the "time_zone" field.
+func (u *ContactUpsert) ClearTimeZone() *ContactUpsert {
+	u.SetNull(contact.FieldTimeZone)
+	return u
+}
+
+// SetCustomFields sets the "custom_fields" field.
+func (u *ContactUpsert) SetCustomFields(v map[string]string) *ContactUpsert {
+	u.Set(contact.FieldCustomFields, v)
+	return u
+}
+
+// UpdateCustomFields sets the "custom_fields" field to the value that was provided on create.
+func (u *ContactUpsert) UpdateCustomFields() *ContactUpsert {
+	u.SetExcluded(contact.FieldCustomFields)
+	return u
+}
+
+// ClearCustomFields clears the value of the "custom_fields" field.
+func (u *ContactUpsert) ClearCustomFields() *ContactUpsert {
+	u.SetNull(contact.FieldCustomFields)
+	return u
+}
+
+// SetWorkspaceID sets the "workspace_id" field.
+func (u *ContactUpsert) SetWorkspaceID(v int64) *ContactUpsert {
+	u.Set(contact.FieldWorkspaceID, v)
+	return u
+}
+
+// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
+func (u *ContactUpsert) UpdateWorkspaceID() *ContactUpsert {
+	u.SetExcluded(contact.FieldWorkspaceID)
+	return u
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (u *ContactUpsert) SetUpdatedAt(v time.Time) *ContactUpsert {
+	u.Set(contact.FieldUpdatedAt, v)
+	return u
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *ContactUpsert) UpdateUpdatedAt() *ContactUpsert {
+	u.SetExcluded(contact.FieldUpdatedAt)
+	return u
+}
+
+// UpdateNewValues updates the mutable fields using the new values that were set on create except the ID field.
+// Using this option is equivalent to using:
+//
+//	client.Contact.Create().
+//		OnConflict(
+//			sql.ResolveWithNewValues(),
+//			sql.ResolveWith(func(u *sql.UpdateSet) {
+//				u.SetIgnore(contact.FieldID)
+//			}),
+//		).
+//		Exec(ctx)
+func (u *ContactUpsertOne) UpdateNewValues() *ContactUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(s *sql.UpdateSet) {
+		if _, exists := u.create.mutation.ID(); exists {
+			s.SetIgnore(contact.FieldID)
+		}
+		if _, exists := u.create.mutation.CreatedAt(); exists {
+			s.SetIgnore(contact.FieldCreatedAt)
+		}
+	}))
+	return u
+}
+
+// Ignore sets each column to itself in case of conflict.
+// Using this option is equivalent to using:
+//
+//	client.Contact.Create().
+//	    OnConflict(sql.ResolveWithIgnore()).
+//	    Exec(ctx)
+func (u *ContactUpsertOne) Ignore() *ContactUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithIgnore())
+	return u
+}
+
+// DoNothing configures the conflict_action to `DO NOTHING`.
+// Supported only by SQLite and PostgreSQL.
+func (u *ContactUpsertOne) DoNothing() *ContactUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.DoNothing())
+	return u
+}
+
+// Update allows overriding fields `UPDATE` values. See the ContactCreate.OnConflict
+// documentation for more info.
+func (u *ContactUpsertOne) Update(set func(*ContactUpsert)) *ContactUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(update *sql.UpdateSet) {
+		set(&ContactUpsert{UpdateSet: update})
+	}))
+	return u
+}
+
+// SetEmail sets the "email" field.
+func (u *ContactUpsertOne) SetEmail(v string) *ContactUpsertOne {
+	return u.Update(func(s *ContactUpsert) {
+		s.SetEmail(v)
+	})
+}
+
+// UpdateEmail sets the "email" field to the value that was provided on create.
+func (u *ContactUpsertOne) UpdateEmail() *ContactUpsertOne {
+	return u.Update(func(s *ContactUpsert) {
+		s.UpdateEmail()
+	})
+}
+
+// SetFirstName sets the "first_name" field.
+func (u *ContactUpsertOne) SetFirstName(v string) *ContactUpsertOne {
+	return u.Update(func(s *ContactUpsert) {
+		s.SetFirstName(v)
+	})
+}
+
+// UpdateFirstName sets the "first_name" field to the value that was provided on create.
+func (u *ContactUpsertOne) UpdateFirstName() *ContactUpsertOne {
+	return u.Update(func(s *ContactUpsert) {
+		s.UpdateFirstName()
+	})
+}
+
+// ClearFirstName clears the value of the "first_name" field.
+func (u *ContactUpsertOne) ClearFirstName() *ContactUpsertOne {
+	return u.Update(func(s *ContactUpsert) {
+		s.ClearFirstName()
+	})
+}
+
+// SetLastName sets the "last_name" field.
+func (u *ContactUpsertOne) SetLastName(v string) *ContactUpsertOne {
+	return u.Update(func(s *ContactUpsert) {
+		s.SetLastName(v)
+	})
+}
+
+// UpdateLastName sets the "last_name" field to the value that was provided on create.
+func (u *ContactUpsertOne) UpdateLastName() *ContactUpsertOne {
+	return u.Update(func(s *ContactUpsert) {
+		s.UpdateLastName()
+	})
+}
+
+// ClearLastName clears the value of the "last_name" field.
+func (u *ContactUpsertOne) ClearLastName() *ContactUpsertOne {
+	return u.Update(func(s *ContactUpsert) {
+		s.ClearLastName()
+	})
+}
+
+// SetStatus sets the "status" field.
+func (u *ContactUpsertOne) SetStatus(v contact.Status) *ContactUpsertOne {
+	return u.Update(func(s *ContactUpsert) {
+		s.SetStatus(v)
+	})
+}
+
+// UpdateStatus sets the "status" field to the value that was provided on create.
+func (u *ContactUpsertOne) UpdateStatus() *ContactUpsertOne {
+	return u.Update(func(s *ContactUpsert) {
+		s.UpdateStatus()
+	})
+}
+
+// SetTimeZone sets the "time_zone" field.
+func (u *ContactUpsertOne) SetTimeZone(v string) *ContactUpsertOne {
+	return u.Update(func(s *ContactUpsert) {
+		s.SetTimeZone(v)
+	})
+}
+
+// UpdateTimeZone sets the "time_zone" field to the value that was provided on create.
+func (u *ContactUpsertOne) UpdateTimeZone() *ContactUpsertOne {
+	return u.Update(func(s *ContactUpsert) {
+		s.UpdateTimeZone()
+	})
+}
+
+// ClearTimeZone clears the value of the "time_zone" field.
+func (u *ContactUpsertOne) ClearTimeZone() *ContactUpsertOne {
+	return u.Update(func(s *ContactUpsert) {
+		s.ClearTimeZone()
+	})
+}
+
+// SetCustomFields sets the "custom_fields" field.
+func (u *ContactUpsertOne) SetCustomFields(v map[string]string) *ContactUpsertOne {
+	return u.Update(func(s *ContactUpsert) {
+		s.SetCustomFields(v)
+	})
+}
+
+// UpdateCustomFields sets the "custom_fields" field to the value that was provided on create.
+func (u *ContactUpsertOne) UpdateCustomFields() *ContactUpsertOne {
+	return u.Update(func(s *ContactUpsert) {
+		s.UpdateCustomFields()
+	})
+}
+
+// ClearCustomFields clears the value of the "custom_fields" field.
+func (u *ContactUpsertOne) ClearCustomFields() *ContactUpsertOne {
+	return u.Update(func(s *ContactUpsert) {
+		s.ClearCustomFields()
+	})
+}
+
+// SetWorkspaceID sets the "workspace_id" field.
+func (u *ContactUpsertOne) SetWorkspaceID(v int64) *ContactUpsertOne {
+	return u.Update(func(s *ContactUpsert) {
+		s.SetWorkspaceID(v)
+	})
+}
+
+// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
+func (u *ContactUpsertOne) UpdateWorkspaceID() *ContactUpsertOne {
+	return u.Update(func(s *ContactUpsert) {
+		s.UpdateWorkspaceID()
+	})
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (u *ContactUpsertOne) SetUpdatedAt(v time.Time) *ContactUpsertOne {
+	return u.Update(func(s *ContactUpsert) {
+		s.SetUpdatedAt(v)
+	})
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *ContactUpsertOne) UpdateUpdatedAt() *ContactUpsertOne {
+	return u.Update(func(s *ContactUpsert) {
+		s.UpdateUpdatedAt()
+	})
+}
+
+// Exec executes the query.
+func (u *ContactUpsertOne) Exec(ctx context.Context) error {
+	if len(u.create.conflict) == 0 {
+		return errors.New("ent: missing options for ContactCreate.OnConflict")
+	}
+	return u.create.Exec(ctx)
+}
+
+// ExecX is like Exec, but panics if an error occurs.
+func (u *ContactUpsertOne) ExecX(ctx context.Context) {
+	if err := u.create.Exec(ctx); err != nil {
+		panic(err)
+	}
+}
+
+// Exec executes the UPSERT query and returns the inserted/updated ID.
+func (u *ContactUpsertOne) ID(ctx context.Context) (id int64, err error) {
+	node, err := u.create.Save(ctx)
+	if err != nil {
+		return id, err
+	}
+	return node.ID, nil
+}
+
+// IDX is like ID, but panics if an error occurs.
+func (u *ContactUpsertOne) IDX(ctx context.Context) int64 {
+	id, err := u.ID(ctx)
+	if err != nil {
+		panic(err)
+	}
+	return id
+}
+
 // ContactCreateBulk is the builder for creating many Contact entities in bulk.
 type ContactCreateBulk struct {
 	config
 	err      error
 	builders []*ContactCreate
+	conflict []sql.ConflictOption
 }
 
 // Save creates the Contact entities in the database.
@@ -331,6 +728,7 @@ func (_c *ContactCreateBulk) Save(ctx context.Context) ([]*Contact, error) {
 					_, err = mutators[i+1].Mutate(root, _c.builders[i+1].mutation)
 				} else {
 					spec := &sqlgraph.BatchCreateSpec{Nodes: specs}
+					spec.OnConflict = _c.conflict
 					// Invoke the actual operation on the latest mutation in the chain.
 					if err = sqlgraph.BatchCreate(ctx, _c.driver, spec); err != nil {
 						if sqlgraph.IsConstraintError(err) {
@@ -381,6 +779,263 @@ func (_c *ContactCreateBulk) Exec(ctx context.Context) error {
 // ExecX is like Exec, but panics if an error occurs.
 func (_c *ContactCreateBulk) ExecX(ctx context.Context) {
 	if err := _c.Exec(ctx); err != nil {
+		panic(err)
+	}
+}
+
+// OnConflict allows configuring the `ON CONFLICT` / `ON DUPLICATE KEY` clause
+// of the `INSERT` statement. For example:
+//
+//	client.Contact.CreateBulk(builders...).
+//		OnConflict(
+//			// Update the row with the new values
+//			// the was proposed for insertion.
+//			sql.ResolveWithNewValues(),
+//		).
+//		// Override some of the fields with custom
+//		// update values.
+//		Update(func(u *ent.ContactUpsert) {
+//			SetEmail(v+v).
+//		}).
+//		Exec(ctx)
+func (_c *ContactCreateBulk) OnConflict(opts ...sql.ConflictOption) *ContactUpsertBulk {
+	_c.conflict = opts
+	return &ContactUpsertBulk{
+		create: _c,
+	}
+}
+
+// OnConflictColumns calls `OnConflict` and configures the columns
+// as conflict target. Using this option is equivalent to using:
+//
+//	client.Contact.Create().
+//		OnConflict(sql.ConflictColumns(columns...)).
+//		Exec(ctx)
+func (_c *ContactCreateBulk) OnConflictColumns(columns ...string) *ContactUpsertBulk {
+	_c.conflict = append(_c.conflict, sql.ConflictColumns(columns...))
+	return &ContactUpsertBulk{
+		create: _c,
+	}
+}
+
+// ContactUpsertBulk is the builder for "upsert"-ing
+// a bulk of Contact nodes.
+type ContactUpsertBulk struct {
+	create *ContactCreateBulk
+}
+
+// UpdateNewValues updates the mutable fields using the new values that
+// were set on create. Using this option is equivalent to using:
+//
+//	client.Contact.Create().
+//		OnConflict(
+//			sql.ResolveWithNewValues(),
+//			sql.ResolveWith(func(u *sql.UpdateSet) {
+//				u.SetIgnore(contact.FieldID)
+//			}),
+//		).
+//		Exec(ctx)
+func (u *ContactUpsertBulk) UpdateNewValues() *ContactUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(s *sql.UpdateSet) {
+		for _, b := range u.create.builders {
+			if _, exists := b.mutation.ID(); exists {
+				s.SetIgnore(contact.FieldID)
+			}
+			if _, exists := b.mutation.CreatedAt(); exists {
+				s.SetIgnore(contact.FieldCreatedAt)
+			}
+		}
+	}))
+	return u
+}
+
+// Ignore sets each column to itself in case of conflict.
+// Using this option is equivalent to using:
+//
+//	client.Contact.Create().
+//		OnConflict(sql.ResolveWithIgnore()).
+//		Exec(ctx)
+func (u *ContactUpsertBulk) Ignore() *ContactUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithIgnore())
+	return u
+}
+
+// DoNothing configures the conflict_action to `DO NOTHING`.
+// Supported only by SQLite and PostgreSQL.
+func (u *ContactUpsertBulk) DoNothing() *ContactUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.DoNothing())
+	return u
+}
+
+// Update allows overriding fields `UPDATE` values. See the ContactCreateBulk.OnConflict
+// documentation for more info.
+func (u *ContactUpsertBulk) Update(set func(*ContactUpsert)) *ContactUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(update *sql.UpdateSet) {
+		set(&ContactUpsert{UpdateSet: update})
+	}))
+	return u
+}
+
+// SetEmail sets the "email" field.
+func (u *ContactUpsertBulk) SetEmail(v string) *ContactUpsertBulk {
+	return u.Update(func(s *ContactUpsert) {
+		s.SetEmail(v)
+	})
+}
+
+// UpdateEmail sets the "email" field to the value that was provided on create.
+func (u *ContactUpsertBulk) UpdateEmail() *ContactUpsertBulk {
+	return u.Update(func(s *ContactUpsert) {
+		s.UpdateEmail()
+	})
+}
+
+// SetFirstName sets the "first_name" field.
+func (u *ContactUpsertBulk) SetFirstName(v string) *ContactUpsertBulk {
+	return u.Update(func(s *ContactUpsert) {
+		s.SetFirstName(v)
+	})
+}
+
+// UpdateFirstName sets the "first_name" field to the value that was provided on create.
+func (u *ContactUpsertBulk) UpdateFirstName() *ContactUpsertBulk {
+	return u.Update(func(s *ContactUpsert) {
+		s.UpdateFirstName()
+	})
+}
+
+// ClearFirstName clears the value of the "first_name" field.
+func (u *ContactUpsertBulk) ClearFirstName() *ContactUpsertBulk {
+	return u.Update(func(s *ContactUpsert) {
+		s.ClearFirstName()
+	})
+}
+
+// SetLastName sets the "last_name" field.
+func (u *ContactUpsertBulk) SetLastName(v string) *ContactUpsertBulk {
+	return u.Update(func(s *ContactUpsert) {
+		s.SetLastName(v)
+	})
+}
+
+// UpdateLastName sets the "last_name" field to the value that was provided on create.
+func (u *ContactUpsertBulk) UpdateLastName() *ContactUpsertBulk {
+	return u.Update(func(s *ContactUpsert) {
+		s.UpdateLastName()
+	})
+}
+
+// ClearLastName clears the value of the "last_name" field.
+func (u *ContactUpsertBulk) ClearLastName() *ContactUpsertBulk {
+	return u.Update(func(s *ContactUpsert) {
+		s.ClearLastName()
+	})
+}
+
+// SetStatus sets the "status" field.
+func (u *ContactUpsertBulk) SetStatus(v contact.Status) *ContactUpsertBulk {
+	return u.Update(func(s *ContactUpsert) {
+		s.SetStatus(v)
+	})
+}
+
+// UpdateStatus sets the "status" field to the value that was provided on create.
+func (u *ContactUpsertBulk) UpdateStatus() *ContactUpsertBulk {
+	return u.Update(func(s *ContactUpsert) {
+		s.UpdateStatus()
+	})
+}
+
+// SetTimeZone sets the "time_zone" field.
+func (u *ContactUpsertBulk) SetTimeZone(v string) *ContactUpsertBulk {
+	return u.Update(func(s *ContactUpsert) {
+		s.SetTimeZone(v)
+	})
+}
+
+// UpdateTimeZone sets the "time_zone" field to the value that was provided on create.
+func (u *ContactUpsertBulk) UpdateTimeZone() *ContactUpsertBulk {
+	return u.Update(func(s *ContactUpsert) {
+		s.UpdateTimeZone()
+	})
+}
+
+// ClearTimeZone clears the value of the "time_zone" field.
+func (u *ContactUpsertBulk) ClearTimeZone() *ContactUpsertBulk {
+	return u.Update(func(s *ContactUpsert) {
+		s.ClearTimeZone()
+	})
+}
+
+// SetCustomFields sets the "custom_fields" field.
+func (u *ContactUpsertBulk) SetCustomFields(v map[string]string) *ContactUpsertBulk {
+	return u.Update(func(s *ContactUpsert) {
+		s.SetCustomFields(v)
+	})
+}
+
+// UpdateCustomFields sets the "custom_fields" field to the value that was provided on create.
+func (u *ContactUpsertBulk) UpdateCustomFields() *ContactUpsertBulk {
+	return u.Update(func(s *ContactUpsert) {
+		s.UpdateCustomFields()
+	})
+}
+
+// ClearCustomFields clears the value of the "custom_fields" field.
+func (u *ContactUpsertBulk) ClearCustomFields() *ContactUpsertBulk {
+	return u.Update(func(s *ContactUpsert) {
+		s.ClearCustomFields()
+	})
+}
+
+// SetWorkspaceID sets the "workspace_id" field.
+func (u *ContactUpsertBulk) SetWorkspaceID(v int64) *ContactUpsertBulk {
+	return u.Update(func(s *ContactUpsert) {
+		s.SetWorkspaceID(v)
+	})
+}
+
+// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
+func (u *ContactUpsertBulk) UpdateWorkspaceID() *ContactUpsertBulk {
+	return u.Update(func(s *ContactUpsert) {
+		s.UpdateWorkspaceID()
+	})
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (u *ContactUpsertBulk) SetUpdatedAt(v time.Time) *ContactUpsertBulk {
+	return u.Update(func(s *ContactUpsert) {
+		s.SetUpdatedAt(v)
+	})
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *ContactUpsertBulk) UpdateUpdatedAt() *ContactUpsertBulk {
+	return u.Update(func(s *ContactUpsert) {
+		s.UpdateUpdatedAt()
+	})
+}
+
+// Exec executes the query.
+func (u *ContactUpsertBulk) Exec(ctx context.Context) error {
+	if u.create.err != nil {
+		return u.create.err
+	}
+	for i, b := range u.create.builders {
+		if len(b.conflict) != 0 {
+			return fmt.Errorf("ent: OnConflict was set for builder %d. Set it on the ContactCreateBulk instead", i)
+		}
+	}
+	if len(u.create.conflict) == 0 {
+		return errors.New("ent: missing options for ContactCreateBulk.OnConflict")
+	}
+	return u.create.Exec(ctx)
+}
+
+// ExecX is like Exec, but panics if an error occurs.
+func (u *ContactUpsertBulk) ExecX(ctx context.Context) {
+	if err := u.create.Exec(ctx); err != nil {
 		panic(err)
 	}
 }

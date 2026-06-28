@@ -108,3 +108,26 @@ func TestPersistWritesEventProjection(t *testing.T) {
 	assert.Equal(t, occurred, row.OccurredAt.UTC())
 	assert.EqualValues(t, 42, row.Properties["contactId"].(float64))
 }
+
+// At-least-once delivery can redeliver an envelope; persist must dedupe on the
+// source id (envelope ULID) so the projection row is written at most once.
+func TestPersistIsIdempotent(t *testing.T) {
+	env := testhelper.Setup(t)
+	ctx := context.Background()
+
+	envlp := events.Envelope{
+		ID:          "01J0IDEMPOTENT00000000000",
+		Name:        events.NameContactCreated,
+		Version:     1,
+		WorkspaceID: fixtureWorkspace,
+		Subject:     "dedupe@example.com",
+		OccurredAt:  time.Date(2026, 6, 28, 10, 0, 0, 0, time.UTC),
+		Payload:     []byte(`{"email":"dedupe@example.com"}`),
+	}
+	require.NoError(t, events.Persist(ctx, env.DB, envlp))
+	require.NoError(t, events.Persist(ctx, env.DB, envlp)) // redelivery
+
+	n, err := env.DB.Event.Query().Where(event.SourceID(envlp.ID)).Count(ctx)
+	require.NoError(t, err)
+	assert.Equal(t, 1, n, "redelivered envelope must not write a second row")
+}

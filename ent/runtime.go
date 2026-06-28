@@ -215,15 +215,15 @@ func init() {
 	eventFields := schema.Event{}.Fields()
 	_ = eventFields
 	// eventDescSubjectID is the schema descriptor for subject_id field.
-	eventDescSubjectID := eventFields[1].Descriptor()
+	eventDescSubjectID := eventFields[2].Descriptor()
 	// event.SubjectIDValidator is a validator for the "subject_id" field. It is called by the builders before save.
 	event.SubjectIDValidator = eventDescSubjectID.Validators[0].(func(string) error)
 	// eventDescAction is the schema descriptor for action field.
-	eventDescAction := eventFields[4].Descriptor()
+	eventDescAction := eventFields[5].Descriptor()
 	// event.ActionValidator is a validator for the "action" field. It is called by the builders before save.
 	event.ActionValidator = eventDescAction.Validators[0].(func(string) error)
 	// eventDescCreatedAt is the schema descriptor for created_at field.
-	eventDescCreatedAt := eventFields[9].Descriptor()
+	eventDescCreatedAt := eventFields[10].Descriptor()
 	// event.DefaultCreatedAt holds the default value on creation for the created_at field.
 	event.DefaultCreatedAt = eventDescCreatedAt.Default.(func() time.Time)
 	integrationFields := schema.Integration{}.Fields()

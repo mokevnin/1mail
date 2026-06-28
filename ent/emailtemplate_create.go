@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"time"
 
+	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/mokevnin/1mail/ent/emailtemplate"
@@ -19,6 +20,7 @@ type EmailTemplateCreate struct {
 	config
 	mutation *EmailTemplateMutation
 	hooks    []Hook
+	conflict []sql.ConflictOption
 }
 
 // SetName sets the "name" field.
@@ -209,6 +211,7 @@ func (_c *EmailTemplateCreate) createSpec() (*EmailTemplate, *sqlgraph.CreateSpe
 		_node = &EmailTemplate{config: _c.config}
 		_spec = sqlgraph.NewCreateSpec(emailtemplate.Table, sqlgraph.NewFieldSpec(emailtemplate.FieldID, field.TypeInt64))
 	)
+	_spec.OnConflict = _c.conflict
 	if id, ok := _c.mutation.ID(); ok {
 		_node.ID = id
 		_spec.ID.Value = id
@@ -253,11 +256,275 @@ func (_c *EmailTemplateCreate) createSpec() (*EmailTemplate, *sqlgraph.CreateSpe
 	return _node, _spec
 }
 
+// OnConflict allows configuring the `ON CONFLICT` / `ON DUPLICATE KEY` clause
+// of the `INSERT` statement. For example:
+//
+//	client.EmailTemplate.Create().
+//		SetName(v).
+//		OnConflict(
+//			// Update the row with the new values
+//			// the was proposed for insertion.
+//			sql.ResolveWithNewValues(),
+//		).
+//		// Override some of the fields with custom
+//		// update values.
+//		Update(func(u *ent.EmailTemplateUpsert) {
+//			SetName(v+v).
+//		}).
+//		Exec(ctx)
+func (_c *EmailTemplateCreate) OnConflict(opts ...sql.ConflictOption) *EmailTemplateUpsertOne {
+	_c.conflict = opts
+	return &EmailTemplateUpsertOne{
+		create: _c,
+	}
+}
+
+// OnConflictColumns calls `OnConflict` and configures the columns
+// as conflict target. Using this option is equivalent to using:
+//
+//	client.EmailTemplate.Create().
+//		OnConflict(sql.ConflictColumns(columns...)).
+//		Exec(ctx)
+func (_c *EmailTemplateCreate) OnConflictColumns(columns ...string) *EmailTemplateUpsertOne {
+	_c.conflict = append(_c.conflict, sql.ConflictColumns(columns...))
+	return &EmailTemplateUpsertOne{
+		create: _c,
+	}
+}
+
+type (
+	// EmailTemplateUpsertOne is the builder for "upsert"-ing
+	//  one EmailTemplate node.
+	EmailTemplateUpsertOne struct {
+		create *EmailTemplateCreate
+	}
+
+	// EmailTemplateUpsert is the "OnConflict" setter.
+	EmailTemplateUpsert struct {
+		*sql.UpdateSet
+	}
+)
+
+// SetName sets the "name" field.
+func (u *EmailTemplateUpsert) SetName(v string) *EmailTemplateUpsert {
+	u.Set(emailtemplate.FieldName, v)
+	return u
+}
+
+// UpdateName sets the "name" field to the value that was provided on create.
+func (u *EmailTemplateUpsert) UpdateName() *EmailTemplateUpsert {
+	u.SetExcluded(emailtemplate.FieldName)
+	return u
+}
+
+// SetSubject sets the "subject" field.
+func (u *EmailTemplateUpsert) SetSubject(v string) *EmailTemplateUpsert {
+	u.Set(emailtemplate.FieldSubject, v)
+	return u
+}
+
+// UpdateSubject sets the "subject" field to the value that was provided on create.
+func (u *EmailTemplateUpsert) UpdateSubject() *EmailTemplateUpsert {
+	u.SetExcluded(emailtemplate.FieldSubject)
+	return u
+}
+
+// SetBody sets the "body" field.
+func (u *EmailTemplateUpsert) SetBody(v string) *EmailTemplateUpsert {
+	u.Set(emailtemplate.FieldBody, v)
+	return u
+}
+
+// UpdateBody sets the "body" field to the value that was provided on create.
+func (u *EmailTemplateUpsert) UpdateBody() *EmailTemplateUpsert {
+	u.SetExcluded(emailtemplate.FieldBody)
+	return u
+}
+
+// SetWorkspaceID sets the "workspace_id" field.
+func (u *EmailTemplateUpsert) SetWorkspaceID(v int64) *EmailTemplateUpsert {
+	u.Set(emailtemplate.FieldWorkspaceID, v)
+	return u
+}
+
+// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
+func (u *EmailTemplateUpsert) UpdateWorkspaceID() *EmailTemplateUpsert {
+	u.SetExcluded(emailtemplate.FieldWorkspaceID)
+	return u
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (u *EmailTemplateUpsert) SetUpdatedAt(v time.Time) *EmailTemplateUpsert {
+	u.Set(emailtemplate.FieldUpdatedAt, v)
+	return u
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *EmailTemplateUpsert) UpdateUpdatedAt() *EmailTemplateUpsert {
+	u.SetExcluded(emailtemplate.FieldUpdatedAt)
+	return u
+}
+
+// UpdateNewValues updates the mutable fields using the new values that were set on create except the ID field.
+// Using this option is equivalent to using:
+//
+//	client.EmailTemplate.Create().
+//		OnConflict(
+//			sql.ResolveWithNewValues(),
+//			sql.ResolveWith(func(u *sql.UpdateSet) {
+//				u.SetIgnore(emailtemplate.FieldID)
+//			}),
+//		).
+//		Exec(ctx)
+func (u *EmailTemplateUpsertOne) UpdateNewValues() *EmailTemplateUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(s *sql.UpdateSet) {
+		if _, exists := u.create.mutation.ID(); exists {
+			s.SetIgnore(emailtemplate.FieldID)
+		}
+		if _, exists := u.create.mutation.CreatedAt(); exists {
+			s.SetIgnore(emailtemplate.FieldCreatedAt)
+		}
+	}))
+	return u
+}
+
+// Ignore sets each column to itself in case of conflict.
+// Using this option is equivalent to using:
+//
+//	client.EmailTemplate.Create().
+//	    OnConflict(sql.ResolveWithIgnore()).
+//	    Exec(ctx)
+func (u *EmailTemplateUpsertOne) Ignore() *EmailTemplateUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithIgnore())
+	return u
+}
+
+// DoNothing configures the conflict_action to `DO NOTHING`.
+// Supported only by SQLite and PostgreSQL.
+func (u *EmailTemplateUpsertOne) DoNothing() *EmailTemplateUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.DoNothing())
+	return u
+}
+
+// Update allows overriding fields `UPDATE` values. See the EmailTemplateCreate.OnConflict
+// documentation for more info.
+func (u *EmailTemplateUpsertOne) Update(set func(*EmailTemplateUpsert)) *EmailTemplateUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(update *sql.UpdateSet) {
+		set(&EmailTemplateUpsert{UpdateSet: update})
+	}))
+	return u
+}
+
+// SetName sets the "name" field.
+func (u *EmailTemplateUpsertOne) SetName(v string) *EmailTemplateUpsertOne {
+	return u.Update(func(s *EmailTemplateUpsert) {
+		s.SetName(v)
+	})
+}
+
+// UpdateName sets the "name" field to the value that was provided on create.
+func (u *EmailTemplateUpsertOne) UpdateName() *EmailTemplateUpsertOne {
+	return u.Update(func(s *EmailTemplateUpsert) {
+		s.UpdateName()
+	})
+}
+
+// SetSubject sets the "subject" field.
+func (u *EmailTemplateUpsertOne) SetSubject(v string) *EmailTemplateUpsertOne {
+	return u.Update(func(s *EmailTemplateUpsert) {
+		s.SetSubject(v)
+	})
+}
+
+// UpdateSubject sets the "subject" field to the value that was provided on create.
+func (u *EmailTemplateUpsertOne) UpdateSubject() *EmailTemplateUpsertOne {
+	return u.Update(func(s *EmailTemplateUpsert) {
+		s.UpdateSubject()
+	})
+}
+
+// SetBody sets the "body" field.
+func (u *EmailTemplateUpsertOne) SetBody(v string) *EmailTemplateUpsertOne {
+	return u.Update(func(s *EmailTemplateUpsert) {
+		s.SetBody(v)
+	})
+}
+
+// UpdateBody sets the "body" field to the value that was provided on create.
+func (u *EmailTemplateUpsertOne) UpdateBody() *EmailTemplateUpsertOne {
+	return u.Update(func(s *EmailTemplateUpsert) {
+		s.UpdateBody()
+	})
+}
+
+// SetWorkspaceID sets the "workspace_id" field.
+func (u *EmailTemplateUpsertOne) SetWorkspaceID(v int64) *EmailTemplateUpsertOne {
+	return u.Update(func(s *EmailTemplateUpsert) {
+		s.SetWorkspaceID(v)
+	})
+}
+
+// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
+func (u *EmailTemplateUpsertOne) UpdateWorkspaceID() *EmailTemplateUpsertOne {
+	return u.Update(func(s *EmailTemplateUpsert) {
+		s.UpdateWorkspaceID()
+	})
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (u *EmailTemplateUpsertOne) SetUpdatedAt(v time.Time) *EmailTemplateUpsertOne {
+	return u.Update(func(s *EmailTemplateUpsert) {
+		s.SetUpdatedAt(v)
+	})
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *EmailTemplateUpsertOne) UpdateUpdatedAt() *EmailTemplateUpsertOne {
+	return u.Update(func(s *EmailTemplateUpsert) {
+		s.UpdateUpdatedAt()
+	})
+}
+
+// Exec executes the query.
+func (u *EmailTemplateUpsertOne) Exec(ctx context.Context) error {
+	if len(u.create.conflict) == 0 {
+		return errors.New("ent: missing options for EmailTemplateCreate.OnConflict")
+	}
+	return u.create.Exec(ctx)
+}
+
+// ExecX is like Exec, but panics if an error occurs.
+func (u *EmailTemplateUpsertOne) ExecX(ctx context.Context) {
+	if err := u.create.Exec(ctx); err != nil {
+		panic(err)
+	}
+}
+
+// Exec executes the UPSERT query and returns the inserted/updated ID.
+func (u *EmailTemplateUpsertOne) ID(ctx context.Context) (id int64, err error) {
+	node, err := u.create.Save(ctx)
+	if err != nil {
+		return id, err
+	}
+	return node.ID, nil
+}
+
+// IDX is like ID, but panics if an error occurs.
+func (u *EmailTemplateUpsertOne) IDX(ctx context.Context) int64 {
+	id, err := u.ID(ctx)
+	if err != nil {
+		panic(err)
+	}
+	return id
+}
+
 // EmailTemplateCreateBulk is the builder for creating many EmailTemplate entities in bulk.
 type EmailTemplateCreateBulk struct {
 	config
 	err      error
 	builders []*EmailTemplateCreate
+	conflict []sql.ConflictOption
 }
 
 // Save creates the EmailTemplate entities in the database.
@@ -287,6 +554,7 @@ func (_c *EmailTemplateCreateBulk) Save(ctx context.Context) ([]*EmailTemplate, 
 					_, err = mutators[i+1].Mutate(root, _c.builders[i+1].mutation)
 				} else {
 					spec := &sqlgraph.BatchCreateSpec{Nodes: specs}
+					spec.OnConflict = _c.conflict
 					// Invoke the actual operation on the latest mutation in the chain.
 					if err = sqlgraph.BatchCreate(ctx, _c.driver, spec); err != nil {
 						if sqlgraph.IsConstraintError(err) {
@@ -337,6 +605,193 @@ func (_c *EmailTemplateCreateBulk) Exec(ctx context.Context) error {
 // ExecX is like Exec, but panics if an error occurs.
 func (_c *EmailTemplateCreateBulk) ExecX(ctx context.Context) {
 	if err := _c.Exec(ctx); err != nil {
+		panic(err)
+	}
+}
+
+// OnConflict allows configuring the `ON CONFLICT` / `ON DUPLICATE KEY` clause
+// of the `INSERT` statement. For example:
+//
+//	client.EmailTemplate.CreateBulk(builders...).
+//		OnConflict(
+//			// Update the row with the new values
+//			// the was proposed for insertion.
+//			sql.ResolveWithNewValues(),
+//		).
+//		// Override some of the fields with custom
+//		// update values.
+//		Update(func(u *ent.EmailTemplateUpsert) {
+//			SetName(v+v).
+//		}).
+//		Exec(ctx)
+func (_c *EmailTemplateCreateBulk) OnConflict(opts ...sql.ConflictOption) *EmailTemplateUpsertBulk {
+	_c.conflict = opts
+	return &EmailTemplateUpsertBulk{
+		create: _c,
+	}
+}
+
+// OnConflictColumns calls `OnConflict` and configures the columns
+// as conflict target. Using this option is equivalent to using:
+//
+//	client.EmailTemplate.Create().
+//		OnConflict(sql.ConflictColumns(columns...)).
+//		Exec(ctx)
+func (_c *EmailTemplateCreateBulk) OnConflictColumns(columns ...string) *EmailTemplateUpsertBulk {
+	_c.conflict = append(_c.conflict, sql.ConflictColumns(columns...))
+	return &EmailTemplateUpsertBulk{
+		create: _c,
+	}
+}
+
+// EmailTemplateUpsertBulk is the builder for "upsert"-ing
+// a bulk of EmailTemplate nodes.
+type EmailTemplateUpsertBulk struct {
+	create *EmailTemplateCreateBulk
+}
+
+// UpdateNewValues updates the mutable fields using the new values that
+// were set on create. Using this option is equivalent to using:
+//
+//	client.EmailTemplate.Create().
+//		OnConflict(
+//			sql.ResolveWithNewValues(),
+//			sql.ResolveWith(func(u *sql.UpdateSet) {
+//				u.SetIgnore(emailtemplate.FieldID)
+//			}),
+//		).
+//		Exec(ctx)
+func (u *EmailTemplateUpsertBulk) UpdateNewValues() *EmailTemplateUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(s *sql.UpdateSet) {
+		for _, b := range u.create.builders {
+			if _, exists := b.mutation.ID(); exists {
+				s.SetIgnore(emailtemplate.FieldID)
+			}
+			if _, exists := b.mutation.CreatedAt(); exists {
+				s.SetIgnore(emailtemplate.FieldCreatedAt)
+			}
+		}
+	}))
+	return u
+}
+
+// Ignore sets each column to itself in case of conflict.
+// Using this option is equivalent to using:
+//
+//	client.EmailTemplate.Create().
+//		OnConflict(sql.ResolveWithIgnore()).
+//		Exec(ctx)
+func (u *EmailTemplateUpsertBulk) Ignore() *EmailTemplateUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithIgnore())
+	return u
+}
+
+// DoNothing configures the conflict_action to `DO NOTHING`.
+// Supported only by SQLite and PostgreSQL.
+func (u *EmailTemplateUpsertBulk) DoNothing() *EmailTemplateUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.DoNothing())
+	return u
+}
+
+// Update allows overriding fields `UPDATE` values. See the EmailTemplateCreateBulk.OnConflict
+// documentation for more info.
+func (u *EmailTemplateUpsertBulk) Update(set func(*EmailTemplateUpsert)) *EmailTemplateUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(update *sql.UpdateSet) {
+		set(&EmailTemplateUpsert{UpdateSet: update})
+	}))
+	return u
+}
+
+// SetName sets the "name" field.
+func (u *EmailTemplateUpsertBulk) SetName(v string) *EmailTemplateUpsertBulk {
+	return u.Update(func(s *EmailTemplateUpsert) {
+		s.SetName(v)
+	})
+}
+
+// UpdateName sets the "name" field to the value that was provided on create.
+func (u *EmailTemplateUpsertBulk) UpdateName() *EmailTemplateUpsertBulk {
+	return u.Update(func(s *EmailTemplateUpsert) {
+		s.UpdateName()
+	})
+}
+
+// SetSubject sets the "subject" field.
+func (u *EmailTemplateUpsertBulk) SetSubject(v string) *EmailTemplateUpsertBulk {
+	return u.Update(func(s *EmailTemplateUpsert) {
+		s.SetSubject(v)
+	})
+}
+
+// UpdateSubject sets the "subject" field to the value that was provided on create.
+func (u *EmailTemplateUpsertBulk) UpdateSubject() *EmailTemplateUpsertBulk {
+	return u.Update(func(s *EmailTemplateUpsert) {
+		s.UpdateSubject()
+	})
+}
+
+// SetBody sets the "body" field.
+func (u *EmailTemplateUpsertBulk) SetBody(v string) *EmailTemplateUpsertBulk {
+	return u.Update(func(s *EmailTemplateUpsert) {
+		s.SetBody(v)
+	})
+}
+
+// UpdateBody sets the "body" field to the value that was provided on create.
+func (u *EmailTemplateUpsertBulk) UpdateBody() *EmailTemplateUpsertBulk {
+	return u.Update(func(s *EmailTemplateUpsert) {
+		s.UpdateBody()
+	})
+}
+
+// SetWorkspaceID sets the "workspace_id" field.
+func (u *EmailTemplateUpsertBulk) SetWorkspaceID(v int64) *EmailTemplateUpsertBulk {
+	return u.Update(func(s *EmailTemplateUpsert) {
+		s.SetWorkspaceID(v)
+	})
+}
+
+// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
+func (u *EmailTemplateUpsertBulk) UpdateWorkspaceID() *EmailTemplateUpsertBulk {
+	return u.Update(func(s *EmailTemplateUpsert) {
+		s.UpdateWorkspaceID()
+	})
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (u *EmailTemplateUpsertBulk) SetUpdatedAt(v time.Time) *EmailTemplateUpsertBulk {
+	return u.Update(func(s *EmailTemplateUpsert) {
+		s.SetUpdatedAt(v)
+	})
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *EmailTemplateUpsertBulk) UpdateUpdatedAt() *EmailTemplateUpsertBulk {
+	return u.Update(func(s *EmailTemplateUpsert) {
+		s.UpdateUpdatedAt()
+	})
+}
+
+// Exec executes the query.
+func (u *EmailTemplateUpsertBulk) Exec(ctx context.Context) error {
+	if u.create.err != nil {
+		return u.create.err
+	}
+	for i, b := range u.create.builders {
+		if len(b.conflict) != 0 {
+			return fmt.Errorf("ent: OnConflict was set for builder %d. Set it on the EmailTemplateCreateBulk instead", i)
+		}
+	}
+	if len(u.create.conflict) == 0 {
+		return errors.New("ent: missing options for EmailTemplateCreateBulk.OnConflict")
+	}
+	return u.create.Exec(ctx)
+}
+
+// ExecX is like Exec, but panics if an error occurs.
+func (u *EmailTemplateUpsertBulk) ExecX(ctx context.Context) {
+	if err := u.create.Exec(ctx); err != nil {
 		panic(err)
 	}
 }

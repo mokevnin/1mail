@@ -10,6 +10,7 @@ import (
 	watermillsql "github.com/ThreeDotsLabs/watermill-sql/v2/pkg/sql"
 	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/mokevnin/1mail/ent"
+	"github.com/mokevnin/1mail/ent/event"
 )
 
 // Enroller enrolls a contact into automations matching an event action. The
@@ -97,10 +98,18 @@ func Persist(ctx context.Context, client *ent.Client, env Envelope) error {
 		SetAction(env.Name).
 		SetProperties(props).
 		SetOccurredAt(env.OccurredAt)
+	// Empty id ⇒ leave source_id NULL (distinct under the unique index) rather than
+	// "", so a missing id never collides and false-dedupes a distinct event.
+	if env.ID != "" {
+		create.SetSourceID(env.ID)
+	}
 	if email, ok := props["email"].(string); ok && email != "" {
 		create.SetEmail(email)
 	}
-	if _, err := create.Save(ctx); err != nil {
+	// Idempotent: at-least-once delivery can redeliver an envelope after a crash;
+	// dedupe on the source_id (the envelope ULID) so the projection row is written
+	// at most once.
+	if err := create.OnConflictColumns(event.FieldSourceID).Ignore().Exec(ctx); err != nil {
 		return fmt.Errorf("persist event %q: %w", env.Name, err)
 	}
 	return nil

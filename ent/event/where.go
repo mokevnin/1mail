@@ -55,6 +55,11 @@ func IDLTE(id int64) predicate.Event {
 	return predicate.Event(sql.FieldLTE(FieldID, id))
 }
 
+// SourceID applies equality check predicate on the "source_id" field. It's identical to SourceIDEQ.
+func SourceID(v string) predicate.Event {
+	return predicate.Event(sql.FieldEQ(FieldSourceID, v))
+}
+
 // SubjectID applies equality check predicate on the "subject_id" field. It's identical to SubjectIDEQ.
 func SubjectID(v string) predicate.Event {
 	return predicate.Event(sql.FieldEQ(FieldSubjectID, v))
@@ -93,6 +98,81 @@ func WorkspaceID(v int64) predicate.Event {
 // CreatedAt applies equality check predicate on the "created_at" field. It's identical to CreatedAtEQ.
 func CreatedAt(v time.Time) predicate.Event {
 	return predicate.Event(sql.FieldEQ(FieldCreatedAt, v))
+}
+
+// SourceIDEQ applies the EQ predicate on the "source_id" field.
+func SourceIDEQ(v string) predicate.Event {
+	return predicate.Event(sql.FieldEQ(FieldSourceID, v))
+}
+
+// SourceIDNEQ applies the NEQ predicate on the "source_id" field.
+func SourceIDNEQ(v string) predicate.Event {
+	return predicate.Event(sql.FieldNEQ(FieldSourceID, v))
+}
+
+// SourceIDIn applies the In predicate on the "source_id" field.
+func SourceIDIn(vs ...string) predicate.Event {
+	return predicate.Event(sql.FieldIn(FieldSourceID, vs...))
+}
+
+// SourceIDNotIn applies the NotIn predicate on the "source_id" field.
+func SourceIDNotIn(vs ...string) predicate.Event {
+	return predicate.Event(sql.FieldNotIn(FieldSourceID, vs...))
+}
+
+// SourceIDGT applies the GT predicate on the "source_id" field.
+func SourceIDGT(v string) predicate.Event {
+	return predicate.Event(sql.FieldGT(FieldSourceID, v))
+}
+
+// SourceIDGTE applies the GTE predicate on the "source_id" field.
+func SourceIDGTE(v string) predicate.Event {
+	return predicate.Event(sql.FieldGTE(FieldSourceID, v))
+}
+
+// SourceIDLT applies the LT predicate on the "source_id" field.
+func SourceIDLT(v string) predicate.Event {
+	return predicate.Event(sql.FieldLT(FieldSourceID, v))
+}
+
+// SourceIDLTE applies the LTE predicate on the "source_id" field.
+func SourceIDLTE(v string) predicate.Event {
+	return predicate.Event(sql.FieldLTE(FieldSourceID, v))
+}
+
+// SourceIDContains applies the Contains predicate on the "source_id" field.
+func SourceIDContains(v string) predicate.Event {
+	return predicate.Event(sql.FieldContains(FieldSourceID, v))
+}
+
+// SourceIDHasPrefix applies the HasPrefix predicate on the "source_id" field.
+func SourceIDHasPrefix(v string) predicate.Event {
+	return predicate.Event(sql.FieldHasPrefix(FieldSourceID, v))
+}
+
+// SourceIDHasSuffix applies the HasSuffix predicate on the "source_id" field.
+func SourceIDHasSuffix(v string) predicate.Event {
+	return predicate.Event(sql.FieldHasSuffix(FieldSourceID, v))
+}
+
+// SourceIDIsNil applies the IsNil predicate on the "source_id" field.
+func SourceIDIsNil() predicate.Event {
+	return predicate.Event(sql.FieldIsNull(FieldSourceID))
+}
+
+// SourceIDNotNil applies the NotNil predicate on the "source_id" field.
+func SourceIDNotNil() predicate.Event {
+	return predicate.Event(sql.FieldNotNull(FieldSourceID))
+}
+
+// SourceIDEqualFold applies the EqualFold predicate on the "source_id" field.
+func SourceIDEqualFold(v string) predicate.Event {
+	return predicate.Event(sql.FieldEqualFold(FieldSourceID, v))
+}
+
+// SourceIDContainsFold applies the ContainsFold predicate on the "source_id" field.
+func SourceIDContainsFold(v string) predicate.Event {
+	return predicate.Event(sql.FieldContainsFold(FieldSourceID, v))
 }
 
 // SubjectIDEQ applies the EQ predicate on the "subject_id" field.

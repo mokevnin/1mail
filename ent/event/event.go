@@ -14,6 +14,8 @@ const (
 	Label = "event"
 	// FieldID holds the string denoting the id field in the database.
 	FieldID = "id"
+	// FieldSourceID holds the string denoting the source_id field in the database.
+	FieldSourceID = "source_id"
 	// FieldSubjectID holds the string denoting the subject_id field in the database.
 	FieldSubjectID = "subject_id"
 	// FieldEmail holds the string denoting the email field in the database.
@@ -48,6 +50,7 @@ const (
 // Columns holds all SQL columns for event fields.
 var Columns = []string{
 	FieldID,
+	FieldSourceID,
 	FieldSubjectID,
 	FieldEmail,
 	FieldPhone,
@@ -84,6 +87,11 @@ type OrderOption func(*sql.Selector)
 // ByID orders the results by the id field.
 func ByID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldID, opts...).ToFunc()
+}
+
+// BySourceID orders the results by the source_id field.
+func BySourceID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldSourceID, opts...).ToFunc()
 }
 
 // BySubjectID orders the results by the subject_id field.

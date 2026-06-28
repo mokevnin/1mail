@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"time"
 
+	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/mokevnin/1mail/ent/automation"
@@ -20,6 +21,7 @@ type AutomationCreate struct {
 	config
 	mutation *AutomationMutation
 	hooks    []Hook
+	conflict []sql.ConflictOption
 }
 
 // SetName sets the "name" field.
@@ -244,6 +246,7 @@ func (_c *AutomationCreate) createSpec() (*Automation, *sqlgraph.CreateSpec) {
 		_node = &Automation{config: _c.config}
 		_spec = sqlgraph.NewCreateSpec(automation.Table, sqlgraph.NewFieldSpec(automation.FieldID, field.TypeInt64))
 	)
+	_spec.OnConflict = _c.conflict
 	if id, ok := _c.mutation.ID(); ok {
 		_node.ID = id
 		_spec.ID.Value = id
@@ -308,11 +311,301 @@ func (_c *AutomationCreate) createSpec() (*Automation, *sqlgraph.CreateSpec) {
 	return _node, _spec
 }
 
+// OnConflict allows configuring the `ON CONFLICT` / `ON DUPLICATE KEY` clause
+// of the `INSERT` statement. For example:
+//
+//	client.Automation.Create().
+//		SetName(v).
+//		OnConflict(
+//			// Update the row with the new values
+//			// the was proposed for insertion.
+//			sql.ResolveWithNewValues(),
+//		).
+//		// Override some of the fields with custom
+//		// update values.
+//		Update(func(u *ent.AutomationUpsert) {
+//			SetName(v+v).
+//		}).
+//		Exec(ctx)
+func (_c *AutomationCreate) OnConflict(opts ...sql.ConflictOption) *AutomationUpsertOne {
+	_c.conflict = opts
+	return &AutomationUpsertOne{
+		create: _c,
+	}
+}
+
+// OnConflictColumns calls `OnConflict` and configures the columns
+// as conflict target. Using this option is equivalent to using:
+//
+//	client.Automation.Create().
+//		OnConflict(sql.ConflictColumns(columns...)).
+//		Exec(ctx)
+func (_c *AutomationCreate) OnConflictColumns(columns ...string) *AutomationUpsertOne {
+	_c.conflict = append(_c.conflict, sql.ConflictColumns(columns...))
+	return &AutomationUpsertOne{
+		create: _c,
+	}
+}
+
+type (
+	// AutomationUpsertOne is the builder for "upsert"-ing
+	//  one Automation node.
+	AutomationUpsertOne struct {
+		create *AutomationCreate
+	}
+
+	// AutomationUpsert is the "OnConflict" setter.
+	AutomationUpsert struct {
+		*sql.UpdateSet
+	}
+)
+
+// SetName sets the "name" field.
+func (u *AutomationUpsert) SetName(v string) *AutomationUpsert {
+	u.Set(automation.FieldName, v)
+	return u
+}
+
+// UpdateName sets the "name" field to the value that was provided on create.
+func (u *AutomationUpsert) UpdateName() *AutomationUpsert {
+	u.SetExcluded(automation.FieldName)
+	return u
+}
+
+// SetStatus sets the "status" field.
+func (u *AutomationUpsert) SetStatus(v automation.Status) *AutomationUpsert {
+	u.Set(automation.FieldStatus, v)
+	return u
+}
+
+// UpdateStatus sets the "status" field to the value that was provided on create.
+func (u *AutomationUpsert) UpdateStatus() *AutomationUpsert {
+	u.SetExcluded(automation.FieldStatus)
+	return u
+}
+
+// SetTriggerEvent sets the "trigger_event" field.
+func (u *AutomationUpsert) SetTriggerEvent(v string) *AutomationUpsert {
+	u.Set(automation.FieldTriggerEvent, v)
+	return u
+}
+
+// UpdateTriggerEvent sets the "trigger_event" field to the value that was provided on create.
+func (u *AutomationUpsert) UpdateTriggerEvent() *AutomationUpsert {
+	u.SetExcluded(automation.FieldTriggerEvent)
+	return u
+}
+
+// SetDefinition sets the "definition" field.
+func (u *AutomationUpsert) SetDefinition(v string) *AutomationUpsert {
+	u.Set(automation.FieldDefinition, v)
+	return u
+}
+
+// UpdateDefinition sets the "definition" field to the value that was provided on create.
+func (u *AutomationUpsert) UpdateDefinition() *AutomationUpsert {
+	u.SetExcluded(automation.FieldDefinition)
+	return u
+}
+
+// SetWorkspaceID sets the "workspace_id" field.
+func (u *AutomationUpsert) SetWorkspaceID(v int64) *AutomationUpsert {
+	u.Set(automation.FieldWorkspaceID, v)
+	return u
+}
+
+// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
+func (u *AutomationUpsert) UpdateWorkspaceID() *AutomationUpsert {
+	u.SetExcluded(automation.FieldWorkspaceID)
+	return u
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (u *AutomationUpsert) SetUpdatedAt(v time.Time) *AutomationUpsert {
+	u.Set(automation.FieldUpdatedAt, v)
+	return u
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *AutomationUpsert) UpdateUpdatedAt() *AutomationUpsert {
+	u.SetExcluded(automation.FieldUpdatedAt)
+	return u
+}
+
+// UpdateNewValues updates the mutable fields using the new values that were set on create except the ID field.
+// Using this option is equivalent to using:
+//
+//	client.Automation.Create().
+//		OnConflict(
+//			sql.ResolveWithNewValues(),
+//			sql.ResolveWith(func(u *sql.UpdateSet) {
+//				u.SetIgnore(automation.FieldID)
+//			}),
+//		).
+//		Exec(ctx)
+func (u *AutomationUpsertOne) UpdateNewValues() *AutomationUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(s *sql.UpdateSet) {
+		if _, exists := u.create.mutation.ID(); exists {
+			s.SetIgnore(automation.FieldID)
+		}
+		if _, exists := u.create.mutation.CreatedAt(); exists {
+			s.SetIgnore(automation.FieldCreatedAt)
+		}
+	}))
+	return u
+}
+
+// Ignore sets each column to itself in case of conflict.
+// Using this option is equivalent to using:
+//
+//	client.Automation.Create().
+//	    OnConflict(sql.ResolveWithIgnore()).
+//	    Exec(ctx)
+func (u *AutomationUpsertOne) Ignore() *AutomationUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithIgnore())
+	return u
+}
+
+// DoNothing configures the conflict_action to `DO NOTHING`.
+// Supported only by SQLite and PostgreSQL.
+func (u *AutomationUpsertOne) DoNothing() *AutomationUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.DoNothing())
+	return u
+}
+
+// Update allows overriding fields `UPDATE` values. See the AutomationCreate.OnConflict
+// documentation for more info.
+func (u *AutomationUpsertOne) Update(set func(*AutomationUpsert)) *AutomationUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(update *sql.UpdateSet) {
+		set(&AutomationUpsert{UpdateSet: update})
+	}))
+	return u
+}
+
+// SetName sets the "name" field.
+func (u *AutomationUpsertOne) SetName(v string) *AutomationUpsertOne {
+	return u.Update(func(s *AutomationUpsert) {
+		s.SetName(v)
+	})
+}
+
+// UpdateName sets the "name" field to the value that was provided on create.
+func (u *AutomationUpsertOne) UpdateName() *AutomationUpsertOne {
+	return u.Update(func(s *AutomationUpsert) {
+		s.UpdateName()
+	})
+}
+
+// SetStatus sets the "status" field.
+func (u *AutomationUpsertOne) SetStatus(v automation.Status) *AutomationUpsertOne {
+	return u.Update(func(s *AutomationUpsert) {
+		s.SetStatus(v)
+	})
+}
+
+// UpdateStatus sets the "status" field to the value that was provided on create.
+func (u *AutomationUpsertOne) UpdateStatus() *AutomationUpsertOne {
+	return u.Update(func(s *AutomationUpsert) {
+		s.UpdateStatus()
+	})
+}
+
+// SetTriggerEvent sets the "trigger_event" field.
+func (u *AutomationUpsertOne) SetTriggerEvent(v string) *AutomationUpsertOne {
+	return u.Update(func(s *AutomationUpsert) {
+		s.SetTriggerEvent(v)
+	})
+}
+
+// UpdateTriggerEvent sets the "trigger_event" field to the value that was provided on create.
+func (u *AutomationUpsertOne) UpdateTriggerEvent() *AutomationUpsertOne {
+	return u.Update(func(s *AutomationUpsert) {
+		s.UpdateTriggerEvent()
+	})
+}
+
+// SetDefinition sets the "definition" field.
+func (u *AutomationUpsertOne) SetDefinition(v string) *AutomationUpsertOne {
+	return u.Update(func(s *AutomationUpsert) {
+		s.SetDefinition(v)
+	})
+}
+
+// UpdateDefinition sets the "definition" field to the value that was provided on create.
+func (u *AutomationUpsertOne) UpdateDefinition() *AutomationUpsertOne {
+	return u.Update(func(s *AutomationUpsert) {
+		s.UpdateDefinition()
+	})
+}
+
+// SetWorkspaceID sets the "workspace_id" field.
+func (u *AutomationUpsertOne) SetWorkspaceID(v int64) *AutomationUpsertOne {
+	return u.Update(func(s *AutomationUpsert) {
+		s.SetWorkspaceID(v)
+	})
+}
+
+// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
+func (u *AutomationUpsertOne) UpdateWorkspaceID() *AutomationUpsertOne {
+	return u.Update(func(s *AutomationUpsert) {
+		s.UpdateWorkspaceID()
+	})
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (u *AutomationUpsertOne) SetUpdatedAt(v time.Time) *AutomationUpsertOne {
+	return u.Update(func(s *AutomationUpsert) {
+		s.SetUpdatedAt(v)
+	})
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *AutomationUpsertOne) UpdateUpdatedAt() *AutomationUpsertOne {
+	return u.Update(func(s *AutomationUpsert) {
+		s.UpdateUpdatedAt()
+	})
+}
+
+// Exec executes the query.
+func (u *AutomationUpsertOne) Exec(ctx context.Context) error {
+	if len(u.create.conflict) == 0 {
+		return errors.New("ent: missing options for AutomationCreate.OnConflict")
+	}
+	return u.create.Exec(ctx)
+}
+
+// ExecX is like Exec, but panics if an error occurs.
+func (u *AutomationUpsertOne) ExecX(ctx context.Context) {
+	if err := u.create.Exec(ctx); err != nil {
+		panic(err)
+	}
+}
+
+// Exec executes the UPSERT query and returns the inserted/updated ID.
+func (u *AutomationUpsertOne) ID(ctx context.Context) (id int64, err error) {
+	node, err := u.create.Save(ctx)
+	if err != nil {
+		return id, err
+	}
+	return node.ID, nil
+}
+
+// IDX is like ID, but panics if an error occurs.
+func (u *AutomationUpsertOne) IDX(ctx context.Context) int64 {
+	id, err := u.ID(ctx)
+	if err != nil {
+		panic(err)
+	}
+	return id
+}
+
 // AutomationCreateBulk is the builder for creating many Automation entities in bulk.
 type AutomationCreateBulk struct {
 	config
 	err      error
 	builders []*AutomationCreate
+	conflict []sql.ConflictOption
 }
 
 // Save creates the Automation entities in the database.
@@ -342,6 +635,7 @@ func (_c *AutomationCreateBulk) Save(ctx context.Context) ([]*Automation, error)
 					_, err = mutators[i+1].Mutate(root, _c.builders[i+1].mutation)
 				} else {
 					spec := &sqlgraph.BatchCreateSpec{Nodes: specs}
+					spec.OnConflict = _c.conflict
 					// Invoke the actual operation on the latest mutation in the chain.
 					if err = sqlgraph.BatchCreate(ctx, _c.driver, spec); err != nil {
 						if sqlgraph.IsConstraintError(err) {
@@ -392,6 +686,207 @@ func (_c *AutomationCreateBulk) Exec(ctx context.Context) error {
 // ExecX is like Exec, but panics if an error occurs.
 func (_c *AutomationCreateBulk) ExecX(ctx context.Context) {
 	if err := _c.Exec(ctx); err != nil {
+		panic(err)
+	}
+}
+
+// OnConflict allows configuring the `ON CONFLICT` / `ON DUPLICATE KEY` clause
+// of the `INSERT` statement. For example:
+//
+//	client.Automation.CreateBulk(builders...).
+//		OnConflict(
+//			// Update the row with the new values
+//			// the was proposed for insertion.
+//			sql.ResolveWithNewValues(),
+//		).
+//		// Override some of the fields with custom
+//		// update values.
+//		Update(func(u *ent.AutomationUpsert) {
+//			SetName(v+v).
+//		}).
+//		Exec(ctx)
+func (_c *AutomationCreateBulk) OnConflict(opts ...sql.ConflictOption) *AutomationUpsertBulk {
+	_c.conflict = opts
+	return &AutomationUpsertBulk{
+		create: _c,
+	}
+}
+
+// OnConflictColumns calls `OnConflict` and configures the columns
+// as conflict target. Using this option is equivalent to using:
+//
+//	client.Automation.Create().
+//		OnConflict(sql.ConflictColumns(columns...)).
+//		Exec(ctx)
+func (_c *AutomationCreateBulk) OnConflictColumns(columns ...string) *AutomationUpsertBulk {
+	_c.conflict = append(_c.conflict, sql.ConflictColumns(columns...))
+	return &AutomationUpsertBulk{
+		create: _c,
+	}
+}
+
+// AutomationUpsertBulk is the builder for "upsert"-ing
+// a bulk of Automation nodes.
+type AutomationUpsertBulk struct {
+	create *AutomationCreateBulk
+}
+
+// UpdateNewValues updates the mutable fields using the new values that
+// were set on create. Using this option is equivalent to using:
+//
+//	client.Automation.Create().
+//		OnConflict(
+//			sql.ResolveWithNewValues(),
+//			sql.ResolveWith(func(u *sql.UpdateSet) {
+//				u.SetIgnore(automation.FieldID)
+//			}),
+//		).
+//		Exec(ctx)
+func (u *AutomationUpsertBulk) UpdateNewValues() *AutomationUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(s *sql.UpdateSet) {
+		for _, b := range u.create.builders {
+			if _, exists := b.mutation.ID(); exists {
+				s.SetIgnore(automation.FieldID)
+			}
+			if _, exists := b.mutation.CreatedAt(); exists {
+				s.SetIgnore(automation.FieldCreatedAt)
+			}
+		}
+	}))
+	return u
+}
+
+// Ignore sets each column to itself in case of conflict.
+// Using this option is equivalent to using:
+//
+//	client.Automation.Create().
+//		OnConflict(sql.ResolveWithIgnore()).
+//		Exec(ctx)
+func (u *AutomationUpsertBulk) Ignore() *AutomationUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithIgnore())
+	return u
+}
+
+// DoNothing configures the conflict_action to `DO NOTHING`.
+// Supported only by SQLite and PostgreSQL.
+func (u *AutomationUpsertBulk) DoNothing() *AutomationUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.DoNothing())
+	return u
+}
+
+// Update allows overriding fields `UPDATE` values. See the AutomationCreateBulk.OnConflict
+// documentation for more info.
+func (u *AutomationUpsertBulk) Update(set func(*AutomationUpsert)) *AutomationUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(update *sql.UpdateSet) {
+		set(&AutomationUpsert{UpdateSet: update})
+	}))
+	return u
+}
+
+// SetName sets the "name" field.
+func (u *AutomationUpsertBulk) SetName(v string) *AutomationUpsertBulk {
+	return u.Update(func(s *AutomationUpsert) {
+		s.SetName(v)
+	})
+}
+
+// UpdateName sets the "name" field to the value that was provided on create.
+func (u *AutomationUpsertBulk) UpdateName() *AutomationUpsertBulk {
+	return u.Update(func(s *AutomationUpsert) {
+		s.UpdateName()
+	})
+}
+
+// SetStatus sets the "status" field.
+func (u *AutomationUpsertBulk) SetStatus(v automation.Status) *AutomationUpsertBulk {
+	return u.Update(func(s *AutomationUpsert) {
+		s.SetStatus(v)
+	})
+}
+
+// UpdateStatus sets the "status" field to the value that was provided on create.
+func (u *AutomationUpsertBulk) UpdateStatus() *AutomationUpsertBulk {
+	return u.Update(func(s *AutomationUpsert) {
+		s.UpdateStatus()
+	})
+}
+
+// SetTriggerEvent sets the "trigger_event" field.
+func (u *AutomationUpsertBulk) SetTriggerEvent(v string) *AutomationUpsertBulk {
+	return u.Update(func(s *AutomationUpsert) {
+		s.SetTriggerEvent(v)
+	})
+}
+
+// UpdateTriggerEvent sets the "trigger_event" field to the value that was provided on create.
+func (u *AutomationUpsertBulk) UpdateTriggerEvent() *AutomationUpsertBulk {
+	return u.Update(func(s *AutomationUpsert) {
+		s.UpdateTriggerEvent()
+	})
+}
+
+// SetDefinition sets the "definition" field.
+func (u *AutomationUpsertBulk) SetDefinition(v string) *AutomationUpsertBulk {
+	return u.Update(func(s *AutomationUpsert) {
+		s.SetDefinition(v)
+	})
+}
+
+// UpdateDefinition sets the "definition" field to the value that was provided on create.
+func (u *AutomationUpsertBulk) UpdateDefinition() *AutomationUpsertBulk {
+	return u.Update(func(s *AutomationUpsert) {
+		s.UpdateDefinition()
+	})
+}
+
+// SetWorkspaceID sets the "workspace_id" field.
+func (u *AutomationUpsertBulk) SetWorkspaceID(v int64) *AutomationUpsertBulk {
+	return u.Update(func(s *AutomationUpsert) {
+		s.SetWorkspaceID(v)
+	})
+}
+
+// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
+func (u *AutomationUpsertBulk) UpdateWorkspaceID() *AutomationUpsertBulk {
+	return u.Update(func(s *AutomationUpsert) {
+		s.UpdateWorkspaceID()
+	})
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (u *AutomationUpsertBulk) SetUpdatedAt(v time.Time) *AutomationUpsertBulk {
+	return u.Update(func(s *AutomationUpsert) {
+		s.SetUpdatedAt(v)
+	})
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *AutomationUpsertBulk) UpdateUpdatedAt() *AutomationUpsertBulk {
+	return u.Update(func(s *AutomationUpsert) {
+		s.UpdateUpdatedAt()
+	})
+}
+
+// Exec executes the query.
+func (u *AutomationUpsertBulk) Exec(ctx context.Context) error {
+	if u.create.err != nil {
+		return u.create.err
+	}
+	for i, b := range u.create.builders {
+		if len(b.conflict) != 0 {
+			return fmt.Errorf("ent: OnConflict was set for builder %d. Set it on the AutomationCreateBulk instead", i)
+		}
+	}
+	if len(u.create.conflict) == 0 {
+		return errors.New("ent: missing options for AutomationCreateBulk.OnConflict")
+	}
+	return u.create.Exec(ctx)
+}
+
+// ExecX is like Exec, but panics if an error occurs.
+func (u *AutomationUpsertBulk) ExecX(ctx context.Context) {
+	if err := u.create.Exec(ctx); err != nil {
 		panic(err)
 	}
 }

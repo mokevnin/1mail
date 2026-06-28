@@ -29,6 +29,26 @@ func (_u *EventUpdate) Where(ps ...predicate.Event) *EventUpdate {
 	return _u
 }
 
+// SetSourceID sets the "source_id" field.
+func (_u *EventUpdate) SetSourceID(v string) *EventUpdate {
+	_u.mutation.SetSourceID(v)
+	return _u
+}
+
+// SetNillableSourceID sets the "source_id" field if the given value is not nil.
+func (_u *EventUpdate) SetNillableSourceID(v *string) *EventUpdate {
+	if v != nil {
+		_u.SetSourceID(*v)
+	}
+	return _u
+}
+
+// ClearSourceID clears the value of the "source_id" field.
+func (_u *EventUpdate) ClearSourceID() *EventUpdate {
+	_u.mutation.ClearSourceID()
+	return _u
+}
+
 // SetSubjectID sets the "subject_id" field.
 func (_u *EventUpdate) SetSubjectID(v string) *EventUpdate {
 	_u.mutation.SetSubjectID(v)
@@ -236,6 +256,12 @@ func (_u *EventUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 			}
 		}
 	}
+	if value, ok := _u.mutation.SourceID(); ok {
+		_spec.SetField(event.FieldSourceID, field.TypeString, value)
+	}
+	if _u.mutation.SourceIDCleared() {
+		_spec.ClearField(event.FieldSourceID, field.TypeString)
+	}
 	if value, ok := _u.mutation.SubjectID(); ok {
 		_spec.SetField(event.FieldSubjectID, field.TypeString, value)
 	}
@@ -319,6 +345,26 @@ type EventUpdateOne struct {
 	fields   []string
 	hooks    []Hook
 	mutation *EventMutation
+}
+
+// SetSourceID sets the "source_id" field.
+func (_u *EventUpdateOne) SetSourceID(v string) *EventUpdateOne {
+	_u.mutation.SetSourceID(v)
+	return _u
+}
+
+// SetNillableSourceID sets the "source_id" field if the given value is not nil.
+func (_u *EventUpdateOne) SetNillableSourceID(v *string) *EventUpdateOne {
+	if v != nil {
+		_u.SetSourceID(*v)
+	}
+	return _u
+}
+
+// ClearSourceID clears the value of the "source_id" field.
+func (_u *EventUpdateOne) ClearSourceID() *EventUpdateOne {
+	_u.mutation.ClearSourceID()
+	return _u
 }
 
 // SetSubjectID sets the "subject_id" field.
@@ -557,6 +603,12 @@ func (_u *EventUpdateOne) sqlSave(ctx context.Context) (_node *Event, err error)
 				ps[i](selector)
 			}
 		}
+	}
+	if value, ok := _u.mutation.SourceID(); ok {
+		_spec.SetField(event.FieldSourceID, field.TypeString, value)
+	}
+	if _u.mutation.SourceIDCleared() {
+		_spec.ClearField(event.FieldSourceID, field.TypeString)
 	}
 	if value, ok := _u.mutation.SubjectID(); ok {
 		_spec.SetField(event.FieldSubjectID, field.TypeString, value)

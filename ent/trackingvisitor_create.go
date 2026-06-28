@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"time"
 
+	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/mokevnin/1mail/ent/trackingprofile"
@@ -20,6 +21,7 @@ type TrackingVisitorCreate struct {
 	config
 	mutation *TrackingVisitorMutation
 	hooks    []Hook
+	conflict []sql.ConflictOption
 }
 
 // SetVisitorID sets the "visitor_id" field.
@@ -208,6 +210,7 @@ func (_c *TrackingVisitorCreate) createSpec() (*TrackingVisitor, *sqlgraph.Creat
 		_node = &TrackingVisitor{config: _c.config}
 		_spec = sqlgraph.NewCreateSpec(trackingvisitor.Table, sqlgraph.NewFieldSpec(trackingvisitor.FieldID, field.TypeInt64))
 	)
+	_spec.OnConflict = _c.conflict
 	if id, ok := _c.mutation.ID(); ok {
 		_node.ID = id
 		_spec.ID.Value = id
@@ -265,11 +268,288 @@ func (_c *TrackingVisitorCreate) createSpec() (*TrackingVisitor, *sqlgraph.Creat
 	return _node, _spec
 }
 
+// OnConflict allows configuring the `ON CONFLICT` / `ON DUPLICATE KEY` clause
+// of the `INSERT` statement. For example:
+//
+//	client.TrackingVisitor.Create().
+//		SetVisitorID(v).
+//		OnConflict(
+//			// Update the row with the new values
+//			// the was proposed for insertion.
+//			sql.ResolveWithNewValues(),
+//		).
+//		// Override some of the fields with custom
+//		// update values.
+//		Update(func(u *ent.TrackingVisitorUpsert) {
+//			SetVisitorID(v+v).
+//		}).
+//		Exec(ctx)
+func (_c *TrackingVisitorCreate) OnConflict(opts ...sql.ConflictOption) *TrackingVisitorUpsertOne {
+	_c.conflict = opts
+	return &TrackingVisitorUpsertOne{
+		create: _c,
+	}
+}
+
+// OnConflictColumns calls `OnConflict` and configures the columns
+// as conflict target. Using this option is equivalent to using:
+//
+//	client.TrackingVisitor.Create().
+//		OnConflict(sql.ConflictColumns(columns...)).
+//		Exec(ctx)
+func (_c *TrackingVisitorCreate) OnConflictColumns(columns ...string) *TrackingVisitorUpsertOne {
+	_c.conflict = append(_c.conflict, sql.ConflictColumns(columns...))
+	return &TrackingVisitorUpsertOne{
+		create: _c,
+	}
+}
+
+type (
+	// TrackingVisitorUpsertOne is the builder for "upsert"-ing
+	//  one TrackingVisitor node.
+	TrackingVisitorUpsertOne struct {
+		create *TrackingVisitorCreate
+	}
+
+	// TrackingVisitorUpsert is the "OnConflict" setter.
+	TrackingVisitorUpsert struct {
+		*sql.UpdateSet
+	}
+)
+
+// SetVisitorID sets the "visitor_id" field.
+func (u *TrackingVisitorUpsert) SetVisitorID(v string) *TrackingVisitorUpsert {
+	u.Set(trackingvisitor.FieldVisitorID, v)
+	return u
+}
+
+// UpdateVisitorID sets the "visitor_id" field to the value that was provided on create.
+func (u *TrackingVisitorUpsert) UpdateVisitorID() *TrackingVisitorUpsert {
+	u.SetExcluded(trackingvisitor.FieldVisitorID)
+	return u
+}
+
+// SetWorkspaceID sets the "workspace_id" field.
+func (u *TrackingVisitorUpsert) SetWorkspaceID(v int64) *TrackingVisitorUpsert {
+	u.Set(trackingvisitor.FieldWorkspaceID, v)
+	return u
+}
+
+// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
+func (u *TrackingVisitorUpsert) UpdateWorkspaceID() *TrackingVisitorUpsert {
+	u.SetExcluded(trackingvisitor.FieldWorkspaceID)
+	return u
+}
+
+// SetProfileID sets the "profile_id" field.
+func (u *TrackingVisitorUpsert) SetProfileID(v int64) *TrackingVisitorUpsert {
+	u.Set(trackingvisitor.FieldProfileID, v)
+	return u
+}
+
+// UpdateProfileID sets the "profile_id" field to the value that was provided on create.
+func (u *TrackingVisitorUpsert) UpdateProfileID() *TrackingVisitorUpsert {
+	u.SetExcluded(trackingvisitor.FieldProfileID)
+	return u
+}
+
+// ClearProfileID clears the value of the "profile_id" field.
+func (u *TrackingVisitorUpsert) ClearProfileID() *TrackingVisitorUpsert {
+	u.SetNull(trackingvisitor.FieldProfileID)
+	return u
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (u *TrackingVisitorUpsert) SetUpdatedAt(v time.Time) *TrackingVisitorUpsert {
+	u.Set(trackingvisitor.FieldUpdatedAt, v)
+	return u
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *TrackingVisitorUpsert) UpdateUpdatedAt() *TrackingVisitorUpsert {
+	u.SetExcluded(trackingvisitor.FieldUpdatedAt)
+	return u
+}
+
+// SetLastSeenAt sets the "last_seen_at" field.
+func (u *TrackingVisitorUpsert) SetLastSeenAt(v time.Time) *TrackingVisitorUpsert {
+	u.Set(trackingvisitor.FieldLastSeenAt, v)
+	return u
+}
+
+// UpdateLastSeenAt sets the "last_seen_at" field to the value that was provided on create.
+func (u *TrackingVisitorUpsert) UpdateLastSeenAt() *TrackingVisitorUpsert {
+	u.SetExcluded(trackingvisitor.FieldLastSeenAt)
+	return u
+}
+
+// UpdateNewValues updates the mutable fields using the new values that were set on create except the ID field.
+// Using this option is equivalent to using:
+//
+//	client.TrackingVisitor.Create().
+//		OnConflict(
+//			sql.ResolveWithNewValues(),
+//			sql.ResolveWith(func(u *sql.UpdateSet) {
+//				u.SetIgnore(trackingvisitor.FieldID)
+//			}),
+//		).
+//		Exec(ctx)
+func (u *TrackingVisitorUpsertOne) UpdateNewValues() *TrackingVisitorUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(s *sql.UpdateSet) {
+		if _, exists := u.create.mutation.ID(); exists {
+			s.SetIgnore(trackingvisitor.FieldID)
+		}
+		if _, exists := u.create.mutation.CreatedAt(); exists {
+			s.SetIgnore(trackingvisitor.FieldCreatedAt)
+		}
+	}))
+	return u
+}
+
+// Ignore sets each column to itself in case of conflict.
+// Using this option is equivalent to using:
+//
+//	client.TrackingVisitor.Create().
+//	    OnConflict(sql.ResolveWithIgnore()).
+//	    Exec(ctx)
+func (u *TrackingVisitorUpsertOne) Ignore() *TrackingVisitorUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithIgnore())
+	return u
+}
+
+// DoNothing configures the conflict_action to `DO NOTHING`.
+// Supported only by SQLite and PostgreSQL.
+func (u *TrackingVisitorUpsertOne) DoNothing() *TrackingVisitorUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.DoNothing())
+	return u
+}
+
+// Update allows overriding fields `UPDATE` values. See the TrackingVisitorCreate.OnConflict
+// documentation for more info.
+func (u *TrackingVisitorUpsertOne) Update(set func(*TrackingVisitorUpsert)) *TrackingVisitorUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(update *sql.UpdateSet) {
+		set(&TrackingVisitorUpsert{UpdateSet: update})
+	}))
+	return u
+}
+
+// SetVisitorID sets the "visitor_id" field.
+func (u *TrackingVisitorUpsertOne) SetVisitorID(v string) *TrackingVisitorUpsertOne {
+	return u.Update(func(s *TrackingVisitorUpsert) {
+		s.SetVisitorID(v)
+	})
+}
+
+// UpdateVisitorID sets the "visitor_id" field to the value that was provided on create.
+func (u *TrackingVisitorUpsertOne) UpdateVisitorID() *TrackingVisitorUpsertOne {
+	return u.Update(func(s *TrackingVisitorUpsert) {
+		s.UpdateVisitorID()
+	})
+}
+
+// SetWorkspaceID sets the "workspace_id" field.
+func (u *TrackingVisitorUpsertOne) SetWorkspaceID(v int64) *TrackingVisitorUpsertOne {
+	return u.Update(func(s *TrackingVisitorUpsert) {
+		s.SetWorkspaceID(v)
+	})
+}
+
+// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
+func (u *TrackingVisitorUpsertOne) UpdateWorkspaceID() *TrackingVisitorUpsertOne {
+	return u.Update(func(s *TrackingVisitorUpsert) {
+		s.UpdateWorkspaceID()
+	})
+}
+
+// SetProfileID sets the "profile_id" field.
+func (u *TrackingVisitorUpsertOne) SetProfileID(v int64) *TrackingVisitorUpsertOne {
+	return u.Update(func(s *TrackingVisitorUpsert) {
+		s.SetProfileID(v)
+	})
+}
+
+// UpdateProfileID sets the "profile_id" field to the value that was provided on create.
+func (u *TrackingVisitorUpsertOne) UpdateProfileID() *TrackingVisitorUpsertOne {
+	return u.Update(func(s *TrackingVisitorUpsert) {
+		s.UpdateProfileID()
+	})
+}
+
+// ClearProfileID clears the value of the "profile_id" field.
+func (u *TrackingVisitorUpsertOne) ClearProfileID() *TrackingVisitorUpsertOne {
+	return u.Update(func(s *TrackingVisitorUpsert) {
+		s.ClearProfileID()
+	})
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (u *TrackingVisitorUpsertOne) SetUpdatedAt(v time.Time) *TrackingVisitorUpsertOne {
+	return u.Update(func(s *TrackingVisitorUpsert) {
+		s.SetUpdatedAt(v)
+	})
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *TrackingVisitorUpsertOne) UpdateUpdatedAt() *TrackingVisitorUpsertOne {
+	return u.Update(func(s *TrackingVisitorUpsert) {
+		s.UpdateUpdatedAt()
+	})
+}
+
+// SetLastSeenAt sets the "last_seen_at" field.
+func (u *TrackingVisitorUpsertOne) SetLastSeenAt(v time.Time) *TrackingVisitorUpsertOne {
+	return u.Update(func(s *TrackingVisitorUpsert) {
+		s.SetLastSeenAt(v)
+	})
+}
+
+// UpdateLastSeenAt sets the "last_seen_at" field to the value that was provided on create.
+func (u *TrackingVisitorUpsertOne) UpdateLastSeenAt() *TrackingVisitorUpsertOne {
+	return u.Update(func(s *TrackingVisitorUpsert) {
+		s.UpdateLastSeenAt()
+	})
+}
+
+// Exec executes the query.
+func (u *TrackingVisitorUpsertOne) Exec(ctx context.Context) error {
+	if len(u.create.conflict) == 0 {
+		return errors.New("ent: missing options for TrackingVisitorCreate.OnConflict")
+	}
+	return u.create.Exec(ctx)
+}
+
+// ExecX is like Exec, but panics if an error occurs.
+func (u *TrackingVisitorUpsertOne) ExecX(ctx context.Context) {
+	if err := u.create.Exec(ctx); err != nil {
+		panic(err)
+	}
+}
+
+// Exec executes the UPSERT query and returns the inserted/updated ID.
+func (u *TrackingVisitorUpsertOne) ID(ctx context.Context) (id int64, err error) {
+	node, err := u.create.Save(ctx)
+	if err != nil {
+		return id, err
+	}
+	return node.ID, nil
+}
+
+// IDX is like ID, but panics if an error occurs.
+func (u *TrackingVisitorUpsertOne) IDX(ctx context.Context) int64 {
+	id, err := u.ID(ctx)
+	if err != nil {
+		panic(err)
+	}
+	return id
+}
+
 // TrackingVisitorCreateBulk is the builder for creating many TrackingVisitor entities in bulk.
 type TrackingVisitorCreateBulk struct {
 	config
 	err      error
 	builders []*TrackingVisitorCreate
+	conflict []sql.ConflictOption
 }
 
 // Save creates the TrackingVisitor entities in the database.
@@ -299,6 +579,7 @@ func (_c *TrackingVisitorCreateBulk) Save(ctx context.Context) ([]*TrackingVisit
 					_, err = mutators[i+1].Mutate(root, _c.builders[i+1].mutation)
 				} else {
 					spec := &sqlgraph.BatchCreateSpec{Nodes: specs}
+					spec.OnConflict = _c.conflict
 					// Invoke the actual operation on the latest mutation in the chain.
 					if err = sqlgraph.BatchCreate(ctx, _c.driver, spec); err != nil {
 						if sqlgraph.IsConstraintError(err) {
@@ -349,6 +630,200 @@ func (_c *TrackingVisitorCreateBulk) Exec(ctx context.Context) error {
 // ExecX is like Exec, but panics if an error occurs.
 func (_c *TrackingVisitorCreateBulk) ExecX(ctx context.Context) {
 	if err := _c.Exec(ctx); err != nil {
+		panic(err)
+	}
+}
+
+// OnConflict allows configuring the `ON CONFLICT` / `ON DUPLICATE KEY` clause
+// of the `INSERT` statement. For example:
+//
+//	client.TrackingVisitor.CreateBulk(builders...).
+//		OnConflict(
+//			// Update the row with the new values
+//			// the was proposed for insertion.
+//			sql.ResolveWithNewValues(),
+//		).
+//		// Override some of the fields with custom
+//		// update values.
+//		Update(func(u *ent.TrackingVisitorUpsert) {
+//			SetVisitorID(v+v).
+//		}).
+//		Exec(ctx)
+func (_c *TrackingVisitorCreateBulk) OnConflict(opts ...sql.ConflictOption) *TrackingVisitorUpsertBulk {
+	_c.conflict = opts
+	return &TrackingVisitorUpsertBulk{
+		create: _c,
+	}
+}
+
+// OnConflictColumns calls `OnConflict` and configures the columns
+// as conflict target. Using this option is equivalent to using:
+//
+//	client.TrackingVisitor.Create().
+//		OnConflict(sql.ConflictColumns(columns...)).
+//		Exec(ctx)
+func (_c *TrackingVisitorCreateBulk) OnConflictColumns(columns ...string) *TrackingVisitorUpsertBulk {
+	_c.conflict = append(_c.conflict, sql.ConflictColumns(columns...))
+	return &TrackingVisitorUpsertBulk{
+		create: _c,
+	}
+}
+
+// TrackingVisitorUpsertBulk is the builder for "upsert"-ing
+// a bulk of TrackingVisitor nodes.
+type TrackingVisitorUpsertBulk struct {
+	create *TrackingVisitorCreateBulk
+}
+
+// UpdateNewValues updates the mutable fields using the new values that
+// were set on create. Using this option is equivalent to using:
+//
+//	client.TrackingVisitor.Create().
+//		OnConflict(
+//			sql.ResolveWithNewValues(),
+//			sql.ResolveWith(func(u *sql.UpdateSet) {
+//				u.SetIgnore(trackingvisitor.FieldID)
+//			}),
+//		).
+//		Exec(ctx)
+func (u *TrackingVisitorUpsertBulk) UpdateNewValues() *TrackingVisitorUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(s *sql.UpdateSet) {
+		for _, b := range u.create.builders {
+			if _, exists := b.mutation.ID(); exists {
+				s.SetIgnore(trackingvisitor.FieldID)
+			}
+			if _, exists := b.mutation.CreatedAt(); exists {
+				s.SetIgnore(trackingvisitor.FieldCreatedAt)
+			}
+		}
+	}))
+	return u
+}
+
+// Ignore sets each column to itself in case of conflict.
+// Using this option is equivalent to using:
+//
+//	client.TrackingVisitor.Create().
+//		OnConflict(sql.ResolveWithIgnore()).
+//		Exec(ctx)
+func (u *TrackingVisitorUpsertBulk) Ignore() *TrackingVisitorUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithIgnore())
+	return u
+}
+
+// DoNothing configures the conflict_action to `DO NOTHING`.
+// Supported only by SQLite and PostgreSQL.
+func (u *TrackingVisitorUpsertBulk) DoNothing() *TrackingVisitorUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.DoNothing())
+	return u
+}
+
+// Update allows overriding fields `UPDATE` values. See the TrackingVisitorCreateBulk.OnConflict
+// documentation for more info.
+func (u *TrackingVisitorUpsertBulk) Update(set func(*TrackingVisitorUpsert)) *TrackingVisitorUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(update *sql.UpdateSet) {
+		set(&TrackingVisitorUpsert{UpdateSet: update})
+	}))
+	return u
+}
+
+// SetVisitorID sets the "visitor_id" field.
+func (u *TrackingVisitorUpsertBulk) SetVisitorID(v string) *TrackingVisitorUpsertBulk {
+	return u.Update(func(s *TrackingVisitorUpsert) {
+		s.SetVisitorID(v)
+	})
+}
+
+// UpdateVisitorID sets the "visitor_id" field to the value that was provided on create.
+func (u *TrackingVisitorUpsertBulk) UpdateVisitorID() *TrackingVisitorUpsertBulk {
+	return u.Update(func(s *TrackingVisitorUpsert) {
+		s.UpdateVisitorID()
+	})
+}
+
+// SetWorkspaceID sets the "workspace_id" field.
+func (u *TrackingVisitorUpsertBulk) SetWorkspaceID(v int64) *TrackingVisitorUpsertBulk {
+	return u.Update(func(s *TrackingVisitorUpsert) {
+		s.SetWorkspaceID(v)
+	})
+}
+
+// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
+func (u *TrackingVisitorUpsertBulk) UpdateWorkspaceID() *TrackingVisitorUpsertBulk {
+	return u.Update(func(s *TrackingVisitorUpsert) {
+		s.UpdateWorkspaceID()
+	})
+}
+
+// SetProfileID sets the "profile_id" field.
+func (u *TrackingVisitorUpsertBulk) SetProfileID(v int64) *TrackingVisitorUpsertBulk {
+	return u.Update(func(s *TrackingVisitorUpsert) {
+		s.SetProfileID(v)
+	})
+}
+
+// UpdateProfileID sets the "profile_id" field to the value that was provided on create.
+func (u *TrackingVisitorUpsertBulk) UpdateProfileID() *TrackingVisitorUpsertBulk {
+	return u.Update(func(s *TrackingVisitorUpsert) {
+		s.UpdateProfileID()
+	})
+}
+
+// ClearProfileID clears the value of the "profile_id" field.
+func (u *TrackingVisitorUpsertBulk) ClearProfileID() *TrackingVisitorUpsertBulk {
+	return u.Update(func(s *TrackingVisitorUpsert) {
+		s.ClearProfileID()
+	})
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (u *TrackingVisitorUpsertBulk) SetUpdatedAt(v time.Time) *TrackingVisitorUpsertBulk {
+	return u.Update(func(s *TrackingVisitorUpsert) {
+		s.SetUpdatedAt(v)
+	})
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *TrackingVisitorUpsertBulk) UpdateUpdatedAt() *TrackingVisitorUpsertBulk {
+	return u.Update(func(s *TrackingVisitorUpsert) {
+		s.UpdateUpdatedAt()
+	})
+}
+
+// SetLastSeenAt sets the "last_seen_at" field.
+func (u *TrackingVisitorUpsertBulk) SetLastSeenAt(v time.Time) *TrackingVisitorUpsertBulk {
+	return u.Update(func(s *TrackingVisitorUpsert) {
+		s.SetLastSeenAt(v)
+	})
+}
+
+// UpdateLastSeenAt sets the "last_seen_at" field to the value that was provided on create.
+func (u *TrackingVisitorUpsertBulk) UpdateLastSeenAt() *TrackingVisitorUpsertBulk {
+	return u.Update(func(s *TrackingVisitorUpsert) {
+		s.UpdateLastSeenAt()
+	})
+}
+
+// Exec executes the query.
+func (u *TrackingVisitorUpsertBulk) Exec(ctx context.Context) error {
+	if u.create.err != nil {
+		return u.create.err
+	}
+	for i, b := range u.create.builders {
+		if len(b.conflict) != 0 {
+			return fmt.Errorf("ent: OnConflict was set for builder %d. Set it on the TrackingVisitorCreateBulk instead", i)
+		}
+	}
+	if len(u.create.conflict) == 0 {
+		return errors.New("ent: missing options for TrackingVisitorCreateBulk.OnConflict")
+	}
+	return u.create.Exec(ctx)
+}
+
+// ExecX is like Exec, but panics if an error occurs.
+func (u *TrackingVisitorUpsertBulk) ExecX(ctx context.Context) {
+	if err := u.create.Exec(ctx); err != nil {
 		panic(err)
 	}
 }

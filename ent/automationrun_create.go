@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"time"
 
+	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/mokevnin/1mail/ent/automation"
@@ -20,6 +21,7 @@ type AutomationRunCreate struct {
 	config
 	mutation *AutomationRunMutation
 	hooks    []Hook
+	conflict []sql.ConflictOption
 }
 
 // SetAutomationID sets the "automation_id" field.
@@ -246,6 +248,7 @@ func (_c *AutomationRunCreate) createSpec() (*AutomationRun, *sqlgraph.CreateSpe
 		_node = &AutomationRun{config: _c.config}
 		_spec = sqlgraph.NewCreateSpec(automationrun.Table, sqlgraph.NewFieldSpec(automationrun.FieldID, field.TypeInt64))
 	)
+	_spec.OnConflict = _c.conflict
 	if id, ok := _c.mutation.ID(); ok {
 		_node.ID = id
 		_spec.ID.Value = id
@@ -311,11 +314,366 @@ func (_c *AutomationRunCreate) createSpec() (*AutomationRun, *sqlgraph.CreateSpe
 	return _node, _spec
 }
 
+// OnConflict allows configuring the `ON CONFLICT` / `ON DUPLICATE KEY` clause
+// of the `INSERT` statement. For example:
+//
+//	client.AutomationRun.Create().
+//		SetAutomationID(v).
+//		OnConflict(
+//			// Update the row with the new values
+//			// the was proposed for insertion.
+//			sql.ResolveWithNewValues(),
+//		).
+//		// Override some of the fields with custom
+//		// update values.
+//		Update(func(u *ent.AutomationRunUpsert) {
+//			SetAutomationID(v+v).
+//		}).
+//		Exec(ctx)
+func (_c *AutomationRunCreate) OnConflict(opts ...sql.ConflictOption) *AutomationRunUpsertOne {
+	_c.conflict = opts
+	return &AutomationRunUpsertOne{
+		create: _c,
+	}
+}
+
+// OnConflictColumns calls `OnConflict` and configures the columns
+// as conflict target. Using this option is equivalent to using:
+//
+//	client.AutomationRun.Create().
+//		OnConflict(sql.ConflictColumns(columns...)).
+//		Exec(ctx)
+func (_c *AutomationRunCreate) OnConflictColumns(columns ...string) *AutomationRunUpsertOne {
+	_c.conflict = append(_c.conflict, sql.ConflictColumns(columns...))
+	return &AutomationRunUpsertOne{
+		create: _c,
+	}
+}
+
+type (
+	// AutomationRunUpsertOne is the builder for "upsert"-ing
+	//  one AutomationRun node.
+	AutomationRunUpsertOne struct {
+		create *AutomationRunCreate
+	}
+
+	// AutomationRunUpsert is the "OnConflict" setter.
+	AutomationRunUpsert struct {
+		*sql.UpdateSet
+	}
+)
+
+// SetAutomationID sets the "automation_id" field.
+func (u *AutomationRunUpsert) SetAutomationID(v int64) *AutomationRunUpsert {
+	u.Set(automationrun.FieldAutomationID, v)
+	return u
+}
+
+// UpdateAutomationID sets the "automation_id" field to the value that was provided on create.
+func (u *AutomationRunUpsert) UpdateAutomationID() *AutomationRunUpsert {
+	u.SetExcluded(automationrun.FieldAutomationID)
+	return u
+}
+
+// SetContactID sets the "contact_id" field.
+func (u *AutomationRunUpsert) SetContactID(v int64) *AutomationRunUpsert {
+	u.Set(automationrun.FieldContactID, v)
+	return u
+}
+
+// UpdateContactID sets the "contact_id" field to the value that was provided on create.
+func (u *AutomationRunUpsert) UpdateContactID() *AutomationRunUpsert {
+	u.SetExcluded(automationrun.FieldContactID)
+	return u
+}
+
+// AddContactID adds v to the "contact_id" field.
+func (u *AutomationRunUpsert) AddContactID(v int64) *AutomationRunUpsert {
+	u.Add(automationrun.FieldContactID, v)
+	return u
+}
+
+// SetWorkspaceID sets the "workspace_id" field.
+func (u *AutomationRunUpsert) SetWorkspaceID(v int64) *AutomationRunUpsert {
+	u.Set(automationrun.FieldWorkspaceID, v)
+	return u
+}
+
+// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
+func (u *AutomationRunUpsert) UpdateWorkspaceID() *AutomationRunUpsert {
+	u.SetExcluded(automationrun.FieldWorkspaceID)
+	return u
+}
+
+// SetStatus sets the "status" field.
+func (u *AutomationRunUpsert) SetStatus(v automationrun.Status) *AutomationRunUpsert {
+	u.Set(automationrun.FieldStatus, v)
+	return u
+}
+
+// UpdateStatus sets the "status" field to the value that was provided on create.
+func (u *AutomationRunUpsert) UpdateStatus() *AutomationRunUpsert {
+	u.SetExcluded(automationrun.FieldStatus)
+	return u
+}
+
+// SetCurrentStep sets the "current_step" field.
+func (u *AutomationRunUpsert) SetCurrentStep(v int) *AutomationRunUpsert {
+	u.Set(automationrun.FieldCurrentStep, v)
+	return u
+}
+
+// UpdateCurrentStep sets the "current_step" field to the value that was provided on create.
+func (u *AutomationRunUpsert) UpdateCurrentStep() *AutomationRunUpsert {
+	u.SetExcluded(automationrun.FieldCurrentStep)
+	return u
+}
+
+// AddCurrentStep adds v to the "current_step" field.
+func (u *AutomationRunUpsert) AddCurrentStep(v int) *AutomationRunUpsert {
+	u.Add(automationrun.FieldCurrentStep, v)
+	return u
+}
+
+// SetResumeAt sets the "resume_at" field.
+func (u *AutomationRunUpsert) SetResumeAt(v time.Time) *AutomationRunUpsert {
+	u.Set(automationrun.FieldResumeAt, v)
+	return u
+}
+
+// UpdateResumeAt sets the "resume_at" field to the value that was provided on create.
+func (u *AutomationRunUpsert) UpdateResumeAt() *AutomationRunUpsert {
+	u.SetExcluded(automationrun.FieldResumeAt)
+	return u
+}
+
+// ClearResumeAt clears the value of the "resume_at" field.
+func (u *AutomationRunUpsert) ClearResumeAt() *AutomationRunUpsert {
+	u.SetNull(automationrun.FieldResumeAt)
+	return u
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (u *AutomationRunUpsert) SetUpdatedAt(v time.Time) *AutomationRunUpsert {
+	u.Set(automationrun.FieldUpdatedAt, v)
+	return u
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *AutomationRunUpsert) UpdateUpdatedAt() *AutomationRunUpsert {
+	u.SetExcluded(automationrun.FieldUpdatedAt)
+	return u
+}
+
+// UpdateNewValues updates the mutable fields using the new values that were set on create except the ID field.
+// Using this option is equivalent to using:
+//
+//	client.AutomationRun.Create().
+//		OnConflict(
+//			sql.ResolveWithNewValues(),
+//			sql.ResolveWith(func(u *sql.UpdateSet) {
+//				u.SetIgnore(automationrun.FieldID)
+//			}),
+//		).
+//		Exec(ctx)
+func (u *AutomationRunUpsertOne) UpdateNewValues() *AutomationRunUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(s *sql.UpdateSet) {
+		if _, exists := u.create.mutation.ID(); exists {
+			s.SetIgnore(automationrun.FieldID)
+		}
+		if _, exists := u.create.mutation.CreatedAt(); exists {
+			s.SetIgnore(automationrun.FieldCreatedAt)
+		}
+	}))
+	return u
+}
+
+// Ignore sets each column to itself in case of conflict.
+// Using this option is equivalent to using:
+//
+//	client.AutomationRun.Create().
+//	    OnConflict(sql.ResolveWithIgnore()).
+//	    Exec(ctx)
+func (u *AutomationRunUpsertOne) Ignore() *AutomationRunUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithIgnore())
+	return u
+}
+
+// DoNothing configures the conflict_action to `DO NOTHING`.
+// Supported only by SQLite and PostgreSQL.
+func (u *AutomationRunUpsertOne) DoNothing() *AutomationRunUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.DoNothing())
+	return u
+}
+
+// Update allows overriding fields `UPDATE` values. See the AutomationRunCreate.OnConflict
+// documentation for more info.
+func (u *AutomationRunUpsertOne) Update(set func(*AutomationRunUpsert)) *AutomationRunUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(update *sql.UpdateSet) {
+		set(&AutomationRunUpsert{UpdateSet: update})
+	}))
+	return u
+}
+
+// SetAutomationID sets the "automation_id" field.
+func (u *AutomationRunUpsertOne) SetAutomationID(v int64) *AutomationRunUpsertOne {
+	return u.Update(func(s *AutomationRunUpsert) {
+		s.SetAutomationID(v)
+	})
+}
+
+// UpdateAutomationID sets the "automation_id" field to the value that was provided on create.
+func (u *AutomationRunUpsertOne) UpdateAutomationID() *AutomationRunUpsertOne {
+	return u.Update(func(s *AutomationRunUpsert) {
+		s.UpdateAutomationID()
+	})
+}
+
+// SetContactID sets the "contact_id" field.
+func (u *AutomationRunUpsertOne) SetContactID(v int64) *AutomationRunUpsertOne {
+	return u.Update(func(s *AutomationRunUpsert) {
+		s.SetContactID(v)
+	})
+}
+
+// AddContactID adds v to the "contact_id" field.
+func (u *AutomationRunUpsertOne) AddContactID(v int64) *AutomationRunUpsertOne {
+	return u.Update(func(s *AutomationRunUpsert) {
+		s.AddContactID(v)
+	})
+}
+
+// UpdateContactID sets the "contact_id" field to the value that was provided on create.
+func (u *AutomationRunUpsertOne) UpdateContactID() *AutomationRunUpsertOne {
+	return u.Update(func(s *AutomationRunUpsert) {
+		s.UpdateContactID()
+	})
+}
+
+// SetWorkspaceID sets the "workspace_id" field.
+func (u *AutomationRunUpsertOne) SetWorkspaceID(v int64) *AutomationRunUpsertOne {
+	return u.Update(func(s *AutomationRunUpsert) {
+		s.SetWorkspaceID(v)
+	})
+}
+
+// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
+func (u *AutomationRunUpsertOne) UpdateWorkspaceID() *AutomationRunUpsertOne {
+	return u.Update(func(s *AutomationRunUpsert) {
+		s.UpdateWorkspaceID()
+	})
+}
+
+// SetStatus sets the "status" field.
+func (u *AutomationRunUpsertOne) SetStatus(v automationrun.Status) *AutomationRunUpsertOne {
+	return u.Update(func(s *AutomationRunUpsert) {
+		s.SetStatus(v)
+	})
+}
+
+// UpdateStatus sets the "status" field to the value that was provided on create.
+func (u *AutomationRunUpsertOne) UpdateStatus() *AutomationRunUpsertOne {
+	return u.Update(func(s *AutomationRunUpsert) {
+		s.UpdateStatus()
+	})
+}
+
+// SetCurrentStep sets the "current_step" field.
+func (u *AutomationRunUpsertOne) SetCurrentStep(v int) *AutomationRunUpsertOne {
+	return u.Update(func(s *AutomationRunUpsert) {
+		s.SetCurrentStep(v)
+	})
+}
+
+// AddCurrentStep adds v to the "current_step" field.
+func (u *AutomationRunUpsertOne) AddCurrentStep(v int) *AutomationRunUpsertOne {
+	return u.Update(func(s *AutomationRunUpsert) {
+		s.AddCurrentStep(v)
+	})
+}
+
+// UpdateCurrentStep sets the "current_step" field to the value that was provided on create.
+func (u *AutomationRunUpsertOne) UpdateCurrentStep() *AutomationRunUpsertOne {
+	return u.Update(func(s *AutomationRunUpsert) {
+		s.UpdateCurrentStep()
+	})
+}
+
+// SetResumeAt sets the "resume_at" field.
+func (u *AutomationRunUpsertOne) SetResumeAt(v time.Time) *AutomationRunUpsertOne {
+	return u.Update(func(s *AutomationRunUpsert) {
+		s.SetResumeAt(v)
+	})
+}
+
+// UpdateResumeAt sets the "resume_at" field to the value that was provided on create.
+func (u *AutomationRunUpsertOne) UpdateResumeAt() *AutomationRunUpsertOne {
+	return u.Update(func(s *AutomationRunUpsert) {
+		s.UpdateResumeAt()
+	})
+}
+
+// ClearResumeAt clears the value of the "resume_at" field.
+func (u *AutomationRunUpsertOne) ClearResumeAt() *AutomationRunUpsertOne {
+	return u.Update(func(s *AutomationRunUpsert) {
+		s.ClearResumeAt()
+	})
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (u *AutomationRunUpsertOne) SetUpdatedAt(v time.Time) *AutomationRunUpsertOne {
+	return u.Update(func(s *AutomationRunUpsert) {
+		s.SetUpdatedAt(v)
+	})
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *AutomationRunUpsertOne) UpdateUpdatedAt() *AutomationRunUpsertOne {
+	return u.Update(func(s *AutomationRunUpsert) {
+		s.UpdateUpdatedAt()
+	})
+}
+
+// Exec executes the query.
+func (u *AutomationRunUpsertOne) Exec(ctx context.Context) error {
+	if len(u.create.conflict) == 0 {
+		return errors.New("ent: missing options for AutomationRunCreate.OnConflict")
+	}
+	return u.create.Exec(ctx)
+}
+
+// ExecX is like Exec, but panics if an error occurs.
+func (u *AutomationRunUpsertOne) ExecX(ctx context.Context) {
+	if err := u.create.Exec(ctx); err != nil {
+		panic(err)
+	}
+}
+
+// Exec executes the UPSERT query and returns the inserted/updated ID.
+func (u *AutomationRunUpsertOne) ID(ctx context.Context) (id int64, err error) {
+	node, err := u.create.Save(ctx)
+	if err != nil {
+		return id, err
+	}
+	return node.ID, nil
+}
+
+// IDX is like ID, but panics if an error occurs.
+func (u *AutomationRunUpsertOne) IDX(ctx context.Context) int64 {
+	id, err := u.ID(ctx)
+	if err != nil {
+		panic(err)
+	}
+	return id
+}
+
 // AutomationRunCreateBulk is the builder for creating many AutomationRun entities in bulk.
 type AutomationRunCreateBulk struct {
 	config
 	err      error
 	builders []*AutomationRunCreate
+	conflict []sql.ConflictOption
 }
 
 // Save creates the AutomationRun entities in the database.
@@ -345,6 +703,7 @@ func (_c *AutomationRunCreateBulk) Save(ctx context.Context) ([]*AutomationRun, 
 					_, err = mutators[i+1].Mutate(root, _c.builders[i+1].mutation)
 				} else {
 					spec := &sqlgraph.BatchCreateSpec{Nodes: specs}
+					spec.OnConflict = _c.conflict
 					// Invoke the actual operation on the latest mutation in the chain.
 					if err = sqlgraph.BatchCreate(ctx, _c.driver, spec); err != nil {
 						if sqlgraph.IsConstraintError(err) {
@@ -395,6 +754,242 @@ func (_c *AutomationRunCreateBulk) Exec(ctx context.Context) error {
 // ExecX is like Exec, but panics if an error occurs.
 func (_c *AutomationRunCreateBulk) ExecX(ctx context.Context) {
 	if err := _c.Exec(ctx); err != nil {
+		panic(err)
+	}
+}
+
+// OnConflict allows configuring the `ON CONFLICT` / `ON DUPLICATE KEY` clause
+// of the `INSERT` statement. For example:
+//
+//	client.AutomationRun.CreateBulk(builders...).
+//		OnConflict(
+//			// Update the row with the new values
+//			// the was proposed for insertion.
+//			sql.ResolveWithNewValues(),
+//		).
+//		// Override some of the fields with custom
+//		// update values.
+//		Update(func(u *ent.AutomationRunUpsert) {
+//			SetAutomationID(v+v).
+//		}).
+//		Exec(ctx)
+func (_c *AutomationRunCreateBulk) OnConflict(opts ...sql.ConflictOption) *AutomationRunUpsertBulk {
+	_c.conflict = opts
+	return &AutomationRunUpsertBulk{
+		create: _c,
+	}
+}
+
+// OnConflictColumns calls `OnConflict` and configures the columns
+// as conflict target. Using this option is equivalent to using:
+//
+//	client.AutomationRun.Create().
+//		OnConflict(sql.ConflictColumns(columns...)).
+//		Exec(ctx)
+func (_c *AutomationRunCreateBulk) OnConflictColumns(columns ...string) *AutomationRunUpsertBulk {
+	_c.conflict = append(_c.conflict, sql.ConflictColumns(columns...))
+	return &AutomationRunUpsertBulk{
+		create: _c,
+	}
+}
+
+// AutomationRunUpsertBulk is the builder for "upsert"-ing
+// a bulk of AutomationRun nodes.
+type AutomationRunUpsertBulk struct {
+	create *AutomationRunCreateBulk
+}
+
+// UpdateNewValues updates the mutable fields using the new values that
+// were set on create. Using this option is equivalent to using:
+//
+//	client.AutomationRun.Create().
+//		OnConflict(
+//			sql.ResolveWithNewValues(),
+//			sql.ResolveWith(func(u *sql.UpdateSet) {
+//				u.SetIgnore(automationrun.FieldID)
+//			}),
+//		).
+//		Exec(ctx)
+func (u *AutomationRunUpsertBulk) UpdateNewValues() *AutomationRunUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(s *sql.UpdateSet) {
+		for _, b := range u.create.builders {
+			if _, exists := b.mutation.ID(); exists {
+				s.SetIgnore(automationrun.FieldID)
+			}
+			if _, exists := b.mutation.CreatedAt(); exists {
+				s.SetIgnore(automationrun.FieldCreatedAt)
+			}
+		}
+	}))
+	return u
+}
+
+// Ignore sets each column to itself in case of conflict.
+// Using this option is equivalent to using:
+//
+//	client.AutomationRun.Create().
+//		OnConflict(sql.ResolveWithIgnore()).
+//		Exec(ctx)
+func (u *AutomationRunUpsertBulk) Ignore() *AutomationRunUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithIgnore())
+	return u
+}
+
+// DoNothing configures the conflict_action to `DO NOTHING`.
+// Supported only by SQLite and PostgreSQL.
+func (u *AutomationRunUpsertBulk) DoNothing() *AutomationRunUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.DoNothing())
+	return u
+}
+
+// Update allows overriding fields `UPDATE` values. See the AutomationRunCreateBulk.OnConflict
+// documentation for more info.
+func (u *AutomationRunUpsertBulk) Update(set func(*AutomationRunUpsert)) *AutomationRunUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(update *sql.UpdateSet) {
+		set(&AutomationRunUpsert{UpdateSet: update})
+	}))
+	return u
+}
+
+// SetAutomationID sets the "automation_id" field.
+func (u *AutomationRunUpsertBulk) SetAutomationID(v int64) *AutomationRunUpsertBulk {
+	return u.Update(func(s *AutomationRunUpsert) {
+		s.SetAutomationID(v)
+	})
+}
+
+// UpdateAutomationID sets the "automation_id" field to the value that was provided on create.
+func (u *AutomationRunUpsertBulk) UpdateAutomationID() *AutomationRunUpsertBulk {
+	return u.Update(func(s *AutomationRunUpsert) {
+		s.UpdateAutomationID()
+	})
+}
+
+// SetContactID sets the "contact_id" field.
+func (u *AutomationRunUpsertBulk) SetContactID(v int64) *AutomationRunUpsertBulk {
+	return u.Update(func(s *AutomationRunUpsert) {
+		s.SetContactID(v)
+	})
+}
+
+// AddContactID adds v to the "contact_id" field.
+func (u *AutomationRunUpsertBulk) AddContactID(v int64) *AutomationRunUpsertBulk {
+	return u.Update(func(s *AutomationRunUpsert) {
+		s.AddContactID(v)
+	})
+}
+
+// UpdateContactID sets the "contact_id" field to the value that was provided on create.
+func (u *AutomationRunUpsertBulk) UpdateContactID() *AutomationRunUpsertBulk {
+	return u.Update(func(s *AutomationRunUpsert) {
+		s.UpdateContactID()
+	})
+}
+
+// SetWorkspaceID sets the "workspace_id" field.
+func (u *AutomationRunUpsertBulk) SetWorkspaceID(v int64) *AutomationRunUpsertBulk {
+	return u.Update(func(s *AutomationRunUpsert) {
+		s.SetWorkspaceID(v)
+	})
+}
+
+// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
+func (u *AutomationRunUpsertBulk) UpdateWorkspaceID() *AutomationRunUpsertBulk {
+	return u.Update(func(s *AutomationRunUpsert) {
+		s.UpdateWorkspaceID()
+	})
+}
+
+// SetStatus sets the "status" field.
+func (u *AutomationRunUpsertBulk) SetStatus(v automationrun.Status) *AutomationRunUpsertBulk {
+	return u.Update(func(s *AutomationRunUpsert) {
+		s.SetStatus(v)
+	})
+}
+
+// UpdateStatus sets the "status" field to the value that was provided on create.
+func (u *AutomationRunUpsertBulk) UpdateStatus() *AutomationRunUpsertBulk {
+	return u.Update(func(s *AutomationRunUpsert) {
+		s.UpdateStatus()
+	})
+}
+
+// SetCurrentStep sets the "current_step" field.
+func (u *AutomationRunUpsertBulk) SetCurrentStep(v int) *AutomationRunUpsertBulk {
+	return u.Update(func(s *AutomationRunUpsert) {
+		s.SetCurrentStep(v)
+	})
+}
+
+// AddCurrentStep adds v to the "current_step" field.
+func (u *AutomationRunUpsertBulk) AddCurrentStep(v int) *AutomationRunUpsertBulk {
+	return u.Update(func(s *AutomationRunUpsert) {
+		s.AddCurrentStep(v)
+	})
+}
+
+// UpdateCurrentStep sets the "current_step" field to the value that was provided on create.
+func (u *AutomationRunUpsertBulk) UpdateCurrentStep() *AutomationRunUpsertBulk {
+	return u.Update(func(s *AutomationRunUpsert) {
+		s.UpdateCurrentStep()
+	})
+}
+
+// SetResumeAt sets the "resume_at" field.
+func (u *AutomationRunUpsertBulk) SetResumeAt(v time.Time) *AutomationRunUpsertBulk {
+	return u.Update(func(s *AutomationRunUpsert) {
+		s.SetResumeAt(v)
+	})
+}
+
+// UpdateResumeAt sets the "resume_at" field to the value that was provided on create.
+func (u *AutomationRunUpsertBulk) UpdateResumeAt() *AutomationRunUpsertBulk {
+	return u.Update(func(s *AutomationRunUpsert) {
+		s.UpdateResumeAt()
+	})
+}
+
+// ClearResumeAt clears the value of the "resume_at" field.
+func (u *AutomationRunUpsertBulk) ClearResumeAt() *AutomationRunUpsertBulk {
+	return u.Update(func(s *AutomationRunUpsert) {
+		s.ClearResumeAt()
+	})
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (u *AutomationRunUpsertBulk) SetUpdatedAt(v time.Time) *AutomationRunUpsertBulk {
+	return u.Update(func(s *AutomationRunUpsert) {
+		s.SetUpdatedAt(v)
+	})
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *AutomationRunUpsertBulk) UpdateUpdatedAt() *AutomationRunUpsertBulk {
+	return u.Update(func(s *AutomationRunUpsert) {
+		s.UpdateUpdatedAt()
+	})
+}
+
+// Exec executes the query.
+func (u *AutomationRunUpsertBulk) Exec(ctx context.Context) error {
+	if u.create.err != nil {
+		return u.create.err
+	}
+	for i, b := range u.create.builders {
+		if len(b.conflict) != 0 {
+			return fmt.Errorf("ent: OnConflict was set for builder %d. Set it on the AutomationRunCreateBulk instead", i)
+		}
+	}
+	if len(u.create.conflict) == 0 {
+		return errors.New("ent: missing options for AutomationRunCreateBulk.OnConflict")
+	}
+	return u.create.Exec(ctx)
+}
+
+// ExecX is like Exec, but panics if an error occurs.
+func (u *AutomationRunUpsertBulk) ExecX(ctx context.Context) {
+	if err := u.create.Exec(ctx); err != nil {
 		panic(err)
 	}
 }

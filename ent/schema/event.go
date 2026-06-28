@@ -25,6 +25,14 @@ func (Event) Fields() []ent.Field {
 		field.Int64("id").
 			StorageKey("id").
 			Immutable(),
+		// source_id is the originating domain-event id (ULID) for rows written by
+		// the events bus persist subscriber. Unique so at-least-once redelivery
+		// dedupes via upsert. Nillable: rows written outside the bus (fixtures)
+		// leave it null, and Postgres treats nulls as distinct.
+		field.String("source_id").
+			Optional().
+			Nillable().
+			Unique(),
 		field.String("subject_id").
 			NotEmpty(),
 		field.String("email").
