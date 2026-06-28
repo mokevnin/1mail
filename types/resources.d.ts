@@ -293,7 +293,30 @@ export default interface Resources {
       },
       "trackingDescription": "Paste this snippet into the <head> of your site to start collecting events.",
       "trackingTitle": "Tracking snippet",
-      "viewActivity": "Open activity feed"
+      "viewActivity": "Open activity feed",
+      "webhooks": {
+        "allEvents": "All events",
+        "copySecret": "Copy secret",
+        "create": "Add endpoint",
+        "createError": "Failed to create webhook",
+        "delete": "Delete",
+        "deleteConfirmTitle": "Delete this webhook endpoint?",
+        "deleteError": "Failed to delete webhook",
+        "disable": "Disable",
+        "disabled": "Disabled",
+        "empty": "No webhook endpoints yet",
+        "enable": "Enable",
+        "enabled": "Enabled",
+        "eventsHint": "Leave empty to receive all events",
+        "eventsLabel": "Events",
+        "loadError": "Failed to load webhooks",
+        "saveError": "Failed to update webhook",
+        "secret": "Signing secret",
+        "statusColumn": "Status",
+        "urlColumn": "URL",
+        "urlLabel": "Endpoint URL"
+      },
+      "webhooksTitle": "Webhooks"
     },
     "status": {
       "active": "Active",

@@ -29,6 +29,7 @@ import { activityRoute } from '../../router.tsx'
 import { getApiErrorMessage } from '../../utils/apiErrors.ts'
 import { ApiKeysSection } from './ApiKeysSection.tsx'
 import { IntegrationsSection } from './IntegrationsSection.tsx'
+import { WebhooksSection } from './WebhooksSection.tsx'
 
 // GeneralSection is split out so the rename form seeds its initial value from the
 // loaded workspace without an effect.
@@ -216,6 +217,7 @@ export function SettingsPage() {
           <TestEvent collectKey={workspace.collectKey} />
           <IntegrationsSection slug={workspace.slug} />
           <ApiKeysSection slug={workspace.slug} />
+          <WebhooksSection slug={workspace.slug} />
         </>
       ) : null}
     </Stack>
