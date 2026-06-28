@@ -19,7 +19,14 @@ export function BroadcastCreatePage() {
   const { slug } = broadcastsCreateRoute.useParams()
 
   const form = useForm<BroadcastFormValues>({
-    initialValues: { name: '', subject: '', fromName: '', fromEmail: '', bodyHtml: '' },
+    initialValues: {
+      name: '',
+      subject: '',
+      fromName: '',
+      fromEmail: '',
+      bodyHtml: '',
+      segmentId: '',
+    },
   })
 
   const createMutation = useMutation({
@@ -62,6 +69,7 @@ export function BroadcastCreatePage() {
               fromName: values.fromName.trim() || null,
               fromEmail: values.fromEmail.trim() || null,
               bodyHtml: values.bodyHtml,
+              segmentId: values.segmentId || null,
             },
           })
         }

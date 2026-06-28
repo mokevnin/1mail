@@ -40,7 +40,9 @@ export default interface Resources {
     },
     "broadcasts": {
       "addBroadcast": "New broadcast",
-      "audienceNote": "This broadcast will be sent to all active contacts in the workspace.",
+      "audienceAll": "All active contacts",
+      "audienceLabel": "Audience",
+      "audienceNote": "Unsubscribed contacts are always excluded.",
       "bodyLabel": "Email body",
       "createTitle": "New broadcast",
       "deliveryHint": "Send now, or schedule it for a future time. Only draft broadcasts can be sent.",
@@ -162,6 +164,9 @@ export default interface Resources {
       "emptyState": "Create your first segment.",
       "nameLabel": "Name",
       "noRecords": "No segments yet",
+      "previewButton": "Preview audience",
+      "previewCount": "{{count}} matching contacts" | "segments.previewCount" | "segments.previewCount",
+      "rulesLabel": "Rules",
       "type": {
         "rule": "Rule",
         "snapshot": "Snapshot"

@@ -27,7 +27,14 @@ export function BroadcastEditPage() {
   const [scheduledAt, setScheduledAt] = useState('')
 
   const form = useForm<BroadcastFormValues>({
-    initialValues: { name: '', subject: '', fromName: '', fromEmail: '', bodyHtml: '' },
+    initialValues: {
+      name: '',
+      subject: '',
+      fromName: '',
+      fromEmail: '',
+      bodyHtml: '',
+      segmentId: '',
+    },
   })
 
   const getQuery = useQuery(
@@ -42,6 +49,7 @@ export function BroadcastEditPage() {
       fromName: data.fromName ?? '',
       fromEmail: data.fromEmail ?? '',
       bodyHtml: data.bodyHtml,
+      segmentId: data.segmentId ?? '',
     })
   })
 
@@ -142,6 +150,7 @@ export function BroadcastEditPage() {
               fromName: values.fromName.trim() || null,
               fromEmail: values.fromEmail.trim() || null,
               bodyHtml: values.bodyHtml,
+              segmentId: values.segmentId || null,
             },
           })
         }

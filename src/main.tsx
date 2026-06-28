@@ -15,6 +15,8 @@ import '@mantine/core/styles.css'
 import '@mantine/notifications/styles.css'
 import '@mantine/tiptap/styles.css'
 import 'mantine-datatable/styles.css'
+// Structural layout only; the Mantine compat package handles the visuals.
+import 'react-querybuilder/dist/query-builder-layout.css'
 
 function Root() {
   const [queryClient] = useState(() => new QueryClient())

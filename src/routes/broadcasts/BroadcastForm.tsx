@@ -1,8 +1,10 @@
-import { Alert, Button, Group, Input, Stack, TextInput } from '@mantine/core'
+import { Alert, Button, Group, Input, Select, Stack, TextInput } from '@mantine/core'
 import type { useForm } from '@mantine/form'
+import { useQuery } from '@tanstack/react-query'
 import { useNavigate, useParams } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 import { RichTextField } from '../../components/RichTextField.tsx'
+import { siteSegmentsListOptions } from '../../generated/site/@tanstack/react-query.gen.ts'
 import { broadcastsRoute } from '../../router.tsx'
 
 export interface BroadcastFormValues {
@@ -11,6 +13,7 @@ export interface BroadcastFormValues {
   fromName: string
   fromEmail: string
   bodyHtml: string
+  segmentId: string
 }
 
 type BroadcastFormInstance = ReturnType<typeof useForm<BroadcastFormValues>>
@@ -25,6 +28,17 @@ export function BroadcastForm({ form, isPending, onSubmit }: BroadcastFormProps)
   const { t } = useTranslation()
   const navigate = useNavigate()
   const { slug } = useParams({ strict: false })
+
+  const segmentsQuery = useQuery({
+    ...siteSegmentsListOptions({ path: { workspaceSlug: slug ?? '' }, query: { pageSize: 100 } }),
+    enabled: Boolean(slug),
+  })
+  const segmentOptions = [
+    { value: '', label: t(($) => $.broadcasts.audienceAll) },
+    ...(segmentsQuery.data?.items ?? [])
+      .filter((s) => s.type === 'rule')
+      .map((s) => ({ value: s.id, label: s.name })),
+  ]
 
   return (
     <form onSubmit={form.onSubmit(onSubmit)}>
@@ -47,6 +61,12 @@ export function BroadcastForm({ form, isPending, onSubmit }: BroadcastFormProps)
           />
         </Group>
 
+        <Select
+          label={t(($) => $.broadcasts.audienceLabel)}
+          data={segmentOptions}
+          allowDeselect={false}
+          {...form.getInputProps('segmentId')}
+        />
         <Alert color="blue" variant="light">
           {t(($) => $.broadcasts.audienceNote)}
         </Alert>

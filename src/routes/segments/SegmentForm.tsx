@@ -1,10 +1,11 @@
-import { Button, Group, Select, Stack, Textarea, TextInput } from '@mantine/core'
+import { Button, Group, Input, Select, Stack, TextInput } from '@mantine/core'
 import type { useForm } from '@mantine/form'
 import { useNavigate, useParams } from '@tanstack/react-router'
 import type { TFunction } from 'i18next'
 import { useTranslation } from 'react-i18next'
 import { SiteSegmentType } from '../../generated/site/types.gen.ts'
 import { segmentsRoute } from '../../router.tsx'
+import { SegmentRuleBuilder } from './SegmentRuleBuilder.tsx'
 
 export interface SegmentFormValues {
   name: string
@@ -46,13 +47,18 @@ export function SegmentForm({ form, isPending, onSubmit }: SegmentFormProps) {
           allowDeselect={false}
           {...form.getInputProps('type')}
         />
-        <Textarea
-          label={t(($) => $.segments.definitionLabel)}
-          description={t(($) => $.segments.definitionHint)}
-          autosize
-          minRows={2}
-          {...form.getInputProps('definition')}
-        />
+        {form.values.type === SiteSegmentType.RULE && slug ? (
+          <Input.Wrapper
+            label={t(($) => $.segments.rulesLabel)}
+            description={t(($) => $.segments.definitionHint)}
+          >
+            <SegmentRuleBuilder
+              slug={slug}
+              value={form.values.definition}
+              onChange={(json) => form.setFieldValue('definition', json)}
+            />
+          </Input.Wrapper>
+        ) : null}
 
         <Group justify="flex-end">
           <Button

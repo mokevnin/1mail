@@ -38,7 +38,9 @@
   },
   "broadcasts": {
     "addBroadcast": "New broadcast",
-    "audienceNote": "This broadcast will be sent to all active contacts in the workspace.",
+    "audienceAll": "All active contacts",
+    "audienceLabel": "Audience",
+    "audienceNote": "Unsubscribed contacts are always excluded.",
     "bodyLabel": "Email body",
     "createTitle": "New broadcast",
     "deliveryHint": "Send now, or schedule it for a future time. Only draft broadcasts can be sent.",
@@ -160,6 +162,11 @@
     "emptyState": "Create your first segment.",
     "nameLabel": "Name",
     "noRecords": "No segments yet",
+    "previewButton": "Preview audience",
+    "previewCount": "{{count}} matching contacts",
+    "previewCount_one": "segments.previewCount",
+    "previewCount_other": "segments.previewCount",
+    "rulesLabel": "Rules",
     "type": {
       "rule": "Rule",
       "snapshot": "Snapshot"
