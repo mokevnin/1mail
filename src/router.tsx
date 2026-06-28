@@ -7,6 +7,9 @@ import { WorkspaceLayout } from './layouts/WorkspaceLayout.tsx'
 import { ProfilePage } from './routes/account/profile.tsx'
 import { LoginPage } from './routes/auth/login.tsx'
 import { RegisterPage } from './routes/auth/register.tsx'
+import { AutomationCreatePage } from './routes/automations/create.tsx'
+import { AutomationEditPage } from './routes/automations/edit.tsx'
+import { AutomationsListPage } from './routes/automations/list.tsx'
 import { BroadcastCreatePage } from './routes/broadcasts/create.tsx'
 import { BroadcastEditPage } from './routes/broadcasts/edit.tsx'
 import { BroadcastsListPage } from './routes/broadcasts/list.tsx'
@@ -144,6 +147,24 @@ export const templatesEditRoute = createRoute({
   component: TemplateEditPage,
 })
 
+export const automationsRoute = createRoute({
+  getParentRoute: () => workspaceRoute,
+  path: 'automations',
+  component: AutomationsListPage,
+})
+
+export const automationsCreateRoute = createRoute({
+  getParentRoute: () => workspaceRoute,
+  path: 'automations/new',
+  component: AutomationCreatePage,
+})
+
+export const automationsEditRoute = createRoute({
+  getParentRoute: () => workspaceRoute,
+  path: 'automations/$automationId/edit',
+  component: AutomationEditPage,
+})
+
 export const activityRoute = createRoute({
   getParentRoute: () => workspaceRoute,
   path: 'activity',
@@ -217,6 +238,9 @@ const routeTree = rootRoute.addChildren([
     templatesRoute,
     templatesCreateRoute,
     templatesEditRoute,
+    automationsRoute,
+    automationsCreateRoute,
+    automationsEditRoute,
     activityRoute,
     settingsRoute,
   ]),

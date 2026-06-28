@@ -1,4 +1,4 @@
-import { Badge, NavLink, Stack } from '@mantine/core'
+import { NavLink, Stack } from '@mantine/core'
 import {
   IconActivity,
   IconLayoutDashboard,
@@ -13,6 +13,7 @@ import { useMatchRoute, useNavigate } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 import {
   activityRoute,
+  automationsRoute,
   broadcastsRoute,
   contactsRoute,
   overviewRoute,
@@ -65,6 +66,13 @@ export function AppNavbar({ slug }: { slug: string }) {
       onClick: () => navigate({ to: templatesRoute.to, params: { slug } }),
     },
     {
+      key: 'automations',
+      label: t(($) => $.nav.automations),
+      icon: <IconRobot size={18} />,
+      active: Boolean(matchRoute({ to: automationsRoute.to, params: { slug }, fuzzy: true })),
+      onClick: () => navigate({ to: automationsRoute.to, params: { slug } }),
+    },
+    {
       key: 'activity',
       label: t(($) => $.nav.activity),
       icon: <IconActivity size={18} />,
@@ -80,10 +88,6 @@ export function AppNavbar({ slug }: { slug: string }) {
     },
   ]
 
-  const roadmap = [
-    { key: 'automations', label: t(($) => $.nav.automations), icon: <IconRobot size={18} /> },
-  ]
-
   return (
     <Stack gap="xs">
       {sections.map((s) => (
@@ -93,19 +97,6 @@ export function AppNavbar({ slug }: { slug: string }) {
           leftSection={s.icon}
           active={s.active}
           onClick={s.onClick}
-        />
-      ))}
-      {roadmap.map((s) => (
-        <NavLink
-          key={s.key}
-          label={s.label}
-          leftSection={s.icon}
-          disabled
-          rightSection={
-            <Badge size="xs" variant="light" color="gray">
-              {t(($) => $.nav.soon)}
-            </Badge>
-          }
         />
       ))}
     </Stack>
