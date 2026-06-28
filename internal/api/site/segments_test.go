@@ -39,7 +39,7 @@ func TestSiteSegmentsScopedToWorkspace(t *testing.T) {
 	created, err := c.SiteSegmentsCreate(ctx, &siteapi.SiteCreateSegmentInput{
 		Name:       "VIP customers",
 		Type:       siteapi.SiteSegmentTypeRule,
-		Definition: siteapi.NewOptNilString("plan == 'vip'"),
+		Definition: siteapi.NewOptNilString(`{"combinator":"and","rules":[{"field":"custom:plan","operator":"=","value":"vip"}]}`),
 	}, siteapi.SiteSegmentsCreateParams{WorkspaceSlug: "acme"})
 	require.NoError(t, err)
 	res, ok := created.(*siteapi.SiteSegmentResource)
