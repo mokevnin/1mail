@@ -7,6 +7,10 @@ import { WorkspaceLayout } from './layouts/WorkspaceLayout.tsx'
 import { ProfilePage } from './routes/account/profile.tsx'
 import { LoginPage } from './routes/auth/login.tsx'
 import { RegisterPage } from './routes/auth/register.tsx'
+import { BroadcastCreatePage } from './routes/broadcasts/create.tsx'
+import { BroadcastEditPage } from './routes/broadcasts/edit.tsx'
+import { BroadcastsListPage } from './routes/broadcasts/list.tsx'
+import { BroadcastReportPage } from './routes/broadcasts/report.tsx'
 import { ContactCreatePage } from './routes/contacts/create.tsx'
 import { ContactEditPage } from './routes/contacts/edit.tsx'
 import { ContactsListPage } from './routes/contacts/list.tsx'
@@ -95,6 +99,30 @@ export const segmentsEditRoute = createRoute({
   component: SegmentEditPage,
 })
 
+export const broadcastsRoute = createRoute({
+  getParentRoute: () => workspaceRoute,
+  path: 'broadcasts',
+  component: BroadcastsListPage,
+})
+
+export const broadcastsCreateRoute = createRoute({
+  getParentRoute: () => workspaceRoute,
+  path: 'broadcasts/new',
+  component: BroadcastCreatePage,
+})
+
+export const broadcastsEditRoute = createRoute({
+  getParentRoute: () => workspaceRoute,
+  path: 'broadcasts/$broadcastId/edit',
+  component: BroadcastEditPage,
+})
+
+export const broadcastsReportRoute = createRoute({
+  getParentRoute: () => workspaceRoute,
+  path: 'broadcasts/$broadcastId/report',
+  component: BroadcastReportPage,
+})
+
 export const activityRoute = createRoute({
   getParentRoute: () => workspaceRoute,
   path: 'activity',
@@ -161,6 +189,10 @@ const routeTree = rootRoute.addChildren([
     segmentsRoute,
     segmentsCreateRoute,
     segmentsEditRoute,
+    broadcastsRoute,
+    broadcastsCreateRoute,
+    broadcastsEditRoute,
+    broadcastsReportRoute,
     activityRoute,
     settingsRoute,
   ]),

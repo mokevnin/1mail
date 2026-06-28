@@ -25,12 +25,53 @@
     "title": "Activity"
   },
   "alerts": {
+    "broadcastDeleteErrorTitle": "Failed to delete broadcast",
+    "broadcastLoadErrorTitle": "Failed to load broadcasts",
+    "broadcastSaveErrorTitle": "Failed to save broadcast",
+    "broadcastSendErrorTitle": "Failed to send broadcast",
     "deleteErrorTitle": "Failed to delete contact",
     "loadErrorTitle": "Failed to load contacts",
     "saveErrorTitle": "Failed to save contact",
     "segmentDeleteErrorTitle": "Failed to delete segment",
     "segmentLoadErrorTitle": "Failed to load segments",
     "segmentSaveErrorTitle": "Failed to save segment"
+  },
+  "broadcasts": {
+    "addBroadcast": "New broadcast",
+    "audienceNote": "This broadcast will be sent to all active contacts in the workspace.",
+    "bodyLabel": "Email body",
+    "createTitle": "New broadcast",
+    "deliveryHint": "Send now, or schedule it for a future time. Only draft broadcasts can be sent.",
+    "deliveryLabel": "Delivery",
+    "editTitle": "Edit broadcast",
+    "emptyState": "Create your first broadcast.",
+    "fromEmailLabel": "From email",
+    "fromNameLabel": "From name",
+    "nameLabel": "Name",
+    "noRecords": "No broadcasts yet",
+    "openedLabel": "Opened",
+    "recipientsLabel": "Recipients",
+    "report": "Report",
+    "schedule": "Schedule",
+    "scheduleLabel": "Schedule for",
+    "sendNow": "Send now",
+    "stats": {
+      "clicked": "Clicked",
+      "failed": "Failed",
+      "opened": "Opened",
+      "recipients": "Recipients",
+      "sent": "Sent",
+      "unsubscribed": "Unsubscribed"
+    },
+    "status": {
+      "draft": "Draft",
+      "failed": "Failed",
+      "scheduled": "Scheduled",
+      "sending": "Sending",
+      "sent": "Sent"
+    },
+    "statusLabel": "Status",
+    "subjectLabel": "Subject"
   },
   "comingSoon": {
     "description": "This section is not available yet.",
@@ -69,6 +110,11 @@
     "soon": "Soon"
   },
   "notifications": {
+    "broadcastCreated": "Broadcast created",
+    "broadcastDeleted": "Broadcast deleted",
+    "broadcastScheduled": "Broadcast scheduled",
+    "broadcastSent": "Broadcast is sending",
+    "broadcastUpdated": "Broadcast updated",
     "contactCreated": "Contact created",
     "contactDeleted": "Contact deleted",
     "contactUpdated": "Contact updated",

@@ -12,6 +12,7 @@ import { useMatchRoute, useNavigate } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 import {
   activityRoute,
+  broadcastsRoute,
   contactsRoute,
   overviewRoute,
   segmentsRoute,
@@ -48,6 +49,13 @@ export function AppNavbar({ slug }: { slug: string }) {
       onClick: () => navigate({ to: segmentsRoute.to, params: { slug } }),
     },
     {
+      key: 'campaigns',
+      label: t(($) => $.nav.campaigns),
+      icon: <IconMailbox size={18} />,
+      active: Boolean(matchRoute({ to: broadcastsRoute.to, params: { slug }, fuzzy: true })),
+      onClick: () => navigate({ to: broadcastsRoute.to, params: { slug } }),
+    },
+    {
       key: 'activity',
       label: t(($) => $.nav.activity),
       icon: <IconActivity size={18} />,
@@ -64,7 +72,6 @@ export function AppNavbar({ slug }: { slug: string }) {
   ]
 
   const roadmap = [
-    { key: 'campaigns', label: t(($) => $.nav.campaigns), icon: <IconMailbox size={18} /> },
     { key: 'automations', label: t(($) => $.nav.automations), icon: <IconRobot size={18} /> },
   ]
 
