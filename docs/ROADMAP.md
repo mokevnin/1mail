@@ -45,15 +45,21 @@ Each phase builds on the previous ones. The order is chosen so that the first va
 appears quickly, and the largest block (automations) lands on a ready foundation of sending + segments +
 tracking.
 
-| Phase | Block | Depends on | Summary |
-|---|---|---|---|
-| **1 (current milestone)** | **Broadcasts MVP** | — | One-off email campaigns end-to-end + delivery tracking (opens/clicks/unsub) + per-campaign report. Audience = all active contacts (+ snapshot segment). |
-| 2 | Segment engine | 1 | Structured rule definition (JSON AST) over contact attributes + events, dynamic evaluation, preview count, usable as broadcast audience. |
-| 3 | Email templates + builder | 1 | Reusable templates, merge tags / Liquid, test sends, a proper editor. |
-| 4 | Automations / Workflows | 1, 2, 3 | Schema (workflow/node/run) + engine (trigger → action → delay → branch → goal) + visual builder (React Flow). The heart of drip. |
-| 5 | Forms & onsite | 1, 2 | Signup forms/popups, embed, feeding into contacts/events (on top of Collect API + tracker). |
-| 6 | Analytics + deliverability | 1, 4 | Dashboards (aggregates over campaigns/automations), sending domains + DKIM/SPF, suppression/bounce handling, A/B. |
-| 7 (later) | E-commerce | 2, 4 | Shopify/Woo connectors, product catalog, purchase/cart events, revenue attribution. Enabled architecturally via the events model from Phase 1. |
+| Phase | Block | Status | Depends on | Summary |
+|---|---|---|---|---|
+| **1** | **Broadcasts MVP** | ✅ Done | — | One-off email campaigns end-to-end + delivery tracking (opens/clicks/unsub) + per-campaign report. Audience = all active contacts (+ rule segment). |
+| **2** | **Segment engine** | ✅ Done | 1 | react-querybuilder rule definition compiled to an ent predicate (attributes + custom fields), preview count, usable as broadcast audience. Events-based conditions still to come. |
+| 3 | Email templates + builder | ⬜ Next | 1 | Reusable templates, merge tags / Liquid, test sends, a proper editor. |
+| 4 | Automations / Workflows | ⬜ | 1, 2, 3 | Schema (workflow/node/run) + engine (trigger → action → delay → branch → goal) + visual builder (React Flow). The heart of drip. |
+| 5 | Forms & onsite | ⬜ | 1, 2 | Signup forms/popups, embed, feeding into contacts/events (on top of Collect API + tracker). |
+| 6 | Analytics + deliverability | ⬜ | 1, 4 | Dashboards (aggregates over campaigns/automations), sending domains + DKIM/SPF, suppression/bounce handling, A/B. |
+| 7 (later) | E-commerce | ⬜ | 2, 4 | Shopify/Woo connectors, product catalog, purchase/cart events, revenue attribution. Enabled architecturally via the events model from Phase 1. |
+
+> **Progress:** Phases 1–2 are implemented, tested, and on `main`. Phase 2 added a
+> standalone, domain-agnostic rule engine (`internal/segments`) compiling the
+> react-querybuilder format to SQL; segment-based targeting and a deliverable-count
+> preview are wired into broadcasts. Remaining for Phase 2 later: event-based
+> conditions ("performed action X") and snapshot (static-list) segments.
 
 ---
 
