@@ -8,6 +8,7 @@ require (
 	github.com/DATA-DOG/go-txdb v0.2.1
 	github.com/ThreeDotsLabs/watermill v1.5.2
 	github.com/ThreeDotsLabs/watermill-sql/v2 v2.0.0
+	github.com/doyensec/safeurl v0.2.5
 	github.com/go-crypt/crypt v0.14.15
 	github.com/go-faster/errors v0.7.1
 	github.com/go-faster/jx v1.2.0
@@ -29,6 +30,7 @@ require (
 	github.com/samber/lo v1.53.0
 	github.com/samber/oops v1.22.0
 	github.com/spf13/viper v1.21.0
+	github.com/standard-webhooks/standard-webhooks/libraries v0.0.1
 	github.com/stretchr/testify v1.11.1
 	github.com/tink-crypto/tink-go/v2 v2.7.0
 	github.com/wneessen/go-mail v0.7.3

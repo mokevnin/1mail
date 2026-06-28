@@ -2,7 +2,6 @@ package jobs
 
 import (
 	"context"
-	"net/http"
 
 	"github.com/riverqueue/river"
 
@@ -27,7 +26,7 @@ type DeliverWebhookWorker struct {
 	river.WorkerDefaults[DeliverWebhookArgs]
 	ent    *ent.Client
 	cipher *secrets.Cipher
-	client *http.Client
+	client webhook.Doer
 }
 
 func (w *DeliverWebhookWorker) Work(ctx context.Context, job *river.Job[DeliverWebhookArgs]) error {

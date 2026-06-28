@@ -2,9 +2,6 @@ package webhook_test
 
 import (
 	"context"
-	"crypto/hmac"
-	"crypto/sha256"
-	"encoding/hex"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -12,20 +9,13 @@ import (
 	"time"
 
 	"github.com/mokevnin/1mail/internal/webhook"
+	standardwebhooks "github.com/standard-webhooks/standard-webhooks/libraries/go"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func TestSignMatchesReceiverRecomputation(t *testing.T) {
-	secret := "whsec_abc"
-	body := []byte(`{"hello":"world"}`)
-
-	mac := hmac.New(sha256.New, []byte(secret))
-	mac.Write(body)
-	want := "sha256=" + hex.EncodeToString(mac.Sum(nil))
-
-	assert.Equal(t, want, webhook.Sign(secret, body))
-}
+// A valid Standard Webhooks secret (whsec_ + base64), from the spec's test vectors.
+const testSecret = "whsec_MfKQ9r8GKYqrTwjUPD8ILPZIo2LaLaSw"
 
 // The hardened client refuses to dial loopback (and by extension private/
 // link-local) addresses — the core SSRF guard. httptest binds to 127.0.0.1.
@@ -35,36 +25,33 @@ func TestNewClientBlocksLoopback(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	_, err := webhook.NewClient(2 * time.Second).Get(srv.URL)
+	req, err := http.NewRequest(http.MethodGet, srv.URL, nil)
+	require.NoError(t, err)
+	_, err = webhook.NewClient(2 * time.Second).Do(req)
 	require.Error(t, err, "must refuse to dial a loopback address")
 }
 
-// Send signs the body with the endpoint secret and treats 2xx as success.
-func TestSendSignsBodyAndSucceedsOn2xx(t *testing.T) {
-	secret := "whsec_xyz"
+// Send signs with the Standard Webhooks scheme; a receiver using the same library
+// verifies the delivery, and 2xx is success.
+func TestSendIsVerifiableAndSucceedsOn2xx(t *testing.T) {
 	body := []byte(`{"id":"evt_1","type":"contact.created"}`)
 
-	var gotSig, gotEvent, gotDelivery string
-	var gotBody []byte
+	var verifyErr error
+	var gotEvent string
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		gotSig = r.Header.Get(webhook.SignatureHeader)
 		gotEvent = r.Header.Get(webhook.EventHeader)
-		gotDelivery = r.Header.Get(webhook.DeliveryHeader)
-		gotBody, _ = io.ReadAll(r.Body)
+		received, _ := io.ReadAll(r.Body)
+		wh, _ := standardwebhooks.NewWebhook(testSecret)
+		verifyErr = wh.Verify(received, r.Header)
 		w.WriteHeader(http.StatusAccepted)
 	}))
 	defer srv.Close()
 
 	// Plain client: httptest is loopback, which the hardened client would block.
-	err := webhook.Send(context.Background(), srv.Client(), srv.URL, secret, "contact.created", "evt_1", body)
+	err := webhook.Send(context.Background(), srv.Client(), srv.URL, testSecret, "contact.created", "evt_1", body)
 	require.NoError(t, err)
-
+	require.NoError(t, verifyErr, "receiver must verify the signature with the same secret")
 	assert.Equal(t, "contact.created", gotEvent)
-	assert.Equal(t, "evt_1", gotDelivery)
-	assert.Equal(t, body, gotBody)
-	// Receiver recomputes the signature over the received body and it matches.
-	assert.Equal(t, webhook.Sign(secret, gotBody), gotSig)
-	assert.True(t, hmac.Equal([]byte(gotSig), []byte(webhook.Sign(secret, body))))
 }
 
 func TestSendErrorsOnNon2xx(t *testing.T) {
@@ -73,6 +60,6 @@ func TestSendErrorsOnNon2xx(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	err := webhook.Send(context.Background(), srv.Client(), srv.URL, "s", "x", "d", []byte(`{}`))
+	err := webhook.Send(context.Background(), srv.Client(), srv.URL, testSecret, "x", "msg_1", []byte(`{}`))
 	require.Error(t, err, "non-2xx must error so river retries")
 }

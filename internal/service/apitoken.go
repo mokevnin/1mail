@@ -2,6 +2,7 @@ package service
 
 import (
 	"crypto/rand"
+	"encoding/base64"
 	"math/big"
 	"regexp"
 
@@ -48,15 +49,15 @@ func GenerateCollectKey() (string, error) {
 	return collectKeyPrefix + "_" + secret, nil
 }
 
-const webhookSecretPrefix = "whsec"
-
-// GenerateWebhookSecret returns an HMAC signing secret for a webhook endpoint.
+// GenerateWebhookSecret returns a Standard Webhooks signing secret: the
+// "whsec_" prefix plus base64 random bytes, the format the standard-webhooks
+// library expects (it base64-decodes the part after the prefix).
 func GenerateWebhookSecret() (string, error) {
-	secret, err := randomString(urlSafeAlphabet, secretLen)
-	if err != nil {
+	b := make([]byte, 24)
+	if _, err := rand.Read(b); err != nil {
 		return "", err
 	}
-	return webhookSecretPrefix + "_" + secret, nil
+	return "whsec_" + base64.StdEncoding.EncodeToString(b), nil
 }
 
 func HashTokenSecret(secret string) (string, error) {
