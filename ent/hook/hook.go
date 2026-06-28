@@ -21,6 +21,30 @@ func (f ApiTokenFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, er
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.ApiTokenMutation", m)
 }
 
+// The BroadcastFunc type is an adapter to allow the use of ordinary
+// function as Broadcast mutator.
+type BroadcastFunc func(context.Context, *ent.BroadcastMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f BroadcastFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.BroadcastMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.BroadcastMutation", m)
+}
+
+// The BroadcastRecipientFunc type is an adapter to allow the use of ordinary
+// function as BroadcastRecipient mutator.
+type BroadcastRecipientFunc func(context.Context, *ent.BroadcastRecipientMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f BroadcastRecipientFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.BroadcastRecipientMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.BroadcastRecipientMutation", m)
+}
+
 // The ContactFunc type is an adapter to allow the use of ordinary
 // function as Contact mutator.
 type ContactFunc func(context.Context, *ent.ContactMutation) (ent.Value, error)

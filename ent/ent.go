@@ -13,6 +13,8 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/mokevnin/1mail/ent/apitoken"
+	"github.com/mokevnin/1mail/ent/broadcast"
+	"github.com/mokevnin/1mail/ent/broadcastrecipient"
 	"github.com/mokevnin/1mail/ent/contact"
 	"github.com/mokevnin/1mail/ent/event"
 	"github.com/mokevnin/1mail/ent/integration"
@@ -81,15 +83,17 @@ var (
 func checkColumn(t, c string) error {
 	initCheck.Do(func() {
 		columnCheck = sql.NewColumnCheck(map[string]func(string) bool{
-			apitoken.Table:        apitoken.ValidColumn,
-			contact.Table:         contact.ValidColumn,
-			event.Table:           event.ValidColumn,
-			integration.Table:     integration.ValidColumn,
-			segment.Table:         segment.ValidColumn,
-			trackingprofile.Table: trackingprofile.ValidColumn,
-			trackingvisitor.Table: trackingvisitor.ValidColumn,
-			user.Table:            user.ValidColumn,
-			workspace.Table:       workspace.ValidColumn,
+			apitoken.Table:           apitoken.ValidColumn,
+			broadcast.Table:          broadcast.ValidColumn,
+			broadcastrecipient.Table: broadcastrecipient.ValidColumn,
+			contact.Table:            contact.ValidColumn,
+			event.Table:              event.ValidColumn,
+			integration.Table:        integration.ValidColumn,
+			segment.Table:            segment.ValidColumn,
+			trackingprofile.Table:    trackingprofile.ValidColumn,
+			trackingvisitor.Table:    trackingvisitor.ValidColumn,
+			user.Table:               user.ValidColumn,
+			workspace.Table:          workspace.ValidColumn,
 		})
 	})
 	return columnCheck(t, c)

@@ -9,6 +9,12 @@ import (
 // ApiToken is the predicate function for apitoken builders.
 type ApiToken func(*sql.Selector)
 
+// Broadcast is the predicate function for broadcast builders.
+type Broadcast func(*sql.Selector)
+
+// BroadcastRecipient is the predicate function for broadcastrecipient builders.
+type BroadcastRecipient func(*sql.Selector)
+
 // Contact is the predicate function for contact builders.
 type Contact func(*sql.Selector)
 

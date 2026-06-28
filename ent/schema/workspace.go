@@ -55,6 +55,8 @@ func (Workspace) Edges() []ent.Edge {
 		edge.To("tracking_visitors", TrackingVisitor.Type),
 		edge.To("api_tokens", ApiToken.Type),
 		edge.To("integrations", Integration.Type),
+		edge.To("broadcasts", Broadcast.Type),
+		edge.To("broadcast_recipients", BroadcastRecipient.Type),
 		edge.From("user", User.Type).
 			Ref("workspaces").
 			Field("user_id").

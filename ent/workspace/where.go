@@ -551,6 +551,52 @@ func HasIntegrationsWith(preds ...predicate.Integration) predicate.Workspace {
 	})
 }
 
+// HasBroadcasts applies the HasEdge predicate on the "broadcasts" edge.
+func HasBroadcasts() predicate.Workspace {
+	return predicate.Workspace(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, BroadcastsTable, BroadcastsColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasBroadcastsWith applies the HasEdge predicate on the "broadcasts" edge with a given conditions (other predicates).
+func HasBroadcastsWith(preds ...predicate.Broadcast) predicate.Workspace {
+	return predicate.Workspace(func(s *sql.Selector) {
+		step := newBroadcastsStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasBroadcastRecipients applies the HasEdge predicate on the "broadcast_recipients" edge.
+func HasBroadcastRecipients() predicate.Workspace {
+	return predicate.Workspace(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, BroadcastRecipientsTable, BroadcastRecipientsColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasBroadcastRecipientsWith applies the HasEdge predicate on the "broadcast_recipients" edge with a given conditions (other predicates).
+func HasBroadcastRecipientsWith(preds ...predicate.BroadcastRecipient) predicate.Workspace {
+	return predicate.Workspace(func(s *sql.Selector) {
+		step := newBroadcastRecipientsStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // HasUser applies the HasEdge predicate on the "user" edge.
 func HasUser() predicate.Workspace {
 	return predicate.Workspace(func(s *sql.Selector) {

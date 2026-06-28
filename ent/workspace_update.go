@@ -12,6 +12,8 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/mokevnin/1mail/ent/apitoken"
+	"github.com/mokevnin/1mail/ent/broadcast"
+	"github.com/mokevnin/1mail/ent/broadcastrecipient"
 	"github.com/mokevnin/1mail/ent/contact"
 	"github.com/mokevnin/1mail/ent/event"
 	"github.com/mokevnin/1mail/ent/integration"
@@ -209,6 +211,36 @@ func (_u *WorkspaceUpdate) AddIntegrations(v ...*Integration) *WorkspaceUpdate {
 	return _u.AddIntegrationIDs(ids...)
 }
 
+// AddBroadcastIDs adds the "broadcasts" edge to the Broadcast entity by IDs.
+func (_u *WorkspaceUpdate) AddBroadcastIDs(ids ...int64) *WorkspaceUpdate {
+	_u.mutation.AddBroadcastIDs(ids...)
+	return _u
+}
+
+// AddBroadcasts adds the "broadcasts" edges to the Broadcast entity.
+func (_u *WorkspaceUpdate) AddBroadcasts(v ...*Broadcast) *WorkspaceUpdate {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddBroadcastIDs(ids...)
+}
+
+// AddBroadcastRecipientIDs adds the "broadcast_recipients" edge to the BroadcastRecipient entity by IDs.
+func (_u *WorkspaceUpdate) AddBroadcastRecipientIDs(ids ...int64) *WorkspaceUpdate {
+	_u.mutation.AddBroadcastRecipientIDs(ids...)
+	return _u
+}
+
+// AddBroadcastRecipients adds the "broadcast_recipients" edges to the BroadcastRecipient entity.
+func (_u *WorkspaceUpdate) AddBroadcastRecipients(v ...*BroadcastRecipient) *WorkspaceUpdate {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddBroadcastRecipientIDs(ids...)
+}
+
 // SetUser sets the "user" edge to the User entity.
 func (_u *WorkspaceUpdate) SetUser(v *User) *WorkspaceUpdate {
 	return _u.SetUserID(v.ID)
@@ -364,6 +396,48 @@ func (_u *WorkspaceUpdate) RemoveIntegrations(v ...*Integration) *WorkspaceUpdat
 		ids[i] = v[i].ID
 	}
 	return _u.RemoveIntegrationIDs(ids...)
+}
+
+// ClearBroadcasts clears all "broadcasts" edges to the Broadcast entity.
+func (_u *WorkspaceUpdate) ClearBroadcasts() *WorkspaceUpdate {
+	_u.mutation.ClearBroadcasts()
+	return _u
+}
+
+// RemoveBroadcastIDs removes the "broadcasts" edge to Broadcast entities by IDs.
+func (_u *WorkspaceUpdate) RemoveBroadcastIDs(ids ...int64) *WorkspaceUpdate {
+	_u.mutation.RemoveBroadcastIDs(ids...)
+	return _u
+}
+
+// RemoveBroadcasts removes "broadcasts" edges to Broadcast entities.
+func (_u *WorkspaceUpdate) RemoveBroadcasts(v ...*Broadcast) *WorkspaceUpdate {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveBroadcastIDs(ids...)
+}
+
+// ClearBroadcastRecipients clears all "broadcast_recipients" edges to the BroadcastRecipient entity.
+func (_u *WorkspaceUpdate) ClearBroadcastRecipients() *WorkspaceUpdate {
+	_u.mutation.ClearBroadcastRecipients()
+	return _u
+}
+
+// RemoveBroadcastRecipientIDs removes the "broadcast_recipients" edge to BroadcastRecipient entities by IDs.
+func (_u *WorkspaceUpdate) RemoveBroadcastRecipientIDs(ids ...int64) *WorkspaceUpdate {
+	_u.mutation.RemoveBroadcastRecipientIDs(ids...)
+	return _u
+}
+
+// RemoveBroadcastRecipients removes "broadcast_recipients" edges to BroadcastRecipient entities.
+func (_u *WorkspaceUpdate) RemoveBroadcastRecipients(v ...*BroadcastRecipient) *WorkspaceUpdate {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveBroadcastRecipientIDs(ids...)
 }
 
 // ClearUser clears the "user" edge to the User entity.
@@ -767,6 +841,96 @@ func (_u *WorkspaceUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	if _u.mutation.BroadcastsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   workspace.BroadcastsTable,
+			Columns: []string{workspace.BroadcastsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(broadcast.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedBroadcastsIDs(); len(nodes) > 0 && !_u.mutation.BroadcastsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   workspace.BroadcastsTable,
+			Columns: []string{workspace.BroadcastsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(broadcast.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.BroadcastsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   workspace.BroadcastsTable,
+			Columns: []string{workspace.BroadcastsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(broadcast.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.BroadcastRecipientsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   workspace.BroadcastRecipientsTable,
+			Columns: []string{workspace.BroadcastRecipientsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(broadcastrecipient.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedBroadcastRecipientsIDs(); len(nodes) > 0 && !_u.mutation.BroadcastRecipientsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   workspace.BroadcastRecipientsTable,
+			Columns: []string{workspace.BroadcastRecipientsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(broadcastrecipient.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.BroadcastRecipientsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   workspace.BroadcastRecipientsTable,
+			Columns: []string{workspace.BroadcastRecipientsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(broadcastrecipient.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if _u.mutation.UserCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
@@ -989,6 +1153,36 @@ func (_u *WorkspaceUpdateOne) AddIntegrations(v ...*Integration) *WorkspaceUpdat
 	return _u.AddIntegrationIDs(ids...)
 }
 
+// AddBroadcastIDs adds the "broadcasts" edge to the Broadcast entity by IDs.
+func (_u *WorkspaceUpdateOne) AddBroadcastIDs(ids ...int64) *WorkspaceUpdateOne {
+	_u.mutation.AddBroadcastIDs(ids...)
+	return _u
+}
+
+// AddBroadcasts adds the "broadcasts" edges to the Broadcast entity.
+func (_u *WorkspaceUpdateOne) AddBroadcasts(v ...*Broadcast) *WorkspaceUpdateOne {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddBroadcastIDs(ids...)
+}
+
+// AddBroadcastRecipientIDs adds the "broadcast_recipients" edge to the BroadcastRecipient entity by IDs.
+func (_u *WorkspaceUpdateOne) AddBroadcastRecipientIDs(ids ...int64) *WorkspaceUpdateOne {
+	_u.mutation.AddBroadcastRecipientIDs(ids...)
+	return _u
+}
+
+// AddBroadcastRecipients adds the "broadcast_recipients" edges to the BroadcastRecipient entity.
+func (_u *WorkspaceUpdateOne) AddBroadcastRecipients(v ...*BroadcastRecipient) *WorkspaceUpdateOne {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddBroadcastRecipientIDs(ids...)
+}
+
 // SetUser sets the "user" edge to the User entity.
 func (_u *WorkspaceUpdateOne) SetUser(v *User) *WorkspaceUpdateOne {
 	return _u.SetUserID(v.ID)
@@ -1144,6 +1338,48 @@ func (_u *WorkspaceUpdateOne) RemoveIntegrations(v ...*Integration) *WorkspaceUp
 		ids[i] = v[i].ID
 	}
 	return _u.RemoveIntegrationIDs(ids...)
+}
+
+// ClearBroadcasts clears all "broadcasts" edges to the Broadcast entity.
+func (_u *WorkspaceUpdateOne) ClearBroadcasts() *WorkspaceUpdateOne {
+	_u.mutation.ClearBroadcasts()
+	return _u
+}
+
+// RemoveBroadcastIDs removes the "broadcasts" edge to Broadcast entities by IDs.
+func (_u *WorkspaceUpdateOne) RemoveBroadcastIDs(ids ...int64) *WorkspaceUpdateOne {
+	_u.mutation.RemoveBroadcastIDs(ids...)
+	return _u
+}
+
+// RemoveBroadcasts removes "broadcasts" edges to Broadcast entities.
+func (_u *WorkspaceUpdateOne) RemoveBroadcasts(v ...*Broadcast) *WorkspaceUpdateOne {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveBroadcastIDs(ids...)
+}
+
+// ClearBroadcastRecipients clears all "broadcast_recipients" edges to the BroadcastRecipient entity.
+func (_u *WorkspaceUpdateOne) ClearBroadcastRecipients() *WorkspaceUpdateOne {
+	_u.mutation.ClearBroadcastRecipients()
+	return _u
+}
+
+// RemoveBroadcastRecipientIDs removes the "broadcast_recipients" edge to BroadcastRecipient entities by IDs.
+func (_u *WorkspaceUpdateOne) RemoveBroadcastRecipientIDs(ids ...int64) *WorkspaceUpdateOne {
+	_u.mutation.RemoveBroadcastRecipientIDs(ids...)
+	return _u
+}
+
+// RemoveBroadcastRecipients removes "broadcast_recipients" edges to BroadcastRecipient entities.
+func (_u *WorkspaceUpdateOne) RemoveBroadcastRecipients(v ...*BroadcastRecipient) *WorkspaceUpdateOne {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveBroadcastRecipientIDs(ids...)
 }
 
 // ClearUser clears the "user" edge to the User entity.
@@ -1570,6 +1806,96 @@ func (_u *WorkspaceUpdateOne) sqlSave(ctx context.Context) (_node *Workspace, er
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(integration.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.BroadcastsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   workspace.BroadcastsTable,
+			Columns: []string{workspace.BroadcastsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(broadcast.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedBroadcastsIDs(); len(nodes) > 0 && !_u.mutation.BroadcastsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   workspace.BroadcastsTable,
+			Columns: []string{workspace.BroadcastsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(broadcast.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.BroadcastsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   workspace.BroadcastsTable,
+			Columns: []string{workspace.BroadcastsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(broadcast.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.BroadcastRecipientsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   workspace.BroadcastRecipientsTable,
+			Columns: []string{workspace.BroadcastRecipientsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(broadcastrecipient.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedBroadcastRecipientsIDs(); len(nodes) > 0 && !_u.mutation.BroadcastRecipientsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   workspace.BroadcastRecipientsTable,
+			Columns: []string{workspace.BroadcastRecipientsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(broadcastrecipient.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.BroadcastRecipientsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   workspace.BroadcastRecipientsTable,
+			Columns: []string{workspace.BroadcastRecipientsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(broadcastrecipient.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {

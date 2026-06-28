@@ -16,6 +16,8 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/mokevnin/1mail/ent/apitoken"
+	"github.com/mokevnin/1mail/ent/broadcast"
+	"github.com/mokevnin/1mail/ent/broadcastrecipient"
 	"github.com/mokevnin/1mail/ent/contact"
 	"github.com/mokevnin/1mail/ent/event"
 	"github.com/mokevnin/1mail/ent/integration"
@@ -33,6 +35,10 @@ type Client struct {
 	Schema *migrate.Schema
 	// ApiToken is the client for interacting with the ApiToken builders.
 	ApiToken *ApiTokenClient
+	// Broadcast is the client for interacting with the Broadcast builders.
+	Broadcast *BroadcastClient
+	// BroadcastRecipient is the client for interacting with the BroadcastRecipient builders.
+	BroadcastRecipient *BroadcastRecipientClient
 	// Contact is the client for interacting with the Contact builders.
 	Contact *ContactClient
 	// Event is the client for interacting with the Event builders.
@@ -61,6 +67,8 @@ func NewClient(opts ...Option) *Client {
 func (c *Client) init() {
 	c.Schema = migrate.NewSchema(c.driver)
 	c.ApiToken = NewApiTokenClient(c.config)
+	c.Broadcast = NewBroadcastClient(c.config)
+	c.BroadcastRecipient = NewBroadcastRecipientClient(c.config)
 	c.Contact = NewContactClient(c.config)
 	c.Event = NewEventClient(c.config)
 	c.Integration = NewIntegrationClient(c.config)
@@ -159,17 +167,19 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 	cfg := c.config
 	cfg.driver = tx
 	return &Tx{
-		ctx:             ctx,
-		config:          cfg,
-		ApiToken:        NewApiTokenClient(cfg),
-		Contact:         NewContactClient(cfg),
-		Event:           NewEventClient(cfg),
-		Integration:     NewIntegrationClient(cfg),
-		Segment:         NewSegmentClient(cfg),
-		TrackingProfile: NewTrackingProfileClient(cfg),
-		TrackingVisitor: NewTrackingVisitorClient(cfg),
-		User:            NewUserClient(cfg),
-		Workspace:       NewWorkspaceClient(cfg),
+		ctx:                ctx,
+		config:             cfg,
+		ApiToken:           NewApiTokenClient(cfg),
+		Broadcast:          NewBroadcastClient(cfg),
+		BroadcastRecipient: NewBroadcastRecipientClient(cfg),
+		Contact:            NewContactClient(cfg),
+		Event:              NewEventClient(cfg),
+		Integration:        NewIntegrationClient(cfg),
+		Segment:            NewSegmentClient(cfg),
+		TrackingProfile:    NewTrackingProfileClient(cfg),
+		TrackingVisitor:    NewTrackingVisitorClient(cfg),
+		User:               NewUserClient(cfg),
+		Workspace:          NewWorkspaceClient(cfg),
 	}, nil
 }
 
@@ -187,17 +197,19 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 	cfg := c.config
 	cfg.driver = &txDriver{tx: tx, drv: c.driver}
 	return &Tx{
-		ctx:             ctx,
-		config:          cfg,
-		ApiToken:        NewApiTokenClient(cfg),
-		Contact:         NewContactClient(cfg),
-		Event:           NewEventClient(cfg),
-		Integration:     NewIntegrationClient(cfg),
-		Segment:         NewSegmentClient(cfg),
-		TrackingProfile: NewTrackingProfileClient(cfg),
-		TrackingVisitor: NewTrackingVisitorClient(cfg),
-		User:            NewUserClient(cfg),
-		Workspace:       NewWorkspaceClient(cfg),
+		ctx:                ctx,
+		config:             cfg,
+		ApiToken:           NewApiTokenClient(cfg),
+		Broadcast:          NewBroadcastClient(cfg),
+		BroadcastRecipient: NewBroadcastRecipientClient(cfg),
+		Contact:            NewContactClient(cfg),
+		Event:              NewEventClient(cfg),
+		Integration:        NewIntegrationClient(cfg),
+		Segment:            NewSegmentClient(cfg),
+		TrackingProfile:    NewTrackingProfileClient(cfg),
+		TrackingVisitor:    NewTrackingVisitorClient(cfg),
+		User:               NewUserClient(cfg),
+		Workspace:          NewWorkspaceClient(cfg),
 	}, nil
 }
 
@@ -227,8 +239,9 @@ func (c *Client) Close() error {
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
 	for _, n := range []interface{ Use(...Hook) }{
-		c.ApiToken, c.Contact, c.Event, c.Integration, c.Segment, c.TrackingProfile,
-		c.TrackingVisitor, c.User, c.Workspace,
+		c.ApiToken, c.Broadcast, c.BroadcastRecipient, c.Contact, c.Event,
+		c.Integration, c.Segment, c.TrackingProfile, c.TrackingVisitor, c.User,
+		c.Workspace,
 	} {
 		n.Use(hooks...)
 	}
@@ -238,8 +251,9 @@ func (c *Client) Use(hooks ...Hook) {
 // In order to add interceptors to a specific client, call: `client.Node.Intercept(...)`.
 func (c *Client) Intercept(interceptors ...Interceptor) {
 	for _, n := range []interface{ Intercept(...Interceptor) }{
-		c.ApiToken, c.Contact, c.Event, c.Integration, c.Segment, c.TrackingProfile,
-		c.TrackingVisitor, c.User, c.Workspace,
+		c.ApiToken, c.Broadcast, c.BroadcastRecipient, c.Contact, c.Event,
+		c.Integration, c.Segment, c.TrackingProfile, c.TrackingVisitor, c.User,
+		c.Workspace,
 	} {
 		n.Intercept(interceptors...)
 	}
@@ -250,6 +264,10 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 	switch m := m.(type) {
 	case *ApiTokenMutation:
 		return c.ApiToken.mutate(ctx, m)
+	case *BroadcastMutation:
+		return c.Broadcast.mutate(ctx, m)
+	case *BroadcastRecipientMutation:
+		return c.BroadcastRecipient.mutate(ctx, m)
 	case *ContactMutation:
 		return c.Contact.mutate(ctx, m)
 	case *EventMutation:
@@ -417,6 +435,336 @@ func (c *ApiTokenClient) mutate(ctx context.Context, m *ApiTokenMutation) (Value
 		return (&ApiTokenDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("ent: unknown ApiToken mutation op: %q", m.Op())
+	}
+}
+
+// BroadcastClient is a client for the Broadcast schema.
+type BroadcastClient struct {
+	config
+}
+
+// NewBroadcastClient returns a client for the Broadcast from the given config.
+func NewBroadcastClient(c config) *BroadcastClient {
+	return &BroadcastClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `broadcast.Hooks(f(g(h())))`.
+func (c *BroadcastClient) Use(hooks ...Hook) {
+	c.hooks.Broadcast = append(c.hooks.Broadcast, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `broadcast.Intercept(f(g(h())))`.
+func (c *BroadcastClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Broadcast = append(c.inters.Broadcast, interceptors...)
+}
+
+// Create returns a builder for creating a Broadcast entity.
+func (c *BroadcastClient) Create() *BroadcastCreate {
+	mutation := newBroadcastMutation(c.config, OpCreate)
+	return &BroadcastCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Broadcast entities.
+func (c *BroadcastClient) CreateBulk(builders ...*BroadcastCreate) *BroadcastCreateBulk {
+	return &BroadcastCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *BroadcastClient) MapCreateBulk(slice any, setFunc func(*BroadcastCreate, int)) *BroadcastCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &BroadcastCreateBulk{err: fmt.Errorf("calling to BroadcastClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*BroadcastCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &BroadcastCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Broadcast.
+func (c *BroadcastClient) Update() *BroadcastUpdate {
+	mutation := newBroadcastMutation(c.config, OpUpdate)
+	return &BroadcastUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *BroadcastClient) UpdateOne(_m *Broadcast) *BroadcastUpdateOne {
+	mutation := newBroadcastMutation(c.config, OpUpdateOne, withBroadcast(_m))
+	return &BroadcastUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *BroadcastClient) UpdateOneID(id int64) *BroadcastUpdateOne {
+	mutation := newBroadcastMutation(c.config, OpUpdateOne, withBroadcastID(id))
+	return &BroadcastUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Broadcast.
+func (c *BroadcastClient) Delete() *BroadcastDelete {
+	mutation := newBroadcastMutation(c.config, OpDelete)
+	return &BroadcastDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *BroadcastClient) DeleteOne(_m *Broadcast) *BroadcastDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *BroadcastClient) DeleteOneID(id int64) *BroadcastDeleteOne {
+	builder := c.Delete().Where(broadcast.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &BroadcastDeleteOne{builder}
+}
+
+// Query returns a query builder for Broadcast.
+func (c *BroadcastClient) Query() *BroadcastQuery {
+	return &BroadcastQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeBroadcast},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Broadcast entity by its id.
+func (c *BroadcastClient) Get(ctx context.Context, id int64) (*Broadcast, error) {
+	return c.Query().Where(broadcast.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *BroadcastClient) GetX(ctx context.Context, id int64) *Broadcast {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryWorkspace queries the workspace edge of a Broadcast.
+func (c *BroadcastClient) QueryWorkspace(_m *Broadcast) *WorkspaceQuery {
+	query := (&WorkspaceClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(broadcast.Table, broadcast.FieldID, id),
+			sqlgraph.To(workspace.Table, workspace.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, broadcast.WorkspaceTable, broadcast.WorkspaceColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryRecipients queries the recipients edge of a Broadcast.
+func (c *BroadcastClient) QueryRecipients(_m *Broadcast) *BroadcastRecipientQuery {
+	query := (&BroadcastRecipientClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(broadcast.Table, broadcast.FieldID, id),
+			sqlgraph.To(broadcastrecipient.Table, broadcastrecipient.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, broadcast.RecipientsTable, broadcast.RecipientsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *BroadcastClient) Hooks() []Hook {
+	return c.hooks.Broadcast
+}
+
+// Interceptors returns the client interceptors.
+func (c *BroadcastClient) Interceptors() []Interceptor {
+	return c.inters.Broadcast
+}
+
+func (c *BroadcastClient) mutate(ctx context.Context, m *BroadcastMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&BroadcastCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&BroadcastUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&BroadcastUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&BroadcastDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown Broadcast mutation op: %q", m.Op())
+	}
+}
+
+// BroadcastRecipientClient is a client for the BroadcastRecipient schema.
+type BroadcastRecipientClient struct {
+	config
+}
+
+// NewBroadcastRecipientClient returns a client for the BroadcastRecipient from the given config.
+func NewBroadcastRecipientClient(c config) *BroadcastRecipientClient {
+	return &BroadcastRecipientClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `broadcastrecipient.Hooks(f(g(h())))`.
+func (c *BroadcastRecipientClient) Use(hooks ...Hook) {
+	c.hooks.BroadcastRecipient = append(c.hooks.BroadcastRecipient, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `broadcastrecipient.Intercept(f(g(h())))`.
+func (c *BroadcastRecipientClient) Intercept(interceptors ...Interceptor) {
+	c.inters.BroadcastRecipient = append(c.inters.BroadcastRecipient, interceptors...)
+}
+
+// Create returns a builder for creating a BroadcastRecipient entity.
+func (c *BroadcastRecipientClient) Create() *BroadcastRecipientCreate {
+	mutation := newBroadcastRecipientMutation(c.config, OpCreate)
+	return &BroadcastRecipientCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of BroadcastRecipient entities.
+func (c *BroadcastRecipientClient) CreateBulk(builders ...*BroadcastRecipientCreate) *BroadcastRecipientCreateBulk {
+	return &BroadcastRecipientCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *BroadcastRecipientClient) MapCreateBulk(slice any, setFunc func(*BroadcastRecipientCreate, int)) *BroadcastRecipientCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &BroadcastRecipientCreateBulk{err: fmt.Errorf("calling to BroadcastRecipientClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*BroadcastRecipientCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &BroadcastRecipientCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for BroadcastRecipient.
+func (c *BroadcastRecipientClient) Update() *BroadcastRecipientUpdate {
+	mutation := newBroadcastRecipientMutation(c.config, OpUpdate)
+	return &BroadcastRecipientUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *BroadcastRecipientClient) UpdateOne(_m *BroadcastRecipient) *BroadcastRecipientUpdateOne {
+	mutation := newBroadcastRecipientMutation(c.config, OpUpdateOne, withBroadcastRecipient(_m))
+	return &BroadcastRecipientUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *BroadcastRecipientClient) UpdateOneID(id int64) *BroadcastRecipientUpdateOne {
+	mutation := newBroadcastRecipientMutation(c.config, OpUpdateOne, withBroadcastRecipientID(id))
+	return &BroadcastRecipientUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for BroadcastRecipient.
+func (c *BroadcastRecipientClient) Delete() *BroadcastRecipientDelete {
+	mutation := newBroadcastRecipientMutation(c.config, OpDelete)
+	return &BroadcastRecipientDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *BroadcastRecipientClient) DeleteOne(_m *BroadcastRecipient) *BroadcastRecipientDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *BroadcastRecipientClient) DeleteOneID(id int64) *BroadcastRecipientDeleteOne {
+	builder := c.Delete().Where(broadcastrecipient.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &BroadcastRecipientDeleteOne{builder}
+}
+
+// Query returns a query builder for BroadcastRecipient.
+func (c *BroadcastRecipientClient) Query() *BroadcastRecipientQuery {
+	return &BroadcastRecipientQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeBroadcastRecipient},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a BroadcastRecipient entity by its id.
+func (c *BroadcastRecipientClient) Get(ctx context.Context, id int64) (*BroadcastRecipient, error) {
+	return c.Query().Where(broadcastrecipient.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *BroadcastRecipientClient) GetX(ctx context.Context, id int64) *BroadcastRecipient {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryBroadcast queries the broadcast edge of a BroadcastRecipient.
+func (c *BroadcastRecipientClient) QueryBroadcast(_m *BroadcastRecipient) *BroadcastQuery {
+	query := (&BroadcastClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(broadcastrecipient.Table, broadcastrecipient.FieldID, id),
+			sqlgraph.To(broadcast.Table, broadcast.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, broadcastrecipient.BroadcastTable, broadcastrecipient.BroadcastColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryWorkspace queries the workspace edge of a BroadcastRecipient.
+func (c *BroadcastRecipientClient) QueryWorkspace(_m *BroadcastRecipient) *WorkspaceQuery {
+	query := (&WorkspaceClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(broadcastrecipient.Table, broadcastrecipient.FieldID, id),
+			sqlgraph.To(workspace.Table, workspace.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, broadcastrecipient.WorkspaceTable, broadcastrecipient.WorkspaceColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *BroadcastRecipientClient) Hooks() []Hook {
+	return c.hooks.BroadcastRecipient
+}
+
+// Interceptors returns the client interceptors.
+func (c *BroadcastRecipientClient) Interceptors() []Interceptor {
+	return c.inters.BroadcastRecipient
+}
+
+func (c *BroadcastRecipientClient) mutate(ctx context.Context, m *BroadcastRecipientMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&BroadcastRecipientCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&BroadcastRecipientUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&BroadcastRecipientUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&BroadcastRecipientDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown BroadcastRecipient mutation op: %q", m.Op())
 	}
 }
 
@@ -1715,6 +2063,38 @@ func (c *WorkspaceClient) QueryIntegrations(_m *Workspace) *IntegrationQuery {
 	return query
 }
 
+// QueryBroadcasts queries the broadcasts edge of a Workspace.
+func (c *WorkspaceClient) QueryBroadcasts(_m *Workspace) *BroadcastQuery {
+	query := (&BroadcastClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workspace.Table, workspace.FieldID, id),
+			sqlgraph.To(broadcast.Table, broadcast.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, workspace.BroadcastsTable, workspace.BroadcastsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryBroadcastRecipients queries the broadcast_recipients edge of a Workspace.
+func (c *WorkspaceClient) QueryBroadcastRecipients(_m *Workspace) *BroadcastRecipientQuery {
+	query := (&BroadcastRecipientClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workspace.Table, workspace.FieldID, id),
+			sqlgraph.To(broadcastrecipient.Table, broadcastrecipient.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, workspace.BroadcastRecipientsTable, workspace.BroadcastRecipientsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // QueryUser queries the user edge of a Workspace.
 func (c *WorkspaceClient) QueryUser(_m *Workspace) *UserQuery {
 	query := (&UserClient{config: c.config}).Query()
@@ -1759,11 +2139,11 @@ func (c *WorkspaceClient) mutate(ctx context.Context, m *WorkspaceMutation) (Val
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		ApiToken, Contact, Event, Integration, Segment, TrackingProfile,
-		TrackingVisitor, User, Workspace []ent.Hook
+		ApiToken, Broadcast, BroadcastRecipient, Contact, Event, Integration, Segment,
+		TrackingProfile, TrackingVisitor, User, Workspace []ent.Hook
 	}
 	inters struct {
-		ApiToken, Contact, Event, Integration, Segment, TrackingProfile,
-		TrackingVisitor, User, Workspace []ent.Interceptor
+		ApiToken, Broadcast, BroadcastRecipient, Contact, Event, Integration, Segment,
+		TrackingProfile, TrackingVisitor, User, Workspace []ent.Interceptor
 	}
 )

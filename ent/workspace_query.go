@@ -13,6 +13,8 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/mokevnin/1mail/ent/apitoken"
+	"github.com/mokevnin/1mail/ent/broadcast"
+	"github.com/mokevnin/1mail/ent/broadcastrecipient"
 	"github.com/mokevnin/1mail/ent/contact"
 	"github.com/mokevnin/1mail/ent/event"
 	"github.com/mokevnin/1mail/ent/integration"
@@ -27,18 +29,20 @@ import (
 // WorkspaceQuery is the builder for querying Workspace entities.
 type WorkspaceQuery struct {
 	config
-	ctx                  *QueryContext
-	order                []workspace.OrderOption
-	inters               []Interceptor
-	predicates           []predicate.Workspace
-	withContacts         *ContactQuery
-	withSegments         *SegmentQuery
-	withEvents           *EventQuery
-	withTrackingProfiles *TrackingProfileQuery
-	withTrackingVisitors *TrackingVisitorQuery
-	withAPITokens        *ApiTokenQuery
-	withIntegrations     *IntegrationQuery
-	withUser             *UserQuery
+	ctx                     *QueryContext
+	order                   []workspace.OrderOption
+	inters                  []Interceptor
+	predicates              []predicate.Workspace
+	withContacts            *ContactQuery
+	withSegments            *SegmentQuery
+	withEvents              *EventQuery
+	withTrackingProfiles    *TrackingProfileQuery
+	withTrackingVisitors    *TrackingVisitorQuery
+	withAPITokens           *ApiTokenQuery
+	withIntegrations        *IntegrationQuery
+	withBroadcasts          *BroadcastQuery
+	withBroadcastRecipients *BroadcastRecipientQuery
+	withUser                *UserQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -222,6 +226,50 @@ func (_q *WorkspaceQuery) QueryIntegrations() *IntegrationQuery {
 			sqlgraph.From(workspace.Table, workspace.FieldID, selector),
 			sqlgraph.To(integration.Table, integration.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, workspace.IntegrationsTable, workspace.IntegrationsColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryBroadcasts chains the current query on the "broadcasts" edge.
+func (_q *WorkspaceQuery) QueryBroadcasts() *BroadcastQuery {
+	query := (&BroadcastClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workspace.Table, workspace.FieldID, selector),
+			sqlgraph.To(broadcast.Table, broadcast.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, workspace.BroadcastsTable, workspace.BroadcastsColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryBroadcastRecipients chains the current query on the "broadcast_recipients" edge.
+func (_q *WorkspaceQuery) QueryBroadcastRecipients() *BroadcastRecipientQuery {
+	query := (&BroadcastRecipientClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workspace.Table, workspace.FieldID, selector),
+			sqlgraph.To(broadcastrecipient.Table, broadcastrecipient.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, workspace.BroadcastRecipientsTable, workspace.BroadcastRecipientsColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
@@ -438,19 +486,21 @@ func (_q *WorkspaceQuery) Clone() *WorkspaceQuery {
 		return nil
 	}
 	return &WorkspaceQuery{
-		config:               _q.config,
-		ctx:                  _q.ctx.Clone(),
-		order:                append([]workspace.OrderOption{}, _q.order...),
-		inters:               append([]Interceptor{}, _q.inters...),
-		predicates:           append([]predicate.Workspace{}, _q.predicates...),
-		withContacts:         _q.withContacts.Clone(),
-		withSegments:         _q.withSegments.Clone(),
-		withEvents:           _q.withEvents.Clone(),
-		withTrackingProfiles: _q.withTrackingProfiles.Clone(),
-		withTrackingVisitors: _q.withTrackingVisitors.Clone(),
-		withAPITokens:        _q.withAPITokens.Clone(),
-		withIntegrations:     _q.withIntegrations.Clone(),
-		withUser:             _q.withUser.Clone(),
+		config:                  _q.config,
+		ctx:                     _q.ctx.Clone(),
+		order:                   append([]workspace.OrderOption{}, _q.order...),
+		inters:                  append([]Interceptor{}, _q.inters...),
+		predicates:              append([]predicate.Workspace{}, _q.predicates...),
+		withContacts:            _q.withContacts.Clone(),
+		withSegments:            _q.withSegments.Clone(),
+		withEvents:              _q.withEvents.Clone(),
+		withTrackingProfiles:    _q.withTrackingProfiles.Clone(),
+		withTrackingVisitors:    _q.withTrackingVisitors.Clone(),
+		withAPITokens:           _q.withAPITokens.Clone(),
+		withIntegrations:        _q.withIntegrations.Clone(),
+		withBroadcasts:          _q.withBroadcasts.Clone(),
+		withBroadcastRecipients: _q.withBroadcastRecipients.Clone(),
+		withUser:                _q.withUser.Clone(),
 		// clone intermediate query.
 		sql:  _q.sql.Clone(),
 		path: _q.path,
@@ -531,6 +581,28 @@ func (_q *WorkspaceQuery) WithIntegrations(opts ...func(*IntegrationQuery)) *Wor
 		opt(query)
 	}
 	_q.withIntegrations = query
+	return _q
+}
+
+// WithBroadcasts tells the query-builder to eager-load the nodes that are connected to
+// the "broadcasts" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *WorkspaceQuery) WithBroadcasts(opts ...func(*BroadcastQuery)) *WorkspaceQuery {
+	query := (&BroadcastClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withBroadcasts = query
+	return _q
+}
+
+// WithBroadcastRecipients tells the query-builder to eager-load the nodes that are connected to
+// the "broadcast_recipients" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *WorkspaceQuery) WithBroadcastRecipients(opts ...func(*BroadcastRecipientQuery)) *WorkspaceQuery {
+	query := (&BroadcastRecipientClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withBroadcastRecipients = query
 	return _q
 }
 
@@ -623,7 +695,7 @@ func (_q *WorkspaceQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Wo
 	var (
 		nodes       = []*Workspace{}
 		_spec       = _q.querySpec()
-		loadedTypes = [8]bool{
+		loadedTypes = [10]bool{
 			_q.withContacts != nil,
 			_q.withSegments != nil,
 			_q.withEvents != nil,
@@ -631,6 +703,8 @@ func (_q *WorkspaceQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Wo
 			_q.withTrackingVisitors != nil,
 			_q.withAPITokens != nil,
 			_q.withIntegrations != nil,
+			_q.withBroadcasts != nil,
+			_q.withBroadcastRecipients != nil,
 			_q.withUser != nil,
 		}
 	)
@@ -698,6 +772,22 @@ func (_q *WorkspaceQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Wo
 		if err := _q.loadIntegrations(ctx, query, nodes,
 			func(n *Workspace) { n.Edges.Integrations = []*Integration{} },
 			func(n *Workspace, e *Integration) { n.Edges.Integrations = append(n.Edges.Integrations, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := _q.withBroadcasts; query != nil {
+		if err := _q.loadBroadcasts(ctx, query, nodes,
+			func(n *Workspace) { n.Edges.Broadcasts = []*Broadcast{} },
+			func(n *Workspace, e *Broadcast) { n.Edges.Broadcasts = append(n.Edges.Broadcasts, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := _q.withBroadcastRecipients; query != nil {
+		if err := _q.loadBroadcastRecipients(ctx, query, nodes,
+			func(n *Workspace) { n.Edges.BroadcastRecipients = []*BroadcastRecipient{} },
+			func(n *Workspace, e *BroadcastRecipient) {
+				n.Edges.BroadcastRecipients = append(n.Edges.BroadcastRecipients, e)
+			}); err != nil {
 			return nil, err
 		}
 	}
@@ -905,6 +995,66 @@ func (_q *WorkspaceQuery) loadIntegrations(ctx context.Context, query *Integrati
 	}
 	query.Where(predicate.Integration(func(s *sql.Selector) {
 		s.Where(sql.InValues(s.C(workspace.IntegrationsColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.WorkspaceID
+		node, ok := nodeids[fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "workspace_id" returned %v for node %v`, fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (_q *WorkspaceQuery) loadBroadcasts(ctx context.Context, query *BroadcastQuery, nodes []*Workspace, init func(*Workspace), assign func(*Workspace, *Broadcast)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[int64]*Workspace)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(broadcast.FieldWorkspaceID)
+	}
+	query.Where(predicate.Broadcast(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(workspace.BroadcastsColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.WorkspaceID
+		node, ok := nodeids[fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "workspace_id" returned %v for node %v`, fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (_q *WorkspaceQuery) loadBroadcastRecipients(ctx context.Context, query *BroadcastRecipientQuery, nodes []*Workspace, init func(*Workspace), assign func(*Workspace, *BroadcastRecipient)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[int64]*Workspace)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(broadcastrecipient.FieldWorkspaceID)
+	}
+	query.Where(predicate.BroadcastRecipient(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(workspace.BroadcastRecipientsColumn), fks...))
 	}))
 	neighbors, err := query.All(ctx)
 	if err != nil {

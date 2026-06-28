@@ -40,6 +40,10 @@ const (
 	EdgeAPITokens = "api_tokens"
 	// EdgeIntegrations holds the string denoting the integrations edge name in mutations.
 	EdgeIntegrations = "integrations"
+	// EdgeBroadcasts holds the string denoting the broadcasts edge name in mutations.
+	EdgeBroadcasts = "broadcasts"
+	// EdgeBroadcastRecipients holds the string denoting the broadcast_recipients edge name in mutations.
+	EdgeBroadcastRecipients = "broadcast_recipients"
 	// EdgeUser holds the string denoting the user edge name in mutations.
 	EdgeUser = "user"
 	// Table holds the table name of the workspace in the database.
@@ -93,6 +97,20 @@ const (
 	IntegrationsInverseTable = "integrations"
 	// IntegrationsColumn is the table column denoting the integrations relation/edge.
 	IntegrationsColumn = "workspace_id"
+	// BroadcastsTable is the table that holds the broadcasts relation/edge.
+	BroadcastsTable = "broadcasts"
+	// BroadcastsInverseTable is the table name for the Broadcast entity.
+	// It exists in this package in order to avoid circular dependency with the "broadcast" package.
+	BroadcastsInverseTable = "broadcasts"
+	// BroadcastsColumn is the table column denoting the broadcasts relation/edge.
+	BroadcastsColumn = "workspace_id"
+	// BroadcastRecipientsTable is the table that holds the broadcast_recipients relation/edge.
+	BroadcastRecipientsTable = "broadcast_recipients"
+	// BroadcastRecipientsInverseTable is the table name for the BroadcastRecipient entity.
+	// It exists in this package in order to avoid circular dependency with the "broadcastrecipient" package.
+	BroadcastRecipientsInverseTable = "broadcast_recipients"
+	// BroadcastRecipientsColumn is the table column denoting the broadcast_recipients relation/edge.
+	BroadcastRecipientsColumn = "workspace_id"
 	// UserTable is the table that holds the user relation/edge.
 	UserTable = "workspaces"
 	// UserInverseTable is the table name for the User entity.
@@ -274,6 +292,34 @@ func ByIntegrations(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 	}
 }
 
+// ByBroadcastsCount orders the results by broadcasts count.
+func ByBroadcastsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newBroadcastsStep(), opts...)
+	}
+}
+
+// ByBroadcasts orders the results by broadcasts terms.
+func ByBroadcasts(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newBroadcastsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+
+// ByBroadcastRecipientsCount orders the results by broadcast_recipients count.
+func ByBroadcastRecipientsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newBroadcastRecipientsStep(), opts...)
+	}
+}
+
+// ByBroadcastRecipients orders the results by broadcast_recipients terms.
+func ByBroadcastRecipients(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newBroadcastRecipientsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+
 // ByUserField orders the results by user field.
 func ByUserField(field string, opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
@@ -327,6 +373,20 @@ func newIntegrationsStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(IntegrationsInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2M, false, IntegrationsTable, IntegrationsColumn),
+	)
+}
+func newBroadcastsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(BroadcastsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, BroadcastsTable, BroadcastsColumn),
+	)
+}
+func newBroadcastRecipientsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(BroadcastRecipientsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, BroadcastRecipientsTable, BroadcastRecipientsColumn),
 	)
 }
 func newUserStep() *sqlgraph.Step {

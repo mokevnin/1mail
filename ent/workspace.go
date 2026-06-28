@@ -52,11 +52,15 @@ type WorkspaceEdges struct {
 	APITokens []*ApiToken `json:"api_tokens,omitempty"`
 	// Integrations holds the value of the integrations edge.
 	Integrations []*Integration `json:"integrations,omitempty"`
+	// Broadcasts holds the value of the broadcasts edge.
+	Broadcasts []*Broadcast `json:"broadcasts,omitempty"`
+	// BroadcastRecipients holds the value of the broadcast_recipients edge.
+	BroadcastRecipients []*BroadcastRecipient `json:"broadcast_recipients,omitempty"`
 	// User holds the value of the user edge.
 	User *User `json:"user,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [8]bool
+	loadedTypes [10]bool
 }
 
 // ContactsOrErr returns the Contacts value or an error if the edge
@@ -122,12 +126,30 @@ func (e WorkspaceEdges) IntegrationsOrErr() ([]*Integration, error) {
 	return nil, &NotLoadedError{edge: "integrations"}
 }
 
+// BroadcastsOrErr returns the Broadcasts value or an error if the edge
+// was not loaded in eager-loading.
+func (e WorkspaceEdges) BroadcastsOrErr() ([]*Broadcast, error) {
+	if e.loadedTypes[7] {
+		return e.Broadcasts, nil
+	}
+	return nil, &NotLoadedError{edge: "broadcasts"}
+}
+
+// BroadcastRecipientsOrErr returns the BroadcastRecipients value or an error if the edge
+// was not loaded in eager-loading.
+func (e WorkspaceEdges) BroadcastRecipientsOrErr() ([]*BroadcastRecipient, error) {
+	if e.loadedTypes[8] {
+		return e.BroadcastRecipients, nil
+	}
+	return nil, &NotLoadedError{edge: "broadcast_recipients"}
+}
+
 // UserOrErr returns the User value or an error if the edge
 // was not loaded in eager-loading, or loaded but was not found.
 func (e WorkspaceEdges) UserOrErr() (*User, error) {
 	if e.User != nil {
 		return e.User, nil
-	} else if e.loadedTypes[7] {
+	} else if e.loadedTypes[9] {
 		return nil, &NotFoundError{label: user.Label}
 	}
 	return nil, &NotLoadedError{edge: "user"}
@@ -248,6 +270,16 @@ func (_m *Workspace) QueryAPITokens() *ApiTokenQuery {
 // QueryIntegrations queries the "integrations" edge of the Workspace entity.
 func (_m *Workspace) QueryIntegrations() *IntegrationQuery {
 	return NewWorkspaceClient(_m.config).QueryIntegrations(_m)
+}
+
+// QueryBroadcasts queries the "broadcasts" edge of the Workspace entity.
+func (_m *Workspace) QueryBroadcasts() *BroadcastQuery {
+	return NewWorkspaceClient(_m.config).QueryBroadcasts(_m)
+}
+
+// QueryBroadcastRecipients queries the "broadcast_recipients" edge of the Workspace entity.
+func (_m *Workspace) QueryBroadcastRecipients() *BroadcastRecipientQuery {
+	return NewWorkspaceClient(_m.config).QueryBroadcastRecipients(_m)
 }
 
 // QueryUser queries the "user" edge of the Workspace entity.

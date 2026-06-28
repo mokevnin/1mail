@@ -14,6 +14,10 @@ type Tx struct {
 	config
 	// ApiToken is the client for interacting with the ApiToken builders.
 	ApiToken *ApiTokenClient
+	// Broadcast is the client for interacting with the Broadcast builders.
+	Broadcast *BroadcastClient
+	// BroadcastRecipient is the client for interacting with the BroadcastRecipient builders.
+	BroadcastRecipient *BroadcastRecipientClient
 	// Contact is the client for interacting with the Contact builders.
 	Contact *ContactClient
 	// Event is the client for interacting with the Event builders.
@@ -162,6 +166,8 @@ func (tx *Tx) Client() *Client {
 
 func (tx *Tx) init() {
 	tx.ApiToken = NewApiTokenClient(tx.config)
+	tx.Broadcast = NewBroadcastClient(tx.config)
+	tx.BroadcastRecipient = NewBroadcastRecipientClient(tx.config)
 	tx.Contact = NewContactClient(tx.config)
 	tx.Event = NewEventClient(tx.config)
 	tx.Integration = NewIntegrationClient(tx.config)

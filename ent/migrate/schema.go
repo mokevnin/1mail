@@ -37,6 +37,97 @@ var (
 			},
 		},
 	}
+	// BroadcastsColumns holds the columns for the "broadcasts" table.
+	BroadcastsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt64, Increment: true},
+		{Name: "name", Type: field.TypeString},
+		{Name: "subject", Type: field.TypeString, Default: ""},
+		{Name: "from_name", Type: field.TypeString, Nullable: true},
+		{Name: "from_email", Type: field.TypeString, Nullable: true},
+		{Name: "body_html", Type: field.TypeString, Default: ""},
+		{Name: "body_text", Type: field.TypeString, Default: ""},
+		{Name: "segment_id", Type: field.TypeInt64, Nullable: true},
+		{Name: "integration_id", Type: field.TypeInt64, Nullable: true},
+		{Name: "status", Type: field.TypeEnum, Enums: []string{"draft", "scheduled", "sending", "sent", "failed"}, Default: "draft"},
+		{Name: "scheduled_at", Type: field.TypeTime, Nullable: true},
+		{Name: "sent_at", Type: field.TypeTime, Nullable: true},
+		{Name: "recipients_total", Type: field.TypeInt, Default: 0},
+		{Name: "sent_count", Type: field.TypeInt, Default: 0},
+		{Name: "opened_count", Type: field.TypeInt, Default: 0},
+		{Name: "clicked_count", Type: field.TypeInt, Default: 0},
+		{Name: "unsubscribed_count", Type: field.TypeInt, Default: 0},
+		{Name: "failed_count", Type: field.TypeInt, Default: 0},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "workspace_id", Type: field.TypeInt64},
+	}
+	// BroadcastsTable holds the schema information for the "broadcasts" table.
+	BroadcastsTable = &schema.Table{
+		Name:       "broadcasts",
+		Columns:    BroadcastsColumns,
+		PrimaryKey: []*schema.Column{BroadcastsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "broadcasts_workspaces_broadcasts",
+				Columns:    []*schema.Column{BroadcastsColumns[20]},
+				RefColumns: []*schema.Column{WorkspacesColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "broadcast_workspace_id",
+				Unique:  false,
+				Columns: []*schema.Column{BroadcastsColumns[20]},
+			},
+		},
+	}
+	// BroadcastRecipientsColumns holds the columns for the "broadcast_recipients" table.
+	BroadcastRecipientsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt64, Increment: true},
+		{Name: "contact_id", Type: field.TypeInt64},
+		{Name: "status", Type: field.TypeEnum, Enums: []string{"pending", "sent", "failed"}, Default: "pending"},
+		{Name: "error", Type: field.TypeString, Nullable: true},
+		{Name: "sent_at", Type: field.TypeTime, Nullable: true},
+		{Name: "opened_at", Type: field.TypeTime, Nullable: true},
+		{Name: "clicked_at", Type: field.TypeTime, Nullable: true},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "broadcast_id", Type: field.TypeInt64},
+		{Name: "workspace_id", Type: field.TypeInt64},
+	}
+	// BroadcastRecipientsTable holds the schema information for the "broadcast_recipients" table.
+	BroadcastRecipientsTable = &schema.Table{
+		Name:       "broadcast_recipients",
+		Columns:    BroadcastRecipientsColumns,
+		PrimaryKey: []*schema.Column{BroadcastRecipientsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "broadcast_recipients_broadcasts_recipients",
+				Columns:    []*schema.Column{BroadcastRecipientsColumns[9]},
+				RefColumns: []*schema.Column{BroadcastsColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+			{
+				Symbol:     "broadcast_recipients_workspaces_broadcast_recipients",
+				Columns:    []*schema.Column{BroadcastRecipientsColumns[10]},
+				RefColumns: []*schema.Column{WorkspacesColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "broadcast_recipients_broadcast_id_contact_id",
+				Unique:  true,
+				Columns: []*schema.Column{BroadcastRecipientsColumns[9], BroadcastRecipientsColumns[1]},
+			},
+			{
+				Name:    "broadcastrecipient_broadcast_id",
+				Unique:  false,
+				Columns: []*schema.Column{BroadcastRecipientsColumns[9]},
+			},
+		},
+	}
 	// ContactsColumns holds the columns for the "contacts" table.
 	ContactsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt64, Increment: true},
@@ -280,6 +371,8 @@ var (
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
 		APITokensTable,
+		BroadcastsTable,
+		BroadcastRecipientsTable,
 		ContactsTable,
 		EventsTable,
 		IntegrationsTable,
@@ -295,6 +388,15 @@ func init() {
 	APITokensTable.ForeignKeys[0].RefTable = WorkspacesTable
 	APITokensTable.Annotation = &entsql.Annotation{
 		Table: "api_tokens",
+	}
+	BroadcastsTable.ForeignKeys[0].RefTable = WorkspacesTable
+	BroadcastsTable.Annotation = &entsql.Annotation{
+		Table: "broadcasts",
+	}
+	BroadcastRecipientsTable.ForeignKeys[0].RefTable = BroadcastsTable
+	BroadcastRecipientsTable.ForeignKeys[1].RefTable = WorkspacesTable
+	BroadcastRecipientsTable.Annotation = &entsql.Annotation{
+		Table: "broadcast_recipients",
 	}
 	ContactsTable.ForeignKeys[0].RefTable = WorkspacesTable
 	ContactsTable.Annotation = &entsql.Annotation{

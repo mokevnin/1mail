@@ -11,6 +11,8 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/mokevnin/1mail/ent/apitoken"
+	"github.com/mokevnin/1mail/ent/broadcast"
+	"github.com/mokevnin/1mail/ent/broadcastrecipient"
 	"github.com/mokevnin/1mail/ent/contact"
 	"github.com/mokevnin/1mail/ent/event"
 	"github.com/mokevnin/1mail/ent/integration"
@@ -197,6 +199,36 @@ func (_c *WorkspaceCreate) AddIntegrations(v ...*Integration) *WorkspaceCreate {
 		ids[i] = v[i].ID
 	}
 	return _c.AddIntegrationIDs(ids...)
+}
+
+// AddBroadcastIDs adds the "broadcasts" edge to the Broadcast entity by IDs.
+func (_c *WorkspaceCreate) AddBroadcastIDs(ids ...int64) *WorkspaceCreate {
+	_c.mutation.AddBroadcastIDs(ids...)
+	return _c
+}
+
+// AddBroadcasts adds the "broadcasts" edges to the Broadcast entity.
+func (_c *WorkspaceCreate) AddBroadcasts(v ...*Broadcast) *WorkspaceCreate {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddBroadcastIDs(ids...)
+}
+
+// AddBroadcastRecipientIDs adds the "broadcast_recipients" edge to the BroadcastRecipient entity by IDs.
+func (_c *WorkspaceCreate) AddBroadcastRecipientIDs(ids ...int64) *WorkspaceCreate {
+	_c.mutation.AddBroadcastRecipientIDs(ids...)
+	return _c
+}
+
+// AddBroadcastRecipients adds the "broadcast_recipients" edges to the BroadcastRecipient entity.
+func (_c *WorkspaceCreate) AddBroadcastRecipients(v ...*BroadcastRecipient) *WorkspaceCreate {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddBroadcastRecipientIDs(ids...)
 }
 
 // SetUser sets the "user" edge to the User entity.
@@ -438,6 +470,38 @@ func (_c *WorkspaceCreate) createSpec() (*Workspace, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(integration.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.BroadcastsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   workspace.BroadcastsTable,
+			Columns: []string{workspace.BroadcastsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(broadcast.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.BroadcastRecipientsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   workspace.BroadcastRecipientsTable,
+			Columns: []string{workspace.BroadcastRecipientsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(broadcastrecipient.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {
