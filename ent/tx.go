@@ -38,6 +38,8 @@ type Tx struct {
 	TrackingVisitor *TrackingVisitorClient
 	// User is the client for interacting with the User builders.
 	User *UserClient
+	// WebhookEndpoint is the client for interacting with the WebhookEndpoint builders.
+	WebhookEndpoint *WebhookEndpointClient
 	// Workspace is the client for interacting with the Workspace builders.
 	Workspace *WorkspaceClient
 
@@ -184,6 +186,7 @@ func (tx *Tx) init() {
 	tx.TrackingProfile = NewTrackingProfileClient(tx.config)
 	tx.TrackingVisitor = NewTrackingVisitorClient(tx.config)
 	tx.User = NewUserClient(tx.config)
+	tx.WebhookEndpoint = NewWebhookEndpointClient(tx.config)
 	tx.Workspace = NewWorkspaceClient(tx.config)
 }
 

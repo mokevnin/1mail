@@ -19,6 +19,7 @@ import (
 	"github.com/mokevnin/1mail/ent/trackingprofile"
 	"github.com/mokevnin/1mail/ent/trackingvisitor"
 	"github.com/mokevnin/1mail/ent/user"
+	"github.com/mokevnin/1mail/ent/webhookendpoint"
 	"github.com/mokevnin/1mail/ent/workspace"
 )
 
@@ -326,6 +327,26 @@ func init() {
 	userDescCreatedAt := userFields[5].Descriptor()
 	// user.DefaultCreatedAt holds the default value on creation for the created_at field.
 	user.DefaultCreatedAt = userDescCreatedAt.Default.(func() time.Time)
+	webhookendpointFields := schema.WebhookEndpoint{}.Fields()
+	_ = webhookendpointFields
+	// webhookendpointDescURL is the schema descriptor for url field.
+	webhookendpointDescURL := webhookendpointFields[1].Descriptor()
+	// webhookendpoint.URLValidator is a validator for the "url" field. It is called by the builders before save.
+	webhookendpoint.URLValidator = webhookendpointDescURL.Validators[0].(func(string) error)
+	// webhookendpointDescEnabled is the schema descriptor for enabled field.
+	webhookendpointDescEnabled := webhookendpointFields[4].Descriptor()
+	// webhookendpoint.DefaultEnabled holds the default value on creation for the enabled field.
+	webhookendpoint.DefaultEnabled = webhookendpointDescEnabled.Default.(bool)
+	// webhookendpointDescCreatedAt is the schema descriptor for created_at field.
+	webhookendpointDescCreatedAt := webhookendpointFields[6].Descriptor()
+	// webhookendpoint.DefaultCreatedAt holds the default value on creation for the created_at field.
+	webhookendpoint.DefaultCreatedAt = webhookendpointDescCreatedAt.Default.(func() time.Time)
+	// webhookendpointDescUpdatedAt is the schema descriptor for updated_at field.
+	webhookendpointDescUpdatedAt := webhookendpointFields[7].Descriptor()
+	// webhookendpoint.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	webhookendpoint.DefaultUpdatedAt = webhookendpointDescUpdatedAt.Default.(func() time.Time)
+	// webhookendpoint.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	webhookendpoint.UpdateDefaultUpdatedAt = webhookendpointDescUpdatedAt.UpdateDefault.(func() time.Time)
 	workspaceFields := schema.Workspace{}.Fields()
 	_ = workspaceFields
 	// workspaceDescName is the schema descriptor for name field.

@@ -48,6 +48,17 @@ func GenerateCollectKey() (string, error) {
 	return collectKeyPrefix + "_" + secret, nil
 }
 
+const webhookSecretPrefix = "whsec"
+
+// GenerateWebhookSecret returns an HMAC signing secret for a webhook endpoint.
+func GenerateWebhookSecret() (string, error) {
+	secret, err := randomString(urlSafeAlphabet, secretLen)
+	if err != nil {
+		return "", err
+	}
+	return webhookSecretPrefix + "_" + secret, nil
+}
+
 func HashTokenSecret(secret string) (string, error) {
 	h, err := bcrypt.GenerateFromPassword([]byte(secret), bcryptCost)
 	if err != nil {

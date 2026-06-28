@@ -68,7 +68,13 @@ var (
 	rn37AllowedHeaders = map[string]string{
 		"POST": "Content-Type",
 	}
-	rn44AllowedHeaders = map[string]string{
+	rn41AllowedHeaders = map[string]string{
+		"POST": "Content-Type",
+	}
+	rn43AllowedHeaders = map[string]string{
+		"PUT": "Content-Type",
+	}
+	rn47AllowedHeaders = map[string]string{
 		"PUT": "Content-Type",
 	}
 )
@@ -1061,6 +1067,85 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 							}
 
+						case 'w': // Prefix: "webhooks"
+
+							if l := len("webhooks"); len(elem) >= l && elem[0:l] == "webhooks" {
+								elem = elem[l:]
+							} else {
+								break
+							}
+
+							if len(elem) == 0 {
+								switch r.Method {
+								case "GET":
+									s.handleSiteWebhooksListRequest([1]string{
+										args[0],
+									}, elemIsEscaped, w, r)
+								case "POST":
+									s.handleSiteWebhooksCreateRequest([1]string{
+										args[0],
+									}, elemIsEscaped, w, r)
+								default:
+									s.notAllowed(w, r, notAllowedParams{
+										allowedMethods: "GET,POST",
+										allowedHeaders: rn41AllowedHeaders,
+										acceptPost:     "application/json",
+										acceptPatch:    "",
+									})
+								}
+
+								return
+							}
+							switch elem[0] {
+							case '/': // Prefix: "/"
+
+								if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
+									elem = elem[l:]
+								} else {
+									break
+								}
+
+								// Param: "id"
+								// Leaf parameter, slashes are prohibited
+								idx := strings.IndexByte(elem, '/')
+								if idx >= 0 {
+									break
+								}
+								args[1] = elem
+								elem = ""
+
+								if len(elem) == 0 {
+									// Leaf node.
+									switch r.Method {
+									case "DELETE":
+										s.handleSiteWebhooksDeleteRequest([2]string{
+											args[0],
+											args[1],
+										}, elemIsEscaped, w, r)
+									case "GET":
+										s.handleSiteWebhooksGetRequest([2]string{
+											args[0],
+											args[1],
+										}, elemIsEscaped, w, r)
+									case "PUT":
+										s.handleSiteWebhooksUpdateRequest([2]string{
+											args[0],
+											args[1],
+										}, elemIsEscaped, w, r)
+									default:
+										s.notAllowed(w, r, notAllowedParams{
+											allowedMethods: "DELETE,GET,PUT",
+											allowedHeaders: rn43AllowedHeaders,
+											acceptPost:     "",
+											acceptPatch:    "",
+										})
+									}
+
+									return
+								}
+
+							}
+
 						}
 
 					}
@@ -1116,7 +1201,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 							default:
 								s.notAllowed(w, r, notAllowedParams{
 									allowedMethods: "PUT",
-									allowedHeaders: rn44AllowedHeaders,
+									allowedHeaders: rn47AllowedHeaders,
 									acceptPost:     "",
 									acceptPatch:    "",
 								})
@@ -2198,6 +2283,93 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 										}
 									}
 
+								}
+
+							}
+
+						case 'w': // Prefix: "webhooks"
+
+							if l := len("webhooks"); len(elem) >= l && elem[0:l] == "webhooks" {
+								elem = elem[l:]
+							} else {
+								break
+							}
+
+							if len(elem) == 0 {
+								switch method {
+								case "GET":
+									r.name = SiteWebhooksListOperation
+									r.summary = ""
+									r.operationID = "SiteWebhooks_list"
+									r.operationGroup = ""
+									r.pathPattern = "/w/{workspaceSlug}/webhooks"
+									r.args = args
+									r.count = 1
+									return r, true
+								case "POST":
+									r.name = SiteWebhooksCreateOperation
+									r.summary = ""
+									r.operationID = "SiteWebhooks_create"
+									r.operationGroup = ""
+									r.pathPattern = "/w/{workspaceSlug}/webhooks"
+									r.args = args
+									r.count = 1
+									return r, true
+								default:
+									return
+								}
+							}
+							switch elem[0] {
+							case '/': // Prefix: "/"
+
+								if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
+									elem = elem[l:]
+								} else {
+									break
+								}
+
+								// Param: "id"
+								// Leaf parameter, slashes are prohibited
+								idx := strings.IndexByte(elem, '/')
+								if idx >= 0 {
+									break
+								}
+								args[1] = elem
+								elem = ""
+
+								if len(elem) == 0 {
+									// Leaf node.
+									switch method {
+									case "DELETE":
+										r.name = SiteWebhooksDeleteOperation
+										r.summary = ""
+										r.operationID = "SiteWebhooks_delete"
+										r.operationGroup = ""
+										r.pathPattern = "/w/{workspaceSlug}/webhooks/{id}"
+										r.args = args
+										r.count = 2
+										return r, true
+									case "GET":
+										r.name = SiteWebhooksGetOperation
+										r.summary = ""
+										r.operationID = "SiteWebhooks_get"
+										r.operationGroup = ""
+										r.pathPattern = "/w/{workspaceSlug}/webhooks/{id}"
+										r.args = args
+										r.count = 2
+										return r, true
+									case "PUT":
+										r.name = SiteWebhooksUpdateOperation
+										r.summary = ""
+										r.operationID = "SiteWebhooks_update"
+										r.operationGroup = ""
+										r.pathPattern = "/w/{workspaceSlug}/webhooks/{id}"
+										r.args = args
+										r.count = 2
+										return r, true
+									default:
+										return
+									}
 								}
 
 							}

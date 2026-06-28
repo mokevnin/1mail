@@ -173,6 +173,26 @@ type SiteUserUpdateMeRes interface {
 	siteUserUpdateMeRes()
 }
 
+type SiteWebhooksCreateRes interface {
+	siteWebhooksCreateRes()
+}
+
+type SiteWebhooksDeleteRes interface {
+	siteWebhooksDeleteRes()
+}
+
+type SiteWebhooksGetRes interface {
+	siteWebhooksGetRes()
+}
+
+type SiteWebhooksListRes interface {
+	siteWebhooksListRes()
+}
+
+type SiteWebhooksUpdateRes interface {
+	siteWebhooksUpdateRes()
+}
+
 type SiteWorkspacesUpdateRes interface {
 	siteWorkspacesUpdateRes()
 }

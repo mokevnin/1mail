@@ -452,6 +452,43 @@ var (
 		Columns:    UsersColumns,
 		PrimaryKey: []*schema.Column{UsersColumns[0]},
 	}
+	// WebhookEndpointsColumns holds the columns for the "webhook_endpoints" table.
+	WebhookEndpointsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt64, Increment: true},
+		{Name: "url", Type: field.TypeString},
+		{Name: "secret_encrypted", Type: field.TypeString},
+		{Name: "event_types", Type: field.TypeJSON, Nullable: true},
+		{Name: "enabled", Type: field.TypeBool, Default: true},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "workspace_id", Type: field.TypeInt64},
+	}
+	// WebhookEndpointsTable holds the schema information for the "webhook_endpoints" table.
+	WebhookEndpointsTable = &schema.Table{
+		Name:       "webhook_endpoints",
+		Columns:    WebhookEndpointsColumns,
+		PrimaryKey: []*schema.Column{WebhookEndpointsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "webhook_endpoints_workspaces_webhook_endpoints",
+				Columns:    []*schema.Column{WebhookEndpointsColumns[7]},
+				RefColumns: []*schema.Column{WorkspacesColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "webhookendpoint_workspace_id",
+				Unique:  false,
+				Columns: []*schema.Column{WebhookEndpointsColumns[7]},
+			},
+			{
+				Name:    "webhookendpoint_workspace_id_enabled",
+				Unique:  false,
+				Columns: []*schema.Column{WebhookEndpointsColumns[7], WebhookEndpointsColumns[4]},
+			},
+		},
+	}
 	// WorkspacesColumns holds the columns for the "workspaces" table.
 	WorkspacesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt64, Increment: true},
@@ -491,6 +528,7 @@ var (
 		TrackingProfilesTable,
 		TrackingVisitorsTable,
 		UsersTable,
+		WebhookEndpointsTable,
 		WorkspacesTable,
 	}
 )
@@ -549,6 +587,10 @@ func init() {
 	}
 	UsersTable.Annotation = &entsql.Annotation{
 		Table: "users",
+	}
+	WebhookEndpointsTable.ForeignKeys[0].RefTable = WorkspacesTable
+	WebhookEndpointsTable.Annotation = &entsql.Annotation{
+		Table: "webhook_endpoints",
 	}
 	WorkspacesTable.ForeignKeys[0].RefTable = UsersTable
 	WorkspacesTable.Annotation = &entsql.Annotation{

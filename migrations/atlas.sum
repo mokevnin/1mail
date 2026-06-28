@@ -1,4 +1,4 @@
-h1:RjkYrPR/Nykx70FGe2kMqMeCrS5pV8d9HfimFNAn6OE=
+h1:v6Ng4J/O9seOIRlVwRuIsXhAEEX7+PUu0+znE6I+cyQ=
 20260508000000_initial.sql h1:hqknpGtwJkLADT5epWil/vMqlKg3ZDRdQRZdZxk0aUQ=
 20260509001138.sql h1:J2sKnbyBsY1JsCWE95Pmy4WagEbpngmLfsJYw7dc3Xg=
 20260621031147_workspace_scoping.sql h1:juzOWkzi0pdsQ8OgXcJEEXDan4uIWa643XoU1+H7/kU=
@@ -9,3 +9,4 @@ h1:RjkYrPR/Nykx70FGe2kMqMeCrS5pV8d9HfimFNAn6OE=
 20260628124843_mjml_only_body.sql h1:60EQ6m/1NRIV2H9M9DVH5+6SCw4sRI++ivOvj/3SVUU=
 20260628134122_add_automations.sql h1:5iA4UPtEp8DmNtjBGENj7yPv392m16eOPHc/5lZmVEg=
 20260628184131_add_event_source_id.sql h1:p6hSTyqkdOh2Ej0VD6xk/uQWiHHYzirUAAuJl+/Mu4A=
+20260628190154_add_webhook_endpoints.sql h1:P2kCyE2i1yyD5TAgLGV5RXqCo5wfUc8jCyLFZeJAmLA=

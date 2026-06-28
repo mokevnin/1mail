@@ -24,6 +24,7 @@ import (
 	"github.com/mokevnin/1mail/ent/trackingprofile"
 	"github.com/mokevnin/1mail/ent/trackingvisitor"
 	"github.com/mokevnin/1mail/ent/user"
+	"github.com/mokevnin/1mail/ent/webhookendpoint"
 	"github.com/mokevnin/1mail/ent/workspace"
 )
 
@@ -279,6 +280,21 @@ func (_c *WorkspaceCreate) AddAutomationRuns(v ...*AutomationRun) *WorkspaceCrea
 		ids[i] = v[i].ID
 	}
 	return _c.AddAutomationRunIDs(ids...)
+}
+
+// AddWebhookEndpointIDs adds the "webhook_endpoints" edge to the WebhookEndpoint entity by IDs.
+func (_c *WorkspaceCreate) AddWebhookEndpointIDs(ids ...int64) *WorkspaceCreate {
+	_c.mutation.AddWebhookEndpointIDs(ids...)
+	return _c
+}
+
+// AddWebhookEndpoints adds the "webhook_endpoints" edges to the WebhookEndpoint entity.
+func (_c *WorkspaceCreate) AddWebhookEndpoints(v ...*WebhookEndpoint) *WorkspaceCreate {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddWebhookEndpointIDs(ids...)
 }
 
 // SetUser sets the "user" edge to the User entity.
@@ -601,6 +617,22 @@ func (_c *WorkspaceCreate) createSpec() (*Workspace, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(automationrun.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.WebhookEndpointsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   workspace.WebhookEndpointsTable,
+			Columns: []string{workspace.WebhookEndpointsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(webhookendpoint.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {

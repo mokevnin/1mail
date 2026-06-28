@@ -25,6 +25,7 @@ import (
 	"github.com/mokevnin/1mail/ent/trackingprofile"
 	"github.com/mokevnin/1mail/ent/trackingvisitor"
 	"github.com/mokevnin/1mail/ent/user"
+	"github.com/mokevnin/1mail/ent/webhookendpoint"
 	"github.com/mokevnin/1mail/ent/workspace"
 )
 
@@ -99,6 +100,7 @@ func checkColumn(t, c string) error {
 			trackingprofile.Table:    trackingprofile.ValidColumn,
 			trackingvisitor.Table:    trackingvisitor.ValidColumn,
 			user.Table:               user.ValidColumn,
+			webhookendpoint.Table:    webhookendpoint.ValidColumn,
 			workspace.Table:          workspace.ValidColumn,
 		})
 	})

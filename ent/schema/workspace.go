@@ -60,6 +60,7 @@ func (Workspace) Edges() []ent.Edge {
 		edge.To("email_templates", EmailTemplate.Type),
 		edge.To("automations", Automation.Type),
 		edge.To("automation_runs", AutomationRun.Type),
+		edge.To("webhook_endpoints", WebhookEndpoint.Type),
 		edge.From("user", User.Type).
 			Ref("workspaces").
 			Field("user_id").

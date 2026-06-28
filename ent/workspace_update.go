@@ -25,6 +25,7 @@ import (
 	"github.com/mokevnin/1mail/ent/trackingprofile"
 	"github.com/mokevnin/1mail/ent/trackingvisitor"
 	"github.com/mokevnin/1mail/ent/user"
+	"github.com/mokevnin/1mail/ent/webhookendpoint"
 	"github.com/mokevnin/1mail/ent/workspace"
 )
 
@@ -289,6 +290,21 @@ func (_u *WorkspaceUpdate) AddAutomationRuns(v ...*AutomationRun) *WorkspaceUpda
 	return _u.AddAutomationRunIDs(ids...)
 }
 
+// AddWebhookEndpointIDs adds the "webhook_endpoints" edge to the WebhookEndpoint entity by IDs.
+func (_u *WorkspaceUpdate) AddWebhookEndpointIDs(ids ...int64) *WorkspaceUpdate {
+	_u.mutation.AddWebhookEndpointIDs(ids...)
+	return _u
+}
+
+// AddWebhookEndpoints adds the "webhook_endpoints" edges to the WebhookEndpoint entity.
+func (_u *WorkspaceUpdate) AddWebhookEndpoints(v ...*WebhookEndpoint) *WorkspaceUpdate {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddWebhookEndpointIDs(ids...)
+}
+
 // SetUser sets the "user" edge to the User entity.
 func (_u *WorkspaceUpdate) SetUser(v *User) *WorkspaceUpdate {
 	return _u.SetUserID(v.ID)
@@ -549,6 +565,27 @@ func (_u *WorkspaceUpdate) RemoveAutomationRuns(v ...*AutomationRun) *WorkspaceU
 		ids[i] = v[i].ID
 	}
 	return _u.RemoveAutomationRunIDs(ids...)
+}
+
+// ClearWebhookEndpoints clears all "webhook_endpoints" edges to the WebhookEndpoint entity.
+func (_u *WorkspaceUpdate) ClearWebhookEndpoints() *WorkspaceUpdate {
+	_u.mutation.ClearWebhookEndpoints()
+	return _u
+}
+
+// RemoveWebhookEndpointIDs removes the "webhook_endpoints" edge to WebhookEndpoint entities by IDs.
+func (_u *WorkspaceUpdate) RemoveWebhookEndpointIDs(ids ...int64) *WorkspaceUpdate {
+	_u.mutation.RemoveWebhookEndpointIDs(ids...)
+	return _u
+}
+
+// RemoveWebhookEndpoints removes "webhook_endpoints" edges to WebhookEndpoint entities.
+func (_u *WorkspaceUpdate) RemoveWebhookEndpoints(v ...*WebhookEndpoint) *WorkspaceUpdate {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveWebhookEndpointIDs(ids...)
 }
 
 // ClearUser clears the "user" edge to the User entity.
@@ -1177,6 +1214,51 @@ func (_u *WorkspaceUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	if _u.mutation.WebhookEndpointsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   workspace.WebhookEndpointsTable,
+			Columns: []string{workspace.WebhookEndpointsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(webhookendpoint.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedWebhookEndpointsIDs(); len(nodes) > 0 && !_u.mutation.WebhookEndpointsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   workspace.WebhookEndpointsTable,
+			Columns: []string{workspace.WebhookEndpointsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(webhookendpoint.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.WebhookEndpointsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   workspace.WebhookEndpointsTable,
+			Columns: []string{workspace.WebhookEndpointsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(webhookendpoint.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if _u.mutation.UserCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
@@ -1474,6 +1556,21 @@ func (_u *WorkspaceUpdateOne) AddAutomationRuns(v ...*AutomationRun) *WorkspaceU
 	return _u.AddAutomationRunIDs(ids...)
 }
 
+// AddWebhookEndpointIDs adds the "webhook_endpoints" edge to the WebhookEndpoint entity by IDs.
+func (_u *WorkspaceUpdateOne) AddWebhookEndpointIDs(ids ...int64) *WorkspaceUpdateOne {
+	_u.mutation.AddWebhookEndpointIDs(ids...)
+	return _u
+}
+
+// AddWebhookEndpoints adds the "webhook_endpoints" edges to the WebhookEndpoint entity.
+func (_u *WorkspaceUpdateOne) AddWebhookEndpoints(v ...*WebhookEndpoint) *WorkspaceUpdateOne {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddWebhookEndpointIDs(ids...)
+}
+
 // SetUser sets the "user" edge to the User entity.
 func (_u *WorkspaceUpdateOne) SetUser(v *User) *WorkspaceUpdateOne {
 	return _u.SetUserID(v.ID)
@@ -1734,6 +1831,27 @@ func (_u *WorkspaceUpdateOne) RemoveAutomationRuns(v ...*AutomationRun) *Workspa
 		ids[i] = v[i].ID
 	}
 	return _u.RemoveAutomationRunIDs(ids...)
+}
+
+// ClearWebhookEndpoints clears all "webhook_endpoints" edges to the WebhookEndpoint entity.
+func (_u *WorkspaceUpdateOne) ClearWebhookEndpoints() *WorkspaceUpdateOne {
+	_u.mutation.ClearWebhookEndpoints()
+	return _u
+}
+
+// RemoveWebhookEndpointIDs removes the "webhook_endpoints" edge to WebhookEndpoint entities by IDs.
+func (_u *WorkspaceUpdateOne) RemoveWebhookEndpointIDs(ids ...int64) *WorkspaceUpdateOne {
+	_u.mutation.RemoveWebhookEndpointIDs(ids...)
+	return _u
+}
+
+// RemoveWebhookEndpoints removes "webhook_endpoints" edges to WebhookEndpoint entities.
+func (_u *WorkspaceUpdateOne) RemoveWebhookEndpoints(v ...*WebhookEndpoint) *WorkspaceUpdateOne {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveWebhookEndpointIDs(ids...)
 }
 
 // ClearUser clears the "user" edge to the User entity.
@@ -2385,6 +2503,51 @@ func (_u *WorkspaceUpdateOne) sqlSave(ctx context.Context) (_node *Workspace, er
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(automationrun.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.WebhookEndpointsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   workspace.WebhookEndpointsTable,
+			Columns: []string{workspace.WebhookEndpointsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(webhookendpoint.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedWebhookEndpointsIDs(); len(nodes) > 0 && !_u.mutation.WebhookEndpointsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   workspace.WebhookEndpointsTable,
+			Columns: []string{workspace.WebhookEndpointsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(webhookendpoint.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.WebhookEndpointsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   workspace.WebhookEndpointsTable,
+			Columns: []string{workspace.WebhookEndpointsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(webhookendpoint.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {

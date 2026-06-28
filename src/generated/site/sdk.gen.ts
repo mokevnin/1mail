@@ -5,8 +5,8 @@ import * as z from 'zod';
 
 import { client } from './client.gen.ts';
 import type { Client, ClientMeta, Options as Options2, RequestResult, TDataShape } from './client/index.ts';
-import type { SiteAuthDirectLoginData, SiteAuthDirectLoginErrors, SiteAuthDirectLoginResponses, SiteAuthRegisterData, SiteAuthRegisterErrors, SiteAuthRegisterResponses, SiteAutomationsActivateData, SiteAutomationsActivateErrors, SiteAutomationsActivateResponses, SiteAutomationsCreateData, SiteAutomationsCreateErrors, SiteAutomationsCreateResponses, SiteAutomationsDeactivateData, SiteAutomationsDeactivateErrors, SiteAutomationsDeactivateResponses, SiteAutomationsDeleteData, SiteAutomationsDeleteErrors, SiteAutomationsDeleteResponses, SiteAutomationsGetData, SiteAutomationsGetErrors, SiteAutomationsGetResponses, SiteAutomationsListData, SiteAutomationsListErrors, SiteAutomationsListResponses, SiteAutomationsUpdateData, SiteAutomationsUpdateErrors, SiteAutomationsUpdateResponses, SiteBroadcastsCreateData, SiteBroadcastsCreateErrors, SiteBroadcastsCreateResponses, SiteBroadcastsDeleteData, SiteBroadcastsDeleteErrors, SiteBroadcastsDeleteResponses, SiteBroadcastsGetData, SiteBroadcastsGetErrors, SiteBroadcastsGetResponses, SiteBroadcastsListData, SiteBroadcastsListErrors, SiteBroadcastsListResponses, SiteBroadcastsScheduleData, SiteBroadcastsScheduleErrors, SiteBroadcastsScheduleResponses, SiteBroadcastsSendData, SiteBroadcastsSendErrors, SiteBroadcastsSendResponses, SiteBroadcastsTestSendData, SiteBroadcastsTestSendErrors, SiteBroadcastsTestSendResponses, SiteBroadcastsUpdateData, SiteBroadcastsUpdateErrors, SiteBroadcastsUpdateResponses, SiteContactsCreateData, SiteContactsCreateErrors, SiteContactsCreateResponses, SiteContactsDeleteData, SiteContactsDeleteErrors, SiteContactsDeleteResponses, SiteContactsGetData, SiteContactsGetErrors, SiteContactsGetResponses, SiteContactsListData, SiteContactsListErrors, SiteContactsListResponses, SiteContactsUpdateData, SiteContactsUpdateErrors, SiteContactsUpdateResponses, SiteEventsListData, SiteEventsListErrors, SiteEventsListResponses, SiteIntegrationsCreateData, SiteIntegrationsCreateErrors, SiteIntegrationsCreateResponses, SiteIntegrationsDeleteData, SiteIntegrationsDeleteErrors, SiteIntegrationsDeleteResponses, SiteIntegrationsGetData, SiteIntegrationsGetErrors, SiteIntegrationsGetResponses, SiteIntegrationsListData, SiteIntegrationsListErrors, SiteIntegrationsListResponses, SiteIntegrationsUpdateData, SiteIntegrationsUpdateErrors, SiteIntegrationsUpdateResponses, SiteSegmentsCreateData, SiteSegmentsCreateErrors, SiteSegmentsCreateResponses, SiteSegmentsDeleteData, SiteSegmentsDeleteErrors, SiteSegmentsDeleteResponses, SiteSegmentsGetData, SiteSegmentsGetErrors, SiteSegmentsGetResponses, SiteSegmentsListData, SiteSegmentsListErrors, SiteSegmentsListResponses, SiteSegmentsPreviewData, SiteSegmentsPreviewErrors, SiteSegmentsPreviewResponses, SiteSegmentsUpdateData, SiteSegmentsUpdateErrors, SiteSegmentsUpdateResponses, SiteTemplatesCreateData, SiteTemplatesCreateErrors, SiteTemplatesCreateResponses, SiteTemplatesDeleteData, SiteTemplatesDeleteErrors, SiteTemplatesDeleteResponses, SiteTemplatesGetData, SiteTemplatesGetErrors, SiteTemplatesGetResponses, SiteTemplatesListData, SiteTemplatesListErrors, SiteTemplatesListResponses, SiteTemplatesUpdateData, SiteTemplatesUpdateErrors, SiteTemplatesUpdateResponses, SiteTokensCreateData, SiteTokensCreateErrors, SiteTokensCreateResponses, SiteTokensDeleteData, SiteTokensDeleteErrors, SiteTokensDeleteResponses, SiteTokensListData, SiteTokensListErrors, SiteTokensListResponses, SiteUserGetMeData, SiteUserGetMeResponses, SiteUserUpdateMeData, SiteUserUpdateMeErrors, SiteUserUpdateMeResponses, SiteWorkspacesListData, SiteWorkspacesListResponses, SiteWorkspacesUpdateData, SiteWorkspacesUpdateErrors, SiteWorkspacesUpdateResponses } from './types.gen.ts';
-import { zSiteAuthDirectLoginBody, zSiteAuthRegisterBody, zSiteAutomationsActivatePath, zSiteAutomationsCreateBody, zSiteAutomationsCreatePath, zSiteAutomationsDeactivatePath, zSiteAutomationsDeletePath, zSiteAutomationsGetPath, zSiteAutomationsListPath, zSiteAutomationsListQuery, zSiteAutomationsUpdateBody, zSiteAutomationsUpdatePath, zSiteBroadcastsCreateBody, zSiteBroadcastsCreatePath, zSiteBroadcastsDeletePath, zSiteBroadcastsGetPath, zSiteBroadcastsListPath, zSiteBroadcastsListQuery, zSiteBroadcastsScheduleBody, zSiteBroadcastsSchedulePath, zSiteBroadcastsSendPath, zSiteBroadcastsTestSendBody, zSiteBroadcastsTestSendPath, zSiteBroadcastsUpdateBody, zSiteBroadcastsUpdatePath, zSiteContactsCreateBody, zSiteContactsCreatePath, zSiteContactsDeletePath, zSiteContactsGetPath, zSiteContactsListPath, zSiteContactsListQuery, zSiteContactsUpdateBody, zSiteContactsUpdatePath, zSiteEventsListPath, zSiteEventsListQuery, zSiteIntegrationsCreateBody, zSiteIntegrationsCreatePath, zSiteIntegrationsDeletePath, zSiteIntegrationsGetPath, zSiteIntegrationsListPath, zSiteIntegrationsUpdateBody, zSiteIntegrationsUpdatePath, zSiteSegmentsCreateBody, zSiteSegmentsCreatePath, zSiteSegmentsDeletePath, zSiteSegmentsGetPath, zSiteSegmentsListPath, zSiteSegmentsListQuery, zSiteSegmentsPreviewBody, zSiteSegmentsPreviewPath, zSiteSegmentsUpdateBody, zSiteSegmentsUpdatePath, zSiteTemplatesCreateBody, zSiteTemplatesCreatePath, zSiteTemplatesDeletePath, zSiteTemplatesGetPath, zSiteTemplatesListPath, zSiteTemplatesListQuery, zSiteTemplatesUpdateBody, zSiteTemplatesUpdatePath, zSiteTokensCreateBody, zSiteTokensCreatePath, zSiteTokensDeletePath, zSiteTokensListPath, zSiteUserUpdateMeBody, zSiteWorkspacesUpdateBody, zSiteWorkspacesUpdatePath } from './zod.gen.ts';
+import type { SiteAuthDirectLoginData, SiteAuthDirectLoginErrors, SiteAuthDirectLoginResponses, SiteAuthRegisterData, SiteAuthRegisterErrors, SiteAuthRegisterResponses, SiteAutomationsActivateData, SiteAutomationsActivateErrors, SiteAutomationsActivateResponses, SiteAutomationsCreateData, SiteAutomationsCreateErrors, SiteAutomationsCreateResponses, SiteAutomationsDeactivateData, SiteAutomationsDeactivateErrors, SiteAutomationsDeactivateResponses, SiteAutomationsDeleteData, SiteAutomationsDeleteErrors, SiteAutomationsDeleteResponses, SiteAutomationsGetData, SiteAutomationsGetErrors, SiteAutomationsGetResponses, SiteAutomationsListData, SiteAutomationsListErrors, SiteAutomationsListResponses, SiteAutomationsUpdateData, SiteAutomationsUpdateErrors, SiteAutomationsUpdateResponses, SiteBroadcastsCreateData, SiteBroadcastsCreateErrors, SiteBroadcastsCreateResponses, SiteBroadcastsDeleteData, SiteBroadcastsDeleteErrors, SiteBroadcastsDeleteResponses, SiteBroadcastsGetData, SiteBroadcastsGetErrors, SiteBroadcastsGetResponses, SiteBroadcastsListData, SiteBroadcastsListErrors, SiteBroadcastsListResponses, SiteBroadcastsScheduleData, SiteBroadcastsScheduleErrors, SiteBroadcastsScheduleResponses, SiteBroadcastsSendData, SiteBroadcastsSendErrors, SiteBroadcastsSendResponses, SiteBroadcastsTestSendData, SiteBroadcastsTestSendErrors, SiteBroadcastsTestSendResponses, SiteBroadcastsUpdateData, SiteBroadcastsUpdateErrors, SiteBroadcastsUpdateResponses, SiteContactsCreateData, SiteContactsCreateErrors, SiteContactsCreateResponses, SiteContactsDeleteData, SiteContactsDeleteErrors, SiteContactsDeleteResponses, SiteContactsGetData, SiteContactsGetErrors, SiteContactsGetResponses, SiteContactsListData, SiteContactsListErrors, SiteContactsListResponses, SiteContactsUpdateData, SiteContactsUpdateErrors, SiteContactsUpdateResponses, SiteEventsListData, SiteEventsListErrors, SiteEventsListResponses, SiteIntegrationsCreateData, SiteIntegrationsCreateErrors, SiteIntegrationsCreateResponses, SiteIntegrationsDeleteData, SiteIntegrationsDeleteErrors, SiteIntegrationsDeleteResponses, SiteIntegrationsGetData, SiteIntegrationsGetErrors, SiteIntegrationsGetResponses, SiteIntegrationsListData, SiteIntegrationsListErrors, SiteIntegrationsListResponses, SiteIntegrationsUpdateData, SiteIntegrationsUpdateErrors, SiteIntegrationsUpdateResponses, SiteSegmentsCreateData, SiteSegmentsCreateErrors, SiteSegmentsCreateResponses, SiteSegmentsDeleteData, SiteSegmentsDeleteErrors, SiteSegmentsDeleteResponses, SiteSegmentsGetData, SiteSegmentsGetErrors, SiteSegmentsGetResponses, SiteSegmentsListData, SiteSegmentsListErrors, SiteSegmentsListResponses, SiteSegmentsPreviewData, SiteSegmentsPreviewErrors, SiteSegmentsPreviewResponses, SiteSegmentsUpdateData, SiteSegmentsUpdateErrors, SiteSegmentsUpdateResponses, SiteTemplatesCreateData, SiteTemplatesCreateErrors, SiteTemplatesCreateResponses, SiteTemplatesDeleteData, SiteTemplatesDeleteErrors, SiteTemplatesDeleteResponses, SiteTemplatesGetData, SiteTemplatesGetErrors, SiteTemplatesGetResponses, SiteTemplatesListData, SiteTemplatesListErrors, SiteTemplatesListResponses, SiteTemplatesUpdateData, SiteTemplatesUpdateErrors, SiteTemplatesUpdateResponses, SiteTokensCreateData, SiteTokensCreateErrors, SiteTokensCreateResponses, SiteTokensDeleteData, SiteTokensDeleteErrors, SiteTokensDeleteResponses, SiteTokensListData, SiteTokensListErrors, SiteTokensListResponses, SiteUserGetMeData, SiteUserGetMeResponses, SiteUserUpdateMeData, SiteUserUpdateMeErrors, SiteUserUpdateMeResponses, SiteWebhooksCreateData, SiteWebhooksCreateErrors, SiteWebhooksCreateResponses, SiteWebhooksDeleteData, SiteWebhooksDeleteErrors, SiteWebhooksDeleteResponses, SiteWebhooksGetData, SiteWebhooksGetErrors, SiteWebhooksGetResponses, SiteWebhooksListData, SiteWebhooksListErrors, SiteWebhooksListResponses, SiteWebhooksUpdateData, SiteWebhooksUpdateErrors, SiteWebhooksUpdateResponses, SiteWorkspacesListData, SiteWorkspacesListResponses, SiteWorkspacesUpdateData, SiteWorkspacesUpdateErrors, SiteWorkspacesUpdateResponses } from './types.gen.ts';
+import { zSiteAuthDirectLoginBody, zSiteAuthRegisterBody, zSiteAutomationsActivatePath, zSiteAutomationsCreateBody, zSiteAutomationsCreatePath, zSiteAutomationsDeactivatePath, zSiteAutomationsDeletePath, zSiteAutomationsGetPath, zSiteAutomationsListPath, zSiteAutomationsListQuery, zSiteAutomationsUpdateBody, zSiteAutomationsUpdatePath, zSiteBroadcastsCreateBody, zSiteBroadcastsCreatePath, zSiteBroadcastsDeletePath, zSiteBroadcastsGetPath, zSiteBroadcastsListPath, zSiteBroadcastsListQuery, zSiteBroadcastsScheduleBody, zSiteBroadcastsSchedulePath, zSiteBroadcastsSendPath, zSiteBroadcastsTestSendBody, zSiteBroadcastsTestSendPath, zSiteBroadcastsUpdateBody, zSiteBroadcastsUpdatePath, zSiteContactsCreateBody, zSiteContactsCreatePath, zSiteContactsDeletePath, zSiteContactsGetPath, zSiteContactsListPath, zSiteContactsListQuery, zSiteContactsUpdateBody, zSiteContactsUpdatePath, zSiteEventsListPath, zSiteEventsListQuery, zSiteIntegrationsCreateBody, zSiteIntegrationsCreatePath, zSiteIntegrationsDeletePath, zSiteIntegrationsGetPath, zSiteIntegrationsListPath, zSiteIntegrationsUpdateBody, zSiteIntegrationsUpdatePath, zSiteSegmentsCreateBody, zSiteSegmentsCreatePath, zSiteSegmentsDeletePath, zSiteSegmentsGetPath, zSiteSegmentsListPath, zSiteSegmentsListQuery, zSiteSegmentsPreviewBody, zSiteSegmentsPreviewPath, zSiteSegmentsUpdateBody, zSiteSegmentsUpdatePath, zSiteTemplatesCreateBody, zSiteTemplatesCreatePath, zSiteTemplatesDeletePath, zSiteTemplatesGetPath, zSiteTemplatesListPath, zSiteTemplatesListQuery, zSiteTemplatesUpdateBody, zSiteTemplatesUpdatePath, zSiteTokensCreateBody, zSiteTokensCreatePath, zSiteTokensDeletePath, zSiteTokensListPath, zSiteUserUpdateMeBody, zSiteWebhooksCreateBody, zSiteWebhooksCreatePath, zSiteWebhooksDeletePath, zSiteWebhooksGetPath, zSiteWebhooksListPath, zSiteWebhooksListQuery, zSiteWebhooksUpdateBody, zSiteWebhooksUpdatePath, zSiteWorkspacesUpdateBody, zSiteWorkspacesUpdatePath } from './zod.gen.ts';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -872,6 +872,104 @@ export const siteTokensDelete = <ThrowOnError extends boolean = false>(options: 
         }],
     url: '/w/{workspaceSlug}/tokens/{id}',
     ...options
+});
+
+/**
+ * List webhook endpoints
+ */
+export const siteWebhooksList = <ThrowOnError extends boolean = false>(options: Options<SiteWebhooksListData, ThrowOnError>): RequestResult<SiteWebhooksListResponses, SiteWebhooksListErrors, ThrowOnError> => (options.client ?? client).get<SiteWebhooksListResponses, SiteWebhooksListErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: z.never().optional(),
+        path: zSiteWebhooksListPath,
+        query: zSiteWebhooksListQuery.optional()
+    }).parseAsync(data),
+    security: [{
+            in: 'cookie',
+            name: 'JWT',
+            type: 'apiKey'
+        }],
+    url: '/w/{workspaceSlug}/webhooks',
+    ...options
+});
+
+/**
+ * Create a webhook endpoint
+ */
+export const siteWebhooksCreate = <ThrowOnError extends boolean = false>(options: Options<SiteWebhooksCreateData, ThrowOnError>): RequestResult<SiteWebhooksCreateResponses, SiteWebhooksCreateErrors, ThrowOnError> => (options.client ?? client).post<SiteWebhooksCreateResponses, SiteWebhooksCreateErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: zSiteWebhooksCreateBody,
+        path: zSiteWebhooksCreatePath,
+        query: z.never().optional()
+    }).parseAsync(data),
+    security: [{
+            in: 'cookie',
+            name: 'JWT',
+            type: 'apiKey'
+        }],
+    url: '/w/{workspaceSlug}/webhooks',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Delete a webhook endpoint
+ */
+export const siteWebhooksDelete = <ThrowOnError extends boolean = false>(options: Options<SiteWebhooksDeleteData, ThrowOnError>): RequestResult<SiteWebhooksDeleteResponses, SiteWebhooksDeleteErrors, ThrowOnError> => (options.client ?? client).delete<SiteWebhooksDeleteResponses, SiteWebhooksDeleteErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: z.never().optional(),
+        path: zSiteWebhooksDeletePath,
+        query: z.never().optional()
+    }).parseAsync(data),
+    security: [{
+            in: 'cookie',
+            name: 'JWT',
+            type: 'apiKey'
+        }],
+    url: '/w/{workspaceSlug}/webhooks/{id}',
+    ...options
+});
+
+/**
+ * Get a webhook endpoint by ID
+ */
+export const siteWebhooksGet = <ThrowOnError extends boolean = false>(options: Options<SiteWebhooksGetData, ThrowOnError>): RequestResult<SiteWebhooksGetResponses, SiteWebhooksGetErrors, ThrowOnError> => (options.client ?? client).get<SiteWebhooksGetResponses, SiteWebhooksGetErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: z.never().optional(),
+        path: zSiteWebhooksGetPath,
+        query: z.never().optional()
+    }).parseAsync(data),
+    security: [{
+            in: 'cookie',
+            name: 'JWT',
+            type: 'apiKey'
+        }],
+    url: '/w/{workspaceSlug}/webhooks/{id}',
+    ...options
+});
+
+/**
+ * Update a webhook endpoint
+ */
+export const siteWebhooksUpdate = <ThrowOnError extends boolean = false>(options: Options<SiteWebhooksUpdateData, ThrowOnError>): RequestResult<SiteWebhooksUpdateResponses, SiteWebhooksUpdateErrors, ThrowOnError> => (options.client ?? client).put<SiteWebhooksUpdateResponses, SiteWebhooksUpdateErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: zSiteWebhooksUpdateBody,
+        path: zSiteWebhooksUpdatePath,
+        query: z.never().optional()
+    }).parseAsync(data),
+    security: [{
+            in: 'cookie',
+            name: 'JWT',
+            type: 'apiKey'
+        }],
+    url: '/w/{workspaceSlug}/webhooks/{id}',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
 });
 
 /**

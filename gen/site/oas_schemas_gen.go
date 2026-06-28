@@ -2780,6 +2780,44 @@ func (s *SiteCreateTokenResponse) SetResource(val SiteApiTokenResource) {
 
 func (*SiteCreateTokenResponse) siteTokensCreateRes() {}
 
+// Site request body for creating a webhook endpoint.
+// Ref: #/components/schemas/SiteCreateWebhookEndpointInput
+type SiteCreateWebhookEndpointInput struct {
+	URL        string   `json:"url"`
+	EventTypes []string `json:"eventTypes"`
+	Enabled    OptBool  `json:"enabled"`
+}
+
+// GetURL returns the value of URL.
+func (s *SiteCreateWebhookEndpointInput) GetURL() string {
+	return s.URL
+}
+
+// GetEventTypes returns the value of EventTypes.
+func (s *SiteCreateWebhookEndpointInput) GetEventTypes() []string {
+	return s.EventTypes
+}
+
+// GetEnabled returns the value of Enabled.
+func (s *SiteCreateWebhookEndpointInput) GetEnabled() OptBool {
+	return s.Enabled
+}
+
+// SetURL sets the value of URL.
+func (s *SiteCreateWebhookEndpointInput) SetURL(val string) {
+	s.URL = val
+}
+
+// SetEventTypes sets the value of EventTypes.
+func (s *SiteCreateWebhookEndpointInput) SetEventTypes(val []string) {
+	s.EventTypes = val
+}
+
+// SetEnabled sets the value of Enabled.
+func (s *SiteCreateWebhookEndpointInput) SetEnabled(val OptBool) {
+	s.Enabled = val
+}
+
 // Ref: #/components/schemas/SiteDirectLoginError
 type SiteDirectLoginError struct {
 	Error string `json:"error"`
@@ -4941,6 +4979,44 @@ func (s *SiteUpdateSegmentInput) SetDefinition(val OptNilString) {
 	s.Definition = val
 }
 
+// Site request body for updating a webhook endpoint.
+// Ref: #/components/schemas/SiteUpdateWebhookEndpointInput
+type SiteUpdateWebhookEndpointInput struct {
+	URL        OptString `json:"url"`
+	EventTypes []string  `json:"eventTypes"`
+	Enabled    OptBool   `json:"enabled"`
+}
+
+// GetURL returns the value of URL.
+func (s *SiteUpdateWebhookEndpointInput) GetURL() OptString {
+	return s.URL
+}
+
+// GetEventTypes returns the value of EventTypes.
+func (s *SiteUpdateWebhookEndpointInput) GetEventTypes() []string {
+	return s.EventTypes
+}
+
+// GetEnabled returns the value of Enabled.
+func (s *SiteUpdateWebhookEndpointInput) GetEnabled() OptBool {
+	return s.Enabled
+}
+
+// SetURL sets the value of URL.
+func (s *SiteUpdateWebhookEndpointInput) SetURL(val OptString) {
+	s.URL = val
+}
+
+// SetEventTypes sets the value of EventTypes.
+func (s *SiteUpdateWebhookEndpointInput) SetEventTypes(val []string) {
+	s.EventTypes = val
+}
+
+// SetEnabled sets the value of Enabled.
+func (s *SiteUpdateWebhookEndpointInput) SetEnabled(val OptBool) {
+	s.Enabled = val
+}
+
 // Update a workspace. The slug is immutable (it is the route key and globally unique); only the
 // display name can change.
 // Ref: #/components/schemas/SiteUpdateWorkspaceInput
@@ -5021,6 +5097,218 @@ func (*SiteUserUpdateMeForbidden) siteUserUpdateMeRes() {}
 type SiteUserUpdateMeUnprocessableEntity ProblemDetails
 
 func (*SiteUserUpdateMeUnprocessableEntity) siteUserUpdateMeRes() {}
+
+// Webhook endpoint resource used by the site UI.
+// Ref: #/components/schemas/SiteWebhookEndpointResource
+type SiteWebhookEndpointResource struct {
+	// Unique identifier.
+	ID EntityId `json:"id"`
+	// Destination URL events are POSTed to.
+	URL string `json:"url"`
+	// HMAC signing secret (used to verify the X-1mail-Signature header).
+	Secret string `json:"secret"`
+	// Event names this endpoint receives; empty means all events.
+	EventTypes []string `json:"eventTypes"`
+	// Whether the endpoint receives deliveries.
+	Enabled bool `json:"enabled"`
+	// Creation timestamp.
+	CreatedAt Timestamp `json:"createdAt"`
+	// Last update timestamp.
+	UpdatedAt Timestamp `json:"updatedAt"`
+}
+
+// GetID returns the value of ID.
+func (s *SiteWebhookEndpointResource) GetID() EntityId {
+	return s.ID
+}
+
+// GetURL returns the value of URL.
+func (s *SiteWebhookEndpointResource) GetURL() string {
+	return s.URL
+}
+
+// GetSecret returns the value of Secret.
+func (s *SiteWebhookEndpointResource) GetSecret() string {
+	return s.Secret
+}
+
+// GetEventTypes returns the value of EventTypes.
+func (s *SiteWebhookEndpointResource) GetEventTypes() []string {
+	return s.EventTypes
+}
+
+// GetEnabled returns the value of Enabled.
+func (s *SiteWebhookEndpointResource) GetEnabled() bool {
+	return s.Enabled
+}
+
+// GetCreatedAt returns the value of CreatedAt.
+func (s *SiteWebhookEndpointResource) GetCreatedAt() Timestamp {
+	return s.CreatedAt
+}
+
+// GetUpdatedAt returns the value of UpdatedAt.
+func (s *SiteWebhookEndpointResource) GetUpdatedAt() Timestamp {
+	return s.UpdatedAt
+}
+
+// SetID sets the value of ID.
+func (s *SiteWebhookEndpointResource) SetID(val EntityId) {
+	s.ID = val
+}
+
+// SetURL sets the value of URL.
+func (s *SiteWebhookEndpointResource) SetURL(val string) {
+	s.URL = val
+}
+
+// SetSecret sets the value of Secret.
+func (s *SiteWebhookEndpointResource) SetSecret(val string) {
+	s.Secret = val
+}
+
+// SetEventTypes sets the value of EventTypes.
+func (s *SiteWebhookEndpointResource) SetEventTypes(val []string) {
+	s.EventTypes = val
+}
+
+// SetEnabled sets the value of Enabled.
+func (s *SiteWebhookEndpointResource) SetEnabled(val bool) {
+	s.Enabled = val
+}
+
+// SetCreatedAt sets the value of CreatedAt.
+func (s *SiteWebhookEndpointResource) SetCreatedAt(val Timestamp) {
+	s.CreatedAt = val
+}
+
+// SetUpdatedAt sets the value of UpdatedAt.
+func (s *SiteWebhookEndpointResource) SetUpdatedAt(val Timestamp) {
+	s.UpdatedAt = val
+}
+
+func (*SiteWebhookEndpointResource) siteWebhooksCreateRes() {}
+func (*SiteWebhookEndpointResource) siteWebhooksGetRes()    {}
+func (*SiteWebhookEndpointResource) siteWebhooksUpdateRes() {}
+
+type SiteWebhooksCreateNotFound ProblemDetails
+
+func (*SiteWebhooksCreateNotFound) siteWebhooksCreateRes() {}
+
+type SiteWebhooksCreateUnprocessableEntity ProblemDetails
+
+func (*SiteWebhooksCreateUnprocessableEntity) siteWebhooksCreateRes() {}
+
+type SiteWebhooksDeleteBadRequest ProblemDetails
+
+func (*SiteWebhooksDeleteBadRequest) siteWebhooksDeleteRes() {}
+
+// SiteWebhooksDeleteNoContent is response for SiteWebhooksDelete operation.
+type SiteWebhooksDeleteNoContent struct{}
+
+func (*SiteWebhooksDeleteNoContent) siteWebhooksDeleteRes() {}
+
+type SiteWebhooksDeleteNotFound ProblemDetails
+
+func (*SiteWebhooksDeleteNotFound) siteWebhooksDeleteRes() {}
+
+type SiteWebhooksGetBadRequest ProblemDetails
+
+func (*SiteWebhooksGetBadRequest) siteWebhooksGetRes() {}
+
+type SiteWebhooksGetNotFound ProblemDetails
+
+func (*SiteWebhooksGetNotFound) siteWebhooksGetRes() {}
+
+type SiteWebhooksListBadRequest ProblemDetails
+
+func (*SiteWebhooksListBadRequest) siteWebhooksListRes() {}
+
+type SiteWebhooksListNotFound ProblemDetails
+
+func (*SiteWebhooksListNotFound) siteWebhooksListRes() {}
+
+// Paginated response.
+type SiteWebhooksListOK struct {
+	// List of items.
+	Items []SiteWebhookEndpointResource `json:"items"`
+	// Page number (1-based).
+	Page int32 `json:"page"`
+	// Page size.
+	PageSize int32 `json:"pageSize"`
+	// Total number of elements.
+	TotalItems int32 `json:"totalItems"`
+	// Total number of pages.
+	TotalPages int32 `json:"totalPages"`
+}
+
+// GetItems returns the value of Items.
+func (s *SiteWebhooksListOK) GetItems() []SiteWebhookEndpointResource {
+	return s.Items
+}
+
+// GetPage returns the value of Page.
+func (s *SiteWebhooksListOK) GetPage() int32 {
+	return s.Page
+}
+
+// GetPageSize returns the value of PageSize.
+func (s *SiteWebhooksListOK) GetPageSize() int32 {
+	return s.PageSize
+}
+
+// GetTotalItems returns the value of TotalItems.
+func (s *SiteWebhooksListOK) GetTotalItems() int32 {
+	return s.TotalItems
+}
+
+// GetTotalPages returns the value of TotalPages.
+func (s *SiteWebhooksListOK) GetTotalPages() int32 {
+	return s.TotalPages
+}
+
+// SetItems sets the value of Items.
+func (s *SiteWebhooksListOK) SetItems(val []SiteWebhookEndpointResource) {
+	s.Items = val
+}
+
+// SetPage sets the value of Page.
+func (s *SiteWebhooksListOK) SetPage(val int32) {
+	s.Page = val
+}
+
+// SetPageSize sets the value of PageSize.
+func (s *SiteWebhooksListOK) SetPageSize(val int32) {
+	s.PageSize = val
+}
+
+// SetTotalItems sets the value of TotalItems.
+func (s *SiteWebhooksListOK) SetTotalItems(val int32) {
+	s.TotalItems = val
+}
+
+// SetTotalPages sets the value of TotalPages.
+func (s *SiteWebhooksListOK) SetTotalPages(val int32) {
+	s.TotalPages = val
+}
+
+func (*SiteWebhooksListOK) siteWebhooksListRes() {}
+
+type SiteWebhooksListUnprocessableEntity ProblemDetails
+
+func (*SiteWebhooksListUnprocessableEntity) siteWebhooksListRes() {}
+
+type SiteWebhooksUpdateBadRequest ProblemDetails
+
+func (*SiteWebhooksUpdateBadRequest) siteWebhooksUpdateRes() {}
+
+type SiteWebhooksUpdateNotFound ProblemDetails
+
+func (*SiteWebhooksUpdateNotFound) siteWebhooksUpdateRes() {}
+
+type SiteWebhooksUpdateUnprocessableEntity ProblemDetails
+
+func (*SiteWebhooksUpdateUnprocessableEntity) siteWebhooksUpdateRes() {}
 
 // Workspace the current user belongs to.
 // Ref: #/components/schemas/SiteWorkspaceResource

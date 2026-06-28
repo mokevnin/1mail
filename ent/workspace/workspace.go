@@ -50,6 +50,8 @@ const (
 	EdgeAutomations = "automations"
 	// EdgeAutomationRuns holds the string denoting the automation_runs edge name in mutations.
 	EdgeAutomationRuns = "automation_runs"
+	// EdgeWebhookEndpoints holds the string denoting the webhook_endpoints edge name in mutations.
+	EdgeWebhookEndpoints = "webhook_endpoints"
 	// EdgeUser holds the string denoting the user edge name in mutations.
 	EdgeUser = "user"
 	// Table holds the table name of the workspace in the database.
@@ -138,6 +140,13 @@ const (
 	AutomationRunsInverseTable = "automation_runs"
 	// AutomationRunsColumn is the table column denoting the automation_runs relation/edge.
 	AutomationRunsColumn = "workspace_id"
+	// WebhookEndpointsTable is the table that holds the webhook_endpoints relation/edge.
+	WebhookEndpointsTable = "webhook_endpoints"
+	// WebhookEndpointsInverseTable is the table name for the WebhookEndpoint entity.
+	// It exists in this package in order to avoid circular dependency with the "webhookendpoint" package.
+	WebhookEndpointsInverseTable = "webhook_endpoints"
+	// WebhookEndpointsColumn is the table column denoting the webhook_endpoints relation/edge.
+	WebhookEndpointsColumn = "workspace_id"
 	// UserTable is the table that holds the user relation/edge.
 	UserTable = "workspaces"
 	// UserInverseTable is the table name for the User entity.
@@ -389,6 +398,20 @@ func ByAutomationRuns(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 	}
 }
 
+// ByWebhookEndpointsCount orders the results by webhook_endpoints count.
+func ByWebhookEndpointsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newWebhookEndpointsStep(), opts...)
+	}
+}
+
+// ByWebhookEndpoints orders the results by webhook_endpoints terms.
+func ByWebhookEndpoints(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newWebhookEndpointsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+
 // ByUserField orders the results by user field.
 func ByUserField(field string, opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
@@ -477,6 +500,13 @@ func newAutomationRunsStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(AutomationRunsInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2M, false, AutomationRunsTable, AutomationRunsColumn),
+	)
+}
+func newWebhookEndpointsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(WebhookEndpointsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, WebhookEndpointsTable, WebhookEndpointsColumn),
 	)
 }
 func newUserStep() *sqlgraph.Step {

@@ -405,6 +405,51 @@ func (UnimplementedHandler) SiteUserUpdateMe(ctx context.Context, req *SiteUpdat
 	return r, ht.ErrNotImplemented
 }
 
+// SiteWebhooksCreate implements SiteWebhooks_create operation.
+//
+// Create a webhook endpoint.
+//
+// POST /w/{workspaceSlug}/webhooks
+func (UnimplementedHandler) SiteWebhooksCreate(ctx context.Context, req *SiteCreateWebhookEndpointInput, params SiteWebhooksCreateParams) (r SiteWebhooksCreateRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// SiteWebhooksDelete implements SiteWebhooks_delete operation.
+//
+// Delete a webhook endpoint.
+//
+// DELETE /w/{workspaceSlug}/webhooks/{id}
+func (UnimplementedHandler) SiteWebhooksDelete(ctx context.Context, params SiteWebhooksDeleteParams) (r SiteWebhooksDeleteRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// SiteWebhooksGet implements SiteWebhooks_get operation.
+//
+// Get a webhook endpoint by ID.
+//
+// GET /w/{workspaceSlug}/webhooks/{id}
+func (UnimplementedHandler) SiteWebhooksGet(ctx context.Context, params SiteWebhooksGetParams) (r SiteWebhooksGetRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// SiteWebhooksList implements SiteWebhooks_list operation.
+//
+// List webhook endpoints.
+//
+// GET /w/{workspaceSlug}/webhooks
+func (UnimplementedHandler) SiteWebhooksList(ctx context.Context, params SiteWebhooksListParams) (r SiteWebhooksListRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// SiteWebhooksUpdate implements SiteWebhooks_update operation.
+//
+// Update a webhook endpoint.
+//
+// PUT /w/{workspaceSlug}/webhooks/{id}
+func (UnimplementedHandler) SiteWebhooksUpdate(ctx context.Context, req *SiteUpdateWebhookEndpointInput, params SiteWebhooksUpdateParams) (r SiteWebhooksUpdateRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // SiteWorkspacesList implements SiteWorkspaces_list operation.
 //
 // List workspaces owned by the authenticated user.

@@ -50,6 +50,11 @@ const (
 	SiteTokensListOperation            OperationName = "SiteTokensList"
 	SiteUserGetMeOperation             OperationName = "SiteUserGetMe"
 	SiteUserUpdateMeOperation          OperationName = "SiteUserUpdateMe"
+	SiteWebhooksCreateOperation        OperationName = "SiteWebhooksCreate"
+	SiteWebhooksDeleteOperation        OperationName = "SiteWebhooksDelete"
+	SiteWebhooksGetOperation           OperationName = "SiteWebhooksGet"
+	SiteWebhooksListOperation          OperationName = "SiteWebhooksList"
+	SiteWebhooksUpdateOperation        OperationName = "SiteWebhooksUpdate"
 	SiteWorkspacesListOperation        OperationName = "SiteWorkspacesList"
 	SiteWorkspacesUpdateOperation      OperationName = "SiteWorkspacesUpdate"
 )

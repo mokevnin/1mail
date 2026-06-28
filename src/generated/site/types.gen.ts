@@ -420,6 +420,15 @@ export type SiteCreateTokenResponse = {
     resource: SiteApiTokenResource;
 };
 
+/**
+ * Site request body for creating a webhook endpoint
+ */
+export type SiteCreateWebhookEndpointInput = {
+    url: string;
+    eventTypes?: Array<string>;
+    enabled?: boolean;
+};
+
 export type SiteDirectLoginError = {
     error: string;
 };
@@ -856,6 +865,15 @@ export type SiteUpdateSegmentInput = {
 };
 
 /**
+ * Site request body for updating a webhook endpoint
+ */
+export type SiteUpdateWebhookEndpointInput = {
+    url?: string;
+    eventTypes?: Array<string>;
+    enabled?: boolean;
+};
+
+/**
  * Update a workspace. The slug is immutable (it is the route key and globally
  * unique); only the display name can change.
  */
@@ -886,6 +904,40 @@ export type SiteUserResource = {
      * Creation timestamp
      */
     createdAt: Timestamp;
+};
+
+/**
+ * Webhook endpoint resource used by the site UI
+ */
+export type SiteWebhookEndpointResource = {
+    /**
+     * Unique identifier
+     */
+    id: EntityId;
+    /**
+     * Destination URL events are POSTed to
+     */
+    url: string;
+    /**
+     * HMAC signing secret (used to verify the X-1mail-Signature header)
+     */
+    secret: string;
+    /**
+     * Event names this endpoint receives; empty means all events
+     */
+    eventTypes: Array<string>;
+    /**
+     * Whether the endpoint receives deliveries
+     */
+    enabled: boolean;
+    /**
+     * Creation timestamp
+     */
+    createdAt: Timestamp;
+    /**
+     * Last update timestamp
+     */
+    updatedAt: Timestamp;
 };
 
 /**
@@ -2557,6 +2609,202 @@ export type SiteTokensDeleteResponses = {
 };
 
 export type SiteTokensDeleteResponse = SiteTokensDeleteResponses[keyof SiteTokensDeleteResponses];
+
+export type SiteWebhooksListData = {
+    body?: never;
+    path: {
+        workspaceSlug: string;
+    };
+    query?: {
+        /**
+         * Page number (1-based)
+         */
+        page?: number;
+        /**
+         * Page size
+         */
+        pageSize?: number;
+    };
+    url: '/w/{workspaceSlug}/webhooks';
+};
+
+export type SiteWebhooksListErrors = {
+    /**
+     * RFC 7807 bad request response
+     */
+    400: ProblemDetails;
+    /**
+     * RFC 7807 not found response
+     */
+    404: ProblemDetails;
+    /**
+     * RFC 7807 validation response
+     */
+    422: ProblemDetails;
+};
+
+export type SiteWebhooksListError = SiteWebhooksListErrors[keyof SiteWebhooksListErrors];
+
+export type SiteWebhooksListResponses = {
+    /**
+     * Paginated response
+     */
+    200: {
+        /**
+         * List of items
+         */
+        items: Array<SiteWebhookEndpointResource>;
+        /**
+         * Page number (1-based)
+         */
+        page: number;
+        /**
+         * Page size
+         */
+        pageSize: number;
+        /**
+         * Total number of elements
+         */
+        totalItems: number;
+        /**
+         * Total number of pages
+         */
+        totalPages: number;
+    };
+};
+
+export type SiteWebhooksListResponse = SiteWebhooksListResponses[keyof SiteWebhooksListResponses];
+
+export type SiteWebhooksCreateData = {
+    body: SiteCreateWebhookEndpointInput;
+    path: {
+        workspaceSlug: string;
+    };
+    query?: never;
+    url: '/w/{workspaceSlug}/webhooks';
+};
+
+export type SiteWebhooksCreateErrors = {
+    /**
+     * RFC 7807 not found response
+     */
+    404: ProblemDetails;
+    /**
+     * RFC 7807 validation response
+     */
+    422: ProblemDetails;
+};
+
+export type SiteWebhooksCreateError = SiteWebhooksCreateErrors[keyof SiteWebhooksCreateErrors];
+
+export type SiteWebhooksCreateResponses = {
+    /**
+     * The request has succeeded and a new resource has been created as a result.
+     */
+    201: SiteWebhookEndpointResource;
+};
+
+export type SiteWebhooksCreateResponse = SiteWebhooksCreateResponses[keyof SiteWebhooksCreateResponses];
+
+export type SiteWebhooksDeleteData = {
+    body?: never;
+    path: {
+        workspaceSlug: string;
+        id: EntityId;
+    };
+    query?: never;
+    url: '/w/{workspaceSlug}/webhooks/{id}';
+};
+
+export type SiteWebhooksDeleteErrors = {
+    /**
+     * RFC 7807 bad request response
+     */
+    400: ProblemDetails;
+    /**
+     * RFC 7807 not found response
+     */
+    404: ProblemDetails;
+};
+
+export type SiteWebhooksDeleteError = SiteWebhooksDeleteErrors[keyof SiteWebhooksDeleteErrors];
+
+export type SiteWebhooksDeleteResponses = {
+    /**
+     * There is no content to send for this request, but the headers may be useful.
+     */
+    204: void;
+};
+
+export type SiteWebhooksDeleteResponse = SiteWebhooksDeleteResponses[keyof SiteWebhooksDeleteResponses];
+
+export type SiteWebhooksGetData = {
+    body?: never;
+    path: {
+        workspaceSlug: string;
+        id: EntityId;
+    };
+    query?: never;
+    url: '/w/{workspaceSlug}/webhooks/{id}';
+};
+
+export type SiteWebhooksGetErrors = {
+    /**
+     * RFC 7807 bad request response
+     */
+    400: ProblemDetails;
+    /**
+     * RFC 7807 not found response
+     */
+    404: ProblemDetails;
+};
+
+export type SiteWebhooksGetError = SiteWebhooksGetErrors[keyof SiteWebhooksGetErrors];
+
+export type SiteWebhooksGetResponses = {
+    /**
+     * The request has succeeded.
+     */
+    200: SiteWebhookEndpointResource;
+};
+
+export type SiteWebhooksGetResponse = SiteWebhooksGetResponses[keyof SiteWebhooksGetResponses];
+
+export type SiteWebhooksUpdateData = {
+    body: SiteUpdateWebhookEndpointInput;
+    path: {
+        workspaceSlug: string;
+        id: EntityId;
+    };
+    query?: never;
+    url: '/w/{workspaceSlug}/webhooks/{id}';
+};
+
+export type SiteWebhooksUpdateErrors = {
+    /**
+     * RFC 7807 bad request response
+     */
+    400: ProblemDetails;
+    /**
+     * RFC 7807 not found response
+     */
+    404: ProblemDetails;
+    /**
+     * RFC 7807 validation response
+     */
+    422: ProblemDetails;
+};
+
+export type SiteWebhooksUpdateError = SiteWebhooksUpdateErrors[keyof SiteWebhooksUpdateErrors];
+
+export type SiteWebhooksUpdateResponses = {
+    /**
+     * The request has succeeded.
+     */
+    200: SiteWebhookEndpointResource;
+};
+
+export type SiteWebhooksUpdateResponse = SiteWebhooksUpdateResponses[keyof SiteWebhooksUpdateResponses];
 
 export type SiteWorkspacesListData = {
     body?: never;

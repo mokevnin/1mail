@@ -268,6 +268,36 @@ type Handler interface {
 	//
 	// PUT /me
 	SiteUserUpdateMe(ctx context.Context, req *SiteUpdateMeInput) (SiteUserUpdateMeRes, error)
+	// SiteWebhooksCreate implements SiteWebhooks_create operation.
+	//
+	// Create a webhook endpoint.
+	//
+	// POST /w/{workspaceSlug}/webhooks
+	SiteWebhooksCreate(ctx context.Context, req *SiteCreateWebhookEndpointInput, params SiteWebhooksCreateParams) (SiteWebhooksCreateRes, error)
+	// SiteWebhooksDelete implements SiteWebhooks_delete operation.
+	//
+	// Delete a webhook endpoint.
+	//
+	// DELETE /w/{workspaceSlug}/webhooks/{id}
+	SiteWebhooksDelete(ctx context.Context, params SiteWebhooksDeleteParams) (SiteWebhooksDeleteRes, error)
+	// SiteWebhooksGet implements SiteWebhooks_get operation.
+	//
+	// Get a webhook endpoint by ID.
+	//
+	// GET /w/{workspaceSlug}/webhooks/{id}
+	SiteWebhooksGet(ctx context.Context, params SiteWebhooksGetParams) (SiteWebhooksGetRes, error)
+	// SiteWebhooksList implements SiteWebhooks_list operation.
+	//
+	// List webhook endpoints.
+	//
+	// GET /w/{workspaceSlug}/webhooks
+	SiteWebhooksList(ctx context.Context, params SiteWebhooksListParams) (SiteWebhooksListRes, error)
+	// SiteWebhooksUpdate implements SiteWebhooks_update operation.
+	//
+	// Update a webhook endpoint.
+	//
+	// PUT /w/{workspaceSlug}/webhooks/{id}
+	SiteWebhooksUpdate(ctx context.Context, req *SiteUpdateWebhookEndpointInput, params SiteWebhooksUpdateParams) (SiteWebhooksUpdateRes, error)
 	// SiteWorkspacesList implements SiteWorkspaces_list operation.
 	//
 	// List workspaces owned by the authenticated user.

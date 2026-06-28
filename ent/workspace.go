@@ -62,11 +62,13 @@ type WorkspaceEdges struct {
 	Automations []*Automation `json:"automations,omitempty"`
 	// AutomationRuns holds the value of the automation_runs edge.
 	AutomationRuns []*AutomationRun `json:"automation_runs,omitempty"`
+	// WebhookEndpoints holds the value of the webhook_endpoints edge.
+	WebhookEndpoints []*WebhookEndpoint `json:"webhook_endpoints,omitempty"`
 	// User holds the value of the user edge.
 	User *User `json:"user,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [13]bool
+	loadedTypes [14]bool
 }
 
 // ContactsOrErr returns the Contacts value or an error if the edge
@@ -177,12 +179,21 @@ func (e WorkspaceEdges) AutomationRunsOrErr() ([]*AutomationRun, error) {
 	return nil, &NotLoadedError{edge: "automation_runs"}
 }
 
+// WebhookEndpointsOrErr returns the WebhookEndpoints value or an error if the edge
+// was not loaded in eager-loading.
+func (e WorkspaceEdges) WebhookEndpointsOrErr() ([]*WebhookEndpoint, error) {
+	if e.loadedTypes[12] {
+		return e.WebhookEndpoints, nil
+	}
+	return nil, &NotLoadedError{edge: "webhook_endpoints"}
+}
+
 // UserOrErr returns the User value or an error if the edge
 // was not loaded in eager-loading, or loaded but was not found.
 func (e WorkspaceEdges) UserOrErr() (*User, error) {
 	if e.User != nil {
 		return e.User, nil
-	} else if e.loadedTypes[12] {
+	} else if e.loadedTypes[13] {
 		return nil, &NotFoundError{label: user.Label}
 	}
 	return nil, &NotLoadedError{edge: "user"}
@@ -328,6 +339,11 @@ func (_m *Workspace) QueryAutomations() *AutomationQuery {
 // QueryAutomationRuns queries the "automation_runs" edge of the Workspace entity.
 func (_m *Workspace) QueryAutomationRuns() *AutomationRunQuery {
 	return NewWorkspaceClient(_m.config).QueryAutomationRuns(_m)
+}
+
+// QueryWebhookEndpoints queries the "webhook_endpoints" edge of the Workspace entity.
+func (_m *Workspace) QueryWebhookEndpoints() *WebhookEndpointQuery {
+	return NewWorkspaceClient(_m.config).QueryWebhookEndpoints(_m)
 }
 
 // QueryUser queries the "user" edge of the Workspace entity.

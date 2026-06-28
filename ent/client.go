@@ -28,6 +28,7 @@ import (
 	"github.com/mokevnin/1mail/ent/trackingprofile"
 	"github.com/mokevnin/1mail/ent/trackingvisitor"
 	"github.com/mokevnin/1mail/ent/user"
+	"github.com/mokevnin/1mail/ent/webhookendpoint"
 	"github.com/mokevnin/1mail/ent/workspace"
 )
 
@@ -62,6 +63,8 @@ type Client struct {
 	TrackingVisitor *TrackingVisitorClient
 	// User is the client for interacting with the User builders.
 	User *UserClient
+	// WebhookEndpoint is the client for interacting with the WebhookEndpoint builders.
+	WebhookEndpoint *WebhookEndpointClient
 	// Workspace is the client for interacting with the Workspace builders.
 	Workspace *WorkspaceClient
 }
@@ -88,6 +91,7 @@ func (c *Client) init() {
 	c.TrackingProfile = NewTrackingProfileClient(c.config)
 	c.TrackingVisitor = NewTrackingVisitorClient(c.config)
 	c.User = NewUserClient(c.config)
+	c.WebhookEndpoint = NewWebhookEndpointClient(c.config)
 	c.Workspace = NewWorkspaceClient(c.config)
 }
 
@@ -194,6 +198,7 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		TrackingProfile:    NewTrackingProfileClient(cfg),
 		TrackingVisitor:    NewTrackingVisitorClient(cfg),
 		User:               NewUserClient(cfg),
+		WebhookEndpoint:    NewWebhookEndpointClient(cfg),
 		Workspace:          NewWorkspaceClient(cfg),
 	}, nil
 }
@@ -227,6 +232,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		TrackingProfile:    NewTrackingProfileClient(cfg),
 		TrackingVisitor:    NewTrackingVisitorClient(cfg),
 		User:               NewUserClient(cfg),
+		WebhookEndpoint:    NewWebhookEndpointClient(cfg),
 		Workspace:          NewWorkspaceClient(cfg),
 	}, nil
 }
@@ -259,7 +265,7 @@ func (c *Client) Use(hooks ...Hook) {
 	for _, n := range []interface{ Use(...Hook) }{
 		c.ApiToken, c.Automation, c.AutomationRun, c.Broadcast, c.BroadcastRecipient,
 		c.Contact, c.EmailTemplate, c.Event, c.Integration, c.Segment,
-		c.TrackingProfile, c.TrackingVisitor, c.User, c.Workspace,
+		c.TrackingProfile, c.TrackingVisitor, c.User, c.WebhookEndpoint, c.Workspace,
 	} {
 		n.Use(hooks...)
 	}
@@ -271,7 +277,7 @@ func (c *Client) Intercept(interceptors ...Interceptor) {
 	for _, n := range []interface{ Intercept(...Interceptor) }{
 		c.ApiToken, c.Automation, c.AutomationRun, c.Broadcast, c.BroadcastRecipient,
 		c.Contact, c.EmailTemplate, c.Event, c.Integration, c.Segment,
-		c.TrackingProfile, c.TrackingVisitor, c.User, c.Workspace,
+		c.TrackingProfile, c.TrackingVisitor, c.User, c.WebhookEndpoint, c.Workspace,
 	} {
 		n.Intercept(interceptors...)
 	}
@@ -306,6 +312,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.TrackingVisitor.mutate(ctx, m)
 	case *UserMutation:
 		return c.User.mutate(ctx, m)
+	case *WebhookEndpointMutation:
+		return c.WebhookEndpoint.mutate(ctx, m)
 	case *WorkspaceMutation:
 		return c.Workspace.mutate(ctx, m)
 	default:
@@ -2346,6 +2354,155 @@ func (c *UserClient) mutate(ctx context.Context, m *UserMutation) (Value, error)
 	}
 }
 
+// WebhookEndpointClient is a client for the WebhookEndpoint schema.
+type WebhookEndpointClient struct {
+	config
+}
+
+// NewWebhookEndpointClient returns a client for the WebhookEndpoint from the given config.
+func NewWebhookEndpointClient(c config) *WebhookEndpointClient {
+	return &WebhookEndpointClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `webhookendpoint.Hooks(f(g(h())))`.
+func (c *WebhookEndpointClient) Use(hooks ...Hook) {
+	c.hooks.WebhookEndpoint = append(c.hooks.WebhookEndpoint, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `webhookendpoint.Intercept(f(g(h())))`.
+func (c *WebhookEndpointClient) Intercept(interceptors ...Interceptor) {
+	c.inters.WebhookEndpoint = append(c.inters.WebhookEndpoint, interceptors...)
+}
+
+// Create returns a builder for creating a WebhookEndpoint entity.
+func (c *WebhookEndpointClient) Create() *WebhookEndpointCreate {
+	mutation := newWebhookEndpointMutation(c.config, OpCreate)
+	return &WebhookEndpointCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of WebhookEndpoint entities.
+func (c *WebhookEndpointClient) CreateBulk(builders ...*WebhookEndpointCreate) *WebhookEndpointCreateBulk {
+	return &WebhookEndpointCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *WebhookEndpointClient) MapCreateBulk(slice any, setFunc func(*WebhookEndpointCreate, int)) *WebhookEndpointCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &WebhookEndpointCreateBulk{err: fmt.Errorf("calling to WebhookEndpointClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*WebhookEndpointCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &WebhookEndpointCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for WebhookEndpoint.
+func (c *WebhookEndpointClient) Update() *WebhookEndpointUpdate {
+	mutation := newWebhookEndpointMutation(c.config, OpUpdate)
+	return &WebhookEndpointUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *WebhookEndpointClient) UpdateOne(_m *WebhookEndpoint) *WebhookEndpointUpdateOne {
+	mutation := newWebhookEndpointMutation(c.config, OpUpdateOne, withWebhookEndpoint(_m))
+	return &WebhookEndpointUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *WebhookEndpointClient) UpdateOneID(id int64) *WebhookEndpointUpdateOne {
+	mutation := newWebhookEndpointMutation(c.config, OpUpdateOne, withWebhookEndpointID(id))
+	return &WebhookEndpointUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for WebhookEndpoint.
+func (c *WebhookEndpointClient) Delete() *WebhookEndpointDelete {
+	mutation := newWebhookEndpointMutation(c.config, OpDelete)
+	return &WebhookEndpointDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *WebhookEndpointClient) DeleteOne(_m *WebhookEndpoint) *WebhookEndpointDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *WebhookEndpointClient) DeleteOneID(id int64) *WebhookEndpointDeleteOne {
+	builder := c.Delete().Where(webhookendpoint.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &WebhookEndpointDeleteOne{builder}
+}
+
+// Query returns a query builder for WebhookEndpoint.
+func (c *WebhookEndpointClient) Query() *WebhookEndpointQuery {
+	return &WebhookEndpointQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeWebhookEndpoint},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a WebhookEndpoint entity by its id.
+func (c *WebhookEndpointClient) Get(ctx context.Context, id int64) (*WebhookEndpoint, error) {
+	return c.Query().Where(webhookendpoint.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *WebhookEndpointClient) GetX(ctx context.Context, id int64) *WebhookEndpoint {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryWorkspace queries the workspace edge of a WebhookEndpoint.
+func (c *WebhookEndpointClient) QueryWorkspace(_m *WebhookEndpoint) *WorkspaceQuery {
+	query := (&WorkspaceClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(webhookendpoint.Table, webhookendpoint.FieldID, id),
+			sqlgraph.To(workspace.Table, workspace.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, webhookendpoint.WorkspaceTable, webhookendpoint.WorkspaceColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *WebhookEndpointClient) Hooks() []Hook {
+	return c.hooks.WebhookEndpoint
+}
+
+// Interceptors returns the client interceptors.
+func (c *WebhookEndpointClient) Interceptors() []Interceptor {
+	return c.inters.WebhookEndpoint
+}
+
+func (c *WebhookEndpointClient) mutate(ctx context.Context, m *WebhookEndpointMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&WebhookEndpointCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&WebhookEndpointUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&WebhookEndpointUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&WebhookEndpointDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown WebhookEndpoint mutation op: %q", m.Op())
+	}
+}
+
 // WorkspaceClient is a client for the Workspace schema.
 type WorkspaceClient struct {
 	config
@@ -2646,6 +2803,22 @@ func (c *WorkspaceClient) QueryAutomationRuns(_m *Workspace) *AutomationRunQuery
 	return query
 }
 
+// QueryWebhookEndpoints queries the webhook_endpoints edge of a Workspace.
+func (c *WorkspaceClient) QueryWebhookEndpoints(_m *Workspace) *WebhookEndpointQuery {
+	query := (&WebhookEndpointClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workspace.Table, workspace.FieldID, id),
+			sqlgraph.To(webhookendpoint.Table, webhookendpoint.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, workspace.WebhookEndpointsTable, workspace.WebhookEndpointsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // QueryUser queries the user edge of a Workspace.
 func (c *WorkspaceClient) QueryUser(_m *Workspace) *UserQuery {
 	query := (&UserClient{config: c.config}).Query()
@@ -2692,11 +2865,11 @@ type (
 	hooks struct {
 		ApiToken, Automation, AutomationRun, Broadcast, BroadcastRecipient, Contact,
 		EmailTemplate, Event, Integration, Segment, TrackingProfile, TrackingVisitor,
-		User, Workspace []ent.Hook
+		User, WebhookEndpoint, Workspace []ent.Hook
 	}
 	inters struct {
 		ApiToken, Automation, AutomationRun, Broadcast, BroadcastRecipient, Contact,
 		EmailTemplate, Event, Integration, Segment, TrackingProfile, TrackingVisitor,
-		User, Workspace []ent.Interceptor
+		User, WebhookEndpoint, Workspace []ent.Interceptor
 	}
 )

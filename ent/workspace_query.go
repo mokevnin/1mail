@@ -26,6 +26,7 @@ import (
 	"github.com/mokevnin/1mail/ent/trackingprofile"
 	"github.com/mokevnin/1mail/ent/trackingvisitor"
 	"github.com/mokevnin/1mail/ent/user"
+	"github.com/mokevnin/1mail/ent/webhookendpoint"
 	"github.com/mokevnin/1mail/ent/workspace"
 )
 
@@ -48,6 +49,7 @@ type WorkspaceQuery struct {
 	withEmailTemplates      *EmailTemplateQuery
 	withAutomations         *AutomationQuery
 	withAutomationRuns      *AutomationRunQuery
+	withWebhookEndpoints    *WebhookEndpointQuery
 	withUser                *UserQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
@@ -349,6 +351,28 @@ func (_q *WorkspaceQuery) QueryAutomationRuns() *AutomationRunQuery {
 	return query
 }
 
+// QueryWebhookEndpoints chains the current query on the "webhook_endpoints" edge.
+func (_q *WorkspaceQuery) QueryWebhookEndpoints() *WebhookEndpointQuery {
+	query := (&WebhookEndpointClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workspace.Table, workspace.FieldID, selector),
+			sqlgraph.To(webhookendpoint.Table, webhookendpoint.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, workspace.WebhookEndpointsTable, workspace.WebhookEndpointsColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
 // QueryUser chains the current query on the "user" edge.
 func (_q *WorkspaceQuery) QueryUser() *UserQuery {
 	query := (&UserClient{config: _q.config}).Query()
@@ -575,6 +599,7 @@ func (_q *WorkspaceQuery) Clone() *WorkspaceQuery {
 		withEmailTemplates:      _q.withEmailTemplates.Clone(),
 		withAutomations:         _q.withAutomations.Clone(),
 		withAutomationRuns:      _q.withAutomationRuns.Clone(),
+		withWebhookEndpoints:    _q.withWebhookEndpoints.Clone(),
 		withUser:                _q.withUser.Clone(),
 		// clone intermediate query.
 		sql:  _q.sql.Clone(),
@@ -714,6 +739,17 @@ func (_q *WorkspaceQuery) WithAutomationRuns(opts ...func(*AutomationRunQuery)) 
 	return _q
 }
 
+// WithWebhookEndpoints tells the query-builder to eager-load the nodes that are connected to
+// the "webhook_endpoints" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *WorkspaceQuery) WithWebhookEndpoints(opts ...func(*WebhookEndpointQuery)) *WorkspaceQuery {
+	query := (&WebhookEndpointClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withWebhookEndpoints = query
+	return _q
+}
+
 // WithUser tells the query-builder to eager-load the nodes that are connected to
 // the "user" edge. The optional arguments are used to configure the query builder of the edge.
 func (_q *WorkspaceQuery) WithUser(opts ...func(*UserQuery)) *WorkspaceQuery {
@@ -803,7 +839,7 @@ func (_q *WorkspaceQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Wo
 	var (
 		nodes       = []*Workspace{}
 		_spec       = _q.querySpec()
-		loadedTypes = [13]bool{
+		loadedTypes = [14]bool{
 			_q.withContacts != nil,
 			_q.withSegments != nil,
 			_q.withEvents != nil,
@@ -816,6 +852,7 @@ func (_q *WorkspaceQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Wo
 			_q.withEmailTemplates != nil,
 			_q.withAutomations != nil,
 			_q.withAutomationRuns != nil,
+			_q.withWebhookEndpoints != nil,
 			_q.withUser != nil,
 		}
 	)
@@ -920,6 +957,13 @@ func (_q *WorkspaceQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Wo
 		if err := _q.loadAutomationRuns(ctx, query, nodes,
 			func(n *Workspace) { n.Edges.AutomationRuns = []*AutomationRun{} },
 			func(n *Workspace, e *AutomationRun) { n.Edges.AutomationRuns = append(n.Edges.AutomationRuns, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := _q.withWebhookEndpoints; query != nil {
+		if err := _q.loadWebhookEndpoints(ctx, query, nodes,
+			func(n *Workspace) { n.Edges.WebhookEndpoints = []*WebhookEndpoint{} },
+			func(n *Workspace, e *WebhookEndpoint) { n.Edges.WebhookEndpoints = append(n.Edges.WebhookEndpoints, e) }); err != nil {
 			return nil, err
 		}
 	}
@@ -1277,6 +1321,36 @@ func (_q *WorkspaceQuery) loadAutomationRuns(ctx context.Context, query *Automat
 	}
 	query.Where(predicate.AutomationRun(func(s *sql.Selector) {
 		s.Where(sql.InValues(s.C(workspace.AutomationRunsColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.WorkspaceID
+		node, ok := nodeids[fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "workspace_id" returned %v for node %v`, fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (_q *WorkspaceQuery) loadWebhookEndpoints(ctx context.Context, query *WebhookEndpointQuery, nodes []*Workspace, init func(*Workspace), assign func(*Workspace, *WebhookEndpoint)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[int64]*Workspace)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(webhookendpoint.FieldWorkspaceID)
+	}
+	query.Where(predicate.WebhookEndpoint(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(workspace.WebhookEndpointsColumn), fks...))
 	}))
 	neighbors, err := query.All(ctx)
 	if err != nil {

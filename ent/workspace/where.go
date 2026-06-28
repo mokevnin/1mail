@@ -666,6 +666,29 @@ func HasAutomationRunsWith(preds ...predicate.AutomationRun) predicate.Workspace
 	})
 }
 
+// HasWebhookEndpoints applies the HasEdge predicate on the "webhook_endpoints" edge.
+func HasWebhookEndpoints() predicate.Workspace {
+	return predicate.Workspace(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, WebhookEndpointsTable, WebhookEndpointsColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasWebhookEndpointsWith applies the HasEdge predicate on the "webhook_endpoints" edge with a given conditions (other predicates).
+func HasWebhookEndpointsWith(preds ...predicate.WebhookEndpoint) predicate.Workspace {
+	return predicate.Workspace(func(s *sql.Selector) {
+		step := newWebhookEndpointsStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // HasUser applies the HasEdge predicate on the "user" edge.
 func HasUser() predicate.Workspace {
 	return predicate.Workspace(func(s *sql.Selector) {

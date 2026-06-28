@@ -85,6 +85,15 @@ export const zSiteCreateEmailTemplateInput = z.object({
     body: z.string().optional()
 });
 
+/**
+ * Site request body for creating a webhook endpoint
+ */
+export const zSiteCreateWebhookEndpointInput = z.object({
+    url: z.string(),
+    eventTypes: z.array(z.string()).optional(),
+    enabled: z.boolean().optional()
+});
+
 export const zSiteDirectLoginError = z.object({
     error: z.string()
 });
@@ -291,6 +300,15 @@ export const zSiteUpdateSegmentInput = z.object({
 });
 
 /**
+ * Site request body for updating a webhook endpoint
+ */
+export const zSiteUpdateWebhookEndpointInput = z.object({
+    url: z.string().optional(),
+    eventTypes: z.array(z.string()).optional(),
+    enabled: z.boolean().optional()
+});
+
+/**
  * Update a workspace. The slug is immutable (it is the route key and globally
  * unique); only the display name can change.
  */
@@ -476,6 +494,19 @@ export const zSiteUserResource = z.object({
     name: z.string(),
     email: zEmailAddress,
     createdAt: zTimestamp
+});
+
+/**
+ * Webhook endpoint resource used by the site UI
+ */
+export const zSiteWebhookEndpointResource = z.object({
+    id: zEntityId,
+    url: z.string(),
+    secret: z.string(),
+    eventTypes: z.array(z.string()),
+    enabled: z.boolean(),
+    createdAt: zTimestamp,
+    updatedAt: zTimestamp
 });
 
 /**
@@ -1015,6 +1046,69 @@ export const zSiteTokensDeletePath = z.object({
  * There is no content to send for this request, but the headers may be useful.
  */
 export const zSiteTokensDeleteResponse = z.void();
+
+export const zSiteWebhooksListPath = z.object({
+    workspaceSlug: z.string()
+});
+
+export const zSiteWebhooksListQuery = z.object({
+    page: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).optional().default(1),
+    pageSize: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).optional().default(25)
+});
+
+/**
+ * Paginated response
+ */
+export const zSiteWebhooksListResponse = z.object({
+    items: z.array(zSiteWebhookEndpointResource),
+    page: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
+    pageSize: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
+    totalItems: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
+    totalPages: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' })
+});
+
+export const zSiteWebhooksCreateBody = zSiteCreateWebhookEndpointInput;
+
+export const zSiteWebhooksCreatePath = z.object({
+    workspaceSlug: z.string()
+});
+
+/**
+ * The request has succeeded and a new resource has been created as a result.
+ */
+export const zSiteWebhooksCreateResponse = zSiteWebhookEndpointResource;
+
+export const zSiteWebhooksDeletePath = z.object({
+    workspaceSlug: z.string(),
+    id: zEntityId
+});
+
+/**
+ * There is no content to send for this request, but the headers may be useful.
+ */
+export const zSiteWebhooksDeleteResponse = z.void();
+
+export const zSiteWebhooksGetPath = z.object({
+    workspaceSlug: z.string(),
+    id: zEntityId
+});
+
+/**
+ * The request has succeeded.
+ */
+export const zSiteWebhooksGetResponse = zSiteWebhookEndpointResource;
+
+export const zSiteWebhooksUpdateBody = zSiteUpdateWebhookEndpointInput;
+
+export const zSiteWebhooksUpdatePath = z.object({
+    workspaceSlug: z.string(),
+    id: zEntityId
+});
+
+/**
+ * The request has succeeded.
+ */
+export const zSiteWebhooksUpdateResponse = zSiteWebhookEndpointResource;
 
 /**
  * The request has succeeded.
