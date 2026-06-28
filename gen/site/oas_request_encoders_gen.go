@@ -38,6 +38,48 @@ func encodeSiteAuthRegisterRequest(
 	return nil
 }
 
+func encodeSiteBroadcastsCreateRequest(
+	req *SiteCreateBroadcastInput,
+	r *http.Request,
+) error {
+	const contentType = "application/json"
+	e := new(jx.Encoder)
+	{
+		req.Encode(e)
+	}
+	encoded := e.Bytes()
+	ht.SetBody(r, bytes.NewReader(encoded), contentType)
+	return nil
+}
+
+func encodeSiteBroadcastsScheduleRequest(
+	req *SiteScheduleBroadcastInput,
+	r *http.Request,
+) error {
+	const contentType = "application/json"
+	e := new(jx.Encoder)
+	{
+		req.Encode(e)
+	}
+	encoded := e.Bytes()
+	ht.SetBody(r, bytes.NewReader(encoded), contentType)
+	return nil
+}
+
+func encodeSiteBroadcastsUpdateRequest(
+	req *SiteUpdateBroadcastInput,
+	r *http.Request,
+) error {
+	const contentType = "application/json"
+	e := new(jx.Encoder)
+	{
+		req.Encode(e)
+	}
+	encoded := e.Bytes()
+	ht.SetBody(r, bytes.NewReader(encoded), contentType)
+	return nil
+}
+
 func encodeSiteContactsCreateRequest(
 	req *SiteCreateContactInput,
 	r *http.Request,

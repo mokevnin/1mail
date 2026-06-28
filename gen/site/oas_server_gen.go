@@ -16,6 +16,48 @@ type Handler interface {
 	//
 	// POST /auth/register
 	SiteAuthRegister(ctx context.Context, req *SiteRegisterInput) (SiteAuthRegisterRes, error)
+	// SiteBroadcastsCreate implements SiteBroadcasts_create operation.
+	//
+	// Create a broadcast from the site UI.
+	//
+	// POST /w/{workspaceSlug}/broadcasts
+	SiteBroadcastsCreate(ctx context.Context, req *SiteCreateBroadcastInput, params SiteBroadcastsCreateParams) (SiteBroadcastsCreateRes, error)
+	// SiteBroadcastsDelete implements SiteBroadcasts_delete operation.
+	//
+	// Delete a broadcast from the site UI.
+	//
+	// DELETE /w/{workspaceSlug}/broadcasts/{id}
+	SiteBroadcastsDelete(ctx context.Context, params SiteBroadcastsDeleteParams) (SiteBroadcastsDeleteRes, error)
+	// SiteBroadcastsGet implements SiteBroadcasts_get operation.
+	//
+	// Get a broadcast by ID for the site UI.
+	//
+	// GET /w/{workspaceSlug}/broadcasts/{id}
+	SiteBroadcastsGet(ctx context.Context, params SiteBroadcastsGetParams) (SiteBroadcastsGetRes, error)
+	// SiteBroadcastsList implements SiteBroadcasts_list operation.
+	//
+	// List broadcasts for the site UI.
+	//
+	// GET /w/{workspaceSlug}/broadcasts
+	SiteBroadcastsList(ctx context.Context, params SiteBroadcastsListParams) (SiteBroadcastsListRes, error)
+	// SiteBroadcastsSchedule implements SiteBroadcasts_schedule operation.
+	//
+	// Schedule a broadcast to send at a future time.
+	//
+	// POST /w/{workspaceSlug}/broadcasts/{id}/schedule
+	SiteBroadcastsSchedule(ctx context.Context, req *SiteScheduleBroadcastInput, params SiteBroadcastsScheduleParams) (SiteBroadcastsScheduleRes, error)
+	// SiteBroadcastsSend implements SiteBroadcasts_send operation.
+	//
+	// Send a broadcast immediately.
+	//
+	// POST /w/{workspaceSlug}/broadcasts/{id}/send
+	SiteBroadcastsSend(ctx context.Context, params SiteBroadcastsSendParams) (SiteBroadcastsSendRes, error)
+	// SiteBroadcastsUpdate implements SiteBroadcasts_update operation.
+	//
+	// Update a broadcast from the site UI.
+	//
+	// PUT /w/{workspaceSlug}/broadcasts/{id}
+	SiteBroadcastsUpdate(ctx context.Context, req *SiteUpdateBroadcastInput, params SiteBroadcastsUpdateParams) (SiteBroadcastsUpdateRes, error)
 	// SiteContactsCreate implements SiteContacts_create operation.
 	//
 	// Create a contact from the site UI.

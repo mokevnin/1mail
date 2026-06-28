@@ -37,7 +37,5 @@ namespace SiteEvents {
 
     /** Filter by event action */
     @query action?: string,
-  ):
-    | Page<SiteEventResource>
-    | NotFoundProblem;
+  ): Page<SiteEventResource> | NotFoundProblem;
 }

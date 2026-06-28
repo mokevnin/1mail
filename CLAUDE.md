@@ -14,7 +14,7 @@ Go backend + React/Vite frontend in a single repo. The data model is workspace-s
 API contracts are **one-directional**: TypeSpec → OpenAPI → generated Go + TS. Never
 hand-edit anything under `openapi/`, `gen/`, `ent/` (except `ent/schema/`),
 `src/generated/` / `packages/analytics/src/generated/`, or the `*_gen.go` files in the
-`sitemap`/`externalmap` packages — regenerate instead.
+`internal/api/{site,external}/resources` packages — regenerate instead.
 
 ```
 typespec/{site,external,collect}   ──tsp compile──▶  openapi/*.openapi.json
@@ -22,12 +22,12 @@ typespec/{site,external,collect}   ──tsp compile──▶  openapi/*.openapi
   openapi/external  ──ogen──▶ gen/external    (Go server)
   openapi/collect   ──ogen──▶ gen/collect     (Go server)  ──openapi-ts──▶ packages/analytics/src/generated/collect (types only)
 ent/schema/*.go     ──entc──▶ ent/*           (Go ORM)
-ent + gen/{site,external}  ──goverter──▶ internal/api/{site/sitemap,external/externalmap}/converter_gen.go
+ent + gen/{site,external}  ──goverter──▶ internal/api/{site,external}/resources/converter_gen.go
 ```
 
 - **goverter** maps ent entities → ogen resource DTOs. The `Converter` interface and its
   `// goverter:extend` helpers (ids, timestamps, optionals) are hand-written in
-  `sitemap.go` / `externalmap.go`; the impl (`ConverterImpl`) is generated. Adding a DTO
+  each package's `resources.go`; the impl (`ConverterImpl`) is generated. Adding a DTO
   field that has no source mapping fails generation — that completeness check is the point.
 
 - `make generate` — full cycle: typespec → openapi → backend (ent + ogen) → frontend → i18n types → format.
@@ -46,7 +46,7 @@ only generated files being the two `converter_gen.go`.
 |---|---|---|---|
 | `ent/` (except `schema/`, `entc.go`, `generate.go`) | ent/entc | `make generate-backend` | `ent/schema/*.go`, `ent/entc.go` |
 | `gen/{site,external,collect}/` | ogen | `make generate-backend` | — (from `openapi/`) |
-| `internal/api/{site/sitemap,external/externalmap}/converter_gen.go` | goverter | `make generate-backend` | sibling `*map.go` (interface + extend helpers) |
+| `internal/api/{site,external}/resources/converter_gen.go` | goverter | `make generate-backend` | sibling `resources.go` (interface + extend helpers) |
 | `openapi/*.openapi.json` | TypeSpec | `make generate-typespec` | `typespec/{site,external,collect}/` |
 | `src/generated/site/` | @hey-api/openapi-ts | `make generate-openapi` | — (from `openapi/`) |
 | `packages/analytics/src/generated/collect/` | @hey-api/openapi-ts | `make generate-openapi` | — (from `openapi/`) |

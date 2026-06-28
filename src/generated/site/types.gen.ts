@@ -86,6 +86,118 @@ export type SiteApiTokenResource = {
 };
 
 /**
+ * Broadcast resource used by the site UI
+ */
+export type SiteBroadcastResource = {
+    /**
+     * Unique identifier
+     */
+    id: EntityId;
+    /**
+     * Internal broadcast name
+     */
+    name: string;
+    /**
+     * Email subject line
+     */
+    subject: string;
+    /**
+     * Sender display name (defaults to the integration's)
+     */
+    fromName?: string | null;
+    /**
+     * Sender email address (defaults to the integration's)
+     */
+    fromEmail?: EmailAddress | null;
+    /**
+     * HTML body authored in the composer
+     */
+    bodyHtml: string;
+    /**
+     * Derived plain-text body
+     */
+    bodyText: string;
+    /**
+     * Target segment; null means all active contacts
+     */
+    segmentId?: EntityId | null;
+    /**
+     * Sending integration; null means the workspace default
+     */
+    integrationId?: EntityId | null;
+    /**
+     * Lifecycle status
+     */
+    status: SiteBroadcastStatus;
+    /**
+     * When the broadcast is scheduled to send
+     */
+    scheduledAt?: Timestamp | null;
+    /**
+     * When the broadcast finished sending
+     */
+    sentAt?: Timestamp | null;
+    /**
+     * Delivery counters
+     */
+    stats: SiteBroadcastStats;
+    /**
+     * Creation timestamp
+     */
+    createdAt: Timestamp;
+    /**
+     * Last update timestamp
+     */
+    updatedAt: Timestamp;
+};
+
+/**
+ * Denormalized delivery counters for a broadcast
+ */
+export type SiteBroadcastStats = {
+    /**
+     * Number of recipients the broadcast targets
+     */
+    recipientsTotal: number;
+    /**
+     * Messages successfully handed to the provider
+     */
+    sentCount: number;
+    /**
+     * Recipients that opened the email
+     */
+    openedCount: number;
+    /**
+     * Recipients that clicked a link
+     */
+    clickedCount: number;
+    /**
+     * Recipients that unsubscribed via this broadcast
+     */
+    unsubscribedCount: number;
+    /**
+     * Messages that failed to send
+     */
+    failedCount: number;
+};
+
+/**
+ * Broadcast lifecycle status
+ */
+export const SiteBroadcastStatus = {
+    DRAFT: 'draft',
+    SCHEDULED: 'scheduled',
+    SENDING: 'sending',
+    SENT: 'sent',
+    FAILED: 'failed'
+} as const;
+
+/**
+ * Broadcast lifecycle status
+ */
+export type SiteBroadcastStatus = typeof SiteBroadcastStatus[keyof typeof SiteBroadcastStatus];
+
+/**
  * Contact resource used by the site UI
  */
 export type SiteContactResource = {
@@ -138,6 +250,40 @@ export const SiteContactStatus = { ACTIVE: 'active', UNSUBSCRIBED: 'unsubscribed
  * Contact status for site UI
  */
 export type SiteContactStatus = typeof SiteContactStatus[keyof typeof SiteContactStatus];
+
+/**
+ * Site request body for creating a broadcast
+ */
+export type SiteCreateBroadcastInput = {
+    /**
+     * Internal broadcast name
+     */
+    name: string;
+    /**
+     * Email subject line
+     */
+    subject?: string;
+    /**
+     * Sender display name
+     */
+    fromName?: string | null;
+    /**
+     * Sender email address
+     */
+    fromEmail?: EmailAddress | null;
+    /**
+     * HTML body
+     */
+    bodyHtml?: string;
+    /**
+     * Target segment; null/omitted means all active contacts
+     */
+    segmentId?: EntityId | null;
+    /**
+     * Sending integration; null/omitted means the workspace default
+     */
+    integrationId?: EntityId | null;
+};
 
 /**
  * Site request body for creating a contact
@@ -364,6 +510,16 @@ export type SiteRegisterResult = {
 };
 
 /**
+ * Site request body for scheduling a broadcast
+ */
+export type SiteScheduleBroadcastInput = {
+    /**
+     * When the broadcast should be sent
+     */
+    scheduledAt: Timestamp;
+};
+
+/**
  * Segment resource used by the site UI
  */
 export type SiteSegmentResource = {
@@ -452,6 +608,40 @@ export type SiteSmtpConfigInput = {
     password?: string | null;
     from: EmailAddress;
     fromName?: string | null;
+};
+
+/**
+ * Site request body for updating a broadcast
+ */
+export type SiteUpdateBroadcastInput = {
+    /**
+     * Internal broadcast name
+     */
+    name?: string;
+    /**
+     * Email subject line
+     */
+    subject?: string;
+    /**
+     * Sender display name
+     */
+    fromName?: string | null;
+    /**
+     * Sender email address
+     */
+    fromEmail?: EmailAddress | null;
+    /**
+     * HTML body
+     */
+    bodyHtml?: string;
+    /**
+     * Target segment; null means all active contacts
+     */
+    segmentId?: EntityId | null;
+    /**
+     * Sending integration; null means the workspace default
+     */
+    integrationId?: EntityId | null;
 };
 
 /**
@@ -707,6 +897,274 @@ export type SiteUserUpdateMeResponses = {
 };
 
 export type SiteUserUpdateMeResponse = SiteUserUpdateMeResponses[keyof SiteUserUpdateMeResponses];
+
+export type SiteBroadcastsListData = {
+    body?: never;
+    path: {
+        workspaceSlug: string;
+    };
+    query?: {
+        /**
+         * Page number (1-based)
+         */
+        page?: number;
+        /**
+         * Page size
+         */
+        pageSize?: number;
+    };
+    url: '/w/{workspaceSlug}/broadcasts';
+};
+
+export type SiteBroadcastsListErrors = {
+    /**
+     * RFC 7807 bad request response
+     */
+    400: ProblemDetails;
+    /**
+     * RFC 7807 not found response
+     */
+    404: ProblemDetails;
+    /**
+     * RFC 7807 validation response
+     */
+    422: ProblemDetails;
+};
+
+export type SiteBroadcastsListError = SiteBroadcastsListErrors[keyof SiteBroadcastsListErrors];
+
+export type SiteBroadcastsListResponses = {
+    /**
+     * Paginated response
+     */
+    200: {
+        /**
+         * List of items
+         */
+        items: Array<SiteBroadcastResource>;
+        /**
+         * Page number (1-based)
+         */
+        page: number;
+        /**
+         * Page size
+         */
+        pageSize: number;
+        /**
+         * Total number of elements
+         */
+        totalItems: number;
+        /**
+         * Total number of pages
+         */
+        totalPages: number;
+    };
+};
+
+export type SiteBroadcastsListResponse = SiteBroadcastsListResponses[keyof SiteBroadcastsListResponses];
+
+export type SiteBroadcastsCreateData = {
+    body: SiteCreateBroadcastInput;
+    path: {
+        workspaceSlug: string;
+    };
+    query?: never;
+    url: '/w/{workspaceSlug}/broadcasts';
+};
+
+export type SiteBroadcastsCreateErrors = {
+    /**
+     * RFC 7807 not found response
+     */
+    404: ProblemDetails;
+    /**
+     * RFC 7807 validation response
+     */
+    422: ProblemDetails;
+};
+
+export type SiteBroadcastsCreateError = SiteBroadcastsCreateErrors[keyof SiteBroadcastsCreateErrors];
+
+export type SiteBroadcastsCreateResponses = {
+    /**
+     * The request has succeeded and a new resource has been created as a result.
+     */
+    201: SiteBroadcastResource;
+};
+
+export type SiteBroadcastsCreateResponse = SiteBroadcastsCreateResponses[keyof SiteBroadcastsCreateResponses];
+
+export type SiteBroadcastsDeleteData = {
+    body?: never;
+    path: {
+        workspaceSlug: string;
+        id: EntityId;
+    };
+    query?: never;
+    url: '/w/{workspaceSlug}/broadcasts/{id}';
+};
+
+export type SiteBroadcastsDeleteErrors = {
+    /**
+     * RFC 7807 bad request response
+     */
+    400: ProblemDetails;
+    /**
+     * RFC 7807 not found response
+     */
+    404: ProblemDetails;
+};
+
+export type SiteBroadcastsDeleteError = SiteBroadcastsDeleteErrors[keyof SiteBroadcastsDeleteErrors];
+
+export type SiteBroadcastsDeleteResponses = {
+    /**
+     * There is no content to send for this request, but the headers may be useful.
+     */
+    204: void;
+};
+
+export type SiteBroadcastsDeleteResponse = SiteBroadcastsDeleteResponses[keyof SiteBroadcastsDeleteResponses];
+
+export type SiteBroadcastsGetData = {
+    body?: never;
+    path: {
+        workspaceSlug: string;
+        id: EntityId;
+    };
+    query?: never;
+    url: '/w/{workspaceSlug}/broadcasts/{id}';
+};
+
+export type SiteBroadcastsGetErrors = {
+    /**
+     * RFC 7807 bad request response
+     */
+    400: ProblemDetails;
+    /**
+     * RFC 7807 not found response
+     */
+    404: ProblemDetails;
+};
+
+export type SiteBroadcastsGetError = SiteBroadcastsGetErrors[keyof SiteBroadcastsGetErrors];
+
+export type SiteBroadcastsGetResponses = {
+    /**
+     * The request has succeeded.
+     */
+    200: SiteBroadcastResource;
+};
+
+export type SiteBroadcastsGetResponse = SiteBroadcastsGetResponses[keyof SiteBroadcastsGetResponses];
+
+export type SiteBroadcastsUpdateData = {
+    body: SiteUpdateBroadcastInput;
+    path: {
+        workspaceSlug: string;
+        id: EntityId;
+    };
+    query?: never;
+    url: '/w/{workspaceSlug}/broadcasts/{id}';
+};
+
+export type SiteBroadcastsUpdateErrors = {
+    /**
+     * RFC 7807 bad request response
+     */
+    400: ProblemDetails;
+    /**
+     * RFC 7807 not found response
+     */
+    404: ProblemDetails;
+    /**
+     * RFC 7807 validation response
+     */
+    422: ProblemDetails;
+};
+
+export type SiteBroadcastsUpdateError = SiteBroadcastsUpdateErrors[keyof SiteBroadcastsUpdateErrors];
+
+export type SiteBroadcastsUpdateResponses = {
+    /**
+     * The request has succeeded.
+     */
+    200: SiteBroadcastResource;
+};
+
+export type SiteBroadcastsUpdateResponse = SiteBroadcastsUpdateResponses[keyof SiteBroadcastsUpdateResponses];
+
+export type SiteBroadcastsScheduleData = {
+    body: SiteScheduleBroadcastInput;
+    path: {
+        workspaceSlug: string;
+        id: EntityId;
+    };
+    query?: never;
+    url: '/w/{workspaceSlug}/broadcasts/{id}/schedule';
+};
+
+export type SiteBroadcastsScheduleErrors = {
+    /**
+     * RFC 7807 bad request response
+     */
+    400: ProblemDetails;
+    /**
+     * RFC 7807 not found response
+     */
+    404: ProblemDetails;
+    /**
+     * RFC 7807 validation response
+     */
+    422: ProblemDetails;
+};
+
+export type SiteBroadcastsScheduleError = SiteBroadcastsScheduleErrors[keyof SiteBroadcastsScheduleErrors];
+
+export type SiteBroadcastsScheduleResponses = {
+    /**
+     * The request has succeeded.
+     */
+    200: SiteBroadcastResource;
+};
+
+export type SiteBroadcastsScheduleResponse = SiteBroadcastsScheduleResponses[keyof SiteBroadcastsScheduleResponses];
+
+export type SiteBroadcastsSendData = {
+    body?: never;
+    path: {
+        workspaceSlug: string;
+        id: EntityId;
+    };
+    query?: never;
+    url: '/w/{workspaceSlug}/broadcasts/{id}/send';
+};
+
+export type SiteBroadcastsSendErrors = {
+    /**
+     * RFC 7807 bad request response
+     */
+    400: ProblemDetails;
+    /**
+     * RFC 7807 not found response
+     */
+    404: ProblemDetails;
+    /**
+     * RFC 7807 validation response
+     */
+    422: ProblemDetails;
+};
+
+export type SiteBroadcastsSendError = SiteBroadcastsSendErrors[keyof SiteBroadcastsSendErrors];
+
+export type SiteBroadcastsSendResponses = {
+    /**
+     * The request has succeeded.
+     */
+    200: SiteBroadcastResource;
+};
+
+export type SiteBroadcastsSendResponse = SiteBroadcastsSendResponses[keyof SiteBroadcastsSendResponses];
 
 export type SiteContactsListData = {
     body?: never;

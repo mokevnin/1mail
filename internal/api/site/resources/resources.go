@@ -1,8 +1,8 @@
-// Package sitemap holds goverter-generated mappers from ent entities to site
-// API resources, plus the custom conversions goverter cannot infer on its own.
-// The generated implementation (ConverterImpl) lives in converter_gen.go;
-// consumers instantiate it (see internal/api/site).
-package sitemap
+// Package resources holds goverter-generated mappers from ent entities to site
+// API resources (the ogen *Resource DTOs), plus the custom conversions goverter
+// cannot infer on its own. The generated implementation (ConverterImpl) lives in
+// converter_gen.go; consumers instantiate it (see internal/api/site).
+package resources
 
 import (
 	"encoding/json"
@@ -25,10 +25,13 @@ import (
 // goverter:extend entityID
 // goverter:extend timestamp
 // goverter:extend optNilString
+// goverter:extend optNilEmailAddress
+// goverter:extend optNilEntityID
 // goverter:extend optNilTimeZone
 // goverter:extend optNilTimestamp
 // goverter:extend contactCustomFields
 // goverter:extend eventProperties
+// goverter:extend intToInt32
 type Converter interface {
 	ContactToResource(source *ent.Contact) siteapi.SiteContactResource
 	SegmentToResource(source *ent.Segment) siteapi.SiteSegmentResource
@@ -36,6 +39,11 @@ type Converter interface {
 	UserToResource(source *ent.User) *siteapi.SiteUserResource
 	WorkspaceToResource(source *ent.Workspace) siteapi.SiteWorkspaceResource
 	EventToResource(source *ent.Event) siteapi.SiteEventResource
+
+	// The flat stat counters on the broadcast are folded into the nested Stats
+	// object; map the whole source through broadcastStats.
+	// goverter:map . Stats
+	BroadcastToResource(source *ent.Broadcast) siteapi.SiteBroadcastResource
 }
 
 func entityID(id int64) siteapi.EntityId {
@@ -51,6 +59,24 @@ func optNilString(v *string) siteapi.OptNilString {
 		return siteapi.OptNilString{}
 	}
 	return siteapi.NewOptNilString(*v)
+}
+
+func optNilEmailAddress(v *string) siteapi.OptNilEmailAddress {
+	if v == nil {
+		return siteapi.OptNilEmailAddress{}
+	}
+	return siteapi.NewOptNilEmailAddress(siteapi.EmailAddress(*v))
+}
+
+func optNilEntityID(v *int64) siteapi.OptNilEntityId {
+	if v == nil {
+		return siteapi.OptNilEntityId{}
+	}
+	return siteapi.NewOptNilEntityId(entityID(*v))
+}
+
+func intToInt32(v int) int32 {
+	return int32(v)
 }
 
 func optNilTimeZone(v *string) siteapi.OptNilTimeZoneName {

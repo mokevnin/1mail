@@ -130,6 +130,142 @@ func (o OptInt32) Or(d int32) int32 {
 	return d
 }
 
+// NewOptNilEmailAddress returns new OptNilEmailAddress with value set to v.
+func NewOptNilEmailAddress(v EmailAddress) OptNilEmailAddress {
+	return OptNilEmailAddress{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptNilEmailAddress is optional nullable EmailAddress.
+type OptNilEmailAddress struct {
+	Value EmailAddress
+	Set   bool
+	Null  bool
+}
+
+// IsSet returns true if OptNilEmailAddress was set.
+func (o OptNilEmailAddress) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptNilEmailAddress) Reset() {
+	var v EmailAddress
+	o.Value = v
+	o.Set = false
+	o.Null = false
+}
+
+// SetTo sets value to v.
+func (o *OptNilEmailAddress) SetTo(v EmailAddress) {
+	o.Set = true
+	o.Null = false
+	o.Value = v
+}
+
+// IsNull returns true if value is Null.
+func (o OptNilEmailAddress) IsNull() bool { return o.Null }
+
+// SetToNull sets value to null.
+func (o *OptNilEmailAddress) SetToNull() {
+	o.Set = true
+	o.Null = true
+	var v EmailAddress
+	o.Value = v
+}
+
+// IsEmpty returns true if the field was omitted from the payload (not Set and not Null).
+func (o OptNilEmailAddress) IsEmpty() bool {
+	return !o.Set && !o.Null
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptNilEmailAddress) Get() (v EmailAddress, ok bool) {
+	if o.Null {
+		return v, false
+	}
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptNilEmailAddress) Or(d EmailAddress) EmailAddress {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptNilEntityId returns new OptNilEntityId with value set to v.
+func NewOptNilEntityId(v EntityId) OptNilEntityId {
+	return OptNilEntityId{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptNilEntityId is optional nullable EntityId.
+type OptNilEntityId struct {
+	Value EntityId
+	Set   bool
+	Null  bool
+}
+
+// IsSet returns true if OptNilEntityId was set.
+func (o OptNilEntityId) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptNilEntityId) Reset() {
+	var v EntityId
+	o.Value = v
+	o.Set = false
+	o.Null = false
+}
+
+// SetTo sets value to v.
+func (o *OptNilEntityId) SetTo(v EntityId) {
+	o.Set = true
+	o.Null = false
+	o.Value = v
+}
+
+// IsNull returns true if value is Null.
+func (o OptNilEntityId) IsNull() bool { return o.Null }
+
+// SetToNull sets value to null.
+func (o *OptNilEntityId) SetToNull() {
+	o.Set = true
+	o.Null = true
+	var v EntityId
+	o.Value = v
+}
+
+// IsEmpty returns true if the field was omitted from the payload (not Set and not Null).
+func (o OptNilEntityId) IsEmpty() bool {
+	return !o.Set && !o.Null
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptNilEntityId) Get() (v EntityId, ok bool) {
+	if o.Null {
+		return v, false
+	}
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptNilEntityId) Or(d EntityId) EntityId {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
 // NewOptNilSiteContactResourceCustomFields returns new OptNilSiteContactResourceCustomFields with value set to v.
 func NewOptNilSiteContactResourceCustomFields(v SiteContactResourceCustomFields) OptNilSiteContactResourceCustomFields {
 	return OptNilSiteContactResourceCustomFields{
@@ -1177,6 +1313,481 @@ type SiteAuthRegisterUnprocessableEntity ProblemDetails
 
 func (*SiteAuthRegisterUnprocessableEntity) siteAuthRegisterRes() {}
 
+// Broadcast resource used by the site UI.
+// Ref: #/components/schemas/SiteBroadcastResource
+type SiteBroadcastResource struct {
+	// Unique identifier.
+	ID EntityId `json:"id"`
+	// Internal broadcast name.
+	Name string `json:"name"`
+	// Email subject line.
+	Subject string `json:"subject"`
+	// Sender display name (defaults to the integration's).
+	FromName OptNilString `json:"fromName"`
+	// Sender email address (defaults to the integration's).
+	FromEmail OptNilEmailAddress `json:"fromEmail"`
+	// HTML body authored in the composer.
+	BodyHtml string `json:"bodyHtml"`
+	// Derived plain-text body.
+	BodyText string `json:"bodyText"`
+	// Target segment; null means all active contacts.
+	SegmentId OptNilEntityId `json:"segmentId"`
+	// Sending integration; null means the workspace default.
+	IntegrationId OptNilEntityId `json:"integrationId"`
+	// Lifecycle status.
+	Status SiteBroadcastStatus `json:"status"`
+	// When the broadcast is scheduled to send.
+	ScheduledAt OptNilTimestamp `json:"scheduledAt"`
+	// When the broadcast finished sending.
+	SentAt OptNilTimestamp `json:"sentAt"`
+	// Delivery counters.
+	Stats SiteBroadcastStats `json:"stats"`
+	// Creation timestamp.
+	CreatedAt Timestamp `json:"createdAt"`
+	// Last update timestamp.
+	UpdatedAt Timestamp `json:"updatedAt"`
+}
+
+// GetID returns the value of ID.
+func (s *SiteBroadcastResource) GetID() EntityId {
+	return s.ID
+}
+
+// GetName returns the value of Name.
+func (s *SiteBroadcastResource) GetName() string {
+	return s.Name
+}
+
+// GetSubject returns the value of Subject.
+func (s *SiteBroadcastResource) GetSubject() string {
+	return s.Subject
+}
+
+// GetFromName returns the value of FromName.
+func (s *SiteBroadcastResource) GetFromName() OptNilString {
+	return s.FromName
+}
+
+// GetFromEmail returns the value of FromEmail.
+func (s *SiteBroadcastResource) GetFromEmail() OptNilEmailAddress {
+	return s.FromEmail
+}
+
+// GetBodyHtml returns the value of BodyHtml.
+func (s *SiteBroadcastResource) GetBodyHtml() string {
+	return s.BodyHtml
+}
+
+// GetBodyText returns the value of BodyText.
+func (s *SiteBroadcastResource) GetBodyText() string {
+	return s.BodyText
+}
+
+// GetSegmentId returns the value of SegmentId.
+func (s *SiteBroadcastResource) GetSegmentId() OptNilEntityId {
+	return s.SegmentId
+}
+
+// GetIntegrationId returns the value of IntegrationId.
+func (s *SiteBroadcastResource) GetIntegrationId() OptNilEntityId {
+	return s.IntegrationId
+}
+
+// GetStatus returns the value of Status.
+func (s *SiteBroadcastResource) GetStatus() SiteBroadcastStatus {
+	return s.Status
+}
+
+// GetScheduledAt returns the value of ScheduledAt.
+func (s *SiteBroadcastResource) GetScheduledAt() OptNilTimestamp {
+	return s.ScheduledAt
+}
+
+// GetSentAt returns the value of SentAt.
+func (s *SiteBroadcastResource) GetSentAt() OptNilTimestamp {
+	return s.SentAt
+}
+
+// GetStats returns the value of Stats.
+func (s *SiteBroadcastResource) GetStats() SiteBroadcastStats {
+	return s.Stats
+}
+
+// GetCreatedAt returns the value of CreatedAt.
+func (s *SiteBroadcastResource) GetCreatedAt() Timestamp {
+	return s.CreatedAt
+}
+
+// GetUpdatedAt returns the value of UpdatedAt.
+func (s *SiteBroadcastResource) GetUpdatedAt() Timestamp {
+	return s.UpdatedAt
+}
+
+// SetID sets the value of ID.
+func (s *SiteBroadcastResource) SetID(val EntityId) {
+	s.ID = val
+}
+
+// SetName sets the value of Name.
+func (s *SiteBroadcastResource) SetName(val string) {
+	s.Name = val
+}
+
+// SetSubject sets the value of Subject.
+func (s *SiteBroadcastResource) SetSubject(val string) {
+	s.Subject = val
+}
+
+// SetFromName sets the value of FromName.
+func (s *SiteBroadcastResource) SetFromName(val OptNilString) {
+	s.FromName = val
+}
+
+// SetFromEmail sets the value of FromEmail.
+func (s *SiteBroadcastResource) SetFromEmail(val OptNilEmailAddress) {
+	s.FromEmail = val
+}
+
+// SetBodyHtml sets the value of BodyHtml.
+func (s *SiteBroadcastResource) SetBodyHtml(val string) {
+	s.BodyHtml = val
+}
+
+// SetBodyText sets the value of BodyText.
+func (s *SiteBroadcastResource) SetBodyText(val string) {
+	s.BodyText = val
+}
+
+// SetSegmentId sets the value of SegmentId.
+func (s *SiteBroadcastResource) SetSegmentId(val OptNilEntityId) {
+	s.SegmentId = val
+}
+
+// SetIntegrationId sets the value of IntegrationId.
+func (s *SiteBroadcastResource) SetIntegrationId(val OptNilEntityId) {
+	s.IntegrationId = val
+}
+
+// SetStatus sets the value of Status.
+func (s *SiteBroadcastResource) SetStatus(val SiteBroadcastStatus) {
+	s.Status = val
+}
+
+// SetScheduledAt sets the value of ScheduledAt.
+func (s *SiteBroadcastResource) SetScheduledAt(val OptNilTimestamp) {
+	s.ScheduledAt = val
+}
+
+// SetSentAt sets the value of SentAt.
+func (s *SiteBroadcastResource) SetSentAt(val OptNilTimestamp) {
+	s.SentAt = val
+}
+
+// SetStats sets the value of Stats.
+func (s *SiteBroadcastResource) SetStats(val SiteBroadcastStats) {
+	s.Stats = val
+}
+
+// SetCreatedAt sets the value of CreatedAt.
+func (s *SiteBroadcastResource) SetCreatedAt(val Timestamp) {
+	s.CreatedAt = val
+}
+
+// SetUpdatedAt sets the value of UpdatedAt.
+func (s *SiteBroadcastResource) SetUpdatedAt(val Timestamp) {
+	s.UpdatedAt = val
+}
+
+func (*SiteBroadcastResource) siteBroadcastsCreateRes()   {}
+func (*SiteBroadcastResource) siteBroadcastsGetRes()      {}
+func (*SiteBroadcastResource) siteBroadcastsScheduleRes() {}
+func (*SiteBroadcastResource) siteBroadcastsSendRes()     {}
+func (*SiteBroadcastResource) siteBroadcastsUpdateRes()   {}
+
+// Denormalized delivery counters for a broadcast.
+// Ref: #/components/schemas/SiteBroadcastStats
+type SiteBroadcastStats struct {
+	// Number of recipients the broadcast targets.
+	RecipientsTotal int32 `json:"recipientsTotal"`
+	// Messages successfully handed to the provider.
+	SentCount int32 `json:"sentCount"`
+	// Recipients that opened the email.
+	OpenedCount int32 `json:"openedCount"`
+	// Recipients that clicked a link.
+	ClickedCount int32 `json:"clickedCount"`
+	// Recipients that unsubscribed via this broadcast.
+	UnsubscribedCount int32 `json:"unsubscribedCount"`
+	// Messages that failed to send.
+	FailedCount int32 `json:"failedCount"`
+}
+
+// GetRecipientsTotal returns the value of RecipientsTotal.
+func (s *SiteBroadcastStats) GetRecipientsTotal() int32 {
+	return s.RecipientsTotal
+}
+
+// GetSentCount returns the value of SentCount.
+func (s *SiteBroadcastStats) GetSentCount() int32 {
+	return s.SentCount
+}
+
+// GetOpenedCount returns the value of OpenedCount.
+func (s *SiteBroadcastStats) GetOpenedCount() int32 {
+	return s.OpenedCount
+}
+
+// GetClickedCount returns the value of ClickedCount.
+func (s *SiteBroadcastStats) GetClickedCount() int32 {
+	return s.ClickedCount
+}
+
+// GetUnsubscribedCount returns the value of UnsubscribedCount.
+func (s *SiteBroadcastStats) GetUnsubscribedCount() int32 {
+	return s.UnsubscribedCount
+}
+
+// GetFailedCount returns the value of FailedCount.
+func (s *SiteBroadcastStats) GetFailedCount() int32 {
+	return s.FailedCount
+}
+
+// SetRecipientsTotal sets the value of RecipientsTotal.
+func (s *SiteBroadcastStats) SetRecipientsTotal(val int32) {
+	s.RecipientsTotal = val
+}
+
+// SetSentCount sets the value of SentCount.
+func (s *SiteBroadcastStats) SetSentCount(val int32) {
+	s.SentCount = val
+}
+
+// SetOpenedCount sets the value of OpenedCount.
+func (s *SiteBroadcastStats) SetOpenedCount(val int32) {
+	s.OpenedCount = val
+}
+
+// SetClickedCount sets the value of ClickedCount.
+func (s *SiteBroadcastStats) SetClickedCount(val int32) {
+	s.ClickedCount = val
+}
+
+// SetUnsubscribedCount sets the value of UnsubscribedCount.
+func (s *SiteBroadcastStats) SetUnsubscribedCount(val int32) {
+	s.UnsubscribedCount = val
+}
+
+// SetFailedCount sets the value of FailedCount.
+func (s *SiteBroadcastStats) SetFailedCount(val int32) {
+	s.FailedCount = val
+}
+
+// Broadcast lifecycle status.
+// Ref: #/components/schemas/SiteBroadcastStatus
+type SiteBroadcastStatus string
+
+const (
+	SiteBroadcastStatusDraft     SiteBroadcastStatus = "draft"
+	SiteBroadcastStatusScheduled SiteBroadcastStatus = "scheduled"
+	SiteBroadcastStatusSending   SiteBroadcastStatus = "sending"
+	SiteBroadcastStatusSent      SiteBroadcastStatus = "sent"
+	SiteBroadcastStatusFailed    SiteBroadcastStatus = "failed"
+)
+
+// AllValues returns all SiteBroadcastStatus values.
+func (SiteBroadcastStatus) AllValues() []SiteBroadcastStatus {
+	return []SiteBroadcastStatus{
+		SiteBroadcastStatusDraft,
+		SiteBroadcastStatusScheduled,
+		SiteBroadcastStatusSending,
+		SiteBroadcastStatusSent,
+		SiteBroadcastStatusFailed,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s SiteBroadcastStatus) MarshalText() ([]byte, error) {
+	switch s {
+	case SiteBroadcastStatusDraft:
+		return []byte(s), nil
+	case SiteBroadcastStatusScheduled:
+		return []byte(s), nil
+	case SiteBroadcastStatusSending:
+		return []byte(s), nil
+	case SiteBroadcastStatusSent:
+		return []byte(s), nil
+	case SiteBroadcastStatusFailed:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *SiteBroadcastStatus) UnmarshalText(data []byte) error {
+	switch SiteBroadcastStatus(data) {
+	case SiteBroadcastStatusDraft:
+		*s = SiteBroadcastStatusDraft
+		return nil
+	case SiteBroadcastStatusScheduled:
+		*s = SiteBroadcastStatusScheduled
+		return nil
+	case SiteBroadcastStatusSending:
+		*s = SiteBroadcastStatusSending
+		return nil
+	case SiteBroadcastStatusSent:
+		*s = SiteBroadcastStatusSent
+		return nil
+	case SiteBroadcastStatusFailed:
+		*s = SiteBroadcastStatusFailed
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+type SiteBroadcastsCreateNotFound ProblemDetails
+
+func (*SiteBroadcastsCreateNotFound) siteBroadcastsCreateRes() {}
+
+type SiteBroadcastsCreateUnprocessableEntity ProblemDetails
+
+func (*SiteBroadcastsCreateUnprocessableEntity) siteBroadcastsCreateRes() {}
+
+type SiteBroadcastsDeleteBadRequest ProblemDetails
+
+func (*SiteBroadcastsDeleteBadRequest) siteBroadcastsDeleteRes() {}
+
+// SiteBroadcastsDeleteNoContent is response for SiteBroadcastsDelete operation.
+type SiteBroadcastsDeleteNoContent struct{}
+
+func (*SiteBroadcastsDeleteNoContent) siteBroadcastsDeleteRes() {}
+
+type SiteBroadcastsDeleteNotFound ProblemDetails
+
+func (*SiteBroadcastsDeleteNotFound) siteBroadcastsDeleteRes() {}
+
+type SiteBroadcastsGetBadRequest ProblemDetails
+
+func (*SiteBroadcastsGetBadRequest) siteBroadcastsGetRes() {}
+
+type SiteBroadcastsGetNotFound ProblemDetails
+
+func (*SiteBroadcastsGetNotFound) siteBroadcastsGetRes() {}
+
+type SiteBroadcastsListBadRequest ProblemDetails
+
+func (*SiteBroadcastsListBadRequest) siteBroadcastsListRes() {}
+
+type SiteBroadcastsListNotFound ProblemDetails
+
+func (*SiteBroadcastsListNotFound) siteBroadcastsListRes() {}
+
+// Paginated response.
+type SiteBroadcastsListOK struct {
+	// List of items.
+	Items []SiteBroadcastResource `json:"items"`
+	// Page number (1-based).
+	Page int32 `json:"page"`
+	// Page size.
+	PageSize int32 `json:"pageSize"`
+	// Total number of elements.
+	TotalItems int32 `json:"totalItems"`
+	// Total number of pages.
+	TotalPages int32 `json:"totalPages"`
+}
+
+// GetItems returns the value of Items.
+func (s *SiteBroadcastsListOK) GetItems() []SiteBroadcastResource {
+	return s.Items
+}
+
+// GetPage returns the value of Page.
+func (s *SiteBroadcastsListOK) GetPage() int32 {
+	return s.Page
+}
+
+// GetPageSize returns the value of PageSize.
+func (s *SiteBroadcastsListOK) GetPageSize() int32 {
+	return s.PageSize
+}
+
+// GetTotalItems returns the value of TotalItems.
+func (s *SiteBroadcastsListOK) GetTotalItems() int32 {
+	return s.TotalItems
+}
+
+// GetTotalPages returns the value of TotalPages.
+func (s *SiteBroadcastsListOK) GetTotalPages() int32 {
+	return s.TotalPages
+}
+
+// SetItems sets the value of Items.
+func (s *SiteBroadcastsListOK) SetItems(val []SiteBroadcastResource) {
+	s.Items = val
+}
+
+// SetPage sets the value of Page.
+func (s *SiteBroadcastsListOK) SetPage(val int32) {
+	s.Page = val
+}
+
+// SetPageSize sets the value of PageSize.
+func (s *SiteBroadcastsListOK) SetPageSize(val int32) {
+	s.PageSize = val
+}
+
+// SetTotalItems sets the value of TotalItems.
+func (s *SiteBroadcastsListOK) SetTotalItems(val int32) {
+	s.TotalItems = val
+}
+
+// SetTotalPages sets the value of TotalPages.
+func (s *SiteBroadcastsListOK) SetTotalPages(val int32) {
+	s.TotalPages = val
+}
+
+func (*SiteBroadcastsListOK) siteBroadcastsListRes() {}
+
+type SiteBroadcastsListUnprocessableEntity ProblemDetails
+
+func (*SiteBroadcastsListUnprocessableEntity) siteBroadcastsListRes() {}
+
+type SiteBroadcastsScheduleBadRequest ProblemDetails
+
+func (*SiteBroadcastsScheduleBadRequest) siteBroadcastsScheduleRes() {}
+
+type SiteBroadcastsScheduleNotFound ProblemDetails
+
+func (*SiteBroadcastsScheduleNotFound) siteBroadcastsScheduleRes() {}
+
+type SiteBroadcastsScheduleUnprocessableEntity ProblemDetails
+
+func (*SiteBroadcastsScheduleUnprocessableEntity) siteBroadcastsScheduleRes() {}
+
+type SiteBroadcastsSendBadRequest ProblemDetails
+
+func (*SiteBroadcastsSendBadRequest) siteBroadcastsSendRes() {}
+
+type SiteBroadcastsSendNotFound ProblemDetails
+
+func (*SiteBroadcastsSendNotFound) siteBroadcastsSendRes() {}
+
+type SiteBroadcastsSendUnprocessableEntity ProblemDetails
+
+func (*SiteBroadcastsSendUnprocessableEntity) siteBroadcastsSendRes() {}
+
+type SiteBroadcastsUpdateBadRequest ProblemDetails
+
+func (*SiteBroadcastsUpdateBadRequest) siteBroadcastsUpdateRes() {}
+
+type SiteBroadcastsUpdateNotFound ProblemDetails
+
+func (*SiteBroadcastsUpdateNotFound) siteBroadcastsUpdateRes() {}
+
+type SiteBroadcastsUpdateUnprocessableEntity ProblemDetails
+
+func (*SiteBroadcastsUpdateUnprocessableEntity) siteBroadcastsUpdateRes() {}
+
 // Contact resource used by the site UI.
 // Ref: #/components/schemas/SiteContactResource
 type SiteContactResource struct {
@@ -1475,6 +2086,95 @@ func (*SiteContactsUpdateNotFound) siteContactsUpdateRes() {}
 type SiteContactsUpdateUnprocessableEntity ProblemDetails
 
 func (*SiteContactsUpdateUnprocessableEntity) siteContactsUpdateRes() {}
+
+// Site request body for creating a broadcast.
+// Ref: #/components/schemas/SiteCreateBroadcastInput
+type SiteCreateBroadcastInput struct {
+	// Internal broadcast name.
+	Name string `json:"name"`
+	// Email subject line.
+	Subject OptString `json:"subject"`
+	// Sender display name.
+	FromName OptNilString `json:"fromName"`
+	// Sender email address.
+	FromEmail OptNilEmailAddress `json:"fromEmail"`
+	// HTML body.
+	BodyHtml OptString `json:"bodyHtml"`
+	// Target segment; null/omitted means all active contacts.
+	SegmentId OptNilEntityId `json:"segmentId"`
+	// Sending integration; null/omitted means the workspace default.
+	IntegrationId OptNilEntityId `json:"integrationId"`
+}
+
+// GetName returns the value of Name.
+func (s *SiteCreateBroadcastInput) GetName() string {
+	return s.Name
+}
+
+// GetSubject returns the value of Subject.
+func (s *SiteCreateBroadcastInput) GetSubject() OptString {
+	return s.Subject
+}
+
+// GetFromName returns the value of FromName.
+func (s *SiteCreateBroadcastInput) GetFromName() OptNilString {
+	return s.FromName
+}
+
+// GetFromEmail returns the value of FromEmail.
+func (s *SiteCreateBroadcastInput) GetFromEmail() OptNilEmailAddress {
+	return s.FromEmail
+}
+
+// GetBodyHtml returns the value of BodyHtml.
+func (s *SiteCreateBroadcastInput) GetBodyHtml() OptString {
+	return s.BodyHtml
+}
+
+// GetSegmentId returns the value of SegmentId.
+func (s *SiteCreateBroadcastInput) GetSegmentId() OptNilEntityId {
+	return s.SegmentId
+}
+
+// GetIntegrationId returns the value of IntegrationId.
+func (s *SiteCreateBroadcastInput) GetIntegrationId() OptNilEntityId {
+	return s.IntegrationId
+}
+
+// SetName sets the value of Name.
+func (s *SiteCreateBroadcastInput) SetName(val string) {
+	s.Name = val
+}
+
+// SetSubject sets the value of Subject.
+func (s *SiteCreateBroadcastInput) SetSubject(val OptString) {
+	s.Subject = val
+}
+
+// SetFromName sets the value of FromName.
+func (s *SiteCreateBroadcastInput) SetFromName(val OptNilString) {
+	s.FromName = val
+}
+
+// SetFromEmail sets the value of FromEmail.
+func (s *SiteCreateBroadcastInput) SetFromEmail(val OptNilEmailAddress) {
+	s.FromEmail = val
+}
+
+// SetBodyHtml sets the value of BodyHtml.
+func (s *SiteCreateBroadcastInput) SetBodyHtml(val OptString) {
+	s.BodyHtml = val
+}
+
+// SetSegmentId sets the value of SegmentId.
+func (s *SiteCreateBroadcastInput) SetSegmentId(val OptNilEntityId) {
+	s.SegmentId = val
+}
+
+// SetIntegrationId sets the value of IntegrationId.
+func (s *SiteCreateBroadcastInput) SetIntegrationId(val OptNilEntityId) {
+	s.IntegrationId = val
+}
 
 // Site request body for creating a contact.
 // Ref: #/components/schemas/SiteCreateContactInput
@@ -2538,6 +3238,23 @@ func (s *SiteRegisterResult) SetCreatedAt(val Timestamp) {
 
 func (*SiteRegisterResult) siteAuthRegisterRes() {}
 
+// Site request body for scheduling a broadcast.
+// Ref: #/components/schemas/SiteScheduleBroadcastInput
+type SiteScheduleBroadcastInput struct {
+	// When the broadcast should be sent.
+	ScheduledAt Timestamp `json:"scheduledAt"`
+}
+
+// GetScheduledAt returns the value of ScheduledAt.
+func (s *SiteScheduleBroadcastInput) GetScheduledAt() Timestamp {
+	return s.ScheduledAt
+}
+
+// SetScheduledAt sets the value of ScheduledAt.
+func (s *SiteScheduleBroadcastInput) SetScheduledAt(val Timestamp) {
+	s.ScheduledAt = val
+}
+
 // Segment resource used by the site UI.
 // Ref: #/components/schemas/SiteSegmentResource
 type SiteSegmentResource struct {
@@ -3226,6 +3943,95 @@ func (*SiteTokensDeleteNotFound) siteTokensDeleteRes() {}
 type SiteTokensListOKApplicationJSON []SiteApiTokenResource
 
 func (*SiteTokensListOKApplicationJSON) siteTokensListRes() {}
+
+// Site request body for updating a broadcast.
+// Ref: #/components/schemas/SiteUpdateBroadcastInput
+type SiteUpdateBroadcastInput struct {
+	// Internal broadcast name.
+	Name OptString `json:"name"`
+	// Email subject line.
+	Subject OptString `json:"subject"`
+	// Sender display name.
+	FromName OptNilString `json:"fromName"`
+	// Sender email address.
+	FromEmail OptNilEmailAddress `json:"fromEmail"`
+	// HTML body.
+	BodyHtml OptString `json:"bodyHtml"`
+	// Target segment; null means all active contacts.
+	SegmentId OptNilEntityId `json:"segmentId"`
+	// Sending integration; null means the workspace default.
+	IntegrationId OptNilEntityId `json:"integrationId"`
+}
+
+// GetName returns the value of Name.
+func (s *SiteUpdateBroadcastInput) GetName() OptString {
+	return s.Name
+}
+
+// GetSubject returns the value of Subject.
+func (s *SiteUpdateBroadcastInput) GetSubject() OptString {
+	return s.Subject
+}
+
+// GetFromName returns the value of FromName.
+func (s *SiteUpdateBroadcastInput) GetFromName() OptNilString {
+	return s.FromName
+}
+
+// GetFromEmail returns the value of FromEmail.
+func (s *SiteUpdateBroadcastInput) GetFromEmail() OptNilEmailAddress {
+	return s.FromEmail
+}
+
+// GetBodyHtml returns the value of BodyHtml.
+func (s *SiteUpdateBroadcastInput) GetBodyHtml() OptString {
+	return s.BodyHtml
+}
+
+// GetSegmentId returns the value of SegmentId.
+func (s *SiteUpdateBroadcastInput) GetSegmentId() OptNilEntityId {
+	return s.SegmentId
+}
+
+// GetIntegrationId returns the value of IntegrationId.
+func (s *SiteUpdateBroadcastInput) GetIntegrationId() OptNilEntityId {
+	return s.IntegrationId
+}
+
+// SetName sets the value of Name.
+func (s *SiteUpdateBroadcastInput) SetName(val OptString) {
+	s.Name = val
+}
+
+// SetSubject sets the value of Subject.
+func (s *SiteUpdateBroadcastInput) SetSubject(val OptString) {
+	s.Subject = val
+}
+
+// SetFromName sets the value of FromName.
+func (s *SiteUpdateBroadcastInput) SetFromName(val OptNilString) {
+	s.FromName = val
+}
+
+// SetFromEmail sets the value of FromEmail.
+func (s *SiteUpdateBroadcastInput) SetFromEmail(val OptNilEmailAddress) {
+	s.FromEmail = val
+}
+
+// SetBodyHtml sets the value of BodyHtml.
+func (s *SiteUpdateBroadcastInput) SetBodyHtml(val OptString) {
+	s.BodyHtml = val
+}
+
+// SetSegmentId sets the value of SegmentId.
+func (s *SiteUpdateBroadcastInput) SetSegmentId(val OptNilEntityId) {
+	s.SegmentId = val
+}
+
+// SetIntegrationId sets the value of IntegrationId.
+func (s *SiteUpdateBroadcastInput) SetIntegrationId(val OptNilEntityId) {
+	s.IntegrationId = val
+}
 
 // Site request body for updating a contact.
 // Ref: #/components/schemas/SiteUpdateContactInput

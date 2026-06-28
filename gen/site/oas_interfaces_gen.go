@@ -9,6 +9,34 @@ type SiteAuthRegisterRes interface {
 	siteAuthRegisterRes()
 }
 
+type SiteBroadcastsCreateRes interface {
+	siteBroadcastsCreateRes()
+}
+
+type SiteBroadcastsDeleteRes interface {
+	siteBroadcastsDeleteRes()
+}
+
+type SiteBroadcastsGetRes interface {
+	siteBroadcastsGetRes()
+}
+
+type SiteBroadcastsListRes interface {
+	siteBroadcastsListRes()
+}
+
+type SiteBroadcastsScheduleRes interface {
+	siteBroadcastsScheduleRes()
+}
+
+type SiteBroadcastsSendRes interface {
+	siteBroadcastsSendRes()
+}
+
+type SiteBroadcastsUpdateRes interface {
+	siteBroadcastsUpdateRes()
+}
+
 type SiteContactsCreateRes interface {
 	siteContactsCreateRes()
 }

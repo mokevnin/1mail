@@ -136,7 +136,10 @@ namespace SiteIntegrations {
 
   /** Create an integration */
   @post
-  op create(@path workspaceSlug: string, @body body: SiteCreateIntegrationInput):
+  op create(
+    @path workspaceSlug: string,
+    @body body: SiteCreateIntegrationInput,
+  ):
     | {
         @statusCode statusCode: 201;
         @body body: SiteIntegrationResource;

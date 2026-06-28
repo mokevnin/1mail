@@ -8,6 +8,13 @@ type OperationName = string
 const (
 	SiteAuthDirectLoginOperation    OperationName = "SiteAuthDirectLogin"
 	SiteAuthRegisterOperation       OperationName = "SiteAuthRegister"
+	SiteBroadcastsCreateOperation   OperationName = "SiteBroadcastsCreate"
+	SiteBroadcastsDeleteOperation   OperationName = "SiteBroadcastsDelete"
+	SiteBroadcastsGetOperation      OperationName = "SiteBroadcastsGet"
+	SiteBroadcastsListOperation     OperationName = "SiteBroadcastsList"
+	SiteBroadcastsScheduleOperation OperationName = "SiteBroadcastsSchedule"
+	SiteBroadcastsSendOperation     OperationName = "SiteBroadcastsSend"
+	SiteBroadcastsUpdateOperation   OperationName = "SiteBroadcastsUpdate"
 	SiteContactsCreateOperation     OperationName = "SiteContactsCreate"
 	SiteContactsDeleteOperation     OperationName = "SiteContactsDelete"
 	SiteContactsGetOperation        OperationName = "SiteContactsGet"

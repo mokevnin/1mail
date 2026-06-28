@@ -112,7 +112,7 @@ generate-backend:
 	$(RUN_GO) sh -c 'go tool ogen --target gen/site     --package siteapi     --clean openapi/site.openapi.json && \
 		go tool ogen --target gen/external --package externalapi --clean openapi/external.openapi.json && \
 		go tool ogen --target gen/collect  --package collectapi  --clean openapi/collect.openapi.json'
-	$(RUN_GO) go tool goverter gen ./internal/api/site/sitemap ./internal/api/external/externalmap
+	$(RUN_GO) go tool goverter gen ./internal/api/site/resources ./internal/api/external/resources
 
 generate: generate-typespec generate-openapi generate-backend check-fix
 

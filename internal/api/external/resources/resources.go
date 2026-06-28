@@ -1,8 +1,8 @@
-// Package externalmap holds goverter-generated mappers from ent entities to
+// Package resources holds goverter-generated mappers from ent entities to
 // external API resources, plus the custom conversions goverter cannot infer.
 // The generated implementation (ConverterImpl) lives in converter_gen.go;
 // consumers instantiate it (see internal/api/external).
-package externalmap
+package resources
 
 import (
 	"strconv"

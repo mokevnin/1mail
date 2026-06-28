@@ -22,9 +22,45 @@ export const zProblemDetails = z.object({
 });
 
 /**
+ * Denormalized delivery counters for a broadcast
+ */
+export const zSiteBroadcastStats = z.object({
+    recipientsTotal: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
+    sentCount: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
+    openedCount: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
+    clickedCount: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
+    unsubscribedCount: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
+    failedCount: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' })
+});
+
+/**
+ * Broadcast lifecycle status
+ */
+export const zSiteBroadcastStatus = z.enum([
+    'draft',
+    'scheduled',
+    'sending',
+    'sent',
+    'failed'
+]);
+
+/**
  * Contact status for site UI
  */
 export const zSiteContactStatus = z.enum(['active', 'unsubscribed']);
+
+/**
+ * Site request body for creating a broadcast
+ */
+export const zSiteCreateBroadcastInput = z.object({
+    name: z.string(),
+    subject: z.string().optional(),
+    fromName: z.string().nullish(),
+    fromEmail: zEmailAddress.nullish(),
+    bodyHtml: z.string().optional(),
+    segmentId: zEntityId.nullish(),
+    integrationId: zEntityId.nullish()
+});
 
 export const zSiteDirectLoginError = z.object({
     error: z.string()
@@ -151,6 +187,19 @@ export const zSiteCreateIntegrationInput = z.object({
 });
 
 /**
+ * Site request body for updating a broadcast
+ */
+export const zSiteUpdateBroadcastInput = z.object({
+    name: z.string().optional(),
+    subject: z.string().optional(),
+    fromName: z.string().nullish(),
+    fromEmail: zEmailAddress.nullish(),
+    bodyHtml: z.string().optional(),
+    segmentId: zEntityId.nullish(),
+    integrationId: zEntityId.nullish()
+});
+
+/**
  * Update a workspace integration. Omit `config` to keep stored credentials.
  */
 export const zSiteUpdateIntegrationInput = z.object({
@@ -226,6 +275,27 @@ export const zSiteApiTokenResource = z.object({
 });
 
 /**
+ * Broadcast resource used by the site UI
+ */
+export const zSiteBroadcastResource = z.object({
+    id: zEntityId,
+    name: z.string(),
+    subject: z.string(),
+    fromName: z.string().nullish(),
+    fromEmail: zEmailAddress.nullish(),
+    bodyHtml: z.string(),
+    bodyText: z.string(),
+    segmentId: zEntityId.nullish(),
+    integrationId: zEntityId.nullish(),
+    status: zSiteBroadcastStatus,
+    scheduledAt: zTimestamp.nullish(),
+    sentAt: zTimestamp.nullish(),
+    stats: zSiteBroadcastStats,
+    createdAt: zTimestamp,
+    updatedAt: zTimestamp
+});
+
+/**
  * Contact resource used by the site UI
  */
 export const zSiteContactResource = z.object({
@@ -290,6 +360,13 @@ export const zSiteRegisterResult = z.object({
     name: z.string(),
     email: zEmailAddress,
     createdAt: zTimestamp
+});
+
+/**
+ * Site request body for scheduling a broadcast
+ */
+export const zSiteScheduleBroadcastInput = z.object({
+    scheduledAt: zTimestamp
 });
 
 /**
@@ -367,6 +444,91 @@ export const zSiteUserUpdateMeBody = zSiteUpdateMeInput;
  * The request has succeeded.
  */
 export const zSiteUserUpdateMeResponse = zSiteUserResource;
+
+export const zSiteBroadcastsListPath = z.object({
+    workspaceSlug: z.string()
+});
+
+export const zSiteBroadcastsListQuery = z.object({
+    page: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).optional().default(1),
+    pageSize: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).optional().default(25)
+});
+
+/**
+ * Paginated response
+ */
+export const zSiteBroadcastsListResponse = z.object({
+    items: z.array(zSiteBroadcastResource),
+    page: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
+    pageSize: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
+    totalItems: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
+    totalPages: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' })
+});
+
+export const zSiteBroadcastsCreateBody = zSiteCreateBroadcastInput;
+
+export const zSiteBroadcastsCreatePath = z.object({
+    workspaceSlug: z.string()
+});
+
+/**
+ * The request has succeeded and a new resource has been created as a result.
+ */
+export const zSiteBroadcastsCreateResponse = zSiteBroadcastResource;
+
+export const zSiteBroadcastsDeletePath = z.object({
+    workspaceSlug: z.string(),
+    id: zEntityId
+});
+
+/**
+ * There is no content to send for this request, but the headers may be useful.
+ */
+export const zSiteBroadcastsDeleteResponse = z.void();
+
+export const zSiteBroadcastsGetPath = z.object({
+    workspaceSlug: z.string(),
+    id: zEntityId
+});
+
+/**
+ * The request has succeeded.
+ */
+export const zSiteBroadcastsGetResponse = zSiteBroadcastResource;
+
+export const zSiteBroadcastsUpdateBody = zSiteUpdateBroadcastInput;
+
+export const zSiteBroadcastsUpdatePath = z.object({
+    workspaceSlug: z.string(),
+    id: zEntityId
+});
+
+/**
+ * The request has succeeded.
+ */
+export const zSiteBroadcastsUpdateResponse = zSiteBroadcastResource;
+
+export const zSiteBroadcastsScheduleBody = zSiteScheduleBroadcastInput;
+
+export const zSiteBroadcastsSchedulePath = z.object({
+    workspaceSlug: z.string(),
+    id: zEntityId
+});
+
+/**
+ * The request has succeeded.
+ */
+export const zSiteBroadcastsScheduleResponse = zSiteBroadcastResource;
+
+export const zSiteBroadcastsSendPath = z.object({
+    workspaceSlug: z.string(),
+    id: zEntityId
+});
+
+/**
+ * The request has succeeded.
+ */
+export const zSiteBroadcastsSendResponse = zSiteBroadcastResource;
 
 export const zSiteContactsListPath = z.object({
     workspaceSlug: z.string()

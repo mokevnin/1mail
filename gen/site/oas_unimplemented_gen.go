@@ -27,6 +27,69 @@ func (UnimplementedHandler) SiteAuthRegister(ctx context.Context, req *SiteRegis
 	return r, ht.ErrNotImplemented
 }
 
+// SiteBroadcastsCreate implements SiteBroadcasts_create operation.
+//
+// Create a broadcast from the site UI.
+//
+// POST /w/{workspaceSlug}/broadcasts
+func (UnimplementedHandler) SiteBroadcastsCreate(ctx context.Context, req *SiteCreateBroadcastInput, params SiteBroadcastsCreateParams) (r SiteBroadcastsCreateRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// SiteBroadcastsDelete implements SiteBroadcasts_delete operation.
+//
+// Delete a broadcast from the site UI.
+//
+// DELETE /w/{workspaceSlug}/broadcasts/{id}
+func (UnimplementedHandler) SiteBroadcastsDelete(ctx context.Context, params SiteBroadcastsDeleteParams) (r SiteBroadcastsDeleteRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// SiteBroadcastsGet implements SiteBroadcasts_get operation.
+//
+// Get a broadcast by ID for the site UI.
+//
+// GET /w/{workspaceSlug}/broadcasts/{id}
+func (UnimplementedHandler) SiteBroadcastsGet(ctx context.Context, params SiteBroadcastsGetParams) (r SiteBroadcastsGetRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// SiteBroadcastsList implements SiteBroadcasts_list operation.
+//
+// List broadcasts for the site UI.
+//
+// GET /w/{workspaceSlug}/broadcasts
+func (UnimplementedHandler) SiteBroadcastsList(ctx context.Context, params SiteBroadcastsListParams) (r SiteBroadcastsListRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// SiteBroadcastsSchedule implements SiteBroadcasts_schedule operation.
+//
+// Schedule a broadcast to send at a future time.
+//
+// POST /w/{workspaceSlug}/broadcasts/{id}/schedule
+func (UnimplementedHandler) SiteBroadcastsSchedule(ctx context.Context, req *SiteScheduleBroadcastInput, params SiteBroadcastsScheduleParams) (r SiteBroadcastsScheduleRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// SiteBroadcastsSend implements SiteBroadcasts_send operation.
+//
+// Send a broadcast immediately.
+//
+// POST /w/{workspaceSlug}/broadcasts/{id}/send
+func (UnimplementedHandler) SiteBroadcastsSend(ctx context.Context, params SiteBroadcastsSendParams) (r SiteBroadcastsSendRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// SiteBroadcastsUpdate implements SiteBroadcasts_update operation.
+//
+// Update a broadcast from the site UI.
+//
+// PUT /w/{workspaceSlug}/broadcasts/{id}
+func (UnimplementedHandler) SiteBroadcastsUpdate(ctx context.Context, req *SiteUpdateBroadcastInput, params SiteBroadcastsUpdateParams) (r SiteBroadcastsUpdateRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // SiteContactsCreate implements SiteContacts_create operation.
 //
 // Create a contact from the site UI.

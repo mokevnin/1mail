@@ -28,6 +28,9 @@
     },
     {
       "name": "Site Integrations"
+    },
+    {
+      "name": "Site Broadcasts"
     }
   ],
   "paths": {
@@ -197,6 +200,483 @@
             }
           }
         }
+      }
+    },
+    "/w/{workspaceSlug}/broadcasts": {
+      "post": {
+        "operationId": "SiteBroadcasts_create",
+        "description": "Create a broadcast from the site UI",
+        "parameters": [
+          {
+            "name": "workspaceSlug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "The request has succeeded and a new resource has been created as a result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SiteBroadcastResource"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "RFC 7807 not found response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "RFC 7807 validation response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Site Broadcasts"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SiteCreateBroadcastInput"
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "operationId": "SiteBroadcasts_list",
+        "description": "List broadcasts for the site UI",
+        "parameters": [
+          {
+            "name": "workspaceSlug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/PageQuery.page"
+          },
+          {
+            "$ref": "#/components/parameters/PageQuery.pageSize"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request has succeeded.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["items", "page", "pageSize", "totalItems", "totalPages"],
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/SiteBroadcastResource"
+                      },
+                      "description": "List of items"
+                    },
+                    "page": {
+                      "type": "integer",
+                      "format": "int32",
+                      "description": "Page number (1-based)"
+                    },
+                    "pageSize": {
+                      "type": "integer",
+                      "format": "int32",
+                      "description": "Page size"
+                    },
+                    "totalItems": {
+                      "type": "integer",
+                      "format": "int32",
+                      "description": "Total number of elements"
+                    },
+                    "totalPages": {
+                      "type": "integer",
+                      "format": "int32",
+                      "description": "Total number of pages"
+                    }
+                  },
+                  "description": "Paginated response"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "RFC 7807 bad request response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "RFC 7807 not found response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "RFC 7807 validation response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Site Broadcasts"]
+      }
+    },
+    "/w/{workspaceSlug}/broadcasts/{id}": {
+      "get": {
+        "operationId": "SiteBroadcasts_get",
+        "description": "Get a broadcast by ID for the site UI",
+        "parameters": [
+          {
+            "name": "workspaceSlug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/EntityId"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request has succeeded.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SiteBroadcastResource"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "RFC 7807 bad request response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "RFC 7807 not found response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Site Broadcasts"]
+      },
+      "put": {
+        "operationId": "SiteBroadcasts_update",
+        "description": "Update a broadcast from the site UI",
+        "parameters": [
+          {
+            "name": "workspaceSlug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/EntityId"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request has succeeded.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SiteBroadcastResource"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "RFC 7807 bad request response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "RFC 7807 not found response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "RFC 7807 validation response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Site Broadcasts"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SiteUpdateBroadcastInput"
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "SiteBroadcasts_delete",
+        "description": "Delete a broadcast from the site UI",
+        "parameters": [
+          {
+            "name": "workspaceSlug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/EntityId"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "There is no content to send for this request, but the headers may be useful."
+          },
+          "400": {
+            "description": "RFC 7807 bad request response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "RFC 7807 not found response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Site Broadcasts"]
+      }
+    },
+    "/w/{workspaceSlug}/broadcasts/{id}/schedule": {
+      "post": {
+        "operationId": "SiteBroadcasts_schedule",
+        "description": "Schedule a broadcast to send at a future time",
+        "parameters": [
+          {
+            "name": "workspaceSlug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/EntityId"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request has succeeded.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SiteBroadcastResource"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "RFC 7807 bad request response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "RFC 7807 not found response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "RFC 7807 validation response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Site Broadcasts"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SiteScheduleBroadcastInput"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/w/{workspaceSlug}/broadcasts/{id}/send": {
+      "post": {
+        "operationId": "SiteBroadcasts_send",
+        "description": "Send a broadcast immediately",
+        "parameters": [
+          {
+            "name": "workspaceSlug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/EntityId"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request has succeeded.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SiteBroadcastResource"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "RFC 7807 bad request response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "RFC 7807 not found response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "RFC 7807 validation response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Site Broadcasts"]
       }
     },
     "/w/{workspaceSlug}/contacts": {
@@ -1659,6 +2139,183 @@
         },
         "description": "A workspace API token (secret shown only once, at creation)"
       },
+      "SiteBroadcastResource": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "subject",
+          "bodyHtml",
+          "bodyText",
+          "status",
+          "stats",
+          "createdAt",
+          "updatedAt"
+        ],
+        "properties": {
+          "id": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EntityId"
+              }
+            ],
+            "description": "Unique identifier"
+          },
+          "name": {
+            "type": "string",
+            "description": "Internal broadcast name"
+          },
+          "subject": {
+            "type": "string",
+            "description": "Email subject line"
+          },
+          "fromName": {
+            "type": "string",
+            "nullable": true,
+            "description": "Sender display name (defaults to the integration's)"
+          },
+          "fromEmail": {
+            "type": "string",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EmailAddress"
+              }
+            ],
+            "nullable": true,
+            "description": "Sender email address (defaults to the integration's)"
+          },
+          "bodyHtml": {
+            "type": "string",
+            "description": "HTML body authored in the composer"
+          },
+          "bodyText": {
+            "type": "string",
+            "description": "Derived plain-text body"
+          },
+          "segmentId": {
+            "type": "string",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EntityId"
+              }
+            ],
+            "nullable": true,
+            "description": "Target segment; null means all active contacts"
+          },
+          "integrationId": {
+            "type": "string",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EntityId"
+              }
+            ],
+            "nullable": true,
+            "description": "Sending integration; null means the workspace default"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SiteBroadcastStatus"
+              }
+            ],
+            "description": "Lifecycle status"
+          },
+          "scheduledAt": {
+            "type": "string",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Timestamp"
+              }
+            ],
+            "nullable": true,
+            "description": "When the broadcast is scheduled to send"
+          },
+          "sentAt": {
+            "type": "string",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Timestamp"
+              }
+            ],
+            "nullable": true,
+            "description": "When the broadcast finished sending"
+          },
+          "stats": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SiteBroadcastStats"
+              }
+            ],
+            "description": "Delivery counters"
+          },
+          "createdAt": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Timestamp"
+              }
+            ],
+            "description": "Creation timestamp"
+          },
+          "updatedAt": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Timestamp"
+              }
+            ],
+            "description": "Last update timestamp"
+          }
+        },
+        "description": "Broadcast resource used by the site UI"
+      },
+      "SiteBroadcastStats": {
+        "type": "object",
+        "required": [
+          "recipientsTotal",
+          "sentCount",
+          "openedCount",
+          "clickedCount",
+          "unsubscribedCount",
+          "failedCount"
+        ],
+        "properties": {
+          "recipientsTotal": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Number of recipients the broadcast targets"
+          },
+          "sentCount": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Messages successfully handed to the provider"
+          },
+          "openedCount": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Recipients that opened the email"
+          },
+          "clickedCount": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Recipients that clicked a link"
+          },
+          "unsubscribedCount": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Recipients that unsubscribed via this broadcast"
+          },
+          "failedCount": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Messages that failed to send"
+          }
+        },
+        "description": "Denormalized delivery counters for a broadcast"
+      },
+      "SiteBroadcastStatus": {
+        "type": "string",
+        "enum": ["draft", "scheduled", "sending", "sent", "failed"],
+        "description": "Broadcast lifecycle status"
+      },
       "SiteContactResource": {
         "type": "object",
         "required": ["id", "email", "status", "createdAt", "updatedAt"],
@@ -1738,6 +2395,60 @@
         "type": "string",
         "enum": ["active", "unsubscribed"],
         "description": "Contact status for site UI"
+      },
+      "SiteCreateBroadcastInput": {
+        "type": "object",
+        "required": ["name"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Internal broadcast name"
+          },
+          "subject": {
+            "type": "string",
+            "description": "Email subject line"
+          },
+          "fromName": {
+            "type": "string",
+            "nullable": true,
+            "description": "Sender display name"
+          },
+          "fromEmail": {
+            "type": "string",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EmailAddress"
+              }
+            ],
+            "nullable": true,
+            "description": "Sender email address"
+          },
+          "bodyHtml": {
+            "type": "string",
+            "description": "HTML body"
+          },
+          "segmentId": {
+            "type": "string",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EntityId"
+              }
+            ],
+            "nullable": true,
+            "description": "Target segment; null/omitted means all active contacts"
+          },
+          "integrationId": {
+            "type": "string",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EntityId"
+              }
+            ],
+            "nullable": true,
+            "description": "Sending integration; null/omitted means the workspace default"
+          }
+        },
+        "description": "Site request body for creating a broadcast"
       },
       "SiteCreateContactInput": {
         "type": "object",
@@ -2125,6 +2836,21 @@
           }
         }
       },
+      "SiteScheduleBroadcastInput": {
+        "type": "object",
+        "required": ["scheduledAt"],
+        "properties": {
+          "scheduledAt": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Timestamp"
+              }
+            ],
+            "description": "When the broadcast should be sent"
+          }
+        },
+        "description": "Site request body for scheduling a broadcast"
+      },
       "SiteSegmentResource": {
         "type": "object",
         "required": ["id", "name", "type", "createdAt", "updatedAt"],
@@ -2292,6 +3018,59 @@
           }
         },
         "description": "SMTP credentials"
+      },
+      "SiteUpdateBroadcastInput": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Internal broadcast name"
+          },
+          "subject": {
+            "type": "string",
+            "description": "Email subject line"
+          },
+          "fromName": {
+            "type": "string",
+            "nullable": true,
+            "description": "Sender display name"
+          },
+          "fromEmail": {
+            "type": "string",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EmailAddress"
+              }
+            ],
+            "nullable": true,
+            "description": "Sender email address"
+          },
+          "bodyHtml": {
+            "type": "string",
+            "description": "HTML body"
+          },
+          "segmentId": {
+            "type": "string",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EntityId"
+              }
+            ],
+            "nullable": true,
+            "description": "Target segment; null means all active contacts"
+          },
+          "integrationId": {
+            "type": "string",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EntityId"
+              }
+            ],
+            "nullable": true,
+            "description": "Sending integration; null means the workspace default"
+          }
+        },
+        "description": "Site request body for updating a broadcast"
       },
       "SiteUpdateContactInput": {
         "type": "object",
