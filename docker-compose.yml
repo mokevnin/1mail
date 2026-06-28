@@ -89,7 +89,9 @@ services:
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: 1mail_development
     ports:
-      - "5432:5432" # host-side Go dev / atlas connect here
+      # Host-side Go dev / atlas connect here. Override DB_HOST_PORT in a local
+      # .env to avoid clashing with another Postgres already bound to 5432.
+      - "${DB_HOST_PORT:-5432}:5432"
     volumes:
       # postgres:18 layout: mount the whole dir; PGDATA defaults to a
       # version-specific subdir (/var/lib/postgresql/18/docker), which supports
