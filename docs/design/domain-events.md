@@ -195,13 +195,26 @@ river, the automation run engine, and the broadcast engine are unchanged — onl
   (SSRF, resolved-IP checks) + `standard-webhooks` (interoperable signatures).
   Webhooks currently see `contact.created` + `email.*`.
 - **Deferred — collect/external producers stay inline.** Migrating them onto the
-  bus was attempted and **reverted**: customer events carry runtime-defined names
-  (no Go type), which forced a generic flat envelope + a `CustomEvent` field-bag and
-  manual producer mapping — a stringly/untyped smell. When revisited, do it as a
-  **typed union**: keep `DomainEvent` a closed interface where each variant owns its
-  projection (`Project()`), carry a typed payload on the wire, decode via a
-  `name → type` registry with `CustomEvent` as the single catch-all for dynamic
-  names — so the field-bag lives only in that one variant, not the core envelope.
+  bus was attempted and **reverted** because the model was wrong: it tried to make a
+  customer's runtime-named event one of *our* event types, forcing a generic flat
+  envelope + field-bag.
+
+  **The correct model (use when revisited): never conflate internal and external
+  events.**
+  - *Our* events are a **closed typed union** — `ContactCreated`, `EmailOpened/
+    Clicked/Unsubscribed`, … — each a Go type that owns its projection (`Project()`).
+    Bus event names are finite and ours.
+  - A *customer's* event (`page_view`, `added_to_cart`) is the **user's domain, not
+    ours**: we know nothing about it and store it **as-is** (opaque action string +
+    properties + identity).
+  - The bridge: ingesting a customer event is itself *our* typed event,
+    **`CollectedEvent`** (bus name e.g. `event.collected`), whose body carries the
+    user's opaque payload. The user's `page_view` is a **field** (`Action`) inside
+    `CollectedEvent`, not a bus event name — so there are no "unknown" bus names and
+    no catch-all is needed. collect and external both publish `CollectedEvent`.
+    (Note: automation triggers that fire on a customer action must match
+    `CollectedEvent.Action`, not the bus name — handle that in the automations
+    subscriber.)
 - **Later**: analytics subscribers; per-subject ordering if needed; the typed-union
   refactor + collect/external migration above.
 
