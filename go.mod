@@ -14,6 +14,7 @@ require (
 	github.com/go-pkgz/auth/v2 v2.1.4
 	github.com/go-testfixtures/testfixtures/v3 v3.19.0
 	github.com/golang-jwt/jwt/v5 v5.3.1
+	github.com/gosimple/slug v1.15.0
 	github.com/jackc/pgx/v5 v5.10.0
 	github.com/k3a/html2text v1.4.0
 	github.com/nikoksr/notify v1.5.0
@@ -22,6 +23,7 @@ require (
 	github.com/preslavrachev/gomjml v0.12.0
 	github.com/riverqueue/river v0.39.0
 	github.com/riverqueue/river/riverdriver/riverpgxv5 v0.39.0
+	github.com/rs/cors v1.11.1
 	github.com/samber/do/v2 v2.0.0
 	github.com/samber/lo v1.53.0
 	github.com/samber/oops v1.22.0
@@ -79,6 +81,7 @@ require (
 	github.com/golang/snappy v1.0.0 // indirect
 	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
+	github.com/gosimple/unidecode v1.0.1 // indirect
 	github.com/hashicorp/hcl/v2 v2.24.0 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 // indirect

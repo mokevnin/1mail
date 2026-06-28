@@ -28,6 +28,7 @@ import (
 	"github.com/mokevnin/1mail/internal/secrets"
 	"github.com/mokevnin/1mail/internal/tracking"
 	"github.com/ogen-go/ogen/ogenerrors"
+	"github.com/rs/cors"
 )
 
 // New builds the top-level net/http handler wiring the three ogen-generated
@@ -111,7 +112,7 @@ func New(cfg *config.Config, client *ent.Client, ps *pubsub.PubSub, enqueuer api
 	// specific pattern wins, so this never shadows the API prefixes above.
 	mux.Handle("/", spaHandler())
 
-	return chain(mux, recoverer, requestID, timeout(30*time.Second), cors(cfg.CORSOrigins)), nil
+	return chain(mux, recoverer, requestID, timeout(30*time.Second), corsMiddleware(cfg.CORSOrigins)), nil
 }
 
 // problemErrorHandler renders ogen errors as RFC 7807 application/problem+json.
@@ -193,35 +194,49 @@ func randomID() string {
 	return hex.EncodeToString(b)
 }
 
-func cors(origins []string) func(http.Handler) http.Handler {
-	allowed := make(map[string]struct{}, len(origins))
-	for _, o := range origins {
-		allowed[o] = struct{}{}
-	}
+// corsMiddleware applies two rs/cors policies by path: the public collect API
+// echoes any origin without credentials (the collect key is public, cookies are
+// first-party on the customer's own domain), while the rest of the app uses the
+// configured allowlist with credentials (an empty list reflects any origin).
+func corsMiddleware(origins []string) func(http.Handler) http.Handler {
+	app := cors.New(cors.Options{
+		AllowedMethods: []string{
+			http.MethodGet, http.MethodPost, http.MethodPut, http.MethodDelete, http.MethodOptions,
+		},
+		// "*" reflects whatever request headers the client asks for (works with
+		// credentials, and avoids brittle exact-match of comma-joined header lists).
+		AllowedHeaders:   []string{"*"},
+		AllowCredentials: true,
+		AllowedOrigins:   origins,
+		// Empty allowlist ⇒ reflect any origin (dev convenience); AllowedOrigins
+		// is ignored when AllowOriginFunc is set, so only install it when empty.
+		AllowOriginFunc: reflectAllWhenEmpty(origins),
+	})
+	collect := cors.New(cors.Options{
+		AllowedMethods:   []string{http.MethodGet, http.MethodPost, http.MethodOptions},
+		AllowedHeaders:   []string{"*"},
+		AllowCredentials: false,
+		AllowOriginFunc:  func(string) bool { return true },
+	})
+
 	return func(next http.Handler) http.Handler {
+		appH := app.Handler(next)
+		collectH := collect.Handler(next)
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			origin := r.Header.Get("Origin")
-			if origin != "" {
-				if strings.HasPrefix(r.URL.Path, "/collect/") {
-					// Public ingestion from arbitrary customer sites: the collect
-					// key is public, so allow any origin. No credentials (cookies
-					// are first-party on the customer's own domain), which lets us
-					// echo the origin instead of being stuck with a static list.
-					w.Header().Set("Access-Control-Allow-Origin", origin)
-					w.Header().Set("Vary", "Origin")
-				} else if _, ok := allowed[origin]; ok || len(origins) == 0 {
-					w.Header().Set("Access-Control-Allow-Origin", origin)
-					w.Header().Set("Access-Control-Allow-Credentials", "true")
-					w.Header().Set("Vary", "Origin")
-				}
-			}
-			if r.Method == http.MethodOptions {
-				w.Header().Set("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS")
-				w.Header().Set("Access-Control-Allow-Headers", strings.Join([]string{"Authorization", "Content-Type", "x-collect-key", "x-bootstrap-token"}, ","))
-				w.WriteHeader(http.StatusNoContent)
+			if strings.HasPrefix(r.URL.Path, "/collect/") {
+				collectH.ServeHTTP(w, r)
 				return
 			}
-			next.ServeHTTP(w, r)
+			appH.ServeHTTP(w, r)
 		})
 	}
+}
+
+// reflectAllWhenEmpty returns an AllowOriginFunc that reflects any origin when no
+// allowlist is configured, or nil so rs/cors uses AllowedOrigins otherwise.
+func reflectAllWhenEmpty(origins []string) func(string) bool {
+	if len(origins) > 0 {
+		return nil
+	}
+	return func(string) bool { return true }
 }
