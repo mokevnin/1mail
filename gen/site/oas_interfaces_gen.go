@@ -97,6 +97,10 @@ type SiteSegmentsListRes interface {
 	siteSegmentsListRes()
 }
 
+type SiteSegmentsPreviewRes interface {
+	siteSegmentsPreviewRes()
+}
+
 type SiteSegmentsUpdateRes interface {
 	siteSegmentsUpdateRes()
 }

@@ -7,6 +7,7 @@ import (
 	"github.com/mokevnin/1mail/ent/broadcast"
 	"github.com/mokevnin/1mail/ent/broadcastrecipient"
 	"github.com/mokevnin/1mail/ent/contact"
+	"github.com/mokevnin/1mail/ent/segment"
 	"github.com/mokevnin/1mail/internal/jobs"
 	"github.com/mokevnin/1mail/internal/messaging"
 	"github.com/mokevnin/1mail/internal/testhelper"
@@ -83,6 +84,39 @@ func TestSendBroadcastDeliversToActiveContacts(t *testing.T) {
 	for _, r := range recs {
 		assert.Equal(t, broadcastrecipient.StatusSent, r.Status)
 	}
+}
+
+func TestSendBroadcastToRuleSegment(t *testing.T) {
+	env := testhelper.Setup(t)
+	ctx := context.Background()
+
+	_, err := env.DB.Contact.Create().SetWorkspaceID(acmeWorkspaceID).
+		SetEmail("pro@seg2.test").SetFirstName("Pro").
+		SetCustomFields(map[string]string{"plan": "pro"}).Save(ctx)
+	require.NoError(t, err)
+	_, err = env.DB.Contact.Create().SetWorkspaceID(acmeWorkspaceID).
+		SetEmail("free@seg2.test").SetFirstName("Free").
+		SetCustomFields(map[string]string{"plan": "free"}).Save(ctx)
+	require.NoError(t, err)
+
+	seg, err := env.DB.Segment.Create().SetWorkspaceID(acmeWorkspaceID).
+		SetName("Pro plan").SetType(segment.TypeRule).
+		SetDefinition(`{"combinator":"and","rules":[{"field":"custom:plan","operator":"=","value":"pro"}]}`).
+		Save(ctx)
+	require.NoError(t, err)
+
+	b, err := env.DB.Broadcast.Create().SetWorkspaceID(acmeWorkspaceID).
+		SetName("Segmented").SetSubject("Hi").SetBodyHTML("<p>Hi</p>").
+		SetSegmentID(seg.ID).Save(ctx)
+	require.NoError(t, err)
+
+	fs := &fakeSender{}
+	require.NoError(t, jobs.SendBroadcast(ctx, env.DB, fakeResolver{sender: fs}, tracking.New("s", "http://local"), b.ID))
+
+	// Only the pro-plan contact is in the audience.
+	require.Len(t, fs.sent, 1)
+	assert.Equal(t, "pro@seg2.test", fs.sent[0].To)
+	assert.Equal(t, 1, env.DB.Broadcast.GetX(ctx, b.ID).RecipientsTotal)
 }
 
 func TestSendBroadcastFailsWithoutProvider(t *testing.T) {

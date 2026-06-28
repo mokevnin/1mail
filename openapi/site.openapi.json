@@ -1580,6 +1580,75 @@
         "tags": ["Site Segments"]
       }
     },
+    "/w/{workspaceSlug}/segments/preview": {
+      "post": {
+        "operationId": "SiteSegments_preview",
+        "description": "Preview how many active contacts match a rule definition",
+        "parameters": [
+          {
+            "name": "workspaceSlug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request has succeeded.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SitePreviewSegmentResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "RFC 7807 bad request response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "RFC 7807 not found response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "RFC 7807 validation response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Site Segments"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SitePreviewSegmentInput"
+              }
+            }
+          }
+        }
+      }
+    },
     "/w/{workspaceSlug}/segments/{id}": {
       "get": {
         "operationId": "SiteSegments_get",
@@ -2802,6 +2871,29 @@
           }
         },
         "description": "A workspace sending-provider integration"
+      },
+      "SitePreviewSegmentInput": {
+        "type": "object",
+        "properties": {
+          "definition": {
+            "type": "string",
+            "nullable": true,
+            "description": "Rule definition (react-querybuilder JSON); empty means all contacts"
+          }
+        },
+        "description": "Request body for previewing a rule definition's audience"
+      },
+      "SitePreviewSegmentResult": {
+        "type": "object",
+        "required": ["count"],
+        "properties": {
+          "count": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Number of active contacts matching the rule"
+          }
+        },
+        "description": "Result of a segment preview: how many deliverable contacts match"
       },
       "SiteRegisterInput": {
         "type": "object",

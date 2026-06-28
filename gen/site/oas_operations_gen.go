@@ -30,6 +30,7 @@ const (
 	SiteSegmentsDeleteOperation     OperationName = "SiteSegmentsDelete"
 	SiteSegmentsGetOperation        OperationName = "SiteSegmentsGet"
 	SiteSegmentsListOperation       OperationName = "SiteSegmentsList"
+	SiteSegmentsPreviewOperation    OperationName = "SiteSegmentsPreview"
 	SiteSegmentsUpdateOperation     OperationName = "SiteSegmentsUpdate"
 	SiteTokensCreateOperation       OperationName = "SiteTokensCreate"
 	SiteTokensDeleteOperation       OperationName = "SiteTokensDelete"

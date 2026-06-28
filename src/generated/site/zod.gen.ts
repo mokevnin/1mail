@@ -92,6 +92,20 @@ export const zSiteIntegrationChannel = z.enum(['email', 'sms']);
  */
 export const zSiteIntegrationProvider = z.enum(['smtp', 'ses']);
 
+/**
+ * Request body for previewing a rule definition's audience
+ */
+export const zSitePreviewSegmentInput = z.object({
+    definition: z.string().nullish()
+});
+
+/**
+ * Result of a segment preview: how many deliverable contacts match
+ */
+export const zSitePreviewSegmentResult = z.object({
+    count: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' })
+});
+
 export const zSiteRegisterInput = z.object({
     name: z.string(),
     email: zEmailAddress,
@@ -697,6 +711,17 @@ export const zSiteSegmentsCreatePath = z.object({
  * The request has succeeded and a new resource has been created as a result.
  */
 export const zSiteSegmentsCreateResponse = zSiteSegmentResource;
+
+export const zSiteSegmentsPreviewBody = zSitePreviewSegmentInput;
+
+export const zSiteSegmentsPreviewPath = z.object({
+    workspaceSlug: z.string()
+});
+
+/**
+ * The request has succeeded.
+ */
+export const zSiteSegmentsPreviewResponse = zSitePreviewSegmentResult;
 
 export const zSiteSegmentsDeletePath = z.object({
     workspaceSlug: z.string(),

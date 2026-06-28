@@ -225,6 +225,15 @@ func (UnimplementedHandler) SiteSegmentsList(ctx context.Context, params SiteSeg
 	return r, ht.ErrNotImplemented
 }
 
+// SiteSegmentsPreview implements SiteSegments_preview operation.
+//
+// Preview how many active contacts match a rule definition.
+//
+// POST /w/{workspaceSlug}/segments/preview
+func (UnimplementedHandler) SiteSegmentsPreview(ctx context.Context, req *SitePreviewSegmentInput, params SiteSegmentsPreviewParams) (r SiteSegmentsPreviewRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // SiteSegmentsUpdate implements SiteSegments_update operation.
 //
 // Update a segment from the site UI.

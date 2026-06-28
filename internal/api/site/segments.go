@@ -6,10 +6,12 @@ import (
 	"strconv"
 
 	"github.com/mokevnin/1mail/ent"
+	"github.com/mokevnin/1mail/ent/contact"
 	"github.com/mokevnin/1mail/ent/segment"
 	siteapi "github.com/mokevnin/1mail/gen/site"
 	"github.com/mokevnin/1mail/internal/convert"
 	"github.com/mokevnin/1mail/internal/pagination"
+	"github.com/mokevnin/1mail/internal/segments"
 )
 
 func (h *Handlers) SiteSegmentsList(ctx context.Context, params siteapi.SiteSegmentsListParams) (siteapi.SiteSegmentsListRes, error) {
@@ -70,6 +72,13 @@ func (h *Handlers) SiteSegmentsCreate(ctx context.Context, req *siteapi.SiteCrea
 		return nil, err
 	}
 
+	if def := convert.StringPtr(req.Definition); req.Type == siteapi.SiteSegmentTypeRule && def != nil && *def != "" {
+		if err := segments.ValidateContactDefinition(*def); err != nil {
+			v := siteapi.SiteSegmentsCreateUnprocessableEntity(problem(http.StatusUnprocessableEntity, err.Error()))
+			return &v, nil
+		}
+	}
+
 	s, err := h.ent.Segment.Create().
 		SetWorkspaceID(ws).
 		SetName(req.Name).
@@ -127,6 +136,13 @@ func (h *Handlers) SiteSegmentsUpdate(ctx context.Context, req *siteapi.SiteUpda
 		v := siteapi.SiteSegmentsUpdateBadRequest(problem(http.StatusBadRequest, "invalid id"))
 		return &v, nil
 	}
+	if def := convert.StringPtr(req.Definition); def != nil && *def != "" {
+		if err := segments.ValidateContactDefinition(*def); err != nil {
+			v := siteapi.SiteSegmentsUpdateUnprocessableEntity(problem(http.StatusUnprocessableEntity, err.Error()))
+			return &v, nil
+		}
+	}
+
 	q := h.ent.Segment.UpdateOneID(id).
 		Where(segment.WorkspaceID(ws)).
 		SetNillableName(convert.StringPtr(req.Name)).
@@ -170,4 +186,36 @@ func (h *Handlers) SiteSegmentsDelete(ctx context.Context, params siteapi.SiteSe
 		return nil, err
 	}
 	return &siteapi.SiteSegmentsDeleteNoContent{}, nil
+}
+
+// SiteSegmentsPreview reports how many *deliverable* (active) contacts match a
+// rule definition. It applies the same active filter the broadcast send path
+// uses, so the previewed number matches what a broadcast to this segment ships.
+func (h *Handlers) SiteSegmentsPreview(ctx context.Context, req *siteapi.SitePreviewSegmentInput, params siteapi.SiteSegmentsPreviewParams) (siteapi.SiteSegmentsPreviewRes, error) {
+	ws, err := h.workspaceID(ctx, params.WorkspaceSlug)
+	if ent.IsNotFound(err) {
+		v := siteapi.SiteSegmentsPreviewNotFound(problem(http.StatusNotFound, "workspace not found"))
+		return &v, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	def := ""
+	if v := convert.StringPtr(req.Definition); v != nil {
+		def = *v
+	}
+	pred, err := segments.ContactPredicate(def)
+	if err != nil {
+		v := siteapi.SiteSegmentsPreviewUnprocessableEntity(problem(http.StatusUnprocessableEntity, err.Error()))
+		return &v, nil
+	}
+
+	count, err := h.ent.Contact.Query().
+		Where(contact.WorkspaceID(ws), contact.StatusEQ(contact.StatusActive), pred).
+		Count(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return &siteapi.SitePreviewSegmentResult{Count: int32(count)}, nil
 }

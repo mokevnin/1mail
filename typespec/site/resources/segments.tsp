@@ -57,6 +57,18 @@ model SiteUpdateSegmentInput {
   definition?: string | null;
 }
 
+/** Request body for previewing a rule definition's audience */
+model SitePreviewSegmentInput {
+  /** Rule definition (react-querybuilder JSON); empty means all contacts */
+  definition?: string | null;
+}
+
+/** Result of a segment preview: how many deliverable contacts match */
+model SitePreviewSegmentResult {
+  /** Number of active contacts matching the rule */
+  count: int32;
+}
+
 @route("/w/{workspaceSlug}/segments")
 @tag("Site Segments")
 namespace SiteSegments {
@@ -111,4 +123,13 @@ namespace SiteSegments {
     | NoContentResponse
     | BadRequestProblem
     | NotFoundProblem;
+
+  /** Preview how many active contacts match a rule definition */
+  @post
+  @route("/preview")
+  op preview(@path workspaceSlug: string, @body body: SitePreviewSegmentInput):
+    | SitePreviewSegmentResult
+    | BadRequestProblem
+    | NotFoundProblem
+    | UnprocessableEntityProblem;
 }

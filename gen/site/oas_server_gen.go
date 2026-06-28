@@ -148,6 +148,12 @@ type Handler interface {
 	//
 	// GET /w/{workspaceSlug}/segments
 	SiteSegmentsList(ctx context.Context, params SiteSegmentsListParams) (SiteSegmentsListRes, error)
+	// SiteSegmentsPreview implements SiteSegments_preview operation.
+	//
+	// Preview how many active contacts match a rule definition.
+	//
+	// POST /w/{workspaceSlug}/segments/preview
+	SiteSegmentsPreview(ctx context.Context, req *SitePreviewSegmentInput, params SiteSegmentsPreviewParams) (SiteSegmentsPreviewRes, error)
 	// SiteSegmentsUpdate implements SiteSegments_update operation.
 	//
 	// Update a segment from the site UI.

@@ -2907,6 +2907,71 @@ func decodeSiteSegmentsListParams(args [1]string, argsEscaped bool, r *http.Requ
 	return params, nil
 }
 
+// SiteSegmentsPreviewParams is parameters of SiteSegments_preview operation.
+type SiteSegmentsPreviewParams struct {
+	WorkspaceSlug string
+}
+
+func unpackSiteSegmentsPreviewParams(packed middleware.Parameters) (params SiteSegmentsPreviewParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "workspaceSlug",
+			In:   "path",
+		}
+		params.WorkspaceSlug = packed[key].(string)
+	}
+	return params
+}
+
+func decodeSiteSegmentsPreviewParams(args [1]string, argsEscaped bool, r *http.Request) (params SiteSegmentsPreviewParams, _ error) {
+	// Decode path: workspaceSlug.
+	if err := func() error {
+		param := args[0]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[0])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "workspaceSlug",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToString(val)
+				if err != nil {
+					return err
+				}
+
+				params.WorkspaceSlug = c
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "workspaceSlug",
+			In:   "path",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
 // SiteSegmentsUpdateParams is parameters of SiteSegments_update operation.
 type SiteSegmentsUpdateParams struct {
 	WorkspaceSlug string

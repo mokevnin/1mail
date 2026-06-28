@@ -12,8 +12,10 @@ import (
 	"github.com/mokevnin/1mail/ent/broadcast"
 	"github.com/mokevnin/1mail/ent/broadcastrecipient"
 	"github.com/mokevnin/1mail/ent/contact"
+	"github.com/mokevnin/1mail/ent/segment"
 	"github.com/mokevnin/1mail/internal/emailrender"
 	"github.com/mokevnin/1mail/internal/messaging"
+	"github.com/mokevnin/1mail/internal/segments"
 	"github.com/mokevnin/1mail/internal/tracking"
 )
 
@@ -67,12 +69,38 @@ func SendBroadcast(ctx context.Context, client *ent.Client, resolver SenderResol
 		return err
 	}
 
-	contacts, err := client.Contact.Query().
-		Where(
-			contact.WorkspaceID(b.WorkspaceID),
-			contact.StatusEQ(contact.StatusActive),
-		).
-		All(ctx)
+	// Audience: active contacts in the workspace, narrowed by the broadcast's
+	// segment when set. Unsubscribed contacts are always excluded regardless of
+	// the segment rule (compliance).
+	audience := client.Contact.Query().Where(
+		contact.WorkspaceID(b.WorkspaceID),
+		contact.StatusEQ(contact.StatusActive),
+	)
+	if b.SegmentID != nil {
+		seg, err := client.Segment.Query().
+			Where(segment.IDEQ(*b.SegmentID), segment.WorkspaceID(b.WorkspaceID)).
+			Only(ctx)
+		if err != nil {
+			_, _ = b.Update().SetStatus(broadcast.StatusFailed).Save(ctx)
+			return fmt.Errorf("load segment %d: %w", *b.SegmentID, err)
+		}
+		if seg.Type != segment.TypeRule {
+			_, _ = b.Update().SetStatus(broadcast.StatusFailed).Save(ctx)
+			return fmt.Errorf("segment %d: only rule segments are supported as broadcast audiences", seg.ID)
+		}
+		def := ""
+		if seg.Definition != nil {
+			def = *seg.Definition
+		}
+		pred, err := segments.ContactPredicate(def)
+		if err != nil {
+			_, _ = b.Update().SetStatus(broadcast.StatusFailed).Save(ctx)
+			return fmt.Errorf("segment %d definition: %w", seg.ID, err)
+		}
+		audience = audience.Where(pred)
+	}
+
+	contacts, err := audience.All(ctx)
 	if err != nil {
 		return err
 	}

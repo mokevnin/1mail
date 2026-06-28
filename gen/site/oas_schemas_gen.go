@@ -3151,6 +3151,42 @@ type SiteIntegrationsUpdateUnprocessableEntity ProblemDetails
 
 func (*SiteIntegrationsUpdateUnprocessableEntity) siteIntegrationsUpdateRes() {}
 
+// Request body for previewing a rule definition's audience.
+// Ref: #/components/schemas/SitePreviewSegmentInput
+type SitePreviewSegmentInput struct {
+	// Rule definition (react-querybuilder JSON); empty means all contacts.
+	Definition OptNilString `json:"definition"`
+}
+
+// GetDefinition returns the value of Definition.
+func (s *SitePreviewSegmentInput) GetDefinition() OptNilString {
+	return s.Definition
+}
+
+// SetDefinition sets the value of Definition.
+func (s *SitePreviewSegmentInput) SetDefinition(val OptNilString) {
+	s.Definition = val
+}
+
+// Result of a segment preview: how many deliverable contacts match.
+// Ref: #/components/schemas/SitePreviewSegmentResult
+type SitePreviewSegmentResult struct {
+	// Number of active contacts matching the rule.
+	Count int32 `json:"count"`
+}
+
+// GetCount returns the value of Count.
+func (s *SitePreviewSegmentResult) GetCount() int32 {
+	return s.Count
+}
+
+// SetCount sets the value of Count.
+func (s *SitePreviewSegmentResult) SetCount(val int32) {
+	s.Count = val
+}
+
+func (*SitePreviewSegmentResult) siteSegmentsPreviewRes() {}
+
 // Ref: #/components/schemas/SiteRegisterInput
 type SiteRegisterInput struct {
 	Name     string       `json:"name"`
@@ -3485,6 +3521,18 @@ func (*SiteSegmentsListOK) siteSegmentsListRes() {}
 type SiteSegmentsListUnprocessableEntity ProblemDetails
 
 func (*SiteSegmentsListUnprocessableEntity) siteSegmentsListRes() {}
+
+type SiteSegmentsPreviewBadRequest ProblemDetails
+
+func (*SiteSegmentsPreviewBadRequest) siteSegmentsPreviewRes() {}
+
+type SiteSegmentsPreviewNotFound ProblemDetails
+
+func (*SiteSegmentsPreviewNotFound) siteSegmentsPreviewRes() {}
+
+type SiteSegmentsPreviewUnprocessableEntity ProblemDetails
+
+func (*SiteSegmentsPreviewUnprocessableEntity) siteSegmentsPreviewRes() {}
 
 type SiteSegmentsUpdateBadRequest ProblemDetails
 

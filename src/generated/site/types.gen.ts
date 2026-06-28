@@ -496,6 +496,26 @@ export type SiteIntegrationResource = {
     updatedAt: Timestamp;
 };
 
+/**
+ * Request body for previewing a rule definition's audience
+ */
+export type SitePreviewSegmentInput = {
+    /**
+     * Rule definition (react-querybuilder JSON); empty means all contacts
+     */
+    definition?: string | null;
+};
+
+/**
+ * Result of a segment preview: how many deliverable contacts match
+ */
+export type SitePreviewSegmentResult = {
+    /**
+     * Number of active contacts matching the rule
+     */
+    count: number;
+};
+
 export type SiteRegisterInput = {
     name: string;
     email: EmailAddress;
@@ -1696,6 +1716,41 @@ export type SiteSegmentsCreateResponses = {
 };
 
 export type SiteSegmentsCreateResponse = SiteSegmentsCreateResponses[keyof SiteSegmentsCreateResponses];
+
+export type SiteSegmentsPreviewData = {
+    body: SitePreviewSegmentInput;
+    path: {
+        workspaceSlug: string;
+    };
+    query?: never;
+    url: '/w/{workspaceSlug}/segments/preview';
+};
+
+export type SiteSegmentsPreviewErrors = {
+    /**
+     * RFC 7807 bad request response
+     */
+    400: ProblemDetails;
+    /**
+     * RFC 7807 not found response
+     */
+    404: ProblemDetails;
+    /**
+     * RFC 7807 validation response
+     */
+    422: ProblemDetails;
+};
+
+export type SiteSegmentsPreviewError = SiteSegmentsPreviewErrors[keyof SiteSegmentsPreviewErrors];
+
+export type SiteSegmentsPreviewResponses = {
+    /**
+     * The request has succeeded.
+     */
+    200: SitePreviewSegmentResult;
+};
+
+export type SiteSegmentsPreviewResponse = SiteSegmentsPreviewResponses[keyof SiteSegmentsPreviewResponses];
 
 export type SiteSegmentsDeleteData = {
     body?: never;
