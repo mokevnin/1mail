@@ -14,6 +14,7 @@ import (
 	"github.com/mokevnin/1mail/ent/contact"
 	"github.com/mokevnin/1mail/internal/emailrender"
 	"github.com/mokevnin/1mail/internal/messaging"
+	"github.com/mokevnin/1mail/internal/tracking"
 )
 
 // SendBroadcastArgs is the river job payload: which broadcast to dispatch.
@@ -34,10 +35,11 @@ type SendBroadcastWorker struct {
 	river.WorkerDefaults[SendBroadcastArgs]
 	ent      *ent.Client
 	resolver SenderResolver
+	tracker  *tracking.Tracker
 }
 
 func (w *SendBroadcastWorker) Work(ctx context.Context, job *river.Job[SendBroadcastArgs]) error {
-	return SendBroadcast(ctx, w.ent, w.resolver, job.Args.BroadcastID)
+	return SendBroadcast(ctx, w.ent, w.resolver, w.tracker, job.Args.BroadcastID)
 }
 
 // SendBroadcast renders and sends a broadcast to all active contacts in its
@@ -48,7 +50,7 @@ func (w *SendBroadcastWorker) Work(ctx context.Context, job *river.Job[SendBroad
 // Audience is all active contacts; segment targeting is a later phase. Sending
 // is done inline (no per-recipient fan-out) — that's the scale path, not needed
 // for the MVP.
-func SendBroadcast(ctx context.Context, client *ent.Client, resolver SenderResolver, broadcastID int64) error {
+func SendBroadcast(ctx context.Context, client *ent.Client, resolver SenderResolver, tracker *tracking.Tracker, broadcastID int64) error {
 	b, err := client.Broadcast.Get(ctx, broadcastID)
 	if err != nil {
 		return fmt.Errorf("load broadcast %d: %w", broadcastID, err)
@@ -105,7 +107,16 @@ func SendBroadcast(ctx context.Context, client *ent.Client, resolver SenderResol
 		if err != nil {
 			log.Printf("broadcast %d: render body for contact %d: %v", b.ID, c.ID, err)
 		}
+		// Text part is derived from the rendered body before tracking is layered
+		// on, so it stays clean of the pixel/footer markup.
 		text := emailrender.HTMLToText(html)
+		if tracker != nil {
+			if tracked, terr := tracker.Rewrite(html, rec.ID); terr != nil {
+				log.Printf("broadcast %d: rewrite links for recipient %d: %v", b.ID, rec.ID, terr)
+			} else {
+				html = tracked
+			}
+		}
 
 		sendErr := sender.Send(ctx, messaging.EmailMessage{
 			From:     fromEmail,

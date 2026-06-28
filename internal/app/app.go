@@ -18,6 +18,7 @@ import (
 	"github.com/mokevnin/1mail/internal/pubsub"
 	"github.com/mokevnin/1mail/internal/secrets"
 	"github.com/mokevnin/1mail/internal/server"
+	"github.com/mokevnin/1mail/internal/tracking"
 	"github.com/samber/do/v2"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
@@ -223,8 +224,9 @@ func register(injector do.Injector, env string) {
 			return nil, err
 		}
 		resolver := messaging.NewResolver(client.Client, cipher, registry.Default())
+		tracker := tracking.New(cfg.JWTSecret, cfg.AppURL)
 
-		jc, err := jobs.NewClient(pool.Pool, client.Client, resolver)
+		jc, err := jobs.NewClient(pool.Pool, client.Client, resolver, tracker)
 		if err != nil {
 			return nil, err
 		}

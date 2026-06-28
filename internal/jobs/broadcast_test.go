@@ -10,6 +10,7 @@ import (
 	"github.com/mokevnin/1mail/internal/jobs"
 	"github.com/mokevnin/1mail/internal/messaging"
 	"github.com/mokevnin/1mail/internal/testhelper"
+	"github.com/mokevnin/1mail/internal/tracking"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -55,7 +56,7 @@ func TestSendBroadcastDeliversToActiveContacts(t *testing.T) {
 	require.NoError(t, err)
 
 	fs := &fakeSender{}
-	require.NoError(t, jobs.SendBroadcast(ctx, env.DB, fakeResolver{sender: fs}, b.ID))
+	require.NoError(t, jobs.SendBroadcast(ctx, env.DB, fakeResolver{sender: fs}, tracking.New("test-secret", "http://local"), b.ID))
 
 	// One message per active contact, with merge tags rendered (no raw braces).
 	assert.Len(t, fs.sent, activeCount)
@@ -95,7 +96,7 @@ func TestSendBroadcastFailsWithoutProvider(t *testing.T) {
 		Save(ctx)
 	require.NoError(t, err)
 
-	err = jobs.SendBroadcast(ctx, env.DB, fakeResolver{err: messaging.ErrNoProvider}, b.ID)
+	err = jobs.SendBroadcast(ctx, env.DB, fakeResolver{err: messaging.ErrNoProvider}, tracking.New("test-secret", "http://local"), b.ID)
 	require.Error(t, err)
 
 	got := env.DB.Broadcast.GetX(ctx, b.ID)

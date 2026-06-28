@@ -15,6 +15,7 @@ import (
 
 	"github.com/mokevnin/1mail/ent"
 	"github.com/mokevnin/1mail/internal/messaging"
+	"github.com/mokevnin/1mail/internal/tracking"
 )
 
 // Client wraps the river client and exposes the typed enqueue methods the API
@@ -25,9 +26,9 @@ type Client struct {
 
 // NewClient builds the river client with all workers registered. Workers carry
 // their own dependencies (ent client, sender resolver).
-func NewClient(pool *pgxpool.Pool, entClient *ent.Client, resolver *messaging.Resolver) (*Client, error) {
+func NewClient(pool *pgxpool.Pool, entClient *ent.Client, resolver *messaging.Resolver, tracker *tracking.Tracker) (*Client, error) {
 	workers := river.NewWorkers()
-	river.AddWorker(workers, &SendBroadcastWorker{ent: entClient, resolver: resolver})
+	river.AddWorker(workers, &SendBroadcastWorker{ent: entClient, resolver: resolver, tracker: tracker})
 
 	rc, err := river.NewClient(riverpgxv5.New(pool), &river.Config{
 		Queues: map[string]river.QueueConfig{

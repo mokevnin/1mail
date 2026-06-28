@@ -26,6 +26,7 @@ import (
 	"github.com/mokevnin/1mail/internal/messaging/registry"
 	"github.com/mokevnin/1mail/internal/pubsub"
 	"github.com/mokevnin/1mail/internal/secrets"
+	"github.com/mokevnin/1mail/internal/tracking"
 	"github.com/ogen-go/ogen/ogenerrors"
 )
 
@@ -102,6 +103,9 @@ func New(cfg *config.Config, client *ent.Client, ps *pubsub.PubSub, enqueuer api
 
 	// Public tracking snippet (no auth) — embedded IIFE bundle.
 	mux.Handle("/t.js", trackerHandler())
+
+	// Public email engagement endpoints (open pixel, click redirect, unsubscribe).
+	mux.Handle("/e/", trackingHandler(client, tracking.New(cfg.JWTSecret, cfg.AppURL)))
 
 	// Catch-all: the embedded SPA (release builds with -tags embed_spa). Most
 	// specific pattern wins, so this never shadows the API prefixes above.
