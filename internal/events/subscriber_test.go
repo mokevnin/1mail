@@ -56,3 +56,40 @@ func TestAutomationsConsumerSkipsContactlessEvents(t *testing.T) {
 
 	assert.Empty(t, enroller.calls)
 }
+
+type dispatchCall struct {
+	workspaceID           int64
+	eventName, deliveryID string
+	body                  []byte
+}
+
+type fakeDispatcher struct{ calls []dispatchCall }
+
+func (f *fakeDispatcher) Dispatch(_ context.Context, ws int64, name, delivery string, body []byte) error {
+	f.calls = append(f.calls, dispatchCall{ws, name, delivery, body})
+	return nil
+}
+
+// The webhooks consumer builds the public payload from the envelope and forwards
+// it to the dispatcher with the workspace, event name, and delivery id.
+func TestWebhooksConsumerBuildsPayload(t *testing.T) {
+	d := &fakeDispatcher{}
+	handler := webhooksConsumer(d)
+
+	require.NoError(t, handler(msgFor(t, Envelope{
+		ID: "evt_9", Name: NameContactCreated, WorkspaceID: 1, Subject: "a@b.c",
+		ContactID: 5, Payload: []byte(`{"email":"a@b.c"}`),
+	})))
+
+	require.Len(t, d.calls, 1)
+	c := d.calls[0]
+	assert.EqualValues(t, 1, c.workspaceID)
+	assert.Equal(t, NameContactCreated, c.eventName)
+	assert.Equal(t, "evt_9", c.deliveryID)
+
+	var p map[string]any
+	require.NoError(t, json.Unmarshal(c.body, &p))
+	assert.Equal(t, "evt_9", p["id"])
+	assert.Equal(t, NameContactCreated, p["type"])
+	assert.Equal(t, "a@b.c", p["subject"])
+}

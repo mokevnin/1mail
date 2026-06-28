@@ -213,7 +213,7 @@ func register(injector do.Injector, env string) {
 		if err := events.InitSchema(context.Background(), database.DB); err != nil {
 			return nil, err
 		}
-		if err := events.RegisterSubscribers(ps.Router, database.DB, client.Client, jc.Client); err != nil {
+		if err := events.RegisterSubscribers(ps.Router, database.DB, client.Client, jc.Client, jc.Client); err != nil {
 			return nil, err
 		}
 
@@ -260,7 +260,7 @@ func register(injector do.Injector, env string) {
 		resolver := messaging.NewResolver(client.Client, cipher, registry.Default())
 		tracker := tracking.New(cfg.JWTSecret, cfg.AppURL)
 
-		jc, err := jobs.NewClient(pool.Pool, client.Client, resolver, tracker)
+		jc, err := jobs.NewClient(pool.Pool, client.Client, resolver, tracker, cipher)
 		if err != nil {
 			return nil, err
 		}

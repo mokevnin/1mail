@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/ThreeDotsLabs/watermill"
 	watermillsql "github.com/ThreeDotsLabs/watermill-sql/v2/pkg/sql"
@@ -20,11 +21,18 @@ type Enroller interface {
 	OnEvent(ctx context.Context, workspaceID, contactID int64, action string) error
 }
 
+// WebhookDispatcher fans an event out to the workspace's matching webhook
+// endpoints. The webhooks subscriber delegates to it, keeping durable delivery
+// (per-endpoint jobs, retries) in river.
+type WebhookDispatcher interface {
+	Dispatch(ctx context.Context, workspaceID int64, eventName, deliveryID string, body []byte) error
+}
+
 // RegisterSubscribers wires the domain-event consumers onto the shared watermill
 // router. Each consumer gets its OWN subscriber with a distinct consumer group,
 // so every subscriber receives every event (fan-out) rather than competing for
 // messages. Add new subscribers here without touching producers.
-func RegisterSubscribers(router *message.Router, db *sql.DB, client *ent.Client, enroller Enroller) error {
+func RegisterSubscribers(router *message.Router, db *sql.DB, client *ent.Client, enroller Enroller, dispatcher WebhookDispatcher) error {
 	persistSub, err := newSubscriber(db, "persist")
 	if err != nil {
 		return fmt.Errorf("persist subscriber: %w", err)
@@ -36,7 +44,46 @@ func RegisterSubscribers(router *message.Router, db *sql.DB, client *ent.Client,
 		return fmt.Errorf("automations subscriber: %w", err)
 	}
 	router.AddConsumerHandler("enroll_automations", TopicDomainEvents, automationsSub, automationsConsumer(enroller))
+
+	webhooksSub, err := newSubscriber(db, "webhooks")
+	if err != nil {
+		return fmt.Errorf("webhooks subscriber: %w", err)
+	}
+	router.AddConsumerHandler("dispatch_webhooks", TopicDomainEvents, webhooksSub, webhooksConsumer(dispatcher))
 	return nil
+}
+
+// webhookPayload is the public JSON delivered to endpoints (and signed).
+type webhookPayload struct {
+	ID          string          `json:"id"`
+	Type        string          `json:"type"`
+	OccurredAt  time.Time       `json:"occurredAt"`
+	WorkspaceID int64           `json:"workspaceId"`
+	Subject     string          `json:"subject"`
+	ContactID   int64           `json:"contactId,omitempty"`
+	Data        json.RawMessage `json:"data,omitempty"`
+}
+
+func webhooksConsumer(dispatcher WebhookDispatcher) message.NoPublishHandlerFunc {
+	return func(msg *message.Message) error {
+		var env Envelope
+		if err := json.Unmarshal(msg.Payload, &env); err != nil {
+			return fmt.Errorf("unmarshal envelope: %w", err)
+		}
+		body, err := json.Marshal(webhookPayload{
+			ID:          env.ID,
+			Type:        env.Name,
+			OccurredAt:  env.OccurredAt,
+			WorkspaceID: env.WorkspaceID,
+			Subject:     env.Subject,
+			ContactID:   env.ContactID,
+			Data:        env.Payload,
+		})
+		if err != nil {
+			return fmt.Errorf("marshal webhook payload: %w", err)
+		}
+		return dispatcher.Dispatch(msg.Context(), env.WorkspaceID, env.Name, env.ID, body)
+	}
 }
 
 // automationsConsumer enrolls the event's contact into matching automations. It

@@ -15,22 +15,33 @@ import (
 
 	"github.com/mokevnin/1mail/ent"
 	"github.com/mokevnin/1mail/internal/messaging"
+	"github.com/mokevnin/1mail/internal/secrets"
 	"github.com/mokevnin/1mail/internal/tracking"
+	"github.com/mokevnin/1mail/internal/webhook"
 )
+
+// webhookDeliveryTimeout bounds a single outbound webhook request.
+const webhookDeliveryTimeout = 15 * time.Second
 
 // Client wraps the river client and exposes the typed enqueue methods the API
 // handlers use, so callers don't depend on river directly.
 type Client struct {
 	river *river.Client[pgx.Tx]
+	ent   *ent.Client
 }
 
 // NewClient builds the river client with all workers registered. Workers carry
-// their own dependencies (ent client, sender resolver).
-func NewClient(pool *pgxpool.Pool, entClient *ent.Client, resolver *messaging.Resolver, tracker *tracking.Tracker) (*Client, error) {
+// their own dependencies (ent client, sender resolver, secrets cipher).
+func NewClient(pool *pgxpool.Pool, entClient *ent.Client, resolver *messaging.Resolver, tracker *tracking.Tracker, cipher *secrets.Cipher) (*Client, error) {
 	workers := river.NewWorkers()
 	river.AddWorker(workers, &SendBroadcastWorker{ent: entClient, resolver: resolver, tracker: tracker})
 	river.AddWorker(workers, &EvaluateTriggerWorker{ent: entClient})
 	river.AddWorker(workers, &RunStepWorker{ent: entClient, resolver: resolver})
+	river.AddWorker(workers, &DeliverWebhookWorker{
+		ent:    entClient,
+		cipher: cipher,
+		client: webhook.NewClient(webhookDeliveryTimeout),
+	})
 
 	rc, err := river.NewClient(riverpgxv5.New(pool), &river.Config{
 		Queues: map[string]river.QueueConfig{
@@ -41,7 +52,7 @@ func NewClient(pool *pgxpool.Pool, entClient *ent.Client, resolver *messaging.Re
 	if err != nil {
 		return nil, err
 	}
-	return &Client{river: rc}, nil
+	return &Client{river: rc, ent: entClient}, nil
 }
 
 // Start begins processing jobs (run in a goroutine; returns once started).
