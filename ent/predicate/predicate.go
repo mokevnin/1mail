@@ -18,6 +18,9 @@ type BroadcastRecipient func(*sql.Selector)
 // Contact is the predicate function for contact builders.
 type Contact func(*sql.Selector)
 
+// EmailTemplate is the predicate function for emailtemplate builders.
+type EmailTemplate func(*sql.Selector)
+
 // Event is the predicate function for event builders.
 type Event func(*sql.Selector)
 

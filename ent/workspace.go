@@ -56,11 +56,13 @@ type WorkspaceEdges struct {
 	Broadcasts []*Broadcast `json:"broadcasts,omitempty"`
 	// BroadcastRecipients holds the value of the broadcast_recipients edge.
 	BroadcastRecipients []*BroadcastRecipient `json:"broadcast_recipients,omitempty"`
+	// EmailTemplates holds the value of the email_templates edge.
+	EmailTemplates []*EmailTemplate `json:"email_templates,omitempty"`
 	// User holds the value of the user edge.
 	User *User `json:"user,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [10]bool
+	loadedTypes [11]bool
 }
 
 // ContactsOrErr returns the Contacts value or an error if the edge
@@ -144,12 +146,21 @@ func (e WorkspaceEdges) BroadcastRecipientsOrErr() ([]*BroadcastRecipient, error
 	return nil, &NotLoadedError{edge: "broadcast_recipients"}
 }
 
+// EmailTemplatesOrErr returns the EmailTemplates value or an error if the edge
+// was not loaded in eager-loading.
+func (e WorkspaceEdges) EmailTemplatesOrErr() ([]*EmailTemplate, error) {
+	if e.loadedTypes[9] {
+		return e.EmailTemplates, nil
+	}
+	return nil, &NotLoadedError{edge: "email_templates"}
+}
+
 // UserOrErr returns the User value or an error if the edge
 // was not loaded in eager-loading, or loaded but was not found.
 func (e WorkspaceEdges) UserOrErr() (*User, error) {
 	if e.User != nil {
 		return e.User, nil
-	} else if e.loadedTypes[9] {
+	} else if e.loadedTypes[10] {
 		return nil, &NotFoundError{label: user.Label}
 	}
 	return nil, &NotLoadedError{edge: "user"}
@@ -280,6 +291,11 @@ func (_m *Workspace) QueryBroadcasts() *BroadcastQuery {
 // QueryBroadcastRecipients queries the "broadcast_recipients" edge of the Workspace entity.
 func (_m *Workspace) QueryBroadcastRecipients() *BroadcastRecipientQuery {
 	return NewWorkspaceClient(_m.config).QueryBroadcastRecipients(_m)
+}
+
+// QueryEmailTemplates queries the "email_templates" edge of the Workspace entity.
+func (_m *Workspace) QueryEmailTemplates() *EmailTemplateQuery {
+	return NewWorkspaceClient(_m.config).QueryEmailTemplates(_m)
 }
 
 // QueryUser queries the "user" edge of the Workspace entity.

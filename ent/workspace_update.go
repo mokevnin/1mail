@@ -15,6 +15,7 @@ import (
 	"github.com/mokevnin/1mail/ent/broadcast"
 	"github.com/mokevnin/1mail/ent/broadcastrecipient"
 	"github.com/mokevnin/1mail/ent/contact"
+	"github.com/mokevnin/1mail/ent/emailtemplate"
 	"github.com/mokevnin/1mail/ent/event"
 	"github.com/mokevnin/1mail/ent/integration"
 	"github.com/mokevnin/1mail/ent/predicate"
@@ -241,6 +242,21 @@ func (_u *WorkspaceUpdate) AddBroadcastRecipients(v ...*BroadcastRecipient) *Wor
 	return _u.AddBroadcastRecipientIDs(ids...)
 }
 
+// AddEmailTemplateIDs adds the "email_templates" edge to the EmailTemplate entity by IDs.
+func (_u *WorkspaceUpdate) AddEmailTemplateIDs(ids ...int64) *WorkspaceUpdate {
+	_u.mutation.AddEmailTemplateIDs(ids...)
+	return _u
+}
+
+// AddEmailTemplates adds the "email_templates" edges to the EmailTemplate entity.
+func (_u *WorkspaceUpdate) AddEmailTemplates(v ...*EmailTemplate) *WorkspaceUpdate {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddEmailTemplateIDs(ids...)
+}
+
 // SetUser sets the "user" edge to the User entity.
 func (_u *WorkspaceUpdate) SetUser(v *User) *WorkspaceUpdate {
 	return _u.SetUserID(v.ID)
@@ -438,6 +454,27 @@ func (_u *WorkspaceUpdate) RemoveBroadcastRecipients(v ...*BroadcastRecipient) *
 		ids[i] = v[i].ID
 	}
 	return _u.RemoveBroadcastRecipientIDs(ids...)
+}
+
+// ClearEmailTemplates clears all "email_templates" edges to the EmailTemplate entity.
+func (_u *WorkspaceUpdate) ClearEmailTemplates() *WorkspaceUpdate {
+	_u.mutation.ClearEmailTemplates()
+	return _u
+}
+
+// RemoveEmailTemplateIDs removes the "email_templates" edge to EmailTemplate entities by IDs.
+func (_u *WorkspaceUpdate) RemoveEmailTemplateIDs(ids ...int64) *WorkspaceUpdate {
+	_u.mutation.RemoveEmailTemplateIDs(ids...)
+	return _u
+}
+
+// RemoveEmailTemplates removes "email_templates" edges to EmailTemplate entities.
+func (_u *WorkspaceUpdate) RemoveEmailTemplates(v ...*EmailTemplate) *WorkspaceUpdate {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveEmailTemplateIDs(ids...)
 }
 
 // ClearUser clears the "user" edge to the User entity.
@@ -931,6 +968,51 @@ func (_u *WorkspaceUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	if _u.mutation.EmailTemplatesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   workspace.EmailTemplatesTable,
+			Columns: []string{workspace.EmailTemplatesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(emailtemplate.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedEmailTemplatesIDs(); len(nodes) > 0 && !_u.mutation.EmailTemplatesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   workspace.EmailTemplatesTable,
+			Columns: []string{workspace.EmailTemplatesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(emailtemplate.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.EmailTemplatesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   workspace.EmailTemplatesTable,
+			Columns: []string{workspace.EmailTemplatesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(emailtemplate.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if _u.mutation.UserCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
@@ -1183,6 +1265,21 @@ func (_u *WorkspaceUpdateOne) AddBroadcastRecipients(v ...*BroadcastRecipient) *
 	return _u.AddBroadcastRecipientIDs(ids...)
 }
 
+// AddEmailTemplateIDs adds the "email_templates" edge to the EmailTemplate entity by IDs.
+func (_u *WorkspaceUpdateOne) AddEmailTemplateIDs(ids ...int64) *WorkspaceUpdateOne {
+	_u.mutation.AddEmailTemplateIDs(ids...)
+	return _u
+}
+
+// AddEmailTemplates adds the "email_templates" edges to the EmailTemplate entity.
+func (_u *WorkspaceUpdateOne) AddEmailTemplates(v ...*EmailTemplate) *WorkspaceUpdateOne {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddEmailTemplateIDs(ids...)
+}
+
 // SetUser sets the "user" edge to the User entity.
 func (_u *WorkspaceUpdateOne) SetUser(v *User) *WorkspaceUpdateOne {
 	return _u.SetUserID(v.ID)
@@ -1380,6 +1477,27 @@ func (_u *WorkspaceUpdateOne) RemoveBroadcastRecipients(v ...*BroadcastRecipient
 		ids[i] = v[i].ID
 	}
 	return _u.RemoveBroadcastRecipientIDs(ids...)
+}
+
+// ClearEmailTemplates clears all "email_templates" edges to the EmailTemplate entity.
+func (_u *WorkspaceUpdateOne) ClearEmailTemplates() *WorkspaceUpdateOne {
+	_u.mutation.ClearEmailTemplates()
+	return _u
+}
+
+// RemoveEmailTemplateIDs removes the "email_templates" edge to EmailTemplate entities by IDs.
+func (_u *WorkspaceUpdateOne) RemoveEmailTemplateIDs(ids ...int64) *WorkspaceUpdateOne {
+	_u.mutation.RemoveEmailTemplateIDs(ids...)
+	return _u
+}
+
+// RemoveEmailTemplates removes "email_templates" edges to EmailTemplate entities.
+func (_u *WorkspaceUpdateOne) RemoveEmailTemplates(v ...*EmailTemplate) *WorkspaceUpdateOne {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveEmailTemplateIDs(ids...)
 }
 
 // ClearUser clears the "user" edge to the User entity.
@@ -1896,6 +2014,51 @@ func (_u *WorkspaceUpdateOne) sqlSave(ctx context.Context) (_node *Workspace, er
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(broadcastrecipient.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.EmailTemplatesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   workspace.EmailTemplatesTable,
+			Columns: []string{workspace.EmailTemplatesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(emailtemplate.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedEmailTemplatesIDs(); len(nodes) > 0 && !_u.mutation.EmailTemplatesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   workspace.EmailTemplatesTable,
+			Columns: []string{workspace.EmailTemplatesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(emailtemplate.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.EmailTemplatesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   workspace.EmailTemplatesTable,
+			Columns: []string{workspace.EmailTemplatesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(emailtemplate.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {

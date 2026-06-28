@@ -597,6 +597,29 @@ func HasBroadcastRecipientsWith(preds ...predicate.BroadcastRecipient) predicate
 	})
 }
 
+// HasEmailTemplates applies the HasEdge predicate on the "email_templates" edge.
+func HasEmailTemplates() predicate.Workspace {
+	return predicate.Workspace(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, EmailTemplatesTable, EmailTemplatesColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasEmailTemplatesWith applies the HasEdge predicate on the "email_templates" edge with a given conditions (other predicates).
+func HasEmailTemplatesWith(preds ...predicate.EmailTemplate) predicate.Workspace {
+	return predicate.Workspace(func(s *sql.Selector) {
+		step := newEmailTemplatesStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // HasUser applies the HasEdge predicate on the "user" edge.
 func HasUser() predicate.Workspace {
 	return predicate.Workspace(func(s *sql.Selector) {

@@ -126,18 +126,18 @@ func SendBroadcast(ctx context.Context, client *ent.Client, resolver SenderResol
 			continue
 		}
 
-		bindings := contactBindings(c)
-		subject, err := emailrender.Render(b.Subject, bindings)
-		if err != nil {
-			log.Printf("broadcast %d: render subject for contact %d: %v", b.ID, c.ID, err)
+		// Pipeline: liquid merge tags → (mjml compile) → CSS inline. Tracking is
+		// layered on AFTER, so re-parsing can't mangle the pixel/links.
+		email, rerr := emailrender.RenderEmail(string(b.BodyFormat), b.Subject, b.BodyHTML, contactBindings(c))
+		if rerr != nil {
+			failedCount++
+			_, _ = rec.Update().
+				SetStatus(broadcastrecipient.StatusFailed).
+				SetError(rerr.Error()).
+				Save(ctx)
+			continue
 		}
-		html, err := emailrender.Render(b.BodyHTML, bindings)
-		if err != nil {
-			log.Printf("broadcast %d: render body for contact %d: %v", b.ID, c.ID, err)
-		}
-		// Text part is derived from the rendered body before tracking is layered
-		// on, so it stays clean of the pixel/footer markup.
-		text := emailrender.HTMLToText(html)
+		html := email.HTML
 		if tracker != nil {
 			if tracked, terr := tracker.Rewrite(html, rec.ID); terr != nil {
 				log.Printf("broadcast %d: rewrite links for recipient %d: %v", b.ID, rec.ID, terr)
@@ -150,9 +150,9 @@ func SendBroadcast(ctx context.Context, client *ent.Client, resolver SenderResol
 			From:     fromEmail,
 			FromName: fromName,
 			To:       c.Email,
-			Subject:  subject,
+			Subject:  email.Subject,
 			HTML:     html,
-			Text:     text,
+			Text:     email.Text,
 		})
 		if sendErr != nil {
 			failedCount++

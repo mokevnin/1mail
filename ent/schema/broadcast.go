@@ -46,6 +46,10 @@ func (Broadcast) Fields() []ent.Field {
 			Default(""),
 		field.String("body_text").
 			Default(""),
+		// Authoring format of body_html: plain "html" or "mjml" (compiled on send).
+		field.Enum("body_format").
+			Values("html", "mjml").
+			Default("html"),
 		// Nil segment_id means "all active contacts in the workspace".
 		field.Int64("segment_id").
 			Optional().

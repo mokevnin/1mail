@@ -9,6 +9,7 @@ import (
 	"github.com/mokevnin/1mail/ent/broadcast"
 	"github.com/mokevnin/1mail/ent/broadcastrecipient"
 	"github.com/mokevnin/1mail/ent/contact"
+	"github.com/mokevnin/1mail/ent/emailtemplate"
 	"github.com/mokevnin/1mail/ent/event"
 	"github.com/mokevnin/1mail/ent/integration"
 	"github.com/mokevnin/1mail/ent/schema"
@@ -70,47 +71,47 @@ func init() {
 	// broadcast.DefaultBodyText holds the default value on creation for the body_text field.
 	broadcast.DefaultBodyText = broadcastDescBodyText.Default.(string)
 	// broadcastDescRecipientsTotal is the schema descriptor for recipients_total field.
-	broadcastDescRecipientsTotal := broadcastFields[12].Descriptor()
+	broadcastDescRecipientsTotal := broadcastFields[13].Descriptor()
 	// broadcast.DefaultRecipientsTotal holds the default value on creation for the recipients_total field.
 	broadcast.DefaultRecipientsTotal = broadcastDescRecipientsTotal.Default.(int)
 	// broadcast.RecipientsTotalValidator is a validator for the "recipients_total" field. It is called by the builders before save.
 	broadcast.RecipientsTotalValidator = broadcastDescRecipientsTotal.Validators[0].(func(int) error)
 	// broadcastDescSentCount is the schema descriptor for sent_count field.
-	broadcastDescSentCount := broadcastFields[13].Descriptor()
+	broadcastDescSentCount := broadcastFields[14].Descriptor()
 	// broadcast.DefaultSentCount holds the default value on creation for the sent_count field.
 	broadcast.DefaultSentCount = broadcastDescSentCount.Default.(int)
 	// broadcast.SentCountValidator is a validator for the "sent_count" field. It is called by the builders before save.
 	broadcast.SentCountValidator = broadcastDescSentCount.Validators[0].(func(int) error)
 	// broadcastDescOpenedCount is the schema descriptor for opened_count field.
-	broadcastDescOpenedCount := broadcastFields[14].Descriptor()
+	broadcastDescOpenedCount := broadcastFields[15].Descriptor()
 	// broadcast.DefaultOpenedCount holds the default value on creation for the opened_count field.
 	broadcast.DefaultOpenedCount = broadcastDescOpenedCount.Default.(int)
 	// broadcast.OpenedCountValidator is a validator for the "opened_count" field. It is called by the builders before save.
 	broadcast.OpenedCountValidator = broadcastDescOpenedCount.Validators[0].(func(int) error)
 	// broadcastDescClickedCount is the schema descriptor for clicked_count field.
-	broadcastDescClickedCount := broadcastFields[15].Descriptor()
+	broadcastDescClickedCount := broadcastFields[16].Descriptor()
 	// broadcast.DefaultClickedCount holds the default value on creation for the clicked_count field.
 	broadcast.DefaultClickedCount = broadcastDescClickedCount.Default.(int)
 	// broadcast.ClickedCountValidator is a validator for the "clicked_count" field. It is called by the builders before save.
 	broadcast.ClickedCountValidator = broadcastDescClickedCount.Validators[0].(func(int) error)
 	// broadcastDescUnsubscribedCount is the schema descriptor for unsubscribed_count field.
-	broadcastDescUnsubscribedCount := broadcastFields[16].Descriptor()
+	broadcastDescUnsubscribedCount := broadcastFields[17].Descriptor()
 	// broadcast.DefaultUnsubscribedCount holds the default value on creation for the unsubscribed_count field.
 	broadcast.DefaultUnsubscribedCount = broadcastDescUnsubscribedCount.Default.(int)
 	// broadcast.UnsubscribedCountValidator is a validator for the "unsubscribed_count" field. It is called by the builders before save.
 	broadcast.UnsubscribedCountValidator = broadcastDescUnsubscribedCount.Validators[0].(func(int) error)
 	// broadcastDescFailedCount is the schema descriptor for failed_count field.
-	broadcastDescFailedCount := broadcastFields[17].Descriptor()
+	broadcastDescFailedCount := broadcastFields[18].Descriptor()
 	// broadcast.DefaultFailedCount holds the default value on creation for the failed_count field.
 	broadcast.DefaultFailedCount = broadcastDescFailedCount.Default.(int)
 	// broadcast.FailedCountValidator is a validator for the "failed_count" field. It is called by the builders before save.
 	broadcast.FailedCountValidator = broadcastDescFailedCount.Validators[0].(func(int) error)
 	// broadcastDescCreatedAt is the schema descriptor for created_at field.
-	broadcastDescCreatedAt := broadcastFields[19].Descriptor()
+	broadcastDescCreatedAt := broadcastFields[20].Descriptor()
 	// broadcast.DefaultCreatedAt holds the default value on creation for the created_at field.
 	broadcast.DefaultCreatedAt = broadcastDescCreatedAt.Default.(func() time.Time)
 	// broadcastDescUpdatedAt is the schema descriptor for updated_at field.
-	broadcastDescUpdatedAt := broadcastFields[20].Descriptor()
+	broadcastDescUpdatedAt := broadcastFields[21].Descriptor()
 	// broadcast.DefaultUpdatedAt holds the default value on creation for the updated_at field.
 	broadcast.DefaultUpdatedAt = broadcastDescUpdatedAt.Default.(func() time.Time)
 	// broadcast.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
@@ -143,6 +144,30 @@ func init() {
 	contact.DefaultUpdatedAt = contactDescUpdatedAt.Default.(func() time.Time)
 	// contact.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	contact.UpdateDefaultUpdatedAt = contactDescUpdatedAt.UpdateDefault.(func() time.Time)
+	emailtemplateFields := schema.EmailTemplate{}.Fields()
+	_ = emailtemplateFields
+	// emailtemplateDescName is the schema descriptor for name field.
+	emailtemplateDescName := emailtemplateFields[1].Descriptor()
+	// emailtemplate.NameValidator is a validator for the "name" field. It is called by the builders before save.
+	emailtemplate.NameValidator = emailtemplateDescName.Validators[0].(func(string) error)
+	// emailtemplateDescSubject is the schema descriptor for subject field.
+	emailtemplateDescSubject := emailtemplateFields[2].Descriptor()
+	// emailtemplate.DefaultSubject holds the default value on creation for the subject field.
+	emailtemplate.DefaultSubject = emailtemplateDescSubject.Default.(string)
+	// emailtemplateDescBodyHTML is the schema descriptor for body_html field.
+	emailtemplateDescBodyHTML := emailtemplateFields[3].Descriptor()
+	// emailtemplate.DefaultBodyHTML holds the default value on creation for the body_html field.
+	emailtemplate.DefaultBodyHTML = emailtemplateDescBodyHTML.Default.(string)
+	// emailtemplateDescCreatedAt is the schema descriptor for created_at field.
+	emailtemplateDescCreatedAt := emailtemplateFields[6].Descriptor()
+	// emailtemplate.DefaultCreatedAt holds the default value on creation for the created_at field.
+	emailtemplate.DefaultCreatedAt = emailtemplateDescCreatedAt.Default.(func() time.Time)
+	// emailtemplateDescUpdatedAt is the schema descriptor for updated_at field.
+	emailtemplateDescUpdatedAt := emailtemplateFields[7].Descriptor()
+	// emailtemplate.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	emailtemplate.DefaultUpdatedAt = emailtemplateDescUpdatedAt.Default.(func() time.Time)
+	// emailtemplate.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	emailtemplate.UpdateDefaultUpdatedAt = emailtemplateDescUpdatedAt.UpdateDefault.(func() time.Time)
 	eventFields := schema.Event{}.Fields()
 	_ = eventFields
 	// eventDescSubjectID is the schema descriptor for subject_id field.

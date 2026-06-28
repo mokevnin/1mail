@@ -30,6 +30,8 @@ type Broadcast struct {
 	BodyHTML string `json:"body_html,omitempty"`
 	// BodyText holds the value of the "body_text" field.
 	BodyText string `json:"body_text,omitempty"`
+	// BodyFormat holds the value of the "body_format" field.
+	BodyFormat broadcast.BodyFormat `json:"body_format,omitempty"`
 	// SegmentID holds the value of the "segment_id" field.
 	SegmentID *int64 `json:"segment_id,omitempty"`
 	// IntegrationID holds the value of the "integration_id" field.
@@ -102,7 +104,7 @@ func (*Broadcast) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case broadcast.FieldID, broadcast.FieldSegmentID, broadcast.FieldIntegrationID, broadcast.FieldRecipientsTotal, broadcast.FieldSentCount, broadcast.FieldOpenedCount, broadcast.FieldClickedCount, broadcast.FieldUnsubscribedCount, broadcast.FieldFailedCount, broadcast.FieldWorkspaceID:
 			values[i] = new(sql.NullInt64)
-		case broadcast.FieldName, broadcast.FieldSubject, broadcast.FieldFromName, broadcast.FieldFromEmail, broadcast.FieldBodyHTML, broadcast.FieldBodyText, broadcast.FieldStatus:
+		case broadcast.FieldName, broadcast.FieldSubject, broadcast.FieldFromName, broadcast.FieldFromEmail, broadcast.FieldBodyHTML, broadcast.FieldBodyText, broadcast.FieldBodyFormat, broadcast.FieldStatus:
 			values[i] = new(sql.NullString)
 		case broadcast.FieldScheduledAt, broadcast.FieldSentAt, broadcast.FieldCreatedAt, broadcast.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
@@ -164,6 +166,12 @@ func (_m *Broadcast) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field body_text", values[i])
 			} else if value.Valid {
 				_m.BodyText = value.String
+			}
+		case broadcast.FieldBodyFormat:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field body_format", values[i])
+			} else if value.Valid {
+				_m.BodyFormat = broadcast.BodyFormat(value.String)
 			}
 		case broadcast.FieldSegmentID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
@@ -320,6 +328,9 @@ func (_m *Broadcast) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("body_text=")
 	builder.WriteString(_m.BodyText)
+	builder.WriteString(", ")
+	builder.WriteString("body_format=")
+	builder.WriteString(fmt.Sprintf("%v", _m.BodyFormat))
 	builder.WriteString(", ")
 	if v := _m.SegmentID; v != nil {
 		builder.WriteString("segment_id=")

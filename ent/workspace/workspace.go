@@ -44,6 +44,8 @@ const (
 	EdgeBroadcasts = "broadcasts"
 	// EdgeBroadcastRecipients holds the string denoting the broadcast_recipients edge name in mutations.
 	EdgeBroadcastRecipients = "broadcast_recipients"
+	// EdgeEmailTemplates holds the string denoting the email_templates edge name in mutations.
+	EdgeEmailTemplates = "email_templates"
 	// EdgeUser holds the string denoting the user edge name in mutations.
 	EdgeUser = "user"
 	// Table holds the table name of the workspace in the database.
@@ -111,6 +113,13 @@ const (
 	BroadcastRecipientsInverseTable = "broadcast_recipients"
 	// BroadcastRecipientsColumn is the table column denoting the broadcast_recipients relation/edge.
 	BroadcastRecipientsColumn = "workspace_id"
+	// EmailTemplatesTable is the table that holds the email_templates relation/edge.
+	EmailTemplatesTable = "email_templates"
+	// EmailTemplatesInverseTable is the table name for the EmailTemplate entity.
+	// It exists in this package in order to avoid circular dependency with the "emailtemplate" package.
+	EmailTemplatesInverseTable = "email_templates"
+	// EmailTemplatesColumn is the table column denoting the email_templates relation/edge.
+	EmailTemplatesColumn = "workspace_id"
 	// UserTable is the table that holds the user relation/edge.
 	UserTable = "workspaces"
 	// UserInverseTable is the table name for the User entity.
@@ -320,6 +329,20 @@ func ByBroadcastRecipients(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOpti
 	}
 }
 
+// ByEmailTemplatesCount orders the results by email_templates count.
+func ByEmailTemplatesCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newEmailTemplatesStep(), opts...)
+	}
+}
+
+// ByEmailTemplates orders the results by email_templates terms.
+func ByEmailTemplates(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newEmailTemplatesStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+
 // ByUserField orders the results by user field.
 func ByUserField(field string, opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
@@ -387,6 +410,13 @@ func newBroadcastRecipientsStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(BroadcastRecipientsInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2M, false, BroadcastRecipientsTable, BroadcastRecipientsColumn),
+	)
+}
+func newEmailTemplatesStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(EmailTemplatesInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, EmailTemplatesTable, EmailTemplatesColumn),
 	)
 }
 func newUserStep() *sqlgraph.Step {

@@ -98,6 +98,20 @@ func (_c *BroadcastCreate) SetNillableBodyText(v *string) *BroadcastCreate {
 	return _c
 }
 
+// SetBodyFormat sets the "body_format" field.
+func (_c *BroadcastCreate) SetBodyFormat(v broadcast.BodyFormat) *BroadcastCreate {
+	_c.mutation.SetBodyFormat(v)
+	return _c
+}
+
+// SetNillableBodyFormat sets the "body_format" field if the given value is not nil.
+func (_c *BroadcastCreate) SetNillableBodyFormat(v *broadcast.BodyFormat) *BroadcastCreate {
+	if v != nil {
+		_c.SetBodyFormat(*v)
+	}
+	return _c
+}
+
 // SetSegmentID sets the "segment_id" field.
 func (_c *BroadcastCreate) SetSegmentID(v int64) *BroadcastCreate {
 	_c.mutation.SetSegmentID(v)
@@ -359,6 +373,10 @@ func (_c *BroadcastCreate) defaults() {
 		v := broadcast.DefaultBodyText
 		_c.mutation.SetBodyText(v)
 	}
+	if _, ok := _c.mutation.BodyFormat(); !ok {
+		v := broadcast.DefaultBodyFormat
+		_c.mutation.SetBodyFormat(v)
+	}
 	if _, ok := _c.mutation.Status(); !ok {
 		v := broadcast.DefaultStatus
 		_c.mutation.SetStatus(v)
@@ -415,6 +433,14 @@ func (_c *BroadcastCreate) check() error {
 	}
 	if _, ok := _c.mutation.BodyText(); !ok {
 		return &ValidationError{Name: "body_text", err: errors.New(`ent: missing required field "Broadcast.body_text"`)}
+	}
+	if _, ok := _c.mutation.BodyFormat(); !ok {
+		return &ValidationError{Name: "body_format", err: errors.New(`ent: missing required field "Broadcast.body_format"`)}
+	}
+	if v, ok := _c.mutation.BodyFormat(); ok {
+		if err := broadcast.BodyFormatValidator(v); err != nil {
+			return &ValidationError{Name: "body_format", err: fmt.Errorf(`ent: validator failed for field "Broadcast.body_format": %w`, err)}
+		}
 	}
 	if _, ok := _c.mutation.Status(); !ok {
 		return &ValidationError{Name: "status", err: errors.New(`ent: missing required field "Broadcast.status"`)}
@@ -539,6 +565,10 @@ func (_c *BroadcastCreate) createSpec() (*Broadcast, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.BodyText(); ok {
 		_spec.SetField(broadcast.FieldBodyText, field.TypeString, value)
 		_node.BodyText = value
+	}
+	if value, ok := _c.mutation.BodyFormat(); ok {
+		_spec.SetField(broadcast.FieldBodyFormat, field.TypeEnum, value)
+		_node.BodyFormat = value
 	}
 	if value, ok := _c.mutation.SegmentID(); ok {
 		_spec.SetField(broadcast.FieldSegmentID, field.TypeInt64, value)

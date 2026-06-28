@@ -16,6 +16,7 @@ import (
 	"github.com/mokevnin/1mail/ent/broadcast"
 	"github.com/mokevnin/1mail/ent/broadcastrecipient"
 	"github.com/mokevnin/1mail/ent/contact"
+	"github.com/mokevnin/1mail/ent/emailtemplate"
 	"github.com/mokevnin/1mail/ent/event"
 	"github.com/mokevnin/1mail/ent/integration"
 	"github.com/mokevnin/1mail/ent/predicate"
@@ -42,6 +43,7 @@ type WorkspaceQuery struct {
 	withIntegrations        *IntegrationQuery
 	withBroadcasts          *BroadcastQuery
 	withBroadcastRecipients *BroadcastRecipientQuery
+	withEmailTemplates      *EmailTemplateQuery
 	withUser                *UserQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
@@ -277,6 +279,28 @@ func (_q *WorkspaceQuery) QueryBroadcastRecipients() *BroadcastRecipientQuery {
 	return query
 }
 
+// QueryEmailTemplates chains the current query on the "email_templates" edge.
+func (_q *WorkspaceQuery) QueryEmailTemplates() *EmailTemplateQuery {
+	query := (&EmailTemplateClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workspace.Table, workspace.FieldID, selector),
+			sqlgraph.To(emailtemplate.Table, emailtemplate.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, workspace.EmailTemplatesTable, workspace.EmailTemplatesColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
 // QueryUser chains the current query on the "user" edge.
 func (_q *WorkspaceQuery) QueryUser() *UserQuery {
 	query := (&UserClient{config: _q.config}).Query()
@@ -500,6 +524,7 @@ func (_q *WorkspaceQuery) Clone() *WorkspaceQuery {
 		withIntegrations:        _q.withIntegrations.Clone(),
 		withBroadcasts:          _q.withBroadcasts.Clone(),
 		withBroadcastRecipients: _q.withBroadcastRecipients.Clone(),
+		withEmailTemplates:      _q.withEmailTemplates.Clone(),
 		withUser:                _q.withUser.Clone(),
 		// clone intermediate query.
 		sql:  _q.sql.Clone(),
@@ -606,6 +631,17 @@ func (_q *WorkspaceQuery) WithBroadcastRecipients(opts ...func(*BroadcastRecipie
 	return _q
 }
 
+// WithEmailTemplates tells the query-builder to eager-load the nodes that are connected to
+// the "email_templates" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *WorkspaceQuery) WithEmailTemplates(opts ...func(*EmailTemplateQuery)) *WorkspaceQuery {
+	query := (&EmailTemplateClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withEmailTemplates = query
+	return _q
+}
+
 // WithUser tells the query-builder to eager-load the nodes that are connected to
 // the "user" edge. The optional arguments are used to configure the query builder of the edge.
 func (_q *WorkspaceQuery) WithUser(opts ...func(*UserQuery)) *WorkspaceQuery {
@@ -695,7 +731,7 @@ func (_q *WorkspaceQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Wo
 	var (
 		nodes       = []*Workspace{}
 		_spec       = _q.querySpec()
-		loadedTypes = [10]bool{
+		loadedTypes = [11]bool{
 			_q.withContacts != nil,
 			_q.withSegments != nil,
 			_q.withEvents != nil,
@@ -705,6 +741,7 @@ func (_q *WorkspaceQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Wo
 			_q.withIntegrations != nil,
 			_q.withBroadcasts != nil,
 			_q.withBroadcastRecipients != nil,
+			_q.withEmailTemplates != nil,
 			_q.withUser != nil,
 		}
 	)
@@ -788,6 +825,13 @@ func (_q *WorkspaceQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Wo
 			func(n *Workspace, e *BroadcastRecipient) {
 				n.Edges.BroadcastRecipients = append(n.Edges.BroadcastRecipients, e)
 			}); err != nil {
+			return nil, err
+		}
+	}
+	if query := _q.withEmailTemplates; query != nil {
+		if err := _q.loadEmailTemplates(ctx, query, nodes,
+			func(n *Workspace) { n.Edges.EmailTemplates = []*EmailTemplate{} },
+			func(n *Workspace, e *EmailTemplate) { n.Edges.EmailTemplates = append(n.Edges.EmailTemplates, e) }); err != nil {
 			return nil, err
 		}
 	}
@@ -1055,6 +1099,36 @@ func (_q *WorkspaceQuery) loadBroadcastRecipients(ctx context.Context, query *Br
 	}
 	query.Where(predicate.BroadcastRecipient(func(s *sql.Selector) {
 		s.Where(sql.InValues(s.C(workspace.BroadcastRecipientsColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.WorkspaceID
+		node, ok := nodeids[fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "workspace_id" returned %v for node %v`, fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (_q *WorkspaceQuery) loadEmailTemplates(ctx context.Context, query *EmailTemplateQuery, nodes []*Workspace, init func(*Workspace), assign func(*Workspace, *EmailTemplate)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[int64]*Workspace)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(emailtemplate.FieldWorkspaceID)
+	}
+	query.Where(predicate.EmailTemplate(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(workspace.EmailTemplatesColumn), fks...))
 	}))
 	neighbors, err := query.All(ctx)
 	if err != nil {

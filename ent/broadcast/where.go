@@ -560,6 +560,26 @@ func BodyTextContainsFold(v string) predicate.Broadcast {
 	return predicate.Broadcast(sql.FieldContainsFold(FieldBodyText, v))
 }
 
+// BodyFormatEQ applies the EQ predicate on the "body_format" field.
+func BodyFormatEQ(v BodyFormat) predicate.Broadcast {
+	return predicate.Broadcast(sql.FieldEQ(FieldBodyFormat, v))
+}
+
+// BodyFormatNEQ applies the NEQ predicate on the "body_format" field.
+func BodyFormatNEQ(v BodyFormat) predicate.Broadcast {
+	return predicate.Broadcast(sql.FieldNEQ(FieldBodyFormat, v))
+}
+
+// BodyFormatIn applies the In predicate on the "body_format" field.
+func BodyFormatIn(vs ...BodyFormat) predicate.Broadcast {
+	return predicate.Broadcast(sql.FieldIn(FieldBodyFormat, vs...))
+}
+
+// BodyFormatNotIn applies the NotIn predicate on the "body_format" field.
+func BodyFormatNotIn(vs ...BodyFormat) predicate.Broadcast {
+	return predicate.Broadcast(sql.FieldNotIn(FieldBodyFormat, vs...))
+}
+
 // SegmentIDEQ applies the EQ predicate on the "segment_id" field.
 func SegmentIDEQ(v int64) predicate.Broadcast {
 	return predicate.Broadcast(sql.FieldEQ(FieldSegmentID, v))

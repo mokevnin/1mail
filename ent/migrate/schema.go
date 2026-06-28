@@ -46,6 +46,7 @@ var (
 		{Name: "from_email", Type: field.TypeString, Nullable: true},
 		{Name: "body_html", Type: field.TypeString, Default: ""},
 		{Name: "body_text", Type: field.TypeString, Default: ""},
+		{Name: "body_format", Type: field.TypeEnum, Enums: []string{"html", "mjml"}, Default: "html"},
 		{Name: "segment_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "integration_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "status", Type: field.TypeEnum, Enums: []string{"draft", "scheduled", "sending", "sent", "failed"}, Default: "draft"},
@@ -69,7 +70,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "broadcasts_workspaces_broadcasts",
-				Columns:    []*schema.Column{BroadcastsColumns[20]},
+				Columns:    []*schema.Column{BroadcastsColumns[21]},
 				RefColumns: []*schema.Column{WorkspacesColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
@@ -78,7 +79,7 @@ var (
 			{
 				Name:    "broadcast_workspace_id",
 				Unique:  false,
-				Columns: []*schema.Column{BroadcastsColumns[20]},
+				Columns: []*schema.Column{BroadcastsColumns[21]},
 			},
 		},
 	}
@@ -159,6 +160,38 @@ var (
 				Name:    "contacts_email_workspace_id",
 				Unique:  true,
 				Columns: []*schema.Column{ContactsColumns[1], ContactsColumns[9]},
+			},
+		},
+	}
+	// EmailTemplatesColumns holds the columns for the "email_templates" table.
+	EmailTemplatesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt64, Increment: true},
+		{Name: "name", Type: field.TypeString},
+		{Name: "subject", Type: field.TypeString, Default: ""},
+		{Name: "body_html", Type: field.TypeString, Default: ""},
+		{Name: "body_format", Type: field.TypeEnum, Enums: []string{"html", "mjml"}, Default: "html"},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "workspace_id", Type: field.TypeInt64},
+	}
+	// EmailTemplatesTable holds the schema information for the "email_templates" table.
+	EmailTemplatesTable = &schema.Table{
+		Name:       "email_templates",
+		Columns:    EmailTemplatesColumns,
+		PrimaryKey: []*schema.Column{EmailTemplatesColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "email_templates_workspaces_email_templates",
+				Columns:    []*schema.Column{EmailTemplatesColumns[7]},
+				RefColumns: []*schema.Column{WorkspacesColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "emailtemplate_workspace_id",
+				Unique:  false,
+				Columns: []*schema.Column{EmailTemplatesColumns[7]},
 			},
 		},
 	}
@@ -374,6 +407,7 @@ var (
 		BroadcastsTable,
 		BroadcastRecipientsTable,
 		ContactsTable,
+		EmailTemplatesTable,
 		EventsTable,
 		IntegrationsTable,
 		SegmentsTable,
@@ -401,6 +435,10 @@ func init() {
 	ContactsTable.ForeignKeys[0].RefTable = WorkspacesTable
 	ContactsTable.Annotation = &entsql.Annotation{
 		Table: "contacts",
+	}
+	EmailTemplatesTable.ForeignKeys[0].RefTable = WorkspacesTable
+	EmailTemplatesTable.Annotation = &entsql.Annotation{
+		Table: "email_templates",
 	}
 	EventsTable.ForeignKeys[0].RefTable = WorkspacesTable
 	EventsTable.Annotation = &entsql.Annotation{

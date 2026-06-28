@@ -20,6 +20,8 @@ type Tx struct {
 	BroadcastRecipient *BroadcastRecipientClient
 	// Contact is the client for interacting with the Contact builders.
 	Contact *ContactClient
+	// EmailTemplate is the client for interacting with the EmailTemplate builders.
+	EmailTemplate *EmailTemplateClient
 	// Event is the client for interacting with the Event builders.
 	Event *EventClient
 	// Integration is the client for interacting with the Integration builders.
@@ -169,6 +171,7 @@ func (tx *Tx) init() {
 	tx.Broadcast = NewBroadcastClient(tx.config)
 	tx.BroadcastRecipient = NewBroadcastRecipientClient(tx.config)
 	tx.Contact = NewContactClient(tx.config)
+	tx.EmailTemplate = NewEmailTemplateClient(tx.config)
 	tx.Event = NewEventClient(tx.config)
 	tx.Integration = NewIntegrationClient(tx.config)
 	tx.Segment = NewSegmentClient(tx.config)

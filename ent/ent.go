@@ -16,6 +16,7 @@ import (
 	"github.com/mokevnin/1mail/ent/broadcast"
 	"github.com/mokevnin/1mail/ent/broadcastrecipient"
 	"github.com/mokevnin/1mail/ent/contact"
+	"github.com/mokevnin/1mail/ent/emailtemplate"
 	"github.com/mokevnin/1mail/ent/event"
 	"github.com/mokevnin/1mail/ent/integration"
 	"github.com/mokevnin/1mail/ent/segment"
@@ -87,6 +88,7 @@ func checkColumn(t, c string) error {
 			broadcast.Table:          broadcast.ValidColumn,
 			broadcastrecipient.Table: broadcastrecipient.ValidColumn,
 			contact.Table:            contact.ValidColumn,
+			emailtemplate.Table:      emailtemplate.ValidColumn,
 			event.Table:              event.ValidColumn,
 			integration.Table:        integration.ValidColumn,
 			segment.Table:            segment.ValidColumn,

@@ -14,6 +14,7 @@ import (
 	"github.com/mokevnin/1mail/ent/broadcast"
 	"github.com/mokevnin/1mail/ent/broadcastrecipient"
 	"github.com/mokevnin/1mail/ent/contact"
+	"github.com/mokevnin/1mail/ent/emailtemplate"
 	"github.com/mokevnin/1mail/ent/event"
 	"github.com/mokevnin/1mail/ent/integration"
 	"github.com/mokevnin/1mail/ent/segment"
@@ -229,6 +230,21 @@ func (_c *WorkspaceCreate) AddBroadcastRecipients(v ...*BroadcastRecipient) *Wor
 		ids[i] = v[i].ID
 	}
 	return _c.AddBroadcastRecipientIDs(ids...)
+}
+
+// AddEmailTemplateIDs adds the "email_templates" edge to the EmailTemplate entity by IDs.
+func (_c *WorkspaceCreate) AddEmailTemplateIDs(ids ...int64) *WorkspaceCreate {
+	_c.mutation.AddEmailTemplateIDs(ids...)
+	return _c
+}
+
+// AddEmailTemplates adds the "email_templates" edges to the EmailTemplate entity.
+func (_c *WorkspaceCreate) AddEmailTemplates(v ...*EmailTemplate) *WorkspaceCreate {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddEmailTemplateIDs(ids...)
 }
 
 // SetUser sets the "user" edge to the User entity.
@@ -502,6 +518,22 @@ func (_c *WorkspaceCreate) createSpec() (*Workspace, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(broadcastrecipient.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.EmailTemplatesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   workspace.EmailTemplatesTable,
+			Columns: []string{workspace.EmailTemplatesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(emailtemplate.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {
