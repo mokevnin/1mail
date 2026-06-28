@@ -19,6 +19,7 @@ func (c *ConverterImpl) BroadcastToResource(source *ent.Broadcast) site.SiteBroa
 		siteapiSiteBroadcastResource.FromName = optNilString((*source).FromName)
 		siteapiSiteBroadcastResource.FromEmail = optNilEmailAddress((*source).FromEmail)
 		siteapiSiteBroadcastResource.BodyHtml = (*source).BodyHTML
+		siteapiSiteBroadcastResource.BodyFormat = site.SiteEmailBodyFormat((*source).BodyFormat)
 		siteapiSiteBroadcastResource.BodyText = (*source).BodyText
 		siteapiSiteBroadcastResource.SegmentId = optNilEntityID((*source).SegmentID)
 		siteapiSiteBroadcastResource.IntegrationId = optNilEntityID((*source).IntegrationID)
@@ -45,6 +46,19 @@ func (c *ConverterImpl) ContactToResource(source *ent.Contact) site.SiteContactR
 		siteapiSiteContactResource.UpdatedAt = timestamp((*source).UpdatedAt)
 	}
 	return siteapiSiteContactResource
+}
+func (c *ConverterImpl) EmailTemplateToResource(source *ent.EmailTemplate) site.SiteEmailTemplateResource {
+	var siteapiSiteEmailTemplateResource site.SiteEmailTemplateResource
+	if source != nil {
+		siteapiSiteEmailTemplateResource.ID = entityID((*source).ID)
+		siteapiSiteEmailTemplateResource.Name = (*source).Name
+		siteapiSiteEmailTemplateResource.Subject = (*source).Subject
+		siteapiSiteEmailTemplateResource.BodyFormat = site.SiteEmailBodyFormat((*source).BodyFormat)
+		siteapiSiteEmailTemplateResource.BodyHtml = (*source).BodyHTML
+		siteapiSiteEmailTemplateResource.CreatedAt = timestamp((*source).CreatedAt)
+		siteapiSiteEmailTemplateResource.UpdatedAt = timestamp((*source).UpdatedAt)
+	}
+	return siteapiSiteEmailTemplateResource
 }
 func (c *ConverterImpl) EventToResource(source *ent.Event) site.SiteEventResource {
 	var siteapiSiteEventResource site.SiteEventResource

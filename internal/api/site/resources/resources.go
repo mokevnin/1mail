@@ -44,6 +44,8 @@ type Converter interface {
 	// object; map the whole source through broadcastStats.
 	// goverter:map . Stats
 	BroadcastToResource(source *ent.Broadcast) siteapi.SiteBroadcastResource
+
+	EmailTemplateToResource(source *ent.EmailTemplate) siteapi.SiteEmailTemplateResource
 }
 
 func entityID(id int64) siteapi.EntityId {

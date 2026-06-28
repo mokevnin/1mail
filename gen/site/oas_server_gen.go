@@ -52,6 +52,12 @@ type Handler interface {
 	//
 	// POST /w/{workspaceSlug}/broadcasts/{id}/send
 	SiteBroadcastsSend(ctx context.Context, params SiteBroadcastsSendParams) (SiteBroadcastsSendRes, error)
+	// SiteBroadcastsTestSend implements SiteBroadcasts_testSend operation.
+	//
+	// Send a one-off rendered preview to a single address.
+	//
+	// POST /w/{workspaceSlug}/broadcasts/{id}/test
+	SiteBroadcastsTestSend(ctx context.Context, req *SiteTestSendBroadcastInput, params SiteBroadcastsTestSendParams) (SiteBroadcastsTestSendRes, error)
 	// SiteBroadcastsUpdate implements SiteBroadcasts_update operation.
 	//
 	// Update a broadcast from the site UI.
@@ -160,6 +166,36 @@ type Handler interface {
 	//
 	// PUT /w/{workspaceSlug}/segments/{id}
 	SiteSegmentsUpdate(ctx context.Context, req *SiteUpdateSegmentInput, params SiteSegmentsUpdateParams) (SiteSegmentsUpdateRes, error)
+	// SiteTemplatesCreate implements SiteTemplates_create operation.
+	//
+	// Create a template.
+	//
+	// POST /w/{workspaceSlug}/templates
+	SiteTemplatesCreate(ctx context.Context, req *SiteCreateEmailTemplateInput, params SiteTemplatesCreateParams) (SiteTemplatesCreateRes, error)
+	// SiteTemplatesDelete implements SiteTemplates_delete operation.
+	//
+	// Delete a template.
+	//
+	// DELETE /w/{workspaceSlug}/templates/{id}
+	SiteTemplatesDelete(ctx context.Context, params SiteTemplatesDeleteParams) (SiteTemplatesDeleteRes, error)
+	// SiteTemplatesGet implements SiteTemplates_get operation.
+	//
+	// Get a template by ID.
+	//
+	// GET /w/{workspaceSlug}/templates/{id}
+	SiteTemplatesGet(ctx context.Context, params SiteTemplatesGetParams) (SiteTemplatesGetRes, error)
+	// SiteTemplatesList implements SiteTemplates_list operation.
+	//
+	// List templates.
+	//
+	// GET /w/{workspaceSlug}/templates
+	SiteTemplatesList(ctx context.Context, params SiteTemplatesListParams) (SiteTemplatesListRes, error)
+	// SiteTemplatesUpdate implements SiteTemplates_update operation.
+	//
+	// Update a template.
+	//
+	// PUT /w/{workspaceSlug}/templates/{id}
+	SiteTemplatesUpdate(ctx context.Context, req *SiteUpdateEmailTemplateInput, params SiteTemplatesUpdateParams) (SiteTemplatesUpdateRes, error)
 	// SiteTokensCreate implements SiteTokens_create operation.
 	//
 	// Create an API token; the full secret is returned once.

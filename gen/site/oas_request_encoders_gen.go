@@ -66,6 +66,20 @@ func encodeSiteBroadcastsScheduleRequest(
 	return nil
 }
 
+func encodeSiteBroadcastsTestSendRequest(
+	req *SiteTestSendBroadcastInput,
+	r *http.Request,
+) error {
+	const contentType = "application/json"
+	e := new(jx.Encoder)
+	{
+		req.Encode(e)
+	}
+	encoded := e.Bytes()
+	ht.SetBody(r, bytes.NewReader(encoded), contentType)
+	return nil
+}
+
 func encodeSiteBroadcastsUpdateRequest(
 	req *SiteUpdateBroadcastInput,
 	r *http.Request,
@@ -166,6 +180,34 @@ func encodeSiteSegmentsPreviewRequest(
 
 func encodeSiteSegmentsUpdateRequest(
 	req *SiteUpdateSegmentInput,
+	r *http.Request,
+) error {
+	const contentType = "application/json"
+	e := new(jx.Encoder)
+	{
+		req.Encode(e)
+	}
+	encoded := e.Bytes()
+	ht.SetBody(r, bytes.NewReader(encoded), contentType)
+	return nil
+}
+
+func encodeSiteTemplatesCreateRequest(
+	req *SiteCreateEmailTemplateInput,
+	r *http.Request,
+) error {
+	const contentType = "application/json"
+	e := new(jx.Encoder)
+	{
+		req.Encode(e)
+	}
+	encoded := e.Bytes()
+	ht.SetBody(r, bytes.NewReader(encoded), contentType)
+	return nil
+}
+
+func encodeSiteTemplatesUpdateRequest(
+	req *SiteUpdateEmailTemplateInput,
 	r *http.Request,
 ) error {
 	const contentType = "application/json"

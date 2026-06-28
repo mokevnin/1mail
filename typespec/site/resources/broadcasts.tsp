@@ -56,6 +56,9 @@ model SiteBroadcastResource {
   /** HTML body authored in the composer */
   bodyHtml: string;
 
+  /** Body authoring format (html or mjml) */
+  bodyFormat: SiteEmailBodyFormat;
+
   /** Derived plain-text body */
   bodyText: string;
 
@@ -101,6 +104,9 @@ model SiteCreateBroadcastInput {
   /** HTML body */
   bodyHtml?: string;
 
+  /** Body authoring format (html or mjml) */
+  bodyFormat?: SiteEmailBodyFormat;
+
   /** Target segment; null/omitted means all active contacts */
   segmentId?: EntityId | null;
 
@@ -125,6 +131,9 @@ model SiteUpdateBroadcastInput {
   /** HTML body */
   bodyHtml?: string;
 
+  /** Body authoring format (html or mjml) */
+  bodyFormat?: SiteEmailBodyFormat;
+
   /** Target segment; null means all active contacts */
   segmentId?: EntityId | null;
 
@@ -136,6 +145,12 @@ model SiteUpdateBroadcastInput {
 model SiteScheduleBroadcastInput {
   /** When the broadcast should be sent */
   scheduledAt: Timestamp;
+}
+
+/** Site request body for a test send */
+model SiteTestSendBroadcastInput {
+  /** Address to send the rendered preview to */
+  email: EmailAddress;
 }
 
 @route("/w/{workspaceSlug}/broadcasts")
@@ -211,6 +226,19 @@ namespace SiteBroadcasts {
     @body body: SiteScheduleBroadcastInput,
   ):
     | SiteBroadcastResource
+    | BadRequestProblem
+    | NotFoundProblem
+    | UnprocessableEntityProblem;
+
+  /** Send a one-off rendered preview to a single address */
+  @post
+  @route("/{id}/test")
+  op testSend(
+    @path workspaceSlug: string,
+    @path id: EntityId,
+    @body body: SiteTestSendBroadcastInput,
+  ):
+    | NoContentResponse
     | BadRequestProblem
     | NotFoundProblem
     | UnprocessableEntityProblem;

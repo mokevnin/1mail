@@ -114,6 +114,10 @@ export type SiteBroadcastResource = {
      */
     bodyHtml: string;
     /**
+     * Body authoring format (html or mjml)
+     */
+    bodyFormat: SiteEmailBodyFormat;
+    /**
      * Derived plain-text body
      */
     bodyText: string;
@@ -276,6 +280,10 @@ export type SiteCreateBroadcastInput = {
      */
     bodyHtml?: string;
     /**
+     * Body authoring format (html or mjml)
+     */
+    bodyFormat?: SiteEmailBodyFormat;
+    /**
      * Target segment; null/omitted means all active contacts
      */
     segmentId?: EntityId | null;
@@ -311,6 +319,16 @@ export type SiteCreateContactInput = {
     customFields?: {
         [key: string]: string;
     } | null;
+};
+
+/**
+ * Site request body for creating a template
+ */
+export type SiteCreateEmailTemplateInput = {
+    name: string;
+    subject?: string;
+    bodyFormat?: SiteEmailBodyFormat;
+    bodyHtml?: string;
 };
 
 /**
@@ -378,6 +396,50 @@ export type SiteDirectLoginResult = {
         [key: string]: unknown;
     };
     role?: string;
+};
+
+/**
+ * Authoring format of an email body
+ */
+export const SiteEmailBodyFormat = { HTML: 'html', MJML: 'mjml' } as const;
+
+/**
+ * Authoring format of an email body
+ */
+export type SiteEmailBodyFormat = typeof SiteEmailBodyFormat[keyof typeof SiteEmailBodyFormat];
+
+/**
+ * Reusable email template used by the site UI
+ */
+export type SiteEmailTemplateResource = {
+    /**
+     * Unique identifier
+     */
+    id: EntityId;
+    /**
+     * Template name
+     */
+    name: string;
+    /**
+     * Default subject line
+     */
+    subject: string;
+    /**
+     * Body authoring format
+     */
+    bodyFormat: SiteEmailBodyFormat;
+    /**
+     * Body (HTML or MJML depending on bodyFormat)
+     */
+    bodyHtml: string;
+    /**
+     * Creation timestamp
+     */
+    createdAt: Timestamp;
+    /**
+     * Last update timestamp
+     */
+    updatedAt: Timestamp;
 };
 
 /**
@@ -631,6 +693,16 @@ export type SiteSmtpConfigInput = {
 };
 
 /**
+ * Site request body for a test send
+ */
+export type SiteTestSendBroadcastInput = {
+    /**
+     * Address to send the rendered preview to
+     */
+    email: EmailAddress;
+};
+
+/**
  * Site request body for updating a broadcast
  */
 export type SiteUpdateBroadcastInput = {
@@ -654,6 +726,10 @@ export type SiteUpdateBroadcastInput = {
      * HTML body
      */
     bodyHtml?: string;
+    /**
+     * Body authoring format (html or mjml)
+     */
+    bodyFormat?: SiteEmailBodyFormat;
     /**
      * Target segment; null means all active contacts
      */
@@ -686,6 +762,16 @@ export type SiteUpdateContactInput = {
     customFields?: {
         [key: string]: string;
     } | null;
+};
+
+/**
+ * Site request body for updating a template
+ */
+export type SiteUpdateEmailTemplateInput = {
+    name?: string;
+    subject?: string;
+    bodyFormat?: SiteEmailBodyFormat;
+    bodyHtml?: string;
 };
 
 /**
@@ -1185,6 +1271,42 @@ export type SiteBroadcastsSendResponses = {
 };
 
 export type SiteBroadcastsSendResponse = SiteBroadcastsSendResponses[keyof SiteBroadcastsSendResponses];
+
+export type SiteBroadcastsTestSendData = {
+    body: SiteTestSendBroadcastInput;
+    path: {
+        workspaceSlug: string;
+        id: EntityId;
+    };
+    query?: never;
+    url: '/w/{workspaceSlug}/broadcasts/{id}/test';
+};
+
+export type SiteBroadcastsTestSendErrors = {
+    /**
+     * RFC 7807 bad request response
+     */
+    400: ProblemDetails;
+    /**
+     * RFC 7807 not found response
+     */
+    404: ProblemDetails;
+    /**
+     * RFC 7807 validation response
+     */
+    422: ProblemDetails;
+};
+
+export type SiteBroadcastsTestSendError = SiteBroadcastsTestSendErrors[keyof SiteBroadcastsTestSendErrors];
+
+export type SiteBroadcastsTestSendResponses = {
+    /**
+     * There is no content to send for this request, but the headers may be useful.
+     */
+    204: void;
+};
+
+export type SiteBroadcastsTestSendResponse = SiteBroadcastsTestSendResponses[keyof SiteBroadcastsTestSendResponses];
 
 export type SiteContactsListData = {
     body?: never;
@@ -1851,6 +1973,202 @@ export type SiteSegmentsUpdateResponses = {
 };
 
 export type SiteSegmentsUpdateResponse = SiteSegmentsUpdateResponses[keyof SiteSegmentsUpdateResponses];
+
+export type SiteTemplatesListData = {
+    body?: never;
+    path: {
+        workspaceSlug: string;
+    };
+    query?: {
+        /**
+         * Page number (1-based)
+         */
+        page?: number;
+        /**
+         * Page size
+         */
+        pageSize?: number;
+    };
+    url: '/w/{workspaceSlug}/templates';
+};
+
+export type SiteTemplatesListErrors = {
+    /**
+     * RFC 7807 bad request response
+     */
+    400: ProblemDetails;
+    /**
+     * RFC 7807 not found response
+     */
+    404: ProblemDetails;
+    /**
+     * RFC 7807 validation response
+     */
+    422: ProblemDetails;
+};
+
+export type SiteTemplatesListError = SiteTemplatesListErrors[keyof SiteTemplatesListErrors];
+
+export type SiteTemplatesListResponses = {
+    /**
+     * Paginated response
+     */
+    200: {
+        /**
+         * List of items
+         */
+        items: Array<SiteEmailTemplateResource>;
+        /**
+         * Page number (1-based)
+         */
+        page: number;
+        /**
+         * Page size
+         */
+        pageSize: number;
+        /**
+         * Total number of elements
+         */
+        totalItems: number;
+        /**
+         * Total number of pages
+         */
+        totalPages: number;
+    };
+};
+
+export type SiteTemplatesListResponse = SiteTemplatesListResponses[keyof SiteTemplatesListResponses];
+
+export type SiteTemplatesCreateData = {
+    body: SiteCreateEmailTemplateInput;
+    path: {
+        workspaceSlug: string;
+    };
+    query?: never;
+    url: '/w/{workspaceSlug}/templates';
+};
+
+export type SiteTemplatesCreateErrors = {
+    /**
+     * RFC 7807 not found response
+     */
+    404: ProblemDetails;
+    /**
+     * RFC 7807 validation response
+     */
+    422: ProblemDetails;
+};
+
+export type SiteTemplatesCreateError = SiteTemplatesCreateErrors[keyof SiteTemplatesCreateErrors];
+
+export type SiteTemplatesCreateResponses = {
+    /**
+     * The request has succeeded and a new resource has been created as a result.
+     */
+    201: SiteEmailTemplateResource;
+};
+
+export type SiteTemplatesCreateResponse = SiteTemplatesCreateResponses[keyof SiteTemplatesCreateResponses];
+
+export type SiteTemplatesDeleteData = {
+    body?: never;
+    path: {
+        workspaceSlug: string;
+        id: EntityId;
+    };
+    query?: never;
+    url: '/w/{workspaceSlug}/templates/{id}';
+};
+
+export type SiteTemplatesDeleteErrors = {
+    /**
+     * RFC 7807 bad request response
+     */
+    400: ProblemDetails;
+    /**
+     * RFC 7807 not found response
+     */
+    404: ProblemDetails;
+};
+
+export type SiteTemplatesDeleteError = SiteTemplatesDeleteErrors[keyof SiteTemplatesDeleteErrors];
+
+export type SiteTemplatesDeleteResponses = {
+    /**
+     * There is no content to send for this request, but the headers may be useful.
+     */
+    204: void;
+};
+
+export type SiteTemplatesDeleteResponse = SiteTemplatesDeleteResponses[keyof SiteTemplatesDeleteResponses];
+
+export type SiteTemplatesGetData = {
+    body?: never;
+    path: {
+        workspaceSlug: string;
+        id: EntityId;
+    };
+    query?: never;
+    url: '/w/{workspaceSlug}/templates/{id}';
+};
+
+export type SiteTemplatesGetErrors = {
+    /**
+     * RFC 7807 bad request response
+     */
+    400: ProblemDetails;
+    /**
+     * RFC 7807 not found response
+     */
+    404: ProblemDetails;
+};
+
+export type SiteTemplatesGetError = SiteTemplatesGetErrors[keyof SiteTemplatesGetErrors];
+
+export type SiteTemplatesGetResponses = {
+    /**
+     * The request has succeeded.
+     */
+    200: SiteEmailTemplateResource;
+};
+
+export type SiteTemplatesGetResponse = SiteTemplatesGetResponses[keyof SiteTemplatesGetResponses];
+
+export type SiteTemplatesUpdateData = {
+    body: SiteUpdateEmailTemplateInput;
+    path: {
+        workspaceSlug: string;
+        id: EntityId;
+    };
+    query?: never;
+    url: '/w/{workspaceSlug}/templates/{id}';
+};
+
+export type SiteTemplatesUpdateErrors = {
+    /**
+     * RFC 7807 bad request response
+     */
+    400: ProblemDetails;
+    /**
+     * RFC 7807 not found response
+     */
+    404: ProblemDetails;
+    /**
+     * RFC 7807 validation response
+     */
+    422: ProblemDetails;
+};
+
+export type SiteTemplatesUpdateError = SiteTemplatesUpdateErrors[keyof SiteTemplatesUpdateErrors];
+
+export type SiteTemplatesUpdateResponses = {
+    /**
+     * The request has succeeded.
+     */
+    200: SiteEmailTemplateResource;
+};
+
+export type SiteTemplatesUpdateResponse = SiteTemplatesUpdateResponses[keyof SiteTemplatesUpdateResponses];
 
 export type SiteTokensListData = {
     body?: never;

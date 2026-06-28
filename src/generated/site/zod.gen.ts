@@ -49,19 +49,6 @@ export const zSiteBroadcastStatus = z.enum([
  */
 export const zSiteContactStatus = z.enum(['active', 'unsubscribed']);
 
-/**
- * Site request body for creating a broadcast
- */
-export const zSiteCreateBroadcastInput = z.object({
-    name: z.string(),
-    subject: z.string().optional(),
-    fromName: z.string().nullish(),
-    fromEmail: zEmailAddress.nullish(),
-    bodyHtml: z.string().optional(),
-    segmentId: zEntityId.nullish(),
-    integrationId: zEntityId.nullish()
-});
-
 export const zSiteDirectLoginError = z.object({
     error: z.string()
 });
@@ -80,6 +67,35 @@ export const zSiteDirectLoginResult = z.object({
     email: z.string().optional(),
     attrs: z.record(z.string(), z.unknown()).optional(),
     role: z.string().optional()
+});
+
+/**
+ * Authoring format of an email body
+ */
+export const zSiteEmailBodyFormat = z.enum(['html', 'mjml']);
+
+/**
+ * Site request body for creating a broadcast
+ */
+export const zSiteCreateBroadcastInput = z.object({
+    name: z.string(),
+    subject: z.string().optional(),
+    fromName: z.string().nullish(),
+    fromEmail: zEmailAddress.nullish(),
+    bodyHtml: z.string().optional(),
+    bodyFormat: zSiteEmailBodyFormat.optional(),
+    segmentId: zEntityId.nullish(),
+    integrationId: zEntityId.nullish()
+});
+
+/**
+ * Site request body for creating a template
+ */
+export const zSiteCreateEmailTemplateInput = z.object({
+    name: z.string(),
+    subject: z.string().optional(),
+    bodyFormat: zSiteEmailBodyFormat.optional(),
+    bodyHtml: z.string().optional()
 });
 
 /**
@@ -201,6 +217,13 @@ export const zSiteCreateIntegrationInput = z.object({
 });
 
 /**
+ * Site request body for a test send
+ */
+export const zSiteTestSendBroadcastInput = z.object({
+    email: zEmailAddress
+});
+
+/**
  * Site request body for updating a broadcast
  */
 export const zSiteUpdateBroadcastInput = z.object({
@@ -209,8 +232,19 @@ export const zSiteUpdateBroadcastInput = z.object({
     fromName: z.string().nullish(),
     fromEmail: zEmailAddress.nullish(),
     bodyHtml: z.string().optional(),
+    bodyFormat: zSiteEmailBodyFormat.optional(),
     segmentId: zEntityId.nullish(),
     integrationId: zEntityId.nullish()
+});
+
+/**
+ * Site request body for updating a template
+ */
+export const zSiteUpdateEmailTemplateInput = z.object({
+    name: z.string().optional(),
+    subject: z.string().optional(),
+    bodyFormat: zSiteEmailBodyFormat.optional(),
+    bodyHtml: z.string().optional()
 });
 
 /**
@@ -298,6 +332,7 @@ export const zSiteBroadcastResource = z.object({
     fromName: z.string().nullish(),
     fromEmail: zEmailAddress.nullish(),
     bodyHtml: z.string(),
+    bodyFormat: zSiteEmailBodyFormat,
     bodyText: z.string(),
     segmentId: zEntityId.nullish(),
     integrationId: zEntityId.nullish(),
@@ -339,6 +374,19 @@ export const zSiteCreateTokenInput = z.object({
 export const zSiteCreateTokenResponse = z.object({
     token: z.string(),
     resource: zSiteApiTokenResource
+});
+
+/**
+ * Reusable email template used by the site UI
+ */
+export const zSiteEmailTemplateResource = z.object({
+    id: zEntityId,
+    name: z.string(),
+    subject: z.string(),
+    bodyFormat: zSiteEmailBodyFormat,
+    bodyHtml: z.string(),
+    createdAt: zTimestamp,
+    updatedAt: zTimestamp
 });
 
 /**
@@ -543,6 +591,18 @@ export const zSiteBroadcastsSendPath = z.object({
  * The request has succeeded.
  */
 export const zSiteBroadcastsSendResponse = zSiteBroadcastResource;
+
+export const zSiteBroadcastsTestSendBody = zSiteTestSendBroadcastInput;
+
+export const zSiteBroadcastsTestSendPath = z.object({
+    workspaceSlug: z.string(),
+    id: zEntityId
+});
+
+/**
+ * There is no content to send for this request, but the headers may be useful.
+ */
+export const zSiteBroadcastsTestSendResponse = z.void();
 
 export const zSiteContactsListPath = z.object({
     workspaceSlug: z.string()
@@ -754,6 +814,69 @@ export const zSiteSegmentsUpdatePath = z.object({
  * The request has succeeded.
  */
 export const zSiteSegmentsUpdateResponse = zSiteSegmentResource;
+
+export const zSiteTemplatesListPath = z.object({
+    workspaceSlug: z.string()
+});
+
+export const zSiteTemplatesListQuery = z.object({
+    page: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).optional().default(1),
+    pageSize: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).optional().default(25)
+});
+
+/**
+ * Paginated response
+ */
+export const zSiteTemplatesListResponse = z.object({
+    items: z.array(zSiteEmailTemplateResource),
+    page: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
+    pageSize: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
+    totalItems: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
+    totalPages: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' })
+});
+
+export const zSiteTemplatesCreateBody = zSiteCreateEmailTemplateInput;
+
+export const zSiteTemplatesCreatePath = z.object({
+    workspaceSlug: z.string()
+});
+
+/**
+ * The request has succeeded and a new resource has been created as a result.
+ */
+export const zSiteTemplatesCreateResponse = zSiteEmailTemplateResource;
+
+export const zSiteTemplatesDeletePath = z.object({
+    workspaceSlug: z.string(),
+    id: zEntityId
+});
+
+/**
+ * There is no content to send for this request, but the headers may be useful.
+ */
+export const zSiteTemplatesDeleteResponse = z.void();
+
+export const zSiteTemplatesGetPath = z.object({
+    workspaceSlug: z.string(),
+    id: zEntityId
+});
+
+/**
+ * The request has succeeded.
+ */
+export const zSiteTemplatesGetResponse = zSiteEmailTemplateResource;
+
+export const zSiteTemplatesUpdateBody = zSiteUpdateEmailTemplateInput;
+
+export const zSiteTemplatesUpdatePath = z.object({
+    workspaceSlug: z.string(),
+    id: zEntityId
+});
+
+/**
+ * The request has succeeded.
+ */
+export const zSiteTemplatesUpdateResponse = zSiteEmailTemplateResource;
 
 export const zSiteTokensListPath = z.object({
     workspaceSlug: z.string()

@@ -33,6 +33,10 @@ type SiteBroadcastsSendRes interface {
 	siteBroadcastsSendRes()
 }
 
+type SiteBroadcastsTestSendRes interface {
+	siteBroadcastsTestSendRes()
+}
+
 type SiteBroadcastsUpdateRes interface {
 	siteBroadcastsUpdateRes()
 }
@@ -103,6 +107,26 @@ type SiteSegmentsPreviewRes interface {
 
 type SiteSegmentsUpdateRes interface {
 	siteSegmentsUpdateRes()
+}
+
+type SiteTemplatesCreateRes interface {
+	siteTemplatesCreateRes()
+}
+
+type SiteTemplatesDeleteRes interface {
+	siteTemplatesDeleteRes()
+}
+
+type SiteTemplatesGetRes interface {
+	siteTemplatesGetRes()
+}
+
+type SiteTemplatesListRes interface {
+	siteTemplatesListRes()
+}
+
+type SiteTemplatesUpdateRes interface {
+	siteTemplatesUpdateRes()
 }
 
 type SiteTokensCreateRes interface {

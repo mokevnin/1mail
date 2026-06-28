@@ -81,6 +81,15 @@ func (UnimplementedHandler) SiteBroadcastsSend(ctx context.Context, params SiteB
 	return r, ht.ErrNotImplemented
 }
 
+// SiteBroadcastsTestSend implements SiteBroadcasts_testSend operation.
+//
+// Send a one-off rendered preview to a single address.
+//
+// POST /w/{workspaceSlug}/broadcasts/{id}/test
+func (UnimplementedHandler) SiteBroadcastsTestSend(ctx context.Context, req *SiteTestSendBroadcastInput, params SiteBroadcastsTestSendParams) (r SiteBroadcastsTestSendRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // SiteBroadcastsUpdate implements SiteBroadcasts_update operation.
 //
 // Update a broadcast from the site UI.
@@ -240,6 +249,51 @@ func (UnimplementedHandler) SiteSegmentsPreview(ctx context.Context, req *SitePr
 //
 // PUT /w/{workspaceSlug}/segments/{id}
 func (UnimplementedHandler) SiteSegmentsUpdate(ctx context.Context, req *SiteUpdateSegmentInput, params SiteSegmentsUpdateParams) (r SiteSegmentsUpdateRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// SiteTemplatesCreate implements SiteTemplates_create operation.
+//
+// Create a template.
+//
+// POST /w/{workspaceSlug}/templates
+func (UnimplementedHandler) SiteTemplatesCreate(ctx context.Context, req *SiteCreateEmailTemplateInput, params SiteTemplatesCreateParams) (r SiteTemplatesCreateRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// SiteTemplatesDelete implements SiteTemplates_delete operation.
+//
+// Delete a template.
+//
+// DELETE /w/{workspaceSlug}/templates/{id}
+func (UnimplementedHandler) SiteTemplatesDelete(ctx context.Context, params SiteTemplatesDeleteParams) (r SiteTemplatesDeleteRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// SiteTemplatesGet implements SiteTemplates_get operation.
+//
+// Get a template by ID.
+//
+// GET /w/{workspaceSlug}/templates/{id}
+func (UnimplementedHandler) SiteTemplatesGet(ctx context.Context, params SiteTemplatesGetParams) (r SiteTemplatesGetRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// SiteTemplatesList implements SiteTemplates_list operation.
+//
+// List templates.
+//
+// GET /w/{workspaceSlug}/templates
+func (UnimplementedHandler) SiteTemplatesList(ctx context.Context, params SiteTemplatesListParams) (r SiteTemplatesListRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// SiteTemplatesUpdate implements SiteTemplates_update operation.
+//
+// Update a template.
+//
+// PUT /w/{workspaceSlug}/templates/{id}
+func (UnimplementedHandler) SiteTemplatesUpdate(ctx context.Context, req *SiteUpdateEmailTemplateInput, params SiteTemplatesUpdateParams) (r SiteTemplatesUpdateRes, _ error) {
 	return r, ht.ErrNotImplemented
 }
 

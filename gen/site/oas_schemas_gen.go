@@ -994,6 +994,52 @@ func (o OptSiteDirectLoginResultAttrs) Or(d SiteDirectLoginResultAttrs) SiteDire
 	return d
 }
 
+// NewOptSiteEmailBodyFormat returns new OptSiteEmailBodyFormat with value set to v.
+func NewOptSiteEmailBodyFormat(v SiteEmailBodyFormat) OptSiteEmailBodyFormat {
+	return OptSiteEmailBodyFormat{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptSiteEmailBodyFormat is optional SiteEmailBodyFormat.
+type OptSiteEmailBodyFormat struct {
+	Value SiteEmailBodyFormat
+	Set   bool
+}
+
+// IsSet returns true if OptSiteEmailBodyFormat was set.
+func (o OptSiteEmailBodyFormat) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptSiteEmailBodyFormat) Reset() {
+	var v SiteEmailBodyFormat
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptSiteEmailBodyFormat) SetTo(v SiteEmailBodyFormat) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptSiteEmailBodyFormat) Get() (v SiteEmailBodyFormat, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptSiteEmailBodyFormat) Or(d SiteEmailBodyFormat) SiteEmailBodyFormat {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
 // NewOptSiteSegmentType returns new OptSiteSegmentType with value set to v.
 func NewOptSiteSegmentType(v SiteSegmentType) OptSiteSegmentType {
 	return OptSiteSegmentType{
@@ -1328,6 +1374,8 @@ type SiteBroadcastResource struct {
 	FromEmail OptNilEmailAddress `json:"fromEmail"`
 	// HTML body authored in the composer.
 	BodyHtml string `json:"bodyHtml"`
+	// Body authoring format (html or mjml).
+	BodyFormat SiteEmailBodyFormat `json:"bodyFormat"`
 	// Derived plain-text body.
 	BodyText string `json:"bodyText"`
 	// Target segment; null means all active contacts.
@@ -1376,6 +1424,11 @@ func (s *SiteBroadcastResource) GetFromEmail() OptNilEmailAddress {
 // GetBodyHtml returns the value of BodyHtml.
 func (s *SiteBroadcastResource) GetBodyHtml() string {
 	return s.BodyHtml
+}
+
+// GetBodyFormat returns the value of BodyFormat.
+func (s *SiteBroadcastResource) GetBodyFormat() SiteEmailBodyFormat {
+	return s.BodyFormat
 }
 
 // GetBodyText returns the value of BodyText.
@@ -1451,6 +1504,11 @@ func (s *SiteBroadcastResource) SetFromEmail(val OptNilEmailAddress) {
 // SetBodyHtml sets the value of BodyHtml.
 func (s *SiteBroadcastResource) SetBodyHtml(val string) {
 	s.BodyHtml = val
+}
+
+// SetBodyFormat sets the value of BodyFormat.
+func (s *SiteBroadcastResource) SetBodyFormat(val SiteEmailBodyFormat) {
+	s.BodyFormat = val
 }
 
 // SetBodyText sets the value of BodyText.
@@ -1776,6 +1834,23 @@ type SiteBroadcastsSendUnprocessableEntity ProblemDetails
 
 func (*SiteBroadcastsSendUnprocessableEntity) siteBroadcastsSendRes() {}
 
+type SiteBroadcastsTestSendBadRequest ProblemDetails
+
+func (*SiteBroadcastsTestSendBadRequest) siteBroadcastsTestSendRes() {}
+
+// SiteBroadcastsTestSendNoContent is response for SiteBroadcastsTestSend operation.
+type SiteBroadcastsTestSendNoContent struct{}
+
+func (*SiteBroadcastsTestSendNoContent) siteBroadcastsTestSendRes() {}
+
+type SiteBroadcastsTestSendNotFound ProblemDetails
+
+func (*SiteBroadcastsTestSendNotFound) siteBroadcastsTestSendRes() {}
+
+type SiteBroadcastsTestSendUnprocessableEntity ProblemDetails
+
+func (*SiteBroadcastsTestSendUnprocessableEntity) siteBroadcastsTestSendRes() {}
+
 type SiteBroadcastsUpdateBadRequest ProblemDetails
 
 func (*SiteBroadcastsUpdateBadRequest) siteBroadcastsUpdateRes() {}
@@ -2100,6 +2175,8 @@ type SiteCreateBroadcastInput struct {
 	FromEmail OptNilEmailAddress `json:"fromEmail"`
 	// HTML body.
 	BodyHtml OptString `json:"bodyHtml"`
+	// Body authoring format (html or mjml).
+	BodyFormat OptSiteEmailBodyFormat `json:"bodyFormat"`
 	// Target segment; null/omitted means all active contacts.
 	SegmentId OptNilEntityId `json:"segmentId"`
 	// Sending integration; null/omitted means the workspace default.
@@ -2129,6 +2206,11 @@ func (s *SiteCreateBroadcastInput) GetFromEmail() OptNilEmailAddress {
 // GetBodyHtml returns the value of BodyHtml.
 func (s *SiteCreateBroadcastInput) GetBodyHtml() OptString {
 	return s.BodyHtml
+}
+
+// GetBodyFormat returns the value of BodyFormat.
+func (s *SiteCreateBroadcastInput) GetBodyFormat() OptSiteEmailBodyFormat {
+	return s.BodyFormat
 }
 
 // GetSegmentId returns the value of SegmentId.
@@ -2164,6 +2246,11 @@ func (s *SiteCreateBroadcastInput) SetFromEmail(val OptNilEmailAddress) {
 // SetBodyHtml sets the value of BodyHtml.
 func (s *SiteCreateBroadcastInput) SetBodyHtml(val OptString) {
 	s.BodyHtml = val
+}
+
+// SetBodyFormat sets the value of BodyFormat.
+func (s *SiteCreateBroadcastInput) SetBodyFormat(val OptSiteEmailBodyFormat) {
+	s.BodyFormat = val
 }
 
 // SetSegmentId sets the value of SegmentId.
@@ -2251,6 +2338,55 @@ func (s *SiteCreateContactInputCustomFields) init() SiteCreateContactInputCustom
 		*s = m
 	}
 	return m
+}
+
+// Site request body for creating a template.
+// Ref: #/components/schemas/SiteCreateEmailTemplateInput
+type SiteCreateEmailTemplateInput struct {
+	Name       string                 `json:"name"`
+	Subject    OptString              `json:"subject"`
+	BodyFormat OptSiteEmailBodyFormat `json:"bodyFormat"`
+	BodyHtml   OptString              `json:"bodyHtml"`
+}
+
+// GetName returns the value of Name.
+func (s *SiteCreateEmailTemplateInput) GetName() string {
+	return s.Name
+}
+
+// GetSubject returns the value of Subject.
+func (s *SiteCreateEmailTemplateInput) GetSubject() OptString {
+	return s.Subject
+}
+
+// GetBodyFormat returns the value of BodyFormat.
+func (s *SiteCreateEmailTemplateInput) GetBodyFormat() OptSiteEmailBodyFormat {
+	return s.BodyFormat
+}
+
+// GetBodyHtml returns the value of BodyHtml.
+func (s *SiteCreateEmailTemplateInput) GetBodyHtml() OptString {
+	return s.BodyHtml
+}
+
+// SetName sets the value of Name.
+func (s *SiteCreateEmailTemplateInput) SetName(val string) {
+	s.Name = val
+}
+
+// SetSubject sets the value of Subject.
+func (s *SiteCreateEmailTemplateInput) SetSubject(val OptString) {
+	s.Subject = val
+}
+
+// SetBodyFormat sets the value of BodyFormat.
+func (s *SiteCreateEmailTemplateInput) SetBodyFormat(val OptSiteEmailBodyFormat) {
+	s.BodyFormat = val
+}
+
+// SetBodyHtml sets the value of BodyHtml.
+func (s *SiteCreateEmailTemplateInput) SetBodyHtml(val OptString) {
+	s.BodyHtml = val
 }
 
 // Create a workspace integration. The provider/channel are derived from `config.kind`.
@@ -2557,6 +2693,142 @@ func (s *SiteDirectLoginResultAttrs) init() SiteDirectLoginResultAttrs {
 	}
 	return m
 }
+
+// Authoring format of an email body.
+// Ref: #/components/schemas/SiteEmailBodyFormat
+type SiteEmailBodyFormat string
+
+const (
+	SiteEmailBodyFormatHTML SiteEmailBodyFormat = "html"
+	SiteEmailBodyFormatMjml SiteEmailBodyFormat = "mjml"
+)
+
+// AllValues returns all SiteEmailBodyFormat values.
+func (SiteEmailBodyFormat) AllValues() []SiteEmailBodyFormat {
+	return []SiteEmailBodyFormat{
+		SiteEmailBodyFormatHTML,
+		SiteEmailBodyFormatMjml,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s SiteEmailBodyFormat) MarshalText() ([]byte, error) {
+	switch s {
+	case SiteEmailBodyFormatHTML:
+		return []byte(s), nil
+	case SiteEmailBodyFormatMjml:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *SiteEmailBodyFormat) UnmarshalText(data []byte) error {
+	switch SiteEmailBodyFormat(data) {
+	case SiteEmailBodyFormatHTML:
+		*s = SiteEmailBodyFormatHTML
+		return nil
+	case SiteEmailBodyFormatMjml:
+		*s = SiteEmailBodyFormatMjml
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// Reusable email template used by the site UI.
+// Ref: #/components/schemas/SiteEmailTemplateResource
+type SiteEmailTemplateResource struct {
+	// Unique identifier.
+	ID EntityId `json:"id"`
+	// Template name.
+	Name string `json:"name"`
+	// Default subject line.
+	Subject string `json:"subject"`
+	// Body authoring format.
+	BodyFormat SiteEmailBodyFormat `json:"bodyFormat"`
+	// Body (HTML or MJML depending on bodyFormat).
+	BodyHtml string `json:"bodyHtml"`
+	// Creation timestamp.
+	CreatedAt Timestamp `json:"createdAt"`
+	// Last update timestamp.
+	UpdatedAt Timestamp `json:"updatedAt"`
+}
+
+// GetID returns the value of ID.
+func (s *SiteEmailTemplateResource) GetID() EntityId {
+	return s.ID
+}
+
+// GetName returns the value of Name.
+func (s *SiteEmailTemplateResource) GetName() string {
+	return s.Name
+}
+
+// GetSubject returns the value of Subject.
+func (s *SiteEmailTemplateResource) GetSubject() string {
+	return s.Subject
+}
+
+// GetBodyFormat returns the value of BodyFormat.
+func (s *SiteEmailTemplateResource) GetBodyFormat() SiteEmailBodyFormat {
+	return s.BodyFormat
+}
+
+// GetBodyHtml returns the value of BodyHtml.
+func (s *SiteEmailTemplateResource) GetBodyHtml() string {
+	return s.BodyHtml
+}
+
+// GetCreatedAt returns the value of CreatedAt.
+func (s *SiteEmailTemplateResource) GetCreatedAt() Timestamp {
+	return s.CreatedAt
+}
+
+// GetUpdatedAt returns the value of UpdatedAt.
+func (s *SiteEmailTemplateResource) GetUpdatedAt() Timestamp {
+	return s.UpdatedAt
+}
+
+// SetID sets the value of ID.
+func (s *SiteEmailTemplateResource) SetID(val EntityId) {
+	s.ID = val
+}
+
+// SetName sets the value of Name.
+func (s *SiteEmailTemplateResource) SetName(val string) {
+	s.Name = val
+}
+
+// SetSubject sets the value of Subject.
+func (s *SiteEmailTemplateResource) SetSubject(val string) {
+	s.Subject = val
+}
+
+// SetBodyFormat sets the value of BodyFormat.
+func (s *SiteEmailTemplateResource) SetBodyFormat(val SiteEmailBodyFormat) {
+	s.BodyFormat = val
+}
+
+// SetBodyHtml sets the value of BodyHtml.
+func (s *SiteEmailTemplateResource) SetBodyHtml(val string) {
+	s.BodyHtml = val
+}
+
+// SetCreatedAt sets the value of CreatedAt.
+func (s *SiteEmailTemplateResource) SetCreatedAt(val Timestamp) {
+	s.CreatedAt = val
+}
+
+// SetUpdatedAt sets the value of UpdatedAt.
+func (s *SiteEmailTemplateResource) SetUpdatedAt(val Timestamp) {
+	s.UpdatedAt = val
+}
+
+func (*SiteEmailTemplateResource) siteTemplatesCreateRes() {}
+func (*SiteEmailTemplateResource) siteTemplatesGetRes()    {}
+func (*SiteEmailTemplateResource) siteTemplatesUpdateRes() {}
 
 // A tracked event shown in the activity feed.
 // Ref: #/components/schemas/SiteEventResource
@@ -3967,6 +4239,142 @@ func (s *SiteSmtpConfigKind) UnmarshalText(data []byte) error {
 	}
 }
 
+type SiteTemplatesCreateNotFound ProblemDetails
+
+func (*SiteTemplatesCreateNotFound) siteTemplatesCreateRes() {}
+
+type SiteTemplatesCreateUnprocessableEntity ProblemDetails
+
+func (*SiteTemplatesCreateUnprocessableEntity) siteTemplatesCreateRes() {}
+
+type SiteTemplatesDeleteBadRequest ProblemDetails
+
+func (*SiteTemplatesDeleteBadRequest) siteTemplatesDeleteRes() {}
+
+// SiteTemplatesDeleteNoContent is response for SiteTemplatesDelete operation.
+type SiteTemplatesDeleteNoContent struct{}
+
+func (*SiteTemplatesDeleteNoContent) siteTemplatesDeleteRes() {}
+
+type SiteTemplatesDeleteNotFound ProblemDetails
+
+func (*SiteTemplatesDeleteNotFound) siteTemplatesDeleteRes() {}
+
+type SiteTemplatesGetBadRequest ProblemDetails
+
+func (*SiteTemplatesGetBadRequest) siteTemplatesGetRes() {}
+
+type SiteTemplatesGetNotFound ProblemDetails
+
+func (*SiteTemplatesGetNotFound) siteTemplatesGetRes() {}
+
+type SiteTemplatesListBadRequest ProblemDetails
+
+func (*SiteTemplatesListBadRequest) siteTemplatesListRes() {}
+
+type SiteTemplatesListNotFound ProblemDetails
+
+func (*SiteTemplatesListNotFound) siteTemplatesListRes() {}
+
+// Paginated response.
+type SiteTemplatesListOK struct {
+	// List of items.
+	Items []SiteEmailTemplateResource `json:"items"`
+	// Page number (1-based).
+	Page int32 `json:"page"`
+	// Page size.
+	PageSize int32 `json:"pageSize"`
+	// Total number of elements.
+	TotalItems int32 `json:"totalItems"`
+	// Total number of pages.
+	TotalPages int32 `json:"totalPages"`
+}
+
+// GetItems returns the value of Items.
+func (s *SiteTemplatesListOK) GetItems() []SiteEmailTemplateResource {
+	return s.Items
+}
+
+// GetPage returns the value of Page.
+func (s *SiteTemplatesListOK) GetPage() int32 {
+	return s.Page
+}
+
+// GetPageSize returns the value of PageSize.
+func (s *SiteTemplatesListOK) GetPageSize() int32 {
+	return s.PageSize
+}
+
+// GetTotalItems returns the value of TotalItems.
+func (s *SiteTemplatesListOK) GetTotalItems() int32 {
+	return s.TotalItems
+}
+
+// GetTotalPages returns the value of TotalPages.
+func (s *SiteTemplatesListOK) GetTotalPages() int32 {
+	return s.TotalPages
+}
+
+// SetItems sets the value of Items.
+func (s *SiteTemplatesListOK) SetItems(val []SiteEmailTemplateResource) {
+	s.Items = val
+}
+
+// SetPage sets the value of Page.
+func (s *SiteTemplatesListOK) SetPage(val int32) {
+	s.Page = val
+}
+
+// SetPageSize sets the value of PageSize.
+func (s *SiteTemplatesListOK) SetPageSize(val int32) {
+	s.PageSize = val
+}
+
+// SetTotalItems sets the value of TotalItems.
+func (s *SiteTemplatesListOK) SetTotalItems(val int32) {
+	s.TotalItems = val
+}
+
+// SetTotalPages sets the value of TotalPages.
+func (s *SiteTemplatesListOK) SetTotalPages(val int32) {
+	s.TotalPages = val
+}
+
+func (*SiteTemplatesListOK) siteTemplatesListRes() {}
+
+type SiteTemplatesListUnprocessableEntity ProblemDetails
+
+func (*SiteTemplatesListUnprocessableEntity) siteTemplatesListRes() {}
+
+type SiteTemplatesUpdateBadRequest ProblemDetails
+
+func (*SiteTemplatesUpdateBadRequest) siteTemplatesUpdateRes() {}
+
+type SiteTemplatesUpdateNotFound ProblemDetails
+
+func (*SiteTemplatesUpdateNotFound) siteTemplatesUpdateRes() {}
+
+type SiteTemplatesUpdateUnprocessableEntity ProblemDetails
+
+func (*SiteTemplatesUpdateUnprocessableEntity) siteTemplatesUpdateRes() {}
+
+// Site request body for a test send.
+// Ref: #/components/schemas/SiteTestSendBroadcastInput
+type SiteTestSendBroadcastInput struct {
+	// Address to send the rendered preview to.
+	Email EmailAddress `json:"email"`
+}
+
+// GetEmail returns the value of Email.
+func (s *SiteTestSendBroadcastInput) GetEmail() EmailAddress {
+	return s.Email
+}
+
+// SetEmail sets the value of Email.
+func (s *SiteTestSendBroadcastInput) SetEmail(val EmailAddress) {
+	s.Email = val
+}
+
 type SiteTokensCreateNotFound ProblemDetails
 
 func (*SiteTokensCreateNotFound) siteTokensCreateRes() {}
@@ -4005,6 +4413,8 @@ type SiteUpdateBroadcastInput struct {
 	FromEmail OptNilEmailAddress `json:"fromEmail"`
 	// HTML body.
 	BodyHtml OptString `json:"bodyHtml"`
+	// Body authoring format (html or mjml).
+	BodyFormat OptSiteEmailBodyFormat `json:"bodyFormat"`
 	// Target segment; null means all active contacts.
 	SegmentId OptNilEntityId `json:"segmentId"`
 	// Sending integration; null means the workspace default.
@@ -4034,6 +4444,11 @@ func (s *SiteUpdateBroadcastInput) GetFromEmail() OptNilEmailAddress {
 // GetBodyHtml returns the value of BodyHtml.
 func (s *SiteUpdateBroadcastInput) GetBodyHtml() OptString {
 	return s.BodyHtml
+}
+
+// GetBodyFormat returns the value of BodyFormat.
+func (s *SiteUpdateBroadcastInput) GetBodyFormat() OptSiteEmailBodyFormat {
+	return s.BodyFormat
 }
 
 // GetSegmentId returns the value of SegmentId.
@@ -4069,6 +4484,11 @@ func (s *SiteUpdateBroadcastInput) SetFromEmail(val OptNilEmailAddress) {
 // SetBodyHtml sets the value of BodyHtml.
 func (s *SiteUpdateBroadcastInput) SetBodyHtml(val OptString) {
 	s.BodyHtml = val
+}
+
+// SetBodyFormat sets the value of BodyFormat.
+func (s *SiteUpdateBroadcastInput) SetBodyFormat(val OptSiteEmailBodyFormat) {
+	s.BodyFormat = val
 }
 
 // SetSegmentId sets the value of SegmentId.
@@ -4144,6 +4564,55 @@ func (s *SiteUpdateContactInputCustomFields) init() SiteUpdateContactInputCustom
 		*s = m
 	}
 	return m
+}
+
+// Site request body for updating a template.
+// Ref: #/components/schemas/SiteUpdateEmailTemplateInput
+type SiteUpdateEmailTemplateInput struct {
+	Name       OptString              `json:"name"`
+	Subject    OptString              `json:"subject"`
+	BodyFormat OptSiteEmailBodyFormat `json:"bodyFormat"`
+	BodyHtml   OptString              `json:"bodyHtml"`
+}
+
+// GetName returns the value of Name.
+func (s *SiteUpdateEmailTemplateInput) GetName() OptString {
+	return s.Name
+}
+
+// GetSubject returns the value of Subject.
+func (s *SiteUpdateEmailTemplateInput) GetSubject() OptString {
+	return s.Subject
+}
+
+// GetBodyFormat returns the value of BodyFormat.
+func (s *SiteUpdateEmailTemplateInput) GetBodyFormat() OptSiteEmailBodyFormat {
+	return s.BodyFormat
+}
+
+// GetBodyHtml returns the value of BodyHtml.
+func (s *SiteUpdateEmailTemplateInput) GetBodyHtml() OptString {
+	return s.BodyHtml
+}
+
+// SetName sets the value of Name.
+func (s *SiteUpdateEmailTemplateInput) SetName(val OptString) {
+	s.Name = val
+}
+
+// SetSubject sets the value of Subject.
+func (s *SiteUpdateEmailTemplateInput) SetSubject(val OptString) {
+	s.Subject = val
+}
+
+// SetBodyFormat sets the value of BodyFormat.
+func (s *SiteUpdateEmailTemplateInput) SetBodyFormat(val OptSiteEmailBodyFormat) {
+	s.BodyFormat = val
+}
+
+// SetBodyHtml sets the value of BodyHtml.
+func (s *SiteUpdateEmailTemplateInput) SetBodyHtml(val OptString) {
+	s.BodyHtml = val
 }
 
 // Update a workspace integration. Omit `config` to keep stored credentials.

@@ -31,6 +31,9 @@
     },
     {
       "name": "Site Broadcasts"
+    },
+    {
+      "name": "Site Templates"
     }
   ],
   "paths": {
@@ -677,6 +680,76 @@
           }
         },
         "tags": ["Site Broadcasts"]
+      }
+    },
+    "/w/{workspaceSlug}/broadcasts/{id}/test": {
+      "post": {
+        "operationId": "SiteBroadcasts_testSend",
+        "description": "Send a one-off rendered preview to a single address",
+        "parameters": [
+          {
+            "name": "workspaceSlug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/EntityId"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "There is no content to send for this request, but the headers may be useful."
+          },
+          "400": {
+            "description": "RFC 7807 bad request response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "RFC 7807 not found response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "RFC 7807 validation response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Site Broadcasts"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SiteTestSendBroadcastInput"
+              }
+            }
+          }
+        }
       }
     },
     "/w/{workspaceSlug}/contacts": {
@@ -1829,6 +1902,339 @@
         "tags": ["Site Segments"]
       }
     },
+    "/w/{workspaceSlug}/templates": {
+      "post": {
+        "operationId": "SiteTemplates_create",
+        "description": "Create a template",
+        "parameters": [
+          {
+            "name": "workspaceSlug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "The request has succeeded and a new resource has been created as a result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SiteEmailTemplateResource"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "RFC 7807 not found response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "RFC 7807 validation response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Site Templates"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SiteCreateEmailTemplateInput"
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "operationId": "SiteTemplates_list",
+        "description": "List templates",
+        "parameters": [
+          {
+            "name": "workspaceSlug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/PageQuery.page"
+          },
+          {
+            "$ref": "#/components/parameters/PageQuery.pageSize"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request has succeeded.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["items", "page", "pageSize", "totalItems", "totalPages"],
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/SiteEmailTemplateResource"
+                      },
+                      "description": "List of items"
+                    },
+                    "page": {
+                      "type": "integer",
+                      "format": "int32",
+                      "description": "Page number (1-based)"
+                    },
+                    "pageSize": {
+                      "type": "integer",
+                      "format": "int32",
+                      "description": "Page size"
+                    },
+                    "totalItems": {
+                      "type": "integer",
+                      "format": "int32",
+                      "description": "Total number of elements"
+                    },
+                    "totalPages": {
+                      "type": "integer",
+                      "format": "int32",
+                      "description": "Total number of pages"
+                    }
+                  },
+                  "description": "Paginated response"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "RFC 7807 bad request response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "RFC 7807 not found response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "RFC 7807 validation response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Site Templates"]
+      }
+    },
+    "/w/{workspaceSlug}/templates/{id}": {
+      "get": {
+        "operationId": "SiteTemplates_get",
+        "description": "Get a template by ID",
+        "parameters": [
+          {
+            "name": "workspaceSlug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/EntityId"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request has succeeded.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SiteEmailTemplateResource"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "RFC 7807 bad request response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "RFC 7807 not found response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Site Templates"]
+      },
+      "put": {
+        "operationId": "SiteTemplates_update",
+        "description": "Update a template",
+        "parameters": [
+          {
+            "name": "workspaceSlug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/EntityId"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request has succeeded.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SiteEmailTemplateResource"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "RFC 7807 bad request response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "RFC 7807 not found response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "RFC 7807 validation response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Site Templates"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SiteUpdateEmailTemplateInput"
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "SiteTemplates_delete",
+        "description": "Delete a template",
+        "parameters": [
+          {
+            "name": "workspaceSlug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/EntityId"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "There is no content to send for this request, but the headers may be useful."
+          },
+          "400": {
+            "description": "RFC 7807 bad request response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "RFC 7807 not found response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Site Templates"]
+      }
+    },
     "/w/{workspaceSlug}/tokens": {
       "get": {
         "operationId": "SiteTokens_list",
@@ -2215,6 +2621,7 @@
           "name",
           "subject",
           "bodyHtml",
+          "bodyFormat",
           "bodyText",
           "status",
           "stats",
@@ -2256,6 +2663,14 @@
           "bodyHtml": {
             "type": "string",
             "description": "HTML body authored in the composer"
+          },
+          "bodyFormat": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SiteEmailBodyFormat"
+              }
+            ],
+            "description": "Body authoring format (html or mjml)"
           },
           "bodyText": {
             "type": "string",
@@ -2496,6 +2911,14 @@
             "type": "string",
             "description": "HTML body"
           },
+          "bodyFormat": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SiteEmailBodyFormat"
+              }
+            ],
+            "description": "Body authoring format (html or mjml)"
+          },
           "segmentId": {
             "type": "string",
             "allOf": [
@@ -2561,6 +2984,25 @@
           }
         },
         "description": "Site request body for creating a contact"
+      },
+      "SiteCreateEmailTemplateInput": {
+        "type": "object",
+        "required": ["name"],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "subject": {
+            "type": "string"
+          },
+          "bodyFormat": {
+            "$ref": "#/components/schemas/SiteEmailBodyFormat"
+          },
+          "bodyHtml": {
+            "type": "string"
+          }
+        },
+        "description": "Site request body for creating a template"
       },
       "SiteCreateIntegrationInput": {
         "type": "object",
@@ -2694,6 +3136,62 @@
             "type": "string"
           }
         }
+      },
+      "SiteEmailBodyFormat": {
+        "type": "string",
+        "enum": ["html", "mjml"],
+        "description": "Authoring format of an email body"
+      },
+      "SiteEmailTemplateResource": {
+        "type": "object",
+        "required": ["id", "name", "subject", "bodyFormat", "bodyHtml", "createdAt", "updatedAt"],
+        "properties": {
+          "id": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EntityId"
+              }
+            ],
+            "description": "Unique identifier"
+          },
+          "name": {
+            "type": "string",
+            "description": "Template name"
+          },
+          "subject": {
+            "type": "string",
+            "description": "Default subject line"
+          },
+          "bodyFormat": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SiteEmailBodyFormat"
+              }
+            ],
+            "description": "Body authoring format"
+          },
+          "bodyHtml": {
+            "type": "string",
+            "description": "Body (HTML or MJML depending on bodyFormat)"
+          },
+          "createdAt": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Timestamp"
+              }
+            ],
+            "description": "Creation timestamp"
+          },
+          "updatedAt": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Timestamp"
+              }
+            ],
+            "description": "Last update timestamp"
+          }
+        },
+        "description": "Reusable email template used by the site UI"
       },
       "SiteEventResource": {
         "type": "object",
@@ -3111,6 +3609,21 @@
         },
         "description": "SMTP credentials"
       },
+      "SiteTestSendBroadcastInput": {
+        "type": "object",
+        "required": ["email"],
+        "properties": {
+          "email": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EmailAddress"
+              }
+            ],
+            "description": "Address to send the rendered preview to"
+          }
+        },
+        "description": "Site request body for a test send"
+      },
       "SiteUpdateBroadcastInput": {
         "type": "object",
         "properties": {
@@ -3140,6 +3653,14 @@
           "bodyHtml": {
             "type": "string",
             "description": "HTML body"
+          },
+          "bodyFormat": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SiteEmailBodyFormat"
+              }
+            ],
+            "description": "Body authoring format (html or mjml)"
           },
           "segmentId": {
             "type": "string",
@@ -3197,6 +3718,24 @@
           }
         },
         "description": "Site request body for updating a contact"
+      },
+      "SiteUpdateEmailTemplateInput": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "subject": {
+            "type": "string"
+          },
+          "bodyFormat": {
+            "$ref": "#/components/schemas/SiteEmailBodyFormat"
+          },
+          "bodyHtml": {
+            "type": "string"
+          }
+        },
+        "description": "Site request body for updating a template"
       },
       "SiteUpdateIntegrationInput": {
         "type": "object",
