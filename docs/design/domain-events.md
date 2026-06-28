@@ -186,8 +186,24 @@ river, the automation run engine, and the broadcast engine are unchanged — onl
   so a crash-redelivery can write a duplicate `Event` log row. Harm is low (counts
   are producer-side), so it's its own follow-up: add a unique `source_id` column +
   `OnConflict(...).Ignore()` upsert.
-- **P2**: idempotency (above); webhooks + analytics subscribers; per-subject
-  ordering if needed; migrate collect/external producers onto the bus.
+- **P2 — DONE (idempotency + webhooks)**: `persist` is idempotent via a unique
+  `Event.source_id` (envelope ULID) + `OnConflictColumns(...).Ignore()`. Outbound
+  **webhooks** shipped: `WebhookEndpoint` entity + site CRUD/UI, a `webhooks`
+  subscriber that fans each event out via the river client to matching endpoints,
+  and a delivery worker that signs (Standard Webhooks) and POSTs with retries.
+  Security/signing are **maintained libs, not hand-rolled**: `doyensec/safeurl`
+  (SSRF, resolved-IP checks) + `standard-webhooks` (interoperable signatures).
+  Webhooks currently see `contact.created` + `email.*`.
+- **Deferred — collect/external producers stay inline.** Migrating them onto the
+  bus was attempted and **reverted**: customer events carry runtime-defined names
+  (no Go type), which forced a generic flat envelope + a `CustomEvent` field-bag and
+  manual producer mapping — a stringly/untyped smell. When revisited, do it as a
+  **typed union**: keep `DomainEvent` a closed interface where each variant owns its
+  projection (`Project()`), carry a typed payload on the wire, decode via a
+  `name → type` registry with `CustomEvent` as the single catch-all for dynamic
+  names — so the field-bag lives only in that one variant, not the core envelope.
+- **Later**: analytics subscribers; per-subject ordering if needed; the typed-union
+  refactor + collect/external migration above.
 
 ## Decisions (resolved 2026-06-28)
 
