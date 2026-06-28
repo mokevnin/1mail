@@ -18,6 +18,7 @@ import (
 	"github.com/mokevnin/1mail/config"
 	"github.com/mokevnin/1mail/ent"
 	"github.com/mokevnin/1mail/internal/db"
+	"github.com/mokevnin/1mail/internal/events"
 	"github.com/mokevnin/1mail/internal/server"
 	ht "github.com/ogen-go/ogen/http"
 	"github.com/stretchr/testify/require"
@@ -56,6 +57,14 @@ func initBaseline() {
 			return
 		}
 
+		// The domain-event outbox topic table is a watermill-sql table, not part
+		// of the ent schema, so create it here too (once per process, on the real
+		// DB) — otherwise the transactional publisher hits "relation does not exist".
+		if err := events.InitSchema(context.Background(), sqlDB); err != nil {
+			loadErr = err
+			return
+		}
+
 		loader, err := testfixtures.New(
 			testfixtures.Database(sqlDB),
 			testfixtures.Dialect("postgres"),
@@ -78,6 +87,8 @@ func initBaseline() {
 
 type TestEnv struct {
 	DB     *ent.Client // transaction-bound; rolled back when the test finishes
+	SQLDB  *sql.DB     // the same txdb connection the ent client and bus ride
+	Bus    *events.Bus // domain-event bus over SQLDB (nested savepoint per WithinTx)
 	Server http.Handler
 }
 
@@ -95,10 +106,13 @@ func Setup(t *testing.T) *TestEnv {
 	t.Cleanup(func() { _ = txDB.Close() }) // rollback
 
 	client := db.NewEntClient(txDB)
-	handler, err := server.New(baseCfg, client, nil, noopEnqueuer{}, noopEnqueuer{})
+	// Bus over the same txdb connection: WithinTx opens a nested (savepoint)
+	// transaction, so producer writes + outbox inserts roll back with the test.
+	bus := events.New(txDB)
+	handler, err := server.New(baseCfg, client, nil, bus, noopEnqueuer{}, noopEnqueuer{})
 	require.NoError(t, err, "build server")
 
-	return &TestEnv{DB: client, Server: handler}
+	return &TestEnv{DB: client, SQLDB: txDB, Bus: bus, Server: handler}
 }
 
 // noopEnqueuer satisfies the site handlers' BroadcastEnqueuer + AutomationTrigger

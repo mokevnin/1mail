@@ -12,6 +12,7 @@ import (
 	"github.com/mokevnin/1mail/ent"
 	"github.com/mokevnin/1mail/internal/db"
 	"github.com/mokevnin/1mail/internal/email"
+	"github.com/mokevnin/1mail/internal/events"
 	"github.com/mokevnin/1mail/internal/jobs"
 	"github.com/mokevnin/1mail/internal/messaging"
 	"github.com/mokevnin/1mail/internal/messaging/registry"
@@ -57,6 +58,12 @@ type pubSub struct {
 
 func (ps *pubSub) Shutdown() {
 	ps.Close()
+}
+
+// eventsBus is the producer side of the domain-event system (transactional
+// outbox over the database/sql pool). No Shutdown: it borrows the sqlDB pool.
+type eventsBus struct {
+	*events.Bus
 }
 
 // pgxPool is the pgx connection pool river runs on (separate from the
@@ -185,13 +192,36 @@ func register(injector do.Injector, env string) {
 			return nil, err
 		}
 
+		client, err := do.Invoke[*entClient](i)
+		if err != nil {
+			return nil, err
+		}
+
 		ps, err := pubsub.New(database.DB)
 		if err != nil {
 			return nil, err
 		}
 		pubsub.RegisterHandlers(ps, emailSender)
 
+		// Domain events: create the outbox topic schema up front (the tx
+		// publisher can't self-initialize) and register the consumers on the
+		// shared router.
+		if err := events.InitSchema(context.Background(), database.DB); err != nil {
+			return nil, err
+		}
+		if err := events.RegisterSubscribers(ps.Router, database.DB, client.Client); err != nil {
+			return nil, err
+		}
+
 		return &pubSub{PubSub: ps}, nil
+	})
+
+	do.Provide(injector, func(i do.Injector) (*eventsBus, error) {
+		database, err := do.Invoke[*sqlDB](i)
+		if err != nil {
+			return nil, err
+		}
+		return &eventsBus{Bus: events.New(database.DB)}, nil
 	})
 
 	do.Provide(injector, func(i do.Injector) (*pgxPool, error) {
@@ -246,11 +276,15 @@ func register(injector do.Injector, env string) {
 		if err != nil {
 			return nil, err
 		}
+		bus, err := do.Invoke[*eventsBus](i)
+		if err != nil {
+			return nil, err
+		}
 		jc, err := do.Invoke[*jobsClient](i)
 		if err != nil {
 			return nil, err
 		}
 
-		return server.New(cfg, client.Client, ps.PubSub, jc.Client, jc.Client)
+		return server.New(cfg, client.Client, ps.PubSub, bus.Bus, jc.Client, jc.Client)
 	})
 }

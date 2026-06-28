@@ -9,6 +9,7 @@ import (
 	"github.com/mokevnin/1mail/ent/contact"
 	siteapi "github.com/mokevnin/1mail/gen/site"
 	"github.com/mokevnin/1mail/internal/convert"
+	"github.com/mokevnin/1mail/internal/events"
 	"github.com/mokevnin/1mail/internal/pagination"
 	"github.com/mokevnin/1mail/internal/service"
 )
@@ -74,16 +75,28 @@ func (h *Handlers) SiteContactsCreate(ctx context.Context, req *siteapi.SiteCrea
 		return nil, err
 	}
 
-	q := h.ent.Contact.Create().
-		SetWorkspaceID(ws).
-		SetEmail(string(req.Email)).
-		SetNillableFirstName(convert.StringPtr(req.FirstName)).
-		SetNillableLastName(convert.StringPtr(req.LastName)).
-		SetNillableTimeZone(convert.StringPtr(req.TimeZone))
-	if v, ok := req.CustomFields.Get(); ok {
-		q = q.SetCustomFields(map[string]string(v))
-	}
-	c, err := q.Save(ctx)
+	// Create the contact and publish contact.created in one transaction
+	// (transactional outbox): the event is committed iff the row is. The
+	// "persist" subscriber writes the engagement-log Event row from the event;
+	// it is no longer written inline here.
+	var c *ent.Contact
+	err = h.bus.WithinTx(ctx, func(tx *ent.Client, pub events.Publisher) error {
+		q := tx.Contact.Create().
+			SetWorkspaceID(ws).
+			SetEmail(string(req.Email)).
+			SetNillableFirstName(convert.StringPtr(req.FirstName)).
+			SetNillableLastName(convert.StringPtr(req.LastName)).
+			SetNillableTimeZone(convert.StringPtr(req.TimeZone))
+		if v, ok := req.CustomFields.Get(); ok {
+			q = q.SetCustomFields(map[string]string(v))
+		}
+		created, err := q.Save(ctx)
+		if err != nil {
+			return err
+		}
+		c = created
+		return pub.Publish(ctx, events.ContactCreated{WorkspaceID: ws, ContactID: c.ID, Email: c.Email})
+	})
 	if service.IsUniqueViolation(err) {
 		v := siteapi.SiteContactsCreateConflict(problemWithErrors(http.StatusConflict, "email already exists", map[string][]string{
 			"email": {"email already exists"},
@@ -93,26 +106,13 @@ func (h *Handlers) SiteContactsCreate(ctx context.Context, req *siteapi.SiteCrea
 	if err != nil {
 		return nil, err
 	}
-	h.emitContactCreated(ctx, ws, c)
+
+	// Automation enrollment still rides the direct trigger seam; P1 moves it onto
+	// the bus as an "automations" subscriber.
+	_ = h.trigger.OnEvent(ctx, ws, c.ID, events.NameContactCreated)
+
 	res := mapper.ContactToResource(c)
 	return &res, nil
-}
-
-// emitContactCreated records a "contact.created" engagement event and enrolls the
-// contact into matching automations. Best-effort: a failure here must not fail the
-// create. This is the trigger seam for automations (other sources — email events,
-// collect events — call h.trigger.OnEvent the same way).
-func (h *Handlers) emitContactCreated(ctx context.Context, workspaceID int64, c *ent.Contact) {
-	const action = "contact.created"
-	if _, err := h.ent.Event.Create().
-		SetWorkspaceID(workspaceID).
-		SetSubjectID(c.Email).
-		SetEmail(c.Email).
-		SetAction(action).
-		Save(ctx); err != nil {
-		return
-	}
-	_ = h.trigger.OnEvent(ctx, workspaceID, c.ID, action)
 }
 
 func (h *Handlers) SiteContactsGet(ctx context.Context, params siteapi.SiteContactsGetParams) (siteapi.SiteContactsGetRes, error) {

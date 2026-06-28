@@ -1,0 +1,76 @@
+package events_test
+
+import (
+	"context"
+	"database/sql"
+	"encoding/json"
+	"testing"
+	"time"
+
+	"github.com/ThreeDotsLabs/watermill/message"
+	_ "github.com/jackc/pgx/v5/stdlib"
+	"github.com/mokevnin/1mail/config"
+	"github.com/mokevnin/1mail/ent"
+	"github.com/mokevnin/1mail/internal/events"
+	"github.com/mokevnin/1mail/internal/pubsub"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+)
+
+// TestDomainEventsRouterDelivery proves the full transport end-to-end against the
+// real DB (not txdb): a producer publishes through the transactional outbox, and
+// the watermill-sql router reads that same table and delivers the decoded
+// envelope to a subscriber. It uses a capture handler instead of persist so it
+// writes no ent rows (no FK setup, no fixture-count interference); it cleans up
+// the committed outbox rows on exit.
+func TestDomainEventsRouterDelivery(t *testing.T) {
+	cfg, err := config.Load("test")
+	require.NoError(t, err)
+
+	db, err := sql.Open("pgx", cfg.DatabaseURL)
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = db.Close() })
+
+	ctx := context.Background()
+	require.NoError(t, events.InitSchema(ctx, db))
+	t.Cleanup(func() {
+		_, _ = db.Exec(`DELETE FROM watermill_domain_events`)
+	})
+
+	ps, err := pubsub.New(db)
+	require.NoError(t, err)
+	t.Cleanup(ps.Close)
+
+	got := make(chan events.Envelope, 1)
+	ps.Router.AddConsumerHandler("capture", events.TopicDomainEvents, ps.Subscriber,
+		func(msg *message.Message) error {
+			var env events.Envelope
+			if err := json.Unmarshal(msg.Payload, &env); err != nil {
+				return err
+			}
+			select {
+			case got <- env:
+			default:
+			}
+			return nil
+		})
+
+	runCtx, cancel := context.WithCancel(ctx)
+	t.Cleanup(cancel)
+	go func() { _ = ps.Router.Run(runCtx) }()
+	<-ps.Router.Running()
+
+	bus := events.New(db)
+	require.NoError(t, bus.WithinTx(ctx, func(_ *ent.Client, pub events.Publisher) error {
+		return pub.Publish(ctx, events.ContactCreated{WorkspaceID: 1, ContactID: 7, Email: "e2e@example.com"})
+	}))
+
+	select {
+	case env := <-got:
+		assert.Equal(t, events.NameContactCreated, env.Name)
+		assert.Equal(t, "e2e@example.com", env.Subject)
+		assert.EqualValues(t, 1, env.WorkspaceID)
+	case <-time.After(10 * time.Second):
+		t.Fatal("domain event was not delivered to the subscriber within 10s")
+	}
+}

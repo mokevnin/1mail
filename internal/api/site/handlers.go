@@ -10,6 +10,7 @@ import (
 	siteapi "github.com/mokevnin/1mail/gen/site"
 	"github.com/mokevnin/1mail/internal/api/auth"
 	"github.com/mokevnin/1mail/internal/api/site/resources"
+	"github.com/mokevnin/1mail/internal/events"
 	"github.com/mokevnin/1mail/internal/messaging"
 	"github.com/mokevnin/1mail/internal/pubsub"
 	"github.com/mokevnin/1mail/internal/secrets"
@@ -35,14 +36,15 @@ type AutomationTrigger interface {
 type Handlers struct {
 	ent      *ent.Client
 	pubsub   *pubsub.PubSub
+	bus      *events.Bus
 	cipher   *secrets.Cipher
 	catalog  *messaging.Catalog
 	enqueuer BroadcastEnqueuer
 	trigger  AutomationTrigger
 }
 
-func NewHandlers(client *ent.Client, ps *pubsub.PubSub, cipher *secrets.Cipher, catalog *messaging.Catalog, enqueuer BroadcastEnqueuer, trigger AutomationTrigger) *Handlers {
-	return &Handlers{ent: client, pubsub: ps, cipher: cipher, catalog: catalog, enqueuer: enqueuer, trigger: trigger}
+func NewHandlers(client *ent.Client, ps *pubsub.PubSub, bus *events.Bus, cipher *secrets.Cipher, catalog *messaging.Catalog, enqueuer BroadcastEnqueuer, trigger AutomationTrigger) *Handlers {
+	return &Handlers{ent: client, pubsub: ps, bus: bus, cipher: cipher, catalog: catalog, enqueuer: enqueuer, trigger: trigger}
 }
 
 var _ siteapi.Handler = (*Handlers)(nil)

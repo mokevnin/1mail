@@ -1,9 +1,9 @@
 # Design: internal domain-event system
 
-Status: **approved — implementing P0**. Author date: 2026-06-28.
-Library facts verified via gh/npm on 2026-06-28. Decisions resolved 2026-06-28:
-outbox approach **A**, watermill **CQRS component**, outbox rows **retained**
-(see Decisions at the end).
+Status: **P0 implemented** (contact.created on the bus, end-to-end). Author date:
+2026-06-28. Library facts verified via gh/npm on 2026-06-28. Decisions resolved
+2026-06-28: outbox approach **A**, outbox rows **retained**, and — revised during
+the spike — **plain Publisher/Subscriber, not the CQRS component** (see Decisions).
 
 ## Why
 
@@ -170,8 +170,11 @@ river, the automation run engine, and the broadcast engine are unchanged — onl
 
 ## Phasing
 
-- **P0 (spike)**: prove transactional publish (outbox approach A) + one
-  subscriber end-to-end (`contact.created` → persist `Event`).
+- **P0 (spike) — DONE**: transactional publish (approach A) proven + one
+  subscriber end-to-end (`contact.created` → persist `Event`). `internal/events`
+  (Envelope, Bus.WithinTx, persist subscriber, InitSchema); contact-create now
+  publishes through the bus; tests cover commit/rollback atomicity, the projection
+  mapping, and live router delivery.
 - **P1**: move automation enrollment onto the bus; delete the direct trigger seam.
 - **P2**: webhooks + analytics subscribers; per-subject ordering if needed.
 
@@ -183,5 +186,24 @@ river, the automation run engine, and the broadcast engine are unchanged — onl
 2. **Outbox rows are retained** (not pruned after dispatch). Replay-to-new-subscriber
    is not built now, but keeping the rows immutable leaves the door open and the
    table is cheap. Add a pruning job later if it grows.
-3. **CQRS component** — use watermill's typed EventBus/EventProcessor for typed
-   events with less boilerplate, on top of the watermill-sql pub/sub + outbox.
+3. ~~CQRS component~~ → **plain Publisher/Subscriber + generic Envelope**
+   (revised during the P0 spike). watermill's `cqrs.EventProcessor` registers one
+   handler per *compile-time* event type, but our core subscribers don't work that
+   way: `persist` writes **every** event, and `automations` match a **runtime**
+   `trigger_event` string — including open-ended custom events from the collect
+   API that have no Go type. Neither can be a per-type CQRS handler. So a single
+   generic `Envelope` on one topic + plain pub/sub is the right shape; typing stays
+   producer-side via the `DomainEvent` interface marshaled into the payload.
+
+### Implementation notes (P0, learned in the spike)
+
+- **Consumer group per subscriber.** All subscribers share the one outbox topic,
+  so each must run under its **own consumer group** (its own offset cursor) to get
+  fan-out; a shared group would make them *compete* for messages.
+  `events.RegisterSubscribers` builds one watermill-sql subscriber per consumer.
+- **Outbox schema at boot.** The tx publisher can't self-initialize (a CREATE
+  TABLE would implicitly commit the tx), so `events.InitSchema` creates the
+  message + offsets tables at startup (and once-per-process in the test harness).
+- **Idempotency is still a gap.** Delivery is at-least-once; on crash, `persist`
+  could double-write an `Event` row (no dedupe column yet). Acceptable for P0;
+  P1 adds a unique source-id column and upsert. Tracked as an open item.
