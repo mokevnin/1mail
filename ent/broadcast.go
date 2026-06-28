@@ -26,12 +26,10 @@ type Broadcast struct {
 	FromName *string `json:"from_name,omitempty"`
 	// FromEmail holds the value of the "from_email" field.
 	FromEmail *string `json:"from_email,omitempty"`
-	// BodyHTML holds the value of the "body_html" field.
-	BodyHTML string `json:"body_html,omitempty"`
+	// Body holds the value of the "body" field.
+	Body string `json:"body,omitempty"`
 	// BodyText holds the value of the "body_text" field.
 	BodyText string `json:"body_text,omitempty"`
-	// BodyFormat holds the value of the "body_format" field.
-	BodyFormat broadcast.BodyFormat `json:"body_format,omitempty"`
 	// SegmentID holds the value of the "segment_id" field.
 	SegmentID *int64 `json:"segment_id,omitempty"`
 	// IntegrationID holds the value of the "integration_id" field.
@@ -104,7 +102,7 @@ func (*Broadcast) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case broadcast.FieldID, broadcast.FieldSegmentID, broadcast.FieldIntegrationID, broadcast.FieldRecipientsTotal, broadcast.FieldSentCount, broadcast.FieldOpenedCount, broadcast.FieldClickedCount, broadcast.FieldUnsubscribedCount, broadcast.FieldFailedCount, broadcast.FieldWorkspaceID:
 			values[i] = new(sql.NullInt64)
-		case broadcast.FieldName, broadcast.FieldSubject, broadcast.FieldFromName, broadcast.FieldFromEmail, broadcast.FieldBodyHTML, broadcast.FieldBodyText, broadcast.FieldBodyFormat, broadcast.FieldStatus:
+		case broadcast.FieldName, broadcast.FieldSubject, broadcast.FieldFromName, broadcast.FieldFromEmail, broadcast.FieldBody, broadcast.FieldBodyText, broadcast.FieldStatus:
 			values[i] = new(sql.NullString)
 		case broadcast.FieldScheduledAt, broadcast.FieldSentAt, broadcast.FieldCreatedAt, broadcast.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
@@ -155,23 +153,17 @@ func (_m *Broadcast) assignValues(columns []string, values []any) error {
 				_m.FromEmail = new(string)
 				*_m.FromEmail = value.String
 			}
-		case broadcast.FieldBodyHTML:
+		case broadcast.FieldBody:
 			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field body_html", values[i])
+				return fmt.Errorf("unexpected type %T for field body", values[i])
 			} else if value.Valid {
-				_m.BodyHTML = value.String
+				_m.Body = value.String
 			}
 		case broadcast.FieldBodyText:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field body_text", values[i])
 			} else if value.Valid {
 				_m.BodyText = value.String
-			}
-		case broadcast.FieldBodyFormat:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field body_format", values[i])
-			} else if value.Valid {
-				_m.BodyFormat = broadcast.BodyFormat(value.String)
 			}
 		case broadcast.FieldSegmentID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
@@ -323,14 +315,11 @@ func (_m *Broadcast) String() string {
 		builder.WriteString(*v)
 	}
 	builder.WriteString(", ")
-	builder.WriteString("body_html=")
-	builder.WriteString(_m.BodyHTML)
+	builder.WriteString("body=")
+	builder.WriteString(_m.Body)
 	builder.WriteString(", ")
 	builder.WriteString("body_text=")
 	builder.WriteString(_m.BodyText)
-	builder.WriteString(", ")
-	builder.WriteString("body_format=")
-	builder.WriteString(fmt.Sprintf("%v", _m.BodyFormat))
 	builder.WriteString(", ")
 	if v := _m.SegmentID; v != nil {
 		builder.WriteString("segment_id=")

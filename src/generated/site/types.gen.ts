@@ -110,13 +110,9 @@ export type SiteBroadcastResource = {
      */
     fromEmail?: EmailAddress | null;
     /**
-     * HTML body authored in the composer
+     * MJML body authored in the composer
      */
-    bodyHtml: string;
-    /**
-     * Body authoring format (html or mjml)
-     */
-    bodyFormat: SiteEmailBodyFormat;
+    body: string;
     /**
      * Derived plain-text body
      */
@@ -276,13 +272,9 @@ export type SiteCreateBroadcastInput = {
      */
     fromEmail?: EmailAddress | null;
     /**
-     * HTML body
+     * MJML body
      */
-    bodyHtml?: string;
-    /**
-     * Body authoring format (html or mjml)
-     */
-    bodyFormat?: SiteEmailBodyFormat;
+    body?: string;
     /**
      * Target segment; null/omitted means all active contacts
      */
@@ -327,8 +319,7 @@ export type SiteCreateContactInput = {
 export type SiteCreateEmailTemplateInput = {
     name: string;
     subject?: string;
-    bodyFormat?: SiteEmailBodyFormat;
-    bodyHtml?: string;
+    body?: string;
 };
 
 /**
@@ -399,16 +390,6 @@ export type SiteDirectLoginResult = {
 };
 
 /**
- * Authoring format of an email body
- */
-export const SiteEmailBodyFormat = { HTML: 'html', MJML: 'mjml' } as const;
-
-/**
- * Authoring format of an email body
- */
-export type SiteEmailBodyFormat = typeof SiteEmailBodyFormat[keyof typeof SiteEmailBodyFormat];
-
-/**
  * Reusable email template used by the site UI
  */
 export type SiteEmailTemplateResource = {
@@ -425,13 +406,9 @@ export type SiteEmailTemplateResource = {
      */
     subject: string;
     /**
-     * Body authoring format
+     * MJML body
      */
-    bodyFormat: SiteEmailBodyFormat;
-    /**
-     * Body (HTML or MJML depending on bodyFormat)
-     */
-    bodyHtml: string;
+    body: string;
     /**
      * Creation timestamp
      */
@@ -723,13 +700,9 @@ export type SiteUpdateBroadcastInput = {
      */
     fromEmail?: EmailAddress | null;
     /**
-     * HTML body
+     * MJML body
      */
-    bodyHtml?: string;
-    /**
-     * Body authoring format (html or mjml)
-     */
-    bodyFormat?: SiteEmailBodyFormat;
+    body?: string;
     /**
      * Target segment; null means all active contacts
      */
@@ -770,8 +743,7 @@ export type SiteUpdateContactInput = {
 export type SiteUpdateEmailTemplateInput = {
     name?: string;
     subject?: string;
-    bodyFormat?: SiteEmailBodyFormat;
-    bodyHtml?: string;
+    body?: string;
 };
 
 /**

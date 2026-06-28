@@ -98,16 +98,16 @@ func (_u *BroadcastUpdate) ClearFromEmail() *BroadcastUpdate {
 	return _u
 }
 
-// SetBodyHTML sets the "body_html" field.
-func (_u *BroadcastUpdate) SetBodyHTML(v string) *BroadcastUpdate {
-	_u.mutation.SetBodyHTML(v)
+// SetBody sets the "body" field.
+func (_u *BroadcastUpdate) SetBody(v string) *BroadcastUpdate {
+	_u.mutation.SetBody(v)
 	return _u
 }
 
-// SetNillableBodyHTML sets the "body_html" field if the given value is not nil.
-func (_u *BroadcastUpdate) SetNillableBodyHTML(v *string) *BroadcastUpdate {
+// SetNillableBody sets the "body" field if the given value is not nil.
+func (_u *BroadcastUpdate) SetNillableBody(v *string) *BroadcastUpdate {
 	if v != nil {
-		_u.SetBodyHTML(*v)
+		_u.SetBody(*v)
 	}
 	return _u
 }
@@ -122,20 +122,6 @@ func (_u *BroadcastUpdate) SetBodyText(v string) *BroadcastUpdate {
 func (_u *BroadcastUpdate) SetNillableBodyText(v *string) *BroadcastUpdate {
 	if v != nil {
 		_u.SetBodyText(*v)
-	}
-	return _u
-}
-
-// SetBodyFormat sets the "body_format" field.
-func (_u *BroadcastUpdate) SetBodyFormat(v broadcast.BodyFormat) *BroadcastUpdate {
-	_u.mutation.SetBodyFormat(v)
-	return _u
-}
-
-// SetNillableBodyFormat sets the "body_format" field if the given value is not nil.
-func (_u *BroadcastUpdate) SetNillableBodyFormat(v *broadcast.BodyFormat) *BroadcastUpdate {
-	if v != nil {
-		_u.SetBodyFormat(*v)
 	}
 	return _u
 }
@@ -489,11 +475,6 @@ func (_u *BroadcastUpdate) check() error {
 			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "Broadcast.name": %w`, err)}
 		}
 	}
-	if v, ok := _u.mutation.BodyFormat(); ok {
-		if err := broadcast.BodyFormatValidator(v); err != nil {
-			return &ValidationError{Name: "body_format", err: fmt.Errorf(`ent: validator failed for field "Broadcast.body_format": %w`, err)}
-		}
-	}
 	if v, ok := _u.mutation.Status(); ok {
 		if err := broadcast.StatusValidator(v); err != nil {
 			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "Broadcast.status": %w`, err)}
@@ -565,14 +546,11 @@ func (_u *BroadcastUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	if _u.mutation.FromEmailCleared() {
 		_spec.ClearField(broadcast.FieldFromEmail, field.TypeString)
 	}
-	if value, ok := _u.mutation.BodyHTML(); ok {
-		_spec.SetField(broadcast.FieldBodyHTML, field.TypeString, value)
+	if value, ok := _u.mutation.Body(); ok {
+		_spec.SetField(broadcast.FieldBody, field.TypeString, value)
 	}
 	if value, ok := _u.mutation.BodyText(); ok {
 		_spec.SetField(broadcast.FieldBodyText, field.TypeString, value)
-	}
-	if value, ok := _u.mutation.BodyFormat(); ok {
-		_spec.SetField(broadcast.FieldBodyFormat, field.TypeEnum, value)
 	}
 	if value, ok := _u.mutation.SegmentID(); ok {
 		_spec.SetField(broadcast.FieldSegmentID, field.TypeInt64, value)
@@ -808,16 +786,16 @@ func (_u *BroadcastUpdateOne) ClearFromEmail() *BroadcastUpdateOne {
 	return _u
 }
 
-// SetBodyHTML sets the "body_html" field.
-func (_u *BroadcastUpdateOne) SetBodyHTML(v string) *BroadcastUpdateOne {
-	_u.mutation.SetBodyHTML(v)
+// SetBody sets the "body" field.
+func (_u *BroadcastUpdateOne) SetBody(v string) *BroadcastUpdateOne {
+	_u.mutation.SetBody(v)
 	return _u
 }
 
-// SetNillableBodyHTML sets the "body_html" field if the given value is not nil.
-func (_u *BroadcastUpdateOne) SetNillableBodyHTML(v *string) *BroadcastUpdateOne {
+// SetNillableBody sets the "body" field if the given value is not nil.
+func (_u *BroadcastUpdateOne) SetNillableBody(v *string) *BroadcastUpdateOne {
 	if v != nil {
-		_u.SetBodyHTML(*v)
+		_u.SetBody(*v)
 	}
 	return _u
 }
@@ -832,20 +810,6 @@ func (_u *BroadcastUpdateOne) SetBodyText(v string) *BroadcastUpdateOne {
 func (_u *BroadcastUpdateOne) SetNillableBodyText(v *string) *BroadcastUpdateOne {
 	if v != nil {
 		_u.SetBodyText(*v)
-	}
-	return _u
-}
-
-// SetBodyFormat sets the "body_format" field.
-func (_u *BroadcastUpdateOne) SetBodyFormat(v broadcast.BodyFormat) *BroadcastUpdateOne {
-	_u.mutation.SetBodyFormat(v)
-	return _u
-}
-
-// SetNillableBodyFormat sets the "body_format" field if the given value is not nil.
-func (_u *BroadcastUpdateOne) SetNillableBodyFormat(v *broadcast.BodyFormat) *BroadcastUpdateOne {
-	if v != nil {
-		_u.SetBodyFormat(*v)
 	}
 	return _u
 }
@@ -1212,11 +1176,6 @@ func (_u *BroadcastUpdateOne) check() error {
 			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "Broadcast.name": %w`, err)}
 		}
 	}
-	if v, ok := _u.mutation.BodyFormat(); ok {
-		if err := broadcast.BodyFormatValidator(v); err != nil {
-			return &ValidationError{Name: "body_format", err: fmt.Errorf(`ent: validator failed for field "Broadcast.body_format": %w`, err)}
-		}
-	}
 	if v, ok := _u.mutation.Status(); ok {
 		if err := broadcast.StatusValidator(v); err != nil {
 			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "Broadcast.status": %w`, err)}
@@ -1305,14 +1264,11 @@ func (_u *BroadcastUpdateOne) sqlSave(ctx context.Context) (_node *Broadcast, er
 	if _u.mutation.FromEmailCleared() {
 		_spec.ClearField(broadcast.FieldFromEmail, field.TypeString)
 	}
-	if value, ok := _u.mutation.BodyHTML(); ok {
-		_spec.SetField(broadcast.FieldBodyHTML, field.TypeString, value)
+	if value, ok := _u.mutation.Body(); ok {
+		_spec.SetField(broadcast.FieldBody, field.TypeString, value)
 	}
 	if value, ok := _u.mutation.BodyText(); ok {
 		_spec.SetField(broadcast.FieldBodyText, field.TypeString, value)
-	}
-	if value, ok := _u.mutation.BodyFormat(); ok {
-		_spec.SetField(broadcast.FieldBodyFormat, field.TypeEnum, value)
 	}
 	if value, ok := _u.mutation.SegmentID(); ok {
 		_spec.SetField(broadcast.FieldSegmentID, field.TypeInt64, value)

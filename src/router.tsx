@@ -17,6 +17,9 @@ import { ContactsListPage } from './routes/contacts/list.tsx'
 import { SegmentCreatePage } from './routes/segments/create.tsx'
 import { SegmentEditPage } from './routes/segments/edit.tsx'
 import { SegmentsListPage } from './routes/segments/list.tsx'
+import { TemplateCreatePage } from './routes/templates/create.tsx'
+import { TemplateEditPage } from './routes/templates/edit.tsx'
+import { TemplatesListPage } from './routes/templates/list.tsx'
 import { ActivityPage } from './routes/workspace/activity.tsx'
 import { OverviewPage } from './routes/workspace/overview.tsx'
 import { SettingsPage } from './routes/workspace/settings.tsx'
@@ -123,6 +126,24 @@ export const broadcastsReportRoute = createRoute({
   component: BroadcastReportPage,
 })
 
+export const templatesRoute = createRoute({
+  getParentRoute: () => workspaceRoute,
+  path: 'templates',
+  component: TemplatesListPage,
+})
+
+export const templatesCreateRoute = createRoute({
+  getParentRoute: () => workspaceRoute,
+  path: 'templates/new',
+  component: TemplateCreatePage,
+})
+
+export const templatesEditRoute = createRoute({
+  getParentRoute: () => workspaceRoute,
+  path: 'templates/$templateId/edit',
+  component: TemplateEditPage,
+})
+
 export const activityRoute = createRoute({
   getParentRoute: () => workspaceRoute,
   path: 'activity',
@@ -193,6 +214,9 @@ const routeTree = rootRoute.addChildren([
     broadcastsCreateRoute,
     broadcastsEditRoute,
     broadcastsReportRoute,
+    templatesRoute,
+    templatesCreateRoute,
+    templatesEditRoute,
     activityRoute,
     settingsRoute,
   ]),

@@ -65,9 +65,9 @@ func Subject(v string) predicate.EmailTemplate {
 	return predicate.EmailTemplate(sql.FieldEQ(FieldSubject, v))
 }
 
-// BodyHTML applies equality check predicate on the "body_html" field. It's identical to BodyHTMLEQ.
-func BodyHTML(v string) predicate.EmailTemplate {
-	return predicate.EmailTemplate(sql.FieldEQ(FieldBodyHTML, v))
+// Body applies equality check predicate on the "body" field. It's identical to BodyEQ.
+func Body(v string) predicate.EmailTemplate {
+	return predicate.EmailTemplate(sql.FieldEQ(FieldBody, v))
 }
 
 // WorkspaceID applies equality check predicate on the "workspace_id" field. It's identical to WorkspaceIDEQ.
@@ -215,89 +215,69 @@ func SubjectContainsFold(v string) predicate.EmailTemplate {
 	return predicate.EmailTemplate(sql.FieldContainsFold(FieldSubject, v))
 }
 
-// BodyHTMLEQ applies the EQ predicate on the "body_html" field.
-func BodyHTMLEQ(v string) predicate.EmailTemplate {
-	return predicate.EmailTemplate(sql.FieldEQ(FieldBodyHTML, v))
+// BodyEQ applies the EQ predicate on the "body" field.
+func BodyEQ(v string) predicate.EmailTemplate {
+	return predicate.EmailTemplate(sql.FieldEQ(FieldBody, v))
 }
 
-// BodyHTMLNEQ applies the NEQ predicate on the "body_html" field.
-func BodyHTMLNEQ(v string) predicate.EmailTemplate {
-	return predicate.EmailTemplate(sql.FieldNEQ(FieldBodyHTML, v))
+// BodyNEQ applies the NEQ predicate on the "body" field.
+func BodyNEQ(v string) predicate.EmailTemplate {
+	return predicate.EmailTemplate(sql.FieldNEQ(FieldBody, v))
 }
 
-// BodyHTMLIn applies the In predicate on the "body_html" field.
-func BodyHTMLIn(vs ...string) predicate.EmailTemplate {
-	return predicate.EmailTemplate(sql.FieldIn(FieldBodyHTML, vs...))
+// BodyIn applies the In predicate on the "body" field.
+func BodyIn(vs ...string) predicate.EmailTemplate {
+	return predicate.EmailTemplate(sql.FieldIn(FieldBody, vs...))
 }
 
-// BodyHTMLNotIn applies the NotIn predicate on the "body_html" field.
-func BodyHTMLNotIn(vs ...string) predicate.EmailTemplate {
-	return predicate.EmailTemplate(sql.FieldNotIn(FieldBodyHTML, vs...))
+// BodyNotIn applies the NotIn predicate on the "body" field.
+func BodyNotIn(vs ...string) predicate.EmailTemplate {
+	return predicate.EmailTemplate(sql.FieldNotIn(FieldBody, vs...))
 }
 
-// BodyHTMLGT applies the GT predicate on the "body_html" field.
-func BodyHTMLGT(v string) predicate.EmailTemplate {
-	return predicate.EmailTemplate(sql.FieldGT(FieldBodyHTML, v))
+// BodyGT applies the GT predicate on the "body" field.
+func BodyGT(v string) predicate.EmailTemplate {
+	return predicate.EmailTemplate(sql.FieldGT(FieldBody, v))
 }
 
-// BodyHTMLGTE applies the GTE predicate on the "body_html" field.
-func BodyHTMLGTE(v string) predicate.EmailTemplate {
-	return predicate.EmailTemplate(sql.FieldGTE(FieldBodyHTML, v))
+// BodyGTE applies the GTE predicate on the "body" field.
+func BodyGTE(v string) predicate.EmailTemplate {
+	return predicate.EmailTemplate(sql.FieldGTE(FieldBody, v))
 }
 
-// BodyHTMLLT applies the LT predicate on the "body_html" field.
-func BodyHTMLLT(v string) predicate.EmailTemplate {
-	return predicate.EmailTemplate(sql.FieldLT(FieldBodyHTML, v))
+// BodyLT applies the LT predicate on the "body" field.
+func BodyLT(v string) predicate.EmailTemplate {
+	return predicate.EmailTemplate(sql.FieldLT(FieldBody, v))
 }
 
-// BodyHTMLLTE applies the LTE predicate on the "body_html" field.
-func BodyHTMLLTE(v string) predicate.EmailTemplate {
-	return predicate.EmailTemplate(sql.FieldLTE(FieldBodyHTML, v))
+// BodyLTE applies the LTE predicate on the "body" field.
+func BodyLTE(v string) predicate.EmailTemplate {
+	return predicate.EmailTemplate(sql.FieldLTE(FieldBody, v))
 }
 
-// BodyHTMLContains applies the Contains predicate on the "body_html" field.
-func BodyHTMLContains(v string) predicate.EmailTemplate {
-	return predicate.EmailTemplate(sql.FieldContains(FieldBodyHTML, v))
+// BodyContains applies the Contains predicate on the "body" field.
+func BodyContains(v string) predicate.EmailTemplate {
+	return predicate.EmailTemplate(sql.FieldContains(FieldBody, v))
 }
 
-// BodyHTMLHasPrefix applies the HasPrefix predicate on the "body_html" field.
-func BodyHTMLHasPrefix(v string) predicate.EmailTemplate {
-	return predicate.EmailTemplate(sql.FieldHasPrefix(FieldBodyHTML, v))
+// BodyHasPrefix applies the HasPrefix predicate on the "body" field.
+func BodyHasPrefix(v string) predicate.EmailTemplate {
+	return predicate.EmailTemplate(sql.FieldHasPrefix(FieldBody, v))
 }
 
-// BodyHTMLHasSuffix applies the HasSuffix predicate on the "body_html" field.
-func BodyHTMLHasSuffix(v string) predicate.EmailTemplate {
-	return predicate.EmailTemplate(sql.FieldHasSuffix(FieldBodyHTML, v))
+// BodyHasSuffix applies the HasSuffix predicate on the "body" field.
+func BodyHasSuffix(v string) predicate.EmailTemplate {
+	return predicate.EmailTemplate(sql.FieldHasSuffix(FieldBody, v))
 }
 
-// BodyHTMLEqualFold applies the EqualFold predicate on the "body_html" field.
-func BodyHTMLEqualFold(v string) predicate.EmailTemplate {
-	return predicate.EmailTemplate(sql.FieldEqualFold(FieldBodyHTML, v))
+// BodyEqualFold applies the EqualFold predicate on the "body" field.
+func BodyEqualFold(v string) predicate.EmailTemplate {
+	return predicate.EmailTemplate(sql.FieldEqualFold(FieldBody, v))
 }
 
-// BodyHTMLContainsFold applies the ContainsFold predicate on the "body_html" field.
-func BodyHTMLContainsFold(v string) predicate.EmailTemplate {
-	return predicate.EmailTemplate(sql.FieldContainsFold(FieldBodyHTML, v))
-}
-
-// BodyFormatEQ applies the EQ predicate on the "body_format" field.
-func BodyFormatEQ(v BodyFormat) predicate.EmailTemplate {
-	return predicate.EmailTemplate(sql.FieldEQ(FieldBodyFormat, v))
-}
-
-// BodyFormatNEQ applies the NEQ predicate on the "body_format" field.
-func BodyFormatNEQ(v BodyFormat) predicate.EmailTemplate {
-	return predicate.EmailTemplate(sql.FieldNEQ(FieldBodyFormat, v))
-}
-
-// BodyFormatIn applies the In predicate on the "body_format" field.
-func BodyFormatIn(vs ...BodyFormat) predicate.EmailTemplate {
-	return predicate.EmailTemplate(sql.FieldIn(FieldBodyFormat, vs...))
-}
-
-// BodyFormatNotIn applies the NotIn predicate on the "body_format" field.
-func BodyFormatNotIn(vs ...BodyFormat) predicate.EmailTemplate {
-	return predicate.EmailTemplate(sql.FieldNotIn(FieldBodyFormat, vs...))
+// BodyContainsFold applies the ContainsFold predicate on the "body" field.
+func BodyContainsFold(v string) predicate.EmailTemplate {
+	return predicate.EmailTemplate(sql.FieldContainsFold(FieldBody, v))
 }
 
 // WorkspaceIDEQ applies the EQ predicate on the "workspace_id" field.

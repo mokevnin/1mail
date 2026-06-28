@@ -761,39 +761,6 @@ func (s *OptSiteDirectLoginResultAttrs) UnmarshalJSON(data []byte) error {
 	return s.Decode(d)
 }
 
-// Encode encodes SiteEmailBodyFormat as json.
-func (o OptSiteEmailBodyFormat) Encode(e *jx.Encoder) {
-	if !o.Set {
-		return
-	}
-	e.Str(string(o.Value))
-}
-
-// Decode decodes SiteEmailBodyFormat from json.
-func (o *OptSiteEmailBodyFormat) Decode(d *jx.Decoder) error {
-	if o == nil {
-		return errors.New("invalid: unable to decode OptSiteEmailBodyFormat to nil")
-	}
-	o.Set = true
-	if err := o.Value.Decode(d); err != nil {
-		return err
-	}
-	return nil
-}
-
-// MarshalJSON implements stdjson.Marshaler.
-func (s OptSiteEmailBodyFormat) MarshalJSON() ([]byte, error) {
-	e := jx.Encoder{}
-	s.Encode(&e)
-	return e.Bytes(), nil
-}
-
-// UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *OptSiteEmailBodyFormat) UnmarshalJSON(data []byte) error {
-	d := jx.DecodeBytes(data)
-	return s.Decode(d)
-}
-
 // Encode encodes SiteSegmentType as json.
 func (o OptSiteSegmentType) Encode(e *jx.Encoder) {
 	if !o.Set {
@@ -1484,12 +1451,8 @@ func (s *SiteBroadcastResource) encodeFields(e *jx.Encoder) {
 		}
 	}
 	{
-		e.FieldStart("bodyHtml")
-		e.Str(s.BodyHtml)
-	}
-	{
-		e.FieldStart("bodyFormat")
-		s.BodyFormat.Encode(e)
+		e.FieldStart("body")
+		e.Str(s.Body)
 	}
 	{
 		e.FieldStart("bodyText")
@@ -1537,23 +1500,22 @@ func (s *SiteBroadcastResource) encodeFields(e *jx.Encoder) {
 	}
 }
 
-var jsonFieldsNameOfSiteBroadcastResource = [16]string{
+var jsonFieldsNameOfSiteBroadcastResource = [15]string{
 	0:  "id",
 	1:  "name",
 	2:  "subject",
 	3:  "fromName",
 	4:  "fromEmail",
-	5:  "bodyHtml",
-	6:  "bodyFormat",
-	7:  "bodyText",
-	8:  "segmentId",
-	9:  "integrationId",
-	10: "status",
-	11: "scheduledAt",
-	12: "sentAt",
-	13: "stats",
-	14: "createdAt",
-	15: "updatedAt",
+	5:  "body",
+	6:  "bodyText",
+	7:  "segmentId",
+	8:  "integrationId",
+	9:  "status",
+	10: "scheduledAt",
+	11: "sentAt",
+	12: "stats",
+	13: "createdAt",
+	14: "updatedAt",
 }
 
 // Decode decodes SiteBroadcastResource from json.
@@ -1619,30 +1581,20 @@ func (s *SiteBroadcastResource) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"fromEmail\"")
 			}
-		case "bodyHtml":
+		case "body":
 			requiredBitSet[0] |= 1 << 5
 			if err := func() error {
 				v, err := d.Str()
-				s.BodyHtml = string(v)
+				s.Body = string(v)
 				if err != nil {
 					return err
 				}
 				return nil
 			}(); err != nil {
-				return errors.Wrap(err, "decode field \"bodyHtml\"")
-			}
-		case "bodyFormat":
-			requiredBitSet[0] |= 1 << 6
-			if err := func() error {
-				if err := s.BodyFormat.Decode(d); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"bodyFormat\"")
+				return errors.Wrap(err, "decode field \"body\"")
 			}
 		case "bodyText":
-			requiredBitSet[0] |= 1 << 7
+			requiredBitSet[0] |= 1 << 6
 			if err := func() error {
 				v, err := d.Str()
 				s.BodyText = string(v)
@@ -1674,7 +1626,7 @@ func (s *SiteBroadcastResource) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"integrationId\"")
 			}
 		case "status":
-			requiredBitSet[1] |= 1 << 2
+			requiredBitSet[1] |= 1 << 1
 			if err := func() error {
 				if err := s.Status.Decode(d); err != nil {
 					return err
@@ -1704,7 +1656,7 @@ func (s *SiteBroadcastResource) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"sentAt\"")
 			}
 		case "stats":
-			requiredBitSet[1] |= 1 << 5
+			requiredBitSet[1] |= 1 << 4
 			if err := func() error {
 				if err := s.Stats.Decode(d); err != nil {
 					return err
@@ -1714,7 +1666,7 @@ func (s *SiteBroadcastResource) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"stats\"")
 			}
 		case "createdAt":
-			requiredBitSet[1] |= 1 << 6
+			requiredBitSet[1] |= 1 << 5
 			if err := func() error {
 				if err := s.CreatedAt.Decode(d); err != nil {
 					return err
@@ -1724,7 +1676,7 @@ func (s *SiteBroadcastResource) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"createdAt\"")
 			}
 		case "updatedAt":
-			requiredBitSet[1] |= 1 << 7
+			requiredBitSet[1] |= 1 << 6
 			if err := func() error {
 				if err := s.UpdatedAt.Decode(d); err != nil {
 					return err
@@ -1743,8 +1695,8 @@ func (s *SiteBroadcastResource) Decode(d *jx.Decoder) error {
 	// Validate required fields.
 	var failures []validate.FieldError
 	for i, mask := range [2]uint8{
-		0b11100111,
-		0b11100100,
+		0b01100111,
+		0b01110010,
 	} {
 		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
 			// Mask only required fields and check equality to mask using XOR.
@@ -4046,15 +3998,9 @@ func (s *SiteCreateBroadcastInput) encodeFields(e *jx.Encoder) {
 		}
 	}
 	{
-		if s.BodyHtml.Set {
-			e.FieldStart("bodyHtml")
-			s.BodyHtml.Encode(e)
-		}
-	}
-	{
-		if s.BodyFormat.Set {
-			e.FieldStart("bodyFormat")
-			s.BodyFormat.Encode(e)
+		if s.Body.Set {
+			e.FieldStart("body")
+			s.Body.Encode(e)
 		}
 	}
 	{
@@ -4071,15 +4017,14 @@ func (s *SiteCreateBroadcastInput) encodeFields(e *jx.Encoder) {
 	}
 }
 
-var jsonFieldsNameOfSiteCreateBroadcastInput = [8]string{
+var jsonFieldsNameOfSiteCreateBroadcastInput = [7]string{
 	0: "name",
 	1: "subject",
 	2: "fromName",
 	3: "fromEmail",
-	4: "bodyHtml",
-	5: "bodyFormat",
-	6: "segmentId",
-	7: "integrationId",
+	4: "body",
+	5: "segmentId",
+	6: "integrationId",
 }
 
 // Decode decodes SiteCreateBroadcastInput from json.
@@ -4133,25 +4078,15 @@ func (s *SiteCreateBroadcastInput) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"fromEmail\"")
 			}
-		case "bodyHtml":
+		case "body":
 			if err := func() error {
-				s.BodyHtml.Reset()
-				if err := s.BodyHtml.Decode(d); err != nil {
+				s.Body.Reset()
+				if err := s.Body.Decode(d); err != nil {
 					return err
 				}
 				return nil
 			}(); err != nil {
-				return errors.Wrap(err, "decode field \"bodyHtml\"")
-			}
-		case "bodyFormat":
-			if err := func() error {
-				s.BodyFormat.Reset()
-				if err := s.BodyFormat.Decode(d); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"bodyFormat\"")
+				return errors.Wrap(err, "decode field \"body\"")
 			}
 		case "segmentId":
 			if err := func() error {
@@ -4467,24 +4402,17 @@ func (s *SiteCreateEmailTemplateInput) encodeFields(e *jx.Encoder) {
 		}
 	}
 	{
-		if s.BodyFormat.Set {
-			e.FieldStart("bodyFormat")
-			s.BodyFormat.Encode(e)
-		}
-	}
-	{
-		if s.BodyHtml.Set {
-			e.FieldStart("bodyHtml")
-			s.BodyHtml.Encode(e)
+		if s.Body.Set {
+			e.FieldStart("body")
+			s.Body.Encode(e)
 		}
 	}
 }
 
-var jsonFieldsNameOfSiteCreateEmailTemplateInput = [4]string{
+var jsonFieldsNameOfSiteCreateEmailTemplateInput = [3]string{
 	0: "name",
 	1: "subject",
-	2: "bodyFormat",
-	3: "bodyHtml",
+	2: "body",
 }
 
 // Decode decodes SiteCreateEmailTemplateInput from json.
@@ -4518,25 +4446,15 @@ func (s *SiteCreateEmailTemplateInput) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"subject\"")
 			}
-		case "bodyFormat":
+		case "body":
 			if err := func() error {
-				s.BodyFormat.Reset()
-				if err := s.BodyFormat.Decode(d); err != nil {
+				s.Body.Reset()
+				if err := s.Body.Decode(d); err != nil {
 					return err
 				}
 				return nil
 			}(); err != nil {
-				return errors.Wrap(err, "decode field \"bodyFormat\"")
-			}
-		case "bodyHtml":
-			if err := func() error {
-				s.BodyHtml.Reset()
-				if err := s.BodyHtml.Decode(d); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"bodyHtml\"")
+				return errors.Wrap(err, "decode field \"body\"")
 			}
 		default:
 			return d.Skip()
@@ -5602,46 +5520,6 @@ func (s *SiteDirectLoginResultAttrs) UnmarshalJSON(data []byte) error {
 	return s.Decode(d)
 }
 
-// Encode encodes SiteEmailBodyFormat as json.
-func (s SiteEmailBodyFormat) Encode(e *jx.Encoder) {
-	e.Str(string(s))
-}
-
-// Decode decodes SiteEmailBodyFormat from json.
-func (s *SiteEmailBodyFormat) Decode(d *jx.Decoder) error {
-	if s == nil {
-		return errors.New("invalid: unable to decode SiteEmailBodyFormat to nil")
-	}
-	v, err := d.StrBytes()
-	if err != nil {
-		return err
-	}
-	// Try to use constant string.
-	switch SiteEmailBodyFormat(v) {
-	case SiteEmailBodyFormatHTML:
-		*s = SiteEmailBodyFormatHTML
-	case SiteEmailBodyFormatMjml:
-		*s = SiteEmailBodyFormatMjml
-	default:
-		*s = SiteEmailBodyFormat(v)
-	}
-
-	return nil
-}
-
-// MarshalJSON implements stdjson.Marshaler.
-func (s SiteEmailBodyFormat) MarshalJSON() ([]byte, error) {
-	e := jx.Encoder{}
-	s.Encode(&e)
-	return e.Bytes(), nil
-}
-
-// UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *SiteEmailBodyFormat) UnmarshalJSON(data []byte) error {
-	d := jx.DecodeBytes(data)
-	return s.Decode(d)
-}
-
 // Encode implements json.Marshaler.
 func (s *SiteEmailTemplateResource) Encode(e *jx.Encoder) {
 	e.ObjStart()
@@ -5664,12 +5542,8 @@ func (s *SiteEmailTemplateResource) encodeFields(e *jx.Encoder) {
 		e.Str(s.Subject)
 	}
 	{
-		e.FieldStart("bodyFormat")
-		s.BodyFormat.Encode(e)
-	}
-	{
-		e.FieldStart("bodyHtml")
-		e.Str(s.BodyHtml)
+		e.FieldStart("body")
+		e.Str(s.Body)
 	}
 	{
 		e.FieldStart("createdAt")
@@ -5681,14 +5555,13 @@ func (s *SiteEmailTemplateResource) encodeFields(e *jx.Encoder) {
 	}
 }
 
-var jsonFieldsNameOfSiteEmailTemplateResource = [7]string{
+var jsonFieldsNameOfSiteEmailTemplateResource = [6]string{
 	0: "id",
 	1: "name",
 	2: "subject",
-	3: "bodyFormat",
-	4: "bodyHtml",
-	5: "createdAt",
-	6: "updatedAt",
+	3: "body",
+	4: "createdAt",
+	5: "updatedAt",
 }
 
 // Decode decodes SiteEmailTemplateResource from json.
@@ -5734,30 +5607,20 @@ func (s *SiteEmailTemplateResource) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"subject\"")
 			}
-		case "bodyFormat":
+		case "body":
 			requiredBitSet[0] |= 1 << 3
 			if err := func() error {
-				if err := s.BodyFormat.Decode(d); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"bodyFormat\"")
-			}
-		case "bodyHtml":
-			requiredBitSet[0] |= 1 << 4
-			if err := func() error {
 				v, err := d.Str()
-				s.BodyHtml = string(v)
+				s.Body = string(v)
 				if err != nil {
 					return err
 				}
 				return nil
 			}(); err != nil {
-				return errors.Wrap(err, "decode field \"bodyHtml\"")
+				return errors.Wrap(err, "decode field \"body\"")
 			}
 		case "createdAt":
-			requiredBitSet[0] |= 1 << 5
+			requiredBitSet[0] |= 1 << 4
 			if err := func() error {
 				if err := s.CreatedAt.Decode(d); err != nil {
 					return err
@@ -5767,7 +5630,7 @@ func (s *SiteEmailTemplateResource) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"createdAt\"")
 			}
 		case "updatedAt":
-			requiredBitSet[0] |= 1 << 6
+			requiredBitSet[0] |= 1 << 5
 			if err := func() error {
 				if err := s.UpdatedAt.Decode(d); err != nil {
 					return err
@@ -5786,7 +5649,7 @@ func (s *SiteEmailTemplateResource) Decode(d *jx.Decoder) error {
 	// Validate required fields.
 	var failures []validate.FieldError
 	for i, mask := range [1]uint8{
-		0b01111111,
+		0b00111111,
 	} {
 		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
 			// Mask only required fields and check equality to mask using XOR.
@@ -10710,15 +10573,9 @@ func (s *SiteUpdateBroadcastInput) encodeFields(e *jx.Encoder) {
 		}
 	}
 	{
-		if s.BodyHtml.Set {
-			e.FieldStart("bodyHtml")
-			s.BodyHtml.Encode(e)
-		}
-	}
-	{
-		if s.BodyFormat.Set {
-			e.FieldStart("bodyFormat")
-			s.BodyFormat.Encode(e)
+		if s.Body.Set {
+			e.FieldStart("body")
+			s.Body.Encode(e)
 		}
 	}
 	{
@@ -10735,15 +10592,14 @@ func (s *SiteUpdateBroadcastInput) encodeFields(e *jx.Encoder) {
 	}
 }
 
-var jsonFieldsNameOfSiteUpdateBroadcastInput = [8]string{
+var jsonFieldsNameOfSiteUpdateBroadcastInput = [7]string{
 	0: "name",
 	1: "subject",
 	2: "fromName",
 	3: "fromEmail",
-	4: "bodyHtml",
-	5: "bodyFormat",
-	6: "segmentId",
-	7: "integrationId",
+	4: "body",
+	5: "segmentId",
+	6: "integrationId",
 }
 
 // Decode decodes SiteUpdateBroadcastInput from json.
@@ -10794,25 +10650,15 @@ func (s *SiteUpdateBroadcastInput) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"fromEmail\"")
 			}
-		case "bodyHtml":
+		case "body":
 			if err := func() error {
-				s.BodyHtml.Reset()
-				if err := s.BodyHtml.Decode(d); err != nil {
+				s.Body.Reset()
+				if err := s.Body.Decode(d); err != nil {
 					return err
 				}
 				return nil
 			}(); err != nil {
-				return errors.Wrap(err, "decode field \"bodyHtml\"")
-			}
-		case "bodyFormat":
-			if err := func() error {
-				s.BodyFormat.Reset()
-				if err := s.BodyFormat.Decode(d); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"bodyFormat\"")
+				return errors.Wrap(err, "decode field \"body\"")
 			}
 		case "segmentId":
 			if err := func() error {
@@ -11050,24 +10896,17 @@ func (s *SiteUpdateEmailTemplateInput) encodeFields(e *jx.Encoder) {
 		}
 	}
 	{
-		if s.BodyFormat.Set {
-			e.FieldStart("bodyFormat")
-			s.BodyFormat.Encode(e)
-		}
-	}
-	{
-		if s.BodyHtml.Set {
-			e.FieldStart("bodyHtml")
-			s.BodyHtml.Encode(e)
+		if s.Body.Set {
+			e.FieldStart("body")
+			s.Body.Encode(e)
 		}
 	}
 }
 
-var jsonFieldsNameOfSiteUpdateEmailTemplateInput = [4]string{
+var jsonFieldsNameOfSiteUpdateEmailTemplateInput = [3]string{
 	0: "name",
 	1: "subject",
-	2: "bodyFormat",
-	3: "bodyHtml",
+	2: "body",
 }
 
 // Decode decodes SiteUpdateEmailTemplateInput from json.
@@ -11098,25 +10937,15 @@ func (s *SiteUpdateEmailTemplateInput) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"subject\"")
 			}
-		case "bodyFormat":
+		case "body":
 			if err := func() error {
-				s.BodyFormat.Reset()
-				if err := s.BodyFormat.Decode(d); err != nil {
+				s.Body.Reset()
+				if err := s.Body.Decode(d); err != nil {
 					return err
 				}
 				return nil
 			}(); err != nil {
-				return errors.Wrap(err, "decode field \"bodyFormat\"")
-			}
-		case "bodyHtml":
-			if err := func() error {
-				s.BodyHtml.Reset()
-				if err := s.BodyHtml.Decode(d); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"bodyHtml\"")
+				return errors.Wrap(err, "decode field \"body\"")
 			}
 		default:
 			return d.Skip()

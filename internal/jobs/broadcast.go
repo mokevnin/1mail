@@ -128,7 +128,7 @@ func SendBroadcast(ctx context.Context, client *ent.Client, resolver SenderResol
 
 		// Pipeline: liquid merge tags → (mjml compile) → CSS inline. Tracking is
 		// layered on AFTER, so re-parsing can't mangle the pixel/links.
-		email, rerr := emailrender.RenderEmail(string(b.BodyFormat), b.Subject, b.BodyHTML, contactBindings(c))
+		email, rerr := emailrender.RenderEmail(b.Subject, b.Body, contactBindings(c))
 		if rerr != nil {
 			failedCount++
 			_, _ = rec.Update().

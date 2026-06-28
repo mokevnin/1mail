@@ -44,9 +44,8 @@ var (
 		{Name: "subject", Type: field.TypeString, Default: ""},
 		{Name: "from_name", Type: field.TypeString, Nullable: true},
 		{Name: "from_email", Type: field.TypeString, Nullable: true},
-		{Name: "body_html", Type: field.TypeString, Default: ""},
+		{Name: "body", Type: field.TypeString, Default: ""},
 		{Name: "body_text", Type: field.TypeString, Default: ""},
-		{Name: "body_format", Type: field.TypeEnum, Enums: []string{"html", "mjml"}, Default: "html"},
 		{Name: "segment_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "integration_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "status", Type: field.TypeEnum, Enums: []string{"draft", "scheduled", "sending", "sent", "failed"}, Default: "draft"},
@@ -70,7 +69,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "broadcasts_workspaces_broadcasts",
-				Columns:    []*schema.Column{BroadcastsColumns[21]},
+				Columns:    []*schema.Column{BroadcastsColumns[20]},
 				RefColumns: []*schema.Column{WorkspacesColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
@@ -79,7 +78,7 @@ var (
 			{
 				Name:    "broadcast_workspace_id",
 				Unique:  false,
-				Columns: []*schema.Column{BroadcastsColumns[21]},
+				Columns: []*schema.Column{BroadcastsColumns[20]},
 			},
 		},
 	}
@@ -168,8 +167,7 @@ var (
 		{Name: "id", Type: field.TypeInt64, Increment: true},
 		{Name: "name", Type: field.TypeString},
 		{Name: "subject", Type: field.TypeString, Default: ""},
-		{Name: "body_html", Type: field.TypeString, Default: ""},
-		{Name: "body_format", Type: field.TypeEnum, Enums: []string{"html", "mjml"}, Default: "html"},
+		{Name: "body", Type: field.TypeString, Default: ""},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
 		{Name: "workspace_id", Type: field.TypeInt64},
@@ -182,7 +180,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "email_templates_workspaces_email_templates",
-				Columns:    []*schema.Column{EmailTemplatesColumns[7]},
+				Columns:    []*schema.Column{EmailTemplatesColumns[6]},
 				RefColumns: []*schema.Column{WorkspacesColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
@@ -191,7 +189,7 @@ var (
 			{
 				Name:    "emailtemplate_workspace_id",
 				Unique:  false,
-				Columns: []*schema.Column{EmailTemplatesColumns[7]},
+				Columns: []*schema.Column{EmailTemplatesColumns[6]},
 			},
 		},
 	}

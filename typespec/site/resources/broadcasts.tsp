@@ -53,11 +53,8 @@ model SiteBroadcastResource {
   /** Sender email address (defaults to the integration's) */
   fromEmail?: EmailAddress | null;
 
-  /** HTML body authored in the composer */
-  bodyHtml: string;
-
-  /** Body authoring format (html or mjml) */
-  bodyFormat: SiteEmailBodyFormat;
+  /** MJML body authored in the composer */
+  body: string;
 
   /** Derived plain-text body */
   bodyText: string;
@@ -101,11 +98,8 @@ model SiteCreateBroadcastInput {
   /** Sender email address */
   fromEmail?: EmailAddress | null;
 
-  /** HTML body */
-  bodyHtml?: string;
-
-  /** Body authoring format (html or mjml) */
-  bodyFormat?: SiteEmailBodyFormat;
+  /** MJML body */
+  body?: string;
 
   /** Target segment; null/omitted means all active contacts */
   segmentId?: EntityId | null;
@@ -128,11 +122,8 @@ model SiteUpdateBroadcastInput {
   /** Sender email address */
   fromEmail?: EmailAddress | null;
 
-  /** HTML body */
-  bodyHtml?: string;
-
-  /** Body authoring format (html or mjml) */
-  bodyFormat?: SiteEmailBodyFormat;
+  /** MJML body */
+  body?: string;
 
   /** Target segment; null means all active contacts */
   segmentId?: EntityId | null;

@@ -2620,8 +2620,7 @@
           "id",
           "name",
           "subject",
-          "bodyHtml",
-          "bodyFormat",
+          "body",
           "bodyText",
           "status",
           "stats",
@@ -2660,17 +2659,9 @@
             "nullable": true,
             "description": "Sender email address (defaults to the integration's)"
           },
-          "bodyHtml": {
+          "body": {
             "type": "string",
-            "description": "HTML body authored in the composer"
-          },
-          "bodyFormat": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/SiteEmailBodyFormat"
-              }
-            ],
-            "description": "Body authoring format (html or mjml)"
+            "description": "MJML body authored in the composer"
           },
           "bodyText": {
             "type": "string",
@@ -2907,17 +2898,9 @@
             "nullable": true,
             "description": "Sender email address"
           },
-          "bodyHtml": {
+          "body": {
             "type": "string",
-            "description": "HTML body"
-          },
-          "bodyFormat": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/SiteEmailBodyFormat"
-              }
-            ],
-            "description": "Body authoring format (html or mjml)"
+            "description": "MJML body"
           },
           "segmentId": {
             "type": "string",
@@ -2995,10 +2978,7 @@
           "subject": {
             "type": "string"
           },
-          "bodyFormat": {
-            "$ref": "#/components/schemas/SiteEmailBodyFormat"
-          },
-          "bodyHtml": {
+          "body": {
             "type": "string"
           }
         },
@@ -3137,14 +3117,9 @@
           }
         }
       },
-      "SiteEmailBodyFormat": {
-        "type": "string",
-        "enum": ["html", "mjml"],
-        "description": "Authoring format of an email body"
-      },
       "SiteEmailTemplateResource": {
         "type": "object",
-        "required": ["id", "name", "subject", "bodyFormat", "bodyHtml", "createdAt", "updatedAt"],
+        "required": ["id", "name", "subject", "body", "createdAt", "updatedAt"],
         "properties": {
           "id": {
             "allOf": [
@@ -3162,17 +3137,9 @@
             "type": "string",
             "description": "Default subject line"
           },
-          "bodyFormat": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/SiteEmailBodyFormat"
-              }
-            ],
-            "description": "Body authoring format"
-          },
-          "bodyHtml": {
+          "body": {
             "type": "string",
-            "description": "Body (HTML or MJML depending on bodyFormat)"
+            "description": "MJML body"
           },
           "createdAt": {
             "allOf": [
@@ -3650,17 +3617,9 @@
             "nullable": true,
             "description": "Sender email address"
           },
-          "bodyHtml": {
+          "body": {
             "type": "string",
-            "description": "HTML body"
-          },
-          "bodyFormat": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/SiteEmailBodyFormat"
-              }
-            ],
-            "description": "Body authoring format (html or mjml)"
+            "description": "MJML body"
           },
           "segmentId": {
             "type": "string",
@@ -3728,10 +3687,7 @@
           "subject": {
             "type": "string"
           },
-          "bodyFormat": {
-            "$ref": "#/components/schemas/SiteEmailBodyFormat"
-          },
-          "bodyHtml": {
+          "body": {
             "type": "string"
           }
         },

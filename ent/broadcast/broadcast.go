@@ -23,12 +23,10 @@ const (
 	FieldFromName = "from_name"
 	// FieldFromEmail holds the string denoting the from_email field in the database.
 	FieldFromEmail = "from_email"
-	// FieldBodyHTML holds the string denoting the body_html field in the database.
-	FieldBodyHTML = "body_html"
+	// FieldBody holds the string denoting the body field in the database.
+	FieldBody = "body"
 	// FieldBodyText holds the string denoting the body_text field in the database.
 	FieldBodyText = "body_text"
-	// FieldBodyFormat holds the string denoting the body_format field in the database.
-	FieldBodyFormat = "body_format"
 	// FieldSegmentID holds the string denoting the segment_id field in the database.
 	FieldSegmentID = "segment_id"
 	// FieldIntegrationID holds the string denoting the integration_id field in the database.
@@ -86,9 +84,8 @@ var Columns = []string{
 	FieldSubject,
 	FieldFromName,
 	FieldFromEmail,
-	FieldBodyHTML,
+	FieldBody,
 	FieldBodyText,
-	FieldBodyFormat,
 	FieldSegmentID,
 	FieldIntegrationID,
 	FieldStatus,
@@ -120,8 +117,8 @@ var (
 	NameValidator func(string) error
 	// DefaultSubject holds the default value on creation for the "subject" field.
 	DefaultSubject string
-	// DefaultBodyHTML holds the default value on creation for the "body_html" field.
-	DefaultBodyHTML string
+	// DefaultBody holds the default value on creation for the "body" field.
+	DefaultBody string
 	// DefaultBodyText holds the default value on creation for the "body_text" field.
 	DefaultBodyText string
 	// DefaultRecipientsTotal holds the default value on creation for the "recipients_total" field.
@@ -155,32 +152,6 @@ var (
 	// UpdateDefaultUpdatedAt holds the default value on update for the "updated_at" field.
 	UpdateDefaultUpdatedAt func() time.Time
 )
-
-// BodyFormat defines the type for the "body_format" enum field.
-type BodyFormat string
-
-// BodyFormatHTML is the default value of the BodyFormat enum.
-const DefaultBodyFormat = BodyFormatHTML
-
-// BodyFormat values.
-const (
-	BodyFormatHTML BodyFormat = "html"
-	BodyFormatMjml BodyFormat = "mjml"
-)
-
-func (bf BodyFormat) String() string {
-	return string(bf)
-}
-
-// BodyFormatValidator is a validator for the "body_format" field enum values. It is called by the builders before save.
-func BodyFormatValidator(bf BodyFormat) error {
-	switch bf {
-	case BodyFormatHTML, BodyFormatMjml:
-		return nil
-	default:
-		return fmt.Errorf("broadcast: invalid enum value for body_format field: %q", bf)
-	}
-}
 
 // Status defines the type for the "status" enum field.
 type Status string
@@ -239,19 +210,14 @@ func ByFromEmail(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldFromEmail, opts...).ToFunc()
 }
 
-// ByBodyHTML orders the results by the body_html field.
-func ByBodyHTML(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldBodyHTML, opts...).ToFunc()
+// ByBody orders the results by the body field.
+func ByBody(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldBody, opts...).ToFunc()
 }
 
 // ByBodyText orders the results by the body_text field.
 func ByBodyText(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldBodyText, opts...).ToFunc()
-}
-
-// ByBodyFormat orders the results by the body_format field.
-func ByBodyFormat(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldBodyFormat, opts...).ToFunc()
 }
 
 // BySegmentID orders the results by the segment_id field.

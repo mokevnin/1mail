@@ -1,10 +1,12 @@
-import { Alert, Button, Group, Input, Select, Stack, TextInput } from '@mantine/core'
+import { Alert, Button, Group, Select, Stack, Textarea, TextInput } from '@mantine/core'
 import type { useForm } from '@mantine/form'
 import { useQuery } from '@tanstack/react-query'
 import { useNavigate, useParams } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
-import { RichTextField } from '../../components/RichTextField.tsx'
-import { siteSegmentsListOptions } from '../../generated/site/@tanstack/react-query.gen.ts'
+import {
+  siteSegmentsListOptions,
+  siteTemplatesListOptions,
+} from '../../generated/site/@tanstack/react-query.gen.ts'
 import { broadcastsRoute } from '../../router.tsx'
 
 export interface BroadcastFormValues {
@@ -12,7 +14,7 @@ export interface BroadcastFormValues {
   subject: string
   fromName: string
   fromEmail: string
-  bodyHtml: string
+  body: string
   segmentId: string
 }
 
@@ -39,6 +41,19 @@ export function BroadcastForm({ form, isPending, onSubmit }: BroadcastFormProps)
       .filter((s) => s.type === 'rule')
       .map((s) => ({ value: s.id, label: s.name })),
   ]
+
+  const templatesQuery = useQuery({
+    ...siteTemplatesListOptions({ path: { workspaceSlug: slug ?? '' }, query: { pageSize: 100 } }),
+    enabled: Boolean(slug),
+  })
+  const templates = templatesQuery.data?.items ?? []
+
+  const applyTemplate = (id: string | null) => {
+    const tpl = templates.find((x) => x.id === id)
+    if (!tpl) return
+    if (tpl.subject) form.setFieldValue('subject', tpl.subject)
+    form.setFieldValue('body', tpl.body)
+  }
 
   return (
     <form onSubmit={form.onSubmit(onSubmit)}>
@@ -71,12 +86,23 @@ export function BroadcastForm({ form, isPending, onSubmit }: BroadcastFormProps)
           {t(($) => $.broadcasts.audienceNote)}
         </Alert>
 
-        <Input.Wrapper label={t(($) => $.broadcasts.bodyLabel)}>
-          <RichTextField
-            value={form.values.bodyHtml}
-            onChange={(html) => form.setFieldValue('bodyHtml', html)}
+        {templates.length > 0 ? (
+          <Select
+            label={t(($) => $.broadcasts.useTemplate)}
+            placeholder={t(($) => $.broadcasts.useTemplateNone)}
+            clearable
+            data={templates.map((tpl) => ({ value: tpl.id, label: tpl.name }))}
+            onChange={applyTemplate}
           />
-        </Input.Wrapper>
+        ) : null}
+
+        <Textarea
+          label={t(($) => $.broadcasts.bodyLabel)}
+          description={t(($) => $.broadcasts.bodyHint)}
+          autosize
+          minRows={12}
+          {...form.getInputProps('body')}
+        />
 
         <Group justify="flex-end">
           <Button

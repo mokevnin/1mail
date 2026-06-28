@@ -5,43 +5,43 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 import {
-  siteBroadcastsCreateMutation,
-  siteBroadcastsListQueryKey,
+  siteTemplatesCreateMutation,
+  siteTemplatesListQueryKey,
 } from '../../generated/site/@tanstack/react-query.gen.ts'
-import { broadcastsCreateRoute, broadcastsEditRoute } from '../../router.tsx'
+import { templatesCreateRoute, templatesEditRoute } from '../../router.tsx'
 import { getApiErrorMessage } from '../../utils/apiErrors.ts'
-import { BroadcastForm, type BroadcastFormValues } from './BroadcastForm.tsx'
+import { TemplateForm, type TemplateFormValues } from './TemplateForm.tsx'
 
-export function BroadcastCreatePage() {
+export function TemplateCreatePage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
-  const { slug } = broadcastsCreateRoute.useParams()
+  const { slug } = templatesCreateRoute.useParams()
 
-  const form = useForm<BroadcastFormValues>({
-    initialValues: { name: '', subject: '', fromName: '', fromEmail: '', body: '', segmentId: '' },
+  const form = useForm<TemplateFormValues>({
+    initialValues: { name: '', subject: '', body: '' },
   })
 
   const createMutation = useMutation({
-    ...siteBroadcastsCreateMutation(),
+    ...siteTemplatesCreateMutation(),
     onSuccess: async (created) => {
       await queryClient.invalidateQueries({
-        queryKey: siteBroadcastsListQueryKey({ path: { workspaceSlug: slug } }),
+        queryKey: siteTemplatesListQueryKey({ path: { workspaceSlug: slug } }),
       })
       notifications.show({
         color: 'teal',
         title: t(($) => $.notifications.successTitle),
-        message: t(($) => $.notifications.broadcastCreated),
+        message: t(($) => $.notifications.templateCreated),
       })
-      await navigate({ to: broadcastsEditRoute.to, params: { slug, broadcastId: created.id } })
+      await navigate({ to: templatesEditRoute.to, params: { slug, templateId: created.id } })
     },
     onError: (error) => {
       notifications.show({
         color: 'red',
-        title: t(($) => $.alerts.broadcastSaveErrorTitle),
+        title: t(($) => $.alerts.templateSaveErrorTitle),
         message: getApiErrorMessage(
           error,
-          t(($) => $.alerts.broadcastSaveErrorTitle),
+          t(($) => $.alerts.templateSaveErrorTitle),
         ),
       })
     },
@@ -49,8 +49,8 @@ export function BroadcastCreatePage() {
 
   return (
     <Stack>
-      <Title order={4}>{t(($) => $.broadcasts.createTitle)}</Title>
-      <BroadcastForm
+      <Title order={4}>{t(($) => $.templates.createTitle)}</Title>
+      <TemplateForm
         form={form}
         isPending={createMutation.isPending}
         onSubmit={(values) =>
@@ -59,10 +59,7 @@ export function BroadcastCreatePage() {
             body: {
               name: values.name.trim(),
               subject: values.subject.trim(),
-              fromName: values.fromName.trim() || null,
-              fromEmail: values.fromEmail.trim() || null,
               body: values.body,
-              segmentId: values.segmentId || null,
             },
           })
         }

@@ -42,14 +42,11 @@ func (Broadcast) Fields() []ent.Field {
 		field.String("from_email").
 			Optional().
 			Nillable(),
-		field.String("body_html").
+		// Email body authored as MJML; compiled to email-safe HTML on send.
+		field.String("body").
 			Default(""),
 		field.String("body_text").
 			Default(""),
-		// Authoring format of body_html: plain "html" or "mjml" (compiled on send).
-		field.Enum("body_format").
-			Values("html", "mjml").
-			Default("html"),
 		// Nil segment_id means "all active contacts in the workspace".
 		field.Int64("segment_id").
 			Optional().

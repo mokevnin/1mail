@@ -1010,9 +1010,8 @@ type BroadcastMutation struct {
 	subject               *string
 	from_name             *string
 	from_email            *string
-	body_html             *string
+	body                  *string
 	body_text             *string
-	body_format           *broadcast.BodyFormat
 	segment_id            *int64
 	addsegment_id         *int64
 	integration_id        *int64
@@ -1319,40 +1318,40 @@ func (m *BroadcastMutation) ResetFromEmail() {
 	delete(m.clearedFields, broadcast.FieldFromEmail)
 }
 
-// SetBodyHTML sets the "body_html" field.
-func (m *BroadcastMutation) SetBodyHTML(s string) {
-	m.body_html = &s
+// SetBody sets the "body" field.
+func (m *BroadcastMutation) SetBody(s string) {
+	m.body = &s
 }
 
-// BodyHTML returns the value of the "body_html" field in the mutation.
-func (m *BroadcastMutation) BodyHTML() (r string, exists bool) {
-	v := m.body_html
+// Body returns the value of the "body" field in the mutation.
+func (m *BroadcastMutation) Body() (r string, exists bool) {
+	v := m.body
 	if v == nil {
 		return
 	}
 	return *v, true
 }
 
-// OldBodyHTML returns the old "body_html" field's value of the Broadcast entity.
+// OldBody returns the old "body" field's value of the Broadcast entity.
 // If the Broadcast object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *BroadcastMutation) OldBodyHTML(ctx context.Context) (v string, err error) {
+func (m *BroadcastMutation) OldBody(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldBodyHTML is only allowed on UpdateOne operations")
+		return v, errors.New("OldBody is only allowed on UpdateOne operations")
 	}
 	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldBodyHTML requires an ID field in the mutation")
+		return v, errors.New("OldBody requires an ID field in the mutation")
 	}
 	oldValue, err := m.oldValue(ctx)
 	if err != nil {
-		return v, fmt.Errorf("querying old value for OldBodyHTML: %w", err)
+		return v, fmt.Errorf("querying old value for OldBody: %w", err)
 	}
-	return oldValue.BodyHTML, nil
+	return oldValue.Body, nil
 }
 
-// ResetBodyHTML resets all changes to the "body_html" field.
-func (m *BroadcastMutation) ResetBodyHTML() {
-	m.body_html = nil
+// ResetBody resets all changes to the "body" field.
+func (m *BroadcastMutation) ResetBody() {
+	m.body = nil
 }
 
 // SetBodyText sets the "body_text" field.
@@ -1389,42 +1388,6 @@ func (m *BroadcastMutation) OldBodyText(ctx context.Context) (v string, err erro
 // ResetBodyText resets all changes to the "body_text" field.
 func (m *BroadcastMutation) ResetBodyText() {
 	m.body_text = nil
-}
-
-// SetBodyFormat sets the "body_format" field.
-func (m *BroadcastMutation) SetBodyFormat(bf broadcast.BodyFormat) {
-	m.body_format = &bf
-}
-
-// BodyFormat returns the value of the "body_format" field in the mutation.
-func (m *BroadcastMutation) BodyFormat() (r broadcast.BodyFormat, exists bool) {
-	v := m.body_format
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldBodyFormat returns the old "body_format" field's value of the Broadcast entity.
-// If the Broadcast object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *BroadcastMutation) OldBodyFormat(ctx context.Context) (v broadcast.BodyFormat, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldBodyFormat is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldBodyFormat requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldBodyFormat: %w", err)
-	}
-	return oldValue.BodyFormat, nil
-}
-
-// ResetBodyFormat resets all changes to the "body_format" field.
-func (m *BroadcastMutation) ResetBodyFormat() {
-	m.body_format = nil
 }
 
 // SetSegmentID sets the "segment_id" field.
@@ -2260,7 +2223,7 @@ func (m *BroadcastMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *BroadcastMutation) Fields() []string {
-	fields := make([]string, 0, 21)
+	fields := make([]string, 0, 20)
 	if m.name != nil {
 		fields = append(fields, broadcast.FieldName)
 	}
@@ -2273,14 +2236,11 @@ func (m *BroadcastMutation) Fields() []string {
 	if m.from_email != nil {
 		fields = append(fields, broadcast.FieldFromEmail)
 	}
-	if m.body_html != nil {
-		fields = append(fields, broadcast.FieldBodyHTML)
+	if m.body != nil {
+		fields = append(fields, broadcast.FieldBody)
 	}
 	if m.body_text != nil {
 		fields = append(fields, broadcast.FieldBodyText)
-	}
-	if m.body_format != nil {
-		fields = append(fields, broadcast.FieldBodyFormat)
 	}
 	if m.segment_id != nil {
 		fields = append(fields, broadcast.FieldSegmentID)
@@ -2340,12 +2300,10 @@ func (m *BroadcastMutation) Field(name string) (ent.Value, bool) {
 		return m.FromName()
 	case broadcast.FieldFromEmail:
 		return m.FromEmail()
-	case broadcast.FieldBodyHTML:
-		return m.BodyHTML()
+	case broadcast.FieldBody:
+		return m.Body()
 	case broadcast.FieldBodyText:
 		return m.BodyText()
-	case broadcast.FieldBodyFormat:
-		return m.BodyFormat()
 	case broadcast.FieldSegmentID:
 		return m.SegmentID()
 	case broadcast.FieldIntegrationID:
@@ -2391,12 +2349,10 @@ func (m *BroadcastMutation) OldField(ctx context.Context, name string) (ent.Valu
 		return m.OldFromName(ctx)
 	case broadcast.FieldFromEmail:
 		return m.OldFromEmail(ctx)
-	case broadcast.FieldBodyHTML:
-		return m.OldBodyHTML(ctx)
+	case broadcast.FieldBody:
+		return m.OldBody(ctx)
 	case broadcast.FieldBodyText:
 		return m.OldBodyText(ctx)
-	case broadcast.FieldBodyFormat:
-		return m.OldBodyFormat(ctx)
 	case broadcast.FieldSegmentID:
 		return m.OldSegmentID(ctx)
 	case broadcast.FieldIntegrationID:
@@ -2462,12 +2418,12 @@ func (m *BroadcastMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetFromEmail(v)
 		return nil
-	case broadcast.FieldBodyHTML:
+	case broadcast.FieldBody:
 		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
-		m.SetBodyHTML(v)
+		m.SetBody(v)
 		return nil
 	case broadcast.FieldBodyText:
 		v, ok := value.(string)
@@ -2475,13 +2431,6 @@ func (m *BroadcastMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetBodyText(v)
-		return nil
-	case broadcast.FieldBodyFormat:
-		v, ok := value.(broadcast.BodyFormat)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetBodyFormat(v)
 		return nil
 	case broadcast.FieldSegmentID:
 		v, ok := value.(int64)
@@ -2780,14 +2729,11 @@ func (m *BroadcastMutation) ResetField(name string) error {
 	case broadcast.FieldFromEmail:
 		m.ResetFromEmail()
 		return nil
-	case broadcast.FieldBodyHTML:
-		m.ResetBodyHTML()
+	case broadcast.FieldBody:
+		m.ResetBody()
 		return nil
 	case broadcast.FieldBodyText:
 		m.ResetBodyText()
-		return nil
-	case broadcast.FieldBodyFormat:
-		m.ResetBodyFormat()
 		return nil
 	case broadcast.FieldSegmentID:
 		m.ResetSegmentID()
@@ -4878,8 +4824,7 @@ type EmailTemplateMutation struct {
 	id               *int64
 	name             *string
 	subject          *string
-	body_html        *string
-	body_format      *emailtemplate.BodyFormat
+	body             *string
 	created_at       *time.Time
 	updated_at       *time.Time
 	clearedFields    map[string]struct{}
@@ -5066,76 +5011,40 @@ func (m *EmailTemplateMutation) ResetSubject() {
 	m.subject = nil
 }
 
-// SetBodyHTML sets the "body_html" field.
-func (m *EmailTemplateMutation) SetBodyHTML(s string) {
-	m.body_html = &s
+// SetBody sets the "body" field.
+func (m *EmailTemplateMutation) SetBody(s string) {
+	m.body = &s
 }
 
-// BodyHTML returns the value of the "body_html" field in the mutation.
-func (m *EmailTemplateMutation) BodyHTML() (r string, exists bool) {
-	v := m.body_html
+// Body returns the value of the "body" field in the mutation.
+func (m *EmailTemplateMutation) Body() (r string, exists bool) {
+	v := m.body
 	if v == nil {
 		return
 	}
 	return *v, true
 }
 
-// OldBodyHTML returns the old "body_html" field's value of the EmailTemplate entity.
+// OldBody returns the old "body" field's value of the EmailTemplate entity.
 // If the EmailTemplate object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *EmailTemplateMutation) OldBodyHTML(ctx context.Context) (v string, err error) {
+func (m *EmailTemplateMutation) OldBody(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldBodyHTML is only allowed on UpdateOne operations")
+		return v, errors.New("OldBody is only allowed on UpdateOne operations")
 	}
 	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldBodyHTML requires an ID field in the mutation")
+		return v, errors.New("OldBody requires an ID field in the mutation")
 	}
 	oldValue, err := m.oldValue(ctx)
 	if err != nil {
-		return v, fmt.Errorf("querying old value for OldBodyHTML: %w", err)
+		return v, fmt.Errorf("querying old value for OldBody: %w", err)
 	}
-	return oldValue.BodyHTML, nil
+	return oldValue.Body, nil
 }
 
-// ResetBodyHTML resets all changes to the "body_html" field.
-func (m *EmailTemplateMutation) ResetBodyHTML() {
-	m.body_html = nil
-}
-
-// SetBodyFormat sets the "body_format" field.
-func (m *EmailTemplateMutation) SetBodyFormat(ef emailtemplate.BodyFormat) {
-	m.body_format = &ef
-}
-
-// BodyFormat returns the value of the "body_format" field in the mutation.
-func (m *EmailTemplateMutation) BodyFormat() (r emailtemplate.BodyFormat, exists bool) {
-	v := m.body_format
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldBodyFormat returns the old "body_format" field's value of the EmailTemplate entity.
-// If the EmailTemplate object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *EmailTemplateMutation) OldBodyFormat(ctx context.Context) (v emailtemplate.BodyFormat, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldBodyFormat is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldBodyFormat requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldBodyFormat: %w", err)
-	}
-	return oldValue.BodyFormat, nil
-}
-
-// ResetBodyFormat resets all changes to the "body_format" field.
-func (m *EmailTemplateMutation) ResetBodyFormat() {
-	m.body_format = nil
+// ResetBody resets all changes to the "body" field.
+func (m *EmailTemplateMutation) ResetBody() {
+	m.body = nil
 }
 
 // SetWorkspaceID sets the "workspace_id" field.
@@ -5307,18 +5216,15 @@ func (m *EmailTemplateMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *EmailTemplateMutation) Fields() []string {
-	fields := make([]string, 0, 7)
+	fields := make([]string, 0, 6)
 	if m.name != nil {
 		fields = append(fields, emailtemplate.FieldName)
 	}
 	if m.subject != nil {
 		fields = append(fields, emailtemplate.FieldSubject)
 	}
-	if m.body_html != nil {
-		fields = append(fields, emailtemplate.FieldBodyHTML)
-	}
-	if m.body_format != nil {
-		fields = append(fields, emailtemplate.FieldBodyFormat)
+	if m.body != nil {
+		fields = append(fields, emailtemplate.FieldBody)
 	}
 	if m.workspace != nil {
 		fields = append(fields, emailtemplate.FieldWorkspaceID)
@@ -5341,10 +5247,8 @@ func (m *EmailTemplateMutation) Field(name string) (ent.Value, bool) {
 		return m.Name()
 	case emailtemplate.FieldSubject:
 		return m.Subject()
-	case emailtemplate.FieldBodyHTML:
-		return m.BodyHTML()
-	case emailtemplate.FieldBodyFormat:
-		return m.BodyFormat()
+	case emailtemplate.FieldBody:
+		return m.Body()
 	case emailtemplate.FieldWorkspaceID:
 		return m.WorkspaceID()
 	case emailtemplate.FieldCreatedAt:
@@ -5364,10 +5268,8 @@ func (m *EmailTemplateMutation) OldField(ctx context.Context, name string) (ent.
 		return m.OldName(ctx)
 	case emailtemplate.FieldSubject:
 		return m.OldSubject(ctx)
-	case emailtemplate.FieldBodyHTML:
-		return m.OldBodyHTML(ctx)
-	case emailtemplate.FieldBodyFormat:
-		return m.OldBodyFormat(ctx)
+	case emailtemplate.FieldBody:
+		return m.OldBody(ctx)
 	case emailtemplate.FieldWorkspaceID:
 		return m.OldWorkspaceID(ctx)
 	case emailtemplate.FieldCreatedAt:
@@ -5397,19 +5299,12 @@ func (m *EmailTemplateMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetSubject(v)
 		return nil
-	case emailtemplate.FieldBodyHTML:
+	case emailtemplate.FieldBody:
 		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
-		m.SetBodyHTML(v)
-		return nil
-	case emailtemplate.FieldBodyFormat:
-		v, ok := value.(emailtemplate.BodyFormat)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetBodyFormat(v)
+		m.SetBody(v)
 		return nil
 	case emailtemplate.FieldWorkspaceID:
 		v, ok := value.(int64)
@@ -5490,11 +5385,8 @@ func (m *EmailTemplateMutation) ResetField(name string) error {
 	case emailtemplate.FieldSubject:
 		m.ResetSubject()
 		return nil
-	case emailtemplate.FieldBodyHTML:
-		m.ResetBodyHTML()
-		return nil
-	case emailtemplate.FieldBodyFormat:
-		m.ResetBodyFormat()
+	case emailtemplate.FieldBody:
+		m.ResetBody()
 		return nil
 	case emailtemplate.FieldWorkspaceID:
 		m.ResetWorkspaceID()

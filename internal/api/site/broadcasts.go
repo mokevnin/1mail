@@ -111,11 +111,8 @@ func (h *Handlers) SiteBroadcastsCreate(ctx context.Context, req *siteapi.SiteCr
 	if v, ok := req.Subject.Get(); ok {
 		q = q.SetSubject(v)
 	}
-	if v, ok := req.BodyHtml.Get(); ok {
-		q = q.SetBodyHTML(v)
-	}
-	if v, ok := req.BodyFormat.Get(); ok {
-		q = q.SetBodyFormat(broadcast.BodyFormat(v))
+	if v, ok := req.Body.Get(); ok {
+		q = q.SetBody(v)
 	}
 	b, err := q.Save(ctx)
 	if err != nil {
@@ -203,12 +200,9 @@ func (h *Handlers) SiteBroadcastsUpdate(ctx context.Context, req *siteapi.SiteUp
 		SetNillableSubject(convert.StringPtr(req.Subject)).
 		SetNillableFromName(convert.StringPtr(req.FromName)).
 		SetNillableFromEmail(convert.StringPtr(req.FromEmail)).
-		SetNillableBodyHTML(convert.StringPtr(req.BodyHtml)).
+		SetNillableBody(convert.StringPtr(req.Body)).
 		SetNillableSegmentID(segmentID).
 		SetNillableIntegrationID(integrationID)
-	if v, ok := req.BodyFormat.Get(); ok {
-		q = q.SetBodyFormat(broadcast.BodyFormat(v))
-	}
 	b, err := q.Save(ctx)
 	if ent.IsNotFound(err) {
 		v := siteapi.SiteBroadcastsUpdateNotFound(problem(http.StatusNotFound, "broadcast not found"))
@@ -378,7 +372,7 @@ func (h *Handlers) SiteBroadcastsTestSend(ctx context.Context, req *siteapi.Site
 
 	to := string(req.Email)
 	bindings := map[string]any{"first_name": "Alex", "last_name": "Sample", "email": to}
-	email, rerr := emailrender.RenderEmail(string(b.BodyFormat), b.Subject, b.BodyHTML, bindings)
+	email, rerr := emailrender.RenderEmail(b.Subject, b.Body, bindings)
 	if rerr != nil {
 		v := siteapi.SiteBroadcastsTestSendUnprocessableEntity(problem(http.StatusUnprocessableEntity, rerr.Error()))
 		return &v, nil

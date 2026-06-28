@@ -22,10 +22,8 @@ type EmailTemplate struct {
 	Name string `json:"name,omitempty"`
 	// Subject holds the value of the "subject" field.
 	Subject string `json:"subject,omitempty"`
-	// BodyHTML holds the value of the "body_html" field.
-	BodyHTML string `json:"body_html,omitempty"`
-	// BodyFormat holds the value of the "body_format" field.
-	BodyFormat emailtemplate.BodyFormat `json:"body_format,omitempty"`
+	// Body holds the value of the "body" field.
+	Body string `json:"body,omitempty"`
 	// WorkspaceID holds the value of the "workspace_id" field.
 	WorkspaceID int64 `json:"workspace_id,omitempty"`
 	// CreatedAt holds the value of the "created_at" field.
@@ -65,7 +63,7 @@ func (*EmailTemplate) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case emailtemplate.FieldID, emailtemplate.FieldWorkspaceID:
 			values[i] = new(sql.NullInt64)
-		case emailtemplate.FieldName, emailtemplate.FieldSubject, emailtemplate.FieldBodyHTML, emailtemplate.FieldBodyFormat:
+		case emailtemplate.FieldName, emailtemplate.FieldSubject, emailtemplate.FieldBody:
 			values[i] = new(sql.NullString)
 		case emailtemplate.FieldCreatedAt, emailtemplate.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
@@ -102,17 +100,11 @@ func (_m *EmailTemplate) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				_m.Subject = value.String
 			}
-		case emailtemplate.FieldBodyHTML:
+		case emailtemplate.FieldBody:
 			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field body_html", values[i])
+				return fmt.Errorf("unexpected type %T for field body", values[i])
 			} else if value.Valid {
-				_m.BodyHTML = value.String
-			}
-		case emailtemplate.FieldBodyFormat:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field body_format", values[i])
-			} else if value.Valid {
-				_m.BodyFormat = emailtemplate.BodyFormat(value.String)
+				_m.Body = value.String
 			}
 		case emailtemplate.FieldWorkspaceID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
@@ -179,11 +171,8 @@ func (_m *EmailTemplate) String() string {
 	builder.WriteString("subject=")
 	builder.WriteString(_m.Subject)
 	builder.WriteString(", ")
-	builder.WriteString("body_html=")
-	builder.WriteString(_m.BodyHTML)
-	builder.WriteString(", ")
-	builder.WriteString("body_format=")
-	builder.WriteString(fmt.Sprintf("%v", _m.BodyFormat))
+	builder.WriteString("body=")
+	builder.WriteString(_m.Body)
 	builder.WriteString(", ")
 	builder.WriteString("workspace_id=")
 	builder.WriteString(fmt.Sprintf("%v", _m.WorkspaceID))

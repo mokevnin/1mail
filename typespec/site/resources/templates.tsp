@@ -3,12 +3,6 @@ using TypeSpec.Rest;
 
 namespace OneMail;
 
-/** Authoring format of an email body */
-enum SiteEmailBodyFormat {
-  html,
-  mjml,
-}
-
 /** Reusable email template used by the site UI */
 @resource("templates")
 @segment("templates")
@@ -23,11 +17,8 @@ model SiteEmailTemplateResource {
   /** Default subject line */
   subject: string;
 
-  /** Body authoring format */
-  bodyFormat: SiteEmailBodyFormat;
-
-  /** Body (HTML or MJML depending on bodyFormat) */
-  bodyHtml: string;
+  /** MJML body */
+  body: string;
 
   /** Creation timestamp */
   createdAt: Timestamp;
@@ -40,16 +31,14 @@ model SiteEmailTemplateResource {
 model SiteCreateEmailTemplateInput {
   name: string;
   subject?: string;
-  bodyFormat?: SiteEmailBodyFormat;
-  bodyHtml?: string;
+  body?: string;
 }
 
 /** Site request body for updating a template */
 model SiteUpdateEmailTemplateInput {
   name?: string;
   subject?: string;
-  bodyFormat?: SiteEmailBodyFormat;
-  bodyHtml?: string;
+  body?: string;
 }
 
 @route("/w/{workspaceSlug}/templates")

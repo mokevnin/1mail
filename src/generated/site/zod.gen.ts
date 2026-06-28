@@ -49,6 +49,28 @@ export const zSiteBroadcastStatus = z.enum([
  */
 export const zSiteContactStatus = z.enum(['active', 'unsubscribed']);
 
+/**
+ * Site request body for creating a broadcast
+ */
+export const zSiteCreateBroadcastInput = z.object({
+    name: z.string(),
+    subject: z.string().optional(),
+    fromName: z.string().nullish(),
+    fromEmail: zEmailAddress.nullish(),
+    body: z.string().optional(),
+    segmentId: zEntityId.nullish(),
+    integrationId: zEntityId.nullish()
+});
+
+/**
+ * Site request body for creating a template
+ */
+export const zSiteCreateEmailTemplateInput = z.object({
+    name: z.string(),
+    subject: z.string().optional(),
+    body: z.string().optional()
+});
+
 export const zSiteDirectLoginError = z.object({
     error: z.string()
 });
@@ -67,35 +89,6 @@ export const zSiteDirectLoginResult = z.object({
     email: z.string().optional(),
     attrs: z.record(z.string(), z.unknown()).optional(),
     role: z.string().optional()
-});
-
-/**
- * Authoring format of an email body
- */
-export const zSiteEmailBodyFormat = z.enum(['html', 'mjml']);
-
-/**
- * Site request body for creating a broadcast
- */
-export const zSiteCreateBroadcastInput = z.object({
-    name: z.string(),
-    subject: z.string().optional(),
-    fromName: z.string().nullish(),
-    fromEmail: zEmailAddress.nullish(),
-    bodyHtml: z.string().optional(),
-    bodyFormat: zSiteEmailBodyFormat.optional(),
-    segmentId: zEntityId.nullish(),
-    integrationId: zEntityId.nullish()
-});
-
-/**
- * Site request body for creating a template
- */
-export const zSiteCreateEmailTemplateInput = z.object({
-    name: z.string(),
-    subject: z.string().optional(),
-    bodyFormat: zSiteEmailBodyFormat.optional(),
-    bodyHtml: z.string().optional()
 });
 
 /**
@@ -231,8 +224,7 @@ export const zSiteUpdateBroadcastInput = z.object({
     subject: z.string().optional(),
     fromName: z.string().nullish(),
     fromEmail: zEmailAddress.nullish(),
-    bodyHtml: z.string().optional(),
-    bodyFormat: zSiteEmailBodyFormat.optional(),
+    body: z.string().optional(),
     segmentId: zEntityId.nullish(),
     integrationId: zEntityId.nullish()
 });
@@ -243,8 +235,7 @@ export const zSiteUpdateBroadcastInput = z.object({
 export const zSiteUpdateEmailTemplateInput = z.object({
     name: z.string().optional(),
     subject: z.string().optional(),
-    bodyFormat: zSiteEmailBodyFormat.optional(),
-    bodyHtml: z.string().optional()
+    body: z.string().optional()
 });
 
 /**
@@ -331,8 +322,7 @@ export const zSiteBroadcastResource = z.object({
     subject: z.string(),
     fromName: z.string().nullish(),
     fromEmail: zEmailAddress.nullish(),
-    bodyHtml: z.string(),
-    bodyFormat: zSiteEmailBodyFormat,
+    body: z.string(),
     bodyText: z.string(),
     segmentId: zEntityId.nullish(),
     integrationId: zEntityId.nullish(),
@@ -383,8 +373,7 @@ export const zSiteEmailTemplateResource = z.object({
     id: zEntityId,
     name: z.string(),
     subject: z.string(),
-    bodyFormat: zSiteEmailBodyFormat,
-    bodyHtml: z.string(),
+    body: z.string(),
     createdAt: zTimestamp,
     updatedAt: zTimestamp
 });

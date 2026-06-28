@@ -1,28 +1,20 @@
-// Package emailrender renders broadcast/template email content. The pipeline is:
-// Liquid merge tags → (MJML compile when the body is MJML) → CSS inlining for
-// plain HTML → derived plain-text part. Each step is a maintained library
-// (osteele/liquid, preslavrachev/gomjml, vanng822/go-premailer, k3a/html2text)
-// — we don't hand-roll templating, MJML, CSS inlining, or HTML stripping.
+// Package emailrender renders broadcast/template email content. Bodies are
+// authored as MJML; the pipeline is: Liquid merge tags → MJML compile (which
+// emits email-safe, inlined HTML) → derived plain-text part. Each step is a
+// maintained library (osteele/liquid, preslavrachev/gomjml, k3a/html2text) — we
+// don't hand-roll templating, MJML, or HTML stripping.
 //
 // Tracking (open pixel, click rewriting, unsubscribe footer) is deliberately NOT
-// done here: the caller layers it on AFTER this pipeline so re-parsing/inlining
-// can never mangle the injected pixel or escape the click-URL query strings.
+// done here: the caller layers it on AFTER this pipeline so re-parsing can never
+// mangle the injected pixel or escape the click-URL query strings.
 package emailrender
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/k3a/html2text"
 	"github.com/osteele/liquid"
 	"github.com/preslavrachev/gomjml/mjml"
-	"github.com/vanng822/go-premailer/premailer"
-)
-
-// Format is the authored body format of a broadcast/template.
-const (
-	FormatHTML = "html"
-	FormatMJML = "mjml"
 )
 
 // engine is safe for concurrent ParseAndRender calls.
@@ -35,27 +27,18 @@ type Email struct {
 	Text    string
 }
 
-// RenderEmail renders subject + body for one recipient. Liquid runs first (so a
-// {% if %} can change MJML structure per recipient), then MJML compiles to
-// email HTML, or plain HTML gets its <style> blocks inlined. The text part is
-// derived from the compiled HTML (before any tracking is layered on).
-//
-// Liquid errors degrade gracefully (best-effort output). A non-nil error means
-// the MJML body failed to compile — the caller should not send that message.
-func RenderEmail(format, subject, body string, bindings map[string]any) (Email, error) {
+// RenderEmail renders subject + MJML body for one recipient: Liquid merge tags
+// first (so a {% if %} can change MJML structure per recipient), then MJML
+// compiles to email HTML, then the text part is derived from that HTML (before
+// any tracking is layered on). A non-nil error means the MJML failed to compile
+// — the caller should not send that message.
+func RenderEmail(subject, body string, bindings map[string]any) (Email, error) {
 	renderedSubject, _ := Render(subject, bindings)
 	renderedBody, _ := Render(body, bindings)
 
-	html := renderedBody
-	if strings.EqualFold(format, FormatMJML) {
-		out, err := mjml.Render(renderedBody)
-		if err != nil {
-			return Email{}, fmt.Errorf("compile mjml: %w", err)
-		}
-		html = out
-	} else if inlined, err := inlineCSS(html); err == nil {
-		// Best-effort: inlining <style> into attributes for plain-HTML emails.
-		html = inlined
+	html, err := mjml.Render(renderedBody)
+	if err != nil {
+		return Email{}, fmt.Errorf("compile mjml: %w", err)
 	}
 
 	return Email{Subject: renderedSubject, HTML: html, Text: HTMLToText(html)}, nil
@@ -77,12 +60,4 @@ func Render(tmpl string, bindings map[string]any) (string, error) {
 // text/plain MIME part.
 func HTMLToText(html string) string {
 	return html2text.HTML2Text(html)
-}
-
-func inlineCSS(html string) (string, error) {
-	p, err := premailer.NewPremailerFromString(html, premailer.NewOptions())
-	if err != nil {
-		return html, err
-	}
-	return p.Transform()
 }

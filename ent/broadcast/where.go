@@ -75,9 +75,9 @@ func FromEmail(v string) predicate.Broadcast {
 	return predicate.Broadcast(sql.FieldEQ(FieldFromEmail, v))
 }
 
-// BodyHTML applies equality check predicate on the "body_html" field. It's identical to BodyHTMLEQ.
-func BodyHTML(v string) predicate.Broadcast {
-	return predicate.Broadcast(sql.FieldEQ(FieldBodyHTML, v))
+// Body applies equality check predicate on the "body" field. It's identical to BodyEQ.
+func Body(v string) predicate.Broadcast {
+	return predicate.Broadcast(sql.FieldEQ(FieldBody, v))
 }
 
 // BodyText applies equality check predicate on the "body_text" field. It's identical to BodyTextEQ.
@@ -430,69 +430,69 @@ func FromEmailContainsFold(v string) predicate.Broadcast {
 	return predicate.Broadcast(sql.FieldContainsFold(FieldFromEmail, v))
 }
 
-// BodyHTMLEQ applies the EQ predicate on the "body_html" field.
-func BodyHTMLEQ(v string) predicate.Broadcast {
-	return predicate.Broadcast(sql.FieldEQ(FieldBodyHTML, v))
+// BodyEQ applies the EQ predicate on the "body" field.
+func BodyEQ(v string) predicate.Broadcast {
+	return predicate.Broadcast(sql.FieldEQ(FieldBody, v))
 }
 
-// BodyHTMLNEQ applies the NEQ predicate on the "body_html" field.
-func BodyHTMLNEQ(v string) predicate.Broadcast {
-	return predicate.Broadcast(sql.FieldNEQ(FieldBodyHTML, v))
+// BodyNEQ applies the NEQ predicate on the "body" field.
+func BodyNEQ(v string) predicate.Broadcast {
+	return predicate.Broadcast(sql.FieldNEQ(FieldBody, v))
 }
 
-// BodyHTMLIn applies the In predicate on the "body_html" field.
-func BodyHTMLIn(vs ...string) predicate.Broadcast {
-	return predicate.Broadcast(sql.FieldIn(FieldBodyHTML, vs...))
+// BodyIn applies the In predicate on the "body" field.
+func BodyIn(vs ...string) predicate.Broadcast {
+	return predicate.Broadcast(sql.FieldIn(FieldBody, vs...))
 }
 
-// BodyHTMLNotIn applies the NotIn predicate on the "body_html" field.
-func BodyHTMLNotIn(vs ...string) predicate.Broadcast {
-	return predicate.Broadcast(sql.FieldNotIn(FieldBodyHTML, vs...))
+// BodyNotIn applies the NotIn predicate on the "body" field.
+func BodyNotIn(vs ...string) predicate.Broadcast {
+	return predicate.Broadcast(sql.FieldNotIn(FieldBody, vs...))
 }
 
-// BodyHTMLGT applies the GT predicate on the "body_html" field.
-func BodyHTMLGT(v string) predicate.Broadcast {
-	return predicate.Broadcast(sql.FieldGT(FieldBodyHTML, v))
+// BodyGT applies the GT predicate on the "body" field.
+func BodyGT(v string) predicate.Broadcast {
+	return predicate.Broadcast(sql.FieldGT(FieldBody, v))
 }
 
-// BodyHTMLGTE applies the GTE predicate on the "body_html" field.
-func BodyHTMLGTE(v string) predicate.Broadcast {
-	return predicate.Broadcast(sql.FieldGTE(FieldBodyHTML, v))
+// BodyGTE applies the GTE predicate on the "body" field.
+func BodyGTE(v string) predicate.Broadcast {
+	return predicate.Broadcast(sql.FieldGTE(FieldBody, v))
 }
 
-// BodyHTMLLT applies the LT predicate on the "body_html" field.
-func BodyHTMLLT(v string) predicate.Broadcast {
-	return predicate.Broadcast(sql.FieldLT(FieldBodyHTML, v))
+// BodyLT applies the LT predicate on the "body" field.
+func BodyLT(v string) predicate.Broadcast {
+	return predicate.Broadcast(sql.FieldLT(FieldBody, v))
 }
 
-// BodyHTMLLTE applies the LTE predicate on the "body_html" field.
-func BodyHTMLLTE(v string) predicate.Broadcast {
-	return predicate.Broadcast(sql.FieldLTE(FieldBodyHTML, v))
+// BodyLTE applies the LTE predicate on the "body" field.
+func BodyLTE(v string) predicate.Broadcast {
+	return predicate.Broadcast(sql.FieldLTE(FieldBody, v))
 }
 
-// BodyHTMLContains applies the Contains predicate on the "body_html" field.
-func BodyHTMLContains(v string) predicate.Broadcast {
-	return predicate.Broadcast(sql.FieldContains(FieldBodyHTML, v))
+// BodyContains applies the Contains predicate on the "body" field.
+func BodyContains(v string) predicate.Broadcast {
+	return predicate.Broadcast(sql.FieldContains(FieldBody, v))
 }
 
-// BodyHTMLHasPrefix applies the HasPrefix predicate on the "body_html" field.
-func BodyHTMLHasPrefix(v string) predicate.Broadcast {
-	return predicate.Broadcast(sql.FieldHasPrefix(FieldBodyHTML, v))
+// BodyHasPrefix applies the HasPrefix predicate on the "body" field.
+func BodyHasPrefix(v string) predicate.Broadcast {
+	return predicate.Broadcast(sql.FieldHasPrefix(FieldBody, v))
 }
 
-// BodyHTMLHasSuffix applies the HasSuffix predicate on the "body_html" field.
-func BodyHTMLHasSuffix(v string) predicate.Broadcast {
-	return predicate.Broadcast(sql.FieldHasSuffix(FieldBodyHTML, v))
+// BodyHasSuffix applies the HasSuffix predicate on the "body" field.
+func BodyHasSuffix(v string) predicate.Broadcast {
+	return predicate.Broadcast(sql.FieldHasSuffix(FieldBody, v))
 }
 
-// BodyHTMLEqualFold applies the EqualFold predicate on the "body_html" field.
-func BodyHTMLEqualFold(v string) predicate.Broadcast {
-	return predicate.Broadcast(sql.FieldEqualFold(FieldBodyHTML, v))
+// BodyEqualFold applies the EqualFold predicate on the "body" field.
+func BodyEqualFold(v string) predicate.Broadcast {
+	return predicate.Broadcast(sql.FieldEqualFold(FieldBody, v))
 }
 
-// BodyHTMLContainsFold applies the ContainsFold predicate on the "body_html" field.
-func BodyHTMLContainsFold(v string) predicate.Broadcast {
-	return predicate.Broadcast(sql.FieldContainsFold(FieldBodyHTML, v))
+// BodyContainsFold applies the ContainsFold predicate on the "body" field.
+func BodyContainsFold(v string) predicate.Broadcast {
+	return predicate.Broadcast(sql.FieldContainsFold(FieldBody, v))
 }
 
 // BodyTextEQ applies the EQ predicate on the "body_text" field.
@@ -558,26 +558,6 @@ func BodyTextEqualFold(v string) predicate.Broadcast {
 // BodyTextContainsFold applies the ContainsFold predicate on the "body_text" field.
 func BodyTextContainsFold(v string) predicate.Broadcast {
 	return predicate.Broadcast(sql.FieldContainsFold(FieldBodyText, v))
-}
-
-// BodyFormatEQ applies the EQ predicate on the "body_format" field.
-func BodyFormatEQ(v BodyFormat) predicate.Broadcast {
-	return predicate.Broadcast(sql.FieldEQ(FieldBodyFormat, v))
-}
-
-// BodyFormatNEQ applies the NEQ predicate on the "body_format" field.
-func BodyFormatNEQ(v BodyFormat) predicate.Broadcast {
-	return predicate.Broadcast(sql.FieldNEQ(FieldBodyFormat, v))
-}
-
-// BodyFormatIn applies the In predicate on the "body_format" field.
-func BodyFormatIn(vs ...BodyFormat) predicate.Broadcast {
-	return predicate.Broadcast(sql.FieldIn(FieldBodyFormat, vs...))
-}
-
-// BodyFormatNotIn applies the NotIn predicate on the "body_format" field.
-func BodyFormatNotIn(vs ...BodyFormat) predicate.Broadcast {
-	return predicate.Broadcast(sql.FieldNotIn(FieldBodyFormat, vs...))
 }
 
 // SegmentIDEQ applies the EQ predicate on the "segment_id" field.

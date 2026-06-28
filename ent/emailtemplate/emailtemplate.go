@@ -3,7 +3,6 @@
 package emailtemplate
 
 import (
-	"fmt"
 	"time"
 
 	"entgo.io/ent/dialect/sql"
@@ -19,10 +18,8 @@ const (
 	FieldName = "name"
 	// FieldSubject holds the string denoting the subject field in the database.
 	FieldSubject = "subject"
-	// FieldBodyHTML holds the string denoting the body_html field in the database.
-	FieldBodyHTML = "body_html"
-	// FieldBodyFormat holds the string denoting the body_format field in the database.
-	FieldBodyFormat = "body_format"
+	// FieldBody holds the string denoting the body field in the database.
+	FieldBody = "body"
 	// FieldWorkspaceID holds the string denoting the workspace_id field in the database.
 	FieldWorkspaceID = "workspace_id"
 	// FieldCreatedAt holds the string denoting the created_at field in the database.
@@ -47,8 +44,7 @@ var Columns = []string{
 	FieldID,
 	FieldName,
 	FieldSubject,
-	FieldBodyHTML,
-	FieldBodyFormat,
+	FieldBody,
 	FieldWorkspaceID,
 	FieldCreatedAt,
 	FieldUpdatedAt,
@@ -69,8 +65,8 @@ var (
 	NameValidator func(string) error
 	// DefaultSubject holds the default value on creation for the "subject" field.
 	DefaultSubject string
-	// DefaultBodyHTML holds the default value on creation for the "body_html" field.
-	DefaultBodyHTML string
+	// DefaultBody holds the default value on creation for the "body" field.
+	DefaultBody string
 	// DefaultCreatedAt holds the default value on creation for the "created_at" field.
 	DefaultCreatedAt func() time.Time
 	// DefaultUpdatedAt holds the default value on creation for the "updated_at" field.
@@ -78,32 +74,6 @@ var (
 	// UpdateDefaultUpdatedAt holds the default value on update for the "updated_at" field.
 	UpdateDefaultUpdatedAt func() time.Time
 )
-
-// BodyFormat defines the type for the "body_format" enum field.
-type BodyFormat string
-
-// BodyFormatHTML is the default value of the BodyFormat enum.
-const DefaultBodyFormat = BodyFormatHTML
-
-// BodyFormat values.
-const (
-	BodyFormatHTML BodyFormat = "html"
-	BodyFormatMjml BodyFormat = "mjml"
-)
-
-func (bf BodyFormat) String() string {
-	return string(bf)
-}
-
-// BodyFormatValidator is a validator for the "body_format" field enum values. It is called by the builders before save.
-func BodyFormatValidator(bf BodyFormat) error {
-	switch bf {
-	case BodyFormatHTML, BodyFormatMjml:
-		return nil
-	default:
-		return fmt.Errorf("emailtemplate: invalid enum value for body_format field: %q", bf)
-	}
-}
 
 // OrderOption defines the ordering options for the EmailTemplate queries.
 type OrderOption func(*sql.Selector)
@@ -123,14 +93,9 @@ func BySubject(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldSubject, opts...).ToFunc()
 }
 
-// ByBodyHTML orders the results by the body_html field.
-func ByBodyHTML(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldBodyHTML, opts...).ToFunc()
-}
-
-// ByBodyFormat orders the results by the body_format field.
-func ByBodyFormat(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldBodyFormat, opts...).ToFunc()
+// ByBody orders the results by the body field.
+func ByBody(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldBody, opts...).ToFunc()
 }
 
 // ByWorkspaceID orders the results by the workspace_id field.

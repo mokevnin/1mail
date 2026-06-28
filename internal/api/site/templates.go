@@ -71,11 +71,8 @@ func (h *Handlers) SiteTemplatesCreate(ctx context.Context, req *siteapi.SiteCre
 	if v, ok := req.Subject.Get(); ok {
 		q = q.SetSubject(v)
 	}
-	if v, ok := req.BodyHtml.Get(); ok {
-		q = q.SetBodyHTML(v)
-	}
-	if v, ok := req.BodyFormat.Get(); ok {
-		q = q.SetBodyFormat(emailtemplate.BodyFormat(v))
+	if v, ok := req.Body.Get(); ok {
+		q = q.SetBody(v)
 	}
 	tpl, err := q.Save(ctx)
 	if err != nil {
@@ -134,10 +131,7 @@ func (h *Handlers) SiteTemplatesUpdate(ctx context.Context, req *siteapi.SiteUpd
 		Where(emailtemplate.WorkspaceID(ws)).
 		SetNillableName(convert.StringPtr(req.Name)).
 		SetNillableSubject(convert.StringPtr(req.Subject)).
-		SetNillableBodyHTML(convert.StringPtr(req.BodyHtml))
-	if v, ok := req.BodyFormat.Get(); ok {
-		q = q.SetBodyFormat(emailtemplate.BodyFormat(v))
-	}
+		SetNillableBody(convert.StringPtr(req.Body))
 	tpl, err := q.Save(ctx)
 	if ent.IsNotFound(err) {
 		v := siteapi.SiteTemplatesUpdateNotFound(problem(http.StatusNotFound, "template not found"))

@@ -18,8 +18,7 @@ func (c *ConverterImpl) BroadcastToResource(source *ent.Broadcast) site.SiteBroa
 		siteapiSiteBroadcastResource.Subject = (*source).Subject
 		siteapiSiteBroadcastResource.FromName = optNilString((*source).FromName)
 		siteapiSiteBroadcastResource.FromEmail = optNilEmailAddress((*source).FromEmail)
-		siteapiSiteBroadcastResource.BodyHtml = (*source).BodyHTML
-		siteapiSiteBroadcastResource.BodyFormat = site.SiteEmailBodyFormat((*source).BodyFormat)
+		siteapiSiteBroadcastResource.Body = (*source).Body
 		siteapiSiteBroadcastResource.BodyText = (*source).BodyText
 		siteapiSiteBroadcastResource.SegmentId = optNilEntityID((*source).SegmentID)
 		siteapiSiteBroadcastResource.IntegrationId = optNilEntityID((*source).IntegrationID)
@@ -53,8 +52,7 @@ func (c *ConverterImpl) EmailTemplateToResource(source *ent.EmailTemplate) site.
 		siteapiSiteEmailTemplateResource.ID = entityID((*source).ID)
 		siteapiSiteEmailTemplateResource.Name = (*source).Name
 		siteapiSiteEmailTemplateResource.Subject = (*source).Subject
-		siteapiSiteEmailTemplateResource.BodyFormat = site.SiteEmailBodyFormat((*source).BodyFormat)
-		siteapiSiteEmailTemplateResource.BodyHtml = (*source).BodyHTML
+		siteapiSiteEmailTemplateResource.Body = (*source).Body
 		siteapiSiteEmailTemplateResource.CreatedAt = timestamp((*source).CreatedAt)
 		siteapiSiteEmailTemplateResource.UpdatedAt = timestamp((*source).UpdatedAt)
 	}

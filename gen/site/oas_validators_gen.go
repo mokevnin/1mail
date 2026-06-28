@@ -187,17 +187,6 @@ func (s *SiteBroadcastResource) Validate() error {
 		})
 	}
 	if err := func() error {
-		if err := s.BodyFormat.Validate(); err != nil {
-			return err
-		}
-		return nil
-	}(); err != nil {
-		failures = append(failures, validate.FieldError{
-			Name:  "bodyFormat",
-			Error: err,
-		})
-	}
-	if err := func() error {
 		if value, ok := s.SegmentId.Get(); ok {
 			if err := func() error {
 				if err := value.Validate(); err != nil {
@@ -708,24 +697,6 @@ func (s *SiteCreateBroadcastInput) Validate() error {
 		})
 	}
 	if err := func() error {
-		if value, ok := s.BodyFormat.Get(); ok {
-			if err := func() error {
-				if err := value.Validate(); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return err
-			}
-		}
-		return nil
-	}(); err != nil {
-		failures = append(failures, validate.FieldError{
-			Name:  "bodyFormat",
-			Error: err,
-		})
-	}
-	if err := func() error {
 		if value, ok := s.SegmentId.Get(); ok {
 			if err := func() error {
 				if err := value.Validate(); err != nil {
@@ -781,36 +752,6 @@ func (s *SiteCreateContactInput) Validate() error {
 	}(); err != nil {
 		failures = append(failures, validate.FieldError{
 			Name:  "email",
-			Error: err,
-		})
-	}
-	if len(failures) > 0 {
-		return &validate.Error{Fields: failures}
-	}
-	return nil
-}
-
-func (s *SiteCreateEmailTemplateInput) Validate() error {
-	if s == nil {
-		return validate.ErrNilPointer
-	}
-
-	var failures []validate.FieldError
-	if err := func() error {
-		if value, ok := s.BodyFormat.Get(); ok {
-			if err := func() error {
-				if err := value.Validate(); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return err
-			}
-		}
-		return nil
-	}(); err != nil {
-		failures = append(failures, validate.FieldError{
-			Name:  "bodyFormat",
 			Error: err,
 		})
 	}
@@ -912,17 +853,6 @@ func (s *SiteCreateTokenResponse) Validate() error {
 	return nil
 }
 
-func (s SiteEmailBodyFormat) Validate() error {
-	switch s {
-	case "html":
-		return nil
-	case "mjml":
-		return nil
-	default:
-		return errors.Errorf("invalid value: %v", s)
-	}
-}
-
 func (s *SiteEmailTemplateResource) Validate() error {
 	if s == nil {
 		return validate.ErrNilPointer
@@ -937,17 +867,6 @@ func (s *SiteEmailTemplateResource) Validate() error {
 	}(); err != nil {
 		failures = append(failures, validate.FieldError{
 			Name:  "id",
-			Error: err,
-		})
-	}
-	if err := func() error {
-		if err := s.BodyFormat.Validate(); err != nil {
-			return err
-		}
-		return nil
-	}(); err != nil {
-		failures = append(failures, validate.FieldError{
-			Name:  "bodyFormat",
 			Error: err,
 		})
 	}
@@ -1966,24 +1885,6 @@ func (s *SiteUpdateBroadcastInput) Validate() error {
 		})
 	}
 	if err := func() error {
-		if value, ok := s.BodyFormat.Get(); ok {
-			if err := func() error {
-				if err := value.Validate(); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return err
-			}
-		}
-		return nil
-	}(); err != nil {
-		failures = append(failures, validate.FieldError{
-			Name:  "bodyFormat",
-			Error: err,
-		})
-	}
-	if err := func() error {
 		if value, ok := s.SegmentId.Get(); ok {
 			if err := func() error {
 				if err := value.Validate(); err != nil {
@@ -2016,36 +1917,6 @@ func (s *SiteUpdateBroadcastInput) Validate() error {
 	}(); err != nil {
 		failures = append(failures, validate.FieldError{
 			Name:  "integrationId",
-			Error: err,
-		})
-	}
-	if len(failures) > 0 {
-		return &validate.Error{Fields: failures}
-	}
-	return nil
-}
-
-func (s *SiteUpdateEmailTemplateInput) Validate() error {
-	if s == nil {
-		return validate.ErrNilPointer
-	}
-
-	var failures []validate.FieldError
-	if err := func() error {
-		if value, ok := s.BodyFormat.Get(); ok {
-			if err := func() error {
-				if err := value.Validate(); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return err
-			}
-		}
-		return nil
-	}(); err != nil {
-		failures = append(failures, validate.FieldError{
-			Name:  "bodyFormat",
 			Error: err,
 		})
 	}

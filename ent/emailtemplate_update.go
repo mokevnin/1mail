@@ -57,30 +57,16 @@ func (_u *EmailTemplateUpdate) SetNillableSubject(v *string) *EmailTemplateUpdat
 	return _u
 }
 
-// SetBodyHTML sets the "body_html" field.
-func (_u *EmailTemplateUpdate) SetBodyHTML(v string) *EmailTemplateUpdate {
-	_u.mutation.SetBodyHTML(v)
+// SetBody sets the "body" field.
+func (_u *EmailTemplateUpdate) SetBody(v string) *EmailTemplateUpdate {
+	_u.mutation.SetBody(v)
 	return _u
 }
 
-// SetNillableBodyHTML sets the "body_html" field if the given value is not nil.
-func (_u *EmailTemplateUpdate) SetNillableBodyHTML(v *string) *EmailTemplateUpdate {
+// SetNillableBody sets the "body" field if the given value is not nil.
+func (_u *EmailTemplateUpdate) SetNillableBody(v *string) *EmailTemplateUpdate {
 	if v != nil {
-		_u.SetBodyHTML(*v)
-	}
-	return _u
-}
-
-// SetBodyFormat sets the "body_format" field.
-func (_u *EmailTemplateUpdate) SetBodyFormat(v emailtemplate.BodyFormat) *EmailTemplateUpdate {
-	_u.mutation.SetBodyFormat(v)
-	return _u
-}
-
-// SetNillableBodyFormat sets the "body_format" field if the given value is not nil.
-func (_u *EmailTemplateUpdate) SetNillableBodyFormat(v *emailtemplate.BodyFormat) *EmailTemplateUpdate {
-	if v != nil {
-		_u.SetBodyFormat(*v)
+		_u.SetBody(*v)
 	}
 	return _u
 }
@@ -164,11 +150,6 @@ func (_u *EmailTemplateUpdate) check() error {
 			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "EmailTemplate.name": %w`, err)}
 		}
 	}
-	if v, ok := _u.mutation.BodyFormat(); ok {
-		if err := emailtemplate.BodyFormatValidator(v); err != nil {
-			return &ValidationError{Name: "body_format", err: fmt.Errorf(`ent: validator failed for field "EmailTemplate.body_format": %w`, err)}
-		}
-	}
 	if _u.mutation.WorkspaceCleared() && len(_u.mutation.WorkspaceIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "EmailTemplate.workspace"`)
 	}
@@ -193,11 +174,8 @@ func (_u *EmailTemplateUpdate) sqlSave(ctx context.Context) (_node int, err erro
 	if value, ok := _u.mutation.Subject(); ok {
 		_spec.SetField(emailtemplate.FieldSubject, field.TypeString, value)
 	}
-	if value, ok := _u.mutation.BodyHTML(); ok {
-		_spec.SetField(emailtemplate.FieldBodyHTML, field.TypeString, value)
-	}
-	if value, ok := _u.mutation.BodyFormat(); ok {
-		_spec.SetField(emailtemplate.FieldBodyFormat, field.TypeEnum, value)
+	if value, ok := _u.mutation.Body(); ok {
+		_spec.SetField(emailtemplate.FieldBody, field.TypeString, value)
 	}
 	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(emailtemplate.FieldUpdatedAt, field.TypeTime, value)
@@ -279,30 +257,16 @@ func (_u *EmailTemplateUpdateOne) SetNillableSubject(v *string) *EmailTemplateUp
 	return _u
 }
 
-// SetBodyHTML sets the "body_html" field.
-func (_u *EmailTemplateUpdateOne) SetBodyHTML(v string) *EmailTemplateUpdateOne {
-	_u.mutation.SetBodyHTML(v)
+// SetBody sets the "body" field.
+func (_u *EmailTemplateUpdateOne) SetBody(v string) *EmailTemplateUpdateOne {
+	_u.mutation.SetBody(v)
 	return _u
 }
 
-// SetNillableBodyHTML sets the "body_html" field if the given value is not nil.
-func (_u *EmailTemplateUpdateOne) SetNillableBodyHTML(v *string) *EmailTemplateUpdateOne {
+// SetNillableBody sets the "body" field if the given value is not nil.
+func (_u *EmailTemplateUpdateOne) SetNillableBody(v *string) *EmailTemplateUpdateOne {
 	if v != nil {
-		_u.SetBodyHTML(*v)
-	}
-	return _u
-}
-
-// SetBodyFormat sets the "body_format" field.
-func (_u *EmailTemplateUpdateOne) SetBodyFormat(v emailtemplate.BodyFormat) *EmailTemplateUpdateOne {
-	_u.mutation.SetBodyFormat(v)
-	return _u
-}
-
-// SetNillableBodyFormat sets the "body_format" field if the given value is not nil.
-func (_u *EmailTemplateUpdateOne) SetNillableBodyFormat(v *emailtemplate.BodyFormat) *EmailTemplateUpdateOne {
-	if v != nil {
-		_u.SetBodyFormat(*v)
+		_u.SetBody(*v)
 	}
 	return _u
 }
@@ -399,11 +363,6 @@ func (_u *EmailTemplateUpdateOne) check() error {
 			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "EmailTemplate.name": %w`, err)}
 		}
 	}
-	if v, ok := _u.mutation.BodyFormat(); ok {
-		if err := emailtemplate.BodyFormatValidator(v); err != nil {
-			return &ValidationError{Name: "body_format", err: fmt.Errorf(`ent: validator failed for field "EmailTemplate.body_format": %w`, err)}
-		}
-	}
 	if _u.mutation.WorkspaceCleared() && len(_u.mutation.WorkspaceIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "EmailTemplate.workspace"`)
 	}
@@ -445,11 +404,8 @@ func (_u *EmailTemplateUpdateOne) sqlSave(ctx context.Context) (_node *EmailTemp
 	if value, ok := _u.mutation.Subject(); ok {
 		_spec.SetField(emailtemplate.FieldSubject, field.TypeString, value)
 	}
-	if value, ok := _u.mutation.BodyHTML(); ok {
-		_spec.SetField(emailtemplate.FieldBodyHTML, field.TypeString, value)
-	}
-	if value, ok := _u.mutation.BodyFormat(); ok {
-		_spec.SetField(emailtemplate.FieldBodyFormat, field.TypeEnum, value)
+	if value, ok := _u.mutation.Body(); ok {
+		_spec.SetField(emailtemplate.FieldBody, field.TypeString, value)
 	}
 	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(emailtemplate.FieldUpdatedAt, field.TypeTime, value)

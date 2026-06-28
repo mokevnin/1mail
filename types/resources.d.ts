@@ -36,19 +36,25 @@ export default interface Resources {
       "saveErrorTitle": "Failed to save contact",
       "segmentDeleteErrorTitle": "Failed to delete segment",
       "segmentLoadErrorTitle": "Failed to load segments",
-      "segmentSaveErrorTitle": "Failed to save segment"
+      "segmentSaveErrorTitle": "Failed to save segment",
+      "templateDeleteErrorTitle": "Failed to delete template",
+      "templateLoadErrorTitle": "Failed to load templates",
+      "templateSaveErrorTitle": "Failed to save template",
+      "testSendErrorTitle": "Failed to send test"
     },
     "broadcasts": {
       "addBroadcast": "New broadcast",
       "audienceAll": "All active contacts",
       "audienceLabel": "Audience",
       "audienceNote": "Unsubscribed contacts are always excluded.",
+      "bodyHint": "MJML markup. Use merge tags like {{first_name}}.",
       "bodyLabel": "Email body",
       "createTitle": "New broadcast",
       "deliveryHint": "Send now, or schedule it for a future time. Only draft broadcasts can be sent.",
       "deliveryLabel": "Delivery",
       "editTitle": "Edit broadcast",
       "emptyState": "Create your first broadcast.",
+      "formatLabel": "Format",
       "fromEmailLabel": "From email",
       "fromNameLabel": "From name",
       "nameLabel": "Name",
@@ -75,7 +81,12 @@ export default interface Resources {
         "sent": "Sent"
       },
       "statusLabel": "Status",
-      "subjectLabel": "Subject"
+      "subjectLabel": "Subject",
+      "testSend": "Test send",
+      "testSendButton": "Send test",
+      "testSendEmailLabel": "Send a test to",
+      "useTemplate": "Start from template",
+      "useTemplateNone": "— none —"
     },
     "comingSoon": {
       "description": "This section is not available yet.",
@@ -111,7 +122,8 @@ export default interface Resources {
       "overview": "Overview",
       "segments": "Segments",
       "settings": "Settings",
-      "soon": "Soon"
+      "soon": "Soon",
+      "templates": "Templates"
     },
     "notifications": {
       "broadcastCreated": "Broadcast created",
@@ -125,7 +137,11 @@ export default interface Resources {
       "segmentCreated": "Segment created",
       "segmentDeleted": "Segment deleted",
       "segmentUpdated": "Segment updated",
-      "successTitle": "Success"
+      "successTitle": "Success",
+      "templateCreated": "Template created",
+      "templateDeleted": "Template deleted",
+      "templateUpdated": "Template updated",
+      "testSent": "Test email sent"
     },
     "overview": {
       "comingSoon": "More metrics coming soon",
@@ -250,6 +266,20 @@ export default interface Resources {
       "lastName": "Last name",
       "status": "Status",
       "timeZone": "Time zone"
+    },
+    "templates": {
+      "addTemplate": "New template",
+      "bodyHint": "MJML markup. Use merge tags like {{first_name}}.",
+      "bodyLabel": "Body",
+      "createTitle": "New template",
+      "editTitle": "Edit template",
+      "emptyState": "Create your first template.",
+      "formatHtml": "Rich text (HTML)",
+      "formatLabel": "Format",
+      "formatMjml": "MJML",
+      "nameLabel": "Name",
+      "noRecords": "No templates yet",
+      "subjectLabel": "Subject"
     },
     "theme": {
       "toggleLabel": "Toggle color scheme"

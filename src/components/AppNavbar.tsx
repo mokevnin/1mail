@@ -5,6 +5,7 @@ import {
   IconMailbox,
   IconRobot,
   IconSettings,
+  IconTemplate,
   IconUsers,
   IconUsersGroup,
 } from '@tabler/icons-react'
@@ -17,6 +18,7 @@ import {
   overviewRoute,
   segmentsRoute,
   settingsRoute,
+  templatesRoute,
 } from '../router.tsx'
 
 // AppNavbar renders the workspace-scoped sidebar. Active sections are built
@@ -54,6 +56,13 @@ export function AppNavbar({ slug }: { slug: string }) {
       icon: <IconMailbox size={18} />,
       active: Boolean(matchRoute({ to: broadcastsRoute.to, params: { slug }, fuzzy: true })),
       onClick: () => navigate({ to: broadcastsRoute.to, params: { slug } }),
+    },
+    {
+      key: 'templates',
+      label: t(($) => $.nav.templates),
+      icon: <IconTemplate size={18} />,
+      active: Boolean(matchRoute({ to: templatesRoute.to, params: { slug }, fuzzy: true })),
+      onClick: () => navigate({ to: templatesRoute.to, params: { slug } }),
     },
     {
       key: 'activity',

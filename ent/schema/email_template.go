@@ -33,11 +33,9 @@ func (EmailTemplate) Fields() []ent.Field {
 			NotEmpty(),
 		field.String("subject").
 			Default(""),
-		field.String("body_html").
+		// Email body authored as MJML; compiled to email-safe HTML on send.
+		field.String("body").
 			Default(""),
-		field.Enum("body_format").
-			Values("html", "mjml").
-			Default("html"),
 		field.Int64("workspace_id"),
 		field.Time("created_at").
 			Default(time.Now).

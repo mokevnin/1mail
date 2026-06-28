@@ -51,7 +51,7 @@ func TestSendBroadcastDeliversToActiveContacts(t *testing.T) {
 		SetWorkspaceID(acmeWorkspaceID).
 		SetName("Engine test").
 		SetSubject("Hello {{ first_name }}").
-		SetBodyHTML("<p>Hi {{ first_name }}, welcome!</p>").
+		SetBody("<mjml><mj-body><mj-section><mj-column><mj-text>Hi {{ first_name }}, welcome!</mj-text></mj-column></mj-section></mj-body></mjml>").
 		SetStatus(broadcast.StatusSending).
 		Save(ctx)
 	require.NoError(t, err)
@@ -106,7 +106,7 @@ func TestSendBroadcastToRuleSegment(t *testing.T) {
 	require.NoError(t, err)
 
 	b, err := env.DB.Broadcast.Create().SetWorkspaceID(acmeWorkspaceID).
-		SetName("Segmented").SetSubject("Hi").SetBodyHTML("<p>Hi</p>").
+		SetName("Segmented").SetSubject("Hi").SetBody("<mjml><mj-body><mj-section><mj-column><mj-text>Hi</mj-text></mj-column></mj-section></mj-body></mjml>").
 		SetSegmentID(seg.ID).Save(ctx)
 	require.NoError(t, err)
 

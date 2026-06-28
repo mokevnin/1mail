@@ -12,6 +12,7 @@ import {
   siteBroadcastsListQueryKey,
   siteBroadcastsScheduleMutation,
   siteBroadcastsSendMutation,
+  siteBroadcastsTestSendMutation,
   siteBroadcastsUpdateMutation,
 } from '../../generated/site/@tanstack/react-query.gen.ts'
 import type { SiteBroadcastResource } from '../../generated/site/types.gen.ts'
@@ -25,6 +26,7 @@ export function BroadcastEditPage() {
   const { slug, broadcastId } = broadcastsEditRoute.useParams()
   const queryClient = useQueryClient()
   const [scheduledAt, setScheduledAt] = useState('')
+  const [testEmail, setTestEmail] = useState('')
 
   const form = useForm<BroadcastFormValues>({
     initialValues: {
@@ -32,7 +34,7 @@ export function BroadcastEditPage() {
       subject: '',
       fromName: '',
       fromEmail: '',
-      bodyHtml: '',
+      body: '',
       segmentId: '',
     },
   })
@@ -48,7 +50,7 @@ export function BroadcastEditPage() {
       subject: data.subject,
       fromName: data.fromName ?? '',
       fromEmail: data.fromEmail ?? '',
-      bodyHtml: data.bodyHtml,
+      body: data.body,
       segmentId: data.segmentId ?? '',
     })
   })
@@ -121,6 +123,18 @@ export function BroadcastEditPage() {
     onError: (error) => notifyError(error, 'broadcastSendErrorTitle'),
   })
 
+  const testSendMutation = useMutation({
+    ...siteBroadcastsTestSendMutation(),
+    onSuccess: () => {
+      notifications.show({
+        color: 'teal',
+        title: t(($) => $.notifications.successTitle),
+        message: t(($) => $.notifications.testSent),
+      })
+    },
+    onError: (error) => notifyError(error, 'broadcastSendErrorTitle'),
+  })
+
   if (getQuery.isLoading) return <Loader />
 
   if (getQuery.isError) {
@@ -149,7 +163,7 @@ export function BroadcastEditPage() {
               subject: values.subject.trim(),
               fromName: values.fromName.trim() || null,
               fromEmail: values.fromEmail.trim() || null,
-              bodyHtml: values.bodyHtml,
+              body: values.body,
               segmentId: values.segmentId || null,
             },
           })
@@ -187,6 +201,28 @@ export function BroadcastEditPage() {
           }
         >
           {t(($) => $.broadcasts.schedule)}
+        </Button>
+      </Group>
+
+      <Group align="flex-end">
+        <TextInput
+          type="email"
+          label={t(($) => $.broadcasts.testSendEmailLabel)}
+          value={testEmail}
+          onChange={(e) => setTestEmail(e.currentTarget.value)}
+        />
+        <Button
+          variant="default"
+          disabled={testEmail === ''}
+          loading={testSendMutation.isPending}
+          onClick={() =>
+            testSendMutation.mutate({
+              path: { workspaceSlug: slug, id: broadcastId },
+              body: { email: testEmail },
+            })
+          }
+        >
+          {t(($) => $.broadcasts.testSendButton)}
         </Button>
       </Group>
     </Stack>

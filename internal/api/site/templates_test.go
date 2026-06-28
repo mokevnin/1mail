@@ -17,16 +17,14 @@ func TestSiteTemplatesCRUD(t *testing.T) {
 	slug := "acme"
 
 	created, err := c.SiteTemplatesCreate(ctx, &siteapi.SiteCreateEmailTemplateInput{
-		Name:       "Welcome",
-		Subject:    siteapi.NewOptString("Welcome {{ first_name }}"),
-		BodyFormat: siteapi.NewOptSiteEmailBodyFormat(siteapi.SiteEmailBodyFormatMjml),
-		BodyHtml:   siteapi.NewOptString("<mjml><mj-body><mj-section><mj-column><mj-text>Hi</mj-text></mj-column></mj-section></mj-body></mjml>"),
+		Name:    "Welcome",
+		Subject: siteapi.NewOptString("Welcome {{ first_name }}"),
+		Body:    siteapi.NewOptString("<mjml><mj-body><mj-section><mj-column><mj-text>Hi</mj-text></mj-column></mj-section></mj-body></mjml>"),
 	}, siteapi.SiteTemplatesCreateParams{WorkspaceSlug: slug})
 	require.NoError(t, err)
 	res, ok := created.(*siteapi.SiteEmailTemplateResource)
 	require.Truef(t, ok, "got %T", created)
 	assert.Equal(t, "Welcome", res.Name)
-	assert.Equal(t, siteapi.SiteEmailBodyFormatMjml, res.BodyFormat)
 
 	list, err := c.SiteTemplatesList(ctx, siteapi.SiteTemplatesListParams{WorkspaceSlug: slug})
 	require.NoError(t, err)

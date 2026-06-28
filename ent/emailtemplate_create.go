@@ -41,30 +41,16 @@ func (_c *EmailTemplateCreate) SetNillableSubject(v *string) *EmailTemplateCreat
 	return _c
 }
 
-// SetBodyHTML sets the "body_html" field.
-func (_c *EmailTemplateCreate) SetBodyHTML(v string) *EmailTemplateCreate {
-	_c.mutation.SetBodyHTML(v)
+// SetBody sets the "body" field.
+func (_c *EmailTemplateCreate) SetBody(v string) *EmailTemplateCreate {
+	_c.mutation.SetBody(v)
 	return _c
 }
 
-// SetNillableBodyHTML sets the "body_html" field if the given value is not nil.
-func (_c *EmailTemplateCreate) SetNillableBodyHTML(v *string) *EmailTemplateCreate {
+// SetNillableBody sets the "body" field if the given value is not nil.
+func (_c *EmailTemplateCreate) SetNillableBody(v *string) *EmailTemplateCreate {
 	if v != nil {
-		_c.SetBodyHTML(*v)
-	}
-	return _c
-}
-
-// SetBodyFormat sets the "body_format" field.
-func (_c *EmailTemplateCreate) SetBodyFormat(v emailtemplate.BodyFormat) *EmailTemplateCreate {
-	_c.mutation.SetBodyFormat(v)
-	return _c
-}
-
-// SetNillableBodyFormat sets the "body_format" field if the given value is not nil.
-func (_c *EmailTemplateCreate) SetNillableBodyFormat(v *emailtemplate.BodyFormat) *EmailTemplateCreate {
-	if v != nil {
-		_c.SetBodyFormat(*v)
+		_c.SetBody(*v)
 	}
 	return _c
 }
@@ -153,13 +139,9 @@ func (_c *EmailTemplateCreate) defaults() {
 		v := emailtemplate.DefaultSubject
 		_c.mutation.SetSubject(v)
 	}
-	if _, ok := _c.mutation.BodyHTML(); !ok {
-		v := emailtemplate.DefaultBodyHTML
-		_c.mutation.SetBodyHTML(v)
-	}
-	if _, ok := _c.mutation.BodyFormat(); !ok {
-		v := emailtemplate.DefaultBodyFormat
-		_c.mutation.SetBodyFormat(v)
+	if _, ok := _c.mutation.Body(); !ok {
+		v := emailtemplate.DefaultBody
+		_c.mutation.SetBody(v)
 	}
 	if _, ok := _c.mutation.CreatedAt(); !ok {
 		v := emailtemplate.DefaultCreatedAt()
@@ -184,16 +166,8 @@ func (_c *EmailTemplateCreate) check() error {
 	if _, ok := _c.mutation.Subject(); !ok {
 		return &ValidationError{Name: "subject", err: errors.New(`ent: missing required field "EmailTemplate.subject"`)}
 	}
-	if _, ok := _c.mutation.BodyHTML(); !ok {
-		return &ValidationError{Name: "body_html", err: errors.New(`ent: missing required field "EmailTemplate.body_html"`)}
-	}
-	if _, ok := _c.mutation.BodyFormat(); !ok {
-		return &ValidationError{Name: "body_format", err: errors.New(`ent: missing required field "EmailTemplate.body_format"`)}
-	}
-	if v, ok := _c.mutation.BodyFormat(); ok {
-		if err := emailtemplate.BodyFormatValidator(v); err != nil {
-			return &ValidationError{Name: "body_format", err: fmt.Errorf(`ent: validator failed for field "EmailTemplate.body_format": %w`, err)}
-		}
+	if _, ok := _c.mutation.Body(); !ok {
+		return &ValidationError{Name: "body", err: errors.New(`ent: missing required field "EmailTemplate.body"`)}
 	}
 	if _, ok := _c.mutation.WorkspaceID(); !ok {
 		return &ValidationError{Name: "workspace_id", err: errors.New(`ent: missing required field "EmailTemplate.workspace_id"`)}
@@ -247,13 +221,9 @@ func (_c *EmailTemplateCreate) createSpec() (*EmailTemplate, *sqlgraph.CreateSpe
 		_spec.SetField(emailtemplate.FieldSubject, field.TypeString, value)
 		_node.Subject = value
 	}
-	if value, ok := _c.mutation.BodyHTML(); ok {
-		_spec.SetField(emailtemplate.FieldBodyHTML, field.TypeString, value)
-		_node.BodyHTML = value
-	}
-	if value, ok := _c.mutation.BodyFormat(); ok {
-		_spec.SetField(emailtemplate.FieldBodyFormat, field.TypeEnum, value)
-		_node.BodyFormat = value
+	if value, ok := _c.mutation.Body(); ok {
+		_spec.SetField(emailtemplate.FieldBody, field.TypeString, value)
+		_node.Body = value
 	}
 	if value, ok := _c.mutation.CreatedAt(); ok {
 		_spec.SetField(emailtemplate.FieldCreatedAt, field.TypeTime, value)
