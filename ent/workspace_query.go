@@ -13,6 +13,8 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/mokevnin/1mail/ent/apitoken"
+	"github.com/mokevnin/1mail/ent/automation"
+	"github.com/mokevnin/1mail/ent/automationrun"
 	"github.com/mokevnin/1mail/ent/broadcast"
 	"github.com/mokevnin/1mail/ent/broadcastrecipient"
 	"github.com/mokevnin/1mail/ent/contact"
@@ -44,6 +46,8 @@ type WorkspaceQuery struct {
 	withBroadcasts          *BroadcastQuery
 	withBroadcastRecipients *BroadcastRecipientQuery
 	withEmailTemplates      *EmailTemplateQuery
+	withAutomations         *AutomationQuery
+	withAutomationRuns      *AutomationRunQuery
 	withUser                *UserQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
@@ -301,6 +305,50 @@ func (_q *WorkspaceQuery) QueryEmailTemplates() *EmailTemplateQuery {
 	return query
 }
 
+// QueryAutomations chains the current query on the "automations" edge.
+func (_q *WorkspaceQuery) QueryAutomations() *AutomationQuery {
+	query := (&AutomationClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workspace.Table, workspace.FieldID, selector),
+			sqlgraph.To(automation.Table, automation.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, workspace.AutomationsTable, workspace.AutomationsColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryAutomationRuns chains the current query on the "automation_runs" edge.
+func (_q *WorkspaceQuery) QueryAutomationRuns() *AutomationRunQuery {
+	query := (&AutomationRunClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workspace.Table, workspace.FieldID, selector),
+			sqlgraph.To(automationrun.Table, automationrun.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, workspace.AutomationRunsTable, workspace.AutomationRunsColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
 // QueryUser chains the current query on the "user" edge.
 func (_q *WorkspaceQuery) QueryUser() *UserQuery {
 	query := (&UserClient{config: _q.config}).Query()
@@ -525,6 +573,8 @@ func (_q *WorkspaceQuery) Clone() *WorkspaceQuery {
 		withBroadcasts:          _q.withBroadcasts.Clone(),
 		withBroadcastRecipients: _q.withBroadcastRecipients.Clone(),
 		withEmailTemplates:      _q.withEmailTemplates.Clone(),
+		withAutomations:         _q.withAutomations.Clone(),
+		withAutomationRuns:      _q.withAutomationRuns.Clone(),
 		withUser:                _q.withUser.Clone(),
 		// clone intermediate query.
 		sql:  _q.sql.Clone(),
@@ -642,6 +692,28 @@ func (_q *WorkspaceQuery) WithEmailTemplates(opts ...func(*EmailTemplateQuery)) 
 	return _q
 }
 
+// WithAutomations tells the query-builder to eager-load the nodes that are connected to
+// the "automations" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *WorkspaceQuery) WithAutomations(opts ...func(*AutomationQuery)) *WorkspaceQuery {
+	query := (&AutomationClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withAutomations = query
+	return _q
+}
+
+// WithAutomationRuns tells the query-builder to eager-load the nodes that are connected to
+// the "automation_runs" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *WorkspaceQuery) WithAutomationRuns(opts ...func(*AutomationRunQuery)) *WorkspaceQuery {
+	query := (&AutomationRunClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withAutomationRuns = query
+	return _q
+}
+
 // WithUser tells the query-builder to eager-load the nodes that are connected to
 // the "user" edge. The optional arguments are used to configure the query builder of the edge.
 func (_q *WorkspaceQuery) WithUser(opts ...func(*UserQuery)) *WorkspaceQuery {
@@ -731,7 +803,7 @@ func (_q *WorkspaceQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Wo
 	var (
 		nodes       = []*Workspace{}
 		_spec       = _q.querySpec()
-		loadedTypes = [11]bool{
+		loadedTypes = [13]bool{
 			_q.withContacts != nil,
 			_q.withSegments != nil,
 			_q.withEvents != nil,
@@ -742,6 +814,8 @@ func (_q *WorkspaceQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Wo
 			_q.withBroadcasts != nil,
 			_q.withBroadcastRecipients != nil,
 			_q.withEmailTemplates != nil,
+			_q.withAutomations != nil,
+			_q.withAutomationRuns != nil,
 			_q.withUser != nil,
 		}
 	)
@@ -832,6 +906,20 @@ func (_q *WorkspaceQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Wo
 		if err := _q.loadEmailTemplates(ctx, query, nodes,
 			func(n *Workspace) { n.Edges.EmailTemplates = []*EmailTemplate{} },
 			func(n *Workspace, e *EmailTemplate) { n.Edges.EmailTemplates = append(n.Edges.EmailTemplates, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := _q.withAutomations; query != nil {
+		if err := _q.loadAutomations(ctx, query, nodes,
+			func(n *Workspace) { n.Edges.Automations = []*Automation{} },
+			func(n *Workspace, e *Automation) { n.Edges.Automations = append(n.Edges.Automations, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := _q.withAutomationRuns; query != nil {
+		if err := _q.loadAutomationRuns(ctx, query, nodes,
+			func(n *Workspace) { n.Edges.AutomationRuns = []*AutomationRun{} },
+			func(n *Workspace, e *AutomationRun) { n.Edges.AutomationRuns = append(n.Edges.AutomationRuns, e) }); err != nil {
 			return nil, err
 		}
 	}
@@ -1129,6 +1217,66 @@ func (_q *WorkspaceQuery) loadEmailTemplates(ctx context.Context, query *EmailTe
 	}
 	query.Where(predicate.EmailTemplate(func(s *sql.Selector) {
 		s.Where(sql.InValues(s.C(workspace.EmailTemplatesColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.WorkspaceID
+		node, ok := nodeids[fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "workspace_id" returned %v for node %v`, fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (_q *WorkspaceQuery) loadAutomations(ctx context.Context, query *AutomationQuery, nodes []*Workspace, init func(*Workspace), assign func(*Workspace, *Automation)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[int64]*Workspace)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(automation.FieldWorkspaceID)
+	}
+	query.Where(predicate.Automation(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(workspace.AutomationsColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.WorkspaceID
+		node, ok := nodeids[fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "workspace_id" returned %v for node %v`, fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (_q *WorkspaceQuery) loadAutomationRuns(ctx context.Context, query *AutomationRunQuery, nodes []*Workspace, init func(*Workspace), assign func(*Workspace, *AutomationRun)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[int64]*Workspace)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(automationrun.FieldWorkspaceID)
+	}
+	query.Where(predicate.AutomationRun(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(workspace.AutomationRunsColumn), fks...))
 	}))
 	neighbors, err := query.All(ctx)
 	if err != nil {

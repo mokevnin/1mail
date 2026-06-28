@@ -12,6 +12,8 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/mokevnin/1mail/ent/apitoken"
+	"github.com/mokevnin/1mail/ent/automation"
+	"github.com/mokevnin/1mail/ent/automationrun"
 	"github.com/mokevnin/1mail/ent/broadcast"
 	"github.com/mokevnin/1mail/ent/broadcastrecipient"
 	"github.com/mokevnin/1mail/ent/contact"
@@ -257,6 +259,36 @@ func (_u *WorkspaceUpdate) AddEmailTemplates(v ...*EmailTemplate) *WorkspaceUpda
 	return _u.AddEmailTemplateIDs(ids...)
 }
 
+// AddAutomationIDs adds the "automations" edge to the Automation entity by IDs.
+func (_u *WorkspaceUpdate) AddAutomationIDs(ids ...int64) *WorkspaceUpdate {
+	_u.mutation.AddAutomationIDs(ids...)
+	return _u
+}
+
+// AddAutomations adds the "automations" edges to the Automation entity.
+func (_u *WorkspaceUpdate) AddAutomations(v ...*Automation) *WorkspaceUpdate {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddAutomationIDs(ids...)
+}
+
+// AddAutomationRunIDs adds the "automation_runs" edge to the AutomationRun entity by IDs.
+func (_u *WorkspaceUpdate) AddAutomationRunIDs(ids ...int64) *WorkspaceUpdate {
+	_u.mutation.AddAutomationRunIDs(ids...)
+	return _u
+}
+
+// AddAutomationRuns adds the "automation_runs" edges to the AutomationRun entity.
+func (_u *WorkspaceUpdate) AddAutomationRuns(v ...*AutomationRun) *WorkspaceUpdate {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddAutomationRunIDs(ids...)
+}
+
 // SetUser sets the "user" edge to the User entity.
 func (_u *WorkspaceUpdate) SetUser(v *User) *WorkspaceUpdate {
 	return _u.SetUserID(v.ID)
@@ -475,6 +507,48 @@ func (_u *WorkspaceUpdate) RemoveEmailTemplates(v ...*EmailTemplate) *WorkspaceU
 		ids[i] = v[i].ID
 	}
 	return _u.RemoveEmailTemplateIDs(ids...)
+}
+
+// ClearAutomations clears all "automations" edges to the Automation entity.
+func (_u *WorkspaceUpdate) ClearAutomations() *WorkspaceUpdate {
+	_u.mutation.ClearAutomations()
+	return _u
+}
+
+// RemoveAutomationIDs removes the "automations" edge to Automation entities by IDs.
+func (_u *WorkspaceUpdate) RemoveAutomationIDs(ids ...int64) *WorkspaceUpdate {
+	_u.mutation.RemoveAutomationIDs(ids...)
+	return _u
+}
+
+// RemoveAutomations removes "automations" edges to Automation entities.
+func (_u *WorkspaceUpdate) RemoveAutomations(v ...*Automation) *WorkspaceUpdate {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveAutomationIDs(ids...)
+}
+
+// ClearAutomationRuns clears all "automation_runs" edges to the AutomationRun entity.
+func (_u *WorkspaceUpdate) ClearAutomationRuns() *WorkspaceUpdate {
+	_u.mutation.ClearAutomationRuns()
+	return _u
+}
+
+// RemoveAutomationRunIDs removes the "automation_runs" edge to AutomationRun entities by IDs.
+func (_u *WorkspaceUpdate) RemoveAutomationRunIDs(ids ...int64) *WorkspaceUpdate {
+	_u.mutation.RemoveAutomationRunIDs(ids...)
+	return _u
+}
+
+// RemoveAutomationRuns removes "automation_runs" edges to AutomationRun entities.
+func (_u *WorkspaceUpdate) RemoveAutomationRuns(v ...*AutomationRun) *WorkspaceUpdate {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveAutomationRunIDs(ids...)
 }
 
 // ClearUser clears the "user" edge to the User entity.
@@ -1013,6 +1087,96 @@ func (_u *WorkspaceUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	if _u.mutation.AutomationsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   workspace.AutomationsTable,
+			Columns: []string{workspace.AutomationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(automation.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedAutomationsIDs(); len(nodes) > 0 && !_u.mutation.AutomationsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   workspace.AutomationsTable,
+			Columns: []string{workspace.AutomationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(automation.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.AutomationsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   workspace.AutomationsTable,
+			Columns: []string{workspace.AutomationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(automation.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.AutomationRunsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   workspace.AutomationRunsTable,
+			Columns: []string{workspace.AutomationRunsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(automationrun.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedAutomationRunsIDs(); len(nodes) > 0 && !_u.mutation.AutomationRunsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   workspace.AutomationRunsTable,
+			Columns: []string{workspace.AutomationRunsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(automationrun.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.AutomationRunsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   workspace.AutomationRunsTable,
+			Columns: []string{workspace.AutomationRunsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(automationrun.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if _u.mutation.UserCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
@@ -1280,6 +1444,36 @@ func (_u *WorkspaceUpdateOne) AddEmailTemplates(v ...*EmailTemplate) *WorkspaceU
 	return _u.AddEmailTemplateIDs(ids...)
 }
 
+// AddAutomationIDs adds the "automations" edge to the Automation entity by IDs.
+func (_u *WorkspaceUpdateOne) AddAutomationIDs(ids ...int64) *WorkspaceUpdateOne {
+	_u.mutation.AddAutomationIDs(ids...)
+	return _u
+}
+
+// AddAutomations adds the "automations" edges to the Automation entity.
+func (_u *WorkspaceUpdateOne) AddAutomations(v ...*Automation) *WorkspaceUpdateOne {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddAutomationIDs(ids...)
+}
+
+// AddAutomationRunIDs adds the "automation_runs" edge to the AutomationRun entity by IDs.
+func (_u *WorkspaceUpdateOne) AddAutomationRunIDs(ids ...int64) *WorkspaceUpdateOne {
+	_u.mutation.AddAutomationRunIDs(ids...)
+	return _u
+}
+
+// AddAutomationRuns adds the "automation_runs" edges to the AutomationRun entity.
+func (_u *WorkspaceUpdateOne) AddAutomationRuns(v ...*AutomationRun) *WorkspaceUpdateOne {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddAutomationRunIDs(ids...)
+}
+
 // SetUser sets the "user" edge to the User entity.
 func (_u *WorkspaceUpdateOne) SetUser(v *User) *WorkspaceUpdateOne {
 	return _u.SetUserID(v.ID)
@@ -1498,6 +1692,48 @@ func (_u *WorkspaceUpdateOne) RemoveEmailTemplates(v ...*EmailTemplate) *Workspa
 		ids[i] = v[i].ID
 	}
 	return _u.RemoveEmailTemplateIDs(ids...)
+}
+
+// ClearAutomations clears all "automations" edges to the Automation entity.
+func (_u *WorkspaceUpdateOne) ClearAutomations() *WorkspaceUpdateOne {
+	_u.mutation.ClearAutomations()
+	return _u
+}
+
+// RemoveAutomationIDs removes the "automations" edge to Automation entities by IDs.
+func (_u *WorkspaceUpdateOne) RemoveAutomationIDs(ids ...int64) *WorkspaceUpdateOne {
+	_u.mutation.RemoveAutomationIDs(ids...)
+	return _u
+}
+
+// RemoveAutomations removes "automations" edges to Automation entities.
+func (_u *WorkspaceUpdateOne) RemoveAutomations(v ...*Automation) *WorkspaceUpdateOne {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveAutomationIDs(ids...)
+}
+
+// ClearAutomationRuns clears all "automation_runs" edges to the AutomationRun entity.
+func (_u *WorkspaceUpdateOne) ClearAutomationRuns() *WorkspaceUpdateOne {
+	_u.mutation.ClearAutomationRuns()
+	return _u
+}
+
+// RemoveAutomationRunIDs removes the "automation_runs" edge to AutomationRun entities by IDs.
+func (_u *WorkspaceUpdateOne) RemoveAutomationRunIDs(ids ...int64) *WorkspaceUpdateOne {
+	_u.mutation.RemoveAutomationRunIDs(ids...)
+	return _u
+}
+
+// RemoveAutomationRuns removes "automation_runs" edges to AutomationRun entities.
+func (_u *WorkspaceUpdateOne) RemoveAutomationRuns(v ...*AutomationRun) *WorkspaceUpdateOne {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveAutomationRunIDs(ids...)
 }
 
 // ClearUser clears the "user" edge to the User entity.
@@ -2059,6 +2295,96 @@ func (_u *WorkspaceUpdateOne) sqlSave(ctx context.Context) (_node *Workspace, er
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(emailtemplate.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.AutomationsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   workspace.AutomationsTable,
+			Columns: []string{workspace.AutomationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(automation.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedAutomationsIDs(); len(nodes) > 0 && !_u.mutation.AutomationsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   workspace.AutomationsTable,
+			Columns: []string{workspace.AutomationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(automation.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.AutomationsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   workspace.AutomationsTable,
+			Columns: []string{workspace.AutomationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(automation.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.AutomationRunsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   workspace.AutomationRunsTable,
+			Columns: []string{workspace.AutomationRunsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(automationrun.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedAutomationRunsIDs(); len(nodes) > 0 && !_u.mutation.AutomationRunsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   workspace.AutomationRunsTable,
+			Columns: []string{workspace.AutomationRunsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(automationrun.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.AutomationRunsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   workspace.AutomationRunsTable,
+			Columns: []string{workspace.AutomationRunsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(automationrun.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {

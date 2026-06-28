@@ -9,6 +9,12 @@ import (
 // ApiToken is the predicate function for apitoken builders.
 type ApiToken func(*sql.Selector)
 
+// Automation is the predicate function for automation builders.
+type Automation func(*sql.Selector)
+
+// AutomationRun is the predicate function for automationrun builders.
+type AutomationRun func(*sql.Selector)
+
 // Broadcast is the predicate function for broadcast builders.
 type Broadcast func(*sql.Selector)
 

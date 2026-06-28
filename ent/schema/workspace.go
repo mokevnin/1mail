@@ -58,6 +58,8 @@ func (Workspace) Edges() []ent.Edge {
 		edge.To("broadcasts", Broadcast.Type),
 		edge.To("broadcast_recipients", BroadcastRecipient.Type),
 		edge.To("email_templates", EmailTemplate.Type),
+		edge.To("automations", Automation.Type),
+		edge.To("automation_runs", AutomationRun.Type),
 		edge.From("user", User.Type).
 			Ref("workspaces").
 			Field("user_id").

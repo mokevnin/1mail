@@ -29,6 +29,8 @@ type Client struct {
 func NewClient(pool *pgxpool.Pool, entClient *ent.Client, resolver *messaging.Resolver, tracker *tracking.Tracker) (*Client, error) {
 	workers := river.NewWorkers()
 	river.AddWorker(workers, &SendBroadcastWorker{ent: entClient, resolver: resolver, tracker: tracker})
+	river.AddWorker(workers, &EvaluateTriggerWorker{ent: entClient})
+	river.AddWorker(workers, &RunStepWorker{ent: entClient, resolver: resolver})
 
 	rc, err := river.NewClient(riverpgxv5.New(pool), &river.Config{
 		Queues: map[string]river.QueueConfig{
@@ -56,6 +58,19 @@ func (c *Client) EnqueueBroadcast(ctx context.Context, broadcastID int64, schedu
 		opts.ScheduledAt = *scheduledAt
 	}
 	_, err := c.river.Insert(ctx, SendBroadcastArgs{BroadcastID: broadcastID}, opts)
+	return err
+}
+
+// OnEvent enrolls a contact into automations triggered by the given Event action.
+// It is the trigger seam injected into the event-recording paths; a no-op
+// implementation keeps tests inert (no river runtime, writes roll back with the
+// tx). Fire-and-forget: enrollment is best-effort and must never block the write.
+func (c *Client) OnEvent(ctx context.Context, workspaceID, contactID int64, action string) error {
+	_, err := c.river.Insert(ctx, EvaluateTriggerArgs{
+		WorkspaceID: workspaceID,
+		ContactID:   contactID,
+		Action:      action,
+	}, nil)
 	return err
 }
 

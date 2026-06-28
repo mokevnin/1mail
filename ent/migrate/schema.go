@@ -37,6 +37,82 @@ var (
 			},
 		},
 	}
+	// AutomationsColumns holds the columns for the "automations" table.
+	AutomationsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt64, Increment: true},
+		{Name: "name", Type: field.TypeString},
+		{Name: "status", Type: field.TypeEnum, Enums: []string{"draft", "active"}, Default: "draft"},
+		{Name: "trigger_event", Type: field.TypeString},
+		{Name: "definition", Type: field.TypeString, Default: "[]"},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "workspace_id", Type: field.TypeInt64},
+	}
+	// AutomationsTable holds the schema information for the "automations" table.
+	AutomationsTable = &schema.Table{
+		Name:       "automations",
+		Columns:    AutomationsColumns,
+		PrimaryKey: []*schema.Column{AutomationsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "automations_workspaces_automations",
+				Columns:    []*schema.Column{AutomationsColumns[7]},
+				RefColumns: []*schema.Column{WorkspacesColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "automation_workspace_id",
+				Unique:  false,
+				Columns: []*schema.Column{AutomationsColumns[7]},
+			},
+			{
+				Name:    "automation_workspace_id_status_trigger_event",
+				Unique:  false,
+				Columns: []*schema.Column{AutomationsColumns[7], AutomationsColumns[2], AutomationsColumns[3]},
+			},
+		},
+	}
+	// AutomationRunsColumns holds the columns for the "automation_runs" table.
+	AutomationRunsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt64, Increment: true},
+		{Name: "contact_id", Type: field.TypeInt64},
+		{Name: "status", Type: field.TypeEnum, Enums: []string{"active", "completed", "failed"}, Default: "active"},
+		{Name: "current_step", Type: field.TypeInt, Default: 0},
+		{Name: "resume_at", Type: field.TypeTime, Nullable: true},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "automation_id", Type: field.TypeInt64},
+		{Name: "workspace_id", Type: field.TypeInt64},
+	}
+	// AutomationRunsTable holds the schema information for the "automation_runs" table.
+	AutomationRunsTable = &schema.Table{
+		Name:       "automation_runs",
+		Columns:    AutomationRunsColumns,
+		PrimaryKey: []*schema.Column{AutomationRunsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "automation_runs_automations_runs",
+				Columns:    []*schema.Column{AutomationRunsColumns[7]},
+				RefColumns: []*schema.Column{AutomationsColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+			{
+				Symbol:     "automation_runs_workspaces_automation_runs",
+				Columns:    []*schema.Column{AutomationRunsColumns[8]},
+				RefColumns: []*schema.Column{WorkspacesColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "automation_runs_automation_id_contact_id",
+				Unique:  true,
+				Columns: []*schema.Column{AutomationRunsColumns[7], AutomationRunsColumns[1]},
+			},
+		},
+	}
 	// BroadcastsColumns holds the columns for the "broadcasts" table.
 	BroadcastsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt64, Increment: true},
@@ -402,6 +478,8 @@ var (
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
 		APITokensTable,
+		AutomationsTable,
+		AutomationRunsTable,
 		BroadcastsTable,
 		BroadcastRecipientsTable,
 		ContactsTable,
@@ -420,6 +498,15 @@ func init() {
 	APITokensTable.ForeignKeys[0].RefTable = WorkspacesTable
 	APITokensTable.Annotation = &entsql.Annotation{
 		Table: "api_tokens",
+	}
+	AutomationsTable.ForeignKeys[0].RefTable = WorkspacesTable
+	AutomationsTable.Annotation = &entsql.Annotation{
+		Table: "automations",
+	}
+	AutomationRunsTable.ForeignKeys[0].RefTable = AutomationsTable
+	AutomationRunsTable.ForeignKeys[1].RefTable = WorkspacesTable
+	AutomationRunsTable.Annotation = &entsql.Annotation{
+		Table: "automation_runs",
 	}
 	BroadcastsTable.ForeignKeys[0].RefTable = WorkspacesTable
 	BroadcastsTable.Annotation = &entsql.Annotation{

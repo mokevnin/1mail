@@ -21,6 +21,30 @@ func (f ApiTokenFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, er
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.ApiTokenMutation", m)
 }
 
+// The AutomationFunc type is an adapter to allow the use of ordinary
+// function as Automation mutator.
+type AutomationFunc func(context.Context, *ent.AutomationMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f AutomationFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.AutomationMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.AutomationMutation", m)
+}
+
+// The AutomationRunFunc type is an adapter to allow the use of ordinary
+// function as AutomationRun mutator.
+type AutomationRunFunc func(context.Context, *ent.AutomationRunMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f AutomationRunFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.AutomationRunMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.AutomationRunMutation", m)
+}
+
 // The BroadcastFunc type is an adapter to allow the use of ordinary
 // function as Broadcast mutator.
 type BroadcastFunc func(context.Context, *ent.BroadcastMutation) (ent.Value, error)

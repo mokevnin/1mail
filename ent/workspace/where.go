@@ -620,6 +620,52 @@ func HasEmailTemplatesWith(preds ...predicate.EmailTemplate) predicate.Workspace
 	})
 }
 
+// HasAutomations applies the HasEdge predicate on the "automations" edge.
+func HasAutomations() predicate.Workspace {
+	return predicate.Workspace(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, AutomationsTable, AutomationsColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasAutomationsWith applies the HasEdge predicate on the "automations" edge with a given conditions (other predicates).
+func HasAutomationsWith(preds ...predicate.Automation) predicate.Workspace {
+	return predicate.Workspace(func(s *sql.Selector) {
+		step := newAutomationsStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasAutomationRuns applies the HasEdge predicate on the "automation_runs" edge.
+func HasAutomationRuns() predicate.Workspace {
+	return predicate.Workspace(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, AutomationRunsTable, AutomationRunsColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasAutomationRunsWith applies the HasEdge predicate on the "automation_runs" edge with a given conditions (other predicates).
+func HasAutomationRunsWith(preds ...predicate.AutomationRun) predicate.Workspace {
+	return predicate.Workspace(func(s *sql.Selector) {
+		step := newAutomationRunsStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // HasUser applies the HasEdge predicate on the "user" edge.
 func HasUser() predicate.Workspace {
 	return predicate.Workspace(func(s *sql.Selector) {

@@ -251,6 +251,6 @@ func register(injector do.Injector, env string) {
 			return nil, err
 		}
 
-		return server.New(cfg, client.Client, ps.PubSub, jc.Client)
+		return server.New(cfg, client.Client, ps.PubSub, jc.Client, jc.Client)
 	})
 }

@@ -6,6 +6,8 @@ import (
 	"time"
 
 	"github.com/mokevnin/1mail/ent/apitoken"
+	"github.com/mokevnin/1mail/ent/automation"
+	"github.com/mokevnin/1mail/ent/automationrun"
 	"github.com/mokevnin/1mail/ent/broadcast"
 	"github.com/mokevnin/1mail/ent/broadcastrecipient"
 	"github.com/mokevnin/1mail/ent/contact"
@@ -52,6 +54,48 @@ func init() {
 	apitoken.DefaultUpdatedAt = apitokenDescUpdatedAt.Default.(func() time.Time)
 	// apitoken.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	apitoken.UpdateDefaultUpdatedAt = apitokenDescUpdatedAt.UpdateDefault.(func() time.Time)
+	automationFields := schema.Automation{}.Fields()
+	_ = automationFields
+	// automationDescName is the schema descriptor for name field.
+	automationDescName := automationFields[1].Descriptor()
+	// automation.NameValidator is a validator for the "name" field. It is called by the builders before save.
+	automation.NameValidator = automationDescName.Validators[0].(func(string) error)
+	// automationDescTriggerEvent is the schema descriptor for trigger_event field.
+	automationDescTriggerEvent := automationFields[3].Descriptor()
+	// automation.TriggerEventValidator is a validator for the "trigger_event" field. It is called by the builders before save.
+	automation.TriggerEventValidator = automationDescTriggerEvent.Validators[0].(func(string) error)
+	// automationDescDefinition is the schema descriptor for definition field.
+	automationDescDefinition := automationFields[4].Descriptor()
+	// automation.DefaultDefinition holds the default value on creation for the definition field.
+	automation.DefaultDefinition = automationDescDefinition.Default.(string)
+	// automationDescCreatedAt is the schema descriptor for created_at field.
+	automationDescCreatedAt := automationFields[6].Descriptor()
+	// automation.DefaultCreatedAt holds the default value on creation for the created_at field.
+	automation.DefaultCreatedAt = automationDescCreatedAt.Default.(func() time.Time)
+	// automationDescUpdatedAt is the schema descriptor for updated_at field.
+	automationDescUpdatedAt := automationFields[7].Descriptor()
+	// automation.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	automation.DefaultUpdatedAt = automationDescUpdatedAt.Default.(func() time.Time)
+	// automation.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	automation.UpdateDefaultUpdatedAt = automationDescUpdatedAt.UpdateDefault.(func() time.Time)
+	automationrunFields := schema.AutomationRun{}.Fields()
+	_ = automationrunFields
+	// automationrunDescCurrentStep is the schema descriptor for current_step field.
+	automationrunDescCurrentStep := automationrunFields[5].Descriptor()
+	// automationrun.DefaultCurrentStep holds the default value on creation for the current_step field.
+	automationrun.DefaultCurrentStep = automationrunDescCurrentStep.Default.(int)
+	// automationrun.CurrentStepValidator is a validator for the "current_step" field. It is called by the builders before save.
+	automationrun.CurrentStepValidator = automationrunDescCurrentStep.Validators[0].(func(int) error)
+	// automationrunDescCreatedAt is the schema descriptor for created_at field.
+	automationrunDescCreatedAt := automationrunFields[7].Descriptor()
+	// automationrun.DefaultCreatedAt holds the default value on creation for the created_at field.
+	automationrun.DefaultCreatedAt = automationrunDescCreatedAt.Default.(func() time.Time)
+	// automationrunDescUpdatedAt is the schema descriptor for updated_at field.
+	automationrunDescUpdatedAt := automationrunFields[8].Descriptor()
+	// automationrun.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	automationrun.DefaultUpdatedAt = automationrunDescUpdatedAt.Default.(func() time.Time)
+	// automationrun.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	automationrun.UpdateDefaultUpdatedAt = automationrunDescUpdatedAt.UpdateDefault.(func() time.Time)
 	broadcastFields := schema.Broadcast{}.Fields()
 	_ = broadcastFields
 	// broadcastDescName is the schema descriptor for name field.

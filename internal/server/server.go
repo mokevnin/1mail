@@ -33,7 +33,7 @@ import (
 
 // New builds the top-level net/http handler wiring the three ogen-generated
 // API servers (site, external, collect) plus go-pkgz/auth endpoints.
-func New(cfg *config.Config, client *ent.Client, ps *pubsub.PubSub, enqueuer apisite.BroadcastEnqueuer) (http.Handler, error) {
+func New(cfg *config.Config, client *ent.Client, ps *pubsub.PubSub, enqueuer apisite.BroadcastEnqueuer, trigger apisite.AutomationTrigger) (http.Handler, error) {
 	// Credential encryption is mandatory: fail fast at boot if the key is
 	// missing or malformed rather than at first provider write.
 	cipher, err := secrets.NewCipher(cfg.EncryptionKey)
@@ -68,7 +68,7 @@ func New(cfg *config.Config, client *ent.Client, ps *pubsub.PubSub, enqueuer api
 	// Site API — /site (JWT cookie via generated SecurityHandler; register and
 	// direct-login are public per the spec).
 	siteSrv, err := siteapi.NewServer(
-		apisite.NewHandlers(client, ps, cipher, providerCatalog, enqueuer),
+		apisite.NewHandlers(client, ps, cipher, providerCatalog, enqueuer, trigger),
 		apiauth.NewSiteSecurityHandler(cfg.JWTSecret, client),
 		siteapi.WithPathPrefix("/site"),
 		siteapi.WithErrorHandler(problemErrorHandler),
@@ -106,7 +106,7 @@ func New(cfg *config.Config, client *ent.Client, ps *pubsub.PubSub, enqueuer api
 	mux.Handle("/t.js", trackerHandler())
 
 	// Public email engagement endpoints (open pixel, click redirect, unsubscribe).
-	mux.Handle("/e/", trackingHandler(client, tracking.New(cfg.JWTSecret, cfg.AppURL)))
+	mux.Handle("/e/", trackingHandler(client, tracking.New(cfg.JWTSecret, cfg.AppURL), trigger))
 
 	// Catch-all: the embedded SPA (release builds with -tags embed_spa). Most
 	// specific pattern wins, so this never shadows the API prefixes above.

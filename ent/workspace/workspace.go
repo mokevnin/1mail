@@ -46,6 +46,10 @@ const (
 	EdgeBroadcastRecipients = "broadcast_recipients"
 	// EdgeEmailTemplates holds the string denoting the email_templates edge name in mutations.
 	EdgeEmailTemplates = "email_templates"
+	// EdgeAutomations holds the string denoting the automations edge name in mutations.
+	EdgeAutomations = "automations"
+	// EdgeAutomationRuns holds the string denoting the automation_runs edge name in mutations.
+	EdgeAutomationRuns = "automation_runs"
 	// EdgeUser holds the string denoting the user edge name in mutations.
 	EdgeUser = "user"
 	// Table holds the table name of the workspace in the database.
@@ -120,6 +124,20 @@ const (
 	EmailTemplatesInverseTable = "email_templates"
 	// EmailTemplatesColumn is the table column denoting the email_templates relation/edge.
 	EmailTemplatesColumn = "workspace_id"
+	// AutomationsTable is the table that holds the automations relation/edge.
+	AutomationsTable = "automations"
+	// AutomationsInverseTable is the table name for the Automation entity.
+	// It exists in this package in order to avoid circular dependency with the "automation" package.
+	AutomationsInverseTable = "automations"
+	// AutomationsColumn is the table column denoting the automations relation/edge.
+	AutomationsColumn = "workspace_id"
+	// AutomationRunsTable is the table that holds the automation_runs relation/edge.
+	AutomationRunsTable = "automation_runs"
+	// AutomationRunsInverseTable is the table name for the AutomationRun entity.
+	// It exists in this package in order to avoid circular dependency with the "automationrun" package.
+	AutomationRunsInverseTable = "automation_runs"
+	// AutomationRunsColumn is the table column denoting the automation_runs relation/edge.
+	AutomationRunsColumn = "workspace_id"
 	// UserTable is the table that holds the user relation/edge.
 	UserTable = "workspaces"
 	// UserInverseTable is the table name for the User entity.
@@ -343,6 +361,34 @@ func ByEmailTemplates(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 	}
 }
 
+// ByAutomationsCount orders the results by automations count.
+func ByAutomationsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newAutomationsStep(), opts...)
+	}
+}
+
+// ByAutomations orders the results by automations terms.
+func ByAutomations(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newAutomationsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+
+// ByAutomationRunsCount orders the results by automation_runs count.
+func ByAutomationRunsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newAutomationRunsStep(), opts...)
+	}
+}
+
+// ByAutomationRuns orders the results by automation_runs terms.
+func ByAutomationRuns(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newAutomationRunsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+
 // ByUserField orders the results by user field.
 func ByUserField(field string, opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
@@ -417,6 +463,20 @@ func newEmailTemplatesStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(EmailTemplatesInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2M, false, EmailTemplatesTable, EmailTemplatesColumn),
+	)
+}
+func newAutomationsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(AutomationsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, AutomationsTable, AutomationsColumn),
+	)
+}
+func newAutomationRunsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(AutomationRunsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, AutomationRunsTable, AutomationRunsColumn),
 	)
 }
 func newUserStep() *sqlgraph.Step {

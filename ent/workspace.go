@@ -58,11 +58,15 @@ type WorkspaceEdges struct {
 	BroadcastRecipients []*BroadcastRecipient `json:"broadcast_recipients,omitempty"`
 	// EmailTemplates holds the value of the email_templates edge.
 	EmailTemplates []*EmailTemplate `json:"email_templates,omitempty"`
+	// Automations holds the value of the automations edge.
+	Automations []*Automation `json:"automations,omitempty"`
+	// AutomationRuns holds the value of the automation_runs edge.
+	AutomationRuns []*AutomationRun `json:"automation_runs,omitempty"`
 	// User holds the value of the user edge.
 	User *User `json:"user,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [11]bool
+	loadedTypes [13]bool
 }
 
 // ContactsOrErr returns the Contacts value or an error if the edge
@@ -155,12 +159,30 @@ func (e WorkspaceEdges) EmailTemplatesOrErr() ([]*EmailTemplate, error) {
 	return nil, &NotLoadedError{edge: "email_templates"}
 }
 
+// AutomationsOrErr returns the Automations value or an error if the edge
+// was not loaded in eager-loading.
+func (e WorkspaceEdges) AutomationsOrErr() ([]*Automation, error) {
+	if e.loadedTypes[10] {
+		return e.Automations, nil
+	}
+	return nil, &NotLoadedError{edge: "automations"}
+}
+
+// AutomationRunsOrErr returns the AutomationRuns value or an error if the edge
+// was not loaded in eager-loading.
+func (e WorkspaceEdges) AutomationRunsOrErr() ([]*AutomationRun, error) {
+	if e.loadedTypes[11] {
+		return e.AutomationRuns, nil
+	}
+	return nil, &NotLoadedError{edge: "automation_runs"}
+}
+
 // UserOrErr returns the User value or an error if the edge
 // was not loaded in eager-loading, or loaded but was not found.
 func (e WorkspaceEdges) UserOrErr() (*User, error) {
 	if e.User != nil {
 		return e.User, nil
-	} else if e.loadedTypes[10] {
+	} else if e.loadedTypes[12] {
 		return nil, &NotFoundError{label: user.Label}
 	}
 	return nil, &NotLoadedError{edge: "user"}
@@ -296,6 +318,16 @@ func (_m *Workspace) QueryBroadcastRecipients() *BroadcastRecipientQuery {
 // QueryEmailTemplates queries the "email_templates" edge of the Workspace entity.
 func (_m *Workspace) QueryEmailTemplates() *EmailTemplateQuery {
 	return NewWorkspaceClient(_m.config).QueryEmailTemplates(_m)
+}
+
+// QueryAutomations queries the "automations" edge of the Workspace entity.
+func (_m *Workspace) QueryAutomations() *AutomationQuery {
+	return NewWorkspaceClient(_m.config).QueryAutomations(_m)
+}
+
+// QueryAutomationRuns queries the "automation_runs" edge of the Workspace entity.
+func (_m *Workspace) QueryAutomationRuns() *AutomationRunQuery {
+	return NewWorkspaceClient(_m.config).QueryAutomationRuns(_m)
 }
 
 // QueryUser queries the "user" edge of the Workspace entity.

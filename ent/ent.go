@@ -13,6 +13,8 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/mokevnin/1mail/ent/apitoken"
+	"github.com/mokevnin/1mail/ent/automation"
+	"github.com/mokevnin/1mail/ent/automationrun"
 	"github.com/mokevnin/1mail/ent/broadcast"
 	"github.com/mokevnin/1mail/ent/broadcastrecipient"
 	"github.com/mokevnin/1mail/ent/contact"
@@ -85,6 +87,8 @@ func checkColumn(t, c string) error {
 	initCheck.Do(func() {
 		columnCheck = sql.NewColumnCheck(map[string]func(string) bool{
 			apitoken.Table:           apitoken.ValidColumn,
+			automation.Table:         automation.ValidColumn,
+			automationrun.Table:      automationrun.ValidColumn,
 			broadcast.Table:          broadcast.ValidColumn,
 			broadcastrecipient.Table: broadcastrecipient.ValidColumn,
 			contact.Table:            contact.ValidColumn,

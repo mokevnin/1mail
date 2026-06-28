@@ -93,8 +93,26 @@ func (h *Handlers) SiteContactsCreate(ctx context.Context, req *siteapi.SiteCrea
 	if err != nil {
 		return nil, err
 	}
+	h.emitContactCreated(ctx, ws, c)
 	res := mapper.ContactToResource(c)
 	return &res, nil
+}
+
+// emitContactCreated records a "contact.created" engagement event and enrolls the
+// contact into matching automations. Best-effort: a failure here must not fail the
+// create. This is the trigger seam for automations (other sources — email events,
+// collect events — call h.trigger.OnEvent the same way).
+func (h *Handlers) emitContactCreated(ctx context.Context, workspaceID int64, c *ent.Contact) {
+	const action = "contact.created"
+	if _, err := h.ent.Event.Create().
+		SetWorkspaceID(workspaceID).
+		SetSubjectID(c.Email).
+		SetEmail(c.Email).
+		SetAction(action).
+		Save(ctx); err != nil {
+		return
+	}
+	_ = h.trigger.OnEvent(ctx, workspaceID, c.ID, action)
 }
 
 func (h *Handlers) SiteContactsGet(ctx context.Context, params siteapi.SiteContactsGetParams) (siteapi.SiteContactsGetRes, error) {

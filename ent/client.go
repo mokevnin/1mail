@@ -16,6 +16,8 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/mokevnin/1mail/ent/apitoken"
+	"github.com/mokevnin/1mail/ent/automation"
+	"github.com/mokevnin/1mail/ent/automationrun"
 	"github.com/mokevnin/1mail/ent/broadcast"
 	"github.com/mokevnin/1mail/ent/broadcastrecipient"
 	"github.com/mokevnin/1mail/ent/contact"
@@ -36,6 +38,10 @@ type Client struct {
 	Schema *migrate.Schema
 	// ApiToken is the client for interacting with the ApiToken builders.
 	ApiToken *ApiTokenClient
+	// Automation is the client for interacting with the Automation builders.
+	Automation *AutomationClient
+	// AutomationRun is the client for interacting with the AutomationRun builders.
+	AutomationRun *AutomationRunClient
 	// Broadcast is the client for interacting with the Broadcast builders.
 	Broadcast *BroadcastClient
 	// BroadcastRecipient is the client for interacting with the BroadcastRecipient builders.
@@ -70,6 +76,8 @@ func NewClient(opts ...Option) *Client {
 func (c *Client) init() {
 	c.Schema = migrate.NewSchema(c.driver)
 	c.ApiToken = NewApiTokenClient(c.config)
+	c.Automation = NewAutomationClient(c.config)
+	c.AutomationRun = NewAutomationRunClient(c.config)
 	c.Broadcast = NewBroadcastClient(c.config)
 	c.BroadcastRecipient = NewBroadcastRecipientClient(c.config)
 	c.Contact = NewContactClient(c.config)
@@ -174,6 +182,8 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		ctx:                ctx,
 		config:             cfg,
 		ApiToken:           NewApiTokenClient(cfg),
+		Automation:         NewAutomationClient(cfg),
+		AutomationRun:      NewAutomationRunClient(cfg),
 		Broadcast:          NewBroadcastClient(cfg),
 		BroadcastRecipient: NewBroadcastRecipientClient(cfg),
 		Contact:            NewContactClient(cfg),
@@ -205,6 +215,8 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		ctx:                ctx,
 		config:             cfg,
 		ApiToken:           NewApiTokenClient(cfg),
+		Automation:         NewAutomationClient(cfg),
+		AutomationRun:      NewAutomationRunClient(cfg),
 		Broadcast:          NewBroadcastClient(cfg),
 		BroadcastRecipient: NewBroadcastRecipientClient(cfg),
 		Contact:            NewContactClient(cfg),
@@ -245,9 +257,9 @@ func (c *Client) Close() error {
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
 	for _, n := range []interface{ Use(...Hook) }{
-		c.ApiToken, c.Broadcast, c.BroadcastRecipient, c.Contact, c.EmailTemplate,
-		c.Event, c.Integration, c.Segment, c.TrackingProfile, c.TrackingVisitor,
-		c.User, c.Workspace,
+		c.ApiToken, c.Automation, c.AutomationRun, c.Broadcast, c.BroadcastRecipient,
+		c.Contact, c.EmailTemplate, c.Event, c.Integration, c.Segment,
+		c.TrackingProfile, c.TrackingVisitor, c.User, c.Workspace,
 	} {
 		n.Use(hooks...)
 	}
@@ -257,9 +269,9 @@ func (c *Client) Use(hooks ...Hook) {
 // In order to add interceptors to a specific client, call: `client.Node.Intercept(...)`.
 func (c *Client) Intercept(interceptors ...Interceptor) {
 	for _, n := range []interface{ Intercept(...Interceptor) }{
-		c.ApiToken, c.Broadcast, c.BroadcastRecipient, c.Contact, c.EmailTemplate,
-		c.Event, c.Integration, c.Segment, c.TrackingProfile, c.TrackingVisitor,
-		c.User, c.Workspace,
+		c.ApiToken, c.Automation, c.AutomationRun, c.Broadcast, c.BroadcastRecipient,
+		c.Contact, c.EmailTemplate, c.Event, c.Integration, c.Segment,
+		c.TrackingProfile, c.TrackingVisitor, c.User, c.Workspace,
 	} {
 		n.Intercept(interceptors...)
 	}
@@ -270,6 +282,10 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 	switch m := m.(type) {
 	case *ApiTokenMutation:
 		return c.ApiToken.mutate(ctx, m)
+	case *AutomationMutation:
+		return c.Automation.mutate(ctx, m)
+	case *AutomationRunMutation:
+		return c.AutomationRun.mutate(ctx, m)
 	case *BroadcastMutation:
 		return c.Broadcast.mutate(ctx, m)
 	case *BroadcastRecipientMutation:
@@ -443,6 +459,336 @@ func (c *ApiTokenClient) mutate(ctx context.Context, m *ApiTokenMutation) (Value
 		return (&ApiTokenDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("ent: unknown ApiToken mutation op: %q", m.Op())
+	}
+}
+
+// AutomationClient is a client for the Automation schema.
+type AutomationClient struct {
+	config
+}
+
+// NewAutomationClient returns a client for the Automation from the given config.
+func NewAutomationClient(c config) *AutomationClient {
+	return &AutomationClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `automation.Hooks(f(g(h())))`.
+func (c *AutomationClient) Use(hooks ...Hook) {
+	c.hooks.Automation = append(c.hooks.Automation, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `automation.Intercept(f(g(h())))`.
+func (c *AutomationClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Automation = append(c.inters.Automation, interceptors...)
+}
+
+// Create returns a builder for creating a Automation entity.
+func (c *AutomationClient) Create() *AutomationCreate {
+	mutation := newAutomationMutation(c.config, OpCreate)
+	return &AutomationCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Automation entities.
+func (c *AutomationClient) CreateBulk(builders ...*AutomationCreate) *AutomationCreateBulk {
+	return &AutomationCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *AutomationClient) MapCreateBulk(slice any, setFunc func(*AutomationCreate, int)) *AutomationCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &AutomationCreateBulk{err: fmt.Errorf("calling to AutomationClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*AutomationCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &AutomationCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Automation.
+func (c *AutomationClient) Update() *AutomationUpdate {
+	mutation := newAutomationMutation(c.config, OpUpdate)
+	return &AutomationUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *AutomationClient) UpdateOne(_m *Automation) *AutomationUpdateOne {
+	mutation := newAutomationMutation(c.config, OpUpdateOne, withAutomation(_m))
+	return &AutomationUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *AutomationClient) UpdateOneID(id int64) *AutomationUpdateOne {
+	mutation := newAutomationMutation(c.config, OpUpdateOne, withAutomationID(id))
+	return &AutomationUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Automation.
+func (c *AutomationClient) Delete() *AutomationDelete {
+	mutation := newAutomationMutation(c.config, OpDelete)
+	return &AutomationDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *AutomationClient) DeleteOne(_m *Automation) *AutomationDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *AutomationClient) DeleteOneID(id int64) *AutomationDeleteOne {
+	builder := c.Delete().Where(automation.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &AutomationDeleteOne{builder}
+}
+
+// Query returns a query builder for Automation.
+func (c *AutomationClient) Query() *AutomationQuery {
+	return &AutomationQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeAutomation},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Automation entity by its id.
+func (c *AutomationClient) Get(ctx context.Context, id int64) (*Automation, error) {
+	return c.Query().Where(automation.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *AutomationClient) GetX(ctx context.Context, id int64) *Automation {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryWorkspace queries the workspace edge of a Automation.
+func (c *AutomationClient) QueryWorkspace(_m *Automation) *WorkspaceQuery {
+	query := (&WorkspaceClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(automation.Table, automation.FieldID, id),
+			sqlgraph.To(workspace.Table, workspace.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, automation.WorkspaceTable, automation.WorkspaceColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryRuns queries the runs edge of a Automation.
+func (c *AutomationClient) QueryRuns(_m *Automation) *AutomationRunQuery {
+	query := (&AutomationRunClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(automation.Table, automation.FieldID, id),
+			sqlgraph.To(automationrun.Table, automationrun.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, automation.RunsTable, automation.RunsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *AutomationClient) Hooks() []Hook {
+	return c.hooks.Automation
+}
+
+// Interceptors returns the client interceptors.
+func (c *AutomationClient) Interceptors() []Interceptor {
+	return c.inters.Automation
+}
+
+func (c *AutomationClient) mutate(ctx context.Context, m *AutomationMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&AutomationCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&AutomationUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&AutomationUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&AutomationDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown Automation mutation op: %q", m.Op())
+	}
+}
+
+// AutomationRunClient is a client for the AutomationRun schema.
+type AutomationRunClient struct {
+	config
+}
+
+// NewAutomationRunClient returns a client for the AutomationRun from the given config.
+func NewAutomationRunClient(c config) *AutomationRunClient {
+	return &AutomationRunClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `automationrun.Hooks(f(g(h())))`.
+func (c *AutomationRunClient) Use(hooks ...Hook) {
+	c.hooks.AutomationRun = append(c.hooks.AutomationRun, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `automationrun.Intercept(f(g(h())))`.
+func (c *AutomationRunClient) Intercept(interceptors ...Interceptor) {
+	c.inters.AutomationRun = append(c.inters.AutomationRun, interceptors...)
+}
+
+// Create returns a builder for creating a AutomationRun entity.
+func (c *AutomationRunClient) Create() *AutomationRunCreate {
+	mutation := newAutomationRunMutation(c.config, OpCreate)
+	return &AutomationRunCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of AutomationRun entities.
+func (c *AutomationRunClient) CreateBulk(builders ...*AutomationRunCreate) *AutomationRunCreateBulk {
+	return &AutomationRunCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *AutomationRunClient) MapCreateBulk(slice any, setFunc func(*AutomationRunCreate, int)) *AutomationRunCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &AutomationRunCreateBulk{err: fmt.Errorf("calling to AutomationRunClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*AutomationRunCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &AutomationRunCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for AutomationRun.
+func (c *AutomationRunClient) Update() *AutomationRunUpdate {
+	mutation := newAutomationRunMutation(c.config, OpUpdate)
+	return &AutomationRunUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *AutomationRunClient) UpdateOne(_m *AutomationRun) *AutomationRunUpdateOne {
+	mutation := newAutomationRunMutation(c.config, OpUpdateOne, withAutomationRun(_m))
+	return &AutomationRunUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *AutomationRunClient) UpdateOneID(id int64) *AutomationRunUpdateOne {
+	mutation := newAutomationRunMutation(c.config, OpUpdateOne, withAutomationRunID(id))
+	return &AutomationRunUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for AutomationRun.
+func (c *AutomationRunClient) Delete() *AutomationRunDelete {
+	mutation := newAutomationRunMutation(c.config, OpDelete)
+	return &AutomationRunDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *AutomationRunClient) DeleteOne(_m *AutomationRun) *AutomationRunDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *AutomationRunClient) DeleteOneID(id int64) *AutomationRunDeleteOne {
+	builder := c.Delete().Where(automationrun.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &AutomationRunDeleteOne{builder}
+}
+
+// Query returns a query builder for AutomationRun.
+func (c *AutomationRunClient) Query() *AutomationRunQuery {
+	return &AutomationRunQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeAutomationRun},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a AutomationRun entity by its id.
+func (c *AutomationRunClient) Get(ctx context.Context, id int64) (*AutomationRun, error) {
+	return c.Query().Where(automationrun.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *AutomationRunClient) GetX(ctx context.Context, id int64) *AutomationRun {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryAutomation queries the automation edge of a AutomationRun.
+func (c *AutomationRunClient) QueryAutomation(_m *AutomationRun) *AutomationQuery {
+	query := (&AutomationClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(automationrun.Table, automationrun.FieldID, id),
+			sqlgraph.To(automation.Table, automation.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, automationrun.AutomationTable, automationrun.AutomationColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryWorkspace queries the workspace edge of a AutomationRun.
+func (c *AutomationRunClient) QueryWorkspace(_m *AutomationRun) *WorkspaceQuery {
+	query := (&WorkspaceClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(automationrun.Table, automationrun.FieldID, id),
+			sqlgraph.To(workspace.Table, workspace.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, automationrun.WorkspaceTable, automationrun.WorkspaceColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *AutomationRunClient) Hooks() []Hook {
+	return c.hooks.AutomationRun
+}
+
+// Interceptors returns the client interceptors.
+func (c *AutomationRunClient) Interceptors() []Interceptor {
+	return c.inters.AutomationRun
+}
+
+func (c *AutomationRunClient) mutate(ctx context.Context, m *AutomationRunMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&AutomationRunCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&AutomationRunUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&AutomationRunUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&AutomationRunDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown AutomationRun mutation op: %q", m.Op())
 	}
 }
 
@@ -2268,6 +2614,38 @@ func (c *WorkspaceClient) QueryEmailTemplates(_m *Workspace) *EmailTemplateQuery
 	return query
 }
 
+// QueryAutomations queries the automations edge of a Workspace.
+func (c *WorkspaceClient) QueryAutomations(_m *Workspace) *AutomationQuery {
+	query := (&AutomationClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workspace.Table, workspace.FieldID, id),
+			sqlgraph.To(automation.Table, automation.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, workspace.AutomationsTable, workspace.AutomationsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryAutomationRuns queries the automation_runs edge of a Workspace.
+func (c *WorkspaceClient) QueryAutomationRuns(_m *Workspace) *AutomationRunQuery {
+	query := (&AutomationRunClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workspace.Table, workspace.FieldID, id),
+			sqlgraph.To(automationrun.Table, automationrun.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, workspace.AutomationRunsTable, workspace.AutomationRunsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // QueryUser queries the user edge of a Workspace.
 func (c *WorkspaceClient) QueryUser(_m *Workspace) *UserQuery {
 	query := (&UserClient{config: c.config}).Query()
@@ -2312,13 +2690,13 @@ func (c *WorkspaceClient) mutate(ctx context.Context, m *WorkspaceMutation) (Val
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		ApiToken, Broadcast, BroadcastRecipient, Contact, EmailTemplate, Event,
-		Integration, Segment, TrackingProfile, TrackingVisitor, User,
-		Workspace []ent.Hook
+		ApiToken, Automation, AutomationRun, Broadcast, BroadcastRecipient, Contact,
+		EmailTemplate, Event, Integration, Segment, TrackingProfile, TrackingVisitor,
+		User, Workspace []ent.Hook
 	}
 	inters struct {
-		ApiToken, Broadcast, BroadcastRecipient, Contact, EmailTemplate, Event,
-		Integration, Segment, TrackingProfile, TrackingVisitor, User,
-		Workspace []ent.Interceptor
+		ApiToken, Automation, AutomationRun, Broadcast, BroadcastRecipient, Contact,
+		EmailTemplate, Event, Integration, Segment, TrackingProfile, TrackingVisitor,
+		User, Workspace []ent.Interceptor
 	}
 )

@@ -12,6 +12,8 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
 	"github.com/mokevnin/1mail/ent/apitoken"
+	"github.com/mokevnin/1mail/ent/automation"
+	"github.com/mokevnin/1mail/ent/automationrun"
 	"github.com/mokevnin/1mail/ent/broadcast"
 	"github.com/mokevnin/1mail/ent/broadcastrecipient"
 	"github.com/mokevnin/1mail/ent/contact"
@@ -36,6 +38,8 @@ const (
 
 	// Node types.
 	TypeApiToken           = "ApiToken"
+	TypeAutomation         = "Automation"
+	TypeAutomationRun      = "AutomationRun"
 	TypeBroadcast          = "Broadcast"
 	TypeBroadcastRecipient = "BroadcastRecipient"
 	TypeContact            = "Contact"
@@ -998,6 +1002,1705 @@ func (m *ApiTokenMutation) ResetEdge(name string) error {
 		return nil
 	}
 	return fmt.Errorf("unknown ApiToken edge %s", name)
+}
+
+// AutomationMutation represents an operation that mutates the Automation nodes in the graph.
+type AutomationMutation struct {
+	config
+	op               Op
+	typ              string
+	id               *int64
+	name             *string
+	status           *automation.Status
+	trigger_event    *string
+	definition       *string
+	created_at       *time.Time
+	updated_at       *time.Time
+	clearedFields    map[string]struct{}
+	workspace        *int64
+	clearedworkspace bool
+	runs             map[int64]struct{}
+	removedruns      map[int64]struct{}
+	clearedruns      bool
+	done             bool
+	oldValue         func(context.Context) (*Automation, error)
+	predicates       []predicate.Automation
+}
+
+var _ ent.Mutation = (*AutomationMutation)(nil)
+
+// automationOption allows management of the mutation configuration using functional options.
+type automationOption func(*AutomationMutation)
+
+// newAutomationMutation creates new mutation for the Automation entity.
+func newAutomationMutation(c config, op Op, opts ...automationOption) *AutomationMutation {
+	m := &AutomationMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeAutomation,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withAutomationID sets the ID field of the mutation.
+func withAutomationID(id int64) automationOption {
+	return func(m *AutomationMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *Automation
+		)
+		m.oldValue = func(ctx context.Context) (*Automation, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().Automation.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withAutomation sets the old Automation of the mutation.
+func withAutomation(node *Automation) automationOption {
+	return func(m *AutomationMutation) {
+		m.oldValue = func(context.Context) (*Automation, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m AutomationMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m AutomationMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of Automation entities.
+func (m *AutomationMutation) SetID(id int64) {
+	m.id = &id
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *AutomationMutation) ID() (id int64, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *AutomationMutation) IDs(ctx context.Context) ([]int64, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []int64{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().Automation.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetName sets the "name" field.
+func (m *AutomationMutation) SetName(s string) {
+	m.name = &s
+}
+
+// Name returns the value of the "name" field in the mutation.
+func (m *AutomationMutation) Name() (r string, exists bool) {
+	v := m.name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldName returns the old "name" field's value of the Automation entity.
+// If the Automation object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AutomationMutation) OldName(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldName: %w", err)
+	}
+	return oldValue.Name, nil
+}
+
+// ResetName resets all changes to the "name" field.
+func (m *AutomationMutation) ResetName() {
+	m.name = nil
+}
+
+// SetStatus sets the "status" field.
+func (m *AutomationMutation) SetStatus(a automation.Status) {
+	m.status = &a
+}
+
+// Status returns the value of the "status" field in the mutation.
+func (m *AutomationMutation) Status() (r automation.Status, exists bool) {
+	v := m.status
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldStatus returns the old "status" field's value of the Automation entity.
+// If the Automation object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AutomationMutation) OldStatus(ctx context.Context) (v automation.Status, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldStatus is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldStatus requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldStatus: %w", err)
+	}
+	return oldValue.Status, nil
+}
+
+// ResetStatus resets all changes to the "status" field.
+func (m *AutomationMutation) ResetStatus() {
+	m.status = nil
+}
+
+// SetTriggerEvent sets the "trigger_event" field.
+func (m *AutomationMutation) SetTriggerEvent(s string) {
+	m.trigger_event = &s
+}
+
+// TriggerEvent returns the value of the "trigger_event" field in the mutation.
+func (m *AutomationMutation) TriggerEvent() (r string, exists bool) {
+	v := m.trigger_event
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldTriggerEvent returns the old "trigger_event" field's value of the Automation entity.
+// If the Automation object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AutomationMutation) OldTriggerEvent(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldTriggerEvent is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldTriggerEvent requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldTriggerEvent: %w", err)
+	}
+	return oldValue.TriggerEvent, nil
+}
+
+// ResetTriggerEvent resets all changes to the "trigger_event" field.
+func (m *AutomationMutation) ResetTriggerEvent() {
+	m.trigger_event = nil
+}
+
+// SetDefinition sets the "definition" field.
+func (m *AutomationMutation) SetDefinition(s string) {
+	m.definition = &s
+}
+
+// Definition returns the value of the "definition" field in the mutation.
+func (m *AutomationMutation) Definition() (r string, exists bool) {
+	v := m.definition
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldDefinition returns the old "definition" field's value of the Automation entity.
+// If the Automation object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AutomationMutation) OldDefinition(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldDefinition is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldDefinition requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldDefinition: %w", err)
+	}
+	return oldValue.Definition, nil
+}
+
+// ResetDefinition resets all changes to the "definition" field.
+func (m *AutomationMutation) ResetDefinition() {
+	m.definition = nil
+}
+
+// SetWorkspaceID sets the "workspace_id" field.
+func (m *AutomationMutation) SetWorkspaceID(i int64) {
+	m.workspace = &i
+}
+
+// WorkspaceID returns the value of the "workspace_id" field in the mutation.
+func (m *AutomationMutation) WorkspaceID() (r int64, exists bool) {
+	v := m.workspace
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldWorkspaceID returns the old "workspace_id" field's value of the Automation entity.
+// If the Automation object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AutomationMutation) OldWorkspaceID(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldWorkspaceID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldWorkspaceID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldWorkspaceID: %w", err)
+	}
+	return oldValue.WorkspaceID, nil
+}
+
+// ResetWorkspaceID resets all changes to the "workspace_id" field.
+func (m *AutomationMutation) ResetWorkspaceID() {
+	m.workspace = nil
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *AutomationMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *AutomationMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the Automation entity.
+// If the Automation object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AutomationMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *AutomationMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (m *AutomationMutation) SetUpdatedAt(t time.Time) {
+	m.updated_at = &t
+}
+
+// UpdatedAt returns the value of the "updated_at" field in the mutation.
+func (m *AutomationMutation) UpdatedAt() (r time.Time, exists bool) {
+	v := m.updated_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUpdatedAt returns the old "updated_at" field's value of the Automation entity.
+// If the Automation object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AutomationMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUpdatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUpdatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUpdatedAt: %w", err)
+	}
+	return oldValue.UpdatedAt, nil
+}
+
+// ResetUpdatedAt resets all changes to the "updated_at" field.
+func (m *AutomationMutation) ResetUpdatedAt() {
+	m.updated_at = nil
+}
+
+// ClearWorkspace clears the "workspace" edge to the Workspace entity.
+func (m *AutomationMutation) ClearWorkspace() {
+	m.clearedworkspace = true
+	m.clearedFields[automation.FieldWorkspaceID] = struct{}{}
+}
+
+// WorkspaceCleared reports if the "workspace" edge to the Workspace entity was cleared.
+func (m *AutomationMutation) WorkspaceCleared() bool {
+	return m.clearedworkspace
+}
+
+// WorkspaceIDs returns the "workspace" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// WorkspaceID instead. It exists only for internal usage by the builders.
+func (m *AutomationMutation) WorkspaceIDs() (ids []int64) {
+	if id := m.workspace; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetWorkspace resets all changes to the "workspace" edge.
+func (m *AutomationMutation) ResetWorkspace() {
+	m.workspace = nil
+	m.clearedworkspace = false
+}
+
+// AddRunIDs adds the "runs" edge to the AutomationRun entity by ids.
+func (m *AutomationMutation) AddRunIDs(ids ...int64) {
+	if m.runs == nil {
+		m.runs = make(map[int64]struct{})
+	}
+	for i := range ids {
+		m.runs[ids[i]] = struct{}{}
+	}
+}
+
+// ClearRuns clears the "runs" edge to the AutomationRun entity.
+func (m *AutomationMutation) ClearRuns() {
+	m.clearedruns = true
+}
+
+// RunsCleared reports if the "runs" edge to the AutomationRun entity was cleared.
+func (m *AutomationMutation) RunsCleared() bool {
+	return m.clearedruns
+}
+
+// RemoveRunIDs removes the "runs" edge to the AutomationRun entity by IDs.
+func (m *AutomationMutation) RemoveRunIDs(ids ...int64) {
+	if m.removedruns == nil {
+		m.removedruns = make(map[int64]struct{})
+	}
+	for i := range ids {
+		delete(m.runs, ids[i])
+		m.removedruns[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedRuns returns the removed IDs of the "runs" edge to the AutomationRun entity.
+func (m *AutomationMutation) RemovedRunsIDs() (ids []int64) {
+	for id := range m.removedruns {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// RunsIDs returns the "runs" edge IDs in the mutation.
+func (m *AutomationMutation) RunsIDs() (ids []int64) {
+	for id := range m.runs {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetRuns resets all changes to the "runs" edge.
+func (m *AutomationMutation) ResetRuns() {
+	m.runs = nil
+	m.clearedruns = false
+	m.removedruns = nil
+}
+
+// Where appends a list predicates to the AutomationMutation builder.
+func (m *AutomationMutation) Where(ps ...predicate.Automation) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the AutomationMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *AutomationMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.Automation, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *AutomationMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *AutomationMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (Automation).
+func (m *AutomationMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *AutomationMutation) Fields() []string {
+	fields := make([]string, 0, 7)
+	if m.name != nil {
+		fields = append(fields, automation.FieldName)
+	}
+	if m.status != nil {
+		fields = append(fields, automation.FieldStatus)
+	}
+	if m.trigger_event != nil {
+		fields = append(fields, automation.FieldTriggerEvent)
+	}
+	if m.definition != nil {
+		fields = append(fields, automation.FieldDefinition)
+	}
+	if m.workspace != nil {
+		fields = append(fields, automation.FieldWorkspaceID)
+	}
+	if m.created_at != nil {
+		fields = append(fields, automation.FieldCreatedAt)
+	}
+	if m.updated_at != nil {
+		fields = append(fields, automation.FieldUpdatedAt)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *AutomationMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case automation.FieldName:
+		return m.Name()
+	case automation.FieldStatus:
+		return m.Status()
+	case automation.FieldTriggerEvent:
+		return m.TriggerEvent()
+	case automation.FieldDefinition:
+		return m.Definition()
+	case automation.FieldWorkspaceID:
+		return m.WorkspaceID()
+	case automation.FieldCreatedAt:
+		return m.CreatedAt()
+	case automation.FieldUpdatedAt:
+		return m.UpdatedAt()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *AutomationMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case automation.FieldName:
+		return m.OldName(ctx)
+	case automation.FieldStatus:
+		return m.OldStatus(ctx)
+	case automation.FieldTriggerEvent:
+		return m.OldTriggerEvent(ctx)
+	case automation.FieldDefinition:
+		return m.OldDefinition(ctx)
+	case automation.FieldWorkspaceID:
+		return m.OldWorkspaceID(ctx)
+	case automation.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	case automation.FieldUpdatedAt:
+		return m.OldUpdatedAt(ctx)
+	}
+	return nil, fmt.Errorf("unknown Automation field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *AutomationMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case automation.FieldName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetName(v)
+		return nil
+	case automation.FieldStatus:
+		v, ok := value.(automation.Status)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetStatus(v)
+		return nil
+	case automation.FieldTriggerEvent:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetTriggerEvent(v)
+		return nil
+	case automation.FieldDefinition:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetDefinition(v)
+		return nil
+	case automation.FieldWorkspaceID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetWorkspaceID(v)
+		return nil
+	case automation.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	case automation.FieldUpdatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUpdatedAt(v)
+		return nil
+	}
+	return fmt.Errorf("unknown Automation field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *AutomationMutation) AddedFields() []string {
+	var fields []string
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *AutomationMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *AutomationMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	}
+	return fmt.Errorf("unknown Automation numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *AutomationMutation) ClearedFields() []string {
+	return nil
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *AutomationMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *AutomationMutation) ClearField(name string) error {
+	return fmt.Errorf("unknown Automation nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *AutomationMutation) ResetField(name string) error {
+	switch name {
+	case automation.FieldName:
+		m.ResetName()
+		return nil
+	case automation.FieldStatus:
+		m.ResetStatus()
+		return nil
+	case automation.FieldTriggerEvent:
+		m.ResetTriggerEvent()
+		return nil
+	case automation.FieldDefinition:
+		m.ResetDefinition()
+		return nil
+	case automation.FieldWorkspaceID:
+		m.ResetWorkspaceID()
+		return nil
+	case automation.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	case automation.FieldUpdatedAt:
+		m.ResetUpdatedAt()
+		return nil
+	}
+	return fmt.Errorf("unknown Automation field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *AutomationMutation) AddedEdges() []string {
+	edges := make([]string, 0, 2)
+	if m.workspace != nil {
+		edges = append(edges, automation.EdgeWorkspace)
+	}
+	if m.runs != nil {
+		edges = append(edges, automation.EdgeRuns)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *AutomationMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case automation.EdgeWorkspace:
+		if id := m.workspace; id != nil {
+			return []ent.Value{*id}
+		}
+	case automation.EdgeRuns:
+		ids := make([]ent.Value, 0, len(m.runs))
+		for id := range m.runs {
+			ids = append(ids, id)
+		}
+		return ids
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *AutomationMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 2)
+	if m.removedruns != nil {
+		edges = append(edges, automation.EdgeRuns)
+	}
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *AutomationMutation) RemovedIDs(name string) []ent.Value {
+	switch name {
+	case automation.EdgeRuns:
+		ids := make([]ent.Value, 0, len(m.removedruns))
+		for id := range m.removedruns {
+			ids = append(ids, id)
+		}
+		return ids
+	}
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *AutomationMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 2)
+	if m.clearedworkspace {
+		edges = append(edges, automation.EdgeWorkspace)
+	}
+	if m.clearedruns {
+		edges = append(edges, automation.EdgeRuns)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *AutomationMutation) EdgeCleared(name string) bool {
+	switch name {
+	case automation.EdgeWorkspace:
+		return m.clearedworkspace
+	case automation.EdgeRuns:
+		return m.clearedruns
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *AutomationMutation) ClearEdge(name string) error {
+	switch name {
+	case automation.EdgeWorkspace:
+		m.ClearWorkspace()
+		return nil
+	}
+	return fmt.Errorf("unknown Automation unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *AutomationMutation) ResetEdge(name string) error {
+	switch name {
+	case automation.EdgeWorkspace:
+		m.ResetWorkspace()
+		return nil
+	case automation.EdgeRuns:
+		m.ResetRuns()
+		return nil
+	}
+	return fmt.Errorf("unknown Automation edge %s", name)
+}
+
+// AutomationRunMutation represents an operation that mutates the AutomationRun nodes in the graph.
+type AutomationRunMutation struct {
+	config
+	op                Op
+	typ               string
+	id                *int64
+	contact_id        *int64
+	addcontact_id     *int64
+	status            *automationrun.Status
+	current_step      *int
+	addcurrent_step   *int
+	resume_at         *time.Time
+	created_at        *time.Time
+	updated_at        *time.Time
+	clearedFields     map[string]struct{}
+	automation        *int64
+	clearedautomation bool
+	workspace         *int64
+	clearedworkspace  bool
+	done              bool
+	oldValue          func(context.Context) (*AutomationRun, error)
+	predicates        []predicate.AutomationRun
+}
+
+var _ ent.Mutation = (*AutomationRunMutation)(nil)
+
+// automationrunOption allows management of the mutation configuration using functional options.
+type automationrunOption func(*AutomationRunMutation)
+
+// newAutomationRunMutation creates new mutation for the AutomationRun entity.
+func newAutomationRunMutation(c config, op Op, opts ...automationrunOption) *AutomationRunMutation {
+	m := &AutomationRunMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeAutomationRun,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withAutomationRunID sets the ID field of the mutation.
+func withAutomationRunID(id int64) automationrunOption {
+	return func(m *AutomationRunMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *AutomationRun
+		)
+		m.oldValue = func(ctx context.Context) (*AutomationRun, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().AutomationRun.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withAutomationRun sets the old AutomationRun of the mutation.
+func withAutomationRun(node *AutomationRun) automationrunOption {
+	return func(m *AutomationRunMutation) {
+		m.oldValue = func(context.Context) (*AutomationRun, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m AutomationRunMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m AutomationRunMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of AutomationRun entities.
+func (m *AutomationRunMutation) SetID(id int64) {
+	m.id = &id
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *AutomationRunMutation) ID() (id int64, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *AutomationRunMutation) IDs(ctx context.Context) ([]int64, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []int64{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().AutomationRun.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetAutomationID sets the "automation_id" field.
+func (m *AutomationRunMutation) SetAutomationID(i int64) {
+	m.automation = &i
+}
+
+// AutomationID returns the value of the "automation_id" field in the mutation.
+func (m *AutomationRunMutation) AutomationID() (r int64, exists bool) {
+	v := m.automation
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldAutomationID returns the old "automation_id" field's value of the AutomationRun entity.
+// If the AutomationRun object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AutomationRunMutation) OldAutomationID(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldAutomationID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldAutomationID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldAutomationID: %w", err)
+	}
+	return oldValue.AutomationID, nil
+}
+
+// ResetAutomationID resets all changes to the "automation_id" field.
+func (m *AutomationRunMutation) ResetAutomationID() {
+	m.automation = nil
+}
+
+// SetContactID sets the "contact_id" field.
+func (m *AutomationRunMutation) SetContactID(i int64) {
+	m.contact_id = &i
+	m.addcontact_id = nil
+}
+
+// ContactID returns the value of the "contact_id" field in the mutation.
+func (m *AutomationRunMutation) ContactID() (r int64, exists bool) {
+	v := m.contact_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldContactID returns the old "contact_id" field's value of the AutomationRun entity.
+// If the AutomationRun object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AutomationRunMutation) OldContactID(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldContactID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldContactID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldContactID: %w", err)
+	}
+	return oldValue.ContactID, nil
+}
+
+// AddContactID adds i to the "contact_id" field.
+func (m *AutomationRunMutation) AddContactID(i int64) {
+	if m.addcontact_id != nil {
+		*m.addcontact_id += i
+	} else {
+		m.addcontact_id = &i
+	}
+}
+
+// AddedContactID returns the value that was added to the "contact_id" field in this mutation.
+func (m *AutomationRunMutation) AddedContactID() (r int64, exists bool) {
+	v := m.addcontact_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetContactID resets all changes to the "contact_id" field.
+func (m *AutomationRunMutation) ResetContactID() {
+	m.contact_id = nil
+	m.addcontact_id = nil
+}
+
+// SetWorkspaceID sets the "workspace_id" field.
+func (m *AutomationRunMutation) SetWorkspaceID(i int64) {
+	m.workspace = &i
+}
+
+// WorkspaceID returns the value of the "workspace_id" field in the mutation.
+func (m *AutomationRunMutation) WorkspaceID() (r int64, exists bool) {
+	v := m.workspace
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldWorkspaceID returns the old "workspace_id" field's value of the AutomationRun entity.
+// If the AutomationRun object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AutomationRunMutation) OldWorkspaceID(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldWorkspaceID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldWorkspaceID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldWorkspaceID: %w", err)
+	}
+	return oldValue.WorkspaceID, nil
+}
+
+// ResetWorkspaceID resets all changes to the "workspace_id" field.
+func (m *AutomationRunMutation) ResetWorkspaceID() {
+	m.workspace = nil
+}
+
+// SetStatus sets the "status" field.
+func (m *AutomationRunMutation) SetStatus(a automationrun.Status) {
+	m.status = &a
+}
+
+// Status returns the value of the "status" field in the mutation.
+func (m *AutomationRunMutation) Status() (r automationrun.Status, exists bool) {
+	v := m.status
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldStatus returns the old "status" field's value of the AutomationRun entity.
+// If the AutomationRun object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AutomationRunMutation) OldStatus(ctx context.Context) (v automationrun.Status, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldStatus is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldStatus requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldStatus: %w", err)
+	}
+	return oldValue.Status, nil
+}
+
+// ResetStatus resets all changes to the "status" field.
+func (m *AutomationRunMutation) ResetStatus() {
+	m.status = nil
+}
+
+// SetCurrentStep sets the "current_step" field.
+func (m *AutomationRunMutation) SetCurrentStep(i int) {
+	m.current_step = &i
+	m.addcurrent_step = nil
+}
+
+// CurrentStep returns the value of the "current_step" field in the mutation.
+func (m *AutomationRunMutation) CurrentStep() (r int, exists bool) {
+	v := m.current_step
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCurrentStep returns the old "current_step" field's value of the AutomationRun entity.
+// If the AutomationRun object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AutomationRunMutation) OldCurrentStep(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCurrentStep is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCurrentStep requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCurrentStep: %w", err)
+	}
+	return oldValue.CurrentStep, nil
+}
+
+// AddCurrentStep adds i to the "current_step" field.
+func (m *AutomationRunMutation) AddCurrentStep(i int) {
+	if m.addcurrent_step != nil {
+		*m.addcurrent_step += i
+	} else {
+		m.addcurrent_step = &i
+	}
+}
+
+// AddedCurrentStep returns the value that was added to the "current_step" field in this mutation.
+func (m *AutomationRunMutation) AddedCurrentStep() (r int, exists bool) {
+	v := m.addcurrent_step
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetCurrentStep resets all changes to the "current_step" field.
+func (m *AutomationRunMutation) ResetCurrentStep() {
+	m.current_step = nil
+	m.addcurrent_step = nil
+}
+
+// SetResumeAt sets the "resume_at" field.
+func (m *AutomationRunMutation) SetResumeAt(t time.Time) {
+	m.resume_at = &t
+}
+
+// ResumeAt returns the value of the "resume_at" field in the mutation.
+func (m *AutomationRunMutation) ResumeAt() (r time.Time, exists bool) {
+	v := m.resume_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldResumeAt returns the old "resume_at" field's value of the AutomationRun entity.
+// If the AutomationRun object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AutomationRunMutation) OldResumeAt(ctx context.Context) (v *time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldResumeAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldResumeAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldResumeAt: %w", err)
+	}
+	return oldValue.ResumeAt, nil
+}
+
+// ClearResumeAt clears the value of the "resume_at" field.
+func (m *AutomationRunMutation) ClearResumeAt() {
+	m.resume_at = nil
+	m.clearedFields[automationrun.FieldResumeAt] = struct{}{}
+}
+
+// ResumeAtCleared returns if the "resume_at" field was cleared in this mutation.
+func (m *AutomationRunMutation) ResumeAtCleared() bool {
+	_, ok := m.clearedFields[automationrun.FieldResumeAt]
+	return ok
+}
+
+// ResetResumeAt resets all changes to the "resume_at" field.
+func (m *AutomationRunMutation) ResetResumeAt() {
+	m.resume_at = nil
+	delete(m.clearedFields, automationrun.FieldResumeAt)
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *AutomationRunMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *AutomationRunMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the AutomationRun entity.
+// If the AutomationRun object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AutomationRunMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *AutomationRunMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (m *AutomationRunMutation) SetUpdatedAt(t time.Time) {
+	m.updated_at = &t
+}
+
+// UpdatedAt returns the value of the "updated_at" field in the mutation.
+func (m *AutomationRunMutation) UpdatedAt() (r time.Time, exists bool) {
+	v := m.updated_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUpdatedAt returns the old "updated_at" field's value of the AutomationRun entity.
+// If the AutomationRun object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AutomationRunMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUpdatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUpdatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUpdatedAt: %w", err)
+	}
+	return oldValue.UpdatedAt, nil
+}
+
+// ResetUpdatedAt resets all changes to the "updated_at" field.
+func (m *AutomationRunMutation) ResetUpdatedAt() {
+	m.updated_at = nil
+}
+
+// ClearAutomation clears the "automation" edge to the Automation entity.
+func (m *AutomationRunMutation) ClearAutomation() {
+	m.clearedautomation = true
+	m.clearedFields[automationrun.FieldAutomationID] = struct{}{}
+}
+
+// AutomationCleared reports if the "automation" edge to the Automation entity was cleared.
+func (m *AutomationRunMutation) AutomationCleared() bool {
+	return m.clearedautomation
+}
+
+// AutomationIDs returns the "automation" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// AutomationID instead. It exists only for internal usage by the builders.
+func (m *AutomationRunMutation) AutomationIDs() (ids []int64) {
+	if id := m.automation; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetAutomation resets all changes to the "automation" edge.
+func (m *AutomationRunMutation) ResetAutomation() {
+	m.automation = nil
+	m.clearedautomation = false
+}
+
+// ClearWorkspace clears the "workspace" edge to the Workspace entity.
+func (m *AutomationRunMutation) ClearWorkspace() {
+	m.clearedworkspace = true
+	m.clearedFields[automationrun.FieldWorkspaceID] = struct{}{}
+}
+
+// WorkspaceCleared reports if the "workspace" edge to the Workspace entity was cleared.
+func (m *AutomationRunMutation) WorkspaceCleared() bool {
+	return m.clearedworkspace
+}
+
+// WorkspaceIDs returns the "workspace" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// WorkspaceID instead. It exists only for internal usage by the builders.
+func (m *AutomationRunMutation) WorkspaceIDs() (ids []int64) {
+	if id := m.workspace; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetWorkspace resets all changes to the "workspace" edge.
+func (m *AutomationRunMutation) ResetWorkspace() {
+	m.workspace = nil
+	m.clearedworkspace = false
+}
+
+// Where appends a list predicates to the AutomationRunMutation builder.
+func (m *AutomationRunMutation) Where(ps ...predicate.AutomationRun) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the AutomationRunMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *AutomationRunMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.AutomationRun, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *AutomationRunMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *AutomationRunMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (AutomationRun).
+func (m *AutomationRunMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *AutomationRunMutation) Fields() []string {
+	fields := make([]string, 0, 8)
+	if m.automation != nil {
+		fields = append(fields, automationrun.FieldAutomationID)
+	}
+	if m.contact_id != nil {
+		fields = append(fields, automationrun.FieldContactID)
+	}
+	if m.workspace != nil {
+		fields = append(fields, automationrun.FieldWorkspaceID)
+	}
+	if m.status != nil {
+		fields = append(fields, automationrun.FieldStatus)
+	}
+	if m.current_step != nil {
+		fields = append(fields, automationrun.FieldCurrentStep)
+	}
+	if m.resume_at != nil {
+		fields = append(fields, automationrun.FieldResumeAt)
+	}
+	if m.created_at != nil {
+		fields = append(fields, automationrun.FieldCreatedAt)
+	}
+	if m.updated_at != nil {
+		fields = append(fields, automationrun.FieldUpdatedAt)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *AutomationRunMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case automationrun.FieldAutomationID:
+		return m.AutomationID()
+	case automationrun.FieldContactID:
+		return m.ContactID()
+	case automationrun.FieldWorkspaceID:
+		return m.WorkspaceID()
+	case automationrun.FieldStatus:
+		return m.Status()
+	case automationrun.FieldCurrentStep:
+		return m.CurrentStep()
+	case automationrun.FieldResumeAt:
+		return m.ResumeAt()
+	case automationrun.FieldCreatedAt:
+		return m.CreatedAt()
+	case automationrun.FieldUpdatedAt:
+		return m.UpdatedAt()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *AutomationRunMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case automationrun.FieldAutomationID:
+		return m.OldAutomationID(ctx)
+	case automationrun.FieldContactID:
+		return m.OldContactID(ctx)
+	case automationrun.FieldWorkspaceID:
+		return m.OldWorkspaceID(ctx)
+	case automationrun.FieldStatus:
+		return m.OldStatus(ctx)
+	case automationrun.FieldCurrentStep:
+		return m.OldCurrentStep(ctx)
+	case automationrun.FieldResumeAt:
+		return m.OldResumeAt(ctx)
+	case automationrun.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	case automationrun.FieldUpdatedAt:
+		return m.OldUpdatedAt(ctx)
+	}
+	return nil, fmt.Errorf("unknown AutomationRun field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *AutomationRunMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case automationrun.FieldAutomationID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetAutomationID(v)
+		return nil
+	case automationrun.FieldContactID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetContactID(v)
+		return nil
+	case automationrun.FieldWorkspaceID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetWorkspaceID(v)
+		return nil
+	case automationrun.FieldStatus:
+		v, ok := value.(automationrun.Status)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetStatus(v)
+		return nil
+	case automationrun.FieldCurrentStep:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCurrentStep(v)
+		return nil
+	case automationrun.FieldResumeAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetResumeAt(v)
+		return nil
+	case automationrun.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	case automationrun.FieldUpdatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUpdatedAt(v)
+		return nil
+	}
+	return fmt.Errorf("unknown AutomationRun field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *AutomationRunMutation) AddedFields() []string {
+	var fields []string
+	if m.addcontact_id != nil {
+		fields = append(fields, automationrun.FieldContactID)
+	}
+	if m.addcurrent_step != nil {
+		fields = append(fields, automationrun.FieldCurrentStep)
+	}
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *AutomationRunMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case automationrun.FieldContactID:
+		return m.AddedContactID()
+	case automationrun.FieldCurrentStep:
+		return m.AddedCurrentStep()
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *AutomationRunMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	case automationrun.FieldContactID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddContactID(v)
+		return nil
+	case automationrun.FieldCurrentStep:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddCurrentStep(v)
+		return nil
+	}
+	return fmt.Errorf("unknown AutomationRun numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *AutomationRunMutation) ClearedFields() []string {
+	var fields []string
+	if m.FieldCleared(automationrun.FieldResumeAt) {
+		fields = append(fields, automationrun.FieldResumeAt)
+	}
+	return fields
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *AutomationRunMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *AutomationRunMutation) ClearField(name string) error {
+	switch name {
+	case automationrun.FieldResumeAt:
+		m.ClearResumeAt()
+		return nil
+	}
+	return fmt.Errorf("unknown AutomationRun nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *AutomationRunMutation) ResetField(name string) error {
+	switch name {
+	case automationrun.FieldAutomationID:
+		m.ResetAutomationID()
+		return nil
+	case automationrun.FieldContactID:
+		m.ResetContactID()
+		return nil
+	case automationrun.FieldWorkspaceID:
+		m.ResetWorkspaceID()
+		return nil
+	case automationrun.FieldStatus:
+		m.ResetStatus()
+		return nil
+	case automationrun.FieldCurrentStep:
+		m.ResetCurrentStep()
+		return nil
+	case automationrun.FieldResumeAt:
+		m.ResetResumeAt()
+		return nil
+	case automationrun.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	case automationrun.FieldUpdatedAt:
+		m.ResetUpdatedAt()
+		return nil
+	}
+	return fmt.Errorf("unknown AutomationRun field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *AutomationRunMutation) AddedEdges() []string {
+	edges := make([]string, 0, 2)
+	if m.automation != nil {
+		edges = append(edges, automationrun.EdgeAutomation)
+	}
+	if m.workspace != nil {
+		edges = append(edges, automationrun.EdgeWorkspace)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *AutomationRunMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case automationrun.EdgeAutomation:
+		if id := m.automation; id != nil {
+			return []ent.Value{*id}
+		}
+	case automationrun.EdgeWorkspace:
+		if id := m.workspace; id != nil {
+			return []ent.Value{*id}
+		}
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *AutomationRunMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 2)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *AutomationRunMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *AutomationRunMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 2)
+	if m.clearedautomation {
+		edges = append(edges, automationrun.EdgeAutomation)
+	}
+	if m.clearedworkspace {
+		edges = append(edges, automationrun.EdgeWorkspace)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *AutomationRunMutation) EdgeCleared(name string) bool {
+	switch name {
+	case automationrun.EdgeAutomation:
+		return m.clearedautomation
+	case automationrun.EdgeWorkspace:
+		return m.clearedworkspace
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *AutomationRunMutation) ClearEdge(name string) error {
+	switch name {
+	case automationrun.EdgeAutomation:
+		m.ClearAutomation()
+		return nil
+	case automationrun.EdgeWorkspace:
+		m.ClearWorkspace()
+		return nil
+	}
+	return fmt.Errorf("unknown AutomationRun unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *AutomationRunMutation) ResetEdge(name string) error {
+	switch name {
+	case automationrun.EdgeAutomation:
+		m.ResetAutomation()
+		return nil
+	case automationrun.EdgeWorkspace:
+		m.ResetWorkspace()
+		return nil
+	}
+	return fmt.Errorf("unknown AutomationRun edge %s", name)
 }
 
 // BroadcastMutation represents an operation that mutates the Broadcast nodes in the graph.
@@ -10167,6 +11870,12 @@ type WorkspaceMutation struct {
 	email_templates             map[int64]struct{}
 	removedemail_templates      map[int64]struct{}
 	clearedemail_templates      bool
+	automations                 map[int64]struct{}
+	removedautomations          map[int64]struct{}
+	clearedautomations          bool
+	automation_runs             map[int64]struct{}
+	removedautomation_runs      map[int64]struct{}
+	clearedautomation_runs      bool
 	user                        *int64
 	cleareduser                 bool
 	done                        bool
@@ -11047,6 +12756,114 @@ func (m *WorkspaceMutation) ResetEmailTemplates() {
 	m.removedemail_templates = nil
 }
 
+// AddAutomationIDs adds the "automations" edge to the Automation entity by ids.
+func (m *WorkspaceMutation) AddAutomationIDs(ids ...int64) {
+	if m.automations == nil {
+		m.automations = make(map[int64]struct{})
+	}
+	for i := range ids {
+		m.automations[ids[i]] = struct{}{}
+	}
+}
+
+// ClearAutomations clears the "automations" edge to the Automation entity.
+func (m *WorkspaceMutation) ClearAutomations() {
+	m.clearedautomations = true
+}
+
+// AutomationsCleared reports if the "automations" edge to the Automation entity was cleared.
+func (m *WorkspaceMutation) AutomationsCleared() bool {
+	return m.clearedautomations
+}
+
+// RemoveAutomationIDs removes the "automations" edge to the Automation entity by IDs.
+func (m *WorkspaceMutation) RemoveAutomationIDs(ids ...int64) {
+	if m.removedautomations == nil {
+		m.removedautomations = make(map[int64]struct{})
+	}
+	for i := range ids {
+		delete(m.automations, ids[i])
+		m.removedautomations[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedAutomations returns the removed IDs of the "automations" edge to the Automation entity.
+func (m *WorkspaceMutation) RemovedAutomationsIDs() (ids []int64) {
+	for id := range m.removedautomations {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// AutomationsIDs returns the "automations" edge IDs in the mutation.
+func (m *WorkspaceMutation) AutomationsIDs() (ids []int64) {
+	for id := range m.automations {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetAutomations resets all changes to the "automations" edge.
+func (m *WorkspaceMutation) ResetAutomations() {
+	m.automations = nil
+	m.clearedautomations = false
+	m.removedautomations = nil
+}
+
+// AddAutomationRunIDs adds the "automation_runs" edge to the AutomationRun entity by ids.
+func (m *WorkspaceMutation) AddAutomationRunIDs(ids ...int64) {
+	if m.automation_runs == nil {
+		m.automation_runs = make(map[int64]struct{})
+	}
+	for i := range ids {
+		m.automation_runs[ids[i]] = struct{}{}
+	}
+}
+
+// ClearAutomationRuns clears the "automation_runs" edge to the AutomationRun entity.
+func (m *WorkspaceMutation) ClearAutomationRuns() {
+	m.clearedautomation_runs = true
+}
+
+// AutomationRunsCleared reports if the "automation_runs" edge to the AutomationRun entity was cleared.
+func (m *WorkspaceMutation) AutomationRunsCleared() bool {
+	return m.clearedautomation_runs
+}
+
+// RemoveAutomationRunIDs removes the "automation_runs" edge to the AutomationRun entity by IDs.
+func (m *WorkspaceMutation) RemoveAutomationRunIDs(ids ...int64) {
+	if m.removedautomation_runs == nil {
+		m.removedautomation_runs = make(map[int64]struct{})
+	}
+	for i := range ids {
+		delete(m.automation_runs, ids[i])
+		m.removedautomation_runs[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedAutomationRuns returns the removed IDs of the "automation_runs" edge to the AutomationRun entity.
+func (m *WorkspaceMutation) RemovedAutomationRunsIDs() (ids []int64) {
+	for id := range m.removedautomation_runs {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// AutomationRunsIDs returns the "automation_runs" edge IDs in the mutation.
+func (m *WorkspaceMutation) AutomationRunsIDs() (ids []int64) {
+	for id := range m.automation_runs {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetAutomationRuns resets all changes to the "automation_runs" edge.
+func (m *WorkspaceMutation) ResetAutomationRuns() {
+	m.automation_runs = nil
+	m.clearedautomation_runs = false
+	m.removedautomation_runs = nil
+}
+
 // ClearUser clears the "user" edge to the User entity.
 func (m *WorkspaceMutation) ClearUser() {
 	m.cleareduser = true
@@ -11304,7 +13121,7 @@ func (m *WorkspaceMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *WorkspaceMutation) AddedEdges() []string {
-	edges := make([]string, 0, 11)
+	edges := make([]string, 0, 13)
 	if m.contacts != nil {
 		edges = append(edges, workspace.EdgeContacts)
 	}
@@ -11334,6 +13151,12 @@ func (m *WorkspaceMutation) AddedEdges() []string {
 	}
 	if m.email_templates != nil {
 		edges = append(edges, workspace.EdgeEmailTemplates)
+	}
+	if m.automations != nil {
+		edges = append(edges, workspace.EdgeAutomations)
+	}
+	if m.automation_runs != nil {
+		edges = append(edges, workspace.EdgeAutomationRuns)
 	}
 	if m.user != nil {
 		edges = append(edges, workspace.EdgeUser)
@@ -11405,6 +13228,18 @@ func (m *WorkspaceMutation) AddedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case workspace.EdgeAutomations:
+		ids := make([]ent.Value, 0, len(m.automations))
+		for id := range m.automations {
+			ids = append(ids, id)
+		}
+		return ids
+	case workspace.EdgeAutomationRuns:
+		ids := make([]ent.Value, 0, len(m.automation_runs))
+		for id := range m.automation_runs {
+			ids = append(ids, id)
+		}
+		return ids
 	case workspace.EdgeUser:
 		if id := m.user; id != nil {
 			return []ent.Value{*id}
@@ -11415,7 +13250,7 @@ func (m *WorkspaceMutation) AddedIDs(name string) []ent.Value {
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *WorkspaceMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 11)
+	edges := make([]string, 0, 13)
 	if m.removedcontacts != nil {
 		edges = append(edges, workspace.EdgeContacts)
 	}
@@ -11445,6 +13280,12 @@ func (m *WorkspaceMutation) RemovedEdges() []string {
 	}
 	if m.removedemail_templates != nil {
 		edges = append(edges, workspace.EdgeEmailTemplates)
+	}
+	if m.removedautomations != nil {
+		edges = append(edges, workspace.EdgeAutomations)
+	}
+	if m.removedautomation_runs != nil {
+		edges = append(edges, workspace.EdgeAutomationRuns)
 	}
 	return edges
 }
@@ -11513,13 +13354,25 @@ func (m *WorkspaceMutation) RemovedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case workspace.EdgeAutomations:
+		ids := make([]ent.Value, 0, len(m.removedautomations))
+		for id := range m.removedautomations {
+			ids = append(ids, id)
+		}
+		return ids
+	case workspace.EdgeAutomationRuns:
+		ids := make([]ent.Value, 0, len(m.removedautomation_runs))
+		for id := range m.removedautomation_runs {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *WorkspaceMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 11)
+	edges := make([]string, 0, 13)
 	if m.clearedcontacts {
 		edges = append(edges, workspace.EdgeContacts)
 	}
@@ -11549,6 +13402,12 @@ func (m *WorkspaceMutation) ClearedEdges() []string {
 	}
 	if m.clearedemail_templates {
 		edges = append(edges, workspace.EdgeEmailTemplates)
+	}
+	if m.clearedautomations {
+		edges = append(edges, workspace.EdgeAutomations)
+	}
+	if m.clearedautomation_runs {
+		edges = append(edges, workspace.EdgeAutomationRuns)
 	}
 	if m.cleareduser {
 		edges = append(edges, workspace.EdgeUser)
@@ -11580,6 +13439,10 @@ func (m *WorkspaceMutation) EdgeCleared(name string) bool {
 		return m.clearedbroadcast_recipients
 	case workspace.EdgeEmailTemplates:
 		return m.clearedemail_templates
+	case workspace.EdgeAutomations:
+		return m.clearedautomations
+	case workspace.EdgeAutomationRuns:
+		return m.clearedautomation_runs
 	case workspace.EdgeUser:
 		return m.cleareduser
 	}
@@ -11630,6 +13493,12 @@ func (m *WorkspaceMutation) ResetEdge(name string) error {
 		return nil
 	case workspace.EdgeEmailTemplates:
 		m.ResetEmailTemplates()
+		return nil
+	case workspace.EdgeAutomations:
+		m.ResetAutomations()
+		return nil
+	case workspace.EdgeAutomationRuns:
+		m.ResetAutomationRuns()
 		return nil
 	case workspace.EdgeUser:
 		m.ResetUser()

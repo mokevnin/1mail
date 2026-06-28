@@ -11,6 +11,8 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/mokevnin/1mail/ent/apitoken"
+	"github.com/mokevnin/1mail/ent/automation"
+	"github.com/mokevnin/1mail/ent/automationrun"
 	"github.com/mokevnin/1mail/ent/broadcast"
 	"github.com/mokevnin/1mail/ent/broadcastrecipient"
 	"github.com/mokevnin/1mail/ent/contact"
@@ -245,6 +247,36 @@ func (_c *WorkspaceCreate) AddEmailTemplates(v ...*EmailTemplate) *WorkspaceCrea
 		ids[i] = v[i].ID
 	}
 	return _c.AddEmailTemplateIDs(ids...)
+}
+
+// AddAutomationIDs adds the "automations" edge to the Automation entity by IDs.
+func (_c *WorkspaceCreate) AddAutomationIDs(ids ...int64) *WorkspaceCreate {
+	_c.mutation.AddAutomationIDs(ids...)
+	return _c
+}
+
+// AddAutomations adds the "automations" edges to the Automation entity.
+func (_c *WorkspaceCreate) AddAutomations(v ...*Automation) *WorkspaceCreate {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddAutomationIDs(ids...)
+}
+
+// AddAutomationRunIDs adds the "automation_runs" edge to the AutomationRun entity by IDs.
+func (_c *WorkspaceCreate) AddAutomationRunIDs(ids ...int64) *WorkspaceCreate {
+	_c.mutation.AddAutomationRunIDs(ids...)
+	return _c
+}
+
+// AddAutomationRuns adds the "automation_runs" edges to the AutomationRun entity.
+func (_c *WorkspaceCreate) AddAutomationRuns(v ...*AutomationRun) *WorkspaceCreate {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddAutomationRunIDs(ids...)
 }
 
 // SetUser sets the "user" edge to the User entity.
@@ -534,6 +566,38 @@ func (_c *WorkspaceCreate) createSpec() (*Workspace, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(emailtemplate.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.AutomationsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   workspace.AutomationsTable,
+			Columns: []string{workspace.AutomationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(automation.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.AutomationRunsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   workspace.AutomationRunsTable,
+			Columns: []string{workspace.AutomationRunsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(automationrun.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {
