@@ -27,6 +27,69 @@ func (UnimplementedHandler) SiteAuthRegister(ctx context.Context, req *SiteRegis
 	return r, ht.ErrNotImplemented
 }
 
+// SiteAutomationsActivate implements SiteAutomations_activate operation.
+//
+// Activate an automation (starts enrolling contacts).
+//
+// POST /w/{workspaceSlug}/automations/{id}/activate
+func (UnimplementedHandler) SiteAutomationsActivate(ctx context.Context, params SiteAutomationsActivateParams) (r SiteAutomationsActivateRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// SiteAutomationsCreate implements SiteAutomations_create operation.
+//
+// Create an automation.
+//
+// POST /w/{workspaceSlug}/automations
+func (UnimplementedHandler) SiteAutomationsCreate(ctx context.Context, req *SiteCreateAutomationInput, params SiteAutomationsCreateParams) (r SiteAutomationsCreateRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// SiteAutomationsDeactivate implements SiteAutomations_deactivate operation.
+//
+// Deactivate an automation (stops new enrollments).
+//
+// POST /w/{workspaceSlug}/automations/{id}/deactivate
+func (UnimplementedHandler) SiteAutomationsDeactivate(ctx context.Context, params SiteAutomationsDeactivateParams) (r SiteAutomationsDeactivateRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// SiteAutomationsDelete implements SiteAutomations_delete operation.
+//
+// Delete an automation.
+//
+// DELETE /w/{workspaceSlug}/automations/{id}
+func (UnimplementedHandler) SiteAutomationsDelete(ctx context.Context, params SiteAutomationsDeleteParams) (r SiteAutomationsDeleteRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// SiteAutomationsGet implements SiteAutomations_get operation.
+//
+// Get an automation by ID.
+//
+// GET /w/{workspaceSlug}/automations/{id}
+func (UnimplementedHandler) SiteAutomationsGet(ctx context.Context, params SiteAutomationsGetParams) (r SiteAutomationsGetRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// SiteAutomationsList implements SiteAutomations_list operation.
+//
+// List automations.
+//
+// GET /w/{workspaceSlug}/automations
+func (UnimplementedHandler) SiteAutomationsList(ctx context.Context, params SiteAutomationsListParams) (r SiteAutomationsListRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// SiteAutomationsUpdate implements SiteAutomations_update operation.
+//
+// Update an automation.
+//
+// PUT /w/{workspaceSlug}/automations/{id}
+func (UnimplementedHandler) SiteAutomationsUpdate(ctx context.Context, req *SiteUpdateAutomationInput, params SiteAutomationsUpdateParams) (r SiteAutomationsUpdateRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // SiteBroadcastsCreate implements SiteBroadcasts_create operation.
 //
 // Create a broadcast from the site UI.

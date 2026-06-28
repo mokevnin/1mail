@@ -22,6 +22,11 @@ export const zProblemDetails = z.object({
 });
 
 /**
+ * Automation lifecycle status
+ */
+export const zSiteAutomationStatus = z.enum(['draft', 'active']);
+
+/**
  * Denormalized delivery counters for a broadcast
  */
 export const zSiteBroadcastStats = z.object({
@@ -48,6 +53,15 @@ export const zSiteBroadcastStatus = z.enum([
  * Contact status for site UI
  */
 export const zSiteContactStatus = z.enum(['active', 'unsubscribed']);
+
+/**
+ * Site request body for creating an automation
+ */
+export const zSiteCreateAutomationInput = z.object({
+    name: z.string(),
+    triggerEvent: z.string(),
+    definition: z.string().optional()
+});
 
 /**
  * Site request body for creating a broadcast
@@ -217,6 +231,15 @@ export const zSiteTestSendBroadcastInput = z.object({
 });
 
 /**
+ * Site request body for updating an automation
+ */
+export const zSiteUpdateAutomationInput = z.object({
+    name: z.string().optional(),
+    triggerEvent: z.string().optional(),
+    definition: z.string().optional()
+});
+
+/**
  * Site request body for updating a broadcast
  */
 export const zSiteUpdateBroadcastInput = z.object({
@@ -311,6 +334,19 @@ export const zSiteApiTokenResource = z.object({
     lastUsedAt: zTimestamp.nullish(),
     expiresAt: zTimestamp.nullish(),
     createdAt: zTimestamp
+});
+
+/**
+ * Automation resource used by the site UI
+ */
+export const zSiteAutomationResource = z.object({
+    id: zEntityId,
+    name: z.string(),
+    status: zSiteAutomationStatus,
+    triggerEvent: z.string(),
+    definition: z.string(),
+    createdAt: zTimestamp,
+    updatedAt: zTimestamp
 });
 
 /**
@@ -495,6 +531,89 @@ export const zSiteUserUpdateMeBody = zSiteUpdateMeInput;
  * The request has succeeded.
  */
 export const zSiteUserUpdateMeResponse = zSiteUserResource;
+
+export const zSiteAutomationsListPath = z.object({
+    workspaceSlug: z.string()
+});
+
+export const zSiteAutomationsListQuery = z.object({
+    page: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).optional().default(1),
+    pageSize: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).optional().default(25)
+});
+
+/**
+ * Paginated response
+ */
+export const zSiteAutomationsListResponse = z.object({
+    items: z.array(zSiteAutomationResource),
+    page: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
+    pageSize: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
+    totalItems: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
+    totalPages: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' })
+});
+
+export const zSiteAutomationsCreateBody = zSiteCreateAutomationInput;
+
+export const zSiteAutomationsCreatePath = z.object({
+    workspaceSlug: z.string()
+});
+
+/**
+ * The request has succeeded and a new resource has been created as a result.
+ */
+export const zSiteAutomationsCreateResponse = zSiteAutomationResource;
+
+export const zSiteAutomationsDeletePath = z.object({
+    workspaceSlug: z.string(),
+    id: zEntityId
+});
+
+/**
+ * There is no content to send for this request, but the headers may be useful.
+ */
+export const zSiteAutomationsDeleteResponse = z.void();
+
+export const zSiteAutomationsGetPath = z.object({
+    workspaceSlug: z.string(),
+    id: zEntityId
+});
+
+/**
+ * The request has succeeded.
+ */
+export const zSiteAutomationsGetResponse = zSiteAutomationResource;
+
+export const zSiteAutomationsUpdateBody = zSiteUpdateAutomationInput;
+
+export const zSiteAutomationsUpdatePath = z.object({
+    workspaceSlug: z.string(),
+    id: zEntityId
+});
+
+/**
+ * The request has succeeded.
+ */
+export const zSiteAutomationsUpdateResponse = zSiteAutomationResource;
+
+export const zSiteAutomationsActivatePath = z.object({
+    workspaceSlug: z.string(),
+    id: zEntityId
+});
+
+/**
+ * The request has succeeded.
+ */
+export const zSiteAutomationsActivateResponse = zSiteAutomationResource;
+
+export const zSiteAutomationsDeactivatePath = z.object({
+    workspaceSlug: z.string(),
+    id: zEntityId
+});
+
+/**
+ * The request has succeeded.
+ */
+export const zSiteAutomationsDeactivateResponse = zSiteAutomationResource;
 
 export const zSiteBroadcastsListPath = z.object({
     workspaceSlug: z.string()

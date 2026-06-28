@@ -4,8 +4,8 @@
 import { type DefaultError, type InfiniteData, infiniteQueryOptions, queryOptions, type UseMutationOptions } from '@tanstack/react-query';
 
 import { client } from '../client.gen.ts';
-import { type Options, siteAuthDirectLogin, siteAuthRegister, siteBroadcastsCreate, siteBroadcastsDelete, siteBroadcastsGet, siteBroadcastsList, siteBroadcastsSchedule, siteBroadcastsSend, siteBroadcastsTestSend, siteBroadcastsUpdate, siteContactsCreate, siteContactsDelete, siteContactsGet, siteContactsList, siteContactsUpdate, siteEventsList, siteIntegrationsCreate, siteIntegrationsDelete, siteIntegrationsGet, siteIntegrationsList, siteIntegrationsUpdate, siteSegmentsCreate, siteSegmentsDelete, siteSegmentsGet, siteSegmentsList, siteSegmentsPreview, siteSegmentsUpdate, siteTemplatesCreate, siteTemplatesDelete, siteTemplatesGet, siteTemplatesList, siteTemplatesUpdate, siteTokensCreate, siteTokensDelete, siteTokensList, siteUserGetMe, siteUserUpdateMe, siteWorkspacesList, siteWorkspacesUpdate } from '../sdk.gen.ts';
-import type { SiteAuthDirectLoginData, SiteAuthDirectLoginError, SiteAuthDirectLoginResponse, SiteAuthRegisterData, SiteAuthRegisterError, SiteAuthRegisterResponse, SiteBroadcastsCreateData, SiteBroadcastsCreateError, SiteBroadcastsCreateResponse, SiteBroadcastsDeleteData, SiteBroadcastsDeleteError, SiteBroadcastsDeleteResponse, SiteBroadcastsGetData, SiteBroadcastsGetError, SiteBroadcastsGetResponse, SiteBroadcastsListData, SiteBroadcastsListError, SiteBroadcastsListResponse, SiteBroadcastsScheduleData, SiteBroadcastsScheduleError, SiteBroadcastsScheduleResponse, SiteBroadcastsSendData, SiteBroadcastsSendError, SiteBroadcastsSendResponse, SiteBroadcastsTestSendData, SiteBroadcastsTestSendError, SiteBroadcastsTestSendResponse, SiteBroadcastsUpdateData, SiteBroadcastsUpdateError, SiteBroadcastsUpdateResponse, SiteContactsCreateData, SiteContactsCreateError, SiteContactsCreateResponse, SiteContactsDeleteData, SiteContactsDeleteError, SiteContactsDeleteResponse, SiteContactsGetData, SiteContactsGetError, SiteContactsGetResponse, SiteContactsListData, SiteContactsListError, SiteContactsListResponse, SiteContactsUpdateData, SiteContactsUpdateError, SiteContactsUpdateResponse, SiteEventsListData, SiteEventsListError, SiteEventsListResponse, SiteIntegrationsCreateData, SiteIntegrationsCreateError, SiteIntegrationsCreateResponse, SiteIntegrationsDeleteData, SiteIntegrationsDeleteError, SiteIntegrationsDeleteResponse, SiteIntegrationsGetData, SiteIntegrationsGetError, SiteIntegrationsGetResponse, SiteIntegrationsListData, SiteIntegrationsListError, SiteIntegrationsListResponse, SiteIntegrationsUpdateData, SiteIntegrationsUpdateError, SiteIntegrationsUpdateResponse, SiteSegmentsCreateData, SiteSegmentsCreateError, SiteSegmentsCreateResponse, SiteSegmentsDeleteData, SiteSegmentsDeleteError, SiteSegmentsDeleteResponse, SiteSegmentsGetData, SiteSegmentsGetError, SiteSegmentsGetResponse, SiteSegmentsListData, SiteSegmentsListError, SiteSegmentsListResponse, SiteSegmentsPreviewData, SiteSegmentsPreviewError, SiteSegmentsPreviewResponse, SiteSegmentsUpdateData, SiteSegmentsUpdateError, SiteSegmentsUpdateResponse, SiteTemplatesCreateData, SiteTemplatesCreateError, SiteTemplatesCreateResponse, SiteTemplatesDeleteData, SiteTemplatesDeleteError, SiteTemplatesDeleteResponse, SiteTemplatesGetData, SiteTemplatesGetError, SiteTemplatesGetResponse, SiteTemplatesListData, SiteTemplatesListError, SiteTemplatesListResponse, SiteTemplatesUpdateData, SiteTemplatesUpdateError, SiteTemplatesUpdateResponse, SiteTokensCreateData, SiteTokensCreateError, SiteTokensCreateResponse, SiteTokensDeleteData, SiteTokensDeleteError, SiteTokensDeleteResponse, SiteTokensListData, SiteTokensListError, SiteTokensListResponse, SiteUserGetMeData, SiteUserGetMeResponse, SiteUserUpdateMeData, SiteUserUpdateMeError, SiteUserUpdateMeResponse, SiteWorkspacesListData, SiteWorkspacesListResponse, SiteWorkspacesUpdateData, SiteWorkspacesUpdateError, SiteWorkspacesUpdateResponse } from '../types.gen.ts';
+import { type Options, siteAuthDirectLogin, siteAuthRegister, siteAutomationsActivate, siteAutomationsCreate, siteAutomationsDeactivate, siteAutomationsDelete, siteAutomationsGet, siteAutomationsList, siteAutomationsUpdate, siteBroadcastsCreate, siteBroadcastsDelete, siteBroadcastsGet, siteBroadcastsList, siteBroadcastsSchedule, siteBroadcastsSend, siteBroadcastsTestSend, siteBroadcastsUpdate, siteContactsCreate, siteContactsDelete, siteContactsGet, siteContactsList, siteContactsUpdate, siteEventsList, siteIntegrationsCreate, siteIntegrationsDelete, siteIntegrationsGet, siteIntegrationsList, siteIntegrationsUpdate, siteSegmentsCreate, siteSegmentsDelete, siteSegmentsGet, siteSegmentsList, siteSegmentsPreview, siteSegmentsUpdate, siteTemplatesCreate, siteTemplatesDelete, siteTemplatesGet, siteTemplatesList, siteTemplatesUpdate, siteTokensCreate, siteTokensDelete, siteTokensList, siteUserGetMe, siteUserUpdateMe, siteWorkspacesList, siteWorkspacesUpdate } from '../sdk.gen.ts';
+import type { SiteAuthDirectLoginData, SiteAuthDirectLoginError, SiteAuthDirectLoginResponse, SiteAuthRegisterData, SiteAuthRegisterError, SiteAuthRegisterResponse, SiteAutomationsActivateData, SiteAutomationsActivateError, SiteAutomationsActivateResponse, SiteAutomationsCreateData, SiteAutomationsCreateError, SiteAutomationsCreateResponse, SiteAutomationsDeactivateData, SiteAutomationsDeactivateError, SiteAutomationsDeactivateResponse, SiteAutomationsDeleteData, SiteAutomationsDeleteError, SiteAutomationsDeleteResponse, SiteAutomationsGetData, SiteAutomationsGetError, SiteAutomationsGetResponse, SiteAutomationsListData, SiteAutomationsListError, SiteAutomationsListResponse, SiteAutomationsUpdateData, SiteAutomationsUpdateError, SiteAutomationsUpdateResponse, SiteBroadcastsCreateData, SiteBroadcastsCreateError, SiteBroadcastsCreateResponse, SiteBroadcastsDeleteData, SiteBroadcastsDeleteError, SiteBroadcastsDeleteResponse, SiteBroadcastsGetData, SiteBroadcastsGetError, SiteBroadcastsGetResponse, SiteBroadcastsListData, SiteBroadcastsListError, SiteBroadcastsListResponse, SiteBroadcastsScheduleData, SiteBroadcastsScheduleError, SiteBroadcastsScheduleResponse, SiteBroadcastsSendData, SiteBroadcastsSendError, SiteBroadcastsSendResponse, SiteBroadcastsTestSendData, SiteBroadcastsTestSendError, SiteBroadcastsTestSendResponse, SiteBroadcastsUpdateData, SiteBroadcastsUpdateError, SiteBroadcastsUpdateResponse, SiteContactsCreateData, SiteContactsCreateError, SiteContactsCreateResponse, SiteContactsDeleteData, SiteContactsDeleteError, SiteContactsDeleteResponse, SiteContactsGetData, SiteContactsGetError, SiteContactsGetResponse, SiteContactsListData, SiteContactsListError, SiteContactsListResponse, SiteContactsUpdateData, SiteContactsUpdateError, SiteContactsUpdateResponse, SiteEventsListData, SiteEventsListError, SiteEventsListResponse, SiteIntegrationsCreateData, SiteIntegrationsCreateError, SiteIntegrationsCreateResponse, SiteIntegrationsDeleteData, SiteIntegrationsDeleteError, SiteIntegrationsDeleteResponse, SiteIntegrationsGetData, SiteIntegrationsGetError, SiteIntegrationsGetResponse, SiteIntegrationsListData, SiteIntegrationsListError, SiteIntegrationsListResponse, SiteIntegrationsUpdateData, SiteIntegrationsUpdateError, SiteIntegrationsUpdateResponse, SiteSegmentsCreateData, SiteSegmentsCreateError, SiteSegmentsCreateResponse, SiteSegmentsDeleteData, SiteSegmentsDeleteError, SiteSegmentsDeleteResponse, SiteSegmentsGetData, SiteSegmentsGetError, SiteSegmentsGetResponse, SiteSegmentsListData, SiteSegmentsListError, SiteSegmentsListResponse, SiteSegmentsPreviewData, SiteSegmentsPreviewError, SiteSegmentsPreviewResponse, SiteSegmentsUpdateData, SiteSegmentsUpdateError, SiteSegmentsUpdateResponse, SiteTemplatesCreateData, SiteTemplatesCreateError, SiteTemplatesCreateResponse, SiteTemplatesDeleteData, SiteTemplatesDeleteError, SiteTemplatesDeleteResponse, SiteTemplatesGetData, SiteTemplatesGetError, SiteTemplatesGetResponse, SiteTemplatesListData, SiteTemplatesListError, SiteTemplatesListResponse, SiteTemplatesUpdateData, SiteTemplatesUpdateError, SiteTemplatesUpdateResponse, SiteTokensCreateData, SiteTokensCreateError, SiteTokensCreateResponse, SiteTokensDeleteData, SiteTokensDeleteError, SiteTokensDeleteResponse, SiteTokensListData, SiteTokensListError, SiteTokensListResponse, SiteUserGetMeData, SiteUserGetMeResponse, SiteUserUpdateMeData, SiteUserUpdateMeError, SiteUserUpdateMeResponse, SiteWorkspacesListData, SiteWorkspacesListResponse, SiteWorkspacesUpdateData, SiteWorkspacesUpdateError, SiteWorkspacesUpdateResponse } from '../types.gen.ts';
 
 export const siteAuthDirectLoginMutation = (options?: Partial<Options<SiteAuthDirectLoginData>>): UseMutationOptions<SiteAuthDirectLoginResponse, SiteAuthDirectLoginError, Options<SiteAuthDirectLoginData>> => {
     const mutationOptions: UseMutationOptions<SiteAuthDirectLoginResponse, SiteAuthDirectLoginError, Options<SiteAuthDirectLoginData>> = {
@@ -103,14 +103,14 @@ export const siteUserUpdateMeMutation = (options?: Partial<Options<SiteUserUpdat
     return mutationOptions;
 };
 
-export const siteBroadcastsListQueryKey = (options: Options<SiteBroadcastsListData>) => createQueryKey('siteBroadcastsList', options);
+export const siteAutomationsListQueryKey = (options: Options<SiteAutomationsListData>) => createQueryKey('siteAutomationsList', options);
 
 /**
- * List broadcasts for the site UI
+ * List automations
  */
-export const siteBroadcastsListOptions = (options: Options<SiteBroadcastsListData>) => queryOptions<SiteBroadcastsListResponse, SiteBroadcastsListError, SiteBroadcastsListResponse, ReturnType<typeof siteBroadcastsListQueryKey>>({
+export const siteAutomationsListOptions = (options: Options<SiteAutomationsListData>) => queryOptions<SiteAutomationsListResponse, SiteAutomationsListError, SiteAutomationsListResponse, ReturnType<typeof siteAutomationsListQueryKey>>({
     queryFn: async ({ queryKey, signal }) => {
-        const { data } = await siteBroadcastsList({
+        const { data } = await siteAutomationsList({
             ...options,
             ...queryKey[0],
             signal,
@@ -118,7 +118,7 @@ export const siteBroadcastsListOptions = (options: Options<SiteBroadcastsListDat
         });
         return data;
     },
-    queryKey: siteBroadcastsListQueryKey(options)
+    queryKey: siteAutomationsListQueryKey(options)
 });
 
 const createInfiniteParams = <K extends Pick<QueryKey<Options>[0], 'body' | 'headers' | 'path' | 'query'>>(queryKey: QueryKey<Options>, page: K) => {
@@ -149,6 +149,157 @@ const createInfiniteParams = <K extends Pick<QueryKey<Options>[0], 'body' | 'hea
     }
     return params as unknown as typeof page;
 };
+
+export const siteAutomationsListInfiniteQueryKey = (options: Options<SiteAutomationsListData>): QueryKey<Options<SiteAutomationsListData>> => createQueryKey('siteAutomationsList', options, true);
+
+/**
+ * List automations
+ */
+export const siteAutomationsListInfiniteOptions = (options: Options<SiteAutomationsListData>) => {
+    const opts = infiniteQueryOptions<SiteAutomationsListResponse, SiteAutomationsListError, InfiniteData<SiteAutomationsListResponse>, QueryKey<Options<SiteAutomationsListData>>, number | Pick<QueryKey<Options<SiteAutomationsListData>>[0], 'body' | 'headers' | 'path' | 'query'>>(
+    // @ts-ignore
+    {
+        queryFn: async ({ pageParam, queryKey, signal }) => {
+            // @ts-ignore
+            const page: Pick<QueryKey<Options<SiteAutomationsListData>>[0], 'body' | 'headers' | 'path' | 'query'> = typeof pageParam === 'object' ? pageParam : {
+                query: {
+                    page: pageParam
+                }
+            };
+            const params = createInfiniteParams(queryKey, page);
+            const { data } = await siteAutomationsList({
+                ...options,
+                ...params,
+                signal,
+                throwOnError: true
+            });
+            return data;
+        },
+        queryKey: siteAutomationsListInfiniteQueryKey(options)
+    });
+    return opts as Omit<typeof opts, 'initialData'>;
+};
+
+/**
+ * Create an automation
+ */
+export const siteAutomationsCreateMutation = (options?: Partial<Options<SiteAutomationsCreateData>>): UseMutationOptions<SiteAutomationsCreateResponse, SiteAutomationsCreateError, Options<SiteAutomationsCreateData>> => {
+    const mutationOptions: UseMutationOptions<SiteAutomationsCreateResponse, SiteAutomationsCreateError, Options<SiteAutomationsCreateData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await siteAutomationsCreate({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Delete an automation
+ */
+export const siteAutomationsDeleteMutation = (options?: Partial<Options<SiteAutomationsDeleteData>>): UseMutationOptions<SiteAutomationsDeleteResponse, SiteAutomationsDeleteError, Options<SiteAutomationsDeleteData>> => {
+    const mutationOptions: UseMutationOptions<SiteAutomationsDeleteResponse, SiteAutomationsDeleteError, Options<SiteAutomationsDeleteData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await siteAutomationsDelete({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const siteAutomationsGetQueryKey = (options: Options<SiteAutomationsGetData>) => createQueryKey('siteAutomationsGet', options);
+
+/**
+ * Get an automation by ID
+ */
+export const siteAutomationsGetOptions = (options: Options<SiteAutomationsGetData>) => queryOptions<SiteAutomationsGetResponse, SiteAutomationsGetError, SiteAutomationsGetResponse, ReturnType<typeof siteAutomationsGetQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await siteAutomationsGet({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: siteAutomationsGetQueryKey(options)
+});
+
+/**
+ * Update an automation
+ */
+export const siteAutomationsUpdateMutation = (options?: Partial<Options<SiteAutomationsUpdateData>>): UseMutationOptions<SiteAutomationsUpdateResponse, SiteAutomationsUpdateError, Options<SiteAutomationsUpdateData>> => {
+    const mutationOptions: UseMutationOptions<SiteAutomationsUpdateResponse, SiteAutomationsUpdateError, Options<SiteAutomationsUpdateData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await siteAutomationsUpdate({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Activate an automation (starts enrolling contacts)
+ */
+export const siteAutomationsActivateMutation = (options?: Partial<Options<SiteAutomationsActivateData>>): UseMutationOptions<SiteAutomationsActivateResponse, SiteAutomationsActivateError, Options<SiteAutomationsActivateData>> => {
+    const mutationOptions: UseMutationOptions<SiteAutomationsActivateResponse, SiteAutomationsActivateError, Options<SiteAutomationsActivateData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await siteAutomationsActivate({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Deactivate an automation (stops new enrollments)
+ */
+export const siteAutomationsDeactivateMutation = (options?: Partial<Options<SiteAutomationsDeactivateData>>): UseMutationOptions<SiteAutomationsDeactivateResponse, SiteAutomationsDeactivateError, Options<SiteAutomationsDeactivateData>> => {
+    const mutationOptions: UseMutationOptions<SiteAutomationsDeactivateResponse, SiteAutomationsDeactivateError, Options<SiteAutomationsDeactivateData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await siteAutomationsDeactivate({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const siteBroadcastsListQueryKey = (options: Options<SiteBroadcastsListData>) => createQueryKey('siteBroadcastsList', options);
+
+/**
+ * List broadcasts for the site UI
+ */
+export const siteBroadcastsListOptions = (options: Options<SiteBroadcastsListData>) => queryOptions<SiteBroadcastsListResponse, SiteBroadcastsListError, SiteBroadcastsListResponse, ReturnType<typeof siteBroadcastsListQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await siteBroadcastsList({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: siteBroadcastsListQueryKey(options)
+});
 
 export const siteBroadcastsListInfiniteQueryKey = (options: Options<SiteBroadcastsListData>): QueryKey<Options<SiteBroadcastsListData>> => createQueryKey('siteBroadcastsList', options, true);
 

@@ -16,6 +16,48 @@ type Handler interface {
 	//
 	// POST /auth/register
 	SiteAuthRegister(ctx context.Context, req *SiteRegisterInput) (SiteAuthRegisterRes, error)
+	// SiteAutomationsActivate implements SiteAutomations_activate operation.
+	//
+	// Activate an automation (starts enrolling contacts).
+	//
+	// POST /w/{workspaceSlug}/automations/{id}/activate
+	SiteAutomationsActivate(ctx context.Context, params SiteAutomationsActivateParams) (SiteAutomationsActivateRes, error)
+	// SiteAutomationsCreate implements SiteAutomations_create operation.
+	//
+	// Create an automation.
+	//
+	// POST /w/{workspaceSlug}/automations
+	SiteAutomationsCreate(ctx context.Context, req *SiteCreateAutomationInput, params SiteAutomationsCreateParams) (SiteAutomationsCreateRes, error)
+	// SiteAutomationsDeactivate implements SiteAutomations_deactivate operation.
+	//
+	// Deactivate an automation (stops new enrollments).
+	//
+	// POST /w/{workspaceSlug}/automations/{id}/deactivate
+	SiteAutomationsDeactivate(ctx context.Context, params SiteAutomationsDeactivateParams) (SiteAutomationsDeactivateRes, error)
+	// SiteAutomationsDelete implements SiteAutomations_delete operation.
+	//
+	// Delete an automation.
+	//
+	// DELETE /w/{workspaceSlug}/automations/{id}
+	SiteAutomationsDelete(ctx context.Context, params SiteAutomationsDeleteParams) (SiteAutomationsDeleteRes, error)
+	// SiteAutomationsGet implements SiteAutomations_get operation.
+	//
+	// Get an automation by ID.
+	//
+	// GET /w/{workspaceSlug}/automations/{id}
+	SiteAutomationsGet(ctx context.Context, params SiteAutomationsGetParams) (SiteAutomationsGetRes, error)
+	// SiteAutomationsList implements SiteAutomations_list operation.
+	//
+	// List automations.
+	//
+	// GET /w/{workspaceSlug}/automations
+	SiteAutomationsList(ctx context.Context, params SiteAutomationsListParams) (SiteAutomationsListRes, error)
+	// SiteAutomationsUpdate implements SiteAutomations_update operation.
+	//
+	// Update an automation.
+	//
+	// PUT /w/{workspaceSlug}/automations/{id}
+	SiteAutomationsUpdate(ctx context.Context, req *SiteUpdateAutomationInput, params SiteAutomationsUpdateParams) (SiteAutomationsUpdateRes, error)
 	// SiteBroadcastsCreate implements SiteBroadcasts_create operation.
 	//
 	// Create a broadcast from the site UI.

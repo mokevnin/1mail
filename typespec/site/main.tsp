@@ -15,6 +15,7 @@ import "./resources/tokens.tsp";
 import "./resources/integrations.tsp";
 import "./resources/broadcasts.tsp";
 import "./resources/templates.tsp";
+import "./resources/automations.tsp";
 
 using TypeSpec.OpenAPI;
 using TypeSpec.Http;

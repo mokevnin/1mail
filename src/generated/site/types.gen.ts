@@ -86,6 +86,50 @@ export type SiteApiTokenResource = {
 };
 
 /**
+ * Automation resource used by the site UI
+ */
+export type SiteAutomationResource = {
+    /**
+     * Unique identifier
+     */
+    id: EntityId;
+    /**
+     * Automation name
+     */
+    name: string;
+    /**
+     * Lifecycle status
+     */
+    status: SiteAutomationStatus;
+    /**
+     * Event action that enrolls a contact (e.g. "contact.created", "email.opened")
+     */
+    triggerEvent: string;
+    /**
+     * JSON array of steps: [{type:"email",subject,body},{type:"wait",seconds}]
+     */
+    definition: string;
+    /**
+     * Creation timestamp
+     */
+    createdAt: Timestamp;
+    /**
+     * Last update timestamp
+     */
+    updatedAt: Timestamp;
+};
+
+/**
+ * Automation lifecycle status
+ */
+export const SiteAutomationStatus = { DRAFT: 'draft', ACTIVE: 'active' } as const;
+
+/**
+ * Automation lifecycle status
+ */
+export type SiteAutomationStatus = typeof SiteAutomationStatus[keyof typeof SiteAutomationStatus];
+
+/**
  * Broadcast resource used by the site UI
  */
 export type SiteBroadcastResource = {
@@ -250,6 +294,15 @@ export const SiteContactStatus = { ACTIVE: 'active', UNSUBSCRIBED: 'unsubscribed
  * Contact status for site UI
  */
 export type SiteContactStatus = typeof SiteContactStatus[keyof typeof SiteContactStatus];
+
+/**
+ * Site request body for creating an automation
+ */
+export type SiteCreateAutomationInput = {
+    name: string;
+    triggerEvent: string;
+    definition?: string;
+};
 
 /**
  * Site request body for creating a broadcast
@@ -680,6 +733,15 @@ export type SiteTestSendBroadcastInput = {
 };
 
 /**
+ * Site request body for updating an automation
+ */
+export type SiteUpdateAutomationInput = {
+    name?: string;
+    triggerEvent?: string;
+    definition?: string;
+};
+
+/**
  * Site request body for updating a broadcast
  */
 export type SiteUpdateBroadcastInput = {
@@ -975,6 +1037,270 @@ export type SiteUserUpdateMeResponses = {
 };
 
 export type SiteUserUpdateMeResponse = SiteUserUpdateMeResponses[keyof SiteUserUpdateMeResponses];
+
+export type SiteAutomationsListData = {
+    body?: never;
+    path: {
+        workspaceSlug: string;
+    };
+    query?: {
+        /**
+         * Page number (1-based)
+         */
+        page?: number;
+        /**
+         * Page size
+         */
+        pageSize?: number;
+    };
+    url: '/w/{workspaceSlug}/automations';
+};
+
+export type SiteAutomationsListErrors = {
+    /**
+     * RFC 7807 bad request response
+     */
+    400: ProblemDetails;
+    /**
+     * RFC 7807 not found response
+     */
+    404: ProblemDetails;
+    /**
+     * RFC 7807 validation response
+     */
+    422: ProblemDetails;
+};
+
+export type SiteAutomationsListError = SiteAutomationsListErrors[keyof SiteAutomationsListErrors];
+
+export type SiteAutomationsListResponses = {
+    /**
+     * Paginated response
+     */
+    200: {
+        /**
+         * List of items
+         */
+        items: Array<SiteAutomationResource>;
+        /**
+         * Page number (1-based)
+         */
+        page: number;
+        /**
+         * Page size
+         */
+        pageSize: number;
+        /**
+         * Total number of elements
+         */
+        totalItems: number;
+        /**
+         * Total number of pages
+         */
+        totalPages: number;
+    };
+};
+
+export type SiteAutomationsListResponse = SiteAutomationsListResponses[keyof SiteAutomationsListResponses];
+
+export type SiteAutomationsCreateData = {
+    body: SiteCreateAutomationInput;
+    path: {
+        workspaceSlug: string;
+    };
+    query?: never;
+    url: '/w/{workspaceSlug}/automations';
+};
+
+export type SiteAutomationsCreateErrors = {
+    /**
+     * RFC 7807 not found response
+     */
+    404: ProblemDetails;
+    /**
+     * RFC 7807 validation response
+     */
+    422: ProblemDetails;
+};
+
+export type SiteAutomationsCreateError = SiteAutomationsCreateErrors[keyof SiteAutomationsCreateErrors];
+
+export type SiteAutomationsCreateResponses = {
+    /**
+     * The request has succeeded and a new resource has been created as a result.
+     */
+    201: SiteAutomationResource;
+};
+
+export type SiteAutomationsCreateResponse = SiteAutomationsCreateResponses[keyof SiteAutomationsCreateResponses];
+
+export type SiteAutomationsDeleteData = {
+    body?: never;
+    path: {
+        workspaceSlug: string;
+        id: EntityId;
+    };
+    query?: never;
+    url: '/w/{workspaceSlug}/automations/{id}';
+};
+
+export type SiteAutomationsDeleteErrors = {
+    /**
+     * RFC 7807 bad request response
+     */
+    400: ProblemDetails;
+    /**
+     * RFC 7807 not found response
+     */
+    404: ProblemDetails;
+};
+
+export type SiteAutomationsDeleteError = SiteAutomationsDeleteErrors[keyof SiteAutomationsDeleteErrors];
+
+export type SiteAutomationsDeleteResponses = {
+    /**
+     * There is no content to send for this request, but the headers may be useful.
+     */
+    204: void;
+};
+
+export type SiteAutomationsDeleteResponse = SiteAutomationsDeleteResponses[keyof SiteAutomationsDeleteResponses];
+
+export type SiteAutomationsGetData = {
+    body?: never;
+    path: {
+        workspaceSlug: string;
+        id: EntityId;
+    };
+    query?: never;
+    url: '/w/{workspaceSlug}/automations/{id}';
+};
+
+export type SiteAutomationsGetErrors = {
+    /**
+     * RFC 7807 bad request response
+     */
+    400: ProblemDetails;
+    /**
+     * RFC 7807 not found response
+     */
+    404: ProblemDetails;
+};
+
+export type SiteAutomationsGetError = SiteAutomationsGetErrors[keyof SiteAutomationsGetErrors];
+
+export type SiteAutomationsGetResponses = {
+    /**
+     * The request has succeeded.
+     */
+    200: SiteAutomationResource;
+};
+
+export type SiteAutomationsGetResponse = SiteAutomationsGetResponses[keyof SiteAutomationsGetResponses];
+
+export type SiteAutomationsUpdateData = {
+    body: SiteUpdateAutomationInput;
+    path: {
+        workspaceSlug: string;
+        id: EntityId;
+    };
+    query?: never;
+    url: '/w/{workspaceSlug}/automations/{id}';
+};
+
+export type SiteAutomationsUpdateErrors = {
+    /**
+     * RFC 7807 bad request response
+     */
+    400: ProblemDetails;
+    /**
+     * RFC 7807 not found response
+     */
+    404: ProblemDetails;
+    /**
+     * RFC 7807 validation response
+     */
+    422: ProblemDetails;
+};
+
+export type SiteAutomationsUpdateError = SiteAutomationsUpdateErrors[keyof SiteAutomationsUpdateErrors];
+
+export type SiteAutomationsUpdateResponses = {
+    /**
+     * The request has succeeded.
+     */
+    200: SiteAutomationResource;
+};
+
+export type SiteAutomationsUpdateResponse = SiteAutomationsUpdateResponses[keyof SiteAutomationsUpdateResponses];
+
+export type SiteAutomationsActivateData = {
+    body?: never;
+    path: {
+        workspaceSlug: string;
+        id: EntityId;
+    };
+    query?: never;
+    url: '/w/{workspaceSlug}/automations/{id}/activate';
+};
+
+export type SiteAutomationsActivateErrors = {
+    /**
+     * RFC 7807 bad request response
+     */
+    400: ProblemDetails;
+    /**
+     * RFC 7807 not found response
+     */
+    404: ProblemDetails;
+    /**
+     * RFC 7807 validation response
+     */
+    422: ProblemDetails;
+};
+
+export type SiteAutomationsActivateError = SiteAutomationsActivateErrors[keyof SiteAutomationsActivateErrors];
+
+export type SiteAutomationsActivateResponses = {
+    /**
+     * The request has succeeded.
+     */
+    200: SiteAutomationResource;
+};
+
+export type SiteAutomationsActivateResponse = SiteAutomationsActivateResponses[keyof SiteAutomationsActivateResponses];
+
+export type SiteAutomationsDeactivateData = {
+    body?: never;
+    path: {
+        workspaceSlug: string;
+        id: EntityId;
+    };
+    query?: never;
+    url: '/w/{workspaceSlug}/automations/{id}/deactivate';
+};
+
+export type SiteAutomationsDeactivateErrors = {
+    /**
+     * RFC 7807 bad request response
+     */
+    400: ProblemDetails;
+    /**
+     * RFC 7807 not found response
+     */
+    404: ProblemDetails;
+};
+
+export type SiteAutomationsDeactivateError = SiteAutomationsDeactivateErrors[keyof SiteAutomationsDeactivateErrors];
+
+export type SiteAutomationsDeactivateResponses = {
+    /**
+     * The request has succeeded.
+     */
+    200: SiteAutomationResource;
+};
+
+export type SiteAutomationsDeactivateResponse = SiteAutomationsDeactivateResponses[keyof SiteAutomationsDeactivateResponses];
 
 export type SiteBroadcastsListData = {
     body?: never;

@@ -9,6 +9,34 @@ type SiteAuthRegisterRes interface {
 	siteAuthRegisterRes()
 }
 
+type SiteAutomationsActivateRes interface {
+	siteAutomationsActivateRes()
+}
+
+type SiteAutomationsCreateRes interface {
+	siteAutomationsCreateRes()
+}
+
+type SiteAutomationsDeactivateRes interface {
+	siteAutomationsDeactivateRes()
+}
+
+type SiteAutomationsDeleteRes interface {
+	siteAutomationsDeleteRes()
+}
+
+type SiteAutomationsGetRes interface {
+	siteAutomationsGetRes()
+}
+
+type SiteAutomationsListRes interface {
+	siteAutomationsListRes()
+}
+
+type SiteAutomationsUpdateRes interface {
+	siteAutomationsUpdateRes()
+}
+
 type SiteBroadcastsCreateRes interface {
 	siteBroadcastsCreateRes()
 }

@@ -10,6 +10,19 @@ import (
 
 type ConverterImpl struct{}
 
+func (c *ConverterImpl) AutomationToResource(source *ent.Automation) site.SiteAutomationResource {
+	var siteapiSiteAutomationResource site.SiteAutomationResource
+	if source != nil {
+		siteapiSiteAutomationResource.ID = entityID((*source).ID)
+		siteapiSiteAutomationResource.Name = (*source).Name
+		siteapiSiteAutomationResource.Status = site.SiteAutomationStatus((*source).Status)
+		siteapiSiteAutomationResource.TriggerEvent = (*source).TriggerEvent
+		siteapiSiteAutomationResource.Definition = (*source).Definition
+		siteapiSiteAutomationResource.CreatedAt = timestamp((*source).CreatedAt)
+		siteapiSiteAutomationResource.UpdatedAt = timestamp((*source).UpdatedAt)
+	}
+	return siteapiSiteAutomationResource
+}
 func (c *ConverterImpl) BroadcastToResource(source *ent.Broadcast) site.SiteBroadcastResource {
 	var siteapiSiteBroadcastResource site.SiteBroadcastResource
 	if source != nil {

@@ -1313,6 +1313,283 @@ type SiteAuthRegisterUnprocessableEntity ProblemDetails
 
 func (*SiteAuthRegisterUnprocessableEntity) siteAuthRegisterRes() {}
 
+// Automation resource used by the site UI.
+// Ref: #/components/schemas/SiteAutomationResource
+type SiteAutomationResource struct {
+	// Unique identifier.
+	ID EntityId `json:"id"`
+	// Automation name.
+	Name string `json:"name"`
+	// Lifecycle status.
+	Status SiteAutomationStatus `json:"status"`
+	// Event action that enrolls a contact (e.g. "contact.created", "email.opened").
+	TriggerEvent string `json:"triggerEvent"`
+	// JSON array of steps: [{type:"email",subject,body},{type:"wait",seconds}].
+	Definition string `json:"definition"`
+	// Creation timestamp.
+	CreatedAt Timestamp `json:"createdAt"`
+	// Last update timestamp.
+	UpdatedAt Timestamp `json:"updatedAt"`
+}
+
+// GetID returns the value of ID.
+func (s *SiteAutomationResource) GetID() EntityId {
+	return s.ID
+}
+
+// GetName returns the value of Name.
+func (s *SiteAutomationResource) GetName() string {
+	return s.Name
+}
+
+// GetStatus returns the value of Status.
+func (s *SiteAutomationResource) GetStatus() SiteAutomationStatus {
+	return s.Status
+}
+
+// GetTriggerEvent returns the value of TriggerEvent.
+func (s *SiteAutomationResource) GetTriggerEvent() string {
+	return s.TriggerEvent
+}
+
+// GetDefinition returns the value of Definition.
+func (s *SiteAutomationResource) GetDefinition() string {
+	return s.Definition
+}
+
+// GetCreatedAt returns the value of CreatedAt.
+func (s *SiteAutomationResource) GetCreatedAt() Timestamp {
+	return s.CreatedAt
+}
+
+// GetUpdatedAt returns the value of UpdatedAt.
+func (s *SiteAutomationResource) GetUpdatedAt() Timestamp {
+	return s.UpdatedAt
+}
+
+// SetID sets the value of ID.
+func (s *SiteAutomationResource) SetID(val EntityId) {
+	s.ID = val
+}
+
+// SetName sets the value of Name.
+func (s *SiteAutomationResource) SetName(val string) {
+	s.Name = val
+}
+
+// SetStatus sets the value of Status.
+func (s *SiteAutomationResource) SetStatus(val SiteAutomationStatus) {
+	s.Status = val
+}
+
+// SetTriggerEvent sets the value of TriggerEvent.
+func (s *SiteAutomationResource) SetTriggerEvent(val string) {
+	s.TriggerEvent = val
+}
+
+// SetDefinition sets the value of Definition.
+func (s *SiteAutomationResource) SetDefinition(val string) {
+	s.Definition = val
+}
+
+// SetCreatedAt sets the value of CreatedAt.
+func (s *SiteAutomationResource) SetCreatedAt(val Timestamp) {
+	s.CreatedAt = val
+}
+
+// SetUpdatedAt sets the value of UpdatedAt.
+func (s *SiteAutomationResource) SetUpdatedAt(val Timestamp) {
+	s.UpdatedAt = val
+}
+
+func (*SiteAutomationResource) siteAutomationsActivateRes()   {}
+func (*SiteAutomationResource) siteAutomationsCreateRes()     {}
+func (*SiteAutomationResource) siteAutomationsDeactivateRes() {}
+func (*SiteAutomationResource) siteAutomationsGetRes()        {}
+func (*SiteAutomationResource) siteAutomationsUpdateRes()     {}
+
+// Automation lifecycle status.
+// Ref: #/components/schemas/SiteAutomationStatus
+type SiteAutomationStatus string
+
+const (
+	SiteAutomationStatusDraft  SiteAutomationStatus = "draft"
+	SiteAutomationStatusActive SiteAutomationStatus = "active"
+)
+
+// AllValues returns all SiteAutomationStatus values.
+func (SiteAutomationStatus) AllValues() []SiteAutomationStatus {
+	return []SiteAutomationStatus{
+		SiteAutomationStatusDraft,
+		SiteAutomationStatusActive,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s SiteAutomationStatus) MarshalText() ([]byte, error) {
+	switch s {
+	case SiteAutomationStatusDraft:
+		return []byte(s), nil
+	case SiteAutomationStatusActive:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *SiteAutomationStatus) UnmarshalText(data []byte) error {
+	switch SiteAutomationStatus(data) {
+	case SiteAutomationStatusDraft:
+		*s = SiteAutomationStatusDraft
+		return nil
+	case SiteAutomationStatusActive:
+		*s = SiteAutomationStatusActive
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+type SiteAutomationsActivateBadRequest ProblemDetails
+
+func (*SiteAutomationsActivateBadRequest) siteAutomationsActivateRes() {}
+
+type SiteAutomationsActivateNotFound ProblemDetails
+
+func (*SiteAutomationsActivateNotFound) siteAutomationsActivateRes() {}
+
+type SiteAutomationsActivateUnprocessableEntity ProblemDetails
+
+func (*SiteAutomationsActivateUnprocessableEntity) siteAutomationsActivateRes() {}
+
+type SiteAutomationsCreateNotFound ProblemDetails
+
+func (*SiteAutomationsCreateNotFound) siteAutomationsCreateRes() {}
+
+type SiteAutomationsCreateUnprocessableEntity ProblemDetails
+
+func (*SiteAutomationsCreateUnprocessableEntity) siteAutomationsCreateRes() {}
+
+type SiteAutomationsDeactivateBadRequest ProblemDetails
+
+func (*SiteAutomationsDeactivateBadRequest) siteAutomationsDeactivateRes() {}
+
+type SiteAutomationsDeactivateNotFound ProblemDetails
+
+func (*SiteAutomationsDeactivateNotFound) siteAutomationsDeactivateRes() {}
+
+type SiteAutomationsDeleteBadRequest ProblemDetails
+
+func (*SiteAutomationsDeleteBadRequest) siteAutomationsDeleteRes() {}
+
+// SiteAutomationsDeleteNoContent is response for SiteAutomationsDelete operation.
+type SiteAutomationsDeleteNoContent struct{}
+
+func (*SiteAutomationsDeleteNoContent) siteAutomationsDeleteRes() {}
+
+type SiteAutomationsDeleteNotFound ProblemDetails
+
+func (*SiteAutomationsDeleteNotFound) siteAutomationsDeleteRes() {}
+
+type SiteAutomationsGetBadRequest ProblemDetails
+
+func (*SiteAutomationsGetBadRequest) siteAutomationsGetRes() {}
+
+type SiteAutomationsGetNotFound ProblemDetails
+
+func (*SiteAutomationsGetNotFound) siteAutomationsGetRes() {}
+
+type SiteAutomationsListBadRequest ProblemDetails
+
+func (*SiteAutomationsListBadRequest) siteAutomationsListRes() {}
+
+type SiteAutomationsListNotFound ProblemDetails
+
+func (*SiteAutomationsListNotFound) siteAutomationsListRes() {}
+
+// Paginated response.
+type SiteAutomationsListOK struct {
+	// List of items.
+	Items []SiteAutomationResource `json:"items"`
+	// Page number (1-based).
+	Page int32 `json:"page"`
+	// Page size.
+	PageSize int32 `json:"pageSize"`
+	// Total number of elements.
+	TotalItems int32 `json:"totalItems"`
+	// Total number of pages.
+	TotalPages int32 `json:"totalPages"`
+}
+
+// GetItems returns the value of Items.
+func (s *SiteAutomationsListOK) GetItems() []SiteAutomationResource {
+	return s.Items
+}
+
+// GetPage returns the value of Page.
+func (s *SiteAutomationsListOK) GetPage() int32 {
+	return s.Page
+}
+
+// GetPageSize returns the value of PageSize.
+func (s *SiteAutomationsListOK) GetPageSize() int32 {
+	return s.PageSize
+}
+
+// GetTotalItems returns the value of TotalItems.
+func (s *SiteAutomationsListOK) GetTotalItems() int32 {
+	return s.TotalItems
+}
+
+// GetTotalPages returns the value of TotalPages.
+func (s *SiteAutomationsListOK) GetTotalPages() int32 {
+	return s.TotalPages
+}
+
+// SetItems sets the value of Items.
+func (s *SiteAutomationsListOK) SetItems(val []SiteAutomationResource) {
+	s.Items = val
+}
+
+// SetPage sets the value of Page.
+func (s *SiteAutomationsListOK) SetPage(val int32) {
+	s.Page = val
+}
+
+// SetPageSize sets the value of PageSize.
+func (s *SiteAutomationsListOK) SetPageSize(val int32) {
+	s.PageSize = val
+}
+
+// SetTotalItems sets the value of TotalItems.
+func (s *SiteAutomationsListOK) SetTotalItems(val int32) {
+	s.TotalItems = val
+}
+
+// SetTotalPages sets the value of TotalPages.
+func (s *SiteAutomationsListOK) SetTotalPages(val int32) {
+	s.TotalPages = val
+}
+
+func (*SiteAutomationsListOK) siteAutomationsListRes() {}
+
+type SiteAutomationsListUnprocessableEntity ProblemDetails
+
+func (*SiteAutomationsListUnprocessableEntity) siteAutomationsListRes() {}
+
+type SiteAutomationsUpdateBadRequest ProblemDetails
+
+func (*SiteAutomationsUpdateBadRequest) siteAutomationsUpdateRes() {}
+
+type SiteAutomationsUpdateNotFound ProblemDetails
+
+func (*SiteAutomationsUpdateNotFound) siteAutomationsUpdateRes() {}
+
+type SiteAutomationsUpdateUnprocessableEntity ProblemDetails
+
+func (*SiteAutomationsUpdateUnprocessableEntity) siteAutomationsUpdateRes() {}
+
 // Broadcast resource used by the site UI.
 // Ref: #/components/schemas/SiteBroadcastResource
 type SiteBroadcastResource struct {
@@ -2103,6 +2380,44 @@ func (*SiteContactsUpdateNotFound) siteContactsUpdateRes() {}
 type SiteContactsUpdateUnprocessableEntity ProblemDetails
 
 func (*SiteContactsUpdateUnprocessableEntity) siteContactsUpdateRes() {}
+
+// Site request body for creating an automation.
+// Ref: #/components/schemas/SiteCreateAutomationInput
+type SiteCreateAutomationInput struct {
+	Name         string    `json:"name"`
+	TriggerEvent string    `json:"triggerEvent"`
+	Definition   OptString `json:"definition"`
+}
+
+// GetName returns the value of Name.
+func (s *SiteCreateAutomationInput) GetName() string {
+	return s.Name
+}
+
+// GetTriggerEvent returns the value of TriggerEvent.
+func (s *SiteCreateAutomationInput) GetTriggerEvent() string {
+	return s.TriggerEvent
+}
+
+// GetDefinition returns the value of Definition.
+func (s *SiteCreateAutomationInput) GetDefinition() OptString {
+	return s.Definition
+}
+
+// SetName sets the value of Name.
+func (s *SiteCreateAutomationInput) SetName(val string) {
+	s.Name = val
+}
+
+// SetTriggerEvent sets the value of TriggerEvent.
+func (s *SiteCreateAutomationInput) SetTriggerEvent(val string) {
+	s.TriggerEvent = val
+}
+
+// SetDefinition sets the value of Definition.
+func (s *SiteCreateAutomationInput) SetDefinition(val OptString) {
+	s.Definition = val
+}
 
 // Site request body for creating a broadcast.
 // Ref: #/components/schemas/SiteCreateBroadcastInput
@@ -4263,6 +4578,44 @@ func (*SiteTokensDeleteNotFound) siteTokensDeleteRes() {}
 type SiteTokensListOKApplicationJSON []SiteApiTokenResource
 
 func (*SiteTokensListOKApplicationJSON) siteTokensListRes() {}
+
+// Site request body for updating an automation.
+// Ref: #/components/schemas/SiteUpdateAutomationInput
+type SiteUpdateAutomationInput struct {
+	Name         OptString `json:"name"`
+	TriggerEvent OptString `json:"triggerEvent"`
+	Definition   OptString `json:"definition"`
+}
+
+// GetName returns the value of Name.
+func (s *SiteUpdateAutomationInput) GetName() OptString {
+	return s.Name
+}
+
+// GetTriggerEvent returns the value of TriggerEvent.
+func (s *SiteUpdateAutomationInput) GetTriggerEvent() OptString {
+	return s.TriggerEvent
+}
+
+// GetDefinition returns the value of Definition.
+func (s *SiteUpdateAutomationInput) GetDefinition() OptString {
+	return s.Definition
+}
+
+// SetName sets the value of Name.
+func (s *SiteUpdateAutomationInput) SetName(val OptString) {
+	s.Name = val
+}
+
+// SetTriggerEvent sets the value of TriggerEvent.
+func (s *SiteUpdateAutomationInput) SetTriggerEvent(val OptString) {
+	s.TriggerEvent = val
+}
+
+// SetDefinition sets the value of Definition.
+func (s *SiteUpdateAutomationInput) SetDefinition(val OptString) {
+	s.Definition = val
+}
 
 // Site request body for updating a broadcast.
 // Ref: #/components/schemas/SiteUpdateBroadcastInput
