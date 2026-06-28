@@ -10,7 +10,6 @@ import (
 	"github.com/mokevnin/1mail/ent/broadcast"
 	"github.com/mokevnin/1mail/ent/broadcastrecipient"
 	"github.com/mokevnin/1mail/ent/contact"
-	"github.com/mokevnin/1mail/ent/event"
 	"github.com/mokevnin/1mail/internal/testhelper"
 	"github.com/mokevnin/1mail/internal/tracking"
 	"github.com/stretchr/testify/assert"
@@ -75,12 +74,22 @@ func TestTrackingEndpoints(t *testing.T) {
 	assert.Equal(t, contact.StatusUnsubscribed, env.DB.Contact.GetX(ctx, c.ID).Status)
 	assert.Equal(t, 1, env.DB.Broadcast.GetX(ctx, b.ID).UnsubscribedCount)
 
-	// Engagement events were recorded.
-	actions, err := env.DB.Event.Query().
-		Where(event.WorkspaceID(1), event.SubjectID(c.Email)).
-		Select(event.FieldAction).Strings(ctx)
+	// Each endpoint published an engagement event onto the transactional outbox.
+	// The persist + automations subscribers consume these (the router isn't run
+	// under txdb; delivery and projection are covered by the events package
+	// tests). Assert the outbox carries all three events for this recipient.
+	rows, err := env.SQLDB.Query(
+		`SELECT payload->>'name' FROM watermill_domain_events WHERE payload->>'subject' = $1`, c.Email)
 	require.NoError(t, err)
-	assert.Contains(t, actions, "email.opened")
-	assert.Contains(t, actions, "email.clicked")
-	assert.Contains(t, actions, "email.unsubscribed")
+	defer func() { _ = rows.Close() }()
+	var names []string
+	for rows.Next() {
+		var n string
+		require.NoError(t, rows.Scan(&n))
+		names = append(names, n)
+	}
+	require.NoError(t, rows.Err())
+	assert.Contains(t, names, "email.opened")
+	assert.Contains(t, names, "email.clicked")
+	assert.Contains(t, names, "email.unsubscribed")
 }

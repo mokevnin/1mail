@@ -66,7 +66,7 @@ func (b *Bus) WithinTx(ctx context.Context, fn func(tx *ent.Client, pub Publishe
 	}()
 
 	// ent client bound to the same *sql.Tx the outbox publisher uses.
-	txClient := ent.NewClient(ent.Driver(entsql.NewDriver(dialect.Postgres, entsql.Conn{ExecQuerier: sqlTx})))
+	txClient := ent.NewClient(ent.Driver(newTxDriver(sqlTx)))
 
 	// watermill-sql forbids AutoInitializeSchema on a tx handle (a CREATE TABLE
 	// would implicitly commit). The outbox table is created up front by InitSchema.
@@ -89,6 +89,43 @@ func (b *Bus) WithinTx(ctx context.Context, fn func(tx *ent.Client, pub Publishe
 	return nil
 }
 
+// newTxDriver builds an ent driver that runs on an already-open *sql.Tx. ent's
+// default driver opens a real nested transaction for multi-statement mutations
+// (UpdateNode etc.) by calling BeginTx on the underlying *sql.DB — which panics
+// when the connection is a *sql.Tx. This driver instead returns a no-op nested
+// transaction that reuses the same tx; the real commit/rollback is owned by
+// Bus.WithinTx, which rolls the whole tx back on any error. (Canonical ent
+// "bring-your-own-transaction" pattern.)
+func newTxDriver(tx *sql.Tx) dialect.Driver {
+	return &txDriver{conn: entsql.Conn{ExecQuerier: tx}}
+}
+
+type txDriver struct {
+	conn entsql.Conn
+}
+
+func (d *txDriver) Exec(ctx context.Context, query string, args, v any) error {
+	return d.conn.Exec(ctx, query, args, v)
+}
+func (d *txDriver) Query(ctx context.Context, query string, args, v any) error {
+	return d.conn.Query(ctx, query, args, v)
+}
+func (d *txDriver) Tx(context.Context) (dialect.Tx, error) { return nopTx{d.conn}, nil }
+func (d *txDriver) BeginTx(context.Context, *entsql.TxOptions) (dialect.Tx, error) {
+	return nopTx{d.conn}, nil
+}
+func (*txDriver) Close() error    { return nil }
+func (*txDriver) Dialect() string { return dialect.Postgres }
+
+// nopTx is a transaction that reuses the borrowed connection; commit/rollback
+// are no-ops because Bus.WithinTx owns the real transaction boundary.
+type nopTx struct {
+	entsql.Conn
+}
+
+func (nopTx) Commit() error   { return nil }
+func (nopTx) Rollback() error { return nil }
+
 // txPublisher serializes a DomainEvent into an Envelope and inserts it onto the
 // outbox topic via the tx-bound watermill publisher.
 type txPublisher struct {
@@ -106,6 +143,7 @@ func (p *txPublisher) Publish(ctx context.Context, ev DomainEvent) error {
 		Version:     ev.EventVersion(),
 		WorkspaceID: ev.Workspace(),
 		Subject:     ev.Subject(),
+		ContactID:   ev.Contact(),
 		OccurredAt:  time.Now().UTC(),
 		Payload:     payload,
 	}

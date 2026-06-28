@@ -12,17 +12,45 @@ import (
 	"github.com/mokevnin/1mail/ent"
 )
 
+// Enroller enrolls a contact into automations matching an event action. The
+// automations subscriber delegates to it, keeping durable execution in river
+// (the implementation enqueues an EvaluateTrigger job).
+type Enroller interface {
+	OnEvent(ctx context.Context, workspaceID, contactID int64, action string) error
+}
+
 // RegisterSubscribers wires the domain-event consumers onto the shared watermill
 // router. Each consumer gets its OWN subscriber with a distinct consumer group,
 // so every subscriber receives every event (fan-out) rather than competing for
 // messages. Add new subscribers here without touching producers.
-func RegisterSubscribers(router *message.Router, db *sql.DB, client *ent.Client) error {
+func RegisterSubscribers(router *message.Router, db *sql.DB, client *ent.Client, enroller Enroller) error {
 	persistSub, err := newSubscriber(db, "persist")
 	if err != nil {
 		return fmt.Errorf("persist subscriber: %w", err)
 	}
 	router.AddConsumerHandler("persist_event", TopicDomainEvents, persistSub, persistConsumer(client))
+
+	automationsSub, err := newSubscriber(db, "automations")
+	if err != nil {
+		return fmt.Errorf("automations subscriber: %w", err)
+	}
+	router.AddConsumerHandler("enroll_automations", TopicDomainEvents, automationsSub, automationsConsumer(enroller))
 	return nil
+}
+
+// automationsConsumer enrolls the event's contact into matching automations. It
+// skips events with no contact (ContactID == 0, e.g. anonymous collect events).
+func automationsConsumer(enroller Enroller) message.NoPublishHandlerFunc {
+	return func(msg *message.Message) error {
+		var env Envelope
+		if err := json.Unmarshal(msg.Payload, &env); err != nil {
+			return fmt.Errorf("unmarshal envelope: %w", err)
+		}
+		if env.ContactID == 0 {
+			return nil
+		}
+		return enroller.OnEvent(msg.Context(), env.WorkspaceID, env.ContactID, env.Name)
+	}
 }
 
 // newSubscriber builds a watermill-sql subscriber for the outbox topic under a

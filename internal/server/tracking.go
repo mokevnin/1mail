@@ -9,8 +9,9 @@ import (
 	"time"
 
 	"github.com/mokevnin/1mail/ent"
+	"github.com/mokevnin/1mail/ent/broadcastrecipient"
 	"github.com/mokevnin/1mail/ent/contact"
-	apisite "github.com/mokevnin/1mail/internal/api/site"
+	"github.com/mokevnin/1mail/internal/events"
 	"github.com/mokevnin/1mail/internal/tracking"
 )
 
@@ -27,12 +28,12 @@ var pixelGIF, _ = base64.StdEncoding.DecodeString(
 //
 // The token is a signed per-recipient JWT. Opens always return the pixel (even
 // on a bad token) so we never leak token validity through the image.
-func trackingHandler(client *ent.Client, tracker *tracking.Tracker, trigger apisite.AutomationTrigger) http.Handler {
+func trackingHandler(client *ent.Client, bus *events.Bus, tracker *tracking.Tracker) http.Handler {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("GET /e/o/{token}", func(w http.ResponseWriter, r *http.Request) {
 		if rid, err := tracker.Decode(r.PathValue("token")); err == nil {
-			recordOpen(r.Context(), client, trigger, rid)
+			recordOpen(r.Context(), client, bus, rid)
 		}
 		w.Header().Set("Content-Type", "image/gif")
 		w.Header().Set("Cache-Control", "no-store, no-cache, must-revalidate")
@@ -50,7 +51,7 @@ func trackingHandler(client *ent.Client, tracker *tracking.Tracker, trigger apis
 			http.Error(w, "invalid token", http.StatusBadRequest)
 			return
 		}
-		recordClick(r.Context(), client, trigger, rid, dest)
+		recordClick(r.Context(), client, bus, rid, dest)
 		http.Redirect(w, r, dest, http.StatusFound)
 	})
 
@@ -60,7 +61,7 @@ func trackingHandler(client *ent.Client, tracker *tracking.Tracker, trigger apis
 			http.Error(w, "invalid token", http.StatusBadRequest)
 			return
 		}
-		recordUnsubscribe(r.Context(), client, trigger, rid)
+		recordUnsubscribe(r.Context(), client, bus, rid)
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 		_, _ = w.Write([]byte(`<!doctype html><html><body style="font-family:sans-serif;text-align:center;padding:48px">` +
 			`<h1>Unsubscribed</h1><p>You will no longer receive these emails.</p></body></html>`))
@@ -69,82 +70,97 @@ func trackingHandler(client *ent.Client, tracker *tracking.Tracker, trigger apis
 	return mux
 }
 
-func recordOpen(ctx context.Context, client *ent.Client, trigger apisite.AutomationTrigger, recipientID int64) {
+// The record* helpers commit the state change and publish the engagement event in
+// one transaction (transactional outbox). The state write is a conditional UPDATE
+// (… WHERE opened_at IS NULL, etc.) and the counter increment + publish are gated
+// on its rows-affected, so concurrent or redelivered hits are counted exactly once
+// (no double-count race). The persist subscriber writes the Event log row and the
+// automations subscriber enrolls the contact — both off the bus. Automation emails
+// are sent untracked, so they emit no open/click events (no loop).
+
+func recordOpen(ctx context.Context, client *ent.Client, bus *events.Bus, recipientID int64) {
 	rec, err := client.BroadcastRecipient.Get(ctx, recipientID)
 	if err != nil {
 		return
 	}
-	if rec.OpenedAt != nil {
-		return // already counted
+	c, err := client.Contact.Get(ctx, rec.ContactID)
+	if err != nil {
+		return
 	}
-	if _, err := rec.Update().SetOpenedAt(time.Now()).Save(ctx); err != nil {
+	err = bus.WithinTx(ctx, func(tx *ent.Client, pub events.Publisher) error {
+		n, err := tx.BroadcastRecipient.Update().
+			Where(broadcastrecipient.ID(rec.ID), broadcastrecipient.OpenedAtIsNil()).
+			SetOpenedAt(time.Now()).Save(ctx)
+		if err != nil || n == 0 {
+			return err // n == 0: already counted, nothing to publish
+		}
+		if _, err := tx.Broadcast.UpdateOneID(rec.BroadcastID).AddOpenedCount(1).Save(ctx); err != nil {
+			return err
+		}
+		return pub.Publish(ctx, events.EmailEngagement{
+			Name: events.NameEmailOpened, WorkspaceID: rec.WorkspaceID, ContactID: rec.ContactID,
+			Email: c.Email, BroadcastID: rec.BroadcastID,
+		})
+	})
+	if err != nil {
 		log.Printf("tracking: record open for recipient %d: %v", recipientID, err)
-		return
 	}
-	if _, err := client.Broadcast.UpdateOneID(rec.BroadcastID).AddOpenedCount(1).Save(ctx); err != nil {
-		log.Printf("tracking: increment opened_count for broadcast %d: %v", rec.BroadcastID, err)
-	}
-	recordEvent(ctx, client, trigger, rec, "email.opened", nil)
 }
 
-func recordClick(ctx context.Context, client *ent.Client, trigger apisite.AutomationTrigger, recipientID int64, dest string) {
+func recordClick(ctx context.Context, client *ent.Client, bus *events.Bus, recipientID int64, dest string) {
 	rec, err := client.BroadcastRecipient.Get(ctx, recipientID)
 	if err != nil {
 		return
 	}
-	if rec.ClickedAt != nil {
+	c, err := client.Contact.Get(ctx, rec.ContactID)
+	if err != nil {
 		return
 	}
-	if _, err := rec.Update().SetClickedAt(time.Now()).Save(ctx); err != nil {
+	err = bus.WithinTx(ctx, func(tx *ent.Client, pub events.Publisher) error {
+		n, err := tx.BroadcastRecipient.Update().
+			Where(broadcastrecipient.ID(rec.ID), broadcastrecipient.ClickedAtIsNil()).
+			SetClickedAt(time.Now()).Save(ctx)
+		if err != nil || n == 0 {
+			return err
+		}
+		if _, err := tx.Broadcast.UpdateOneID(rec.BroadcastID).AddClickedCount(1).Save(ctx); err != nil {
+			return err
+		}
+		return pub.Publish(ctx, events.EmailEngagement{
+			Name: events.NameEmailClicked, WorkspaceID: rec.WorkspaceID, ContactID: rec.ContactID,
+			Email: c.Email, BroadcastID: rec.BroadcastID, URL: dest,
+		})
+	})
+	if err != nil {
 		log.Printf("tracking: record click for recipient %d: %v", recipientID, err)
-		return
 	}
-	if _, err := client.Broadcast.UpdateOneID(rec.BroadcastID).AddClickedCount(1).Save(ctx); err != nil {
-		log.Printf("tracking: increment clicked_count for broadcast %d: %v", rec.BroadcastID, err)
-	}
-	recordEvent(ctx, client, trigger, rec, "email.clicked", map[string]any{"url": dest})
 }
 
-func recordUnsubscribe(ctx context.Context, client *ent.Client, trigger apisite.AutomationTrigger, recipientID int64) {
+func recordUnsubscribe(ctx context.Context, client *ent.Client, bus *events.Bus, recipientID int64) {
 	rec, err := client.BroadcastRecipient.Get(ctx, recipientID)
 	if err != nil {
 		return
 	}
 	c, err := client.Contact.Get(ctx, rec.ContactID)
-	if err != nil || c.Status == contact.StatusUnsubscribed {
-		return // already unsubscribed: don't double-count
-	}
-	if _, err := c.Update().SetStatus(contact.StatusUnsubscribed).Save(ctx); err != nil {
-		log.Printf("tracking: unsubscribe contact %d: %v", rec.ContactID, err)
-		return
-	}
-	if _, err := client.Broadcast.UpdateOneID(rec.BroadcastID).AddUnsubscribedCount(1).Save(ctx); err != nil {
-		log.Printf("tracking: increment unsubscribed_count for broadcast %d: %v", rec.BroadcastID, err)
-	}
-	recordEvent(ctx, client, trigger, rec, "email.unsubscribed", nil)
-}
-
-// recordEvent appends a first-class engagement event and enrolls the contact into
-// automations triggered by that action. Automation emails are sent untracked, so
-// they emit no open/click events — no trigger loop.
-func recordEvent(ctx context.Context, client *ent.Client, trigger apisite.AutomationTrigger, rec *ent.BroadcastRecipient, action string, extra map[string]any) {
-	c, err := client.Contact.Get(ctx, rec.ContactID)
 	if err != nil {
 		return
 	}
-	props := map[string]any{"broadcast_id": rec.BroadcastID}
-	for k, v := range extra {
-		props[k] = v
+	err = bus.WithinTx(ctx, func(tx *ent.Client, pub events.Publisher) error {
+		n, err := tx.Contact.Update().
+			Where(contact.ID(rec.ContactID), contact.StatusNEQ(contact.StatusUnsubscribed)).
+			SetStatus(contact.StatusUnsubscribed).Save(ctx)
+		if err != nil || n == 0 {
+			return err // already unsubscribed
+		}
+		if _, err := tx.Broadcast.UpdateOneID(rec.BroadcastID).AddUnsubscribedCount(1).Save(ctx); err != nil {
+			return err
+		}
+		return pub.Publish(ctx, events.EmailEngagement{
+			Name: events.NameEmailUnsubscribed, WorkspaceID: rec.WorkspaceID, ContactID: rec.ContactID,
+			Email: c.Email, BroadcastID: rec.BroadcastID,
+		})
+	})
+	if err != nil {
+		log.Printf("tracking: unsubscribe contact %d: %v", rec.ContactID, err)
 	}
-	if _, err := client.Event.Create().
-		SetWorkspaceID(rec.WorkspaceID).
-		SetSubjectID(c.Email).
-		SetEmail(c.Email).
-		SetAction(action).
-		SetProperties(props).
-		Save(ctx); err != nil {
-		log.Printf("tracking: record %s event for contact %d: %v", action, rec.ContactID, err)
-		return
-	}
-	_ = trigger.OnEvent(ctx, rec.WorkspaceID, rec.ContactID, action)
 }

@@ -27,12 +27,6 @@ type BroadcastEnqueuer interface {
 	EnqueueBroadcast(ctx context.Context, broadcastID int64, scheduledAt *time.Time) error
 }
 
-// AutomationTrigger enrolls a contact into automations matching an Event action.
-// Same testable-seam pattern as BroadcastEnqueuer (tests pass a no-op).
-type AutomationTrigger interface {
-	OnEvent(ctx context.Context, workspaceID, contactID int64, action string) error
-}
-
 type Handlers struct {
 	ent      *ent.Client
 	pubsub   *pubsub.PubSub
@@ -40,11 +34,10 @@ type Handlers struct {
 	cipher   *secrets.Cipher
 	catalog  *messaging.Catalog
 	enqueuer BroadcastEnqueuer
-	trigger  AutomationTrigger
 }
 
-func NewHandlers(client *ent.Client, ps *pubsub.PubSub, bus *events.Bus, cipher *secrets.Cipher, catalog *messaging.Catalog, enqueuer BroadcastEnqueuer, trigger AutomationTrigger) *Handlers {
-	return &Handlers{ent: client, pubsub: ps, bus: bus, cipher: cipher, catalog: catalog, enqueuer: enqueuer, trigger: trigger}
+func NewHandlers(client *ent.Client, ps *pubsub.PubSub, bus *events.Bus, cipher *secrets.Cipher, catalog *messaging.Catalog, enqueuer BroadcastEnqueuer) *Handlers {
+	return &Handlers{ent: client, pubsub: ps, bus: bus, cipher: cipher, catalog: catalog, enqueuer: enqueuer}
 }
 
 var _ siteapi.Handler = (*Handlers)(nil)

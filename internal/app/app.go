@@ -196,6 +196,10 @@ func register(injector do.Injector, env string) {
 		if err != nil {
 			return nil, err
 		}
+		jc, err := do.Invoke[*jobsClient](i)
+		if err != nil {
+			return nil, err
+		}
 
 		ps, err := pubsub.New(database.DB)
 		if err != nil {
@@ -205,11 +209,11 @@ func register(injector do.Injector, env string) {
 
 		// Domain events: create the outbox topic schema up front (the tx
 		// publisher can't self-initialize) and register the consumers on the
-		// shared router.
+		// shared router. The automations subscriber enrolls via the river client.
 		if err := events.InitSchema(context.Background(), database.DB); err != nil {
 			return nil, err
 		}
-		if err := events.RegisterSubscribers(ps.Router, database.DB, client.Client); err != nil {
+		if err := events.RegisterSubscribers(ps.Router, database.DB, client.Client, jc.Client); err != nil {
 			return nil, err
 		}
 
@@ -285,6 +289,6 @@ func register(injector do.Injector, env string) {
 			return nil, err
 		}
 
-		return server.New(cfg, client.Client, ps.PubSub, bus.Bus, jc.Client, jc.Client)
+		return server.New(cfg, client.Client, ps.PubSub, bus.Bus, jc.Client)
 	})
 }

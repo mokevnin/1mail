@@ -175,8 +175,19 @@ river, the automation run engine, and the broadcast engine are unchanged — onl
   (Envelope, Bus.WithinTx, persist subscriber, InitSchema); contact-create now
   publishes through the bus; tests cover commit/rollback atomicity, the projection
   mapping, and live router delivery.
-- **P1**: move automation enrollment onto the bus; delete the direct trigger seam.
-- **P2**: webhooks + analytics subscribers; per-subject ordering if needed.
+- **P1 — DONE (core)**: automation enrollment moved onto the bus (an `automations`
+  subscriber that enrolls via the river client when the envelope carries a
+  `ContactID`); the `apisite.AutomationTrigger` seam is deleted. Email engagement
+  (`email.opened/clicked/unsubscribed`) now publishes through the bus
+  transactionally; the `persist` subscriber writes their `Event` rows. **Deferred:**
+  (a) the collect/external custom-event producers still write `Event` inline — they
+  have no contact id and don't enroll automations, so moving them buys nothing yet;
+  (b) **idempotency** — delivery is at-least-once and `persist` has no dedupe column,
+  so a crash-redelivery can write a duplicate `Event` log row. Harm is low (counts
+  are producer-side), so it's its own follow-up: add a unique `source_id` column +
+  `OnConflict(...).Ignore()` upsert.
+- **P2**: idempotency (above); webhooks + analytics subscribers; per-subject
+  ordering if needed; migrate collect/external producers onto the bus.
 
 ## Decisions (resolved 2026-06-28)
 

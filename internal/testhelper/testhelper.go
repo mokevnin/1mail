@@ -109,21 +109,20 @@ func Setup(t *testing.T) *TestEnv {
 	// Bus over the same txdb connection: WithinTx opens a nested (savepoint)
 	// transaction, so producer writes + outbox inserts roll back with the test.
 	bus := events.New(txDB)
-	handler, err := server.New(baseCfg, client, nil, bus, noopEnqueuer{}, noopEnqueuer{})
+	handler, err := server.New(baseCfg, client, nil, bus, noopEnqueuer{})
 	require.NoError(t, err, "build server")
 
 	return &TestEnv{DB: client, SQLDB: txDB, Bus: bus, Server: handler}
 }
 
-// noopEnqueuer satisfies the site handlers' BroadcastEnqueuer + AutomationTrigger
-// without a river runtime: tests assert on the resulting state/status, not on
-// async dispatch (the engines are tested directly via jobs.SendBroadcast /
-// jobs.EvaluateTrigger + jobs.RunStep).
+// noopEnqueuer satisfies the site handlers' BroadcastEnqueuer without a river
+// runtime: tests assert on the resulting state/status, not on async dispatch (the
+// engines are tested directly via jobs.SendBroadcast / jobs.EvaluateTrigger +
+// jobs.RunStep). Automation enrollment now flows through the events bus, whose
+// router isn't run under txdb — covered by the events package tests instead.
 type noopEnqueuer struct{}
 
 func (noopEnqueuer) EnqueueBroadcast(context.Context, int64, *time.Time) error { return nil }
-
-func (noopEnqueuer) OnEvent(context.Context, int64, int64, string) error { return nil }
 
 // Transport returns an ogen http.Client that dispatches in-memory to the
 // server (no socket). Pass it via the generated client's WithClient option so

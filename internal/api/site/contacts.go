@@ -107,10 +107,8 @@ func (h *Handlers) SiteContactsCreate(ctx context.Context, req *siteapi.SiteCrea
 		return nil, err
 	}
 
-	// Automation enrollment still rides the direct trigger seam; P1 moves it onto
-	// the bus as an "automations" subscriber.
-	_ = h.trigger.OnEvent(ctx, ws, c.ID, events.NameContactCreated)
-
+	// The persist + automations subscribers handle the engagement log and
+	// enrollment off the published contact.created event — no direct calls here.
 	res := mapper.ContactToResource(c)
 	return &res, nil
 }

@@ -23,18 +23,22 @@ const TopicDomainEvents = "domain_events"
 // the automation trigger_event values, so the taxonomy and the trigger
 // vocabulary are one and the same.
 const (
-	NameContactCreated = "contact.created"
+	NameContactCreated    = "contact.created"
+	NameEmailOpened       = "email.opened"
+	NameEmailClicked      = "email.clicked"
+	NameEmailUnsubscribed = "email.unsubscribed"
 )
 
 // Envelope is the generic bus message. It carries enough for the projection
 // (Subject, Name, OccurredAt) without the subscriber knowing the concrete type;
 // numeric ids and type-specific fields live in Payload.
 type Envelope struct {
-	ID          string          `json:"id"`          // ULID; idempotency key for consumers
-	Name        string          `json:"name"`        // e.g. "contact.created"
-	Version     int             `json:"version"`     // payload schema version
-	WorkspaceID int64           `json:"workspaceId"` // every event is workspace-scoped
-	Subject     string          `json:"subject"`     // identity string → events.subject_id (email/phone/visitor)
+	ID          string          `json:"id"`                  // ULID; idempotency key for consumers
+	Name        string          `json:"name"`                // e.g. "contact.created"
+	Version     int             `json:"version"`             // payload schema version
+	WorkspaceID int64           `json:"workspaceId"`         // every event is workspace-scoped
+	Subject     string          `json:"subject"`             // identity string → events.subject_id (email/phone/visitor)
+	ContactID   int64           `json:"contactId,omitempty"` // enroll target for automations; 0 = no contact (e.g. anon collect event)
 	OccurredAt  time.Time       `json:"occurredAt"`
 	Payload     json.RawMessage `json:"payload"` // marshaled DomainEvent
 }
@@ -51,6 +55,9 @@ type DomainEvent interface {
 	Workspace() int64
 	// Subject is the identity string the projection keys on (email/phone/visitor).
 	Subject() string
+	// Contact is the contact id automations enroll, or 0 if the event has no
+	// associated contact (the projection ignores this; only automations use it).
+	Contact() int64
 }
 
 // ContactCreated is emitted when a contact is created in a workspace.
@@ -64,3 +71,22 @@ func (ContactCreated) EventName() string  { return NameContactCreated }
 func (ContactCreated) EventVersion() int  { return 1 }
 func (e ContactCreated) Workspace() int64 { return e.WorkspaceID }
 func (e ContactCreated) Subject() string  { return e.Email }
+func (e ContactCreated) Contact() int64   { return e.ContactID }
+
+// EmailEngagement is emitted when a recipient opens, clicks, or unsubscribes from
+// a broadcast email. The concrete name (NameEmailOpened/Clicked/Unsubscribed) is
+// set per occurrence; URL is populated for clicks only.
+type EmailEngagement struct {
+	Name        string `json:"-"`
+	WorkspaceID int64  `json:"workspaceId"`
+	ContactID   int64  `json:"contactId"`
+	Email       string `json:"email"`
+	BroadcastID int64  `json:"broadcastId"`
+	URL         string `json:"url,omitempty"`
+}
+
+func (e EmailEngagement) EventName() string { return e.Name }
+func (EmailEngagement) EventVersion() int   { return 1 }
+func (e EmailEngagement) Workspace() int64  { return e.WorkspaceID }
+func (e EmailEngagement) Subject() string   { return e.Email }
+func (e EmailEngagement) Contact() int64    { return e.ContactID }
