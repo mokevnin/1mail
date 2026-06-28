@@ -75,6 +75,10 @@ func main() {
 		}
 	}()
 
+	if err := application.RunJobs(ctx); err != nil {
+		log.Printf("job queue failed to start: %v", err)
+	}
+
 	go func() {
 		<-ctx.Done()
 		shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)

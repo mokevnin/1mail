@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"database/sql"
 	"log"
 	"net/url"
@@ -8,13 +9,15 @@ import (
 	"strings"
 
 	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/jackc/pgx/v5/pgxpool"
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/mokevnin/1mail/config"
+	"github.com/mokevnin/1mail/internal/jobs"
 )
 
 func main() {
 	if len(os.Args) < 2 {
-		log.Fatal("usage: db <create|drop>")
+		log.Fatal("usage: db <create|drop|river-up>")
 	}
 
 	envName := os.Getenv("APP_ENV")
@@ -25,6 +28,21 @@ func main() {
 	cfg, err := config.Load(envName)
 	if err != nil {
 		log.Fatalf("load config: %v", err)
+	}
+
+	// river owns its own schema, migrated out of band from Atlas (which would
+	// otherwise diff it away). This applies river's tables to the target DB.
+	if os.Args[1] == "river-up" {
+		pool, err := pgxpool.New(context.Background(), cfg.DatabaseURL)
+		if err != nil {
+			log.Fatalf("open pool: %v", err)
+		}
+		defer pool.Close()
+		if err := jobs.Migrate(context.Background(), pool); err != nil {
+			log.Fatalf("river migrate: %v", err)
+		}
+		log.Print("river schema applied")
+		return
 	}
 
 	u, err := url.Parse(cfg.DatabaseURL)

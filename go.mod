@@ -15,8 +15,10 @@ require (
 	github.com/go-testfixtures/testfixtures/v3 v3.19.0
 	github.com/golang-jwt/jwt/v5 v5.3.1
 	github.com/jackc/pgx/v5 v5.10.0
+	github.com/k3a/html2text v1.4.0
 	github.com/nikoksr/notify v1.5.0
 	github.com/ogen-go/ogen v1.22.0
+	github.com/osteele/liquid v1.8.1
 	github.com/riverqueue/river v0.39.0
 	github.com/riverqueue/river/riverdriver/riverpgxv5 v0.39.0
 	github.com/samber/do/v2 v2.0.0
@@ -88,6 +90,7 @@ require (
 	github.com/montanaflynn/stats v0.9.0 // indirect
 	github.com/oklog/ulid v1.3.1 // indirect
 	github.com/oklog/ulid/v2 v2.1.1 // indirect
+	github.com/osteele/tuesday v1.0.4 // indirect
 	github.com/pelletier/go-toml/v2 v2.4.2 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect

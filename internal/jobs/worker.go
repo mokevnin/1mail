@@ -1,20 +1,71 @@
+// Package jobs is the river-backed (Postgres) async job queue. It owns the
+// worker registry, the typed enqueue API the HTTP handlers call, and river's own
+// schema migration (kept out of Atlas — see Migrate).
 package jobs
 
 import (
+	"context"
+	"time"
+
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/riverqueue/river"
 	"github.com/riverqueue/river/riverdriver/riverpgxv5"
+	"github.com/riverqueue/river/rivermigrate"
+
+	"github.com/mokevnin/1mail/ent"
+	"github.com/mokevnin/1mail/internal/messaging"
 )
 
-func NewClient(pool *pgxpool.Pool) (*river.Client[pgx.Tx], error) {
-	workers := river.NewWorkers()
-	river.AddWorker(workers, &ExampleWorker{})
+// Client wraps the river client and exposes the typed enqueue methods the API
+// handlers use, so callers don't depend on river directly.
+type Client struct {
+	river *river.Client[pgx.Tx]
+}
 
-	return river.NewClient(riverpgxv5.New(pool), &river.Config{
+// NewClient builds the river client with all workers registered. Workers carry
+// their own dependencies (ent client, sender resolver).
+func NewClient(pool *pgxpool.Pool, entClient *ent.Client, resolver *messaging.Resolver) (*Client, error) {
+	workers := river.NewWorkers()
+	river.AddWorker(workers, &SendBroadcastWorker{ent: entClient, resolver: resolver})
+
+	rc, err := river.NewClient(riverpgxv5.New(pool), &river.Config{
 		Queues: map[string]river.QueueConfig{
 			river.QueueDefault: {MaxWorkers: 5},
 		},
 		Workers: workers,
 	})
+	if err != nil {
+		return nil, err
+	}
+	return &Client{river: rc}, nil
+}
+
+// Start begins processing jobs (run in a goroutine; returns once started).
+func (c *Client) Start(ctx context.Context) error { return c.river.Start(ctx) }
+
+// Stop drains and stops the workers.
+func (c *Client) Stop(ctx context.Context) error { return c.river.Stop(ctx) }
+
+// EnqueueBroadcast schedules a broadcast send. A nil scheduledAt sends ASAP;
+// otherwise the job runs at scheduledAt.
+func (c *Client) EnqueueBroadcast(ctx context.Context, broadcastID int64, scheduledAt *time.Time) error {
+	opts := &river.InsertOpts{}
+	if scheduledAt != nil {
+		opts.ScheduledAt = *scheduledAt
+	}
+	_, err := c.river.Insert(ctx, SendBroadcastArgs{BroadcastID: broadcastID}, opts)
+	return err
+}
+
+// Migrate applies river's own schema (river_job, river_leader, …). This is run
+// out of band from Atlas on purpose: Atlas diffs against the ent-derived schema
+// and would otherwise try to drop river's tables. See cmd/db `river-up`.
+func Migrate(ctx context.Context, pool *pgxpool.Pool) error {
+	migrator, err := rivermigrate.New(riverpgxv5.New(pool), nil)
+	if err != nil {
+		return err
+	}
+	_, err = migrator.Migrate(ctx, rivermigrate.DirectionUp, nil)
+	return err
 }

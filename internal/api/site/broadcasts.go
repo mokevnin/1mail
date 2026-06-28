@@ -273,7 +273,11 @@ func (h *Handlers) SiteBroadcastsSend(ctx context.Context, params siteapi.SiteBr
 		return &v, nil
 	}
 
-	// TODO(phase1): enqueue the river SendBroadcastJob once the engine is wired.
+	// Enqueue first, then flip status: if the enqueue fails we don't strand the
+	// broadcast in "sending" with no job behind it.
+	if err := h.enqueuer.EnqueueBroadcast(ctx, b.ID, nil); err != nil {
+		return nil, err
+	}
 	b, err = b.Update().SetStatus(broadcast.StatusSending).ClearScheduledAt().Save(ctx)
 	if err != nil {
 		return nil, err
@@ -314,10 +318,13 @@ func (h *Handlers) SiteBroadcastsSchedule(ctx context.Context, req *siteapi.Site
 		return &v, nil
 	}
 
-	// TODO(phase1): enqueue the river SendBroadcastJob with ScheduledAt once wired.
+	when := time.Time(req.ScheduledAt)
+	if err := h.enqueuer.EnqueueBroadcast(ctx, b.ID, &when); err != nil {
+		return nil, err
+	}
 	b, err = b.Update().
 		SetStatus(broadcast.StatusScheduled).
-		SetScheduledAt(time.Time(req.ScheduledAt)).
+		SetScheduledAt(when).
 		Save(ctx)
 	if err != nil {
 		return nil, err

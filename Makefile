@@ -46,8 +46,14 @@ db-drop:
 db-drop-test:
 	$(RUN_GO_DB) sh -c 'APP_ENV=test DATABASE_URL=$(TEST_DB_URL) go run ./cmd/db drop'
 
-db-migrate:
+db-migrate: db-migrate-atlas db-migrate-river
+
+db-migrate-atlas:
 	$(RUN_GO_DB) atlas migrate apply --env local --allow-dirty
+
+# river owns its schema (river_job, …), applied out of band from Atlas.
+db-migrate-river:
+	$(RUN_GO_DB) go run ./cmd/db river-up
 
 db-seed:
 	$(RUN_GO_DB) go run ./cmd/seed
@@ -165,4 +171,4 @@ LDFLAGS := -s -w -X main.version=$(VERSION) -X main.commit=$(COMMIT) -X main.dat
 build: build-tracker build-spa
 	$(RUN_GO) go build -tags embed_spa -ldflags "$(LDFLAGS)" -o bin/1mail ./cmd/server
 
-.PHONY: setup install db-create db-create-test db-create-atlas db-drop db-drop-test db-migrate db-seed db-reset db-reset-test db-generate dev dev-down test test-watch test-frontend update update-npm update-go generate generate-backend generate-openapi generate-openapi-site generate-typespec generate-typespec-external generate-typespec-site generate-typespec-collect generate-i18n-types check check-fe check-i18n check-be check-fix check-fix-i18n check-fix-fe check-fix-be build-tracker build-spa build
+.PHONY: setup install db-create db-create-test db-create-atlas db-drop db-drop-test db-migrate db-migrate-atlas db-migrate-river db-seed db-reset db-reset-test db-generate dev dev-down test test-watch test-frontend update update-npm update-go generate generate-backend generate-openapi generate-openapi-site generate-typespec generate-typespec-external generate-typespec-site generate-typespec-collect generate-i18n-types check check-fe check-i18n check-be check-fix check-fix-i18n check-fix-fe check-fix-be build-tracker build-spa build

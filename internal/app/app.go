@@ -7,11 +7,16 @@ import (
 	"sync"
 	"time"
 
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/mokevnin/1mail/config"
 	"github.com/mokevnin/1mail/ent"
 	"github.com/mokevnin/1mail/internal/db"
 	"github.com/mokevnin/1mail/internal/email"
+	"github.com/mokevnin/1mail/internal/jobs"
+	"github.com/mokevnin/1mail/internal/messaging"
+	"github.com/mokevnin/1mail/internal/messaging/registry"
 	"github.com/mokevnin/1mail/internal/pubsub"
+	"github.com/mokevnin/1mail/internal/secrets"
 	"github.com/mokevnin/1mail/internal/server"
 	"github.com/samber/do/v2"
 
@@ -24,6 +29,7 @@ type App struct {
 
 	injector       *do.RootScope
 	pubSub         *pubSub
+	jobs           *jobsClient
 	shutdownOnce   sync.Once
 	shutdownReport *do.ShutdownReport
 }
@@ -52,6 +58,27 @@ func (ps *pubSub) Shutdown() {
 	ps.Close()
 }
 
+// pgxPool is the pgx connection pool river runs on (separate from the
+// database/sql pool the ent client and pubsub use).
+type pgxPool struct {
+	*pgxpool.Pool
+}
+
+func (p *pgxPool) Shutdown() {
+	p.Close()
+}
+
+// jobsClient is the river-backed async job queue (workers + enqueue API).
+type jobsClient struct {
+	*jobs.Client
+}
+
+func (j *jobsClient) Shutdown() error {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	return j.Stop(ctx)
+}
+
 func New(env string) (*App, error) {
 	injector := do.New()
 	register(injector, env)
@@ -74,6 +101,12 @@ func New(env string) (*App, error) {
 		return nil, err
 	}
 
+	jobsCli, err := do.Invoke[*jobsClient](injector)
+	if err != nil {
+		_ = injector.Shutdown()
+		return nil, err
+	}
+
 	return &App{
 		Config: cfg,
 		Server: &http.Server{
@@ -83,11 +116,18 @@ func New(env string) (*App, error) {
 		},
 		injector: injector,
 		pubSub:   ps,
+		jobs:     jobsCli,
 	}, nil
 }
 
 func (a *App) RunPubSub(ctx context.Context) error {
 	return a.pubSub.Router.Run(ctx)
+}
+
+// RunJobs starts the river worker pool. It returns once started; workers run
+// until the context is cancelled (stop happens via Shutdown).
+func (a *App) RunJobs(ctx context.Context) error {
+	return a.jobs.Start(ctx)
 }
 
 func (a *App) Shutdown(ctx context.Context) *do.ShutdownReport {
@@ -153,6 +193,44 @@ func register(injector do.Injector, env string) {
 		return &pubSub{PubSub: ps}, nil
 	})
 
+	do.Provide(injector, func(i do.Injector) (*pgxPool, error) {
+		cfg, err := do.Invoke[*config.Config](i)
+		if err != nil {
+			return nil, err
+		}
+		pool, err := pgxpool.New(context.Background(), cfg.DatabaseURL)
+		if err != nil {
+			return nil, err
+		}
+		return &pgxPool{Pool: pool}, nil
+	})
+
+	do.Provide(injector, func(i do.Injector) (*jobsClient, error) {
+		cfg, err := do.Invoke[*config.Config](i)
+		if err != nil {
+			return nil, err
+		}
+		client, err := do.Invoke[*entClient](i)
+		if err != nil {
+			return nil, err
+		}
+		pool, err := do.Invoke[*pgxPool](i)
+		if err != nil {
+			return nil, err
+		}
+		cipher, err := secrets.NewCipher(cfg.EncryptionKey)
+		if err != nil {
+			return nil, err
+		}
+		resolver := messaging.NewResolver(client.Client, cipher, registry.Default())
+
+		jc, err := jobs.NewClient(pool.Pool, client.Client, resolver)
+		if err != nil {
+			return nil, err
+		}
+		return &jobsClient{Client: jc}, nil
+	})
+
 	do.Provide(injector, func(i do.Injector) (http.Handler, error) {
 		cfg, err := do.Invoke[*config.Config](i)
 		if err != nil {
@@ -166,7 +244,11 @@ func register(injector do.Injector, env string) {
 		if err != nil {
 			return nil, err
 		}
+		jc, err := do.Invoke[*jobsClient](i)
+		if err != nil {
+			return nil, err
+		}
 
-		return server.New(cfg, client.Client, ps.PubSub)
+		return server.New(cfg, client.Client, ps.PubSub, jc.Client)
 	})
 }
