@@ -95,7 +95,7 @@ func (h *Handlers) SiteContactsCreate(ctx context.Context, req *siteapi.SiteCrea
 			return err
 		}
 		c = created
-		return pub.Publish(ctx, events.ContactCreated{WorkspaceID: ws, ContactID: c.ID, Email: c.Email})
+		return pub.Publish(ctx, &events.ContactCreated{WorkspaceID: ws, ContactID: c.ID, Email: c.Email})
 	})
 	if service.IsUniqueViolation(err) {
 		v := siteapi.SiteContactsCreateConflict(problemWithErrors(http.StatusConflict, "email already exists", map[string][]string{

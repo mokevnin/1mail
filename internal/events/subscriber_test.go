@@ -23,35 +23,37 @@ func (f *fakeEnroller) OnEvent(_ context.Context, workspaceID, contactID int64, 
 	return nil
 }
 
-// msgFor builds a watermill message carrying the given envelope, as the router
-// would deliver it.
-func msgFor(t *testing.T, env Envelope) *message.Message {
+// msgFor builds the watermill message the router would deliver for a typed event.
+func msgFor(t *testing.T, ev DomainEvent) *message.Message {
 	t.Helper()
+	data, err := json.Marshal(ev)
+	require.NoError(t, err)
+	env := Envelope{ID: "evt_test", Name: ev.EventName(), Version: ev.EventVersion(), WorkspaceID: ev.Workspace(), Data: data}
 	body, err := json.Marshal(env)
 	require.NoError(t, err)
 	return message.NewMessage(watermill.NewUUID(), body)
 }
 
-// The automations consumer enrolls the contact for events that carry one.
+// The automations consumer enrolls the contact on the event's semantic action.
 func TestAutomationsConsumerEnrollsContact(t *testing.T) {
 	enroller := &fakeEnroller{}
 	handler := automationsConsumer(enroller)
 
-	require.NoError(t, handler(msgFor(t, Envelope{
-		Name: NameEmailOpened, WorkspaceID: 1, ContactID: 7, Subject: "a@b.c",
+	require.NoError(t, handler(msgFor(t, &EmailEngagement{
+		Action: NameEmailOpened, WorkspaceID: 1, ContactID: 7, Email: "a@b.c",
 	})))
 
 	require.Len(t, enroller.calls, 1)
 	assert.Equal(t, enrollCall{workspaceID: 1, contactID: 7, action: NameEmailOpened}, enroller.calls[0])
 }
 
-// Events without a contact (anonymous collect events) are skipped, not enrolled.
+// Collected (customer) events carry no contact, so they are not enrolled.
 func TestAutomationsConsumerSkipsContactlessEvents(t *testing.T) {
 	enroller := &fakeEnroller{}
 	handler := automationsConsumer(enroller)
 
-	require.NoError(t, handler(msgFor(t, Envelope{
-		Name: "page_view", WorkspaceID: 1, ContactID: 0, Subject: "visitor:x",
+	require.NoError(t, handler(msgFor(t, &CollectedEvent{
+		WorkspaceID: 1, SubjectID: "visitor:x", Action: "page_view",
 	})))
 
 	assert.Empty(t, enroller.calls)
@@ -70,26 +72,21 @@ func (f *fakeDispatcher) Dispatch(_ context.Context, ws int64, name, delivery st
 	return nil
 }
 
-// The webhooks consumer builds the public payload from the envelope and forwards
-// it to the dispatcher with the workspace, event name, and delivery id.
+// The webhooks consumer dispatches with the semantic action and a payload built
+// from the event's projection.
 func TestWebhooksConsumerBuildsPayload(t *testing.T) {
 	d := &fakeDispatcher{}
 	handler := webhooksConsumer(d)
 
-	require.NoError(t, handler(msgFor(t, Envelope{
-		ID: "evt_9", Name: NameContactCreated, WorkspaceID: 1, Subject: "a@b.c",
-		ContactID: 5, Payload: []byte(`{"email":"a@b.c"}`),
-	})))
+	require.NoError(t, handler(msgFor(t, &ContactCreated{WorkspaceID: 1, ContactID: 5, Email: "a@b.c"})))
 
 	require.Len(t, d.calls, 1)
 	c := d.calls[0]
 	assert.EqualValues(t, 1, c.workspaceID)
 	assert.Equal(t, NameContactCreated, c.eventName)
-	assert.Equal(t, "evt_9", c.deliveryID)
 
 	var p map[string]any
 	require.NoError(t, json.Unmarshal(c.body, &p))
-	assert.Equal(t, "evt_9", p["id"])
 	assert.Equal(t, NameContactCreated, p["type"])
 	assert.Equal(t, "a@b.c", p["subject"])
 }

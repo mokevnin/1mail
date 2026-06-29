@@ -2,6 +2,7 @@ package events_test
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"testing"
 	"time"
@@ -26,6 +27,14 @@ func outboxCount(t *testing.T, env *testhelper.TestEnv) int {
 	return n
 }
 
+// dataFor marshals a typed event into the envelope Data, as the publisher does.
+func dataFor(t *testing.T, ev events.DomainEvent) []byte {
+	t.Helper()
+	b, err := json.Marshal(ev)
+	require.NoError(t, err)
+	return b
+}
+
 // The load-bearing requirement: the state row and the outbox row commit together.
 func TestBusWithinTxCommitsStateAndOutbox(t *testing.T) {
 	env := testhelper.Setup(t)
@@ -42,7 +51,7 @@ func TestBusWithinTxCommitsStateAndOutbox(t *testing.T) {
 			return err
 		}
 		created = c
-		return pub.Publish(ctx, events.ContactCreated{WorkspaceID: fixtureWorkspace, ContactID: c.ID, Email: c.Email})
+		return pub.Publish(ctx, &events.ContactCreated{WorkspaceID: fixtureWorkspace, ContactID: c.ID, Email: c.Email})
 	})
 	require.NoError(t, err)
 
@@ -68,7 +77,7 @@ func TestBusWithinTxRollsBackBoth(t *testing.T) {
 			Save(ctx); err != nil {
 			return err
 		}
-		if err := pub.Publish(ctx, events.ContactCreated{WorkspaceID: fixtureWorkspace, Email: "outbox-rollback@example.com"}); err != nil {
+		if err := pub.Publish(ctx, &events.ContactCreated{WorkspaceID: fixtureWorkspace, Email: "outbox-rollback@example.com"}); err != nil {
 			return err
 		}
 		return boom
@@ -81,32 +90,49 @@ func TestBusWithinTxRollsBackBoth(t *testing.T) {
 	assert.Equal(t, before, outboxCount(t, env), "no event published on rollback")
 }
 
-// Persist is the projection: it maps an envelope to the durable Event row. The
-// router isn't running under txdb, so exercise the projection logic directly.
+// Persist projects an envelope to the durable Event row. This is the load-bearing
+// check on the projection (the router doesn't run under txdb): every column —
+// including phone, prospect, a non-now OccurredAt, and opaque Properties — must
+// land. Uses a CollectedEvent because it exercises all of them.
 func TestPersistWritesEventProjection(t *testing.T) {
 	env := testhelper.Setup(t)
 	ctx := context.Background()
 
 	occurred := time.Date(2026, 6, 28, 10, 0, 0, 0, time.UTC)
+	prospect := true
+	collected := &events.CollectedEvent{
+		WorkspaceID: fixtureWorkspace,
+		SubjectID:   "visitor:abc",
+		Action:      "page_view",
+		Email:       "persist@example.com",
+		Phone:       "+15550100",
+		Prospect:    &prospect,
+		Properties:  map[string]any{"path": "/pricing"},
+		OccurredAt:  occurred,
+	}
 	envlp := events.Envelope{
 		ID:          "01J0PERSISTTEST00000000000",
-		Name:        events.NameContactCreated,
+		Name:        events.NameCollected,
 		Version:     1,
 		WorkspaceID: fixtureWorkspace,
-		Subject:     "persist@example.com",
 		OccurredAt:  occurred,
-		Payload:     []byte(`{"workspaceId":1,"contactId":42,"email":"persist@example.com"}`),
+		Data:        dataFor(t, collected),
 	}
 	require.NoError(t, events.Persist(ctx, env.DB, envlp))
 
-	row, err := env.DB.Event.Query().Where(event.SubjectID("persist@example.com")).Only(ctx)
+	row, err := env.DB.Event.Query().Where(event.SourceID(envlp.ID)).Only(ctx)
 	require.NoError(t, err)
-	assert.Equal(t, events.NameContactCreated, row.Action)
+	assert.Equal(t, "page_view", row.Action)
+	assert.Equal(t, "visitor:abc", row.SubjectID)
 	require.NotNil(t, row.Email)
 	assert.Equal(t, "persist@example.com", *row.Email)
+	require.NotNil(t, row.Phone)
+	assert.Equal(t, "+15550100", *row.Phone)
+	require.NotNil(t, row.Prospect)
+	assert.True(t, *row.Prospect)
 	require.NotNil(t, row.OccurredAt)
 	assert.Equal(t, occurred, row.OccurredAt.UTC())
-	assert.EqualValues(t, 42, row.Properties["contactId"].(float64))
+	assert.Equal(t, "/pricing", row.Properties["path"])
 }
 
 // At-least-once delivery can redeliver an envelope; persist must dedupe on the
@@ -120,9 +146,8 @@ func TestPersistIsIdempotent(t *testing.T) {
 		Name:        events.NameContactCreated,
 		Version:     1,
 		WorkspaceID: fixtureWorkspace,
-		Subject:     "dedupe@example.com",
 		OccurredAt:  time.Date(2026, 6, 28, 10, 0, 0, 0, time.UTC),
-		Payload:     []byte(`{"email":"dedupe@example.com"}`),
+		Data:        dataFor(t, &events.ContactCreated{WorkspaceID: fixtureWorkspace, ContactID: 7, Email: "dedupe@example.com"}),
 	}
 	require.NoError(t, events.Persist(ctx, env.DB, envlp))
 	require.NoError(t, events.Persist(ctx, env.DB, envlp)) // redelivery

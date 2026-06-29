@@ -2,12 +2,13 @@ package collect_test
 
 import (
 	"context"
+	"encoding/json"
 	"testing"
 
 	"github.com/go-faster/jx"
-	"github.com/mokevnin/1mail/ent/event"
 	"github.com/mokevnin/1mail/ent/trackingprofile"
 	collectapi "github.com/mokevnin/1mail/gen/collect"
+	"github.com/mokevnin/1mail/internal/events"
 	"github.com/mokevnin/1mail/internal/testhelper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -81,10 +82,24 @@ func TestCollectIdentifyAndEvents(t *testing.T) {
 	require.NoError(t, err)
 	assert.IsType(t, &collectapi.CollectEventsCreateNoContent{}, evRes)
 
-	evt, err := env.DB.Event.Query().
-		Where(event.Email("trav@example.com"), event.Action("page_view")).Only(ctx)
+	// The event is published to the transactional outbox as a CollectedEvent (the
+	// persist subscriber writes the Event row asynchronously; the router isn't run
+	// under txdb). Decode the outbox row and assert the customer's event is carried
+	// as-is, with the resolved identity.
+	var payload []byte
+	err = env.SQLDB.QueryRow(`SELECT payload FROM watermill_domain_events ORDER BY "offset" DESC LIMIT 1`).Scan(&payload)
 	require.NoError(t, err)
-	assert.Equal(t, "/pricing", evt.Properties["url"])
-	assert.Equal(t, float64(5), evt.Properties["n"])
-	assert.Equal(t, int64(1), evt.WorkspaceID) // scoped to the key's workspace
+	var envlp events.Envelope
+	require.NoError(t, json.Unmarshal(payload, &envlp))
+	assert.Equal(t, events.NameCollected, envlp.Name)
+	assert.EqualValues(t, 1, envlp.WorkspaceID) // scoped to the key's workspace
+
+	decoded, err := events.Decode(envlp)
+	require.NoError(t, err)
+	ce, ok := decoded.(*events.CollectedEvent)
+	require.Truef(t, ok, "got %T", decoded)
+	assert.Equal(t, "page_view", ce.Action)
+	assert.Equal(t, "trav@example.com", ce.Email)
+	assert.Equal(t, "/pricing", ce.Properties["url"])
+	assert.Equal(t, float64(5), ce.Properties["n"])
 }

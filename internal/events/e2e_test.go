@@ -62,14 +62,16 @@ func TestDomainEventsRouterDelivery(t *testing.T) {
 
 	bus := events.New(db)
 	require.NoError(t, bus.WithinTx(ctx, func(_ *ent.Client, pub events.Publisher) error {
-		return pub.Publish(ctx, events.ContactCreated{WorkspaceID: 1, ContactID: 7, Email: "e2e@example.com"})
+		return pub.Publish(ctx, &events.ContactCreated{WorkspaceID: 1, ContactID: 7, Email: "e2e@example.com"})
 	}))
 
 	select {
 	case env := <-got:
 		assert.Equal(t, events.NameContactCreated, env.Name)
-		assert.Equal(t, "e2e@example.com", env.Subject)
 		assert.EqualValues(t, 1, env.WorkspaceID)
+		ev, err := events.Decode(env)
+		require.NoError(t, err)
+		assert.Equal(t, "e2e@example.com", ev.Project().Subject)
 	case <-time.After(10 * time.Second):
 		t.Fatal("domain event was not delivered to the subscriber within 10s")
 	}

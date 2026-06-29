@@ -133,19 +133,21 @@ type txPublisher struct {
 }
 
 func (p *txPublisher) Publish(ctx context.Context, ev DomainEvent) error {
-	payload, err := json.Marshal(ev)
+	data, err := json.Marshal(ev)
 	if err != nil {
-		return fmt.Errorf("marshal event payload: %w", err)
+		return fmt.Errorf("marshal event: %w", err)
+	}
+	occurred := ev.Project().OccurredAt
+	if occurred.IsZero() {
+		occurred = time.Now().UTC()
 	}
 	env := Envelope{
 		ID:          ulid.Make().String(),
 		Name:        ev.EventName(),
 		Version:     ev.EventVersion(),
 		WorkspaceID: ev.Workspace(),
-		Subject:     ev.Subject(),
-		ContactID:   ev.Contact(),
-		OccurredAt:  time.Now().UTC(),
-		Payload:     payload,
+		OccurredAt:  occurred,
+		Data:        data,
 	}
 	body, err := json.Marshal(env)
 	if err != nil {

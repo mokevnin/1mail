@@ -2,18 +2,52 @@ package external_test
 
 import (
 	"context"
+	"encoding/json"
 	"testing"
 	"time"
 
 	"github.com/go-faster/jx"
 	"github.com/mokevnin/1mail/ent"
-	"github.com/mokevnin/1mail/ent/event"
 	externalapi "github.com/mokevnin/1mail/gen/external"
+	"github.com/mokevnin/1mail/internal/events"
 	"github.com/mokevnin/1mail/internal/service"
 	"github.com/mokevnin/1mail/internal/testhelper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+// collectedRow is an outbox row decoded back into its CollectedEvent.
+type collectedRow struct {
+	envelope events.Envelope
+	event    *events.CollectedEvent
+}
+
+// outboxCollected reads every domain-event outbox row and decodes it as a
+// CollectedEvent. External ingest now publishes through the bus (the persist
+// subscriber writes the Event row asynchronously; the router isn't run under
+// txdb), so the outbox is where the assertions land.
+func outboxCollected(t *testing.T, env *testhelper.TestEnv) []collectedRow {
+	t.Helper()
+	rows, err := env.SQLDB.Query(`SELECT payload FROM watermill_domain_events ORDER BY "offset"`)
+	require.NoError(t, err)
+	defer func() { _ = rows.Close() }()
+
+	var out []collectedRow
+	for rows.Next() {
+		var payload []byte
+		require.NoError(t, rows.Scan(&payload))
+		var envlp events.Envelope
+		require.NoError(t, json.Unmarshal(payload, &envlp))
+		require.Equal(t, events.NameCollected, envlp.Name)
+		decoded, err := events.Decode(envlp)
+		require.NoError(t, err)
+		ce, ok := decoded.(*events.CollectedEvent)
+		require.Truef(t, ok, "got %T", decoded)
+		out = append(out, collectedRow{envelope: envlp, event: ce})
+	}
+	require.NoError(t, rows.Err())
+	return out
+}
 
 // seedToken inserts an ApiToken with the given scopes and returns the plaintext
 // bearer value (omtk_<prefix>_<secret>), exercising the real token crypto.
@@ -145,26 +179,29 @@ func TestExternalEventsCreate(t *testing.T) {
 	require.NoError(t, err)
 	require.IsType(t, &externalapi.EventsCreateNoContent{}, res)
 
-	// Token belongs to workspace 1; both events must land there.
-	created, err := env.DB.Event.Query().
-		Where(event.WorkspaceID(1), event.SubjectID("user:dave@example.com")).
-		Only(ctx)
-	require.NoError(t, err)
-	assert.Equal(t, "signup", created.Action)
-	require.NotNil(t, created.Email)
-	assert.Equal(t, "dave@example.com", *created.Email)
-	require.NotNil(t, created.Prospect)
-	assert.True(t, *created.Prospect)
-	require.NotNil(t, created.OccurredAt)
-	assert.True(t, created.OccurredAt.Equal(occurred))
-	assert.Equal(t, "pro", created.Properties["plan"])
-	assert.EqualValues(t, 42, created.Properties["amount"])
+	// Both events are published to the outbox as CollectedEvents, scoped to the
+	// token's workspace, with every optional field carried as-is.
+	byID := map[string]collectedRow{}
+	rows := outboxCollected(t, env)
+	require.Len(t, rows, 2)
+	for _, r := range rows {
+		assert.EqualValues(t, 1, r.envelope.WorkspaceID) // token belongs to workspace 1
+		byID[r.event.SubjectID] = r
+	}
 
-	login, err := env.DB.Event.Query().
-		Where(event.WorkspaceID(1), event.SubjectID("user:erin@example.com")).
-		Only(ctx)
-	require.NoError(t, err)
-	assert.Equal(t, "login", login.Action)
+	dave := byID["user:dave@example.com"].event
+	require.NotNil(t, dave)
+	assert.Equal(t, "signup", dave.Action)
+	assert.Equal(t, "dave@example.com", dave.Email)
+	require.NotNil(t, dave.Prospect)
+	assert.True(t, *dave.Prospect)
+	assert.True(t, dave.OccurredAt.Equal(occurred))
+	assert.Equal(t, "pro", dave.Properties["plan"])
+	assert.EqualValues(t, 42, dave.Properties["amount"])
+
+	erin := byID["user:erin@example.com"].event
+	require.NotNil(t, erin)
+	assert.Equal(t, "login", erin.Action)
 }
 
 // TestExternalEventsScopes verifies events:write/read scopes are enforced.
@@ -242,9 +279,10 @@ func TestExternalEventsWorkspaceIsolation(t *testing.T) {
 		Events: []externalapi.EventInput{{SubjectId: "user:fred@example.com", Action: "ws1_write"}},
 	})
 	require.NoError(t, err)
-	got, err := env.DB.Event.Query().Where(event.SubjectID("user:fred@example.com")).Only(ctx)
-	require.NoError(t, err)
-	assert.Equal(t, int64(1), got.WorkspaceID)
+	rows := outboxCollected(t, env)
+	require.Len(t, rows, 1)
+	assert.Equal(t, "user:fred@example.com", rows[0].event.SubjectID)
+	assert.EqualValues(t, 1, rows[0].envelope.WorkspaceID)
 }
 
 func TestExternalRequestValidation(t *testing.T) {

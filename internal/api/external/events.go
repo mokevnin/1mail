@@ -11,6 +11,7 @@ import (
 	externalapi "github.com/mokevnin/1mail/gen/external"
 	"github.com/mokevnin/1mail/internal/api/auth"
 	"github.com/mokevnin/1mail/internal/convert"
+	"github.com/mokevnin/1mail/internal/events"
 	"github.com/mokevnin/1mail/internal/pagination"
 )
 
@@ -22,43 +23,48 @@ func (h *Handlers) EventsCreate(ctx context.Context, req *externalapi.RecordEven
 
 	ws := auth.WorkspaceID(auth.GetTokenAuth(ctx))
 
-	builders := make([]*ent.EventCreate, len(req.Events))
-	for i := range req.Events {
-		e := req.Events[i]
-		b := h.ent.Event.Create().
-			SetWorkspaceID(ws).
-			SetSubjectID(e.SubjectId).
-			SetAction(e.Action)
-
-		if v, ok := e.Email.Get(); ok {
-			s := string(v)
-			b = b.SetNillableEmail(&s)
-		}
-		if v, ok := e.Phone.Get(); ok {
-			b = b.SetNillablePhone(&v)
-		}
-		if v, ok := e.Prospect.Get(); ok {
-			b = b.SetNillableProspect(&v)
-		}
-		if v, ok := e.OccurredAt.Get(); ok {
-			b = b.SetOccurredAt(time.Time(v))
-		}
-		if props, ok := e.Properties.Get(); ok {
-			converted := make(map[string]interface{}, len(props))
-			for key, raw := range props {
-				var value interface{}
-				if err := json.Unmarshal([]byte(raw), &value); err != nil {
-					return nil, err
-				}
-				converted[key] = value
+	// Publish the whole batch in one transaction (one commit, atomic outbox). The
+	// persist subscriber writes the Event rows; the webhooks subscriber fans them
+	// out. These are the customer's own events, stored as-is. Ingest is now
+	// accept-then-process: the caller gets 204 and rows land asynchronously.
+	err := h.bus.WithinTx(ctx, func(_ *ent.Client, pub events.Publisher) error {
+		for i := range req.Events {
+			e := req.Events[i]
+			collected := &events.CollectedEvent{
+				WorkspaceID: ws,
+				SubjectID:   e.SubjectId,
+				Action:      e.Action,
 			}
-			b = b.SetProperties(converted)
+			if v, ok := e.Email.Get(); ok {
+				collected.Email = string(v)
+			}
+			if v, ok := e.Phone.Get(); ok {
+				collected.Phone = v
+			}
+			if v, ok := e.Prospect.Get(); ok {
+				prospect := v
+				collected.Prospect = &prospect
+			}
+			if v, ok := e.OccurredAt.Get(); ok {
+				collected.OccurredAt = time.Time(v)
+			}
+			if props, ok := e.Properties.Get(); ok {
+				converted := make(map[string]any, len(props))
+				for key, raw := range props {
+					var value any
+					if err := json.Unmarshal([]byte(raw), &value); err != nil {
+						return err
+					}
+					converted[key] = value
+				}
+				collected.Properties = converted
+			}
+			if err := pub.Publish(ctx, collected); err != nil {
+				return err
+			}
 		}
-
-		builders[i] = b
-	}
-
-	_, err := h.ent.Event.CreateBulk(builders...).Save(ctx)
+		return nil
+	})
 	if err != nil {
 		return nil, err
 	}

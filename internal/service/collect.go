@@ -10,6 +10,7 @@ import (
 	"github.com/mokevnin/1mail/ent"
 	"github.com/mokevnin/1mail/ent/trackingprofile"
 	"github.com/mokevnin/1mail/ent/trackingvisitor"
+	"github.com/mokevnin/1mail/internal/events"
 	"github.com/samber/lo"
 )
 
@@ -59,31 +60,31 @@ func IdentifyVisitor(ctx context.Context, client *ent.Client, workspaceID int64,
 		Exec(ctx)
 }
 
-func CollectEvents(ctx context.Context, client *ent.Client, workspaceID int64, events []CollectEventInput) error {
-	for _, evt := range events {
+func CollectEvents(ctx context.Context, bus *events.Bus, workspaceID int64, evts []CollectEventInput) error {
+	for _, evt := range evts {
 		visitorID := normalizeStringVal(evt.VisitorID)
-		resolution, err := resolveTrackingIdentity(ctx, client, workspaceID, visitorID)
-		if err != nil {
-			return err
-		}
-
-		q := client.Event.Create().
-			SetWorkspaceID(workspaceID).
-			SetSubjectID(resolution.subjectID).
-			SetAction(evt.Action)
-		if resolution.email != "" {
-			q = q.SetEmail(resolution.email)
-		}
-		if resolution.phone != "" {
-			q = q.SetPhone(resolution.phone)
-		}
-		if evt.Properties != nil {
-			q = q.SetProperties(evt.Properties)
-		}
-		if evt.OccurredAt != nil {
-			q = q.SetOccurredAt(*evt.OccurredAt)
-		}
-		if _, err := q.Save(ctx); err != nil {
+		// Resolve identity and publish in one transaction: the visitor/profile
+		// upsert and the outbox row commit together. The collected event is the
+		// customer's own — its action and properties are stored as-is.
+		if err := bus.WithinTx(ctx, func(tx *ent.Client, pub events.Publisher) error {
+			resolution, err := resolveTrackingIdentity(ctx, tx, workspaceID, visitorID)
+			if err != nil {
+				return err
+			}
+			var occurred time.Time
+			if evt.OccurredAt != nil {
+				occurred = *evt.OccurredAt
+			}
+			return pub.Publish(ctx, &events.CollectedEvent{
+				WorkspaceID: workspaceID,
+				SubjectID:   resolution.subjectID,
+				Action:      evt.Action,
+				Email:       resolution.email,
+				Phone:       resolution.phone,
+				Properties:  evt.Properties,
+				OccurredAt:  occurred,
+			})
+		}); err != nil {
 			return err
 		}
 	}

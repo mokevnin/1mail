@@ -70,19 +70,25 @@ func webhooksConsumer(dispatcher WebhookDispatcher) message.NoPublishHandlerFunc
 		if err := json.Unmarshal(msg.Payload, &env); err != nil {
 			return fmt.Errorf("unmarshal envelope: %w", err)
 		}
+		ev, err := Decode(env)
+		if err != nil {
+			return err
+		}
+		p := ev.Project()
 		body, err := json.Marshal(webhookPayload{
 			ID:          env.ID,
-			Type:        env.Name,
+			Type:        p.Action,
 			OccurredAt:  env.OccurredAt,
 			WorkspaceID: env.WorkspaceID,
-			Subject:     env.Subject,
-			ContactID:   env.ContactID,
-			Data:        env.Payload,
+			Subject:     p.Subject,
+			ContactID:   p.ContactID,
+			Data:        env.Data,
 		})
 		if err != nil {
 			return fmt.Errorf("marshal webhook payload: %w", err)
 		}
-		return dispatcher.Dispatch(msg.Context(), env.WorkspaceID, env.Name, env.ID, body)
+		// Filter/route on the semantic action (e.g. "page_view"), not the bus type.
+		return dispatcher.Dispatch(msg.Context(), env.WorkspaceID, p.Action, env.ID, body)
 	}
 }
 
@@ -94,10 +100,17 @@ func automationsConsumer(enroller Enroller) message.NoPublishHandlerFunc {
 		if err := json.Unmarshal(msg.Payload, &env); err != nil {
 			return fmt.Errorf("unmarshal envelope: %w", err)
 		}
-		if env.ContactID == 0 {
-			return nil
+		ev, err := Decode(env)
+		if err != nil {
+			return err
 		}
-		return enroller.OnEvent(msg.Context(), env.WorkspaceID, env.ContactID, env.Name)
+		p := ev.Project()
+		if p.ContactID == 0 {
+			return nil // no contact to enroll (e.g. an anonymous collected event)
+		}
+		// Enroll on the semantic action so a trigger can be "contact.created" or a
+		// customer action like "page_view".
+		return enroller.OnEvent(msg.Context(), env.WorkspaceID, p.ContactID, p.Action)
 	}
 }
 
@@ -128,30 +141,34 @@ func persistConsumer(client *ent.Client) message.NoPublishHandlerFunc {
 // calls. Exported so the projection logic can be unit-tested directly without
 // running the router.
 //
-// The mapping is generic: subject_id/action/workspace come from the envelope and
-// the whole payload is stored as queryable properties. Type-aware fields (email)
-// are lifted from the payload when present.
+// It decodes the typed event and writes the row from its Project(), so any event
+// type projects faithfully without persist knowing the concrete fields.
 func Persist(ctx context.Context, client *ent.Client, env Envelope) error {
-	props := map[string]any{}
-	if len(env.Payload) > 0 {
-		if err := json.Unmarshal(env.Payload, &props); err != nil {
-			return fmt.Errorf("unmarshal payload: %w", err)
-		}
+	ev, err := Decode(env)
+	if err != nil {
+		return err
 	}
+	p := ev.Project()
 
 	create := client.Event.Create().
 		SetWorkspaceID(env.WorkspaceID).
-		SetSubjectID(env.Subject).
-		SetAction(env.Name).
-		SetProperties(props).
+		SetSubjectID(p.Subject).
+		SetAction(p.Action).
+		SetProperties(p.Properties).
 		SetOccurredAt(env.OccurredAt)
 	// Empty id ⇒ leave source_id NULL (distinct under the unique index) rather than
 	// "", so a missing id never collides and false-dedupes a distinct event.
 	if env.ID != "" {
 		create.SetSourceID(env.ID)
 	}
-	if email, ok := props["email"].(string); ok && email != "" {
-		create.SetEmail(email)
+	if p.Email != "" {
+		create.SetEmail(p.Email)
+	}
+	if p.Phone != "" {
+		create.SetPhone(p.Phone)
+	}
+	if p.Prospect != nil {
+		create.SetProspect(*p.Prospect)
 	}
 	// Idempotent: at-least-once delivery can redeliver an envelope after a crash;
 	// dedupe on the source_id (the envelope ULID) so the projection row is written

@@ -97,8 +97,8 @@ func recordOpen(ctx context.Context, client *ent.Client, bus *events.Bus, recipi
 		if _, err := tx.Broadcast.UpdateOneID(rec.BroadcastID).AddOpenedCount(1).Save(ctx); err != nil {
 			return err
 		}
-		return pub.Publish(ctx, events.EmailEngagement{
-			Name: events.NameEmailOpened, WorkspaceID: rec.WorkspaceID, ContactID: rec.ContactID,
+		return pub.Publish(ctx, &events.EmailEngagement{
+			Action: events.NameEmailOpened, WorkspaceID: rec.WorkspaceID, ContactID: rec.ContactID,
 			Email: c.Email, BroadcastID: rec.BroadcastID,
 		})
 	})
@@ -126,8 +126,8 @@ func recordClick(ctx context.Context, client *ent.Client, bus *events.Bus, recip
 		if _, err := tx.Broadcast.UpdateOneID(rec.BroadcastID).AddClickedCount(1).Save(ctx); err != nil {
 			return err
 		}
-		return pub.Publish(ctx, events.EmailEngagement{
-			Name: events.NameEmailClicked, WorkspaceID: rec.WorkspaceID, ContactID: rec.ContactID,
+		return pub.Publish(ctx, &events.EmailEngagement{
+			Action: events.NameEmailClicked, WorkspaceID: rec.WorkspaceID, ContactID: rec.ContactID,
 			Email: c.Email, BroadcastID: rec.BroadcastID, URL: dest,
 		})
 	})
@@ -155,8 +155,8 @@ func recordUnsubscribe(ctx context.Context, client *ent.Client, bus *events.Bus,
 		if _, err := tx.Broadcast.UpdateOneID(rec.BroadcastID).AddUnsubscribedCount(1).Save(ctx); err != nil {
 			return err
 		}
-		return pub.Publish(ctx, events.EmailEngagement{
-			Name: events.NameEmailUnsubscribed, WorkspaceID: rec.WorkspaceID, ContactID: rec.ContactID,
+		return pub.Publish(ctx, &events.EmailEngagement{
+			Action: events.NameEmailUnsubscribed, WorkspaceID: rec.WorkspaceID, ContactID: rec.ContactID,
 			Email: c.Email, BroadcastID: rec.BroadcastID,
 		})
 	})

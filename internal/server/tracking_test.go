@@ -79,7 +79,7 @@ func TestTrackingEndpoints(t *testing.T) {
 	// under txdb; delivery and projection are covered by the events package
 	// tests). Assert the outbox carries all three events for this recipient.
 	rows, err := env.SQLDB.Query(
-		`SELECT payload->>'name' FROM watermill_domain_events WHERE payload->>'subject' = $1`, c.Email)
+		`SELECT payload->>'name' FROM watermill_domain_events WHERE payload->'data'->>'email' = $1`, c.Email)
 	require.NoError(t, err)
 	defer func() { _ = rows.Close() }()
 	var names []string

@@ -9,16 +9,18 @@ import (
 	"github.com/mokevnin/1mail/ent"
 	collectapi "github.com/mokevnin/1mail/gen/collect"
 	"github.com/mokevnin/1mail/internal/api/auth"
+	"github.com/mokevnin/1mail/internal/events"
 	"github.com/mokevnin/1mail/internal/service"
 	"github.com/samber/lo"
 )
 
 type Handlers struct {
 	ent *ent.Client
+	bus *events.Bus
 }
 
-func NewHandlers(client *ent.Client) *Handlers {
-	return &Handlers{ent: client}
+func NewHandlers(client *ent.Client, bus *events.Bus) *Handlers {
+	return &Handlers{ent: client, bus: bus}
 }
 
 // rawMap decodes an ogen map[string]jx.Raw into map[string]any using
@@ -40,7 +42,7 @@ func rawMap(m map[string]jx.Raw) map[string]any {
 }
 
 func (h *Handlers) CollectEventsCreate(ctx context.Context, req *collectapi.CollectEventsInput) (collectapi.CollectEventsCreateRes, error) {
-	events := lo.Map(req.Events, func(e collectapi.CollectEventInput, _ int) service.CollectEventInput {
+	evts := lo.Map(req.Events, func(e collectapi.CollectEventInput, _ int) service.CollectEventInput {
 		evt := service.CollectEventInput{
 			VisitorID: e.VisitorId,
 			Action:    e.Action,
@@ -55,7 +57,7 @@ func (h *Handlers) CollectEventsCreate(ctx context.Context, req *collectapi.Coll
 		return evt
 	})
 
-	if err := service.CollectEvents(ctx, h.ent, auth.CollectWorkspaceID(ctx), events); err != nil {
+	if err := service.CollectEvents(ctx, h.bus, auth.CollectWorkspaceID(ctx), evts); err != nil {
 		return nil, err
 	}
 	return &collectapi.CollectEventsCreateNoContent{}, nil

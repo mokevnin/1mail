@@ -81,7 +81,7 @@ func New(cfg *config.Config, client *ent.Client, ps *pubsub.PubSub, bus *events.
 
 	// External API — /api (Bearer token auth via ogen SecurityHandler).
 	extSrv, err := externalapi.NewServer(
-		apiexternal.NewHandlers(client, cfg.BootstrapToken),
+		apiexternal.NewHandlers(client, cfg.BootstrapToken, bus),
 		apiauth.NewExternalSecurityHandler(client),
 		externalapi.WithPathPrefix("/api"),
 		externalapi.WithErrorHandler(problemErrorHandler),
@@ -93,7 +93,7 @@ func New(cfg *config.Config, client *ent.Client, ps *pubsub.PubSub, bus *events.
 
 	// Collect API — /collect (x-collect-key via generated SecurityHandler).
 	colSrv, err := collectapi.NewServer(
-		apicollect.NewHandlers(client),
+		apicollect.NewHandlers(client, bus),
 		apiauth.NewCollectSecurityHandler(client),
 		collectapi.WithPathPrefix("/collect"),
 		collectapi.WithErrorHandler(problemErrorHandler),
