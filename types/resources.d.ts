@@ -6,10 +6,12 @@ export default interface Resources {
       "profile": "Profile"
     },
     "actions": {
+      "back": "Back",
       "cancel": "Cancel",
       "delete": "Delete",
       "edit": "Edit",
-      "save": "Save"
+      "save": "Save",
+      "view": "View"
     },
     "activity": {
       "action": "Action",
@@ -35,6 +37,7 @@ export default interface Resources {
       "broadcastLoadErrorTitle": "Failed to load broadcasts",
       "broadcastSaveErrorTitle": "Failed to save broadcast",
       "broadcastSendErrorTitle": "Failed to send broadcast",
+      "contactLoadErrorTitle": "Failed to load contact",
       "deleteErrorTitle": "Failed to delete contact",
       "loadErrorTitle": "Failed to load contacts",
       "saveErrorTitle": "Failed to save contact",
@@ -135,9 +138,13 @@ export default interface Resources {
     },
     "contacts": {
       "addContact": "Add contact",
+      "customFields": "Custom fields",
+      "detailsTitle": "Details",
       "emptyState": "Create your first contact.",
+      "eventsTitle": "Events",
       "noRecords": "No contacts yet",
-      "statusFilter": "Filter by status"
+      "statusFilter": "Filter by status",
+      "updatedAt": "Updated at"
     },
     "form": {
       "createTitle": "New contact",

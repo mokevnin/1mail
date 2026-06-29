@@ -1884,6 +1884,10 @@ export type SiteEventsListData = {
          * Filter by event action
          */
         action?: string;
+        /**
+         * Filter by the email associated with the event
+         */
+        email?: string;
     };
     url: '/w/{workspaceSlug}/events';
 };

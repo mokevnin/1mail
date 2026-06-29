@@ -37,5 +37,8 @@ namespace SiteEvents {
 
     /** Filter by event action */
     @query action?: string,
+
+    /** Filter by the email associated with the event */
+    @query email?: string,
   ): Page<SiteEventResource> | NotFoundProblem;
 }

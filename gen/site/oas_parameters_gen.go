@@ -2687,6 +2687,8 @@ type SiteEventsListParams struct {
 	PageSize OptInt32 `json:",omitempty,omitzero"`
 	// Filter by event action.
 	Action OptString `json:",omitempty,omitzero"`
+	// Filter by the email associated with the event.
+	Email OptString `json:",omitempty,omitzero"`
 }
 
 func unpackSiteEventsListParams(packed middleware.Parameters) (params SiteEventsListParams) {
@@ -2722,6 +2724,15 @@ func unpackSiteEventsListParams(packed middleware.Parameters) (params SiteEvents
 		}
 		if v, ok := packed[key]; ok {
 			params.Action = v.(OptString)
+		}
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "email",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.Email = v.(OptString)
 		}
 	}
 	return params
@@ -2903,6 +2914,47 @@ func decodeSiteEventsListParams(args [1]string, argsEscaped bool, r *http.Reques
 	}(); err != nil {
 		return params, &ogenerrors.DecodeParamError{
 			Name: "action",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	// Decode query: email.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "email",
+			Style:   uri.QueryStyleForm,
+			Explode: false,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotEmailVal string
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotEmailVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.Email.SetTo(paramsDotEmailVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "email",
 			In:   "query",
 			Err:  err,
 		}

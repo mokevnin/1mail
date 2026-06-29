@@ -814,7 +814,8 @@ export const zSiteEventsListPath = z.object({
 export const zSiteEventsListQuery = z.object({
     page: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).optional().default(1),
     pageSize: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).optional().default(25),
-    action: z.string().optional()
+    action: z.string().optional(),
+    email: z.string().optional()
 });
 
 /**

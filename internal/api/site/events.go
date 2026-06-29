@@ -34,6 +34,12 @@ func (h *Handlers) SiteEventsList(ctx context.Context, params siteapi.SiteEvents
 	if v, ok := params.Action.Get(); ok && v != "" {
 		q = q.Where(event.ActionEQ(v))
 	}
+	if v, ok := params.Email.Get(); ok && v != "" {
+		// Case-insensitive: contact emails are stored as entered, but collect
+		// ingestion lowercases event emails (service.normalizeLower), so an exact
+		// match would miss a contact's tracked events.
+		q = q.Where(event.EmailEqualFold(v))
+	}
 	total, err := q.Count(ctx)
 	if err != nil {
 		return nil, err

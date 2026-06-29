@@ -15,6 +15,7 @@ import { BroadcastEditPage } from './routes/broadcasts/edit.tsx'
 import { BroadcastsListPage } from './routes/broadcasts/list.tsx'
 import { BroadcastReportPage } from './routes/broadcasts/report.tsx'
 import { ContactCreatePage } from './routes/contacts/create.tsx'
+import { ContactDetailPage } from './routes/contacts/detail.tsx'
 import { ContactEditPage } from './routes/contacts/edit.tsx'
 import { ContactsListPage } from './routes/contacts/list.tsx'
 import { SegmentCreatePage } from './routes/segments/create.tsx'
@@ -189,6 +190,12 @@ export const contactsEditRoute = createRoute({
   component: ContactEditPage,
 })
 
+export const contactsDetailRoute = createRoute({
+  getParentRoute: () => workspaceRoute,
+  path: 'contacts/$contactId',
+  component: ContactDetailPage,
+})
+
 export const registerRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/register',
@@ -228,6 +235,7 @@ const routeTree = rootRoute.addChildren([
     contactsRoute,
     contactsCreateRoute,
     contactsEditRoute,
+    contactsDetailRoute,
     segmentsRoute,
     segmentsCreateRoute,
     segmentsEditRoute,

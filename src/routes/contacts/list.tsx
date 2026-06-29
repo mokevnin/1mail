@@ -1,6 +1,7 @@
-import { Button, Group, Loader, Select, Stack, Text } from '@mantine/core'
+import { ActionIcon, Button, Group, Loader, Select, Stack, Text, Tooltip } from '@mantine/core'
 import { useCounter } from '@mantine/hooks'
 import { notifications } from '@mantine/notifications'
+import { IconEye, IconPencil, IconTrash } from '@tabler/icons-react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
 import type { TFunction } from 'i18next'
@@ -8,6 +9,7 @@ import { DataTable } from 'mantine-datatable'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ApiErrorAlert } from '../../components/ApiErrorAlert.tsx'
+import { ActionIconLink } from '../../components/RouterLink.tsx'
 import {
   siteContactsDeleteMutation,
   siteContactsListOptions,
@@ -15,7 +17,12 @@ import {
 } from '../../generated/site/@tanstack/react-query.gen.ts'
 import { SiteContactStatus } from '../../generated/site/types.gen.ts'
 import { useDeleteConfirmation } from '../../hooks/useDeleteConfirmation.tsx'
-import { contactsCreateRoute, contactsEditRoute, contactsRoute } from '../../router.tsx'
+import {
+  contactsCreateRoute,
+  contactsDetailRoute,
+  contactsEditRoute,
+  contactsRoute,
+} from '../../router.tsx'
 import { getApiErrorMessage } from '../../utils/apiErrors.ts'
 
 type ContactStatusFilter = 'all' | SiteContactStatus
@@ -137,26 +144,37 @@ export function ContactsListPage() {
             accessor: 'actions',
             title: t(($) => $.table.actions),
             render: (record) => (
-              <Group gap="xs">
-                <Button
-                  size="compact-sm"
-                  onClick={() =>
-                    navigate({
-                      to: contactsEditRoute.to,
-                      params: { slug, contactId: record.id },
-                    })
-                  }
-                >
-                  {t(($) => $.actions.edit)}
-                </Button>
-                <Button
-                  size="compact-sm"
-                  color="red"
-                  variant="light"
-                  onClick={() => onDeleteClick(record.id)}
-                >
-                  {t(($) => $.actions.delete)}
-                </Button>
+              <Group gap="xs" wrap="nowrap">
+                <Tooltip label={t(($) => $.actions.view)}>
+                  <ActionIconLink
+                    variant="light"
+                    to={contactsDetailRoute.to}
+                    params={{ slug, contactId: record.id }}
+                    aria-label={t(($) => $.actions.view)}
+                  >
+                    <IconEye size={16} />
+                  </ActionIconLink>
+                </Tooltip>
+                <Tooltip label={t(($) => $.actions.edit)}>
+                  <ActionIconLink
+                    variant="light"
+                    to={contactsEditRoute.to}
+                    params={{ slug, contactId: record.id }}
+                    aria-label={t(($) => $.actions.edit)}
+                  >
+                    <IconPencil size={16} />
+                  </ActionIconLink>
+                </Tooltip>
+                <Tooltip label={t(($) => $.actions.delete)}>
+                  <ActionIcon
+                    variant="light"
+                    color="red"
+                    onClick={() => onDeleteClick(record.id)}
+                    aria-label={t(($) => $.actions.delete)}
+                  >
+                    <IconTrash size={16} />
+                  </ActionIcon>
+                </Tooltip>
               </Group>
             ),
           },

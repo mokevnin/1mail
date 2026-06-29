@@ -1606,6 +1606,16 @@
               "type": "string"
             },
             "explode": false
+          },
+          {
+            "name": "email",
+            "in": "query",
+            "required": false,
+            "description": "Filter by the email associated with the event",
+            "schema": {
+              "type": "string"
+            },
+            "explode": false
           }
         ],
         "responses": {
