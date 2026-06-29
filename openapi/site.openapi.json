@@ -3620,7 +3620,13 @@
           "openedCount",
           "clickedCount",
           "unsubscribedCount",
-          "failedCount"
+          "failedCount",
+          "deliveryRate",
+          "openRate",
+          "clickRate",
+          "clickToOpenRate",
+          "unsubscribeRate",
+          "failureRate"
         ],
         "properties": {
           "recipientsTotal": {
@@ -3652,6 +3658,36 @@
             "type": "integer",
             "format": "int32",
             "description": "Messages that failed to send"
+          },
+          "deliveryRate": {
+            "type": "number",
+            "format": "float",
+            "description": "Messages handed to the provider ÷ recipients targeted (0–1)"
+          },
+          "openRate": {
+            "type": "number",
+            "format": "float",
+            "description": "Unique opens ÷ messages sent (0–1)"
+          },
+          "clickRate": {
+            "type": "number",
+            "format": "float",
+            "description": "Unique clicks ÷ messages sent (0–1)"
+          },
+          "clickToOpenRate": {
+            "type": "number",
+            "format": "float",
+            "description": "Unique clicks ÷ unique opens (0–1)"
+          },
+          "unsubscribeRate": {
+            "type": "number",
+            "format": "float",
+            "description": "Unsubscribes ÷ messages sent (0–1)"
+          },
+          "failureRate": {
+            "type": "number",
+            "format": "float",
+            "description": "Send failures ÷ recipients targeted (0–1)"
           }
         },
         "description": "Denormalized delivery counters for a broadcast"

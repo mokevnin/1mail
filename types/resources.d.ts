@@ -104,11 +104,17 @@ export default interface Resources {
       "scheduleLabel": "Schedule for",
       "sendNow": "Send now",
       "stats": {
+        "clickRate": "Click rate",
+        "clickToOpenRate": "Click-to-open",
         "clicked": "Clicked",
+        "deliveryRate": "Delivery rate",
         "failed": "Failed",
+        "failureRate": "Failure rate",
+        "openRate": "Open rate",
         "opened": "Opened",
         "recipients": "Recipients",
         "sent": "Sent",
+        "unsubscribeRate": "Unsubscribe rate",
         "unsubscribed": "Unsubscribed"
       },
       "status": {

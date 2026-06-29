@@ -1,4 +1,14 @@
-import { Badge, Card, Group, Loader, SimpleGrid, Stack, Text, Title } from '@mantine/core'
+import {
+  Badge,
+  Card,
+  Group,
+  Loader,
+  NumberFormatter,
+  SimpleGrid,
+  Stack,
+  Text,
+  Title,
+} from '@mantine/core'
 import { useQuery } from '@tanstack/react-query'
 import type { TFunction } from 'i18next'
 import { useTranslation } from 'react-i18next'
@@ -39,6 +49,30 @@ function statEntries(t: TFunction, stats: SiteBroadcastStats): { label: string; 
   ]
 }
 
+function RateCard({ label, value }: { label: string; value: number }) {
+  return (
+    <Card withBorder padding="md">
+      <Text size="xs" c="dimmed" tt="uppercase">
+        {label}
+      </Text>
+      <Text fw={700} size="xl">
+        <NumberFormatter value={value * 100} suffix="%" decimalScale={1} />
+      </Text>
+    </Card>
+  )
+}
+
+function rateEntries(t: TFunction, stats: SiteBroadcastStats): { label: string; value: number }[] {
+  return [
+    { label: t(($) => $.broadcasts.stats.deliveryRate), value: stats.deliveryRate },
+    { label: t(($) => $.broadcasts.stats.openRate), value: stats.openRate },
+    { label: t(($) => $.broadcasts.stats.clickRate), value: stats.clickRate },
+    { label: t(($) => $.broadcasts.stats.clickToOpenRate), value: stats.clickToOpenRate },
+    { label: t(($) => $.broadcasts.stats.unsubscribeRate), value: stats.unsubscribeRate },
+    { label: t(($) => $.broadcasts.stats.failureRate), value: stats.failureRate },
+  ]
+}
+
 export function BroadcastReportPage() {
   const { t } = useTranslation()
   const { slug, broadcastId } = broadcastsReportRoute.useParams()
@@ -74,6 +108,12 @@ export function BroadcastReportPage() {
       <SimpleGrid cols={{ base: 2, sm: 3 }}>
         {statEntries(t, broadcast.stats).map((entry) => (
           <StatCard key={entry.label} label={entry.label} value={entry.value} />
+        ))}
+      </SimpleGrid>
+
+      <SimpleGrid cols={{ base: 2, sm: 3 }}>
+        {rateEntries(t, broadcast.stats).map((entry) => (
+          <RateCard key={entry.label} label={entry.label} value={entry.value} />
         ))}
       </SimpleGrid>
     </Stack>

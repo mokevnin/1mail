@@ -1796,6 +1796,18 @@ type SiteBroadcastStats struct {
 	UnsubscribedCount int32 `json:"unsubscribedCount"`
 	// Messages that failed to send.
 	FailedCount int32 `json:"failedCount"`
+	// Messages handed to the provider ÷ recipients targeted (0–1).
+	DeliveryRate float32 `json:"deliveryRate"`
+	// Unique opens ÷ messages sent (0–1).
+	OpenRate float32 `json:"openRate"`
+	// Unique clicks ÷ messages sent (0–1).
+	ClickRate float32 `json:"clickRate"`
+	// Unique clicks ÷ unique opens (0–1).
+	ClickToOpenRate float32 `json:"clickToOpenRate"`
+	// Unsubscribes ÷ messages sent (0–1).
+	UnsubscribeRate float32 `json:"unsubscribeRate"`
+	// Send failures ÷ recipients targeted (0–1).
+	FailureRate float32 `json:"failureRate"`
 }
 
 // GetRecipientsTotal returns the value of RecipientsTotal.
@@ -1828,6 +1840,36 @@ func (s *SiteBroadcastStats) GetFailedCount() int32 {
 	return s.FailedCount
 }
 
+// GetDeliveryRate returns the value of DeliveryRate.
+func (s *SiteBroadcastStats) GetDeliveryRate() float32 {
+	return s.DeliveryRate
+}
+
+// GetOpenRate returns the value of OpenRate.
+func (s *SiteBroadcastStats) GetOpenRate() float32 {
+	return s.OpenRate
+}
+
+// GetClickRate returns the value of ClickRate.
+func (s *SiteBroadcastStats) GetClickRate() float32 {
+	return s.ClickRate
+}
+
+// GetClickToOpenRate returns the value of ClickToOpenRate.
+func (s *SiteBroadcastStats) GetClickToOpenRate() float32 {
+	return s.ClickToOpenRate
+}
+
+// GetUnsubscribeRate returns the value of UnsubscribeRate.
+func (s *SiteBroadcastStats) GetUnsubscribeRate() float32 {
+	return s.UnsubscribeRate
+}
+
+// GetFailureRate returns the value of FailureRate.
+func (s *SiteBroadcastStats) GetFailureRate() float32 {
+	return s.FailureRate
+}
+
 // SetRecipientsTotal sets the value of RecipientsTotal.
 func (s *SiteBroadcastStats) SetRecipientsTotal(val int32) {
 	s.RecipientsTotal = val
@@ -1856,6 +1898,36 @@ func (s *SiteBroadcastStats) SetUnsubscribedCount(val int32) {
 // SetFailedCount sets the value of FailedCount.
 func (s *SiteBroadcastStats) SetFailedCount(val int32) {
 	s.FailedCount = val
+}
+
+// SetDeliveryRate sets the value of DeliveryRate.
+func (s *SiteBroadcastStats) SetDeliveryRate(val float32) {
+	s.DeliveryRate = val
+}
+
+// SetOpenRate sets the value of OpenRate.
+func (s *SiteBroadcastStats) SetOpenRate(val float32) {
+	s.OpenRate = val
+}
+
+// SetClickRate sets the value of ClickRate.
+func (s *SiteBroadcastStats) SetClickRate(val float32) {
+	s.ClickRate = val
+}
+
+// SetClickToOpenRate sets the value of ClickToOpenRate.
+func (s *SiteBroadcastStats) SetClickToOpenRate(val float32) {
+	s.ClickToOpenRate = val
+}
+
+// SetUnsubscribeRate sets the value of UnsubscribeRate.
+func (s *SiteBroadcastStats) SetUnsubscribeRate(val float32) {
+	s.UnsubscribeRate = val
+}
+
+// SetFailureRate sets the value of FailureRate.
+func (s *SiteBroadcastStats) SetFailureRate(val float32) {
+	s.FailureRate = val
 }
 
 // Broadcast lifecycle status.

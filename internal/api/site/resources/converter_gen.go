@@ -38,7 +38,7 @@ func (c *ConverterImpl) BroadcastToResource(source *ent.Broadcast) site.SiteBroa
 		siteapiSiteBroadcastResource.Status = site.SiteBroadcastStatus((*source).Status)
 		siteapiSiteBroadcastResource.ScheduledAt = optNilTimestamp((*source).ScheduledAt)
 		siteapiSiteBroadcastResource.SentAt = optNilTimestamp((*source).SentAt)
-		siteapiSiteBroadcastResource.Stats = c.entBroadcastToSiteapiSiteBroadcastStats((*source))
+		siteapiSiteBroadcastResource.Stats = broadcastStats((*source))
 		siteapiSiteBroadcastResource.CreatedAt = timestamp((*source).CreatedAt)
 		siteapiSiteBroadcastResource.UpdatedAt = timestamp((*source).UpdatedAt)
 	}
@@ -136,14 +136,4 @@ func (c *ConverterImpl) WorkspaceToResource(source *ent.Workspace) site.SiteWork
 		siteapiSiteWorkspaceResource.CreatedAt = timestamp((*source).CreatedAt)
 	}
 	return siteapiSiteWorkspaceResource
-}
-func (c *ConverterImpl) entBroadcastToSiteapiSiteBroadcastStats(source ent.Broadcast) site.SiteBroadcastStats {
-	var siteapiSiteBroadcastStats site.SiteBroadcastStats
-	siteapiSiteBroadcastStats.RecipientsTotal = intToInt32(source.RecipientsTotal)
-	siteapiSiteBroadcastStats.SentCount = intToInt32(source.SentCount)
-	siteapiSiteBroadcastStats.OpenedCount = intToInt32(source.OpenedCount)
-	siteapiSiteBroadcastStats.ClickedCount = intToInt32(source.ClickedCount)
-	siteapiSiteBroadcastStats.UnsubscribedCount = intToInt32(source.UnsubscribedCount)
-	siteapiSiteBroadcastStats.FailedCount = intToInt32(source.FailedCount)
-	return siteapiSiteBroadcastStats
 }

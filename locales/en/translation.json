@@ -103,11 +103,17 @@
     "sendNow": "Send now",
     "stats": {
       "clicked": "Clicked",
+      "clickRate": "Click rate",
+      "clickToOpenRate": "Click-to-open",
+      "deliveryRate": "Delivery rate",
       "failed": "Failed",
+      "failureRate": "Failure rate",
       "opened": "Opened",
+      "openRate": "Open rate",
       "recipients": "Recipients",
       "sent": "Sent",
-      "unsubscribed": "Unsubscribed"
+      "unsubscribed": "Unsubscribed",
+      "unsubscribeRate": "Unsubscribe rate"
     },
     "status": {
       "draft": "Draft",

@@ -2825,15 +2825,45 @@ func (s *SiteBroadcastStats) encodeFields(e *jx.Encoder) {
 		e.FieldStart("failedCount")
 		e.Int32(s.FailedCount)
 	}
+	{
+		e.FieldStart("deliveryRate")
+		e.Float32(s.DeliveryRate)
+	}
+	{
+		e.FieldStart("openRate")
+		e.Float32(s.OpenRate)
+	}
+	{
+		e.FieldStart("clickRate")
+		e.Float32(s.ClickRate)
+	}
+	{
+		e.FieldStart("clickToOpenRate")
+		e.Float32(s.ClickToOpenRate)
+	}
+	{
+		e.FieldStart("unsubscribeRate")
+		e.Float32(s.UnsubscribeRate)
+	}
+	{
+		e.FieldStart("failureRate")
+		e.Float32(s.FailureRate)
+	}
 }
 
-var jsonFieldsNameOfSiteBroadcastStats = [6]string{
-	0: "recipientsTotal",
-	1: "sentCount",
-	2: "openedCount",
-	3: "clickedCount",
-	4: "unsubscribedCount",
-	5: "failedCount",
+var jsonFieldsNameOfSiteBroadcastStats = [12]string{
+	0:  "recipientsTotal",
+	1:  "sentCount",
+	2:  "openedCount",
+	3:  "clickedCount",
+	4:  "unsubscribedCount",
+	5:  "failedCount",
+	6:  "deliveryRate",
+	7:  "openRate",
+	8:  "clickRate",
+	9:  "clickToOpenRate",
+	10: "unsubscribeRate",
+	11: "failureRate",
 }
 
 // Decode decodes SiteBroadcastStats from json.
@@ -2841,7 +2871,7 @@ func (s *SiteBroadcastStats) Decode(d *jx.Decoder) error {
 	if s == nil {
 		return errors.New("invalid: unable to decode SiteBroadcastStats to nil")
 	}
-	var requiredBitSet [1]uint8
+	var requiredBitSet [2]uint8
 
 	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
 		switch string(k) {
@@ -2917,6 +2947,78 @@ func (s *SiteBroadcastStats) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"failedCount\"")
 			}
+		case "deliveryRate":
+			requiredBitSet[0] |= 1 << 6
+			if err := func() error {
+				v, err := d.Float32()
+				s.DeliveryRate = float32(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"deliveryRate\"")
+			}
+		case "openRate":
+			requiredBitSet[0] |= 1 << 7
+			if err := func() error {
+				v, err := d.Float32()
+				s.OpenRate = float32(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"openRate\"")
+			}
+		case "clickRate":
+			requiredBitSet[1] |= 1 << 0
+			if err := func() error {
+				v, err := d.Float32()
+				s.ClickRate = float32(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"clickRate\"")
+			}
+		case "clickToOpenRate":
+			requiredBitSet[1] |= 1 << 1
+			if err := func() error {
+				v, err := d.Float32()
+				s.ClickToOpenRate = float32(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"clickToOpenRate\"")
+			}
+		case "unsubscribeRate":
+			requiredBitSet[1] |= 1 << 2
+			if err := func() error {
+				v, err := d.Float32()
+				s.UnsubscribeRate = float32(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"unsubscribeRate\"")
+			}
+		case "failureRate":
+			requiredBitSet[1] |= 1 << 3
+			if err := func() error {
+				v, err := d.Float32()
+				s.FailureRate = float32(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"failureRate\"")
+			}
 		default:
 			return d.Skip()
 		}
@@ -2926,8 +3028,9 @@ func (s *SiteBroadcastStats) Decode(d *jx.Decoder) error {
 	}
 	// Validate required fields.
 	var failures []validate.FieldError
-	for i, mask := range [1]uint8{
-		0b00111111,
+	for i, mask := range [2]uint8{
+		0b11111111,
+		0b00001111,
 	} {
 		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
 			// Mask only required fields and check equality to mask using XOR.

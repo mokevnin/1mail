@@ -31,7 +31,7 @@ import (
 // goverter:extend optNilTimestamp
 // goverter:extend contactCustomFields
 // goverter:extend eventProperties
-// goverter:extend intToInt32
+// goverter:extend broadcastStats
 type Converter interface {
 	ContactToResource(source *ent.Contact) siteapi.SiteContactResource
 	SegmentToResource(source *ent.Segment) siteapi.SiteSegmentResource
@@ -78,8 +78,33 @@ func optNilEntityID(v *int64) siteapi.OptNilEntityId {
 	return siteapi.NewOptNilEntityId(entityID(*v))
 }
 
-func intToInt32(v int) int32 {
-	return int32(v)
+// broadcastStats folds the broadcast's flat delivery counters into the nested
+// Stats DTO and computes the derived engagement rates. Rates are ratios in [0,1];
+// a zero denominator yields 0 (see ratio). It is wired as a goverter extend so the
+// `. -> Stats` mapping on BroadcastToResource routes through it.
+func broadcastStats(b ent.Broadcast) siteapi.SiteBroadcastStats {
+	return siteapi.SiteBroadcastStats{
+		RecipientsTotal:   int32(b.RecipientsTotal),
+		SentCount:         int32(b.SentCount),
+		OpenedCount:       int32(b.OpenedCount),
+		ClickedCount:      int32(b.ClickedCount),
+		UnsubscribedCount: int32(b.UnsubscribedCount),
+		FailedCount:       int32(b.FailedCount),
+		DeliveryRate:      ratio(b.SentCount, b.RecipientsTotal),
+		OpenRate:          ratio(b.OpenedCount, b.SentCount),
+		ClickRate:         ratio(b.ClickedCount, b.SentCount),
+		ClickToOpenRate:   ratio(b.ClickedCount, b.OpenedCount),
+		UnsubscribeRate:   ratio(b.UnsubscribedCount, b.SentCount),
+		FailureRate:       ratio(b.FailedCount, b.RecipientsTotal),
+	}
+}
+
+// ratio is num/denom as a float32 in [0,1], guarding against a zero denominator.
+func ratio(num, denom int) float32 {
+	if denom <= 0 {
+		return 0
+	}
+	return float32(num) / float32(denom)
 }
 
 func optNilTimeZone(v *string) siteapi.OptNilTimeZoneName {

@@ -223,6 +223,30 @@ export type SiteBroadcastStats = {
      * Messages that failed to send
      */
     failedCount: number;
+    /**
+     * Messages handed to the provider ÷ recipients targeted (0–1)
+     */
+    deliveryRate: number;
+    /**
+     * Unique opens ÷ messages sent (0–1)
+     */
+    openRate: number;
+    /**
+     * Unique clicks ÷ messages sent (0–1)
+     */
+    clickRate: number;
+    /**
+     * Unique clicks ÷ unique opens (0–1)
+     */
+    clickToOpenRate: number;
+    /**
+     * Unsubscribes ÷ messages sent (0–1)
+     */
+    unsubscribeRate: number;
+    /**
+     * Send failures ÷ recipients targeted (0–1)
+     */
+    failureRate: number;
 };
 
 /**

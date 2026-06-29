@@ -31,6 +31,24 @@ model SiteBroadcastStats {
 
   /** Messages that failed to send */
   failedCount: int32;
+
+  /** Messages handed to the provider ÷ recipients targeted (0–1) */
+  deliveryRate: float32;
+
+  /** Unique opens ÷ messages sent (0–1) */
+  openRate: float32;
+
+  /** Unique clicks ÷ messages sent (0–1) */
+  clickRate: float32;
+
+  /** Unique clicks ÷ unique opens (0–1) */
+  clickToOpenRate: float32;
+
+  /** Unsubscribes ÷ messages sent (0–1) */
+  unsubscribeRate: float32;
+
+  /** Send failures ÷ recipients targeted (0–1) */
+  failureRate: float32;
 }
 
 /** Broadcast resource used by the site UI */
