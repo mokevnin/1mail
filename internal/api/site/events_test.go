@@ -73,3 +73,31 @@ func TestSiteEventsListUnknownWorkspace(t *testing.T) {
 	require.NoError(t, err)
 	assert.IsType(t, &siteapi.ProblemDetails{}, res)
 }
+
+// SiteEventsActions returns the workspace's distinct actions, sorted — the
+// segment builder uses it to populate event conditions. Fixtures give acme the
+// actions page_view + purchase; a duplicate page_view must still appear once.
+func TestSiteEventsActions(t *testing.T) {
+	env := testhelper.Setup(t)
+	c := siteClient(t, env, "info@1mail.com")
+	ctx := context.Background()
+
+	_, err := env.DB.Event.Create().
+		SetWorkspaceID(1).SetSubjectID("x@test.dev").SetAction("page_view").Save(ctx)
+	require.NoError(t, err)
+
+	out, err := c.SiteEventsActions(ctx, siteapi.SiteEventsActionsParams{WorkspaceSlug: "acme"})
+	require.NoError(t, err)
+	res, ok := out.(*siteapi.SiteEventActionsResult)
+	require.Truef(t, ok, "got %T", out)
+	assert.Equal(t, []string{"page_view", "purchase"}, res.Actions, "distinct + sorted")
+}
+
+func TestSiteEventsActionsUnknownWorkspace(t *testing.T) {
+	env := testhelper.Setup(t)
+	c := siteClient(t, env, "info@1mail.com")
+
+	res, err := c.SiteEventsActions(context.Background(), siteapi.SiteEventsActionsParams{WorkspaceSlug: "does-not-exist"})
+	require.NoError(t, err)
+	assert.IsType(t, &siteapi.ProblemDetails{}, res)
+}

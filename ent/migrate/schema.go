@@ -296,6 +296,13 @@ var (
 				OnDelete:   schema.NoAction,
 			},
 		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "event_workspace_id_email_action",
+				Unique:  false,
+				Columns: []*schema.Column{EventsColumns[10], EventsColumns[3], EventsColumns[5]},
+			},
+		},
 	}
 	// IntegrationsColumns holds the columns for the "integrations" table.
 	IntegrationsColumns = []*schema.Column{

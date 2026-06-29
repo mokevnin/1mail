@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"testing"
+	"time"
 
 	"github.com/mokevnin/1mail/ent/contact"
 	"github.com/mokevnin/1mail/ent/predicate"
@@ -87,6 +88,60 @@ func TestCompileEvaluatesAgainstContacts(t *testing.T) {
 
 	// not: NOT(plan=pro) → only Bob (free)
 	assert.Equal(t, 1, count(segments.Group{Not: true, Rules: marshal(rule("custom:plan", "=", "pro"))}))
+}
+
+func TestEventConditions(t *testing.T) {
+	env := testhelper.Setup(t)
+	ctx := context.Background()
+
+	mk := func(email string) {
+		_, err := env.DB.Contact.Create().SetWorkspaceID(wsID).SetEmail(email).Save(ctx)
+		require.NoError(t, err)
+	}
+	mkEvent := func(email, action string, workspace int64, occurred time.Time) {
+		_, err := env.DB.Event.Create().
+			SetWorkspaceID(workspace).SetSubjectID(email).SetEmail(email).
+			SetAction(action).SetOccurredAt(occurred).Save(ctx)
+		require.NoError(t, err)
+	}
+	mk("ann@evseg.test")
+	mk("bob@evseg.test")
+
+	// A second real workspace (FK-valid) to prove the join is workspace-scoped.
+	ws2, err := env.DB.Workspace.Create().
+		SetName("Other").SetSlug("other-evseg").SetCollectKey("k-evseg").SetUserID(1).Save(ctx)
+	require.NoError(t, err)
+
+	now := time.Now()
+	mkEvent("ann@evseg.test", "page_view", wsID, now.AddDate(0, 0, -2))  // recent
+	mkEvent("ann@evseg.test", "purchase", wsID, now.AddDate(0, 0, -40))  // old
+	mkEvent("ann@evseg.test", "ws2_only", ws2.ID, now.AddDate(0, 0, -1)) // other workspace
+
+	count := func(g segments.Group) int {
+		p, err := segments.Compile(g, segments.ContactSchema())
+		require.NoError(t, err)
+		n, err := env.DB.Contact.Query().
+			Where(contact.WorkspaceID(wsID), contact.EmailContainsFold("@evseg.test"), predicate.Contact(p)).
+			Count(ctx)
+		require.NoError(t, err)
+		return n
+	}
+
+	// performed ever → only Ann did page_view.
+	assert.Equal(t, 1, count(segments.Group{Rules: marshal(rule("event:page_view", "performed", ""))}))
+	// performed within 7 days → Ann's page_view (2d ago) qualifies.
+	assert.Equal(t, 1, count(segments.Group{Rules: marshal(rule("event:page_view", "performed", "7"))}))
+	// purchase within 7 days → none (Ann's is 40d ago); ever → Ann.
+	assert.Equal(t, 0, count(segments.Group{Rules: marshal(rule("event:purchase", "performed", "7"))}))
+	assert.Equal(t, 1, count(segments.Group{Rules: marshal(rule("event:purchase", "performed", ""))}))
+	// notPerformed page_view → Bob only.
+	assert.Equal(t, 1, count(segments.Group{Rules: marshal(rule("event:page_view", "notPerformed", ""))}))
+	// workspace isolation: ws2_only event must not match in ws1.
+	assert.Equal(t, 0, count(segments.Group{Rules: marshal(rule("event:ws2_only", "performed", ""))}))
+
+	// validation: bad operator + non-numeric window are rejected.
+	assert.Error(t, segments.Validate(`{"rules":[{"field":"event:x","operator":"weird","value":""}]}`, segments.ContactSchema()))
+	assert.Error(t, segments.Validate(`{"rules":[{"field":"event:x","operator":"performed","value":"soon"}]}`, segments.ContactSchema()))
 }
 
 func TestParseAndValidate(t *testing.T) {

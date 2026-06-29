@@ -3,6 +3,7 @@ package site_test
 import (
 	"context"
 	"testing"
+	"time"
 
 	siteapi "github.com/mokevnin/1mail/gen/site"
 	"github.com/mokevnin/1mail/internal/testhelper"
@@ -24,6 +25,28 @@ func TestSiteSegmentsPreviewCountsMatchingActiveContacts(t *testing.T) {
 	require.NoError(t, err)
 
 	def := `{"combinator":"and","rules":[{"field":"custom:plan","operator":"=","value":"preview-pro"}]}`
+	out, err := c.SiteSegmentsPreview(ctx, &siteapi.SitePreviewSegmentInput{
+		Definition: siteapi.NewOptNilString(def),
+	}, siteapi.SiteSegmentsPreviewParams{WorkspaceSlug: "acme"})
+	require.NoError(t, err)
+	res, ok := out.(*siteapi.SitePreviewSegmentResult)
+	require.Truef(t, ok, "got %T", out)
+	assert.Equal(t, int32(1), res.Count)
+}
+
+func TestSiteSegmentsPreviewEventCondition(t *testing.T) {
+	env := testhelper.Setup(t)
+	c := siteClient(t, env, "info@1mail.com")
+	ctx := context.Background()
+
+	_, err := env.DB.Contact.Create().SetWorkspaceID(1).SetEmail("ev-prev@test.dev").Save(ctx)
+	require.NoError(t, err)
+	_, err = env.DB.Event.Create().
+		SetWorkspaceID(1).SetSubjectID("ev-prev@test.dev").SetEmail("ev-prev@test.dev").
+		SetAction("signed_up").SetOccurredAt(time.Now()).Save(ctx)
+	require.NoError(t, err)
+
+	def := `{"combinator":"and","rules":[{"field":"event:signed_up","operator":"performed","value":"30"}]}`
 	out, err := c.SiteSegmentsPreview(ctx, &siteapi.SitePreviewSegmentInput{
 		Definition: siteapi.NewOptNilString(def),
 	}, siteapi.SiteSegmentsPreviewParams{WorkspaceSlug: "acme"})

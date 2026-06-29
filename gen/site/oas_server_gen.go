@@ -136,6 +136,12 @@ type Handler interface {
 	//
 	// PUT /w/{workspaceSlug}/contacts/{id}
 	SiteContactsUpdate(ctx context.Context, req *SiteUpdateContactInput, params SiteContactsUpdateParams) (SiteContactsUpdateRes, error)
+	// SiteEventsActions implements SiteEvents_actions operation.
+	//
+	// Distinct event actions in the workspace, sorted — powers the segment builder.
+	//
+	// GET /w/{workspaceSlug}/events/actions
+	SiteEventsActions(ctx context.Context, params SiteEventsActionsParams) (SiteEventsActionsRes, error)
 	// SiteEventsList implements SiteEvents_list operation.
 	//
 	// List events for the site UI (most recent first).

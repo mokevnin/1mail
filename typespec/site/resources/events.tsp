@@ -26,6 +26,11 @@ model SiteEventResource {
   createdAt: Timestamp;
 }
 
+/** Distinct event actions seen in a workspace (for segment/filter pickers) */
+model SiteEventActionsResult {
+  actions: string[];
+}
+
 @route("/w/{workspaceSlug}/events")
 @tag("Site Events")
 namespace SiteEvents {
@@ -41,4 +46,11 @@ namespace SiteEvents {
     /** Filter by the email associated with the event */
     @query email?: string,
   ): Page<SiteEventResource> | NotFoundProblem;
+
+  /** Distinct event actions in the workspace, sorted — powers the segment builder */
+  @get
+  @route("/actions")
+  op actions(@path workspaceSlug: string):
+    | SiteEventActionsResult
+    | NotFoundProblem;
 }

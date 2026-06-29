@@ -1188,6 +1188,7 @@ func (s *ProblemDetails) SetFields(val OptProblemDetailsFields) {
 }
 
 func (*ProblemDetails) siteAuthDirectLoginRes()  {}
+func (*ProblemDetails) siteEventsActionsRes()    {}
 func (*ProblemDetails) siteEventsListRes()       {}
 func (*ProblemDetails) siteIntegrationsListRes() {}
 func (*ProblemDetails) siteTokensListRes()       {}
@@ -3118,6 +3119,24 @@ func (s *SiteEmailTemplateResource) SetUpdatedAt(val Timestamp) {
 func (*SiteEmailTemplateResource) siteTemplatesCreateRes() {}
 func (*SiteEmailTemplateResource) siteTemplatesGetRes()    {}
 func (*SiteEmailTemplateResource) siteTemplatesUpdateRes() {}
+
+// Distinct event actions seen in a workspace (for segment/filter pickers).
+// Ref: #/components/schemas/SiteEventActionsResult
+type SiteEventActionsResult struct {
+	Actions []string `json:"actions"`
+}
+
+// GetActions returns the value of Actions.
+func (s *SiteEventActionsResult) GetActions() []string {
+	return s.Actions
+}
+
+// SetActions sets the value of Actions.
+func (s *SiteEventActionsResult) SetActions(val []string) {
+	s.Actions = val
+}
+
+func (*SiteEventActionsResult) siteEventsActionsRes() {}
 
 // A tracked event shown in the activity feed.
 // Ref: #/components/schemas/SiteEventResource

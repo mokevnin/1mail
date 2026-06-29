@@ -121,6 +121,13 @@ export const zSiteDirectLoginResult = z.object({
 });
 
 /**
+ * Distinct event actions seen in a workspace (for segment/filter pickers)
+ */
+export const zSiteEventActionsResult = z.object({
+    actions: z.array(z.string())
+});
+
+/**
  * Delivery channel an integration belongs to
  */
 export const zSiteIntegrationChannel = z.enum(['email', 'sms']);
@@ -834,6 +841,15 @@ export const zSiteEventsListResponse = z.object({
     totalItems: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
     totalPages: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' })
 });
+
+export const zSiteEventsActionsPath = z.object({
+    workspaceSlug: z.string()
+});
+
+/**
+ * The request has succeeded.
+ */
+export const zSiteEventsActionsResponse = zSiteEventActionsResult;
 
 export const zSiteIntegrationsListPath = z.object({
     workspaceSlug: z.string()

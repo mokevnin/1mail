@@ -1674,6 +1674,45 @@
         "tags": ["Site Events"]
       }
     },
+    "/w/{workspaceSlug}/events/actions": {
+      "get": {
+        "operationId": "SiteEvents_actions",
+        "description": "Distinct event actions in the workspace, sorted — powers the segment builder",
+        "parameters": [
+          {
+            "name": "workspaceSlug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request has succeeded.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SiteEventActionsResult"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "RFC 7807 not found response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Site Events"]
+      }
+    },
     "/w/{workspaceSlug}/integrations": {
       "get": {
         "operationId": "SiteIntegrations_list",
@@ -4100,6 +4139,19 @@
           }
         },
         "description": "Reusable email template used by the site UI"
+      },
+      "SiteEventActionsResult": {
+        "type": "object",
+        "required": ["actions"],
+        "properties": {
+          "actions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "description": "Distinct event actions seen in a workspace (for segment/filter pickers)"
       },
       "SiteEventResource": {
         "type": "object",

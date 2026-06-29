@@ -1,10 +1,13 @@
 import { Button, Group, Stack, Text } from '@mantine/core'
 import { QueryBuilderMantine } from '@react-querybuilder/mantine'
-import { useMutation } from '@tanstack/react-query'
+import { useMutation, useQuery } from '@tanstack/react-query'
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { type Field, type Operator, QueryBuilder, type RuleGroupType } from 'react-querybuilder'
-import { siteSegmentsPreviewMutation } from '../../generated/site/@tanstack/react-query.gen.ts'
+import {
+  siteEventsActionsOptions,
+  siteSegmentsPreviewMutation,
+} from '../../generated/site/@tanstack/react-query.gen.ts'
 
 // Operators limited to what the backend segment engine compiles.
 const operators: Operator[] = [
@@ -16,7 +19,14 @@ const operators: Operator[] = [
   { name: 'notNull', label: 'is set' },
 ]
 
-const fields: Field[] = [
+// Event conditions get their own operator set (per-field overrides the global one).
+// The value is a day window: blank = ever.
+const eventOperators: Operator[] = [
+  { name: 'performed', label: 'performed in last (days)' },
+  { name: 'notPerformed', label: 'not performed in last (days)' },
+]
+
+const contactFields: Field[] = [
   { name: 'email', label: 'Email' },
   { name: 'first_name', label: 'First name' },
   { name: 'last_name', label: 'Last name' },
@@ -57,6 +67,20 @@ export function SegmentRuleBuilder({ slug, value, onChange }: SegmentRuleBuilder
   const { t } = useTranslation()
   const query = useMemo(() => parseQuery(value), [value])
   const preview = useMutation(siteSegmentsPreviewMutation())
+
+  // The workspace's distinct event actions become behavioral fields
+  // ("event:<action>") that compile to an EXISTS against the events log.
+  const actionsQuery = useQuery(siteEventsActionsOptions({ path: { workspaceSlug: slug } }))
+  const fields = useMemo<Field[]>(() => {
+    const eventFields = (actionsQuery.data?.actions ?? []).map<Field>((action) => ({
+      name: `event:${action}`,
+      label: `Did "${action}"`,
+      operators: eventOperators,
+      defaultOperator: 'performed',
+      inputType: 'number',
+    }))
+    return [...contactFields, ...eventFields]
+  }, [actionsQuery.data])
 
   return (
     <Stack gap="xs">

@@ -7,11 +7,13 @@ package segments
 
 import (
 	"github.com/mokevnin/1mail/ent/contact"
+	"github.com/mokevnin/1mail/ent/event"
 	"github.com/mokevnin/1mail/ent/predicate"
 )
 
 // ContactSchema whitelists the contact fields a segment rule may target and maps
-// them to columns. Custom fields are addressed as "custom:<key>".
+// them to columns. Custom fields are addressed as "custom:<key>"; behavioral
+// conditions as "event:<action>" (joined to the events log on email + workspace).
 func ContactSchema() Schema {
 	return Schema{
 		Columns: map[string]string{
@@ -23,6 +25,15 @@ func ContactSchema() Schema {
 		},
 		JSONColumns: map[string]string{
 			"custom:": contact.FieldCustomFields,
+		},
+		Events: &EventSchema{
+			Table:             event.Table,
+			EmailCol:          event.FieldEmail,
+			WorkspaceCol:      event.FieldWorkspaceID,
+			ActionCol:         event.FieldAction,
+			OccurredCol:       event.FieldOccurredAt,
+			OuterEmailCol:     contact.FieldEmail,
+			OuterWorkspaceCol: contact.FieldWorkspaceID,
 		},
 	}
 }

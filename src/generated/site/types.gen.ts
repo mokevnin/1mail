@@ -506,6 +506,13 @@ export type SiteEmailTemplateResource = {
 };
 
 /**
+ * Distinct event actions seen in a workspace (for segment/filter pickers)
+ */
+export type SiteEventActionsResult = {
+    actions: Array<string>;
+};
+
+/**
  * A tracked event shown in the activity feed
  */
 export type SiteEventResource = {
@@ -1954,6 +1961,33 @@ export type SiteEventsListResponses = {
 };
 
 export type SiteEventsListResponse = SiteEventsListResponses[keyof SiteEventsListResponses];
+
+export type SiteEventsActionsData = {
+    body?: never;
+    path: {
+        workspaceSlug: string;
+    };
+    query?: never;
+    url: '/w/{workspaceSlug}/events/actions';
+};
+
+export type SiteEventsActionsErrors = {
+    /**
+     * RFC 7807 not found response
+     */
+    404: ProblemDetails;
+};
+
+export type SiteEventsActionsError = SiteEventsActionsErrors[keyof SiteEventsActionsErrors];
+
+export type SiteEventsActionsResponses = {
+    /**
+     * The request has succeeded.
+     */
+    200: SiteEventActionsResult;
+};
+
+export type SiteEventsActionsResponse = SiteEventsActionsResponses[keyof SiteEventsActionsResponses];
 
 export type SiteIntegrationsListData = {
     body?: never;

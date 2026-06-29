@@ -2678,6 +2678,71 @@ func decodeSiteContactsUpdateParams(args [2]string, argsEscaped bool, r *http.Re
 	return params, nil
 }
 
+// SiteEventsActionsParams is parameters of SiteEvents_actions operation.
+type SiteEventsActionsParams struct {
+	WorkspaceSlug string
+}
+
+func unpackSiteEventsActionsParams(packed middleware.Parameters) (params SiteEventsActionsParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "workspaceSlug",
+			In:   "path",
+		}
+		params.WorkspaceSlug = packed[key].(string)
+	}
+	return params
+}
+
+func decodeSiteEventsActionsParams(args [1]string, argsEscaped bool, r *http.Request) (params SiteEventsActionsParams, _ error) {
+	// Decode path: workspaceSlug.
+	if err := func() error {
+		param := args[0]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[0])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "workspaceSlug",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToString(val)
+				if err != nil {
+					return err
+				}
+
+				params.WorkspaceSlug = c
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "workspaceSlug",
+			In:   "path",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
 // SiteEventsListParams is parameters of SiteEvents_list operation.
 type SiteEventsListParams struct {
 	WorkspaceSlug string

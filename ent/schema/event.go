@@ -8,6 +8,7 @@ import (
 	"entgo.io/ent/schema"
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
+	"entgo.io/ent/schema/index"
 )
 
 type Event struct {
@@ -65,5 +66,13 @@ func (Event) Edges() []ent.Edge {
 			Field("workspace_id").
 			Required().
 			Unique(),
+	}
+}
+
+func (Event) Indexes() []ent.Index {
+	return []ent.Index{
+		// Backs event-based segment conditions: the correlated EXISTS filters by
+		// workspace + email + action (the contact↔event join + the event type).
+		index.Fields("workspace_id", "email", "action"),
 	}
 }

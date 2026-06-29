@@ -23,12 +23,12 @@ func TestBroadcastStatsRates(t *testing.T) {
 		got  float32
 		want float32
 	}{
-		{"deliveryRate", got.DeliveryRate, 0.80},   // 80/100
-		{"openRate", got.OpenRate, 0.50},           // 40/80
-		{"clickRate", got.ClickRate, 0.25},         // 20/80
-		{"clickToOpenRate", got.ClickToOpenRate, 0.50}, // 20/40
+		{"deliveryRate", got.DeliveryRate, 0.80},         // 80/100
+		{"openRate", got.OpenRate, 0.50},                 // 40/80
+		{"clickRate", got.ClickRate, 0.25},               // 20/80
+		{"clickToOpenRate", got.ClickToOpenRate, 0.50},   // 20/40
 		{"unsubscribeRate", got.UnsubscribeRate, 0.0625}, // 5/80
-		{"failureRate", got.FailureRate, 0.20},     // 20/100
+		{"failureRate", got.FailureRate, 0.20},           // 20/100
 	}
 	for _, c := range cases {
 		if c.got != c.want {

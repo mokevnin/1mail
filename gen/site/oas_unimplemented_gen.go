@@ -207,6 +207,15 @@ func (UnimplementedHandler) SiteContactsUpdate(ctx context.Context, req *SiteUpd
 	return r, ht.ErrNotImplemented
 }
 
+// SiteEventsActions implements SiteEvents_actions operation.
+//
+// Distinct event actions in the workspace, sorted — powers the segment builder.
+//
+// GET /w/{workspaceSlug}/events/actions
+func (UnimplementedHandler) SiteEventsActions(ctx context.Context, params SiteEventsActionsParams) (r SiteEventsActionsRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // SiteEventsList implements SiteEvents_list operation.
 //
 // List events for the site UI (most recent first).

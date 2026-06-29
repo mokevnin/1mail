@@ -66,3 +66,26 @@ func (h *Handlers) SiteEventsList(ctx context.Context, params siteapi.SiteEvents
 		TotalPages: int32(pagination.TotalPages(total, pageSize)),
 	}, nil
 }
+
+// SiteEventsActions returns the distinct event actions in the workspace, sorted —
+// used to populate the segment builder's event-condition picker.
+func (h *Handlers) SiteEventsActions(ctx context.Context, params siteapi.SiteEventsActionsParams) (siteapi.SiteEventsActionsRes, error) {
+	ws, err := h.workspaceID(ctx, params.WorkspaceSlug)
+	if ent.IsNotFound(err) {
+		v := problem(http.StatusNotFound, "workspace not found")
+		return &v, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	actions, err := h.ent.Event.Query().
+		Where(event.WorkspaceID(ws)).
+		Order(ent.Asc(event.FieldAction)).
+		GroupBy(event.FieldAction).
+		Strings(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return &siteapi.SiteEventActionsResult{Actions: actions}, nil
+}

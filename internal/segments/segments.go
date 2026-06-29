@@ -15,11 +15,17 @@ package segments
 import (
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"strings"
+	"time"
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqljson"
 )
+
+// eventFieldPrefix marks a leaf as a behavioral condition: field "event:<action>"
+// with operator "performed"/"notPerformed" and value = a day window ("" = ever).
+const eventFieldPrefix = "event:"
 
 // Group is a react-querybuilder RuleGroupType. Each rules[] entry is decoded
 // lazily because it is either a nested Group or a leaf Rule.
@@ -43,6 +49,23 @@ type Rule struct {
 type Schema struct {
 	Columns     map[string]string
 	JSONColumns map[string]string
+	// Events, when set, enables "event:<action>" leaves that compile to a
+	// correlated (NOT) EXISTS against an events table. All names are the SQL
+	// columns (kept as strings so this engine stays ent-agnostic).
+	Events *EventSchema
+}
+
+// EventSchema describes how to correlate the subject entity to its events: the
+// events table + its (email, workspace, action, occurred_at) columns, plus the
+// outer subject's email/workspace columns to join on.
+type EventSchema struct {
+	Table             string
+	EmailCol          string
+	WorkspaceCol      string
+	ActionCol         string
+	OccurredCol       string
+	OuterEmailCol     string
+	OuterWorkspaceCol string
 }
 
 // Predicate is the compiled output: a selector mutator, assignment-compatible
@@ -149,6 +172,13 @@ func compileEntry(raw json.RawMessage, schema Schema) (builder, error) {
 }
 
 func compileRule(r Rule, schema Schema) (builder, error) {
+	if strings.HasPrefix(r.Field, eventFieldPrefix) {
+		action := strings.TrimPrefix(r.Field, eventFieldPrefix)
+		if schema.Events == nil || action == "" {
+			return nil, fmt.Errorf("unknown field %q", r.Field)
+		}
+		return compileEvent(schema.Events, action, r.Operator, r.Value)
+	}
 	if col, path, ok := resolveJSON(r.Field, schema); ok {
 		return compileJSON(col, path, r.Operator, r.Value)
 	}
@@ -172,6 +202,54 @@ func compileRule(r Rule, schema Schema) (builder, error) {
 	default:
 		return nil, fmt.Errorf("unsupported operator %q", r.Operator)
 	}
+}
+
+// compileEvent builds a correlated (NOT) EXISTS against the events table: the
+// subject performed `action` (optionally within the last `value` days). The
+// subquery joins events↔subject on email + workspace, so it works for any subject
+// schema that supplies those outer columns.
+func compileEvent(ev *EventSchema, action, op, value string) (builder, error) {
+	var negate bool
+	switch op {
+	case "performed":
+		negate = false
+	case "notPerformed":
+		negate = true
+	default:
+		return nil, fmt.Errorf("unsupported operator %q for event field", op)
+	}
+
+	var since *time.Time
+	if v := strings.TrimSpace(value); v != "" {
+		days, err := strconv.Atoi(v)
+		if err != nil || days < 0 {
+			return nil, fmt.Errorf("event window must be a non-negative number of days, got %q", value)
+		}
+		if days > 0 {
+			t := time.Now().AddDate(0, 0, -days)
+			since = &t
+		}
+	}
+
+	return func(s *sql.Selector) *sql.Predicate {
+		sub := sql.Select(ev.EmailCol).From(sql.Table(ev.Table))
+		preds := []*sql.Predicate{
+			sql.ColumnsEQ(sub.C(ev.EmailCol), s.C(ev.OuterEmailCol)),
+			sql.ColumnsEQ(sub.C(ev.WorkspaceCol), s.C(ev.OuterWorkspaceCol)),
+			sql.EQ(sub.C(ev.ActionCol), action),
+		}
+		if since != nil {
+			// GTE excludes NULL occurred_at. Safe in practice: the events bus always
+			// stamps occurred_at (zero ⇒ publish time), so persisted events are never
+			// null. "ever" (since == nil) adds no time predicate and matches all.
+			preds = append(preds, sql.GTE(sub.C(ev.OccurredCol), *since))
+		}
+		sub.Where(sql.And(preds...))
+		if negate {
+			return sql.NotExists(sub)
+		}
+		return sql.Exists(sub)
+	}, nil
 }
 
 func compileJSON(col, path, op, value string) (builder, error) {
