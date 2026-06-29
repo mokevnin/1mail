@@ -194,13 +194,11 @@ river, the automation run engine, and the broadcast engine are unchanged — onl
   Security/signing are **maintained libs, not hand-rolled**: `doyensec/safeurl`
   (SSRF, resolved-IP checks) + `standard-webhooks` (interoperable signatures).
   Webhooks currently see `contact.created` + `email.*`.
-- **Deferred — collect/external producers stay inline.** Migrating them onto the
-  bus was attempted and **reverted** because the model was wrong: it tried to make a
-  customer's runtime-named event one of *our* event types, forcing a generic flat
-  envelope + field-bag.
+- **DONE — collect/external on the bus via a typed union.** A first attempt was
+  reverted (it tried to make a customer's runtime-named event one of *our* types,
+  forcing a flat envelope + field-bag). The shipped model below is the correct one.
 
-  **The correct model (use when revisited): never conflate internal and external
-  events.**
+  **Never conflate internal and external events.**
   - *Our* events are a **closed typed union** — `ContactCreated`, `EmailOpened/
     Clicked/Unsubscribed`, … — each a Go type that owns its projection (`Project()`).
     Bus event names are finite and ours.
@@ -212,11 +210,10 @@ river, the automation run engine, and the broadcast engine are unchanged — onl
     user's opaque payload. The user's `page_view` is a **field** (`Action`) inside
     `CollectedEvent`, not a bus event name — so there are no "unknown" bus names and
     no catch-all is needed. collect and external both publish `CollectedEvent`.
-    (Note: automation triggers that fire on a customer action must match
-    `CollectedEvent.Action`, not the bus name — handle that in the automations
-    subscriber.)
-- **Later**: analytics subscribers; per-subject ordering if needed; the typed-union
-  refactor + collect/external migration above.
+    Shipped: persist/automations/webhooks `Decode()` the envelope and use
+    `Project()`; automations enroll and webhooks filter on `Project().Action` (the
+    customer action), not the bus name.
+- **Later**: analytics subscribers; per-subject ordering if needed.
 
 ## Decisions (resolved 2026-06-28)
 
