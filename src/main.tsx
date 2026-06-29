@@ -16,6 +16,8 @@ import '@mantine/notifications/styles.css'
 import 'mantine-datatable/styles.css'
 // Structural layout only; the Mantine compat package handles the visuals.
 import 'react-querybuilder/dist/query-builder-layout.css'
+// Visual automation builder (xyflow-based editor ships its own styles).
+import '@workflowbuilder/sdk/style.css'
 
 function Root() {
   const [queryClient] = useState(() => new QueryClient())
