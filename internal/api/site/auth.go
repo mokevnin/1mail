@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	siteapi "github.com/mokevnin/1mail/gen/site"
-	"github.com/mokevnin/1mail/internal/pubsub"
 	"github.com/mokevnin/1mail/internal/service"
 )
 
@@ -69,11 +68,9 @@ func (h *Handlers) SiteAuthRegister(ctx context.Context, req *siteapi.SiteRegist
 		return nil, err
 	}
 
-	_ = pubsub.Publish(h.pubsub, pubsub.TopicUserRegistered, pubsub.UserRegisteredEvent{
-		UserID: u.ID,
-		Name:   u.Name,
-		Email:  u.Email,
-	})
+	// Welcome email is a platform (transactional) send via the system sender — a
+	// river job in prod, run inline in tests. Best-effort: never fail registration.
+	_ = h.welcome.EnqueueWelcome(ctx, u.Email, u.Name)
 
 	return &siteapi.SiteRegisterResult{
 		ID:        siteapi.EntityId(strconv.FormatInt(u.ID, 10)),

@@ -8,6 +8,7 @@ import (
 
 	"github.com/mokevnin/1mail/ent"
 	"github.com/mokevnin/1mail/ent/broadcast"
+	"github.com/mokevnin/1mail/ent/broadcastrecipient"
 	siteapi "github.com/mokevnin/1mail/gen/site"
 	"github.com/mokevnin/1mail/internal/convert"
 	"github.com/mokevnin/1mail/internal/emailrender"
@@ -230,6 +231,14 @@ func (h *Handlers) SiteBroadcastsDelete(ctx context.Context, params siteapi.Site
 		v := siteapi.SiteBroadcastsDeleteBadRequest(problem(http.StatusBadRequest, "invalid id"))
 		return &v, nil
 	}
+	// Remove the per-recipient delivery rows first: they FK the broadcast, so a
+	// sent broadcast can't be deleted while they exist. (The engagement Event log
+	// keys on subject_id, not the broadcast, so it is unaffected.)
+	if _, err := h.ent.BroadcastRecipient.Delete().
+		Where(broadcastrecipient.BroadcastID(id), broadcastrecipient.WorkspaceID(ws)).
+		Exec(ctx); err != nil {
+		return nil, err
+	}
 	err = h.ent.Broadcast.DeleteOneID(id).Where(broadcast.WorkspaceID(ws)).Exec(ctx)
 	if ent.IsNotFound(err) {
 		v := siteapi.SiteBroadcastsDeleteNotFound(problem(http.StatusNotFound, "broadcast not found"))
@@ -275,13 +284,17 @@ func (h *Handlers) SiteBroadcastsSend(ctx context.Context, params siteapi.SiteBr
 		return &v, nil
 	}
 
-	// Enqueue first, then flip status: if the enqueue fails we don't strand the
-	// broadcast in "sending" with no job behind it.
-	if err := h.enqueuer.EnqueueBroadcast(ctx, b.ID, nil); err != nil {
-		return nil, err
-	}
+	// Move to "sending" first, then enqueue. The inline adapter runs the send
+	// synchronously (advancing the row to "sent"); the async river path advances it
+	// later via the worker. So we must NOT write status after enqueue — that would
+	// clobber the inline "sent" back to "sending". If the enqueue itself fails,
+	// revert so the broadcast isn't stranded in "sending" with no job behind it.
 	b, err = b.Update().SetStatus(broadcast.StatusSending).ClearScheduledAt().Save(ctx)
 	if err != nil {
+		return nil, err
+	}
+	if err := h.enqueuer.EnqueueBroadcast(ctx, b.ID, nil); err != nil {
+		_, _ = b.Update().SetStatus(broadcast.StatusDraft).Save(ctx)
 		return nil, err
 	}
 	res := mapper.BroadcastToResource(b)
@@ -321,14 +334,15 @@ func (h *Handlers) SiteBroadcastsSchedule(ctx context.Context, req *siteapi.Site
 	}
 
 	when := time.Time(req.ScheduledAt)
-	if err := h.enqueuer.EnqueueBroadcast(ctx, b.ID, &when); err != nil {
-		return nil, err
-	}
 	b, err = b.Update().
 		SetStatus(broadcast.StatusScheduled).
 		SetScheduledAt(when).
 		Save(ctx)
 	if err != nil {
+		return nil, err
+	}
+	if err := h.enqueuer.EnqueueBroadcast(ctx, b.ID, &when); err != nil {
+		_, _ = b.Update().SetStatus(broadcast.StatusDraft).ClearScheduledAt().Save(ctx)
 		return nil, err
 	}
 	res := mapper.BroadcastToResource(b)

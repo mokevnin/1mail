@@ -31,8 +31,9 @@ type Client struct {
 }
 
 // NewClient builds the river client with all workers registered. Workers carry
-// their own dependencies (ent client, sender resolver, secrets cipher).
-func NewClient(pool *pgxpool.Pool, entClient *ent.Client, resolver *messaging.Resolver, tracker *tracking.Tracker, cipher *secrets.Cipher) (*Client, error) {
+// their own dependencies (ent client, sender resolver, secrets cipher, the
+// platform system sender).
+func NewClient(pool *pgxpool.Pool, entClient *ent.Client, resolver *messaging.Resolver, tracker *tracking.Tracker, cipher *secrets.Cipher, systemSender messaging.EmailSender) (*Client, error) {
 	workers := river.NewWorkers()
 	river.AddWorker(workers, &SendBroadcastWorker{ent: entClient, resolver: resolver, tracker: tracker})
 	river.AddWorker(workers, &EvaluateTriggerWorker{ent: entClient})
@@ -42,6 +43,7 @@ func NewClient(pool *pgxpool.Pool, entClient *ent.Client, resolver *messaging.Re
 		cipher: cipher,
 		client: webhook.NewClient(webhookDeliveryTimeout),
 	})
+	river.AddWorker(workers, &SendWelcomeWorker{sender: systemSender})
 
 	rc, err := river.NewClient(riverpgxv5.New(pool), &river.Config{
 		Queues: map[string]river.QueueConfig{

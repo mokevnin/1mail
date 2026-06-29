@@ -18,7 +18,7 @@ import (
 
 // outboxSchema / outboxOffsets are the single source of truth for the
 // domain_events topic layout. The producer (WithinTx publisher), the subscribers
-// (newSubscriber), and the DDL (InitSchema) all reference these, so the table the
+// (NewSubscriber), and the DDL (InitSchema) all reference these, so the table the
 // producer writes, the table the consumers read, and the table InitSchema creates
 // cannot drift apart.
 var (

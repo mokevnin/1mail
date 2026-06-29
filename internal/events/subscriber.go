@@ -28,24 +28,32 @@ type WebhookDispatcher interface {
 	Dispatch(ctx context.Context, workspaceID int64, eventName, deliveryID string, body []byte) error
 }
 
+// NewRouter builds the watermill router that hosts the domain-event subscribers.
+// The events package owns its full consume-side runtime (router + per-group
+// subscribers); the producer side is Bus. Run the returned router in a goroutine
+// and Close it on shutdown.
+func NewRouter() (*message.Router, error) {
+	return message.NewRouter(message.RouterConfig{}, watermill.NewStdLogger(false, false))
+}
+
 // RegisterSubscribers wires the domain-event consumers onto the shared watermill
 // router. Each consumer gets its OWN subscriber with a distinct consumer group,
 // so every subscriber receives every event (fan-out) rather than competing for
 // messages. Add new subscribers here without touching producers.
 func RegisterSubscribers(router *message.Router, db *sql.DB, client *ent.Client, enroller Enroller, dispatcher WebhookDispatcher) error {
-	persistSub, err := newSubscriber(db, "persist")
+	persistSub, err := NewSubscriber(db, "persist")
 	if err != nil {
 		return fmt.Errorf("persist subscriber: %w", err)
 	}
 	router.AddConsumerHandler("persist_event", TopicDomainEvents, persistSub, persistConsumer(client))
 
-	automationsSub, err := newSubscriber(db, "automations")
+	automationsSub, err := NewSubscriber(db, "automations")
 	if err != nil {
 		return fmt.Errorf("automations subscriber: %w", err)
 	}
 	router.AddConsumerHandler("enroll_automations", TopicDomainEvents, automationsSub, automationsConsumer(enroller))
 
-	webhooksSub, err := newSubscriber(db, "webhooks")
+	webhooksSub, err := NewSubscriber(db, "webhooks")
 	if err != nil {
 		return fmt.Errorf("webhooks subscriber: %w", err)
 	}
@@ -114,10 +122,10 @@ func automationsConsumer(enroller Enroller) message.NoPublishHandlerFunc {
 	}
 }
 
-// newSubscriber builds a watermill-sql subscriber for the outbox topic under a
+// NewSubscriber builds a watermill-sql subscriber for the outbox topic under a
 // dedicated consumer group (its own offset cursor). InitializeSchema is false —
 // InitSchema creates the message + offsets tables at boot.
-func newSubscriber(db *sql.DB, consumerGroup string) (message.Subscriber, error) {
+func NewSubscriber(db *sql.DB, consumerGroup string) (message.Subscriber, error) {
 	return watermillsql.NewSubscriber(db, watermillsql.SubscriberConfig{
 		SchemaAdapter:    outboxSchema,
 		OffsetsAdapter:   outboxOffsets,

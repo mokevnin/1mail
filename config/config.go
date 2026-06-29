@@ -23,6 +23,16 @@ type Config struct {
 	SMTPFrom       string
 	EncryptionKey  string
 	AutoMigrate    bool
+
+	// System (platform) transactional email — 1mail's OWN sender, distinct from a
+	// customer's per-workspace integration. Dev uses smtp → mailpit (the SMTP_*
+	// values); prod uses ses (the SES_* values). Sent via the same messaging
+	// Catalog, not a separate sender.
+	SystemEmailProvider string // "smtp" | "ses"
+	SystemEmailFrom     string
+	SESRegion           string
+	SESAccessKeyID      string
+	SESSecretAccessKey  string
 }
 
 func Load(envName string) (*Config, error) {
@@ -33,6 +43,8 @@ func Load(envName string) (*Config, error) {
 	v.SetDefault("PORT", "3000")
 	v.SetDefault("APP_URL", "http://localhost:3000")
 	v.SetDefault("SMTP_PORT", 1025)
+	v.SetDefault("SYSTEM_EMAIL_PROVIDER", "smtp")
+	v.SetDefault("SYSTEM_EMAIL_FROM", "noreply@1mail.localhost")
 
 	for _, file := range envFiles(rootDir, envName) {
 		sub := viper.New()
@@ -66,6 +78,12 @@ func Load(envName string) (*Config, error) {
 		SMTPFrom:       v.GetString("SMTP_FROM"),
 		EncryptionKey:  v.GetString("ENCRYPTION_KEY"),
 		AutoMigrate:    v.GetBool("AUTO_MIGRATE"),
+
+		SystemEmailProvider: v.GetString("SYSTEM_EMAIL_PROVIDER"),
+		SystemEmailFrom:     v.GetString("SYSTEM_EMAIL_FROM"),
+		SESRegion:           v.GetString("SES_REGION"),
+		SESAccessKeyID:      v.GetString("SES_ACCESS_KEY_ID"),
+		SESSecretAccessKey:  v.GetString("SES_SECRET_ACCESS_KEY"),
 	}, nil
 }
 

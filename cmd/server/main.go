@@ -70,8 +70,8 @@ func main() {
 	defer stop()
 
 	go func() {
-		if err := application.RunPubSub(ctx); err != nil {
-			log.Printf("pubsub router stopped: %v", err)
+		if err := application.RunEvents(ctx); err != nil {
+			log.Printf("events router stopped: %v", err)
 		}
 	}()
 

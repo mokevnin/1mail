@@ -8,7 +8,6 @@ import (
 	"runtime"
 	"sync"
 	"testing"
-	"time"
 
 	"net/http/httptest"
 
@@ -19,6 +18,8 @@ import (
 	"github.com/mokevnin/1mail/ent"
 	"github.com/mokevnin/1mail/internal/db"
 	"github.com/mokevnin/1mail/internal/events"
+	"github.com/mokevnin/1mail/internal/jobs"
+	"github.com/mokevnin/1mail/internal/messaging"
 	"github.com/mokevnin/1mail/internal/server"
 	ht "github.com/ogen-go/ogen/http"
 	"github.com/stretchr/testify/require"
@@ -90,6 +91,10 @@ type TestEnv struct {
 	SQLDB  *sql.DB     // the same txdb connection the ent client and bus ride
 	Bus    *events.Bus // domain-event bus over SQLDB (nested savepoint per WithinTx)
 	Server http.Handler
+
+	// Captured sends from the inline jobs adapter, for assertions.
+	SystemMail   *CapturingSender // platform mail (welcome, …)
+	CustomerMail *CapturingSender // workspace/campaign mail (broadcasts)
 }
 
 func Setup(t *testing.T) *TestEnv {
@@ -109,20 +114,48 @@ func Setup(t *testing.T) *TestEnv {
 	// Bus over the same txdb connection: WithinTx opens a nested (savepoint)
 	// transaction, so producer writes + outbox inserts roll back with the test.
 	bus := events.New(txDB)
-	handler, err := server.New(baseCfg, client, nil, bus, noopEnqueuer{})
+
+	// Inline jobs adapter (Rails :inline equivalent): enqueued jobs run
+	// synchronously against capturing senders, so tests assert the real effect.
+	systemMail := &CapturingSender{}
+	customerMail := &CapturingSender{}
+	inline := jobs.NewInline(client, fixedResolver{sender: customerMail}, nil, systemMail)
+	handler, err := server.New(baseCfg, client, bus, inline, inline)
 	require.NoError(t, err, "build server")
 
-	return &TestEnv{DB: client, SQLDB: txDB, Bus: bus, Server: handler}
+	return &TestEnv{
+		DB: client, SQLDB: txDB, Bus: bus, Server: handler,
+		SystemMail: systemMail, CustomerMail: customerMail,
+	}
 }
 
-// noopEnqueuer satisfies the site handlers' BroadcastEnqueuer without a river
-// runtime: tests assert on the resulting state/status, not on async dispatch (the
-// engines are tested directly via jobs.SendBroadcast / jobs.EvaluateTrigger +
-// jobs.RunStep). Automation enrollment now flows through the events bus, whose
-// router isn't run under txdb — covered by the events package tests instead.
-type noopEnqueuer struct{}
+// CapturingSender is a messaging.EmailSender that records sends for assertions.
+type CapturingSender struct {
+	mu   sync.Mutex
+	sent []messaging.EmailMessage
+}
 
-func (noopEnqueuer) EnqueueBroadcast(context.Context, int64, *time.Time) error { return nil }
+func (s *CapturingSender) Send(_ context.Context, msg messaging.EmailMessage) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.sent = append(s.sent, msg)
+	return nil
+}
+
+// Messages returns a copy of the captured sends.
+func (s *CapturingSender) Messages() []messaging.EmailMessage {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return append([]messaging.EmailMessage(nil), s.sent...)
+}
+
+// fixedResolver returns the same capturing sender for any workspace, so inline
+// broadcast sends work without a configured integration.
+type fixedResolver struct{ sender messaging.EmailSender }
+
+func (r fixedResolver) EmailSender(context.Context, int64) (messaging.EmailSender, error) {
+	return r.sender, nil
+}
 
 // Transport returns an ogen http.Client that dispatches in-memory to the
 // server (no socket). Pass it via the generated client's WithClient option so

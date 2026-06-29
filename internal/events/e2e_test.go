@@ -12,7 +12,6 @@ import (
 	"github.com/mokevnin/1mail/config"
 	"github.com/mokevnin/1mail/ent"
 	"github.com/mokevnin/1mail/internal/events"
-	"github.com/mokevnin/1mail/internal/pubsub"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -37,12 +36,14 @@ func TestDomainEventsRouterDelivery(t *testing.T) {
 		_, _ = db.Exec(`DELETE FROM watermill_domain_events`)
 	})
 
-	ps, err := pubsub.New(db)
+	router, err := events.NewRouter()
 	require.NoError(t, err)
-	t.Cleanup(ps.Close)
+	t.Cleanup(func() { _ = router.Close() })
+	sub, err := events.NewSubscriber(db, "capture")
+	require.NoError(t, err)
 
 	got := make(chan events.Envelope, 1)
-	ps.Router.AddConsumerHandler("capture", events.TopicDomainEvents, ps.Subscriber,
+	router.AddConsumerHandler("capture", events.TopicDomainEvents, sub,
 		func(msg *message.Message) error {
 			var env events.Envelope
 			if err := json.Unmarshal(msg.Payload, &env); err != nil {
@@ -57,8 +58,8 @@ func TestDomainEventsRouterDelivery(t *testing.T) {
 
 	runCtx, cancel := context.WithCancel(ctx)
 	t.Cleanup(cancel)
-	go func() { _ = ps.Router.Run(runCtx) }()
-	<-ps.Router.Running()
+	go func() { _ = router.Run(runCtx) }()
+	<-router.Running()
 
 	bus := events.New(db)
 	require.NoError(t, bus.WithinTx(ctx, func(_ *ent.Client, pub events.Publisher) error {

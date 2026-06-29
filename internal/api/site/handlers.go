@@ -12,7 +12,6 @@ import (
 	"github.com/mokevnin/1mail/internal/api/site/resources"
 	"github.com/mokevnin/1mail/internal/events"
 	"github.com/mokevnin/1mail/internal/messaging"
-	"github.com/mokevnin/1mail/internal/pubsub"
 	"github.com/mokevnin/1mail/internal/secrets"
 	"github.com/mokevnin/1mail/internal/service"
 )
@@ -21,23 +20,29 @@ import (
 var mapper = &resources.ConverterImpl{}
 
 // BroadcastEnqueuer schedules a broadcast for asynchronous dispatch. It is a
-// narrow seam over the river-backed jobs client so handlers stay testable (tests
-// pass a no-op). A nil scheduledAt means send as soon as possible.
+// narrow seam over the jobs enqueue API (river in prod, inline in tests). A nil
+// scheduledAt means send as soon as possible.
 type BroadcastEnqueuer interface {
 	EnqueueBroadcast(ctx context.Context, broadcastID int64, scheduledAt *time.Time) error
 }
 
+// WelcomeEnqueuer schedules the platform welcome email after registration. Same
+// jobs enqueue seam (river prod, inline tests).
+type WelcomeEnqueuer interface {
+	EnqueueWelcome(ctx context.Context, email, name string) error
+}
+
 type Handlers struct {
 	ent      *ent.Client
-	pubsub   *pubsub.PubSub
 	bus      *events.Bus
 	cipher   *secrets.Cipher
 	catalog  *messaging.Catalog
 	enqueuer BroadcastEnqueuer
+	welcome  WelcomeEnqueuer
 }
 
-func NewHandlers(client *ent.Client, ps *pubsub.PubSub, bus *events.Bus, cipher *secrets.Cipher, catalog *messaging.Catalog, enqueuer BroadcastEnqueuer) *Handlers {
-	return &Handlers{ent: client, pubsub: ps, bus: bus, cipher: cipher, catalog: catalog, enqueuer: enqueuer}
+func NewHandlers(client *ent.Client, bus *events.Bus, cipher *secrets.Cipher, catalog *messaging.Catalog, enqueuer BroadcastEnqueuer, welcome WelcomeEnqueuer) *Handlers {
+	return &Handlers{ent: client, bus: bus, cipher: cipher, catalog: catalog, enqueuer: enqueuer, welcome: welcome}
 }
 
 var _ siteapi.Handler = (*Handlers)(nil)

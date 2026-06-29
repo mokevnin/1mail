@@ -3,20 +3,20 @@ package app
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"net/http"
 	"sync"
 	"time"
 
+	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/mokevnin/1mail/config"
 	"github.com/mokevnin/1mail/ent"
 	"github.com/mokevnin/1mail/internal/db"
-	"github.com/mokevnin/1mail/internal/email"
 	"github.com/mokevnin/1mail/internal/events"
 	"github.com/mokevnin/1mail/internal/jobs"
 	"github.com/mokevnin/1mail/internal/messaging"
 	"github.com/mokevnin/1mail/internal/messaging/registry"
-	"github.com/mokevnin/1mail/internal/pubsub"
 	"github.com/mokevnin/1mail/internal/secrets"
 	"github.com/mokevnin/1mail/internal/server"
 	"github.com/mokevnin/1mail/internal/tracking"
@@ -30,7 +30,7 @@ type App struct {
 	Server *http.Server
 
 	injector       *do.RootScope
-	pubSub         *pubSub
+	events         *eventsRuntime
 	jobs           *jobsClient
 	shutdownOnce   sync.Once
 	shutdownReport *do.ShutdownReport
@@ -52,18 +52,27 @@ func (c *entClient) Shutdown() error {
 	return c.Close()
 }
 
-type pubSub struct {
-	*pubsub.PubSub
+// eventsRuntime is the consume side of the domain-event system: the watermill
+// router hosting the persist/automations/webhooks subscribers. (The produce side
+// is eventsBus.) Run the router via RunEvents; Shutdown closes it.
+type eventsRuntime struct {
+	router *message.Router
 }
 
-func (ps *pubSub) Shutdown() {
-	ps.Close()
+func (e *eventsRuntime) Shutdown() error {
+	return e.router.Close()
 }
 
 // eventsBus is the producer side of the domain-event system (transactional
 // outbox over the database/sql pool). No Shutdown: it borrows the sqlDB pool.
 type eventsBus struct {
 	*events.Bus
+}
+
+// systemSender is 1mail's own (platform) transactional email sender, built from
+// config via the messaging catalog. Distinct from a workspace's customer sender.
+type systemSender struct {
+	messaging.EmailSender
 }
 
 // pgxPool is the pgx connection pool river runs on (separate from the
@@ -103,7 +112,7 @@ func New(env string) (*App, error) {
 		return nil, err
 	}
 
-	ps, err := do.Invoke[*pubSub](injector)
+	evRuntime, err := do.Invoke[*eventsRuntime](injector)
 	if err != nil {
 		_ = injector.Shutdown()
 		return nil, err
@@ -123,13 +132,15 @@ func New(env string) (*App, error) {
 			ReadHeaderTimeout: 5 * time.Second,
 		},
 		injector: injector,
-		pubSub:   ps,
+		events:   evRuntime,
 		jobs:     jobsCli,
 	}, nil
 }
 
-func (a *App) RunPubSub(ctx context.Context) error {
-	return a.pubSub.Router.Run(ctx)
+// RunEvents runs the domain-event router (persist/automations/webhooks
+// subscribers). Blocks until ctx is cancelled; stop happens via Shutdown.
+func (a *App) RunEvents(ctx context.Context) error {
+	return a.events.router.Run(ctx)
 }
 
 // RunJobs starts the river worker pool. It returns once started; workers run
@@ -173,25 +184,23 @@ func register(injector do.Injector, env string) {
 		return &entClient{Client: db.NewEntClient(database.DB)}, nil
 	})
 
-	do.Provide(injector, func(i do.Injector) (*email.Sender, error) {
+	do.Provide(injector, func(i do.Injector) (*systemSender, error) {
 		cfg, err := do.Invoke[*config.Config](i)
 		if err != nil {
 			return nil, err
 		}
-
-		return email.New(cfg.SMTPHost, cfg.SMTPUser, cfg.SMTPPass, cfg.SMTPFrom, cfg.SMTPPort), nil
+		sender, err := buildSystemSender(cfg, registry.Default())
+		if err != nil {
+			return nil, err
+		}
+		return &systemSender{EmailSender: sender}, nil
 	})
 
-	do.Provide(injector, func(i do.Injector) (*pubSub, error) {
+	do.Provide(injector, func(i do.Injector) (*eventsRuntime, error) {
 		database, err := do.Invoke[*sqlDB](i)
 		if err != nil {
 			return nil, err
 		}
-		emailSender, err := do.Invoke[*email.Sender](i)
-		if err != nil {
-			return nil, err
-		}
-
 		client, err := do.Invoke[*entClient](i)
 		if err != nil {
 			return nil, err
@@ -201,23 +210,21 @@ func register(injector do.Injector, env string) {
 			return nil, err
 		}
 
-		ps, err := pubsub.New(database.DB)
-		if err != nil {
-			return nil, err
-		}
-		pubsub.RegisterHandlers(ps, emailSender)
-
-		// Domain events: create the outbox topic schema up front (the tx
-		// publisher can't self-initialize) and register the consumers on the
-		// shared router. The automations subscriber enrolls via the river client.
+		// Domain events: create the outbox topic schema up front (the tx publisher
+		// can't self-initialize), build the router, and register the consumers. The
+		// automations subscriber enrolls and the webhooks subscriber dispatches via
+		// the river client.
 		if err := events.InitSchema(context.Background(), database.DB); err != nil {
 			return nil, err
 		}
-		if err := events.RegisterSubscribers(ps.Router, database.DB, client.Client, jc.Client, jc.Client); err != nil {
+		router, err := events.NewRouter()
+		if err != nil {
 			return nil, err
 		}
-
-		return &pubSub{PubSub: ps}, nil
+		if err := events.RegisterSubscribers(router, database.DB, client.Client, jc.Client, jc.Client); err != nil {
+			return nil, err
+		}
+		return &eventsRuntime{router: router}, nil
 	})
 
 	do.Provide(injector, func(i do.Injector) (*eventsBus, error) {
@@ -257,10 +264,14 @@ func register(injector do.Injector, env string) {
 		if err != nil {
 			return nil, err
 		}
+		sys, err := do.Invoke[*systemSender](i)
+		if err != nil {
+			return nil, err
+		}
 		resolver := messaging.NewResolver(client.Client, cipher, registry.Default())
 		tracker := tracking.New(cfg.JWTSecret, cfg.AppURL)
 
-		jc, err := jobs.NewClient(pool.Pool, client.Client, resolver, tracker, cipher)
+		jc, err := jobs.NewClient(pool.Pool, client.Client, resolver, tracker, cipher, sys.EmailSender)
 		if err != nil {
 			return nil, err
 		}
@@ -276,10 +287,6 @@ func register(injector do.Injector, env string) {
 		if err != nil {
 			return nil, err
 		}
-		ps, err := do.Invoke[*pubSub](i)
-		if err != nil {
-			return nil, err
-		}
 		bus, err := do.Invoke[*eventsBus](i)
 		if err != nil {
 			return nil, err
@@ -289,6 +296,42 @@ func register(injector do.Injector, env string) {
 			return nil, err
 		}
 
-		return server.New(cfg, client.Client, ps.PubSub, bus.Bus, jc.Client)
+		// The river jobs client is both the broadcast enqueuer and the welcome
+		// enqueuer (it implements both seams).
+		return server.New(cfg, client.Client, bus.Bus, jc.Client, jc.Client)
 	})
+}
+
+// buildSystemSender constructs 1mail's platform email sender from config via the
+// messaging catalog: smtp (dev → mailpit) or ses (prod). Same abstraction as
+// customer sends, just 1mail's own provider.
+func buildSystemSender(cfg *config.Config, catalog *messaging.Catalog) (messaging.EmailSender, error) {
+	from := messaging.FirstNonEmpty(cfg.SystemEmailFrom, cfg.SMTPFrom)
+	switch cfg.SystemEmailProvider {
+	case "ses":
+		blob, err := json.Marshal(map[string]any{
+			"region":          cfg.SESRegion,
+			"accessKeyId":     cfg.SESAccessKeyID,
+			"secretAccessKey": cfg.SESSecretAccessKey,
+			"from":            from,
+			"fromName":        "1mail",
+		})
+		if err != nil {
+			return nil, err
+		}
+		return catalog.BuildEmail(messaging.ProviderSES, blob)
+	default: // smtp (dev → mailpit)
+		blob, err := json.Marshal(map[string]any{
+			"host":     cfg.SMTPHost,
+			"port":     cfg.SMTPPort,
+			"username": cfg.SMTPUser,
+			"password": cfg.SMTPPass,
+			"from":     from,
+			"fromName": "1mail",
+		})
+		if err != nil {
+			return nil, err
+		}
+		return catalog.BuildEmail(messaging.ProviderSMTP, blob)
+	}
 }
