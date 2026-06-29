@@ -32,6 +32,8 @@ type Tx struct {
 	Integration *IntegrationClient
 	// Segment is the client for interacting with the Segment builders.
 	Segment *SegmentClient
+	// Suppression is the client for interacting with the Suppression builders.
+	Suppression *SuppressionClient
 	// TrackingProfile is the client for interacting with the TrackingProfile builders.
 	TrackingProfile *TrackingProfileClient
 	// TrackingVisitor is the client for interacting with the TrackingVisitor builders.
@@ -183,6 +185,7 @@ func (tx *Tx) init() {
 	tx.Event = NewEventClient(tx.config)
 	tx.Integration = NewIntegrationClient(tx.config)
 	tx.Segment = NewSegmentClient(tx.config)
+	tx.Suppression = NewSuppressionClient(tx.config)
 	tx.TrackingProfile = NewTrackingProfileClient(tx.config)
 	tx.TrackingVisitor = NewTrackingVisitorClient(tx.config)
 	tx.User = NewUserClient(tx.config)

@@ -145,6 +145,18 @@ type SiteSegmentsUpdateRes interface {
 	siteSegmentsUpdateRes()
 }
 
+type SiteSuppressionsCreateRes interface {
+	siteSuppressionsCreateRes()
+}
+
+type SiteSuppressionsDeleteRes interface {
+	siteSuppressionsDeleteRes()
+}
+
+type SiteSuppressionsListRes interface {
+	siteSuppressionsListRes()
+}
+
 type SiteTemplatesCreateRes interface {
 	siteTemplatesCreateRes()
 }

@@ -156,6 +156,13 @@ export const zSiteCreateEmailTemplateInput = z.object({
 });
 
 /**
+ * Site request body for manually suppressing an address
+ */
+export const zSiteCreateSuppressionInput = z.object({
+    email: zEmailAddress
+});
+
+/**
  * Site request body for creating a webhook endpoint
  */
 export const zSiteCreateWebhookEndpointInput = z.object({
@@ -308,6 +315,16 @@ export const zSiteCreateIntegrationInput = z.object({
     isDefault: z.boolean().optional(),
     config: zSiteIntegrationConfigInput
 });
+
+/**
+ * Why an address is on the suppression (do-not-send) list
+ */
+export const zSiteSuppressionReason = z.enum([
+    'unsubscribed',
+    'bounce',
+    'complaint',
+    'manual'
+]);
 
 /**
  * Site request body for a test send
@@ -559,6 +576,17 @@ export const zSiteSegmentResource = z.object({
     name: z.string(),
     type: zSiteSegmentType,
     definition: z.string().nullish(),
+    createdAt: zTimestamp,
+    updatedAt: zTimestamp
+});
+
+/**
+ * A suppressed address: the send path skips it regardless of contact status
+ */
+export const zSiteSuppressionResource = z.object({
+    id: zEntityId,
+    email: z.string(),
+    reason: zSiteSuppressionReason,
     createdAt: zTimestamp,
     updatedAt: zTimestamp
 });
@@ -1053,6 +1081,47 @@ export const zSiteSegmentsUpdatePath = z.object({
  * The request has succeeded.
  */
 export const zSiteSegmentsUpdateResponse = zSiteSegmentResource;
+
+export const zSiteSuppressionsListPath = z.object({
+    workspaceSlug: z.string()
+});
+
+export const zSiteSuppressionsListQuery = z.object({
+    page: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).optional().default(1),
+    pageSize: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).optional().default(25)
+});
+
+/**
+ * Paginated response
+ */
+export const zSiteSuppressionsListResponse = z.object({
+    items: z.array(zSiteSuppressionResource),
+    page: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
+    pageSize: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
+    totalItems: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
+    totalPages: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' })
+});
+
+export const zSiteSuppressionsCreateBody = zSiteCreateSuppressionInput;
+
+export const zSiteSuppressionsCreatePath = z.object({
+    workspaceSlug: z.string()
+});
+
+/**
+ * The request has succeeded and a new resource has been created as a result.
+ */
+export const zSiteSuppressionsCreateResponse = zSiteSuppressionResource;
+
+export const zSiteSuppressionsDeletePath = z.object({
+    workspaceSlug: z.string(),
+    id: zEntityId
+});
+
+/**
+ * There is no content to send for this request, but the headers may be useful.
+ */
+export const zSiteSuppressionsDeleteResponse = z.void();
 
 export const zSiteTemplatesListPath = z.object({
     workspaceSlug: z.string()

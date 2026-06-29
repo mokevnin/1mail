@@ -323,6 +323,26 @@
     "loadErrorTitle": "Failed to load workspace",
     "nameLabel": "Workspace name",
     "saved": "Workspace updated",
+    "suppressions": {
+      "create": "Suppress",
+      "createError": "Failed to suppress address",
+      "delete": "Remove",
+      "deleteConfirmTitle": "Remove this address from the suppression list?",
+      "deleteError": "Failed to remove suppression",
+      "emailColumn": "Email",
+      "emailHint": "Sends to this address will be skipped",
+      "emailLabel": "Email address",
+      "empty": "No suppressed addresses",
+      "loadError": "Failed to load suppression list",
+      "reasonColumn": "Reason",
+      "reasons": {
+        "bounce": "Bounced",
+        "complaint": "Complaint",
+        "manual": "Manual",
+        "unsubscribed": "Unsubscribed"
+      },
+      "title": "Suppression list"
+    },
     "testEventDescription": "Send a test event from your terminal, then watch it appear in the activity feed.",
     "testEventTitle": "Send a test event",
     "title": "Settings",

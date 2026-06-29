@@ -554,6 +554,13 @@ export type SiteCreateSegmentInput = {
 };
 
 /**
+ * Site request body for manually suppressing an address
+ */
+export type SiteCreateSuppressionInput = {
+    email: EmailAddress;
+};
+
+/**
  * Create a workspace API token
  */
 export type SiteCreateTokenInput = {
@@ -886,6 +893,47 @@ export type SiteSmtpConfigInput = {
     password?: string | null;
     from: EmailAddress;
     fromName?: string | null;
+};
+
+/**
+ * Why an address is on the suppression (do-not-send) list
+ */
+export const SiteSuppressionReason = {
+    UNSUBSCRIBED: 'unsubscribed',
+    BOUNCE: 'bounce',
+    COMPLAINT: 'complaint',
+    MANUAL: 'manual'
+} as const;
+
+/**
+ * Why an address is on the suppression (do-not-send) list
+ */
+export type SiteSuppressionReason = typeof SiteSuppressionReason[keyof typeof SiteSuppressionReason];
+
+/**
+ * A suppressed address: the send path skips it regardless of contact status
+ */
+export type SiteSuppressionResource = {
+    /**
+     * Unique identifier
+     */
+    id: EntityId;
+    /**
+     * Normalized (lower-cased) email address
+     */
+    email: string;
+    /**
+     * Why the address is suppressed
+     */
+    reason: SiteSuppressionReason;
+    /**
+     * Creation timestamp
+     */
+    createdAt: Timestamp;
+    /**
+     * Last update timestamp
+     */
+    updatedAt: Timestamp;
 };
 
 /**
@@ -2543,6 +2591,134 @@ export type SiteSegmentsUpdateResponses = {
 };
 
 export type SiteSegmentsUpdateResponse = SiteSegmentsUpdateResponses[keyof SiteSegmentsUpdateResponses];
+
+export type SiteSuppressionsListData = {
+    body?: never;
+    path: {
+        workspaceSlug: string;
+    };
+    query?: {
+        /**
+         * Page number (1-based)
+         */
+        page?: number;
+        /**
+         * Page size
+         */
+        pageSize?: number;
+    };
+    url: '/w/{workspaceSlug}/suppressions';
+};
+
+export type SiteSuppressionsListErrors = {
+    /**
+     * RFC 7807 bad request response
+     */
+    400: ProblemDetails;
+    /**
+     * RFC 7807 not found response
+     */
+    404: ProblemDetails;
+    /**
+     * RFC 7807 validation response
+     */
+    422: ProblemDetails;
+};
+
+export type SiteSuppressionsListError = SiteSuppressionsListErrors[keyof SiteSuppressionsListErrors];
+
+export type SiteSuppressionsListResponses = {
+    /**
+     * Paginated response
+     */
+    200: {
+        /**
+         * List of items
+         */
+        items: Array<SiteSuppressionResource>;
+        /**
+         * Page number (1-based)
+         */
+        page: number;
+        /**
+         * Page size
+         */
+        pageSize: number;
+        /**
+         * Total number of elements
+         */
+        totalItems: number;
+        /**
+         * Total number of pages
+         */
+        totalPages: number;
+    };
+};
+
+export type SiteSuppressionsListResponse = SiteSuppressionsListResponses[keyof SiteSuppressionsListResponses];
+
+export type SiteSuppressionsCreateData = {
+    body: SiteCreateSuppressionInput;
+    path: {
+        workspaceSlug: string;
+    };
+    query?: never;
+    url: '/w/{workspaceSlug}/suppressions';
+};
+
+export type SiteSuppressionsCreateErrors = {
+    /**
+     * RFC 7807 not found response
+     */
+    404: ProblemDetails;
+    /**
+     * RFC 7807 validation response
+     */
+    422: ProblemDetails;
+};
+
+export type SiteSuppressionsCreateError = SiteSuppressionsCreateErrors[keyof SiteSuppressionsCreateErrors];
+
+export type SiteSuppressionsCreateResponses = {
+    /**
+     * The request has succeeded and a new resource has been created as a result.
+     */
+    201: SiteSuppressionResource;
+};
+
+export type SiteSuppressionsCreateResponse = SiteSuppressionsCreateResponses[keyof SiteSuppressionsCreateResponses];
+
+export type SiteSuppressionsDeleteData = {
+    body?: never;
+    path: {
+        workspaceSlug: string;
+        id: EntityId;
+    };
+    query?: never;
+    url: '/w/{workspaceSlug}/suppressions/{id}';
+};
+
+export type SiteSuppressionsDeleteErrors = {
+    /**
+     * RFC 7807 bad request response
+     */
+    400: ProblemDetails;
+    /**
+     * RFC 7807 not found response
+     */
+    404: ProblemDetails;
+};
+
+export type SiteSuppressionsDeleteError = SiteSuppressionsDeleteErrors[keyof SiteSuppressionsDeleteErrors];
+
+export type SiteSuppressionsDeleteResponses = {
+    /**
+     * There is no content to send for this request, but the headers may be useful.
+     */
+    204: void;
+};
+
+export type SiteSuppressionsDeleteResponse = SiteSuppressionsDeleteResponses[keyof SiteSuppressionsDeleteResponses];
 
 export type SiteTemplatesListData = {
     body?: never;

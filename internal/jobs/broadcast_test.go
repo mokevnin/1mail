@@ -8,6 +8,7 @@ import (
 	"github.com/mokevnin/1mail/ent/broadcastrecipient"
 	"github.com/mokevnin/1mail/ent/contact"
 	"github.com/mokevnin/1mail/ent/segment"
+	"github.com/mokevnin/1mail/ent/suppression"
 	"github.com/mokevnin/1mail/internal/jobs"
 	"github.com/mokevnin/1mail/internal/messaging"
 	"github.com/mokevnin/1mail/internal/testhelper"
@@ -84,6 +85,56 @@ func TestSendBroadcastDeliversToActiveContacts(t *testing.T) {
 	for _, r := range recs {
 		assert.Equal(t, broadcastrecipient.StatusSent, r.Status)
 	}
+}
+
+// Suppressed addresses are skipped: no message, no recipient row, and the
+// suppressed contact is excluded from the recipients_total.
+func TestSendBroadcastSkipsSuppressed(t *testing.T) {
+	env := testhelper.Setup(t)
+	ctx := context.Background()
+
+	activeCount, err := env.DB.Contact.Query().
+		Where(contact.WorkspaceID(acmeWorkspaceID), contact.StatusEQ(contact.StatusActive)).
+		Count(ctx)
+	require.NoError(t, err)
+	require.GreaterOrEqual(t, activeCount, 2, "fixtures must have ≥2 active contacts")
+
+	// Suppress the first active contact (alice, id 1 in fixtures).
+	alice := env.DB.Contact.GetX(ctx, 1)
+	_, err = env.DB.Suppression.Create().
+		SetWorkspaceID(acmeWorkspaceID).
+		SetEmail(alice.Email).
+		SetReason(suppression.ReasonManual).
+		Save(ctx)
+	require.NoError(t, err)
+
+	b, err := env.DB.Broadcast.Create().
+		SetWorkspaceID(acmeWorkspaceID).
+		SetName("Suppress test").
+		SetSubject("Hi").
+		SetBody("<mjml><mj-body><mj-section><mj-column><mj-text>Hi</mj-text></mj-column></mj-section></mj-body></mjml>").
+		SetStatus(broadcast.StatusSending).
+		Save(ctx)
+	require.NoError(t, err)
+
+	fs := &fakeSender{}
+	require.NoError(t, jobs.SendBroadcast(ctx, env.DB, fakeResolver{sender: fs}, tracking.New("s", "http://local"), b.ID))
+
+	// alice gets no message.
+	for _, m := range fs.sent {
+		assert.NotEqual(t, alice.Email, m.To, "suppressed address must not be sent to")
+	}
+	assert.Len(t, fs.sent, activeCount-1)
+
+	// Counters exclude the suppressed contact, and she has no recipient row.
+	got := env.DB.Broadcast.GetX(ctx, b.ID)
+	assert.Equal(t, activeCount-1, got.RecipientsTotal)
+	assert.Equal(t, activeCount-1, got.SentCount)
+	n, err := env.DB.BroadcastRecipient.Query().
+		Where(broadcastrecipient.BroadcastID(b.ID), broadcastrecipient.ContactID(alice.ID)).
+		Count(ctx)
+	require.NoError(t, err)
+	assert.Zero(t, n, "no recipient row for a suppressed contact")
 }
 
 func TestSendBroadcastToRuleSegment(t *testing.T) {

@@ -36,6 +36,9 @@ type Integration func(*sql.Selector)
 // Segment is the predicate function for segment builders.
 type Segment func(*sql.Selector)
 
+// Suppression is the predicate function for suppression builders.
+type Suppression func(*sql.Selector)
+
 // TrackingProfile is the predicate function for trackingprofile builders.
 type TrackingProfile func(*sql.Selector)
 

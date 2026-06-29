@@ -23,6 +23,7 @@ import (
 	"github.com/mokevnin/1mail/ent/integration"
 	"github.com/mokevnin/1mail/ent/predicate"
 	"github.com/mokevnin/1mail/ent/segment"
+	"github.com/mokevnin/1mail/ent/suppression"
 	"github.com/mokevnin/1mail/ent/trackingprofile"
 	"github.com/mokevnin/1mail/ent/trackingvisitor"
 	"github.com/mokevnin/1mail/ent/user"
@@ -50,6 +51,7 @@ type WorkspaceQuery struct {
 	withAutomations         *AutomationQuery
 	withAutomationRuns      *AutomationRunQuery
 	withWebhookEndpoints    *WebhookEndpointQuery
+	withSuppressions        *SuppressionQuery
 	withUser                *UserQuery
 	modifiers               []func(*sql.Selector)
 	// intermediate query (i.e. traversal path).
@@ -374,6 +376,28 @@ func (_q *WorkspaceQuery) QueryWebhookEndpoints() *WebhookEndpointQuery {
 	return query
 }
 
+// QuerySuppressions chains the current query on the "suppressions" edge.
+func (_q *WorkspaceQuery) QuerySuppressions() *SuppressionQuery {
+	query := (&SuppressionClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workspace.Table, workspace.FieldID, selector),
+			sqlgraph.To(suppression.Table, suppression.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, workspace.SuppressionsTable, workspace.SuppressionsColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
 // QueryUser chains the current query on the "user" edge.
 func (_q *WorkspaceQuery) QueryUser() *UserQuery {
 	query := (&UserClient{config: _q.config}).Query()
@@ -601,6 +625,7 @@ func (_q *WorkspaceQuery) Clone() *WorkspaceQuery {
 		withAutomations:         _q.withAutomations.Clone(),
 		withAutomationRuns:      _q.withAutomationRuns.Clone(),
 		withWebhookEndpoints:    _q.withWebhookEndpoints.Clone(),
+		withSuppressions:        _q.withSuppressions.Clone(),
 		withUser:                _q.withUser.Clone(),
 		// clone intermediate query.
 		sql:       _q.sql.Clone(),
@@ -752,6 +777,17 @@ func (_q *WorkspaceQuery) WithWebhookEndpoints(opts ...func(*WebhookEndpointQuer
 	return _q
 }
 
+// WithSuppressions tells the query-builder to eager-load the nodes that are connected to
+// the "suppressions" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *WorkspaceQuery) WithSuppressions(opts ...func(*SuppressionQuery)) *WorkspaceQuery {
+	query := (&SuppressionClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withSuppressions = query
+	return _q
+}
+
 // WithUser tells the query-builder to eager-load the nodes that are connected to
 // the "user" edge. The optional arguments are used to configure the query builder of the edge.
 func (_q *WorkspaceQuery) WithUser(opts ...func(*UserQuery)) *WorkspaceQuery {
@@ -841,7 +877,7 @@ func (_q *WorkspaceQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Wo
 	var (
 		nodes       = []*Workspace{}
 		_spec       = _q.querySpec()
-		loadedTypes = [14]bool{
+		loadedTypes = [15]bool{
 			_q.withContacts != nil,
 			_q.withSegments != nil,
 			_q.withEvents != nil,
@@ -855,6 +891,7 @@ func (_q *WorkspaceQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Wo
 			_q.withAutomations != nil,
 			_q.withAutomationRuns != nil,
 			_q.withWebhookEndpoints != nil,
+			_q.withSuppressions != nil,
 			_q.withUser != nil,
 		}
 	)
@@ -969,6 +1006,13 @@ func (_q *WorkspaceQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Wo
 		if err := _q.loadWebhookEndpoints(ctx, query, nodes,
 			func(n *Workspace) { n.Edges.WebhookEndpoints = []*WebhookEndpoint{} },
 			func(n *Workspace, e *WebhookEndpoint) { n.Edges.WebhookEndpoints = append(n.Edges.WebhookEndpoints, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := _q.withSuppressions; query != nil {
+		if err := _q.loadSuppressions(ctx, query, nodes,
+			func(n *Workspace) { n.Edges.Suppressions = []*Suppression{} },
+			func(n *Workspace, e *Suppression) { n.Edges.Suppressions = append(n.Edges.Suppressions, e) }); err != nil {
 			return nil, err
 		}
 	}
@@ -1356,6 +1400,36 @@ func (_q *WorkspaceQuery) loadWebhookEndpoints(ctx context.Context, query *Webho
 	}
 	query.Where(predicate.WebhookEndpoint(func(s *sql.Selector) {
 		s.Where(sql.InValues(s.C(workspace.WebhookEndpointsColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.WorkspaceID
+		node, ok := nodeids[fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "workspace_id" returned %v for node %v`, fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (_q *WorkspaceQuery) loadSuppressions(ctx context.Context, query *SuppressionQuery, nodes []*Workspace, init func(*Workspace), assign func(*Workspace, *Suppression)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[int64]*Workspace)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(suppression.FieldWorkspaceID)
+	}
+	query.Where(predicate.Suppression(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(workspace.SuppressionsColumn), fks...))
 	}))
 	neighbors, err := query.All(ctx)
 	if err != nil {

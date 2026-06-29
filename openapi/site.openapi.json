@@ -43,6 +43,9 @@
     },
     {
       "name": "Site Analytics"
+    },
+    {
+      "name": "Site Suppressions"
     }
   ],
   "paths": {
@@ -2466,6 +2469,209 @@
         "tags": ["Site Segments"]
       }
     },
+    "/w/{workspaceSlug}/suppressions": {
+      "post": {
+        "operationId": "SiteSuppressions_create",
+        "description": "Manually suppress an address (reason = manual; idempotent per address)",
+        "parameters": [
+          {
+            "name": "workspaceSlug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "The request has succeeded and a new resource has been created as a result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SiteSuppressionResource"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "RFC 7807 not found response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "RFC 7807 validation response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Site Suppressions"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SiteCreateSuppressionInput"
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "operationId": "SiteSuppressions_list",
+        "description": "List suppressed addresses",
+        "parameters": [
+          {
+            "name": "workspaceSlug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/PageQuery.page"
+          },
+          {
+            "$ref": "#/components/parameters/PageQuery.pageSize"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request has succeeded.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["items", "page", "pageSize", "totalItems", "totalPages"],
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/SiteSuppressionResource"
+                      },
+                      "description": "List of items"
+                    },
+                    "page": {
+                      "type": "integer",
+                      "format": "int32",
+                      "description": "Page number (1-based)"
+                    },
+                    "pageSize": {
+                      "type": "integer",
+                      "format": "int32",
+                      "description": "Page size"
+                    },
+                    "totalItems": {
+                      "type": "integer",
+                      "format": "int32",
+                      "description": "Total number of elements"
+                    },
+                    "totalPages": {
+                      "type": "integer",
+                      "format": "int32",
+                      "description": "Total number of pages"
+                    }
+                  },
+                  "description": "Paginated response"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "RFC 7807 bad request response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "RFC 7807 not found response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "RFC 7807 validation response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Site Suppressions"]
+      }
+    },
+    "/w/{workspaceSlug}/suppressions/{id}": {
+      "delete": {
+        "operationId": "SiteSuppressions_delete",
+        "description": "Remove an address from the suppression list",
+        "parameters": [
+          {
+            "name": "workspaceSlug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/EntityId"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "There is no content to send for this request, but the headers may be useful."
+          },
+          "400": {
+            "description": "RFC 7807 bad request response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "RFC 7807 not found response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Site Suppressions"]
+      }
+    },
     "/w/{workspaceSlug}/templates": {
       "post": {
         "operationId": "SiteTemplates_create",
@@ -4192,6 +4398,16 @@
         },
         "description": "Site request body for creating a segment"
       },
+      "SiteCreateSuppressionInput": {
+        "type": "object",
+        "required": ["email"],
+        "properties": {
+          "email": {
+            "$ref": "#/components/schemas/EmailAddress"
+          }
+        },
+        "description": "Site request body for manually suppressing an address"
+      },
       "SiteCreateTokenInput": {
         "type": "object",
         "required": ["name", "scopes"],
@@ -4772,6 +4988,54 @@
           }
         },
         "description": "SMTP credentials"
+      },
+      "SiteSuppressionReason": {
+        "type": "string",
+        "enum": ["unsubscribed", "bounce", "complaint", "manual"],
+        "description": "Why an address is on the suppression (do-not-send) list"
+      },
+      "SiteSuppressionResource": {
+        "type": "object",
+        "required": ["id", "email", "reason", "createdAt", "updatedAt"],
+        "properties": {
+          "id": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EntityId"
+              }
+            ],
+            "description": "Unique identifier"
+          },
+          "email": {
+            "type": "string",
+            "description": "Normalized (lower-cased) email address"
+          },
+          "reason": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SiteSuppressionReason"
+              }
+            ],
+            "description": "Why the address is suppressed"
+          },
+          "createdAt": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Timestamp"
+              }
+            ],
+            "description": "Creation timestamp"
+          },
+          "updatedAt": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Timestamp"
+              }
+            ],
+            "description": "Last update timestamp"
+          }
+        },
+        "description": "A suppressed address: the send path skips it regardless of contact status"
       },
       "SiteTestSendBroadcastInput": {
         "type": "object",

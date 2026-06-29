@@ -220,6 +220,24 @@ type Handler interface {
 	//
 	// PUT /w/{workspaceSlug}/segments/{id}
 	SiteSegmentsUpdate(ctx context.Context, req *SiteUpdateSegmentInput, params SiteSegmentsUpdateParams) (SiteSegmentsUpdateRes, error)
+	// SiteSuppressionsCreate implements SiteSuppressions_create operation.
+	//
+	// Manually suppress an address (reason = manual; idempotent per address).
+	//
+	// POST /w/{workspaceSlug}/suppressions
+	SiteSuppressionsCreate(ctx context.Context, req *SiteCreateSuppressionInput, params SiteSuppressionsCreateParams) (SiteSuppressionsCreateRes, error)
+	// SiteSuppressionsDelete implements SiteSuppressions_delete operation.
+	//
+	// Remove an address from the suppression list.
+	//
+	// DELETE /w/{workspaceSlug}/suppressions/{id}
+	SiteSuppressionsDelete(ctx context.Context, params SiteSuppressionsDeleteParams) (SiteSuppressionsDeleteRes, error)
+	// SiteSuppressionsList implements SiteSuppressions_list operation.
+	//
+	// List suppressed addresses.
+	//
+	// GET /w/{workspaceSlug}/suppressions
+	SiteSuppressionsList(ctx context.Context, params SiteSuppressionsListParams) (SiteSuppressionsListRes, error)
 	// SiteTemplatesCreate implements SiteTemplates_create operation.
 	//
 	// Create a template.

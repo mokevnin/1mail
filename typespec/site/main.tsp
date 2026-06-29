@@ -18,6 +18,7 @@ import "./resources/templates.tsp";
 import "./resources/automations.tsp";
 import "./resources/webhooks.tsp";
 import "./resources/analytics.tsp";
+import "./resources/suppressions.tsp";
 
 using TypeSpec.OpenAPI;
 using TypeSpec.Http;

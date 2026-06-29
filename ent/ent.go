@@ -22,6 +22,7 @@ import (
 	"github.com/mokevnin/1mail/ent/event"
 	"github.com/mokevnin/1mail/ent/integration"
 	"github.com/mokevnin/1mail/ent/segment"
+	"github.com/mokevnin/1mail/ent/suppression"
 	"github.com/mokevnin/1mail/ent/trackingprofile"
 	"github.com/mokevnin/1mail/ent/trackingvisitor"
 	"github.com/mokevnin/1mail/ent/user"
@@ -97,6 +98,7 @@ func checkColumn(t, c string) error {
 			event.Table:              event.ValidColumn,
 			integration.Table:        integration.ValidColumn,
 			segment.Table:            segment.ValidColumn,
+			suppression.Table:        suppression.ValidColumn,
 			trackingprofile.Table:    trackingprofile.ValidColumn,
 			trackingvisitor.Table:    trackingvisitor.ValidColumn,
 			user.Table:               user.ValidColumn,

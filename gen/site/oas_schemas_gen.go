@@ -3173,6 +3173,22 @@ func (s *SiteCreateSegmentInput) SetDefinition(val OptNilString) {
 	s.Definition = val
 }
 
+// Site request body for manually suppressing an address.
+// Ref: #/components/schemas/SiteCreateSuppressionInput
+type SiteCreateSuppressionInput struct {
+	Email EmailAddress `json:"email"`
+}
+
+// GetEmail returns the value of Email.
+func (s *SiteCreateSuppressionInput) GetEmail() EmailAddress {
+	return s.Email
+}
+
+// SetEmail sets the value of Email.
+func (s *SiteCreateSuppressionInput) SetEmail(val EmailAddress) {
+	s.Email = val
+}
+
 // Create a workspace API token.
 // Ref: #/components/schemas/SiteCreateTokenInput
 type SiteCreateTokenInput struct {
@@ -4933,6 +4949,229 @@ func (s *SiteSmtpConfigKind) UnmarshalText(data []byte) error {
 		return errors.Errorf("invalid value: %q", data)
 	}
 }
+
+// Why an address is on the suppression (do-not-send) list.
+// Ref: #/components/schemas/SiteSuppressionReason
+type SiteSuppressionReason string
+
+const (
+	SiteSuppressionReasonUnsubscribed SiteSuppressionReason = "unsubscribed"
+	SiteSuppressionReasonBounce       SiteSuppressionReason = "bounce"
+	SiteSuppressionReasonComplaint    SiteSuppressionReason = "complaint"
+	SiteSuppressionReasonManual       SiteSuppressionReason = "manual"
+)
+
+// AllValues returns all SiteSuppressionReason values.
+func (SiteSuppressionReason) AllValues() []SiteSuppressionReason {
+	return []SiteSuppressionReason{
+		SiteSuppressionReasonUnsubscribed,
+		SiteSuppressionReasonBounce,
+		SiteSuppressionReasonComplaint,
+		SiteSuppressionReasonManual,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s SiteSuppressionReason) MarshalText() ([]byte, error) {
+	switch s {
+	case SiteSuppressionReasonUnsubscribed:
+		return []byte(s), nil
+	case SiteSuppressionReasonBounce:
+		return []byte(s), nil
+	case SiteSuppressionReasonComplaint:
+		return []byte(s), nil
+	case SiteSuppressionReasonManual:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *SiteSuppressionReason) UnmarshalText(data []byte) error {
+	switch SiteSuppressionReason(data) {
+	case SiteSuppressionReasonUnsubscribed:
+		*s = SiteSuppressionReasonUnsubscribed
+		return nil
+	case SiteSuppressionReasonBounce:
+		*s = SiteSuppressionReasonBounce
+		return nil
+	case SiteSuppressionReasonComplaint:
+		*s = SiteSuppressionReasonComplaint
+		return nil
+	case SiteSuppressionReasonManual:
+		*s = SiteSuppressionReasonManual
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// A suppressed address: the send path skips it regardless of contact status.
+// Ref: #/components/schemas/SiteSuppressionResource
+type SiteSuppressionResource struct {
+	// Unique identifier.
+	ID EntityId `json:"id"`
+	// Normalized (lower-cased) email address.
+	Email string `json:"email"`
+	// Why the address is suppressed.
+	Reason SiteSuppressionReason `json:"reason"`
+	// Creation timestamp.
+	CreatedAt Timestamp `json:"createdAt"`
+	// Last update timestamp.
+	UpdatedAt Timestamp `json:"updatedAt"`
+}
+
+// GetID returns the value of ID.
+func (s *SiteSuppressionResource) GetID() EntityId {
+	return s.ID
+}
+
+// GetEmail returns the value of Email.
+func (s *SiteSuppressionResource) GetEmail() string {
+	return s.Email
+}
+
+// GetReason returns the value of Reason.
+func (s *SiteSuppressionResource) GetReason() SiteSuppressionReason {
+	return s.Reason
+}
+
+// GetCreatedAt returns the value of CreatedAt.
+func (s *SiteSuppressionResource) GetCreatedAt() Timestamp {
+	return s.CreatedAt
+}
+
+// GetUpdatedAt returns the value of UpdatedAt.
+func (s *SiteSuppressionResource) GetUpdatedAt() Timestamp {
+	return s.UpdatedAt
+}
+
+// SetID sets the value of ID.
+func (s *SiteSuppressionResource) SetID(val EntityId) {
+	s.ID = val
+}
+
+// SetEmail sets the value of Email.
+func (s *SiteSuppressionResource) SetEmail(val string) {
+	s.Email = val
+}
+
+// SetReason sets the value of Reason.
+func (s *SiteSuppressionResource) SetReason(val SiteSuppressionReason) {
+	s.Reason = val
+}
+
+// SetCreatedAt sets the value of CreatedAt.
+func (s *SiteSuppressionResource) SetCreatedAt(val Timestamp) {
+	s.CreatedAt = val
+}
+
+// SetUpdatedAt sets the value of UpdatedAt.
+func (s *SiteSuppressionResource) SetUpdatedAt(val Timestamp) {
+	s.UpdatedAt = val
+}
+
+func (*SiteSuppressionResource) siteSuppressionsCreateRes() {}
+
+type SiteSuppressionsCreateNotFound ProblemDetails
+
+func (*SiteSuppressionsCreateNotFound) siteSuppressionsCreateRes() {}
+
+type SiteSuppressionsCreateUnprocessableEntity ProblemDetails
+
+func (*SiteSuppressionsCreateUnprocessableEntity) siteSuppressionsCreateRes() {}
+
+type SiteSuppressionsDeleteBadRequest ProblemDetails
+
+func (*SiteSuppressionsDeleteBadRequest) siteSuppressionsDeleteRes() {}
+
+// SiteSuppressionsDeleteNoContent is response for SiteSuppressionsDelete operation.
+type SiteSuppressionsDeleteNoContent struct{}
+
+func (*SiteSuppressionsDeleteNoContent) siteSuppressionsDeleteRes() {}
+
+type SiteSuppressionsDeleteNotFound ProblemDetails
+
+func (*SiteSuppressionsDeleteNotFound) siteSuppressionsDeleteRes() {}
+
+type SiteSuppressionsListBadRequest ProblemDetails
+
+func (*SiteSuppressionsListBadRequest) siteSuppressionsListRes() {}
+
+type SiteSuppressionsListNotFound ProblemDetails
+
+func (*SiteSuppressionsListNotFound) siteSuppressionsListRes() {}
+
+// Paginated response.
+type SiteSuppressionsListOK struct {
+	// List of items.
+	Items []SiteSuppressionResource `json:"items"`
+	// Page number (1-based).
+	Page int32 `json:"page"`
+	// Page size.
+	PageSize int32 `json:"pageSize"`
+	// Total number of elements.
+	TotalItems int32 `json:"totalItems"`
+	// Total number of pages.
+	TotalPages int32 `json:"totalPages"`
+}
+
+// GetItems returns the value of Items.
+func (s *SiteSuppressionsListOK) GetItems() []SiteSuppressionResource {
+	return s.Items
+}
+
+// GetPage returns the value of Page.
+func (s *SiteSuppressionsListOK) GetPage() int32 {
+	return s.Page
+}
+
+// GetPageSize returns the value of PageSize.
+func (s *SiteSuppressionsListOK) GetPageSize() int32 {
+	return s.PageSize
+}
+
+// GetTotalItems returns the value of TotalItems.
+func (s *SiteSuppressionsListOK) GetTotalItems() int32 {
+	return s.TotalItems
+}
+
+// GetTotalPages returns the value of TotalPages.
+func (s *SiteSuppressionsListOK) GetTotalPages() int32 {
+	return s.TotalPages
+}
+
+// SetItems sets the value of Items.
+func (s *SiteSuppressionsListOK) SetItems(val []SiteSuppressionResource) {
+	s.Items = val
+}
+
+// SetPage sets the value of Page.
+func (s *SiteSuppressionsListOK) SetPage(val int32) {
+	s.Page = val
+}
+
+// SetPageSize sets the value of PageSize.
+func (s *SiteSuppressionsListOK) SetPageSize(val int32) {
+	s.PageSize = val
+}
+
+// SetTotalItems sets the value of TotalItems.
+func (s *SiteSuppressionsListOK) SetTotalItems(val int32) {
+	s.TotalItems = val
+}
+
+// SetTotalPages sets the value of TotalPages.
+func (s *SiteSuppressionsListOK) SetTotalPages(val int32) {
+	s.TotalPages = val
+}
+
+func (*SiteSuppressionsListOK) siteSuppressionsListRes() {}
+
+type SiteSuppressionsListUnprocessableEntity ProblemDetails
+
+func (*SiteSuppressionsListUnprocessableEntity) siteSuppressionsListRes() {}
 
 type SiteTemplatesCreateNotFound ProblemDetails
 

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"strings"
 	"time"
 
 	"github.com/riverqueue/river"
@@ -13,6 +14,7 @@ import (
 	"github.com/mokevnin/1mail/ent/broadcastrecipient"
 	"github.com/mokevnin/1mail/ent/contact"
 	"github.com/mokevnin/1mail/ent/segment"
+	"github.com/mokevnin/1mail/ent/suppression"
 	"github.com/mokevnin/1mail/internal/emailrender"
 	"github.com/mokevnin/1mail/internal/messaging"
 	"github.com/mokevnin/1mail/internal/segments"
@@ -105,6 +107,15 @@ func SendBroadcast(ctx context.Context, client *ent.Client, resolver SenderResol
 		return err
 	}
 
+	// Deliverability: the suppression list is the central do-not-send registry
+	// (unsubscribes, bounces, complaints, manual). Loaded once as a set and
+	// checked per recipient — suppressed addresses are skipped without a
+	// recipient row, independent of contact status.
+	suppressed, err := suppressedEmails(ctx, client, b.WorkspaceID)
+	if err != nil {
+		return err
+	}
+
 	var fromEmail, fromName string
 	if b.FromEmail != nil {
 		fromEmail = *b.FromEmail
@@ -113,8 +124,15 @@ func SendBroadcast(ctx context.Context, client *ent.Client, resolver SenderResol
 		fromName = *b.FromName
 	}
 
-	var sentCount, failedCount int
+	var targeted, sentCount, failedCount int
 	for _, c := range contacts {
+		if _, ok := suppressed[strings.ToLower(strings.TrimSpace(c.Email))]; ok {
+			continue
+		}
+		// Recipients targeted = audience minus suppressed. Counted independently of
+		// the send outcome so a retry (where rows already exist) doesn't collapse it.
+		targeted++
+
 		// Idempotency: one recipient row per (broadcast, contact). On a retry the
 		// unique index rejects the duplicate and we skip the contact.
 		rec, err := client.BroadcastRecipient.Create().
@@ -172,11 +190,30 @@ func SendBroadcast(ctx context.Context, client *ent.Client, resolver SenderResol
 	_, err = b.Update().
 		SetStatus(broadcast.StatusSent).
 		SetSentAt(time.Now()).
-		SetRecipientsTotal(len(contacts)).
+		SetRecipientsTotal(targeted).
 		SetSentCount(sentCount).
 		SetFailedCount(failedCount).
 		Save(ctx)
 	return err
+}
+
+// suppressedEmails returns the workspace's suppression list as a set of
+// normalized addresses, for an in-memory skip check during the send loop.
+func suppressedEmails(ctx context.Context, client *ent.Client, workspaceID int64) (map[string]struct{}, error) {
+	emails, err := client.Suppression.Query().
+		Where(suppression.WorkspaceID(workspaceID)).
+		Select(suppression.FieldEmail).
+		Strings(ctx)
+	if err != nil {
+		return nil, err
+	}
+	set := make(map[string]struct{}, len(emails))
+	for _, e := range emails {
+		// Stored emails are normalized on write; re-normalize defensively so a
+		// future writer that forgets can't let a suppressed address slip through.
+		set[strings.ToLower(strings.TrimSpace(e))] = struct{}{}
+	}
+	return set, nil
 }
 
 // contactBindings builds the Liquid merge-tag context for a contact: its core

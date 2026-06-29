@@ -64,11 +64,13 @@ type WorkspaceEdges struct {
 	AutomationRuns []*AutomationRun `json:"automation_runs,omitempty"`
 	// WebhookEndpoints holds the value of the webhook_endpoints edge.
 	WebhookEndpoints []*WebhookEndpoint `json:"webhook_endpoints,omitempty"`
+	// Suppressions holds the value of the suppressions edge.
+	Suppressions []*Suppression `json:"suppressions,omitempty"`
 	// User holds the value of the user edge.
 	User *User `json:"user,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [14]bool
+	loadedTypes [15]bool
 }
 
 // ContactsOrErr returns the Contacts value or an error if the edge
@@ -188,12 +190,21 @@ func (e WorkspaceEdges) WebhookEndpointsOrErr() ([]*WebhookEndpoint, error) {
 	return nil, &NotLoadedError{edge: "webhook_endpoints"}
 }
 
+// SuppressionsOrErr returns the Suppressions value or an error if the edge
+// was not loaded in eager-loading.
+func (e WorkspaceEdges) SuppressionsOrErr() ([]*Suppression, error) {
+	if e.loadedTypes[13] {
+		return e.Suppressions, nil
+	}
+	return nil, &NotLoadedError{edge: "suppressions"}
+}
+
 // UserOrErr returns the User value or an error if the edge
 // was not loaded in eager-loading, or loaded but was not found.
 func (e WorkspaceEdges) UserOrErr() (*User, error) {
 	if e.User != nil {
 		return e.User, nil
-	} else if e.loadedTypes[13] {
+	} else if e.loadedTypes[14] {
 		return nil, &NotFoundError{label: user.Label}
 	}
 	return nil, &NotLoadedError{edge: "user"}
@@ -344,6 +355,11 @@ func (_m *Workspace) QueryAutomationRuns() *AutomationRunQuery {
 // QueryWebhookEndpoints queries the "webhook_endpoints" edge of the Workspace entity.
 func (_m *Workspace) QueryWebhookEndpoints() *WebhookEndpointQuery {
 	return NewWorkspaceClient(_m.config).QueryWebhookEndpoints(_m)
+}
+
+// QuerySuppressions queries the "suppressions" edge of the Workspace entity.
+func (_m *Workspace) QuerySuppressions() *SuppressionQuery {
+	return NewWorkspaceClient(_m.config).QuerySuppressions(_m)
 }
 
 // QueryUser queries the "user" edge of the Workspace entity.

@@ -52,6 +52,8 @@ const (
 	EdgeAutomationRuns = "automation_runs"
 	// EdgeWebhookEndpoints holds the string denoting the webhook_endpoints edge name in mutations.
 	EdgeWebhookEndpoints = "webhook_endpoints"
+	// EdgeSuppressions holds the string denoting the suppressions edge name in mutations.
+	EdgeSuppressions = "suppressions"
 	// EdgeUser holds the string denoting the user edge name in mutations.
 	EdgeUser = "user"
 	// Table holds the table name of the workspace in the database.
@@ -147,6 +149,13 @@ const (
 	WebhookEndpointsInverseTable = "webhook_endpoints"
 	// WebhookEndpointsColumn is the table column denoting the webhook_endpoints relation/edge.
 	WebhookEndpointsColumn = "workspace_id"
+	// SuppressionsTable is the table that holds the suppressions relation/edge.
+	SuppressionsTable = "suppressions"
+	// SuppressionsInverseTable is the table name for the Suppression entity.
+	// It exists in this package in order to avoid circular dependency with the "suppression" package.
+	SuppressionsInverseTable = "suppressions"
+	// SuppressionsColumn is the table column denoting the suppressions relation/edge.
+	SuppressionsColumn = "workspace_id"
 	// UserTable is the table that holds the user relation/edge.
 	UserTable = "workspaces"
 	// UserInverseTable is the table name for the User entity.
@@ -412,6 +421,20 @@ func ByWebhookEndpoints(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption 
 	}
 }
 
+// BySuppressionsCount orders the results by suppressions count.
+func BySuppressionsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newSuppressionsStep(), opts...)
+	}
+}
+
+// BySuppressions orders the results by suppressions terms.
+func BySuppressions(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newSuppressionsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+
 // ByUserField orders the results by user field.
 func ByUserField(field string, opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
@@ -507,6 +530,13 @@ func newWebhookEndpointsStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(WebhookEndpointsInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2M, false, WebhookEndpointsTable, WebhookEndpointsColumn),
+	)
+}
+func newSuppressionsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(SuppressionsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, SuppressionsTable, SuppressionsColumn),
 	)
 }
 func newUserStep() *sqlgraph.Step {

@@ -96,6 +96,17 @@ func (c *ConverterImpl) SegmentToResource(source *ent.Segment) site.SiteSegmentR
 	}
 	return siteapiSiteSegmentResource
 }
+func (c *ConverterImpl) SuppressionToResource(source *ent.Suppression) site.SiteSuppressionResource {
+	var siteapiSiteSuppressionResource site.SiteSuppressionResource
+	if source != nil {
+		siteapiSiteSuppressionResource.ID = entityID((*source).ID)
+		siteapiSiteSuppressionResource.Email = (*source).Email
+		siteapiSiteSuppressionResource.Reason = site.SiteSuppressionReason((*source).Reason)
+		siteapiSiteSuppressionResource.CreatedAt = timestamp((*source).CreatedAt)
+		siteapiSiteSuppressionResource.UpdatedAt = timestamp((*source).UpdatedAt)
+	}
+	return siteapiSiteSuppressionResource
+}
 func (c *ConverterImpl) TokenToResource(source *ent.ApiToken) site.SiteApiTokenResource {
 	var siteapiSiteApiTokenResource site.SiteApiTokenResource
 	if source != nil {

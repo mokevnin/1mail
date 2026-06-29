@@ -61,6 +61,7 @@ func (Workspace) Edges() []ent.Edge {
 		edge.To("automations", Automation.Type),
 		edge.To("automation_runs", AutomationRun.Type),
 		edge.To("webhook_endpoints", WebhookEndpoint.Type),
+		edge.To("suppressions", Suppression.Type),
 		edge.From("user", User.Type).
 			Ref("workspaces").
 			Field("user_id").

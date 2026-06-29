@@ -689,6 +689,29 @@ func HasWebhookEndpointsWith(preds ...predicate.WebhookEndpoint) predicate.Works
 	})
 }
 
+// HasSuppressions applies the HasEdge predicate on the "suppressions" edge.
+func HasSuppressions() predicate.Workspace {
+	return predicate.Workspace(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, SuppressionsTable, SuppressionsColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasSuppressionsWith applies the HasEdge predicate on the "suppressions" edge with a given conditions (other predicates).
+func HasSuppressionsWith(preds ...predicate.Suppression) predicate.Workspace {
+	return predicate.Workspace(func(s *sql.Selector) {
+		step := newSuppressionsStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // HasUser applies the HasEdge predicate on the "user" edge.
 func HasUser() predicate.Workspace {
 	return predicate.Workspace(func(s *sql.Selector) {

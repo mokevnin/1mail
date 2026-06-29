@@ -129,6 +129,18 @@ func (f SegmentFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, err
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.SegmentMutation", m)
 }
 
+// The SuppressionFunc type is an adapter to allow the use of ordinary
+// function as Suppression mutator.
+type SuppressionFunc func(context.Context, *ent.SuppressionMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f SuppressionFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.SuppressionMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.SuppressionMutation", m)
+}
+
 // The TrackingProfileFunc type is an adapter to allow the use of ordinary
 // function as TrackingProfile mutator.
 type TrackingProfileFunc func(context.Context, *ent.TrackingProfileMutation) (ent.Value, error)

@@ -16,6 +16,7 @@ import (
 	"github.com/mokevnin/1mail/ent/integration"
 	"github.com/mokevnin/1mail/ent/schema"
 	"github.com/mokevnin/1mail/ent/segment"
+	"github.com/mokevnin/1mail/ent/suppression"
 	"github.com/mokevnin/1mail/ent/trackingprofile"
 	"github.com/mokevnin/1mail/ent/trackingvisitor"
 	"github.com/mokevnin/1mail/ent/user"
@@ -267,6 +268,22 @@ func init() {
 	segment.DefaultUpdatedAt = segmentDescUpdatedAt.Default.(func() time.Time)
 	// segment.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	segment.UpdateDefaultUpdatedAt = segmentDescUpdatedAt.UpdateDefault.(func() time.Time)
+	suppressionFields := schema.Suppression{}.Fields()
+	_ = suppressionFields
+	// suppressionDescEmail is the schema descriptor for email field.
+	suppressionDescEmail := suppressionFields[1].Descriptor()
+	// suppression.EmailValidator is a validator for the "email" field. It is called by the builders before save.
+	suppression.EmailValidator = suppressionDescEmail.Validators[0].(func(string) error)
+	// suppressionDescCreatedAt is the schema descriptor for created_at field.
+	suppressionDescCreatedAt := suppressionFields[5].Descriptor()
+	// suppression.DefaultCreatedAt holds the default value on creation for the created_at field.
+	suppression.DefaultCreatedAt = suppressionDescCreatedAt.Default.(func() time.Time)
+	// suppressionDescUpdatedAt is the schema descriptor for updated_at field.
+	suppressionDescUpdatedAt := suppressionFields[6].Descriptor()
+	// suppression.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	suppression.DefaultUpdatedAt = suppressionDescUpdatedAt.Default.(func() time.Time)
+	// suppression.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	suppression.UpdateDefaultUpdatedAt = suppressionDescUpdatedAt.UpdateDefault.(func() time.Time)
 	trackingprofileFields := schema.TrackingProfile{}.Fields()
 	_ = trackingprofileFields
 	// trackingprofileDescSubjectID is the schema descriptor for subject_id field.

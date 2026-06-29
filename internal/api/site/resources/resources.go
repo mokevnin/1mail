@@ -47,6 +47,7 @@ type Converter interface {
 
 	EmailTemplateToResource(source *ent.EmailTemplate) siteapi.SiteEmailTemplateResource
 	AutomationToResource(source *ent.Automation) siteapi.SiteAutomationResource
+	SuppressionToResource(source *ent.Suppression) siteapi.SiteSuppressionResource
 }
 
 func entityID(id int64) siteapi.EntityId {

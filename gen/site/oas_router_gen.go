@@ -17,7 +17,7 @@ var (
 	rn7AllowedHeaders = map[string]string{
 		"POST": "Content-Type",
 	}
-	rn43AllowedHeaders = map[string]string{
+	rn47AllowedHeaders = map[string]string{
 		"PUT": "Content-Type",
 	}
 	rn12AllowedHeaders = map[string]string{
@@ -59,22 +59,25 @@ var (
 	rn34AllowedHeaders = map[string]string{
 		"PUT": "Content-Type",
 	}
-	rn36AllowedHeaders = map[string]string{
+	rn37AllowedHeaders = map[string]string{
 		"POST": "Content-Type",
-	}
-	rn38AllowedHeaders = map[string]string{
-		"PUT": "Content-Type",
 	}
 	rn40AllowedHeaders = map[string]string{
 		"POST": "Content-Type",
 	}
+	rn42AllowedHeaders = map[string]string{
+		"PUT": "Content-Type",
+	}
 	rn44AllowedHeaders = map[string]string{
 		"POST": "Content-Type",
 	}
-	rn46AllowedHeaders = map[string]string{
-		"PUT": "Content-Type",
+	rn48AllowedHeaders = map[string]string{
+		"POST": "Content-Type",
 	}
 	rn50AllowedHeaders = map[string]string{
+		"PUT": "Content-Type",
+	}
+	rn54AllowedHeaders = map[string]string{
 		"PUT": "Content-Type",
 	}
 )
@@ -212,7 +215,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 					default:
 						s.notAllowed(w, r, notAllowedParams{
 							allowedMethods: "GET,PUT",
-							allowedHeaders: rn43AllowedHeaders,
+							allowedHeaders: rn47AllowedHeaders,
 							acceptPost:     "",
 							acceptPatch:    "",
 						})
@@ -862,68 +865,121 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 							}
 
-						case 's': // Prefix: "segments"
+						case 's': // Prefix: "s"
 
-							if l := len("segments"); len(elem) >= l && elem[0:l] == "segments" {
+							if l := len("s"); len(elem) >= l && elem[0:l] == "s" {
 								elem = elem[l:]
 							} else {
 								break
 							}
 
 							if len(elem) == 0 {
-								switch r.Method {
-								case "GET":
-									s.handleSiteSegmentsListRequest([1]string{
-										args[0],
-									}, elemIsEscaped, w, r)
-								case "POST":
-									s.handleSiteSegmentsCreateRequest([1]string{
-										args[0],
-									}, elemIsEscaped, w, r)
-								default:
-									s.notAllowed(w, r, notAllowedParams{
-										allowedMethods: "GET,POST",
-										allowedHeaders: rn32AllowedHeaders,
-										acceptPost:     "application/json",
-										acceptPatch:    "",
-									})
-								}
-
-								return
+								break
 							}
 							switch elem[0] {
-							case '/': // Prefix: "/"
+							case 'e': // Prefix: "egments"
 
-								if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
+								if l := len("egments"); len(elem) >= l && elem[0:l] == "egments" {
 									elem = elem[l:]
 								} else {
 									break
 								}
 
 								if len(elem) == 0 {
-									break
+									switch r.Method {
+									case "GET":
+										s.handleSiteSegmentsListRequest([1]string{
+											args[0],
+										}, elemIsEscaped, w, r)
+									case "POST":
+										s.handleSiteSegmentsCreateRequest([1]string{
+											args[0],
+										}, elemIsEscaped, w, r)
+									default:
+										s.notAllowed(w, r, notAllowedParams{
+											allowedMethods: "GET,POST",
+											allowedHeaders: rn32AllowedHeaders,
+											acceptPost:     "application/json",
+											acceptPatch:    "",
+										})
+									}
+
+									return
 								}
 								switch elem[0] {
-								case 'p': // Prefix: "preview"
-									origElem := elem
-									if l := len("preview"); len(elem) >= l && elem[0:l] == "preview" {
+								case '/': // Prefix: "/"
+
+									if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
 										elem = elem[l:]
 									} else {
 										break
 									}
 
 									if len(elem) == 0 {
+										break
+									}
+									switch elem[0] {
+									case 'p': // Prefix: "preview"
+										origElem := elem
+										if l := len("preview"); len(elem) >= l && elem[0:l] == "preview" {
+											elem = elem[l:]
+										} else {
+											break
+										}
+
+										if len(elem) == 0 {
+											// Leaf node.
+											switch r.Method {
+											case "POST":
+												s.handleSiteSegmentsPreviewRequest([1]string{
+													args[0],
+												}, elemIsEscaped, w, r)
+											default:
+												s.notAllowed(w, r, notAllowedParams{
+													allowedMethods: "POST",
+													allowedHeaders: rn35AllowedHeaders,
+													acceptPost:     "application/json",
+													acceptPatch:    "",
+												})
+											}
+
+											return
+										}
+
+										elem = origElem
+									}
+									// Param: "id"
+									// Leaf parameter, slashes are prohibited
+									idx := strings.IndexByte(elem, '/')
+									if idx >= 0 {
+										break
+									}
+									args[1] = elem
+									elem = ""
+
+									if len(elem) == 0 {
 										// Leaf node.
 										switch r.Method {
-										case "POST":
-											s.handleSiteSegmentsPreviewRequest([1]string{
+										case "DELETE":
+											s.handleSiteSegmentsDeleteRequest([2]string{
 												args[0],
+												args[1],
+											}, elemIsEscaped, w, r)
+										case "GET":
+											s.handleSiteSegmentsGetRequest([2]string{
+												args[0],
+												args[1],
+											}, elemIsEscaped, w, r)
+										case "PUT":
+											s.handleSiteSegmentsUpdateRequest([2]string{
+												args[0],
+												args[1],
 											}, elemIsEscaped, w, r)
 										default:
 											s.notAllowed(w, r, notAllowedParams{
-												allowedMethods: "POST",
-												allowedHeaders: rn35AllowedHeaders,
-												acceptPost:     "application/json",
+												allowedMethods: "DELETE,GET,PUT",
+												allowedHeaders: rn34AllowedHeaders,
+												acceptPost:     "",
 												acceptPatch:    "",
 											})
 										}
@@ -931,45 +987,75 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 										return
 									}
 
-									elem = origElem
 								}
-								// Param: "id"
-								// Leaf parameter, slashes are prohibited
-								idx := strings.IndexByte(elem, '/')
-								if idx >= 0 {
+
+							case 'u': // Prefix: "uppressions"
+
+								if l := len("uppressions"); len(elem) >= l && elem[0:l] == "uppressions" {
+									elem = elem[l:]
+								} else {
 									break
 								}
-								args[1] = elem
-								elem = ""
 
 								if len(elem) == 0 {
-									// Leaf node.
 									switch r.Method {
-									case "DELETE":
-										s.handleSiteSegmentsDeleteRequest([2]string{
-											args[0],
-											args[1],
-										}, elemIsEscaped, w, r)
 									case "GET":
-										s.handleSiteSegmentsGetRequest([2]string{
+										s.handleSiteSuppressionsListRequest([1]string{
 											args[0],
-											args[1],
 										}, elemIsEscaped, w, r)
-									case "PUT":
-										s.handleSiteSegmentsUpdateRequest([2]string{
+									case "POST":
+										s.handleSiteSuppressionsCreateRequest([1]string{
 											args[0],
-											args[1],
 										}, elemIsEscaped, w, r)
 									default:
 										s.notAllowed(w, r, notAllowedParams{
-											allowedMethods: "DELETE,GET,PUT",
-											allowedHeaders: rn34AllowedHeaders,
-											acceptPost:     "",
+											allowedMethods: "GET,POST",
+											allowedHeaders: rn37AllowedHeaders,
+											acceptPost:     "application/json",
 											acceptPatch:    "",
 										})
 									}
 
 									return
+								}
+								switch elem[0] {
+								case '/': // Prefix: "/"
+
+									if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
+										elem = elem[l:]
+									} else {
+										break
+									}
+
+									// Param: "id"
+									// Leaf parameter, slashes are prohibited
+									idx := strings.IndexByte(elem, '/')
+									if idx >= 0 {
+										break
+									}
+									args[1] = elem
+									elem = ""
+
+									if len(elem) == 0 {
+										// Leaf node.
+										switch r.Method {
+										case "DELETE":
+											s.handleSiteSuppressionsDeleteRequest([2]string{
+												args[0],
+												args[1],
+											}, elemIsEscaped, w, r)
+										default:
+											s.notAllowed(w, r, notAllowedParams{
+												allowedMethods: "DELETE",
+												allowedHeaders: nil,
+												acceptPost:     "",
+												acceptPatch:    "",
+											})
+										}
+
+										return
+									}
+
 								}
 
 							}
@@ -1007,7 +1093,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 									default:
 										s.notAllowed(w, r, notAllowedParams{
 											allowedMethods: "GET,POST",
-											allowedHeaders: rn36AllowedHeaders,
+											allowedHeaders: rn40AllowedHeaders,
 											acceptPost:     "application/json",
 											acceptPatch:    "",
 										})
@@ -1054,7 +1140,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 										default:
 											s.notAllowed(w, r, notAllowedParams{
 												allowedMethods: "DELETE,GET,PUT",
-												allowedHeaders: rn38AllowedHeaders,
+												allowedHeaders: rn42AllowedHeaders,
 												acceptPost:     "",
 												acceptPatch:    "",
 											})
@@ -1086,7 +1172,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 									default:
 										s.notAllowed(w, r, notAllowedParams{
 											allowedMethods: "GET,POST",
-											allowedHeaders: rn40AllowedHeaders,
+											allowedHeaders: rn44AllowedHeaders,
 											acceptPost:     "application/json",
 											acceptPatch:    "",
 										})
@@ -1157,7 +1243,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 								default:
 									s.notAllowed(w, r, notAllowedParams{
 										allowedMethods: "GET,POST",
-										allowedHeaders: rn44AllowedHeaders,
+										allowedHeaders: rn48AllowedHeaders,
 										acceptPost:     "application/json",
 										acceptPatch:    "",
 									})
@@ -1204,7 +1290,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 									default:
 										s.notAllowed(w, r, notAllowedParams{
 											allowedMethods: "DELETE,GET,PUT",
-											allowedHeaders: rn46AllowedHeaders,
+											allowedHeaders: rn50AllowedHeaders,
 											acceptPost:     "",
 											acceptPatch:    "",
 										})
@@ -1270,7 +1356,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 							default:
 								s.notAllowed(w, r, notAllowedParams{
 									allowedMethods: "PUT",
-									allowedHeaders: rn50AllowedHeaders,
+									allowedHeaders: rn54AllowedHeaders,
 									acceptPost:     "",
 									acceptPatch:    "",
 								})
@@ -2133,120 +2219,203 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 
 							}
 
-						case 's': // Prefix: "segments"
+						case 's': // Prefix: "s"
 
-							if l := len("segments"); len(elem) >= l && elem[0:l] == "segments" {
+							if l := len("s"); len(elem) >= l && elem[0:l] == "s" {
 								elem = elem[l:]
 							} else {
 								break
 							}
 
 							if len(elem) == 0 {
-								switch method {
-								case "GET":
-									r.name = SiteSegmentsListOperation
-									r.summary = ""
-									r.operationID = "SiteSegments_list"
-									r.operationGroup = ""
-									r.pathPattern = "/w/{workspaceSlug}/segments"
-									r.args = args
-									r.count = 1
-									return r, true
-								case "POST":
-									r.name = SiteSegmentsCreateOperation
-									r.summary = ""
-									r.operationID = "SiteSegments_create"
-									r.operationGroup = ""
-									r.pathPattern = "/w/{workspaceSlug}/segments"
-									r.args = args
-									r.count = 1
-									return r, true
-								default:
-									return
-								}
+								break
 							}
 							switch elem[0] {
-							case '/': // Prefix: "/"
+							case 'e': // Prefix: "egments"
 
-								if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
+								if l := len("egments"); len(elem) >= l && elem[0:l] == "egments" {
 									elem = elem[l:]
 								} else {
 									break
 								}
 
 								if len(elem) == 0 {
-									break
+									switch method {
+									case "GET":
+										r.name = SiteSegmentsListOperation
+										r.summary = ""
+										r.operationID = "SiteSegments_list"
+										r.operationGroup = ""
+										r.pathPattern = "/w/{workspaceSlug}/segments"
+										r.args = args
+										r.count = 1
+										return r, true
+									case "POST":
+										r.name = SiteSegmentsCreateOperation
+										r.summary = ""
+										r.operationID = "SiteSegments_create"
+										r.operationGroup = ""
+										r.pathPattern = "/w/{workspaceSlug}/segments"
+										r.args = args
+										r.count = 1
+										return r, true
+									default:
+										return
+									}
 								}
 								switch elem[0] {
-								case 'p': // Prefix: "preview"
-									origElem := elem
-									if l := len("preview"); len(elem) >= l && elem[0:l] == "preview" {
+								case '/': // Prefix: "/"
+
+									if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
 										elem = elem[l:]
 									} else {
 										break
 									}
 
 									if len(elem) == 0 {
+										break
+									}
+									switch elem[0] {
+									case 'p': // Prefix: "preview"
+										origElem := elem
+										if l := len("preview"); len(elem) >= l && elem[0:l] == "preview" {
+											elem = elem[l:]
+										} else {
+											break
+										}
+
+										if len(elem) == 0 {
+											// Leaf node.
+											switch method {
+											case "POST":
+												r.name = SiteSegmentsPreviewOperation
+												r.summary = ""
+												r.operationID = "SiteSegments_preview"
+												r.operationGroup = ""
+												r.pathPattern = "/w/{workspaceSlug}/segments/preview"
+												r.args = args
+												r.count = 1
+												return r, true
+											default:
+												return
+											}
+										}
+
+										elem = origElem
+									}
+									// Param: "id"
+									// Leaf parameter, slashes are prohibited
+									idx := strings.IndexByte(elem, '/')
+									if idx >= 0 {
+										break
+									}
+									args[1] = elem
+									elem = ""
+
+									if len(elem) == 0 {
 										// Leaf node.
 										switch method {
-										case "POST":
-											r.name = SiteSegmentsPreviewOperation
+										case "DELETE":
+											r.name = SiteSegmentsDeleteOperation
 											r.summary = ""
-											r.operationID = "SiteSegments_preview"
+											r.operationID = "SiteSegments_delete"
 											r.operationGroup = ""
-											r.pathPattern = "/w/{workspaceSlug}/segments/preview"
+											r.pathPattern = "/w/{workspaceSlug}/segments/{id}"
 											r.args = args
-											r.count = 1
+											r.count = 2
+											return r, true
+										case "GET":
+											r.name = SiteSegmentsGetOperation
+											r.summary = ""
+											r.operationID = "SiteSegments_get"
+											r.operationGroup = ""
+											r.pathPattern = "/w/{workspaceSlug}/segments/{id}"
+											r.args = args
+											r.count = 2
+											return r, true
+										case "PUT":
+											r.name = SiteSegmentsUpdateOperation
+											r.summary = ""
+											r.operationID = "SiteSegments_update"
+											r.operationGroup = ""
+											r.pathPattern = "/w/{workspaceSlug}/segments/{id}"
+											r.args = args
+											r.count = 2
 											return r, true
 										default:
 											return
 										}
 									}
 
-									elem = origElem
 								}
-								// Param: "id"
-								// Leaf parameter, slashes are prohibited
-								idx := strings.IndexByte(elem, '/')
-								if idx >= 0 {
+
+							case 'u': // Prefix: "uppressions"
+
+								if l := len("uppressions"); len(elem) >= l && elem[0:l] == "uppressions" {
+									elem = elem[l:]
+								} else {
 									break
 								}
-								args[1] = elem
-								elem = ""
 
 								if len(elem) == 0 {
-									// Leaf node.
 									switch method {
-									case "DELETE":
-										r.name = SiteSegmentsDeleteOperation
-										r.summary = ""
-										r.operationID = "SiteSegments_delete"
-										r.operationGroup = ""
-										r.pathPattern = "/w/{workspaceSlug}/segments/{id}"
-										r.args = args
-										r.count = 2
-										return r, true
 									case "GET":
-										r.name = SiteSegmentsGetOperation
+										r.name = SiteSuppressionsListOperation
 										r.summary = ""
-										r.operationID = "SiteSegments_get"
+										r.operationID = "SiteSuppressions_list"
 										r.operationGroup = ""
-										r.pathPattern = "/w/{workspaceSlug}/segments/{id}"
+										r.pathPattern = "/w/{workspaceSlug}/suppressions"
 										r.args = args
-										r.count = 2
+										r.count = 1
 										return r, true
-									case "PUT":
-										r.name = SiteSegmentsUpdateOperation
+									case "POST":
+										r.name = SiteSuppressionsCreateOperation
 										r.summary = ""
-										r.operationID = "SiteSegments_update"
+										r.operationID = "SiteSuppressions_create"
 										r.operationGroup = ""
-										r.pathPattern = "/w/{workspaceSlug}/segments/{id}"
+										r.pathPattern = "/w/{workspaceSlug}/suppressions"
 										r.args = args
-										r.count = 2
+										r.count = 1
 										return r, true
 									default:
 										return
 									}
+								}
+								switch elem[0] {
+								case '/': // Prefix: "/"
+
+									if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
+										elem = elem[l:]
+									} else {
+										break
+									}
+
+									// Param: "id"
+									// Leaf parameter, slashes are prohibited
+									idx := strings.IndexByte(elem, '/')
+									if idx >= 0 {
+										break
+									}
+									args[1] = elem
+									elem = ""
+
+									if len(elem) == 0 {
+										// Leaf node.
+										switch method {
+										case "DELETE":
+											r.name = SiteSuppressionsDeleteOperation
+											r.summary = ""
+											r.operationID = "SiteSuppressions_delete"
+											r.operationGroup = ""
+											r.pathPattern = "/w/{workspaceSlug}/suppressions/{id}"
+											r.args = args
+											r.count = 2
+											return r, true
+										default:
+											return
+										}
+									}
+
 								}
 
 							}

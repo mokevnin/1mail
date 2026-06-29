@@ -370,6 +370,37 @@ var (
 			},
 		},
 	}
+	// SuppressionsColumns holds the columns for the "suppressions" table.
+	SuppressionsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt64, Increment: true},
+		{Name: "email", Type: field.TypeString},
+		{Name: "reason", Type: field.TypeEnum, Enums: []string{"unsubscribed", "bounce", "complaint", "manual"}, Default: "manual"},
+		{Name: "contact_id", Type: field.TypeInt64, Nullable: true},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "workspace_id", Type: field.TypeInt64},
+	}
+	// SuppressionsTable holds the schema information for the "suppressions" table.
+	SuppressionsTable = &schema.Table{
+		Name:       "suppressions",
+		Columns:    SuppressionsColumns,
+		PrimaryKey: []*schema.Column{SuppressionsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "suppressions_workspaces_suppressions",
+				Columns:    []*schema.Column{SuppressionsColumns[6]},
+				RefColumns: []*schema.Column{WorkspacesColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "suppressions_workspace_id_email",
+				Unique:  true,
+				Columns: []*schema.Column{SuppressionsColumns[6], SuppressionsColumns[1]},
+			},
+		},
+	}
 	// TrackingProfilesColumns holds the columns for the "tracking_profiles" table.
 	TrackingProfilesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt64, Increment: true},
@@ -537,6 +568,7 @@ var (
 		EventsTable,
 		IntegrationsTable,
 		SegmentsTable,
+		SuppressionsTable,
 		TrackingProfilesTable,
 		TrackingVisitorsTable,
 		UsersTable,
@@ -587,6 +619,10 @@ func init() {
 	SegmentsTable.ForeignKeys[0].RefTable = WorkspacesTable
 	SegmentsTable.Annotation = &entsql.Annotation{
 		Table: "segments",
+	}
+	SuppressionsTable.ForeignKeys[0].RefTable = WorkspacesTable
+	SuppressionsTable.Annotation = &entsql.Annotation{
+		Table: "suppressions",
 	}
 	TrackingProfilesTable.ForeignKeys[0].RefTable = WorkspacesTable
 	TrackingProfilesTable.Annotation = &entsql.Annotation{

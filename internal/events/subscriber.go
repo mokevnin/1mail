@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/ThreeDotsLabs/watermill"
@@ -12,6 +13,7 @@ import (
 	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/mokevnin/1mail/ent"
 	"github.com/mokevnin/1mail/ent/event"
+	"github.com/mokevnin/1mail/ent/suppression"
 )
 
 // Enroller enrolls a contact into automations matching an event action. The
@@ -58,6 +60,71 @@ func RegisterSubscribers(router *message.Router, db *sql.DB, client *ent.Client,
 		return fmt.Errorf("webhooks subscriber: %w", err)
 	}
 	router.AddConsumerHandler("dispatch_webhooks", TopicDomainEvents, webhooksSub, webhooksConsumer(dispatcher))
+
+	suppressionSub, err := NewSubscriber(db, "suppression")
+	if err != nil {
+		return fmt.Errorf("suppression subscriber: %w", err)
+	}
+	router.AddConsumerHandler("update_suppression", TopicDomainEvents, suppressionSub, suppressionConsumer(client))
+	return nil
+}
+
+// suppressionReason maps an engagement action to the suppression reason it
+// implies, or false for actions that don't suppress (opens, clicks). Bounce and
+// complaint events will slot in here once deliverability ingestion lands.
+func suppressionReason(action string) (suppression.Reason, bool) {
+	switch action {
+	case NameEmailUnsubscribed:
+		return suppression.ReasonUnsubscribed, true
+	default:
+		return "", false
+	}
+}
+
+// suppressionConsumer adds the event's address to the workspace suppression list
+// when the action implies it (today: unsubscribe).
+func suppressionConsumer(client *ent.Client) message.NoPublishHandlerFunc {
+	return func(msg *message.Message) error {
+		var env Envelope
+		if err := json.Unmarshal(msg.Payload, &env); err != nil {
+			return fmt.Errorf("unmarshal envelope: %w", err)
+		}
+		return Suppress(msg.Context(), client, env)
+	}
+}
+
+// Suppress adds the event's address to the workspace suppression list when the
+// action implies a do-not-send (today: unsubscribe; bounce/complaint later).
+// No-op for other actions or a missing email. Idempotent — a redelivered or
+// repeated event keeps the original entry rather than erroring or overwriting
+// its reason. Exported so the logic can be tested without running the router.
+func Suppress(ctx context.Context, client *ent.Client, env Envelope) error {
+	ev, err := Decode(env)
+	if err != nil {
+		return err
+	}
+	p := ev.Project()
+	reason, ok := suppressionReason(p.Action)
+	if !ok {
+		return nil
+	}
+	email := strings.ToLower(strings.TrimSpace(p.Email))
+	if email == "" {
+		return nil
+	}
+	create := client.Suppression.Create().
+		SetWorkspaceID(env.WorkspaceID).
+		SetEmail(email).
+		SetReason(reason)
+	if p.ContactID != 0 {
+		create.SetContactID(p.ContactID)
+	}
+	if err := create.
+		OnConflictColumns(suppression.FieldWorkspaceID, suppression.FieldEmail).
+		Ignore().
+		Exec(ctx); err != nil {
+		return fmt.Errorf("suppress %q: %w", email, err)
+	}
 	return nil
 }
 

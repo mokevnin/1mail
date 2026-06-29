@@ -22,6 +22,7 @@ import (
 	"github.com/mokevnin/1mail/ent/integration"
 	"github.com/mokevnin/1mail/ent/predicate"
 	"github.com/mokevnin/1mail/ent/segment"
+	"github.com/mokevnin/1mail/ent/suppression"
 	"github.com/mokevnin/1mail/ent/trackingprofile"
 	"github.com/mokevnin/1mail/ent/trackingvisitor"
 	"github.com/mokevnin/1mail/ent/user"
@@ -306,6 +307,21 @@ func (_u *WorkspaceUpdate) AddWebhookEndpoints(v ...*WebhookEndpoint) *Workspace
 	return _u.AddWebhookEndpointIDs(ids...)
 }
 
+// AddSuppressionIDs adds the "suppressions" edge to the Suppression entity by IDs.
+func (_u *WorkspaceUpdate) AddSuppressionIDs(ids ...int64) *WorkspaceUpdate {
+	_u.mutation.AddSuppressionIDs(ids...)
+	return _u
+}
+
+// AddSuppressions adds the "suppressions" edges to the Suppression entity.
+func (_u *WorkspaceUpdate) AddSuppressions(v ...*Suppression) *WorkspaceUpdate {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddSuppressionIDs(ids...)
+}
+
 // SetUser sets the "user" edge to the User entity.
 func (_u *WorkspaceUpdate) SetUser(v *User) *WorkspaceUpdate {
 	return _u.SetUserID(v.ID)
@@ -587,6 +603,27 @@ func (_u *WorkspaceUpdate) RemoveWebhookEndpoints(v ...*WebhookEndpoint) *Worksp
 		ids[i] = v[i].ID
 	}
 	return _u.RemoveWebhookEndpointIDs(ids...)
+}
+
+// ClearSuppressions clears all "suppressions" edges to the Suppression entity.
+func (_u *WorkspaceUpdate) ClearSuppressions() *WorkspaceUpdate {
+	_u.mutation.ClearSuppressions()
+	return _u
+}
+
+// RemoveSuppressionIDs removes the "suppressions" edge to Suppression entities by IDs.
+func (_u *WorkspaceUpdate) RemoveSuppressionIDs(ids ...int64) *WorkspaceUpdate {
+	_u.mutation.RemoveSuppressionIDs(ids...)
+	return _u
+}
+
+// RemoveSuppressions removes "suppressions" edges to Suppression entities.
+func (_u *WorkspaceUpdate) RemoveSuppressions(v ...*Suppression) *WorkspaceUpdate {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveSuppressionIDs(ids...)
 }
 
 // ClearUser clears the "user" edge to the User entity.
@@ -1266,6 +1303,51 @@ func (_u *WorkspaceUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	if _u.mutation.SuppressionsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   workspace.SuppressionsTable,
+			Columns: []string{workspace.SuppressionsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(suppression.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedSuppressionsIDs(); len(nodes) > 0 && !_u.mutation.SuppressionsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   workspace.SuppressionsTable,
+			Columns: []string{workspace.SuppressionsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(suppression.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.SuppressionsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   workspace.SuppressionsTable,
+			Columns: []string{workspace.SuppressionsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(suppression.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if _u.mutation.UserCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
@@ -1580,6 +1662,21 @@ func (_u *WorkspaceUpdateOne) AddWebhookEndpoints(v ...*WebhookEndpoint) *Worksp
 	return _u.AddWebhookEndpointIDs(ids...)
 }
 
+// AddSuppressionIDs adds the "suppressions" edge to the Suppression entity by IDs.
+func (_u *WorkspaceUpdateOne) AddSuppressionIDs(ids ...int64) *WorkspaceUpdateOne {
+	_u.mutation.AddSuppressionIDs(ids...)
+	return _u
+}
+
+// AddSuppressions adds the "suppressions" edges to the Suppression entity.
+func (_u *WorkspaceUpdateOne) AddSuppressions(v ...*Suppression) *WorkspaceUpdateOne {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddSuppressionIDs(ids...)
+}
+
 // SetUser sets the "user" edge to the User entity.
 func (_u *WorkspaceUpdateOne) SetUser(v *User) *WorkspaceUpdateOne {
 	return _u.SetUserID(v.ID)
@@ -1861,6 +1958,27 @@ func (_u *WorkspaceUpdateOne) RemoveWebhookEndpoints(v ...*WebhookEndpoint) *Wor
 		ids[i] = v[i].ID
 	}
 	return _u.RemoveWebhookEndpointIDs(ids...)
+}
+
+// ClearSuppressions clears all "suppressions" edges to the Suppression entity.
+func (_u *WorkspaceUpdateOne) ClearSuppressions() *WorkspaceUpdateOne {
+	_u.mutation.ClearSuppressions()
+	return _u
+}
+
+// RemoveSuppressionIDs removes the "suppressions" edge to Suppression entities by IDs.
+func (_u *WorkspaceUpdateOne) RemoveSuppressionIDs(ids ...int64) *WorkspaceUpdateOne {
+	_u.mutation.RemoveSuppressionIDs(ids...)
+	return _u
+}
+
+// RemoveSuppressions removes "suppressions" edges to Suppression entities.
+func (_u *WorkspaceUpdateOne) RemoveSuppressions(v ...*Suppression) *WorkspaceUpdateOne {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveSuppressionIDs(ids...)
 }
 
 // ClearUser clears the "user" edge to the User entity.
@@ -2563,6 +2681,51 @@ func (_u *WorkspaceUpdateOne) sqlSave(ctx context.Context) (_node *Workspace, er
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(webhookendpoint.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.SuppressionsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   workspace.SuppressionsTable,
+			Columns: []string{workspace.SuppressionsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(suppression.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedSuppressionsIDs(); len(nodes) > 0 && !_u.mutation.SuppressionsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   workspace.SuppressionsTable,
+			Columns: []string{workspace.SuppressionsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(suppression.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.SuppressionsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   workspace.SuppressionsTable,
+			Columns: []string{workspace.SuppressionsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(suppression.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {

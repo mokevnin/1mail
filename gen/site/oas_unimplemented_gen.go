@@ -333,6 +333,33 @@ func (UnimplementedHandler) SiteSegmentsUpdate(ctx context.Context, req *SiteUpd
 	return r, ht.ErrNotImplemented
 }
 
+// SiteSuppressionsCreate implements SiteSuppressions_create operation.
+//
+// Manually suppress an address (reason = manual; idempotent per address).
+//
+// POST /w/{workspaceSlug}/suppressions
+func (UnimplementedHandler) SiteSuppressionsCreate(ctx context.Context, req *SiteCreateSuppressionInput, params SiteSuppressionsCreateParams) (r SiteSuppressionsCreateRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// SiteSuppressionsDelete implements SiteSuppressions_delete operation.
+//
+// Remove an address from the suppression list.
+//
+// DELETE /w/{workspaceSlug}/suppressions/{id}
+func (UnimplementedHandler) SiteSuppressionsDelete(ctx context.Context, params SiteSuppressionsDeleteParams) (r SiteSuppressionsDeleteRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// SiteSuppressionsList implements SiteSuppressions_list operation.
+//
+// List suppressed addresses.
+//
+// GET /w/{workspaceSlug}/suppressions
+func (UnimplementedHandler) SiteSuppressionsList(ctx context.Context, params SiteSuppressionsListParams) (r SiteSuppressionsListRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // SiteTemplatesCreate implements SiteTemplates_create operation.
 //
 // Create a template.

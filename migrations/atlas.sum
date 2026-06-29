@@ -1,4 +1,4 @@
-h1:JFc0k/hVSVrAamvN/AxUVbMhgQwTmRcTDOHFa9rLwWA=
+h1:vKDdCS7wXynhLWoYRZrNRm62Rr5R3Y6naeJs7dhKeFQ=
 20260508000000_initial.sql h1:hqknpGtwJkLADT5epWil/vMqlKg3ZDRdQRZdZxk0aUQ=
 20260509001138.sql h1:J2sKnbyBsY1JsCWE95Pmy4WagEbpngmLfsJYw7dc3Xg=
 20260621031147_workspace_scoping.sql h1:juzOWkzi0pdsQ8OgXcJEEXDan4uIWa643XoU1+H7/kU=
@@ -12,3 +12,4 @@ h1:JFc0k/hVSVrAamvN/AxUVbMhgQwTmRcTDOHFa9rLwWA=
 20260628190154_add_webhook_endpoints.sql h1:P2kCyE2i1yyD5TAgLGV5RXqCo5wfUc8jCyLFZeJAmLA=
 20260629105447_event_segment_index.sql h1:k5ZcOz0GIzt7aMXu1t+BkZjZECB2gGI3Q4ato4vLdsI=
 20260629132535_add_broadcast_recipient_ws_index.sql h1:pBOeIrOu2EoMX1o/bmRMPcQzRo5TDOtVgDE5Nt/IBEM=
+20260629142351_add_suppressions.sql h1:HSl3Cv1rNBd0Ge4G0JmSZhQvM7uRQiz+MizDYiqc74w=
