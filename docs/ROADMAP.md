@@ -48,7 +48,7 @@ tracking.
 | Phase | Block | Status | Depends on | Summary |
 |---|---|---|---|---|
 | **1** | **Broadcasts MVP** | ✅ Done | — | One-off email campaigns end-to-end + delivery tracking (opens/clicks/unsub) + per-campaign report. Audience = all active contacts (+ rule segment). |
-| **2** | **Segment engine** | ✅ Done | 1 | react-querybuilder rule definition compiled to an ent predicate (attributes + custom fields), preview count, usable as broadcast audience. Events-based conditions still to come. |
+| **2** | **Segment engine** | ✅ Done | 1 | react-querybuilder rule definition compiled to an ent predicate (attributes + custom fields **+ event-based conditions** — "performed event X in last N days" via a correlated EXISTS), preview count, usable as broadcast audience. |
 | **3** | **Email templates + MJML** | ✅ Done | 1 | Reusable templates; single body format — **MJML** everywhere (liquid → MJML compile → text), test sends. A proper visual MJML editor is still to come (body is an MJML textarea for now). |
 | **4** | **Automations / Workflows** | ✅ Done (linear) | 1, 2, 3 | Automation + AutomationRun schema, river-backed engine (trigger → email/wait steps, enroll-once), site CRUD API + UI (list, step editor, activate/deactivate). Triggers fire off the **domain-event bus** (`internal/events`). A visual branch/goal builder (@workflowbuilder/sdk, xyflow) is still to come — steps are a linear list for now. |
 | 5 | Forms & onsite | ⬜ | 1, 2 | Signup forms/popups, embed, feeding into contacts/events (on top of Collect API + tracker). |
@@ -63,9 +63,10 @@ tracking.
 > Phase 4 shipped linear automations (trigger → email/wait steps) end-to-end, with
 > enrollment driven by an internal **domain-event bus** (`internal/events`, transactional
 > outbox over watermill-sql; see docs/design/domain-events.md).
-> Remaining later: Phase 2 event-based conditions + snapshot segments; Phase 3 a
-> visual MJML editor; Phase 4 a visual branch/goal builder; events-bus P2
-> (idempotency, webhooks/analytics subscribers, collect/external producers).
+> Remaining later: Phase 2 snapshot segments; Phase 3 a visual MJML editor; Phase 4
+> a visual branch/goal builder; analytics/per-subject-ordering event subscribers.
+> (Done since: events-bus P0–P2 + typed union + webhooks; legacy email/pubsub
+> retired with an inline jobs adapter; Phase 2 event-based segment conditions.)
 
 ---
 
