@@ -1,82 +1,175 @@
-import { Button, Card, SimpleGrid, Stack, Text, Title } from '@mantine/core'
+import { AreaChart, DonutChart } from '@mantine/charts'
+import { Group, Loader, SegmentedControl, SimpleGrid, Stack, Text, Title } from '@mantine/core'
 import { useQuery } from '@tanstack/react-query'
-import { useNavigate, useParams } from '@tanstack/react-router'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { ApiErrorAlert } from '../../components/ApiErrorAlert.tsx'
+import { StatCard } from '../../components/StatCard.tsx'
 import {
-  siteContactsListOptions,
+  siteAnalyticsOverviewOptions,
   siteWorkspacesListOptions,
 } from '../../generated/site/@tanstack/react-query.gen.ts'
-import { activityRoute, contactsRoute, settingsRoute } from '../../router.tsx'
+import type { SiteAnalyticsRange } from '../../generated/site/types.gen.ts'
+import { overviewRoute } from '../../router.tsx'
 
-// OverviewPage is the workspace landing: headline metrics and quick links into
-// the main sections. Metrics are intentionally sparse for now (more to come).
+const RANGES: SiteAnalyticsRange[] = ['7d', '30d', '90d']
+
+// OverviewPage is the workspace dashboard: KPI cards plus charts summarizing
+// contacts, email engagement, and automations over a selectable window. The
+// engagement cards and the trend chart share one range-scoped source, so they
+// reconcile; contact and automation counts are point-in-time snapshots.
 export function OverviewPage() {
   const { t } = useTranslation()
-  const navigate = useNavigate()
-  const { slug } = useParams({ strict: false })
+  const { slug } = overviewRoute.useParams()
+  const [range, setRange] = useState<SiteAnalyticsRange>('30d')
 
   const workspacesQuery = useQuery(siteWorkspacesListOptions())
   const workspace = workspacesQuery.data?.find((w) => w.slug === slug)
 
-  const contactsQuery = useQuery({
-    ...siteContactsListOptions({ path: { workspaceSlug: slug ?? '' }, query: { pageSize: 1 } }),
-    enabled: Boolean(slug),
-  })
-  const contactsCount = contactsQuery.data?.totalItems ?? 0
-
-  if (!slug) {
-    return null
-  }
+  const analyticsQuery = useQuery(
+    siteAnalyticsOverviewOptions({ path: { workspaceSlug: slug }, query: { range } }),
+  )
 
   return (
     <Stack>
-      <Title order={2}>{workspace?.name ?? t(($) => $.overview.title)}</Title>
+      <Group justify="space-between" align="center">
+        <Title order={2}>{workspace?.name ?? t(($) => $.overview.title)}</Title>
+        <SegmentedControl
+          value={range}
+          onChange={(v) => setRange(v as SiteAnalyticsRange)}
+          data={RANGES.map((r) => ({ value: r, label: t(($) => $.analytics.range[r]) }))}
+        />
+      </Group>
 
-      <SimpleGrid cols={{ base: 1, sm: 3 }}>
-        <Card withBorder>
-          <Text c="dimmed" size="sm">
-            {t(($) => $.overview.contactsCount)}
-          </Text>
-          <Title order={3}>{contactsCount}</Title>
-          <Button
-            variant="light"
-            mt="sm"
-            onClick={() => navigate({ to: contactsRoute.to, params: { slug } })}
-          >
-            {t(($) => $.overview.viewContacts)}
-          </Button>
-        </Card>
+      {analyticsQuery.isLoading && <Loader />}
 
-        <Card withBorder>
-          <Text c="dimmed" size="sm">
-            {t(($) => $.nav.activity)}
-          </Text>
-          <Button
-            variant="light"
-            mt="sm"
-            onClick={() => navigate({ to: activityRoute.to, params: { slug } })}
-          >
-            {t(($) => $.overview.viewActivity)}
-          </Button>
-        </Card>
+      {analyticsQuery.isError && (
+        <ApiErrorAlert
+          error={analyticsQuery.error}
+          title={t(($) => $.analytics.loadError)}
+          fallback={t(($) => $.analytics.loadError)}
+        />
+      )}
 
-        <Card withBorder>
-          <Text c="dimmed" size="sm">
-            {t(($) => $.nav.settings)}
-          </Text>
-          <Button
-            variant="light"
-            mt="sm"
-            onClick={() => navigate({ to: settingsRoute.to, params: { slug } })}
-          >
-            {t(($) => $.overview.viewSettings)}
-          </Button>
-        </Card>
-      </SimpleGrid>
+      {analyticsQuery.data && (
+        <Stack gap="xl">
+          <Stack gap="xs">
+            <Title order={4}>{t(($) => $.analytics.sections.email)}</Title>
+            <Text size="sm" c="dimmed">
+              {t(($) => $.analytics.email.rangeNote)}
+            </Text>
+            <SimpleGrid cols={{ base: 2, sm: 3, lg: 6 }}>
+              <StatCard
+                label={t(($) => $.analytics.email.sent)}
+                value={analyticsQuery.data.email.sentCount}
+              />
+              <StatCard
+                label={t(($) => $.analytics.email.opened)}
+                value={analyticsQuery.data.email.openedCount}
+              />
+              <StatCard
+                label={t(($) => $.analytics.email.clicked)}
+                value={analyticsQuery.data.email.clickedCount}
+              />
+              <StatCard
+                label={t(($) => $.analytics.email.openRate)}
+                value={analyticsQuery.data.email.openRate}
+                percent
+              />
+              <StatCard
+                label={t(($) => $.analytics.email.clickRate)}
+                value={analyticsQuery.data.email.clickRate}
+                percent
+              />
+              <StatCard
+                label={t(($) => $.analytics.email.clickToOpenRate)}
+                value={analyticsQuery.data.email.clickToOpenRate}
+                percent
+              />
+            </SimpleGrid>
+            <AreaChart
+              h={260}
+              data={analyticsQuery.data.timeseries}
+              dataKey="date"
+              withLegend
+              curveType="monotone"
+              series={[
+                { name: 'sent', label: t(($) => $.analytics.series.sent), color: 'blue.6' },
+                { name: 'opened', label: t(($) => $.analytics.series.opened), color: 'teal.6' },
+                { name: 'clicked', label: t(($) => $.analytics.series.clicked), color: 'grape.6' },
+              ]}
+            />
+          </Stack>
 
-      <Text c="dimmed" size="sm">
-        {t(($) => $.overview.comingSoon)}
-      </Text>
+          <SimpleGrid cols={{ base: 1, md: 2 }}>
+            <Stack gap="xs">
+              <Title order={4}>{t(($) => $.analytics.sections.contacts)}</Title>
+              <SimpleGrid cols={2}>
+                <StatCard
+                  label={t(($) => $.analytics.contacts.total)}
+                  value={analyticsQuery.data.contacts.total}
+                />
+                <StatCard
+                  label={t(($) => $.analytics.contacts.active)}
+                  value={analyticsQuery.data.contacts.active}
+                />
+                <StatCard
+                  label={t(($) => $.analytics.contacts.unsubscribed)}
+                  value={analyticsQuery.data.contacts.unsubscribed}
+                />
+                <StatCard
+                  label={t(($) => $.analytics.contacts.newInRange)}
+                  value={analyticsQuery.data.contacts.newInRange}
+                />
+              </SimpleGrid>
+              {analyticsQuery.data.contacts.total > 0 ? (
+                <DonutChart
+                  h={200}
+                  withLabels
+                  data={[
+                    {
+                      name: t(($) => $.analytics.contacts.active),
+                      value: analyticsQuery.data.contacts.active,
+                      color: 'teal.6',
+                    },
+                    {
+                      name: t(($) => $.analytics.contacts.unsubscribed),
+                      value: analyticsQuery.data.contacts.unsubscribed,
+                      color: 'gray.5',
+                    },
+                  ]}
+                />
+              ) : (
+                <Text size="sm" c="dimmed">
+                  {t(($) => $.analytics.contacts.empty)}
+                </Text>
+              )}
+            </Stack>
+
+            <Stack gap="xs">
+              <Title order={4}>{t(($) => $.analytics.sections.automations)}</Title>
+              <SimpleGrid cols={2}>
+                <StatCard
+                  label={t(($) => $.analytics.automations.total)}
+                  value={analyticsQuery.data.automations.total}
+                />
+                <StatCard
+                  label={t(($) => $.analytics.automations.active)}
+                  value={analyticsQuery.data.automations.active}
+                />
+                <StatCard
+                  label={t(($) => $.analytics.automations.runsActive)}
+                  value={analyticsQuery.data.automations.runsActive}
+                />
+                <StatCard
+                  label={t(($) => $.analytics.automations.runsCompleted)}
+                  value={analyticsQuery.data.automations.runsCompleted}
+                />
+              </SimpleGrid>
+            </Stack>
+          </SimpleGrid>
+        </Stack>
+      )}
     </Stack>
   )
 }

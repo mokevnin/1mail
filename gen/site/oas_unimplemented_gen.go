@@ -13,6 +13,15 @@ type UnimplementedHandler struct{}
 
 var _ Handler = UnimplementedHandler{}
 
+// SiteAnalyticsOverview implements SiteAnalytics_overview operation.
+//
+// Aggregate metrics for the workspace dashboard.
+//
+// GET /w/{workspaceSlug}/analytics/overview
+func (UnimplementedHandler) SiteAnalyticsOverview(ctx context.Context, params SiteAnalyticsOverviewParams) (r SiteAnalyticsOverviewRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // SiteAuthDirectLogin implements SiteAuth_directLogin operation.
 //
 // POST /auth/direct/login

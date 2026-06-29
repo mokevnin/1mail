@@ -20,8 +20,9 @@ import (
 // BroadcastUpdate is the builder for updating Broadcast entities.
 type BroadcastUpdate struct {
 	config
-	hooks    []Hook
-	mutation *BroadcastMutation
+	hooks     []Hook
+	mutation  *BroadcastMutation
+	modifiers []func(*sql.UpdateBuilder)
 }
 
 // Where appends a list predicates to the BroadcastUpdate builder.
@@ -516,6 +517,12 @@ func (_u *BroadcastUpdate) check() error {
 	return nil
 }
 
+// Modify adds a statement modifier for attaching custom logic to the UPDATE statement.
+func (_u *BroadcastUpdate) Modify(modifiers ...func(u *sql.UpdateBuilder)) *BroadcastUpdate {
+	_u.modifiers = append(_u.modifiers, modifiers...)
+	return _u
+}
+
 func (_u *BroadcastUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	if err := _u.check(); err != nil {
 		return _node, err
@@ -698,6 +705,7 @@ func (_u *BroadcastUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	_spec.AddModifiers(_u.modifiers...)
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{broadcast.Label}
@@ -713,9 +721,10 @@ func (_u *BroadcastUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 // BroadcastUpdateOne is the builder for updating a single Broadcast entity.
 type BroadcastUpdateOne struct {
 	config
-	fields   []string
-	hooks    []Hook
-	mutation *BroadcastMutation
+	fields    []string
+	hooks     []Hook
+	mutation  *BroadcastMutation
+	modifiers []func(*sql.UpdateBuilder)
 }
 
 // SetName sets the "name" field.
@@ -1217,6 +1226,12 @@ func (_u *BroadcastUpdateOne) check() error {
 	return nil
 }
 
+// Modify adds a statement modifier for attaching custom logic to the UPDATE statement.
+func (_u *BroadcastUpdateOne) Modify(modifiers ...func(u *sql.UpdateBuilder)) *BroadcastUpdateOne {
+	_u.modifiers = append(_u.modifiers, modifiers...)
+	return _u
+}
+
 func (_u *BroadcastUpdateOne) sqlSave(ctx context.Context) (_node *Broadcast, err error) {
 	if err := _u.check(); err != nil {
 		return _node, err
@@ -1416,6 +1431,7 @@ func (_u *BroadcastUpdateOne) sqlSave(ctx context.Context) (_node *Broadcast, er
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	_spec.AddModifiers(_u.modifiers...)
 	_node = &Broadcast{config: _u.config}
 	_spec.Assign = _node.assignValues
 	_spec.ScanValues = _node.scanValues

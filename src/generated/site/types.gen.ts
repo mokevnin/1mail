@@ -52,6 +52,132 @@ export type ProblemDetails = {
 };
 
 /**
+ * Automation counts (point-in-time snapshot)
+ */
+export type SiteAnalyticsAutomations = {
+    /**
+     * All automations in the workspace
+     */
+    total: number;
+    /**
+     * Automations with status = active
+     */
+    active: number;
+    /**
+     * Runs currently in progress
+     */
+    runsActive: number;
+    /**
+     * Runs that have completed
+     */
+    runsCompleted: number;
+};
+
+/**
+ * Current contact counts (point-in-time snapshot, not range-scoped)
+ */
+export type SiteAnalyticsContacts = {
+    /**
+     * All contacts in the workspace
+     */
+    total: number;
+    /**
+     * Contacts with status = active
+     */
+    active: number;
+    /**
+     * Contacts with status = unsubscribed
+     */
+    unsubscribed: number;
+    /**
+     * Contacts created within the selected range
+     */
+    newInRange: number;
+};
+
+/**
+ * Email engagement for the messages sent in the selected range (the send
+ * cohort), from delivery logs. Opens/clicks are counted among that cohort, so
+ * the counts reconcile and the rates stay in [0,1].
+ */
+export type SiteAnalyticsEmail = {
+    /**
+     * Messages sent within the range
+     */
+    sentCount: number;
+    /**
+     * Messages sent in the range that were opened
+     */
+    openedCount: number;
+    /**
+     * Messages sent in the range that were clicked
+     */
+    clickedCount: number;
+    /**
+     * Opened ÷ sent (0–1)
+     */
+    openRate: number;
+    /**
+     * Clicked ÷ sent (0–1)
+     */
+    clickRate: number;
+    /**
+     * Clicked ÷ opened (0–1)
+     */
+    clickToOpenRate: number;
+};
+
+/**
+ * Workspace analytics overview powering the dashboard
+ */
+export type SiteAnalyticsOverview = {
+    contacts: SiteAnalyticsContacts;
+    email: SiteAnalyticsEmail;
+    automations: SiteAnalyticsAutomations;
+    /**
+     * Daily engagement series, oldest first, one point per day in the range
+     */
+    timeseries: Array<SiteAnalyticsPoint>;
+};
+
+/**
+ * One UTC send-day of the cohort, zero-filled across the range. Opened/clicked
+ * count the messages sent that day that were later opened/clicked.
+ */
+export type SiteAnalyticsPoint = {
+    /**
+     * Day bucket, YYYY-MM-DD (UTC)
+     */
+    date: string;
+    /**
+     * Messages sent that day
+     */
+    sent: number;
+    /**
+     * Messages sent that day that were opened
+     */
+    opened: number;
+    /**
+     * Messages sent that day that were clicked
+     */
+    clicked: number;
+};
+
+/**
+ * Selectable window for the analytics overview
+ */
+export const SiteAnalyticsRange = {
+    '7D': '7d',
+    '30D': '30d',
+    '90D': '90d'
+} as const;
+
+/**
+ * Selectable window for the analytics overview
+ */
+export type SiteAnalyticsRange = typeof SiteAnalyticsRange[keyof typeof SiteAnalyticsRange];
+
+/**
  * A workspace API token (secret shown only once, at creation)
  */
 export type SiteApiTokenResource = {
@@ -1120,6 +1246,38 @@ export type SiteUserUpdateMeResponses = {
 };
 
 export type SiteUserUpdateMeResponse = SiteUserUpdateMeResponses[keyof SiteUserUpdateMeResponses];
+
+export type SiteAnalyticsOverviewData = {
+    body?: never;
+    path: {
+        workspaceSlug: string;
+    };
+    query?: {
+        /**
+         * Window to aggregate over (defaults to 30d)
+         */
+        range?: SiteAnalyticsRange;
+    };
+    url: '/w/{workspaceSlug}/analytics/overview';
+};
+
+export type SiteAnalyticsOverviewErrors = {
+    /**
+     * RFC 7807 not found response
+     */
+    404: ProblemDetails;
+};
+
+export type SiteAnalyticsOverviewError = SiteAnalyticsOverviewErrors[keyof SiteAnalyticsOverviewErrors];
+
+export type SiteAnalyticsOverviewResponses = {
+    /**
+     * The request has succeeded.
+     */
+    200: SiteAnalyticsOverview;
+};
+
+export type SiteAnalyticsOverviewResponse = SiteAnalyticsOverviewResponses[keyof SiteAnalyticsOverviewResponses];
 
 export type SiteAutomationsListData = {
     body?: never;

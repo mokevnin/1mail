@@ -19,8 +19,9 @@ import (
 // ContactUpdate is the builder for updating Contact entities.
 type ContactUpdate struct {
 	config
-	hooks    []Hook
-	mutation *ContactMutation
+	hooks     []Hook
+	mutation  *ContactMutation
+	modifiers []func(*sql.UpdateBuilder)
 }
 
 // Where appends a list predicates to the ContactUpdate builder.
@@ -219,6 +220,12 @@ func (_u *ContactUpdate) check() error {
 	return nil
 }
 
+// Modify adds a statement modifier for attaching custom logic to the UPDATE statement.
+func (_u *ContactUpdate) Modify(modifiers ...func(u *sql.UpdateBuilder)) *ContactUpdate {
+	_u.modifiers = append(_u.modifiers, modifiers...)
+	return _u
+}
+
 func (_u *ContactUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	if err := _u.check(); err != nil {
 		return _node, err
@@ -293,6 +300,7 @@ func (_u *ContactUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	_spec.AddModifiers(_u.modifiers...)
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{contact.Label}
@@ -308,9 +316,10 @@ func (_u *ContactUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 // ContactUpdateOne is the builder for updating a single Contact entity.
 type ContactUpdateOne struct {
 	config
-	fields   []string
-	hooks    []Hook
-	mutation *ContactMutation
+	fields    []string
+	hooks     []Hook
+	mutation  *ContactMutation
+	modifiers []func(*sql.UpdateBuilder)
 }
 
 // SetEmail sets the "email" field.
@@ -516,6 +525,12 @@ func (_u *ContactUpdateOne) check() error {
 	return nil
 }
 
+// Modify adds a statement modifier for attaching custom logic to the UPDATE statement.
+func (_u *ContactUpdateOne) Modify(modifiers ...func(u *sql.UpdateBuilder)) *ContactUpdateOne {
+	_u.modifiers = append(_u.modifiers, modifiers...)
+	return _u
+}
+
 func (_u *ContactUpdateOne) sqlSave(ctx context.Context) (_node *Contact, err error) {
 	if err := _u.check(); err != nil {
 		return _node, err
@@ -607,6 +622,7 @@ func (_u *ContactUpdateOne) sqlSave(ctx context.Context) (_node *Contact, err er
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	_spec.AddModifiers(_u.modifiers...)
 	_node = &Contact{config: _u.config}
 	_spec.Assign = _node.assignValues
 	_spec.ScanValues = _node.scanValues

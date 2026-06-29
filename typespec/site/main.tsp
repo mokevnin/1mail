@@ -17,6 +17,7 @@ import "./resources/broadcasts.tsp";
 import "./resources/templates.tsp";
 import "./resources/automations.tsp";
 import "./resources/webhooks.tsp";
+import "./resources/analytics.tsp";
 
 using TypeSpec.OpenAPI;
 using TypeSpec.Http;

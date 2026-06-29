@@ -22,6 +22,70 @@ export const zProblemDetails = z.object({
 });
 
 /**
+ * Automation counts (point-in-time snapshot)
+ */
+export const zSiteAnalyticsAutomations = z.object({
+    total: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
+    active: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
+    runsActive: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
+    runsCompleted: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' })
+});
+
+/**
+ * Current contact counts (point-in-time snapshot, not range-scoped)
+ */
+export const zSiteAnalyticsContacts = z.object({
+    total: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
+    active: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
+    unsubscribed: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
+    newInRange: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' })
+});
+
+/**
+ * Email engagement for the messages sent in the selected range (the send
+ * cohort), from delivery logs. Opens/clicks are counted among that cohort, so
+ * the counts reconcile and the rates stay in [0,1].
+ */
+export const zSiteAnalyticsEmail = z.object({
+    sentCount: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
+    openedCount: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
+    clickedCount: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
+    openRate: z.number(),
+    clickRate: z.number(),
+    clickToOpenRate: z.number()
+});
+
+/**
+ * One UTC send-day of the cohort, zero-filled across the range. Opened/clicked
+ * count the messages sent that day that were later opened/clicked.
+ */
+export const zSiteAnalyticsPoint = z.object({
+    date: z.string(),
+    sent: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
+    opened: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
+    clicked: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' })
+});
+
+/**
+ * Workspace analytics overview powering the dashboard
+ */
+export const zSiteAnalyticsOverview = z.object({
+    contacts: zSiteAnalyticsContacts,
+    email: zSiteAnalyticsEmail,
+    automations: zSiteAnalyticsAutomations,
+    timeseries: z.array(zSiteAnalyticsPoint)
+});
+
+/**
+ * Selectable window for the analytics overview
+ */
+export const zSiteAnalyticsRange = z.enum([
+    '7d',
+    '30d',
+    '90d'
+]);
+
+/**
  * Automation lifecycle status
  */
 export const zSiteAutomationStatus = z.enum(['draft', 'active']);
@@ -575,6 +639,19 @@ export const zSiteUserUpdateMeBody = zSiteUpdateMeInput;
  * The request has succeeded.
  */
 export const zSiteUserUpdateMeResponse = zSiteUserResource;
+
+export const zSiteAnalyticsOverviewPath = z.object({
+    workspaceSlug: z.string()
+});
+
+export const zSiteAnalyticsOverviewQuery = z.object({
+    range: zSiteAnalyticsRange.optional()
+});
+
+/**
+ * The request has succeeded.
+ */
+export const zSiteAnalyticsOverviewResponse = zSiteAnalyticsOverview;
 
 export const zSiteAutomationsListPath = z.object({
     workspaceSlug: z.string()

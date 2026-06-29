@@ -202,6 +202,11 @@ var (
 				Unique:  false,
 				Columns: []*schema.Column{BroadcastRecipientsColumns[9]},
 			},
+			{
+				Name:    "broadcastrecipient_workspace_id_sent_at",
+				Unique:  false,
+				Columns: []*schema.Column{BroadcastRecipientsColumns[10], BroadcastRecipientsColumns[4]},
+			},
 		},
 	}
 	// ContactsColumns holds the columns for the "contacts" table.

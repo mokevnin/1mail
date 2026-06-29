@@ -12,6 +12,7 @@ import { router } from './router.tsx'
 client.setConfig({ baseUrl: '/site' })
 
 import '@mantine/core/styles.css'
+import '@mantine/charts/styles.css'
 import '@mantine/notifications/styles.css'
 import 'mantine-datatable/styles.css'
 // Structural layout only; the Mantine compat package handles the visuals.

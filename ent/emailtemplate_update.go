@@ -19,8 +19,9 @@ import (
 // EmailTemplateUpdate is the builder for updating EmailTemplate entities.
 type EmailTemplateUpdate struct {
 	config
-	hooks    []Hook
-	mutation *EmailTemplateMutation
+	hooks     []Hook
+	mutation  *EmailTemplateMutation
+	modifiers []func(*sql.UpdateBuilder)
 }
 
 // Where appends a list predicates to the EmailTemplateUpdate builder.
@@ -156,6 +157,12 @@ func (_u *EmailTemplateUpdate) check() error {
 	return nil
 }
 
+// Modify adds a statement modifier for attaching custom logic to the UPDATE statement.
+func (_u *EmailTemplateUpdate) Modify(modifiers ...func(u *sql.UpdateBuilder)) *EmailTemplateUpdate {
+	_u.modifiers = append(_u.modifiers, modifiers...)
+	return _u
+}
+
 func (_u *EmailTemplateUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	if err := _u.check(); err != nil {
 		return _node, err
@@ -209,6 +216,7 @@ func (_u *EmailTemplateUpdate) sqlSave(ctx context.Context) (_node int, err erro
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	_spec.AddModifiers(_u.modifiers...)
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{emailtemplate.Label}
@@ -224,9 +232,10 @@ func (_u *EmailTemplateUpdate) sqlSave(ctx context.Context) (_node int, err erro
 // EmailTemplateUpdateOne is the builder for updating a single EmailTemplate entity.
 type EmailTemplateUpdateOne struct {
 	config
-	fields   []string
-	hooks    []Hook
-	mutation *EmailTemplateMutation
+	fields    []string
+	hooks     []Hook
+	mutation  *EmailTemplateMutation
+	modifiers []func(*sql.UpdateBuilder)
 }
 
 // SetName sets the "name" field.
@@ -369,6 +378,12 @@ func (_u *EmailTemplateUpdateOne) check() error {
 	return nil
 }
 
+// Modify adds a statement modifier for attaching custom logic to the UPDATE statement.
+func (_u *EmailTemplateUpdateOne) Modify(modifiers ...func(u *sql.UpdateBuilder)) *EmailTemplateUpdateOne {
+	_u.modifiers = append(_u.modifiers, modifiers...)
+	return _u
+}
+
 func (_u *EmailTemplateUpdateOne) sqlSave(ctx context.Context) (_node *EmailTemplate, err error) {
 	if err := _u.check(); err != nil {
 		return _node, err
@@ -439,6 +454,7 @@ func (_u *EmailTemplateUpdateOne) sqlSave(ctx context.Context) (_node *EmailTemp
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	_spec.AddModifiers(_u.modifiers...)
 	_node = &EmailTemplate{config: _u.config}
 	_spec.Assign = _node.assignValues
 	_spec.ScanValues = _node.scanValues

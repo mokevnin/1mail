@@ -14,6 +14,139 @@ import (
 	"github.com/ogen-go/ogen/validate"
 )
 
+// SiteAnalyticsOverviewParams is parameters of SiteAnalytics_overview operation.
+type SiteAnalyticsOverviewParams struct {
+	WorkspaceSlug string
+	// Window to aggregate over (defaults to 30d).
+	Range OptSiteAnalyticsRange `json:",omitempty,omitzero"`
+}
+
+func unpackSiteAnalyticsOverviewParams(packed middleware.Parameters) (params SiteAnalyticsOverviewParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "workspaceSlug",
+			In:   "path",
+		}
+		params.WorkspaceSlug = packed[key].(string)
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "range",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.Range = v.(OptSiteAnalyticsRange)
+		}
+	}
+	return params
+}
+
+func decodeSiteAnalyticsOverviewParams(args [1]string, argsEscaped bool, r *http.Request) (params SiteAnalyticsOverviewParams, _ error) {
+	q := uri.NewQueryDecoder(r.URL.Query())
+	// Decode path: workspaceSlug.
+	if err := func() error {
+		param := args[0]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[0])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "workspaceSlug",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToString(val)
+				if err != nil {
+					return err
+				}
+
+				params.WorkspaceSlug = c
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "workspaceSlug",
+			In:   "path",
+			Err:  err,
+		}
+	}
+	// Decode query: range.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "range",
+			Style:   uri.QueryStyleForm,
+			Explode: false,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotRangeVal SiteAnalyticsRange
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotRangeVal = SiteAnalyticsRange(c)
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.Range.SetTo(paramsDotRangeVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if value, ok := params.Range.Get(); ok {
+					if err := func() error {
+						if err := value.Validate(); err != nil {
+							return err
+						}
+						return nil
+					}(); err != nil {
+						return err
+					}
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "range",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
 // SiteAutomationsActivateParams is parameters of SiteAutomations_activate operation.
 type SiteAutomationsActivateParams struct {
 	WorkspaceSlug string

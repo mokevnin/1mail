@@ -20,8 +20,9 @@ import (
 // WebhookEndpointUpdate is the builder for updating WebhookEndpoint entities.
 type WebhookEndpointUpdate struct {
 	config
-	hooks    []Hook
-	mutation *WebhookEndpointMutation
+	hooks     []Hook
+	mutation  *WebhookEndpointMutation
+	modifiers []func(*sql.UpdateBuilder)
 }
 
 // Where appends a list predicates to the WebhookEndpointUpdate builder.
@@ -175,6 +176,12 @@ func (_u *WebhookEndpointUpdate) check() error {
 	return nil
 }
 
+// Modify adds a statement modifier for attaching custom logic to the UPDATE statement.
+func (_u *WebhookEndpointUpdate) Modify(modifiers ...func(u *sql.UpdateBuilder)) *WebhookEndpointUpdate {
+	_u.modifiers = append(_u.modifiers, modifiers...)
+	return _u
+}
+
 func (_u *WebhookEndpointUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	if err := _u.check(); err != nil {
 		return _node, err
@@ -239,6 +246,7 @@ func (_u *WebhookEndpointUpdate) sqlSave(ctx context.Context) (_node int, err er
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	_spec.AddModifiers(_u.modifiers...)
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{webhookendpoint.Label}
@@ -254,9 +262,10 @@ func (_u *WebhookEndpointUpdate) sqlSave(ctx context.Context) (_node int, err er
 // WebhookEndpointUpdateOne is the builder for updating a single WebhookEndpoint entity.
 type WebhookEndpointUpdateOne struct {
 	config
-	fields   []string
-	hooks    []Hook
-	mutation *WebhookEndpointMutation
+	fields    []string
+	hooks     []Hook
+	mutation  *WebhookEndpointMutation
+	modifiers []func(*sql.UpdateBuilder)
 }
 
 // SetURL sets the "url" field.
@@ -417,6 +426,12 @@ func (_u *WebhookEndpointUpdateOne) check() error {
 	return nil
 }
 
+// Modify adds a statement modifier for attaching custom logic to the UPDATE statement.
+func (_u *WebhookEndpointUpdateOne) Modify(modifiers ...func(u *sql.UpdateBuilder)) *WebhookEndpointUpdateOne {
+	_u.modifiers = append(_u.modifiers, modifiers...)
+	return _u
+}
+
 func (_u *WebhookEndpointUpdateOne) sqlSave(ctx context.Context) (_node *WebhookEndpoint, err error) {
 	if err := _u.check(); err != nil {
 		return _node, err
@@ -498,6 +513,7 @@ func (_u *WebhookEndpointUpdateOne) sqlSave(ctx context.Context) (_node *Webhook
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	_spec.AddModifiers(_u.modifiers...)
 	_node = &WebhookEndpoint{config: _u.config}
 	_spec.Assign = _node.assignValues
 	_spec.ScanValues = _node.scanValues

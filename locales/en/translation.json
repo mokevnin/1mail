@@ -48,6 +48,46 @@
     "templateSaveErrorTitle": "Failed to save template",
     "testSendErrorTitle": "Failed to send test"
   },
+  "analytics": {
+    "automations": {
+      "active": "Active",
+      "runsActive": "Active runs",
+      "runsCompleted": "Completed runs",
+      "total": "Total"
+    },
+    "contacts": {
+      "active": "Active",
+      "empty": "No contacts yet",
+      "newInRange": "New in range",
+      "total": "Total",
+      "unsubscribed": "Unsubscribed"
+    },
+    "email": {
+      "clicked": "Clicked",
+      "clickRate": "Click rate",
+      "clickToOpenRate": "Click-to-open",
+      "opened": "Opened",
+      "openRate": "Open rate",
+      "rangeNote": "Aggregated over the selected window, from delivery logs.",
+      "sent": "Sent"
+    },
+    "loadError": "Failed to load analytics",
+    "range": {
+      "30d": "Last 30 days",
+      "7d": "Last 7 days",
+      "90d": "Last 90 days"
+    },
+    "sections": {
+      "automations": "Automations",
+      "contacts": "Contacts",
+      "email": "Email engagement"
+    },
+    "series": {
+      "clicked": "Clicked",
+      "opened": "Opened",
+      "sent": "Sent"
+    }
+  },
   "automations": {
     "activate": "Activate",
     "addAutomation": "New automation",
@@ -194,7 +234,6 @@
     "testSent": "Test email sent"
   },
   "overview": {
-    "comingSoon": "More metrics coming soon",
     "contactsCount": "Contacts",
     "title": "Overview",
     "viewActivity": "View activity",

@@ -40,6 +40,9 @@
     },
     {
       "name": "Site Webhooks"
+    },
+    {
+      "name": "Site Analytics"
     }
   ],
   "paths": {
@@ -209,6 +212,55 @@
             }
           }
         }
+      }
+    },
+    "/w/{workspaceSlug}/analytics/overview": {
+      "get": {
+        "operationId": "SiteAnalytics_overview",
+        "description": "Aggregate metrics for the workspace dashboard",
+        "parameters": [
+          {
+            "name": "workspaceSlug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "range",
+            "in": "query",
+            "required": false,
+            "description": "Window to aggregate over (defaults to 30d)",
+            "schema": {
+              "$ref": "#/components/schemas/SiteAnalyticsRange"
+            },
+            "explode": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request has succeeded.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SiteAnalyticsOverview"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "RFC 7807 not found response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Site Analytics"]
       }
     },
     "/w/{workspaceSlug}/automations": {
@@ -3400,6 +3452,158 @@
           }
         },
         "description": "RFC 7807 Problem Details"
+      },
+      "SiteAnalyticsAutomations": {
+        "type": "object",
+        "required": ["total", "active", "runsActive", "runsCompleted"],
+        "properties": {
+          "total": {
+            "type": "integer",
+            "format": "int32",
+            "description": "All automations in the workspace"
+          },
+          "active": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Automations with status = active"
+          },
+          "runsActive": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Runs currently in progress"
+          },
+          "runsCompleted": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Runs that have completed"
+          }
+        },
+        "description": "Automation counts (point-in-time snapshot)"
+      },
+      "SiteAnalyticsContacts": {
+        "type": "object",
+        "required": ["total", "active", "unsubscribed", "newInRange"],
+        "properties": {
+          "total": {
+            "type": "integer",
+            "format": "int32",
+            "description": "All contacts in the workspace"
+          },
+          "active": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Contacts with status = active"
+          },
+          "unsubscribed": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Contacts with status = unsubscribed"
+          },
+          "newInRange": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Contacts created within the selected range"
+          }
+        },
+        "description": "Current contact counts (point-in-time snapshot, not range-scoped)"
+      },
+      "SiteAnalyticsEmail": {
+        "type": "object",
+        "required": [
+          "sentCount",
+          "openedCount",
+          "clickedCount",
+          "openRate",
+          "clickRate",
+          "clickToOpenRate"
+        ],
+        "properties": {
+          "sentCount": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Messages sent within the range"
+          },
+          "openedCount": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Messages sent in the range that were opened"
+          },
+          "clickedCount": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Messages sent in the range that were clicked"
+          },
+          "openRate": {
+            "type": "number",
+            "format": "float",
+            "description": "Opened ÷ sent (0–1)"
+          },
+          "clickRate": {
+            "type": "number",
+            "format": "float",
+            "description": "Clicked ÷ sent (0–1)"
+          },
+          "clickToOpenRate": {
+            "type": "number",
+            "format": "float",
+            "description": "Clicked ÷ opened (0–1)"
+          }
+        },
+        "description": "Email engagement for the messages sent in the selected range (the send\ncohort), from delivery logs. Opens/clicks are counted among that cohort, so\nthe counts reconcile and the rates stay in [0,1]."
+      },
+      "SiteAnalyticsOverview": {
+        "type": "object",
+        "required": ["contacts", "email", "automations", "timeseries"],
+        "properties": {
+          "contacts": {
+            "$ref": "#/components/schemas/SiteAnalyticsContacts"
+          },
+          "email": {
+            "$ref": "#/components/schemas/SiteAnalyticsEmail"
+          },
+          "automations": {
+            "$ref": "#/components/schemas/SiteAnalyticsAutomations"
+          },
+          "timeseries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SiteAnalyticsPoint"
+            },
+            "description": "Daily engagement series, oldest first, one point per day in the range"
+          }
+        },
+        "description": "Workspace analytics overview powering the dashboard"
+      },
+      "SiteAnalyticsPoint": {
+        "type": "object",
+        "required": ["date", "sent", "opened", "clicked"],
+        "properties": {
+          "date": {
+            "type": "string",
+            "description": "Day bucket, YYYY-MM-DD (UTC)"
+          },
+          "sent": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Messages sent that day"
+          },
+          "opened": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Messages sent that day that were opened"
+          },
+          "clicked": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Messages sent that day that were clicked"
+          }
+        },
+        "description": "One UTC send-day of the cohort, zero-filled across the range. Opened/clicked\ncount the messages sent that day that were later opened/clicked."
+      },
+      "SiteAnalyticsRange": {
+        "type": "string",
+        "enum": ["7d", "30d", "90d"],
+        "description": "Selectable window for the analytics overview"
       },
       "SiteApiTokenResource": {
         "type": "object",

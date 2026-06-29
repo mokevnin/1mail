@@ -77,5 +77,8 @@ func (BroadcastRecipient) Indexes() []ent.Index {
 			Unique().
 			StorageKey("broadcast_recipients_broadcast_id_contact_id"),
 		index.Fields("broadcast_id"),
+		// Supports the workspace analytics dashboard, which scans recipients by
+		// workspace + delivery time for engagement aggregates and time series.
+		index.Fields("workspace_id", "sent_at"),
 	}
 }

@@ -20,8 +20,9 @@ import (
 // TrackingVisitorUpdate is the builder for updating TrackingVisitor entities.
 type TrackingVisitorUpdate struct {
 	config
-	hooks    []Hook
-	mutation *TrackingVisitorMutation
+	hooks     []Hook
+	mutation  *TrackingVisitorMutation
+	modifiers []func(*sql.UpdateBuilder)
 }
 
 // Where appends a list predicates to the TrackingVisitorUpdate builder.
@@ -174,6 +175,12 @@ func (_u *TrackingVisitorUpdate) check() error {
 	return nil
 }
 
+// Modify adds a statement modifier for attaching custom logic to the UPDATE statement.
+func (_u *TrackingVisitorUpdate) Modify(modifiers ...func(u *sql.UpdateBuilder)) *TrackingVisitorUpdate {
+	_u.modifiers = append(_u.modifiers, modifiers...)
+	return _u
+}
+
 func (_u *TrackingVisitorUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	if err := _u.check(); err != nil {
 		return _node, err
@@ -253,6 +260,7 @@ func (_u *TrackingVisitorUpdate) sqlSave(ctx context.Context) (_node int, err er
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	_spec.AddModifiers(_u.modifiers...)
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{trackingvisitor.Label}
@@ -268,9 +276,10 @@ func (_u *TrackingVisitorUpdate) sqlSave(ctx context.Context) (_node int, err er
 // TrackingVisitorUpdateOne is the builder for updating a single TrackingVisitor entity.
 type TrackingVisitorUpdateOne struct {
 	config
-	fields   []string
-	hooks    []Hook
-	mutation *TrackingVisitorMutation
+	fields    []string
+	hooks     []Hook
+	mutation  *TrackingVisitorMutation
+	modifiers []func(*sql.UpdateBuilder)
 }
 
 // SetVisitorID sets the "visitor_id" field.
@@ -430,6 +439,12 @@ func (_u *TrackingVisitorUpdateOne) check() error {
 	return nil
 }
 
+// Modify adds a statement modifier for attaching custom logic to the UPDATE statement.
+func (_u *TrackingVisitorUpdateOne) Modify(modifiers ...func(u *sql.UpdateBuilder)) *TrackingVisitorUpdateOne {
+	_u.modifiers = append(_u.modifiers, modifiers...)
+	return _u
+}
+
 func (_u *TrackingVisitorUpdateOne) sqlSave(ctx context.Context) (_node *TrackingVisitor, err error) {
 	if err := _u.check(); err != nil {
 		return _node, err
@@ -526,6 +541,7 @@ func (_u *TrackingVisitorUpdateOne) sqlSave(ctx context.Context) (_node *Trackin
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	_spec.AddModifiers(_u.modifiers...)
 	_node = &TrackingVisitor{config: _u.config}
 	_spec.Assign = _node.assignValues
 	_spec.ScanValues = _node.scanValues

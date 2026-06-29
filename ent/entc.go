@@ -18,6 +18,9 @@ func main() {
 		Features: []gen.Feature{
 			gen.FeatureSnapshot,
 			gen.FeatureUpsert,
+			// Modifier exposes .Modify() on query builders, used by the analytics
+			// dashboard for date_trunc day-bucketed engagement aggregates.
+			gen.FeatureModifier,
 		},
 	})
 	if err != nil {

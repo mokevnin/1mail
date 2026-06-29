@@ -8,6 +8,12 @@ import (
 
 // Handler handles operations described by OpenAPI v3 specification.
 type Handler interface {
+	// SiteAnalyticsOverview implements SiteAnalytics_overview operation.
+	//
+	// Aggregate metrics for the workspace dashboard.
+	//
+	// GET /w/{workspaceSlug}/analytics/overview
+	SiteAnalyticsOverview(ctx context.Context, params SiteAnalyticsOverviewParams) (SiteAnalyticsOverviewRes, error)
 	// SiteAuthDirectLogin implements SiteAuth_directLogin operation.
 	//
 	// POST /auth/direct/login

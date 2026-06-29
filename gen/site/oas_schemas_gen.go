@@ -902,6 +902,52 @@ func (o OptProblemDetailsFields) Or(d ProblemDetailsFields) ProblemDetailsFields
 	return d
 }
 
+// NewOptSiteAnalyticsRange returns new OptSiteAnalyticsRange with value set to v.
+func NewOptSiteAnalyticsRange(v SiteAnalyticsRange) OptSiteAnalyticsRange {
+	return OptSiteAnalyticsRange{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptSiteAnalyticsRange is optional SiteAnalyticsRange.
+type OptSiteAnalyticsRange struct {
+	Value SiteAnalyticsRange
+	Set   bool
+}
+
+// IsSet returns true if OptSiteAnalyticsRange was set.
+func (o OptSiteAnalyticsRange) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptSiteAnalyticsRange) Reset() {
+	var v SiteAnalyticsRange
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptSiteAnalyticsRange) SetTo(v SiteAnalyticsRange) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptSiteAnalyticsRange) Get() (v SiteAnalyticsRange, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptSiteAnalyticsRange) Or(d SiteAnalyticsRange) SiteAnalyticsRange {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
 // NewOptSiteContactStatus returns new OptSiteContactStatus with value set to v.
 func NewOptSiteContactStatus(v SiteContactStatus) OptSiteContactStatus {
 	return OptSiteContactStatus{
@@ -1187,11 +1233,12 @@ func (s *ProblemDetails) SetFields(val OptProblemDetailsFields) {
 	s.Fields = val
 }
 
-func (*ProblemDetails) siteAuthDirectLoginRes()  {}
-func (*ProblemDetails) siteEventsActionsRes()    {}
-func (*ProblemDetails) siteEventsListRes()       {}
-func (*ProblemDetails) siteIntegrationsListRes() {}
-func (*ProblemDetails) siteTokensListRes()       {}
+func (*ProblemDetails) siteAnalyticsOverviewRes() {}
+func (*ProblemDetails) siteAuthDirectLoginRes()   {}
+func (*ProblemDetails) siteEventsActionsRes()     {}
+func (*ProblemDetails) siteEventsListRes()        {}
+func (*ProblemDetails) siteIntegrationsListRes()  {}
+func (*ProblemDetails) siteTokensListRes()        {}
 
 // Validation errors grouped by field.
 type ProblemDetailsErrors map[string][]string
@@ -1215,6 +1262,346 @@ func (s *ProblemDetailsFields) init() ProblemDetailsFields {
 		*s = m
 	}
 	return m
+}
+
+// Automation counts (point-in-time snapshot).
+// Ref: #/components/schemas/SiteAnalyticsAutomations
+type SiteAnalyticsAutomations struct {
+	// All automations in the workspace.
+	Total int32 `json:"total"`
+	// Automations with status = active.
+	Active int32 `json:"active"`
+	// Runs currently in progress.
+	RunsActive int32 `json:"runsActive"`
+	// Runs that have completed.
+	RunsCompleted int32 `json:"runsCompleted"`
+}
+
+// GetTotal returns the value of Total.
+func (s *SiteAnalyticsAutomations) GetTotal() int32 {
+	return s.Total
+}
+
+// GetActive returns the value of Active.
+func (s *SiteAnalyticsAutomations) GetActive() int32 {
+	return s.Active
+}
+
+// GetRunsActive returns the value of RunsActive.
+func (s *SiteAnalyticsAutomations) GetRunsActive() int32 {
+	return s.RunsActive
+}
+
+// GetRunsCompleted returns the value of RunsCompleted.
+func (s *SiteAnalyticsAutomations) GetRunsCompleted() int32 {
+	return s.RunsCompleted
+}
+
+// SetTotal sets the value of Total.
+func (s *SiteAnalyticsAutomations) SetTotal(val int32) {
+	s.Total = val
+}
+
+// SetActive sets the value of Active.
+func (s *SiteAnalyticsAutomations) SetActive(val int32) {
+	s.Active = val
+}
+
+// SetRunsActive sets the value of RunsActive.
+func (s *SiteAnalyticsAutomations) SetRunsActive(val int32) {
+	s.RunsActive = val
+}
+
+// SetRunsCompleted sets the value of RunsCompleted.
+func (s *SiteAnalyticsAutomations) SetRunsCompleted(val int32) {
+	s.RunsCompleted = val
+}
+
+// Current contact counts (point-in-time snapshot, not range-scoped).
+// Ref: #/components/schemas/SiteAnalyticsContacts
+type SiteAnalyticsContacts struct {
+	// All contacts in the workspace.
+	Total int32 `json:"total"`
+	// Contacts with status = active.
+	Active int32 `json:"active"`
+	// Contacts with status = unsubscribed.
+	Unsubscribed int32 `json:"unsubscribed"`
+	// Contacts created within the selected range.
+	NewInRange int32 `json:"newInRange"`
+}
+
+// GetTotal returns the value of Total.
+func (s *SiteAnalyticsContacts) GetTotal() int32 {
+	return s.Total
+}
+
+// GetActive returns the value of Active.
+func (s *SiteAnalyticsContacts) GetActive() int32 {
+	return s.Active
+}
+
+// GetUnsubscribed returns the value of Unsubscribed.
+func (s *SiteAnalyticsContacts) GetUnsubscribed() int32 {
+	return s.Unsubscribed
+}
+
+// GetNewInRange returns the value of NewInRange.
+func (s *SiteAnalyticsContacts) GetNewInRange() int32 {
+	return s.NewInRange
+}
+
+// SetTotal sets the value of Total.
+func (s *SiteAnalyticsContacts) SetTotal(val int32) {
+	s.Total = val
+}
+
+// SetActive sets the value of Active.
+func (s *SiteAnalyticsContacts) SetActive(val int32) {
+	s.Active = val
+}
+
+// SetUnsubscribed sets the value of Unsubscribed.
+func (s *SiteAnalyticsContacts) SetUnsubscribed(val int32) {
+	s.Unsubscribed = val
+}
+
+// SetNewInRange sets the value of NewInRange.
+func (s *SiteAnalyticsContacts) SetNewInRange(val int32) {
+	s.NewInRange = val
+}
+
+// Email engagement for the messages sent in the selected range (the send cohort), from delivery logs.
+// Opens/clicks are counted among that cohort, so the counts reconcile and the rates stay in [0,1].
+// Ref: #/components/schemas/SiteAnalyticsEmail
+type SiteAnalyticsEmail struct {
+	// Messages sent within the range.
+	SentCount int32 `json:"sentCount"`
+	// Messages sent in the range that were opened.
+	OpenedCount int32 `json:"openedCount"`
+	// Messages sent in the range that were clicked.
+	ClickedCount int32 `json:"clickedCount"`
+	// Opened ÷ sent (0–1).
+	OpenRate float32 `json:"openRate"`
+	// Clicked ÷ sent (0–1).
+	ClickRate float32 `json:"clickRate"`
+	// Clicked ÷ opened (0–1).
+	ClickToOpenRate float32 `json:"clickToOpenRate"`
+}
+
+// GetSentCount returns the value of SentCount.
+func (s *SiteAnalyticsEmail) GetSentCount() int32 {
+	return s.SentCount
+}
+
+// GetOpenedCount returns the value of OpenedCount.
+func (s *SiteAnalyticsEmail) GetOpenedCount() int32 {
+	return s.OpenedCount
+}
+
+// GetClickedCount returns the value of ClickedCount.
+func (s *SiteAnalyticsEmail) GetClickedCount() int32 {
+	return s.ClickedCount
+}
+
+// GetOpenRate returns the value of OpenRate.
+func (s *SiteAnalyticsEmail) GetOpenRate() float32 {
+	return s.OpenRate
+}
+
+// GetClickRate returns the value of ClickRate.
+func (s *SiteAnalyticsEmail) GetClickRate() float32 {
+	return s.ClickRate
+}
+
+// GetClickToOpenRate returns the value of ClickToOpenRate.
+func (s *SiteAnalyticsEmail) GetClickToOpenRate() float32 {
+	return s.ClickToOpenRate
+}
+
+// SetSentCount sets the value of SentCount.
+func (s *SiteAnalyticsEmail) SetSentCount(val int32) {
+	s.SentCount = val
+}
+
+// SetOpenedCount sets the value of OpenedCount.
+func (s *SiteAnalyticsEmail) SetOpenedCount(val int32) {
+	s.OpenedCount = val
+}
+
+// SetClickedCount sets the value of ClickedCount.
+func (s *SiteAnalyticsEmail) SetClickedCount(val int32) {
+	s.ClickedCount = val
+}
+
+// SetOpenRate sets the value of OpenRate.
+func (s *SiteAnalyticsEmail) SetOpenRate(val float32) {
+	s.OpenRate = val
+}
+
+// SetClickRate sets the value of ClickRate.
+func (s *SiteAnalyticsEmail) SetClickRate(val float32) {
+	s.ClickRate = val
+}
+
+// SetClickToOpenRate sets the value of ClickToOpenRate.
+func (s *SiteAnalyticsEmail) SetClickToOpenRate(val float32) {
+	s.ClickToOpenRate = val
+}
+
+// Workspace analytics overview powering the dashboard.
+// Ref: #/components/schemas/SiteAnalyticsOverview
+type SiteAnalyticsOverview struct {
+	Contacts    SiteAnalyticsContacts    `json:"contacts"`
+	Email       SiteAnalyticsEmail       `json:"email"`
+	Automations SiteAnalyticsAutomations `json:"automations"`
+	// Daily engagement series, oldest first, one point per day in the range.
+	Timeseries []SiteAnalyticsPoint `json:"timeseries"`
+}
+
+// GetContacts returns the value of Contacts.
+func (s *SiteAnalyticsOverview) GetContacts() SiteAnalyticsContacts {
+	return s.Contacts
+}
+
+// GetEmail returns the value of Email.
+func (s *SiteAnalyticsOverview) GetEmail() SiteAnalyticsEmail {
+	return s.Email
+}
+
+// GetAutomations returns the value of Automations.
+func (s *SiteAnalyticsOverview) GetAutomations() SiteAnalyticsAutomations {
+	return s.Automations
+}
+
+// GetTimeseries returns the value of Timeseries.
+func (s *SiteAnalyticsOverview) GetTimeseries() []SiteAnalyticsPoint {
+	return s.Timeseries
+}
+
+// SetContacts sets the value of Contacts.
+func (s *SiteAnalyticsOverview) SetContacts(val SiteAnalyticsContacts) {
+	s.Contacts = val
+}
+
+// SetEmail sets the value of Email.
+func (s *SiteAnalyticsOverview) SetEmail(val SiteAnalyticsEmail) {
+	s.Email = val
+}
+
+// SetAutomations sets the value of Automations.
+func (s *SiteAnalyticsOverview) SetAutomations(val SiteAnalyticsAutomations) {
+	s.Automations = val
+}
+
+// SetTimeseries sets the value of Timeseries.
+func (s *SiteAnalyticsOverview) SetTimeseries(val []SiteAnalyticsPoint) {
+	s.Timeseries = val
+}
+
+func (*SiteAnalyticsOverview) siteAnalyticsOverviewRes() {}
+
+// One UTC send-day of the cohort, zero-filled across the range. Opened/clicked count the messages sent
+// that day that were later opened/clicked.
+// Ref: #/components/schemas/SiteAnalyticsPoint
+type SiteAnalyticsPoint struct {
+	// Day bucket, YYYY-MM-DD (UTC).
+	Date string `json:"date"`
+	// Messages sent that day.
+	Sent int32 `json:"sent"`
+	// Messages sent that day that were opened.
+	Opened int32 `json:"opened"`
+	// Messages sent that day that were clicked.
+	Clicked int32 `json:"clicked"`
+}
+
+// GetDate returns the value of Date.
+func (s *SiteAnalyticsPoint) GetDate() string {
+	return s.Date
+}
+
+// GetSent returns the value of Sent.
+func (s *SiteAnalyticsPoint) GetSent() int32 {
+	return s.Sent
+}
+
+// GetOpened returns the value of Opened.
+func (s *SiteAnalyticsPoint) GetOpened() int32 {
+	return s.Opened
+}
+
+// GetClicked returns the value of Clicked.
+func (s *SiteAnalyticsPoint) GetClicked() int32 {
+	return s.Clicked
+}
+
+// SetDate sets the value of Date.
+func (s *SiteAnalyticsPoint) SetDate(val string) {
+	s.Date = val
+}
+
+// SetSent sets the value of Sent.
+func (s *SiteAnalyticsPoint) SetSent(val int32) {
+	s.Sent = val
+}
+
+// SetOpened sets the value of Opened.
+func (s *SiteAnalyticsPoint) SetOpened(val int32) {
+	s.Opened = val
+}
+
+// SetClicked sets the value of Clicked.
+func (s *SiteAnalyticsPoint) SetClicked(val int32) {
+	s.Clicked = val
+}
+
+// Selectable window for the analytics overview.
+// Ref: #/components/schemas/SiteAnalyticsRange
+type SiteAnalyticsRange string
+
+const (
+	SiteAnalyticsRange7d  SiteAnalyticsRange = "7d"
+	SiteAnalyticsRange30d SiteAnalyticsRange = "30d"
+	SiteAnalyticsRange90d SiteAnalyticsRange = "90d"
+)
+
+// AllValues returns all SiteAnalyticsRange values.
+func (SiteAnalyticsRange) AllValues() []SiteAnalyticsRange {
+	return []SiteAnalyticsRange{
+		SiteAnalyticsRange7d,
+		SiteAnalyticsRange30d,
+		SiteAnalyticsRange90d,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s SiteAnalyticsRange) MarshalText() ([]byte, error) {
+	switch s {
+	case SiteAnalyticsRange7d:
+		return []byte(s), nil
+	case SiteAnalyticsRange30d:
+		return []byte(s), nil
+	case SiteAnalyticsRange90d:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *SiteAnalyticsRange) UnmarshalText(data []byte) error {
+	switch SiteAnalyticsRange(data) {
+	case SiteAnalyticsRange7d:
+		*s = SiteAnalyticsRange7d
+		return nil
+	case SiteAnalyticsRange30d:
+		*s = SiteAnalyticsRange30d
+		return nil
+	case SiteAnalyticsRange90d:
+		*s = SiteAnalyticsRange90d
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
 }
 
 // A workspace API token (secret shown only once, at creation).

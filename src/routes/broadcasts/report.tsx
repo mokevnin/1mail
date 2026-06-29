@@ -1,18 +1,9 @@
-import {
-  Badge,
-  Card,
-  Group,
-  Loader,
-  NumberFormatter,
-  SimpleGrid,
-  Stack,
-  Text,
-  Title,
-} from '@mantine/core'
+import { Badge, Group, Loader, SimpleGrid, Stack, Text, Title } from '@mantine/core'
 import { useQuery } from '@tanstack/react-query'
 import type { TFunction } from 'i18next'
 import { useTranslation } from 'react-i18next'
 import { ApiErrorAlert } from '../../components/ApiErrorAlert.tsx'
+import { StatCard } from '../../components/StatCard.tsx'
 import { siteBroadcastsGetOptions } from '../../generated/site/@tanstack/react-query.gen.ts'
 import type { SiteBroadcastStats, SiteBroadcastStatus } from '../../generated/site/types.gen.ts'
 import { broadcastsReportRoute } from '../../router.tsx'
@@ -25,19 +16,6 @@ const STATUS_COLORS: Record<SiteBroadcastStatus, string> = {
   failed: 'red',
 }
 
-function StatCard({ label, value }: { label: string; value: number }) {
-  return (
-    <Card withBorder padding="md">
-      <Text size="xs" c="dimmed" tt="uppercase">
-        {label}
-      </Text>
-      <Text fw={700} size="xl">
-        {value}
-      </Text>
-    </Card>
-  )
-}
-
 function statEntries(t: TFunction, stats: SiteBroadcastStats): { label: string; value: number }[] {
   return [
     { label: t(($) => $.broadcasts.stats.recipients), value: stats.recipientsTotal },
@@ -47,19 +25,6 @@ function statEntries(t: TFunction, stats: SiteBroadcastStats): { label: string; 
     { label: t(($) => $.broadcasts.stats.unsubscribed), value: stats.unsubscribedCount },
     { label: t(($) => $.broadcasts.stats.failed), value: stats.failedCount },
   ]
-}
-
-function RateCard({ label, value }: { label: string; value: number }) {
-  return (
-    <Card withBorder padding="md">
-      <Text size="xs" c="dimmed" tt="uppercase">
-        {label}
-      </Text>
-      <Text fw={700} size="xl">
-        <NumberFormatter value={value * 100} suffix="%" decimalScale={1} />
-      </Text>
-    </Card>
-  )
 }
 
 function rateEntries(t: TFunction, stats: SiteBroadcastStats): { label: string; value: number }[] {
@@ -113,7 +78,7 @@ export function BroadcastReportPage() {
 
       <SimpleGrid cols={{ base: 2, sm: 3 }}>
         {rateEntries(t, broadcast.stats).map((entry) => (
-          <RateCard key={entry.label} label={entry.label} value={entry.value} />
+          <StatCard key={entry.label} label={entry.label} value={entry.value} percent />
         ))}
       </SimpleGrid>
     </Stack>

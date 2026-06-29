@@ -45,6 +45,7 @@
     "@electric-sql/pglite": "^0.5.3",
     "@jsonforms/core": "^3.8.0",
     "@jsonforms/react": "^3.8.0",
+    "@mantine/charts": "^9.4.1",
     "@mantine/core": "^9.4.0",
     "@mantine/form": "^9.4.0",
     "@mantine/hooks": "^9.4.0",
@@ -72,6 +73,7 @@
     "react-dom": "^19.2.7",
     "react-i18next": "^17.0.8",
     "react-querybuilder": "^8.20.2",
+    "recharts": "^3.9.0",
     "zod": "^4.4.3",
     "zustand": "^5.0.14"
   },
