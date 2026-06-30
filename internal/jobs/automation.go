@@ -14,6 +14,7 @@ import (
 	"github.com/mokevnin/1mail/ent/automationrun"
 	"github.com/mokevnin/1mail/internal/eligibility"
 	"github.com/mokevnin/1mail/internal/emailrender"
+	"github.com/mokevnin/1mail/internal/events"
 	"github.com/mokevnin/1mail/internal/messaging"
 	"github.com/mokevnin/1mail/internal/tracking"
 )
@@ -109,12 +110,13 @@ func (RunStepArgs) Kind() string { return "automation_run_step" }
 type RunStepWorker struct {
 	river.WorkerDefaults[RunStepArgs]
 	ent      *ent.Client
+	bus      *events.Bus
 	resolver SenderResolver
 	tracker  *tracking.Tracker
 }
 
 func (w *RunStepWorker) Work(ctx context.Context, job *river.Job[RunStepArgs]) error {
-	res, err := RunStep(ctx, w.ent, w.resolver, w.tracker, job.Args.RunID)
+	res, err := RunStep(ctx, w.ent, w.bus, w.resolver, w.tracker, job.Args.RunID)
 	if err != nil {
 		return err
 	}
@@ -141,7 +143,7 @@ type StepResult struct {
 // so a test can drive a whole automation by looping until Done. Email sends carry
 // an unsubscribe footer scoped to this automation (the tracker may be nil, e.g. in
 // tests that don't assert on it); open/click tracking is still broadcast-only.
-func RunStep(ctx context.Context, client *ent.Client, resolver SenderResolver, tracker *tracking.Tracker, runID int64) (StepResult, error) {
+func RunStep(ctx context.Context, client *ent.Client, bus *events.Bus, resolver SenderResolver, tracker *tracking.Tracker, runID int64) (StepResult, error) {
 	run, err := client.AutomationRun.Get(ctx, runID)
 	if err != nil {
 		return StepResult{}, fmt.Errorf("load run %d: %w", runID, err)
@@ -235,7 +237,24 @@ func RunStep(ctx context.Context, client *ent.Client, resolver SenderResolver, t
 			_, _ = run.Update().SetStatus(automationrun.StatusFailed).Save(ctx)
 			return StepResult{}, fmt.Errorf("send: %w", err)
 		}
-		if _, err := run.Update().SetCurrentStep(run.CurrentStep + 1).ClearResumeAt().Save(ctx); err != nil {
+		// Advance the enrollment + publish email.sent atomically (transactional
+		// outbox), so the send fact lands in the Event log alongside broadcast sends
+		// (Events are the source of truth). The deterministic DedupID (run + step)
+		// makes persist idempotent if the step is retried after a send.
+		sentStep := run.CurrentStep
+		if err := bus.WithinTx(ctx, func(tx *ent.Client, pub events.Publisher) error {
+			if _, err := tx.AutomationRun.UpdateOneID(run.ID).
+				SetCurrentStep(sentStep + 1).ClearResumeAt().Save(ctx); err != nil {
+				return err
+			}
+			return pub.Publish(ctx, &events.EmailEngagement{
+				Action:      events.NameEmailSent,
+				WorkspaceID: run.WorkspaceID,
+				ContactID:   run.ContactID,
+				Email:       *c.Email,
+				DedupID:     fmt.Sprintf("email.sent:automation:%d:%d", run.ID, sentStep),
+			})
+		}); err != nil {
 			return StepResult{}, err
 		}
 		return StepResult{}, nil // continue immediately

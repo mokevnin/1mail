@@ -2,6 +2,7 @@ package jobs_test
 
 import (
 	"context"
+	"strconv"
 	"testing"
 
 	"github.com/mokevnin/1mail/ent/broadcast"
@@ -65,7 +66,7 @@ func TestSendBroadcastDeliversToEligibleContacts(t *testing.T) {
 	require.NoError(t, err)
 
 	fs := &fakeSender{}
-	require.NoError(t, jobs.SendBroadcast(ctx, env.DB, fakeResolver{sender: fs}, tracking.New("test-secret", "http://local"), b.ID))
+	require.NoError(t, jobs.SendBroadcast(ctx, env.DB, env.Bus, fakeResolver{sender: fs}, tracking.New("test-secret", "http://local"), b.ID))
 
 	// One message per eligible contact, with merge tags rendered (no raw braces).
 	assert.Len(t, fs.sent, eligibleCount)
@@ -93,6 +94,26 @@ func TestSendBroadcastDeliversToEligibleContacts(t *testing.T) {
 	for _, r := range recs {
 		assert.Equal(t, broadcastrecipient.StatusSent, r.Status)
 	}
+
+	// Each send publishes an email.sent event onto the transactional outbox, so the
+	// send fact reaches the Event log (Events are the source of truth; persist runs
+	// off the bus, not under txdb — projection is covered by the events tests). One
+	// per sent recipient, no more (exactly-once).
+	assert.Equal(t, eligibleCount, countOutboxEvents(t, env, "email.sent", b.ID))
+}
+
+// countOutboxEvents returns how many events of the given name for the given
+// broadcast sit in the transactional outbox.
+func countOutboxEvents(t *testing.T, env *testhelper.TestEnv, name string, broadcastID int64) int {
+	t.Helper()
+	var n int
+	err := env.SQLDB.QueryRow(
+		`SELECT count(*) FROM watermill_domain_events
+		   WHERE payload->>'name' = $1 AND payload->'data'->>'broadcastId' = $2`,
+		name, strconv.FormatInt(broadcastID, 10),
+	).Scan(&n)
+	require.NoError(t, err)
+	return n
 }
 
 // Suppressed addresses are skipped: no message, no recipient row, and the
@@ -130,7 +151,7 @@ func TestSendBroadcastSkipsSuppressed(t *testing.T) {
 	require.NoError(t, err)
 
 	fs := &fakeSender{}
-	require.NoError(t, jobs.SendBroadcast(ctx, env.DB, fakeResolver{sender: fs}, tracking.New("s", "http://local"), b.ID))
+	require.NoError(t, jobs.SendBroadcast(ctx, env.DB, env.Bus, fakeResolver{sender: fs}, tracking.New("s", "http://local"), b.ID))
 
 	// alice gets no message.
 	for _, m := range fs.sent {
@@ -177,7 +198,7 @@ func TestSendBroadcastSkipsUnsubscribedFromEverything(t *testing.T) {
 	require.NoError(t, err)
 
 	fs := &fakeSender{}
-	require.NoError(t, jobs.SendBroadcast(ctx, env.DB, fakeResolver{sender: fs}, tracking.New("s", "http://local"), b.ID))
+	require.NoError(t, jobs.SendBroadcast(ctx, env.DB, env.Bus, fakeResolver{sender: fs}, tracking.New("s", "http://local"), b.ID))
 
 	// Positive control: the eligible audience (alice + carol; bob is broadcasts-
 	// unsubscribed) is still delivered to, and the everything-opt-out is excluded.
@@ -217,7 +238,7 @@ func TestSendBroadcastToRuleSegment(t *testing.T) {
 	require.NoError(t, err)
 
 	fs := &fakeSender{}
-	require.NoError(t, jobs.SendBroadcast(ctx, env.DB, fakeResolver{sender: fs}, tracking.New("s", "http://local"), b.ID))
+	require.NoError(t, jobs.SendBroadcast(ctx, env.DB, env.Bus, fakeResolver{sender: fs}, tracking.New("s", "http://local"), b.ID))
 
 	// Only the pro-plan contact is in the audience.
 	require.Len(t, fs.sent, 1)
@@ -236,7 +257,7 @@ func TestSendBroadcastFailsWithoutProvider(t *testing.T) {
 		Save(ctx)
 	require.NoError(t, err)
 
-	err = jobs.SendBroadcast(ctx, env.DB, fakeResolver{err: messaging.ErrNoProvider}, tracking.New("test-secret", "http://local"), b.ID)
+	err = jobs.SendBroadcast(ctx, env.DB, env.Bus, fakeResolver{err: messaging.ErrNoProvider}, tracking.New("test-secret", "http://local"), b.ID)
 	require.Error(t, err)
 
 	got := env.DB.Broadcast.GetX(ctx, b.ID)

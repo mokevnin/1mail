@@ -15,6 +15,7 @@ import (
 	"github.com/mokevnin/1mail/ent/segment"
 	"github.com/mokevnin/1mail/internal/eligibility"
 	"github.com/mokevnin/1mail/internal/emailrender"
+	"github.com/mokevnin/1mail/internal/events"
 	"github.com/mokevnin/1mail/internal/messaging"
 	"github.com/mokevnin/1mail/internal/segments"
 	"github.com/mokevnin/1mail/internal/tracking"
@@ -37,12 +38,13 @@ type SenderResolver interface {
 type SendBroadcastWorker struct {
 	river.WorkerDefaults[SendBroadcastArgs]
 	ent      *ent.Client
+	bus      *events.Bus
 	resolver SenderResolver
 	tracker  *tracking.Tracker
 }
 
 func (w *SendBroadcastWorker) Work(ctx context.Context, job *river.Job[SendBroadcastArgs]) error {
-	return SendBroadcast(ctx, w.ent, w.resolver, w.tracker, job.Args.BroadcastID)
+	return SendBroadcast(ctx, w.ent, w.bus, w.resolver, w.tracker, job.Args.BroadcastID)
 }
 
 // SendBroadcast renders and sends a broadcast to its eligible audience,
@@ -54,7 +56,7 @@ func (w *SendBroadcastWorker) Work(ctx context.Context, job *river.Job[SendBroad
 // ineligible (suppressed / unsubscribed, derived per ADR 0001). Sending is done
 // inline (no per-recipient fan-out) — that's the scale path, not needed for the
 // MVP.
-func SendBroadcast(ctx context.Context, client *ent.Client, resolver SenderResolver, tracker *tracking.Tracker, broadcastID int64) error {
+func SendBroadcast(ctx context.Context, client *ent.Client, bus *events.Bus, resolver SenderResolver, tracker *tracking.Tracker, broadcastID int64) error {
 	b, err := client.Broadcast.Get(ctx, broadcastID)
 	if err != nil {
 		return fmt.Errorf("load broadcast %d: %w", broadcastID, err)
@@ -184,10 +186,29 @@ func SendBroadcast(ctx context.Context, client *ent.Client, resolver SenderResol
 			continue
 		}
 		sentCount++
-		_, _ = rec.Update().
-			SetStatus(broadcastrecipient.StatusSent).
-			SetSentAt(time.Now()).
-			Save(ctx)
+		// Record delivery + publish email.sent atomically (transactional outbox), so
+		// the send fact lands in the Event log (segmentable, ADR-aligned: Events are
+		// the source of truth) iff the recipient is marked sent. Exactly-once: the
+		// recipient row's unique (broadcast, contact) index already rejects a retry's
+		// duplicate before we reach here; the deterministic DedupID makes persist
+		// idempotent as defense in depth.
+		if perr := bus.WithinTx(ctx, func(tx *ent.Client, pub events.Publisher) error {
+			if _, err := tx.BroadcastRecipient.UpdateOneID(rec.ID).
+				SetStatus(broadcastrecipient.StatusSent).
+				SetSentAt(time.Now()).Save(ctx); err != nil {
+				return err
+			}
+			return pub.Publish(ctx, &events.EmailEngagement{
+				Action:      events.NameEmailSent,
+				WorkspaceID: b.WorkspaceID,
+				ContactID:   c.ID,
+				Email:       addr,
+				BroadcastID: b.ID,
+				DedupID:     fmt.Sprintf("email.sent:%d", rec.ID),
+			})
+		}); perr != nil {
+			log.Printf("broadcast %d: record sent for recipient %d: %v", b.ID, rec.ID, perr)
+		}
 	}
 
 	_, err = b.Update().

@@ -29,6 +29,7 @@ const TopicDomainEvents = "domain_events"
 // CollectedEvent.Action.
 const (
 	NameContactCreated    = "contact.created"
+	NameEmailSent         = "email.sent"
 	NameEmailOpened       = "email.opened"
 	NameEmailClicked      = "email.clicked"
 	NameEmailUnsubscribed = "email.unsubscribed"
@@ -100,6 +101,7 @@ type identifiable interface {
 // are ours and finite — there is no catch-all.
 var registry = map[string]func() DomainEvent{
 	NameContactCreated:    func() DomainEvent { return &ContactCreated{} },
+	NameEmailSent:         func() DomainEvent { return &EmailEngagement{} },
 	NameEmailOpened:       func() DomainEvent { return &EmailEngagement{} },
 	NameEmailClicked:      func() DomainEvent { return &EmailEngagement{} },
 	NameEmailUnsubscribed: func() DomainEvent { return &EmailEngagement{} },
@@ -135,22 +137,34 @@ func (e *ContactCreated) Project() Projection {
 	return Projection{Subject: e.Email, Action: NameContactCreated, Email: e.Email, ContactID: e.ContactID}
 }
 
-// EmailEngagement is emitted when a recipient opens, clicks, or unsubscribes from
-// a broadcast email. Action is the specific name; URL is set for clicks only.
+// EmailEngagement is emitted when one of our emails is sent to a recipient, or
+// when the recipient opens, clicks, or unsubscribes from a broadcast email.
+// Action is the specific name; URL is set for clicks only. DedupID, when set,
+// makes the persist projection idempotent under at-least-once redelivery — the
+// send path sets it (a deterministic per-recipient/per-step key) so a job retry
+// can't write a second email.sent row; open/click/unsubscribe leave it empty and
+// fall back to the envelope ULID.
 type EmailEngagement struct {
-	Action      string `json:"action"` // email.opened|email.clicked|email.unsubscribed
+	Action      string `json:"action"` // email.sent|email.opened|email.clicked|email.unsubscribed
 	WorkspaceID int64  `json:"workspaceId"`
 	ContactID   int64  `json:"contactId"`
 	Email       string `json:"email"`
 	BroadcastID int64  `json:"broadcastId"`
 	URL         string `json:"url,omitempty"`
+	DedupID     string `json:"dedupId,omitempty"`
 }
 
 func (e *EmailEngagement) EventName() string { return e.Action }
 func (*EmailEngagement) EventVersion() int   { return 1 }
 func (e *EmailEngagement) Workspace() int64  { return e.WorkspaceID }
+func (e *EmailEngagement) EventID() string   { return e.DedupID }
 func (e *EmailEngagement) Project() Projection {
-	props := map[string]any{"broadcastId": e.BroadcastID}
+	props := map[string]any{}
+	// Automation sends carry no broadcast, so omit broadcastId rather than write 0 —
+	// otherwise a "broadcastId = 0" segment filter would select every automation send.
+	if e.BroadcastID != 0 {
+		props["broadcastId"] = e.BroadcastID
+	}
 	if e.URL != "" {
 		props["url"] = e.URL
 	}

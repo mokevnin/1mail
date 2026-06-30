@@ -268,10 +268,14 @@ func register(injector do.Injector, env string) {
 		if err != nil {
 			return nil, err
 		}
+		bus, err := do.Invoke[*eventsBus](i)
+		if err != nil {
+			return nil, err
+		}
 		resolver := messaging.NewResolver(client.Client, cipher, registry.Default())
 		tracker := tracking.New(cfg.JWTSecret, cfg.AppURL)
 
-		jc, err := jobs.NewClient(pool.Pool, client.Client, resolver, tracker, cipher, sys.EmailSender)
+		jc, err := jobs.NewClient(pool.Pool, client.Client, bus.Bus, resolver, tracker, cipher, sys.EmailSender)
 		if err != nil {
 			return nil, err
 		}

@@ -14,6 +14,7 @@ import (
 	"github.com/riverqueue/river/rivermigrate"
 
 	"github.com/mokevnin/1mail/ent"
+	"github.com/mokevnin/1mail/internal/events"
 	"github.com/mokevnin/1mail/internal/messaging"
 	"github.com/mokevnin/1mail/internal/secrets"
 	"github.com/mokevnin/1mail/internal/tracking"
@@ -33,11 +34,11 @@ type Client struct {
 // NewClient builds the river client with all workers registered. Workers carry
 // their own dependencies (ent client, sender resolver, secrets cipher, the
 // platform system sender).
-func NewClient(pool *pgxpool.Pool, entClient *ent.Client, resolver *messaging.Resolver, tracker *tracking.Tracker, cipher *secrets.Cipher, systemSender messaging.EmailSender) (*Client, error) {
+func NewClient(pool *pgxpool.Pool, entClient *ent.Client, bus *events.Bus, resolver *messaging.Resolver, tracker *tracking.Tracker, cipher *secrets.Cipher, systemSender messaging.EmailSender) (*Client, error) {
 	workers := river.NewWorkers()
-	river.AddWorker(workers, &SendBroadcastWorker{ent: entClient, resolver: resolver, tracker: tracker})
+	river.AddWorker(workers, &SendBroadcastWorker{ent: entClient, bus: bus, resolver: resolver, tracker: tracker})
 	river.AddWorker(workers, &EvaluateTriggerWorker{ent: entClient})
-	river.AddWorker(workers, &RunStepWorker{ent: entClient, resolver: resolver, tracker: tracker})
+	river.AddWorker(workers, &RunStepWorker{ent: entClient, bus: bus, resolver: resolver, tracker: tracker})
 	river.AddWorker(workers, &DeliverWebhookWorker{
 		ent:    entClient,
 		cipher: cipher,

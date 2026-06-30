@@ -120,7 +120,7 @@ func Setup(t *testing.T) *TestEnv {
 	systemMail := &CapturingSender{}
 	customerMail := &CapturingSender{}
 	resolver := fixedResolver{sender: customerMail}
-	inline := jobs.NewInline(client, resolver, nil, systemMail)
+	inline := jobs.NewInline(client, bus, resolver, nil, systemMail)
 	// The transactional send surface resolves a workspace sender directly (not via
 	// river), so it gets the same capturing resolver — its sends land in CustomerMail.
 	handler, err := server.New(baseCfg, client, bus, inline, inline, resolver)

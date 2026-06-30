@@ -24,7 +24,7 @@ func drive(t *testing.T, env *testhelper.TestEnv, resolver jobs.SenderResolver, 
 	t.Helper()
 	ctx := context.Background()
 	for i := 0; i < 20; i++ {
-		res, err := jobs.RunStep(ctx, env.DB, resolver, nil, runID)
+		res, err := jobs.RunStep(ctx, env.DB, env.Bus, resolver, nil, runID)
 		require.NoError(t, err)
 		if res.Done {
 			return
@@ -66,6 +66,17 @@ func TestAutomationEnrollAndRun(t *testing.T) {
 
 	got := env.DB.AutomationRun.GetX(ctx, runIDs[0])
 	assert.Equal(t, automationrun.StatusCompleted, got.Status)
+
+	// Each automation send publishes email.sent onto the transactional outbox, so an
+	// automation send is segmentable through the same Event log as broadcast sends.
+	// Two email steps ⇒ two send facts for this contact.
+	var sent int
+	require.NoError(t, env.SQLDB.QueryRow(
+		`SELECT count(*) FROM watermill_domain_events
+		   WHERE payload->>'name' = 'email.sent' AND payload->'data'->>'email' = $1`,
+		"auto@test.dev",
+	).Scan(&sent))
+	assert.Equal(t, 2, sent)
 }
 
 // An opt-out from this automation's source (or a suppression) exits the
@@ -189,7 +200,7 @@ func TestAutomationSendIncludesUnsubscribeFooter(t *testing.T) {
 
 	fs := &fakeSender{}
 	tr := tracking.New("secret", "https://app.test")
-	_, err = jobs.RunStep(ctx, env.DB, fakeResolver{sender: fs}, tr, runIDs[0])
+	_, err = jobs.RunStep(ctx, env.DB, env.Bus, fakeResolver{sender: fs}, tr, runIDs[0])
 	require.NoError(t, err)
 
 	require.Len(t, fs.sent, 1)
@@ -228,7 +239,7 @@ func TestAutomationWaitDefersNextStep(t *testing.T) {
 	require.Len(t, runIDs, 1)
 
 	// First step is a wait: it defers (ResumeAt set), no send yet.
-	res, err := jobs.RunStep(ctx, env.DB, fakeResolver{sender: &fakeSender{}}, nil, runIDs[0])
+	res, err := jobs.RunStep(ctx, env.DB, env.Bus, fakeResolver{sender: &fakeSender{}}, nil, runIDs[0])
 	require.NoError(t, err)
 	assert.False(t, res.Done)
 	require.NotNil(t, res.ResumeAt)
