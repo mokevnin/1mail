@@ -32,6 +32,7 @@ export function LoginPage() {
       })
       await navigate({ to: indexRoute.to })
     } catch (error) {
+      form.setFieldValue('passwd', '')
       notifications.show({
         color: 'red',
         title: t(($) => $.login.errorTitle),

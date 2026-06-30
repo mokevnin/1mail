@@ -33,6 +33,7 @@ export function RegisterPage() {
         },
       })
     } catch (error) {
+      form.setFieldValue('password', '')
       notifications.show({
         color: 'red',
         title: t(($) => $.registration.errorTitle),
