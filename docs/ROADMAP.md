@@ -7,19 +7,30 @@ workspace-scoped multi-tenant). The goal is to incrementally bring the product t
 **drip.com**, but as a **general-purpose marketing automation platform** (not the e-commerce-specific
 ECRM that drip is — e-commerce is designed-for architecturally and built later).
 
-**Current state (the foundation exists):**
-- Contacts (CRUD, custom fields, status), segments (but `definition` is just a string — no engine yet),
-  events (immutable log) + tracking (visitor/profile identity resolution), Collect API (identify + events).
-- Sending: SMTP/SES integrations (encrypted), `internal/messaging` abstraction + default-provider resolver.
-- Infra: watermill (pubsub) and river (jobs) are wired but have no real workers/handlers yet (stubs only).
-- Three API surfaces (site/external/collect), scoped API tokens.
-- Frontend: contacts, segments, activity feed, settings (tracking/integrations/tokens), profile, auth.
-  In the navbar, **Campaigns** and **Automations** are "Coming soon" placeholders.
+**Current state (the core is built):**
+- Identity per the accepted ADRs: **Contact** is multi-key (subject_id / email / phone, all optional),
+  has no `status`/`prospect` flag; **Visitor** resolves to a Contact via **Identify**, which stitches
+  earlier anonymous Events; Events attach by stable `contact_id` resolved at ingest (never by email).
+  Custom fields (auto-created, typed). Collect API (identify + events). [ADR 0002, 0006]
+- **Segment engine** (`internal/segments`): react-querybuilder rules compiled to ent predicates —
+  attributes, custom fields, and event-correlation conditions (NOT-EXISTS), with a live preview count.
+- **Send-eligibility** (`internal/eligibility`, [ADR 0001]): (channel, destination)-keyed Suppression +
+  per-source Unsubscribe, derived (never a contact flag); consulted in every send path; scoped
+  unsubscribe links + an "unsubscribe from everything" path.
+- **Sending — all three surfaces:** Broadcasts (river engine, open/click/unsub tracking, per-broadcast
+  report), Automations (linear send/wait, enroll-once, event-bus triggers, visual xyflow builder),
+  Transactional (`/api` send, references a Template, respects Suppression). Templates are MJML
+  (compiled on send), copied-at-author-time for marketing [ADR 0003].
+- **Deliverability so far:** bounce/complaint ingestion (SES-over-SNS hook → Suppression),
+  workspace analytics dashboard.
+- Infra: watermill domain-event bus (transactional outbox), river jobs — both with real handlers.
+  Three API surfaces (site/external/collect), scoped API tokens. SMTP/SES integrations
+  (encrypted). **Auth is still single-owner** (`Workspace.user_id`) — ADR 0004 (Membership
+  + Role) is accepted but not yet built.
 
-**Gaps to reach parity (the big rocks):** broadcasts (only a TypeSpec spec exists in `external`, with no
-ent schema or handlers), email builder/templates, delivery tracking (opens/clicks/bounces/unsub),
-a working segment engine, automations/workflows, onsite forms/popups, personalization (Liquid),
-analytics/dashboards, A/B testing, deliverability (DKIM/SPF domains).
+**Gaps to reach parity (the big rocks left):** automation branching / goals / per-step conditions,
+onsite forms/popups, a visual MJML editor, sending domains (DKIM/SPF), A/B testing, an outbound
+SES-compatible send API, more provider adapters (Yandex/SendGrid/…), SMS channel, e-commerce.
 
 For a detailed competitive feature breakdown of drip.com, see
 [research/drip-com-feature-analysis.md](research/drip-com-feature-analysis.md).
@@ -51,36 +62,61 @@ tracking.
 | **2** | **Segment engine** | ✅ Done | 1 | react-querybuilder rule definition compiled to an ent predicate (attributes + custom fields **+ event-based conditions** — "performed event X in last N days" via a correlated EXISTS), preview count, usable as broadcast audience. |
 | **3** | **Email templates + MJML** | ✅ Done | 1 | Reusable templates; single body format — **MJML** everywhere (liquid → MJML compile → text), test sends. A proper visual MJML editor is still to come (body is an MJML textarea for now). |
 | **4** | **Automations / Workflows** | ✅ Done (linear) | 1, 2, 3 | Automation + AutomationRun schema, river-backed engine (trigger → email/wait steps, enroll-once), site CRUD API + UI (list, step editor, activate/deactivate). Triggers fire off the **domain-event bus** (`internal/events`). A visual branch/goal builder (@workflowbuilder/sdk, xyflow) is still to come — steps are a linear list for now. |
+| **ADR** | **Identity + eligibility refactors** | ✅ Done | — | ADR 0002 (unified Contact identity — multi-key, email optional, events by resolved id, anonymous-event stitching, `prospect` dropped) and ADR 0001 (send-eligibility — no `contact.status`; (channel, destination)-keyed Suppression + per-source Unsubscribe; derived eligibility) are built, wired into every send path, and tested. |
 | 5 | Forms & onsite | ⬜ | 1, 2 | Signup forms/popups, embed, feeding into contacts/events (on top of Collect API + tracker). |
 | 6 | Analytics + deliverability | 🟡 In progress | 1, 4 | Dashboards **✅** (workspace analytics overview). Suppression list **✅** (do-not-send registry, consulted in the send loop). Bounce/complaint **ingestion ✅** — SES-over-SNS adapter at `/hooks/{ingestKey}/{provider}` (signature-verified, subscription-confirm) normalizes into typed `EmailBounce`/`EmailComplaint` events → suppression (permanent bounces + complaints). Still ⬜: outbound SES-compatible endpoint (extend nikoksr/notify), sending domains + DKIM/SPF, A/B, more provider adapters (Yandex/SendGrid/…). |
 | 7 (later) | E-commerce | ⬜ | 2, 4 | Shopify/Woo connectors, product catalog, purchase/cart events, revenue attribution. Enabled architecturally via the events model from Phase 1. |
 
-> **Progress:** Phases 1–4 are implemented, tested, and on `main`. Phase 2 added a
+> **Progress:** Phases 1–4 **and** the two accepted ADR refactors (0001 send-eligibility,
+> 0002 unified identity) are implemented, tested, and on `main`. Phase 2 added a
 > standalone, domain-agnostic rule engine (`internal/segments`) compiling the
 > react-querybuilder format to SQL; segment targeting + a deliverable-count preview
 > are wired into broadcasts. Phase 3 made email bodies **MJML-only** (compiled via
 > gomjml on send) with reusable templates and test-sends — one format, no dual editor.
 > Phase 4 shipped linear automations (trigger → email/wait steps) end-to-end, with
 > enrollment driven by an internal **domain-event bus** (`internal/events`, transactional
-> outbox over watermill-sql; see docs/design/domain-events.md).
-> Remaining later: Phase 3 a visual MJML editor; Phase 4 a visual branch/goal builder;
-> analytics/per-subject-ordering event subscribers.
+> outbox over watermill-sql; see docs/design/domain-events.md) and a **visual xyflow
+> builder** (`@workflowbuilder/sdk`) that currently linearizes the graph (branches drawn
+> in the canvas are dropped with a warning). The transactional send surface [ADR 0005]
+> is live on `/api`. Send-eligibility (`internal/eligibility`) is consulted in the
+> broadcast, automation, and transactional paths; identity resolution + anonymous-event
+> stitching run at Collect ingest.
 > (Done since: events-bus P0–P2 + typed union + webhooks; legacy email/pubsub
-> retired with an inline jobs adapter; Phase 2 event-based segment conditions.)
+> retired with an inline jobs adapter; Phase 2 event-based segment conditions;
+> ADR 0001/0002 refactors; transactional send [ADR 0005]; visual automation builder.)
 
 > **⚠️ Authoritative model — read `CONTEXT.md` + `docs/adr/*` first.** This phased
-> roadmap predates the domain model captured in `CONTEXT.md` and the accepted ADRs,
-> which supersede it where they disagree. Two consequences for the items below:
+> roadmap predates the domain model in `CONTEXT.md` and the accepted ADRs, which
+> supersede it where they disagree. Note in particular:
 > - **"Snapshot / static segments" is rejected**, not deferred. Per `CONTEXT.md`
 >   ("a segment is always a rule; membership is never materialized"; anti-vocabulary
 >   rejects List/snapshot), there is no second segment kind. Mentions of snapshot
 >   below are obsolete.
-> - The real near-term backlog is the two accepted refactors the code hasn't built
->   yet: **ADR 0002** (unified contact identity — events attach by resolved id, not
->   email; email optional; drop `prospect`) and **ADR 0001** (send-eligibility —
->   no `contact.status`; address-keyed Suppression + per-source Unsubscribe; derived
->   eligibility). The earlier event-segment work joins by email and will be reworked
->   under ADR 0002.
+> - The two ADR refactors that were once the near-term backlog — **ADR 0002**
+>   (unified contact identity) and **ADR 0001** (send-eligibility) — are now **built
+>   and wired** (see the ADR row in the table above). The event-segment conditions were
+>   reworked to join by resolved `contact_id`, not email.
+
+## Remaining backlog (the foundation is built)
+
+The core model is in place; the open work is feature breadth on top of it:
+
+- **Automation branching / goals / per-step conditions** — the visual builder exists but
+  linearizes; the schema + engine model only ordered send/wait steps. Now that the builder
+  is real, this is the natural next increment (CONTEXT.md deferred it "until the sequence
+  builder is real").
+- **Anonymous-Contact promotion policy** — left open by ADR 0002: a Visitor resolves to a
+  Contact only via Identify/API/import; whether/when an anonymous Visitor is promoted to a
+  Contact row is undecided.
+- **Multi-user workspaces [ADR 0004]** — accepted but not built: the schema is still
+  single-owner (`Workspace.user_id`); Membership + Role (and the access checks that hang
+  off them) don't exist yet. The structural prerequisite for any teams / SSO feature.
+- **Phase 5 — Forms & onsite popups** — not started.
+- **Phase 6 remainder** — outbound SES-compatible send endpoint, sending domains + DKIM/SPF,
+  A/B testing, more provider adapters (Yandex/SendGrid/…).
+- **Phase 3 — visual MJML editor** — the body is still an MJML textarea.
+- **SMS channel** — reserved on Integration/Suppression/Unsubscribe; no implementation.
+- **Phase 7 — e-commerce** — far future.
 
 ---
 
