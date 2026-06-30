@@ -28,11 +28,34 @@ func TestDecodeRejectsWrongSecret(t *testing.T) {
 	assert.Error(t, err)
 }
 
+// unsubToken↔DecodeUnsub round-trips every field, including a large int64 id that
+// would lose precision if stored as a JSON number (float64) instead of a string.
+func TestUnsubTokenRoundTrip(t *testing.T) {
+	tr := tracking.New("secret", "https://app.test")
+	target := tracking.UnsubTarget{
+		Source:      "automation:7",
+		Destination: "person@example.com",
+		WorkspaceID: 1,
+		ContactID:   9007199254740993, // 2^53 + 1: not representable as float64
+		BroadcastID: 0,
+	}
+	urlStr, err := tr.UnsubscribeURL(target)
+	require.NoError(t, err)
+	assert.Contains(t, urlStr, "https://app.test/e/u/")
+
+	token := strings.TrimPrefix(urlStr, "https://app.test/e/u/")
+	got, err := tr.DecodeUnsub(token)
+	require.NoError(t, err)
+	assert.Equal(t, target, got)
+}
+
 func TestRewriteWrapsLinksAndAddsPixelAndFooter(t *testing.T) {
 	tr := tracking.New("secret", "https://app.test")
 	body := `<p>Hello <a href="https://dest.test/path?x=1">click</a> or <a href="mailto:a@b.test">mail</a></p>`
 
-	out, err := tr.Rewrite(body, 7)
+	out, err := tr.Rewrite(body, 7, tracking.UnsubTarget{
+		Source: "broadcasts", Destination: "x@y.test", WorkspaceID: 1, ContactID: 2, BroadcastID: 3,
+	})
 	require.NoError(t, err)
 
 	// http link routed through the click tracker, with the destination preserved.

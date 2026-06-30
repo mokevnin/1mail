@@ -11,19 +11,20 @@ import (
 	"github.com/mokevnin/1mail/internal/eligibility"
 	"github.com/mokevnin/1mail/internal/jobs"
 	"github.com/mokevnin/1mail/internal/testhelper"
+	"github.com/mokevnin/1mail/internal/tracking"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 const emailStep = `{"type":"email","subject":"Hi {{ first_name }}","body":"<mjml><mj-body><mj-section><mj-column><mj-text>Hi {{ first_name }}</mj-text></mj-column></mj-section></mj-body></mjml>"}`
 
-// drive runs RunStep until the run finishes (or a safety cap), returning how many
-// steps executed.
+// drive runs RunStep until the run finishes (or a safety cap). tracker may be nil
+// (most tests don't assert on the unsubscribe footer).
 func drive(t *testing.T, env *testhelper.TestEnv, resolver jobs.SenderResolver, runID int64) {
 	t.Helper()
 	ctx := context.Background()
 	for i := 0; i < 20; i++ {
-		res, err := jobs.RunStep(ctx, env.DB, resolver, runID)
+		res, err := jobs.RunStep(ctx, env.DB, resolver, nil, runID)
 		require.NoError(t, err)
 		if res.Done {
 			return
@@ -168,6 +169,33 @@ func TestAutomationUnaffectedByBroadcastUnsubscribe(t *testing.T) {
 	assert.Equal(t, automationrun.StatusCompleted, env.DB.AutomationRun.GetX(ctx, runIDs[0]).Status)
 }
 
+// An automation send carries an unsubscribe footer scoped to the automation, so
+// the recipient can opt out (which exits the enrollment — see the endpoint test).
+func TestAutomationSendIncludesUnsubscribeFooter(t *testing.T) {
+	env := testhelper.Setup(t)
+	ctx := context.Background()
+
+	c, err := env.DB.Contact.Create().SetWorkspaceID(acmeWorkspaceID).
+		SetEmail("foot@test.dev").SetFirstName("Foo").Save(ctx)
+	require.NoError(t, err)
+	_, err = env.DB.Automation.Create().SetWorkspaceID(acmeWorkspaceID).
+		SetName("Welcome").SetTriggerEvent("contact.created").SetStatus(automation.StatusActive).
+		SetDefinition("[" + emailStep + "]").Save(ctx)
+	require.NoError(t, err)
+
+	runIDs, err := jobs.EvaluateTrigger(ctx, env.DB, acmeWorkspaceID, c.ID, "contact.created")
+	require.NoError(t, err)
+	require.Len(t, runIDs, 1)
+
+	fs := &fakeSender{}
+	tr := tracking.New("secret", "https://app.test")
+	_, err = jobs.RunStep(ctx, env.DB, fakeResolver{sender: fs}, tr, runIDs[0])
+	require.NoError(t, err)
+
+	require.Len(t, fs.sent, 1)
+	assert.Contains(t, fs.sent[0].HTML, "https://app.test/e/u/", "automation email carries an unsubscribe link")
+}
+
 func TestAutomationInactiveDoesNotEnroll(t *testing.T) {
 	env := testhelper.Setup(t)
 	ctx := context.Background()
@@ -200,7 +228,7 @@ func TestAutomationWaitDefersNextStep(t *testing.T) {
 	require.Len(t, runIDs, 1)
 
 	// First step is a wait: it defers (ResumeAt set), no send yet.
-	res, err := jobs.RunStep(ctx, env.DB, fakeResolver{sender: &fakeSender{}}, runIDs[0])
+	res, err := jobs.RunStep(ctx, env.DB, fakeResolver{sender: &fakeSender{}}, nil, runIDs[0])
 	require.NoError(t, err)
 	assert.False(t, res.Done)
 	require.NotNil(t, res.ResumeAt)

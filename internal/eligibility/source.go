@@ -2,6 +2,7 @@ package eligibility
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 )
 
@@ -29,4 +30,18 @@ const (
 // AutomationSource is the per-automation unsubscribe scope.
 func AutomationSource(automationID int64) string {
 	return fmt.Sprintf("automation:%d", automationID)
+}
+
+// ParseAutomationSource is the inverse of AutomationSource: it returns the
+// automation id when src is an "automation:<id>" scope, and false otherwise.
+func ParseAutomationSource(src string) (int64, bool) {
+	rest, ok := strings.CutPrefix(src, "automation:")
+	if !ok {
+		return 0, false
+	}
+	id, err := strconv.ParseInt(rest, 10, 64)
+	if err != nil {
+		return 0, false
+	}
+	return id, true
 }

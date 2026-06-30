@@ -153,7 +153,14 @@ func SendBroadcast(ctx context.Context, client *ent.Client, resolver SenderResol
 		}
 		html := email.HTML
 		if tracker != nil {
-			if tracked, terr := tracker.Rewrite(html, rec.ID); terr != nil {
+			unsub := tracking.UnsubTarget{
+				Source:      eligibility.SourceBroadcasts,
+				Destination: addr,
+				WorkspaceID: b.WorkspaceID,
+				ContactID:   c.ID,
+				BroadcastID: b.ID,
+			}
+			if tracked, terr := tracker.Rewrite(html, rec.ID, unsub); terr != nil {
 				log.Printf("broadcast %d: rewrite links for recipient %d: %v", b.ID, rec.ID, terr)
 			} else {
 				html = tracked

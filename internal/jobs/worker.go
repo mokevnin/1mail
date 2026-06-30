@@ -37,7 +37,7 @@ func NewClient(pool *pgxpool.Pool, entClient *ent.Client, resolver *messaging.Re
 	workers := river.NewWorkers()
 	river.AddWorker(workers, &SendBroadcastWorker{ent: entClient, resolver: resolver, tracker: tracker})
 	river.AddWorker(workers, &EvaluateTriggerWorker{ent: entClient})
-	river.AddWorker(workers, &RunStepWorker{ent: entClient, resolver: resolver})
+	river.AddWorker(workers, &RunStepWorker{ent: entClient, resolver: resolver, tracker: tracker})
 	river.AddWorker(workers, &DeliverWebhookWorker{
 		ent:    entClient,
 		cipher: cipher,

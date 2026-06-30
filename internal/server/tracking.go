@@ -5,10 +5,12 @@ import (
 	"encoding/base64"
 	"log"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 
 	"github.com/mokevnin/1mail/ent"
+	"github.com/mokevnin/1mail/ent/automationrun"
 	"github.com/mokevnin/1mail/ent/broadcastrecipient"
 	"github.com/mokevnin/1mail/ent/unsubscribe"
 	"github.com/mokevnin/1mail/internal/eligibility"
@@ -26,7 +28,7 @@ var pixelGIF, _ = base64.StdEncoding.DecodeString(
 //
 //	GET /e/o/{token}        — open pixel:       record open, return a 1x1 gif
 //	GET /e/c/{token}?u=URL  — click:            record click, 302 to URL
-//	GET /e/u/{token}        — unsubscribe:      opt the destination out of "broadcasts"
+//	GET /e/u/{token}        — unsubscribe:      opt the destination out of the token's scope
 //
 // The token is a signed per-recipient JWT. Opens always return the pixel (even
 // on a bad token) so we never leak token validity through the image.
@@ -58,18 +60,39 @@ func trackingHandler(client *ent.Client, bus *events.Bus, tracker *tracking.Trac
 	})
 
 	mux.HandleFunc("GET /e/u/{token}", func(w http.ResponseWriter, r *http.Request) {
-		rid, err := tracker.Decode(r.PathValue("token"))
+		target, err := tracker.DecodeUnsub(r.PathValue("token"))
 		if err != nil {
 			http.Error(w, "invalid token", http.StatusBadRequest)
 			return
 		}
-		recordUnsubscribe(r.Context(), client, bus, rid)
-		w.Header().Set("Content-Type", "text/html; charset=utf-8")
-		_, _ = w.Write([]byte(`<!doctype html><html><body style="font-family:sans-serif;text-align:center;padding:48px">` +
-			`<h1>Unsubscribed</h1><p>You will no longer receive these emails.</p></body></html>`))
+		recordUnsubscribe(r.Context(), client, bus, target)
+		// The confirmation page is the SPA's public /unsubscribed route — no HTML
+		// is rendered server-side. For a per-source opt-out we pass the deliberate
+		// "unsubscribe from everything" escalation link as a query param, so the
+		// page can offer it (a click, never an auto-fired second request).
+		http.Redirect(w, r, unsubscribedRedirect(tracker, target), http.StatusSeeOther)
 	})
 
 	return mux
+}
+
+// unsubscribedRedirect is the SPA route to land on after recording an opt-out.
+// For a per-source opt-out it carries the everything-scoped escalation URL (built
+// from the same destination) so the page can render it.
+func unsubscribedRedirect(tracker *tracking.Tracker, target tracking.UnsubTarget) string {
+	if target.Source == eligibility.SourceEverything {
+		return "/unsubscribed"
+	}
+	allURL, err := tracker.UnsubscribeURL(tracking.UnsubTarget{
+		Source:      eligibility.SourceEverything,
+		Destination: target.Destination,
+		WorkspaceID: target.WorkspaceID,
+		ContactID:   target.ContactID,
+	})
+	if err != nil {
+		return "/unsubscribed"
+	}
+	return "/unsubscribed?all=" + url.QueryEscape(allURL)
 }
 
 // The record* helpers commit the state change and publish the engagement event in
@@ -138,56 +161,71 @@ func recordClick(ctx context.Context, client *ent.Client, bus *events.Bus, recip
 	}
 }
 
-// recordUnsubscribe writes a per-destination opt-out from the "broadcasts"
-// sending source (ADR 0001) — never touching any contact status, which no longer
-// exists. The default in-email link is scoped to the source, not "everything".
-// Scope (broadcasts) and attribution (which broadcast) are two separate facts:
-// the scope lives in the Unsubscribe row, the attribution in the counter + event.
-func recordUnsubscribe(ctx context.Context, client *ent.Client, bus *events.Bus, recipientID int64) {
-	rec, err := client.BroadcastRecipient.Get(ctx, recipientID)
-	if err != nil {
+// recordUnsubscribe writes a per-(channel, destination, sending source) opt-out
+// (ADR 0001) from a signed token — no contact-row lookup, so the opt-out records
+// even if the contact was deleted between send and click (the point of
+// destination-keying). The default in-email link is scoped to its sending source;
+// "everything" is the deliberate escalation. All effects (the row, the broadcast
+// counter, the automation enrollment exit, and the engagement event) live in one
+// transaction gated on the existence check, so a re-click or scanner prefetch is a
+// complete no-op and concurrent clicks are counted exactly once.
+func recordUnsubscribe(ctx context.Context, client *ent.Client, bus *events.Bus, target tracking.UnsubTarget) {
+	dest := eligibility.NormalizeDestination(target.Destination)
+	if dest == "" || target.WorkspaceID == 0 || target.Source == "" {
 		return
 	}
-	c, err := client.Contact.Get(ctx, rec.ContactID)
-	if err != nil {
-		return
-	}
-	dest := eligibility.NormalizeDestination(lo.FromPtr(c.Email))
-	if dest == "" {
-		return
-	}
-	err = bus.WithinTx(ctx, func(tx *ent.Client, pub events.Publisher) error {
-		// Exactly-once: skip the counter + event if the destination already opted
-		// out of broadcasts. Concurrent duplicate clicks are caught by the unique
-		// (workspace, channel, destination, sending_source) index — the loser's tx
-		// rolls back, so the counter is incremented exactly once.
+	automationID, isAutomation := eligibility.ParseAutomationSource(target.Source)
+
+	err := bus.WithinTx(ctx, func(tx *ent.Client, pub events.Publisher) error {
 		exists, err := tx.Unsubscribe.Query().Where(
-			unsubscribe.WorkspaceID(rec.WorkspaceID),
+			unsubscribe.WorkspaceID(target.WorkspaceID),
 			unsubscribe.ChannelEQ(unsubscribe.ChannelEmail),
 			unsubscribe.DestinationEQ(dest),
-			unsubscribe.SendingSourceEQ(eligibility.SourceBroadcasts),
+			unsubscribe.SendingSourceEQ(target.Source),
 		).Exist(ctx)
 		if err != nil || exists {
 			return err
 		}
 		create := tx.Unsubscribe.Create().
-			SetWorkspaceID(rec.WorkspaceID).
+			SetWorkspaceID(target.WorkspaceID).
 			SetChannel(unsubscribe.ChannelEmail).
 			SetDestination(dest).
-			SetSendingSource(eligibility.SourceBroadcasts).
-			SetContactID(rec.ContactID)
+			SetSendingSource(target.Source)
+		if target.ContactID != 0 {
+			create.SetContactID(target.ContactID)
+		}
 		if _, err := create.Save(ctx); err != nil {
 			return err
 		}
-		if _, err := tx.Broadcast.UpdateOneID(rec.BroadcastID).AddUnsubscribedCount(1).Save(ctx); err != nil {
-			return err
+
+		// Broadcast attribution: bump the triggering broadcast's counter.
+		if target.BroadcastID != 0 {
+			if _, err := tx.Broadcast.UpdateOneID(target.BroadcastID).AddUnsubscribedCount(1).Save(ctx); err != nil {
+				return err
+			}
 		}
+		// Automation: unsubscribing from an automation also exits its active
+		// enrollment (ADR: two effects from one action).
+		if isAutomation && target.ContactID != 0 {
+			if _, err := tx.AutomationRun.Update().
+				Where(
+					automationrun.AutomationID(automationID),
+					automationrun.ContactID(target.ContactID),
+					automationrun.StatusEQ(automationrun.StatusActive),
+				).
+				SetStatus(automationrun.StatusExited).
+				ClearResumeAt().
+				Save(ctx); err != nil {
+				return err
+			}
+		}
+
 		return pub.Publish(ctx, &events.EmailEngagement{
-			Action: events.NameEmailUnsubscribed, WorkspaceID: rec.WorkspaceID, ContactID: rec.ContactID,
-			Email: lo.FromPtr(c.Email), BroadcastID: rec.BroadcastID,
+			Action: events.NameEmailUnsubscribed, WorkspaceID: target.WorkspaceID, ContactID: target.ContactID,
+			Email: dest, BroadcastID: target.BroadcastID,
 		})
 	})
 	if err != nil {
-		log.Printf("tracking: unsubscribe contact %d: %v", rec.ContactID, err)
+		log.Printf("tracking: unsubscribe %q (source %q): %v", dest, target.Source, err)
 	}
 }

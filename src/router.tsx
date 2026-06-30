@@ -1,4 +1,5 @@
 import { createRootRoute, createRoute, createRouter, redirect } from '@tanstack/react-router'
+import { z } from 'zod'
 import App from './App.tsx'
 import { siteWorkspacesList } from './generated/site/sdk.gen.ts'
 import type { SiteWorkspaceResource } from './generated/site/types.gen.ts'
@@ -24,6 +25,7 @@ import { SegmentsListPage } from './routes/segments/list.tsx'
 import { TemplateCreatePage } from './routes/templates/create.tsx'
 import { TemplateEditPage } from './routes/templates/edit.tsx'
 import { TemplatesListPage } from './routes/templates/list.tsx'
+import { UnsubscribedPage } from './routes/unsubscribed.tsx'
 import { ActivityPage } from './routes/workspace/activity.tsx'
 import { OverviewPage } from './routes/workspace/overview.tsx'
 import { SettingsPage } from './routes/workspace/settings.tsx'
@@ -208,6 +210,16 @@ export const loginRoute = createRoute({
   component: LoginPage,
 })
 
+// Public unsubscribe confirmation (no auth): the /e/u/{token} endpoint records the
+// opt-out then redirects here. `all` is the optional "unsubscribe from everything"
+// escalation URL the backend supplies.
+export const unsubscribedRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/unsubscribed',
+  validateSearch: z.object({ all: z.string().optional() }),
+  component: UnsubscribedPage,
+})
+
 // Account layout: workspace-independent settings. Authenticates via the same
 // workspace fetch (redirects to /login on 401) but renders its own shell.
 export const accountRoute = createRoute({
@@ -229,6 +241,7 @@ const routeTree = rootRoute.addChildren([
   indexRoute,
   loginRoute,
   registerRoute,
+  unsubscribedRoute,
   accountRoute.addChildren([profileRoute]),
   workspaceRoute.addChildren([
     overviewRoute,

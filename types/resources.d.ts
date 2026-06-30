@@ -426,6 +426,11 @@ export default interface Resources {
     "theme": {
       "toggleLabel": "Toggle color scheme"
     },
+    "unsubscribed": {
+      "body": "You will no longer receive these emails.",
+      "title": "Unsubscribed",
+      "unsubscribeAll": "Unsubscribe from all emails"
+    },
     "userMenu": {
       "logout": "Sign out",
       "logoutErrorTitle": "Sign out failed",

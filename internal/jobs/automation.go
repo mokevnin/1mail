@@ -15,6 +15,7 @@ import (
 	"github.com/mokevnin/1mail/internal/eligibility"
 	"github.com/mokevnin/1mail/internal/emailrender"
 	"github.com/mokevnin/1mail/internal/messaging"
+	"github.com/mokevnin/1mail/internal/tracking"
 )
 
 // step is one node in an automation definition (a linear list for the MVP).
@@ -109,10 +110,11 @@ type RunStepWorker struct {
 	river.WorkerDefaults[RunStepArgs]
 	ent      *ent.Client
 	resolver SenderResolver
+	tracker  *tracking.Tracker
 }
 
 func (w *RunStepWorker) Work(ctx context.Context, job *river.Job[RunStepArgs]) error {
-	res, err := RunStep(ctx, w.ent, w.resolver, job.Args.RunID)
+	res, err := RunStep(ctx, w.ent, w.resolver, w.tracker, job.Args.RunID)
 	if err != nil {
 		return err
 	}
@@ -136,9 +138,10 @@ type StepResult struct {
 }
 
 // RunStep executes the run's current step and advances it. Exported and queue-free
-// so a test can drive a whole automation by looping until Done. Email sends are
-// untracked for the MVP (tracking is broadcast-recipient-scoped).
-func RunStep(ctx context.Context, client *ent.Client, resolver SenderResolver, runID int64) (StepResult, error) {
+// so a test can drive a whole automation by looping until Done. Email sends carry
+// an unsubscribe footer scoped to this automation (the tracker may be nil, e.g. in
+// tests that don't assert on it); open/click tracking is still broadcast-only.
+func RunStep(ctx context.Context, client *ent.Client, resolver SenderResolver, tracker *tracking.Tracker, runID int64) (StepResult, error) {
 	run, err := client.AutomationRun.Get(ctx, runID)
 	if err != nil {
 		return StepResult{}, fmt.Errorf("load run %d: %w", runID, err)
@@ -205,12 +208,28 @@ func RunStep(ctx context.Context, client *ent.Client, resolver SenderResolver, r
 			_, _ = run.Update().SetStatus(automationrun.StatusFailed).Save(ctx)
 			return StepResult{}, fmt.Errorf("render: %w", err)
 		}
+		// Unsubscribe footer scoped to this automation: each Automation is its own
+		// sending source, and the click exits the enrollment (ADR 0001).
+		html := email.HTML
+		if tracker != nil {
+			footer, ferr := tracker.UnsubscribeFooter(tracking.UnsubTarget{
+				Source:      eligibility.AutomationSource(a.ID),
+				Destination: *c.Email,
+				WorkspaceID: run.WorkspaceID,
+				ContactID:   c.ID,
+			})
+			if ferr != nil {
+				_, _ = run.Update().SetStatus(automationrun.StatusFailed).Save(ctx)
+				return StepResult{}, fmt.Errorf("unsubscribe footer: %w", ferr)
+			}
+			html += footer
+		}
 		// From/FromName left empty: the provider falls back to the integration's
 		// configured sender (messaging.FirstNonEmpty in the smtp/ses senders).
 		if err := sender.Send(ctx, messaging.EmailMessage{
 			To:      *c.Email,
 			Subject: email.Subject,
-			HTML:    email.HTML,
+			HTML:    html,
 			Text:    email.Text,
 		}); err != nil {
 			_, _ = run.Update().SetStatus(automationrun.StatusFailed).Save(ctx)

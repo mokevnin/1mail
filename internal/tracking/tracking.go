@@ -30,7 +30,21 @@ func New(secret, baseURL string) *Tracker {
 	return &Tracker{secret: []byte(secret), baseURL: strings.TrimRight(baseURL, "/")}
 }
 
-// Token mints a signed token identifying a broadcast recipient.
+// UnsubTarget is the self-describing payload an unsubscribe link carries. The
+// opt-out is destination-keyed (ADR 0001), so the link records against the
+// destination directly — no contact-row lookup, and it survives the contact being
+// deleted between send and click. BroadcastID is set only for broadcast sends
+// (for per-broadcast attribution); Source is the sending-source string the opt-out
+// is scoped to ("broadcasts" / "automation:<id>" / "everything").
+type UnsubTarget struct {
+	Source      string
+	Destination string
+	WorkspaceID int64
+	ContactID   int64
+	BroadcastID int64
+}
+
+// Token mints a signed token identifying a broadcast recipient (open/click).
 func (t *Tracker) Token(recipientID int64) (string, error) {
 	tok := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"rid": strconv.FormatInt(recipientID, 10),
@@ -57,6 +71,61 @@ func (t *Tracker) Decode(token string) (int64, error) {
 	return strconv.ParseInt(rid, 10, 64)
 }
 
+// unsubToken mints a signed scoped-unsubscribe token. int64 fields are stored as
+// strings: jwt.MapClaims decodes JSON numbers to float64, which loses precision
+// above 2^53.
+func (t *Tracker) unsubToken(target UnsubTarget) (string, error) {
+	tok := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"src":  target.Source,
+		"dest": target.Destination,
+		"ws":   strconv.FormatInt(target.WorkspaceID, 10),
+		"cid":  strconv.FormatInt(target.ContactID, 10),
+		"bid":  strconv.FormatInt(target.BroadcastID, 10),
+	})
+	return tok.SignedString(t.secret)
+}
+
+// DecodeUnsub validates a scoped-unsubscribe token and returns its target.
+func (t *Tracker) DecodeUnsub(token string) (UnsubTarget, error) {
+	parsed, err := jwt.Parse(token, func(*jwt.Token) (any, error) {
+		return t.secret, nil
+	}, jwt.WithValidMethods([]string{"HS256"}))
+	if err != nil {
+		return UnsubTarget{}, err
+	}
+	claims, ok := parsed.Claims.(jwt.MapClaims)
+	if !ok {
+		return UnsubTarget{}, fmt.Errorf("tracking: unexpected claims type")
+	}
+	src, _ := claims["src"].(string)
+	dest, _ := claims["dest"].(string)
+	if src == "" {
+		return UnsubTarget{}, fmt.Errorf("tracking: missing src claim")
+	}
+	ws, err := claimInt64(claims, "ws")
+	if err != nil {
+		return UnsubTarget{}, err
+	}
+	cid, err := claimInt64(claims, "cid")
+	if err != nil {
+		return UnsubTarget{}, err
+	}
+	bid, err := claimInt64(claims, "bid")
+	if err != nil {
+		return UnsubTarget{}, err
+	}
+	return UnsubTarget{Source: src, Destination: dest, WorkspaceID: ws, ContactID: cid, BroadcastID: bid}, nil
+}
+
+// claimInt64 reads a string-encoded int64 claim.
+func claimInt64(claims jwt.MapClaims, key string) (int64, error) {
+	s, ok := claims[key].(string)
+	if !ok {
+		return 0, fmt.Errorf("tracking: missing %s claim", key)
+	}
+	return strconv.ParseInt(s, 10, 64)
+}
+
 // OpenURL is the 1x1 pixel URL that records an open.
 func (t *Tracker) OpenURL(token string) string {
 	return t.baseURL + "/e/o/" + token
@@ -67,16 +136,35 @@ func (t *Tracker) ClickURL(token, dest string) string {
 	return t.baseURL + "/e/c/" + token + "?u=" + url.QueryEscape(dest)
 }
 
-// UnsubscribeURL records an unsubscribe.
-func (t *Tracker) UnsubscribeURL(token string) string {
-	return t.baseURL + "/e/u/" + token
+// UnsubscribeURL is the public link that records the scoped opt-out in target.
+func (t *Tracker) UnsubscribeURL(target UnsubTarget) (string, error) {
+	token, err := t.unsubToken(target)
+	if err != nil {
+		return "", err
+	}
+	return t.baseURL + "/e/u/" + token, nil
+}
+
+// UnsubscribeFooter is the email's unsubscribe footer, scoped to target. Shared by
+// the broadcast Rewrite and the automation send step (which appends it directly).
+func (t *Tracker) UnsubscribeFooter(target UnsubTarget) (string, error) {
+	url, err := t.UnsubscribeURL(target)
+	if err != nil {
+		return "", err
+	}
+	return fmt.Sprintf(
+		`<p style="font-size:12px;color:#888888;margin-top:24px">`+
+			`If you no longer wish to receive these emails, `+
+			`<a href="%s">unsubscribe</a>.</p>`,
+		url,
+	), nil
 }
 
 // Rewrite prepares a broadcast body for a recipient: it routes http(s) links
-// through the click tracker, appends the open pixel, and adds an unsubscribe
-// footer. On a tokenizer error it falls back to the original body plus pixel and
-// footer so a send is never blocked by odd markup.
-func (t *Tracker) Rewrite(body string, recipientID int64) (string, error) {
+// through the click tracker (rid token), appends the open pixel, and adds the
+// unsubscribe footer (scoped to unsub). On a tokenizer error it falls back to the
+// original body plus pixel and footer so a send is never blocked by odd markup.
+func (t *Tracker) Rewrite(body string, recipientID int64, unsub UnsubTarget) (string, error) {
 	token, err := t.Token(recipientID)
 	if err != nil {
 		return body, err
@@ -87,13 +175,11 @@ func (t *Tracker) Rewrite(body string, recipientID int64) (string, error) {
 		rewritten = body
 	}
 
+	footer, err := t.UnsubscribeFooter(unsub)
+	if err != nil {
+		return body, err
+	}
 	pixel := fmt.Sprintf(`<img src="%s" width="1" height="1" alt="" style="display:none">`, t.OpenURL(token))
-	footer := fmt.Sprintf(
-		`<p style="font-size:12px;color:#888888;margin-top:24px">`+
-			`If you no longer wish to receive these emails, `+
-			`<a href="%s">unsubscribe</a>.</p>`,
-		t.UnsubscribeURL(token),
-	)
 	return rewritten + pixel + footer, nil
 }
 
