@@ -142,6 +142,12 @@ type Handler interface {
 	//
 	// PUT /w/{workspaceSlug}/contacts/{id}
 	SiteContactsUpdate(ctx context.Context, req *SiteUpdateContactInput, params SiteContactsUpdateParams) (SiteContactsUpdateRes, error)
+	// SiteCustomFieldsList implements SiteCustomFields_list operation.
+	//
+	// List the workspace's custom field definitions.
+	//
+	// GET /w/{workspaceSlug}/custom-fields
+	SiteCustomFieldsList(ctx context.Context, params SiteCustomFieldsListParams) (SiteCustomFieldsListRes, error)
 	// SiteEventsActions implements SiteEvents_actions operation.
 	//
 	// Distinct event actions in the workspace, sorted — powers the segment builder.

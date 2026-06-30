@@ -3,6 +3,7 @@ package site
 import (
 	"context"
 	"net/http"
+	"strconv"
 
 	"github.com/mokevnin/1mail/ent"
 	"github.com/mokevnin/1mail/ent/event"
@@ -33,6 +34,13 @@ func (h *Handlers) SiteEventsList(ctx context.Context, params siteapi.SiteEvents
 	q := h.ent.Event.Query().Where(event.WorkspaceID(ws))
 	if v, ok := params.Action.Get(); ok && v != "" {
 		q = q.Where(event.ActionEQ(v))
+	}
+	// Preferred: filter a contact's activity by the stable identity link, which
+	// includes anonymous events stitched onto the contact at Identify (ADR 0002).
+	if v, ok := params.ContactId.Get(); ok {
+		if id, perr := strconv.ParseInt(string(v), 10, 64); perr == nil {
+			q = q.Where(event.ContactID(id))
+		}
 	}
 	if v, ok := params.Email.Get(); ok && v != "" {
 		// Case-insensitive: contact emails are stored as entered, but collect

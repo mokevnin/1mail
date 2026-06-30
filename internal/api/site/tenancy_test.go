@@ -68,7 +68,7 @@ func TestSiteContactsScopedToWorkspace(t *testing.T) {
 	assert.Equal(t, int32(3), listed.TotalItems)
 
 	// Creating a contact scopes it to the workspace.
-	created, err := c.SiteContactsCreate(ctx, &siteapi.SiteCreateContactInput{Email: "site-new@example.com"}, siteapi.SiteContactsCreateParams{WorkspaceSlug: "acme"})
+	created, err := c.SiteContactsCreate(ctx, &siteapi.SiteCreateContactInput{Email: siteapi.NewOptNilEmailAddress("site-new@example.com")}, siteapi.SiteContactsCreateParams{WorkspaceSlug: "acme"})
 	require.NoError(t, err)
 	assert.IsType(t, &siteapi.SiteContactResource{}, created)
 

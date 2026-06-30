@@ -13,6 +13,7 @@ import (
 	"entgo.io/ent/schema/field"
 	"github.com/mokevnin/1mail/ent/contact"
 	"github.com/mokevnin/1mail/ent/predicate"
+	"github.com/mokevnin/1mail/ent/visitor"
 	"github.com/mokevnin/1mail/ent/workspace"
 )
 
@@ -30,6 +31,26 @@ func (_u *ContactUpdate) Where(ps ...predicate.Contact) *ContactUpdate {
 	return _u
 }
 
+// SetSubjectID sets the "subject_id" field.
+func (_u *ContactUpdate) SetSubjectID(v string) *ContactUpdate {
+	_u.mutation.SetSubjectID(v)
+	return _u
+}
+
+// SetNillableSubjectID sets the "subject_id" field if the given value is not nil.
+func (_u *ContactUpdate) SetNillableSubjectID(v *string) *ContactUpdate {
+	if v != nil {
+		_u.SetSubjectID(*v)
+	}
+	return _u
+}
+
+// ClearSubjectID clears the value of the "subject_id" field.
+func (_u *ContactUpdate) ClearSubjectID() *ContactUpdate {
+	_u.mutation.ClearSubjectID()
+	return _u
+}
+
 // SetEmail sets the "email" field.
 func (_u *ContactUpdate) SetEmail(v string) *ContactUpdate {
 	_u.mutation.SetEmail(v)
@@ -41,6 +62,32 @@ func (_u *ContactUpdate) SetNillableEmail(v *string) *ContactUpdate {
 	if v != nil {
 		_u.SetEmail(*v)
 	}
+	return _u
+}
+
+// ClearEmail clears the value of the "email" field.
+func (_u *ContactUpdate) ClearEmail() *ContactUpdate {
+	_u.mutation.ClearEmail()
+	return _u
+}
+
+// SetPhone sets the "phone" field.
+func (_u *ContactUpdate) SetPhone(v string) *ContactUpdate {
+	_u.mutation.SetPhone(v)
+	return _u
+}
+
+// SetNillablePhone sets the "phone" field if the given value is not nil.
+func (_u *ContactUpdate) SetNillablePhone(v *string) *ContactUpdate {
+	if v != nil {
+		_u.SetPhone(*v)
+	}
+	return _u
+}
+
+// ClearPhone clears the value of the "phone" field.
+func (_u *ContactUpdate) ClearPhone() *ContactUpdate {
+	_u.mutation.ClearPhone()
 	return _u
 }
 
@@ -119,7 +166,7 @@ func (_u *ContactUpdate) ClearTimeZone() *ContactUpdate {
 }
 
 // SetCustomFields sets the "custom_fields" field.
-func (_u *ContactUpdate) SetCustomFields(v map[string]string) *ContactUpdate {
+func (_u *ContactUpdate) SetCustomFields(v map[string]interface{}) *ContactUpdate {
 	_u.mutation.SetCustomFields(v)
 	return _u
 }
@@ -150,6 +197,21 @@ func (_u *ContactUpdate) SetUpdatedAt(v time.Time) *ContactUpdate {
 	return _u
 }
 
+// AddVisitorIDs adds the "visitors" edge to the Visitor entity by IDs.
+func (_u *ContactUpdate) AddVisitorIDs(ids ...int64) *ContactUpdate {
+	_u.mutation.AddVisitorIDs(ids...)
+	return _u
+}
+
+// AddVisitors adds the "visitors" edges to the Visitor entity.
+func (_u *ContactUpdate) AddVisitors(v ...*Visitor) *ContactUpdate {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddVisitorIDs(ids...)
+}
+
 // SetWorkspace sets the "workspace" edge to the Workspace entity.
 func (_u *ContactUpdate) SetWorkspace(v *Workspace) *ContactUpdate {
 	return _u.SetWorkspaceID(v.ID)
@@ -158,6 +220,27 @@ func (_u *ContactUpdate) SetWorkspace(v *Workspace) *ContactUpdate {
 // Mutation returns the ContactMutation object of the builder.
 func (_u *ContactUpdate) Mutation() *ContactMutation {
 	return _u.mutation
+}
+
+// ClearVisitors clears all "visitors" edges to the Visitor entity.
+func (_u *ContactUpdate) ClearVisitors() *ContactUpdate {
+	_u.mutation.ClearVisitors()
+	return _u
+}
+
+// RemoveVisitorIDs removes the "visitors" edge to Visitor entities by IDs.
+func (_u *ContactUpdate) RemoveVisitorIDs(ids ...int64) *ContactUpdate {
+	_u.mutation.RemoveVisitorIDs(ids...)
+	return _u
+}
+
+// RemoveVisitors removes "visitors" edges to Visitor entities.
+func (_u *ContactUpdate) RemoveVisitors(v ...*Visitor) *ContactUpdate {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveVisitorIDs(ids...)
 }
 
 // ClearWorkspace clears the "workspace" edge to the Workspace entity.
@@ -204,11 +287,6 @@ func (_u *ContactUpdate) defaults() {
 
 // check runs all checks and user-defined validators on the builder.
 func (_u *ContactUpdate) check() error {
-	if v, ok := _u.mutation.Email(); ok {
-		if err := contact.EmailValidator(v); err != nil {
-			return &ValidationError{Name: "email", err: fmt.Errorf(`ent: validator failed for field "Contact.email": %w`, err)}
-		}
-	}
 	if v, ok := _u.mutation.Status(); ok {
 		if err := contact.StatusValidator(v); err != nil {
 			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "Contact.status": %w`, err)}
@@ -238,8 +316,23 @@ func (_u *ContactUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 			}
 		}
 	}
+	if value, ok := _u.mutation.SubjectID(); ok {
+		_spec.SetField(contact.FieldSubjectID, field.TypeString, value)
+	}
+	if _u.mutation.SubjectIDCleared() {
+		_spec.ClearField(contact.FieldSubjectID, field.TypeString)
+	}
 	if value, ok := _u.mutation.Email(); ok {
 		_spec.SetField(contact.FieldEmail, field.TypeString, value)
+	}
+	if _u.mutation.EmailCleared() {
+		_spec.ClearField(contact.FieldEmail, field.TypeString)
+	}
+	if value, ok := _u.mutation.Phone(); ok {
+		_spec.SetField(contact.FieldPhone, field.TypeString, value)
+	}
+	if _u.mutation.PhoneCleared() {
+		_spec.ClearField(contact.FieldPhone, field.TypeString)
 	}
 	if value, ok := _u.mutation.FirstName(); ok {
 		_spec.SetField(contact.FieldFirstName, field.TypeString, value)
@@ -270,6 +363,51 @@ func (_u *ContactUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	}
 	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(contact.FieldUpdatedAt, field.TypeTime, value)
+	}
+	if _u.mutation.VisitorsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   contact.VisitorsTable,
+			Columns: []string{contact.VisitorsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(visitor.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedVisitorsIDs(); len(nodes) > 0 && !_u.mutation.VisitorsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   contact.VisitorsTable,
+			Columns: []string{contact.VisitorsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(visitor.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.VisitorsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   contact.VisitorsTable,
+			Columns: []string{contact.VisitorsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(visitor.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if _u.mutation.WorkspaceCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -322,6 +460,26 @@ type ContactUpdateOne struct {
 	modifiers []func(*sql.UpdateBuilder)
 }
 
+// SetSubjectID sets the "subject_id" field.
+func (_u *ContactUpdateOne) SetSubjectID(v string) *ContactUpdateOne {
+	_u.mutation.SetSubjectID(v)
+	return _u
+}
+
+// SetNillableSubjectID sets the "subject_id" field if the given value is not nil.
+func (_u *ContactUpdateOne) SetNillableSubjectID(v *string) *ContactUpdateOne {
+	if v != nil {
+		_u.SetSubjectID(*v)
+	}
+	return _u
+}
+
+// ClearSubjectID clears the value of the "subject_id" field.
+func (_u *ContactUpdateOne) ClearSubjectID() *ContactUpdateOne {
+	_u.mutation.ClearSubjectID()
+	return _u
+}
+
 // SetEmail sets the "email" field.
 func (_u *ContactUpdateOne) SetEmail(v string) *ContactUpdateOne {
 	_u.mutation.SetEmail(v)
@@ -333,6 +491,32 @@ func (_u *ContactUpdateOne) SetNillableEmail(v *string) *ContactUpdateOne {
 	if v != nil {
 		_u.SetEmail(*v)
 	}
+	return _u
+}
+
+// ClearEmail clears the value of the "email" field.
+func (_u *ContactUpdateOne) ClearEmail() *ContactUpdateOne {
+	_u.mutation.ClearEmail()
+	return _u
+}
+
+// SetPhone sets the "phone" field.
+func (_u *ContactUpdateOne) SetPhone(v string) *ContactUpdateOne {
+	_u.mutation.SetPhone(v)
+	return _u
+}
+
+// SetNillablePhone sets the "phone" field if the given value is not nil.
+func (_u *ContactUpdateOne) SetNillablePhone(v *string) *ContactUpdateOne {
+	if v != nil {
+		_u.SetPhone(*v)
+	}
+	return _u
+}
+
+// ClearPhone clears the value of the "phone" field.
+func (_u *ContactUpdateOne) ClearPhone() *ContactUpdateOne {
+	_u.mutation.ClearPhone()
 	return _u
 }
 
@@ -411,7 +595,7 @@ func (_u *ContactUpdateOne) ClearTimeZone() *ContactUpdateOne {
 }
 
 // SetCustomFields sets the "custom_fields" field.
-func (_u *ContactUpdateOne) SetCustomFields(v map[string]string) *ContactUpdateOne {
+func (_u *ContactUpdateOne) SetCustomFields(v map[string]interface{}) *ContactUpdateOne {
 	_u.mutation.SetCustomFields(v)
 	return _u
 }
@@ -442,6 +626,21 @@ func (_u *ContactUpdateOne) SetUpdatedAt(v time.Time) *ContactUpdateOne {
 	return _u
 }
 
+// AddVisitorIDs adds the "visitors" edge to the Visitor entity by IDs.
+func (_u *ContactUpdateOne) AddVisitorIDs(ids ...int64) *ContactUpdateOne {
+	_u.mutation.AddVisitorIDs(ids...)
+	return _u
+}
+
+// AddVisitors adds the "visitors" edges to the Visitor entity.
+func (_u *ContactUpdateOne) AddVisitors(v ...*Visitor) *ContactUpdateOne {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddVisitorIDs(ids...)
+}
+
 // SetWorkspace sets the "workspace" edge to the Workspace entity.
 func (_u *ContactUpdateOne) SetWorkspace(v *Workspace) *ContactUpdateOne {
 	return _u.SetWorkspaceID(v.ID)
@@ -450,6 +649,27 @@ func (_u *ContactUpdateOne) SetWorkspace(v *Workspace) *ContactUpdateOne {
 // Mutation returns the ContactMutation object of the builder.
 func (_u *ContactUpdateOne) Mutation() *ContactMutation {
 	return _u.mutation
+}
+
+// ClearVisitors clears all "visitors" edges to the Visitor entity.
+func (_u *ContactUpdateOne) ClearVisitors() *ContactUpdateOne {
+	_u.mutation.ClearVisitors()
+	return _u
+}
+
+// RemoveVisitorIDs removes the "visitors" edge to Visitor entities by IDs.
+func (_u *ContactUpdateOne) RemoveVisitorIDs(ids ...int64) *ContactUpdateOne {
+	_u.mutation.RemoveVisitorIDs(ids...)
+	return _u
+}
+
+// RemoveVisitors removes "visitors" edges to Visitor entities.
+func (_u *ContactUpdateOne) RemoveVisitors(v ...*Visitor) *ContactUpdateOne {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveVisitorIDs(ids...)
 }
 
 // ClearWorkspace clears the "workspace" edge to the Workspace entity.
@@ -509,11 +729,6 @@ func (_u *ContactUpdateOne) defaults() {
 
 // check runs all checks and user-defined validators on the builder.
 func (_u *ContactUpdateOne) check() error {
-	if v, ok := _u.mutation.Email(); ok {
-		if err := contact.EmailValidator(v); err != nil {
-			return &ValidationError{Name: "email", err: fmt.Errorf(`ent: validator failed for field "Contact.email": %w`, err)}
-		}
-	}
 	if v, ok := _u.mutation.Status(); ok {
 		if err := contact.StatusValidator(v); err != nil {
 			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "Contact.status": %w`, err)}
@@ -560,8 +775,23 @@ func (_u *ContactUpdateOne) sqlSave(ctx context.Context) (_node *Contact, err er
 			}
 		}
 	}
+	if value, ok := _u.mutation.SubjectID(); ok {
+		_spec.SetField(contact.FieldSubjectID, field.TypeString, value)
+	}
+	if _u.mutation.SubjectIDCleared() {
+		_spec.ClearField(contact.FieldSubjectID, field.TypeString)
+	}
 	if value, ok := _u.mutation.Email(); ok {
 		_spec.SetField(contact.FieldEmail, field.TypeString, value)
+	}
+	if _u.mutation.EmailCleared() {
+		_spec.ClearField(contact.FieldEmail, field.TypeString)
+	}
+	if value, ok := _u.mutation.Phone(); ok {
+		_spec.SetField(contact.FieldPhone, field.TypeString, value)
+	}
+	if _u.mutation.PhoneCleared() {
+		_spec.ClearField(contact.FieldPhone, field.TypeString)
 	}
 	if value, ok := _u.mutation.FirstName(); ok {
 		_spec.SetField(contact.FieldFirstName, field.TypeString, value)
@@ -592,6 +822,51 @@ func (_u *ContactUpdateOne) sqlSave(ctx context.Context) (_node *Contact, err er
 	}
 	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(contact.FieldUpdatedAt, field.TypeTime, value)
+	}
+	if _u.mutation.VisitorsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   contact.VisitorsTable,
+			Columns: []string{contact.VisitorsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(visitor.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedVisitorsIDs(); len(nodes) > 0 && !_u.mutation.VisitorsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   contact.VisitorsTable,
+			Columns: []string{contact.VisitorsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(visitor.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.VisitorsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   contact.VisitorsTable,
+			Columns: []string{contact.VisitorsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(visitor.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if _u.mutation.WorkspaceCleared() {
 		edge := &sqlgraph.EdgeSpec{

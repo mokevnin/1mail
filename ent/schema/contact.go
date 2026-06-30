@@ -26,8 +26,18 @@ func (Contact) Fields() []ent.Field {
 		field.Int64("id").
 			StorageKey("id").
 			Immutable(),
+		// Alias keys: subject_id (the customer's own user id), email, phone. Each is
+		// unique per workspace and ANY may be absent — an anonymous Contact has none.
+		// Identity is multi-key; the stable anchor is the internal id, not the email.
+		field.String("subject_id").
+			Optional().
+			Nillable(),
 		field.String("email").
-			NotEmpty(),
+			Optional().
+			Nillable(),
+		field.String("phone").
+			Optional().
+			Nillable(),
 		field.String("first_name").
 			Optional().
 			Nillable(),
@@ -40,7 +50,10 @@ func (Contact) Fields() []ent.Field {
 		field.String("time_zone").
 			Optional().
 			Nillable(),
-		field.JSON("custom_fields", map[string]string{}).
+		// Typed Custom field values keyed by the field's machine key. The typed
+		// definitions live in CustomField; values are widened to any to carry
+		// number/bool/datetime, not only strings.
+		field.JSON("custom_fields", map[string]any{}).
 			Optional(),
 		field.Int64("workspace_id"),
 		field.Time("created_at").
@@ -54,6 +67,9 @@ func (Contact) Fields() []ent.Field {
 
 func (Contact) Edges() []ent.Edge {
 	return []ent.Edge{
+		// The anonymous devices seen as this person. A Visitor may belong to no
+		// Contact before Identify; once bound, one Contact owns many Visitors.
+		edge.To("visitors", Visitor.Type),
 		edge.From("workspace", Workspace.Type).
 			Ref("contacts").
 			Field("workspace_id").
@@ -64,6 +80,10 @@ func (Contact) Edges() []ent.Edge {
 
 func (Contact) Indexes() []ent.Index {
 	return []ent.Index{
+		// Each alias key is unique per workspace; all three are nullable and Postgres
+		// treats nulls as distinct, so any may be absent without colliding.
 		index.Fields("email", "workspace_id").Unique().StorageKey("contacts_email_workspace_id"),
+		index.Fields("subject_id", "workspace_id").Unique().StorageKey("contacts_subject_id_workspace_id"),
+		index.Fields("phone", "workspace_id").Unique().StorageKey("contacts_phone_workspace_id"),
 	}
 }

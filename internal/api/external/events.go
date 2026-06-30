@@ -13,6 +13,7 @@ import (
 	"github.com/mokevnin/1mail/internal/convert"
 	"github.com/mokevnin/1mail/internal/events"
 	"github.com/mokevnin/1mail/internal/pagination"
+	"github.com/mokevnin/1mail/internal/service"
 )
 
 func (h *Handlers) EventsCreate(ctx context.Context, req *externalapi.RecordEventsInput) (externalapi.EventsCreateRes, error) {
@@ -27,7 +28,7 @@ func (h *Handlers) EventsCreate(ctx context.Context, req *externalapi.RecordEven
 	// persist subscriber writes the Event rows; the webhooks subscriber fans them
 	// out. These are the customer's own events, stored as-is. Ingest is now
 	// accept-then-process: the caller gets 204 and rows land asynchronously.
-	err := h.bus.WithinTx(ctx, func(_ *ent.Client, pub events.Publisher) error {
+	err := h.bus.WithinTx(ctx, func(tx *ent.Client, pub events.Publisher) error {
 		for i := range req.Events {
 			e := req.Events[i]
 			collected := &events.CollectedEvent{
@@ -41,10 +42,13 @@ func (h *Handlers) EventsCreate(ctx context.Context, req *externalapi.RecordEven
 			if v, ok := e.Phone.Get(); ok {
 				collected.Phone = v
 			}
-			if v, ok := e.Prospect.Get(); ok {
-				prospect := v
-				collected.Prospect = &prospect
+			// Attach to a Contact by stable identity (ADR 0002): resolve the supplied
+			// alias keys to an existing Contact id; 0 ⇒ anonymous (no contact yet).
+			contactID, err := service.ResolveContactID(ctx, tx, ws, e.SubjectId, convert.StringPtr(e.Email), convert.StringPtr(e.Phone))
+			if err != nil {
+				return err
 			}
+			collected.ContactID = contactID
 			if v, ok := e.OccurredAt.Get(); ok {
 				collected.OccurredAt = time.Time(v)
 			}

@@ -171,6 +171,16 @@ export const zSiteCreateWebhookEndpointInput = z.object({
     enabled: z.boolean().optional()
 });
 
+/**
+ * A Custom field's value type
+ */
+export const zSiteCustomFieldType = z.enum([
+    'string',
+    'number',
+    'bool',
+    'datetime'
+]);
+
 export const zSiteDirectLoginError = z.object({
     error: z.string()
 });
@@ -418,21 +428,26 @@ export const zTimeZoneName = z.string();
  * Site request body for creating a contact
  */
 export const zSiteCreateContactInput = z.object({
-    email: zEmailAddress,
+    subjectId: z.string().nullish(),
+    email: zEmailAddress.nullish(),
+    phone: z.string().nullish(),
     firstName: z.string().nullish(),
     lastName: z.string().nullish(),
     timeZone: zTimeZoneName.nullish(),
-    customFields: z.record(z.string(), z.string()).nullish()
+    customFields: z.record(z.string(), z.unknown()).nullish()
 });
 
 /**
  * Site request body for updating a contact
  */
 export const zSiteUpdateContactInput = z.object({
+    subjectId: z.string().nullish(),
+    email: zEmailAddress.nullish(),
+    phone: z.string().nullish(),
     firstName: z.string().nullish(),
     lastName: z.string().nullish(),
     timeZone: zTimeZoneName.nullish(),
-    customFields: z.record(z.string(), z.string()).nullish()
+    customFields: z.record(z.string(), z.unknown()).nullish()
 });
 
 export const zTimestamp = z.iso.datetime();
@@ -489,11 +504,13 @@ export const zSiteBroadcastResource = z.object({
  */
 export const zSiteContactResource = z.object({
     id: zEntityId,
-    email: zEmailAddress,
+    subjectId: z.string().nullish(),
+    email: zEmailAddress.nullish(),
+    phone: z.string().nullish(),
     firstName: z.string().nullish(),
     lastName: z.string().nullish(),
     timeZone: zTimeZoneName.nullish(),
-    customFields: z.record(z.string(), z.string()).nullish(),
+    customFields: z.record(z.string(), z.unknown()).nullish(),
     status: zSiteContactStatus,
     createdAt: zTimestamp,
     updatedAt: zTimestamp
@@ -514,6 +531,19 @@ export const zSiteCreateTokenInput = z.object({
 export const zSiteCreateTokenResponse = z.object({
     token: z.string(),
     resource: zSiteApiTokenResource
+});
+
+/**
+ * Custom field definition — a typed, named Contact attribute (ADR 0006). Auto-created
+ * on first sight from Identify; the catalogue feeds the segment builder.
+ */
+export const zSiteCustomFieldResource = z.object({
+    id: zEntityId,
+    key: z.string(),
+    name: z.string(),
+    type: zSiteCustomFieldType,
+    createdAt: zTimestamp,
+    updatedAt: zTimestamp
 });
 
 /**
@@ -928,6 +958,21 @@ export const zSiteContactsUpdatePath = z.object({
  */
 export const zSiteContactsUpdateResponse = zSiteContactResource;
 
+export const zSiteCustomFieldsListPath = z.object({
+    workspaceSlug: z.string()
+});
+
+/**
+ * Paginated response
+ */
+export const zSiteCustomFieldsListResponse = z.object({
+    items: z.array(zSiteCustomFieldResource),
+    page: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
+    pageSize: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
+    totalItems: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
+    totalPages: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' })
+});
+
 export const zSiteEventsListPath = z.object({
     workspaceSlug: z.string()
 });
@@ -936,6 +981,7 @@ export const zSiteEventsListQuery = z.object({
     page: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).optional().default(1),
     pageSize: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).optional().default(25),
     action: z.string().optional(),
+    contactId: zEntityId.optional(),
     email: z.string().optional()
 });
 

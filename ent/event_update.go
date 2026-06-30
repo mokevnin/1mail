@@ -50,6 +50,53 @@ func (_u *EventUpdate) ClearSourceID() *EventUpdate {
 	return _u
 }
 
+// SetContactID sets the "contact_id" field.
+func (_u *EventUpdate) SetContactID(v int64) *EventUpdate {
+	_u.mutation.ResetContactID()
+	_u.mutation.SetContactID(v)
+	return _u
+}
+
+// SetNillableContactID sets the "contact_id" field if the given value is not nil.
+func (_u *EventUpdate) SetNillableContactID(v *int64) *EventUpdate {
+	if v != nil {
+		_u.SetContactID(*v)
+	}
+	return _u
+}
+
+// AddContactID adds value to the "contact_id" field.
+func (_u *EventUpdate) AddContactID(v int64) *EventUpdate {
+	_u.mutation.AddContactID(v)
+	return _u
+}
+
+// ClearContactID clears the value of the "contact_id" field.
+func (_u *EventUpdate) ClearContactID() *EventUpdate {
+	_u.mutation.ClearContactID()
+	return _u
+}
+
+// SetVisitorID sets the "visitor_id" field.
+func (_u *EventUpdate) SetVisitorID(v string) *EventUpdate {
+	_u.mutation.SetVisitorID(v)
+	return _u
+}
+
+// SetNillableVisitorID sets the "visitor_id" field if the given value is not nil.
+func (_u *EventUpdate) SetNillableVisitorID(v *string) *EventUpdate {
+	if v != nil {
+		_u.SetVisitorID(*v)
+	}
+	return _u
+}
+
+// ClearVisitorID clears the value of the "visitor_id" field.
+func (_u *EventUpdate) ClearVisitorID() *EventUpdate {
+	_u.mutation.ClearVisitorID()
+	return _u
+}
+
 // SetSubjectID sets the "subject_id" field.
 func (_u *EventUpdate) SetSubjectID(v string) *EventUpdate {
 	_u.mutation.SetSubjectID(v)
@@ -61,6 +108,12 @@ func (_u *EventUpdate) SetNillableSubjectID(v *string) *EventUpdate {
 	if v != nil {
 		_u.SetSubjectID(*v)
 	}
+	return _u
+}
+
+// ClearSubjectID clears the value of the "subject_id" field.
+func (_u *EventUpdate) ClearSubjectID() *EventUpdate {
+	_u.mutation.ClearSubjectID()
 	return _u
 }
 
@@ -150,26 +203,6 @@ func (_u *EventUpdate) ClearOccurredAt() *EventUpdate {
 	return _u
 }
 
-// SetProspect sets the "prospect" field.
-func (_u *EventUpdate) SetProspect(v bool) *EventUpdate {
-	_u.mutation.SetProspect(v)
-	return _u
-}
-
-// SetNillableProspect sets the "prospect" field if the given value is not nil.
-func (_u *EventUpdate) SetNillableProspect(v *bool) *EventUpdate {
-	if v != nil {
-		_u.SetProspect(*v)
-	}
-	return _u
-}
-
-// ClearProspect clears the value of the "prospect" field.
-func (_u *EventUpdate) ClearProspect() *EventUpdate {
-	_u.mutation.ClearProspect()
-	return _u
-}
-
 // SetWorkspaceID sets the "workspace_id" field.
 func (_u *EventUpdate) SetWorkspaceID(v int64) *EventUpdate {
 	_u.mutation.SetWorkspaceID(v)
@@ -229,11 +262,6 @@ func (_u *EventUpdate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (_u *EventUpdate) check() error {
-	if v, ok := _u.mutation.SubjectID(); ok {
-		if err := event.SubjectIDValidator(v); err != nil {
-			return &ValidationError{Name: "subject_id", err: fmt.Errorf(`ent: validator failed for field "Event.subject_id": %w`, err)}
-		}
-	}
 	if v, ok := _u.mutation.Action(); ok {
 		if err := event.ActionValidator(v); err != nil {
 			return &ValidationError{Name: "action", err: fmt.Errorf(`ent: validator failed for field "Event.action": %w`, err)}
@@ -269,8 +297,26 @@ func (_u *EventUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	if _u.mutation.SourceIDCleared() {
 		_spec.ClearField(event.FieldSourceID, field.TypeString)
 	}
+	if value, ok := _u.mutation.ContactID(); ok {
+		_spec.SetField(event.FieldContactID, field.TypeInt64, value)
+	}
+	if value, ok := _u.mutation.AddedContactID(); ok {
+		_spec.AddField(event.FieldContactID, field.TypeInt64, value)
+	}
+	if _u.mutation.ContactIDCleared() {
+		_spec.ClearField(event.FieldContactID, field.TypeInt64)
+	}
+	if value, ok := _u.mutation.VisitorID(); ok {
+		_spec.SetField(event.FieldVisitorID, field.TypeString, value)
+	}
+	if _u.mutation.VisitorIDCleared() {
+		_spec.ClearField(event.FieldVisitorID, field.TypeString)
+	}
 	if value, ok := _u.mutation.SubjectID(); ok {
 		_spec.SetField(event.FieldSubjectID, field.TypeString, value)
+	}
+	if _u.mutation.SubjectIDCleared() {
+		_spec.ClearField(event.FieldSubjectID, field.TypeString)
 	}
 	if value, ok := _u.mutation.Email(); ok {
 		_spec.SetField(event.FieldEmail, field.TypeString, value)
@@ -298,12 +344,6 @@ func (_u *EventUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	}
 	if _u.mutation.OccurredAtCleared() {
 		_spec.ClearField(event.FieldOccurredAt, field.TypeTime)
-	}
-	if value, ok := _u.mutation.Prospect(); ok {
-		_spec.SetField(event.FieldProspect, field.TypeBool, value)
-	}
-	if _u.mutation.ProspectCleared() {
-		_spec.ClearField(event.FieldProspect, field.TypeBool)
 	}
 	if _u.mutation.WorkspaceCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -376,6 +416,53 @@ func (_u *EventUpdateOne) ClearSourceID() *EventUpdateOne {
 	return _u
 }
 
+// SetContactID sets the "contact_id" field.
+func (_u *EventUpdateOne) SetContactID(v int64) *EventUpdateOne {
+	_u.mutation.ResetContactID()
+	_u.mutation.SetContactID(v)
+	return _u
+}
+
+// SetNillableContactID sets the "contact_id" field if the given value is not nil.
+func (_u *EventUpdateOne) SetNillableContactID(v *int64) *EventUpdateOne {
+	if v != nil {
+		_u.SetContactID(*v)
+	}
+	return _u
+}
+
+// AddContactID adds value to the "contact_id" field.
+func (_u *EventUpdateOne) AddContactID(v int64) *EventUpdateOne {
+	_u.mutation.AddContactID(v)
+	return _u
+}
+
+// ClearContactID clears the value of the "contact_id" field.
+func (_u *EventUpdateOne) ClearContactID() *EventUpdateOne {
+	_u.mutation.ClearContactID()
+	return _u
+}
+
+// SetVisitorID sets the "visitor_id" field.
+func (_u *EventUpdateOne) SetVisitorID(v string) *EventUpdateOne {
+	_u.mutation.SetVisitorID(v)
+	return _u
+}
+
+// SetNillableVisitorID sets the "visitor_id" field if the given value is not nil.
+func (_u *EventUpdateOne) SetNillableVisitorID(v *string) *EventUpdateOne {
+	if v != nil {
+		_u.SetVisitorID(*v)
+	}
+	return _u
+}
+
+// ClearVisitorID clears the value of the "visitor_id" field.
+func (_u *EventUpdateOne) ClearVisitorID() *EventUpdateOne {
+	_u.mutation.ClearVisitorID()
+	return _u
+}
+
 // SetSubjectID sets the "subject_id" field.
 func (_u *EventUpdateOne) SetSubjectID(v string) *EventUpdateOne {
 	_u.mutation.SetSubjectID(v)
@@ -387,6 +474,12 @@ func (_u *EventUpdateOne) SetNillableSubjectID(v *string) *EventUpdateOne {
 	if v != nil {
 		_u.SetSubjectID(*v)
 	}
+	return _u
+}
+
+// ClearSubjectID clears the value of the "subject_id" field.
+func (_u *EventUpdateOne) ClearSubjectID() *EventUpdateOne {
+	_u.mutation.ClearSubjectID()
 	return _u
 }
 
@@ -476,26 +569,6 @@ func (_u *EventUpdateOne) ClearOccurredAt() *EventUpdateOne {
 	return _u
 }
 
-// SetProspect sets the "prospect" field.
-func (_u *EventUpdateOne) SetProspect(v bool) *EventUpdateOne {
-	_u.mutation.SetProspect(v)
-	return _u
-}
-
-// SetNillableProspect sets the "prospect" field if the given value is not nil.
-func (_u *EventUpdateOne) SetNillableProspect(v *bool) *EventUpdateOne {
-	if v != nil {
-		_u.SetProspect(*v)
-	}
-	return _u
-}
-
-// ClearProspect clears the value of the "prospect" field.
-func (_u *EventUpdateOne) ClearProspect() *EventUpdateOne {
-	_u.mutation.ClearProspect()
-	return _u
-}
-
 // SetWorkspaceID sets the "workspace_id" field.
 func (_u *EventUpdateOne) SetWorkspaceID(v int64) *EventUpdateOne {
 	_u.mutation.SetWorkspaceID(v)
@@ -568,11 +641,6 @@ func (_u *EventUpdateOne) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (_u *EventUpdateOne) check() error {
-	if v, ok := _u.mutation.SubjectID(); ok {
-		if err := event.SubjectIDValidator(v); err != nil {
-			return &ValidationError{Name: "subject_id", err: fmt.Errorf(`ent: validator failed for field "Event.subject_id": %w`, err)}
-		}
-	}
 	if v, ok := _u.mutation.Action(); ok {
 		if err := event.ActionValidator(v); err != nil {
 			return &ValidationError{Name: "action", err: fmt.Errorf(`ent: validator failed for field "Event.action": %w`, err)}
@@ -625,8 +693,26 @@ func (_u *EventUpdateOne) sqlSave(ctx context.Context) (_node *Event, err error)
 	if _u.mutation.SourceIDCleared() {
 		_spec.ClearField(event.FieldSourceID, field.TypeString)
 	}
+	if value, ok := _u.mutation.ContactID(); ok {
+		_spec.SetField(event.FieldContactID, field.TypeInt64, value)
+	}
+	if value, ok := _u.mutation.AddedContactID(); ok {
+		_spec.AddField(event.FieldContactID, field.TypeInt64, value)
+	}
+	if _u.mutation.ContactIDCleared() {
+		_spec.ClearField(event.FieldContactID, field.TypeInt64)
+	}
+	if value, ok := _u.mutation.VisitorID(); ok {
+		_spec.SetField(event.FieldVisitorID, field.TypeString, value)
+	}
+	if _u.mutation.VisitorIDCleared() {
+		_spec.ClearField(event.FieldVisitorID, field.TypeString)
+	}
 	if value, ok := _u.mutation.SubjectID(); ok {
 		_spec.SetField(event.FieldSubjectID, field.TypeString, value)
+	}
+	if _u.mutation.SubjectIDCleared() {
+		_spec.ClearField(event.FieldSubjectID, field.TypeString)
 	}
 	if value, ok := _u.mutation.Email(); ok {
 		_spec.SetField(event.FieldEmail, field.TypeString, value)
@@ -654,12 +740,6 @@ func (_u *EventUpdateOne) sqlSave(ctx context.Context) (_node *Event, err error)
 	}
 	if _u.mutation.OccurredAtCleared() {
 		_spec.ClearField(event.FieldOccurredAt, field.TypeTime)
-	}
-	if value, ok := _u.mutation.Prospect(); ok {
-		_spec.SetField(event.FieldProspect, field.TypeBool, value)
-	}
-	if _u.mutation.ProspectCleared() {
-		_spec.ClearField(event.FieldProspect, field.TypeBool)
 	}
 	if _u.mutation.WorkspaceCleared() {
 		edge := &sqlgraph.EdgeSpec{

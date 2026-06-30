@@ -37,9 +37,45 @@ func (_c *EventCreate) SetNillableSourceID(v *string) *EventCreate {
 	return _c
 }
 
+// SetContactID sets the "contact_id" field.
+func (_c *EventCreate) SetContactID(v int64) *EventCreate {
+	_c.mutation.SetContactID(v)
+	return _c
+}
+
+// SetNillableContactID sets the "contact_id" field if the given value is not nil.
+func (_c *EventCreate) SetNillableContactID(v *int64) *EventCreate {
+	if v != nil {
+		_c.SetContactID(*v)
+	}
+	return _c
+}
+
+// SetVisitorID sets the "visitor_id" field.
+func (_c *EventCreate) SetVisitorID(v string) *EventCreate {
+	_c.mutation.SetVisitorID(v)
+	return _c
+}
+
+// SetNillableVisitorID sets the "visitor_id" field if the given value is not nil.
+func (_c *EventCreate) SetNillableVisitorID(v *string) *EventCreate {
+	if v != nil {
+		_c.SetVisitorID(*v)
+	}
+	return _c
+}
+
 // SetSubjectID sets the "subject_id" field.
 func (_c *EventCreate) SetSubjectID(v string) *EventCreate {
 	_c.mutation.SetSubjectID(v)
+	return _c
+}
+
+// SetNillableSubjectID sets the "subject_id" field if the given value is not nil.
+func (_c *EventCreate) SetNillableSubjectID(v *string) *EventCreate {
+	if v != nil {
+		_c.SetSubjectID(*v)
+	}
 	return _c
 }
 
@@ -93,20 +129,6 @@ func (_c *EventCreate) SetOccurredAt(v time.Time) *EventCreate {
 func (_c *EventCreate) SetNillableOccurredAt(v *time.Time) *EventCreate {
 	if v != nil {
 		_c.SetOccurredAt(*v)
-	}
-	return _c
-}
-
-// SetProspect sets the "prospect" field.
-func (_c *EventCreate) SetProspect(v bool) *EventCreate {
-	_c.mutation.SetProspect(v)
-	return _c
-}
-
-// SetNillableProspect sets the "prospect" field if the given value is not nil.
-func (_c *EventCreate) SetNillableProspect(v *bool) *EventCreate {
-	if v != nil {
-		_c.SetProspect(*v)
 	}
 	return _c
 }
@@ -185,14 +207,6 @@ func (_c *EventCreate) defaults() {
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *EventCreate) check() error {
-	if _, ok := _c.mutation.SubjectID(); !ok {
-		return &ValidationError{Name: "subject_id", err: errors.New(`ent: missing required field "Event.subject_id"`)}
-	}
-	if v, ok := _c.mutation.SubjectID(); ok {
-		if err := event.SubjectIDValidator(v); err != nil {
-			return &ValidationError{Name: "subject_id", err: fmt.Errorf(`ent: validator failed for field "Event.subject_id": %w`, err)}
-		}
-	}
 	if _, ok := _c.mutation.Action(); !ok {
 		return &ValidationError{Name: "action", err: errors.New(`ent: missing required field "Event.action"`)}
 	}
@@ -247,6 +261,14 @@ func (_c *EventCreate) createSpec() (*Event, *sqlgraph.CreateSpec) {
 		_spec.SetField(event.FieldSourceID, field.TypeString, value)
 		_node.SourceID = &value
 	}
+	if value, ok := _c.mutation.ContactID(); ok {
+		_spec.SetField(event.FieldContactID, field.TypeInt64, value)
+		_node.ContactID = &value
+	}
+	if value, ok := _c.mutation.VisitorID(); ok {
+		_spec.SetField(event.FieldVisitorID, field.TypeString, value)
+		_node.VisitorID = &value
+	}
 	if value, ok := _c.mutation.SubjectID(); ok {
 		_spec.SetField(event.FieldSubjectID, field.TypeString, value)
 		_node.SubjectID = value
@@ -270,10 +292,6 @@ func (_c *EventCreate) createSpec() (*Event, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.OccurredAt(); ok {
 		_spec.SetField(event.FieldOccurredAt, field.TypeTime, value)
 		_node.OccurredAt = &value
-	}
-	if value, ok := _c.mutation.Prospect(); ok {
-		_spec.SetField(event.FieldProspect, field.TypeBool, value)
-		_node.Prospect = &value
 	}
 	if value, ok := _c.mutation.CreatedAt(); ok {
 		_spec.SetField(event.FieldCreatedAt, field.TypeTime, value)
@@ -366,6 +384,48 @@ func (u *EventUpsert) ClearSourceID() *EventUpsert {
 	return u
 }
 
+// SetContactID sets the "contact_id" field.
+func (u *EventUpsert) SetContactID(v int64) *EventUpsert {
+	u.Set(event.FieldContactID, v)
+	return u
+}
+
+// UpdateContactID sets the "contact_id" field to the value that was provided on create.
+func (u *EventUpsert) UpdateContactID() *EventUpsert {
+	u.SetExcluded(event.FieldContactID)
+	return u
+}
+
+// AddContactID adds v to the "contact_id" field.
+func (u *EventUpsert) AddContactID(v int64) *EventUpsert {
+	u.Add(event.FieldContactID, v)
+	return u
+}
+
+// ClearContactID clears the value of the "contact_id" field.
+func (u *EventUpsert) ClearContactID() *EventUpsert {
+	u.SetNull(event.FieldContactID)
+	return u
+}
+
+// SetVisitorID sets the "visitor_id" field.
+func (u *EventUpsert) SetVisitorID(v string) *EventUpsert {
+	u.Set(event.FieldVisitorID, v)
+	return u
+}
+
+// UpdateVisitorID sets the "visitor_id" field to the value that was provided on create.
+func (u *EventUpsert) UpdateVisitorID() *EventUpsert {
+	u.SetExcluded(event.FieldVisitorID)
+	return u
+}
+
+// ClearVisitorID clears the value of the "visitor_id" field.
+func (u *EventUpsert) ClearVisitorID() *EventUpsert {
+	u.SetNull(event.FieldVisitorID)
+	return u
+}
+
 // SetSubjectID sets the "subject_id" field.
 func (u *EventUpsert) SetSubjectID(v string) *EventUpsert {
 	u.Set(event.FieldSubjectID, v)
@@ -375,6 +435,12 @@ func (u *EventUpsert) SetSubjectID(v string) *EventUpsert {
 // UpdateSubjectID sets the "subject_id" field to the value that was provided on create.
 func (u *EventUpsert) UpdateSubjectID() *EventUpsert {
 	u.SetExcluded(event.FieldSubjectID)
+	return u
+}
+
+// ClearSubjectID clears the value of the "subject_id" field.
+func (u *EventUpsert) ClearSubjectID() *EventUpsert {
+	u.SetNull(event.FieldSubjectID)
 	return u
 }
 
@@ -462,24 +528,6 @@ func (u *EventUpsert) ClearOccurredAt() *EventUpsert {
 	return u
 }
 
-// SetProspect sets the "prospect" field.
-func (u *EventUpsert) SetProspect(v bool) *EventUpsert {
-	u.Set(event.FieldProspect, v)
-	return u
-}
-
-// UpdateProspect sets the "prospect" field to the value that was provided on create.
-func (u *EventUpsert) UpdateProspect() *EventUpsert {
-	u.SetExcluded(event.FieldProspect)
-	return u
-}
-
-// ClearProspect clears the value of the "prospect" field.
-func (u *EventUpsert) ClearProspect() *EventUpsert {
-	u.SetNull(event.FieldProspect)
-	return u
-}
-
 // SetWorkspaceID sets the "workspace_id" field.
 func (u *EventUpsert) SetWorkspaceID(v int64) *EventUpsert {
 	u.Set(event.FieldWorkspaceID, v)
@@ -564,6 +612,55 @@ func (u *EventUpsertOne) ClearSourceID() *EventUpsertOne {
 	})
 }
 
+// SetContactID sets the "contact_id" field.
+func (u *EventUpsertOne) SetContactID(v int64) *EventUpsertOne {
+	return u.Update(func(s *EventUpsert) {
+		s.SetContactID(v)
+	})
+}
+
+// AddContactID adds v to the "contact_id" field.
+func (u *EventUpsertOne) AddContactID(v int64) *EventUpsertOne {
+	return u.Update(func(s *EventUpsert) {
+		s.AddContactID(v)
+	})
+}
+
+// UpdateContactID sets the "contact_id" field to the value that was provided on create.
+func (u *EventUpsertOne) UpdateContactID() *EventUpsertOne {
+	return u.Update(func(s *EventUpsert) {
+		s.UpdateContactID()
+	})
+}
+
+// ClearContactID clears the value of the "contact_id" field.
+func (u *EventUpsertOne) ClearContactID() *EventUpsertOne {
+	return u.Update(func(s *EventUpsert) {
+		s.ClearContactID()
+	})
+}
+
+// SetVisitorID sets the "visitor_id" field.
+func (u *EventUpsertOne) SetVisitorID(v string) *EventUpsertOne {
+	return u.Update(func(s *EventUpsert) {
+		s.SetVisitorID(v)
+	})
+}
+
+// UpdateVisitorID sets the "visitor_id" field to the value that was provided on create.
+func (u *EventUpsertOne) UpdateVisitorID() *EventUpsertOne {
+	return u.Update(func(s *EventUpsert) {
+		s.UpdateVisitorID()
+	})
+}
+
+// ClearVisitorID clears the value of the "visitor_id" field.
+func (u *EventUpsertOne) ClearVisitorID() *EventUpsertOne {
+	return u.Update(func(s *EventUpsert) {
+		s.ClearVisitorID()
+	})
+}
+
 // SetSubjectID sets the "subject_id" field.
 func (u *EventUpsertOne) SetSubjectID(v string) *EventUpsertOne {
 	return u.Update(func(s *EventUpsert) {
@@ -575,6 +672,13 @@ func (u *EventUpsertOne) SetSubjectID(v string) *EventUpsertOne {
 func (u *EventUpsertOne) UpdateSubjectID() *EventUpsertOne {
 	return u.Update(func(s *EventUpsert) {
 		s.UpdateSubjectID()
+	})
+}
+
+// ClearSubjectID clears the value of the "subject_id" field.
+func (u *EventUpsertOne) ClearSubjectID() *EventUpsertOne {
+	return u.Update(func(s *EventUpsert) {
+		s.ClearSubjectID()
 	})
 }
 
@@ -673,27 +777,6 @@ func (u *EventUpsertOne) UpdateOccurredAt() *EventUpsertOne {
 func (u *EventUpsertOne) ClearOccurredAt() *EventUpsertOne {
 	return u.Update(func(s *EventUpsert) {
 		s.ClearOccurredAt()
-	})
-}
-
-// SetProspect sets the "prospect" field.
-func (u *EventUpsertOne) SetProspect(v bool) *EventUpsertOne {
-	return u.Update(func(s *EventUpsert) {
-		s.SetProspect(v)
-	})
-}
-
-// UpdateProspect sets the "prospect" field to the value that was provided on create.
-func (u *EventUpsertOne) UpdateProspect() *EventUpsertOne {
-	return u.Update(func(s *EventUpsert) {
-		s.UpdateProspect()
-	})
-}
-
-// ClearProspect clears the value of the "prospect" field.
-func (u *EventUpsertOne) ClearProspect() *EventUpsertOne {
-	return u.Update(func(s *EventUpsert) {
-		s.ClearProspect()
 	})
 }
 
@@ -949,6 +1032,55 @@ func (u *EventUpsertBulk) ClearSourceID() *EventUpsertBulk {
 	})
 }
 
+// SetContactID sets the "contact_id" field.
+func (u *EventUpsertBulk) SetContactID(v int64) *EventUpsertBulk {
+	return u.Update(func(s *EventUpsert) {
+		s.SetContactID(v)
+	})
+}
+
+// AddContactID adds v to the "contact_id" field.
+func (u *EventUpsertBulk) AddContactID(v int64) *EventUpsertBulk {
+	return u.Update(func(s *EventUpsert) {
+		s.AddContactID(v)
+	})
+}
+
+// UpdateContactID sets the "contact_id" field to the value that was provided on create.
+func (u *EventUpsertBulk) UpdateContactID() *EventUpsertBulk {
+	return u.Update(func(s *EventUpsert) {
+		s.UpdateContactID()
+	})
+}
+
+// ClearContactID clears the value of the "contact_id" field.
+func (u *EventUpsertBulk) ClearContactID() *EventUpsertBulk {
+	return u.Update(func(s *EventUpsert) {
+		s.ClearContactID()
+	})
+}
+
+// SetVisitorID sets the "visitor_id" field.
+func (u *EventUpsertBulk) SetVisitorID(v string) *EventUpsertBulk {
+	return u.Update(func(s *EventUpsert) {
+		s.SetVisitorID(v)
+	})
+}
+
+// UpdateVisitorID sets the "visitor_id" field to the value that was provided on create.
+func (u *EventUpsertBulk) UpdateVisitorID() *EventUpsertBulk {
+	return u.Update(func(s *EventUpsert) {
+		s.UpdateVisitorID()
+	})
+}
+
+// ClearVisitorID clears the value of the "visitor_id" field.
+func (u *EventUpsertBulk) ClearVisitorID() *EventUpsertBulk {
+	return u.Update(func(s *EventUpsert) {
+		s.ClearVisitorID()
+	})
+}
+
 // SetSubjectID sets the "subject_id" field.
 func (u *EventUpsertBulk) SetSubjectID(v string) *EventUpsertBulk {
 	return u.Update(func(s *EventUpsert) {
@@ -960,6 +1092,13 @@ func (u *EventUpsertBulk) SetSubjectID(v string) *EventUpsertBulk {
 func (u *EventUpsertBulk) UpdateSubjectID() *EventUpsertBulk {
 	return u.Update(func(s *EventUpsert) {
 		s.UpdateSubjectID()
+	})
+}
+
+// ClearSubjectID clears the value of the "subject_id" field.
+func (u *EventUpsertBulk) ClearSubjectID() *EventUpsertBulk {
+	return u.Update(func(s *EventUpsert) {
+		s.ClearSubjectID()
 	})
 }
 
@@ -1058,27 +1197,6 @@ func (u *EventUpsertBulk) UpdateOccurredAt() *EventUpsertBulk {
 func (u *EventUpsertBulk) ClearOccurredAt() *EventUpsertBulk {
 	return u.Update(func(s *EventUpsert) {
 		s.ClearOccurredAt()
-	})
-}
-
-// SetProspect sets the "prospect" field.
-func (u *EventUpsertBulk) SetProspect(v bool) *EventUpsertBulk {
-	return u.Update(func(s *EventUpsert) {
-		s.SetProspect(v)
-	})
-}
-
-// UpdateProspect sets the "prospect" field to the value that was provided on create.
-func (u *EventUpsertBulk) UpdateProspect() *EventUpsertBulk {
-	return u.Update(func(s *EventUpsert) {
-		s.UpdateProspect()
-	})
-}
-
-// ClearProspect clears the value of the "prospect" field.
-func (u *EventUpsertBulk) ClearProspect() *EventUpsertBulk {
-	return u.Update(func(s *EventUpsert) {
-		s.ClearProspect()
 	})
 }
 

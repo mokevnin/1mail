@@ -13,14 +13,21 @@ import {
 import type { SiteContactResource } from '../../generated/site/types.gen.ts'
 import { useResourceMutation } from '../../hooks/useResourceMutation.ts'
 import { contactsEditRoute } from '../../router.tsx'
-import { ContactForm, type ContactFormValues } from './ContactForm.tsx'
+import { ContactForm, type ContactFormValues, toContactPayload } from './ContactForm.tsx'
 
 export function ContactEditPage() {
   const { t } = useTranslation()
   const { slug, contactId } = contactsEditRoute.useParams()
 
   const form = useForm<ContactFormValues>({
-    initialValues: { email: '', firstName: '', lastName: '', timeZone: '' },
+    initialValues: {
+      subjectId: '',
+      email: '',
+      phone: '',
+      firstName: '',
+      lastName: '',
+      timeZone: '',
+    },
   })
 
   const getContactQuery = useQuery(
@@ -30,7 +37,9 @@ export function ContactEditPage() {
   const applyContactData = useEffectEvent((data: SiteContactResource | undefined) => {
     if (!data) return
     form.setValues({
-      email: data.email,
+      subjectId: data.subjectId ?? '',
+      email: data.email ?? '',
+      phone: data.phone ?? '',
       firstName: data.firstName ?? '',
       lastName: data.lastName ?? '',
       timeZone: data.timeZone ?? '',
@@ -68,12 +77,11 @@ export function ContactEditPage() {
       <Title order={4}>{t(($) => $.form.editTitle)}</Title>
       <ContactForm
         form={form}
-        emailEditable={false}
         isPending={updateMutation.isPending}
-        onSubmit={({ firstName, lastName, timeZone }) =>
+        onSubmit={(values) =>
           updateMutation.mutate({
             path: { workspaceSlug: slug, id: contactId },
-            body: { firstName, lastName, timeZone },
+            body: toContactPayload(values),
           })
         }
       />

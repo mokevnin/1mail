@@ -93,6 +93,10 @@ type SiteContactsUpdateRes interface {
 	siteContactsUpdateRes()
 }
 
+type SiteCustomFieldsListRes interface {
+	siteCustomFieldsListRes()
+}
+
 type SiteEventsActionsRes interface {
 	siteEventsActionsRes()
 }

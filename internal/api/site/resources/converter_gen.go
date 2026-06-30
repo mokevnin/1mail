@@ -48,7 +48,9 @@ func (c *ConverterImpl) ContactToResource(source *ent.Contact) site.SiteContactR
 	var siteapiSiteContactResource site.SiteContactResource
 	if source != nil {
 		siteapiSiteContactResource.ID = entityID((*source).ID)
-		siteapiSiteContactResource.Email = site.EmailAddress((*source).Email)
+		siteapiSiteContactResource.SubjectId = optNilString((*source).SubjectID)
+		siteapiSiteContactResource.Email = optNilEmailAddress((*source).Email)
+		siteapiSiteContactResource.Phone = optNilString((*source).Phone)
 		siteapiSiteContactResource.FirstName = optNilString((*source).FirstName)
 		siteapiSiteContactResource.LastName = optNilString((*source).LastName)
 		siteapiSiteContactResource.TimeZone = optNilTimeZone((*source).TimeZone)
@@ -58,6 +60,18 @@ func (c *ConverterImpl) ContactToResource(source *ent.Contact) site.SiteContactR
 		siteapiSiteContactResource.UpdatedAt = timestamp((*source).UpdatedAt)
 	}
 	return siteapiSiteContactResource
+}
+func (c *ConverterImpl) CustomFieldToResource(source *ent.CustomField) site.SiteCustomFieldResource {
+	var siteapiSiteCustomFieldResource site.SiteCustomFieldResource
+	if source != nil {
+		siteapiSiteCustomFieldResource.ID = entityID((*source).ID)
+		siteapiSiteCustomFieldResource.Key = (*source).Key
+		siteapiSiteCustomFieldResource.Name = (*source).Name
+		siteapiSiteCustomFieldResource.Type = site.SiteCustomFieldType((*source).Type)
+		siteapiSiteCustomFieldResource.CreatedAt = timestamp((*source).CreatedAt)
+		siteapiSiteCustomFieldResource.UpdatedAt = timestamp((*source).UpdatedAt)
+	}
+	return siteapiSiteCustomFieldResource
 }
 func (c *ConverterImpl) EmailTemplateToResource(source *ent.EmailTemplate) site.SiteEmailTemplateResource {
 	var siteapiSiteEmailTemplateResource site.SiteEmailTemplateResource

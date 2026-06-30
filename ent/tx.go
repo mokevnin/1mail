@@ -24,6 +24,8 @@ type Tx struct {
 	BroadcastRecipient *BroadcastRecipientClient
 	// Contact is the client for interacting with the Contact builders.
 	Contact *ContactClient
+	// CustomField is the client for interacting with the CustomField builders.
+	CustomField *CustomFieldClient
 	// EmailTemplate is the client for interacting with the EmailTemplate builders.
 	EmailTemplate *EmailTemplateClient
 	// Event is the client for interacting with the Event builders.
@@ -34,12 +36,10 @@ type Tx struct {
 	Segment *SegmentClient
 	// Suppression is the client for interacting with the Suppression builders.
 	Suppression *SuppressionClient
-	// TrackingProfile is the client for interacting with the TrackingProfile builders.
-	TrackingProfile *TrackingProfileClient
-	// TrackingVisitor is the client for interacting with the TrackingVisitor builders.
-	TrackingVisitor *TrackingVisitorClient
 	// User is the client for interacting with the User builders.
 	User *UserClient
+	// Visitor is the client for interacting with the Visitor builders.
+	Visitor *VisitorClient
 	// WebhookEndpoint is the client for interacting with the WebhookEndpoint builders.
 	WebhookEndpoint *WebhookEndpointClient
 	// Workspace is the client for interacting with the Workspace builders.
@@ -181,14 +181,14 @@ func (tx *Tx) init() {
 	tx.Broadcast = NewBroadcastClient(tx.config)
 	tx.BroadcastRecipient = NewBroadcastRecipientClient(tx.config)
 	tx.Contact = NewContactClient(tx.config)
+	tx.CustomField = NewCustomFieldClient(tx.config)
 	tx.EmailTemplate = NewEmailTemplateClient(tx.config)
 	tx.Event = NewEventClient(tx.config)
 	tx.Integration = NewIntegrationClient(tx.config)
 	tx.Segment = NewSegmentClient(tx.config)
 	tx.Suppression = NewSuppressionClient(tx.config)
-	tx.TrackingProfile = NewTrackingProfileClient(tx.config)
-	tx.TrackingVisitor = NewTrackingVisitorClient(tx.config)
 	tx.User = NewUserClient(tx.config)
+	tx.Visitor = NewVisitorClient(tx.config)
 	tx.WebhookEndpoint = NewWebhookEndpointClient(tx.config)
 	tx.Workspace = NewWorkspaceClient(tx.config)
 }

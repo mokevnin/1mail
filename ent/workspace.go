@@ -42,14 +42,14 @@ type Workspace struct {
 type WorkspaceEdges struct {
 	// Contacts holds the value of the contacts edge.
 	Contacts []*Contact `json:"contacts,omitempty"`
+	// CustomFields holds the value of the custom_fields edge.
+	CustomFields []*CustomField `json:"custom_fields,omitempty"`
 	// Segments holds the value of the segments edge.
 	Segments []*Segment `json:"segments,omitempty"`
 	// Events holds the value of the events edge.
 	Events []*Event `json:"events,omitempty"`
-	// TrackingProfiles holds the value of the tracking_profiles edge.
-	TrackingProfiles []*TrackingProfile `json:"tracking_profiles,omitempty"`
-	// TrackingVisitors holds the value of the tracking_visitors edge.
-	TrackingVisitors []*TrackingVisitor `json:"tracking_visitors,omitempty"`
+	// Visitors holds the value of the visitors edge.
+	Visitors []*Visitor `json:"visitors,omitempty"`
 	// APITokens holds the value of the api_tokens edge.
 	APITokens []*ApiToken `json:"api_tokens,omitempty"`
 	// Integrations holds the value of the integrations edge.
@@ -84,10 +84,19 @@ func (e WorkspaceEdges) ContactsOrErr() ([]*Contact, error) {
 	return nil, &NotLoadedError{edge: "contacts"}
 }
 
+// CustomFieldsOrErr returns the CustomFields value or an error if the edge
+// was not loaded in eager-loading.
+func (e WorkspaceEdges) CustomFieldsOrErr() ([]*CustomField, error) {
+	if e.loadedTypes[1] {
+		return e.CustomFields, nil
+	}
+	return nil, &NotLoadedError{edge: "custom_fields"}
+}
+
 // SegmentsOrErr returns the Segments value or an error if the edge
 // was not loaded in eager-loading.
 func (e WorkspaceEdges) SegmentsOrErr() ([]*Segment, error) {
-	if e.loadedTypes[1] {
+	if e.loadedTypes[2] {
 		return e.Segments, nil
 	}
 	return nil, &NotLoadedError{edge: "segments"}
@@ -96,28 +105,19 @@ func (e WorkspaceEdges) SegmentsOrErr() ([]*Segment, error) {
 // EventsOrErr returns the Events value or an error if the edge
 // was not loaded in eager-loading.
 func (e WorkspaceEdges) EventsOrErr() ([]*Event, error) {
-	if e.loadedTypes[2] {
+	if e.loadedTypes[3] {
 		return e.Events, nil
 	}
 	return nil, &NotLoadedError{edge: "events"}
 }
 
-// TrackingProfilesOrErr returns the TrackingProfiles value or an error if the edge
+// VisitorsOrErr returns the Visitors value or an error if the edge
 // was not loaded in eager-loading.
-func (e WorkspaceEdges) TrackingProfilesOrErr() ([]*TrackingProfile, error) {
-	if e.loadedTypes[3] {
-		return e.TrackingProfiles, nil
-	}
-	return nil, &NotLoadedError{edge: "tracking_profiles"}
-}
-
-// TrackingVisitorsOrErr returns the TrackingVisitors value or an error if the edge
-// was not loaded in eager-loading.
-func (e WorkspaceEdges) TrackingVisitorsOrErr() ([]*TrackingVisitor, error) {
+func (e WorkspaceEdges) VisitorsOrErr() ([]*Visitor, error) {
 	if e.loadedTypes[4] {
-		return e.TrackingVisitors, nil
+		return e.Visitors, nil
 	}
-	return nil, &NotLoadedError{edge: "tracking_visitors"}
+	return nil, &NotLoadedError{edge: "visitors"}
 }
 
 // APITokensOrErr returns the APITokens value or an error if the edge
@@ -305,6 +305,11 @@ func (_m *Workspace) QueryContacts() *ContactQuery {
 	return NewWorkspaceClient(_m.config).QueryContacts(_m)
 }
 
+// QueryCustomFields queries the "custom_fields" edge of the Workspace entity.
+func (_m *Workspace) QueryCustomFields() *CustomFieldQuery {
+	return NewWorkspaceClient(_m.config).QueryCustomFields(_m)
+}
+
 // QuerySegments queries the "segments" edge of the Workspace entity.
 func (_m *Workspace) QuerySegments() *SegmentQuery {
 	return NewWorkspaceClient(_m.config).QuerySegments(_m)
@@ -315,14 +320,9 @@ func (_m *Workspace) QueryEvents() *EventQuery {
 	return NewWorkspaceClient(_m.config).QueryEvents(_m)
 }
 
-// QueryTrackingProfiles queries the "tracking_profiles" edge of the Workspace entity.
-func (_m *Workspace) QueryTrackingProfiles() *TrackingProfileQuery {
-	return NewWorkspaceClient(_m.config).QueryTrackingProfiles(_m)
-}
-
-// QueryTrackingVisitors queries the "tracking_visitors" edge of the Workspace entity.
-func (_m *Workspace) QueryTrackingVisitors() *TrackingVisitorQuery {
-	return NewWorkspaceClient(_m.config).QueryTrackingVisitors(_m)
+// QueryVisitors queries the "visitors" edge of the Workspace entity.
+func (_m *Workspace) QueryVisitors() *VisitorQuery {
+	return NewWorkspaceClient(_m.config).QueryVisitors(_m)
 }
 
 // QueryAPITokens queries the "api_tokens" edge of the Workspace entity.

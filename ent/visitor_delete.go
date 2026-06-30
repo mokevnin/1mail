@@ -9,29 +9,29 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/mokevnin/1mail/ent/predicate"
-	"github.com/mokevnin/1mail/ent/trackingprofile"
+	"github.com/mokevnin/1mail/ent/visitor"
 )
 
-// TrackingProfileDelete is the builder for deleting a TrackingProfile entity.
-type TrackingProfileDelete struct {
+// VisitorDelete is the builder for deleting a Visitor entity.
+type VisitorDelete struct {
 	config
 	hooks    []Hook
-	mutation *TrackingProfileMutation
+	mutation *VisitorMutation
 }
 
-// Where appends a list predicates to the TrackingProfileDelete builder.
-func (_d *TrackingProfileDelete) Where(ps ...predicate.TrackingProfile) *TrackingProfileDelete {
+// Where appends a list predicates to the VisitorDelete builder.
+func (_d *VisitorDelete) Where(ps ...predicate.Visitor) *VisitorDelete {
 	_d.mutation.Where(ps...)
 	return _d
 }
 
 // Exec executes the deletion query and returns how many vertices were deleted.
-func (_d *TrackingProfileDelete) Exec(ctx context.Context) (int, error) {
+func (_d *VisitorDelete) Exec(ctx context.Context) (int, error) {
 	return withHooks(ctx, _d.sqlExec, _d.mutation, _d.hooks)
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (_d *TrackingProfileDelete) ExecX(ctx context.Context) int {
+func (_d *VisitorDelete) ExecX(ctx context.Context) int {
 	n, err := _d.Exec(ctx)
 	if err != nil {
 		panic(err)
@@ -39,8 +39,8 @@ func (_d *TrackingProfileDelete) ExecX(ctx context.Context) int {
 	return n
 }
 
-func (_d *TrackingProfileDelete) sqlExec(ctx context.Context) (int, error) {
-	_spec := sqlgraph.NewDeleteSpec(trackingprofile.Table, sqlgraph.NewFieldSpec(trackingprofile.FieldID, field.TypeInt64))
+func (_d *VisitorDelete) sqlExec(ctx context.Context) (int, error) {
+	_spec := sqlgraph.NewDeleteSpec(visitor.Table, sqlgraph.NewFieldSpec(visitor.FieldID, field.TypeInt64))
 	if ps := _d.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
@@ -56,32 +56,32 @@ func (_d *TrackingProfileDelete) sqlExec(ctx context.Context) (int, error) {
 	return affected, err
 }
 
-// TrackingProfileDeleteOne is the builder for deleting a single TrackingProfile entity.
-type TrackingProfileDeleteOne struct {
-	_d *TrackingProfileDelete
+// VisitorDeleteOne is the builder for deleting a single Visitor entity.
+type VisitorDeleteOne struct {
+	_d *VisitorDelete
 }
 
-// Where appends a list predicates to the TrackingProfileDelete builder.
-func (_d *TrackingProfileDeleteOne) Where(ps ...predicate.TrackingProfile) *TrackingProfileDeleteOne {
+// Where appends a list predicates to the VisitorDelete builder.
+func (_d *VisitorDeleteOne) Where(ps ...predicate.Visitor) *VisitorDeleteOne {
 	_d._d.mutation.Where(ps...)
 	return _d
 }
 
 // Exec executes the deletion query.
-func (_d *TrackingProfileDeleteOne) Exec(ctx context.Context) error {
+func (_d *VisitorDeleteOne) Exec(ctx context.Context) error {
 	n, err := _d._d.Exec(ctx)
 	switch {
 	case err != nil:
 		return err
 	case n == 0:
-		return &NotFoundError{trackingprofile.Label}
+		return &NotFoundError{visitor.Label}
 	default:
 		return nil
 	}
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (_d *TrackingProfileDeleteOne) ExecX(ctx context.Context) {
+func (_d *VisitorDeleteOne) ExecX(ctx context.Context) {
 	if err := _d.Exec(ctx); err != nil {
 		panic(err)
 	}

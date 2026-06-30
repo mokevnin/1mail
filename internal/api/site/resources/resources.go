@@ -48,6 +48,7 @@ type Converter interface {
 	EmailTemplateToResource(source *ent.EmailTemplate) siteapi.SiteEmailTemplateResource
 	AutomationToResource(source *ent.Automation) siteapi.SiteAutomationResource
 	SuppressionToResource(source *ent.Suppression) siteapi.SiteSuppressionResource
+	CustomFieldToResource(source *ent.CustomField) siteapi.SiteCustomFieldResource
 }
 
 func entityID(id int64) siteapi.EntityId {
@@ -122,11 +123,19 @@ func optNilTimestamp(v *time.Time) siteapi.OptNilTimestamp {
 	return siteapi.NewOptNilTimestamp(siteapi.Timestamp(*v))
 }
 
-func contactCustomFields(m map[string]string) siteapi.OptNilSiteContactResourceCustomFields {
-	if m == nil {
+func contactCustomFields(m map[string]any) siteapi.OptNilSiteContactResourceCustomFields {
+	if len(m) == 0 {
 		return siteapi.OptNilSiteContactResourceCustomFields{}
 	}
-	return siteapi.NewOptNilSiteContactResourceCustomFields(siteapi.SiteContactResourceCustomFields(m))
+	fields := make(siteapi.SiteContactResourceCustomFields, len(m))
+	for k, v := range m {
+		b, err := json.Marshal(v)
+		if err != nil {
+			continue
+		}
+		fields[k] = jx.Raw(b)
+	}
+	return siteapi.NewOptNilSiteContactResourceCustomFields(fields)
 }
 
 func eventProperties(m map[string]any) siteapi.OptNilSiteEventResourceProperties {

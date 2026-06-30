@@ -250,14 +250,18 @@ func Persist(ctx context.Context, client *ent.Client, env Envelope) error {
 	if sourceID != "" {
 		create.SetSourceID(sourceID)
 	}
+	// The authoritative Contact link, resolved at ingest. 0 ⇒ anonymous (leave null).
+	if p.ContactID != 0 {
+		create.SetContactID(p.ContactID)
+	}
+	if p.VisitorID != "" {
+		create.SetVisitorID(p.VisitorID)
+	}
 	if p.Email != "" {
 		create.SetEmail(p.Email)
 	}
 	if p.Phone != "" {
 		create.SetPhone(p.Phone)
-	}
-	if p.Prospect != nil {
-		create.SetProspect(*p.Prospect)
 	}
 	// Idempotent: at-least-once delivery can redeliver an envelope after a crash;
 	// dedupe on the source_id (the envelope ULID) so the projection row is written

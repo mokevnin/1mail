@@ -51,7 +51,7 @@ func TestBusWithinTxCommitsStateAndOutbox(t *testing.T) {
 			return err
 		}
 		created = c
-		return pub.Publish(ctx, &events.ContactCreated{WorkspaceID: fixtureWorkspace, ContactID: c.ID, Email: c.Email})
+		return pub.Publish(ctx, &events.ContactCreated{WorkspaceID: fixtureWorkspace, ContactID: c.ID, Email: *c.Email})
 	})
 	require.NoError(t, err)
 
@@ -92,21 +92,21 @@ func TestBusWithinTxRollsBackBoth(t *testing.T) {
 
 // Persist projects an envelope to the durable Event row. This is the load-bearing
 // check on the projection (the router doesn't run under txdb): every column —
-// including phone, prospect, a non-now OccurredAt, and opaque Properties — must
-// land. Uses a CollectedEvent because it exercises all of them.
+// including the resolved contact_id, visitor_id, phone, a non-now OccurredAt, and
+// opaque Properties — must land. Uses a CollectedEvent because it exercises them all.
 func TestPersistWritesEventProjection(t *testing.T) {
 	env := testhelper.Setup(t)
 	ctx := context.Background()
 
 	occurred := time.Date(2026, 6, 28, 10, 0, 0, 0, time.UTC)
-	prospect := true
 	collected := &events.CollectedEvent{
 		WorkspaceID: fixtureWorkspace,
+		ContactID:   1, // fixture contact in the fixture workspace
+		VisitorID:   "visitor-abc",
 		SubjectID:   "visitor:abc",
 		Action:      "page_view",
 		Email:       "persist@example.com",
 		Phone:       "+15550100",
-		Prospect:    &prospect,
 		Properties:  map[string]any{"path": "/pricing"},
 		OccurredAt:  occurred,
 	}
@@ -128,8 +128,10 @@ func TestPersistWritesEventProjection(t *testing.T) {
 	assert.Equal(t, "persist@example.com", *row.Email)
 	require.NotNil(t, row.Phone)
 	assert.Equal(t, "+15550100", *row.Phone)
-	require.NotNil(t, row.Prospect)
-	assert.True(t, *row.Prospect)
+	require.NotNil(t, row.ContactID)
+	assert.EqualValues(t, 1, *row.ContactID)
+	require.NotNil(t, row.VisitorID)
+	assert.Equal(t, "visitor-abc", *row.VisitorID)
 	require.NotNil(t, row.OccurredAt)
 	assert.Equal(t, occurred, row.OccurredAt.UTC())
 	assert.Equal(t, "/pricing", row.Properties["path"])

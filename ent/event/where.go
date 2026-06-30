@@ -60,6 +60,16 @@ func SourceID(v string) predicate.Event {
 	return predicate.Event(sql.FieldEQ(FieldSourceID, v))
 }
 
+// ContactID applies equality check predicate on the "contact_id" field. It's identical to ContactIDEQ.
+func ContactID(v int64) predicate.Event {
+	return predicate.Event(sql.FieldEQ(FieldContactID, v))
+}
+
+// VisitorID applies equality check predicate on the "visitor_id" field. It's identical to VisitorIDEQ.
+func VisitorID(v string) predicate.Event {
+	return predicate.Event(sql.FieldEQ(FieldVisitorID, v))
+}
+
 // SubjectID applies equality check predicate on the "subject_id" field. It's identical to SubjectIDEQ.
 func SubjectID(v string) predicate.Event {
 	return predicate.Event(sql.FieldEQ(FieldSubjectID, v))
@@ -83,11 +93,6 @@ func Action(v string) predicate.Event {
 // OccurredAt applies equality check predicate on the "occurred_at" field. It's identical to OccurredAtEQ.
 func OccurredAt(v time.Time) predicate.Event {
 	return predicate.Event(sql.FieldEQ(FieldOccurredAt, v))
-}
-
-// Prospect applies equality check predicate on the "prospect" field. It's identical to ProspectEQ.
-func Prospect(v bool) predicate.Event {
-	return predicate.Event(sql.FieldEQ(FieldProspect, v))
 }
 
 // WorkspaceID applies equality check predicate on the "workspace_id" field. It's identical to WorkspaceIDEQ.
@@ -175,6 +180,131 @@ func SourceIDContainsFold(v string) predicate.Event {
 	return predicate.Event(sql.FieldContainsFold(FieldSourceID, v))
 }
 
+// ContactIDEQ applies the EQ predicate on the "contact_id" field.
+func ContactIDEQ(v int64) predicate.Event {
+	return predicate.Event(sql.FieldEQ(FieldContactID, v))
+}
+
+// ContactIDNEQ applies the NEQ predicate on the "contact_id" field.
+func ContactIDNEQ(v int64) predicate.Event {
+	return predicate.Event(sql.FieldNEQ(FieldContactID, v))
+}
+
+// ContactIDIn applies the In predicate on the "contact_id" field.
+func ContactIDIn(vs ...int64) predicate.Event {
+	return predicate.Event(sql.FieldIn(FieldContactID, vs...))
+}
+
+// ContactIDNotIn applies the NotIn predicate on the "contact_id" field.
+func ContactIDNotIn(vs ...int64) predicate.Event {
+	return predicate.Event(sql.FieldNotIn(FieldContactID, vs...))
+}
+
+// ContactIDGT applies the GT predicate on the "contact_id" field.
+func ContactIDGT(v int64) predicate.Event {
+	return predicate.Event(sql.FieldGT(FieldContactID, v))
+}
+
+// ContactIDGTE applies the GTE predicate on the "contact_id" field.
+func ContactIDGTE(v int64) predicate.Event {
+	return predicate.Event(sql.FieldGTE(FieldContactID, v))
+}
+
+// ContactIDLT applies the LT predicate on the "contact_id" field.
+func ContactIDLT(v int64) predicate.Event {
+	return predicate.Event(sql.FieldLT(FieldContactID, v))
+}
+
+// ContactIDLTE applies the LTE predicate on the "contact_id" field.
+func ContactIDLTE(v int64) predicate.Event {
+	return predicate.Event(sql.FieldLTE(FieldContactID, v))
+}
+
+// ContactIDIsNil applies the IsNil predicate on the "contact_id" field.
+func ContactIDIsNil() predicate.Event {
+	return predicate.Event(sql.FieldIsNull(FieldContactID))
+}
+
+// ContactIDNotNil applies the NotNil predicate on the "contact_id" field.
+func ContactIDNotNil() predicate.Event {
+	return predicate.Event(sql.FieldNotNull(FieldContactID))
+}
+
+// VisitorIDEQ applies the EQ predicate on the "visitor_id" field.
+func VisitorIDEQ(v string) predicate.Event {
+	return predicate.Event(sql.FieldEQ(FieldVisitorID, v))
+}
+
+// VisitorIDNEQ applies the NEQ predicate on the "visitor_id" field.
+func VisitorIDNEQ(v string) predicate.Event {
+	return predicate.Event(sql.FieldNEQ(FieldVisitorID, v))
+}
+
+// VisitorIDIn applies the In predicate on the "visitor_id" field.
+func VisitorIDIn(vs ...string) predicate.Event {
+	return predicate.Event(sql.FieldIn(FieldVisitorID, vs...))
+}
+
+// VisitorIDNotIn applies the NotIn predicate on the "visitor_id" field.
+func VisitorIDNotIn(vs ...string) predicate.Event {
+	return predicate.Event(sql.FieldNotIn(FieldVisitorID, vs...))
+}
+
+// VisitorIDGT applies the GT predicate on the "visitor_id" field.
+func VisitorIDGT(v string) predicate.Event {
+	return predicate.Event(sql.FieldGT(FieldVisitorID, v))
+}
+
+// VisitorIDGTE applies the GTE predicate on the "visitor_id" field.
+func VisitorIDGTE(v string) predicate.Event {
+	return predicate.Event(sql.FieldGTE(FieldVisitorID, v))
+}
+
+// VisitorIDLT applies the LT predicate on the "visitor_id" field.
+func VisitorIDLT(v string) predicate.Event {
+	return predicate.Event(sql.FieldLT(FieldVisitorID, v))
+}
+
+// VisitorIDLTE applies the LTE predicate on the "visitor_id" field.
+func VisitorIDLTE(v string) predicate.Event {
+	return predicate.Event(sql.FieldLTE(FieldVisitorID, v))
+}
+
+// VisitorIDContains applies the Contains predicate on the "visitor_id" field.
+func VisitorIDContains(v string) predicate.Event {
+	return predicate.Event(sql.FieldContains(FieldVisitorID, v))
+}
+
+// VisitorIDHasPrefix applies the HasPrefix predicate on the "visitor_id" field.
+func VisitorIDHasPrefix(v string) predicate.Event {
+	return predicate.Event(sql.FieldHasPrefix(FieldVisitorID, v))
+}
+
+// VisitorIDHasSuffix applies the HasSuffix predicate on the "visitor_id" field.
+func VisitorIDHasSuffix(v string) predicate.Event {
+	return predicate.Event(sql.FieldHasSuffix(FieldVisitorID, v))
+}
+
+// VisitorIDIsNil applies the IsNil predicate on the "visitor_id" field.
+func VisitorIDIsNil() predicate.Event {
+	return predicate.Event(sql.FieldIsNull(FieldVisitorID))
+}
+
+// VisitorIDNotNil applies the NotNil predicate on the "visitor_id" field.
+func VisitorIDNotNil() predicate.Event {
+	return predicate.Event(sql.FieldNotNull(FieldVisitorID))
+}
+
+// VisitorIDEqualFold applies the EqualFold predicate on the "visitor_id" field.
+func VisitorIDEqualFold(v string) predicate.Event {
+	return predicate.Event(sql.FieldEqualFold(FieldVisitorID, v))
+}
+
+// VisitorIDContainsFold applies the ContainsFold predicate on the "visitor_id" field.
+func VisitorIDContainsFold(v string) predicate.Event {
+	return predicate.Event(sql.FieldContainsFold(FieldVisitorID, v))
+}
+
 // SubjectIDEQ applies the EQ predicate on the "subject_id" field.
 func SubjectIDEQ(v string) predicate.Event {
 	return predicate.Event(sql.FieldEQ(FieldSubjectID, v))
@@ -228,6 +358,16 @@ func SubjectIDHasPrefix(v string) predicate.Event {
 // SubjectIDHasSuffix applies the HasSuffix predicate on the "subject_id" field.
 func SubjectIDHasSuffix(v string) predicate.Event {
 	return predicate.Event(sql.FieldHasSuffix(FieldSubjectID, v))
+}
+
+// SubjectIDIsNil applies the IsNil predicate on the "subject_id" field.
+func SubjectIDIsNil() predicate.Event {
+	return predicate.Event(sql.FieldIsNull(FieldSubjectID))
+}
+
+// SubjectIDNotNil applies the NotNil predicate on the "subject_id" field.
+func SubjectIDNotNil() predicate.Event {
+	return predicate.Event(sql.FieldNotNull(FieldSubjectID))
 }
 
 // SubjectIDEqualFold applies the EqualFold predicate on the "subject_id" field.
@@ -513,26 +653,6 @@ func OccurredAtIsNil() predicate.Event {
 // OccurredAtNotNil applies the NotNil predicate on the "occurred_at" field.
 func OccurredAtNotNil() predicate.Event {
 	return predicate.Event(sql.FieldNotNull(FieldOccurredAt))
-}
-
-// ProspectEQ applies the EQ predicate on the "prospect" field.
-func ProspectEQ(v bool) predicate.Event {
-	return predicate.Event(sql.FieldEQ(FieldProspect, v))
-}
-
-// ProspectNEQ applies the NEQ predicate on the "prospect" field.
-func ProspectNEQ(v bool) predicate.Event {
-	return predicate.Event(sql.FieldNEQ(FieldProspect, v))
-}
-
-// ProspectIsNil applies the IsNil predicate on the "prospect" field.
-func ProspectIsNil() predicate.Event {
-	return predicate.Event(sql.FieldIsNull(FieldProspect))
-}
-
-// ProspectNotNil applies the NotNil predicate on the "prospect" field.
-func ProspectNotNil() predicate.Event {
-	return predicate.Event(sql.FieldNotNull(FieldProspect))
 }
 
 // WorkspaceIDEQ applies the EQ predicate on the "workspace_id" field.

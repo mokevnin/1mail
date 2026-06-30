@@ -1891,8 +1891,22 @@ func (s *ContactResource) encodeFields(e *jx.Encoder) {
 		s.ID.Encode(e)
 	}
 	{
-		e.FieldStart("email")
-		s.Email.Encode(e)
+		if s.SubjectId.Set {
+			e.FieldStart("subjectId")
+			s.SubjectId.Encode(e)
+		}
+	}
+	{
+		if s.Email.Set {
+			e.FieldStart("email")
+			s.Email.Encode(e)
+		}
+	}
+	{
+		if s.Phone.Set {
+			e.FieldStart("phone")
+			s.Phone.Encode(e)
+		}
 	}
 	{
 		if s.FirstName.Set {
@@ -1932,16 +1946,18 @@ func (s *ContactResource) encodeFields(e *jx.Encoder) {
 	}
 }
 
-var jsonFieldsNameOfContactResource = [9]string{
-	0: "id",
-	1: "email",
-	2: "firstName",
-	3: "lastName",
-	4: "timeZone",
-	5: "customFields",
-	6: "status",
-	7: "createdAt",
-	8: "updatedAt",
+var jsonFieldsNameOfContactResource = [11]string{
+	0:  "id",
+	1:  "subjectId",
+	2:  "email",
+	3:  "phone",
+	4:  "firstName",
+	5:  "lastName",
+	6:  "timeZone",
+	7:  "customFields",
+	8:  "status",
+	9:  "createdAt",
+	10: "updatedAt",
 }
 
 // Decode decodes ContactResource from json.
@@ -1963,15 +1979,35 @@ func (s *ContactResource) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"id\"")
 			}
-		case "email":
-			requiredBitSet[0] |= 1 << 1
+		case "subjectId":
 			if err := func() error {
+				s.SubjectId.Reset()
+				if err := s.SubjectId.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"subjectId\"")
+			}
+		case "email":
+			if err := func() error {
+				s.Email.Reset()
 				if err := s.Email.Decode(d); err != nil {
 					return err
 				}
 				return nil
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"email\"")
+			}
+		case "phone":
+			if err := func() error {
+				s.Phone.Reset()
+				if err := s.Phone.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"phone\"")
 			}
 		case "firstName":
 			if err := func() error {
@@ -2014,7 +2050,7 @@ func (s *ContactResource) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"customFields\"")
 			}
 		case "status":
-			requiredBitSet[0] |= 1 << 6
+			requiredBitSet[1] |= 1 << 0
 			if err := func() error {
 				if err := s.Status.Decode(d); err != nil {
 					return err
@@ -2024,7 +2060,7 @@ func (s *ContactResource) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"status\"")
 			}
 		case "createdAt":
-			requiredBitSet[0] |= 1 << 7
+			requiredBitSet[1] |= 1 << 1
 			if err := func() error {
 				if err := s.CreatedAt.Decode(d); err != nil {
 					return err
@@ -2034,7 +2070,7 @@ func (s *ContactResource) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"createdAt\"")
 			}
 		case "updatedAt":
-			requiredBitSet[1] |= 1 << 0
+			requiredBitSet[1] |= 1 << 2
 			if err := func() error {
 				if err := s.UpdatedAt.Decode(d); err != nil {
 					return err
@@ -2053,8 +2089,8 @@ func (s *ContactResource) Decode(d *jx.Decoder) error {
 	// Validate required fields.
 	var failures []validate.FieldError
 	for i, mask := range [2]uint8{
-		0b11000011,
 		0b00000001,
+		0b00000111,
 	} {
 		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
 			// Mask only required fields and check equality to mask using XOR.
@@ -2112,7 +2148,9 @@ func (s ContactResourceCustomFields) encodeFields(e *jx.Encoder) {
 	for k, elem := range s {
 		e.FieldStart(k)
 
-		e.Str(elem)
+		if len(elem) != 0 {
+			e.Raw(elem)
+		}
 	}
 }
 
@@ -2123,10 +2161,10 @@ func (s *ContactResourceCustomFields) Decode(d *jx.Decoder) error {
 	}
 	m := s.init()
 	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
-		var elem string
+		var elem jx.Raw
 		if err := func() error {
-			v, err := d.Str()
-			elem = string(v)
+			v, err := d.RawAppend(nil)
+			elem = jx.Raw(v)
 			if err != nil {
 				return err
 			}
@@ -3403,8 +3441,22 @@ func (s *CreateContactInput) Encode(e *jx.Encoder) {
 // encodeFields encodes fields.
 func (s *CreateContactInput) encodeFields(e *jx.Encoder) {
 	{
-		e.FieldStart("email")
-		s.Email.Encode(e)
+		if s.SubjectId.Set {
+			e.FieldStart("subjectId")
+			s.SubjectId.Encode(e)
+		}
+	}
+	{
+		if s.Email.Set {
+			e.FieldStart("email")
+			s.Email.Encode(e)
+		}
+	}
+	{
+		if s.Phone.Set {
+			e.FieldStart("phone")
+			s.Phone.Encode(e)
+		}
 	}
 	{
 		if s.FirstName.Set {
@@ -3432,12 +3484,14 @@ func (s *CreateContactInput) encodeFields(e *jx.Encoder) {
 	}
 }
 
-var jsonFieldsNameOfCreateContactInput = [5]string{
-	0: "email",
-	1: "firstName",
-	2: "lastName",
-	3: "timeZone",
-	4: "customFields",
+var jsonFieldsNameOfCreateContactInput = [7]string{
+	0: "subjectId",
+	1: "email",
+	2: "phone",
+	3: "firstName",
+	4: "lastName",
+	5: "timeZone",
+	6: "customFields",
 }
 
 // Decode decodes CreateContactInput from json.
@@ -3445,19 +3499,38 @@ func (s *CreateContactInput) Decode(d *jx.Decoder) error {
 	if s == nil {
 		return errors.New("invalid: unable to decode CreateContactInput to nil")
 	}
-	var requiredBitSet [1]uint8
 
 	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
 		switch string(k) {
-		case "email":
-			requiredBitSet[0] |= 1 << 0
+		case "subjectId":
 			if err := func() error {
+				s.SubjectId.Reset()
+				if err := s.SubjectId.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"subjectId\"")
+			}
+		case "email":
+			if err := func() error {
+				s.Email.Reset()
 				if err := s.Email.Decode(d); err != nil {
 					return err
 				}
 				return nil
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"email\"")
+			}
+		case "phone":
+			if err := func() error {
+				s.Phone.Reset()
+				if err := s.Phone.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"phone\"")
 			}
 		case "firstName":
 			if err := func() error {
@@ -3506,38 +3579,6 @@ func (s *CreateContactInput) Decode(d *jx.Decoder) error {
 	}); err != nil {
 		return errors.Wrap(err, "decode CreateContactInput")
 	}
-	// Validate required fields.
-	var failures []validate.FieldError
-	for i, mask := range [1]uint8{
-		0b00000001,
-	} {
-		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
-			// Mask only required fields and check equality to mask using XOR.
-			//
-			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
-			// Bits of fields which would be set are actually bits of missed fields.
-			missed := bits.OnesCount8(result)
-			for bitN := 0; bitN < missed; bitN++ {
-				bitIdx := bits.TrailingZeros8(result)
-				fieldIdx := i*8 + bitIdx
-				var name string
-				if fieldIdx < len(jsonFieldsNameOfCreateContactInput) {
-					name = jsonFieldsNameOfCreateContactInput[fieldIdx]
-				} else {
-					name = strconv.Itoa(fieldIdx)
-				}
-				failures = append(failures, validate.FieldError{
-					Name:  name,
-					Error: validate.ErrFieldRequired,
-				})
-				// Reset bit.
-				result &^= 1 << bitIdx
-			}
-		}
-	}
-	if len(failures) > 0 {
-		return &validate.Error{Fields: failures}
-	}
 
 	return nil
 }
@@ -3567,7 +3608,9 @@ func (s CreateContactInputCustomFields) encodeFields(e *jx.Encoder) {
 	for k, elem := range s {
 		e.FieldStart(k)
 
-		e.Str(elem)
+		if len(elem) != 0 {
+			e.Raw(elem)
+		}
 	}
 }
 
@@ -3578,10 +3621,10 @@ func (s *CreateContactInputCustomFields) Decode(d *jx.Decoder) error {
 	}
 	m := s.init()
 	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
-		var elem string
+		var elem jx.Raw
 		if err := func() error {
-			v, err := d.Str()
-			elem = string(v)
+			v, err := d.RawAppend(nil)
+			elem = jx.Raw(v)
 			if err != nil {
 				return err
 			}
@@ -4233,12 +4276,6 @@ func (s *EventInput) encodeFields(e *jx.Encoder) {
 		}
 	}
 	{
-		if s.Prospect.Set {
-			e.FieldStart("prospect")
-			s.Prospect.Encode(e)
-		}
-	}
-	{
 		if s.Properties.Set {
 			e.FieldStart("properties")
 			s.Properties.Encode(e)
@@ -4252,14 +4289,13 @@ func (s *EventInput) encodeFields(e *jx.Encoder) {
 	}
 }
 
-var jsonFieldsNameOfEventInput = [7]string{
+var jsonFieldsNameOfEventInput = [6]string{
 	0: "subjectId",
 	1: "action",
 	2: "email",
 	3: "phone",
-	4: "prospect",
-	5: "properties",
-	6: "occurredAt",
+	4: "properties",
+	5: "occurredAt",
 }
 
 // Decode decodes EventInput from json.
@@ -4314,16 +4350,6 @@ func (s *EventInput) Decode(d *jx.Decoder) error {
 				return nil
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"phone\"")
-			}
-		case "prospect":
-			if err := func() error {
-				s.Prospect.Reset()
-				if err := s.Prospect.Decode(d); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"prospect\"")
 			}
 		case "properties":
 			if err := func() error {
@@ -4632,57 +4658,6 @@ func (s OptInt32) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
 func (s *OptInt32) UnmarshalJSON(data []byte) error {
-	d := jx.DecodeBytes(data)
-	return s.Decode(d)
-}
-
-// Encode encodes bool as json.
-func (o OptNilBool) Encode(e *jx.Encoder) {
-	if !o.Set {
-		return
-	}
-	if o.Null {
-		e.Null()
-		return
-	}
-	e.Bool(bool(o.Value))
-}
-
-// Decode decodes bool from json.
-func (o *OptNilBool) Decode(d *jx.Decoder) error {
-	if o == nil {
-		return errors.New("invalid: unable to decode OptNilBool to nil")
-	}
-	if d.Next() == jx.Null {
-		if err := d.Null(); err != nil {
-			return err
-		}
-
-		var v bool
-		o.Value = v
-		o.Set = true
-		o.Null = true
-		return nil
-	}
-	o.Set = true
-	o.Null = false
-	v, err := d.Bool()
-	if err != nil {
-		return err
-	}
-	o.Value = bool(v)
-	return nil
-}
-
-// MarshalJSON implements stdjson.Marshaler.
-func (s OptNilBool) MarshalJSON() ([]byte, error) {
-	e := jx.Encoder{}
-	s.Encode(&e)
-	return e.Bytes(), nil
-}
-
-// UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *OptNilBool) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }
@@ -6777,6 +6752,24 @@ func (s *UpdateContactInput) Encode(e *jx.Encoder) {
 // encodeFields encodes fields.
 func (s *UpdateContactInput) encodeFields(e *jx.Encoder) {
 	{
+		if s.SubjectId.Set {
+			e.FieldStart("subjectId")
+			s.SubjectId.Encode(e)
+		}
+	}
+	{
+		if s.Email.Set {
+			e.FieldStart("email")
+			s.Email.Encode(e)
+		}
+	}
+	{
+		if s.Phone.Set {
+			e.FieldStart("phone")
+			s.Phone.Encode(e)
+		}
+	}
+	{
 		if s.FirstName.Set {
 			e.FieldStart("firstName")
 			s.FirstName.Encode(e)
@@ -6802,11 +6795,14 @@ func (s *UpdateContactInput) encodeFields(e *jx.Encoder) {
 	}
 }
 
-var jsonFieldsNameOfUpdateContactInput = [4]string{
-	0: "firstName",
-	1: "lastName",
-	2: "timeZone",
-	3: "customFields",
+var jsonFieldsNameOfUpdateContactInput = [7]string{
+	0: "subjectId",
+	1: "email",
+	2: "phone",
+	3: "firstName",
+	4: "lastName",
+	5: "timeZone",
+	6: "customFields",
 }
 
 // Decode decodes UpdateContactInput from json.
@@ -6817,6 +6813,36 @@ func (s *UpdateContactInput) Decode(d *jx.Decoder) error {
 
 	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
 		switch string(k) {
+		case "subjectId":
+			if err := func() error {
+				s.SubjectId.Reset()
+				if err := s.SubjectId.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"subjectId\"")
+			}
+		case "email":
+			if err := func() error {
+				s.Email.Reset()
+				if err := s.Email.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"email\"")
+			}
+		case "phone":
+			if err := func() error {
+				s.Phone.Reset()
+				if err := s.Phone.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"phone\"")
+			}
 		case "firstName":
 			if err := func() error {
 				s.FirstName.Reset()
@@ -6893,7 +6919,9 @@ func (s UpdateContactInputCustomFields) encodeFields(e *jx.Encoder) {
 	for k, elem := range s {
 		e.FieldStart(k)
 
-		e.Str(elem)
+		if len(elem) != 0 {
+			e.Raw(elem)
+		}
 	}
 }
 
@@ -6904,10 +6932,10 @@ func (s *UpdateContactInputCustomFields) Decode(d *jx.Decoder) error {
 	}
 	m := s.init()
 	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
-		var elem string
+		var elem jx.Raw
 		if err := func() error {
-			v, err := d.Str()
-			elem = string(v)
+			v, err := d.RawAppend(nil)
+			elem = jx.Raw(v)
 			if err != nil {
 				return err
 			}

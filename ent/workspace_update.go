@@ -17,15 +17,15 @@ import (
 	"github.com/mokevnin/1mail/ent/broadcast"
 	"github.com/mokevnin/1mail/ent/broadcastrecipient"
 	"github.com/mokevnin/1mail/ent/contact"
+	"github.com/mokevnin/1mail/ent/customfield"
 	"github.com/mokevnin/1mail/ent/emailtemplate"
 	"github.com/mokevnin/1mail/ent/event"
 	"github.com/mokevnin/1mail/ent/integration"
 	"github.com/mokevnin/1mail/ent/predicate"
 	"github.com/mokevnin/1mail/ent/segment"
 	"github.com/mokevnin/1mail/ent/suppression"
-	"github.com/mokevnin/1mail/ent/trackingprofile"
-	"github.com/mokevnin/1mail/ent/trackingvisitor"
 	"github.com/mokevnin/1mail/ent/user"
+	"github.com/mokevnin/1mail/ent/visitor"
 	"github.com/mokevnin/1mail/ent/webhookendpoint"
 	"github.com/mokevnin/1mail/ent/workspace"
 )
@@ -141,6 +141,21 @@ func (_u *WorkspaceUpdate) AddContacts(v ...*Contact) *WorkspaceUpdate {
 	return _u.AddContactIDs(ids...)
 }
 
+// AddCustomFieldIDs adds the "custom_fields" edge to the CustomField entity by IDs.
+func (_u *WorkspaceUpdate) AddCustomFieldIDs(ids ...int64) *WorkspaceUpdate {
+	_u.mutation.AddCustomFieldIDs(ids...)
+	return _u
+}
+
+// AddCustomFields adds the "custom_fields" edges to the CustomField entity.
+func (_u *WorkspaceUpdate) AddCustomFields(v ...*CustomField) *WorkspaceUpdate {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddCustomFieldIDs(ids...)
+}
+
 // AddSegmentIDs adds the "segments" edge to the Segment entity by IDs.
 func (_u *WorkspaceUpdate) AddSegmentIDs(ids ...int64) *WorkspaceUpdate {
 	_u.mutation.AddSegmentIDs(ids...)
@@ -171,34 +186,19 @@ func (_u *WorkspaceUpdate) AddEvents(v ...*Event) *WorkspaceUpdate {
 	return _u.AddEventIDs(ids...)
 }
 
-// AddTrackingProfileIDs adds the "tracking_profiles" edge to the TrackingProfile entity by IDs.
-func (_u *WorkspaceUpdate) AddTrackingProfileIDs(ids ...int64) *WorkspaceUpdate {
-	_u.mutation.AddTrackingProfileIDs(ids...)
+// AddVisitorIDs adds the "visitors" edge to the Visitor entity by IDs.
+func (_u *WorkspaceUpdate) AddVisitorIDs(ids ...int64) *WorkspaceUpdate {
+	_u.mutation.AddVisitorIDs(ids...)
 	return _u
 }
 
-// AddTrackingProfiles adds the "tracking_profiles" edges to the TrackingProfile entity.
-func (_u *WorkspaceUpdate) AddTrackingProfiles(v ...*TrackingProfile) *WorkspaceUpdate {
+// AddVisitors adds the "visitors" edges to the Visitor entity.
+func (_u *WorkspaceUpdate) AddVisitors(v ...*Visitor) *WorkspaceUpdate {
 	ids := make([]int64, len(v))
 	for i := range v {
 		ids[i] = v[i].ID
 	}
-	return _u.AddTrackingProfileIDs(ids...)
-}
-
-// AddTrackingVisitorIDs adds the "tracking_visitors" edge to the TrackingVisitor entity by IDs.
-func (_u *WorkspaceUpdate) AddTrackingVisitorIDs(ids ...int64) *WorkspaceUpdate {
-	_u.mutation.AddTrackingVisitorIDs(ids...)
-	return _u
-}
-
-// AddTrackingVisitors adds the "tracking_visitors" edges to the TrackingVisitor entity.
-func (_u *WorkspaceUpdate) AddTrackingVisitors(v ...*TrackingVisitor) *WorkspaceUpdate {
-	ids := make([]int64, len(v))
-	for i := range v {
-		ids[i] = v[i].ID
-	}
-	return _u.AddTrackingVisitorIDs(ids...)
+	return _u.AddVisitorIDs(ids...)
 }
 
 // AddAPITokenIDs adds the "api_tokens" edge to the ApiToken entity by IDs.
@@ -367,6 +367,27 @@ func (_u *WorkspaceUpdate) RemoveContacts(v ...*Contact) *WorkspaceUpdate {
 	return _u.RemoveContactIDs(ids...)
 }
 
+// ClearCustomFields clears all "custom_fields" edges to the CustomField entity.
+func (_u *WorkspaceUpdate) ClearCustomFields() *WorkspaceUpdate {
+	_u.mutation.ClearCustomFields()
+	return _u
+}
+
+// RemoveCustomFieldIDs removes the "custom_fields" edge to CustomField entities by IDs.
+func (_u *WorkspaceUpdate) RemoveCustomFieldIDs(ids ...int64) *WorkspaceUpdate {
+	_u.mutation.RemoveCustomFieldIDs(ids...)
+	return _u
+}
+
+// RemoveCustomFields removes "custom_fields" edges to CustomField entities.
+func (_u *WorkspaceUpdate) RemoveCustomFields(v ...*CustomField) *WorkspaceUpdate {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveCustomFieldIDs(ids...)
+}
+
 // ClearSegments clears all "segments" edges to the Segment entity.
 func (_u *WorkspaceUpdate) ClearSegments() *WorkspaceUpdate {
 	_u.mutation.ClearSegments()
@@ -409,46 +430,25 @@ func (_u *WorkspaceUpdate) RemoveEvents(v ...*Event) *WorkspaceUpdate {
 	return _u.RemoveEventIDs(ids...)
 }
 
-// ClearTrackingProfiles clears all "tracking_profiles" edges to the TrackingProfile entity.
-func (_u *WorkspaceUpdate) ClearTrackingProfiles() *WorkspaceUpdate {
-	_u.mutation.ClearTrackingProfiles()
+// ClearVisitors clears all "visitors" edges to the Visitor entity.
+func (_u *WorkspaceUpdate) ClearVisitors() *WorkspaceUpdate {
+	_u.mutation.ClearVisitors()
 	return _u
 }
 
-// RemoveTrackingProfileIDs removes the "tracking_profiles" edge to TrackingProfile entities by IDs.
-func (_u *WorkspaceUpdate) RemoveTrackingProfileIDs(ids ...int64) *WorkspaceUpdate {
-	_u.mutation.RemoveTrackingProfileIDs(ids...)
+// RemoveVisitorIDs removes the "visitors" edge to Visitor entities by IDs.
+func (_u *WorkspaceUpdate) RemoveVisitorIDs(ids ...int64) *WorkspaceUpdate {
+	_u.mutation.RemoveVisitorIDs(ids...)
 	return _u
 }
 
-// RemoveTrackingProfiles removes "tracking_profiles" edges to TrackingProfile entities.
-func (_u *WorkspaceUpdate) RemoveTrackingProfiles(v ...*TrackingProfile) *WorkspaceUpdate {
+// RemoveVisitors removes "visitors" edges to Visitor entities.
+func (_u *WorkspaceUpdate) RemoveVisitors(v ...*Visitor) *WorkspaceUpdate {
 	ids := make([]int64, len(v))
 	for i := range v {
 		ids[i] = v[i].ID
 	}
-	return _u.RemoveTrackingProfileIDs(ids...)
-}
-
-// ClearTrackingVisitors clears all "tracking_visitors" edges to the TrackingVisitor entity.
-func (_u *WorkspaceUpdate) ClearTrackingVisitors() *WorkspaceUpdate {
-	_u.mutation.ClearTrackingVisitors()
-	return _u
-}
-
-// RemoveTrackingVisitorIDs removes the "tracking_visitors" edge to TrackingVisitor entities by IDs.
-func (_u *WorkspaceUpdate) RemoveTrackingVisitorIDs(ids ...int64) *WorkspaceUpdate {
-	_u.mutation.RemoveTrackingVisitorIDs(ids...)
-	return _u
-}
-
-// RemoveTrackingVisitors removes "tracking_visitors" edges to TrackingVisitor entities.
-func (_u *WorkspaceUpdate) RemoveTrackingVisitors(v ...*TrackingVisitor) *WorkspaceUpdate {
-	ids := make([]int64, len(v))
-	for i := range v {
-		ids[i] = v[i].ID
-	}
-	return _u.RemoveTrackingVisitorIDs(ids...)
+	return _u.RemoveVisitorIDs(ids...)
 }
 
 // ClearAPITokens clears all "api_tokens" edges to the ApiToken entity.
@@ -785,6 +785,51 @@ func (_u *WorkspaceUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	if _u.mutation.CustomFieldsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   workspace.CustomFieldsTable,
+			Columns: []string{workspace.CustomFieldsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(customfield.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedCustomFieldsIDs(); len(nodes) > 0 && !_u.mutation.CustomFieldsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   workspace.CustomFieldsTable,
+			Columns: []string{workspace.CustomFieldsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(customfield.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.CustomFieldsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   workspace.CustomFieldsTable,
+			Columns: []string{workspace.CustomFieldsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(customfield.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if _u.mutation.SegmentsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
@@ -875,28 +920,28 @@ func (_u *WorkspaceUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if _u.mutation.TrackingProfilesCleared() {
+	if _u.mutation.VisitorsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   workspace.TrackingProfilesTable,
-			Columns: []string{workspace.TrackingProfilesColumn},
+			Table:   workspace.VisitorsTable,
+			Columns: []string{workspace.VisitorsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(trackingprofile.FieldID, field.TypeInt64),
+				IDSpec: sqlgraph.NewFieldSpec(visitor.FieldID, field.TypeInt64),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := _u.mutation.RemovedTrackingProfilesIDs(); len(nodes) > 0 && !_u.mutation.TrackingProfilesCleared() {
+	if nodes := _u.mutation.RemovedVisitorsIDs(); len(nodes) > 0 && !_u.mutation.VisitorsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   workspace.TrackingProfilesTable,
-			Columns: []string{workspace.TrackingProfilesColumn},
+			Table:   workspace.VisitorsTable,
+			Columns: []string{workspace.VisitorsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(trackingprofile.FieldID, field.TypeInt64),
+				IDSpec: sqlgraph.NewFieldSpec(visitor.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {
@@ -904,60 +949,15 @@ func (_u *WorkspaceUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := _u.mutation.TrackingProfilesIDs(); len(nodes) > 0 {
+	if nodes := _u.mutation.VisitorsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   workspace.TrackingProfilesTable,
-			Columns: []string{workspace.TrackingProfilesColumn},
+			Table:   workspace.VisitorsTable,
+			Columns: []string{workspace.VisitorsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(trackingprofile.FieldID, field.TypeInt64),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
-	}
-	if _u.mutation.TrackingVisitorsCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: false,
-			Table:   workspace.TrackingVisitorsTable,
-			Columns: []string{workspace.TrackingVisitorsColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(trackingvisitor.FieldID, field.TypeInt64),
-			},
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := _u.mutation.RemovedTrackingVisitorsIDs(); len(nodes) > 0 && !_u.mutation.TrackingVisitorsCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: false,
-			Table:   workspace.TrackingVisitorsTable,
-			Columns: []string{workspace.TrackingVisitorsColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(trackingvisitor.FieldID, field.TypeInt64),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := _u.mutation.TrackingVisitorsIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: false,
-			Table:   workspace.TrackingVisitorsTable,
-			Columns: []string{workspace.TrackingVisitorsColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(trackingvisitor.FieldID, field.TypeInt64),
+				IDSpec: sqlgraph.NewFieldSpec(visitor.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {
@@ -1518,6 +1518,21 @@ func (_u *WorkspaceUpdateOne) AddContacts(v ...*Contact) *WorkspaceUpdateOne {
 	return _u.AddContactIDs(ids...)
 }
 
+// AddCustomFieldIDs adds the "custom_fields" edge to the CustomField entity by IDs.
+func (_u *WorkspaceUpdateOne) AddCustomFieldIDs(ids ...int64) *WorkspaceUpdateOne {
+	_u.mutation.AddCustomFieldIDs(ids...)
+	return _u
+}
+
+// AddCustomFields adds the "custom_fields" edges to the CustomField entity.
+func (_u *WorkspaceUpdateOne) AddCustomFields(v ...*CustomField) *WorkspaceUpdateOne {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddCustomFieldIDs(ids...)
+}
+
 // AddSegmentIDs adds the "segments" edge to the Segment entity by IDs.
 func (_u *WorkspaceUpdateOne) AddSegmentIDs(ids ...int64) *WorkspaceUpdateOne {
 	_u.mutation.AddSegmentIDs(ids...)
@@ -1548,34 +1563,19 @@ func (_u *WorkspaceUpdateOne) AddEvents(v ...*Event) *WorkspaceUpdateOne {
 	return _u.AddEventIDs(ids...)
 }
 
-// AddTrackingProfileIDs adds the "tracking_profiles" edge to the TrackingProfile entity by IDs.
-func (_u *WorkspaceUpdateOne) AddTrackingProfileIDs(ids ...int64) *WorkspaceUpdateOne {
-	_u.mutation.AddTrackingProfileIDs(ids...)
+// AddVisitorIDs adds the "visitors" edge to the Visitor entity by IDs.
+func (_u *WorkspaceUpdateOne) AddVisitorIDs(ids ...int64) *WorkspaceUpdateOne {
+	_u.mutation.AddVisitorIDs(ids...)
 	return _u
 }
 
-// AddTrackingProfiles adds the "tracking_profiles" edges to the TrackingProfile entity.
-func (_u *WorkspaceUpdateOne) AddTrackingProfiles(v ...*TrackingProfile) *WorkspaceUpdateOne {
+// AddVisitors adds the "visitors" edges to the Visitor entity.
+func (_u *WorkspaceUpdateOne) AddVisitors(v ...*Visitor) *WorkspaceUpdateOne {
 	ids := make([]int64, len(v))
 	for i := range v {
 		ids[i] = v[i].ID
 	}
-	return _u.AddTrackingProfileIDs(ids...)
-}
-
-// AddTrackingVisitorIDs adds the "tracking_visitors" edge to the TrackingVisitor entity by IDs.
-func (_u *WorkspaceUpdateOne) AddTrackingVisitorIDs(ids ...int64) *WorkspaceUpdateOne {
-	_u.mutation.AddTrackingVisitorIDs(ids...)
-	return _u
-}
-
-// AddTrackingVisitors adds the "tracking_visitors" edges to the TrackingVisitor entity.
-func (_u *WorkspaceUpdateOne) AddTrackingVisitors(v ...*TrackingVisitor) *WorkspaceUpdateOne {
-	ids := make([]int64, len(v))
-	for i := range v {
-		ids[i] = v[i].ID
-	}
-	return _u.AddTrackingVisitorIDs(ids...)
+	return _u.AddVisitorIDs(ids...)
 }
 
 // AddAPITokenIDs adds the "api_tokens" edge to the ApiToken entity by IDs.
@@ -1744,6 +1744,27 @@ func (_u *WorkspaceUpdateOne) RemoveContacts(v ...*Contact) *WorkspaceUpdateOne 
 	return _u.RemoveContactIDs(ids...)
 }
 
+// ClearCustomFields clears all "custom_fields" edges to the CustomField entity.
+func (_u *WorkspaceUpdateOne) ClearCustomFields() *WorkspaceUpdateOne {
+	_u.mutation.ClearCustomFields()
+	return _u
+}
+
+// RemoveCustomFieldIDs removes the "custom_fields" edge to CustomField entities by IDs.
+func (_u *WorkspaceUpdateOne) RemoveCustomFieldIDs(ids ...int64) *WorkspaceUpdateOne {
+	_u.mutation.RemoveCustomFieldIDs(ids...)
+	return _u
+}
+
+// RemoveCustomFields removes "custom_fields" edges to CustomField entities.
+func (_u *WorkspaceUpdateOne) RemoveCustomFields(v ...*CustomField) *WorkspaceUpdateOne {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveCustomFieldIDs(ids...)
+}
+
 // ClearSegments clears all "segments" edges to the Segment entity.
 func (_u *WorkspaceUpdateOne) ClearSegments() *WorkspaceUpdateOne {
 	_u.mutation.ClearSegments()
@@ -1786,46 +1807,25 @@ func (_u *WorkspaceUpdateOne) RemoveEvents(v ...*Event) *WorkspaceUpdateOne {
 	return _u.RemoveEventIDs(ids...)
 }
 
-// ClearTrackingProfiles clears all "tracking_profiles" edges to the TrackingProfile entity.
-func (_u *WorkspaceUpdateOne) ClearTrackingProfiles() *WorkspaceUpdateOne {
-	_u.mutation.ClearTrackingProfiles()
+// ClearVisitors clears all "visitors" edges to the Visitor entity.
+func (_u *WorkspaceUpdateOne) ClearVisitors() *WorkspaceUpdateOne {
+	_u.mutation.ClearVisitors()
 	return _u
 }
 
-// RemoveTrackingProfileIDs removes the "tracking_profiles" edge to TrackingProfile entities by IDs.
-func (_u *WorkspaceUpdateOne) RemoveTrackingProfileIDs(ids ...int64) *WorkspaceUpdateOne {
-	_u.mutation.RemoveTrackingProfileIDs(ids...)
+// RemoveVisitorIDs removes the "visitors" edge to Visitor entities by IDs.
+func (_u *WorkspaceUpdateOne) RemoveVisitorIDs(ids ...int64) *WorkspaceUpdateOne {
+	_u.mutation.RemoveVisitorIDs(ids...)
 	return _u
 }
 
-// RemoveTrackingProfiles removes "tracking_profiles" edges to TrackingProfile entities.
-func (_u *WorkspaceUpdateOne) RemoveTrackingProfiles(v ...*TrackingProfile) *WorkspaceUpdateOne {
+// RemoveVisitors removes "visitors" edges to Visitor entities.
+func (_u *WorkspaceUpdateOne) RemoveVisitors(v ...*Visitor) *WorkspaceUpdateOne {
 	ids := make([]int64, len(v))
 	for i := range v {
 		ids[i] = v[i].ID
 	}
-	return _u.RemoveTrackingProfileIDs(ids...)
-}
-
-// ClearTrackingVisitors clears all "tracking_visitors" edges to the TrackingVisitor entity.
-func (_u *WorkspaceUpdateOne) ClearTrackingVisitors() *WorkspaceUpdateOne {
-	_u.mutation.ClearTrackingVisitors()
-	return _u
-}
-
-// RemoveTrackingVisitorIDs removes the "tracking_visitors" edge to TrackingVisitor entities by IDs.
-func (_u *WorkspaceUpdateOne) RemoveTrackingVisitorIDs(ids ...int64) *WorkspaceUpdateOne {
-	_u.mutation.RemoveTrackingVisitorIDs(ids...)
-	return _u
-}
-
-// RemoveTrackingVisitors removes "tracking_visitors" edges to TrackingVisitor entities.
-func (_u *WorkspaceUpdateOne) RemoveTrackingVisitors(v ...*TrackingVisitor) *WorkspaceUpdateOne {
-	ids := make([]int64, len(v))
-	for i := range v {
-		ids[i] = v[i].ID
-	}
-	return _u.RemoveTrackingVisitorIDs(ids...)
+	return _u.RemoveVisitorIDs(ids...)
 }
 
 // ClearAPITokens clears all "api_tokens" edges to the ApiToken entity.
@@ -2192,6 +2192,51 @@ func (_u *WorkspaceUpdateOne) sqlSave(ctx context.Context) (_node *Workspace, er
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	if _u.mutation.CustomFieldsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   workspace.CustomFieldsTable,
+			Columns: []string{workspace.CustomFieldsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(customfield.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedCustomFieldsIDs(); len(nodes) > 0 && !_u.mutation.CustomFieldsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   workspace.CustomFieldsTable,
+			Columns: []string{workspace.CustomFieldsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(customfield.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.CustomFieldsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   workspace.CustomFieldsTable,
+			Columns: []string{workspace.CustomFieldsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(customfield.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if _u.mutation.SegmentsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
@@ -2282,28 +2327,28 @@ func (_u *WorkspaceUpdateOne) sqlSave(ctx context.Context) (_node *Workspace, er
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if _u.mutation.TrackingProfilesCleared() {
+	if _u.mutation.VisitorsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   workspace.TrackingProfilesTable,
-			Columns: []string{workspace.TrackingProfilesColumn},
+			Table:   workspace.VisitorsTable,
+			Columns: []string{workspace.VisitorsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(trackingprofile.FieldID, field.TypeInt64),
+				IDSpec: sqlgraph.NewFieldSpec(visitor.FieldID, field.TypeInt64),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := _u.mutation.RemovedTrackingProfilesIDs(); len(nodes) > 0 && !_u.mutation.TrackingProfilesCleared() {
+	if nodes := _u.mutation.RemovedVisitorsIDs(); len(nodes) > 0 && !_u.mutation.VisitorsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   workspace.TrackingProfilesTable,
-			Columns: []string{workspace.TrackingProfilesColumn},
+			Table:   workspace.VisitorsTable,
+			Columns: []string{workspace.VisitorsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(trackingprofile.FieldID, field.TypeInt64),
+				IDSpec: sqlgraph.NewFieldSpec(visitor.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {
@@ -2311,60 +2356,15 @@ func (_u *WorkspaceUpdateOne) sqlSave(ctx context.Context) (_node *Workspace, er
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := _u.mutation.TrackingProfilesIDs(); len(nodes) > 0 {
+	if nodes := _u.mutation.VisitorsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   workspace.TrackingProfilesTable,
-			Columns: []string{workspace.TrackingProfilesColumn},
+			Table:   workspace.VisitorsTable,
+			Columns: []string{workspace.VisitorsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(trackingprofile.FieldID, field.TypeInt64),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
-	}
-	if _u.mutation.TrackingVisitorsCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: false,
-			Table:   workspace.TrackingVisitorsTable,
-			Columns: []string{workspace.TrackingVisitorsColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(trackingvisitor.FieldID, field.TypeInt64),
-			},
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := _u.mutation.RemovedTrackingVisitorsIDs(); len(nodes) > 0 && !_u.mutation.TrackingVisitorsCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: false,
-			Table:   workspace.TrackingVisitorsTable,
-			Columns: []string{workspace.TrackingVisitorsColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(trackingvisitor.FieldID, field.TypeInt64),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := _u.mutation.TrackingVisitorsIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: false,
-			Table:   workspace.TrackingVisitorsTable,
-			Columns: []string{workspace.TrackingVisitorsColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(trackingvisitor.FieldID, field.TypeInt64),
+				IDSpec: sqlgraph.NewFieldSpec(visitor.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {

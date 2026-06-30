@@ -21,6 +21,10 @@ type Event struct {
 	ID int64 `json:"id,omitempty"`
 	// SourceID holds the value of the "source_id" field.
 	SourceID *string `json:"source_id,omitempty"`
+	// ContactID holds the value of the "contact_id" field.
+	ContactID *int64 `json:"contact_id,omitempty"`
+	// VisitorID holds the value of the "visitor_id" field.
+	VisitorID *string `json:"visitor_id,omitempty"`
 	// SubjectID holds the value of the "subject_id" field.
 	SubjectID string `json:"subject_id,omitempty"`
 	// Email holds the value of the "email" field.
@@ -33,8 +37,6 @@ type Event struct {
 	Properties map[string]interface{} `json:"properties,omitempty"`
 	// OccurredAt holds the value of the "occurred_at" field.
 	OccurredAt *time.Time `json:"occurred_at,omitempty"`
-	// Prospect holds the value of the "prospect" field.
-	Prospect *bool `json:"prospect,omitempty"`
 	// WorkspaceID holds the value of the "workspace_id" field.
 	WorkspaceID int64 `json:"workspace_id,omitempty"`
 	// CreatedAt holds the value of the "created_at" field.
@@ -72,11 +74,9 @@ func (*Event) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case event.FieldProperties:
 			values[i] = new([]byte)
-		case event.FieldProspect:
-			values[i] = new(sql.NullBool)
-		case event.FieldID, event.FieldWorkspaceID:
+		case event.FieldID, event.FieldContactID, event.FieldWorkspaceID:
 			values[i] = new(sql.NullInt64)
-		case event.FieldSourceID, event.FieldSubjectID, event.FieldEmail, event.FieldPhone, event.FieldAction:
+		case event.FieldSourceID, event.FieldVisitorID, event.FieldSubjectID, event.FieldEmail, event.FieldPhone, event.FieldAction:
 			values[i] = new(sql.NullString)
 		case event.FieldOccurredAt, event.FieldCreatedAt:
 			values[i] = new(sql.NullTime)
@@ -107,6 +107,20 @@ func (_m *Event) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				_m.SourceID = new(string)
 				*_m.SourceID = value.String
+			}
+		case event.FieldContactID:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field contact_id", values[i])
+			} else if value.Valid {
+				_m.ContactID = new(int64)
+				*_m.ContactID = value.Int64
+			}
+		case event.FieldVisitorID:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field visitor_id", values[i])
+			} else if value.Valid {
+				_m.VisitorID = new(string)
+				*_m.VisitorID = value.String
 			}
 		case event.FieldSubjectID:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -148,13 +162,6 @@ func (_m *Event) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				_m.OccurredAt = new(time.Time)
 				*_m.OccurredAt = value.Time
-			}
-		case event.FieldProspect:
-			if value, ok := values[i].(*sql.NullBool); !ok {
-				return fmt.Errorf("unexpected type %T for field prospect", values[i])
-			} else if value.Valid {
-				_m.Prospect = new(bool)
-				*_m.Prospect = value.Bool
 			}
 		case event.FieldWorkspaceID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
@@ -214,6 +221,16 @@ func (_m *Event) String() string {
 		builder.WriteString(*v)
 	}
 	builder.WriteString(", ")
+	if v := _m.ContactID; v != nil {
+		builder.WriteString("contact_id=")
+		builder.WriteString(fmt.Sprintf("%v", *v))
+	}
+	builder.WriteString(", ")
+	if v := _m.VisitorID; v != nil {
+		builder.WriteString("visitor_id=")
+		builder.WriteString(*v)
+	}
+	builder.WriteString(", ")
 	builder.WriteString("subject_id=")
 	builder.WriteString(_m.SubjectID)
 	builder.WriteString(", ")
@@ -236,11 +253,6 @@ func (_m *Event) String() string {
 	if v := _m.OccurredAt; v != nil {
 		builder.WriteString("occurred_at=")
 		builder.WriteString(v.Format(time.ANSIC))
-	}
-	builder.WriteString(", ")
-	if v := _m.Prospect; v != nil {
-		builder.WriteString("prospect=")
-		builder.WriteString(fmt.Sprintf("%v", *v))
 	}
 	builder.WriteString(", ")
 	builder.WriteString("workspace_id=")

@@ -8,8 +8,9 @@ import (
 	"time"
 
 	"github.com/mokevnin/1mail/ent"
-	"github.com/mokevnin/1mail/ent/trackingprofile"
-	"github.com/mokevnin/1mail/ent/trackingvisitor"
+	"github.com/mokevnin/1mail/ent/contact"
+	"github.com/mokevnin/1mail/ent/event"
+	"github.com/mokevnin/1mail/ent/visitor"
 	"github.com/mokevnin/1mail/internal/events"
 	"github.com/samber/lo"
 )
@@ -29,7 +30,12 @@ type CollectEventInput struct {
 	OccurredAt *time.Time
 }
 
-func IdentifyVisitor(ctx context.Context, client *ent.Client, workspaceID int64, input IdentifyInput) error {
+// IdentifyVisitor binds a Visitor to a Contact and asserts that Contact's alias keys
+// (subject_id / email / phone). It upserts the Contact by any present alias key,
+// auto-creates typed Custom fields from the traits, binds the device, and stitches
+// the device's earlier anonymous Events onto the Contact so pre-identify behavior
+// becomes visible to segmentation. A newly created Contact emits contact.created.
+func IdentifyVisitor(ctx context.Context, bus *events.Bus, workspaceID int64, input IdentifyInput) error {
 	visitorID := normalizeStringVal(input.VisitorID)
 	if visitorID == "" {
 		return errors.New("visitorId is required")
@@ -39,35 +45,58 @@ func IdentifyVisitor(ctx context.Context, client *ent.Client, workspaceID int64,
 	phone := normalizeOptional(input.Phone)
 	subjectID := normalizeString(input.SubjectID)
 	traits := normalizeTraits(input.Traits)
-	canonicalSubjectID, err := deriveCanonicalSubjectID(subjectID, email, phone)
-	if err != nil {
-		return err
+	if subjectID == "" && email == nil && phone == nil {
+		return fmt.Errorf("identify requires subjectId, email, or phone")
 	}
 
-	profile, err := upsertProfile(ctx, client, workspaceID, canonicalSubjectID, email, phone, traits)
-	if err != nil {
-		return err
-	}
+	return bus.WithinTx(ctx, func(tx *ent.Client, pub events.Publisher) error {
+		c, created, err := upsertContact(ctx, tx, workspaceID, subjectID, email, phone, traits)
+		if err != nil {
+			return err
+		}
 
-	visitor, err := findOrCreateVisitor(ctx, client, workspaceID, visitorID)
-	if err != nil {
-		return err
-	}
+		vis, err := findOrCreateVisitor(ctx, tx, workspaceID, visitorID)
+		if err != nil {
+			return err
+		}
+		if err := tx.Visitor.UpdateOneID(vis.ID).
+			SetContactID(c.ID).
+			SetLastSeenAt(time.Now()).
+			Exec(ctx); err != nil {
+			return err
+		}
 
-	return client.TrackingVisitor.UpdateOneID(visitor.ID).
-		SetProfileID(profile.ID).
-		SetLastSeenAt(time.Now()).
-		Exec(ctx)
+		// Stitch: attach the device's earlier anonymous events onto the Contact.
+		if _, err := tx.Event.Update().
+			Where(
+				event.WorkspaceID(workspaceID),
+				event.VisitorID(visitorID),
+				event.ContactIDIsNil(),
+			).
+			SetContactID(c.ID).
+			Save(ctx); err != nil {
+			return err
+		}
+
+		if created {
+			return pub.Publish(ctx, &events.ContactCreated{
+				WorkspaceID: workspaceID,
+				ContactID:   c.ID,
+				Email:       lo.FromPtr(c.Email),
+			})
+		}
+		return nil
+	})
 }
 
 func CollectEvents(ctx context.Context, bus *events.Bus, workspaceID int64, evts []CollectEventInput) error {
 	for _, evt := range evts {
 		visitorID := normalizeStringVal(evt.VisitorID)
-		// Resolve identity and publish in one transaction: the visitor/profile
-		// upsert and the outbox row commit together. The collected event is the
-		// customer's own — its action and properties are stored as-is.
+		// Resolve identity and publish in one transaction: the visitor upsert and the
+		// outbox row commit together. The collected event is the customer's own — its
+		// action and properties are stored as-is.
 		if err := bus.WithinTx(ctx, func(tx *ent.Client, pub events.Publisher) error {
-			resolution, err := resolveTrackingIdentity(ctx, tx, workspaceID, visitorID)
+			res, err := resolveIdentity(ctx, tx, workspaceID, visitorID)
 			if err != nil {
 				return err
 			}
@@ -77,10 +106,12 @@ func CollectEvents(ctx context.Context, bus *events.Bus, workspaceID int64, evts
 			}
 			return pub.Publish(ctx, &events.CollectedEvent{
 				WorkspaceID: workspaceID,
-				SubjectID:   resolution.subjectID,
+				ContactID:   res.contactID,
+				VisitorID:   visitorID,
+				SubjectID:   res.subjectID,
+				Email:       res.email,
+				Phone:       res.phone,
 				Action:      evt.Action,
-				Email:       resolution.email,
-				Phone:       resolution.phone,
 				Properties:  evt.Properties,
 				OccurredAt:  occurred,
 			})
@@ -91,131 +122,151 @@ func CollectEvents(ctx context.Context, bus *events.Bus, workspaceID int64, evts
 	return nil
 }
 
-type trackingResolution struct {
+// identityResolution is the Contact a device resolves to at event-ingest time. A
+// zero contactID means anonymous (the device is not yet identified); the event is
+// recorded with a null contact_id and stitched onto a Contact at the next Identify.
+type identityResolution struct {
+	contactID int64
 	subjectID string
 	email     string
 	phone     string
 }
 
-func resolveTrackingIdentity(ctx context.Context, client *ent.Client, workspaceID int64, visitorID string) (*trackingResolution, error) {
-	visitor, err := findOrCreateVisitor(ctx, client, workspaceID, visitorID)
+func resolveIdentity(ctx context.Context, client *ent.Client, workspaceID int64, visitorID string) (*identityResolution, error) {
+	vis, err := findOrCreateVisitor(ctx, client, workspaceID, visitorID)
 	if err != nil {
 		return nil, err
 	}
-	if visitor.ProfileID == nil {
-		return &trackingResolution{subjectID: "visitor:" + visitorID}, nil
+	if vis.ContactID == nil {
+		return &identityResolution{}, nil // anonymous
 	}
-	profile, err := client.TrackingProfile.Get(ctx, *visitor.ProfileID)
+	c, err := client.Contact.Get(ctx, *vis.ContactID)
 	if err != nil {
-		return &trackingResolution{subjectID: "visitor:" + visitorID}, nil
+		return &identityResolution{}, nil // contact gone; treat as anonymous
 	}
-	res := &trackingResolution{subjectID: profile.SubjectID}
-	if profile.Email != nil {
-		res.email = *profile.Email
-	}
-	if profile.Phone != nil {
-		res.phone = *profile.Phone
-	}
-	return res, nil
+	return &identityResolution{
+		contactID: c.ID,
+		subjectID: lo.FromPtr(c.SubjectID),
+		email:     lo.FromPtr(c.Email),
+		phone:     lo.FromPtr(c.Phone),
+	}, nil
 }
 
-func findOrCreateVisitor(ctx context.Context, client *ent.Client, workspaceID int64, visitorID string) (*ent.TrackingVisitor, error) {
-	existing, err := client.TrackingVisitor.Query().
-		Where(trackingvisitor.VisitorID(visitorID), trackingvisitor.WorkspaceID(workspaceID)).
+func findOrCreateVisitor(ctx context.Context, client *ent.Client, workspaceID int64, visitorID string) (*ent.Visitor, error) {
+	existing, err := client.Visitor.Query().
+		Where(visitor.VisitorID(visitorID), visitor.WorkspaceID(workspaceID)).
 		First(ctx)
 	if err == nil {
-		return client.TrackingVisitor.UpdateOneID(existing.ID).
+		return client.Visitor.UpdateOneID(existing.ID).
 			SetLastSeenAt(time.Now()).
 			Save(ctx)
 	}
 	if !ent.IsNotFound(err) {
 		return nil, err
 	}
-	return client.TrackingVisitor.Create().
+	return client.Visitor.Create().
 		SetWorkspaceID(workspaceID).
 		SetVisitorID(visitorID).
 		SetLastSeenAt(time.Now()).
 		Save(ctx)
 }
 
-func upsertProfile(ctx context.Context, client *ent.Client, workspaceID int64, subjectID string, email, phone *string, traits map[string]any) (*ent.TrackingProfile, error) {
-	existing, err := findProfile(ctx, client, workspaceID, subjectID, email, phone)
+// upsertContact resolves a Contact by any present alias key (subject_id → email →
+// phone), filling in alias keys it was missing and merging typed Custom field
+// values. Returns whether a new Contact was created. Aliases already present are
+// never overwritten (identity is additive here).
+func upsertContact(ctx context.Context, client *ent.Client, workspaceID int64, subjectID string, email, phone *string, traits map[string]any) (*ent.Contact, bool, error) {
+	typed, err := EnsureCustomFields(ctx, client, workspaceID, traits)
 	if err != nil {
-		return nil, err
+		return nil, false, err
+	}
+
+	existing, err := findContact(ctx, client, workspaceID, subjectID, email, phone)
+	if err != nil {
+		return nil, false, err
 	}
 	if existing != nil {
-		merged := mergeTraits(existing.Traits, traits)
-		q := client.TrackingProfile.UpdateOneID(existing.ID).SetTraits(merged)
+		q := client.Contact.UpdateOneID(existing.ID)
+		if subjectID != "" && existing.SubjectID == nil {
+			q.SetSubjectID(subjectID)
+		}
 		if email != nil && existing.Email == nil {
-			q = q.SetEmail(*email)
+			q.SetEmail(*email)
 		}
 		if phone != nil && existing.Phone == nil {
-			q = q.SetPhone(*phone)
+			q.SetPhone(*phone)
 		}
-		return q.Save(ctx)
+		if len(typed) > 0 {
+			q.SetCustomFields(lo.Assign(existing.CustomFields, typed))
+		}
+		c, err := q.Save(ctx)
+		return c, false, err
 	}
-	q := client.TrackingProfile.Create().
-		SetWorkspaceID(workspaceID).
-		SetSubjectID(subjectID).
-		SetTraits(traits)
+
+	q := client.Contact.Create().SetWorkspaceID(workspaceID)
+	if subjectID != "" {
+		q.SetSubjectID(subjectID)
+	}
 	if email != nil {
-		q = q.SetEmail(*email)
+		q.SetEmail(*email)
 	}
 	if phone != nil {
-		q = q.SetPhone(*phone)
+		q.SetPhone(*phone)
 	}
-	return q.Save(ctx)
+	if len(typed) > 0 {
+		q.SetCustomFields(typed)
+	}
+	c, err := q.Save(ctx)
+	return c, true, err
 }
 
-func findProfile(ctx context.Context, client *ent.Client, workspaceID int64, subjectID string, email, phone *string) (*ent.TrackingProfile, error) {
+// ResolveContactID resolves an existing Contact by any present alias key (subject_id
+// → email → phone) and returns its id, or 0 if none matches. It never creates a
+// Contact — used by event ingest to attach an event to a Contact by stable identity
+// when one already exists, leaving it anonymous (0) otherwise.
+func ResolveContactID(ctx context.Context, client *ent.Client, workspaceID int64, subjectID string, email, phone *string) (int64, error) {
+	c, err := findContact(ctx, client, workspaceID, normalizeStringVal(subjectID), normalizeLower(email), normalizeOptional(phone))
+	if err != nil {
+		return 0, err
+	}
+	if c == nil {
+		return 0, nil
+	}
+	return c.ID, nil
+}
+
+func findContact(ctx context.Context, client *ent.Client, workspaceID int64, subjectID string, email, phone *string) (*ent.Contact, error) {
 	if subjectID != "" {
-		p, err := client.TrackingProfile.Query().
-			Where(trackingprofile.SubjectID(subjectID), trackingprofile.WorkspaceID(workspaceID)).First(ctx)
+		c, err := client.Contact.Query().
+			Where(contact.SubjectID(subjectID), contact.WorkspaceID(workspaceID)).First(ctx)
 		if err == nil {
-			return p, nil
+			return c, nil
 		}
 		if !ent.IsNotFound(err) {
 			return nil, err
 		}
 	}
 	if email != nil {
-		p, err := client.TrackingProfile.Query().
-			Where(trackingprofile.Email(*email), trackingprofile.WorkspaceID(workspaceID)).First(ctx)
+		c, err := client.Contact.Query().
+			Where(contact.Email(*email), contact.WorkspaceID(workspaceID)).First(ctx)
 		if err == nil {
-			return p, nil
+			return c, nil
 		}
 		if !ent.IsNotFound(err) {
 			return nil, err
 		}
 	}
 	if phone != nil {
-		p, err := client.TrackingProfile.Query().
-			Where(trackingprofile.Phone(*phone), trackingprofile.WorkspaceID(workspaceID)).First(ctx)
+		c, err := client.Contact.Query().
+			Where(contact.Phone(*phone), contact.WorkspaceID(workspaceID)).First(ctx)
 		if err == nil {
-			return p, nil
+			return c, nil
 		}
 		if !ent.IsNotFound(err) {
 			return nil, err
 		}
 	}
 	return nil, nil
-}
-
-func deriveCanonicalSubjectID(subjectID string, email, phone *string) (string, error) {
-	if subjectID != "" {
-		return subjectID, nil
-	}
-	if email != nil {
-		return "email:" + *email, nil
-	}
-	if phone != nil {
-		return "phone:" + *phone, nil
-	}
-	return "", fmt.Errorf("identify requires subjectId, email, or phone")
-}
-
-func mergeTraits(existing, incoming map[string]any) map[string]any {
-	return lo.Assign(existing, incoming)
 }
 
 func normalizeString(s *string) string {

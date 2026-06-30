@@ -11,20 +11,20 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/mokevnin/1mail/ent/contact"
 	"github.com/mokevnin/1mail/ent/predicate"
-	"github.com/mokevnin/1mail/ent/trackingprofile"
-	"github.com/mokevnin/1mail/ent/trackingvisitor"
+	"github.com/mokevnin/1mail/ent/visitor"
 	"github.com/mokevnin/1mail/ent/workspace"
 )
 
-// TrackingVisitorQuery is the builder for querying TrackingVisitor entities.
-type TrackingVisitorQuery struct {
+// VisitorQuery is the builder for querying Visitor entities.
+type VisitorQuery struct {
 	config
 	ctx           *QueryContext
-	order         []trackingvisitor.OrderOption
+	order         []visitor.OrderOption
 	inters        []Interceptor
-	predicates    []predicate.TrackingVisitor
-	withProfile   *TrackingProfileQuery
+	predicates    []predicate.Visitor
+	withContact   *ContactQuery
 	withWorkspace *WorkspaceQuery
 	modifiers     []func(*sql.Selector)
 	// intermediate query (i.e. traversal path).
@@ -32,40 +32,40 @@ type TrackingVisitorQuery struct {
 	path func(context.Context) (*sql.Selector, error)
 }
 
-// Where adds a new predicate for the TrackingVisitorQuery builder.
-func (_q *TrackingVisitorQuery) Where(ps ...predicate.TrackingVisitor) *TrackingVisitorQuery {
+// Where adds a new predicate for the VisitorQuery builder.
+func (_q *VisitorQuery) Where(ps ...predicate.Visitor) *VisitorQuery {
 	_q.predicates = append(_q.predicates, ps...)
 	return _q
 }
 
 // Limit the number of records to be returned by this query.
-func (_q *TrackingVisitorQuery) Limit(limit int) *TrackingVisitorQuery {
+func (_q *VisitorQuery) Limit(limit int) *VisitorQuery {
 	_q.ctx.Limit = &limit
 	return _q
 }
 
 // Offset to start from.
-func (_q *TrackingVisitorQuery) Offset(offset int) *TrackingVisitorQuery {
+func (_q *VisitorQuery) Offset(offset int) *VisitorQuery {
 	_q.ctx.Offset = &offset
 	return _q
 }
 
 // Unique configures the query builder to filter duplicate records on query.
 // By default, unique is set to true, and can be disabled using this method.
-func (_q *TrackingVisitorQuery) Unique(unique bool) *TrackingVisitorQuery {
+func (_q *VisitorQuery) Unique(unique bool) *VisitorQuery {
 	_q.ctx.Unique = &unique
 	return _q
 }
 
 // Order specifies how the records should be ordered.
-func (_q *TrackingVisitorQuery) Order(o ...trackingvisitor.OrderOption) *TrackingVisitorQuery {
+func (_q *VisitorQuery) Order(o ...visitor.OrderOption) *VisitorQuery {
 	_q.order = append(_q.order, o...)
 	return _q
 }
 
-// QueryProfile chains the current query on the "profile" edge.
-func (_q *TrackingVisitorQuery) QueryProfile() *TrackingProfileQuery {
-	query := (&TrackingProfileClient{config: _q.config}).Query()
+// QueryContact chains the current query on the "contact" edge.
+func (_q *VisitorQuery) QueryContact() *ContactQuery {
+	query := (&ContactClient{config: _q.config}).Query()
 	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
 		if err := _q.prepareQuery(ctx); err != nil {
 			return nil, err
@@ -75,9 +75,9 @@ func (_q *TrackingVisitorQuery) QueryProfile() *TrackingProfileQuery {
 			return nil, err
 		}
 		step := sqlgraph.NewStep(
-			sqlgraph.From(trackingvisitor.Table, trackingvisitor.FieldID, selector),
-			sqlgraph.To(trackingprofile.Table, trackingprofile.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, true, trackingvisitor.ProfileTable, trackingvisitor.ProfileColumn),
+			sqlgraph.From(visitor.Table, visitor.FieldID, selector),
+			sqlgraph.To(contact.Table, contact.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, visitor.ContactTable, visitor.ContactColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
@@ -86,7 +86,7 @@ func (_q *TrackingVisitorQuery) QueryProfile() *TrackingProfileQuery {
 }
 
 // QueryWorkspace chains the current query on the "workspace" edge.
-func (_q *TrackingVisitorQuery) QueryWorkspace() *WorkspaceQuery {
+func (_q *VisitorQuery) QueryWorkspace() *WorkspaceQuery {
 	query := (&WorkspaceClient{config: _q.config}).Query()
 	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
 		if err := _q.prepareQuery(ctx); err != nil {
@@ -97,9 +97,9 @@ func (_q *TrackingVisitorQuery) QueryWorkspace() *WorkspaceQuery {
 			return nil, err
 		}
 		step := sqlgraph.NewStep(
-			sqlgraph.From(trackingvisitor.Table, trackingvisitor.FieldID, selector),
+			sqlgraph.From(visitor.Table, visitor.FieldID, selector),
 			sqlgraph.To(workspace.Table, workspace.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, true, trackingvisitor.WorkspaceTable, trackingvisitor.WorkspaceColumn),
+			sqlgraph.Edge(sqlgraph.M2O, true, visitor.WorkspaceTable, visitor.WorkspaceColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
@@ -107,21 +107,21 @@ func (_q *TrackingVisitorQuery) QueryWorkspace() *WorkspaceQuery {
 	return query
 }
 
-// First returns the first TrackingVisitor entity from the query.
-// Returns a *NotFoundError when no TrackingVisitor was found.
-func (_q *TrackingVisitorQuery) First(ctx context.Context) (*TrackingVisitor, error) {
+// First returns the first Visitor entity from the query.
+// Returns a *NotFoundError when no Visitor was found.
+func (_q *VisitorQuery) First(ctx context.Context) (*Visitor, error) {
 	nodes, err := _q.Limit(1).All(setContextOp(ctx, _q.ctx, ent.OpQueryFirst))
 	if err != nil {
 		return nil, err
 	}
 	if len(nodes) == 0 {
-		return nil, &NotFoundError{trackingvisitor.Label}
+		return nil, &NotFoundError{visitor.Label}
 	}
 	return nodes[0], nil
 }
 
 // FirstX is like First, but panics if an error occurs.
-func (_q *TrackingVisitorQuery) FirstX(ctx context.Context) *TrackingVisitor {
+func (_q *VisitorQuery) FirstX(ctx context.Context) *Visitor {
 	node, err := _q.First(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
@@ -129,22 +129,22 @@ func (_q *TrackingVisitorQuery) FirstX(ctx context.Context) *TrackingVisitor {
 	return node
 }
 
-// FirstID returns the first TrackingVisitor ID from the query.
-// Returns a *NotFoundError when no TrackingVisitor ID was found.
-func (_q *TrackingVisitorQuery) FirstID(ctx context.Context) (id int64, err error) {
+// FirstID returns the first Visitor ID from the query.
+// Returns a *NotFoundError when no Visitor ID was found.
+func (_q *VisitorQuery) FirstID(ctx context.Context) (id int64, err error) {
 	var ids []int64
 	if ids, err = _q.Limit(1).IDs(setContextOp(ctx, _q.ctx, ent.OpQueryFirstID)); err != nil {
 		return
 	}
 	if len(ids) == 0 {
-		err = &NotFoundError{trackingvisitor.Label}
+		err = &NotFoundError{visitor.Label}
 		return
 	}
 	return ids[0], nil
 }
 
 // FirstIDX is like FirstID, but panics if an error occurs.
-func (_q *TrackingVisitorQuery) FirstIDX(ctx context.Context) int64 {
+func (_q *VisitorQuery) FirstIDX(ctx context.Context) int64 {
 	id, err := _q.FirstID(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
@@ -152,10 +152,10 @@ func (_q *TrackingVisitorQuery) FirstIDX(ctx context.Context) int64 {
 	return id
 }
 
-// Only returns a single TrackingVisitor entity found by the query, ensuring it only returns one.
-// Returns a *NotSingularError when more than one TrackingVisitor entity is found.
-// Returns a *NotFoundError when no TrackingVisitor entities are found.
-func (_q *TrackingVisitorQuery) Only(ctx context.Context) (*TrackingVisitor, error) {
+// Only returns a single Visitor entity found by the query, ensuring it only returns one.
+// Returns a *NotSingularError when more than one Visitor entity is found.
+// Returns a *NotFoundError when no Visitor entities are found.
+func (_q *VisitorQuery) Only(ctx context.Context) (*Visitor, error) {
 	nodes, err := _q.Limit(2).All(setContextOp(ctx, _q.ctx, ent.OpQueryOnly))
 	if err != nil {
 		return nil, err
@@ -164,14 +164,14 @@ func (_q *TrackingVisitorQuery) Only(ctx context.Context) (*TrackingVisitor, err
 	case 1:
 		return nodes[0], nil
 	case 0:
-		return nil, &NotFoundError{trackingvisitor.Label}
+		return nil, &NotFoundError{visitor.Label}
 	default:
-		return nil, &NotSingularError{trackingvisitor.Label}
+		return nil, &NotSingularError{visitor.Label}
 	}
 }
 
 // OnlyX is like Only, but panics if an error occurs.
-func (_q *TrackingVisitorQuery) OnlyX(ctx context.Context) *TrackingVisitor {
+func (_q *VisitorQuery) OnlyX(ctx context.Context) *Visitor {
 	node, err := _q.Only(ctx)
 	if err != nil {
 		panic(err)
@@ -179,10 +179,10 @@ func (_q *TrackingVisitorQuery) OnlyX(ctx context.Context) *TrackingVisitor {
 	return node
 }
 
-// OnlyID is like Only, but returns the only TrackingVisitor ID in the query.
-// Returns a *NotSingularError when more than one TrackingVisitor ID is found.
+// OnlyID is like Only, but returns the only Visitor ID in the query.
+// Returns a *NotSingularError when more than one Visitor ID is found.
 // Returns a *NotFoundError when no entities are found.
-func (_q *TrackingVisitorQuery) OnlyID(ctx context.Context) (id int64, err error) {
+func (_q *VisitorQuery) OnlyID(ctx context.Context) (id int64, err error) {
 	var ids []int64
 	if ids, err = _q.Limit(2).IDs(setContextOp(ctx, _q.ctx, ent.OpQueryOnlyID)); err != nil {
 		return
@@ -191,15 +191,15 @@ func (_q *TrackingVisitorQuery) OnlyID(ctx context.Context) (id int64, err error
 	case 1:
 		id = ids[0]
 	case 0:
-		err = &NotFoundError{trackingvisitor.Label}
+		err = &NotFoundError{visitor.Label}
 	default:
-		err = &NotSingularError{trackingvisitor.Label}
+		err = &NotSingularError{visitor.Label}
 	}
 	return
 }
 
 // OnlyIDX is like OnlyID, but panics if an error occurs.
-func (_q *TrackingVisitorQuery) OnlyIDX(ctx context.Context) int64 {
+func (_q *VisitorQuery) OnlyIDX(ctx context.Context) int64 {
 	id, err := _q.OnlyID(ctx)
 	if err != nil {
 		panic(err)
@@ -207,18 +207,18 @@ func (_q *TrackingVisitorQuery) OnlyIDX(ctx context.Context) int64 {
 	return id
 }
 
-// All executes the query and returns a list of TrackingVisitors.
-func (_q *TrackingVisitorQuery) All(ctx context.Context) ([]*TrackingVisitor, error) {
+// All executes the query and returns a list of Visitors.
+func (_q *VisitorQuery) All(ctx context.Context) ([]*Visitor, error) {
 	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryAll)
 	if err := _q.prepareQuery(ctx); err != nil {
 		return nil, err
 	}
-	qr := querierAll[[]*TrackingVisitor, *TrackingVisitorQuery]()
-	return withInterceptors[[]*TrackingVisitor](ctx, _q, qr, _q.inters)
+	qr := querierAll[[]*Visitor, *VisitorQuery]()
+	return withInterceptors[[]*Visitor](ctx, _q, qr, _q.inters)
 }
 
 // AllX is like All, but panics if an error occurs.
-func (_q *TrackingVisitorQuery) AllX(ctx context.Context) []*TrackingVisitor {
+func (_q *VisitorQuery) AllX(ctx context.Context) []*Visitor {
 	nodes, err := _q.All(ctx)
 	if err != nil {
 		panic(err)
@@ -226,20 +226,20 @@ func (_q *TrackingVisitorQuery) AllX(ctx context.Context) []*TrackingVisitor {
 	return nodes
 }
 
-// IDs executes the query and returns a list of TrackingVisitor IDs.
-func (_q *TrackingVisitorQuery) IDs(ctx context.Context) (ids []int64, err error) {
+// IDs executes the query and returns a list of Visitor IDs.
+func (_q *VisitorQuery) IDs(ctx context.Context) (ids []int64, err error) {
 	if _q.ctx.Unique == nil && _q.path != nil {
 		_q.Unique(true)
 	}
 	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryIDs)
-	if err = _q.Select(trackingvisitor.FieldID).Scan(ctx, &ids); err != nil {
+	if err = _q.Select(visitor.FieldID).Scan(ctx, &ids); err != nil {
 		return nil, err
 	}
 	return ids, nil
 }
 
 // IDsX is like IDs, but panics if an error occurs.
-func (_q *TrackingVisitorQuery) IDsX(ctx context.Context) []int64 {
+func (_q *VisitorQuery) IDsX(ctx context.Context) []int64 {
 	ids, err := _q.IDs(ctx)
 	if err != nil {
 		panic(err)
@@ -248,16 +248,16 @@ func (_q *TrackingVisitorQuery) IDsX(ctx context.Context) []int64 {
 }
 
 // Count returns the count of the given query.
-func (_q *TrackingVisitorQuery) Count(ctx context.Context) (int, error) {
+func (_q *VisitorQuery) Count(ctx context.Context) (int, error) {
 	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryCount)
 	if err := _q.prepareQuery(ctx); err != nil {
 		return 0, err
 	}
-	return withInterceptors[int](ctx, _q, querierCount[*TrackingVisitorQuery](), _q.inters)
+	return withInterceptors[int](ctx, _q, querierCount[*VisitorQuery](), _q.inters)
 }
 
 // CountX is like Count, but panics if an error occurs.
-func (_q *TrackingVisitorQuery) CountX(ctx context.Context) int {
+func (_q *VisitorQuery) CountX(ctx context.Context) int {
 	count, err := _q.Count(ctx)
 	if err != nil {
 		panic(err)
@@ -266,7 +266,7 @@ func (_q *TrackingVisitorQuery) CountX(ctx context.Context) int {
 }
 
 // Exist returns true if the query has elements in the graph.
-func (_q *TrackingVisitorQuery) Exist(ctx context.Context) (bool, error) {
+func (_q *VisitorQuery) Exist(ctx context.Context) (bool, error) {
 	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryExist)
 	switch _, err := _q.FirstID(ctx); {
 	case IsNotFound(err):
@@ -279,7 +279,7 @@ func (_q *TrackingVisitorQuery) Exist(ctx context.Context) (bool, error) {
 }
 
 // ExistX is like Exist, but panics if an error occurs.
-func (_q *TrackingVisitorQuery) ExistX(ctx context.Context) bool {
+func (_q *VisitorQuery) ExistX(ctx context.Context) bool {
 	exist, err := _q.Exist(ctx)
 	if err != nil {
 		panic(err)
@@ -287,19 +287,19 @@ func (_q *TrackingVisitorQuery) ExistX(ctx context.Context) bool {
 	return exist
 }
 
-// Clone returns a duplicate of the TrackingVisitorQuery builder, including all associated steps. It can be
+// Clone returns a duplicate of the VisitorQuery builder, including all associated steps. It can be
 // used to prepare common query builders and use them differently after the clone is made.
-func (_q *TrackingVisitorQuery) Clone() *TrackingVisitorQuery {
+func (_q *VisitorQuery) Clone() *VisitorQuery {
 	if _q == nil {
 		return nil
 	}
-	return &TrackingVisitorQuery{
+	return &VisitorQuery{
 		config:        _q.config,
 		ctx:           _q.ctx.Clone(),
-		order:         append([]trackingvisitor.OrderOption{}, _q.order...),
+		order:         append([]visitor.OrderOption{}, _q.order...),
 		inters:        append([]Interceptor{}, _q.inters...),
-		predicates:    append([]predicate.TrackingVisitor{}, _q.predicates...),
-		withProfile:   _q.withProfile.Clone(),
+		predicates:    append([]predicate.Visitor{}, _q.predicates...),
+		withContact:   _q.withContact.Clone(),
 		withWorkspace: _q.withWorkspace.Clone(),
 		// clone intermediate query.
 		sql:       _q.sql.Clone(),
@@ -308,20 +308,20 @@ func (_q *TrackingVisitorQuery) Clone() *TrackingVisitorQuery {
 	}
 }
 
-// WithProfile tells the query-builder to eager-load the nodes that are connected to
-// the "profile" edge. The optional arguments are used to configure the query builder of the edge.
-func (_q *TrackingVisitorQuery) WithProfile(opts ...func(*TrackingProfileQuery)) *TrackingVisitorQuery {
-	query := (&TrackingProfileClient{config: _q.config}).Query()
+// WithContact tells the query-builder to eager-load the nodes that are connected to
+// the "contact" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *VisitorQuery) WithContact(opts ...func(*ContactQuery)) *VisitorQuery {
+	query := (&ContactClient{config: _q.config}).Query()
 	for _, opt := range opts {
 		opt(query)
 	}
-	_q.withProfile = query
+	_q.withContact = query
 	return _q
 }
 
 // WithWorkspace tells the query-builder to eager-load the nodes that are connected to
 // the "workspace" edge. The optional arguments are used to configure the query builder of the edge.
-func (_q *TrackingVisitorQuery) WithWorkspace(opts ...func(*WorkspaceQuery)) *TrackingVisitorQuery {
+func (_q *VisitorQuery) WithWorkspace(opts ...func(*WorkspaceQuery)) *VisitorQuery {
 	query := (&WorkspaceClient{config: _q.config}).Query()
 	for _, opt := range opts {
 		opt(query)
@@ -340,15 +340,15 @@ func (_q *TrackingVisitorQuery) WithWorkspace(opts ...func(*WorkspaceQuery)) *Tr
 //		Count int `json:"count,omitempty"`
 //	}
 //
-//	client.TrackingVisitor.Query().
-//		GroupBy(trackingvisitor.FieldVisitorID).
+//	client.Visitor.Query().
+//		GroupBy(visitor.FieldVisitorID).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
-func (_q *TrackingVisitorQuery) GroupBy(field string, fields ...string) *TrackingVisitorGroupBy {
+func (_q *VisitorQuery) GroupBy(field string, fields ...string) *VisitorGroupBy {
 	_q.ctx.Fields = append([]string{field}, fields...)
-	grbuild := &TrackingVisitorGroupBy{build: _q}
+	grbuild := &VisitorGroupBy{build: _q}
 	grbuild.flds = &_q.ctx.Fields
-	grbuild.label = trackingvisitor.Label
+	grbuild.label = visitor.Label
 	grbuild.scan = grbuild.Scan
 	return grbuild
 }
@@ -362,23 +362,23 @@ func (_q *TrackingVisitorQuery) GroupBy(field string, fields ...string) *Trackin
 //		VisitorID string `json:"visitor_id,omitempty"`
 //	}
 //
-//	client.TrackingVisitor.Query().
-//		Select(trackingvisitor.FieldVisitorID).
+//	client.Visitor.Query().
+//		Select(visitor.FieldVisitorID).
 //		Scan(ctx, &v)
-func (_q *TrackingVisitorQuery) Select(fields ...string) *TrackingVisitorSelect {
+func (_q *VisitorQuery) Select(fields ...string) *VisitorSelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)
-	sbuild := &TrackingVisitorSelect{TrackingVisitorQuery: _q}
-	sbuild.label = trackingvisitor.Label
+	sbuild := &VisitorSelect{VisitorQuery: _q}
+	sbuild.label = visitor.Label
 	sbuild.flds, sbuild.scan = &_q.ctx.Fields, sbuild.Scan
 	return sbuild
 }
 
-// Aggregate returns a TrackingVisitorSelect configured with the given aggregations.
-func (_q *TrackingVisitorQuery) Aggregate(fns ...AggregateFunc) *TrackingVisitorSelect {
+// Aggregate returns a VisitorSelect configured with the given aggregations.
+func (_q *VisitorQuery) Aggregate(fns ...AggregateFunc) *VisitorSelect {
 	return _q.Select().Aggregate(fns...)
 }
 
-func (_q *TrackingVisitorQuery) prepareQuery(ctx context.Context) error {
+func (_q *VisitorQuery) prepareQuery(ctx context.Context) error {
 	for _, inter := range _q.inters {
 		if inter == nil {
 			return fmt.Errorf("ent: uninitialized interceptor (forgotten import ent/runtime?)")
@@ -390,7 +390,7 @@ func (_q *TrackingVisitorQuery) prepareQuery(ctx context.Context) error {
 		}
 	}
 	for _, f := range _q.ctx.Fields {
-		if !trackingvisitor.ValidColumn(f) {
+		if !visitor.ValidColumn(f) {
 			return &ValidationError{Name: f, err: fmt.Errorf("ent: invalid field %q for query", f)}
 		}
 	}
@@ -404,20 +404,20 @@ func (_q *TrackingVisitorQuery) prepareQuery(ctx context.Context) error {
 	return nil
 }
 
-func (_q *TrackingVisitorQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*TrackingVisitor, error) {
+func (_q *VisitorQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Visitor, error) {
 	var (
-		nodes       = []*TrackingVisitor{}
+		nodes       = []*Visitor{}
 		_spec       = _q.querySpec()
 		loadedTypes = [2]bool{
-			_q.withProfile != nil,
+			_q.withContact != nil,
 			_q.withWorkspace != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
-		return (*TrackingVisitor).scanValues(nil, columns)
+		return (*Visitor).scanValues(nil, columns)
 	}
 	_spec.Assign = func(columns []string, values []any) error {
-		node := &TrackingVisitor{config: _q.config}
+		node := &Visitor{config: _q.config}
 		nodes = append(nodes, node)
 		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(columns, values)
@@ -434,29 +434,29 @@ func (_q *TrackingVisitorQuery) sqlAll(ctx context.Context, hooks ...queryHook) 
 	if len(nodes) == 0 {
 		return nodes, nil
 	}
-	if query := _q.withProfile; query != nil {
-		if err := _q.loadProfile(ctx, query, nodes, nil,
-			func(n *TrackingVisitor, e *TrackingProfile) { n.Edges.Profile = e }); err != nil {
+	if query := _q.withContact; query != nil {
+		if err := _q.loadContact(ctx, query, nodes, nil,
+			func(n *Visitor, e *Contact) { n.Edges.Contact = e }); err != nil {
 			return nil, err
 		}
 	}
 	if query := _q.withWorkspace; query != nil {
 		if err := _q.loadWorkspace(ctx, query, nodes, nil,
-			func(n *TrackingVisitor, e *Workspace) { n.Edges.Workspace = e }); err != nil {
+			func(n *Visitor, e *Workspace) { n.Edges.Workspace = e }); err != nil {
 			return nil, err
 		}
 	}
 	return nodes, nil
 }
 
-func (_q *TrackingVisitorQuery) loadProfile(ctx context.Context, query *TrackingProfileQuery, nodes []*TrackingVisitor, init func(*TrackingVisitor), assign func(*TrackingVisitor, *TrackingProfile)) error {
+func (_q *VisitorQuery) loadContact(ctx context.Context, query *ContactQuery, nodes []*Visitor, init func(*Visitor), assign func(*Visitor, *Contact)) error {
 	ids := make([]int64, 0, len(nodes))
-	nodeids := make(map[int64][]*TrackingVisitor)
+	nodeids := make(map[int64][]*Visitor)
 	for i := range nodes {
-		if nodes[i].ProfileID == nil {
+		if nodes[i].ContactID == nil {
 			continue
 		}
-		fk := *nodes[i].ProfileID
+		fk := *nodes[i].ContactID
 		if _, ok := nodeids[fk]; !ok {
 			ids = append(ids, fk)
 		}
@@ -465,7 +465,7 @@ func (_q *TrackingVisitorQuery) loadProfile(ctx context.Context, query *Tracking
 	if len(ids) == 0 {
 		return nil
 	}
-	query.Where(trackingprofile.IDIn(ids...))
+	query.Where(contact.IDIn(ids...))
 	neighbors, err := query.All(ctx)
 	if err != nil {
 		return err
@@ -473,7 +473,7 @@ func (_q *TrackingVisitorQuery) loadProfile(ctx context.Context, query *Tracking
 	for _, n := range neighbors {
 		nodes, ok := nodeids[n.ID]
 		if !ok {
-			return fmt.Errorf(`unexpected foreign-key "profile_id" returned %v`, n.ID)
+			return fmt.Errorf(`unexpected foreign-key "contact_id" returned %v`, n.ID)
 		}
 		for i := range nodes {
 			assign(nodes[i], n)
@@ -481,9 +481,9 @@ func (_q *TrackingVisitorQuery) loadProfile(ctx context.Context, query *Tracking
 	}
 	return nil
 }
-func (_q *TrackingVisitorQuery) loadWorkspace(ctx context.Context, query *WorkspaceQuery, nodes []*TrackingVisitor, init func(*TrackingVisitor), assign func(*TrackingVisitor, *Workspace)) error {
+func (_q *VisitorQuery) loadWorkspace(ctx context.Context, query *WorkspaceQuery, nodes []*Visitor, init func(*Visitor), assign func(*Visitor, *Workspace)) error {
 	ids := make([]int64, 0, len(nodes))
-	nodeids := make(map[int64][]*TrackingVisitor)
+	nodeids := make(map[int64][]*Visitor)
 	for i := range nodes {
 		fk := nodes[i].WorkspaceID
 		if _, ok := nodeids[fk]; !ok {
@@ -511,7 +511,7 @@ func (_q *TrackingVisitorQuery) loadWorkspace(ctx context.Context, query *Worksp
 	return nil
 }
 
-func (_q *TrackingVisitorQuery) sqlCount(ctx context.Context) (int, error) {
+func (_q *VisitorQuery) sqlCount(ctx context.Context) (int, error) {
 	_spec := _q.querySpec()
 	if len(_q.modifiers) > 0 {
 		_spec.Modifiers = _q.modifiers
@@ -523,8 +523,8 @@ func (_q *TrackingVisitorQuery) sqlCount(ctx context.Context) (int, error) {
 	return sqlgraph.CountNodes(ctx, _q.driver, _spec)
 }
 
-func (_q *TrackingVisitorQuery) querySpec() *sqlgraph.QuerySpec {
-	_spec := sqlgraph.NewQuerySpec(trackingvisitor.Table, trackingvisitor.Columns, sqlgraph.NewFieldSpec(trackingvisitor.FieldID, field.TypeInt64))
+func (_q *VisitorQuery) querySpec() *sqlgraph.QuerySpec {
+	_spec := sqlgraph.NewQuerySpec(visitor.Table, visitor.Columns, sqlgraph.NewFieldSpec(visitor.FieldID, field.TypeInt64))
 	_spec.From = _q.sql
 	if unique := _q.ctx.Unique; unique != nil {
 		_spec.Unique = *unique
@@ -533,17 +533,17 @@ func (_q *TrackingVisitorQuery) querySpec() *sqlgraph.QuerySpec {
 	}
 	if fields := _q.ctx.Fields; len(fields) > 0 {
 		_spec.Node.Columns = make([]string, 0, len(fields))
-		_spec.Node.Columns = append(_spec.Node.Columns, trackingvisitor.FieldID)
+		_spec.Node.Columns = append(_spec.Node.Columns, visitor.FieldID)
 		for i := range fields {
-			if fields[i] != trackingvisitor.FieldID {
+			if fields[i] != visitor.FieldID {
 				_spec.Node.Columns = append(_spec.Node.Columns, fields[i])
 			}
 		}
-		if _q.withProfile != nil {
-			_spec.Node.AddColumnOnce(trackingvisitor.FieldProfileID)
+		if _q.withContact != nil {
+			_spec.Node.AddColumnOnce(visitor.FieldContactID)
 		}
 		if _q.withWorkspace != nil {
-			_spec.Node.AddColumnOnce(trackingvisitor.FieldWorkspaceID)
+			_spec.Node.AddColumnOnce(visitor.FieldWorkspaceID)
 		}
 	}
 	if ps := _q.predicates; len(ps) > 0 {
@@ -569,12 +569,12 @@ func (_q *TrackingVisitorQuery) querySpec() *sqlgraph.QuerySpec {
 	return _spec
 }
 
-func (_q *TrackingVisitorQuery) sqlQuery(ctx context.Context) *sql.Selector {
+func (_q *VisitorQuery) sqlQuery(ctx context.Context) *sql.Selector {
 	builder := sql.Dialect(_q.driver.Dialect())
-	t1 := builder.Table(trackingvisitor.Table)
+	t1 := builder.Table(visitor.Table)
 	columns := _q.ctx.Fields
 	if len(columns) == 0 {
-		columns = trackingvisitor.Columns
+		columns = visitor.Columns
 	}
 	selector := builder.Select(t1.Columns(columns...)...).From(t1)
 	if _q.sql != nil {
@@ -605,33 +605,33 @@ func (_q *TrackingVisitorQuery) sqlQuery(ctx context.Context) *sql.Selector {
 }
 
 // Modify adds a query modifier for attaching custom logic to queries.
-func (_q *TrackingVisitorQuery) Modify(modifiers ...func(s *sql.Selector)) *TrackingVisitorSelect {
+func (_q *VisitorQuery) Modify(modifiers ...func(s *sql.Selector)) *VisitorSelect {
 	_q.modifiers = append(_q.modifiers, modifiers...)
 	return _q.Select()
 }
 
-// TrackingVisitorGroupBy is the group-by builder for TrackingVisitor entities.
-type TrackingVisitorGroupBy struct {
+// VisitorGroupBy is the group-by builder for Visitor entities.
+type VisitorGroupBy struct {
 	selector
-	build *TrackingVisitorQuery
+	build *VisitorQuery
 }
 
 // Aggregate adds the given aggregation functions to the group-by query.
-func (_g *TrackingVisitorGroupBy) Aggregate(fns ...AggregateFunc) *TrackingVisitorGroupBy {
+func (_g *VisitorGroupBy) Aggregate(fns ...AggregateFunc) *VisitorGroupBy {
 	_g.fns = append(_g.fns, fns...)
 	return _g
 }
 
 // Scan applies the selector query and scans the result into the given value.
-func (_g *TrackingVisitorGroupBy) Scan(ctx context.Context, v any) error {
+func (_g *VisitorGroupBy) Scan(ctx context.Context, v any) error {
 	ctx = setContextOp(ctx, _g.build.ctx, ent.OpQueryGroupBy)
 	if err := _g.build.prepareQuery(ctx); err != nil {
 		return err
 	}
-	return scanWithInterceptors[*TrackingVisitorQuery, *TrackingVisitorGroupBy](ctx, _g.build, _g, _g.build.inters, v)
+	return scanWithInterceptors[*VisitorQuery, *VisitorGroupBy](ctx, _g.build, _g, _g.build.inters, v)
 }
 
-func (_g *TrackingVisitorGroupBy) sqlScan(ctx context.Context, root *TrackingVisitorQuery, v any) error {
+func (_g *VisitorGroupBy) sqlScan(ctx context.Context, root *VisitorQuery, v any) error {
 	selector := root.sqlQuery(ctx).Select()
 	aggregation := make([]string, 0, len(_g.fns))
 	for _, fn := range _g.fns {
@@ -658,28 +658,28 @@ func (_g *TrackingVisitorGroupBy) sqlScan(ctx context.Context, root *TrackingVis
 	return sql.ScanSlice(rows, v)
 }
 
-// TrackingVisitorSelect is the builder for selecting fields of TrackingVisitor entities.
-type TrackingVisitorSelect struct {
-	*TrackingVisitorQuery
+// VisitorSelect is the builder for selecting fields of Visitor entities.
+type VisitorSelect struct {
+	*VisitorQuery
 	selector
 }
 
 // Aggregate adds the given aggregation functions to the selector query.
-func (_s *TrackingVisitorSelect) Aggregate(fns ...AggregateFunc) *TrackingVisitorSelect {
+func (_s *VisitorSelect) Aggregate(fns ...AggregateFunc) *VisitorSelect {
 	_s.fns = append(_s.fns, fns...)
 	return _s
 }
 
 // Scan applies the selector query and scans the result into the given value.
-func (_s *TrackingVisitorSelect) Scan(ctx context.Context, v any) error {
+func (_s *VisitorSelect) Scan(ctx context.Context, v any) error {
 	ctx = setContextOp(ctx, _s.ctx, ent.OpQuerySelect)
 	if err := _s.prepareQuery(ctx); err != nil {
 		return err
 	}
-	return scanWithInterceptors[*TrackingVisitorQuery, *TrackingVisitorSelect](ctx, _s.TrackingVisitorQuery, _s, _s.inters, v)
+	return scanWithInterceptors[*VisitorQuery, *VisitorSelect](ctx, _s.VisitorQuery, _s, _s.inters, v)
 }
 
-func (_s *TrackingVisitorSelect) sqlScan(ctx context.Context, root *TrackingVisitorQuery, v any) error {
+func (_s *VisitorSelect) sqlScan(ctx context.Context, root *VisitorQuery, v any) error {
 	selector := root.sqlQuery(ctx)
 	aggregation := make([]string, 0, len(_s.fns))
 	for _, fn := range _s.fns {
@@ -701,7 +701,7 @@ func (_s *TrackingVisitorSelect) sqlScan(ctx context.Context, root *TrackingVisi
 }
 
 // Modify adds a query modifier for attaching custom logic to queries.
-func (_s *TrackingVisitorSelect) Modify(modifiers ...func(s *sql.Selector)) *TrackingVisitorSelect {
+func (_s *VisitorSelect) Modify(modifiers ...func(s *sql.Selector)) *VisitorSelect {
 	_s.modifiers = append(_s.modifiers, modifiers...)
 	return _s
 }

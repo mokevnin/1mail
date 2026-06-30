@@ -81,6 +81,18 @@ func (f ContactFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, err
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.ContactMutation", m)
 }
 
+// The CustomFieldFunc type is an adapter to allow the use of ordinary
+// function as CustomField mutator.
+type CustomFieldFunc func(context.Context, *ent.CustomFieldMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f CustomFieldFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.CustomFieldMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.CustomFieldMutation", m)
+}
+
 // The EmailTemplateFunc type is an adapter to allow the use of ordinary
 // function as EmailTemplate mutator.
 type EmailTemplateFunc func(context.Context, *ent.EmailTemplateMutation) (ent.Value, error)
@@ -141,30 +153,6 @@ func (f SuppressionFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value,
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.SuppressionMutation", m)
 }
 
-// The TrackingProfileFunc type is an adapter to allow the use of ordinary
-// function as TrackingProfile mutator.
-type TrackingProfileFunc func(context.Context, *ent.TrackingProfileMutation) (ent.Value, error)
-
-// Mutate calls f(ctx, m).
-func (f TrackingProfileFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
-	if mv, ok := m.(*ent.TrackingProfileMutation); ok {
-		return f(ctx, mv)
-	}
-	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.TrackingProfileMutation", m)
-}
-
-// The TrackingVisitorFunc type is an adapter to allow the use of ordinary
-// function as TrackingVisitor mutator.
-type TrackingVisitorFunc func(context.Context, *ent.TrackingVisitorMutation) (ent.Value, error)
-
-// Mutate calls f(ctx, m).
-func (f TrackingVisitorFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
-	if mv, ok := m.(*ent.TrackingVisitorMutation); ok {
-		return f(ctx, mv)
-	}
-	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.TrackingVisitorMutation", m)
-}
-
 // The UserFunc type is an adapter to allow the use of ordinary
 // function as User mutator.
 type UserFunc func(context.Context, *ent.UserMutation) (ent.Value, error)
@@ -175,6 +163,18 @@ func (f UserFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error)
 		return f(ctx, mv)
 	}
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.UserMutation", m)
+}
+
+// The VisitorFunc type is an adapter to allow the use of ordinary
+// function as Visitor mutator.
+type VisitorFunc func(context.Context, *ent.VisitorMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f VisitorFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.VisitorMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.VisitorMutation", m)
 }
 
 // The WebhookEndpointFunc type is an adapter to allow the use of ordinary

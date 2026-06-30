@@ -33,7 +33,9 @@ func (c *ConverterImpl) ContactToResource(source *ent.Contact) external.ContactR
 	var externalapiContactResource external.ContactResource
 	if source != nil {
 		externalapiContactResource.ID = entityID((*source).ID)
-		externalapiContactResource.Email = external.EmailAddress((*source).Email)
+		externalapiContactResource.SubjectId = optNilString((*source).SubjectID)
+		externalapiContactResource.Email = optNilEmailAddress((*source).Email)
+		externalapiContactResource.Phone = optNilString((*source).Phone)
 		externalapiContactResource.FirstName = optNilString((*source).FirstName)
 		externalapiContactResource.LastName = optNilString((*source).LastName)
 		externalapiContactResource.TimeZone = optNilTimeZone((*source).TimeZone)

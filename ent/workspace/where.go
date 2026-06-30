@@ -483,6 +483,29 @@ func HasContactsWith(preds ...predicate.Contact) predicate.Workspace {
 	})
 }
 
+// HasCustomFields applies the HasEdge predicate on the "custom_fields" edge.
+func HasCustomFields() predicate.Workspace {
+	return predicate.Workspace(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, CustomFieldsTable, CustomFieldsColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasCustomFieldsWith applies the HasEdge predicate on the "custom_fields" edge with a given conditions (other predicates).
+func HasCustomFieldsWith(preds ...predicate.CustomField) predicate.Workspace {
+	return predicate.Workspace(func(s *sql.Selector) {
+		step := newCustomFieldsStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // HasSegments applies the HasEdge predicate on the "segments" edge.
 func HasSegments() predicate.Workspace {
 	return predicate.Workspace(func(s *sql.Selector) {
@@ -529,44 +552,21 @@ func HasEventsWith(preds ...predicate.Event) predicate.Workspace {
 	})
 }
 
-// HasTrackingProfiles applies the HasEdge predicate on the "tracking_profiles" edge.
-func HasTrackingProfiles() predicate.Workspace {
+// HasVisitors applies the HasEdge predicate on the "visitors" edge.
+func HasVisitors() predicate.Workspace {
 	return predicate.Workspace(func(s *sql.Selector) {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(Table, FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, TrackingProfilesTable, TrackingProfilesColumn),
+			sqlgraph.Edge(sqlgraph.O2M, false, VisitorsTable, VisitorsColumn),
 		)
 		sqlgraph.HasNeighbors(s, step)
 	})
 }
 
-// HasTrackingProfilesWith applies the HasEdge predicate on the "tracking_profiles" edge with a given conditions (other predicates).
-func HasTrackingProfilesWith(preds ...predicate.TrackingProfile) predicate.Workspace {
+// HasVisitorsWith applies the HasEdge predicate on the "visitors" edge with a given conditions (other predicates).
+func HasVisitorsWith(preds ...predicate.Visitor) predicate.Workspace {
 	return predicate.Workspace(func(s *sql.Selector) {
-		step := newTrackingProfilesStep()
-		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
-			for _, p := range preds {
-				p(s)
-			}
-		})
-	})
-}
-
-// HasTrackingVisitors applies the HasEdge predicate on the "tracking_visitors" edge.
-func HasTrackingVisitors() predicate.Workspace {
-	return predicate.Workspace(func(s *sql.Selector) {
-		step := sqlgraph.NewStep(
-			sqlgraph.From(Table, FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, TrackingVisitorsTable, TrackingVisitorsColumn),
-		)
-		sqlgraph.HasNeighbors(s, step)
-	})
-}
-
-// HasTrackingVisitorsWith applies the HasEdge predicate on the "tracking_visitors" edge with a given conditions (other predicates).
-func HasTrackingVisitorsWith(preds ...predicate.TrackingVisitor) predicate.Workspace {
-	return predicate.Workspace(func(s *sql.Selector) {
-		step := newTrackingVisitorsStep()
+		step := newVisitorsStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)

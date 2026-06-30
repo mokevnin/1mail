@@ -17,15 +17,15 @@ import (
 	"github.com/mokevnin/1mail/ent/broadcast"
 	"github.com/mokevnin/1mail/ent/broadcastrecipient"
 	"github.com/mokevnin/1mail/ent/contact"
+	"github.com/mokevnin/1mail/ent/customfield"
 	"github.com/mokevnin/1mail/ent/emailtemplate"
 	"github.com/mokevnin/1mail/ent/event"
 	"github.com/mokevnin/1mail/ent/integration"
 	"github.com/mokevnin/1mail/ent/predicate"
 	"github.com/mokevnin/1mail/ent/segment"
 	"github.com/mokevnin/1mail/ent/suppression"
-	"github.com/mokevnin/1mail/ent/trackingprofile"
-	"github.com/mokevnin/1mail/ent/trackingvisitor"
 	"github.com/mokevnin/1mail/ent/user"
+	"github.com/mokevnin/1mail/ent/visitor"
 	"github.com/mokevnin/1mail/ent/webhookendpoint"
 	"github.com/mokevnin/1mail/ent/workspace"
 )
@@ -45,14 +45,14 @@ const (
 	TypeBroadcast          = "Broadcast"
 	TypeBroadcastRecipient = "BroadcastRecipient"
 	TypeContact            = "Contact"
+	TypeCustomField        = "CustomField"
 	TypeEmailTemplate      = "EmailTemplate"
 	TypeEvent              = "Event"
 	TypeIntegration        = "Integration"
 	TypeSegment            = "Segment"
 	TypeSuppression        = "Suppression"
-	TypeTrackingProfile    = "TrackingProfile"
-	TypeTrackingVisitor    = "TrackingVisitor"
 	TypeUser               = "User"
+	TypeVisitor            = "Visitor"
 	TypeWebhookEndpoint    = "WebhookEndpoint"
 	TypeWorkspace          = "Workspace"
 )
@@ -5629,15 +5629,20 @@ type ContactMutation struct {
 	op               Op
 	typ              string
 	id               *int64
+	subject_id       *string
 	email            *string
+	phone            *string
 	first_name       *string
 	last_name        *string
 	status           *contact.Status
 	time_zone        *string
-	custom_fields    *map[string]string
+	custom_fields    *map[string]interface{}
 	created_at       *time.Time
 	updated_at       *time.Time
 	clearedFields    map[string]struct{}
+	visitors         map[int64]struct{}
+	removedvisitors  map[int64]struct{}
+	clearedvisitors  bool
 	workspace        *int64
 	clearedworkspace bool
 	done             bool
@@ -5749,6 +5754,55 @@ func (m *ContactMutation) IDs(ctx context.Context) ([]int64, error) {
 	}
 }
 
+// SetSubjectID sets the "subject_id" field.
+func (m *ContactMutation) SetSubjectID(s string) {
+	m.subject_id = &s
+}
+
+// SubjectID returns the value of the "subject_id" field in the mutation.
+func (m *ContactMutation) SubjectID() (r string, exists bool) {
+	v := m.subject_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSubjectID returns the old "subject_id" field's value of the Contact entity.
+// If the Contact object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ContactMutation) OldSubjectID(ctx context.Context) (v *string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSubjectID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSubjectID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSubjectID: %w", err)
+	}
+	return oldValue.SubjectID, nil
+}
+
+// ClearSubjectID clears the value of the "subject_id" field.
+func (m *ContactMutation) ClearSubjectID() {
+	m.subject_id = nil
+	m.clearedFields[contact.FieldSubjectID] = struct{}{}
+}
+
+// SubjectIDCleared returns if the "subject_id" field was cleared in this mutation.
+func (m *ContactMutation) SubjectIDCleared() bool {
+	_, ok := m.clearedFields[contact.FieldSubjectID]
+	return ok
+}
+
+// ResetSubjectID resets all changes to the "subject_id" field.
+func (m *ContactMutation) ResetSubjectID() {
+	m.subject_id = nil
+	delete(m.clearedFields, contact.FieldSubjectID)
+}
+
 // SetEmail sets the "email" field.
 func (m *ContactMutation) SetEmail(s string) {
 	m.email = &s
@@ -5766,7 +5820,7 @@ func (m *ContactMutation) Email() (r string, exists bool) {
 // OldEmail returns the old "email" field's value of the Contact entity.
 // If the Contact object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *ContactMutation) OldEmail(ctx context.Context) (v string, err error) {
+func (m *ContactMutation) OldEmail(ctx context.Context) (v *string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldEmail is only allowed on UpdateOne operations")
 	}
@@ -5780,9 +5834,71 @@ func (m *ContactMutation) OldEmail(ctx context.Context) (v string, err error) {
 	return oldValue.Email, nil
 }
 
+// ClearEmail clears the value of the "email" field.
+func (m *ContactMutation) ClearEmail() {
+	m.email = nil
+	m.clearedFields[contact.FieldEmail] = struct{}{}
+}
+
+// EmailCleared returns if the "email" field was cleared in this mutation.
+func (m *ContactMutation) EmailCleared() bool {
+	_, ok := m.clearedFields[contact.FieldEmail]
+	return ok
+}
+
 // ResetEmail resets all changes to the "email" field.
 func (m *ContactMutation) ResetEmail() {
 	m.email = nil
+	delete(m.clearedFields, contact.FieldEmail)
+}
+
+// SetPhone sets the "phone" field.
+func (m *ContactMutation) SetPhone(s string) {
+	m.phone = &s
+}
+
+// Phone returns the value of the "phone" field in the mutation.
+func (m *ContactMutation) Phone() (r string, exists bool) {
+	v := m.phone
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldPhone returns the old "phone" field's value of the Contact entity.
+// If the Contact object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ContactMutation) OldPhone(ctx context.Context) (v *string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldPhone is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldPhone requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldPhone: %w", err)
+	}
+	return oldValue.Phone, nil
+}
+
+// ClearPhone clears the value of the "phone" field.
+func (m *ContactMutation) ClearPhone() {
+	m.phone = nil
+	m.clearedFields[contact.FieldPhone] = struct{}{}
+}
+
+// PhoneCleared returns if the "phone" field was cleared in this mutation.
+func (m *ContactMutation) PhoneCleared() bool {
+	_, ok := m.clearedFields[contact.FieldPhone]
+	return ok
+}
+
+// ResetPhone resets all changes to the "phone" field.
+func (m *ContactMutation) ResetPhone() {
+	m.phone = nil
+	delete(m.clearedFields, contact.FieldPhone)
 }
 
 // SetFirstName sets the "first_name" field.
@@ -5969,12 +6085,12 @@ func (m *ContactMutation) ResetTimeZone() {
 }
 
 // SetCustomFields sets the "custom_fields" field.
-func (m *ContactMutation) SetCustomFields(value map[string]string) {
+func (m *ContactMutation) SetCustomFields(value map[string]interface{}) {
 	m.custom_fields = &value
 }
 
 // CustomFields returns the value of the "custom_fields" field in the mutation.
-func (m *ContactMutation) CustomFields() (r map[string]string, exists bool) {
+func (m *ContactMutation) CustomFields() (r map[string]interface{}, exists bool) {
 	v := m.custom_fields
 	if v == nil {
 		return
@@ -5985,7 +6101,7 @@ func (m *ContactMutation) CustomFields() (r map[string]string, exists bool) {
 // OldCustomFields returns the old "custom_fields" field's value of the Contact entity.
 // If the Contact object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *ContactMutation) OldCustomFields(ctx context.Context) (v map[string]string, err error) {
+func (m *ContactMutation) OldCustomFields(ctx context.Context) (v map[string]interface{}, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldCustomFields is only allowed on UpdateOne operations")
 	}
@@ -6125,6 +6241,60 @@ func (m *ContactMutation) ResetUpdatedAt() {
 	m.updated_at = nil
 }
 
+// AddVisitorIDs adds the "visitors" edge to the Visitor entity by ids.
+func (m *ContactMutation) AddVisitorIDs(ids ...int64) {
+	if m.visitors == nil {
+		m.visitors = make(map[int64]struct{})
+	}
+	for i := range ids {
+		m.visitors[ids[i]] = struct{}{}
+	}
+}
+
+// ClearVisitors clears the "visitors" edge to the Visitor entity.
+func (m *ContactMutation) ClearVisitors() {
+	m.clearedvisitors = true
+}
+
+// VisitorsCleared reports if the "visitors" edge to the Visitor entity was cleared.
+func (m *ContactMutation) VisitorsCleared() bool {
+	return m.clearedvisitors
+}
+
+// RemoveVisitorIDs removes the "visitors" edge to the Visitor entity by IDs.
+func (m *ContactMutation) RemoveVisitorIDs(ids ...int64) {
+	if m.removedvisitors == nil {
+		m.removedvisitors = make(map[int64]struct{})
+	}
+	for i := range ids {
+		delete(m.visitors, ids[i])
+		m.removedvisitors[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedVisitors returns the removed IDs of the "visitors" edge to the Visitor entity.
+func (m *ContactMutation) RemovedVisitorsIDs() (ids []int64) {
+	for id := range m.removedvisitors {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// VisitorsIDs returns the "visitors" edge IDs in the mutation.
+func (m *ContactMutation) VisitorsIDs() (ids []int64) {
+	for id := range m.visitors {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetVisitors resets all changes to the "visitors" edge.
+func (m *ContactMutation) ResetVisitors() {
+	m.visitors = nil
+	m.clearedvisitors = false
+	m.removedvisitors = nil
+}
+
 // ClearWorkspace clears the "workspace" edge to the Workspace entity.
 func (m *ContactMutation) ClearWorkspace() {
 	m.clearedworkspace = true
@@ -6186,9 +6356,15 @@ func (m *ContactMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *ContactMutation) Fields() []string {
-	fields := make([]string, 0, 9)
+	fields := make([]string, 0, 11)
+	if m.subject_id != nil {
+		fields = append(fields, contact.FieldSubjectID)
+	}
 	if m.email != nil {
 		fields = append(fields, contact.FieldEmail)
+	}
+	if m.phone != nil {
+		fields = append(fields, contact.FieldPhone)
 	}
 	if m.first_name != nil {
 		fields = append(fields, contact.FieldFirstName)
@@ -6222,8 +6398,12 @@ func (m *ContactMutation) Fields() []string {
 // schema.
 func (m *ContactMutation) Field(name string) (ent.Value, bool) {
 	switch name {
+	case contact.FieldSubjectID:
+		return m.SubjectID()
 	case contact.FieldEmail:
 		return m.Email()
+	case contact.FieldPhone:
+		return m.Phone()
 	case contact.FieldFirstName:
 		return m.FirstName()
 	case contact.FieldLastName:
@@ -6249,8 +6429,12 @@ func (m *ContactMutation) Field(name string) (ent.Value, bool) {
 // database failed.
 func (m *ContactMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
 	switch name {
+	case contact.FieldSubjectID:
+		return m.OldSubjectID(ctx)
 	case contact.FieldEmail:
 		return m.OldEmail(ctx)
+	case contact.FieldPhone:
+		return m.OldPhone(ctx)
 	case contact.FieldFirstName:
 		return m.OldFirstName(ctx)
 	case contact.FieldLastName:
@@ -6276,12 +6460,26 @@ func (m *ContactMutation) OldField(ctx context.Context, name string) (ent.Value,
 // type.
 func (m *ContactMutation) SetField(name string, value ent.Value) error {
 	switch name {
+	case contact.FieldSubjectID:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSubjectID(v)
+		return nil
 	case contact.FieldEmail:
 		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetEmail(v)
+		return nil
+	case contact.FieldPhone:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetPhone(v)
 		return nil
 	case contact.FieldFirstName:
 		v, ok := value.(string)
@@ -6312,7 +6510,7 @@ func (m *ContactMutation) SetField(name string, value ent.Value) error {
 		m.SetTimeZone(v)
 		return nil
 	case contact.FieldCustomFields:
-		v, ok := value.(map[string]string)
+		v, ok := value.(map[string]interface{})
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -6372,6 +6570,15 @@ func (m *ContactMutation) AddField(name string, value ent.Value) error {
 // mutation.
 func (m *ContactMutation) ClearedFields() []string {
 	var fields []string
+	if m.FieldCleared(contact.FieldSubjectID) {
+		fields = append(fields, contact.FieldSubjectID)
+	}
+	if m.FieldCleared(contact.FieldEmail) {
+		fields = append(fields, contact.FieldEmail)
+	}
+	if m.FieldCleared(contact.FieldPhone) {
+		fields = append(fields, contact.FieldPhone)
+	}
 	if m.FieldCleared(contact.FieldFirstName) {
 		fields = append(fields, contact.FieldFirstName)
 	}
@@ -6398,6 +6605,15 @@ func (m *ContactMutation) FieldCleared(name string) bool {
 // error if the field is not defined in the schema.
 func (m *ContactMutation) ClearField(name string) error {
 	switch name {
+	case contact.FieldSubjectID:
+		m.ClearSubjectID()
+		return nil
+	case contact.FieldEmail:
+		m.ClearEmail()
+		return nil
+	case contact.FieldPhone:
+		m.ClearPhone()
+		return nil
 	case contact.FieldFirstName:
 		m.ClearFirstName()
 		return nil
@@ -6418,8 +6634,14 @@ func (m *ContactMutation) ClearField(name string) error {
 // It returns an error if the field is not defined in the schema.
 func (m *ContactMutation) ResetField(name string) error {
 	switch name {
+	case contact.FieldSubjectID:
+		m.ResetSubjectID()
+		return nil
 	case contact.FieldEmail:
 		m.ResetEmail()
+		return nil
+	case contact.FieldPhone:
+		m.ResetPhone()
 		return nil
 	case contact.FieldFirstName:
 		m.ResetFirstName()
@@ -6451,7 +6673,10 @@ func (m *ContactMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *ContactMutation) AddedEdges() []string {
-	edges := make([]string, 0, 1)
+	edges := make([]string, 0, 2)
+	if m.visitors != nil {
+		edges = append(edges, contact.EdgeVisitors)
+	}
 	if m.workspace != nil {
 		edges = append(edges, contact.EdgeWorkspace)
 	}
@@ -6462,6 +6687,12 @@ func (m *ContactMutation) AddedEdges() []string {
 // name in this mutation.
 func (m *ContactMutation) AddedIDs(name string) []ent.Value {
 	switch name {
+	case contact.EdgeVisitors:
+		ids := make([]ent.Value, 0, len(m.visitors))
+		for id := range m.visitors {
+			ids = append(ids, id)
+		}
+		return ids
 	case contact.EdgeWorkspace:
 		if id := m.workspace; id != nil {
 			return []ent.Value{*id}
@@ -6472,19 +6703,33 @@ func (m *ContactMutation) AddedIDs(name string) []ent.Value {
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *ContactMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 1)
+	edges := make([]string, 0, 2)
+	if m.removedvisitors != nil {
+		edges = append(edges, contact.EdgeVisitors)
+	}
 	return edges
 }
 
 // RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
 // the given name in this mutation.
 func (m *ContactMutation) RemovedIDs(name string) []ent.Value {
+	switch name {
+	case contact.EdgeVisitors:
+		ids := make([]ent.Value, 0, len(m.removedvisitors))
+		for id := range m.removedvisitors {
+			ids = append(ids, id)
+		}
+		return ids
+	}
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *ContactMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 1)
+	edges := make([]string, 0, 2)
+	if m.clearedvisitors {
+		edges = append(edges, contact.EdgeVisitors)
+	}
 	if m.clearedworkspace {
 		edges = append(edges, contact.EdgeWorkspace)
 	}
@@ -6495,6 +6740,8 @@ func (m *ContactMutation) ClearedEdges() []string {
 // was cleared in this mutation.
 func (m *ContactMutation) EdgeCleared(name string) bool {
 	switch name {
+	case contact.EdgeVisitors:
+		return m.clearedvisitors
 	case contact.EdgeWorkspace:
 		return m.clearedworkspace
 	}
@@ -6516,11 +6763,673 @@ func (m *ContactMutation) ClearEdge(name string) error {
 // It returns an error if the edge is not defined in the schema.
 func (m *ContactMutation) ResetEdge(name string) error {
 	switch name {
+	case contact.EdgeVisitors:
+		m.ResetVisitors()
+		return nil
 	case contact.EdgeWorkspace:
 		m.ResetWorkspace()
 		return nil
 	}
 	return fmt.Errorf("unknown Contact edge %s", name)
+}
+
+// CustomFieldMutation represents an operation that mutates the CustomField nodes in the graph.
+type CustomFieldMutation struct {
+	config
+	op               Op
+	typ              string
+	id               *int64
+	key              *string
+	name             *string
+	_type            *customfield.Type
+	created_at       *time.Time
+	updated_at       *time.Time
+	clearedFields    map[string]struct{}
+	workspace        *int64
+	clearedworkspace bool
+	done             bool
+	oldValue         func(context.Context) (*CustomField, error)
+	predicates       []predicate.CustomField
+}
+
+var _ ent.Mutation = (*CustomFieldMutation)(nil)
+
+// customfieldOption allows management of the mutation configuration using functional options.
+type customfieldOption func(*CustomFieldMutation)
+
+// newCustomFieldMutation creates new mutation for the CustomField entity.
+func newCustomFieldMutation(c config, op Op, opts ...customfieldOption) *CustomFieldMutation {
+	m := &CustomFieldMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeCustomField,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withCustomFieldID sets the ID field of the mutation.
+func withCustomFieldID(id int64) customfieldOption {
+	return func(m *CustomFieldMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *CustomField
+		)
+		m.oldValue = func(ctx context.Context) (*CustomField, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().CustomField.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withCustomField sets the old CustomField of the mutation.
+func withCustomField(node *CustomField) customfieldOption {
+	return func(m *CustomFieldMutation) {
+		m.oldValue = func(context.Context) (*CustomField, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m CustomFieldMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m CustomFieldMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of CustomField entities.
+func (m *CustomFieldMutation) SetID(id int64) {
+	m.id = &id
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *CustomFieldMutation) ID() (id int64, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *CustomFieldMutation) IDs(ctx context.Context) ([]int64, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []int64{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().CustomField.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetKey sets the "key" field.
+func (m *CustomFieldMutation) SetKey(s string) {
+	m.key = &s
+}
+
+// Key returns the value of the "key" field in the mutation.
+func (m *CustomFieldMutation) Key() (r string, exists bool) {
+	v := m.key
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldKey returns the old "key" field's value of the CustomField entity.
+// If the CustomField object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CustomFieldMutation) OldKey(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldKey is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldKey requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldKey: %w", err)
+	}
+	return oldValue.Key, nil
+}
+
+// ResetKey resets all changes to the "key" field.
+func (m *CustomFieldMutation) ResetKey() {
+	m.key = nil
+}
+
+// SetName sets the "name" field.
+func (m *CustomFieldMutation) SetName(s string) {
+	m.name = &s
+}
+
+// Name returns the value of the "name" field in the mutation.
+func (m *CustomFieldMutation) Name() (r string, exists bool) {
+	v := m.name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldName returns the old "name" field's value of the CustomField entity.
+// If the CustomField object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CustomFieldMutation) OldName(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldName: %w", err)
+	}
+	return oldValue.Name, nil
+}
+
+// ResetName resets all changes to the "name" field.
+func (m *CustomFieldMutation) ResetName() {
+	m.name = nil
+}
+
+// SetType sets the "type" field.
+func (m *CustomFieldMutation) SetType(c customfield.Type) {
+	m._type = &c
+}
+
+// GetType returns the value of the "type" field in the mutation.
+func (m *CustomFieldMutation) GetType() (r customfield.Type, exists bool) {
+	v := m._type
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldType returns the old "type" field's value of the CustomField entity.
+// If the CustomField object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CustomFieldMutation) OldType(ctx context.Context) (v customfield.Type, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldType is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldType requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldType: %w", err)
+	}
+	return oldValue.Type, nil
+}
+
+// ResetType resets all changes to the "type" field.
+func (m *CustomFieldMutation) ResetType() {
+	m._type = nil
+}
+
+// SetWorkspaceID sets the "workspace_id" field.
+func (m *CustomFieldMutation) SetWorkspaceID(i int64) {
+	m.workspace = &i
+}
+
+// WorkspaceID returns the value of the "workspace_id" field in the mutation.
+func (m *CustomFieldMutation) WorkspaceID() (r int64, exists bool) {
+	v := m.workspace
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldWorkspaceID returns the old "workspace_id" field's value of the CustomField entity.
+// If the CustomField object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CustomFieldMutation) OldWorkspaceID(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldWorkspaceID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldWorkspaceID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldWorkspaceID: %w", err)
+	}
+	return oldValue.WorkspaceID, nil
+}
+
+// ResetWorkspaceID resets all changes to the "workspace_id" field.
+func (m *CustomFieldMutation) ResetWorkspaceID() {
+	m.workspace = nil
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *CustomFieldMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *CustomFieldMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the CustomField entity.
+// If the CustomField object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CustomFieldMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *CustomFieldMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (m *CustomFieldMutation) SetUpdatedAt(t time.Time) {
+	m.updated_at = &t
+}
+
+// UpdatedAt returns the value of the "updated_at" field in the mutation.
+func (m *CustomFieldMutation) UpdatedAt() (r time.Time, exists bool) {
+	v := m.updated_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUpdatedAt returns the old "updated_at" field's value of the CustomField entity.
+// If the CustomField object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CustomFieldMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUpdatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUpdatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUpdatedAt: %w", err)
+	}
+	return oldValue.UpdatedAt, nil
+}
+
+// ResetUpdatedAt resets all changes to the "updated_at" field.
+func (m *CustomFieldMutation) ResetUpdatedAt() {
+	m.updated_at = nil
+}
+
+// ClearWorkspace clears the "workspace" edge to the Workspace entity.
+func (m *CustomFieldMutation) ClearWorkspace() {
+	m.clearedworkspace = true
+	m.clearedFields[customfield.FieldWorkspaceID] = struct{}{}
+}
+
+// WorkspaceCleared reports if the "workspace" edge to the Workspace entity was cleared.
+func (m *CustomFieldMutation) WorkspaceCleared() bool {
+	return m.clearedworkspace
+}
+
+// WorkspaceIDs returns the "workspace" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// WorkspaceID instead. It exists only for internal usage by the builders.
+func (m *CustomFieldMutation) WorkspaceIDs() (ids []int64) {
+	if id := m.workspace; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetWorkspace resets all changes to the "workspace" edge.
+func (m *CustomFieldMutation) ResetWorkspace() {
+	m.workspace = nil
+	m.clearedworkspace = false
+}
+
+// Where appends a list predicates to the CustomFieldMutation builder.
+func (m *CustomFieldMutation) Where(ps ...predicate.CustomField) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the CustomFieldMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *CustomFieldMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.CustomField, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *CustomFieldMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *CustomFieldMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (CustomField).
+func (m *CustomFieldMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *CustomFieldMutation) Fields() []string {
+	fields := make([]string, 0, 6)
+	if m.key != nil {
+		fields = append(fields, customfield.FieldKey)
+	}
+	if m.name != nil {
+		fields = append(fields, customfield.FieldName)
+	}
+	if m._type != nil {
+		fields = append(fields, customfield.FieldType)
+	}
+	if m.workspace != nil {
+		fields = append(fields, customfield.FieldWorkspaceID)
+	}
+	if m.created_at != nil {
+		fields = append(fields, customfield.FieldCreatedAt)
+	}
+	if m.updated_at != nil {
+		fields = append(fields, customfield.FieldUpdatedAt)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *CustomFieldMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case customfield.FieldKey:
+		return m.Key()
+	case customfield.FieldName:
+		return m.Name()
+	case customfield.FieldType:
+		return m.GetType()
+	case customfield.FieldWorkspaceID:
+		return m.WorkspaceID()
+	case customfield.FieldCreatedAt:
+		return m.CreatedAt()
+	case customfield.FieldUpdatedAt:
+		return m.UpdatedAt()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *CustomFieldMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case customfield.FieldKey:
+		return m.OldKey(ctx)
+	case customfield.FieldName:
+		return m.OldName(ctx)
+	case customfield.FieldType:
+		return m.OldType(ctx)
+	case customfield.FieldWorkspaceID:
+		return m.OldWorkspaceID(ctx)
+	case customfield.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	case customfield.FieldUpdatedAt:
+		return m.OldUpdatedAt(ctx)
+	}
+	return nil, fmt.Errorf("unknown CustomField field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *CustomFieldMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case customfield.FieldKey:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetKey(v)
+		return nil
+	case customfield.FieldName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetName(v)
+		return nil
+	case customfield.FieldType:
+		v, ok := value.(customfield.Type)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetType(v)
+		return nil
+	case customfield.FieldWorkspaceID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetWorkspaceID(v)
+		return nil
+	case customfield.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	case customfield.FieldUpdatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUpdatedAt(v)
+		return nil
+	}
+	return fmt.Errorf("unknown CustomField field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *CustomFieldMutation) AddedFields() []string {
+	var fields []string
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *CustomFieldMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *CustomFieldMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	}
+	return fmt.Errorf("unknown CustomField numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *CustomFieldMutation) ClearedFields() []string {
+	return nil
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *CustomFieldMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *CustomFieldMutation) ClearField(name string) error {
+	return fmt.Errorf("unknown CustomField nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *CustomFieldMutation) ResetField(name string) error {
+	switch name {
+	case customfield.FieldKey:
+		m.ResetKey()
+		return nil
+	case customfield.FieldName:
+		m.ResetName()
+		return nil
+	case customfield.FieldType:
+		m.ResetType()
+		return nil
+	case customfield.FieldWorkspaceID:
+		m.ResetWorkspaceID()
+		return nil
+	case customfield.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	case customfield.FieldUpdatedAt:
+		m.ResetUpdatedAt()
+		return nil
+	}
+	return fmt.Errorf("unknown CustomField field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *CustomFieldMutation) AddedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.workspace != nil {
+		edges = append(edges, customfield.EdgeWorkspace)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *CustomFieldMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case customfield.EdgeWorkspace:
+		if id := m.workspace; id != nil {
+			return []ent.Value{*id}
+		}
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *CustomFieldMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 1)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *CustomFieldMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *CustomFieldMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.clearedworkspace {
+		edges = append(edges, customfield.EdgeWorkspace)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *CustomFieldMutation) EdgeCleared(name string) bool {
+	switch name {
+	case customfield.EdgeWorkspace:
+		return m.clearedworkspace
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *CustomFieldMutation) ClearEdge(name string) error {
+	switch name {
+	case customfield.EdgeWorkspace:
+		m.ClearWorkspace()
+		return nil
+	}
+	return fmt.Errorf("unknown CustomField unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *CustomFieldMutation) ResetEdge(name string) error {
+	switch name {
+	case customfield.EdgeWorkspace:
+		m.ResetWorkspace()
+		return nil
+	}
+	return fmt.Errorf("unknown CustomField edge %s", name)
 }
 
 // EmailTemplateMutation represents an operation that mutates the EmailTemplate nodes in the graph.
@@ -7189,13 +8098,15 @@ type EventMutation struct {
 	typ              string
 	id               *int64
 	source_id        *string
+	contact_id       *int64
+	addcontact_id    *int64
+	visitor_id       *string
 	subject_id       *string
 	email            *string
 	phone            *string
 	action           *string
 	properties       *map[string]interface{}
 	occurred_at      *time.Time
-	prospect         *bool
 	created_at       *time.Time
 	clearedFields    map[string]struct{}
 	workspace        *int64
@@ -7358,6 +8269,125 @@ func (m *EventMutation) ResetSourceID() {
 	delete(m.clearedFields, event.FieldSourceID)
 }
 
+// SetContactID sets the "contact_id" field.
+func (m *EventMutation) SetContactID(i int64) {
+	m.contact_id = &i
+	m.addcontact_id = nil
+}
+
+// ContactID returns the value of the "contact_id" field in the mutation.
+func (m *EventMutation) ContactID() (r int64, exists bool) {
+	v := m.contact_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldContactID returns the old "contact_id" field's value of the Event entity.
+// If the Event object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *EventMutation) OldContactID(ctx context.Context) (v *int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldContactID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldContactID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldContactID: %w", err)
+	}
+	return oldValue.ContactID, nil
+}
+
+// AddContactID adds i to the "contact_id" field.
+func (m *EventMutation) AddContactID(i int64) {
+	if m.addcontact_id != nil {
+		*m.addcontact_id += i
+	} else {
+		m.addcontact_id = &i
+	}
+}
+
+// AddedContactID returns the value that was added to the "contact_id" field in this mutation.
+func (m *EventMutation) AddedContactID() (r int64, exists bool) {
+	v := m.addcontact_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearContactID clears the value of the "contact_id" field.
+func (m *EventMutation) ClearContactID() {
+	m.contact_id = nil
+	m.addcontact_id = nil
+	m.clearedFields[event.FieldContactID] = struct{}{}
+}
+
+// ContactIDCleared returns if the "contact_id" field was cleared in this mutation.
+func (m *EventMutation) ContactIDCleared() bool {
+	_, ok := m.clearedFields[event.FieldContactID]
+	return ok
+}
+
+// ResetContactID resets all changes to the "contact_id" field.
+func (m *EventMutation) ResetContactID() {
+	m.contact_id = nil
+	m.addcontact_id = nil
+	delete(m.clearedFields, event.FieldContactID)
+}
+
+// SetVisitorID sets the "visitor_id" field.
+func (m *EventMutation) SetVisitorID(s string) {
+	m.visitor_id = &s
+}
+
+// VisitorID returns the value of the "visitor_id" field in the mutation.
+func (m *EventMutation) VisitorID() (r string, exists bool) {
+	v := m.visitor_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldVisitorID returns the old "visitor_id" field's value of the Event entity.
+// If the Event object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *EventMutation) OldVisitorID(ctx context.Context) (v *string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldVisitorID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldVisitorID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldVisitorID: %w", err)
+	}
+	return oldValue.VisitorID, nil
+}
+
+// ClearVisitorID clears the value of the "visitor_id" field.
+func (m *EventMutation) ClearVisitorID() {
+	m.visitor_id = nil
+	m.clearedFields[event.FieldVisitorID] = struct{}{}
+}
+
+// VisitorIDCleared returns if the "visitor_id" field was cleared in this mutation.
+func (m *EventMutation) VisitorIDCleared() bool {
+	_, ok := m.clearedFields[event.FieldVisitorID]
+	return ok
+}
+
+// ResetVisitorID resets all changes to the "visitor_id" field.
+func (m *EventMutation) ResetVisitorID() {
+	m.visitor_id = nil
+	delete(m.clearedFields, event.FieldVisitorID)
+}
+
 // SetSubjectID sets the "subject_id" field.
 func (m *EventMutation) SetSubjectID(s string) {
 	m.subject_id = &s
@@ -7389,9 +8419,22 @@ func (m *EventMutation) OldSubjectID(ctx context.Context) (v string, err error) 
 	return oldValue.SubjectID, nil
 }
 
+// ClearSubjectID clears the value of the "subject_id" field.
+func (m *EventMutation) ClearSubjectID() {
+	m.subject_id = nil
+	m.clearedFields[event.FieldSubjectID] = struct{}{}
+}
+
+// SubjectIDCleared returns if the "subject_id" field was cleared in this mutation.
+func (m *EventMutation) SubjectIDCleared() bool {
+	_, ok := m.clearedFields[event.FieldSubjectID]
+	return ok
+}
+
 // ResetSubjectID resets all changes to the "subject_id" field.
 func (m *EventMutation) ResetSubjectID() {
 	m.subject_id = nil
+	delete(m.clearedFields, event.FieldSubjectID)
 }
 
 // SetEmail sets the "email" field.
@@ -7626,55 +8669,6 @@ func (m *EventMutation) ResetOccurredAt() {
 	delete(m.clearedFields, event.FieldOccurredAt)
 }
 
-// SetProspect sets the "prospect" field.
-func (m *EventMutation) SetProspect(b bool) {
-	m.prospect = &b
-}
-
-// Prospect returns the value of the "prospect" field in the mutation.
-func (m *EventMutation) Prospect() (r bool, exists bool) {
-	v := m.prospect
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldProspect returns the old "prospect" field's value of the Event entity.
-// If the Event object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *EventMutation) OldProspect(ctx context.Context) (v *bool, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldProspect is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldProspect requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldProspect: %w", err)
-	}
-	return oldValue.Prospect, nil
-}
-
-// ClearProspect clears the value of the "prospect" field.
-func (m *EventMutation) ClearProspect() {
-	m.prospect = nil
-	m.clearedFields[event.FieldProspect] = struct{}{}
-}
-
-// ProspectCleared returns if the "prospect" field was cleared in this mutation.
-func (m *EventMutation) ProspectCleared() bool {
-	_, ok := m.clearedFields[event.FieldProspect]
-	return ok
-}
-
-// ResetProspect resets all changes to the "prospect" field.
-func (m *EventMutation) ResetProspect() {
-	m.prospect = nil
-	delete(m.clearedFields, event.FieldProspect)
-}
-
 // SetWorkspaceID sets the "workspace_id" field.
 func (m *EventMutation) SetWorkspaceID(i int64) {
 	m.workspace = &i
@@ -7808,9 +8802,15 @@ func (m *EventMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *EventMutation) Fields() []string {
-	fields := make([]string, 0, 10)
+	fields := make([]string, 0, 11)
 	if m.source_id != nil {
 		fields = append(fields, event.FieldSourceID)
+	}
+	if m.contact_id != nil {
+		fields = append(fields, event.FieldContactID)
+	}
+	if m.visitor_id != nil {
+		fields = append(fields, event.FieldVisitorID)
 	}
 	if m.subject_id != nil {
 		fields = append(fields, event.FieldSubjectID)
@@ -7830,9 +8830,6 @@ func (m *EventMutation) Fields() []string {
 	if m.occurred_at != nil {
 		fields = append(fields, event.FieldOccurredAt)
 	}
-	if m.prospect != nil {
-		fields = append(fields, event.FieldProspect)
-	}
 	if m.workspace != nil {
 		fields = append(fields, event.FieldWorkspaceID)
 	}
@@ -7849,6 +8846,10 @@ func (m *EventMutation) Field(name string) (ent.Value, bool) {
 	switch name {
 	case event.FieldSourceID:
 		return m.SourceID()
+	case event.FieldContactID:
+		return m.ContactID()
+	case event.FieldVisitorID:
+		return m.VisitorID()
 	case event.FieldSubjectID:
 		return m.SubjectID()
 	case event.FieldEmail:
@@ -7861,8 +8862,6 @@ func (m *EventMutation) Field(name string) (ent.Value, bool) {
 		return m.Properties()
 	case event.FieldOccurredAt:
 		return m.OccurredAt()
-	case event.FieldProspect:
-		return m.Prospect()
 	case event.FieldWorkspaceID:
 		return m.WorkspaceID()
 	case event.FieldCreatedAt:
@@ -7878,6 +8877,10 @@ func (m *EventMutation) OldField(ctx context.Context, name string) (ent.Value, e
 	switch name {
 	case event.FieldSourceID:
 		return m.OldSourceID(ctx)
+	case event.FieldContactID:
+		return m.OldContactID(ctx)
+	case event.FieldVisitorID:
+		return m.OldVisitorID(ctx)
 	case event.FieldSubjectID:
 		return m.OldSubjectID(ctx)
 	case event.FieldEmail:
@@ -7890,8 +8893,6 @@ func (m *EventMutation) OldField(ctx context.Context, name string) (ent.Value, e
 		return m.OldProperties(ctx)
 	case event.FieldOccurredAt:
 		return m.OldOccurredAt(ctx)
-	case event.FieldProspect:
-		return m.OldProspect(ctx)
 	case event.FieldWorkspaceID:
 		return m.OldWorkspaceID(ctx)
 	case event.FieldCreatedAt:
@@ -7911,6 +8912,20 @@ func (m *EventMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetSourceID(v)
+		return nil
+	case event.FieldContactID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetContactID(v)
+		return nil
+	case event.FieldVisitorID:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetVisitorID(v)
 		return nil
 	case event.FieldSubjectID:
 		v, ok := value.(string)
@@ -7954,13 +8969,6 @@ func (m *EventMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetOccurredAt(v)
 		return nil
-	case event.FieldProspect:
-		v, ok := value.(bool)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetProspect(v)
-		return nil
 	case event.FieldWorkspaceID:
 		v, ok := value.(int64)
 		if !ok {
@@ -7983,6 +8991,9 @@ func (m *EventMutation) SetField(name string, value ent.Value) error {
 // this mutation.
 func (m *EventMutation) AddedFields() []string {
 	var fields []string
+	if m.addcontact_id != nil {
+		fields = append(fields, event.FieldContactID)
+	}
 	return fields
 }
 
@@ -7991,6 +9002,8 @@ func (m *EventMutation) AddedFields() []string {
 // was not set, or was not defined in the schema.
 func (m *EventMutation) AddedField(name string) (ent.Value, bool) {
 	switch name {
+	case event.FieldContactID:
+		return m.AddedContactID()
 	}
 	return nil, false
 }
@@ -8000,6 +9013,13 @@ func (m *EventMutation) AddedField(name string) (ent.Value, bool) {
 // type.
 func (m *EventMutation) AddField(name string, value ent.Value) error {
 	switch name {
+	case event.FieldContactID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddContactID(v)
+		return nil
 	}
 	return fmt.Errorf("unknown Event numeric field %s", name)
 }
@@ -8010,6 +9030,15 @@ func (m *EventMutation) ClearedFields() []string {
 	var fields []string
 	if m.FieldCleared(event.FieldSourceID) {
 		fields = append(fields, event.FieldSourceID)
+	}
+	if m.FieldCleared(event.FieldContactID) {
+		fields = append(fields, event.FieldContactID)
+	}
+	if m.FieldCleared(event.FieldVisitorID) {
+		fields = append(fields, event.FieldVisitorID)
+	}
+	if m.FieldCleared(event.FieldSubjectID) {
+		fields = append(fields, event.FieldSubjectID)
 	}
 	if m.FieldCleared(event.FieldEmail) {
 		fields = append(fields, event.FieldEmail)
@@ -8022,9 +9051,6 @@ func (m *EventMutation) ClearedFields() []string {
 	}
 	if m.FieldCleared(event.FieldOccurredAt) {
 		fields = append(fields, event.FieldOccurredAt)
-	}
-	if m.FieldCleared(event.FieldProspect) {
-		fields = append(fields, event.FieldProspect)
 	}
 	return fields
 }
@@ -8043,6 +9069,15 @@ func (m *EventMutation) ClearField(name string) error {
 	case event.FieldSourceID:
 		m.ClearSourceID()
 		return nil
+	case event.FieldContactID:
+		m.ClearContactID()
+		return nil
+	case event.FieldVisitorID:
+		m.ClearVisitorID()
+		return nil
+	case event.FieldSubjectID:
+		m.ClearSubjectID()
+		return nil
 	case event.FieldEmail:
 		m.ClearEmail()
 		return nil
@@ -8055,9 +9090,6 @@ func (m *EventMutation) ClearField(name string) error {
 	case event.FieldOccurredAt:
 		m.ClearOccurredAt()
 		return nil
-	case event.FieldProspect:
-		m.ClearProspect()
-		return nil
 	}
 	return fmt.Errorf("unknown Event nullable field %s", name)
 }
@@ -8068,6 +9100,12 @@ func (m *EventMutation) ResetField(name string) error {
 	switch name {
 	case event.FieldSourceID:
 		m.ResetSourceID()
+		return nil
+	case event.FieldContactID:
+		m.ResetContactID()
+		return nil
+	case event.FieldVisitorID:
+		m.ResetVisitorID()
 		return nil
 	case event.FieldSubjectID:
 		m.ResetSubjectID()
@@ -8086,9 +9124,6 @@ func (m *EventMutation) ResetField(name string) error {
 		return nil
 	case event.FieldOccurredAt:
 		m.ResetOccurredAt()
-		return nil
-	case event.FieldProspect:
-		m.ResetProspect()
 		return nil
 	case event.FieldWorkspaceID:
 		m.ResetWorkspaceID()
@@ -10391,1572 +11426,6 @@ func (m *SuppressionMutation) ResetEdge(name string) error {
 	return fmt.Errorf("unknown Suppression edge %s", name)
 }
 
-// TrackingProfileMutation represents an operation that mutates the TrackingProfile nodes in the graph.
-type TrackingProfileMutation struct {
-	config
-	op               Op
-	typ              string
-	id               *int64
-	subject_id       *string
-	email            *string
-	phone            *string
-	traits           *map[string]interface{}
-	created_at       *time.Time
-	updated_at       *time.Time
-	clearedFields    map[string]struct{}
-	visitors         map[int64]struct{}
-	removedvisitors  map[int64]struct{}
-	clearedvisitors  bool
-	workspace        *int64
-	clearedworkspace bool
-	done             bool
-	oldValue         func(context.Context) (*TrackingProfile, error)
-	predicates       []predicate.TrackingProfile
-}
-
-var _ ent.Mutation = (*TrackingProfileMutation)(nil)
-
-// trackingprofileOption allows management of the mutation configuration using functional options.
-type trackingprofileOption func(*TrackingProfileMutation)
-
-// newTrackingProfileMutation creates new mutation for the TrackingProfile entity.
-func newTrackingProfileMutation(c config, op Op, opts ...trackingprofileOption) *TrackingProfileMutation {
-	m := &TrackingProfileMutation{
-		config:        c,
-		op:            op,
-		typ:           TypeTrackingProfile,
-		clearedFields: make(map[string]struct{}),
-	}
-	for _, opt := range opts {
-		opt(m)
-	}
-	return m
-}
-
-// withTrackingProfileID sets the ID field of the mutation.
-func withTrackingProfileID(id int64) trackingprofileOption {
-	return func(m *TrackingProfileMutation) {
-		var (
-			err   error
-			once  sync.Once
-			value *TrackingProfile
-		)
-		m.oldValue = func(ctx context.Context) (*TrackingProfile, error) {
-			once.Do(func() {
-				if m.done {
-					err = errors.New("querying old values post mutation is not allowed")
-				} else {
-					value, err = m.Client().TrackingProfile.Get(ctx, id)
-				}
-			})
-			return value, err
-		}
-		m.id = &id
-	}
-}
-
-// withTrackingProfile sets the old TrackingProfile of the mutation.
-func withTrackingProfile(node *TrackingProfile) trackingprofileOption {
-	return func(m *TrackingProfileMutation) {
-		m.oldValue = func(context.Context) (*TrackingProfile, error) {
-			return node, nil
-		}
-		m.id = &node.ID
-	}
-}
-
-// Client returns a new `ent.Client` from the mutation. If the mutation was
-// executed in a transaction (ent.Tx), a transactional client is returned.
-func (m TrackingProfileMutation) Client() *Client {
-	client := &Client{config: m.config}
-	client.init()
-	return client
-}
-
-// Tx returns an `ent.Tx` for mutations that were executed in transactions;
-// it returns an error otherwise.
-func (m TrackingProfileMutation) Tx() (*Tx, error) {
-	if _, ok := m.driver.(*txDriver); !ok {
-		return nil, errors.New("ent: mutation is not running in a transaction")
-	}
-	tx := &Tx{config: m.config}
-	tx.init()
-	return tx, nil
-}
-
-// SetID sets the value of the id field. Note that this
-// operation is only accepted on creation of TrackingProfile entities.
-func (m *TrackingProfileMutation) SetID(id int64) {
-	m.id = &id
-}
-
-// ID returns the ID value in the mutation. Note that the ID is only available
-// if it was provided to the builder or after it was returned from the database.
-func (m *TrackingProfileMutation) ID() (id int64, exists bool) {
-	if m.id == nil {
-		return
-	}
-	return *m.id, true
-}
-
-// IDs queries the database and returns the entity ids that match the mutation's predicate.
-// That means, if the mutation is applied within a transaction with an isolation level such
-// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
-// or updated by the mutation.
-func (m *TrackingProfileMutation) IDs(ctx context.Context) ([]int64, error) {
-	switch {
-	case m.op.Is(OpUpdateOne | OpDeleteOne):
-		id, exists := m.ID()
-		if exists {
-			return []int64{id}, nil
-		}
-		fallthrough
-	case m.op.Is(OpUpdate | OpDelete):
-		return m.Client().TrackingProfile.Query().Where(m.predicates...).IDs(ctx)
-	default:
-		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
-	}
-}
-
-// SetSubjectID sets the "subject_id" field.
-func (m *TrackingProfileMutation) SetSubjectID(s string) {
-	m.subject_id = &s
-}
-
-// SubjectID returns the value of the "subject_id" field in the mutation.
-func (m *TrackingProfileMutation) SubjectID() (r string, exists bool) {
-	v := m.subject_id
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldSubjectID returns the old "subject_id" field's value of the TrackingProfile entity.
-// If the TrackingProfile object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *TrackingProfileMutation) OldSubjectID(ctx context.Context) (v string, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldSubjectID is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldSubjectID requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldSubjectID: %w", err)
-	}
-	return oldValue.SubjectID, nil
-}
-
-// ResetSubjectID resets all changes to the "subject_id" field.
-func (m *TrackingProfileMutation) ResetSubjectID() {
-	m.subject_id = nil
-}
-
-// SetEmail sets the "email" field.
-func (m *TrackingProfileMutation) SetEmail(s string) {
-	m.email = &s
-}
-
-// Email returns the value of the "email" field in the mutation.
-func (m *TrackingProfileMutation) Email() (r string, exists bool) {
-	v := m.email
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldEmail returns the old "email" field's value of the TrackingProfile entity.
-// If the TrackingProfile object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *TrackingProfileMutation) OldEmail(ctx context.Context) (v *string, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldEmail is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldEmail requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldEmail: %w", err)
-	}
-	return oldValue.Email, nil
-}
-
-// ClearEmail clears the value of the "email" field.
-func (m *TrackingProfileMutation) ClearEmail() {
-	m.email = nil
-	m.clearedFields[trackingprofile.FieldEmail] = struct{}{}
-}
-
-// EmailCleared returns if the "email" field was cleared in this mutation.
-func (m *TrackingProfileMutation) EmailCleared() bool {
-	_, ok := m.clearedFields[trackingprofile.FieldEmail]
-	return ok
-}
-
-// ResetEmail resets all changes to the "email" field.
-func (m *TrackingProfileMutation) ResetEmail() {
-	m.email = nil
-	delete(m.clearedFields, trackingprofile.FieldEmail)
-}
-
-// SetPhone sets the "phone" field.
-func (m *TrackingProfileMutation) SetPhone(s string) {
-	m.phone = &s
-}
-
-// Phone returns the value of the "phone" field in the mutation.
-func (m *TrackingProfileMutation) Phone() (r string, exists bool) {
-	v := m.phone
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldPhone returns the old "phone" field's value of the TrackingProfile entity.
-// If the TrackingProfile object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *TrackingProfileMutation) OldPhone(ctx context.Context) (v *string, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldPhone is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldPhone requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldPhone: %w", err)
-	}
-	return oldValue.Phone, nil
-}
-
-// ClearPhone clears the value of the "phone" field.
-func (m *TrackingProfileMutation) ClearPhone() {
-	m.phone = nil
-	m.clearedFields[trackingprofile.FieldPhone] = struct{}{}
-}
-
-// PhoneCleared returns if the "phone" field was cleared in this mutation.
-func (m *TrackingProfileMutation) PhoneCleared() bool {
-	_, ok := m.clearedFields[trackingprofile.FieldPhone]
-	return ok
-}
-
-// ResetPhone resets all changes to the "phone" field.
-func (m *TrackingProfileMutation) ResetPhone() {
-	m.phone = nil
-	delete(m.clearedFields, trackingprofile.FieldPhone)
-}
-
-// SetTraits sets the "traits" field.
-func (m *TrackingProfileMutation) SetTraits(value map[string]interface{}) {
-	m.traits = &value
-}
-
-// Traits returns the value of the "traits" field in the mutation.
-func (m *TrackingProfileMutation) Traits() (r map[string]interface{}, exists bool) {
-	v := m.traits
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldTraits returns the old "traits" field's value of the TrackingProfile entity.
-// If the TrackingProfile object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *TrackingProfileMutation) OldTraits(ctx context.Context) (v map[string]interface{}, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldTraits is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldTraits requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldTraits: %w", err)
-	}
-	return oldValue.Traits, nil
-}
-
-// ResetTraits resets all changes to the "traits" field.
-func (m *TrackingProfileMutation) ResetTraits() {
-	m.traits = nil
-}
-
-// SetWorkspaceID sets the "workspace_id" field.
-func (m *TrackingProfileMutation) SetWorkspaceID(i int64) {
-	m.workspace = &i
-}
-
-// WorkspaceID returns the value of the "workspace_id" field in the mutation.
-func (m *TrackingProfileMutation) WorkspaceID() (r int64, exists bool) {
-	v := m.workspace
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldWorkspaceID returns the old "workspace_id" field's value of the TrackingProfile entity.
-// If the TrackingProfile object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *TrackingProfileMutation) OldWorkspaceID(ctx context.Context) (v int64, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldWorkspaceID is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldWorkspaceID requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldWorkspaceID: %w", err)
-	}
-	return oldValue.WorkspaceID, nil
-}
-
-// ResetWorkspaceID resets all changes to the "workspace_id" field.
-func (m *TrackingProfileMutation) ResetWorkspaceID() {
-	m.workspace = nil
-}
-
-// SetCreatedAt sets the "created_at" field.
-func (m *TrackingProfileMutation) SetCreatedAt(t time.Time) {
-	m.created_at = &t
-}
-
-// CreatedAt returns the value of the "created_at" field in the mutation.
-func (m *TrackingProfileMutation) CreatedAt() (r time.Time, exists bool) {
-	v := m.created_at
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldCreatedAt returns the old "created_at" field's value of the TrackingProfile entity.
-// If the TrackingProfile object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *TrackingProfileMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
-	}
-	return oldValue.CreatedAt, nil
-}
-
-// ResetCreatedAt resets all changes to the "created_at" field.
-func (m *TrackingProfileMutation) ResetCreatedAt() {
-	m.created_at = nil
-}
-
-// SetUpdatedAt sets the "updated_at" field.
-func (m *TrackingProfileMutation) SetUpdatedAt(t time.Time) {
-	m.updated_at = &t
-}
-
-// UpdatedAt returns the value of the "updated_at" field in the mutation.
-func (m *TrackingProfileMutation) UpdatedAt() (r time.Time, exists bool) {
-	v := m.updated_at
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldUpdatedAt returns the old "updated_at" field's value of the TrackingProfile entity.
-// If the TrackingProfile object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *TrackingProfileMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldUpdatedAt is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldUpdatedAt requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldUpdatedAt: %w", err)
-	}
-	return oldValue.UpdatedAt, nil
-}
-
-// ResetUpdatedAt resets all changes to the "updated_at" field.
-func (m *TrackingProfileMutation) ResetUpdatedAt() {
-	m.updated_at = nil
-}
-
-// AddVisitorIDs adds the "visitors" edge to the TrackingVisitor entity by ids.
-func (m *TrackingProfileMutation) AddVisitorIDs(ids ...int64) {
-	if m.visitors == nil {
-		m.visitors = make(map[int64]struct{})
-	}
-	for i := range ids {
-		m.visitors[ids[i]] = struct{}{}
-	}
-}
-
-// ClearVisitors clears the "visitors" edge to the TrackingVisitor entity.
-func (m *TrackingProfileMutation) ClearVisitors() {
-	m.clearedvisitors = true
-}
-
-// VisitorsCleared reports if the "visitors" edge to the TrackingVisitor entity was cleared.
-func (m *TrackingProfileMutation) VisitorsCleared() bool {
-	return m.clearedvisitors
-}
-
-// RemoveVisitorIDs removes the "visitors" edge to the TrackingVisitor entity by IDs.
-func (m *TrackingProfileMutation) RemoveVisitorIDs(ids ...int64) {
-	if m.removedvisitors == nil {
-		m.removedvisitors = make(map[int64]struct{})
-	}
-	for i := range ids {
-		delete(m.visitors, ids[i])
-		m.removedvisitors[ids[i]] = struct{}{}
-	}
-}
-
-// RemovedVisitors returns the removed IDs of the "visitors" edge to the TrackingVisitor entity.
-func (m *TrackingProfileMutation) RemovedVisitorsIDs() (ids []int64) {
-	for id := range m.removedvisitors {
-		ids = append(ids, id)
-	}
-	return
-}
-
-// VisitorsIDs returns the "visitors" edge IDs in the mutation.
-func (m *TrackingProfileMutation) VisitorsIDs() (ids []int64) {
-	for id := range m.visitors {
-		ids = append(ids, id)
-	}
-	return
-}
-
-// ResetVisitors resets all changes to the "visitors" edge.
-func (m *TrackingProfileMutation) ResetVisitors() {
-	m.visitors = nil
-	m.clearedvisitors = false
-	m.removedvisitors = nil
-}
-
-// ClearWorkspace clears the "workspace" edge to the Workspace entity.
-func (m *TrackingProfileMutation) ClearWorkspace() {
-	m.clearedworkspace = true
-	m.clearedFields[trackingprofile.FieldWorkspaceID] = struct{}{}
-}
-
-// WorkspaceCleared reports if the "workspace" edge to the Workspace entity was cleared.
-func (m *TrackingProfileMutation) WorkspaceCleared() bool {
-	return m.clearedworkspace
-}
-
-// WorkspaceIDs returns the "workspace" edge IDs in the mutation.
-// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
-// WorkspaceID instead. It exists only for internal usage by the builders.
-func (m *TrackingProfileMutation) WorkspaceIDs() (ids []int64) {
-	if id := m.workspace; id != nil {
-		ids = append(ids, *id)
-	}
-	return
-}
-
-// ResetWorkspace resets all changes to the "workspace" edge.
-func (m *TrackingProfileMutation) ResetWorkspace() {
-	m.workspace = nil
-	m.clearedworkspace = false
-}
-
-// Where appends a list predicates to the TrackingProfileMutation builder.
-func (m *TrackingProfileMutation) Where(ps ...predicate.TrackingProfile) {
-	m.predicates = append(m.predicates, ps...)
-}
-
-// WhereP appends storage-level predicates to the TrackingProfileMutation builder. Using this method,
-// users can use type-assertion to append predicates that do not depend on any generated package.
-func (m *TrackingProfileMutation) WhereP(ps ...func(*sql.Selector)) {
-	p := make([]predicate.TrackingProfile, len(ps))
-	for i := range ps {
-		p[i] = ps[i]
-	}
-	m.Where(p...)
-}
-
-// Op returns the operation name.
-func (m *TrackingProfileMutation) Op() Op {
-	return m.op
-}
-
-// SetOp allows setting the mutation operation.
-func (m *TrackingProfileMutation) SetOp(op Op) {
-	m.op = op
-}
-
-// Type returns the node type of this mutation (TrackingProfile).
-func (m *TrackingProfileMutation) Type() string {
-	return m.typ
-}
-
-// Fields returns all fields that were changed during this mutation. Note that in
-// order to get all numeric fields that were incremented/decremented, call
-// AddedFields().
-func (m *TrackingProfileMutation) Fields() []string {
-	fields := make([]string, 0, 7)
-	if m.subject_id != nil {
-		fields = append(fields, trackingprofile.FieldSubjectID)
-	}
-	if m.email != nil {
-		fields = append(fields, trackingprofile.FieldEmail)
-	}
-	if m.phone != nil {
-		fields = append(fields, trackingprofile.FieldPhone)
-	}
-	if m.traits != nil {
-		fields = append(fields, trackingprofile.FieldTraits)
-	}
-	if m.workspace != nil {
-		fields = append(fields, trackingprofile.FieldWorkspaceID)
-	}
-	if m.created_at != nil {
-		fields = append(fields, trackingprofile.FieldCreatedAt)
-	}
-	if m.updated_at != nil {
-		fields = append(fields, trackingprofile.FieldUpdatedAt)
-	}
-	return fields
-}
-
-// Field returns the value of a field with the given name. The second boolean
-// return value indicates that this field was not set, or was not defined in the
-// schema.
-func (m *TrackingProfileMutation) Field(name string) (ent.Value, bool) {
-	switch name {
-	case trackingprofile.FieldSubjectID:
-		return m.SubjectID()
-	case trackingprofile.FieldEmail:
-		return m.Email()
-	case trackingprofile.FieldPhone:
-		return m.Phone()
-	case trackingprofile.FieldTraits:
-		return m.Traits()
-	case trackingprofile.FieldWorkspaceID:
-		return m.WorkspaceID()
-	case trackingprofile.FieldCreatedAt:
-		return m.CreatedAt()
-	case trackingprofile.FieldUpdatedAt:
-		return m.UpdatedAt()
-	}
-	return nil, false
-}
-
-// OldField returns the old value of the field from the database. An error is
-// returned if the mutation operation is not UpdateOne, or the query to the
-// database failed.
-func (m *TrackingProfileMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
-	switch name {
-	case trackingprofile.FieldSubjectID:
-		return m.OldSubjectID(ctx)
-	case trackingprofile.FieldEmail:
-		return m.OldEmail(ctx)
-	case trackingprofile.FieldPhone:
-		return m.OldPhone(ctx)
-	case trackingprofile.FieldTraits:
-		return m.OldTraits(ctx)
-	case trackingprofile.FieldWorkspaceID:
-		return m.OldWorkspaceID(ctx)
-	case trackingprofile.FieldCreatedAt:
-		return m.OldCreatedAt(ctx)
-	case trackingprofile.FieldUpdatedAt:
-		return m.OldUpdatedAt(ctx)
-	}
-	return nil, fmt.Errorf("unknown TrackingProfile field %s", name)
-}
-
-// SetField sets the value of a field with the given name. It returns an error if
-// the field is not defined in the schema, or if the type mismatched the field
-// type.
-func (m *TrackingProfileMutation) SetField(name string, value ent.Value) error {
-	switch name {
-	case trackingprofile.FieldSubjectID:
-		v, ok := value.(string)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetSubjectID(v)
-		return nil
-	case trackingprofile.FieldEmail:
-		v, ok := value.(string)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetEmail(v)
-		return nil
-	case trackingprofile.FieldPhone:
-		v, ok := value.(string)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetPhone(v)
-		return nil
-	case trackingprofile.FieldTraits:
-		v, ok := value.(map[string]interface{})
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetTraits(v)
-		return nil
-	case trackingprofile.FieldWorkspaceID:
-		v, ok := value.(int64)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetWorkspaceID(v)
-		return nil
-	case trackingprofile.FieldCreatedAt:
-		v, ok := value.(time.Time)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetCreatedAt(v)
-		return nil
-	case trackingprofile.FieldUpdatedAt:
-		v, ok := value.(time.Time)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetUpdatedAt(v)
-		return nil
-	}
-	return fmt.Errorf("unknown TrackingProfile field %s", name)
-}
-
-// AddedFields returns all numeric fields that were incremented/decremented during
-// this mutation.
-func (m *TrackingProfileMutation) AddedFields() []string {
-	var fields []string
-	return fields
-}
-
-// AddedField returns the numeric value that was incremented/decremented on a field
-// with the given name. The second boolean return value indicates that this field
-// was not set, or was not defined in the schema.
-func (m *TrackingProfileMutation) AddedField(name string) (ent.Value, bool) {
-	switch name {
-	}
-	return nil, false
-}
-
-// AddField adds the value to the field with the given name. It returns an error if
-// the field is not defined in the schema, or if the type mismatched the field
-// type.
-func (m *TrackingProfileMutation) AddField(name string, value ent.Value) error {
-	switch name {
-	}
-	return fmt.Errorf("unknown TrackingProfile numeric field %s", name)
-}
-
-// ClearedFields returns all nullable fields that were cleared during this
-// mutation.
-func (m *TrackingProfileMutation) ClearedFields() []string {
-	var fields []string
-	if m.FieldCleared(trackingprofile.FieldEmail) {
-		fields = append(fields, trackingprofile.FieldEmail)
-	}
-	if m.FieldCleared(trackingprofile.FieldPhone) {
-		fields = append(fields, trackingprofile.FieldPhone)
-	}
-	return fields
-}
-
-// FieldCleared returns a boolean indicating if a field with the given name was
-// cleared in this mutation.
-func (m *TrackingProfileMutation) FieldCleared(name string) bool {
-	_, ok := m.clearedFields[name]
-	return ok
-}
-
-// ClearField clears the value of the field with the given name. It returns an
-// error if the field is not defined in the schema.
-func (m *TrackingProfileMutation) ClearField(name string) error {
-	switch name {
-	case trackingprofile.FieldEmail:
-		m.ClearEmail()
-		return nil
-	case trackingprofile.FieldPhone:
-		m.ClearPhone()
-		return nil
-	}
-	return fmt.Errorf("unknown TrackingProfile nullable field %s", name)
-}
-
-// ResetField resets all changes in the mutation for the field with the given name.
-// It returns an error if the field is not defined in the schema.
-func (m *TrackingProfileMutation) ResetField(name string) error {
-	switch name {
-	case trackingprofile.FieldSubjectID:
-		m.ResetSubjectID()
-		return nil
-	case trackingprofile.FieldEmail:
-		m.ResetEmail()
-		return nil
-	case trackingprofile.FieldPhone:
-		m.ResetPhone()
-		return nil
-	case trackingprofile.FieldTraits:
-		m.ResetTraits()
-		return nil
-	case trackingprofile.FieldWorkspaceID:
-		m.ResetWorkspaceID()
-		return nil
-	case trackingprofile.FieldCreatedAt:
-		m.ResetCreatedAt()
-		return nil
-	case trackingprofile.FieldUpdatedAt:
-		m.ResetUpdatedAt()
-		return nil
-	}
-	return fmt.Errorf("unknown TrackingProfile field %s", name)
-}
-
-// AddedEdges returns all edge names that were set/added in this mutation.
-func (m *TrackingProfileMutation) AddedEdges() []string {
-	edges := make([]string, 0, 2)
-	if m.visitors != nil {
-		edges = append(edges, trackingprofile.EdgeVisitors)
-	}
-	if m.workspace != nil {
-		edges = append(edges, trackingprofile.EdgeWorkspace)
-	}
-	return edges
-}
-
-// AddedIDs returns all IDs (to other nodes) that were added for the given edge
-// name in this mutation.
-func (m *TrackingProfileMutation) AddedIDs(name string) []ent.Value {
-	switch name {
-	case trackingprofile.EdgeVisitors:
-		ids := make([]ent.Value, 0, len(m.visitors))
-		for id := range m.visitors {
-			ids = append(ids, id)
-		}
-		return ids
-	case trackingprofile.EdgeWorkspace:
-		if id := m.workspace; id != nil {
-			return []ent.Value{*id}
-		}
-	}
-	return nil
-}
-
-// RemovedEdges returns all edge names that were removed in this mutation.
-func (m *TrackingProfileMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 2)
-	if m.removedvisitors != nil {
-		edges = append(edges, trackingprofile.EdgeVisitors)
-	}
-	return edges
-}
-
-// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
-// the given name in this mutation.
-func (m *TrackingProfileMutation) RemovedIDs(name string) []ent.Value {
-	switch name {
-	case trackingprofile.EdgeVisitors:
-		ids := make([]ent.Value, 0, len(m.removedvisitors))
-		for id := range m.removedvisitors {
-			ids = append(ids, id)
-		}
-		return ids
-	}
-	return nil
-}
-
-// ClearedEdges returns all edge names that were cleared in this mutation.
-func (m *TrackingProfileMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 2)
-	if m.clearedvisitors {
-		edges = append(edges, trackingprofile.EdgeVisitors)
-	}
-	if m.clearedworkspace {
-		edges = append(edges, trackingprofile.EdgeWorkspace)
-	}
-	return edges
-}
-
-// EdgeCleared returns a boolean which indicates if the edge with the given name
-// was cleared in this mutation.
-func (m *TrackingProfileMutation) EdgeCleared(name string) bool {
-	switch name {
-	case trackingprofile.EdgeVisitors:
-		return m.clearedvisitors
-	case trackingprofile.EdgeWorkspace:
-		return m.clearedworkspace
-	}
-	return false
-}
-
-// ClearEdge clears the value of the edge with the given name. It returns an error
-// if that edge is not defined in the schema.
-func (m *TrackingProfileMutation) ClearEdge(name string) error {
-	switch name {
-	case trackingprofile.EdgeWorkspace:
-		m.ClearWorkspace()
-		return nil
-	}
-	return fmt.Errorf("unknown TrackingProfile unique edge %s", name)
-}
-
-// ResetEdge resets all changes to the edge with the given name in this mutation.
-// It returns an error if the edge is not defined in the schema.
-func (m *TrackingProfileMutation) ResetEdge(name string) error {
-	switch name {
-	case trackingprofile.EdgeVisitors:
-		m.ResetVisitors()
-		return nil
-	case trackingprofile.EdgeWorkspace:
-		m.ResetWorkspace()
-		return nil
-	}
-	return fmt.Errorf("unknown TrackingProfile edge %s", name)
-}
-
-// TrackingVisitorMutation represents an operation that mutates the TrackingVisitor nodes in the graph.
-type TrackingVisitorMutation struct {
-	config
-	op               Op
-	typ              string
-	id               *int64
-	visitor_id       *string
-	created_at       *time.Time
-	updated_at       *time.Time
-	last_seen_at     *time.Time
-	clearedFields    map[string]struct{}
-	profile          *int64
-	clearedprofile   bool
-	workspace        *int64
-	clearedworkspace bool
-	done             bool
-	oldValue         func(context.Context) (*TrackingVisitor, error)
-	predicates       []predicate.TrackingVisitor
-}
-
-var _ ent.Mutation = (*TrackingVisitorMutation)(nil)
-
-// trackingvisitorOption allows management of the mutation configuration using functional options.
-type trackingvisitorOption func(*TrackingVisitorMutation)
-
-// newTrackingVisitorMutation creates new mutation for the TrackingVisitor entity.
-func newTrackingVisitorMutation(c config, op Op, opts ...trackingvisitorOption) *TrackingVisitorMutation {
-	m := &TrackingVisitorMutation{
-		config:        c,
-		op:            op,
-		typ:           TypeTrackingVisitor,
-		clearedFields: make(map[string]struct{}),
-	}
-	for _, opt := range opts {
-		opt(m)
-	}
-	return m
-}
-
-// withTrackingVisitorID sets the ID field of the mutation.
-func withTrackingVisitorID(id int64) trackingvisitorOption {
-	return func(m *TrackingVisitorMutation) {
-		var (
-			err   error
-			once  sync.Once
-			value *TrackingVisitor
-		)
-		m.oldValue = func(ctx context.Context) (*TrackingVisitor, error) {
-			once.Do(func() {
-				if m.done {
-					err = errors.New("querying old values post mutation is not allowed")
-				} else {
-					value, err = m.Client().TrackingVisitor.Get(ctx, id)
-				}
-			})
-			return value, err
-		}
-		m.id = &id
-	}
-}
-
-// withTrackingVisitor sets the old TrackingVisitor of the mutation.
-func withTrackingVisitor(node *TrackingVisitor) trackingvisitorOption {
-	return func(m *TrackingVisitorMutation) {
-		m.oldValue = func(context.Context) (*TrackingVisitor, error) {
-			return node, nil
-		}
-		m.id = &node.ID
-	}
-}
-
-// Client returns a new `ent.Client` from the mutation. If the mutation was
-// executed in a transaction (ent.Tx), a transactional client is returned.
-func (m TrackingVisitorMutation) Client() *Client {
-	client := &Client{config: m.config}
-	client.init()
-	return client
-}
-
-// Tx returns an `ent.Tx` for mutations that were executed in transactions;
-// it returns an error otherwise.
-func (m TrackingVisitorMutation) Tx() (*Tx, error) {
-	if _, ok := m.driver.(*txDriver); !ok {
-		return nil, errors.New("ent: mutation is not running in a transaction")
-	}
-	tx := &Tx{config: m.config}
-	tx.init()
-	return tx, nil
-}
-
-// SetID sets the value of the id field. Note that this
-// operation is only accepted on creation of TrackingVisitor entities.
-func (m *TrackingVisitorMutation) SetID(id int64) {
-	m.id = &id
-}
-
-// ID returns the ID value in the mutation. Note that the ID is only available
-// if it was provided to the builder or after it was returned from the database.
-func (m *TrackingVisitorMutation) ID() (id int64, exists bool) {
-	if m.id == nil {
-		return
-	}
-	return *m.id, true
-}
-
-// IDs queries the database and returns the entity ids that match the mutation's predicate.
-// That means, if the mutation is applied within a transaction with an isolation level such
-// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
-// or updated by the mutation.
-func (m *TrackingVisitorMutation) IDs(ctx context.Context) ([]int64, error) {
-	switch {
-	case m.op.Is(OpUpdateOne | OpDeleteOne):
-		id, exists := m.ID()
-		if exists {
-			return []int64{id}, nil
-		}
-		fallthrough
-	case m.op.Is(OpUpdate | OpDelete):
-		return m.Client().TrackingVisitor.Query().Where(m.predicates...).IDs(ctx)
-	default:
-		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
-	}
-}
-
-// SetVisitorID sets the "visitor_id" field.
-func (m *TrackingVisitorMutation) SetVisitorID(s string) {
-	m.visitor_id = &s
-}
-
-// VisitorID returns the value of the "visitor_id" field in the mutation.
-func (m *TrackingVisitorMutation) VisitorID() (r string, exists bool) {
-	v := m.visitor_id
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldVisitorID returns the old "visitor_id" field's value of the TrackingVisitor entity.
-// If the TrackingVisitor object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *TrackingVisitorMutation) OldVisitorID(ctx context.Context) (v string, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldVisitorID is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldVisitorID requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldVisitorID: %w", err)
-	}
-	return oldValue.VisitorID, nil
-}
-
-// ResetVisitorID resets all changes to the "visitor_id" field.
-func (m *TrackingVisitorMutation) ResetVisitorID() {
-	m.visitor_id = nil
-}
-
-// SetWorkspaceID sets the "workspace_id" field.
-func (m *TrackingVisitorMutation) SetWorkspaceID(i int64) {
-	m.workspace = &i
-}
-
-// WorkspaceID returns the value of the "workspace_id" field in the mutation.
-func (m *TrackingVisitorMutation) WorkspaceID() (r int64, exists bool) {
-	v := m.workspace
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldWorkspaceID returns the old "workspace_id" field's value of the TrackingVisitor entity.
-// If the TrackingVisitor object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *TrackingVisitorMutation) OldWorkspaceID(ctx context.Context) (v int64, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldWorkspaceID is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldWorkspaceID requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldWorkspaceID: %w", err)
-	}
-	return oldValue.WorkspaceID, nil
-}
-
-// ResetWorkspaceID resets all changes to the "workspace_id" field.
-func (m *TrackingVisitorMutation) ResetWorkspaceID() {
-	m.workspace = nil
-}
-
-// SetProfileID sets the "profile_id" field.
-func (m *TrackingVisitorMutation) SetProfileID(i int64) {
-	m.profile = &i
-}
-
-// ProfileID returns the value of the "profile_id" field in the mutation.
-func (m *TrackingVisitorMutation) ProfileID() (r int64, exists bool) {
-	v := m.profile
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldProfileID returns the old "profile_id" field's value of the TrackingVisitor entity.
-// If the TrackingVisitor object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *TrackingVisitorMutation) OldProfileID(ctx context.Context) (v *int64, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldProfileID is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldProfileID requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldProfileID: %w", err)
-	}
-	return oldValue.ProfileID, nil
-}
-
-// ClearProfileID clears the value of the "profile_id" field.
-func (m *TrackingVisitorMutation) ClearProfileID() {
-	m.profile = nil
-	m.clearedFields[trackingvisitor.FieldProfileID] = struct{}{}
-}
-
-// ProfileIDCleared returns if the "profile_id" field was cleared in this mutation.
-func (m *TrackingVisitorMutation) ProfileIDCleared() bool {
-	_, ok := m.clearedFields[trackingvisitor.FieldProfileID]
-	return ok
-}
-
-// ResetProfileID resets all changes to the "profile_id" field.
-func (m *TrackingVisitorMutation) ResetProfileID() {
-	m.profile = nil
-	delete(m.clearedFields, trackingvisitor.FieldProfileID)
-}
-
-// SetCreatedAt sets the "created_at" field.
-func (m *TrackingVisitorMutation) SetCreatedAt(t time.Time) {
-	m.created_at = &t
-}
-
-// CreatedAt returns the value of the "created_at" field in the mutation.
-func (m *TrackingVisitorMutation) CreatedAt() (r time.Time, exists bool) {
-	v := m.created_at
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldCreatedAt returns the old "created_at" field's value of the TrackingVisitor entity.
-// If the TrackingVisitor object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *TrackingVisitorMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
-	}
-	return oldValue.CreatedAt, nil
-}
-
-// ResetCreatedAt resets all changes to the "created_at" field.
-func (m *TrackingVisitorMutation) ResetCreatedAt() {
-	m.created_at = nil
-}
-
-// SetUpdatedAt sets the "updated_at" field.
-func (m *TrackingVisitorMutation) SetUpdatedAt(t time.Time) {
-	m.updated_at = &t
-}
-
-// UpdatedAt returns the value of the "updated_at" field in the mutation.
-func (m *TrackingVisitorMutation) UpdatedAt() (r time.Time, exists bool) {
-	v := m.updated_at
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldUpdatedAt returns the old "updated_at" field's value of the TrackingVisitor entity.
-// If the TrackingVisitor object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *TrackingVisitorMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldUpdatedAt is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldUpdatedAt requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldUpdatedAt: %w", err)
-	}
-	return oldValue.UpdatedAt, nil
-}
-
-// ResetUpdatedAt resets all changes to the "updated_at" field.
-func (m *TrackingVisitorMutation) ResetUpdatedAt() {
-	m.updated_at = nil
-}
-
-// SetLastSeenAt sets the "last_seen_at" field.
-func (m *TrackingVisitorMutation) SetLastSeenAt(t time.Time) {
-	m.last_seen_at = &t
-}
-
-// LastSeenAt returns the value of the "last_seen_at" field in the mutation.
-func (m *TrackingVisitorMutation) LastSeenAt() (r time.Time, exists bool) {
-	v := m.last_seen_at
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldLastSeenAt returns the old "last_seen_at" field's value of the TrackingVisitor entity.
-// If the TrackingVisitor object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *TrackingVisitorMutation) OldLastSeenAt(ctx context.Context) (v time.Time, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldLastSeenAt is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldLastSeenAt requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldLastSeenAt: %w", err)
-	}
-	return oldValue.LastSeenAt, nil
-}
-
-// ResetLastSeenAt resets all changes to the "last_seen_at" field.
-func (m *TrackingVisitorMutation) ResetLastSeenAt() {
-	m.last_seen_at = nil
-}
-
-// ClearProfile clears the "profile" edge to the TrackingProfile entity.
-func (m *TrackingVisitorMutation) ClearProfile() {
-	m.clearedprofile = true
-	m.clearedFields[trackingvisitor.FieldProfileID] = struct{}{}
-}
-
-// ProfileCleared reports if the "profile" edge to the TrackingProfile entity was cleared.
-func (m *TrackingVisitorMutation) ProfileCleared() bool {
-	return m.ProfileIDCleared() || m.clearedprofile
-}
-
-// ProfileIDs returns the "profile" edge IDs in the mutation.
-// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
-// ProfileID instead. It exists only for internal usage by the builders.
-func (m *TrackingVisitorMutation) ProfileIDs() (ids []int64) {
-	if id := m.profile; id != nil {
-		ids = append(ids, *id)
-	}
-	return
-}
-
-// ResetProfile resets all changes to the "profile" edge.
-func (m *TrackingVisitorMutation) ResetProfile() {
-	m.profile = nil
-	m.clearedprofile = false
-}
-
-// ClearWorkspace clears the "workspace" edge to the Workspace entity.
-func (m *TrackingVisitorMutation) ClearWorkspace() {
-	m.clearedworkspace = true
-	m.clearedFields[trackingvisitor.FieldWorkspaceID] = struct{}{}
-}
-
-// WorkspaceCleared reports if the "workspace" edge to the Workspace entity was cleared.
-func (m *TrackingVisitorMutation) WorkspaceCleared() bool {
-	return m.clearedworkspace
-}
-
-// WorkspaceIDs returns the "workspace" edge IDs in the mutation.
-// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
-// WorkspaceID instead. It exists only for internal usage by the builders.
-func (m *TrackingVisitorMutation) WorkspaceIDs() (ids []int64) {
-	if id := m.workspace; id != nil {
-		ids = append(ids, *id)
-	}
-	return
-}
-
-// ResetWorkspace resets all changes to the "workspace" edge.
-func (m *TrackingVisitorMutation) ResetWorkspace() {
-	m.workspace = nil
-	m.clearedworkspace = false
-}
-
-// Where appends a list predicates to the TrackingVisitorMutation builder.
-func (m *TrackingVisitorMutation) Where(ps ...predicate.TrackingVisitor) {
-	m.predicates = append(m.predicates, ps...)
-}
-
-// WhereP appends storage-level predicates to the TrackingVisitorMutation builder. Using this method,
-// users can use type-assertion to append predicates that do not depend on any generated package.
-func (m *TrackingVisitorMutation) WhereP(ps ...func(*sql.Selector)) {
-	p := make([]predicate.TrackingVisitor, len(ps))
-	for i := range ps {
-		p[i] = ps[i]
-	}
-	m.Where(p...)
-}
-
-// Op returns the operation name.
-func (m *TrackingVisitorMutation) Op() Op {
-	return m.op
-}
-
-// SetOp allows setting the mutation operation.
-func (m *TrackingVisitorMutation) SetOp(op Op) {
-	m.op = op
-}
-
-// Type returns the node type of this mutation (TrackingVisitor).
-func (m *TrackingVisitorMutation) Type() string {
-	return m.typ
-}
-
-// Fields returns all fields that were changed during this mutation. Note that in
-// order to get all numeric fields that were incremented/decremented, call
-// AddedFields().
-func (m *TrackingVisitorMutation) Fields() []string {
-	fields := make([]string, 0, 6)
-	if m.visitor_id != nil {
-		fields = append(fields, trackingvisitor.FieldVisitorID)
-	}
-	if m.workspace != nil {
-		fields = append(fields, trackingvisitor.FieldWorkspaceID)
-	}
-	if m.profile != nil {
-		fields = append(fields, trackingvisitor.FieldProfileID)
-	}
-	if m.created_at != nil {
-		fields = append(fields, trackingvisitor.FieldCreatedAt)
-	}
-	if m.updated_at != nil {
-		fields = append(fields, trackingvisitor.FieldUpdatedAt)
-	}
-	if m.last_seen_at != nil {
-		fields = append(fields, trackingvisitor.FieldLastSeenAt)
-	}
-	return fields
-}
-
-// Field returns the value of a field with the given name. The second boolean
-// return value indicates that this field was not set, or was not defined in the
-// schema.
-func (m *TrackingVisitorMutation) Field(name string) (ent.Value, bool) {
-	switch name {
-	case trackingvisitor.FieldVisitorID:
-		return m.VisitorID()
-	case trackingvisitor.FieldWorkspaceID:
-		return m.WorkspaceID()
-	case trackingvisitor.FieldProfileID:
-		return m.ProfileID()
-	case trackingvisitor.FieldCreatedAt:
-		return m.CreatedAt()
-	case trackingvisitor.FieldUpdatedAt:
-		return m.UpdatedAt()
-	case trackingvisitor.FieldLastSeenAt:
-		return m.LastSeenAt()
-	}
-	return nil, false
-}
-
-// OldField returns the old value of the field from the database. An error is
-// returned if the mutation operation is not UpdateOne, or the query to the
-// database failed.
-func (m *TrackingVisitorMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
-	switch name {
-	case trackingvisitor.FieldVisitorID:
-		return m.OldVisitorID(ctx)
-	case trackingvisitor.FieldWorkspaceID:
-		return m.OldWorkspaceID(ctx)
-	case trackingvisitor.FieldProfileID:
-		return m.OldProfileID(ctx)
-	case trackingvisitor.FieldCreatedAt:
-		return m.OldCreatedAt(ctx)
-	case trackingvisitor.FieldUpdatedAt:
-		return m.OldUpdatedAt(ctx)
-	case trackingvisitor.FieldLastSeenAt:
-		return m.OldLastSeenAt(ctx)
-	}
-	return nil, fmt.Errorf("unknown TrackingVisitor field %s", name)
-}
-
-// SetField sets the value of a field with the given name. It returns an error if
-// the field is not defined in the schema, or if the type mismatched the field
-// type.
-func (m *TrackingVisitorMutation) SetField(name string, value ent.Value) error {
-	switch name {
-	case trackingvisitor.FieldVisitorID:
-		v, ok := value.(string)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetVisitorID(v)
-		return nil
-	case trackingvisitor.FieldWorkspaceID:
-		v, ok := value.(int64)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetWorkspaceID(v)
-		return nil
-	case trackingvisitor.FieldProfileID:
-		v, ok := value.(int64)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetProfileID(v)
-		return nil
-	case trackingvisitor.FieldCreatedAt:
-		v, ok := value.(time.Time)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetCreatedAt(v)
-		return nil
-	case trackingvisitor.FieldUpdatedAt:
-		v, ok := value.(time.Time)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetUpdatedAt(v)
-		return nil
-	case trackingvisitor.FieldLastSeenAt:
-		v, ok := value.(time.Time)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetLastSeenAt(v)
-		return nil
-	}
-	return fmt.Errorf("unknown TrackingVisitor field %s", name)
-}
-
-// AddedFields returns all numeric fields that were incremented/decremented during
-// this mutation.
-func (m *TrackingVisitorMutation) AddedFields() []string {
-	var fields []string
-	return fields
-}
-
-// AddedField returns the numeric value that was incremented/decremented on a field
-// with the given name. The second boolean return value indicates that this field
-// was not set, or was not defined in the schema.
-func (m *TrackingVisitorMutation) AddedField(name string) (ent.Value, bool) {
-	switch name {
-	}
-	return nil, false
-}
-
-// AddField adds the value to the field with the given name. It returns an error if
-// the field is not defined in the schema, or if the type mismatched the field
-// type.
-func (m *TrackingVisitorMutation) AddField(name string, value ent.Value) error {
-	switch name {
-	}
-	return fmt.Errorf("unknown TrackingVisitor numeric field %s", name)
-}
-
-// ClearedFields returns all nullable fields that were cleared during this
-// mutation.
-func (m *TrackingVisitorMutation) ClearedFields() []string {
-	var fields []string
-	if m.FieldCleared(trackingvisitor.FieldProfileID) {
-		fields = append(fields, trackingvisitor.FieldProfileID)
-	}
-	return fields
-}
-
-// FieldCleared returns a boolean indicating if a field with the given name was
-// cleared in this mutation.
-func (m *TrackingVisitorMutation) FieldCleared(name string) bool {
-	_, ok := m.clearedFields[name]
-	return ok
-}
-
-// ClearField clears the value of the field with the given name. It returns an
-// error if the field is not defined in the schema.
-func (m *TrackingVisitorMutation) ClearField(name string) error {
-	switch name {
-	case trackingvisitor.FieldProfileID:
-		m.ClearProfileID()
-		return nil
-	}
-	return fmt.Errorf("unknown TrackingVisitor nullable field %s", name)
-}
-
-// ResetField resets all changes in the mutation for the field with the given name.
-// It returns an error if the field is not defined in the schema.
-func (m *TrackingVisitorMutation) ResetField(name string) error {
-	switch name {
-	case trackingvisitor.FieldVisitorID:
-		m.ResetVisitorID()
-		return nil
-	case trackingvisitor.FieldWorkspaceID:
-		m.ResetWorkspaceID()
-		return nil
-	case trackingvisitor.FieldProfileID:
-		m.ResetProfileID()
-		return nil
-	case trackingvisitor.FieldCreatedAt:
-		m.ResetCreatedAt()
-		return nil
-	case trackingvisitor.FieldUpdatedAt:
-		m.ResetUpdatedAt()
-		return nil
-	case trackingvisitor.FieldLastSeenAt:
-		m.ResetLastSeenAt()
-		return nil
-	}
-	return fmt.Errorf("unknown TrackingVisitor field %s", name)
-}
-
-// AddedEdges returns all edge names that were set/added in this mutation.
-func (m *TrackingVisitorMutation) AddedEdges() []string {
-	edges := make([]string, 0, 2)
-	if m.profile != nil {
-		edges = append(edges, trackingvisitor.EdgeProfile)
-	}
-	if m.workspace != nil {
-		edges = append(edges, trackingvisitor.EdgeWorkspace)
-	}
-	return edges
-}
-
-// AddedIDs returns all IDs (to other nodes) that were added for the given edge
-// name in this mutation.
-func (m *TrackingVisitorMutation) AddedIDs(name string) []ent.Value {
-	switch name {
-	case trackingvisitor.EdgeProfile:
-		if id := m.profile; id != nil {
-			return []ent.Value{*id}
-		}
-	case trackingvisitor.EdgeWorkspace:
-		if id := m.workspace; id != nil {
-			return []ent.Value{*id}
-		}
-	}
-	return nil
-}
-
-// RemovedEdges returns all edge names that were removed in this mutation.
-func (m *TrackingVisitorMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 2)
-	return edges
-}
-
-// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
-// the given name in this mutation.
-func (m *TrackingVisitorMutation) RemovedIDs(name string) []ent.Value {
-	return nil
-}
-
-// ClearedEdges returns all edge names that were cleared in this mutation.
-func (m *TrackingVisitorMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 2)
-	if m.clearedprofile {
-		edges = append(edges, trackingvisitor.EdgeProfile)
-	}
-	if m.clearedworkspace {
-		edges = append(edges, trackingvisitor.EdgeWorkspace)
-	}
-	return edges
-}
-
-// EdgeCleared returns a boolean which indicates if the edge with the given name
-// was cleared in this mutation.
-func (m *TrackingVisitorMutation) EdgeCleared(name string) bool {
-	switch name {
-	case trackingvisitor.EdgeProfile:
-		return m.clearedprofile
-	case trackingvisitor.EdgeWorkspace:
-		return m.clearedworkspace
-	}
-	return false
-}
-
-// ClearEdge clears the value of the edge with the given name. It returns an error
-// if that edge is not defined in the schema.
-func (m *TrackingVisitorMutation) ClearEdge(name string) error {
-	switch name {
-	case trackingvisitor.EdgeProfile:
-		m.ClearProfile()
-		return nil
-	case trackingvisitor.EdgeWorkspace:
-		m.ClearWorkspace()
-		return nil
-	}
-	return fmt.Errorf("unknown TrackingVisitor unique edge %s", name)
-}
-
-// ResetEdge resets all changes to the edge with the given name in this mutation.
-// It returns an error if the edge is not defined in the schema.
-func (m *TrackingVisitorMutation) ResetEdge(name string) error {
-	switch name {
-	case trackingvisitor.EdgeProfile:
-		m.ResetProfile()
-		return nil
-	case trackingvisitor.EdgeWorkspace:
-		m.ResetWorkspace()
-		return nil
-	}
-	return fmt.Errorf("unknown TrackingVisitor edge %s", name)
-}
-
 // UserMutation represents an operation that mutates the User nodes in the graph.
 type UserMutation struct {
 	config
@@ -12618,6 +12087,733 @@ func (m *UserMutation) ResetEdge(name string) error {
 		return nil
 	}
 	return fmt.Errorf("unknown User edge %s", name)
+}
+
+// VisitorMutation represents an operation that mutates the Visitor nodes in the graph.
+type VisitorMutation struct {
+	config
+	op               Op
+	typ              string
+	id               *int64
+	visitor_id       *string
+	created_at       *time.Time
+	updated_at       *time.Time
+	last_seen_at     *time.Time
+	clearedFields    map[string]struct{}
+	contact          *int64
+	clearedcontact   bool
+	workspace        *int64
+	clearedworkspace bool
+	done             bool
+	oldValue         func(context.Context) (*Visitor, error)
+	predicates       []predicate.Visitor
+}
+
+var _ ent.Mutation = (*VisitorMutation)(nil)
+
+// visitorOption allows management of the mutation configuration using functional options.
+type visitorOption func(*VisitorMutation)
+
+// newVisitorMutation creates new mutation for the Visitor entity.
+func newVisitorMutation(c config, op Op, opts ...visitorOption) *VisitorMutation {
+	m := &VisitorMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeVisitor,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withVisitorID sets the ID field of the mutation.
+func withVisitorID(id int64) visitorOption {
+	return func(m *VisitorMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *Visitor
+		)
+		m.oldValue = func(ctx context.Context) (*Visitor, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().Visitor.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withVisitor sets the old Visitor of the mutation.
+func withVisitor(node *Visitor) visitorOption {
+	return func(m *VisitorMutation) {
+		m.oldValue = func(context.Context) (*Visitor, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m VisitorMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m VisitorMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of Visitor entities.
+func (m *VisitorMutation) SetID(id int64) {
+	m.id = &id
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *VisitorMutation) ID() (id int64, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *VisitorMutation) IDs(ctx context.Context) ([]int64, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []int64{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().Visitor.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetVisitorID sets the "visitor_id" field.
+func (m *VisitorMutation) SetVisitorID(s string) {
+	m.visitor_id = &s
+}
+
+// VisitorID returns the value of the "visitor_id" field in the mutation.
+func (m *VisitorMutation) VisitorID() (r string, exists bool) {
+	v := m.visitor_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldVisitorID returns the old "visitor_id" field's value of the Visitor entity.
+// If the Visitor object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *VisitorMutation) OldVisitorID(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldVisitorID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldVisitorID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldVisitorID: %w", err)
+	}
+	return oldValue.VisitorID, nil
+}
+
+// ResetVisitorID resets all changes to the "visitor_id" field.
+func (m *VisitorMutation) ResetVisitorID() {
+	m.visitor_id = nil
+}
+
+// SetWorkspaceID sets the "workspace_id" field.
+func (m *VisitorMutation) SetWorkspaceID(i int64) {
+	m.workspace = &i
+}
+
+// WorkspaceID returns the value of the "workspace_id" field in the mutation.
+func (m *VisitorMutation) WorkspaceID() (r int64, exists bool) {
+	v := m.workspace
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldWorkspaceID returns the old "workspace_id" field's value of the Visitor entity.
+// If the Visitor object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *VisitorMutation) OldWorkspaceID(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldWorkspaceID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldWorkspaceID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldWorkspaceID: %w", err)
+	}
+	return oldValue.WorkspaceID, nil
+}
+
+// ResetWorkspaceID resets all changes to the "workspace_id" field.
+func (m *VisitorMutation) ResetWorkspaceID() {
+	m.workspace = nil
+}
+
+// SetContactID sets the "contact_id" field.
+func (m *VisitorMutation) SetContactID(i int64) {
+	m.contact = &i
+}
+
+// ContactID returns the value of the "contact_id" field in the mutation.
+func (m *VisitorMutation) ContactID() (r int64, exists bool) {
+	v := m.contact
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldContactID returns the old "contact_id" field's value of the Visitor entity.
+// If the Visitor object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *VisitorMutation) OldContactID(ctx context.Context) (v *int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldContactID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldContactID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldContactID: %w", err)
+	}
+	return oldValue.ContactID, nil
+}
+
+// ClearContactID clears the value of the "contact_id" field.
+func (m *VisitorMutation) ClearContactID() {
+	m.contact = nil
+	m.clearedFields[visitor.FieldContactID] = struct{}{}
+}
+
+// ContactIDCleared returns if the "contact_id" field was cleared in this mutation.
+func (m *VisitorMutation) ContactIDCleared() bool {
+	_, ok := m.clearedFields[visitor.FieldContactID]
+	return ok
+}
+
+// ResetContactID resets all changes to the "contact_id" field.
+func (m *VisitorMutation) ResetContactID() {
+	m.contact = nil
+	delete(m.clearedFields, visitor.FieldContactID)
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *VisitorMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *VisitorMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the Visitor entity.
+// If the Visitor object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *VisitorMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *VisitorMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (m *VisitorMutation) SetUpdatedAt(t time.Time) {
+	m.updated_at = &t
+}
+
+// UpdatedAt returns the value of the "updated_at" field in the mutation.
+func (m *VisitorMutation) UpdatedAt() (r time.Time, exists bool) {
+	v := m.updated_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUpdatedAt returns the old "updated_at" field's value of the Visitor entity.
+// If the Visitor object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *VisitorMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUpdatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUpdatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUpdatedAt: %w", err)
+	}
+	return oldValue.UpdatedAt, nil
+}
+
+// ResetUpdatedAt resets all changes to the "updated_at" field.
+func (m *VisitorMutation) ResetUpdatedAt() {
+	m.updated_at = nil
+}
+
+// SetLastSeenAt sets the "last_seen_at" field.
+func (m *VisitorMutation) SetLastSeenAt(t time.Time) {
+	m.last_seen_at = &t
+}
+
+// LastSeenAt returns the value of the "last_seen_at" field in the mutation.
+func (m *VisitorMutation) LastSeenAt() (r time.Time, exists bool) {
+	v := m.last_seen_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldLastSeenAt returns the old "last_seen_at" field's value of the Visitor entity.
+// If the Visitor object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *VisitorMutation) OldLastSeenAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldLastSeenAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldLastSeenAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldLastSeenAt: %w", err)
+	}
+	return oldValue.LastSeenAt, nil
+}
+
+// ResetLastSeenAt resets all changes to the "last_seen_at" field.
+func (m *VisitorMutation) ResetLastSeenAt() {
+	m.last_seen_at = nil
+}
+
+// ClearContact clears the "contact" edge to the Contact entity.
+func (m *VisitorMutation) ClearContact() {
+	m.clearedcontact = true
+	m.clearedFields[visitor.FieldContactID] = struct{}{}
+}
+
+// ContactCleared reports if the "contact" edge to the Contact entity was cleared.
+func (m *VisitorMutation) ContactCleared() bool {
+	return m.ContactIDCleared() || m.clearedcontact
+}
+
+// ContactIDs returns the "contact" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// ContactID instead. It exists only for internal usage by the builders.
+func (m *VisitorMutation) ContactIDs() (ids []int64) {
+	if id := m.contact; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetContact resets all changes to the "contact" edge.
+func (m *VisitorMutation) ResetContact() {
+	m.contact = nil
+	m.clearedcontact = false
+}
+
+// ClearWorkspace clears the "workspace" edge to the Workspace entity.
+func (m *VisitorMutation) ClearWorkspace() {
+	m.clearedworkspace = true
+	m.clearedFields[visitor.FieldWorkspaceID] = struct{}{}
+}
+
+// WorkspaceCleared reports if the "workspace" edge to the Workspace entity was cleared.
+func (m *VisitorMutation) WorkspaceCleared() bool {
+	return m.clearedworkspace
+}
+
+// WorkspaceIDs returns the "workspace" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// WorkspaceID instead. It exists only for internal usage by the builders.
+func (m *VisitorMutation) WorkspaceIDs() (ids []int64) {
+	if id := m.workspace; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetWorkspace resets all changes to the "workspace" edge.
+func (m *VisitorMutation) ResetWorkspace() {
+	m.workspace = nil
+	m.clearedworkspace = false
+}
+
+// Where appends a list predicates to the VisitorMutation builder.
+func (m *VisitorMutation) Where(ps ...predicate.Visitor) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the VisitorMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *VisitorMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.Visitor, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *VisitorMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *VisitorMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (Visitor).
+func (m *VisitorMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *VisitorMutation) Fields() []string {
+	fields := make([]string, 0, 6)
+	if m.visitor_id != nil {
+		fields = append(fields, visitor.FieldVisitorID)
+	}
+	if m.workspace != nil {
+		fields = append(fields, visitor.FieldWorkspaceID)
+	}
+	if m.contact != nil {
+		fields = append(fields, visitor.FieldContactID)
+	}
+	if m.created_at != nil {
+		fields = append(fields, visitor.FieldCreatedAt)
+	}
+	if m.updated_at != nil {
+		fields = append(fields, visitor.FieldUpdatedAt)
+	}
+	if m.last_seen_at != nil {
+		fields = append(fields, visitor.FieldLastSeenAt)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *VisitorMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case visitor.FieldVisitorID:
+		return m.VisitorID()
+	case visitor.FieldWorkspaceID:
+		return m.WorkspaceID()
+	case visitor.FieldContactID:
+		return m.ContactID()
+	case visitor.FieldCreatedAt:
+		return m.CreatedAt()
+	case visitor.FieldUpdatedAt:
+		return m.UpdatedAt()
+	case visitor.FieldLastSeenAt:
+		return m.LastSeenAt()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *VisitorMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case visitor.FieldVisitorID:
+		return m.OldVisitorID(ctx)
+	case visitor.FieldWorkspaceID:
+		return m.OldWorkspaceID(ctx)
+	case visitor.FieldContactID:
+		return m.OldContactID(ctx)
+	case visitor.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	case visitor.FieldUpdatedAt:
+		return m.OldUpdatedAt(ctx)
+	case visitor.FieldLastSeenAt:
+		return m.OldLastSeenAt(ctx)
+	}
+	return nil, fmt.Errorf("unknown Visitor field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *VisitorMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case visitor.FieldVisitorID:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetVisitorID(v)
+		return nil
+	case visitor.FieldWorkspaceID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetWorkspaceID(v)
+		return nil
+	case visitor.FieldContactID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetContactID(v)
+		return nil
+	case visitor.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	case visitor.FieldUpdatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUpdatedAt(v)
+		return nil
+	case visitor.FieldLastSeenAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetLastSeenAt(v)
+		return nil
+	}
+	return fmt.Errorf("unknown Visitor field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *VisitorMutation) AddedFields() []string {
+	var fields []string
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *VisitorMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *VisitorMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	}
+	return fmt.Errorf("unknown Visitor numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *VisitorMutation) ClearedFields() []string {
+	var fields []string
+	if m.FieldCleared(visitor.FieldContactID) {
+		fields = append(fields, visitor.FieldContactID)
+	}
+	return fields
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *VisitorMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *VisitorMutation) ClearField(name string) error {
+	switch name {
+	case visitor.FieldContactID:
+		m.ClearContactID()
+		return nil
+	}
+	return fmt.Errorf("unknown Visitor nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *VisitorMutation) ResetField(name string) error {
+	switch name {
+	case visitor.FieldVisitorID:
+		m.ResetVisitorID()
+		return nil
+	case visitor.FieldWorkspaceID:
+		m.ResetWorkspaceID()
+		return nil
+	case visitor.FieldContactID:
+		m.ResetContactID()
+		return nil
+	case visitor.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	case visitor.FieldUpdatedAt:
+		m.ResetUpdatedAt()
+		return nil
+	case visitor.FieldLastSeenAt:
+		m.ResetLastSeenAt()
+		return nil
+	}
+	return fmt.Errorf("unknown Visitor field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *VisitorMutation) AddedEdges() []string {
+	edges := make([]string, 0, 2)
+	if m.contact != nil {
+		edges = append(edges, visitor.EdgeContact)
+	}
+	if m.workspace != nil {
+		edges = append(edges, visitor.EdgeWorkspace)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *VisitorMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case visitor.EdgeContact:
+		if id := m.contact; id != nil {
+			return []ent.Value{*id}
+		}
+	case visitor.EdgeWorkspace:
+		if id := m.workspace; id != nil {
+			return []ent.Value{*id}
+		}
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *VisitorMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 2)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *VisitorMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *VisitorMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 2)
+	if m.clearedcontact {
+		edges = append(edges, visitor.EdgeContact)
+	}
+	if m.clearedworkspace {
+		edges = append(edges, visitor.EdgeWorkspace)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *VisitorMutation) EdgeCleared(name string) bool {
+	switch name {
+	case visitor.EdgeContact:
+		return m.clearedcontact
+	case visitor.EdgeWorkspace:
+		return m.clearedworkspace
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *VisitorMutation) ClearEdge(name string) error {
+	switch name {
+	case visitor.EdgeContact:
+		m.ClearContact()
+		return nil
+	case visitor.EdgeWorkspace:
+		m.ClearWorkspace()
+		return nil
+	}
+	return fmt.Errorf("unknown Visitor unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *VisitorMutation) ResetEdge(name string) error {
+	switch name {
+	case visitor.EdgeContact:
+		m.ResetContact()
+		return nil
+	case visitor.EdgeWorkspace:
+		m.ResetWorkspace()
+		return nil
+	}
+	return fmt.Errorf("unknown Visitor edge %s", name)
 }
 
 // WebhookEndpointMutation represents an operation that mutates the WebhookEndpoint nodes in the graph.
@@ -13388,18 +13584,18 @@ type WorkspaceMutation struct {
 	contacts                    map[int64]struct{}
 	removedcontacts             map[int64]struct{}
 	clearedcontacts             bool
+	custom_fields               map[int64]struct{}
+	removedcustom_fields        map[int64]struct{}
+	clearedcustom_fields        bool
 	segments                    map[int64]struct{}
 	removedsegments             map[int64]struct{}
 	clearedsegments             bool
 	events                      map[int64]struct{}
 	removedevents               map[int64]struct{}
 	clearedevents               bool
-	tracking_profiles           map[int64]struct{}
-	removedtracking_profiles    map[int64]struct{}
-	clearedtracking_profiles    bool
-	tracking_visitors           map[int64]struct{}
-	removedtracking_visitors    map[int64]struct{}
-	clearedtracking_visitors    bool
+	visitors                    map[int64]struct{}
+	removedvisitors             map[int64]struct{}
+	clearedvisitors             bool
 	api_tokens                  map[int64]struct{}
 	removedapi_tokens           map[int64]struct{}
 	clearedapi_tokens           bool
@@ -13857,6 +14053,60 @@ func (m *WorkspaceMutation) ResetContacts() {
 	m.removedcontacts = nil
 }
 
+// AddCustomFieldIDs adds the "custom_fields" edge to the CustomField entity by ids.
+func (m *WorkspaceMutation) AddCustomFieldIDs(ids ...int64) {
+	if m.custom_fields == nil {
+		m.custom_fields = make(map[int64]struct{})
+	}
+	for i := range ids {
+		m.custom_fields[ids[i]] = struct{}{}
+	}
+}
+
+// ClearCustomFields clears the "custom_fields" edge to the CustomField entity.
+func (m *WorkspaceMutation) ClearCustomFields() {
+	m.clearedcustom_fields = true
+}
+
+// CustomFieldsCleared reports if the "custom_fields" edge to the CustomField entity was cleared.
+func (m *WorkspaceMutation) CustomFieldsCleared() bool {
+	return m.clearedcustom_fields
+}
+
+// RemoveCustomFieldIDs removes the "custom_fields" edge to the CustomField entity by IDs.
+func (m *WorkspaceMutation) RemoveCustomFieldIDs(ids ...int64) {
+	if m.removedcustom_fields == nil {
+		m.removedcustom_fields = make(map[int64]struct{})
+	}
+	for i := range ids {
+		delete(m.custom_fields, ids[i])
+		m.removedcustom_fields[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedCustomFields returns the removed IDs of the "custom_fields" edge to the CustomField entity.
+func (m *WorkspaceMutation) RemovedCustomFieldsIDs() (ids []int64) {
+	for id := range m.removedcustom_fields {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// CustomFieldsIDs returns the "custom_fields" edge IDs in the mutation.
+func (m *WorkspaceMutation) CustomFieldsIDs() (ids []int64) {
+	for id := range m.custom_fields {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetCustomFields resets all changes to the "custom_fields" edge.
+func (m *WorkspaceMutation) ResetCustomFields() {
+	m.custom_fields = nil
+	m.clearedcustom_fields = false
+	m.removedcustom_fields = nil
+}
+
 // AddSegmentIDs adds the "segments" edge to the Segment entity by ids.
 func (m *WorkspaceMutation) AddSegmentIDs(ids ...int64) {
 	if m.segments == nil {
@@ -13965,112 +14215,58 @@ func (m *WorkspaceMutation) ResetEvents() {
 	m.removedevents = nil
 }
 
-// AddTrackingProfileIDs adds the "tracking_profiles" edge to the TrackingProfile entity by ids.
-func (m *WorkspaceMutation) AddTrackingProfileIDs(ids ...int64) {
-	if m.tracking_profiles == nil {
-		m.tracking_profiles = make(map[int64]struct{})
+// AddVisitorIDs adds the "visitors" edge to the Visitor entity by ids.
+func (m *WorkspaceMutation) AddVisitorIDs(ids ...int64) {
+	if m.visitors == nil {
+		m.visitors = make(map[int64]struct{})
 	}
 	for i := range ids {
-		m.tracking_profiles[ids[i]] = struct{}{}
+		m.visitors[ids[i]] = struct{}{}
 	}
 }
 
-// ClearTrackingProfiles clears the "tracking_profiles" edge to the TrackingProfile entity.
-func (m *WorkspaceMutation) ClearTrackingProfiles() {
-	m.clearedtracking_profiles = true
+// ClearVisitors clears the "visitors" edge to the Visitor entity.
+func (m *WorkspaceMutation) ClearVisitors() {
+	m.clearedvisitors = true
 }
 
-// TrackingProfilesCleared reports if the "tracking_profiles" edge to the TrackingProfile entity was cleared.
-func (m *WorkspaceMutation) TrackingProfilesCleared() bool {
-	return m.clearedtracking_profiles
+// VisitorsCleared reports if the "visitors" edge to the Visitor entity was cleared.
+func (m *WorkspaceMutation) VisitorsCleared() bool {
+	return m.clearedvisitors
 }
 
-// RemoveTrackingProfileIDs removes the "tracking_profiles" edge to the TrackingProfile entity by IDs.
-func (m *WorkspaceMutation) RemoveTrackingProfileIDs(ids ...int64) {
-	if m.removedtracking_profiles == nil {
-		m.removedtracking_profiles = make(map[int64]struct{})
+// RemoveVisitorIDs removes the "visitors" edge to the Visitor entity by IDs.
+func (m *WorkspaceMutation) RemoveVisitorIDs(ids ...int64) {
+	if m.removedvisitors == nil {
+		m.removedvisitors = make(map[int64]struct{})
 	}
 	for i := range ids {
-		delete(m.tracking_profiles, ids[i])
-		m.removedtracking_profiles[ids[i]] = struct{}{}
+		delete(m.visitors, ids[i])
+		m.removedvisitors[ids[i]] = struct{}{}
 	}
 }
 
-// RemovedTrackingProfiles returns the removed IDs of the "tracking_profiles" edge to the TrackingProfile entity.
-func (m *WorkspaceMutation) RemovedTrackingProfilesIDs() (ids []int64) {
-	for id := range m.removedtracking_profiles {
+// RemovedVisitors returns the removed IDs of the "visitors" edge to the Visitor entity.
+func (m *WorkspaceMutation) RemovedVisitorsIDs() (ids []int64) {
+	for id := range m.removedvisitors {
 		ids = append(ids, id)
 	}
 	return
 }
 
-// TrackingProfilesIDs returns the "tracking_profiles" edge IDs in the mutation.
-func (m *WorkspaceMutation) TrackingProfilesIDs() (ids []int64) {
-	for id := range m.tracking_profiles {
+// VisitorsIDs returns the "visitors" edge IDs in the mutation.
+func (m *WorkspaceMutation) VisitorsIDs() (ids []int64) {
+	for id := range m.visitors {
 		ids = append(ids, id)
 	}
 	return
 }
 
-// ResetTrackingProfiles resets all changes to the "tracking_profiles" edge.
-func (m *WorkspaceMutation) ResetTrackingProfiles() {
-	m.tracking_profiles = nil
-	m.clearedtracking_profiles = false
-	m.removedtracking_profiles = nil
-}
-
-// AddTrackingVisitorIDs adds the "tracking_visitors" edge to the TrackingVisitor entity by ids.
-func (m *WorkspaceMutation) AddTrackingVisitorIDs(ids ...int64) {
-	if m.tracking_visitors == nil {
-		m.tracking_visitors = make(map[int64]struct{})
-	}
-	for i := range ids {
-		m.tracking_visitors[ids[i]] = struct{}{}
-	}
-}
-
-// ClearTrackingVisitors clears the "tracking_visitors" edge to the TrackingVisitor entity.
-func (m *WorkspaceMutation) ClearTrackingVisitors() {
-	m.clearedtracking_visitors = true
-}
-
-// TrackingVisitorsCleared reports if the "tracking_visitors" edge to the TrackingVisitor entity was cleared.
-func (m *WorkspaceMutation) TrackingVisitorsCleared() bool {
-	return m.clearedtracking_visitors
-}
-
-// RemoveTrackingVisitorIDs removes the "tracking_visitors" edge to the TrackingVisitor entity by IDs.
-func (m *WorkspaceMutation) RemoveTrackingVisitorIDs(ids ...int64) {
-	if m.removedtracking_visitors == nil {
-		m.removedtracking_visitors = make(map[int64]struct{})
-	}
-	for i := range ids {
-		delete(m.tracking_visitors, ids[i])
-		m.removedtracking_visitors[ids[i]] = struct{}{}
-	}
-}
-
-// RemovedTrackingVisitors returns the removed IDs of the "tracking_visitors" edge to the TrackingVisitor entity.
-func (m *WorkspaceMutation) RemovedTrackingVisitorsIDs() (ids []int64) {
-	for id := range m.removedtracking_visitors {
-		ids = append(ids, id)
-	}
-	return
-}
-
-// TrackingVisitorsIDs returns the "tracking_visitors" edge IDs in the mutation.
-func (m *WorkspaceMutation) TrackingVisitorsIDs() (ids []int64) {
-	for id := range m.tracking_visitors {
-		ids = append(ids, id)
-	}
-	return
-}
-
-// ResetTrackingVisitors resets all changes to the "tracking_visitors" edge.
-func (m *WorkspaceMutation) ResetTrackingVisitors() {
-	m.tracking_visitors = nil
-	m.clearedtracking_visitors = false
-	m.removedtracking_visitors = nil
+// ResetVisitors resets all changes to the "visitors" edge.
+func (m *WorkspaceMutation) ResetVisitors() {
+	m.visitors = nil
+	m.clearedvisitors = false
+	m.removedvisitors = nil
 }
 
 // AddAPITokenIDs adds the "api_tokens" edge to the ApiToken entity by ids.
@@ -14837,17 +15033,17 @@ func (m *WorkspaceMutation) AddedEdges() []string {
 	if m.contacts != nil {
 		edges = append(edges, workspace.EdgeContacts)
 	}
+	if m.custom_fields != nil {
+		edges = append(edges, workspace.EdgeCustomFields)
+	}
 	if m.segments != nil {
 		edges = append(edges, workspace.EdgeSegments)
 	}
 	if m.events != nil {
 		edges = append(edges, workspace.EdgeEvents)
 	}
-	if m.tracking_profiles != nil {
-		edges = append(edges, workspace.EdgeTrackingProfiles)
-	}
-	if m.tracking_visitors != nil {
-		edges = append(edges, workspace.EdgeTrackingVisitors)
+	if m.visitors != nil {
+		edges = append(edges, workspace.EdgeVisitors)
 	}
 	if m.api_tokens != nil {
 		edges = append(edges, workspace.EdgeAPITokens)
@@ -14892,6 +15088,12 @@ func (m *WorkspaceMutation) AddedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case workspace.EdgeCustomFields:
+		ids := make([]ent.Value, 0, len(m.custom_fields))
+		for id := range m.custom_fields {
+			ids = append(ids, id)
+		}
+		return ids
 	case workspace.EdgeSegments:
 		ids := make([]ent.Value, 0, len(m.segments))
 		for id := range m.segments {
@@ -14904,15 +15106,9 @@ func (m *WorkspaceMutation) AddedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
-	case workspace.EdgeTrackingProfiles:
-		ids := make([]ent.Value, 0, len(m.tracking_profiles))
-		for id := range m.tracking_profiles {
-			ids = append(ids, id)
-		}
-		return ids
-	case workspace.EdgeTrackingVisitors:
-		ids := make([]ent.Value, 0, len(m.tracking_visitors))
-		for id := range m.tracking_visitors {
+	case workspace.EdgeVisitors:
+		ids := make([]ent.Value, 0, len(m.visitors))
+		for id := range m.visitors {
 			ids = append(ids, id)
 		}
 		return ids
@@ -14984,17 +15180,17 @@ func (m *WorkspaceMutation) RemovedEdges() []string {
 	if m.removedcontacts != nil {
 		edges = append(edges, workspace.EdgeContacts)
 	}
+	if m.removedcustom_fields != nil {
+		edges = append(edges, workspace.EdgeCustomFields)
+	}
 	if m.removedsegments != nil {
 		edges = append(edges, workspace.EdgeSegments)
 	}
 	if m.removedevents != nil {
 		edges = append(edges, workspace.EdgeEvents)
 	}
-	if m.removedtracking_profiles != nil {
-		edges = append(edges, workspace.EdgeTrackingProfiles)
-	}
-	if m.removedtracking_visitors != nil {
-		edges = append(edges, workspace.EdgeTrackingVisitors)
+	if m.removedvisitors != nil {
+		edges = append(edges, workspace.EdgeVisitors)
 	}
 	if m.removedapi_tokens != nil {
 		edges = append(edges, workspace.EdgeAPITokens)
@@ -15036,6 +15232,12 @@ func (m *WorkspaceMutation) RemovedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case workspace.EdgeCustomFields:
+		ids := make([]ent.Value, 0, len(m.removedcustom_fields))
+		for id := range m.removedcustom_fields {
+			ids = append(ids, id)
+		}
+		return ids
 	case workspace.EdgeSegments:
 		ids := make([]ent.Value, 0, len(m.removedsegments))
 		for id := range m.removedsegments {
@@ -15048,15 +15250,9 @@ func (m *WorkspaceMutation) RemovedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
-	case workspace.EdgeTrackingProfiles:
-		ids := make([]ent.Value, 0, len(m.removedtracking_profiles))
-		for id := range m.removedtracking_profiles {
-			ids = append(ids, id)
-		}
-		return ids
-	case workspace.EdgeTrackingVisitors:
-		ids := make([]ent.Value, 0, len(m.removedtracking_visitors))
-		for id := range m.removedtracking_visitors {
+	case workspace.EdgeVisitors:
+		ids := make([]ent.Value, 0, len(m.removedvisitors))
+		for id := range m.removedvisitors {
 			ids = append(ids, id)
 		}
 		return ids
@@ -15124,17 +15320,17 @@ func (m *WorkspaceMutation) ClearedEdges() []string {
 	if m.clearedcontacts {
 		edges = append(edges, workspace.EdgeContacts)
 	}
+	if m.clearedcustom_fields {
+		edges = append(edges, workspace.EdgeCustomFields)
+	}
 	if m.clearedsegments {
 		edges = append(edges, workspace.EdgeSegments)
 	}
 	if m.clearedevents {
 		edges = append(edges, workspace.EdgeEvents)
 	}
-	if m.clearedtracking_profiles {
-		edges = append(edges, workspace.EdgeTrackingProfiles)
-	}
-	if m.clearedtracking_visitors {
-		edges = append(edges, workspace.EdgeTrackingVisitors)
+	if m.clearedvisitors {
+		edges = append(edges, workspace.EdgeVisitors)
 	}
 	if m.clearedapi_tokens {
 		edges = append(edges, workspace.EdgeAPITokens)
@@ -15175,14 +15371,14 @@ func (m *WorkspaceMutation) EdgeCleared(name string) bool {
 	switch name {
 	case workspace.EdgeContacts:
 		return m.clearedcontacts
+	case workspace.EdgeCustomFields:
+		return m.clearedcustom_fields
 	case workspace.EdgeSegments:
 		return m.clearedsegments
 	case workspace.EdgeEvents:
 		return m.clearedevents
-	case workspace.EdgeTrackingProfiles:
-		return m.clearedtracking_profiles
-	case workspace.EdgeTrackingVisitors:
-		return m.clearedtracking_visitors
+	case workspace.EdgeVisitors:
+		return m.clearedvisitors
 	case workspace.EdgeAPITokens:
 		return m.clearedapi_tokens
 	case workspace.EdgeIntegrations:
@@ -15225,17 +15421,17 @@ func (m *WorkspaceMutation) ResetEdge(name string) error {
 	case workspace.EdgeContacts:
 		m.ResetContacts()
 		return nil
+	case workspace.EdgeCustomFields:
+		m.ResetCustomFields()
+		return nil
 	case workspace.EdgeSegments:
 		m.ResetSegments()
 		return nil
 	case workspace.EdgeEvents:
 		m.ResetEvents()
 		return nil
-	case workspace.EdgeTrackingProfiles:
-		m.ResetTrackingProfiles()
-		return nil
-	case workspace.EdgeTrackingVisitors:
-		m.ResetTrackingVisitors()
+	case workspace.EdgeVisitors:
+		m.ResetVisitors()
 		return nil
 	case workspace.EdgeAPITokens:
 		m.ResetAPITokens()

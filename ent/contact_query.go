@@ -4,6 +4,7 @@ package ent
 
 import (
 	"context"
+	"database/sql/driver"
 	"fmt"
 	"math"
 
@@ -13,6 +14,7 @@ import (
 	"entgo.io/ent/schema/field"
 	"github.com/mokevnin/1mail/ent/contact"
 	"github.com/mokevnin/1mail/ent/predicate"
+	"github.com/mokevnin/1mail/ent/visitor"
 	"github.com/mokevnin/1mail/ent/workspace"
 )
 
@@ -23,6 +25,7 @@ type ContactQuery struct {
 	order         []contact.OrderOption
 	inters        []Interceptor
 	predicates    []predicate.Contact
+	withVisitors  *VisitorQuery
 	withWorkspace *WorkspaceQuery
 	modifiers     []func(*sql.Selector)
 	// intermediate query (i.e. traversal path).
@@ -59,6 +62,28 @@ func (_q *ContactQuery) Unique(unique bool) *ContactQuery {
 func (_q *ContactQuery) Order(o ...contact.OrderOption) *ContactQuery {
 	_q.order = append(_q.order, o...)
 	return _q
+}
+
+// QueryVisitors chains the current query on the "visitors" edge.
+func (_q *ContactQuery) QueryVisitors() *VisitorQuery {
+	query := (&VisitorClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(contact.Table, contact.FieldID, selector),
+			sqlgraph.To(visitor.Table, visitor.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, contact.VisitorsTable, contact.VisitorsColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
 }
 
 // QueryWorkspace chains the current query on the "workspace" edge.
@@ -275,12 +300,24 @@ func (_q *ContactQuery) Clone() *ContactQuery {
 		order:         append([]contact.OrderOption{}, _q.order...),
 		inters:        append([]Interceptor{}, _q.inters...),
 		predicates:    append([]predicate.Contact{}, _q.predicates...),
+		withVisitors:  _q.withVisitors.Clone(),
 		withWorkspace: _q.withWorkspace.Clone(),
 		// clone intermediate query.
 		sql:       _q.sql.Clone(),
 		path:      _q.path,
 		modifiers: append([]func(*sql.Selector){}, _q.modifiers...),
 	}
+}
+
+// WithVisitors tells the query-builder to eager-load the nodes that are connected to
+// the "visitors" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *ContactQuery) WithVisitors(opts ...func(*VisitorQuery)) *ContactQuery {
+	query := (&VisitorClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withVisitors = query
+	return _q
 }
 
 // WithWorkspace tells the query-builder to eager-load the nodes that are connected to
@@ -300,12 +337,12 @@ func (_q *ContactQuery) WithWorkspace(opts ...func(*WorkspaceQuery)) *ContactQue
 // Example:
 //
 //	var v []struct {
-//		Email string `json:"email,omitempty"`
+//		SubjectID string `json:"subject_id,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.Contact.Query().
-//		GroupBy(contact.FieldEmail).
+//		GroupBy(contact.FieldSubjectID).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
 func (_q *ContactQuery) GroupBy(field string, fields ...string) *ContactGroupBy {
@@ -323,11 +360,11 @@ func (_q *ContactQuery) GroupBy(field string, fields ...string) *ContactGroupBy 
 // Example:
 //
 //	var v []struct {
-//		Email string `json:"email,omitempty"`
+//		SubjectID string `json:"subject_id,omitempty"`
 //	}
 //
 //	client.Contact.Query().
-//		Select(contact.FieldEmail).
+//		Select(contact.FieldSubjectID).
 //		Scan(ctx, &v)
 func (_q *ContactQuery) Select(fields ...string) *ContactSelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)
@@ -372,7 +409,8 @@ func (_q *ContactQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Cont
 	var (
 		nodes       = []*Contact{}
 		_spec       = _q.querySpec()
-		loadedTypes = [1]bool{
+		loadedTypes = [2]bool{
+			_q.withVisitors != nil,
 			_q.withWorkspace != nil,
 		}
 	)
@@ -397,6 +435,13 @@ func (_q *ContactQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Cont
 	if len(nodes) == 0 {
 		return nodes, nil
 	}
+	if query := _q.withVisitors; query != nil {
+		if err := _q.loadVisitors(ctx, query, nodes,
+			func(n *Contact) { n.Edges.Visitors = []*Visitor{} },
+			func(n *Contact, e *Visitor) { n.Edges.Visitors = append(n.Edges.Visitors, e) }); err != nil {
+			return nil, err
+		}
+	}
 	if query := _q.withWorkspace; query != nil {
 		if err := _q.loadWorkspace(ctx, query, nodes, nil,
 			func(n *Contact, e *Workspace) { n.Edges.Workspace = e }); err != nil {
@@ -406,6 +451,39 @@ func (_q *ContactQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Cont
 	return nodes, nil
 }
 
+func (_q *ContactQuery) loadVisitors(ctx context.Context, query *VisitorQuery, nodes []*Contact, init func(*Contact), assign func(*Contact, *Visitor)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[int64]*Contact)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(visitor.FieldContactID)
+	}
+	query.Where(predicate.Visitor(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(contact.VisitorsColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.ContactID
+		if fk == nil {
+			return fmt.Errorf(`foreign-key "contact_id" is nil for node %v`, n.ID)
+		}
+		node, ok := nodeids[*fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "contact_id" returned %v for node %v`, *fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
 func (_q *ContactQuery) loadWorkspace(ctx context.Context, query *WorkspaceQuery, nodes []*Contact, init func(*Contact), assign func(*Contact, *Workspace)) error {
 	ids := make([]int64, 0, len(nodes))
 	nodeids := make(map[int64][]*Contact)

@@ -18,15 +18,15 @@ import (
 	"github.com/mokevnin/1mail/ent/broadcast"
 	"github.com/mokevnin/1mail/ent/broadcastrecipient"
 	"github.com/mokevnin/1mail/ent/contact"
+	"github.com/mokevnin/1mail/ent/customfield"
 	"github.com/mokevnin/1mail/ent/emailtemplate"
 	"github.com/mokevnin/1mail/ent/event"
 	"github.com/mokevnin/1mail/ent/integration"
 	"github.com/mokevnin/1mail/ent/predicate"
 	"github.com/mokevnin/1mail/ent/segment"
 	"github.com/mokevnin/1mail/ent/suppression"
-	"github.com/mokevnin/1mail/ent/trackingprofile"
-	"github.com/mokevnin/1mail/ent/trackingvisitor"
 	"github.com/mokevnin/1mail/ent/user"
+	"github.com/mokevnin/1mail/ent/visitor"
 	"github.com/mokevnin/1mail/ent/webhookendpoint"
 	"github.com/mokevnin/1mail/ent/workspace"
 )
@@ -39,10 +39,10 @@ type WorkspaceQuery struct {
 	inters                  []Interceptor
 	predicates              []predicate.Workspace
 	withContacts            *ContactQuery
+	withCustomFields        *CustomFieldQuery
 	withSegments            *SegmentQuery
 	withEvents              *EventQuery
-	withTrackingProfiles    *TrackingProfileQuery
-	withTrackingVisitors    *TrackingVisitorQuery
+	withVisitors            *VisitorQuery
 	withAPITokens           *ApiTokenQuery
 	withIntegrations        *IntegrationQuery
 	withBroadcasts          *BroadcastQuery
@@ -112,6 +112,28 @@ func (_q *WorkspaceQuery) QueryContacts() *ContactQuery {
 	return query
 }
 
+// QueryCustomFields chains the current query on the "custom_fields" edge.
+func (_q *WorkspaceQuery) QueryCustomFields() *CustomFieldQuery {
+	query := (&CustomFieldClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workspace.Table, workspace.FieldID, selector),
+			sqlgraph.To(customfield.Table, customfield.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, workspace.CustomFieldsTable, workspace.CustomFieldsColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
 // QuerySegments chains the current query on the "segments" edge.
 func (_q *WorkspaceQuery) QuerySegments() *SegmentQuery {
 	query := (&SegmentClient{config: _q.config}).Query()
@@ -156,9 +178,9 @@ func (_q *WorkspaceQuery) QueryEvents() *EventQuery {
 	return query
 }
 
-// QueryTrackingProfiles chains the current query on the "tracking_profiles" edge.
-func (_q *WorkspaceQuery) QueryTrackingProfiles() *TrackingProfileQuery {
-	query := (&TrackingProfileClient{config: _q.config}).Query()
+// QueryVisitors chains the current query on the "visitors" edge.
+func (_q *WorkspaceQuery) QueryVisitors() *VisitorQuery {
+	query := (&VisitorClient{config: _q.config}).Query()
 	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
 		if err := _q.prepareQuery(ctx); err != nil {
 			return nil, err
@@ -169,30 +191,8 @@ func (_q *WorkspaceQuery) QueryTrackingProfiles() *TrackingProfileQuery {
 		}
 		step := sqlgraph.NewStep(
 			sqlgraph.From(workspace.Table, workspace.FieldID, selector),
-			sqlgraph.To(trackingprofile.Table, trackingprofile.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, workspace.TrackingProfilesTable, workspace.TrackingProfilesColumn),
-		)
-		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
-		return fromU, nil
-	}
-	return query
-}
-
-// QueryTrackingVisitors chains the current query on the "tracking_visitors" edge.
-func (_q *WorkspaceQuery) QueryTrackingVisitors() *TrackingVisitorQuery {
-	query := (&TrackingVisitorClient{config: _q.config}).Query()
-	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
-		if err := _q.prepareQuery(ctx); err != nil {
-			return nil, err
-		}
-		selector := _q.sqlQuery(ctx)
-		if err := selector.Err(); err != nil {
-			return nil, err
-		}
-		step := sqlgraph.NewStep(
-			sqlgraph.From(workspace.Table, workspace.FieldID, selector),
-			sqlgraph.To(trackingvisitor.Table, trackingvisitor.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, workspace.TrackingVisitorsTable, workspace.TrackingVisitorsColumn),
+			sqlgraph.To(visitor.Table, visitor.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, workspace.VisitorsTable, workspace.VisitorsColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
@@ -613,10 +613,10 @@ func (_q *WorkspaceQuery) Clone() *WorkspaceQuery {
 		inters:                  append([]Interceptor{}, _q.inters...),
 		predicates:              append([]predicate.Workspace{}, _q.predicates...),
 		withContacts:            _q.withContacts.Clone(),
+		withCustomFields:        _q.withCustomFields.Clone(),
 		withSegments:            _q.withSegments.Clone(),
 		withEvents:              _q.withEvents.Clone(),
-		withTrackingProfiles:    _q.withTrackingProfiles.Clone(),
-		withTrackingVisitors:    _q.withTrackingVisitors.Clone(),
+		withVisitors:            _q.withVisitors.Clone(),
 		withAPITokens:           _q.withAPITokens.Clone(),
 		withIntegrations:        _q.withIntegrations.Clone(),
 		withBroadcasts:          _q.withBroadcasts.Clone(),
@@ -645,6 +645,17 @@ func (_q *WorkspaceQuery) WithContacts(opts ...func(*ContactQuery)) *WorkspaceQu
 	return _q
 }
 
+// WithCustomFields tells the query-builder to eager-load the nodes that are connected to
+// the "custom_fields" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *WorkspaceQuery) WithCustomFields(opts ...func(*CustomFieldQuery)) *WorkspaceQuery {
+	query := (&CustomFieldClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withCustomFields = query
+	return _q
+}
+
 // WithSegments tells the query-builder to eager-load the nodes that are connected to
 // the "segments" edge. The optional arguments are used to configure the query builder of the edge.
 func (_q *WorkspaceQuery) WithSegments(opts ...func(*SegmentQuery)) *WorkspaceQuery {
@@ -667,25 +678,14 @@ func (_q *WorkspaceQuery) WithEvents(opts ...func(*EventQuery)) *WorkspaceQuery 
 	return _q
 }
 
-// WithTrackingProfiles tells the query-builder to eager-load the nodes that are connected to
-// the "tracking_profiles" edge. The optional arguments are used to configure the query builder of the edge.
-func (_q *WorkspaceQuery) WithTrackingProfiles(opts ...func(*TrackingProfileQuery)) *WorkspaceQuery {
-	query := (&TrackingProfileClient{config: _q.config}).Query()
+// WithVisitors tells the query-builder to eager-load the nodes that are connected to
+// the "visitors" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *WorkspaceQuery) WithVisitors(opts ...func(*VisitorQuery)) *WorkspaceQuery {
+	query := (&VisitorClient{config: _q.config}).Query()
 	for _, opt := range opts {
 		opt(query)
 	}
-	_q.withTrackingProfiles = query
-	return _q
-}
-
-// WithTrackingVisitors tells the query-builder to eager-load the nodes that are connected to
-// the "tracking_visitors" edge. The optional arguments are used to configure the query builder of the edge.
-func (_q *WorkspaceQuery) WithTrackingVisitors(opts ...func(*TrackingVisitorQuery)) *WorkspaceQuery {
-	query := (&TrackingVisitorClient{config: _q.config}).Query()
-	for _, opt := range opts {
-		opt(query)
-	}
-	_q.withTrackingVisitors = query
+	_q.withVisitors = query
 	return _q
 }
 
@@ -879,10 +879,10 @@ func (_q *WorkspaceQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Wo
 		_spec       = _q.querySpec()
 		loadedTypes = [15]bool{
 			_q.withContacts != nil,
+			_q.withCustomFields != nil,
 			_q.withSegments != nil,
 			_q.withEvents != nil,
-			_q.withTrackingProfiles != nil,
-			_q.withTrackingVisitors != nil,
+			_q.withVisitors != nil,
 			_q.withAPITokens != nil,
 			_q.withIntegrations != nil,
 			_q.withBroadcasts != nil,
@@ -923,6 +923,13 @@ func (_q *WorkspaceQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Wo
 			return nil, err
 		}
 	}
+	if query := _q.withCustomFields; query != nil {
+		if err := _q.loadCustomFields(ctx, query, nodes,
+			func(n *Workspace) { n.Edges.CustomFields = []*CustomField{} },
+			func(n *Workspace, e *CustomField) { n.Edges.CustomFields = append(n.Edges.CustomFields, e) }); err != nil {
+			return nil, err
+		}
+	}
 	if query := _q.withSegments; query != nil {
 		if err := _q.loadSegments(ctx, query, nodes,
 			func(n *Workspace) { n.Edges.Segments = []*Segment{} },
@@ -937,17 +944,10 @@ func (_q *WorkspaceQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Wo
 			return nil, err
 		}
 	}
-	if query := _q.withTrackingProfiles; query != nil {
-		if err := _q.loadTrackingProfiles(ctx, query, nodes,
-			func(n *Workspace) { n.Edges.TrackingProfiles = []*TrackingProfile{} },
-			func(n *Workspace, e *TrackingProfile) { n.Edges.TrackingProfiles = append(n.Edges.TrackingProfiles, e) }); err != nil {
-			return nil, err
-		}
-	}
-	if query := _q.withTrackingVisitors; query != nil {
-		if err := _q.loadTrackingVisitors(ctx, query, nodes,
-			func(n *Workspace) { n.Edges.TrackingVisitors = []*TrackingVisitor{} },
-			func(n *Workspace, e *TrackingVisitor) { n.Edges.TrackingVisitors = append(n.Edges.TrackingVisitors, e) }); err != nil {
+	if query := _q.withVisitors; query != nil {
+		if err := _q.loadVisitors(ctx, query, nodes,
+			func(n *Workspace) { n.Edges.Visitors = []*Visitor{} },
+			func(n *Workspace, e *Visitor) { n.Edges.Visitors = append(n.Edges.Visitors, e) }); err != nil {
 			return nil, err
 		}
 	}
@@ -1055,6 +1055,36 @@ func (_q *WorkspaceQuery) loadContacts(ctx context.Context, query *ContactQuery,
 	}
 	return nil
 }
+func (_q *WorkspaceQuery) loadCustomFields(ctx context.Context, query *CustomFieldQuery, nodes []*Workspace, init func(*Workspace), assign func(*Workspace, *CustomField)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[int64]*Workspace)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(customfield.FieldWorkspaceID)
+	}
+	query.Where(predicate.CustomField(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(workspace.CustomFieldsColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.WorkspaceID
+		node, ok := nodeids[fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "workspace_id" returned %v for node %v`, fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
 func (_q *WorkspaceQuery) loadSegments(ctx context.Context, query *SegmentQuery, nodes []*Workspace, init func(*Workspace), assign func(*Workspace, *Segment)) error {
 	fks := make([]driver.Value, 0, len(nodes))
 	nodeids := make(map[int64]*Workspace)
@@ -1115,7 +1145,7 @@ func (_q *WorkspaceQuery) loadEvents(ctx context.Context, query *EventQuery, nod
 	}
 	return nil
 }
-func (_q *WorkspaceQuery) loadTrackingProfiles(ctx context.Context, query *TrackingProfileQuery, nodes []*Workspace, init func(*Workspace), assign func(*Workspace, *TrackingProfile)) error {
+func (_q *WorkspaceQuery) loadVisitors(ctx context.Context, query *VisitorQuery, nodes []*Workspace, init func(*Workspace), assign func(*Workspace, *Visitor)) error {
 	fks := make([]driver.Value, 0, len(nodes))
 	nodeids := make(map[int64]*Workspace)
 	for i := range nodes {
@@ -1126,40 +1156,10 @@ func (_q *WorkspaceQuery) loadTrackingProfiles(ctx context.Context, query *Track
 		}
 	}
 	if len(query.ctx.Fields) > 0 {
-		query.ctx.AppendFieldOnce(trackingprofile.FieldWorkspaceID)
+		query.ctx.AppendFieldOnce(visitor.FieldWorkspaceID)
 	}
-	query.Where(predicate.TrackingProfile(func(s *sql.Selector) {
-		s.Where(sql.InValues(s.C(workspace.TrackingProfilesColumn), fks...))
-	}))
-	neighbors, err := query.All(ctx)
-	if err != nil {
-		return err
-	}
-	for _, n := range neighbors {
-		fk := n.WorkspaceID
-		node, ok := nodeids[fk]
-		if !ok {
-			return fmt.Errorf(`unexpected referenced foreign-key "workspace_id" returned %v for node %v`, fk, n.ID)
-		}
-		assign(node, n)
-	}
-	return nil
-}
-func (_q *WorkspaceQuery) loadTrackingVisitors(ctx context.Context, query *TrackingVisitorQuery, nodes []*Workspace, init func(*Workspace), assign func(*Workspace, *TrackingVisitor)) error {
-	fks := make([]driver.Value, 0, len(nodes))
-	nodeids := make(map[int64]*Workspace)
-	for i := range nodes {
-		fks = append(fks, nodes[i].ID)
-		nodeids[nodes[i].ID] = nodes[i]
-		if init != nil {
-			init(nodes[i])
-		}
-	}
-	if len(query.ctx.Fields) > 0 {
-		query.ctx.AppendFieldOnce(trackingvisitor.FieldWorkspaceID)
-	}
-	query.Where(predicate.TrackingVisitor(func(s *sql.Selector) {
-		s.Where(sql.InValues(s.C(workspace.TrackingVisitorsColumn), fks...))
+	query.Where(predicate.Visitor(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(workspace.VisitorsColumn), fks...))
 	}))
 	neighbors, err := query.All(ctx)
 	if err != nil {

@@ -96,13 +96,15 @@ func TestExternalContactsCRUD(t *testing.T) {
 	assert.Equal(t, int32(3), listed.TotalItems)
 
 	created, err := c.ContactsCreate(ctx, &externalapi.CreateContactInput{
-		Email:     "new@example.com",
+		Email:     externalapi.NewOptNilEmailAddress("new@example.com"),
 		FirstName: externalapi.NewOptNilString("New"),
 	})
 	require.NoError(t, err)
 	contact, ok := created.(*externalapi.ContactResource)
 	require.Truef(t, ok, "got %T", created)
-	assert.Equal(t, externalapi.EmailAddress("new@example.com"), contact.Email)
+	email, ok := contact.Email.Get()
+	require.True(t, ok)
+	assert.Equal(t, externalapi.EmailAddress("new@example.com"), email)
 
 	got, err := c.ContactsGet(ctx, externalapi.ContactsGetParams{ID: "1"})
 	require.NoError(t, err)
@@ -122,7 +124,7 @@ func TestExternalContactsConflict(t *testing.T) {
 	env := testhelper.Setup(t)
 	c := client(t, env, seedToken(t, env.DB, []string{"contacts:write"}))
 
-	res, err := c.ContactsCreate(context.Background(), &externalapi.CreateContactInput{Email: "alice@example.com"})
+	res, err := c.ContactsCreate(context.Background(), &externalapi.CreateContactInput{Email: externalapi.NewOptNilEmailAddress("alice@example.com")})
 	require.NoError(t, err)
 	assert.IsType(t, &externalapi.ContactsCreateConflict{}, res)
 }
@@ -142,7 +144,7 @@ func TestExternalAuthAndScopes(t *testing.T) {
 
 	// Read-only token: can read, cannot create.
 	ro := client(t, env, seedToken(t, env.DB, []string{"contacts:read"}))
-	createRes, err := ro.ContactsCreate(ctx, &externalapi.CreateContactInput{Email: "x@example.com"})
+	createRes, err := ro.ContactsCreate(ctx, &externalapi.CreateContactInput{Email: externalapi.NewOptNilEmailAddress("x@example.com")})
 	require.NoError(t, err)
 	assert.IsType(t, &externalapi.ContactsCreateUnauthorized{}, createRes)
 
@@ -166,7 +168,6 @@ func TestExternalEventsCreate(t *testing.T) {
 				SubjectId:  "user:dave@example.com",
 				Action:     "signup",
 				Email:      externalapi.NewOptNilEmailAddress("dave@example.com"),
-				Prospect:   externalapi.NewOptNilBool(true),
 				OccurredAt: externalapi.NewOptNilTimestamp(externalapi.Timestamp(occurred)),
 				Properties: externalapi.NewOptNilEventInputProperties(externalapi.EventInputProperties{
 					"plan":   jx.Raw(`"pro"`),
@@ -193,8 +194,6 @@ func TestExternalEventsCreate(t *testing.T) {
 	require.NotNil(t, dave)
 	assert.Equal(t, "signup", dave.Action)
 	assert.Equal(t, "dave@example.com", dave.Email)
-	require.NotNil(t, dave.Prospect)
-	assert.True(t, *dave.Prospect)
 	assert.True(t, dave.OccurredAt.Equal(occurred))
 	assert.Equal(t, "pro", dave.Properties["plan"])
 	assert.EqualValues(t, 42, dave.Properties["amount"])
@@ -292,6 +291,6 @@ func TestExternalRequestValidation(t *testing.T) {
 
 	// Invalid email → ogen validation rejects with an undocumented 400, which
 	// the typed client surfaces as an error.
-	_, err := c.ContactsCreate(context.Background(), &externalapi.CreateContactInput{Email: "not-an-email"})
+	_, err := c.ContactsCreate(context.Background(), &externalapi.CreateContactInput{Email: externalapi.NewOptNilEmailAddress("not-an-email")})
 	require.Error(t, err)
 }

@@ -63,14 +63,18 @@ type Envelope struct {
 // its own via Project(), so the projection logic lives with the type rather than
 // being flattened by producers.
 type Projection struct {
-	Subject    string         // → events.subject_id (email/phone/visitor identity)
+	Subject    string         // → events.subject_id snapshot; "" ⇒ anonymous
 	Action     string         // → events.action; also the automation trigger key
 	Email      string         // "" ⇒ unset
 	Phone      string         // "" ⇒ unset
-	Prospect   *bool          // nil ⇒ unset
 	Properties map[string]any // → events.properties (opaque for customer events)
 	OccurredAt time.Time      // zero ⇒ publish time
-	ContactID  int64          // automations enroll target; 0 ⇒ none
+	// ContactID is the authoritative Contact link (→ events.contact_id) AND the
+	// automations enroll target; 0 ⇒ none (anonymous, pre-Identify).
+	ContactID int64
+	// VisitorID is the anonymous device (→ events.visitor_id), kept so an anonymous
+	// event can be stitched onto a Contact at Identify. "" ⇒ unset.
+	VisitorID string
 }
 
 // DomainEvent is a typed, producer-side domain event. Implementations are
@@ -188,15 +192,18 @@ func (e *EmailDeliveryFailure) Project() Projection {
 
 // CollectedEvent wraps a customer's own event ingested via the collect or external
 // API. Its body is the user's domain, stored as-is: Action and Properties are
-// opaque to us. It carries no contact, so it never enrolls automations by contact
-// — but its Action is the automation trigger key (a user can trigger on "page_view").
+// opaque to us. Identity is resolved at ingest: ContactID is the Contact this device
+// resolves to (0 ⇒ anonymous, pre-Identify), VisitorID the anonymous device — kept
+// so the event can be stitched onto a Contact when Identify later arrives. Its Action
+// is also the automation trigger key (a user can trigger on "page_view").
 type CollectedEvent struct {
 	WorkspaceID int64          `json:"workspaceId"`
-	SubjectID   string         `json:"subjectId"`
+	ContactID   int64          `json:"contactId,omitempty"` // 0 ⇒ anonymous
+	VisitorID   string         `json:"visitorId,omitempty"`
+	SubjectID   string         `json:"subjectId,omitempty"`
 	Action      string         `json:"action"`
 	Email       string         `json:"email,omitempty"`
 	Phone       string         `json:"phone,omitempty"`
-	Prospect    *bool          `json:"prospect,omitempty"`
 	Properties  map[string]any `json:"properties,omitempty"`
 	OccurredAt  time.Time      `json:"occurredAt,omitempty"`
 }
@@ -210,8 +217,9 @@ func (e *CollectedEvent) Project() Projection {
 		Action:     e.Action,
 		Email:      e.Email,
 		Phone:      e.Phone,
-		Prospect:   e.Prospect,
 		Properties: e.Properties,
 		OccurredAt: e.OccurredAt,
+		ContactID:  e.ContactID,
+		VisitorID:  e.VisitorID,
 	}
 }

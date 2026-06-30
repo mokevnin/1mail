@@ -84,6 +84,52 @@ func (o OptBool) Or(d bool) bool {
 	return d
 }
 
+// NewOptEntityId returns new OptEntityId with value set to v.
+func NewOptEntityId(v EntityId) OptEntityId {
+	return OptEntityId{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptEntityId is optional EntityId.
+type OptEntityId struct {
+	Value EntityId
+	Set   bool
+}
+
+// IsSet returns true if OptEntityId was set.
+func (o OptEntityId) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptEntityId) Reset() {
+	var v EntityId
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptEntityId) SetTo(v EntityId) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptEntityId) Get() (v EntityId, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptEntityId) Or(d EntityId) EntityId {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
 // NewOptInt32 returns new OptInt32 with value set to v.
 func NewOptInt32(v int32) OptInt32 {
 	return OptInt32{
@@ -2547,15 +2593,19 @@ func (*SiteBroadcastsUpdateUnprocessableEntity) siteBroadcastsUpdateRes() {}
 type SiteContactResource struct {
 	// Unique identifier.
 	ID EntityId `json:"id"`
-	// Email address.
-	Email EmailAddress `json:"email"`
+	// The customer's own user id — an alias key. May be absent.
+	SubjectId OptNilString `json:"subjectId"`
+	// Email address — an alias key. May be absent for anonymous contacts.
+	Email OptNilEmailAddress `json:"email"`
+	// Phone number — an alias key. May be absent.
+	Phone OptNilString `json:"phone"`
 	// First name.
 	FirstName OptNilString `json:"firstName"`
 	// Last name.
 	LastName OptNilString `json:"lastName"`
 	// IANA time zone identifier.
 	TimeZone OptNilTimeZoneName `json:"timeZone"`
-	// Custom fields as key-value pairs.
+	// Typed custom field values keyed by the field's machine key.
 	CustomFields OptNilSiteContactResourceCustomFields `json:"customFields"`
 	// Current status.
 	Status SiteContactStatus `json:"status"`
@@ -2570,9 +2620,19 @@ func (s *SiteContactResource) GetID() EntityId {
 	return s.ID
 }
 
+// GetSubjectId returns the value of SubjectId.
+func (s *SiteContactResource) GetSubjectId() OptNilString {
+	return s.SubjectId
+}
+
 // GetEmail returns the value of Email.
-func (s *SiteContactResource) GetEmail() EmailAddress {
+func (s *SiteContactResource) GetEmail() OptNilEmailAddress {
 	return s.Email
+}
+
+// GetPhone returns the value of Phone.
+func (s *SiteContactResource) GetPhone() OptNilString {
+	return s.Phone
 }
 
 // GetFirstName returns the value of FirstName.
@@ -2615,9 +2675,19 @@ func (s *SiteContactResource) SetID(val EntityId) {
 	s.ID = val
 }
 
+// SetSubjectId sets the value of SubjectId.
+func (s *SiteContactResource) SetSubjectId(val OptNilString) {
+	s.SubjectId = val
+}
+
 // SetEmail sets the value of Email.
-func (s *SiteContactResource) SetEmail(val EmailAddress) {
+func (s *SiteContactResource) SetEmail(val OptNilEmailAddress) {
 	s.Email = val
+}
+
+// SetPhone sets the value of Phone.
+func (s *SiteContactResource) SetPhone(val OptNilString) {
+	s.Phone = val
 }
 
 // SetFirstName sets the value of FirstName.
@@ -2659,13 +2729,13 @@ func (*SiteContactResource) siteContactsCreateRes() {}
 func (*SiteContactResource) siteContactsGetRes()    {}
 func (*SiteContactResource) siteContactsUpdateRes() {}
 
-// Custom fields as key-value pairs.
-type SiteContactResourceCustomFields map[string]string
+// Typed custom field values keyed by the field's machine key.
+type SiteContactResourceCustomFields map[string]jx.Raw
 
 func (s *SiteContactResourceCustomFields) init() SiteContactResourceCustomFields {
 	m := *s
 	if m == nil {
-		m = map[string]string{}
+		m = map[string]jx.Raw{}
 		*s = m
 	}
 	return m
@@ -2971,21 +3041,35 @@ func (s *SiteCreateBroadcastInput) SetIntegrationId(val OptNilEntityId) {
 // Site request body for creating a contact.
 // Ref: #/components/schemas/SiteCreateContactInput
 type SiteCreateContactInput struct {
-	// Email address.
-	Email EmailAddress `json:"email"`
+	// The customer's own user id — an alias key.
+	SubjectId OptNilString `json:"subjectId"`
+	// Email address — optional; any alias key may be absent.
+	Email OptNilEmailAddress `json:"email"`
+	// Phone number — an alias key.
+	Phone OptNilString `json:"phone"`
 	// First name.
 	FirstName OptNilString `json:"firstName"`
 	// Last name.
 	LastName OptNilString `json:"lastName"`
 	// IANA time zone identifier.
 	TimeZone OptNilTimeZoneName `json:"timeZone"`
-	// Custom fields as key-value pairs.
+	// Typed custom field values keyed by the field's machine key.
 	CustomFields OptNilSiteCreateContactInputCustomFields `json:"customFields"`
 }
 
+// GetSubjectId returns the value of SubjectId.
+func (s *SiteCreateContactInput) GetSubjectId() OptNilString {
+	return s.SubjectId
+}
+
 // GetEmail returns the value of Email.
-func (s *SiteCreateContactInput) GetEmail() EmailAddress {
+func (s *SiteCreateContactInput) GetEmail() OptNilEmailAddress {
 	return s.Email
+}
+
+// GetPhone returns the value of Phone.
+func (s *SiteCreateContactInput) GetPhone() OptNilString {
+	return s.Phone
 }
 
 // GetFirstName returns the value of FirstName.
@@ -3008,9 +3092,19 @@ func (s *SiteCreateContactInput) GetCustomFields() OptNilSiteCreateContactInputC
 	return s.CustomFields
 }
 
+// SetSubjectId sets the value of SubjectId.
+func (s *SiteCreateContactInput) SetSubjectId(val OptNilString) {
+	s.SubjectId = val
+}
+
 // SetEmail sets the value of Email.
-func (s *SiteCreateContactInput) SetEmail(val EmailAddress) {
+func (s *SiteCreateContactInput) SetEmail(val OptNilEmailAddress) {
 	s.Email = val
+}
+
+// SetPhone sets the value of Phone.
+func (s *SiteCreateContactInput) SetPhone(val OptNilString) {
+	s.Phone = val
 }
 
 // SetFirstName sets the value of FirstName.
@@ -3033,13 +3127,13 @@ func (s *SiteCreateContactInput) SetCustomFields(val OptNilSiteCreateContactInpu
 	s.CustomFields = val
 }
 
-// Custom fields as key-value pairs.
-type SiteCreateContactInputCustomFields map[string]string
+// Typed custom field values keyed by the field's machine key.
+type SiteCreateContactInputCustomFields map[string]jx.Raw
 
 func (s *SiteCreateContactInputCustomFields) init() SiteCreateContactInputCustomFields {
 	m := *s
 	if m == nil {
-		m = map[string]string{}
+		m = map[string]jx.Raw{}
 		*s = m
 	}
 	return m
@@ -3293,6 +3387,215 @@ func (s *SiteCreateWebhookEndpointInput) SetEventTypes(val []string) {
 func (s *SiteCreateWebhookEndpointInput) SetEnabled(val OptBool) {
 	s.Enabled = val
 }
+
+// Custom field definition — a typed, named Contact attribute (ADR 0006). Auto-created on first sight
+// from Identify; the catalogue feeds the segment builder.
+// Ref: #/components/schemas/SiteCustomFieldResource
+type SiteCustomFieldResource struct {
+	// Unique identifier.
+	ID EntityId `json:"id"`
+	// Machine key — how values are addressed in custom fields and segment rules.
+	Key string `json:"key"`
+	// Display name (renameable).
+	Name string `json:"name"`
+	// Inferred value type.
+	Type SiteCustomFieldType `json:"type"`
+	// Creation timestamp.
+	CreatedAt Timestamp `json:"createdAt"`
+	// Last update timestamp.
+	UpdatedAt Timestamp `json:"updatedAt"`
+}
+
+// GetID returns the value of ID.
+func (s *SiteCustomFieldResource) GetID() EntityId {
+	return s.ID
+}
+
+// GetKey returns the value of Key.
+func (s *SiteCustomFieldResource) GetKey() string {
+	return s.Key
+}
+
+// GetName returns the value of Name.
+func (s *SiteCustomFieldResource) GetName() string {
+	return s.Name
+}
+
+// GetType returns the value of Type.
+func (s *SiteCustomFieldResource) GetType() SiteCustomFieldType {
+	return s.Type
+}
+
+// GetCreatedAt returns the value of CreatedAt.
+func (s *SiteCustomFieldResource) GetCreatedAt() Timestamp {
+	return s.CreatedAt
+}
+
+// GetUpdatedAt returns the value of UpdatedAt.
+func (s *SiteCustomFieldResource) GetUpdatedAt() Timestamp {
+	return s.UpdatedAt
+}
+
+// SetID sets the value of ID.
+func (s *SiteCustomFieldResource) SetID(val EntityId) {
+	s.ID = val
+}
+
+// SetKey sets the value of Key.
+func (s *SiteCustomFieldResource) SetKey(val string) {
+	s.Key = val
+}
+
+// SetName sets the value of Name.
+func (s *SiteCustomFieldResource) SetName(val string) {
+	s.Name = val
+}
+
+// SetType sets the value of Type.
+func (s *SiteCustomFieldResource) SetType(val SiteCustomFieldType) {
+	s.Type = val
+}
+
+// SetCreatedAt sets the value of CreatedAt.
+func (s *SiteCustomFieldResource) SetCreatedAt(val Timestamp) {
+	s.CreatedAt = val
+}
+
+// SetUpdatedAt sets the value of UpdatedAt.
+func (s *SiteCustomFieldResource) SetUpdatedAt(val Timestamp) {
+	s.UpdatedAt = val
+}
+
+// A Custom field's value type.
+// Ref: #/components/schemas/SiteCustomFieldType
+type SiteCustomFieldType string
+
+const (
+	SiteCustomFieldTypeString   SiteCustomFieldType = "string"
+	SiteCustomFieldTypeNumber   SiteCustomFieldType = "number"
+	SiteCustomFieldTypeBool     SiteCustomFieldType = "bool"
+	SiteCustomFieldTypeDatetime SiteCustomFieldType = "datetime"
+)
+
+// AllValues returns all SiteCustomFieldType values.
+func (SiteCustomFieldType) AllValues() []SiteCustomFieldType {
+	return []SiteCustomFieldType{
+		SiteCustomFieldTypeString,
+		SiteCustomFieldTypeNumber,
+		SiteCustomFieldTypeBool,
+		SiteCustomFieldTypeDatetime,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s SiteCustomFieldType) MarshalText() ([]byte, error) {
+	switch s {
+	case SiteCustomFieldTypeString:
+		return []byte(s), nil
+	case SiteCustomFieldTypeNumber:
+		return []byte(s), nil
+	case SiteCustomFieldTypeBool:
+		return []byte(s), nil
+	case SiteCustomFieldTypeDatetime:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *SiteCustomFieldType) UnmarshalText(data []byte) error {
+	switch SiteCustomFieldType(data) {
+	case SiteCustomFieldTypeString:
+		*s = SiteCustomFieldTypeString
+		return nil
+	case SiteCustomFieldTypeNumber:
+		*s = SiteCustomFieldTypeNumber
+		return nil
+	case SiteCustomFieldTypeBool:
+		*s = SiteCustomFieldTypeBool
+		return nil
+	case SiteCustomFieldTypeDatetime:
+		*s = SiteCustomFieldTypeDatetime
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+type SiteCustomFieldsListBadRequest ProblemDetails
+
+func (*SiteCustomFieldsListBadRequest) siteCustomFieldsListRes() {}
+
+type SiteCustomFieldsListNotFound ProblemDetails
+
+func (*SiteCustomFieldsListNotFound) siteCustomFieldsListRes() {}
+
+// Paginated response.
+type SiteCustomFieldsListOK struct {
+	// List of items.
+	Items []SiteCustomFieldResource `json:"items"`
+	// Page number (1-based).
+	Page int32 `json:"page"`
+	// Page size.
+	PageSize int32 `json:"pageSize"`
+	// Total number of elements.
+	TotalItems int32 `json:"totalItems"`
+	// Total number of pages.
+	TotalPages int32 `json:"totalPages"`
+}
+
+// GetItems returns the value of Items.
+func (s *SiteCustomFieldsListOK) GetItems() []SiteCustomFieldResource {
+	return s.Items
+}
+
+// GetPage returns the value of Page.
+func (s *SiteCustomFieldsListOK) GetPage() int32 {
+	return s.Page
+}
+
+// GetPageSize returns the value of PageSize.
+func (s *SiteCustomFieldsListOK) GetPageSize() int32 {
+	return s.PageSize
+}
+
+// GetTotalItems returns the value of TotalItems.
+func (s *SiteCustomFieldsListOK) GetTotalItems() int32 {
+	return s.TotalItems
+}
+
+// GetTotalPages returns the value of TotalPages.
+func (s *SiteCustomFieldsListOK) GetTotalPages() int32 {
+	return s.TotalPages
+}
+
+// SetItems sets the value of Items.
+func (s *SiteCustomFieldsListOK) SetItems(val []SiteCustomFieldResource) {
+	s.Items = val
+}
+
+// SetPage sets the value of Page.
+func (s *SiteCustomFieldsListOK) SetPage(val int32) {
+	s.Page = val
+}
+
+// SetPageSize sets the value of PageSize.
+func (s *SiteCustomFieldsListOK) SetPageSize(val int32) {
+	s.PageSize = val
+}
+
+// SetTotalItems sets the value of TotalItems.
+func (s *SiteCustomFieldsListOK) SetTotalItems(val int32) {
+	s.TotalItems = val
+}
+
+// SetTotalPages sets the value of TotalPages.
+func (s *SiteCustomFieldsListOK) SetTotalPages(val int32) {
+	s.TotalPages = val
+}
+
+func (*SiteCustomFieldsListOK) siteCustomFieldsListRes() {}
 
 // Ref: #/components/schemas/SiteDirectLoginError
 type SiteDirectLoginError struct {
@@ -5488,14 +5791,35 @@ func (s *SiteUpdateBroadcastInput) SetIntegrationId(val OptNilEntityId) {
 // Site request body for updating a contact.
 // Ref: #/components/schemas/SiteUpdateContactInput
 type SiteUpdateContactInput struct {
+	// The customer's own user id — an alias key.
+	SubjectId OptNilString `json:"subjectId"`
+	// Email address — an alias key.
+	Email OptNilEmailAddress `json:"email"`
+	// Phone number — an alias key.
+	Phone OptNilString `json:"phone"`
 	// First name.
 	FirstName OptNilString `json:"firstName"`
 	// Last name.
 	LastName OptNilString `json:"lastName"`
 	// IANA time zone identifier.
 	TimeZone OptNilTimeZoneName `json:"timeZone"`
-	// Custom fields as key-value pairs.
+	// Typed custom field values keyed by the field's machine key.
 	CustomFields OptNilSiteUpdateContactInputCustomFields `json:"customFields"`
+}
+
+// GetSubjectId returns the value of SubjectId.
+func (s *SiteUpdateContactInput) GetSubjectId() OptNilString {
+	return s.SubjectId
+}
+
+// GetEmail returns the value of Email.
+func (s *SiteUpdateContactInput) GetEmail() OptNilEmailAddress {
+	return s.Email
+}
+
+// GetPhone returns the value of Phone.
+func (s *SiteUpdateContactInput) GetPhone() OptNilString {
+	return s.Phone
 }
 
 // GetFirstName returns the value of FirstName.
@@ -5518,6 +5842,21 @@ func (s *SiteUpdateContactInput) GetCustomFields() OptNilSiteUpdateContactInputC
 	return s.CustomFields
 }
 
+// SetSubjectId sets the value of SubjectId.
+func (s *SiteUpdateContactInput) SetSubjectId(val OptNilString) {
+	s.SubjectId = val
+}
+
+// SetEmail sets the value of Email.
+func (s *SiteUpdateContactInput) SetEmail(val OptNilEmailAddress) {
+	s.Email = val
+}
+
+// SetPhone sets the value of Phone.
+func (s *SiteUpdateContactInput) SetPhone(val OptNilString) {
+	s.Phone = val
+}
+
 // SetFirstName sets the value of FirstName.
 func (s *SiteUpdateContactInput) SetFirstName(val OptNilString) {
 	s.FirstName = val
@@ -5538,13 +5877,13 @@ func (s *SiteUpdateContactInput) SetCustomFields(val OptNilSiteUpdateContactInpu
 	s.CustomFields = val
 }
 
-// Custom fields as key-value pairs.
-type SiteUpdateContactInputCustomFields map[string]string
+// Typed custom field values keyed by the field's machine key.
+type SiteUpdateContactInputCustomFields map[string]jx.Raw
 
 func (s *SiteUpdateContactInputCustomFields) init() SiteUpdateContactInputCustomFields {
 	m := *s
 	if m == nil {
-		m = map[string]string{}
+		m = map[string]jx.Raw{}
 		*s = m
 	}
 	return m

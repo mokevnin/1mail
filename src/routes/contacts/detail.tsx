@@ -30,6 +30,14 @@ function Field({ label, value }: { label: string; value: string }) {
   )
 }
 
+// Custom field values are typed (string/number/bool/…); render scalars directly and
+// anything richer as compact JSON.
+function formatCustomValue(value: unknown): string {
+  if (value == null) return ''
+  if (typeof value === 'object') return JSON.stringify(value)
+  return String(value)
+}
+
 export function ContactDetailPage() {
   const { t } = useTranslation()
   const { slug, contactId } = contactsDetailRoute.useParams()
@@ -47,13 +55,15 @@ export function ContactDetailPage() {
 
   const contact = contactQuery.data
 
-  const eventsQuery = useQuery({
-    ...siteEventsListOptions({
+  // Activity is keyed by the stable contact_id (ADR 0002): this also surfaces
+  // anonymous events stitched onto the contact at Identify, which an email filter
+  // would miss.
+  const eventsQuery = useQuery(
+    siteEventsListOptions({
       path: { workspaceSlug: slug },
-      query: { page, pageSize: EVENTS_PAGE_SIZE, email: contact?.email ?? '' },
+      query: { page, pageSize: EVENTS_PAGE_SIZE, contactId },
     }),
-    enabled: Boolean(contact?.email),
-  })
+  )
 
   if (contactQuery.isLoading) return <Loader />
 
@@ -76,7 +86,7 @@ export function ContactDetailPage() {
     <Stack>
       <Group justify="space-between" align="flex-start" wrap="wrap">
         <Stack gap={4}>
-          <Title order={4}>{contact.email}</Title>
+          <Title order={4}>{contact.email ?? contact.subjectId ?? contact.phone ?? '—'}</Title>
           {fullName ? <Text c="dimmed">{fullName}</Text> : null}
         </Stack>
         <Group gap="xs">
@@ -94,6 +104,9 @@ export function ContactDetailPage() {
 
       <Title order={5}>{t(($) => $.contacts.detailsTitle)}</Title>
       <SimpleGrid cols={{ base: 1, sm: 2, md: 3 }}>
+        <Field label={t(($) => $.table.email)} value={contact.email ?? ''} />
+        <Field label={t(($) => $.table.subjectId)} value={contact.subjectId ?? ''} />
+        <Field label={t(($) => $.table.phone)} value={contact.phone ?? ''} />
         <Field label={t(($) => $.table.firstName)} value={contact.firstName ?? ''} />
         <Field label={t(($) => $.table.lastName)} value={contact.lastName ?? ''} />
         <Field label={t(($) => $.table.timeZone)} value={contact.timeZone ?? ''} />
@@ -112,7 +125,7 @@ export function ContactDetailPage() {
           <Title order={5}>{t(($) => $.contacts.customFields)}</Title>
           <SimpleGrid cols={{ base: 1, sm: 2, md: 3 }}>
             {customFields.map(([key, value]) => (
-              <Field key={key} label={key} value={value} />
+              <Field key={key} label={key} value={formatCustomValue(value)} />
             ))}
           </SimpleGrid>
         </>

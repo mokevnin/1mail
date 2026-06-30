@@ -13,11 +13,14 @@ import (
 
 // ContactSchema whitelists the contact fields a segment rule may target and maps
 // them to columns. Custom fields are addressed as "custom:<key>"; behavioral
-// conditions as "event:<action>" (joined to the events log on email + workspace).
+// conditions as "event:<action>" (joined to the events log on the stable identity
+// link contact_id ↔ id + workspace, per ADR 0002 — never the email string).
 func ContactSchema() Schema {
 	return Schema{
 		Columns: map[string]string{
+			"subject_id": contact.FieldSubjectID,
 			"email":      contact.FieldEmail,
+			"phone":      contact.FieldPhone,
 			"first_name": contact.FieldFirstName,
 			"last_name":  contact.FieldLastName,
 			"time_zone":  contact.FieldTimeZone,
@@ -28,11 +31,11 @@ func ContactSchema() Schema {
 		},
 		Events: &EventSchema{
 			Table:             event.Table,
-			EmailCol:          event.FieldEmail,
+			JoinCol:           event.FieldContactID,
 			WorkspaceCol:      event.FieldWorkspaceID,
 			ActionCol:         event.FieldAction,
 			OccurredCol:       event.FieldOccurredAt,
-			OuterEmailCol:     contact.FieldEmail,
+			OuterJoinCol:      contact.FieldID,
 			OuterWorkspaceCol: contact.FieldWorkspaceID,
 		},
 	}

@@ -4,7 +4,6 @@ package ent
 
 import (
 	"context"
-	"database/sql/driver"
 	"fmt"
 	"math"
 
@@ -12,20 +11,18 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/mokevnin/1mail/ent/customfield"
 	"github.com/mokevnin/1mail/ent/predicate"
-	"github.com/mokevnin/1mail/ent/trackingprofile"
-	"github.com/mokevnin/1mail/ent/trackingvisitor"
 	"github.com/mokevnin/1mail/ent/workspace"
 )
 
-// TrackingProfileQuery is the builder for querying TrackingProfile entities.
-type TrackingProfileQuery struct {
+// CustomFieldQuery is the builder for querying CustomField entities.
+type CustomFieldQuery struct {
 	config
 	ctx           *QueryContext
-	order         []trackingprofile.OrderOption
+	order         []customfield.OrderOption
 	inters        []Interceptor
-	predicates    []predicate.TrackingProfile
-	withVisitors  *TrackingVisitorQuery
+	predicates    []predicate.CustomField
 	withWorkspace *WorkspaceQuery
 	modifiers     []func(*sql.Selector)
 	// intermediate query (i.e. traversal path).
@@ -33,61 +30,39 @@ type TrackingProfileQuery struct {
 	path func(context.Context) (*sql.Selector, error)
 }
 
-// Where adds a new predicate for the TrackingProfileQuery builder.
-func (_q *TrackingProfileQuery) Where(ps ...predicate.TrackingProfile) *TrackingProfileQuery {
+// Where adds a new predicate for the CustomFieldQuery builder.
+func (_q *CustomFieldQuery) Where(ps ...predicate.CustomField) *CustomFieldQuery {
 	_q.predicates = append(_q.predicates, ps...)
 	return _q
 }
 
 // Limit the number of records to be returned by this query.
-func (_q *TrackingProfileQuery) Limit(limit int) *TrackingProfileQuery {
+func (_q *CustomFieldQuery) Limit(limit int) *CustomFieldQuery {
 	_q.ctx.Limit = &limit
 	return _q
 }
 
 // Offset to start from.
-func (_q *TrackingProfileQuery) Offset(offset int) *TrackingProfileQuery {
+func (_q *CustomFieldQuery) Offset(offset int) *CustomFieldQuery {
 	_q.ctx.Offset = &offset
 	return _q
 }
 
 // Unique configures the query builder to filter duplicate records on query.
 // By default, unique is set to true, and can be disabled using this method.
-func (_q *TrackingProfileQuery) Unique(unique bool) *TrackingProfileQuery {
+func (_q *CustomFieldQuery) Unique(unique bool) *CustomFieldQuery {
 	_q.ctx.Unique = &unique
 	return _q
 }
 
 // Order specifies how the records should be ordered.
-func (_q *TrackingProfileQuery) Order(o ...trackingprofile.OrderOption) *TrackingProfileQuery {
+func (_q *CustomFieldQuery) Order(o ...customfield.OrderOption) *CustomFieldQuery {
 	_q.order = append(_q.order, o...)
 	return _q
 }
 
-// QueryVisitors chains the current query on the "visitors" edge.
-func (_q *TrackingProfileQuery) QueryVisitors() *TrackingVisitorQuery {
-	query := (&TrackingVisitorClient{config: _q.config}).Query()
-	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
-		if err := _q.prepareQuery(ctx); err != nil {
-			return nil, err
-		}
-		selector := _q.sqlQuery(ctx)
-		if err := selector.Err(); err != nil {
-			return nil, err
-		}
-		step := sqlgraph.NewStep(
-			sqlgraph.From(trackingprofile.Table, trackingprofile.FieldID, selector),
-			sqlgraph.To(trackingvisitor.Table, trackingvisitor.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, trackingprofile.VisitorsTable, trackingprofile.VisitorsColumn),
-		)
-		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
-		return fromU, nil
-	}
-	return query
-}
-
 // QueryWorkspace chains the current query on the "workspace" edge.
-func (_q *TrackingProfileQuery) QueryWorkspace() *WorkspaceQuery {
+func (_q *CustomFieldQuery) QueryWorkspace() *WorkspaceQuery {
 	query := (&WorkspaceClient{config: _q.config}).Query()
 	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
 		if err := _q.prepareQuery(ctx); err != nil {
@@ -98,9 +73,9 @@ func (_q *TrackingProfileQuery) QueryWorkspace() *WorkspaceQuery {
 			return nil, err
 		}
 		step := sqlgraph.NewStep(
-			sqlgraph.From(trackingprofile.Table, trackingprofile.FieldID, selector),
+			sqlgraph.From(customfield.Table, customfield.FieldID, selector),
 			sqlgraph.To(workspace.Table, workspace.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, true, trackingprofile.WorkspaceTable, trackingprofile.WorkspaceColumn),
+			sqlgraph.Edge(sqlgraph.M2O, true, customfield.WorkspaceTable, customfield.WorkspaceColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
@@ -108,21 +83,21 @@ func (_q *TrackingProfileQuery) QueryWorkspace() *WorkspaceQuery {
 	return query
 }
 
-// First returns the first TrackingProfile entity from the query.
-// Returns a *NotFoundError when no TrackingProfile was found.
-func (_q *TrackingProfileQuery) First(ctx context.Context) (*TrackingProfile, error) {
+// First returns the first CustomField entity from the query.
+// Returns a *NotFoundError when no CustomField was found.
+func (_q *CustomFieldQuery) First(ctx context.Context) (*CustomField, error) {
 	nodes, err := _q.Limit(1).All(setContextOp(ctx, _q.ctx, ent.OpQueryFirst))
 	if err != nil {
 		return nil, err
 	}
 	if len(nodes) == 0 {
-		return nil, &NotFoundError{trackingprofile.Label}
+		return nil, &NotFoundError{customfield.Label}
 	}
 	return nodes[0], nil
 }
 
 // FirstX is like First, but panics if an error occurs.
-func (_q *TrackingProfileQuery) FirstX(ctx context.Context) *TrackingProfile {
+func (_q *CustomFieldQuery) FirstX(ctx context.Context) *CustomField {
 	node, err := _q.First(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
@@ -130,22 +105,22 @@ func (_q *TrackingProfileQuery) FirstX(ctx context.Context) *TrackingProfile {
 	return node
 }
 
-// FirstID returns the first TrackingProfile ID from the query.
-// Returns a *NotFoundError when no TrackingProfile ID was found.
-func (_q *TrackingProfileQuery) FirstID(ctx context.Context) (id int64, err error) {
+// FirstID returns the first CustomField ID from the query.
+// Returns a *NotFoundError when no CustomField ID was found.
+func (_q *CustomFieldQuery) FirstID(ctx context.Context) (id int64, err error) {
 	var ids []int64
 	if ids, err = _q.Limit(1).IDs(setContextOp(ctx, _q.ctx, ent.OpQueryFirstID)); err != nil {
 		return
 	}
 	if len(ids) == 0 {
-		err = &NotFoundError{trackingprofile.Label}
+		err = &NotFoundError{customfield.Label}
 		return
 	}
 	return ids[0], nil
 }
 
 // FirstIDX is like FirstID, but panics if an error occurs.
-func (_q *TrackingProfileQuery) FirstIDX(ctx context.Context) int64 {
+func (_q *CustomFieldQuery) FirstIDX(ctx context.Context) int64 {
 	id, err := _q.FirstID(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
@@ -153,10 +128,10 @@ func (_q *TrackingProfileQuery) FirstIDX(ctx context.Context) int64 {
 	return id
 }
 
-// Only returns a single TrackingProfile entity found by the query, ensuring it only returns one.
-// Returns a *NotSingularError when more than one TrackingProfile entity is found.
-// Returns a *NotFoundError when no TrackingProfile entities are found.
-func (_q *TrackingProfileQuery) Only(ctx context.Context) (*TrackingProfile, error) {
+// Only returns a single CustomField entity found by the query, ensuring it only returns one.
+// Returns a *NotSingularError when more than one CustomField entity is found.
+// Returns a *NotFoundError when no CustomField entities are found.
+func (_q *CustomFieldQuery) Only(ctx context.Context) (*CustomField, error) {
 	nodes, err := _q.Limit(2).All(setContextOp(ctx, _q.ctx, ent.OpQueryOnly))
 	if err != nil {
 		return nil, err
@@ -165,14 +140,14 @@ func (_q *TrackingProfileQuery) Only(ctx context.Context) (*TrackingProfile, err
 	case 1:
 		return nodes[0], nil
 	case 0:
-		return nil, &NotFoundError{trackingprofile.Label}
+		return nil, &NotFoundError{customfield.Label}
 	default:
-		return nil, &NotSingularError{trackingprofile.Label}
+		return nil, &NotSingularError{customfield.Label}
 	}
 }
 
 // OnlyX is like Only, but panics if an error occurs.
-func (_q *TrackingProfileQuery) OnlyX(ctx context.Context) *TrackingProfile {
+func (_q *CustomFieldQuery) OnlyX(ctx context.Context) *CustomField {
 	node, err := _q.Only(ctx)
 	if err != nil {
 		panic(err)
@@ -180,10 +155,10 @@ func (_q *TrackingProfileQuery) OnlyX(ctx context.Context) *TrackingProfile {
 	return node
 }
 
-// OnlyID is like Only, but returns the only TrackingProfile ID in the query.
-// Returns a *NotSingularError when more than one TrackingProfile ID is found.
+// OnlyID is like Only, but returns the only CustomField ID in the query.
+// Returns a *NotSingularError when more than one CustomField ID is found.
 // Returns a *NotFoundError when no entities are found.
-func (_q *TrackingProfileQuery) OnlyID(ctx context.Context) (id int64, err error) {
+func (_q *CustomFieldQuery) OnlyID(ctx context.Context) (id int64, err error) {
 	var ids []int64
 	if ids, err = _q.Limit(2).IDs(setContextOp(ctx, _q.ctx, ent.OpQueryOnlyID)); err != nil {
 		return
@@ -192,15 +167,15 @@ func (_q *TrackingProfileQuery) OnlyID(ctx context.Context) (id int64, err error
 	case 1:
 		id = ids[0]
 	case 0:
-		err = &NotFoundError{trackingprofile.Label}
+		err = &NotFoundError{customfield.Label}
 	default:
-		err = &NotSingularError{trackingprofile.Label}
+		err = &NotSingularError{customfield.Label}
 	}
 	return
 }
 
 // OnlyIDX is like OnlyID, but panics if an error occurs.
-func (_q *TrackingProfileQuery) OnlyIDX(ctx context.Context) int64 {
+func (_q *CustomFieldQuery) OnlyIDX(ctx context.Context) int64 {
 	id, err := _q.OnlyID(ctx)
 	if err != nil {
 		panic(err)
@@ -208,18 +183,18 @@ func (_q *TrackingProfileQuery) OnlyIDX(ctx context.Context) int64 {
 	return id
 }
 
-// All executes the query and returns a list of TrackingProfiles.
-func (_q *TrackingProfileQuery) All(ctx context.Context) ([]*TrackingProfile, error) {
+// All executes the query and returns a list of CustomFields.
+func (_q *CustomFieldQuery) All(ctx context.Context) ([]*CustomField, error) {
 	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryAll)
 	if err := _q.prepareQuery(ctx); err != nil {
 		return nil, err
 	}
-	qr := querierAll[[]*TrackingProfile, *TrackingProfileQuery]()
-	return withInterceptors[[]*TrackingProfile](ctx, _q, qr, _q.inters)
+	qr := querierAll[[]*CustomField, *CustomFieldQuery]()
+	return withInterceptors[[]*CustomField](ctx, _q, qr, _q.inters)
 }
 
 // AllX is like All, but panics if an error occurs.
-func (_q *TrackingProfileQuery) AllX(ctx context.Context) []*TrackingProfile {
+func (_q *CustomFieldQuery) AllX(ctx context.Context) []*CustomField {
 	nodes, err := _q.All(ctx)
 	if err != nil {
 		panic(err)
@@ -227,20 +202,20 @@ func (_q *TrackingProfileQuery) AllX(ctx context.Context) []*TrackingProfile {
 	return nodes
 }
 
-// IDs executes the query and returns a list of TrackingProfile IDs.
-func (_q *TrackingProfileQuery) IDs(ctx context.Context) (ids []int64, err error) {
+// IDs executes the query and returns a list of CustomField IDs.
+func (_q *CustomFieldQuery) IDs(ctx context.Context) (ids []int64, err error) {
 	if _q.ctx.Unique == nil && _q.path != nil {
 		_q.Unique(true)
 	}
 	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryIDs)
-	if err = _q.Select(trackingprofile.FieldID).Scan(ctx, &ids); err != nil {
+	if err = _q.Select(customfield.FieldID).Scan(ctx, &ids); err != nil {
 		return nil, err
 	}
 	return ids, nil
 }
 
 // IDsX is like IDs, but panics if an error occurs.
-func (_q *TrackingProfileQuery) IDsX(ctx context.Context) []int64 {
+func (_q *CustomFieldQuery) IDsX(ctx context.Context) []int64 {
 	ids, err := _q.IDs(ctx)
 	if err != nil {
 		panic(err)
@@ -249,16 +224,16 @@ func (_q *TrackingProfileQuery) IDsX(ctx context.Context) []int64 {
 }
 
 // Count returns the count of the given query.
-func (_q *TrackingProfileQuery) Count(ctx context.Context) (int, error) {
+func (_q *CustomFieldQuery) Count(ctx context.Context) (int, error) {
 	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryCount)
 	if err := _q.prepareQuery(ctx); err != nil {
 		return 0, err
 	}
-	return withInterceptors[int](ctx, _q, querierCount[*TrackingProfileQuery](), _q.inters)
+	return withInterceptors[int](ctx, _q, querierCount[*CustomFieldQuery](), _q.inters)
 }
 
 // CountX is like Count, but panics if an error occurs.
-func (_q *TrackingProfileQuery) CountX(ctx context.Context) int {
+func (_q *CustomFieldQuery) CountX(ctx context.Context) int {
 	count, err := _q.Count(ctx)
 	if err != nil {
 		panic(err)
@@ -267,7 +242,7 @@ func (_q *TrackingProfileQuery) CountX(ctx context.Context) int {
 }
 
 // Exist returns true if the query has elements in the graph.
-func (_q *TrackingProfileQuery) Exist(ctx context.Context) (bool, error) {
+func (_q *CustomFieldQuery) Exist(ctx context.Context) (bool, error) {
 	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryExist)
 	switch _, err := _q.FirstID(ctx); {
 	case IsNotFound(err):
@@ -280,7 +255,7 @@ func (_q *TrackingProfileQuery) Exist(ctx context.Context) (bool, error) {
 }
 
 // ExistX is like Exist, but panics if an error occurs.
-func (_q *TrackingProfileQuery) ExistX(ctx context.Context) bool {
+func (_q *CustomFieldQuery) ExistX(ctx context.Context) bool {
 	exist, err := _q.Exist(ctx)
 	if err != nil {
 		panic(err)
@@ -288,19 +263,18 @@ func (_q *TrackingProfileQuery) ExistX(ctx context.Context) bool {
 	return exist
 }
 
-// Clone returns a duplicate of the TrackingProfileQuery builder, including all associated steps. It can be
+// Clone returns a duplicate of the CustomFieldQuery builder, including all associated steps. It can be
 // used to prepare common query builders and use them differently after the clone is made.
-func (_q *TrackingProfileQuery) Clone() *TrackingProfileQuery {
+func (_q *CustomFieldQuery) Clone() *CustomFieldQuery {
 	if _q == nil {
 		return nil
 	}
-	return &TrackingProfileQuery{
+	return &CustomFieldQuery{
 		config:        _q.config,
 		ctx:           _q.ctx.Clone(),
-		order:         append([]trackingprofile.OrderOption{}, _q.order...),
+		order:         append([]customfield.OrderOption{}, _q.order...),
 		inters:        append([]Interceptor{}, _q.inters...),
-		predicates:    append([]predicate.TrackingProfile{}, _q.predicates...),
-		withVisitors:  _q.withVisitors.Clone(),
+		predicates:    append([]predicate.CustomField{}, _q.predicates...),
 		withWorkspace: _q.withWorkspace.Clone(),
 		// clone intermediate query.
 		sql:       _q.sql.Clone(),
@@ -309,20 +283,9 @@ func (_q *TrackingProfileQuery) Clone() *TrackingProfileQuery {
 	}
 }
 
-// WithVisitors tells the query-builder to eager-load the nodes that are connected to
-// the "visitors" edge. The optional arguments are used to configure the query builder of the edge.
-func (_q *TrackingProfileQuery) WithVisitors(opts ...func(*TrackingVisitorQuery)) *TrackingProfileQuery {
-	query := (&TrackingVisitorClient{config: _q.config}).Query()
-	for _, opt := range opts {
-		opt(query)
-	}
-	_q.withVisitors = query
-	return _q
-}
-
 // WithWorkspace tells the query-builder to eager-load the nodes that are connected to
 // the "workspace" edge. The optional arguments are used to configure the query builder of the edge.
-func (_q *TrackingProfileQuery) WithWorkspace(opts ...func(*WorkspaceQuery)) *TrackingProfileQuery {
+func (_q *CustomFieldQuery) WithWorkspace(opts ...func(*WorkspaceQuery)) *CustomFieldQuery {
 	query := (&WorkspaceClient{config: _q.config}).Query()
 	for _, opt := range opts {
 		opt(query)
@@ -337,19 +300,19 @@ func (_q *TrackingProfileQuery) WithWorkspace(opts ...func(*WorkspaceQuery)) *Tr
 // Example:
 //
 //	var v []struct {
-//		SubjectID string `json:"subject_id,omitempty"`
+//		Key string `json:"key,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
-//	client.TrackingProfile.Query().
-//		GroupBy(trackingprofile.FieldSubjectID).
+//	client.CustomField.Query().
+//		GroupBy(customfield.FieldKey).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
-func (_q *TrackingProfileQuery) GroupBy(field string, fields ...string) *TrackingProfileGroupBy {
+func (_q *CustomFieldQuery) GroupBy(field string, fields ...string) *CustomFieldGroupBy {
 	_q.ctx.Fields = append([]string{field}, fields...)
-	grbuild := &TrackingProfileGroupBy{build: _q}
+	grbuild := &CustomFieldGroupBy{build: _q}
 	grbuild.flds = &_q.ctx.Fields
-	grbuild.label = trackingprofile.Label
+	grbuild.label = customfield.Label
 	grbuild.scan = grbuild.Scan
 	return grbuild
 }
@@ -360,26 +323,26 @@ func (_q *TrackingProfileQuery) GroupBy(field string, fields ...string) *Trackin
 // Example:
 //
 //	var v []struct {
-//		SubjectID string `json:"subject_id,omitempty"`
+//		Key string `json:"key,omitempty"`
 //	}
 //
-//	client.TrackingProfile.Query().
-//		Select(trackingprofile.FieldSubjectID).
+//	client.CustomField.Query().
+//		Select(customfield.FieldKey).
 //		Scan(ctx, &v)
-func (_q *TrackingProfileQuery) Select(fields ...string) *TrackingProfileSelect {
+func (_q *CustomFieldQuery) Select(fields ...string) *CustomFieldSelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)
-	sbuild := &TrackingProfileSelect{TrackingProfileQuery: _q}
-	sbuild.label = trackingprofile.Label
+	sbuild := &CustomFieldSelect{CustomFieldQuery: _q}
+	sbuild.label = customfield.Label
 	sbuild.flds, sbuild.scan = &_q.ctx.Fields, sbuild.Scan
 	return sbuild
 }
 
-// Aggregate returns a TrackingProfileSelect configured with the given aggregations.
-func (_q *TrackingProfileQuery) Aggregate(fns ...AggregateFunc) *TrackingProfileSelect {
+// Aggregate returns a CustomFieldSelect configured with the given aggregations.
+func (_q *CustomFieldQuery) Aggregate(fns ...AggregateFunc) *CustomFieldSelect {
 	return _q.Select().Aggregate(fns...)
 }
 
-func (_q *TrackingProfileQuery) prepareQuery(ctx context.Context) error {
+func (_q *CustomFieldQuery) prepareQuery(ctx context.Context) error {
 	for _, inter := range _q.inters {
 		if inter == nil {
 			return fmt.Errorf("ent: uninitialized interceptor (forgotten import ent/runtime?)")
@@ -391,7 +354,7 @@ func (_q *TrackingProfileQuery) prepareQuery(ctx context.Context) error {
 		}
 	}
 	for _, f := range _q.ctx.Fields {
-		if !trackingprofile.ValidColumn(f) {
+		if !customfield.ValidColumn(f) {
 			return &ValidationError{Name: f, err: fmt.Errorf("ent: invalid field %q for query", f)}
 		}
 	}
@@ -405,20 +368,19 @@ func (_q *TrackingProfileQuery) prepareQuery(ctx context.Context) error {
 	return nil
 }
 
-func (_q *TrackingProfileQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*TrackingProfile, error) {
+func (_q *CustomFieldQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*CustomField, error) {
 	var (
-		nodes       = []*TrackingProfile{}
+		nodes       = []*CustomField{}
 		_spec       = _q.querySpec()
-		loadedTypes = [2]bool{
-			_q.withVisitors != nil,
+		loadedTypes = [1]bool{
 			_q.withWorkspace != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
-		return (*TrackingProfile).scanValues(nil, columns)
+		return (*CustomField).scanValues(nil, columns)
 	}
 	_spec.Assign = func(columns []string, values []any) error {
-		node := &TrackingProfile{config: _q.config}
+		node := &CustomField{config: _q.config}
 		nodes = append(nodes, node)
 		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(columns, values)
@@ -435,58 +397,18 @@ func (_q *TrackingProfileQuery) sqlAll(ctx context.Context, hooks ...queryHook) 
 	if len(nodes) == 0 {
 		return nodes, nil
 	}
-	if query := _q.withVisitors; query != nil {
-		if err := _q.loadVisitors(ctx, query, nodes,
-			func(n *TrackingProfile) { n.Edges.Visitors = []*TrackingVisitor{} },
-			func(n *TrackingProfile, e *TrackingVisitor) { n.Edges.Visitors = append(n.Edges.Visitors, e) }); err != nil {
-			return nil, err
-		}
-	}
 	if query := _q.withWorkspace; query != nil {
 		if err := _q.loadWorkspace(ctx, query, nodes, nil,
-			func(n *TrackingProfile, e *Workspace) { n.Edges.Workspace = e }); err != nil {
+			func(n *CustomField, e *Workspace) { n.Edges.Workspace = e }); err != nil {
 			return nil, err
 		}
 	}
 	return nodes, nil
 }
 
-func (_q *TrackingProfileQuery) loadVisitors(ctx context.Context, query *TrackingVisitorQuery, nodes []*TrackingProfile, init func(*TrackingProfile), assign func(*TrackingProfile, *TrackingVisitor)) error {
-	fks := make([]driver.Value, 0, len(nodes))
-	nodeids := make(map[int64]*TrackingProfile)
-	for i := range nodes {
-		fks = append(fks, nodes[i].ID)
-		nodeids[nodes[i].ID] = nodes[i]
-		if init != nil {
-			init(nodes[i])
-		}
-	}
-	if len(query.ctx.Fields) > 0 {
-		query.ctx.AppendFieldOnce(trackingvisitor.FieldProfileID)
-	}
-	query.Where(predicate.TrackingVisitor(func(s *sql.Selector) {
-		s.Where(sql.InValues(s.C(trackingprofile.VisitorsColumn), fks...))
-	}))
-	neighbors, err := query.All(ctx)
-	if err != nil {
-		return err
-	}
-	for _, n := range neighbors {
-		fk := n.ProfileID
-		if fk == nil {
-			return fmt.Errorf(`foreign-key "profile_id" is nil for node %v`, n.ID)
-		}
-		node, ok := nodeids[*fk]
-		if !ok {
-			return fmt.Errorf(`unexpected referenced foreign-key "profile_id" returned %v for node %v`, *fk, n.ID)
-		}
-		assign(node, n)
-	}
-	return nil
-}
-func (_q *TrackingProfileQuery) loadWorkspace(ctx context.Context, query *WorkspaceQuery, nodes []*TrackingProfile, init func(*TrackingProfile), assign func(*TrackingProfile, *Workspace)) error {
+func (_q *CustomFieldQuery) loadWorkspace(ctx context.Context, query *WorkspaceQuery, nodes []*CustomField, init func(*CustomField), assign func(*CustomField, *Workspace)) error {
 	ids := make([]int64, 0, len(nodes))
-	nodeids := make(map[int64][]*TrackingProfile)
+	nodeids := make(map[int64][]*CustomField)
 	for i := range nodes {
 		fk := nodes[i].WorkspaceID
 		if _, ok := nodeids[fk]; !ok {
@@ -514,7 +436,7 @@ func (_q *TrackingProfileQuery) loadWorkspace(ctx context.Context, query *Worksp
 	return nil
 }
 
-func (_q *TrackingProfileQuery) sqlCount(ctx context.Context) (int, error) {
+func (_q *CustomFieldQuery) sqlCount(ctx context.Context) (int, error) {
 	_spec := _q.querySpec()
 	if len(_q.modifiers) > 0 {
 		_spec.Modifiers = _q.modifiers
@@ -526,8 +448,8 @@ func (_q *TrackingProfileQuery) sqlCount(ctx context.Context) (int, error) {
 	return sqlgraph.CountNodes(ctx, _q.driver, _spec)
 }
 
-func (_q *TrackingProfileQuery) querySpec() *sqlgraph.QuerySpec {
-	_spec := sqlgraph.NewQuerySpec(trackingprofile.Table, trackingprofile.Columns, sqlgraph.NewFieldSpec(trackingprofile.FieldID, field.TypeInt64))
+func (_q *CustomFieldQuery) querySpec() *sqlgraph.QuerySpec {
+	_spec := sqlgraph.NewQuerySpec(customfield.Table, customfield.Columns, sqlgraph.NewFieldSpec(customfield.FieldID, field.TypeInt64))
 	_spec.From = _q.sql
 	if unique := _q.ctx.Unique; unique != nil {
 		_spec.Unique = *unique
@@ -536,14 +458,14 @@ func (_q *TrackingProfileQuery) querySpec() *sqlgraph.QuerySpec {
 	}
 	if fields := _q.ctx.Fields; len(fields) > 0 {
 		_spec.Node.Columns = make([]string, 0, len(fields))
-		_spec.Node.Columns = append(_spec.Node.Columns, trackingprofile.FieldID)
+		_spec.Node.Columns = append(_spec.Node.Columns, customfield.FieldID)
 		for i := range fields {
-			if fields[i] != trackingprofile.FieldID {
+			if fields[i] != customfield.FieldID {
 				_spec.Node.Columns = append(_spec.Node.Columns, fields[i])
 			}
 		}
 		if _q.withWorkspace != nil {
-			_spec.Node.AddColumnOnce(trackingprofile.FieldWorkspaceID)
+			_spec.Node.AddColumnOnce(customfield.FieldWorkspaceID)
 		}
 	}
 	if ps := _q.predicates; len(ps) > 0 {
@@ -569,12 +491,12 @@ func (_q *TrackingProfileQuery) querySpec() *sqlgraph.QuerySpec {
 	return _spec
 }
 
-func (_q *TrackingProfileQuery) sqlQuery(ctx context.Context) *sql.Selector {
+func (_q *CustomFieldQuery) sqlQuery(ctx context.Context) *sql.Selector {
 	builder := sql.Dialect(_q.driver.Dialect())
-	t1 := builder.Table(trackingprofile.Table)
+	t1 := builder.Table(customfield.Table)
 	columns := _q.ctx.Fields
 	if len(columns) == 0 {
-		columns = trackingprofile.Columns
+		columns = customfield.Columns
 	}
 	selector := builder.Select(t1.Columns(columns...)...).From(t1)
 	if _q.sql != nil {
@@ -605,33 +527,33 @@ func (_q *TrackingProfileQuery) sqlQuery(ctx context.Context) *sql.Selector {
 }
 
 // Modify adds a query modifier for attaching custom logic to queries.
-func (_q *TrackingProfileQuery) Modify(modifiers ...func(s *sql.Selector)) *TrackingProfileSelect {
+func (_q *CustomFieldQuery) Modify(modifiers ...func(s *sql.Selector)) *CustomFieldSelect {
 	_q.modifiers = append(_q.modifiers, modifiers...)
 	return _q.Select()
 }
 
-// TrackingProfileGroupBy is the group-by builder for TrackingProfile entities.
-type TrackingProfileGroupBy struct {
+// CustomFieldGroupBy is the group-by builder for CustomField entities.
+type CustomFieldGroupBy struct {
 	selector
-	build *TrackingProfileQuery
+	build *CustomFieldQuery
 }
 
 // Aggregate adds the given aggregation functions to the group-by query.
-func (_g *TrackingProfileGroupBy) Aggregate(fns ...AggregateFunc) *TrackingProfileGroupBy {
+func (_g *CustomFieldGroupBy) Aggregate(fns ...AggregateFunc) *CustomFieldGroupBy {
 	_g.fns = append(_g.fns, fns...)
 	return _g
 }
 
 // Scan applies the selector query and scans the result into the given value.
-func (_g *TrackingProfileGroupBy) Scan(ctx context.Context, v any) error {
+func (_g *CustomFieldGroupBy) Scan(ctx context.Context, v any) error {
 	ctx = setContextOp(ctx, _g.build.ctx, ent.OpQueryGroupBy)
 	if err := _g.build.prepareQuery(ctx); err != nil {
 		return err
 	}
-	return scanWithInterceptors[*TrackingProfileQuery, *TrackingProfileGroupBy](ctx, _g.build, _g, _g.build.inters, v)
+	return scanWithInterceptors[*CustomFieldQuery, *CustomFieldGroupBy](ctx, _g.build, _g, _g.build.inters, v)
 }
 
-func (_g *TrackingProfileGroupBy) sqlScan(ctx context.Context, root *TrackingProfileQuery, v any) error {
+func (_g *CustomFieldGroupBy) sqlScan(ctx context.Context, root *CustomFieldQuery, v any) error {
 	selector := root.sqlQuery(ctx).Select()
 	aggregation := make([]string, 0, len(_g.fns))
 	for _, fn := range _g.fns {
@@ -658,28 +580,28 @@ func (_g *TrackingProfileGroupBy) sqlScan(ctx context.Context, root *TrackingPro
 	return sql.ScanSlice(rows, v)
 }
 
-// TrackingProfileSelect is the builder for selecting fields of TrackingProfile entities.
-type TrackingProfileSelect struct {
-	*TrackingProfileQuery
+// CustomFieldSelect is the builder for selecting fields of CustomField entities.
+type CustomFieldSelect struct {
+	*CustomFieldQuery
 	selector
 }
 
 // Aggregate adds the given aggregation functions to the selector query.
-func (_s *TrackingProfileSelect) Aggregate(fns ...AggregateFunc) *TrackingProfileSelect {
+func (_s *CustomFieldSelect) Aggregate(fns ...AggregateFunc) *CustomFieldSelect {
 	_s.fns = append(_s.fns, fns...)
 	return _s
 }
 
 // Scan applies the selector query and scans the result into the given value.
-func (_s *TrackingProfileSelect) Scan(ctx context.Context, v any) error {
+func (_s *CustomFieldSelect) Scan(ctx context.Context, v any) error {
 	ctx = setContextOp(ctx, _s.ctx, ent.OpQuerySelect)
 	if err := _s.prepareQuery(ctx); err != nil {
 		return err
 	}
-	return scanWithInterceptors[*TrackingProfileQuery, *TrackingProfileSelect](ctx, _s.TrackingProfileQuery, _s, _s.inters, v)
+	return scanWithInterceptors[*CustomFieldQuery, *CustomFieldSelect](ctx, _s.CustomFieldQuery, _s, _s.inters, v)
 }
 
-func (_s *TrackingProfileSelect) sqlScan(ctx context.Context, root *TrackingProfileQuery, v any) error {
+func (_s *CustomFieldSelect) sqlScan(ctx context.Context, root *CustomFieldQuery, v any) error {
 	selector := root.sqlQuery(ctx)
 	aggregation := make([]string, 0, len(_s.fns))
 	for _, fn := range _s.fns {
@@ -701,7 +623,7 @@ func (_s *TrackingProfileSelect) sqlScan(ctx context.Context, root *TrackingProf
 }
 
 // Modify adds a query modifier for attaching custom logic to queries.
-func (_s *TrackingProfileSelect) Modify(modifiers ...func(s *sql.Selector)) *TrackingProfileSelect {
+func (_s *CustomFieldSelect) Modify(modifiers ...func(s *sql.Selector)) *CustomFieldSelect {
 	_s.modifiers = append(_s.modifiers, modifiers...)
 	return _s
 }

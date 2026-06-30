@@ -8,7 +8,7 @@ import {
 } from '../../generated/site/@tanstack/react-query.gen.ts'
 import { useResourceMutation } from '../../hooks/useResourceMutation.ts'
 import { contactsCreateRoute, contactsEditRoute } from '../../router.tsx'
-import { ContactForm, type ContactFormValues } from './ContactForm.tsx'
+import { ContactForm, type ContactFormValues, toContactPayload } from './ContactForm.tsx'
 
 export function ContactCreatePage() {
   const { t } = useTranslation()
@@ -16,7 +16,14 @@ export function ContactCreatePage() {
   const { slug } = contactsCreateRoute.useParams()
 
   const form = useForm<ContactFormValues>({
-    initialValues: { email: '', firstName: '', lastName: '', timeZone: '' },
+    initialValues: {
+      subjectId: '',
+      email: '',
+      phone: '',
+      firstName: '',
+      lastName: '',
+      timeZone: '',
+    },
   })
 
   const createMutation = useResourceMutation({
@@ -37,7 +44,7 @@ export function ContactCreatePage() {
         onSubmit={(values) =>
           createMutation.mutate({
             path: { workspaceSlug: slug },
-            body: { ...values, email: values.email.trim() },
+            body: toContactPayload(values),
           })
         }
       />

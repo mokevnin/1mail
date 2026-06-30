@@ -29,6 +29,7 @@ const (
 	SiteContactsGetOperation           OperationName = "SiteContactsGet"
 	SiteContactsListOperation          OperationName = "SiteContactsList"
 	SiteContactsUpdateOperation        OperationName = "SiteContactsUpdate"
+	SiteCustomFieldsListOperation      OperationName = "SiteCustomFieldsList"
 	SiteEventsActionsOperation         OperationName = "SiteEventsActions"
 	SiteEventsListOperation            OperationName = "SiteEventsList"
 	SiteIntegrationsCreateOperation    OperationName = "SiteIntegrationsCreate"

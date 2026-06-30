@@ -34,8 +34,22 @@ func (Event) Fields() []ent.Field {
 			Optional().
 			Nillable().
 			Unique(),
+		// The authoritative link to the Contact, resolved by stable identity at ingest
+		// (never by email). Plain column, deliberately NOT an FK: Events are immutable
+		// and append-only and must outlive the mutable Contact. Null for anonymous
+		// events before Identify; backfilled (stitched) onto the Contact at Identify.
+		field.Int64("contact_id").
+			Optional().
+			Nillable(),
+		// The anonymous device this event came from. Kept so pre-Identify anonymous
+		// events can be stitched onto a Contact by visitor_id when Identify arrives.
+		field.String("visitor_id").
+			Optional().
+			Nillable(),
+		// Denormalized identity snapshot, for debugging only — the authoritative link
+		// is contact_id. May be empty for anonymous events.
 		field.String("subject_id").
-			NotEmpty(),
+			Optional(),
 		field.String("email").
 			Optional().
 			Nillable(),
@@ -47,9 +61,6 @@ func (Event) Fields() []ent.Field {
 		field.JSON("properties", map[string]interface{}{}).
 			Optional(),
 		field.Time("occurred_at").
-			Optional().
-			Nillable(),
-		field.Bool("prospect").
 			Optional().
 			Nillable(),
 		field.Int64("workspace_id"),
@@ -71,8 +82,11 @@ func (Event) Edges() []ent.Edge {
 
 func (Event) Indexes() []ent.Index {
 	return []ent.Index{
-		// Backs event-based segment conditions: the correlated EXISTS filters by
-		// workspace + email + action (the contact↔event join + the event type).
-		index.Fields("workspace_id", "email", "action"),
+		// Backs event-based segment conditions: the correlated EXISTS joins the
+		// Contact to its Events by the stable contact_id (not email) and filters by
+		// the event type.
+		index.Fields("workspace_id", "contact_id", "action"),
+		// Backs stitching anonymous events onto a Contact at Identify time.
+		index.Fields("workspace_id", "visitor_id"),
 	}
 }

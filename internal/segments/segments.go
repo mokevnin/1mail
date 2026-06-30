@@ -56,15 +56,16 @@ type Schema struct {
 }
 
 // EventSchema describes how to correlate the subject entity to its events: the
-// events table + its (email, workspace, action, occurred_at) columns, plus the
-// outer subject's email/workspace columns to join on.
+// events table + its (join, workspace, action, occurred_at) columns, plus the outer
+// subject's join/workspace columns. The join is on the stable identity link
+// (event.contact_id ↔ contact.id), never the email string (ADR 0002).
 type EventSchema struct {
 	Table             string
-	EmailCol          string
+	JoinCol           string
 	WorkspaceCol      string
 	ActionCol         string
 	OccurredCol       string
-	OuterEmailCol     string
+	OuterJoinCol      string
 	OuterWorkspaceCol string
 }
 
@@ -206,8 +207,10 @@ func compileRule(r Rule, schema Schema) (builder, error) {
 
 // compileEvent builds a correlated (NOT) EXISTS against the events table: the
 // subject performed `action` (optionally within the last `value` days). The
-// subquery joins events↔subject on email + workspace, so it works for any subject
-// schema that supplies those outer columns.
+// subquery joins events↔subject on the stable identity link (contact_id ↔ id) +
+// workspace, so anonymous events stitched onto a Contact at Identify become visible
+// to segmentation (ADR 0002), and it works for any subject schema supplying those
+// outer columns.
 func compileEvent(ev *EventSchema, action, op, value string) (builder, error) {
 	var negate bool
 	switch op {
@@ -232,9 +235,9 @@ func compileEvent(ev *EventSchema, action, op, value string) (builder, error) {
 	}
 
 	return func(s *sql.Selector) *sql.Predicate {
-		sub := sql.Select(ev.EmailCol).From(sql.Table(ev.Table))
+		sub := sql.Select(ev.JoinCol).From(sql.Table(ev.Table))
 		preds := []*sql.Predicate{
-			sql.ColumnsEQ(sub.C(ev.EmailCol), s.C(ev.OuterEmailCol)),
+			sql.ColumnsEQ(sub.C(ev.JoinCol), s.C(ev.OuterJoinCol)),
 			sql.ColumnsEQ(sub.C(ev.WorkspaceCol), s.C(ev.OuterWorkspaceCol)),
 			sql.EQ(sub.C(ev.ActionCol), action),
 		}

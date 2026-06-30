@@ -17,14 +17,14 @@ import (
 	"github.com/mokevnin/1mail/ent/broadcast"
 	"github.com/mokevnin/1mail/ent/broadcastrecipient"
 	"github.com/mokevnin/1mail/ent/contact"
+	"github.com/mokevnin/1mail/ent/customfield"
 	"github.com/mokevnin/1mail/ent/emailtemplate"
 	"github.com/mokevnin/1mail/ent/event"
 	"github.com/mokevnin/1mail/ent/integration"
 	"github.com/mokevnin/1mail/ent/segment"
 	"github.com/mokevnin/1mail/ent/suppression"
-	"github.com/mokevnin/1mail/ent/trackingprofile"
-	"github.com/mokevnin/1mail/ent/trackingvisitor"
 	"github.com/mokevnin/1mail/ent/user"
+	"github.com/mokevnin/1mail/ent/visitor"
 	"github.com/mokevnin/1mail/ent/webhookendpoint"
 	"github.com/mokevnin/1mail/ent/workspace"
 )
@@ -124,6 +124,21 @@ func (_c *WorkspaceCreate) AddContacts(v ...*Contact) *WorkspaceCreate {
 	return _c.AddContactIDs(ids...)
 }
 
+// AddCustomFieldIDs adds the "custom_fields" edge to the CustomField entity by IDs.
+func (_c *WorkspaceCreate) AddCustomFieldIDs(ids ...int64) *WorkspaceCreate {
+	_c.mutation.AddCustomFieldIDs(ids...)
+	return _c
+}
+
+// AddCustomFields adds the "custom_fields" edges to the CustomField entity.
+func (_c *WorkspaceCreate) AddCustomFields(v ...*CustomField) *WorkspaceCreate {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddCustomFieldIDs(ids...)
+}
+
 // AddSegmentIDs adds the "segments" edge to the Segment entity by IDs.
 func (_c *WorkspaceCreate) AddSegmentIDs(ids ...int64) *WorkspaceCreate {
 	_c.mutation.AddSegmentIDs(ids...)
@@ -154,34 +169,19 @@ func (_c *WorkspaceCreate) AddEvents(v ...*Event) *WorkspaceCreate {
 	return _c.AddEventIDs(ids...)
 }
 
-// AddTrackingProfileIDs adds the "tracking_profiles" edge to the TrackingProfile entity by IDs.
-func (_c *WorkspaceCreate) AddTrackingProfileIDs(ids ...int64) *WorkspaceCreate {
-	_c.mutation.AddTrackingProfileIDs(ids...)
+// AddVisitorIDs adds the "visitors" edge to the Visitor entity by IDs.
+func (_c *WorkspaceCreate) AddVisitorIDs(ids ...int64) *WorkspaceCreate {
+	_c.mutation.AddVisitorIDs(ids...)
 	return _c
 }
 
-// AddTrackingProfiles adds the "tracking_profiles" edges to the TrackingProfile entity.
-func (_c *WorkspaceCreate) AddTrackingProfiles(v ...*TrackingProfile) *WorkspaceCreate {
+// AddVisitors adds the "visitors" edges to the Visitor entity.
+func (_c *WorkspaceCreate) AddVisitors(v ...*Visitor) *WorkspaceCreate {
 	ids := make([]int64, len(v))
 	for i := range v {
 		ids[i] = v[i].ID
 	}
-	return _c.AddTrackingProfileIDs(ids...)
-}
-
-// AddTrackingVisitorIDs adds the "tracking_visitors" edge to the TrackingVisitor entity by IDs.
-func (_c *WorkspaceCreate) AddTrackingVisitorIDs(ids ...int64) *WorkspaceCreate {
-	_c.mutation.AddTrackingVisitorIDs(ids...)
-	return _c
-}
-
-// AddTrackingVisitors adds the "tracking_visitors" edges to the TrackingVisitor entity.
-func (_c *WorkspaceCreate) AddTrackingVisitors(v ...*TrackingVisitor) *WorkspaceCreate {
-	ids := make([]int64, len(v))
-	for i := range v {
-		ids[i] = v[i].ID
-	}
-	return _c.AddTrackingVisitorIDs(ids...)
+	return _c.AddVisitorIDs(ids...)
 }
 
 // AddAPITokenIDs adds the "api_tokens" edge to the ApiToken entity by IDs.
@@ -482,6 +482,22 @@ func (_c *WorkspaceCreate) createSpec() (*Workspace, *sqlgraph.CreateSpec) {
 		}
 		_spec.Edges = append(_spec.Edges, edge)
 	}
+	if nodes := _c.mutation.CustomFieldsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   workspace.CustomFieldsTable,
+			Columns: []string{workspace.CustomFieldsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(customfield.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
 	if nodes := _c.mutation.SegmentsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
@@ -514,31 +530,15 @@ func (_c *WorkspaceCreate) createSpec() (*Workspace, *sqlgraph.CreateSpec) {
 		}
 		_spec.Edges = append(_spec.Edges, edge)
 	}
-	if nodes := _c.mutation.TrackingProfilesIDs(); len(nodes) > 0 {
+	if nodes := _c.mutation.VisitorsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   workspace.TrackingProfilesTable,
-			Columns: []string{workspace.TrackingProfilesColumn},
+			Table:   workspace.VisitorsTable,
+			Columns: []string{workspace.VisitorsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(trackingprofile.FieldID, field.TypeInt64),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges = append(_spec.Edges, edge)
-	}
-	if nodes := _c.mutation.TrackingVisitorsIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: false,
-			Table:   workspace.TrackingVisitorsTable,
-			Columns: []string{workspace.TrackingVisitorsColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(trackingvisitor.FieldID, field.TypeInt64),
+				IDSpec: sqlgraph.NewFieldSpec(visitor.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {

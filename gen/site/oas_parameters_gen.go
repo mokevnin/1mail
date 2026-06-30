@@ -2811,6 +2811,71 @@ func decodeSiteContactsUpdateParams(args [2]string, argsEscaped bool, r *http.Re
 	return params, nil
 }
 
+// SiteCustomFieldsListParams is parameters of SiteCustomFields_list operation.
+type SiteCustomFieldsListParams struct {
+	WorkspaceSlug string
+}
+
+func unpackSiteCustomFieldsListParams(packed middleware.Parameters) (params SiteCustomFieldsListParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "workspaceSlug",
+			In:   "path",
+		}
+		params.WorkspaceSlug = packed[key].(string)
+	}
+	return params
+}
+
+func decodeSiteCustomFieldsListParams(args [1]string, argsEscaped bool, r *http.Request) (params SiteCustomFieldsListParams, _ error) {
+	// Decode path: workspaceSlug.
+	if err := func() error {
+		param := args[0]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[0])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "workspaceSlug",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToString(val)
+				if err != nil {
+					return err
+				}
+
+				params.WorkspaceSlug = c
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "workspaceSlug",
+			In:   "path",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
 // SiteEventsActionsParams is parameters of SiteEvents_actions operation.
 type SiteEventsActionsParams struct {
 	WorkspaceSlug string
@@ -2885,6 +2950,8 @@ type SiteEventsListParams struct {
 	PageSize OptInt32 `json:",omitempty,omitzero"`
 	// Filter by event action.
 	Action OptString `json:",omitempty,omitzero"`
+	// Filter by the Contact the event resolved to (the stable identity link).
+	ContactId OptEntityId `json:",omitempty,omitzero"`
 	// Filter by the email associated with the event.
 	Email OptString `json:",omitempty,omitzero"`
 }
@@ -2922,6 +2989,15 @@ func unpackSiteEventsListParams(packed middleware.Parameters) (params SiteEvents
 		}
 		if v, ok := packed[key]; ok {
 			params.Action = v.(OptString)
+		}
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "contactId",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.ContactId = v.(OptEntityId)
 		}
 	}
 	{
@@ -3112,6 +3188,69 @@ func decodeSiteEventsListParams(args [1]string, argsEscaped bool, r *http.Reques
 	}(); err != nil {
 		return params, &ogenerrors.DecodeParamError{
 			Name: "action",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	// Decode query: contactId.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "contactId",
+			Style:   uri.QueryStyleForm,
+			Explode: false,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotContactIdVal EntityId
+				if err := func() error {
+					var paramsDotContactIdValVal string
+					if err := func() error {
+						val, err := d.DecodeValue()
+						if err != nil {
+							return err
+						}
+
+						c, err := conv.ToString(val)
+						if err != nil {
+							return err
+						}
+
+						paramsDotContactIdValVal = c
+						return nil
+					}(); err != nil {
+						return err
+					}
+					paramsDotContactIdVal = EntityId(paramsDotContactIdValVal)
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.ContactId.SetTo(paramsDotContactIdVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if value, ok := params.ContactId.Get(); ok {
+					if err := func() error {
+						if err := value.Validate(); err != nil {
+							return err
+						}
+						return nil
+					}(); err != nil {
+						return err
+					}
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "contactId",
 			In:   "query",
 			Err:  err,
 		}

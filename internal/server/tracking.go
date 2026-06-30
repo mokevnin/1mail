@@ -13,6 +13,7 @@ import (
 	"github.com/mokevnin/1mail/ent/contact"
 	"github.com/mokevnin/1mail/internal/events"
 	"github.com/mokevnin/1mail/internal/tracking"
+	"github.com/samber/lo"
 )
 
 // pixelGIF is a 1x1 transparent GIF served by the open-tracking endpoint.
@@ -99,7 +100,7 @@ func recordOpen(ctx context.Context, client *ent.Client, bus *events.Bus, recipi
 		}
 		return pub.Publish(ctx, &events.EmailEngagement{
 			Action: events.NameEmailOpened, WorkspaceID: rec.WorkspaceID, ContactID: rec.ContactID,
-			Email: c.Email, BroadcastID: rec.BroadcastID,
+			Email: lo.FromPtr(c.Email), BroadcastID: rec.BroadcastID,
 		})
 	})
 	if err != nil {
@@ -128,7 +129,7 @@ func recordClick(ctx context.Context, client *ent.Client, bus *events.Bus, recip
 		}
 		return pub.Publish(ctx, &events.EmailEngagement{
 			Action: events.NameEmailClicked, WorkspaceID: rec.WorkspaceID, ContactID: rec.ContactID,
-			Email: c.Email, BroadcastID: rec.BroadcastID, URL: dest,
+			Email: lo.FromPtr(c.Email), BroadcastID: rec.BroadcastID, URL: dest,
 		})
 	})
 	if err != nil {
@@ -157,7 +158,7 @@ func recordUnsubscribe(ctx context.Context, client *ent.Client, bus *events.Bus,
 		}
 		return pub.Publish(ctx, &events.EmailEngagement{
 			Action: events.NameEmailUnsubscribed, WorkspaceID: rec.WorkspaceID, ContactID: rec.ContactID,
-			Email: c.Email, BroadcastID: rec.BroadcastID,
+			Email: lo.FromPtr(c.Email), BroadcastID: rec.BroadcastID,
 		})
 	})
 	if err != nil {

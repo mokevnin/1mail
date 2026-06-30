@@ -17,9 +17,6 @@ model EventInput {
   /** Phone number associated with the event */
   phone?: string | null;
 
-  /** Prospect flag */
-  prospect?: boolean | null;
-
   /** Event properties */
   properties?: Record<unknown> | null;
 

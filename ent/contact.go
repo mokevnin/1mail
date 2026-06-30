@@ -19,8 +19,12 @@ type Contact struct {
 	config `json:"-"`
 	// ID of the ent.
 	ID int64 `json:"id,omitempty"`
+	// SubjectID holds the value of the "subject_id" field.
+	SubjectID *string `json:"subject_id,omitempty"`
 	// Email holds the value of the "email" field.
-	Email string `json:"email,omitempty"`
+	Email *string `json:"email,omitempty"`
+	// Phone holds the value of the "phone" field.
+	Phone *string `json:"phone,omitempty"`
 	// FirstName holds the value of the "first_name" field.
 	FirstName *string `json:"first_name,omitempty"`
 	// LastName holds the value of the "last_name" field.
@@ -30,7 +34,7 @@ type Contact struct {
 	// TimeZone holds the value of the "time_zone" field.
 	TimeZone *string `json:"time_zone,omitempty"`
 	// CustomFields holds the value of the "custom_fields" field.
-	CustomFields map[string]string `json:"custom_fields,omitempty"`
+	CustomFields map[string]interface{} `json:"custom_fields,omitempty"`
 	// WorkspaceID holds the value of the "workspace_id" field.
 	WorkspaceID int64 `json:"workspace_id,omitempty"`
 	// CreatedAt holds the value of the "created_at" field.
@@ -45,11 +49,22 @@ type Contact struct {
 
 // ContactEdges holds the relations/edges for other nodes in the graph.
 type ContactEdges struct {
+	// Visitors holds the value of the visitors edge.
+	Visitors []*Visitor `json:"visitors,omitempty"`
 	// Workspace holds the value of the workspace edge.
 	Workspace *Workspace `json:"workspace,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [1]bool
+	loadedTypes [2]bool
+}
+
+// VisitorsOrErr returns the Visitors value or an error if the edge
+// was not loaded in eager-loading.
+func (e ContactEdges) VisitorsOrErr() ([]*Visitor, error) {
+	if e.loadedTypes[0] {
+		return e.Visitors, nil
+	}
+	return nil, &NotLoadedError{edge: "visitors"}
 }
 
 // WorkspaceOrErr returns the Workspace value or an error if the edge
@@ -57,7 +72,7 @@ type ContactEdges struct {
 func (e ContactEdges) WorkspaceOrErr() (*Workspace, error) {
 	if e.Workspace != nil {
 		return e.Workspace, nil
-	} else if e.loadedTypes[0] {
+	} else if e.loadedTypes[1] {
 		return nil, &NotFoundError{label: workspace.Label}
 	}
 	return nil, &NotLoadedError{edge: "workspace"}
@@ -72,7 +87,7 @@ func (*Contact) scanValues(columns []string) ([]any, error) {
 			values[i] = new([]byte)
 		case contact.FieldID, contact.FieldWorkspaceID:
 			values[i] = new(sql.NullInt64)
-		case contact.FieldEmail, contact.FieldFirstName, contact.FieldLastName, contact.FieldStatus, contact.FieldTimeZone:
+		case contact.FieldSubjectID, contact.FieldEmail, contact.FieldPhone, contact.FieldFirstName, contact.FieldLastName, contact.FieldStatus, contact.FieldTimeZone:
 			values[i] = new(sql.NullString)
 		case contact.FieldCreatedAt, contact.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
@@ -97,11 +112,26 @@ func (_m *Contact) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field id", value)
 			}
 			_m.ID = int64(value.Int64)
+		case contact.FieldSubjectID:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field subject_id", values[i])
+			} else if value.Valid {
+				_m.SubjectID = new(string)
+				*_m.SubjectID = value.String
+			}
 		case contact.FieldEmail:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field email", values[i])
 			} else if value.Valid {
-				_m.Email = value.String
+				_m.Email = new(string)
+				*_m.Email = value.String
+			}
+		case contact.FieldPhone:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field phone", values[i])
+			} else if value.Valid {
+				_m.Phone = new(string)
+				*_m.Phone = value.String
 			}
 		case contact.FieldFirstName:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -169,6 +199,11 @@ func (_m *Contact) Value(name string) (ent.Value, error) {
 	return _m.selectValues.Get(name)
 }
 
+// QueryVisitors queries the "visitors" edge of the Contact entity.
+func (_m *Contact) QueryVisitors() *VisitorQuery {
+	return NewContactClient(_m.config).QueryVisitors(_m)
+}
+
 // QueryWorkspace queries the "workspace" edge of the Contact entity.
 func (_m *Contact) QueryWorkspace() *WorkspaceQuery {
 	return NewContactClient(_m.config).QueryWorkspace(_m)
@@ -197,8 +232,20 @@ func (_m *Contact) String() string {
 	var builder strings.Builder
 	builder.WriteString("Contact(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
-	builder.WriteString("email=")
-	builder.WriteString(_m.Email)
+	if v := _m.SubjectID; v != nil {
+		builder.WriteString("subject_id=")
+		builder.WriteString(*v)
+	}
+	builder.WriteString(", ")
+	if v := _m.Email; v != nil {
+		builder.WriteString("email=")
+		builder.WriteString(*v)
+	}
+	builder.WriteString(", ")
+	if v := _m.Phone; v != nil {
+		builder.WriteString("phone=")
+		builder.WriteString(*v)
+	}
 	builder.WriteString(", ")
 	if v := _m.FirstName; v != nil {
 		builder.WriteString("first_name=")

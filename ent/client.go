@@ -21,14 +21,14 @@ import (
 	"github.com/mokevnin/1mail/ent/broadcast"
 	"github.com/mokevnin/1mail/ent/broadcastrecipient"
 	"github.com/mokevnin/1mail/ent/contact"
+	"github.com/mokevnin/1mail/ent/customfield"
 	"github.com/mokevnin/1mail/ent/emailtemplate"
 	"github.com/mokevnin/1mail/ent/event"
 	"github.com/mokevnin/1mail/ent/integration"
 	"github.com/mokevnin/1mail/ent/segment"
 	"github.com/mokevnin/1mail/ent/suppression"
-	"github.com/mokevnin/1mail/ent/trackingprofile"
-	"github.com/mokevnin/1mail/ent/trackingvisitor"
 	"github.com/mokevnin/1mail/ent/user"
+	"github.com/mokevnin/1mail/ent/visitor"
 	"github.com/mokevnin/1mail/ent/webhookendpoint"
 	"github.com/mokevnin/1mail/ent/workspace"
 )
@@ -50,6 +50,8 @@ type Client struct {
 	BroadcastRecipient *BroadcastRecipientClient
 	// Contact is the client for interacting with the Contact builders.
 	Contact *ContactClient
+	// CustomField is the client for interacting with the CustomField builders.
+	CustomField *CustomFieldClient
 	// EmailTemplate is the client for interacting with the EmailTemplate builders.
 	EmailTemplate *EmailTemplateClient
 	// Event is the client for interacting with the Event builders.
@@ -60,12 +62,10 @@ type Client struct {
 	Segment *SegmentClient
 	// Suppression is the client for interacting with the Suppression builders.
 	Suppression *SuppressionClient
-	// TrackingProfile is the client for interacting with the TrackingProfile builders.
-	TrackingProfile *TrackingProfileClient
-	// TrackingVisitor is the client for interacting with the TrackingVisitor builders.
-	TrackingVisitor *TrackingVisitorClient
 	// User is the client for interacting with the User builders.
 	User *UserClient
+	// Visitor is the client for interacting with the Visitor builders.
+	Visitor *VisitorClient
 	// WebhookEndpoint is the client for interacting with the WebhookEndpoint builders.
 	WebhookEndpoint *WebhookEndpointClient
 	// Workspace is the client for interacting with the Workspace builders.
@@ -87,14 +87,14 @@ func (c *Client) init() {
 	c.Broadcast = NewBroadcastClient(c.config)
 	c.BroadcastRecipient = NewBroadcastRecipientClient(c.config)
 	c.Contact = NewContactClient(c.config)
+	c.CustomField = NewCustomFieldClient(c.config)
 	c.EmailTemplate = NewEmailTemplateClient(c.config)
 	c.Event = NewEventClient(c.config)
 	c.Integration = NewIntegrationClient(c.config)
 	c.Segment = NewSegmentClient(c.config)
 	c.Suppression = NewSuppressionClient(c.config)
-	c.TrackingProfile = NewTrackingProfileClient(c.config)
-	c.TrackingVisitor = NewTrackingVisitorClient(c.config)
 	c.User = NewUserClient(c.config)
+	c.Visitor = NewVisitorClient(c.config)
 	c.WebhookEndpoint = NewWebhookEndpointClient(c.config)
 	c.Workspace = NewWorkspaceClient(c.config)
 }
@@ -195,14 +195,14 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		Broadcast:          NewBroadcastClient(cfg),
 		BroadcastRecipient: NewBroadcastRecipientClient(cfg),
 		Contact:            NewContactClient(cfg),
+		CustomField:        NewCustomFieldClient(cfg),
 		EmailTemplate:      NewEmailTemplateClient(cfg),
 		Event:              NewEventClient(cfg),
 		Integration:        NewIntegrationClient(cfg),
 		Segment:            NewSegmentClient(cfg),
 		Suppression:        NewSuppressionClient(cfg),
-		TrackingProfile:    NewTrackingProfileClient(cfg),
-		TrackingVisitor:    NewTrackingVisitorClient(cfg),
 		User:               NewUserClient(cfg),
+		Visitor:            NewVisitorClient(cfg),
 		WebhookEndpoint:    NewWebhookEndpointClient(cfg),
 		Workspace:          NewWorkspaceClient(cfg),
 	}, nil
@@ -230,14 +230,14 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		Broadcast:          NewBroadcastClient(cfg),
 		BroadcastRecipient: NewBroadcastRecipientClient(cfg),
 		Contact:            NewContactClient(cfg),
+		CustomField:        NewCustomFieldClient(cfg),
 		EmailTemplate:      NewEmailTemplateClient(cfg),
 		Event:              NewEventClient(cfg),
 		Integration:        NewIntegrationClient(cfg),
 		Segment:            NewSegmentClient(cfg),
 		Suppression:        NewSuppressionClient(cfg),
-		TrackingProfile:    NewTrackingProfileClient(cfg),
-		TrackingVisitor:    NewTrackingVisitorClient(cfg),
 		User:               NewUserClient(cfg),
+		Visitor:            NewVisitorClient(cfg),
 		WebhookEndpoint:    NewWebhookEndpointClient(cfg),
 		Workspace:          NewWorkspaceClient(cfg),
 	}, nil
@@ -270,8 +270,8 @@ func (c *Client) Close() error {
 func (c *Client) Use(hooks ...Hook) {
 	for _, n := range []interface{ Use(...Hook) }{
 		c.ApiToken, c.Automation, c.AutomationRun, c.Broadcast, c.BroadcastRecipient,
-		c.Contact, c.EmailTemplate, c.Event, c.Integration, c.Segment, c.Suppression,
-		c.TrackingProfile, c.TrackingVisitor, c.User, c.WebhookEndpoint, c.Workspace,
+		c.Contact, c.CustomField, c.EmailTemplate, c.Event, c.Integration, c.Segment,
+		c.Suppression, c.User, c.Visitor, c.WebhookEndpoint, c.Workspace,
 	} {
 		n.Use(hooks...)
 	}
@@ -282,8 +282,8 @@ func (c *Client) Use(hooks ...Hook) {
 func (c *Client) Intercept(interceptors ...Interceptor) {
 	for _, n := range []interface{ Intercept(...Interceptor) }{
 		c.ApiToken, c.Automation, c.AutomationRun, c.Broadcast, c.BroadcastRecipient,
-		c.Contact, c.EmailTemplate, c.Event, c.Integration, c.Segment, c.Suppression,
-		c.TrackingProfile, c.TrackingVisitor, c.User, c.WebhookEndpoint, c.Workspace,
+		c.Contact, c.CustomField, c.EmailTemplate, c.Event, c.Integration, c.Segment,
+		c.Suppression, c.User, c.Visitor, c.WebhookEndpoint, c.Workspace,
 	} {
 		n.Intercept(interceptors...)
 	}
@@ -304,6 +304,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.BroadcastRecipient.mutate(ctx, m)
 	case *ContactMutation:
 		return c.Contact.mutate(ctx, m)
+	case *CustomFieldMutation:
+		return c.CustomField.mutate(ctx, m)
 	case *EmailTemplateMutation:
 		return c.EmailTemplate.mutate(ctx, m)
 	case *EventMutation:
@@ -314,12 +316,10 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.Segment.mutate(ctx, m)
 	case *SuppressionMutation:
 		return c.Suppression.mutate(ctx, m)
-	case *TrackingProfileMutation:
-		return c.TrackingProfile.mutate(ctx, m)
-	case *TrackingVisitorMutation:
-		return c.TrackingVisitor.mutate(ctx, m)
 	case *UserMutation:
 		return c.User.mutate(ctx, m)
+	case *VisitorMutation:
+		return c.Visitor.mutate(ctx, m)
 	case *WebhookEndpointMutation:
 		return c.WebhookEndpoint.mutate(ctx, m)
 	case *WorkspaceMutation:
@@ -1246,6 +1246,22 @@ func (c *ContactClient) GetX(ctx context.Context, id int64) *Contact {
 	return obj
 }
 
+// QueryVisitors queries the visitors edge of a Contact.
+func (c *ContactClient) QueryVisitors(_m *Contact) *VisitorQuery {
+	query := (&VisitorClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(contact.Table, contact.FieldID, id),
+			sqlgraph.To(visitor.Table, visitor.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, contact.VisitorsTable, contact.VisitorsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // QueryWorkspace queries the workspace edge of a Contact.
 func (c *ContactClient) QueryWorkspace(_m *Contact) *WorkspaceQuery {
 	query := (&WorkspaceClient{config: c.config}).Query()
@@ -1284,6 +1300,155 @@ func (c *ContactClient) mutate(ctx context.Context, m *ContactMutation) (Value, 
 		return (&ContactDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("ent: unknown Contact mutation op: %q", m.Op())
+	}
+}
+
+// CustomFieldClient is a client for the CustomField schema.
+type CustomFieldClient struct {
+	config
+}
+
+// NewCustomFieldClient returns a client for the CustomField from the given config.
+func NewCustomFieldClient(c config) *CustomFieldClient {
+	return &CustomFieldClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `customfield.Hooks(f(g(h())))`.
+func (c *CustomFieldClient) Use(hooks ...Hook) {
+	c.hooks.CustomField = append(c.hooks.CustomField, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `customfield.Intercept(f(g(h())))`.
+func (c *CustomFieldClient) Intercept(interceptors ...Interceptor) {
+	c.inters.CustomField = append(c.inters.CustomField, interceptors...)
+}
+
+// Create returns a builder for creating a CustomField entity.
+func (c *CustomFieldClient) Create() *CustomFieldCreate {
+	mutation := newCustomFieldMutation(c.config, OpCreate)
+	return &CustomFieldCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of CustomField entities.
+func (c *CustomFieldClient) CreateBulk(builders ...*CustomFieldCreate) *CustomFieldCreateBulk {
+	return &CustomFieldCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *CustomFieldClient) MapCreateBulk(slice any, setFunc func(*CustomFieldCreate, int)) *CustomFieldCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &CustomFieldCreateBulk{err: fmt.Errorf("calling to CustomFieldClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*CustomFieldCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &CustomFieldCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for CustomField.
+func (c *CustomFieldClient) Update() *CustomFieldUpdate {
+	mutation := newCustomFieldMutation(c.config, OpUpdate)
+	return &CustomFieldUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *CustomFieldClient) UpdateOne(_m *CustomField) *CustomFieldUpdateOne {
+	mutation := newCustomFieldMutation(c.config, OpUpdateOne, withCustomField(_m))
+	return &CustomFieldUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *CustomFieldClient) UpdateOneID(id int64) *CustomFieldUpdateOne {
+	mutation := newCustomFieldMutation(c.config, OpUpdateOne, withCustomFieldID(id))
+	return &CustomFieldUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for CustomField.
+func (c *CustomFieldClient) Delete() *CustomFieldDelete {
+	mutation := newCustomFieldMutation(c.config, OpDelete)
+	return &CustomFieldDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *CustomFieldClient) DeleteOne(_m *CustomField) *CustomFieldDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *CustomFieldClient) DeleteOneID(id int64) *CustomFieldDeleteOne {
+	builder := c.Delete().Where(customfield.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &CustomFieldDeleteOne{builder}
+}
+
+// Query returns a query builder for CustomField.
+func (c *CustomFieldClient) Query() *CustomFieldQuery {
+	return &CustomFieldQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeCustomField},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a CustomField entity by its id.
+func (c *CustomFieldClient) Get(ctx context.Context, id int64) (*CustomField, error) {
+	return c.Query().Where(customfield.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *CustomFieldClient) GetX(ctx context.Context, id int64) *CustomField {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryWorkspace queries the workspace edge of a CustomField.
+func (c *CustomFieldClient) QueryWorkspace(_m *CustomField) *WorkspaceQuery {
+	query := (&WorkspaceClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(customfield.Table, customfield.FieldID, id),
+			sqlgraph.To(workspace.Table, workspace.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, customfield.WorkspaceTable, customfield.WorkspaceColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *CustomFieldClient) Hooks() []Hook {
+	return c.hooks.CustomField
+}
+
+// Interceptors returns the client interceptors.
+func (c *CustomFieldClient) Interceptors() []Interceptor {
+	return c.inters.CustomField
+}
+
+func (c *CustomFieldClient) mutate(ctx context.Context, m *CustomFieldMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&CustomFieldCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&CustomFieldUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&CustomFieldUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&CustomFieldDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown CustomField mutation op: %q", m.Op())
 	}
 }
 
@@ -2032,336 +2197,6 @@ func (c *SuppressionClient) mutate(ctx context.Context, m *SuppressionMutation) 
 	}
 }
 
-// TrackingProfileClient is a client for the TrackingProfile schema.
-type TrackingProfileClient struct {
-	config
-}
-
-// NewTrackingProfileClient returns a client for the TrackingProfile from the given config.
-func NewTrackingProfileClient(c config) *TrackingProfileClient {
-	return &TrackingProfileClient{config: c}
-}
-
-// Use adds a list of mutation hooks to the hooks stack.
-// A call to `Use(f, g, h)` equals to `trackingprofile.Hooks(f(g(h())))`.
-func (c *TrackingProfileClient) Use(hooks ...Hook) {
-	c.hooks.TrackingProfile = append(c.hooks.TrackingProfile, hooks...)
-}
-
-// Intercept adds a list of query interceptors to the interceptors stack.
-// A call to `Intercept(f, g, h)` equals to `trackingprofile.Intercept(f(g(h())))`.
-func (c *TrackingProfileClient) Intercept(interceptors ...Interceptor) {
-	c.inters.TrackingProfile = append(c.inters.TrackingProfile, interceptors...)
-}
-
-// Create returns a builder for creating a TrackingProfile entity.
-func (c *TrackingProfileClient) Create() *TrackingProfileCreate {
-	mutation := newTrackingProfileMutation(c.config, OpCreate)
-	return &TrackingProfileCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// CreateBulk returns a builder for creating a bulk of TrackingProfile entities.
-func (c *TrackingProfileClient) CreateBulk(builders ...*TrackingProfileCreate) *TrackingProfileCreateBulk {
-	return &TrackingProfileCreateBulk{config: c.config, builders: builders}
-}
-
-// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
-// a builder and applies setFunc on it.
-func (c *TrackingProfileClient) MapCreateBulk(slice any, setFunc func(*TrackingProfileCreate, int)) *TrackingProfileCreateBulk {
-	rv := reflect.ValueOf(slice)
-	if rv.Kind() != reflect.Slice {
-		return &TrackingProfileCreateBulk{err: fmt.Errorf("calling to TrackingProfileClient.MapCreateBulk with wrong type %T, need slice", slice)}
-	}
-	builders := make([]*TrackingProfileCreate, rv.Len())
-	for i := 0; i < rv.Len(); i++ {
-		builders[i] = c.Create()
-		setFunc(builders[i], i)
-	}
-	return &TrackingProfileCreateBulk{config: c.config, builders: builders}
-}
-
-// Update returns an update builder for TrackingProfile.
-func (c *TrackingProfileClient) Update() *TrackingProfileUpdate {
-	mutation := newTrackingProfileMutation(c.config, OpUpdate)
-	return &TrackingProfileUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// UpdateOne returns an update builder for the given entity.
-func (c *TrackingProfileClient) UpdateOne(_m *TrackingProfile) *TrackingProfileUpdateOne {
-	mutation := newTrackingProfileMutation(c.config, OpUpdateOne, withTrackingProfile(_m))
-	return &TrackingProfileUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// UpdateOneID returns an update builder for the given id.
-func (c *TrackingProfileClient) UpdateOneID(id int64) *TrackingProfileUpdateOne {
-	mutation := newTrackingProfileMutation(c.config, OpUpdateOne, withTrackingProfileID(id))
-	return &TrackingProfileUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// Delete returns a delete builder for TrackingProfile.
-func (c *TrackingProfileClient) Delete() *TrackingProfileDelete {
-	mutation := newTrackingProfileMutation(c.config, OpDelete)
-	return &TrackingProfileDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// DeleteOne returns a builder for deleting the given entity.
-func (c *TrackingProfileClient) DeleteOne(_m *TrackingProfile) *TrackingProfileDeleteOne {
-	return c.DeleteOneID(_m.ID)
-}
-
-// DeleteOneID returns a builder for deleting the given entity by its id.
-func (c *TrackingProfileClient) DeleteOneID(id int64) *TrackingProfileDeleteOne {
-	builder := c.Delete().Where(trackingprofile.ID(id))
-	builder.mutation.id = &id
-	builder.mutation.op = OpDeleteOne
-	return &TrackingProfileDeleteOne{builder}
-}
-
-// Query returns a query builder for TrackingProfile.
-func (c *TrackingProfileClient) Query() *TrackingProfileQuery {
-	return &TrackingProfileQuery{
-		config: c.config,
-		ctx:    &QueryContext{Type: TypeTrackingProfile},
-		inters: c.Interceptors(),
-	}
-}
-
-// Get returns a TrackingProfile entity by its id.
-func (c *TrackingProfileClient) Get(ctx context.Context, id int64) (*TrackingProfile, error) {
-	return c.Query().Where(trackingprofile.ID(id)).Only(ctx)
-}
-
-// GetX is like Get, but panics if an error occurs.
-func (c *TrackingProfileClient) GetX(ctx context.Context, id int64) *TrackingProfile {
-	obj, err := c.Get(ctx, id)
-	if err != nil {
-		panic(err)
-	}
-	return obj
-}
-
-// QueryVisitors queries the visitors edge of a TrackingProfile.
-func (c *TrackingProfileClient) QueryVisitors(_m *TrackingProfile) *TrackingVisitorQuery {
-	query := (&TrackingVisitorClient{config: c.config}).Query()
-	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
-		id := _m.ID
-		step := sqlgraph.NewStep(
-			sqlgraph.From(trackingprofile.Table, trackingprofile.FieldID, id),
-			sqlgraph.To(trackingvisitor.Table, trackingvisitor.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, trackingprofile.VisitorsTable, trackingprofile.VisitorsColumn),
-		)
-		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
-		return fromV, nil
-	}
-	return query
-}
-
-// QueryWorkspace queries the workspace edge of a TrackingProfile.
-func (c *TrackingProfileClient) QueryWorkspace(_m *TrackingProfile) *WorkspaceQuery {
-	query := (&WorkspaceClient{config: c.config}).Query()
-	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
-		id := _m.ID
-		step := sqlgraph.NewStep(
-			sqlgraph.From(trackingprofile.Table, trackingprofile.FieldID, id),
-			sqlgraph.To(workspace.Table, workspace.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, true, trackingprofile.WorkspaceTable, trackingprofile.WorkspaceColumn),
-		)
-		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
-		return fromV, nil
-	}
-	return query
-}
-
-// Hooks returns the client hooks.
-func (c *TrackingProfileClient) Hooks() []Hook {
-	return c.hooks.TrackingProfile
-}
-
-// Interceptors returns the client interceptors.
-func (c *TrackingProfileClient) Interceptors() []Interceptor {
-	return c.inters.TrackingProfile
-}
-
-func (c *TrackingProfileClient) mutate(ctx context.Context, m *TrackingProfileMutation) (Value, error) {
-	switch m.Op() {
-	case OpCreate:
-		return (&TrackingProfileCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
-	case OpUpdate:
-		return (&TrackingProfileUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
-	case OpUpdateOne:
-		return (&TrackingProfileUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
-	case OpDelete, OpDeleteOne:
-		return (&TrackingProfileDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
-	default:
-		return nil, fmt.Errorf("ent: unknown TrackingProfile mutation op: %q", m.Op())
-	}
-}
-
-// TrackingVisitorClient is a client for the TrackingVisitor schema.
-type TrackingVisitorClient struct {
-	config
-}
-
-// NewTrackingVisitorClient returns a client for the TrackingVisitor from the given config.
-func NewTrackingVisitorClient(c config) *TrackingVisitorClient {
-	return &TrackingVisitorClient{config: c}
-}
-
-// Use adds a list of mutation hooks to the hooks stack.
-// A call to `Use(f, g, h)` equals to `trackingvisitor.Hooks(f(g(h())))`.
-func (c *TrackingVisitorClient) Use(hooks ...Hook) {
-	c.hooks.TrackingVisitor = append(c.hooks.TrackingVisitor, hooks...)
-}
-
-// Intercept adds a list of query interceptors to the interceptors stack.
-// A call to `Intercept(f, g, h)` equals to `trackingvisitor.Intercept(f(g(h())))`.
-func (c *TrackingVisitorClient) Intercept(interceptors ...Interceptor) {
-	c.inters.TrackingVisitor = append(c.inters.TrackingVisitor, interceptors...)
-}
-
-// Create returns a builder for creating a TrackingVisitor entity.
-func (c *TrackingVisitorClient) Create() *TrackingVisitorCreate {
-	mutation := newTrackingVisitorMutation(c.config, OpCreate)
-	return &TrackingVisitorCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// CreateBulk returns a builder for creating a bulk of TrackingVisitor entities.
-func (c *TrackingVisitorClient) CreateBulk(builders ...*TrackingVisitorCreate) *TrackingVisitorCreateBulk {
-	return &TrackingVisitorCreateBulk{config: c.config, builders: builders}
-}
-
-// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
-// a builder and applies setFunc on it.
-func (c *TrackingVisitorClient) MapCreateBulk(slice any, setFunc func(*TrackingVisitorCreate, int)) *TrackingVisitorCreateBulk {
-	rv := reflect.ValueOf(slice)
-	if rv.Kind() != reflect.Slice {
-		return &TrackingVisitorCreateBulk{err: fmt.Errorf("calling to TrackingVisitorClient.MapCreateBulk with wrong type %T, need slice", slice)}
-	}
-	builders := make([]*TrackingVisitorCreate, rv.Len())
-	for i := 0; i < rv.Len(); i++ {
-		builders[i] = c.Create()
-		setFunc(builders[i], i)
-	}
-	return &TrackingVisitorCreateBulk{config: c.config, builders: builders}
-}
-
-// Update returns an update builder for TrackingVisitor.
-func (c *TrackingVisitorClient) Update() *TrackingVisitorUpdate {
-	mutation := newTrackingVisitorMutation(c.config, OpUpdate)
-	return &TrackingVisitorUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// UpdateOne returns an update builder for the given entity.
-func (c *TrackingVisitorClient) UpdateOne(_m *TrackingVisitor) *TrackingVisitorUpdateOne {
-	mutation := newTrackingVisitorMutation(c.config, OpUpdateOne, withTrackingVisitor(_m))
-	return &TrackingVisitorUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// UpdateOneID returns an update builder for the given id.
-func (c *TrackingVisitorClient) UpdateOneID(id int64) *TrackingVisitorUpdateOne {
-	mutation := newTrackingVisitorMutation(c.config, OpUpdateOne, withTrackingVisitorID(id))
-	return &TrackingVisitorUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// Delete returns a delete builder for TrackingVisitor.
-func (c *TrackingVisitorClient) Delete() *TrackingVisitorDelete {
-	mutation := newTrackingVisitorMutation(c.config, OpDelete)
-	return &TrackingVisitorDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// DeleteOne returns a builder for deleting the given entity.
-func (c *TrackingVisitorClient) DeleteOne(_m *TrackingVisitor) *TrackingVisitorDeleteOne {
-	return c.DeleteOneID(_m.ID)
-}
-
-// DeleteOneID returns a builder for deleting the given entity by its id.
-func (c *TrackingVisitorClient) DeleteOneID(id int64) *TrackingVisitorDeleteOne {
-	builder := c.Delete().Where(trackingvisitor.ID(id))
-	builder.mutation.id = &id
-	builder.mutation.op = OpDeleteOne
-	return &TrackingVisitorDeleteOne{builder}
-}
-
-// Query returns a query builder for TrackingVisitor.
-func (c *TrackingVisitorClient) Query() *TrackingVisitorQuery {
-	return &TrackingVisitorQuery{
-		config: c.config,
-		ctx:    &QueryContext{Type: TypeTrackingVisitor},
-		inters: c.Interceptors(),
-	}
-}
-
-// Get returns a TrackingVisitor entity by its id.
-func (c *TrackingVisitorClient) Get(ctx context.Context, id int64) (*TrackingVisitor, error) {
-	return c.Query().Where(trackingvisitor.ID(id)).Only(ctx)
-}
-
-// GetX is like Get, but panics if an error occurs.
-func (c *TrackingVisitorClient) GetX(ctx context.Context, id int64) *TrackingVisitor {
-	obj, err := c.Get(ctx, id)
-	if err != nil {
-		panic(err)
-	}
-	return obj
-}
-
-// QueryProfile queries the profile edge of a TrackingVisitor.
-func (c *TrackingVisitorClient) QueryProfile(_m *TrackingVisitor) *TrackingProfileQuery {
-	query := (&TrackingProfileClient{config: c.config}).Query()
-	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
-		id := _m.ID
-		step := sqlgraph.NewStep(
-			sqlgraph.From(trackingvisitor.Table, trackingvisitor.FieldID, id),
-			sqlgraph.To(trackingprofile.Table, trackingprofile.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, true, trackingvisitor.ProfileTable, trackingvisitor.ProfileColumn),
-		)
-		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
-		return fromV, nil
-	}
-	return query
-}
-
-// QueryWorkspace queries the workspace edge of a TrackingVisitor.
-func (c *TrackingVisitorClient) QueryWorkspace(_m *TrackingVisitor) *WorkspaceQuery {
-	query := (&WorkspaceClient{config: c.config}).Query()
-	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
-		id := _m.ID
-		step := sqlgraph.NewStep(
-			sqlgraph.From(trackingvisitor.Table, trackingvisitor.FieldID, id),
-			sqlgraph.To(workspace.Table, workspace.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, true, trackingvisitor.WorkspaceTable, trackingvisitor.WorkspaceColumn),
-		)
-		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
-		return fromV, nil
-	}
-	return query
-}
-
-// Hooks returns the client hooks.
-func (c *TrackingVisitorClient) Hooks() []Hook {
-	return c.hooks.TrackingVisitor
-}
-
-// Interceptors returns the client interceptors.
-func (c *TrackingVisitorClient) Interceptors() []Interceptor {
-	return c.inters.TrackingVisitor
-}
-
-func (c *TrackingVisitorClient) mutate(ctx context.Context, m *TrackingVisitorMutation) (Value, error) {
-	switch m.Op() {
-	case OpCreate:
-		return (&TrackingVisitorCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
-	case OpUpdate:
-		return (&TrackingVisitorUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
-	case OpUpdateOne:
-		return (&TrackingVisitorUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
-	case OpDelete, OpDeleteOne:
-		return (&TrackingVisitorDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
-	default:
-		return nil, fmt.Errorf("ent: unknown TrackingVisitor mutation op: %q", m.Op())
-	}
-}
-
 // UserClient is a client for the User schema.
 type UserClient struct {
 	config
@@ -2508,6 +2343,171 @@ func (c *UserClient) mutate(ctx context.Context, m *UserMutation) (Value, error)
 		return (&UserDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("ent: unknown User mutation op: %q", m.Op())
+	}
+}
+
+// VisitorClient is a client for the Visitor schema.
+type VisitorClient struct {
+	config
+}
+
+// NewVisitorClient returns a client for the Visitor from the given config.
+func NewVisitorClient(c config) *VisitorClient {
+	return &VisitorClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `visitor.Hooks(f(g(h())))`.
+func (c *VisitorClient) Use(hooks ...Hook) {
+	c.hooks.Visitor = append(c.hooks.Visitor, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `visitor.Intercept(f(g(h())))`.
+func (c *VisitorClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Visitor = append(c.inters.Visitor, interceptors...)
+}
+
+// Create returns a builder for creating a Visitor entity.
+func (c *VisitorClient) Create() *VisitorCreate {
+	mutation := newVisitorMutation(c.config, OpCreate)
+	return &VisitorCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Visitor entities.
+func (c *VisitorClient) CreateBulk(builders ...*VisitorCreate) *VisitorCreateBulk {
+	return &VisitorCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *VisitorClient) MapCreateBulk(slice any, setFunc func(*VisitorCreate, int)) *VisitorCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &VisitorCreateBulk{err: fmt.Errorf("calling to VisitorClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*VisitorCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &VisitorCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Visitor.
+func (c *VisitorClient) Update() *VisitorUpdate {
+	mutation := newVisitorMutation(c.config, OpUpdate)
+	return &VisitorUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *VisitorClient) UpdateOne(_m *Visitor) *VisitorUpdateOne {
+	mutation := newVisitorMutation(c.config, OpUpdateOne, withVisitor(_m))
+	return &VisitorUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *VisitorClient) UpdateOneID(id int64) *VisitorUpdateOne {
+	mutation := newVisitorMutation(c.config, OpUpdateOne, withVisitorID(id))
+	return &VisitorUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Visitor.
+func (c *VisitorClient) Delete() *VisitorDelete {
+	mutation := newVisitorMutation(c.config, OpDelete)
+	return &VisitorDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *VisitorClient) DeleteOne(_m *Visitor) *VisitorDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *VisitorClient) DeleteOneID(id int64) *VisitorDeleteOne {
+	builder := c.Delete().Where(visitor.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &VisitorDeleteOne{builder}
+}
+
+// Query returns a query builder for Visitor.
+func (c *VisitorClient) Query() *VisitorQuery {
+	return &VisitorQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeVisitor},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Visitor entity by its id.
+func (c *VisitorClient) Get(ctx context.Context, id int64) (*Visitor, error) {
+	return c.Query().Where(visitor.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *VisitorClient) GetX(ctx context.Context, id int64) *Visitor {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryContact queries the contact edge of a Visitor.
+func (c *VisitorClient) QueryContact(_m *Visitor) *ContactQuery {
+	query := (&ContactClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(visitor.Table, visitor.FieldID, id),
+			sqlgraph.To(contact.Table, contact.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, visitor.ContactTable, visitor.ContactColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryWorkspace queries the workspace edge of a Visitor.
+func (c *VisitorClient) QueryWorkspace(_m *Visitor) *WorkspaceQuery {
+	query := (&WorkspaceClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(visitor.Table, visitor.FieldID, id),
+			sqlgraph.To(workspace.Table, workspace.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, visitor.WorkspaceTable, visitor.WorkspaceColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *VisitorClient) Hooks() []Hook {
+	return c.hooks.Visitor
+}
+
+// Interceptors returns the client interceptors.
+func (c *VisitorClient) Interceptors() []Interceptor {
+	return c.inters.Visitor
+}
+
+func (c *VisitorClient) mutate(ctx context.Context, m *VisitorMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&VisitorCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&VisitorUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&VisitorUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&VisitorDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown Visitor mutation op: %q", m.Op())
 	}
 }
 
@@ -2784,6 +2784,22 @@ func (c *WorkspaceClient) QueryContacts(_m *Workspace) *ContactQuery {
 	return query
 }
 
+// QueryCustomFields queries the custom_fields edge of a Workspace.
+func (c *WorkspaceClient) QueryCustomFields(_m *Workspace) *CustomFieldQuery {
+	query := (&CustomFieldClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workspace.Table, workspace.FieldID, id),
+			sqlgraph.To(customfield.Table, customfield.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, workspace.CustomFieldsTable, workspace.CustomFieldsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // QuerySegments queries the segments edge of a Workspace.
 func (c *WorkspaceClient) QuerySegments(_m *Workspace) *SegmentQuery {
 	query := (&SegmentClient{config: c.config}).Query()
@@ -2816,31 +2832,15 @@ func (c *WorkspaceClient) QueryEvents(_m *Workspace) *EventQuery {
 	return query
 }
 
-// QueryTrackingProfiles queries the tracking_profiles edge of a Workspace.
-func (c *WorkspaceClient) QueryTrackingProfiles(_m *Workspace) *TrackingProfileQuery {
-	query := (&TrackingProfileClient{config: c.config}).Query()
+// QueryVisitors queries the visitors edge of a Workspace.
+func (c *WorkspaceClient) QueryVisitors(_m *Workspace) *VisitorQuery {
+	query := (&VisitorClient{config: c.config}).Query()
 	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
 		id := _m.ID
 		step := sqlgraph.NewStep(
 			sqlgraph.From(workspace.Table, workspace.FieldID, id),
-			sqlgraph.To(trackingprofile.Table, trackingprofile.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, workspace.TrackingProfilesTable, workspace.TrackingProfilesColumn),
-		)
-		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
-		return fromV, nil
-	}
-	return query
-}
-
-// QueryTrackingVisitors queries the tracking_visitors edge of a Workspace.
-func (c *WorkspaceClient) QueryTrackingVisitors(_m *Workspace) *TrackingVisitorQuery {
-	query := (&TrackingVisitorClient{config: c.config}).Query()
-	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
-		id := _m.ID
-		step := sqlgraph.NewStep(
-			sqlgraph.From(workspace.Table, workspace.FieldID, id),
-			sqlgraph.To(trackingvisitor.Table, trackingvisitor.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, workspace.TrackingVisitorsTable, workspace.TrackingVisitorsColumn),
+			sqlgraph.To(visitor.Table, visitor.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, workspace.VisitorsTable, workspace.VisitorsColumn),
 		)
 		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
 		return fromV, nil
@@ -3037,12 +3037,12 @@ func (c *WorkspaceClient) mutate(ctx context.Context, m *WorkspaceMutation) (Val
 type (
 	hooks struct {
 		ApiToken, Automation, AutomationRun, Broadcast, BroadcastRecipient, Contact,
-		EmailTemplate, Event, Integration, Segment, Suppression, TrackingProfile,
-		TrackingVisitor, User, WebhookEndpoint, Workspace []ent.Hook
+		CustomField, EmailTemplate, Event, Integration, Segment, Suppression, User,
+		Visitor, WebhookEndpoint, Workspace []ent.Hook
 	}
 	inters struct {
 		ApiToken, Automation, AutomationRun, Broadcast, BroadcastRecipient, Contact,
-		EmailTemplate, Event, Integration, Segment, Suppression, TrackingProfile,
-		TrackingVisitor, User, WebhookEndpoint, Workspace []ent.Interceptor
+		CustomField, EmailTemplate, Event, Integration, Segment, Suppression, User,
+		Visitor, WebhookEndpoint, Workspace []ent.Interceptor
 	}
 )

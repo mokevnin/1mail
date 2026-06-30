@@ -128,6 +128,39 @@ func (s *OptBool) UnmarshalJSON(data []byte) error {
 	return s.Decode(d)
 }
 
+// Encode encodes EntityId as json.
+func (o OptEntityId) Encode(e *jx.Encoder) {
+	if !o.Set {
+		return
+	}
+	o.Value.Encode(e)
+}
+
+// Decode decodes EntityId from json.
+func (o *OptEntityId) Decode(d *jx.Decoder) error {
+	if o == nil {
+		return errors.New("invalid: unable to decode OptEntityId to nil")
+	}
+	o.Set = true
+	if err := o.Value.Decode(d); err != nil {
+		return err
+	}
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s OptEntityId) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *OptEntityId) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
 // Encode encodes int32 as json.
 func (o OptInt32) Encode(e *jx.Encoder) {
 	if !o.Set {
@@ -4881,8 +4914,22 @@ func (s *SiteContactResource) encodeFields(e *jx.Encoder) {
 		s.ID.Encode(e)
 	}
 	{
-		e.FieldStart("email")
-		s.Email.Encode(e)
+		if s.SubjectId.Set {
+			e.FieldStart("subjectId")
+			s.SubjectId.Encode(e)
+		}
+	}
+	{
+		if s.Email.Set {
+			e.FieldStart("email")
+			s.Email.Encode(e)
+		}
+	}
+	{
+		if s.Phone.Set {
+			e.FieldStart("phone")
+			s.Phone.Encode(e)
+		}
 	}
 	{
 		if s.FirstName.Set {
@@ -4922,16 +4969,18 @@ func (s *SiteContactResource) encodeFields(e *jx.Encoder) {
 	}
 }
 
-var jsonFieldsNameOfSiteContactResource = [9]string{
-	0: "id",
-	1: "email",
-	2: "firstName",
-	3: "lastName",
-	4: "timeZone",
-	5: "customFields",
-	6: "status",
-	7: "createdAt",
-	8: "updatedAt",
+var jsonFieldsNameOfSiteContactResource = [11]string{
+	0:  "id",
+	1:  "subjectId",
+	2:  "email",
+	3:  "phone",
+	4:  "firstName",
+	5:  "lastName",
+	6:  "timeZone",
+	7:  "customFields",
+	8:  "status",
+	9:  "createdAt",
+	10: "updatedAt",
 }
 
 // Decode decodes SiteContactResource from json.
@@ -4953,15 +5002,35 @@ func (s *SiteContactResource) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"id\"")
 			}
-		case "email":
-			requiredBitSet[0] |= 1 << 1
+		case "subjectId":
 			if err := func() error {
+				s.SubjectId.Reset()
+				if err := s.SubjectId.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"subjectId\"")
+			}
+		case "email":
+			if err := func() error {
+				s.Email.Reset()
 				if err := s.Email.Decode(d); err != nil {
 					return err
 				}
 				return nil
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"email\"")
+			}
+		case "phone":
+			if err := func() error {
+				s.Phone.Reset()
+				if err := s.Phone.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"phone\"")
 			}
 		case "firstName":
 			if err := func() error {
@@ -5004,7 +5073,7 @@ func (s *SiteContactResource) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"customFields\"")
 			}
 		case "status":
-			requiredBitSet[0] |= 1 << 6
+			requiredBitSet[1] |= 1 << 0
 			if err := func() error {
 				if err := s.Status.Decode(d); err != nil {
 					return err
@@ -5014,7 +5083,7 @@ func (s *SiteContactResource) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"status\"")
 			}
 		case "createdAt":
-			requiredBitSet[0] |= 1 << 7
+			requiredBitSet[1] |= 1 << 1
 			if err := func() error {
 				if err := s.CreatedAt.Decode(d); err != nil {
 					return err
@@ -5024,7 +5093,7 @@ func (s *SiteContactResource) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"createdAt\"")
 			}
 		case "updatedAt":
-			requiredBitSet[1] |= 1 << 0
+			requiredBitSet[1] |= 1 << 2
 			if err := func() error {
 				if err := s.UpdatedAt.Decode(d); err != nil {
 					return err
@@ -5043,8 +5112,8 @@ func (s *SiteContactResource) Decode(d *jx.Decoder) error {
 	// Validate required fields.
 	var failures []validate.FieldError
 	for i, mask := range [2]uint8{
-		0b11000011,
 		0b00000001,
+		0b00000111,
 	} {
 		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
 			// Mask only required fields and check equality to mask using XOR.
@@ -5102,7 +5171,9 @@ func (s SiteContactResourceCustomFields) encodeFields(e *jx.Encoder) {
 	for k, elem := range s {
 		e.FieldStart(k)
 
-		e.Str(elem)
+		if len(elem) != 0 {
+			e.Raw(elem)
+		}
 	}
 }
 
@@ -5113,10 +5184,10 @@ func (s *SiteContactResourceCustomFields) Decode(d *jx.Decoder) error {
 	}
 	m := s.init()
 	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
-		var elem string
+		var elem jx.Raw
 		if err := func() error {
-			v, err := d.Str()
-			elem = string(v)
+			v, err := d.RawAppend(nil)
+			elem = jx.Raw(v)
 			if err != nil {
 				return err
 			}
@@ -6230,8 +6301,22 @@ func (s *SiteCreateContactInput) Encode(e *jx.Encoder) {
 // encodeFields encodes fields.
 func (s *SiteCreateContactInput) encodeFields(e *jx.Encoder) {
 	{
-		e.FieldStart("email")
-		s.Email.Encode(e)
+		if s.SubjectId.Set {
+			e.FieldStart("subjectId")
+			s.SubjectId.Encode(e)
+		}
+	}
+	{
+		if s.Email.Set {
+			e.FieldStart("email")
+			s.Email.Encode(e)
+		}
+	}
+	{
+		if s.Phone.Set {
+			e.FieldStart("phone")
+			s.Phone.Encode(e)
+		}
 	}
 	{
 		if s.FirstName.Set {
@@ -6259,12 +6344,14 @@ func (s *SiteCreateContactInput) encodeFields(e *jx.Encoder) {
 	}
 }
 
-var jsonFieldsNameOfSiteCreateContactInput = [5]string{
-	0: "email",
-	1: "firstName",
-	2: "lastName",
-	3: "timeZone",
-	4: "customFields",
+var jsonFieldsNameOfSiteCreateContactInput = [7]string{
+	0: "subjectId",
+	1: "email",
+	2: "phone",
+	3: "firstName",
+	4: "lastName",
+	5: "timeZone",
+	6: "customFields",
 }
 
 // Decode decodes SiteCreateContactInput from json.
@@ -6272,19 +6359,38 @@ func (s *SiteCreateContactInput) Decode(d *jx.Decoder) error {
 	if s == nil {
 		return errors.New("invalid: unable to decode SiteCreateContactInput to nil")
 	}
-	var requiredBitSet [1]uint8
 
 	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
 		switch string(k) {
-		case "email":
-			requiredBitSet[0] |= 1 << 0
+		case "subjectId":
 			if err := func() error {
+				s.SubjectId.Reset()
+				if err := s.SubjectId.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"subjectId\"")
+			}
+		case "email":
+			if err := func() error {
+				s.Email.Reset()
 				if err := s.Email.Decode(d); err != nil {
 					return err
 				}
 				return nil
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"email\"")
+			}
+		case "phone":
+			if err := func() error {
+				s.Phone.Reset()
+				if err := s.Phone.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"phone\"")
 			}
 		case "firstName":
 			if err := func() error {
@@ -6333,38 +6439,6 @@ func (s *SiteCreateContactInput) Decode(d *jx.Decoder) error {
 	}); err != nil {
 		return errors.Wrap(err, "decode SiteCreateContactInput")
 	}
-	// Validate required fields.
-	var failures []validate.FieldError
-	for i, mask := range [1]uint8{
-		0b00000001,
-	} {
-		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
-			// Mask only required fields and check equality to mask using XOR.
-			//
-			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
-			// Bits of fields which would be set are actually bits of missed fields.
-			missed := bits.OnesCount8(result)
-			for bitN := 0; bitN < missed; bitN++ {
-				bitIdx := bits.TrailingZeros8(result)
-				fieldIdx := i*8 + bitIdx
-				var name string
-				if fieldIdx < len(jsonFieldsNameOfSiteCreateContactInput) {
-					name = jsonFieldsNameOfSiteCreateContactInput[fieldIdx]
-				} else {
-					name = strconv.Itoa(fieldIdx)
-				}
-				failures = append(failures, validate.FieldError{
-					Name:  name,
-					Error: validate.ErrFieldRequired,
-				})
-				// Reset bit.
-				result &^= 1 << bitIdx
-			}
-		}
-	}
-	if len(failures) > 0 {
-		return &validate.Error{Fields: failures}
-	}
 
 	return nil
 }
@@ -6394,7 +6468,9 @@ func (s SiteCreateContactInputCustomFields) encodeFields(e *jx.Encoder) {
 	for k, elem := range s {
 		e.FieldStart(k)
 
-		e.Str(elem)
+		if len(elem) != 0 {
+			e.Raw(elem)
+		}
 	}
 }
 
@@ -6405,10 +6481,10 @@ func (s *SiteCreateContactInputCustomFields) Decode(d *jx.Decoder) error {
 	}
 	m := s.init()
 	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
-		var elem string
+		var elem jx.Raw
 		if err := func() error {
-			v, err := d.Str()
-			elem = string(v)
+			v, err := d.RawAppend(nil)
+			elem = jx.Raw(v)
 			if err != nil {
 				return err
 			}
@@ -7327,6 +7403,473 @@ func (s *SiteCreateWebhookEndpointInput) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
 func (s *SiteCreateWebhookEndpointInput) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *SiteCustomFieldResource) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *SiteCustomFieldResource) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("id")
+		s.ID.Encode(e)
+	}
+	{
+		e.FieldStart("key")
+		e.Str(s.Key)
+	}
+	{
+		e.FieldStart("name")
+		e.Str(s.Name)
+	}
+	{
+		e.FieldStart("type")
+		s.Type.Encode(e)
+	}
+	{
+		e.FieldStart("createdAt")
+		s.CreatedAt.Encode(e)
+	}
+	{
+		e.FieldStart("updatedAt")
+		s.UpdatedAt.Encode(e)
+	}
+}
+
+var jsonFieldsNameOfSiteCustomFieldResource = [6]string{
+	0: "id",
+	1: "key",
+	2: "name",
+	3: "type",
+	4: "createdAt",
+	5: "updatedAt",
+}
+
+// Decode decodes SiteCustomFieldResource from json.
+func (s *SiteCustomFieldResource) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode SiteCustomFieldResource to nil")
+	}
+	var requiredBitSet [1]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "id":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				if err := s.ID.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"id\"")
+			}
+		case "key":
+			requiredBitSet[0] |= 1 << 1
+			if err := func() error {
+				v, err := d.Str()
+				s.Key = string(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"key\"")
+			}
+		case "name":
+			requiredBitSet[0] |= 1 << 2
+			if err := func() error {
+				v, err := d.Str()
+				s.Name = string(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"name\"")
+			}
+		case "type":
+			requiredBitSet[0] |= 1 << 3
+			if err := func() error {
+				if err := s.Type.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"type\"")
+			}
+		case "createdAt":
+			requiredBitSet[0] |= 1 << 4
+			if err := func() error {
+				if err := s.CreatedAt.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"createdAt\"")
+			}
+		case "updatedAt":
+			requiredBitSet[0] |= 1 << 5
+			if err := func() error {
+				if err := s.UpdatedAt.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"updatedAt\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode SiteCustomFieldResource")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b00111111,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfSiteCustomFieldResource) {
+					name = jsonFieldsNameOfSiteCustomFieldResource[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *SiteCustomFieldResource) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *SiteCustomFieldResource) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes SiteCustomFieldType as json.
+func (s SiteCustomFieldType) Encode(e *jx.Encoder) {
+	e.Str(string(s))
+}
+
+// Decode decodes SiteCustomFieldType from json.
+func (s *SiteCustomFieldType) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode SiteCustomFieldType to nil")
+	}
+	v, err := d.StrBytes()
+	if err != nil {
+		return err
+	}
+	// Try to use constant string.
+	switch SiteCustomFieldType(v) {
+	case SiteCustomFieldTypeString:
+		*s = SiteCustomFieldTypeString
+	case SiteCustomFieldTypeNumber:
+		*s = SiteCustomFieldTypeNumber
+	case SiteCustomFieldTypeBool:
+		*s = SiteCustomFieldTypeBool
+	case SiteCustomFieldTypeDatetime:
+		*s = SiteCustomFieldTypeDatetime
+	default:
+		*s = SiteCustomFieldType(v)
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s SiteCustomFieldType) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *SiteCustomFieldType) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes SiteCustomFieldsListBadRequest as json.
+func (s *SiteCustomFieldsListBadRequest) Encode(e *jx.Encoder) {
+	unwrapped := (*ProblemDetails)(s)
+
+	unwrapped.Encode(e)
+}
+
+// Decode decodes SiteCustomFieldsListBadRequest from json.
+func (s *SiteCustomFieldsListBadRequest) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode SiteCustomFieldsListBadRequest to nil")
+	}
+	var unwrapped ProblemDetails
+	if err := func() error {
+		if err := unwrapped.Decode(d); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "alias")
+	}
+	*s = SiteCustomFieldsListBadRequest(unwrapped)
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *SiteCustomFieldsListBadRequest) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *SiteCustomFieldsListBadRequest) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes SiteCustomFieldsListNotFound as json.
+func (s *SiteCustomFieldsListNotFound) Encode(e *jx.Encoder) {
+	unwrapped := (*ProblemDetails)(s)
+
+	unwrapped.Encode(e)
+}
+
+// Decode decodes SiteCustomFieldsListNotFound from json.
+func (s *SiteCustomFieldsListNotFound) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode SiteCustomFieldsListNotFound to nil")
+	}
+	var unwrapped ProblemDetails
+	if err := func() error {
+		if err := unwrapped.Decode(d); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "alias")
+	}
+	*s = SiteCustomFieldsListNotFound(unwrapped)
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *SiteCustomFieldsListNotFound) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *SiteCustomFieldsListNotFound) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *SiteCustomFieldsListOK) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *SiteCustomFieldsListOK) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("items")
+		e.ArrStart()
+		for _, elem := range s.Items {
+			elem.Encode(e)
+		}
+		e.ArrEnd()
+	}
+	{
+		e.FieldStart("page")
+		e.Int32(s.Page)
+	}
+	{
+		e.FieldStart("pageSize")
+		e.Int32(s.PageSize)
+	}
+	{
+		e.FieldStart("totalItems")
+		e.Int32(s.TotalItems)
+	}
+	{
+		e.FieldStart("totalPages")
+		e.Int32(s.TotalPages)
+	}
+}
+
+var jsonFieldsNameOfSiteCustomFieldsListOK = [5]string{
+	0: "items",
+	1: "page",
+	2: "pageSize",
+	3: "totalItems",
+	4: "totalPages",
+}
+
+// Decode decodes SiteCustomFieldsListOK from json.
+func (s *SiteCustomFieldsListOK) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode SiteCustomFieldsListOK to nil")
+	}
+	var requiredBitSet [1]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "items":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				s.Items = make([]SiteCustomFieldResource, 0)
+				if err := d.Arr(func(d *jx.Decoder) error {
+					var elem SiteCustomFieldResource
+					if err := elem.Decode(d); err != nil {
+						return err
+					}
+					s.Items = append(s.Items, elem)
+					return nil
+				}); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"items\"")
+			}
+		case "page":
+			requiredBitSet[0] |= 1 << 1
+			if err := func() error {
+				v, err := d.Int32()
+				s.Page = int32(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"page\"")
+			}
+		case "pageSize":
+			requiredBitSet[0] |= 1 << 2
+			if err := func() error {
+				v, err := d.Int32()
+				s.PageSize = int32(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"pageSize\"")
+			}
+		case "totalItems":
+			requiredBitSet[0] |= 1 << 3
+			if err := func() error {
+				v, err := d.Int32()
+				s.TotalItems = int32(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"totalItems\"")
+			}
+		case "totalPages":
+			requiredBitSet[0] |= 1 << 4
+			if err := func() error {
+				v, err := d.Int32()
+				s.TotalPages = int32(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"totalPages\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode SiteCustomFieldsListOK")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b00011111,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfSiteCustomFieldsListOK) {
+					name = jsonFieldsNameOfSiteCustomFieldsListOK[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *SiteCustomFieldsListOK) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *SiteCustomFieldsListOK) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }
@@ -13898,6 +14441,24 @@ func (s *SiteUpdateContactInput) Encode(e *jx.Encoder) {
 // encodeFields encodes fields.
 func (s *SiteUpdateContactInput) encodeFields(e *jx.Encoder) {
 	{
+		if s.SubjectId.Set {
+			e.FieldStart("subjectId")
+			s.SubjectId.Encode(e)
+		}
+	}
+	{
+		if s.Email.Set {
+			e.FieldStart("email")
+			s.Email.Encode(e)
+		}
+	}
+	{
+		if s.Phone.Set {
+			e.FieldStart("phone")
+			s.Phone.Encode(e)
+		}
+	}
+	{
 		if s.FirstName.Set {
 			e.FieldStart("firstName")
 			s.FirstName.Encode(e)
@@ -13923,11 +14484,14 @@ func (s *SiteUpdateContactInput) encodeFields(e *jx.Encoder) {
 	}
 }
 
-var jsonFieldsNameOfSiteUpdateContactInput = [4]string{
-	0: "firstName",
-	1: "lastName",
-	2: "timeZone",
-	3: "customFields",
+var jsonFieldsNameOfSiteUpdateContactInput = [7]string{
+	0: "subjectId",
+	1: "email",
+	2: "phone",
+	3: "firstName",
+	4: "lastName",
+	5: "timeZone",
+	6: "customFields",
 }
 
 // Decode decodes SiteUpdateContactInput from json.
@@ -13938,6 +14502,36 @@ func (s *SiteUpdateContactInput) Decode(d *jx.Decoder) error {
 
 	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
 		switch string(k) {
+		case "subjectId":
+			if err := func() error {
+				s.SubjectId.Reset()
+				if err := s.SubjectId.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"subjectId\"")
+			}
+		case "email":
+			if err := func() error {
+				s.Email.Reset()
+				if err := s.Email.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"email\"")
+			}
+		case "phone":
+			if err := func() error {
+				s.Phone.Reset()
+				if err := s.Phone.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"phone\"")
+			}
 		case "firstName":
 			if err := func() error {
 				s.FirstName.Reset()
@@ -14014,7 +14608,9 @@ func (s SiteUpdateContactInputCustomFields) encodeFields(e *jx.Encoder) {
 	for k, elem := range s {
 		e.FieldStart(k)
 
-		e.Str(elem)
+		if len(elem) != 0 {
+			e.Raw(elem)
+		}
 	}
 }
 
@@ -14025,10 +14621,10 @@ func (s *SiteUpdateContactInputCustomFields) Decode(d *jx.Decoder) error {
 	}
 	m := s.init()
 	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
-		var elem string
+		var elem jx.Raw
 		if err := func() error {
-			v, err := d.Str()
-			elem = string(v)
+			v, err := d.RawAppend(nil)
+			elem = jx.Raw(v)
 			if err != nil {
 				return err
 			}

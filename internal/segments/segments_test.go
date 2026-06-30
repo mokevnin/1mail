@@ -37,7 +37,7 @@ func TestCompileEvaluatesAgainstContacts(t *testing.T) {
 	env := testhelper.Setup(t)
 	ctx := context.Background()
 
-	mk := func(email, first, status string, custom map[string]string) {
+	mk := func(email, first, status string, custom map[string]any) {
 		c := env.DB.Contact.Create().SetWorkspaceID(wsID).SetEmail(email).SetFirstName(first)
 		if status == "unsubscribed" {
 			c.SetStatus(contact.StatusUnsubscribed)
@@ -48,9 +48,9 @@ func TestCompileEvaluatesAgainstContacts(t *testing.T) {
 		_, err := c.Save(ctx)
 		require.NoError(t, err)
 	}
-	mk("ann@seg.test", "Ann", "active", map[string]string{"plan": "pro"})
-	mk("bob@seg.test", "Bob", "active", map[string]string{"plan": "free"})
-	mk("cara@seg.test", "Cara", "unsubscribed", map[string]string{"plan": "pro"})
+	mk("ann@seg.test", "Ann", "active", map[string]any{"plan": "pro"})
+	mk("bob@seg.test", "Bob", "active", map[string]any{"plan": "free"})
+	mk("cara@seg.test", "Cara", "unsubscribed", map[string]any{"plan": "pro"})
 
 	count := func(g segments.Group) int {
 		p, err := segments.Compile(g, segments.ContactSchema())
@@ -94,17 +94,19 @@ func TestEventConditions(t *testing.T) {
 	env := testhelper.Setup(t)
 	ctx := context.Background()
 
-	mk := func(email string) {
-		_, err := env.DB.Contact.Create().SetWorkspaceID(wsID).SetEmail(email).Save(ctx)
+	mk := func(email string) int64 {
+		c, err := env.DB.Contact.Create().SetWorkspaceID(wsID).SetEmail(email).Save(ctx)
 		require.NoError(t, err)
+		return c.ID
 	}
-	mkEvent := func(email, action string, workspace int64, occurred time.Time) {
+	// Events attach by the stable contact_id (ADR 0002), not the email string.
+	mkEvent := func(contactID int64, action string, workspace int64, occurred time.Time) {
 		_, err := env.DB.Event.Create().
-			SetWorkspaceID(workspace).SetSubjectID(email).SetEmail(email).
+			SetWorkspaceID(workspace).SetContactID(contactID).
 			SetAction(action).SetOccurredAt(occurred).Save(ctx)
 		require.NoError(t, err)
 	}
-	mk("ann@evseg.test")
+	annID := mk("ann@evseg.test")
 	mk("bob@evseg.test")
 
 	// A second real workspace (FK-valid) to prove the join is workspace-scoped.
@@ -113,9 +115,9 @@ func TestEventConditions(t *testing.T) {
 	require.NoError(t, err)
 
 	now := time.Now()
-	mkEvent("ann@evseg.test", "page_view", wsID, now.AddDate(0, 0, -2))  // recent
-	mkEvent("ann@evseg.test", "purchase", wsID, now.AddDate(0, 0, -40))  // old
-	mkEvent("ann@evseg.test", "ws2_only", ws2.ID, now.AddDate(0, 0, -1)) // other workspace
+	mkEvent(annID, "page_view", wsID, now.AddDate(0, 0, -2))  // recent
+	mkEvent(annID, "purchase", wsID, now.AddDate(0, 0, -40))  // old
+	mkEvent(annID, "ws2_only", ws2.ID, now.AddDate(0, 0, -1)) // other workspace
 
 	count := func(g segments.Group) int {
 		p, err := segments.Compile(g, segments.ContactSchema())

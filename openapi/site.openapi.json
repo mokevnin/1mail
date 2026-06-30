@@ -9,6 +9,9 @@
       "name": "Site Contacts"
     },
     {
+      "name": "Site Custom Fields"
+    },
+    {
       "name": "Site Segments"
     },
     {
@@ -1633,6 +1636,86 @@
         "tags": ["Site Contacts"]
       }
     },
+    "/w/{workspaceSlug}/custom-fields": {
+      "get": {
+        "operationId": "SiteCustomFields_list",
+        "description": "List the workspace's custom field definitions",
+        "parameters": [
+          {
+            "name": "workspaceSlug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request has succeeded.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["items", "page", "pageSize", "totalItems", "totalPages"],
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/SiteCustomFieldResource"
+                      },
+                      "description": "List of items"
+                    },
+                    "page": {
+                      "type": "integer",
+                      "format": "int32",
+                      "description": "Page number (1-based)"
+                    },
+                    "pageSize": {
+                      "type": "integer",
+                      "format": "int32",
+                      "description": "Page size"
+                    },
+                    "totalItems": {
+                      "type": "integer",
+                      "format": "int32",
+                      "description": "Total number of elements"
+                    },
+                    "totalPages": {
+                      "type": "integer",
+                      "format": "int32",
+                      "description": "Total number of pages"
+                    }
+                  },
+                  "description": "Paginated response"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "RFC 7807 bad request response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "RFC 7807 not found response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Site Custom Fields"]
+      }
+    },
     "/w/{workspaceSlug}/events": {
       "get": {
         "operationId": "SiteEvents_list",
@@ -1659,6 +1742,16 @@
             "description": "Filter by event action",
             "schema": {
               "type": "string"
+            },
+            "explode": false
+          },
+          {
+            "name": "contactId",
+            "in": "query",
+            "required": false,
+            "description": "Filter by the Contact the event resolved to (the stable identity link)",
+            "schema": {
+              "$ref": "#/components/schemas/EntityId"
             },
             "explode": false
           },
@@ -4148,7 +4241,7 @@
       },
       "SiteContactResource": {
         "type": "object",
-        "required": ["id", "email", "status", "createdAt", "updatedAt"],
+        "required": ["id", "status", "createdAt", "updatedAt"],
         "properties": {
           "id": {
             "allOf": [
@@ -4158,13 +4251,25 @@
             ],
             "description": "Unique identifier"
           },
+          "subjectId": {
+            "type": "string",
+            "nullable": true,
+            "description": "The customer's own user id — an alias key. May be absent."
+          },
           "email": {
+            "type": "string",
             "allOf": [
               {
                 "$ref": "#/components/schemas/EmailAddress"
               }
             ],
-            "description": "Email address"
+            "nullable": true,
+            "description": "Email address — an alias key. May be absent for anonymous contacts."
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true,
+            "description": "Phone number — an alias key. May be absent."
           },
           "firstName": {
             "type": "string",
@@ -4188,11 +4293,9 @@
           },
           "customFields": {
             "type": "object",
-            "additionalProperties": {
-              "type": "string"
-            },
+            "additionalProperties": {},
             "nullable": true,
-            "description": "Custom fields as key-value pairs"
+            "description": "Typed custom field values keyed by the field's machine key"
           },
           "status": {
             "allOf": [
@@ -4298,15 +4401,26 @@
       },
       "SiteCreateContactInput": {
         "type": "object",
-        "required": ["email"],
         "properties": {
+          "subjectId": {
+            "type": "string",
+            "nullable": true,
+            "description": "The customer's own user id — an alias key"
+          },
           "email": {
+            "type": "string",
             "allOf": [
               {
                 "$ref": "#/components/schemas/EmailAddress"
               }
             ],
-            "description": "Email address"
+            "nullable": true,
+            "description": "Email address — optional; any alias key may be absent"
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true,
+            "description": "Phone number — an alias key"
           },
           "firstName": {
             "type": "string",
@@ -4330,11 +4444,9 @@
           },
           "customFields": {
             "type": "object",
-            "additionalProperties": {
-              "type": "string"
-            },
+            "additionalProperties": {},
             "nullable": true,
-            "description": "Custom fields as key-value pairs"
+            "description": "Typed custom field values keyed by the field's machine key"
           }
         },
         "description": "Site request body for creating a contact"
@@ -4464,6 +4576,58 @@
           }
         },
         "description": "Site request body for creating a webhook endpoint"
+      },
+      "SiteCustomFieldResource": {
+        "type": "object",
+        "required": ["id", "key", "name", "type", "createdAt", "updatedAt"],
+        "properties": {
+          "id": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EntityId"
+              }
+            ],
+            "description": "Unique identifier"
+          },
+          "key": {
+            "type": "string",
+            "description": "Machine key — how values are addressed in custom fields and segment rules"
+          },
+          "name": {
+            "type": "string",
+            "description": "Display name (renameable)"
+          },
+          "type": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SiteCustomFieldType"
+              }
+            ],
+            "description": "Inferred value type"
+          },
+          "createdAt": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Timestamp"
+              }
+            ],
+            "description": "Creation timestamp"
+          },
+          "updatedAt": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Timestamp"
+              }
+            ],
+            "description": "Last update timestamp"
+          }
+        },
+        "description": "Custom field definition — a typed, named Contact attribute (ADR 0006). Auto-created\n on first sight from Identify; the catalogue feeds the segment builder."
+      },
+      "SiteCustomFieldType": {
+        "type": "string",
+        "enum": ["string", "number", "bool", "datetime"],
+        "description": "A Custom field's value type"
       },
       "SiteDirectLoginError": {
         "type": "object",
@@ -5133,6 +5297,26 @@
       "SiteUpdateContactInput": {
         "type": "object",
         "properties": {
+          "subjectId": {
+            "type": "string",
+            "nullable": true,
+            "description": "The customer's own user id — an alias key"
+          },
+          "email": {
+            "type": "string",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EmailAddress"
+              }
+            ],
+            "nullable": true,
+            "description": "Email address — an alias key"
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true,
+            "description": "Phone number — an alias key"
+          },
           "firstName": {
             "type": "string",
             "nullable": true,
@@ -5155,11 +5339,9 @@
           },
           "customFields": {
             "type": "object",
-            "additionalProperties": {
-              "type": "string"
-            },
+            "additionalProperties": {},
             "nullable": true,
-            "description": "Custom fields as key-value pairs"
+            "description": "Typed custom field values keyed by the field's machine key"
           }
         },
         "description": "Site request body for updating a contact"

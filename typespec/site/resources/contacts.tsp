@@ -17,8 +17,14 @@ model SiteContactResource {
   @key
   id: EntityId;
 
-  /** Email address */
-  email: EmailAddress;
+  /** The customer's own user id — an alias key. May be absent. */
+  subjectId?: string | null;
+
+  /** Email address — an alias key. May be absent for anonymous contacts. */
+  email?: EmailAddress | null;
+
+  /** Phone number — an alias key. May be absent. */
+  phone?: string | null;
 
   /** First name */
   firstName?: string | null;
@@ -29,8 +35,8 @@ model SiteContactResource {
   /** IANA time zone identifier */
   timeZone?: TimeZoneName | null;
 
-  /** Custom fields as key-value pairs */
-  customFields?: Record<string> | null;
+  /** Typed custom field values keyed by the field's machine key */
+  customFields?: Record<unknown> | null;
 
   /** Current status */
   status: SiteContactStatus;
@@ -44,8 +50,14 @@ model SiteContactResource {
 
 /** Site request body for creating a contact */
 model SiteCreateContactInput {
-  /** Email address */
-  email: EmailAddress;
+  /** The customer's own user id — an alias key */
+  subjectId?: string | null;
+
+  /** Email address — optional; any alias key may be absent */
+  email?: EmailAddress | null;
+
+  /** Phone number — an alias key */
+  phone?: string | null;
 
   /** First name */
   firstName?: string | null;
@@ -56,12 +68,21 @@ model SiteCreateContactInput {
   /** IANA time zone identifier */
   timeZone?: TimeZoneName | null;
 
-  /** Custom fields as key-value pairs */
-  customFields?: Record<string> | null;
+  /** Typed custom field values keyed by the field's machine key */
+  customFields?: Record<unknown> | null;
 }
 
 /** Site request body for updating a contact */
 model SiteUpdateContactInput {
+  /** The customer's own user id — an alias key */
+  subjectId?: string | null;
+
+  /** Email address — an alias key */
+  email?: EmailAddress | null;
+
+  /** Phone number — an alias key */
+  phone?: string | null;
+
   /** First name */
   firstName?: string | null;
 
@@ -71,8 +92,8 @@ model SiteUpdateContactInput {
   /** IANA time zone identifier */
   timeZone?: TimeZoneName | null;
 
-  /** Custom fields as key-value pairs */
-  customFields?: Record<string> | null;
+  /** Typed custom field values keyed by the field's machine key */
+  customFields?: Record<unknown> | null;
 }
 
 @route("/w/{workspaceSlug}/contacts")

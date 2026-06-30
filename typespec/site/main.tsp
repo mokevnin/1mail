@@ -6,6 +6,7 @@ import "../common/scalars.tsp";
 import "../common/pagination.tsp";
 import "../common/errors.tsp";
 import "./resources/contacts.tsp";
+import "./resources/custom-fields.tsp";
 import "./resources/segments.tsp";
 import "./resources/auth.tsp";
 import "./resources/workspaces.tsp";

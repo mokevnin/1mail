@@ -9,13 +9,13 @@ import (
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
-	"github.com/mokevnin/1mail/ent/trackingprofile"
-	"github.com/mokevnin/1mail/ent/trackingvisitor"
+	"github.com/mokevnin/1mail/ent/contact"
+	"github.com/mokevnin/1mail/ent/visitor"
 	"github.com/mokevnin/1mail/ent/workspace"
 )
 
-// TrackingVisitor is the model entity for the TrackingVisitor schema.
-type TrackingVisitor struct {
+// Visitor is the model entity for the Visitor schema.
+type Visitor struct {
 	config `json:"-"`
 	// ID of the ent.
 	ID int64 `json:"id,omitempty"`
@@ -23,8 +23,8 @@ type TrackingVisitor struct {
 	VisitorID string `json:"visitor_id,omitempty"`
 	// WorkspaceID holds the value of the "workspace_id" field.
 	WorkspaceID int64 `json:"workspace_id,omitempty"`
-	// ProfileID holds the value of the "profile_id" field.
-	ProfileID *int64 `json:"profile_id,omitempty"`
+	// ContactID holds the value of the "contact_id" field.
+	ContactID *int64 `json:"contact_id,omitempty"`
 	// CreatedAt holds the value of the "created_at" field.
 	CreatedAt time.Time `json:"created_at,omitempty"`
 	// UpdatedAt holds the value of the "updated_at" field.
@@ -32,15 +32,15 @@ type TrackingVisitor struct {
 	// LastSeenAt holds the value of the "last_seen_at" field.
 	LastSeenAt time.Time `json:"last_seen_at,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
-	// The values are being populated by the TrackingVisitorQuery when eager-loading is set.
-	Edges        TrackingVisitorEdges `json:"edges"`
+	// The values are being populated by the VisitorQuery when eager-loading is set.
+	Edges        VisitorEdges `json:"edges"`
 	selectValues sql.SelectValues
 }
 
-// TrackingVisitorEdges holds the relations/edges for other nodes in the graph.
-type TrackingVisitorEdges struct {
-	// Profile holds the value of the profile edge.
-	Profile *TrackingProfile `json:"profile,omitempty"`
+// VisitorEdges holds the relations/edges for other nodes in the graph.
+type VisitorEdges struct {
+	// Contact holds the value of the contact edge.
+	Contact *Contact `json:"contact,omitempty"`
 	// Workspace holds the value of the workspace edge.
 	Workspace *Workspace `json:"workspace,omitempty"`
 	// loadedTypes holds the information for reporting if a
@@ -48,20 +48,20 @@ type TrackingVisitorEdges struct {
 	loadedTypes [2]bool
 }
 
-// ProfileOrErr returns the Profile value or an error if the edge
+// ContactOrErr returns the Contact value or an error if the edge
 // was not loaded in eager-loading, or loaded but was not found.
-func (e TrackingVisitorEdges) ProfileOrErr() (*TrackingProfile, error) {
-	if e.Profile != nil {
-		return e.Profile, nil
+func (e VisitorEdges) ContactOrErr() (*Contact, error) {
+	if e.Contact != nil {
+		return e.Contact, nil
 	} else if e.loadedTypes[0] {
-		return nil, &NotFoundError{label: trackingprofile.Label}
+		return nil, &NotFoundError{label: contact.Label}
 	}
-	return nil, &NotLoadedError{edge: "profile"}
+	return nil, &NotLoadedError{edge: "contact"}
 }
 
 // WorkspaceOrErr returns the Workspace value or an error if the edge
 // was not loaded in eager-loading, or loaded but was not found.
-func (e TrackingVisitorEdges) WorkspaceOrErr() (*Workspace, error) {
+func (e VisitorEdges) WorkspaceOrErr() (*Workspace, error) {
 	if e.Workspace != nil {
 		return e.Workspace, nil
 	} else if e.loadedTypes[1] {
@@ -71,15 +71,15 @@ func (e TrackingVisitorEdges) WorkspaceOrErr() (*Workspace, error) {
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
-func (*TrackingVisitor) scanValues(columns []string) ([]any, error) {
+func (*Visitor) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case trackingvisitor.FieldID, trackingvisitor.FieldWorkspaceID, trackingvisitor.FieldProfileID:
+		case visitor.FieldID, visitor.FieldWorkspaceID, visitor.FieldContactID:
 			values[i] = new(sql.NullInt64)
-		case trackingvisitor.FieldVisitorID:
+		case visitor.FieldVisitorID:
 			values[i] = new(sql.NullString)
-		case trackingvisitor.FieldCreatedAt, trackingvisitor.FieldUpdatedAt, trackingvisitor.FieldLastSeenAt:
+		case visitor.FieldCreatedAt, visitor.FieldUpdatedAt, visitor.FieldLastSeenAt:
 			values[i] = new(sql.NullTime)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -89,51 +89,51 @@ func (*TrackingVisitor) scanValues(columns []string) ([]any, error) {
 }
 
 // assignValues assigns the values that were returned from sql.Rows (after scanning)
-// to the TrackingVisitor fields.
-func (_m *TrackingVisitor) assignValues(columns []string, values []any) error {
+// to the Visitor fields.
+func (_m *Visitor) assignValues(columns []string, values []any) error {
 	if m, n := len(values), len(columns); m < n {
 		return fmt.Errorf("mismatch number of scan values: %d != %d", m, n)
 	}
 	for i := range columns {
 		switch columns[i] {
-		case trackingvisitor.FieldID:
+		case visitor.FieldID:
 			value, ok := values[i].(*sql.NullInt64)
 			if !ok {
 				return fmt.Errorf("unexpected type %T for field id", value)
 			}
 			_m.ID = int64(value.Int64)
-		case trackingvisitor.FieldVisitorID:
+		case visitor.FieldVisitorID:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field visitor_id", values[i])
 			} else if value.Valid {
 				_m.VisitorID = value.String
 			}
-		case trackingvisitor.FieldWorkspaceID:
+		case visitor.FieldWorkspaceID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field workspace_id", values[i])
 			} else if value.Valid {
 				_m.WorkspaceID = value.Int64
 			}
-		case trackingvisitor.FieldProfileID:
+		case visitor.FieldContactID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
-				return fmt.Errorf("unexpected type %T for field profile_id", values[i])
+				return fmt.Errorf("unexpected type %T for field contact_id", values[i])
 			} else if value.Valid {
-				_m.ProfileID = new(int64)
-				*_m.ProfileID = value.Int64
+				_m.ContactID = new(int64)
+				*_m.ContactID = value.Int64
 			}
-		case trackingvisitor.FieldCreatedAt:
+		case visitor.FieldCreatedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
 				return fmt.Errorf("unexpected type %T for field created_at", values[i])
 			} else if value.Valid {
 				_m.CreatedAt = value.Time
 			}
-		case trackingvisitor.FieldUpdatedAt:
+		case visitor.FieldUpdatedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
 				return fmt.Errorf("unexpected type %T for field updated_at", values[i])
 			} else if value.Valid {
 				_m.UpdatedAt = value.Time
 			}
-		case trackingvisitor.FieldLastSeenAt:
+		case visitor.FieldLastSeenAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
 				return fmt.Errorf("unexpected type %T for field last_seen_at", values[i])
 			} else if value.Valid {
@@ -146,44 +146,44 @@ func (_m *TrackingVisitor) assignValues(columns []string, values []any) error {
 	return nil
 }
 
-// Value returns the ent.Value that was dynamically selected and assigned to the TrackingVisitor.
+// Value returns the ent.Value that was dynamically selected and assigned to the Visitor.
 // This includes values selected through modifiers, order, etc.
-func (_m *TrackingVisitor) Value(name string) (ent.Value, error) {
+func (_m *Visitor) Value(name string) (ent.Value, error) {
 	return _m.selectValues.Get(name)
 }
 
-// QueryProfile queries the "profile" edge of the TrackingVisitor entity.
-func (_m *TrackingVisitor) QueryProfile() *TrackingProfileQuery {
-	return NewTrackingVisitorClient(_m.config).QueryProfile(_m)
+// QueryContact queries the "contact" edge of the Visitor entity.
+func (_m *Visitor) QueryContact() *ContactQuery {
+	return NewVisitorClient(_m.config).QueryContact(_m)
 }
 
-// QueryWorkspace queries the "workspace" edge of the TrackingVisitor entity.
-func (_m *TrackingVisitor) QueryWorkspace() *WorkspaceQuery {
-	return NewTrackingVisitorClient(_m.config).QueryWorkspace(_m)
+// QueryWorkspace queries the "workspace" edge of the Visitor entity.
+func (_m *Visitor) QueryWorkspace() *WorkspaceQuery {
+	return NewVisitorClient(_m.config).QueryWorkspace(_m)
 }
 
-// Update returns a builder for updating this TrackingVisitor.
-// Note that you need to call TrackingVisitor.Unwrap() before calling this method if this TrackingVisitor
+// Update returns a builder for updating this Visitor.
+// Note that you need to call Visitor.Unwrap() before calling this method if this Visitor
 // was returned from a transaction, and the transaction was committed or rolled back.
-func (_m *TrackingVisitor) Update() *TrackingVisitorUpdateOne {
-	return NewTrackingVisitorClient(_m.config).UpdateOne(_m)
+func (_m *Visitor) Update() *VisitorUpdateOne {
+	return NewVisitorClient(_m.config).UpdateOne(_m)
 }
 
-// Unwrap unwraps the TrackingVisitor entity that was returned from a transaction after it was closed,
+// Unwrap unwraps the Visitor entity that was returned from a transaction after it was closed,
 // so that all future queries will be executed through the driver which created the transaction.
-func (_m *TrackingVisitor) Unwrap() *TrackingVisitor {
+func (_m *Visitor) Unwrap() *Visitor {
 	_tx, ok := _m.config.driver.(*txDriver)
 	if !ok {
-		panic("ent: TrackingVisitor is not a transactional entity")
+		panic("ent: Visitor is not a transactional entity")
 	}
 	_m.config.driver = _tx.drv
 	return _m
 }
 
 // String implements the fmt.Stringer.
-func (_m *TrackingVisitor) String() string {
+func (_m *Visitor) String() string {
 	var builder strings.Builder
-	builder.WriteString("TrackingVisitor(")
+	builder.WriteString("Visitor(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
 	builder.WriteString("visitor_id=")
 	builder.WriteString(_m.VisitorID)
@@ -191,8 +191,8 @@ func (_m *TrackingVisitor) String() string {
 	builder.WriteString("workspace_id=")
 	builder.WriteString(fmt.Sprintf("%v", _m.WorkspaceID))
 	builder.WriteString(", ")
-	if v := _m.ProfileID; v != nil {
-		builder.WriteString("profile_id=")
+	if v := _m.ContactID; v != nil {
+		builder.WriteString("contact_id=")
 		builder.WriteString(fmt.Sprintf("%v", *v))
 	}
 	builder.WriteString(", ")
@@ -208,5 +208,5 @@ func (_m *TrackingVisitor) String() string {
 	return builder.String()
 }
 
-// TrackingVisitors is a parsable slice of TrackingVisitor.
-type TrackingVisitors []*TrackingVisitor
+// Visitors is a parsable slice of Visitor.
+type Visitors []*Visitor

@@ -5,9 +5,11 @@
 package resources
 
 import (
+	"encoding/json"
 	"strconv"
 	"time"
 
+	"github.com/go-faster/jx"
 	"github.com/mokevnin/1mail/ent"
 	externalapi "github.com/mokevnin/1mail/gen/external"
 )
@@ -22,6 +24,7 @@ import (
 // goverter:extend entityID
 // goverter:extend timestamp
 // goverter:extend optNilString
+// goverter:extend optNilEmailAddress
 // goverter:extend optNilTimeZone
 // goverter:extend optNilTimestamp
 // goverter:extend contactCustomFields
@@ -45,6 +48,13 @@ func optNilString(v *string) externalapi.OptNilString {
 	return externalapi.NewOptNilString(*v)
 }
 
+func optNilEmailAddress(v *string) externalapi.OptNilEmailAddress {
+	if v == nil {
+		return externalapi.OptNilEmailAddress{}
+	}
+	return externalapi.NewOptNilEmailAddress(externalapi.EmailAddress(*v))
+}
+
 func optNilTimeZone(v *string) externalapi.OptNilTimeZoneName {
 	if v == nil {
 		return externalapi.OptNilTimeZoneName{}
@@ -59,9 +69,17 @@ func optNilTimestamp(v *time.Time) externalapi.OptNilTimestamp {
 	return externalapi.NewOptNilTimestamp(externalapi.Timestamp(*v))
 }
 
-func contactCustomFields(m map[string]string) externalapi.OptNilContactResourceCustomFields {
-	if m == nil {
+func contactCustomFields(m map[string]any) externalapi.OptNilContactResourceCustomFields {
+	if len(m) == 0 {
 		return externalapi.OptNilContactResourceCustomFields{}
 	}
-	return externalapi.NewOptNilContactResourceCustomFields(externalapi.ContactResourceCustomFields(m))
+	fields := make(externalapi.ContactResourceCustomFields, len(m))
+	for k, v := range m {
+		b, err := json.Marshal(v)
+		if err != nil {
+			continue
+		}
+		fields[k] = jx.Raw(b)
+	}
+	return externalapi.NewOptNilContactResourceCustomFields(fields)
 }

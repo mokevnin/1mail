@@ -550,15 +550,19 @@ func (*BroadcastsUpdateUnprocessableEntity) broadcastsUpdateRes() {}
 type ContactResource struct {
 	// Unique identifier.
 	ID EntityId `json:"id"`
-	// Email address.
-	Email EmailAddress `json:"email"`
+	// The customer's own user id — an alias key. May be absent.
+	SubjectId OptNilString `json:"subjectId"`
+	// Email address — an alias key. May be absent for anonymous contacts.
+	Email OptNilEmailAddress `json:"email"`
+	// Phone number — an alias key. May be absent.
+	Phone OptNilString `json:"phone"`
 	// First name.
 	FirstName OptNilString `json:"firstName"`
 	// Last name.
 	LastName OptNilString `json:"lastName"`
 	// IANA time zone identifier.
 	TimeZone OptNilTimeZoneName `json:"timeZone"`
-	// Custom fields as key-value pairs.
+	// Typed custom field values keyed by the field's machine key.
 	CustomFields OptNilContactResourceCustomFields `json:"customFields"`
 	// Current status.
 	Status ContactStatus `json:"status"`
@@ -573,9 +577,19 @@ func (s *ContactResource) GetID() EntityId {
 	return s.ID
 }
 
+// GetSubjectId returns the value of SubjectId.
+func (s *ContactResource) GetSubjectId() OptNilString {
+	return s.SubjectId
+}
+
 // GetEmail returns the value of Email.
-func (s *ContactResource) GetEmail() EmailAddress {
+func (s *ContactResource) GetEmail() OptNilEmailAddress {
 	return s.Email
+}
+
+// GetPhone returns the value of Phone.
+func (s *ContactResource) GetPhone() OptNilString {
+	return s.Phone
 }
 
 // GetFirstName returns the value of FirstName.
@@ -618,9 +632,19 @@ func (s *ContactResource) SetID(val EntityId) {
 	s.ID = val
 }
 
+// SetSubjectId sets the value of SubjectId.
+func (s *ContactResource) SetSubjectId(val OptNilString) {
+	s.SubjectId = val
+}
+
 // SetEmail sets the value of Email.
-func (s *ContactResource) SetEmail(val EmailAddress) {
+func (s *ContactResource) SetEmail(val OptNilEmailAddress) {
 	s.Email = val
+}
+
+// SetPhone sets the value of Phone.
+func (s *ContactResource) SetPhone(val OptNilString) {
+	s.Phone = val
 }
 
 // SetFirstName sets the value of FirstName.
@@ -662,13 +686,13 @@ func (*ContactResource) contactsCreateRes() {}
 func (*ContactResource) contactsGetRes()    {}
 func (*ContactResource) contactsUpdateRes() {}
 
-// Custom fields as key-value pairs.
-type ContactResourceCustomFields map[string]string
+// Typed custom field values keyed by the field's machine key.
+type ContactResourceCustomFields map[string]jx.Raw
 
 func (s *ContactResourceCustomFields) init() ContactResourceCustomFields {
 	m := *s
 	if m == nil {
-		m = map[string]string{}
+		m = map[string]jx.Raw{}
 		*s = m
 	}
 	return m
@@ -966,21 +990,35 @@ func (s *CreateBroadcastInput) SetStatus(val BroadcastStatus) {
 // Request body for creating a contact.
 // Ref: #/components/schemas/CreateContactInput
 type CreateContactInput struct {
-	// Email address.
-	Email EmailAddress `json:"email"`
+	// The customer's own user id — an alias key.
+	SubjectId OptNilString `json:"subjectId"`
+	// Email address — optional; any alias key may be absent.
+	Email OptNilEmailAddress `json:"email"`
+	// Phone number — an alias key.
+	Phone OptNilString `json:"phone"`
 	// First name.
 	FirstName OptNilString `json:"firstName"`
 	// Last name.
 	LastName OptNilString `json:"lastName"`
 	// IANA time zone identifier.
 	TimeZone OptNilTimeZoneName `json:"timeZone"`
-	// Custom fields as key-value pairs.
+	// Typed custom field values keyed by the field's machine key.
 	CustomFields OptNilCreateContactInputCustomFields `json:"customFields"`
 }
 
+// GetSubjectId returns the value of SubjectId.
+func (s *CreateContactInput) GetSubjectId() OptNilString {
+	return s.SubjectId
+}
+
 // GetEmail returns the value of Email.
-func (s *CreateContactInput) GetEmail() EmailAddress {
+func (s *CreateContactInput) GetEmail() OptNilEmailAddress {
 	return s.Email
+}
+
+// GetPhone returns the value of Phone.
+func (s *CreateContactInput) GetPhone() OptNilString {
+	return s.Phone
 }
 
 // GetFirstName returns the value of FirstName.
@@ -1003,9 +1041,19 @@ func (s *CreateContactInput) GetCustomFields() OptNilCreateContactInputCustomFie
 	return s.CustomFields
 }
 
+// SetSubjectId sets the value of SubjectId.
+func (s *CreateContactInput) SetSubjectId(val OptNilString) {
+	s.SubjectId = val
+}
+
 // SetEmail sets the value of Email.
-func (s *CreateContactInput) SetEmail(val EmailAddress) {
+func (s *CreateContactInput) SetEmail(val OptNilEmailAddress) {
 	s.Email = val
+}
+
+// SetPhone sets the value of Phone.
+func (s *CreateContactInput) SetPhone(val OptNilString) {
+	s.Phone = val
 }
 
 // SetFirstName sets the value of FirstName.
@@ -1028,13 +1076,13 @@ func (s *CreateContactInput) SetCustomFields(val OptNilCreateContactInputCustomF
 	s.CustomFields = val
 }
 
-// Custom fields as key-value pairs.
-type CreateContactInputCustomFields map[string]string
+// Typed custom field values keyed by the field's machine key.
+type CreateContactInputCustomFields map[string]jx.Raw
 
 func (s *CreateContactInputCustomFields) init() CreateContactInputCustomFields {
 	m := *s
 	if m == nil {
-		m = map[string]string{}
+		m = map[string]jx.Raw{}
 		*s = m
 	}
 	return m
@@ -1191,8 +1239,6 @@ type EventInput struct {
 	Email OptNilEmailAddress `json:"email"`
 	// Phone number associated with the event.
 	Phone OptNilString `json:"phone"`
-	// Prospect flag.
-	Prospect OptNilBool `json:"prospect"`
 	// Event properties.
 	Properties OptNilEventInputProperties `json:"properties"`
 	// Event occurrence timestamp.
@@ -1217,11 +1263,6 @@ func (s *EventInput) GetEmail() OptNilEmailAddress {
 // GetPhone returns the value of Phone.
 func (s *EventInput) GetPhone() OptNilString {
 	return s.Phone
-}
-
-// GetProspect returns the value of Prospect.
-func (s *EventInput) GetProspect() OptNilBool {
-	return s.Prospect
 }
 
 // GetProperties returns the value of Properties.
@@ -1252,11 +1293,6 @@ func (s *EventInput) SetEmail(val OptNilEmailAddress) {
 // SetPhone sets the value of Phone.
 func (s *EventInput) SetPhone(val OptNilString) {
 	s.Phone = val
-}
-
-// SetProspect sets the value of Prospect.
-func (s *EventInput) SetProspect(val OptNilBool) {
-	s.Prospect = val
 }
 
 // SetProperties sets the value of Properties.
@@ -1472,74 +1508,6 @@ func (o OptInt32) Get() (v int32, ok bool) {
 
 // Or returns value if set, or given parameter if does not.
 func (o OptInt32) Or(d int32) int32 {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// NewOptNilBool returns new OptNilBool with value set to v.
-func NewOptNilBool(v bool) OptNilBool {
-	return OptNilBool{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptNilBool is optional nullable bool.
-type OptNilBool struct {
-	Value bool
-	Set   bool
-	Null  bool
-}
-
-// IsSet returns true if OptNilBool was set.
-func (o OptNilBool) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptNilBool) Reset() {
-	var v bool
-	o.Value = v
-	o.Set = false
-	o.Null = false
-}
-
-// SetTo sets value to v.
-func (o *OptNilBool) SetTo(v bool) {
-	o.Set = true
-	o.Null = false
-	o.Value = v
-}
-
-// IsNull returns true if value is Null.
-func (o OptNilBool) IsNull() bool { return o.Null }
-
-// SetToNull sets value to null.
-func (o *OptNilBool) SetToNull() {
-	o.Set = true
-	o.Null = true
-	var v bool
-	o.Value = v
-}
-
-// IsEmpty returns true if the field was omitted from the payload (not Set and not Null).
-func (o OptNilBool) IsEmpty() bool {
-	return !o.Set && !o.Null
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptNilBool) Get() (v bool, ok bool) {
-	if o.Null {
-		return v, false
-	}
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptNilBool) Or(d bool) bool {
 	if v, ok := o.Get(); ok {
 		return v
 	}
@@ -2719,14 +2687,35 @@ func (s *UpdateBroadcastInput) SetStatus(val OptBroadcastStatus) {
 // Request body for updating a contact.
 // Ref: #/components/schemas/UpdateContactInput
 type UpdateContactInput struct {
+	// The customer's own user id — an alias key.
+	SubjectId OptNilString `json:"subjectId"`
+	// Email address — an alias key.
+	Email OptNilEmailAddress `json:"email"`
+	// Phone number — an alias key.
+	Phone OptNilString `json:"phone"`
 	// First name.
 	FirstName OptNilString `json:"firstName"`
 	// Last name.
 	LastName OptNilString `json:"lastName"`
 	// IANA time zone identifier.
 	TimeZone OptNilTimeZoneName `json:"timeZone"`
-	// Custom fields as key-value pairs.
+	// Typed custom field values keyed by the field's machine key.
 	CustomFields OptNilUpdateContactInputCustomFields `json:"customFields"`
+}
+
+// GetSubjectId returns the value of SubjectId.
+func (s *UpdateContactInput) GetSubjectId() OptNilString {
+	return s.SubjectId
+}
+
+// GetEmail returns the value of Email.
+func (s *UpdateContactInput) GetEmail() OptNilEmailAddress {
+	return s.Email
+}
+
+// GetPhone returns the value of Phone.
+func (s *UpdateContactInput) GetPhone() OptNilString {
+	return s.Phone
 }
 
 // GetFirstName returns the value of FirstName.
@@ -2749,6 +2738,21 @@ func (s *UpdateContactInput) GetCustomFields() OptNilUpdateContactInputCustomFie
 	return s.CustomFields
 }
 
+// SetSubjectId sets the value of SubjectId.
+func (s *UpdateContactInput) SetSubjectId(val OptNilString) {
+	s.SubjectId = val
+}
+
+// SetEmail sets the value of Email.
+func (s *UpdateContactInput) SetEmail(val OptNilEmailAddress) {
+	s.Email = val
+}
+
+// SetPhone sets the value of Phone.
+func (s *UpdateContactInput) SetPhone(val OptNilString) {
+	s.Phone = val
+}
+
 // SetFirstName sets the value of FirstName.
 func (s *UpdateContactInput) SetFirstName(val OptNilString) {
 	s.FirstName = val
@@ -2769,13 +2773,13 @@ func (s *UpdateContactInput) SetCustomFields(val OptNilUpdateContactInputCustomF
 	s.CustomFields = val
 }
 
-// Custom fields as key-value pairs.
-type UpdateContactInputCustomFields map[string]string
+// Typed custom field values keyed by the field's machine key.
+type UpdateContactInputCustomFields map[string]jx.Raw
 
 func (s *UpdateContactInputCustomFields) init() UpdateContactInputCustomFields {
 	m := *s
 	if m == nil {
-		m = map[string]string{}
+		m = map[string]jx.Raw{}
 		*s = m
 	}
 	return m

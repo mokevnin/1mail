@@ -83,19 +83,31 @@ func (h *Handlers) SiteContactsCreate(ctx context.Context, req *siteapi.SiteCrea
 	err = h.bus.WithinTx(ctx, func(tx *ent.Client, pub events.Publisher) error {
 		q := tx.Contact.Create().
 			SetWorkspaceID(ws).
-			SetEmail(string(req.Email)).
+			SetNillableSubjectID(convert.StringPtr(req.SubjectId)).
+			SetNillableEmail(convert.StringPtr(req.Email)).
+			SetNillablePhone(convert.StringPtr(req.Phone)).
 			SetNillableFirstName(convert.StringPtr(req.FirstName)).
 			SetNillableLastName(convert.StringPtr(req.LastName)).
 			SetNillableTimeZone(convert.StringPtr(req.TimeZone))
 		if v, ok := req.CustomFields.Get(); ok {
-			q = q.SetCustomFields(map[string]string(v))
+			typed, err := service.EnsureCustomFields(ctx, tx, ws, convert.RawMap(v))
+			if err != nil {
+				return err
+			}
+			if len(typed) > 0 {
+				q = q.SetCustomFields(typed)
+			}
 		}
 		created, err := q.Save(ctx)
 		if err != nil {
 			return err
 		}
 		c = created
-		return pub.Publish(ctx, &events.ContactCreated{WorkspaceID: ws, ContactID: c.ID, Email: c.Email})
+		email := ""
+		if c.Email != nil {
+			email = *c.Email
+		}
+		return pub.Publish(ctx, &events.ContactCreated{WorkspaceID: ws, ContactID: c.ID, Email: email})
 	})
 	if service.IsUniqueViolation(err) {
 		v := siteapi.SiteContactsCreateConflict(problemWithErrors(http.StatusConflict, "email already exists", map[string][]string{
@@ -159,11 +171,18 @@ func (h *Handlers) SiteContactsUpdate(ctx context.Context, req *siteapi.SiteUpda
 	}
 	q := h.ent.Contact.UpdateOneID(id).
 		Where(contact.WorkspaceID(ws)).
+		SetNillableSubjectID(convert.StringPtr(req.SubjectId)).
+		SetNillableEmail(convert.StringPtr(req.Email)).
+		SetNillablePhone(convert.StringPtr(req.Phone)).
 		SetNillableFirstName(convert.StringPtr(req.FirstName)).
 		SetNillableLastName(convert.StringPtr(req.LastName)).
 		SetNillableTimeZone(convert.StringPtr(req.TimeZone))
 	if v, ok := req.CustomFields.Get(); ok {
-		q = q.SetCustomFields(map[string]string(v))
+		typed, err := service.EnsureCustomFields(ctx, h.ent, ws, convert.RawMap(v))
+		if err != nil {
+			return nil, err
+		}
+		q = q.SetCustomFields(typed)
 	}
 	c, err := q.Save(ctx)
 	if service.IsUniqueViolation(err) {

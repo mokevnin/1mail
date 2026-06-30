@@ -212,7 +212,9 @@ var (
 	// ContactsColumns holds the columns for the "contacts" table.
 	ContactsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt64, Increment: true},
-		{Name: "email", Type: field.TypeString},
+		{Name: "subject_id", Type: field.TypeString, Nullable: true},
+		{Name: "email", Type: field.TypeString, Nullable: true},
+		{Name: "phone", Type: field.TypeString, Nullable: true},
 		{Name: "first_name", Type: field.TypeString, Nullable: true},
 		{Name: "last_name", Type: field.TypeString, Nullable: true},
 		{Name: "status", Type: field.TypeEnum, Enums: []string{"active", "unsubscribed"}, Default: "active"},
@@ -230,7 +232,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "contacts_workspaces_contacts",
-				Columns:    []*schema.Column{ContactsColumns[9]},
+				Columns:    []*schema.Column{ContactsColumns[11]},
 				RefColumns: []*schema.Column{WorkspacesColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
@@ -239,7 +241,48 @@ var (
 			{
 				Name:    "contacts_email_workspace_id",
 				Unique:  true,
-				Columns: []*schema.Column{ContactsColumns[1], ContactsColumns[9]},
+				Columns: []*schema.Column{ContactsColumns[2], ContactsColumns[11]},
+			},
+			{
+				Name:    "contacts_subject_id_workspace_id",
+				Unique:  true,
+				Columns: []*schema.Column{ContactsColumns[1], ContactsColumns[11]},
+			},
+			{
+				Name:    "contacts_phone_workspace_id",
+				Unique:  true,
+				Columns: []*schema.Column{ContactsColumns[3], ContactsColumns[11]},
+			},
+		},
+	}
+	// CustomFieldsColumns holds the columns for the "custom_fields" table.
+	CustomFieldsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt64, Increment: true},
+		{Name: "key", Type: field.TypeString},
+		{Name: "name", Type: field.TypeString},
+		{Name: "type", Type: field.TypeEnum, Enums: []string{"string", "number", "bool", "datetime"}, Default: "string"},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "workspace_id", Type: field.TypeInt64},
+	}
+	// CustomFieldsTable holds the schema information for the "custom_fields" table.
+	CustomFieldsTable = &schema.Table{
+		Name:       "custom_fields",
+		Columns:    CustomFieldsColumns,
+		PrimaryKey: []*schema.Column{CustomFieldsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "custom_fields_workspaces_custom_fields",
+				Columns:    []*schema.Column{CustomFieldsColumns[6]},
+				RefColumns: []*schema.Column{WorkspacesColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "custom_fields_key_workspace_id",
+				Unique:  true,
+				Columns: []*schema.Column{CustomFieldsColumns[1], CustomFieldsColumns[6]},
 			},
 		},
 	}
@@ -278,13 +321,14 @@ var (
 	EventsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt64, Increment: true},
 		{Name: "source_id", Type: field.TypeString, Unique: true, Nullable: true},
-		{Name: "subject_id", Type: field.TypeString},
+		{Name: "contact_id", Type: field.TypeInt64, Nullable: true},
+		{Name: "visitor_id", Type: field.TypeString, Nullable: true},
+		{Name: "subject_id", Type: field.TypeString, Nullable: true},
 		{Name: "email", Type: field.TypeString, Nullable: true},
 		{Name: "phone", Type: field.TypeString, Nullable: true},
 		{Name: "action", Type: field.TypeString},
 		{Name: "properties", Type: field.TypeJSON, Nullable: true},
 		{Name: "occurred_at", Type: field.TypeTime, Nullable: true},
-		{Name: "prospect", Type: field.TypeBool, Nullable: true},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "workspace_id", Type: field.TypeInt64},
 	}
@@ -296,16 +340,21 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "events_workspaces_events",
-				Columns:    []*schema.Column{EventsColumns[10]},
+				Columns:    []*schema.Column{EventsColumns[11]},
 				RefColumns: []*schema.Column{WorkspacesColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
 		},
 		Indexes: []*schema.Index{
 			{
-				Name:    "event_workspace_id_email_action",
+				Name:    "event_workspace_id_contact_id_action",
 				Unique:  false,
-				Columns: []*schema.Column{EventsColumns[10], EventsColumns[3], EventsColumns[5]},
+				Columns: []*schema.Column{EventsColumns[11], EventsColumns[2], EventsColumns[7]},
+			},
+			{
+				Name:    "event_workspace_id_visitor_id",
+				Unique:  false,
+				Columns: []*schema.Column{EventsColumns[11], EventsColumns[3]},
 			},
 		},
 	}
@@ -401,85 +450,6 @@ var (
 			},
 		},
 	}
-	// TrackingProfilesColumns holds the columns for the "tracking_profiles" table.
-	TrackingProfilesColumns = []*schema.Column{
-		{Name: "id", Type: field.TypeInt64, Increment: true},
-		{Name: "subject_id", Type: field.TypeString},
-		{Name: "email", Type: field.TypeString, Nullable: true},
-		{Name: "phone", Type: field.TypeString, Nullable: true},
-		{Name: "traits", Type: field.TypeJSON},
-		{Name: "created_at", Type: field.TypeTime},
-		{Name: "updated_at", Type: field.TypeTime},
-		{Name: "workspace_id", Type: field.TypeInt64},
-	}
-	// TrackingProfilesTable holds the schema information for the "tracking_profiles" table.
-	TrackingProfilesTable = &schema.Table{
-		Name:       "tracking_profiles",
-		Columns:    TrackingProfilesColumns,
-		PrimaryKey: []*schema.Column{TrackingProfilesColumns[0]},
-		ForeignKeys: []*schema.ForeignKey{
-			{
-				Symbol:     "tracking_profiles_workspaces_tracking_profiles",
-				Columns:    []*schema.Column{TrackingProfilesColumns[7]},
-				RefColumns: []*schema.Column{WorkspacesColumns[0]},
-				OnDelete:   schema.NoAction,
-			},
-		},
-		Indexes: []*schema.Index{
-			{
-				Name:    "tracking_profiles_subject_id_workspace_id",
-				Unique:  true,
-				Columns: []*schema.Column{TrackingProfilesColumns[1], TrackingProfilesColumns[7]},
-			},
-			{
-				Name:    "tracking_profiles_email_workspace_id",
-				Unique:  true,
-				Columns: []*schema.Column{TrackingProfilesColumns[2], TrackingProfilesColumns[7]},
-			},
-			{
-				Name:    "tracking_profiles_phone_workspace_id",
-				Unique:  true,
-				Columns: []*schema.Column{TrackingProfilesColumns[3], TrackingProfilesColumns[7]},
-			},
-		},
-	}
-	// TrackingVisitorsColumns holds the columns for the "tracking_visitors" table.
-	TrackingVisitorsColumns = []*schema.Column{
-		{Name: "id", Type: field.TypeInt64, Increment: true},
-		{Name: "visitor_id", Type: field.TypeString},
-		{Name: "created_at", Type: field.TypeTime},
-		{Name: "updated_at", Type: field.TypeTime},
-		{Name: "last_seen_at", Type: field.TypeTime},
-		{Name: "profile_id", Type: field.TypeInt64, Nullable: true},
-		{Name: "workspace_id", Type: field.TypeInt64},
-	}
-	// TrackingVisitorsTable holds the schema information for the "tracking_visitors" table.
-	TrackingVisitorsTable = &schema.Table{
-		Name:       "tracking_visitors",
-		Columns:    TrackingVisitorsColumns,
-		PrimaryKey: []*schema.Column{TrackingVisitorsColumns[0]},
-		ForeignKeys: []*schema.ForeignKey{
-			{
-				Symbol:     "tracking_visitors_tracking_profiles_visitors",
-				Columns:    []*schema.Column{TrackingVisitorsColumns[5]},
-				RefColumns: []*schema.Column{TrackingProfilesColumns[0]},
-				OnDelete:   schema.SetNull,
-			},
-			{
-				Symbol:     "tracking_visitors_workspaces_tracking_visitors",
-				Columns:    []*schema.Column{TrackingVisitorsColumns[6]},
-				RefColumns: []*schema.Column{WorkspacesColumns[0]},
-				OnDelete:   schema.NoAction,
-			},
-		},
-		Indexes: []*schema.Index{
-			{
-				Name:    "tracking_visitors_visitor_id_workspace_id",
-				Unique:  true,
-				Columns: []*schema.Column{TrackingVisitorsColumns[1], TrackingVisitorsColumns[6]},
-			},
-		},
-	}
 	// UsersColumns holds the columns for the "users" table.
 	UsersColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt64, Increment: true},
@@ -494,6 +464,43 @@ var (
 		Name:       "users",
 		Columns:    UsersColumns,
 		PrimaryKey: []*schema.Column{UsersColumns[0]},
+	}
+	// VisitorsColumns holds the columns for the "visitors" table.
+	VisitorsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt64, Increment: true},
+		{Name: "visitor_id", Type: field.TypeString},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "last_seen_at", Type: field.TypeTime},
+		{Name: "contact_id", Type: field.TypeInt64, Nullable: true},
+		{Name: "workspace_id", Type: field.TypeInt64},
+	}
+	// VisitorsTable holds the schema information for the "visitors" table.
+	VisitorsTable = &schema.Table{
+		Name:       "visitors",
+		Columns:    VisitorsColumns,
+		PrimaryKey: []*schema.Column{VisitorsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "visitors_contacts_visitors",
+				Columns:    []*schema.Column{VisitorsColumns[5]},
+				RefColumns: []*schema.Column{ContactsColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+			{
+				Symbol:     "visitors_workspaces_visitors",
+				Columns:    []*schema.Column{VisitorsColumns[6]},
+				RefColumns: []*schema.Column{WorkspacesColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "visitors_visitor_id_workspace_id",
+				Unique:  true,
+				Columns: []*schema.Column{VisitorsColumns[1], VisitorsColumns[6]},
+			},
+		},
 	}
 	// WebhookEndpointsColumns holds the columns for the "webhook_endpoints" table.
 	WebhookEndpointsColumns = []*schema.Column{
@@ -565,14 +572,14 @@ var (
 		BroadcastsTable,
 		BroadcastRecipientsTable,
 		ContactsTable,
+		CustomFieldsTable,
 		EmailTemplatesTable,
 		EventsTable,
 		IntegrationsTable,
 		SegmentsTable,
 		SuppressionsTable,
-		TrackingProfilesTable,
-		TrackingVisitorsTable,
 		UsersTable,
+		VisitorsTable,
 		WebhookEndpointsTable,
 		WorkspacesTable,
 	}
@@ -605,6 +612,10 @@ func init() {
 	ContactsTable.Annotation = &entsql.Annotation{
 		Table: "contacts",
 	}
+	CustomFieldsTable.ForeignKeys[0].RefTable = WorkspacesTable
+	CustomFieldsTable.Annotation = &entsql.Annotation{
+		Table: "custom_fields",
+	}
 	EmailTemplatesTable.ForeignKeys[0].RefTable = WorkspacesTable
 	EmailTemplatesTable.Annotation = &entsql.Annotation{
 		Table: "email_templates",
@@ -625,17 +636,13 @@ func init() {
 	SuppressionsTable.Annotation = &entsql.Annotation{
 		Table: "suppressions",
 	}
-	TrackingProfilesTable.ForeignKeys[0].RefTable = WorkspacesTable
-	TrackingProfilesTable.Annotation = &entsql.Annotation{
-		Table: "tracking_profiles",
-	}
-	TrackingVisitorsTable.ForeignKeys[0].RefTable = TrackingProfilesTable
-	TrackingVisitorsTable.ForeignKeys[1].RefTable = WorkspacesTable
-	TrackingVisitorsTable.Annotation = &entsql.Annotation{
-		Table: "tracking_visitors",
-	}
 	UsersTable.Annotation = &entsql.Annotation{
 		Table: "users",
+	}
+	VisitorsTable.ForeignKeys[0].RefTable = ContactsTable
+	VisitorsTable.ForeignKeys[1].RefTable = WorkspacesTable
+	VisitorsTable.Annotation = &entsql.Annotation{
+		Table: "visitors",
 	}
 	WebhookEndpointsTable.ForeignKeys[0].RefTable = WorkspacesTable
 	WebhookEndpointsTable.Annotation = &entsql.Annotation{

@@ -4,6 +4,30 @@
 // handlers previously duplicated.
 package convert
 
+import (
+	"encoding/json"
+
+	"github.com/go-faster/jx"
+)
+
+// RawMap decodes an ogen Record<unknown> body (map of raw JSON values) into a plain
+// map[string]any so value types match what the service layer expects (float64 for
+// numbers, bool, nested maps, …). Used for typed custom field values on the wire.
+func RawMap[M ~map[string]jx.Raw](m M) map[string]any {
+	if m == nil {
+		return nil
+	}
+	out := make(map[string]any, len(m))
+	for k, v := range m {
+		var decoded any
+		if err := json.Unmarshal(v, &decoded); err != nil {
+			continue
+		}
+		out[k] = decoded
+	}
+	return out
+}
+
 // getter is implemented by every ogen Opt*/OptNil* value type.
 type getter[T any] interface {
 	Get() (T, bool)

@@ -83,7 +83,7 @@ func (h *Handlers) CollectIdentifyCreate(ctx context.Context, req *collectapi.Co
 		input.Traits = rawMap(traits)
 	}
 
-	if err := service.IdentifyVisitor(ctx, h.ent, auth.CollectWorkspaceID(ctx), input); err != nil {
+	if err := service.IdentifyVisitor(ctx, h.bus, auth.CollectWorkspaceID(ctx), input); err != nil {
 		return nil, err
 	}
 	return &collectapi.CollectOkResponse{Ok: collectapi.CollectOkResponseOkTrue}, nil

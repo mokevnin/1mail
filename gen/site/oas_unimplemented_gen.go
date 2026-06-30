@@ -216,6 +216,15 @@ func (UnimplementedHandler) SiteContactsUpdate(ctx context.Context, req *SiteUpd
 	return r, ht.ErrNotImplemented
 }
 
+// SiteCustomFieldsList implements SiteCustomFields_list operation.
+//
+// List the workspace's custom field definitions.
+//
+// GET /w/{workspaceSlug}/custom-fields
+func (UnimplementedHandler) SiteCustomFieldsList(ctx context.Context, params SiteCustomFieldsListParams) (r SiteCustomFieldsListRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // SiteEventsActions implements SiteEvents_actions operation.
 //
 // Distinct event actions in the workspace, sorted — powers the segment builder.

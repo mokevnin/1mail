@@ -5,19 +5,18 @@ import { ContactForm, type ContactFormValues } from './ContactForm.tsx'
 
 // ContactForm receives a Mantine form as a prop, so the harness builds a real
 // one and renders the form under it — same shape as create.tsx / edit.tsx.
-function Harness({
-  emailEditable = true,
-  onSubmit,
-}: {
-  emailEditable?: boolean
-  onSubmit: (values: ContactFormValues) => void
-}) {
+function Harness({ onSubmit }: { onSubmit: (values: ContactFormValues) => void }) {
   const form = useForm<ContactFormValues>({
-    initialValues: { email: '', firstName: '', lastName: '', timeZone: '' },
+    initialValues: {
+      subjectId: '',
+      email: '',
+      phone: '',
+      firstName: '',
+      lastName: '',
+      timeZone: '',
+    },
   })
-  return (
-    <ContactForm form={form} emailEditable={emailEditable} isPending={false} onSubmit={onSubmit} />
-  )
+  return <ContactForm form={form} isPending={false} onSubmit={onSubmit} />
 }
 
 test('submits the entered values', async () => {
@@ -36,10 +35,4 @@ test('submits the entered values', async () => {
       expect.anything(),
     ),
   )
-})
-
-test('disables the email field when not editable', async () => {
-  const { screen } = await renderWithRouter(<Harness emailEditable={false} onSubmit={vi.fn()} />)
-
-  await expect.element(screen.getByLabelText('Email')).toBeDisabled()
 })

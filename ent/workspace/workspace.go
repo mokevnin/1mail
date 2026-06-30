@@ -30,14 +30,14 @@ const (
 	FieldUpdatedAt = "updated_at"
 	// EdgeContacts holds the string denoting the contacts edge name in mutations.
 	EdgeContacts = "contacts"
+	// EdgeCustomFields holds the string denoting the custom_fields edge name in mutations.
+	EdgeCustomFields = "custom_fields"
 	// EdgeSegments holds the string denoting the segments edge name in mutations.
 	EdgeSegments = "segments"
 	// EdgeEvents holds the string denoting the events edge name in mutations.
 	EdgeEvents = "events"
-	// EdgeTrackingProfiles holds the string denoting the tracking_profiles edge name in mutations.
-	EdgeTrackingProfiles = "tracking_profiles"
-	// EdgeTrackingVisitors holds the string denoting the tracking_visitors edge name in mutations.
-	EdgeTrackingVisitors = "tracking_visitors"
+	// EdgeVisitors holds the string denoting the visitors edge name in mutations.
+	EdgeVisitors = "visitors"
 	// EdgeAPITokens holds the string denoting the api_tokens edge name in mutations.
 	EdgeAPITokens = "api_tokens"
 	// EdgeIntegrations holds the string denoting the integrations edge name in mutations.
@@ -67,6 +67,13 @@ const (
 	ContactsInverseTable = "contacts"
 	// ContactsColumn is the table column denoting the contacts relation/edge.
 	ContactsColumn = "workspace_id"
+	// CustomFieldsTable is the table that holds the custom_fields relation/edge.
+	CustomFieldsTable = "custom_fields"
+	// CustomFieldsInverseTable is the table name for the CustomField entity.
+	// It exists in this package in order to avoid circular dependency with the "customfield" package.
+	CustomFieldsInverseTable = "custom_fields"
+	// CustomFieldsColumn is the table column denoting the custom_fields relation/edge.
+	CustomFieldsColumn = "workspace_id"
 	// SegmentsTable is the table that holds the segments relation/edge.
 	SegmentsTable = "segments"
 	// SegmentsInverseTable is the table name for the Segment entity.
@@ -81,20 +88,13 @@ const (
 	EventsInverseTable = "events"
 	// EventsColumn is the table column denoting the events relation/edge.
 	EventsColumn = "workspace_id"
-	// TrackingProfilesTable is the table that holds the tracking_profiles relation/edge.
-	TrackingProfilesTable = "tracking_profiles"
-	// TrackingProfilesInverseTable is the table name for the TrackingProfile entity.
-	// It exists in this package in order to avoid circular dependency with the "trackingprofile" package.
-	TrackingProfilesInverseTable = "tracking_profiles"
-	// TrackingProfilesColumn is the table column denoting the tracking_profiles relation/edge.
-	TrackingProfilesColumn = "workspace_id"
-	// TrackingVisitorsTable is the table that holds the tracking_visitors relation/edge.
-	TrackingVisitorsTable = "tracking_visitors"
-	// TrackingVisitorsInverseTable is the table name for the TrackingVisitor entity.
-	// It exists in this package in order to avoid circular dependency with the "trackingvisitor" package.
-	TrackingVisitorsInverseTable = "tracking_visitors"
-	// TrackingVisitorsColumn is the table column denoting the tracking_visitors relation/edge.
-	TrackingVisitorsColumn = "workspace_id"
+	// VisitorsTable is the table that holds the visitors relation/edge.
+	VisitorsTable = "visitors"
+	// VisitorsInverseTable is the table name for the Visitor entity.
+	// It exists in this package in order to avoid circular dependency with the "visitor" package.
+	VisitorsInverseTable = "visitors"
+	// VisitorsColumn is the table column denoting the visitors relation/edge.
+	VisitorsColumn = "workspace_id"
 	// APITokensTable is the table that holds the api_tokens relation/edge.
 	APITokensTable = "api_tokens"
 	// APITokensInverseTable is the table name for the ApiToken entity.
@@ -263,6 +263,20 @@ func ByContacts(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 	}
 }
 
+// ByCustomFieldsCount orders the results by custom_fields count.
+func ByCustomFieldsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newCustomFieldsStep(), opts...)
+	}
+}
+
+// ByCustomFields orders the results by custom_fields terms.
+func ByCustomFields(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newCustomFieldsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+
 // BySegmentsCount orders the results by segments count.
 func BySegmentsCount(opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
@@ -291,31 +305,17 @@ func ByEvents(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 	}
 }
 
-// ByTrackingProfilesCount orders the results by tracking_profiles count.
-func ByTrackingProfilesCount(opts ...sql.OrderTermOption) OrderOption {
+// ByVisitorsCount orders the results by visitors count.
+func ByVisitorsCount(opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborsCount(s, newTrackingProfilesStep(), opts...)
+		sqlgraph.OrderByNeighborsCount(s, newVisitorsStep(), opts...)
 	}
 }
 
-// ByTrackingProfiles orders the results by tracking_profiles terms.
-func ByTrackingProfiles(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+// ByVisitors orders the results by visitors terms.
+func ByVisitors(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborTerms(s, newTrackingProfilesStep(), append([]sql.OrderTerm{term}, terms...)...)
-	}
-}
-
-// ByTrackingVisitorsCount orders the results by tracking_visitors count.
-func ByTrackingVisitorsCount(opts ...sql.OrderTermOption) OrderOption {
-	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborsCount(s, newTrackingVisitorsStep(), opts...)
-	}
-}
-
-// ByTrackingVisitors orders the results by tracking_visitors terms.
-func ByTrackingVisitors(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
-	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborTerms(s, newTrackingVisitorsStep(), append([]sql.OrderTerm{term}, terms...)...)
+		sqlgraph.OrderByNeighborTerms(s, newVisitorsStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
 
@@ -458,6 +458,13 @@ func newContactsStep() *sqlgraph.Step {
 		sqlgraph.Edge(sqlgraph.O2M, false, ContactsTable, ContactsColumn),
 	)
 }
+func newCustomFieldsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(CustomFieldsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, CustomFieldsTable, CustomFieldsColumn),
+	)
+}
 func newSegmentsStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -472,18 +479,11 @@ func newEventsStep() *sqlgraph.Step {
 		sqlgraph.Edge(sqlgraph.O2M, false, EventsTable, EventsColumn),
 	)
 }
-func newTrackingProfilesStep() *sqlgraph.Step {
+func newVisitorsStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
-		sqlgraph.To(TrackingProfilesInverseTable, FieldID),
-		sqlgraph.Edge(sqlgraph.O2M, false, TrackingProfilesTable, TrackingProfilesColumn),
-	)
-}
-func newTrackingVisitorsStep() *sqlgraph.Step {
-	return sqlgraph.NewStep(
-		sqlgraph.From(Table, FieldID),
-		sqlgraph.To(TrackingVisitorsInverseTable, FieldID),
-		sqlgraph.Edge(sqlgraph.O2M, false, TrackingVisitorsTable, TrackingVisitorsColumn),
+		sqlgraph.To(VisitorsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, VisitorsTable, VisitorsColumn),
 	)
 }
 func newAPITokensStep() *sqlgraph.Step {

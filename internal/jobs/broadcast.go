@@ -126,7 +126,13 @@ func SendBroadcast(ctx context.Context, client *ent.Client, resolver SenderResol
 
 	var targeted, sentCount, failedCount int
 	for _, c := range contacts {
-		if _, ok := suppressed[strings.ToLower(strings.TrimSpace(c.Email))]; ok {
+		// Email channel: a Contact with no email address (identity is multi-key and
+		// any alias may be absent) cannot be a recipient.
+		if c.Email == nil {
+			continue
+		}
+		addr := *c.Email
+		if _, ok := suppressed[strings.ToLower(strings.TrimSpace(addr))]; ok {
 			continue
 		}
 		// Recipients targeted = audience minus suppressed. Counted independently of
@@ -167,7 +173,7 @@ func SendBroadcast(ctx context.Context, client *ent.Client, resolver SenderResol
 		sendErr := sender.Send(ctx, messaging.EmailMessage{
 			From:     fromEmail,
 			FromName: fromName,
-			To:       c.Email,
+			To:       addr,
 			Subject:  email.Subject,
 			HTML:     html,
 			Text:     email.Text,

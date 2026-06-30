@@ -55,9 +55,19 @@ func IDLTE(id int64) predicate.Contact {
 	return predicate.Contact(sql.FieldLTE(FieldID, id))
 }
 
+// SubjectID applies equality check predicate on the "subject_id" field. It's identical to SubjectIDEQ.
+func SubjectID(v string) predicate.Contact {
+	return predicate.Contact(sql.FieldEQ(FieldSubjectID, v))
+}
+
 // Email applies equality check predicate on the "email" field. It's identical to EmailEQ.
 func Email(v string) predicate.Contact {
 	return predicate.Contact(sql.FieldEQ(FieldEmail, v))
+}
+
+// Phone applies equality check predicate on the "phone" field. It's identical to PhoneEQ.
+func Phone(v string) predicate.Contact {
+	return predicate.Contact(sql.FieldEQ(FieldPhone, v))
 }
 
 // FirstName applies equality check predicate on the "first_name" field. It's identical to FirstNameEQ.
@@ -88,6 +98,81 @@ func CreatedAt(v time.Time) predicate.Contact {
 // UpdatedAt applies equality check predicate on the "updated_at" field. It's identical to UpdatedAtEQ.
 func UpdatedAt(v time.Time) predicate.Contact {
 	return predicate.Contact(sql.FieldEQ(FieldUpdatedAt, v))
+}
+
+// SubjectIDEQ applies the EQ predicate on the "subject_id" field.
+func SubjectIDEQ(v string) predicate.Contact {
+	return predicate.Contact(sql.FieldEQ(FieldSubjectID, v))
+}
+
+// SubjectIDNEQ applies the NEQ predicate on the "subject_id" field.
+func SubjectIDNEQ(v string) predicate.Contact {
+	return predicate.Contact(sql.FieldNEQ(FieldSubjectID, v))
+}
+
+// SubjectIDIn applies the In predicate on the "subject_id" field.
+func SubjectIDIn(vs ...string) predicate.Contact {
+	return predicate.Contact(sql.FieldIn(FieldSubjectID, vs...))
+}
+
+// SubjectIDNotIn applies the NotIn predicate on the "subject_id" field.
+func SubjectIDNotIn(vs ...string) predicate.Contact {
+	return predicate.Contact(sql.FieldNotIn(FieldSubjectID, vs...))
+}
+
+// SubjectIDGT applies the GT predicate on the "subject_id" field.
+func SubjectIDGT(v string) predicate.Contact {
+	return predicate.Contact(sql.FieldGT(FieldSubjectID, v))
+}
+
+// SubjectIDGTE applies the GTE predicate on the "subject_id" field.
+func SubjectIDGTE(v string) predicate.Contact {
+	return predicate.Contact(sql.FieldGTE(FieldSubjectID, v))
+}
+
+// SubjectIDLT applies the LT predicate on the "subject_id" field.
+func SubjectIDLT(v string) predicate.Contact {
+	return predicate.Contact(sql.FieldLT(FieldSubjectID, v))
+}
+
+// SubjectIDLTE applies the LTE predicate on the "subject_id" field.
+func SubjectIDLTE(v string) predicate.Contact {
+	return predicate.Contact(sql.FieldLTE(FieldSubjectID, v))
+}
+
+// SubjectIDContains applies the Contains predicate on the "subject_id" field.
+func SubjectIDContains(v string) predicate.Contact {
+	return predicate.Contact(sql.FieldContains(FieldSubjectID, v))
+}
+
+// SubjectIDHasPrefix applies the HasPrefix predicate on the "subject_id" field.
+func SubjectIDHasPrefix(v string) predicate.Contact {
+	return predicate.Contact(sql.FieldHasPrefix(FieldSubjectID, v))
+}
+
+// SubjectIDHasSuffix applies the HasSuffix predicate on the "subject_id" field.
+func SubjectIDHasSuffix(v string) predicate.Contact {
+	return predicate.Contact(sql.FieldHasSuffix(FieldSubjectID, v))
+}
+
+// SubjectIDIsNil applies the IsNil predicate on the "subject_id" field.
+func SubjectIDIsNil() predicate.Contact {
+	return predicate.Contact(sql.FieldIsNull(FieldSubjectID))
+}
+
+// SubjectIDNotNil applies the NotNil predicate on the "subject_id" field.
+func SubjectIDNotNil() predicate.Contact {
+	return predicate.Contact(sql.FieldNotNull(FieldSubjectID))
+}
+
+// SubjectIDEqualFold applies the EqualFold predicate on the "subject_id" field.
+func SubjectIDEqualFold(v string) predicate.Contact {
+	return predicate.Contact(sql.FieldEqualFold(FieldSubjectID, v))
+}
+
+// SubjectIDContainsFold applies the ContainsFold predicate on the "subject_id" field.
+func SubjectIDContainsFold(v string) predicate.Contact {
+	return predicate.Contact(sql.FieldContainsFold(FieldSubjectID, v))
 }
 
 // EmailEQ applies the EQ predicate on the "email" field.
@@ -145,6 +230,16 @@ func EmailHasSuffix(v string) predicate.Contact {
 	return predicate.Contact(sql.FieldHasSuffix(FieldEmail, v))
 }
 
+// EmailIsNil applies the IsNil predicate on the "email" field.
+func EmailIsNil() predicate.Contact {
+	return predicate.Contact(sql.FieldIsNull(FieldEmail))
+}
+
+// EmailNotNil applies the NotNil predicate on the "email" field.
+func EmailNotNil() predicate.Contact {
+	return predicate.Contact(sql.FieldNotNull(FieldEmail))
+}
+
 // EmailEqualFold applies the EqualFold predicate on the "email" field.
 func EmailEqualFold(v string) predicate.Contact {
 	return predicate.Contact(sql.FieldEqualFold(FieldEmail, v))
@@ -153,6 +248,81 @@ func EmailEqualFold(v string) predicate.Contact {
 // EmailContainsFold applies the ContainsFold predicate on the "email" field.
 func EmailContainsFold(v string) predicate.Contact {
 	return predicate.Contact(sql.FieldContainsFold(FieldEmail, v))
+}
+
+// PhoneEQ applies the EQ predicate on the "phone" field.
+func PhoneEQ(v string) predicate.Contact {
+	return predicate.Contact(sql.FieldEQ(FieldPhone, v))
+}
+
+// PhoneNEQ applies the NEQ predicate on the "phone" field.
+func PhoneNEQ(v string) predicate.Contact {
+	return predicate.Contact(sql.FieldNEQ(FieldPhone, v))
+}
+
+// PhoneIn applies the In predicate on the "phone" field.
+func PhoneIn(vs ...string) predicate.Contact {
+	return predicate.Contact(sql.FieldIn(FieldPhone, vs...))
+}
+
+// PhoneNotIn applies the NotIn predicate on the "phone" field.
+func PhoneNotIn(vs ...string) predicate.Contact {
+	return predicate.Contact(sql.FieldNotIn(FieldPhone, vs...))
+}
+
+// PhoneGT applies the GT predicate on the "phone" field.
+func PhoneGT(v string) predicate.Contact {
+	return predicate.Contact(sql.FieldGT(FieldPhone, v))
+}
+
+// PhoneGTE applies the GTE predicate on the "phone" field.
+func PhoneGTE(v string) predicate.Contact {
+	return predicate.Contact(sql.FieldGTE(FieldPhone, v))
+}
+
+// PhoneLT applies the LT predicate on the "phone" field.
+func PhoneLT(v string) predicate.Contact {
+	return predicate.Contact(sql.FieldLT(FieldPhone, v))
+}
+
+// PhoneLTE applies the LTE predicate on the "phone" field.
+func PhoneLTE(v string) predicate.Contact {
+	return predicate.Contact(sql.FieldLTE(FieldPhone, v))
+}
+
+// PhoneContains applies the Contains predicate on the "phone" field.
+func PhoneContains(v string) predicate.Contact {
+	return predicate.Contact(sql.FieldContains(FieldPhone, v))
+}
+
+// PhoneHasPrefix applies the HasPrefix predicate on the "phone" field.
+func PhoneHasPrefix(v string) predicate.Contact {
+	return predicate.Contact(sql.FieldHasPrefix(FieldPhone, v))
+}
+
+// PhoneHasSuffix applies the HasSuffix predicate on the "phone" field.
+func PhoneHasSuffix(v string) predicate.Contact {
+	return predicate.Contact(sql.FieldHasSuffix(FieldPhone, v))
+}
+
+// PhoneIsNil applies the IsNil predicate on the "phone" field.
+func PhoneIsNil() predicate.Contact {
+	return predicate.Contact(sql.FieldIsNull(FieldPhone))
+}
+
+// PhoneNotNil applies the NotNil predicate on the "phone" field.
+func PhoneNotNil() predicate.Contact {
+	return predicate.Contact(sql.FieldNotNull(FieldPhone))
+}
+
+// PhoneEqualFold applies the EqualFold predicate on the "phone" field.
+func PhoneEqualFold(v string) predicate.Contact {
+	return predicate.Contact(sql.FieldEqualFold(FieldPhone, v))
+}
+
+// PhoneContainsFold applies the ContainsFold predicate on the "phone" field.
+func PhoneContainsFold(v string) predicate.Contact {
+	return predicate.Contact(sql.FieldContainsFold(FieldPhone, v))
 }
 
 // FirstNameEQ applies the EQ predicate on the "first_name" field.
@@ -508,6 +678,29 @@ func UpdatedAtLT(v time.Time) predicate.Contact {
 // UpdatedAtLTE applies the LTE predicate on the "updated_at" field.
 func UpdatedAtLTE(v time.Time) predicate.Contact {
 	return predicate.Contact(sql.FieldLTE(FieldUpdatedAt, v))
+}
+
+// HasVisitors applies the HasEdge predicate on the "visitors" edge.
+func HasVisitors() predicate.Contact {
+	return predicate.Contact(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, VisitorsTable, VisitorsColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasVisitorsWith applies the HasEdge predicate on the "visitors" edge with a given conditions (other predicates).
+func HasVisitorsWith(preds ...predicate.Visitor) predicate.Contact {
+	return predicate.Contact(func(s *sql.Selector) {
+		step := newVisitorsStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
 }
 
 // HasWorkspace applies the HasEdge predicate on the "workspace" edge.

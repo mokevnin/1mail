@@ -400,9 +400,17 @@ export type SiteContactResource = {
      */
     id: EntityId;
     /**
-     * Email address
+     * The customer's own user id — an alias key. May be absent.
      */
-    email: EmailAddress;
+    subjectId?: string | null;
+    /**
+     * Email address — an alias key. May be absent for anonymous contacts.
+     */
+    email?: EmailAddress | null;
+    /**
+     * Phone number — an alias key. May be absent.
+     */
+    phone?: string | null;
     /**
      * First name
      */
@@ -416,10 +424,10 @@ export type SiteContactResource = {
      */
     timeZone?: TimeZoneName | null;
     /**
-     * Custom fields as key-value pairs
+     * Typed custom field values keyed by the field's machine key
      */
     customFields?: {
-        [key: string]: string;
+        [key: string]: unknown;
     } | null;
     /**
      * Current status
@@ -493,9 +501,17 @@ export type SiteCreateBroadcastInput = {
  */
 export type SiteCreateContactInput = {
     /**
-     * Email address
+     * The customer's own user id — an alias key
      */
-    email: EmailAddress;
+    subjectId?: string | null;
+    /**
+     * Email address — optional; any alias key may be absent
+     */
+    email?: EmailAddress | null;
+    /**
+     * Phone number — an alias key
+     */
+    phone?: string | null;
     /**
      * First name
      */
@@ -509,10 +525,10 @@ export type SiteCreateContactInput = {
      */
     timeZone?: TimeZoneName | null;
     /**
-     * Custom fields as key-value pairs
+     * Typed custom field values keyed by the field's machine key
      */
     customFields?: {
-        [key: string]: string;
+        [key: string]: unknown;
     } | null;
 };
 
@@ -585,6 +601,52 @@ export type SiteCreateWebhookEndpointInput = {
     eventTypes?: Array<string>;
     enabled?: boolean;
 };
+
+/**
+ * Custom field definition — a typed, named Contact attribute (ADR 0006). Auto-created
+ * on first sight from Identify; the catalogue feeds the segment builder.
+ */
+export type SiteCustomFieldResource = {
+    /**
+     * Unique identifier
+     */
+    id: EntityId;
+    /**
+     * Machine key — how values are addressed in custom fields and segment rules
+     */
+    key: string;
+    /**
+     * Display name (renameable)
+     */
+    name: string;
+    /**
+     * Inferred value type
+     */
+    type: SiteCustomFieldType;
+    /**
+     * Creation timestamp
+     */
+    createdAt: Timestamp;
+    /**
+     * Last update timestamp
+     */
+    updatedAt: Timestamp;
+};
+
+/**
+ * A Custom field's value type
+ */
+export const SiteCustomFieldType = {
+    STRING: 'string',
+    NUMBER: 'number',
+    BOOL: 'bool',
+    DATETIME: 'datetime'
+} as const;
+
+/**
+ * A Custom field's value type
+ */
+export type SiteCustomFieldType = typeof SiteCustomFieldType[keyof typeof SiteCustomFieldType];
 
 export type SiteDirectLoginError = {
     error: string;
@@ -1002,6 +1064,18 @@ export type SiteUpdateBroadcastInput = {
  */
 export type SiteUpdateContactInput = {
     /**
+     * The customer's own user id — an alias key
+     */
+    subjectId?: string | null;
+    /**
+     * Email address — an alias key
+     */
+    email?: EmailAddress | null;
+    /**
+     * Phone number — an alias key
+     */
+    phone?: string | null;
+    /**
      * First name
      */
     firstName?: string | null;
@@ -1014,10 +1088,10 @@ export type SiteUpdateContactInput = {
      */
     timeZone?: TimeZoneName | null;
     /**
-     * Custom fields as key-value pairs
+     * Typed custom field values keyed by the field's machine key
      */
     customFields?: {
-        [key: string]: string;
+        [key: string]: unknown;
     } | null;
 };
 
@@ -2115,6 +2189,58 @@ export type SiteContactsUpdateResponses = {
 
 export type SiteContactsUpdateResponse = SiteContactsUpdateResponses[keyof SiteContactsUpdateResponses];
 
+export type SiteCustomFieldsListData = {
+    body?: never;
+    path: {
+        workspaceSlug: string;
+    };
+    query?: never;
+    url: '/w/{workspaceSlug}/custom-fields';
+};
+
+export type SiteCustomFieldsListErrors = {
+    /**
+     * RFC 7807 bad request response
+     */
+    400: ProblemDetails;
+    /**
+     * RFC 7807 not found response
+     */
+    404: ProblemDetails;
+};
+
+export type SiteCustomFieldsListError = SiteCustomFieldsListErrors[keyof SiteCustomFieldsListErrors];
+
+export type SiteCustomFieldsListResponses = {
+    /**
+     * Paginated response
+     */
+    200: {
+        /**
+         * List of items
+         */
+        items: Array<SiteCustomFieldResource>;
+        /**
+         * Page number (1-based)
+         */
+        page: number;
+        /**
+         * Page size
+         */
+        pageSize: number;
+        /**
+         * Total number of elements
+         */
+        totalItems: number;
+        /**
+         * Total number of pages
+         */
+        totalPages: number;
+    };
+};
+
+export type SiteCustomFieldsListResponse = SiteCustomFieldsListResponses[keyof SiteCustomFieldsListResponses];
+
 export type SiteEventsListData = {
     body?: never;
     path: {
@@ -2133,6 +2259,10 @@ export type SiteEventsListData = {
          * Filter by event action
          */
         action?: string;
+        /**
+         * Filter by the Contact the event resolved to (the stable identity link)
+         */
+        contactId?: EntityId;
         /**
          * Filter by the email associated with the event
          */

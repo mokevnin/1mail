@@ -180,6 +180,11 @@ func RunStep(ctx context.Context, client *ent.Client, resolver SenderResolver, r
 			_, _ = run.Update().SetStatus(automationrun.StatusCompleted).ClearResumeAt().Save(ctx)
 			return StepResult{Done: true}, nil
 		}
+		// Email channel: a Contact with no email address can't receive this step.
+		if c.Email == nil {
+			_, _ = run.Update().SetStatus(automationrun.StatusCompleted).ClearResumeAt().Save(ctx)
+			return StepResult{Done: true}, nil
+		}
 		sender, err := resolver.EmailSender(ctx, run.WorkspaceID)
 		if err != nil {
 			_, _ = run.Update().SetStatus(automationrun.StatusFailed).Save(ctx)
@@ -193,7 +198,7 @@ func RunStep(ctx context.Context, client *ent.Client, resolver SenderResolver, r
 		// From/FromName left empty: the provider falls back to the integration's
 		// configured sender (messaging.FirstNonEmpty in the smtp/ses senders).
 		if err := sender.Send(ctx, messaging.EmailMessage{
-			To:      c.Email,
+			To:      *c.Email,
 			Subject: email.Subject,
 			HTML:    email.HTML,
 			Text:    email.Text,

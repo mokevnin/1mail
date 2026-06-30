@@ -24,6 +24,9 @@ type BroadcastRecipient func(*sql.Selector)
 // Contact is the predicate function for contact builders.
 type Contact func(*sql.Selector)
 
+// CustomField is the predicate function for customfield builders.
+type CustomField func(*sql.Selector)
+
 // EmailTemplate is the predicate function for emailtemplate builders.
 type EmailTemplate func(*sql.Selector)
 
@@ -39,14 +42,11 @@ type Segment func(*sql.Selector)
 // Suppression is the predicate function for suppression builders.
 type Suppression func(*sql.Selector)
 
-// TrackingProfile is the predicate function for trackingprofile builders.
-type TrackingProfile func(*sql.Selector)
-
-// TrackingVisitor is the predicate function for trackingvisitor builders.
-type TrackingVisitor func(*sql.Selector)
-
 // User is the predicate function for user builders.
 type User func(*sql.Selector)
+
+// Visitor is the predicate function for visitor builders.
+type Visitor func(*sql.Selector)
 
 // WebhookEndpoint is the predicate function for webhookendpoint builders.
 type WebhookEndpoint func(*sql.Selector)

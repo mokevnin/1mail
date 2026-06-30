@@ -1566,7 +1566,7 @@
       },
       "ContactResource": {
         "type": "object",
-        "required": ["id", "email", "status", "createdAt", "updatedAt"],
+        "required": ["id", "status", "createdAt", "updatedAt"],
         "properties": {
           "id": {
             "allOf": [
@@ -1576,13 +1576,25 @@
             ],
             "description": "Unique identifier"
           },
+          "subjectId": {
+            "type": "string",
+            "nullable": true,
+            "description": "The customer's own user id — an alias key. May be absent."
+          },
           "email": {
+            "type": "string",
             "allOf": [
               {
                 "$ref": "#/components/schemas/EmailAddress"
               }
             ],
-            "description": "Email address"
+            "nullable": true,
+            "description": "Email address — an alias key. May be absent for anonymous contacts."
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true,
+            "description": "Phone number — an alias key. May be absent."
           },
           "firstName": {
             "type": "string",
@@ -1606,11 +1618,9 @@
           },
           "customFields": {
             "type": "object",
-            "additionalProperties": {
-              "type": "string"
-            },
+            "additionalProperties": {},
             "nullable": true,
-            "description": "Custom fields as key-value pairs"
+            "description": "Typed custom field values keyed by the field's machine key"
           },
           "status": {
             "allOf": [
@@ -1709,15 +1719,26 @@
       },
       "CreateContactInput": {
         "type": "object",
-        "required": ["email"],
         "properties": {
+          "subjectId": {
+            "type": "string",
+            "nullable": true,
+            "description": "The customer's own user id — an alias key"
+          },
           "email": {
+            "type": "string",
             "allOf": [
               {
                 "$ref": "#/components/schemas/EmailAddress"
               }
             ],
-            "description": "Email address"
+            "nullable": true,
+            "description": "Email address — optional; any alias key may be absent"
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true,
+            "description": "Phone number — an alias key"
           },
           "firstName": {
             "type": "string",
@@ -1741,11 +1762,9 @@
           },
           "customFields": {
             "type": "object",
-            "additionalProperties": {
-              "type": "string"
-            },
+            "additionalProperties": {},
             "nullable": true,
-            "description": "Custom fields as key-value pairs"
+            "description": "Typed custom field values keyed by the field's machine key"
           }
         },
         "description": "Request body for creating a contact"
@@ -1818,11 +1837,6 @@
             "type": "string",
             "nullable": true,
             "description": "Phone number associated with the event"
-          },
-          "prospect": {
-            "type": "boolean",
-            "nullable": true,
-            "description": "Prospect flag"
           },
           "properties": {
             "type": "object",
@@ -1982,6 +1996,26 @@
       "UpdateContactInput": {
         "type": "object",
         "properties": {
+          "subjectId": {
+            "type": "string",
+            "nullable": true,
+            "description": "The customer's own user id — an alias key"
+          },
+          "email": {
+            "type": "string",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EmailAddress"
+              }
+            ],
+            "nullable": true,
+            "description": "Email address — an alias key"
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true,
+            "description": "Phone number — an alias key"
+          },
           "firstName": {
             "type": "string",
             "nullable": true,
@@ -2004,11 +2038,9 @@
           },
           "customFields": {
             "type": "object",
-            "additionalProperties": {
-              "type": "string"
-            },
+            "additionalProperties": {},
             "nullable": true,
-            "description": "Custom fields as key-value pairs"
+            "description": "Typed custom field values keyed by the field's machine key"
           }
         },
         "description": "Request body for updating a contact"

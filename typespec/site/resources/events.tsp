@@ -43,6 +43,9 @@ namespace SiteEvents {
     /** Filter by event action */
     @query action?: string,
 
+    /** Filter by the Contact the event resolved to (the stable identity link) */
+    @query contactId?: EntityId,
+
     /** Filter by the email associated with the event */
     @query email?: string,
   ): Page<SiteEventResource> | NotFoundProblem;

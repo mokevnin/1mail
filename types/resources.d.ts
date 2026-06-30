@@ -404,7 +404,9 @@ export default interface Resources {
       "email": "Email",
       "firstName": "First name",
       "lastName": "Last name",
+      "phone": "Phone",
       "status": "Status",
+      "subjectId": "Subject ID",
       "timeZone": "Time zone"
     },
     "templates": {

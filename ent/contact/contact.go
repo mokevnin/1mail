@@ -15,8 +15,12 @@ const (
 	Label = "contact"
 	// FieldID holds the string denoting the id field in the database.
 	FieldID = "id"
+	// FieldSubjectID holds the string denoting the subject_id field in the database.
+	FieldSubjectID = "subject_id"
 	// FieldEmail holds the string denoting the email field in the database.
 	FieldEmail = "email"
+	// FieldPhone holds the string denoting the phone field in the database.
+	FieldPhone = "phone"
 	// FieldFirstName holds the string denoting the first_name field in the database.
 	FieldFirstName = "first_name"
 	// FieldLastName holds the string denoting the last_name field in the database.
@@ -33,10 +37,19 @@ const (
 	FieldCreatedAt = "created_at"
 	// FieldUpdatedAt holds the string denoting the updated_at field in the database.
 	FieldUpdatedAt = "updated_at"
+	// EdgeVisitors holds the string denoting the visitors edge name in mutations.
+	EdgeVisitors = "visitors"
 	// EdgeWorkspace holds the string denoting the workspace edge name in mutations.
 	EdgeWorkspace = "workspace"
 	// Table holds the table name of the contact in the database.
 	Table = "contacts"
+	// VisitorsTable is the table that holds the visitors relation/edge.
+	VisitorsTable = "visitors"
+	// VisitorsInverseTable is the table name for the Visitor entity.
+	// It exists in this package in order to avoid circular dependency with the "visitor" package.
+	VisitorsInverseTable = "visitors"
+	// VisitorsColumn is the table column denoting the visitors relation/edge.
+	VisitorsColumn = "contact_id"
 	// WorkspaceTable is the table that holds the workspace relation/edge.
 	WorkspaceTable = "contacts"
 	// WorkspaceInverseTable is the table name for the Workspace entity.
@@ -49,7 +62,9 @@ const (
 // Columns holds all SQL columns for contact fields.
 var Columns = []string{
 	FieldID,
+	FieldSubjectID,
 	FieldEmail,
+	FieldPhone,
 	FieldFirstName,
 	FieldLastName,
 	FieldStatus,
@@ -71,8 +86,6 @@ func ValidColumn(column string) bool {
 }
 
 var (
-	// EmailValidator is a validator for the "email" field. It is called by the builders before save.
-	EmailValidator func(string) error
 	// DefaultCreatedAt holds the default value on creation for the "created_at" field.
 	DefaultCreatedAt func() time.Time
 	// DefaultUpdatedAt holds the default value on creation for the "updated_at" field.
@@ -115,9 +128,19 @@ func ByID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldID, opts...).ToFunc()
 }
 
+// BySubjectID orders the results by the subject_id field.
+func BySubjectID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldSubjectID, opts...).ToFunc()
+}
+
 // ByEmail orders the results by the email field.
 func ByEmail(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldEmail, opts...).ToFunc()
+}
+
+// ByPhone orders the results by the phone field.
+func ByPhone(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldPhone, opts...).ToFunc()
 }
 
 // ByFirstName orders the results by the first_name field.
@@ -155,11 +178,32 @@ func ByUpdatedAt(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldUpdatedAt, opts...).ToFunc()
 }
 
+// ByVisitorsCount orders the results by visitors count.
+func ByVisitorsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newVisitorsStep(), opts...)
+	}
+}
+
+// ByVisitors orders the results by visitors terms.
+func ByVisitors(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newVisitorsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+
 // ByWorkspaceField orders the results by workspace field.
 func ByWorkspaceField(field string, opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
 		sqlgraph.OrderByNeighborTerms(s, newWorkspaceStep(), sql.OrderByField(field, opts...))
 	}
+}
+func newVisitorsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(VisitorsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, VisitorsTable, VisitorsColumn),
+	)
 }
 func newWorkspaceStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(

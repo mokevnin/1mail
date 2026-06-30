@@ -20,7 +20,7 @@ func TestSiteSegmentsPreviewCountsMatchingActiveContacts(t *testing.T) {
 	_, err := env.DB.Contact.Create().
 		SetWorkspaceID(1).
 		SetEmail("preview-target@test.dev").
-		SetCustomFields(map[string]string{"plan": "preview-pro"}).
+		SetCustomFields(map[string]any{"plan": "preview-pro"}).
 		Save(ctx)
 	require.NoError(t, err)
 
@@ -39,10 +39,11 @@ func TestSiteSegmentsPreviewEventCondition(t *testing.T) {
 	c := siteClient(t, env, "info@1mail.com")
 	ctx := context.Background()
 
-	_, err := env.DB.Contact.Create().SetWorkspaceID(1).SetEmail("ev-prev@test.dev").Save(ctx)
+	ct, err := env.DB.Contact.Create().SetWorkspaceID(1).SetEmail("ev-prev@test.dev").Save(ctx)
 	require.NoError(t, err)
+	// Events attach by the stable contact_id (ADR 0002), not the email string.
 	_, err = env.DB.Event.Create().
-		SetWorkspaceID(1).SetSubjectID("ev-prev@test.dev").SetEmail("ev-prev@test.dev").
+		SetWorkspaceID(1).SetContactID(ct.ID).
 		SetAction("signed_up").SetOccurredAt(time.Now()).Save(ctx)
 	require.NoError(t, err)
 

@@ -60,14 +60,23 @@ func (h *Handlers) ContactsCreate(ctx context.Context, req *externalapi.CreateCo
 		return &res, nil
 	}
 
+	ws := auth.WorkspaceID(auth.GetTokenAuth(ctx))
 	q := h.ent.Contact.Create().
-		SetWorkspaceID(auth.WorkspaceID(auth.GetTokenAuth(ctx))).
-		SetEmail(string(req.Email)).
+		SetWorkspaceID(ws).
+		SetNillableSubjectID(convert.StringPtr(req.SubjectId)).
+		SetNillableEmail(convert.StringPtr(req.Email)).
+		SetNillablePhone(convert.StringPtr(req.Phone)).
 		SetNillableFirstName(convert.StringPtr(req.FirstName)).
 		SetNillableLastName(convert.StringPtr(req.LastName)).
 		SetNillableTimeZone(convert.StringPtr(req.TimeZone))
 	if v, ok := req.CustomFields.Get(); ok {
-		q = q.SetCustomFields(map[string]string(v))
+		typed, err := service.EnsureCustomFields(ctx, h.ent, ws, convert.RawMap(v))
+		if err != nil {
+			return nil, err
+		}
+		if len(typed) > 0 {
+			q = q.SetCustomFields(typed)
+		}
 	}
 
 	c, err := q.Save(ctx)
@@ -126,11 +135,18 @@ func (h *Handlers) ContactsUpdate(ctx context.Context, req *externalapi.UpdateCo
 	ws := auth.WorkspaceID(auth.GetTokenAuth(ctx))
 	q := h.ent.Contact.UpdateOneID(id).
 		Where(contact.WorkspaceID(ws)).
+		SetNillableSubjectID(convert.StringPtr(req.SubjectId)).
+		SetNillableEmail(convert.StringPtr(req.Email)).
+		SetNillablePhone(convert.StringPtr(req.Phone)).
 		SetNillableFirstName(convert.StringPtr(req.FirstName)).
 		SetNillableLastName(convert.StringPtr(req.LastName)).
 		SetNillableTimeZone(convert.StringPtr(req.TimeZone))
 	if v, ok := req.CustomFields.Get(); ok {
-		q = q.SetCustomFields(map[string]string(v))
+		typed, err := service.EnsureCustomFields(ctx, h.ent, ws, convert.RawMap(v))
+		if err != nil {
+			return nil, err
+		}
+		q = q.SetCustomFields(typed)
 	}
 
 	c, err := q.Save(ctx)

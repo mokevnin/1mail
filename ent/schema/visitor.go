@@ -11,17 +11,21 @@ import (
 	"entgo.io/ent/schema/index"
 )
 
-type TrackingVisitor struct {
+// Visitor is an anonymous device/browser identity — a visitor_id cookie, unique per
+// workspace. Before Identify it may belong to no Contact (contact_id null); Identify
+// binds it to a Contact, and one Contact owns many Visitors (the same person across
+// devices).
+type Visitor struct {
 	ent.Schema
 }
 
-func (TrackingVisitor) Annotations() []schema.Annotation {
+func (Visitor) Annotations() []schema.Annotation {
 	return []schema.Annotation{
-		entsql.Annotation{Table: "tracking_visitors"},
+		entsql.Annotation{Table: "visitors"},
 	}
 }
 
-func (TrackingVisitor) Fields() []ent.Field {
+func (Visitor) Fields() []ent.Field {
 	return []ent.Field{
 		field.Int64("id").
 			StorageKey("id").
@@ -29,7 +33,8 @@ func (TrackingVisitor) Fields() []ent.Field {
 		field.String("visitor_id").
 			NotEmpty(),
 		field.Int64("workspace_id"),
-		field.Int64("profile_id").
+		// Null until Identify resolves who this device is.
+		field.Int64("contact_id").
 			Optional().
 			Nillable(),
 		field.Time("created_at").
@@ -43,22 +48,22 @@ func (TrackingVisitor) Fields() []ent.Field {
 	}
 }
 
-func (TrackingVisitor) Edges() []ent.Edge {
+func (Visitor) Edges() []ent.Edge {
 	return []ent.Edge{
-		edge.From("profile", TrackingProfile.Type).
+		edge.From("contact", Contact.Type).
 			Ref("visitors").
-			Field("profile_id").
+			Field("contact_id").
 			Unique(),
 		edge.From("workspace", Workspace.Type).
-			Ref("tracking_visitors").
+			Ref("visitors").
 			Field("workspace_id").
 			Required().
 			Unique(),
 	}
 }
 
-func (TrackingVisitor) Indexes() []ent.Index {
+func (Visitor) Indexes() []ent.Index {
 	return []ent.Index{
-		index.Fields("visitor_id", "workspace_id").Unique().StorageKey("tracking_visitors_visitor_id_workspace_id"),
+		index.Fields("visitor_id", "workspace_id").Unique().StorageKey("visitors_visitor_id_workspace_id"),
 	}
 }

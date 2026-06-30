@@ -16,6 +16,10 @@ const (
 	FieldID = "id"
 	// FieldSourceID holds the string denoting the source_id field in the database.
 	FieldSourceID = "source_id"
+	// FieldContactID holds the string denoting the contact_id field in the database.
+	FieldContactID = "contact_id"
+	// FieldVisitorID holds the string denoting the visitor_id field in the database.
+	FieldVisitorID = "visitor_id"
 	// FieldSubjectID holds the string denoting the subject_id field in the database.
 	FieldSubjectID = "subject_id"
 	// FieldEmail holds the string denoting the email field in the database.
@@ -28,8 +32,6 @@ const (
 	FieldProperties = "properties"
 	// FieldOccurredAt holds the string denoting the occurred_at field in the database.
 	FieldOccurredAt = "occurred_at"
-	// FieldProspect holds the string denoting the prospect field in the database.
-	FieldProspect = "prospect"
 	// FieldWorkspaceID holds the string denoting the workspace_id field in the database.
 	FieldWorkspaceID = "workspace_id"
 	// FieldCreatedAt holds the string denoting the created_at field in the database.
@@ -51,13 +53,14 @@ const (
 var Columns = []string{
 	FieldID,
 	FieldSourceID,
+	FieldContactID,
+	FieldVisitorID,
 	FieldSubjectID,
 	FieldEmail,
 	FieldPhone,
 	FieldAction,
 	FieldProperties,
 	FieldOccurredAt,
-	FieldProspect,
 	FieldWorkspaceID,
 	FieldCreatedAt,
 }
@@ -73,8 +76,6 @@ func ValidColumn(column string) bool {
 }
 
 var (
-	// SubjectIDValidator is a validator for the "subject_id" field. It is called by the builders before save.
-	SubjectIDValidator func(string) error
 	// ActionValidator is a validator for the "action" field. It is called by the builders before save.
 	ActionValidator func(string) error
 	// DefaultCreatedAt holds the default value on creation for the "created_at" field.
@@ -92,6 +93,16 @@ func ByID(opts ...sql.OrderTermOption) OrderOption {
 // BySourceID orders the results by the source_id field.
 func BySourceID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldSourceID, opts...).ToFunc()
+}
+
+// ByContactID orders the results by the contact_id field.
+func ByContactID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldContactID, opts...).ToFunc()
+}
+
+// ByVisitorID orders the results by the visitor_id field.
+func ByVisitorID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldVisitorID, opts...).ToFunc()
 }
 
 // BySubjectID orders the results by the subject_id field.
@@ -117,11 +128,6 @@ func ByAction(opts ...sql.OrderTermOption) OrderOption {
 // ByOccurredAt orders the results by the occurred_at field.
 func ByOccurredAt(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldOccurredAt, opts...).ToFunc()
-}
-
-// ByProspect orders the results by the prospect field.
-func ByProspect(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldProspect, opts...).ToFunc()
 }
 
 // ByWorkspaceID orders the results by the workspace_id field.

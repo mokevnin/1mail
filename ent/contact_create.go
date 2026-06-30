@@ -12,6 +12,7 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/mokevnin/1mail/ent/contact"
+	"github.com/mokevnin/1mail/ent/visitor"
 	"github.com/mokevnin/1mail/ent/workspace"
 )
 
@@ -23,9 +24,45 @@ type ContactCreate struct {
 	conflict []sql.ConflictOption
 }
 
+// SetSubjectID sets the "subject_id" field.
+func (_c *ContactCreate) SetSubjectID(v string) *ContactCreate {
+	_c.mutation.SetSubjectID(v)
+	return _c
+}
+
+// SetNillableSubjectID sets the "subject_id" field if the given value is not nil.
+func (_c *ContactCreate) SetNillableSubjectID(v *string) *ContactCreate {
+	if v != nil {
+		_c.SetSubjectID(*v)
+	}
+	return _c
+}
+
 // SetEmail sets the "email" field.
 func (_c *ContactCreate) SetEmail(v string) *ContactCreate {
 	_c.mutation.SetEmail(v)
+	return _c
+}
+
+// SetNillableEmail sets the "email" field if the given value is not nil.
+func (_c *ContactCreate) SetNillableEmail(v *string) *ContactCreate {
+	if v != nil {
+		_c.SetEmail(*v)
+	}
+	return _c
+}
+
+// SetPhone sets the "phone" field.
+func (_c *ContactCreate) SetPhone(v string) *ContactCreate {
+	_c.mutation.SetPhone(v)
+	return _c
+}
+
+// SetNillablePhone sets the "phone" field if the given value is not nil.
+func (_c *ContactCreate) SetNillablePhone(v *string) *ContactCreate {
+	if v != nil {
+		_c.SetPhone(*v)
+	}
 	return _c
 }
 
@@ -86,7 +123,7 @@ func (_c *ContactCreate) SetNillableTimeZone(v *string) *ContactCreate {
 }
 
 // SetCustomFields sets the "custom_fields" field.
-func (_c *ContactCreate) SetCustomFields(v map[string]string) *ContactCreate {
+func (_c *ContactCreate) SetCustomFields(v map[string]interface{}) *ContactCreate {
 	_c.mutation.SetCustomFields(v)
 	return _c
 }
@@ -129,6 +166,21 @@ func (_c *ContactCreate) SetNillableUpdatedAt(v *time.Time) *ContactCreate {
 func (_c *ContactCreate) SetID(v int64) *ContactCreate {
 	_c.mutation.SetID(v)
 	return _c
+}
+
+// AddVisitorIDs adds the "visitors" edge to the Visitor entity by IDs.
+func (_c *ContactCreate) AddVisitorIDs(ids ...int64) *ContactCreate {
+	_c.mutation.AddVisitorIDs(ids...)
+	return _c
+}
+
+// AddVisitors adds the "visitors" edges to the Visitor entity.
+func (_c *ContactCreate) AddVisitors(v ...*Visitor) *ContactCreate {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddVisitorIDs(ids...)
 }
 
 // SetWorkspace sets the "workspace" edge to the Workspace entity.
@@ -187,14 +239,6 @@ func (_c *ContactCreate) defaults() {
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *ContactCreate) check() error {
-	if _, ok := _c.mutation.Email(); !ok {
-		return &ValidationError{Name: "email", err: errors.New(`ent: missing required field "Contact.email"`)}
-	}
-	if v, ok := _c.mutation.Email(); ok {
-		if err := contact.EmailValidator(v); err != nil {
-			return &ValidationError{Name: "email", err: fmt.Errorf(`ent: validator failed for field "Contact.email": %w`, err)}
-		}
-	}
 	if _, ok := _c.mutation.Status(); !ok {
 		return &ValidationError{Name: "status", err: errors.New(`ent: missing required field "Contact.status"`)}
 	}
@@ -248,9 +292,17 @@ func (_c *ContactCreate) createSpec() (*Contact, *sqlgraph.CreateSpec) {
 		_node.ID = id
 		_spec.ID.Value = id
 	}
+	if value, ok := _c.mutation.SubjectID(); ok {
+		_spec.SetField(contact.FieldSubjectID, field.TypeString, value)
+		_node.SubjectID = &value
+	}
 	if value, ok := _c.mutation.Email(); ok {
 		_spec.SetField(contact.FieldEmail, field.TypeString, value)
-		_node.Email = value
+		_node.Email = &value
+	}
+	if value, ok := _c.mutation.Phone(); ok {
+		_spec.SetField(contact.FieldPhone, field.TypeString, value)
+		_node.Phone = &value
 	}
 	if value, ok := _c.mutation.FirstName(); ok {
 		_spec.SetField(contact.FieldFirstName, field.TypeString, value)
@@ -280,6 +332,22 @@ func (_c *ContactCreate) createSpec() (*Contact, *sqlgraph.CreateSpec) {
 		_spec.SetField(contact.FieldUpdatedAt, field.TypeTime, value)
 		_node.UpdatedAt = value
 	}
+	if nodes := _c.mutation.VisitorsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   contact.VisitorsTable,
+			Columns: []string{contact.VisitorsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(visitor.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
 	if nodes := _c.mutation.WorkspaceIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
@@ -304,7 +372,7 @@ func (_c *ContactCreate) createSpec() (*Contact, *sqlgraph.CreateSpec) {
 // of the `INSERT` statement. For example:
 //
 //	client.Contact.Create().
-//		SetEmail(v).
+//		SetSubjectID(v).
 //		OnConflict(
 //			// Update the row with the new values
 //			// the was proposed for insertion.
@@ -313,7 +381,7 @@ func (_c *ContactCreate) createSpec() (*Contact, *sqlgraph.CreateSpec) {
 //		// Override some of the fields with custom
 //		// update values.
 //		Update(func(u *ent.ContactUpsert) {
-//			SetEmail(v+v).
+//			SetSubjectID(v+v).
 //		}).
 //		Exec(ctx)
 func (_c *ContactCreate) OnConflict(opts ...sql.ConflictOption) *ContactUpsertOne {
@@ -349,6 +417,24 @@ type (
 	}
 )
 
+// SetSubjectID sets the "subject_id" field.
+func (u *ContactUpsert) SetSubjectID(v string) *ContactUpsert {
+	u.Set(contact.FieldSubjectID, v)
+	return u
+}
+
+// UpdateSubjectID sets the "subject_id" field to the value that was provided on create.
+func (u *ContactUpsert) UpdateSubjectID() *ContactUpsert {
+	u.SetExcluded(contact.FieldSubjectID)
+	return u
+}
+
+// ClearSubjectID clears the value of the "subject_id" field.
+func (u *ContactUpsert) ClearSubjectID() *ContactUpsert {
+	u.SetNull(contact.FieldSubjectID)
+	return u
+}
+
 // SetEmail sets the "email" field.
 func (u *ContactUpsert) SetEmail(v string) *ContactUpsert {
 	u.Set(contact.FieldEmail, v)
@@ -358,6 +444,30 @@ func (u *ContactUpsert) SetEmail(v string) *ContactUpsert {
 // UpdateEmail sets the "email" field to the value that was provided on create.
 func (u *ContactUpsert) UpdateEmail() *ContactUpsert {
 	u.SetExcluded(contact.FieldEmail)
+	return u
+}
+
+// ClearEmail clears the value of the "email" field.
+func (u *ContactUpsert) ClearEmail() *ContactUpsert {
+	u.SetNull(contact.FieldEmail)
+	return u
+}
+
+// SetPhone sets the "phone" field.
+func (u *ContactUpsert) SetPhone(v string) *ContactUpsert {
+	u.Set(contact.FieldPhone, v)
+	return u
+}
+
+// UpdatePhone sets the "phone" field to the value that was provided on create.
+func (u *ContactUpsert) UpdatePhone() *ContactUpsert {
+	u.SetExcluded(contact.FieldPhone)
+	return u
+}
+
+// ClearPhone clears the value of the "phone" field.
+func (u *ContactUpsert) ClearPhone() *ContactUpsert {
+	u.SetNull(contact.FieldPhone)
 	return u
 }
 
@@ -428,7 +538,7 @@ func (u *ContactUpsert) ClearTimeZone() *ContactUpsert {
 }
 
 // SetCustomFields sets the "custom_fields" field.
-func (u *ContactUpsert) SetCustomFields(v map[string]string) *ContactUpsert {
+func (u *ContactUpsert) SetCustomFields(v map[string]interface{}) *ContactUpsert {
 	u.Set(contact.FieldCustomFields, v)
 	return u
 }
@@ -520,6 +630,27 @@ func (u *ContactUpsertOne) Update(set func(*ContactUpsert)) *ContactUpsertOne {
 	return u
 }
 
+// SetSubjectID sets the "subject_id" field.
+func (u *ContactUpsertOne) SetSubjectID(v string) *ContactUpsertOne {
+	return u.Update(func(s *ContactUpsert) {
+		s.SetSubjectID(v)
+	})
+}
+
+// UpdateSubjectID sets the "subject_id" field to the value that was provided on create.
+func (u *ContactUpsertOne) UpdateSubjectID() *ContactUpsertOne {
+	return u.Update(func(s *ContactUpsert) {
+		s.UpdateSubjectID()
+	})
+}
+
+// ClearSubjectID clears the value of the "subject_id" field.
+func (u *ContactUpsertOne) ClearSubjectID() *ContactUpsertOne {
+	return u.Update(func(s *ContactUpsert) {
+		s.ClearSubjectID()
+	})
+}
+
 // SetEmail sets the "email" field.
 func (u *ContactUpsertOne) SetEmail(v string) *ContactUpsertOne {
 	return u.Update(func(s *ContactUpsert) {
@@ -531,6 +662,34 @@ func (u *ContactUpsertOne) SetEmail(v string) *ContactUpsertOne {
 func (u *ContactUpsertOne) UpdateEmail() *ContactUpsertOne {
 	return u.Update(func(s *ContactUpsert) {
 		s.UpdateEmail()
+	})
+}
+
+// ClearEmail clears the value of the "email" field.
+func (u *ContactUpsertOne) ClearEmail() *ContactUpsertOne {
+	return u.Update(func(s *ContactUpsert) {
+		s.ClearEmail()
+	})
+}
+
+// SetPhone sets the "phone" field.
+func (u *ContactUpsertOne) SetPhone(v string) *ContactUpsertOne {
+	return u.Update(func(s *ContactUpsert) {
+		s.SetPhone(v)
+	})
+}
+
+// UpdatePhone sets the "phone" field to the value that was provided on create.
+func (u *ContactUpsertOne) UpdatePhone() *ContactUpsertOne {
+	return u.Update(func(s *ContactUpsert) {
+		s.UpdatePhone()
+	})
+}
+
+// ClearPhone clears the value of the "phone" field.
+func (u *ContactUpsertOne) ClearPhone() *ContactUpsertOne {
+	return u.Update(func(s *ContactUpsert) {
+		s.ClearPhone()
 	})
 }
 
@@ -612,7 +771,7 @@ func (u *ContactUpsertOne) ClearTimeZone() *ContactUpsertOne {
 }
 
 // SetCustomFields sets the "custom_fields" field.
-func (u *ContactUpsertOne) SetCustomFields(v map[string]string) *ContactUpsertOne {
+func (u *ContactUpsertOne) SetCustomFields(v map[string]interface{}) *ContactUpsertOne {
 	return u.Update(func(s *ContactUpsert) {
 		s.SetCustomFields(v)
 	})
@@ -795,7 +954,7 @@ func (_c *ContactCreateBulk) ExecX(ctx context.Context) {
 //		// Override some of the fields with custom
 //		// update values.
 //		Update(func(u *ent.ContactUpsert) {
-//			SetEmail(v+v).
+//			SetSubjectID(v+v).
 //		}).
 //		Exec(ctx)
 func (_c *ContactCreateBulk) OnConflict(opts ...sql.ConflictOption) *ContactUpsertBulk {
@@ -877,6 +1036,27 @@ func (u *ContactUpsertBulk) Update(set func(*ContactUpsert)) *ContactUpsertBulk 
 	return u
 }
 
+// SetSubjectID sets the "subject_id" field.
+func (u *ContactUpsertBulk) SetSubjectID(v string) *ContactUpsertBulk {
+	return u.Update(func(s *ContactUpsert) {
+		s.SetSubjectID(v)
+	})
+}
+
+// UpdateSubjectID sets the "subject_id" field to the value that was provided on create.
+func (u *ContactUpsertBulk) UpdateSubjectID() *ContactUpsertBulk {
+	return u.Update(func(s *ContactUpsert) {
+		s.UpdateSubjectID()
+	})
+}
+
+// ClearSubjectID clears the value of the "subject_id" field.
+func (u *ContactUpsertBulk) ClearSubjectID() *ContactUpsertBulk {
+	return u.Update(func(s *ContactUpsert) {
+		s.ClearSubjectID()
+	})
+}
+
 // SetEmail sets the "email" field.
 func (u *ContactUpsertBulk) SetEmail(v string) *ContactUpsertBulk {
 	return u.Update(func(s *ContactUpsert) {
@@ -888,6 +1068,34 @@ func (u *ContactUpsertBulk) SetEmail(v string) *ContactUpsertBulk {
 func (u *ContactUpsertBulk) UpdateEmail() *ContactUpsertBulk {
 	return u.Update(func(s *ContactUpsert) {
 		s.UpdateEmail()
+	})
+}
+
+// ClearEmail clears the value of the "email" field.
+func (u *ContactUpsertBulk) ClearEmail() *ContactUpsertBulk {
+	return u.Update(func(s *ContactUpsert) {
+		s.ClearEmail()
+	})
+}
+
+// SetPhone sets the "phone" field.
+func (u *ContactUpsertBulk) SetPhone(v string) *ContactUpsertBulk {
+	return u.Update(func(s *ContactUpsert) {
+		s.SetPhone(v)
+	})
+}
+
+// UpdatePhone sets the "phone" field to the value that was provided on create.
+func (u *ContactUpsertBulk) UpdatePhone() *ContactUpsertBulk {
+	return u.Update(func(s *ContactUpsert) {
+		s.UpdatePhone()
+	})
+}
+
+// ClearPhone clears the value of the "phone" field.
+func (u *ContactUpsertBulk) ClearPhone() *ContactUpsertBulk {
+	return u.Update(func(s *ContactUpsert) {
+		s.ClearPhone()
 	})
 }
 
@@ -969,7 +1177,7 @@ func (u *ContactUpsertBulk) ClearTimeZone() *ContactUpsertBulk {
 }
 
 // SetCustomFields sets the "custom_fields" field.
-func (u *ContactUpsertBulk) SetCustomFields(v map[string]string) *ContactUpsertBulk {
+func (u *ContactUpsertBulk) SetCustomFields(v map[string]interface{}) *ContactUpsertBulk {
 	return u.Update(func(s *ContactUpsert) {
 		s.SetCustomFields(v)
 	})

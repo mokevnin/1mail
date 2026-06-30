@@ -103,7 +103,7 @@ func TestSendBroadcastSkipsSuppressed(t *testing.T) {
 	alice := env.DB.Contact.GetX(ctx, 1)
 	_, err = env.DB.Suppression.Create().
 		SetWorkspaceID(acmeWorkspaceID).
-		SetEmail(alice.Email).
+		SetEmail(*alice.Email).
 		SetReason(suppression.ReasonManual).
 		Save(ctx)
 	require.NoError(t, err)
@@ -122,7 +122,7 @@ func TestSendBroadcastSkipsSuppressed(t *testing.T) {
 
 	// alice gets no message.
 	for _, m := range fs.sent {
-		assert.NotEqual(t, alice.Email, m.To, "suppressed address must not be sent to")
+		assert.NotEqual(t, *alice.Email, m.To, "suppressed address must not be sent to")
 	}
 	assert.Len(t, fs.sent, activeCount-1)
 
@@ -143,11 +143,11 @@ func TestSendBroadcastToRuleSegment(t *testing.T) {
 
 	_, err := env.DB.Contact.Create().SetWorkspaceID(acmeWorkspaceID).
 		SetEmail("pro@seg2.test").SetFirstName("Pro").
-		SetCustomFields(map[string]string{"plan": "pro"}).Save(ctx)
+		SetCustomFields(map[string]any{"plan": "pro"}).Save(ctx)
 	require.NoError(t, err)
 	_, err = env.DB.Contact.Create().SetWorkspaceID(acmeWorkspaceID).
 		SetEmail("free@seg2.test").SetFirstName("Free").
-		SetCustomFields(map[string]string{"plan": "free"}).Save(ctx)
+		SetCustomFields(map[string]any{"plan": "free"}).Save(ctx)
 	require.NoError(t, err)
 
 	seg, err := env.DB.Segment.Create().SetWorkspaceID(acmeWorkspaceID).

@@ -11,34 +11,34 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/mokevnin/1mail/ent/contact"
 	"github.com/mokevnin/1mail/ent/predicate"
-	"github.com/mokevnin/1mail/ent/trackingprofile"
-	"github.com/mokevnin/1mail/ent/trackingvisitor"
+	"github.com/mokevnin/1mail/ent/visitor"
 	"github.com/mokevnin/1mail/ent/workspace"
 )
 
-// TrackingVisitorUpdate is the builder for updating TrackingVisitor entities.
-type TrackingVisitorUpdate struct {
+// VisitorUpdate is the builder for updating Visitor entities.
+type VisitorUpdate struct {
 	config
 	hooks     []Hook
-	mutation  *TrackingVisitorMutation
+	mutation  *VisitorMutation
 	modifiers []func(*sql.UpdateBuilder)
 }
 
-// Where appends a list predicates to the TrackingVisitorUpdate builder.
-func (_u *TrackingVisitorUpdate) Where(ps ...predicate.TrackingVisitor) *TrackingVisitorUpdate {
+// Where appends a list predicates to the VisitorUpdate builder.
+func (_u *VisitorUpdate) Where(ps ...predicate.Visitor) *VisitorUpdate {
 	_u.mutation.Where(ps...)
 	return _u
 }
 
 // SetVisitorID sets the "visitor_id" field.
-func (_u *TrackingVisitorUpdate) SetVisitorID(v string) *TrackingVisitorUpdate {
+func (_u *VisitorUpdate) SetVisitorID(v string) *VisitorUpdate {
 	_u.mutation.SetVisitorID(v)
 	return _u
 }
 
 // SetNillableVisitorID sets the "visitor_id" field if the given value is not nil.
-func (_u *TrackingVisitorUpdate) SetNillableVisitorID(v *string) *TrackingVisitorUpdate {
+func (_u *VisitorUpdate) SetNillableVisitorID(v *string) *VisitorUpdate {
 	if v != nil {
 		_u.SetVisitorID(*v)
 	}
@@ -46,94 +46,94 @@ func (_u *TrackingVisitorUpdate) SetNillableVisitorID(v *string) *TrackingVisito
 }
 
 // SetWorkspaceID sets the "workspace_id" field.
-func (_u *TrackingVisitorUpdate) SetWorkspaceID(v int64) *TrackingVisitorUpdate {
+func (_u *VisitorUpdate) SetWorkspaceID(v int64) *VisitorUpdate {
 	_u.mutation.SetWorkspaceID(v)
 	return _u
 }
 
 // SetNillableWorkspaceID sets the "workspace_id" field if the given value is not nil.
-func (_u *TrackingVisitorUpdate) SetNillableWorkspaceID(v *int64) *TrackingVisitorUpdate {
+func (_u *VisitorUpdate) SetNillableWorkspaceID(v *int64) *VisitorUpdate {
 	if v != nil {
 		_u.SetWorkspaceID(*v)
 	}
 	return _u
 }
 
-// SetProfileID sets the "profile_id" field.
-func (_u *TrackingVisitorUpdate) SetProfileID(v int64) *TrackingVisitorUpdate {
-	_u.mutation.SetProfileID(v)
+// SetContactID sets the "contact_id" field.
+func (_u *VisitorUpdate) SetContactID(v int64) *VisitorUpdate {
+	_u.mutation.SetContactID(v)
 	return _u
 }
 
-// SetNillableProfileID sets the "profile_id" field if the given value is not nil.
-func (_u *TrackingVisitorUpdate) SetNillableProfileID(v *int64) *TrackingVisitorUpdate {
+// SetNillableContactID sets the "contact_id" field if the given value is not nil.
+func (_u *VisitorUpdate) SetNillableContactID(v *int64) *VisitorUpdate {
 	if v != nil {
-		_u.SetProfileID(*v)
+		_u.SetContactID(*v)
 	}
 	return _u
 }
 
-// ClearProfileID clears the value of the "profile_id" field.
-func (_u *TrackingVisitorUpdate) ClearProfileID() *TrackingVisitorUpdate {
-	_u.mutation.ClearProfileID()
+// ClearContactID clears the value of the "contact_id" field.
+func (_u *VisitorUpdate) ClearContactID() *VisitorUpdate {
+	_u.mutation.ClearContactID()
 	return _u
 }
 
 // SetUpdatedAt sets the "updated_at" field.
-func (_u *TrackingVisitorUpdate) SetUpdatedAt(v time.Time) *TrackingVisitorUpdate {
+func (_u *VisitorUpdate) SetUpdatedAt(v time.Time) *VisitorUpdate {
 	_u.mutation.SetUpdatedAt(v)
 	return _u
 }
 
 // SetLastSeenAt sets the "last_seen_at" field.
-func (_u *TrackingVisitorUpdate) SetLastSeenAt(v time.Time) *TrackingVisitorUpdate {
+func (_u *VisitorUpdate) SetLastSeenAt(v time.Time) *VisitorUpdate {
 	_u.mutation.SetLastSeenAt(v)
 	return _u
 }
 
 // SetNillableLastSeenAt sets the "last_seen_at" field if the given value is not nil.
-func (_u *TrackingVisitorUpdate) SetNillableLastSeenAt(v *time.Time) *TrackingVisitorUpdate {
+func (_u *VisitorUpdate) SetNillableLastSeenAt(v *time.Time) *VisitorUpdate {
 	if v != nil {
 		_u.SetLastSeenAt(*v)
 	}
 	return _u
 }
 
-// SetProfile sets the "profile" edge to the TrackingProfile entity.
-func (_u *TrackingVisitorUpdate) SetProfile(v *TrackingProfile) *TrackingVisitorUpdate {
-	return _u.SetProfileID(v.ID)
+// SetContact sets the "contact" edge to the Contact entity.
+func (_u *VisitorUpdate) SetContact(v *Contact) *VisitorUpdate {
+	return _u.SetContactID(v.ID)
 }
 
 // SetWorkspace sets the "workspace" edge to the Workspace entity.
-func (_u *TrackingVisitorUpdate) SetWorkspace(v *Workspace) *TrackingVisitorUpdate {
+func (_u *VisitorUpdate) SetWorkspace(v *Workspace) *VisitorUpdate {
 	return _u.SetWorkspaceID(v.ID)
 }
 
-// Mutation returns the TrackingVisitorMutation object of the builder.
-func (_u *TrackingVisitorUpdate) Mutation() *TrackingVisitorMutation {
+// Mutation returns the VisitorMutation object of the builder.
+func (_u *VisitorUpdate) Mutation() *VisitorMutation {
 	return _u.mutation
 }
 
-// ClearProfile clears the "profile" edge to the TrackingProfile entity.
-func (_u *TrackingVisitorUpdate) ClearProfile() *TrackingVisitorUpdate {
-	_u.mutation.ClearProfile()
+// ClearContact clears the "contact" edge to the Contact entity.
+func (_u *VisitorUpdate) ClearContact() *VisitorUpdate {
+	_u.mutation.ClearContact()
 	return _u
 }
 
 // ClearWorkspace clears the "workspace" edge to the Workspace entity.
-func (_u *TrackingVisitorUpdate) ClearWorkspace() *TrackingVisitorUpdate {
+func (_u *VisitorUpdate) ClearWorkspace() *VisitorUpdate {
 	_u.mutation.ClearWorkspace()
 	return _u
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
-func (_u *TrackingVisitorUpdate) Save(ctx context.Context) (int, error) {
+func (_u *VisitorUpdate) Save(ctx context.Context) (int, error) {
 	_u.defaults()
 	return withHooks(ctx, _u.sqlSave, _u.mutation, _u.hooks)
 }
 
 // SaveX is like Save, but panics if an error occurs.
-func (_u *TrackingVisitorUpdate) SaveX(ctx context.Context) int {
+func (_u *VisitorUpdate) SaveX(ctx context.Context) int {
 	affected, err := _u.Save(ctx)
 	if err != nil {
 		panic(err)
@@ -142,50 +142,50 @@ func (_u *TrackingVisitorUpdate) SaveX(ctx context.Context) int {
 }
 
 // Exec executes the query.
-func (_u *TrackingVisitorUpdate) Exec(ctx context.Context) error {
+func (_u *VisitorUpdate) Exec(ctx context.Context) error {
 	_, err := _u.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (_u *TrackingVisitorUpdate) ExecX(ctx context.Context) {
+func (_u *VisitorUpdate) ExecX(ctx context.Context) {
 	if err := _u.Exec(ctx); err != nil {
 		panic(err)
 	}
 }
 
 // defaults sets the default values of the builder before save.
-func (_u *TrackingVisitorUpdate) defaults() {
+func (_u *VisitorUpdate) defaults() {
 	if _, ok := _u.mutation.UpdatedAt(); !ok {
-		v := trackingvisitor.UpdateDefaultUpdatedAt()
+		v := visitor.UpdateDefaultUpdatedAt()
 		_u.mutation.SetUpdatedAt(v)
 	}
 }
 
 // check runs all checks and user-defined validators on the builder.
-func (_u *TrackingVisitorUpdate) check() error {
+func (_u *VisitorUpdate) check() error {
 	if v, ok := _u.mutation.VisitorID(); ok {
-		if err := trackingvisitor.VisitorIDValidator(v); err != nil {
-			return &ValidationError{Name: "visitor_id", err: fmt.Errorf(`ent: validator failed for field "TrackingVisitor.visitor_id": %w`, err)}
+		if err := visitor.VisitorIDValidator(v); err != nil {
+			return &ValidationError{Name: "visitor_id", err: fmt.Errorf(`ent: validator failed for field "Visitor.visitor_id": %w`, err)}
 		}
 	}
 	if _u.mutation.WorkspaceCleared() && len(_u.mutation.WorkspaceIDs()) > 0 {
-		return errors.New(`ent: clearing a required unique edge "TrackingVisitor.workspace"`)
+		return errors.New(`ent: clearing a required unique edge "Visitor.workspace"`)
 	}
 	return nil
 }
 
 // Modify adds a statement modifier for attaching custom logic to the UPDATE statement.
-func (_u *TrackingVisitorUpdate) Modify(modifiers ...func(u *sql.UpdateBuilder)) *TrackingVisitorUpdate {
+func (_u *VisitorUpdate) Modify(modifiers ...func(u *sql.UpdateBuilder)) *VisitorUpdate {
 	_u.modifiers = append(_u.modifiers, modifiers...)
 	return _u
 }
 
-func (_u *TrackingVisitorUpdate) sqlSave(ctx context.Context) (_node int, err error) {
+func (_u *VisitorUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	if err := _u.check(); err != nil {
 		return _node, err
 	}
-	_spec := sqlgraph.NewUpdateSpec(trackingvisitor.Table, trackingvisitor.Columns, sqlgraph.NewFieldSpec(trackingvisitor.FieldID, field.TypeInt64))
+	_spec := sqlgraph.NewUpdateSpec(visitor.Table, visitor.Columns, sqlgraph.NewFieldSpec(visitor.FieldID, field.TypeInt64))
 	if ps := _u.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
@@ -194,36 +194,36 @@ func (_u *TrackingVisitorUpdate) sqlSave(ctx context.Context) (_node int, err er
 		}
 	}
 	if value, ok := _u.mutation.VisitorID(); ok {
-		_spec.SetField(trackingvisitor.FieldVisitorID, field.TypeString, value)
+		_spec.SetField(visitor.FieldVisitorID, field.TypeString, value)
 	}
 	if value, ok := _u.mutation.UpdatedAt(); ok {
-		_spec.SetField(trackingvisitor.FieldUpdatedAt, field.TypeTime, value)
+		_spec.SetField(visitor.FieldUpdatedAt, field.TypeTime, value)
 	}
 	if value, ok := _u.mutation.LastSeenAt(); ok {
-		_spec.SetField(trackingvisitor.FieldLastSeenAt, field.TypeTime, value)
+		_spec.SetField(visitor.FieldLastSeenAt, field.TypeTime, value)
 	}
-	if _u.mutation.ProfileCleared() {
+	if _u.mutation.ContactCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
-			Table:   trackingvisitor.ProfileTable,
-			Columns: []string{trackingvisitor.ProfileColumn},
+			Table:   visitor.ContactTable,
+			Columns: []string{visitor.ContactColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(trackingprofile.FieldID, field.TypeInt64),
+				IDSpec: sqlgraph.NewFieldSpec(contact.FieldID, field.TypeInt64),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := _u.mutation.ProfileIDs(); len(nodes) > 0 {
+	if nodes := _u.mutation.ContactIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
-			Table:   trackingvisitor.ProfileTable,
-			Columns: []string{trackingvisitor.ProfileColumn},
+			Table:   visitor.ContactTable,
+			Columns: []string{visitor.ContactColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(trackingprofile.FieldID, field.TypeInt64),
+				IDSpec: sqlgraph.NewFieldSpec(contact.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {
@@ -235,8 +235,8 @@ func (_u *TrackingVisitorUpdate) sqlSave(ctx context.Context) (_node int, err er
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
-			Table:   trackingvisitor.WorkspaceTable,
-			Columns: []string{trackingvisitor.WorkspaceColumn},
+			Table:   visitor.WorkspaceTable,
+			Columns: []string{visitor.WorkspaceColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(workspace.FieldID, field.TypeInt64),
@@ -248,8 +248,8 @@ func (_u *TrackingVisitorUpdate) sqlSave(ctx context.Context) (_node int, err er
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
-			Table:   trackingvisitor.WorkspaceTable,
-			Columns: []string{trackingvisitor.WorkspaceColumn},
+			Table:   visitor.WorkspaceTable,
+			Columns: []string{visitor.WorkspaceColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(workspace.FieldID, field.TypeInt64),
@@ -263,7 +263,7 @@ func (_u *TrackingVisitorUpdate) sqlSave(ctx context.Context) (_node int, err er
 	_spec.AddModifiers(_u.modifiers...)
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
-			err = &NotFoundError{trackingvisitor.Label}
+			err = &NotFoundError{visitor.Label}
 		} else if sqlgraph.IsConstraintError(err) {
 			err = &ConstraintError{msg: err.Error(), wrap: err}
 		}
@@ -273,23 +273,23 @@ func (_u *TrackingVisitorUpdate) sqlSave(ctx context.Context) (_node int, err er
 	return _node, nil
 }
 
-// TrackingVisitorUpdateOne is the builder for updating a single TrackingVisitor entity.
-type TrackingVisitorUpdateOne struct {
+// VisitorUpdateOne is the builder for updating a single Visitor entity.
+type VisitorUpdateOne struct {
 	config
 	fields    []string
 	hooks     []Hook
-	mutation  *TrackingVisitorMutation
+	mutation  *VisitorMutation
 	modifiers []func(*sql.UpdateBuilder)
 }
 
 // SetVisitorID sets the "visitor_id" field.
-func (_u *TrackingVisitorUpdateOne) SetVisitorID(v string) *TrackingVisitorUpdateOne {
+func (_u *VisitorUpdateOne) SetVisitorID(v string) *VisitorUpdateOne {
 	_u.mutation.SetVisitorID(v)
 	return _u
 }
 
 // SetNillableVisitorID sets the "visitor_id" field if the given value is not nil.
-func (_u *TrackingVisitorUpdateOne) SetNillableVisitorID(v *string) *TrackingVisitorUpdateOne {
+func (_u *VisitorUpdateOne) SetNillableVisitorID(v *string) *VisitorUpdateOne {
 	if v != nil {
 		_u.SetVisitorID(*v)
 	}
@@ -297,107 +297,107 @@ func (_u *TrackingVisitorUpdateOne) SetNillableVisitorID(v *string) *TrackingVis
 }
 
 // SetWorkspaceID sets the "workspace_id" field.
-func (_u *TrackingVisitorUpdateOne) SetWorkspaceID(v int64) *TrackingVisitorUpdateOne {
+func (_u *VisitorUpdateOne) SetWorkspaceID(v int64) *VisitorUpdateOne {
 	_u.mutation.SetWorkspaceID(v)
 	return _u
 }
 
 // SetNillableWorkspaceID sets the "workspace_id" field if the given value is not nil.
-func (_u *TrackingVisitorUpdateOne) SetNillableWorkspaceID(v *int64) *TrackingVisitorUpdateOne {
+func (_u *VisitorUpdateOne) SetNillableWorkspaceID(v *int64) *VisitorUpdateOne {
 	if v != nil {
 		_u.SetWorkspaceID(*v)
 	}
 	return _u
 }
 
-// SetProfileID sets the "profile_id" field.
-func (_u *TrackingVisitorUpdateOne) SetProfileID(v int64) *TrackingVisitorUpdateOne {
-	_u.mutation.SetProfileID(v)
+// SetContactID sets the "contact_id" field.
+func (_u *VisitorUpdateOne) SetContactID(v int64) *VisitorUpdateOne {
+	_u.mutation.SetContactID(v)
 	return _u
 }
 
-// SetNillableProfileID sets the "profile_id" field if the given value is not nil.
-func (_u *TrackingVisitorUpdateOne) SetNillableProfileID(v *int64) *TrackingVisitorUpdateOne {
+// SetNillableContactID sets the "contact_id" field if the given value is not nil.
+func (_u *VisitorUpdateOne) SetNillableContactID(v *int64) *VisitorUpdateOne {
 	if v != nil {
-		_u.SetProfileID(*v)
+		_u.SetContactID(*v)
 	}
 	return _u
 }
 
-// ClearProfileID clears the value of the "profile_id" field.
-func (_u *TrackingVisitorUpdateOne) ClearProfileID() *TrackingVisitorUpdateOne {
-	_u.mutation.ClearProfileID()
+// ClearContactID clears the value of the "contact_id" field.
+func (_u *VisitorUpdateOne) ClearContactID() *VisitorUpdateOne {
+	_u.mutation.ClearContactID()
 	return _u
 }
 
 // SetUpdatedAt sets the "updated_at" field.
-func (_u *TrackingVisitorUpdateOne) SetUpdatedAt(v time.Time) *TrackingVisitorUpdateOne {
+func (_u *VisitorUpdateOne) SetUpdatedAt(v time.Time) *VisitorUpdateOne {
 	_u.mutation.SetUpdatedAt(v)
 	return _u
 }
 
 // SetLastSeenAt sets the "last_seen_at" field.
-func (_u *TrackingVisitorUpdateOne) SetLastSeenAt(v time.Time) *TrackingVisitorUpdateOne {
+func (_u *VisitorUpdateOne) SetLastSeenAt(v time.Time) *VisitorUpdateOne {
 	_u.mutation.SetLastSeenAt(v)
 	return _u
 }
 
 // SetNillableLastSeenAt sets the "last_seen_at" field if the given value is not nil.
-func (_u *TrackingVisitorUpdateOne) SetNillableLastSeenAt(v *time.Time) *TrackingVisitorUpdateOne {
+func (_u *VisitorUpdateOne) SetNillableLastSeenAt(v *time.Time) *VisitorUpdateOne {
 	if v != nil {
 		_u.SetLastSeenAt(*v)
 	}
 	return _u
 }
 
-// SetProfile sets the "profile" edge to the TrackingProfile entity.
-func (_u *TrackingVisitorUpdateOne) SetProfile(v *TrackingProfile) *TrackingVisitorUpdateOne {
-	return _u.SetProfileID(v.ID)
+// SetContact sets the "contact" edge to the Contact entity.
+func (_u *VisitorUpdateOne) SetContact(v *Contact) *VisitorUpdateOne {
+	return _u.SetContactID(v.ID)
 }
 
 // SetWorkspace sets the "workspace" edge to the Workspace entity.
-func (_u *TrackingVisitorUpdateOne) SetWorkspace(v *Workspace) *TrackingVisitorUpdateOne {
+func (_u *VisitorUpdateOne) SetWorkspace(v *Workspace) *VisitorUpdateOne {
 	return _u.SetWorkspaceID(v.ID)
 }
 
-// Mutation returns the TrackingVisitorMutation object of the builder.
-func (_u *TrackingVisitorUpdateOne) Mutation() *TrackingVisitorMutation {
+// Mutation returns the VisitorMutation object of the builder.
+func (_u *VisitorUpdateOne) Mutation() *VisitorMutation {
 	return _u.mutation
 }
 
-// ClearProfile clears the "profile" edge to the TrackingProfile entity.
-func (_u *TrackingVisitorUpdateOne) ClearProfile() *TrackingVisitorUpdateOne {
-	_u.mutation.ClearProfile()
+// ClearContact clears the "contact" edge to the Contact entity.
+func (_u *VisitorUpdateOne) ClearContact() *VisitorUpdateOne {
+	_u.mutation.ClearContact()
 	return _u
 }
 
 // ClearWorkspace clears the "workspace" edge to the Workspace entity.
-func (_u *TrackingVisitorUpdateOne) ClearWorkspace() *TrackingVisitorUpdateOne {
+func (_u *VisitorUpdateOne) ClearWorkspace() *VisitorUpdateOne {
 	_u.mutation.ClearWorkspace()
 	return _u
 }
 
-// Where appends a list predicates to the TrackingVisitorUpdate builder.
-func (_u *TrackingVisitorUpdateOne) Where(ps ...predicate.TrackingVisitor) *TrackingVisitorUpdateOne {
+// Where appends a list predicates to the VisitorUpdate builder.
+func (_u *VisitorUpdateOne) Where(ps ...predicate.Visitor) *VisitorUpdateOne {
 	_u.mutation.Where(ps...)
 	return _u
 }
 
 // Select allows selecting one or more fields (columns) of the returned entity.
 // The default is selecting all fields defined in the entity schema.
-func (_u *TrackingVisitorUpdateOne) Select(field string, fields ...string) *TrackingVisitorUpdateOne {
+func (_u *VisitorUpdateOne) Select(field string, fields ...string) *VisitorUpdateOne {
 	_u.fields = append([]string{field}, fields...)
 	return _u
 }
 
-// Save executes the query and returns the updated TrackingVisitor entity.
-func (_u *TrackingVisitorUpdateOne) Save(ctx context.Context) (*TrackingVisitor, error) {
+// Save executes the query and returns the updated Visitor entity.
+func (_u *VisitorUpdateOne) Save(ctx context.Context) (*Visitor, error) {
 	_u.defaults()
 	return withHooks(ctx, _u.sqlSave, _u.mutation, _u.hooks)
 }
 
 // SaveX is like Save, but panics if an error occurs.
-func (_u *TrackingVisitorUpdateOne) SaveX(ctx context.Context) *TrackingVisitor {
+func (_u *VisitorUpdateOne) SaveX(ctx context.Context) *Visitor {
 	node, err := _u.Save(ctx)
 	if err != nil {
 		panic(err)
@@ -406,63 +406,63 @@ func (_u *TrackingVisitorUpdateOne) SaveX(ctx context.Context) *TrackingVisitor 
 }
 
 // Exec executes the query on the entity.
-func (_u *TrackingVisitorUpdateOne) Exec(ctx context.Context) error {
+func (_u *VisitorUpdateOne) Exec(ctx context.Context) error {
 	_, err := _u.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (_u *TrackingVisitorUpdateOne) ExecX(ctx context.Context) {
+func (_u *VisitorUpdateOne) ExecX(ctx context.Context) {
 	if err := _u.Exec(ctx); err != nil {
 		panic(err)
 	}
 }
 
 // defaults sets the default values of the builder before save.
-func (_u *TrackingVisitorUpdateOne) defaults() {
+func (_u *VisitorUpdateOne) defaults() {
 	if _, ok := _u.mutation.UpdatedAt(); !ok {
-		v := trackingvisitor.UpdateDefaultUpdatedAt()
+		v := visitor.UpdateDefaultUpdatedAt()
 		_u.mutation.SetUpdatedAt(v)
 	}
 }
 
 // check runs all checks and user-defined validators on the builder.
-func (_u *TrackingVisitorUpdateOne) check() error {
+func (_u *VisitorUpdateOne) check() error {
 	if v, ok := _u.mutation.VisitorID(); ok {
-		if err := trackingvisitor.VisitorIDValidator(v); err != nil {
-			return &ValidationError{Name: "visitor_id", err: fmt.Errorf(`ent: validator failed for field "TrackingVisitor.visitor_id": %w`, err)}
+		if err := visitor.VisitorIDValidator(v); err != nil {
+			return &ValidationError{Name: "visitor_id", err: fmt.Errorf(`ent: validator failed for field "Visitor.visitor_id": %w`, err)}
 		}
 	}
 	if _u.mutation.WorkspaceCleared() && len(_u.mutation.WorkspaceIDs()) > 0 {
-		return errors.New(`ent: clearing a required unique edge "TrackingVisitor.workspace"`)
+		return errors.New(`ent: clearing a required unique edge "Visitor.workspace"`)
 	}
 	return nil
 }
 
 // Modify adds a statement modifier for attaching custom logic to the UPDATE statement.
-func (_u *TrackingVisitorUpdateOne) Modify(modifiers ...func(u *sql.UpdateBuilder)) *TrackingVisitorUpdateOne {
+func (_u *VisitorUpdateOne) Modify(modifiers ...func(u *sql.UpdateBuilder)) *VisitorUpdateOne {
 	_u.modifiers = append(_u.modifiers, modifiers...)
 	return _u
 }
 
-func (_u *TrackingVisitorUpdateOne) sqlSave(ctx context.Context) (_node *TrackingVisitor, err error) {
+func (_u *VisitorUpdateOne) sqlSave(ctx context.Context) (_node *Visitor, err error) {
 	if err := _u.check(); err != nil {
 		return _node, err
 	}
-	_spec := sqlgraph.NewUpdateSpec(trackingvisitor.Table, trackingvisitor.Columns, sqlgraph.NewFieldSpec(trackingvisitor.FieldID, field.TypeInt64))
+	_spec := sqlgraph.NewUpdateSpec(visitor.Table, visitor.Columns, sqlgraph.NewFieldSpec(visitor.FieldID, field.TypeInt64))
 	id, ok := _u.mutation.ID()
 	if !ok {
-		return nil, &ValidationError{Name: "id", err: errors.New(`ent: missing "TrackingVisitor.id" for update`)}
+		return nil, &ValidationError{Name: "id", err: errors.New(`ent: missing "Visitor.id" for update`)}
 	}
 	_spec.Node.ID.Value = id
 	if fields := _u.fields; len(fields) > 0 {
 		_spec.Node.Columns = make([]string, 0, len(fields))
-		_spec.Node.Columns = append(_spec.Node.Columns, trackingvisitor.FieldID)
+		_spec.Node.Columns = append(_spec.Node.Columns, visitor.FieldID)
 		for _, f := range fields {
-			if !trackingvisitor.ValidColumn(f) {
+			if !visitor.ValidColumn(f) {
 				return nil, &ValidationError{Name: f, err: fmt.Errorf("ent: invalid field %q for query", f)}
 			}
-			if f != trackingvisitor.FieldID {
+			if f != visitor.FieldID {
 				_spec.Node.Columns = append(_spec.Node.Columns, f)
 			}
 		}
@@ -475,36 +475,36 @@ func (_u *TrackingVisitorUpdateOne) sqlSave(ctx context.Context) (_node *Trackin
 		}
 	}
 	if value, ok := _u.mutation.VisitorID(); ok {
-		_spec.SetField(trackingvisitor.FieldVisitorID, field.TypeString, value)
+		_spec.SetField(visitor.FieldVisitorID, field.TypeString, value)
 	}
 	if value, ok := _u.mutation.UpdatedAt(); ok {
-		_spec.SetField(trackingvisitor.FieldUpdatedAt, field.TypeTime, value)
+		_spec.SetField(visitor.FieldUpdatedAt, field.TypeTime, value)
 	}
 	if value, ok := _u.mutation.LastSeenAt(); ok {
-		_spec.SetField(trackingvisitor.FieldLastSeenAt, field.TypeTime, value)
+		_spec.SetField(visitor.FieldLastSeenAt, field.TypeTime, value)
 	}
-	if _u.mutation.ProfileCleared() {
+	if _u.mutation.ContactCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
-			Table:   trackingvisitor.ProfileTable,
-			Columns: []string{trackingvisitor.ProfileColumn},
+			Table:   visitor.ContactTable,
+			Columns: []string{visitor.ContactColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(trackingprofile.FieldID, field.TypeInt64),
+				IDSpec: sqlgraph.NewFieldSpec(contact.FieldID, field.TypeInt64),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := _u.mutation.ProfileIDs(); len(nodes) > 0 {
+	if nodes := _u.mutation.ContactIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
-			Table:   trackingvisitor.ProfileTable,
-			Columns: []string{trackingvisitor.ProfileColumn},
+			Table:   visitor.ContactTable,
+			Columns: []string{visitor.ContactColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(trackingprofile.FieldID, field.TypeInt64),
+				IDSpec: sqlgraph.NewFieldSpec(contact.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {
@@ -516,8 +516,8 @@ func (_u *TrackingVisitorUpdateOne) sqlSave(ctx context.Context) (_node *Trackin
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
-			Table:   trackingvisitor.WorkspaceTable,
-			Columns: []string{trackingvisitor.WorkspaceColumn},
+			Table:   visitor.WorkspaceTable,
+			Columns: []string{visitor.WorkspaceColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(workspace.FieldID, field.TypeInt64),
@@ -529,8 +529,8 @@ func (_u *TrackingVisitorUpdateOne) sqlSave(ctx context.Context) (_node *Trackin
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
-			Table:   trackingvisitor.WorkspaceTable,
-			Columns: []string{trackingvisitor.WorkspaceColumn},
+			Table:   visitor.WorkspaceTable,
+			Columns: []string{visitor.WorkspaceColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(workspace.FieldID, field.TypeInt64),
@@ -542,12 +542,12 @@ func (_u *TrackingVisitorUpdateOne) sqlSave(ctx context.Context) (_node *Trackin
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	_spec.AddModifiers(_u.modifiers...)
-	_node = &TrackingVisitor{config: _u.config}
+	_node = &Visitor{config: _u.config}
 	_spec.Assign = _node.assignValues
 	_spec.ScanValues = _node.scanValues
 	if err = sqlgraph.UpdateNode(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
-			err = &NotFoundError{trackingvisitor.Label}
+			err = &NotFoundError{visitor.Label}
 		} else if sqlgraph.IsConstraintError(err) {
 			err = &ConstraintError{msg: err.Error(), wrap: err}
 		}
