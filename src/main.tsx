@@ -5,8 +5,9 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { RouterProvider } from '@tanstack/react-router'
 import { StrictMode, useState } from 'react'
 import { createRoot } from 'react-dom/client'
+import { I18nextProvider } from 'react-i18next'
 import { client } from './generated/site/client.gen.ts'
-import './i18n.ts'
+import { i18n } from './i18n.ts'
 import { router } from './router.tsx'
 
 client.setConfig({ baseUrl: '/site' })
@@ -25,12 +26,14 @@ function Root() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <MantineProvider defaultColorScheme="auto">
-        <ModalsProvider>
-          <Notifications position="top-right" />
-          <RouterProvider router={router} />
-        </ModalsProvider>
-      </MantineProvider>
+      <I18nextProvider i18n={i18n}>
+        <MantineProvider defaultColorScheme="auto">
+          <ModalsProvider>
+            <Notifications position="top-right" />
+            <RouterProvider router={router} />
+          </ModalsProvider>
+        </MantineProvider>
+      </I18nextProvider>
     </QueryClientProvider>
   )
 }

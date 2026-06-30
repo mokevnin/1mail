@@ -7,8 +7,9 @@ import {
   type OnSaveExternal,
   WorkflowBuilder,
 } from '@workflowbuilder/sdk'
+import i18next from 'i18next'
 import { useCallback, useMemo } from 'react'
-import { useTranslation } from 'react-i18next'
+import { I18nextProvider, useTranslation } from 'react-i18next'
 import {
   siteAutomationsGetQueryKey,
   siteAutomationsListQueryKey,
@@ -102,15 +103,20 @@ export function AutomationBuilder({ slug, automation }: AutomationBuilderProps) 
     <Stack>
       <AutomationDetailsFields form={form} />
       <Box pos="relative" h="calc(100vh - 220px)" w="100%">
-        <WorkflowBuilder.Root
-          key={automation.id}
-          name={automation.name}
-          layoutDirection="DOWN"
-          nodeTypes={nodeTypes}
-          initialNodes={initialGraph.nodes}
-          initialEdges={initialGraph.edges}
-          integration={integration}
-        />
+        {/* The SDK initialises and reads the global i18next instance for its own
+            strings. The app tree runs on a private instance (see main.tsx), so the
+            builder subtree is bound back to the global one here. */}
+        <I18nextProvider i18n={i18next}>
+          <WorkflowBuilder.Root
+            key={automation.id}
+            name={automation.name}
+            layoutDirection="DOWN"
+            nodeTypes={nodeTypes}
+            initialNodes={initialGraph.nodes}
+            initialEdges={initialGraph.edges}
+            integration={integration}
+          />
+        </I18nextProvider>
       </Box>
     </Stack>
   )
