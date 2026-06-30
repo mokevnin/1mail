@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"crypto/rand"
+	"database/sql"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
@@ -33,7 +34,7 @@ import (
 
 // New builds the top-level net/http handler wiring the three ogen-generated
 // API servers (site, external, collect) plus go-pkgz/auth endpoints.
-func New(cfg *config.Config, client *ent.Client, bus *events.Bus, enqueuer apisite.BroadcastEnqueuer, welcome apisite.WelcomeEnqueuer, resolver apiexternal.SenderResolver) (http.Handler, error) {
+func New(cfg *config.Config, client *ent.Client, db *sql.DB, bus *events.Bus, enqueuer apisite.BroadcastEnqueuer, welcome apisite.WelcomeEnqueuer, resolver apiexternal.SenderResolver) (http.Handler, error) {
 	// Credential encryption is mandatory: fail fast at boot if the key is
 	// missing or malformed rather than at first provider write.
 	cipher, err := secrets.NewCipher(cfg.EncryptionKey)
@@ -101,6 +102,10 @@ func New(cfg *config.Config, client *ent.Client, bus *events.Bus, enqueuer apisi
 		return nil, err
 	}
 	mux.Handle("/collect/", colSrv)
+
+	// Liveness/readiness probes (no auth) for orchestrators and load balancers.
+	mux.Handle("/healthz", healthzHandler())
+	mux.Handle("/readyz", readyzHandler(db))
 
 	// Public tracking snippet (no auth) — embedded IIFE bundle.
 	mux.Handle("/t.js", trackerHandler())

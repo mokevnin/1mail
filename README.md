@@ -160,9 +160,19 @@ Configuration is read from the environment (and, if present, `.env` files).
 | `PORT`                                            | `3000`                   | HTTP listen port                             |
 | `APP_URL`                                          | `http://localhost:3000`  | Public base URL (auth token issuance)        |
 | `AUTO_MIGRATE`                                    | `false`                  | Apply embedded migrations on startup         |
-| `JWT_SECRET`                                      | —                        | JWT signing secret (set a real one in prod)  |
+| `JWT_SECRET`                                      | — (**required in prod**) | JWT signing secret; required outside development |
 | `SMTP_HOST` / `SMTP_PORT` / `SMTP_USER` / `SMTP_PASS` / `SMTP_FROM` | `SMTP_PORT=1025` | Outbound email             |
 | `CORS_ORIGINS`                                    | —                        | Allowed CORS origins                         |
 
 `COLLECT_SITE_KEY` and `BOOTSTRAP_TOKEN` are also recognized (tracker ingestion key and
 external-API bootstrap token).
+
+For deploying 1mail yourself (Docker or single binary, full env-var reference, migrations,
+health checks), see [`docs/self-hosting.md`](docs/self-hosting.md).
+
+## License
+
+1mail is **open-core**. The core is licensed under the GNU AGPL-3.0
+([`LICENSE`](LICENSE)); the Enterprise features under [`ee/`](ee/) are commercial and
+source-available ([`ee/LICENSE`](ee/LICENSE)). See [`LICENSING.md`](LICENSING.md) for the
+boundary.

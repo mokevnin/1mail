@@ -1,0 +1,53 @@
+The 1mail Enterprise Edition (EE) License
+
+Copyright (c) 2026 1mail
+
+----------------------------------------------------------------------
+
+This license governs everything in this directory (the `ee/` tree, and any
+file that carries an explicit "1mail Enterprise Edition License" header).
+The rest of the 1mail repository is licensed separately under the GNU AGPL-3.0
+(see the LICENSE file at the repository root and LICENSING.md). Where this
+license applies, it supersedes the AGPL-3.0 for the covered files.
+
+----------------------------------------------------------------------
+
+1. Source-available, not open source.
+
+   The source code under this license is made available so that you can read,
+   review, modify, and contribute to it. It is NOT free/open-source software:
+   the rights granted below are limited.
+
+2. Grant of use.
+
+   You may use, copy, modify, and run the covered software ONLY:
+   (a) for development, testing, and evaluation purposes; or
+   (b) in production, if and for as long as you hold a valid 1mail Enterprise
+       subscription (a "License Key") that covers such use, and only within
+       the scope of that subscription.
+
+   Any production use of the Enterprise features without a valid License Key
+   is not permitted under this license.
+
+3. Restrictions.
+
+   Except as expressly permitted above, you may not:
+   (a) use the covered software to provide a commercial hosted or managed
+       service to third parties;
+   (b) remove or circumvent any License Key check or other licensing
+       mechanism; or
+   (c) sublicense, sell, or distribute the covered software on a standalone
+       basis.
+
+4. Contributions.
+
+   Contributions to files under this license are accepted under the project's
+   contribution terms and remain governed by this license.
+
+5. No warranty.
+
+   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+   IMPLIED. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR
+   ANY CLAIM, DAMAGES, OR OTHER LIABILITY ARISING FROM THE USE OF THE SOFTWARE.
+
+For commercial licensing and Enterprise subscriptions, contact the 1mail team.

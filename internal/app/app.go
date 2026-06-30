@@ -291,6 +291,10 @@ func register(injector do.Injector, env string) {
 		if err != nil {
 			return nil, err
 		}
+		database, err := do.Invoke[*sqlDB](i)
+		if err != nil {
+			return nil, err
+		}
 		bus, err := do.Invoke[*eventsBus](i)
 		if err != nil {
 			return nil, err
@@ -310,7 +314,7 @@ func register(injector do.Injector, env string) {
 
 		// The river jobs client is both the broadcast enqueuer and the welcome
 		// enqueuer (it implements both seams).
-		return server.New(cfg, client.Client, bus.Bus, jc.Client, jc.Client, resolver)
+		return server.New(cfg, client.Client, database.DB, bus.Bus, jc.Client, jc.Client, resolver)
 	})
 }
 

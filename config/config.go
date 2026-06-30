@@ -63,7 +63,7 @@ func Load(envName string) (*Config, error) {
 		return nil, fmt.Errorf("DATABASE_URL is required")
 	}
 
-	return &Config{
+	cfg := &Config{
 		DatabaseURL:    v.GetString("DATABASE_URL"),
 		Port:           v.GetString("PORT"),
 		CollectSiteKey: v.GetString("COLLECT_SITE_KEY"),
@@ -84,7 +84,28 @@ func Load(envName string) (*Config, error) {
 		SESRegion:           v.GetString("SES_REGION"),
 		SESAccessKeyID:      v.GetString("SES_ACCESS_KEY_ID"),
 		SESSecretAccessKey:  v.GetString("SES_SECRET_ACCESS_KEY"),
-	}, nil
+	}
+
+	if err := cfg.validate(envName); err != nil {
+		return nil, err
+	}
+	return cfg, nil
+}
+
+// validate enforces invariants that depend on the deployment environment.
+func (c *Config) validate(envName string) error {
+	// Outside development/test, an empty JWT_SECRET silently signs auth tokens
+	// with an empty key — refuse to boot rather than ship that footgun.
+	if !isDevEnv(envName) && c.JWTSecret == "" {
+		return fmt.Errorf("JWT_SECRET is required outside development")
+	}
+	return nil
+}
+
+// isDevEnv reports whether the env is a non-production one where missing
+// security secrets are tolerated (so local dev and tests boot without ceremony).
+func isDevEnv(envName string) bool {
+	return envName == "" || envName == "development" || envName == "test"
 }
 
 func envFiles(rootDir, envName string) []string {

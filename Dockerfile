@@ -31,4 +31,6 @@ FROM alpine:3.23
 RUN apk add --no-cache ca-certificates tzdata
 COPY --from=gobuild /1mail /usr/local/bin/1mail
 EXPOSE 3000
+HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
+    CMD wget -qO- "http://localhost:${PORT:-3000}/healthz" || exit 1
 ENTRYPOINT ["1mail"]

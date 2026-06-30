@@ -123,7 +123,7 @@ func Setup(t *testing.T) *TestEnv {
 	inline := jobs.NewInline(client, bus, resolver, nil, systemMail)
 	// The transactional send surface resolves a workspace sender directly (not via
 	// river), so it gets the same capturing resolver — its sends land in CustomerMail.
-	handler, err := server.New(baseCfg, client, bus, inline, inline, resolver)
+	handler, err := server.New(baseCfg, client, txDB, bus, inline, inline, resolver)
 	require.NoError(t, err, "build server")
 
 	return &TestEnv{
