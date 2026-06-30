@@ -7,8 +7,13 @@ import {
   type OnSaveExternal,
   WorkflowBuilder,
 } from '@workflowbuilder/sdk'
+// Imported as a raw string (not auto-injected): the SDK sheet carries unlayered
+// global resets and .mantine-* overrides that would leak app-wide. We mount it
+// only while the builder is on screen and remove it on unmount, so it never
+// touches the rest of the app (e.g. the dashboard's body scroll).
+import builderStyles from '@workflowbuilder/sdk/style.css?inline'
 import i18next from 'i18next'
-import { useCallback, useMemo } from 'react'
+import { useCallback, useLayoutEffect, useMemo } from 'react'
 import { I18nextProvider, useTranslation } from 'react-i18next'
 import {
   siteAutomationsGetQueryKey,
@@ -37,6 +42,17 @@ export function AutomationBuilder({ slug, automation }: AutomationBuilderProps) 
   const { t } = useTranslation()
   const queryClient = useQueryClient()
   const nodeTypes = useAutomationNodeTypes()
+
+  // Scope the SDK stylesheet to the builder's lifetime: present while mounted,
+  // gone everywhere else. useLayoutEffect injects it before paint to avoid an
+  // unstyled flash of the canvas.
+  useLayoutEffect(() => {
+    const style = document.createElement('style')
+    style.dataset.workflowBuilder = ''
+    style.textContent = builderStyles
+    document.head.appendChild(style)
+    return () => style.remove()
+  }, [])
 
   const form = useForm<AutomationDetailsValues>({
     initialValues: { name: automation.name, triggerEvent: automation.triggerEvent },

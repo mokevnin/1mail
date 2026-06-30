@@ -18,8 +18,11 @@ import '@mantine/notifications/styles.css'
 import 'mantine-datatable/styles.css'
 // Structural layout only; the Mantine compat package handles the visuals.
 import 'react-querybuilder/dist/query-builder-layout.css'
-// Visual automation builder (xyflow-based editor ships its own styles).
-import '@workflowbuilder/sdk/style.css'
+
+// The workflow builder SDK stylesheet is intentionally NOT imported here: it
+// ships unlayered global resets (body{overflow:hidden}, *{font-family}) and
+// rewrites global .mantine-* classes, which leak across the whole app. It is
+// injected only while the builder is mounted — see AutomationBuilder.tsx.
 
 function Root() {
   const [queryClient] = useState(() => new QueryClient())
