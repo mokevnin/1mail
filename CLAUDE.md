@@ -147,8 +147,6 @@ backend service does not self-migrate.
 ## Conventions
 
 - Commit directly to `main` (no feature branches).
-- **Before committing, run the `/code-review` skill** on the staged changes and address its
-  findings first.
 - Commit messages follow **Conventional Commits** (`feat:`, `fix:`, `chore:`, `docs:`,
   `refactor:`, `ci:` …) — release-please uses them for versioning/changelog.
 - After changing TypeSpec or `ent/schema`, run `make generate` and commit the generated output.
