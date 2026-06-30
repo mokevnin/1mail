@@ -295,10 +295,18 @@ func register(injector do.Injector, env string) {
 		if err != nil {
 			return nil, err
 		}
+		cipher, err := secrets.NewCipher(cfg.EncryptionKey)
+		if err != nil {
+			return nil, err
+		}
+		// Resolver for the transactional send surface: same workspace→sender
+		// resolution the jobs use, so transactional mail goes through the
+		// workspace's configured integration.
+		resolver := messaging.NewResolver(client.Client, cipher, registry.Default())
 
 		// The river jobs client is both the broadcast enqueuer and the welcome
 		// enqueuer (it implements both seams).
-		return server.New(cfg, client.Client, bus.Bus, jc.Client, jc.Client)
+		return server.New(cfg, client.Client, bus.Bus, jc.Client, jc.Client, resolver)
 	})
 }
 

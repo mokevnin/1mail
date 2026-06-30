@@ -119,8 +119,11 @@ func Setup(t *testing.T) *TestEnv {
 	// synchronously against capturing senders, so tests assert the real effect.
 	systemMail := &CapturingSender{}
 	customerMail := &CapturingSender{}
-	inline := jobs.NewInline(client, fixedResolver{sender: customerMail}, nil, systemMail)
-	handler, err := server.New(baseCfg, client, bus, inline, inline)
+	resolver := fixedResolver{sender: customerMail}
+	inline := jobs.NewInline(client, resolver, nil, systemMail)
+	// The transactional send surface resolves a workspace sender directly (not via
+	// river), so it gets the same capturing resolver — its sends land in CustomerMail.
+	handler, err := server.New(baseCfg, client, bus, inline, inline, resolver)
 	require.NoError(t, err, "build server")
 
 	return &TestEnv{

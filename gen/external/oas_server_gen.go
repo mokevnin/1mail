@@ -88,6 +88,14 @@ type Handler interface {
 	//
 	// PUT /contacts/{id}
 	ContactsUpdate(ctx context.Context, req *UpdateContactInput, params ContactsUpdateParams) (ContactsUpdateRes, error)
+	// EmailsSend implements Emails_send operation.
+	//
+	// Send a transactional email. The referenced Template's current content is rendered with the supplied
+	// variables at send time. Respects the workspace Suppression list (a suppressed destination returns
+	// status `suppressed`) but not marketing Unsubscribe — transactional mail carries no sending source.
+	//
+	// POST /emails
+	EmailsSend(ctx context.Context, req *SendTransactionalEmailInput) (EmailsSendRes, error)
 	// EventActionsList implements EventActions_list operation.
 	//
 	// List unique event actions.

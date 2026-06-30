@@ -33,6 +33,7 @@ const SCOPE_OPTIONS = [
   'segments:write',
   'broadcasts:read',
   'broadcasts:write',
+  'emails:send',
   'tokens:manage',
 ]
 

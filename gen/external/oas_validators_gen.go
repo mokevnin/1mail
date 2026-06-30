@@ -114,6 +114,8 @@ func (s ApiTokenScope) Validate() error {
 		return nil
 	case "broadcasts:write":
 		return nil
+	case "emails:send":
+		return nil
 	case "tokens:manage":
 		return nil
 	default:
@@ -838,6 +840,30 @@ func (s EmailAddress) Validate() error {
 	return nil
 }
 
+func (s *EmailsSendNotFound) Validate() error {
+	alias := (*ProblemDetails)(s)
+	if err := alias.Validate(); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *EmailsSendUnauthorized) Validate() error {
+	alias := (*ProblemDetails)(s)
+	if err := alias.Validate(); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *EmailsSendUnprocessableEntity) Validate() error {
+	alias := (*ProblemDetails)(s)
+	if err := alias.Validate(); err != nil {
+		return err
+	}
+	return nil
+}
+
 func (s EntityId) Validate() error {
 	alias := (string)(s)
 	if err := (validate.String{
@@ -1246,6 +1272,74 @@ func (s *SegmentsUpdateUnprocessableEntity) Validate() error {
 		return err
 	}
 	return nil
+}
+
+func (s *SendTransactionalEmailInput) Validate() error {
+	if s == nil {
+		return validate.ErrNilPointer
+	}
+
+	var failures []validate.FieldError
+	if err := func() error {
+		if err := s.TemplateId.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "templateId",
+			Error: err,
+		})
+	}
+	if err := func() error {
+		if err := s.Destination.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "destination",
+			Error: err,
+		})
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+	return nil
+}
+
+func (s *SendTransactionalEmailResponse) Validate() error {
+	if s == nil {
+		return validate.ErrNilPointer
+	}
+
+	var failures []validate.FieldError
+	if err := func() error {
+		if err := s.Status.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "status",
+			Error: err,
+		})
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+	return nil
+}
+
+func (s TransactionalSendStatus) Validate() error {
+	switch s {
+	case "sent":
+		return nil
+	case "suppressed":
+		return nil
+	default:
+		return errors.Errorf("invalid value: %v", s)
+	}
 }
 
 func (s *UpdateBroadcastInput) Validate() error {

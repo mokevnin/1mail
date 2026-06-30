@@ -21,6 +21,7 @@ const (
 	ContactsGetOperation         OperationName = "ContactsGet"
 	ContactsListOperation        OperationName = "ContactsList"
 	ContactsUpdateOperation      OperationName = "ContactsUpdate"
+	EmailsSendOperation          OperationName = "EmailsSend"
 	EventActionsListOperation    OperationName = "EventActionsList"
 	EventsCreateOperation        OperationName = "EventsCreate"
 	SegmentsCreateOperation      OperationName = "SegmentsCreate"

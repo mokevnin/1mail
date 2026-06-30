@@ -130,6 +130,7 @@ const (
 	ApiTokenScopeSegmentsWrite   ApiTokenScope = "segments:write"
 	ApiTokenScopeBroadcastsRead  ApiTokenScope = "broadcasts:read"
 	ApiTokenScopeBroadcastsWrite ApiTokenScope = "broadcasts:write"
+	ApiTokenScopeEmailsSend      ApiTokenScope = "emails:send"
 	ApiTokenScopeTokensManage    ApiTokenScope = "tokens:manage"
 )
 
@@ -142,6 +143,7 @@ func (ApiTokenScope) AllValues() []ApiTokenScope {
 		ApiTokenScopeSegmentsWrite,
 		ApiTokenScopeBroadcastsRead,
 		ApiTokenScopeBroadcastsWrite,
+		ApiTokenScopeEmailsSend,
 		ApiTokenScopeTokensManage,
 	}
 }
@@ -160,6 +162,8 @@ func (s ApiTokenScope) MarshalText() ([]byte, error) {
 	case ApiTokenScopeBroadcastsRead:
 		return []byte(s), nil
 	case ApiTokenScopeBroadcastsWrite:
+		return []byte(s), nil
+	case ApiTokenScopeEmailsSend:
 		return []byte(s), nil
 	case ApiTokenScopeTokensManage:
 		return []byte(s), nil
@@ -188,6 +192,9 @@ func (s *ApiTokenScope) UnmarshalText(data []byte) error {
 		return nil
 	case ApiTokenScopeBroadcastsWrite:
 		*s = ApiTokenScopeBroadcastsWrite
+		return nil
+	case ApiTokenScopeEmailsSend:
+		*s = ApiTokenScopeEmailsSend
 		return nil
 	case ApiTokenScopeTokensManage:
 		*s = ApiTokenScopeTokensManage
@@ -1075,6 +1082,18 @@ func (s *CreateSegmentInput) SetDefinition(val OptString) {
 }
 
 type EmailAddress string
+
+type EmailsSendNotFound ProblemDetails
+
+func (*EmailsSendNotFound) emailsSendRes() {}
+
+type EmailsSendUnauthorized ProblemDetails
+
+func (*EmailsSendUnauthorized) emailsSendRes() {}
+
+type EmailsSendUnprocessableEntity ProblemDetails
+
+func (*EmailsSendUnprocessableEntity) emailsSendRes() {}
 
 type EntityId string
 
@@ -2095,6 +2114,52 @@ func (o OptSegmentType) Or(d SegmentType) SegmentType {
 	return d
 }
 
+// NewOptSendTransactionalEmailInputVariables returns new OptSendTransactionalEmailInputVariables with value set to v.
+func NewOptSendTransactionalEmailInputVariables(v SendTransactionalEmailInputVariables) OptSendTransactionalEmailInputVariables {
+	return OptSendTransactionalEmailInputVariables{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptSendTransactionalEmailInputVariables is optional SendTransactionalEmailInputVariables.
+type OptSendTransactionalEmailInputVariables struct {
+	Value SendTransactionalEmailInputVariables
+	Set   bool
+}
+
+// IsSet returns true if OptSendTransactionalEmailInputVariables was set.
+func (o OptSendTransactionalEmailInputVariables) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptSendTransactionalEmailInputVariables) Reset() {
+	var v SendTransactionalEmailInputVariables
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptSendTransactionalEmailInputVariables) SetTo(v SendTransactionalEmailInputVariables) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptSendTransactionalEmailInputVariables) Get() (v SendTransactionalEmailInputVariables, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptSendTransactionalEmailInputVariables) Or(d SendTransactionalEmailInputVariables) SendTransactionalEmailInputVariables {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
 // NewOptString returns new OptString with value set to v.
 func NewOptString(v string) OptString {
 	return OptString{
@@ -2538,9 +2603,136 @@ type SegmentsUpdateUnprocessableEntity ProblemDetails
 
 func (*SegmentsUpdateUnprocessableEntity) segmentsUpdateRes() {}
 
+// Send a single transactional email by rendering a referenced template.
+// Ref: #/components/schemas/SendTransactionalEmailInput
+type SendTransactionalEmailInput struct {
+	// The Template to render at send time (bound by reference, not copied).
+	TemplateId EntityId `json:"templateId"`
+	// The destination email address.
+	Destination EmailAddress `json:"destination"`
+	// Per-call variables merged into the template's subject and body (Liquid `{{ }}`).
+	Variables OptSendTransactionalEmailInputVariables `json:"variables"`
+}
+
+// GetTemplateId returns the value of TemplateId.
+func (s *SendTransactionalEmailInput) GetTemplateId() EntityId {
+	return s.TemplateId
+}
+
+// GetDestination returns the value of Destination.
+func (s *SendTransactionalEmailInput) GetDestination() EmailAddress {
+	return s.Destination
+}
+
+// GetVariables returns the value of Variables.
+func (s *SendTransactionalEmailInput) GetVariables() OptSendTransactionalEmailInputVariables {
+	return s.Variables
+}
+
+// SetTemplateId sets the value of TemplateId.
+func (s *SendTransactionalEmailInput) SetTemplateId(val EntityId) {
+	s.TemplateId = val
+}
+
+// SetDestination sets the value of Destination.
+func (s *SendTransactionalEmailInput) SetDestination(val EmailAddress) {
+	s.Destination = val
+}
+
+// SetVariables sets the value of Variables.
+func (s *SendTransactionalEmailInput) SetVariables(val OptSendTransactionalEmailInputVariables) {
+	s.Variables = val
+}
+
+// Per-call variables merged into the template's subject and body (Liquid `{{ }}`).
+type SendTransactionalEmailInputVariables map[string]jx.Raw
+
+func (s *SendTransactionalEmailInputVariables) init() SendTransactionalEmailInputVariables {
+	m := *s
+	if m == nil {
+		m = map[string]jx.Raw{}
+		*s = m
+	}
+	return m
+}
+
+// Result of a transactional send.
+// Ref: #/components/schemas/SendTransactionalEmailResponse
+type SendTransactionalEmailResponse struct {
+	// Whether the message was sent or skipped as suppressed.
+	Status TransactionalSendStatus `json:"status"`
+	// The normalized destination the result applies to.
+	Destination string `json:"destination"`
+}
+
+// GetStatus returns the value of Status.
+func (s *SendTransactionalEmailResponse) GetStatus() TransactionalSendStatus {
+	return s.Status
+}
+
+// GetDestination returns the value of Destination.
+func (s *SendTransactionalEmailResponse) GetDestination() string {
+	return s.Destination
+}
+
+// SetStatus sets the value of Status.
+func (s *SendTransactionalEmailResponse) SetStatus(val TransactionalSendStatus) {
+	s.Status = val
+}
+
+// SetDestination sets the value of Destination.
+func (s *SendTransactionalEmailResponse) SetDestination(val string) {
+	s.Destination = val
+}
+
+func (*SendTransactionalEmailResponse) emailsSendRes() {}
+
 type TimeZoneName string
 
 type Timestamp time.Time
+
+// Outcome of a transactional send.
+// Ref: #/components/schemas/TransactionalSendStatus
+type TransactionalSendStatus string
+
+const (
+	TransactionalSendStatusSent       TransactionalSendStatus = "sent"
+	TransactionalSendStatusSuppressed TransactionalSendStatus = "suppressed"
+)
+
+// AllValues returns all TransactionalSendStatus values.
+func (TransactionalSendStatus) AllValues() []TransactionalSendStatus {
+	return []TransactionalSendStatus{
+		TransactionalSendStatusSent,
+		TransactionalSendStatusSuppressed,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s TransactionalSendStatus) MarshalText() ([]byte, error) {
+	switch s {
+	case TransactionalSendStatusSent:
+		return []byte(s), nil
+	case TransactionalSendStatusSuppressed:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *TransactionalSendStatus) UnmarshalText(data []byte) error {
+	switch TransactionalSendStatus(data) {
+	case TransactionalSendStatusSent:
+		*s = TransactionalSendStatusSent
+		return nil
+	case TransactionalSendStatusSuppressed:
+		*s = TransactionalSendStatusSuppressed
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
 
 // Request body for updating a broadcast.
 // Ref: #/components/schemas/UpdateBroadcastInput

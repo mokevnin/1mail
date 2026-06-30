@@ -33,7 +33,7 @@ import (
 
 // New builds the top-level net/http handler wiring the three ogen-generated
 // API servers (site, external, collect) plus go-pkgz/auth endpoints.
-func New(cfg *config.Config, client *ent.Client, bus *events.Bus, enqueuer apisite.BroadcastEnqueuer, welcome apisite.WelcomeEnqueuer) (http.Handler, error) {
+func New(cfg *config.Config, client *ent.Client, bus *events.Bus, enqueuer apisite.BroadcastEnqueuer, welcome apisite.WelcomeEnqueuer, resolver apiexternal.SenderResolver) (http.Handler, error) {
 	// Credential encryption is mandatory: fail fast at boot if the key is
 	// missing or malformed rather than at first provider write.
 	cipher, err := secrets.NewCipher(cfg.EncryptionKey)
@@ -80,7 +80,7 @@ func New(cfg *config.Config, client *ent.Client, bus *events.Bus, enqueuer apisi
 
 	// External API — /api (Bearer token auth via ogen SecurityHandler).
 	extSrv, err := externalapi.NewServer(
-		apiexternal.NewHandlers(client, cfg.BootstrapToken, bus),
+		apiexternal.NewHandlers(client, cfg.BootstrapToken, bus, resolver),
 		apiauth.NewExternalSecurityHandler(client),
 		externalapi.WithPathPrefix("/api"),
 		externalapi.WithErrorHandler(problemErrorHandler),

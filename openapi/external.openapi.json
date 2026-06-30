@@ -15,6 +15,9 @@
       "name": "Broadcasts"
     },
     {
+      "name": "Emails"
+    },
+    {
       "name": "Events"
     },
     {
@@ -951,6 +954,66 @@
         "tags": ["Contacts"]
       }
     },
+    "/emails": {
+      "post": {
+        "operationId": "Emails_send",
+        "description": "Send a transactional email. The referenced Template's current content is\nrendered with the supplied variables at send time. Respects the workspace\nSuppression list (a suppressed destination returns status `suppressed`) but\nnot marketing Unsubscribe — transactional mail carries no sending source.",
+        "parameters": [],
+        "responses": {
+          "202": {
+            "description": "The request has been accepted for processing, but processing has not yet completed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SendTransactionalEmailResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "RFC 7807 unauthorized response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "RFC 7807 not found response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "RFC 7807 validation response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Emails"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SendTransactionalEmailInput"
+              }
+            }
+          }
+        }
+      }
+    },
     "/event-actions": {
       "get": {
         "operationId": "EventActions_list",
@@ -1510,6 +1573,7 @@
           "segments:write",
           "broadcasts:read",
           "broadcasts:write",
+          "emails:send",
           "tokens:manage"
         ]
       },
@@ -1937,12 +2001,64 @@
         "enum": ["rule", "snapshot"],
         "description": "Segment type"
       },
+      "SendTransactionalEmailInput": {
+        "type": "object",
+        "required": ["templateId", "destination"],
+        "properties": {
+          "templateId": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EntityId"
+              }
+            ],
+            "description": "The Template to render at send time (bound by reference, not copied)"
+          },
+          "destination": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EmailAddress"
+              }
+            ],
+            "description": "The destination email address"
+          },
+          "variables": {
+            "type": "object",
+            "additionalProperties": {},
+            "description": "Per-call variables merged into the template's subject and body (Liquid `{{ }}`)"
+          }
+        },
+        "description": "Send a single transactional email by rendering a referenced template."
+      },
+      "SendTransactionalEmailResponse": {
+        "type": "object",
+        "required": ["status", "destination"],
+        "properties": {
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TransactionalSendStatus"
+              }
+            ],
+            "description": "Whether the message was sent or skipped as suppressed"
+          },
+          "destination": {
+            "type": "string",
+            "description": "The normalized destination the result applies to"
+          }
+        },
+        "description": "Result of a transactional send"
+      },
       "TimeZoneName": {
         "type": "string"
       },
       "Timestamp": {
         "type": "string",
         "format": "date-time"
+      },
+      "TransactionalSendStatus": {
+        "type": "string",
+        "enum": ["sent", "suppressed"],
+        "description": "Outcome of a transactional send"
       },
       "UpdateBroadcastInput": {
         "type": "object",

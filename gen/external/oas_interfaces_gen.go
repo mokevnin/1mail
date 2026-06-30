@@ -61,6 +61,10 @@ type ContactsUpdateRes interface {
 	contactsUpdateRes()
 }
 
+type EmailsSendRes interface {
+	emailsSendRes()
+}
+
 type EventActionsListRes interface {
 	eventActionsListRes()
 }

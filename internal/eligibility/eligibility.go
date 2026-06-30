@@ -18,8 +18,8 @@ package eligibility
 
 import (
 	"context"
-	"fmt"
 	"entgo.io/ent/dialect/sql"
+	"fmt"
 
 	"github.com/mokevnin/1mail/ent"
 	"github.com/mokevnin/1mail/ent/contact"
@@ -103,6 +103,14 @@ func destinationMatches(outer, sub *sql.Selector, destCol string) *sql.Predicate
 	return sql.P(func(b *sql.Builder) {
 		b.WriteString("lower(").WriteString(outer.C(contact.FieldEmail)).WriteString(") = ").WriteString(sub.C(destCol))
 	})
+}
+
+// CheckTransactional is the eligibility check for a transactional send: it
+// respects Suppression (the global hard floor) but skips Unsubscribe, because
+// transactional mail carries no sending source (ADR 0005). A thin wrapper over
+// Check so the call site reads as intent rather than a bare "", false.
+func CheckTransactional(ctx context.Context, client *ent.Client, workspaceID int64, channel, dest string) (Decision, error) {
+	return Check(ctx, client, workspaceID, channel, dest, "", false)
 }
 
 // Check decides eligibility for a single destination via point lookups. Pass

@@ -138,6 +138,17 @@ func (UnimplementedHandler) ContactsUpdate(ctx context.Context, req *UpdateConta
 	return r, ht.ErrNotImplemented
 }
 
+// EmailsSend implements Emails_send operation.
+//
+// Send a transactional email. The referenced Template's current content is rendered with the supplied
+// variables at send time. Respects the workspace Suppression list (a suppressed destination returns
+// status `suppressed`) but not marketing Unsubscribe — transactional mail carries no sending source.
+//
+// POST /emails
+func (UnimplementedHandler) EmailsSend(ctx context.Context, req *SendTransactionalEmailInput) (r EmailsSendRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // EventActionsList implements EventActions_list operation.
 //
 // List unique event actions.

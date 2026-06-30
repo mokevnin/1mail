@@ -9,6 +9,7 @@ enum ApiTokenScope {
   segmentsWrite: "segments:write",
   broadcastsRead: "broadcasts:read",
   broadcastsWrite: "broadcasts:write",
+  emailsSend: "emails:send",
   tokensManage: "tokens:manage",
 }
 
