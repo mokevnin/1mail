@@ -1,8 +1,7 @@
 import { ActionIcon, Button, Group, Loader, Select, Stack, Text, Tooltip } from '@mantine/core'
 import { useCounter } from '@mantine/hooks'
-import { notifications } from '@mantine/notifications'
 import { IconEye, IconPencil, IconTrash } from '@tabler/icons-react'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
 import type { TFunction } from 'i18next'
 import { DataTable } from 'mantine-datatable'
@@ -17,13 +16,13 @@ import {
 } from '../../generated/site/@tanstack/react-query.gen.ts'
 import { SiteContactStatus } from '../../generated/site/types.gen.ts'
 import { useDeleteConfirmation } from '../../hooks/useDeleteConfirmation.tsx'
+import { useResourceMutation } from '../../hooks/useResourceMutation.ts'
 import {
   contactsCreateRoute,
   contactsDetailRoute,
   contactsEditRoute,
   contactsRoute,
 } from '../../router.tsx'
-import { getApiErrorMessage } from '../../utils/apiErrors.ts'
 
 type ContactStatusFilter = 'all' | SiteContactStatus
 
@@ -40,7 +39,6 @@ function translateStatus(t: TFunction, status: ContactStatusFilter): string {
 export function ContactsListPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
-  const queryClient = useQueryClient()
   const confirmDelete = useDeleteConfirmation()
   const { slug } = contactsRoute.useParams()
   const [page, pageHandlers] = useCounter(1, { min: 1 })
@@ -57,28 +55,11 @@ export function ContactsListPage() {
     }),
   )
 
-  const deleteContactMutation = useMutation({
-    ...siteContactsDeleteMutation(),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({
-        queryKey: siteContactsListQueryKey({ path: { workspaceSlug: slug } }),
-      })
-      notifications.show({
-        color: 'teal',
-        title: t(($) => $.notifications.successTitle),
-        message: t(($) => $.notifications.contactDeleted),
-      })
-    },
-    onError: (error) => {
-      notifications.show({
-        color: 'red',
-        title: t(($) => $.alerts.deleteErrorTitle),
-        message: getApiErrorMessage(
-          error,
-          t(($) => $.alerts.deleteErrorTitle),
-        ),
-      })
-    },
+  const deleteContactMutation = useResourceMutation({
+    mutation: siteContactsDeleteMutation(),
+    invalidate: [siteContactsListQueryKey({ path: { workspaceSlug: slug } })],
+    successMessage: t(($) => $.notifications.contactDeleted),
+    errorTitle: t(($) => $.alerts.deleteErrorTitle),
   })
 
   const totalItems = contactsList.data?.totalItems ?? 0

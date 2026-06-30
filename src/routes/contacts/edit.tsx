@@ -1,7 +1,6 @@
 import { Loader, Stack, Title } from '@mantine/core'
 import { useForm } from '@mantine/form'
-import { notifications } from '@mantine/notifications'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import { useEffect, useEffectEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ApiErrorAlert } from '../../components/ApiErrorAlert.tsx'
@@ -12,14 +11,13 @@ import {
   siteContactsUpdateMutation,
 } from '../../generated/site/@tanstack/react-query.gen.ts'
 import type { SiteContactResource } from '../../generated/site/types.gen.ts'
+import { useResourceMutation } from '../../hooks/useResourceMutation.ts'
 import { contactsEditRoute } from '../../router.tsx'
-import { getApiErrorMessage } from '../../utils/apiErrors.ts'
 import { ContactForm, type ContactFormValues } from './ContactForm.tsx'
 
 export function ContactEditPage() {
   const { t } = useTranslation()
   const { slug, contactId } = contactsEditRoute.useParams()
-  const queryClient = useQueryClient()
 
   const form = useForm<ContactFormValues>({
     initialValues: { email: '', firstName: '', lastName: '', timeZone: '' },
@@ -43,31 +41,14 @@ export function ContactEditPage() {
     applyContactData(getContactQuery.data)
   }, [getContactQuery.data])
 
-  const updateMutation = useMutation({
-    ...siteContactsUpdateMutation(),
-    onSuccess: async (updated) => {
-      await queryClient.invalidateQueries({
-        queryKey: siteContactsListQueryKey({ path: { workspaceSlug: slug } }),
-      })
-      await queryClient.invalidateQueries({
-        queryKey: siteContactsGetQueryKey({ path: { workspaceSlug: slug, id: updated.id } }),
-      })
-      notifications.show({
-        color: 'teal',
-        title: t(($) => $.notifications.successTitle),
-        message: t(($) => $.notifications.contactUpdated),
-      })
-    },
-    onError: (error) => {
-      notifications.show({
-        color: 'red',
-        title: t(($) => $.alerts.saveErrorTitle),
-        message: getApiErrorMessage(
-          error,
-          t(($) => $.alerts.saveErrorTitle),
-        ),
-      })
-    },
+  const updateMutation = useResourceMutation({
+    mutation: siteContactsUpdateMutation(),
+    invalidate: [
+      siteContactsListQueryKey({ path: { workspaceSlug: slug } }),
+      siteContactsGetQueryKey({ path: { workspaceSlug: slug, id: contactId } }),
+    ],
+    successMessage: t(($) => $.notifications.contactUpdated),
+    errorTitle: t(($) => $.alerts.saveErrorTitle),
   })
 
   if (getContactQuery.isLoading) return <Loader />

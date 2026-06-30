@@ -10,8 +10,7 @@ import {
   Title,
 } from '@mantine/core'
 import { useForm } from '@mantine/form'
-import { notifications } from '@mantine/notifications'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import {
   siteUserGetMeOptions,
@@ -19,7 +18,7 @@ import {
   siteUserUpdateMeMutation,
 } from '../../generated/site/@tanstack/react-query.gen.ts'
 import type { SiteUpdateMeInput, SiteUserResource } from '../../generated/site/types.gen.ts'
-import { getApiErrorMessage } from '../../utils/apiErrors.ts'
+import { useResourceMutation } from '../../hooks/useResourceMutation.ts'
 
 type ProfileFormValues = {
   name: string
@@ -31,33 +30,19 @@ type ProfileFormValues = {
 // loaded user without an effect — the parent only renders it once data is ready.
 function ProfileForm({ user }: { user: SiteUserResource }) {
   const { t } = useTranslation()
-  const queryClient = useQueryClient()
 
   const form = useForm<ProfileFormValues>({
     initialValues: { name: user.name, currentPassword: '', newPassword: '' },
   })
 
-  const updateMutation = useMutation({
-    ...siteUserUpdateMeMutation(),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: siteUserGetMeQueryKey() })
+  const updateMutation = useResourceMutation({
+    mutation: siteUserUpdateMeMutation(),
+    invalidate: [siteUserGetMeQueryKey()],
+    successMessage: t(($) => $.profile.updated),
+    errorTitle: t(($) => $.profile.errorTitle),
+    onDone: () => {
       form.setFieldValue('currentPassword', '')
       form.setFieldValue('newPassword', '')
-      notifications.show({
-        color: 'teal',
-        title: t(($) => $.notifications.successTitle),
-        message: t(($) => $.profile.updated),
-      })
-    },
-    onError: (error) => {
-      notifications.show({
-        color: 'red',
-        title: t(($) => $.profile.errorTitle),
-        message: getApiErrorMessage(
-          error,
-          t(($) => $.profile.errorTitle),
-        ),
-      })
     },
   })
 

@@ -1,50 +1,31 @@
 import { Stack, Title } from '@mantine/core'
 import { useForm } from '@mantine/form'
-import { notifications } from '@mantine/notifications'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 import {
   siteContactsCreateMutation,
   siteContactsListQueryKey,
 } from '../../generated/site/@tanstack/react-query.gen.ts'
+import { useResourceMutation } from '../../hooks/useResourceMutation.ts'
 import { contactsCreateRoute, contactsEditRoute } from '../../router.tsx'
-import { getApiErrorMessage } from '../../utils/apiErrors.ts'
 import { ContactForm, type ContactFormValues } from './ContactForm.tsx'
 
 export function ContactCreatePage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
-  const queryClient = useQueryClient()
   const { slug } = contactsCreateRoute.useParams()
 
   const form = useForm<ContactFormValues>({
     initialValues: { email: '', firstName: '', lastName: '', timeZone: '' },
   })
 
-  const createMutation = useMutation({
-    ...siteContactsCreateMutation(),
-    onSuccess: async (created) => {
-      await queryClient.invalidateQueries({
-        queryKey: siteContactsListQueryKey({ path: { workspaceSlug: slug } }),
-      })
-      notifications.show({
-        color: 'teal',
-        title: t(($) => $.notifications.successTitle),
-        message: t(($) => $.notifications.contactCreated),
-      })
-      await navigate({ to: contactsEditRoute.to, params: { slug, contactId: created.id } })
-    },
-    onError: (error) => {
-      notifications.show({
-        color: 'red',
-        title: t(($) => $.alerts.saveErrorTitle),
-        message: getApiErrorMessage(
-          error,
-          t(($) => $.alerts.saveErrorTitle),
-        ),
-      })
-    },
+  const createMutation = useResourceMutation({
+    mutation: siteContactsCreateMutation(),
+    invalidate: [siteContactsListQueryKey({ path: { workspaceSlug: slug } })],
+    successMessage: t(($) => $.notifications.contactCreated),
+    errorTitle: t(($) => $.alerts.saveErrorTitle),
+    onDone: (created) =>
+      navigate({ to: contactsEditRoute.to, params: { slug, contactId: created.id } }),
   })
 
   return (

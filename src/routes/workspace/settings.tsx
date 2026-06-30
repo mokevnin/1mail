@@ -14,8 +14,7 @@ import {
   Title,
 } from '@mantine/core'
 import { useForm } from '@mantine/form'
-import { notifications } from '@mantine/notifications'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import { useNavigate, useParams } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 import {
@@ -25,8 +24,8 @@ import {
   siteWorkspacesUpdateMutation,
 } from '../../generated/site/@tanstack/react-query.gen.ts'
 import type { SiteWorkspaceResource } from '../../generated/site/types.gen.ts'
+import { useResourceMutation } from '../../hooks/useResourceMutation.ts'
 import { activityRoute } from '../../router.tsx'
-import { getApiErrorMessage } from '../../utils/apiErrors.ts'
 import { ApiKeysSection } from './ApiKeysSection.tsx'
 import { IntegrationsSection } from './IntegrationsSection.tsx'
 import { SuppressionsSection } from './SuppressionsSection.tsx'
@@ -36,29 +35,13 @@ import { WebhooksSection } from './WebhooksSection.tsx'
 // loaded workspace without an effect.
 function GeneralSection({ workspace }: { workspace: SiteWorkspaceResource }) {
   const { t } = useTranslation()
-  const queryClient = useQueryClient()
   const form = useForm<{ name: string }>({ initialValues: { name: workspace.name } })
 
-  const updateMutation = useMutation({
-    ...siteWorkspacesUpdateMutation(),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: siteWorkspacesListQueryKey() })
-      notifications.show({
-        color: 'teal',
-        title: t(($) => $.notifications.successTitle),
-        message: t(($) => $.settings.saved),
-      })
-    },
-    onError: (error) => {
-      notifications.show({
-        color: 'red',
-        title: t(($) => $.settings.errorTitle),
-        message: getApiErrorMessage(
-          error,
-          t(($) => $.settings.errorTitle),
-        ),
-      })
-    },
+  const updateMutation = useResourceMutation({
+    mutation: siteWorkspacesUpdateMutation(),
+    invalidate: [siteWorkspacesListQueryKey()],
+    successMessage: t(($) => $.settings.saved),
+    errorTitle: t(($) => $.settings.errorTitle),
   })
 
   return (

@@ -1,7 +1,6 @@
 import { Badge, Button, Group, Loader, Stack, Text } from '@mantine/core'
 import { useCounter } from '@mantine/hooks'
-import { notifications } from '@mantine/notifications'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
 import { DataTable } from 'mantine-datatable'
 import { useTranslation } from 'react-i18next'
@@ -14,15 +13,14 @@ import {
   siteAutomationsListQueryKey,
 } from '../../generated/site/@tanstack/react-query.gen.ts'
 import { useDeleteConfirmation } from '../../hooks/useDeleteConfirmation.tsx'
+import { useResourceMutation } from '../../hooks/useResourceMutation.ts'
 import { automationsCreateRoute, automationsEditRoute, automationsRoute } from '../../router.tsx'
-import { type ApiErrorLike, getApiErrorMessage } from '../../utils/apiErrors.ts'
 
 const PAGE_SIZE = 10
 
 export function AutomationsListPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
-  const queryClient = useQueryClient()
   const confirmDelete = useDeleteConfirmation()
   const { slug } = automationsRoute.useParams()
   const [page, pageHandlers] = useCounter(1, { min: 1 })
@@ -34,63 +32,27 @@ export function AutomationsListPage() {
     }),
   )
 
-  const invalidateList = () =>
-    queryClient.invalidateQueries({
-      queryKey: siteAutomationsListQueryKey({ path: { workspaceSlug: slug } }),
-    })
+  const listQueryKey = siteAutomationsListQueryKey({ path: { workspaceSlug: slug } })
 
-  const notifyError = (error: ApiErrorLike | null | undefined, title: string) =>
-    notifications.show({ color: 'red', title, message: getApiErrorMessage(error, title) })
-
-  const deleteMutation = useMutation({
-    ...siteAutomationsDeleteMutation(),
-    onSuccess: async () => {
-      await invalidateList()
-      notifications.show({
-        color: 'teal',
-        title: t(($) => $.notifications.successTitle),
-        message: t(($) => $.notifications.automationDeleted),
-      })
-    },
-    onError: (error) =>
-      notifyError(
-        error,
-        t(($) => $.alerts.automationDeleteErrorTitle),
-      ),
+  const deleteMutation = useResourceMutation({
+    mutation: siteAutomationsDeleteMutation(),
+    invalidate: [listQueryKey],
+    successMessage: t(($) => $.notifications.automationDeleted),
+    errorTitle: t(($) => $.alerts.automationDeleteErrorTitle),
   })
 
-  const activateMutation = useMutation({
-    ...siteAutomationsActivateMutation(),
-    onSuccess: async () => {
-      await invalidateList()
-      notifications.show({
-        color: 'teal',
-        title: t(($) => $.notifications.successTitle),
-        message: t(($) => $.notifications.automationActivated),
-      })
-    },
-    onError: (error) =>
-      notifyError(
-        error,
-        t(($) => $.alerts.automationStatusErrorTitle),
-      ),
+  const activateMutation = useResourceMutation({
+    mutation: siteAutomationsActivateMutation(),
+    invalidate: [listQueryKey],
+    successMessage: t(($) => $.notifications.automationActivated),
+    errorTitle: t(($) => $.alerts.automationStatusErrorTitle),
   })
 
-  const deactivateMutation = useMutation({
-    ...siteAutomationsDeactivateMutation(),
-    onSuccess: async () => {
-      await invalidateList()
-      notifications.show({
-        color: 'teal',
-        title: t(($) => $.notifications.successTitle),
-        message: t(($) => $.notifications.automationDeactivated),
-      })
-    },
-    onError: (error) =>
-      notifyError(
-        error,
-        t(($) => $.alerts.automationStatusErrorTitle),
-      ),
+  const deactivateMutation = useResourceMutation({
+    mutation: siteAutomationsDeactivateMutation(),
+    invalidate: [listQueryKey],
+    successMessage: t(($) => $.notifications.automationDeactivated),
+    errorTitle: t(($) => $.alerts.automationStatusErrorTitle),
   })
 
   const totalItems = automationsList.data?.totalItems ?? 0

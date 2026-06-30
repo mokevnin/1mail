@@ -11,8 +11,7 @@ import {
   Title,
 } from '@mantine/core'
 import { useForm } from '@mantine/form'
-import { notifications } from '@mantine/notifications'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import { DataTable } from 'mantine-datatable'
 import { useTranslation } from 'react-i18next'
 import {
@@ -24,14 +23,13 @@ import {
 } from '../../generated/site/@tanstack/react-query.gen.ts'
 import type { SiteWebhookEndpointResource } from '../../generated/site/types.gen.ts'
 import { useDeleteConfirmation } from '../../hooks/useDeleteConfirmation.tsx'
-import { getApiErrorMessage } from '../../utils/apiErrors.ts'
+import { useResourceMutation } from '../../hooks/useResourceMutation.ts'
 
 // The domain events an endpoint can subscribe to. An empty selection means all.
 const EVENT_OPTIONS = ['contact.created', 'email.opened', 'email.clicked', 'email.unsubscribed']
 
 export function WebhooksSection({ slug }: { slug: string }) {
   const { t } = useTranslation()
-  const queryClient = useQueryClient()
   const confirmDelete = useDeleteConfirmation()
 
   const queryKey = siteWebhooksListQueryKey({ path: { workspaceSlug: slug } })
@@ -41,46 +39,23 @@ export function WebhooksSection({ slug }: { slug: string }) {
     initialValues: { url: '', eventTypes: [] },
   })
 
-  const invalidate = () => queryClient.invalidateQueries({ queryKey })
-
-  const notifyError = (error: unknown, title: string) =>
-    notifications.show({
-      color: 'red',
-      title,
-      message: getApiErrorMessage(error as Parameters<typeof getApiErrorMessage>[0], title),
-    })
-
-  const createMutation = useMutation({
-    ...siteWebhooksCreateMutation(),
-    onSuccess: async () => {
-      form.reset()
-      await invalidate()
-    },
-    onError: (error) =>
-      notifyError(
-        error,
-        t(($) => $.settings.webhooks.createError),
-      ),
+  const createMutation = useResourceMutation({
+    mutation: siteWebhooksCreateMutation(),
+    invalidate: [queryKey],
+    errorTitle: t(($) => $.settings.webhooks.createError),
+    onDone: () => form.reset(),
   })
 
-  const updateMutation = useMutation({
-    ...siteWebhooksUpdateMutation(),
-    onSuccess: invalidate,
-    onError: (error) =>
-      notifyError(
-        error,
-        t(($) => $.settings.webhooks.saveError),
-      ),
+  const updateMutation = useResourceMutation({
+    mutation: siteWebhooksUpdateMutation(),
+    invalidate: [queryKey],
+    errorTitle: t(($) => $.settings.webhooks.saveError),
   })
 
-  const deleteMutation = useMutation({
-    ...siteWebhooksDeleteMutation(),
-    onSuccess: invalidate,
-    onError: (error) =>
-      notifyError(
-        error,
-        t(($) => $.settings.webhooks.deleteError),
-      ),
+  const deleteMutation = useResourceMutation({
+    mutation: siteWebhooksDeleteMutation(),
+    invalidate: [queryKey],
+    errorTitle: t(($) => $.settings.webhooks.deleteError),
   })
 
   const onToggle = (record: SiteWebhookEndpointResource) =>

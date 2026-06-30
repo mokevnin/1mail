@@ -1,8 +1,7 @@
 import { Alert, Badge, Button, Card, Group, Loader, TextInput, Title } from '@mantine/core'
 import { useForm } from '@mantine/form'
 import { useCounter } from '@mantine/hooks'
-import { notifications } from '@mantine/notifications'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import { DataTable } from 'mantine-datatable'
 import { useTranslation } from 'react-i18next'
 import {
@@ -13,7 +12,7 @@ import {
 } from '../../generated/site/@tanstack/react-query.gen.ts'
 import type { SiteSuppressionReason } from '../../generated/site/types.gen.ts'
 import { useDeleteConfirmation } from '../../hooks/useDeleteConfirmation.tsx'
-import { getApiErrorMessage } from '../../utils/apiErrors.ts'
+import { useResourceMutation } from '../../hooks/useResourceMutation.ts'
 
 const REASON_COLORS: Record<SiteSuppressionReason, string> = {
   unsubscribed: 'yellow',
@@ -31,7 +30,6 @@ const PAGE_SIZE = 20
 // manually. The send path skips every address listed here.
 export function SuppressionsSection({ slug }: { slug: string }) {
   const { t } = useTranslation()
-  const queryClient = useQueryClient()
   const confirmDelete = useDeleteConfirmation()
   const [page, pageHandlers] = useCounter(1, { min: 1 })
 
@@ -45,37 +43,20 @@ export function SuppressionsSection({ slug }: { slug: string }) {
 
   const form = useForm<{ email: string }>({ initialValues: { email: '' } })
 
-  const invalidate = () => queryClient.invalidateQueries({ queryKey })
-
-  const notifyError = (error: unknown, title: string) =>
-    notifications.show({
-      color: 'red',
-      title,
-      message: getApiErrorMessage(error as Parameters<typeof getApiErrorMessage>[0], title),
-    })
-
-  const createMutation = useMutation({
-    ...siteSuppressionsCreateMutation(),
-    onSuccess: async () => {
+  const createMutation = useResourceMutation({
+    mutation: siteSuppressionsCreateMutation(),
+    invalidate: [queryKey],
+    errorTitle: t(($) => $.settings.suppressions.createError),
+    onDone: () => {
       form.reset()
       pageHandlers.set(1) // newest is first (id desc), so jump to page 1 to show it
-      await invalidate()
     },
-    onError: (error) =>
-      notifyError(
-        error,
-        t(($) => $.settings.suppressions.createError),
-      ),
   })
 
-  const deleteMutation = useMutation({
-    ...siteSuppressionsDeleteMutation(),
-    onSuccess: invalidate,
-    onError: (error) =>
-      notifyError(
-        error,
-        t(($) => $.settings.suppressions.deleteError),
-      ),
+  const deleteMutation = useResourceMutation({
+    mutation: siteSuppressionsDeleteMutation(),
+    invalidate: [queryKey],
+    errorTitle: t(($) => $.settings.suppressions.deleteError),
   })
 
   const onDelete = (id: string) =>

@@ -1,7 +1,6 @@
 import { Button, Divider, Group, Loader, Stack, Text, TextInput, Title } from '@mantine/core'
 import { useForm } from '@mantine/form'
-import { notifications } from '@mantine/notifications'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
 import { useEffect, useEffectEvent, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -16,15 +15,14 @@ import {
   siteBroadcastsUpdateMutation,
 } from '../../generated/site/@tanstack/react-query.gen.ts'
 import type { SiteBroadcastResource } from '../../generated/site/types.gen.ts'
+import { useResourceMutation } from '../../hooks/useResourceMutation.ts'
 import { broadcastsEditRoute, broadcastsReportRoute } from '../../router.tsx'
-import { type ApiErrorLike, getApiErrorMessage } from '../../utils/apiErrors.ts'
 import { BroadcastForm, type BroadcastFormValues } from './BroadcastForm.tsx'
 
 export function BroadcastEditPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const { slug, broadcastId } = broadcastsEditRoute.useParams()
-  const queryClient = useQueryClient()
   const [scheduledAt, setScheduledAt] = useState('')
   const [testEmail, setTestEmail] = useState('')
 
@@ -59,80 +57,40 @@ export function BroadcastEditPage() {
     applyData(getQuery.data)
   }, [getQuery.data])
 
-  const invalidate = async () => {
-    await queryClient.invalidateQueries({
-      queryKey: siteBroadcastsListQueryKey({ path: { workspaceSlug: slug } }),
-    })
-    await queryClient.invalidateQueries({
-      queryKey: siteBroadcastsGetQueryKey({ path: { workspaceSlug: slug, id: broadcastId } }),
-    })
-  }
+  const invalidateKeys = [
+    siteBroadcastsListQueryKey({ path: { workspaceSlug: slug } }),
+    siteBroadcastsGetQueryKey({ path: { workspaceSlug: slug, id: broadcastId } }),
+  ]
 
-  const notifyError = (
-    error: ApiErrorLike | null | undefined,
-    titleKey: 'broadcastSaveErrorTitle' | 'broadcastSendErrorTitle',
-  ) => {
-    notifications.show({
-      color: 'red',
-      title: t(($) => $.alerts[titleKey]),
-      message: getApiErrorMessage(
-        error,
-        t(($) => $.alerts[titleKey]),
-      ),
-    })
-  }
+  const toReport = () => navigate({ to: broadcastsReportRoute.to, params: { slug, broadcastId } })
 
-  const updateMutation = useMutation({
-    ...siteBroadcastsUpdateMutation(),
-    onSuccess: async () => {
-      await invalidate()
-      notifications.show({
-        color: 'teal',
-        title: t(($) => $.notifications.successTitle),
-        message: t(($) => $.notifications.broadcastUpdated),
-      })
-    },
-    onError: (error) => notifyError(error, 'broadcastSaveErrorTitle'),
+  const updateMutation = useResourceMutation({
+    mutation: siteBroadcastsUpdateMutation(),
+    invalidate: invalidateKeys,
+    successMessage: t(($) => $.notifications.broadcastUpdated),
+    errorTitle: t(($) => $.alerts.broadcastSaveErrorTitle),
   })
 
-  const sendMutation = useMutation({
-    ...siteBroadcastsSendMutation(),
-    onSuccess: async () => {
-      await invalidate()
-      notifications.show({
-        color: 'teal',
-        title: t(($) => $.notifications.successTitle),
-        message: t(($) => $.notifications.broadcastSent),
-      })
-      await navigate({ to: broadcastsReportRoute.to, params: { slug, broadcastId } })
-    },
-    onError: (error) => notifyError(error, 'broadcastSendErrorTitle'),
+  const sendMutation = useResourceMutation({
+    mutation: siteBroadcastsSendMutation(),
+    invalidate: invalidateKeys,
+    successMessage: t(($) => $.notifications.broadcastSent),
+    errorTitle: t(($) => $.alerts.broadcastSendErrorTitle),
+    onDone: toReport,
   })
 
-  const scheduleMutation = useMutation({
-    ...siteBroadcastsScheduleMutation(),
-    onSuccess: async () => {
-      await invalidate()
-      notifications.show({
-        color: 'teal',
-        title: t(($) => $.notifications.successTitle),
-        message: t(($) => $.notifications.broadcastScheduled),
-      })
-      await navigate({ to: broadcastsReportRoute.to, params: { slug, broadcastId } })
-    },
-    onError: (error) => notifyError(error, 'broadcastSendErrorTitle'),
+  const scheduleMutation = useResourceMutation({
+    mutation: siteBroadcastsScheduleMutation(),
+    invalidate: invalidateKeys,
+    successMessage: t(($) => $.notifications.broadcastScheduled),
+    errorTitle: t(($) => $.alerts.broadcastSendErrorTitle),
+    onDone: toReport,
   })
 
-  const testSendMutation = useMutation({
-    ...siteBroadcastsTestSendMutation(),
-    onSuccess: () => {
-      notifications.show({
-        color: 'teal',
-        title: t(($) => $.notifications.successTitle),
-        message: t(($) => $.notifications.testSent),
-      })
-    },
-    onError: (error) => notifyError(error, 'broadcastSendErrorTitle'),
+  const testSendMutation = useResourceMutation({
+    mutation: siteBroadcastsTestSendMutation(),
+    successMessage: t(($) => $.notifications.testSent),
+    errorTitle: t(($) => $.alerts.broadcastSendErrorTitle),
   })
 
   if (getQuery.isLoading) return <Loader />

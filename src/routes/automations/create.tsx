@@ -1,15 +1,13 @@
 import { Button, Group, Stack, Title } from '@mantine/core'
 import { useForm } from '@mantine/form'
-import { notifications } from '@mantine/notifications'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 import {
   siteAutomationsCreateMutation,
   siteAutomationsListQueryKey,
 } from '../../generated/site/@tanstack/react-query.gen.ts'
+import { useResourceMutation } from '../../hooks/useResourceMutation.ts'
 import { automationsCreateRoute, automationsEditRoute, automationsRoute } from '../../router.tsx'
-import { getApiErrorMessage } from '../../utils/apiErrors.ts'
 import {
   AutomationDetailsFields,
   type AutomationDetailsValues,
@@ -20,36 +18,19 @@ import {
 export function AutomationCreatePage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
-  const queryClient = useQueryClient()
   const { slug } = automationsCreateRoute.useParams()
 
   const form = useForm<AutomationDetailsValues>({
     initialValues: { name: '', triggerEvent: 'contact.created' },
   })
 
-  const createMutation = useMutation({
-    ...siteAutomationsCreateMutation(),
-    onSuccess: async (created) => {
-      await queryClient.invalidateQueries({
-        queryKey: siteAutomationsListQueryKey({ path: { workspaceSlug: slug } }),
-      })
-      notifications.show({
-        color: 'teal',
-        title: t(($) => $.notifications.successTitle),
-        message: t(($) => $.notifications.automationCreated),
-      })
-      await navigate({ to: automationsEditRoute.to, params: { slug, automationId: created.id } })
-    },
-    onError: (error) => {
-      notifications.show({
-        color: 'red',
-        title: t(($) => $.alerts.automationSaveErrorTitle),
-        message: getApiErrorMessage(
-          error,
-          t(($) => $.alerts.automationSaveErrorTitle),
-        ),
-      })
-    },
+  const createMutation = useResourceMutation({
+    mutation: siteAutomationsCreateMutation(),
+    invalidate: [siteAutomationsListQueryKey({ path: { workspaceSlug: slug } })],
+    successMessage: t(($) => $.notifications.automationCreated),
+    errorTitle: t(($) => $.alerts.automationSaveErrorTitle),
+    onDone: (created) =>
+      navigate({ to: automationsEditRoute.to, params: { slug, automationId: created.id } }),
   })
 
   return (

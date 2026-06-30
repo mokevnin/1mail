@@ -1,7 +1,6 @@
 import { Button, Group, Loader, Stack, Text } from '@mantine/core'
 import { useCounter } from '@mantine/hooks'
-import { notifications } from '@mantine/notifications'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
 import { DataTable } from 'mantine-datatable'
 import { useTranslation } from 'react-i18next'
@@ -12,15 +11,14 @@ import {
   siteTemplatesListQueryKey,
 } from '../../generated/site/@tanstack/react-query.gen.ts'
 import { useDeleteConfirmation } from '../../hooks/useDeleteConfirmation.tsx'
+import { useResourceMutation } from '../../hooks/useResourceMutation.ts'
 import { templatesCreateRoute, templatesEditRoute, templatesRoute } from '../../router.tsx'
-import { getApiErrorMessage } from '../../utils/apiErrors.ts'
 
 const PAGE_SIZE = 10
 
 export function TemplatesListPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
-  const queryClient = useQueryClient()
   const confirmDelete = useDeleteConfirmation()
   const { slug } = templatesRoute.useParams()
   const [page, pageHandlers] = useCounter(1, { min: 1 })
@@ -32,28 +30,11 @@ export function TemplatesListPage() {
     }),
   )
 
-  const deleteMutation = useMutation({
-    ...siteTemplatesDeleteMutation(),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({
-        queryKey: siteTemplatesListQueryKey({ path: { workspaceSlug: slug } }),
-      })
-      notifications.show({
-        color: 'teal',
-        title: t(($) => $.notifications.successTitle),
-        message: t(($) => $.notifications.templateDeleted),
-      })
-    },
-    onError: (error) => {
-      notifications.show({
-        color: 'red',
-        title: t(($) => $.alerts.templateDeleteErrorTitle),
-        message: getApiErrorMessage(
-          error,
-          t(($) => $.alerts.templateDeleteErrorTitle),
-        ),
-      })
-    },
+  const deleteMutation = useResourceMutation({
+    mutation: siteTemplatesDeleteMutation(),
+    invalidate: [siteTemplatesListQueryKey({ path: { workspaceSlug: slug } })],
+    successMessage: t(($) => $.notifications.templateDeleted),
+    errorTitle: t(($) => $.alerts.templateDeleteErrorTitle),
   })
 
   const totalItems = templatesList.data?.totalItems ?? 0

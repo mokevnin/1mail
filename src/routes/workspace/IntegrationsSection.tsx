@@ -13,8 +13,7 @@ import {
   Title,
 } from '@mantine/core'
 import { useForm } from '@mantine/form'
-import { notifications } from '@mantine/notifications'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import { DataTable } from 'mantine-datatable'
 import { useTranslation } from 'react-i18next'
 import {
@@ -25,7 +24,7 @@ import {
 } from '../../generated/site/@tanstack/react-query.gen.ts'
 import type { SiteIntegrationConfigInput } from '../../generated/site/types.gen.ts'
 import { useDeleteConfirmation } from '../../hooks/useDeleteConfirmation.tsx'
-import { getApiErrorMessage } from '../../utils/apiErrors.ts'
+import { useResourceMutation } from '../../hooks/useResourceMutation.ts'
 
 type ProviderKind = 'smtp' | 'ses'
 
@@ -85,7 +84,6 @@ function buildConfig(values: IntegrationFormValues): SiteIntegrationConfigInput 
 
 export function IntegrationsSection({ slug }: { slug: string }) {
   const { t } = useTranslation()
-  const queryClient = useQueryClient()
   const confirmDelete = useDeleteConfirmation()
 
   const queryKey = siteIntegrationsListQueryKey({ path: { workspaceSlug: slug } })
@@ -93,44 +91,18 @@ export function IntegrationsSection({ slug }: { slug: string }) {
 
   const form = useForm<IntegrationFormValues>({ initialValues: INITIAL_VALUES })
 
-  const createMutation = useMutation({
-    ...siteIntegrationsCreateMutation(),
-    onSuccess: async () => {
-      form.reset()
-      await queryClient.invalidateQueries({ queryKey })
-      notifications.show({
-        color: 'teal',
-        title: t(($) => $.notifications.successTitle),
-        message: t(($) => $.settings.integrations.saved),
-      })
-    },
-    onError: (error) => {
-      notifications.show({
-        color: 'red',
-        title: t(($) => $.settings.integrations.createError),
-        message: getApiErrorMessage(
-          error,
-          t(($) => $.settings.integrations.createError),
-        ),
-      })
-    },
+  const createMutation = useResourceMutation({
+    mutation: siteIntegrationsCreateMutation(),
+    invalidate: [queryKey],
+    successMessage: t(($) => $.settings.integrations.saved),
+    errorTitle: t(($) => $.settings.integrations.createError),
+    onDone: () => form.reset(),
   })
 
-  const deleteMutation = useMutation({
-    ...siteIntegrationsDeleteMutation(),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey })
-    },
-    onError: (error) => {
-      notifications.show({
-        color: 'red',
-        title: t(($) => $.settings.integrations.deleteError),
-        message: getApiErrorMessage(
-          error,
-          t(($) => $.settings.integrations.deleteError),
-        ),
-      })
-    },
+  const deleteMutation = useResourceMutation({
+    mutation: siteIntegrationsDeleteMutation(),
+    invalidate: [queryKey],
+    errorTitle: t(($) => $.settings.integrations.deleteError),
   })
 
   const onDelete = (id: string) => {

@@ -11,8 +11,7 @@ import {
   Title,
 } from '@mantine/core'
 import { useForm } from '@mantine/form'
-import { notifications } from '@mantine/notifications'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import { DataTable } from 'mantine-datatable'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -23,7 +22,7 @@ import {
   siteTokensListQueryKey,
 } from '../../generated/site/@tanstack/react-query.gen.ts'
 import { useDeleteConfirmation } from '../../hooks/useDeleteConfirmation.tsx'
-import { getApiErrorMessage } from '../../utils/apiErrors.ts'
+import { useResourceMutation } from '../../hooks/useResourceMutation.ts'
 
 // Scopes offered in the UI. The backend stores whatever strings it receives;
 // these mirror the external API's scope vocabulary.
@@ -39,7 +38,6 @@ const SCOPE_OPTIONS = [
 
 export function ApiKeysSection({ slug }: { slug: string }) {
   const { t } = useTranslation()
-  const queryClient = useQueryClient()
   const confirmRevoke = useDeleteConfirmation()
   const [newSecret, setNewSecret] = useState<string | null>(null)
 
@@ -50,40 +48,20 @@ export function ApiKeysSection({ slug }: { slug: string }) {
     initialValues: { name: '', scopes: [] },
   })
 
-  const createMutation = useMutation({
-    ...siteTokensCreateMutation(),
-    onSuccess: async (data) => {
+  const createMutation = useResourceMutation({
+    mutation: siteTokensCreateMutation(),
+    invalidate: [queryKey],
+    errorTitle: t(($) => $.settings.tokens.createError),
+    onDone: (data) => {
       setNewSecret(data.token)
       form.reset()
-      await queryClient.invalidateQueries({ queryKey })
-    },
-    onError: (error) => {
-      notifications.show({
-        color: 'red',
-        title: t(($) => $.settings.tokens.createError),
-        message: getApiErrorMessage(
-          error,
-          t(($) => $.settings.tokens.createError),
-        ),
-      })
     },
   })
 
-  const deleteMutation = useMutation({
-    ...siteTokensDeleteMutation(),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey })
-    },
-    onError: (error) => {
-      notifications.show({
-        color: 'red',
-        title: t(($) => $.settings.tokens.revokeError),
-        message: getApiErrorMessage(
-          error,
-          t(($) => $.settings.tokens.revokeError),
-        ),
-      })
-    },
+  const deleteMutation = useResourceMutation({
+    mutation: siteTokensDeleteMutation(),
+    invalidate: [queryKey],
+    errorTitle: t(($) => $.settings.tokens.revokeError),
   })
 
   const onRevoke = (id: string) => {

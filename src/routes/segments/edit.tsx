@@ -1,7 +1,6 @@
 import { Loader, Stack, Title } from '@mantine/core'
 import { useForm } from '@mantine/form'
-import { notifications } from '@mantine/notifications'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import { useEffect, useEffectEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ApiErrorAlert } from '../../components/ApiErrorAlert.tsx'
@@ -12,14 +11,13 @@ import {
   siteSegmentsUpdateMutation,
 } from '../../generated/site/@tanstack/react-query.gen.ts'
 import { type SiteSegmentResource, SiteSegmentType } from '../../generated/site/types.gen.ts'
+import { useResourceMutation } from '../../hooks/useResourceMutation.ts'
 import { segmentsEditRoute } from '../../router.tsx'
-import { getApiErrorMessage } from '../../utils/apiErrors.ts'
 import { SegmentForm, type SegmentFormValues } from './SegmentForm.tsx'
 
 export function SegmentEditPage() {
   const { t } = useTranslation()
   const { slug, segmentId } = segmentsEditRoute.useParams()
-  const queryClient = useQueryClient()
 
   const form = useForm<SegmentFormValues>({
     initialValues: { name: '', type: SiteSegmentType.RULE, definition: '' },
@@ -42,31 +40,14 @@ export function SegmentEditPage() {
     applySegmentData(getSegmentQuery.data)
   }, [getSegmentQuery.data])
 
-  const updateMutation = useMutation({
-    ...siteSegmentsUpdateMutation(),
-    onSuccess: async (updated) => {
-      await queryClient.invalidateQueries({
-        queryKey: siteSegmentsListQueryKey({ path: { workspaceSlug: slug } }),
-      })
-      await queryClient.invalidateQueries({
-        queryKey: siteSegmentsGetQueryKey({ path: { workspaceSlug: slug, id: updated.id } }),
-      })
-      notifications.show({
-        color: 'teal',
-        title: t(($) => $.notifications.successTitle),
-        message: t(($) => $.notifications.segmentUpdated),
-      })
-    },
-    onError: (error) => {
-      notifications.show({
-        color: 'red',
-        title: t(($) => $.alerts.segmentSaveErrorTitle),
-        message: getApiErrorMessage(
-          error,
-          t(($) => $.alerts.segmentSaveErrorTitle),
-        ),
-      })
-    },
+  const updateMutation = useResourceMutation({
+    mutation: siteSegmentsUpdateMutation(),
+    invalidate: [
+      siteSegmentsListQueryKey({ path: { workspaceSlug: slug } }),
+      siteSegmentsGetQueryKey({ path: { workspaceSlug: slug, id: segmentId } }),
+    ],
+    successMessage: t(($) => $.notifications.segmentUpdated),
+    errorTitle: t(($) => $.alerts.segmentSaveErrorTitle),
   })
 
   if (getSegmentQuery.isLoading) return <Loader />

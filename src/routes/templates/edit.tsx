@@ -1,7 +1,6 @@
 import { Loader, Stack, Title } from '@mantine/core'
 import { useForm } from '@mantine/form'
-import { notifications } from '@mantine/notifications'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import { useEffect, useEffectEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ApiErrorAlert } from '../../components/ApiErrorAlert.tsx'
@@ -12,14 +11,13 @@ import {
   siteTemplatesUpdateMutation,
 } from '../../generated/site/@tanstack/react-query.gen.ts'
 import type { SiteEmailTemplateResource } from '../../generated/site/types.gen.ts'
+import { useResourceMutation } from '../../hooks/useResourceMutation.ts'
 import { templatesEditRoute } from '../../router.tsx'
-import { getApiErrorMessage } from '../../utils/apiErrors.ts'
 import { TemplateForm, type TemplateFormValues } from './TemplateForm.tsx'
 
 export function TemplateEditPage() {
   const { t } = useTranslation()
   const { slug, templateId } = templatesEditRoute.useParams()
-  const queryClient = useQueryClient()
 
   const form = useForm<TemplateFormValues>({
     initialValues: { name: '', subject: '', body: '' },
@@ -42,31 +40,14 @@ export function TemplateEditPage() {
     applyData(getQuery.data)
   }, [getQuery.data])
 
-  const updateMutation = useMutation({
-    ...siteTemplatesUpdateMutation(),
-    onSuccess: async (updated) => {
-      await queryClient.invalidateQueries({
-        queryKey: siteTemplatesListQueryKey({ path: { workspaceSlug: slug } }),
-      })
-      await queryClient.invalidateQueries({
-        queryKey: siteTemplatesGetQueryKey({ path: { workspaceSlug: slug, id: updated.id } }),
-      })
-      notifications.show({
-        color: 'teal',
-        title: t(($) => $.notifications.successTitle),
-        message: t(($) => $.notifications.templateUpdated),
-      })
-    },
-    onError: (error) => {
-      notifications.show({
-        color: 'red',
-        title: t(($) => $.alerts.templateSaveErrorTitle),
-        message: getApiErrorMessage(
-          error,
-          t(($) => $.alerts.templateSaveErrorTitle),
-        ),
-      })
-    },
+  const updateMutation = useResourceMutation({
+    mutation: siteTemplatesUpdateMutation(),
+    invalidate: [
+      siteTemplatesListQueryKey({ path: { workspaceSlug: slug } }),
+      siteTemplatesGetQueryKey({ path: { workspaceSlug: slug, id: templateId } }),
+    ],
+    successMessage: t(($) => $.notifications.templateUpdated),
+    errorTitle: t(($) => $.alerts.templateSaveErrorTitle),
   })
 
   if (getQuery.isLoading) return <Loader />

@@ -1,7 +1,6 @@
 import { Badge, Button, Group, Loader, Stack, Text } from '@mantine/core'
 import { useCounter } from '@mantine/hooks'
-import { notifications } from '@mantine/notifications'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
 import type { TFunction } from 'i18next'
 import { DataTable } from 'mantine-datatable'
@@ -14,13 +13,13 @@ import {
 } from '../../generated/site/@tanstack/react-query.gen.ts'
 import type { SiteBroadcastStatus } from '../../generated/site/types.gen.ts'
 import { useDeleteConfirmation } from '../../hooks/useDeleteConfirmation.tsx'
+import { useResourceMutation } from '../../hooks/useResourceMutation.ts'
 import {
   broadcastsCreateRoute,
   broadcastsEditRoute,
   broadcastsReportRoute,
   broadcastsRoute,
 } from '../../router.tsx'
-import { getApiErrorMessage } from '../../utils/apiErrors.ts'
 
 const PAGE_SIZE = 10
 
@@ -43,7 +42,6 @@ function StatusBadge({ t, status }: { t: TFunction; status: SiteBroadcastStatus 
 export function BroadcastsListPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
-  const queryClient = useQueryClient()
   const confirmDelete = useDeleteConfirmation()
   const { slug } = broadcastsRoute.useParams()
   const [page, pageHandlers] = useCounter(1, { min: 1 })
@@ -55,28 +53,11 @@ export function BroadcastsListPage() {
     }),
   )
 
-  const deleteBroadcastMutation = useMutation({
-    ...siteBroadcastsDeleteMutation(),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({
-        queryKey: siteBroadcastsListQueryKey({ path: { workspaceSlug: slug } }),
-      })
-      notifications.show({
-        color: 'teal',
-        title: t(($) => $.notifications.successTitle),
-        message: t(($) => $.notifications.broadcastDeleted),
-      })
-    },
-    onError: (error) => {
-      notifications.show({
-        color: 'red',
-        title: t(($) => $.alerts.broadcastDeleteErrorTitle),
-        message: getApiErrorMessage(
-          error,
-          t(($) => $.alerts.broadcastDeleteErrorTitle),
-        ),
-      })
-    },
+  const deleteBroadcastMutation = useResourceMutation({
+    mutation: siteBroadcastsDeleteMutation(),
+    invalidate: [siteBroadcastsListQueryKey({ path: { workspaceSlug: slug } })],
+    successMessage: t(($) => $.notifications.broadcastDeleted),
+    errorTitle: t(($) => $.alerts.broadcastDeleteErrorTitle),
   })
 
   const totalItems = broadcastsList.data?.totalItems ?? 0
