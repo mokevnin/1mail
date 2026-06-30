@@ -70,6 +70,7 @@ func (Workspace) Edges() []ent.Edge {
 		edge.To("webhook_endpoints", WebhookEndpoint.Type),
 		edge.To("suppressions", Suppression.Type),
 		edge.To("unsubscribes", Unsubscribe.Type),
+		edge.To("transactional_emails", TransactionalEmail.Type),
 		edge.From("user", User.Type).
 			Ref("workspaces").
 			Field("user_id").

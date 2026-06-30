@@ -43,7 +43,7 @@ var (
 		"PUT":    "Authorization,Content-Type",
 	}
 	rn14AllowedHeaders = map[string]string{
-		"POST": "Authorization,Content-Type",
+		"POST": "Authorization,Content-Type,Idempotency-Key",
 	}
 	rn16AllowedHeaders = map[string]string{
 		"GET": "Authorization",

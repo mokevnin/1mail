@@ -18,6 +18,7 @@ import (
 	"github.com/mokevnin/1mail/ent/schema"
 	"github.com/mokevnin/1mail/ent/segment"
 	"github.com/mokevnin/1mail/ent/suppression"
+	"github.com/mokevnin/1mail/ent/transactionalemail"
 	"github.com/mokevnin/1mail/ent/unsubscribe"
 	"github.com/mokevnin/1mail/ent/user"
 	"github.com/mokevnin/1mail/ent/visitor"
@@ -297,6 +298,22 @@ func init() {
 	suppression.DefaultUpdatedAt = suppressionDescUpdatedAt.Default.(func() time.Time)
 	// suppression.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	suppression.UpdateDefaultUpdatedAt = suppressionDescUpdatedAt.UpdateDefault.(func() time.Time)
+	transactionalemailFields := schema.TransactionalEmail{}.Fields()
+	_ = transactionalemailFields
+	// transactionalemailDescDestination is the schema descriptor for destination field.
+	transactionalemailDescDestination := transactionalemailFields[2].Descriptor()
+	// transactionalemail.DestinationValidator is a validator for the "destination" field. It is called by the builders before save.
+	transactionalemail.DestinationValidator = transactionalemailDescDestination.Validators[0].(func(string) error)
+	// transactionalemailDescCreatedAt is the schema descriptor for created_at field.
+	transactionalemailDescCreatedAt := transactionalemailFields[9].Descriptor()
+	// transactionalemail.DefaultCreatedAt holds the default value on creation for the created_at field.
+	transactionalemail.DefaultCreatedAt = transactionalemailDescCreatedAt.Default.(func() time.Time)
+	// transactionalemailDescUpdatedAt is the schema descriptor for updated_at field.
+	transactionalemailDescUpdatedAt := transactionalemailFields[10].Descriptor()
+	// transactionalemail.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	transactionalemail.DefaultUpdatedAt = transactionalemailDescUpdatedAt.Default.(func() time.Time)
+	// transactionalemail.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	transactionalemail.UpdateDefaultUpdatedAt = transactionalemailDescUpdatedAt.UpdateDefault.(func() time.Time)
 	unsubscribeFields := schema.Unsubscribe{}.Fields()
 	_ = unsubscribeFields
 	// unsubscribeDescDestination is the schema descriptor for destination field.

@@ -49,6 +49,9 @@
     },
     {
       "name": "Site Suppressions"
+    },
+    {
+      "name": "Site Transactional Emails"
     }
   ],
   "paths": {
@@ -3237,6 +3240,102 @@
         "tags": ["Site Tokens"]
       }
     },
+    "/w/{workspaceSlug}/transactional-emails": {
+      "get": {
+        "operationId": "SiteTransactionalEmails_list",
+        "description": "List transactional sends, most recent first",
+        "parameters": [
+          {
+            "name": "workspaceSlug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/PageQuery.page"
+          },
+          {
+            "$ref": "#/components/parameters/PageQuery.pageSize"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request has succeeded.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["items", "page", "pageSize", "totalItems", "totalPages"],
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/SiteTransactionalEmailResource"
+                      },
+                      "description": "List of items"
+                    },
+                    "page": {
+                      "type": "integer",
+                      "format": "int32",
+                      "description": "Page number (1-based)"
+                    },
+                    "pageSize": {
+                      "type": "integer",
+                      "format": "int32",
+                      "description": "Page size"
+                    },
+                    "totalItems": {
+                      "type": "integer",
+                      "format": "int32",
+                      "description": "Total number of elements"
+                    },
+                    "totalPages": {
+                      "type": "integer",
+                      "format": "int32",
+                      "description": "Total number of pages"
+                    }
+                  },
+                  "description": "Paginated response"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "RFC 7807 bad request response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "RFC 7807 not found response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "RFC 7807 validation response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Site Transactional Emails"]
+      }
+    },
     "/w/{workspaceSlug}/webhooks": {
       "post": {
         "operationId": "SiteWebhooks_create",
@@ -5255,6 +5354,82 @@
           }
         },
         "description": "Site request body for a test send"
+      },
+      "SiteTransactionalEmailChannel": {
+        "type": "string",
+        "enum": ["email"],
+        "description": "The channel a transactional send went out on (email today; sms reserved)"
+      },
+      "SiteTransactionalEmailResource": {
+        "type": "object",
+        "required": ["id", "channel", "destination", "templateId", "status", "createdAt"],
+        "properties": {
+          "id": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EntityId"
+              }
+            ],
+            "description": "Unique identifier"
+          },
+          "channel": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SiteTransactionalEmailChannel"
+              }
+            ],
+            "description": "The channel this send went out on"
+          },
+          "destination": {
+            "type": "string",
+            "description": "Normalized (lower-cased) destination address"
+          },
+          "templateId": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EntityId"
+              }
+            ],
+            "description": "The id of the Template rendered at send time (bound by reference)"
+          },
+          "contactId": {
+            "type": "string",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EntityId"
+              }
+            ],
+            "nullable": true,
+            "description": "The contact this destination resolved to, when one existed"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SiteTransactionalEmailStatus"
+              }
+            ],
+            "description": "Outcome of the send"
+          },
+          "error": {
+            "type": "string",
+            "nullable": true,
+            "description": "Provider error message, present when status is `failed`"
+          },
+          "createdAt": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Timestamp"
+              }
+            ],
+            "description": "Creation timestamp"
+          }
+        },
+        "description": "One transactional send: the durable, read-only trace of an `/api/emails` call"
+      },
+      "SiteTransactionalEmailStatus": {
+        "type": "string",
+        "enum": ["pending", "sent", "suppressed", "failed"],
+        "description": "Outcome of a transactional send"
       },
       "SiteUpdateAutomationInput": {
         "type": "object",

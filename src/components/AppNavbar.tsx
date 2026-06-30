@@ -3,6 +3,7 @@ import {
   IconActivity,
   IconLayoutDashboard,
   IconMailbox,
+  IconMailFast,
   IconRobot,
   IconSettings,
   IconTemplate,
@@ -20,6 +21,7 @@ import {
   segmentsRoute,
   settingsRoute,
   templatesRoute,
+  transactionalEmailsRoute,
 } from '../router.tsx'
 
 // AppNavbar renders the workspace-scoped sidebar. Active sections are built
@@ -71,6 +73,15 @@ export function AppNavbar({ slug }: { slug: string }) {
       icon: <IconRobot size={18} />,
       active: Boolean(matchRoute({ to: automationsRoute.to, params: { slug }, fuzzy: true })),
       onClick: () => navigate({ to: automationsRoute.to, params: { slug } }),
+    },
+    {
+      key: 'transactional-emails',
+      label: t(($) => $.nav.transactionalEmails),
+      icon: <IconMailFast size={18} />,
+      active: Boolean(
+        matchRoute({ to: transactionalEmailsRoute.to, params: { slug }, fuzzy: true }),
+      ),
+      onClick: () => navigate({ to: transactionalEmailsRoute.to, params: { slug } }),
     },
     {
       key: 'activity',

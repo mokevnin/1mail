@@ -363,6 +363,21 @@ export const zSiteTestSendBroadcastInput = z.object({
 });
 
 /**
+ * The channel a transactional send went out on (email today; sms reserved)
+ */
+export const zSiteTransactionalEmailChannel = z.enum(['email']);
+
+/**
+ * Outcome of a transactional send
+ */
+export const zSiteTransactionalEmailStatus = z.enum([
+    'pending',
+    'sent',
+    'suppressed',
+    'failed'
+]);
+
+/**
  * Site request body for updating an automation
  */
 export const zSiteUpdateAutomationInput = z.object({
@@ -638,6 +653,20 @@ export const zSiteSuppressionResource = z.object({
     reason: zSiteSuppressionReason,
     createdAt: zTimestamp,
     updatedAt: zTimestamp
+});
+
+/**
+ * One transactional send: the durable, read-only trace of an `/api/emails` call
+ */
+export const zSiteTransactionalEmailResource = z.object({
+    id: zEntityId,
+    channel: zSiteTransactionalEmailChannel,
+    destination: z.string(),
+    templateId: zEntityId,
+    contactId: zEntityId.nullish(),
+    status: zSiteTransactionalEmailStatus,
+    error: z.string().nullish(),
+    createdAt: zTimestamp
 });
 
 /**
@@ -1280,6 +1309,26 @@ export const zSiteTokensDeletePath = z.object({
  * There is no content to send for this request, but the headers may be useful.
  */
 export const zSiteTokensDeleteResponse = z.void();
+
+export const zSiteTransactionalEmailsListPath = z.object({
+    workspaceSlug: z.string()
+});
+
+export const zSiteTransactionalEmailsListQuery = z.object({
+    page: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).optional().default(1),
+    pageSize: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).optional().default(25)
+});
+
+/**
+ * Paginated response
+ */
+export const zSiteTransactionalEmailsListResponse = z.object({
+    items: z.array(zSiteTransactionalEmailResource),
+    page: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
+    pageSize: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
+    totalItems: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
+    totalPages: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' })
+});
 
 export const zSiteWebhooksListPath = z.object({
     workspaceSlug: z.string()

@@ -115,8 +115,11 @@ type Invoker interface {
 	// variables at send time. Respects the workspace Suppression list (a suppressed destination returns
 	// status `suppressed`) but not marketing Unsubscribe — transactional mail carries no sending source.
 	//
+	// Supply an `Idempotency-Key` to make retries safe: a repeated key replays the original result without
+	// sending a second email, and a key whose first request is still in flight returns 409.
+	//
 	// POST /emails
-	EmailsSend(ctx context.Context, request *SendTransactionalEmailInput) (EmailsSendRes, error)
+	EmailsSend(ctx context.Context, request *SendTransactionalEmailInput, params EmailsSendParams) (EmailsSendRes, error)
 	// EventActionsList invokes EventActions_list operation.
 	//
 	// List unique event actions.
@@ -2115,13 +2118,16 @@ func (c *Client) sendContactsUpdate(ctx context.Context, request *UpdateContactI
 // variables at send time. Respects the workspace Suppression list (a suppressed destination returns
 // status `suppressed`) but not marketing Unsubscribe — transactional mail carries no sending source.
 //
+// Supply an `Idempotency-Key` to make retries safe: a repeated key replays the original result without
+// sending a second email, and a key whose first request is still in flight returns 409.
+//
 // POST /emails
-func (c *Client) EmailsSend(ctx context.Context, request *SendTransactionalEmailInput) (EmailsSendRes, error) {
-	res, err := c.sendEmailsSend(ctx, request)
+func (c *Client) EmailsSend(ctx context.Context, request *SendTransactionalEmailInput, params EmailsSendParams) (EmailsSendRes, error) {
+	res, err := c.sendEmailsSend(ctx, request, params)
 	return res, err
 }
 
-func (c *Client) sendEmailsSend(ctx context.Context, request *SendTransactionalEmailInput) (res EmailsSendRes, err error) {
+func (c *Client) sendEmailsSend(ctx context.Context, request *SendTransactionalEmailInput, params EmailsSendParams) (res EmailsSendRes, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("Emails_send"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -2169,6 +2175,23 @@ func (c *Client) sendEmailsSend(ctx context.Context, request *SendTransactionalE
 	}
 	if err := encodeEmailsSendRequest(request, r); err != nil {
 		return res, errors.Wrap(err, "encode request")
+	}
+
+	stage = "EncodeHeaderParams"
+	h := uri.NewHeaderEncoder(r.Header)
+	{
+		cfg := uri.HeaderParameterEncodingConfig{
+			Name:    "Idempotency-Key",
+			Explode: false,
+		}
+		if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.IdempotencyKey.Get(); ok {
+				return e.EncodeValue(conv.StringToString(val))
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode header")
+		}
 	}
 
 	{

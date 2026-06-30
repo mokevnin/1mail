@@ -144,8 +144,11 @@ func (UnimplementedHandler) ContactsUpdate(ctx context.Context, req *UpdateConta
 // variables at send time. Respects the workspace Suppression list (a suppressed destination returns
 // status `suppressed`) but not marketing Unsubscribe — transactional mail carries no sending source.
 //
+// Supply an `Idempotency-Key` to make retries safe: a repeated key replays the original result without
+// sending a second email, and a key whose first request is still in flight returns 409.
+//
 // POST /emails
-func (UnimplementedHandler) EmailsSend(ctx context.Context, req *SendTransactionalEmailInput) (r EmailsSendRes, _ error) {
+func (UnimplementedHandler) EmailsSend(ctx context.Context, req *SendTransactionalEmailInput, params EmailsSendParams) (r EmailsSendRes, _ error) {
 	return r, ht.ErrNotImplemented
 }
 

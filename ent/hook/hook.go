@@ -153,6 +153,18 @@ func (f SuppressionFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value,
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.SuppressionMutation", m)
 }
 
+// The TransactionalEmailFunc type is an adapter to allow the use of ordinary
+// function as TransactionalEmail mutator.
+type TransactionalEmailFunc func(context.Context, *ent.TransactionalEmailMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f TransactionalEmailFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.TransactionalEmailMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.TransactionalEmailMutation", m)
+}
+
 // The UnsubscribeFunc type is an adapter to allow the use of ordinary
 // function as Unsubscribe mutator.
 type UnsubscribeFunc func(context.Context, *ent.UnsubscribeMutation) (ent.Value, error)

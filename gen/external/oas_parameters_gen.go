@@ -883,6 +883,69 @@ func decodeContactsUpdateParams(args [1]string, argsEscaped bool, r *http.Reques
 	return params, nil
 }
 
+// EmailsSendParams is parameters of Emails_send operation.
+type EmailsSendParams struct {
+	// Client-supplied key that makes a retried send idempotent (Stripe-style).
+	IdempotencyKey OptString `json:",omitempty,omitzero"`
+}
+
+func unpackEmailsSendParams(packed middleware.Parameters) (params EmailsSendParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "Idempotency-Key",
+			In:   "header",
+		}
+		if v, ok := packed[key]; ok {
+			params.IdempotencyKey = v.(OptString)
+		}
+	}
+	return params
+}
+
+func decodeEmailsSendParams(args [0]string, argsEscaped bool, r *http.Request) (params EmailsSendParams, _ error) {
+	h := uri.NewHeaderDecoder(r.Header)
+	// Decode header: Idempotency-Key.
+	if err := func() error {
+		cfg := uri.HeaderParameterDecodingConfig{
+			Name:    "Idempotency-Key",
+			Explode: false,
+		}
+		if err := h.HasParam(cfg); err == nil {
+			if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotIdempotencyKeyVal string
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotIdempotencyKeyVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.IdempotencyKey.SetTo(paramsDotIdempotencyKeyVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "Idempotency-Key",
+			In:   "header",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
 // EventActionsListParams is parameters of EventActions_list operation.
 type EventActionsListParams struct {
 	// Page number (1-based).

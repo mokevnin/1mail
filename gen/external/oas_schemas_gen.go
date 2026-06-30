@@ -1083,6 +1083,10 @@ func (s *CreateSegmentInput) SetDefinition(val OptString) {
 
 type EmailAddress string
 
+type EmailsSendConflict ProblemDetails
+
+func (*EmailsSendConflict) emailsSendRes() {}
+
 type EmailsSendNotFound ProblemDetails
 
 func (*EmailsSendNotFound) emailsSendRes() {}
@@ -2659,10 +2663,17 @@ func (s *SendTransactionalEmailInputVariables) init() SendTransactionalEmailInpu
 // Result of a transactional send.
 // Ref: #/components/schemas/SendTransactionalEmailResponse
 type SendTransactionalEmailResponse struct {
+	// The id of the durable send record (the send-history trace).
+	ID EntityId `json:"id"`
 	// Whether the message was sent or skipped as suppressed.
 	Status TransactionalSendStatus `json:"status"`
 	// The normalized destination the result applies to.
 	Destination string `json:"destination"`
+}
+
+// GetID returns the value of ID.
+func (s *SendTransactionalEmailResponse) GetID() EntityId {
+	return s.ID
 }
 
 // GetStatus returns the value of Status.
@@ -2673,6 +2684,11 @@ func (s *SendTransactionalEmailResponse) GetStatus() TransactionalSendStatus {
 // GetDestination returns the value of Destination.
 func (s *SendTransactionalEmailResponse) GetDestination() string {
 	return s.Destination
+}
+
+// SetID sets the value of ID.
+func (s *SendTransactionalEmailResponse) SetID(val EntityId) {
+	s.ID = val
 }
 
 // SetStatus sets the value of Status.

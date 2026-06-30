@@ -450,6 +450,46 @@ var (
 			},
 		},
 	}
+	// TransactionalEmailsColumns holds the columns for the "transactional_emails" table.
+	TransactionalEmailsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt64, Increment: true},
+		{Name: "channel", Type: field.TypeEnum, Enums: []string{"email"}, Default: "email"},
+		{Name: "destination", Type: field.TypeString},
+		{Name: "template_id", Type: field.TypeInt64},
+		{Name: "contact_id", Type: field.TypeInt64, Nullable: true},
+		{Name: "status", Type: field.TypeEnum, Enums: []string{"pending", "sent", "suppressed", "failed"}, Default: "pending"},
+		{Name: "error", Type: field.TypeString, Nullable: true},
+		{Name: "idempotency_key", Type: field.TypeString, Nullable: true},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "workspace_id", Type: field.TypeInt64},
+	}
+	// TransactionalEmailsTable holds the schema information for the "transactional_emails" table.
+	TransactionalEmailsTable = &schema.Table{
+		Name:       "transactional_emails",
+		Columns:    TransactionalEmailsColumns,
+		PrimaryKey: []*schema.Column{TransactionalEmailsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "transactional_emails_workspaces_transactional_emails",
+				Columns:    []*schema.Column{TransactionalEmailsColumns[10]},
+				RefColumns: []*schema.Column{WorkspacesColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "transactional_emails_workspace_id_idempotency_key",
+				Unique:  true,
+				Columns: []*schema.Column{TransactionalEmailsColumns[10], TransactionalEmailsColumns[7]},
+			},
+			{
+				Name:    "transactionalemail_workspace_id_created_at",
+				Unique:  false,
+				Columns: []*schema.Column{TransactionalEmailsColumns[10], TransactionalEmailsColumns[8]},
+			},
+		},
+	}
 	// UnsubscribesColumns holds the columns for the "unsubscribes" table.
 	UnsubscribesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt64, Increment: true},
@@ -615,6 +655,7 @@ var (
 		IntegrationsTable,
 		SegmentsTable,
 		SuppressionsTable,
+		TransactionalEmailsTable,
 		UnsubscribesTable,
 		UsersTable,
 		VisitorsTable,
@@ -673,6 +714,10 @@ func init() {
 	SuppressionsTable.ForeignKeys[0].RefTable = WorkspacesTable
 	SuppressionsTable.Annotation = &entsql.Annotation{
 		Table: "suppressions",
+	}
+	TransactionalEmailsTable.ForeignKeys[0].RefTable = WorkspacesTable
+	TransactionalEmailsTable.Annotation = &entsql.Annotation{
+		Table: "transactional_emails",
 	}
 	UnsubscribesTable.ForeignKeys[0].RefTable = WorkspacesTable
 	UnsubscribesTable.Annotation = &entsql.Annotation{

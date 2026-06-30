@@ -24,6 +24,7 @@ import (
 	"github.com/mokevnin/1mail/ent/predicate"
 	"github.com/mokevnin/1mail/ent/segment"
 	"github.com/mokevnin/1mail/ent/suppression"
+	"github.com/mokevnin/1mail/ent/transactionalemail"
 	"github.com/mokevnin/1mail/ent/unsubscribe"
 	"github.com/mokevnin/1mail/ent/user"
 	"github.com/mokevnin/1mail/ent/visitor"
@@ -352,6 +353,21 @@ func (_u *WorkspaceUpdate) AddUnsubscribes(v ...*Unsubscribe) *WorkspaceUpdate {
 	return _u.AddUnsubscribeIDs(ids...)
 }
 
+// AddTransactionalEmailIDs adds the "transactional_emails" edge to the TransactionalEmail entity by IDs.
+func (_u *WorkspaceUpdate) AddTransactionalEmailIDs(ids ...int64) *WorkspaceUpdate {
+	_u.mutation.AddTransactionalEmailIDs(ids...)
+	return _u
+}
+
+// AddTransactionalEmails adds the "transactional_emails" edges to the TransactionalEmail entity.
+func (_u *WorkspaceUpdate) AddTransactionalEmails(v ...*TransactionalEmail) *WorkspaceUpdate {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddTransactionalEmailIDs(ids...)
+}
+
 // SetUser sets the "user" edge to the User entity.
 func (_u *WorkspaceUpdate) SetUser(v *User) *WorkspaceUpdate {
 	return _u.SetUserID(v.ID)
@@ -675,6 +691,27 @@ func (_u *WorkspaceUpdate) RemoveUnsubscribes(v ...*Unsubscribe) *WorkspaceUpdat
 		ids[i] = v[i].ID
 	}
 	return _u.RemoveUnsubscribeIDs(ids...)
+}
+
+// ClearTransactionalEmails clears all "transactional_emails" edges to the TransactionalEmail entity.
+func (_u *WorkspaceUpdate) ClearTransactionalEmails() *WorkspaceUpdate {
+	_u.mutation.ClearTransactionalEmails()
+	return _u
+}
+
+// RemoveTransactionalEmailIDs removes the "transactional_emails" edge to TransactionalEmail entities by IDs.
+func (_u *WorkspaceUpdate) RemoveTransactionalEmailIDs(ids ...int64) *WorkspaceUpdate {
+	_u.mutation.RemoveTransactionalEmailIDs(ids...)
+	return _u
+}
+
+// RemoveTransactionalEmails removes "transactional_emails" edges to TransactionalEmail entities.
+func (_u *WorkspaceUpdate) RemoveTransactionalEmails(v ...*TransactionalEmail) *WorkspaceUpdate {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveTransactionalEmailIDs(ids...)
 }
 
 // ClearUser clears the "user" edge to the User entity.
@@ -1452,6 +1489,51 @@ func (_u *WorkspaceUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	if _u.mutation.TransactionalEmailsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   workspace.TransactionalEmailsTable,
+			Columns: []string{workspace.TransactionalEmailsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(transactionalemail.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedTransactionalEmailsIDs(); len(nodes) > 0 && !_u.mutation.TransactionalEmailsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   workspace.TransactionalEmailsTable,
+			Columns: []string{workspace.TransactionalEmailsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(transactionalemail.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.TransactionalEmailsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   workspace.TransactionalEmailsTable,
+			Columns: []string{workspace.TransactionalEmailsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(transactionalemail.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if _u.mutation.UserCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
@@ -1810,6 +1892,21 @@ func (_u *WorkspaceUpdateOne) AddUnsubscribes(v ...*Unsubscribe) *WorkspaceUpdat
 	return _u.AddUnsubscribeIDs(ids...)
 }
 
+// AddTransactionalEmailIDs adds the "transactional_emails" edge to the TransactionalEmail entity by IDs.
+func (_u *WorkspaceUpdateOne) AddTransactionalEmailIDs(ids ...int64) *WorkspaceUpdateOne {
+	_u.mutation.AddTransactionalEmailIDs(ids...)
+	return _u
+}
+
+// AddTransactionalEmails adds the "transactional_emails" edges to the TransactionalEmail entity.
+func (_u *WorkspaceUpdateOne) AddTransactionalEmails(v ...*TransactionalEmail) *WorkspaceUpdateOne {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddTransactionalEmailIDs(ids...)
+}
+
 // SetUser sets the "user" edge to the User entity.
 func (_u *WorkspaceUpdateOne) SetUser(v *User) *WorkspaceUpdateOne {
 	return _u.SetUserID(v.ID)
@@ -2133,6 +2230,27 @@ func (_u *WorkspaceUpdateOne) RemoveUnsubscribes(v ...*Unsubscribe) *WorkspaceUp
 		ids[i] = v[i].ID
 	}
 	return _u.RemoveUnsubscribeIDs(ids...)
+}
+
+// ClearTransactionalEmails clears all "transactional_emails" edges to the TransactionalEmail entity.
+func (_u *WorkspaceUpdateOne) ClearTransactionalEmails() *WorkspaceUpdateOne {
+	_u.mutation.ClearTransactionalEmails()
+	return _u
+}
+
+// RemoveTransactionalEmailIDs removes the "transactional_emails" edge to TransactionalEmail entities by IDs.
+func (_u *WorkspaceUpdateOne) RemoveTransactionalEmailIDs(ids ...int64) *WorkspaceUpdateOne {
+	_u.mutation.RemoveTransactionalEmailIDs(ids...)
+	return _u
+}
+
+// RemoveTransactionalEmails removes "transactional_emails" edges to TransactionalEmail entities.
+func (_u *WorkspaceUpdateOne) RemoveTransactionalEmails(v ...*TransactionalEmail) *WorkspaceUpdateOne {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveTransactionalEmailIDs(ids...)
 }
 
 // ClearUser clears the "user" edge to the User entity.
@@ -2933,6 +3051,51 @@ func (_u *WorkspaceUpdateOne) sqlSave(ctx context.Context) (_node *Workspace, er
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(unsubscribe.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.TransactionalEmailsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   workspace.TransactionalEmailsTable,
+			Columns: []string{workspace.TransactionalEmailsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(transactionalemail.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedTransactionalEmailsIDs(); len(nodes) > 0 && !_u.mutation.TransactionalEmailsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   workspace.TransactionalEmailsTable,
+			Columns: []string{workspace.TransactionalEmailsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(transactionalemail.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.TransactionalEmailsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   workspace.TransactionalEmailsTable,
+			Columns: []string{workspace.TransactionalEmailsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(transactionalemail.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {

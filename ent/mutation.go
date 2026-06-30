@@ -24,6 +24,7 @@ import (
 	"github.com/mokevnin/1mail/ent/predicate"
 	"github.com/mokevnin/1mail/ent/segment"
 	"github.com/mokevnin/1mail/ent/suppression"
+	"github.com/mokevnin/1mail/ent/transactionalemail"
 	"github.com/mokevnin/1mail/ent/unsubscribe"
 	"github.com/mokevnin/1mail/ent/user"
 	"github.com/mokevnin/1mail/ent/visitor"
@@ -52,6 +53,7 @@ const (
 	TypeIntegration        = "Integration"
 	TypeSegment            = "Segment"
 	TypeSuppression        = "Suppression"
+	TypeTransactionalEmail = "TransactionalEmail"
 	TypeUnsubscribe        = "Unsubscribe"
 	TypeUser               = "User"
 	TypeVisitor            = "Visitor"
@@ -11428,6 +11430,1008 @@ func (m *SuppressionMutation) ResetEdge(name string) error {
 	return fmt.Errorf("unknown Suppression edge %s", name)
 }
 
+// TransactionalEmailMutation represents an operation that mutates the TransactionalEmail nodes in the graph.
+type TransactionalEmailMutation struct {
+	config
+	op               Op
+	typ              string
+	id               *int64
+	channel          *transactionalemail.Channel
+	destination      *string
+	template_id      *int64
+	addtemplate_id   *int64
+	contact_id       *int64
+	addcontact_id    *int64
+	status           *transactionalemail.Status
+	error            *string
+	idempotency_key  *string
+	created_at       *time.Time
+	updated_at       *time.Time
+	clearedFields    map[string]struct{}
+	workspace        *int64
+	clearedworkspace bool
+	done             bool
+	oldValue         func(context.Context) (*TransactionalEmail, error)
+	predicates       []predicate.TransactionalEmail
+}
+
+var _ ent.Mutation = (*TransactionalEmailMutation)(nil)
+
+// transactionalemailOption allows management of the mutation configuration using functional options.
+type transactionalemailOption func(*TransactionalEmailMutation)
+
+// newTransactionalEmailMutation creates new mutation for the TransactionalEmail entity.
+func newTransactionalEmailMutation(c config, op Op, opts ...transactionalemailOption) *TransactionalEmailMutation {
+	m := &TransactionalEmailMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeTransactionalEmail,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withTransactionalEmailID sets the ID field of the mutation.
+func withTransactionalEmailID(id int64) transactionalemailOption {
+	return func(m *TransactionalEmailMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *TransactionalEmail
+		)
+		m.oldValue = func(ctx context.Context) (*TransactionalEmail, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().TransactionalEmail.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withTransactionalEmail sets the old TransactionalEmail of the mutation.
+func withTransactionalEmail(node *TransactionalEmail) transactionalemailOption {
+	return func(m *TransactionalEmailMutation) {
+		m.oldValue = func(context.Context) (*TransactionalEmail, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m TransactionalEmailMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m TransactionalEmailMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of TransactionalEmail entities.
+func (m *TransactionalEmailMutation) SetID(id int64) {
+	m.id = &id
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *TransactionalEmailMutation) ID() (id int64, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *TransactionalEmailMutation) IDs(ctx context.Context) ([]int64, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []int64{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().TransactionalEmail.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetChannel sets the "channel" field.
+func (m *TransactionalEmailMutation) SetChannel(t transactionalemail.Channel) {
+	m.channel = &t
+}
+
+// Channel returns the value of the "channel" field in the mutation.
+func (m *TransactionalEmailMutation) Channel() (r transactionalemail.Channel, exists bool) {
+	v := m.channel
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldChannel returns the old "channel" field's value of the TransactionalEmail entity.
+// If the TransactionalEmail object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TransactionalEmailMutation) OldChannel(ctx context.Context) (v transactionalemail.Channel, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldChannel is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldChannel requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldChannel: %w", err)
+	}
+	return oldValue.Channel, nil
+}
+
+// ResetChannel resets all changes to the "channel" field.
+func (m *TransactionalEmailMutation) ResetChannel() {
+	m.channel = nil
+}
+
+// SetDestination sets the "destination" field.
+func (m *TransactionalEmailMutation) SetDestination(s string) {
+	m.destination = &s
+}
+
+// Destination returns the value of the "destination" field in the mutation.
+func (m *TransactionalEmailMutation) Destination() (r string, exists bool) {
+	v := m.destination
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldDestination returns the old "destination" field's value of the TransactionalEmail entity.
+// If the TransactionalEmail object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TransactionalEmailMutation) OldDestination(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldDestination is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldDestination requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldDestination: %w", err)
+	}
+	return oldValue.Destination, nil
+}
+
+// ResetDestination resets all changes to the "destination" field.
+func (m *TransactionalEmailMutation) ResetDestination() {
+	m.destination = nil
+}
+
+// SetTemplateID sets the "template_id" field.
+func (m *TransactionalEmailMutation) SetTemplateID(i int64) {
+	m.template_id = &i
+	m.addtemplate_id = nil
+}
+
+// TemplateID returns the value of the "template_id" field in the mutation.
+func (m *TransactionalEmailMutation) TemplateID() (r int64, exists bool) {
+	v := m.template_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldTemplateID returns the old "template_id" field's value of the TransactionalEmail entity.
+// If the TransactionalEmail object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TransactionalEmailMutation) OldTemplateID(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldTemplateID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldTemplateID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldTemplateID: %w", err)
+	}
+	return oldValue.TemplateID, nil
+}
+
+// AddTemplateID adds i to the "template_id" field.
+func (m *TransactionalEmailMutation) AddTemplateID(i int64) {
+	if m.addtemplate_id != nil {
+		*m.addtemplate_id += i
+	} else {
+		m.addtemplate_id = &i
+	}
+}
+
+// AddedTemplateID returns the value that was added to the "template_id" field in this mutation.
+func (m *TransactionalEmailMutation) AddedTemplateID() (r int64, exists bool) {
+	v := m.addtemplate_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetTemplateID resets all changes to the "template_id" field.
+func (m *TransactionalEmailMutation) ResetTemplateID() {
+	m.template_id = nil
+	m.addtemplate_id = nil
+}
+
+// SetContactID sets the "contact_id" field.
+func (m *TransactionalEmailMutation) SetContactID(i int64) {
+	m.contact_id = &i
+	m.addcontact_id = nil
+}
+
+// ContactID returns the value of the "contact_id" field in the mutation.
+func (m *TransactionalEmailMutation) ContactID() (r int64, exists bool) {
+	v := m.contact_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldContactID returns the old "contact_id" field's value of the TransactionalEmail entity.
+// If the TransactionalEmail object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TransactionalEmailMutation) OldContactID(ctx context.Context) (v *int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldContactID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldContactID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldContactID: %w", err)
+	}
+	return oldValue.ContactID, nil
+}
+
+// AddContactID adds i to the "contact_id" field.
+func (m *TransactionalEmailMutation) AddContactID(i int64) {
+	if m.addcontact_id != nil {
+		*m.addcontact_id += i
+	} else {
+		m.addcontact_id = &i
+	}
+}
+
+// AddedContactID returns the value that was added to the "contact_id" field in this mutation.
+func (m *TransactionalEmailMutation) AddedContactID() (r int64, exists bool) {
+	v := m.addcontact_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearContactID clears the value of the "contact_id" field.
+func (m *TransactionalEmailMutation) ClearContactID() {
+	m.contact_id = nil
+	m.addcontact_id = nil
+	m.clearedFields[transactionalemail.FieldContactID] = struct{}{}
+}
+
+// ContactIDCleared returns if the "contact_id" field was cleared in this mutation.
+func (m *TransactionalEmailMutation) ContactIDCleared() bool {
+	_, ok := m.clearedFields[transactionalemail.FieldContactID]
+	return ok
+}
+
+// ResetContactID resets all changes to the "contact_id" field.
+func (m *TransactionalEmailMutation) ResetContactID() {
+	m.contact_id = nil
+	m.addcontact_id = nil
+	delete(m.clearedFields, transactionalemail.FieldContactID)
+}
+
+// SetStatus sets the "status" field.
+func (m *TransactionalEmailMutation) SetStatus(t transactionalemail.Status) {
+	m.status = &t
+}
+
+// Status returns the value of the "status" field in the mutation.
+func (m *TransactionalEmailMutation) Status() (r transactionalemail.Status, exists bool) {
+	v := m.status
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldStatus returns the old "status" field's value of the TransactionalEmail entity.
+// If the TransactionalEmail object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TransactionalEmailMutation) OldStatus(ctx context.Context) (v transactionalemail.Status, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldStatus is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldStatus requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldStatus: %w", err)
+	}
+	return oldValue.Status, nil
+}
+
+// ResetStatus resets all changes to the "status" field.
+func (m *TransactionalEmailMutation) ResetStatus() {
+	m.status = nil
+}
+
+// SetError sets the "error" field.
+func (m *TransactionalEmailMutation) SetError(s string) {
+	m.error = &s
+}
+
+// Error returns the value of the "error" field in the mutation.
+func (m *TransactionalEmailMutation) Error() (r string, exists bool) {
+	v := m.error
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldError returns the old "error" field's value of the TransactionalEmail entity.
+// If the TransactionalEmail object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TransactionalEmailMutation) OldError(ctx context.Context) (v *string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldError is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldError requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldError: %w", err)
+	}
+	return oldValue.Error, nil
+}
+
+// ClearError clears the value of the "error" field.
+func (m *TransactionalEmailMutation) ClearError() {
+	m.error = nil
+	m.clearedFields[transactionalemail.FieldError] = struct{}{}
+}
+
+// ErrorCleared returns if the "error" field was cleared in this mutation.
+func (m *TransactionalEmailMutation) ErrorCleared() bool {
+	_, ok := m.clearedFields[transactionalemail.FieldError]
+	return ok
+}
+
+// ResetError resets all changes to the "error" field.
+func (m *TransactionalEmailMutation) ResetError() {
+	m.error = nil
+	delete(m.clearedFields, transactionalemail.FieldError)
+}
+
+// SetIdempotencyKey sets the "idempotency_key" field.
+func (m *TransactionalEmailMutation) SetIdempotencyKey(s string) {
+	m.idempotency_key = &s
+}
+
+// IdempotencyKey returns the value of the "idempotency_key" field in the mutation.
+func (m *TransactionalEmailMutation) IdempotencyKey() (r string, exists bool) {
+	v := m.idempotency_key
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldIdempotencyKey returns the old "idempotency_key" field's value of the TransactionalEmail entity.
+// If the TransactionalEmail object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TransactionalEmailMutation) OldIdempotencyKey(ctx context.Context) (v *string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldIdempotencyKey is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldIdempotencyKey requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldIdempotencyKey: %w", err)
+	}
+	return oldValue.IdempotencyKey, nil
+}
+
+// ClearIdempotencyKey clears the value of the "idempotency_key" field.
+func (m *TransactionalEmailMutation) ClearIdempotencyKey() {
+	m.idempotency_key = nil
+	m.clearedFields[transactionalemail.FieldIdempotencyKey] = struct{}{}
+}
+
+// IdempotencyKeyCleared returns if the "idempotency_key" field was cleared in this mutation.
+func (m *TransactionalEmailMutation) IdempotencyKeyCleared() bool {
+	_, ok := m.clearedFields[transactionalemail.FieldIdempotencyKey]
+	return ok
+}
+
+// ResetIdempotencyKey resets all changes to the "idempotency_key" field.
+func (m *TransactionalEmailMutation) ResetIdempotencyKey() {
+	m.idempotency_key = nil
+	delete(m.clearedFields, transactionalemail.FieldIdempotencyKey)
+}
+
+// SetWorkspaceID sets the "workspace_id" field.
+func (m *TransactionalEmailMutation) SetWorkspaceID(i int64) {
+	m.workspace = &i
+}
+
+// WorkspaceID returns the value of the "workspace_id" field in the mutation.
+func (m *TransactionalEmailMutation) WorkspaceID() (r int64, exists bool) {
+	v := m.workspace
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldWorkspaceID returns the old "workspace_id" field's value of the TransactionalEmail entity.
+// If the TransactionalEmail object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TransactionalEmailMutation) OldWorkspaceID(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldWorkspaceID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldWorkspaceID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldWorkspaceID: %w", err)
+	}
+	return oldValue.WorkspaceID, nil
+}
+
+// ResetWorkspaceID resets all changes to the "workspace_id" field.
+func (m *TransactionalEmailMutation) ResetWorkspaceID() {
+	m.workspace = nil
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *TransactionalEmailMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *TransactionalEmailMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the TransactionalEmail entity.
+// If the TransactionalEmail object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TransactionalEmailMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *TransactionalEmailMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (m *TransactionalEmailMutation) SetUpdatedAt(t time.Time) {
+	m.updated_at = &t
+}
+
+// UpdatedAt returns the value of the "updated_at" field in the mutation.
+func (m *TransactionalEmailMutation) UpdatedAt() (r time.Time, exists bool) {
+	v := m.updated_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUpdatedAt returns the old "updated_at" field's value of the TransactionalEmail entity.
+// If the TransactionalEmail object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TransactionalEmailMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUpdatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUpdatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUpdatedAt: %w", err)
+	}
+	return oldValue.UpdatedAt, nil
+}
+
+// ResetUpdatedAt resets all changes to the "updated_at" field.
+func (m *TransactionalEmailMutation) ResetUpdatedAt() {
+	m.updated_at = nil
+}
+
+// ClearWorkspace clears the "workspace" edge to the Workspace entity.
+func (m *TransactionalEmailMutation) ClearWorkspace() {
+	m.clearedworkspace = true
+	m.clearedFields[transactionalemail.FieldWorkspaceID] = struct{}{}
+}
+
+// WorkspaceCleared reports if the "workspace" edge to the Workspace entity was cleared.
+func (m *TransactionalEmailMutation) WorkspaceCleared() bool {
+	return m.clearedworkspace
+}
+
+// WorkspaceIDs returns the "workspace" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// WorkspaceID instead. It exists only for internal usage by the builders.
+func (m *TransactionalEmailMutation) WorkspaceIDs() (ids []int64) {
+	if id := m.workspace; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetWorkspace resets all changes to the "workspace" edge.
+func (m *TransactionalEmailMutation) ResetWorkspace() {
+	m.workspace = nil
+	m.clearedworkspace = false
+}
+
+// Where appends a list predicates to the TransactionalEmailMutation builder.
+func (m *TransactionalEmailMutation) Where(ps ...predicate.TransactionalEmail) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the TransactionalEmailMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *TransactionalEmailMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.TransactionalEmail, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *TransactionalEmailMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *TransactionalEmailMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (TransactionalEmail).
+func (m *TransactionalEmailMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *TransactionalEmailMutation) Fields() []string {
+	fields := make([]string, 0, 10)
+	if m.channel != nil {
+		fields = append(fields, transactionalemail.FieldChannel)
+	}
+	if m.destination != nil {
+		fields = append(fields, transactionalemail.FieldDestination)
+	}
+	if m.template_id != nil {
+		fields = append(fields, transactionalemail.FieldTemplateID)
+	}
+	if m.contact_id != nil {
+		fields = append(fields, transactionalemail.FieldContactID)
+	}
+	if m.status != nil {
+		fields = append(fields, transactionalemail.FieldStatus)
+	}
+	if m.error != nil {
+		fields = append(fields, transactionalemail.FieldError)
+	}
+	if m.idempotency_key != nil {
+		fields = append(fields, transactionalemail.FieldIdempotencyKey)
+	}
+	if m.workspace != nil {
+		fields = append(fields, transactionalemail.FieldWorkspaceID)
+	}
+	if m.created_at != nil {
+		fields = append(fields, transactionalemail.FieldCreatedAt)
+	}
+	if m.updated_at != nil {
+		fields = append(fields, transactionalemail.FieldUpdatedAt)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *TransactionalEmailMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case transactionalemail.FieldChannel:
+		return m.Channel()
+	case transactionalemail.FieldDestination:
+		return m.Destination()
+	case transactionalemail.FieldTemplateID:
+		return m.TemplateID()
+	case transactionalemail.FieldContactID:
+		return m.ContactID()
+	case transactionalemail.FieldStatus:
+		return m.Status()
+	case transactionalemail.FieldError:
+		return m.Error()
+	case transactionalemail.FieldIdempotencyKey:
+		return m.IdempotencyKey()
+	case transactionalemail.FieldWorkspaceID:
+		return m.WorkspaceID()
+	case transactionalemail.FieldCreatedAt:
+		return m.CreatedAt()
+	case transactionalemail.FieldUpdatedAt:
+		return m.UpdatedAt()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *TransactionalEmailMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case transactionalemail.FieldChannel:
+		return m.OldChannel(ctx)
+	case transactionalemail.FieldDestination:
+		return m.OldDestination(ctx)
+	case transactionalemail.FieldTemplateID:
+		return m.OldTemplateID(ctx)
+	case transactionalemail.FieldContactID:
+		return m.OldContactID(ctx)
+	case transactionalemail.FieldStatus:
+		return m.OldStatus(ctx)
+	case transactionalemail.FieldError:
+		return m.OldError(ctx)
+	case transactionalemail.FieldIdempotencyKey:
+		return m.OldIdempotencyKey(ctx)
+	case transactionalemail.FieldWorkspaceID:
+		return m.OldWorkspaceID(ctx)
+	case transactionalemail.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	case transactionalemail.FieldUpdatedAt:
+		return m.OldUpdatedAt(ctx)
+	}
+	return nil, fmt.Errorf("unknown TransactionalEmail field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *TransactionalEmailMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case transactionalemail.FieldChannel:
+		v, ok := value.(transactionalemail.Channel)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetChannel(v)
+		return nil
+	case transactionalemail.FieldDestination:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetDestination(v)
+		return nil
+	case transactionalemail.FieldTemplateID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetTemplateID(v)
+		return nil
+	case transactionalemail.FieldContactID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetContactID(v)
+		return nil
+	case transactionalemail.FieldStatus:
+		v, ok := value.(transactionalemail.Status)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetStatus(v)
+		return nil
+	case transactionalemail.FieldError:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetError(v)
+		return nil
+	case transactionalemail.FieldIdempotencyKey:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetIdempotencyKey(v)
+		return nil
+	case transactionalemail.FieldWorkspaceID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetWorkspaceID(v)
+		return nil
+	case transactionalemail.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	case transactionalemail.FieldUpdatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUpdatedAt(v)
+		return nil
+	}
+	return fmt.Errorf("unknown TransactionalEmail field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *TransactionalEmailMutation) AddedFields() []string {
+	var fields []string
+	if m.addtemplate_id != nil {
+		fields = append(fields, transactionalemail.FieldTemplateID)
+	}
+	if m.addcontact_id != nil {
+		fields = append(fields, transactionalemail.FieldContactID)
+	}
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *TransactionalEmailMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case transactionalemail.FieldTemplateID:
+		return m.AddedTemplateID()
+	case transactionalemail.FieldContactID:
+		return m.AddedContactID()
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *TransactionalEmailMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	case transactionalemail.FieldTemplateID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddTemplateID(v)
+		return nil
+	case transactionalemail.FieldContactID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddContactID(v)
+		return nil
+	}
+	return fmt.Errorf("unknown TransactionalEmail numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *TransactionalEmailMutation) ClearedFields() []string {
+	var fields []string
+	if m.FieldCleared(transactionalemail.FieldContactID) {
+		fields = append(fields, transactionalemail.FieldContactID)
+	}
+	if m.FieldCleared(transactionalemail.FieldError) {
+		fields = append(fields, transactionalemail.FieldError)
+	}
+	if m.FieldCleared(transactionalemail.FieldIdempotencyKey) {
+		fields = append(fields, transactionalemail.FieldIdempotencyKey)
+	}
+	return fields
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *TransactionalEmailMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *TransactionalEmailMutation) ClearField(name string) error {
+	switch name {
+	case transactionalemail.FieldContactID:
+		m.ClearContactID()
+		return nil
+	case transactionalemail.FieldError:
+		m.ClearError()
+		return nil
+	case transactionalemail.FieldIdempotencyKey:
+		m.ClearIdempotencyKey()
+		return nil
+	}
+	return fmt.Errorf("unknown TransactionalEmail nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *TransactionalEmailMutation) ResetField(name string) error {
+	switch name {
+	case transactionalemail.FieldChannel:
+		m.ResetChannel()
+		return nil
+	case transactionalemail.FieldDestination:
+		m.ResetDestination()
+		return nil
+	case transactionalemail.FieldTemplateID:
+		m.ResetTemplateID()
+		return nil
+	case transactionalemail.FieldContactID:
+		m.ResetContactID()
+		return nil
+	case transactionalemail.FieldStatus:
+		m.ResetStatus()
+		return nil
+	case transactionalemail.FieldError:
+		m.ResetError()
+		return nil
+	case transactionalemail.FieldIdempotencyKey:
+		m.ResetIdempotencyKey()
+		return nil
+	case transactionalemail.FieldWorkspaceID:
+		m.ResetWorkspaceID()
+		return nil
+	case transactionalemail.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	case transactionalemail.FieldUpdatedAt:
+		m.ResetUpdatedAt()
+		return nil
+	}
+	return fmt.Errorf("unknown TransactionalEmail field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *TransactionalEmailMutation) AddedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.workspace != nil {
+		edges = append(edges, transactionalemail.EdgeWorkspace)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *TransactionalEmailMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case transactionalemail.EdgeWorkspace:
+		if id := m.workspace; id != nil {
+			return []ent.Value{*id}
+		}
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *TransactionalEmailMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 1)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *TransactionalEmailMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *TransactionalEmailMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.clearedworkspace {
+		edges = append(edges, transactionalemail.EdgeWorkspace)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *TransactionalEmailMutation) EdgeCleared(name string) bool {
+	switch name {
+	case transactionalemail.EdgeWorkspace:
+		return m.clearedworkspace
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *TransactionalEmailMutation) ClearEdge(name string) error {
+	switch name {
+	case transactionalemail.EdgeWorkspace:
+		m.ClearWorkspace()
+		return nil
+	}
+	return fmt.Errorf("unknown TransactionalEmail unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *TransactionalEmailMutation) ResetEdge(name string) error {
+	switch name {
+	case transactionalemail.EdgeWorkspace:
+		m.ResetWorkspace()
+		return nil
+	}
+	return fmt.Errorf("unknown TransactionalEmail edge %s", name)
+}
+
 // UnsubscribeMutation represents an operation that mutates the Unsubscribe nodes in the graph.
 type UnsubscribeMutation struct {
 	config
@@ -14397,6 +15401,9 @@ type WorkspaceMutation struct {
 	unsubscribes                map[int64]struct{}
 	removedunsubscribes         map[int64]struct{}
 	clearedunsubscribes         bool
+	transactional_emails        map[int64]struct{}
+	removedtransactional_emails map[int64]struct{}
+	clearedtransactional_emails bool
 	user                        *int64
 	cleareduser                 bool
 	done                        bool
@@ -15583,6 +16590,60 @@ func (m *WorkspaceMutation) ResetUnsubscribes() {
 	m.removedunsubscribes = nil
 }
 
+// AddTransactionalEmailIDs adds the "transactional_emails" edge to the TransactionalEmail entity by ids.
+func (m *WorkspaceMutation) AddTransactionalEmailIDs(ids ...int64) {
+	if m.transactional_emails == nil {
+		m.transactional_emails = make(map[int64]struct{})
+	}
+	for i := range ids {
+		m.transactional_emails[ids[i]] = struct{}{}
+	}
+}
+
+// ClearTransactionalEmails clears the "transactional_emails" edge to the TransactionalEmail entity.
+func (m *WorkspaceMutation) ClearTransactionalEmails() {
+	m.clearedtransactional_emails = true
+}
+
+// TransactionalEmailsCleared reports if the "transactional_emails" edge to the TransactionalEmail entity was cleared.
+func (m *WorkspaceMutation) TransactionalEmailsCleared() bool {
+	return m.clearedtransactional_emails
+}
+
+// RemoveTransactionalEmailIDs removes the "transactional_emails" edge to the TransactionalEmail entity by IDs.
+func (m *WorkspaceMutation) RemoveTransactionalEmailIDs(ids ...int64) {
+	if m.removedtransactional_emails == nil {
+		m.removedtransactional_emails = make(map[int64]struct{})
+	}
+	for i := range ids {
+		delete(m.transactional_emails, ids[i])
+		m.removedtransactional_emails[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedTransactionalEmails returns the removed IDs of the "transactional_emails" edge to the TransactionalEmail entity.
+func (m *WorkspaceMutation) RemovedTransactionalEmailsIDs() (ids []int64) {
+	for id := range m.removedtransactional_emails {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// TransactionalEmailsIDs returns the "transactional_emails" edge IDs in the mutation.
+func (m *WorkspaceMutation) TransactionalEmailsIDs() (ids []int64) {
+	for id := range m.transactional_emails {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetTransactionalEmails resets all changes to the "transactional_emails" edge.
+func (m *WorkspaceMutation) ResetTransactionalEmails() {
+	m.transactional_emails = nil
+	m.clearedtransactional_emails = false
+	m.removedtransactional_emails = nil
+}
+
 // ClearUser clears the "user" edge to the User entity.
 func (m *WorkspaceMutation) ClearUser() {
 	m.cleareduser = true
@@ -15857,7 +16918,7 @@ func (m *WorkspaceMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *WorkspaceMutation) AddedEdges() []string {
-	edges := make([]string, 0, 16)
+	edges := make([]string, 0, 17)
 	if m.contacts != nil {
 		edges = append(edges, workspace.EdgeContacts)
 	}
@@ -15902,6 +16963,9 @@ func (m *WorkspaceMutation) AddedEdges() []string {
 	}
 	if m.unsubscribes != nil {
 		edges = append(edges, workspace.EdgeUnsubscribes)
+	}
+	if m.transactional_emails != nil {
+		edges = append(edges, workspace.EdgeTransactionalEmails)
 	}
 	if m.user != nil {
 		edges = append(edges, workspace.EdgeUser)
@@ -16003,6 +17067,12 @@ func (m *WorkspaceMutation) AddedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case workspace.EdgeTransactionalEmails:
+		ids := make([]ent.Value, 0, len(m.transactional_emails))
+		for id := range m.transactional_emails {
+			ids = append(ids, id)
+		}
+		return ids
 	case workspace.EdgeUser:
 		if id := m.user; id != nil {
 			return []ent.Value{*id}
@@ -16013,7 +17083,7 @@ func (m *WorkspaceMutation) AddedIDs(name string) []ent.Value {
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *WorkspaceMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 16)
+	edges := make([]string, 0, 17)
 	if m.removedcontacts != nil {
 		edges = append(edges, workspace.EdgeContacts)
 	}
@@ -16058,6 +17128,9 @@ func (m *WorkspaceMutation) RemovedEdges() []string {
 	}
 	if m.removedunsubscribes != nil {
 		edges = append(edges, workspace.EdgeUnsubscribes)
+	}
+	if m.removedtransactional_emails != nil {
+		edges = append(edges, workspace.EdgeTransactionalEmails)
 	}
 	return edges
 }
@@ -16156,13 +17229,19 @@ func (m *WorkspaceMutation) RemovedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case workspace.EdgeTransactionalEmails:
+		ids := make([]ent.Value, 0, len(m.removedtransactional_emails))
+		for id := range m.removedtransactional_emails {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *WorkspaceMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 16)
+	edges := make([]string, 0, 17)
 	if m.clearedcontacts {
 		edges = append(edges, workspace.EdgeContacts)
 	}
@@ -16208,6 +17287,9 @@ func (m *WorkspaceMutation) ClearedEdges() []string {
 	if m.clearedunsubscribes {
 		edges = append(edges, workspace.EdgeUnsubscribes)
 	}
+	if m.clearedtransactional_emails {
+		edges = append(edges, workspace.EdgeTransactionalEmails)
+	}
 	if m.cleareduser {
 		edges = append(edges, workspace.EdgeUser)
 	}
@@ -16248,6 +17330,8 @@ func (m *WorkspaceMutation) EdgeCleared(name string) bool {
 		return m.clearedsuppressions
 	case workspace.EdgeUnsubscribes:
 		return m.clearedunsubscribes
+	case workspace.EdgeTransactionalEmails:
+		return m.clearedtransactional_emails
 	case workspace.EdgeUser:
 		return m.cleareduser
 	}
@@ -16313,6 +17397,9 @@ func (m *WorkspaceMutation) ResetEdge(name string) error {
 		return nil
 	case workspace.EdgeUnsubscribes:
 		m.ResetUnsubscribes()
+		return nil
+	case workspace.EdgeTransactionalEmails:
+		m.ResetTransactionalEmails()
 		return nil
 	case workspace.EdgeUser:
 		m.ResetUser()

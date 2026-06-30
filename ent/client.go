@@ -27,6 +27,7 @@ import (
 	"github.com/mokevnin/1mail/ent/integration"
 	"github.com/mokevnin/1mail/ent/segment"
 	"github.com/mokevnin/1mail/ent/suppression"
+	"github.com/mokevnin/1mail/ent/transactionalemail"
 	"github.com/mokevnin/1mail/ent/unsubscribe"
 	"github.com/mokevnin/1mail/ent/user"
 	"github.com/mokevnin/1mail/ent/visitor"
@@ -63,6 +64,8 @@ type Client struct {
 	Segment *SegmentClient
 	// Suppression is the client for interacting with the Suppression builders.
 	Suppression *SuppressionClient
+	// TransactionalEmail is the client for interacting with the TransactionalEmail builders.
+	TransactionalEmail *TransactionalEmailClient
 	// Unsubscribe is the client for interacting with the Unsubscribe builders.
 	Unsubscribe *UnsubscribeClient
 	// User is the client for interacting with the User builders.
@@ -96,6 +99,7 @@ func (c *Client) init() {
 	c.Integration = NewIntegrationClient(c.config)
 	c.Segment = NewSegmentClient(c.config)
 	c.Suppression = NewSuppressionClient(c.config)
+	c.TransactionalEmail = NewTransactionalEmailClient(c.config)
 	c.Unsubscribe = NewUnsubscribeClient(c.config)
 	c.User = NewUserClient(c.config)
 	c.Visitor = NewVisitorClient(c.config)
@@ -205,6 +209,7 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		Integration:        NewIntegrationClient(cfg),
 		Segment:            NewSegmentClient(cfg),
 		Suppression:        NewSuppressionClient(cfg),
+		TransactionalEmail: NewTransactionalEmailClient(cfg),
 		Unsubscribe:        NewUnsubscribeClient(cfg),
 		User:               NewUserClient(cfg),
 		Visitor:            NewVisitorClient(cfg),
@@ -241,6 +246,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		Integration:        NewIntegrationClient(cfg),
 		Segment:            NewSegmentClient(cfg),
 		Suppression:        NewSuppressionClient(cfg),
+		TransactionalEmail: NewTransactionalEmailClient(cfg),
 		Unsubscribe:        NewUnsubscribeClient(cfg),
 		User:               NewUserClient(cfg),
 		Visitor:            NewVisitorClient(cfg),
@@ -277,8 +283,8 @@ func (c *Client) Use(hooks ...Hook) {
 	for _, n := range []interface{ Use(...Hook) }{
 		c.ApiToken, c.Automation, c.AutomationRun, c.Broadcast, c.BroadcastRecipient,
 		c.Contact, c.CustomField, c.EmailTemplate, c.Event, c.Integration, c.Segment,
-		c.Suppression, c.Unsubscribe, c.User, c.Visitor, c.WebhookEndpoint,
-		c.Workspace,
+		c.Suppression, c.TransactionalEmail, c.Unsubscribe, c.User, c.Visitor,
+		c.WebhookEndpoint, c.Workspace,
 	} {
 		n.Use(hooks...)
 	}
@@ -290,8 +296,8 @@ func (c *Client) Intercept(interceptors ...Interceptor) {
 	for _, n := range []interface{ Intercept(...Interceptor) }{
 		c.ApiToken, c.Automation, c.AutomationRun, c.Broadcast, c.BroadcastRecipient,
 		c.Contact, c.CustomField, c.EmailTemplate, c.Event, c.Integration, c.Segment,
-		c.Suppression, c.Unsubscribe, c.User, c.Visitor, c.WebhookEndpoint,
-		c.Workspace,
+		c.Suppression, c.TransactionalEmail, c.Unsubscribe, c.User, c.Visitor,
+		c.WebhookEndpoint, c.Workspace,
 	} {
 		n.Intercept(interceptors...)
 	}
@@ -324,6 +330,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.Segment.mutate(ctx, m)
 	case *SuppressionMutation:
 		return c.Suppression.mutate(ctx, m)
+	case *TransactionalEmailMutation:
+		return c.TransactionalEmail.mutate(ctx, m)
 	case *UnsubscribeMutation:
 		return c.Unsubscribe.mutate(ctx, m)
 	case *UserMutation:
@@ -2207,6 +2215,155 @@ func (c *SuppressionClient) mutate(ctx context.Context, m *SuppressionMutation) 
 	}
 }
 
+// TransactionalEmailClient is a client for the TransactionalEmail schema.
+type TransactionalEmailClient struct {
+	config
+}
+
+// NewTransactionalEmailClient returns a client for the TransactionalEmail from the given config.
+func NewTransactionalEmailClient(c config) *TransactionalEmailClient {
+	return &TransactionalEmailClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `transactionalemail.Hooks(f(g(h())))`.
+func (c *TransactionalEmailClient) Use(hooks ...Hook) {
+	c.hooks.TransactionalEmail = append(c.hooks.TransactionalEmail, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `transactionalemail.Intercept(f(g(h())))`.
+func (c *TransactionalEmailClient) Intercept(interceptors ...Interceptor) {
+	c.inters.TransactionalEmail = append(c.inters.TransactionalEmail, interceptors...)
+}
+
+// Create returns a builder for creating a TransactionalEmail entity.
+func (c *TransactionalEmailClient) Create() *TransactionalEmailCreate {
+	mutation := newTransactionalEmailMutation(c.config, OpCreate)
+	return &TransactionalEmailCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of TransactionalEmail entities.
+func (c *TransactionalEmailClient) CreateBulk(builders ...*TransactionalEmailCreate) *TransactionalEmailCreateBulk {
+	return &TransactionalEmailCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *TransactionalEmailClient) MapCreateBulk(slice any, setFunc func(*TransactionalEmailCreate, int)) *TransactionalEmailCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &TransactionalEmailCreateBulk{err: fmt.Errorf("calling to TransactionalEmailClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*TransactionalEmailCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &TransactionalEmailCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for TransactionalEmail.
+func (c *TransactionalEmailClient) Update() *TransactionalEmailUpdate {
+	mutation := newTransactionalEmailMutation(c.config, OpUpdate)
+	return &TransactionalEmailUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *TransactionalEmailClient) UpdateOne(_m *TransactionalEmail) *TransactionalEmailUpdateOne {
+	mutation := newTransactionalEmailMutation(c.config, OpUpdateOne, withTransactionalEmail(_m))
+	return &TransactionalEmailUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *TransactionalEmailClient) UpdateOneID(id int64) *TransactionalEmailUpdateOne {
+	mutation := newTransactionalEmailMutation(c.config, OpUpdateOne, withTransactionalEmailID(id))
+	return &TransactionalEmailUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for TransactionalEmail.
+func (c *TransactionalEmailClient) Delete() *TransactionalEmailDelete {
+	mutation := newTransactionalEmailMutation(c.config, OpDelete)
+	return &TransactionalEmailDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *TransactionalEmailClient) DeleteOne(_m *TransactionalEmail) *TransactionalEmailDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *TransactionalEmailClient) DeleteOneID(id int64) *TransactionalEmailDeleteOne {
+	builder := c.Delete().Where(transactionalemail.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &TransactionalEmailDeleteOne{builder}
+}
+
+// Query returns a query builder for TransactionalEmail.
+func (c *TransactionalEmailClient) Query() *TransactionalEmailQuery {
+	return &TransactionalEmailQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeTransactionalEmail},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a TransactionalEmail entity by its id.
+func (c *TransactionalEmailClient) Get(ctx context.Context, id int64) (*TransactionalEmail, error) {
+	return c.Query().Where(transactionalemail.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *TransactionalEmailClient) GetX(ctx context.Context, id int64) *TransactionalEmail {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryWorkspace queries the workspace edge of a TransactionalEmail.
+func (c *TransactionalEmailClient) QueryWorkspace(_m *TransactionalEmail) *WorkspaceQuery {
+	query := (&WorkspaceClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(transactionalemail.Table, transactionalemail.FieldID, id),
+			sqlgraph.To(workspace.Table, workspace.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, transactionalemail.WorkspaceTable, transactionalemail.WorkspaceColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *TransactionalEmailClient) Hooks() []Hook {
+	return c.hooks.TransactionalEmail
+}
+
+// Interceptors returns the client interceptors.
+func (c *TransactionalEmailClient) Interceptors() []Interceptor {
+	return c.inters.TransactionalEmail
+}
+
+func (c *TransactionalEmailClient) mutate(ctx context.Context, m *TransactionalEmailMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&TransactionalEmailCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&TransactionalEmailUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&TransactionalEmailUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&TransactionalEmailDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown TransactionalEmail mutation op: %q", m.Op())
+	}
+}
+
 // UnsubscribeClient is a client for the Unsubscribe schema.
 type UnsubscribeClient struct {
 	config
@@ -3167,6 +3324,22 @@ func (c *WorkspaceClient) QueryUnsubscribes(_m *Workspace) *UnsubscribeQuery {
 	return query
 }
 
+// QueryTransactionalEmails queries the transactional_emails edge of a Workspace.
+func (c *WorkspaceClient) QueryTransactionalEmails(_m *Workspace) *TransactionalEmailQuery {
+	query := (&TransactionalEmailClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workspace.Table, workspace.FieldID, id),
+			sqlgraph.To(transactionalemail.Table, transactionalemail.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, workspace.TransactionalEmailsTable, workspace.TransactionalEmailsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // QueryUser queries the user edge of a Workspace.
 func (c *WorkspaceClient) QueryUser(_m *Workspace) *UserQuery {
 	query := (&UserClient{config: c.config}).Query()
@@ -3213,11 +3386,13 @@ type (
 	hooks struct {
 		ApiToken, Automation, AutomationRun, Broadcast, BroadcastRecipient, Contact,
 		CustomField, EmailTemplate, Event, Integration, Segment, Suppression,
-		Unsubscribe, User, Visitor, WebhookEndpoint, Workspace []ent.Hook
+		TransactionalEmail, Unsubscribe, User, Visitor, WebhookEndpoint,
+		Workspace []ent.Hook
 	}
 	inters struct {
 		ApiToken, Automation, AutomationRun, Broadcast, BroadcastRecipient, Contact,
 		CustomField, EmailTemplate, Event, Integration, Segment, Suppression,
-		Unsubscribe, User, Visitor, WebhookEndpoint, Workspace []ent.Interceptor
+		TransactionalEmail, Unsubscribe, User, Visitor, WebhookEndpoint,
+		Workspace []ent.Interceptor
 	}
 )

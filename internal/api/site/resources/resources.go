@@ -54,6 +54,7 @@ type Converter interface {
 	AutomationToResource(source *ent.Automation) siteapi.SiteAutomationResource
 	SuppressionToResource(source *ent.Suppression) siteapi.SiteSuppressionResource
 	CustomFieldToResource(source *ent.CustomField) siteapi.SiteCustomFieldResource
+	TransactionalEmailToResource(source *ent.TransactionalEmail) siteapi.SiteTransactionalEmailResource
 }
 
 func entityID(id int64) siteapi.EntityId {

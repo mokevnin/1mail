@@ -5758,6 +5758,278 @@ type SiteTokensListOKApplicationJSON []SiteApiTokenResource
 
 func (*SiteTokensListOKApplicationJSON) siteTokensListRes() {}
 
+// The channel a transactional send went out on (email today; sms reserved).
+// Ref: #/components/schemas/SiteTransactionalEmailChannel
+type SiteTransactionalEmailChannel string
+
+const (
+	SiteTransactionalEmailChannelEmail SiteTransactionalEmailChannel = "email"
+)
+
+// AllValues returns all SiteTransactionalEmailChannel values.
+func (SiteTransactionalEmailChannel) AllValues() []SiteTransactionalEmailChannel {
+	return []SiteTransactionalEmailChannel{
+		SiteTransactionalEmailChannelEmail,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s SiteTransactionalEmailChannel) MarshalText() ([]byte, error) {
+	switch s {
+	case SiteTransactionalEmailChannelEmail:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *SiteTransactionalEmailChannel) UnmarshalText(data []byte) error {
+	switch SiteTransactionalEmailChannel(data) {
+	case SiteTransactionalEmailChannelEmail:
+		*s = SiteTransactionalEmailChannelEmail
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// One transactional send: the durable, read-only trace of an `/api/emails` call.
+// Ref: #/components/schemas/SiteTransactionalEmailResource
+type SiteTransactionalEmailResource struct {
+	// Unique identifier.
+	ID EntityId `json:"id"`
+	// The channel this send went out on.
+	Channel SiteTransactionalEmailChannel `json:"channel"`
+	// Normalized (lower-cased) destination address.
+	Destination string `json:"destination"`
+	// The id of the Template rendered at send time (bound by reference).
+	TemplateId EntityId `json:"templateId"`
+	// The contact this destination resolved to, when one existed.
+	ContactId OptNilEntityId `json:"contactId"`
+	// Outcome of the send.
+	Status SiteTransactionalEmailStatus `json:"status"`
+	// Provider error message, present when status is `failed`.
+	Error OptNilString `json:"error"`
+	// Creation timestamp.
+	CreatedAt Timestamp `json:"createdAt"`
+}
+
+// GetID returns the value of ID.
+func (s *SiteTransactionalEmailResource) GetID() EntityId {
+	return s.ID
+}
+
+// GetChannel returns the value of Channel.
+func (s *SiteTransactionalEmailResource) GetChannel() SiteTransactionalEmailChannel {
+	return s.Channel
+}
+
+// GetDestination returns the value of Destination.
+func (s *SiteTransactionalEmailResource) GetDestination() string {
+	return s.Destination
+}
+
+// GetTemplateId returns the value of TemplateId.
+func (s *SiteTransactionalEmailResource) GetTemplateId() EntityId {
+	return s.TemplateId
+}
+
+// GetContactId returns the value of ContactId.
+func (s *SiteTransactionalEmailResource) GetContactId() OptNilEntityId {
+	return s.ContactId
+}
+
+// GetStatus returns the value of Status.
+func (s *SiteTransactionalEmailResource) GetStatus() SiteTransactionalEmailStatus {
+	return s.Status
+}
+
+// GetError returns the value of Error.
+func (s *SiteTransactionalEmailResource) GetError() OptNilString {
+	return s.Error
+}
+
+// GetCreatedAt returns the value of CreatedAt.
+func (s *SiteTransactionalEmailResource) GetCreatedAt() Timestamp {
+	return s.CreatedAt
+}
+
+// SetID sets the value of ID.
+func (s *SiteTransactionalEmailResource) SetID(val EntityId) {
+	s.ID = val
+}
+
+// SetChannel sets the value of Channel.
+func (s *SiteTransactionalEmailResource) SetChannel(val SiteTransactionalEmailChannel) {
+	s.Channel = val
+}
+
+// SetDestination sets the value of Destination.
+func (s *SiteTransactionalEmailResource) SetDestination(val string) {
+	s.Destination = val
+}
+
+// SetTemplateId sets the value of TemplateId.
+func (s *SiteTransactionalEmailResource) SetTemplateId(val EntityId) {
+	s.TemplateId = val
+}
+
+// SetContactId sets the value of ContactId.
+func (s *SiteTransactionalEmailResource) SetContactId(val OptNilEntityId) {
+	s.ContactId = val
+}
+
+// SetStatus sets the value of Status.
+func (s *SiteTransactionalEmailResource) SetStatus(val SiteTransactionalEmailStatus) {
+	s.Status = val
+}
+
+// SetError sets the value of Error.
+func (s *SiteTransactionalEmailResource) SetError(val OptNilString) {
+	s.Error = val
+}
+
+// SetCreatedAt sets the value of CreatedAt.
+func (s *SiteTransactionalEmailResource) SetCreatedAt(val Timestamp) {
+	s.CreatedAt = val
+}
+
+// Outcome of a transactional send.
+// Ref: #/components/schemas/SiteTransactionalEmailStatus
+type SiteTransactionalEmailStatus string
+
+const (
+	SiteTransactionalEmailStatusPending    SiteTransactionalEmailStatus = "pending"
+	SiteTransactionalEmailStatusSent       SiteTransactionalEmailStatus = "sent"
+	SiteTransactionalEmailStatusSuppressed SiteTransactionalEmailStatus = "suppressed"
+	SiteTransactionalEmailStatusFailed     SiteTransactionalEmailStatus = "failed"
+)
+
+// AllValues returns all SiteTransactionalEmailStatus values.
+func (SiteTransactionalEmailStatus) AllValues() []SiteTransactionalEmailStatus {
+	return []SiteTransactionalEmailStatus{
+		SiteTransactionalEmailStatusPending,
+		SiteTransactionalEmailStatusSent,
+		SiteTransactionalEmailStatusSuppressed,
+		SiteTransactionalEmailStatusFailed,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s SiteTransactionalEmailStatus) MarshalText() ([]byte, error) {
+	switch s {
+	case SiteTransactionalEmailStatusPending:
+		return []byte(s), nil
+	case SiteTransactionalEmailStatusSent:
+		return []byte(s), nil
+	case SiteTransactionalEmailStatusSuppressed:
+		return []byte(s), nil
+	case SiteTransactionalEmailStatusFailed:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *SiteTransactionalEmailStatus) UnmarshalText(data []byte) error {
+	switch SiteTransactionalEmailStatus(data) {
+	case SiteTransactionalEmailStatusPending:
+		*s = SiteTransactionalEmailStatusPending
+		return nil
+	case SiteTransactionalEmailStatusSent:
+		*s = SiteTransactionalEmailStatusSent
+		return nil
+	case SiteTransactionalEmailStatusSuppressed:
+		*s = SiteTransactionalEmailStatusSuppressed
+		return nil
+	case SiteTransactionalEmailStatusFailed:
+		*s = SiteTransactionalEmailStatusFailed
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+type SiteTransactionalEmailsListBadRequest ProblemDetails
+
+func (*SiteTransactionalEmailsListBadRequest) siteTransactionalEmailsListRes() {}
+
+type SiteTransactionalEmailsListNotFound ProblemDetails
+
+func (*SiteTransactionalEmailsListNotFound) siteTransactionalEmailsListRes() {}
+
+// Paginated response.
+type SiteTransactionalEmailsListOK struct {
+	// List of items.
+	Items []SiteTransactionalEmailResource `json:"items"`
+	// Page number (1-based).
+	Page int32 `json:"page"`
+	// Page size.
+	PageSize int32 `json:"pageSize"`
+	// Total number of elements.
+	TotalItems int32 `json:"totalItems"`
+	// Total number of pages.
+	TotalPages int32 `json:"totalPages"`
+}
+
+// GetItems returns the value of Items.
+func (s *SiteTransactionalEmailsListOK) GetItems() []SiteTransactionalEmailResource {
+	return s.Items
+}
+
+// GetPage returns the value of Page.
+func (s *SiteTransactionalEmailsListOK) GetPage() int32 {
+	return s.Page
+}
+
+// GetPageSize returns the value of PageSize.
+func (s *SiteTransactionalEmailsListOK) GetPageSize() int32 {
+	return s.PageSize
+}
+
+// GetTotalItems returns the value of TotalItems.
+func (s *SiteTransactionalEmailsListOK) GetTotalItems() int32 {
+	return s.TotalItems
+}
+
+// GetTotalPages returns the value of TotalPages.
+func (s *SiteTransactionalEmailsListOK) GetTotalPages() int32 {
+	return s.TotalPages
+}
+
+// SetItems sets the value of Items.
+func (s *SiteTransactionalEmailsListOK) SetItems(val []SiteTransactionalEmailResource) {
+	s.Items = val
+}
+
+// SetPage sets the value of Page.
+func (s *SiteTransactionalEmailsListOK) SetPage(val int32) {
+	s.Page = val
+}
+
+// SetPageSize sets the value of PageSize.
+func (s *SiteTransactionalEmailsListOK) SetPageSize(val int32) {
+	s.PageSize = val
+}
+
+// SetTotalItems sets the value of TotalItems.
+func (s *SiteTransactionalEmailsListOK) SetTotalItems(val int32) {
+	s.TotalItems = val
+}
+
+// SetTotalPages sets the value of TotalPages.
+func (s *SiteTransactionalEmailsListOK) SetTotalPages(val int32) {
+	s.TotalPages = val
+}
+
+func (*SiteTransactionalEmailsListOK) siteTransactionalEmailsListRes() {}
+
+type SiteTransactionalEmailsListUnprocessableEntity ProblemDetails
+
+func (*SiteTransactionalEmailsListUnprocessableEntity) siteTransactionalEmailsListRes() {}
+
 // Site request body for updating an automation.
 // Ref: #/components/schemas/SiteUpdateAutomationInput
 type SiteUpdateAutomationInput struct {

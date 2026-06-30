@@ -139,6 +139,20 @@ func (c *ConverterImpl) TokenToResource(source *ent.ApiToken) site.SiteApiTokenR
 	}
 	return siteapiSiteApiTokenResource
 }
+func (c *ConverterImpl) TransactionalEmailToResource(source *ent.TransactionalEmail) site.SiteTransactionalEmailResource {
+	var siteapiSiteTransactionalEmailResource site.SiteTransactionalEmailResource
+	if source != nil {
+		siteapiSiteTransactionalEmailResource.ID = entityID((*source).ID)
+		siteapiSiteTransactionalEmailResource.Channel = site.SiteTransactionalEmailChannel((*source).Channel)
+		siteapiSiteTransactionalEmailResource.Destination = (*source).Destination
+		siteapiSiteTransactionalEmailResource.TemplateId = entityID((*source).TemplateID)
+		siteapiSiteTransactionalEmailResource.ContactId = optNilEntityID((*source).ContactID)
+		siteapiSiteTransactionalEmailResource.Status = site.SiteTransactionalEmailStatus((*source).Status)
+		siteapiSiteTransactionalEmailResource.Error = optNilString((*source).Error)
+		siteapiSiteTransactionalEmailResource.CreatedAt = timestamp((*source).CreatedAt)
+	}
+	return siteapiSiteTransactionalEmailResource
+}
 func (c *ConverterImpl) UserToResource(source *ent.User) *site.SiteUserResource {
 	var pSiteapiSiteUserResource *site.SiteUserResource
 	if source != nil {

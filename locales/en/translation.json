@@ -46,7 +46,8 @@
     "templateDeleteErrorTitle": "Failed to delete template",
     "templateLoadErrorTitle": "Failed to load templates",
     "templateSaveErrorTitle": "Failed to save template",
-    "testSendErrorTitle": "Failed to send test"
+    "testSendErrorTitle": "Failed to send test",
+    "transactionalEmailsLoadErrorTitle": "Failed to load transactional emails"
   },
   "analytics": {
     "automations": {
@@ -208,7 +209,8 @@
     "overview": "Overview",
     "segments": "Segments",
     "settings": "Settings",
-    "templates": "Templates"
+    "templates": "Templates",
+    "transactionalEmails": "Transactional emails"
   },
   "notifications": {
     "automationActivated": "Automation activated",
@@ -436,5 +438,20 @@
     "logoutErrorTitle": "Sign out failed",
     "profile": "Profile",
     "workspaceSettings": "Workspace settings"
+  },
+  "transactionalEmails": {
+    "title": "Transactional emails",
+    "subtitle": "Single-recipient emails sent through the API.",
+    "noRecords": "No transactional emails yet",
+    "destinationLabel": "Email",
+    "statusLabel": "Status",
+    "errorLabel": "Error",
+    "sentAtLabel": "Sent at",
+    "status": {
+      "pending": "Pending",
+      "sent": "Sent",
+      "suppressed": "Suppressed",
+      "failed": "Failed"
+    }
   }
 }

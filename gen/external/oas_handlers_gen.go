@@ -2813,6 +2813,9 @@ func (s *Server) handleContactsUpdateRequest(args [1]string, argsEscaped bool, w
 // variables at send time. Respects the workspace Suppression list (a suppressed destination returns
 // status `suppressed`) but not marketing Unsubscribe — transactional mail carries no sending source.
 //
+// Supply an `Idempotency-Key` to make retries safe: a repeated key replays the original result without
+// sending a second email, and a key whose first request is still in flight returns 409.
+//
 // POST /emails
 func (s *Server) handleEmailsSendRequest(args [0]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
 	statusWriter := &codeRecorder{ResponseWriter: w}
@@ -2929,6 +2932,16 @@ func (s *Server) handleEmailsSendRequest(args [0]string, argsEscaped bool, w htt
 			return
 		}
 	}
+	params, err := decodeEmailsSendParams(args, argsEscaped, r)
+	if err != nil {
+		err = &ogenerrors.DecodeParamsError{
+			OperationContext: opErrContext,
+			Err:              err,
+		}
+		defer recordError("DecodeParams", err)
+		s.cfg.ErrorHandler(ctx, w, r, err)
+		return
+	}
 
 	var rawBody []byte
 	request, rawBody, close, err := s.decodeEmailsSendRequest(r)
@@ -2956,13 +2969,18 @@ func (s *Server) handleEmailsSendRequest(args [0]string, argsEscaped bool, w htt
 			OperationID:      "Emails_send",
 			Body:             request,
 			RawBody:          rawBody,
-			Params:           middleware.Parameters{},
-			Raw:              r,
+			Params: middleware.Parameters{
+				{
+					Name: "Idempotency-Key",
+					In:   "header",
+				}: params.IdempotencyKey,
+			},
+			Raw: r,
 		}
 
 		type (
 			Request  = *SendTransactionalEmailInput
-			Params   = struct{}
+			Params   = EmailsSendParams
 			Response = EmailsSendRes
 		)
 		response, err = middleware.HookMiddleware[
@@ -2972,14 +2990,14 @@ func (s *Server) handleEmailsSendRequest(args [0]string, argsEscaped bool, w htt
 		](
 			m,
 			mreq,
-			nil,
+			unpackEmailsSendParams,
 			func(ctx context.Context, request Request, params Params) (response Response, err error) {
-				response, err = s.h.EmailsSend(ctx, request)
+				response, err = s.h.EmailsSend(ctx, request, params)
 				return response, err
 			},
 		)
 	} else {
-		response, err = s.h.EmailsSend(ctx, request)
+		response, err = s.h.EmailsSend(ctx, request, params)
 	}
 	if err != nil {
 		defer recordError("Internal", err)

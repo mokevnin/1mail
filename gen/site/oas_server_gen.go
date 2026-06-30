@@ -292,6 +292,12 @@ type Handler interface {
 	//
 	// GET /w/{workspaceSlug}/tokens
 	SiteTokensList(ctx context.Context, params SiteTokensListParams) (SiteTokensListRes, error)
+	// SiteTransactionalEmailsList implements SiteTransactionalEmails_list operation.
+	//
+	// List transactional sends, most recent first.
+	//
+	// GET /w/{workspaceSlug}/transactional-emails
+	SiteTransactionalEmailsList(ctx context.Context, params SiteTransactionalEmailsListParams) (SiteTransactionalEmailsListRes, error)
 	// SiteUserGetMe implements SiteUser_getMe operation.
 	//
 	// Get the authenticated user's profile.

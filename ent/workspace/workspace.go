@@ -58,6 +58,8 @@ const (
 	EdgeSuppressions = "suppressions"
 	// EdgeUnsubscribes holds the string denoting the unsubscribes edge name in mutations.
 	EdgeUnsubscribes = "unsubscribes"
+	// EdgeTransactionalEmails holds the string denoting the transactional_emails edge name in mutations.
+	EdgeTransactionalEmails = "transactional_emails"
 	// EdgeUser holds the string denoting the user edge name in mutations.
 	EdgeUser = "user"
 	// Table holds the table name of the workspace in the database.
@@ -167,6 +169,13 @@ const (
 	UnsubscribesInverseTable = "unsubscribes"
 	// UnsubscribesColumn is the table column denoting the unsubscribes relation/edge.
 	UnsubscribesColumn = "workspace_id"
+	// TransactionalEmailsTable is the table that holds the transactional_emails relation/edge.
+	TransactionalEmailsTable = "transactional_emails"
+	// TransactionalEmailsInverseTable is the table name for the TransactionalEmail entity.
+	// It exists in this package in order to avoid circular dependency with the "transactionalemail" package.
+	TransactionalEmailsInverseTable = "transactional_emails"
+	// TransactionalEmailsColumn is the table column denoting the transactional_emails relation/edge.
+	TransactionalEmailsColumn = "workspace_id"
 	// UserTable is the table that holds the user relation/edge.
 	UserTable = "workspaces"
 	// UserInverseTable is the table name for the User entity.
@@ -468,6 +477,20 @@ func ByUnsubscribes(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 	}
 }
 
+// ByTransactionalEmailsCount orders the results by transactional_emails count.
+func ByTransactionalEmailsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newTransactionalEmailsStep(), opts...)
+	}
+}
+
+// ByTransactionalEmails orders the results by transactional_emails terms.
+func ByTransactionalEmails(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newTransactionalEmailsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+
 // ByUserField orders the results by user field.
 func ByUserField(field string, opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
@@ -577,6 +600,13 @@ func newUnsubscribesStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(UnsubscribesInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2M, false, UnsubscribesTable, UnsubscribesColumn),
+	)
+}
+func newTransactionalEmailsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(TransactionalEmailsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, TransactionalEmailsTable, TransactionalEmailsColumn),
 	)
 }
 func newUserStep() *sqlgraph.Step {

@@ -48,7 +48,8 @@ export default interface Resources {
       "templateDeleteErrorTitle": "Failed to delete template",
       "templateLoadErrorTitle": "Failed to load templates",
       "templateSaveErrorTitle": "Failed to save template",
-      "testSendErrorTitle": "Failed to send test"
+      "testSendErrorTitle": "Failed to send test",
+      "transactionalEmailsLoadErrorTitle": "Failed to load transactional emails"
     },
     "analytics": {
       "automations": {
@@ -210,7 +211,8 @@ export default interface Resources {
       "overview": "Overview",
       "segments": "Segments",
       "settings": "Settings",
-      "templates": "Templates"
+      "templates": "Templates",
+      "transactionalEmails": "Transactional emails"
     },
     "notifications": {
       "automationActivated": "Automation activated",
@@ -425,6 +427,21 @@ export default interface Resources {
     },
     "theme": {
       "toggleLabel": "Toggle color scheme"
+    },
+    "transactionalEmails": {
+      "destinationLabel": "Email",
+      "errorLabel": "Error",
+      "noRecords": "No transactional emails yet",
+      "sentAtLabel": "Sent at",
+      "status": {
+        "failed": "Failed",
+        "pending": "Pending",
+        "sent": "Sent",
+        "suppressed": "Suppressed"
+      },
+      "statusLabel": "Status",
+      "subtitle": "Single-recipient emails sent through the API.",
+      "title": "Transactional emails"
     },
     "unsubscribed": {
       "body": "You will no longer receive these emails.",

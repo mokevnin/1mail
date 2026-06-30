@@ -193,6 +193,10 @@ type SiteTokensListRes interface {
 	siteTokensListRes()
 }
 
+type SiteTransactionalEmailsListRes interface {
+	siteTransactionalEmailsListRes()
+}
+
 type SiteUserUpdateMeRes interface {
 	siteUserUpdateMeRes()
 }

@@ -42,6 +42,9 @@ type Segment func(*sql.Selector)
 // Suppression is the predicate function for suppression builders.
 type Suppression func(*sql.Selector)
 
+// TransactionalEmail is the predicate function for transactionalemail builders.
+type TransactionalEmail func(*sql.Selector)
+
 // Unsubscribe is the predicate function for unsubscribe builders.
 type Unsubscribe func(*sql.Selector)
 

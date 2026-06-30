@@ -25,6 +25,7 @@ import (
 	"github.com/mokevnin/1mail/ent/predicate"
 	"github.com/mokevnin/1mail/ent/segment"
 	"github.com/mokevnin/1mail/ent/suppression"
+	"github.com/mokevnin/1mail/ent/transactionalemail"
 	"github.com/mokevnin/1mail/ent/unsubscribe"
 	"github.com/mokevnin/1mail/ent/user"
 	"github.com/mokevnin/1mail/ent/visitor"
@@ -54,6 +55,7 @@ type WorkspaceQuery struct {
 	withWebhookEndpoints    *WebhookEndpointQuery
 	withSuppressions        *SuppressionQuery
 	withUnsubscribes        *UnsubscribeQuery
+	withTransactionalEmails *TransactionalEmailQuery
 	withUser                *UserQuery
 	modifiers               []func(*sql.Selector)
 	// intermediate query (i.e. traversal path).
@@ -422,6 +424,28 @@ func (_q *WorkspaceQuery) QueryUnsubscribes() *UnsubscribeQuery {
 	return query
 }
 
+// QueryTransactionalEmails chains the current query on the "transactional_emails" edge.
+func (_q *WorkspaceQuery) QueryTransactionalEmails() *TransactionalEmailQuery {
+	query := (&TransactionalEmailClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workspace.Table, workspace.FieldID, selector),
+			sqlgraph.To(transactionalemail.Table, transactionalemail.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, workspace.TransactionalEmailsTable, workspace.TransactionalEmailsColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
 // QueryUser chains the current query on the "user" edge.
 func (_q *WorkspaceQuery) QueryUser() *UserQuery {
 	query := (&UserClient{config: _q.config}).Query()
@@ -651,6 +675,7 @@ func (_q *WorkspaceQuery) Clone() *WorkspaceQuery {
 		withWebhookEndpoints:    _q.withWebhookEndpoints.Clone(),
 		withSuppressions:        _q.withSuppressions.Clone(),
 		withUnsubscribes:        _q.withUnsubscribes.Clone(),
+		withTransactionalEmails: _q.withTransactionalEmails.Clone(),
 		withUser:                _q.withUser.Clone(),
 		// clone intermediate query.
 		sql:       _q.sql.Clone(),
@@ -824,6 +849,17 @@ func (_q *WorkspaceQuery) WithUnsubscribes(opts ...func(*UnsubscribeQuery)) *Wor
 	return _q
 }
 
+// WithTransactionalEmails tells the query-builder to eager-load the nodes that are connected to
+// the "transactional_emails" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *WorkspaceQuery) WithTransactionalEmails(opts ...func(*TransactionalEmailQuery)) *WorkspaceQuery {
+	query := (&TransactionalEmailClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withTransactionalEmails = query
+	return _q
+}
+
 // WithUser tells the query-builder to eager-load the nodes that are connected to
 // the "user" edge. The optional arguments are used to configure the query builder of the edge.
 func (_q *WorkspaceQuery) WithUser(opts ...func(*UserQuery)) *WorkspaceQuery {
@@ -913,7 +949,7 @@ func (_q *WorkspaceQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Wo
 	var (
 		nodes       = []*Workspace{}
 		_spec       = _q.querySpec()
-		loadedTypes = [16]bool{
+		loadedTypes = [17]bool{
 			_q.withContacts != nil,
 			_q.withCustomFields != nil,
 			_q.withSegments != nil,
@@ -929,6 +965,7 @@ func (_q *WorkspaceQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Wo
 			_q.withWebhookEndpoints != nil,
 			_q.withSuppressions != nil,
 			_q.withUnsubscribes != nil,
+			_q.withTransactionalEmails != nil,
 			_q.withUser != nil,
 		}
 	)
@@ -1057,6 +1094,15 @@ func (_q *WorkspaceQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Wo
 		if err := _q.loadUnsubscribes(ctx, query, nodes,
 			func(n *Workspace) { n.Edges.Unsubscribes = []*Unsubscribe{} },
 			func(n *Workspace, e *Unsubscribe) { n.Edges.Unsubscribes = append(n.Edges.Unsubscribes, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := _q.withTransactionalEmails; query != nil {
+		if err := _q.loadTransactionalEmails(ctx, query, nodes,
+			func(n *Workspace) { n.Edges.TransactionalEmails = []*TransactionalEmail{} },
+			func(n *Workspace, e *TransactionalEmail) {
+				n.Edges.TransactionalEmails = append(n.Edges.TransactionalEmails, e)
+			}); err != nil {
 			return nil, err
 		}
 	}
@@ -1504,6 +1550,36 @@ func (_q *WorkspaceQuery) loadUnsubscribes(ctx context.Context, query *Unsubscri
 	}
 	query.Where(predicate.Unsubscribe(func(s *sql.Selector) {
 		s.Where(sql.InValues(s.C(workspace.UnsubscribesColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.WorkspaceID
+		node, ok := nodeids[fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "workspace_id" returned %v for node %v`, fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (_q *WorkspaceQuery) loadTransactionalEmails(ctx context.Context, query *TransactionalEmailQuery, nodes []*Workspace, init func(*Workspace), assign func(*Workspace, *TransactionalEmail)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[int64]*Workspace)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(transactionalemail.FieldWorkspaceID)
+	}
+	query.Where(predicate.TransactionalEmail(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(workspace.TransactionalEmailsColumn), fks...))
 	}))
 	neighbors, err := query.All(ctx)
 	if err != nil {

@@ -1058,6 +1058,69 @@ export type SiteTestSendBroadcastInput = {
 };
 
 /**
+ * The channel a transactional send went out on (email today; sms reserved)
+ */
+export const SiteTransactionalEmailChannel = { EMAIL: 'email' } as const;
+
+/**
+ * The channel a transactional send went out on (email today; sms reserved)
+ */
+export type SiteTransactionalEmailChannel = typeof SiteTransactionalEmailChannel[keyof typeof SiteTransactionalEmailChannel];
+
+/**
+ * One transactional send: the durable, read-only trace of an `/api/emails` call
+ */
+export type SiteTransactionalEmailResource = {
+    /**
+     * Unique identifier
+     */
+    id: EntityId;
+    /**
+     * The channel this send went out on
+     */
+    channel: SiteTransactionalEmailChannel;
+    /**
+     * Normalized (lower-cased) destination address
+     */
+    destination: string;
+    /**
+     * The id of the Template rendered at send time (bound by reference)
+     */
+    templateId: EntityId;
+    /**
+     * The contact this destination resolved to, when one existed
+     */
+    contactId?: EntityId | null;
+    /**
+     * Outcome of the send
+     */
+    status: SiteTransactionalEmailStatus;
+    /**
+     * Provider error message, present when status is `failed`
+     */
+    error?: string | null;
+    /**
+     * Creation timestamp
+     */
+    createdAt: Timestamp;
+};
+
+/**
+ * Outcome of a transactional send
+ */
+export const SiteTransactionalEmailStatus = {
+    PENDING: 'pending',
+    SENT: 'sent',
+    SUPPRESSED: 'suppressed',
+    FAILED: 'failed'
+} as const;
+
+/**
+ * Outcome of a transactional send
+ */
+export type SiteTransactionalEmailStatus = typeof SiteTransactionalEmailStatus[keyof typeof SiteTransactionalEmailStatus];
+
+/**
  * Site request body for updating an automation
  */
 export type SiteUpdateAutomationInput = {
@@ -3184,6 +3247,71 @@ export type SiteTokensDeleteResponses = {
 };
 
 export type SiteTokensDeleteResponse = SiteTokensDeleteResponses[keyof SiteTokensDeleteResponses];
+
+export type SiteTransactionalEmailsListData = {
+    body?: never;
+    path: {
+        workspaceSlug: string;
+    };
+    query?: {
+        /**
+         * Page number (1-based)
+         */
+        page?: number;
+        /**
+         * Page size
+         */
+        pageSize?: number;
+    };
+    url: '/w/{workspaceSlug}/transactional-emails';
+};
+
+export type SiteTransactionalEmailsListErrors = {
+    /**
+     * RFC 7807 bad request response
+     */
+    400: ProblemDetails;
+    /**
+     * RFC 7807 not found response
+     */
+    404: ProblemDetails;
+    /**
+     * RFC 7807 validation response
+     */
+    422: ProblemDetails;
+};
+
+export type SiteTransactionalEmailsListError = SiteTransactionalEmailsListErrors[keyof SiteTransactionalEmailsListErrors];
+
+export type SiteTransactionalEmailsListResponses = {
+    /**
+     * Paginated response
+     */
+    200: {
+        /**
+         * List of items
+         */
+        items: Array<SiteTransactionalEmailResource>;
+        /**
+         * Page number (1-based)
+         */
+        page: number;
+        /**
+         * Page size
+         */
+        pageSize: number;
+        /**
+         * Total number of elements
+         */
+        totalItems: number;
+        /**
+         * Total number of pages
+         */
+        totalPages: number;
+    };
+};
+
+export type SiteTransactionalEmailsListResponse = SiteTransactionalEmailsListResponses[keyof SiteTransactionalEmailsListResponses];
 
 export type SiteWebhooksListData = {
     body?: never;

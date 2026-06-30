@@ -25,6 +25,7 @@ import { SegmentsListPage } from './routes/segments/list.tsx'
 import { TemplateCreatePage } from './routes/templates/create.tsx'
 import { TemplateEditPage } from './routes/templates/edit.tsx'
 import { TemplatesListPage } from './routes/templates/list.tsx'
+import { TransactionalEmailsListPage } from './routes/transactional-emails/list.tsx'
 import { UnsubscribedPage } from './routes/unsubscribed.tsx'
 import { ActivityPage } from './routes/workspace/activity.tsx'
 import { OverviewPage } from './routes/workspace/overview.tsx'
@@ -130,6 +131,12 @@ export const broadcastsReportRoute = createRoute({
   getParentRoute: () => workspaceRoute,
   path: 'broadcasts/$broadcastId/report',
   component: BroadcastReportPage,
+})
+
+export const transactionalEmailsRoute = createRoute({
+  getParentRoute: () => workspaceRoute,
+  path: 'transactional-emails',
+  component: TransactionalEmailsListPage,
 })
 
 export const templatesRoute = createRoute({
@@ -256,6 +263,7 @@ const routeTree = rootRoute.addChildren([
     broadcastsCreateRoute,
     broadcastsEditRoute,
     broadcastsReportRoute,
+    transactionalEmailsRoute,
     templatesRoute,
     templatesCreateRoute,
     templatesEditRoute,

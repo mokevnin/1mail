@@ -441,6 +441,15 @@ func (UnimplementedHandler) SiteTokensList(ctx context.Context, params SiteToken
 	return r, ht.ErrNotImplemented
 }
 
+// SiteTransactionalEmailsList implements SiteTransactionalEmails_list operation.
+//
+// List transactional sends, most recent first.
+//
+// GET /w/{workspaceSlug}/transactional-emails
+func (UnimplementedHandler) SiteTransactionalEmailsList(ctx context.Context, params SiteTransactionalEmailsListParams) (r SiteTransactionalEmailsListRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // SiteUserGetMe implements SiteUser_getMe operation.
 //
 // Get the authenticated user's profile.

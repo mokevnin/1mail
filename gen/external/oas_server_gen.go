@@ -94,8 +94,11 @@ type Handler interface {
 	// variables at send time. Respects the workspace Suppression list (a suppressed destination returns
 	// status `suppressed`) but not marketing Unsubscribe — transactional mail carries no sending source.
 	//
+	// Supply an `Idempotency-Key` to make retries safe: a repeated key replays the original result without
+	// sending a second email, and a key whose first request is still in flight returns 409.
+	//
 	// POST /emails
-	EmailsSend(ctx context.Context, req *SendTransactionalEmailInput) (EmailsSendRes, error)
+	EmailsSend(ctx context.Context, req *SendTransactionalEmailInput, params EmailsSendParams) (EmailsSendRes, error)
 	// EventActionsList implements EventActions_list operation.
 	//
 	// List unique event actions.

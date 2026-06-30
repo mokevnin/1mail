@@ -805,6 +805,29 @@ func HasUnsubscribesWith(preds ...predicate.Unsubscribe) predicate.Workspace {
 	})
 }
 
+// HasTransactionalEmails applies the HasEdge predicate on the "transactional_emails" edge.
+func HasTransactionalEmails() predicate.Workspace {
+	return predicate.Workspace(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, TransactionalEmailsTable, TransactionalEmailsColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasTransactionalEmailsWith applies the HasEdge predicate on the "transactional_emails" edge with a given conditions (other predicates).
+func HasTransactionalEmailsWith(preds ...predicate.TransactionalEmail) predicate.Workspace {
+	return predicate.Workspace(func(s *sql.Selector) {
+		step := newTransactionalEmailsStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // HasUser applies the HasEdge predicate on the "user" edge.
 func HasUser() predicate.Workspace {
 	return predicate.Workspace(func(s *sql.Selector) {

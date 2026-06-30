@@ -53,3 +53,16 @@ transactional says "send the *live* template X with these data".
   Suppression registry, so reputation and do-not-send state are shared across all surfaces.
 - Template gains a meaningful reference-by-id use (transactional), even though marketing still
   records no `template_id` — the provenance question left open in 0003 is unaffected.
+
+## Amendment (2026-06-30): a per-send record exists
+
+The original cut deferred any per-send record; it is now built. Each Transactional send writes
+a `TransactionalEmail` row — the transactional counterpart of `BroadcastRecipient`: a durable,
+queryable send trace (destination, referenced `template_id`, resolved `contact_id`, outcome)
+surfaced in the UI, and the publisher of `email.sent` so transactional sends are segmentable
+through the Event log like the other surfaces. It is also the synchronous claim behind an
+optional `Idempotency-Key` header: the row is inserted on a unique `(workspace, key)` index
+*before* the provider call, so a retried or concurrent same-key request replays the recorded
+outcome (or gets 409 while in flight) instead of sending twice — the Event-log DedupKey only
+dedupes the event row, never the send. Consistent with the by-reference rule, the record stores
+only provenance and outcome, never the rendered content.

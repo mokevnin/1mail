@@ -957,8 +957,18 @@
     "/emails": {
       "post": {
         "operationId": "Emails_send",
-        "description": "Send a transactional email. The referenced Template's current content is\nrendered with the supplied variables at send time. Respects the workspace\nSuppression list (a suppressed destination returns status `suppressed`) but\nnot marketing Unsubscribe — transactional mail carries no sending source.",
-        "parameters": [],
+        "description": "Send a transactional email. The referenced Template's current content is\nrendered with the supplied variables at send time. Respects the workspace\nSuppression list (a suppressed destination returns status `suppressed`) but\nnot marketing Unsubscribe — transactional mail carries no sending source.\n\nSupply an `Idempotency-Key` to make retries safe: a repeated key replays the\noriginal result without sending a second email, and a key whose first request\nis still in flight returns 409.",
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": false,
+            "description": "Client-supplied key that makes a retried send idempotent (Stripe-style)",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "202": {
             "description": "The request has been accepted for processing, but processing has not yet completed.",
@@ -982,6 +992,16 @@
           },
           "404": {
             "description": "RFC 7807 not found response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "RFC 7807 conflict response",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -2031,8 +2051,16 @@
       },
       "SendTransactionalEmailResponse": {
         "type": "object",
-        "required": ["status", "destination"],
+        "required": ["id", "status", "destination"],
         "properties": {
+          "id": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EntityId"
+              }
+            ],
+            "description": "The id of the durable send record (the send-history trace)"
+          },
           "status": {
             "allOf": [
               {
