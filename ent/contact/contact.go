@@ -3,7 +3,6 @@
 package contact
 
 import (
-	"fmt"
 	"time"
 
 	"entgo.io/ent/dialect/sql"
@@ -25,8 +24,6 @@ const (
 	FieldFirstName = "first_name"
 	// FieldLastName holds the string denoting the last_name field in the database.
 	FieldLastName = "last_name"
-	// FieldStatus holds the string denoting the status field in the database.
-	FieldStatus = "status"
 	// FieldTimeZone holds the string denoting the time_zone field in the database.
 	FieldTimeZone = "time_zone"
 	// FieldCustomFields holds the string denoting the custom_fields field in the database.
@@ -67,7 +64,6 @@ var Columns = []string{
 	FieldPhone,
 	FieldFirstName,
 	FieldLastName,
-	FieldStatus,
 	FieldTimeZone,
 	FieldCustomFields,
 	FieldWorkspaceID,
@@ -93,32 +89,6 @@ var (
 	// UpdateDefaultUpdatedAt holds the default value on update for the "updated_at" field.
 	UpdateDefaultUpdatedAt func() time.Time
 )
-
-// Status defines the type for the "status" enum field.
-type Status string
-
-// StatusActive is the default value of the Status enum.
-const DefaultStatus = StatusActive
-
-// Status values.
-const (
-	StatusActive       Status = "active"
-	StatusUnsubscribed Status = "unsubscribed"
-)
-
-func (s Status) String() string {
-	return string(s)
-}
-
-// StatusValidator is a validator for the "status" field enum values. It is called by the builders before save.
-func StatusValidator(s Status) error {
-	switch s {
-	case StatusActive, StatusUnsubscribed:
-		return nil
-	default:
-		return fmt.Errorf("contact: invalid enum value for status field: %q", s)
-	}
-}
 
 // OrderOption defines the ordering options for the Contact queries.
 type OrderOption func(*sql.Selector)
@@ -151,11 +121,6 @@ func ByFirstName(opts ...sql.OrderTermOption) OrderOption {
 // ByLastName orders the results by the last_name field.
 func ByLastName(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldLastName, opts...).ToFunc()
-}
-
-// ByStatus orders the results by the status field.
-func ByStatus(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldStatus, opts...).ToFunc()
 }
 
 // ByTimeZone orders the results by the time_zone field.

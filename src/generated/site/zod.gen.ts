@@ -120,11 +120,6 @@ export const zSiteBroadcastStatus = z.enum([
 ]);
 
 /**
- * Contact status for site UI
- */
-export const zSiteContactStatus = z.enum(['active', 'unsubscribed']);
-
-/**
  * Site request body for creating an automation
  */
 export const zSiteCreateAutomationInput = z.object({
@@ -153,13 +148,6 @@ export const zSiteCreateEmailTemplateInput = z.object({
     name: z.string(),
     subject: z.string().optional(),
     body: z.string().optional()
-});
-
-/**
- * Site request body for manually suppressing an address
- */
-export const zSiteCreateSuppressionInput = z.object({
-    email: zEmailAddress
 });
 
 /**
@@ -329,10 +317,23 @@ export const zSiteCreateIntegrationInput = z.object({
 });
 
 /**
- * Why an address is on the suppression (do-not-send) list
+ * The channel a suppression applies to (email today; sms reserved)
+ */
+export const zSiteSuppressionChannel = z.enum(['email']);
+
+/**
+ * Site request body for manually suppressing a destination
+ */
+export const zSiteCreateSuppressionInput = z.object({
+    channel: zSiteSuppressionChannel.optional(),
+    destination: z.string()
+});
+
+/**
+ * Why a destination is on the suppression (do-not-send) list. Unsubscribe is
+ * not a suppression — it is a separate, per-source opt-out.
  */
 export const zSiteSuppressionReason = z.enum([
-    'unsubscribed',
     'bounce',
     'complaint',
     'manual'
@@ -511,7 +512,6 @@ export const zSiteContactResource = z.object({
     lastName: z.string().nullish(),
     timeZone: zTimeZoneName.nullish(),
     customFields: z.record(z.string(), z.unknown()).nullish(),
-    status: zSiteContactStatus,
     createdAt: zTimestamp,
     updatedAt: zTimestamp
 });
@@ -613,11 +613,12 @@ export const zSiteSegmentResource = z.object({
 });
 
 /**
- * A suppressed address: the send path skips it regardless of contact status
+ * A suppressed destination: the send path skips it on every surface
  */
 export const zSiteSuppressionResource = z.object({
     id: zEntityId,
-    email: z.string(),
+    channel: zSiteSuppressionChannel,
+    destination: z.string(),
     reason: zSiteSuppressionReason,
     createdAt: zTimestamp,
     updatedAt: zTimestamp
@@ -900,8 +901,7 @@ export const zSiteContactsListPath = z.object({
 
 export const zSiteContactsListQuery = z.object({
     page: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).optional().default(1),
-    pageSize: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).optional().default(25),
-    status: zSiteContactStatus.optional()
+    pageSize: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).optional().default(25)
 });
 
 /**

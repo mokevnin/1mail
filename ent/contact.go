@@ -29,8 +29,6 @@ type Contact struct {
 	FirstName *string `json:"first_name,omitempty"`
 	// LastName holds the value of the "last_name" field.
 	LastName *string `json:"last_name,omitempty"`
-	// Status holds the value of the "status" field.
-	Status contact.Status `json:"status,omitempty"`
 	// TimeZone holds the value of the "time_zone" field.
 	TimeZone *string `json:"time_zone,omitempty"`
 	// CustomFields holds the value of the "custom_fields" field.
@@ -87,7 +85,7 @@ func (*Contact) scanValues(columns []string) ([]any, error) {
 			values[i] = new([]byte)
 		case contact.FieldID, contact.FieldWorkspaceID:
 			values[i] = new(sql.NullInt64)
-		case contact.FieldSubjectID, contact.FieldEmail, contact.FieldPhone, contact.FieldFirstName, contact.FieldLastName, contact.FieldStatus, contact.FieldTimeZone:
+		case contact.FieldSubjectID, contact.FieldEmail, contact.FieldPhone, contact.FieldFirstName, contact.FieldLastName, contact.FieldTimeZone:
 			values[i] = new(sql.NullString)
 		case contact.FieldCreatedAt, contact.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
@@ -146,12 +144,6 @@ func (_m *Contact) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				_m.LastName = new(string)
 				*_m.LastName = value.String
-			}
-		case contact.FieldStatus:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field status", values[i])
-			} else if value.Valid {
-				_m.Status = contact.Status(value.String)
 			}
 		case contact.FieldTimeZone:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -256,9 +248,6 @@ func (_m *Contact) String() string {
 		builder.WriteString("last_name=")
 		builder.WriteString(*v)
 	}
-	builder.WriteString(", ")
-	builder.WriteString("status=")
-	builder.WriteString(fmt.Sprintf("%v", _m.Status))
 	builder.WriteString(", ")
 	if v := _m.TimeZone; v != nil {
 		builder.WriteString("time_zone=")

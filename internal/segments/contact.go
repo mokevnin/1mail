@@ -24,7 +24,6 @@ func ContactSchema() Schema {
 			"first_name": contact.FieldFirstName,
 			"last_name":  contact.FieldLastName,
 			"time_zone":  contact.FieldTimeZone,
-			"status":     contact.FieldStatus,
 		},
 		JSONColumns: map[string]string{
 			"custom:": contact.FieldCustomFields,

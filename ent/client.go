@@ -27,6 +27,7 @@ import (
 	"github.com/mokevnin/1mail/ent/integration"
 	"github.com/mokevnin/1mail/ent/segment"
 	"github.com/mokevnin/1mail/ent/suppression"
+	"github.com/mokevnin/1mail/ent/unsubscribe"
 	"github.com/mokevnin/1mail/ent/user"
 	"github.com/mokevnin/1mail/ent/visitor"
 	"github.com/mokevnin/1mail/ent/webhookendpoint"
@@ -62,6 +63,8 @@ type Client struct {
 	Segment *SegmentClient
 	// Suppression is the client for interacting with the Suppression builders.
 	Suppression *SuppressionClient
+	// Unsubscribe is the client for interacting with the Unsubscribe builders.
+	Unsubscribe *UnsubscribeClient
 	// User is the client for interacting with the User builders.
 	User *UserClient
 	// Visitor is the client for interacting with the Visitor builders.
@@ -93,6 +96,7 @@ func (c *Client) init() {
 	c.Integration = NewIntegrationClient(c.config)
 	c.Segment = NewSegmentClient(c.config)
 	c.Suppression = NewSuppressionClient(c.config)
+	c.Unsubscribe = NewUnsubscribeClient(c.config)
 	c.User = NewUserClient(c.config)
 	c.Visitor = NewVisitorClient(c.config)
 	c.WebhookEndpoint = NewWebhookEndpointClient(c.config)
@@ -201,6 +205,7 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		Integration:        NewIntegrationClient(cfg),
 		Segment:            NewSegmentClient(cfg),
 		Suppression:        NewSuppressionClient(cfg),
+		Unsubscribe:        NewUnsubscribeClient(cfg),
 		User:               NewUserClient(cfg),
 		Visitor:            NewVisitorClient(cfg),
 		WebhookEndpoint:    NewWebhookEndpointClient(cfg),
@@ -236,6 +241,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		Integration:        NewIntegrationClient(cfg),
 		Segment:            NewSegmentClient(cfg),
 		Suppression:        NewSuppressionClient(cfg),
+		Unsubscribe:        NewUnsubscribeClient(cfg),
 		User:               NewUserClient(cfg),
 		Visitor:            NewVisitorClient(cfg),
 		WebhookEndpoint:    NewWebhookEndpointClient(cfg),
@@ -271,7 +277,8 @@ func (c *Client) Use(hooks ...Hook) {
 	for _, n := range []interface{ Use(...Hook) }{
 		c.ApiToken, c.Automation, c.AutomationRun, c.Broadcast, c.BroadcastRecipient,
 		c.Contact, c.CustomField, c.EmailTemplate, c.Event, c.Integration, c.Segment,
-		c.Suppression, c.User, c.Visitor, c.WebhookEndpoint, c.Workspace,
+		c.Suppression, c.Unsubscribe, c.User, c.Visitor, c.WebhookEndpoint,
+		c.Workspace,
 	} {
 		n.Use(hooks...)
 	}
@@ -283,7 +290,8 @@ func (c *Client) Intercept(interceptors ...Interceptor) {
 	for _, n := range []interface{ Intercept(...Interceptor) }{
 		c.ApiToken, c.Automation, c.AutomationRun, c.Broadcast, c.BroadcastRecipient,
 		c.Contact, c.CustomField, c.EmailTemplate, c.Event, c.Integration, c.Segment,
-		c.Suppression, c.User, c.Visitor, c.WebhookEndpoint, c.Workspace,
+		c.Suppression, c.Unsubscribe, c.User, c.Visitor, c.WebhookEndpoint,
+		c.Workspace,
 	} {
 		n.Intercept(interceptors...)
 	}
@@ -316,6 +324,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.Segment.mutate(ctx, m)
 	case *SuppressionMutation:
 		return c.Suppression.mutate(ctx, m)
+	case *UnsubscribeMutation:
+		return c.Unsubscribe.mutate(ctx, m)
 	case *UserMutation:
 		return c.User.mutate(ctx, m)
 	case *VisitorMutation:
@@ -2197,6 +2207,155 @@ func (c *SuppressionClient) mutate(ctx context.Context, m *SuppressionMutation) 
 	}
 }
 
+// UnsubscribeClient is a client for the Unsubscribe schema.
+type UnsubscribeClient struct {
+	config
+}
+
+// NewUnsubscribeClient returns a client for the Unsubscribe from the given config.
+func NewUnsubscribeClient(c config) *UnsubscribeClient {
+	return &UnsubscribeClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `unsubscribe.Hooks(f(g(h())))`.
+func (c *UnsubscribeClient) Use(hooks ...Hook) {
+	c.hooks.Unsubscribe = append(c.hooks.Unsubscribe, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `unsubscribe.Intercept(f(g(h())))`.
+func (c *UnsubscribeClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Unsubscribe = append(c.inters.Unsubscribe, interceptors...)
+}
+
+// Create returns a builder for creating a Unsubscribe entity.
+func (c *UnsubscribeClient) Create() *UnsubscribeCreate {
+	mutation := newUnsubscribeMutation(c.config, OpCreate)
+	return &UnsubscribeCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Unsubscribe entities.
+func (c *UnsubscribeClient) CreateBulk(builders ...*UnsubscribeCreate) *UnsubscribeCreateBulk {
+	return &UnsubscribeCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *UnsubscribeClient) MapCreateBulk(slice any, setFunc func(*UnsubscribeCreate, int)) *UnsubscribeCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &UnsubscribeCreateBulk{err: fmt.Errorf("calling to UnsubscribeClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*UnsubscribeCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &UnsubscribeCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Unsubscribe.
+func (c *UnsubscribeClient) Update() *UnsubscribeUpdate {
+	mutation := newUnsubscribeMutation(c.config, OpUpdate)
+	return &UnsubscribeUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *UnsubscribeClient) UpdateOne(_m *Unsubscribe) *UnsubscribeUpdateOne {
+	mutation := newUnsubscribeMutation(c.config, OpUpdateOne, withUnsubscribe(_m))
+	return &UnsubscribeUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *UnsubscribeClient) UpdateOneID(id int64) *UnsubscribeUpdateOne {
+	mutation := newUnsubscribeMutation(c.config, OpUpdateOne, withUnsubscribeID(id))
+	return &UnsubscribeUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Unsubscribe.
+func (c *UnsubscribeClient) Delete() *UnsubscribeDelete {
+	mutation := newUnsubscribeMutation(c.config, OpDelete)
+	return &UnsubscribeDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *UnsubscribeClient) DeleteOne(_m *Unsubscribe) *UnsubscribeDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *UnsubscribeClient) DeleteOneID(id int64) *UnsubscribeDeleteOne {
+	builder := c.Delete().Where(unsubscribe.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &UnsubscribeDeleteOne{builder}
+}
+
+// Query returns a query builder for Unsubscribe.
+func (c *UnsubscribeClient) Query() *UnsubscribeQuery {
+	return &UnsubscribeQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeUnsubscribe},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Unsubscribe entity by its id.
+func (c *UnsubscribeClient) Get(ctx context.Context, id int64) (*Unsubscribe, error) {
+	return c.Query().Where(unsubscribe.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *UnsubscribeClient) GetX(ctx context.Context, id int64) *Unsubscribe {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryWorkspace queries the workspace edge of a Unsubscribe.
+func (c *UnsubscribeClient) QueryWorkspace(_m *Unsubscribe) *WorkspaceQuery {
+	query := (&WorkspaceClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(unsubscribe.Table, unsubscribe.FieldID, id),
+			sqlgraph.To(workspace.Table, workspace.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, unsubscribe.WorkspaceTable, unsubscribe.WorkspaceColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *UnsubscribeClient) Hooks() []Hook {
+	return c.hooks.Unsubscribe
+}
+
+// Interceptors returns the client interceptors.
+func (c *UnsubscribeClient) Interceptors() []Interceptor {
+	return c.inters.Unsubscribe
+}
+
+func (c *UnsubscribeClient) mutate(ctx context.Context, m *UnsubscribeMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&UnsubscribeCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&UnsubscribeUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&UnsubscribeUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&UnsubscribeDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown Unsubscribe mutation op: %q", m.Op())
+	}
+}
+
 // UserClient is a client for the User schema.
 type UserClient struct {
 	config
@@ -2992,6 +3151,22 @@ func (c *WorkspaceClient) QuerySuppressions(_m *Workspace) *SuppressionQuery {
 	return query
 }
 
+// QueryUnsubscribes queries the unsubscribes edge of a Workspace.
+func (c *WorkspaceClient) QueryUnsubscribes(_m *Workspace) *UnsubscribeQuery {
+	query := (&UnsubscribeClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workspace.Table, workspace.FieldID, id),
+			sqlgraph.To(unsubscribe.Table, unsubscribe.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, workspace.UnsubscribesTable, workspace.UnsubscribesColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // QueryUser queries the user edge of a Workspace.
 func (c *WorkspaceClient) QueryUser(_m *Workspace) *UserQuery {
 	query := (&UserClient{config: c.config}).Query()
@@ -3037,12 +3212,12 @@ func (c *WorkspaceClient) mutate(ctx context.Context, m *WorkspaceMutation) (Val
 type (
 	hooks struct {
 		ApiToken, Automation, AutomationRun, Broadcast, BroadcastRecipient, Contact,
-		CustomField, EmailTemplate, Event, Integration, Segment, Suppression, User,
-		Visitor, WebhookEndpoint, Workspace []ent.Hook
+		CustomField, EmailTemplate, Event, Integration, Segment, Suppression,
+		Unsubscribe, User, Visitor, WebhookEndpoint, Workspace []ent.Hook
 	}
 	inters struct {
 		ApiToken, Automation, AutomationRun, Broadcast, BroadcastRecipient, Contact,
-		CustomField, EmailTemplate, Event, Integration, Segment, Suppression, User,
-		Visitor, WebhookEndpoint, Workspace []ent.Interceptor
+		CustomField, EmailTemplate, Event, Integration, Segment, Suppression,
+		Unsubscribe, User, Visitor, WebhookEndpoint, Workspace []ent.Interceptor
 	}
 )

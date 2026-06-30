@@ -11,13 +11,16 @@ import (
 	"entgo.io/ent/schema/index"
 )
 
-// Suppression is a workspace-scoped "do not send" registry entry. It is the
-// central deliverability list: an address is suppressed when it unsubscribes,
-// hard-bounces, files a spam complaint, or is added manually. The send path
-// skips any recipient whose (lower-cased) email is present here, independent of
-// the contact's status — so addresses with no contact (e.g. a bounce) can be
-// suppressed too. Email is stored normalized (lower-cased) and unique per
-// workspace, so ingestion can upsert idempotently.
+// Suppression is the workspace's authoritative, (channel, destination)-keyed
+// do-not-send registry for hard, global facts: hard bounce, spam complaint, and
+// manual bans. It is the send path's global hard floor, checked on every send,
+// and a compliance ratchet (bounce/complaint do not auto-clear). Keyed by
+// (channel, destination) — not by contact — so it covers destinations with no
+// contact (e.g. a bounce) and survives contact deletion/re-import. The
+// destination is stored normalized (lower-cased) and unique per (workspace,
+// channel), so ingestion can upsert idempotently. Distinct from Unsubscribe:
+// Suppression is global and hard; an unsubscribe is per-sending-source and
+// toggleable (see the Unsubscribe entity).
 type Suppression struct {
 	ent.Schema
 }
@@ -33,15 +36,20 @@ func (Suppression) Fields() []ent.Field {
 		field.Int64("id").
 			StorageKey("id").
 			Immutable(),
-		// Normalized (lower-cased) email address.
-		field.String("email").
+		// The channel this suppression applies to (email today; sms reserved).
+		field.Enum("channel").
+			Values("email").
+			Default("email"),
+		// Normalized (lower-cased) channel-specific destination address.
+		field.String("destination").
 			NotEmpty(),
-		// Why the address is suppressed.
+		// Why the destination is suppressed. Unsubscribe is NOT a suppression
+		// reason — it lives in the separate, toggleable Unsubscribe entity.
 		field.Enum("reason").
-			Values("unsubscribed", "bounce", "complaint", "manual").
+			Values("bounce", "complaint", "manual").
 			Default("manual"),
-		// The contact this address belongs to, when known (a bounce/complaint may
-		// arrive for an address with no contact). Nullable.
+		// The contact this destination belongs to, when known (a bounce/complaint
+		// may arrive for a destination with no contact). Display only. Nullable.
 		field.Int64("contact_id").
 			Optional().
 			Nillable(),
@@ -67,9 +75,9 @@ func (Suppression) Edges() []ent.Edge {
 
 func (Suppression) Indexes() []ent.Index {
 	return []ent.Index{
-		// One suppression per address per workspace; lets ingestion upsert.
-		index.Fields("workspace_id", "email").
+		// One suppression per (channel, destination) per workspace; lets ingestion upsert.
+		index.Fields("workspace_id", "channel", "destination").
 			Unique().
-			StorageKey("suppressions_workspace_id_email"),
+			StorageKey("suppressions_workspace_id_channel_destination"),
 	}
 }

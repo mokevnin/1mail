@@ -30,16 +30,30 @@ func (_u *SuppressionUpdate) Where(ps ...predicate.Suppression) *SuppressionUpda
 	return _u
 }
 
-// SetEmail sets the "email" field.
-func (_u *SuppressionUpdate) SetEmail(v string) *SuppressionUpdate {
-	_u.mutation.SetEmail(v)
+// SetChannel sets the "channel" field.
+func (_u *SuppressionUpdate) SetChannel(v suppression.Channel) *SuppressionUpdate {
+	_u.mutation.SetChannel(v)
 	return _u
 }
 
-// SetNillableEmail sets the "email" field if the given value is not nil.
-func (_u *SuppressionUpdate) SetNillableEmail(v *string) *SuppressionUpdate {
+// SetNillableChannel sets the "channel" field if the given value is not nil.
+func (_u *SuppressionUpdate) SetNillableChannel(v *suppression.Channel) *SuppressionUpdate {
 	if v != nil {
-		_u.SetEmail(*v)
+		_u.SetChannel(*v)
+	}
+	return _u
+}
+
+// SetDestination sets the "destination" field.
+func (_u *SuppressionUpdate) SetDestination(v string) *SuppressionUpdate {
+	_u.mutation.SetDestination(v)
+	return _u
+}
+
+// SetNillableDestination sets the "destination" field if the given value is not nil.
+func (_u *SuppressionUpdate) SetNillableDestination(v *string) *SuppressionUpdate {
+	if v != nil {
+		_u.SetDestination(*v)
 	}
 	return _u
 }
@@ -159,9 +173,14 @@ func (_u *SuppressionUpdate) defaults() {
 
 // check runs all checks and user-defined validators on the builder.
 func (_u *SuppressionUpdate) check() error {
-	if v, ok := _u.mutation.Email(); ok {
-		if err := suppression.EmailValidator(v); err != nil {
-			return &ValidationError{Name: "email", err: fmt.Errorf(`ent: validator failed for field "Suppression.email": %w`, err)}
+	if v, ok := _u.mutation.Channel(); ok {
+		if err := suppression.ChannelValidator(v); err != nil {
+			return &ValidationError{Name: "channel", err: fmt.Errorf(`ent: validator failed for field "Suppression.channel": %w`, err)}
+		}
+	}
+	if v, ok := _u.mutation.Destination(); ok {
+		if err := suppression.DestinationValidator(v); err != nil {
+			return &ValidationError{Name: "destination", err: fmt.Errorf(`ent: validator failed for field "Suppression.destination": %w`, err)}
 		}
 	}
 	if v, ok := _u.mutation.Reason(); ok {
@@ -193,8 +212,11 @@ func (_u *SuppressionUpdate) sqlSave(ctx context.Context) (_node int, err error)
 			}
 		}
 	}
-	if value, ok := _u.mutation.Email(); ok {
-		_spec.SetField(suppression.FieldEmail, field.TypeString, value)
+	if value, ok := _u.mutation.Channel(); ok {
+		_spec.SetField(suppression.FieldChannel, field.TypeEnum, value)
+	}
+	if value, ok := _u.mutation.Destination(); ok {
+		_spec.SetField(suppression.FieldDestination, field.TypeString, value)
 	}
 	if value, ok := _u.mutation.Reason(); ok {
 		_spec.SetField(suppression.FieldReason, field.TypeEnum, value)
@@ -262,16 +284,30 @@ type SuppressionUpdateOne struct {
 	modifiers []func(*sql.UpdateBuilder)
 }
 
-// SetEmail sets the "email" field.
-func (_u *SuppressionUpdateOne) SetEmail(v string) *SuppressionUpdateOne {
-	_u.mutation.SetEmail(v)
+// SetChannel sets the "channel" field.
+func (_u *SuppressionUpdateOne) SetChannel(v suppression.Channel) *SuppressionUpdateOne {
+	_u.mutation.SetChannel(v)
 	return _u
 }
 
-// SetNillableEmail sets the "email" field if the given value is not nil.
-func (_u *SuppressionUpdateOne) SetNillableEmail(v *string) *SuppressionUpdateOne {
+// SetNillableChannel sets the "channel" field if the given value is not nil.
+func (_u *SuppressionUpdateOne) SetNillableChannel(v *suppression.Channel) *SuppressionUpdateOne {
 	if v != nil {
-		_u.SetEmail(*v)
+		_u.SetChannel(*v)
+	}
+	return _u
+}
+
+// SetDestination sets the "destination" field.
+func (_u *SuppressionUpdateOne) SetDestination(v string) *SuppressionUpdateOne {
+	_u.mutation.SetDestination(v)
+	return _u
+}
+
+// SetNillableDestination sets the "destination" field if the given value is not nil.
+func (_u *SuppressionUpdateOne) SetNillableDestination(v *string) *SuppressionUpdateOne {
+	if v != nil {
+		_u.SetDestination(*v)
 	}
 	return _u
 }
@@ -404,9 +440,14 @@ func (_u *SuppressionUpdateOne) defaults() {
 
 // check runs all checks and user-defined validators on the builder.
 func (_u *SuppressionUpdateOne) check() error {
-	if v, ok := _u.mutation.Email(); ok {
-		if err := suppression.EmailValidator(v); err != nil {
-			return &ValidationError{Name: "email", err: fmt.Errorf(`ent: validator failed for field "Suppression.email": %w`, err)}
+	if v, ok := _u.mutation.Channel(); ok {
+		if err := suppression.ChannelValidator(v); err != nil {
+			return &ValidationError{Name: "channel", err: fmt.Errorf(`ent: validator failed for field "Suppression.channel": %w`, err)}
+		}
+	}
+	if v, ok := _u.mutation.Destination(); ok {
+		if err := suppression.DestinationValidator(v); err != nil {
+			return &ValidationError{Name: "destination", err: fmt.Errorf(`ent: validator failed for field "Suppression.destination": %w`, err)}
 		}
 	}
 	if v, ok := _u.mutation.Reason(); ok {
@@ -455,8 +496,11 @@ func (_u *SuppressionUpdateOne) sqlSave(ctx context.Context) (_node *Suppression
 			}
 		}
 	}
-	if value, ok := _u.mutation.Email(); ok {
-		_spec.SetField(suppression.FieldEmail, field.TypeString, value)
+	if value, ok := _u.mutation.Channel(); ok {
+		_spec.SetField(suppression.FieldChannel, field.TypeEnum, value)
+	}
+	if value, ok := _u.mutation.Destination(); ok {
+		_spec.SetField(suppression.FieldDestination, field.TypeString, value)
 	}
 	if value, ok := _u.mutation.Reason(); ok {
 		_spec.SetField(suppression.FieldReason, field.TypeEnum, value)

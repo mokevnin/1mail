@@ -23,9 +23,23 @@ type SuppressionCreate struct {
 	conflict []sql.ConflictOption
 }
 
-// SetEmail sets the "email" field.
-func (_c *SuppressionCreate) SetEmail(v string) *SuppressionCreate {
-	_c.mutation.SetEmail(v)
+// SetChannel sets the "channel" field.
+func (_c *SuppressionCreate) SetChannel(v suppression.Channel) *SuppressionCreate {
+	_c.mutation.SetChannel(v)
+	return _c
+}
+
+// SetNillableChannel sets the "channel" field if the given value is not nil.
+func (_c *SuppressionCreate) SetNillableChannel(v *suppression.Channel) *SuppressionCreate {
+	if v != nil {
+		_c.SetChannel(*v)
+	}
+	return _c
+}
+
+// SetDestination sets the "destination" field.
+func (_c *SuppressionCreate) SetDestination(v string) *SuppressionCreate {
+	_c.mutation.SetDestination(v)
 	return _c
 }
 
@@ -137,6 +151,10 @@ func (_c *SuppressionCreate) ExecX(ctx context.Context) {
 
 // defaults sets the default values of the builder before save.
 func (_c *SuppressionCreate) defaults() {
+	if _, ok := _c.mutation.Channel(); !ok {
+		v := suppression.DefaultChannel
+		_c.mutation.SetChannel(v)
+	}
 	if _, ok := _c.mutation.Reason(); !ok {
 		v := suppression.DefaultReason
 		_c.mutation.SetReason(v)
@@ -153,12 +171,20 @@ func (_c *SuppressionCreate) defaults() {
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *SuppressionCreate) check() error {
-	if _, ok := _c.mutation.Email(); !ok {
-		return &ValidationError{Name: "email", err: errors.New(`ent: missing required field "Suppression.email"`)}
+	if _, ok := _c.mutation.Channel(); !ok {
+		return &ValidationError{Name: "channel", err: errors.New(`ent: missing required field "Suppression.channel"`)}
 	}
-	if v, ok := _c.mutation.Email(); ok {
-		if err := suppression.EmailValidator(v); err != nil {
-			return &ValidationError{Name: "email", err: fmt.Errorf(`ent: validator failed for field "Suppression.email": %w`, err)}
+	if v, ok := _c.mutation.Channel(); ok {
+		if err := suppression.ChannelValidator(v); err != nil {
+			return &ValidationError{Name: "channel", err: fmt.Errorf(`ent: validator failed for field "Suppression.channel": %w`, err)}
+		}
+	}
+	if _, ok := _c.mutation.Destination(); !ok {
+		return &ValidationError{Name: "destination", err: errors.New(`ent: missing required field "Suppression.destination"`)}
+	}
+	if v, ok := _c.mutation.Destination(); ok {
+		if err := suppression.DestinationValidator(v); err != nil {
+			return &ValidationError{Name: "destination", err: fmt.Errorf(`ent: validator failed for field "Suppression.destination": %w`, err)}
 		}
 	}
 	if _, ok := _c.mutation.Reason(); !ok {
@@ -214,9 +240,13 @@ func (_c *SuppressionCreate) createSpec() (*Suppression, *sqlgraph.CreateSpec) {
 		_node.ID = id
 		_spec.ID.Value = id
 	}
-	if value, ok := _c.mutation.Email(); ok {
-		_spec.SetField(suppression.FieldEmail, field.TypeString, value)
-		_node.Email = value
+	if value, ok := _c.mutation.Channel(); ok {
+		_spec.SetField(suppression.FieldChannel, field.TypeEnum, value)
+		_node.Channel = value
+	}
+	if value, ok := _c.mutation.Destination(); ok {
+		_spec.SetField(suppression.FieldDestination, field.TypeString, value)
+		_node.Destination = value
 	}
 	if value, ok := _c.mutation.Reason(); ok {
 		_spec.SetField(suppression.FieldReason, field.TypeEnum, value)
@@ -258,7 +288,7 @@ func (_c *SuppressionCreate) createSpec() (*Suppression, *sqlgraph.CreateSpec) {
 // of the `INSERT` statement. For example:
 //
 //	client.Suppression.Create().
-//		SetEmail(v).
+//		SetChannel(v).
 //		OnConflict(
 //			// Update the row with the new values
 //			// the was proposed for insertion.
@@ -267,7 +297,7 @@ func (_c *SuppressionCreate) createSpec() (*Suppression, *sqlgraph.CreateSpec) {
 //		// Override some of the fields with custom
 //		// update values.
 //		Update(func(u *ent.SuppressionUpsert) {
-//			SetEmail(v+v).
+//			SetChannel(v+v).
 //		}).
 //		Exec(ctx)
 func (_c *SuppressionCreate) OnConflict(opts ...sql.ConflictOption) *SuppressionUpsertOne {
@@ -303,15 +333,27 @@ type (
 	}
 )
 
-// SetEmail sets the "email" field.
-func (u *SuppressionUpsert) SetEmail(v string) *SuppressionUpsert {
-	u.Set(suppression.FieldEmail, v)
+// SetChannel sets the "channel" field.
+func (u *SuppressionUpsert) SetChannel(v suppression.Channel) *SuppressionUpsert {
+	u.Set(suppression.FieldChannel, v)
 	return u
 }
 
-// UpdateEmail sets the "email" field to the value that was provided on create.
-func (u *SuppressionUpsert) UpdateEmail() *SuppressionUpsert {
-	u.SetExcluded(suppression.FieldEmail)
+// UpdateChannel sets the "channel" field to the value that was provided on create.
+func (u *SuppressionUpsert) UpdateChannel() *SuppressionUpsert {
+	u.SetExcluded(suppression.FieldChannel)
+	return u
+}
+
+// SetDestination sets the "destination" field.
+func (u *SuppressionUpsert) SetDestination(v string) *SuppressionUpsert {
+	u.Set(suppression.FieldDestination, v)
+	return u
+}
+
+// UpdateDestination sets the "destination" field to the value that was provided on create.
+func (u *SuppressionUpsert) UpdateDestination() *SuppressionUpsert {
+	u.SetExcluded(suppression.FieldDestination)
 	return u
 }
 
@@ -426,17 +468,31 @@ func (u *SuppressionUpsertOne) Update(set func(*SuppressionUpsert)) *Suppression
 	return u
 }
 
-// SetEmail sets the "email" field.
-func (u *SuppressionUpsertOne) SetEmail(v string) *SuppressionUpsertOne {
+// SetChannel sets the "channel" field.
+func (u *SuppressionUpsertOne) SetChannel(v suppression.Channel) *SuppressionUpsertOne {
 	return u.Update(func(s *SuppressionUpsert) {
-		s.SetEmail(v)
+		s.SetChannel(v)
 	})
 }
 
-// UpdateEmail sets the "email" field to the value that was provided on create.
-func (u *SuppressionUpsertOne) UpdateEmail() *SuppressionUpsertOne {
+// UpdateChannel sets the "channel" field to the value that was provided on create.
+func (u *SuppressionUpsertOne) UpdateChannel() *SuppressionUpsertOne {
 	return u.Update(func(s *SuppressionUpsert) {
-		s.UpdateEmail()
+		s.UpdateChannel()
+	})
+}
+
+// SetDestination sets the "destination" field.
+func (u *SuppressionUpsertOne) SetDestination(v string) *SuppressionUpsertOne {
+	return u.Update(func(s *SuppressionUpsert) {
+		s.SetDestination(v)
+	})
+}
+
+// UpdateDestination sets the "destination" field to the value that was provided on create.
+func (u *SuppressionUpsertOne) UpdateDestination() *SuppressionUpsertOne {
+	return u.Update(func(s *SuppressionUpsert) {
+		s.UpdateDestination()
 	})
 }
 
@@ -645,7 +701,7 @@ func (_c *SuppressionCreateBulk) ExecX(ctx context.Context) {
 //		// Override some of the fields with custom
 //		// update values.
 //		Update(func(u *ent.SuppressionUpsert) {
-//			SetEmail(v+v).
+//			SetChannel(v+v).
 //		}).
 //		Exec(ctx)
 func (_c *SuppressionCreateBulk) OnConflict(opts ...sql.ConflictOption) *SuppressionUpsertBulk {
@@ -727,17 +783,31 @@ func (u *SuppressionUpsertBulk) Update(set func(*SuppressionUpsert)) *Suppressio
 	return u
 }
 
-// SetEmail sets the "email" field.
-func (u *SuppressionUpsertBulk) SetEmail(v string) *SuppressionUpsertBulk {
+// SetChannel sets the "channel" field.
+func (u *SuppressionUpsertBulk) SetChannel(v suppression.Channel) *SuppressionUpsertBulk {
 	return u.Update(func(s *SuppressionUpsert) {
-		s.SetEmail(v)
+		s.SetChannel(v)
 	})
 }
 
-// UpdateEmail sets the "email" field to the value that was provided on create.
-func (u *SuppressionUpsertBulk) UpdateEmail() *SuppressionUpsertBulk {
+// UpdateChannel sets the "channel" field to the value that was provided on create.
+func (u *SuppressionUpsertBulk) UpdateChannel() *SuppressionUpsertBulk {
 	return u.Update(func(s *SuppressionUpsert) {
-		s.UpdateEmail()
+		s.UpdateChannel()
+	})
+}
+
+// SetDestination sets the "destination" field.
+func (u *SuppressionUpsertBulk) SetDestination(v string) *SuppressionUpsertBulk {
+	return u.Update(func(s *SuppressionUpsert) {
+		s.SetDestination(v)
+	})
+}
+
+// UpdateDestination sets the "destination" field to the value that was provided on create.
+func (u *SuppressionUpsertBulk) UpdateDestination() *SuppressionUpsertBulk {
+	return u.Update(func(s *SuppressionUpsert) {
+		s.UpdateDestination()
 	})
 }
 

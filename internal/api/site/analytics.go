@@ -13,6 +13,7 @@ import (
 	"github.com/mokevnin/1mail/ent/broadcastrecipient"
 	"github.com/mokevnin/1mail/ent/contact"
 	siteapi "github.com/mokevnin/1mail/gen/site"
+	"github.com/mokevnin/1mail/internal/eligibility"
 )
 
 // analyticsDayFormat is the bucket label format for the engagement time series.
@@ -84,14 +85,16 @@ func (h *Handlers) analyticsContacts(ctx context.Context, ws int64, since time.T
 	if err != nil {
 		return out, err
 	}
-	active, err := h.ent.Contact.Query().Where(contact.WorkspaceID(ws), contact.StatusEQ(contact.StatusActive)).Count(ctx)
+	// Eligibility is derived, not stored (ADR 0001): "unsubscribed" here means the
+	// contact's email is globally non-mailable (suppressed or opted out of
+	// everything); "active" is the remainder.
+	unsub, err := h.ent.Contact.Query().
+		Where(contact.WorkspaceID(ws), eligibility.GloballyOptedOut(eligibility.ChannelEmail)).
+		Count(ctx)
 	if err != nil {
 		return out, err
 	}
-	unsub, err := h.ent.Contact.Query().Where(contact.WorkspaceID(ws), contact.StatusEQ(contact.StatusUnsubscribed)).Count(ctx)
-	if err != nil {
-		return out, err
-	}
+	active := total - unsub
 	newInRange, err := h.ent.Contact.Query().Where(contact.WorkspaceID(ws), contact.CreatedAtGTE(since)).Count(ctx)
 	if err != nil {
 		return out, err

@@ -901,32 +901,10 @@ func (s *SiteContactResource) Validate() error {
 			Error: err,
 		})
 	}
-	if err := func() error {
-		if err := s.Status.Validate(); err != nil {
-			return err
-		}
-		return nil
-	}(); err != nil {
-		failures = append(failures, validate.FieldError{
-			Name:  "status",
-			Error: err,
-		})
-	}
 	if len(failures) > 0 {
 		return &validate.Error{Fields: failures}
 	}
 	return nil
-}
-
-func (s SiteContactStatus) Validate() error {
-	switch s {
-	case "active":
-		return nil
-	case "unsubscribed":
-		return nil
-	default:
-		return errors.Errorf("invalid value: %v", s)
-	}
 }
 
 func (s *SiteContactsCreateConflict) Validate() error {
@@ -1230,13 +1208,20 @@ func (s *SiteCreateSuppressionInput) Validate() error {
 
 	var failures []validate.FieldError
 	if err := func() error {
-		if err := s.Email.Validate(); err != nil {
-			return err
+		if value, ok := s.Channel.Get(); ok {
+			if err := func() error {
+				if err := value.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
 		}
 		return nil
 	}(); err != nil {
 		failures = append(failures, validate.FieldError{
-			Name:  "email",
+			Name:  "channel",
 			Error: err,
 		})
 	}
@@ -2211,10 +2196,17 @@ func (s SiteSmtpConfigKind) Validate() error {
 	}
 }
 
+func (s SiteSuppressionChannel) Validate() error {
+	switch s {
+	case "email":
+		return nil
+	default:
+		return errors.Errorf("invalid value: %v", s)
+	}
+}
+
 func (s SiteSuppressionReason) Validate() error {
 	switch s {
-	case "unsubscribed":
-		return nil
 	case "bounce":
 		return nil
 	case "complaint":
@@ -2240,6 +2232,17 @@ func (s *SiteSuppressionResource) Validate() error {
 	}(); err != nil {
 		failures = append(failures, validate.FieldError{
 			Name:  "id",
+			Error: err,
+		})
+	}
+	if err := func() error {
+		if err := s.Channel.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "channel",
 			Error: err,
 		})
 	}

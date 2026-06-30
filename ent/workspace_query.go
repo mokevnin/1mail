@@ -25,6 +25,7 @@ import (
 	"github.com/mokevnin/1mail/ent/predicate"
 	"github.com/mokevnin/1mail/ent/segment"
 	"github.com/mokevnin/1mail/ent/suppression"
+	"github.com/mokevnin/1mail/ent/unsubscribe"
 	"github.com/mokevnin/1mail/ent/user"
 	"github.com/mokevnin/1mail/ent/visitor"
 	"github.com/mokevnin/1mail/ent/webhookendpoint"
@@ -52,6 +53,7 @@ type WorkspaceQuery struct {
 	withAutomationRuns      *AutomationRunQuery
 	withWebhookEndpoints    *WebhookEndpointQuery
 	withSuppressions        *SuppressionQuery
+	withUnsubscribes        *UnsubscribeQuery
 	withUser                *UserQuery
 	modifiers               []func(*sql.Selector)
 	// intermediate query (i.e. traversal path).
@@ -398,6 +400,28 @@ func (_q *WorkspaceQuery) QuerySuppressions() *SuppressionQuery {
 	return query
 }
 
+// QueryUnsubscribes chains the current query on the "unsubscribes" edge.
+func (_q *WorkspaceQuery) QueryUnsubscribes() *UnsubscribeQuery {
+	query := (&UnsubscribeClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workspace.Table, workspace.FieldID, selector),
+			sqlgraph.To(unsubscribe.Table, unsubscribe.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, workspace.UnsubscribesTable, workspace.UnsubscribesColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
 // QueryUser chains the current query on the "user" edge.
 func (_q *WorkspaceQuery) QueryUser() *UserQuery {
 	query := (&UserClient{config: _q.config}).Query()
@@ -626,6 +650,7 @@ func (_q *WorkspaceQuery) Clone() *WorkspaceQuery {
 		withAutomationRuns:      _q.withAutomationRuns.Clone(),
 		withWebhookEndpoints:    _q.withWebhookEndpoints.Clone(),
 		withSuppressions:        _q.withSuppressions.Clone(),
+		withUnsubscribes:        _q.withUnsubscribes.Clone(),
 		withUser:                _q.withUser.Clone(),
 		// clone intermediate query.
 		sql:       _q.sql.Clone(),
@@ -788,6 +813,17 @@ func (_q *WorkspaceQuery) WithSuppressions(opts ...func(*SuppressionQuery)) *Wor
 	return _q
 }
 
+// WithUnsubscribes tells the query-builder to eager-load the nodes that are connected to
+// the "unsubscribes" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *WorkspaceQuery) WithUnsubscribes(opts ...func(*UnsubscribeQuery)) *WorkspaceQuery {
+	query := (&UnsubscribeClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withUnsubscribes = query
+	return _q
+}
+
 // WithUser tells the query-builder to eager-load the nodes that are connected to
 // the "user" edge. The optional arguments are used to configure the query builder of the edge.
 func (_q *WorkspaceQuery) WithUser(opts ...func(*UserQuery)) *WorkspaceQuery {
@@ -877,7 +913,7 @@ func (_q *WorkspaceQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Wo
 	var (
 		nodes       = []*Workspace{}
 		_spec       = _q.querySpec()
-		loadedTypes = [15]bool{
+		loadedTypes = [16]bool{
 			_q.withContacts != nil,
 			_q.withCustomFields != nil,
 			_q.withSegments != nil,
@@ -892,6 +928,7 @@ func (_q *WorkspaceQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Wo
 			_q.withAutomationRuns != nil,
 			_q.withWebhookEndpoints != nil,
 			_q.withSuppressions != nil,
+			_q.withUnsubscribes != nil,
 			_q.withUser != nil,
 		}
 	)
@@ -1013,6 +1050,13 @@ func (_q *WorkspaceQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Wo
 		if err := _q.loadSuppressions(ctx, query, nodes,
 			func(n *Workspace) { n.Edges.Suppressions = []*Suppression{} },
 			func(n *Workspace, e *Suppression) { n.Edges.Suppressions = append(n.Edges.Suppressions, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := _q.withUnsubscribes; query != nil {
+		if err := _q.loadUnsubscribes(ctx, query, nodes,
+			func(n *Workspace) { n.Edges.Unsubscribes = []*Unsubscribe{} },
+			func(n *Workspace, e *Unsubscribe) { n.Edges.Unsubscribes = append(n.Edges.Unsubscribes, e) }); err != nil {
 			return nil, err
 		}
 	}
@@ -1430,6 +1474,36 @@ func (_q *WorkspaceQuery) loadSuppressions(ctx context.Context, query *Suppressi
 	}
 	query.Where(predicate.Suppression(func(s *sql.Selector) {
 		s.Where(sql.InValues(s.C(workspace.SuppressionsColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.WorkspaceID
+		node, ok := nodeids[fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "workspace_id" returned %v for node %v`, fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (_q *WorkspaceQuery) loadUnsubscribes(ctx context.Context, query *UnsubscribeQuery, nodes []*Workspace, init func(*Workspace), assign func(*Workspace, *Unsubscribe)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[int64]*Workspace)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(unsubscribe.FieldWorkspaceID)
+	}
+	query.Where(predicate.Unsubscribe(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(workspace.UnsubscribesColumn), fks...))
 	}))
 	neighbors, err := query.All(ctx)
 	if err != nil {

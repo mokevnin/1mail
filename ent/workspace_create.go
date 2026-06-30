@@ -23,6 +23,7 @@ import (
 	"github.com/mokevnin/1mail/ent/integration"
 	"github.com/mokevnin/1mail/ent/segment"
 	"github.com/mokevnin/1mail/ent/suppression"
+	"github.com/mokevnin/1mail/ent/unsubscribe"
 	"github.com/mokevnin/1mail/ent/user"
 	"github.com/mokevnin/1mail/ent/visitor"
 	"github.com/mokevnin/1mail/ent/webhookendpoint"
@@ -317,6 +318,21 @@ func (_c *WorkspaceCreate) AddSuppressions(v ...*Suppression) *WorkspaceCreate {
 		ids[i] = v[i].ID
 	}
 	return _c.AddSuppressionIDs(ids...)
+}
+
+// AddUnsubscribeIDs adds the "unsubscribes" edge to the Unsubscribe entity by IDs.
+func (_c *WorkspaceCreate) AddUnsubscribeIDs(ids ...int64) *WorkspaceCreate {
+	_c.mutation.AddUnsubscribeIDs(ids...)
+	return _c
+}
+
+// AddUnsubscribes adds the "unsubscribes" edges to the Unsubscribe entity.
+func (_c *WorkspaceCreate) AddUnsubscribes(v ...*Unsubscribe) *WorkspaceCreate {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddUnsubscribeIDs(ids...)
 }
 
 // SetUser sets the "user" edge to the User entity.
@@ -683,6 +699,22 @@ func (_c *WorkspaceCreate) createSpec() (*Workspace, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(suppression.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.UnsubscribesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   workspace.UnsubscribesTable,
+			Columns: []string{workspace.UnsubscribesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(unsubscribe.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {

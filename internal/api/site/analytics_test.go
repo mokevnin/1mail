@@ -7,6 +7,7 @@ import (
 
 	"github.com/mokevnin/1mail/ent"
 	"github.com/mokevnin/1mail/ent/broadcastrecipient"
+	"github.com/mokevnin/1mail/ent/suppression"
 	siteapi "github.com/mokevnin/1mail/gen/site"
 	"github.com/mokevnin/1mail/internal/testhelper"
 	"github.com/stretchr/testify/assert"
@@ -56,8 +57,10 @@ func seedRecipient(t *testing.T, db *ent.Client, ws, broadcastID, contactID int6
 
 // Engagement KPIs and the time series are range-scoped from the delivery log and
 // must reconcile; contacts/automations are point-in-time snapshots. Fixture
-// workspace "acme" (id 1) has 3 contacts (2 active, 1 unsubscribed) created in
-// January, so newInRange is 0 within any recent window.
+// workspace "acme" (id 1) has 3 contacts created in January, so newInRange is 0
+// within any recent window. The "unsubscribed" KPI is derived (ADR 0001): a
+// contact counts only when globally non-mailable (suppressed or opted out of
+// everything), which the test sets up explicitly.
 func TestSiteAnalyticsOverview(t *testing.T) {
 	env := testhelper.Setup(t)
 	c := siteClient(t, env, "info@1mail.com")
@@ -89,6 +92,18 @@ func TestSiteAnalyticsOverview(t *testing.T) {
 	late, err := db.Contact.Create().SetWorkspaceID(acme).SetEmail("late@example.com").Save(ctx)
 	require.NoError(t, err)
 	seedRecipient(t, db, acme, b2.ID, late.ID, &d100, &d2, nil)
+
+	// Make alice (fixture contact id 1) globally non-mailable so the derived
+	// "unsubscribed" KPI is 1 (eligibility is not a stored contact status). Bob
+	// (id 2) is only unsubscribed from "broadcasts" in the fixtures — a per-source
+	// opt-out that must NOT count toward the global KPI, so he is the negative
+	// control: if GloballyOptedOut wrongly counted per-source opt-outs, unsub
+	// would be 2 and this test would fail.
+	alice := db.Contact.GetX(ctx, 1)
+	_, err = db.Suppression.Create().SetWorkspaceID(acme).
+		SetChannel(suppression.ChannelEmail).SetDestination(*alice.Email).
+		SetReason(suppression.ReasonBounce).Save(ctx)
+	require.NoError(t, err)
 
 	// A second workspace's delivery must not leak into acme's numbers.
 	other, err := db.Workspace.Create().

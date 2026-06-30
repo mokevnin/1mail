@@ -34,15 +34,6 @@ const contactFields: Field[] = [
   { name: 'first_name', label: 'First name' },
   { name: 'last_name', label: 'Last name' },
   { name: 'time_zone', label: 'Time zone' },
-  {
-    name: 'status',
-    label: 'Status',
-    valueEditorType: 'select',
-    values: [
-      { name: 'active', label: 'Active' },
-      { name: 'unsubscribed', label: 'Unsubscribed' },
-    ],
-  },
 ]
 
 const emptyQuery: RuleGroupType = { combinator: 'and', rules: [] }

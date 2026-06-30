@@ -1933,10 +1933,6 @@ func (s *ContactResource) encodeFields(e *jx.Encoder) {
 		}
 	}
 	{
-		e.FieldStart("status")
-		s.Status.Encode(e)
-	}
-	{
 		e.FieldStart("createdAt")
 		s.CreatedAt.Encode(e)
 	}
@@ -1946,18 +1942,17 @@ func (s *ContactResource) encodeFields(e *jx.Encoder) {
 	}
 }
 
-var jsonFieldsNameOfContactResource = [11]string{
-	0:  "id",
-	1:  "subjectId",
-	2:  "email",
-	3:  "phone",
-	4:  "firstName",
-	5:  "lastName",
-	6:  "timeZone",
-	7:  "customFields",
-	8:  "status",
-	9:  "createdAt",
-	10: "updatedAt",
+var jsonFieldsNameOfContactResource = [10]string{
+	0: "id",
+	1: "subjectId",
+	2: "email",
+	3: "phone",
+	4: "firstName",
+	5: "lastName",
+	6: "timeZone",
+	7: "customFields",
+	8: "createdAt",
+	9: "updatedAt",
 }
 
 // Decode decodes ContactResource from json.
@@ -2049,18 +2044,8 @@ func (s *ContactResource) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"customFields\"")
 			}
-		case "status":
-			requiredBitSet[1] |= 1 << 0
-			if err := func() error {
-				if err := s.Status.Decode(d); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"status\"")
-			}
 		case "createdAt":
-			requiredBitSet[1] |= 1 << 1
+			requiredBitSet[1] |= 1 << 0
 			if err := func() error {
 				if err := s.CreatedAt.Decode(d); err != nil {
 					return err
@@ -2070,7 +2055,7 @@ func (s *ContactResource) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"createdAt\"")
 			}
 		case "updatedAt":
-			requiredBitSet[1] |= 1 << 2
+			requiredBitSet[1] |= 1 << 1
 			if err := func() error {
 				if err := s.UpdatedAt.Decode(d); err != nil {
 					return err
@@ -2090,7 +2075,7 @@ func (s *ContactResource) Decode(d *jx.Decoder) error {
 	var failures []validate.FieldError
 	for i, mask := range [2]uint8{
 		0b00000001,
-		0b00000111,
+		0b00000011,
 	} {
 		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
 			// Mask only required fields and check equality to mask using XOR.
@@ -2190,46 +2175,6 @@ func (s ContactResourceCustomFields) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
 func (s *ContactResourceCustomFields) UnmarshalJSON(data []byte) error {
-	d := jx.DecodeBytes(data)
-	return s.Decode(d)
-}
-
-// Encode encodes ContactStatus as json.
-func (s ContactStatus) Encode(e *jx.Encoder) {
-	e.Str(string(s))
-}
-
-// Decode decodes ContactStatus from json.
-func (s *ContactStatus) Decode(d *jx.Decoder) error {
-	if s == nil {
-		return errors.New("invalid: unable to decode ContactStatus to nil")
-	}
-	v, err := d.StrBytes()
-	if err != nil {
-		return err
-	}
-	// Try to use constant string.
-	switch ContactStatus(v) {
-	case ContactStatusActive:
-		*s = ContactStatusActive
-	case ContactStatusUnsubscribed:
-		*s = ContactStatusUnsubscribed
-	default:
-		*s = ContactStatus(v)
-	}
-
-	return nil
-}
-
-// MarshalJSON implements stdjson.Marshaler.
-func (s ContactStatus) MarshalJSON() ([]byte, error) {
-	e := jx.Encoder{}
-	s.Encode(&e)
-	return e.Bytes(), nil
-}
-
-// UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *ContactStatus) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }

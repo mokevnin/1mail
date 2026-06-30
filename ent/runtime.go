@@ -18,6 +18,7 @@ import (
 	"github.com/mokevnin/1mail/ent/schema"
 	"github.com/mokevnin/1mail/ent/segment"
 	"github.com/mokevnin/1mail/ent/suppression"
+	"github.com/mokevnin/1mail/ent/unsubscribe"
 	"github.com/mokevnin/1mail/ent/user"
 	"github.com/mokevnin/1mail/ent/visitor"
 	"github.com/mokevnin/1mail/ent/webhookendpoint"
@@ -177,11 +178,11 @@ func init() {
 	contactFields := schema.Contact{}.Fields()
 	_ = contactFields
 	// contactDescCreatedAt is the schema descriptor for created_at field.
-	contactDescCreatedAt := contactFields[10].Descriptor()
+	contactDescCreatedAt := contactFields[9].Descriptor()
 	// contact.DefaultCreatedAt holds the default value on creation for the created_at field.
 	contact.DefaultCreatedAt = contactDescCreatedAt.Default.(func() time.Time)
 	// contactDescUpdatedAt is the schema descriptor for updated_at field.
-	contactDescUpdatedAt := contactFields[11].Descriptor()
+	contactDescUpdatedAt := contactFields[10].Descriptor()
 	// contact.DefaultUpdatedAt holds the default value on creation for the updated_at field.
 	contact.DefaultUpdatedAt = contactDescUpdatedAt.Default.(func() time.Time)
 	// contact.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
@@ -282,20 +283,40 @@ func init() {
 	segment.UpdateDefaultUpdatedAt = segmentDescUpdatedAt.UpdateDefault.(func() time.Time)
 	suppressionFields := schema.Suppression{}.Fields()
 	_ = suppressionFields
-	// suppressionDescEmail is the schema descriptor for email field.
-	suppressionDescEmail := suppressionFields[1].Descriptor()
-	// suppression.EmailValidator is a validator for the "email" field. It is called by the builders before save.
-	suppression.EmailValidator = suppressionDescEmail.Validators[0].(func(string) error)
+	// suppressionDescDestination is the schema descriptor for destination field.
+	suppressionDescDestination := suppressionFields[2].Descriptor()
+	// suppression.DestinationValidator is a validator for the "destination" field. It is called by the builders before save.
+	suppression.DestinationValidator = suppressionDescDestination.Validators[0].(func(string) error)
 	// suppressionDescCreatedAt is the schema descriptor for created_at field.
-	suppressionDescCreatedAt := suppressionFields[5].Descriptor()
+	suppressionDescCreatedAt := suppressionFields[6].Descriptor()
 	// suppression.DefaultCreatedAt holds the default value on creation for the created_at field.
 	suppression.DefaultCreatedAt = suppressionDescCreatedAt.Default.(func() time.Time)
 	// suppressionDescUpdatedAt is the schema descriptor for updated_at field.
-	suppressionDescUpdatedAt := suppressionFields[6].Descriptor()
+	suppressionDescUpdatedAt := suppressionFields[7].Descriptor()
 	// suppression.DefaultUpdatedAt holds the default value on creation for the updated_at field.
 	suppression.DefaultUpdatedAt = suppressionDescUpdatedAt.Default.(func() time.Time)
 	// suppression.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	suppression.UpdateDefaultUpdatedAt = suppressionDescUpdatedAt.UpdateDefault.(func() time.Time)
+	unsubscribeFields := schema.Unsubscribe{}.Fields()
+	_ = unsubscribeFields
+	// unsubscribeDescDestination is the schema descriptor for destination field.
+	unsubscribeDescDestination := unsubscribeFields[2].Descriptor()
+	// unsubscribe.DestinationValidator is a validator for the "destination" field. It is called by the builders before save.
+	unsubscribe.DestinationValidator = unsubscribeDescDestination.Validators[0].(func(string) error)
+	// unsubscribeDescSendingSource is the schema descriptor for sending_source field.
+	unsubscribeDescSendingSource := unsubscribeFields[3].Descriptor()
+	// unsubscribe.SendingSourceValidator is a validator for the "sending_source" field. It is called by the builders before save.
+	unsubscribe.SendingSourceValidator = unsubscribeDescSendingSource.Validators[0].(func(string) error)
+	// unsubscribeDescCreatedAt is the schema descriptor for created_at field.
+	unsubscribeDescCreatedAt := unsubscribeFields[6].Descriptor()
+	// unsubscribe.DefaultCreatedAt holds the default value on creation for the created_at field.
+	unsubscribe.DefaultCreatedAt = unsubscribeDescCreatedAt.Default.(func() time.Time)
+	// unsubscribeDescUpdatedAt is the schema descriptor for updated_at field.
+	unsubscribeDescUpdatedAt := unsubscribeFields[7].Descriptor()
+	// unsubscribe.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	unsubscribe.DefaultUpdatedAt = unsubscribeDescUpdatedAt.Default.(func() time.Time)
+	// unsubscribe.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	unsubscribe.UpdateDefaultUpdatedAt = unsubscribeDescUpdatedAt.UpdateDefault.(func() time.Time)
 	userFields := schema.User{}.Fields()
 	_ = userFields
 	// userDescName is the schema descriptor for name field.

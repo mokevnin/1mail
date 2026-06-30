@@ -15,8 +15,10 @@ const (
 	Label = "suppression"
 	// FieldID holds the string denoting the id field in the database.
 	FieldID = "id"
-	// FieldEmail holds the string denoting the email field in the database.
-	FieldEmail = "email"
+	// FieldChannel holds the string denoting the channel field in the database.
+	FieldChannel = "channel"
+	// FieldDestination holds the string denoting the destination field in the database.
+	FieldDestination = "destination"
 	// FieldReason holds the string denoting the reason field in the database.
 	FieldReason = "reason"
 	// FieldContactID holds the string denoting the contact_id field in the database.
@@ -43,7 +45,8 @@ const (
 // Columns holds all SQL columns for suppression fields.
 var Columns = []string{
 	FieldID,
-	FieldEmail,
+	FieldChannel,
+	FieldDestination,
 	FieldReason,
 	FieldContactID,
 	FieldWorkspaceID,
@@ -62,8 +65,8 @@ func ValidColumn(column string) bool {
 }
 
 var (
-	// EmailValidator is a validator for the "email" field. It is called by the builders before save.
-	EmailValidator func(string) error
+	// DestinationValidator is a validator for the "destination" field. It is called by the builders before save.
+	DestinationValidator func(string) error
 	// DefaultCreatedAt holds the default value on creation for the "created_at" field.
 	DefaultCreatedAt func() time.Time
 	// DefaultUpdatedAt holds the default value on creation for the "updated_at" field.
@@ -71,6 +74,31 @@ var (
 	// UpdateDefaultUpdatedAt holds the default value on update for the "updated_at" field.
 	UpdateDefaultUpdatedAt func() time.Time
 )
+
+// Channel defines the type for the "channel" enum field.
+type Channel string
+
+// ChannelEmail is the default value of the Channel enum.
+const DefaultChannel = ChannelEmail
+
+// Channel values.
+const (
+	ChannelEmail Channel = "email"
+)
+
+func (c Channel) String() string {
+	return string(c)
+}
+
+// ChannelValidator is a validator for the "channel" field enum values. It is called by the builders before save.
+func ChannelValidator(c Channel) error {
+	switch c {
+	case ChannelEmail:
+		return nil
+	default:
+		return fmt.Errorf("suppression: invalid enum value for channel field: %q", c)
+	}
+}
 
 // Reason defines the type for the "reason" enum field.
 type Reason string
@@ -80,10 +108,9 @@ const DefaultReason = ReasonManual
 
 // Reason values.
 const (
-	ReasonUnsubscribed Reason = "unsubscribed"
-	ReasonBounce       Reason = "bounce"
-	ReasonComplaint    Reason = "complaint"
-	ReasonManual       Reason = "manual"
+	ReasonBounce    Reason = "bounce"
+	ReasonComplaint Reason = "complaint"
+	ReasonManual    Reason = "manual"
 )
 
 func (r Reason) String() string {
@@ -93,7 +120,7 @@ func (r Reason) String() string {
 // ReasonValidator is a validator for the "reason" field enum values. It is called by the builders before save.
 func ReasonValidator(r Reason) error {
 	switch r {
-	case ReasonUnsubscribed, ReasonBounce, ReasonComplaint, ReasonManual:
+	case ReasonBounce, ReasonComplaint, ReasonManual:
 		return nil
 	default:
 		return fmt.Errorf("suppression: invalid enum value for reason field: %q", r)
@@ -108,9 +135,14 @@ func ByID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldID, opts...).ToFunc()
 }
 
-// ByEmail orders the results by the email field.
-func ByEmail(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldEmail, opts...).ToFunc()
+// ByChannel orders the results by the channel field.
+func ByChannel(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldChannel, opts...).ToFunc()
+}
+
+// ByDestination orders the results by the destination field.
+func ByDestination(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldDestination, opts...).ToFunc()
 }
 
 // ByReason orders the results by the reason field.

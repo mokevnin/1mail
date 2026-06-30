@@ -34,9 +34,6 @@ func (h *Handlers) SiteContactsList(ctx context.Context, params siteapi.SiteCont
 	page, pageSize := pagination.Normalize(pagePtr, pageSizePtr)
 
 	q := h.ent.Contact.Query().Where(contact.WorkspaceID(ws))
-	if v, ok := params.Status.Get(); ok {
-		q = q.Where(contact.StatusEQ(contact.Status(string(v))))
-	}
 
 	total, err := q.Count(ctx)
 	if err != nil {

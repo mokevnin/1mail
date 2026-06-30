@@ -17,17 +17,17 @@ func TestSiteSuppressionsCRUD(t *testing.T) {
 	ctx := context.Background()
 	slug := "acme"
 
-	// Create normalizes the address and defaults the reason to manual.
-	created, err := c.SiteSuppressionsCreate(ctx, &siteapi.SiteCreateSuppressionInput{Email: "Blocked@Example.com"},
+	// Create normalizes the destination and defaults the reason to manual.
+	created, err := c.SiteSuppressionsCreate(ctx, &siteapi.SiteCreateSuppressionInput{Destination: "Blocked@Example.com"},
 		siteapi.SiteSuppressionsCreateParams{WorkspaceSlug: slug})
 	require.NoError(t, err)
 	res, ok := created.(*siteapi.SiteSuppressionResource)
 	require.Truef(t, ok, "got %T", created)
-	assert.Equal(t, "blocked@example.com", res.Email)
+	assert.Equal(t, "blocked@example.com", res.Destination)
 	assert.Equal(t, siteapi.SiteSuppressionReasonManual, res.Reason)
 
-	// Suppressing the same address again is idempotent (no duplicate).
-	again, err := c.SiteSuppressionsCreate(ctx, &siteapi.SiteCreateSuppressionInput{Email: "blocked@example.com"},
+	// Suppressing the same destination again is idempotent (no duplicate).
+	again, err := c.SiteSuppressionsCreate(ctx, &siteapi.SiteCreateSuppressionInput{Destination: "blocked@example.com"},
 		siteapi.SiteSuppressionsCreateParams{WorkspaceSlug: slug})
 	require.NoError(t, err)
 	againRes, ok := again.(*siteapi.SiteSuppressionResource)

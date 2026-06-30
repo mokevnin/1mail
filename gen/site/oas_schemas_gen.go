@@ -994,52 +994,6 @@ func (o OptSiteAnalyticsRange) Or(d SiteAnalyticsRange) SiteAnalyticsRange {
 	return d
 }
 
-// NewOptSiteContactStatus returns new OptSiteContactStatus with value set to v.
-func NewOptSiteContactStatus(v SiteContactStatus) OptSiteContactStatus {
-	return OptSiteContactStatus{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptSiteContactStatus is optional SiteContactStatus.
-type OptSiteContactStatus struct {
-	Value SiteContactStatus
-	Set   bool
-}
-
-// IsSet returns true if OptSiteContactStatus was set.
-func (o OptSiteContactStatus) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptSiteContactStatus) Reset() {
-	var v SiteContactStatus
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptSiteContactStatus) SetTo(v SiteContactStatus) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptSiteContactStatus) Get() (v SiteContactStatus, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptSiteContactStatus) Or(d SiteContactStatus) SiteContactStatus {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
 // NewOptSiteDirectLoginResultAttrs returns new OptSiteDirectLoginResultAttrs with value set to v.
 func NewOptSiteDirectLoginResultAttrs(v SiteDirectLoginResultAttrs) OptSiteDirectLoginResultAttrs {
 	return OptSiteDirectLoginResultAttrs{
@@ -1126,6 +1080,52 @@ func (o OptSiteSegmentType) Get() (v SiteSegmentType, ok bool) {
 
 // Or returns value if set, or given parameter if does not.
 func (o OptSiteSegmentType) Or(d SiteSegmentType) SiteSegmentType {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptSiteSuppressionChannel returns new OptSiteSuppressionChannel with value set to v.
+func NewOptSiteSuppressionChannel(v SiteSuppressionChannel) OptSiteSuppressionChannel {
+	return OptSiteSuppressionChannel{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptSiteSuppressionChannel is optional SiteSuppressionChannel.
+type OptSiteSuppressionChannel struct {
+	Value SiteSuppressionChannel
+	Set   bool
+}
+
+// IsSet returns true if OptSiteSuppressionChannel was set.
+func (o OptSiteSuppressionChannel) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptSiteSuppressionChannel) Reset() {
+	var v SiteSuppressionChannel
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptSiteSuppressionChannel) SetTo(v SiteSuppressionChannel) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptSiteSuppressionChannel) Get() (v SiteSuppressionChannel, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptSiteSuppressionChannel) Or(d SiteSuppressionChannel) SiteSuppressionChannel {
 	if v, ok := o.Get(); ok {
 		return v
 	}
@@ -2607,8 +2607,6 @@ type SiteContactResource struct {
 	TimeZone OptNilTimeZoneName `json:"timeZone"`
 	// Typed custom field values keyed by the field's machine key.
 	CustomFields OptNilSiteContactResourceCustomFields `json:"customFields"`
-	// Current status.
-	Status SiteContactStatus `json:"status"`
 	// Creation timestamp.
 	CreatedAt Timestamp `json:"createdAt"`
 	// Last update timestamp.
@@ -2653,11 +2651,6 @@ func (s *SiteContactResource) GetTimeZone() OptNilTimeZoneName {
 // GetCustomFields returns the value of CustomFields.
 func (s *SiteContactResource) GetCustomFields() OptNilSiteContactResourceCustomFields {
 	return s.CustomFields
-}
-
-// GetStatus returns the value of Status.
-func (s *SiteContactResource) GetStatus() SiteContactStatus {
-	return s.Status
 }
 
 // GetCreatedAt returns the value of CreatedAt.
@@ -2710,11 +2703,6 @@ func (s *SiteContactResource) SetCustomFields(val OptNilSiteContactResourceCusto
 	s.CustomFields = val
 }
 
-// SetStatus sets the value of Status.
-func (s *SiteContactResource) SetStatus(val SiteContactStatus) {
-	s.Status = val
-}
-
 // SetCreatedAt sets the value of CreatedAt.
 func (s *SiteContactResource) SetCreatedAt(val Timestamp) {
 	s.CreatedAt = val
@@ -2739,49 +2727,6 @@ func (s *SiteContactResourceCustomFields) init() SiteContactResourceCustomFields
 		*s = m
 	}
 	return m
-}
-
-// Contact status for site UI.
-// Ref: #/components/schemas/SiteContactStatus
-type SiteContactStatus string
-
-const (
-	SiteContactStatusActive       SiteContactStatus = "active"
-	SiteContactStatusUnsubscribed SiteContactStatus = "unsubscribed"
-)
-
-// AllValues returns all SiteContactStatus values.
-func (SiteContactStatus) AllValues() []SiteContactStatus {
-	return []SiteContactStatus{
-		SiteContactStatusActive,
-		SiteContactStatusUnsubscribed,
-	}
-}
-
-// MarshalText implements encoding.TextMarshaler.
-func (s SiteContactStatus) MarshalText() ([]byte, error) {
-	switch s {
-	case SiteContactStatusActive:
-		return []byte(s), nil
-	case SiteContactStatusUnsubscribed:
-		return []byte(s), nil
-	default:
-		return nil, errors.Errorf("invalid value: %q", s)
-	}
-}
-
-// UnmarshalText implements encoding.TextUnmarshaler.
-func (s *SiteContactStatus) UnmarshalText(data []byte) error {
-	switch SiteContactStatus(data) {
-	case SiteContactStatusActive:
-		*s = SiteContactStatusActive
-		return nil
-	case SiteContactStatusUnsubscribed:
-		*s = SiteContactStatusUnsubscribed
-		return nil
-	default:
-		return errors.Errorf("invalid value: %q", data)
-	}
 }
 
 type SiteContactsCreateConflict ProblemDetails
@@ -3267,20 +3212,33 @@ func (s *SiteCreateSegmentInput) SetDefinition(val OptNilString) {
 	s.Definition = val
 }
 
-// Site request body for manually suppressing an address.
+// Site request body for manually suppressing a destination.
 // Ref: #/components/schemas/SiteCreateSuppressionInput
 type SiteCreateSuppressionInput struct {
-	Email EmailAddress `json:"email"`
+	// Channel (defaults to email when omitted).
+	Channel OptSiteSuppressionChannel `json:"channel"`
+	// The destination address to suppress.
+	Destination string `json:"destination"`
 }
 
-// GetEmail returns the value of Email.
-func (s *SiteCreateSuppressionInput) GetEmail() EmailAddress {
-	return s.Email
+// GetChannel returns the value of Channel.
+func (s *SiteCreateSuppressionInput) GetChannel() OptSiteSuppressionChannel {
+	return s.Channel
 }
 
-// SetEmail sets the value of Email.
-func (s *SiteCreateSuppressionInput) SetEmail(val EmailAddress) {
-	s.Email = val
+// GetDestination returns the value of Destination.
+func (s *SiteCreateSuppressionInput) GetDestination() string {
+	return s.Destination
+}
+
+// SetChannel sets the value of Channel.
+func (s *SiteCreateSuppressionInput) SetChannel(val OptSiteSuppressionChannel) {
+	s.Channel = val
+}
+
+// SetDestination sets the value of Destination.
+func (s *SiteCreateSuppressionInput) SetDestination(val string) {
+	s.Destination = val
 }
 
 // Create a workspace API token.
@@ -5277,21 +5235,56 @@ func (s *SiteSmtpConfigKind) UnmarshalText(data []byte) error {
 	}
 }
 
-// Why an address is on the suppression (do-not-send) list.
+// The channel a suppression applies to (email today; sms reserved).
+// Ref: #/components/schemas/SiteSuppressionChannel
+type SiteSuppressionChannel string
+
+const (
+	SiteSuppressionChannelEmail SiteSuppressionChannel = "email"
+)
+
+// AllValues returns all SiteSuppressionChannel values.
+func (SiteSuppressionChannel) AllValues() []SiteSuppressionChannel {
+	return []SiteSuppressionChannel{
+		SiteSuppressionChannelEmail,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s SiteSuppressionChannel) MarshalText() ([]byte, error) {
+	switch s {
+	case SiteSuppressionChannelEmail:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *SiteSuppressionChannel) UnmarshalText(data []byte) error {
+	switch SiteSuppressionChannel(data) {
+	case SiteSuppressionChannelEmail:
+		*s = SiteSuppressionChannelEmail
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// Why a destination is on the suppression (do-not-send) list. Unsubscribe is not a suppression — it
+// is a separate, per-source opt-out.
 // Ref: #/components/schemas/SiteSuppressionReason
 type SiteSuppressionReason string
 
 const (
-	SiteSuppressionReasonUnsubscribed SiteSuppressionReason = "unsubscribed"
-	SiteSuppressionReasonBounce       SiteSuppressionReason = "bounce"
-	SiteSuppressionReasonComplaint    SiteSuppressionReason = "complaint"
-	SiteSuppressionReasonManual       SiteSuppressionReason = "manual"
+	SiteSuppressionReasonBounce    SiteSuppressionReason = "bounce"
+	SiteSuppressionReasonComplaint SiteSuppressionReason = "complaint"
+	SiteSuppressionReasonManual    SiteSuppressionReason = "manual"
 )
 
 // AllValues returns all SiteSuppressionReason values.
 func (SiteSuppressionReason) AllValues() []SiteSuppressionReason {
 	return []SiteSuppressionReason{
-		SiteSuppressionReasonUnsubscribed,
 		SiteSuppressionReasonBounce,
 		SiteSuppressionReasonComplaint,
 		SiteSuppressionReasonManual,
@@ -5301,8 +5294,6 @@ func (SiteSuppressionReason) AllValues() []SiteSuppressionReason {
 // MarshalText implements encoding.TextMarshaler.
 func (s SiteSuppressionReason) MarshalText() ([]byte, error) {
 	switch s {
-	case SiteSuppressionReasonUnsubscribed:
-		return []byte(s), nil
 	case SiteSuppressionReasonBounce:
 		return []byte(s), nil
 	case SiteSuppressionReasonComplaint:
@@ -5317,9 +5308,6 @@ func (s SiteSuppressionReason) MarshalText() ([]byte, error) {
 // UnmarshalText implements encoding.TextUnmarshaler.
 func (s *SiteSuppressionReason) UnmarshalText(data []byte) error {
 	switch SiteSuppressionReason(data) {
-	case SiteSuppressionReasonUnsubscribed:
-		*s = SiteSuppressionReasonUnsubscribed
-		return nil
 	case SiteSuppressionReasonBounce:
 		*s = SiteSuppressionReasonBounce
 		return nil
@@ -5334,14 +5322,16 @@ func (s *SiteSuppressionReason) UnmarshalText(data []byte) error {
 	}
 }
 
-// A suppressed address: the send path skips it regardless of contact status.
+// A suppressed destination: the send path skips it on every surface.
 // Ref: #/components/schemas/SiteSuppressionResource
 type SiteSuppressionResource struct {
 	// Unique identifier.
 	ID EntityId `json:"id"`
-	// Normalized (lower-cased) email address.
-	Email string `json:"email"`
-	// Why the address is suppressed.
+	// The channel this suppression applies to.
+	Channel SiteSuppressionChannel `json:"channel"`
+	// Normalized (lower-cased) channel-specific destination address.
+	Destination string `json:"destination"`
+	// Why the destination is suppressed.
 	Reason SiteSuppressionReason `json:"reason"`
 	// Creation timestamp.
 	CreatedAt Timestamp `json:"createdAt"`
@@ -5354,9 +5344,14 @@ func (s *SiteSuppressionResource) GetID() EntityId {
 	return s.ID
 }
 
-// GetEmail returns the value of Email.
-func (s *SiteSuppressionResource) GetEmail() string {
-	return s.Email
+// GetChannel returns the value of Channel.
+func (s *SiteSuppressionResource) GetChannel() SiteSuppressionChannel {
+	return s.Channel
+}
+
+// GetDestination returns the value of Destination.
+func (s *SiteSuppressionResource) GetDestination() string {
+	return s.Destination
 }
 
 // GetReason returns the value of Reason.
@@ -5379,9 +5374,14 @@ func (s *SiteSuppressionResource) SetID(val EntityId) {
 	s.ID = val
 }
 
-// SetEmail sets the value of Email.
-func (s *SiteSuppressionResource) SetEmail(val string) {
-	s.Email = val
+// SetChannel sets the value of Channel.
+func (s *SiteSuppressionResource) SetChannel(val SiteSuppressionChannel) {
+	s.Channel = val
+}
+
+// SetDestination sets the value of Destination.
+func (s *SiteSuppressionResource) SetDestination(val string) {
+	s.Destination = val
 }
 
 // SetReason sets the value of Reason.

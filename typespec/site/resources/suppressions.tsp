@@ -3,15 +3,20 @@ using TypeSpec.Rest;
 
 namespace OneMail;
 
-/** Why an address is on the suppression (do-not-send) list */
+/** Why a destination is on the suppression (do-not-send) list. Unsubscribe is
+ * not a suppression — it is a separate, per-source opt-out. */
 enum SiteSuppressionReason {
-  unsubscribed,
   bounce,
   complaint,
   manual,
 }
 
-/** A suppressed address: the send path skips it regardless of contact status */
+/** The channel a suppression applies to (email today; sms reserved) */
+enum SiteSuppressionChannel {
+  email,
+}
+
+/** A suppressed destination: the send path skips it on every surface */
 @resource("suppressions")
 @segment("suppressions")
 model SiteSuppressionResource {
@@ -19,10 +24,13 @@ model SiteSuppressionResource {
   @key
   id: EntityId;
 
-  /** Normalized (lower-cased) email address */
-  email: string;
+  /** The channel this suppression applies to */
+  channel: SiteSuppressionChannel;
 
-  /** Why the address is suppressed */
+  /** Normalized (lower-cased) channel-specific destination address */
+  destination: string;
+
+  /** Why the destination is suppressed */
   reason: SiteSuppressionReason;
 
   /** Creation timestamp */
@@ -32,9 +40,13 @@ model SiteSuppressionResource {
   updatedAt: Timestamp;
 }
 
-/** Site request body for manually suppressing an address */
+/** Site request body for manually suppressing a destination */
 model SiteCreateSuppressionInput {
-  email: EmailAddress;
+  /** Channel (defaults to email when omitted) */
+  channel?: SiteSuppressionChannel;
+
+  /** The destination address to suppress */
+  destination: string;
 }
 
 @route("/w/{workspaceSlug}/suppressions")

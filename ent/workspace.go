@@ -68,11 +68,13 @@ type WorkspaceEdges struct {
 	WebhookEndpoints []*WebhookEndpoint `json:"webhook_endpoints,omitempty"`
 	// Suppressions holds the value of the suppressions edge.
 	Suppressions []*Suppression `json:"suppressions,omitempty"`
+	// Unsubscribes holds the value of the unsubscribes edge.
+	Unsubscribes []*Unsubscribe `json:"unsubscribes,omitempty"`
 	// User holds the value of the user edge.
 	User *User `json:"user,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [15]bool
+	loadedTypes [16]bool
 }
 
 // ContactsOrErr returns the Contacts value or an error if the edge
@@ -201,12 +203,21 @@ func (e WorkspaceEdges) SuppressionsOrErr() ([]*Suppression, error) {
 	return nil, &NotLoadedError{edge: "suppressions"}
 }
 
+// UnsubscribesOrErr returns the Unsubscribes value or an error if the edge
+// was not loaded in eager-loading.
+func (e WorkspaceEdges) UnsubscribesOrErr() ([]*Unsubscribe, error) {
+	if e.loadedTypes[14] {
+		return e.Unsubscribes, nil
+	}
+	return nil, &NotLoadedError{edge: "unsubscribes"}
+}
+
 // UserOrErr returns the User value or an error if the edge
 // was not loaded in eager-loading, or loaded but was not found.
 func (e WorkspaceEdges) UserOrErr() (*User, error) {
 	if e.User != nil {
 		return e.User, nil
-	} else if e.loadedTypes[14] {
+	} else if e.loadedTypes[15] {
 		return nil, &NotFoundError{label: user.Label}
 	}
 	return nil, &NotLoadedError{edge: "user"}
@@ -368,6 +379,11 @@ func (_m *Workspace) QueryWebhookEndpoints() *WebhookEndpointQuery {
 // QuerySuppressions queries the "suppressions" edge of the Workspace entity.
 func (_m *Workspace) QuerySuppressions() *SuppressionQuery {
 	return NewWorkspaceClient(_m.config).QuerySuppressions(_m)
+}
+
+// QueryUnsubscribes queries the "unsubscribes" edge of the Workspace entity.
+func (_m *Workspace) QueryUnsubscribes() *UnsubscribeQuery {
+	return NewWorkspaceClient(_m.config).QueryUnsubscribes(_m)
 }
 
 // QueryUser queries the "user" edge of the Workspace entity.

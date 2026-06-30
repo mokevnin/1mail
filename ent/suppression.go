@@ -18,8 +18,10 @@ type Suppression struct {
 	config `json:"-"`
 	// ID of the ent.
 	ID int64 `json:"id,omitempty"`
-	// Email holds the value of the "email" field.
-	Email string `json:"email,omitempty"`
+	// Channel holds the value of the "channel" field.
+	Channel suppression.Channel `json:"channel,omitempty"`
+	// Destination holds the value of the "destination" field.
+	Destination string `json:"destination,omitempty"`
 	// Reason holds the value of the "reason" field.
 	Reason suppression.Reason `json:"reason,omitempty"`
 	// ContactID holds the value of the "contact_id" field.
@@ -63,7 +65,7 @@ func (*Suppression) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case suppression.FieldID, suppression.FieldContactID, suppression.FieldWorkspaceID:
 			values[i] = new(sql.NullInt64)
-		case suppression.FieldEmail, suppression.FieldReason:
+		case suppression.FieldChannel, suppression.FieldDestination, suppression.FieldReason:
 			values[i] = new(sql.NullString)
 		case suppression.FieldCreatedAt, suppression.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
@@ -88,11 +90,17 @@ func (_m *Suppression) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field id", value)
 			}
 			_m.ID = int64(value.Int64)
-		case suppression.FieldEmail:
+		case suppression.FieldChannel:
 			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field email", values[i])
+				return fmt.Errorf("unexpected type %T for field channel", values[i])
 			} else if value.Valid {
-				_m.Email = value.String
+				_m.Channel = suppression.Channel(value.String)
+			}
+		case suppression.FieldDestination:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field destination", values[i])
+			} else if value.Valid {
+				_m.Destination = value.String
 			}
 		case suppression.FieldReason:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -166,8 +174,11 @@ func (_m *Suppression) String() string {
 	var builder strings.Builder
 	builder.WriteString("Suppression(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
-	builder.WriteString("email=")
-	builder.WriteString(_m.Email)
+	builder.WriteString("channel=")
+	builder.WriteString(fmt.Sprintf("%v", _m.Channel))
+	builder.WriteString(", ")
+	builder.WriteString("destination=")
+	builder.WriteString(_m.Destination)
 	builder.WriteString(", ")
 	builder.WriteString("reason=")
 	builder.WriteString(fmt.Sprintf("%v", _m.Reason))

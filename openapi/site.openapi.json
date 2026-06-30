@@ -1358,16 +1358,6 @@
           },
           {
             "$ref": "#/components/parameters/PageQuery.pageSize"
-          },
-          {
-            "name": "status",
-            "in": "query",
-            "required": false,
-            "description": "Filter by status",
-            "schema": {
-              "$ref": "#/components/schemas/SiteContactStatus"
-            },
-            "explode": false
           }
         ],
         "responses": {
@@ -4241,7 +4231,7 @@
       },
       "SiteContactResource": {
         "type": "object",
-        "required": ["id", "status", "createdAt", "updatedAt"],
+        "required": ["id", "createdAt", "updatedAt"],
         "properties": {
           "id": {
             "allOf": [
@@ -4297,14 +4287,6 @@
             "nullable": true,
             "description": "Typed custom field values keyed by the field's machine key"
           },
-          "status": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/SiteContactStatus"
-              }
-            ],
-            "description": "Current status"
-          },
           "createdAt": {
             "allOf": [
               {
@@ -4323,11 +4305,6 @@
           }
         },
         "description": "Contact resource used by the site UI"
-      },
-      "SiteContactStatus": {
-        "type": "string",
-        "enum": ["active", "unsubscribed"],
-        "description": "Contact status for site UI"
       },
       "SiteCreateAutomationInput": {
         "type": "object",
@@ -4512,13 +4489,22 @@
       },
       "SiteCreateSuppressionInput": {
         "type": "object",
-        "required": ["email"],
+        "required": ["destination"],
         "properties": {
-          "email": {
-            "$ref": "#/components/schemas/EmailAddress"
+          "channel": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SiteSuppressionChannel"
+              }
+            ],
+            "description": "Channel (defaults to email when omitted)"
+          },
+          "destination": {
+            "type": "string",
+            "description": "The destination address to suppress"
           }
         },
-        "description": "Site request body for manually suppressing an address"
+        "description": "Site request body for manually suppressing a destination"
       },
       "SiteCreateTokenInput": {
         "type": "object",
@@ -5163,14 +5149,19 @@
         },
         "description": "SMTP credentials"
       },
+      "SiteSuppressionChannel": {
+        "type": "string",
+        "enum": ["email"],
+        "description": "The channel a suppression applies to (email today; sms reserved)"
+      },
       "SiteSuppressionReason": {
         "type": "string",
-        "enum": ["unsubscribed", "bounce", "complaint", "manual"],
-        "description": "Why an address is on the suppression (do-not-send) list"
+        "enum": ["bounce", "complaint", "manual"],
+        "description": "Why a destination is on the suppression (do-not-send) list. Unsubscribe is\nnot a suppression — it is a separate, per-source opt-out."
       },
       "SiteSuppressionResource": {
         "type": "object",
-        "required": ["id", "email", "reason", "createdAt", "updatedAt"],
+        "required": ["id", "channel", "destination", "reason", "createdAt", "updatedAt"],
         "properties": {
           "id": {
             "allOf": [
@@ -5180,9 +5171,17 @@
             ],
             "description": "Unique identifier"
           },
-          "email": {
+          "channel": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SiteSuppressionChannel"
+              }
+            ],
+            "description": "The channel this suppression applies to"
+          },
+          "destination": {
             "type": "string",
-            "description": "Normalized (lower-cased) email address"
+            "description": "Normalized (lower-cased) channel-specific destination address"
           },
           "reason": {
             "allOf": [
@@ -5190,7 +5189,7 @@
                 "$ref": "#/components/schemas/SiteSuppressionReason"
               }
             ],
-            "description": "Why the address is suppressed"
+            "description": "Why the destination is suppressed"
           },
           "createdAt": {
             "allOf": [
@@ -5209,7 +5208,7 @@
             "description": "Last update timestamp"
           }
         },
-        "description": "A suppressed address: the send path skips it regardless of contact status"
+        "description": "A suppressed destination: the send path skips it on every surface"
       },
       "SiteTestSendBroadcastInput": {
         "type": "object",

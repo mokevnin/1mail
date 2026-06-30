@@ -682,8 +682,6 @@ type ContactsListParams struct {
 	Page OptInt32 `json:",omitempty,omitzero"`
 	// Page size.
 	PageSize OptInt32 `json:",omitempty,omitzero"`
-	// Filter by status.
-	Status OptContactStatus `json:",omitempty,omitzero"`
 }
 
 func unpackContactsListParams(packed middleware.Parameters) (params ContactsListParams) {
@@ -703,15 +701,6 @@ func unpackContactsListParams(packed middleware.Parameters) (params ContactsList
 		}
 		if v, ok := packed[key]; ok {
 			params.PageSize = v.(OptInt32)
-		}
-	}
-	{
-		key := middleware.ParameterKey{
-			Name: "status",
-			In:   "query",
-		}
-		if v, ok := packed[key]; ok {
-			params.Status = v.(OptContactStatus)
 		}
 	}
 	return params
@@ -807,62 +796,6 @@ func decodeContactsListParams(args [0]string, argsEscaped bool, r *http.Request)
 	}(); err != nil {
 		return params, &ogenerrors.DecodeParamError{
 			Name: "pageSize",
-			In:   "query",
-			Err:  err,
-		}
-	}
-	// Decode query: status.
-	if err := func() error {
-		cfg := uri.QueryParameterDecodingConfig{
-			Name:    "status",
-			Style:   uri.QueryStyleForm,
-			Explode: false,
-		}
-
-		if err := q.HasParam(cfg); err == nil {
-			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
-				var paramsDotStatusVal ContactStatus
-				if err := func() error {
-					val, err := d.DecodeValue()
-					if err != nil {
-						return err
-					}
-
-					c, err := conv.ToString(val)
-					if err != nil {
-						return err
-					}
-
-					paramsDotStatusVal = ContactStatus(c)
-					return nil
-				}(); err != nil {
-					return err
-				}
-				params.Status.SetTo(paramsDotStatusVal)
-				return nil
-			}); err != nil {
-				return err
-			}
-			if err := func() error {
-				if value, ok := params.Status.Get(); ok {
-					if err := func() error {
-						if err := value.Validate(); err != nil {
-							return err
-						}
-						return nil
-					}(); err != nil {
-						return err
-					}
-				}
-				return nil
-			}(); err != nil {
-				return err
-			}
-		}
-		return nil
-	}(); err != nil {
-		return params, &ogenerrors.DecodeParamError{
-			Name: "status",
 			In:   "query",
 			Err:  err,
 		}

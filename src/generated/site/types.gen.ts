@@ -430,10 +430,6 @@ export type SiteContactResource = {
         [key: string]: unknown;
     } | null;
     /**
-     * Current status
-     */
-    status: SiteContactStatus;
-    /**
      * Creation timestamp
      */
     createdAt: Timestamp;
@@ -442,16 +438,6 @@ export type SiteContactResource = {
      */
     updatedAt: Timestamp;
 };
-
-/**
- * Contact status for site UI
- */
-export const SiteContactStatus = { ACTIVE: 'active', UNSUBSCRIBED: 'unsubscribed' } as const;
-
-/**
- * Contact status for site UI
- */
-export type SiteContactStatus = typeof SiteContactStatus[keyof typeof SiteContactStatus];
 
 /**
  * Site request body for creating an automation
@@ -570,10 +556,17 @@ export type SiteCreateSegmentInput = {
 };
 
 /**
- * Site request body for manually suppressing an address
+ * Site request body for manually suppressing a destination
  */
 export type SiteCreateSuppressionInput = {
-    email: EmailAddress;
+    /**
+     * Channel (defaults to email when omitted)
+     */
+    channel?: SiteSuppressionChannel;
+    /**
+     * The destination address to suppress
+     */
+    destination: string;
 };
 
 /**
@@ -966,22 +959,33 @@ export type SiteSmtpConfigInput = {
 };
 
 /**
- * Why an address is on the suppression (do-not-send) list
+ * The channel a suppression applies to (email today; sms reserved)
+ */
+export const SiteSuppressionChannel = { EMAIL: 'email' } as const;
+
+/**
+ * The channel a suppression applies to (email today; sms reserved)
+ */
+export type SiteSuppressionChannel = typeof SiteSuppressionChannel[keyof typeof SiteSuppressionChannel];
+
+/**
+ * Why a destination is on the suppression (do-not-send) list. Unsubscribe is
+ * not a suppression — it is a separate, per-source opt-out.
  */
 export const SiteSuppressionReason = {
-    UNSUBSCRIBED: 'unsubscribed',
     BOUNCE: 'bounce',
     COMPLAINT: 'complaint',
     MANUAL: 'manual'
 } as const;
 
 /**
- * Why an address is on the suppression (do-not-send) list
+ * Why a destination is on the suppression (do-not-send) list. Unsubscribe is
+ * not a suppression — it is a separate, per-source opt-out.
  */
 export type SiteSuppressionReason = typeof SiteSuppressionReason[keyof typeof SiteSuppressionReason];
 
 /**
- * A suppressed address: the send path skips it regardless of contact status
+ * A suppressed destination: the send path skips it on every surface
  */
 export type SiteSuppressionResource = {
     /**
@@ -989,11 +993,15 @@ export type SiteSuppressionResource = {
      */
     id: EntityId;
     /**
-     * Normalized (lower-cased) email address
+     * The channel this suppression applies to
      */
-    email: string;
+    channel: SiteSuppressionChannel;
     /**
-     * Why the address is suppressed
+     * Normalized (lower-cased) channel-specific destination address
+     */
+    destination: string;
+    /**
+     * Why the destination is suppressed
      */
     reason: SiteSuppressionReason;
     /**
@@ -1995,10 +2003,6 @@ export type SiteContactsListData = {
          * Page size
          */
         pageSize?: number;
-        /**
-         * Filter by status
-         */
-        status?: SiteContactStatus;
     };
     url: '/w/{workspaceSlug}/contacts';
 };

@@ -3582,23 +3582,6 @@ func (c *Client) sendSiteContactsList(ctx context.Context, params SiteContactsLi
 			return res, errors.Wrap(err, "encode query")
 		}
 	}
-	{
-		// Encode "status" parameter.
-		cfg := uri.QueryParameterEncodingConfig{
-			Name:    "status",
-			Style:   uri.QueryStyleForm,
-			Explode: false,
-		}
-
-		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
-			if val, ok := params.Status.Get(); ok {
-				return e.EncodeValue(conv.StringToString(string(val)))
-			}
-			return nil
-		}); err != nil {
-			return res, errors.Wrap(err, "encode query")
-		}
-	}
 	u.RawQuery = q.Values().Encode()
 
 	stage = "EncodeRequest"

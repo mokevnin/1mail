@@ -3,12 +3,6 @@ using TypeSpec.Rest;
 
 namespace OneMail;
 
-/** Contact status */
-enum ContactStatus {
-  active,
-  unsubscribed,
-}
-
 /** Contact resource */
 @resource("contacts")
 @segment("contacts")
@@ -37,9 +31,6 @@ model ContactResource {
 
   /** Typed custom field values keyed by the field's machine key */
   customFields?: Record<unknown> | null;
-
-  /** Current status */
-  status: ContactStatus;
 
   /** Creation timestamp */
   createdAt: Timestamp;
@@ -114,12 +105,7 @@ namespace Contacts {
   /** List contacts with pagination */
   @listsResource(ContactResource)
   @get
-  op list(
-    ...PageQuery,
-
-    /** Filter by status */
-    @query status?: ContactStatus,
-  ):
+  op list(...PageQuery):
     | Page<ContactResource>
     | BadRequestProblem
     | UnauthorizedProblem

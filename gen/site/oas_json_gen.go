@@ -827,6 +827,39 @@ func (s *OptSiteSegmentType) UnmarshalJSON(data []byte) error {
 	return s.Decode(d)
 }
 
+// Encode encodes SiteSuppressionChannel as json.
+func (o OptSiteSuppressionChannel) Encode(e *jx.Encoder) {
+	if !o.Set {
+		return
+	}
+	e.Str(string(o.Value))
+}
+
+// Decode decodes SiteSuppressionChannel from json.
+func (o *OptSiteSuppressionChannel) Decode(d *jx.Decoder) error {
+	if o == nil {
+		return errors.New("invalid: unable to decode OptSiteSuppressionChannel to nil")
+	}
+	o.Set = true
+	if err := o.Value.Decode(d); err != nil {
+		return err
+	}
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s OptSiteSuppressionChannel) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *OptSiteSuppressionChannel) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
 // Encode encodes string as json.
 func (o OptString) Encode(e *jx.Encoder) {
 	if !o.Set {
@@ -4956,10 +4989,6 @@ func (s *SiteContactResource) encodeFields(e *jx.Encoder) {
 		}
 	}
 	{
-		e.FieldStart("status")
-		s.Status.Encode(e)
-	}
-	{
 		e.FieldStart("createdAt")
 		s.CreatedAt.Encode(e)
 	}
@@ -4969,18 +4998,17 @@ func (s *SiteContactResource) encodeFields(e *jx.Encoder) {
 	}
 }
 
-var jsonFieldsNameOfSiteContactResource = [11]string{
-	0:  "id",
-	1:  "subjectId",
-	2:  "email",
-	3:  "phone",
-	4:  "firstName",
-	5:  "lastName",
-	6:  "timeZone",
-	7:  "customFields",
-	8:  "status",
-	9:  "createdAt",
-	10: "updatedAt",
+var jsonFieldsNameOfSiteContactResource = [10]string{
+	0: "id",
+	1: "subjectId",
+	2: "email",
+	3: "phone",
+	4: "firstName",
+	5: "lastName",
+	6: "timeZone",
+	7: "customFields",
+	8: "createdAt",
+	9: "updatedAt",
 }
 
 // Decode decodes SiteContactResource from json.
@@ -5072,18 +5100,8 @@ func (s *SiteContactResource) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"customFields\"")
 			}
-		case "status":
-			requiredBitSet[1] |= 1 << 0
-			if err := func() error {
-				if err := s.Status.Decode(d); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"status\"")
-			}
 		case "createdAt":
-			requiredBitSet[1] |= 1 << 1
+			requiredBitSet[1] |= 1 << 0
 			if err := func() error {
 				if err := s.CreatedAt.Decode(d); err != nil {
 					return err
@@ -5093,7 +5111,7 @@ func (s *SiteContactResource) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"createdAt\"")
 			}
 		case "updatedAt":
-			requiredBitSet[1] |= 1 << 2
+			requiredBitSet[1] |= 1 << 1
 			if err := func() error {
 				if err := s.UpdatedAt.Decode(d); err != nil {
 					return err
@@ -5113,7 +5131,7 @@ func (s *SiteContactResource) Decode(d *jx.Decoder) error {
 	var failures []validate.FieldError
 	for i, mask := range [2]uint8{
 		0b00000001,
-		0b00000111,
+		0b00000011,
 	} {
 		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
 			// Mask only required fields and check equality to mask using XOR.
@@ -5213,46 +5231,6 @@ func (s SiteContactResourceCustomFields) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
 func (s *SiteContactResourceCustomFields) UnmarshalJSON(data []byte) error {
-	d := jx.DecodeBytes(data)
-	return s.Decode(d)
-}
-
-// Encode encodes SiteContactStatus as json.
-func (s SiteContactStatus) Encode(e *jx.Encoder) {
-	e.Str(string(s))
-}
-
-// Decode decodes SiteContactStatus from json.
-func (s *SiteContactStatus) Decode(d *jx.Decoder) error {
-	if s == nil {
-		return errors.New("invalid: unable to decode SiteContactStatus to nil")
-	}
-	v, err := d.StrBytes()
-	if err != nil {
-		return err
-	}
-	// Try to use constant string.
-	switch SiteContactStatus(v) {
-	case SiteContactStatusActive:
-		*s = SiteContactStatusActive
-	case SiteContactStatusUnsubscribed:
-		*s = SiteContactStatusUnsubscribed
-	default:
-		*s = SiteContactStatus(v)
-	}
-
-	return nil
-}
-
-// MarshalJSON implements stdjson.Marshaler.
-func (s SiteContactStatus) MarshalJSON() ([]byte, error) {
-	e := jx.Encoder{}
-	s.Encode(&e)
-	return e.Bytes(), nil
-}
-
-// UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *SiteContactStatus) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }
@@ -6927,13 +6905,20 @@ func (s *SiteCreateSuppressionInput) Encode(e *jx.Encoder) {
 // encodeFields encodes fields.
 func (s *SiteCreateSuppressionInput) encodeFields(e *jx.Encoder) {
 	{
-		e.FieldStart("email")
-		s.Email.Encode(e)
+		if s.Channel.Set {
+			e.FieldStart("channel")
+			s.Channel.Encode(e)
+		}
+	}
+	{
+		e.FieldStart("destination")
+		e.Str(s.Destination)
 	}
 }
 
-var jsonFieldsNameOfSiteCreateSuppressionInput = [1]string{
-	0: "email",
+var jsonFieldsNameOfSiteCreateSuppressionInput = [2]string{
+	0: "channel",
+	1: "destination",
 }
 
 // Decode decodes SiteCreateSuppressionInput from json.
@@ -6945,15 +6930,27 @@ func (s *SiteCreateSuppressionInput) Decode(d *jx.Decoder) error {
 
 	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
 		switch string(k) {
-		case "email":
-			requiredBitSet[0] |= 1 << 0
+		case "channel":
 			if err := func() error {
-				if err := s.Email.Decode(d); err != nil {
+				s.Channel.Reset()
+				if err := s.Channel.Decode(d); err != nil {
 					return err
 				}
 				return nil
 			}(); err != nil {
-				return errors.Wrap(err, "decode field \"email\"")
+				return errors.Wrap(err, "decode field \"channel\"")
+			}
+		case "destination":
+			requiredBitSet[0] |= 1 << 1
+			if err := func() error {
+				v, err := d.Str()
+				s.Destination = string(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"destination\"")
 			}
 		default:
 			return d.Skip()
@@ -6965,7 +6962,7 @@ func (s *SiteCreateSuppressionInput) Decode(d *jx.Decoder) error {
 	// Validate required fields.
 	var failures []validate.FieldError
 	for i, mask := range [1]uint8{
-		0b00000001,
+		0b00000010,
 	} {
 		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
 			// Mask only required fields and check equality to mask using XOR.
@@ -12603,6 +12600,44 @@ func (s *SiteSmtpConfigKind) UnmarshalJSON(data []byte) error {
 	return s.Decode(d)
 }
 
+// Encode encodes SiteSuppressionChannel as json.
+func (s SiteSuppressionChannel) Encode(e *jx.Encoder) {
+	e.Str(string(s))
+}
+
+// Decode decodes SiteSuppressionChannel from json.
+func (s *SiteSuppressionChannel) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode SiteSuppressionChannel to nil")
+	}
+	v, err := d.StrBytes()
+	if err != nil {
+		return err
+	}
+	// Try to use constant string.
+	switch SiteSuppressionChannel(v) {
+	case SiteSuppressionChannelEmail:
+		*s = SiteSuppressionChannelEmail
+	default:
+		*s = SiteSuppressionChannel(v)
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s SiteSuppressionChannel) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *SiteSuppressionChannel) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
 // Encode encodes SiteSuppressionReason as json.
 func (s SiteSuppressionReason) Encode(e *jx.Encoder) {
 	e.Str(string(s))
@@ -12619,8 +12654,6 @@ func (s *SiteSuppressionReason) Decode(d *jx.Decoder) error {
 	}
 	// Try to use constant string.
 	switch SiteSuppressionReason(v) {
-	case SiteSuppressionReasonUnsubscribed:
-		*s = SiteSuppressionReasonUnsubscribed
 	case SiteSuppressionReasonBounce:
 		*s = SiteSuppressionReasonBounce
 	case SiteSuppressionReasonComplaint:
@@ -12661,8 +12694,12 @@ func (s *SiteSuppressionResource) encodeFields(e *jx.Encoder) {
 		s.ID.Encode(e)
 	}
 	{
-		e.FieldStart("email")
-		e.Str(s.Email)
+		e.FieldStart("channel")
+		s.Channel.Encode(e)
+	}
+	{
+		e.FieldStart("destination")
+		e.Str(s.Destination)
 	}
 	{
 		e.FieldStart("reason")
@@ -12678,12 +12715,13 @@ func (s *SiteSuppressionResource) encodeFields(e *jx.Encoder) {
 	}
 }
 
-var jsonFieldsNameOfSiteSuppressionResource = [5]string{
+var jsonFieldsNameOfSiteSuppressionResource = [6]string{
 	0: "id",
-	1: "email",
-	2: "reason",
-	3: "createdAt",
-	4: "updatedAt",
+	1: "channel",
+	2: "destination",
+	3: "reason",
+	4: "createdAt",
+	5: "updatedAt",
 }
 
 // Decode decodes SiteSuppressionResource from json.
@@ -12705,20 +12743,30 @@ func (s *SiteSuppressionResource) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"id\"")
 			}
-		case "email":
+		case "channel":
 			requiredBitSet[0] |= 1 << 1
 			if err := func() error {
+				if err := s.Channel.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"channel\"")
+			}
+		case "destination":
+			requiredBitSet[0] |= 1 << 2
+			if err := func() error {
 				v, err := d.Str()
-				s.Email = string(v)
+				s.Destination = string(v)
 				if err != nil {
 					return err
 				}
 				return nil
 			}(); err != nil {
-				return errors.Wrap(err, "decode field \"email\"")
+				return errors.Wrap(err, "decode field \"destination\"")
 			}
 		case "reason":
-			requiredBitSet[0] |= 1 << 2
+			requiredBitSet[0] |= 1 << 3
 			if err := func() error {
 				if err := s.Reason.Decode(d); err != nil {
 					return err
@@ -12728,7 +12776,7 @@ func (s *SiteSuppressionResource) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"reason\"")
 			}
 		case "createdAt":
-			requiredBitSet[0] |= 1 << 3
+			requiredBitSet[0] |= 1 << 4
 			if err := func() error {
 				if err := s.CreatedAt.Decode(d); err != nil {
 					return err
@@ -12738,7 +12786,7 @@ func (s *SiteSuppressionResource) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"createdAt\"")
 			}
 		case "updatedAt":
-			requiredBitSet[0] |= 1 << 4
+			requiredBitSet[0] |= 1 << 5
 			if err := func() error {
 				if err := s.UpdatedAt.Decode(d); err != nil {
 					return err
@@ -12757,7 +12805,7 @@ func (s *SiteSuppressionResource) Decode(d *jx.Decoder) error {
 	// Validate required fields.
 	var failures []validate.FieldError
 	for i, mask := range [1]uint8{
-		0b00011111,
+		0b00111111,
 	} {
 		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
 			// Mask only required fields and check equality to mask using XOR.

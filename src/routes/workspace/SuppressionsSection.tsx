@@ -15,19 +15,19 @@ import { useDeleteConfirmation } from '../../hooks/useDeleteConfirmation.tsx'
 import { useResourceMutation } from '../../hooks/useResourceMutation.ts'
 
 const REASON_COLORS: Record<SiteSuppressionReason, string> = {
-  unsubscribed: 'yellow',
   bounce: 'orange',
   complaint: 'red',
   manual: 'gray',
 }
 
-// The list grows automatically (bounces/complaints/unsubscribes), so it is
-// paginated server-side rather than rendering only the first page.
+// The list grows automatically (bounces/complaints), so it is paginated
+// server-side rather than rendering only the first page.
 const PAGE_SIZE = 20
 
-// SuppressionsSection manages the workspace do-not-send list: unsubscribes,
-// bounces, and complaints land here automatically; addresses can also be added
-// manually. The send path skips every address listed here.
+// SuppressionsSection manages the workspace do-not-send list: hard bounces and
+// complaints land here automatically; destinations can also be added manually.
+// The send path skips every destination listed here. (Unsubscribes are a
+// separate, per-source opt-out, not a suppression.)
 export function SuppressionsSection({ slug }: { slug: string }) {
   const { t } = useTranslation()
   const confirmDelete = useDeleteConfirmation()
@@ -41,7 +41,7 @@ export function SuppressionsSection({ slug }: { slug: string }) {
     }),
   )
 
-  const form = useForm<{ email: string }>({ initialValues: { email: '' } })
+  const form = useForm<{ destination: string }>({ initialValues: { destination: '' } })
 
   const createMutation = useResourceMutation({
     mutation: siteSuppressionsCreateMutation(),
@@ -84,7 +84,7 @@ export function SuppressionsSection({ slug }: { slug: string }) {
         onSubmit={form.onSubmit((values) =>
           createMutation.mutate({
             path: { workspaceSlug: slug },
-            body: { email: values.email.trim() },
+            body: { destination: values.destination.trim() },
           }),
         )}
       >
@@ -96,7 +96,7 @@ export function SuppressionsSection({ slug }: { slug: string }) {
             type="email"
             required
             w={320}
-            {...form.getInputProps('email')}
+            {...form.getInputProps('destination')}
           />
           <Button type="submit" loading={createMutation.isPending}>
             {t(($) => $.settings.suppressions.create)}
@@ -111,7 +111,7 @@ export function SuppressionsSection({ slug }: { slug: string }) {
         records={records}
         idAccessor="id"
         columns={[
-          { accessor: 'email', title: t(($) => $.settings.suppressions.emailColumn) },
+          { accessor: 'destination', title: t(($) => $.settings.suppressions.emailColumn) },
           {
             accessor: 'reason',
             title: t(($) => $.settings.suppressions.reasonColumn),

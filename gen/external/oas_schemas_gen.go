@@ -564,8 +564,6 @@ type ContactResource struct {
 	TimeZone OptNilTimeZoneName `json:"timeZone"`
 	// Typed custom field values keyed by the field's machine key.
 	CustomFields OptNilContactResourceCustomFields `json:"customFields"`
-	// Current status.
-	Status ContactStatus `json:"status"`
 	// Creation timestamp.
 	CreatedAt Timestamp `json:"createdAt"`
 	// Last update timestamp.
@@ -610,11 +608,6 @@ func (s *ContactResource) GetTimeZone() OptNilTimeZoneName {
 // GetCustomFields returns the value of CustomFields.
 func (s *ContactResource) GetCustomFields() OptNilContactResourceCustomFields {
 	return s.CustomFields
-}
-
-// GetStatus returns the value of Status.
-func (s *ContactResource) GetStatus() ContactStatus {
-	return s.Status
 }
 
 // GetCreatedAt returns the value of CreatedAt.
@@ -667,11 +660,6 @@ func (s *ContactResource) SetCustomFields(val OptNilContactResourceCustomFields)
 	s.CustomFields = val
 }
 
-// SetStatus sets the value of Status.
-func (s *ContactResource) SetStatus(val ContactStatus) {
-	s.Status = val
-}
-
 // SetCreatedAt sets the value of CreatedAt.
 func (s *ContactResource) SetCreatedAt(val Timestamp) {
 	s.CreatedAt = val
@@ -696,49 +684,6 @@ func (s *ContactResourceCustomFields) init() ContactResourceCustomFields {
 		*s = m
 	}
 	return m
-}
-
-// Contact status.
-// Ref: #/components/schemas/ContactStatus
-type ContactStatus string
-
-const (
-	ContactStatusActive       ContactStatus = "active"
-	ContactStatusUnsubscribed ContactStatus = "unsubscribed"
-)
-
-// AllValues returns all ContactStatus values.
-func (ContactStatus) AllValues() []ContactStatus {
-	return []ContactStatus{
-		ContactStatusActive,
-		ContactStatusUnsubscribed,
-	}
-}
-
-// MarshalText implements encoding.TextMarshaler.
-func (s ContactStatus) MarshalText() ([]byte, error) {
-	switch s {
-	case ContactStatusActive:
-		return []byte(s), nil
-	case ContactStatusUnsubscribed:
-		return []byte(s), nil
-	default:
-		return nil, errors.Errorf("invalid value: %q", s)
-	}
-}
-
-// UnmarshalText implements encoding.TextUnmarshaler.
-func (s *ContactStatus) UnmarshalText(data []byte) error {
-	switch ContactStatus(data) {
-	case ContactStatusActive:
-		*s = ContactStatusActive
-		return nil
-	case ContactStatusUnsubscribed:
-		*s = ContactStatusUnsubscribed
-		return nil
-	default:
-		return errors.Errorf("invalid value: %q", data)
-	}
 }
 
 type ContactsCreateConflict ProblemDetails
@@ -1370,52 +1315,6 @@ func (o OptBroadcastStatus) Get() (v BroadcastStatus, ok bool) {
 
 // Or returns value if set, or given parameter if does not.
 func (o OptBroadcastStatus) Or(d BroadcastStatus) BroadcastStatus {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// NewOptContactStatus returns new OptContactStatus with value set to v.
-func NewOptContactStatus(v ContactStatus) OptContactStatus {
-	return OptContactStatus{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptContactStatus is optional ContactStatus.
-type OptContactStatus struct {
-	Value ContactStatus
-	Set   bool
-}
-
-// IsSet returns true if OptContactStatus was set.
-func (o OptContactStatus) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptContactStatus) Reset() {
-	var v ContactStatus
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptContactStatus) SetTo(v ContactStatus) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptContactStatus) Get() (v ContactStatus, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptContactStatus) Or(d ContactStatus) ContactStatus {
 	if v, ok := o.Get(); ok {
 		return v
 	}

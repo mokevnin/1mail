@@ -9,7 +9,8 @@ import (
 	"github.com/mokevnin/1mail/config"
 	"github.com/mokevnin/1mail/ent/broadcast"
 	"github.com/mokevnin/1mail/ent/broadcastrecipient"
-	"github.com/mokevnin/1mail/ent/contact"
+	"github.com/mokevnin/1mail/ent/unsubscribe"
+	"github.com/mokevnin/1mail/internal/eligibility"
 	"github.com/mokevnin/1mail/internal/testhelper"
 	"github.com/mokevnin/1mail/internal/tracking"
 	"github.com/stretchr/testify/assert"
@@ -26,11 +27,9 @@ func TestTrackingEndpoints(t *testing.T) {
 	require.NoError(t, err)
 	tr := tracking.New(cfg.JWTSecret, cfg.AppURL)
 
-	// A recipient in fixture workspace acme (id 1).
-	c, err := env.DB.Contact.Query().
-		Where(contact.WorkspaceID(1), contact.StatusEQ(contact.StatusActive)).
-		First(ctx)
-	require.NoError(t, err)
+	// A recipient in fixture workspace acme (id 1). Alice (id 1) is not already
+	// unsubscribed from broadcasts (bob is, in the fixtures).
+	c := env.DB.Contact.GetX(ctx, 1)
 
 	b, err := env.DB.Broadcast.Create().
 		SetWorkspaceID(1).SetName("Track").SetSubject("Hi").
@@ -68,10 +67,22 @@ func TestTrackingEndpoints(t *testing.T) {
 	assert.NotNil(t, env.DB.BroadcastRecipient.GetX(ctx, rec.ID).ClickedAt)
 	assert.Equal(t, 1, env.DB.Broadcast.GetX(ctx, b.ID).ClickedCount)
 
-	// Unsubscribe: marks the contact unsubscribed.
+	// Unsubscribe: writes a "broadcasts"-scoped opt-out for the destination
+	// (no contact status exists) and increments the broadcast counter once.
 	resp = get("/e/u/" + token)
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
-	assert.Equal(t, contact.StatusUnsubscribed, env.DB.Contact.GetX(ctx, c.ID).Status)
+	optedOut, err := env.DB.Unsubscribe.Query().Where(
+		unsubscribe.WorkspaceID(1),
+		unsubscribe.ChannelEQ(unsubscribe.ChannelEmail),
+		unsubscribe.DestinationEQ(*c.Email),
+		unsubscribe.SendingSourceEQ(eligibility.SourceBroadcasts),
+	).Exist(ctx)
+	require.NoError(t, err)
+	assert.True(t, optedOut, "unsubscribe writes a broadcasts-scoped opt-out")
+	assert.Equal(t, 1, env.DB.Broadcast.GetX(ctx, b.ID).UnsubscribedCount)
+
+	// Redelivery of the same unsubscribe must not double-count.
+	get("/e/u/" + token)
 	assert.Equal(t, 1, env.DB.Broadcast.GetX(ctx, b.ID).UnsubscribedCount)
 
 	// Each endpoint published an engagement event onto the transactional outbox.

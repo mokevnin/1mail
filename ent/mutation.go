@@ -24,6 +24,7 @@ import (
 	"github.com/mokevnin/1mail/ent/predicate"
 	"github.com/mokevnin/1mail/ent/segment"
 	"github.com/mokevnin/1mail/ent/suppression"
+	"github.com/mokevnin/1mail/ent/unsubscribe"
 	"github.com/mokevnin/1mail/ent/user"
 	"github.com/mokevnin/1mail/ent/visitor"
 	"github.com/mokevnin/1mail/ent/webhookendpoint"
@@ -51,6 +52,7 @@ const (
 	TypeIntegration        = "Integration"
 	TypeSegment            = "Segment"
 	TypeSuppression        = "Suppression"
+	TypeUnsubscribe        = "Unsubscribe"
 	TypeUser               = "User"
 	TypeVisitor            = "Visitor"
 	TypeWebhookEndpoint    = "WebhookEndpoint"
@@ -5634,7 +5636,6 @@ type ContactMutation struct {
 	phone            *string
 	first_name       *string
 	last_name        *string
-	status           *contact.Status
 	time_zone        *string
 	custom_fields    *map[string]interface{}
 	created_at       *time.Time
@@ -5999,42 +6000,6 @@ func (m *ContactMutation) ResetLastName() {
 	delete(m.clearedFields, contact.FieldLastName)
 }
 
-// SetStatus sets the "status" field.
-func (m *ContactMutation) SetStatus(c contact.Status) {
-	m.status = &c
-}
-
-// Status returns the value of the "status" field in the mutation.
-func (m *ContactMutation) Status() (r contact.Status, exists bool) {
-	v := m.status
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldStatus returns the old "status" field's value of the Contact entity.
-// If the Contact object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *ContactMutation) OldStatus(ctx context.Context) (v contact.Status, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldStatus is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldStatus requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldStatus: %w", err)
-	}
-	return oldValue.Status, nil
-}
-
-// ResetStatus resets all changes to the "status" field.
-func (m *ContactMutation) ResetStatus() {
-	m.status = nil
-}
-
 // SetTimeZone sets the "time_zone" field.
 func (m *ContactMutation) SetTimeZone(s string) {
 	m.time_zone = &s
@@ -6356,7 +6321,7 @@ func (m *ContactMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *ContactMutation) Fields() []string {
-	fields := make([]string, 0, 11)
+	fields := make([]string, 0, 10)
 	if m.subject_id != nil {
 		fields = append(fields, contact.FieldSubjectID)
 	}
@@ -6371,9 +6336,6 @@ func (m *ContactMutation) Fields() []string {
 	}
 	if m.last_name != nil {
 		fields = append(fields, contact.FieldLastName)
-	}
-	if m.status != nil {
-		fields = append(fields, contact.FieldStatus)
 	}
 	if m.time_zone != nil {
 		fields = append(fields, contact.FieldTimeZone)
@@ -6408,8 +6370,6 @@ func (m *ContactMutation) Field(name string) (ent.Value, bool) {
 		return m.FirstName()
 	case contact.FieldLastName:
 		return m.LastName()
-	case contact.FieldStatus:
-		return m.Status()
 	case contact.FieldTimeZone:
 		return m.TimeZone()
 	case contact.FieldCustomFields:
@@ -6439,8 +6399,6 @@ func (m *ContactMutation) OldField(ctx context.Context, name string) (ent.Value,
 		return m.OldFirstName(ctx)
 	case contact.FieldLastName:
 		return m.OldLastName(ctx)
-	case contact.FieldStatus:
-		return m.OldStatus(ctx)
 	case contact.FieldTimeZone:
 		return m.OldTimeZone(ctx)
 	case contact.FieldCustomFields:
@@ -6494,13 +6452,6 @@ func (m *ContactMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetLastName(v)
-		return nil
-	case contact.FieldStatus:
-		v, ok := value.(contact.Status)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetStatus(v)
 		return nil
 	case contact.FieldTimeZone:
 		v, ok := value.(string)
@@ -6648,9 +6599,6 @@ func (m *ContactMutation) ResetField(name string) error {
 		return nil
 	case contact.FieldLastName:
 		m.ResetLastName()
-		return nil
-	case contact.FieldStatus:
-		m.ResetStatus()
 		return nil
 	case contact.FieldTimeZone:
 		m.ResetTimeZone()
@@ -10717,7 +10665,8 @@ type SuppressionMutation struct {
 	op               Op
 	typ              string
 	id               *int64
-	email            *string
+	channel          *suppression.Channel
+	destination      *string
 	reason           *suppression.Reason
 	contact_id       *int64
 	addcontact_id    *int64
@@ -10835,40 +10784,76 @@ func (m *SuppressionMutation) IDs(ctx context.Context) ([]int64, error) {
 	}
 }
 
-// SetEmail sets the "email" field.
-func (m *SuppressionMutation) SetEmail(s string) {
-	m.email = &s
+// SetChannel sets the "channel" field.
+func (m *SuppressionMutation) SetChannel(s suppression.Channel) {
+	m.channel = &s
 }
 
-// Email returns the value of the "email" field in the mutation.
-func (m *SuppressionMutation) Email() (r string, exists bool) {
-	v := m.email
+// Channel returns the value of the "channel" field in the mutation.
+func (m *SuppressionMutation) Channel() (r suppression.Channel, exists bool) {
+	v := m.channel
 	if v == nil {
 		return
 	}
 	return *v, true
 }
 
-// OldEmail returns the old "email" field's value of the Suppression entity.
+// OldChannel returns the old "channel" field's value of the Suppression entity.
 // If the Suppression object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *SuppressionMutation) OldEmail(ctx context.Context) (v string, err error) {
+func (m *SuppressionMutation) OldChannel(ctx context.Context) (v suppression.Channel, err error) {
 	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldEmail is only allowed on UpdateOne operations")
+		return v, errors.New("OldChannel is only allowed on UpdateOne operations")
 	}
 	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldEmail requires an ID field in the mutation")
+		return v, errors.New("OldChannel requires an ID field in the mutation")
 	}
 	oldValue, err := m.oldValue(ctx)
 	if err != nil {
-		return v, fmt.Errorf("querying old value for OldEmail: %w", err)
+		return v, fmt.Errorf("querying old value for OldChannel: %w", err)
 	}
-	return oldValue.Email, nil
+	return oldValue.Channel, nil
 }
 
-// ResetEmail resets all changes to the "email" field.
-func (m *SuppressionMutation) ResetEmail() {
-	m.email = nil
+// ResetChannel resets all changes to the "channel" field.
+func (m *SuppressionMutation) ResetChannel() {
+	m.channel = nil
+}
+
+// SetDestination sets the "destination" field.
+func (m *SuppressionMutation) SetDestination(s string) {
+	m.destination = &s
+}
+
+// Destination returns the value of the "destination" field in the mutation.
+func (m *SuppressionMutation) Destination() (r string, exists bool) {
+	v := m.destination
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldDestination returns the old "destination" field's value of the Suppression entity.
+// If the Suppression object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *SuppressionMutation) OldDestination(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldDestination is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldDestination requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldDestination: %w", err)
+	}
+	return oldValue.Destination, nil
+}
+
+// ResetDestination resets all changes to the "destination" field.
+func (m *SuppressionMutation) ResetDestination() {
+	m.destination = nil
 }
 
 // SetReason sets the "reason" field.
@@ -11146,9 +11131,12 @@ func (m *SuppressionMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *SuppressionMutation) Fields() []string {
-	fields := make([]string, 0, 6)
-	if m.email != nil {
-		fields = append(fields, suppression.FieldEmail)
+	fields := make([]string, 0, 7)
+	if m.channel != nil {
+		fields = append(fields, suppression.FieldChannel)
+	}
+	if m.destination != nil {
+		fields = append(fields, suppression.FieldDestination)
 	}
 	if m.reason != nil {
 		fields = append(fields, suppression.FieldReason)
@@ -11173,8 +11161,10 @@ func (m *SuppressionMutation) Fields() []string {
 // schema.
 func (m *SuppressionMutation) Field(name string) (ent.Value, bool) {
 	switch name {
-	case suppression.FieldEmail:
-		return m.Email()
+	case suppression.FieldChannel:
+		return m.Channel()
+	case suppression.FieldDestination:
+		return m.Destination()
 	case suppression.FieldReason:
 		return m.Reason()
 	case suppression.FieldContactID:
@@ -11194,8 +11184,10 @@ func (m *SuppressionMutation) Field(name string) (ent.Value, bool) {
 // database failed.
 func (m *SuppressionMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
 	switch name {
-	case suppression.FieldEmail:
-		return m.OldEmail(ctx)
+	case suppression.FieldChannel:
+		return m.OldChannel(ctx)
+	case suppression.FieldDestination:
+		return m.OldDestination(ctx)
 	case suppression.FieldReason:
 		return m.OldReason(ctx)
 	case suppression.FieldContactID:
@@ -11215,12 +11207,19 @@ func (m *SuppressionMutation) OldField(ctx context.Context, name string) (ent.Va
 // type.
 func (m *SuppressionMutation) SetField(name string, value ent.Value) error {
 	switch name {
-	case suppression.FieldEmail:
+	case suppression.FieldChannel:
+		v, ok := value.(suppression.Channel)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetChannel(v)
+		return nil
+	case suppression.FieldDestination:
 		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
-		m.SetEmail(v)
+		m.SetDestination(v)
 		return nil
 	case suppression.FieldReason:
 		v, ok := value.(suppression.Reason)
@@ -11330,8 +11329,11 @@ func (m *SuppressionMutation) ClearField(name string) error {
 // It returns an error if the field is not defined in the schema.
 func (m *SuppressionMutation) ResetField(name string) error {
 	switch name {
-	case suppression.FieldEmail:
-		m.ResetEmail()
+	case suppression.FieldChannel:
+		m.ResetChannel()
+		return nil
+	case suppression.FieldDestination:
+		m.ResetDestination()
 		return nil
 	case suppression.FieldReason:
 		m.ResetReason()
@@ -11424,6 +11426,775 @@ func (m *SuppressionMutation) ResetEdge(name string) error {
 		return nil
 	}
 	return fmt.Errorf("unknown Suppression edge %s", name)
+}
+
+// UnsubscribeMutation represents an operation that mutates the Unsubscribe nodes in the graph.
+type UnsubscribeMutation struct {
+	config
+	op               Op
+	typ              string
+	id               *int64
+	channel          *unsubscribe.Channel
+	destination      *string
+	sending_source   *string
+	contact_id       *int64
+	addcontact_id    *int64
+	created_at       *time.Time
+	updated_at       *time.Time
+	clearedFields    map[string]struct{}
+	workspace        *int64
+	clearedworkspace bool
+	done             bool
+	oldValue         func(context.Context) (*Unsubscribe, error)
+	predicates       []predicate.Unsubscribe
+}
+
+var _ ent.Mutation = (*UnsubscribeMutation)(nil)
+
+// unsubscribeOption allows management of the mutation configuration using functional options.
+type unsubscribeOption func(*UnsubscribeMutation)
+
+// newUnsubscribeMutation creates new mutation for the Unsubscribe entity.
+func newUnsubscribeMutation(c config, op Op, opts ...unsubscribeOption) *UnsubscribeMutation {
+	m := &UnsubscribeMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeUnsubscribe,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withUnsubscribeID sets the ID field of the mutation.
+func withUnsubscribeID(id int64) unsubscribeOption {
+	return func(m *UnsubscribeMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *Unsubscribe
+		)
+		m.oldValue = func(ctx context.Context) (*Unsubscribe, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().Unsubscribe.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withUnsubscribe sets the old Unsubscribe of the mutation.
+func withUnsubscribe(node *Unsubscribe) unsubscribeOption {
+	return func(m *UnsubscribeMutation) {
+		m.oldValue = func(context.Context) (*Unsubscribe, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m UnsubscribeMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m UnsubscribeMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of Unsubscribe entities.
+func (m *UnsubscribeMutation) SetID(id int64) {
+	m.id = &id
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *UnsubscribeMutation) ID() (id int64, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *UnsubscribeMutation) IDs(ctx context.Context) ([]int64, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []int64{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().Unsubscribe.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetChannel sets the "channel" field.
+func (m *UnsubscribeMutation) SetChannel(u unsubscribe.Channel) {
+	m.channel = &u
+}
+
+// Channel returns the value of the "channel" field in the mutation.
+func (m *UnsubscribeMutation) Channel() (r unsubscribe.Channel, exists bool) {
+	v := m.channel
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldChannel returns the old "channel" field's value of the Unsubscribe entity.
+// If the Unsubscribe object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UnsubscribeMutation) OldChannel(ctx context.Context) (v unsubscribe.Channel, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldChannel is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldChannel requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldChannel: %w", err)
+	}
+	return oldValue.Channel, nil
+}
+
+// ResetChannel resets all changes to the "channel" field.
+func (m *UnsubscribeMutation) ResetChannel() {
+	m.channel = nil
+}
+
+// SetDestination sets the "destination" field.
+func (m *UnsubscribeMutation) SetDestination(s string) {
+	m.destination = &s
+}
+
+// Destination returns the value of the "destination" field in the mutation.
+func (m *UnsubscribeMutation) Destination() (r string, exists bool) {
+	v := m.destination
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldDestination returns the old "destination" field's value of the Unsubscribe entity.
+// If the Unsubscribe object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UnsubscribeMutation) OldDestination(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldDestination is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldDestination requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldDestination: %w", err)
+	}
+	return oldValue.Destination, nil
+}
+
+// ResetDestination resets all changes to the "destination" field.
+func (m *UnsubscribeMutation) ResetDestination() {
+	m.destination = nil
+}
+
+// SetSendingSource sets the "sending_source" field.
+func (m *UnsubscribeMutation) SetSendingSource(s string) {
+	m.sending_source = &s
+}
+
+// SendingSource returns the value of the "sending_source" field in the mutation.
+func (m *UnsubscribeMutation) SendingSource() (r string, exists bool) {
+	v := m.sending_source
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSendingSource returns the old "sending_source" field's value of the Unsubscribe entity.
+// If the Unsubscribe object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UnsubscribeMutation) OldSendingSource(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSendingSource is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSendingSource requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSendingSource: %w", err)
+	}
+	return oldValue.SendingSource, nil
+}
+
+// ResetSendingSource resets all changes to the "sending_source" field.
+func (m *UnsubscribeMutation) ResetSendingSource() {
+	m.sending_source = nil
+}
+
+// SetContactID sets the "contact_id" field.
+func (m *UnsubscribeMutation) SetContactID(i int64) {
+	m.contact_id = &i
+	m.addcontact_id = nil
+}
+
+// ContactID returns the value of the "contact_id" field in the mutation.
+func (m *UnsubscribeMutation) ContactID() (r int64, exists bool) {
+	v := m.contact_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldContactID returns the old "contact_id" field's value of the Unsubscribe entity.
+// If the Unsubscribe object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UnsubscribeMutation) OldContactID(ctx context.Context) (v *int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldContactID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldContactID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldContactID: %w", err)
+	}
+	return oldValue.ContactID, nil
+}
+
+// AddContactID adds i to the "contact_id" field.
+func (m *UnsubscribeMutation) AddContactID(i int64) {
+	if m.addcontact_id != nil {
+		*m.addcontact_id += i
+	} else {
+		m.addcontact_id = &i
+	}
+}
+
+// AddedContactID returns the value that was added to the "contact_id" field in this mutation.
+func (m *UnsubscribeMutation) AddedContactID() (r int64, exists bool) {
+	v := m.addcontact_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearContactID clears the value of the "contact_id" field.
+func (m *UnsubscribeMutation) ClearContactID() {
+	m.contact_id = nil
+	m.addcontact_id = nil
+	m.clearedFields[unsubscribe.FieldContactID] = struct{}{}
+}
+
+// ContactIDCleared returns if the "contact_id" field was cleared in this mutation.
+func (m *UnsubscribeMutation) ContactIDCleared() bool {
+	_, ok := m.clearedFields[unsubscribe.FieldContactID]
+	return ok
+}
+
+// ResetContactID resets all changes to the "contact_id" field.
+func (m *UnsubscribeMutation) ResetContactID() {
+	m.contact_id = nil
+	m.addcontact_id = nil
+	delete(m.clearedFields, unsubscribe.FieldContactID)
+}
+
+// SetWorkspaceID sets the "workspace_id" field.
+func (m *UnsubscribeMutation) SetWorkspaceID(i int64) {
+	m.workspace = &i
+}
+
+// WorkspaceID returns the value of the "workspace_id" field in the mutation.
+func (m *UnsubscribeMutation) WorkspaceID() (r int64, exists bool) {
+	v := m.workspace
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldWorkspaceID returns the old "workspace_id" field's value of the Unsubscribe entity.
+// If the Unsubscribe object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UnsubscribeMutation) OldWorkspaceID(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldWorkspaceID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldWorkspaceID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldWorkspaceID: %w", err)
+	}
+	return oldValue.WorkspaceID, nil
+}
+
+// ResetWorkspaceID resets all changes to the "workspace_id" field.
+func (m *UnsubscribeMutation) ResetWorkspaceID() {
+	m.workspace = nil
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *UnsubscribeMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *UnsubscribeMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the Unsubscribe entity.
+// If the Unsubscribe object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UnsubscribeMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *UnsubscribeMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (m *UnsubscribeMutation) SetUpdatedAt(t time.Time) {
+	m.updated_at = &t
+}
+
+// UpdatedAt returns the value of the "updated_at" field in the mutation.
+func (m *UnsubscribeMutation) UpdatedAt() (r time.Time, exists bool) {
+	v := m.updated_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUpdatedAt returns the old "updated_at" field's value of the Unsubscribe entity.
+// If the Unsubscribe object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UnsubscribeMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUpdatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUpdatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUpdatedAt: %w", err)
+	}
+	return oldValue.UpdatedAt, nil
+}
+
+// ResetUpdatedAt resets all changes to the "updated_at" field.
+func (m *UnsubscribeMutation) ResetUpdatedAt() {
+	m.updated_at = nil
+}
+
+// ClearWorkspace clears the "workspace" edge to the Workspace entity.
+func (m *UnsubscribeMutation) ClearWorkspace() {
+	m.clearedworkspace = true
+	m.clearedFields[unsubscribe.FieldWorkspaceID] = struct{}{}
+}
+
+// WorkspaceCleared reports if the "workspace" edge to the Workspace entity was cleared.
+func (m *UnsubscribeMutation) WorkspaceCleared() bool {
+	return m.clearedworkspace
+}
+
+// WorkspaceIDs returns the "workspace" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// WorkspaceID instead. It exists only for internal usage by the builders.
+func (m *UnsubscribeMutation) WorkspaceIDs() (ids []int64) {
+	if id := m.workspace; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetWorkspace resets all changes to the "workspace" edge.
+func (m *UnsubscribeMutation) ResetWorkspace() {
+	m.workspace = nil
+	m.clearedworkspace = false
+}
+
+// Where appends a list predicates to the UnsubscribeMutation builder.
+func (m *UnsubscribeMutation) Where(ps ...predicate.Unsubscribe) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the UnsubscribeMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *UnsubscribeMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.Unsubscribe, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *UnsubscribeMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *UnsubscribeMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (Unsubscribe).
+func (m *UnsubscribeMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *UnsubscribeMutation) Fields() []string {
+	fields := make([]string, 0, 7)
+	if m.channel != nil {
+		fields = append(fields, unsubscribe.FieldChannel)
+	}
+	if m.destination != nil {
+		fields = append(fields, unsubscribe.FieldDestination)
+	}
+	if m.sending_source != nil {
+		fields = append(fields, unsubscribe.FieldSendingSource)
+	}
+	if m.contact_id != nil {
+		fields = append(fields, unsubscribe.FieldContactID)
+	}
+	if m.workspace != nil {
+		fields = append(fields, unsubscribe.FieldWorkspaceID)
+	}
+	if m.created_at != nil {
+		fields = append(fields, unsubscribe.FieldCreatedAt)
+	}
+	if m.updated_at != nil {
+		fields = append(fields, unsubscribe.FieldUpdatedAt)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *UnsubscribeMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case unsubscribe.FieldChannel:
+		return m.Channel()
+	case unsubscribe.FieldDestination:
+		return m.Destination()
+	case unsubscribe.FieldSendingSource:
+		return m.SendingSource()
+	case unsubscribe.FieldContactID:
+		return m.ContactID()
+	case unsubscribe.FieldWorkspaceID:
+		return m.WorkspaceID()
+	case unsubscribe.FieldCreatedAt:
+		return m.CreatedAt()
+	case unsubscribe.FieldUpdatedAt:
+		return m.UpdatedAt()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *UnsubscribeMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case unsubscribe.FieldChannel:
+		return m.OldChannel(ctx)
+	case unsubscribe.FieldDestination:
+		return m.OldDestination(ctx)
+	case unsubscribe.FieldSendingSource:
+		return m.OldSendingSource(ctx)
+	case unsubscribe.FieldContactID:
+		return m.OldContactID(ctx)
+	case unsubscribe.FieldWorkspaceID:
+		return m.OldWorkspaceID(ctx)
+	case unsubscribe.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	case unsubscribe.FieldUpdatedAt:
+		return m.OldUpdatedAt(ctx)
+	}
+	return nil, fmt.Errorf("unknown Unsubscribe field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *UnsubscribeMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case unsubscribe.FieldChannel:
+		v, ok := value.(unsubscribe.Channel)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetChannel(v)
+		return nil
+	case unsubscribe.FieldDestination:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetDestination(v)
+		return nil
+	case unsubscribe.FieldSendingSource:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSendingSource(v)
+		return nil
+	case unsubscribe.FieldContactID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetContactID(v)
+		return nil
+	case unsubscribe.FieldWorkspaceID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetWorkspaceID(v)
+		return nil
+	case unsubscribe.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	case unsubscribe.FieldUpdatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUpdatedAt(v)
+		return nil
+	}
+	return fmt.Errorf("unknown Unsubscribe field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *UnsubscribeMutation) AddedFields() []string {
+	var fields []string
+	if m.addcontact_id != nil {
+		fields = append(fields, unsubscribe.FieldContactID)
+	}
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *UnsubscribeMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case unsubscribe.FieldContactID:
+		return m.AddedContactID()
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *UnsubscribeMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	case unsubscribe.FieldContactID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddContactID(v)
+		return nil
+	}
+	return fmt.Errorf("unknown Unsubscribe numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *UnsubscribeMutation) ClearedFields() []string {
+	var fields []string
+	if m.FieldCleared(unsubscribe.FieldContactID) {
+		fields = append(fields, unsubscribe.FieldContactID)
+	}
+	return fields
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *UnsubscribeMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *UnsubscribeMutation) ClearField(name string) error {
+	switch name {
+	case unsubscribe.FieldContactID:
+		m.ClearContactID()
+		return nil
+	}
+	return fmt.Errorf("unknown Unsubscribe nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *UnsubscribeMutation) ResetField(name string) error {
+	switch name {
+	case unsubscribe.FieldChannel:
+		m.ResetChannel()
+		return nil
+	case unsubscribe.FieldDestination:
+		m.ResetDestination()
+		return nil
+	case unsubscribe.FieldSendingSource:
+		m.ResetSendingSource()
+		return nil
+	case unsubscribe.FieldContactID:
+		m.ResetContactID()
+		return nil
+	case unsubscribe.FieldWorkspaceID:
+		m.ResetWorkspaceID()
+		return nil
+	case unsubscribe.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	case unsubscribe.FieldUpdatedAt:
+		m.ResetUpdatedAt()
+		return nil
+	}
+	return fmt.Errorf("unknown Unsubscribe field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *UnsubscribeMutation) AddedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.workspace != nil {
+		edges = append(edges, unsubscribe.EdgeWorkspace)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *UnsubscribeMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case unsubscribe.EdgeWorkspace:
+		if id := m.workspace; id != nil {
+			return []ent.Value{*id}
+		}
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *UnsubscribeMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 1)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *UnsubscribeMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *UnsubscribeMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.clearedworkspace {
+		edges = append(edges, unsubscribe.EdgeWorkspace)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *UnsubscribeMutation) EdgeCleared(name string) bool {
+	switch name {
+	case unsubscribe.EdgeWorkspace:
+		return m.clearedworkspace
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *UnsubscribeMutation) ClearEdge(name string) error {
+	switch name {
+	case unsubscribe.EdgeWorkspace:
+		m.ClearWorkspace()
+		return nil
+	}
+	return fmt.Errorf("unknown Unsubscribe unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *UnsubscribeMutation) ResetEdge(name string) error {
+	switch name {
+	case unsubscribe.EdgeWorkspace:
+		m.ResetWorkspace()
+		return nil
+	}
+	return fmt.Errorf("unknown Unsubscribe edge %s", name)
 }
 
 // UserMutation represents an operation that mutates the User nodes in the graph.
@@ -13623,6 +14394,9 @@ type WorkspaceMutation struct {
 	suppressions                map[int64]struct{}
 	removedsuppressions         map[int64]struct{}
 	clearedsuppressions         bool
+	unsubscribes                map[int64]struct{}
+	removedunsubscribes         map[int64]struct{}
+	clearedunsubscribes         bool
 	user                        *int64
 	cleareduser                 bool
 	done                        bool
@@ -14755,6 +15529,60 @@ func (m *WorkspaceMutation) ResetSuppressions() {
 	m.removedsuppressions = nil
 }
 
+// AddUnsubscribeIDs adds the "unsubscribes" edge to the Unsubscribe entity by ids.
+func (m *WorkspaceMutation) AddUnsubscribeIDs(ids ...int64) {
+	if m.unsubscribes == nil {
+		m.unsubscribes = make(map[int64]struct{})
+	}
+	for i := range ids {
+		m.unsubscribes[ids[i]] = struct{}{}
+	}
+}
+
+// ClearUnsubscribes clears the "unsubscribes" edge to the Unsubscribe entity.
+func (m *WorkspaceMutation) ClearUnsubscribes() {
+	m.clearedunsubscribes = true
+}
+
+// UnsubscribesCleared reports if the "unsubscribes" edge to the Unsubscribe entity was cleared.
+func (m *WorkspaceMutation) UnsubscribesCleared() bool {
+	return m.clearedunsubscribes
+}
+
+// RemoveUnsubscribeIDs removes the "unsubscribes" edge to the Unsubscribe entity by IDs.
+func (m *WorkspaceMutation) RemoveUnsubscribeIDs(ids ...int64) {
+	if m.removedunsubscribes == nil {
+		m.removedunsubscribes = make(map[int64]struct{})
+	}
+	for i := range ids {
+		delete(m.unsubscribes, ids[i])
+		m.removedunsubscribes[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedUnsubscribes returns the removed IDs of the "unsubscribes" edge to the Unsubscribe entity.
+func (m *WorkspaceMutation) RemovedUnsubscribesIDs() (ids []int64) {
+	for id := range m.removedunsubscribes {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// UnsubscribesIDs returns the "unsubscribes" edge IDs in the mutation.
+func (m *WorkspaceMutation) UnsubscribesIDs() (ids []int64) {
+	for id := range m.unsubscribes {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetUnsubscribes resets all changes to the "unsubscribes" edge.
+func (m *WorkspaceMutation) ResetUnsubscribes() {
+	m.unsubscribes = nil
+	m.clearedunsubscribes = false
+	m.removedunsubscribes = nil
+}
+
 // ClearUser clears the "user" edge to the User entity.
 func (m *WorkspaceMutation) ClearUser() {
 	m.cleareduser = true
@@ -15029,7 +15857,7 @@ func (m *WorkspaceMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *WorkspaceMutation) AddedEdges() []string {
-	edges := make([]string, 0, 15)
+	edges := make([]string, 0, 16)
 	if m.contacts != nil {
 		edges = append(edges, workspace.EdgeContacts)
 	}
@@ -15071,6 +15899,9 @@ func (m *WorkspaceMutation) AddedEdges() []string {
 	}
 	if m.suppressions != nil {
 		edges = append(edges, workspace.EdgeSuppressions)
+	}
+	if m.unsubscribes != nil {
+		edges = append(edges, workspace.EdgeUnsubscribes)
 	}
 	if m.user != nil {
 		edges = append(edges, workspace.EdgeUser)
@@ -15166,6 +15997,12 @@ func (m *WorkspaceMutation) AddedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case workspace.EdgeUnsubscribes:
+		ids := make([]ent.Value, 0, len(m.unsubscribes))
+		for id := range m.unsubscribes {
+			ids = append(ids, id)
+		}
+		return ids
 	case workspace.EdgeUser:
 		if id := m.user; id != nil {
 			return []ent.Value{*id}
@@ -15176,7 +16013,7 @@ func (m *WorkspaceMutation) AddedIDs(name string) []ent.Value {
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *WorkspaceMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 15)
+	edges := make([]string, 0, 16)
 	if m.removedcontacts != nil {
 		edges = append(edges, workspace.EdgeContacts)
 	}
@@ -15218,6 +16055,9 @@ func (m *WorkspaceMutation) RemovedEdges() []string {
 	}
 	if m.removedsuppressions != nil {
 		edges = append(edges, workspace.EdgeSuppressions)
+	}
+	if m.removedunsubscribes != nil {
+		edges = append(edges, workspace.EdgeUnsubscribes)
 	}
 	return edges
 }
@@ -15310,13 +16150,19 @@ func (m *WorkspaceMutation) RemovedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case workspace.EdgeUnsubscribes:
+		ids := make([]ent.Value, 0, len(m.removedunsubscribes))
+		for id := range m.removedunsubscribes {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *WorkspaceMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 15)
+	edges := make([]string, 0, 16)
 	if m.clearedcontacts {
 		edges = append(edges, workspace.EdgeContacts)
 	}
@@ -15359,6 +16205,9 @@ func (m *WorkspaceMutation) ClearedEdges() []string {
 	if m.clearedsuppressions {
 		edges = append(edges, workspace.EdgeSuppressions)
 	}
+	if m.clearedunsubscribes {
+		edges = append(edges, workspace.EdgeUnsubscribes)
+	}
 	if m.cleareduser {
 		edges = append(edges, workspace.EdgeUser)
 	}
@@ -15397,6 +16246,8 @@ func (m *WorkspaceMutation) EdgeCleared(name string) bool {
 		return m.clearedwebhook_endpoints
 	case workspace.EdgeSuppressions:
 		return m.clearedsuppressions
+	case workspace.EdgeUnsubscribes:
+		return m.clearedunsubscribes
 	case workspace.EdgeUser:
 		return m.cleareduser
 	}
@@ -15459,6 +16310,9 @@ func (m *WorkspaceMutation) ResetEdge(name string) error {
 		return nil
 	case workspace.EdgeSuppressions:
 		m.ResetSuppressions()
+		return nil
+	case workspace.EdgeUnsubscribes:
+		m.ResetUnsubscribes()
 		return nil
 	case workspace.EdgeUser:
 		m.ResetUser()

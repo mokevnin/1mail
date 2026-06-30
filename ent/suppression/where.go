@@ -55,9 +55,9 @@ func IDLTE(id int64) predicate.Suppression {
 	return predicate.Suppression(sql.FieldLTE(FieldID, id))
 }
 
-// Email applies equality check predicate on the "email" field. It's identical to EmailEQ.
-func Email(v string) predicate.Suppression {
-	return predicate.Suppression(sql.FieldEQ(FieldEmail, v))
+// Destination applies equality check predicate on the "destination" field. It's identical to DestinationEQ.
+func Destination(v string) predicate.Suppression {
+	return predicate.Suppression(sql.FieldEQ(FieldDestination, v))
 }
 
 // ContactID applies equality check predicate on the "contact_id" field. It's identical to ContactIDEQ.
@@ -80,69 +80,89 @@ func UpdatedAt(v time.Time) predicate.Suppression {
 	return predicate.Suppression(sql.FieldEQ(FieldUpdatedAt, v))
 }
 
-// EmailEQ applies the EQ predicate on the "email" field.
-func EmailEQ(v string) predicate.Suppression {
-	return predicate.Suppression(sql.FieldEQ(FieldEmail, v))
+// ChannelEQ applies the EQ predicate on the "channel" field.
+func ChannelEQ(v Channel) predicate.Suppression {
+	return predicate.Suppression(sql.FieldEQ(FieldChannel, v))
 }
 
-// EmailNEQ applies the NEQ predicate on the "email" field.
-func EmailNEQ(v string) predicate.Suppression {
-	return predicate.Suppression(sql.FieldNEQ(FieldEmail, v))
+// ChannelNEQ applies the NEQ predicate on the "channel" field.
+func ChannelNEQ(v Channel) predicate.Suppression {
+	return predicate.Suppression(sql.FieldNEQ(FieldChannel, v))
 }
 
-// EmailIn applies the In predicate on the "email" field.
-func EmailIn(vs ...string) predicate.Suppression {
-	return predicate.Suppression(sql.FieldIn(FieldEmail, vs...))
+// ChannelIn applies the In predicate on the "channel" field.
+func ChannelIn(vs ...Channel) predicate.Suppression {
+	return predicate.Suppression(sql.FieldIn(FieldChannel, vs...))
 }
 
-// EmailNotIn applies the NotIn predicate on the "email" field.
-func EmailNotIn(vs ...string) predicate.Suppression {
-	return predicate.Suppression(sql.FieldNotIn(FieldEmail, vs...))
+// ChannelNotIn applies the NotIn predicate on the "channel" field.
+func ChannelNotIn(vs ...Channel) predicate.Suppression {
+	return predicate.Suppression(sql.FieldNotIn(FieldChannel, vs...))
 }
 
-// EmailGT applies the GT predicate on the "email" field.
-func EmailGT(v string) predicate.Suppression {
-	return predicate.Suppression(sql.FieldGT(FieldEmail, v))
+// DestinationEQ applies the EQ predicate on the "destination" field.
+func DestinationEQ(v string) predicate.Suppression {
+	return predicate.Suppression(sql.FieldEQ(FieldDestination, v))
 }
 
-// EmailGTE applies the GTE predicate on the "email" field.
-func EmailGTE(v string) predicate.Suppression {
-	return predicate.Suppression(sql.FieldGTE(FieldEmail, v))
+// DestinationNEQ applies the NEQ predicate on the "destination" field.
+func DestinationNEQ(v string) predicate.Suppression {
+	return predicate.Suppression(sql.FieldNEQ(FieldDestination, v))
 }
 
-// EmailLT applies the LT predicate on the "email" field.
-func EmailLT(v string) predicate.Suppression {
-	return predicate.Suppression(sql.FieldLT(FieldEmail, v))
+// DestinationIn applies the In predicate on the "destination" field.
+func DestinationIn(vs ...string) predicate.Suppression {
+	return predicate.Suppression(sql.FieldIn(FieldDestination, vs...))
 }
 
-// EmailLTE applies the LTE predicate on the "email" field.
-func EmailLTE(v string) predicate.Suppression {
-	return predicate.Suppression(sql.FieldLTE(FieldEmail, v))
+// DestinationNotIn applies the NotIn predicate on the "destination" field.
+func DestinationNotIn(vs ...string) predicate.Suppression {
+	return predicate.Suppression(sql.FieldNotIn(FieldDestination, vs...))
 }
 
-// EmailContains applies the Contains predicate on the "email" field.
-func EmailContains(v string) predicate.Suppression {
-	return predicate.Suppression(sql.FieldContains(FieldEmail, v))
+// DestinationGT applies the GT predicate on the "destination" field.
+func DestinationGT(v string) predicate.Suppression {
+	return predicate.Suppression(sql.FieldGT(FieldDestination, v))
 }
 
-// EmailHasPrefix applies the HasPrefix predicate on the "email" field.
-func EmailHasPrefix(v string) predicate.Suppression {
-	return predicate.Suppression(sql.FieldHasPrefix(FieldEmail, v))
+// DestinationGTE applies the GTE predicate on the "destination" field.
+func DestinationGTE(v string) predicate.Suppression {
+	return predicate.Suppression(sql.FieldGTE(FieldDestination, v))
 }
 
-// EmailHasSuffix applies the HasSuffix predicate on the "email" field.
-func EmailHasSuffix(v string) predicate.Suppression {
-	return predicate.Suppression(sql.FieldHasSuffix(FieldEmail, v))
+// DestinationLT applies the LT predicate on the "destination" field.
+func DestinationLT(v string) predicate.Suppression {
+	return predicate.Suppression(sql.FieldLT(FieldDestination, v))
 }
 
-// EmailEqualFold applies the EqualFold predicate on the "email" field.
-func EmailEqualFold(v string) predicate.Suppression {
-	return predicate.Suppression(sql.FieldEqualFold(FieldEmail, v))
+// DestinationLTE applies the LTE predicate on the "destination" field.
+func DestinationLTE(v string) predicate.Suppression {
+	return predicate.Suppression(sql.FieldLTE(FieldDestination, v))
 }
 
-// EmailContainsFold applies the ContainsFold predicate on the "email" field.
-func EmailContainsFold(v string) predicate.Suppression {
-	return predicate.Suppression(sql.FieldContainsFold(FieldEmail, v))
+// DestinationContains applies the Contains predicate on the "destination" field.
+func DestinationContains(v string) predicate.Suppression {
+	return predicate.Suppression(sql.FieldContains(FieldDestination, v))
+}
+
+// DestinationHasPrefix applies the HasPrefix predicate on the "destination" field.
+func DestinationHasPrefix(v string) predicate.Suppression {
+	return predicate.Suppression(sql.FieldHasPrefix(FieldDestination, v))
+}
+
+// DestinationHasSuffix applies the HasSuffix predicate on the "destination" field.
+func DestinationHasSuffix(v string) predicate.Suppression {
+	return predicate.Suppression(sql.FieldHasSuffix(FieldDestination, v))
+}
+
+// DestinationEqualFold applies the EqualFold predicate on the "destination" field.
+func DestinationEqualFold(v string) predicate.Suppression {
+	return predicate.Suppression(sql.FieldEqualFold(FieldDestination, v))
+}
+
+// DestinationContainsFold applies the ContainsFold predicate on the "destination" field.
+func DestinationContainsFold(v string) predicate.Suppression {
+	return predicate.Suppression(sql.FieldContainsFold(FieldDestination, v))
 }
 
 // ReasonEQ applies the EQ predicate on the "reason" field.

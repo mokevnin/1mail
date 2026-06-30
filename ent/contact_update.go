@@ -131,20 +131,6 @@ func (_u *ContactUpdate) ClearLastName() *ContactUpdate {
 	return _u
 }
 
-// SetStatus sets the "status" field.
-func (_u *ContactUpdate) SetStatus(v contact.Status) *ContactUpdate {
-	_u.mutation.SetStatus(v)
-	return _u
-}
-
-// SetNillableStatus sets the "status" field if the given value is not nil.
-func (_u *ContactUpdate) SetNillableStatus(v *contact.Status) *ContactUpdate {
-	if v != nil {
-		_u.SetStatus(*v)
-	}
-	return _u
-}
-
 // SetTimeZone sets the "time_zone" field.
 func (_u *ContactUpdate) SetTimeZone(v string) *ContactUpdate {
 	_u.mutation.SetTimeZone(v)
@@ -287,11 +273,6 @@ func (_u *ContactUpdate) defaults() {
 
 // check runs all checks and user-defined validators on the builder.
 func (_u *ContactUpdate) check() error {
-	if v, ok := _u.mutation.Status(); ok {
-		if err := contact.StatusValidator(v); err != nil {
-			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "Contact.status": %w`, err)}
-		}
-	}
 	if _u.mutation.WorkspaceCleared() && len(_u.mutation.WorkspaceIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "Contact.workspace"`)
 	}
@@ -345,9 +326,6 @@ func (_u *ContactUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	}
 	if _u.mutation.LastNameCleared() {
 		_spec.ClearField(contact.FieldLastName, field.TypeString)
-	}
-	if value, ok := _u.mutation.Status(); ok {
-		_spec.SetField(contact.FieldStatus, field.TypeEnum, value)
 	}
 	if value, ok := _u.mutation.TimeZone(); ok {
 		_spec.SetField(contact.FieldTimeZone, field.TypeString, value)
@@ -560,20 +538,6 @@ func (_u *ContactUpdateOne) ClearLastName() *ContactUpdateOne {
 	return _u
 }
 
-// SetStatus sets the "status" field.
-func (_u *ContactUpdateOne) SetStatus(v contact.Status) *ContactUpdateOne {
-	_u.mutation.SetStatus(v)
-	return _u
-}
-
-// SetNillableStatus sets the "status" field if the given value is not nil.
-func (_u *ContactUpdateOne) SetNillableStatus(v *contact.Status) *ContactUpdateOne {
-	if v != nil {
-		_u.SetStatus(*v)
-	}
-	return _u
-}
-
 // SetTimeZone sets the "time_zone" field.
 func (_u *ContactUpdateOne) SetTimeZone(v string) *ContactUpdateOne {
 	_u.mutation.SetTimeZone(v)
@@ -729,11 +693,6 @@ func (_u *ContactUpdateOne) defaults() {
 
 // check runs all checks and user-defined validators on the builder.
 func (_u *ContactUpdateOne) check() error {
-	if v, ok := _u.mutation.Status(); ok {
-		if err := contact.StatusValidator(v); err != nil {
-			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "Contact.status": %w`, err)}
-		}
-	}
 	if _u.mutation.WorkspaceCleared() && len(_u.mutation.WorkspaceIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "Contact.workspace"`)
 	}
@@ -804,9 +763,6 @@ func (_u *ContactUpdateOne) sqlSave(ctx context.Context) (_node *Contact, err er
 	}
 	if _u.mutation.LastNameCleared() {
 		_spec.ClearField(contact.FieldLastName, field.TypeString)
-	}
-	if value, ok := _u.mutation.Status(); ok {
-		_spec.SetField(contact.FieldStatus, field.TypeEnum, value)
 	}
 	if value, ok := _u.mutation.TimeZone(); ok {
 		_spec.SetField(contact.FieldTimeZone, field.TypeString, value)

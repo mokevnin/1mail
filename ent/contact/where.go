@@ -475,26 +475,6 @@ func LastNameContainsFold(v string) predicate.Contact {
 	return predicate.Contact(sql.FieldContainsFold(FieldLastName, v))
 }
 
-// StatusEQ applies the EQ predicate on the "status" field.
-func StatusEQ(v Status) predicate.Contact {
-	return predicate.Contact(sql.FieldEQ(FieldStatus, v))
-}
-
-// StatusNEQ applies the NEQ predicate on the "status" field.
-func StatusNEQ(v Status) predicate.Contact {
-	return predicate.Contact(sql.FieldNEQ(FieldStatus, v))
-}
-
-// StatusIn applies the In predicate on the "status" field.
-func StatusIn(vs ...Status) predicate.Contact {
-	return predicate.Contact(sql.FieldIn(FieldStatus, vs...))
-}
-
-// StatusNotIn applies the NotIn predicate on the "status" field.
-func StatusNotIn(vs ...Status) predicate.Contact {
-	return predicate.Contact(sql.FieldNotIn(FieldStatus, vs...))
-}
-
 // TimeZoneEQ applies the EQ predicate on the "time_zone" field.
 func TimeZoneEQ(v string) predicate.Contact {
 	return predicate.Contact(sql.FieldEQ(FieldTimeZone, v))

@@ -14,9 +14,9 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// An unsubscribe event adds the address to the workspace suppression list,
-// normalized (lower-cased), with reason "unsubscribed".
-func TestSuppressOnUnsubscribe(t *testing.T) {
+// An unsubscribe is NOT a suppression (ADR 0001): it is a separate, per-source
+// opt-out, so an unsubscribe event must not create a suppression row.
+func TestSuppressIgnoresUnsubscribe(t *testing.T) {
 	env := testhelper.Setup(t)
 	ctx := context.Background()
 
@@ -35,13 +35,9 @@ func TestSuppressOnUnsubscribe(t *testing.T) {
 	}
 	require.NoError(t, events.Suppress(ctx, env.DB, envlp))
 
-	s, err := env.DB.Suppression.Query().
-		Where(suppression.WorkspaceID(fixtureWorkspace), suppression.EmailEQ("unsub@example.com")).
-		Only(ctx)
+	n, err := env.DB.Suppression.Query().Where(suppression.WorkspaceID(fixtureWorkspace)).Count(ctx)
 	require.NoError(t, err)
-	assert.Equal(t, suppression.ReasonUnsubscribed, s.Reason)
-	require.NotNil(t, s.ContactID)
-	assert.EqualValues(t, 7, *s.ContactID)
+	assert.Zero(t, n, "unsubscribe must not suppress")
 }
 
 // Opens/clicks (and any non-suppressing action) do not create a suppression.
@@ -139,7 +135,9 @@ func TestSuppressOnPermanentBounce(t *testing.T) {
 	require.NoError(t, events.Suppress(ctx, env.DB, envlp))
 
 	s, err := env.DB.Suppression.Query().
-		Where(suppression.WorkspaceID(fixtureWorkspace), suppression.EmailEQ("hardbounce@example.com")).
+		Where(suppression.WorkspaceID(fixtureWorkspace),
+			suppression.ChannelEQ(suppression.ChannelEmail),
+			suppression.DestinationEQ("hardbounce@example.com")).
 		Only(ctx)
 	require.NoError(t, err)
 	assert.Equal(t, suppression.ReasonBounce, s.Reason)
@@ -192,25 +190,27 @@ func TestSuppressOnComplaint(t *testing.T) {
 	require.NoError(t, events.Suppress(ctx, env.DB, envlp))
 
 	s, err := env.DB.Suppression.Query().
-		Where(suppression.WorkspaceID(fixtureWorkspace), suppression.EmailEQ("complaint@example.com")).
+		Where(suppression.WorkspaceID(fixtureWorkspace),
+			suppression.ChannelEQ(suppression.ChannelEmail),
+			suppression.DestinationEQ("complaint@example.com")).
 		Only(ctx)
 	require.NoError(t, err)
 	assert.Equal(t, suppression.ReasonComplaint, s.Reason)
 }
 
-// Redelivery or a repeat unsubscribe keeps a single entry (idempotent upsert).
+// Redelivery or a repeat suppressing event keeps a single entry (idempotent upsert).
 func TestSuppressIsIdempotent(t *testing.T) {
 	env := testhelper.Setup(t)
 	ctx := context.Background()
 
 	envlp := events.Envelope{
 		ID:          "01J0SUPPRESS00000000000002",
-		Name:        events.NameEmailUnsubscribed,
+		Name:        events.NameEmailComplained,
 		Version:     1,
 		WorkspaceID: fixtureWorkspace,
 		OccurredAt:  time.Date(2026, 6, 28, 10, 0, 0, 0, time.UTC),
-		Data: dataFor(t, &events.EmailEngagement{
-			Action:      events.NameEmailUnsubscribed,
+		Data: dataFor(t, &events.EmailDeliveryFailure{
+			Action:      events.NameEmailComplained,
 			WorkspaceID: fixtureWorkspace,
 			Email:       "dupe@example.com",
 		}),
@@ -219,7 +219,9 @@ func TestSuppressIsIdempotent(t *testing.T) {
 	require.NoError(t, events.Suppress(ctx, env.DB, envlp)) // redelivery
 
 	n, err := env.DB.Suppression.Query().
-		Where(suppression.WorkspaceID(fixtureWorkspace), suppression.EmailEQ("dupe@example.com")).
+		Where(suppression.WorkspaceID(fixtureWorkspace),
+			suppression.ChannelEQ(suppression.ChannelEmail),
+			suppression.DestinationEQ("dupe@example.com")).
 		Count(ctx)
 	require.NoError(t, err)
 	assert.Equal(t, 1, n)

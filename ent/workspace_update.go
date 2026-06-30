@@ -24,6 +24,7 @@ import (
 	"github.com/mokevnin/1mail/ent/predicate"
 	"github.com/mokevnin/1mail/ent/segment"
 	"github.com/mokevnin/1mail/ent/suppression"
+	"github.com/mokevnin/1mail/ent/unsubscribe"
 	"github.com/mokevnin/1mail/ent/user"
 	"github.com/mokevnin/1mail/ent/visitor"
 	"github.com/mokevnin/1mail/ent/webhookendpoint"
@@ -336,6 +337,21 @@ func (_u *WorkspaceUpdate) AddSuppressions(v ...*Suppression) *WorkspaceUpdate {
 	return _u.AddSuppressionIDs(ids...)
 }
 
+// AddUnsubscribeIDs adds the "unsubscribes" edge to the Unsubscribe entity by IDs.
+func (_u *WorkspaceUpdate) AddUnsubscribeIDs(ids ...int64) *WorkspaceUpdate {
+	_u.mutation.AddUnsubscribeIDs(ids...)
+	return _u
+}
+
+// AddUnsubscribes adds the "unsubscribes" edges to the Unsubscribe entity.
+func (_u *WorkspaceUpdate) AddUnsubscribes(v ...*Unsubscribe) *WorkspaceUpdate {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddUnsubscribeIDs(ids...)
+}
+
 // SetUser sets the "user" edge to the User entity.
 func (_u *WorkspaceUpdate) SetUser(v *User) *WorkspaceUpdate {
 	return _u.SetUserID(v.ID)
@@ -638,6 +654,27 @@ func (_u *WorkspaceUpdate) RemoveSuppressions(v ...*Suppression) *WorkspaceUpdat
 		ids[i] = v[i].ID
 	}
 	return _u.RemoveSuppressionIDs(ids...)
+}
+
+// ClearUnsubscribes clears all "unsubscribes" edges to the Unsubscribe entity.
+func (_u *WorkspaceUpdate) ClearUnsubscribes() *WorkspaceUpdate {
+	_u.mutation.ClearUnsubscribes()
+	return _u
+}
+
+// RemoveUnsubscribeIDs removes the "unsubscribes" edge to Unsubscribe entities by IDs.
+func (_u *WorkspaceUpdate) RemoveUnsubscribeIDs(ids ...int64) *WorkspaceUpdate {
+	_u.mutation.RemoveUnsubscribeIDs(ids...)
+	return _u
+}
+
+// RemoveUnsubscribes removes "unsubscribes" edges to Unsubscribe entities.
+func (_u *WorkspaceUpdate) RemoveUnsubscribes(v ...*Unsubscribe) *WorkspaceUpdate {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveUnsubscribeIDs(ids...)
 }
 
 // ClearUser clears the "user" edge to the User entity.
@@ -1370,6 +1407,51 @@ func (_u *WorkspaceUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	if _u.mutation.UnsubscribesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   workspace.UnsubscribesTable,
+			Columns: []string{workspace.UnsubscribesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(unsubscribe.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedUnsubscribesIDs(); len(nodes) > 0 && !_u.mutation.UnsubscribesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   workspace.UnsubscribesTable,
+			Columns: []string{workspace.UnsubscribesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(unsubscribe.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.UnsubscribesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   workspace.UnsubscribesTable,
+			Columns: []string{workspace.UnsubscribesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(unsubscribe.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if _u.mutation.UserCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
@@ -1713,6 +1795,21 @@ func (_u *WorkspaceUpdateOne) AddSuppressions(v ...*Suppression) *WorkspaceUpdat
 	return _u.AddSuppressionIDs(ids...)
 }
 
+// AddUnsubscribeIDs adds the "unsubscribes" edge to the Unsubscribe entity by IDs.
+func (_u *WorkspaceUpdateOne) AddUnsubscribeIDs(ids ...int64) *WorkspaceUpdateOne {
+	_u.mutation.AddUnsubscribeIDs(ids...)
+	return _u
+}
+
+// AddUnsubscribes adds the "unsubscribes" edges to the Unsubscribe entity.
+func (_u *WorkspaceUpdateOne) AddUnsubscribes(v ...*Unsubscribe) *WorkspaceUpdateOne {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddUnsubscribeIDs(ids...)
+}
+
 // SetUser sets the "user" edge to the User entity.
 func (_u *WorkspaceUpdateOne) SetUser(v *User) *WorkspaceUpdateOne {
 	return _u.SetUserID(v.ID)
@@ -2015,6 +2112,27 @@ func (_u *WorkspaceUpdateOne) RemoveSuppressions(v ...*Suppression) *WorkspaceUp
 		ids[i] = v[i].ID
 	}
 	return _u.RemoveSuppressionIDs(ids...)
+}
+
+// ClearUnsubscribes clears all "unsubscribes" edges to the Unsubscribe entity.
+func (_u *WorkspaceUpdateOne) ClearUnsubscribes() *WorkspaceUpdateOne {
+	_u.mutation.ClearUnsubscribes()
+	return _u
+}
+
+// RemoveUnsubscribeIDs removes the "unsubscribes" edge to Unsubscribe entities by IDs.
+func (_u *WorkspaceUpdateOne) RemoveUnsubscribeIDs(ids ...int64) *WorkspaceUpdateOne {
+	_u.mutation.RemoveUnsubscribeIDs(ids...)
+	return _u
+}
+
+// RemoveUnsubscribes removes "unsubscribes" edges to Unsubscribe entities.
+func (_u *WorkspaceUpdateOne) RemoveUnsubscribes(v ...*Unsubscribe) *WorkspaceUpdateOne {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveUnsubscribeIDs(ids...)
 }
 
 // ClearUser clears the "user" edge to the User entity.
@@ -2770,6 +2888,51 @@ func (_u *WorkspaceUpdateOne) sqlSave(ctx context.Context) (_node *Workspace, er
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(suppression.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.UnsubscribesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   workspace.UnsubscribesTable,
+			Columns: []string{workspace.UnsubscribesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(unsubscribe.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedUnsubscribesIDs(); len(nodes) > 0 && !_u.mutation.UnsubscribesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   workspace.UnsubscribesTable,
+			Columns: []string{workspace.UnsubscribesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(unsubscribe.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.UnsubscribesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   workspace.UnsubscribesTable,
+			Columns: []string{workspace.UnsubscribesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(unsubscribe.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {

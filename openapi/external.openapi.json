@@ -677,16 +677,6 @@
           },
           {
             "$ref": "#/components/parameters/PageQuery.pageSize"
-          },
-          {
-            "name": "status",
-            "in": "query",
-            "required": false,
-            "description": "Filter by status",
-            "schema": {
-              "$ref": "#/components/schemas/ContactStatus"
-            },
-            "explode": false
           }
         ],
         "responses": {
@@ -1566,7 +1556,7 @@
       },
       "ContactResource": {
         "type": "object",
-        "required": ["id", "status", "createdAt", "updatedAt"],
+        "required": ["id", "createdAt", "updatedAt"],
         "properties": {
           "id": {
             "allOf": [
@@ -1622,14 +1612,6 @@
             "nullable": true,
             "description": "Typed custom field values keyed by the field's machine key"
           },
-          "status": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ContactStatus"
-              }
-            ],
-            "description": "Current status"
-          },
           "createdAt": {
             "allOf": [
               {
@@ -1648,11 +1630,6 @@
           }
         },
         "description": "Contact resource"
-      },
-      "ContactStatus": {
-        "type": "string",
-        "enum": ["active", "unsubscribed"],
-        "description": "Contact status"
       },
       "CreateApiTokenInput": {
         "type": "object",

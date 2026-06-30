@@ -1,4 +1,4 @@
-import { Badge, Card, Code, Group, Loader, SimpleGrid, Stack, Text, Title } from '@mantine/core'
+import { Card, Code, Group, Loader, SimpleGrid, Stack, Text, Title } from '@mantine/core'
 import { useQuery } from '@tanstack/react-query'
 import { DataTable } from 'mantine-datatable'
 import { useEffect, useState } from 'react'
@@ -9,15 +9,9 @@ import {
   siteContactsGetOptions,
   siteEventsListOptions,
 } from '../../generated/site/@tanstack/react-query.gen.ts'
-import type { SiteContactStatus } from '../../generated/site/types.gen.ts'
 import { contactsDetailRoute, contactsEditRoute, contactsRoute } from '../../router.tsx'
 
 const EVENTS_PAGE_SIZE = 10
-
-const STATUS_COLORS: Record<SiteContactStatus, string> = {
-  active: 'teal',
-  unsubscribed: 'gray',
-}
 
 function Field({ label, value }: { label: string; value: string }) {
   return (
@@ -90,9 +84,6 @@ export function ContactDetailPage() {
           {fullName ? <Text c="dimmed">{fullName}</Text> : null}
         </Stack>
         <Group gap="xs">
-          <Badge color={STATUS_COLORS[contact.status]} variant="light" size="lg">
-            {t(($) => $.status[contact.status])}
-          </Badge>
           <ButtonLink variant="default" to={contactsEditRoute.to} params={{ slug, contactId }}>
             {t(($) => $.actions.edit)}
           </ButtonLink>

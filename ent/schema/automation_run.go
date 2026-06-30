@@ -33,8 +33,10 @@ func (AutomationRun) Fields() []ent.Field {
 		field.Int64("automation_id"),
 		field.Int64("contact_id"),
 		field.Int64("workspace_id"),
+		// exited: the enrollment left early (e.g. an unsubscribe or suppression
+		// mid-run) — distinct from completing the sequence.
 		field.Enum("status").
-			Values("active", "completed", "failed").
+			Values("active", "completed", "failed", "exited").
 			Default("active"),
 		field.Int("current_step").
 			Default(0).

@@ -44,9 +44,6 @@ func (Contact) Fields() []ent.Field {
 		field.String("last_name").
 			Optional().
 			Nillable(),
-		field.Enum("status").
-			Values("active", "unsubscribed").
-			Default("active"),
 		field.String("time_zone").
 			Optional().
 			Nillable(),

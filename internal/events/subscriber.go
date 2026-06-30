@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/ThreeDotsLabs/watermill"
@@ -14,6 +13,7 @@ import (
 	"github.com/mokevnin/1mail/ent"
 	"github.com/mokevnin/1mail/ent/event"
 	"github.com/mokevnin/1mail/ent/suppression"
+	"github.com/mokevnin/1mail/internal/eligibility"
 )
 
 // Enroller enrolls a contact into automations matching an event action. The
@@ -70,13 +70,12 @@ func RegisterSubscribers(router *message.Router, db *sql.DB, client *ent.Client,
 }
 
 // suppressionReason maps a projected event to the suppression reason it implies,
-// or false for events that don't suppress (opens, clicks, transient bounces). It
-// takes the whole projection because a bounce only suppresses when permanent,
-// which lives in the projected properties.
+// or false for events that don't suppress (opens, clicks, transient bounces,
+// unsubscribes). It takes the whole projection because a bounce only suppresses
+// when permanent, which lives in the projected properties. Unsubscribe is NOT a
+// suppression: it writes a per-source Unsubscribe row instead (ADR 0001).
 func suppressionReason(p Projection) (suppression.Reason, bool) {
 	switch p.Action {
-	case NameEmailUnsubscribed:
-		return suppression.ReasonUnsubscribed, true
 	case NameEmailComplained:
 		return suppression.ReasonComplaint, true
 	case NameEmailBounced:
@@ -91,7 +90,7 @@ func suppressionReason(p Projection) (suppression.Reason, bool) {
 }
 
 // suppressionConsumer adds the event's address to the workspace suppression list
-// when the action implies it (today: unsubscribe).
+// when the action implies it (hard bounce, complaint).
 func suppressionConsumer(client *ent.Client) message.NoPublishHandlerFunc {
 	return func(msg *message.Message) error {
 		var env Envelope
@@ -102,11 +101,11 @@ func suppressionConsumer(client *ent.Client) message.NoPublishHandlerFunc {
 	}
 }
 
-// Suppress adds the event's address to the workspace suppression list when the
-// action implies a do-not-send (today: unsubscribe; bounce/complaint later).
-// No-op for other actions or a missing email. Idempotent — a redelivered or
-// repeated event keeps the original entry rather than erroring or overwriting
-// its reason. Exported so the logic can be tested without running the router.
+// Suppress adds the event's destination to the workspace suppression list when
+// the action implies a global do-not-send (hard bounce, complaint). No-op for
+// other actions or a missing email. Idempotent — a redelivered or repeated event
+// keeps the original entry rather than erroring or overwriting its reason.
+// Exported so the logic can be tested without running the router.
 func Suppress(ctx context.Context, client *ent.Client, env Envelope) error {
 	ev, err := Decode(env)
 	if err != nil {
@@ -117,22 +116,23 @@ func Suppress(ctx context.Context, client *ent.Client, env Envelope) error {
 	if !ok {
 		return nil
 	}
-	email := strings.ToLower(strings.TrimSpace(p.Email))
-	if email == "" {
+	dest := eligibility.NormalizeDestination(p.Email)
+	if dest == "" {
 		return nil
 	}
 	create := client.Suppression.Create().
 		SetWorkspaceID(env.WorkspaceID).
-		SetEmail(email).
+		SetChannel(suppression.ChannelEmail).
+		SetDestination(dest).
 		SetReason(reason)
 	if p.ContactID != 0 {
 		create.SetContactID(p.ContactID)
 	}
 	if err := create.
-		OnConflictColumns(suppression.FieldWorkspaceID, suppression.FieldEmail).
+		OnConflictColumns(suppression.FieldWorkspaceID, suppression.FieldChannel, suppression.FieldDestination).
 		Ignore().
 		Exec(ctx); err != nil {
-		return fmt.Errorf("suppress %q: %w", email, err)
+		return fmt.Errorf("suppress %q: %w", dest, err)
 	}
 	return nil
 }

@@ -23,9 +23,6 @@ func (h *Handlers) ContactsList(ctx context.Context, params externalapi.Contacts
 	page, pageSize := pagination.Normalize(convert.Ptr(params.Page), convert.Ptr(params.PageSize))
 
 	q := h.ent.Contact.Query().Where(contact.WorkspaceID(ws))
-	if status, ok := params.Status.Get(); ok {
-		q = q.Where(contact.StatusEQ(contact.Status(string(status))))
-	}
 
 	total, err := q.Count(ctx)
 	if err != nil {

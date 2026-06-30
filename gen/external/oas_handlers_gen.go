@@ -2565,10 +2565,6 @@ func (s *Server) handleContactsListRequest(args [0]string, argsEscaped bool, w h
 					Name: "pageSize",
 					In:   "query",
 				}: params.PageSize,
-				{
-					Name: "status",
-					In:   "query",
-				}: params.Status,
 			},
 			Raw: r,
 		}

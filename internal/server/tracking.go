@@ -10,7 +10,8 @@ import (
 
 	"github.com/mokevnin/1mail/ent"
 	"github.com/mokevnin/1mail/ent/broadcastrecipient"
-	"github.com/mokevnin/1mail/ent/contact"
+	"github.com/mokevnin/1mail/ent/unsubscribe"
+	"github.com/mokevnin/1mail/internal/eligibility"
 	"github.com/mokevnin/1mail/internal/events"
 	"github.com/mokevnin/1mail/internal/tracking"
 	"github.com/samber/lo"
@@ -25,7 +26,7 @@ var pixelGIF, _ = base64.StdEncoding.DecodeString(
 //
 //	GET /e/o/{token}        — open pixel:       record open, return a 1x1 gif
 //	GET /e/c/{token}?u=URL  — click:            record click, 302 to URL
-//	GET /e/u/{token}        — unsubscribe:      mark contact unsubscribed
+//	GET /e/u/{token}        — unsubscribe:      opt the destination out of "broadcasts"
 //
 // The token is a signed per-recipient JWT. Opens always return the pixel (even
 // on a bad token) so we never leak token validity through the image.
@@ -137,6 +138,11 @@ func recordClick(ctx context.Context, client *ent.Client, bus *events.Bus, recip
 	}
 }
 
+// recordUnsubscribe writes a per-destination opt-out from the "broadcasts"
+// sending source (ADR 0001) — never touching any contact status, which no longer
+// exists. The default in-email link is scoped to the source, not "everything".
+// Scope (broadcasts) and attribution (which broadcast) are two separate facts:
+// the scope lives in the Unsubscribe row, the attribution in the counter + event.
 func recordUnsubscribe(ctx context.Context, client *ent.Client, bus *events.Bus, recipientID int64) {
 	rec, err := client.BroadcastRecipient.Get(ctx, recipientID)
 	if err != nil {
@@ -146,12 +152,32 @@ func recordUnsubscribe(ctx context.Context, client *ent.Client, bus *events.Bus,
 	if err != nil {
 		return
 	}
+	dest := eligibility.NormalizeDestination(lo.FromPtr(c.Email))
+	if dest == "" {
+		return
+	}
 	err = bus.WithinTx(ctx, func(tx *ent.Client, pub events.Publisher) error {
-		n, err := tx.Contact.Update().
-			Where(contact.ID(rec.ContactID), contact.StatusNEQ(contact.StatusUnsubscribed)).
-			SetStatus(contact.StatusUnsubscribed).Save(ctx)
-		if err != nil || n == 0 {
-			return err // already unsubscribed
+		// Exactly-once: skip the counter + event if the destination already opted
+		// out of broadcasts. Concurrent duplicate clicks are caught by the unique
+		// (workspace, channel, destination, sending_source) index — the loser's tx
+		// rolls back, so the counter is incremented exactly once.
+		exists, err := tx.Unsubscribe.Query().Where(
+			unsubscribe.WorkspaceID(rec.WorkspaceID),
+			unsubscribe.ChannelEQ(unsubscribe.ChannelEmail),
+			unsubscribe.DestinationEQ(dest),
+			unsubscribe.SendingSourceEQ(eligibility.SourceBroadcasts),
+		).Exist(ctx)
+		if err != nil || exists {
+			return err
+		}
+		create := tx.Unsubscribe.Create().
+			SetWorkspaceID(rec.WorkspaceID).
+			SetChannel(unsubscribe.ChannelEmail).
+			SetDestination(dest).
+			SetSendingSource(eligibility.SourceBroadcasts).
+			SetContactID(rec.ContactID)
+		if _, err := create.Save(ctx); err != nil {
+			return err
 		}
 		if _, err := tx.Broadcast.UpdateOneID(rec.BroadcastID).AddUnsubscribedCount(1).Save(ctx); err != nil {
 			return err

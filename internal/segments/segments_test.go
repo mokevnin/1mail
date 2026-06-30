@@ -37,20 +37,17 @@ func TestCompileEvaluatesAgainstContacts(t *testing.T) {
 	env := testhelper.Setup(t)
 	ctx := context.Background()
 
-	mk := func(email, first, status string, custom map[string]any) {
+	mk := func(email, first string, custom map[string]any) {
 		c := env.DB.Contact.Create().SetWorkspaceID(wsID).SetEmail(email).SetFirstName(first)
-		if status == "unsubscribed" {
-			c.SetStatus(contact.StatusUnsubscribed)
-		}
 		if custom != nil {
 			c.SetCustomFields(custom)
 		}
 		_, err := c.Save(ctx)
 		require.NoError(t, err)
 	}
-	mk("ann@seg.test", "Ann", "active", map[string]any{"plan": "pro"})
-	mk("bob@seg.test", "Bob", "active", map[string]any{"plan": "free"})
-	mk("cara@seg.test", "Cara", "unsubscribed", map[string]any{"plan": "pro"})
+	mk("ann@seg.test", "Ann", map[string]any{"plan": "pro"})
+	mk("bob@seg.test", "Bob", map[string]any{"plan": "free"})
+	mk("cara@seg.test", "Cara", map[string]any{"plan": "pro"})
 
 	count := func(g segments.Group) int {
 		p, err := segments.Compile(g, segments.ContactSchema())
@@ -65,16 +62,13 @@ func TestCompileEvaluatesAgainstContacts(t *testing.T) {
 	// Empty group matches everyone (within the @seg.test scope: all 3).
 	assert.Equal(t, 3, count(segments.Group{}))
 
-	// status = active
-	assert.Equal(t, 2, count(segments.Group{Rules: marshal(rule("status", "=", "active"))}))
-
-	// custom:plan = pro
+	// custom:plan = pro → Ann + Cara
 	assert.Equal(t, 2, count(segments.Group{Rules: marshal(rule("custom:plan", "=", "pro"))}))
 
-	// and: active AND plan=pro → just Ann
+	// and: first_name=Ann AND plan=pro → just Ann
 	assert.Equal(t, 1, count(segments.Group{
 		Combinator: "and",
-		Rules:      marshal(rule("status", "=", "active"), rule("custom:plan", "=", "pro")),
+		Rules:      marshal(rule("first_name", "=", "Ann"), rule("custom:plan", "=", "pro")),
 	}))
 
 	// or: first_name=Ann OR first_name=Bob → 2
@@ -154,7 +148,7 @@ func TestParseAndValidate(t *testing.T) {
 	require.NoError(t, segments.Validate(`{"combinator":"or","rules":[{"field":"email","operator":"contains","value":"x"}]}`, segments.ContactSchema()))
 
 	// nested group
-	require.NoError(t, segments.Validate(`{"combinator":"and","rules":[{"combinator":"or","rules":[{"field":"status","operator":"=","value":"active"}]}]}`, segments.ContactSchema()))
+	require.NoError(t, segments.Validate(`{"combinator":"and","rules":[{"combinator":"or","rules":[{"field":"first_name","operator":"=","value":"Ann"}]}]}`, segments.ContactSchema()))
 
 	// unknown field
 	assert.Error(t, segments.Validate(`{"rules":[{"field":"nope","operator":"=","value":"x"}]}`, segments.ContactSchema()))

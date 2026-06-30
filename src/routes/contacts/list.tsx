@@ -1,11 +1,9 @@
-import { ActionIcon, Button, Group, Loader, Select, Stack, Text, Tooltip } from '@mantine/core'
+import { ActionIcon, Button, Group, Loader, Stack, Text, Tooltip } from '@mantine/core'
 import { useCounter } from '@mantine/hooks'
 import { IconEye, IconPencil, IconTrash } from '@tabler/icons-react'
 import { useQuery } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
-import type { TFunction } from 'i18next'
 import { DataTable } from 'mantine-datatable'
-import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ApiErrorAlert } from '../../components/ApiErrorAlert.tsx'
 import { ActionIconLink } from '../../components/RouterLink.tsx'
@@ -14,7 +12,6 @@ import {
   siteContactsListOptions,
   siteContactsListQueryKey,
 } from '../../generated/site/@tanstack/react-query.gen.ts'
-import { SiteContactStatus } from '../../generated/site/types.gen.ts'
 import { useDeleteConfirmation } from '../../hooks/useDeleteConfirmation.tsx'
 import { useResourceMutation } from '../../hooks/useResourceMutation.ts'
 import {
@@ -24,17 +21,7 @@ import {
   contactsRoute,
 } from '../../router.tsx'
 
-type ContactStatusFilter = 'all' | SiteContactStatus
-
 const PAGE_SIZE = 10
-const contactStatusFilterValues: ContactStatusFilter[] = [
-  'all',
-  ...Object.values(SiteContactStatus),
-]
-
-function translateStatus(t: TFunction, status: ContactStatusFilter): string {
-  return t(($) => $.status[status])
-}
 
 export function ContactsListPage() {
   const { t } = useTranslation()
@@ -42,7 +29,6 @@ export function ContactsListPage() {
   const confirmDelete = useDeleteConfirmation()
   const { slug } = contactsRoute.useParams()
   const [page, pageHandlers] = useCounter(1, { min: 1 })
-  const [status, setStatus] = useState<ContactStatusFilter>('all')
 
   const contactsList = useQuery(
     siteContactsListOptions({
@@ -50,7 +36,6 @@ export function ContactsListPage() {
       query: {
         page,
         pageSize: PAGE_SIZE,
-        ...(status !== 'all' ? { status } : {}),
       },
     }),
   )
@@ -65,11 +50,6 @@ export function ContactsListPage() {
   const totalItems = contactsList.data?.totalItems ?? 0
   const records = contactsList.data?.items ?? []
 
-  const onStatusChange = (value: string | null) => {
-    setStatus((value as ContactStatusFilter | null) ?? 'all')
-    pageHandlers.set(1)
-  }
-
   const onDeleteClick = (contactId: string) => {
     deleteContactMutation.reset()
     confirmDelete({
@@ -81,18 +61,7 @@ export function ContactsListPage() {
 
   return (
     <Stack>
-      <Group justify="space-between" align="flex-end" wrap="wrap">
-        <Select
-          label={t(($) => $.contacts.statusFilter)}
-          data={contactStatusFilterValues.map((value) => ({
-            value,
-            label: translateStatus(t, value),
-          }))}
-          value={status}
-          onChange={onStatusChange}
-          w={{ base: '100%', xs: 220 }}
-        />
-
+      <Group justify="flex-end" align="flex-end" wrap="wrap">
         <Button onClick={() => navigate({ to: contactsCreateRoute.to, params: { slug } })}>
           {t(($) => $.contacts.addContact)}
         </Button>
@@ -116,11 +85,6 @@ export function ContactsListPage() {
           { accessor: 'firstName', title: t(($) => $.table.firstName) },
           { accessor: 'lastName', title: t(($) => $.table.lastName) },
           { accessor: 'timeZone', title: t(($) => $.table.timeZone) },
-          {
-            accessor: 'status',
-            title: t(($) => $.table.status),
-            render: (record) => translateStatus(t, record.status),
-          },
           {
             accessor: 'actions',
             title: t(($) => $.table.actions),

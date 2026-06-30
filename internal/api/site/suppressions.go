@@ -4,19 +4,13 @@ import (
 	"context"
 	"net/http"
 	"strconv"
-	"strings"
 
 	"github.com/mokevnin/1mail/ent"
 	"github.com/mokevnin/1mail/ent/suppression"
 	siteapi "github.com/mokevnin/1mail/gen/site"
+	"github.com/mokevnin/1mail/internal/eligibility"
 	"github.com/mokevnin/1mail/internal/pagination"
 )
-
-// normalizeEmail lower-cases and trims an address so suppression lookups and
-// upserts are case-insensitive (collect ingestion lower-cases event emails too).
-func normalizeEmail(email string) string {
-	return strings.ToLower(strings.TrimSpace(email))
-}
 
 func (h *Handlers) SiteSuppressionsList(ctx context.Context, params siteapi.SiteSuppressionsListParams) (siteapi.SiteSuppressionsListRes, error) {
 	ws, err := h.workspaceID(ctx, params.WorkspaceSlug)
@@ -73,28 +67,29 @@ func (h *Handlers) SiteSuppressionsCreate(ctx context.Context, req *siteapi.Site
 		return nil, err
 	}
 
-	email := normalizeEmail(string(req.Email))
-	if email == "" {
-		v := siteapi.SiteSuppressionsCreateUnprocessableEntity(problemWithErrors(http.StatusUnprocessableEntity, "invalid email", map[string][]string{
-			"email": {"must not be empty"},
+	dest := eligibility.NormalizeDestination(req.Destination)
+	if dest == "" {
+		v := siteapi.SiteSuppressionsCreateUnprocessableEntity(problemWithErrors(http.StatusUnprocessableEntity, "invalid destination", map[string][]string{
+			"destination": {"must not be empty"},
 		}))
 		return &v, nil
 	}
 
-	// Manual suppression is idempotent per address: keep the existing entry (and
-	// its reason) if the address is already suppressed.
+	// Manual suppression is idempotent per (channel, destination): keep the
+	// existing entry (and its reason) if the destination is already suppressed.
 	if err := h.ent.Suppression.Create().
 		SetWorkspaceID(ws).
-		SetEmail(email).
+		SetChannel(suppression.ChannelEmail).
+		SetDestination(dest).
 		SetReason(suppression.ReasonManual).
-		OnConflictColumns(suppression.FieldWorkspaceID, suppression.FieldEmail).
+		OnConflictColumns(suppression.FieldWorkspaceID, suppression.FieldChannel, suppression.FieldDestination).
 		Ignore().
 		Exec(ctx); err != nil {
 		return nil, err
 	}
 
 	s, err := h.ent.Suppression.Query().
-		Where(suppression.WorkspaceID(ws), suppression.EmailEQ(email)).
+		Where(suppression.WorkspaceID(ws), suppression.ChannelEQ(suppression.ChannelEmail), suppression.DestinationEQ(dest)).
 		Only(ctx)
 	if err != nil {
 		return nil, err

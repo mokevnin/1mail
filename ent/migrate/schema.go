@@ -78,7 +78,7 @@ var (
 	AutomationRunsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt64, Increment: true},
 		{Name: "contact_id", Type: field.TypeInt64},
-		{Name: "status", Type: field.TypeEnum, Enums: []string{"active", "completed", "failed"}, Default: "active"},
+		{Name: "status", Type: field.TypeEnum, Enums: []string{"active", "completed", "failed", "exited"}, Default: "active"},
 		{Name: "current_step", Type: field.TypeInt, Default: 0},
 		{Name: "resume_at", Type: field.TypeTime, Nullable: true},
 		{Name: "created_at", Type: field.TypeTime},
@@ -217,7 +217,6 @@ var (
 		{Name: "phone", Type: field.TypeString, Nullable: true},
 		{Name: "first_name", Type: field.TypeString, Nullable: true},
 		{Name: "last_name", Type: field.TypeString, Nullable: true},
-		{Name: "status", Type: field.TypeEnum, Enums: []string{"active", "unsubscribed"}, Default: "active"},
 		{Name: "time_zone", Type: field.TypeString, Nullable: true},
 		{Name: "custom_fields", Type: field.TypeJSON, Nullable: true},
 		{Name: "created_at", Type: field.TypeTime},
@@ -232,7 +231,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "contacts_workspaces_contacts",
-				Columns:    []*schema.Column{ContactsColumns[11]},
+				Columns:    []*schema.Column{ContactsColumns[10]},
 				RefColumns: []*schema.Column{WorkspacesColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
@@ -241,17 +240,17 @@ var (
 			{
 				Name:    "contacts_email_workspace_id",
 				Unique:  true,
-				Columns: []*schema.Column{ContactsColumns[2], ContactsColumns[11]},
+				Columns: []*schema.Column{ContactsColumns[2], ContactsColumns[10]},
 			},
 			{
 				Name:    "contacts_subject_id_workspace_id",
 				Unique:  true,
-				Columns: []*schema.Column{ContactsColumns[1], ContactsColumns[11]},
+				Columns: []*schema.Column{ContactsColumns[1], ContactsColumns[10]},
 			},
 			{
 				Name:    "contacts_phone_workspace_id",
 				Unique:  true,
-				Columns: []*schema.Column{ContactsColumns[3], ContactsColumns[11]},
+				Columns: []*schema.Column{ContactsColumns[3], ContactsColumns[10]},
 			},
 		},
 	}
@@ -422,8 +421,9 @@ var (
 	// SuppressionsColumns holds the columns for the "suppressions" table.
 	SuppressionsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt64, Increment: true},
-		{Name: "email", Type: field.TypeString},
-		{Name: "reason", Type: field.TypeEnum, Enums: []string{"unsubscribed", "bounce", "complaint", "manual"}, Default: "manual"},
+		{Name: "channel", Type: field.TypeEnum, Enums: []string{"email"}, Default: "email"},
+		{Name: "destination", Type: field.TypeString},
+		{Name: "reason", Type: field.TypeEnum, Enums: []string{"bounce", "complaint", "manual"}, Default: "manual"},
 		{Name: "contact_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
@@ -437,16 +437,53 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "suppressions_workspaces_suppressions",
-				Columns:    []*schema.Column{SuppressionsColumns[6]},
+				Columns:    []*schema.Column{SuppressionsColumns[7]},
 				RefColumns: []*schema.Column{WorkspacesColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
 		},
 		Indexes: []*schema.Index{
 			{
-				Name:    "suppressions_workspace_id_email",
+				Name:    "suppressions_workspace_id_channel_destination",
 				Unique:  true,
-				Columns: []*schema.Column{SuppressionsColumns[6], SuppressionsColumns[1]},
+				Columns: []*schema.Column{SuppressionsColumns[7], SuppressionsColumns[1], SuppressionsColumns[2]},
+			},
+		},
+	}
+	// UnsubscribesColumns holds the columns for the "unsubscribes" table.
+	UnsubscribesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt64, Increment: true},
+		{Name: "channel", Type: field.TypeEnum, Enums: []string{"email"}, Default: "email"},
+		{Name: "destination", Type: field.TypeString},
+		{Name: "sending_source", Type: field.TypeString},
+		{Name: "contact_id", Type: field.TypeInt64, Nullable: true},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "workspace_id", Type: field.TypeInt64},
+	}
+	// UnsubscribesTable holds the schema information for the "unsubscribes" table.
+	UnsubscribesTable = &schema.Table{
+		Name:       "unsubscribes",
+		Columns:    UnsubscribesColumns,
+		PrimaryKey: []*schema.Column{UnsubscribesColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "unsubscribes_workspaces_unsubscribes",
+				Columns:    []*schema.Column{UnsubscribesColumns[7]},
+				RefColumns: []*schema.Column{WorkspacesColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "unsubscribes_ws_channel_dest_source",
+				Unique:  true,
+				Columns: []*schema.Column{UnsubscribesColumns[7], UnsubscribesColumns[1], UnsubscribesColumns[2], UnsubscribesColumns[3]},
+			},
+			{
+				Name:    "unsubscribes_ws_channel_dest",
+				Unique:  false,
+				Columns: []*schema.Column{UnsubscribesColumns[7], UnsubscribesColumns[1], UnsubscribesColumns[2]},
 			},
 		},
 	}
@@ -578,6 +615,7 @@ var (
 		IntegrationsTable,
 		SegmentsTable,
 		SuppressionsTable,
+		UnsubscribesTable,
 		UsersTable,
 		VisitorsTable,
 		WebhookEndpointsTable,
@@ -635,6 +673,10 @@ func init() {
 	SuppressionsTable.ForeignKeys[0].RefTable = WorkspacesTable
 	SuppressionsTable.Annotation = &entsql.Annotation{
 		Table: "suppressions",
+	}
+	UnsubscribesTable.ForeignKeys[0].RefTable = WorkspacesTable
+	UnsubscribesTable.Annotation = &entsql.Annotation{
+		Table: "unsubscribes",
 	}
 	UsersTable.Annotation = &entsql.Annotation{
 		Table: "users",

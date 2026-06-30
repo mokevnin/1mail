@@ -12,7 +12,7 @@ import (
 	"github.com/mokevnin/1mail/ent"
 	"github.com/mokevnin/1mail/ent/automation"
 	"github.com/mokevnin/1mail/ent/automationrun"
-	"github.com/mokevnin/1mail/ent/contact"
+	"github.com/mokevnin/1mail/internal/eligibility"
 	"github.com/mokevnin/1mail/internal/emailrender"
 	"github.com/mokevnin/1mail/internal/messaging"
 )
@@ -175,14 +175,24 @@ func RunStep(ctx context.Context, client *ent.Client, resolver SenderResolver, r
 		if err != nil {
 			return StepResult{}, err
 		}
-		// Never email an unsubscribed contact; exit the run instead.
-		if c.Status == contact.StatusUnsubscribed {
+		// Email channel: a Contact with no email address can't receive this step.
+		// Not an opt-out — the sequence simply completes.
+		if c.Email == nil {
 			_, _ = run.Update().SetStatus(automationrun.StatusCompleted).ClearResumeAt().Save(ctx)
 			return StepResult{Done: true}, nil
 		}
-		// Email channel: a Contact with no email address can't receive this step.
-		if c.Email == nil {
-			_, _ = run.Update().SetStatus(automationrun.StatusCompleted).ClearResumeAt().Save(ctx)
+		// Send-eligibility (ADR 0001): each Automation is its own unsubscribe
+		// source, and Suppression is the global hard floor. An ineligible
+		// destination (suppressed, or unsubscribed from this automation / from
+		// everything) exits the enrollment — a run never silently keeps walking
+		// steps while skipping every email.
+		decision, err := eligibility.Check(ctx, client, run.WorkspaceID,
+			eligibility.ChannelEmail, *c.Email, eligibility.AutomationSource(a.ID), true)
+		if err != nil {
+			return StepResult{}, fmt.Errorf("eligibility: %w", err)
+		}
+		if !decision.Eligible {
+			_, _ = run.Update().SetStatus(automationrun.StatusExited).ClearResumeAt().Save(ctx)
 			return StepResult{Done: true}, nil
 		}
 		sender, err := resolver.EmailSender(ctx, run.WorkspaceID)

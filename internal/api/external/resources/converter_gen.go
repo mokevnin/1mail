@@ -40,7 +40,6 @@ func (c *ConverterImpl) ContactToResource(source *ent.Contact) external.ContactR
 		externalapiContactResource.LastName = optNilString((*source).LastName)
 		externalapiContactResource.TimeZone = optNilTimeZone((*source).TimeZone)
 		externalapiContactResource.CustomFields = contactCustomFields((*source).CustomFields)
-		externalapiContactResource.Status = external.ContactStatus((*source).Status)
 		externalapiContactResource.CreatedAt = timestamp((*source).CreatedAt)
 		externalapiContactResource.UpdatedAt = timestamp((*source).UpdatedAt)
 	}

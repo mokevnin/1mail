@@ -55,7 +55,6 @@ func (c *ConverterImpl) ContactToResource(source *ent.Contact) site.SiteContactR
 		siteapiSiteContactResource.LastName = optNilString((*source).LastName)
 		siteapiSiteContactResource.TimeZone = optNilTimeZone((*source).TimeZone)
 		siteapiSiteContactResource.CustomFields = contactCustomFields((*source).CustomFields)
-		siteapiSiteContactResource.Status = site.SiteContactStatus((*source).Status)
 		siteapiSiteContactResource.CreatedAt = timestamp((*source).CreatedAt)
 		siteapiSiteContactResource.UpdatedAt = timestamp((*source).UpdatedAt)
 	}
@@ -114,7 +113,8 @@ func (c *ConverterImpl) SuppressionToResource(source *ent.Suppression) site.Site
 	var siteapiSiteSuppressionResource site.SiteSuppressionResource
 	if source != nil {
 		siteapiSiteSuppressionResource.ID = entityID((*source).ID)
-		siteapiSiteSuppressionResource.Email = (*source).Email
+		siteapiSiteSuppressionResource.Channel = site.SiteSuppressionChannel((*source).Channel)
+		siteapiSiteSuppressionResource.Destination = (*source).Destination
 		siteapiSiteSuppressionResource.Reason = site.SiteSuppressionReason((*source).Reason)
 		siteapiSiteSuppressionResource.CreatedAt = timestamp((*source).CreatedAt)
 		siteapiSiteSuppressionResource.UpdatedAt = timestamp((*source).UpdatedAt)

@@ -211,8 +211,10 @@ func (h *Handlers) SiteSegmentsPreview(ctx context.Context, req *siteapi.SitePre
 		return &v, nil
 	}
 
+	// Segment membership is the rule alone — eligibility (suppression/unsubscribe)
+	// is subtracted only at send, never folded into the audience count (ADR 0001).
 	count, err := h.ent.Contact.Query().
-		Where(contact.WorkspaceID(ws), contact.StatusEQ(contact.StatusActive), pred).
+		Where(contact.WorkspaceID(ws), pred).
 		Count(ctx)
 	if err != nil {
 		return nil, err

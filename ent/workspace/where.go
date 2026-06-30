@@ -782,6 +782,29 @@ func HasSuppressionsWith(preds ...predicate.Suppression) predicate.Workspace {
 	})
 }
 
+// HasUnsubscribes applies the HasEdge predicate on the "unsubscribes" edge.
+func HasUnsubscribes() predicate.Workspace {
+	return predicate.Workspace(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, UnsubscribesTable, UnsubscribesColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasUnsubscribesWith applies the HasEdge predicate on the "unsubscribes" edge with a given conditions (other predicates).
+func HasUnsubscribesWith(preds ...predicate.Unsubscribe) predicate.Workspace {
+	return predicate.Workspace(func(s *sql.Selector) {
+		step := newUnsubscribesStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // HasUser applies the HasEdge predicate on the "user" edge.
 func HasUser() predicate.Workspace {
 	return predicate.Workspace(func(s *sql.Selector) {

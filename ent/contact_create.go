@@ -94,20 +94,6 @@ func (_c *ContactCreate) SetNillableLastName(v *string) *ContactCreate {
 	return _c
 }
 
-// SetStatus sets the "status" field.
-func (_c *ContactCreate) SetStatus(v contact.Status) *ContactCreate {
-	_c.mutation.SetStatus(v)
-	return _c
-}
-
-// SetNillableStatus sets the "status" field if the given value is not nil.
-func (_c *ContactCreate) SetNillableStatus(v *contact.Status) *ContactCreate {
-	if v != nil {
-		_c.SetStatus(*v)
-	}
-	return _c
-}
-
 // SetTimeZone sets the "time_zone" field.
 func (_c *ContactCreate) SetTimeZone(v string) *ContactCreate {
 	_c.mutation.SetTimeZone(v)
@@ -223,10 +209,6 @@ func (_c *ContactCreate) ExecX(ctx context.Context) {
 
 // defaults sets the default values of the builder before save.
 func (_c *ContactCreate) defaults() {
-	if _, ok := _c.mutation.Status(); !ok {
-		v := contact.DefaultStatus
-		_c.mutation.SetStatus(v)
-	}
 	if _, ok := _c.mutation.CreatedAt(); !ok {
 		v := contact.DefaultCreatedAt()
 		_c.mutation.SetCreatedAt(v)
@@ -239,14 +221,6 @@ func (_c *ContactCreate) defaults() {
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *ContactCreate) check() error {
-	if _, ok := _c.mutation.Status(); !ok {
-		return &ValidationError{Name: "status", err: errors.New(`ent: missing required field "Contact.status"`)}
-	}
-	if v, ok := _c.mutation.Status(); ok {
-		if err := contact.StatusValidator(v); err != nil {
-			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "Contact.status": %w`, err)}
-		}
-	}
 	if _, ok := _c.mutation.WorkspaceID(); !ok {
 		return &ValidationError{Name: "workspace_id", err: errors.New(`ent: missing required field "Contact.workspace_id"`)}
 	}
@@ -311,10 +285,6 @@ func (_c *ContactCreate) createSpec() (*Contact, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.LastName(); ok {
 		_spec.SetField(contact.FieldLastName, field.TypeString, value)
 		_node.LastName = &value
-	}
-	if value, ok := _c.mutation.Status(); ok {
-		_spec.SetField(contact.FieldStatus, field.TypeEnum, value)
-		_node.Status = value
 	}
 	if value, ok := _c.mutation.TimeZone(); ok {
 		_spec.SetField(contact.FieldTimeZone, field.TypeString, value)
@@ -504,18 +474,6 @@ func (u *ContactUpsert) UpdateLastName() *ContactUpsert {
 // ClearLastName clears the value of the "last_name" field.
 func (u *ContactUpsert) ClearLastName() *ContactUpsert {
 	u.SetNull(contact.FieldLastName)
-	return u
-}
-
-// SetStatus sets the "status" field.
-func (u *ContactUpsert) SetStatus(v contact.Status) *ContactUpsert {
-	u.Set(contact.FieldStatus, v)
-	return u
-}
-
-// UpdateStatus sets the "status" field to the value that was provided on create.
-func (u *ContactUpsert) UpdateStatus() *ContactUpsert {
-	u.SetExcluded(contact.FieldStatus)
 	return u
 }
 
@@ -732,20 +690,6 @@ func (u *ContactUpsertOne) UpdateLastName() *ContactUpsertOne {
 func (u *ContactUpsertOne) ClearLastName() *ContactUpsertOne {
 	return u.Update(func(s *ContactUpsert) {
 		s.ClearLastName()
-	})
-}
-
-// SetStatus sets the "status" field.
-func (u *ContactUpsertOne) SetStatus(v contact.Status) *ContactUpsertOne {
-	return u.Update(func(s *ContactUpsert) {
-		s.SetStatus(v)
-	})
-}
-
-// UpdateStatus sets the "status" field to the value that was provided on create.
-func (u *ContactUpsertOne) UpdateStatus() *ContactUpsertOne {
-	return u.Update(func(s *ContactUpsert) {
-		s.UpdateStatus()
 	})
 }
 
@@ -1138,20 +1082,6 @@ func (u *ContactUpsertBulk) UpdateLastName() *ContactUpsertBulk {
 func (u *ContactUpsertBulk) ClearLastName() *ContactUpsertBulk {
 	return u.Update(func(s *ContactUpsert) {
 		s.ClearLastName()
-	})
-}
-
-// SetStatus sets the "status" field.
-func (u *ContactUpsertBulk) SetStatus(v contact.Status) *ContactUpsertBulk {
-	return u.Update(func(s *ContactUpsert) {
-		s.SetStatus(v)
-	})
-}
-
-// UpdateStatus sets the "status" field to the value that was provided on create.
-func (u *ContactUpsertBulk) UpdateStatus() *ContactUpsertBulk {
-	return u.Update(func(s *ContactUpsert) {
-		s.UpdateStatus()
 	})
 }
 

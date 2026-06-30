@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"strings"
 	"time"
 
 	"github.com/riverqueue/river"
@@ -14,7 +13,7 @@ import (
 	"github.com/mokevnin/1mail/ent/broadcastrecipient"
 	"github.com/mokevnin/1mail/ent/contact"
 	"github.com/mokevnin/1mail/ent/segment"
-	"github.com/mokevnin/1mail/ent/suppression"
+	"github.com/mokevnin/1mail/internal/eligibility"
 	"github.com/mokevnin/1mail/internal/emailrender"
 	"github.com/mokevnin/1mail/internal/messaging"
 	"github.com/mokevnin/1mail/internal/segments"
@@ -46,14 +45,15 @@ func (w *SendBroadcastWorker) Work(ctx context.Context, job *river.Job[SendBroad
 	return SendBroadcast(ctx, w.ent, w.resolver, w.tracker, job.Args.BroadcastID)
 }
 
-// SendBroadcast renders and sends a broadcast to all active contacts in its
-// workspace, recording a BroadcastRecipient per contact and updating the
-// broadcast's aggregate counters. It is exported (not just the worker) so it can
-// be exercised directly in tests with a fake sender and no river runtime.
+// SendBroadcast renders and sends a broadcast to its eligible audience,
+// recording a BroadcastRecipient per contact and updating the broadcast's
+// aggregate counters. It is exported (not just the worker) so it can be
+// exercised directly in tests with a fake sender and no river runtime.
 //
-// Audience is all active contacts; segment targeting is a later phase. Sending
-// is done inline (no per-recipient fan-out) — that's the scale path, not needed
-// for the MVP.
+// Audience = workspace contacts (optionally narrowed by a segment) minus the
+// ineligible (suppressed / unsubscribed, derived per ADR 0001). Sending is done
+// inline (no per-recipient fan-out) — that's the scale path, not needed for the
+// MVP.
 func SendBroadcast(ctx context.Context, client *ent.Client, resolver SenderResolver, tracker *tracking.Tracker, broadcastID int64) error {
 	b, err := client.Broadcast.Get(ctx, broadcastID)
 	if err != nil {
@@ -71,12 +71,14 @@ func SendBroadcast(ctx context.Context, client *ent.Client, resolver SenderResol
 		return err
 	}
 
-	// Audience: active contacts in the workspace, narrowed by the broadcast's
-	// segment when set. Unsubscribed contacts are always excluded regardless of
-	// the segment rule (compliance).
+	// Audience: contacts in the workspace, narrowed by the broadcast's segment
+	// when set, then filtered to eligible recipients. Eligibility is derived
+	// (ADR 0001) — suppressed destinations and ones unsubscribed from the
+	// "broadcasts" source (or from everything) are excluded at the query level,
+	// regardless of the segment rule, so no recipient row is created for them.
 	audience := client.Contact.Query().Where(
 		contact.WorkspaceID(b.WorkspaceID),
-		contact.StatusEQ(contact.StatusActive),
+		eligibility.Predicate(eligibility.ChannelEmail, eligibility.SourceBroadcasts),
 	)
 	if b.SegmentID != nil {
 		seg, err := client.Segment.Query().
@@ -107,15 +109,6 @@ func SendBroadcast(ctx context.Context, client *ent.Client, resolver SenderResol
 		return err
 	}
 
-	// Deliverability: the suppression list is the central do-not-send registry
-	// (unsubscribes, bounces, complaints, manual). Loaded once as a set and
-	// checked per recipient — suppressed addresses are skipped without a
-	// recipient row, independent of contact status.
-	suppressed, err := suppressedEmails(ctx, client, b.WorkspaceID)
-	if err != nil {
-		return err
-	}
-
 	var fromEmail, fromName string
 	if b.FromEmail != nil {
 		fromEmail = *b.FromEmail
@@ -132,11 +125,8 @@ func SendBroadcast(ctx context.Context, client *ent.Client, resolver SenderResol
 			continue
 		}
 		addr := *c.Email
-		if _, ok := suppressed[strings.ToLower(strings.TrimSpace(addr))]; ok {
-			continue
-		}
-		// Recipients targeted = audience minus suppressed. Counted independently of
-		// the send outcome so a retry (where rows already exist) doesn't collapse it.
+		// Recipients targeted = the eligible audience. Counted independently of the
+		// send outcome so a retry (where rows already exist) doesn't collapse it.
 		targeted++
 
 		// Idempotency: one recipient row per (broadcast, contact). On a retry the
@@ -201,25 +191,6 @@ func SendBroadcast(ctx context.Context, client *ent.Client, resolver SenderResol
 		SetFailedCount(failedCount).
 		Save(ctx)
 	return err
-}
-
-// suppressedEmails returns the workspace's suppression list as a set of
-// normalized addresses, for an in-memory skip check during the send loop.
-func suppressedEmails(ctx context.Context, client *ent.Client, workspaceID int64) (map[string]struct{}, error) {
-	emails, err := client.Suppression.Query().
-		Where(suppression.WorkspaceID(workspaceID)).
-		Select(suppression.FieldEmail).
-		Strings(ctx)
-	if err != nil {
-		return nil, err
-	}
-	set := make(map[string]struct{}, len(emails))
-	for _, e := range emails {
-		// Stored emails are normalized on write; re-normalize defensively so a
-		// future writer that forgets can't let a suppressed address slip through.
-		set[strings.ToLower(strings.TrimSpace(e))] = struct{}{}
-	}
-	return set, nil
 }
 
 // contactBindings builds the Liquid merge-tag context for a contact: its core

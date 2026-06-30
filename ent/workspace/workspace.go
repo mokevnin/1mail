@@ -56,6 +56,8 @@ const (
 	EdgeWebhookEndpoints = "webhook_endpoints"
 	// EdgeSuppressions holds the string denoting the suppressions edge name in mutations.
 	EdgeSuppressions = "suppressions"
+	// EdgeUnsubscribes holds the string denoting the unsubscribes edge name in mutations.
+	EdgeUnsubscribes = "unsubscribes"
 	// EdgeUser holds the string denoting the user edge name in mutations.
 	EdgeUser = "user"
 	// Table holds the table name of the workspace in the database.
@@ -158,6 +160,13 @@ const (
 	SuppressionsInverseTable = "suppressions"
 	// SuppressionsColumn is the table column denoting the suppressions relation/edge.
 	SuppressionsColumn = "workspace_id"
+	// UnsubscribesTable is the table that holds the unsubscribes relation/edge.
+	UnsubscribesTable = "unsubscribes"
+	// UnsubscribesInverseTable is the table name for the Unsubscribe entity.
+	// It exists in this package in order to avoid circular dependency with the "unsubscribe" package.
+	UnsubscribesInverseTable = "unsubscribes"
+	// UnsubscribesColumn is the table column denoting the unsubscribes relation/edge.
+	UnsubscribesColumn = "workspace_id"
 	// UserTable is the table that holds the user relation/edge.
 	UserTable = "workspaces"
 	// UserInverseTable is the table name for the User entity.
@@ -445,6 +454,20 @@ func BySuppressions(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 	}
 }
 
+// ByUnsubscribesCount orders the results by unsubscribes count.
+func ByUnsubscribesCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newUnsubscribesStep(), opts...)
+	}
+}
+
+// ByUnsubscribes orders the results by unsubscribes terms.
+func ByUnsubscribes(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newUnsubscribesStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+
 // ByUserField orders the results by user field.
 func ByUserField(field string, opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
@@ -547,6 +570,13 @@ func newSuppressionsStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(SuppressionsInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2M, false, SuppressionsTable, SuppressionsColumn),
+	)
+}
+func newUnsubscribesStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(UnsubscribesInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, UnsubscribesTable, UnsubscribesColumn),
 	)
 }
 func newUserStep() *sqlgraph.Step {
