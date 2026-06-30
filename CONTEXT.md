@@ -17,12 +17,23 @@ _Avoid_: Account, tenant, organization, project
 The single record for a person in a workspace — whether fully identified or still anonymous.
 Anchored by a stable internal id, with email, phone, and subject_id (the customer's own user
 id) as alias keys, each unique per workspace and any of which may be absent. Carries
-attributes (traits and custom fields) and owns the Visitors (devices) seen as this person.
+Custom fields (typed, named attributes beyond the core fields) and owns the Visitors
+(devices) seen as this person.
 The thing Events attach to and the thing a campaign is sent to. Whether a message may be sent
 is *derived* (see Send-eligibility), never a stored status — so anonymous, un-consented
 Contacts are harmless. There is no separate tracking "profile": this entity is both the
 behavioral identity and the marketing audience member.
 _Avoid_: Profile, tracking profile, lead, subscriber, user, recipient
+
+**Custom field**:
+A workspace-defined, typed, named attribute on the Contact, beyond the core fields
+(email / phone / subject_id / name). The one attribute concept — there is no separate,
+schemaless "trait". An unknown key arriving from Identify or an Event payload is
+*auto-created* as a Custom field with an inferred type (declared-by-use), but it is a
+first-class, typed, renameable definition from the first sight, not an anonymous bag of
+keys — so the Segment builder always has a real, governed field list to offer. Core fields
+and Custom fields together are a Contact's attributes.
+_Avoid_: Trait, property, attribute (unqualified), metadata
 
 **Visitor**:
 An anonymous device/browser identity — a `visitor_id` cookie, unique per workspace. Resolves
@@ -40,7 +51,10 @@ _Avoid_: Alias, merge, reconcile
 An immutable, append-only record that something happened (an `action`, optional properties,
 at a time). Attached to a Contact by **stable identity resolved at ingest** — not by email —
 and carries denormalized identity snapshot fields for debugging. Never FK-constrained to the
-mutable Contact. The raw material behind behavioral segmentation.
+mutable Contact. The raw material behind behavioral segmentation. 1mail's own delivery and
+engagement facts (`email.sent`, `email.opened`, `email.clicked`) are Events too — reserved,
+system-generated actions — so engagement is segmentable through the very same machinery as
+customer-tracked actions, with no parallel event stream.
 _Avoid_: Activity, log entry, signal
 
 **Segment**:
@@ -111,8 +125,10 @@ _Avoid_: Campaign, newsletter blast, mailshot, email blast
 
 **Broadcast recipient**:
 The per-(Broadcast, Contact) delivery record — the frozen audience snapshot taken at send
-time, and the home of per-recipient delivery state (sent / failed) and engagement (opened /
-clicked). Contrast Segment, which is a live query and never materialized.
+time, and the home of per-recipient delivery state (sent / failed) plus a denormalized
+**rollup** of engagement (opened / clicked) derived from the underlying `email.opened` /
+`email.clicked` Events, for per-broadcast stats. The Events are the source of truth; the
+rollup is a convenience view. Contrast Segment, which is a live query and never materialized.
 _Avoid_: Send log, delivery row
 
 **Sent** (vs delivered):
@@ -120,6 +136,18 @@ _Avoid_: Send log, delivery row
 True delivery failures surface afterward as bounces / complaints, which flow into Suppression.
 A broadcast's delivery rate is accepted-by-provider ÷ targeted, not inbox delivery.
 _Avoid_: Delivered (for the accepted-by-provider sense)
+
+**Transactional send**:
+A single-recipient email triggered by the customer's own application through the `/api`
+surface (e.g. password reset, receipt, OTP) — the third send surface alongside Broadcast and
+Automation, and what makes 1mail one service for marketing *and* transactional. It carries no
+Sending source and is **never** authored as a campaign: the app supplies a Destination, a
+referenced Template id, and per-call variables, and the content is rendered at send time. It
+skips Unsubscribe (Send-eligibility layers 2–3 — you cannot opt out of your own password
+reset) but **still respects Suppression** (a hard-bounced or complained address is never
+sent to, transactional or not). Unlike marketing, it binds its Template by *reference*, not
+by copy (see Template).
+_Avoid_: Notification, system email, trigger (that is the Automation term), API send
 
 **Automation**:
 A workspace-scoped, event-triggered sequence: when its Trigger fires for a Contact, the
@@ -143,18 +171,35 @@ the active Enrollment to `exited`; suppression and hard bounces likewise exit th
 A run never silently keeps walking steps while skipping every email.
 _Avoid_: Run, automation run, journey instance, subscription
 
+**Step**:
+One node in an Automation's **ordered, linear** sequence; an Enrollment points at exactly one
+current Step. Two kinds today: **send** (an email — it holds its *own copy* of Message
+content, per the marketing copy-at-author-time rule) and **wait** (a delay before the next
+Step). The Enrollment's single "current step" pointer is deliberate: there is no branching,
+no parallel paths, no per-step conditions yet. Conditional / branching steps are a real
+future want but are **deferred until the sequence builder is real** — not modelled now.
+_Avoid_: Action, node, block, stage
+
 **Template** (email template):
 A workspace-scoped, named, reusable piece of email content — a **starting point copied at
 author time**. A Broadcast or Automation step takes a *copy* of the template's content with no
 reference back, so editing or deleting a Template never changes any already-authored or sent
 message. A content library, not a live layout that propagates.
+
+This copy-at-author-time rule is for **marketing** sends (Broadcast, Automation send step). A
+**Transactional send** binds the *opposite* way: it references a Template by id and renders
+its current content with per-call variables at send time, so fixing a typo in a receipt
+template instantly corrects every future receipt — without the customer redeploying their
+app. Two deliberately different binding models, one per surface: marketing copies (sent
+content is immutable history), transactional references (the template is live).
 _Avoid_: Layout, theme, master, partial
 
 **Message content** (a value, not an entity):
 The reusable shape every email carries — a subject plus an MJML body (compiled to email-safe
 HTML on send). A Template is the saved, named instance of it; a Broadcast and each email
-Automation step each hold their own copy. The same value in three homes, linked by copy and
-never by reference.
+Automation send step each hold their own copy; a Transactional send renders a *referenced*
+Template's content with per-call variables. The same value across surfaces — copied for
+marketing, referenced for transactional.
 _Avoid_: Email body, content block
 
 ### Operational
@@ -232,6 +277,9 @@ the core now:
   it as a Segment.
 - **Tracking profile** — there is no separate person record for the behavioral/CDP side; the
   Contact *is* the identity. (The old tracking profile is absorbed into Contact.)
+- **Trait** — the schemaless CDP attribute. Not a separate concept: every non-core attribute
+  is a typed, named Custom field (auto-created on first sight). We keep one governed attribute
+  notion, not raw-traits-plus-promoted-fields.
 - **Prospect** — a dropped, never-read flag. "Not yet a real contact" is not a stored term;
   it is the anonymous/un-identified state of a Contact, and mailability is derived anyway.
 - **Contact status / subscribed flag** — send-eligibility is not a property of a Contact;

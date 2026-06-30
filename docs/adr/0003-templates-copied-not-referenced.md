@@ -2,7 +2,12 @@
 status: accepted
 ---
 
-# Templates are copied at author time, never referenced
+# Templates are copied at author time, never referenced (marketing)
+
+> Scope: this decision governs **marketing** sends (Broadcast, Automation step). The later
+> [[0005-transactional-send-surface]] binds Templates by *reference* for transactional sends —
+> the deliberate opposite, one model per surface. This ADR's body already anticipated that
+> ("the reference model belongs to transactional templating").
 
 A Template is a reusable starting point for email **content** (subject + MJML body). When a
 Broadcast or an Automation email step is authored, it takes a *copy* of the template's
