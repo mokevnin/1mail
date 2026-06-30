@@ -16,6 +16,9 @@ model SiteWorkspaceResource {
   /** Per-workspace collect write-key (x-collect-key) for the tracking snippet */
   collectKey: string;
 
+  /** Secret key that routes inbound provider webhooks (/hooks/{ingestKey}/...) */
+  ingestKey: string;
+
   /** Creation timestamp */
   createdAt: Timestamp;
 }

@@ -15700,17 +15700,22 @@ func (s *SiteWorkspaceResource) encodeFields(e *jx.Encoder) {
 		e.Str(s.CollectKey)
 	}
 	{
+		e.FieldStart("ingestKey")
+		e.Str(s.IngestKey)
+	}
+	{
 		e.FieldStart("createdAt")
 		s.CreatedAt.Encode(e)
 	}
 }
 
-var jsonFieldsNameOfSiteWorkspaceResource = [5]string{
+var jsonFieldsNameOfSiteWorkspaceResource = [6]string{
 	0: "id",
 	1: "name",
 	2: "slug",
 	3: "collectKey",
-	4: "createdAt",
+	4: "ingestKey",
+	5: "createdAt",
 }
 
 // Decode decodes SiteWorkspaceResource from json.
@@ -15768,8 +15773,20 @@ func (s *SiteWorkspaceResource) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"collectKey\"")
 			}
-		case "createdAt":
+		case "ingestKey":
 			requiredBitSet[0] |= 1 << 4
+			if err := func() error {
+				v, err := d.Str()
+				s.IngestKey = string(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"ingestKey\"")
+			}
+		case "createdAt":
+			requiredBitSet[0] |= 1 << 5
 			if err := func() error {
 				if err := s.CreatedAt.Decode(d); err != nil {
 					return err
@@ -15788,7 +15805,7 @@ func (s *SiteWorkspaceResource) Decode(d *jx.Decoder) error {
 	// Validate required fields.
 	var failures []validate.FieldError
 	for i, mask := range [1]uint8{
-		0b00011111,
+		0b00111111,
 	} {
 		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
 			// Mask only required fields and check equality to mask using XOR.

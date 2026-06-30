@@ -88,10 +88,15 @@ func (h *Handlers) createDefaultWorkspace(ctx context.Context, userID int64, nam
 		if err != nil {
 			return nil, err
 		}
+		ingestKey, err := service.GenerateIngestKey()
+		if err != nil {
+			return nil, err
+		}
 		ws, err := h.ent.Workspace.Create().
 			SetName(name).
 			SetSlug(slug).
 			SetCollectKey(collectKey).
+			SetIngestKey(ingestKey).
 			SetUserID(userID).
 			Save(ctx)
 		if service.IsUniqueViolation(err) {

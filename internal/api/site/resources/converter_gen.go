@@ -144,6 +144,7 @@ func (c *ConverterImpl) WorkspaceToResource(source *ent.Workspace) site.SiteWork
 		siteapiSiteWorkspaceResource.Name = (*source).Name
 		siteapiSiteWorkspaceResource.Slug = (*source).Slug
 		siteapiSiteWorkspaceResource.CollectKey = (*source).CollectKey
+		siteapiSiteWorkspaceResource.IngestKey = (*source).IngestKey
 		siteapiSiteWorkspaceResource.CreatedAt = timestamp((*source).CreatedAt)
 	}
 	return siteapiSiteWorkspaceResource

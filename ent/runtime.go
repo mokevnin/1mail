@@ -378,12 +378,16 @@ func init() {
 	workspaceDescCollectKey := workspaceFields[3].Descriptor()
 	// workspace.CollectKeyValidator is a validator for the "collect_key" field. It is called by the builders before save.
 	workspace.CollectKeyValidator = workspaceDescCollectKey.Validators[0].(func(string) error)
+	// workspaceDescIngestKey is the schema descriptor for ingest_key field.
+	workspaceDescIngestKey := workspaceFields[4].Descriptor()
+	// workspace.IngestKeyValidator is a validator for the "ingest_key" field. It is called by the builders before save.
+	workspace.IngestKeyValidator = workspaceDescIngestKey.Validators[0].(func(string) error)
 	// workspaceDescCreatedAt is the schema descriptor for created_at field.
-	workspaceDescCreatedAt := workspaceFields[5].Descriptor()
+	workspaceDescCreatedAt := workspaceFields[6].Descriptor()
 	// workspace.DefaultCreatedAt holds the default value on creation for the created_at field.
 	workspace.DefaultCreatedAt = workspaceDescCreatedAt.Default.(func() time.Time)
 	// workspaceDescUpdatedAt is the schema descriptor for updated_at field.
-	workspaceDescUpdatedAt := workspaceFields[6].Descriptor()
+	workspaceDescUpdatedAt := workspaceFields[7].Descriptor()
 	// workspace.DefaultUpdatedAt holds the default value on creation for the updated_at field.
 	workspace.DefaultUpdatedAt = workspaceDescUpdatedAt.Default.(func() time.Time)
 	// workspace.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.

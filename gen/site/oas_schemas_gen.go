@@ -6038,6 +6038,8 @@ type SiteWorkspaceResource struct {
 	Slug string `json:"slug"`
 	// Per-workspace collect write-key (x-collect-key) for the tracking snippet.
 	CollectKey string `json:"collectKey"`
+	// Secret key that routes inbound provider webhooks (/hooks/{ingestKey}/...).
+	IngestKey string `json:"ingestKey"`
 	// Creation timestamp.
 	CreatedAt Timestamp `json:"createdAt"`
 }
@@ -6060,6 +6062,11 @@ func (s *SiteWorkspaceResource) GetSlug() string {
 // GetCollectKey returns the value of CollectKey.
 func (s *SiteWorkspaceResource) GetCollectKey() string {
 	return s.CollectKey
+}
+
+// GetIngestKey returns the value of IngestKey.
+func (s *SiteWorkspaceResource) GetIngestKey() string {
+	return s.IngestKey
 }
 
 // GetCreatedAt returns the value of CreatedAt.
@@ -6085,6 +6092,11 @@ func (s *SiteWorkspaceResource) SetSlug(val string) {
 // SetCollectKey sets the value of CollectKey.
 func (s *SiteWorkspaceResource) SetCollectKey(val string) {
 	s.CollectKey = val
+}
+
+// SetIngestKey sets the value of IngestKey.
+func (s *SiteWorkspaceResource) SetIngestKey(val string) {
+	s.IngestKey = val
 }
 
 // SetCreatedAt sets the value of CreatedAt.

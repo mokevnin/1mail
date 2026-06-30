@@ -323,6 +323,10 @@
     "loadErrorTitle": "Failed to load workspace",
     "nameLabel": "Workspace name",
     "saved": "Workspace updated",
+    "sesWebhook": {
+      "description": "Register this URL as the HTTPS subscription for your SES bounce and complaint SNS topic. Bounced and complained addresses are added to the suppression list automatically.",
+      "title": "SES bounce & complaint webhook"
+    },
     "suppressions": {
       "create": "Suppress",
       "createError": "Failed to suppress address",

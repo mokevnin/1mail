@@ -34,6 +34,13 @@ func (Workspace) Fields() []ent.Field {
 			NotEmpty().
 			Unique().
 			Sensitive(),
+		// Secret per-workspace key that routes inbound provider webhooks
+		// (/hooks/{ingest_key}/{provider}, e.g. SES bounce/complaint via SNS).
+		// Distinct from the browser-exposed collect_key.
+		field.String("ingest_key").
+			NotEmpty().
+			Unique().
+			Sensitive(),
 		field.Int64("user_id").
 			Optional().
 			Nillable(),

@@ -20,6 +20,8 @@ const (
 	FieldSlug = "slug"
 	// FieldCollectKey holds the string denoting the collect_key field in the database.
 	FieldCollectKey = "collect_key"
+	// FieldIngestKey holds the string denoting the ingest_key field in the database.
+	FieldIngestKey = "ingest_key"
 	// FieldUserID holds the string denoting the user_id field in the database.
 	FieldUserID = "user_id"
 	// FieldCreatedAt holds the string denoting the created_at field in the database.
@@ -171,6 +173,7 @@ var Columns = []string{
 	FieldName,
 	FieldSlug,
 	FieldCollectKey,
+	FieldIngestKey,
 	FieldUserID,
 	FieldCreatedAt,
 	FieldUpdatedAt,
@@ -193,6 +196,8 @@ var (
 	SlugValidator func(string) error
 	// CollectKeyValidator is a validator for the "collect_key" field. It is called by the builders before save.
 	CollectKeyValidator func(string) error
+	// IngestKeyValidator is a validator for the "ingest_key" field. It is called by the builders before save.
+	IngestKeyValidator func(string) error
 	// DefaultCreatedAt holds the default value on creation for the "created_at" field.
 	DefaultCreatedAt func() time.Time
 	// DefaultUpdatedAt holds the default value on creation for the "updated_at" field.
@@ -222,6 +227,11 @@ func BySlug(opts ...sql.OrderTermOption) OrderOption {
 // ByCollectKey orders the results by the collect_key field.
 func ByCollectKey(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldCollectKey, opts...).ToFunc()
+}
+
+// ByIngestKey orders the results by the ingest_key field.
+func ByIngestKey(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldIngestKey, opts...).ToFunc()
 }
 
 // ByUserID orders the results by the user_id field.

@@ -109,7 +109,7 @@ func TestEventConditions(t *testing.T) {
 
 	// A second real workspace (FK-valid) to prove the join is workspace-scoped.
 	ws2, err := env.DB.Workspace.Create().
-		SetName("Other").SetSlug("other-evseg").SetCollectKey("k-evseg").SetUserID(1).Save(ctx)
+		SetName("Other").SetSlug("other-evseg").SetCollectKey("k-evseg").SetIngestKey("ik-evseg").SetUserID(1).Save(ctx)
 	require.NoError(t, err)
 
 	now := time.Now()

@@ -141,6 +141,13 @@ func (p *txPublisher) Publish(ctx context.Context, ev DomainEvent) error {
 	if occurred.IsZero() {
 		occurred = time.Now().UTC()
 	}
+	// The message id is always a fresh ULID (short, fits the outbox uuid column).
+	// An event with a natural upstream id supplies a DedupKey instead, which the
+	// persist consumer uses as source_id so redelivery dedupes.
+	var dedupKey string
+	if idv, ok := ev.(identifiable); ok {
+		dedupKey = idv.EventID()
+	}
 	env := Envelope{
 		ID:          ulid.Make().String(),
 		Name:        ev.EventName(),
@@ -148,6 +155,7 @@ func (p *txPublisher) Publish(ctx context.Context, ev DomainEvent) error {
 		WorkspaceID: ev.Workspace(),
 		OccurredAt:  occurred,
 		Data:        data,
+		DedupKey:    dedupKey,
 	}
 	body, err := json.Marshal(env)
 	if err != nil {

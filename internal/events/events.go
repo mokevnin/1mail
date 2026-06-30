@@ -32,18 +32,31 @@ const (
 	NameEmailOpened       = "email.opened"
 	NameEmailClicked      = "email.clicked"
 	NameEmailUnsubscribed = "email.unsubscribed"
+	NameEmailBounced      = "email.bounced"
+	NameEmailComplained   = "email.complained"
 	NameCollected         = "event.collected"
+)
+
+// Bounce kinds carried by EmailDeliveryFailure. Only a permanent (hard) bounce
+// suppresses an address; a transient (soft) bounce is temporary.
+const (
+	BounceKindPermanent = "permanent"
+	BounceKindTransient = "transient"
 )
 
 // Envelope is the generic bus message. It carries transport metadata plus the
 // typed event as Data; subscribers decode Data via the registry.
 type Envelope struct {
-	ID          string          `json:"id"`          // ULID; idempotency key for consumers
+	ID          string          `json:"id"`          // ULID; the watermill message id
 	Name        string          `json:"name"`        // bus event type (registry key)
 	Version     int             `json:"version"`     // schema version of Data
 	WorkspaceID int64           `json:"workspaceId"` // every event is workspace-scoped
 	OccurredAt  time.Time       `json:"occurredAt"`
 	Data        json.RawMessage `json:"data"` // the typed event, marshaled
+	// DedupKey is the persist idempotency key. Empty ⇒ use ID. An event with a
+	// natural upstream id (a provider notification) sets it so at-least-once
+	// redelivery dedupes, while ID stays a short ULID for the message-id column.
+	DedupKey string `json:"dedupKey,omitempty"`
 }
 
 // Projection is the durable Event-row an event maps to. Each event type computes
@@ -69,6 +82,15 @@ type DomainEvent interface {
 	Project() Projection // how this event maps to the Event row + trigger
 }
 
+// identifiable is an optional DomainEvent capability: an event with a stable
+// upstream id (a provider notification, an external message) implements it so the
+// publisher records that id as the envelope's DedupKey, making at-least-once
+// redelivery idempotent at the persist layer (which dedupes on source_id). The
+// id does NOT become the message id, which stays a short ULID.
+type identifiable interface {
+	EventID() string
+}
+
 // registry maps a bus event name to a constructor for its concrete type, so a
 // serialized envelope can be decoded back into the right Go type. All variants
 // are ours and finite — there is no catch-all.
@@ -77,6 +99,8 @@ var registry = map[string]func() DomainEvent{
 	NameEmailOpened:       func() DomainEvent { return &EmailEngagement{} },
 	NameEmailClicked:      func() DomainEvent { return &EmailEngagement{} },
 	NameEmailUnsubscribed: func() DomainEvent { return &EmailEngagement{} },
+	NameEmailBounced:      func() DomainEvent { return &EmailDeliveryFailure{} },
+	NameEmailComplained:   func() DomainEvent { return &EmailDeliveryFailure{} },
 	NameCollected:         func() DomainEvent { return &CollectedEvent{} },
 }
 
@@ -125,6 +149,39 @@ func (e *EmailEngagement) Project() Projection {
 	props := map[string]any{"broadcastId": e.BroadcastID}
 	if e.URL != "" {
 		props["url"] = e.URL
+	}
+	return Projection{Subject: e.Email, Action: e.Action, Email: e.Email, Properties: props, ContactID: e.ContactID}
+}
+
+// EmailDeliveryFailure is emitted when a provider reports a bounce or a spam
+// complaint for one of our sends (ingested from a provider webhook, e.g. SES via
+// SNS). Action is the specific name. BounceKind distinguishes a permanent (hard)
+// bounce from a transient (soft) one and is empty for complaints; only permanent
+// bounces and complaints suppress the address. ContactID is 0 when the address
+// has no contact in the workspace.
+type EmailDeliveryFailure struct {
+	Action      string `json:"action"` // email.bounced|email.complained
+	WorkspaceID int64  `json:"workspaceId"`
+	ContactID   int64  `json:"contactId,omitempty"`
+	Email       string `json:"email"`
+	BounceKind  string `json:"bounceKind,omitempty"` // permanent|transient (bounces only)
+	Provider    string `json:"provider,omitempty"`   // ses, ...
+	// DedupID is the stable upstream id (e.g. SNS messageId + recipient) used as
+	// the envelope id so a redelivered provider notification dedupes at persist.
+	DedupID string `json:"dedupId,omitempty"`
+}
+
+func (e *EmailDeliveryFailure) EventName() string { return e.Action }
+func (*EmailDeliveryFailure) EventVersion() int   { return 1 }
+func (e *EmailDeliveryFailure) Workspace() int64  { return e.WorkspaceID }
+func (e *EmailDeliveryFailure) EventID() string   { return e.DedupID }
+func (e *EmailDeliveryFailure) Project() Projection {
+	props := map[string]any{}
+	if e.BounceKind != "" {
+		props["bounceKind"] = e.BounceKind
+	}
+	if e.Provider != "" {
+		props["provider"] = e.Provider
 	}
 	return Projection{Subject: e.Email, Action: e.Action, Email: e.Email, Properties: props, ContactID: e.ContactID}
 }

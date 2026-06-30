@@ -92,7 +92,7 @@ func TestSiteAnalyticsOverview(t *testing.T) {
 
 	// A second workspace's delivery must not leak into acme's numbers.
 	other, err := db.Workspace.Create().
-		SetName("Other").SetSlug("other").SetCollectKey("omck_other").Save(ctx)
+		SetName("Other").SetSlug("other").SetCollectKey("omck_other").SetIngestKey("omik_other").Save(ctx)
 	require.NoError(t, err)
 	oc, err := db.Contact.Create().SetWorkspaceID(other.ID).SetEmail("z@other.test").Save(ctx)
 	require.NoError(t, err)

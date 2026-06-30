@@ -69,13 +69,22 @@ func RegisterSubscribers(router *message.Router, db *sql.DB, client *ent.Client,
 	return nil
 }
 
-// suppressionReason maps an engagement action to the suppression reason it
-// implies, or false for actions that don't suppress (opens, clicks). Bounce and
-// complaint events will slot in here once deliverability ingestion lands.
-func suppressionReason(action string) (suppression.Reason, bool) {
-	switch action {
+// suppressionReason maps a projected event to the suppression reason it implies,
+// or false for events that don't suppress (opens, clicks, transient bounces). It
+// takes the whole projection because a bounce only suppresses when permanent,
+// which lives in the projected properties.
+func suppressionReason(p Projection) (suppression.Reason, bool) {
+	switch p.Action {
 	case NameEmailUnsubscribed:
 		return suppression.ReasonUnsubscribed, true
+	case NameEmailComplained:
+		return suppression.ReasonComplaint, true
+	case NameEmailBounced:
+		// Only hard (permanent) bounces suppress; transient bounces are temporary.
+		if kind, _ := p.Properties["bounceKind"].(string); kind == BounceKindPermanent {
+			return suppression.ReasonBounce, true
+		}
+		return "", false
 	default:
 		return "", false
 	}
@@ -104,7 +113,7 @@ func Suppress(ctx context.Context, client *ent.Client, env Envelope) error {
 		return err
 	}
 	p := ev.Project()
-	reason, ok := suppressionReason(p.Action)
+	reason, ok := suppressionReason(p)
 	if !ok {
 		return nil
 	}
@@ -231,10 +240,15 @@ func Persist(ctx context.Context, client *ent.Client, env Envelope) error {
 		SetAction(p.Action).
 		SetProperties(p.Properties).
 		SetOccurredAt(env.OccurredAt)
-	// Empty id ⇒ leave source_id NULL (distinct under the unique index) rather than
-	// "", so a missing id never collides and false-dedupes a distinct event.
-	if env.ID != "" {
-		create.SetSourceID(env.ID)
+	// Dedup on the DedupKey when the event carries a natural upstream id, else the
+	// envelope ULID. Empty ⇒ leave source_id NULL (distinct under the unique index)
+	// rather than "", so a missing id never collides and false-dedupes a distinct event.
+	sourceID := env.ID
+	if env.DedupKey != "" {
+		sourceID = env.DedupKey
+	}
+	if sourceID != "" {
+		create.SetSourceID(sourceID)
 	}
 	if p.Email != "" {
 		create.SetEmail(p.Email)

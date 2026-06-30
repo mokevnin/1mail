@@ -5349,7 +5349,7 @@
       },
       "SiteWorkspaceResource": {
         "type": "object",
-        "required": ["id", "name", "slug", "collectKey", "createdAt"],
+        "required": ["id", "name", "slug", "collectKey", "ingestKey", "createdAt"],
         "properties": {
           "id": {
             "allOf": [
@@ -5370,6 +5370,10 @@
           "collectKey": {
             "type": "string",
             "description": "Per-workspace collect write-key (x-collect-key) for the tracking snippet"
+          },
+          "ingestKey": {
+            "type": "string",
+            "description": "Secret key that routes inbound provider webhooks (/hooks/{ingestKey}/...)"
           },
           "createdAt": {
             "allOf": [

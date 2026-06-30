@@ -24,6 +24,8 @@ type Workspace struct {
 	Slug string `json:"slug,omitempty"`
 	// CollectKey holds the value of the "collect_key" field.
 	CollectKey string `json:"-"`
+	// IngestKey holds the value of the "ingest_key" field.
+	IngestKey string `json:"-"`
 	// UserID holds the value of the "user_id" field.
 	UserID *int64 `json:"user_id,omitempty"`
 	// CreatedAt holds the value of the "created_at" field.
@@ -217,7 +219,7 @@ func (*Workspace) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case workspace.FieldID, workspace.FieldUserID:
 			values[i] = new(sql.NullInt64)
-		case workspace.FieldName, workspace.FieldSlug, workspace.FieldCollectKey:
+		case workspace.FieldName, workspace.FieldSlug, workspace.FieldCollectKey, workspace.FieldIngestKey:
 			values[i] = new(sql.NullString)
 		case workspace.FieldCreatedAt, workspace.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
@@ -259,6 +261,12 @@ func (_m *Workspace) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field collect_key", values[i])
 			} else if value.Valid {
 				_m.CollectKey = value.String
+			}
+		case workspace.FieldIngestKey:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field ingest_key", values[i])
+			} else if value.Valid {
+				_m.IngestKey = value.String
 			}
 		case workspace.FieldUserID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
@@ -397,6 +405,8 @@ func (_m *Workspace) String() string {
 	builder.WriteString(_m.Slug)
 	builder.WriteString(", ")
 	builder.WriteString("collect_key=<sensitive>")
+	builder.WriteString(", ")
+	builder.WriteString("ingest_key=<sensitive>")
 	builder.WriteString(", ")
 	if v := _m.UserID; v != nil {
 		builder.WriteString("user_id=")

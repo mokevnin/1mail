@@ -1166,6 +1166,10 @@ export type SiteWorkspaceResource = {
      */
     collectKey: string;
     /**
+     * Secret key that routes inbound provider webhooks (/hooks/{ingestKey}/...)
+     */
+    ingestKey: string;
+    /**
      * Creation timestamp
      */
     createdAt: Timestamp;

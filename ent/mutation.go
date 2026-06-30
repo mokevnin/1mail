@@ -13381,6 +13381,7 @@ type WorkspaceMutation struct {
 	name                        *string
 	slug                        *string
 	collect_key                 *string
+	ingest_key                  *string
 	created_at                  *time.Time
 	updated_at                  *time.Time
 	clearedFields               map[string]struct{}
@@ -13643,6 +13644,42 @@ func (m *WorkspaceMutation) OldCollectKey(ctx context.Context) (v string, err er
 // ResetCollectKey resets all changes to the "collect_key" field.
 func (m *WorkspaceMutation) ResetCollectKey() {
 	m.collect_key = nil
+}
+
+// SetIngestKey sets the "ingest_key" field.
+func (m *WorkspaceMutation) SetIngestKey(s string) {
+	m.ingest_key = &s
+}
+
+// IngestKey returns the value of the "ingest_key" field in the mutation.
+func (m *WorkspaceMutation) IngestKey() (r string, exists bool) {
+	v := m.ingest_key
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldIngestKey returns the old "ingest_key" field's value of the Workspace entity.
+// If the Workspace object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WorkspaceMutation) OldIngestKey(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldIngestKey is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldIngestKey requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldIngestKey: %w", err)
+	}
+	return oldValue.IngestKey, nil
+}
+
+// ResetIngestKey resets all changes to the "ingest_key" field.
+func (m *WorkspaceMutation) ResetIngestKey() {
+	m.ingest_key = nil
 }
 
 // SetUserID sets the "user_id" field.
@@ -14583,7 +14620,7 @@ func (m *WorkspaceMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *WorkspaceMutation) Fields() []string {
-	fields := make([]string, 0, 6)
+	fields := make([]string, 0, 7)
 	if m.name != nil {
 		fields = append(fields, workspace.FieldName)
 	}
@@ -14592,6 +14629,9 @@ func (m *WorkspaceMutation) Fields() []string {
 	}
 	if m.collect_key != nil {
 		fields = append(fields, workspace.FieldCollectKey)
+	}
+	if m.ingest_key != nil {
+		fields = append(fields, workspace.FieldIngestKey)
 	}
 	if m.user != nil {
 		fields = append(fields, workspace.FieldUserID)
@@ -14616,6 +14656,8 @@ func (m *WorkspaceMutation) Field(name string) (ent.Value, bool) {
 		return m.Slug()
 	case workspace.FieldCollectKey:
 		return m.CollectKey()
+	case workspace.FieldIngestKey:
+		return m.IngestKey()
 	case workspace.FieldUserID:
 		return m.UserID()
 	case workspace.FieldCreatedAt:
@@ -14637,6 +14679,8 @@ func (m *WorkspaceMutation) OldField(ctx context.Context, name string) (ent.Valu
 		return m.OldSlug(ctx)
 	case workspace.FieldCollectKey:
 		return m.OldCollectKey(ctx)
+	case workspace.FieldIngestKey:
+		return m.OldIngestKey(ctx)
 	case workspace.FieldUserID:
 		return m.OldUserID(ctx)
 	case workspace.FieldCreatedAt:
@@ -14672,6 +14716,13 @@ func (m *WorkspaceMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetCollectKey(v)
+		return nil
+	case workspace.FieldIngestKey:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetIngestKey(v)
 		return nil
 	case workspace.FieldUserID:
 		v, ok := value.(int64)
@@ -14763,6 +14814,9 @@ func (m *WorkspaceMutation) ResetField(name string) error {
 		return nil
 	case workspace.FieldCollectKey:
 		m.ResetCollectKey()
+		return nil
+	case workspace.FieldIngestKey:
+		m.ResetIngestKey()
 		return nil
 	case workspace.FieldUserID:
 		m.ResetUserID()

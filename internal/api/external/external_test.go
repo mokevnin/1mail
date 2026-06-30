@@ -253,6 +253,7 @@ func TestExternalEventsWorkspaceIsolation(t *testing.T) {
 	// A second workspace with an event carrying an action unique to it.
 	ws2, err := env.DB.Workspace.Create().
 		SetName("Globex").SetSlug("globex").SetCollectKey("globex-collect-key").
+		SetIngestKey("globex-ingest-key").
 		Save(ctx)
 	require.NoError(t, err)
 	_, err = env.DB.Event.Create().

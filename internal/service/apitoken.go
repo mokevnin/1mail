@@ -49,6 +49,19 @@ func GenerateCollectKey() (string, error) {
 	return collectKeyPrefix + "_" + secret, nil
 }
 
+const ingestKeyPrefix = "omik"
+
+// GenerateIngestKey returns a per-workspace secret key that routes inbound
+// provider webhooks (/hooks/{ingest_key}/{provider}). Unlike the collect key it
+// is never exposed in the browser tracker.
+func GenerateIngestKey() (string, error) {
+	secret, err := randomString(urlSafeAlphabet, secretLen)
+	if err != nil {
+		return "", err
+	}
+	return ingestKeyPrefix + "_" + secret, nil
+}
+
 // GenerateWebhookSecret returns a Standard Webhooks signing secret: the
 // "whsec_" prefix plus base64 random bytes, the format the standard-webhooks
 // library expects (it base64-decodes the part after the prefix).

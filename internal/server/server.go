@@ -108,6 +108,10 @@ func New(cfg *config.Config, client *ent.Client, bus *events.Bus, enqueuer apisi
 	// Public email engagement endpoints (open pixel, click redirect, unsubscribe).
 	mux.Handle("/e/", trackingHandler(client, bus, tracking.New(cfg.JWTSecret, cfg.AppURL)))
 
+	// Inbound provider webhooks (SES bounce/complaint via SNS), routed by the
+	// workspace's secret ingest key: POST /hooks/{key}/{provider}.
+	mux.Handle("/hooks/", hooksHandler(client, bus))
+
 	// Catch-all: the embedded SPA (release builds with -tags embed_spa). Most
 	// specific pattern wins, so this never shadows the API prefixes above.
 	mux.Handle("/", spaHandler())

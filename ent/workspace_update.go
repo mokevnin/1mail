@@ -86,6 +86,20 @@ func (_u *WorkspaceUpdate) SetNillableCollectKey(v *string) *WorkspaceUpdate {
 	return _u
 }
 
+// SetIngestKey sets the "ingest_key" field.
+func (_u *WorkspaceUpdate) SetIngestKey(v string) *WorkspaceUpdate {
+	_u.mutation.SetIngestKey(v)
+	return _u
+}
+
+// SetNillableIngestKey sets the "ingest_key" field if the given value is not nil.
+func (_u *WorkspaceUpdate) SetNillableIngestKey(v *string) *WorkspaceUpdate {
+	if v != nil {
+		_u.SetIngestKey(*v)
+	}
+	return _u
+}
+
 // SetUserID sets the "user_id" field.
 func (_u *WorkspaceUpdate) SetUserID(v int64) *WorkspaceUpdate {
 	_u.mutation.SetUserID(v)
@@ -685,6 +699,11 @@ func (_u *WorkspaceUpdate) check() error {
 			return &ValidationError{Name: "collect_key", err: fmt.Errorf(`ent: validator failed for field "Workspace.collect_key": %w`, err)}
 		}
 	}
+	if v, ok := _u.mutation.IngestKey(); ok {
+		if err := workspace.IngestKeyValidator(v); err != nil {
+			return &ValidationError{Name: "ingest_key", err: fmt.Errorf(`ent: validator failed for field "Workspace.ingest_key": %w`, err)}
+		}
+	}
 	return nil
 }
 
@@ -714,6 +733,9 @@ func (_u *WorkspaceUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	}
 	if value, ok := _u.mutation.CollectKey(); ok {
 		_spec.SetField(workspace.FieldCollectKey, field.TypeString, value)
+	}
+	if value, ok := _u.mutation.IngestKey(); ok {
+		_spec.SetField(workspace.FieldIngestKey, field.TypeString, value)
 	}
 	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(workspace.FieldUpdatedAt, field.TypeTime, value)
@@ -1441,6 +1463,20 @@ func (_u *WorkspaceUpdateOne) SetNillableCollectKey(v *string) *WorkspaceUpdateO
 	return _u
 }
 
+// SetIngestKey sets the "ingest_key" field.
+func (_u *WorkspaceUpdateOne) SetIngestKey(v string) *WorkspaceUpdateOne {
+	_u.mutation.SetIngestKey(v)
+	return _u
+}
+
+// SetNillableIngestKey sets the "ingest_key" field if the given value is not nil.
+func (_u *WorkspaceUpdateOne) SetNillableIngestKey(v *string) *WorkspaceUpdateOne {
+	if v != nil {
+		_u.SetIngestKey(*v)
+	}
+	return _u
+}
+
 // SetUserID sets the "user_id" field.
 func (_u *WorkspaceUpdateOne) SetUserID(v int64) *WorkspaceUpdateOne {
 	_u.mutation.SetUserID(v)
@@ -2053,6 +2089,11 @@ func (_u *WorkspaceUpdateOne) check() error {
 			return &ValidationError{Name: "collect_key", err: fmt.Errorf(`ent: validator failed for field "Workspace.collect_key": %w`, err)}
 		}
 	}
+	if v, ok := _u.mutation.IngestKey(); ok {
+		if err := workspace.IngestKeyValidator(v); err != nil {
+			return &ValidationError{Name: "ingest_key", err: fmt.Errorf(`ent: validator failed for field "Workspace.ingest_key": %w`, err)}
+		}
+	}
 	return nil
 }
 
@@ -2099,6 +2140,9 @@ func (_u *WorkspaceUpdateOne) sqlSave(ctx context.Context) (_node *Workspace, er
 	}
 	if value, ok := _u.mutation.CollectKey(); ok {
 		_spec.SetField(workspace.FieldCollectKey, field.TypeString, value)
+	}
+	if value, ok := _u.mutation.IngestKey(); ok {
+		_spec.SetField(workspace.FieldIngestKey, field.TypeString, value)
 	}
 	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(workspace.FieldUpdatedAt, field.TypeTime, value)

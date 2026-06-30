@@ -55,6 +55,12 @@ func (_c *WorkspaceCreate) SetCollectKey(v string) *WorkspaceCreate {
 	return _c
 }
 
+// SetIngestKey sets the "ingest_key" field.
+func (_c *WorkspaceCreate) SetIngestKey(v string) *WorkspaceCreate {
+	_c.mutation.SetIngestKey(v)
+	return _c
+}
+
 // SetUserID sets the "user_id" field.
 func (_c *WorkspaceCreate) SetUserID(v int64) *WorkspaceCreate {
 	_c.mutation.SetUserID(v)
@@ -389,6 +395,14 @@ func (_c *WorkspaceCreate) check() error {
 			return &ValidationError{Name: "collect_key", err: fmt.Errorf(`ent: validator failed for field "Workspace.collect_key": %w`, err)}
 		}
 	}
+	if _, ok := _c.mutation.IngestKey(); !ok {
+		return &ValidationError{Name: "ingest_key", err: errors.New(`ent: missing required field "Workspace.ingest_key"`)}
+	}
+	if v, ok := _c.mutation.IngestKey(); ok {
+		if err := workspace.IngestKeyValidator(v); err != nil {
+			return &ValidationError{Name: "ingest_key", err: fmt.Errorf(`ent: validator failed for field "Workspace.ingest_key": %w`, err)}
+		}
+	}
 	if _, ok := _c.mutation.CreatedAt(); !ok {
 		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "Workspace.created_at"`)}
 	}
@@ -439,6 +453,10 @@ func (_c *WorkspaceCreate) createSpec() (*Workspace, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.CollectKey(); ok {
 		_spec.SetField(workspace.FieldCollectKey, field.TypeString, value)
 		_node.CollectKey = value
+	}
+	if value, ok := _c.mutation.IngestKey(); ok {
+		_spec.SetField(workspace.FieldIngestKey, field.TypeString, value)
+		_node.IngestKey = value
 	}
 	if value, ok := _c.mutation.CreatedAt(); ok {
 		_spec.SetField(workspace.FieldCreatedAt, field.TypeTime, value)
@@ -777,6 +795,18 @@ func (u *WorkspaceUpsert) UpdateCollectKey() *WorkspaceUpsert {
 	return u
 }
 
+// SetIngestKey sets the "ingest_key" field.
+func (u *WorkspaceUpsert) SetIngestKey(v string) *WorkspaceUpsert {
+	u.Set(workspace.FieldIngestKey, v)
+	return u
+}
+
+// UpdateIngestKey sets the "ingest_key" field to the value that was provided on create.
+func (u *WorkspaceUpsert) UpdateIngestKey() *WorkspaceUpsert {
+	u.SetExcluded(workspace.FieldIngestKey)
+	return u
+}
+
 // SetUserID sets the "user_id" field.
 func (u *WorkspaceUpsert) SetUserID(v int64) *WorkspaceUpsert {
 	u.Set(workspace.FieldUserID, v)
@@ -897,6 +927,20 @@ func (u *WorkspaceUpsertOne) SetCollectKey(v string) *WorkspaceUpsertOne {
 func (u *WorkspaceUpsertOne) UpdateCollectKey() *WorkspaceUpsertOne {
 	return u.Update(func(s *WorkspaceUpsert) {
 		s.UpdateCollectKey()
+	})
+}
+
+// SetIngestKey sets the "ingest_key" field.
+func (u *WorkspaceUpsertOne) SetIngestKey(v string) *WorkspaceUpsertOne {
+	return u.Update(func(s *WorkspaceUpsert) {
+		s.SetIngestKey(v)
+	})
+}
+
+// UpdateIngestKey sets the "ingest_key" field to the value that was provided on create.
+func (u *WorkspaceUpsertOne) UpdateIngestKey() *WorkspaceUpsertOne {
+	return u.Update(func(s *WorkspaceUpsert) {
+		s.UpdateIngestKey()
 	})
 }
 
@@ -1191,6 +1235,20 @@ func (u *WorkspaceUpsertBulk) SetCollectKey(v string) *WorkspaceUpsertBulk {
 func (u *WorkspaceUpsertBulk) UpdateCollectKey() *WorkspaceUpsertBulk {
 	return u.Update(func(s *WorkspaceUpsert) {
 		s.UpdateCollectKey()
+	})
+}
+
+// SetIngestKey sets the "ingest_key" field.
+func (u *WorkspaceUpsertBulk) SetIngestKey(v string) *WorkspaceUpsertBulk {
+	return u.Update(func(s *WorkspaceUpsert) {
+		s.SetIngestKey(v)
+	})
+}
+
+// UpdateIngestKey sets the "ingest_key" field to the value that was provided on create.
+func (u *WorkspaceUpsertBulk) UpdateIngestKey() *WorkspaceUpsertBulk {
+	return u.Update(func(s *WorkspaceUpsert) {
+		s.UpdateIngestKey()
 	})
 }
 
