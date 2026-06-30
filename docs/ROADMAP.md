@@ -63,10 +63,24 @@ tracking.
 > Phase 4 shipped linear automations (trigger → email/wait steps) end-to-end, with
 > enrollment driven by an internal **domain-event bus** (`internal/events`, transactional
 > outbox over watermill-sql; see docs/design/domain-events.md).
-> Remaining later: Phase 2 snapshot segments; Phase 3 a visual MJML editor; Phase 4
-> a visual branch/goal builder; analytics/per-subject-ordering event subscribers.
+> Remaining later: Phase 3 a visual MJML editor; Phase 4 a visual branch/goal builder;
+> analytics/per-subject-ordering event subscribers.
 > (Done since: events-bus P0–P2 + typed union + webhooks; legacy email/pubsub
 > retired with an inline jobs adapter; Phase 2 event-based segment conditions.)
+
+> **⚠️ Authoritative model — read `CONTEXT.md` + `docs/adr/*` first.** This phased
+> roadmap predates the domain model captured in `CONTEXT.md` and the accepted ADRs,
+> which supersede it where they disagree. Two consequences for the items below:
+> - **"Snapshot / static segments" is rejected**, not deferred. Per `CONTEXT.md`
+>   ("a segment is always a rule; membership is never materialized"; anti-vocabulary
+>   rejects List/snapshot), there is no second segment kind. Mentions of snapshot
+>   below are obsolete.
+> - The real near-term backlog is the two accepted refactors the code hasn't built
+>   yet: **ADR 0002** (unified contact identity — events attach by resolved id, not
+>   email; email optional; drop `prospect`) and **ADR 0001** (send-eligibility —
+>   no `contact.status`; address-keyed Suppression + per-source Unsubscribe; derived
+>   eligibility). The earlier event-segment work joins by email and will be reworked
+>   under ADR 0002.
 
 ---
 
@@ -78,8 +92,9 @@ and see a report** (sent / opened / clicked / unsubscribed). This is the first "
 ### MVP scope (in / out)
 - **In:** a single email to an audience; HTML editor; merge tags (Liquid); immediate and scheduled
   sending via the queue; open/click/unsubscribe tracking; per-campaign report.
-- **Audience (MVP):** "all active contacts in the workspace" + optionally a **snapshot segment**
-  (static list). **Dynamic rule segments — Phase 2** (to avoid pulling the segment engine into the MVP).
+- **Audience (MVP):** "all active contacts in the workspace" + optionally a **rule segment**.
+  (Historical note: this originally read "snapshot segment"; that concept was later **rejected**
+  — see `CONTEXT.md`. A segment is always a live rule; there is no static/snapshot kind.)
 - **Out (later phases):** visual drag-and-drop builder, reusable templates, full Liquid feature set,
   A/B, bounce/complaint handling, dedicated domains.
 
@@ -193,8 +208,7 @@ Pattern: the public tracker `internal/server/tracker.go` (serves `/t.js`, ingest
 8. `make test` (backend) and `make check` (tsgo + biome + golangci-lint) are green.
 
 ### Open questions / later
-- **Snapshot segments:** need a membership table (`SegmentMember`) — add as a small extra in Phase 1, or
-  defer and keep "all active contacts" only in the MVP. Recommendation: MVP = "all active" only; snapshot
-  ships with Phase 2.
+- ~~**Snapshot segments:**~~ **Resolved: rejected.** A segment is always a live rule (no
+  `SegmentMember` membership table). See `CONTEXT.md` anti-vocabulary.
 - **Bounce/complaint handling** (SES SNS / SMTP DSN) — Phase 6 (deliverability).
 - **External API broadcasts** — after the site contract stabilizes.
