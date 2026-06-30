@@ -7,9 +7,8 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/nikoksr/notify/service/amazonses"
-
 	"github.com/mokevnin/1mail/internal/messaging"
+	"github.com/mokevnin/1mail/internal/messaging/ses/amazonses"
 )
 
 // Config is the cleartext credential shape stored (encrypted) for an SES
@@ -20,6 +19,9 @@ type Config struct {
 	SecretAccessKey string `json:"secretAccessKey,omitempty"`
 	From            string `json:"from"`
 	FromName        string `json:"fromName,omitempty"`
+	// Endpoint targets an SES-compatible API (e.g. Yandex Cloud Postbox) instead
+	// of AWS. Empty ⇒ AWS default endpoint for Region. Not a secret.
+	Endpoint string `json:"endpoint,omitempty"`
 }
 
 // Descriptor registers the SES provider with the messaging catalog.
@@ -72,7 +74,10 @@ func (s *sender) Send(ctx context.Context, msg messaging.EmailMessage) error {
 	from := messaging.FirstNonEmpty(msg.From, s.cfg.From)
 	fromName := messaging.FirstNonEmpty(msg.FromName, s.cfg.FromName)
 
-	svc, err := amazonses.New(s.cfg.AccessKeyID, s.cfg.SecretAccessKey, s.cfg.Region, messaging.FormatSender(from, fromName))
+	svc, err := amazonses.New(
+		s.cfg.AccessKeyID, s.cfg.SecretAccessKey, s.cfg.Region, messaging.FormatSender(from, fromName),
+		amazonses.WithEndpoint(s.cfg.Endpoint),
+	)
 	if err != nil {
 		return err
 	}

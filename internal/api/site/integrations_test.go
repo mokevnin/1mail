@@ -37,6 +37,45 @@ func sesInput(region, accessKey, secret string) siteapi.SiteIntegrationConfigInp
 	}
 }
 
+func TestSiteIntegrationsSesEndpointRoundTrips(t *testing.T) {
+	env := testhelper.Setup(t)
+	c := siteClient(t, env, "info@1mail.com")
+	ctx := context.Background()
+	params := siteapi.SiteIntegrationsCreateParams{WorkspaceSlug: "acme"}
+
+	// SES integration targeting an SES-compatible endpoint (e.g. Yandex Postbox).
+	created, err := c.SiteIntegrationsCreate(ctx, &siteapi.SiteCreateIntegrationInput{
+		Name: "Postbox",
+		Config: siteapi.SiteIntegrationConfigInput{
+			OneOf: siteapi.NewSiteSesConfigInputSiteIntegrationConfigInputSum(siteapi.SiteSesConfigInput{
+				Kind:            siteapi.SiteSesConfigInputKindSes,
+				Region:          "ru-central1",
+				AccessKeyId:     "AKIA1234",
+				SecretAccessKey: "secret",
+				From:            "noreply@acme.test",
+				Endpoint:        siteapi.NewOptNilString("https://postbox.cloud.yandex.net"),
+			}),
+		},
+	}, params)
+	require.NoError(t, err)
+	res := created.(*siteapi.SiteIntegrationResource)
+
+	// The endpoint is not a secret, so it round-trips on read.
+	sesOut, ok := res.Config.OneOf.GetSiteSesConfig()
+	require.Truef(t, ok, "config is ses")
+	assert.Equal(t, "https://postbox.cloud.yandex.net", sesOut.Endpoint.Or(""))
+
+	// An SES integration without an endpoint reads back with the endpoint unset.
+	plain, err := c.SiteIntegrationsCreate(ctx, &siteapi.SiteCreateIntegrationInput{
+		Name:   "AWS",
+		Config: sesInput("eu-west-1", "AKIA5678", "secret"),
+	}, params)
+	require.NoError(t, err)
+	plainSes, ok := plain.(*siteapi.SiteIntegrationResource).Config.OneOf.GetSiteSesConfig()
+	require.Truef(t, ok, "config is ses")
+	assert.Empty(t, plainSes.Endpoint.Or(""))
+}
+
 func TestSiteIntegrationsCRUD(t *testing.T) {
 	env := testhelper.Setup(t)
 	c := siteClient(t, env, "info@1mail.com")

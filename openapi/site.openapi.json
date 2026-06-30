@@ -4892,6 +4892,11 @@
             "type": "string",
             "nullable": true
           },
+          "endpoint": {
+            "type": "string",
+            "nullable": true,
+            "description": "Custom SES-compatible API endpoint (e.g. Yandex Cloud Postbox); empty for AWS"
+          },
           "accessKeyIdLast4": {
             "type": "string",
             "nullable": true,
@@ -4923,6 +4928,11 @@
           "fromName": {
             "type": "string",
             "nullable": true
+          },
+          "endpoint": {
+            "type": "string",
+            "nullable": true,
+            "description": "Custom SES-compatible API endpoint (e.g. Yandex Cloud Postbox); empty for AWS"
           }
         },
         "description": "SES credentials"

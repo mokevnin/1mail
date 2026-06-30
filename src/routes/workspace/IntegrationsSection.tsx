@@ -41,6 +41,7 @@ interface IntegrationFormValues {
   region: string
   accessKeyId: string
   secretAccessKey: string
+  endpoint: string
   from: string
   fromName: string
 }
@@ -56,6 +57,7 @@ const INITIAL_VALUES: IntegrationFormValues = {
   region: '',
   accessKeyId: '',
   secretAccessKey: '',
+  endpoint: '',
   from: '',
   fromName: '',
 }
@@ -67,6 +69,7 @@ function buildConfig(values: IntegrationFormValues): SiteIntegrationConfigInput 
       region: values.region.trim(),
       accessKeyId: values.accessKeyId.trim(),
       secretAccessKey: values.secretAccessKey,
+      endpoint: values.endpoint.trim() || null,
       from: values.from.trim(),
       fromName: values.fromName.trim() || null,
     }
@@ -162,24 +165,32 @@ export function IntegrationsSection({ slug }: { slug: string }) {
           </Group>
 
           {isSes ? (
-            <Group grow>
+            <>
+              <Group grow>
+                <TextInput
+                  label={t(($) => $.settings.integrations.fields.region)}
+                  required
+                  {...form.getInputProps('region')}
+                />
+                <TextInput
+                  label={t(($) => $.settings.integrations.fields.accessKeyId)}
+                  required
+                  {...form.getInputProps('accessKeyId')}
+                />
+                <TextInput
+                  label={t(($) => $.settings.integrations.fields.secretAccessKey)}
+                  type="password"
+                  required
+                  {...form.getInputProps('secretAccessKey')}
+                />
+              </Group>
               <TextInput
-                label={t(($) => $.settings.integrations.fields.region)}
-                required
-                {...form.getInputProps('region')}
+                label={t(($) => $.settings.integrations.fields.endpoint)}
+                description={t(($) => $.settings.integrations.fields.endpointHint)}
+                placeholder="https://postbox.cloud.yandex.net"
+                {...form.getInputProps('endpoint')}
               />
-              <TextInput
-                label={t(($) => $.settings.integrations.fields.accessKeyId)}
-                required
-                {...form.getInputProps('accessKeyId')}
-              />
-              <TextInput
-                label={t(($) => $.settings.integrations.fields.secretAccessKey)}
-                type="password"
-                required
-                {...form.getInputProps('secretAccessKey')}
-              />
-            </Group>
+            </>
           ) : (
             <>
               <Group grow>

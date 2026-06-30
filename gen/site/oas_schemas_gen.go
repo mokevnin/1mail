@@ -4536,6 +4536,8 @@ type SiteSesConfig struct {
 	Region   string            `json:"region"`
 	From     EmailAddress      `json:"from"`
 	FromName OptNilString      `json:"fromName"`
+	// Custom SES-compatible API endpoint (e.g. Yandex Cloud Postbox); empty for AWS.
+	Endpoint OptNilString `json:"endpoint"`
 	// Last 4 chars of the access key id, for recognition.
 	AccessKeyIdLast4 OptNilString `json:"accessKeyIdLast4"`
 }
@@ -4558,6 +4560,11 @@ func (s *SiteSesConfig) GetFrom() EmailAddress {
 // GetFromName returns the value of FromName.
 func (s *SiteSesConfig) GetFromName() OptNilString {
 	return s.FromName
+}
+
+// GetEndpoint returns the value of Endpoint.
+func (s *SiteSesConfig) GetEndpoint() OptNilString {
+	return s.Endpoint
 }
 
 // GetAccessKeyIdLast4 returns the value of AccessKeyIdLast4.
@@ -4585,6 +4592,11 @@ func (s *SiteSesConfig) SetFromName(val OptNilString) {
 	s.FromName = val
 }
 
+// SetEndpoint sets the value of Endpoint.
+func (s *SiteSesConfig) SetEndpoint(val OptNilString) {
+	s.Endpoint = val
+}
+
 // SetAccessKeyIdLast4 sets the value of AccessKeyIdLast4.
 func (s *SiteSesConfig) SetAccessKeyIdLast4(val OptNilString) {
 	s.AccessKeyIdLast4 = val
@@ -4599,6 +4611,8 @@ type SiteSesConfigInput struct {
 	SecretAccessKey string                 `json:"secretAccessKey"`
 	From            EmailAddress           `json:"from"`
 	FromName        OptNilString           `json:"fromName"`
+	// Custom SES-compatible API endpoint (e.g. Yandex Cloud Postbox); empty for AWS.
+	Endpoint OptNilString `json:"endpoint"`
 }
 
 // GetKind returns the value of Kind.
@@ -4631,6 +4645,11 @@ func (s *SiteSesConfigInput) GetFromName() OptNilString {
 	return s.FromName
 }
 
+// GetEndpoint returns the value of Endpoint.
+func (s *SiteSesConfigInput) GetEndpoint() OptNilString {
+	return s.Endpoint
+}
+
 // SetKind sets the value of Kind.
 func (s *SiteSesConfigInput) SetKind(val SiteSesConfigInputKind) {
 	s.Kind = val
@@ -4659,6 +4678,11 @@ func (s *SiteSesConfigInput) SetFrom(val EmailAddress) {
 // SetFromName sets the value of FromName.
 func (s *SiteSesConfigInput) SetFromName(val OptNilString) {
 	s.FromName = val
+}
+
+// SetEndpoint sets the value of Endpoint.
+func (s *SiteSesConfigInput) SetEndpoint(val OptNilString) {
+	s.Endpoint = val
 }
 
 type SiteSesConfigInputKind string

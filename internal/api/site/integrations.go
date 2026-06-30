@@ -400,6 +400,7 @@ func (h *Handlers) encodeConfigInput(in siteapi.SiteIntegrationConfigInput) (int
 			SecretAccessKey: c.SecretAccessKey,
 			From:            string(c.From),
 			FromName:        c.FromName.Or(""),
+			Endpoint:        c.Endpoint.Or(""),
 		})
 	default:
 		return "", "", nil, errUnknownProvider
@@ -498,6 +499,7 @@ func (h *Handlers) integrationToResource(row *ent.Integration) (siteapi.SiteInte
 			Region:   c.Region,
 			From:     siteapi.EmailAddress(c.From),
 			FromName: optNilString(c.FromName),
+			Endpoint: optNilString(c.Endpoint),
 		}
 		if n := len(c.AccessKeyID); n > 0 {
 			last4 := c.AccessKeyID

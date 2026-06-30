@@ -33,6 +33,9 @@ model SiteSesConfig {
   from: EmailAddress;
   fromName?: string | null;
 
+  /** Custom SES-compatible API endpoint (e.g. Yandex Cloud Postbox); empty for AWS */
+  endpoint?: string | null;
+
   /** Last 4 chars of the access key id, for recognition */
   accessKeyIdLast4?: string | null;
 }
@@ -65,6 +68,9 @@ model SiteSesConfigInput {
   secretAccessKey: string;
   from: EmailAddress;
   fromName?: string | null;
+
+  /** Custom SES-compatible API endpoint (e.g. Yandex Cloud Postbox); empty for AWS */
+  endpoint?: string | null;
 }
 
 /** Provider config submitted by the UI, discriminated by `kind`. */

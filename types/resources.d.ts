@@ -303,6 +303,8 @@ export default interface Resources {
         "enabled": "Enabled",
         "fields": {
           "accessKeyId": "Access key ID",
+          "endpoint": "Custom endpoint",
+          "endpointHint": "Optional. For an SES-compatible service (e.g. Yandex Cloud Postbox); leave blank for AWS.",
           "from": "From address",
           "fromName": "From name",
           "host": "SMTP host",

@@ -250,6 +250,7 @@ export const zSiteSesConfig = z.object({
     region: z.string(),
     from: zEmailAddress,
     fromName: z.string().nullish(),
+    endpoint: z.string().nullish(),
     accessKeyIdLast4: z.string().nullish()
 });
 
@@ -262,7 +263,8 @@ export const zSiteSesConfigInput = z.object({
     accessKeyId: z.string(),
     secretAccessKey: z.string(),
     from: zEmailAddress,
-    fromName: z.string().nullish()
+    fromName: z.string().nullish(),
+    endpoint: z.string().nullish()
 });
 
 /**
