@@ -13,8 +13,6 @@ export function LoginPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
 
-  const loginMutation = useMutation(siteAuthDirectLoginMutation())
-
   const form = useForm<SiteDirectLoginInput>({
     initialValues: {
       user: '',
@@ -22,16 +20,11 @@ export function LoginPage() {
     },
   })
 
-  const handleSubmit = async (values: SiteDirectLoginInput) => {
-    try {
-      await loginMutation.mutateAsync({
-        body: {
-          user: values.user.trim(),
-          passwd: values.passwd,
-        },
-      })
-      await navigate({ to: indexRoute.to })
-    } catch (error) {
+  const loginMutation = useMutation({
+    ...siteAuthDirectLoginMutation(),
+    onSuccess: () => navigate({ to: indexRoute.to }),
+    onError: (error) => {
+      // Drop the rejected password so the user retypes a fresh one.
       form.setFieldValue('passwd', '')
       notifications.show({
         color: 'red',
@@ -41,7 +34,16 @@ export function LoginPage() {
           t(($) => $.login.errorTitle),
         ),
       })
-    }
+    },
+  })
+
+  const handleSubmit = (values: SiteDirectLoginInput) => {
+    loginMutation.mutate({
+      body: {
+        user: values.user.trim(),
+        passwd: values.passwd,
+      },
+    })
   }
 
   return (

@@ -13,8 +13,6 @@ export function RegisterPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
 
-  const registerMutation = useMutation(siteAuthRegisterMutation())
-
   const form = useForm<SiteRegisterInput>({
     initialValues: {
       name: '',
@@ -23,16 +21,18 @@ export function RegisterPage() {
     },
   })
 
-  const handleSubmit = async (values: SiteRegisterInput) => {
-    try {
-      await registerMutation.mutateAsync({
-        body: {
-          name: values.name.trim(),
-          email: values.email.trim(),
-          password: values.password,
-        },
+  const registerMutation = useMutation({
+    ...siteAuthRegisterMutation(),
+    onSuccess: () => {
+      notifications.show({
+        color: 'teal',
+        title: t(($) => $.notifications.successTitle),
+        message: t(($) => $.registration.successMessage),
       })
-    } catch (error) {
+      return navigate({ to: indexRoute.to })
+    },
+    onError: (error) => {
+      // Drop the rejected password so the user retypes a fresh one.
       form.setFieldValue('password', '')
       notifications.show({
         color: 'red',
@@ -42,15 +42,17 @@ export function RegisterPage() {
           t(($) => $.registration.errorTitle),
         ),
       })
-      return
-    }
+    },
+  })
 
-    notifications.show({
-      color: 'teal',
-      title: t(($) => $.notifications.successTitle),
-      message: t(($) => $.registration.successMessage),
+  const handleSubmit = (values: SiteRegisterInput) => {
+    registerMutation.mutate({
+      body: {
+        name: values.name.trim(),
+        email: values.email.trim(),
+        password: values.password,
+      },
     })
-    await navigate({ to: indexRoute.to })
   }
 
   return (
