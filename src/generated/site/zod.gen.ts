@@ -91,6 +91,22 @@ export const zSiteAnalyticsRange = z.enum([
 export const zSiteAutomationStatus = z.enum(['draft', 'active']);
 
 /**
+ * Kind of automation step
+ */
+export const zSiteAutomationStepType = z.enum(['email', 'wait']);
+
+/**
+ * One node in an automation's ordered, linear sequence. A flat shape: email
+ * steps carry subject/body, wait steps carry seconds.
+ */
+export const zSiteAutomationStep = z.object({
+    type: zSiteAutomationStepType,
+    subject: z.string().optional(),
+    body: z.string().optional(),
+    seconds: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).optional()
+});
+
+/**
  * Denormalized delivery counters for a broadcast
  */
 export const zSiteBroadcastStats = z.object({
@@ -125,7 +141,7 @@ export const zSiteBroadcastStatus = z.enum([
 export const zSiteCreateAutomationInput = z.object({
     name: z.string(),
     triggerEvent: z.string(),
-    definition: z.string().optional()
+    steps: z.array(zSiteAutomationStep).optional()
 });
 
 /**
@@ -352,7 +368,7 @@ export const zSiteTestSendBroadcastInput = z.object({
 export const zSiteUpdateAutomationInput = z.object({
     name: z.string().optional(),
     triggerEvent: z.string().optional(),
-    definition: z.string().optional()
+    steps: z.array(zSiteAutomationStep).optional()
 });
 
 /**
@@ -474,7 +490,7 @@ export const zSiteAutomationResource = z.object({
     name: z.string(),
     status: zSiteAutomationStatus,
     triggerEvent: z.string(),
-    definition: z.string(),
+    steps: z.array(zSiteAutomationStep),
     createdAt: zTimestamp,
     updatedAt: zTimestamp
 });

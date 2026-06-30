@@ -3954,15 +3954,7 @@
       },
       "SiteAutomationResource": {
         "type": "object",
-        "required": [
-          "id",
-          "name",
-          "status",
-          "triggerEvent",
-          "definition",
-          "createdAt",
-          "updatedAt"
-        ],
+        "required": ["id", "name", "status", "triggerEvent", "steps", "createdAt", "updatedAt"],
         "properties": {
           "id": {
             "allOf": [
@@ -3988,9 +3980,12 @@
             "type": "string",
             "description": "Event action that enrolls a contact (e.g. \"contact.created\", \"email.opened\")"
           },
-          "definition": {
-            "type": "string",
-            "description": "JSON array of steps: [{type:\"email\",subject,body},{type:\"wait\",seconds}]"
+          "steps": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SiteAutomationStep"
+            },
+            "description": "The automation's ordered, linear steps"
           },
           "createdAt": {
             "allOf": [
@@ -4015,6 +4010,39 @@
         "type": "string",
         "enum": ["draft", "active"],
         "description": "Automation lifecycle status"
+      },
+      "SiteAutomationStep": {
+        "type": "object",
+        "required": ["type"],
+        "properties": {
+          "type": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SiteAutomationStepType"
+              }
+            ],
+            "description": "Step kind"
+          },
+          "subject": {
+            "type": "string",
+            "description": "Email subject (email steps)"
+          },
+          "body": {
+            "type": "string",
+            "description": "Email body as MJML (email steps)"
+          },
+          "seconds": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Delay before the next step, in seconds (wait steps)"
+          }
+        },
+        "description": "One node in an automation's ordered, linear sequence. A flat shape: email\nsteps carry subject/body, wait steps carry seconds."
+      },
+      "SiteAutomationStepType": {
+        "type": "string",
+        "enum": ["email", "wait"],
+        "description": "Kind of automation step"
       },
       "SiteBroadcastResource": {
         "type": "object",
@@ -4316,8 +4344,11 @@
           "triggerEvent": {
             "type": "string"
           },
-          "definition": {
-            "type": "string"
+          "steps": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SiteAutomationStep"
+            }
           }
         },
         "description": "Site request body for creating an automation"
@@ -5234,8 +5265,11 @@
           "triggerEvent": {
             "type": "string"
           },
-          "definition": {
-            "type": "string"
+          "steps": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SiteAutomationStep"
+            }
           }
         },
         "description": "Site request body for updating an automation"

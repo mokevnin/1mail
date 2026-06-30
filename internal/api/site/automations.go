@@ -8,6 +8,7 @@ import (
 	"github.com/mokevnin/1mail/ent"
 	"github.com/mokevnin/1mail/ent/automation"
 	siteapi "github.com/mokevnin/1mail/gen/site"
+	"github.com/mokevnin/1mail/internal/api/site/resources"
 	"github.com/mokevnin/1mail/internal/convert"
 	"github.com/mokevnin/1mail/internal/pagination"
 )
@@ -71,8 +72,8 @@ func (h *Handlers) SiteAutomationsCreate(ctx context.Context, req *siteapi.SiteC
 		SetWorkspaceID(ws).
 		SetName(req.Name).
 		SetTriggerEvent(req.TriggerEvent)
-	if v, ok := req.Definition.Get(); ok {
-		q = q.SetDefinition(v)
+	if req.Steps != nil {
+		q = q.SetDefinition(resources.SerializeAutomationSteps(req.Steps))
 	}
 	a, err := q.Save(ctx)
 	if err != nil {
@@ -123,8 +124,10 @@ func (h *Handlers) SiteAutomationsUpdate(ctx context.Context, req *siteapi.SiteU
 	q := h.ent.Automation.UpdateOneID(id).
 		Where(automation.WorkspaceID(ws)).
 		SetNillableName(convert.StringPtr(req.Name)).
-		SetNillableTriggerEvent(convert.StringPtr(req.TriggerEvent)).
-		SetNillableDefinition(convert.StringPtr(req.Definition))
+		SetNillableTriggerEvent(convert.StringPtr(req.TriggerEvent))
+	if req.Steps != nil {
+		q = q.SetDefinition(resources.SerializeAutomationSteps(req.Steps))
+	}
 	a, err := q.Save(ctx)
 	if ent.IsNotFound(err) {
 		v := siteapi.SiteAutomationsUpdateNotFound(problem(http.StatusNotFound, "automation not found"))

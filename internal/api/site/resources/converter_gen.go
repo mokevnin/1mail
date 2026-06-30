@@ -17,7 +17,7 @@ func (c *ConverterImpl) AutomationToResource(source *ent.Automation) site.SiteAu
 		siteapiSiteAutomationResource.Name = (*source).Name
 		siteapiSiteAutomationResource.Status = site.SiteAutomationStatus((*source).Status)
 		siteapiSiteAutomationResource.TriggerEvent = (*source).TriggerEvent
-		siteapiSiteAutomationResource.Definition = (*source).Definition
+		siteapiSiteAutomationResource.Steps = automationSteps((*source).Definition)
 		siteapiSiteAutomationResource.CreatedAt = timestamp((*source).CreatedAt)
 		siteapiSiteAutomationResource.UpdatedAt = timestamp((*source).UpdatedAt)
 	}

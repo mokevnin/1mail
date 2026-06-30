@@ -232,9 +232,9 @@ export type SiteAutomationResource = {
      */
     triggerEvent: string;
     /**
-     * JSON array of steps: [{type:"email",subject,body},{type:"wait",seconds}]
+     * The automation's ordered, linear steps
      */
-    definition: string;
+    steps: Array<SiteAutomationStep>;
     /**
      * Creation timestamp
      */
@@ -254,6 +254,39 @@ export const SiteAutomationStatus = { DRAFT: 'draft', ACTIVE: 'active' } as cons
  * Automation lifecycle status
  */
 export type SiteAutomationStatus = typeof SiteAutomationStatus[keyof typeof SiteAutomationStatus];
+
+/**
+ * One node in an automation's ordered, linear sequence. A flat shape: email
+ * steps carry subject/body, wait steps carry seconds.
+ */
+export type SiteAutomationStep = {
+    /**
+     * Step kind
+     */
+    type: SiteAutomationStepType;
+    /**
+     * Email subject (email steps)
+     */
+    subject?: string;
+    /**
+     * Email body as MJML (email steps)
+     */
+    body?: string;
+    /**
+     * Delay before the next step, in seconds (wait steps)
+     */
+    seconds?: number;
+};
+
+/**
+ * Kind of automation step
+ */
+export const SiteAutomationStepType = { EMAIL: 'email', WAIT: 'wait' } as const;
+
+/**
+ * Kind of automation step
+ */
+export type SiteAutomationStepType = typeof SiteAutomationStepType[keyof typeof SiteAutomationStepType];
 
 /**
  * Broadcast resource used by the site UI
@@ -445,7 +478,7 @@ export type SiteContactResource = {
 export type SiteCreateAutomationInput = {
     name: string;
     triggerEvent: string;
-    definition?: string;
+    steps?: Array<SiteAutomationStep>;
 };
 
 /**
@@ -1030,7 +1063,7 @@ export type SiteTestSendBroadcastInput = {
 export type SiteUpdateAutomationInput = {
     name?: string;
     triggerEvent?: string;
-    definition?: string;
+    steps?: Array<SiteAutomationStep>;
 };
 
 /**

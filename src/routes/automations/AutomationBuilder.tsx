@@ -20,7 +20,7 @@ import {
   AutomationDetailsFields,
   type AutomationDetailsValues,
 } from './AutomationDetailsFields.tsx'
-import { graphToSteps, parseSteps, serializeSteps, stepsToGraph } from './definition.ts'
+import { graphToSteps, stepsToGraph } from './definition.ts'
 import { useAutomationNodeTypes } from './nodes.tsx'
 
 interface AutomationBuilderProps {
@@ -41,10 +41,7 @@ export function AutomationBuilder({ slug, automation }: AutomationBuilderProps) 
     initialValues: { name: automation.name, triggerEvent: automation.triggerEvent },
   })
 
-  const initialGraph = useMemo(
-    () => stepsToGraph(parseSteps(automation.definition)),
-    [automation.definition],
-  )
+  const initialGraph = useMemo(() => stepsToGraph(automation.steps), [automation.steps])
 
   const updateMutation = useMutation({
     ...siteAutomationsUpdateMutation(),
@@ -75,7 +72,7 @@ export function AutomationBuilder({ slug, automation }: AutomationBuilderProps) 
           body: {
             name: values.name.trim(),
             triggerEvent: values.triggerEvent,
-            definition: serializeSteps(steps),
+            steps,
           },
         })
         notifications.show({

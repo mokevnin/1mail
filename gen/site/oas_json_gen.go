@@ -2282,8 +2282,12 @@ func (s *SiteAutomationResource) encodeFields(e *jx.Encoder) {
 		e.Str(s.TriggerEvent)
 	}
 	{
-		e.FieldStart("definition")
-		e.Str(s.Definition)
+		e.FieldStart("steps")
+		e.ArrStart()
+		for _, elem := range s.Steps {
+			elem.Encode(e)
+		}
+		e.ArrEnd()
 	}
 	{
 		e.FieldStart("createdAt")
@@ -2300,7 +2304,7 @@ var jsonFieldsNameOfSiteAutomationResource = [7]string{
 	1: "name",
 	2: "status",
 	3: "triggerEvent",
-	4: "definition",
+	4: "steps",
 	5: "createdAt",
 	6: "updatedAt",
 }
@@ -2358,17 +2362,23 @@ func (s *SiteAutomationResource) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"triggerEvent\"")
 			}
-		case "definition":
+		case "steps":
 			requiredBitSet[0] |= 1 << 4
 			if err := func() error {
-				v, err := d.Str()
-				s.Definition = string(v)
-				if err != nil {
+				s.Steps = make([]SiteAutomationStep, 0)
+				if err := d.Arr(func(d *jx.Decoder) error {
+					var elem SiteAutomationStep
+					if err := elem.Decode(d); err != nil {
+						return err
+					}
+					s.Steps = append(s.Steps, elem)
+					return nil
+				}); err != nil {
 					return err
 				}
 				return nil
 			}(); err != nil {
-				return errors.Wrap(err, "decode field \"definition\"")
+				return errors.Wrap(err, "decode field \"steps\"")
 			}
 		case "createdAt":
 			requiredBitSet[0] |= 1 << 5
@@ -2482,6 +2492,191 @@ func (s SiteAutomationStatus) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
 func (s *SiteAutomationStatus) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *SiteAutomationStep) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *SiteAutomationStep) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("type")
+		s.Type.Encode(e)
+	}
+	{
+		if s.Subject.Set {
+			e.FieldStart("subject")
+			s.Subject.Encode(e)
+		}
+	}
+	{
+		if s.Body.Set {
+			e.FieldStart("body")
+			s.Body.Encode(e)
+		}
+	}
+	{
+		if s.Seconds.Set {
+			e.FieldStart("seconds")
+			s.Seconds.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfSiteAutomationStep = [4]string{
+	0: "type",
+	1: "subject",
+	2: "body",
+	3: "seconds",
+}
+
+// Decode decodes SiteAutomationStep from json.
+func (s *SiteAutomationStep) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode SiteAutomationStep to nil")
+	}
+	var requiredBitSet [1]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "type":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				if err := s.Type.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"type\"")
+			}
+		case "subject":
+			if err := func() error {
+				s.Subject.Reset()
+				if err := s.Subject.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"subject\"")
+			}
+		case "body":
+			if err := func() error {
+				s.Body.Reset()
+				if err := s.Body.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"body\"")
+			}
+		case "seconds":
+			if err := func() error {
+				s.Seconds.Reset()
+				if err := s.Seconds.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"seconds\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode SiteAutomationStep")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b00000001,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfSiteAutomationStep) {
+					name = jsonFieldsNameOfSiteAutomationStep[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *SiteAutomationStep) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *SiteAutomationStep) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes SiteAutomationStepType as json.
+func (s SiteAutomationStepType) Encode(e *jx.Encoder) {
+	e.Str(string(s))
+}
+
+// Decode decodes SiteAutomationStepType from json.
+func (s *SiteAutomationStepType) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode SiteAutomationStepType to nil")
+	}
+	v, err := d.StrBytes()
+	if err != nil {
+		return err
+	}
+	// Try to use constant string.
+	switch SiteAutomationStepType(v) {
+	case SiteAutomationStepTypeEmail:
+		*s = SiteAutomationStepTypeEmail
+	case SiteAutomationStepTypeWait:
+		*s = SiteAutomationStepTypeWait
+	default:
+		*s = SiteAutomationStepType(v)
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s SiteAutomationStepType) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *SiteAutomationStepType) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }
@@ -5959,9 +6154,13 @@ func (s *SiteCreateAutomationInput) encodeFields(e *jx.Encoder) {
 		e.Str(s.TriggerEvent)
 	}
 	{
-		if s.Definition.Set {
-			e.FieldStart("definition")
-			s.Definition.Encode(e)
+		if s.Steps != nil {
+			e.FieldStart("steps")
+			e.ArrStart()
+			for _, elem := range s.Steps {
+				elem.Encode(e)
+			}
+			e.ArrEnd()
 		}
 	}
 }
@@ -5969,7 +6168,7 @@ func (s *SiteCreateAutomationInput) encodeFields(e *jx.Encoder) {
 var jsonFieldsNameOfSiteCreateAutomationInput = [3]string{
 	0: "name",
 	1: "triggerEvent",
-	2: "definition",
+	2: "steps",
 }
 
 // Decode decodes SiteCreateAutomationInput from json.
@@ -6005,15 +6204,22 @@ func (s *SiteCreateAutomationInput) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"triggerEvent\"")
 			}
-		case "definition":
+		case "steps":
 			if err := func() error {
-				s.Definition.Reset()
-				if err := s.Definition.Decode(d); err != nil {
+				s.Steps = make([]SiteAutomationStep, 0)
+				if err := d.Arr(func(d *jx.Decoder) error {
+					var elem SiteAutomationStep
+					if err := elem.Decode(d); err != nil {
+						return err
+					}
+					s.Steps = append(s.Steps, elem)
+					return nil
+				}); err != nil {
 					return err
 				}
 				return nil
 			}(); err != nil {
-				return errors.Wrap(err, "decode field \"definition\"")
+				return errors.Wrap(err, "decode field \"steps\"")
 			}
 		default:
 			return d.Skip()
@@ -14239,9 +14445,13 @@ func (s *SiteUpdateAutomationInput) encodeFields(e *jx.Encoder) {
 		}
 	}
 	{
-		if s.Definition.Set {
-			e.FieldStart("definition")
-			s.Definition.Encode(e)
+		if s.Steps != nil {
+			e.FieldStart("steps")
+			e.ArrStart()
+			for _, elem := range s.Steps {
+				elem.Encode(e)
+			}
+			e.ArrEnd()
 		}
 	}
 }
@@ -14249,7 +14459,7 @@ func (s *SiteUpdateAutomationInput) encodeFields(e *jx.Encoder) {
 var jsonFieldsNameOfSiteUpdateAutomationInput = [3]string{
 	0: "name",
 	1: "triggerEvent",
-	2: "definition",
+	2: "steps",
 }
 
 // Decode decodes SiteUpdateAutomationInput from json.
@@ -14280,15 +14490,22 @@ func (s *SiteUpdateAutomationInput) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"triggerEvent\"")
 			}
-		case "definition":
+		case "steps":
 			if err := func() error {
-				s.Definition.Reset()
-				if err := s.Definition.Decode(d); err != nil {
+				s.Steps = make([]SiteAutomationStep, 0)
+				if err := d.Arr(func(d *jx.Decoder) error {
+					var elem SiteAutomationStep
+					if err := elem.Decode(d); err != nil {
+						return err
+					}
+					s.Steps = append(s.Steps, elem)
+					return nil
+				}); err != nil {
 					return err
 				}
 				return nil
 			}(); err != nil {
-				return errors.Wrap(err, "decode field \"definition\"")
+				return errors.Wrap(err, "decode field \"steps\"")
 			}
 		default:
 			return d.Skip()

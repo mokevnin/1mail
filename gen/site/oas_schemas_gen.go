@@ -1758,8 +1758,8 @@ type SiteAutomationResource struct {
 	Status SiteAutomationStatus `json:"status"`
 	// Event action that enrolls a contact (e.g. "contact.created", "email.opened").
 	TriggerEvent string `json:"triggerEvent"`
-	// JSON array of steps: [{type:"email",subject,body},{type:"wait",seconds}].
-	Definition string `json:"definition"`
+	// The automation's ordered, linear steps.
+	Steps []SiteAutomationStep `json:"steps"`
 	// Creation timestamp.
 	CreatedAt Timestamp `json:"createdAt"`
 	// Last update timestamp.
@@ -1786,9 +1786,9 @@ func (s *SiteAutomationResource) GetTriggerEvent() string {
 	return s.TriggerEvent
 }
 
-// GetDefinition returns the value of Definition.
-func (s *SiteAutomationResource) GetDefinition() string {
-	return s.Definition
+// GetSteps returns the value of Steps.
+func (s *SiteAutomationResource) GetSteps() []SiteAutomationStep {
+	return s.Steps
 }
 
 // GetCreatedAt returns the value of CreatedAt.
@@ -1821,9 +1821,9 @@ func (s *SiteAutomationResource) SetTriggerEvent(val string) {
 	s.TriggerEvent = val
 }
 
-// SetDefinition sets the value of Definition.
-func (s *SiteAutomationResource) SetDefinition(val string) {
-	s.Definition = val
+// SetSteps sets the value of Steps.
+func (s *SiteAutomationResource) SetSteps(val []SiteAutomationStep) {
+	s.Steps = val
 }
 
 // SetCreatedAt sets the value of CreatedAt.
@@ -1879,6 +1879,103 @@ func (s *SiteAutomationStatus) UnmarshalText(data []byte) error {
 		return nil
 	case SiteAutomationStatusActive:
 		*s = SiteAutomationStatusActive
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// One node in an automation's ordered, linear sequence. A flat shape: email steps carry subject/body,
+// wait steps carry seconds.
+// Ref: #/components/schemas/SiteAutomationStep
+type SiteAutomationStep struct {
+	// Step kind.
+	Type SiteAutomationStepType `json:"type"`
+	// Email subject (email steps).
+	Subject OptString `json:"subject"`
+	// Email body as MJML (email steps).
+	Body OptString `json:"body"`
+	// Delay before the next step, in seconds (wait steps).
+	Seconds OptInt32 `json:"seconds"`
+}
+
+// GetType returns the value of Type.
+func (s *SiteAutomationStep) GetType() SiteAutomationStepType {
+	return s.Type
+}
+
+// GetSubject returns the value of Subject.
+func (s *SiteAutomationStep) GetSubject() OptString {
+	return s.Subject
+}
+
+// GetBody returns the value of Body.
+func (s *SiteAutomationStep) GetBody() OptString {
+	return s.Body
+}
+
+// GetSeconds returns the value of Seconds.
+func (s *SiteAutomationStep) GetSeconds() OptInt32 {
+	return s.Seconds
+}
+
+// SetType sets the value of Type.
+func (s *SiteAutomationStep) SetType(val SiteAutomationStepType) {
+	s.Type = val
+}
+
+// SetSubject sets the value of Subject.
+func (s *SiteAutomationStep) SetSubject(val OptString) {
+	s.Subject = val
+}
+
+// SetBody sets the value of Body.
+func (s *SiteAutomationStep) SetBody(val OptString) {
+	s.Body = val
+}
+
+// SetSeconds sets the value of Seconds.
+func (s *SiteAutomationStep) SetSeconds(val OptInt32) {
+	s.Seconds = val
+}
+
+// Kind of automation step.
+// Ref: #/components/schemas/SiteAutomationStepType
+type SiteAutomationStepType string
+
+const (
+	SiteAutomationStepTypeEmail SiteAutomationStepType = "email"
+	SiteAutomationStepTypeWait  SiteAutomationStepType = "wait"
+)
+
+// AllValues returns all SiteAutomationStepType values.
+func (SiteAutomationStepType) AllValues() []SiteAutomationStepType {
+	return []SiteAutomationStepType{
+		SiteAutomationStepTypeEmail,
+		SiteAutomationStepTypeWait,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s SiteAutomationStepType) MarshalText() ([]byte, error) {
+	switch s {
+	case SiteAutomationStepTypeEmail:
+		return []byte(s), nil
+	case SiteAutomationStepTypeWait:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *SiteAutomationStepType) UnmarshalText(data []byte) error {
+	switch SiteAutomationStepType(data) {
+	case SiteAutomationStepTypeEmail:
+		*s = SiteAutomationStepTypeEmail
+		return nil
+	case SiteAutomationStepTypeWait:
+		*s = SiteAutomationStepTypeWait
 		return nil
 	default:
 		return errors.Errorf("invalid value: %q", data)
@@ -2859,9 +2956,9 @@ func (*SiteContactsUpdateUnprocessableEntity) siteContactsUpdateRes() {}
 // Site request body for creating an automation.
 // Ref: #/components/schemas/SiteCreateAutomationInput
 type SiteCreateAutomationInput struct {
-	Name         string    `json:"name"`
-	TriggerEvent string    `json:"triggerEvent"`
-	Definition   OptString `json:"definition"`
+	Name         string               `json:"name"`
+	TriggerEvent string               `json:"triggerEvent"`
+	Steps        []SiteAutomationStep `json:"steps"`
 }
 
 // GetName returns the value of Name.
@@ -2874,9 +2971,9 @@ func (s *SiteCreateAutomationInput) GetTriggerEvent() string {
 	return s.TriggerEvent
 }
 
-// GetDefinition returns the value of Definition.
-func (s *SiteCreateAutomationInput) GetDefinition() OptString {
-	return s.Definition
+// GetSteps returns the value of Steps.
+func (s *SiteCreateAutomationInput) GetSteps() []SiteAutomationStep {
+	return s.Steps
 }
 
 // SetName sets the value of Name.
@@ -2889,9 +2986,9 @@ func (s *SiteCreateAutomationInput) SetTriggerEvent(val string) {
 	s.TriggerEvent = val
 }
 
-// SetDefinition sets the value of Definition.
-func (s *SiteCreateAutomationInput) SetDefinition(val OptString) {
-	s.Definition = val
+// SetSteps sets the value of Steps.
+func (s *SiteCreateAutomationInput) SetSteps(val []SiteAutomationStep) {
+	s.Steps = val
 }
 
 // Site request body for creating a broadcast.
@@ -5664,9 +5761,9 @@ func (*SiteTokensListOKApplicationJSON) siteTokensListRes() {}
 // Site request body for updating an automation.
 // Ref: #/components/schemas/SiteUpdateAutomationInput
 type SiteUpdateAutomationInput struct {
-	Name         OptString `json:"name"`
-	TriggerEvent OptString `json:"triggerEvent"`
-	Definition   OptString `json:"definition"`
+	Name         OptString            `json:"name"`
+	TriggerEvent OptString            `json:"triggerEvent"`
+	Steps        []SiteAutomationStep `json:"steps"`
 }
 
 // GetName returns the value of Name.
@@ -5679,9 +5776,9 @@ func (s *SiteUpdateAutomationInput) GetTriggerEvent() OptString {
 	return s.TriggerEvent
 }
 
-// GetDefinition returns the value of Definition.
-func (s *SiteUpdateAutomationInput) GetDefinition() OptString {
-	return s.Definition
+// GetSteps returns the value of Steps.
+func (s *SiteUpdateAutomationInput) GetSteps() []SiteAutomationStep {
+	return s.Steps
 }
 
 // SetName sets the value of Name.
@@ -5694,9 +5791,9 @@ func (s *SiteUpdateAutomationInput) SetTriggerEvent(val OptString) {
 	s.TriggerEvent = val
 }
 
-// SetDefinition sets the value of Definition.
-func (s *SiteUpdateAutomationInput) SetDefinition(val OptString) {
-	s.Definition = val
+// SetSteps sets the value of Steps.
+func (s *SiteUpdateAutomationInput) SetSteps(val []SiteAutomationStep) {
+	s.Steps = val
 }
 
 // Site request body for updating a broadcast.

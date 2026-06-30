@@ -9,6 +9,28 @@ enum SiteAutomationStatus {
   active,
 }
 
+/** Kind of automation step */
+enum SiteAutomationStepType {
+  email,
+  wait,
+}
+
+/** One node in an automation's ordered, linear sequence. A flat shape: email
+ * steps carry subject/body, wait steps carry seconds. */
+model SiteAutomationStep {
+  /** Step kind */
+  type: SiteAutomationStepType;
+
+  /** Email subject (email steps) */
+  subject?: string;
+
+  /** Email body as MJML (email steps) */
+  body?: string;
+
+  /** Delay before the next step, in seconds (wait steps) */
+  seconds?: int32;
+}
+
 /** Automation resource used by the site UI */
 @resource("automations")
 @segment("automations")
@@ -26,8 +48,8 @@ model SiteAutomationResource {
   /** Event action that enrolls a contact (e.g. "contact.created", "email.opened") */
   triggerEvent: string;
 
-  /** JSON array of steps: [{type:"email",subject,body},{type:"wait",seconds}] */
-  definition: string;
+  /** The automation's ordered, linear steps */
+  steps: SiteAutomationStep[];
 
   /** Creation timestamp */
   createdAt: Timestamp;
@@ -40,14 +62,14 @@ model SiteAutomationResource {
 model SiteCreateAutomationInput {
   name: string;
   triggerEvent: string;
-  definition?: string;
+  steps?: SiteAutomationStep[];
 }
 
 /** Site request body for updating an automation */
 model SiteUpdateAutomationInput {
   name?: string;
   triggerEvent?: string;
-  definition?: string;
+  steps?: SiteAutomationStep[];
 }
 
 @route("/w/{workspaceSlug}/automations")

@@ -1,46 +1,13 @@
 import type { WorkflowBuilderEdge, WorkflowBuilderNode } from '@workflowbuilder/sdk'
+import type { SiteAutomationStep } from '../../generated/site/types.gen.ts'
 import { EMAIL_NODE_ICON, EMAIL_NODE_TYPE, WAIT_NODE_ICON, WAIT_NODE_TYPE } from './nodes.tsx'
 
-// AutomationStep mirrors the engine's step JSON ({type, subject, body, seconds}).
-// It is the on-disk format the backend executor reads — keep it byte-compatible.
-export interface AutomationStep {
-  type: 'email' | 'wait'
-  subject: string
-  body: string
-  seconds: number
-}
+// A step is the generated contract type (typed in TypeSpec; no hand-rolled
+// parse/serialize — the API carries steps as structured data, not a JSON string).
+export type AutomationStep = SiteAutomationStep
 
 export function emptyWaitStep(): AutomationStep {
-  return { type: 'wait', subject: '', body: '', seconds: 3600 }
-}
-
-// serializeSteps turns steps into the JSON definition the engine reads, dropping
-// fields irrelevant to each step type.
-export function serializeSteps(steps: AutomationStep[]): string {
-  return JSON.stringify(
-    steps.map((s) =>
-      s.type === 'email'
-        ? { type: 'email', subject: s.subject, body: s.body }
-        : { type: 'wait', seconds: Math.trunc(Number(s.seconds)) || 0 },
-    ),
-  )
-}
-
-// parseSteps reads a stored definition back into steps, tolerating an empty or
-// malformed value (new automations default to "[]").
-export function parseSteps(definition: string): AutomationStep[] {
-  try {
-    const raw = JSON.parse(definition || '[]')
-    if (!Array.isArray(raw)) return []
-    return raw.map((s: Partial<AutomationStep>) => ({
-      type: s.type === 'wait' ? 'wait' : 'email',
-      subject: s.subject ?? '',
-      body: s.body ?? '',
-      seconds: s.seconds ?? 3600,
-    }))
-  } catch {
-    return []
-  }
+  return { type: 'wait', seconds: 3600 }
 }
 
 // --- graph ↔ steps (the visual builder uses an xyflow graph; we persist []step) ---
@@ -73,8 +40,8 @@ export function stepsToGraph(steps: AutomationStep[]): AutomationGraph {
       segments: [],
       properties:
         step.type === 'wait'
-          ? { seconds: step.seconds }
-          : { subject: step.subject, body: step.body },
+          ? { seconds: step.seconds ?? 0 }
+          : { subject: step.subject ?? '', body: step.body ?? '' },
     },
   }))
 
@@ -96,14 +63,13 @@ export function stepsToGraph(steps: AutomationStep[]): AutomationGraph {
 function nodeToStep(node: WorkflowBuilderNode): AutomationStep | null {
   const props = (node.data.properties ?? {}) as Record<string, unknown>
   if (node.data.type === WAIT_NODE_TYPE) {
-    return { ...emptyWaitStep(), seconds: Math.trunc(Number(props.seconds)) || 0 }
+    return { type: 'wait', seconds: Math.trunc(Number(props.seconds)) || 0 }
   }
   if (node.data.type === EMAIL_NODE_TYPE) {
     return {
       type: 'email',
       subject: String(props.subject ?? ''),
       body: String(props.body ?? ''),
-      seconds: 0,
     }
   }
   return null
