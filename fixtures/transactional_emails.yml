@@ -1,0 +1,66 @@
+# Workspace acme (id 1). Per-send trace for the transactional surface. template_id
+# is a plain id snapshot into email_templates (not an FK). Outcomes cover
+# sent / suppressed / failed; idempotency_key is unique per (workspace, key).
+- id: 100
+  channel: email
+  destination: liam.python@codebasics.dev
+  template_id: 1
+  contact_id: 100
+  status: sent
+  idempotency_key: txn-welcome-100
+  workspace_id: 1
+  created_at: "{{daysAgo 2}}"
+  updated_at: "{{daysAgo 2}}"
+- id: 101
+  channel: email
+  destination: emma.sql@codebasics.dev
+  template_id: 3
+  contact_id: 101
+  status: sent
+  idempotency_key: txn-receipt-101
+  workspace_id: 1
+  created_at: "{{daysAgo 3}}"
+  updated_at: "{{daysAgo 3}}"
+- id: 102
+  channel: email
+  destination: sophia.python@codebasics.dev
+  template_id: 3
+  contact_id: 105
+  status: sent
+  idempotency_key: txn-receipt-105
+  workspace_id: 1
+  created_at: "{{daysAgo 8}}"
+  updated_at: "{{daysAgo 8}}"
+# Suppressed: destination is on the do-not-send registry, so no send happened.
+- id: 103
+  channel: email
+  destination: ethan.data@codebasics.dev
+  template_id: 1
+  contact_id: 104
+  status: suppressed
+  idempotency_key: txn-welcome-104
+  workspace_id: 1
+  created_at: "{{daysAgo 6}}"
+  updated_at: "{{daysAgo 6}}"
+# Failed: the provider call errored.
+- id: 104
+  channel: email
+  destination: noah.js@codebasics.dev
+  template_id: 1
+  contact_id: 102
+  status: failed
+  error: provider timeout
+  idempotency_key: txn-welcome-102
+  workspace_id: 1
+  created_at: "{{daysAgo 5}}"
+  updated_at: "{{daysAgo 5}}"
+# Keyless send (idempotency_key null is always accepted).
+- id: 105
+  channel: email
+  destination: ava.devops@codebasics.dev
+  template_id: 2
+  contact_id: 103
+  status: sent
+  workspace_id: 1
+  created_at: "{{daysAgo 4}}"
+  updated_at: "{{daysAgo 4}}"

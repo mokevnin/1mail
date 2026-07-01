@@ -188,7 +188,7 @@ func TestExternalEmailsSendRecordsTrace(t *testing.T) {
 	require.IsType(t, &externalapi.SendTransactionalEmailResponse{}, res)
 
 	rec, err := env.DB.TransactionalEmail.Query().
-		Where(transactionalemail.WorkspaceID(1)).Only(ctx)
+		Where(transactionalemail.WorkspaceID(1), transactionalemail.Destination("trace@example.com")).Only(ctx)
 	require.NoError(t, err)
 	assert.Equal(t, transactionalemail.StatusSent, rec.Status)
 	assert.Equal(t, "trace@example.com", rec.Destination)
@@ -230,7 +230,8 @@ func TestExternalEmailsSendIdempotentReplay(t *testing.T) {
 	assert.Equal(t, externalapi.TransactionalSendStatusSent, second.Status)
 	assert.Len(t, env.CustomerMail.Messages(), 1, "the email is sent exactly once")
 
-	n, err := env.DB.TransactionalEmail.Query().Where(transactionalemail.WorkspaceID(1)).Count(ctx)
+	n, err := env.DB.TransactionalEmail.Query().
+		Where(transactionalemail.WorkspaceID(1), transactionalemail.Destination("once@example.com")).Count(ctx)
 	require.NoError(t, err)
 	assert.Equal(t, 1, n, "one record for the key")
 }
@@ -256,7 +257,8 @@ func TestExternalEmailsSendSuppressedRecordsNoEvent(t *testing.T) {
 	ok := res.(*externalapi.SendTransactionalEmailResponse)
 	assert.Equal(t, externalapi.TransactionalSendStatusSuppressed, ok.Status)
 
-	rec, err := env.DB.TransactionalEmail.Query().Where(transactionalemail.WorkspaceID(1)).Only(ctx)
+	rec, err := env.DB.TransactionalEmail.Query().
+		Where(transactionalemail.WorkspaceID(1), transactionalemail.Destination("blocked@example.com")).Only(ctx)
 	require.NoError(t, err)
 	assert.Equal(t, transactionalemail.StatusSuppressed, rec.Status)
 

@@ -1,0 +1,19 @@
+# Workspace acme (id 1). Enrollments across the active automations (100, 101) with
+# every run status represented. Unique (automation_id, contact_id) — one row per pair.
+# Welcome series (100): completed / active(waiting) / exited / failed
+- {id: 1000, automation_id: 100, contact_id: 100, workspace_id: 1, status: completed, current_step: 3, created_at: "{{daysAgo 2}}", updated_at: "{{daysAgo 1}}"}
+- {id: 1001, automation_id: 100, contact_id: 101, workspace_id: 1, status: completed, current_step: 3, created_at: "{{daysAgo 4}}", updated_at: "{{daysAgo 2}}"}
+- {id: 1002, automation_id: 100, contact_id: 102, workspace_id: 1, status: completed, current_step: 3, created_at: "{{daysAgo 6}}", updated_at: "{{daysAgo 4}}"}
+- {id: 1003, automation_id: 100, contact_id: 103, workspace_id: 1, status: completed, current_step: 3, created_at: "{{daysAgo 9}}", updated_at: "{{daysAgo 7}}"}
+- {id: 1004, automation_id: 100, contact_id: 105, workspace_id: 1, status: completed, current_step: 3, created_at: "{{daysAgo 15}}", updated_at: "{{daysAgo 13}}"}
+- {id: 1005, automation_id: 100, contact_id: 104, workspace_id: 1, status: active, current_step: 1, resume_at: "{{daysAhead 1}}", created_at: "{{daysAgo 1}}", updated_at: "{{hoursAgo 5}}"}
+- {id: 1006, automation_id: 100, contact_id: 106, workspace_id: 1, status: active, current_step: 2, resume_at: "{{daysAhead 2}}", created_at: "{{daysAgo 2}}", updated_at: "{{hoursAgo 8}}"}
+- {id: 1007, automation_id: 100, contact_id: 108, workspace_id: 1, status: exited, current_step: 1, created_at: "{{daysAgo 12}}", updated_at: "{{daysAgo 11}}"}
+- {id: 1008, automation_id: 100, contact_id: 109, workspace_id: 1, status: failed, current_step: 2, created_at: "{{daysAgo 20}}", updated_at: "{{daysAgo 20}}"}
+# Course completion congrats (101): completed / exited / active
+- {id: 1009, automation_id: 101, contact_id: 110, workspace_id: 1, status: completed, current_step: 1, created_at: "{{daysAgo 16}}", updated_at: "{{daysAgo 16}}"}
+- {id: 1010, automation_id: 101, contact_id: 111, workspace_id: 1, status: completed, current_step: 1, created_at: "{{daysAgo 14}}", updated_at: "{{daysAgo 14}}"}
+- {id: 1011, automation_id: 101, contact_id: 112, workspace_id: 1, status: completed, current_step: 1, created_at: "{{daysAgo 10}}", updated_at: "{{daysAgo 10}}"}
+- {id: 1012, automation_id: 101, contact_id: 115, workspace_id: 1, status: completed, current_step: 1, created_at: "{{daysAgo 7}}", updated_at: "{{daysAgo 7}}"}
+- {id: 1013, automation_id: 101, contact_id: 113, workspace_id: 1, status: exited, current_step: 0, created_at: "{{daysAgo 5}}", updated_at: "{{daysAgo 5}}"}
+- {id: 1014, automation_id: 101, contact_id: 114, workspace_id: 1, status: active, current_step: 0, resume_at: "{{daysAhead 1}}", created_at: "{{daysAgo 1}}", updated_at: "{{hoursAgo 3}}"}

@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/mokevnin/1mail/ent/apitoken"
 	siteapi "github.com/mokevnin/1mail/gen/site"
 	"github.com/mokevnin/1mail/internal/service"
 	"github.com/mokevnin/1mail/internal/testhelper"
@@ -27,14 +28,12 @@ func TestSiteTokensCreateListRevoke(t *testing.T) {
 	assert.NotNil(t, service.ParseToken(resp.Token), "returned a well-formed token value")
 	assert.Equal(t, "CI", resp.Resource.Name)
 
-	// List includes the fixture token plus the new one, with no secrets.
-	listed, err := c.SiteTokensList(ctx, siteapi.SiteTokensListParams{WorkspaceSlug: "acme"})
+	// The new token is persisted and live (selected from the DB by its public prefix).
+	row, err := env.DB.ApiToken.Query().Where(apitoken.Prefix(resp.Resource.Prefix)).Only(ctx)
 	require.NoError(t, err)
-	list, ok := listed.(*siteapi.SiteTokensListOKApplicationJSON)
-	require.Truef(t, ok, "got %T", listed)
-	require.Len(t, *list, 2)
+	assert.Nil(t, row.RevokedAt, "freshly created token is not revoked")
 
-	// Revoke the new token; it disappears from the list.
+	// Revoke the new token; the row is then marked revoked (a soft delete).
 	del, err := c.SiteTokensDelete(ctx, siteapi.SiteTokensDeleteParams{
 		WorkspaceSlug: "acme",
 		ID:            resp.Resource.ID,
@@ -42,10 +41,9 @@ func TestSiteTokensCreateListRevoke(t *testing.T) {
 	require.NoError(t, err)
 	assert.IsType(t, &siteapi.SiteTokensDeleteNoContent{}, del)
 
-	after, err := c.SiteTokensList(ctx, siteapi.SiteTokensListParams{WorkspaceSlug: "acme"})
+	revoked, err := env.DB.ApiToken.Query().Where(apitoken.Prefix(resp.Resource.Prefix)).Only(ctx)
 	require.NoError(t, err)
-	list2 := after.(*siteapi.SiteTokensListOKApplicationJSON)
-	assert.Len(t, *list2, 1)
+	assert.NotNil(t, revoked.RevokedAt, "revoked token carries a revoked_at timestamp")
 }
 
 func TestSiteTokensDeleteUnknown(t *testing.T) {

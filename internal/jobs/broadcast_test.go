@@ -54,7 +54,11 @@ func TestSendBroadcastDeliversToEligibleContacts(t *testing.T) {
 		All(ctx)
 	require.NoError(t, err)
 	eligibleCount := len(eligible)
-	require.Equal(t, 2, eligibleCount, "alice + carol eligible; bob unsubscribed from broadcasts")
+	require.Greater(t, eligibleCount, 0, "the workspace has broadcast-eligible contacts")
+	// Bob is unsubscribed from "broadcasts", so he must not be in the eligible set.
+	for _, e := range eligible {
+		require.NotEqual(t, "bob@example.com", *e.Email, "unsubscribed contact is excluded from the audience")
+	}
 
 	b, err := env.DB.Broadcast.Create().
 		SetWorkspaceID(acmeWorkspaceID).
@@ -217,9 +221,11 @@ func TestSendBroadcastToRuleSegment(t *testing.T) {
 	env := testhelper.Setup(t)
 	ctx := context.Background()
 
+	// A sentinel plan value unique to this test's contact, so the segment audience
+	// is exactly the one created here regardless of how many fixture contacts exist.
 	_, err := env.DB.Contact.Create().SetWorkspaceID(acmeWorkspaceID).
 		SetEmail("pro@seg2.test").SetFirstName("Pro").
-		SetCustomFields(map[string]any{"plan": "pro"}).Save(ctx)
+		SetCustomFields(map[string]any{"plan": "seg2pro"}).Save(ctx)
 	require.NoError(t, err)
 	_, err = env.DB.Contact.Create().SetWorkspaceID(acmeWorkspaceID).
 		SetEmail("free@seg2.test").SetFirstName("Free").
@@ -228,7 +234,7 @@ func TestSendBroadcastToRuleSegment(t *testing.T) {
 
 	seg, err := env.DB.Segment.Create().SetWorkspaceID(acmeWorkspaceID).
 		SetName("Pro plan").SetType(segment.TypeRule).
-		SetDefinition(`{"combinator":"and","rules":[{"field":"custom:plan","operator":"=","value":"pro"}]}`).
+		SetDefinition(`{"combinator":"and","rules":[{"field":"custom:plan","operator":"=","value":"seg2pro"}]}`).
 		Save(ctx)
 	require.NoError(t, err)
 

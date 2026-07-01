@@ -18,8 +18,10 @@ import (
 	"github.com/mokevnin/1mail/ent"
 	"github.com/mokevnin/1mail/internal/db"
 	"github.com/mokevnin/1mail/internal/events"
+	"github.com/mokevnin/1mail/internal/fixtures"
 	"github.com/mokevnin/1mail/internal/jobs"
 	"github.com/mokevnin/1mail/internal/messaging"
+	"github.com/mokevnin/1mail/internal/secrets"
 	"github.com/mokevnin/1mail/internal/server"
 	ht "github.com/ogen-go/ogen/http"
 	"github.com/stretchr/testify/require"
@@ -66,10 +68,23 @@ func initBaseline() {
 			return
 		}
 
+		cipher, err := secrets.NewCipher(cfg.EncryptionKey)
+		if err != nil {
+			loadErr = err
+			return
+		}
+
 		loader, err := testfixtures.New(
 			testfixtures.Database(sqlDB),
 			testfixtures.Dialect("postgres"),
+			// Template options MUST precede Directory: Directory eagerly reads and
+			// renders the files when its option is applied. Fixtures use templating
+			// for relative dates and load-time encryption (internal/fixtures).
+			testfixtures.Template(),
+			testfixtures.TemplateFuncs(fixtures.TemplateFuncs(cipher)),
 			testfixtures.Directory(filepath.Join(projectRoot, "fixtures")),
+			// ResetSequencesTo keeps the explicit fixture ids clear of app-inserted rows.
+			testfixtures.ResetSequencesTo(100000),
 		)
 		if err != nil {
 			loadErr = err

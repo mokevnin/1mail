@@ -35,9 +35,13 @@ func TestSuppressIgnoresUnsubscribe(t *testing.T) {
 	}
 	require.NoError(t, events.Suppress(ctx, env.DB, envlp))
 
-	n, err := env.DB.Suppression.Query().Where(suppression.WorkspaceID(fixtureWorkspace)).Count(ctx)
+	// No suppression was created for this destination (unsubscribe is not a
+	// suppression reason). Scoped to the destination so unrelated fixtures don't matter.
+	exists, err := env.DB.Suppression.Query().
+		Where(suppression.WorkspaceID(fixtureWorkspace), suppression.Destination("unsub@example.com")).
+		Exist(ctx)
 	require.NoError(t, err)
-	assert.Zero(t, n, "unsubscribe must not suppress")
+	assert.False(t, exists, "unsubscribe must not suppress")
 }
 
 // Opens/clicks (and any non-suppressing action) do not create a suppression.
@@ -60,9 +64,11 @@ func TestSuppressIgnoresNonSuppressingActions(t *testing.T) {
 	}
 	require.NoError(t, events.Suppress(ctx, env.DB, envlp))
 
-	n, err := env.DB.Suppression.Query().Where(suppression.WorkspaceID(fixtureWorkspace)).Count(ctx)
+	exists, err := env.DB.Suppression.Query().
+		Where(suppression.WorkspaceID(fixtureWorkspace), suppression.Destination("open@example.com")).
+		Exist(ctx)
 	require.NoError(t, err)
-	assert.Zero(t, n)
+	assert.False(t, exists)
 }
 
 // Publishing an EmailDeliveryFailure with a long natural id must succeed: the
@@ -164,9 +170,11 @@ func TestSuppressIgnoresTransientBounce(t *testing.T) {
 	}
 	require.NoError(t, events.Suppress(ctx, env.DB, envlp))
 
-	n, err := env.DB.Suppression.Query().Where(suppression.WorkspaceID(fixtureWorkspace)).Count(ctx)
+	exists, err := env.DB.Suppression.Query().
+		Where(suppression.WorkspaceID(fixtureWorkspace), suppression.Destination("softbounce@example.com")).
+		Exist(ctx)
 	require.NoError(t, err)
-	assert.Zero(t, n)
+	assert.False(t, exists)
 }
 
 // A spam complaint suppresses the address with reason "complaint".

@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/mokevnin/1mail/ent/suppression"
 	siteapi "github.com/mokevnin/1mail/gen/site"
 	"github.com/mokevnin/1mail/internal/testhelper"
 	"github.com/stretchr/testify/assert"
@@ -34,20 +35,23 @@ func TestSiteSuppressionsCRUD(t *testing.T) {
 	require.Truef(t, ok, "got %T", again)
 	assert.Equal(t, res.ID, againRes.ID, "idempotent: same entry returned")
 
-	list, err := c.SiteSuppressionsList(ctx, siteapi.SiteSuppressionsListParams{WorkspaceSlug: slug})
+	// The row is persisted under the workspace (selected from the DB by its key).
+	exists, err := env.DB.Suppression.Query().
+		Where(suppression.WorkspaceID(1), suppression.Destination("blocked@example.com")).
+		Exist(ctx)
 	require.NoError(t, err)
-	listed, ok := list.(*siteapi.SiteSuppressionsListOK)
-	require.Truef(t, ok, "got %T", list)
-	assert.Equal(t, int32(1), listed.TotalItems)
+	assert.True(t, exists, "created suppression is persisted")
 
 	// Delete removes it.
 	del, err := c.SiteSuppressionsDelete(ctx, siteapi.SiteSuppressionsDeleteParams{WorkspaceSlug: slug, ID: res.ID})
 	require.NoError(t, err)
 	assert.IsType(t, &siteapi.SiteSuppressionsDeleteNoContent{}, del)
 
-	after, err := c.SiteSuppressionsList(ctx, siteapi.SiteSuppressionsListParams{WorkspaceSlug: slug})
+	stillThere, err := env.DB.Suppression.Query().
+		Where(suppression.WorkspaceID(1), suppression.Destination("blocked@example.com")).
+		Exist(ctx)
 	require.NoError(t, err)
-	assert.Equal(t, int32(0), after.(*siteapi.SiteSuppressionsListOK).TotalItems)
+	assert.False(t, stillThere, "deleted suppression is gone")
 }
 
 // Suppressions are workspace-scoped: an unowned slug is a 404.

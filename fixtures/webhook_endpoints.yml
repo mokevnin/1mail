@@ -1,0 +1,17 @@
+# Workspace acme (id 1). secret_encrypted is sealed at load time via the encrypt
+# template func (per-env valid). event_types is a JSON array; empty/absent = all events.
+- id: 100
+  url: https://codebasics.dev/webhooks/1mail
+  secret_encrypted: '{{ encrypt "whsec_codebasics_primary" }}'
+  event_types: '["contact.created","email.opened","email.clicked"]'
+  enabled: true
+  workspace_id: 1
+  created_at: "{{daysAgo 70}}"
+  updated_at: "{{daysAgo 70}}"
+- id: 101
+  url: https://hooks.codebasics.dev/disabled
+  secret_encrypted: '{{ encrypt "whsec_codebasics_disabled" }}'
+  enabled: false
+  workspace_id: 1
+  created_at: "{{daysAgo 50}}"
+  updated_at: "{{daysAgo 50}}"

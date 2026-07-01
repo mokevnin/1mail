@@ -35,12 +35,12 @@ func TestSiteWebhooksCRUD(t *testing.T) {
 	assert.True(t, res.Enabled)
 	assert.NotEmpty(t, res.Secret, "signing secret is returned for verification")
 
-	// List shows it.
-	list, err := c.SiteWebhooksList(ctx, siteapi.SiteWebhooksListParams{WorkspaceSlug: slug})
+	// Fetch it back by id (selection by key).
+	got, err := c.SiteWebhooksGet(ctx, siteapi.SiteWebhooksGetParams{WorkspaceSlug: slug, ID: res.ID})
 	require.NoError(t, err)
-	listed, ok := list.(*siteapi.SiteWebhooksListOK)
-	require.Truef(t, ok, "got %T", list)
-	assert.Equal(t, int32(1), listed.TotalItems)
+	gotRes, ok := got.(*siteapi.SiteWebhookEndpointResource)
+	require.Truef(t, ok, "got %T", got)
+	assert.Equal(t, res.ID, gotRes.ID)
 
 	// Update: disable and broaden to all events.
 	upd, err := c.SiteWebhooksUpdate(ctx, &siteapi.SiteUpdateWebhookEndpointInput{
@@ -54,8 +54,12 @@ func TestSiteWebhooksCRUD(t *testing.T) {
 	assert.Empty(t, updRes.EventTypes)
 	assert.Equal(t, res.Secret, updRes.Secret, "secret is stable across updates")
 
-	// Delete.
+	// Delete; a fetch by id then resolves to 404.
 	del, err := c.SiteWebhooksDelete(ctx, siteapi.SiteWebhooksDeleteParams{WorkspaceSlug: slug, ID: res.ID})
 	require.NoError(t, err)
 	assert.IsType(t, &siteapi.SiteWebhooksDeleteNoContent{}, del)
+
+	gone, err := c.SiteWebhooksGet(ctx, siteapi.SiteWebhooksGetParams{WorkspaceSlug: slug, ID: res.ID})
+	require.NoError(t, err)
+	assert.IsType(t, &siteapi.SiteWebhooksGetNotFound{}, gone)
 }

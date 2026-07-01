@@ -1,0 +1,26 @@
+# Workspace acme (id 1). config_encrypted is sealed at load time via the encrypt
+# template func using the loading env's ENCRYPTION_KEY, so the blob is valid in both
+# the test DB and the dev DB (their keys differ; a static ciphertext could not be).
+# The SMTP integration is the workspace default (points at the dev Mailpit); the SES
+# one is disabled. Exactly one is_default per (workspace, channel) — see the partial
+# unique index on integrations.
+- id: 1
+  name: Mailpit (dev SMTP)
+  channel: email
+  provider: smtp
+  config_encrypted: '{{ encrypt "{\"host\":\"mailpit\",\"port\":1025,\"from\":\"hello@codebasics.dev\",\"fromName\":\"CodeBasics\"}" }}'
+  enabled: true
+  is_default: true
+  workspace_id: 1
+  created_at: "{{daysAgo 170}}"
+  updated_at: "{{daysAgo 170}}"
+- id: 2
+  name: Amazon SES (disabled)
+  channel: email
+  provider: ses
+  config_encrypted: '{{ encrypt "{\"region\":\"eu-west-1\",\"accessKeyId\":\"AKIAEXAMPLE\",\"from\":\"hello@codebasics.dev\"}" }}'
+  enabled: false
+  is_default: false
+  workspace_id: 1
+  created_at: "{{daysAgo 40}}"
+  updated_at: "{{daysAgo 40}}"

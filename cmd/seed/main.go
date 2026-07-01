@@ -7,6 +7,8 @@ import (
 	"github.com/go-testfixtures/testfixtures/v3"
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/mokevnin/1mail/config"
+	"github.com/mokevnin/1mail/internal/fixtures"
+	"github.com/mokevnin/1mail/internal/secrets"
 )
 
 func main() {
@@ -21,11 +23,22 @@ func main() {
 	}
 	defer func() { _ = sqlDB.Close() }()
 
+	cipher, err := secrets.NewCipher(cfg.EncryptionKey)
+	if err != nil {
+		log.Fatalf("init cipher: %v", err)
+	}
+
 	loader, err := testfixtures.New(
 		testfixtures.Database(sqlDB),
 		testfixtures.Dialect("postgres"),
-		testfixtures.Directory("fixtures"),
 		testfixtures.DangerousSkipTestDatabaseCheck(),
+		// Template options MUST precede Directory (it renders files eagerly). Same
+		// templating + sequence handling as the test loader (internal/testhelper)
+		// so dev and test load identical fixtures.
+		testfixtures.Template(),
+		testfixtures.TemplateFuncs(fixtures.TemplateFuncs(cipher)),
+		testfixtures.Directory("fixtures"),
+		testfixtures.ResetSequencesTo(100000),
 	)
 	if err != nil {
 		log.Fatalf("create fixtures loader: %v", err)

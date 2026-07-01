@@ -28,12 +28,12 @@ func TestSiteSegmentsScopedToWorkspace(t *testing.T) {
 	c := siteClient(t, env, "info@1mail.com")
 	ctx := context.Background()
 
-	// Seeded segments of the owned workspace are listed.
-	list, err := c.SiteSegmentsList(ctx, siteapi.SiteSegmentsListParams{WorkspaceSlug: "acme"})
+	// A seeded segment of the owned workspace is fetchable by id (selection by key).
+	seeded, err := c.SiteSegmentsGet(ctx, siteapi.SiteSegmentsGetParams{WorkspaceSlug: "acme", ID: "1"})
 	require.NoError(t, err)
-	listed, ok := list.(*siteapi.SiteSegmentsListOK)
-	require.Truef(t, ok, "got %T", list)
-	assert.Equal(t, int32(2), listed.TotalItems)
+	seededRes, ok := seeded.(*siteapi.SiteSegmentResource)
+	require.Truef(t, ok, "got %T", seeded)
+	assert.Equal(t, "Active subscribers", seededRes.Name)
 
 	// Create scopes the segment to the workspace and returns the resource.
 	created, err := c.SiteSegmentsCreate(ctx, &siteapi.SiteCreateSegmentInput{

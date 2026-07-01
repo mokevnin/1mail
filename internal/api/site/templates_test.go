@@ -26,11 +26,11 @@ func TestSiteTemplatesCRUD(t *testing.T) {
 	require.Truef(t, ok, "got %T", created)
 	assert.Equal(t, "Welcome", res.Name)
 
-	list, err := c.SiteTemplatesList(ctx, siteapi.SiteTemplatesListParams{WorkspaceSlug: slug})
+	got, err := c.SiteTemplatesGet(ctx, siteapi.SiteTemplatesGetParams{WorkspaceSlug: slug, ID: res.ID})
 	require.NoError(t, err)
-	listed, ok := list.(*siteapi.SiteTemplatesListOK)
-	require.Truef(t, ok, "got %T", list)
-	assert.Equal(t, int32(1), listed.TotalItems)
+	gotRes, ok := got.(*siteapi.SiteEmailTemplateResource)
+	require.Truef(t, ok, "got %T", got)
+	assert.Equal(t, res.ID, gotRes.ID)
 
 	updated, err := c.SiteTemplatesUpdate(ctx, &siteapi.SiteUpdateEmailTemplateInput{
 		Name: siteapi.NewOptString("Welcome v2"),
@@ -43,6 +43,10 @@ func TestSiteTemplatesCRUD(t *testing.T) {
 	del, err := c.SiteTemplatesDelete(ctx, siteapi.SiteTemplatesDeleteParams{WorkspaceSlug: slug, ID: res.ID})
 	require.NoError(t, err)
 	assert.IsType(t, &siteapi.SiteTemplatesDeleteNoContent{}, del)
+
+	gone, err := c.SiteTemplatesGet(ctx, siteapi.SiteTemplatesGetParams{WorkspaceSlug: slug, ID: res.ID})
+	require.NoError(t, err)
+	assert.IsType(t, &siteapi.SiteTemplatesGetNotFound{}, gone)
 }
 
 // Test-send without a configured sending integration is rejected with 422.

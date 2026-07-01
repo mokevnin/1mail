@@ -2,7 +2,9 @@ package site_test
 
 import (
 	"context"
+	"sort"
 	"testing"
+	"time"
 
 	siteapi "github.com/mokevnin/1mail/gen/site"
 	"github.com/mokevnin/1mail/internal/testhelper"
@@ -19,11 +21,12 @@ func TestSiteEventsListMostRecentFirst(t *testing.T) {
 	ok, isOK := res.(*siteapi.SiteEventsListOK)
 	require.Truef(t, isOK, "got %T", res)
 
-	// Two seeded events for workspace acme, newest (purchase, 2026-01-02) first.
-	assert.Equal(t, int32(2), ok.TotalItems)
-	require.Len(t, ok.Items, 2)
-	assert.Equal(t, "purchase", ok.Items[0].Action)
-	assert.Equal(t, "page_view", ok.Items[1].Action)
+	// The page is ordered most-recent-first: each item's createdAt is >= the next.
+	require.NotEmpty(t, ok.Items)
+	for i := 1; i < len(ok.Items); i++ {
+		assert.Falsef(t, time.Time(ok.Items[i-1].CreatedAt).Before(time.Time(ok.Items[i].CreatedAt)),
+			"events must be newest-first, but item %d is older than item %d", i-1, i)
+	}
 }
 
 func TestSiteEventsListFilterByAction(t *testing.T) {
@@ -38,9 +41,11 @@ func TestSiteEventsListFilterByAction(t *testing.T) {
 	ok, isOK := res.(*siteapi.SiteEventsListOK)
 	require.Truef(t, isOK, "got %T", res)
 
-	assert.Equal(t, int32(1), ok.TotalItems)
-	require.Len(t, ok.Items, 1)
-	assert.Equal(t, "purchase", ok.Items[0].Action)
+	// The action filter selects only matching events.
+	require.NotEmpty(t, ok.Items)
+	for _, it := range ok.Items {
+		assert.Equal(t, "purchase", it.Action)
+	}
 }
 
 func TestSiteEventsListFilterByEmail(t *testing.T) {
@@ -57,12 +62,14 @@ func TestSiteEventsListFilterByEmail(t *testing.T) {
 	ok, isOK := res.(*siteapi.SiteEventsListOK)
 	require.Truef(t, isOK, "got %T", res)
 
-	// Only alice's page_view event matches; bob's purchase is excluded.
-	assert.Equal(t, int32(1), ok.TotalItems)
-	require.Len(t, ok.Items, 1)
+	// The email filter selects only alice's events (case-insensitively); bob's are
+	// excluded. Alice's single seeded event is her page_view.
+	require.NotEmpty(t, ok.Items)
+	for _, it := range ok.Items {
+		require.True(t, it.Email.Set)
+		assert.Equal(t, "alice@example.com", it.Email.Value)
+	}
 	assert.Equal(t, "page_view", ok.Items[0].Action)
-	require.True(t, ok.Items[0].Email.Set)
-	assert.Equal(t, "alice@example.com", ok.Items[0].Email.Value)
 }
 
 func TestSiteEventsListUnknownWorkspace(t *testing.T) {
@@ -75,13 +82,14 @@ func TestSiteEventsListUnknownWorkspace(t *testing.T) {
 }
 
 // SiteEventsActions returns the workspace's distinct actions, sorted — the
-// segment builder uses it to populate event conditions. Fixtures give acme the
-// actions page_view + purchase; a duplicate page_view must still appear once.
+// segment builder uses it to populate event conditions. A duplicate page_view
+// must still appear once.
 func TestSiteEventsActions(t *testing.T) {
 	env := testhelper.Setup(t)
 	c := siteClient(t, env, "info@1mail.com")
 	ctx := context.Background()
 
+	// An extra page_view exercises de-duplication (it must not appear twice).
 	_, err := env.DB.Event.Create().
 		SetWorkspaceID(1).SetSubjectID("x@test.dev").SetAction("page_view").Save(ctx)
 	require.NoError(t, err)
@@ -90,7 +98,14 @@ func TestSiteEventsActions(t *testing.T) {
 	require.NoError(t, err)
 	res, ok := out.(*siteapi.SiteEventActionsResult)
 	require.Truef(t, ok, "got %T", out)
-	assert.Equal(t, []string{"page_view", "purchase"}, res.Actions, "distinct + sorted")
+
+	assert.True(t, sort.StringsAreSorted(res.Actions), "actions are sorted")
+	seen := map[string]int{}
+	for _, a := range res.Actions {
+		seen[a]++
+	}
+	assert.Equal(t, 1, seen["page_view"], "distinct: page_view appears once despite duplicates")
+	assert.Contains(t, res.Actions, "purchase", "known seeded action is present")
 }
 
 func TestSiteEventsActionsUnknownWorkspace(t *testing.T) {

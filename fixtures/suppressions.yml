@@ -1,0 +1,43 @@
+# Workspace acme (id 1). Global do-not-send registry (hard floor). These plus the
+# "everything" unsubscribes make the derived "unsubscribed" analytics KPI non-zero.
+# Destinations are normalized (lower-cased) and unique per (workspace, channel).
+- id: 100
+  channel: email
+  destination: ethan.data@codebasics.dev
+  reason: bounce
+  contact_id: 104
+  workspace_id: 1
+  created_at: "{{daysAgo 20}}"
+  updated_at: "{{daysAgo 20}}"
+- id: 101
+  channel: email
+  destination: mia.data@codebasics.dev
+  reason: complaint
+  contact_id: 109
+  workspace_id: 1
+  created_at: "{{daysAgo 35}}"
+  updated_at: "{{daysAgo 35}}"
+- id: 102
+  channel: email
+  destination: aiden.data@codebasics.dev
+  reason: manual
+  contact_id: 114
+  workspace_id: 1
+  created_at: "{{daysAgo 48}}"
+  updated_at: "{{daysAgo 48}}"
+- id: 103
+  channel: email
+  destination: ella.data@codebasics.dev
+  reason: bounce
+  contact_id: 119
+  workspace_id: 1
+  created_at: "{{daysAgo 12}}"
+  updated_at: "{{daysAgo 12}}"
+# A bounce for a destination with no contact (covers the contact-less case).
+- id: 104
+  channel: email
+  destination: ghost@codebasics.dev
+  reason: bounce
+  workspace_id: 1
+  created_at: "{{daysAgo 5}}"
+  updated_at: "{{daysAgo 5}}"

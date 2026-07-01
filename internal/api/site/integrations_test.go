@@ -109,10 +109,12 @@ func TestSiteIntegrationsCRUD(t *testing.T) {
 	assert.NotContains(t, row.ConfigEncrypted, "s3cret-pass", "password is not stored in cleartext")
 	assert.NotContains(t, row.ConfigEncrypted, "smtp.example.com", "config is encrypted, not cleartext")
 
-	// Get round-trips.
+	// Fetch the created integration back by id (selection by key).
 	got, err := c.SiteIntegrationsGet(ctx, siteapi.SiteIntegrationsGetParams{WorkspaceSlug: "acme", ID: res.ID})
 	require.NoError(t, err)
-	assert.IsType(t, &siteapi.SiteIntegrationResource{}, got)
+	gotRes, ok := got.(*siteapi.SiteIntegrationResource)
+	require.Truef(t, ok, "got %T", got)
+	assert.Equal(t, res.ID, gotRes.ID)
 
 	// Update name + re-supply credentials.
 	updated, err := c.SiteIntegrationsUpdate(ctx, &siteapi.SiteUpdateIntegrationInput{
@@ -123,16 +125,14 @@ func TestSiteIntegrationsCRUD(t *testing.T) {
 	updRes := updated.(*siteapi.SiteIntegrationResource)
 	assert.Equal(t, "Renamed SMTP", updRes.Name)
 
-	// List shows the one integration.
-	listed, err := c.SiteIntegrationsList(ctx, siteapi.SiteIntegrationsListParams{WorkspaceSlug: "acme"})
-	require.NoError(t, err)
-	list := listed.(*siteapi.SiteIntegrationsListOKApplicationJSON)
-	require.Len(t, *list, 1)
-
-	// Delete removes it.
+	// Delete removes it; a fetch by id then resolves to 404.
 	del, err := c.SiteIntegrationsDelete(ctx, siteapi.SiteIntegrationsDeleteParams{WorkspaceSlug: "acme", ID: res.ID})
 	require.NoError(t, err)
 	assert.IsType(t, &siteapi.SiteIntegrationsDeleteNoContent{}, del)
+
+	gone, err := c.SiteIntegrationsGet(ctx, siteapi.SiteIntegrationsGetParams{WorkspaceSlug: "acme", ID: res.ID})
+	require.NoError(t, err)
+	assert.IsType(t, &siteapi.SiteIntegrationsGetNotFound{}, gone)
 }
 
 func TestSiteIntegrationsRejectsWrongProviderOnUpdate(t *testing.T) {

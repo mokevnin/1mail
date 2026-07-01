@@ -1,5 +1,7 @@
 # Bob (contact id 2) has opted out of the "broadcasts" sending source — so he is
 # excluded from broadcast sends but still eligible for other sources (automations).
+# This anchor row is the negative control for the global "unsubscribed" KPI (a
+# per-source opt-out must NOT count) — DO NOT change it.
 - id: 1
   channel: email
   destination: bob@example.com
@@ -8,3 +10,39 @@
   workspace_id: 1
   created_at: "2026-01-03 00:00:00"
   updated_at: "2026-01-03 00:00:00"
+
+# --- CodeBasics opt-outs (varied sources) ---
+# "everything" = the leave-entirely opt-out; counts toward the global KPI.
+- id: 100
+  channel: email
+  destination: scarlett.sql@codebasics.dev
+  sending_source: everything
+  contact_id: 121
+  workspace_id: 1
+  created_at: "{{daysAgo 40}}"
+  updated_at: "{{daysAgo 40}}"
+- id: 101
+  channel: email
+  destination: jack.data@codebasics.dev
+  sending_source: everything
+  contact_id: 124
+  workspace_id: 1
+  created_at: "{{daysAgo 22}}"
+  updated_at: "{{daysAgo 22}}"
+# Per-source opt-outs (broadcasts / a specific automation) — do NOT count globally.
+- id: 102
+  channel: email
+  destination: owen.sql@codebasics.dev
+  sending_source: broadcasts
+  contact_id: 126
+  workspace_id: 1
+  created_at: "{{daysAgo 18}}"
+  updated_at: "{{daysAgo 18}}"
+- id: 103
+  channel: email
+  destination: leo.devops@codebasics.dev
+  sending_source: "automation:100"
+  contact_id: 128
+  workspace_id: 1
+  created_at: "{{daysAgo 14}}"
+  updated_at: "{{daysAgo 14}}"

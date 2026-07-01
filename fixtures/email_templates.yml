@@ -1,0 +1,23 @@
+# Workspace acme (id 1). Reusable MJML bodies. transactional_emails reference these
+# by id snapshot (not FK).
+- id: 1
+  name: Welcome
+  subject: "Welcome to CodeBasics \U0001F44B"
+  body: '<mjml><mj-body><mj-section><mj-column><mj-text font-size="20px" font-weight="bold">Welcome!</mj-text><mj-text>Start your first course today.</mj-text><mj-button href="https://codebasics.dev">Open CodeBasics</mj-button></mj-column></mj-section></mj-body></mjml>'
+  workspace_id: 1
+  created_at: "{{daysAgo 120}}"
+  updated_at: "{{daysAgo 30}}"
+- id: 2
+  name: Weekly digest
+  subject: Your weekly learning digest
+  body: '<mjml><mj-body><mj-section><mj-column><mj-text font-size="20px" font-weight="bold">This week at CodeBasics</mj-text><mj-text>New lessons are waiting for you.</mj-text></mj-column></mj-section></mj-body></mjml>'
+  workspace_id: 1
+  created_at: "{{daysAgo 120}}"
+  updated_at: "{{daysAgo 20}}"
+- id: 3
+  name: Receipt
+  subject: Your CodeBasics receipt
+  body: '<mjml><mj-body><mj-section><mj-column><mj-text font-size="20px" font-weight="bold">Thanks for your purchase</mj-text><mj-text>Your access is now active.</mj-text></mj-column></mj-section></mj-body></mjml>'
+  workspace_id: 1
+  created_at: "{{daysAgo 120}}"
+  updated_at: "{{daysAgo 60}}"

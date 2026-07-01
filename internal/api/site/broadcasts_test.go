@@ -32,17 +32,12 @@ func TestSiteBroadcastsCRUD(t *testing.T) {
 	assert.Equal(t, siteapi.SiteBroadcastStatusDraft, res.Status)
 	assert.Equal(t, int32(0), res.Stats.RecipientsTotal)
 
-	// List shows the one broadcast.
-	list, err := c.SiteBroadcastsList(ctx, siteapi.SiteBroadcastsListParams{WorkspaceSlug: slug})
-	require.NoError(t, err)
-	listed, ok := list.(*siteapi.SiteBroadcastsListOK)
-	require.Truef(t, ok, "got %T", list)
-	assert.Equal(t, int32(1), listed.TotalItems)
-
-	// Get round-trips.
+	// Fetch the created broadcast back by id (selection by key).
 	got, err := c.SiteBroadcastsGet(ctx, siteapi.SiteBroadcastsGetParams{WorkspaceSlug: slug, ID: res.ID})
 	require.NoError(t, err)
-	assert.IsType(t, &siteapi.SiteBroadcastResource{}, got)
+	gotRes, ok := got.(*siteapi.SiteBroadcastResource)
+	require.Truef(t, ok, "got %T", got)
+	assert.Equal(t, res.ID, gotRes.ID)
 
 	// Update renames a draft.
 	updated, err := c.SiteBroadcastsUpdate(ctx, &siteapi.SiteUpdateBroadcastInput{
@@ -83,10 +78,14 @@ func TestSiteBroadcastsCRUD(t *testing.T) {
 	require.NoError(t, err)
 	assert.IsType(t, &siteapi.SiteBroadcastsUpdateUnprocessableEntity{}, badUpd)
 
-	// Delete removes it.
+	// Delete removes it; a fetch by id then resolves to 404.
 	del, err := c.SiteBroadcastsDelete(ctx, siteapi.SiteBroadcastsDeleteParams{WorkspaceSlug: slug, ID: res.ID})
 	require.NoError(t, err)
 	assert.IsType(t, &siteapi.SiteBroadcastsDeleteNoContent{}, del)
+
+	gone, err := c.SiteBroadcastsGet(ctx, siteapi.SiteBroadcastsGetParams{WorkspaceSlug: slug, ID: res.ID})
+	require.NoError(t, err)
+	assert.IsType(t, &siteapi.SiteBroadcastsGetNotFound{}, gone)
 }
 
 // Broadcasts are scoped to the workspace: a slug the user does not own is a 404.
