@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/mokevnin/1mail/internal/secrets"
+	"github.com/mokevnin/1mail/internal/service"
 )
 
 // timeLayout is the Postgres-friendly timestamp layout the template date helpers
@@ -38,5 +39,8 @@ func TemplateFuncs(cipher *secrets.Cipher) template.FuncMap {
 		"daysAhead": func(n int) string { return at(time.Duration(n) * day) },
 		"hoursAgo":  func(n int) string { return at(-time.Duration(n) * time.Hour) },
 		"encrypt":   func(s string) (string, error) { return cipher.Encrypt([]byte(s)) },
+		// Invitation tokens are stored only as a SHA-256 hash; fixtures express the
+		// raw token and hash it at load time so tests can present the raw value.
+		"inviteHash": service.HashInviteToken,
 	}
 }
