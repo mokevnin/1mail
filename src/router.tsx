@@ -6,8 +6,12 @@ import type { SiteWorkspaceResource } from './generated/site/types.gen.ts'
 import { AccountLayout } from './layouts/AccountLayout.tsx'
 import { WorkspaceLayout } from './layouts/WorkspaceLayout.tsx'
 import { ProfilePage } from './routes/account/profile.tsx'
+import { ConfirmEmailChangePage } from './routes/auth/confirm-email-change.tsx'
+import { ForgotPasswordPage } from './routes/auth/forgot-password.tsx'
 import { LoginPage } from './routes/auth/login.tsx'
 import { RegisterPage } from './routes/auth/register.tsx'
+import { ResetPasswordPage } from './routes/auth/reset-password.tsx'
+import { VerifyEmailPage } from './routes/auth/verify-email.tsx'
 import { AutomationCreatePage } from './routes/automations/create.tsx'
 import { AutomationEditPage } from './routes/automations/edit.tsx'
 import { AutomationsListPage } from './routes/automations/list.tsx'
@@ -217,6 +221,34 @@ export const loginRoute = createRoute({
   component: LoginPage,
 })
 
+// Public self-service auth pages (no auth guard): reached from emailed links.
+export const forgotPasswordRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/forgot-password',
+  component: ForgotPasswordPage,
+})
+
+export const resetPasswordRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/reset-password',
+  validateSearch: z.object({ token: z.string().catch('') }),
+  component: ResetPasswordPage,
+})
+
+export const verifyEmailRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/verify-email',
+  validateSearch: z.object({ token: z.string().catch('') }),
+  component: VerifyEmailPage,
+})
+
+export const confirmEmailChangeRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/confirm-email-change',
+  validateSearch: z.object({ token: z.string().catch('') }),
+  component: ConfirmEmailChangePage,
+})
+
 // Public unsubscribe confirmation (no auth): the /e/u/{token} endpoint records the
 // opt-out then redirects here. `all` is the optional "unsubscribe from everything"
 // escalation URL the backend supplies.
@@ -248,6 +280,10 @@ const routeTree = rootRoute.addChildren([
   indexRoute,
   loginRoute,
   registerRoute,
+  forgotPasswordRoute,
+  resetPasswordRoute,
+  verifyEmailRoute,
+  confirmEmailChangeRoute,
   unsubscribedRoute,
   accountRoute.addChildren([profileRoute]),
   workspaceRoute.addChildren([

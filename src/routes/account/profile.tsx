@@ -1,5 +1,6 @@
 import {
   Alert,
+  Badge,
   Button,
   Divider,
   Group,
@@ -13,11 +14,17 @@ import { useForm } from '@mantine/form'
 import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import {
+  siteUserEmailChangeMutation,
   siteUserGetMeOptions,
   siteUserGetMeQueryKey,
+  siteUserResendVerificationMutation,
   siteUserUpdateMeMutation,
 } from '../../generated/site/@tanstack/react-query.gen.ts'
-import type { SiteUpdateMeInput, SiteUserResource } from '../../generated/site/types.gen.ts'
+import type {
+  SiteEmailChangeInput,
+  SiteUpdateMeInput,
+  SiteUserResource,
+} from '../../generated/site/types.gen.ts'
 import { useResourceMutation } from '../../hooks/useResourceMutation.ts'
 
 type ProfileFormValues = {
@@ -59,7 +66,19 @@ function ProfileForm({ user }: { user: SiteUserResource }) {
     <form onSubmit={form.onSubmit(handleSubmit)}>
       <Stack maw={420}>
         <TextInput label={t(($) => $.profile.nameLabel)} required {...form.getInputProps('name')} />
-        <TextInput label={t(($) => $.profile.emailLabel)} value={user.email} disabled />
+        <TextInput
+          label={t(($) => $.profile.emailLabel)}
+          value={user.email}
+          disabled
+          rightSectionWidth={110}
+          rightSection={
+            <Badge color={user.emailVerified ? 'teal' : 'gray'} variant="light">
+              {user.emailVerified
+                ? t(($) => $.profile.verifiedBadge)
+                : t(($) => $.profile.unverifiedBadge)}
+            </Badge>
+          }
+        />
 
         <Divider label={t(($) => $.profile.passwordSectionTitle)} />
         <PasswordInput
@@ -74,6 +93,72 @@ function ProfileForm({ user }: { user: SiteUserResource }) {
         <Group justify="flex-end">
           <Button type="submit" loading={updateMutation.isPending}>
             {t(($) => $.actions.save)}
+          </Button>
+        </Group>
+      </Stack>
+    </form>
+  )
+}
+
+// UnverifiedAlert prompts an unverified user to resend the verification email.
+function UnverifiedAlert() {
+  const { t } = useTranslation()
+  const resend = useResourceMutation({
+    mutation: siteUserResendVerificationMutation(),
+    successMessage: t(($) => $.profile.resendSuccess),
+    errorTitle: t(($) => $.profile.resendErrorTitle),
+  })
+
+  return (
+    <Alert color="yellow" title={t(($) => $.profile.unverifiedAlert)}>
+      <Button
+        variant="light"
+        size="xs"
+        loading={resend.isPending}
+        onClick={() => resend.mutate({})}
+      >
+        {t(($) => $.profile.resendVerification)}
+      </Button>
+    </Alert>
+  )
+}
+
+// EmailSection requests an email change; the new address must confirm via link.
+function EmailSection() {
+  const { t } = useTranslation()
+  const form = useForm({ initialValues: { newEmail: '', currentPassword: '' } })
+
+  const changeMutation = useResourceMutation({
+    mutation: siteUserEmailChangeMutation(),
+    successMessage: t(($) => $.profile.changeEmailSuccess),
+    errorTitle: t(($) => $.profile.changeEmailErrorTitle),
+    onDone: () => form.reset(),
+  })
+
+  const handleSubmit = (values: SiteEmailChangeInput) => {
+    changeMutation.mutate({
+      body: { newEmail: values.newEmail.trim(), currentPassword: values.currentPassword },
+    })
+  }
+
+  return (
+    <form onSubmit={form.onSubmit(handleSubmit)}>
+      <Stack maw={420}>
+        <Divider label={t(($) => $.profile.emailSectionTitle)} />
+        <TextInput
+          label={t(($) => $.profile.newEmailLabel)}
+          type="email"
+          required
+          {...form.getInputProps('newEmail')}
+        />
+        <PasswordInput
+          label={t(($) => $.profile.currentPasswordForEmailLabel)}
+          required
+          {...form.getInputProps('currentPassword')}
+        />
+        <Group justify="flex-end">
+          <Button type="submit" loading={changeMutation.isPending}>
+            {t(($) => $.profile.changeEmailButton)}
           </Button>
         </Group>
       </Stack>
@@ -97,7 +182,13 @@ export function ProfilePage() {
 
       {meQuery.isLoading ? <Loader /> : null}
 
-      {meQuery.data ? <ProfileForm user={meQuery.data} /> : null}
+      {meQuery.data ? (
+        <Stack>
+          {meQuery.data.emailVerified ? null : <UnverifiedAlert />}
+          <ProfileForm user={meQuery.data} />
+          <EmailSection />
+        </Stack>
+      ) : null}
     </Stack>
   )
 }

@@ -6,7 +6,7 @@ import { useNavigate } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 import { siteAuthDirectLoginMutation } from '../../generated/site/@tanstack/react-query.gen.ts'
 import type { SiteDirectLoginInput } from '../../generated/site/types.gen.ts'
-import { indexRoute, registerRoute } from '../../router.tsx'
+import { forgotPasswordRoute, indexRoute, registerRoute } from '../../router.tsx'
 import { type ApiErrorLike, getApiErrorMessage } from '../../utils/apiErrors.ts'
 
 export function LoginPage() {
@@ -65,9 +65,14 @@ export function LoginPage() {
           />
 
           <Group justify="space-between" align="center">
-            <Anchor component="a" href={registerRoute.to} size="sm">
-              {t(($) => $.login.registerLink)}
-            </Anchor>
+            <Stack gap={2}>
+              <Anchor component="a" href={registerRoute.to} size="sm">
+                {t(($) => $.login.registerLink)}
+              </Anchor>
+              <Anchor component="a" href={forgotPasswordRoute.to} size="sm">
+                {t(($) => $.login.forgotPasswordLink)}
+              </Anchor>
+            </Stack>
             <Button type="submit" loading={loginMutation.isPending}>
               {t(($) => $.login.submitButton)}
             </Button>

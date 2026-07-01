@@ -177,6 +177,14 @@ export default interface Resources {
       "description": "This section is not available yet.",
       "title": "Coming soon"
     },
+    "confirmEmailChange": {
+      "errorBody": "This confirmation link is invalid or has expired.",
+      "errorTitle": "Confirmation failed",
+      "goToLogin": "Go to sign in",
+      "successBody": "Your email address has been changed. Please sign in with your new email.",
+      "successTitle": "Email updated",
+      "verifying": "Confirming your new email…"
+    },
     "confirmations": {
       "deleteDescription": "This action cannot be undone.",
       "deleteTitle": "Are you sure?"
@@ -191,6 +199,15 @@ export default interface Resources {
       "statusFilter": "Filter by status",
       "updatedAt": "Updated at"
     },
+    "forgotPassword": {
+      "backToLogin": "Back to sign in",
+      "description": "Enter your email and we'll send you a reset link.",
+      "emailLabel": "Email",
+      "submitButton": "Send reset link",
+      "successBody": "If an account exists for that address, we've sent a password reset link.",
+      "successTitle": "Check your email",
+      "title": "Reset your password"
+    },
     "form": {
       "createTitle": "New contact",
       "editTitle": "Edit contact"
@@ -198,6 +215,7 @@ export default interface Resources {
     "login": {
       "emailLabel": "Email",
       "errorTitle": "Sign in failed",
+      "forgotPasswordLink": "Forgot password?",
       "passwordLabel": "Password",
       "registerLink": "Create account",
       "submitButton": "Sign in",
@@ -245,15 +263,27 @@ export default interface Resources {
       "viewSettings": "Settings"
     },
     "profile": {
+      "changeEmailButton": "Send confirmation link",
+      "changeEmailErrorTitle": "Could not change email",
+      "changeEmailSuccess": "Check your new inbox for a confirmation link.",
+      "currentPasswordForEmailLabel": "Current password",
       "currentPasswordLabel": "Current password",
       "emailLabel": "Email",
+      "emailSectionTitle": "Change email",
       "errorTitle": "Failed to update profile",
       "loadErrorTitle": "Failed to load profile",
       "nameLabel": "Name",
+      "newEmailLabel": "New email",
       "newPasswordLabel": "New password",
       "passwordSectionTitle": "Change password",
+      "resendErrorTitle": "Could not send verification email",
+      "resendSuccess": "Verification email sent",
+      "resendVerification": "Resend verification email",
       "title": "Profile",
-      "updated": "Profile updated"
+      "unverifiedAlert": "Your email address is not verified.",
+      "unverifiedBadge": "Not verified",
+      "updated": "Profile updated",
+      "verifiedBadge": "Verified"
     },
     "registration": {
       "emailLabel": "Email",
@@ -263,6 +293,16 @@ export default interface Resources {
       "submitButton": "Register",
       "successMessage": "Account created successfully",
       "title": "Create account"
+    },
+    "resetPassword": {
+      "confirmPasswordLabel": "Confirm new password",
+      "errorTitle": "Could not reset password",
+      "mismatch": "Passwords do not match",
+      "missingToken": "This reset link is invalid or has expired.",
+      "newPasswordLabel": "New password",
+      "submitButton": "Set password",
+      "successMessage": "Your password has been reset. Please sign in.",
+      "title": "Set a new password"
     },
     "segments": {
       "addSegment": "Add segment",
@@ -453,6 +493,14 @@ export default interface Resources {
       "logoutErrorTitle": "Sign out failed",
       "profile": "Profile",
       "workspaceSettings": "Workspace settings"
+    },
+    "verifyEmail": {
+      "continue": "Continue",
+      "errorBody": "This verification link is invalid or has expired.",
+      "errorTitle": "Verification failed",
+      "successBody": "Thanks — your email address is confirmed.",
+      "successTitle": "Email verified",
+      "verifying": "Verifying your email…"
     }
   }
 }

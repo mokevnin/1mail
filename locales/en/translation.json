@@ -199,7 +199,8 @@
     "passwordLabel": "Password",
     "registerLink": "Create account",
     "submitButton": "Sign in",
-    "title": "Sign in"
+    "title": "Sign in",
+    "forgotPasswordLink": "Forgot password?"
   },
   "nav": {
     "activity": "Activity",
@@ -251,7 +252,19 @@
     "newPasswordLabel": "New password",
     "passwordSectionTitle": "Change password",
     "title": "Profile",
-    "updated": "Profile updated"
+    "updated": "Profile updated",
+    "verifiedBadge": "Verified",
+    "unverifiedBadge": "Not verified",
+    "unverifiedAlert": "Your email address is not verified.",
+    "resendVerification": "Resend verification email",
+    "resendSuccess": "Verification email sent",
+    "resendErrorTitle": "Could not send verification email",
+    "emailSectionTitle": "Change email",
+    "newEmailLabel": "New email",
+    "currentPasswordForEmailLabel": "Current password",
+    "changeEmailButton": "Send confirmation link",
+    "changeEmailSuccess": "Check your new inbox for a confirmation link.",
+    "changeEmailErrorTitle": "Could not change email"
   },
   "registration": {
     "emailLabel": "Email",
@@ -453,5 +466,40 @@
       "suppressed": "Suppressed",
       "failed": "Failed"
     }
+  },
+  "forgotPassword": {
+    "title": "Reset your password",
+    "description": "Enter your email and we'll send you a reset link.",
+    "emailLabel": "Email",
+    "submitButton": "Send reset link",
+    "successTitle": "Check your email",
+    "successBody": "If an account exists for that address, we've sent a password reset link.",
+    "backToLogin": "Back to sign in"
+  },
+  "resetPassword": {
+    "title": "Set a new password",
+    "newPasswordLabel": "New password",
+    "confirmPasswordLabel": "Confirm new password",
+    "submitButton": "Set password",
+    "successMessage": "Your password has been reset. Please sign in.",
+    "errorTitle": "Could not reset password",
+    "mismatch": "Passwords do not match",
+    "missingToken": "This reset link is invalid or has expired."
+  },
+  "verifyEmail": {
+    "verifying": "Verifying your email…",
+    "successTitle": "Email verified",
+    "successBody": "Thanks — your email address is confirmed.",
+    "errorTitle": "Verification failed",
+    "errorBody": "This verification link is invalid or has expired.",
+    "continue": "Continue"
+  },
+  "confirmEmailChange": {
+    "verifying": "Confirming your new email…",
+    "successTitle": "Email updated",
+    "successBody": "Your email address has been changed. Please sign in with your new email.",
+    "errorTitle": "Confirmation failed",
+    "errorBody": "This confirmation link is invalid or has expired.",
+    "goToLogin": "Go to sign in"
   }
 }
