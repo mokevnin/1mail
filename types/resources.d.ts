@@ -288,6 +288,7 @@ export default interface Resources {
     "registration": {
       "emailLabel": "Email",
       "errorTitle": "Registration failed",
+      "loginLink": "Already have an account? Sign in",
       "nameLabel": "Name",
       "passwordLabel": "Password",
       "submitButton": "Register",

@@ -1,4 +1,4 @@
-import { Button, Group, PasswordInput, Stack, TextInput, Title } from '@mantine/core'
+import { Anchor, Button, Group, PasswordInput, Stack, TextInput, Title } from '@mantine/core'
 import { useForm } from '@mantine/form'
 import { notifications } from '@mantine/notifications'
 import { useMutation } from '@tanstack/react-query'
@@ -6,7 +6,7 @@ import { useNavigate } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 import { siteAuthRegisterMutation } from '../../generated/site/@tanstack/react-query.gen.ts'
 import type { SiteRegisterInput } from '../../generated/site/types.gen.ts'
-import { indexRoute } from '../../router.tsx'
+import { indexRoute, loginRoute } from '../../router.tsx'
 import { type ApiErrorLike, getApiErrorMessage } from '../../utils/apiErrors.ts'
 
 export function RegisterPage() {
@@ -78,7 +78,10 @@ export function RegisterPage() {
             {...form.getInputProps('password')}
           />
 
-          <Group justify="flex-end">
+          <Group justify="space-between" align="center">
+            <Anchor component="a" href={loginRoute.to} size="sm">
+              {t(($) => $.registration.loginLink)}
+            </Anchor>
             <Button type="submit" loading={registerMutation.isPending}>
               {t(($) => $.registration.submitButton)}
             </Button>
