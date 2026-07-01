@@ -6,7 +6,7 @@
   workspace_id: 1
   email: invited@acme.test
   role: member
-  token_hash: "{{inviteHash \"inv_fixture_token_acme\"}}"
+  token_hash: '{{ inviteHash "inv_fixture_token_acme" }}'
   invited_by: 1
   expires_at: "{{daysAhead 7}}"
   created_at: "{{daysAgo 1}}"
@@ -17,7 +17,7 @@
   workspace_id: 1
   email: expired@acme.test
   role: member
-  token_hash: "{{inviteHash \"inv_fixture_token_expired\"}}"
+  token_hash: '{{ inviteHash "inv_fixture_token_expired" }}'
   invited_by: 1
   expires_at: "{{daysAgo 1}}"
   created_at: "{{daysAgo 8}}"

@@ -52,6 +52,15 @@ export type ProblemDetails = {
 };
 
 /**
+ * Accept an invite. name + password are required only when the invitee has no
+ * account yet; ignored otherwise.
+ */
+export type SiteAcceptInvitationInput = {
+    name?: string;
+    password?: string;
+};
+
+/**
  * Automation counts (point-in-time snapshot)
  */
 export type SiteAnalyticsAutomations = {
@@ -578,6 +587,23 @@ export type SiteCreateIntegrationInput = {
 };
 
 /**
+ * Invite an email address to the workspace
+ */
+export type SiteCreateInvitationInput = {
+    email: EmailAddress;
+    role: SiteInvitableRole;
+};
+
+/**
+ * Invite creation result. `inviteUrl` is the one-time accept link — shown so the
+ * UI can offer "copy link"; an email is also sent best-effort.
+ */
+export type SiteCreateInvitationResponse = {
+    inviteUrl: string;
+    resource: SiteInvitationResource;
+};
+
+/**
  * Site request body for creating a segment
  */
 export type SiteCreateSegmentInput = {
@@ -877,6 +903,108 @@ export type SiteIntegrationResource = {
      */
     updatedAt: Timestamp;
 };
+
+/**
+ * Roles that may be invited. owner is never invited — it is transferred.
+ */
+export const SiteInvitableRole = { ADMIN: 'admin', MEMBER: 'member' } as const;
+
+/**
+ * Roles that may be invited. owner is never invited — it is transferred.
+ */
+export type SiteInvitableRole = typeof SiteInvitableRole[keyof typeof SiteInvitableRole];
+
+/**
+ * What an invite link reveals before acceptance, for rendering the accept page
+ */
+export type SiteInvitationLookupResult = {
+    /**
+     * The workspace the invitee is joining
+     */
+    workspaceName: string;
+    /**
+     * The address the invite was sent to
+     */
+    email: EmailAddress;
+    /**
+     * True when that email already has a 1mail account (accept needs no signup)
+     */
+    hasAccount: boolean;
+};
+
+/**
+ * A pending invitation of an email address to join the workspace
+ */
+export type SiteInvitationResource = {
+    /**
+     * Unique identifier
+     */
+    id: EntityId;
+    /**
+     * The invited email address
+     */
+    email: EmailAddress;
+    /**
+     * The role the invitee will receive on accept
+     */
+    role: SiteInvitableRole;
+    /**
+     * When the invitation link expires
+     */
+    expiresAt: Timestamp;
+    /**
+     * Email of the User who sent the invite, if still known
+     */
+    invitedByEmail?: string | null;
+    /**
+     * Creation timestamp
+     */
+    createdAt: Timestamp;
+};
+
+/**
+ * A Membership — the join granting a User access to the workspace with a Role
+ */
+export type SiteMembershipResource = {
+    /**
+     * Unique identifier
+     */
+    id: EntityId;
+    /**
+     * The member's User id
+     */
+    userId: EntityId;
+    /**
+     * The member's email
+     */
+    email: EmailAddress;
+    /**
+     * The member's display name
+     */
+    name: string;
+    /**
+     * The member's role in this workspace
+     */
+    role: SiteMembershipRole;
+    /**
+     * When the member joined
+     */
+    createdAt: Timestamp;
+};
+
+/**
+ * A User's permission level in a Workspace
+ */
+export const SiteMembershipRole = {
+    OWNER: 'owner',
+    ADMIN: 'admin',
+    MEMBER: 'member'
+} as const;
+
+/**
+ * A User's permission level in a Workspace
+ */
+export type SiteMembershipRole = typeof SiteMembershipRole[keyof typeof SiteMembershipRole];
 
 /**
  * Request body for previewing a rule definition's audience
@@ -1275,6 +1403,13 @@ export type SiteUpdateMeInput = {
 };
 
 /**
+ * Change a member's role. Only an owner may grant/transfer the owner role.
+ */
+export type SiteUpdateMembershipInput = {
+    role: SiteMembershipRole;
+};
+
+/**
  * Site request body for updating a segment
  */
 export type SiteUpdateSegmentInput = {
@@ -1526,6 +1661,36 @@ export type SiteIntegrationResourceParentKey = string;
 /**
  * Unique identifier
  */
+export type SiteInvitationResourceKeyId = EntityId;
+
+/**
+ * URL-safe unique slug; the route key for nested workspace resources
+ */
+export type SiteInvitationResourceKeySlug = string;
+
+/**
+ * URL-safe unique slug; the route key for nested workspace resources
+ */
+export type SiteInvitationResourceParentKey = string;
+
+/**
+ * Unique identifier
+ */
+export type SiteMembershipResourceKeyId = EntityId;
+
+/**
+ * URL-safe unique slug; the route key for nested workspace resources
+ */
+export type SiteMembershipResourceKeySlug = string;
+
+/**
+ * URL-safe unique slug; the route key for nested workspace resources
+ */
+export type SiteMembershipResourceParentKey = string;
+
+/**
+ * Unique identifier
+ */
 export type SiteSegmentResourceKeyId = EntityId;
 
 /**
@@ -1712,6 +1877,62 @@ export type SiteAuthVerifyEmailErrors = {
 export type SiteAuthVerifyEmailError = SiteAuthVerifyEmailErrors[keyof SiteAuthVerifyEmailErrors];
 
 export type SiteAuthVerifyEmailResponses = {
+    /**
+     * The request has succeeded.
+     */
+    200: unknown;
+};
+
+export type SitePublicInvitationsLookupData = {
+    body?: never;
+    path: {
+        token: string;
+    };
+    query?: never;
+    url: '/invitations/{token}';
+};
+
+export type SitePublicInvitationsLookupErrors = {
+    /**
+     * RFC 7807 not found response
+     */
+    404: ProblemDetails;
+};
+
+export type SitePublicInvitationsLookupError = SitePublicInvitationsLookupErrors[keyof SitePublicInvitationsLookupErrors];
+
+export type SitePublicInvitationsLookupResponses = {
+    /**
+     * The request has succeeded.
+     */
+    200: SiteInvitationLookupResult;
+};
+
+export type SitePublicInvitationsLookupResponse = SitePublicInvitationsLookupResponses[keyof SitePublicInvitationsLookupResponses];
+
+export type SitePublicInvitationsAcceptData = {
+    body: SiteAcceptInvitationInput;
+    path: {
+        token: string;
+    };
+    query?: never;
+    url: '/invitations/{token}/accept';
+};
+
+export type SitePublicInvitationsAcceptErrors = {
+    /**
+     * RFC 7807 not found response
+     */
+    404: ProblemDetails;
+    /**
+     * RFC 7807 validation response
+     */
+    422: ProblemDetails;
+};
+
+export type SitePublicInvitationsAcceptError = SitePublicInvitationsAcceptErrors[keyof SitePublicInvitationsAcceptErrors];
+
+export type SitePublicInvitationsAcceptResponses = {
     /**
      * The request has succeeded.
      */
@@ -3107,6 +3328,230 @@ export type SiteIntegrationsUpdateResponses = {
 };
 
 export type SiteIntegrationsUpdateResponse = SiteIntegrationsUpdateResponses[keyof SiteIntegrationsUpdateResponses];
+
+export type SiteInvitationsListData = {
+    body?: never;
+    path: {
+        /**
+         * URL-safe unique slug; the route key for nested workspace resources
+         */
+        slug: string;
+    };
+    query?: never;
+    url: '/workspaces/{slug}/invitations';
+};
+
+export type SiteInvitationsListErrors = {
+    /**
+     * RFC 7807 not found response
+     */
+    404: ProblemDetails;
+};
+
+export type SiteInvitationsListError = SiteInvitationsListErrors[keyof SiteInvitationsListErrors];
+
+export type SiteInvitationsListResponses = {
+    /**
+     * The request has succeeded.
+     */
+    200: Array<SiteInvitationResource>;
+};
+
+export type SiteInvitationsListResponse = SiteInvitationsListResponses[keyof SiteInvitationsListResponses];
+
+export type SiteInvitationsCreateData = {
+    body: SiteCreateInvitationInput;
+    path: {
+        /**
+         * URL-safe unique slug; the route key for nested workspace resources
+         */
+        slug: string;
+    };
+    query?: never;
+    url: '/workspaces/{slug}/invitations';
+};
+
+export type SiteInvitationsCreateErrors = {
+    /**
+     * RFC 7807 forbidden response
+     */
+    403: ProblemDetails;
+    /**
+     * RFC 7807 not found response
+     */
+    404: ProblemDetails;
+    /**
+     * RFC 7807 conflict response
+     */
+    409: ProblemDetails;
+    /**
+     * RFC 7807 validation response
+     */
+    422: ProblemDetails;
+};
+
+export type SiteInvitationsCreateError = SiteInvitationsCreateErrors[keyof SiteInvitationsCreateErrors];
+
+export type SiteInvitationsCreateResponses = {
+    /**
+     * The request has succeeded and a new resource has been created as a result.
+     */
+    201: SiteCreateInvitationResponse;
+};
+
+export type SiteInvitationsCreateResponse = SiteInvitationsCreateResponses[keyof SiteInvitationsCreateResponses];
+
+export type SiteInvitationsDeleteData = {
+    body?: never;
+    path: {
+        /**
+         * URL-safe unique slug; the route key for nested workspace resources
+         */
+        slug: string;
+        /**
+         * Unique identifier
+         */
+        id: EntityId;
+    };
+    query?: never;
+    url: '/workspaces/{slug}/invitations/{id}';
+};
+
+export type SiteInvitationsDeleteErrors = {
+    /**
+     * RFC 7807 forbidden response
+     */
+    403: ProblemDetails;
+    /**
+     * RFC 7807 not found response
+     */
+    404: ProblemDetails;
+};
+
+export type SiteInvitationsDeleteError = SiteInvitationsDeleteErrors[keyof SiteInvitationsDeleteErrors];
+
+export type SiteInvitationsDeleteResponses = {
+    /**
+     * There is no content to send for this request, but the headers may be useful.
+     */
+    204: void;
+};
+
+export type SiteInvitationsDeleteResponse = SiteInvitationsDeleteResponses[keyof SiteInvitationsDeleteResponses];
+
+export type SiteMembershipsListData = {
+    body?: never;
+    path: {
+        /**
+         * URL-safe unique slug; the route key for nested workspace resources
+         */
+        slug: string;
+    };
+    query?: never;
+    url: '/workspaces/{slug}/memberships';
+};
+
+export type SiteMembershipsListErrors = {
+    /**
+     * RFC 7807 not found response
+     */
+    404: ProblemDetails;
+};
+
+export type SiteMembershipsListError = SiteMembershipsListErrors[keyof SiteMembershipsListErrors];
+
+export type SiteMembershipsListResponses = {
+    /**
+     * The request has succeeded.
+     */
+    200: Array<SiteMembershipResource>;
+};
+
+export type SiteMembershipsListResponse = SiteMembershipsListResponses[keyof SiteMembershipsListResponses];
+
+export type SiteMembershipsDeleteData = {
+    body?: never;
+    path: {
+        /**
+         * URL-safe unique slug; the route key for nested workspace resources
+         */
+        slug: string;
+        /**
+         * Unique identifier
+         */
+        id: EntityId;
+    };
+    query?: never;
+    url: '/workspaces/{slug}/memberships/{id}';
+};
+
+export type SiteMembershipsDeleteErrors = {
+    /**
+     * RFC 7807 forbidden response
+     */
+    403: ProblemDetails;
+    /**
+     * RFC 7807 not found response
+     */
+    404: ProblemDetails;
+    /**
+     * RFC 7807 validation response
+     */
+    422: ProblemDetails;
+};
+
+export type SiteMembershipsDeleteError = SiteMembershipsDeleteErrors[keyof SiteMembershipsDeleteErrors];
+
+export type SiteMembershipsDeleteResponses = {
+    /**
+     * There is no content to send for this request, but the headers may be useful.
+     */
+    204: void;
+};
+
+export type SiteMembershipsDeleteResponse = SiteMembershipsDeleteResponses[keyof SiteMembershipsDeleteResponses];
+
+export type SiteMembershipsUpdateData = {
+    body: SiteUpdateMembershipInput;
+    path: {
+        /**
+         * URL-safe unique slug; the route key for nested workspace resources
+         */
+        slug: string;
+        /**
+         * Unique identifier
+         */
+        id: EntityId;
+    };
+    query?: never;
+    url: '/workspaces/{slug}/memberships/{id}';
+};
+
+export type SiteMembershipsUpdateErrors = {
+    /**
+     * RFC 7807 forbidden response
+     */
+    403: ProblemDetails;
+    /**
+     * RFC 7807 not found response
+     */
+    404: ProblemDetails;
+    /**
+     * RFC 7807 validation response
+     */
+    422: ProblemDetails;
+};
+
+export type SiteMembershipsUpdateError = SiteMembershipsUpdateErrors[keyof SiteMembershipsUpdateErrors];
+
+export type SiteMembershipsUpdateResponses = {
+    /**
+     * The request has succeeded.
+     */
+    200: SiteMembershipResource;
+};
+
+export type SiteMembershipsUpdateResponse = SiteMembershipsUpdateResponses[keyof SiteMembershipsUpdateResponses];
 
 export type SiteSegmentsListData = {
     body?: never;

@@ -28,6 +28,7 @@ import { useResourceMutation } from '../../hooks/useResourceMutation.ts'
 import { activityRoute } from '../../router.tsx'
 import { ApiKeysSection } from './ApiKeysSection.tsx'
 import { IntegrationsSection } from './IntegrationsSection.tsx'
+import { MembersSection } from './MembersSection.tsx'
 import { SuppressionsSection } from './SuppressionsSection.tsx'
 import { WebhooksSection } from './WebhooksSection.tsx'
 
@@ -224,6 +225,7 @@ export function SettingsPage() {
       {workspace ? (
         <>
           <GeneralSection workspace={workspace} />
+          <MembersSection slug={workspace.slug} />
           <TrackingSection collectKey={workspace.collectKey} slug={workspace.slug} />
           <TestEvent collectKey={workspace.collectKey} />
           <IntegrationsSection slug={workspace.slug} />

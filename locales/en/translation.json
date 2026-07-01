@@ -1,4 +1,18 @@
 {
+  "acceptInvitation": {
+    "acceptButton": "Accept invitation",
+    "acceptExistingButton": "Join workspace",
+    "errorMessage": "We couldn't accept this invitation. The link may have expired.",
+    "errorTitle": "Could not accept invitation",
+    "intro": "You've been invited to join {{workspace}} on 1mail.",
+    "invalid": "This invitation is invalid or has expired.",
+    "loading": "Loading invitation…",
+    "nameLabel": "Your name",
+    "passwordLabel": "Password",
+    "successMessage": "You've joined the workspace. Please sign in.",
+    "successTitle": "Invitation accepted",
+    "title": "Accept invitation"
+  },
   "account": {
     "backToDashboard": "Dashboard",
     "profile": "Profile"
@@ -371,6 +385,31 @@
       "title": "Sending providers"
     },
     "loadErrorTitle": "Failed to load workspace",
+    "members": {
+      "created": "Created",
+      "emailLabel": "Email",
+      "expires": "Expires",
+      "invitationsEmpty": "No pending invitations",
+      "invitationsTitle": "Pending invitations",
+      "invite": "Invite",
+      "inviteError": "Failed to send invitation",
+      "inviteUrlNotice": "Copy this invite link — you can also share it directly.",
+      "loadError": "Failed to load members",
+      "membersEmpty": "No members yet",
+      "membersTitle": "Members",
+      "nameHeader": "Name",
+      "remove": "Remove",
+      "removeConfirmDescription": "They will immediately lose access to this workspace.",
+      "removeConfirmTitle": "Remove member?",
+      "removeError": "Failed to remove member",
+      "revoke": "Revoke",
+      "revokeConfirmDescription": "The invite link will stop working.",
+      "revokeConfirmTitle": "Revoke invitation?",
+      "revokeError": "Failed to revoke invitation",
+      "roleLabel": "Role",
+      "roleUpdateError": "Failed to update role",
+      "title": "Team members"
+    },
     "nameLabel": "Workspace name",
     "saved": "Workspace updated",
     "sesWebhook": {

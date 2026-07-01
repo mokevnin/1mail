@@ -97,6 +97,11 @@ func (h *Handlers) SiteMembershipsUpdate(ctx context.Context, req *siteapi.SiteU
 		v := siteapi.SiteMembershipsUpdateForbidden(problem(http.StatusForbidden, "only an owner may grant the owner role"))
 		return &v, nil
 	}
+	// Only an owner may modify another owner (an admin cannot demote a co-owner).
+	if target.Role == membership.RoleOwner && callerRole != membership.RoleOwner {
+		v := siteapi.SiteMembershipsUpdateForbidden(problem(http.StatusForbidden, "only an owner may change an owner's role"))
+		return &v, nil
+	}
 	// The last owner cannot be demoted, or the workspace would be ownerless.
 	if target.Role == membership.RoleOwner && desired != membership.RoleOwner {
 		owners, err := h.ent.Membership.Query().
@@ -155,6 +160,12 @@ func (h *Handlers) SiteMembershipsDelete(ctx context.Context, params siteapi.Sit
 	}
 	if err != nil {
 		return nil, err
+	}
+
+	// Only an owner may remove another owner (an admin cannot remove a co-owner).
+	if target.Role == membership.RoleOwner && callerRole != membership.RoleOwner {
+		v := siteapi.SiteMembershipsDeleteForbidden(problem(http.StatusForbidden, "only an owner may remove an owner"))
+		return &v, nil
 	}
 
 	if target.Role == membership.RoleOwner {

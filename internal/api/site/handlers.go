@@ -121,25 +121,34 @@ func (h *Handlers) createDefaultWorkspace(ctx context.Context, userID int64, nam
 		if err != nil {
 			return nil, err
 		}
-		ws, err := h.ent.Workspace.Create().
-			SetName(name).
-			SetSlug(slug).
-			SetCollectKey(collectKey).
-			SetIngestKey(ingestKey).
-			Save(ctx)
+		// Create the workspace and the creator's owner Membership atomically — a
+		// Workspace is reached through Memberships, never owned by a User directly,
+		// so a workspace without its owner row would be inaccessible.
+		var ws *ent.Workspace
+		err = h.bus.WithinTx(ctx, func(tx *ent.Client, _ events.Publisher) error {
+			created, cerr := tx.Workspace.Create().
+				SetName(name).
+				SetSlug(slug).
+				SetCollectKey(collectKey).
+				SetIngestKey(ingestKey).
+				Save(ctx)
+			if cerr != nil {
+				return cerr
+			}
+			if _, merr := tx.Membership.Create().
+				SetUserID(userID).
+				SetWorkspaceID(created.ID).
+				SetRole(membership.RoleOwner).
+				Save(ctx); merr != nil {
+				return merr
+			}
+			ws = created
+			return nil
+		})
 		if service.IsUniqueViolation(err) {
 			continue // lost a race on the slug; try the next suffix
 		}
 		if err != nil {
-			return nil, err
-		}
-		// The creator becomes the workspace owner via a Membership — a Workspace
-		// is reached through Memberships, never owned by a single User directly.
-		if _, err := h.ent.Membership.Create().
-			SetUserID(userID).
-			SetWorkspaceID(ws.ID).
-			SetRole(membership.RoleOwner).
-			Save(ctx); err != nil {
 			return nil, err
 		}
 		return ws, nil

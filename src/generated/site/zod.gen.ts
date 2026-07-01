@@ -22,6 +22,15 @@ export const zProblemDetails = z.object({
 });
 
 /**
+ * Accept an invite. name + password are required only when the invitee has no
+ * account yet; ignored otherwise.
+ */
+export const zSiteAcceptInvitationInput = z.object({
+    name: z.string().optional(),
+    password: z.string().optional()
+});
+
+/**
  * Automation counts (point-in-time snapshot)
  */
 export const zSiteAnalyticsAutomations = z.object({
@@ -246,6 +255,37 @@ export const zSiteIntegrationChannel = z.enum(['email', 'sms']);
 export const zSiteIntegrationProvider = z.enum(['smtp', 'ses']);
 
 /**
+ * Roles that may be invited. owner is never invited — it is transferred.
+ */
+export const zSiteInvitableRole = z.enum(['admin', 'member']);
+
+/**
+ * Invite an email address to the workspace
+ */
+export const zSiteCreateInvitationInput = z.object({
+    email: zEmailAddress,
+    role: zSiteInvitableRole
+});
+
+/**
+ * What an invite link reveals before acceptance, for rendering the accept page
+ */
+export const zSiteInvitationLookupResult = z.object({
+    workspaceName: z.string(),
+    email: zEmailAddress,
+    hasAccount: z.boolean()
+});
+
+/**
+ * A User's permission level in a Workspace
+ */
+export const zSiteMembershipRole = z.enum([
+    'owner',
+    'admin',
+    'member'
+]);
+
+/**
  * Request body for previewing a rule definition's audience
  */
 export const zSitePreviewSegmentInput = z.object({
@@ -460,6 +500,13 @@ export const zSiteUpdateMeInput = z.object({
 });
 
 /**
+ * Change a member's role. Only an owner may grant/transfer the owner role.
+ */
+export const zSiteUpdateMembershipInput = z.object({
+    role: zSiteMembershipRole
+});
+
+/**
  * Site request body for updating a segment
  */
 export const zSiteUpdateSegmentInput = z.object({
@@ -653,6 +700,39 @@ export const zSiteIntegrationResource = z.object({
     config: zSiteIntegrationConfig,
     createdAt: zTimestamp,
     updatedAt: zTimestamp
+});
+
+/**
+ * A pending invitation of an email address to join the workspace
+ */
+export const zSiteInvitationResource = z.object({
+    id: zEntityId,
+    email: zEmailAddress,
+    role: zSiteInvitableRole,
+    expiresAt: zTimestamp,
+    invitedByEmail: z.string().nullish(),
+    createdAt: zTimestamp
+});
+
+/**
+ * Invite creation result. `inviteUrl` is the one-time accept link — shown so the
+ * UI can offer "copy link"; an email is also sent best-effort.
+ */
+export const zSiteCreateInvitationResponse = z.object({
+    inviteUrl: z.string(),
+    resource: zSiteInvitationResource
+});
+
+/**
+ * A Membership — the join granting a User access to the workspace with a Role
+ */
+export const zSiteMembershipResource = z.object({
+    id: zEntityId,
+    userId: zEntityId,
+    email: zEmailAddress,
+    name: z.string(),
+    role: zSiteMembershipRole,
+    createdAt: zTimestamp
 });
 
 export const zSiteRegisterResult = z.object({
@@ -856,6 +936,36 @@ export const zSiteIntegrationResourceParentKey = z.string();
 /**
  * Unique identifier
  */
+export const zSiteInvitationResourceKeyId = zEntityId;
+
+/**
+ * URL-safe unique slug; the route key for nested workspace resources
+ */
+export const zSiteInvitationResourceKeySlug = z.string();
+
+/**
+ * URL-safe unique slug; the route key for nested workspace resources
+ */
+export const zSiteInvitationResourceParentKey = z.string();
+
+/**
+ * Unique identifier
+ */
+export const zSiteMembershipResourceKeyId = zEntityId;
+
+/**
+ * URL-safe unique slug; the route key for nested workspace resources
+ */
+export const zSiteMembershipResourceKeySlug = z.string();
+
+/**
+ * URL-safe unique slug; the route key for nested workspace resources
+ */
+export const zSiteMembershipResourceParentKey = z.string();
+
+/**
+ * Unique identifier
+ */
 export const zSiteSegmentResourceKeyId = zEntityId;
 
 /**
@@ -924,6 +1034,21 @@ export const zSiteAuthRegisterResponse = zSiteRegisterResult;
 export const zSiteAuthResetPasswordBody = zSiteResetPasswordInput;
 
 export const zSiteAuthVerifyEmailBody = zSiteVerifyEmailInput;
+
+export const zSitePublicInvitationsLookupPath = z.object({
+    token: z.string()
+});
+
+/**
+ * The request has succeeded.
+ */
+export const zSitePublicInvitationsLookupResponse = zSiteInvitationLookupResult;
+
+export const zSitePublicInvitationsAcceptBody = zSiteAcceptInvitationInput;
+
+export const zSitePublicInvitationsAcceptPath = z.object({
+    token: z.string()
+});
 
 /**
  * The request has succeeded.
@@ -1309,6 +1434,67 @@ export const zSiteIntegrationsUpdatePath = z.object({
  * The request has succeeded.
  */
 export const zSiteIntegrationsUpdateResponse = zSiteIntegrationResource;
+
+export const zSiteInvitationsListPath = z.object({
+    slug: z.string()
+});
+
+/**
+ * The request has succeeded.
+ */
+export const zSiteInvitationsListResponse = z.array(zSiteInvitationResource);
+
+export const zSiteInvitationsCreateBody = zSiteCreateInvitationInput;
+
+export const zSiteInvitationsCreatePath = z.object({
+    slug: z.string()
+});
+
+/**
+ * The request has succeeded and a new resource has been created as a result.
+ */
+export const zSiteInvitationsCreateResponse = zSiteCreateInvitationResponse;
+
+export const zSiteInvitationsDeletePath = z.object({
+    slug: z.string(),
+    id: zEntityId
+});
+
+/**
+ * There is no content to send for this request, but the headers may be useful.
+ */
+export const zSiteInvitationsDeleteResponse = z.void();
+
+export const zSiteMembershipsListPath = z.object({
+    slug: z.string()
+});
+
+/**
+ * The request has succeeded.
+ */
+export const zSiteMembershipsListResponse = z.array(zSiteMembershipResource);
+
+export const zSiteMembershipsDeletePath = z.object({
+    slug: z.string(),
+    id: zEntityId
+});
+
+/**
+ * There is no content to send for this request, but the headers may be useful.
+ */
+export const zSiteMembershipsDeleteResponse = z.void();
+
+export const zSiteMembershipsUpdateBody = zSiteUpdateMembershipInput;
+
+export const zSiteMembershipsUpdatePath = z.object({
+    slug: z.string(),
+    id: zEntityId
+});
+
+/**
+ * The request has succeeded.
+ */
+export const zSiteMembershipsUpdateResponse = zSiteMembershipResource;
 
 export const zSiteSegmentsListPath = z.object({
     slug: z.string()

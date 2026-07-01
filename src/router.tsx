@@ -23,6 +23,7 @@ import { ContactCreatePage } from './routes/contacts/create.tsx'
 import { ContactDetailPage } from './routes/contacts/detail.tsx'
 import { ContactEditPage } from './routes/contacts/edit.tsx'
 import { ContactsListPage } from './routes/contacts/list.tsx'
+import { AcceptInvitationPage } from './routes/invitations/accept.tsx'
 import { SegmentCreatePage } from './routes/segments/create.tsx'
 import { SegmentEditPage } from './routes/segments/edit.tsx'
 import { SegmentsListPage } from './routes/segments/list.tsx'
@@ -259,6 +260,14 @@ export const unsubscribedRoute = createRoute({
   component: UnsubscribedPage,
 })
 
+// Public invite acceptance (no auth): opened from the invite link. The token in
+// the path is the authorization; the page creates or attaches the user on accept.
+export const acceptInvitationRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/invitations/$token',
+  component: AcceptInvitationPage,
+})
+
 // Account layout: workspace-independent settings. Authenticates via the same
 // workspace fetch (redirects to /login on 401) but renders its own shell.
 export const accountRoute = createRoute({
@@ -285,6 +294,7 @@ const routeTree = rootRoute.addChildren([
   verifyEmailRoute,
   confirmEmailChangeRoute,
   unsubscribedRoute,
+  acceptInvitationRoute,
   accountRoute.addChildren([profileRoute]),
   workspaceRoute.addChildren([
     overviewRoute,
