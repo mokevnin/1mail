@@ -234,6 +234,48 @@ func encodeSiteIntegrationsUpdateRequest(
 	return nil
 }
 
+func encodeSiteInvitationsCreateRequest(
+	req *SiteCreateInvitationInput,
+	r *http.Request,
+) error {
+	const contentType = "application/json"
+	e := new(jx.Encoder)
+	{
+		req.Encode(e)
+	}
+	encoded := e.Bytes()
+	ht.SetBody(r, bytes.NewReader(encoded), contentType)
+	return nil
+}
+
+func encodeSiteMembershipsUpdateRequest(
+	req *SiteUpdateMembershipInput,
+	r *http.Request,
+) error {
+	const contentType = "application/json"
+	e := new(jx.Encoder)
+	{
+		req.Encode(e)
+	}
+	encoded := e.Bytes()
+	ht.SetBody(r, bytes.NewReader(encoded), contentType)
+	return nil
+}
+
+func encodeSitePublicInvitationsAcceptRequest(
+	req *SiteAcceptInvitationInput,
+	r *http.Request,
+) error {
+	const contentType = "application/json"
+	e := new(jx.Encoder)
+	{
+		req.Encode(e)
+	}
+	encoded := e.Bytes()
+	ht.SetBody(r, bytes.NewReader(encoded), contentType)
+	return nil
+}
+
 func encodeSiteSegmentsCreateRequest(
 	req *SiteCreateSegmentInput,
 	r *http.Request,

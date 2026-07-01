@@ -11,8 +11,9 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/mokevnin/1mail/ent/invitation"
+	"github.com/mokevnin/1mail/ent/membership"
 	"github.com/mokevnin/1mail/ent/user"
-	"github.com/mokevnin/1mail/ent/workspace"
 )
 
 // UserCreate is the builder for creating a User entity.
@@ -97,19 +98,34 @@ func (_c *UserCreate) SetID(v int64) *UserCreate {
 	return _c
 }
 
-// AddWorkspaceIDs adds the "workspaces" edge to the Workspace entity by IDs.
-func (_c *UserCreate) AddWorkspaceIDs(ids ...int64) *UserCreate {
-	_c.mutation.AddWorkspaceIDs(ids...)
+// AddMembershipIDs adds the "memberships" edge to the Membership entity by IDs.
+func (_c *UserCreate) AddMembershipIDs(ids ...int64) *UserCreate {
+	_c.mutation.AddMembershipIDs(ids...)
 	return _c
 }
 
-// AddWorkspaces adds the "workspaces" edges to the Workspace entity.
-func (_c *UserCreate) AddWorkspaces(v ...*Workspace) *UserCreate {
+// AddMemberships adds the "memberships" edges to the Membership entity.
+func (_c *UserCreate) AddMemberships(v ...*Membership) *UserCreate {
 	ids := make([]int64, len(v))
 	for i := range v {
 		ids[i] = v[i].ID
 	}
-	return _c.AddWorkspaceIDs(ids...)
+	return _c.AddMembershipIDs(ids...)
+}
+
+// AddSentInvitationIDs adds the "sent_invitations" edge to the Invitation entity by IDs.
+func (_c *UserCreate) AddSentInvitationIDs(ids ...int64) *UserCreate {
+	_c.mutation.AddSentInvitationIDs(ids...)
+	return _c
+}
+
+// AddSentInvitations adds the "sent_invitations" edges to the Invitation entity.
+func (_c *UserCreate) AddSentInvitations(v ...*Invitation) *UserCreate {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddSentInvitationIDs(ids...)
 }
 
 // Mutation returns the UserMutation object of the builder.
@@ -238,15 +254,31 @@ func (_c *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 		_spec.SetField(user.FieldCreatedAt, field.TypeTime, value)
 		_node.CreatedAt = value
 	}
-	if nodes := _c.mutation.WorkspacesIDs(); len(nodes) > 0 {
+	if nodes := _c.mutation.MembershipsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   user.WorkspacesTable,
-			Columns: []string{user.WorkspacesColumn},
+			Table:   user.MembershipsTable,
+			Columns: []string{user.MembershipsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(workspace.FieldID, field.TypeInt64),
+				IDSpec: sqlgraph.NewFieldSpec(membership.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.SentInvitationsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.SentInvitationsTable,
+			Columns: []string{user.SentInvitationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(invitation.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {

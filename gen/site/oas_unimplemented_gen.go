@@ -326,6 +326,78 @@ func (UnimplementedHandler) SiteIntegrationsUpdate(ctx context.Context, req *Sit
 	return r, ht.ErrNotImplemented
 }
 
+// SiteInvitationsCreate implements SiteInvitations_create operation.
+//
+// Invite an email address; the accept link is returned once.
+//
+// POST /workspaces/{slug}/invitations
+func (UnimplementedHandler) SiteInvitationsCreate(ctx context.Context, req *SiteCreateInvitationInput, params SiteInvitationsCreateParams) (r SiteInvitationsCreateRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// SiteInvitationsDelete implements SiteInvitations_delete operation.
+//
+// Revoke a pending invitation.
+//
+// DELETE /workspaces/{slug}/invitations/{id}
+func (UnimplementedHandler) SiteInvitationsDelete(ctx context.Context, params SiteInvitationsDeleteParams) (r SiteInvitationsDeleteRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// SiteInvitationsList implements SiteInvitations_list operation.
+//
+// List pending (unaccepted) invitations for the workspace.
+//
+// GET /workspaces/{slug}/invitations
+func (UnimplementedHandler) SiteInvitationsList(ctx context.Context, params SiteInvitationsListParams) (r SiteInvitationsListRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// SiteMembershipsDelete implements SiteMemberships_delete operation.
+//
+// Remove a member (owner/admin only; the last owner cannot be removed).
+//
+// DELETE /workspaces/{slug}/memberships/{id}
+func (UnimplementedHandler) SiteMembershipsDelete(ctx context.Context, params SiteMembershipsDeleteParams) (r SiteMembershipsDeleteRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// SiteMembershipsList implements SiteMemberships_list operation.
+//
+// List the workspace's members.
+//
+// GET /workspaces/{slug}/memberships
+func (UnimplementedHandler) SiteMembershipsList(ctx context.Context, params SiteMembershipsListParams) (r SiteMembershipsListRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// SiteMembershipsUpdate implements SiteMemberships_update operation.
+//
+// Change a member's role (owner/admin only; owner-only to grant owner).
+//
+// PUT /workspaces/{slug}/memberships/{id}
+func (UnimplementedHandler) SiteMembershipsUpdate(ctx context.Context, req *SiteUpdateMembershipInput, params SiteMembershipsUpdateParams) (r SiteMembershipsUpdateRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// SitePublicInvitationsAccept implements SitePublicInvitations_accept operation.
+//
+// Accept an invite: create or attach the User and create the Membership.
+//
+// POST /invitations/{token}/accept
+func (UnimplementedHandler) SitePublicInvitationsAccept(ctx context.Context, req *SiteAcceptInvitationInput, params SitePublicInvitationsAcceptParams) (r SitePublicInvitationsAcceptRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// SitePublicInvitationsLookup implements SitePublicInvitations_lookup operation.
+//
+// Look up a pending invite by its token to render the accept page.
+//
+// GET /invitations/{token}
+func (UnimplementedHandler) SitePublicInvitationsLookup(ctx context.Context, params SitePublicInvitationsLookupParams) (r SitePublicInvitationsLookupRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // SiteSegmentsCreate implements SiteSegments_create operation.
 //
 // Create a resource from the site UI.

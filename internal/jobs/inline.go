@@ -61,3 +61,13 @@ func (i *Inline) EnqueueEmailVerification(ctx context.Context, email, token stri
 func (i *Inline) EnqueueEmailChangeConfirm(ctx context.Context, email, token string) error {
 	return SendAuthMail(ctx, i.systemSender, i.appURL, SendAuthMailArgs{Flow: flowEmailChange, Email: email, Token: token})
 }
+
+// EnqueueMemberInvite sends the workspace invite email now via the system sender.
+func (i *Inline) EnqueueMemberInvite(ctx context.Context, email, inviteURL, workspaceName, inviterName string) error {
+	return SendMemberInvite(ctx, i.systemSender, SendMemberInviteArgs{
+		Email:         email,
+		InviteURL:     inviteURL,
+		WorkspaceName: workspaceName,
+		InviterName:   inviterName,
+	})
+}

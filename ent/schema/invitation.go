@@ -1,0 +1,81 @@
+package schema
+
+import (
+	"time"
+
+	"entgo.io/ent"
+	"entgo.io/ent/dialect/entsql"
+	"entgo.io/ent/schema"
+	"entgo.io/ent/schema/edge"
+	"entgo.io/ent/schema/field"
+	"entgo.io/ent/schema/index"
+)
+
+// Invitation is a pending offer of Membership to an email address. It carries its
+// own token + expiry (before any User exists), and becomes a Membership on accept.
+// owner is never invitable — only owner/admin manage members, and ownership is
+// transferred, not invited.
+type Invitation struct {
+	ent.Schema
+}
+
+func (Invitation) Annotations() []schema.Annotation {
+	return []schema.Annotation{
+		entsql.Annotation{Table: "invitations"},
+	}
+}
+
+func (Invitation) Fields() []ent.Field {
+	return []ent.Field{
+		field.Int64("id").
+			StorageKey("id").
+			Immutable(),
+		field.Int64("workspace_id"),
+		field.String("email").
+			NotEmpty(),
+		field.Enum("role").
+			Values("admin", "member"),
+		// SHA-256 of the raw invite token; the raw token is only ever in the link
+		// (email + copy-link), never stored — mirrors api_token.secret_hash.
+		field.String("token_hash").
+			NotEmpty().
+			Sensitive(),
+		// The User who sent the invite (informational). Optional so an invite
+		// survives the inviter's deletion.
+		field.Int64("invited_by").
+			Optional().
+			Nillable(),
+		field.Time("expires_at"),
+		field.Time("accepted_at").
+			Optional().
+			Nillable(),
+		field.Time("created_at").
+			Default(time.Now).
+			Immutable(),
+		field.Time("updated_at").
+			Default(time.Now).
+			UpdateDefault(time.Now),
+	}
+}
+
+func (Invitation) Edges() []ent.Edge {
+	return []ent.Edge{
+		edge.From("workspace", Workspace.Type).
+			Ref("invitations").
+			Field("workspace_id").
+			Required().
+			Unique(),
+		edge.From("inviter", User.Type).
+			Ref("sent_invitations").
+			Field("invited_by").
+			Unique(),
+	}
+}
+
+func (Invitation) Indexes() []ent.Index {
+	return []ent.Index{
+		// One live invite per (workspace, email); re-invite updates the row.
+		index.Fields("workspace_id", "email").
+			Unique(),
+	}
+}

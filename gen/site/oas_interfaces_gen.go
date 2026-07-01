@@ -137,6 +137,38 @@ type SiteIntegrationsUpdateRes interface {
 	siteIntegrationsUpdateRes()
 }
 
+type SiteInvitationsCreateRes interface {
+	siteInvitationsCreateRes()
+}
+
+type SiteInvitationsDeleteRes interface {
+	siteInvitationsDeleteRes()
+}
+
+type SiteInvitationsListRes interface {
+	siteInvitationsListRes()
+}
+
+type SiteMembershipsDeleteRes interface {
+	siteMembershipsDeleteRes()
+}
+
+type SiteMembershipsListRes interface {
+	siteMembershipsListRes()
+}
+
+type SiteMembershipsUpdateRes interface {
+	siteMembershipsUpdateRes()
+}
+
+type SitePublicInvitationsAcceptRes interface {
+	sitePublicInvitationsAcceptRes()
+}
+
+type SitePublicInvitationsLookupRes interface {
+	sitePublicInvitationsLookupRes()
+}
+
 type SiteSegmentsCreateRes interface {
 	siteSegmentsCreateRes()
 }

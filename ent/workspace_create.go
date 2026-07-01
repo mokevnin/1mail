@@ -21,11 +21,12 @@ import (
 	"github.com/mokevnin/1mail/ent/emailtemplate"
 	"github.com/mokevnin/1mail/ent/event"
 	"github.com/mokevnin/1mail/ent/integration"
+	"github.com/mokevnin/1mail/ent/invitation"
+	"github.com/mokevnin/1mail/ent/membership"
 	"github.com/mokevnin/1mail/ent/segment"
 	"github.com/mokevnin/1mail/ent/suppression"
 	"github.com/mokevnin/1mail/ent/transactionalemail"
 	"github.com/mokevnin/1mail/ent/unsubscribe"
-	"github.com/mokevnin/1mail/ent/user"
 	"github.com/mokevnin/1mail/ent/visitor"
 	"github.com/mokevnin/1mail/ent/webhookendpoint"
 	"github.com/mokevnin/1mail/ent/workspace"
@@ -60,20 +61,6 @@ func (_c *WorkspaceCreate) SetCollectKey(v string) *WorkspaceCreate {
 // SetIngestKey sets the "ingest_key" field.
 func (_c *WorkspaceCreate) SetIngestKey(v string) *WorkspaceCreate {
 	_c.mutation.SetIngestKey(v)
-	return _c
-}
-
-// SetUserID sets the "user_id" field.
-func (_c *WorkspaceCreate) SetUserID(v int64) *WorkspaceCreate {
-	_c.mutation.SetUserID(v)
-	return _c
-}
-
-// SetNillableUserID sets the "user_id" field if the given value is not nil.
-func (_c *WorkspaceCreate) SetNillableUserID(v *int64) *WorkspaceCreate {
-	if v != nil {
-		_c.SetUserID(*v)
-	}
 	return _c
 }
 
@@ -351,9 +338,34 @@ func (_c *WorkspaceCreate) AddTransactionalEmails(v ...*TransactionalEmail) *Wor
 	return _c.AddTransactionalEmailIDs(ids...)
 }
 
-// SetUser sets the "user" edge to the User entity.
-func (_c *WorkspaceCreate) SetUser(v *User) *WorkspaceCreate {
-	return _c.SetUserID(v.ID)
+// AddMembershipIDs adds the "memberships" edge to the Membership entity by IDs.
+func (_c *WorkspaceCreate) AddMembershipIDs(ids ...int64) *WorkspaceCreate {
+	_c.mutation.AddMembershipIDs(ids...)
+	return _c
+}
+
+// AddMemberships adds the "memberships" edges to the Membership entity.
+func (_c *WorkspaceCreate) AddMemberships(v ...*Membership) *WorkspaceCreate {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddMembershipIDs(ids...)
+}
+
+// AddInvitationIDs adds the "invitations" edge to the Invitation entity by IDs.
+func (_c *WorkspaceCreate) AddInvitationIDs(ids ...int64) *WorkspaceCreate {
+	_c.mutation.AddInvitationIDs(ids...)
+	return _c
+}
+
+// AddInvitations adds the "invitations" edges to the Invitation entity.
+func (_c *WorkspaceCreate) AddInvitations(v ...*Invitation) *WorkspaceCreate {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddInvitationIDs(ids...)
 }
 
 // Mutation returns the WorkspaceMutation object of the builder.
@@ -754,21 +766,36 @@ func (_c *WorkspaceCreate) createSpec() (*Workspace, *sqlgraph.CreateSpec) {
 		}
 		_spec.Edges = append(_spec.Edges, edge)
 	}
-	if nodes := _c.mutation.UserIDs(); len(nodes) > 0 {
+	if nodes := _c.mutation.MembershipsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: true,
-			Table:   workspace.UserTable,
-			Columns: []string{workspace.UserColumn},
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   workspace.MembershipsTable,
+			Columns: []string{workspace.MembershipsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt64),
+				IDSpec: sqlgraph.NewFieldSpec(membership.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_node.UserID = &nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.InvitationsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   workspace.InvitationsTable,
+			Columns: []string{workspace.InvitationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(invitation.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec
@@ -868,24 +895,6 @@ func (u *WorkspaceUpsert) SetIngestKey(v string) *WorkspaceUpsert {
 // UpdateIngestKey sets the "ingest_key" field to the value that was provided on create.
 func (u *WorkspaceUpsert) UpdateIngestKey() *WorkspaceUpsert {
 	u.SetExcluded(workspace.FieldIngestKey)
-	return u
-}
-
-// SetUserID sets the "user_id" field.
-func (u *WorkspaceUpsert) SetUserID(v int64) *WorkspaceUpsert {
-	u.Set(workspace.FieldUserID, v)
-	return u
-}
-
-// UpdateUserID sets the "user_id" field to the value that was provided on create.
-func (u *WorkspaceUpsert) UpdateUserID() *WorkspaceUpsert {
-	u.SetExcluded(workspace.FieldUserID)
-	return u
-}
-
-// ClearUserID clears the value of the "user_id" field.
-func (u *WorkspaceUpsert) ClearUserID() *WorkspaceUpsert {
-	u.SetNull(workspace.FieldUserID)
 	return u
 }
 
@@ -1005,27 +1014,6 @@ func (u *WorkspaceUpsertOne) SetIngestKey(v string) *WorkspaceUpsertOne {
 func (u *WorkspaceUpsertOne) UpdateIngestKey() *WorkspaceUpsertOne {
 	return u.Update(func(s *WorkspaceUpsert) {
 		s.UpdateIngestKey()
-	})
-}
-
-// SetUserID sets the "user_id" field.
-func (u *WorkspaceUpsertOne) SetUserID(v int64) *WorkspaceUpsertOne {
-	return u.Update(func(s *WorkspaceUpsert) {
-		s.SetUserID(v)
-	})
-}
-
-// UpdateUserID sets the "user_id" field to the value that was provided on create.
-func (u *WorkspaceUpsertOne) UpdateUserID() *WorkspaceUpsertOne {
-	return u.Update(func(s *WorkspaceUpsert) {
-		s.UpdateUserID()
-	})
-}
-
-// ClearUserID clears the value of the "user_id" field.
-func (u *WorkspaceUpsertOne) ClearUserID() *WorkspaceUpsertOne {
-	return u.Update(func(s *WorkspaceUpsert) {
-		s.ClearUserID()
 	})
 }
 
@@ -1313,27 +1301,6 @@ func (u *WorkspaceUpsertBulk) SetIngestKey(v string) *WorkspaceUpsertBulk {
 func (u *WorkspaceUpsertBulk) UpdateIngestKey() *WorkspaceUpsertBulk {
 	return u.Update(func(s *WorkspaceUpsert) {
 		s.UpdateIngestKey()
-	})
-}
-
-// SetUserID sets the "user_id" field.
-func (u *WorkspaceUpsertBulk) SetUserID(v int64) *WorkspaceUpsertBulk {
-	return u.Update(func(s *WorkspaceUpsert) {
-		s.SetUserID(v)
-	})
-}
-
-// UpdateUserID sets the "user_id" field to the value that was provided on create.
-func (u *WorkspaceUpsertBulk) UpdateUserID() *WorkspaceUpsertBulk {
-	return u.Update(func(s *WorkspaceUpsert) {
-		s.UpdateUserID()
-	})
-}
-
-// ClearUserID clears the value of the "user_id" field.
-func (u *WorkspaceUpsertBulk) ClearUserID() *WorkspaceUpsertBulk {
-	return u.Update(func(s *WorkspaceUpsert) {
-		s.ClearUserID()
 	})
 }
 

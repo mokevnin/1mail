@@ -22,12 +22,13 @@ import (
 	"github.com/mokevnin/1mail/ent/emailtemplate"
 	"github.com/mokevnin/1mail/ent/event"
 	"github.com/mokevnin/1mail/ent/integration"
+	"github.com/mokevnin/1mail/ent/invitation"
+	"github.com/mokevnin/1mail/ent/membership"
 	"github.com/mokevnin/1mail/ent/predicate"
 	"github.com/mokevnin/1mail/ent/segment"
 	"github.com/mokevnin/1mail/ent/suppression"
 	"github.com/mokevnin/1mail/ent/transactionalemail"
 	"github.com/mokevnin/1mail/ent/unsubscribe"
-	"github.com/mokevnin/1mail/ent/user"
 	"github.com/mokevnin/1mail/ent/visitor"
 	"github.com/mokevnin/1mail/ent/webhookendpoint"
 	"github.com/mokevnin/1mail/ent/workspace"
@@ -56,7 +57,8 @@ type WorkspaceQuery struct {
 	withSuppressions        *SuppressionQuery
 	withUnsubscribes        *UnsubscribeQuery
 	withTransactionalEmails *TransactionalEmailQuery
-	withUser                *UserQuery
+	withMemberships         *MembershipQuery
+	withInvitations         *InvitationQuery
 	modifiers               []func(*sql.Selector)
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
@@ -446,9 +448,9 @@ func (_q *WorkspaceQuery) QueryTransactionalEmails() *TransactionalEmailQuery {
 	return query
 }
 
-// QueryUser chains the current query on the "user" edge.
-func (_q *WorkspaceQuery) QueryUser() *UserQuery {
-	query := (&UserClient{config: _q.config}).Query()
+// QueryMemberships chains the current query on the "memberships" edge.
+func (_q *WorkspaceQuery) QueryMemberships() *MembershipQuery {
+	query := (&MembershipClient{config: _q.config}).Query()
 	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
 		if err := _q.prepareQuery(ctx); err != nil {
 			return nil, err
@@ -459,8 +461,30 @@ func (_q *WorkspaceQuery) QueryUser() *UserQuery {
 		}
 		step := sqlgraph.NewStep(
 			sqlgraph.From(workspace.Table, workspace.FieldID, selector),
-			sqlgraph.To(user.Table, user.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, true, workspace.UserTable, workspace.UserColumn),
+			sqlgraph.To(membership.Table, membership.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, workspace.MembershipsTable, workspace.MembershipsColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryInvitations chains the current query on the "invitations" edge.
+func (_q *WorkspaceQuery) QueryInvitations() *InvitationQuery {
+	query := (&InvitationClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workspace.Table, workspace.FieldID, selector),
+			sqlgraph.To(invitation.Table, invitation.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, workspace.InvitationsTable, workspace.InvitationsColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
@@ -676,7 +700,8 @@ func (_q *WorkspaceQuery) Clone() *WorkspaceQuery {
 		withSuppressions:        _q.withSuppressions.Clone(),
 		withUnsubscribes:        _q.withUnsubscribes.Clone(),
 		withTransactionalEmails: _q.withTransactionalEmails.Clone(),
-		withUser:                _q.withUser.Clone(),
+		withMemberships:         _q.withMemberships.Clone(),
+		withInvitations:         _q.withInvitations.Clone(),
 		// clone intermediate query.
 		sql:       _q.sql.Clone(),
 		path:      _q.path,
@@ -860,14 +885,25 @@ func (_q *WorkspaceQuery) WithTransactionalEmails(opts ...func(*TransactionalEma
 	return _q
 }
 
-// WithUser tells the query-builder to eager-load the nodes that are connected to
-// the "user" edge. The optional arguments are used to configure the query builder of the edge.
-func (_q *WorkspaceQuery) WithUser(opts ...func(*UserQuery)) *WorkspaceQuery {
-	query := (&UserClient{config: _q.config}).Query()
+// WithMemberships tells the query-builder to eager-load the nodes that are connected to
+// the "memberships" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *WorkspaceQuery) WithMemberships(opts ...func(*MembershipQuery)) *WorkspaceQuery {
+	query := (&MembershipClient{config: _q.config}).Query()
 	for _, opt := range opts {
 		opt(query)
 	}
-	_q.withUser = query
+	_q.withMemberships = query
+	return _q
+}
+
+// WithInvitations tells the query-builder to eager-load the nodes that are connected to
+// the "invitations" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *WorkspaceQuery) WithInvitations(opts ...func(*InvitationQuery)) *WorkspaceQuery {
+	query := (&InvitationClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withInvitations = query
 	return _q
 }
 
@@ -949,7 +985,7 @@ func (_q *WorkspaceQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Wo
 	var (
 		nodes       = []*Workspace{}
 		_spec       = _q.querySpec()
-		loadedTypes = [17]bool{
+		loadedTypes = [18]bool{
 			_q.withContacts != nil,
 			_q.withCustomFields != nil,
 			_q.withSegments != nil,
@@ -966,7 +1002,8 @@ func (_q *WorkspaceQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Wo
 			_q.withSuppressions != nil,
 			_q.withUnsubscribes != nil,
 			_q.withTransactionalEmails != nil,
-			_q.withUser != nil,
+			_q.withMemberships != nil,
+			_q.withInvitations != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
@@ -1106,9 +1143,17 @@ func (_q *WorkspaceQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Wo
 			return nil, err
 		}
 	}
-	if query := _q.withUser; query != nil {
-		if err := _q.loadUser(ctx, query, nodes, nil,
-			func(n *Workspace, e *User) { n.Edges.User = e }); err != nil {
+	if query := _q.withMemberships; query != nil {
+		if err := _q.loadMemberships(ctx, query, nodes,
+			func(n *Workspace) { n.Edges.Memberships = []*Membership{} },
+			func(n *Workspace, e *Membership) { n.Edges.Memberships = append(n.Edges.Memberships, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := _q.withInvitations; query != nil {
+		if err := _q.loadInvitations(ctx, query, nodes,
+			func(n *Workspace) { n.Edges.Invitations = []*Invitation{} },
+			func(n *Workspace, e *Invitation) { n.Edges.Invitations = append(n.Edges.Invitations, e) }); err != nil {
 			return nil, err
 		}
 	}
@@ -1595,35 +1640,63 @@ func (_q *WorkspaceQuery) loadTransactionalEmails(ctx context.Context, query *Tr
 	}
 	return nil
 }
-func (_q *WorkspaceQuery) loadUser(ctx context.Context, query *UserQuery, nodes []*Workspace, init func(*Workspace), assign func(*Workspace, *User)) error {
-	ids := make([]int64, 0, len(nodes))
-	nodeids := make(map[int64][]*Workspace)
+func (_q *WorkspaceQuery) loadMemberships(ctx context.Context, query *MembershipQuery, nodes []*Workspace, init func(*Workspace), assign func(*Workspace, *Membership)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[int64]*Workspace)
 	for i := range nodes {
-		if nodes[i].UserID == nil {
-			continue
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
 		}
-		fk := *nodes[i].UserID
-		if _, ok := nodeids[fk]; !ok {
-			ids = append(ids, fk)
-		}
-		nodeids[fk] = append(nodeids[fk], nodes[i])
 	}
-	if len(ids) == 0 {
-		return nil
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(membership.FieldWorkspaceID)
 	}
-	query.Where(user.IDIn(ids...))
+	query.Where(predicate.Membership(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(workspace.MembershipsColumn), fks...))
+	}))
 	neighbors, err := query.All(ctx)
 	if err != nil {
 		return err
 	}
 	for _, n := range neighbors {
-		nodes, ok := nodeids[n.ID]
+		fk := n.WorkspaceID
+		node, ok := nodeids[fk]
 		if !ok {
-			return fmt.Errorf(`unexpected foreign-key "user_id" returned %v`, n.ID)
+			return fmt.Errorf(`unexpected referenced foreign-key "workspace_id" returned %v for node %v`, fk, n.ID)
 		}
-		for i := range nodes {
-			assign(nodes[i], n)
+		assign(node, n)
+	}
+	return nil
+}
+func (_q *WorkspaceQuery) loadInvitations(ctx context.Context, query *InvitationQuery, nodes []*Workspace, init func(*Workspace), assign func(*Workspace, *Invitation)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[int64]*Workspace)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
 		}
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(invitation.FieldWorkspaceID)
+	}
+	query.Where(predicate.Invitation(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(workspace.InvitationsColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.WorkspaceID
+		node, ok := nodeids[fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "workspace_id" returned %v for node %v`, fk, n.ID)
+		}
+		assign(node, n)
 	}
 	return nil
 }
@@ -1655,9 +1728,6 @@ func (_q *WorkspaceQuery) querySpec() *sqlgraph.QuerySpec {
 			if fields[i] != workspace.FieldID {
 				_spec.Node.Columns = append(_spec.Node.Columns, fields[i])
 			}
-		}
-		if _q.withUser != nil {
-			_spec.Node.AddColumnOnce(workspace.FieldUserID)
 		}
 	}
 	if ps := _q.predicates; len(ps) > 0 {

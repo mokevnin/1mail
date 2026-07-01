@@ -22,8 +22,6 @@ const (
 	FieldCollectKey = "collect_key"
 	// FieldIngestKey holds the string denoting the ingest_key field in the database.
 	FieldIngestKey = "ingest_key"
-	// FieldUserID holds the string denoting the user_id field in the database.
-	FieldUserID = "user_id"
 	// FieldCreatedAt holds the string denoting the created_at field in the database.
 	FieldCreatedAt = "created_at"
 	// FieldUpdatedAt holds the string denoting the updated_at field in the database.
@@ -60,8 +58,10 @@ const (
 	EdgeUnsubscribes = "unsubscribes"
 	// EdgeTransactionalEmails holds the string denoting the transactional_emails edge name in mutations.
 	EdgeTransactionalEmails = "transactional_emails"
-	// EdgeUser holds the string denoting the user edge name in mutations.
-	EdgeUser = "user"
+	// EdgeMemberships holds the string denoting the memberships edge name in mutations.
+	EdgeMemberships = "memberships"
+	// EdgeInvitations holds the string denoting the invitations edge name in mutations.
+	EdgeInvitations = "invitations"
 	// Table holds the table name of the workspace in the database.
 	Table = "workspaces"
 	// ContactsTable is the table that holds the contacts relation/edge.
@@ -176,13 +176,20 @@ const (
 	TransactionalEmailsInverseTable = "transactional_emails"
 	// TransactionalEmailsColumn is the table column denoting the transactional_emails relation/edge.
 	TransactionalEmailsColumn = "workspace_id"
-	// UserTable is the table that holds the user relation/edge.
-	UserTable = "workspaces"
-	// UserInverseTable is the table name for the User entity.
-	// It exists in this package in order to avoid circular dependency with the "user" package.
-	UserInverseTable = "users"
-	// UserColumn is the table column denoting the user relation/edge.
-	UserColumn = "user_id"
+	// MembershipsTable is the table that holds the memberships relation/edge.
+	MembershipsTable = "memberships"
+	// MembershipsInverseTable is the table name for the Membership entity.
+	// It exists in this package in order to avoid circular dependency with the "membership" package.
+	MembershipsInverseTable = "memberships"
+	// MembershipsColumn is the table column denoting the memberships relation/edge.
+	MembershipsColumn = "workspace_id"
+	// InvitationsTable is the table that holds the invitations relation/edge.
+	InvitationsTable = "invitations"
+	// InvitationsInverseTable is the table name for the Invitation entity.
+	// It exists in this package in order to avoid circular dependency with the "invitation" package.
+	InvitationsInverseTable = "invitations"
+	// InvitationsColumn is the table column denoting the invitations relation/edge.
+	InvitationsColumn = "workspace_id"
 )
 
 // Columns holds all SQL columns for workspace fields.
@@ -192,7 +199,6 @@ var Columns = []string{
 	FieldSlug,
 	FieldCollectKey,
 	FieldIngestKey,
-	FieldUserID,
 	FieldCreatedAt,
 	FieldUpdatedAt,
 }
@@ -250,11 +256,6 @@ func ByCollectKey(opts ...sql.OrderTermOption) OrderOption {
 // ByIngestKey orders the results by the ingest_key field.
 func ByIngestKey(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldIngestKey, opts...).ToFunc()
-}
-
-// ByUserID orders the results by the user_id field.
-func ByUserID(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldUserID, opts...).ToFunc()
 }
 
 // ByCreatedAt orders the results by the created_at field.
@@ -491,10 +492,31 @@ func ByTransactionalEmails(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOpti
 	}
 }
 
-// ByUserField orders the results by user field.
-func ByUserField(field string, opts ...sql.OrderTermOption) OrderOption {
+// ByMembershipsCount orders the results by memberships count.
+func ByMembershipsCount(opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborTerms(s, newUserStep(), sql.OrderByField(field, opts...))
+		sqlgraph.OrderByNeighborsCount(s, newMembershipsStep(), opts...)
+	}
+}
+
+// ByMemberships orders the results by memberships terms.
+func ByMemberships(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newMembershipsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+
+// ByInvitationsCount orders the results by invitations count.
+func ByInvitationsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newInvitationsStep(), opts...)
+	}
+}
+
+// ByInvitations orders the results by invitations terms.
+func ByInvitations(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newInvitationsStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
 func newContactsStep() *sqlgraph.Step {
@@ -609,10 +631,17 @@ func newTransactionalEmailsStep() *sqlgraph.Step {
 		sqlgraph.Edge(sqlgraph.O2M, false, TransactionalEmailsTable, TransactionalEmailsColumn),
 	)
 }
-func newUserStep() *sqlgraph.Step {
+func newMembershipsStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
-		sqlgraph.To(UserInverseTable, FieldID),
-		sqlgraph.Edge(sqlgraph.M2O, true, UserTable, UserColumn),
+		sqlgraph.To(MembershipsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, MembershipsTable, MembershipsColumn),
+	)
+}
+func newInvitationsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(InvitationsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, InvitationsTable, InvitationsColumn),
 	)
 }

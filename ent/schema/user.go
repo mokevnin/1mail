@@ -49,6 +49,7 @@ func (User) Fields() []ent.Field {
 
 func (User) Edges() []ent.Edge {
 	return []ent.Edge{
-		edge.To("workspaces", Workspace.Type),
+		edge.To("memberships", Membership.Type),
+		edge.To("sent_invitations", Invitation.Type),
 	}
 }

@@ -15,6 +15,12 @@
       "name": "Site Workspaces"
     },
     {
+      "name": "Site Memberships"
+    },
+    {
+      "name": "Site Invitations"
+    },
+    {
       "name": "Site User"
     },
     {
@@ -284,6 +290,99 @@
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/SiteVerifyEmailInput"
+              }
+            }
+          }
+        },
+        "security": [{}]
+      }
+    },
+    "/invitations/{token}": {
+      "get": {
+        "operationId": "SitePublicInvitations_lookup",
+        "description": "Look up a pending invite by its token to render the accept page",
+        "parameters": [
+          {
+            "name": "token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request has succeeded.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SiteInvitationLookupResult"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "RFC 7807 not found response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Site Invitations"],
+        "security": [{}]
+      }
+    },
+    "/invitations/{token}/accept": {
+      "post": {
+        "operationId": "SitePublicInvitations_accept",
+        "description": "Accept an invite: create or attach the User and create the Membership",
+        "parameters": [
+          {
+            "name": "token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request has succeeded."
+          },
+          "404": {
+            "description": "RFC 7807 not found response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "RFC 7807 validation response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Site Invitations"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SiteAcceptInvitationInput"
               }
             }
           }
@@ -2212,6 +2311,307 @@
         "tags": ["Site Integrations"]
       }
     },
+    "/workspaces/{slug}/invitations": {
+      "get": {
+        "operationId": "SiteInvitations_list",
+        "description": "List pending (unaccepted) invitations for the workspace",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/SiteInvitationResourceParentKey"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request has succeeded.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SiteInvitationResource"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "RFC 7807 not found response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Site Invitations"]
+      },
+      "post": {
+        "operationId": "SiteInvitations_create",
+        "description": "Invite an email address; the accept link is returned once",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/SiteInvitationResourceParentKey"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "The request has succeeded and a new resource has been created as a result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SiteCreateInvitationResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "RFC 7807 forbidden response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "RFC 7807 not found response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "RFC 7807 conflict response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "RFC 7807 validation response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Site Invitations"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SiteCreateInvitationInput"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workspaces/{slug}/invitations/{id}": {
+      "delete": {
+        "operationId": "SiteInvitations_delete",
+        "description": "Revoke a pending invitation",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/SiteInvitationResourceKey.slug"
+          },
+          {
+            "$ref": "#/components/parameters/SiteInvitationResourceKey.id"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "There is no content to send for this request, but the headers may be useful."
+          },
+          "403": {
+            "description": "RFC 7807 forbidden response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "RFC 7807 not found response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Site Invitations"]
+      }
+    },
+    "/workspaces/{slug}/memberships": {
+      "get": {
+        "operationId": "SiteMemberships_list",
+        "description": "List the workspace's members",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/SiteMembershipResourceParentKey"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request has succeeded.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SiteMembershipResource"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "RFC 7807 not found response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Site Memberships"]
+      }
+    },
+    "/workspaces/{slug}/memberships/{id}": {
+      "put": {
+        "operationId": "SiteMemberships_update",
+        "description": "Change a member's role (owner/admin only; owner-only to grant owner)",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/SiteMembershipResourceKey.slug"
+          },
+          {
+            "$ref": "#/components/parameters/SiteMembershipResourceKey.id"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request has succeeded.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SiteMembershipResource"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "RFC 7807 forbidden response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "RFC 7807 not found response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "RFC 7807 validation response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Site Memberships"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SiteUpdateMembershipInput"
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "SiteMemberships_delete",
+        "description": "Remove a member (owner/admin only; the last owner cannot be removed)",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/SiteMembershipResourceKey.slug"
+          },
+          {
+            "$ref": "#/components/parameters/SiteMembershipResourceKey.id"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "There is no content to send for this request, but the headers may be useful."
+          },
+          "403": {
+            "description": "RFC 7807 forbidden response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "RFC 7807 not found response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "RFC 7807 validation response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Site Memberships"]
+      }
+    },
     "/workspaces/{slug}/segments": {
       "get": {
         "operationId": "SiteSegments_list",
@@ -3770,6 +4170,60 @@
           "type": "string"
         }
       },
+      "SiteInvitationResourceKey.id": {
+        "name": "id",
+        "in": "path",
+        "required": true,
+        "description": "Unique identifier",
+        "schema": {
+          "$ref": "#/components/schemas/EntityId"
+        }
+      },
+      "SiteInvitationResourceKey.slug": {
+        "name": "slug",
+        "in": "path",
+        "required": true,
+        "description": "URL-safe unique slug; the route key for nested workspace resources",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "SiteInvitationResourceParentKey": {
+        "name": "slug",
+        "in": "path",
+        "required": true,
+        "description": "URL-safe unique slug; the route key for nested workspace resources",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "SiteMembershipResourceKey.id": {
+        "name": "id",
+        "in": "path",
+        "required": true,
+        "description": "Unique identifier",
+        "schema": {
+          "$ref": "#/components/schemas/EntityId"
+        }
+      },
+      "SiteMembershipResourceKey.slug": {
+        "name": "slug",
+        "in": "path",
+        "required": true,
+        "description": "URL-safe unique slug; the route key for nested workspace resources",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "SiteMembershipResourceParentKey": {
+        "name": "slug",
+        "in": "path",
+        "required": true,
+        "description": "URL-safe unique slug; the route key for nested workspace resources",
+        "schema": {
+          "type": "string"
+        }
+      },
       "SiteSegmentResourceKey.id": {
         "name": "id",
         "in": "path",
@@ -3917,6 +4371,18 @@
           }
         },
         "description": "RFC 7807 Problem Details"
+      },
+      "SiteAcceptInvitationInput": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "password": {
+            "type": "string"
+          }
+        },
+        "description": "Accept an invite. name + password are required only when the invitee has no\naccount yet; ignored otherwise."
       },
       "SiteAnalyticsAutomations": {
         "type": "object",
@@ -4680,6 +5146,32 @@
         },
         "description": "Create a workspace integration. The provider/channel are derived from `config.kind`."
       },
+      "SiteCreateInvitationInput": {
+        "type": "object",
+        "required": ["email", "role"],
+        "properties": {
+          "email": {
+            "$ref": "#/components/schemas/EmailAddress"
+          },
+          "role": {
+            "$ref": "#/components/schemas/SiteInvitableRole"
+          }
+        },
+        "description": "Invite an email address to the workspace"
+      },
+      "SiteCreateInvitationResponse": {
+        "type": "object",
+        "required": ["inviteUrl", "resource"],
+        "properties": {
+          "inviteUrl": {
+            "type": "string"
+          },
+          "resource": {
+            "$ref": "#/components/schemas/SiteInvitationResource"
+          }
+        },
+        "description": "Invite creation result. `inviteUrl` is the one-time accept link — shown so the\nUI can offer \"copy link\"; an email is also sent best-effort."
+      },
       "SiteCreateSegmentInput": {
         "type": "object",
         "required": ["name", "type"],
@@ -5145,6 +5637,142 @@
           }
         },
         "description": "A workspace sending-provider integration"
+      },
+      "SiteInvitableRole": {
+        "type": "string",
+        "enum": ["admin", "member"],
+        "description": "Roles that may be invited. owner is never invited — it is transferred."
+      },
+      "SiteInvitationLookupResult": {
+        "type": "object",
+        "required": ["workspaceName", "email", "hasAccount"],
+        "properties": {
+          "workspaceName": {
+            "type": "string",
+            "description": "The workspace the invitee is joining"
+          },
+          "email": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EmailAddress"
+              }
+            ],
+            "description": "The address the invite was sent to"
+          },
+          "hasAccount": {
+            "type": "boolean",
+            "description": "True when that email already has a 1mail account (accept needs no signup)"
+          }
+        },
+        "description": "What an invite link reveals before acceptance, for rendering the accept page"
+      },
+      "SiteInvitationResource": {
+        "type": "object",
+        "required": ["id", "email", "role", "expiresAt", "createdAt"],
+        "properties": {
+          "id": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EntityId"
+              }
+            ],
+            "description": "Unique identifier"
+          },
+          "email": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EmailAddress"
+              }
+            ],
+            "description": "The invited email address"
+          },
+          "role": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SiteInvitableRole"
+              }
+            ],
+            "description": "The role the invitee will receive on accept"
+          },
+          "expiresAt": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Timestamp"
+              }
+            ],
+            "description": "When the invitation link expires"
+          },
+          "invitedByEmail": {
+            "type": "string",
+            "nullable": true,
+            "description": "Email of the User who sent the invite, if still known"
+          },
+          "createdAt": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Timestamp"
+              }
+            ],
+            "description": "Creation timestamp"
+          }
+        },
+        "description": "A pending invitation of an email address to join the workspace"
+      },
+      "SiteMembershipResource": {
+        "type": "object",
+        "required": ["id", "userId", "email", "name", "role", "createdAt"],
+        "properties": {
+          "id": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EntityId"
+              }
+            ],
+            "description": "Unique identifier"
+          },
+          "userId": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EntityId"
+              }
+            ],
+            "description": "The member's User id"
+          },
+          "email": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EmailAddress"
+              }
+            ],
+            "description": "The member's email"
+          },
+          "name": {
+            "type": "string",
+            "description": "The member's display name"
+          },
+          "role": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SiteMembershipRole"
+              }
+            ],
+            "description": "The member's role in this workspace"
+          },
+          "createdAt": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Timestamp"
+              }
+            ],
+            "description": "When the member joined"
+          }
+        },
+        "description": "A Membership — the join granting a User access to the workspace with a Role"
+      },
+      "SiteMembershipRole": {
+        "type": "string",
+        "enum": ["owner", "admin", "member"],
+        "description": "A User's permission level in a Workspace"
       },
       "SitePreviewSegmentInput": {
         "type": "object",
@@ -5738,6 +6366,16 @@
           }
         },
         "description": "Update the authenticated user's profile. To change the password, provide\nboth currentPassword and newPassword."
+      },
+      "SiteUpdateMembershipInput": {
+        "type": "object",
+        "required": ["role"],
+        "properties": {
+          "role": {
+            "$ref": "#/components/schemas/SiteMembershipRole"
+          }
+        },
+        "description": "Change a member's role. Only an owner may grant/transfer the owner role."
       },
       "SiteUpdateSegmentInput": {
         "type": "object",

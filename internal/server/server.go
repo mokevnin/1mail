@@ -73,7 +73,7 @@ func New(cfg *config.Config, client *ent.Client, db *sql.DB, bus *events.Bus, en
 	// Site API — /site (JWT cookie via generated SecurityHandler; register and
 	// direct-login are public per the spec).
 	siteSrv, err := siteapi.NewServer(
-		apisite.NewHandlers(client, bus, cipher, providerCatalog, enqueuer, welcome, sysmail, authtoken.New(cfg.JWTSecret)),
+		apisite.NewHandlers(client, bus, cipher, providerCatalog, enqueuer, welcome, sysmail, authtoken.New(cfg.JWTSecret), cfg.AppURL),
 		apiauth.NewSiteSecurityHandler(cfg.JWTSecret, client),
 		siteapi.WithPathPrefix("/site"),
 		siteapi.WithErrorHandler(problemErrorHandler),

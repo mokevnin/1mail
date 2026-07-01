@@ -88,3 +88,29 @@ func TestSiteWorkspacesList(t *testing.T) {
 	require.Len(t, got, 1)
 	assert.Equal(t, "acme", got[0].Slug)
 }
+
+// Access is by Membership, not single ownership: a User with no Membership on a
+// workspace can neither see it nor reach its scoped resources.
+func TestSiteWorkspaceRequiresMembership(t *testing.T) {
+	env := testhelper.Setup(t)
+	ctx := context.Background()
+
+	// A real, authenticated User who is a member of no workspace.
+	_, err := env.DB.User.Create().
+		SetName("outsider@example.com").
+		SetEmail("outsider@example.com").
+		Save(ctx)
+	require.NoError(t, err)
+
+	c := siteClient(t, env, "outsider@example.com")
+
+	// Sees no workspaces at all.
+	got, err := c.SiteWorkspacesList(ctx)
+	require.NoError(t, err)
+	assert.Empty(t, got)
+
+	// And cannot reach acme's contacts — 404, not a data leak.
+	missing, err := c.SiteContactsList(ctx, siteapi.SiteContactsListParams{Slug: "acme"})
+	require.NoError(t, err)
+	assert.IsType(t, &siteapi.SiteContactsListNotFound{}, missing)
+}

@@ -37,20 +37,31 @@ type User struct {
 
 // UserEdges holds the relations/edges for other nodes in the graph.
 type UserEdges struct {
-	// Workspaces holds the value of the workspaces edge.
-	Workspaces []*Workspace `json:"workspaces,omitempty"`
+	// Memberships holds the value of the memberships edge.
+	Memberships []*Membership `json:"memberships,omitempty"`
+	// SentInvitations holds the value of the sent_invitations edge.
+	SentInvitations []*Invitation `json:"sent_invitations,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [1]bool
+	loadedTypes [2]bool
 }
 
-// WorkspacesOrErr returns the Workspaces value or an error if the edge
+// MembershipsOrErr returns the Memberships value or an error if the edge
 // was not loaded in eager-loading.
-func (e UserEdges) WorkspacesOrErr() ([]*Workspace, error) {
+func (e UserEdges) MembershipsOrErr() ([]*Membership, error) {
 	if e.loadedTypes[0] {
-		return e.Workspaces, nil
+		return e.Memberships, nil
 	}
-	return nil, &NotLoadedError{edge: "workspaces"}
+	return nil, &NotLoadedError{edge: "memberships"}
+}
+
+// SentInvitationsOrErr returns the SentInvitations value or an error if the edge
+// was not loaded in eager-loading.
+func (e UserEdges) SentInvitationsOrErr() ([]*Invitation, error) {
+	if e.loadedTypes[1] {
+		return e.SentInvitations, nil
+	}
+	return nil, &NotLoadedError{edge: "sent_invitations"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -135,9 +146,14 @@ func (_m *User) Value(name string) (ent.Value, error) {
 	return _m.selectValues.Get(name)
 }
 
-// QueryWorkspaces queries the "workspaces" edge of the User entity.
-func (_m *User) QueryWorkspaces() *WorkspaceQuery {
-	return NewUserClient(_m.config).QueryWorkspaces(_m)
+// QueryMemberships queries the "memberships" edge of the User entity.
+func (_m *User) QueryMemberships() *MembershipQuery {
+	return NewUserClient(_m.config).QueryMemberships(_m)
+}
+
+// QuerySentInvitations queries the "sent_invitations" edge of the User entity.
+func (_m *User) QuerySentInvitations() *InvitationQuery {
+	return NewUserClient(_m.config).QuerySentInvitations(_m)
 }
 
 // Update returns a builder for updating this User.

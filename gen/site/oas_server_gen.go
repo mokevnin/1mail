@@ -216,6 +216,54 @@ type Handler interface {
 	//
 	// PUT /workspaces/{slug}/integrations/{id}
 	SiteIntegrationsUpdate(ctx context.Context, req *SiteUpdateIntegrationInput, params SiteIntegrationsUpdateParams) (SiteIntegrationsUpdateRes, error)
+	// SiteInvitationsCreate implements SiteInvitations_create operation.
+	//
+	// Invite an email address; the accept link is returned once.
+	//
+	// POST /workspaces/{slug}/invitations
+	SiteInvitationsCreate(ctx context.Context, req *SiteCreateInvitationInput, params SiteInvitationsCreateParams) (SiteInvitationsCreateRes, error)
+	// SiteInvitationsDelete implements SiteInvitations_delete operation.
+	//
+	// Revoke a pending invitation.
+	//
+	// DELETE /workspaces/{slug}/invitations/{id}
+	SiteInvitationsDelete(ctx context.Context, params SiteInvitationsDeleteParams) (SiteInvitationsDeleteRes, error)
+	// SiteInvitationsList implements SiteInvitations_list operation.
+	//
+	// List pending (unaccepted) invitations for the workspace.
+	//
+	// GET /workspaces/{slug}/invitations
+	SiteInvitationsList(ctx context.Context, params SiteInvitationsListParams) (SiteInvitationsListRes, error)
+	// SiteMembershipsDelete implements SiteMemberships_delete operation.
+	//
+	// Remove a member (owner/admin only; the last owner cannot be removed).
+	//
+	// DELETE /workspaces/{slug}/memberships/{id}
+	SiteMembershipsDelete(ctx context.Context, params SiteMembershipsDeleteParams) (SiteMembershipsDeleteRes, error)
+	// SiteMembershipsList implements SiteMemberships_list operation.
+	//
+	// List the workspace's members.
+	//
+	// GET /workspaces/{slug}/memberships
+	SiteMembershipsList(ctx context.Context, params SiteMembershipsListParams) (SiteMembershipsListRes, error)
+	// SiteMembershipsUpdate implements SiteMemberships_update operation.
+	//
+	// Change a member's role (owner/admin only; owner-only to grant owner).
+	//
+	// PUT /workspaces/{slug}/memberships/{id}
+	SiteMembershipsUpdate(ctx context.Context, req *SiteUpdateMembershipInput, params SiteMembershipsUpdateParams) (SiteMembershipsUpdateRes, error)
+	// SitePublicInvitationsAccept implements SitePublicInvitations_accept operation.
+	//
+	// Accept an invite: create or attach the User and create the Membership.
+	//
+	// POST /invitations/{token}/accept
+	SitePublicInvitationsAccept(ctx context.Context, req *SiteAcceptInvitationInput, params SitePublicInvitationsAcceptParams) (SitePublicInvitationsAcceptRes, error)
+	// SitePublicInvitationsLookup implements SitePublicInvitations_lookup operation.
+	//
+	// Look up a pending invite by its token to render the accept page.
+	//
+	// GET /invitations/{token}
+	SitePublicInvitationsLookup(ctx context.Context, params SitePublicInvitationsLookupParams) (SitePublicInvitationsLookupRes, error)
 	// SiteSegmentsCreate implements SiteSegments_create operation.
 	//
 	// Create a resource from the site UI.

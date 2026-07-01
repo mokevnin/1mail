@@ -11,6 +11,8 @@ import "./resources/custom-fields.tsp";
 import "./resources/segments.tsp";
 import "./resources/auth.tsp";
 import "./resources/workspaces.tsp";
+import "./resources/memberships.tsp";
+import "./resources/invitations.tsp";
 import "./resources/me.tsp";
 import "./resources/events.tsp";
 import "./resources/tokens.tsp";

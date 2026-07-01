@@ -41,9 +41,6 @@ func (Workspace) Fields() []ent.Field {
 			NotEmpty().
 			Unique().
 			Sensitive(),
-		field.Int64("user_id").
-			Optional().
-			Nillable(),
 		field.Time("created_at").
 			Default(time.Now).
 			Immutable(),
@@ -71,9 +68,7 @@ func (Workspace) Edges() []ent.Edge {
 		edge.To("suppressions", Suppression.Type),
 		edge.To("unsubscribes", Unsubscribe.Type),
 		edge.To("transactional_emails", TransactionalEmail.Type),
-		edge.From("user", User.Type).
-			Ref("workspaces").
-			Field("user_id").
-			Unique(),
+		edge.To("memberships", Membership.Type),
+		edge.To("invitations", Invitation.Type),
 	}
 }

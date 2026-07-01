@@ -32,6 +32,10 @@ type Tx struct {
 	Event *EventClient
 	// Integration is the client for interacting with the Integration builders.
 	Integration *IntegrationClient
+	// Invitation is the client for interacting with the Invitation builders.
+	Invitation *InvitationClient
+	// Membership is the client for interacting with the Membership builders.
+	Membership *MembershipClient
 	// Segment is the client for interacting with the Segment builders.
 	Segment *SegmentClient
 	// Suppression is the client for interacting with the Suppression builders.
@@ -189,6 +193,8 @@ func (tx *Tx) init() {
 	tx.EmailTemplate = NewEmailTemplateClient(tx.config)
 	tx.Event = NewEventClient(tx.config)
 	tx.Integration = NewIntegrationClient(tx.config)
+	tx.Invitation = NewInvitationClient(tx.config)
+	tx.Membership = NewMembershipClient(tx.config)
 	tx.Segment = NewSegmentClient(tx.config)
 	tx.Suppression = NewSuppressionClient(tx.config)
 	tx.TransactionalEmail = NewTransactionalEmailClient(tx.config)

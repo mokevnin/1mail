@@ -9,7 +9,6 @@ import (
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
-	"github.com/mokevnin/1mail/ent/user"
 	"github.com/mokevnin/1mail/ent/workspace"
 )
 
@@ -26,8 +25,6 @@ type Workspace struct {
 	CollectKey string `json:"-"`
 	// IngestKey holds the value of the "ingest_key" field.
 	IngestKey string `json:"-"`
-	// UserID holds the value of the "user_id" field.
-	UserID *int64 `json:"user_id,omitempty"`
 	// CreatedAt holds the value of the "created_at" field.
 	CreatedAt time.Time `json:"created_at,omitempty"`
 	// UpdatedAt holds the value of the "updated_at" field.
@@ -72,11 +69,13 @@ type WorkspaceEdges struct {
 	Unsubscribes []*Unsubscribe `json:"unsubscribes,omitempty"`
 	// TransactionalEmails holds the value of the transactional_emails edge.
 	TransactionalEmails []*TransactionalEmail `json:"transactional_emails,omitempty"`
-	// User holds the value of the user edge.
-	User *User `json:"user,omitempty"`
+	// Memberships holds the value of the memberships edge.
+	Memberships []*Membership `json:"memberships,omitempty"`
+	// Invitations holds the value of the invitations edge.
+	Invitations []*Invitation `json:"invitations,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [17]bool
+	loadedTypes [18]bool
 }
 
 // ContactsOrErr returns the Contacts value or an error if the edge
@@ -223,15 +222,22 @@ func (e WorkspaceEdges) TransactionalEmailsOrErr() ([]*TransactionalEmail, error
 	return nil, &NotLoadedError{edge: "transactional_emails"}
 }
 
-// UserOrErr returns the User value or an error if the edge
-// was not loaded in eager-loading, or loaded but was not found.
-func (e WorkspaceEdges) UserOrErr() (*User, error) {
-	if e.User != nil {
-		return e.User, nil
-	} else if e.loadedTypes[16] {
-		return nil, &NotFoundError{label: user.Label}
+// MembershipsOrErr returns the Memberships value or an error if the edge
+// was not loaded in eager-loading.
+func (e WorkspaceEdges) MembershipsOrErr() ([]*Membership, error) {
+	if e.loadedTypes[16] {
+		return e.Memberships, nil
 	}
-	return nil, &NotLoadedError{edge: "user"}
+	return nil, &NotLoadedError{edge: "memberships"}
+}
+
+// InvitationsOrErr returns the Invitations value or an error if the edge
+// was not loaded in eager-loading.
+func (e WorkspaceEdges) InvitationsOrErr() ([]*Invitation, error) {
+	if e.loadedTypes[17] {
+		return e.Invitations, nil
+	}
+	return nil, &NotLoadedError{edge: "invitations"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -239,7 +245,7 @@ func (*Workspace) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case workspace.FieldID, workspace.FieldUserID:
+		case workspace.FieldID:
 			values[i] = new(sql.NullInt64)
 		case workspace.FieldName, workspace.FieldSlug, workspace.FieldCollectKey, workspace.FieldIngestKey:
 			values[i] = new(sql.NullString)
@@ -289,13 +295,6 @@ func (_m *Workspace) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field ingest_key", values[i])
 			} else if value.Valid {
 				_m.IngestKey = value.String
-			}
-		case workspace.FieldUserID:
-			if value, ok := values[i].(*sql.NullInt64); !ok {
-				return fmt.Errorf("unexpected type %T for field user_id", values[i])
-			} else if value.Valid {
-				_m.UserID = new(int64)
-				*_m.UserID = value.Int64
 			}
 		case workspace.FieldCreatedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
@@ -402,9 +401,14 @@ func (_m *Workspace) QueryTransactionalEmails() *TransactionalEmailQuery {
 	return NewWorkspaceClient(_m.config).QueryTransactionalEmails(_m)
 }
 
-// QueryUser queries the "user" edge of the Workspace entity.
-func (_m *Workspace) QueryUser() *UserQuery {
-	return NewWorkspaceClient(_m.config).QueryUser(_m)
+// QueryMemberships queries the "memberships" edge of the Workspace entity.
+func (_m *Workspace) QueryMemberships() *MembershipQuery {
+	return NewWorkspaceClient(_m.config).QueryMemberships(_m)
+}
+
+// QueryInvitations queries the "invitations" edge of the Workspace entity.
+func (_m *Workspace) QueryInvitations() *InvitationQuery {
+	return NewWorkspaceClient(_m.config).QueryInvitations(_m)
 }
 
 // Update returns a builder for updating this Workspace.
@@ -439,11 +443,6 @@ func (_m *Workspace) String() string {
 	builder.WriteString("collect_key=<sensitive>")
 	builder.WriteString(", ")
 	builder.WriteString("ingest_key=<sensitive>")
-	builder.WriteString(", ")
-	if v := _m.UserID; v != nil {
-		builder.WriteString("user_id=")
-		builder.WriteString(fmt.Sprintf("%v", *v))
-	}
 	builder.WriteString(", ")
 	builder.WriteString("created_at=")
 	builder.WriteString(_m.CreatedAt.Format(time.ANSIC))

@@ -394,6 +394,82 @@ var (
 			},
 		},
 	}
+	// InvitationsColumns holds the columns for the "invitations" table.
+	InvitationsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt64, Increment: true},
+		{Name: "email", Type: field.TypeString},
+		{Name: "role", Type: field.TypeEnum, Enums: []string{"admin", "member"}},
+		{Name: "token_hash", Type: field.TypeString},
+		{Name: "expires_at", Type: field.TypeTime},
+		{Name: "accepted_at", Type: field.TypeTime, Nullable: true},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "invited_by", Type: field.TypeInt64, Nullable: true},
+		{Name: "workspace_id", Type: field.TypeInt64},
+	}
+	// InvitationsTable holds the schema information for the "invitations" table.
+	InvitationsTable = &schema.Table{
+		Name:       "invitations",
+		Columns:    InvitationsColumns,
+		PrimaryKey: []*schema.Column{InvitationsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "invitations_users_sent_invitations",
+				Columns:    []*schema.Column{InvitationsColumns[8]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+			{
+				Symbol:     "invitations_workspaces_invitations",
+				Columns:    []*schema.Column{InvitationsColumns[9]},
+				RefColumns: []*schema.Column{WorkspacesColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "invitation_workspace_id_email",
+				Unique:  true,
+				Columns: []*schema.Column{InvitationsColumns[9], InvitationsColumns[1]},
+			},
+		},
+	}
+	// MembershipsColumns holds the columns for the "memberships" table.
+	MembershipsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt64, Increment: true},
+		{Name: "role", Type: field.TypeEnum, Enums: []string{"owner", "admin", "member"}},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "user_id", Type: field.TypeInt64},
+		{Name: "workspace_id", Type: field.TypeInt64},
+	}
+	// MembershipsTable holds the schema information for the "memberships" table.
+	MembershipsTable = &schema.Table{
+		Name:       "memberships",
+		Columns:    MembershipsColumns,
+		PrimaryKey: []*schema.Column{MembershipsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "memberships_users_memberships",
+				Columns:    []*schema.Column{MembershipsColumns[4]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+			{
+				Symbol:     "memberships_workspaces_memberships",
+				Columns:    []*schema.Column{MembershipsColumns[5]},
+				RefColumns: []*schema.Column{WorkspacesColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "membership_user_id_workspace_id",
+				Unique:  true,
+				Columns: []*schema.Column{MembershipsColumns[4], MembershipsColumns[5]},
+			},
+		},
+	}
 	// SegmentsColumns holds the columns for the "segments" table.
 	SegmentsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt64, Increment: true},
@@ -626,21 +702,12 @@ var (
 		{Name: "ingest_key", Type: field.TypeString, Unique: true},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
-		{Name: "user_id", Type: field.TypeInt64, Nullable: true},
 	}
 	// WorkspacesTable holds the schema information for the "workspaces" table.
 	WorkspacesTable = &schema.Table{
 		Name:       "workspaces",
 		Columns:    WorkspacesColumns,
 		PrimaryKey: []*schema.Column{WorkspacesColumns[0]},
-		ForeignKeys: []*schema.ForeignKey{
-			{
-				Symbol:     "workspaces_users_workspaces",
-				Columns:    []*schema.Column{WorkspacesColumns[7]},
-				RefColumns: []*schema.Column{UsersColumns[0]},
-				OnDelete:   schema.SetNull,
-			},
-		},
 	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
@@ -654,6 +721,8 @@ var (
 		EmailTemplatesTable,
 		EventsTable,
 		IntegrationsTable,
+		InvitationsTable,
+		MembershipsTable,
 		SegmentsTable,
 		SuppressionsTable,
 		TransactionalEmailsTable,
@@ -708,6 +777,16 @@ func init() {
 	IntegrationsTable.Annotation = &entsql.Annotation{
 		Table: "integrations",
 	}
+	InvitationsTable.ForeignKeys[0].RefTable = UsersTable
+	InvitationsTable.ForeignKeys[1].RefTable = WorkspacesTable
+	InvitationsTable.Annotation = &entsql.Annotation{
+		Table: "invitations",
+	}
+	MembershipsTable.ForeignKeys[0].RefTable = UsersTable
+	MembershipsTable.ForeignKeys[1].RefTable = WorkspacesTable
+	MembershipsTable.Annotation = &entsql.Annotation{
+		Table: "memberships",
+	}
 	SegmentsTable.ForeignKeys[0].RefTable = WorkspacesTable
 	SegmentsTable.Annotation = &entsql.Annotation{
 		Table: "segments",
@@ -736,7 +815,6 @@ func init() {
 	WebhookEndpointsTable.Annotation = &entsql.Annotation{
 		Table: "webhook_endpoints",
 	}
-	WorkspacesTable.ForeignKeys[0].RefTable = UsersTable
 	WorkspacesTable.Annotation = &entsql.Annotation{
 		Table: "workspaces",
 	}

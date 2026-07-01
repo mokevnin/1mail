@@ -26,17 +26,26 @@ const (
 	FieldUpdatedAt = "updated_at"
 	// FieldCreatedAt holds the string denoting the created_at field in the database.
 	FieldCreatedAt = "created_at"
-	// EdgeWorkspaces holds the string denoting the workspaces edge name in mutations.
-	EdgeWorkspaces = "workspaces"
+	// EdgeMemberships holds the string denoting the memberships edge name in mutations.
+	EdgeMemberships = "memberships"
+	// EdgeSentInvitations holds the string denoting the sent_invitations edge name in mutations.
+	EdgeSentInvitations = "sent_invitations"
 	// Table holds the table name of the user in the database.
 	Table = "users"
-	// WorkspacesTable is the table that holds the workspaces relation/edge.
-	WorkspacesTable = "workspaces"
-	// WorkspacesInverseTable is the table name for the Workspace entity.
-	// It exists in this package in order to avoid circular dependency with the "workspace" package.
-	WorkspacesInverseTable = "workspaces"
-	// WorkspacesColumn is the table column denoting the workspaces relation/edge.
-	WorkspacesColumn = "user_id"
+	// MembershipsTable is the table that holds the memberships relation/edge.
+	MembershipsTable = "memberships"
+	// MembershipsInverseTable is the table name for the Membership entity.
+	// It exists in this package in order to avoid circular dependency with the "membership" package.
+	MembershipsInverseTable = "memberships"
+	// MembershipsColumn is the table column denoting the memberships relation/edge.
+	MembershipsColumn = "user_id"
+	// SentInvitationsTable is the table that holds the sent_invitations relation/edge.
+	SentInvitationsTable = "invitations"
+	// SentInvitationsInverseTable is the table name for the Invitation entity.
+	// It exists in this package in order to avoid circular dependency with the "invitation" package.
+	SentInvitationsInverseTable = "invitations"
+	// SentInvitationsColumn is the table column denoting the sent_invitations relation/edge.
+	SentInvitationsColumn = "invited_by"
 )
 
 // Columns holds all SQL columns for user fields.
@@ -111,23 +120,44 @@ func ByCreatedAt(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldCreatedAt, opts...).ToFunc()
 }
 
-// ByWorkspacesCount orders the results by workspaces count.
-func ByWorkspacesCount(opts ...sql.OrderTermOption) OrderOption {
+// ByMembershipsCount orders the results by memberships count.
+func ByMembershipsCount(opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborsCount(s, newWorkspacesStep(), opts...)
+		sqlgraph.OrderByNeighborsCount(s, newMembershipsStep(), opts...)
 	}
 }
 
-// ByWorkspaces orders the results by workspaces terms.
-func ByWorkspaces(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+// ByMemberships orders the results by memberships terms.
+func ByMemberships(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborTerms(s, newWorkspacesStep(), append([]sql.OrderTerm{term}, terms...)...)
+		sqlgraph.OrderByNeighborTerms(s, newMembershipsStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
-func newWorkspacesStep() *sqlgraph.Step {
+
+// BySentInvitationsCount orders the results by sent_invitations count.
+func BySentInvitationsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newSentInvitationsStep(), opts...)
+	}
+}
+
+// BySentInvitations orders the results by sent_invitations terms.
+func BySentInvitations(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newSentInvitationsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+func newMembershipsStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
-		sqlgraph.To(WorkspacesInverseTable, FieldID),
-		sqlgraph.Edge(sqlgraph.O2M, false, WorkspacesTable, WorkspacesColumn),
+		sqlgraph.To(MembershipsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, MembershipsTable, MembershipsColumn),
+	)
+}
+func newSentInvitationsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(SentInvitationsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, SentInvitationsTable, SentInvitationsColumn),
 	)
 }

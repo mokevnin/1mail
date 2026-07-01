@@ -6,12 +6,13 @@ import (
 	"strings"
 
 	"github.com/mokevnin/1mail/ent"
+	"github.com/mokevnin/1mail/ent/membership"
 	"github.com/mokevnin/1mail/ent/workspace"
 	siteapi "github.com/mokevnin/1mail/gen/site"
 	"github.com/mokevnin/1mail/internal/api/auth"
 )
 
-// SiteWorkspacesList returns the workspaces owned by the authenticated user.
+// SiteWorkspacesList returns the workspaces the authenticated user is a member of.
 func (h *Handlers) SiteWorkspacesList(ctx context.Context) ([]siteapi.SiteWorkspaceResource, error) {
 	a := auth.GetSiteAuth(ctx)
 	if a == nil {
@@ -19,7 +20,7 @@ func (h *Handlers) SiteWorkspacesList(ctx context.Context) ([]siteapi.SiteWorksp
 	}
 
 	items, err := h.ent.Workspace.Query().
-		Where(workspace.UserID(a.UserID)).
+		Where(workspace.HasMembershipsWith(membership.UserID(a.UserID))).
 		Order(ent.Asc(workspace.FieldID)).
 		All(ctx)
 	if err != nil {

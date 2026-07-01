@@ -22,6 +22,8 @@ import (
 	"github.com/mokevnin/1mail/ent/emailtemplate"
 	"github.com/mokevnin/1mail/ent/event"
 	"github.com/mokevnin/1mail/ent/integration"
+	"github.com/mokevnin/1mail/ent/invitation"
+	"github.com/mokevnin/1mail/ent/membership"
 	"github.com/mokevnin/1mail/ent/segment"
 	"github.com/mokevnin/1mail/ent/suppression"
 	"github.com/mokevnin/1mail/ent/transactionalemail"
@@ -100,6 +102,8 @@ func checkColumn(t, c string) error {
 			emailtemplate.Table:      emailtemplate.ValidColumn,
 			event.Table:              event.ValidColumn,
 			integration.Table:        integration.ValidColumn,
+			invitation.Table:         invitation.ValidColumn,
+			membership.Table:         membership.ValidColumn,
 			segment.Table:            segment.ValidColumn,
 			suppression.Table:        suppression.ValidColumn,
 			transactionalemail.Table: transactionalemail.ValidColumn,

@@ -1279,14 +1279,17 @@ func (s *ProblemDetails) SetFields(val OptProblemDetailsFields) {
 	s.Fields = val
 }
 
-func (*ProblemDetails) siteAnalyticsOverviewRes() {}
-func (*ProblemDetails) siteAuthDirectLoginRes()   {}
-func (*ProblemDetails) siteAuthResetPasswordRes() {}
-func (*ProblemDetails) siteAuthVerifyEmailRes()   {}
-func (*ProblemDetails) siteEventsActionsRes()     {}
-func (*ProblemDetails) siteEventsListRes()        {}
-func (*ProblemDetails) siteIntegrationsListRes()  {}
-func (*ProblemDetails) siteTokensListRes()        {}
+func (*ProblemDetails) siteAnalyticsOverviewRes()       {}
+func (*ProblemDetails) siteAuthDirectLoginRes()         {}
+func (*ProblemDetails) siteAuthResetPasswordRes()       {}
+func (*ProblemDetails) siteAuthVerifyEmailRes()         {}
+func (*ProblemDetails) siteEventsActionsRes()           {}
+func (*ProblemDetails) siteEventsListRes()              {}
+func (*ProblemDetails) siteIntegrationsListRes()        {}
+func (*ProblemDetails) siteInvitationsListRes()         {}
+func (*ProblemDetails) siteMembershipsListRes()         {}
+func (*ProblemDetails) sitePublicInvitationsLookupRes() {}
+func (*ProblemDetails) siteTokensListRes()              {}
 
 // Validation errors grouped by field.
 type ProblemDetailsErrors map[string][]string
@@ -1310,6 +1313,34 @@ func (s *ProblemDetailsFields) init() ProblemDetailsFields {
 		*s = m
 	}
 	return m
+}
+
+// Accept an invite. name + password are required only when the invitee has no account yet; ignored
+// otherwise.
+// Ref: #/components/schemas/SiteAcceptInvitationInput
+type SiteAcceptInvitationInput struct {
+	Name     OptString `json:"name"`
+	Password OptString `json:"password"`
+}
+
+// GetName returns the value of Name.
+func (s *SiteAcceptInvitationInput) GetName() OptString {
+	return s.Name
+}
+
+// GetPassword returns the value of Password.
+func (s *SiteAcceptInvitationInput) GetPassword() OptString {
+	return s.Password
+}
+
+// SetName sets the value of Name.
+func (s *SiteAcceptInvitationInput) SetName(val OptString) {
+	s.Name = val
+}
+
+// SetPassword sets the value of Password.
+func (s *SiteAcceptInvitationInput) SetPassword(val OptString) {
+	s.Password = val
 }
 
 // Automation counts (point-in-time snapshot).
@@ -3312,6 +3343,63 @@ func (s *SiteCreateIntegrationInput) SetConfig(val SiteIntegrationConfigInput) {
 	s.Config = val
 }
 
+// Invite an email address to the workspace.
+// Ref: #/components/schemas/SiteCreateInvitationInput
+type SiteCreateInvitationInput struct {
+	Email EmailAddress      `json:"email"`
+	Role  SiteInvitableRole `json:"role"`
+}
+
+// GetEmail returns the value of Email.
+func (s *SiteCreateInvitationInput) GetEmail() EmailAddress {
+	return s.Email
+}
+
+// GetRole returns the value of Role.
+func (s *SiteCreateInvitationInput) GetRole() SiteInvitableRole {
+	return s.Role
+}
+
+// SetEmail sets the value of Email.
+func (s *SiteCreateInvitationInput) SetEmail(val EmailAddress) {
+	s.Email = val
+}
+
+// SetRole sets the value of Role.
+func (s *SiteCreateInvitationInput) SetRole(val SiteInvitableRole) {
+	s.Role = val
+}
+
+// Invite creation result. `inviteUrl` is the one-time accept link — shown so the UI can offer "copy
+// link"; an email is also sent best-effort.
+// Ref: #/components/schemas/SiteCreateInvitationResponse
+type SiteCreateInvitationResponse struct {
+	InviteUrl string                 `json:"inviteUrl"`
+	Resource  SiteInvitationResource `json:"resource"`
+}
+
+// GetInviteUrl returns the value of InviteUrl.
+func (s *SiteCreateInvitationResponse) GetInviteUrl() string {
+	return s.InviteUrl
+}
+
+// GetResource returns the value of Resource.
+func (s *SiteCreateInvitationResponse) GetResource() SiteInvitationResource {
+	return s.Resource
+}
+
+// SetInviteUrl sets the value of InviteUrl.
+func (s *SiteCreateInvitationResponse) SetInviteUrl(val string) {
+	s.InviteUrl = val
+}
+
+// SetResource sets the value of Resource.
+func (s *SiteCreateInvitationResponse) SetResource(val SiteInvitationResource) {
+	s.Resource = val
+}
+
+func (*SiteCreateInvitationResponse) siteInvitationsCreateRes() {}
+
 // Site request body for creating a segment.
 // Ref: #/components/schemas/SiteCreateSegmentInput
 type SiteCreateSegmentInput struct {
@@ -4582,6 +4670,364 @@ type SiteIntegrationsUpdateUnprocessableEntity ProblemDetails
 
 func (*SiteIntegrationsUpdateUnprocessableEntity) siteIntegrationsUpdateRes() {}
 
+// Roles that may be invited. owner is never invited — it is transferred.
+// Ref: #/components/schemas/SiteInvitableRole
+type SiteInvitableRole string
+
+const (
+	SiteInvitableRoleAdmin  SiteInvitableRole = "admin"
+	SiteInvitableRoleMember SiteInvitableRole = "member"
+)
+
+// AllValues returns all SiteInvitableRole values.
+func (SiteInvitableRole) AllValues() []SiteInvitableRole {
+	return []SiteInvitableRole{
+		SiteInvitableRoleAdmin,
+		SiteInvitableRoleMember,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s SiteInvitableRole) MarshalText() ([]byte, error) {
+	switch s {
+	case SiteInvitableRoleAdmin:
+		return []byte(s), nil
+	case SiteInvitableRoleMember:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *SiteInvitableRole) UnmarshalText(data []byte) error {
+	switch SiteInvitableRole(data) {
+	case SiteInvitableRoleAdmin:
+		*s = SiteInvitableRoleAdmin
+		return nil
+	case SiteInvitableRoleMember:
+		*s = SiteInvitableRoleMember
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// What an invite link reveals before acceptance, for rendering the accept page.
+// Ref: #/components/schemas/SiteInvitationLookupResult
+type SiteInvitationLookupResult struct {
+	// The workspace the invitee is joining.
+	WorkspaceName string `json:"workspaceName"`
+	// The address the invite was sent to.
+	Email EmailAddress `json:"email"`
+	// True when that email already has a 1mail account (accept needs no signup).
+	HasAccount bool `json:"hasAccount"`
+}
+
+// GetWorkspaceName returns the value of WorkspaceName.
+func (s *SiteInvitationLookupResult) GetWorkspaceName() string {
+	return s.WorkspaceName
+}
+
+// GetEmail returns the value of Email.
+func (s *SiteInvitationLookupResult) GetEmail() EmailAddress {
+	return s.Email
+}
+
+// GetHasAccount returns the value of HasAccount.
+func (s *SiteInvitationLookupResult) GetHasAccount() bool {
+	return s.HasAccount
+}
+
+// SetWorkspaceName sets the value of WorkspaceName.
+func (s *SiteInvitationLookupResult) SetWorkspaceName(val string) {
+	s.WorkspaceName = val
+}
+
+// SetEmail sets the value of Email.
+func (s *SiteInvitationLookupResult) SetEmail(val EmailAddress) {
+	s.Email = val
+}
+
+// SetHasAccount sets the value of HasAccount.
+func (s *SiteInvitationLookupResult) SetHasAccount(val bool) {
+	s.HasAccount = val
+}
+
+func (*SiteInvitationLookupResult) sitePublicInvitationsLookupRes() {}
+
+// A pending invitation of an email address to join the workspace.
+// Ref: #/components/schemas/SiteInvitationResource
+type SiteInvitationResource struct {
+	// Unique identifier.
+	ID EntityId `json:"id"`
+	// The invited email address.
+	Email EmailAddress `json:"email"`
+	// The role the invitee will receive on accept.
+	Role SiteInvitableRole `json:"role"`
+	// When the invitation link expires.
+	ExpiresAt Timestamp `json:"expiresAt"`
+	// Email of the User who sent the invite, if still known.
+	InvitedByEmail OptNilString `json:"invitedByEmail"`
+	// Creation timestamp.
+	CreatedAt Timestamp `json:"createdAt"`
+}
+
+// GetID returns the value of ID.
+func (s *SiteInvitationResource) GetID() EntityId {
+	return s.ID
+}
+
+// GetEmail returns the value of Email.
+func (s *SiteInvitationResource) GetEmail() EmailAddress {
+	return s.Email
+}
+
+// GetRole returns the value of Role.
+func (s *SiteInvitationResource) GetRole() SiteInvitableRole {
+	return s.Role
+}
+
+// GetExpiresAt returns the value of ExpiresAt.
+func (s *SiteInvitationResource) GetExpiresAt() Timestamp {
+	return s.ExpiresAt
+}
+
+// GetInvitedByEmail returns the value of InvitedByEmail.
+func (s *SiteInvitationResource) GetInvitedByEmail() OptNilString {
+	return s.InvitedByEmail
+}
+
+// GetCreatedAt returns the value of CreatedAt.
+func (s *SiteInvitationResource) GetCreatedAt() Timestamp {
+	return s.CreatedAt
+}
+
+// SetID sets the value of ID.
+func (s *SiteInvitationResource) SetID(val EntityId) {
+	s.ID = val
+}
+
+// SetEmail sets the value of Email.
+func (s *SiteInvitationResource) SetEmail(val EmailAddress) {
+	s.Email = val
+}
+
+// SetRole sets the value of Role.
+func (s *SiteInvitationResource) SetRole(val SiteInvitableRole) {
+	s.Role = val
+}
+
+// SetExpiresAt sets the value of ExpiresAt.
+func (s *SiteInvitationResource) SetExpiresAt(val Timestamp) {
+	s.ExpiresAt = val
+}
+
+// SetInvitedByEmail sets the value of InvitedByEmail.
+func (s *SiteInvitationResource) SetInvitedByEmail(val OptNilString) {
+	s.InvitedByEmail = val
+}
+
+// SetCreatedAt sets the value of CreatedAt.
+func (s *SiteInvitationResource) SetCreatedAt(val Timestamp) {
+	s.CreatedAt = val
+}
+
+type SiteInvitationsCreateConflict ProblemDetails
+
+func (*SiteInvitationsCreateConflict) siteInvitationsCreateRes() {}
+
+type SiteInvitationsCreateForbidden ProblemDetails
+
+func (*SiteInvitationsCreateForbidden) siteInvitationsCreateRes() {}
+
+type SiteInvitationsCreateNotFound ProblemDetails
+
+func (*SiteInvitationsCreateNotFound) siteInvitationsCreateRes() {}
+
+type SiteInvitationsCreateUnprocessableEntity ProblemDetails
+
+func (*SiteInvitationsCreateUnprocessableEntity) siteInvitationsCreateRes() {}
+
+type SiteInvitationsDeleteForbidden ProblemDetails
+
+func (*SiteInvitationsDeleteForbidden) siteInvitationsDeleteRes() {}
+
+// SiteInvitationsDeleteNoContent is response for SiteInvitationsDelete operation.
+type SiteInvitationsDeleteNoContent struct{}
+
+func (*SiteInvitationsDeleteNoContent) siteInvitationsDeleteRes() {}
+
+type SiteInvitationsDeleteNotFound ProblemDetails
+
+func (*SiteInvitationsDeleteNotFound) siteInvitationsDeleteRes() {}
+
+type SiteInvitationsListOKApplicationJSON []SiteInvitationResource
+
+func (*SiteInvitationsListOKApplicationJSON) siteInvitationsListRes() {}
+
+// A Membership — the join granting a User access to the workspace with a Role.
+// Ref: #/components/schemas/SiteMembershipResource
+type SiteMembershipResource struct {
+	// Unique identifier.
+	ID EntityId `json:"id"`
+	// The member's User id.
+	UserId EntityId `json:"userId"`
+	// The member's email.
+	Email EmailAddress `json:"email"`
+	// The member's display name.
+	Name string `json:"name"`
+	// The member's role in this workspace.
+	Role SiteMembershipRole `json:"role"`
+	// When the member joined.
+	CreatedAt Timestamp `json:"createdAt"`
+}
+
+// GetID returns the value of ID.
+func (s *SiteMembershipResource) GetID() EntityId {
+	return s.ID
+}
+
+// GetUserId returns the value of UserId.
+func (s *SiteMembershipResource) GetUserId() EntityId {
+	return s.UserId
+}
+
+// GetEmail returns the value of Email.
+func (s *SiteMembershipResource) GetEmail() EmailAddress {
+	return s.Email
+}
+
+// GetName returns the value of Name.
+func (s *SiteMembershipResource) GetName() string {
+	return s.Name
+}
+
+// GetRole returns the value of Role.
+func (s *SiteMembershipResource) GetRole() SiteMembershipRole {
+	return s.Role
+}
+
+// GetCreatedAt returns the value of CreatedAt.
+func (s *SiteMembershipResource) GetCreatedAt() Timestamp {
+	return s.CreatedAt
+}
+
+// SetID sets the value of ID.
+func (s *SiteMembershipResource) SetID(val EntityId) {
+	s.ID = val
+}
+
+// SetUserId sets the value of UserId.
+func (s *SiteMembershipResource) SetUserId(val EntityId) {
+	s.UserId = val
+}
+
+// SetEmail sets the value of Email.
+func (s *SiteMembershipResource) SetEmail(val EmailAddress) {
+	s.Email = val
+}
+
+// SetName sets the value of Name.
+func (s *SiteMembershipResource) SetName(val string) {
+	s.Name = val
+}
+
+// SetRole sets the value of Role.
+func (s *SiteMembershipResource) SetRole(val SiteMembershipRole) {
+	s.Role = val
+}
+
+// SetCreatedAt sets the value of CreatedAt.
+func (s *SiteMembershipResource) SetCreatedAt(val Timestamp) {
+	s.CreatedAt = val
+}
+
+func (*SiteMembershipResource) siteMembershipsUpdateRes() {}
+
+// A User's permission level in a Workspace.
+// Ref: #/components/schemas/SiteMembershipRole
+type SiteMembershipRole string
+
+const (
+	SiteMembershipRoleOwner  SiteMembershipRole = "owner"
+	SiteMembershipRoleAdmin  SiteMembershipRole = "admin"
+	SiteMembershipRoleMember SiteMembershipRole = "member"
+)
+
+// AllValues returns all SiteMembershipRole values.
+func (SiteMembershipRole) AllValues() []SiteMembershipRole {
+	return []SiteMembershipRole{
+		SiteMembershipRoleOwner,
+		SiteMembershipRoleAdmin,
+		SiteMembershipRoleMember,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s SiteMembershipRole) MarshalText() ([]byte, error) {
+	switch s {
+	case SiteMembershipRoleOwner:
+		return []byte(s), nil
+	case SiteMembershipRoleAdmin:
+		return []byte(s), nil
+	case SiteMembershipRoleMember:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *SiteMembershipRole) UnmarshalText(data []byte) error {
+	switch SiteMembershipRole(data) {
+	case SiteMembershipRoleOwner:
+		*s = SiteMembershipRoleOwner
+		return nil
+	case SiteMembershipRoleAdmin:
+		*s = SiteMembershipRoleAdmin
+		return nil
+	case SiteMembershipRoleMember:
+		*s = SiteMembershipRoleMember
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+type SiteMembershipsDeleteForbidden ProblemDetails
+
+func (*SiteMembershipsDeleteForbidden) siteMembershipsDeleteRes() {}
+
+// SiteMembershipsDeleteNoContent is response for SiteMembershipsDelete operation.
+type SiteMembershipsDeleteNoContent struct{}
+
+func (*SiteMembershipsDeleteNoContent) siteMembershipsDeleteRes() {}
+
+type SiteMembershipsDeleteNotFound ProblemDetails
+
+func (*SiteMembershipsDeleteNotFound) siteMembershipsDeleteRes() {}
+
+type SiteMembershipsDeleteUnprocessableEntity ProblemDetails
+
+func (*SiteMembershipsDeleteUnprocessableEntity) siteMembershipsDeleteRes() {}
+
+type SiteMembershipsListOKApplicationJSON []SiteMembershipResource
+
+func (*SiteMembershipsListOKApplicationJSON) siteMembershipsListRes() {}
+
+type SiteMembershipsUpdateForbidden ProblemDetails
+
+func (*SiteMembershipsUpdateForbidden) siteMembershipsUpdateRes() {}
+
+type SiteMembershipsUpdateNotFound ProblemDetails
+
+func (*SiteMembershipsUpdateNotFound) siteMembershipsUpdateRes() {}
+
+type SiteMembershipsUpdateUnprocessableEntity ProblemDetails
+
+func (*SiteMembershipsUpdateUnprocessableEntity) siteMembershipsUpdateRes() {}
+
 // Request body for previewing a rule definition's audience.
 // Ref: #/components/schemas/SitePreviewSegmentInput
 type SitePreviewSegmentInput struct {
@@ -4617,6 +5063,19 @@ func (s *SitePreviewSegmentResult) SetCount(val int32) {
 }
 
 func (*SitePreviewSegmentResult) siteSegmentsPreviewRes() {}
+
+type SitePublicInvitationsAcceptNotFound ProblemDetails
+
+func (*SitePublicInvitationsAcceptNotFound) sitePublicInvitationsAcceptRes() {}
+
+// SitePublicInvitationsAcceptOK is response for SitePublicInvitationsAccept operation.
+type SitePublicInvitationsAcceptOK struct{}
+
+func (*SitePublicInvitationsAcceptOK) sitePublicInvitationsAcceptRes() {}
+
+type SitePublicInvitationsAcceptUnprocessableEntity ProblemDetails
+
+func (*SitePublicInvitationsAcceptUnprocessableEntity) sitePublicInvitationsAcceptRes() {}
 
 // Ref: #/components/schemas/SiteRegisterInput
 type SiteRegisterInput struct {
@@ -6502,6 +6961,22 @@ func (s *SiteUpdateMeInput) SetCurrentPassword(val OptString) {
 // SetNewPassword sets the value of NewPassword.
 func (s *SiteUpdateMeInput) SetNewPassword(val OptString) {
 	s.NewPassword = val
+}
+
+// Change a member's role. Only an owner may grant/transfer the owner role.
+// Ref: #/components/schemas/SiteUpdateMembershipInput
+type SiteUpdateMembershipInput struct {
+	Role SiteMembershipRole `json:"role"`
+}
+
+// GetRole returns the value of Role.
+func (s *SiteUpdateMembershipInput) GetRole() SiteMembershipRole {
+	return s.Role
+}
+
+// SetRole sets the value of Role.
+func (s *SiteUpdateMembershipInput) SetRole(val SiteMembershipRole) {
+	s.Role = val
 }
 
 // Site request body for updating a segment.

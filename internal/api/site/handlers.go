@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/mokevnin/1mail/ent"
+	"github.com/mokevnin/1mail/ent/membership"
 	"github.com/mokevnin/1mail/ent/workspace"
 	siteapi "github.com/mokevnin/1mail/gen/site"
 	"github.com/mokevnin/1mail/internal/api/auth"
@@ -41,6 +42,10 @@ type SystemMailEnqueuer interface {
 	EnqueuePasswordReset(ctx context.Context, email, token string) error
 	EnqueueEmailVerification(ctx context.Context, email, token string) error
 	EnqueueEmailChangeConfirm(ctx context.Context, email, token string) error
+	// EnqueueMemberInvite sends the workspace invite email. It is best-effort:
+	// the invite also returns a copy-link, so a missing/failed mailer (common on
+	// self-hosted with no SMTP) must not fail the invite.
+	EnqueueMemberInvite(ctx context.Context, email, inviteURL, workspaceName, inviterName string) error
 }
 
 type Handlers struct {
@@ -52,29 +57,40 @@ type Handlers struct {
 	welcome  WelcomeEnqueuer
 	sysmail  SystemMailEnqueuer
 	tokens   *authtoken.Signer
+	appURL   string
 }
 
-func NewHandlers(client *ent.Client, bus *events.Bus, cipher *secrets.Cipher, catalog *messaging.Catalog, enqueuer BroadcastEnqueuer, welcome WelcomeEnqueuer, sysmail SystemMailEnqueuer, tokens *authtoken.Signer) *Handlers {
-	return &Handlers{ent: client, bus: bus, cipher: cipher, catalog: catalog, enqueuer: enqueuer, welcome: welcome, sysmail: sysmail, tokens: tokens}
+func NewHandlers(client *ent.Client, bus *events.Bus, cipher *secrets.Cipher, catalog *messaging.Catalog, enqueuer BroadcastEnqueuer, welcome WelcomeEnqueuer, sysmail SystemMailEnqueuer, tokens *authtoken.Signer, appURL string) *Handlers {
+	return &Handlers{ent: client, bus: bus, cipher: cipher, catalog: catalog, enqueuer: enqueuer, welcome: welcome, sysmail: sysmail, tokens: tokens, appURL: appURL}
 }
 
 var _ siteapi.Handler = (*Handlers)(nil)
 
-// workspaceID resolves the workspace addressed by the /w/{slug} path segment,
-// scoped to the authenticated user. Returns an ent NotFound error (so callers
-// can map it to 404) when the slug does not exist or is not owned by the user.
-func (h *Handlers) workspaceID(ctx context.Context, slug string) (int64, error) {
+// membershipFor resolves the authenticated user's Membership on the workspace
+// addressed by the /w/{slug} path segment, returning the workspace id and the
+// caller's Role. Returns an ent NotFound error (so callers can map it to 404)
+// when the slug does not exist or the user has no membership on it — access is
+// "does this User have a Membership on this Workspace?", never single-owner.
+func (h *Handlers) membershipFor(ctx context.Context, slug string) (int64, membership.Role, error) {
 	a := auth.GetSiteAuth(ctx)
 	if a == nil {
-		return 0, &ent.NotFoundError{}
+		return 0, "", &ent.NotFoundError{}
 	}
-	ws, err := h.ent.Workspace.Query().
-		Where(workspace.Slug(slug), workspace.UserID(a.UserID)).
+	m, err := h.ent.Membership.Query().
+		Where(membership.UserID(a.UserID), membership.HasWorkspaceWith(workspace.Slug(slug))).
 		Only(ctx)
 	if err != nil {
-		return 0, err
+		return 0, "", err
 	}
-	return ws.ID, nil
+	return m.WorkspaceID, m.Role, nil
+}
+
+// workspaceID resolves the workspace addressed by the /w/{slug} path segment,
+// scoped to the authenticated user's membership. Returns an ent NotFound error
+// (mapped to 404) when the slug does not exist or the user is not a member.
+func (h *Handlers) workspaceID(ctx context.Context, slug string) (int64, error) {
+	id, _, err := h.membershipFor(ctx, slug)
+	return id, err
 }
 
 // createDefaultWorkspace creates the user's initial workspace with a unique slug
@@ -110,12 +126,20 @@ func (h *Handlers) createDefaultWorkspace(ctx context.Context, userID int64, nam
 			SetSlug(slug).
 			SetCollectKey(collectKey).
 			SetIngestKey(ingestKey).
-			SetUserID(userID).
 			Save(ctx)
 		if service.IsUniqueViolation(err) {
 			continue // lost a race on the slug; try the next suffix
 		}
 		if err != nil {
+			return nil, err
+		}
+		// The creator becomes the workspace owner via a Membership — a Workspace
+		// is reached through Memberships, never owned by a single User directly.
+		if _, err := h.ent.Membership.Create().
+			SetUserID(userID).
+			SetWorkspaceID(ws.ID).
+			SetRole(membership.RoleOwner).
+			Save(ctx); err != nil {
 			return nil, err
 		}
 		return ws, nil
