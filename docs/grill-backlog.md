@@ -42,6 +42,99 @@ opt-in flow (confirmation email → activation) has to be modeled *without* rein
 subscription status. Open forks: what "confirmed" is a fact about, how it coexists with the
 derived Send-eligibility model, per-source vs. global confirmation.
 
+### 🟡 AI/MCP plane — agent-operable platform (no built-in chat)
+The strategic AI-first bet: 1mail is **operated by an agent through an MCP tool-surface**,
+not through a built-in chatbox. The clean glossary (already a de-facto system prompt), the
+`Event` spine, and **derived** Send-eligibility are what make the domain safely
+agent-operable — the AI is a *client* of the core invariants, never a bypass. One surface is
+the substrate for two consumers: an external "bring-your-own-agent" (Claude Desktop, the
+customer's own agent) and, later, in-app **inline intents** (NL→Segment in the builder,
+"draft" in the composer, "explain" on analytics) — each producing a domain object in its
+native editor under the existing `draft`/`inactive` approval gate. Open forks:
+- **Surface generation** — grill *first*, it shapes the rest: MCP tools **derived from the
+  contract** (a 4th TypeSpec spec `mcp`) vs. a projection over the existing `external` API.
+  Hand-maintaining a parallel tool list that drifts from the contract is the rejected path
+  (codegen ethos: generated over hand-rolled).
+- **Tool granularity** — intent-level domain verbs (`create_segment_from_description`,
+  `draft_broadcast`, `explain_broadcast_performance`) vs. a 1:1 CRUD mirror of REST
+  endpoints. Few deep tools aligned to the glossary; a CRUD mirror drowns the agent.
+- **AI is an author, not a sender (governing principle).** The AI plane's output is always an
+  *artifact* — a Segment, a `draft` Broadcast, an `inactive` Automation, a Template, a
+  Recommendation. `send`/`activate` is **never** an AI capability: pulling the trigger is
+  always a human action. So the token scopes the AI gets are `read` + `write`-drafts only;
+  `send`/`activate` is human-only, out of the AI's mandate (not merely "gated"). The
+  `draft`/`inactive` states are the *boundary of what the AI can touch*, not just a review
+  gate. The core choke points (Send-eligibility, Suppression, verified domain,
+  Workspace/Billing freeze) still guard the human's eventual send.
+- **AI-authorship attribution** — reuse the actor-attribution pattern (actor `system` /
+  Operator): entities an agent creates carry "who authored — AI vs User".
+- **AI as a metered unit** — token/AI-call usage extends the Usage snapshot (metering in
+  core, money outside, ADR 0009) — a new metric, not a new billing plane.
+- **Skills (operating playbooks) as a distinct layer** — tools are *capability*
+  (`create_segment`), skills are *competence* ("how to run a win-back well"): a skill is
+  domain know-how + the sequence of tool calls. Delivered over the same MCP connection via
+  the protocol-native **prompts** primitive (server-provided, user-invoked), so a BYO-agent
+  gets them with no file distribution. Two authorship tiers: **1mail-shipped** best-practice
+  playbooks (welcome / cart-abandonment / win-back / list-hygiene — assets, encode correct
+  use of *this* model) vs. **workspace-authored** brand/voice playbooks (stateful,
+  workspace-scoped, versioned → a candidate glossary term `Skill`, distinct from `Template`
+  (email content) and `Automation` (runtime sequence)). Skills partly *resolve* the
+  tool-granularity fork — orchestration knowledge in the skill lets tools stay primitive
+  without drowning the agent, so **grill skills together with tool granularity**. Liveness
+  tension: a skill references tool names generated from the contract → needs a
+  validity-against-current-surface check (same principle as goverter's completeness check).
+Ties to: External `/api` breadth, Billing/metering, Audit log. **Rejected here:** a built-in
+**chat** as a primary UI — AI-first ≠ chat-first; a conversation is a poor home for outputs
+that are governed domain objects. Chat is *deferred and narrow* — at most a later,
+optional **analytical panel** for open-ended "why/what-if" Q&A, never the main surface.
+
+### 🔴 Prompt-injection from contact-supplied data
+Split out from the AI/MCP plane because it touches the send path and the data model, not just
+the tool layer. `Custom field`s and `Event` properties are **declared-by-use / auto-created
+from untrusted tracker & API input** — so contact-supplied strings (e.g. an instruction
+stuffed in `first_name`) flow into any prompt or into a BYO-agent's context the moment a
+`read` tool returns them. Because the AI **only forms artifacts, never sends** (see AI/MCP
+plane), a successful injection can't directly fire a send — but it can (a) corrupt an
+artifact a human then approves and sends, or (b) exfiltrate contact data into a BYO-agent's
+context. The human send-review is the backstop, not the primary defense. Open forks: where
+untrusted-data boundaries are drawn (mark contact-origin fields as tainted?), whether an
+AI-formed artifact surfaces its untrusted-data provenance at review time, and how tainting
+flows through the `read` tools that feed a BYO-agent.
+
+### ⚪ Proactive marketing intelligence (the "one person runs everything" bet)
+The largest AI-first ambition: a system that **watches, recommends, and — under policy —
+forms artifacts** — analyzing what's happening and drafting segments / automations /
+broadcasts on the fly, so one operator does the work of a marketing team. A shift from
+*reactive* (agent does what asked) to *proactive* (agent forms hypotheses and drafts).
+**The AI never sends** — its entire output is authoring-side artifacts (see AI/MCP plane:
+"AI is an author, not a sender"); pulling the send/activate trigger stays a human action.
+Deliberately **not** "no marketers": the human stays the accountable sender/approver; the
+product is an AI copilot that proposes and *drafts* **under a bounded mandate**, earning more
+autonomy-to-draft as its accepted recommendations demonstrably move a metric. **Composes what
+is already decided** — sensor = `Event` spine; hands = MCP tools (create drafts only);
+competence = Skills; approval-and-send gate = `draft`/`inactive`. Runtime = a background
+agentic loop on the domain-event bus (watermill) + river periodics, **triggered by
+thresholds, not always-on** (runaway/token-cost is real → a new metered line). Open forks:
+- **`Recommendation` as a domain object** — proposed change = rationale (grounded in
+  Events/metrics) + proposed diff (which entities, in `draft`) + status (pending / accepted /
+  dismissed / auto-applied) + AI-attribution. Anti-vocabulary: *not* a notification, *not* a
+  task.
+- **`Autonomy policy` / budget** — how "does it if the user agrees" is modeled, and the "it"
+  is always *forming an artifact*, never sending: **per-action** consent (approve each draft)
+  vs. **standing** consent bounded by a budget ("auto-draft win-back for cold segments, ≤ N
+  drafts/week"). Bounds how many artifacts the AI may create unattended, not any send.
+- **The outcome loop** — attributing whether a Recommendation (once a human sent it) actually
+  improved the metric, back onto the Recommendation (reuses the Broadcast-recipient
+  rollup/attribution pattern). **Without this it is a suggestion-spewer, not a marketer** —
+  the make-or-break, and the hardest part.
+- **Autonomy gradient** — over *artifact formation only* (there is no auto-send tier): L0
+  analyze/explain (read-only) · L1 propose drafts, per-action approve · L2 auto-form drafts
+  within a policy/budget. The human always sends. Higher autonomy = more drafts formed
+  unattended, never more sending.
+Depends on: 🔴 Complaint/bounce-rate metrics (the analyzer has nothing to read until they
+exist — same prerequisite as the ADR 0007 auto-suspension detector). Ties to: AI/MCP plane,
+Billing/metering, Lead scoring, Audit log.
+
 ### 🟡 Automation action steps (beyond send/wait)
 Step is only `send` | `wait` today. A whole class is unnamed: update custom field,
 add/remove segment membership (tag), call a Webhook endpoint, notify team, enroll into
@@ -117,6 +210,9 @@ nature and therefore has no such tension: self-host simply has no billing.
 | Billing / subscriptions / payments | **stripe/stripe-go** | Go SDK | Official, active. SaaS-only. |
 | Usage metering + entitlements/quota | **openmeterio/openmeter** (Go SDK, Stripe sync) or **getlago/lago** | service | SaaS-only, and cleanly so: billing/quotas don't exist in self-host, so these separate services never touch the single-binary path — no tension. |
 | Double opt-in | *no lib* — confirmation email + signed token (JWT), existing send path | build | Flow only; must not reintroduce a "subscribed" flag (grill it). |
+| AI/MCP surface — server | **modelcontextprotocol/go-sdk** | Go SDK | Official MCP Go SDK. Mount as a 4th surface next to the ogen servers; auth rides the existing scoped API-token model. Grill generated-vs-projected before adopting. |
+| AI/MCP — LLM provider (for inline intents / later panel) | **anthropics/anthropic-sdk-go** | Go SDK | Provider-agnostic behind an `Integration`-style abstraction; default to Claude (Opus/Sonnet 4.x). Not needed for the BYO-agent path (client hosts the model). |
+| Prompt-injection defenses | *no lib* — taint contact-origin fields + extra send-gate | build | Mechanism is custom; the boundary + gate are the grill. |
 | Automation action steps / branching | **@xyflow/react** (already used) + **river** (already used) for execution | in-repo | No workflow-engine dep needed; river drives steps. |
 | Time/date & recurring triggers | **river** periodic jobs / **robfig/cron** | Go lib | river (already in repo) has periodic jobs — prefer it over a new cron dep. |
 | GDPR export / erasure | *no lib* — custom, stdlib serialization | build | Mechanism is custom; policy is the grill. |
