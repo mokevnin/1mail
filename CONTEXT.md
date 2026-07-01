@@ -224,6 +224,29 @@ A bare, single-purpose secret string that identifies a workspace for one job —
 not a bearer token. The deliberate counterpart to an API token.
 _Avoid_: Token (for these), API key
 
+**Operator** (platform operator):
+A member of the **platform's** staff who acts *across* all Workspaces (suspend an abusive
+sender, impersonate for support). Deliberately **not** a User and **not** reached through a
+Membership: a distinct identity with its own store and its own auth surface, holding **no**
+Membership, so the "every query is scoped by a Workspace" invariant has no exception —
+workspace-scoped code has no path that can return an Operator. A person who is both staff and
+a customer holds two separate identities (an Operator *and* a User), by design, for
+least-privilege and clean audit. A SaaS/platform concept, absent from a plain self-hosted
+install.
+_Avoid_: Admin (that is a workspace Role), superuser, staff user, root
+
+**Workspace suspension**:
+A reversible Workspace state that **freezes all outbound sending** — every one of the three
+send surfaces (Broadcast, Automation, Transactional) refuses while it is set — as a
+platform reputation-protection measure against an abusive sender. It is *not* a lockout:
+login, dashboard reads, `/api` reads, and `/collect` tracking keep working, so the owner can
+still see the suspension and appeal. Enforced in the **core** send path (the AGPL binary is
+the only reliable choke point). It records **attribution**: the actor that set it (an
+automated abuse detector — actor `system` — or a platform Operator) and a reason. The
+automated path only fires above a minimum send volume (a rate is noise at low volume),
+notifies the workspace owner, and is one-click reversible by an Operator.
+_Avoid_: Ban, lockout, disable, quota (suspension is not a billing state)
+
 **Webhook endpoint** (outbound):
 A workspace-scoped HTTP destination that **1mail calls** when domain events occur — subscribes
 to event types (empty = all) and signs each delivery (HMAC). Outbound only; the opposite of an
@@ -251,6 +274,23 @@ _Avoid_: Team, seat, collaborator, ownership
 A Membership's permission level in a Workspace (e.g. owner / admin / member). The exact set is a
 follow-up; the structural decision is that access is role-scoped per Membership.
 _Avoid_: Permission, scope (scope is the API-token term)
+
+### Metering & billing
+
+1mail's core *measures* billable activity; it does not *price* it. Metering (what happened,
+how much) is a domain concern; rating, plans, invoices, payment, and dunning are **not** — they
+live in an external billing plane and never enter the core glossary.
+
+**Usage snapshot** (metering):
+A per-(Workspace, billing period, metric) materialized aggregate of billable activity, finalized
+(made immutable) at period close — the billing-grade number a biller consumes. Distinct from the
+raw Events it is computed from, which stay the source of truth for audit and dispute. Different
+metrics aggregate differently: sends are a *sum* over `email.sent`; contact count is a
+**high-water-mark** (the peak reached during the period), not an instantaneous value. It
+materializes live Events for money the same way a Broadcast recipient's rollup materializes
+engagement — the Events are truth, the snapshot is the closed, reproducible figure. Carries no
+price.
+_Avoid_: Meter, counter, invoice line, quota (quota is enforcement, not measurement)
 
 ## Channels & future surfaces
 
