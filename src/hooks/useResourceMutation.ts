@@ -19,7 +19,8 @@ interface ResourceMutationOptions<TData, TError, TVars, TCtx> {
   // Toast message shown on success. Omit for no toast (the generic "Success"
   // title is supplied by the hook).
   successMessage?: string
-  // Title used for the error toast (also the fallback message).
+  // Title used for the error toast. The message is the API error detail, or a
+  // generic fallback when the API gives none — never a copy of the title.
   errorTitle: string
   // Extra success work — navigation, form reset — run after invalidation.
   onDone?: (data: TData, variables: TVars) => void | Promise<void>
@@ -57,7 +58,10 @@ export function useResourceMutation<TData, TError, TVars, TCtx>({
       notifications.show({
         color: 'red',
         title: errorTitle,
-        message: getApiErrorMessage(error as ApiErrorLike, errorTitle),
+        message: getApiErrorMessage(
+          error as ApiErrorLike,
+          t(($) => $.notifications.errorMessage),
+        ),
       })
     },
   })

@@ -31,7 +31,7 @@ export function LoginPage() {
         title: t(($) => $.login.errorTitle),
         message: getApiErrorMessage(
           error as ApiErrorLike,
-          t(($) => $.login.errorTitle),
+          t(($) => $.notifications.errorMessage),
         ),
       })
     },

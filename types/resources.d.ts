@@ -246,6 +246,7 @@ export default interface Resources {
       "contactCreated": "Contact created",
       "contactDeleted": "Contact deleted",
       "contactUpdated": "Contact updated",
+      "errorMessage": "Something went wrong. Please try again.",
       "segmentCreated": "Segment created",
       "segmentDeleted": "Segment deleted",
       "segmentUpdated": "Segment updated",
