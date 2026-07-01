@@ -1,0 +1,24 @@
+# Pending invitations on workspace 1 (Acme). The raw tokens are documented here;
+# only their SHA-256 hash is stored (see internal/service.HashInviteToken).
+#
+# id 1: valid pending invite. raw token = "inv_fixture_token_acme"
+- id: 1
+  workspace_id: 1
+  email: invited@acme.test
+  role: member
+  token_hash: "{{inviteHash \"inv_fixture_token_acme\"}}"
+  invited_by: 1
+  expires_at: "{{daysAhead 7}}"
+  created_at: "{{daysAgo 1}}"
+  updated_at: "{{daysAgo 1}}"
+
+# id 2: expired invite (used to assert lookup/accept reject). raw token = "inv_fixture_token_expired"
+- id: 2
+  workspace_id: 1
+  email: expired@acme.test
+  role: member
+  token_hash: "{{inviteHash \"inv_fixture_token_expired\"}}"
+  invited_by: 1
+  expires_at: "{{daysAgo 1}}"
+  created_at: "{{daysAgo 8}}"
+  updated_at: "{{daysAgo 8}}"
