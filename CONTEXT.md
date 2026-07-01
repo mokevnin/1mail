@@ -212,6 +212,20 @@ workspace default when unspecified). Sending is one half of a loop: bounces and 
 back via the Ingest hook and land in Suppression.
 _Avoid_: Provider (alone), ESP, sender, connector
 
+**Sending domain**:
+A workspace-scoped, DNS-verified domain that a Contact's mail may be sent *from* — the
+authenticated **sending identity**, deliberately **independent of the Integration** (the
+transport). 1mail owns a per-domain DKIM keypair and **signs every outbound message itself**
+(native signing), so the same identity holds across SMTP, SES, and any future provider with no
+re-verification. A `from_email` is a verified Sending domain plus a local part — never a free
+string; the send path **hard-requires** the From domain to match a verified Sending domain on
+all three surfaces (Broadcast, Automation, Transactional) and rejects otherwise.
+`verified` is a **live** property: the gate is the published DKIM TXT matching our key (SPF and
+DMARC are generated, shown, and checked but do **not** block). It is re-checked over time — if
+the DKIM record disappears, the domain reverts to unverified, its sends block, and the owner is
+notified. Distinct from a **Sending source** (that is the unsubscribe scope, not an identity).
+_Avoid_: From domain, verified domain, sender identity, SPF domain
+
 **API token**:
 A workspace-scoped, **scoped** bearer credential for the external `/api` surface — a public
 `prefix` plus a hashed secret, carrying scopes, optional expiry, and revocation. Distinct from
