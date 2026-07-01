@@ -119,7 +119,8 @@ func (s *Signer) Parse(token string, purpose Purpose, bindingFor func(userID int
 // scoped to one flow and one user, and stops verifying once the binding changes.
 func (s *Signer) deriveKey(purpose Purpose, userID int64, binding string) []byte {
 	mac := hmac.New(sha256.New, s.secret)
-	fmt.Fprintf(mac, "%s|%d|%s", purpose, userID, binding)
+	// hash.Hash.Write never returns an error.
+	_, _ = fmt.Fprintf(mac, "%s|%d|%s", purpose, userID, binding)
 	return mac.Sum(nil)
 }
 
