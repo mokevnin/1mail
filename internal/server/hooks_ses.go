@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"net/url"
 	"strings"
@@ -15,6 +14,7 @@ import (
 	"github.com/mokevnin/1mail/ent/contact"
 	"github.com/mokevnin/1mail/ent/workspace"
 	"github.com/mokevnin/1mail/internal/events"
+	"github.com/mokevnin/1mail/internal/logging"
 	"github.com/mokevnin/1mail/internal/webhook"
 	sns "github.com/robbiet480/go.sns"
 )
@@ -100,7 +100,7 @@ func (h *sesHook) handle(w http.ResponseWriter, r *http.Request) {
 		// Confirm the subscription by fetching the (SSRF-guarded) SubscribeURL. On
 		// failure return 5xx so SNS resends the confirmation.
 		if err := h.confirm(r.Context(), payload.SubscribeURL); err != nil {
-			log.Printf("hooks/ses: confirm subscription for workspace %d: %v", ws.ID, err)
+			logging.FromContext(r.Context()).Error("hooks/ses: confirm subscription failed", "workspace_id", ws.ID, "err", err)
 			writeProblem(w, http.StatusBadGateway, "subscription confirmation failed")
 			return
 		}
@@ -108,7 +108,7 @@ func (h *sesHook) handle(w http.ResponseWriter, r *http.Request) {
 		// On failure return 5xx so SNS redelivers rather than dropping the bounce;
 		// downstream persist/suppression dedupe on redelivery (DedupKey).
 		if err := h.handleNotification(r.Context(), ws.ID, payload); err != nil {
-			log.Printf("hooks/ses: notification for workspace %d: %v", ws.ID, err)
+			logging.FromContext(r.Context()).Error("hooks/ses: notification processing failed", "workspace_id", ws.ID, "err", err)
 			writeProblem(w, http.StatusInternalServerError, "notification processing failed")
 			return
 		}

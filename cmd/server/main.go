@@ -4,7 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"log"
+	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
@@ -14,6 +14,7 @@ import (
 	onemail "github.com/mokevnin/1mail"
 	"github.com/mokevnin/1mail/config"
 	"github.com/mokevnin/1mail/internal/app"
+	"github.com/mokevnin/1mail/internal/logging"
 	"github.com/mokevnin/1mail/internal/migrate"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
@@ -33,7 +34,7 @@ func main() {
 	}
 
 	if len(os.Args) > 1 && (os.Args[1] == "version" || os.Args[1] == "--version") {
-		log.Printf("1mail %s (commit %s, built %s)", version, commit, date)
+		slog.Info("1mail version", "version", version, "commit", commit, "built", date)
 		return
 	}
 
@@ -41,29 +42,32 @@ func main() {
 	// separate orchestration step (init container, release job, manual run).
 	if len(os.Args) > 1 && os.Args[1] == "migrate" {
 		if err := runMigrate(env); err != nil {
-			log.Fatalf("migrate: %v", err)
+			fatal("migrate", err)
 		}
 		return
 	}
 
 	cfg, err := config.Load(env)
 	if err != nil {
-		log.Fatalf("load config: %v", err)
+		fatal("load config", err)
 	}
-	log.Printf("starting 1mail %s (commit %s)", version, commit)
+	// Install the configured logger process-wide; river, watermill, and every
+	// request-scoped handler emit through it from here on.
+	logging.Setup(cfg)
+	slog.Info("starting 1mail", "version", version, "commit", commit)
 
 	// Opt-in self-migration on startup, so the single binary/image can come up
 	// against a fresh database with no extra step.
 	if cfg.AutoMigrate {
 		if err := applyMigrations(cfg); err != nil {
-			log.Fatalf("auto-migrate: %v", err)
+			fatal("auto-migrate", err)
 		}
-		log.Print("migrations applied")
+		slog.Info("migrations applied")
 	}
 
 	application, err := app.New(env)
 	if err != nil {
-		log.Fatalf("init app: %v", err)
+		fatal("init app", err)
 	}
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
@@ -71,12 +75,12 @@ func main() {
 
 	go func() {
 		if err := application.RunEvents(ctx); err != nil {
-			log.Printf("events router stopped: %v", err)
+			slog.Error("events router stopped", "err", err)
 		}
 	}()
 
 	if err := application.RunJobs(ctx); err != nil {
-		log.Printf("job queue failed to start: %v", err)
+		slog.Error("job queue failed to start", "err", err)
 	}
 
 	go func() {
@@ -86,20 +90,26 @@ func main() {
 		_ = application.Server.Shutdown(shutdownCtx)
 		report := application.Shutdown(shutdownCtx)
 		if !report.Succeed {
-			log.Printf("shutdown: %v", report)
+			slog.Error("shutdown incomplete", "report", report)
 		}
 	}()
 
 	if err := application.Server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-		log.Printf("server stopped: %v", err)
+		slog.Error("server stopped", "err", err)
 	}
 
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	report := application.Shutdown(shutdownCtx)
 	if !report.Succeed {
-		log.Printf("shutdown: %v", report)
+		slog.Error("shutdown incomplete", "report", report)
 	}
+}
+
+// fatal logs an error and exits non-zero (slog has no Fatal helper).
+func fatal(msg string, err error) {
+	slog.Error(msg, "err", err)
+	os.Exit(1)
 }
 
 func runMigrate(env string) error {
@@ -110,7 +120,7 @@ func runMigrate(env string) error {
 	if err := applyMigrations(cfg); err != nil {
 		return err
 	}
-	log.Print("migrations applied")
+	slog.Info("migrations applied")
 	return nil
 }
 

@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"time"
 
 	"github.com/ThreeDotsLabs/watermill"
@@ -35,7 +36,7 @@ type WebhookDispatcher interface {
 // subscribers); the producer side is Bus. Run the returned router in a goroutine
 // and Close it on shutdown.
 func NewRouter() (*message.Router, error) {
-	return message.NewRouter(message.RouterConfig{}, watermill.NewStdLogger(false, false))
+	return message.NewRouter(message.RouterConfig{}, watermill.NewSlogLogger(slog.Default()))
 }
 
 // RegisterSubscribers wires the domain-event consumers onto the shared watermill
@@ -207,7 +208,7 @@ func NewSubscriber(db *sql.DB, consumerGroup string) (message.Subscriber, error)
 		OffsetsAdapter:   outboxOffsets,
 		InitializeSchema: false,
 		ConsumerGroup:    consumerGroup,
-	}, watermill.NewStdLogger(false, false))
+	}, watermill.NewSlogLogger(slog.Default()))
 }
 
 func persistConsumer(client *ent.Client) message.NoPublishHandlerFunc {

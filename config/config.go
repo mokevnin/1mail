@@ -24,6 +24,11 @@ type Config struct {
 	EncryptionKey  string
 	AutoMigrate    bool
 
+	// Logging: level is one of debug|info|warn|error; format is text|json.
+	// Dev defaults to a human-readable coloured text handler, prod to JSON.
+	LogLevel  string
+	LogFormat string
+
 	// System (platform) transactional email — 1mail's OWN sender, distinct from a
 	// customer's per-workspace integration. Dev uses smtp → mailpit (the SMTP_*
 	// values); prod uses ses (the SES_* values). Sent via the same messaging
@@ -45,6 +50,13 @@ func Load(envName string) (*Config, error) {
 	v.SetDefault("SMTP_PORT", 1025)
 	v.SetDefault("SYSTEM_EMAIL_PROVIDER", "smtp")
 	v.SetDefault("SYSTEM_EMAIL_FROM", "noreply@1mail.localhost")
+	v.SetDefault("LOG_LEVEL", "info")
+	// Human-readable logs in dev, structured JSON everywhere else.
+	if isDevEnv(envName) {
+		v.SetDefault("LOG_FORMAT", "text")
+	} else {
+		v.SetDefault("LOG_FORMAT", "json")
+	}
 
 	for _, file := range envFiles(rootDir, envName) {
 		sub := viper.New()
@@ -78,6 +90,8 @@ func Load(envName string) (*Config, error) {
 		SMTPFrom:       v.GetString("SMTP_FROM"),
 		EncryptionKey:  v.GetString("ENCRYPTION_KEY"),
 		AutoMigrate:    v.GetBool("AUTO_MIGRATE"),
+		LogLevel:       v.GetString("LOG_LEVEL"),
+		LogFormat:      v.GetString("LOG_FORMAT"),
 
 		SystemEmailProvider: v.GetString("SYSTEM_EMAIL_PROVIDER"),
 		SystemEmailFrom:     v.GetString("SYSTEM_EMAIL_FROM"),

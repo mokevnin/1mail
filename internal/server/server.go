@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"runtime/debug"
 	"strings"
 	"time"
 
@@ -25,6 +26,7 @@ import (
 	apiexternal "github.com/mokevnin/1mail/internal/api/external"
 	apisite "github.com/mokevnin/1mail/internal/api/site"
 	"github.com/mokevnin/1mail/internal/events"
+	"github.com/mokevnin/1mail/internal/logging"
 	"github.com/mokevnin/1mail/internal/messaging/registry"
 	"github.com/mokevnin/1mail/internal/secrets"
 	"github.com/mokevnin/1mail/internal/tracking"
@@ -121,7 +123,10 @@ func New(cfg *config.Config, client *ent.Client, db *sql.DB, bus *events.Bus, en
 	// specific pattern wins, so this never shadows the API prefixes above.
 	mux.Handle("/", spaHandler())
 
-	return chain(mux, recoverer, requestID, timeout(30*time.Second), corsMiddleware(cfg.CORSOrigins)), nil
+	// requestID is outermost so the correlation id is in context before recoverer
+	// runs — the panic log then carries request_id. (requestID is trivial and
+	// cannot itself panic, so nothing downstream of recovery is lost.)
+	return chain(mux, requestID, recoverer, timeout(30*time.Second), corsMiddleware(cfg.CORSOrigins)), nil
 }
 
 // problemErrorHandler renders ogen errors as RFC 7807 application/problem+json.
@@ -166,6 +171,12 @@ func recoverer(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer func() {
 			if rec := recover(); rec != nil {
+				logging.FromContext(r.Context()).Error("panic recovered",
+					"err", rec,
+					"method", r.Method,
+					"path", r.URL.Path,
+					"stack", string(debug.Stack()),
+				)
 				writeProblem(w, http.StatusInternalServerError, "internal server error")
 			}
 		}()
@@ -191,7 +202,9 @@ func requestID(next http.Handler) http.Handler {
 			id = randomID()
 		}
 		w.Header().Set("X-Request-Id", id)
-		next.ServeHTTP(w, r)
+		// Carry the id in context so request-scoped logs (via logging.FromContext)
+		// correlate back to this request.
+		next.ServeHTTP(w, r.WithContext(logging.WithRequestID(r.Context(), id)))
 	})
 }
 

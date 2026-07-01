@@ -3,7 +3,6 @@ package server
 import (
 	"context"
 	"encoding/base64"
-	"log"
 	"net/http"
 	"net/url"
 	"strings"
@@ -15,6 +14,7 @@ import (
 	"github.com/mokevnin/1mail/ent/unsubscribe"
 	"github.com/mokevnin/1mail/internal/eligibility"
 	"github.com/mokevnin/1mail/internal/events"
+	"github.com/mokevnin/1mail/internal/logging"
 	"github.com/mokevnin/1mail/internal/tracking"
 	"github.com/samber/lo"
 )
@@ -128,7 +128,7 @@ func recordOpen(ctx context.Context, client *ent.Client, bus *events.Bus, recipi
 		})
 	})
 	if err != nil {
-		log.Printf("tracking: record open for recipient %d: %v", recipientID, err)
+		logging.FromContext(ctx).Error("tracking: record open failed", "recipient_id", recipientID, "err", err)
 	}
 }
 
@@ -157,7 +157,7 @@ func recordClick(ctx context.Context, client *ent.Client, bus *events.Bus, recip
 		})
 	})
 	if err != nil {
-		log.Printf("tracking: record click for recipient %d: %v", recipientID, err)
+		logging.FromContext(ctx).Error("tracking: record click failed", "recipient_id", recipientID, "err", err)
 	}
 }
 
@@ -226,6 +226,6 @@ func recordUnsubscribe(ctx context.Context, client *ent.Client, bus *events.Bus,
 		})
 	})
 	if err != nil {
-		log.Printf("tracking: unsubscribe %q (source %q): %v", dest, target.Source, err)
+		logging.FromContext(ctx).Error("tracking: unsubscribe failed", "destination", dest, "source", target.Source, "err", err)
 	}
 }

@@ -3,7 +3,6 @@ package jobs
 import (
 	"context"
 	"fmt"
-	"log"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -17,6 +16,7 @@ import (
 	"github.com/mokevnin/1mail/internal/eligibility"
 	"github.com/mokevnin/1mail/internal/emailrender"
 	"github.com/mokevnin/1mail/internal/events"
+	"github.com/mokevnin/1mail/internal/logging"
 	"github.com/mokevnin/1mail/internal/messaging"
 	"github.com/mokevnin/1mail/internal/segments"
 	"github.com/mokevnin/1mail/internal/tracking"
@@ -305,7 +305,7 @@ func SendToRecipient(ctx context.Context, client *ent.Client, bus *events.Bus, r
 			BroadcastID: b.ID,
 		}
 		if tracked, terr := tracker.Rewrite(html, rec.ID, unsub); terr != nil {
-			log.Printf("broadcast %d: rewrite links for recipient %d: %v", b.ID, rec.ID, terr)
+			logging.FromContext(ctx).Error("broadcast: rewrite links failed", "broadcast_id", b.ID, "recipient_id", rec.ID, "err", terr)
 		} else {
 			html = tracked
 		}

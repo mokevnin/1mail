@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"time"
 
 	"entgo.io/ent/dialect"
@@ -43,7 +44,7 @@ type Bus struct {
 
 // New builds a Bus over the application's database pool.
 func New(db *sql.DB) *Bus {
-	return &Bus{db: db, logger: watermill.NewStdLogger(false, false)}
+	return &Bus{db: db, logger: watermill.NewSlogLogger(slog.Default())}
 }
 
 // WithinTx runs fn inside a single SQL transaction. The *ent.Client handed to fn
