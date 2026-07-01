@@ -41,6 +41,42 @@ func encodeSiteAnalyticsOverviewResponse(response SiteAnalyticsOverviewRes, w ht
 	}
 }
 
+func encodeSiteAuthConfirmEmailChangeResponse(response SiteAuthConfirmEmailChangeRes, w http.ResponseWriter, span trace.Span) error {
+	switch response := response.(type) {
+	case *SiteAuthConfirmEmailChangeOK:
+		w.WriteHeader(200)
+
+		return nil
+
+	case *SiteAuthConfirmEmailChangeBadRequest:
+		w.Header().Set("Content-Type", "application/problem+json")
+		w.WriteHeader(400)
+
+		e := new(jx.Encoder)
+		response.Encode(e)
+		if _, err := e.WriteTo(w); err != nil {
+			return errors.Wrap(err, "write")
+		}
+
+		return nil
+
+	case *SiteAuthConfirmEmailChangeConflict:
+		w.Header().Set("Content-Type", "application/problem+json")
+		w.WriteHeader(409)
+
+		e := new(jx.Encoder)
+		response.Encode(e)
+		if _, err := e.WriteTo(w); err != nil {
+			return errors.Wrap(err, "write")
+		}
+
+		return nil
+
+	default:
+		return errors.Errorf("unexpected response type: %T", response)
+	}
+}
+
 func encodeSiteAuthDirectLoginResponse(response SiteAuthDirectLoginRes, w http.ResponseWriter, span trace.Span) error {
 	switch response := response.(type) {
 	case *SiteDirectLoginResult:
@@ -84,6 +120,12 @@ func encodeSiteAuthDirectLoginResponse(response SiteAuthDirectLoginRes, w http.R
 	}
 }
 
+func encodeSiteAuthForgotPasswordResponse(response *SiteAuthForgotPasswordAccepted, w http.ResponseWriter, span trace.Span) error {
+	w.WriteHeader(202)
+
+	return nil
+}
+
 func encodeSiteAuthRegisterResponse(response SiteAuthRegisterRes, w http.ResponseWriter, span trace.Span) error {
 	switch response := response.(type) {
 	case *SiteRegisterResult:
@@ -113,6 +155,54 @@ func encodeSiteAuthRegisterResponse(response SiteAuthRegisterRes, w http.Respons
 	case *SiteAuthRegisterUnprocessableEntity:
 		w.Header().Set("Content-Type", "application/problem+json")
 		w.WriteHeader(422)
+
+		e := new(jx.Encoder)
+		response.Encode(e)
+		if _, err := e.WriteTo(w); err != nil {
+			return errors.Wrap(err, "write")
+		}
+
+		return nil
+
+	default:
+		return errors.Errorf("unexpected response type: %T", response)
+	}
+}
+
+func encodeSiteAuthResetPasswordResponse(response SiteAuthResetPasswordRes, w http.ResponseWriter, span trace.Span) error {
+	switch response := response.(type) {
+	case *SiteAuthResetPasswordOK:
+		w.WriteHeader(200)
+
+		return nil
+
+	case *ProblemDetails:
+		w.Header().Set("Content-Type", "application/problem+json")
+		w.WriteHeader(400)
+
+		e := new(jx.Encoder)
+		response.Encode(e)
+		if _, err := e.WriteTo(w); err != nil {
+			return errors.Wrap(err, "write")
+		}
+
+		return nil
+
+	default:
+		return errors.Errorf("unexpected response type: %T", response)
+	}
+}
+
+func encodeSiteAuthVerifyEmailResponse(response SiteAuthVerifyEmailRes, w http.ResponseWriter, span trace.Span) error {
+	switch response := response.(type) {
+	case *SiteAuthVerifyEmailOK:
+		w.WriteHeader(200)
+
+		return nil
+
+	case *ProblemDetails:
+		w.Header().Set("Content-Type", "application/problem+json")
+		w.WriteHeader(400)
 
 		e := new(jx.Encoder)
 		response.Encode(e)
@@ -2258,6 +2348,54 @@ func encodeSiteTransactionalEmailsListResponse(response SiteTransactionalEmailsL
 	}
 }
 
+func encodeSiteUserEmailChangeResponse(response SiteUserEmailChangeRes, w http.ResponseWriter, span trace.Span) error {
+	switch response := response.(type) {
+	case *SiteUserEmailChangeAccepted:
+		w.WriteHeader(202)
+
+		return nil
+
+	case *SiteUserEmailChangeForbidden:
+		w.Header().Set("Content-Type", "application/problem+json")
+		w.WriteHeader(403)
+
+		e := new(jx.Encoder)
+		response.Encode(e)
+		if _, err := e.WriteTo(w); err != nil {
+			return errors.Wrap(err, "write")
+		}
+
+		return nil
+
+	case *SiteUserEmailChangeConflict:
+		w.Header().Set("Content-Type", "application/problem+json")
+		w.WriteHeader(409)
+
+		e := new(jx.Encoder)
+		response.Encode(e)
+		if _, err := e.WriteTo(w); err != nil {
+			return errors.Wrap(err, "write")
+		}
+
+		return nil
+
+	case *SiteUserEmailChangeUnprocessableEntity:
+		w.Header().Set("Content-Type", "application/problem+json")
+		w.WriteHeader(422)
+
+		e := new(jx.Encoder)
+		response.Encode(e)
+		if _, err := e.WriteTo(w); err != nil {
+			return errors.Wrap(err, "write")
+		}
+
+		return nil
+
+	default:
+		return errors.Errorf("unexpected response type: %T", response)
+	}
+}
+
 func encodeSiteUserGetMeResponse(response *SiteUserResource, w http.ResponseWriter, span trace.Span) error {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(200)
@@ -2267,6 +2405,12 @@ func encodeSiteUserGetMeResponse(response *SiteUserResource, w http.ResponseWrit
 	if _, err := e.WriteTo(w); err != nil {
 		return errors.Wrap(err, "write")
 	}
+
+	return nil
+}
+
+func encodeSiteUserResendVerificationResponse(response *SiteUserResendVerificationAccepted, w http.ResponseWriter, span trace.Span) error {
+	w.WriteHeader(202)
 
 	return nil
 }

@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	siteapi "github.com/mokevnin/1mail/gen/site"
+	"github.com/mokevnin/1mail/internal/authtoken"
 	"github.com/mokevnin/1mail/internal/service"
 )
 
@@ -71,6 +72,11 @@ func (h *Handlers) SiteAuthRegister(ctx context.Context, req *siteapi.SiteRegist
 	// Welcome email is a platform (transactional) send via the system sender — a
 	// river job in prod, run inline in tests. Best-effort: never fail registration.
 	_ = h.welcome.EnqueueWelcome(ctx, u.Email, u.Name)
+
+	// Send a (soft) email-verification link. Best-effort, like the welcome email.
+	if token, err := h.tokens.Mint(authtoken.PurposeEmailVerify, u.ID, "", verifyTokenTTL, map[string]string{"email": u.Email}); err == nil {
+		_ = h.sysmail.EnqueueEmailVerification(ctx, u.Email, token)
+	}
 
 	return &siteapi.SiteRegisterResult{
 		ID:        siteapi.EntityId(strconv.FormatInt(u.ID, 10)),

@@ -5,8 +5,8 @@ import * as z from 'zod';
 
 import { client } from './client.gen.ts';
 import type { Client, ClientMeta, Options as Options2, RequestResult, TDataShape } from './client/index.ts';
-import type { SiteAnalyticsOverviewData, SiteAnalyticsOverviewErrors, SiteAnalyticsOverviewResponses, SiteAuthDirectLoginData, SiteAuthDirectLoginErrors, SiteAuthDirectLoginResponses, SiteAuthRegisterData, SiteAuthRegisterErrors, SiteAuthRegisterResponses, SiteAutomationsActivateData, SiteAutomationsActivateErrors, SiteAutomationsActivateResponses, SiteAutomationsCreateData, SiteAutomationsCreateErrors, SiteAutomationsCreateResponses, SiteAutomationsDeactivateData, SiteAutomationsDeactivateErrors, SiteAutomationsDeactivateResponses, SiteAutomationsDeleteData, SiteAutomationsDeleteErrors, SiteAutomationsDeleteResponses, SiteAutomationsGetData, SiteAutomationsGetErrors, SiteAutomationsGetResponses, SiteAutomationsListData, SiteAutomationsListErrors, SiteAutomationsListResponses, SiteAutomationsUpdateData, SiteAutomationsUpdateErrors, SiteAutomationsUpdateResponses, SiteBroadcastsCreateData, SiteBroadcastsCreateErrors, SiteBroadcastsCreateResponses, SiteBroadcastsDeleteData, SiteBroadcastsDeleteErrors, SiteBroadcastsDeleteResponses, SiteBroadcastsGetData, SiteBroadcastsGetErrors, SiteBroadcastsGetResponses, SiteBroadcastsListData, SiteBroadcastsListErrors, SiteBroadcastsListResponses, SiteBroadcastsScheduleData, SiteBroadcastsScheduleErrors, SiteBroadcastsScheduleResponses, SiteBroadcastsSendData, SiteBroadcastsSendErrors, SiteBroadcastsSendResponses, SiteBroadcastsTestSendData, SiteBroadcastsTestSendErrors, SiteBroadcastsTestSendResponses, SiteBroadcastsUpdateData, SiteBroadcastsUpdateErrors, SiteBroadcastsUpdateResponses, SiteContactsCreateData, SiteContactsCreateErrors, SiteContactsCreateResponses, SiteContactsDeleteData, SiteContactsDeleteErrors, SiteContactsDeleteResponses, SiteContactsGetData, SiteContactsGetErrors, SiteContactsGetResponses, SiteContactsListData, SiteContactsListErrors, SiteContactsListResponses, SiteContactsUpdateData, SiteContactsUpdateErrors, SiteContactsUpdateResponses, SiteCustomFieldsListData, SiteCustomFieldsListErrors, SiteCustomFieldsListResponses, SiteEventsActionsData, SiteEventsActionsErrors, SiteEventsActionsResponses, SiteEventsListData, SiteEventsListErrors, SiteEventsListResponses, SiteIntegrationsCreateData, SiteIntegrationsCreateErrors, SiteIntegrationsCreateResponses, SiteIntegrationsDeleteData, SiteIntegrationsDeleteErrors, SiteIntegrationsDeleteResponses, SiteIntegrationsGetData, SiteIntegrationsGetErrors, SiteIntegrationsGetResponses, SiteIntegrationsListData, SiteIntegrationsListErrors, SiteIntegrationsListResponses, SiteIntegrationsUpdateData, SiteIntegrationsUpdateErrors, SiteIntegrationsUpdateResponses, SiteSegmentsCreateData, SiteSegmentsCreateErrors, SiteSegmentsCreateResponses, SiteSegmentsDeleteData, SiteSegmentsDeleteErrors, SiteSegmentsDeleteResponses, SiteSegmentsGetData, SiteSegmentsGetErrors, SiteSegmentsGetResponses, SiteSegmentsListData, SiteSegmentsListErrors, SiteSegmentsListResponses, SiteSegmentsPreviewData, SiteSegmentsPreviewErrors, SiteSegmentsPreviewResponses, SiteSegmentsUpdateData, SiteSegmentsUpdateErrors, SiteSegmentsUpdateResponses, SiteSuppressionsCreateData, SiteSuppressionsCreateErrors, SiteSuppressionsCreateResponses, SiteSuppressionsDeleteData, SiteSuppressionsDeleteErrors, SiteSuppressionsDeleteResponses, SiteSuppressionsListData, SiteSuppressionsListErrors, SiteSuppressionsListResponses, SiteTemplatesCreateData, SiteTemplatesCreateErrors, SiteTemplatesCreateResponses, SiteTemplatesDeleteData, SiteTemplatesDeleteErrors, SiteTemplatesDeleteResponses, SiteTemplatesGetData, SiteTemplatesGetErrors, SiteTemplatesGetResponses, SiteTemplatesListData, SiteTemplatesListErrors, SiteTemplatesListResponses, SiteTemplatesUpdateData, SiteTemplatesUpdateErrors, SiteTemplatesUpdateResponses, SiteTokensCreateData, SiteTokensCreateErrors, SiteTokensCreateResponses, SiteTokensDeleteData, SiteTokensDeleteErrors, SiteTokensDeleteResponses, SiteTokensListData, SiteTokensListErrors, SiteTokensListResponses, SiteTransactionalEmailsListData, SiteTransactionalEmailsListErrors, SiteTransactionalEmailsListResponses, SiteUserGetMeData, SiteUserGetMeResponses, SiteUserUpdateMeData, SiteUserUpdateMeErrors, SiteUserUpdateMeResponses, SiteWebhooksCreateData, SiteWebhooksCreateErrors, SiteWebhooksCreateResponses, SiteWebhooksDeleteData, SiteWebhooksDeleteErrors, SiteWebhooksDeleteResponses, SiteWebhooksGetData, SiteWebhooksGetErrors, SiteWebhooksGetResponses, SiteWebhooksListData, SiteWebhooksListErrors, SiteWebhooksListResponses, SiteWebhooksUpdateData, SiteWebhooksUpdateErrors, SiteWebhooksUpdateResponses, SiteWorkspacesListData, SiteWorkspacesListResponses, SiteWorkspacesUpdateData, SiteWorkspacesUpdateErrors, SiteWorkspacesUpdateResponses } from './types.gen.ts';
-import { zSiteAnalyticsOverviewPath, zSiteAnalyticsOverviewQuery, zSiteAuthDirectLoginBody, zSiteAuthRegisterBody, zSiteAutomationsActivatePath, zSiteAutomationsCreateBody, zSiteAutomationsCreatePath, zSiteAutomationsDeactivatePath, zSiteAutomationsDeletePath, zSiteAutomationsGetPath, zSiteAutomationsListPath, zSiteAutomationsListQuery, zSiteAutomationsUpdateBody, zSiteAutomationsUpdatePath, zSiteBroadcastsCreateBody, zSiteBroadcastsCreatePath, zSiteBroadcastsDeletePath, zSiteBroadcastsGetPath, zSiteBroadcastsListPath, zSiteBroadcastsListQuery, zSiteBroadcastsScheduleBody, zSiteBroadcastsSchedulePath, zSiteBroadcastsSendPath, zSiteBroadcastsTestSendBody, zSiteBroadcastsTestSendPath, zSiteBroadcastsUpdateBody, zSiteBroadcastsUpdatePath, zSiteContactsCreateBody, zSiteContactsCreatePath, zSiteContactsDeletePath, zSiteContactsGetPath, zSiteContactsListPath, zSiteContactsListQuery, zSiteContactsUpdateBody, zSiteContactsUpdatePath, zSiteCustomFieldsListPath, zSiteEventsActionsPath, zSiteEventsListPath, zSiteEventsListQuery, zSiteIntegrationsCreateBody, zSiteIntegrationsCreatePath, zSiteIntegrationsDeletePath, zSiteIntegrationsGetPath, zSiteIntegrationsListPath, zSiteIntegrationsUpdateBody, zSiteIntegrationsUpdatePath, zSiteSegmentsCreateBody, zSiteSegmentsCreatePath, zSiteSegmentsDeletePath, zSiteSegmentsGetPath, zSiteSegmentsListPath, zSiteSegmentsListQuery, zSiteSegmentsPreviewBody, zSiteSegmentsPreviewPath, zSiteSegmentsUpdateBody, zSiteSegmentsUpdatePath, zSiteSuppressionsCreateBody, zSiteSuppressionsCreatePath, zSiteSuppressionsDeletePath, zSiteSuppressionsListPath, zSiteSuppressionsListQuery, zSiteTemplatesCreateBody, zSiteTemplatesCreatePath, zSiteTemplatesDeletePath, zSiteTemplatesGetPath, zSiteTemplatesListPath, zSiteTemplatesListQuery, zSiteTemplatesUpdateBody, zSiteTemplatesUpdatePath, zSiteTokensCreateBody, zSiteTokensCreatePath, zSiteTokensDeletePath, zSiteTokensListPath, zSiteTransactionalEmailsListPath, zSiteTransactionalEmailsListQuery, zSiteUserUpdateMeBody, zSiteWebhooksCreateBody, zSiteWebhooksCreatePath, zSiteWebhooksDeletePath, zSiteWebhooksGetPath, zSiteWebhooksListPath, zSiteWebhooksListQuery, zSiteWebhooksUpdateBody, zSiteWebhooksUpdatePath, zSiteWorkspacesUpdateBody, zSiteWorkspacesUpdatePath } from './zod.gen.ts';
+import type { SiteAnalyticsOverviewData, SiteAnalyticsOverviewErrors, SiteAnalyticsOverviewResponses, SiteAuthConfirmEmailChangeData, SiteAuthConfirmEmailChangeErrors, SiteAuthConfirmEmailChangeResponses, SiteAuthDirectLoginData, SiteAuthDirectLoginErrors, SiteAuthDirectLoginResponses, SiteAuthForgotPasswordData, SiteAuthForgotPasswordResponses, SiteAuthRegisterData, SiteAuthRegisterErrors, SiteAuthRegisterResponses, SiteAuthResetPasswordData, SiteAuthResetPasswordErrors, SiteAuthResetPasswordResponses, SiteAuthVerifyEmailData, SiteAuthVerifyEmailErrors, SiteAuthVerifyEmailResponses, SiteAutomationsActivateData, SiteAutomationsActivateErrors, SiteAutomationsActivateResponses, SiteAutomationsCreateData, SiteAutomationsCreateErrors, SiteAutomationsCreateResponses, SiteAutomationsDeactivateData, SiteAutomationsDeactivateErrors, SiteAutomationsDeactivateResponses, SiteAutomationsDeleteData, SiteAutomationsDeleteErrors, SiteAutomationsDeleteResponses, SiteAutomationsGetData, SiteAutomationsGetErrors, SiteAutomationsGetResponses, SiteAutomationsListData, SiteAutomationsListErrors, SiteAutomationsListResponses, SiteAutomationsUpdateData, SiteAutomationsUpdateErrors, SiteAutomationsUpdateResponses, SiteBroadcastsCreateData, SiteBroadcastsCreateErrors, SiteBroadcastsCreateResponses, SiteBroadcastsDeleteData, SiteBroadcastsDeleteErrors, SiteBroadcastsDeleteResponses, SiteBroadcastsGetData, SiteBroadcastsGetErrors, SiteBroadcastsGetResponses, SiteBroadcastsListData, SiteBroadcastsListErrors, SiteBroadcastsListResponses, SiteBroadcastsScheduleData, SiteBroadcastsScheduleErrors, SiteBroadcastsScheduleResponses, SiteBroadcastsSendData, SiteBroadcastsSendErrors, SiteBroadcastsSendResponses, SiteBroadcastsTestSendData, SiteBroadcastsTestSendErrors, SiteBroadcastsTestSendResponses, SiteBroadcastsUpdateData, SiteBroadcastsUpdateErrors, SiteBroadcastsUpdateResponses, SiteContactsCreateData, SiteContactsCreateErrors, SiteContactsCreateResponses, SiteContactsDeleteData, SiteContactsDeleteErrors, SiteContactsDeleteResponses, SiteContactsGetData, SiteContactsGetErrors, SiteContactsGetResponses, SiteContactsListData, SiteContactsListErrors, SiteContactsListResponses, SiteContactsUpdateData, SiteContactsUpdateErrors, SiteContactsUpdateResponses, SiteCustomFieldsListData, SiteCustomFieldsListErrors, SiteCustomFieldsListResponses, SiteEventsActionsData, SiteEventsActionsErrors, SiteEventsActionsResponses, SiteEventsListData, SiteEventsListErrors, SiteEventsListResponses, SiteIntegrationsCreateData, SiteIntegrationsCreateErrors, SiteIntegrationsCreateResponses, SiteIntegrationsDeleteData, SiteIntegrationsDeleteErrors, SiteIntegrationsDeleteResponses, SiteIntegrationsGetData, SiteIntegrationsGetErrors, SiteIntegrationsGetResponses, SiteIntegrationsListData, SiteIntegrationsListErrors, SiteIntegrationsListResponses, SiteIntegrationsUpdateData, SiteIntegrationsUpdateErrors, SiteIntegrationsUpdateResponses, SiteSegmentsCreateData, SiteSegmentsCreateErrors, SiteSegmentsCreateResponses, SiteSegmentsDeleteData, SiteSegmentsDeleteErrors, SiteSegmentsDeleteResponses, SiteSegmentsGetData, SiteSegmentsGetErrors, SiteSegmentsGetResponses, SiteSegmentsListData, SiteSegmentsListErrors, SiteSegmentsListResponses, SiteSegmentsPreviewData, SiteSegmentsPreviewErrors, SiteSegmentsPreviewResponses, SiteSegmentsUpdateData, SiteSegmentsUpdateErrors, SiteSegmentsUpdateResponses, SiteSuppressionsCreateData, SiteSuppressionsCreateErrors, SiteSuppressionsCreateResponses, SiteSuppressionsDeleteData, SiteSuppressionsDeleteErrors, SiteSuppressionsDeleteResponses, SiteSuppressionsListData, SiteSuppressionsListErrors, SiteSuppressionsListResponses, SiteTemplatesCreateData, SiteTemplatesCreateErrors, SiteTemplatesCreateResponses, SiteTemplatesDeleteData, SiteTemplatesDeleteErrors, SiteTemplatesDeleteResponses, SiteTemplatesGetData, SiteTemplatesGetErrors, SiteTemplatesGetResponses, SiteTemplatesListData, SiteTemplatesListErrors, SiteTemplatesListResponses, SiteTemplatesUpdateData, SiteTemplatesUpdateErrors, SiteTemplatesUpdateResponses, SiteTokensCreateData, SiteTokensCreateErrors, SiteTokensCreateResponses, SiteTokensDeleteData, SiteTokensDeleteErrors, SiteTokensDeleteResponses, SiteTokensListData, SiteTokensListErrors, SiteTokensListResponses, SiteTransactionalEmailsListData, SiteTransactionalEmailsListErrors, SiteTransactionalEmailsListResponses, SiteUserEmailChangeData, SiteUserEmailChangeErrors, SiteUserEmailChangeResponses, SiteUserGetMeData, SiteUserGetMeResponses, SiteUserResendVerificationData, SiteUserResendVerificationResponses, SiteUserUpdateMeData, SiteUserUpdateMeErrors, SiteUserUpdateMeResponses, SiteWebhooksCreateData, SiteWebhooksCreateErrors, SiteWebhooksCreateResponses, SiteWebhooksDeleteData, SiteWebhooksDeleteErrors, SiteWebhooksDeleteResponses, SiteWebhooksGetData, SiteWebhooksGetErrors, SiteWebhooksGetResponses, SiteWebhooksListData, SiteWebhooksListErrors, SiteWebhooksListResponses, SiteWebhooksUpdateData, SiteWebhooksUpdateErrors, SiteWebhooksUpdateResponses, SiteWorkspacesListData, SiteWorkspacesListResponses, SiteWorkspacesUpdateData, SiteWorkspacesUpdateErrors, SiteWorkspacesUpdateResponses } from './types.gen.ts';
+import { zSiteAnalyticsOverviewPath, zSiteAnalyticsOverviewQuery, zSiteAuthConfirmEmailChangeBody, zSiteAuthDirectLoginBody, zSiteAuthForgotPasswordBody, zSiteAuthRegisterBody, zSiteAuthResetPasswordBody, zSiteAuthVerifyEmailBody, zSiteAutomationsActivatePath, zSiteAutomationsCreateBody, zSiteAutomationsCreatePath, zSiteAutomationsDeactivatePath, zSiteAutomationsDeletePath, zSiteAutomationsGetPath, zSiteAutomationsListPath, zSiteAutomationsListQuery, zSiteAutomationsUpdateBody, zSiteAutomationsUpdatePath, zSiteBroadcastsCreateBody, zSiteBroadcastsCreatePath, zSiteBroadcastsDeletePath, zSiteBroadcastsGetPath, zSiteBroadcastsListPath, zSiteBroadcastsListQuery, zSiteBroadcastsScheduleBody, zSiteBroadcastsSchedulePath, zSiteBroadcastsSendPath, zSiteBroadcastsTestSendBody, zSiteBroadcastsTestSendPath, zSiteBroadcastsUpdateBody, zSiteBroadcastsUpdatePath, zSiteContactsCreateBody, zSiteContactsCreatePath, zSiteContactsDeletePath, zSiteContactsGetPath, zSiteContactsListPath, zSiteContactsListQuery, zSiteContactsUpdateBody, zSiteContactsUpdatePath, zSiteCustomFieldsListPath, zSiteEventsActionsPath, zSiteEventsListPath, zSiteEventsListQuery, zSiteIntegrationsCreateBody, zSiteIntegrationsCreatePath, zSiteIntegrationsDeletePath, zSiteIntegrationsGetPath, zSiteIntegrationsListPath, zSiteIntegrationsUpdateBody, zSiteIntegrationsUpdatePath, zSiteSegmentsCreateBody, zSiteSegmentsCreatePath, zSiteSegmentsDeletePath, zSiteSegmentsGetPath, zSiteSegmentsListPath, zSiteSegmentsListQuery, zSiteSegmentsPreviewBody, zSiteSegmentsPreviewPath, zSiteSegmentsUpdateBody, zSiteSegmentsUpdatePath, zSiteSuppressionsCreateBody, zSiteSuppressionsCreatePath, zSiteSuppressionsDeletePath, zSiteSuppressionsListPath, zSiteSuppressionsListQuery, zSiteTemplatesCreateBody, zSiteTemplatesCreatePath, zSiteTemplatesDeletePath, zSiteTemplatesGetPath, zSiteTemplatesListPath, zSiteTemplatesListQuery, zSiteTemplatesUpdateBody, zSiteTemplatesUpdatePath, zSiteTokensCreateBody, zSiteTokensCreatePath, zSiteTokensDeletePath, zSiteTokensListPath, zSiteTransactionalEmailsListPath, zSiteTransactionalEmailsListQuery, zSiteUserEmailChangeBody, zSiteUserUpdateMeBody, zSiteWebhooksCreateBody, zSiteWebhooksCreatePath, zSiteWebhooksDeletePath, zSiteWebhooksGetPath, zSiteWebhooksListPath, zSiteWebhooksListQuery, zSiteWebhooksUpdateBody, zSiteWebhooksUpdatePath, zSiteWorkspacesUpdateBody, zSiteWorkspacesUpdatePath } from './zod.gen.ts';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -22,6 +22,24 @@ export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends 
     meta?: keyof ClientMeta extends never ? Record<string, unknown> : ClientMeta;
 };
 
+/**
+ * Confirm an email change from the token sent to the new address. Public:
+ * the link is opened from the new inbox, which has no session.
+ */
+export const siteAuthConfirmEmailChange = <ThrowOnError extends boolean = false>(options: Options<SiteAuthConfirmEmailChangeData, ThrowOnError>): RequestResult<SiteAuthConfirmEmailChangeResponses, SiteAuthConfirmEmailChangeErrors, ThrowOnError> => (options.client ?? client).post<SiteAuthConfirmEmailChangeResponses, SiteAuthConfirmEmailChangeErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: zSiteAuthConfirmEmailChangeBody,
+        path: z.never().optional(),
+        query: z.never().optional()
+    }).parseAsync(data),
+    url: '/auth/confirm-email-change',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
 export const siteAuthDirectLogin = <ThrowOnError extends boolean = false>(options: Options<SiteAuthDirectLoginData, ThrowOnError>): RequestResult<SiteAuthDirectLoginResponses, SiteAuthDirectLoginErrors, ThrowOnError> => (options.client ?? client).post<SiteAuthDirectLoginResponses, SiteAuthDirectLoginErrors, ThrowOnError>({
     requestValidator: async (data) => await z.object({
         body: zSiteAuthDirectLoginBody,
@@ -36,6 +54,24 @@ export const siteAuthDirectLogin = <ThrowOnError extends boolean = false>(option
     }
 });
 
+/**
+ * Request a password-reset link. Always returns 202 regardless of whether
+ * the email matches an account, to avoid leaking which addresses exist.
+ */
+export const siteAuthForgotPassword = <ThrowOnError extends boolean = false>(options: Options<SiteAuthForgotPasswordData, ThrowOnError>): RequestResult<SiteAuthForgotPasswordResponses, unknown, ThrowOnError> => (options.client ?? client).post<SiteAuthForgotPasswordResponses, unknown, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: zSiteAuthForgotPasswordBody,
+        path: z.never().optional(),
+        query: z.never().optional()
+    }).parseAsync(data),
+    url: '/auth/forgot-password',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
 export const siteAuthRegister = <ThrowOnError extends boolean = false>(options: Options<SiteAuthRegisterData, ThrowOnError>): RequestResult<SiteAuthRegisterResponses, SiteAuthRegisterErrors, ThrowOnError> => (options.client ?? client).post<SiteAuthRegisterResponses, SiteAuthRegisterErrors, ThrowOnError>({
     requestValidator: async (data) => await z.object({
         body: zSiteAuthRegisterBody,
@@ -43,6 +79,40 @@ export const siteAuthRegister = <ThrowOnError extends boolean = false>(options: 
         query: z.never().optional()
     }).parseAsync(data),
     url: '/auth/register',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Set a new password from a reset token
+ */
+export const siteAuthResetPassword = <ThrowOnError extends boolean = false>(options: Options<SiteAuthResetPasswordData, ThrowOnError>): RequestResult<SiteAuthResetPasswordResponses, SiteAuthResetPasswordErrors, ThrowOnError> => (options.client ?? client).post<SiteAuthResetPasswordResponses, SiteAuthResetPasswordErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: zSiteAuthResetPasswordBody,
+        path: z.never().optional(),
+        query: z.never().optional()
+    }).parseAsync(data),
+    url: '/auth/reset-password',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Confirm an email address from a verification token (signup verification)
+ */
+export const siteAuthVerifyEmail = <ThrowOnError extends boolean = false>(options: Options<SiteAuthVerifyEmailData, ThrowOnError>): RequestResult<SiteAuthVerifyEmailResponses, SiteAuthVerifyEmailErrors, ThrowOnError> => (options.client ?? client).post<SiteAuthVerifyEmailResponses, SiteAuthVerifyEmailErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: zSiteAuthVerifyEmailBody,
+        path: z.never().optional(),
+        query: z.never().optional()
+    }).parseAsync(data),
+    url: '/auth/verify-email',
     ...options,
     headers: {
         'Content-Type': 'application/json',
@@ -88,6 +158,47 @@ export const siteUserUpdateMe = <ThrowOnError extends boolean = false>(options: 
         'Content-Type': 'application/json',
         ...options.headers
     }
+});
+
+/**
+ * Request an email change; sends a confirmation link to the new address.
+ * Requires the current password. 409 if the new address is already in use.
+ */
+export const siteUserEmailChange = <ThrowOnError extends boolean = false>(options: Options<SiteUserEmailChangeData, ThrowOnError>): RequestResult<SiteUserEmailChangeResponses, SiteUserEmailChangeErrors, ThrowOnError> => (options.client ?? client).post<SiteUserEmailChangeResponses, SiteUserEmailChangeErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: zSiteUserEmailChangeBody,
+        path: z.never().optional(),
+        query: z.never().optional()
+    }).parseAsync(data),
+    security: [{
+            in: 'cookie',
+            name: 'JWT',
+            type: 'apiKey'
+        }],
+    url: '/me/email-change',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Resend the signup email-verification link to the current address
+ */
+export const siteUserResendVerification = <ThrowOnError extends boolean = false>(options?: Options<SiteUserResendVerificationData, ThrowOnError>): RequestResult<SiteUserResendVerificationResponses, unknown, ThrowOnError> => (options?.client ?? client).post<SiteUserResendVerificationResponses, unknown, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: z.never().optional(),
+        path: z.never().optional(),
+        query: z.never().optional()
+    }).parseAsync(data),
+    security: [{
+            in: 'cookie',
+            name: 'JWT',
+            type: 'apiKey'
+        }],
+    url: '/me/verification-email',
+    ...options
 });
 
 /**

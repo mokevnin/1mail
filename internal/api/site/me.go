@@ -5,8 +5,10 @@ import (
 	"net/http"
 	"strings"
 
+	entuser "github.com/mokevnin/1mail/ent/user"
 	siteapi "github.com/mokevnin/1mail/gen/site"
 	"github.com/mokevnin/1mail/internal/api/auth"
+	"github.com/mokevnin/1mail/internal/authtoken"
 	"github.com/mokevnin/1mail/internal/service"
 )
 
@@ -86,4 +88,86 @@ func (h *Handlers) SiteUserUpdateMe(ctx context.Context, req *siteapi.SiteUpdate
 	}
 
 	return mapper.UserToResource(u), nil
+}
+
+// SiteUserEmailChange requests a change of the login email. It verifies the
+// current password, rejects an address already in use, and emails a
+// confirmation link to the NEW address — the change only takes effect once that
+// link is confirmed (SiteAuthConfirmEmailChange). Returns 202.
+func (h *Handlers) SiteUserEmailChange(ctx context.Context, req *siteapi.SiteEmailChangeInput) (siteapi.SiteUserEmailChangeRes, error) {
+	a := auth.GetSiteAuth(ctx)
+	if a == nil {
+		v := siteapi.SiteUserEmailChangeForbidden(problem(http.StatusForbidden, "unauthorized"))
+		return &v, nil
+	}
+	u, err := h.ent.User.Get(ctx, a.UserID)
+	if err != nil {
+		return nil, err
+	}
+
+	newEmail := strings.TrimSpace(string(req.NewEmail))
+	if newEmail == "" {
+		v := siteapi.SiteUserEmailChangeUnprocessableEntity(problemWithErrors(
+			http.StatusUnprocessableEntity,
+			"new email is required",
+			map[string][]string{"newEmail": {"new email is required"}},
+		))
+		return &v, nil
+	}
+	if strings.EqualFold(newEmail, u.Email) {
+		v := siteapi.SiteUserEmailChangeUnprocessableEntity(problemWithErrors(
+			http.StatusUnprocessableEntity,
+			"new email must differ from the current one",
+			map[string][]string{"newEmail": {"new email must differ from the current one"}},
+		))
+		return &v, nil
+	}
+
+	if u.PasswordHash == "" || !service.VerifyPassword(u.PasswordHash, req.CurrentPassword) {
+		v := siteapi.SiteUserEmailChangeForbidden(problem(http.StatusForbidden, "current password is incorrect"))
+		return &v, nil
+	}
+
+	// Reject an address already taken. The confirm step re-checks under the unique
+	// index, so this is an early, friendly 409 rather than the sole guard.
+	taken, err := h.ent.User.Query().Where(entuser.Email(newEmail)).Exist(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if taken {
+		v := siteapi.SiteUserEmailChangeConflict(problem(http.StatusConflict, "that email is already in use"))
+		return &v, nil
+	}
+
+	// Bind to the current email so the token is single-use (invalid once swapped);
+	// carry the requested new address in the token.
+	token, err := h.tokens.Mint(authtoken.PurposeEmailChange, u.ID, u.Email, emailChangeTokenTTL, map[string]string{"new": newEmail})
+	if err != nil {
+		return nil, err
+	}
+	_ = h.sysmail.EnqueueEmailChangeConfirm(ctx, newEmail, token)
+
+	return &siteapi.SiteUserEmailChangeAccepted{}, nil
+}
+
+// SiteUserResendVerification re-sends the signup verification link to the
+// current address. A no-op (still 202) when the email is already verified.
+func (h *Handlers) SiteUserResendVerification(ctx context.Context) error {
+	a := auth.GetSiteAuth(ctx)
+	if a == nil {
+		return auth.ErrUnauthorized
+	}
+	u, err := h.ent.User.Get(ctx, a.UserID)
+	if err != nil {
+		return err
+	}
+	if u.EmailVerifiedAt != nil {
+		return nil
+	}
+	token, err := h.tokens.Mint(authtoken.PurposeEmailVerify, u.ID, "", verifyTokenTTL, map[string]string{"email": u.Email})
+	if err != nil {
+		return err
+	}
+	_ = h.sysmail.EnqueueEmailVerification(ctx, u.Email, token)
+	return nil
 }

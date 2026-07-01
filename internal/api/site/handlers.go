@@ -10,6 +10,7 @@ import (
 	siteapi "github.com/mokevnin/1mail/gen/site"
 	"github.com/mokevnin/1mail/internal/api/auth"
 	"github.com/mokevnin/1mail/internal/api/site/resources"
+	"github.com/mokevnin/1mail/internal/authtoken"
 	"github.com/mokevnin/1mail/internal/events"
 	"github.com/mokevnin/1mail/internal/messaging"
 	"github.com/mokevnin/1mail/internal/secrets"
@@ -32,6 +33,16 @@ type WelcomeEnqueuer interface {
 	EnqueueWelcome(ctx context.Context, email, name string) error
 }
 
+// SystemMailEnqueuer schedules the self-service account emails (password reset,
+// email verification, email-change confirmation) through the platform system
+// sender. Same jobs enqueue seam (river prod, inline tests). The token is minted
+// by the handler; the job builds the link.
+type SystemMailEnqueuer interface {
+	EnqueuePasswordReset(ctx context.Context, email, token string) error
+	EnqueueEmailVerification(ctx context.Context, email, token string) error
+	EnqueueEmailChangeConfirm(ctx context.Context, email, token string) error
+}
+
 type Handlers struct {
 	ent      *ent.Client
 	bus      *events.Bus
@@ -39,10 +50,12 @@ type Handlers struct {
 	catalog  *messaging.Catalog
 	enqueuer BroadcastEnqueuer
 	welcome  WelcomeEnqueuer
+	sysmail  SystemMailEnqueuer
+	tokens   *authtoken.Signer
 }
 
-func NewHandlers(client *ent.Client, bus *events.Bus, cipher *secrets.Cipher, catalog *messaging.Catalog, enqueuer BroadcastEnqueuer, welcome WelcomeEnqueuer) *Handlers {
-	return &Handlers{ent: client, bus: bus, cipher: cipher, catalog: catalog, enqueuer: enqueuer, welcome: welcome}
+func NewHandlers(client *ent.Client, bus *events.Bus, cipher *secrets.Cipher, catalog *messaging.Catalog, enqueuer BroadcastEnqueuer, welcome WelcomeEnqueuer, sysmail SystemMailEnqueuer, tokens *authtoken.Signer) *Handlers {
+	return &Handlers{ent: client, bus: bus, cipher: cipher, catalog: catalog, enqueuer: enqueuer, welcome: welcome, sysmail: sysmail, tokens: tokens}
 }
 
 var _ siteapi.Handler = (*Handlers)(nil)

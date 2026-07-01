@@ -25,6 +25,7 @@ import (
 	apicollect "github.com/mokevnin/1mail/internal/api/collect"
 	apiexternal "github.com/mokevnin/1mail/internal/api/external"
 	apisite "github.com/mokevnin/1mail/internal/api/site"
+	"github.com/mokevnin/1mail/internal/authtoken"
 	"github.com/mokevnin/1mail/internal/events"
 	"github.com/mokevnin/1mail/internal/logging"
 	"github.com/mokevnin/1mail/internal/messaging/registry"
@@ -36,7 +37,7 @@ import (
 
 // New builds the top-level net/http handler wiring the three ogen-generated
 // API servers (site, external, collect) plus go-pkgz/auth endpoints.
-func New(cfg *config.Config, client *ent.Client, db *sql.DB, bus *events.Bus, enqueuer apisite.BroadcastEnqueuer, welcome apisite.WelcomeEnqueuer, resolver apiexternal.SenderResolver) (http.Handler, error) {
+func New(cfg *config.Config, client *ent.Client, db *sql.DB, bus *events.Bus, enqueuer apisite.BroadcastEnqueuer, welcome apisite.WelcomeEnqueuer, sysmail apisite.SystemMailEnqueuer, resolver apiexternal.SenderResolver) (http.Handler, error) {
 	// Credential encryption is mandatory: fail fast at boot if the key is
 	// missing or malformed rather than at first provider write.
 	cipher, err := secrets.NewCipher(cfg.EncryptionKey)
@@ -71,7 +72,7 @@ func New(cfg *config.Config, client *ent.Client, db *sql.DB, bus *events.Bus, en
 	// Site API — /site (JWT cookie via generated SecurityHandler; register and
 	// direct-login are public per the spec).
 	siteSrv, err := siteapi.NewServer(
-		apisite.NewHandlers(client, bus, cipher, providerCatalog, enqueuer, welcome),
+		apisite.NewHandlers(client, bus, cipher, providerCatalog, enqueuer, welcome, sysmail, authtoken.New(cfg.JWTSecret)),
 		apiauth.NewSiteSecurityHandler(cfg.JWTSecret, client),
 		siteapi.WithPathPrefix("/site"),
 		siteapi.WithErrorHandler(problemErrorHandler),

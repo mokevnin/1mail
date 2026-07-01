@@ -22,13 +22,14 @@ type Inline struct {
 	resolver     SenderResolver
 	tracker      *tracking.Tracker
 	systemSender messaging.EmailSender
+	appURL       string
 }
 
 // NewInline builds the inline adapter. systemSender sends platform mail; resolver
 // resolves a workspace's customer sender for broadcasts; bus carries the send's
-// transactional outbox publish (email.sent).
-func NewInline(entClient *ent.Client, bus *events.Bus, resolver SenderResolver, tracker *tracking.Tracker, systemSender messaging.EmailSender) *Inline {
-	return &Inline{ent: entClient, bus: bus, resolver: resolver, tracker: tracker, systemSender: systemSender}
+// transactional outbox publish (email.sent). appURL builds account-email links.
+func NewInline(entClient *ent.Client, bus *events.Bus, resolver SenderResolver, tracker *tracking.Tracker, systemSender messaging.EmailSender, appURL string) *Inline {
+	return &Inline{ent: entClient, bus: bus, resolver: resolver, tracker: tracker, systemSender: systemSender, appURL: appURL}
 }
 
 // EnqueueBroadcast runs the broadcast send now. A future scheduledAt is skipped:
@@ -44,4 +45,19 @@ func (i *Inline) EnqueueBroadcast(ctx context.Context, broadcastID int64, schedu
 // EnqueueWelcome sends the welcome email now via the system sender.
 func (i *Inline) EnqueueWelcome(ctx context.Context, email, name string) error {
 	return SendWelcome(ctx, i.systemSender, email, name)
+}
+
+// EnqueuePasswordReset sends the password-reset email now.
+func (i *Inline) EnqueuePasswordReset(ctx context.Context, email, token string) error {
+	return SendAuthMail(ctx, i.systemSender, i.appURL, SendAuthMailArgs{Flow: flowPasswordReset, Email: email, Token: token})
+}
+
+// EnqueueEmailVerification sends the signup email-verification email now.
+func (i *Inline) EnqueueEmailVerification(ctx context.Context, email, token string) error {
+	return SendAuthMail(ctx, i.systemSender, i.appURL, SendAuthMailArgs{Flow: flowEmailVerify, Email: email, Token: token})
+}
+
+// EnqueueEmailChangeConfirm sends the confirm-new-email email now.
+func (i *Inline) EnqueueEmailChangeConfirm(ctx context.Context, email, token string) error {
+	return SendAuthMail(ctx, i.systemSender, i.appURL, SendAuthMailArgs{Flow: flowEmailChange, Email: email, Token: token})
 }

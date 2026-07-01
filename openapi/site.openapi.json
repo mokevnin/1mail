@@ -55,6 +55,50 @@
     }
   ],
   "paths": {
+    "/auth/confirm-email-change": {
+      "post": {
+        "operationId": "SiteAuth_confirmEmailChange",
+        "description": "Confirm an email change from the token sent to the new address. Public:\nthe link is opened from the new inbox, which has no session.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "The request has succeeded."
+          },
+          "400": {
+            "description": "RFC 7807 bad request response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "RFC 7807 conflict response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Site Auth"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SiteConfirmEmailChangeInput"
+              }
+            }
+          }
+        },
+        "security": [{}]
+      }
+    },
     "/auth/direct/login": {
       "post": {
         "operationId": "SiteAuth_directLogin",
@@ -105,6 +149,30 @@
         "security": [{}]
       }
     },
+    "/auth/forgot-password": {
+      "post": {
+        "operationId": "SiteAuth_forgotPassword",
+        "description": "Request a password-reset link. Always returns 202 regardless of whether\nthe email matches an account, to avoid leaking which addresses exist.",
+        "parameters": [],
+        "responses": {
+          "202": {
+            "description": "The request has been accepted for processing, but processing has not yet completed."
+          }
+        },
+        "tags": ["Site Auth"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SiteForgotPasswordInput"
+              }
+            }
+          }
+        },
+        "security": [{}]
+      }
+    },
     "/auth/register": {
       "post": {
         "operationId": "SiteAuth_register",
@@ -148,6 +216,74 @@
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/SiteRegisterInput"
+              }
+            }
+          }
+        },
+        "security": [{}]
+      }
+    },
+    "/auth/reset-password": {
+      "post": {
+        "operationId": "SiteAuth_resetPassword",
+        "description": "Set a new password from a reset token",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "The request has succeeded."
+          },
+          "400": {
+            "description": "RFC 7807 bad request response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Site Auth"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SiteResetPasswordInput"
+              }
+            }
+          }
+        },
+        "security": [{}]
+      }
+    },
+    "/auth/verify-email": {
+      "post": {
+        "operationId": "SiteAuth_verifyEmail",
+        "description": "Confirm an email address from a verification token (signup verification)",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "The request has succeeded."
+          },
+          "400": {
+            "description": "RFC 7807 bad request response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Site Auth"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SiteVerifyEmailInput"
               }
             }
           }
@@ -221,6 +357,72 @@
             }
           }
         }
+      }
+    },
+    "/me/email-change": {
+      "post": {
+        "operationId": "SiteUser_emailChange",
+        "description": "Request an email change; sends a confirmation link to the new address.\nRequires the current password. 409 if the new address is already in use.",
+        "parameters": [],
+        "responses": {
+          "202": {
+            "description": "The request has been accepted for processing, but processing has not yet completed."
+          },
+          "403": {
+            "description": "RFC 7807 forbidden response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "RFC 7807 conflict response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "RFC 7807 validation response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Site User"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SiteEmailChangeInput"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/me/verification-email": {
+      "post": {
+        "operationId": "SiteUser_resendVerification",
+        "description": "Resend the signup email-verification link to the current address",
+        "parameters": [],
+        "responses": {
+          "202": {
+            "description": "The request has been accepted for processing, but processing has not yet completed."
+          }
+        },
+        "tags": ["Site User"]
       }
     },
     "/w/{workspaceSlug}/analytics/overview": {
@@ -4356,6 +4558,16 @@
         "enum": ["draft", "scheduled", "sending", "sent", "failed"],
         "description": "Broadcast lifecycle status"
       },
+      "SiteConfirmEmailChangeInput": {
+        "type": "object",
+        "required": ["token"],
+        "properties": {
+          "token": {
+            "type": "string"
+          }
+        },
+        "description": "Confirm a requested email change using the token sent to the new address"
+      },
       "SiteContactResource": {
         "type": "object",
         "required": ["id", "createdAt", "updatedAt"],
@@ -4797,6 +5009,25 @@
           }
         }
       },
+      "SiteEmailChangeInput": {
+        "type": "object",
+        "required": ["newEmail", "currentPassword"],
+        "properties": {
+          "newEmail": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EmailAddress"
+              }
+            ],
+            "description": "The requested new email address"
+          },
+          "currentPassword": {
+            "type": "string",
+            "description": "Current password, required to authorize the change"
+          }
+        },
+        "description": "Request a change of the login email. The new address must be confirmed via a\nlink sent to it before the change takes effect."
+      },
       "SiteEmailTemplateResource": {
         "type": "object",
         "required": ["id", "name", "subject", "body", "createdAt", "updatedAt"],
@@ -4904,6 +5135,16 @@
           }
         },
         "description": "A tracked event shown in the activity feed"
+      },
+      "SiteForgotPasswordInput": {
+        "type": "object",
+        "required": ["email"],
+        "properties": {
+          "email": {
+            "$ref": "#/components/schemas/EmailAddress"
+          }
+        },
+        "description": "Request a password-reset link (always accepted; no account enumeration)"
       },
       "SiteIntegrationChannel": {
         "type": "string",
@@ -5085,6 +5326,19 @@
             "$ref": "#/components/schemas/Timestamp"
           }
         }
+      },
+      "SiteResetPasswordInput": {
+        "type": "object",
+        "required": ["token", "password"],
+        "properties": {
+          "token": {
+            "type": "string"
+          },
+          "password": {
+            "type": "string"
+          }
+        },
+        "description": "Set a new password using a reset token"
       },
       "SiteScheduleBroadcastInput": {
         "type": "object",
@@ -5664,7 +5918,7 @@
       },
       "SiteUserResource": {
         "type": "object",
-        "required": ["id", "name", "email", "createdAt"],
+        "required": ["id", "name", "email", "emailVerified", "createdAt"],
         "properties": {
           "id": {
             "allOf": [
@@ -5684,7 +5938,11 @@
                 "$ref": "#/components/schemas/EmailAddress"
               }
             ],
-            "description": "Email address (login identity; not editable here)"
+            "description": "Email address (login identity; change it via the email-change flow)"
+          },
+          "emailVerified": {
+            "type": "boolean",
+            "description": "Whether the user has confirmed ownership of their email"
           },
           "createdAt": {
             "allOf": [
@@ -5696,6 +5954,16 @@
           }
         },
         "description": "The authenticated dashboard user"
+      },
+      "SiteVerifyEmailInput": {
+        "type": "object",
+        "required": ["token"],
+        "properties": {
+          "token": {
+            "type": "string"
+          }
+        },
+        "description": "Confirm ownership of an email address using a verification token"
       },
       "SiteWebhookEndpointResource": {
         "type": "object",

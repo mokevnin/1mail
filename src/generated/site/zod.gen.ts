@@ -136,6 +136,13 @@ export const zSiteBroadcastStatus = z.enum([
 ]);
 
 /**
+ * Confirm a requested email change using the token sent to the new address
+ */
+export const zSiteConfirmEmailChangeInput = z.object({
+    token: z.string()
+});
+
+/**
  * Site request body for creating an automation
  */
 export const zSiteCreateAutomationInput = z.object({
@@ -206,10 +213,26 @@ export const zSiteDirectLoginResult = z.object({
 });
 
 /**
+ * Request a change of the login email. The new address must be confirmed via a
+ * link sent to it before the change takes effect.
+ */
+export const zSiteEmailChangeInput = z.object({
+    newEmail: zEmailAddress,
+    currentPassword: z.string()
+});
+
+/**
  * Distinct event actions seen in a workspace (for segment/filter pickers)
  */
 export const zSiteEventActionsResult = z.object({
     actions: z.array(z.string())
+});
+
+/**
+ * Request a password-reset link (always accepted; no account enumeration)
+ */
+export const zSiteForgotPasswordInput = z.object({
+    email: zEmailAddress
 });
 
 /**
@@ -239,6 +262,14 @@ export const zSitePreviewSegmentResult = z.object({
 export const zSiteRegisterInput = z.object({
     name: z.string(),
     email: zEmailAddress,
+    password: z.string()
+});
+
+/**
+ * Set a new password using a reset token
+ */
+export const zSiteResetPasswordInput = z.object({
+    token: z.string(),
     password: z.string()
 });
 
@@ -452,6 +483,13 @@ export const zSiteUpdateWebhookEndpointInput = z.object({
  */
 export const zSiteUpdateWorkspaceInput = z.object({
     name: z.string()
+});
+
+/**
+ * Confirm ownership of an email address using a verification token
+ */
+export const zSiteVerifyEmailInput = z.object({
+    token: z.string()
 });
 
 export const zTimeZoneName = z.string();
@@ -676,6 +714,7 @@ export const zSiteUserResource = z.object({
     id: zEntityId,
     name: z.string(),
     email: zEmailAddress,
+    emailVerified: z.boolean(),
     createdAt: zTimestamp
 });
 
@@ -721,6 +760,8 @@ export const zPageQueryPage = z.int().min(-2147483648, { error: 'Invalid value: 
  */
 export const zPageQueryPageSize = z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).default(25);
 
+export const zSiteAuthConfirmEmailChangeBody = zSiteConfirmEmailChangeInput;
+
 export const zSiteAuthDirectLoginBody = zSiteDirectLoginInput;
 
 /**
@@ -728,12 +769,18 @@ export const zSiteAuthDirectLoginBody = zSiteDirectLoginInput;
  */
 export const zSiteAuthDirectLoginResponse = zSiteDirectLoginResult;
 
+export const zSiteAuthForgotPasswordBody = zSiteForgotPasswordInput;
+
 export const zSiteAuthRegisterBody = zSiteRegisterInput;
 
 /**
  * The request has succeeded and a new resource has been created as a result.
  */
 export const zSiteAuthRegisterResponse = zSiteRegisterResult;
+
+export const zSiteAuthResetPasswordBody = zSiteResetPasswordInput;
+
+export const zSiteAuthVerifyEmailBody = zSiteVerifyEmailInput;
 
 /**
  * The request has succeeded.
@@ -746,6 +793,8 @@ export const zSiteUserUpdateMeBody = zSiteUpdateMeInput;
  * The request has succeeded.
  */
 export const zSiteUserUpdateMeResponse = zSiteUserResource;
+
+export const zSiteUserEmailChangeBody = zSiteEmailChangeInput;
 
 export const zSiteAnalyticsOverviewPath = z.object({
     workspaceSlug: z.string()

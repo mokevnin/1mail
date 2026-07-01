@@ -45,8 +45,9 @@ type Client struct {
 
 // NewClient builds the river client with all workers registered. Workers carry
 // their own dependencies (ent client, sender resolver, secrets cipher, the
-// platform system sender).
-func NewClient(pool *pgxpool.Pool, entClient *ent.Client, bus *events.Bus, resolver *messaging.Resolver, tracker *tracking.Tracker, cipher *secrets.Cipher, systemSender messaging.EmailSender) (*Client, error) {
+// platform system sender). appURL is the public origin used to build the links
+// in account emails (reset/verify/change).
+func NewClient(pool *pgxpool.Pool, entClient *ent.Client, bus *events.Bus, resolver *messaging.Resolver, tracker *tracking.Tracker, cipher *secrets.Cipher, systemSender messaging.EmailSender, appURL string) (*Client, error) {
 	workers := river.NewWorkers()
 	river.AddWorker(workers, &SendBroadcastWorker{ent: entClient, bus: bus, resolver: resolver, tracker: tracker})
 	river.AddWorker(workers, &SendRecipientWorker{ent: entClient, bus: bus, resolver: resolver, tracker: tracker})
@@ -58,6 +59,7 @@ func NewClient(pool *pgxpool.Pool, entClient *ent.Client, bus *events.Bus, resol
 		client: webhook.NewClient(webhookDeliveryTimeout),
 	})
 	river.AddWorker(workers, &SendWelcomeWorker{sender: systemSender})
+	river.AddWorker(workers, &SendAuthMailWorker{sender: systemSender, appURL: appURL})
 
 	logger := slog.Default()
 	rc, err := river.NewClient(riverpgxv5.New(pool), &river.Config{

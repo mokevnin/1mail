@@ -7,8 +7,12 @@ type OperationName = string
 
 const (
 	SiteAnalyticsOverviewOperation       OperationName = "SiteAnalyticsOverview"
+	SiteAuthConfirmEmailChangeOperation  OperationName = "SiteAuthConfirmEmailChange"
 	SiteAuthDirectLoginOperation         OperationName = "SiteAuthDirectLogin"
+	SiteAuthForgotPasswordOperation      OperationName = "SiteAuthForgotPassword"
 	SiteAuthRegisterOperation            OperationName = "SiteAuthRegister"
+	SiteAuthResetPasswordOperation       OperationName = "SiteAuthResetPassword"
+	SiteAuthVerifyEmailOperation         OperationName = "SiteAuthVerifyEmail"
 	SiteAutomationsActivateOperation     OperationName = "SiteAutomationsActivate"
 	SiteAutomationsCreateOperation       OperationName = "SiteAutomationsCreate"
 	SiteAutomationsDeactivateOperation   OperationName = "SiteAutomationsDeactivate"
@@ -55,7 +59,9 @@ const (
 	SiteTokensDeleteOperation            OperationName = "SiteTokensDelete"
 	SiteTokensListOperation              OperationName = "SiteTokensList"
 	SiteTransactionalEmailsListOperation OperationName = "SiteTransactionalEmailsList"
+	SiteUserEmailChangeOperation         OperationName = "SiteUserEmailChange"
 	SiteUserGetMeOperation               OperationName = "SiteUserGetMe"
+	SiteUserResendVerificationOperation  OperationName = "SiteUserResendVerification"
 	SiteUserUpdateMeOperation            OperationName = "SiteUserUpdateMe"
 	SiteWebhooksCreateOperation          OperationName = "SiteWebhooksCreate"
 	SiteWebhooksDeleteOperation          OperationName = "SiteWebhooksDelete"

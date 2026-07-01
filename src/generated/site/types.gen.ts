@@ -425,6 +425,13 @@ export const SiteBroadcastStatus = {
 export type SiteBroadcastStatus = typeof SiteBroadcastStatus[keyof typeof SiteBroadcastStatus];
 
 /**
+ * Confirm a requested email change using the token sent to the new address
+ */
+export type SiteConfirmEmailChangeInput = {
+    token: string;
+};
+
+/**
  * Contact resource used by the site UI
  */
 export type SiteContactResource = {
@@ -697,6 +704,21 @@ export type SiteDirectLoginResult = {
 };
 
 /**
+ * Request a change of the login email. The new address must be confirmed via a
+ * link sent to it before the change takes effect.
+ */
+export type SiteEmailChangeInput = {
+    /**
+     * The requested new email address
+     */
+    newEmail: EmailAddress;
+    /**
+     * Current password, required to authorize the change
+     */
+    currentPassword: string;
+};
+
+/**
  * Reusable email template used by the site UI
  */
 export type SiteEmailTemplateResource = {
@@ -767,6 +789,13 @@ export type SiteEventResource = {
      * When the event was recorded
      */
     createdAt: Timestamp;
+};
+
+/**
+ * Request a password-reset link (always accepted; no account enumeration)
+ */
+export type SiteForgotPasswordInput = {
+    email: EmailAddress;
 };
 
 /**
@@ -880,6 +909,14 @@ export type SiteRegisterResult = {
     name: string;
     email: EmailAddress;
     createdAt: Timestamp;
+};
+
+/**
+ * Set a new password using a reset token
+ */
+export type SiteResetPasswordInput = {
+    token: string;
+    password: string;
 };
 
 /**
@@ -1288,13 +1325,24 @@ export type SiteUserResource = {
      */
     name: string;
     /**
-     * Email address (login identity; not editable here)
+     * Email address (login identity; change it via the email-change flow)
      */
     email: EmailAddress;
+    /**
+     * Whether the user has confirmed ownership of their email
+     */
+    emailVerified: boolean;
     /**
      * Creation timestamp
      */
     createdAt: Timestamp;
+};
+
+/**
+ * Confirm ownership of an email address using a verification token
+ */
+export type SiteVerifyEmailInput = {
+    token: string;
 };
 
 /**
@@ -1382,6 +1430,33 @@ export type PageQueryPage = number;
  */
 export type PageQueryPageSize = number;
 
+export type SiteAuthConfirmEmailChangeData = {
+    body: SiteConfirmEmailChangeInput;
+    path?: never;
+    query?: never;
+    url: '/auth/confirm-email-change';
+};
+
+export type SiteAuthConfirmEmailChangeErrors = {
+    /**
+     * RFC 7807 bad request response
+     */
+    400: ProblemDetails;
+    /**
+     * RFC 7807 conflict response
+     */
+    409: ProblemDetails;
+};
+
+export type SiteAuthConfirmEmailChangeError = SiteAuthConfirmEmailChangeErrors[keyof SiteAuthConfirmEmailChangeErrors];
+
+export type SiteAuthConfirmEmailChangeResponses = {
+    /**
+     * The request has succeeded.
+     */
+    200: unknown;
+};
+
 export type SiteAuthDirectLoginData = {
     body: SiteDirectLoginInput;
     path?: never;
@@ -1411,6 +1486,20 @@ export type SiteAuthDirectLoginResponses = {
 
 export type SiteAuthDirectLoginResponse = SiteAuthDirectLoginResponses[keyof SiteAuthDirectLoginResponses];
 
+export type SiteAuthForgotPasswordData = {
+    body: SiteForgotPasswordInput;
+    path?: never;
+    query?: never;
+    url: '/auth/forgot-password';
+};
+
+export type SiteAuthForgotPasswordResponses = {
+    /**
+     * The request has been accepted for processing, but processing has not yet completed.
+     */
+    202: unknown;
+};
+
 export type SiteAuthRegisterData = {
     body: SiteRegisterInput;
     path?: never;
@@ -1439,6 +1528,52 @@ export type SiteAuthRegisterResponses = {
 };
 
 export type SiteAuthRegisterResponse = SiteAuthRegisterResponses[keyof SiteAuthRegisterResponses];
+
+export type SiteAuthResetPasswordData = {
+    body: SiteResetPasswordInput;
+    path?: never;
+    query?: never;
+    url: '/auth/reset-password';
+};
+
+export type SiteAuthResetPasswordErrors = {
+    /**
+     * RFC 7807 bad request response
+     */
+    400: ProblemDetails;
+};
+
+export type SiteAuthResetPasswordError = SiteAuthResetPasswordErrors[keyof SiteAuthResetPasswordErrors];
+
+export type SiteAuthResetPasswordResponses = {
+    /**
+     * The request has succeeded.
+     */
+    200: unknown;
+};
+
+export type SiteAuthVerifyEmailData = {
+    body: SiteVerifyEmailInput;
+    path?: never;
+    query?: never;
+    url: '/auth/verify-email';
+};
+
+export type SiteAuthVerifyEmailErrors = {
+    /**
+     * RFC 7807 bad request response
+     */
+    400: ProblemDetails;
+};
+
+export type SiteAuthVerifyEmailError = SiteAuthVerifyEmailErrors[keyof SiteAuthVerifyEmailErrors];
+
+export type SiteAuthVerifyEmailResponses = {
+    /**
+     * The request has succeeded.
+     */
+    200: unknown;
+};
 
 export type SiteUserGetMeData = {
     body?: never;
@@ -1484,6 +1619,51 @@ export type SiteUserUpdateMeResponses = {
 };
 
 export type SiteUserUpdateMeResponse = SiteUserUpdateMeResponses[keyof SiteUserUpdateMeResponses];
+
+export type SiteUserEmailChangeData = {
+    body: SiteEmailChangeInput;
+    path?: never;
+    query?: never;
+    url: '/me/email-change';
+};
+
+export type SiteUserEmailChangeErrors = {
+    /**
+     * RFC 7807 forbidden response
+     */
+    403: ProblemDetails;
+    /**
+     * RFC 7807 conflict response
+     */
+    409: ProblemDetails;
+    /**
+     * RFC 7807 validation response
+     */
+    422: ProblemDetails;
+};
+
+export type SiteUserEmailChangeError = SiteUserEmailChangeErrors[keyof SiteUserEmailChangeErrors];
+
+export type SiteUserEmailChangeResponses = {
+    /**
+     * The request has been accepted for processing, but processing has not yet completed.
+     */
+    202: unknown;
+};
+
+export type SiteUserResendVerificationData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/me/verification-email';
+};
+
+export type SiteUserResendVerificationResponses = {
+    /**
+     * The request has been accepted for processing, but processing has not yet completed.
+     */
+    202: unknown;
+};
 
 export type SiteAnalyticsOverviewData = {
     body?: never;

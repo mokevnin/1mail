@@ -10,6 +10,20 @@ import (
 	ht "github.com/ogen-go/ogen/http"
 )
 
+func encodeSiteAuthConfirmEmailChangeRequest(
+	req *SiteConfirmEmailChangeInput,
+	r *http.Request,
+) error {
+	const contentType = "application/json"
+	e := new(jx.Encoder)
+	{
+		req.Encode(e)
+	}
+	encoded := e.Bytes()
+	ht.SetBody(r, bytes.NewReader(encoded), contentType)
+	return nil
+}
+
 func encodeSiteAuthDirectLoginRequest(
 	req *SiteDirectLoginInput,
 	r *http.Request,
@@ -24,8 +38,50 @@ func encodeSiteAuthDirectLoginRequest(
 	return nil
 }
 
+func encodeSiteAuthForgotPasswordRequest(
+	req *SiteForgotPasswordInput,
+	r *http.Request,
+) error {
+	const contentType = "application/json"
+	e := new(jx.Encoder)
+	{
+		req.Encode(e)
+	}
+	encoded := e.Bytes()
+	ht.SetBody(r, bytes.NewReader(encoded), contentType)
+	return nil
+}
+
 func encodeSiteAuthRegisterRequest(
 	req *SiteRegisterInput,
+	r *http.Request,
+) error {
+	const contentType = "application/json"
+	e := new(jx.Encoder)
+	{
+		req.Encode(e)
+	}
+	encoded := e.Bytes()
+	ht.SetBody(r, bytes.NewReader(encoded), contentType)
+	return nil
+}
+
+func encodeSiteAuthResetPasswordRequest(
+	req *SiteResetPasswordInput,
+	r *http.Request,
+) error {
+	const contentType = "application/json"
+	e := new(jx.Encoder)
+	{
+		req.Encode(e)
+	}
+	encoded := e.Bytes()
+	ht.SetBody(r, bytes.NewReader(encoded), contentType)
+	return nil
+}
+
+func encodeSiteAuthVerifyEmailRequest(
+	req *SiteVerifyEmailInput,
 	r *http.Request,
 ) error {
 	const contentType = "application/json"
@@ -264,6 +320,20 @@ func encodeSiteTemplatesUpdateRequest(
 
 func encodeSiteTokensCreateRequest(
 	req *SiteCreateTokenInput,
+	r *http.Request,
+) error {
+	const contentType = "application/json"
+	e := new(jx.Encoder)
+	{
+		req.Encode(e)
+	}
+	encoded := e.Bytes()
+	ht.SetBody(r, bytes.NewReader(encoded), contentType)
+	return nil
+}
+
+func encodeSiteUserEmailChangeRequest(
+	req *SiteEmailChangeInput,
 	r *http.Request,
 ) error {
 	const contentType = "application/json"

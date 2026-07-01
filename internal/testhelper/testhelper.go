@@ -135,10 +135,11 @@ func Setup(t *testing.T) *TestEnv {
 	systemMail := &CapturingSender{}
 	customerMail := &CapturingSender{}
 	resolver := fixedResolver{sender: customerMail}
-	inline := jobs.NewInline(client, bus, resolver, nil, systemMail)
+	inline := jobs.NewInline(client, bus, resolver, nil, systemMail, baseCfg.AppURL)
 	// The transactional send surface resolves a workspace sender directly (not via
 	// river), so it gets the same capturing resolver — its sends land in CustomerMail.
-	handler, err := server.New(baseCfg, client, txDB, bus, inline, inline, resolver)
+	// inline implements every enqueue seam (broadcast, welcome, account mail).
+	handler, err := server.New(baseCfg, client, txDB, bus, inline, inline, inline, resolver)
 	require.NoError(t, err, "build server")
 
 	return &TestEnv{

@@ -14,14 +14,40 @@ type Handler interface {
 	//
 	// GET /w/{workspaceSlug}/analytics/overview
 	SiteAnalyticsOverview(ctx context.Context, params SiteAnalyticsOverviewParams) (SiteAnalyticsOverviewRes, error)
+	// SiteAuthConfirmEmailChange implements SiteAuth_confirmEmailChange operation.
+	//
+	// Confirm an email change from the token sent to the new address. Public: the link is opened from the
+	// new inbox, which has no session.
+	//
+	// POST /auth/confirm-email-change
+	SiteAuthConfirmEmailChange(ctx context.Context, req *SiteConfirmEmailChangeInput) (SiteAuthConfirmEmailChangeRes, error)
 	// SiteAuthDirectLogin implements SiteAuth_directLogin operation.
 	//
 	// POST /auth/direct/login
 	SiteAuthDirectLogin(ctx context.Context, req *SiteDirectLoginInput) (SiteAuthDirectLoginRes, error)
+	// SiteAuthForgotPassword implements SiteAuth_forgotPassword operation.
+	//
+	// Request a password-reset link. Always returns 202 regardless of whether the email matches an
+	// account, to avoid leaking which addresses exist.
+	//
+	// POST /auth/forgot-password
+	SiteAuthForgotPassword(ctx context.Context, req *SiteForgotPasswordInput) error
 	// SiteAuthRegister implements SiteAuth_register operation.
 	//
 	// POST /auth/register
 	SiteAuthRegister(ctx context.Context, req *SiteRegisterInput) (SiteAuthRegisterRes, error)
+	// SiteAuthResetPassword implements SiteAuth_resetPassword operation.
+	//
+	// Set a new password from a reset token.
+	//
+	// POST /auth/reset-password
+	SiteAuthResetPassword(ctx context.Context, req *SiteResetPasswordInput) (SiteAuthResetPasswordRes, error)
+	// SiteAuthVerifyEmail implements SiteAuth_verifyEmail operation.
+	//
+	// Confirm an email address from a verification token (signup verification).
+	//
+	// POST /auth/verify-email
+	SiteAuthVerifyEmail(ctx context.Context, req *SiteVerifyEmailInput) (SiteAuthVerifyEmailRes, error)
 	// SiteAutomationsActivate implements SiteAutomations_activate operation.
 	//
 	// Activate an automation (starts enrolling contacts).
@@ -298,12 +324,25 @@ type Handler interface {
 	//
 	// GET /w/{workspaceSlug}/transactional-emails
 	SiteTransactionalEmailsList(ctx context.Context, params SiteTransactionalEmailsListParams) (SiteTransactionalEmailsListRes, error)
+	// SiteUserEmailChange implements SiteUser_emailChange operation.
+	//
+	// Request an email change; sends a confirmation link to the new address. Requires the current
+	// password. 409 if the new address is already in use.
+	//
+	// POST /me/email-change
+	SiteUserEmailChange(ctx context.Context, req *SiteEmailChangeInput) (SiteUserEmailChangeRes, error)
 	// SiteUserGetMe implements SiteUser_getMe operation.
 	//
 	// Get the authenticated user's profile.
 	//
 	// GET /me
 	SiteUserGetMe(ctx context.Context) (*SiteUserResource, error)
+	// SiteUserResendVerification implements SiteUser_resendVerification operation.
+	//
+	// Resend the signup email-verification link to the current address.
+	//
+	// POST /me/verification-email
+	SiteUserResendVerification(ctx context.Context) error
 	// SiteUserUpdateMe implements SiteUser_updateMe operation.
 	//
 	// Update the authenticated user's profile (name and/or password).

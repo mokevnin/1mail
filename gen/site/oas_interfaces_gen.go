@@ -5,12 +5,24 @@ type SiteAnalyticsOverviewRes interface {
 	siteAnalyticsOverviewRes()
 }
 
+type SiteAuthConfirmEmailChangeRes interface {
+	siteAuthConfirmEmailChangeRes()
+}
+
 type SiteAuthDirectLoginRes interface {
 	siteAuthDirectLoginRes()
 }
 
 type SiteAuthRegisterRes interface {
 	siteAuthRegisterRes()
+}
+
+type SiteAuthResetPasswordRes interface {
+	siteAuthResetPasswordRes()
+}
+
+type SiteAuthVerifyEmailRes interface {
+	siteAuthVerifyEmailRes()
 }
 
 type SiteAutomationsActivateRes interface {
@@ -195,6 +207,10 @@ type SiteTokensListRes interface {
 
 type SiteTransactionalEmailsListRes interface {
 	siteTransactionalEmailsListRes()
+}
+
+type SiteUserEmailChangeRes interface {
+	siteUserEmailChangeRes()
 }
 
 type SiteUserUpdateMeRes interface {

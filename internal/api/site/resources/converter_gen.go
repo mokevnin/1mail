@@ -160,6 +160,7 @@ func (c *ConverterImpl) UserToResource(source *ent.User) *site.SiteUserResource 
 		siteapiSiteUserResource.ID = entityID((*source).ID)
 		siteapiSiteUserResource.Name = (*source).Name
 		siteapiSiteUserResource.Email = site.EmailAddress((*source).Email)
+		siteapiSiteUserResource.EmailVerified = emailVerified((*source).EmailVerifiedAt)
 		siteapiSiteUserResource.CreatedAt = timestamp((*source).CreatedAt)
 		pSiteapiSiteUserResource = &siteapiSiteUserResource
 	}

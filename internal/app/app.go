@@ -275,7 +275,7 @@ func register(injector do.Injector, env string) {
 		resolver := messaging.NewResolver(client.Client, cipher, registry.Default())
 		tracker := tracking.New(cfg.JWTSecret, cfg.AppURL)
 
-		jc, err := jobs.NewClient(pool.Pool, client.Client, bus.Bus, resolver, tracker, cipher, sys.EmailSender)
+		jc, err := jobs.NewClient(pool.Pool, client.Client, bus.Bus, resolver, tracker, cipher, sys.EmailSender, cfg.AppURL)
 		if err != nil {
 			return nil, err
 		}
@@ -312,9 +312,9 @@ func register(injector do.Injector, env string) {
 		// workspace's configured integration.
 		resolver := messaging.NewResolver(client.Client, cipher, registry.Default())
 
-		// The river jobs client is both the broadcast enqueuer and the welcome
-		// enqueuer (it implements both seams).
-		return server.New(cfg, client.Client, database.DB, bus.Bus, jc.Client, jc.Client, resolver)
+		// The river jobs client implements every enqueue seam: broadcast, welcome,
+		// and the self-service account mail (reset/verify/change).
+		return server.New(cfg, client.Client, database.DB, bus.Bus, jc.Client, jc.Client, jc.Client, resolver)
 	})
 }
 

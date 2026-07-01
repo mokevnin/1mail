@@ -22,6 +22,16 @@ func (UnimplementedHandler) SiteAnalyticsOverview(ctx context.Context, params Si
 	return r, ht.ErrNotImplemented
 }
 
+// SiteAuthConfirmEmailChange implements SiteAuth_confirmEmailChange operation.
+//
+// Confirm an email change from the token sent to the new address. Public: the link is opened from the
+// new inbox, which has no session.
+//
+// POST /auth/confirm-email-change
+func (UnimplementedHandler) SiteAuthConfirmEmailChange(ctx context.Context, req *SiteConfirmEmailChangeInput) (r SiteAuthConfirmEmailChangeRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // SiteAuthDirectLogin implements SiteAuth_directLogin operation.
 //
 // POST /auth/direct/login
@@ -29,10 +39,38 @@ func (UnimplementedHandler) SiteAuthDirectLogin(ctx context.Context, req *SiteDi
 	return r, ht.ErrNotImplemented
 }
 
+// SiteAuthForgotPassword implements SiteAuth_forgotPassword operation.
+//
+// Request a password-reset link. Always returns 202 regardless of whether the email matches an
+// account, to avoid leaking which addresses exist.
+//
+// POST /auth/forgot-password
+func (UnimplementedHandler) SiteAuthForgotPassword(ctx context.Context, req *SiteForgotPasswordInput) error {
+	return ht.ErrNotImplemented
+}
+
 // SiteAuthRegister implements SiteAuth_register operation.
 //
 // POST /auth/register
 func (UnimplementedHandler) SiteAuthRegister(ctx context.Context, req *SiteRegisterInput) (r SiteAuthRegisterRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// SiteAuthResetPassword implements SiteAuth_resetPassword operation.
+//
+// Set a new password from a reset token.
+//
+// POST /auth/reset-password
+func (UnimplementedHandler) SiteAuthResetPassword(ctx context.Context, req *SiteResetPasswordInput) (r SiteAuthResetPasswordRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// SiteAuthVerifyEmail implements SiteAuth_verifyEmail operation.
+//
+// Confirm an email address from a verification token (signup verification).
+//
+// POST /auth/verify-email
+func (UnimplementedHandler) SiteAuthVerifyEmail(ctx context.Context, req *SiteVerifyEmailInput) (r SiteAuthVerifyEmailRes, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -450,6 +488,16 @@ func (UnimplementedHandler) SiteTransactionalEmailsList(ctx context.Context, par
 	return r, ht.ErrNotImplemented
 }
 
+// SiteUserEmailChange implements SiteUser_emailChange operation.
+//
+// Request an email change; sends a confirmation link to the new address. Requires the current
+// password. 409 if the new address is already in use.
+//
+// POST /me/email-change
+func (UnimplementedHandler) SiteUserEmailChange(ctx context.Context, req *SiteEmailChangeInput) (r SiteUserEmailChangeRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // SiteUserGetMe implements SiteUser_getMe operation.
 //
 // Get the authenticated user's profile.
@@ -457,6 +505,15 @@ func (UnimplementedHandler) SiteTransactionalEmailsList(ctx context.Context, par
 // GET /me
 func (UnimplementedHandler) SiteUserGetMe(ctx context.Context) (r *SiteUserResource, _ error) {
 	return r, ht.ErrNotImplemented
+}
+
+// SiteUserResendVerification implements SiteUser_resendVerification operation.
+//
+// Resend the signup email-verification link to the current address.
+//
+// POST /me/verification-email
+func (UnimplementedHandler) SiteUserResendVerification(ctx context.Context) error {
+	return ht.ErrNotImplemented
 }
 
 // SiteUserUpdateMe implements SiteUser_updateMe operation.

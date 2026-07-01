@@ -35,14 +35,40 @@ type Invoker interface {
 	//
 	// GET /w/{workspaceSlug}/analytics/overview
 	SiteAnalyticsOverview(ctx context.Context, params SiteAnalyticsOverviewParams) (SiteAnalyticsOverviewRes, error)
+	// SiteAuthConfirmEmailChange invokes SiteAuth_confirmEmailChange operation.
+	//
+	// Confirm an email change from the token sent to the new address. Public: the link is opened from the
+	// new inbox, which has no session.
+	//
+	// POST /auth/confirm-email-change
+	SiteAuthConfirmEmailChange(ctx context.Context, request *SiteConfirmEmailChangeInput) (SiteAuthConfirmEmailChangeRes, error)
 	// SiteAuthDirectLogin invokes SiteAuth_directLogin operation.
 	//
 	// POST /auth/direct/login
 	SiteAuthDirectLogin(ctx context.Context, request *SiteDirectLoginInput) (SiteAuthDirectLoginRes, error)
+	// SiteAuthForgotPassword invokes SiteAuth_forgotPassword operation.
+	//
+	// Request a password-reset link. Always returns 202 regardless of whether the email matches an
+	// account, to avoid leaking which addresses exist.
+	//
+	// POST /auth/forgot-password
+	SiteAuthForgotPassword(ctx context.Context, request *SiteForgotPasswordInput) error
 	// SiteAuthRegister invokes SiteAuth_register operation.
 	//
 	// POST /auth/register
 	SiteAuthRegister(ctx context.Context, request *SiteRegisterInput) (SiteAuthRegisterRes, error)
+	// SiteAuthResetPassword invokes SiteAuth_resetPassword operation.
+	//
+	// Set a new password from a reset token.
+	//
+	// POST /auth/reset-password
+	SiteAuthResetPassword(ctx context.Context, request *SiteResetPasswordInput) (SiteAuthResetPasswordRes, error)
+	// SiteAuthVerifyEmail invokes SiteAuth_verifyEmail operation.
+	//
+	// Confirm an email address from a verification token (signup verification).
+	//
+	// POST /auth/verify-email
+	SiteAuthVerifyEmail(ctx context.Context, request *SiteVerifyEmailInput) (SiteAuthVerifyEmailRes, error)
 	// SiteAutomationsActivate invokes SiteAutomations_activate operation.
 	//
 	// Activate an automation (starts enrolling contacts).
@@ -319,12 +345,25 @@ type Invoker interface {
 	//
 	// GET /w/{workspaceSlug}/transactional-emails
 	SiteTransactionalEmailsList(ctx context.Context, params SiteTransactionalEmailsListParams) (SiteTransactionalEmailsListRes, error)
+	// SiteUserEmailChange invokes SiteUser_emailChange operation.
+	//
+	// Request an email change; sends a confirmation link to the new address. Requires the current
+	// password. 409 if the new address is already in use.
+	//
+	// POST /me/email-change
+	SiteUserEmailChange(ctx context.Context, request *SiteEmailChangeInput) (SiteUserEmailChangeRes, error)
 	// SiteUserGetMe invokes SiteUser_getMe operation.
 	//
 	// Get the authenticated user's profile.
 	//
 	// GET /me
 	SiteUserGetMe(ctx context.Context) (*SiteUserResource, error)
+	// SiteUserResendVerification invokes SiteUser_resendVerification operation.
+	//
+	// Resend the signup email-verification link to the current address.
+	//
+	// POST /me/verification-email
+	SiteUserResendVerification(ctx context.Context) error
 	// SiteUserUpdateMe invokes SiteUser_updateMe operation.
 	//
 	// Update the authenticated user's profile (name and/or password).
@@ -569,6 +608,90 @@ func (c *Client) sendSiteAnalyticsOverview(ctx context.Context, params SiteAnaly
 	return result, nil
 }
 
+// SiteAuthConfirmEmailChange invokes SiteAuth_confirmEmailChange operation.
+//
+// Confirm an email change from the token sent to the new address. Public: the link is opened from the
+// new inbox, which has no session.
+//
+// POST /auth/confirm-email-change
+func (c *Client) SiteAuthConfirmEmailChange(ctx context.Context, request *SiteConfirmEmailChangeInput) (SiteAuthConfirmEmailChangeRes, error) {
+	res, err := c.sendSiteAuthConfirmEmailChange(ctx, request)
+	return res, err
+}
+
+func (c *Client) sendSiteAuthConfirmEmailChange(ctx context.Context, request *SiteConfirmEmailChangeInput) (res SiteAuthConfirmEmailChangeRes, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("SiteAuth_confirmEmailChange"),
+		semconv.HTTPRequestMethodKey.String("POST"),
+		semconv.URLTemplateKey.String("/auth/confirm-email-change"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, SiteAuthConfirmEmailChangeOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	stage = "BuildURL"
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [1]string
+	pathParts[0] = "/auth/confirm-email-change"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "POST", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+	if err := encodeSiteAuthConfirmEmailChangeRequest(request, r); err != nil {
+		return res, errors.Wrap(err, "encode request")
+	}
+
+	stage = "SendRequest"
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	body := resp.Body
+	defer func() {
+		// Drain the body to EOF before closing, so the underlying
+		// connection can be reused by the Transport regardless of the
+		// response status code. See https://github.com/ogen-go/ogen/issues/1670.
+		_, _ = io.Copy(io.Discard, body)
+		_ = body.Close()
+	}()
+
+	stage = "DecodeResponse"
+	result, err := decodeSiteAuthConfirmEmailChangeResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
 // SiteAuthDirectLogin invokes SiteAuth_directLogin operation.
 //
 // POST /auth/direct/login
@@ -650,6 +773,90 @@ func (c *Client) sendSiteAuthDirectLogin(ctx context.Context, request *SiteDirec
 	return result, nil
 }
 
+// SiteAuthForgotPassword invokes SiteAuth_forgotPassword operation.
+//
+// Request a password-reset link. Always returns 202 regardless of whether the email matches an
+// account, to avoid leaking which addresses exist.
+//
+// POST /auth/forgot-password
+func (c *Client) SiteAuthForgotPassword(ctx context.Context, request *SiteForgotPasswordInput) error {
+	_, err := c.sendSiteAuthForgotPassword(ctx, request)
+	return err
+}
+
+func (c *Client) sendSiteAuthForgotPassword(ctx context.Context, request *SiteForgotPasswordInput) (res *SiteAuthForgotPasswordAccepted, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("SiteAuth_forgotPassword"),
+		semconv.HTTPRequestMethodKey.String("POST"),
+		semconv.URLTemplateKey.String("/auth/forgot-password"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, SiteAuthForgotPasswordOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	stage = "BuildURL"
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [1]string
+	pathParts[0] = "/auth/forgot-password"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "POST", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+	if err := encodeSiteAuthForgotPasswordRequest(request, r); err != nil {
+		return res, errors.Wrap(err, "encode request")
+	}
+
+	stage = "SendRequest"
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	body := resp.Body
+	defer func() {
+		// Drain the body to EOF before closing, so the underlying
+		// connection can be reused by the Transport regardless of the
+		// response status code. See https://github.com/ogen-go/ogen/issues/1670.
+		_, _ = io.Copy(io.Discard, body)
+		_ = body.Close()
+	}()
+
+	stage = "DecodeResponse"
+	result, err := decodeSiteAuthForgotPasswordResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
 // SiteAuthRegister invokes SiteAuth_register operation.
 //
 // POST /auth/register
@@ -724,6 +931,172 @@ func (c *Client) sendSiteAuthRegister(ctx context.Context, request *SiteRegister
 
 	stage = "DecodeResponse"
 	result, err := decodeSiteAuthRegisterResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// SiteAuthResetPassword invokes SiteAuth_resetPassword operation.
+//
+// Set a new password from a reset token.
+//
+// POST /auth/reset-password
+func (c *Client) SiteAuthResetPassword(ctx context.Context, request *SiteResetPasswordInput) (SiteAuthResetPasswordRes, error) {
+	res, err := c.sendSiteAuthResetPassword(ctx, request)
+	return res, err
+}
+
+func (c *Client) sendSiteAuthResetPassword(ctx context.Context, request *SiteResetPasswordInput) (res SiteAuthResetPasswordRes, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("SiteAuth_resetPassword"),
+		semconv.HTTPRequestMethodKey.String("POST"),
+		semconv.URLTemplateKey.String("/auth/reset-password"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, SiteAuthResetPasswordOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	stage = "BuildURL"
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [1]string
+	pathParts[0] = "/auth/reset-password"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "POST", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+	if err := encodeSiteAuthResetPasswordRequest(request, r); err != nil {
+		return res, errors.Wrap(err, "encode request")
+	}
+
+	stage = "SendRequest"
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	body := resp.Body
+	defer func() {
+		// Drain the body to EOF before closing, so the underlying
+		// connection can be reused by the Transport regardless of the
+		// response status code. See https://github.com/ogen-go/ogen/issues/1670.
+		_, _ = io.Copy(io.Discard, body)
+		_ = body.Close()
+	}()
+
+	stage = "DecodeResponse"
+	result, err := decodeSiteAuthResetPasswordResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// SiteAuthVerifyEmail invokes SiteAuth_verifyEmail operation.
+//
+// Confirm an email address from a verification token (signup verification).
+//
+// POST /auth/verify-email
+func (c *Client) SiteAuthVerifyEmail(ctx context.Context, request *SiteVerifyEmailInput) (SiteAuthVerifyEmailRes, error) {
+	res, err := c.sendSiteAuthVerifyEmail(ctx, request)
+	return res, err
+}
+
+func (c *Client) sendSiteAuthVerifyEmail(ctx context.Context, request *SiteVerifyEmailInput) (res SiteAuthVerifyEmailRes, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("SiteAuth_verifyEmail"),
+		semconv.HTTPRequestMethodKey.String("POST"),
+		semconv.URLTemplateKey.String("/auth/verify-email"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, SiteAuthVerifyEmailOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	stage = "BuildURL"
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [1]string
+	pathParts[0] = "/auth/verify-email"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "POST", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+	if err := encodeSiteAuthVerifyEmailRequest(request, r); err != nil {
+		return res, errors.Wrap(err, "encode request")
+	}
+
+	stage = "SendRequest"
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	body := resp.Body
+	defer func() {
+		// Drain the body to EOF before closing, so the underlying
+		// connection can be reused by the Transport regardless of the
+		// response status code. See https://github.com/ogen-go/ogen/issues/1670.
+		_, _ = io.Copy(io.Discard, body)
+		_ = body.Close()
+	}()
+
+	stage = "DecodeResponse"
+	result, err := decodeSiteAuthVerifyEmailResponse(resp)
 	if err != nil {
 		return res, errors.Wrap(err, "decode response")
 	}
@@ -7742,6 +8115,123 @@ func (c *Client) sendSiteTransactionalEmailsList(ctx context.Context, params Sit
 	return result, nil
 }
 
+// SiteUserEmailChange invokes SiteUser_emailChange operation.
+//
+// Request an email change; sends a confirmation link to the new address. Requires the current
+// password. 409 if the new address is already in use.
+//
+// POST /me/email-change
+func (c *Client) SiteUserEmailChange(ctx context.Context, request *SiteEmailChangeInput) (SiteUserEmailChangeRes, error) {
+	res, err := c.sendSiteUserEmailChange(ctx, request)
+	return res, err
+}
+
+func (c *Client) sendSiteUserEmailChange(ctx context.Context, request *SiteEmailChangeInput) (res SiteUserEmailChangeRes, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("SiteUser_emailChange"),
+		semconv.HTTPRequestMethodKey.String("POST"),
+		semconv.URLTemplateKey.String("/me/email-change"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, SiteUserEmailChangeOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	stage = "BuildURL"
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [1]string
+	pathParts[0] = "/me/email-change"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "POST", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+	if err := encodeSiteUserEmailChangeRequest(request, r); err != nil {
+		return res, errors.Wrap(err, "encode request")
+	}
+
+	{
+		type bitset = [1]uint8
+		var satisfied bitset
+		{
+			stage = "Security:ApiKeyAuth"
+			switch err := c.securityApiKeyAuth(ctx, SiteUserEmailChangeOperation, r); {
+			case err == nil: // if NO error
+				satisfied[0] |= 1 << 0
+			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
+				// Skip this security.
+			default:
+				return res, errors.Wrap(err, "security \"ApiKeyAuth\"")
+			}
+		}
+
+		if ok := func() bool {
+		nextRequirement:
+			for _, requirement := range []bitset{
+				{0b00000001},
+			} {
+				for i, mask := range requirement {
+					if satisfied[i]&mask != mask {
+						continue nextRequirement
+					}
+				}
+				return true
+			}
+			return false
+		}(); !ok {
+			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
+		}
+	}
+
+	stage = "SendRequest"
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	body := resp.Body
+	defer func() {
+		// Drain the body to EOF before closing, so the underlying
+		// connection can be reused by the Transport regardless of the
+		// response status code. See https://github.com/ogen-go/ogen/issues/1670.
+		_, _ = io.Copy(io.Discard, body)
+		_ = body.Close()
+	}()
+
+	stage = "DecodeResponse"
+	result, err := decodeSiteUserEmailChangeResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
 // SiteUserGetMe invokes SiteUser_getMe operation.
 //
 // Get the authenticated user's profile.
@@ -7848,6 +8338,119 @@ func (c *Client) sendSiteUserGetMe(ctx context.Context) (res *SiteUserResource, 
 
 	stage = "DecodeResponse"
 	result, err := decodeSiteUserGetMeResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// SiteUserResendVerification invokes SiteUser_resendVerification operation.
+//
+// Resend the signup email-verification link to the current address.
+//
+// POST /me/verification-email
+func (c *Client) SiteUserResendVerification(ctx context.Context) error {
+	_, err := c.sendSiteUserResendVerification(ctx)
+	return err
+}
+
+func (c *Client) sendSiteUserResendVerification(ctx context.Context) (res *SiteUserResendVerificationAccepted, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("SiteUser_resendVerification"),
+		semconv.HTTPRequestMethodKey.String("POST"),
+		semconv.URLTemplateKey.String("/me/verification-email"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, SiteUserResendVerificationOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	stage = "BuildURL"
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [1]string
+	pathParts[0] = "/me/verification-email"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "POST", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+
+	{
+		type bitset = [1]uint8
+		var satisfied bitset
+		{
+			stage = "Security:ApiKeyAuth"
+			switch err := c.securityApiKeyAuth(ctx, SiteUserResendVerificationOperation, r); {
+			case err == nil: // if NO error
+				satisfied[0] |= 1 << 0
+			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
+				// Skip this security.
+			default:
+				return res, errors.Wrap(err, "security \"ApiKeyAuth\"")
+			}
+		}
+
+		if ok := func() bool {
+		nextRequirement:
+			for _, requirement := range []bitset{
+				{0b00000001},
+			} {
+				for i, mask := range requirement {
+					if satisfied[i]&mask != mask {
+						continue nextRequirement
+					}
+				}
+				return true
+			}
+			return false
+		}(); !ok {
+			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
+		}
+	}
+
+	stage = "SendRequest"
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	body := resp.Body
+	defer func() {
+		// Drain the body to EOF before closing, so the underlying
+		// connection can be reused by the Transport regardless of the
+		// response status code. See https://github.com/ogen-go/ogen/issues/1670.
+		_, _ = io.Copy(io.Discard, body)
+		_ = body.Close()
+	}()
+
+	stage = "DecodeResponse"
+	result, err := decodeSiteUserResendVerificationResponse(resp)
 	if err != nil {
 		return res, errors.Wrap(err, "decode response")
 	}

@@ -10,11 +10,24 @@ model SiteUserResource {
   /** Display name */
   name: string;
 
-  /** Email address (login identity; not editable here) */
+  /** Email address (login identity; change it via the email-change flow) */
   email: EmailAddress;
+
+  /** Whether the user has confirmed ownership of their email */
+  emailVerified: boolean;
 
   /** Creation timestamp */
   createdAt: Timestamp;
+}
+
+/** Request a change of the login email. The new address must be confirmed via a
+ * link sent to it before the change takes effect. */
+model SiteEmailChangeInput {
+  /** The requested new email address */
+  newEmail: EmailAddress;
+
+  /** Current password, required to authorize the change */
+  currentPassword: string;
 }
 
 /** Update the authenticated user's profile. To change the password, provide
@@ -46,4 +59,19 @@ namespace SiteUser {
     | SiteUserResource
     | ForbiddenProblem
     | UnprocessableEntityProblem;
+
+  /** Request an email change; sends a confirmation link to the new address.
+   * Requires the current password. 409 if the new address is already in use. */
+  @post
+  @route("/email-change")
+  op emailChange(@body body: SiteEmailChangeInput):
+    | AcceptedResponse
+    | ForbiddenProblem
+    | ConflictProblem
+    | UnprocessableEntityProblem;
+
+  /** Resend the signup email-verification link to the current address */
+  @post
+  @route("/verification-email")
+  op resendVerification(): AcceptedResponse;
 }

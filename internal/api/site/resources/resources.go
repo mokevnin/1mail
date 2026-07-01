@@ -33,10 +33,14 @@ import (
 // goverter:extend eventProperties
 // goverter:extend broadcastStats
 // goverter:extend automationSteps
+// goverter:extend emailVerified
 type Converter interface {
 	ContactToResource(source *ent.Contact) siteapi.SiteContactResource
 	SegmentToResource(source *ent.Segment) siteapi.SiteSegmentResource
 	TokenToResource(source *ent.ApiToken) siteapi.SiteApiTokenResource
+
+	// Verification is derived: a non-nil email_verified_at means verified.
+	// goverter:map EmailVerifiedAt EmailVerified | emailVerified
 	UserToResource(source *ent.User) *siteapi.SiteUserResource
 	WorkspaceToResource(source *ent.Workspace) siteapi.SiteWorkspaceResource
 	EventToResource(source *ent.Event) siteapi.SiteEventResource
@@ -55,6 +59,11 @@ type Converter interface {
 	SuppressionToResource(source *ent.Suppression) siteapi.SiteSuppressionResource
 	CustomFieldToResource(source *ent.CustomField) siteapi.SiteCustomFieldResource
 	TransactionalEmailToResource(source *ent.TransactionalEmail) siteapi.SiteTransactionalEmailResource
+}
+
+// emailVerified derives the verified flag from the nullable timestamp.
+func emailVerified(t *time.Time) bool {
+	return t != nil
 }
 
 func entityID(id int64) siteapi.EntityId {

@@ -1281,6 +1281,8 @@ func (s *ProblemDetails) SetFields(val OptProblemDetailsFields) {
 
 func (*ProblemDetails) siteAnalyticsOverviewRes() {}
 func (*ProblemDetails) siteAuthDirectLoginRes()   {}
+func (*ProblemDetails) siteAuthResetPasswordRes() {}
+func (*ProblemDetails) siteAuthVerifyEmailRes()   {}
 func (*ProblemDetails) siteEventsActionsRes()     {}
 func (*ProblemDetails) siteEventsListRes()        {}
 func (*ProblemDetails) siteIntegrationsListRes()  {}
@@ -1739,6 +1741,22 @@ func (s *SiteApiTokenResource) SetCreatedAt(val Timestamp) {
 	s.CreatedAt = val
 }
 
+type SiteAuthConfirmEmailChangeBadRequest ProblemDetails
+
+func (*SiteAuthConfirmEmailChangeBadRequest) siteAuthConfirmEmailChangeRes() {}
+
+type SiteAuthConfirmEmailChangeConflict ProblemDetails
+
+func (*SiteAuthConfirmEmailChangeConflict) siteAuthConfirmEmailChangeRes() {}
+
+// SiteAuthConfirmEmailChangeOK is response for SiteAuthConfirmEmailChange operation.
+type SiteAuthConfirmEmailChangeOK struct{}
+
+func (*SiteAuthConfirmEmailChangeOK) siteAuthConfirmEmailChangeRes() {}
+
+// SiteAuthForgotPasswordAccepted is response for SiteAuthForgotPassword operation.
+type SiteAuthForgotPasswordAccepted struct{}
+
 type SiteAuthRegisterConflict ProblemDetails
 
 func (*SiteAuthRegisterConflict) siteAuthRegisterRes() {}
@@ -1746,6 +1764,16 @@ func (*SiteAuthRegisterConflict) siteAuthRegisterRes() {}
 type SiteAuthRegisterUnprocessableEntity ProblemDetails
 
 func (*SiteAuthRegisterUnprocessableEntity) siteAuthRegisterRes() {}
+
+// SiteAuthResetPasswordOK is response for SiteAuthResetPassword operation.
+type SiteAuthResetPasswordOK struct{}
+
+func (*SiteAuthResetPasswordOK) siteAuthResetPasswordRes() {}
+
+// SiteAuthVerifyEmailOK is response for SiteAuthVerifyEmail operation.
+type SiteAuthVerifyEmailOK struct{}
+
+func (*SiteAuthVerifyEmailOK) siteAuthVerifyEmailRes() {}
 
 // Automation resource used by the site UI.
 // Ref: #/components/schemas/SiteAutomationResource
@@ -2684,6 +2712,22 @@ func (*SiteBroadcastsUpdateNotFound) siteBroadcastsUpdateRes() {}
 type SiteBroadcastsUpdateUnprocessableEntity ProblemDetails
 
 func (*SiteBroadcastsUpdateUnprocessableEntity) siteBroadcastsUpdateRes() {}
+
+// Confirm a requested email change using the token sent to the new address.
+// Ref: #/components/schemas/SiteConfirmEmailChangeInput
+type SiteConfirmEmailChangeInput struct {
+	Token string `json:"token"`
+}
+
+// GetToken returns the value of Token.
+func (s *SiteConfirmEmailChangeInput) GetToken() string {
+	return s.Token
+}
+
+// SetToken sets the value of Token.
+func (s *SiteConfirmEmailChangeInput) SetToken(val string) {
+	s.Token = val
+}
 
 // Contact resource used by the site UI.
 // Ref: #/components/schemas/SiteContactResource
@@ -3800,6 +3844,36 @@ func (s *SiteDirectLoginResultAttrs) init() SiteDirectLoginResultAttrs {
 	return m
 }
 
+// Request a change of the login email. The new address must be confirmed via a link sent to it before
+// the change takes effect.
+// Ref: #/components/schemas/SiteEmailChangeInput
+type SiteEmailChangeInput struct {
+	// The requested new email address.
+	NewEmail EmailAddress `json:"newEmail"`
+	// Current password, required to authorize the change.
+	CurrentPassword string `json:"currentPassword"`
+}
+
+// GetNewEmail returns the value of NewEmail.
+func (s *SiteEmailChangeInput) GetNewEmail() EmailAddress {
+	return s.NewEmail
+}
+
+// GetCurrentPassword returns the value of CurrentPassword.
+func (s *SiteEmailChangeInput) GetCurrentPassword() string {
+	return s.CurrentPassword
+}
+
+// SetNewEmail sets the value of NewEmail.
+func (s *SiteEmailChangeInput) SetNewEmail(val EmailAddress) {
+	s.NewEmail = val
+}
+
+// SetCurrentPassword sets the value of CurrentPassword.
+func (s *SiteEmailChangeInput) SetCurrentPassword(val string) {
+	s.CurrentPassword = val
+}
+
 // Reusable email template used by the site UI.
 // Ref: #/components/schemas/SiteEmailTemplateResource
 type SiteEmailTemplateResource struct {
@@ -4065,6 +4139,22 @@ func (s *SiteEventsListOK) SetTotalPages(val int32) {
 }
 
 func (*SiteEventsListOK) siteEventsListRes() {}
+
+// Request a password-reset link (always accepted; no account enumeration).
+// Ref: #/components/schemas/SiteForgotPasswordInput
+type SiteForgotPasswordInput struct {
+	Email EmailAddress `json:"email"`
+}
+
+// GetEmail returns the value of Email.
+func (s *SiteForgotPasswordInput) GetEmail() EmailAddress {
+	return s.Email
+}
+
+// SetEmail sets the value of Email.
+func (s *SiteForgotPasswordInput) SetEmail(val EmailAddress) {
+	s.Email = val
+}
 
 // Delivery channel an integration belongs to.
 // Ref: #/components/schemas/SiteIntegrationChannel
@@ -4614,6 +4704,33 @@ func (s *SiteRegisterResult) SetCreatedAt(val Timestamp) {
 }
 
 func (*SiteRegisterResult) siteAuthRegisterRes() {}
+
+// Set a new password using a reset token.
+// Ref: #/components/schemas/SiteResetPasswordInput
+type SiteResetPasswordInput struct {
+	Token    string `json:"token"`
+	Password string `json:"password"`
+}
+
+// GetToken returns the value of Token.
+func (s *SiteResetPasswordInput) GetToken() string {
+	return s.Token
+}
+
+// GetPassword returns the value of Password.
+func (s *SiteResetPasswordInput) GetPassword() string {
+	return s.Password
+}
+
+// SetToken sets the value of Token.
+func (s *SiteResetPasswordInput) SetToken(val string) {
+	s.Token = val
+}
+
+// SetPassword sets the value of Password.
+func (s *SiteResetPasswordInput) SetPassword(val string) {
+	s.Password = val
+}
 
 // Site request body for scheduling a broadcast.
 // Ref: #/components/schemas/SiteScheduleBroadcastInput
@@ -6484,6 +6601,26 @@ func (s *SiteUpdateWorkspaceInput) SetName(val string) {
 	s.Name = val
 }
 
+// SiteUserEmailChangeAccepted is response for SiteUserEmailChange operation.
+type SiteUserEmailChangeAccepted struct{}
+
+func (*SiteUserEmailChangeAccepted) siteUserEmailChangeRes() {}
+
+type SiteUserEmailChangeConflict ProblemDetails
+
+func (*SiteUserEmailChangeConflict) siteUserEmailChangeRes() {}
+
+type SiteUserEmailChangeForbidden ProblemDetails
+
+func (*SiteUserEmailChangeForbidden) siteUserEmailChangeRes() {}
+
+type SiteUserEmailChangeUnprocessableEntity ProblemDetails
+
+func (*SiteUserEmailChangeUnprocessableEntity) siteUserEmailChangeRes() {}
+
+// SiteUserResendVerificationAccepted is response for SiteUserResendVerification operation.
+type SiteUserResendVerificationAccepted struct{}
+
 // The authenticated dashboard user.
 // Ref: #/components/schemas/SiteUserResource
 type SiteUserResource struct {
@@ -6491,8 +6628,10 @@ type SiteUserResource struct {
 	ID EntityId `json:"id"`
 	// Display name.
 	Name string `json:"name"`
-	// Email address (login identity; not editable here).
+	// Email address (login identity; change it via the email-change flow).
 	Email EmailAddress `json:"email"`
+	// Whether the user has confirmed ownership of their email.
+	EmailVerified bool `json:"emailVerified"`
 	// Creation timestamp.
 	CreatedAt Timestamp `json:"createdAt"`
 }
@@ -6510,6 +6649,11 @@ func (s *SiteUserResource) GetName() string {
 // GetEmail returns the value of Email.
 func (s *SiteUserResource) GetEmail() EmailAddress {
 	return s.Email
+}
+
+// GetEmailVerified returns the value of EmailVerified.
+func (s *SiteUserResource) GetEmailVerified() bool {
+	return s.EmailVerified
 }
 
 // GetCreatedAt returns the value of CreatedAt.
@@ -6532,6 +6676,11 @@ func (s *SiteUserResource) SetEmail(val EmailAddress) {
 	s.Email = val
 }
 
+// SetEmailVerified sets the value of EmailVerified.
+func (s *SiteUserResource) SetEmailVerified(val bool) {
+	s.EmailVerified = val
+}
+
 // SetCreatedAt sets the value of CreatedAt.
 func (s *SiteUserResource) SetCreatedAt(val Timestamp) {
 	s.CreatedAt = val
@@ -6546,6 +6695,22 @@ func (*SiteUserUpdateMeForbidden) siteUserUpdateMeRes() {}
 type SiteUserUpdateMeUnprocessableEntity ProblemDetails
 
 func (*SiteUserUpdateMeUnprocessableEntity) siteUserUpdateMeRes() {}
+
+// Confirm ownership of an email address using a verification token.
+// Ref: #/components/schemas/SiteVerifyEmailInput
+type SiteVerifyEmailInput struct {
+	Token string `json:"token"`
+}
+
+// GetToken returns the value of Token.
+func (s *SiteVerifyEmailInput) GetToken() string {
+	return s.Token
+}
+
+// SetToken sets the value of Token.
+func (s *SiteVerifyEmailInput) SetToken(val string) {
+	s.Token = val
+}
 
 // Webhook endpoint resource used by the site UI.
 // Ref: #/components/schemas/SiteWebhookEndpointResource
