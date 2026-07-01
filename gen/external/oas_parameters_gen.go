@@ -151,6 +151,7 @@ func decodeAuthTokensDeleteParams(args [1]string, argsEscaped bool, r *http.Requ
 
 // BroadcastsDeleteParams is parameters of Broadcasts_delete operation.
 type BroadcastsDeleteParams struct {
+	// Unique identifier.
 	ID EntityId
 }
 
@@ -231,6 +232,7 @@ func decodeBroadcastsDeleteParams(args [1]string, argsEscaped bool, r *http.Requ
 
 // BroadcastsGetParams is parameters of Broadcasts_get operation.
 type BroadcastsGetParams struct {
+	// Unique identifier.
 	ID EntityId
 }
 
@@ -438,6 +440,7 @@ func decodeBroadcastsListParams(args [0]string, argsEscaped bool, r *http.Reques
 
 // BroadcastsUpdateParams is parameters of Broadcasts_update operation.
 type BroadcastsUpdateParams struct {
+	// Unique identifier.
 	ID EntityId
 }
 
@@ -518,6 +521,7 @@ func decodeBroadcastsUpdateParams(args [1]string, argsEscaped bool, r *http.Requ
 
 // ContactsDeleteParams is parameters of Contacts_delete operation.
 type ContactsDeleteParams struct {
+	// Unique identifier.
 	ID EntityId
 }
 
@@ -598,6 +602,7 @@ func decodeContactsDeleteParams(args [1]string, argsEscaped bool, r *http.Reques
 
 // ContactsGetParams is parameters of Contacts_get operation.
 type ContactsGetParams struct {
+	// Unique identifier.
 	ID EntityId
 }
 
@@ -805,6 +810,7 @@ func decodeContactsListParams(args [0]string, argsEscaped bool, r *http.Request)
 
 // ContactsUpdateParams is parameters of Contacts_update operation.
 type ContactsUpdateParams struct {
+	// Unique identifier.
 	ID EntityId
 }
 
@@ -1075,6 +1081,7 @@ func decodeEventActionsListParams(args [0]string, argsEscaped bool, r *http.Requ
 
 // SegmentsDeleteParams is parameters of Segments_delete operation.
 type SegmentsDeleteParams struct {
+	// Unique identifier.
 	ID EntityId
 }
 
@@ -1155,6 +1162,7 @@ func decodeSegmentsDeleteParams(args [1]string, argsEscaped bool, r *http.Reques
 
 // SegmentsGetParams is parameters of Segments_get operation.
 type SegmentsGetParams struct {
+	// Unique identifier.
 	ID EntityId
 }
 
@@ -1362,6 +1370,7 @@ func decodeSegmentsListParams(args [0]string, argsEscaped bool, r *http.Request)
 
 // SegmentsUpdateParams is parameters of Segments_update operation.
 type SegmentsUpdateParams struct {
+	// Unique identifier.
 	ID EntityId
 }
 

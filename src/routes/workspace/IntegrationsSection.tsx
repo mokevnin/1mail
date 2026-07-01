@@ -89,8 +89,8 @@ export function IntegrationsSection({ slug }: { slug: string }) {
   const { t } = useTranslation()
   const confirmDelete = useDeleteConfirmation()
 
-  const queryKey = siteIntegrationsListQueryKey({ path: { workspaceSlug: slug } })
-  const integrationsQuery = useQuery(siteIntegrationsListOptions({ path: { workspaceSlug: slug } }))
+  const queryKey = siteIntegrationsListQueryKey({ path: { slug: slug } })
+  const integrationsQuery = useQuery(siteIntegrationsListOptions({ path: { slug: slug } }))
 
   const form = useForm<IntegrationFormValues>({ initialValues: INITIAL_VALUES })
 
@@ -112,7 +112,7 @@ export function IntegrationsSection({ slug }: { slug: string }) {
     confirmDelete({
       title: t(($) => $.settings.integrations.deleteConfirmTitle),
       description: t(($) => $.settings.integrations.deleteConfirmDescription),
-      onConfirm: () => deleteMutation.mutate({ path: { workspaceSlug: slug, id } }),
+      onConfirm: () => deleteMutation.mutate({ path: { slug: slug, id } }),
     })
   }
 
@@ -137,7 +137,7 @@ export function IntegrationsSection({ slug }: { slug: string }) {
       <form
         onSubmit={form.onSubmit((values) =>
           createMutation.mutate({
-            path: { workspaceSlug: slug },
+            path: { slug: slug },
             body: {
               name: values.name.trim(),
               isDefault: values.isDefault,

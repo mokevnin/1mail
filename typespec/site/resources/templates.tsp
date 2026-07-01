@@ -6,6 +6,7 @@ namespace OneMail;
 /** Reusable email template used by the site UI */
 @resource("templates")
 @segment("templates")
+@parentResource(SiteWorkspaceResource)
 model SiteEmailTemplateResource {
   /** Unique identifier */
   @key
@@ -41,61 +42,10 @@ model SiteUpdateEmailTemplateInput {
   body?: string;
 }
 
-@route("/w/{workspaceSlug}/templates")
 @tag("Site Templates")
-namespace SiteTemplates {
-  /** Create a template */
-  @createsResource(SiteEmailTemplateResource)
-  @post
-  op create(
-    @path workspaceSlug: string,
-    @body body: SiteCreateEmailTemplateInput,
-  ):
-    | {
-        @statusCode statusCode: 201;
-        @body body: SiteEmailTemplateResource;
-      }
-    | NotFoundProblem
-    | UnprocessableEntityProblem;
-
-  /** List templates */
-  @listsResource(SiteEmailTemplateResource)
-  @get
-  op list(@path workspaceSlug: string, ...PageQuery):
-    | Page<SiteEmailTemplateResource>
-    | BadRequestProblem
-    | NotFoundProblem
-    | UnprocessableEntityProblem;
-
-  /** Get a template by ID */
-  @readsResource(SiteEmailTemplateResource)
-  @get
-  @route("/{id}")
-  op get(@path workspaceSlug: string, @path id: EntityId):
-    | SiteEmailTemplateResource
-    | BadRequestProblem
-    | NotFoundProblem;
-
-  /** Update a template */
-  @updatesResource(SiteEmailTemplateResource)
-  @put
-  @route("/{id}")
-  op update(
-    @path workspaceSlug: string,
-    @path id: EntityId,
-    @body body: SiteUpdateEmailTemplateInput,
-  ):
-    | SiteEmailTemplateResource
-    | BadRequestProblem
-    | NotFoundProblem
-    | UnprocessableEntityProblem;
-
-  /** Delete a template */
-  @deletesResource(SiteEmailTemplateResource)
-  @delete
-  @route("/{id}")
-  op delete(@path workspaceSlug: string, @path id: EntityId):
-    | NoContentResponse
-    | BadRequestProblem
-    | NotFoundProblem;
-}
+interface SiteTemplates
+  extends WorkspaceCrud<
+      SiteEmailTemplateResource,
+      SiteCreateEmailTemplateInput,
+      SiteUpdateEmailTemplateInput
+    > {}

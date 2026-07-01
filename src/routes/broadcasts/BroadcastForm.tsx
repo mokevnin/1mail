@@ -32,7 +32,7 @@ export function BroadcastForm({ form, isPending, onSubmit }: BroadcastFormProps)
   const { slug } = useParams({ strict: false })
 
   const segmentsQuery = useQuery({
-    ...siteSegmentsListOptions({ path: { workspaceSlug: slug ?? '' }, query: { pageSize: 100 } }),
+    ...siteSegmentsListOptions({ path: { slug: slug ?? '' }, query: { pageSize: 100 } }),
     enabled: Boolean(slug),
   })
   const segmentOptions = [
@@ -43,7 +43,7 @@ export function BroadcastForm({ form, isPending, onSubmit }: BroadcastFormProps)
   ]
 
   const templatesQuery = useQuery({
-    ...siteTemplatesListOptions({ path: { workspaceSlug: slug ?? '' }, query: { pageSize: 100 } }),
+    ...siteTemplatesListOptions({ path: { slug: slug ?? '' }, query: { pageSize: 100 } }),
     enabled: Boolean(slug),
   })
   const templates = templatesQuery.data?.items ?? []

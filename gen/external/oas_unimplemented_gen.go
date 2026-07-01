@@ -50,7 +50,7 @@ func (UnimplementedHandler) AuthTokensList(ctx context.Context) (r AuthTokensLis
 
 // BroadcastsCreate implements Broadcasts_create operation.
 //
-// Create a broadcast.
+// Create a resource.
 //
 // POST /broadcasts
 func (UnimplementedHandler) BroadcastsCreate(ctx context.Context, req *CreateBroadcastInput) (r BroadcastsCreateRes, _ error) {
@@ -59,7 +59,7 @@ func (UnimplementedHandler) BroadcastsCreate(ctx context.Context, req *CreateBro
 
 // BroadcastsDelete implements Broadcasts_delete operation.
 //
-// Delete a broadcast.
+// Delete a resource.
 //
 // DELETE /broadcasts/{id}
 func (UnimplementedHandler) BroadcastsDelete(ctx context.Context, params BroadcastsDeleteParams) (r BroadcastsDeleteRes, _ error) {
@@ -68,7 +68,7 @@ func (UnimplementedHandler) BroadcastsDelete(ctx context.Context, params Broadca
 
 // BroadcastsGet implements Broadcasts_get operation.
 //
-// Get a broadcast by ID.
+// Get a resource by ID.
 //
 // GET /broadcasts/{id}
 func (UnimplementedHandler) BroadcastsGet(ctx context.Context, params BroadcastsGetParams) (r BroadcastsGetRes, _ error) {
@@ -77,7 +77,7 @@ func (UnimplementedHandler) BroadcastsGet(ctx context.Context, params Broadcasts
 
 // BroadcastsList implements Broadcasts_list operation.
 //
-// List broadcasts with pagination.
+// List resources with pagination.
 //
 // GET /broadcasts
 func (UnimplementedHandler) BroadcastsList(ctx context.Context, params BroadcastsListParams) (r BroadcastsListRes, _ error) {
@@ -86,7 +86,7 @@ func (UnimplementedHandler) BroadcastsList(ctx context.Context, params Broadcast
 
 // BroadcastsUpdate implements Broadcasts_update operation.
 //
-// Update a broadcast.
+// Update a resource.
 //
 // PUT /broadcasts/{id}
 func (UnimplementedHandler) BroadcastsUpdate(ctx context.Context, req *UpdateBroadcastInput, params BroadcastsUpdateParams) (r BroadcastsUpdateRes, _ error) {
@@ -95,7 +95,7 @@ func (UnimplementedHandler) BroadcastsUpdate(ctx context.Context, req *UpdateBro
 
 // ContactsCreate implements Contacts_create operation.
 //
-// Create a contact.
+// Create a resource.
 //
 // POST /contacts
 func (UnimplementedHandler) ContactsCreate(ctx context.Context, req *CreateContactInput) (r ContactsCreateRes, _ error) {
@@ -104,7 +104,7 @@ func (UnimplementedHandler) ContactsCreate(ctx context.Context, req *CreateConta
 
 // ContactsDelete implements Contacts_delete operation.
 //
-// Delete a contact.
+// Delete a resource.
 //
 // DELETE /contacts/{id}
 func (UnimplementedHandler) ContactsDelete(ctx context.Context, params ContactsDeleteParams) (r ContactsDeleteRes, _ error) {
@@ -113,7 +113,7 @@ func (UnimplementedHandler) ContactsDelete(ctx context.Context, params ContactsD
 
 // ContactsGet implements Contacts_get operation.
 //
-// Get a contact by ID.
+// Get a resource by ID.
 //
 // GET /contacts/{id}
 func (UnimplementedHandler) ContactsGet(ctx context.Context, params ContactsGetParams) (r ContactsGetRes, _ error) {
@@ -122,7 +122,7 @@ func (UnimplementedHandler) ContactsGet(ctx context.Context, params ContactsGetP
 
 // ContactsList implements Contacts_list operation.
 //
-// List contacts with pagination.
+// List resources with pagination.
 //
 // GET /contacts
 func (UnimplementedHandler) ContactsList(ctx context.Context, params ContactsListParams) (r ContactsListRes, _ error) {
@@ -131,7 +131,7 @@ func (UnimplementedHandler) ContactsList(ctx context.Context, params ContactsLis
 
 // ContactsUpdate implements Contacts_update operation.
 //
-// Update a contact.
+// Update a resource.
 //
 // PUT /contacts/{id}
 func (UnimplementedHandler) ContactsUpdate(ctx context.Context, req *UpdateContactInput, params ContactsUpdateParams) (r ContactsUpdateRes, _ error) {
@@ -156,7 +156,7 @@ func (UnimplementedHandler) EmailsSend(ctx context.Context, req *SendTransaction
 //
 // List unique event actions.
 //
-// GET /event-actions
+// GET /events/actions
 func (UnimplementedHandler) EventActionsList(ctx context.Context, params EventActionsListParams) (r EventActionsListRes, _ error) {
 	return r, ht.ErrNotImplemented
 }
@@ -172,7 +172,7 @@ func (UnimplementedHandler) EventsCreate(ctx context.Context, req *RecordEventsI
 
 // SegmentsCreate implements Segments_create operation.
 //
-// Create a segment.
+// Create a resource.
 //
 // POST /segments
 func (UnimplementedHandler) SegmentsCreate(ctx context.Context, req *CreateSegmentInput) (r SegmentsCreateRes, _ error) {
@@ -181,7 +181,7 @@ func (UnimplementedHandler) SegmentsCreate(ctx context.Context, req *CreateSegme
 
 // SegmentsDelete implements Segments_delete operation.
 //
-// Delete a segment.
+// Delete a resource.
 //
 // DELETE /segments/{id}
 func (UnimplementedHandler) SegmentsDelete(ctx context.Context, params SegmentsDeleteParams) (r SegmentsDeleteRes, _ error) {
@@ -190,7 +190,7 @@ func (UnimplementedHandler) SegmentsDelete(ctx context.Context, params SegmentsD
 
 // SegmentsGet implements Segments_get operation.
 //
-// Get a segment by ID.
+// Get a resource by ID.
 //
 // GET /segments/{id}
 func (UnimplementedHandler) SegmentsGet(ctx context.Context, params SegmentsGetParams) (r SegmentsGetRes, _ error) {
@@ -199,7 +199,7 @@ func (UnimplementedHandler) SegmentsGet(ctx context.Context, params SegmentsGetP
 
 // SegmentsList implements Segments_list operation.
 //
-// List segments with pagination.
+// List resources with pagination.
 //
 // GET /segments
 func (UnimplementedHandler) SegmentsList(ctx context.Context, params SegmentsListParams) (r SegmentsListRes, _ error) {
@@ -208,7 +208,7 @@ func (UnimplementedHandler) SegmentsList(ctx context.Context, params SegmentsLis
 
 // SegmentsUpdate implements Segments_update operation.
 //
-// Update a segment.
+// Update a resource.
 //
 // PUT /segments/{id}
 func (UnimplementedHandler) SegmentsUpdate(ctx context.Context, req *UpdateSegmentInput, params SegmentsUpdateParams) (r SegmentsUpdateRes, _ error) {

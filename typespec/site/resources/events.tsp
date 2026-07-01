@@ -1,10 +1,16 @@
 using TypeSpec.Http;
+using TypeSpec.Rest;
+using TypeSpec.Rest.Resource;
 
 namespace OneMail;
 
 /** A tracked event shown in the activity feed */
+@resource("events")
+@segment("events")
+@parentResource(SiteWorkspaceResource)
 model SiteEventResource {
   /** Unique identifier */
+  @key
   id: EntityId;
 
   /** Subject (tracking profile / visitor) the event belongs to */
@@ -31,13 +37,16 @@ model SiteEventActionsResult {
   actions: string[];
 }
 
-@route("/w/{workspaceSlug}/events")
+// Read-only activity feed + an actions metadata collection action.
+// Nested via @parentResource + @autoRoute.
 @tag("Site Events")
 namespace SiteEvents {
   /** List events for the site UI (most recent first) */
+  @listsResource(SiteEventResource)
   @get
+  @autoRoute
   op list(
-    @path workspaceSlug: string,
+    ...ResourceCollectionParameters<SiteEventResource>,
     ...PageQuery,
 
     /** Filter by event action */
@@ -51,9 +60,10 @@ namespace SiteEvents {
   ): Page<SiteEventResource> | NotFoundProblem;
 
   /** Distinct event actions in the workspace, sorted — powers the segment builder */
+  @collectionAction(SiteEventResource, "actions")
   @get
-  @route("/actions")
-  op actions(@path workspaceSlug: string):
+  @autoRoute
+  op actions(...ResourceCollectionParameters<SiteEventResource>):
     | SiteEventActionsResult
     | NotFoundProblem;
 }

@@ -202,1018 +202,6 @@ export const siteUserResendVerification = <ThrowOnError extends boolean = false>
 });
 
 /**
- * Aggregate metrics for the workspace dashboard
- */
-export const siteAnalyticsOverview = <ThrowOnError extends boolean = false>(options: Options<SiteAnalyticsOverviewData, ThrowOnError>): RequestResult<SiteAnalyticsOverviewResponses, SiteAnalyticsOverviewErrors, ThrowOnError> => (options.client ?? client).get<SiteAnalyticsOverviewResponses, SiteAnalyticsOverviewErrors, ThrowOnError>({
-    requestValidator: async (data) => await z.object({
-        body: z.never().optional(),
-        path: zSiteAnalyticsOverviewPath,
-        query: zSiteAnalyticsOverviewQuery.optional()
-    }).parseAsync(data),
-    security: [{
-            in: 'cookie',
-            name: 'JWT',
-            type: 'apiKey'
-        }],
-    url: '/w/{workspaceSlug}/analytics/overview',
-    ...options
-});
-
-/**
- * List automations
- */
-export const siteAutomationsList = <ThrowOnError extends boolean = false>(options: Options<SiteAutomationsListData, ThrowOnError>): RequestResult<SiteAutomationsListResponses, SiteAutomationsListErrors, ThrowOnError> => (options.client ?? client).get<SiteAutomationsListResponses, SiteAutomationsListErrors, ThrowOnError>({
-    requestValidator: async (data) => await z.object({
-        body: z.never().optional(),
-        path: zSiteAutomationsListPath,
-        query: zSiteAutomationsListQuery.optional()
-    }).parseAsync(data),
-    security: [{
-            in: 'cookie',
-            name: 'JWT',
-            type: 'apiKey'
-        }],
-    url: '/w/{workspaceSlug}/automations',
-    ...options
-});
-
-/**
- * Create an automation
- */
-export const siteAutomationsCreate = <ThrowOnError extends boolean = false>(options: Options<SiteAutomationsCreateData, ThrowOnError>): RequestResult<SiteAutomationsCreateResponses, SiteAutomationsCreateErrors, ThrowOnError> => (options.client ?? client).post<SiteAutomationsCreateResponses, SiteAutomationsCreateErrors, ThrowOnError>({
-    requestValidator: async (data) => await z.object({
-        body: zSiteAutomationsCreateBody,
-        path: zSiteAutomationsCreatePath,
-        query: z.never().optional()
-    }).parseAsync(data),
-    security: [{
-            in: 'cookie',
-            name: 'JWT',
-            type: 'apiKey'
-        }],
-    url: '/w/{workspaceSlug}/automations',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Delete an automation
- */
-export const siteAutomationsDelete = <ThrowOnError extends boolean = false>(options: Options<SiteAutomationsDeleteData, ThrowOnError>): RequestResult<SiteAutomationsDeleteResponses, SiteAutomationsDeleteErrors, ThrowOnError> => (options.client ?? client).delete<SiteAutomationsDeleteResponses, SiteAutomationsDeleteErrors, ThrowOnError>({
-    requestValidator: async (data) => await z.object({
-        body: z.never().optional(),
-        path: zSiteAutomationsDeletePath,
-        query: z.never().optional()
-    }).parseAsync(data),
-    security: [{
-            in: 'cookie',
-            name: 'JWT',
-            type: 'apiKey'
-        }],
-    url: '/w/{workspaceSlug}/automations/{id}',
-    ...options
-});
-
-/**
- * Get an automation by ID
- */
-export const siteAutomationsGet = <ThrowOnError extends boolean = false>(options: Options<SiteAutomationsGetData, ThrowOnError>): RequestResult<SiteAutomationsGetResponses, SiteAutomationsGetErrors, ThrowOnError> => (options.client ?? client).get<SiteAutomationsGetResponses, SiteAutomationsGetErrors, ThrowOnError>({
-    requestValidator: async (data) => await z.object({
-        body: z.never().optional(),
-        path: zSiteAutomationsGetPath,
-        query: z.never().optional()
-    }).parseAsync(data),
-    security: [{
-            in: 'cookie',
-            name: 'JWT',
-            type: 'apiKey'
-        }],
-    url: '/w/{workspaceSlug}/automations/{id}',
-    ...options
-});
-
-/**
- * Update an automation
- */
-export const siteAutomationsUpdate = <ThrowOnError extends boolean = false>(options: Options<SiteAutomationsUpdateData, ThrowOnError>): RequestResult<SiteAutomationsUpdateResponses, SiteAutomationsUpdateErrors, ThrowOnError> => (options.client ?? client).put<SiteAutomationsUpdateResponses, SiteAutomationsUpdateErrors, ThrowOnError>({
-    requestValidator: async (data) => await z.object({
-        body: zSiteAutomationsUpdateBody,
-        path: zSiteAutomationsUpdatePath,
-        query: z.never().optional()
-    }).parseAsync(data),
-    security: [{
-            in: 'cookie',
-            name: 'JWT',
-            type: 'apiKey'
-        }],
-    url: '/w/{workspaceSlug}/automations/{id}',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Activate an automation (starts enrolling contacts)
- */
-export const siteAutomationsActivate = <ThrowOnError extends boolean = false>(options: Options<SiteAutomationsActivateData, ThrowOnError>): RequestResult<SiteAutomationsActivateResponses, SiteAutomationsActivateErrors, ThrowOnError> => (options.client ?? client).post<SiteAutomationsActivateResponses, SiteAutomationsActivateErrors, ThrowOnError>({
-    requestValidator: async (data) => await z.object({
-        body: z.never().optional(),
-        path: zSiteAutomationsActivatePath,
-        query: z.never().optional()
-    }).parseAsync(data),
-    security: [{
-            in: 'cookie',
-            name: 'JWT',
-            type: 'apiKey'
-        }],
-    url: '/w/{workspaceSlug}/automations/{id}/activate',
-    ...options
-});
-
-/**
- * Deactivate an automation (stops new enrollments)
- */
-export const siteAutomationsDeactivate = <ThrowOnError extends boolean = false>(options: Options<SiteAutomationsDeactivateData, ThrowOnError>): RequestResult<SiteAutomationsDeactivateResponses, SiteAutomationsDeactivateErrors, ThrowOnError> => (options.client ?? client).post<SiteAutomationsDeactivateResponses, SiteAutomationsDeactivateErrors, ThrowOnError>({
-    requestValidator: async (data) => await z.object({
-        body: z.never().optional(),
-        path: zSiteAutomationsDeactivatePath,
-        query: z.never().optional()
-    }).parseAsync(data),
-    security: [{
-            in: 'cookie',
-            name: 'JWT',
-            type: 'apiKey'
-        }],
-    url: '/w/{workspaceSlug}/automations/{id}/deactivate',
-    ...options
-});
-
-/**
- * List broadcasts for the site UI
- */
-export const siteBroadcastsList = <ThrowOnError extends boolean = false>(options: Options<SiteBroadcastsListData, ThrowOnError>): RequestResult<SiteBroadcastsListResponses, SiteBroadcastsListErrors, ThrowOnError> => (options.client ?? client).get<SiteBroadcastsListResponses, SiteBroadcastsListErrors, ThrowOnError>({
-    requestValidator: async (data) => await z.object({
-        body: z.never().optional(),
-        path: zSiteBroadcastsListPath,
-        query: zSiteBroadcastsListQuery.optional()
-    }).parseAsync(data),
-    security: [{
-            in: 'cookie',
-            name: 'JWT',
-            type: 'apiKey'
-        }],
-    url: '/w/{workspaceSlug}/broadcasts',
-    ...options
-});
-
-/**
- * Create a broadcast from the site UI
- */
-export const siteBroadcastsCreate = <ThrowOnError extends boolean = false>(options: Options<SiteBroadcastsCreateData, ThrowOnError>): RequestResult<SiteBroadcastsCreateResponses, SiteBroadcastsCreateErrors, ThrowOnError> => (options.client ?? client).post<SiteBroadcastsCreateResponses, SiteBroadcastsCreateErrors, ThrowOnError>({
-    requestValidator: async (data) => await z.object({
-        body: zSiteBroadcastsCreateBody,
-        path: zSiteBroadcastsCreatePath,
-        query: z.never().optional()
-    }).parseAsync(data),
-    security: [{
-            in: 'cookie',
-            name: 'JWT',
-            type: 'apiKey'
-        }],
-    url: '/w/{workspaceSlug}/broadcasts',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Delete a broadcast from the site UI
- */
-export const siteBroadcastsDelete = <ThrowOnError extends boolean = false>(options: Options<SiteBroadcastsDeleteData, ThrowOnError>): RequestResult<SiteBroadcastsDeleteResponses, SiteBroadcastsDeleteErrors, ThrowOnError> => (options.client ?? client).delete<SiteBroadcastsDeleteResponses, SiteBroadcastsDeleteErrors, ThrowOnError>({
-    requestValidator: async (data) => await z.object({
-        body: z.never().optional(),
-        path: zSiteBroadcastsDeletePath,
-        query: z.never().optional()
-    }).parseAsync(data),
-    security: [{
-            in: 'cookie',
-            name: 'JWT',
-            type: 'apiKey'
-        }],
-    url: '/w/{workspaceSlug}/broadcasts/{id}',
-    ...options
-});
-
-/**
- * Get a broadcast by ID for the site UI
- */
-export const siteBroadcastsGet = <ThrowOnError extends boolean = false>(options: Options<SiteBroadcastsGetData, ThrowOnError>): RequestResult<SiteBroadcastsGetResponses, SiteBroadcastsGetErrors, ThrowOnError> => (options.client ?? client).get<SiteBroadcastsGetResponses, SiteBroadcastsGetErrors, ThrowOnError>({
-    requestValidator: async (data) => await z.object({
-        body: z.never().optional(),
-        path: zSiteBroadcastsGetPath,
-        query: z.never().optional()
-    }).parseAsync(data),
-    security: [{
-            in: 'cookie',
-            name: 'JWT',
-            type: 'apiKey'
-        }],
-    url: '/w/{workspaceSlug}/broadcasts/{id}',
-    ...options
-});
-
-/**
- * Update a broadcast from the site UI
- */
-export const siteBroadcastsUpdate = <ThrowOnError extends boolean = false>(options: Options<SiteBroadcastsUpdateData, ThrowOnError>): RequestResult<SiteBroadcastsUpdateResponses, SiteBroadcastsUpdateErrors, ThrowOnError> => (options.client ?? client).put<SiteBroadcastsUpdateResponses, SiteBroadcastsUpdateErrors, ThrowOnError>({
-    requestValidator: async (data) => await z.object({
-        body: zSiteBroadcastsUpdateBody,
-        path: zSiteBroadcastsUpdatePath,
-        query: z.never().optional()
-    }).parseAsync(data),
-    security: [{
-            in: 'cookie',
-            name: 'JWT',
-            type: 'apiKey'
-        }],
-    url: '/w/{workspaceSlug}/broadcasts/{id}',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Schedule a broadcast to send at a future time
- */
-export const siteBroadcastsSchedule = <ThrowOnError extends boolean = false>(options: Options<SiteBroadcastsScheduleData, ThrowOnError>): RequestResult<SiteBroadcastsScheduleResponses, SiteBroadcastsScheduleErrors, ThrowOnError> => (options.client ?? client).post<SiteBroadcastsScheduleResponses, SiteBroadcastsScheduleErrors, ThrowOnError>({
-    requestValidator: async (data) => await z.object({
-        body: zSiteBroadcastsScheduleBody,
-        path: zSiteBroadcastsSchedulePath,
-        query: z.never().optional()
-    }).parseAsync(data),
-    security: [{
-            in: 'cookie',
-            name: 'JWT',
-            type: 'apiKey'
-        }],
-    url: '/w/{workspaceSlug}/broadcasts/{id}/schedule',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Send a broadcast immediately
- */
-export const siteBroadcastsSend = <ThrowOnError extends boolean = false>(options: Options<SiteBroadcastsSendData, ThrowOnError>): RequestResult<SiteBroadcastsSendResponses, SiteBroadcastsSendErrors, ThrowOnError> => (options.client ?? client).post<SiteBroadcastsSendResponses, SiteBroadcastsSendErrors, ThrowOnError>({
-    requestValidator: async (data) => await z.object({
-        body: z.never().optional(),
-        path: zSiteBroadcastsSendPath,
-        query: z.never().optional()
-    }).parseAsync(data),
-    security: [{
-            in: 'cookie',
-            name: 'JWT',
-            type: 'apiKey'
-        }],
-    url: '/w/{workspaceSlug}/broadcasts/{id}/send',
-    ...options
-});
-
-/**
- * Send a one-off rendered preview to a single address
- */
-export const siteBroadcastsTestSend = <ThrowOnError extends boolean = false>(options: Options<SiteBroadcastsTestSendData, ThrowOnError>): RequestResult<SiteBroadcastsTestSendResponses, SiteBroadcastsTestSendErrors, ThrowOnError> => (options.client ?? client).post<SiteBroadcastsTestSendResponses, SiteBroadcastsTestSendErrors, ThrowOnError>({
-    requestValidator: async (data) => await z.object({
-        body: zSiteBroadcastsTestSendBody,
-        path: zSiteBroadcastsTestSendPath,
-        query: z.never().optional()
-    }).parseAsync(data),
-    security: [{
-            in: 'cookie',
-            name: 'JWT',
-            type: 'apiKey'
-        }],
-    url: '/w/{workspaceSlug}/broadcasts/{id}/test',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * List contacts for the site UI
- */
-export const siteContactsList = <ThrowOnError extends boolean = false>(options: Options<SiteContactsListData, ThrowOnError>): RequestResult<SiteContactsListResponses, SiteContactsListErrors, ThrowOnError> => (options.client ?? client).get<SiteContactsListResponses, SiteContactsListErrors, ThrowOnError>({
-    requestValidator: async (data) => await z.object({
-        body: z.never().optional(),
-        path: zSiteContactsListPath,
-        query: zSiteContactsListQuery.optional()
-    }).parseAsync(data),
-    security: [{
-            in: 'cookie',
-            name: 'JWT',
-            type: 'apiKey'
-        }],
-    url: '/w/{workspaceSlug}/contacts',
-    ...options
-});
-
-/**
- * Create a contact from the site UI
- */
-export const siteContactsCreate = <ThrowOnError extends boolean = false>(options: Options<SiteContactsCreateData, ThrowOnError>): RequestResult<SiteContactsCreateResponses, SiteContactsCreateErrors, ThrowOnError> => (options.client ?? client).post<SiteContactsCreateResponses, SiteContactsCreateErrors, ThrowOnError>({
-    requestValidator: async (data) => await z.object({
-        body: zSiteContactsCreateBody,
-        path: zSiteContactsCreatePath,
-        query: z.never().optional()
-    }).parseAsync(data),
-    security: [{
-            in: 'cookie',
-            name: 'JWT',
-            type: 'apiKey'
-        }],
-    url: '/w/{workspaceSlug}/contacts',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Delete a contact from the site UI
- */
-export const siteContactsDelete = <ThrowOnError extends boolean = false>(options: Options<SiteContactsDeleteData, ThrowOnError>): RequestResult<SiteContactsDeleteResponses, SiteContactsDeleteErrors, ThrowOnError> => (options.client ?? client).delete<SiteContactsDeleteResponses, SiteContactsDeleteErrors, ThrowOnError>({
-    requestValidator: async (data) => await z.object({
-        body: z.never().optional(),
-        path: zSiteContactsDeletePath,
-        query: z.never().optional()
-    }).parseAsync(data),
-    security: [{
-            in: 'cookie',
-            name: 'JWT',
-            type: 'apiKey'
-        }],
-    url: '/w/{workspaceSlug}/contacts/{id}',
-    ...options
-});
-
-/**
- * Get a contact by ID for the site UI
- */
-export const siteContactsGet = <ThrowOnError extends boolean = false>(options: Options<SiteContactsGetData, ThrowOnError>): RequestResult<SiteContactsGetResponses, SiteContactsGetErrors, ThrowOnError> => (options.client ?? client).get<SiteContactsGetResponses, SiteContactsGetErrors, ThrowOnError>({
-    requestValidator: async (data) => await z.object({
-        body: z.never().optional(),
-        path: zSiteContactsGetPath,
-        query: z.never().optional()
-    }).parseAsync(data),
-    security: [{
-            in: 'cookie',
-            name: 'JWT',
-            type: 'apiKey'
-        }],
-    url: '/w/{workspaceSlug}/contacts/{id}',
-    ...options
-});
-
-/**
- * Update a contact from the site UI
- */
-export const siteContactsUpdate = <ThrowOnError extends boolean = false>(options: Options<SiteContactsUpdateData, ThrowOnError>): RequestResult<SiteContactsUpdateResponses, SiteContactsUpdateErrors, ThrowOnError> => (options.client ?? client).put<SiteContactsUpdateResponses, SiteContactsUpdateErrors, ThrowOnError>({
-    requestValidator: async (data) => await z.object({
-        body: zSiteContactsUpdateBody,
-        path: zSiteContactsUpdatePath,
-        query: z.never().optional()
-    }).parseAsync(data),
-    security: [{
-            in: 'cookie',
-            name: 'JWT',
-            type: 'apiKey'
-        }],
-    url: '/w/{workspaceSlug}/contacts/{id}',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * List the workspace's custom field definitions
- */
-export const siteCustomFieldsList = <ThrowOnError extends boolean = false>(options: Options<SiteCustomFieldsListData, ThrowOnError>): RequestResult<SiteCustomFieldsListResponses, SiteCustomFieldsListErrors, ThrowOnError> => (options.client ?? client).get<SiteCustomFieldsListResponses, SiteCustomFieldsListErrors, ThrowOnError>({
-    requestValidator: async (data) => await z.object({
-        body: z.never().optional(),
-        path: zSiteCustomFieldsListPath,
-        query: z.never().optional()
-    }).parseAsync(data),
-    security: [{
-            in: 'cookie',
-            name: 'JWT',
-            type: 'apiKey'
-        }],
-    url: '/w/{workspaceSlug}/custom-fields',
-    ...options
-});
-
-/**
- * List events for the site UI (most recent first)
- */
-export const siteEventsList = <ThrowOnError extends boolean = false>(options: Options<SiteEventsListData, ThrowOnError>): RequestResult<SiteEventsListResponses, SiteEventsListErrors, ThrowOnError> => (options.client ?? client).get<SiteEventsListResponses, SiteEventsListErrors, ThrowOnError>({
-    requestValidator: async (data) => await z.object({
-        body: z.never().optional(),
-        path: zSiteEventsListPath,
-        query: zSiteEventsListQuery.optional()
-    }).parseAsync(data),
-    security: [{
-            in: 'cookie',
-            name: 'JWT',
-            type: 'apiKey'
-        }],
-    url: '/w/{workspaceSlug}/events',
-    ...options
-});
-
-/**
- * Distinct event actions in the workspace, sorted — powers the segment builder
- */
-export const siteEventsActions = <ThrowOnError extends boolean = false>(options: Options<SiteEventsActionsData, ThrowOnError>): RequestResult<SiteEventsActionsResponses, SiteEventsActionsErrors, ThrowOnError> => (options.client ?? client).get<SiteEventsActionsResponses, SiteEventsActionsErrors, ThrowOnError>({
-    requestValidator: async (data) => await z.object({
-        body: z.never().optional(),
-        path: zSiteEventsActionsPath,
-        query: z.never().optional()
-    }).parseAsync(data),
-    security: [{
-            in: 'cookie',
-            name: 'JWT',
-            type: 'apiKey'
-        }],
-    url: '/w/{workspaceSlug}/events/actions',
-    ...options
-});
-
-/**
- * List the workspace's sending-provider integrations
- */
-export const siteIntegrationsList = <ThrowOnError extends boolean = false>(options: Options<SiteIntegrationsListData, ThrowOnError>): RequestResult<SiteIntegrationsListResponses, SiteIntegrationsListErrors, ThrowOnError> => (options.client ?? client).get<SiteIntegrationsListResponses, SiteIntegrationsListErrors, ThrowOnError>({
-    requestValidator: async (data) => await z.object({
-        body: z.never().optional(),
-        path: zSiteIntegrationsListPath,
-        query: z.never().optional()
-    }).parseAsync(data),
-    security: [{
-            in: 'cookie',
-            name: 'JWT',
-            type: 'apiKey'
-        }],
-    url: '/w/{workspaceSlug}/integrations',
-    ...options
-});
-
-/**
- * Create an integration
- */
-export const siteIntegrationsCreate = <ThrowOnError extends boolean = false>(options: Options<SiteIntegrationsCreateData, ThrowOnError>): RequestResult<SiteIntegrationsCreateResponses, SiteIntegrationsCreateErrors, ThrowOnError> => (options.client ?? client).post<SiteIntegrationsCreateResponses, SiteIntegrationsCreateErrors, ThrowOnError>({
-    requestValidator: async (data) => await z.object({
-        body: zSiteIntegrationsCreateBody,
-        path: zSiteIntegrationsCreatePath,
-        query: z.never().optional()
-    }).parseAsync(data),
-    security: [{
-            in: 'cookie',
-            name: 'JWT',
-            type: 'apiKey'
-        }],
-    url: '/w/{workspaceSlug}/integrations',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Delete an integration
- */
-export const siteIntegrationsDelete = <ThrowOnError extends boolean = false>(options: Options<SiteIntegrationsDeleteData, ThrowOnError>): RequestResult<SiteIntegrationsDeleteResponses, SiteIntegrationsDeleteErrors, ThrowOnError> => (options.client ?? client).delete<SiteIntegrationsDeleteResponses, SiteIntegrationsDeleteErrors, ThrowOnError>({
-    requestValidator: async (data) => await z.object({
-        body: z.never().optional(),
-        path: zSiteIntegrationsDeletePath,
-        query: z.never().optional()
-    }).parseAsync(data),
-    security: [{
-            in: 'cookie',
-            name: 'JWT',
-            type: 'apiKey'
-        }],
-    url: '/w/{workspaceSlug}/integrations/{id}',
-    ...options
-});
-
-/**
- * Get an integration by id
- */
-export const siteIntegrationsGet = <ThrowOnError extends boolean = false>(options: Options<SiteIntegrationsGetData, ThrowOnError>): RequestResult<SiteIntegrationsGetResponses, SiteIntegrationsGetErrors, ThrowOnError> => (options.client ?? client).get<SiteIntegrationsGetResponses, SiteIntegrationsGetErrors, ThrowOnError>({
-    requestValidator: async (data) => await z.object({
-        body: z.never().optional(),
-        path: zSiteIntegrationsGetPath,
-        query: z.never().optional()
-    }).parseAsync(data),
-    security: [{
-            in: 'cookie',
-            name: 'JWT',
-            type: 'apiKey'
-        }],
-    url: '/w/{workspaceSlug}/integrations/{id}',
-    ...options
-});
-
-/**
- * Update an integration
- */
-export const siteIntegrationsUpdate = <ThrowOnError extends boolean = false>(options: Options<SiteIntegrationsUpdateData, ThrowOnError>): RequestResult<SiteIntegrationsUpdateResponses, SiteIntegrationsUpdateErrors, ThrowOnError> => (options.client ?? client).put<SiteIntegrationsUpdateResponses, SiteIntegrationsUpdateErrors, ThrowOnError>({
-    requestValidator: async (data) => await z.object({
-        body: zSiteIntegrationsUpdateBody,
-        path: zSiteIntegrationsUpdatePath,
-        query: z.never().optional()
-    }).parseAsync(data),
-    security: [{
-            in: 'cookie',
-            name: 'JWT',
-            type: 'apiKey'
-        }],
-    url: '/w/{workspaceSlug}/integrations/{id}',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * List segments for the site UI
- */
-export const siteSegmentsList = <ThrowOnError extends boolean = false>(options: Options<SiteSegmentsListData, ThrowOnError>): RequestResult<SiteSegmentsListResponses, SiteSegmentsListErrors, ThrowOnError> => (options.client ?? client).get<SiteSegmentsListResponses, SiteSegmentsListErrors, ThrowOnError>({
-    requestValidator: async (data) => await z.object({
-        body: z.never().optional(),
-        path: zSiteSegmentsListPath,
-        query: zSiteSegmentsListQuery.optional()
-    }).parseAsync(data),
-    security: [{
-            in: 'cookie',
-            name: 'JWT',
-            type: 'apiKey'
-        }],
-    url: '/w/{workspaceSlug}/segments',
-    ...options
-});
-
-/**
- * Create a segment from the site UI
- */
-export const siteSegmentsCreate = <ThrowOnError extends boolean = false>(options: Options<SiteSegmentsCreateData, ThrowOnError>): RequestResult<SiteSegmentsCreateResponses, SiteSegmentsCreateErrors, ThrowOnError> => (options.client ?? client).post<SiteSegmentsCreateResponses, SiteSegmentsCreateErrors, ThrowOnError>({
-    requestValidator: async (data) => await z.object({
-        body: zSiteSegmentsCreateBody,
-        path: zSiteSegmentsCreatePath,
-        query: z.never().optional()
-    }).parseAsync(data),
-    security: [{
-            in: 'cookie',
-            name: 'JWT',
-            type: 'apiKey'
-        }],
-    url: '/w/{workspaceSlug}/segments',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Preview how many active contacts match a rule definition
- */
-export const siteSegmentsPreview = <ThrowOnError extends boolean = false>(options: Options<SiteSegmentsPreviewData, ThrowOnError>): RequestResult<SiteSegmentsPreviewResponses, SiteSegmentsPreviewErrors, ThrowOnError> => (options.client ?? client).post<SiteSegmentsPreviewResponses, SiteSegmentsPreviewErrors, ThrowOnError>({
-    requestValidator: async (data) => await z.object({
-        body: zSiteSegmentsPreviewBody,
-        path: zSiteSegmentsPreviewPath,
-        query: z.never().optional()
-    }).parseAsync(data),
-    security: [{
-            in: 'cookie',
-            name: 'JWT',
-            type: 'apiKey'
-        }],
-    url: '/w/{workspaceSlug}/segments/preview',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Delete a segment from the site UI
- */
-export const siteSegmentsDelete = <ThrowOnError extends boolean = false>(options: Options<SiteSegmentsDeleteData, ThrowOnError>): RequestResult<SiteSegmentsDeleteResponses, SiteSegmentsDeleteErrors, ThrowOnError> => (options.client ?? client).delete<SiteSegmentsDeleteResponses, SiteSegmentsDeleteErrors, ThrowOnError>({
-    requestValidator: async (data) => await z.object({
-        body: z.never().optional(),
-        path: zSiteSegmentsDeletePath,
-        query: z.never().optional()
-    }).parseAsync(data),
-    security: [{
-            in: 'cookie',
-            name: 'JWT',
-            type: 'apiKey'
-        }],
-    url: '/w/{workspaceSlug}/segments/{id}',
-    ...options
-});
-
-/**
- * Get a segment by ID for the site UI
- */
-export const siteSegmentsGet = <ThrowOnError extends boolean = false>(options: Options<SiteSegmentsGetData, ThrowOnError>): RequestResult<SiteSegmentsGetResponses, SiteSegmentsGetErrors, ThrowOnError> => (options.client ?? client).get<SiteSegmentsGetResponses, SiteSegmentsGetErrors, ThrowOnError>({
-    requestValidator: async (data) => await z.object({
-        body: z.never().optional(),
-        path: zSiteSegmentsGetPath,
-        query: z.never().optional()
-    }).parseAsync(data),
-    security: [{
-            in: 'cookie',
-            name: 'JWT',
-            type: 'apiKey'
-        }],
-    url: '/w/{workspaceSlug}/segments/{id}',
-    ...options
-});
-
-/**
- * Update a segment from the site UI
- */
-export const siteSegmentsUpdate = <ThrowOnError extends boolean = false>(options: Options<SiteSegmentsUpdateData, ThrowOnError>): RequestResult<SiteSegmentsUpdateResponses, SiteSegmentsUpdateErrors, ThrowOnError> => (options.client ?? client).put<SiteSegmentsUpdateResponses, SiteSegmentsUpdateErrors, ThrowOnError>({
-    requestValidator: async (data) => await z.object({
-        body: zSiteSegmentsUpdateBody,
-        path: zSiteSegmentsUpdatePath,
-        query: z.never().optional()
-    }).parseAsync(data),
-    security: [{
-            in: 'cookie',
-            name: 'JWT',
-            type: 'apiKey'
-        }],
-    url: '/w/{workspaceSlug}/segments/{id}',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * List suppressed addresses
- */
-export const siteSuppressionsList = <ThrowOnError extends boolean = false>(options: Options<SiteSuppressionsListData, ThrowOnError>): RequestResult<SiteSuppressionsListResponses, SiteSuppressionsListErrors, ThrowOnError> => (options.client ?? client).get<SiteSuppressionsListResponses, SiteSuppressionsListErrors, ThrowOnError>({
-    requestValidator: async (data) => await z.object({
-        body: z.never().optional(),
-        path: zSiteSuppressionsListPath,
-        query: zSiteSuppressionsListQuery.optional()
-    }).parseAsync(data),
-    security: [{
-            in: 'cookie',
-            name: 'JWT',
-            type: 'apiKey'
-        }],
-    url: '/w/{workspaceSlug}/suppressions',
-    ...options
-});
-
-/**
- * Manually suppress an address (reason = manual; idempotent per address)
- */
-export const siteSuppressionsCreate = <ThrowOnError extends boolean = false>(options: Options<SiteSuppressionsCreateData, ThrowOnError>): RequestResult<SiteSuppressionsCreateResponses, SiteSuppressionsCreateErrors, ThrowOnError> => (options.client ?? client).post<SiteSuppressionsCreateResponses, SiteSuppressionsCreateErrors, ThrowOnError>({
-    requestValidator: async (data) => await z.object({
-        body: zSiteSuppressionsCreateBody,
-        path: zSiteSuppressionsCreatePath,
-        query: z.never().optional()
-    }).parseAsync(data),
-    security: [{
-            in: 'cookie',
-            name: 'JWT',
-            type: 'apiKey'
-        }],
-    url: '/w/{workspaceSlug}/suppressions',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Remove an address from the suppression list
- */
-export const siteSuppressionsDelete = <ThrowOnError extends boolean = false>(options: Options<SiteSuppressionsDeleteData, ThrowOnError>): RequestResult<SiteSuppressionsDeleteResponses, SiteSuppressionsDeleteErrors, ThrowOnError> => (options.client ?? client).delete<SiteSuppressionsDeleteResponses, SiteSuppressionsDeleteErrors, ThrowOnError>({
-    requestValidator: async (data) => await z.object({
-        body: z.never().optional(),
-        path: zSiteSuppressionsDeletePath,
-        query: z.never().optional()
-    }).parseAsync(data),
-    security: [{
-            in: 'cookie',
-            name: 'JWT',
-            type: 'apiKey'
-        }],
-    url: '/w/{workspaceSlug}/suppressions/{id}',
-    ...options
-});
-
-/**
- * List templates
- */
-export const siteTemplatesList = <ThrowOnError extends boolean = false>(options: Options<SiteTemplatesListData, ThrowOnError>): RequestResult<SiteTemplatesListResponses, SiteTemplatesListErrors, ThrowOnError> => (options.client ?? client).get<SiteTemplatesListResponses, SiteTemplatesListErrors, ThrowOnError>({
-    requestValidator: async (data) => await z.object({
-        body: z.never().optional(),
-        path: zSiteTemplatesListPath,
-        query: zSiteTemplatesListQuery.optional()
-    }).parseAsync(data),
-    security: [{
-            in: 'cookie',
-            name: 'JWT',
-            type: 'apiKey'
-        }],
-    url: '/w/{workspaceSlug}/templates',
-    ...options
-});
-
-/**
- * Create a template
- */
-export const siteTemplatesCreate = <ThrowOnError extends boolean = false>(options: Options<SiteTemplatesCreateData, ThrowOnError>): RequestResult<SiteTemplatesCreateResponses, SiteTemplatesCreateErrors, ThrowOnError> => (options.client ?? client).post<SiteTemplatesCreateResponses, SiteTemplatesCreateErrors, ThrowOnError>({
-    requestValidator: async (data) => await z.object({
-        body: zSiteTemplatesCreateBody,
-        path: zSiteTemplatesCreatePath,
-        query: z.never().optional()
-    }).parseAsync(data),
-    security: [{
-            in: 'cookie',
-            name: 'JWT',
-            type: 'apiKey'
-        }],
-    url: '/w/{workspaceSlug}/templates',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Delete a template
- */
-export const siteTemplatesDelete = <ThrowOnError extends boolean = false>(options: Options<SiteTemplatesDeleteData, ThrowOnError>): RequestResult<SiteTemplatesDeleteResponses, SiteTemplatesDeleteErrors, ThrowOnError> => (options.client ?? client).delete<SiteTemplatesDeleteResponses, SiteTemplatesDeleteErrors, ThrowOnError>({
-    requestValidator: async (data) => await z.object({
-        body: z.never().optional(),
-        path: zSiteTemplatesDeletePath,
-        query: z.never().optional()
-    }).parseAsync(data),
-    security: [{
-            in: 'cookie',
-            name: 'JWT',
-            type: 'apiKey'
-        }],
-    url: '/w/{workspaceSlug}/templates/{id}',
-    ...options
-});
-
-/**
- * Get a template by ID
- */
-export const siteTemplatesGet = <ThrowOnError extends boolean = false>(options: Options<SiteTemplatesGetData, ThrowOnError>): RequestResult<SiteTemplatesGetResponses, SiteTemplatesGetErrors, ThrowOnError> => (options.client ?? client).get<SiteTemplatesGetResponses, SiteTemplatesGetErrors, ThrowOnError>({
-    requestValidator: async (data) => await z.object({
-        body: z.never().optional(),
-        path: zSiteTemplatesGetPath,
-        query: z.never().optional()
-    }).parseAsync(data),
-    security: [{
-            in: 'cookie',
-            name: 'JWT',
-            type: 'apiKey'
-        }],
-    url: '/w/{workspaceSlug}/templates/{id}',
-    ...options
-});
-
-/**
- * Update a template
- */
-export const siteTemplatesUpdate = <ThrowOnError extends boolean = false>(options: Options<SiteTemplatesUpdateData, ThrowOnError>): RequestResult<SiteTemplatesUpdateResponses, SiteTemplatesUpdateErrors, ThrowOnError> => (options.client ?? client).put<SiteTemplatesUpdateResponses, SiteTemplatesUpdateErrors, ThrowOnError>({
-    requestValidator: async (data) => await z.object({
-        body: zSiteTemplatesUpdateBody,
-        path: zSiteTemplatesUpdatePath,
-        query: z.never().optional()
-    }).parseAsync(data),
-    security: [{
-            in: 'cookie',
-            name: 'JWT',
-            type: 'apiKey'
-        }],
-    url: '/w/{workspaceSlug}/templates/{id}',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * List active (non-revoked) API tokens for the workspace
- */
-export const siteTokensList = <ThrowOnError extends boolean = false>(options: Options<SiteTokensListData, ThrowOnError>): RequestResult<SiteTokensListResponses, SiteTokensListErrors, ThrowOnError> => (options.client ?? client).get<SiteTokensListResponses, SiteTokensListErrors, ThrowOnError>({
-    requestValidator: async (data) => await z.object({
-        body: z.never().optional(),
-        path: zSiteTokensListPath,
-        query: z.never().optional()
-    }).parseAsync(data),
-    security: [{
-            in: 'cookie',
-            name: 'JWT',
-            type: 'apiKey'
-        }],
-    url: '/w/{workspaceSlug}/tokens',
-    ...options
-});
-
-/**
- * Create an API token; the full secret is returned once
- */
-export const siteTokensCreate = <ThrowOnError extends boolean = false>(options: Options<SiteTokensCreateData, ThrowOnError>): RequestResult<SiteTokensCreateResponses, SiteTokensCreateErrors, ThrowOnError> => (options.client ?? client).post<SiteTokensCreateResponses, SiteTokensCreateErrors, ThrowOnError>({
-    requestValidator: async (data) => await z.object({
-        body: zSiteTokensCreateBody,
-        path: zSiteTokensCreatePath,
-        query: z.never().optional()
-    }).parseAsync(data),
-    security: [{
-            in: 'cookie',
-            name: 'JWT',
-            type: 'apiKey'
-        }],
-    url: '/w/{workspaceSlug}/tokens',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Revoke an API token
- */
-export const siteTokensDelete = <ThrowOnError extends boolean = false>(options: Options<SiteTokensDeleteData, ThrowOnError>): RequestResult<SiteTokensDeleteResponses, SiteTokensDeleteErrors, ThrowOnError> => (options.client ?? client).delete<SiteTokensDeleteResponses, SiteTokensDeleteErrors, ThrowOnError>({
-    requestValidator: async (data) => await z.object({
-        body: z.never().optional(),
-        path: zSiteTokensDeletePath,
-        query: z.never().optional()
-    }).parseAsync(data),
-    security: [{
-            in: 'cookie',
-            name: 'JWT',
-            type: 'apiKey'
-        }],
-    url: '/w/{workspaceSlug}/tokens/{id}',
-    ...options
-});
-
-/**
- * List transactional sends, most recent first
- */
-export const siteTransactionalEmailsList = <ThrowOnError extends boolean = false>(options: Options<SiteTransactionalEmailsListData, ThrowOnError>): RequestResult<SiteTransactionalEmailsListResponses, SiteTransactionalEmailsListErrors, ThrowOnError> => (options.client ?? client).get<SiteTransactionalEmailsListResponses, SiteTransactionalEmailsListErrors, ThrowOnError>({
-    requestValidator: async (data) => await z.object({
-        body: z.never().optional(),
-        path: zSiteTransactionalEmailsListPath,
-        query: zSiteTransactionalEmailsListQuery.optional()
-    }).parseAsync(data),
-    security: [{
-            in: 'cookie',
-            name: 'JWT',
-            type: 'apiKey'
-        }],
-    url: '/w/{workspaceSlug}/transactional-emails',
-    ...options
-});
-
-/**
- * List webhook endpoints
- */
-export const siteWebhooksList = <ThrowOnError extends boolean = false>(options: Options<SiteWebhooksListData, ThrowOnError>): RequestResult<SiteWebhooksListResponses, SiteWebhooksListErrors, ThrowOnError> => (options.client ?? client).get<SiteWebhooksListResponses, SiteWebhooksListErrors, ThrowOnError>({
-    requestValidator: async (data) => await z.object({
-        body: z.never().optional(),
-        path: zSiteWebhooksListPath,
-        query: zSiteWebhooksListQuery.optional()
-    }).parseAsync(data),
-    security: [{
-            in: 'cookie',
-            name: 'JWT',
-            type: 'apiKey'
-        }],
-    url: '/w/{workspaceSlug}/webhooks',
-    ...options
-});
-
-/**
- * Create a webhook endpoint
- */
-export const siteWebhooksCreate = <ThrowOnError extends boolean = false>(options: Options<SiteWebhooksCreateData, ThrowOnError>): RequestResult<SiteWebhooksCreateResponses, SiteWebhooksCreateErrors, ThrowOnError> => (options.client ?? client).post<SiteWebhooksCreateResponses, SiteWebhooksCreateErrors, ThrowOnError>({
-    requestValidator: async (data) => await z.object({
-        body: zSiteWebhooksCreateBody,
-        path: zSiteWebhooksCreatePath,
-        query: z.never().optional()
-    }).parseAsync(data),
-    security: [{
-            in: 'cookie',
-            name: 'JWT',
-            type: 'apiKey'
-        }],
-    url: '/w/{workspaceSlug}/webhooks',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Delete a webhook endpoint
- */
-export const siteWebhooksDelete = <ThrowOnError extends boolean = false>(options: Options<SiteWebhooksDeleteData, ThrowOnError>): RequestResult<SiteWebhooksDeleteResponses, SiteWebhooksDeleteErrors, ThrowOnError> => (options.client ?? client).delete<SiteWebhooksDeleteResponses, SiteWebhooksDeleteErrors, ThrowOnError>({
-    requestValidator: async (data) => await z.object({
-        body: z.never().optional(),
-        path: zSiteWebhooksDeletePath,
-        query: z.never().optional()
-    }).parseAsync(data),
-    security: [{
-            in: 'cookie',
-            name: 'JWT',
-            type: 'apiKey'
-        }],
-    url: '/w/{workspaceSlug}/webhooks/{id}',
-    ...options
-});
-
-/**
- * Get a webhook endpoint by ID
- */
-export const siteWebhooksGet = <ThrowOnError extends boolean = false>(options: Options<SiteWebhooksGetData, ThrowOnError>): RequestResult<SiteWebhooksGetResponses, SiteWebhooksGetErrors, ThrowOnError> => (options.client ?? client).get<SiteWebhooksGetResponses, SiteWebhooksGetErrors, ThrowOnError>({
-    requestValidator: async (data) => await z.object({
-        body: z.never().optional(),
-        path: zSiteWebhooksGetPath,
-        query: z.never().optional()
-    }).parseAsync(data),
-    security: [{
-            in: 'cookie',
-            name: 'JWT',
-            type: 'apiKey'
-        }],
-    url: '/w/{workspaceSlug}/webhooks/{id}',
-    ...options
-});
-
-/**
- * Update a webhook endpoint
- */
-export const siteWebhooksUpdate = <ThrowOnError extends boolean = false>(options: Options<SiteWebhooksUpdateData, ThrowOnError>): RequestResult<SiteWebhooksUpdateResponses, SiteWebhooksUpdateErrors, ThrowOnError> => (options.client ?? client).put<SiteWebhooksUpdateResponses, SiteWebhooksUpdateErrors, ThrowOnError>({
-    requestValidator: async (data) => await z.object({
-        body: zSiteWebhooksUpdateBody,
-        path: zSiteWebhooksUpdatePath,
-        query: z.never().optional()
-    }).parseAsync(data),
-    security: [{
-            in: 'cookie',
-            name: 'JWT',
-            type: 'apiKey'
-        }],
-    url: '/w/{workspaceSlug}/webhooks/{id}',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
  * List workspaces owned by the authenticated user
  */
 export const siteWorkspacesList = <ThrowOnError extends boolean = false>(options?: Options<SiteWorkspacesListData, ThrowOnError>): RequestResult<SiteWorkspacesListResponses, unknown, ThrowOnError> => (options?.client ?? client).get<SiteWorkspacesListResponses, unknown, ThrowOnError>({
@@ -1246,6 +234,1018 @@ export const siteWorkspacesUpdate = <ThrowOnError extends boolean = false>(optio
             type: 'apiKey'
         }],
     url: '/workspaces/{slug}',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Aggregate metrics for the workspace dashboard
+ */
+export const siteAnalyticsOverview = <ThrowOnError extends boolean = false>(options: Options<SiteAnalyticsOverviewData, ThrowOnError>): RequestResult<SiteAnalyticsOverviewResponses, SiteAnalyticsOverviewErrors, ThrowOnError> => (options.client ?? client).get<SiteAnalyticsOverviewResponses, SiteAnalyticsOverviewErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: z.never().optional(),
+        path: zSiteAnalyticsOverviewPath,
+        query: zSiteAnalyticsOverviewQuery.optional()
+    }).parseAsync(data),
+    security: [{
+            in: 'cookie',
+            name: 'JWT',
+            type: 'apiKey'
+        }],
+    url: '/workspaces/{slug}/analytics/overview',
+    ...options
+});
+
+/**
+ * List resources for the site UI
+ */
+export const siteAutomationsList = <ThrowOnError extends boolean = false>(options: Options<SiteAutomationsListData, ThrowOnError>): RequestResult<SiteAutomationsListResponses, SiteAutomationsListErrors, ThrowOnError> => (options.client ?? client).get<SiteAutomationsListResponses, SiteAutomationsListErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: z.never().optional(),
+        path: zSiteAutomationsListPath,
+        query: zSiteAutomationsListQuery.optional()
+    }).parseAsync(data),
+    security: [{
+            in: 'cookie',
+            name: 'JWT',
+            type: 'apiKey'
+        }],
+    url: '/workspaces/{slug}/automations',
+    ...options
+});
+
+/**
+ * Create a resource from the site UI
+ */
+export const siteAutomationsCreate = <ThrowOnError extends boolean = false>(options: Options<SiteAutomationsCreateData, ThrowOnError>): RequestResult<SiteAutomationsCreateResponses, SiteAutomationsCreateErrors, ThrowOnError> => (options.client ?? client).post<SiteAutomationsCreateResponses, SiteAutomationsCreateErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: zSiteAutomationsCreateBody,
+        path: zSiteAutomationsCreatePath,
+        query: z.never().optional()
+    }).parseAsync(data),
+    security: [{
+            in: 'cookie',
+            name: 'JWT',
+            type: 'apiKey'
+        }],
+    url: '/workspaces/{slug}/automations',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Delete a resource from the site UI
+ */
+export const siteAutomationsDelete = <ThrowOnError extends boolean = false>(options: Options<SiteAutomationsDeleteData, ThrowOnError>): RequestResult<SiteAutomationsDeleteResponses, SiteAutomationsDeleteErrors, ThrowOnError> => (options.client ?? client).delete<SiteAutomationsDeleteResponses, SiteAutomationsDeleteErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: z.never().optional(),
+        path: zSiteAutomationsDeletePath,
+        query: z.never().optional()
+    }).parseAsync(data),
+    security: [{
+            in: 'cookie',
+            name: 'JWT',
+            type: 'apiKey'
+        }],
+    url: '/workspaces/{slug}/automations/{id}',
+    ...options
+});
+
+/**
+ * Get a resource by ID for the site UI
+ */
+export const siteAutomationsGet = <ThrowOnError extends boolean = false>(options: Options<SiteAutomationsGetData, ThrowOnError>): RequestResult<SiteAutomationsGetResponses, SiteAutomationsGetErrors, ThrowOnError> => (options.client ?? client).get<SiteAutomationsGetResponses, SiteAutomationsGetErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: z.never().optional(),
+        path: zSiteAutomationsGetPath,
+        query: z.never().optional()
+    }).parseAsync(data),
+    security: [{
+            in: 'cookie',
+            name: 'JWT',
+            type: 'apiKey'
+        }],
+    url: '/workspaces/{slug}/automations/{id}',
+    ...options
+});
+
+/**
+ * Update a resource from the site UI
+ */
+export const siteAutomationsUpdate = <ThrowOnError extends boolean = false>(options: Options<SiteAutomationsUpdateData, ThrowOnError>): RequestResult<SiteAutomationsUpdateResponses, SiteAutomationsUpdateErrors, ThrowOnError> => (options.client ?? client).put<SiteAutomationsUpdateResponses, SiteAutomationsUpdateErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: zSiteAutomationsUpdateBody,
+        path: zSiteAutomationsUpdatePath,
+        query: z.never().optional()
+    }).parseAsync(data),
+    security: [{
+            in: 'cookie',
+            name: 'JWT',
+            type: 'apiKey'
+        }],
+    url: '/workspaces/{slug}/automations/{id}',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Activate an automation (starts enrolling contacts)
+ */
+export const siteAutomationsActivate = <ThrowOnError extends boolean = false>(options: Options<SiteAutomationsActivateData, ThrowOnError>): RequestResult<SiteAutomationsActivateResponses, SiteAutomationsActivateErrors, ThrowOnError> => (options.client ?? client).post<SiteAutomationsActivateResponses, SiteAutomationsActivateErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: z.never().optional(),
+        path: zSiteAutomationsActivatePath,
+        query: z.never().optional()
+    }).parseAsync(data),
+    security: [{
+            in: 'cookie',
+            name: 'JWT',
+            type: 'apiKey'
+        }],
+    url: '/workspaces/{slug}/automations/{id}/activate',
+    ...options
+});
+
+/**
+ * Deactivate an automation (stops new enrollments)
+ */
+export const siteAutomationsDeactivate = <ThrowOnError extends boolean = false>(options: Options<SiteAutomationsDeactivateData, ThrowOnError>): RequestResult<SiteAutomationsDeactivateResponses, SiteAutomationsDeactivateErrors, ThrowOnError> => (options.client ?? client).post<SiteAutomationsDeactivateResponses, SiteAutomationsDeactivateErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: z.never().optional(),
+        path: zSiteAutomationsDeactivatePath,
+        query: z.never().optional()
+    }).parseAsync(data),
+    security: [{
+            in: 'cookie',
+            name: 'JWT',
+            type: 'apiKey'
+        }],
+    url: '/workspaces/{slug}/automations/{id}/deactivate',
+    ...options
+});
+
+/**
+ * List resources for the site UI
+ */
+export const siteBroadcastsList = <ThrowOnError extends boolean = false>(options: Options<SiteBroadcastsListData, ThrowOnError>): RequestResult<SiteBroadcastsListResponses, SiteBroadcastsListErrors, ThrowOnError> => (options.client ?? client).get<SiteBroadcastsListResponses, SiteBroadcastsListErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: z.never().optional(),
+        path: zSiteBroadcastsListPath,
+        query: zSiteBroadcastsListQuery.optional()
+    }).parseAsync(data),
+    security: [{
+            in: 'cookie',
+            name: 'JWT',
+            type: 'apiKey'
+        }],
+    url: '/workspaces/{slug}/broadcasts',
+    ...options
+});
+
+/**
+ * Create a resource from the site UI
+ */
+export const siteBroadcastsCreate = <ThrowOnError extends boolean = false>(options: Options<SiteBroadcastsCreateData, ThrowOnError>): RequestResult<SiteBroadcastsCreateResponses, SiteBroadcastsCreateErrors, ThrowOnError> => (options.client ?? client).post<SiteBroadcastsCreateResponses, SiteBroadcastsCreateErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: zSiteBroadcastsCreateBody,
+        path: zSiteBroadcastsCreatePath,
+        query: z.never().optional()
+    }).parseAsync(data),
+    security: [{
+            in: 'cookie',
+            name: 'JWT',
+            type: 'apiKey'
+        }],
+    url: '/workspaces/{slug}/broadcasts',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Delete a resource from the site UI
+ */
+export const siteBroadcastsDelete = <ThrowOnError extends boolean = false>(options: Options<SiteBroadcastsDeleteData, ThrowOnError>): RequestResult<SiteBroadcastsDeleteResponses, SiteBroadcastsDeleteErrors, ThrowOnError> => (options.client ?? client).delete<SiteBroadcastsDeleteResponses, SiteBroadcastsDeleteErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: z.never().optional(),
+        path: zSiteBroadcastsDeletePath,
+        query: z.never().optional()
+    }).parseAsync(data),
+    security: [{
+            in: 'cookie',
+            name: 'JWT',
+            type: 'apiKey'
+        }],
+    url: '/workspaces/{slug}/broadcasts/{id}',
+    ...options
+});
+
+/**
+ * Get a resource by ID for the site UI
+ */
+export const siteBroadcastsGet = <ThrowOnError extends boolean = false>(options: Options<SiteBroadcastsGetData, ThrowOnError>): RequestResult<SiteBroadcastsGetResponses, SiteBroadcastsGetErrors, ThrowOnError> => (options.client ?? client).get<SiteBroadcastsGetResponses, SiteBroadcastsGetErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: z.never().optional(),
+        path: zSiteBroadcastsGetPath,
+        query: z.never().optional()
+    }).parseAsync(data),
+    security: [{
+            in: 'cookie',
+            name: 'JWT',
+            type: 'apiKey'
+        }],
+    url: '/workspaces/{slug}/broadcasts/{id}',
+    ...options
+});
+
+/**
+ * Update a resource from the site UI
+ */
+export const siteBroadcastsUpdate = <ThrowOnError extends boolean = false>(options: Options<SiteBroadcastsUpdateData, ThrowOnError>): RequestResult<SiteBroadcastsUpdateResponses, SiteBroadcastsUpdateErrors, ThrowOnError> => (options.client ?? client).put<SiteBroadcastsUpdateResponses, SiteBroadcastsUpdateErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: zSiteBroadcastsUpdateBody,
+        path: zSiteBroadcastsUpdatePath,
+        query: z.never().optional()
+    }).parseAsync(data),
+    security: [{
+            in: 'cookie',
+            name: 'JWT',
+            type: 'apiKey'
+        }],
+    url: '/workspaces/{slug}/broadcasts/{id}',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Schedule a broadcast to send at a future time
+ */
+export const siteBroadcastsSchedule = <ThrowOnError extends boolean = false>(options: Options<SiteBroadcastsScheduleData, ThrowOnError>): RequestResult<SiteBroadcastsScheduleResponses, SiteBroadcastsScheduleErrors, ThrowOnError> => (options.client ?? client).post<SiteBroadcastsScheduleResponses, SiteBroadcastsScheduleErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: zSiteBroadcastsScheduleBody,
+        path: zSiteBroadcastsSchedulePath,
+        query: z.never().optional()
+    }).parseAsync(data),
+    security: [{
+            in: 'cookie',
+            name: 'JWT',
+            type: 'apiKey'
+        }],
+    url: '/workspaces/{slug}/broadcasts/{id}/schedule',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Send a broadcast immediately
+ */
+export const siteBroadcastsSend = <ThrowOnError extends boolean = false>(options: Options<SiteBroadcastsSendData, ThrowOnError>): RequestResult<SiteBroadcastsSendResponses, SiteBroadcastsSendErrors, ThrowOnError> => (options.client ?? client).post<SiteBroadcastsSendResponses, SiteBroadcastsSendErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: z.never().optional(),
+        path: zSiteBroadcastsSendPath,
+        query: z.never().optional()
+    }).parseAsync(data),
+    security: [{
+            in: 'cookie',
+            name: 'JWT',
+            type: 'apiKey'
+        }],
+    url: '/workspaces/{slug}/broadcasts/{id}/send',
+    ...options
+});
+
+/**
+ * Send a one-off rendered preview to a single address
+ */
+export const siteBroadcastsTestSend = <ThrowOnError extends boolean = false>(options: Options<SiteBroadcastsTestSendData, ThrowOnError>): RequestResult<SiteBroadcastsTestSendResponses, SiteBroadcastsTestSendErrors, ThrowOnError> => (options.client ?? client).post<SiteBroadcastsTestSendResponses, SiteBroadcastsTestSendErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: zSiteBroadcastsTestSendBody,
+        path: zSiteBroadcastsTestSendPath,
+        query: z.never().optional()
+    }).parseAsync(data),
+    security: [{
+            in: 'cookie',
+            name: 'JWT',
+            type: 'apiKey'
+        }],
+    url: '/workspaces/{slug}/broadcasts/{id}/test-send',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * List resources for the site UI
+ */
+export const siteContactsList = <ThrowOnError extends boolean = false>(options: Options<SiteContactsListData, ThrowOnError>): RequestResult<SiteContactsListResponses, SiteContactsListErrors, ThrowOnError> => (options.client ?? client).get<SiteContactsListResponses, SiteContactsListErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: z.never().optional(),
+        path: zSiteContactsListPath,
+        query: zSiteContactsListQuery.optional()
+    }).parseAsync(data),
+    security: [{
+            in: 'cookie',
+            name: 'JWT',
+            type: 'apiKey'
+        }],
+    url: '/workspaces/{slug}/contacts',
+    ...options
+});
+
+/**
+ * Create a resource from the site UI
+ */
+export const siteContactsCreate = <ThrowOnError extends boolean = false>(options: Options<SiteContactsCreateData, ThrowOnError>): RequestResult<SiteContactsCreateResponses, SiteContactsCreateErrors, ThrowOnError> => (options.client ?? client).post<SiteContactsCreateResponses, SiteContactsCreateErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: zSiteContactsCreateBody,
+        path: zSiteContactsCreatePath,
+        query: z.never().optional()
+    }).parseAsync(data),
+    security: [{
+            in: 'cookie',
+            name: 'JWT',
+            type: 'apiKey'
+        }],
+    url: '/workspaces/{slug}/contacts',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Delete a resource from the site UI
+ */
+export const siteContactsDelete = <ThrowOnError extends boolean = false>(options: Options<SiteContactsDeleteData, ThrowOnError>): RequestResult<SiteContactsDeleteResponses, SiteContactsDeleteErrors, ThrowOnError> => (options.client ?? client).delete<SiteContactsDeleteResponses, SiteContactsDeleteErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: z.never().optional(),
+        path: zSiteContactsDeletePath,
+        query: z.never().optional()
+    }).parseAsync(data),
+    security: [{
+            in: 'cookie',
+            name: 'JWT',
+            type: 'apiKey'
+        }],
+    url: '/workspaces/{slug}/contacts/{id}',
+    ...options
+});
+
+/**
+ * Get a resource by ID for the site UI
+ */
+export const siteContactsGet = <ThrowOnError extends boolean = false>(options: Options<SiteContactsGetData, ThrowOnError>): RequestResult<SiteContactsGetResponses, SiteContactsGetErrors, ThrowOnError> => (options.client ?? client).get<SiteContactsGetResponses, SiteContactsGetErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: z.never().optional(),
+        path: zSiteContactsGetPath,
+        query: z.never().optional()
+    }).parseAsync(data),
+    security: [{
+            in: 'cookie',
+            name: 'JWT',
+            type: 'apiKey'
+        }],
+    url: '/workspaces/{slug}/contacts/{id}',
+    ...options
+});
+
+/**
+ * Update a resource from the site UI
+ */
+export const siteContactsUpdate = <ThrowOnError extends boolean = false>(options: Options<SiteContactsUpdateData, ThrowOnError>): RequestResult<SiteContactsUpdateResponses, SiteContactsUpdateErrors, ThrowOnError> => (options.client ?? client).put<SiteContactsUpdateResponses, SiteContactsUpdateErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: zSiteContactsUpdateBody,
+        path: zSiteContactsUpdatePath,
+        query: z.never().optional()
+    }).parseAsync(data),
+    security: [{
+            in: 'cookie',
+            name: 'JWT',
+            type: 'apiKey'
+        }],
+    url: '/workspaces/{slug}/contacts/{id}',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * List the workspace's custom field definitions
+ */
+export const siteCustomFieldsList = <ThrowOnError extends boolean = false>(options: Options<SiteCustomFieldsListData, ThrowOnError>): RequestResult<SiteCustomFieldsListResponses, SiteCustomFieldsListErrors, ThrowOnError> => (options.client ?? client).get<SiteCustomFieldsListResponses, SiteCustomFieldsListErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: z.never().optional(),
+        path: zSiteCustomFieldsListPath,
+        query: z.never().optional()
+    }).parseAsync(data),
+    security: [{
+            in: 'cookie',
+            name: 'JWT',
+            type: 'apiKey'
+        }],
+    url: '/workspaces/{slug}/custom-fields',
+    ...options
+});
+
+/**
+ * List events for the site UI (most recent first)
+ */
+export const siteEventsList = <ThrowOnError extends boolean = false>(options: Options<SiteEventsListData, ThrowOnError>): RequestResult<SiteEventsListResponses, SiteEventsListErrors, ThrowOnError> => (options.client ?? client).get<SiteEventsListResponses, SiteEventsListErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: z.never().optional(),
+        path: zSiteEventsListPath,
+        query: zSiteEventsListQuery.optional()
+    }).parseAsync(data),
+    security: [{
+            in: 'cookie',
+            name: 'JWT',
+            type: 'apiKey'
+        }],
+    url: '/workspaces/{slug}/events',
+    ...options
+});
+
+/**
+ * Distinct event actions in the workspace, sorted — powers the segment builder
+ */
+export const siteEventsActions = <ThrowOnError extends boolean = false>(options: Options<SiteEventsActionsData, ThrowOnError>): RequestResult<SiteEventsActionsResponses, SiteEventsActionsErrors, ThrowOnError> => (options.client ?? client).get<SiteEventsActionsResponses, SiteEventsActionsErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: z.never().optional(),
+        path: zSiteEventsActionsPath,
+        query: z.never().optional()
+    }).parseAsync(data),
+    security: [{
+            in: 'cookie',
+            name: 'JWT',
+            type: 'apiKey'
+        }],
+    url: '/workspaces/{slug}/events/actions',
+    ...options
+});
+
+/**
+ * List the workspace's sending-provider integrations
+ */
+export const siteIntegrationsList = <ThrowOnError extends boolean = false>(options: Options<SiteIntegrationsListData, ThrowOnError>): RequestResult<SiteIntegrationsListResponses, SiteIntegrationsListErrors, ThrowOnError> => (options.client ?? client).get<SiteIntegrationsListResponses, SiteIntegrationsListErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: z.never().optional(),
+        path: zSiteIntegrationsListPath,
+        query: z.never().optional()
+    }).parseAsync(data),
+    security: [{
+            in: 'cookie',
+            name: 'JWT',
+            type: 'apiKey'
+        }],
+    url: '/workspaces/{slug}/integrations',
+    ...options
+});
+
+/**
+ * Create an integration
+ */
+export const siteIntegrationsCreate = <ThrowOnError extends boolean = false>(options: Options<SiteIntegrationsCreateData, ThrowOnError>): RequestResult<SiteIntegrationsCreateResponses, SiteIntegrationsCreateErrors, ThrowOnError> => (options.client ?? client).post<SiteIntegrationsCreateResponses, SiteIntegrationsCreateErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: zSiteIntegrationsCreateBody,
+        path: zSiteIntegrationsCreatePath,
+        query: z.never().optional()
+    }).parseAsync(data),
+    security: [{
+            in: 'cookie',
+            name: 'JWT',
+            type: 'apiKey'
+        }],
+    url: '/workspaces/{slug}/integrations',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Delete an integration
+ */
+export const siteIntegrationsDelete = <ThrowOnError extends boolean = false>(options: Options<SiteIntegrationsDeleteData, ThrowOnError>): RequestResult<SiteIntegrationsDeleteResponses, SiteIntegrationsDeleteErrors, ThrowOnError> => (options.client ?? client).delete<SiteIntegrationsDeleteResponses, SiteIntegrationsDeleteErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: z.never().optional(),
+        path: zSiteIntegrationsDeletePath,
+        query: z.never().optional()
+    }).parseAsync(data),
+    security: [{
+            in: 'cookie',
+            name: 'JWT',
+            type: 'apiKey'
+        }],
+    url: '/workspaces/{slug}/integrations/{id}',
+    ...options
+});
+
+/**
+ * Get an integration by id
+ */
+export const siteIntegrationsGet = <ThrowOnError extends boolean = false>(options: Options<SiteIntegrationsGetData, ThrowOnError>): RequestResult<SiteIntegrationsGetResponses, SiteIntegrationsGetErrors, ThrowOnError> => (options.client ?? client).get<SiteIntegrationsGetResponses, SiteIntegrationsGetErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: z.never().optional(),
+        path: zSiteIntegrationsGetPath,
+        query: z.never().optional()
+    }).parseAsync(data),
+    security: [{
+            in: 'cookie',
+            name: 'JWT',
+            type: 'apiKey'
+        }],
+    url: '/workspaces/{slug}/integrations/{id}',
+    ...options
+});
+
+/**
+ * Update an integration
+ */
+export const siteIntegrationsUpdate = <ThrowOnError extends boolean = false>(options: Options<SiteIntegrationsUpdateData, ThrowOnError>): RequestResult<SiteIntegrationsUpdateResponses, SiteIntegrationsUpdateErrors, ThrowOnError> => (options.client ?? client).put<SiteIntegrationsUpdateResponses, SiteIntegrationsUpdateErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: zSiteIntegrationsUpdateBody,
+        path: zSiteIntegrationsUpdatePath,
+        query: z.never().optional()
+    }).parseAsync(data),
+    security: [{
+            in: 'cookie',
+            name: 'JWT',
+            type: 'apiKey'
+        }],
+    url: '/workspaces/{slug}/integrations/{id}',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * List resources for the site UI
+ */
+export const siteSegmentsList = <ThrowOnError extends boolean = false>(options: Options<SiteSegmentsListData, ThrowOnError>): RequestResult<SiteSegmentsListResponses, SiteSegmentsListErrors, ThrowOnError> => (options.client ?? client).get<SiteSegmentsListResponses, SiteSegmentsListErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: z.never().optional(),
+        path: zSiteSegmentsListPath,
+        query: zSiteSegmentsListQuery.optional()
+    }).parseAsync(data),
+    security: [{
+            in: 'cookie',
+            name: 'JWT',
+            type: 'apiKey'
+        }],
+    url: '/workspaces/{slug}/segments',
+    ...options
+});
+
+/**
+ * Create a resource from the site UI
+ */
+export const siteSegmentsCreate = <ThrowOnError extends boolean = false>(options: Options<SiteSegmentsCreateData, ThrowOnError>): RequestResult<SiteSegmentsCreateResponses, SiteSegmentsCreateErrors, ThrowOnError> => (options.client ?? client).post<SiteSegmentsCreateResponses, SiteSegmentsCreateErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: zSiteSegmentsCreateBody,
+        path: zSiteSegmentsCreatePath,
+        query: z.never().optional()
+    }).parseAsync(data),
+    security: [{
+            in: 'cookie',
+            name: 'JWT',
+            type: 'apiKey'
+        }],
+    url: '/workspaces/{slug}/segments',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Preview how many active contacts match a rule definition
+ */
+export const siteSegmentsPreview = <ThrowOnError extends boolean = false>(options: Options<SiteSegmentsPreviewData, ThrowOnError>): RequestResult<SiteSegmentsPreviewResponses, SiteSegmentsPreviewErrors, ThrowOnError> => (options.client ?? client).post<SiteSegmentsPreviewResponses, SiteSegmentsPreviewErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: zSiteSegmentsPreviewBody,
+        path: zSiteSegmentsPreviewPath,
+        query: z.never().optional()
+    }).parseAsync(data),
+    security: [{
+            in: 'cookie',
+            name: 'JWT',
+            type: 'apiKey'
+        }],
+    url: '/workspaces/{slug}/segments/preview',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Delete a resource from the site UI
+ */
+export const siteSegmentsDelete = <ThrowOnError extends boolean = false>(options: Options<SiteSegmentsDeleteData, ThrowOnError>): RequestResult<SiteSegmentsDeleteResponses, SiteSegmentsDeleteErrors, ThrowOnError> => (options.client ?? client).delete<SiteSegmentsDeleteResponses, SiteSegmentsDeleteErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: z.never().optional(),
+        path: zSiteSegmentsDeletePath,
+        query: z.never().optional()
+    }).parseAsync(data),
+    security: [{
+            in: 'cookie',
+            name: 'JWT',
+            type: 'apiKey'
+        }],
+    url: '/workspaces/{slug}/segments/{id}',
+    ...options
+});
+
+/**
+ * Get a resource by ID for the site UI
+ */
+export const siteSegmentsGet = <ThrowOnError extends boolean = false>(options: Options<SiteSegmentsGetData, ThrowOnError>): RequestResult<SiteSegmentsGetResponses, SiteSegmentsGetErrors, ThrowOnError> => (options.client ?? client).get<SiteSegmentsGetResponses, SiteSegmentsGetErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: z.never().optional(),
+        path: zSiteSegmentsGetPath,
+        query: z.never().optional()
+    }).parseAsync(data),
+    security: [{
+            in: 'cookie',
+            name: 'JWT',
+            type: 'apiKey'
+        }],
+    url: '/workspaces/{slug}/segments/{id}',
+    ...options
+});
+
+/**
+ * Update a resource from the site UI
+ */
+export const siteSegmentsUpdate = <ThrowOnError extends boolean = false>(options: Options<SiteSegmentsUpdateData, ThrowOnError>): RequestResult<SiteSegmentsUpdateResponses, SiteSegmentsUpdateErrors, ThrowOnError> => (options.client ?? client).put<SiteSegmentsUpdateResponses, SiteSegmentsUpdateErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: zSiteSegmentsUpdateBody,
+        path: zSiteSegmentsUpdatePath,
+        query: z.never().optional()
+    }).parseAsync(data),
+    security: [{
+            in: 'cookie',
+            name: 'JWT',
+            type: 'apiKey'
+        }],
+    url: '/workspaces/{slug}/segments/{id}',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * List suppressed addresses
+ */
+export const siteSuppressionsList = <ThrowOnError extends boolean = false>(options: Options<SiteSuppressionsListData, ThrowOnError>): RequestResult<SiteSuppressionsListResponses, SiteSuppressionsListErrors, ThrowOnError> => (options.client ?? client).get<SiteSuppressionsListResponses, SiteSuppressionsListErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: z.never().optional(),
+        path: zSiteSuppressionsListPath,
+        query: zSiteSuppressionsListQuery.optional()
+    }).parseAsync(data),
+    security: [{
+            in: 'cookie',
+            name: 'JWT',
+            type: 'apiKey'
+        }],
+    url: '/workspaces/{slug}/suppressions',
+    ...options
+});
+
+/**
+ * Manually suppress an address (reason = manual; idempotent per address)
+ */
+export const siteSuppressionsCreate = <ThrowOnError extends boolean = false>(options: Options<SiteSuppressionsCreateData, ThrowOnError>): RequestResult<SiteSuppressionsCreateResponses, SiteSuppressionsCreateErrors, ThrowOnError> => (options.client ?? client).post<SiteSuppressionsCreateResponses, SiteSuppressionsCreateErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: zSiteSuppressionsCreateBody,
+        path: zSiteSuppressionsCreatePath,
+        query: z.never().optional()
+    }).parseAsync(data),
+    security: [{
+            in: 'cookie',
+            name: 'JWT',
+            type: 'apiKey'
+        }],
+    url: '/workspaces/{slug}/suppressions',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Remove an address from the suppression list
+ */
+export const siteSuppressionsDelete = <ThrowOnError extends boolean = false>(options: Options<SiteSuppressionsDeleteData, ThrowOnError>): RequestResult<SiteSuppressionsDeleteResponses, SiteSuppressionsDeleteErrors, ThrowOnError> => (options.client ?? client).delete<SiteSuppressionsDeleteResponses, SiteSuppressionsDeleteErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: z.never().optional(),
+        path: zSiteSuppressionsDeletePath,
+        query: z.never().optional()
+    }).parseAsync(data),
+    security: [{
+            in: 'cookie',
+            name: 'JWT',
+            type: 'apiKey'
+        }],
+    url: '/workspaces/{slug}/suppressions/{id}',
+    ...options
+});
+
+/**
+ * List resources for the site UI
+ */
+export const siteTemplatesList = <ThrowOnError extends boolean = false>(options: Options<SiteTemplatesListData, ThrowOnError>): RequestResult<SiteTemplatesListResponses, SiteTemplatesListErrors, ThrowOnError> => (options.client ?? client).get<SiteTemplatesListResponses, SiteTemplatesListErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: z.never().optional(),
+        path: zSiteTemplatesListPath,
+        query: zSiteTemplatesListQuery.optional()
+    }).parseAsync(data),
+    security: [{
+            in: 'cookie',
+            name: 'JWT',
+            type: 'apiKey'
+        }],
+    url: '/workspaces/{slug}/templates',
+    ...options
+});
+
+/**
+ * Create a resource from the site UI
+ */
+export const siteTemplatesCreate = <ThrowOnError extends boolean = false>(options: Options<SiteTemplatesCreateData, ThrowOnError>): RequestResult<SiteTemplatesCreateResponses, SiteTemplatesCreateErrors, ThrowOnError> => (options.client ?? client).post<SiteTemplatesCreateResponses, SiteTemplatesCreateErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: zSiteTemplatesCreateBody,
+        path: zSiteTemplatesCreatePath,
+        query: z.never().optional()
+    }).parseAsync(data),
+    security: [{
+            in: 'cookie',
+            name: 'JWT',
+            type: 'apiKey'
+        }],
+    url: '/workspaces/{slug}/templates',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Delete a resource from the site UI
+ */
+export const siteTemplatesDelete = <ThrowOnError extends boolean = false>(options: Options<SiteTemplatesDeleteData, ThrowOnError>): RequestResult<SiteTemplatesDeleteResponses, SiteTemplatesDeleteErrors, ThrowOnError> => (options.client ?? client).delete<SiteTemplatesDeleteResponses, SiteTemplatesDeleteErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: z.never().optional(),
+        path: zSiteTemplatesDeletePath,
+        query: z.never().optional()
+    }).parseAsync(data),
+    security: [{
+            in: 'cookie',
+            name: 'JWT',
+            type: 'apiKey'
+        }],
+    url: '/workspaces/{slug}/templates/{id}',
+    ...options
+});
+
+/**
+ * Get a resource by ID for the site UI
+ */
+export const siteTemplatesGet = <ThrowOnError extends boolean = false>(options: Options<SiteTemplatesGetData, ThrowOnError>): RequestResult<SiteTemplatesGetResponses, SiteTemplatesGetErrors, ThrowOnError> => (options.client ?? client).get<SiteTemplatesGetResponses, SiteTemplatesGetErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: z.never().optional(),
+        path: zSiteTemplatesGetPath,
+        query: z.never().optional()
+    }).parseAsync(data),
+    security: [{
+            in: 'cookie',
+            name: 'JWT',
+            type: 'apiKey'
+        }],
+    url: '/workspaces/{slug}/templates/{id}',
+    ...options
+});
+
+/**
+ * Update a resource from the site UI
+ */
+export const siteTemplatesUpdate = <ThrowOnError extends boolean = false>(options: Options<SiteTemplatesUpdateData, ThrowOnError>): RequestResult<SiteTemplatesUpdateResponses, SiteTemplatesUpdateErrors, ThrowOnError> => (options.client ?? client).put<SiteTemplatesUpdateResponses, SiteTemplatesUpdateErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: zSiteTemplatesUpdateBody,
+        path: zSiteTemplatesUpdatePath,
+        query: z.never().optional()
+    }).parseAsync(data),
+    security: [{
+            in: 'cookie',
+            name: 'JWT',
+            type: 'apiKey'
+        }],
+    url: '/workspaces/{slug}/templates/{id}',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * List active (non-revoked) API tokens for the workspace
+ */
+export const siteTokensList = <ThrowOnError extends boolean = false>(options: Options<SiteTokensListData, ThrowOnError>): RequestResult<SiteTokensListResponses, SiteTokensListErrors, ThrowOnError> => (options.client ?? client).get<SiteTokensListResponses, SiteTokensListErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: z.never().optional(),
+        path: zSiteTokensListPath,
+        query: z.never().optional()
+    }).parseAsync(data),
+    security: [{
+            in: 'cookie',
+            name: 'JWT',
+            type: 'apiKey'
+        }],
+    url: '/workspaces/{slug}/tokens',
+    ...options
+});
+
+/**
+ * Create an API token; the full secret is returned once
+ */
+export const siteTokensCreate = <ThrowOnError extends boolean = false>(options: Options<SiteTokensCreateData, ThrowOnError>): RequestResult<SiteTokensCreateResponses, SiteTokensCreateErrors, ThrowOnError> => (options.client ?? client).post<SiteTokensCreateResponses, SiteTokensCreateErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: zSiteTokensCreateBody,
+        path: zSiteTokensCreatePath,
+        query: z.never().optional()
+    }).parseAsync(data),
+    security: [{
+            in: 'cookie',
+            name: 'JWT',
+            type: 'apiKey'
+        }],
+    url: '/workspaces/{slug}/tokens',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Revoke an API token
+ */
+export const siteTokensDelete = <ThrowOnError extends boolean = false>(options: Options<SiteTokensDeleteData, ThrowOnError>): RequestResult<SiteTokensDeleteResponses, SiteTokensDeleteErrors, ThrowOnError> => (options.client ?? client).delete<SiteTokensDeleteResponses, SiteTokensDeleteErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: z.never().optional(),
+        path: zSiteTokensDeletePath,
+        query: z.never().optional()
+    }).parseAsync(data),
+    security: [{
+            in: 'cookie',
+            name: 'JWT',
+            type: 'apiKey'
+        }],
+    url: '/workspaces/{slug}/tokens/{id}',
+    ...options
+});
+
+/**
+ * List transactional sends, most recent first
+ */
+export const siteTransactionalEmailsList = <ThrowOnError extends boolean = false>(options: Options<SiteTransactionalEmailsListData, ThrowOnError>): RequestResult<SiteTransactionalEmailsListResponses, SiteTransactionalEmailsListErrors, ThrowOnError> => (options.client ?? client).get<SiteTransactionalEmailsListResponses, SiteTransactionalEmailsListErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: z.never().optional(),
+        path: zSiteTransactionalEmailsListPath,
+        query: zSiteTransactionalEmailsListQuery.optional()
+    }).parseAsync(data),
+    security: [{
+            in: 'cookie',
+            name: 'JWT',
+            type: 'apiKey'
+        }],
+    url: '/workspaces/{slug}/transactional-emails',
+    ...options
+});
+
+/**
+ * List resources for the site UI
+ */
+export const siteWebhooksList = <ThrowOnError extends boolean = false>(options: Options<SiteWebhooksListData, ThrowOnError>): RequestResult<SiteWebhooksListResponses, SiteWebhooksListErrors, ThrowOnError> => (options.client ?? client).get<SiteWebhooksListResponses, SiteWebhooksListErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: z.never().optional(),
+        path: zSiteWebhooksListPath,
+        query: zSiteWebhooksListQuery.optional()
+    }).parseAsync(data),
+    security: [{
+            in: 'cookie',
+            name: 'JWT',
+            type: 'apiKey'
+        }],
+    url: '/workspaces/{slug}/webhooks',
+    ...options
+});
+
+/**
+ * Create a resource from the site UI
+ */
+export const siteWebhooksCreate = <ThrowOnError extends boolean = false>(options: Options<SiteWebhooksCreateData, ThrowOnError>): RequestResult<SiteWebhooksCreateResponses, SiteWebhooksCreateErrors, ThrowOnError> => (options.client ?? client).post<SiteWebhooksCreateResponses, SiteWebhooksCreateErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: zSiteWebhooksCreateBody,
+        path: zSiteWebhooksCreatePath,
+        query: z.never().optional()
+    }).parseAsync(data),
+    security: [{
+            in: 'cookie',
+            name: 'JWT',
+            type: 'apiKey'
+        }],
+    url: '/workspaces/{slug}/webhooks',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Delete a resource from the site UI
+ */
+export const siteWebhooksDelete = <ThrowOnError extends boolean = false>(options: Options<SiteWebhooksDeleteData, ThrowOnError>): RequestResult<SiteWebhooksDeleteResponses, SiteWebhooksDeleteErrors, ThrowOnError> => (options.client ?? client).delete<SiteWebhooksDeleteResponses, SiteWebhooksDeleteErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: z.never().optional(),
+        path: zSiteWebhooksDeletePath,
+        query: z.never().optional()
+    }).parseAsync(data),
+    security: [{
+            in: 'cookie',
+            name: 'JWT',
+            type: 'apiKey'
+        }],
+    url: '/workspaces/{slug}/webhooks/{id}',
+    ...options
+});
+
+/**
+ * Get a resource by ID for the site UI
+ */
+export const siteWebhooksGet = <ThrowOnError extends boolean = false>(options: Options<SiteWebhooksGetData, ThrowOnError>): RequestResult<SiteWebhooksGetResponses, SiteWebhooksGetErrors, ThrowOnError> => (options.client ?? client).get<SiteWebhooksGetResponses, SiteWebhooksGetErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: z.never().optional(),
+        path: zSiteWebhooksGetPath,
+        query: z.never().optional()
+    }).parseAsync(data),
+    security: [{
+            in: 'cookie',
+            name: 'JWT',
+            type: 'apiKey'
+        }],
+    url: '/workspaces/{slug}/webhooks/{id}',
+    ...options
+});
+
+/**
+ * Update a resource from the site UI
+ */
+export const siteWebhooksUpdate = <ThrowOnError extends boolean = false>(options: Options<SiteWebhooksUpdateData, ThrowOnError>): RequestResult<SiteWebhooksUpdateResponses, SiteWebhooksUpdateErrors, ThrowOnError> => (options.client ?? client).put<SiteWebhooksUpdateResponses, SiteWebhooksUpdateErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: zSiteWebhooksUpdateBody,
+        path: zSiteWebhooksUpdatePath,
+        query: z.never().optional()
+    }).parseAsync(data),
+    security: [{
+            in: 'cookie',
+            name: 'JWT',
+            type: 'apiKey'
+        }],
+    url: '/workspaces/{slug}/webhooks/{id}',
     ...options,
     headers: {
         'Content-Type': 'application/json',

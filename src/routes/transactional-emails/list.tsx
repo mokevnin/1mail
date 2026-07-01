@@ -33,7 +33,7 @@ export function TransactionalEmailsListPage() {
 
   const list = useQuery(
     siteTransactionalEmailsListOptions({
-      path: { workspaceSlug: slug },
+      path: { slug: slug },
       query: { page, pageSize: PAGE_SIZE },
     }),
   )

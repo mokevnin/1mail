@@ -62,19 +62,19 @@ func TestSiteContactsScopedToWorkspace(t *testing.T) {
 
 	// Contacts of the owned workspace are listed (the workspace has seeded
 	// contacts; assert presence, not an exact count).
-	list, err := c.SiteContactsList(ctx, siteapi.SiteContactsListParams{WorkspaceSlug: "acme"})
+	list, err := c.SiteContactsList(ctx, siteapi.SiteContactsListParams{Slug: "acme"})
 	require.NoError(t, err)
 	listed, ok := list.(*siteapi.SiteContactsListOK)
 	require.Truef(t, ok, "got %T", list)
 	assert.NotEmpty(t, listed.Items, "owned workspace returns its contacts")
 
 	// Creating a contact scopes it to the workspace.
-	created, err := c.SiteContactsCreate(ctx, &siteapi.SiteCreateContactInput{Email: siteapi.NewOptNilEmailAddress("site-new@example.com")}, siteapi.SiteContactsCreateParams{WorkspaceSlug: "acme"})
+	created, err := c.SiteContactsCreate(ctx, &siteapi.SiteCreateContactInput{Email: siteapi.NewOptNilEmailAddress("site-new@example.com")}, siteapi.SiteContactsCreateParams{Slug: "acme"})
 	require.NoError(t, err)
 	assert.IsType(t, &siteapi.SiteContactResource{}, created)
 
 	// An unknown / non-owned workspace slug resolves to 404, not a data leak.
-	missing, err := c.SiteContactsList(ctx, siteapi.SiteContactsListParams{WorkspaceSlug: "does-not-exist"})
+	missing, err := c.SiteContactsList(ctx, siteapi.SiteContactsListParams{Slug: "does-not-exist"})
 	require.NoError(t, err)
 	assert.IsType(t, &siteapi.SiteContactsListNotFound{}, missing)
 }

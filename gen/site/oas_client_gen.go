@@ -33,7 +33,7 @@ type Invoker interface {
 	//
 	// Aggregate metrics for the workspace dashboard.
 	//
-	// GET /w/{workspaceSlug}/analytics/overview
+	// GET /workspaces/{slug}/analytics/overview
 	SiteAnalyticsOverview(ctx context.Context, params SiteAnalyticsOverviewParams) (SiteAnalyticsOverviewRes, error)
 	// SiteAuthConfirmEmailChange invokes SiteAuth_confirmEmailChange operation.
 	//
@@ -73,277 +73,277 @@ type Invoker interface {
 	//
 	// Activate an automation (starts enrolling contacts).
 	//
-	// POST /w/{workspaceSlug}/automations/{id}/activate
+	// POST /workspaces/{slug}/automations/{id}/activate
 	SiteAutomationsActivate(ctx context.Context, params SiteAutomationsActivateParams) (SiteAutomationsActivateRes, error)
 	// SiteAutomationsCreate invokes SiteAutomations_create operation.
 	//
-	// Create an automation.
+	// Create a resource from the site UI.
 	//
-	// POST /w/{workspaceSlug}/automations
+	// POST /workspaces/{slug}/automations
 	SiteAutomationsCreate(ctx context.Context, request *SiteCreateAutomationInput, params SiteAutomationsCreateParams) (SiteAutomationsCreateRes, error)
 	// SiteAutomationsDeactivate invokes SiteAutomations_deactivate operation.
 	//
 	// Deactivate an automation (stops new enrollments).
 	//
-	// POST /w/{workspaceSlug}/automations/{id}/deactivate
+	// POST /workspaces/{slug}/automations/{id}/deactivate
 	SiteAutomationsDeactivate(ctx context.Context, params SiteAutomationsDeactivateParams) (SiteAutomationsDeactivateRes, error)
 	// SiteAutomationsDelete invokes SiteAutomations_delete operation.
 	//
-	// Delete an automation.
+	// Delete a resource from the site UI.
 	//
-	// DELETE /w/{workspaceSlug}/automations/{id}
+	// DELETE /workspaces/{slug}/automations/{id}
 	SiteAutomationsDelete(ctx context.Context, params SiteAutomationsDeleteParams) (SiteAutomationsDeleteRes, error)
 	// SiteAutomationsGet invokes SiteAutomations_get operation.
 	//
-	// Get an automation by ID.
+	// Get a resource by ID for the site UI.
 	//
-	// GET /w/{workspaceSlug}/automations/{id}
+	// GET /workspaces/{slug}/automations/{id}
 	SiteAutomationsGet(ctx context.Context, params SiteAutomationsGetParams) (SiteAutomationsGetRes, error)
 	// SiteAutomationsList invokes SiteAutomations_list operation.
 	//
-	// List automations.
+	// List resources for the site UI.
 	//
-	// GET /w/{workspaceSlug}/automations
+	// GET /workspaces/{slug}/automations
 	SiteAutomationsList(ctx context.Context, params SiteAutomationsListParams) (SiteAutomationsListRes, error)
 	// SiteAutomationsUpdate invokes SiteAutomations_update operation.
 	//
-	// Update an automation.
+	// Update a resource from the site UI.
 	//
-	// PUT /w/{workspaceSlug}/automations/{id}
+	// PUT /workspaces/{slug}/automations/{id}
 	SiteAutomationsUpdate(ctx context.Context, request *SiteUpdateAutomationInput, params SiteAutomationsUpdateParams) (SiteAutomationsUpdateRes, error)
 	// SiteBroadcastsCreate invokes SiteBroadcasts_create operation.
 	//
-	// Create a broadcast from the site UI.
+	// Create a resource from the site UI.
 	//
-	// POST /w/{workspaceSlug}/broadcasts
+	// POST /workspaces/{slug}/broadcasts
 	SiteBroadcastsCreate(ctx context.Context, request *SiteCreateBroadcastInput, params SiteBroadcastsCreateParams) (SiteBroadcastsCreateRes, error)
 	// SiteBroadcastsDelete invokes SiteBroadcasts_delete operation.
 	//
-	// Delete a broadcast from the site UI.
+	// Delete a resource from the site UI.
 	//
-	// DELETE /w/{workspaceSlug}/broadcasts/{id}
+	// DELETE /workspaces/{slug}/broadcasts/{id}
 	SiteBroadcastsDelete(ctx context.Context, params SiteBroadcastsDeleteParams) (SiteBroadcastsDeleteRes, error)
 	// SiteBroadcastsGet invokes SiteBroadcasts_get operation.
 	//
-	// Get a broadcast by ID for the site UI.
+	// Get a resource by ID for the site UI.
 	//
-	// GET /w/{workspaceSlug}/broadcasts/{id}
+	// GET /workspaces/{slug}/broadcasts/{id}
 	SiteBroadcastsGet(ctx context.Context, params SiteBroadcastsGetParams) (SiteBroadcastsGetRes, error)
 	// SiteBroadcastsList invokes SiteBroadcasts_list operation.
 	//
-	// List broadcasts for the site UI.
+	// List resources for the site UI.
 	//
-	// GET /w/{workspaceSlug}/broadcasts
+	// GET /workspaces/{slug}/broadcasts
 	SiteBroadcastsList(ctx context.Context, params SiteBroadcastsListParams) (SiteBroadcastsListRes, error)
 	// SiteBroadcastsSchedule invokes SiteBroadcasts_schedule operation.
 	//
 	// Schedule a broadcast to send at a future time.
 	//
-	// POST /w/{workspaceSlug}/broadcasts/{id}/schedule
+	// POST /workspaces/{slug}/broadcasts/{id}/schedule
 	SiteBroadcastsSchedule(ctx context.Context, request *SiteScheduleBroadcastInput, params SiteBroadcastsScheduleParams) (SiteBroadcastsScheduleRes, error)
 	// SiteBroadcastsSend invokes SiteBroadcasts_send operation.
 	//
 	// Send a broadcast immediately.
 	//
-	// POST /w/{workspaceSlug}/broadcasts/{id}/send
+	// POST /workspaces/{slug}/broadcasts/{id}/send
 	SiteBroadcastsSend(ctx context.Context, params SiteBroadcastsSendParams) (SiteBroadcastsSendRes, error)
 	// SiteBroadcastsTestSend invokes SiteBroadcasts_testSend operation.
 	//
 	// Send a one-off rendered preview to a single address.
 	//
-	// POST /w/{workspaceSlug}/broadcasts/{id}/test
+	// POST /workspaces/{slug}/broadcasts/{id}/test-send
 	SiteBroadcastsTestSend(ctx context.Context, request *SiteTestSendBroadcastInput, params SiteBroadcastsTestSendParams) (SiteBroadcastsTestSendRes, error)
 	// SiteBroadcastsUpdate invokes SiteBroadcasts_update operation.
 	//
-	// Update a broadcast from the site UI.
+	// Update a resource from the site UI.
 	//
-	// PUT /w/{workspaceSlug}/broadcasts/{id}
+	// PUT /workspaces/{slug}/broadcasts/{id}
 	SiteBroadcastsUpdate(ctx context.Context, request *SiteUpdateBroadcastInput, params SiteBroadcastsUpdateParams) (SiteBroadcastsUpdateRes, error)
 	// SiteContactsCreate invokes SiteContacts_create operation.
 	//
-	// Create a contact from the site UI.
+	// Create a resource from the site UI.
 	//
-	// POST /w/{workspaceSlug}/contacts
+	// POST /workspaces/{slug}/contacts
 	SiteContactsCreate(ctx context.Context, request *SiteCreateContactInput, params SiteContactsCreateParams) (SiteContactsCreateRes, error)
 	// SiteContactsDelete invokes SiteContacts_delete operation.
 	//
-	// Delete a contact from the site UI.
+	// Delete a resource from the site UI.
 	//
-	// DELETE /w/{workspaceSlug}/contacts/{id}
+	// DELETE /workspaces/{slug}/contacts/{id}
 	SiteContactsDelete(ctx context.Context, params SiteContactsDeleteParams) (SiteContactsDeleteRes, error)
 	// SiteContactsGet invokes SiteContacts_get operation.
 	//
-	// Get a contact by ID for the site UI.
+	// Get a resource by ID for the site UI.
 	//
-	// GET /w/{workspaceSlug}/contacts/{id}
+	// GET /workspaces/{slug}/contacts/{id}
 	SiteContactsGet(ctx context.Context, params SiteContactsGetParams) (SiteContactsGetRes, error)
 	// SiteContactsList invokes SiteContacts_list operation.
 	//
-	// List contacts for the site UI.
+	// List resources for the site UI.
 	//
-	// GET /w/{workspaceSlug}/contacts
+	// GET /workspaces/{slug}/contacts
 	SiteContactsList(ctx context.Context, params SiteContactsListParams) (SiteContactsListRes, error)
 	// SiteContactsUpdate invokes SiteContacts_update operation.
 	//
-	// Update a contact from the site UI.
+	// Update a resource from the site UI.
 	//
-	// PUT /w/{workspaceSlug}/contacts/{id}
+	// PUT /workspaces/{slug}/contacts/{id}
 	SiteContactsUpdate(ctx context.Context, request *SiteUpdateContactInput, params SiteContactsUpdateParams) (SiteContactsUpdateRes, error)
 	// SiteCustomFieldsList invokes SiteCustomFields_list operation.
 	//
 	// List the workspace's custom field definitions.
 	//
-	// GET /w/{workspaceSlug}/custom-fields
+	// GET /workspaces/{slug}/custom-fields
 	SiteCustomFieldsList(ctx context.Context, params SiteCustomFieldsListParams) (SiteCustomFieldsListRes, error)
 	// SiteEventsActions invokes SiteEvents_actions operation.
 	//
 	// Distinct event actions in the workspace, sorted — powers the segment builder.
 	//
-	// GET /w/{workspaceSlug}/events/actions
+	// GET /workspaces/{slug}/events/actions
 	SiteEventsActions(ctx context.Context, params SiteEventsActionsParams) (SiteEventsActionsRes, error)
 	// SiteEventsList invokes SiteEvents_list operation.
 	//
 	// List events for the site UI (most recent first).
 	//
-	// GET /w/{workspaceSlug}/events
+	// GET /workspaces/{slug}/events
 	SiteEventsList(ctx context.Context, params SiteEventsListParams) (SiteEventsListRes, error)
 	// SiteIntegrationsCreate invokes SiteIntegrations_create operation.
 	//
 	// Create an integration.
 	//
-	// POST /w/{workspaceSlug}/integrations
+	// POST /workspaces/{slug}/integrations
 	SiteIntegrationsCreate(ctx context.Context, request *SiteCreateIntegrationInput, params SiteIntegrationsCreateParams) (SiteIntegrationsCreateRes, error)
 	// SiteIntegrationsDelete invokes SiteIntegrations_delete operation.
 	//
 	// Delete an integration.
 	//
-	// DELETE /w/{workspaceSlug}/integrations/{id}
+	// DELETE /workspaces/{slug}/integrations/{id}
 	SiteIntegrationsDelete(ctx context.Context, params SiteIntegrationsDeleteParams) (SiteIntegrationsDeleteRes, error)
 	// SiteIntegrationsGet invokes SiteIntegrations_get operation.
 	//
 	// Get an integration by id.
 	//
-	// GET /w/{workspaceSlug}/integrations/{id}
+	// GET /workspaces/{slug}/integrations/{id}
 	SiteIntegrationsGet(ctx context.Context, params SiteIntegrationsGetParams) (SiteIntegrationsGetRes, error)
 	// SiteIntegrationsList invokes SiteIntegrations_list operation.
 	//
 	// List the workspace's sending-provider integrations.
 	//
-	// GET /w/{workspaceSlug}/integrations
+	// GET /workspaces/{slug}/integrations
 	SiteIntegrationsList(ctx context.Context, params SiteIntegrationsListParams) (SiteIntegrationsListRes, error)
 	// SiteIntegrationsUpdate invokes SiteIntegrations_update operation.
 	//
 	// Update an integration.
 	//
-	// PUT /w/{workspaceSlug}/integrations/{id}
+	// PUT /workspaces/{slug}/integrations/{id}
 	SiteIntegrationsUpdate(ctx context.Context, request *SiteUpdateIntegrationInput, params SiteIntegrationsUpdateParams) (SiteIntegrationsUpdateRes, error)
 	// SiteSegmentsCreate invokes SiteSegments_create operation.
 	//
-	// Create a segment from the site UI.
+	// Create a resource from the site UI.
 	//
-	// POST /w/{workspaceSlug}/segments
+	// POST /workspaces/{slug}/segments
 	SiteSegmentsCreate(ctx context.Context, request *SiteCreateSegmentInput, params SiteSegmentsCreateParams) (SiteSegmentsCreateRes, error)
 	// SiteSegmentsDelete invokes SiteSegments_delete operation.
 	//
-	// Delete a segment from the site UI.
+	// Delete a resource from the site UI.
 	//
-	// DELETE /w/{workspaceSlug}/segments/{id}
+	// DELETE /workspaces/{slug}/segments/{id}
 	SiteSegmentsDelete(ctx context.Context, params SiteSegmentsDeleteParams) (SiteSegmentsDeleteRes, error)
 	// SiteSegmentsGet invokes SiteSegments_get operation.
 	//
-	// Get a segment by ID for the site UI.
+	// Get a resource by ID for the site UI.
 	//
-	// GET /w/{workspaceSlug}/segments/{id}
+	// GET /workspaces/{slug}/segments/{id}
 	SiteSegmentsGet(ctx context.Context, params SiteSegmentsGetParams) (SiteSegmentsGetRes, error)
 	// SiteSegmentsList invokes SiteSegments_list operation.
 	//
-	// List segments for the site UI.
+	// List resources for the site UI.
 	//
-	// GET /w/{workspaceSlug}/segments
+	// GET /workspaces/{slug}/segments
 	SiteSegmentsList(ctx context.Context, params SiteSegmentsListParams) (SiteSegmentsListRes, error)
 	// SiteSegmentsPreview invokes SiteSegments_preview operation.
 	//
 	// Preview how many active contacts match a rule definition.
 	//
-	// POST /w/{workspaceSlug}/segments/preview
+	// POST /workspaces/{slug}/segments/preview
 	SiteSegmentsPreview(ctx context.Context, request *SitePreviewSegmentInput, params SiteSegmentsPreviewParams) (SiteSegmentsPreviewRes, error)
 	// SiteSegmentsUpdate invokes SiteSegments_update operation.
 	//
-	// Update a segment from the site UI.
+	// Update a resource from the site UI.
 	//
-	// PUT /w/{workspaceSlug}/segments/{id}
+	// PUT /workspaces/{slug}/segments/{id}
 	SiteSegmentsUpdate(ctx context.Context, request *SiteUpdateSegmentInput, params SiteSegmentsUpdateParams) (SiteSegmentsUpdateRes, error)
 	// SiteSuppressionsCreate invokes SiteSuppressions_create operation.
 	//
 	// Manually suppress an address (reason = manual; idempotent per address).
 	//
-	// POST /w/{workspaceSlug}/suppressions
+	// POST /workspaces/{slug}/suppressions
 	SiteSuppressionsCreate(ctx context.Context, request *SiteCreateSuppressionInput, params SiteSuppressionsCreateParams) (SiteSuppressionsCreateRes, error)
 	// SiteSuppressionsDelete invokes SiteSuppressions_delete operation.
 	//
 	// Remove an address from the suppression list.
 	//
-	// DELETE /w/{workspaceSlug}/suppressions/{id}
+	// DELETE /workspaces/{slug}/suppressions/{id}
 	SiteSuppressionsDelete(ctx context.Context, params SiteSuppressionsDeleteParams) (SiteSuppressionsDeleteRes, error)
 	// SiteSuppressionsList invokes SiteSuppressions_list operation.
 	//
 	// List suppressed addresses.
 	//
-	// GET /w/{workspaceSlug}/suppressions
+	// GET /workspaces/{slug}/suppressions
 	SiteSuppressionsList(ctx context.Context, params SiteSuppressionsListParams) (SiteSuppressionsListRes, error)
 	// SiteTemplatesCreate invokes SiteTemplates_create operation.
 	//
-	// Create a template.
+	// Create a resource from the site UI.
 	//
-	// POST /w/{workspaceSlug}/templates
+	// POST /workspaces/{slug}/templates
 	SiteTemplatesCreate(ctx context.Context, request *SiteCreateEmailTemplateInput, params SiteTemplatesCreateParams) (SiteTemplatesCreateRes, error)
 	// SiteTemplatesDelete invokes SiteTemplates_delete operation.
 	//
-	// Delete a template.
+	// Delete a resource from the site UI.
 	//
-	// DELETE /w/{workspaceSlug}/templates/{id}
+	// DELETE /workspaces/{slug}/templates/{id}
 	SiteTemplatesDelete(ctx context.Context, params SiteTemplatesDeleteParams) (SiteTemplatesDeleteRes, error)
 	// SiteTemplatesGet invokes SiteTemplates_get operation.
 	//
-	// Get a template by ID.
+	// Get a resource by ID for the site UI.
 	//
-	// GET /w/{workspaceSlug}/templates/{id}
+	// GET /workspaces/{slug}/templates/{id}
 	SiteTemplatesGet(ctx context.Context, params SiteTemplatesGetParams) (SiteTemplatesGetRes, error)
 	// SiteTemplatesList invokes SiteTemplates_list operation.
 	//
-	// List templates.
+	// List resources for the site UI.
 	//
-	// GET /w/{workspaceSlug}/templates
+	// GET /workspaces/{slug}/templates
 	SiteTemplatesList(ctx context.Context, params SiteTemplatesListParams) (SiteTemplatesListRes, error)
 	// SiteTemplatesUpdate invokes SiteTemplates_update operation.
 	//
-	// Update a template.
+	// Update a resource from the site UI.
 	//
-	// PUT /w/{workspaceSlug}/templates/{id}
+	// PUT /workspaces/{slug}/templates/{id}
 	SiteTemplatesUpdate(ctx context.Context, request *SiteUpdateEmailTemplateInput, params SiteTemplatesUpdateParams) (SiteTemplatesUpdateRes, error)
 	// SiteTokensCreate invokes SiteTokens_create operation.
 	//
 	// Create an API token; the full secret is returned once.
 	//
-	// POST /w/{workspaceSlug}/tokens
+	// POST /workspaces/{slug}/tokens
 	SiteTokensCreate(ctx context.Context, request *SiteCreateTokenInput, params SiteTokensCreateParams) (SiteTokensCreateRes, error)
 	// SiteTokensDelete invokes SiteTokens_delete operation.
 	//
 	// Revoke an API token.
 	//
-	// DELETE /w/{workspaceSlug}/tokens/{id}
+	// DELETE /workspaces/{slug}/tokens/{id}
 	SiteTokensDelete(ctx context.Context, params SiteTokensDeleteParams) (SiteTokensDeleteRes, error)
 	// SiteTokensList invokes SiteTokens_list operation.
 	//
 	// List active (non-revoked) API tokens for the workspace.
 	//
-	// GET /w/{workspaceSlug}/tokens
+	// GET /workspaces/{slug}/tokens
 	SiteTokensList(ctx context.Context, params SiteTokensListParams) (SiteTokensListRes, error)
 	// SiteTransactionalEmailsList invokes SiteTransactionalEmails_list operation.
 	//
 	// List transactional sends, most recent first.
 	//
-	// GET /w/{workspaceSlug}/transactional-emails
+	// GET /workspaces/{slug}/transactional-emails
 	SiteTransactionalEmailsList(ctx context.Context, params SiteTransactionalEmailsListParams) (SiteTransactionalEmailsListRes, error)
 	// SiteUserEmailChange invokes SiteUser_emailChange operation.
 	//
@@ -372,33 +372,33 @@ type Invoker interface {
 	SiteUserUpdateMe(ctx context.Context, request *SiteUpdateMeInput) (SiteUserUpdateMeRes, error)
 	// SiteWebhooksCreate invokes SiteWebhooks_create operation.
 	//
-	// Create a webhook endpoint.
+	// Create a resource from the site UI.
 	//
-	// POST /w/{workspaceSlug}/webhooks
+	// POST /workspaces/{slug}/webhooks
 	SiteWebhooksCreate(ctx context.Context, request *SiteCreateWebhookEndpointInput, params SiteWebhooksCreateParams) (SiteWebhooksCreateRes, error)
 	// SiteWebhooksDelete invokes SiteWebhooks_delete operation.
 	//
-	// Delete a webhook endpoint.
+	// Delete a resource from the site UI.
 	//
-	// DELETE /w/{workspaceSlug}/webhooks/{id}
+	// DELETE /workspaces/{slug}/webhooks/{id}
 	SiteWebhooksDelete(ctx context.Context, params SiteWebhooksDeleteParams) (SiteWebhooksDeleteRes, error)
 	// SiteWebhooksGet invokes SiteWebhooks_get operation.
 	//
-	// Get a webhook endpoint by ID.
+	// Get a resource by ID for the site UI.
 	//
-	// GET /w/{workspaceSlug}/webhooks/{id}
+	// GET /workspaces/{slug}/webhooks/{id}
 	SiteWebhooksGet(ctx context.Context, params SiteWebhooksGetParams) (SiteWebhooksGetRes, error)
 	// SiteWebhooksList invokes SiteWebhooks_list operation.
 	//
-	// List webhook endpoints.
+	// List resources for the site UI.
 	//
-	// GET /w/{workspaceSlug}/webhooks
+	// GET /workspaces/{slug}/webhooks
 	SiteWebhooksList(ctx context.Context, params SiteWebhooksListParams) (SiteWebhooksListRes, error)
 	// SiteWebhooksUpdate invokes SiteWebhooks_update operation.
 	//
-	// Update a webhook endpoint.
+	// Update a resource from the site UI.
 	//
-	// PUT /w/{workspaceSlug}/webhooks/{id}
+	// PUT /workspaces/{slug}/webhooks/{id}
 	SiteWebhooksUpdate(ctx context.Context, request *SiteUpdateWebhookEndpointInput, params SiteWebhooksUpdateParams) (SiteWebhooksUpdateRes, error)
 	// SiteWorkspacesList invokes SiteWorkspaces_list operation.
 	//
@@ -459,7 +459,7 @@ func (c *Client) requestURL(ctx context.Context) *url.URL {
 //
 // Aggregate metrics for the workspace dashboard.
 //
-// GET /w/{workspaceSlug}/analytics/overview
+// GET /workspaces/{slug}/analytics/overview
 func (c *Client) SiteAnalyticsOverview(ctx context.Context, params SiteAnalyticsOverviewParams) (SiteAnalyticsOverviewRes, error) {
 	res, err := c.sendSiteAnalyticsOverview(ctx, params)
 	return res, err
@@ -469,7 +469,7 @@ func (c *Client) sendSiteAnalyticsOverview(ctx context.Context, params SiteAnaly
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("SiteAnalytics_overview"),
 		semconv.HTTPRequestMethodKey.String("GET"),
-		semconv.URLTemplateKey.String("/w/{workspaceSlug}/analytics/overview"),
+		semconv.URLTemplateKey.String("/workspaces/{slug}/analytics/overview"),
 	}
 	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
 
@@ -503,16 +503,16 @@ func (c *Client) sendSiteAnalyticsOverview(ctx context.Context, params SiteAnaly
 	stage = "BuildURL"
 	u := uri.Clone(c.requestURL(ctx))
 	var pathParts [3]string
-	pathParts[0] = "/w/"
+	pathParts[0] = "/workspaces/"
 	{
-		// Encode "workspaceSlug" parameter.
+		// Encode "slug" parameter.
 		e := uri.NewPathEncoder(uri.PathEncoderConfig{
-			Param:   "workspaceSlug",
+			Param:   "slug",
 			Style:   uri.PathStyleSimple,
 			Explode: false,
 		})
 		if err := func() error {
-			return e.EncodeValue(conv.StringToString(params.WorkspaceSlug))
+			return e.EncodeValue(conv.StringToString(params.Slug))
 		}(); err != nil {
 			return res, errors.Wrap(err, "encode path")
 		}
@@ -1108,7 +1108,7 @@ func (c *Client) sendSiteAuthVerifyEmail(ctx context.Context, request *SiteVerif
 //
 // Activate an automation (starts enrolling contacts).
 //
-// POST /w/{workspaceSlug}/automations/{id}/activate
+// POST /workspaces/{slug}/automations/{id}/activate
 func (c *Client) SiteAutomationsActivate(ctx context.Context, params SiteAutomationsActivateParams) (SiteAutomationsActivateRes, error) {
 	res, err := c.sendSiteAutomationsActivate(ctx, params)
 	return res, err
@@ -1118,7 +1118,7 @@ func (c *Client) sendSiteAutomationsActivate(ctx context.Context, params SiteAut
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("SiteAutomations_activate"),
 		semconv.HTTPRequestMethodKey.String("POST"),
-		semconv.URLTemplateKey.String("/w/{workspaceSlug}/automations/{id}/activate"),
+		semconv.URLTemplateKey.String("/workspaces/{slug}/automations/{id}/activate"),
 	}
 	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
 
@@ -1152,16 +1152,16 @@ func (c *Client) sendSiteAutomationsActivate(ctx context.Context, params SiteAut
 	stage = "BuildURL"
 	u := uri.Clone(c.requestURL(ctx))
 	var pathParts [5]string
-	pathParts[0] = "/w/"
+	pathParts[0] = "/workspaces/"
 	{
-		// Encode "workspaceSlug" parameter.
+		// Encode "slug" parameter.
 		e := uri.NewPathEncoder(uri.PathEncoderConfig{
-			Param:   "workspaceSlug",
+			Param:   "slug",
 			Style:   uri.PathStyleSimple,
 			Explode: false,
 		})
 		if err := func() error {
-			return e.EncodeValue(conv.StringToString(params.WorkspaceSlug))
+			return e.EncodeValue(conv.StringToString(params.Slug))
 		}(); err != nil {
 			return res, errors.Wrap(err, "encode path")
 		}
@@ -1260,9 +1260,9 @@ func (c *Client) sendSiteAutomationsActivate(ctx context.Context, params SiteAut
 
 // SiteAutomationsCreate invokes SiteAutomations_create operation.
 //
-// Create an automation.
+// Create a resource from the site UI.
 //
-// POST /w/{workspaceSlug}/automations
+// POST /workspaces/{slug}/automations
 func (c *Client) SiteAutomationsCreate(ctx context.Context, request *SiteCreateAutomationInput, params SiteAutomationsCreateParams) (SiteAutomationsCreateRes, error) {
 	res, err := c.sendSiteAutomationsCreate(ctx, request, params)
 	return res, err
@@ -1272,7 +1272,7 @@ func (c *Client) sendSiteAutomationsCreate(ctx context.Context, request *SiteCre
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("SiteAutomations_create"),
 		semconv.HTTPRequestMethodKey.String("POST"),
-		semconv.URLTemplateKey.String("/w/{workspaceSlug}/automations"),
+		semconv.URLTemplateKey.String("/workspaces/{slug}/automations"),
 	}
 	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
 
@@ -1306,16 +1306,16 @@ func (c *Client) sendSiteAutomationsCreate(ctx context.Context, request *SiteCre
 	stage = "BuildURL"
 	u := uri.Clone(c.requestURL(ctx))
 	var pathParts [3]string
-	pathParts[0] = "/w/"
+	pathParts[0] = "/workspaces/"
 	{
-		// Encode "workspaceSlug" parameter.
+		// Encode "slug" parameter.
 		e := uri.NewPathEncoder(uri.PathEncoderConfig{
-			Param:   "workspaceSlug",
+			Param:   "slug",
 			Style:   uri.PathStyleSimple,
 			Explode: false,
 		})
 		if err := func() error {
-			return e.EncodeValue(conv.StringToString(params.WorkspaceSlug))
+			return e.EncodeValue(conv.StringToString(params.Slug))
 		}(); err != nil {
 			return res, errors.Wrap(err, "encode path")
 		}
@@ -1397,7 +1397,7 @@ func (c *Client) sendSiteAutomationsCreate(ctx context.Context, request *SiteCre
 //
 // Deactivate an automation (stops new enrollments).
 //
-// POST /w/{workspaceSlug}/automations/{id}/deactivate
+// POST /workspaces/{slug}/automations/{id}/deactivate
 func (c *Client) SiteAutomationsDeactivate(ctx context.Context, params SiteAutomationsDeactivateParams) (SiteAutomationsDeactivateRes, error) {
 	res, err := c.sendSiteAutomationsDeactivate(ctx, params)
 	return res, err
@@ -1407,7 +1407,7 @@ func (c *Client) sendSiteAutomationsDeactivate(ctx context.Context, params SiteA
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("SiteAutomations_deactivate"),
 		semconv.HTTPRequestMethodKey.String("POST"),
-		semconv.URLTemplateKey.String("/w/{workspaceSlug}/automations/{id}/deactivate"),
+		semconv.URLTemplateKey.String("/workspaces/{slug}/automations/{id}/deactivate"),
 	}
 	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
 
@@ -1441,16 +1441,16 @@ func (c *Client) sendSiteAutomationsDeactivate(ctx context.Context, params SiteA
 	stage = "BuildURL"
 	u := uri.Clone(c.requestURL(ctx))
 	var pathParts [5]string
-	pathParts[0] = "/w/"
+	pathParts[0] = "/workspaces/"
 	{
-		// Encode "workspaceSlug" parameter.
+		// Encode "slug" parameter.
 		e := uri.NewPathEncoder(uri.PathEncoderConfig{
-			Param:   "workspaceSlug",
+			Param:   "slug",
 			Style:   uri.PathStyleSimple,
 			Explode: false,
 		})
 		if err := func() error {
-			return e.EncodeValue(conv.StringToString(params.WorkspaceSlug))
+			return e.EncodeValue(conv.StringToString(params.Slug))
 		}(); err != nil {
 			return res, errors.Wrap(err, "encode path")
 		}
@@ -1549,9 +1549,9 @@ func (c *Client) sendSiteAutomationsDeactivate(ctx context.Context, params SiteA
 
 // SiteAutomationsDelete invokes SiteAutomations_delete operation.
 //
-// Delete an automation.
+// Delete a resource from the site UI.
 //
-// DELETE /w/{workspaceSlug}/automations/{id}
+// DELETE /workspaces/{slug}/automations/{id}
 func (c *Client) SiteAutomationsDelete(ctx context.Context, params SiteAutomationsDeleteParams) (SiteAutomationsDeleteRes, error) {
 	res, err := c.sendSiteAutomationsDelete(ctx, params)
 	return res, err
@@ -1561,7 +1561,7 @@ func (c *Client) sendSiteAutomationsDelete(ctx context.Context, params SiteAutom
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("SiteAutomations_delete"),
 		semconv.HTTPRequestMethodKey.String("DELETE"),
-		semconv.URLTemplateKey.String("/w/{workspaceSlug}/automations/{id}"),
+		semconv.URLTemplateKey.String("/workspaces/{slug}/automations/{id}"),
 	}
 	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
 
@@ -1595,16 +1595,16 @@ func (c *Client) sendSiteAutomationsDelete(ctx context.Context, params SiteAutom
 	stage = "BuildURL"
 	u := uri.Clone(c.requestURL(ctx))
 	var pathParts [4]string
-	pathParts[0] = "/w/"
+	pathParts[0] = "/workspaces/"
 	{
-		// Encode "workspaceSlug" parameter.
+		// Encode "slug" parameter.
 		e := uri.NewPathEncoder(uri.PathEncoderConfig{
-			Param:   "workspaceSlug",
+			Param:   "slug",
 			Style:   uri.PathStyleSimple,
 			Explode: false,
 		})
 		if err := func() error {
-			return e.EncodeValue(conv.StringToString(params.WorkspaceSlug))
+			return e.EncodeValue(conv.StringToString(params.Slug))
 		}(); err != nil {
 			return res, errors.Wrap(err, "encode path")
 		}
@@ -1702,9 +1702,9 @@ func (c *Client) sendSiteAutomationsDelete(ctx context.Context, params SiteAutom
 
 // SiteAutomationsGet invokes SiteAutomations_get operation.
 //
-// Get an automation by ID.
+// Get a resource by ID for the site UI.
 //
-// GET /w/{workspaceSlug}/automations/{id}
+// GET /workspaces/{slug}/automations/{id}
 func (c *Client) SiteAutomationsGet(ctx context.Context, params SiteAutomationsGetParams) (SiteAutomationsGetRes, error) {
 	res, err := c.sendSiteAutomationsGet(ctx, params)
 	return res, err
@@ -1714,7 +1714,7 @@ func (c *Client) sendSiteAutomationsGet(ctx context.Context, params SiteAutomati
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("SiteAutomations_get"),
 		semconv.HTTPRequestMethodKey.String("GET"),
-		semconv.URLTemplateKey.String("/w/{workspaceSlug}/automations/{id}"),
+		semconv.URLTemplateKey.String("/workspaces/{slug}/automations/{id}"),
 	}
 	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
 
@@ -1748,16 +1748,16 @@ func (c *Client) sendSiteAutomationsGet(ctx context.Context, params SiteAutomati
 	stage = "BuildURL"
 	u := uri.Clone(c.requestURL(ctx))
 	var pathParts [4]string
-	pathParts[0] = "/w/"
+	pathParts[0] = "/workspaces/"
 	{
-		// Encode "workspaceSlug" parameter.
+		// Encode "slug" parameter.
 		e := uri.NewPathEncoder(uri.PathEncoderConfig{
-			Param:   "workspaceSlug",
+			Param:   "slug",
 			Style:   uri.PathStyleSimple,
 			Explode: false,
 		})
 		if err := func() error {
-			return e.EncodeValue(conv.StringToString(params.WorkspaceSlug))
+			return e.EncodeValue(conv.StringToString(params.Slug))
 		}(); err != nil {
 			return res, errors.Wrap(err, "encode path")
 		}
@@ -1855,9 +1855,9 @@ func (c *Client) sendSiteAutomationsGet(ctx context.Context, params SiteAutomati
 
 // SiteAutomationsList invokes SiteAutomations_list operation.
 //
-// List automations.
+// List resources for the site UI.
 //
-// GET /w/{workspaceSlug}/automations
+// GET /workspaces/{slug}/automations
 func (c *Client) SiteAutomationsList(ctx context.Context, params SiteAutomationsListParams) (SiteAutomationsListRes, error) {
 	res, err := c.sendSiteAutomationsList(ctx, params)
 	return res, err
@@ -1867,7 +1867,7 @@ func (c *Client) sendSiteAutomationsList(ctx context.Context, params SiteAutomat
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("SiteAutomations_list"),
 		semconv.HTTPRequestMethodKey.String("GET"),
-		semconv.URLTemplateKey.String("/w/{workspaceSlug}/automations"),
+		semconv.URLTemplateKey.String("/workspaces/{slug}/automations"),
 	}
 	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
 
@@ -1901,16 +1901,16 @@ func (c *Client) sendSiteAutomationsList(ctx context.Context, params SiteAutomat
 	stage = "BuildURL"
 	u := uri.Clone(c.requestURL(ctx))
 	var pathParts [3]string
-	pathParts[0] = "/w/"
+	pathParts[0] = "/workspaces/"
 	{
-		// Encode "workspaceSlug" parameter.
+		// Encode "slug" parameter.
 		e := uri.NewPathEncoder(uri.PathEncoderConfig{
-			Param:   "workspaceSlug",
+			Param:   "slug",
 			Style:   uri.PathStyleSimple,
 			Explode: false,
 		})
 		if err := func() error {
-			return e.EncodeValue(conv.StringToString(params.WorkspaceSlug))
+			return e.EncodeValue(conv.StringToString(params.Slug))
 		}(); err != nil {
 			return res, errors.Wrap(err, "encode path")
 		}
@@ -2025,9 +2025,9 @@ func (c *Client) sendSiteAutomationsList(ctx context.Context, params SiteAutomat
 
 // SiteAutomationsUpdate invokes SiteAutomations_update operation.
 //
-// Update an automation.
+// Update a resource from the site UI.
 //
-// PUT /w/{workspaceSlug}/automations/{id}
+// PUT /workspaces/{slug}/automations/{id}
 func (c *Client) SiteAutomationsUpdate(ctx context.Context, request *SiteUpdateAutomationInput, params SiteAutomationsUpdateParams) (SiteAutomationsUpdateRes, error) {
 	res, err := c.sendSiteAutomationsUpdate(ctx, request, params)
 	return res, err
@@ -2037,7 +2037,7 @@ func (c *Client) sendSiteAutomationsUpdate(ctx context.Context, request *SiteUpd
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("SiteAutomations_update"),
 		semconv.HTTPRequestMethodKey.String("PUT"),
-		semconv.URLTemplateKey.String("/w/{workspaceSlug}/automations/{id}"),
+		semconv.URLTemplateKey.String("/workspaces/{slug}/automations/{id}"),
 	}
 	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
 
@@ -2071,16 +2071,16 @@ func (c *Client) sendSiteAutomationsUpdate(ctx context.Context, request *SiteUpd
 	stage = "BuildURL"
 	u := uri.Clone(c.requestURL(ctx))
 	var pathParts [4]string
-	pathParts[0] = "/w/"
+	pathParts[0] = "/workspaces/"
 	{
-		// Encode "workspaceSlug" parameter.
+		// Encode "slug" parameter.
 		e := uri.NewPathEncoder(uri.PathEncoderConfig{
-			Param:   "workspaceSlug",
+			Param:   "slug",
 			Style:   uri.PathStyleSimple,
 			Explode: false,
 		})
 		if err := func() error {
-			return e.EncodeValue(conv.StringToString(params.WorkspaceSlug))
+			return e.EncodeValue(conv.StringToString(params.Slug))
 		}(); err != nil {
 			return res, errors.Wrap(err, "encode path")
 		}
@@ -2181,9 +2181,9 @@ func (c *Client) sendSiteAutomationsUpdate(ctx context.Context, request *SiteUpd
 
 // SiteBroadcastsCreate invokes SiteBroadcasts_create operation.
 //
-// Create a broadcast from the site UI.
+// Create a resource from the site UI.
 //
-// POST /w/{workspaceSlug}/broadcasts
+// POST /workspaces/{slug}/broadcasts
 func (c *Client) SiteBroadcastsCreate(ctx context.Context, request *SiteCreateBroadcastInput, params SiteBroadcastsCreateParams) (SiteBroadcastsCreateRes, error) {
 	res, err := c.sendSiteBroadcastsCreate(ctx, request, params)
 	return res, err
@@ -2193,7 +2193,7 @@ func (c *Client) sendSiteBroadcastsCreate(ctx context.Context, request *SiteCrea
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("SiteBroadcasts_create"),
 		semconv.HTTPRequestMethodKey.String("POST"),
-		semconv.URLTemplateKey.String("/w/{workspaceSlug}/broadcasts"),
+		semconv.URLTemplateKey.String("/workspaces/{slug}/broadcasts"),
 	}
 	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
 
@@ -2227,16 +2227,16 @@ func (c *Client) sendSiteBroadcastsCreate(ctx context.Context, request *SiteCrea
 	stage = "BuildURL"
 	u := uri.Clone(c.requestURL(ctx))
 	var pathParts [3]string
-	pathParts[0] = "/w/"
+	pathParts[0] = "/workspaces/"
 	{
-		// Encode "workspaceSlug" parameter.
+		// Encode "slug" parameter.
 		e := uri.NewPathEncoder(uri.PathEncoderConfig{
-			Param:   "workspaceSlug",
+			Param:   "slug",
 			Style:   uri.PathStyleSimple,
 			Explode: false,
 		})
 		if err := func() error {
-			return e.EncodeValue(conv.StringToString(params.WorkspaceSlug))
+			return e.EncodeValue(conv.StringToString(params.Slug))
 		}(); err != nil {
 			return res, errors.Wrap(err, "encode path")
 		}
@@ -2316,9 +2316,9 @@ func (c *Client) sendSiteBroadcastsCreate(ctx context.Context, request *SiteCrea
 
 // SiteBroadcastsDelete invokes SiteBroadcasts_delete operation.
 //
-// Delete a broadcast from the site UI.
+// Delete a resource from the site UI.
 //
-// DELETE /w/{workspaceSlug}/broadcasts/{id}
+// DELETE /workspaces/{slug}/broadcasts/{id}
 func (c *Client) SiteBroadcastsDelete(ctx context.Context, params SiteBroadcastsDeleteParams) (SiteBroadcastsDeleteRes, error) {
 	res, err := c.sendSiteBroadcastsDelete(ctx, params)
 	return res, err
@@ -2328,7 +2328,7 @@ func (c *Client) sendSiteBroadcastsDelete(ctx context.Context, params SiteBroadc
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("SiteBroadcasts_delete"),
 		semconv.HTTPRequestMethodKey.String("DELETE"),
-		semconv.URLTemplateKey.String("/w/{workspaceSlug}/broadcasts/{id}"),
+		semconv.URLTemplateKey.String("/workspaces/{slug}/broadcasts/{id}"),
 	}
 	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
 
@@ -2362,16 +2362,16 @@ func (c *Client) sendSiteBroadcastsDelete(ctx context.Context, params SiteBroadc
 	stage = "BuildURL"
 	u := uri.Clone(c.requestURL(ctx))
 	var pathParts [4]string
-	pathParts[0] = "/w/"
+	pathParts[0] = "/workspaces/"
 	{
-		// Encode "workspaceSlug" parameter.
+		// Encode "slug" parameter.
 		e := uri.NewPathEncoder(uri.PathEncoderConfig{
-			Param:   "workspaceSlug",
+			Param:   "slug",
 			Style:   uri.PathStyleSimple,
 			Explode: false,
 		})
 		if err := func() error {
-			return e.EncodeValue(conv.StringToString(params.WorkspaceSlug))
+			return e.EncodeValue(conv.StringToString(params.Slug))
 		}(); err != nil {
 			return res, errors.Wrap(err, "encode path")
 		}
@@ -2469,9 +2469,9 @@ func (c *Client) sendSiteBroadcastsDelete(ctx context.Context, params SiteBroadc
 
 // SiteBroadcastsGet invokes SiteBroadcasts_get operation.
 //
-// Get a broadcast by ID for the site UI.
+// Get a resource by ID for the site UI.
 //
-// GET /w/{workspaceSlug}/broadcasts/{id}
+// GET /workspaces/{slug}/broadcasts/{id}
 func (c *Client) SiteBroadcastsGet(ctx context.Context, params SiteBroadcastsGetParams) (SiteBroadcastsGetRes, error) {
 	res, err := c.sendSiteBroadcastsGet(ctx, params)
 	return res, err
@@ -2481,7 +2481,7 @@ func (c *Client) sendSiteBroadcastsGet(ctx context.Context, params SiteBroadcast
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("SiteBroadcasts_get"),
 		semconv.HTTPRequestMethodKey.String("GET"),
-		semconv.URLTemplateKey.String("/w/{workspaceSlug}/broadcasts/{id}"),
+		semconv.URLTemplateKey.String("/workspaces/{slug}/broadcasts/{id}"),
 	}
 	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
 
@@ -2515,16 +2515,16 @@ func (c *Client) sendSiteBroadcastsGet(ctx context.Context, params SiteBroadcast
 	stage = "BuildURL"
 	u := uri.Clone(c.requestURL(ctx))
 	var pathParts [4]string
-	pathParts[0] = "/w/"
+	pathParts[0] = "/workspaces/"
 	{
-		// Encode "workspaceSlug" parameter.
+		// Encode "slug" parameter.
 		e := uri.NewPathEncoder(uri.PathEncoderConfig{
-			Param:   "workspaceSlug",
+			Param:   "slug",
 			Style:   uri.PathStyleSimple,
 			Explode: false,
 		})
 		if err := func() error {
-			return e.EncodeValue(conv.StringToString(params.WorkspaceSlug))
+			return e.EncodeValue(conv.StringToString(params.Slug))
 		}(); err != nil {
 			return res, errors.Wrap(err, "encode path")
 		}
@@ -2622,9 +2622,9 @@ func (c *Client) sendSiteBroadcastsGet(ctx context.Context, params SiteBroadcast
 
 // SiteBroadcastsList invokes SiteBroadcasts_list operation.
 //
-// List broadcasts for the site UI.
+// List resources for the site UI.
 //
-// GET /w/{workspaceSlug}/broadcasts
+// GET /workspaces/{slug}/broadcasts
 func (c *Client) SiteBroadcastsList(ctx context.Context, params SiteBroadcastsListParams) (SiteBroadcastsListRes, error) {
 	res, err := c.sendSiteBroadcastsList(ctx, params)
 	return res, err
@@ -2634,7 +2634,7 @@ func (c *Client) sendSiteBroadcastsList(ctx context.Context, params SiteBroadcas
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("SiteBroadcasts_list"),
 		semconv.HTTPRequestMethodKey.String("GET"),
-		semconv.URLTemplateKey.String("/w/{workspaceSlug}/broadcasts"),
+		semconv.URLTemplateKey.String("/workspaces/{slug}/broadcasts"),
 	}
 	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
 
@@ -2668,16 +2668,16 @@ func (c *Client) sendSiteBroadcastsList(ctx context.Context, params SiteBroadcas
 	stage = "BuildURL"
 	u := uri.Clone(c.requestURL(ctx))
 	var pathParts [3]string
-	pathParts[0] = "/w/"
+	pathParts[0] = "/workspaces/"
 	{
-		// Encode "workspaceSlug" parameter.
+		// Encode "slug" parameter.
 		e := uri.NewPathEncoder(uri.PathEncoderConfig{
-			Param:   "workspaceSlug",
+			Param:   "slug",
 			Style:   uri.PathStyleSimple,
 			Explode: false,
 		})
 		if err := func() error {
-			return e.EncodeValue(conv.StringToString(params.WorkspaceSlug))
+			return e.EncodeValue(conv.StringToString(params.Slug))
 		}(); err != nil {
 			return res, errors.Wrap(err, "encode path")
 		}
@@ -2794,7 +2794,7 @@ func (c *Client) sendSiteBroadcastsList(ctx context.Context, params SiteBroadcas
 //
 // Schedule a broadcast to send at a future time.
 //
-// POST /w/{workspaceSlug}/broadcasts/{id}/schedule
+// POST /workspaces/{slug}/broadcasts/{id}/schedule
 func (c *Client) SiteBroadcastsSchedule(ctx context.Context, request *SiteScheduleBroadcastInput, params SiteBroadcastsScheduleParams) (SiteBroadcastsScheduleRes, error) {
 	res, err := c.sendSiteBroadcastsSchedule(ctx, request, params)
 	return res, err
@@ -2804,7 +2804,7 @@ func (c *Client) sendSiteBroadcastsSchedule(ctx context.Context, request *SiteSc
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("SiteBroadcasts_schedule"),
 		semconv.HTTPRequestMethodKey.String("POST"),
-		semconv.URLTemplateKey.String("/w/{workspaceSlug}/broadcasts/{id}/schedule"),
+		semconv.URLTemplateKey.String("/workspaces/{slug}/broadcasts/{id}/schedule"),
 	}
 	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
 
@@ -2838,16 +2838,16 @@ func (c *Client) sendSiteBroadcastsSchedule(ctx context.Context, request *SiteSc
 	stage = "BuildURL"
 	u := uri.Clone(c.requestURL(ctx))
 	var pathParts [5]string
-	pathParts[0] = "/w/"
+	pathParts[0] = "/workspaces/"
 	{
-		// Encode "workspaceSlug" parameter.
+		// Encode "slug" parameter.
 		e := uri.NewPathEncoder(uri.PathEncoderConfig{
-			Param:   "workspaceSlug",
+			Param:   "slug",
 			Style:   uri.PathStyleSimple,
 			Explode: false,
 		})
 		if err := func() error {
-			return e.EncodeValue(conv.StringToString(params.WorkspaceSlug))
+			return e.EncodeValue(conv.StringToString(params.Slug))
 		}(); err != nil {
 			return res, errors.Wrap(err, "encode path")
 		}
@@ -2951,7 +2951,7 @@ func (c *Client) sendSiteBroadcastsSchedule(ctx context.Context, request *SiteSc
 //
 // Send a broadcast immediately.
 //
-// POST /w/{workspaceSlug}/broadcasts/{id}/send
+// POST /workspaces/{slug}/broadcasts/{id}/send
 func (c *Client) SiteBroadcastsSend(ctx context.Context, params SiteBroadcastsSendParams) (SiteBroadcastsSendRes, error) {
 	res, err := c.sendSiteBroadcastsSend(ctx, params)
 	return res, err
@@ -2961,7 +2961,7 @@ func (c *Client) sendSiteBroadcastsSend(ctx context.Context, params SiteBroadcas
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("SiteBroadcasts_send"),
 		semconv.HTTPRequestMethodKey.String("POST"),
-		semconv.URLTemplateKey.String("/w/{workspaceSlug}/broadcasts/{id}/send"),
+		semconv.URLTemplateKey.String("/workspaces/{slug}/broadcasts/{id}/send"),
 	}
 	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
 
@@ -2995,16 +2995,16 @@ func (c *Client) sendSiteBroadcastsSend(ctx context.Context, params SiteBroadcas
 	stage = "BuildURL"
 	u := uri.Clone(c.requestURL(ctx))
 	var pathParts [5]string
-	pathParts[0] = "/w/"
+	pathParts[0] = "/workspaces/"
 	{
-		// Encode "workspaceSlug" parameter.
+		// Encode "slug" parameter.
 		e := uri.NewPathEncoder(uri.PathEncoderConfig{
-			Param:   "workspaceSlug",
+			Param:   "slug",
 			Style:   uri.PathStyleSimple,
 			Explode: false,
 		})
 		if err := func() error {
-			return e.EncodeValue(conv.StringToString(params.WorkspaceSlug))
+			return e.EncodeValue(conv.StringToString(params.Slug))
 		}(); err != nil {
 			return res, errors.Wrap(err, "encode path")
 		}
@@ -3105,7 +3105,7 @@ func (c *Client) sendSiteBroadcastsSend(ctx context.Context, params SiteBroadcas
 //
 // Send a one-off rendered preview to a single address.
 //
-// POST /w/{workspaceSlug}/broadcasts/{id}/test
+// POST /workspaces/{slug}/broadcasts/{id}/test-send
 func (c *Client) SiteBroadcastsTestSend(ctx context.Context, request *SiteTestSendBroadcastInput, params SiteBroadcastsTestSendParams) (SiteBroadcastsTestSendRes, error) {
 	res, err := c.sendSiteBroadcastsTestSend(ctx, request, params)
 	return res, err
@@ -3115,7 +3115,7 @@ func (c *Client) sendSiteBroadcastsTestSend(ctx context.Context, request *SiteTe
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("SiteBroadcasts_testSend"),
 		semconv.HTTPRequestMethodKey.String("POST"),
-		semconv.URLTemplateKey.String("/w/{workspaceSlug}/broadcasts/{id}/test"),
+		semconv.URLTemplateKey.String("/workspaces/{slug}/broadcasts/{id}/test-send"),
 	}
 	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
 
@@ -3149,16 +3149,16 @@ func (c *Client) sendSiteBroadcastsTestSend(ctx context.Context, request *SiteTe
 	stage = "BuildURL"
 	u := uri.Clone(c.requestURL(ctx))
 	var pathParts [5]string
-	pathParts[0] = "/w/"
+	pathParts[0] = "/workspaces/"
 	{
-		// Encode "workspaceSlug" parameter.
+		// Encode "slug" parameter.
 		e := uri.NewPathEncoder(uri.PathEncoderConfig{
-			Param:   "workspaceSlug",
+			Param:   "slug",
 			Style:   uri.PathStyleSimple,
 			Explode: false,
 		})
 		if err := func() error {
-			return e.EncodeValue(conv.StringToString(params.WorkspaceSlug))
+			return e.EncodeValue(conv.StringToString(params.Slug))
 		}(); err != nil {
 			return res, errors.Wrap(err, "encode path")
 		}
@@ -3190,7 +3190,7 @@ func (c *Client) sendSiteBroadcastsTestSend(ctx context.Context, request *SiteTe
 		}
 		pathParts[3] = encoded
 	}
-	pathParts[4] = "/test"
+	pathParts[4] = "/test-send"
 	uri.AddPathParts(u, pathParts[:]...)
 
 	stage = "EncodeRequest"
@@ -3260,9 +3260,9 @@ func (c *Client) sendSiteBroadcastsTestSend(ctx context.Context, request *SiteTe
 
 // SiteBroadcastsUpdate invokes SiteBroadcasts_update operation.
 //
-// Update a broadcast from the site UI.
+// Update a resource from the site UI.
 //
-// PUT /w/{workspaceSlug}/broadcasts/{id}
+// PUT /workspaces/{slug}/broadcasts/{id}
 func (c *Client) SiteBroadcastsUpdate(ctx context.Context, request *SiteUpdateBroadcastInput, params SiteBroadcastsUpdateParams) (SiteBroadcastsUpdateRes, error) {
 	res, err := c.sendSiteBroadcastsUpdate(ctx, request, params)
 	return res, err
@@ -3272,7 +3272,7 @@ func (c *Client) sendSiteBroadcastsUpdate(ctx context.Context, request *SiteUpda
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("SiteBroadcasts_update"),
 		semconv.HTTPRequestMethodKey.String("PUT"),
-		semconv.URLTemplateKey.String("/w/{workspaceSlug}/broadcasts/{id}"),
+		semconv.URLTemplateKey.String("/workspaces/{slug}/broadcasts/{id}"),
 	}
 	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
 
@@ -3306,16 +3306,16 @@ func (c *Client) sendSiteBroadcastsUpdate(ctx context.Context, request *SiteUpda
 	stage = "BuildURL"
 	u := uri.Clone(c.requestURL(ctx))
 	var pathParts [4]string
-	pathParts[0] = "/w/"
+	pathParts[0] = "/workspaces/"
 	{
-		// Encode "workspaceSlug" parameter.
+		// Encode "slug" parameter.
 		e := uri.NewPathEncoder(uri.PathEncoderConfig{
-			Param:   "workspaceSlug",
+			Param:   "slug",
 			Style:   uri.PathStyleSimple,
 			Explode: false,
 		})
 		if err := func() error {
-			return e.EncodeValue(conv.StringToString(params.WorkspaceSlug))
+			return e.EncodeValue(conv.StringToString(params.Slug))
 		}(); err != nil {
 			return res, errors.Wrap(err, "encode path")
 		}
@@ -3416,9 +3416,9 @@ func (c *Client) sendSiteBroadcastsUpdate(ctx context.Context, request *SiteUpda
 
 // SiteContactsCreate invokes SiteContacts_create operation.
 //
-// Create a contact from the site UI.
+// Create a resource from the site UI.
 //
-// POST /w/{workspaceSlug}/contacts
+// POST /workspaces/{slug}/contacts
 func (c *Client) SiteContactsCreate(ctx context.Context, request *SiteCreateContactInput, params SiteContactsCreateParams) (SiteContactsCreateRes, error) {
 	res, err := c.sendSiteContactsCreate(ctx, request, params)
 	return res, err
@@ -3428,7 +3428,7 @@ func (c *Client) sendSiteContactsCreate(ctx context.Context, request *SiteCreate
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("SiteContacts_create"),
 		semconv.HTTPRequestMethodKey.String("POST"),
-		semconv.URLTemplateKey.String("/w/{workspaceSlug}/contacts"),
+		semconv.URLTemplateKey.String("/workspaces/{slug}/contacts"),
 	}
 	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
 
@@ -3462,16 +3462,16 @@ func (c *Client) sendSiteContactsCreate(ctx context.Context, request *SiteCreate
 	stage = "BuildURL"
 	u := uri.Clone(c.requestURL(ctx))
 	var pathParts [3]string
-	pathParts[0] = "/w/"
+	pathParts[0] = "/workspaces/"
 	{
-		// Encode "workspaceSlug" parameter.
+		// Encode "slug" parameter.
 		e := uri.NewPathEncoder(uri.PathEncoderConfig{
-			Param:   "workspaceSlug",
+			Param:   "slug",
 			Style:   uri.PathStyleSimple,
 			Explode: false,
 		})
 		if err := func() error {
-			return e.EncodeValue(conv.StringToString(params.WorkspaceSlug))
+			return e.EncodeValue(conv.StringToString(params.Slug))
 		}(); err != nil {
 			return res, errors.Wrap(err, "encode path")
 		}
@@ -3551,9 +3551,9 @@ func (c *Client) sendSiteContactsCreate(ctx context.Context, request *SiteCreate
 
 // SiteContactsDelete invokes SiteContacts_delete operation.
 //
-// Delete a contact from the site UI.
+// Delete a resource from the site UI.
 //
-// DELETE /w/{workspaceSlug}/contacts/{id}
+// DELETE /workspaces/{slug}/contacts/{id}
 func (c *Client) SiteContactsDelete(ctx context.Context, params SiteContactsDeleteParams) (SiteContactsDeleteRes, error) {
 	res, err := c.sendSiteContactsDelete(ctx, params)
 	return res, err
@@ -3563,7 +3563,7 @@ func (c *Client) sendSiteContactsDelete(ctx context.Context, params SiteContacts
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("SiteContacts_delete"),
 		semconv.HTTPRequestMethodKey.String("DELETE"),
-		semconv.URLTemplateKey.String("/w/{workspaceSlug}/contacts/{id}"),
+		semconv.URLTemplateKey.String("/workspaces/{slug}/contacts/{id}"),
 	}
 	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
 
@@ -3597,16 +3597,16 @@ func (c *Client) sendSiteContactsDelete(ctx context.Context, params SiteContacts
 	stage = "BuildURL"
 	u := uri.Clone(c.requestURL(ctx))
 	var pathParts [4]string
-	pathParts[0] = "/w/"
+	pathParts[0] = "/workspaces/"
 	{
-		// Encode "workspaceSlug" parameter.
+		// Encode "slug" parameter.
 		e := uri.NewPathEncoder(uri.PathEncoderConfig{
-			Param:   "workspaceSlug",
+			Param:   "slug",
 			Style:   uri.PathStyleSimple,
 			Explode: false,
 		})
 		if err := func() error {
-			return e.EncodeValue(conv.StringToString(params.WorkspaceSlug))
+			return e.EncodeValue(conv.StringToString(params.Slug))
 		}(); err != nil {
 			return res, errors.Wrap(err, "encode path")
 		}
@@ -3704,9 +3704,9 @@ func (c *Client) sendSiteContactsDelete(ctx context.Context, params SiteContacts
 
 // SiteContactsGet invokes SiteContacts_get operation.
 //
-// Get a contact by ID for the site UI.
+// Get a resource by ID for the site UI.
 //
-// GET /w/{workspaceSlug}/contacts/{id}
+// GET /workspaces/{slug}/contacts/{id}
 func (c *Client) SiteContactsGet(ctx context.Context, params SiteContactsGetParams) (SiteContactsGetRes, error) {
 	res, err := c.sendSiteContactsGet(ctx, params)
 	return res, err
@@ -3716,7 +3716,7 @@ func (c *Client) sendSiteContactsGet(ctx context.Context, params SiteContactsGet
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("SiteContacts_get"),
 		semconv.HTTPRequestMethodKey.String("GET"),
-		semconv.URLTemplateKey.String("/w/{workspaceSlug}/contacts/{id}"),
+		semconv.URLTemplateKey.String("/workspaces/{slug}/contacts/{id}"),
 	}
 	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
 
@@ -3750,16 +3750,16 @@ func (c *Client) sendSiteContactsGet(ctx context.Context, params SiteContactsGet
 	stage = "BuildURL"
 	u := uri.Clone(c.requestURL(ctx))
 	var pathParts [4]string
-	pathParts[0] = "/w/"
+	pathParts[0] = "/workspaces/"
 	{
-		// Encode "workspaceSlug" parameter.
+		// Encode "slug" parameter.
 		e := uri.NewPathEncoder(uri.PathEncoderConfig{
-			Param:   "workspaceSlug",
+			Param:   "slug",
 			Style:   uri.PathStyleSimple,
 			Explode: false,
 		})
 		if err := func() error {
-			return e.EncodeValue(conv.StringToString(params.WorkspaceSlug))
+			return e.EncodeValue(conv.StringToString(params.Slug))
 		}(); err != nil {
 			return res, errors.Wrap(err, "encode path")
 		}
@@ -3857,9 +3857,9 @@ func (c *Client) sendSiteContactsGet(ctx context.Context, params SiteContactsGet
 
 // SiteContactsList invokes SiteContacts_list operation.
 //
-// List contacts for the site UI.
+// List resources for the site UI.
 //
-// GET /w/{workspaceSlug}/contacts
+// GET /workspaces/{slug}/contacts
 func (c *Client) SiteContactsList(ctx context.Context, params SiteContactsListParams) (SiteContactsListRes, error) {
 	res, err := c.sendSiteContactsList(ctx, params)
 	return res, err
@@ -3869,7 +3869,7 @@ func (c *Client) sendSiteContactsList(ctx context.Context, params SiteContactsLi
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("SiteContacts_list"),
 		semconv.HTTPRequestMethodKey.String("GET"),
-		semconv.URLTemplateKey.String("/w/{workspaceSlug}/contacts"),
+		semconv.URLTemplateKey.String("/workspaces/{slug}/contacts"),
 	}
 	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
 
@@ -3903,16 +3903,16 @@ func (c *Client) sendSiteContactsList(ctx context.Context, params SiteContactsLi
 	stage = "BuildURL"
 	u := uri.Clone(c.requestURL(ctx))
 	var pathParts [3]string
-	pathParts[0] = "/w/"
+	pathParts[0] = "/workspaces/"
 	{
-		// Encode "workspaceSlug" parameter.
+		// Encode "slug" parameter.
 		e := uri.NewPathEncoder(uri.PathEncoderConfig{
-			Param:   "workspaceSlug",
+			Param:   "slug",
 			Style:   uri.PathStyleSimple,
 			Explode: false,
 		})
 		if err := func() error {
-			return e.EncodeValue(conv.StringToString(params.WorkspaceSlug))
+			return e.EncodeValue(conv.StringToString(params.Slug))
 		}(); err != nil {
 			return res, errors.Wrap(err, "encode path")
 		}
@@ -4027,9 +4027,9 @@ func (c *Client) sendSiteContactsList(ctx context.Context, params SiteContactsLi
 
 // SiteContactsUpdate invokes SiteContacts_update operation.
 //
-// Update a contact from the site UI.
+// Update a resource from the site UI.
 //
-// PUT /w/{workspaceSlug}/contacts/{id}
+// PUT /workspaces/{slug}/contacts/{id}
 func (c *Client) SiteContactsUpdate(ctx context.Context, request *SiteUpdateContactInput, params SiteContactsUpdateParams) (SiteContactsUpdateRes, error) {
 	res, err := c.sendSiteContactsUpdate(ctx, request, params)
 	return res, err
@@ -4039,7 +4039,7 @@ func (c *Client) sendSiteContactsUpdate(ctx context.Context, request *SiteUpdate
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("SiteContacts_update"),
 		semconv.HTTPRequestMethodKey.String("PUT"),
-		semconv.URLTemplateKey.String("/w/{workspaceSlug}/contacts/{id}"),
+		semconv.URLTemplateKey.String("/workspaces/{slug}/contacts/{id}"),
 	}
 	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
 
@@ -4073,16 +4073,16 @@ func (c *Client) sendSiteContactsUpdate(ctx context.Context, request *SiteUpdate
 	stage = "BuildURL"
 	u := uri.Clone(c.requestURL(ctx))
 	var pathParts [4]string
-	pathParts[0] = "/w/"
+	pathParts[0] = "/workspaces/"
 	{
-		// Encode "workspaceSlug" parameter.
+		// Encode "slug" parameter.
 		e := uri.NewPathEncoder(uri.PathEncoderConfig{
-			Param:   "workspaceSlug",
+			Param:   "slug",
 			Style:   uri.PathStyleSimple,
 			Explode: false,
 		})
 		if err := func() error {
-			return e.EncodeValue(conv.StringToString(params.WorkspaceSlug))
+			return e.EncodeValue(conv.StringToString(params.Slug))
 		}(); err != nil {
 			return res, errors.Wrap(err, "encode path")
 		}
@@ -4185,7 +4185,7 @@ func (c *Client) sendSiteContactsUpdate(ctx context.Context, request *SiteUpdate
 //
 // List the workspace's custom field definitions.
 //
-// GET /w/{workspaceSlug}/custom-fields
+// GET /workspaces/{slug}/custom-fields
 func (c *Client) SiteCustomFieldsList(ctx context.Context, params SiteCustomFieldsListParams) (SiteCustomFieldsListRes, error) {
 	res, err := c.sendSiteCustomFieldsList(ctx, params)
 	return res, err
@@ -4195,7 +4195,7 @@ func (c *Client) sendSiteCustomFieldsList(ctx context.Context, params SiteCustom
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("SiteCustomFields_list"),
 		semconv.HTTPRequestMethodKey.String("GET"),
-		semconv.URLTemplateKey.String("/w/{workspaceSlug}/custom-fields"),
+		semconv.URLTemplateKey.String("/workspaces/{slug}/custom-fields"),
 	}
 	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
 
@@ -4229,16 +4229,16 @@ func (c *Client) sendSiteCustomFieldsList(ctx context.Context, params SiteCustom
 	stage = "BuildURL"
 	u := uri.Clone(c.requestURL(ctx))
 	var pathParts [3]string
-	pathParts[0] = "/w/"
+	pathParts[0] = "/workspaces/"
 	{
-		// Encode "workspaceSlug" parameter.
+		// Encode "slug" parameter.
 		e := uri.NewPathEncoder(uri.PathEncoderConfig{
-			Param:   "workspaceSlug",
+			Param:   "slug",
 			Style:   uri.PathStyleSimple,
 			Explode: false,
 		})
 		if err := func() error {
-			return e.EncodeValue(conv.StringToString(params.WorkspaceSlug))
+			return e.EncodeValue(conv.StringToString(params.Slug))
 		}(); err != nil {
 			return res, errors.Wrap(err, "encode path")
 		}
@@ -4317,7 +4317,7 @@ func (c *Client) sendSiteCustomFieldsList(ctx context.Context, params SiteCustom
 //
 // Distinct event actions in the workspace, sorted — powers the segment builder.
 //
-// GET /w/{workspaceSlug}/events/actions
+// GET /workspaces/{slug}/events/actions
 func (c *Client) SiteEventsActions(ctx context.Context, params SiteEventsActionsParams) (SiteEventsActionsRes, error) {
 	res, err := c.sendSiteEventsActions(ctx, params)
 	return res, err
@@ -4327,7 +4327,7 @@ func (c *Client) sendSiteEventsActions(ctx context.Context, params SiteEventsAct
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("SiteEvents_actions"),
 		semconv.HTTPRequestMethodKey.String("GET"),
-		semconv.URLTemplateKey.String("/w/{workspaceSlug}/events/actions"),
+		semconv.URLTemplateKey.String("/workspaces/{slug}/events/actions"),
 	}
 	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
 
@@ -4361,16 +4361,16 @@ func (c *Client) sendSiteEventsActions(ctx context.Context, params SiteEventsAct
 	stage = "BuildURL"
 	u := uri.Clone(c.requestURL(ctx))
 	var pathParts [3]string
-	pathParts[0] = "/w/"
+	pathParts[0] = "/workspaces/"
 	{
-		// Encode "workspaceSlug" parameter.
+		// Encode "slug" parameter.
 		e := uri.NewPathEncoder(uri.PathEncoderConfig{
-			Param:   "workspaceSlug",
+			Param:   "slug",
 			Style:   uri.PathStyleSimple,
 			Explode: false,
 		})
 		if err := func() error {
-			return e.EncodeValue(conv.StringToString(params.WorkspaceSlug))
+			return e.EncodeValue(conv.StringToString(params.Slug))
 		}(); err != nil {
 			return res, errors.Wrap(err, "encode path")
 		}
@@ -4449,7 +4449,7 @@ func (c *Client) sendSiteEventsActions(ctx context.Context, params SiteEventsAct
 //
 // List events for the site UI (most recent first).
 //
-// GET /w/{workspaceSlug}/events
+// GET /workspaces/{slug}/events
 func (c *Client) SiteEventsList(ctx context.Context, params SiteEventsListParams) (SiteEventsListRes, error) {
 	res, err := c.sendSiteEventsList(ctx, params)
 	return res, err
@@ -4459,7 +4459,7 @@ func (c *Client) sendSiteEventsList(ctx context.Context, params SiteEventsListPa
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("SiteEvents_list"),
 		semconv.HTTPRequestMethodKey.String("GET"),
-		semconv.URLTemplateKey.String("/w/{workspaceSlug}/events"),
+		semconv.URLTemplateKey.String("/workspaces/{slug}/events"),
 	}
 	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
 
@@ -4493,16 +4493,16 @@ func (c *Client) sendSiteEventsList(ctx context.Context, params SiteEventsListPa
 	stage = "BuildURL"
 	u := uri.Clone(c.requestURL(ctx))
 	var pathParts [3]string
-	pathParts[0] = "/w/"
+	pathParts[0] = "/workspaces/"
 	{
-		// Encode "workspaceSlug" parameter.
+		// Encode "slug" parameter.
 		e := uri.NewPathEncoder(uri.PathEncoderConfig{
-			Param:   "workspaceSlug",
+			Param:   "slug",
 			Style:   uri.PathStyleSimple,
 			Explode: false,
 		})
 		if err := func() error {
-			return e.EncodeValue(conv.StringToString(params.WorkspaceSlug))
+			return e.EncodeValue(conv.StringToString(params.Slug))
 		}(); err != nil {
 			return res, errors.Wrap(err, "encode path")
 		}
@@ -4673,7 +4673,7 @@ func (c *Client) sendSiteEventsList(ctx context.Context, params SiteEventsListPa
 //
 // Create an integration.
 //
-// POST /w/{workspaceSlug}/integrations
+// POST /workspaces/{slug}/integrations
 func (c *Client) SiteIntegrationsCreate(ctx context.Context, request *SiteCreateIntegrationInput, params SiteIntegrationsCreateParams) (SiteIntegrationsCreateRes, error) {
 	res, err := c.sendSiteIntegrationsCreate(ctx, request, params)
 	return res, err
@@ -4683,7 +4683,7 @@ func (c *Client) sendSiteIntegrationsCreate(ctx context.Context, request *SiteCr
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("SiteIntegrations_create"),
 		semconv.HTTPRequestMethodKey.String("POST"),
-		semconv.URLTemplateKey.String("/w/{workspaceSlug}/integrations"),
+		semconv.URLTemplateKey.String("/workspaces/{slug}/integrations"),
 	}
 	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
 
@@ -4717,16 +4717,16 @@ func (c *Client) sendSiteIntegrationsCreate(ctx context.Context, request *SiteCr
 	stage = "BuildURL"
 	u := uri.Clone(c.requestURL(ctx))
 	var pathParts [3]string
-	pathParts[0] = "/w/"
+	pathParts[0] = "/workspaces/"
 	{
-		// Encode "workspaceSlug" parameter.
+		// Encode "slug" parameter.
 		e := uri.NewPathEncoder(uri.PathEncoderConfig{
-			Param:   "workspaceSlug",
+			Param:   "slug",
 			Style:   uri.PathStyleSimple,
 			Explode: false,
 		})
 		if err := func() error {
-			return e.EncodeValue(conv.StringToString(params.WorkspaceSlug))
+			return e.EncodeValue(conv.StringToString(params.Slug))
 		}(); err != nil {
 			return res, errors.Wrap(err, "encode path")
 		}
@@ -4808,7 +4808,7 @@ func (c *Client) sendSiteIntegrationsCreate(ctx context.Context, request *SiteCr
 //
 // Delete an integration.
 //
-// DELETE /w/{workspaceSlug}/integrations/{id}
+// DELETE /workspaces/{slug}/integrations/{id}
 func (c *Client) SiteIntegrationsDelete(ctx context.Context, params SiteIntegrationsDeleteParams) (SiteIntegrationsDeleteRes, error) {
 	res, err := c.sendSiteIntegrationsDelete(ctx, params)
 	return res, err
@@ -4818,7 +4818,7 @@ func (c *Client) sendSiteIntegrationsDelete(ctx context.Context, params SiteInte
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("SiteIntegrations_delete"),
 		semconv.HTTPRequestMethodKey.String("DELETE"),
-		semconv.URLTemplateKey.String("/w/{workspaceSlug}/integrations/{id}"),
+		semconv.URLTemplateKey.String("/workspaces/{slug}/integrations/{id}"),
 	}
 	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
 
@@ -4852,16 +4852,16 @@ func (c *Client) sendSiteIntegrationsDelete(ctx context.Context, params SiteInte
 	stage = "BuildURL"
 	u := uri.Clone(c.requestURL(ctx))
 	var pathParts [4]string
-	pathParts[0] = "/w/"
+	pathParts[0] = "/workspaces/"
 	{
-		// Encode "workspaceSlug" parameter.
+		// Encode "slug" parameter.
 		e := uri.NewPathEncoder(uri.PathEncoderConfig{
-			Param:   "workspaceSlug",
+			Param:   "slug",
 			Style:   uri.PathStyleSimple,
 			Explode: false,
 		})
 		if err := func() error {
-			return e.EncodeValue(conv.StringToString(params.WorkspaceSlug))
+			return e.EncodeValue(conv.StringToString(params.Slug))
 		}(); err != nil {
 			return res, errors.Wrap(err, "encode path")
 		}
@@ -4961,7 +4961,7 @@ func (c *Client) sendSiteIntegrationsDelete(ctx context.Context, params SiteInte
 //
 // Get an integration by id.
 //
-// GET /w/{workspaceSlug}/integrations/{id}
+// GET /workspaces/{slug}/integrations/{id}
 func (c *Client) SiteIntegrationsGet(ctx context.Context, params SiteIntegrationsGetParams) (SiteIntegrationsGetRes, error) {
 	res, err := c.sendSiteIntegrationsGet(ctx, params)
 	return res, err
@@ -4971,7 +4971,7 @@ func (c *Client) sendSiteIntegrationsGet(ctx context.Context, params SiteIntegra
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("SiteIntegrations_get"),
 		semconv.HTTPRequestMethodKey.String("GET"),
-		semconv.URLTemplateKey.String("/w/{workspaceSlug}/integrations/{id}"),
+		semconv.URLTemplateKey.String("/workspaces/{slug}/integrations/{id}"),
 	}
 	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
 
@@ -5005,16 +5005,16 @@ func (c *Client) sendSiteIntegrationsGet(ctx context.Context, params SiteIntegra
 	stage = "BuildURL"
 	u := uri.Clone(c.requestURL(ctx))
 	var pathParts [4]string
-	pathParts[0] = "/w/"
+	pathParts[0] = "/workspaces/"
 	{
-		// Encode "workspaceSlug" parameter.
+		// Encode "slug" parameter.
 		e := uri.NewPathEncoder(uri.PathEncoderConfig{
-			Param:   "workspaceSlug",
+			Param:   "slug",
 			Style:   uri.PathStyleSimple,
 			Explode: false,
 		})
 		if err := func() error {
-			return e.EncodeValue(conv.StringToString(params.WorkspaceSlug))
+			return e.EncodeValue(conv.StringToString(params.Slug))
 		}(); err != nil {
 			return res, errors.Wrap(err, "encode path")
 		}
@@ -5114,7 +5114,7 @@ func (c *Client) sendSiteIntegrationsGet(ctx context.Context, params SiteIntegra
 //
 // List the workspace's sending-provider integrations.
 //
-// GET /w/{workspaceSlug}/integrations
+// GET /workspaces/{slug}/integrations
 func (c *Client) SiteIntegrationsList(ctx context.Context, params SiteIntegrationsListParams) (SiteIntegrationsListRes, error) {
 	res, err := c.sendSiteIntegrationsList(ctx, params)
 	return res, err
@@ -5124,7 +5124,7 @@ func (c *Client) sendSiteIntegrationsList(ctx context.Context, params SiteIntegr
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("SiteIntegrations_list"),
 		semconv.HTTPRequestMethodKey.String("GET"),
-		semconv.URLTemplateKey.String("/w/{workspaceSlug}/integrations"),
+		semconv.URLTemplateKey.String("/workspaces/{slug}/integrations"),
 	}
 	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
 
@@ -5158,16 +5158,16 @@ func (c *Client) sendSiteIntegrationsList(ctx context.Context, params SiteIntegr
 	stage = "BuildURL"
 	u := uri.Clone(c.requestURL(ctx))
 	var pathParts [3]string
-	pathParts[0] = "/w/"
+	pathParts[0] = "/workspaces/"
 	{
-		// Encode "workspaceSlug" parameter.
+		// Encode "slug" parameter.
 		e := uri.NewPathEncoder(uri.PathEncoderConfig{
-			Param:   "workspaceSlug",
+			Param:   "slug",
 			Style:   uri.PathStyleSimple,
 			Explode: false,
 		})
 		if err := func() error {
-			return e.EncodeValue(conv.StringToString(params.WorkspaceSlug))
+			return e.EncodeValue(conv.StringToString(params.Slug))
 		}(); err != nil {
 			return res, errors.Wrap(err, "encode path")
 		}
@@ -5246,7 +5246,7 @@ func (c *Client) sendSiteIntegrationsList(ctx context.Context, params SiteIntegr
 //
 // Update an integration.
 //
-// PUT /w/{workspaceSlug}/integrations/{id}
+// PUT /workspaces/{slug}/integrations/{id}
 func (c *Client) SiteIntegrationsUpdate(ctx context.Context, request *SiteUpdateIntegrationInput, params SiteIntegrationsUpdateParams) (SiteIntegrationsUpdateRes, error) {
 	res, err := c.sendSiteIntegrationsUpdate(ctx, request, params)
 	return res, err
@@ -5256,7 +5256,7 @@ func (c *Client) sendSiteIntegrationsUpdate(ctx context.Context, request *SiteUp
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("SiteIntegrations_update"),
 		semconv.HTTPRequestMethodKey.String("PUT"),
-		semconv.URLTemplateKey.String("/w/{workspaceSlug}/integrations/{id}"),
+		semconv.URLTemplateKey.String("/workspaces/{slug}/integrations/{id}"),
 	}
 	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
 
@@ -5290,16 +5290,16 @@ func (c *Client) sendSiteIntegrationsUpdate(ctx context.Context, request *SiteUp
 	stage = "BuildURL"
 	u := uri.Clone(c.requestURL(ctx))
 	var pathParts [4]string
-	pathParts[0] = "/w/"
+	pathParts[0] = "/workspaces/"
 	{
-		// Encode "workspaceSlug" parameter.
+		// Encode "slug" parameter.
 		e := uri.NewPathEncoder(uri.PathEncoderConfig{
-			Param:   "workspaceSlug",
+			Param:   "slug",
 			Style:   uri.PathStyleSimple,
 			Explode: false,
 		})
 		if err := func() error {
-			return e.EncodeValue(conv.StringToString(params.WorkspaceSlug))
+			return e.EncodeValue(conv.StringToString(params.Slug))
 		}(); err != nil {
 			return res, errors.Wrap(err, "encode path")
 		}
@@ -5400,9 +5400,9 @@ func (c *Client) sendSiteIntegrationsUpdate(ctx context.Context, request *SiteUp
 
 // SiteSegmentsCreate invokes SiteSegments_create operation.
 //
-// Create a segment from the site UI.
+// Create a resource from the site UI.
 //
-// POST /w/{workspaceSlug}/segments
+// POST /workspaces/{slug}/segments
 func (c *Client) SiteSegmentsCreate(ctx context.Context, request *SiteCreateSegmentInput, params SiteSegmentsCreateParams) (SiteSegmentsCreateRes, error) {
 	res, err := c.sendSiteSegmentsCreate(ctx, request, params)
 	return res, err
@@ -5412,7 +5412,7 @@ func (c *Client) sendSiteSegmentsCreate(ctx context.Context, request *SiteCreate
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("SiteSegments_create"),
 		semconv.HTTPRequestMethodKey.String("POST"),
-		semconv.URLTemplateKey.String("/w/{workspaceSlug}/segments"),
+		semconv.URLTemplateKey.String("/workspaces/{slug}/segments"),
 	}
 	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
 
@@ -5446,16 +5446,16 @@ func (c *Client) sendSiteSegmentsCreate(ctx context.Context, request *SiteCreate
 	stage = "BuildURL"
 	u := uri.Clone(c.requestURL(ctx))
 	var pathParts [3]string
-	pathParts[0] = "/w/"
+	pathParts[0] = "/workspaces/"
 	{
-		// Encode "workspaceSlug" parameter.
+		// Encode "slug" parameter.
 		e := uri.NewPathEncoder(uri.PathEncoderConfig{
-			Param:   "workspaceSlug",
+			Param:   "slug",
 			Style:   uri.PathStyleSimple,
 			Explode: false,
 		})
 		if err := func() error {
-			return e.EncodeValue(conv.StringToString(params.WorkspaceSlug))
+			return e.EncodeValue(conv.StringToString(params.Slug))
 		}(); err != nil {
 			return res, errors.Wrap(err, "encode path")
 		}
@@ -5535,9 +5535,9 @@ func (c *Client) sendSiteSegmentsCreate(ctx context.Context, request *SiteCreate
 
 // SiteSegmentsDelete invokes SiteSegments_delete operation.
 //
-// Delete a segment from the site UI.
+// Delete a resource from the site UI.
 //
-// DELETE /w/{workspaceSlug}/segments/{id}
+// DELETE /workspaces/{slug}/segments/{id}
 func (c *Client) SiteSegmentsDelete(ctx context.Context, params SiteSegmentsDeleteParams) (SiteSegmentsDeleteRes, error) {
 	res, err := c.sendSiteSegmentsDelete(ctx, params)
 	return res, err
@@ -5547,7 +5547,7 @@ func (c *Client) sendSiteSegmentsDelete(ctx context.Context, params SiteSegments
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("SiteSegments_delete"),
 		semconv.HTTPRequestMethodKey.String("DELETE"),
-		semconv.URLTemplateKey.String("/w/{workspaceSlug}/segments/{id}"),
+		semconv.URLTemplateKey.String("/workspaces/{slug}/segments/{id}"),
 	}
 	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
 
@@ -5581,16 +5581,16 @@ func (c *Client) sendSiteSegmentsDelete(ctx context.Context, params SiteSegments
 	stage = "BuildURL"
 	u := uri.Clone(c.requestURL(ctx))
 	var pathParts [4]string
-	pathParts[0] = "/w/"
+	pathParts[0] = "/workspaces/"
 	{
-		// Encode "workspaceSlug" parameter.
+		// Encode "slug" parameter.
 		e := uri.NewPathEncoder(uri.PathEncoderConfig{
-			Param:   "workspaceSlug",
+			Param:   "slug",
 			Style:   uri.PathStyleSimple,
 			Explode: false,
 		})
 		if err := func() error {
-			return e.EncodeValue(conv.StringToString(params.WorkspaceSlug))
+			return e.EncodeValue(conv.StringToString(params.Slug))
 		}(); err != nil {
 			return res, errors.Wrap(err, "encode path")
 		}
@@ -5688,9 +5688,9 @@ func (c *Client) sendSiteSegmentsDelete(ctx context.Context, params SiteSegments
 
 // SiteSegmentsGet invokes SiteSegments_get operation.
 //
-// Get a segment by ID for the site UI.
+// Get a resource by ID for the site UI.
 //
-// GET /w/{workspaceSlug}/segments/{id}
+// GET /workspaces/{slug}/segments/{id}
 func (c *Client) SiteSegmentsGet(ctx context.Context, params SiteSegmentsGetParams) (SiteSegmentsGetRes, error) {
 	res, err := c.sendSiteSegmentsGet(ctx, params)
 	return res, err
@@ -5700,7 +5700,7 @@ func (c *Client) sendSiteSegmentsGet(ctx context.Context, params SiteSegmentsGet
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("SiteSegments_get"),
 		semconv.HTTPRequestMethodKey.String("GET"),
-		semconv.URLTemplateKey.String("/w/{workspaceSlug}/segments/{id}"),
+		semconv.URLTemplateKey.String("/workspaces/{slug}/segments/{id}"),
 	}
 	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
 
@@ -5734,16 +5734,16 @@ func (c *Client) sendSiteSegmentsGet(ctx context.Context, params SiteSegmentsGet
 	stage = "BuildURL"
 	u := uri.Clone(c.requestURL(ctx))
 	var pathParts [4]string
-	pathParts[0] = "/w/"
+	pathParts[0] = "/workspaces/"
 	{
-		// Encode "workspaceSlug" parameter.
+		// Encode "slug" parameter.
 		e := uri.NewPathEncoder(uri.PathEncoderConfig{
-			Param:   "workspaceSlug",
+			Param:   "slug",
 			Style:   uri.PathStyleSimple,
 			Explode: false,
 		})
 		if err := func() error {
-			return e.EncodeValue(conv.StringToString(params.WorkspaceSlug))
+			return e.EncodeValue(conv.StringToString(params.Slug))
 		}(); err != nil {
 			return res, errors.Wrap(err, "encode path")
 		}
@@ -5841,9 +5841,9 @@ func (c *Client) sendSiteSegmentsGet(ctx context.Context, params SiteSegmentsGet
 
 // SiteSegmentsList invokes SiteSegments_list operation.
 //
-// List segments for the site UI.
+// List resources for the site UI.
 //
-// GET /w/{workspaceSlug}/segments
+// GET /workspaces/{slug}/segments
 func (c *Client) SiteSegmentsList(ctx context.Context, params SiteSegmentsListParams) (SiteSegmentsListRes, error) {
 	res, err := c.sendSiteSegmentsList(ctx, params)
 	return res, err
@@ -5853,7 +5853,7 @@ func (c *Client) sendSiteSegmentsList(ctx context.Context, params SiteSegmentsLi
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("SiteSegments_list"),
 		semconv.HTTPRequestMethodKey.String("GET"),
-		semconv.URLTemplateKey.String("/w/{workspaceSlug}/segments"),
+		semconv.URLTemplateKey.String("/workspaces/{slug}/segments"),
 	}
 	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
 
@@ -5887,16 +5887,16 @@ func (c *Client) sendSiteSegmentsList(ctx context.Context, params SiteSegmentsLi
 	stage = "BuildURL"
 	u := uri.Clone(c.requestURL(ctx))
 	var pathParts [3]string
-	pathParts[0] = "/w/"
+	pathParts[0] = "/workspaces/"
 	{
-		// Encode "workspaceSlug" parameter.
+		// Encode "slug" parameter.
 		e := uri.NewPathEncoder(uri.PathEncoderConfig{
-			Param:   "workspaceSlug",
+			Param:   "slug",
 			Style:   uri.PathStyleSimple,
 			Explode: false,
 		})
 		if err := func() error {
-			return e.EncodeValue(conv.StringToString(params.WorkspaceSlug))
+			return e.EncodeValue(conv.StringToString(params.Slug))
 		}(); err != nil {
 			return res, errors.Wrap(err, "encode path")
 		}
@@ -6013,7 +6013,7 @@ func (c *Client) sendSiteSegmentsList(ctx context.Context, params SiteSegmentsLi
 //
 // Preview how many active contacts match a rule definition.
 //
-// POST /w/{workspaceSlug}/segments/preview
+// POST /workspaces/{slug}/segments/preview
 func (c *Client) SiteSegmentsPreview(ctx context.Context, request *SitePreviewSegmentInput, params SiteSegmentsPreviewParams) (SiteSegmentsPreviewRes, error) {
 	res, err := c.sendSiteSegmentsPreview(ctx, request, params)
 	return res, err
@@ -6023,7 +6023,7 @@ func (c *Client) sendSiteSegmentsPreview(ctx context.Context, request *SitePrevi
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("SiteSegments_preview"),
 		semconv.HTTPRequestMethodKey.String("POST"),
-		semconv.URLTemplateKey.String("/w/{workspaceSlug}/segments/preview"),
+		semconv.URLTemplateKey.String("/workspaces/{slug}/segments/preview"),
 	}
 	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
 
@@ -6057,16 +6057,16 @@ func (c *Client) sendSiteSegmentsPreview(ctx context.Context, request *SitePrevi
 	stage = "BuildURL"
 	u := uri.Clone(c.requestURL(ctx))
 	var pathParts [3]string
-	pathParts[0] = "/w/"
+	pathParts[0] = "/workspaces/"
 	{
-		// Encode "workspaceSlug" parameter.
+		// Encode "slug" parameter.
 		e := uri.NewPathEncoder(uri.PathEncoderConfig{
-			Param:   "workspaceSlug",
+			Param:   "slug",
 			Style:   uri.PathStyleSimple,
 			Explode: false,
 		})
 		if err := func() error {
-			return e.EncodeValue(conv.StringToString(params.WorkspaceSlug))
+			return e.EncodeValue(conv.StringToString(params.Slug))
 		}(); err != nil {
 			return res, errors.Wrap(err, "encode path")
 		}
@@ -6146,9 +6146,9 @@ func (c *Client) sendSiteSegmentsPreview(ctx context.Context, request *SitePrevi
 
 // SiteSegmentsUpdate invokes SiteSegments_update operation.
 //
-// Update a segment from the site UI.
+// Update a resource from the site UI.
 //
-// PUT /w/{workspaceSlug}/segments/{id}
+// PUT /workspaces/{slug}/segments/{id}
 func (c *Client) SiteSegmentsUpdate(ctx context.Context, request *SiteUpdateSegmentInput, params SiteSegmentsUpdateParams) (SiteSegmentsUpdateRes, error) {
 	res, err := c.sendSiteSegmentsUpdate(ctx, request, params)
 	return res, err
@@ -6158,7 +6158,7 @@ func (c *Client) sendSiteSegmentsUpdate(ctx context.Context, request *SiteUpdate
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("SiteSegments_update"),
 		semconv.HTTPRequestMethodKey.String("PUT"),
-		semconv.URLTemplateKey.String("/w/{workspaceSlug}/segments/{id}"),
+		semconv.URLTemplateKey.String("/workspaces/{slug}/segments/{id}"),
 	}
 	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
 
@@ -6192,16 +6192,16 @@ func (c *Client) sendSiteSegmentsUpdate(ctx context.Context, request *SiteUpdate
 	stage = "BuildURL"
 	u := uri.Clone(c.requestURL(ctx))
 	var pathParts [4]string
-	pathParts[0] = "/w/"
+	pathParts[0] = "/workspaces/"
 	{
-		// Encode "workspaceSlug" parameter.
+		// Encode "slug" parameter.
 		e := uri.NewPathEncoder(uri.PathEncoderConfig{
-			Param:   "workspaceSlug",
+			Param:   "slug",
 			Style:   uri.PathStyleSimple,
 			Explode: false,
 		})
 		if err := func() error {
-			return e.EncodeValue(conv.StringToString(params.WorkspaceSlug))
+			return e.EncodeValue(conv.StringToString(params.Slug))
 		}(); err != nil {
 			return res, errors.Wrap(err, "encode path")
 		}
@@ -6304,7 +6304,7 @@ func (c *Client) sendSiteSegmentsUpdate(ctx context.Context, request *SiteUpdate
 //
 // Manually suppress an address (reason = manual; idempotent per address).
 //
-// POST /w/{workspaceSlug}/suppressions
+// POST /workspaces/{slug}/suppressions
 func (c *Client) SiteSuppressionsCreate(ctx context.Context, request *SiteCreateSuppressionInput, params SiteSuppressionsCreateParams) (SiteSuppressionsCreateRes, error) {
 	res, err := c.sendSiteSuppressionsCreate(ctx, request, params)
 	return res, err
@@ -6314,7 +6314,7 @@ func (c *Client) sendSiteSuppressionsCreate(ctx context.Context, request *SiteCr
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("SiteSuppressions_create"),
 		semconv.HTTPRequestMethodKey.String("POST"),
-		semconv.URLTemplateKey.String("/w/{workspaceSlug}/suppressions"),
+		semconv.URLTemplateKey.String("/workspaces/{slug}/suppressions"),
 	}
 	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
 
@@ -6348,16 +6348,16 @@ func (c *Client) sendSiteSuppressionsCreate(ctx context.Context, request *SiteCr
 	stage = "BuildURL"
 	u := uri.Clone(c.requestURL(ctx))
 	var pathParts [3]string
-	pathParts[0] = "/w/"
+	pathParts[0] = "/workspaces/"
 	{
-		// Encode "workspaceSlug" parameter.
+		// Encode "slug" parameter.
 		e := uri.NewPathEncoder(uri.PathEncoderConfig{
-			Param:   "workspaceSlug",
+			Param:   "slug",
 			Style:   uri.PathStyleSimple,
 			Explode: false,
 		})
 		if err := func() error {
-			return e.EncodeValue(conv.StringToString(params.WorkspaceSlug))
+			return e.EncodeValue(conv.StringToString(params.Slug))
 		}(); err != nil {
 			return res, errors.Wrap(err, "encode path")
 		}
@@ -6439,7 +6439,7 @@ func (c *Client) sendSiteSuppressionsCreate(ctx context.Context, request *SiteCr
 //
 // Remove an address from the suppression list.
 //
-// DELETE /w/{workspaceSlug}/suppressions/{id}
+// DELETE /workspaces/{slug}/suppressions/{id}
 func (c *Client) SiteSuppressionsDelete(ctx context.Context, params SiteSuppressionsDeleteParams) (SiteSuppressionsDeleteRes, error) {
 	res, err := c.sendSiteSuppressionsDelete(ctx, params)
 	return res, err
@@ -6449,7 +6449,7 @@ func (c *Client) sendSiteSuppressionsDelete(ctx context.Context, params SiteSupp
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("SiteSuppressions_delete"),
 		semconv.HTTPRequestMethodKey.String("DELETE"),
-		semconv.URLTemplateKey.String("/w/{workspaceSlug}/suppressions/{id}"),
+		semconv.URLTemplateKey.String("/workspaces/{slug}/suppressions/{id}"),
 	}
 	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
 
@@ -6483,16 +6483,16 @@ func (c *Client) sendSiteSuppressionsDelete(ctx context.Context, params SiteSupp
 	stage = "BuildURL"
 	u := uri.Clone(c.requestURL(ctx))
 	var pathParts [4]string
-	pathParts[0] = "/w/"
+	pathParts[0] = "/workspaces/"
 	{
-		// Encode "workspaceSlug" parameter.
+		// Encode "slug" parameter.
 		e := uri.NewPathEncoder(uri.PathEncoderConfig{
-			Param:   "workspaceSlug",
+			Param:   "slug",
 			Style:   uri.PathStyleSimple,
 			Explode: false,
 		})
 		if err := func() error {
-			return e.EncodeValue(conv.StringToString(params.WorkspaceSlug))
+			return e.EncodeValue(conv.StringToString(params.Slug))
 		}(); err != nil {
 			return res, errors.Wrap(err, "encode path")
 		}
@@ -6592,7 +6592,7 @@ func (c *Client) sendSiteSuppressionsDelete(ctx context.Context, params SiteSupp
 //
 // List suppressed addresses.
 //
-// GET /w/{workspaceSlug}/suppressions
+// GET /workspaces/{slug}/suppressions
 func (c *Client) SiteSuppressionsList(ctx context.Context, params SiteSuppressionsListParams) (SiteSuppressionsListRes, error) {
 	res, err := c.sendSiteSuppressionsList(ctx, params)
 	return res, err
@@ -6602,7 +6602,7 @@ func (c *Client) sendSiteSuppressionsList(ctx context.Context, params SiteSuppre
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("SiteSuppressions_list"),
 		semconv.HTTPRequestMethodKey.String("GET"),
-		semconv.URLTemplateKey.String("/w/{workspaceSlug}/suppressions"),
+		semconv.URLTemplateKey.String("/workspaces/{slug}/suppressions"),
 	}
 	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
 
@@ -6636,16 +6636,16 @@ func (c *Client) sendSiteSuppressionsList(ctx context.Context, params SiteSuppre
 	stage = "BuildURL"
 	u := uri.Clone(c.requestURL(ctx))
 	var pathParts [3]string
-	pathParts[0] = "/w/"
+	pathParts[0] = "/workspaces/"
 	{
-		// Encode "workspaceSlug" parameter.
+		// Encode "slug" parameter.
 		e := uri.NewPathEncoder(uri.PathEncoderConfig{
-			Param:   "workspaceSlug",
+			Param:   "slug",
 			Style:   uri.PathStyleSimple,
 			Explode: false,
 		})
 		if err := func() error {
-			return e.EncodeValue(conv.StringToString(params.WorkspaceSlug))
+			return e.EncodeValue(conv.StringToString(params.Slug))
 		}(); err != nil {
 			return res, errors.Wrap(err, "encode path")
 		}
@@ -6760,9 +6760,9 @@ func (c *Client) sendSiteSuppressionsList(ctx context.Context, params SiteSuppre
 
 // SiteTemplatesCreate invokes SiteTemplates_create operation.
 //
-// Create a template.
+// Create a resource from the site UI.
 //
-// POST /w/{workspaceSlug}/templates
+// POST /workspaces/{slug}/templates
 func (c *Client) SiteTemplatesCreate(ctx context.Context, request *SiteCreateEmailTemplateInput, params SiteTemplatesCreateParams) (SiteTemplatesCreateRes, error) {
 	res, err := c.sendSiteTemplatesCreate(ctx, request, params)
 	return res, err
@@ -6772,7 +6772,7 @@ func (c *Client) sendSiteTemplatesCreate(ctx context.Context, request *SiteCreat
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("SiteTemplates_create"),
 		semconv.HTTPRequestMethodKey.String("POST"),
-		semconv.URLTemplateKey.String("/w/{workspaceSlug}/templates"),
+		semconv.URLTemplateKey.String("/workspaces/{slug}/templates"),
 	}
 	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
 
@@ -6806,16 +6806,16 @@ func (c *Client) sendSiteTemplatesCreate(ctx context.Context, request *SiteCreat
 	stage = "BuildURL"
 	u := uri.Clone(c.requestURL(ctx))
 	var pathParts [3]string
-	pathParts[0] = "/w/"
+	pathParts[0] = "/workspaces/"
 	{
-		// Encode "workspaceSlug" parameter.
+		// Encode "slug" parameter.
 		e := uri.NewPathEncoder(uri.PathEncoderConfig{
-			Param:   "workspaceSlug",
+			Param:   "slug",
 			Style:   uri.PathStyleSimple,
 			Explode: false,
 		})
 		if err := func() error {
-			return e.EncodeValue(conv.StringToString(params.WorkspaceSlug))
+			return e.EncodeValue(conv.StringToString(params.Slug))
 		}(); err != nil {
 			return res, errors.Wrap(err, "encode path")
 		}
@@ -6895,9 +6895,9 @@ func (c *Client) sendSiteTemplatesCreate(ctx context.Context, request *SiteCreat
 
 // SiteTemplatesDelete invokes SiteTemplates_delete operation.
 //
-// Delete a template.
+// Delete a resource from the site UI.
 //
-// DELETE /w/{workspaceSlug}/templates/{id}
+// DELETE /workspaces/{slug}/templates/{id}
 func (c *Client) SiteTemplatesDelete(ctx context.Context, params SiteTemplatesDeleteParams) (SiteTemplatesDeleteRes, error) {
 	res, err := c.sendSiteTemplatesDelete(ctx, params)
 	return res, err
@@ -6907,7 +6907,7 @@ func (c *Client) sendSiteTemplatesDelete(ctx context.Context, params SiteTemplat
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("SiteTemplates_delete"),
 		semconv.HTTPRequestMethodKey.String("DELETE"),
-		semconv.URLTemplateKey.String("/w/{workspaceSlug}/templates/{id}"),
+		semconv.URLTemplateKey.String("/workspaces/{slug}/templates/{id}"),
 	}
 	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
 
@@ -6941,16 +6941,16 @@ func (c *Client) sendSiteTemplatesDelete(ctx context.Context, params SiteTemplat
 	stage = "BuildURL"
 	u := uri.Clone(c.requestURL(ctx))
 	var pathParts [4]string
-	pathParts[0] = "/w/"
+	pathParts[0] = "/workspaces/"
 	{
-		// Encode "workspaceSlug" parameter.
+		// Encode "slug" parameter.
 		e := uri.NewPathEncoder(uri.PathEncoderConfig{
-			Param:   "workspaceSlug",
+			Param:   "slug",
 			Style:   uri.PathStyleSimple,
 			Explode: false,
 		})
 		if err := func() error {
-			return e.EncodeValue(conv.StringToString(params.WorkspaceSlug))
+			return e.EncodeValue(conv.StringToString(params.Slug))
 		}(); err != nil {
 			return res, errors.Wrap(err, "encode path")
 		}
@@ -7048,9 +7048,9 @@ func (c *Client) sendSiteTemplatesDelete(ctx context.Context, params SiteTemplat
 
 // SiteTemplatesGet invokes SiteTemplates_get operation.
 //
-// Get a template by ID.
+// Get a resource by ID for the site UI.
 //
-// GET /w/{workspaceSlug}/templates/{id}
+// GET /workspaces/{slug}/templates/{id}
 func (c *Client) SiteTemplatesGet(ctx context.Context, params SiteTemplatesGetParams) (SiteTemplatesGetRes, error) {
 	res, err := c.sendSiteTemplatesGet(ctx, params)
 	return res, err
@@ -7060,7 +7060,7 @@ func (c *Client) sendSiteTemplatesGet(ctx context.Context, params SiteTemplatesG
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("SiteTemplates_get"),
 		semconv.HTTPRequestMethodKey.String("GET"),
-		semconv.URLTemplateKey.String("/w/{workspaceSlug}/templates/{id}"),
+		semconv.URLTemplateKey.String("/workspaces/{slug}/templates/{id}"),
 	}
 	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
 
@@ -7094,16 +7094,16 @@ func (c *Client) sendSiteTemplatesGet(ctx context.Context, params SiteTemplatesG
 	stage = "BuildURL"
 	u := uri.Clone(c.requestURL(ctx))
 	var pathParts [4]string
-	pathParts[0] = "/w/"
+	pathParts[0] = "/workspaces/"
 	{
-		// Encode "workspaceSlug" parameter.
+		// Encode "slug" parameter.
 		e := uri.NewPathEncoder(uri.PathEncoderConfig{
-			Param:   "workspaceSlug",
+			Param:   "slug",
 			Style:   uri.PathStyleSimple,
 			Explode: false,
 		})
 		if err := func() error {
-			return e.EncodeValue(conv.StringToString(params.WorkspaceSlug))
+			return e.EncodeValue(conv.StringToString(params.Slug))
 		}(); err != nil {
 			return res, errors.Wrap(err, "encode path")
 		}
@@ -7201,9 +7201,9 @@ func (c *Client) sendSiteTemplatesGet(ctx context.Context, params SiteTemplatesG
 
 // SiteTemplatesList invokes SiteTemplates_list operation.
 //
-// List templates.
+// List resources for the site UI.
 //
-// GET /w/{workspaceSlug}/templates
+// GET /workspaces/{slug}/templates
 func (c *Client) SiteTemplatesList(ctx context.Context, params SiteTemplatesListParams) (SiteTemplatesListRes, error) {
 	res, err := c.sendSiteTemplatesList(ctx, params)
 	return res, err
@@ -7213,7 +7213,7 @@ func (c *Client) sendSiteTemplatesList(ctx context.Context, params SiteTemplates
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("SiteTemplates_list"),
 		semconv.HTTPRequestMethodKey.String("GET"),
-		semconv.URLTemplateKey.String("/w/{workspaceSlug}/templates"),
+		semconv.URLTemplateKey.String("/workspaces/{slug}/templates"),
 	}
 	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
 
@@ -7247,16 +7247,16 @@ func (c *Client) sendSiteTemplatesList(ctx context.Context, params SiteTemplates
 	stage = "BuildURL"
 	u := uri.Clone(c.requestURL(ctx))
 	var pathParts [3]string
-	pathParts[0] = "/w/"
+	pathParts[0] = "/workspaces/"
 	{
-		// Encode "workspaceSlug" parameter.
+		// Encode "slug" parameter.
 		e := uri.NewPathEncoder(uri.PathEncoderConfig{
-			Param:   "workspaceSlug",
+			Param:   "slug",
 			Style:   uri.PathStyleSimple,
 			Explode: false,
 		})
 		if err := func() error {
-			return e.EncodeValue(conv.StringToString(params.WorkspaceSlug))
+			return e.EncodeValue(conv.StringToString(params.Slug))
 		}(); err != nil {
 			return res, errors.Wrap(err, "encode path")
 		}
@@ -7371,9 +7371,9 @@ func (c *Client) sendSiteTemplatesList(ctx context.Context, params SiteTemplates
 
 // SiteTemplatesUpdate invokes SiteTemplates_update operation.
 //
-// Update a template.
+// Update a resource from the site UI.
 //
-// PUT /w/{workspaceSlug}/templates/{id}
+// PUT /workspaces/{slug}/templates/{id}
 func (c *Client) SiteTemplatesUpdate(ctx context.Context, request *SiteUpdateEmailTemplateInput, params SiteTemplatesUpdateParams) (SiteTemplatesUpdateRes, error) {
 	res, err := c.sendSiteTemplatesUpdate(ctx, request, params)
 	return res, err
@@ -7383,7 +7383,7 @@ func (c *Client) sendSiteTemplatesUpdate(ctx context.Context, request *SiteUpdat
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("SiteTemplates_update"),
 		semconv.HTTPRequestMethodKey.String("PUT"),
-		semconv.URLTemplateKey.String("/w/{workspaceSlug}/templates/{id}"),
+		semconv.URLTemplateKey.String("/workspaces/{slug}/templates/{id}"),
 	}
 	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
 
@@ -7417,16 +7417,16 @@ func (c *Client) sendSiteTemplatesUpdate(ctx context.Context, request *SiteUpdat
 	stage = "BuildURL"
 	u := uri.Clone(c.requestURL(ctx))
 	var pathParts [4]string
-	pathParts[0] = "/w/"
+	pathParts[0] = "/workspaces/"
 	{
-		// Encode "workspaceSlug" parameter.
+		// Encode "slug" parameter.
 		e := uri.NewPathEncoder(uri.PathEncoderConfig{
-			Param:   "workspaceSlug",
+			Param:   "slug",
 			Style:   uri.PathStyleSimple,
 			Explode: false,
 		})
 		if err := func() error {
-			return e.EncodeValue(conv.StringToString(params.WorkspaceSlug))
+			return e.EncodeValue(conv.StringToString(params.Slug))
 		}(); err != nil {
 			return res, errors.Wrap(err, "encode path")
 		}
@@ -7529,7 +7529,7 @@ func (c *Client) sendSiteTemplatesUpdate(ctx context.Context, request *SiteUpdat
 //
 // Create an API token; the full secret is returned once.
 //
-// POST /w/{workspaceSlug}/tokens
+// POST /workspaces/{slug}/tokens
 func (c *Client) SiteTokensCreate(ctx context.Context, request *SiteCreateTokenInput, params SiteTokensCreateParams) (SiteTokensCreateRes, error) {
 	res, err := c.sendSiteTokensCreate(ctx, request, params)
 	return res, err
@@ -7539,7 +7539,7 @@ func (c *Client) sendSiteTokensCreate(ctx context.Context, request *SiteCreateTo
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("SiteTokens_create"),
 		semconv.HTTPRequestMethodKey.String("POST"),
-		semconv.URLTemplateKey.String("/w/{workspaceSlug}/tokens"),
+		semconv.URLTemplateKey.String("/workspaces/{slug}/tokens"),
 	}
 	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
 
@@ -7573,16 +7573,16 @@ func (c *Client) sendSiteTokensCreate(ctx context.Context, request *SiteCreateTo
 	stage = "BuildURL"
 	u := uri.Clone(c.requestURL(ctx))
 	var pathParts [3]string
-	pathParts[0] = "/w/"
+	pathParts[0] = "/workspaces/"
 	{
-		// Encode "workspaceSlug" parameter.
+		// Encode "slug" parameter.
 		e := uri.NewPathEncoder(uri.PathEncoderConfig{
-			Param:   "workspaceSlug",
+			Param:   "slug",
 			Style:   uri.PathStyleSimple,
 			Explode: false,
 		})
 		if err := func() error {
-			return e.EncodeValue(conv.StringToString(params.WorkspaceSlug))
+			return e.EncodeValue(conv.StringToString(params.Slug))
 		}(); err != nil {
 			return res, errors.Wrap(err, "encode path")
 		}
@@ -7664,7 +7664,7 @@ func (c *Client) sendSiteTokensCreate(ctx context.Context, request *SiteCreateTo
 //
 // Revoke an API token.
 //
-// DELETE /w/{workspaceSlug}/tokens/{id}
+// DELETE /workspaces/{slug}/tokens/{id}
 func (c *Client) SiteTokensDelete(ctx context.Context, params SiteTokensDeleteParams) (SiteTokensDeleteRes, error) {
 	res, err := c.sendSiteTokensDelete(ctx, params)
 	return res, err
@@ -7674,7 +7674,7 @@ func (c *Client) sendSiteTokensDelete(ctx context.Context, params SiteTokensDele
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("SiteTokens_delete"),
 		semconv.HTTPRequestMethodKey.String("DELETE"),
-		semconv.URLTemplateKey.String("/w/{workspaceSlug}/tokens/{id}"),
+		semconv.URLTemplateKey.String("/workspaces/{slug}/tokens/{id}"),
 	}
 	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
 
@@ -7708,16 +7708,16 @@ func (c *Client) sendSiteTokensDelete(ctx context.Context, params SiteTokensDele
 	stage = "BuildURL"
 	u := uri.Clone(c.requestURL(ctx))
 	var pathParts [4]string
-	pathParts[0] = "/w/"
+	pathParts[0] = "/workspaces/"
 	{
-		// Encode "workspaceSlug" parameter.
+		// Encode "slug" parameter.
 		e := uri.NewPathEncoder(uri.PathEncoderConfig{
-			Param:   "workspaceSlug",
+			Param:   "slug",
 			Style:   uri.PathStyleSimple,
 			Explode: false,
 		})
 		if err := func() error {
-			return e.EncodeValue(conv.StringToString(params.WorkspaceSlug))
+			return e.EncodeValue(conv.StringToString(params.Slug))
 		}(); err != nil {
 			return res, errors.Wrap(err, "encode path")
 		}
@@ -7817,7 +7817,7 @@ func (c *Client) sendSiteTokensDelete(ctx context.Context, params SiteTokensDele
 //
 // List active (non-revoked) API tokens for the workspace.
 //
-// GET /w/{workspaceSlug}/tokens
+// GET /workspaces/{slug}/tokens
 func (c *Client) SiteTokensList(ctx context.Context, params SiteTokensListParams) (SiteTokensListRes, error) {
 	res, err := c.sendSiteTokensList(ctx, params)
 	return res, err
@@ -7827,7 +7827,7 @@ func (c *Client) sendSiteTokensList(ctx context.Context, params SiteTokensListPa
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("SiteTokens_list"),
 		semconv.HTTPRequestMethodKey.String("GET"),
-		semconv.URLTemplateKey.String("/w/{workspaceSlug}/tokens"),
+		semconv.URLTemplateKey.String("/workspaces/{slug}/tokens"),
 	}
 	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
 
@@ -7861,16 +7861,16 @@ func (c *Client) sendSiteTokensList(ctx context.Context, params SiteTokensListPa
 	stage = "BuildURL"
 	u := uri.Clone(c.requestURL(ctx))
 	var pathParts [3]string
-	pathParts[0] = "/w/"
+	pathParts[0] = "/workspaces/"
 	{
-		// Encode "workspaceSlug" parameter.
+		// Encode "slug" parameter.
 		e := uri.NewPathEncoder(uri.PathEncoderConfig{
-			Param:   "workspaceSlug",
+			Param:   "slug",
 			Style:   uri.PathStyleSimple,
 			Explode: false,
 		})
 		if err := func() error {
-			return e.EncodeValue(conv.StringToString(params.WorkspaceSlug))
+			return e.EncodeValue(conv.StringToString(params.Slug))
 		}(); err != nil {
 			return res, errors.Wrap(err, "encode path")
 		}
@@ -7949,7 +7949,7 @@ func (c *Client) sendSiteTokensList(ctx context.Context, params SiteTokensListPa
 //
 // List transactional sends, most recent first.
 //
-// GET /w/{workspaceSlug}/transactional-emails
+// GET /workspaces/{slug}/transactional-emails
 func (c *Client) SiteTransactionalEmailsList(ctx context.Context, params SiteTransactionalEmailsListParams) (SiteTransactionalEmailsListRes, error) {
 	res, err := c.sendSiteTransactionalEmailsList(ctx, params)
 	return res, err
@@ -7959,7 +7959,7 @@ func (c *Client) sendSiteTransactionalEmailsList(ctx context.Context, params Sit
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("SiteTransactionalEmails_list"),
 		semconv.HTTPRequestMethodKey.String("GET"),
-		semconv.URLTemplateKey.String("/w/{workspaceSlug}/transactional-emails"),
+		semconv.URLTemplateKey.String("/workspaces/{slug}/transactional-emails"),
 	}
 	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
 
@@ -7993,16 +7993,16 @@ func (c *Client) sendSiteTransactionalEmailsList(ctx context.Context, params Sit
 	stage = "BuildURL"
 	u := uri.Clone(c.requestURL(ctx))
 	var pathParts [3]string
-	pathParts[0] = "/w/"
+	pathParts[0] = "/workspaces/"
 	{
-		// Encode "workspaceSlug" parameter.
+		// Encode "slug" parameter.
 		e := uri.NewPathEncoder(uri.PathEncoderConfig{
-			Param:   "workspaceSlug",
+			Param:   "slug",
 			Style:   uri.PathStyleSimple,
 			Explode: false,
 		})
 		if err := func() error {
-			return e.EncodeValue(conv.StringToString(params.WorkspaceSlug))
+			return e.EncodeValue(conv.StringToString(params.Slug))
 		}(); err != nil {
 			return res, errors.Wrap(err, "encode path")
 		}
@@ -8576,9 +8576,9 @@ func (c *Client) sendSiteUserUpdateMe(ctx context.Context, request *SiteUpdateMe
 
 // SiteWebhooksCreate invokes SiteWebhooks_create operation.
 //
-// Create a webhook endpoint.
+// Create a resource from the site UI.
 //
-// POST /w/{workspaceSlug}/webhooks
+// POST /workspaces/{slug}/webhooks
 func (c *Client) SiteWebhooksCreate(ctx context.Context, request *SiteCreateWebhookEndpointInput, params SiteWebhooksCreateParams) (SiteWebhooksCreateRes, error) {
 	res, err := c.sendSiteWebhooksCreate(ctx, request, params)
 	return res, err
@@ -8588,7 +8588,7 @@ func (c *Client) sendSiteWebhooksCreate(ctx context.Context, request *SiteCreate
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("SiteWebhooks_create"),
 		semconv.HTTPRequestMethodKey.String("POST"),
-		semconv.URLTemplateKey.String("/w/{workspaceSlug}/webhooks"),
+		semconv.URLTemplateKey.String("/workspaces/{slug}/webhooks"),
 	}
 	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
 
@@ -8622,16 +8622,16 @@ func (c *Client) sendSiteWebhooksCreate(ctx context.Context, request *SiteCreate
 	stage = "BuildURL"
 	u := uri.Clone(c.requestURL(ctx))
 	var pathParts [3]string
-	pathParts[0] = "/w/"
+	pathParts[0] = "/workspaces/"
 	{
-		// Encode "workspaceSlug" parameter.
+		// Encode "slug" parameter.
 		e := uri.NewPathEncoder(uri.PathEncoderConfig{
-			Param:   "workspaceSlug",
+			Param:   "slug",
 			Style:   uri.PathStyleSimple,
 			Explode: false,
 		})
 		if err := func() error {
-			return e.EncodeValue(conv.StringToString(params.WorkspaceSlug))
+			return e.EncodeValue(conv.StringToString(params.Slug))
 		}(); err != nil {
 			return res, errors.Wrap(err, "encode path")
 		}
@@ -8711,9 +8711,9 @@ func (c *Client) sendSiteWebhooksCreate(ctx context.Context, request *SiteCreate
 
 // SiteWebhooksDelete invokes SiteWebhooks_delete operation.
 //
-// Delete a webhook endpoint.
+// Delete a resource from the site UI.
 //
-// DELETE /w/{workspaceSlug}/webhooks/{id}
+// DELETE /workspaces/{slug}/webhooks/{id}
 func (c *Client) SiteWebhooksDelete(ctx context.Context, params SiteWebhooksDeleteParams) (SiteWebhooksDeleteRes, error) {
 	res, err := c.sendSiteWebhooksDelete(ctx, params)
 	return res, err
@@ -8723,7 +8723,7 @@ func (c *Client) sendSiteWebhooksDelete(ctx context.Context, params SiteWebhooks
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("SiteWebhooks_delete"),
 		semconv.HTTPRequestMethodKey.String("DELETE"),
-		semconv.URLTemplateKey.String("/w/{workspaceSlug}/webhooks/{id}"),
+		semconv.URLTemplateKey.String("/workspaces/{slug}/webhooks/{id}"),
 	}
 	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
 
@@ -8757,16 +8757,16 @@ func (c *Client) sendSiteWebhooksDelete(ctx context.Context, params SiteWebhooks
 	stage = "BuildURL"
 	u := uri.Clone(c.requestURL(ctx))
 	var pathParts [4]string
-	pathParts[0] = "/w/"
+	pathParts[0] = "/workspaces/"
 	{
-		// Encode "workspaceSlug" parameter.
+		// Encode "slug" parameter.
 		e := uri.NewPathEncoder(uri.PathEncoderConfig{
-			Param:   "workspaceSlug",
+			Param:   "slug",
 			Style:   uri.PathStyleSimple,
 			Explode: false,
 		})
 		if err := func() error {
-			return e.EncodeValue(conv.StringToString(params.WorkspaceSlug))
+			return e.EncodeValue(conv.StringToString(params.Slug))
 		}(); err != nil {
 			return res, errors.Wrap(err, "encode path")
 		}
@@ -8864,9 +8864,9 @@ func (c *Client) sendSiteWebhooksDelete(ctx context.Context, params SiteWebhooks
 
 // SiteWebhooksGet invokes SiteWebhooks_get operation.
 //
-// Get a webhook endpoint by ID.
+// Get a resource by ID for the site UI.
 //
-// GET /w/{workspaceSlug}/webhooks/{id}
+// GET /workspaces/{slug}/webhooks/{id}
 func (c *Client) SiteWebhooksGet(ctx context.Context, params SiteWebhooksGetParams) (SiteWebhooksGetRes, error) {
 	res, err := c.sendSiteWebhooksGet(ctx, params)
 	return res, err
@@ -8876,7 +8876,7 @@ func (c *Client) sendSiteWebhooksGet(ctx context.Context, params SiteWebhooksGet
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("SiteWebhooks_get"),
 		semconv.HTTPRequestMethodKey.String("GET"),
-		semconv.URLTemplateKey.String("/w/{workspaceSlug}/webhooks/{id}"),
+		semconv.URLTemplateKey.String("/workspaces/{slug}/webhooks/{id}"),
 	}
 	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
 
@@ -8910,16 +8910,16 @@ func (c *Client) sendSiteWebhooksGet(ctx context.Context, params SiteWebhooksGet
 	stage = "BuildURL"
 	u := uri.Clone(c.requestURL(ctx))
 	var pathParts [4]string
-	pathParts[0] = "/w/"
+	pathParts[0] = "/workspaces/"
 	{
-		// Encode "workspaceSlug" parameter.
+		// Encode "slug" parameter.
 		e := uri.NewPathEncoder(uri.PathEncoderConfig{
-			Param:   "workspaceSlug",
+			Param:   "slug",
 			Style:   uri.PathStyleSimple,
 			Explode: false,
 		})
 		if err := func() error {
-			return e.EncodeValue(conv.StringToString(params.WorkspaceSlug))
+			return e.EncodeValue(conv.StringToString(params.Slug))
 		}(); err != nil {
 			return res, errors.Wrap(err, "encode path")
 		}
@@ -9017,9 +9017,9 @@ func (c *Client) sendSiteWebhooksGet(ctx context.Context, params SiteWebhooksGet
 
 // SiteWebhooksList invokes SiteWebhooks_list operation.
 //
-// List webhook endpoints.
+// List resources for the site UI.
 //
-// GET /w/{workspaceSlug}/webhooks
+// GET /workspaces/{slug}/webhooks
 func (c *Client) SiteWebhooksList(ctx context.Context, params SiteWebhooksListParams) (SiteWebhooksListRes, error) {
 	res, err := c.sendSiteWebhooksList(ctx, params)
 	return res, err
@@ -9029,7 +9029,7 @@ func (c *Client) sendSiteWebhooksList(ctx context.Context, params SiteWebhooksLi
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("SiteWebhooks_list"),
 		semconv.HTTPRequestMethodKey.String("GET"),
-		semconv.URLTemplateKey.String("/w/{workspaceSlug}/webhooks"),
+		semconv.URLTemplateKey.String("/workspaces/{slug}/webhooks"),
 	}
 	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
 
@@ -9063,16 +9063,16 @@ func (c *Client) sendSiteWebhooksList(ctx context.Context, params SiteWebhooksLi
 	stage = "BuildURL"
 	u := uri.Clone(c.requestURL(ctx))
 	var pathParts [3]string
-	pathParts[0] = "/w/"
+	pathParts[0] = "/workspaces/"
 	{
-		// Encode "workspaceSlug" parameter.
+		// Encode "slug" parameter.
 		e := uri.NewPathEncoder(uri.PathEncoderConfig{
-			Param:   "workspaceSlug",
+			Param:   "slug",
 			Style:   uri.PathStyleSimple,
 			Explode: false,
 		})
 		if err := func() error {
-			return e.EncodeValue(conv.StringToString(params.WorkspaceSlug))
+			return e.EncodeValue(conv.StringToString(params.Slug))
 		}(); err != nil {
 			return res, errors.Wrap(err, "encode path")
 		}
@@ -9187,9 +9187,9 @@ func (c *Client) sendSiteWebhooksList(ctx context.Context, params SiteWebhooksLi
 
 // SiteWebhooksUpdate invokes SiteWebhooks_update operation.
 //
-// Update a webhook endpoint.
+// Update a resource from the site UI.
 //
-// PUT /w/{workspaceSlug}/webhooks/{id}
+// PUT /workspaces/{slug}/webhooks/{id}
 func (c *Client) SiteWebhooksUpdate(ctx context.Context, request *SiteUpdateWebhookEndpointInput, params SiteWebhooksUpdateParams) (SiteWebhooksUpdateRes, error) {
 	res, err := c.sendSiteWebhooksUpdate(ctx, request, params)
 	return res, err
@@ -9199,7 +9199,7 @@ func (c *Client) sendSiteWebhooksUpdate(ctx context.Context, request *SiteUpdate
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("SiteWebhooks_update"),
 		semconv.HTTPRequestMethodKey.String("PUT"),
-		semconv.URLTemplateKey.String("/w/{workspaceSlug}/webhooks/{id}"),
+		semconv.URLTemplateKey.String("/workspaces/{slug}/webhooks/{id}"),
 	}
 	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
 
@@ -9233,16 +9233,16 @@ func (c *Client) sendSiteWebhooksUpdate(ctx context.Context, request *SiteUpdate
 	stage = "BuildURL"
 	u := uri.Clone(c.requestURL(ctx))
 	var pathParts [4]string
-	pathParts[0] = "/w/"
+	pathParts[0] = "/workspaces/"
 	{
-		// Encode "workspaceSlug" parameter.
+		// Encode "slug" parameter.
 		e := uri.NewPathEncoder(uri.PathEncoderConfig{
-			Param:   "workspaceSlug",
+			Param:   "slug",
 			Style:   uri.PathStyleSimple,
 			Explode: false,
 		})
 		if err := func() error {
-			return e.EncodeValue(conv.StringToString(params.WorkspaceSlug))
+			return e.EncodeValue(conv.StringToString(params.Slug))
 		}(); err != nil {
 			return res, errors.Wrap(err, "encode path")
 		}

@@ -39,7 +39,7 @@ func TestSiteTransactionalEmailsList(t *testing.T) {
 	seedTransactional(t, env.DB, ws2.ID, "leak@example.com", transactionalemail.StatusSent)
 
 	c := siteClient(t, env, "info@1mail.com")
-	res, err := c.SiteTransactionalEmailsList(ctx, siteapi.SiteTransactionalEmailsListParams{WorkspaceSlug: "acme"})
+	res, err := c.SiteTransactionalEmailsList(ctx, siteapi.SiteTransactionalEmailsListParams{Slug: "acme"})
 	require.NoError(t, err)
 
 	page, ok := res.(*siteapi.SiteTransactionalEmailsListOK)
@@ -56,6 +56,6 @@ func TestSiteTransactionalEmailsRequireAuth(t *testing.T) {
 	c, err := siteapi.NewClient("http://local/site", noJWT{}, siteapi.WithClient(env.Transport(nil)))
 	require.NoError(t, err)
 
-	_, err = c.SiteTransactionalEmailsList(context.Background(), siteapi.SiteTransactionalEmailsListParams{WorkspaceSlug: "acme"})
+	_, err = c.SiteTransactionalEmailsList(context.Background(), siteapi.SiteTransactionalEmailsListParams{Slug: "acme"})
 	require.Error(t, err)
 }

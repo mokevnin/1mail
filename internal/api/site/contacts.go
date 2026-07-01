@@ -15,7 +15,7 @@ import (
 )
 
 func (h *Handlers) SiteContactsList(ctx context.Context, params siteapi.SiteContactsListParams) (siteapi.SiteContactsListRes, error) {
-	ws, err := h.workspaceID(ctx, params.WorkspaceSlug)
+	ws, err := h.workspaceID(ctx, params.Slug)
 	if ent.IsNotFound(err) {
 		v := siteapi.SiteContactsListNotFound(problem(http.StatusNotFound, "workspace not found"))
 		return &v, nil
@@ -63,7 +63,7 @@ func (h *Handlers) SiteContactsList(ctx context.Context, params siteapi.SiteCont
 }
 
 func (h *Handlers) SiteContactsCreate(ctx context.Context, req *siteapi.SiteCreateContactInput, params siteapi.SiteContactsCreateParams) (siteapi.SiteContactsCreateRes, error) {
-	ws, err := h.workspaceID(ctx, params.WorkspaceSlug)
+	ws, err := h.workspaceID(ctx, params.Slug)
 	if ent.IsNotFound(err) {
 		v := siteapi.SiteContactsCreateNotFound(problem(http.StatusNotFound, "workspace not found"))
 		return &v, nil
@@ -123,7 +123,7 @@ func (h *Handlers) SiteContactsCreate(ctx context.Context, req *siteapi.SiteCrea
 }
 
 func (h *Handlers) SiteContactsGet(ctx context.Context, params siteapi.SiteContactsGetParams) (siteapi.SiteContactsGetRes, error) {
-	ws, err := h.workspaceID(ctx, params.WorkspaceSlug)
+	ws, err := h.workspaceID(ctx, params.Slug)
 	if ent.IsNotFound(err) {
 		v := siteapi.SiteContactsGetNotFound(problem(http.StatusNotFound, "workspace not found"))
 		return &v, nil
@@ -152,7 +152,7 @@ func (h *Handlers) SiteContactsGet(ctx context.Context, params siteapi.SiteConta
 }
 
 func (h *Handlers) SiteContactsUpdate(ctx context.Context, req *siteapi.SiteUpdateContactInput, params siteapi.SiteContactsUpdateParams) (siteapi.SiteContactsUpdateRes, error) {
-	ws, err := h.workspaceID(ctx, params.WorkspaceSlug)
+	ws, err := h.workspaceID(ctx, params.Slug)
 	if ent.IsNotFound(err) {
 		v := siteapi.SiteContactsUpdateNotFound(problem(http.StatusNotFound, "workspace not found"))
 		return &v, nil
@@ -198,7 +198,7 @@ func (h *Handlers) SiteContactsUpdate(ctx context.Context, req *siteapi.SiteUpda
 }
 
 func (h *Handlers) SiteContactsDelete(ctx context.Context, params siteapi.SiteContactsDeleteParams) (siteapi.SiteContactsDeleteRes, error) {
-	ws, err := h.workspaceID(ctx, params.WorkspaceSlug)
+	ws, err := h.workspaceID(ctx, params.Slug)
 	if ent.IsNotFound(err) {
 		v := siteapi.SiteContactsDeleteNotFound(problem(http.StatusNotFound, "workspace not found"))
 		return &v, nil

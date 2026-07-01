@@ -1392,7 +1392,7 @@ export type SiteWorkspaceResource = {
      */
     name: string;
     /**
-     * URL-safe unique slug (used in /w/{slug} routes)
+     * URL-safe unique slug; the route key for nested workspace resources
      */
     slug: string;
     /**
@@ -1414,13 +1414,6 @@ export type TimeZoneName = string;
 export type Timestamp = string;
 
 /**
- * RFC 7807 unauthorized response
- */
-export type UnauthorizedProblem = {
-    body: ProblemDetails;
-};
-
-/**
  * Page number (1-based)
  */
 export type PageQueryPage = number;
@@ -1429,6 +1422,156 @@ export type PageQueryPage = number;
  * Page size
  */
 export type PageQueryPageSize = number;
+
+/**
+ * Unique identifier
+ */
+export type SiteApiTokenResourceKeyId = EntityId;
+
+/**
+ * URL-safe unique slug; the route key for nested workspace resources
+ */
+export type SiteApiTokenResourceKeySlug = string;
+
+/**
+ * URL-safe unique slug; the route key for nested workspace resources
+ */
+export type SiteApiTokenResourceParentKey = string;
+
+/**
+ * Unique identifier
+ */
+export type SiteAutomationResourceKeyId = EntityId;
+
+/**
+ * URL-safe unique slug; the route key for nested workspace resources
+ */
+export type SiteAutomationResourceKeySlug = string;
+
+/**
+ * URL-safe unique slug; the route key for nested workspace resources
+ */
+export type SiteAutomationResourceParentKey = string;
+
+/**
+ * Unique identifier
+ */
+export type SiteBroadcastResourceKeyId = EntityId;
+
+/**
+ * URL-safe unique slug; the route key for nested workspace resources
+ */
+export type SiteBroadcastResourceKeySlug = string;
+
+/**
+ * URL-safe unique slug; the route key for nested workspace resources
+ */
+export type SiteBroadcastResourceParentKey = string;
+
+/**
+ * Unique identifier
+ */
+export type SiteContactResourceKeyId = EntityId;
+
+/**
+ * URL-safe unique slug; the route key for nested workspace resources
+ */
+export type SiteContactResourceKeySlug = string;
+
+/**
+ * URL-safe unique slug; the route key for nested workspace resources
+ */
+export type SiteContactResourceParentKey = string;
+
+/**
+ * URL-safe unique slug; the route key for nested workspace resources
+ */
+export type SiteCustomFieldResourceParentKey = string;
+
+/**
+ * Unique identifier
+ */
+export type SiteEmailTemplateResourceKeyId = EntityId;
+
+/**
+ * URL-safe unique slug; the route key for nested workspace resources
+ */
+export type SiteEmailTemplateResourceKeySlug = string;
+
+/**
+ * URL-safe unique slug; the route key for nested workspace resources
+ */
+export type SiteEmailTemplateResourceParentKey = string;
+
+/**
+ * URL-safe unique slug; the route key for nested workspace resources
+ */
+export type SiteEventResourceParentKey = string;
+
+/**
+ * Unique identifier
+ */
+export type SiteIntegrationResourceKeyId = EntityId;
+
+/**
+ * URL-safe unique slug; the route key for nested workspace resources
+ */
+export type SiteIntegrationResourceKeySlug = string;
+
+/**
+ * URL-safe unique slug; the route key for nested workspace resources
+ */
+export type SiteIntegrationResourceParentKey = string;
+
+/**
+ * Unique identifier
+ */
+export type SiteSegmentResourceKeyId = EntityId;
+
+/**
+ * URL-safe unique slug; the route key for nested workspace resources
+ */
+export type SiteSegmentResourceKeySlug = string;
+
+/**
+ * URL-safe unique slug; the route key for nested workspace resources
+ */
+export type SiteSegmentResourceParentKey = string;
+
+/**
+ * Unique identifier
+ */
+export type SiteSuppressionResourceKeyId = EntityId;
+
+/**
+ * URL-safe unique slug; the route key for nested workspace resources
+ */
+export type SiteSuppressionResourceKeySlug = string;
+
+/**
+ * URL-safe unique slug; the route key for nested workspace resources
+ */
+export type SiteSuppressionResourceParentKey = string;
+
+/**
+ * URL-safe unique slug; the route key for nested workspace resources
+ */
+export type SiteTransactionalEmailResourceParentKey = string;
+
+/**
+ * Unique identifier
+ */
+export type SiteWebhookEndpointResourceKeyId = EntityId;
+
+/**
+ * URL-safe unique slug; the route key for nested workspace resources
+ */
+export type SiteWebhookEndpointResourceKeySlug = string;
+
+/**
+ * URL-safe unique slug; the route key for nested workspace resources
+ */
+export type SiteWebhookEndpointResourceParentKey = string;
 
 export type SiteAuthConfirmEmailChangeData = {
     body: SiteConfirmEmailChangeInput;
@@ -1665,10 +1808,57 @@ export type SiteUserResendVerificationResponses = {
     202: unknown;
 };
 
+export type SiteWorkspacesListData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/workspaces';
+};
+
+export type SiteWorkspacesListResponses = {
+    /**
+     * The request has succeeded.
+     */
+    200: Array<SiteWorkspaceResource>;
+};
+
+export type SiteWorkspacesListResponse = SiteWorkspacesListResponses[keyof SiteWorkspacesListResponses];
+
+export type SiteWorkspacesUpdateData = {
+    body: SiteUpdateWorkspaceInput;
+    path: {
+        slug: string;
+    };
+    query?: never;
+    url: '/workspaces/{slug}';
+};
+
+export type SiteWorkspacesUpdateErrors = {
+    /**
+     * RFC 7807 not found response
+     */
+    404: ProblemDetails;
+    /**
+     * RFC 7807 validation response
+     */
+    422: ProblemDetails;
+};
+
+export type SiteWorkspacesUpdateError = SiteWorkspacesUpdateErrors[keyof SiteWorkspacesUpdateErrors];
+
+export type SiteWorkspacesUpdateResponses = {
+    /**
+     * The request has succeeded.
+     */
+    200: SiteWorkspaceResource;
+};
+
+export type SiteWorkspacesUpdateResponse = SiteWorkspacesUpdateResponses[keyof SiteWorkspacesUpdateResponses];
+
 export type SiteAnalyticsOverviewData = {
     body?: never;
     path: {
-        workspaceSlug: string;
+        slug: string;
     };
     query?: {
         /**
@@ -1676,7 +1866,7 @@ export type SiteAnalyticsOverviewData = {
          */
         range?: SiteAnalyticsRange;
     };
-    url: '/w/{workspaceSlug}/analytics/overview';
+    url: '/workspaces/{slug}/analytics/overview';
 };
 
 export type SiteAnalyticsOverviewErrors = {
@@ -1700,7 +1890,10 @@ export type SiteAnalyticsOverviewResponse = SiteAnalyticsOverviewResponses[keyof
 export type SiteAutomationsListData = {
     body?: never;
     path: {
-        workspaceSlug: string;
+        /**
+         * URL-safe unique slug; the route key for nested workspace resources
+         */
+        slug: string;
     };
     query?: {
         /**
@@ -1712,7 +1905,7 @@ export type SiteAutomationsListData = {
          */
         pageSize?: number;
     };
-    url: '/w/{workspaceSlug}/automations';
+    url: '/workspaces/{slug}/automations';
 };
 
 export type SiteAutomationsListErrors = {
@@ -1765,10 +1958,13 @@ export type SiteAutomationsListResponse = SiteAutomationsListResponses[keyof Sit
 export type SiteAutomationsCreateData = {
     body: SiteCreateAutomationInput;
     path: {
-        workspaceSlug: string;
+        /**
+         * URL-safe unique slug; the route key for nested workspace resources
+         */
+        slug: string;
     };
     query?: never;
-    url: '/w/{workspaceSlug}/automations';
+    url: '/workspaces/{slug}/automations';
 };
 
 export type SiteAutomationsCreateErrors = {
@@ -1796,11 +1992,17 @@ export type SiteAutomationsCreateResponse = SiteAutomationsCreateResponses[keyof
 export type SiteAutomationsDeleteData = {
     body?: never;
     path: {
-        workspaceSlug: string;
+        /**
+         * URL-safe unique slug; the route key for nested workspace resources
+         */
+        slug: string;
+        /**
+         * Unique identifier
+         */
         id: EntityId;
     };
     query?: never;
-    url: '/w/{workspaceSlug}/automations/{id}';
+    url: '/workspaces/{slug}/automations/{id}';
 };
 
 export type SiteAutomationsDeleteErrors = {
@@ -1828,11 +2030,17 @@ export type SiteAutomationsDeleteResponse = SiteAutomationsDeleteResponses[keyof
 export type SiteAutomationsGetData = {
     body?: never;
     path: {
-        workspaceSlug: string;
+        /**
+         * URL-safe unique slug; the route key for nested workspace resources
+         */
+        slug: string;
+        /**
+         * Unique identifier
+         */
         id: EntityId;
     };
     query?: never;
-    url: '/w/{workspaceSlug}/automations/{id}';
+    url: '/workspaces/{slug}/automations/{id}';
 };
 
 export type SiteAutomationsGetErrors = {
@@ -1860,11 +2068,17 @@ export type SiteAutomationsGetResponse = SiteAutomationsGetResponses[keyof SiteA
 export type SiteAutomationsUpdateData = {
     body: SiteUpdateAutomationInput;
     path: {
-        workspaceSlug: string;
+        /**
+         * URL-safe unique slug; the route key for nested workspace resources
+         */
+        slug: string;
+        /**
+         * Unique identifier
+         */
         id: EntityId;
     };
     query?: never;
-    url: '/w/{workspaceSlug}/automations/{id}';
+    url: '/workspaces/{slug}/automations/{id}';
 };
 
 export type SiteAutomationsUpdateErrors = {
@@ -1896,11 +2110,17 @@ export type SiteAutomationsUpdateResponse = SiteAutomationsUpdateResponses[keyof
 export type SiteAutomationsActivateData = {
     body?: never;
     path: {
-        workspaceSlug: string;
+        /**
+         * URL-safe unique slug; the route key for nested workspace resources
+         */
+        slug: string;
+        /**
+         * Unique identifier
+         */
         id: EntityId;
     };
     query?: never;
-    url: '/w/{workspaceSlug}/automations/{id}/activate';
+    url: '/workspaces/{slug}/automations/{id}/activate';
 };
 
 export type SiteAutomationsActivateErrors = {
@@ -1932,11 +2152,17 @@ export type SiteAutomationsActivateResponse = SiteAutomationsActivateResponses[k
 export type SiteAutomationsDeactivateData = {
     body?: never;
     path: {
-        workspaceSlug: string;
+        /**
+         * URL-safe unique slug; the route key for nested workspace resources
+         */
+        slug: string;
+        /**
+         * Unique identifier
+         */
         id: EntityId;
     };
     query?: never;
-    url: '/w/{workspaceSlug}/automations/{id}/deactivate';
+    url: '/workspaces/{slug}/automations/{id}/deactivate';
 };
 
 export type SiteAutomationsDeactivateErrors = {
@@ -1964,7 +2190,10 @@ export type SiteAutomationsDeactivateResponse = SiteAutomationsDeactivateRespons
 export type SiteBroadcastsListData = {
     body?: never;
     path: {
-        workspaceSlug: string;
+        /**
+         * URL-safe unique slug; the route key for nested workspace resources
+         */
+        slug: string;
     };
     query?: {
         /**
@@ -1976,7 +2205,7 @@ export type SiteBroadcastsListData = {
          */
         pageSize?: number;
     };
-    url: '/w/{workspaceSlug}/broadcasts';
+    url: '/workspaces/{slug}/broadcasts';
 };
 
 export type SiteBroadcastsListErrors = {
@@ -2029,10 +2258,13 @@ export type SiteBroadcastsListResponse = SiteBroadcastsListResponses[keyof SiteB
 export type SiteBroadcastsCreateData = {
     body: SiteCreateBroadcastInput;
     path: {
-        workspaceSlug: string;
+        /**
+         * URL-safe unique slug; the route key for nested workspace resources
+         */
+        slug: string;
     };
     query?: never;
-    url: '/w/{workspaceSlug}/broadcasts';
+    url: '/workspaces/{slug}/broadcasts';
 };
 
 export type SiteBroadcastsCreateErrors = {
@@ -2060,11 +2292,17 @@ export type SiteBroadcastsCreateResponse = SiteBroadcastsCreateResponses[keyof S
 export type SiteBroadcastsDeleteData = {
     body?: never;
     path: {
-        workspaceSlug: string;
+        /**
+         * URL-safe unique slug; the route key for nested workspace resources
+         */
+        slug: string;
+        /**
+         * Unique identifier
+         */
         id: EntityId;
     };
     query?: never;
-    url: '/w/{workspaceSlug}/broadcasts/{id}';
+    url: '/workspaces/{slug}/broadcasts/{id}';
 };
 
 export type SiteBroadcastsDeleteErrors = {
@@ -2092,11 +2330,17 @@ export type SiteBroadcastsDeleteResponse = SiteBroadcastsDeleteResponses[keyof S
 export type SiteBroadcastsGetData = {
     body?: never;
     path: {
-        workspaceSlug: string;
+        /**
+         * URL-safe unique slug; the route key for nested workspace resources
+         */
+        slug: string;
+        /**
+         * Unique identifier
+         */
         id: EntityId;
     };
     query?: never;
-    url: '/w/{workspaceSlug}/broadcasts/{id}';
+    url: '/workspaces/{slug}/broadcasts/{id}';
 };
 
 export type SiteBroadcastsGetErrors = {
@@ -2124,11 +2368,17 @@ export type SiteBroadcastsGetResponse = SiteBroadcastsGetResponses[keyof SiteBro
 export type SiteBroadcastsUpdateData = {
     body: SiteUpdateBroadcastInput;
     path: {
-        workspaceSlug: string;
+        /**
+         * URL-safe unique slug; the route key for nested workspace resources
+         */
+        slug: string;
+        /**
+         * Unique identifier
+         */
         id: EntityId;
     };
     query?: never;
-    url: '/w/{workspaceSlug}/broadcasts/{id}';
+    url: '/workspaces/{slug}/broadcasts/{id}';
 };
 
 export type SiteBroadcastsUpdateErrors = {
@@ -2160,11 +2410,17 @@ export type SiteBroadcastsUpdateResponse = SiteBroadcastsUpdateResponses[keyof S
 export type SiteBroadcastsScheduleData = {
     body: SiteScheduleBroadcastInput;
     path: {
-        workspaceSlug: string;
+        /**
+         * URL-safe unique slug; the route key for nested workspace resources
+         */
+        slug: string;
+        /**
+         * Unique identifier
+         */
         id: EntityId;
     };
     query?: never;
-    url: '/w/{workspaceSlug}/broadcasts/{id}/schedule';
+    url: '/workspaces/{slug}/broadcasts/{id}/schedule';
 };
 
 export type SiteBroadcastsScheduleErrors = {
@@ -2196,11 +2452,17 @@ export type SiteBroadcastsScheduleResponse = SiteBroadcastsScheduleResponses[key
 export type SiteBroadcastsSendData = {
     body?: never;
     path: {
-        workspaceSlug: string;
+        /**
+         * URL-safe unique slug; the route key for nested workspace resources
+         */
+        slug: string;
+        /**
+         * Unique identifier
+         */
         id: EntityId;
     };
     query?: never;
-    url: '/w/{workspaceSlug}/broadcasts/{id}/send';
+    url: '/workspaces/{slug}/broadcasts/{id}/send';
 };
 
 export type SiteBroadcastsSendErrors = {
@@ -2232,11 +2494,17 @@ export type SiteBroadcastsSendResponse = SiteBroadcastsSendResponses[keyof SiteB
 export type SiteBroadcastsTestSendData = {
     body: SiteTestSendBroadcastInput;
     path: {
-        workspaceSlug: string;
+        /**
+         * URL-safe unique slug; the route key for nested workspace resources
+         */
+        slug: string;
+        /**
+         * Unique identifier
+         */
         id: EntityId;
     };
     query?: never;
-    url: '/w/{workspaceSlug}/broadcasts/{id}/test';
+    url: '/workspaces/{slug}/broadcasts/{id}/test-send';
 };
 
 export type SiteBroadcastsTestSendErrors = {
@@ -2268,7 +2536,10 @@ export type SiteBroadcastsTestSendResponse = SiteBroadcastsTestSendResponses[key
 export type SiteContactsListData = {
     body?: never;
     path: {
-        workspaceSlug: string;
+        /**
+         * URL-safe unique slug; the route key for nested workspace resources
+         */
+        slug: string;
     };
     query?: {
         /**
@@ -2280,7 +2551,7 @@ export type SiteContactsListData = {
          */
         pageSize?: number;
     };
-    url: '/w/{workspaceSlug}/contacts';
+    url: '/workspaces/{slug}/contacts';
 };
 
 export type SiteContactsListErrors = {
@@ -2333,10 +2604,13 @@ export type SiteContactsListResponse = SiteContactsListResponses[keyof SiteConta
 export type SiteContactsCreateData = {
     body: SiteCreateContactInput;
     path: {
-        workspaceSlug: string;
+        /**
+         * URL-safe unique slug; the route key for nested workspace resources
+         */
+        slug: string;
     };
     query?: never;
-    url: '/w/{workspaceSlug}/contacts';
+    url: '/workspaces/{slug}/contacts';
 };
 
 export type SiteContactsCreateErrors = {
@@ -2368,11 +2642,17 @@ export type SiteContactsCreateResponse = SiteContactsCreateResponses[keyof SiteC
 export type SiteContactsDeleteData = {
     body?: never;
     path: {
-        workspaceSlug: string;
+        /**
+         * URL-safe unique slug; the route key for nested workspace resources
+         */
+        slug: string;
+        /**
+         * Unique identifier
+         */
         id: EntityId;
     };
     query?: never;
-    url: '/w/{workspaceSlug}/contacts/{id}';
+    url: '/workspaces/{slug}/contacts/{id}';
 };
 
 export type SiteContactsDeleteErrors = {
@@ -2400,11 +2680,17 @@ export type SiteContactsDeleteResponse = SiteContactsDeleteResponses[keyof SiteC
 export type SiteContactsGetData = {
     body?: never;
     path: {
-        workspaceSlug: string;
+        /**
+         * URL-safe unique slug; the route key for nested workspace resources
+         */
+        slug: string;
+        /**
+         * Unique identifier
+         */
         id: EntityId;
     };
     query?: never;
-    url: '/w/{workspaceSlug}/contacts/{id}';
+    url: '/workspaces/{slug}/contacts/{id}';
 };
 
 export type SiteContactsGetErrors = {
@@ -2432,11 +2718,17 @@ export type SiteContactsGetResponse = SiteContactsGetResponses[keyof SiteContact
 export type SiteContactsUpdateData = {
     body: SiteUpdateContactInput;
     path: {
-        workspaceSlug: string;
+        /**
+         * URL-safe unique slug; the route key for nested workspace resources
+         */
+        slug: string;
+        /**
+         * Unique identifier
+         */
         id: EntityId;
     };
     query?: never;
-    url: '/w/{workspaceSlug}/contacts/{id}';
+    url: '/workspaces/{slug}/contacts/{id}';
 };
 
 export type SiteContactsUpdateErrors = {
@@ -2472,10 +2764,13 @@ export type SiteContactsUpdateResponse = SiteContactsUpdateResponses[keyof SiteC
 export type SiteCustomFieldsListData = {
     body?: never;
     path: {
-        workspaceSlug: string;
+        /**
+         * URL-safe unique slug; the route key for nested workspace resources
+         */
+        slug: string;
     };
     query?: never;
-    url: '/w/{workspaceSlug}/custom-fields';
+    url: '/workspaces/{slug}/custom-fields';
 };
 
 export type SiteCustomFieldsListErrors = {
@@ -2524,7 +2819,10 @@ export type SiteCustomFieldsListResponse = SiteCustomFieldsListResponses[keyof S
 export type SiteEventsListData = {
     body?: never;
     path: {
-        workspaceSlug: string;
+        /**
+         * URL-safe unique slug; the route key for nested workspace resources
+         */
+        slug: string;
     };
     query?: {
         /**
@@ -2548,7 +2846,7 @@ export type SiteEventsListData = {
          */
         email?: string;
     };
-    url: '/w/{workspaceSlug}/events';
+    url: '/workspaces/{slug}/events';
 };
 
 export type SiteEventsListErrors = {
@@ -2593,10 +2891,13 @@ export type SiteEventsListResponse = SiteEventsListResponses[keyof SiteEventsLis
 export type SiteEventsActionsData = {
     body?: never;
     path: {
-        workspaceSlug: string;
+        /**
+         * URL-safe unique slug; the route key for nested workspace resources
+         */
+        slug: string;
     };
     query?: never;
-    url: '/w/{workspaceSlug}/events/actions';
+    url: '/workspaces/{slug}/events/actions';
 };
 
 export type SiteEventsActionsErrors = {
@@ -2620,10 +2921,13 @@ export type SiteEventsActionsResponse = SiteEventsActionsResponses[keyof SiteEve
 export type SiteIntegrationsListData = {
     body?: never;
     path: {
-        workspaceSlug: string;
+        /**
+         * URL-safe unique slug; the route key for nested workspace resources
+         */
+        slug: string;
     };
     query?: never;
-    url: '/w/{workspaceSlug}/integrations';
+    url: '/workspaces/{slug}/integrations';
 };
 
 export type SiteIntegrationsListErrors = {
@@ -2647,10 +2951,13 @@ export type SiteIntegrationsListResponse = SiteIntegrationsListResponses[keyof S
 export type SiteIntegrationsCreateData = {
     body: SiteCreateIntegrationInput;
     path: {
-        workspaceSlug: string;
+        /**
+         * URL-safe unique slug; the route key for nested workspace resources
+         */
+        slug: string;
     };
     query?: never;
-    url: '/w/{workspaceSlug}/integrations';
+    url: '/workspaces/{slug}/integrations';
 };
 
 export type SiteIntegrationsCreateErrors = {
@@ -2682,11 +2989,17 @@ export type SiteIntegrationsCreateResponse = SiteIntegrationsCreateResponses[key
 export type SiteIntegrationsDeleteData = {
     body?: never;
     path: {
-        workspaceSlug: string;
+        /**
+         * URL-safe unique slug; the route key for nested workspace resources
+         */
+        slug: string;
+        /**
+         * Unique identifier
+         */
         id: EntityId;
     };
     query?: never;
-    url: '/w/{workspaceSlug}/integrations/{id}';
+    url: '/workspaces/{slug}/integrations/{id}';
 };
 
 export type SiteIntegrationsDeleteErrors = {
@@ -2714,11 +3027,17 @@ export type SiteIntegrationsDeleteResponse = SiteIntegrationsDeleteResponses[key
 export type SiteIntegrationsGetData = {
     body?: never;
     path: {
-        workspaceSlug: string;
+        /**
+         * URL-safe unique slug; the route key for nested workspace resources
+         */
+        slug: string;
+        /**
+         * Unique identifier
+         */
         id: EntityId;
     };
     query?: never;
-    url: '/w/{workspaceSlug}/integrations/{id}';
+    url: '/workspaces/{slug}/integrations/{id}';
 };
 
 export type SiteIntegrationsGetErrors = {
@@ -2746,11 +3065,17 @@ export type SiteIntegrationsGetResponse = SiteIntegrationsGetResponses[keyof Sit
 export type SiteIntegrationsUpdateData = {
     body: SiteUpdateIntegrationInput;
     path: {
-        workspaceSlug: string;
+        /**
+         * URL-safe unique slug; the route key for nested workspace resources
+         */
+        slug: string;
+        /**
+         * Unique identifier
+         */
         id: EntityId;
     };
     query?: never;
-    url: '/w/{workspaceSlug}/integrations/{id}';
+    url: '/workspaces/{slug}/integrations/{id}';
 };
 
 export type SiteIntegrationsUpdateErrors = {
@@ -2786,7 +3111,10 @@ export type SiteIntegrationsUpdateResponse = SiteIntegrationsUpdateResponses[key
 export type SiteSegmentsListData = {
     body?: never;
     path: {
-        workspaceSlug: string;
+        /**
+         * URL-safe unique slug; the route key for nested workspace resources
+         */
+        slug: string;
     };
     query?: {
         /**
@@ -2798,7 +3126,7 @@ export type SiteSegmentsListData = {
          */
         pageSize?: number;
     };
-    url: '/w/{workspaceSlug}/segments';
+    url: '/workspaces/{slug}/segments';
 };
 
 export type SiteSegmentsListErrors = {
@@ -2851,10 +3179,13 @@ export type SiteSegmentsListResponse = SiteSegmentsListResponses[keyof SiteSegme
 export type SiteSegmentsCreateData = {
     body: SiteCreateSegmentInput;
     path: {
-        workspaceSlug: string;
+        /**
+         * URL-safe unique slug; the route key for nested workspace resources
+         */
+        slug: string;
     };
     query?: never;
-    url: '/w/{workspaceSlug}/segments';
+    url: '/workspaces/{slug}/segments';
 };
 
 export type SiteSegmentsCreateErrors = {
@@ -2882,10 +3213,13 @@ export type SiteSegmentsCreateResponse = SiteSegmentsCreateResponses[keyof SiteS
 export type SiteSegmentsPreviewData = {
     body: SitePreviewSegmentInput;
     path: {
-        workspaceSlug: string;
+        /**
+         * URL-safe unique slug; the route key for nested workspace resources
+         */
+        slug: string;
     };
     query?: never;
-    url: '/w/{workspaceSlug}/segments/preview';
+    url: '/workspaces/{slug}/segments/preview';
 };
 
 export type SiteSegmentsPreviewErrors = {
@@ -2917,11 +3251,17 @@ export type SiteSegmentsPreviewResponse = SiteSegmentsPreviewResponses[keyof Sit
 export type SiteSegmentsDeleteData = {
     body?: never;
     path: {
-        workspaceSlug: string;
+        /**
+         * URL-safe unique slug; the route key for nested workspace resources
+         */
+        slug: string;
+        /**
+         * Unique identifier
+         */
         id: EntityId;
     };
     query?: never;
-    url: '/w/{workspaceSlug}/segments/{id}';
+    url: '/workspaces/{slug}/segments/{id}';
 };
 
 export type SiteSegmentsDeleteErrors = {
@@ -2949,11 +3289,17 @@ export type SiteSegmentsDeleteResponse = SiteSegmentsDeleteResponses[keyof SiteS
 export type SiteSegmentsGetData = {
     body?: never;
     path: {
-        workspaceSlug: string;
+        /**
+         * URL-safe unique slug; the route key for nested workspace resources
+         */
+        slug: string;
+        /**
+         * Unique identifier
+         */
         id: EntityId;
     };
     query?: never;
-    url: '/w/{workspaceSlug}/segments/{id}';
+    url: '/workspaces/{slug}/segments/{id}';
 };
 
 export type SiteSegmentsGetErrors = {
@@ -2981,11 +3327,17 @@ export type SiteSegmentsGetResponse = SiteSegmentsGetResponses[keyof SiteSegment
 export type SiteSegmentsUpdateData = {
     body: SiteUpdateSegmentInput;
     path: {
-        workspaceSlug: string;
+        /**
+         * URL-safe unique slug; the route key for nested workspace resources
+         */
+        slug: string;
+        /**
+         * Unique identifier
+         */
         id: EntityId;
     };
     query?: never;
-    url: '/w/{workspaceSlug}/segments/{id}';
+    url: '/workspaces/{slug}/segments/{id}';
 };
 
 export type SiteSegmentsUpdateErrors = {
@@ -3017,7 +3369,10 @@ export type SiteSegmentsUpdateResponse = SiteSegmentsUpdateResponses[keyof SiteS
 export type SiteSuppressionsListData = {
     body?: never;
     path: {
-        workspaceSlug: string;
+        /**
+         * URL-safe unique slug; the route key for nested workspace resources
+         */
+        slug: string;
     };
     query?: {
         /**
@@ -3029,7 +3384,7 @@ export type SiteSuppressionsListData = {
          */
         pageSize?: number;
     };
-    url: '/w/{workspaceSlug}/suppressions';
+    url: '/workspaces/{slug}/suppressions';
 };
 
 export type SiteSuppressionsListErrors = {
@@ -3082,10 +3437,13 @@ export type SiteSuppressionsListResponse = SiteSuppressionsListResponses[keyof S
 export type SiteSuppressionsCreateData = {
     body: SiteCreateSuppressionInput;
     path: {
-        workspaceSlug: string;
+        /**
+         * URL-safe unique slug; the route key for nested workspace resources
+         */
+        slug: string;
     };
     query?: never;
-    url: '/w/{workspaceSlug}/suppressions';
+    url: '/workspaces/{slug}/suppressions';
 };
 
 export type SiteSuppressionsCreateErrors = {
@@ -3113,11 +3471,17 @@ export type SiteSuppressionsCreateResponse = SiteSuppressionsCreateResponses[key
 export type SiteSuppressionsDeleteData = {
     body?: never;
     path: {
-        workspaceSlug: string;
+        /**
+         * URL-safe unique slug; the route key for nested workspace resources
+         */
+        slug: string;
+        /**
+         * Unique identifier
+         */
         id: EntityId;
     };
     query?: never;
-    url: '/w/{workspaceSlug}/suppressions/{id}';
+    url: '/workspaces/{slug}/suppressions/{id}';
 };
 
 export type SiteSuppressionsDeleteErrors = {
@@ -3145,7 +3509,10 @@ export type SiteSuppressionsDeleteResponse = SiteSuppressionsDeleteResponses[key
 export type SiteTemplatesListData = {
     body?: never;
     path: {
-        workspaceSlug: string;
+        /**
+         * URL-safe unique slug; the route key for nested workspace resources
+         */
+        slug: string;
     };
     query?: {
         /**
@@ -3157,7 +3524,7 @@ export type SiteTemplatesListData = {
          */
         pageSize?: number;
     };
-    url: '/w/{workspaceSlug}/templates';
+    url: '/workspaces/{slug}/templates';
 };
 
 export type SiteTemplatesListErrors = {
@@ -3210,10 +3577,13 @@ export type SiteTemplatesListResponse = SiteTemplatesListResponses[keyof SiteTem
 export type SiteTemplatesCreateData = {
     body: SiteCreateEmailTemplateInput;
     path: {
-        workspaceSlug: string;
+        /**
+         * URL-safe unique slug; the route key for nested workspace resources
+         */
+        slug: string;
     };
     query?: never;
-    url: '/w/{workspaceSlug}/templates';
+    url: '/workspaces/{slug}/templates';
 };
 
 export type SiteTemplatesCreateErrors = {
@@ -3241,11 +3611,17 @@ export type SiteTemplatesCreateResponse = SiteTemplatesCreateResponses[keyof Sit
 export type SiteTemplatesDeleteData = {
     body?: never;
     path: {
-        workspaceSlug: string;
+        /**
+         * URL-safe unique slug; the route key for nested workspace resources
+         */
+        slug: string;
+        /**
+         * Unique identifier
+         */
         id: EntityId;
     };
     query?: never;
-    url: '/w/{workspaceSlug}/templates/{id}';
+    url: '/workspaces/{slug}/templates/{id}';
 };
 
 export type SiteTemplatesDeleteErrors = {
@@ -3273,11 +3649,17 @@ export type SiteTemplatesDeleteResponse = SiteTemplatesDeleteResponses[keyof Sit
 export type SiteTemplatesGetData = {
     body?: never;
     path: {
-        workspaceSlug: string;
+        /**
+         * URL-safe unique slug; the route key for nested workspace resources
+         */
+        slug: string;
+        /**
+         * Unique identifier
+         */
         id: EntityId;
     };
     query?: never;
-    url: '/w/{workspaceSlug}/templates/{id}';
+    url: '/workspaces/{slug}/templates/{id}';
 };
 
 export type SiteTemplatesGetErrors = {
@@ -3305,11 +3687,17 @@ export type SiteTemplatesGetResponse = SiteTemplatesGetResponses[keyof SiteTempl
 export type SiteTemplatesUpdateData = {
     body: SiteUpdateEmailTemplateInput;
     path: {
-        workspaceSlug: string;
+        /**
+         * URL-safe unique slug; the route key for nested workspace resources
+         */
+        slug: string;
+        /**
+         * Unique identifier
+         */
         id: EntityId;
     };
     query?: never;
-    url: '/w/{workspaceSlug}/templates/{id}';
+    url: '/workspaces/{slug}/templates/{id}';
 };
 
 export type SiteTemplatesUpdateErrors = {
@@ -3341,10 +3729,13 @@ export type SiteTemplatesUpdateResponse = SiteTemplatesUpdateResponses[keyof Sit
 export type SiteTokensListData = {
     body?: never;
     path: {
-        workspaceSlug: string;
+        /**
+         * URL-safe unique slug; the route key for nested workspace resources
+         */
+        slug: string;
     };
     query?: never;
-    url: '/w/{workspaceSlug}/tokens';
+    url: '/workspaces/{slug}/tokens';
 };
 
 export type SiteTokensListErrors = {
@@ -3368,10 +3759,13 @@ export type SiteTokensListResponse = SiteTokensListResponses[keyof SiteTokensLis
 export type SiteTokensCreateData = {
     body: SiteCreateTokenInput;
     path: {
-        workspaceSlug: string;
+        /**
+         * URL-safe unique slug; the route key for nested workspace resources
+         */
+        slug: string;
     };
     query?: never;
-    url: '/w/{workspaceSlug}/tokens';
+    url: '/workspaces/{slug}/tokens';
 };
 
 export type SiteTokensCreateErrors = {
@@ -3399,11 +3793,17 @@ export type SiteTokensCreateResponse = SiteTokensCreateResponses[keyof SiteToken
 export type SiteTokensDeleteData = {
     body?: never;
     path: {
-        workspaceSlug: string;
+        /**
+         * URL-safe unique slug; the route key for nested workspace resources
+         */
+        slug: string;
+        /**
+         * Unique identifier
+         */
         id: EntityId;
     };
     query?: never;
-    url: '/w/{workspaceSlug}/tokens/{id}';
+    url: '/workspaces/{slug}/tokens/{id}';
 };
 
 export type SiteTokensDeleteErrors = {
@@ -3431,7 +3831,10 @@ export type SiteTokensDeleteResponse = SiteTokensDeleteResponses[keyof SiteToken
 export type SiteTransactionalEmailsListData = {
     body?: never;
     path: {
-        workspaceSlug: string;
+        /**
+         * URL-safe unique slug; the route key for nested workspace resources
+         */
+        slug: string;
     };
     query?: {
         /**
@@ -3443,7 +3846,7 @@ export type SiteTransactionalEmailsListData = {
          */
         pageSize?: number;
     };
-    url: '/w/{workspaceSlug}/transactional-emails';
+    url: '/workspaces/{slug}/transactional-emails';
 };
 
 export type SiteTransactionalEmailsListErrors = {
@@ -3496,7 +3899,10 @@ export type SiteTransactionalEmailsListResponse = SiteTransactionalEmailsListRes
 export type SiteWebhooksListData = {
     body?: never;
     path: {
-        workspaceSlug: string;
+        /**
+         * URL-safe unique slug; the route key for nested workspace resources
+         */
+        slug: string;
     };
     query?: {
         /**
@@ -3508,7 +3914,7 @@ export type SiteWebhooksListData = {
          */
         pageSize?: number;
     };
-    url: '/w/{workspaceSlug}/webhooks';
+    url: '/workspaces/{slug}/webhooks';
 };
 
 export type SiteWebhooksListErrors = {
@@ -3561,10 +3967,13 @@ export type SiteWebhooksListResponse = SiteWebhooksListResponses[keyof SiteWebho
 export type SiteWebhooksCreateData = {
     body: SiteCreateWebhookEndpointInput;
     path: {
-        workspaceSlug: string;
+        /**
+         * URL-safe unique slug; the route key for nested workspace resources
+         */
+        slug: string;
     };
     query?: never;
-    url: '/w/{workspaceSlug}/webhooks';
+    url: '/workspaces/{slug}/webhooks';
 };
 
 export type SiteWebhooksCreateErrors = {
@@ -3592,11 +4001,17 @@ export type SiteWebhooksCreateResponse = SiteWebhooksCreateResponses[keyof SiteW
 export type SiteWebhooksDeleteData = {
     body?: never;
     path: {
-        workspaceSlug: string;
+        /**
+         * URL-safe unique slug; the route key for nested workspace resources
+         */
+        slug: string;
+        /**
+         * Unique identifier
+         */
         id: EntityId;
     };
     query?: never;
-    url: '/w/{workspaceSlug}/webhooks/{id}';
+    url: '/workspaces/{slug}/webhooks/{id}';
 };
 
 export type SiteWebhooksDeleteErrors = {
@@ -3624,11 +4039,17 @@ export type SiteWebhooksDeleteResponse = SiteWebhooksDeleteResponses[keyof SiteW
 export type SiteWebhooksGetData = {
     body?: never;
     path: {
-        workspaceSlug: string;
+        /**
+         * URL-safe unique slug; the route key for nested workspace resources
+         */
+        slug: string;
+        /**
+         * Unique identifier
+         */
         id: EntityId;
     };
     query?: never;
-    url: '/w/{workspaceSlug}/webhooks/{id}';
+    url: '/workspaces/{slug}/webhooks/{id}';
 };
 
 export type SiteWebhooksGetErrors = {
@@ -3656,11 +4077,17 @@ export type SiteWebhooksGetResponse = SiteWebhooksGetResponses[keyof SiteWebhook
 export type SiteWebhooksUpdateData = {
     body: SiteUpdateWebhookEndpointInput;
     path: {
-        workspaceSlug: string;
+        /**
+         * URL-safe unique slug; the route key for nested workspace resources
+         */
+        slug: string;
+        /**
+         * Unique identifier
+         */
         id: EntityId;
     };
     query?: never;
-    url: '/w/{workspaceSlug}/webhooks/{id}';
+    url: '/workspaces/{slug}/webhooks/{id}';
 };
 
 export type SiteWebhooksUpdateErrors = {
@@ -3688,50 +4115,3 @@ export type SiteWebhooksUpdateResponses = {
 };
 
 export type SiteWebhooksUpdateResponse = SiteWebhooksUpdateResponses[keyof SiteWebhooksUpdateResponses];
-
-export type SiteWorkspacesListData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/workspaces';
-};
-
-export type SiteWorkspacesListResponses = {
-    /**
-     * The request has succeeded.
-     */
-    200: Array<SiteWorkspaceResource>;
-};
-
-export type SiteWorkspacesListResponse = SiteWorkspacesListResponses[keyof SiteWorkspacesListResponses];
-
-export type SiteWorkspacesUpdateData = {
-    body: SiteUpdateWorkspaceInput;
-    path: {
-        slug: string;
-    };
-    query?: never;
-    url: '/workspaces/{slug}';
-};
-
-export type SiteWorkspacesUpdateErrors = {
-    /**
-     * RFC 7807 not found response
-     */
-    404: ProblemDetails;
-    /**
-     * RFC 7807 validation response
-     */
-    422: ProblemDetails;
-};
-
-export type SiteWorkspacesUpdateError = SiteWorkspacesUpdateErrors[keyof SiteWorkspacesUpdateErrors];
-
-export type SiteWorkspacesUpdateResponses = {
-    /**
-     * The request has succeeded.
-     */
-    200: SiteWorkspaceResource;
-};
-
-export type SiteWorkspacesUpdateResponse = SiteWorkspacesUpdateResponses[keyof SiteWorkspacesUpdateResponses];

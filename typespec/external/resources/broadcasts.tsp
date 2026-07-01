@@ -49,57 +49,10 @@ model UpdateBroadcastInput {
   status?: BroadcastStatus;
 }
 
-@route("/broadcasts")
 @tag("Broadcasts")
-namespace Broadcasts {
-  /** Create a broadcast */
-  @createsResource(BroadcastResource)
-  @post
-  op create(@body body: CreateBroadcastInput):
-    | {
-        @statusCode statusCode: 201;
-        @body body: BroadcastResource;
-      }
-    | UnauthorizedProblem
-    | UnprocessableEntityProblem;
-
-  /** List broadcasts with pagination */
-  @listsResource(BroadcastResource)
-  @get
-  op list(...PageQuery):
-    | Page<BroadcastResource>
-    | BadRequestProblem
-    | UnauthorizedProblem
-    | UnprocessableEntityProblem;
-
-  /** Get a broadcast by ID */
-  @readsResource(BroadcastResource)
-  @get
-  @autoRoute
-  op get(@path id: EntityId):
-    | BroadcastResource
-    | BadRequestProblem
-    | UnauthorizedProblem
-    | NotFoundProblem;
-
-  /** Update a broadcast */
-  @updatesResource(BroadcastResource)
-  @put
-  @autoRoute
-  op update(@path id: EntityId, @body body: UpdateBroadcastInput):
-    | BroadcastResource
-    | BadRequestProblem
-    | UnauthorizedProblem
-    | NotFoundProblem
-    | UnprocessableEntityProblem;
-
-  /** Delete a broadcast */
-  @deletesResource(BroadcastResource)
-  @delete
-  @autoRoute
-  op delete(@path id: EntityId):
-    | NoContentResponse
-    | BadRequestProblem
-    | UnauthorizedProblem
-    | NotFoundProblem;
-}
+interface Broadcasts
+  extends ExternalCrud<
+      BroadcastResource,
+      CreateBroadcastInput,
+      UpdateBroadcastInput
+    > {}

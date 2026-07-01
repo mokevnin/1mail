@@ -10,9 +10,7 @@ export function AutomationEditPage() {
   const { t } = useTranslation()
   const { slug, automationId } = automationsEditRoute.useParams()
 
-  const getQuery = useQuery(
-    siteAutomationsGetOptions({ path: { workspaceSlug: slug, id: automationId } }),
-  )
+  const getQuery = useQuery(siteAutomationsGetOptions({ path: { slug: slug, id: automationId } }))
 
   if (getQuery.isLoading) return <Loader />
 

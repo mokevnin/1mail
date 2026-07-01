@@ -28,7 +28,7 @@ export function ActivityPage() {
 
   const eventsQuery = useQuery({
     ...siteEventsListOptions({
-      path: { workspaceSlug: slug ?? '' },
+      path: { slug: slug ?? '' },
       query: {
         page,
         pageSize: PAGE_SIZE,

@@ -1,5 +1,6 @@
 using TypeSpec.Http;
 using TypeSpec.Rest;
+using TypeSpec.Rest.Resource;
 
 namespace OneMail;
 
@@ -54,6 +55,7 @@ model SiteBroadcastStats {
 /** Broadcast resource used by the site UI */
 @resource("broadcasts")
 @segment("broadcasts")
+@parentResource(SiteWorkspaceResource)
 model SiteBroadcastResource {
   /** Unique identifier */
   @key
@@ -162,76 +164,27 @@ model SiteTestSendBroadcastInput {
   email: EmailAddress;
 }
 
-@route("/w/{workspaceSlug}/broadcasts")
 @tag("Site Broadcasts")
-namespace SiteBroadcasts {
-  /** Create a broadcast from the site UI */
-  @createsResource(SiteBroadcastResource)
-  @post
-  op create(@path workspaceSlug: string, @body body: SiteCreateBroadcastInput):
-    | {
-        @statusCode statusCode: 201;
-        @body body: SiteBroadcastResource;
-      }
-    | NotFoundProblem
-    | UnprocessableEntityProblem;
-
-  /** List broadcasts for the site UI */
-  @listsResource(SiteBroadcastResource)
-  @get
-  op list(@path workspaceSlug: string, ...PageQuery):
-    | Page<SiteBroadcastResource>
-    | BadRequestProblem
-    | NotFoundProblem
-    | UnprocessableEntityProblem;
-
-  /** Get a broadcast by ID for the site UI */
-  @readsResource(SiteBroadcastResource)
-  @get
-  @route("/{id}")
-  op get(@path workspaceSlug: string, @path id: EntityId):
-    | SiteBroadcastResource
-    | BadRequestProblem
-    | NotFoundProblem;
-
-  /** Update a broadcast from the site UI */
-  @updatesResource(SiteBroadcastResource)
-  @put
-  @route("/{id}")
-  op update(
-    @path workspaceSlug: string,
-    @path id: EntityId,
-    @body body: SiteUpdateBroadcastInput,
-  ):
-    | SiteBroadcastResource
-    | BadRequestProblem
-    | NotFoundProblem
-    | UnprocessableEntityProblem;
-
-  /** Delete a broadcast from the site UI */
-  @deletesResource(SiteBroadcastResource)
-  @delete
-  @route("/{id}")
-  op delete(@path workspaceSlug: string, @path id: EntityId):
-    | NoContentResponse
-    | BadRequestProblem
-    | NotFoundProblem;
-
+interface SiteBroadcasts
+  extends WorkspaceCrud<
+      SiteBroadcastResource,
+      SiteCreateBroadcastInput,
+      SiteUpdateBroadcastInput
+    > {
   /** Send a broadcast immediately */
-  @post
-  @route("/{id}/send")
-  op send(@path workspaceSlug: string, @path id: EntityId):
+  @action("send")
+  @autoRoute
+  send(...ResourceParameters<SiteBroadcastResource>):
     | SiteBroadcastResource
     | BadRequestProblem
     | NotFoundProblem
     | UnprocessableEntityProblem;
 
   /** Schedule a broadcast to send at a future time */
-  @post
-  @route("/{id}/schedule")
-  op schedule(
-    @path workspaceSlug: string,
-    @path id: EntityId,
+  @action("schedule")
+  @autoRoute
+  schedule(
+    ...ResourceParameters<SiteBroadcastResource>,
     @body body: SiteScheduleBroadcastInput,
   ):
     | SiteBroadcastResource
@@ -240,11 +193,10 @@ namespace SiteBroadcasts {
     | UnprocessableEntityProblem;
 
   /** Send a one-off rendered preview to a single address */
-  @post
-  @route("/{id}/test")
-  op testSend(
-    @path workspaceSlug: string,
-    @path id: EntityId,
+  @action("test-send")
+  @autoRoute
+  testSend(
+    ...ResourceParameters<SiteBroadcastResource>,
     @body body: SiteTestSendBroadcastInput,
   ):
     | NoContentResponse

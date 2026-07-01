@@ -1,5 +1,6 @@
 using TypeSpec.Http;
 using TypeSpec.Rest;
+using TypeSpec.Rest.Resource;
 
 namespace OneMail;
 
@@ -12,6 +13,7 @@ enum SiteSegmentType {
 /** Segment resource used by the site UI */
 @resource("segments")
 @segment("segments")
+@parentResource(SiteWorkspaceResource)
 model SiteSegmentResource {
   /** Unique identifier */
   @key
@@ -69,65 +71,20 @@ model SitePreviewSegmentResult {
   count: int32;
 }
 
-@route("/w/{workspaceSlug}/segments")
 @tag("Site Segments")
-namespace SiteSegments {
-  /** Create a segment from the site UI */
-  @createsResource(SiteSegmentResource)
-  @post
-  op create(@path workspaceSlug: string, @body body: SiteCreateSegmentInput):
-    | {
-        @statusCode statusCode: 201;
-        @body body: SiteSegmentResource;
-      }
-    | NotFoundProblem
-    | UnprocessableEntityProblem;
-
-  /** List segments for the site UI */
-  @listsResource(SiteSegmentResource)
-  @get
-  op list(@path workspaceSlug: string, ...PageQuery):
-    | Page<SiteSegmentResource>
-    | BadRequestProblem
-    | NotFoundProblem
-    | UnprocessableEntityProblem;
-
-  /** Get a segment by ID for the site UI */
-  @readsResource(SiteSegmentResource)
-  @get
-  @route("/{id}")
-  op get(@path workspaceSlug: string, @path id: EntityId):
-    | SiteSegmentResource
-    | BadRequestProblem
-    | NotFoundProblem;
-
-  /** Update a segment from the site UI */
-  @updatesResource(SiteSegmentResource)
-  @put
-  @route("/{id}")
-  op update(
-    @path workspaceSlug: string,
-    @path id: EntityId,
-    @body body: SiteUpdateSegmentInput,
-  ):
-    | SiteSegmentResource
-    | BadRequestProblem
-    | NotFoundProblem
-    | UnprocessableEntityProblem;
-
-  /** Delete a segment from the site UI */
-  @deletesResource(SiteSegmentResource)
-  @delete
-  @route("/{id}")
-  op delete(@path workspaceSlug: string, @path id: EntityId):
-    | NoContentResponse
-    | BadRequestProblem
-    | NotFoundProblem;
-
+interface SiteSegments
+  extends WorkspaceCrud<
+      SiteSegmentResource,
+      SiteCreateSegmentInput,
+      SiteUpdateSegmentInput
+    > {
   /** Preview how many active contacts match a rule definition */
-  @post
-  @route("/preview")
-  op preview(@path workspaceSlug: string, @body body: SitePreviewSegmentInput):
+  @collectionAction(SiteSegmentResource, "preview")
+  @autoRoute
+  preview(
+    ...ResourceCollectionParameters<SiteSegmentResource>,
+    @body body: SitePreviewSegmentInput,
+  ):
     | SitePreviewSegmentResult
     | BadRequestProblem
     | NotFoundProblem

@@ -64,10 +64,10 @@ export function SegmentRuleBuilder({ slug, value, onChange }: SegmentRuleBuilder
 
   // The workspace's distinct event actions become behavioral fields
   // ("event:<action>") that compile to an EXISTS against the events log.
-  const actionsQuery = useQuery(siteEventsActionsOptions({ path: { workspaceSlug: slug } }))
+  const actionsQuery = useQuery(siteEventsActionsOptions({ path: { slug: slug } }))
   // The typed Custom field catalogue (ADR 0006) becomes targetable fields
   // ("custom:<key>") alongside the core fields — one governed attribute list.
-  const customFieldsQuery = useQuery(siteCustomFieldsListOptions({ path: { workspaceSlug: slug } }))
+  const customFieldsQuery = useQuery(siteCustomFieldsListOptions({ path: { slug: slug } }))
   const fields = useMemo<Field[]>(() => {
     const customFields = (customFieldsQuery.data?.items ?? []).map<Field>((f) => ({
       name: `custom:${f.key}`,
@@ -99,9 +99,7 @@ export function SegmentRuleBuilder({ slug, value, onChange }: SegmentRuleBuilder
           variant="light"
           size="compact-sm"
           loading={preview.isPending}
-          onClick={() =>
-            preview.mutate({ path: { workspaceSlug: slug }, body: { definition: value } })
-          }
+          onClick={() => preview.mutate({ path: { slug: slug }, body: { definition: value } })}
         >
           {t(($) => $.segments.previewButton)}
         </Button>

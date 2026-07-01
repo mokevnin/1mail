@@ -66,7 +66,7 @@ export const indexRoute = createRoute({
 // Workspace-scoped layout: authenticates and verifies the slug is one the user owns.
 export const workspaceRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: '/w/$slug',
+  path: '/workspaces/$slug',
   beforeLoad: async ({ params }) => {
     const workspaces = await fetchWorkspaces()
     const current = workspaces.find((w) => w.slug === params.slug)

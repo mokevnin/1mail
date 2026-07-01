@@ -45,17 +45,17 @@ var (
 	rn14AllowedHeaders = map[string]string{
 		"POST": "Authorization,Content-Type,Idempotency-Key",
 	}
+	rn17AllowedHeaders = map[string]string{
+		"POST": "Authorization,Content-Type",
+	}
 	rn16AllowedHeaders = map[string]string{
 		"GET": "Authorization",
 	}
 	rn18AllowedHeaders = map[string]string{
-		"POST": "Authorization,Content-Type",
-	}
-	rn19AllowedHeaders = map[string]string{
 		"GET":  "Authorization",
 		"POST": "Authorization,Content-Type",
 	}
-	rn21AllowedHeaders = map[string]string{
+	rn20AllowedHeaders = map[string]string{
 		"DELETE": "Authorization",
 		"GET":    "Authorization",
 		"PUT":    "Authorization,Content-Type",
@@ -428,21 +428,33 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 						return
 					}
 
-				case 'v': // Prefix: "vent"
+				case 'v': // Prefix: "vents"
 
-					if l := len("vent"); len(elem) >= l && elem[0:l] == "vent" {
+					if l := len("vents"); len(elem) >= l && elem[0:l] == "vents" {
 						elem = elem[l:]
 					} else {
 						break
 					}
 
 					if len(elem) == 0 {
-						break
+						switch r.Method {
+						case "POST":
+							s.handleEventsCreateRequest([0]string{}, elemIsEscaped, w, r)
+						default:
+							s.notAllowed(w, r, notAllowedParams{
+								allowedMethods: "POST",
+								allowedHeaders: rn17AllowedHeaders,
+								acceptPost:     "application/json",
+								acceptPatch:    "",
+							})
+						}
+
+						return
 					}
 					switch elem[0] {
-					case '-': // Prefix: "-actions"
+					case '/': // Prefix: "/actions"
 
-						if l := len("-actions"); len(elem) >= l && elem[0:l] == "-actions" {
+						if l := len("/actions"); len(elem) >= l && elem[0:l] == "/actions" {
 							elem = elem[l:]
 						} else {
 							break
@@ -458,31 +470,6 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 									allowedMethods: "GET",
 									allowedHeaders: rn16AllowedHeaders,
 									acceptPost:     "",
-									acceptPatch:    "",
-								})
-							}
-
-							return
-						}
-
-					case 's': // Prefix: "s"
-
-						if l := len("s"); len(elem) >= l && elem[0:l] == "s" {
-							elem = elem[l:]
-						} else {
-							break
-						}
-
-						if len(elem) == 0 {
-							// Leaf node.
-							switch r.Method {
-							case "POST":
-								s.handleEventsCreateRequest([0]string{}, elemIsEscaped, w, r)
-							default:
-								s.notAllowed(w, r, notAllowedParams{
-									allowedMethods: "POST",
-									allowedHeaders: rn18AllowedHeaders,
-									acceptPost:     "application/json",
 									acceptPatch:    "",
 								})
 							}
@@ -511,7 +498,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 					default:
 						s.notAllowed(w, r, notAllowedParams{
 							allowedMethods: "GET,POST",
-							allowedHeaders: rn19AllowedHeaders,
+							allowedHeaders: rn18AllowedHeaders,
 							acceptPost:     "application/json",
 							acceptPatch:    "",
 						})
@@ -555,7 +542,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 						default:
 							s.notAllowed(w, r, notAllowedParams{
 								allowedMethods: "DELETE,GET,PUT",
-								allowedHeaders: rn21AllowedHeaders,
+								allowedHeaders: rn20AllowedHeaders,
 								acceptPost:     "",
 								acceptPatch:    "",
 							})
@@ -1016,21 +1003,33 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 						}
 					}
 
-				case 'v': // Prefix: "vent"
+				case 'v': // Prefix: "vents"
 
-					if l := len("vent"); len(elem) >= l && elem[0:l] == "vent" {
+					if l := len("vents"); len(elem) >= l && elem[0:l] == "vents" {
 						elem = elem[l:]
 					} else {
 						break
 					}
 
 					if len(elem) == 0 {
-						break
+						switch method {
+						case "POST":
+							r.name = EventsCreateOperation
+							r.summary = ""
+							r.operationID = "Events_create"
+							r.operationGroup = ""
+							r.pathPattern = "/events"
+							r.args = args
+							r.count = 0
+							return r, true
+						default:
+							return
+						}
 					}
 					switch elem[0] {
-					case '-': // Prefix: "-actions"
+					case '/': // Prefix: "/actions"
 
-						if l := len("-actions"); len(elem) >= l && elem[0:l] == "-actions" {
+						if l := len("/actions"); len(elem) >= l && elem[0:l] == "/actions" {
 							elem = elem[l:]
 						} else {
 							break
@@ -1044,32 +1043,7 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 								r.summary = ""
 								r.operationID = "EventActions_list"
 								r.operationGroup = ""
-								r.pathPattern = "/event-actions"
-								r.args = args
-								r.count = 0
-								return r, true
-							default:
-								return
-							}
-						}
-
-					case 's': // Prefix: "s"
-
-						if l := len("s"); len(elem) >= l && elem[0:l] == "s" {
-							elem = elem[l:]
-						} else {
-							break
-						}
-
-						if len(elem) == 0 {
-							// Leaf node.
-							switch method {
-							case "POST":
-								r.name = EventsCreateOperation
-								r.summary = ""
-								r.operationID = "Events_create"
-								r.operationGroup = ""
-								r.pathPattern = "/events"
+								r.pathPattern = "/events/actions"
 								r.args = args
 								r.count = 0
 								return r, true

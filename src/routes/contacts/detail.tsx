@@ -43,9 +43,7 @@ export function ContactDetailPage() {
     setPage(1)
   }, [contactId])
 
-  const contactQuery = useQuery(
-    siteContactsGetOptions({ path: { workspaceSlug: slug, id: contactId } }),
-  )
+  const contactQuery = useQuery(siteContactsGetOptions({ path: { slug: slug, id: contactId } }))
 
   const contact = contactQuery.data
 
@@ -54,7 +52,7 @@ export function ContactDetailPage() {
   // would miss.
   const eventsQuery = useQuery(
     siteEventsListOptions({
-      path: { workspaceSlug: slug },
+      path: { slug: slug },
       query: { page, pageSize: EVENTS_PAGE_SIZE, contactId },
     }),
   )

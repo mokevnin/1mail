@@ -1,5 +1,6 @@
 using TypeSpec.Http;
 using TypeSpec.Rest;
+using TypeSpec.Rest.Resource;
 
 namespace OneMail;
 
@@ -15,6 +16,7 @@ enum SiteCustomFieldType {
  on first sight from Identify; the catalogue feeds the segment builder. */
 @resource("custom-fields")
 @segment("custom-fields")
+@parentResource(SiteWorkspaceResource)
 model SiteCustomFieldResource {
   /** Unique identifier */
   @key
@@ -36,13 +38,14 @@ model SiteCustomFieldResource {
   updatedAt: Timestamp;
 }
 
-@route("/w/{workspaceSlug}/custom-fields")
+// Read-only catalogue: list only. Nested via @parentResource + @autoRoute.
 @tag("Site Custom Fields")
 namespace SiteCustomFields {
   /** List the workspace's custom field definitions */
   @listsResource(SiteCustomFieldResource)
   @get
-  op list(@path workspaceSlug: string):
+  @autoRoute
+  op list(...ResourceCollectionParameters<SiteCustomFieldResource>):
     | Page<SiteCustomFieldResource>
     | BadRequestProblem
     | NotFoundProblem;

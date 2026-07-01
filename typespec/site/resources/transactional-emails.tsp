@@ -1,5 +1,6 @@
 using TypeSpec.Http;
 using TypeSpec.Rest;
+using TypeSpec.Rest.Resource;
 
 namespace OneMail;
 
@@ -26,6 +27,7 @@ enum SiteTransactionalEmailChannel {
 /** One transactional send: the durable, read-only trace of an `/api/emails` call */
 @resource("transactional-emails")
 @segment("transactional-emails")
+@parentResource(SiteWorkspaceResource)
 model SiteTransactionalEmailResource {
   /** Unique identifier */
   @key
@@ -53,13 +55,17 @@ model SiteTransactionalEmailResource {
   createdAt: Timestamp;
 }
 
-@route("/w/{workspaceSlug}/transactional-emails")
+// Read-only send trace: list only. Nested via @parentResource + @autoRoute.
 @tag("Site Transactional Emails")
 namespace SiteTransactionalEmails {
   /** List transactional sends, most recent first */
   @listsResource(SiteTransactionalEmailResource)
   @get
-  op list(@path workspaceSlug: string, ...PageQuery):
+  @autoRoute
+  op list(
+    ...ResourceCollectionParameters<SiteTransactionalEmailResource>,
+    ...PageQuery,
+  ):
     | Page<SiteTransactionalEmailResource>
     | BadRequestProblem
     | NotFoundProblem

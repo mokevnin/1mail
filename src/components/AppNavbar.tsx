@@ -54,8 +54,8 @@ export function AppNavbar({ slug }: { slug: string }) {
       onClick: () => navigate({ to: segmentsRoute.to, params: { slug } }),
     },
     {
-      key: 'campaigns',
-      label: t(($) => $.nav.campaigns),
+      key: 'broadcasts',
+      label: t(($) => $.nav.broadcasts),
       icon: <IconMailbox size={18} />,
       active: Boolean(matchRoute({ to: broadcastsRoute.to, params: { slug }, fuzzy: true })),
       onClick: () => navigate({ to: broadcastsRoute.to, params: { slug } }),

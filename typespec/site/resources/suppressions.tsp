@@ -1,5 +1,6 @@
 using TypeSpec.Http;
 using TypeSpec.Rest;
+using TypeSpec.Rest.Resource;
 
 namespace OneMail;
 
@@ -19,6 +20,7 @@ enum SiteSuppressionChannel {
 /** A suppressed destination: the send path skips it on every surface */
 @resource("suppressions")
 @segment("suppressions")
+@parentResource(SiteWorkspaceResource)
 model SiteSuppressionResource {
   /** Unique identifier */
   @key
@@ -49,14 +51,16 @@ model SiteCreateSuppressionInput {
   destination: string;
 }
 
-@route("/w/{workspaceSlug}/suppressions")
+// Bespoke (not WorkspaceCrud): no GET/PUT for a single suppression.
+// Nested via @parentResource + @autoRoute.
 @tag("Site Suppressions")
 namespace SiteSuppressions {
   /** Manually suppress an address (reason = manual; idempotent per address) */
   @createsResource(SiteSuppressionResource)
   @post
+  @autoRoute
   op create(
-    @path workspaceSlug: string,
+    ...ResourceCollectionParameters<SiteSuppressionResource>,
     @body body: SiteCreateSuppressionInput,
   ):
     | {
@@ -69,7 +73,11 @@ namespace SiteSuppressions {
   /** List suppressed addresses */
   @listsResource(SiteSuppressionResource)
   @get
-  op list(@path workspaceSlug: string, ...PageQuery):
+  @autoRoute
+  op list(
+    ...ResourceCollectionParameters<SiteSuppressionResource>,
+    ...PageQuery,
+  ):
     | Page<SiteSuppressionResource>
     | BadRequestProblem
     | NotFoundProblem
@@ -78,8 +86,8 @@ namespace SiteSuppressions {
   /** Remove an address from the suppression list */
   @deletesResource(SiteSuppressionResource)
   @delete
-  @route("/{id}")
-  op delete(@path workspaceSlug: string, @path id: EntityId):
+  @autoRoute
+  op delete(...ResourceParameters<SiteSuppressionResource>):
     | NoContentResponse
     | BadRequestProblem
     | NotFoundProblem;

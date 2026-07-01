@@ -51,61 +51,61 @@ type Invoker interface {
 	AuthTokensList(ctx context.Context) (AuthTokensListRes, error)
 	// BroadcastsCreate invokes Broadcasts_create operation.
 	//
-	// Create a broadcast.
+	// Create a resource.
 	//
 	// POST /broadcasts
 	BroadcastsCreate(ctx context.Context, request *CreateBroadcastInput) (BroadcastsCreateRes, error)
 	// BroadcastsDelete invokes Broadcasts_delete operation.
 	//
-	// Delete a broadcast.
+	// Delete a resource.
 	//
 	// DELETE /broadcasts/{id}
 	BroadcastsDelete(ctx context.Context, params BroadcastsDeleteParams) (BroadcastsDeleteRes, error)
 	// BroadcastsGet invokes Broadcasts_get operation.
 	//
-	// Get a broadcast by ID.
+	// Get a resource by ID.
 	//
 	// GET /broadcasts/{id}
 	BroadcastsGet(ctx context.Context, params BroadcastsGetParams) (BroadcastsGetRes, error)
 	// BroadcastsList invokes Broadcasts_list operation.
 	//
-	// List broadcasts with pagination.
+	// List resources with pagination.
 	//
 	// GET /broadcasts
 	BroadcastsList(ctx context.Context, params BroadcastsListParams) (BroadcastsListRes, error)
 	// BroadcastsUpdate invokes Broadcasts_update operation.
 	//
-	// Update a broadcast.
+	// Update a resource.
 	//
 	// PUT /broadcasts/{id}
 	BroadcastsUpdate(ctx context.Context, request *UpdateBroadcastInput, params BroadcastsUpdateParams) (BroadcastsUpdateRes, error)
 	// ContactsCreate invokes Contacts_create operation.
 	//
-	// Create a contact.
+	// Create a resource.
 	//
 	// POST /contacts
 	ContactsCreate(ctx context.Context, request *CreateContactInput) (ContactsCreateRes, error)
 	// ContactsDelete invokes Contacts_delete operation.
 	//
-	// Delete a contact.
+	// Delete a resource.
 	//
 	// DELETE /contacts/{id}
 	ContactsDelete(ctx context.Context, params ContactsDeleteParams) (ContactsDeleteRes, error)
 	// ContactsGet invokes Contacts_get operation.
 	//
-	// Get a contact by ID.
+	// Get a resource by ID.
 	//
 	// GET /contacts/{id}
 	ContactsGet(ctx context.Context, params ContactsGetParams) (ContactsGetRes, error)
 	// ContactsList invokes Contacts_list operation.
 	//
-	// List contacts with pagination.
+	// List resources with pagination.
 	//
 	// GET /contacts
 	ContactsList(ctx context.Context, params ContactsListParams) (ContactsListRes, error)
 	// ContactsUpdate invokes Contacts_update operation.
 	//
-	// Update a contact.
+	// Update a resource.
 	//
 	// PUT /contacts/{id}
 	ContactsUpdate(ctx context.Context, request *UpdateContactInput, params ContactsUpdateParams) (ContactsUpdateRes, error)
@@ -124,7 +124,7 @@ type Invoker interface {
 	//
 	// List unique event actions.
 	//
-	// GET /event-actions
+	// GET /events/actions
 	EventActionsList(ctx context.Context, params EventActionsListParams) (EventActionsListRes, error)
 	// EventsCreate invokes Events_create operation.
 	//
@@ -134,31 +134,31 @@ type Invoker interface {
 	EventsCreate(ctx context.Context, request *RecordEventsInput) (EventsCreateRes, error)
 	// SegmentsCreate invokes Segments_create operation.
 	//
-	// Create a segment.
+	// Create a resource.
 	//
 	// POST /segments
 	SegmentsCreate(ctx context.Context, request *CreateSegmentInput) (SegmentsCreateRes, error)
 	// SegmentsDelete invokes Segments_delete operation.
 	//
-	// Delete a segment.
+	// Delete a resource.
 	//
 	// DELETE /segments/{id}
 	SegmentsDelete(ctx context.Context, params SegmentsDeleteParams) (SegmentsDeleteRes, error)
 	// SegmentsGet invokes Segments_get operation.
 	//
-	// Get a segment by ID.
+	// Get a resource by ID.
 	//
 	// GET /segments/{id}
 	SegmentsGet(ctx context.Context, params SegmentsGetParams) (SegmentsGetRes, error)
 	// SegmentsList invokes Segments_list operation.
 	//
-	// List segments with pagination.
+	// List resources with pagination.
 	//
 	// GET /segments
 	SegmentsList(ctx context.Context, params SegmentsListParams) (SegmentsListRes, error)
 	// SegmentsUpdate invokes Segments_update operation.
 	//
-	// Update a segment.
+	// Update a resource.
 	//
 	// PUT /segments/{id}
 	SegmentsUpdate(ctx context.Context, request *UpdateSegmentInput, params SegmentsUpdateParams) (SegmentsUpdateRes, error)
@@ -770,7 +770,7 @@ func (c *Client) sendAuthTokensList(ctx context.Context) (res AuthTokensListRes,
 
 // BroadcastsCreate invokes Broadcasts_create operation.
 //
-// Create a broadcast.
+// Create a resource.
 //
 // POST /broadcasts
 func (c *Client) BroadcastsCreate(ctx context.Context, request *CreateBroadcastInput) (BroadcastsCreateRes, error) {
@@ -886,7 +886,7 @@ func (c *Client) sendBroadcastsCreate(ctx context.Context, request *CreateBroadc
 
 // BroadcastsDelete invokes Broadcasts_delete operation.
 //
-// Delete a broadcast.
+// Delete a resource.
 //
 // DELETE /broadcasts/{id}
 func (c *Client) BroadcastsDelete(ctx context.Context, params BroadcastsDeleteParams) (BroadcastsDeleteRes, error) {
@@ -1020,7 +1020,7 @@ func (c *Client) sendBroadcastsDelete(ctx context.Context, params BroadcastsDele
 
 // BroadcastsGet invokes Broadcasts_get operation.
 //
-// Get a broadcast by ID.
+// Get a resource by ID.
 //
 // GET /broadcasts/{id}
 func (c *Client) BroadcastsGet(ctx context.Context, params BroadcastsGetParams) (BroadcastsGetRes, error) {
@@ -1154,7 +1154,7 @@ func (c *Client) sendBroadcastsGet(ctx context.Context, params BroadcastsGetPara
 
 // BroadcastsList invokes Broadcasts_list operation.
 //
-// List broadcasts with pagination.
+// List resources with pagination.
 //
 // GET /broadcasts
 func (c *Client) BroadcastsList(ctx context.Context, params BroadcastsListParams) (BroadcastsListRes, error) {
@@ -1305,7 +1305,7 @@ func (c *Client) sendBroadcastsList(ctx context.Context, params BroadcastsListPa
 
 // BroadcastsUpdate invokes Broadcasts_update operation.
 //
-// Update a broadcast.
+// Update a resource.
 //
 // PUT /broadcasts/{id}
 func (c *Client) BroadcastsUpdate(ctx context.Context, request *UpdateBroadcastInput, params BroadcastsUpdateParams) (BroadcastsUpdateRes, error) {
@@ -1442,7 +1442,7 @@ func (c *Client) sendBroadcastsUpdate(ctx context.Context, request *UpdateBroadc
 
 // ContactsCreate invokes Contacts_create operation.
 //
-// Create a contact.
+// Create a resource.
 //
 // POST /contacts
 func (c *Client) ContactsCreate(ctx context.Context, request *CreateContactInput) (ContactsCreateRes, error) {
@@ -1558,7 +1558,7 @@ func (c *Client) sendContactsCreate(ctx context.Context, request *CreateContactI
 
 // ContactsDelete invokes Contacts_delete operation.
 //
-// Delete a contact.
+// Delete a resource.
 //
 // DELETE /contacts/{id}
 func (c *Client) ContactsDelete(ctx context.Context, params ContactsDeleteParams) (ContactsDeleteRes, error) {
@@ -1692,7 +1692,7 @@ func (c *Client) sendContactsDelete(ctx context.Context, params ContactsDeletePa
 
 // ContactsGet invokes Contacts_get operation.
 //
-// Get a contact by ID.
+// Get a resource by ID.
 //
 // GET /contacts/{id}
 func (c *Client) ContactsGet(ctx context.Context, params ContactsGetParams) (ContactsGetRes, error) {
@@ -1826,7 +1826,7 @@ func (c *Client) sendContactsGet(ctx context.Context, params ContactsGetParams) 
 
 // ContactsList invokes Contacts_list operation.
 //
-// List contacts with pagination.
+// List resources with pagination.
 //
 // GET /contacts
 func (c *Client) ContactsList(ctx context.Context, params ContactsListParams) (ContactsListRes, error) {
@@ -1977,7 +1977,7 @@ func (c *Client) sendContactsList(ctx context.Context, params ContactsListParams
 
 // ContactsUpdate invokes Contacts_update operation.
 //
-// Update a contact.
+// Update a resource.
 //
 // PUT /contacts/{id}
 func (c *Client) ContactsUpdate(ctx context.Context, request *UpdateContactInput, params ContactsUpdateParams) (ContactsUpdateRes, error) {
@@ -2254,7 +2254,7 @@ func (c *Client) sendEmailsSend(ctx context.Context, request *SendTransactionalE
 //
 // List unique event actions.
 //
-// GET /event-actions
+// GET /events/actions
 func (c *Client) EventActionsList(ctx context.Context, params EventActionsListParams) (EventActionsListRes, error) {
 	res, err := c.sendEventActionsList(ctx, params)
 	return res, err
@@ -2264,7 +2264,7 @@ func (c *Client) sendEventActionsList(ctx context.Context, params EventActionsLi
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("EventActions_list"),
 		semconv.HTTPRequestMethodKey.String("GET"),
-		semconv.URLTemplateKey.String("/event-actions"),
+		semconv.URLTemplateKey.String("/events/actions"),
 	}
 	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
 
@@ -2298,7 +2298,7 @@ func (c *Client) sendEventActionsList(ctx context.Context, params EventActionsLi
 	stage = "BuildURL"
 	u := uri.Clone(c.requestURL(ctx))
 	var pathParts [1]string
-	pathParts[0] = "/event-actions"
+	pathParts[0] = "/events/actions"
 	uri.AddPathParts(u, pathParts[:]...)
 
 	stage = "EncodeQueryParams"
@@ -2519,7 +2519,7 @@ func (c *Client) sendEventsCreate(ctx context.Context, request *RecordEventsInpu
 
 // SegmentsCreate invokes Segments_create operation.
 //
-// Create a segment.
+// Create a resource.
 //
 // POST /segments
 func (c *Client) SegmentsCreate(ctx context.Context, request *CreateSegmentInput) (SegmentsCreateRes, error) {
@@ -2635,7 +2635,7 @@ func (c *Client) sendSegmentsCreate(ctx context.Context, request *CreateSegmentI
 
 // SegmentsDelete invokes Segments_delete operation.
 //
-// Delete a segment.
+// Delete a resource.
 //
 // DELETE /segments/{id}
 func (c *Client) SegmentsDelete(ctx context.Context, params SegmentsDeleteParams) (SegmentsDeleteRes, error) {
@@ -2769,7 +2769,7 @@ func (c *Client) sendSegmentsDelete(ctx context.Context, params SegmentsDeletePa
 
 // SegmentsGet invokes Segments_get operation.
 //
-// Get a segment by ID.
+// Get a resource by ID.
 //
 // GET /segments/{id}
 func (c *Client) SegmentsGet(ctx context.Context, params SegmentsGetParams) (SegmentsGetRes, error) {
@@ -2903,7 +2903,7 @@ func (c *Client) sendSegmentsGet(ctx context.Context, params SegmentsGetParams) 
 
 // SegmentsList invokes Segments_list operation.
 //
-// List segments with pagination.
+// List resources with pagination.
 //
 // GET /segments
 func (c *Client) SegmentsList(ctx context.Context, params SegmentsListParams) (SegmentsListRes, error) {
@@ -3054,7 +3054,7 @@ func (c *Client) sendSegmentsList(ctx context.Context, params SegmentsListParams
 
 // SegmentsUpdate invokes Segments_update operation.
 //
-// Update a segment.
+// Update a resource.
 //
 // PUT /segments/{id}
 func (c *Client) SegmentsUpdate(ctx context.Context, request *UpdateSegmentInput, params SegmentsUpdateParams) (SegmentsUpdateRes, error) {

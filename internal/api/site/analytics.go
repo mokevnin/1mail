@@ -40,7 +40,7 @@ func rangeDays(r siteapi.OptSiteAnalyticsRange) int {
 // (BroadcastRecipient delivery timestamps) so the cards and the chart reconcile;
 // contact and automation counts are point-in-time snapshots.
 func (h *Handlers) SiteAnalyticsOverview(ctx context.Context, params siteapi.SiteAnalyticsOverviewParams) (siteapi.SiteAnalyticsOverviewRes, error) {
-	ws, err := h.workspaceID(ctx, params.WorkspaceSlug)
+	ws, err := h.workspaceID(ctx, params.Slug)
 	if ent.IsNotFound(err) {
 		v := problem(http.StatusNotFound, "workspace not found")
 		return &v, nil

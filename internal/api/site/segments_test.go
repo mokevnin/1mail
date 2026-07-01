@@ -29,7 +29,7 @@ func TestSiteSegmentsScopedToWorkspace(t *testing.T) {
 	ctx := context.Background()
 
 	// A seeded segment of the owned workspace is fetchable by id (selection by key).
-	seeded, err := c.SiteSegmentsGet(ctx, siteapi.SiteSegmentsGetParams{WorkspaceSlug: "acme", ID: "1"})
+	seeded, err := c.SiteSegmentsGet(ctx, siteapi.SiteSegmentsGetParams{Slug: "acme", ID: "1"})
 	require.NoError(t, err)
 	seededRes, ok := seeded.(*siteapi.SiteSegmentResource)
 	require.Truef(t, ok, "got %T", seeded)
@@ -40,7 +40,7 @@ func TestSiteSegmentsScopedToWorkspace(t *testing.T) {
 		Name:       "VIP customers",
 		Type:       siteapi.SiteSegmentTypeRule,
 		Definition: siteapi.NewOptNilString(`{"combinator":"and","rules":[{"field":"custom:plan","operator":"=","value":"vip"}]}`),
-	}, siteapi.SiteSegmentsCreateParams{WorkspaceSlug: "acme"})
+	}, siteapi.SiteSegmentsCreateParams{Slug: "acme"})
 	require.NoError(t, err)
 	res, ok := created.(*siteapi.SiteSegmentResource)
 	require.Truef(t, ok, "got %T", created)
@@ -48,7 +48,7 @@ func TestSiteSegmentsScopedToWorkspace(t *testing.T) {
 	assert.Equal(t, siteapi.SiteSegmentTypeRule, res.Type)
 
 	// The new segment is readable by id.
-	got, err := c.SiteSegmentsGet(ctx, siteapi.SiteSegmentsGetParams{WorkspaceSlug: "acme", ID: res.ID})
+	got, err := c.SiteSegmentsGet(ctx, siteapi.SiteSegmentsGetParams{Slug: "acme", ID: res.ID})
 	require.NoError(t, err)
 	gotRes, ok := got.(*siteapi.SiteSegmentResource)
 	require.Truef(t, ok, "got %T", got)
@@ -58,7 +58,7 @@ func TestSiteSegmentsScopedToWorkspace(t *testing.T) {
 	updated, err := c.SiteSegmentsUpdate(ctx, &siteapi.SiteUpdateSegmentInput{
 		Name: siteapi.NewOptString("VIP renamed"),
 		Type: siteapi.NewOptSiteSegmentType(siteapi.SiteSegmentTypeSnapshot),
-	}, siteapi.SiteSegmentsUpdateParams{WorkspaceSlug: "acme", ID: res.ID})
+	}, siteapi.SiteSegmentsUpdateParams{Slug: "acme", ID: res.ID})
 	require.NoError(t, err)
 	updRes, ok := updated.(*siteapi.SiteSegmentResource)
 	require.Truef(t, ok, "got %T", updated)
@@ -66,12 +66,12 @@ func TestSiteSegmentsScopedToWorkspace(t *testing.T) {
 	assert.Equal(t, siteapi.SiteSegmentTypeSnapshot, updRes.Type)
 
 	// Delete removes it.
-	del, err := c.SiteSegmentsDelete(ctx, siteapi.SiteSegmentsDeleteParams{WorkspaceSlug: "acme", ID: res.ID})
+	del, err := c.SiteSegmentsDelete(ctx, siteapi.SiteSegmentsDeleteParams{Slug: "acme", ID: res.ID})
 	require.NoError(t, err)
 	assert.IsType(t, &siteapi.SiteSegmentsDeleteNoContent{}, del)
 
 	// An unknown / non-owned workspace slug resolves to 404, not a data leak.
-	missing, err := c.SiteSegmentsList(ctx, siteapi.SiteSegmentsListParams{WorkspaceSlug: "does-not-exist"})
+	missing, err := c.SiteSegmentsList(ctx, siteapi.SiteSegmentsListParams{Slug: "does-not-exist"})
 	require.NoError(t, err)
 	assert.IsType(t, &siteapi.SiteSegmentsListNotFound{}, missing)
 }

@@ -21,7 +21,7 @@ export function BroadcastCreatePage() {
 
   const createMutation = useResourceMutation({
     mutation: siteBroadcastsCreateMutation(),
-    invalidate: [siteBroadcastsListQueryKey({ path: { workspaceSlug: slug } })],
+    invalidate: [siteBroadcastsListQueryKey({ path: { slug: slug } })],
     successMessage: t(($) => $.notifications.broadcastCreated),
     errorTitle: t(($) => $.alerts.broadcastSaveErrorTitle),
     onDone: (created) =>
@@ -36,7 +36,7 @@ export function BroadcastCreatePage() {
         isPending={createMutation.isPending}
         onSubmit={(values) =>
           createMutation.mutate({
-            path: { workspaceSlug: slug },
+            path: { slug: slug },
             body: {
               name: values.name.trim(),
               subject: values.subject.trim(),

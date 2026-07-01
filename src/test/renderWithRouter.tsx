@@ -24,7 +24,7 @@ type RenderWithRouterOptions = {
 // spy the test can assert against (e.g. expect(navigate).toHaveBeenCalledWith).
 export async function renderWithRouter(
   ui: ReactNode,
-  { initialPath = '/w/test', path = '/w/$slug' }: RenderWithRouterOptions = {},
+  { initialPath = '/workspaces/test', path = '/workspaces/$slug' }: RenderWithRouterOptions = {},
 ) {
   const rootRoute = createRootRoute()
   const route = createRoute({

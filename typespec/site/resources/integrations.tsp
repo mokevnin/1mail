@@ -1,4 +1,6 @@
 using TypeSpec.Http;
+using TypeSpec.Rest;
+using TypeSpec.Rest.Resource;
 
 namespace OneMail;
 
@@ -83,8 +85,12 @@ union SiteIntegrationConfigInput {
 // --- Resource + request bodies ---
 
 /** A workspace sending-provider integration */
+@resource("integrations")
+@segment("integrations")
+@parentResource(SiteWorkspaceResource)
 model SiteIntegrationResource {
   /** Unique identifier */
+  @key
   id: EntityId;
 
   /** Human-readable label */
@@ -128,12 +134,15 @@ model SiteUpdateIntegrationInput {
   config?: SiteIntegrationConfigInput | null;
 }
 
-@route("/w/{workspaceSlug}/integrations")
+// Bespoke (not WorkspaceCrud): `list` returns a bare array, not a paginated
+// envelope. Nesting under /workspaces/{slug} comes from @parentResource + @autoRoute.
 @tag("Site Integrations")
 namespace SiteIntegrations {
   /** List the workspace's sending-provider integrations */
+  @listsResource(SiteIntegrationResource)
   @get
-  op list(@path workspaceSlug: string):
+  @autoRoute
+  op list(...ResourceCollectionParameters<SiteIntegrationResource>):
     | {
         @statusCode statusCode: 200;
         @body body: SiteIntegrationResource[];
@@ -141,9 +150,11 @@ namespace SiteIntegrations {
     | NotFoundProblem;
 
   /** Create an integration */
+  @createsResource(SiteIntegrationResource)
   @post
+  @autoRoute
   op create(
-    @path workspaceSlug: string,
+    ...ResourceCollectionParameters<SiteIntegrationResource>,
     @body body: SiteCreateIntegrationInput,
   ):
     | {
@@ -155,19 +166,20 @@ namespace SiteIntegrations {
     | UnprocessableEntityProblem;
 
   /** Get an integration by id */
+  @readsResource(SiteIntegrationResource)
   @get
-  @route("/{id}")
-  op get(@path workspaceSlug: string, @path id: EntityId):
+  @autoRoute
+  op get(...ResourceParameters<SiteIntegrationResource>):
     | SiteIntegrationResource
     | BadRequestProblem
     | NotFoundProblem;
 
   /** Update an integration */
+  @updatesResource(SiteIntegrationResource)
   @put
-  @route("/{id}")
+  @autoRoute
   op update(
-    @path workspaceSlug: string,
-    @path id: EntityId,
+    ...ResourceParameters<SiteIntegrationResource>,
     @body body: SiteUpdateIntegrationInput,
   ):
     | SiteIntegrationResource
@@ -177,9 +189,10 @@ namespace SiteIntegrations {
     | UnprocessableEntityProblem;
 
   /** Delete an integration */
+  @deletesResource(SiteIntegrationResource)
   @delete
-  @route("/{id}")
-  op delete(@path workspaceSlug: string, @path id: EntityId):
+  @autoRoute
+  op delete(...ResourceParameters<SiteIntegrationResource>):
     | NoContentResponse
     | BadRequestProblem
     | NotFoundProblem;

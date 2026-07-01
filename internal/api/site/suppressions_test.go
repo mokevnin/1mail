@@ -20,7 +20,7 @@ func TestSiteSuppressionsCRUD(t *testing.T) {
 
 	// Create normalizes the destination and defaults the reason to manual.
 	created, err := c.SiteSuppressionsCreate(ctx, &siteapi.SiteCreateSuppressionInput{Destination: "Blocked@Example.com"},
-		siteapi.SiteSuppressionsCreateParams{WorkspaceSlug: slug})
+		siteapi.SiteSuppressionsCreateParams{Slug: slug})
 	require.NoError(t, err)
 	res, ok := created.(*siteapi.SiteSuppressionResource)
 	require.Truef(t, ok, "got %T", created)
@@ -29,7 +29,7 @@ func TestSiteSuppressionsCRUD(t *testing.T) {
 
 	// Suppressing the same destination again is idempotent (no duplicate).
 	again, err := c.SiteSuppressionsCreate(ctx, &siteapi.SiteCreateSuppressionInput{Destination: "blocked@example.com"},
-		siteapi.SiteSuppressionsCreateParams{WorkspaceSlug: slug})
+		siteapi.SiteSuppressionsCreateParams{Slug: slug})
 	require.NoError(t, err)
 	againRes, ok := again.(*siteapi.SiteSuppressionResource)
 	require.Truef(t, ok, "got %T", again)
@@ -43,7 +43,7 @@ func TestSiteSuppressionsCRUD(t *testing.T) {
 	assert.True(t, exists, "created suppression is persisted")
 
 	// Delete removes it.
-	del, err := c.SiteSuppressionsDelete(ctx, siteapi.SiteSuppressionsDeleteParams{WorkspaceSlug: slug, ID: res.ID})
+	del, err := c.SiteSuppressionsDelete(ctx, siteapi.SiteSuppressionsDeleteParams{Slug: slug, ID: res.ID})
 	require.NoError(t, err)
 	assert.IsType(t, &siteapi.SiteSuppressionsDeleteNoContent{}, del)
 
@@ -59,7 +59,7 @@ func TestSiteSuppressionsRequireOwnedWorkspace(t *testing.T) {
 	env := testhelper.Setup(t)
 	c := siteClient(t, env, "info@1mail.com")
 
-	out, err := c.SiteSuppressionsList(context.Background(), siteapi.SiteSuppressionsListParams{WorkspaceSlug: "does-not-exist"})
+	out, err := c.SiteSuppressionsList(context.Background(), siteapi.SiteSuppressionsListParams{Slug: "does-not-exist"})
 	require.NoError(t, err)
 	assert.IsType(t, &siteapi.SiteSuppressionsListNotFound{}, out)
 }

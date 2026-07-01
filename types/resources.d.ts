@@ -224,7 +224,7 @@ export default interface Resources {
     "nav": {
       "activity": "Activity",
       "automations": "Automations",
-      "campaigns": "Campaigns",
+      "broadcasts": "Broadcasts",
       "contacts": "Contacts",
       "overview": "Overview",
       "segments": "Segments",

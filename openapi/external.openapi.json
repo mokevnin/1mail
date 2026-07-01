@@ -6,15 +6,6 @@
   },
   "tags": [
     {
-      "name": "Contacts"
-    },
-    {
-      "name": "Segments"
-    },
-    {
-      "name": "Broadcasts"
-    },
-    {
       "name": "Emails"
     },
     {
@@ -22,6 +13,15 @@
     },
     {
       "name": "Auth"
+    },
+    {
+      "name": "Contacts"
+    },
+    {
+      "name": "Segments"
+    },
+    {
+      "name": "Broadcasts"
     }
   ],
   "paths": {
@@ -291,57 +291,9 @@
       }
     },
     "/broadcasts": {
-      "post": {
-        "operationId": "Broadcasts_create",
-        "description": "Create a broadcast",
-        "parameters": [],
-        "responses": {
-          "201": {
-            "description": "The request has succeeded and a new resource has been created as a result.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BroadcastResource"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "RFC 7807 unauthorized response",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "RFC 7807 validation response",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          }
-        },
-        "tags": ["Broadcasts"],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateBroadcastInput"
-              }
-            }
-          }
-        }
-      },
       "get": {
         "operationId": "Broadcasts_list",
-        "description": "List broadcasts with pagination",
+        "description": "List resources with pagination",
         "parameters": [
           {
             "$ref": "#/components/parameters/PageQuery.page"
@@ -424,20 +376,63 @@
           }
         },
         "tags": ["Broadcasts"]
+      },
+      "post": {
+        "operationId": "Broadcasts_create",
+        "description": "Create a resource",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": "The request has succeeded and a new resource has been created as a result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BroadcastResource"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "RFC 7807 unauthorized response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "RFC 7807 validation response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Broadcasts"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateBroadcastInput"
+              }
+            }
+          }
+        }
       }
     },
     "/broadcasts/{id}": {
       "get": {
         "operationId": "Broadcasts_get",
-        "description": "Get a broadcast by ID",
+        "description": "Get a resource by ID",
         "parameters": [
           {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "$ref": "#/components/schemas/EntityId"
-            }
+            "$ref": "#/components/parameters/BroadcastResourceKey"
           }
         ],
         "responses": {
@@ -486,15 +481,10 @@
       },
       "put": {
         "operationId": "Broadcasts_update",
-        "description": "Update a broadcast",
+        "description": "Update a resource",
         "parameters": [
           {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "$ref": "#/components/schemas/EntityId"
-            }
+            "$ref": "#/components/parameters/BroadcastResourceKey"
           }
         ],
         "responses": {
@@ -563,15 +553,10 @@
       },
       "delete": {
         "operationId": "Broadcasts_delete",
-        "description": "Delete a broadcast",
+        "description": "Delete a resource",
         "parameters": [
           {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "$ref": "#/components/schemas/EntityId"
-            }
+            "$ref": "#/components/parameters/BroadcastResourceKey"
           }
         ],
         "responses": {
@@ -613,67 +598,9 @@
       }
     },
     "/contacts": {
-      "post": {
-        "operationId": "Contacts_create",
-        "description": "Create a contact",
-        "parameters": [],
-        "responses": {
-          "201": {
-            "description": "The request has succeeded and a new resource has been created as a result.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ContactResource"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "RFC 7807 unauthorized response",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "RFC 7807 conflict response",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "RFC 7807 validation response",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          }
-        },
-        "tags": ["Contacts"],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateContactInput"
-              }
-            }
-          }
-        }
-      },
       "get": {
         "operationId": "Contacts_list",
-        "description": "List contacts with pagination",
+        "description": "List resources with pagination",
         "parameters": [
           {
             "$ref": "#/components/parameters/PageQuery.page"
@@ -756,20 +683,73 @@
           }
         },
         "tags": ["Contacts"]
+      },
+      "post": {
+        "operationId": "Contacts_create",
+        "description": "Create a resource",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": "The request has succeeded and a new resource has been created as a result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContactResource"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "RFC 7807 unauthorized response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "RFC 7807 conflict response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "RFC 7807 validation response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Contacts"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateContactInput"
+              }
+            }
+          }
+        }
       }
     },
     "/contacts/{id}": {
       "get": {
         "operationId": "Contacts_get",
-        "description": "Get a contact by ID",
+        "description": "Get a resource by ID",
         "parameters": [
           {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "$ref": "#/components/schemas/EntityId"
-            }
+            "$ref": "#/components/parameters/ContactResourceKey"
           }
         ],
         "responses": {
@@ -818,15 +798,10 @@
       },
       "put": {
         "operationId": "Contacts_update",
-        "description": "Update a contact",
+        "description": "Update a resource",
         "parameters": [
           {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "$ref": "#/components/schemas/EntityId"
-            }
+            "$ref": "#/components/parameters/ContactResourceKey"
           }
         ],
         "responses": {
@@ -905,15 +880,10 @@
       },
       "delete": {
         "operationId": "Contacts_delete",
-        "description": "Delete a contact",
+        "description": "Delete a resource",
         "parameters": [
           {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "$ref": "#/components/schemas/EntityId"
-            }
+            "$ref": "#/components/parameters/ContactResourceKey"
           }
         ],
         "responses": {
@@ -1034,7 +1004,50 @@
         }
       }
     },
-    "/event-actions": {
+    "/events": {
+      "post": {
+        "operationId": "Events_create",
+        "description": "Record events in batch",
+        "parameters": [],
+        "responses": {
+          "204": {
+            "description": "There is no content to send for this request, but the headers may be useful."
+          },
+          "401": {
+            "description": "RFC 7807 unauthorized response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "RFC 7807 validation response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Events"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecordEventsInput"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/events/actions": {
       "get": {
         "operationId": "EventActions_list",
         "description": "List unique event actions",
@@ -1122,101 +1135,10 @@
         "tags": ["Events"]
       }
     },
-    "/events": {
-      "post": {
-        "operationId": "Events_create",
-        "description": "Record events in batch",
-        "parameters": [],
-        "responses": {
-          "204": {
-            "description": "There is no content to send for this request, but the headers may be useful."
-          },
-          "401": {
-            "description": "RFC 7807 unauthorized response",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "RFC 7807 validation response",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          }
-        },
-        "tags": ["Events"],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/RecordEventsInput"
-              }
-            }
-          }
-        }
-      }
-    },
     "/segments": {
-      "post": {
-        "operationId": "Segments_create",
-        "description": "Create a segment",
-        "parameters": [],
-        "responses": {
-          "201": {
-            "description": "The request has succeeded and a new resource has been created as a result.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SegmentResource"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "RFC 7807 unauthorized response",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "RFC 7807 validation response",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          }
-        },
-        "tags": ["Segments"],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateSegmentInput"
-              }
-            }
-          }
-        }
-      },
       "get": {
         "operationId": "Segments_list",
-        "description": "List segments with pagination",
+        "description": "List resources with pagination",
         "parameters": [
           {
             "$ref": "#/components/parameters/PageQuery.page"
@@ -1299,20 +1221,63 @@
           }
         },
         "tags": ["Segments"]
+      },
+      "post": {
+        "operationId": "Segments_create",
+        "description": "Create a resource",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": "The request has succeeded and a new resource has been created as a result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SegmentResource"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "RFC 7807 unauthorized response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "RFC 7807 validation response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Segments"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSegmentInput"
+              }
+            }
+          }
+        }
       }
     },
     "/segments/{id}": {
       "get": {
         "operationId": "Segments_get",
-        "description": "Get a segment by ID",
+        "description": "Get a resource by ID",
         "parameters": [
           {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "$ref": "#/components/schemas/EntityId"
-            }
+            "$ref": "#/components/parameters/SegmentResourceKey"
           }
         ],
         "responses": {
@@ -1361,15 +1326,10 @@
       },
       "put": {
         "operationId": "Segments_update",
-        "description": "Update a segment",
+        "description": "Update a resource",
         "parameters": [
           {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "$ref": "#/components/schemas/EntityId"
-            }
+            "$ref": "#/components/parameters/SegmentResourceKey"
           }
         ],
         "responses": {
@@ -1438,15 +1398,10 @@
       },
       "delete": {
         "operationId": "Segments_delete",
-        "description": "Delete a segment",
+        "description": "Delete a resource",
         "parameters": [
           {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "$ref": "#/components/schemas/EntityId"
-            }
+            "$ref": "#/components/parameters/SegmentResourceKey"
           }
         ],
         "responses": {
@@ -1495,6 +1450,24 @@
   ],
   "components": {
     "parameters": {
+      "BroadcastResourceKey": {
+        "name": "id",
+        "in": "path",
+        "required": true,
+        "description": "Unique identifier",
+        "schema": {
+          "$ref": "#/components/schemas/EntityId"
+        }
+      },
+      "ContactResourceKey": {
+        "name": "id",
+        "in": "path",
+        "required": true,
+        "description": "Unique identifier",
+        "schema": {
+          "$ref": "#/components/schemas/EntityId"
+        }
+      },
       "PageQuery.page": {
         "name": "page",
         "in": "query",
@@ -1518,6 +1491,15 @@
           "default": 25
         },
         "explode": false
+      },
+      "SegmentResourceKey": {
+        "name": "id",
+        "in": "path",
+        "required": true,
+        "description": "Unique identifier",
+        "schema": {
+          "$ref": "#/components/schemas/EntityId"
+        }
       }
     },
     "schemas": {

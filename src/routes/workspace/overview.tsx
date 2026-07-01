@@ -27,7 +27,7 @@ export function OverviewPage() {
   const workspace = workspacesQuery.data?.find((w) => w.slug === slug)
 
   const analyticsQuery = useQuery(
-    siteAnalyticsOverviewOptions({ path: { workspaceSlug: slug }, query: { range } }),
+    siteAnalyticsOverviewOptions({ path: { slug: slug }, query: { range } }),
   )
 
   return (

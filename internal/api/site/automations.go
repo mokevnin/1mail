@@ -14,7 +14,7 @@ import (
 )
 
 func (h *Handlers) SiteAutomationsList(ctx context.Context, params siteapi.SiteAutomationsListParams) (siteapi.SiteAutomationsListRes, error) {
-	ws, err := h.workspaceID(ctx, params.WorkspaceSlug)
+	ws, err := h.workspaceID(ctx, params.Slug)
 	if ent.IsNotFound(err) {
 		v := siteapi.SiteAutomationsListNotFound(problem(http.StatusNotFound, "workspace not found"))
 		return &v, nil
@@ -59,7 +59,7 @@ func (h *Handlers) SiteAutomationsList(ctx context.Context, params siteapi.SiteA
 }
 
 func (h *Handlers) SiteAutomationsCreate(ctx context.Context, req *siteapi.SiteCreateAutomationInput, params siteapi.SiteAutomationsCreateParams) (siteapi.SiteAutomationsCreateRes, error) {
-	ws, err := h.workspaceID(ctx, params.WorkspaceSlug)
+	ws, err := h.workspaceID(ctx, params.Slug)
 	if ent.IsNotFound(err) {
 		v := siteapi.SiteAutomationsCreateNotFound(problem(http.StatusNotFound, "workspace not found"))
 		return &v, nil
@@ -84,7 +84,7 @@ func (h *Handlers) SiteAutomationsCreate(ctx context.Context, req *siteapi.SiteC
 }
 
 func (h *Handlers) SiteAutomationsGet(ctx context.Context, params siteapi.SiteAutomationsGetParams) (siteapi.SiteAutomationsGetRes, error) {
-	ws, err := h.workspaceID(ctx, params.WorkspaceSlug)
+	ws, err := h.workspaceID(ctx, params.Slug)
 	if ent.IsNotFound(err) {
 		v := siteapi.SiteAutomationsGetNotFound(problem(http.StatusNotFound, "workspace not found"))
 		return &v, nil
@@ -107,7 +107,7 @@ func (h *Handlers) SiteAutomationsGet(ctx context.Context, params siteapi.SiteAu
 }
 
 func (h *Handlers) SiteAutomationsUpdate(ctx context.Context, req *siteapi.SiteUpdateAutomationInput, params siteapi.SiteAutomationsUpdateParams) (siteapi.SiteAutomationsUpdateRes, error) {
-	ws, err := h.workspaceID(ctx, params.WorkspaceSlug)
+	ws, err := h.workspaceID(ctx, params.Slug)
 	if ent.IsNotFound(err) {
 		v := siteapi.SiteAutomationsUpdateNotFound(problem(http.StatusNotFound, "workspace not found"))
 		return &v, nil
@@ -141,7 +141,7 @@ func (h *Handlers) SiteAutomationsUpdate(ctx context.Context, req *siteapi.SiteU
 }
 
 func (h *Handlers) SiteAutomationsDelete(ctx context.Context, params siteapi.SiteAutomationsDeleteParams) (siteapi.SiteAutomationsDeleteRes, error) {
-	ws, err := h.workspaceID(ctx, params.WorkspaceSlug)
+	ws, err := h.workspaceID(ctx, params.Slug)
 	if ent.IsNotFound(err) {
 		v := siteapi.SiteAutomationsDeleteNotFound(problem(http.StatusNotFound, "workspace not found"))
 		return &v, nil
@@ -167,7 +167,7 @@ func (h *Handlers) SiteAutomationsDelete(ctx context.Context, params siteapi.Sit
 }
 
 func (h *Handlers) SiteAutomationsActivate(ctx context.Context, params siteapi.SiteAutomationsActivateParams) (siteapi.SiteAutomationsActivateRes, error) {
-	a, err := h.setAutomationStatus(ctx, params.WorkspaceSlug, params.ID, automation.StatusActive)
+	a, err := h.setAutomationStatus(ctx, params.Slug, params.ID, automation.StatusActive)
 	if ent.IsNotFound(err) {
 		v := siteapi.SiteAutomationsActivateNotFound(problem(http.StatusNotFound, "automation not found"))
 		return &v, nil
@@ -181,7 +181,7 @@ func (h *Handlers) SiteAutomationsActivate(ctx context.Context, params siteapi.S
 }
 
 func (h *Handlers) SiteAutomationsDeactivate(ctx context.Context, params siteapi.SiteAutomationsDeactivateParams) (siteapi.SiteAutomationsDeactivateRes, error) {
-	a, err := h.setAutomationStatus(ctx, params.WorkspaceSlug, params.ID, automation.StatusDraft)
+	a, err := h.setAutomationStatus(ctx, params.Slug, params.ID, automation.StatusDraft)
 	if ent.IsNotFound(err) {
 		v := siteapi.SiteAutomationsDeactivateNotFound(problem(http.StatusNotFound, "automation not found"))
 		return &v, nil

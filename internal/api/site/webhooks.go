@@ -44,7 +44,7 @@ func validWebhookURL(raw string) bool {
 }
 
 func (h *Handlers) SiteWebhooksList(ctx context.Context, params siteapi.SiteWebhooksListParams) (siteapi.SiteWebhooksListRes, error) {
-	ws, err := h.workspaceID(ctx, params.WorkspaceSlug)
+	ws, err := h.workspaceID(ctx, params.Slug)
 	if ent.IsNotFound(err) {
 		v := siteapi.SiteWebhooksListNotFound(problem(http.StatusNotFound, "workspace not found"))
 		return &v, nil
@@ -93,7 +93,7 @@ func (h *Handlers) SiteWebhooksList(ctx context.Context, params siteapi.SiteWebh
 }
 
 func (h *Handlers) SiteWebhooksCreate(ctx context.Context, req *siteapi.SiteCreateWebhookEndpointInput, params siteapi.SiteWebhooksCreateParams) (siteapi.SiteWebhooksCreateRes, error) {
-	ws, err := h.workspaceID(ctx, params.WorkspaceSlug)
+	ws, err := h.workspaceID(ctx, params.Slug)
 	if ent.IsNotFound(err) {
 		v := siteapi.SiteWebhooksCreateNotFound(problem(http.StatusNotFound, "workspace not found"))
 		return &v, nil
@@ -138,7 +138,7 @@ func (h *Handlers) SiteWebhooksCreate(ctx context.Context, req *siteapi.SiteCrea
 }
 
 func (h *Handlers) SiteWebhooksGet(ctx context.Context, params siteapi.SiteWebhooksGetParams) (siteapi.SiteWebhooksGetRes, error) {
-	ws, err := h.workspaceID(ctx, params.WorkspaceSlug)
+	ws, err := h.workspaceID(ctx, params.Slug)
 	if ent.IsNotFound(err) {
 		v := siteapi.SiteWebhooksGetNotFound(problem(http.StatusNotFound, "workspace not found"))
 		return &v, nil
@@ -170,7 +170,7 @@ func (h *Handlers) SiteWebhooksGet(ctx context.Context, params siteapi.SiteWebho
 }
 
 func (h *Handlers) SiteWebhooksUpdate(ctx context.Context, req *siteapi.SiteUpdateWebhookEndpointInput, params siteapi.SiteWebhooksUpdateParams) (siteapi.SiteWebhooksUpdateRes, error) {
-	ws, err := h.workspaceID(ctx, params.WorkspaceSlug)
+	ws, err := h.workspaceID(ctx, params.Slug)
 	if ent.IsNotFound(err) {
 		v := siteapi.SiteWebhooksUpdateNotFound(problem(http.StatusNotFound, "workspace not found"))
 		return &v, nil
@@ -217,7 +217,7 @@ func (h *Handlers) SiteWebhooksUpdate(ctx context.Context, req *siteapi.SiteUpda
 }
 
 func (h *Handlers) SiteWebhooksDelete(ctx context.Context, params siteapi.SiteWebhooksDeleteParams) (siteapi.SiteWebhooksDeleteRes, error) {
-	ws, err := h.workspaceID(ctx, params.WorkspaceSlug)
+	ws, err := h.workspaceID(ctx, params.Slug)
 	if ent.IsNotFound(err) {
 		v := siteapi.SiteWebhooksDeleteNotFound(problem(http.StatusNotFound, "workspace not found"))
 		return &v, nil

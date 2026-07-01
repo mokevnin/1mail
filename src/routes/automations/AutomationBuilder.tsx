@@ -64,10 +64,10 @@ export function AutomationBuilder({ slug, automation }: AutomationBuilderProps) 
     ...siteAutomationsUpdateMutation(),
     onSuccess: async (updated) => {
       await queryClient.invalidateQueries({
-        queryKey: siteAutomationsListQueryKey({ path: { workspaceSlug: slug } }),
+        queryKey: siteAutomationsListQueryKey({ path: { slug: slug } }),
       })
       await queryClient.invalidateQueries({
-        queryKey: siteAutomationsGetQueryKey({ path: { workspaceSlug: slug, id: updated.id } }),
+        queryKey: siteAutomationsGetQueryKey({ path: { slug: slug, id: updated.id } }),
       })
     },
   })
@@ -85,7 +85,7 @@ export function AutomationBuilder({ slug, automation }: AutomationBuilderProps) 
       const values = form.getValues()
       try {
         await updateMutation.mutateAsync({
-          path: { workspaceSlug: slug, id: automation.id },
+          path: { slug: slug, id: automation.id },
           body: {
             name: values.name.trim(),
             triggerEvent: values.triggerEvent,

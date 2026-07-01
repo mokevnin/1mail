@@ -1,10 +1,16 @@
 using TypeSpec.Http;
+using TypeSpec.Rest;
+using TypeSpec.Rest.Resource;
 
 namespace OneMail;
 
 /** A workspace API token (secret shown only once, at creation) */
+@resource("tokens")
+@segment("tokens")
+@parentResource(SiteWorkspaceResource)
 model SiteApiTokenResource {
   /** Unique identifier */
+  @key
   id: EntityId;
 
   /** Human-readable label */
@@ -39,12 +45,15 @@ model SiteCreateTokenResponse {
   resource: SiteApiTokenResource;
 }
 
-@route("/w/{workspaceSlug}/tokens")
+// Bespoke (not WorkspaceCrud): no GET/PUT for a single token, and create returns
+// the one-time secret rather than the resource. Nested via @parentResource + @autoRoute.
 @tag("Site Tokens")
 namespace SiteTokens {
   /** List active (non-revoked) API tokens for the workspace */
+  @listsResource(SiteApiTokenResource)
   @get
-  op list(@path workspaceSlug: string):
+  @autoRoute
+  op list(...ResourceCollectionParameters<SiteApiTokenResource>):
     | {
         @statusCode statusCode: 200;
         @body body: SiteApiTokenResource[];
@@ -52,8 +61,13 @@ namespace SiteTokens {
     | NotFoundProblem;
 
   /** Create an API token; the full secret is returned once */
+  @createsResource(SiteApiTokenResource)
   @post
-  op create(@path workspaceSlug: string, @body body: SiteCreateTokenInput):
+  @autoRoute
+  op create(
+    ...ResourceCollectionParameters<SiteApiTokenResource>,
+    @body body: SiteCreateTokenInput,
+  ):
     | {
         @statusCode statusCode: 201;
         @body body: SiteCreateTokenResponse;
@@ -62,9 +76,10 @@ namespace SiteTokens {
     | UnprocessableEntityProblem;
 
   /** Revoke an API token */
+  @deletesResource(SiteApiTokenResource)
   @delete
-  @route("/{id}")
-  op delete(@path workspaceSlug: string, @path id: EntityId):
+  @autoRoute
+  op delete(...ResourceParameters<SiteApiTokenResource>):
     | NoContentResponse
     | NotFoundProblem
     | BadRequestProblem;

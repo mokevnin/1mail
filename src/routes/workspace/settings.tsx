@@ -82,7 +82,7 @@ function InstallStatus({ slug }: { slug: string }) {
   const navigate = useNavigate()
   const statusQuery = useQuery({
     ...siteEventsListOptions({
-      path: { workspaceSlug: slug },
+      path: { slug: slug },
       query: { page: 1, pageSize: 1 },
     }),
     refetchInterval: 5000,

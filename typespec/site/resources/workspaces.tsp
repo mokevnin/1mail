@@ -1,8 +1,11 @@
 using TypeSpec.Http;
+using TypeSpec.Rest;
 
 namespace OneMail;
 
 /** Workspace the current user belongs to */
+@resource("workspaces")
+@segment("workspaces")
 model SiteWorkspaceResource {
   /** Unique identifier */
   id: EntityId;
@@ -10,7 +13,8 @@ model SiteWorkspaceResource {
   /** Display name */
   name: string;
 
-  /** URL-safe unique slug (used in /w/{slug} routes) */
+  /** URL-safe unique slug; the route key for nested workspace resources */
+  @key("slug")
   slug: string;
 
   /** Per-workspace collect write-key (x-collect-key) for the tracking snippet */

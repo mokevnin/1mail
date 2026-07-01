@@ -37,14 +37,14 @@ func (c *codeRecorder) Unwrap() http.ResponseWriter {
 //
 // Aggregate metrics for the workspace dashboard.
 //
-// GET /w/{workspaceSlug}/analytics/overview
+// GET /workspaces/{slug}/analytics/overview
 func (s *Server) handleSiteAnalyticsOverviewRequest(args [1]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
 	statusWriter := &codeRecorder{ResponseWriter: w}
 	w = statusWriter
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("SiteAnalytics_overview"),
 		semconv.HTTPRequestMethodKey.String("GET"),
-		semconv.HTTPRouteKey.String("/w/{workspaceSlug}/analytics/overview"),
+		semconv.HTTPRouteKey.String("/workspaces/{slug}/analytics/overview"),
 	}
 	// Add attributes from config.
 	otelAttrs = append(otelAttrs, s.cfg.Attributes...)
@@ -177,9 +177,9 @@ func (s *Server) handleSiteAnalyticsOverviewRequest(args [1]string, argsEscaped 
 			RawBody:          rawBody,
 			Params: middleware.Parameters{
 				{
-					Name: "workspaceSlug",
+					Name: "slug",
 					In:   "path",
-				}: params.WorkspaceSlug,
+				}: params.Slug,
 				{
 					Name: "range",
 					In:   "query",
@@ -1084,14 +1084,14 @@ func (s *Server) handleSiteAuthVerifyEmailRequest(args [0]string, argsEscaped bo
 //
 // Activate an automation (starts enrolling contacts).
 //
-// POST /w/{workspaceSlug}/automations/{id}/activate
+// POST /workspaces/{slug}/automations/{id}/activate
 func (s *Server) handleSiteAutomationsActivateRequest(args [2]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
 	statusWriter := &codeRecorder{ResponseWriter: w}
 	w = statusWriter
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("SiteAutomations_activate"),
 		semconv.HTTPRequestMethodKey.String("POST"),
-		semconv.HTTPRouteKey.String("/w/{workspaceSlug}/automations/{id}/activate"),
+		semconv.HTTPRouteKey.String("/workspaces/{slug}/automations/{id}/activate"),
 	}
 	// Add attributes from config.
 	otelAttrs = append(otelAttrs, s.cfg.Attributes...)
@@ -1224,9 +1224,9 @@ func (s *Server) handleSiteAutomationsActivateRequest(args [2]string, argsEscape
 			RawBody:          rawBody,
 			Params: middleware.Parameters{
 				{
-					Name: "workspaceSlug",
+					Name: "slug",
 					In:   "path",
-				}: params.WorkspaceSlug,
+				}: params.Slug,
 				{
 					Name: "id",
 					In:   "path",
@@ -1273,16 +1273,16 @@ func (s *Server) handleSiteAutomationsActivateRequest(args [2]string, argsEscape
 
 // handleSiteAutomationsCreateRequest handles SiteAutomations_create operation.
 //
-// Create an automation.
+// Create a resource from the site UI.
 //
-// POST /w/{workspaceSlug}/automations
+// POST /workspaces/{slug}/automations
 func (s *Server) handleSiteAutomationsCreateRequest(args [1]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
 	statusWriter := &codeRecorder{ResponseWriter: w}
 	w = statusWriter
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("SiteAutomations_create"),
 		semconv.HTTPRequestMethodKey.String("POST"),
-		semconv.HTTPRouteKey.String("/w/{workspaceSlug}/automations"),
+		semconv.HTTPRouteKey.String("/workspaces/{slug}/automations"),
 	}
 	// Add attributes from config.
 	otelAttrs = append(otelAttrs, s.cfg.Attributes...)
@@ -1430,9 +1430,9 @@ func (s *Server) handleSiteAutomationsCreateRequest(args [1]string, argsEscaped 
 			RawBody:          rawBody,
 			Params: middleware.Parameters{
 				{
-					Name: "workspaceSlug",
+					Name: "slug",
 					In:   "path",
-				}: params.WorkspaceSlug,
+				}: params.Slug,
 			},
 			Raw: r,
 		}
@@ -1477,14 +1477,14 @@ func (s *Server) handleSiteAutomationsCreateRequest(args [1]string, argsEscaped 
 //
 // Deactivate an automation (stops new enrollments).
 //
-// POST /w/{workspaceSlug}/automations/{id}/deactivate
+// POST /workspaces/{slug}/automations/{id}/deactivate
 func (s *Server) handleSiteAutomationsDeactivateRequest(args [2]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
 	statusWriter := &codeRecorder{ResponseWriter: w}
 	w = statusWriter
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("SiteAutomations_deactivate"),
 		semconv.HTTPRequestMethodKey.String("POST"),
-		semconv.HTTPRouteKey.String("/w/{workspaceSlug}/automations/{id}/deactivate"),
+		semconv.HTTPRouteKey.String("/workspaces/{slug}/automations/{id}/deactivate"),
 	}
 	// Add attributes from config.
 	otelAttrs = append(otelAttrs, s.cfg.Attributes...)
@@ -1617,9 +1617,9 @@ func (s *Server) handleSiteAutomationsDeactivateRequest(args [2]string, argsEsca
 			RawBody:          rawBody,
 			Params: middleware.Parameters{
 				{
-					Name: "workspaceSlug",
+					Name: "slug",
 					In:   "path",
-				}: params.WorkspaceSlug,
+				}: params.Slug,
 				{
 					Name: "id",
 					In:   "path",
@@ -1666,16 +1666,16 @@ func (s *Server) handleSiteAutomationsDeactivateRequest(args [2]string, argsEsca
 
 // handleSiteAutomationsDeleteRequest handles SiteAutomations_delete operation.
 //
-// Delete an automation.
+// Delete a resource from the site UI.
 //
-// DELETE /w/{workspaceSlug}/automations/{id}
+// DELETE /workspaces/{slug}/automations/{id}
 func (s *Server) handleSiteAutomationsDeleteRequest(args [2]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
 	statusWriter := &codeRecorder{ResponseWriter: w}
 	w = statusWriter
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("SiteAutomations_delete"),
 		semconv.HTTPRequestMethodKey.String("DELETE"),
-		semconv.HTTPRouteKey.String("/w/{workspaceSlug}/automations/{id}"),
+		semconv.HTTPRouteKey.String("/workspaces/{slug}/automations/{id}"),
 	}
 	// Add attributes from config.
 	otelAttrs = append(otelAttrs, s.cfg.Attributes...)
@@ -1808,9 +1808,9 @@ func (s *Server) handleSiteAutomationsDeleteRequest(args [2]string, argsEscaped 
 			RawBody:          rawBody,
 			Params: middleware.Parameters{
 				{
-					Name: "workspaceSlug",
+					Name: "slug",
 					In:   "path",
-				}: params.WorkspaceSlug,
+				}: params.Slug,
 				{
 					Name: "id",
 					In:   "path",
@@ -1857,16 +1857,16 @@ func (s *Server) handleSiteAutomationsDeleteRequest(args [2]string, argsEscaped 
 
 // handleSiteAutomationsGetRequest handles SiteAutomations_get operation.
 //
-// Get an automation by ID.
+// Get a resource by ID for the site UI.
 //
-// GET /w/{workspaceSlug}/automations/{id}
+// GET /workspaces/{slug}/automations/{id}
 func (s *Server) handleSiteAutomationsGetRequest(args [2]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
 	statusWriter := &codeRecorder{ResponseWriter: w}
 	w = statusWriter
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("SiteAutomations_get"),
 		semconv.HTTPRequestMethodKey.String("GET"),
-		semconv.HTTPRouteKey.String("/w/{workspaceSlug}/automations/{id}"),
+		semconv.HTTPRouteKey.String("/workspaces/{slug}/automations/{id}"),
 	}
 	// Add attributes from config.
 	otelAttrs = append(otelAttrs, s.cfg.Attributes...)
@@ -1999,9 +1999,9 @@ func (s *Server) handleSiteAutomationsGetRequest(args [2]string, argsEscaped boo
 			RawBody:          rawBody,
 			Params: middleware.Parameters{
 				{
-					Name: "workspaceSlug",
+					Name: "slug",
 					In:   "path",
-				}: params.WorkspaceSlug,
+				}: params.Slug,
 				{
 					Name: "id",
 					In:   "path",
@@ -2048,16 +2048,16 @@ func (s *Server) handleSiteAutomationsGetRequest(args [2]string, argsEscaped boo
 
 // handleSiteAutomationsListRequest handles SiteAutomations_list operation.
 //
-// List automations.
+// List resources for the site UI.
 //
-// GET /w/{workspaceSlug}/automations
+// GET /workspaces/{slug}/automations
 func (s *Server) handleSiteAutomationsListRequest(args [1]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
 	statusWriter := &codeRecorder{ResponseWriter: w}
 	w = statusWriter
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("SiteAutomations_list"),
 		semconv.HTTPRequestMethodKey.String("GET"),
-		semconv.HTTPRouteKey.String("/w/{workspaceSlug}/automations"),
+		semconv.HTTPRouteKey.String("/workspaces/{slug}/automations"),
 	}
 	// Add attributes from config.
 	otelAttrs = append(otelAttrs, s.cfg.Attributes...)
@@ -2190,9 +2190,9 @@ func (s *Server) handleSiteAutomationsListRequest(args [1]string, argsEscaped bo
 			RawBody:          rawBody,
 			Params: middleware.Parameters{
 				{
-					Name: "workspaceSlug",
+					Name: "slug",
 					In:   "path",
-				}: params.WorkspaceSlug,
+				}: params.Slug,
 				{
 					Name: "page",
 					In:   "query",
@@ -2243,16 +2243,16 @@ func (s *Server) handleSiteAutomationsListRequest(args [1]string, argsEscaped bo
 
 // handleSiteAutomationsUpdateRequest handles SiteAutomations_update operation.
 //
-// Update an automation.
+// Update a resource from the site UI.
 //
-// PUT /w/{workspaceSlug}/automations/{id}
+// PUT /workspaces/{slug}/automations/{id}
 func (s *Server) handleSiteAutomationsUpdateRequest(args [2]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
 	statusWriter := &codeRecorder{ResponseWriter: w}
 	w = statusWriter
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("SiteAutomations_update"),
 		semconv.HTTPRequestMethodKey.String("PUT"),
-		semconv.HTTPRouteKey.String("/w/{workspaceSlug}/automations/{id}"),
+		semconv.HTTPRouteKey.String("/workspaces/{slug}/automations/{id}"),
 	}
 	// Add attributes from config.
 	otelAttrs = append(otelAttrs, s.cfg.Attributes...)
@@ -2400,9 +2400,9 @@ func (s *Server) handleSiteAutomationsUpdateRequest(args [2]string, argsEscaped 
 			RawBody:          rawBody,
 			Params: middleware.Parameters{
 				{
-					Name: "workspaceSlug",
+					Name: "slug",
 					In:   "path",
-				}: params.WorkspaceSlug,
+				}: params.Slug,
 				{
 					Name: "id",
 					In:   "path",
@@ -2449,16 +2449,16 @@ func (s *Server) handleSiteAutomationsUpdateRequest(args [2]string, argsEscaped 
 
 // handleSiteBroadcastsCreateRequest handles SiteBroadcasts_create operation.
 //
-// Create a broadcast from the site UI.
+// Create a resource from the site UI.
 //
-// POST /w/{workspaceSlug}/broadcasts
+// POST /workspaces/{slug}/broadcasts
 func (s *Server) handleSiteBroadcastsCreateRequest(args [1]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
 	statusWriter := &codeRecorder{ResponseWriter: w}
 	w = statusWriter
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("SiteBroadcasts_create"),
 		semconv.HTTPRequestMethodKey.String("POST"),
-		semconv.HTTPRouteKey.String("/w/{workspaceSlug}/broadcasts"),
+		semconv.HTTPRouteKey.String("/workspaces/{slug}/broadcasts"),
 	}
 	// Add attributes from config.
 	otelAttrs = append(otelAttrs, s.cfg.Attributes...)
@@ -2606,9 +2606,9 @@ func (s *Server) handleSiteBroadcastsCreateRequest(args [1]string, argsEscaped b
 			RawBody:          rawBody,
 			Params: middleware.Parameters{
 				{
-					Name: "workspaceSlug",
+					Name: "slug",
 					In:   "path",
-				}: params.WorkspaceSlug,
+				}: params.Slug,
 			},
 			Raw: r,
 		}
@@ -2651,16 +2651,16 @@ func (s *Server) handleSiteBroadcastsCreateRequest(args [1]string, argsEscaped b
 
 // handleSiteBroadcastsDeleteRequest handles SiteBroadcasts_delete operation.
 //
-// Delete a broadcast from the site UI.
+// Delete a resource from the site UI.
 //
-// DELETE /w/{workspaceSlug}/broadcasts/{id}
+// DELETE /workspaces/{slug}/broadcasts/{id}
 func (s *Server) handleSiteBroadcastsDeleteRequest(args [2]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
 	statusWriter := &codeRecorder{ResponseWriter: w}
 	w = statusWriter
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("SiteBroadcasts_delete"),
 		semconv.HTTPRequestMethodKey.String("DELETE"),
-		semconv.HTTPRouteKey.String("/w/{workspaceSlug}/broadcasts/{id}"),
+		semconv.HTTPRouteKey.String("/workspaces/{slug}/broadcasts/{id}"),
 	}
 	// Add attributes from config.
 	otelAttrs = append(otelAttrs, s.cfg.Attributes...)
@@ -2793,9 +2793,9 @@ func (s *Server) handleSiteBroadcastsDeleteRequest(args [2]string, argsEscaped b
 			RawBody:          rawBody,
 			Params: middleware.Parameters{
 				{
-					Name: "workspaceSlug",
+					Name: "slug",
 					In:   "path",
-				}: params.WorkspaceSlug,
+				}: params.Slug,
 				{
 					Name: "id",
 					In:   "path",
@@ -2842,16 +2842,16 @@ func (s *Server) handleSiteBroadcastsDeleteRequest(args [2]string, argsEscaped b
 
 // handleSiteBroadcastsGetRequest handles SiteBroadcasts_get operation.
 //
-// Get a broadcast by ID for the site UI.
+// Get a resource by ID for the site UI.
 //
-// GET /w/{workspaceSlug}/broadcasts/{id}
+// GET /workspaces/{slug}/broadcasts/{id}
 func (s *Server) handleSiteBroadcastsGetRequest(args [2]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
 	statusWriter := &codeRecorder{ResponseWriter: w}
 	w = statusWriter
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("SiteBroadcasts_get"),
 		semconv.HTTPRequestMethodKey.String("GET"),
-		semconv.HTTPRouteKey.String("/w/{workspaceSlug}/broadcasts/{id}"),
+		semconv.HTTPRouteKey.String("/workspaces/{slug}/broadcasts/{id}"),
 	}
 	// Add attributes from config.
 	otelAttrs = append(otelAttrs, s.cfg.Attributes...)
@@ -2984,9 +2984,9 @@ func (s *Server) handleSiteBroadcastsGetRequest(args [2]string, argsEscaped bool
 			RawBody:          rawBody,
 			Params: middleware.Parameters{
 				{
-					Name: "workspaceSlug",
+					Name: "slug",
 					In:   "path",
-				}: params.WorkspaceSlug,
+				}: params.Slug,
 				{
 					Name: "id",
 					In:   "path",
@@ -3033,16 +3033,16 @@ func (s *Server) handleSiteBroadcastsGetRequest(args [2]string, argsEscaped bool
 
 // handleSiteBroadcastsListRequest handles SiteBroadcasts_list operation.
 //
-// List broadcasts for the site UI.
+// List resources for the site UI.
 //
-// GET /w/{workspaceSlug}/broadcasts
+// GET /workspaces/{slug}/broadcasts
 func (s *Server) handleSiteBroadcastsListRequest(args [1]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
 	statusWriter := &codeRecorder{ResponseWriter: w}
 	w = statusWriter
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("SiteBroadcasts_list"),
 		semconv.HTTPRequestMethodKey.String("GET"),
-		semconv.HTTPRouteKey.String("/w/{workspaceSlug}/broadcasts"),
+		semconv.HTTPRouteKey.String("/workspaces/{slug}/broadcasts"),
 	}
 	// Add attributes from config.
 	otelAttrs = append(otelAttrs, s.cfg.Attributes...)
@@ -3175,9 +3175,9 @@ func (s *Server) handleSiteBroadcastsListRequest(args [1]string, argsEscaped boo
 			RawBody:          rawBody,
 			Params: middleware.Parameters{
 				{
-					Name: "workspaceSlug",
+					Name: "slug",
 					In:   "path",
-				}: params.WorkspaceSlug,
+				}: params.Slug,
 				{
 					Name: "page",
 					In:   "query",
@@ -3230,14 +3230,14 @@ func (s *Server) handleSiteBroadcastsListRequest(args [1]string, argsEscaped boo
 //
 // Schedule a broadcast to send at a future time.
 //
-// POST /w/{workspaceSlug}/broadcasts/{id}/schedule
+// POST /workspaces/{slug}/broadcasts/{id}/schedule
 func (s *Server) handleSiteBroadcastsScheduleRequest(args [2]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
 	statusWriter := &codeRecorder{ResponseWriter: w}
 	w = statusWriter
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("SiteBroadcasts_schedule"),
 		semconv.HTTPRequestMethodKey.String("POST"),
-		semconv.HTTPRouteKey.String("/w/{workspaceSlug}/broadcasts/{id}/schedule"),
+		semconv.HTTPRouteKey.String("/workspaces/{slug}/broadcasts/{id}/schedule"),
 	}
 	// Add attributes from config.
 	otelAttrs = append(otelAttrs, s.cfg.Attributes...)
@@ -3385,9 +3385,9 @@ func (s *Server) handleSiteBroadcastsScheduleRequest(args [2]string, argsEscaped
 			RawBody:          rawBody,
 			Params: middleware.Parameters{
 				{
-					Name: "workspaceSlug",
+					Name: "slug",
 					In:   "path",
-				}: params.WorkspaceSlug,
+				}: params.Slug,
 				{
 					Name: "id",
 					In:   "path",
@@ -3436,14 +3436,14 @@ func (s *Server) handleSiteBroadcastsScheduleRequest(args [2]string, argsEscaped
 //
 // Send a broadcast immediately.
 //
-// POST /w/{workspaceSlug}/broadcasts/{id}/send
+// POST /workspaces/{slug}/broadcasts/{id}/send
 func (s *Server) handleSiteBroadcastsSendRequest(args [2]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
 	statusWriter := &codeRecorder{ResponseWriter: w}
 	w = statusWriter
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("SiteBroadcasts_send"),
 		semconv.HTTPRequestMethodKey.String("POST"),
-		semconv.HTTPRouteKey.String("/w/{workspaceSlug}/broadcasts/{id}/send"),
+		semconv.HTTPRouteKey.String("/workspaces/{slug}/broadcasts/{id}/send"),
 	}
 	// Add attributes from config.
 	otelAttrs = append(otelAttrs, s.cfg.Attributes...)
@@ -3576,9 +3576,9 @@ func (s *Server) handleSiteBroadcastsSendRequest(args [2]string, argsEscaped boo
 			RawBody:          rawBody,
 			Params: middleware.Parameters{
 				{
-					Name: "workspaceSlug",
+					Name: "slug",
 					In:   "path",
-				}: params.WorkspaceSlug,
+				}: params.Slug,
 				{
 					Name: "id",
 					In:   "path",
@@ -3627,14 +3627,14 @@ func (s *Server) handleSiteBroadcastsSendRequest(args [2]string, argsEscaped boo
 //
 // Send a one-off rendered preview to a single address.
 //
-// POST /w/{workspaceSlug}/broadcasts/{id}/test
+// POST /workspaces/{slug}/broadcasts/{id}/test-send
 func (s *Server) handleSiteBroadcastsTestSendRequest(args [2]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
 	statusWriter := &codeRecorder{ResponseWriter: w}
 	w = statusWriter
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("SiteBroadcasts_testSend"),
 		semconv.HTTPRequestMethodKey.String("POST"),
-		semconv.HTTPRouteKey.String("/w/{workspaceSlug}/broadcasts/{id}/test"),
+		semconv.HTTPRouteKey.String("/workspaces/{slug}/broadcasts/{id}/test-send"),
 	}
 	// Add attributes from config.
 	otelAttrs = append(otelAttrs, s.cfg.Attributes...)
@@ -3782,9 +3782,9 @@ func (s *Server) handleSiteBroadcastsTestSendRequest(args [2]string, argsEscaped
 			RawBody:          rawBody,
 			Params: middleware.Parameters{
 				{
-					Name: "workspaceSlug",
+					Name: "slug",
 					In:   "path",
-				}: params.WorkspaceSlug,
+				}: params.Slug,
 				{
 					Name: "id",
 					In:   "path",
@@ -3831,16 +3831,16 @@ func (s *Server) handleSiteBroadcastsTestSendRequest(args [2]string, argsEscaped
 
 // handleSiteBroadcastsUpdateRequest handles SiteBroadcasts_update operation.
 //
-// Update a broadcast from the site UI.
+// Update a resource from the site UI.
 //
-// PUT /w/{workspaceSlug}/broadcasts/{id}
+// PUT /workspaces/{slug}/broadcasts/{id}
 func (s *Server) handleSiteBroadcastsUpdateRequest(args [2]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
 	statusWriter := &codeRecorder{ResponseWriter: w}
 	w = statusWriter
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("SiteBroadcasts_update"),
 		semconv.HTTPRequestMethodKey.String("PUT"),
-		semconv.HTTPRouteKey.String("/w/{workspaceSlug}/broadcasts/{id}"),
+		semconv.HTTPRouteKey.String("/workspaces/{slug}/broadcasts/{id}"),
 	}
 	// Add attributes from config.
 	otelAttrs = append(otelAttrs, s.cfg.Attributes...)
@@ -3988,9 +3988,9 @@ func (s *Server) handleSiteBroadcastsUpdateRequest(args [2]string, argsEscaped b
 			RawBody:          rawBody,
 			Params: middleware.Parameters{
 				{
-					Name: "workspaceSlug",
+					Name: "slug",
 					In:   "path",
-				}: params.WorkspaceSlug,
+				}: params.Slug,
 				{
 					Name: "id",
 					In:   "path",
@@ -4037,16 +4037,16 @@ func (s *Server) handleSiteBroadcastsUpdateRequest(args [2]string, argsEscaped b
 
 // handleSiteContactsCreateRequest handles SiteContacts_create operation.
 //
-// Create a contact from the site UI.
+// Create a resource from the site UI.
 //
-// POST /w/{workspaceSlug}/contacts
+// POST /workspaces/{slug}/contacts
 func (s *Server) handleSiteContactsCreateRequest(args [1]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
 	statusWriter := &codeRecorder{ResponseWriter: w}
 	w = statusWriter
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("SiteContacts_create"),
 		semconv.HTTPRequestMethodKey.String("POST"),
-		semconv.HTTPRouteKey.String("/w/{workspaceSlug}/contacts"),
+		semconv.HTTPRouteKey.String("/workspaces/{slug}/contacts"),
 	}
 	// Add attributes from config.
 	otelAttrs = append(otelAttrs, s.cfg.Attributes...)
@@ -4194,9 +4194,9 @@ func (s *Server) handleSiteContactsCreateRequest(args [1]string, argsEscaped boo
 			RawBody:          rawBody,
 			Params: middleware.Parameters{
 				{
-					Name: "workspaceSlug",
+					Name: "slug",
 					In:   "path",
-				}: params.WorkspaceSlug,
+				}: params.Slug,
 			},
 			Raw: r,
 		}
@@ -4239,16 +4239,16 @@ func (s *Server) handleSiteContactsCreateRequest(args [1]string, argsEscaped boo
 
 // handleSiteContactsDeleteRequest handles SiteContacts_delete operation.
 //
-// Delete a contact from the site UI.
+// Delete a resource from the site UI.
 //
-// DELETE /w/{workspaceSlug}/contacts/{id}
+// DELETE /workspaces/{slug}/contacts/{id}
 func (s *Server) handleSiteContactsDeleteRequest(args [2]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
 	statusWriter := &codeRecorder{ResponseWriter: w}
 	w = statusWriter
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("SiteContacts_delete"),
 		semconv.HTTPRequestMethodKey.String("DELETE"),
-		semconv.HTTPRouteKey.String("/w/{workspaceSlug}/contacts/{id}"),
+		semconv.HTTPRouteKey.String("/workspaces/{slug}/contacts/{id}"),
 	}
 	// Add attributes from config.
 	otelAttrs = append(otelAttrs, s.cfg.Attributes...)
@@ -4381,9 +4381,9 @@ func (s *Server) handleSiteContactsDeleteRequest(args [2]string, argsEscaped boo
 			RawBody:          rawBody,
 			Params: middleware.Parameters{
 				{
-					Name: "workspaceSlug",
+					Name: "slug",
 					In:   "path",
-				}: params.WorkspaceSlug,
+				}: params.Slug,
 				{
 					Name: "id",
 					In:   "path",
@@ -4430,16 +4430,16 @@ func (s *Server) handleSiteContactsDeleteRequest(args [2]string, argsEscaped boo
 
 // handleSiteContactsGetRequest handles SiteContacts_get operation.
 //
-// Get a contact by ID for the site UI.
+// Get a resource by ID for the site UI.
 //
-// GET /w/{workspaceSlug}/contacts/{id}
+// GET /workspaces/{slug}/contacts/{id}
 func (s *Server) handleSiteContactsGetRequest(args [2]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
 	statusWriter := &codeRecorder{ResponseWriter: w}
 	w = statusWriter
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("SiteContacts_get"),
 		semconv.HTTPRequestMethodKey.String("GET"),
-		semconv.HTTPRouteKey.String("/w/{workspaceSlug}/contacts/{id}"),
+		semconv.HTTPRouteKey.String("/workspaces/{slug}/contacts/{id}"),
 	}
 	// Add attributes from config.
 	otelAttrs = append(otelAttrs, s.cfg.Attributes...)
@@ -4572,9 +4572,9 @@ func (s *Server) handleSiteContactsGetRequest(args [2]string, argsEscaped bool, 
 			RawBody:          rawBody,
 			Params: middleware.Parameters{
 				{
-					Name: "workspaceSlug",
+					Name: "slug",
 					In:   "path",
-				}: params.WorkspaceSlug,
+				}: params.Slug,
 				{
 					Name: "id",
 					In:   "path",
@@ -4621,16 +4621,16 @@ func (s *Server) handleSiteContactsGetRequest(args [2]string, argsEscaped bool, 
 
 // handleSiteContactsListRequest handles SiteContacts_list operation.
 //
-// List contacts for the site UI.
+// List resources for the site UI.
 //
-// GET /w/{workspaceSlug}/contacts
+// GET /workspaces/{slug}/contacts
 func (s *Server) handleSiteContactsListRequest(args [1]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
 	statusWriter := &codeRecorder{ResponseWriter: w}
 	w = statusWriter
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("SiteContacts_list"),
 		semconv.HTTPRequestMethodKey.String("GET"),
-		semconv.HTTPRouteKey.String("/w/{workspaceSlug}/contacts"),
+		semconv.HTTPRouteKey.String("/workspaces/{slug}/contacts"),
 	}
 	// Add attributes from config.
 	otelAttrs = append(otelAttrs, s.cfg.Attributes...)
@@ -4763,9 +4763,9 @@ func (s *Server) handleSiteContactsListRequest(args [1]string, argsEscaped bool,
 			RawBody:          rawBody,
 			Params: middleware.Parameters{
 				{
-					Name: "workspaceSlug",
+					Name: "slug",
 					In:   "path",
-				}: params.WorkspaceSlug,
+				}: params.Slug,
 				{
 					Name: "page",
 					In:   "query",
@@ -4816,16 +4816,16 @@ func (s *Server) handleSiteContactsListRequest(args [1]string, argsEscaped bool,
 
 // handleSiteContactsUpdateRequest handles SiteContacts_update operation.
 //
-// Update a contact from the site UI.
+// Update a resource from the site UI.
 //
-// PUT /w/{workspaceSlug}/contacts/{id}
+// PUT /workspaces/{slug}/contacts/{id}
 func (s *Server) handleSiteContactsUpdateRequest(args [2]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
 	statusWriter := &codeRecorder{ResponseWriter: w}
 	w = statusWriter
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("SiteContacts_update"),
 		semconv.HTTPRequestMethodKey.String("PUT"),
-		semconv.HTTPRouteKey.String("/w/{workspaceSlug}/contacts/{id}"),
+		semconv.HTTPRouteKey.String("/workspaces/{slug}/contacts/{id}"),
 	}
 	// Add attributes from config.
 	otelAttrs = append(otelAttrs, s.cfg.Attributes...)
@@ -4973,9 +4973,9 @@ func (s *Server) handleSiteContactsUpdateRequest(args [2]string, argsEscaped boo
 			RawBody:          rawBody,
 			Params: middleware.Parameters{
 				{
-					Name: "workspaceSlug",
+					Name: "slug",
 					In:   "path",
-				}: params.WorkspaceSlug,
+				}: params.Slug,
 				{
 					Name: "id",
 					In:   "path",
@@ -5024,14 +5024,14 @@ func (s *Server) handleSiteContactsUpdateRequest(args [2]string, argsEscaped boo
 //
 // List the workspace's custom field definitions.
 //
-// GET /w/{workspaceSlug}/custom-fields
+// GET /workspaces/{slug}/custom-fields
 func (s *Server) handleSiteCustomFieldsListRequest(args [1]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
 	statusWriter := &codeRecorder{ResponseWriter: w}
 	w = statusWriter
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("SiteCustomFields_list"),
 		semconv.HTTPRequestMethodKey.String("GET"),
-		semconv.HTTPRouteKey.String("/w/{workspaceSlug}/custom-fields"),
+		semconv.HTTPRouteKey.String("/workspaces/{slug}/custom-fields"),
 	}
 	// Add attributes from config.
 	otelAttrs = append(otelAttrs, s.cfg.Attributes...)
@@ -5164,9 +5164,9 @@ func (s *Server) handleSiteCustomFieldsListRequest(args [1]string, argsEscaped b
 			RawBody:          rawBody,
 			Params: middleware.Parameters{
 				{
-					Name: "workspaceSlug",
+					Name: "slug",
 					In:   "path",
-				}: params.WorkspaceSlug,
+				}: params.Slug,
 			},
 			Raw: r,
 		}
@@ -5211,14 +5211,14 @@ func (s *Server) handleSiteCustomFieldsListRequest(args [1]string, argsEscaped b
 //
 // Distinct event actions in the workspace, sorted — powers the segment builder.
 //
-// GET /w/{workspaceSlug}/events/actions
+// GET /workspaces/{slug}/events/actions
 func (s *Server) handleSiteEventsActionsRequest(args [1]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
 	statusWriter := &codeRecorder{ResponseWriter: w}
 	w = statusWriter
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("SiteEvents_actions"),
 		semconv.HTTPRequestMethodKey.String("GET"),
-		semconv.HTTPRouteKey.String("/w/{workspaceSlug}/events/actions"),
+		semconv.HTTPRouteKey.String("/workspaces/{slug}/events/actions"),
 	}
 	// Add attributes from config.
 	otelAttrs = append(otelAttrs, s.cfg.Attributes...)
@@ -5351,9 +5351,9 @@ func (s *Server) handleSiteEventsActionsRequest(args [1]string, argsEscaped bool
 			RawBody:          rawBody,
 			Params: middleware.Parameters{
 				{
-					Name: "workspaceSlug",
+					Name: "slug",
 					In:   "path",
-				}: params.WorkspaceSlug,
+				}: params.Slug,
 			},
 			Raw: r,
 		}
@@ -5398,14 +5398,14 @@ func (s *Server) handleSiteEventsActionsRequest(args [1]string, argsEscaped bool
 //
 // List events for the site UI (most recent first).
 //
-// GET /w/{workspaceSlug}/events
+// GET /workspaces/{slug}/events
 func (s *Server) handleSiteEventsListRequest(args [1]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
 	statusWriter := &codeRecorder{ResponseWriter: w}
 	w = statusWriter
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("SiteEvents_list"),
 		semconv.HTTPRequestMethodKey.String("GET"),
-		semconv.HTTPRouteKey.String("/w/{workspaceSlug}/events"),
+		semconv.HTTPRouteKey.String("/workspaces/{slug}/events"),
 	}
 	// Add attributes from config.
 	otelAttrs = append(otelAttrs, s.cfg.Attributes...)
@@ -5538,9 +5538,9 @@ func (s *Server) handleSiteEventsListRequest(args [1]string, argsEscaped bool, w
 			RawBody:          rawBody,
 			Params: middleware.Parameters{
 				{
-					Name: "workspaceSlug",
+					Name: "slug",
 					In:   "path",
-				}: params.WorkspaceSlug,
+				}: params.Slug,
 				{
 					Name: "page",
 					In:   "query",
@@ -5605,14 +5605,14 @@ func (s *Server) handleSiteEventsListRequest(args [1]string, argsEscaped bool, w
 //
 // Create an integration.
 //
-// POST /w/{workspaceSlug}/integrations
+// POST /workspaces/{slug}/integrations
 func (s *Server) handleSiteIntegrationsCreateRequest(args [1]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
 	statusWriter := &codeRecorder{ResponseWriter: w}
 	w = statusWriter
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("SiteIntegrations_create"),
 		semconv.HTTPRequestMethodKey.String("POST"),
-		semconv.HTTPRouteKey.String("/w/{workspaceSlug}/integrations"),
+		semconv.HTTPRouteKey.String("/workspaces/{slug}/integrations"),
 	}
 	// Add attributes from config.
 	otelAttrs = append(otelAttrs, s.cfg.Attributes...)
@@ -5760,9 +5760,9 @@ func (s *Server) handleSiteIntegrationsCreateRequest(args [1]string, argsEscaped
 			RawBody:          rawBody,
 			Params: middleware.Parameters{
 				{
-					Name: "workspaceSlug",
+					Name: "slug",
 					In:   "path",
-				}: params.WorkspaceSlug,
+				}: params.Slug,
 			},
 			Raw: r,
 		}
@@ -5807,14 +5807,14 @@ func (s *Server) handleSiteIntegrationsCreateRequest(args [1]string, argsEscaped
 //
 // Delete an integration.
 //
-// DELETE /w/{workspaceSlug}/integrations/{id}
+// DELETE /workspaces/{slug}/integrations/{id}
 func (s *Server) handleSiteIntegrationsDeleteRequest(args [2]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
 	statusWriter := &codeRecorder{ResponseWriter: w}
 	w = statusWriter
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("SiteIntegrations_delete"),
 		semconv.HTTPRequestMethodKey.String("DELETE"),
-		semconv.HTTPRouteKey.String("/w/{workspaceSlug}/integrations/{id}"),
+		semconv.HTTPRouteKey.String("/workspaces/{slug}/integrations/{id}"),
 	}
 	// Add attributes from config.
 	otelAttrs = append(otelAttrs, s.cfg.Attributes...)
@@ -5947,9 +5947,9 @@ func (s *Server) handleSiteIntegrationsDeleteRequest(args [2]string, argsEscaped
 			RawBody:          rawBody,
 			Params: middleware.Parameters{
 				{
-					Name: "workspaceSlug",
+					Name: "slug",
 					In:   "path",
-				}: params.WorkspaceSlug,
+				}: params.Slug,
 				{
 					Name: "id",
 					In:   "path",
@@ -5998,14 +5998,14 @@ func (s *Server) handleSiteIntegrationsDeleteRequest(args [2]string, argsEscaped
 //
 // Get an integration by id.
 //
-// GET /w/{workspaceSlug}/integrations/{id}
+// GET /workspaces/{slug}/integrations/{id}
 func (s *Server) handleSiteIntegrationsGetRequest(args [2]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
 	statusWriter := &codeRecorder{ResponseWriter: w}
 	w = statusWriter
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("SiteIntegrations_get"),
 		semconv.HTTPRequestMethodKey.String("GET"),
-		semconv.HTTPRouteKey.String("/w/{workspaceSlug}/integrations/{id}"),
+		semconv.HTTPRouteKey.String("/workspaces/{slug}/integrations/{id}"),
 	}
 	// Add attributes from config.
 	otelAttrs = append(otelAttrs, s.cfg.Attributes...)
@@ -6138,9 +6138,9 @@ func (s *Server) handleSiteIntegrationsGetRequest(args [2]string, argsEscaped bo
 			RawBody:          rawBody,
 			Params: middleware.Parameters{
 				{
-					Name: "workspaceSlug",
+					Name: "slug",
 					In:   "path",
-				}: params.WorkspaceSlug,
+				}: params.Slug,
 				{
 					Name: "id",
 					In:   "path",
@@ -6189,14 +6189,14 @@ func (s *Server) handleSiteIntegrationsGetRequest(args [2]string, argsEscaped bo
 //
 // List the workspace's sending-provider integrations.
 //
-// GET /w/{workspaceSlug}/integrations
+// GET /workspaces/{slug}/integrations
 func (s *Server) handleSiteIntegrationsListRequest(args [1]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
 	statusWriter := &codeRecorder{ResponseWriter: w}
 	w = statusWriter
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("SiteIntegrations_list"),
 		semconv.HTTPRequestMethodKey.String("GET"),
-		semconv.HTTPRouteKey.String("/w/{workspaceSlug}/integrations"),
+		semconv.HTTPRouteKey.String("/workspaces/{slug}/integrations"),
 	}
 	// Add attributes from config.
 	otelAttrs = append(otelAttrs, s.cfg.Attributes...)
@@ -6329,9 +6329,9 @@ func (s *Server) handleSiteIntegrationsListRequest(args [1]string, argsEscaped b
 			RawBody:          rawBody,
 			Params: middleware.Parameters{
 				{
-					Name: "workspaceSlug",
+					Name: "slug",
 					In:   "path",
-				}: params.WorkspaceSlug,
+				}: params.Slug,
 			},
 			Raw: r,
 		}
@@ -6376,14 +6376,14 @@ func (s *Server) handleSiteIntegrationsListRequest(args [1]string, argsEscaped b
 //
 // Update an integration.
 //
-// PUT /w/{workspaceSlug}/integrations/{id}
+// PUT /workspaces/{slug}/integrations/{id}
 func (s *Server) handleSiteIntegrationsUpdateRequest(args [2]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
 	statusWriter := &codeRecorder{ResponseWriter: w}
 	w = statusWriter
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("SiteIntegrations_update"),
 		semconv.HTTPRequestMethodKey.String("PUT"),
-		semconv.HTTPRouteKey.String("/w/{workspaceSlug}/integrations/{id}"),
+		semconv.HTTPRouteKey.String("/workspaces/{slug}/integrations/{id}"),
 	}
 	// Add attributes from config.
 	otelAttrs = append(otelAttrs, s.cfg.Attributes...)
@@ -6531,9 +6531,9 @@ func (s *Server) handleSiteIntegrationsUpdateRequest(args [2]string, argsEscaped
 			RawBody:          rawBody,
 			Params: middleware.Parameters{
 				{
-					Name: "workspaceSlug",
+					Name: "slug",
 					In:   "path",
-				}: params.WorkspaceSlug,
+				}: params.Slug,
 				{
 					Name: "id",
 					In:   "path",
@@ -6580,16 +6580,16 @@ func (s *Server) handleSiteIntegrationsUpdateRequest(args [2]string, argsEscaped
 
 // handleSiteSegmentsCreateRequest handles SiteSegments_create operation.
 //
-// Create a segment from the site UI.
+// Create a resource from the site UI.
 //
-// POST /w/{workspaceSlug}/segments
+// POST /workspaces/{slug}/segments
 func (s *Server) handleSiteSegmentsCreateRequest(args [1]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
 	statusWriter := &codeRecorder{ResponseWriter: w}
 	w = statusWriter
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("SiteSegments_create"),
 		semconv.HTTPRequestMethodKey.String("POST"),
-		semconv.HTTPRouteKey.String("/w/{workspaceSlug}/segments"),
+		semconv.HTTPRouteKey.String("/workspaces/{slug}/segments"),
 	}
 	// Add attributes from config.
 	otelAttrs = append(otelAttrs, s.cfg.Attributes...)
@@ -6737,9 +6737,9 @@ func (s *Server) handleSiteSegmentsCreateRequest(args [1]string, argsEscaped boo
 			RawBody:          rawBody,
 			Params: middleware.Parameters{
 				{
-					Name: "workspaceSlug",
+					Name: "slug",
 					In:   "path",
-				}: params.WorkspaceSlug,
+				}: params.Slug,
 			},
 			Raw: r,
 		}
@@ -6782,16 +6782,16 @@ func (s *Server) handleSiteSegmentsCreateRequest(args [1]string, argsEscaped boo
 
 // handleSiteSegmentsDeleteRequest handles SiteSegments_delete operation.
 //
-// Delete a segment from the site UI.
+// Delete a resource from the site UI.
 //
-// DELETE /w/{workspaceSlug}/segments/{id}
+// DELETE /workspaces/{slug}/segments/{id}
 func (s *Server) handleSiteSegmentsDeleteRequest(args [2]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
 	statusWriter := &codeRecorder{ResponseWriter: w}
 	w = statusWriter
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("SiteSegments_delete"),
 		semconv.HTTPRequestMethodKey.String("DELETE"),
-		semconv.HTTPRouteKey.String("/w/{workspaceSlug}/segments/{id}"),
+		semconv.HTTPRouteKey.String("/workspaces/{slug}/segments/{id}"),
 	}
 	// Add attributes from config.
 	otelAttrs = append(otelAttrs, s.cfg.Attributes...)
@@ -6924,9 +6924,9 @@ func (s *Server) handleSiteSegmentsDeleteRequest(args [2]string, argsEscaped boo
 			RawBody:          rawBody,
 			Params: middleware.Parameters{
 				{
-					Name: "workspaceSlug",
+					Name: "slug",
 					In:   "path",
-				}: params.WorkspaceSlug,
+				}: params.Slug,
 				{
 					Name: "id",
 					In:   "path",
@@ -6973,16 +6973,16 @@ func (s *Server) handleSiteSegmentsDeleteRequest(args [2]string, argsEscaped boo
 
 // handleSiteSegmentsGetRequest handles SiteSegments_get operation.
 //
-// Get a segment by ID for the site UI.
+// Get a resource by ID for the site UI.
 //
-// GET /w/{workspaceSlug}/segments/{id}
+// GET /workspaces/{slug}/segments/{id}
 func (s *Server) handleSiteSegmentsGetRequest(args [2]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
 	statusWriter := &codeRecorder{ResponseWriter: w}
 	w = statusWriter
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("SiteSegments_get"),
 		semconv.HTTPRequestMethodKey.String("GET"),
-		semconv.HTTPRouteKey.String("/w/{workspaceSlug}/segments/{id}"),
+		semconv.HTTPRouteKey.String("/workspaces/{slug}/segments/{id}"),
 	}
 	// Add attributes from config.
 	otelAttrs = append(otelAttrs, s.cfg.Attributes...)
@@ -7115,9 +7115,9 @@ func (s *Server) handleSiteSegmentsGetRequest(args [2]string, argsEscaped bool, 
 			RawBody:          rawBody,
 			Params: middleware.Parameters{
 				{
-					Name: "workspaceSlug",
+					Name: "slug",
 					In:   "path",
-				}: params.WorkspaceSlug,
+				}: params.Slug,
 				{
 					Name: "id",
 					In:   "path",
@@ -7164,16 +7164,16 @@ func (s *Server) handleSiteSegmentsGetRequest(args [2]string, argsEscaped bool, 
 
 // handleSiteSegmentsListRequest handles SiteSegments_list operation.
 //
-// List segments for the site UI.
+// List resources for the site UI.
 //
-// GET /w/{workspaceSlug}/segments
+// GET /workspaces/{slug}/segments
 func (s *Server) handleSiteSegmentsListRequest(args [1]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
 	statusWriter := &codeRecorder{ResponseWriter: w}
 	w = statusWriter
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("SiteSegments_list"),
 		semconv.HTTPRequestMethodKey.String("GET"),
-		semconv.HTTPRouteKey.String("/w/{workspaceSlug}/segments"),
+		semconv.HTTPRouteKey.String("/workspaces/{slug}/segments"),
 	}
 	// Add attributes from config.
 	otelAttrs = append(otelAttrs, s.cfg.Attributes...)
@@ -7306,9 +7306,9 @@ func (s *Server) handleSiteSegmentsListRequest(args [1]string, argsEscaped bool,
 			RawBody:          rawBody,
 			Params: middleware.Parameters{
 				{
-					Name: "workspaceSlug",
+					Name: "slug",
 					In:   "path",
-				}: params.WorkspaceSlug,
+				}: params.Slug,
 				{
 					Name: "page",
 					In:   "query",
@@ -7361,14 +7361,14 @@ func (s *Server) handleSiteSegmentsListRequest(args [1]string, argsEscaped bool,
 //
 // Preview how many active contacts match a rule definition.
 //
-// POST /w/{workspaceSlug}/segments/preview
+// POST /workspaces/{slug}/segments/preview
 func (s *Server) handleSiteSegmentsPreviewRequest(args [1]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
 	statusWriter := &codeRecorder{ResponseWriter: w}
 	w = statusWriter
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("SiteSegments_preview"),
 		semconv.HTTPRequestMethodKey.String("POST"),
-		semconv.HTTPRouteKey.String("/w/{workspaceSlug}/segments/preview"),
+		semconv.HTTPRouteKey.String("/workspaces/{slug}/segments/preview"),
 	}
 	// Add attributes from config.
 	otelAttrs = append(otelAttrs, s.cfg.Attributes...)
@@ -7516,9 +7516,9 @@ func (s *Server) handleSiteSegmentsPreviewRequest(args [1]string, argsEscaped bo
 			RawBody:          rawBody,
 			Params: middleware.Parameters{
 				{
-					Name: "workspaceSlug",
+					Name: "slug",
 					In:   "path",
-				}: params.WorkspaceSlug,
+				}: params.Slug,
 			},
 			Raw: r,
 		}
@@ -7561,16 +7561,16 @@ func (s *Server) handleSiteSegmentsPreviewRequest(args [1]string, argsEscaped bo
 
 // handleSiteSegmentsUpdateRequest handles SiteSegments_update operation.
 //
-// Update a segment from the site UI.
+// Update a resource from the site UI.
 //
-// PUT /w/{workspaceSlug}/segments/{id}
+// PUT /workspaces/{slug}/segments/{id}
 func (s *Server) handleSiteSegmentsUpdateRequest(args [2]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
 	statusWriter := &codeRecorder{ResponseWriter: w}
 	w = statusWriter
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("SiteSegments_update"),
 		semconv.HTTPRequestMethodKey.String("PUT"),
-		semconv.HTTPRouteKey.String("/w/{workspaceSlug}/segments/{id}"),
+		semconv.HTTPRouteKey.String("/workspaces/{slug}/segments/{id}"),
 	}
 	// Add attributes from config.
 	otelAttrs = append(otelAttrs, s.cfg.Attributes...)
@@ -7718,9 +7718,9 @@ func (s *Server) handleSiteSegmentsUpdateRequest(args [2]string, argsEscaped boo
 			RawBody:          rawBody,
 			Params: middleware.Parameters{
 				{
-					Name: "workspaceSlug",
+					Name: "slug",
 					In:   "path",
-				}: params.WorkspaceSlug,
+				}: params.Slug,
 				{
 					Name: "id",
 					In:   "path",
@@ -7769,14 +7769,14 @@ func (s *Server) handleSiteSegmentsUpdateRequest(args [2]string, argsEscaped boo
 //
 // Manually suppress an address (reason = manual; idempotent per address).
 //
-// POST /w/{workspaceSlug}/suppressions
+// POST /workspaces/{slug}/suppressions
 func (s *Server) handleSiteSuppressionsCreateRequest(args [1]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
 	statusWriter := &codeRecorder{ResponseWriter: w}
 	w = statusWriter
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("SiteSuppressions_create"),
 		semconv.HTTPRequestMethodKey.String("POST"),
-		semconv.HTTPRouteKey.String("/w/{workspaceSlug}/suppressions"),
+		semconv.HTTPRouteKey.String("/workspaces/{slug}/suppressions"),
 	}
 	// Add attributes from config.
 	otelAttrs = append(otelAttrs, s.cfg.Attributes...)
@@ -7924,9 +7924,9 @@ func (s *Server) handleSiteSuppressionsCreateRequest(args [1]string, argsEscaped
 			RawBody:          rawBody,
 			Params: middleware.Parameters{
 				{
-					Name: "workspaceSlug",
+					Name: "slug",
 					In:   "path",
-				}: params.WorkspaceSlug,
+				}: params.Slug,
 			},
 			Raw: r,
 		}
@@ -7971,14 +7971,14 @@ func (s *Server) handleSiteSuppressionsCreateRequest(args [1]string, argsEscaped
 //
 // Remove an address from the suppression list.
 //
-// DELETE /w/{workspaceSlug}/suppressions/{id}
+// DELETE /workspaces/{slug}/suppressions/{id}
 func (s *Server) handleSiteSuppressionsDeleteRequest(args [2]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
 	statusWriter := &codeRecorder{ResponseWriter: w}
 	w = statusWriter
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("SiteSuppressions_delete"),
 		semconv.HTTPRequestMethodKey.String("DELETE"),
-		semconv.HTTPRouteKey.String("/w/{workspaceSlug}/suppressions/{id}"),
+		semconv.HTTPRouteKey.String("/workspaces/{slug}/suppressions/{id}"),
 	}
 	// Add attributes from config.
 	otelAttrs = append(otelAttrs, s.cfg.Attributes...)
@@ -8111,9 +8111,9 @@ func (s *Server) handleSiteSuppressionsDeleteRequest(args [2]string, argsEscaped
 			RawBody:          rawBody,
 			Params: middleware.Parameters{
 				{
-					Name: "workspaceSlug",
+					Name: "slug",
 					In:   "path",
-				}: params.WorkspaceSlug,
+				}: params.Slug,
 				{
 					Name: "id",
 					In:   "path",
@@ -8162,14 +8162,14 @@ func (s *Server) handleSiteSuppressionsDeleteRequest(args [2]string, argsEscaped
 //
 // List suppressed addresses.
 //
-// GET /w/{workspaceSlug}/suppressions
+// GET /workspaces/{slug}/suppressions
 func (s *Server) handleSiteSuppressionsListRequest(args [1]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
 	statusWriter := &codeRecorder{ResponseWriter: w}
 	w = statusWriter
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("SiteSuppressions_list"),
 		semconv.HTTPRequestMethodKey.String("GET"),
-		semconv.HTTPRouteKey.String("/w/{workspaceSlug}/suppressions"),
+		semconv.HTTPRouteKey.String("/workspaces/{slug}/suppressions"),
 	}
 	// Add attributes from config.
 	otelAttrs = append(otelAttrs, s.cfg.Attributes...)
@@ -8302,9 +8302,9 @@ func (s *Server) handleSiteSuppressionsListRequest(args [1]string, argsEscaped b
 			RawBody:          rawBody,
 			Params: middleware.Parameters{
 				{
-					Name: "workspaceSlug",
+					Name: "slug",
 					In:   "path",
-				}: params.WorkspaceSlug,
+				}: params.Slug,
 				{
 					Name: "page",
 					In:   "query",
@@ -8355,16 +8355,16 @@ func (s *Server) handleSiteSuppressionsListRequest(args [1]string, argsEscaped b
 
 // handleSiteTemplatesCreateRequest handles SiteTemplates_create operation.
 //
-// Create a template.
+// Create a resource from the site UI.
 //
-// POST /w/{workspaceSlug}/templates
+// POST /workspaces/{slug}/templates
 func (s *Server) handleSiteTemplatesCreateRequest(args [1]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
 	statusWriter := &codeRecorder{ResponseWriter: w}
 	w = statusWriter
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("SiteTemplates_create"),
 		semconv.HTTPRequestMethodKey.String("POST"),
-		semconv.HTTPRouteKey.String("/w/{workspaceSlug}/templates"),
+		semconv.HTTPRouteKey.String("/workspaces/{slug}/templates"),
 	}
 	// Add attributes from config.
 	otelAttrs = append(otelAttrs, s.cfg.Attributes...)
@@ -8512,9 +8512,9 @@ func (s *Server) handleSiteTemplatesCreateRequest(args [1]string, argsEscaped bo
 			RawBody:          rawBody,
 			Params: middleware.Parameters{
 				{
-					Name: "workspaceSlug",
+					Name: "slug",
 					In:   "path",
-				}: params.WorkspaceSlug,
+				}: params.Slug,
 			},
 			Raw: r,
 		}
@@ -8557,16 +8557,16 @@ func (s *Server) handleSiteTemplatesCreateRequest(args [1]string, argsEscaped bo
 
 // handleSiteTemplatesDeleteRequest handles SiteTemplates_delete operation.
 //
-// Delete a template.
+// Delete a resource from the site UI.
 //
-// DELETE /w/{workspaceSlug}/templates/{id}
+// DELETE /workspaces/{slug}/templates/{id}
 func (s *Server) handleSiteTemplatesDeleteRequest(args [2]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
 	statusWriter := &codeRecorder{ResponseWriter: w}
 	w = statusWriter
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("SiteTemplates_delete"),
 		semconv.HTTPRequestMethodKey.String("DELETE"),
-		semconv.HTTPRouteKey.String("/w/{workspaceSlug}/templates/{id}"),
+		semconv.HTTPRouteKey.String("/workspaces/{slug}/templates/{id}"),
 	}
 	// Add attributes from config.
 	otelAttrs = append(otelAttrs, s.cfg.Attributes...)
@@ -8699,9 +8699,9 @@ func (s *Server) handleSiteTemplatesDeleteRequest(args [2]string, argsEscaped bo
 			RawBody:          rawBody,
 			Params: middleware.Parameters{
 				{
-					Name: "workspaceSlug",
+					Name: "slug",
 					In:   "path",
-				}: params.WorkspaceSlug,
+				}: params.Slug,
 				{
 					Name: "id",
 					In:   "path",
@@ -8748,16 +8748,16 @@ func (s *Server) handleSiteTemplatesDeleteRequest(args [2]string, argsEscaped bo
 
 // handleSiteTemplatesGetRequest handles SiteTemplates_get operation.
 //
-// Get a template by ID.
+// Get a resource by ID for the site UI.
 //
-// GET /w/{workspaceSlug}/templates/{id}
+// GET /workspaces/{slug}/templates/{id}
 func (s *Server) handleSiteTemplatesGetRequest(args [2]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
 	statusWriter := &codeRecorder{ResponseWriter: w}
 	w = statusWriter
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("SiteTemplates_get"),
 		semconv.HTTPRequestMethodKey.String("GET"),
-		semconv.HTTPRouteKey.String("/w/{workspaceSlug}/templates/{id}"),
+		semconv.HTTPRouteKey.String("/workspaces/{slug}/templates/{id}"),
 	}
 	// Add attributes from config.
 	otelAttrs = append(otelAttrs, s.cfg.Attributes...)
@@ -8890,9 +8890,9 @@ func (s *Server) handleSiteTemplatesGetRequest(args [2]string, argsEscaped bool,
 			RawBody:          rawBody,
 			Params: middleware.Parameters{
 				{
-					Name: "workspaceSlug",
+					Name: "slug",
 					In:   "path",
-				}: params.WorkspaceSlug,
+				}: params.Slug,
 				{
 					Name: "id",
 					In:   "path",
@@ -8939,16 +8939,16 @@ func (s *Server) handleSiteTemplatesGetRequest(args [2]string, argsEscaped bool,
 
 // handleSiteTemplatesListRequest handles SiteTemplates_list operation.
 //
-// List templates.
+// List resources for the site UI.
 //
-// GET /w/{workspaceSlug}/templates
+// GET /workspaces/{slug}/templates
 func (s *Server) handleSiteTemplatesListRequest(args [1]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
 	statusWriter := &codeRecorder{ResponseWriter: w}
 	w = statusWriter
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("SiteTemplates_list"),
 		semconv.HTTPRequestMethodKey.String("GET"),
-		semconv.HTTPRouteKey.String("/w/{workspaceSlug}/templates"),
+		semconv.HTTPRouteKey.String("/workspaces/{slug}/templates"),
 	}
 	// Add attributes from config.
 	otelAttrs = append(otelAttrs, s.cfg.Attributes...)
@@ -9081,9 +9081,9 @@ func (s *Server) handleSiteTemplatesListRequest(args [1]string, argsEscaped bool
 			RawBody:          rawBody,
 			Params: middleware.Parameters{
 				{
-					Name: "workspaceSlug",
+					Name: "slug",
 					In:   "path",
-				}: params.WorkspaceSlug,
+				}: params.Slug,
 				{
 					Name: "page",
 					In:   "query",
@@ -9134,16 +9134,16 @@ func (s *Server) handleSiteTemplatesListRequest(args [1]string, argsEscaped bool
 
 // handleSiteTemplatesUpdateRequest handles SiteTemplates_update operation.
 //
-// Update a template.
+// Update a resource from the site UI.
 //
-// PUT /w/{workspaceSlug}/templates/{id}
+// PUT /workspaces/{slug}/templates/{id}
 func (s *Server) handleSiteTemplatesUpdateRequest(args [2]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
 	statusWriter := &codeRecorder{ResponseWriter: w}
 	w = statusWriter
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("SiteTemplates_update"),
 		semconv.HTTPRequestMethodKey.String("PUT"),
-		semconv.HTTPRouteKey.String("/w/{workspaceSlug}/templates/{id}"),
+		semconv.HTTPRouteKey.String("/workspaces/{slug}/templates/{id}"),
 	}
 	// Add attributes from config.
 	otelAttrs = append(otelAttrs, s.cfg.Attributes...)
@@ -9291,9 +9291,9 @@ func (s *Server) handleSiteTemplatesUpdateRequest(args [2]string, argsEscaped bo
 			RawBody:          rawBody,
 			Params: middleware.Parameters{
 				{
-					Name: "workspaceSlug",
+					Name: "slug",
 					In:   "path",
-				}: params.WorkspaceSlug,
+				}: params.Slug,
 				{
 					Name: "id",
 					In:   "path",
@@ -9342,14 +9342,14 @@ func (s *Server) handleSiteTemplatesUpdateRequest(args [2]string, argsEscaped bo
 //
 // Create an API token; the full secret is returned once.
 //
-// POST /w/{workspaceSlug}/tokens
+// POST /workspaces/{slug}/tokens
 func (s *Server) handleSiteTokensCreateRequest(args [1]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
 	statusWriter := &codeRecorder{ResponseWriter: w}
 	w = statusWriter
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("SiteTokens_create"),
 		semconv.HTTPRequestMethodKey.String("POST"),
-		semconv.HTTPRouteKey.String("/w/{workspaceSlug}/tokens"),
+		semconv.HTTPRouteKey.String("/workspaces/{slug}/tokens"),
 	}
 	// Add attributes from config.
 	otelAttrs = append(otelAttrs, s.cfg.Attributes...)
@@ -9497,9 +9497,9 @@ func (s *Server) handleSiteTokensCreateRequest(args [1]string, argsEscaped bool,
 			RawBody:          rawBody,
 			Params: middleware.Parameters{
 				{
-					Name: "workspaceSlug",
+					Name: "slug",
 					In:   "path",
-				}: params.WorkspaceSlug,
+				}: params.Slug,
 			},
 			Raw: r,
 		}
@@ -9544,14 +9544,14 @@ func (s *Server) handleSiteTokensCreateRequest(args [1]string, argsEscaped bool,
 //
 // Revoke an API token.
 //
-// DELETE /w/{workspaceSlug}/tokens/{id}
+// DELETE /workspaces/{slug}/tokens/{id}
 func (s *Server) handleSiteTokensDeleteRequest(args [2]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
 	statusWriter := &codeRecorder{ResponseWriter: w}
 	w = statusWriter
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("SiteTokens_delete"),
 		semconv.HTTPRequestMethodKey.String("DELETE"),
-		semconv.HTTPRouteKey.String("/w/{workspaceSlug}/tokens/{id}"),
+		semconv.HTTPRouteKey.String("/workspaces/{slug}/tokens/{id}"),
 	}
 	// Add attributes from config.
 	otelAttrs = append(otelAttrs, s.cfg.Attributes...)
@@ -9684,9 +9684,9 @@ func (s *Server) handleSiteTokensDeleteRequest(args [2]string, argsEscaped bool,
 			RawBody:          rawBody,
 			Params: middleware.Parameters{
 				{
-					Name: "workspaceSlug",
+					Name: "slug",
 					In:   "path",
-				}: params.WorkspaceSlug,
+				}: params.Slug,
 				{
 					Name: "id",
 					In:   "path",
@@ -9735,14 +9735,14 @@ func (s *Server) handleSiteTokensDeleteRequest(args [2]string, argsEscaped bool,
 //
 // List active (non-revoked) API tokens for the workspace.
 //
-// GET /w/{workspaceSlug}/tokens
+// GET /workspaces/{slug}/tokens
 func (s *Server) handleSiteTokensListRequest(args [1]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
 	statusWriter := &codeRecorder{ResponseWriter: w}
 	w = statusWriter
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("SiteTokens_list"),
 		semconv.HTTPRequestMethodKey.String("GET"),
-		semconv.HTTPRouteKey.String("/w/{workspaceSlug}/tokens"),
+		semconv.HTTPRouteKey.String("/workspaces/{slug}/tokens"),
 	}
 	// Add attributes from config.
 	otelAttrs = append(otelAttrs, s.cfg.Attributes...)
@@ -9875,9 +9875,9 @@ func (s *Server) handleSiteTokensListRequest(args [1]string, argsEscaped bool, w
 			RawBody:          rawBody,
 			Params: middleware.Parameters{
 				{
-					Name: "workspaceSlug",
+					Name: "slug",
 					In:   "path",
-				}: params.WorkspaceSlug,
+				}: params.Slug,
 			},
 			Raw: r,
 		}
@@ -9922,14 +9922,14 @@ func (s *Server) handleSiteTokensListRequest(args [1]string, argsEscaped bool, w
 //
 // List transactional sends, most recent first.
 //
-// GET /w/{workspaceSlug}/transactional-emails
+// GET /workspaces/{slug}/transactional-emails
 func (s *Server) handleSiteTransactionalEmailsListRequest(args [1]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
 	statusWriter := &codeRecorder{ResponseWriter: w}
 	w = statusWriter
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("SiteTransactionalEmails_list"),
 		semconv.HTTPRequestMethodKey.String("GET"),
-		semconv.HTTPRouteKey.String("/w/{workspaceSlug}/transactional-emails"),
+		semconv.HTTPRouteKey.String("/workspaces/{slug}/transactional-emails"),
 	}
 	// Add attributes from config.
 	otelAttrs = append(otelAttrs, s.cfg.Attributes...)
@@ -10062,9 +10062,9 @@ func (s *Server) handleSiteTransactionalEmailsListRequest(args [1]string, argsEs
 			RawBody:          rawBody,
 			Params: middleware.Parameters{
 				{
-					Name: "workspaceSlug",
+					Name: "slug",
 					In:   "path",
-				}: params.WorkspaceSlug,
+				}: params.Slug,
 				{
 					Name: "page",
 					In:   "query",
@@ -10834,16 +10834,16 @@ func (s *Server) handleSiteUserUpdateMeRequest(args [0]string, argsEscaped bool,
 
 // handleSiteWebhooksCreateRequest handles SiteWebhooks_create operation.
 //
-// Create a webhook endpoint.
+// Create a resource from the site UI.
 //
-// POST /w/{workspaceSlug}/webhooks
+// POST /workspaces/{slug}/webhooks
 func (s *Server) handleSiteWebhooksCreateRequest(args [1]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
 	statusWriter := &codeRecorder{ResponseWriter: w}
 	w = statusWriter
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("SiteWebhooks_create"),
 		semconv.HTTPRequestMethodKey.String("POST"),
-		semconv.HTTPRouteKey.String("/w/{workspaceSlug}/webhooks"),
+		semconv.HTTPRouteKey.String("/workspaces/{slug}/webhooks"),
 	}
 	// Add attributes from config.
 	otelAttrs = append(otelAttrs, s.cfg.Attributes...)
@@ -10991,9 +10991,9 @@ func (s *Server) handleSiteWebhooksCreateRequest(args [1]string, argsEscaped boo
 			RawBody:          rawBody,
 			Params: middleware.Parameters{
 				{
-					Name: "workspaceSlug",
+					Name: "slug",
 					In:   "path",
-				}: params.WorkspaceSlug,
+				}: params.Slug,
 			},
 			Raw: r,
 		}
@@ -11036,16 +11036,16 @@ func (s *Server) handleSiteWebhooksCreateRequest(args [1]string, argsEscaped boo
 
 // handleSiteWebhooksDeleteRequest handles SiteWebhooks_delete operation.
 //
-// Delete a webhook endpoint.
+// Delete a resource from the site UI.
 //
-// DELETE /w/{workspaceSlug}/webhooks/{id}
+// DELETE /workspaces/{slug}/webhooks/{id}
 func (s *Server) handleSiteWebhooksDeleteRequest(args [2]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
 	statusWriter := &codeRecorder{ResponseWriter: w}
 	w = statusWriter
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("SiteWebhooks_delete"),
 		semconv.HTTPRequestMethodKey.String("DELETE"),
-		semconv.HTTPRouteKey.String("/w/{workspaceSlug}/webhooks/{id}"),
+		semconv.HTTPRouteKey.String("/workspaces/{slug}/webhooks/{id}"),
 	}
 	// Add attributes from config.
 	otelAttrs = append(otelAttrs, s.cfg.Attributes...)
@@ -11178,9 +11178,9 @@ func (s *Server) handleSiteWebhooksDeleteRequest(args [2]string, argsEscaped boo
 			RawBody:          rawBody,
 			Params: middleware.Parameters{
 				{
-					Name: "workspaceSlug",
+					Name: "slug",
 					In:   "path",
-				}: params.WorkspaceSlug,
+				}: params.Slug,
 				{
 					Name: "id",
 					In:   "path",
@@ -11227,16 +11227,16 @@ func (s *Server) handleSiteWebhooksDeleteRequest(args [2]string, argsEscaped boo
 
 // handleSiteWebhooksGetRequest handles SiteWebhooks_get operation.
 //
-// Get a webhook endpoint by ID.
+// Get a resource by ID for the site UI.
 //
-// GET /w/{workspaceSlug}/webhooks/{id}
+// GET /workspaces/{slug}/webhooks/{id}
 func (s *Server) handleSiteWebhooksGetRequest(args [2]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
 	statusWriter := &codeRecorder{ResponseWriter: w}
 	w = statusWriter
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("SiteWebhooks_get"),
 		semconv.HTTPRequestMethodKey.String("GET"),
-		semconv.HTTPRouteKey.String("/w/{workspaceSlug}/webhooks/{id}"),
+		semconv.HTTPRouteKey.String("/workspaces/{slug}/webhooks/{id}"),
 	}
 	// Add attributes from config.
 	otelAttrs = append(otelAttrs, s.cfg.Attributes...)
@@ -11369,9 +11369,9 @@ func (s *Server) handleSiteWebhooksGetRequest(args [2]string, argsEscaped bool, 
 			RawBody:          rawBody,
 			Params: middleware.Parameters{
 				{
-					Name: "workspaceSlug",
+					Name: "slug",
 					In:   "path",
-				}: params.WorkspaceSlug,
+				}: params.Slug,
 				{
 					Name: "id",
 					In:   "path",
@@ -11418,16 +11418,16 @@ func (s *Server) handleSiteWebhooksGetRequest(args [2]string, argsEscaped bool, 
 
 // handleSiteWebhooksListRequest handles SiteWebhooks_list operation.
 //
-// List webhook endpoints.
+// List resources for the site UI.
 //
-// GET /w/{workspaceSlug}/webhooks
+// GET /workspaces/{slug}/webhooks
 func (s *Server) handleSiteWebhooksListRequest(args [1]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
 	statusWriter := &codeRecorder{ResponseWriter: w}
 	w = statusWriter
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("SiteWebhooks_list"),
 		semconv.HTTPRequestMethodKey.String("GET"),
-		semconv.HTTPRouteKey.String("/w/{workspaceSlug}/webhooks"),
+		semconv.HTTPRouteKey.String("/workspaces/{slug}/webhooks"),
 	}
 	// Add attributes from config.
 	otelAttrs = append(otelAttrs, s.cfg.Attributes...)
@@ -11560,9 +11560,9 @@ func (s *Server) handleSiteWebhooksListRequest(args [1]string, argsEscaped bool,
 			RawBody:          rawBody,
 			Params: middleware.Parameters{
 				{
-					Name: "workspaceSlug",
+					Name: "slug",
 					In:   "path",
-				}: params.WorkspaceSlug,
+				}: params.Slug,
 				{
 					Name: "page",
 					In:   "query",
@@ -11613,16 +11613,16 @@ func (s *Server) handleSiteWebhooksListRequest(args [1]string, argsEscaped bool,
 
 // handleSiteWebhooksUpdateRequest handles SiteWebhooks_update operation.
 //
-// Update a webhook endpoint.
+// Update a resource from the site UI.
 //
-// PUT /w/{workspaceSlug}/webhooks/{id}
+// PUT /workspaces/{slug}/webhooks/{id}
 func (s *Server) handleSiteWebhooksUpdateRequest(args [2]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
 	statusWriter := &codeRecorder{ResponseWriter: w}
 	w = statusWriter
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("SiteWebhooks_update"),
 		semconv.HTTPRequestMethodKey.String("PUT"),
-		semconv.HTTPRouteKey.String("/w/{workspaceSlug}/webhooks/{id}"),
+		semconv.HTTPRouteKey.String("/workspaces/{slug}/webhooks/{id}"),
 	}
 	// Add attributes from config.
 	otelAttrs = append(otelAttrs, s.cfg.Attributes...)
@@ -11770,9 +11770,9 @@ func (s *Server) handleSiteWebhooksUpdateRequest(args [2]string, argsEscaped boo
 			RawBody:          rawBody,
 			Params: middleware.Parameters{
 				{
-					Name: "workspaceSlug",
+					Name: "slug",
 					In:   "path",
-				}: params.WorkspaceSlug,
+				}: params.Slug,
 				{
 					Name: "id",
 					In:   "path",

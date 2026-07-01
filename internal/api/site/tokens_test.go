@@ -20,7 +20,7 @@ func TestSiteTokensCreateListRevoke(t *testing.T) {
 	// Create returns the full secret once.
 	created, err := c.SiteTokensCreate(ctx,
 		&siteapi.SiteCreateTokenInput{Name: "CI", Scopes: []string{"contacts:read"}},
-		siteapi.SiteTokensCreateParams{WorkspaceSlug: "acme"})
+		siteapi.SiteTokensCreateParams{Slug: "acme"})
 	require.NoError(t, err)
 	resp, ok := created.(*siteapi.SiteCreateTokenResponse)
 	require.Truef(t, ok, "got %T", created)
@@ -35,8 +35,8 @@ func TestSiteTokensCreateListRevoke(t *testing.T) {
 
 	// Revoke the new token; the row is then marked revoked (a soft delete).
 	del, err := c.SiteTokensDelete(ctx, siteapi.SiteTokensDeleteParams{
-		WorkspaceSlug: "acme",
-		ID:            resp.Resource.ID,
+		Slug: "acme",
+		ID:   resp.Resource.ID,
 	})
 	require.NoError(t, err)
 	assert.IsType(t, &siteapi.SiteTokensDeleteNoContent{}, del)
@@ -51,8 +51,8 @@ func TestSiteTokensDeleteUnknown(t *testing.T) {
 	c := siteClient(t, env, "info@1mail.com")
 
 	del, err := c.SiteTokensDelete(context.Background(), siteapi.SiteTokensDeleteParams{
-		WorkspaceSlug: "acme",
-		ID:            "999999",
+		Slug: "acme",
+		ID:   "999999",
 	})
 	require.NoError(t, err)
 	assert.IsType(t, &siteapi.SiteTokensDeleteNotFound{}, del)
@@ -62,7 +62,7 @@ func TestSiteTokensWorkspaceNotFound(t *testing.T) {
 	env := testhelper.Setup(t)
 	c := siteClient(t, env, "info@1mail.com")
 
-	res, err := c.SiteTokensList(context.Background(), siteapi.SiteTokensListParams{WorkspaceSlug: "does-not-exist"})
+	res, err := c.SiteTokensList(context.Background(), siteapi.SiteTokensListParams{Slug: "does-not-exist"})
 	require.NoError(t, err)
 	assert.IsType(t, &siteapi.ProblemDetails{}, res)
 }

@@ -6,6 +6,7 @@ namespace OneMail;
 /** Contact resource used by the site UI */
 @resource("contacts")
 @segment("contacts")
+@parentResource(SiteWorkspaceResource)
 model SiteContactResource {
   /** Unique identifier */
   @key
@@ -87,60 +88,10 @@ model SiteUpdateContactInput {
   customFields?: Record<unknown> | null;
 }
 
-@route("/w/{workspaceSlug}/contacts")
 @tag("Site Contacts")
-namespace SiteContacts {
-  /** Create a contact from the site UI */
-  @createsResource(SiteContactResource)
-  @post
-  op create(@path workspaceSlug: string, @body body: SiteCreateContactInput):
-    | {
-        @statusCode statusCode: 201;
-        @body body: SiteContactResource;
-      }
-    | NotFoundProblem
-    | ConflictProblem
-    | UnprocessableEntityProblem;
-
-  /** List contacts for the site UI */
-  @listsResource(SiteContactResource)
-  @get
-  op list(@path workspaceSlug: string, ...PageQuery):
-    | Page<SiteContactResource>
-    | BadRequestProblem
-    | NotFoundProblem
-    | UnprocessableEntityProblem;
-
-  /** Get a contact by ID for the site UI */
-  @readsResource(SiteContactResource)
-  @get
-  @route("/{id}")
-  op get(@path workspaceSlug: string, @path id: EntityId):
-    | SiteContactResource
-    | BadRequestProblem
-    | NotFoundProblem;
-
-  /** Update a contact from the site UI */
-  @updatesResource(SiteContactResource)
-  @put
-  @route("/{id}")
-  op update(
-    @path workspaceSlug: string,
-    @path id: EntityId,
-    @body body: SiteUpdateContactInput,
-  ):
-    | SiteContactResource
-    | BadRequestProblem
-    | NotFoundProblem
-    | ConflictProblem
-    | UnprocessableEntityProblem;
-
-  /** Delete a contact from the site UI */
-  @deletesResource(SiteContactResource)
-  @delete
-  @route("/{id}")
-  op delete(@path workspaceSlug: string, @path id: EntityId):
-    | NoContentResponse
-    | BadRequestProblem
-    | NotFoundProblem;
-}
+interface SiteContacts
+  extends WorkspaceCrudUnique<
+      SiteContactResource,
+      SiteCreateContactInput,
+      SiteUpdateContactInput
+    > {}

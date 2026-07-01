@@ -16,7 +16,7 @@ func TestSiteAnalyticsRequireAuth(t *testing.T) {
 	c, err := siteapi.NewClient("http://local/site", noJWT{}, siteapi.WithClient(env.Transport(nil)))
 	require.NoError(t, err)
 
-	_, err = c.SiteAnalyticsOverview(context.Background(), siteapi.SiteAnalyticsOverviewParams{WorkspaceSlug: "acme"})
+	_, err = c.SiteAnalyticsOverview(context.Background(), siteapi.SiteAnalyticsOverviewParams{Slug: "acme"})
 	require.Error(t, err)
 }
 
@@ -25,7 +25,7 @@ func TestSiteAnalyticsRequireOwnedWorkspace(t *testing.T) {
 	env := testhelper.Setup(t)
 	c := siteClient(t, env, "info@1mail.com")
 
-	out, err := c.SiteAnalyticsOverview(context.Background(), siteapi.SiteAnalyticsOverviewParams{WorkspaceSlug: "does-not-exist"})
+	out, err := c.SiteAnalyticsOverview(context.Background(), siteapi.SiteAnalyticsOverviewParams{Slug: "does-not-exist"})
 	require.NoError(t, err)
 	assert.IsType(t, &siteapi.ProblemDetails{}, out)
 }
@@ -41,8 +41,8 @@ func TestSiteAnalyticsOverview(t *testing.T) {
 	ctx := context.Background()
 
 	res, err := c.SiteAnalyticsOverview(ctx, siteapi.SiteAnalyticsOverviewParams{
-		WorkspaceSlug: "acme",
-		Range:         siteapi.NewOptSiteAnalyticsRange(siteapi.SiteAnalyticsRange30d),
+		Slug:  "acme",
+		Range: siteapi.NewOptSiteAnalyticsRange(siteapi.SiteAnalyticsRange30d),
 	})
 	require.NoError(t, err)
 	ov, ok := res.(*siteapi.SiteAnalyticsOverview)
@@ -80,8 +80,8 @@ func TestSiteAnalyticsOverview(t *testing.T) {
 
 	// The 90-day window widens the cohort: it includes everything the 30-day one did.
 	res90, err := c.SiteAnalyticsOverview(ctx, siteapi.SiteAnalyticsOverviewParams{
-		WorkspaceSlug: "acme",
-		Range:         siteapi.NewOptSiteAnalyticsRange(siteapi.SiteAnalyticsRange90d),
+		Slug:  "acme",
+		Range: siteapi.NewOptSiteAnalyticsRange(siteapi.SiteAnalyticsRange90d),
 	})
 	require.NoError(t, err)
 	ov90 := res90.(*siteapi.SiteAnalyticsOverview)

@@ -16,7 +16,7 @@ func TestSiteEventsListMostRecentFirst(t *testing.T) {
 	env := testhelper.Setup(t)
 	c := siteClient(t, env, "info@1mail.com")
 
-	res, err := c.SiteEventsList(context.Background(), siteapi.SiteEventsListParams{WorkspaceSlug: "acme"})
+	res, err := c.SiteEventsList(context.Background(), siteapi.SiteEventsListParams{Slug: "acme"})
 	require.NoError(t, err)
 	ok, isOK := res.(*siteapi.SiteEventsListOK)
 	require.Truef(t, isOK, "got %T", res)
@@ -34,8 +34,8 @@ func TestSiteEventsListFilterByAction(t *testing.T) {
 	c := siteClient(t, env, "info@1mail.com")
 
 	res, err := c.SiteEventsList(context.Background(), siteapi.SiteEventsListParams{
-		WorkspaceSlug: "acme",
-		Action:        siteapi.NewOptString("purchase"),
+		Slug:   "acme",
+		Action: siteapi.NewOptString("purchase"),
 	})
 	require.NoError(t, err)
 	ok, isOK := res.(*siteapi.SiteEventsListOK)
@@ -55,8 +55,8 @@ func TestSiteEventsListFilterByEmail(t *testing.T) {
 	// Upper-cased on purpose: the match must be case-insensitive because contact
 	// emails are stored as entered while collect events are lowercased.
 	res, err := c.SiteEventsList(context.Background(), siteapi.SiteEventsListParams{
-		WorkspaceSlug: "acme",
-		Email:         siteapi.NewOptString("ALICE@example.com"),
+		Slug:  "acme",
+		Email: siteapi.NewOptString("ALICE@example.com"),
 	})
 	require.NoError(t, err)
 	ok, isOK := res.(*siteapi.SiteEventsListOK)
@@ -76,7 +76,7 @@ func TestSiteEventsListUnknownWorkspace(t *testing.T) {
 	env := testhelper.Setup(t)
 	c := siteClient(t, env, "info@1mail.com")
 
-	res, err := c.SiteEventsList(context.Background(), siteapi.SiteEventsListParams{WorkspaceSlug: "does-not-exist"})
+	res, err := c.SiteEventsList(context.Background(), siteapi.SiteEventsListParams{Slug: "does-not-exist"})
 	require.NoError(t, err)
 	assert.IsType(t, &siteapi.ProblemDetails{}, res)
 }
@@ -94,7 +94,7 @@ func TestSiteEventsActions(t *testing.T) {
 		SetWorkspaceID(1).SetSubjectID("x@test.dev").SetAction("page_view").Save(ctx)
 	require.NoError(t, err)
 
-	out, err := c.SiteEventsActions(ctx, siteapi.SiteEventsActionsParams{WorkspaceSlug: "acme"})
+	out, err := c.SiteEventsActions(ctx, siteapi.SiteEventsActionsParams{Slug: "acme"})
 	require.NoError(t, err)
 	res, ok := out.(*siteapi.SiteEventActionsResult)
 	require.Truef(t, ok, "got %T", out)
@@ -112,7 +112,7 @@ func TestSiteEventsActionsUnknownWorkspace(t *testing.T) {
 	env := testhelper.Setup(t)
 	c := siteClient(t, env, "info@1mail.com")
 
-	res, err := c.SiteEventsActions(context.Background(), siteapi.SiteEventsActionsParams{WorkspaceSlug: "does-not-exist"})
+	res, err := c.SiteEventsActions(context.Background(), siteapi.SiteEventsActionsParams{Slug: "does-not-exist"})
 	require.NoError(t, err)
 	assert.IsType(t, &siteapi.ProblemDetails{}, res)
 }

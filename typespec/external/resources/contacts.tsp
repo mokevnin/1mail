@@ -87,59 +87,10 @@ model UpdateContactInput {
   customFields?: Record<unknown> | null;
 }
 
-@route("/contacts")
 @tag("Contacts")
-namespace Contacts {
-  /** Create a contact */
-  @createsResource(ContactResource)
-  @post
-  op create(@body body: CreateContactInput):
-    | {
-        @statusCode statusCode: 201;
-        @body body: ContactResource;
-      }
-    | UnauthorizedProblem
-    | ConflictProblem
-    | UnprocessableEntityProblem;
-
-  /** List contacts with pagination */
-  @listsResource(ContactResource)
-  @get
-  op list(...PageQuery):
-    | Page<ContactResource>
-    | BadRequestProblem
-    | UnauthorizedProblem
-    | UnprocessableEntityProblem;
-
-  /** Get a contact by ID */
-  @readsResource(ContactResource)
-  @get
-  @autoRoute
-  op get(@path id: EntityId):
-    | ContactResource
-    | BadRequestProblem
-    | UnauthorizedProblem
-    | NotFoundProblem;
-
-  /** Update a contact */
-  @updatesResource(ContactResource)
-  @put
-  @autoRoute
-  op update(@path id: EntityId, @body body: UpdateContactInput):
-    | ContactResource
-    | BadRequestProblem
-    | UnauthorizedProblem
-    | NotFoundProblem
-    | ConflictProblem
-    | UnprocessableEntityProblem;
-
-  /** Delete a contact */
-  @deletesResource(ContactResource)
-  @delete
-  @autoRoute
-  op delete(@path id: EntityId):
-    | NoContentResponse
-    | BadRequestProblem
-    | UnauthorizedProblem
-    | NotFoundProblem;
-}
+interface Contacts
+  extends ExternalCrudUnique<
+      ContactResource,
+      CreateContactInput,
+      UpdateContactInput
+    > {}

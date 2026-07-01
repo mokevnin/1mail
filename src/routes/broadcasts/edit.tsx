@@ -37,9 +37,7 @@ export function BroadcastEditPage() {
     },
   })
 
-  const getQuery = useQuery(
-    siteBroadcastsGetOptions({ path: { workspaceSlug: slug, id: broadcastId } }),
-  )
+  const getQuery = useQuery(siteBroadcastsGetOptions({ path: { slug: slug, id: broadcastId } }))
 
   const applyData = useEffectEvent((data: SiteBroadcastResource | undefined) => {
     if (!data) return
@@ -58,8 +56,8 @@ export function BroadcastEditPage() {
   }, [getQuery.data])
 
   const invalidateKeys = [
-    siteBroadcastsListQueryKey({ path: { workspaceSlug: slug } }),
-    siteBroadcastsGetQueryKey({ path: { workspaceSlug: slug, id: broadcastId } }),
+    siteBroadcastsListQueryKey({ path: { slug: slug } }),
+    siteBroadcastsGetQueryKey({ path: { slug: slug, id: broadcastId } }),
   ]
 
   const toReport = () => navigate({ to: broadcastsReportRoute.to, params: { slug, broadcastId } })
@@ -115,7 +113,7 @@ export function BroadcastEditPage() {
         isPending={updateMutation.isPending}
         onSubmit={(values) =>
           updateMutation.mutate({
-            path: { workspaceSlug: slug, id: broadcastId },
+            path: { slug: slug, id: broadcastId },
             body: {
               name: values.name.trim(),
               subject: values.subject.trim(),
@@ -137,7 +135,7 @@ export function BroadcastEditPage() {
           color="teal"
           disabled={!isDraft}
           loading={sendMutation.isPending}
-          onClick={() => sendMutation.mutate({ path: { workspaceSlug: slug, id: broadcastId } })}
+          onClick={() => sendMutation.mutate({ path: { slug: slug, id: broadcastId } })}
         >
           {t(($) => $.broadcasts.sendNow)}
         </Button>
@@ -153,7 +151,7 @@ export function BroadcastEditPage() {
           loading={scheduleMutation.isPending}
           onClick={() =>
             scheduleMutation.mutate({
-              path: { workspaceSlug: slug, id: broadcastId },
+              path: { slug: slug, id: broadcastId },
               body: { scheduledAt: new Date(scheduledAt).toISOString() },
             })
           }
@@ -175,7 +173,7 @@ export function BroadcastEditPage() {
           loading={testSendMutation.isPending}
           onClick={() =>
             testSendMutation.mutate({
-              path: { workspaceSlug: slug, id: broadcastId },
+              path: { slug: slug, id: broadcastId },
               body: { email: testEmail },
             })
           }

@@ -21,7 +21,7 @@ export function TemplateCreatePage() {
 
   const createMutation = useResourceMutation({
     mutation: siteTemplatesCreateMutation(),
-    invalidate: [siteTemplatesListQueryKey({ path: { workspaceSlug: slug } })],
+    invalidate: [siteTemplatesListQueryKey({ path: { slug: slug } })],
     successMessage: t(($) => $.notifications.templateCreated),
     errorTitle: t(($) => $.alerts.templateSaveErrorTitle),
     onDone: (created) =>
@@ -36,7 +36,7 @@ export function TemplateCreatePage() {
         isPending={createMutation.isPending}
         onSubmit={(values) =>
           createMutation.mutate({
-            path: { workspaceSlug: slug },
+            path: { slug: slug },
             body: {
               name: values.name.trim(),
               subject: values.subject.trim(),

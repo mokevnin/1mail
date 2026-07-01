@@ -901,7 +901,7 @@ func (s *Server) handleAuthTokensListRequest(args [0]string, argsEscaped bool, w
 
 // handleBroadcastsCreateRequest handles Broadcasts_create operation.
 //
-// Create a broadcast.
+// Create a resource.
 //
 // POST /broadcasts
 func (s *Server) handleBroadcastsCreateRequest(args [0]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
@@ -1088,7 +1088,7 @@ func (s *Server) handleBroadcastsCreateRequest(args [0]string, argsEscaped bool,
 
 // handleBroadcastsDeleteRequest handles Broadcasts_delete operation.
 //
-// Delete a broadcast.
+// Delete a resource.
 //
 // DELETE /broadcasts/{id}
 func (s *Server) handleBroadcastsDeleteRequest(args [1]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
@@ -1275,7 +1275,7 @@ func (s *Server) handleBroadcastsDeleteRequest(args [1]string, argsEscaped bool,
 
 // handleBroadcastsGetRequest handles Broadcasts_get operation.
 //
-// Get a broadcast by ID.
+// Get a resource by ID.
 //
 // GET /broadcasts/{id}
 func (s *Server) handleBroadcastsGetRequest(args [1]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
@@ -1462,7 +1462,7 @@ func (s *Server) handleBroadcastsGetRequest(args [1]string, argsEscaped bool, w 
 
 // handleBroadcastsListRequest handles Broadcasts_list operation.
 //
-// List broadcasts with pagination.
+// List resources with pagination.
 //
 // GET /broadcasts
 func (s *Server) handleBroadcastsListRequest(args [0]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
@@ -1653,7 +1653,7 @@ func (s *Server) handleBroadcastsListRequest(args [0]string, argsEscaped bool, w
 
 // handleBroadcastsUpdateRequest handles Broadcasts_update operation.
 //
-// Update a broadcast.
+// Update a resource.
 //
 // PUT /broadcasts/{id}
 func (s *Server) handleBroadcastsUpdateRequest(args [1]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
@@ -1855,7 +1855,7 @@ func (s *Server) handleBroadcastsUpdateRequest(args [1]string, argsEscaped bool,
 
 // handleContactsCreateRequest handles Contacts_create operation.
 //
-// Create a contact.
+// Create a resource.
 //
 // POST /contacts
 func (s *Server) handleContactsCreateRequest(args [0]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
@@ -2042,7 +2042,7 @@ func (s *Server) handleContactsCreateRequest(args [0]string, argsEscaped bool, w
 
 // handleContactsDeleteRequest handles Contacts_delete operation.
 //
-// Delete a contact.
+// Delete a resource.
 //
 // DELETE /contacts/{id}
 func (s *Server) handleContactsDeleteRequest(args [1]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
@@ -2229,7 +2229,7 @@ func (s *Server) handleContactsDeleteRequest(args [1]string, argsEscaped bool, w
 
 // handleContactsGetRequest handles Contacts_get operation.
 //
-// Get a contact by ID.
+// Get a resource by ID.
 //
 // GET /contacts/{id}
 func (s *Server) handleContactsGetRequest(args [1]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
@@ -2416,7 +2416,7 @@ func (s *Server) handleContactsGetRequest(args [1]string, argsEscaped bool, w ht
 
 // handleContactsListRequest handles Contacts_list operation.
 //
-// List contacts with pagination.
+// List resources with pagination.
 //
 // GET /contacts
 func (s *Server) handleContactsListRequest(args [0]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
@@ -2607,7 +2607,7 @@ func (s *Server) handleContactsListRequest(args [0]string, argsEscaped bool, w h
 
 // handleContactsUpdateRequest handles Contacts_update operation.
 //
-// Update a contact.
+// Update a resource.
 //
 // PUT /contacts/{id}
 func (s *Server) handleContactsUpdateRequest(args [1]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
@@ -3018,14 +3018,14 @@ func (s *Server) handleEmailsSendRequest(args [0]string, argsEscaped bool, w htt
 //
 // List unique event actions.
 //
-// GET /event-actions
+// GET /events/actions
 func (s *Server) handleEventActionsListRequest(args [0]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
 	statusWriter := &codeRecorder{ResponseWriter: w}
 	w = statusWriter
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("EventActions_list"),
 		semconv.HTTPRequestMethodKey.String("GET"),
-		semconv.HTTPRouteKey.String("/event-actions"),
+		semconv.HTTPRouteKey.String("/events/actions"),
 	}
 	// Add attributes from config.
 	otelAttrs = append(otelAttrs, s.cfg.Attributes...)
@@ -3394,7 +3394,7 @@ func (s *Server) handleEventsCreateRequest(args [0]string, argsEscaped bool, w h
 
 // handleSegmentsCreateRequest handles Segments_create operation.
 //
-// Create a segment.
+// Create a resource.
 //
 // POST /segments
 func (s *Server) handleSegmentsCreateRequest(args [0]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
@@ -3581,7 +3581,7 @@ func (s *Server) handleSegmentsCreateRequest(args [0]string, argsEscaped bool, w
 
 // handleSegmentsDeleteRequest handles Segments_delete operation.
 //
-// Delete a segment.
+// Delete a resource.
 //
 // DELETE /segments/{id}
 func (s *Server) handleSegmentsDeleteRequest(args [1]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
@@ -3768,7 +3768,7 @@ func (s *Server) handleSegmentsDeleteRequest(args [1]string, argsEscaped bool, w
 
 // handleSegmentsGetRequest handles Segments_get operation.
 //
-// Get a segment by ID.
+// Get a resource by ID.
 //
 // GET /segments/{id}
 func (s *Server) handleSegmentsGetRequest(args [1]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
@@ -3955,7 +3955,7 @@ func (s *Server) handleSegmentsGetRequest(args [1]string, argsEscaped bool, w ht
 
 // handleSegmentsListRequest handles Segments_list operation.
 //
-// List segments with pagination.
+// List resources with pagination.
 //
 // GET /segments
 func (s *Server) handleSegmentsListRequest(args [0]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
@@ -4146,7 +4146,7 @@ func (s *Server) handleSegmentsListRequest(args [0]string, argsEscaped bool, w h
 
 // handleSegmentsUpdateRequest handles Segments_update operation.
 //
-// Update a segment.
+// Update a resource.
 //
 // PUT /segments/{id}
 func (s *Server) handleSegmentsUpdateRequest(args [1]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {

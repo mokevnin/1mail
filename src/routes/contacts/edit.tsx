@@ -30,9 +30,7 @@ export function ContactEditPage() {
     },
   })
 
-  const getContactQuery = useQuery(
-    siteContactsGetOptions({ path: { workspaceSlug: slug, id: contactId } }),
-  )
+  const getContactQuery = useQuery(siteContactsGetOptions({ path: { slug: slug, id: contactId } }))
 
   const applyContactData = useEffectEvent((data: SiteContactResource | undefined) => {
     if (!data) return
@@ -53,8 +51,8 @@ export function ContactEditPage() {
   const updateMutation = useResourceMutation({
     mutation: siteContactsUpdateMutation(),
     invalidate: [
-      siteContactsListQueryKey({ path: { workspaceSlug: slug } }),
-      siteContactsGetQueryKey({ path: { workspaceSlug: slug, id: contactId } }),
+      siteContactsListQueryKey({ path: { slug: slug } }),
+      siteContactsGetQueryKey({ path: { slug: slug, id: contactId } }),
     ],
     successMessage: t(($) => $.notifications.contactUpdated),
     errorTitle: t(($) => $.alerts.saveErrorTitle),
@@ -80,7 +78,7 @@ export function ContactEditPage() {
         isPending={updateMutation.isPending}
         onSubmit={(values) =>
           updateMutation.mutate({
-            path: { workspaceSlug: slug, id: contactId },
+            path: { slug: slug, id: contactId },
             body: toContactPayload(values),
           })
         }

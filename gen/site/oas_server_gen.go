@@ -12,7 +12,7 @@ type Handler interface {
 	//
 	// Aggregate metrics for the workspace dashboard.
 	//
-	// GET /w/{workspaceSlug}/analytics/overview
+	// GET /workspaces/{slug}/analytics/overview
 	SiteAnalyticsOverview(ctx context.Context, params SiteAnalyticsOverviewParams) (SiteAnalyticsOverviewRes, error)
 	// SiteAuthConfirmEmailChange implements SiteAuth_confirmEmailChange operation.
 	//
@@ -52,277 +52,277 @@ type Handler interface {
 	//
 	// Activate an automation (starts enrolling contacts).
 	//
-	// POST /w/{workspaceSlug}/automations/{id}/activate
+	// POST /workspaces/{slug}/automations/{id}/activate
 	SiteAutomationsActivate(ctx context.Context, params SiteAutomationsActivateParams) (SiteAutomationsActivateRes, error)
 	// SiteAutomationsCreate implements SiteAutomations_create operation.
 	//
-	// Create an automation.
+	// Create a resource from the site UI.
 	//
-	// POST /w/{workspaceSlug}/automations
+	// POST /workspaces/{slug}/automations
 	SiteAutomationsCreate(ctx context.Context, req *SiteCreateAutomationInput, params SiteAutomationsCreateParams) (SiteAutomationsCreateRes, error)
 	// SiteAutomationsDeactivate implements SiteAutomations_deactivate operation.
 	//
 	// Deactivate an automation (stops new enrollments).
 	//
-	// POST /w/{workspaceSlug}/automations/{id}/deactivate
+	// POST /workspaces/{slug}/automations/{id}/deactivate
 	SiteAutomationsDeactivate(ctx context.Context, params SiteAutomationsDeactivateParams) (SiteAutomationsDeactivateRes, error)
 	// SiteAutomationsDelete implements SiteAutomations_delete operation.
 	//
-	// Delete an automation.
+	// Delete a resource from the site UI.
 	//
-	// DELETE /w/{workspaceSlug}/automations/{id}
+	// DELETE /workspaces/{slug}/automations/{id}
 	SiteAutomationsDelete(ctx context.Context, params SiteAutomationsDeleteParams) (SiteAutomationsDeleteRes, error)
 	// SiteAutomationsGet implements SiteAutomations_get operation.
 	//
-	// Get an automation by ID.
+	// Get a resource by ID for the site UI.
 	//
-	// GET /w/{workspaceSlug}/automations/{id}
+	// GET /workspaces/{slug}/automations/{id}
 	SiteAutomationsGet(ctx context.Context, params SiteAutomationsGetParams) (SiteAutomationsGetRes, error)
 	// SiteAutomationsList implements SiteAutomations_list operation.
 	//
-	// List automations.
+	// List resources for the site UI.
 	//
-	// GET /w/{workspaceSlug}/automations
+	// GET /workspaces/{slug}/automations
 	SiteAutomationsList(ctx context.Context, params SiteAutomationsListParams) (SiteAutomationsListRes, error)
 	// SiteAutomationsUpdate implements SiteAutomations_update operation.
 	//
-	// Update an automation.
+	// Update a resource from the site UI.
 	//
-	// PUT /w/{workspaceSlug}/automations/{id}
+	// PUT /workspaces/{slug}/automations/{id}
 	SiteAutomationsUpdate(ctx context.Context, req *SiteUpdateAutomationInput, params SiteAutomationsUpdateParams) (SiteAutomationsUpdateRes, error)
 	// SiteBroadcastsCreate implements SiteBroadcasts_create operation.
 	//
-	// Create a broadcast from the site UI.
+	// Create a resource from the site UI.
 	//
-	// POST /w/{workspaceSlug}/broadcasts
+	// POST /workspaces/{slug}/broadcasts
 	SiteBroadcastsCreate(ctx context.Context, req *SiteCreateBroadcastInput, params SiteBroadcastsCreateParams) (SiteBroadcastsCreateRes, error)
 	// SiteBroadcastsDelete implements SiteBroadcasts_delete operation.
 	//
-	// Delete a broadcast from the site UI.
+	// Delete a resource from the site UI.
 	//
-	// DELETE /w/{workspaceSlug}/broadcasts/{id}
+	// DELETE /workspaces/{slug}/broadcasts/{id}
 	SiteBroadcastsDelete(ctx context.Context, params SiteBroadcastsDeleteParams) (SiteBroadcastsDeleteRes, error)
 	// SiteBroadcastsGet implements SiteBroadcasts_get operation.
 	//
-	// Get a broadcast by ID for the site UI.
+	// Get a resource by ID for the site UI.
 	//
-	// GET /w/{workspaceSlug}/broadcasts/{id}
+	// GET /workspaces/{slug}/broadcasts/{id}
 	SiteBroadcastsGet(ctx context.Context, params SiteBroadcastsGetParams) (SiteBroadcastsGetRes, error)
 	// SiteBroadcastsList implements SiteBroadcasts_list operation.
 	//
-	// List broadcasts for the site UI.
+	// List resources for the site UI.
 	//
-	// GET /w/{workspaceSlug}/broadcasts
+	// GET /workspaces/{slug}/broadcasts
 	SiteBroadcastsList(ctx context.Context, params SiteBroadcastsListParams) (SiteBroadcastsListRes, error)
 	// SiteBroadcastsSchedule implements SiteBroadcasts_schedule operation.
 	//
 	// Schedule a broadcast to send at a future time.
 	//
-	// POST /w/{workspaceSlug}/broadcasts/{id}/schedule
+	// POST /workspaces/{slug}/broadcasts/{id}/schedule
 	SiteBroadcastsSchedule(ctx context.Context, req *SiteScheduleBroadcastInput, params SiteBroadcastsScheduleParams) (SiteBroadcastsScheduleRes, error)
 	// SiteBroadcastsSend implements SiteBroadcasts_send operation.
 	//
 	// Send a broadcast immediately.
 	//
-	// POST /w/{workspaceSlug}/broadcasts/{id}/send
+	// POST /workspaces/{slug}/broadcasts/{id}/send
 	SiteBroadcastsSend(ctx context.Context, params SiteBroadcastsSendParams) (SiteBroadcastsSendRes, error)
 	// SiteBroadcastsTestSend implements SiteBroadcasts_testSend operation.
 	//
 	// Send a one-off rendered preview to a single address.
 	//
-	// POST /w/{workspaceSlug}/broadcasts/{id}/test
+	// POST /workspaces/{slug}/broadcasts/{id}/test-send
 	SiteBroadcastsTestSend(ctx context.Context, req *SiteTestSendBroadcastInput, params SiteBroadcastsTestSendParams) (SiteBroadcastsTestSendRes, error)
 	// SiteBroadcastsUpdate implements SiteBroadcasts_update operation.
 	//
-	// Update a broadcast from the site UI.
+	// Update a resource from the site UI.
 	//
-	// PUT /w/{workspaceSlug}/broadcasts/{id}
+	// PUT /workspaces/{slug}/broadcasts/{id}
 	SiteBroadcastsUpdate(ctx context.Context, req *SiteUpdateBroadcastInput, params SiteBroadcastsUpdateParams) (SiteBroadcastsUpdateRes, error)
 	// SiteContactsCreate implements SiteContacts_create operation.
 	//
-	// Create a contact from the site UI.
+	// Create a resource from the site UI.
 	//
-	// POST /w/{workspaceSlug}/contacts
+	// POST /workspaces/{slug}/contacts
 	SiteContactsCreate(ctx context.Context, req *SiteCreateContactInput, params SiteContactsCreateParams) (SiteContactsCreateRes, error)
 	// SiteContactsDelete implements SiteContacts_delete operation.
 	//
-	// Delete a contact from the site UI.
+	// Delete a resource from the site UI.
 	//
-	// DELETE /w/{workspaceSlug}/contacts/{id}
+	// DELETE /workspaces/{slug}/contacts/{id}
 	SiteContactsDelete(ctx context.Context, params SiteContactsDeleteParams) (SiteContactsDeleteRes, error)
 	// SiteContactsGet implements SiteContacts_get operation.
 	//
-	// Get a contact by ID for the site UI.
+	// Get a resource by ID for the site UI.
 	//
-	// GET /w/{workspaceSlug}/contacts/{id}
+	// GET /workspaces/{slug}/contacts/{id}
 	SiteContactsGet(ctx context.Context, params SiteContactsGetParams) (SiteContactsGetRes, error)
 	// SiteContactsList implements SiteContacts_list operation.
 	//
-	// List contacts for the site UI.
+	// List resources for the site UI.
 	//
-	// GET /w/{workspaceSlug}/contacts
+	// GET /workspaces/{slug}/contacts
 	SiteContactsList(ctx context.Context, params SiteContactsListParams) (SiteContactsListRes, error)
 	// SiteContactsUpdate implements SiteContacts_update operation.
 	//
-	// Update a contact from the site UI.
+	// Update a resource from the site UI.
 	//
-	// PUT /w/{workspaceSlug}/contacts/{id}
+	// PUT /workspaces/{slug}/contacts/{id}
 	SiteContactsUpdate(ctx context.Context, req *SiteUpdateContactInput, params SiteContactsUpdateParams) (SiteContactsUpdateRes, error)
 	// SiteCustomFieldsList implements SiteCustomFields_list operation.
 	//
 	// List the workspace's custom field definitions.
 	//
-	// GET /w/{workspaceSlug}/custom-fields
+	// GET /workspaces/{slug}/custom-fields
 	SiteCustomFieldsList(ctx context.Context, params SiteCustomFieldsListParams) (SiteCustomFieldsListRes, error)
 	// SiteEventsActions implements SiteEvents_actions operation.
 	//
 	// Distinct event actions in the workspace, sorted — powers the segment builder.
 	//
-	// GET /w/{workspaceSlug}/events/actions
+	// GET /workspaces/{slug}/events/actions
 	SiteEventsActions(ctx context.Context, params SiteEventsActionsParams) (SiteEventsActionsRes, error)
 	// SiteEventsList implements SiteEvents_list operation.
 	//
 	// List events for the site UI (most recent first).
 	//
-	// GET /w/{workspaceSlug}/events
+	// GET /workspaces/{slug}/events
 	SiteEventsList(ctx context.Context, params SiteEventsListParams) (SiteEventsListRes, error)
 	// SiteIntegrationsCreate implements SiteIntegrations_create operation.
 	//
 	// Create an integration.
 	//
-	// POST /w/{workspaceSlug}/integrations
+	// POST /workspaces/{slug}/integrations
 	SiteIntegrationsCreate(ctx context.Context, req *SiteCreateIntegrationInput, params SiteIntegrationsCreateParams) (SiteIntegrationsCreateRes, error)
 	// SiteIntegrationsDelete implements SiteIntegrations_delete operation.
 	//
 	// Delete an integration.
 	//
-	// DELETE /w/{workspaceSlug}/integrations/{id}
+	// DELETE /workspaces/{slug}/integrations/{id}
 	SiteIntegrationsDelete(ctx context.Context, params SiteIntegrationsDeleteParams) (SiteIntegrationsDeleteRes, error)
 	// SiteIntegrationsGet implements SiteIntegrations_get operation.
 	//
 	// Get an integration by id.
 	//
-	// GET /w/{workspaceSlug}/integrations/{id}
+	// GET /workspaces/{slug}/integrations/{id}
 	SiteIntegrationsGet(ctx context.Context, params SiteIntegrationsGetParams) (SiteIntegrationsGetRes, error)
 	// SiteIntegrationsList implements SiteIntegrations_list operation.
 	//
 	// List the workspace's sending-provider integrations.
 	//
-	// GET /w/{workspaceSlug}/integrations
+	// GET /workspaces/{slug}/integrations
 	SiteIntegrationsList(ctx context.Context, params SiteIntegrationsListParams) (SiteIntegrationsListRes, error)
 	// SiteIntegrationsUpdate implements SiteIntegrations_update operation.
 	//
 	// Update an integration.
 	//
-	// PUT /w/{workspaceSlug}/integrations/{id}
+	// PUT /workspaces/{slug}/integrations/{id}
 	SiteIntegrationsUpdate(ctx context.Context, req *SiteUpdateIntegrationInput, params SiteIntegrationsUpdateParams) (SiteIntegrationsUpdateRes, error)
 	// SiteSegmentsCreate implements SiteSegments_create operation.
 	//
-	// Create a segment from the site UI.
+	// Create a resource from the site UI.
 	//
-	// POST /w/{workspaceSlug}/segments
+	// POST /workspaces/{slug}/segments
 	SiteSegmentsCreate(ctx context.Context, req *SiteCreateSegmentInput, params SiteSegmentsCreateParams) (SiteSegmentsCreateRes, error)
 	// SiteSegmentsDelete implements SiteSegments_delete operation.
 	//
-	// Delete a segment from the site UI.
+	// Delete a resource from the site UI.
 	//
-	// DELETE /w/{workspaceSlug}/segments/{id}
+	// DELETE /workspaces/{slug}/segments/{id}
 	SiteSegmentsDelete(ctx context.Context, params SiteSegmentsDeleteParams) (SiteSegmentsDeleteRes, error)
 	// SiteSegmentsGet implements SiteSegments_get operation.
 	//
-	// Get a segment by ID for the site UI.
+	// Get a resource by ID for the site UI.
 	//
-	// GET /w/{workspaceSlug}/segments/{id}
+	// GET /workspaces/{slug}/segments/{id}
 	SiteSegmentsGet(ctx context.Context, params SiteSegmentsGetParams) (SiteSegmentsGetRes, error)
 	// SiteSegmentsList implements SiteSegments_list operation.
 	//
-	// List segments for the site UI.
+	// List resources for the site UI.
 	//
-	// GET /w/{workspaceSlug}/segments
+	// GET /workspaces/{slug}/segments
 	SiteSegmentsList(ctx context.Context, params SiteSegmentsListParams) (SiteSegmentsListRes, error)
 	// SiteSegmentsPreview implements SiteSegments_preview operation.
 	//
 	// Preview how many active contacts match a rule definition.
 	//
-	// POST /w/{workspaceSlug}/segments/preview
+	// POST /workspaces/{slug}/segments/preview
 	SiteSegmentsPreview(ctx context.Context, req *SitePreviewSegmentInput, params SiteSegmentsPreviewParams) (SiteSegmentsPreviewRes, error)
 	// SiteSegmentsUpdate implements SiteSegments_update operation.
 	//
-	// Update a segment from the site UI.
+	// Update a resource from the site UI.
 	//
-	// PUT /w/{workspaceSlug}/segments/{id}
+	// PUT /workspaces/{slug}/segments/{id}
 	SiteSegmentsUpdate(ctx context.Context, req *SiteUpdateSegmentInput, params SiteSegmentsUpdateParams) (SiteSegmentsUpdateRes, error)
 	// SiteSuppressionsCreate implements SiteSuppressions_create operation.
 	//
 	// Manually suppress an address (reason = manual; idempotent per address).
 	//
-	// POST /w/{workspaceSlug}/suppressions
+	// POST /workspaces/{slug}/suppressions
 	SiteSuppressionsCreate(ctx context.Context, req *SiteCreateSuppressionInput, params SiteSuppressionsCreateParams) (SiteSuppressionsCreateRes, error)
 	// SiteSuppressionsDelete implements SiteSuppressions_delete operation.
 	//
 	// Remove an address from the suppression list.
 	//
-	// DELETE /w/{workspaceSlug}/suppressions/{id}
+	// DELETE /workspaces/{slug}/suppressions/{id}
 	SiteSuppressionsDelete(ctx context.Context, params SiteSuppressionsDeleteParams) (SiteSuppressionsDeleteRes, error)
 	// SiteSuppressionsList implements SiteSuppressions_list operation.
 	//
 	// List suppressed addresses.
 	//
-	// GET /w/{workspaceSlug}/suppressions
+	// GET /workspaces/{slug}/suppressions
 	SiteSuppressionsList(ctx context.Context, params SiteSuppressionsListParams) (SiteSuppressionsListRes, error)
 	// SiteTemplatesCreate implements SiteTemplates_create operation.
 	//
-	// Create a template.
+	// Create a resource from the site UI.
 	//
-	// POST /w/{workspaceSlug}/templates
+	// POST /workspaces/{slug}/templates
 	SiteTemplatesCreate(ctx context.Context, req *SiteCreateEmailTemplateInput, params SiteTemplatesCreateParams) (SiteTemplatesCreateRes, error)
 	// SiteTemplatesDelete implements SiteTemplates_delete operation.
 	//
-	// Delete a template.
+	// Delete a resource from the site UI.
 	//
-	// DELETE /w/{workspaceSlug}/templates/{id}
+	// DELETE /workspaces/{slug}/templates/{id}
 	SiteTemplatesDelete(ctx context.Context, params SiteTemplatesDeleteParams) (SiteTemplatesDeleteRes, error)
 	// SiteTemplatesGet implements SiteTemplates_get operation.
 	//
-	// Get a template by ID.
+	// Get a resource by ID for the site UI.
 	//
-	// GET /w/{workspaceSlug}/templates/{id}
+	// GET /workspaces/{slug}/templates/{id}
 	SiteTemplatesGet(ctx context.Context, params SiteTemplatesGetParams) (SiteTemplatesGetRes, error)
 	// SiteTemplatesList implements SiteTemplates_list operation.
 	//
-	// List templates.
+	// List resources for the site UI.
 	//
-	// GET /w/{workspaceSlug}/templates
+	// GET /workspaces/{slug}/templates
 	SiteTemplatesList(ctx context.Context, params SiteTemplatesListParams) (SiteTemplatesListRes, error)
 	// SiteTemplatesUpdate implements SiteTemplates_update operation.
 	//
-	// Update a template.
+	// Update a resource from the site UI.
 	//
-	// PUT /w/{workspaceSlug}/templates/{id}
+	// PUT /workspaces/{slug}/templates/{id}
 	SiteTemplatesUpdate(ctx context.Context, req *SiteUpdateEmailTemplateInput, params SiteTemplatesUpdateParams) (SiteTemplatesUpdateRes, error)
 	// SiteTokensCreate implements SiteTokens_create operation.
 	//
 	// Create an API token; the full secret is returned once.
 	//
-	// POST /w/{workspaceSlug}/tokens
+	// POST /workspaces/{slug}/tokens
 	SiteTokensCreate(ctx context.Context, req *SiteCreateTokenInput, params SiteTokensCreateParams) (SiteTokensCreateRes, error)
 	// SiteTokensDelete implements SiteTokens_delete operation.
 	//
 	// Revoke an API token.
 	//
-	// DELETE /w/{workspaceSlug}/tokens/{id}
+	// DELETE /workspaces/{slug}/tokens/{id}
 	SiteTokensDelete(ctx context.Context, params SiteTokensDeleteParams) (SiteTokensDeleteRes, error)
 	// SiteTokensList implements SiteTokens_list operation.
 	//
 	// List active (non-revoked) API tokens for the workspace.
 	//
-	// GET /w/{workspaceSlug}/tokens
+	// GET /workspaces/{slug}/tokens
 	SiteTokensList(ctx context.Context, params SiteTokensListParams) (SiteTokensListRes, error)
 	// SiteTransactionalEmailsList implements SiteTransactionalEmails_list operation.
 	//
 	// List transactional sends, most recent first.
 	//
-	// GET /w/{workspaceSlug}/transactional-emails
+	// GET /workspaces/{slug}/transactional-emails
 	SiteTransactionalEmailsList(ctx context.Context, params SiteTransactionalEmailsListParams) (SiteTransactionalEmailsListRes, error)
 	// SiteUserEmailChange implements SiteUser_emailChange operation.
 	//
@@ -351,33 +351,33 @@ type Handler interface {
 	SiteUserUpdateMe(ctx context.Context, req *SiteUpdateMeInput) (SiteUserUpdateMeRes, error)
 	// SiteWebhooksCreate implements SiteWebhooks_create operation.
 	//
-	// Create a webhook endpoint.
+	// Create a resource from the site UI.
 	//
-	// POST /w/{workspaceSlug}/webhooks
+	// POST /workspaces/{slug}/webhooks
 	SiteWebhooksCreate(ctx context.Context, req *SiteCreateWebhookEndpointInput, params SiteWebhooksCreateParams) (SiteWebhooksCreateRes, error)
 	// SiteWebhooksDelete implements SiteWebhooks_delete operation.
 	//
-	// Delete a webhook endpoint.
+	// Delete a resource from the site UI.
 	//
-	// DELETE /w/{workspaceSlug}/webhooks/{id}
+	// DELETE /workspaces/{slug}/webhooks/{id}
 	SiteWebhooksDelete(ctx context.Context, params SiteWebhooksDeleteParams) (SiteWebhooksDeleteRes, error)
 	// SiteWebhooksGet implements SiteWebhooks_get operation.
 	//
-	// Get a webhook endpoint by ID.
+	// Get a resource by ID for the site UI.
 	//
-	// GET /w/{workspaceSlug}/webhooks/{id}
+	// GET /workspaces/{slug}/webhooks/{id}
 	SiteWebhooksGet(ctx context.Context, params SiteWebhooksGetParams) (SiteWebhooksGetRes, error)
 	// SiteWebhooksList implements SiteWebhooks_list operation.
 	//
-	// List webhook endpoints.
+	// List resources for the site UI.
 	//
-	// GET /w/{workspaceSlug}/webhooks
+	// GET /workspaces/{slug}/webhooks
 	SiteWebhooksList(ctx context.Context, params SiteWebhooksListParams) (SiteWebhooksListRes, error)
 	// SiteWebhooksUpdate implements SiteWebhooks_update operation.
 	//
-	// Update a webhook endpoint.
+	// Update a resource from the site UI.
 	//
-	// PUT /w/{workspaceSlug}/webhooks/{id}
+	// PUT /workspaces/{slug}/webhooks/{id}
 	SiteWebhooksUpdate(ctx context.Context, req *SiteUpdateWebhookEndpointInput, params SiteWebhooksUpdateParams) (SiteWebhooksUpdateRes, error)
 	// SiteWorkspacesList implements SiteWorkspaces_list operation.
 	//

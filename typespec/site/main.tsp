@@ -5,6 +5,7 @@ import "@typespec/openapi";
 import "../common/scalars.tsp";
 import "../common/pagination.tsp";
 import "../common/errors.tsp";
+import "../common/crud.tsp";
 import "./resources/contacts.tsp";
 import "./resources/custom-fields.tsp";
 import "./resources/segments.tsp";

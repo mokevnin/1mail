@@ -7,6 +7,7 @@ import "../common/scalars.tsp";
 import "../common/pagination.tsp";
 import "../common/errors.tsp";
 import "../common/versions.tsp";
+import "../common/crud.tsp";
 import "./resources/contacts.tsp";
 import "./resources/segments.tsp";
 import "./resources/broadcasts.tsp";

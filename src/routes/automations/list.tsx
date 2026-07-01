@@ -27,12 +27,12 @@ export function AutomationsListPage() {
 
   const automationsList = useQuery(
     siteAutomationsListOptions({
-      path: { workspaceSlug: slug },
+      path: { slug: slug },
       query: { page, pageSize: PAGE_SIZE },
     }),
   )
 
-  const listQueryKey = siteAutomationsListQueryKey({ path: { workspaceSlug: slug } })
+  const listQueryKey = siteAutomationsListQueryKey({ path: { slug: slug } })
 
   const deleteMutation = useResourceMutation({
     mutation: siteAutomationsDeleteMutation(),
@@ -60,7 +60,7 @@ export function AutomationsListPage() {
 
   const onDeleteClick = (id: string) => {
     deleteMutation.reset()
-    confirmDelete({ onConfirm: () => deleteMutation.mutate({ path: { workspaceSlug: slug, id } }) })
+    confirmDelete({ onConfirm: () => deleteMutation.mutate({ path: { slug: slug, id } }) })
   }
 
   return (
@@ -110,7 +110,7 @@ export function AutomationsListPage() {
                     color="orange"
                     loading={deactivateMutation.isPending}
                     onClick={() =>
-                      deactivateMutation.mutate({ path: { workspaceSlug: slug, id: record.id } })
+                      deactivateMutation.mutate({ path: { slug: slug, id: record.id } })
                     }
                   >
                     {t(($) => $.automations.deactivate)}
@@ -121,9 +121,7 @@ export function AutomationsListPage() {
                     variant="light"
                     color="teal"
                     loading={activateMutation.isPending}
-                    onClick={() =>
-                      activateMutation.mutate({ path: { workspaceSlug: slug, id: record.id } })
-                    }
+                    onClick={() => activateMutation.mutate({ path: { slug: slug, id: record.id } })}
                   >
                     {t(($) => $.automations.activate)}
                   </Button>

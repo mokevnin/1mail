@@ -1,5 +1,6 @@
 using TypeSpec.Http;
 using TypeSpec.Rest;
+using TypeSpec.Rest.Resource;
 
 namespace OneMail;
 
@@ -34,6 +35,7 @@ model SiteAutomationStep {
 /** Automation resource used by the site UI */
 @resource("automations")
 @segment("automations")
+@parentResource(SiteWorkspaceResource)
 model SiteAutomationResource {
   /** Unique identifier */
   @key
@@ -72,77 +74,26 @@ model SiteUpdateAutomationInput {
   steps?: SiteAutomationStep[];
 }
 
-@route("/w/{workspaceSlug}/automations")
 @tag("Site Automations")
-namespace SiteAutomations {
-  /** Create an automation */
-  @createsResource(SiteAutomationResource)
-  @post
-  op create(
-    @path workspaceSlug: string,
-    @body body: SiteCreateAutomationInput,
-  ):
-    | {
-        @statusCode statusCode: 201;
-        @body body: SiteAutomationResource;
-      }
-    | NotFoundProblem
-    | UnprocessableEntityProblem;
-
-  /** List automations */
-  @listsResource(SiteAutomationResource)
-  @get
-  op list(@path workspaceSlug: string, ...PageQuery):
-    | Page<SiteAutomationResource>
-    | BadRequestProblem
-    | NotFoundProblem
-    | UnprocessableEntityProblem;
-
-  /** Get an automation by ID */
-  @readsResource(SiteAutomationResource)
-  @get
-  @route("/{id}")
-  op get(@path workspaceSlug: string, @path id: EntityId):
-    | SiteAutomationResource
-    | BadRequestProblem
-    | NotFoundProblem;
-
-  /** Update an automation */
-  @updatesResource(SiteAutomationResource)
-  @put
-  @route("/{id}")
-  op update(
-    @path workspaceSlug: string,
-    @path id: EntityId,
-    @body body: SiteUpdateAutomationInput,
-  ):
-    | SiteAutomationResource
-    | BadRequestProblem
-    | NotFoundProblem
-    | UnprocessableEntityProblem;
-
-  /** Delete an automation */
-  @deletesResource(SiteAutomationResource)
-  @delete
-  @route("/{id}")
-  op delete(@path workspaceSlug: string, @path id: EntityId):
-    | NoContentResponse
-    | BadRequestProblem
-    | NotFoundProblem;
-
+interface SiteAutomations
+  extends WorkspaceCrud<
+      SiteAutomationResource,
+      SiteCreateAutomationInput,
+      SiteUpdateAutomationInput
+    > {
   /** Activate an automation (starts enrolling contacts) */
-  @post
-  @route("/{id}/activate")
-  op activate(@path workspaceSlug: string, @path id: EntityId):
+  @action("activate")
+  @autoRoute
+  activate(...ResourceParameters<SiteAutomationResource>):
     | SiteAutomationResource
     | BadRequestProblem
     | NotFoundProblem
     | UnprocessableEntityProblem;
 
   /** Deactivate an automation (stops new enrollments) */
-  @post
-  @route("/{id}/deactivate")
-  op deactivate(@path workspaceSlug: string, @path id: EntityId):
+  @action("deactivate")
+  @autoRoute
+  deactivate(...ResourceParameters<SiteAutomationResource>):
     | SiteAutomationResource
     | BadRequestProblem
     | NotFoundProblem;

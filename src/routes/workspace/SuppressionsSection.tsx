@@ -33,10 +33,10 @@ export function SuppressionsSection({ slug }: { slug: string }) {
   const confirmDelete = useDeleteConfirmation()
   const [page, pageHandlers] = useCounter(1, { min: 1 })
 
-  const queryKey = siteSuppressionsListQueryKey({ path: { workspaceSlug: slug } })
+  const queryKey = siteSuppressionsListQueryKey({ path: { slug: slug } })
   const suppressionsQuery = useQuery(
     siteSuppressionsListOptions({
-      path: { workspaceSlug: slug },
+      path: { slug: slug },
       query: { page, pageSize: PAGE_SIZE },
     }),
   )
@@ -62,7 +62,7 @@ export function SuppressionsSection({ slug }: { slug: string }) {
   const onDelete = (id: string) =>
     confirmDelete({
       title: t(($) => $.settings.suppressions.deleteConfirmTitle),
-      onConfirm: () => deleteMutation.mutate({ path: { workspaceSlug: slug, id } }),
+      onConfirm: () => deleteMutation.mutate({ path: { slug: slug, id } }),
     })
 
   const records = suppressionsQuery.data?.items ?? []
@@ -83,7 +83,7 @@ export function SuppressionsSection({ slug }: { slug: string }) {
       <form
         onSubmit={form.onSubmit((values) =>
           createMutation.mutate({
-            path: { workspaceSlug: slug },
+            path: { slug: slug },
             body: { destination: values.destination.trim() },
           }),
         )}

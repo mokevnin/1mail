@@ -208,6 +208,41 @@ export const siteUserResendVerificationMutation = (options?: Partial<Options<Sit
     return mutationOptions;
 };
 
+export const siteWorkspacesListQueryKey = (options?: Options<SiteWorkspacesListData>) => createQueryKey('siteWorkspacesList', options);
+
+/**
+ * List workspaces owned by the authenticated user
+ */
+export const siteWorkspacesListOptions = (options?: Options<SiteWorkspacesListData>) => queryOptions<SiteWorkspacesListResponse, DefaultError, SiteWorkspacesListResponse, ReturnType<typeof siteWorkspacesListQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await siteWorkspacesList({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: siteWorkspacesListQueryKey(options)
+});
+
+/**
+ * Rename a workspace owned by the authenticated user
+ */
+export const siteWorkspacesUpdateMutation = (options?: Partial<Options<SiteWorkspacesUpdateData>>): UseMutationOptions<SiteWorkspacesUpdateResponse, SiteWorkspacesUpdateError, Options<SiteWorkspacesUpdateData>> => {
+    const mutationOptions: UseMutationOptions<SiteWorkspacesUpdateResponse, SiteWorkspacesUpdateError, Options<SiteWorkspacesUpdateData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await siteWorkspacesUpdate({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
 export const siteAnalyticsOverviewQueryKey = (options: Options<SiteAnalyticsOverviewData>) => createQueryKey('siteAnalyticsOverview', options);
 
 /**
@@ -229,7 +264,7 @@ export const siteAnalyticsOverviewOptions = (options: Options<SiteAnalyticsOverv
 export const siteAutomationsListQueryKey = (options: Options<SiteAutomationsListData>) => createQueryKey('siteAutomationsList', options);
 
 /**
- * List automations
+ * List resources for the site UI
  */
 export const siteAutomationsListOptions = (options: Options<SiteAutomationsListData>) => queryOptions<SiteAutomationsListResponse, SiteAutomationsListError, SiteAutomationsListResponse, ReturnType<typeof siteAutomationsListQueryKey>>({
     queryFn: async ({ queryKey, signal }) => {
@@ -276,7 +311,7 @@ const createInfiniteParams = <K extends Pick<QueryKey<Options>[0], 'body' | 'hea
 export const siteAutomationsListInfiniteQueryKey = (options: Options<SiteAutomationsListData>): QueryKey<Options<SiteAutomationsListData>> => createQueryKey('siteAutomationsList', options, true);
 
 /**
- * List automations
+ * List resources for the site UI
  */
 export const siteAutomationsListInfiniteOptions = (options: Options<SiteAutomationsListData>) => {
     const opts = infiniteQueryOptions<SiteAutomationsListResponse, SiteAutomationsListError, InfiniteData<SiteAutomationsListResponse>, QueryKey<Options<SiteAutomationsListData>>, number | Pick<QueryKey<Options<SiteAutomationsListData>>[0], 'body' | 'headers' | 'path' | 'query'>>(
@@ -304,7 +339,7 @@ export const siteAutomationsListInfiniteOptions = (options: Options<SiteAutomati
 };
 
 /**
- * Create an automation
+ * Create a resource from the site UI
  */
 export const siteAutomationsCreateMutation = (options?: Partial<Options<SiteAutomationsCreateData>>): UseMutationOptions<SiteAutomationsCreateResponse, SiteAutomationsCreateError, Options<SiteAutomationsCreateData>> => {
     const mutationOptions: UseMutationOptions<SiteAutomationsCreateResponse, SiteAutomationsCreateError, Options<SiteAutomationsCreateData>> = {
@@ -321,7 +356,7 @@ export const siteAutomationsCreateMutation = (options?: Partial<Options<SiteAuto
 };
 
 /**
- * Delete an automation
+ * Delete a resource from the site UI
  */
 export const siteAutomationsDeleteMutation = (options?: Partial<Options<SiteAutomationsDeleteData>>): UseMutationOptions<SiteAutomationsDeleteResponse, SiteAutomationsDeleteError, Options<SiteAutomationsDeleteData>> => {
     const mutationOptions: UseMutationOptions<SiteAutomationsDeleteResponse, SiteAutomationsDeleteError, Options<SiteAutomationsDeleteData>> = {
@@ -340,7 +375,7 @@ export const siteAutomationsDeleteMutation = (options?: Partial<Options<SiteAuto
 export const siteAutomationsGetQueryKey = (options: Options<SiteAutomationsGetData>) => createQueryKey('siteAutomationsGet', options);
 
 /**
- * Get an automation by ID
+ * Get a resource by ID for the site UI
  */
 export const siteAutomationsGetOptions = (options: Options<SiteAutomationsGetData>) => queryOptions<SiteAutomationsGetResponse, SiteAutomationsGetError, SiteAutomationsGetResponse, ReturnType<typeof siteAutomationsGetQueryKey>>({
     queryFn: async ({ queryKey, signal }) => {
@@ -356,7 +391,7 @@ export const siteAutomationsGetOptions = (options: Options<SiteAutomationsGetDat
 });
 
 /**
- * Update an automation
+ * Update a resource from the site UI
  */
 export const siteAutomationsUpdateMutation = (options?: Partial<Options<SiteAutomationsUpdateData>>): UseMutationOptions<SiteAutomationsUpdateResponse, SiteAutomationsUpdateError, Options<SiteAutomationsUpdateData>> => {
     const mutationOptions: UseMutationOptions<SiteAutomationsUpdateResponse, SiteAutomationsUpdateError, Options<SiteAutomationsUpdateData>> = {
@@ -409,7 +444,7 @@ export const siteAutomationsDeactivateMutation = (options?: Partial<Options<Site
 export const siteBroadcastsListQueryKey = (options: Options<SiteBroadcastsListData>) => createQueryKey('siteBroadcastsList', options);
 
 /**
- * List broadcasts for the site UI
+ * List resources for the site UI
  */
 export const siteBroadcastsListOptions = (options: Options<SiteBroadcastsListData>) => queryOptions<SiteBroadcastsListResponse, SiteBroadcastsListError, SiteBroadcastsListResponse, ReturnType<typeof siteBroadcastsListQueryKey>>({
     queryFn: async ({ queryKey, signal }) => {
@@ -427,7 +462,7 @@ export const siteBroadcastsListOptions = (options: Options<SiteBroadcastsListDat
 export const siteBroadcastsListInfiniteQueryKey = (options: Options<SiteBroadcastsListData>): QueryKey<Options<SiteBroadcastsListData>> => createQueryKey('siteBroadcastsList', options, true);
 
 /**
- * List broadcasts for the site UI
+ * List resources for the site UI
  */
 export const siteBroadcastsListInfiniteOptions = (options: Options<SiteBroadcastsListData>) => {
     const opts = infiniteQueryOptions<SiteBroadcastsListResponse, SiteBroadcastsListError, InfiniteData<SiteBroadcastsListResponse>, QueryKey<Options<SiteBroadcastsListData>>, number | Pick<QueryKey<Options<SiteBroadcastsListData>>[0], 'body' | 'headers' | 'path' | 'query'>>(
@@ -455,7 +490,7 @@ export const siteBroadcastsListInfiniteOptions = (options: Options<SiteBroadcast
 };
 
 /**
- * Create a broadcast from the site UI
+ * Create a resource from the site UI
  */
 export const siteBroadcastsCreateMutation = (options?: Partial<Options<SiteBroadcastsCreateData>>): UseMutationOptions<SiteBroadcastsCreateResponse, SiteBroadcastsCreateError, Options<SiteBroadcastsCreateData>> => {
     const mutationOptions: UseMutationOptions<SiteBroadcastsCreateResponse, SiteBroadcastsCreateError, Options<SiteBroadcastsCreateData>> = {
@@ -472,7 +507,7 @@ export const siteBroadcastsCreateMutation = (options?: Partial<Options<SiteBroad
 };
 
 /**
- * Delete a broadcast from the site UI
+ * Delete a resource from the site UI
  */
 export const siteBroadcastsDeleteMutation = (options?: Partial<Options<SiteBroadcastsDeleteData>>): UseMutationOptions<SiteBroadcastsDeleteResponse, SiteBroadcastsDeleteError, Options<SiteBroadcastsDeleteData>> => {
     const mutationOptions: UseMutationOptions<SiteBroadcastsDeleteResponse, SiteBroadcastsDeleteError, Options<SiteBroadcastsDeleteData>> = {
@@ -491,7 +526,7 @@ export const siteBroadcastsDeleteMutation = (options?: Partial<Options<SiteBroad
 export const siteBroadcastsGetQueryKey = (options: Options<SiteBroadcastsGetData>) => createQueryKey('siteBroadcastsGet', options);
 
 /**
- * Get a broadcast by ID for the site UI
+ * Get a resource by ID for the site UI
  */
 export const siteBroadcastsGetOptions = (options: Options<SiteBroadcastsGetData>) => queryOptions<SiteBroadcastsGetResponse, SiteBroadcastsGetError, SiteBroadcastsGetResponse, ReturnType<typeof siteBroadcastsGetQueryKey>>({
     queryFn: async ({ queryKey, signal }) => {
@@ -507,7 +542,7 @@ export const siteBroadcastsGetOptions = (options: Options<SiteBroadcastsGetData>
 });
 
 /**
- * Update a broadcast from the site UI
+ * Update a resource from the site UI
  */
 export const siteBroadcastsUpdateMutation = (options?: Partial<Options<SiteBroadcastsUpdateData>>): UseMutationOptions<SiteBroadcastsUpdateResponse, SiteBroadcastsUpdateError, Options<SiteBroadcastsUpdateData>> => {
     const mutationOptions: UseMutationOptions<SiteBroadcastsUpdateResponse, SiteBroadcastsUpdateError, Options<SiteBroadcastsUpdateData>> = {
@@ -577,7 +612,7 @@ export const siteBroadcastsTestSendMutation = (options?: Partial<Options<SiteBro
 export const siteContactsListQueryKey = (options: Options<SiteContactsListData>) => createQueryKey('siteContactsList', options);
 
 /**
- * List contacts for the site UI
+ * List resources for the site UI
  */
 export const siteContactsListOptions = (options: Options<SiteContactsListData>) => queryOptions<SiteContactsListResponse, SiteContactsListError, SiteContactsListResponse, ReturnType<typeof siteContactsListQueryKey>>({
     queryFn: async ({ queryKey, signal }) => {
@@ -595,7 +630,7 @@ export const siteContactsListOptions = (options: Options<SiteContactsListData>) 
 export const siteContactsListInfiniteQueryKey = (options: Options<SiteContactsListData>): QueryKey<Options<SiteContactsListData>> => createQueryKey('siteContactsList', options, true);
 
 /**
- * List contacts for the site UI
+ * List resources for the site UI
  */
 export const siteContactsListInfiniteOptions = (options: Options<SiteContactsListData>) => {
     const opts = infiniteQueryOptions<SiteContactsListResponse, SiteContactsListError, InfiniteData<SiteContactsListResponse>, QueryKey<Options<SiteContactsListData>>, number | Pick<QueryKey<Options<SiteContactsListData>>[0], 'body' | 'headers' | 'path' | 'query'>>(
@@ -623,7 +658,7 @@ export const siteContactsListInfiniteOptions = (options: Options<SiteContactsLis
 };
 
 /**
- * Create a contact from the site UI
+ * Create a resource from the site UI
  */
 export const siteContactsCreateMutation = (options?: Partial<Options<SiteContactsCreateData>>): UseMutationOptions<SiteContactsCreateResponse, SiteContactsCreateError, Options<SiteContactsCreateData>> => {
     const mutationOptions: UseMutationOptions<SiteContactsCreateResponse, SiteContactsCreateError, Options<SiteContactsCreateData>> = {
@@ -640,7 +675,7 @@ export const siteContactsCreateMutation = (options?: Partial<Options<SiteContact
 };
 
 /**
- * Delete a contact from the site UI
+ * Delete a resource from the site UI
  */
 export const siteContactsDeleteMutation = (options?: Partial<Options<SiteContactsDeleteData>>): UseMutationOptions<SiteContactsDeleteResponse, SiteContactsDeleteError, Options<SiteContactsDeleteData>> => {
     const mutationOptions: UseMutationOptions<SiteContactsDeleteResponse, SiteContactsDeleteError, Options<SiteContactsDeleteData>> = {
@@ -659,7 +694,7 @@ export const siteContactsDeleteMutation = (options?: Partial<Options<SiteContact
 export const siteContactsGetQueryKey = (options: Options<SiteContactsGetData>) => createQueryKey('siteContactsGet', options);
 
 /**
- * Get a contact by ID for the site UI
+ * Get a resource by ID for the site UI
  */
 export const siteContactsGetOptions = (options: Options<SiteContactsGetData>) => queryOptions<SiteContactsGetResponse, SiteContactsGetError, SiteContactsGetResponse, ReturnType<typeof siteContactsGetQueryKey>>({
     queryFn: async ({ queryKey, signal }) => {
@@ -675,7 +710,7 @@ export const siteContactsGetOptions = (options: Options<SiteContactsGetData>) =>
 });
 
 /**
- * Update a contact from the site UI
+ * Update a resource from the site UI
  */
 export const siteContactsUpdateMutation = (options?: Partial<Options<SiteContactsUpdateData>>): UseMutationOptions<SiteContactsUpdateResponse, SiteContactsUpdateError, Options<SiteContactsUpdateData>> => {
     const mutationOptions: UseMutationOptions<SiteContactsUpdateResponse, SiteContactsUpdateError, Options<SiteContactsUpdateData>> = {
@@ -865,7 +900,7 @@ export const siteIntegrationsUpdateMutation = (options?: Partial<Options<SiteInt
 export const siteSegmentsListQueryKey = (options: Options<SiteSegmentsListData>) => createQueryKey('siteSegmentsList', options);
 
 /**
- * List segments for the site UI
+ * List resources for the site UI
  */
 export const siteSegmentsListOptions = (options: Options<SiteSegmentsListData>) => queryOptions<SiteSegmentsListResponse, SiteSegmentsListError, SiteSegmentsListResponse, ReturnType<typeof siteSegmentsListQueryKey>>({
     queryFn: async ({ queryKey, signal }) => {
@@ -883,7 +918,7 @@ export const siteSegmentsListOptions = (options: Options<SiteSegmentsListData>) 
 export const siteSegmentsListInfiniteQueryKey = (options: Options<SiteSegmentsListData>): QueryKey<Options<SiteSegmentsListData>> => createQueryKey('siteSegmentsList', options, true);
 
 /**
- * List segments for the site UI
+ * List resources for the site UI
  */
 export const siteSegmentsListInfiniteOptions = (options: Options<SiteSegmentsListData>) => {
     const opts = infiniteQueryOptions<SiteSegmentsListResponse, SiteSegmentsListError, InfiniteData<SiteSegmentsListResponse>, QueryKey<Options<SiteSegmentsListData>>, number | Pick<QueryKey<Options<SiteSegmentsListData>>[0], 'body' | 'headers' | 'path' | 'query'>>(
@@ -911,7 +946,7 @@ export const siteSegmentsListInfiniteOptions = (options: Options<SiteSegmentsLis
 };
 
 /**
- * Create a segment from the site UI
+ * Create a resource from the site UI
  */
 export const siteSegmentsCreateMutation = (options?: Partial<Options<SiteSegmentsCreateData>>): UseMutationOptions<SiteSegmentsCreateResponse, SiteSegmentsCreateError, Options<SiteSegmentsCreateData>> => {
     const mutationOptions: UseMutationOptions<SiteSegmentsCreateResponse, SiteSegmentsCreateError, Options<SiteSegmentsCreateData>> = {
@@ -945,7 +980,7 @@ export const siteSegmentsPreviewMutation = (options?: Partial<Options<SiteSegmen
 };
 
 /**
- * Delete a segment from the site UI
+ * Delete a resource from the site UI
  */
 export const siteSegmentsDeleteMutation = (options?: Partial<Options<SiteSegmentsDeleteData>>): UseMutationOptions<SiteSegmentsDeleteResponse, SiteSegmentsDeleteError, Options<SiteSegmentsDeleteData>> => {
     const mutationOptions: UseMutationOptions<SiteSegmentsDeleteResponse, SiteSegmentsDeleteError, Options<SiteSegmentsDeleteData>> = {
@@ -964,7 +999,7 @@ export const siteSegmentsDeleteMutation = (options?: Partial<Options<SiteSegment
 export const siteSegmentsGetQueryKey = (options: Options<SiteSegmentsGetData>) => createQueryKey('siteSegmentsGet', options);
 
 /**
- * Get a segment by ID for the site UI
+ * Get a resource by ID for the site UI
  */
 export const siteSegmentsGetOptions = (options: Options<SiteSegmentsGetData>) => queryOptions<SiteSegmentsGetResponse, SiteSegmentsGetError, SiteSegmentsGetResponse, ReturnType<typeof siteSegmentsGetQueryKey>>({
     queryFn: async ({ queryKey, signal }) => {
@@ -980,7 +1015,7 @@ export const siteSegmentsGetOptions = (options: Options<SiteSegmentsGetData>) =>
 });
 
 /**
- * Update a segment from the site UI
+ * Update a resource from the site UI
  */
 export const siteSegmentsUpdateMutation = (options?: Partial<Options<SiteSegmentsUpdateData>>): UseMutationOptions<SiteSegmentsUpdateResponse, SiteSegmentsUpdateError, Options<SiteSegmentsUpdateData>> => {
     const mutationOptions: UseMutationOptions<SiteSegmentsUpdateResponse, SiteSegmentsUpdateError, Options<SiteSegmentsUpdateData>> = {
@@ -1081,7 +1116,7 @@ export const siteSuppressionsDeleteMutation = (options?: Partial<Options<SiteSup
 export const siteTemplatesListQueryKey = (options: Options<SiteTemplatesListData>) => createQueryKey('siteTemplatesList', options);
 
 /**
- * List templates
+ * List resources for the site UI
  */
 export const siteTemplatesListOptions = (options: Options<SiteTemplatesListData>) => queryOptions<SiteTemplatesListResponse, SiteTemplatesListError, SiteTemplatesListResponse, ReturnType<typeof siteTemplatesListQueryKey>>({
     queryFn: async ({ queryKey, signal }) => {
@@ -1099,7 +1134,7 @@ export const siteTemplatesListOptions = (options: Options<SiteTemplatesListData>
 export const siteTemplatesListInfiniteQueryKey = (options: Options<SiteTemplatesListData>): QueryKey<Options<SiteTemplatesListData>> => createQueryKey('siteTemplatesList', options, true);
 
 /**
- * List templates
+ * List resources for the site UI
  */
 export const siteTemplatesListInfiniteOptions = (options: Options<SiteTemplatesListData>) => {
     const opts = infiniteQueryOptions<SiteTemplatesListResponse, SiteTemplatesListError, InfiniteData<SiteTemplatesListResponse>, QueryKey<Options<SiteTemplatesListData>>, number | Pick<QueryKey<Options<SiteTemplatesListData>>[0], 'body' | 'headers' | 'path' | 'query'>>(
@@ -1127,7 +1162,7 @@ export const siteTemplatesListInfiniteOptions = (options: Options<SiteTemplatesL
 };
 
 /**
- * Create a template
+ * Create a resource from the site UI
  */
 export const siteTemplatesCreateMutation = (options?: Partial<Options<SiteTemplatesCreateData>>): UseMutationOptions<SiteTemplatesCreateResponse, SiteTemplatesCreateError, Options<SiteTemplatesCreateData>> => {
     const mutationOptions: UseMutationOptions<SiteTemplatesCreateResponse, SiteTemplatesCreateError, Options<SiteTemplatesCreateData>> = {
@@ -1144,7 +1179,7 @@ export const siteTemplatesCreateMutation = (options?: Partial<Options<SiteTempla
 };
 
 /**
- * Delete a template
+ * Delete a resource from the site UI
  */
 export const siteTemplatesDeleteMutation = (options?: Partial<Options<SiteTemplatesDeleteData>>): UseMutationOptions<SiteTemplatesDeleteResponse, SiteTemplatesDeleteError, Options<SiteTemplatesDeleteData>> => {
     const mutationOptions: UseMutationOptions<SiteTemplatesDeleteResponse, SiteTemplatesDeleteError, Options<SiteTemplatesDeleteData>> = {
@@ -1163,7 +1198,7 @@ export const siteTemplatesDeleteMutation = (options?: Partial<Options<SiteTempla
 export const siteTemplatesGetQueryKey = (options: Options<SiteTemplatesGetData>) => createQueryKey('siteTemplatesGet', options);
 
 /**
- * Get a template by ID
+ * Get a resource by ID for the site UI
  */
 export const siteTemplatesGetOptions = (options: Options<SiteTemplatesGetData>) => queryOptions<SiteTemplatesGetResponse, SiteTemplatesGetError, SiteTemplatesGetResponse, ReturnType<typeof siteTemplatesGetQueryKey>>({
     queryFn: async ({ queryKey, signal }) => {
@@ -1179,7 +1214,7 @@ export const siteTemplatesGetOptions = (options: Options<SiteTemplatesGetData>) 
 });
 
 /**
- * Update a template
+ * Update a resource from the site UI
  */
 export const siteTemplatesUpdateMutation = (options?: Partial<Options<SiteTemplatesUpdateData>>): UseMutationOptions<SiteTemplatesUpdateResponse, SiteTemplatesUpdateError, Options<SiteTemplatesUpdateData>> => {
     const mutationOptions: UseMutationOptions<SiteTemplatesUpdateResponse, SiteTemplatesUpdateError, Options<SiteTemplatesUpdateData>> = {
@@ -1298,7 +1333,7 @@ export const siteTransactionalEmailsListInfiniteOptions = (options: Options<Site
 export const siteWebhooksListQueryKey = (options: Options<SiteWebhooksListData>) => createQueryKey('siteWebhooksList', options);
 
 /**
- * List webhook endpoints
+ * List resources for the site UI
  */
 export const siteWebhooksListOptions = (options: Options<SiteWebhooksListData>) => queryOptions<SiteWebhooksListResponse, SiteWebhooksListError, SiteWebhooksListResponse, ReturnType<typeof siteWebhooksListQueryKey>>({
     queryFn: async ({ queryKey, signal }) => {
@@ -1316,7 +1351,7 @@ export const siteWebhooksListOptions = (options: Options<SiteWebhooksListData>) 
 export const siteWebhooksListInfiniteQueryKey = (options: Options<SiteWebhooksListData>): QueryKey<Options<SiteWebhooksListData>> => createQueryKey('siteWebhooksList', options, true);
 
 /**
- * List webhook endpoints
+ * List resources for the site UI
  */
 export const siteWebhooksListInfiniteOptions = (options: Options<SiteWebhooksListData>) => {
     const opts = infiniteQueryOptions<SiteWebhooksListResponse, SiteWebhooksListError, InfiniteData<SiteWebhooksListResponse>, QueryKey<Options<SiteWebhooksListData>>, number | Pick<QueryKey<Options<SiteWebhooksListData>>[0], 'body' | 'headers' | 'path' | 'query'>>(
@@ -1344,7 +1379,7 @@ export const siteWebhooksListInfiniteOptions = (options: Options<SiteWebhooksLis
 };
 
 /**
- * Create a webhook endpoint
+ * Create a resource from the site UI
  */
 export const siteWebhooksCreateMutation = (options?: Partial<Options<SiteWebhooksCreateData>>): UseMutationOptions<SiteWebhooksCreateResponse, SiteWebhooksCreateError, Options<SiteWebhooksCreateData>> => {
     const mutationOptions: UseMutationOptions<SiteWebhooksCreateResponse, SiteWebhooksCreateError, Options<SiteWebhooksCreateData>> = {
@@ -1361,7 +1396,7 @@ export const siteWebhooksCreateMutation = (options?: Partial<Options<SiteWebhook
 };
 
 /**
- * Delete a webhook endpoint
+ * Delete a resource from the site UI
  */
 export const siteWebhooksDeleteMutation = (options?: Partial<Options<SiteWebhooksDeleteData>>): UseMutationOptions<SiteWebhooksDeleteResponse, SiteWebhooksDeleteError, Options<SiteWebhooksDeleteData>> => {
     const mutationOptions: UseMutationOptions<SiteWebhooksDeleteResponse, SiteWebhooksDeleteError, Options<SiteWebhooksDeleteData>> = {
@@ -1380,7 +1415,7 @@ export const siteWebhooksDeleteMutation = (options?: Partial<Options<SiteWebhook
 export const siteWebhooksGetQueryKey = (options: Options<SiteWebhooksGetData>) => createQueryKey('siteWebhooksGet', options);
 
 /**
- * Get a webhook endpoint by ID
+ * Get a resource by ID for the site UI
  */
 export const siteWebhooksGetOptions = (options: Options<SiteWebhooksGetData>) => queryOptions<SiteWebhooksGetResponse, SiteWebhooksGetError, SiteWebhooksGetResponse, ReturnType<typeof siteWebhooksGetQueryKey>>({
     queryFn: async ({ queryKey, signal }) => {
@@ -1396,47 +1431,12 @@ export const siteWebhooksGetOptions = (options: Options<SiteWebhooksGetData>) =>
 });
 
 /**
- * Update a webhook endpoint
+ * Update a resource from the site UI
  */
 export const siteWebhooksUpdateMutation = (options?: Partial<Options<SiteWebhooksUpdateData>>): UseMutationOptions<SiteWebhooksUpdateResponse, SiteWebhooksUpdateError, Options<SiteWebhooksUpdateData>> => {
     const mutationOptions: UseMutationOptions<SiteWebhooksUpdateResponse, SiteWebhooksUpdateError, Options<SiteWebhooksUpdateData>> = {
         mutationFn: async (fnOptions) => {
             const { data } = await siteWebhooksUpdate({
-                ...options,
-                ...fnOptions,
-                throwOnError: true
-            });
-            return data;
-        }
-    };
-    return mutationOptions;
-};
-
-export const siteWorkspacesListQueryKey = (options?: Options<SiteWorkspacesListData>) => createQueryKey('siteWorkspacesList', options);
-
-/**
- * List workspaces owned by the authenticated user
- */
-export const siteWorkspacesListOptions = (options?: Options<SiteWorkspacesListData>) => queryOptions<SiteWorkspacesListResponse, DefaultError, SiteWorkspacesListResponse, ReturnType<typeof siteWorkspacesListQueryKey>>({
-    queryFn: async ({ queryKey, signal }) => {
-        const { data } = await siteWorkspacesList({
-            ...options,
-            ...queryKey[0],
-            signal,
-            throwOnError: true
-        });
-        return data;
-    },
-    queryKey: siteWorkspacesListQueryKey(options)
-});
-
-/**
- * Rename a workspace owned by the authenticated user
- */
-export const siteWorkspacesUpdateMutation = (options?: Partial<Options<SiteWorkspacesUpdateData>>): UseMutationOptions<SiteWorkspacesUpdateResponse, SiteWorkspacesUpdateError, Options<SiteWorkspacesUpdateData>> => {
-    const mutationOptions: UseMutationOptions<SiteWorkspacesUpdateResponse, SiteWorkspacesUpdateError, Options<SiteWorkspacesUpdateData>> = {
-        mutationFn: async (fnOptions) => {
-            const { data } = await siteWorkspacesUpdate({
                 ...options,
                 ...fnOptions,
                 throwOnError: true

@@ -47,7 +47,8 @@ namespace Events {
     | UnprocessableEntityProblem;
 }
 
-@route("/event-actions")
+// Aligned with the site API's `/events/actions` naming.
+@route("/events/actions")
 @tag("Events")
 namespace EventActions {
   /** List unique event actions */

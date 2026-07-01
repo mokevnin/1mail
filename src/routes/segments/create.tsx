@@ -22,7 +22,7 @@ export function SegmentCreatePage() {
 
   const createMutation = useResourceMutation({
     mutation: siteSegmentsCreateMutation(),
-    invalidate: [siteSegmentsListQueryKey({ path: { workspaceSlug: slug } })],
+    invalidate: [siteSegmentsListQueryKey({ path: { slug: slug } })],
     successMessage: t(($) => $.notifications.segmentCreated),
     errorTitle: t(($) => $.alerts.segmentSaveErrorTitle),
     onDone: (created) =>
@@ -37,7 +37,7 @@ export function SegmentCreatePage() {
         isPending={createMutation.isPending}
         onSubmit={(values) =>
           createMutation.mutate({
-            path: { workspaceSlug: slug },
+            path: { slug: slug },
             body: {
               name: values.name.trim(),
               type: values.type,

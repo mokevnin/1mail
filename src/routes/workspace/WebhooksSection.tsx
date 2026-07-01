@@ -32,8 +32,8 @@ export function WebhooksSection({ slug }: { slug: string }) {
   const { t } = useTranslation()
   const confirmDelete = useDeleteConfirmation()
 
-  const queryKey = siteWebhooksListQueryKey({ path: { workspaceSlug: slug } })
-  const webhooksQuery = useQuery(siteWebhooksListOptions({ path: { workspaceSlug: slug } }))
+  const queryKey = siteWebhooksListQueryKey({ path: { slug: slug } })
+  const webhooksQuery = useQuery(siteWebhooksListOptions({ path: { slug: slug } }))
 
   const form = useForm<{ url: string; eventTypes: string[] }>({
     initialValues: { url: '', eventTypes: [] },
@@ -60,14 +60,14 @@ export function WebhooksSection({ slug }: { slug: string }) {
 
   const onToggle = (record: SiteWebhookEndpointResource) =>
     updateMutation.mutate({
-      path: { workspaceSlug: slug, id: record.id },
+      path: { slug: slug, id: record.id },
       body: { url: record.url, eventTypes: record.eventTypes, enabled: !record.enabled },
     })
 
   const onDelete = (id: string) =>
     confirmDelete({
       title: t(($) => $.settings.webhooks.deleteConfirmTitle),
-      onConfirm: () => deleteMutation.mutate({ path: { workspaceSlug: slug, id } }),
+      onConfirm: () => deleteMutation.mutate({ path: { slug: slug, id } }),
     })
 
   const records = webhooksQuery.data?.items ?? []
@@ -87,7 +87,7 @@ export function WebhooksSection({ slug }: { slug: string }) {
       <form
         onSubmit={form.onSubmit((values) =>
           createMutation.mutate({
-            path: { workspaceSlug: slug },
+            path: { slug: slug },
             body: { url: values.url.trim(), eventTypes: values.eventTypes },
           }),
         )}

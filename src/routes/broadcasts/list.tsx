@@ -48,14 +48,14 @@ export function BroadcastsListPage() {
 
   const broadcastsList = useQuery(
     siteBroadcastsListOptions({
-      path: { workspaceSlug: slug },
+      path: { slug: slug },
       query: { page, pageSize: PAGE_SIZE },
     }),
   )
 
   const deleteBroadcastMutation = useResourceMutation({
     mutation: siteBroadcastsDeleteMutation(),
-    invalidate: [siteBroadcastsListQueryKey({ path: { workspaceSlug: slug } })],
+    invalidate: [siteBroadcastsListQueryKey({ path: { slug: slug } })],
     successMessage: t(($) => $.notifications.broadcastDeleted),
     errorTitle: t(($) => $.alerts.broadcastDeleteErrorTitle),
   })
@@ -67,7 +67,7 @@ export function BroadcastsListPage() {
     deleteBroadcastMutation.reset()
     confirmDelete({
       onConfirm: () => {
-        deleteBroadcastMutation.mutate({ path: { workspaceSlug: slug, id } })
+        deleteBroadcastMutation.mutate({ path: { slug: slug, id } })
       },
     })
   }

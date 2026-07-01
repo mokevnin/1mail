@@ -15,7 +15,7 @@ import (
 
 // SiteTokensList returns the workspace's active (non-revoked) API tokens.
 func (h *Handlers) SiteTokensList(ctx context.Context, params siteapi.SiteTokensListParams) (siteapi.SiteTokensListRes, error) {
-	ws, err := h.workspaceID(ctx, params.WorkspaceSlug)
+	ws, err := h.workspaceID(ctx, params.Slug)
 	if ent.IsNotFound(err) {
 		v := problem(http.StatusNotFound, "workspace not found")
 		return &v, nil
@@ -42,7 +42,7 @@ func (h *Handlers) SiteTokensList(ctx context.Context, params siteapi.SiteTokens
 // SiteTokensCreate mints a workspace API token. The full secret is returned once;
 // only its bcrypt hash and public prefix are stored.
 func (h *Handlers) SiteTokensCreate(ctx context.Context, req *siteapi.SiteCreateTokenInput, params siteapi.SiteTokensCreateParams) (siteapi.SiteTokensCreateRes, error) {
-	ws, err := h.workspaceID(ctx, params.WorkspaceSlug)
+	ws, err := h.workspaceID(ctx, params.Slug)
 	if ent.IsNotFound(err) {
 		v := siteapi.SiteTokensCreateNotFound(problem(http.StatusNotFound, "workspace not found"))
 		return &v, nil
@@ -96,7 +96,7 @@ func (h *Handlers) SiteTokensCreate(ctx context.Context, req *siteapi.SiteCreate
 
 // SiteTokensDelete revokes (soft-deletes) a workspace API token.
 func (h *Handlers) SiteTokensDelete(ctx context.Context, params siteapi.SiteTokensDeleteParams) (siteapi.SiteTokensDeleteRes, error) {
-	ws, err := h.workspaceID(ctx, params.WorkspaceSlug)
+	ws, err := h.workspaceID(ctx, params.Slug)
 	if ent.IsNotFound(err) {
 		v := siteapi.SiteTokensDeleteNotFound(problem(http.StatusNotFound, "workspace not found"))
 		return &v, nil

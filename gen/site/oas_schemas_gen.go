@@ -6931,7 +6931,7 @@ type SiteWorkspaceResource struct {
 	ID EntityId `json:"id"`
 	// Display name.
 	Name string `json:"name"`
-	// URL-safe unique slug (used in /w/{slug} routes).
+	// URL-safe unique slug; the route key for nested workspace resources.
 	Slug string `json:"slug"`
 	// Per-workspace collect write-key (x-collect-key) for the tracking snippet.
 	CollectKey string `json:"collectKey"`

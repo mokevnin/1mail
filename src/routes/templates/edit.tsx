@@ -23,9 +23,7 @@ export function TemplateEditPage() {
     initialValues: { name: '', subject: '', body: '' },
   })
 
-  const getQuery = useQuery(
-    siteTemplatesGetOptions({ path: { workspaceSlug: slug, id: templateId } }),
-  )
+  const getQuery = useQuery(siteTemplatesGetOptions({ path: { slug: slug, id: templateId } }))
 
   const applyData = useEffectEvent((data: SiteEmailTemplateResource | undefined) => {
     if (!data) return
@@ -43,8 +41,8 @@ export function TemplateEditPage() {
   const updateMutation = useResourceMutation({
     mutation: siteTemplatesUpdateMutation(),
     invalidate: [
-      siteTemplatesListQueryKey({ path: { workspaceSlug: slug } }),
-      siteTemplatesGetQueryKey({ path: { workspaceSlug: slug, id: templateId } }),
+      siteTemplatesListQueryKey({ path: { slug: slug } }),
+      siteTemplatesGetQueryKey({ path: { slug: slug, id: templateId } }),
     ],
     successMessage: t(($) => $.notifications.templateUpdated),
     errorTitle: t(($) => $.alerts.templateSaveErrorTitle),
@@ -70,7 +68,7 @@ export function TemplateEditPage() {
         isPending={updateMutation.isPending}
         onSubmit={(values) =>
           updateMutation.mutate({
-            path: { workspaceSlug: slug, id: templateId },
+            path: { slug: slug, id: templateId },
             body: {
               name: values.name.trim(),
               subject: values.subject.trim(),

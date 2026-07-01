@@ -26,7 +26,7 @@ export function AutomationCreatePage() {
 
   const createMutation = useResourceMutation({
     mutation: siteAutomationsCreateMutation(),
-    invalidate: [siteAutomationsListQueryKey({ path: { workspaceSlug: slug } })],
+    invalidate: [siteAutomationsListQueryKey({ path: { slug: slug } })],
     successMessage: t(($) => $.notifications.automationCreated),
     errorTitle: t(($) => $.alerts.automationSaveErrorTitle),
     onDone: (created) =>
@@ -39,7 +39,7 @@ export function AutomationCreatePage() {
       <form
         onSubmit={form.onSubmit((values) =>
           createMutation.mutate({
-            path: { workspaceSlug: slug },
+            path: { slug: slug },
             body: { name: values.name.trim(), triggerEvent: values.triggerEvent },
           }),
         )}

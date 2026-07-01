@@ -28,7 +28,7 @@ export function ContactCreatePage() {
 
   const createMutation = useResourceMutation({
     mutation: siteContactsCreateMutation(),
-    invalidate: [siteContactsListQueryKey({ path: { workspaceSlug: slug } })],
+    invalidate: [siteContactsListQueryKey({ path: { slug: slug } })],
     successMessage: t(($) => $.notifications.contactCreated),
     errorTitle: t(($) => $.alerts.saveErrorTitle),
     onDone: (created) =>
@@ -43,7 +43,7 @@ export function ContactCreatePage() {
         isPending={createMutation.isPending}
         onSubmit={(values) =>
           createMutation.mutate({
-            path: { workspaceSlug: slug },
+            path: { slug: slug },
             body: toContactPayload(values),
           })
         }

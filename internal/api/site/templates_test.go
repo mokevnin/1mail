@@ -20,13 +20,13 @@ func TestSiteTemplatesCRUD(t *testing.T) {
 		Name:    "Welcome",
 		Subject: siteapi.NewOptString("Welcome {{ first_name }}"),
 		Body:    siteapi.NewOptString("<mjml><mj-body><mj-section><mj-column><mj-text>Hi</mj-text></mj-column></mj-section></mj-body></mjml>"),
-	}, siteapi.SiteTemplatesCreateParams{WorkspaceSlug: slug})
+	}, siteapi.SiteTemplatesCreateParams{Slug: slug})
 	require.NoError(t, err)
 	res, ok := created.(*siteapi.SiteEmailTemplateResource)
 	require.Truef(t, ok, "got %T", created)
 	assert.Equal(t, "Welcome", res.Name)
 
-	got, err := c.SiteTemplatesGet(ctx, siteapi.SiteTemplatesGetParams{WorkspaceSlug: slug, ID: res.ID})
+	got, err := c.SiteTemplatesGet(ctx, siteapi.SiteTemplatesGetParams{Slug: slug, ID: res.ID})
 	require.NoError(t, err)
 	gotRes, ok := got.(*siteapi.SiteEmailTemplateResource)
 	require.Truef(t, ok, "got %T", got)
@@ -34,17 +34,17 @@ func TestSiteTemplatesCRUD(t *testing.T) {
 
 	updated, err := c.SiteTemplatesUpdate(ctx, &siteapi.SiteUpdateEmailTemplateInput{
 		Name: siteapi.NewOptString("Welcome v2"),
-	}, siteapi.SiteTemplatesUpdateParams{WorkspaceSlug: slug, ID: res.ID})
+	}, siteapi.SiteTemplatesUpdateParams{Slug: slug, ID: res.ID})
 	require.NoError(t, err)
 	updRes, ok := updated.(*siteapi.SiteEmailTemplateResource)
 	require.Truef(t, ok, "got %T", updated)
 	assert.Equal(t, "Welcome v2", updRes.Name)
 
-	del, err := c.SiteTemplatesDelete(ctx, siteapi.SiteTemplatesDeleteParams{WorkspaceSlug: slug, ID: res.ID})
+	del, err := c.SiteTemplatesDelete(ctx, siteapi.SiteTemplatesDeleteParams{Slug: slug, ID: res.ID})
 	require.NoError(t, err)
 	assert.IsType(t, &siteapi.SiteTemplatesDeleteNoContent{}, del)
 
-	gone, err := c.SiteTemplatesGet(ctx, siteapi.SiteTemplatesGetParams{WorkspaceSlug: slug, ID: res.ID})
+	gone, err := c.SiteTemplatesGet(ctx, siteapi.SiteTemplatesGetParams{Slug: slug, ID: res.ID})
 	require.NoError(t, err)
 	assert.IsType(t, &siteapi.SiteTemplatesGetNotFound{}, gone)
 }
@@ -57,13 +57,13 @@ func TestSiteBroadcastsTestSendWithoutIntegration(t *testing.T) {
 
 	created, err := c.SiteBroadcastsCreate(ctx, &siteapi.SiteCreateBroadcastInput{
 		Name: "Preview me", Subject: siteapi.NewOptString("Hi"),
-	}, siteapi.SiteBroadcastsCreateParams{WorkspaceSlug: "acme"})
+	}, siteapi.SiteBroadcastsCreateParams{Slug: "acme"})
 	require.NoError(t, err)
 	b := created.(*siteapi.SiteBroadcastResource)
 
 	out, err := c.SiteBroadcastsTestSend(ctx, &siteapi.SiteTestSendBroadcastInput{
 		Email: "qa@test.dev",
-	}, siteapi.SiteBroadcastsTestSendParams{WorkspaceSlug: "acme", ID: b.ID})
+	}, siteapi.SiteBroadcastsTestSendParams{Slug: "acme", ID: b.ID})
 	require.NoError(t, err)
 	assert.IsType(t, &siteapi.SiteBroadcastsTestSendUnprocessableEntity{}, out)
 }

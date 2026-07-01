@@ -23,9 +23,7 @@ export function SegmentEditPage() {
     initialValues: { name: '', type: SiteSegmentType.RULE, definition: '' },
   })
 
-  const getSegmentQuery = useQuery(
-    siteSegmentsGetOptions({ path: { workspaceSlug: slug, id: segmentId } }),
-  )
+  const getSegmentQuery = useQuery(siteSegmentsGetOptions({ path: { slug: slug, id: segmentId } }))
 
   const applySegmentData = useEffectEvent((data: SiteSegmentResource | undefined) => {
     if (!data) return
@@ -43,8 +41,8 @@ export function SegmentEditPage() {
   const updateMutation = useResourceMutation({
     mutation: siteSegmentsUpdateMutation(),
     invalidate: [
-      siteSegmentsListQueryKey({ path: { workspaceSlug: slug } }),
-      siteSegmentsGetQueryKey({ path: { workspaceSlug: slug, id: segmentId } }),
+      siteSegmentsListQueryKey({ path: { slug: slug } }),
+      siteSegmentsGetQueryKey({ path: { slug: slug, id: segmentId } }),
     ],
     successMessage: t(($) => $.notifications.segmentUpdated),
     errorTitle: t(($) => $.alerts.segmentSaveErrorTitle),
@@ -70,7 +68,7 @@ export function SegmentEditPage() {
         isPending={updateMutation.isPending}
         onSubmit={(values) =>
           updateMutation.mutate({
-            path: { workspaceSlug: slug, id: segmentId },
+            path: { slug: slug, id: segmentId },
             body: {
               name: values.name.trim(),
               type: values.type,

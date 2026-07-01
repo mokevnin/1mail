@@ -13,7 +13,7 @@ import (
 // SiteTransactionalEmailsList returns the workspace's transactional send history
 // (the durable trace written by the /api/emails surface), most recent first.
 func (h *Handlers) SiteTransactionalEmailsList(ctx context.Context, params siteapi.SiteTransactionalEmailsListParams) (siteapi.SiteTransactionalEmailsListRes, error) {
-	ws, err := h.workspaceID(ctx, params.WorkspaceSlug)
+	ws, err := h.workspaceID(ctx, params.Slug)
 	if ent.IsNotFound(err) {
 		v := siteapi.SiteTransactionalEmailsListNotFound(problem(http.StatusNotFound, "workspace not found"))
 		return &v, nil

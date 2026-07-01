@@ -32,7 +32,7 @@ export function ContactsListPage() {
 
   const contactsList = useQuery(
     siteContactsListOptions({
-      path: { workspaceSlug: slug },
+      path: { slug: slug },
       query: {
         page,
         pageSize: PAGE_SIZE,
@@ -42,7 +42,7 @@ export function ContactsListPage() {
 
   const deleteContactMutation = useResourceMutation({
     mutation: siteContactsDeleteMutation(),
-    invalidate: [siteContactsListQueryKey({ path: { workspaceSlug: slug } })],
+    invalidate: [siteContactsListQueryKey({ path: { slug: slug } })],
     successMessage: t(($) => $.notifications.contactDeleted),
     errorTitle: t(($) => $.alerts.deleteErrorTitle),
   })
@@ -54,7 +54,7 @@ export function ContactsListPage() {
     deleteContactMutation.reset()
     confirmDelete({
       onConfirm: () => {
-        deleteContactMutation.mutate({ path: { workspaceSlug: slug, id: contactId } })
+        deleteContactMutation.mutate({ path: { slug: slug, id: contactId } })
       },
     })
   }

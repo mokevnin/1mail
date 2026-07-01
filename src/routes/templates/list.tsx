@@ -25,14 +25,14 @@ export function TemplatesListPage() {
 
   const templatesList = useQuery(
     siteTemplatesListOptions({
-      path: { workspaceSlug: slug },
+      path: { slug: slug },
       query: { page, pageSize: PAGE_SIZE },
     }),
   )
 
   const deleteMutation = useResourceMutation({
     mutation: siteTemplatesDeleteMutation(),
-    invalidate: [siteTemplatesListQueryKey({ path: { workspaceSlug: slug } })],
+    invalidate: [siteTemplatesListQueryKey({ path: { slug: slug } })],
     successMessage: t(($) => $.notifications.templateDeleted),
     errorTitle: t(($) => $.alerts.templateDeleteErrorTitle),
   })
@@ -42,7 +42,7 @@ export function TemplatesListPage() {
 
   const onDeleteClick = (id: string) => {
     deleteMutation.reset()
-    confirmDelete({ onConfirm: () => deleteMutation.mutate({ path: { workspaceSlug: slug, id } }) })
+    confirmDelete({ onConfirm: () => deleteMutation.mutate({ path: { slug: slug, id } }) })
   }
 
   return (

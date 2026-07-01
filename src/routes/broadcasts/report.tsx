@@ -42,9 +42,7 @@ export function BroadcastReportPage() {
   const { t } = useTranslation()
   const { slug, broadcastId } = broadcastsReportRoute.useParams()
 
-  const getQuery = useQuery(
-    siteBroadcastsGetOptions({ path: { workspaceSlug: slug, id: broadcastId } }),
-  )
+  const getQuery = useQuery(siteBroadcastsGetOptions({ path: { slug: slug, id: broadcastId } }))
 
   if (getQuery.isLoading) return <Loader />
 

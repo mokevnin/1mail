@@ -30,61 +30,61 @@ type Handler interface {
 	AuthTokensList(ctx context.Context) (AuthTokensListRes, error)
 	// BroadcastsCreate implements Broadcasts_create operation.
 	//
-	// Create a broadcast.
+	// Create a resource.
 	//
 	// POST /broadcasts
 	BroadcastsCreate(ctx context.Context, req *CreateBroadcastInput) (BroadcastsCreateRes, error)
 	// BroadcastsDelete implements Broadcasts_delete operation.
 	//
-	// Delete a broadcast.
+	// Delete a resource.
 	//
 	// DELETE /broadcasts/{id}
 	BroadcastsDelete(ctx context.Context, params BroadcastsDeleteParams) (BroadcastsDeleteRes, error)
 	// BroadcastsGet implements Broadcasts_get operation.
 	//
-	// Get a broadcast by ID.
+	// Get a resource by ID.
 	//
 	// GET /broadcasts/{id}
 	BroadcastsGet(ctx context.Context, params BroadcastsGetParams) (BroadcastsGetRes, error)
 	// BroadcastsList implements Broadcasts_list operation.
 	//
-	// List broadcasts with pagination.
+	// List resources with pagination.
 	//
 	// GET /broadcasts
 	BroadcastsList(ctx context.Context, params BroadcastsListParams) (BroadcastsListRes, error)
 	// BroadcastsUpdate implements Broadcasts_update operation.
 	//
-	// Update a broadcast.
+	// Update a resource.
 	//
 	// PUT /broadcasts/{id}
 	BroadcastsUpdate(ctx context.Context, req *UpdateBroadcastInput, params BroadcastsUpdateParams) (BroadcastsUpdateRes, error)
 	// ContactsCreate implements Contacts_create operation.
 	//
-	// Create a contact.
+	// Create a resource.
 	//
 	// POST /contacts
 	ContactsCreate(ctx context.Context, req *CreateContactInput) (ContactsCreateRes, error)
 	// ContactsDelete implements Contacts_delete operation.
 	//
-	// Delete a contact.
+	// Delete a resource.
 	//
 	// DELETE /contacts/{id}
 	ContactsDelete(ctx context.Context, params ContactsDeleteParams) (ContactsDeleteRes, error)
 	// ContactsGet implements Contacts_get operation.
 	//
-	// Get a contact by ID.
+	// Get a resource by ID.
 	//
 	// GET /contacts/{id}
 	ContactsGet(ctx context.Context, params ContactsGetParams) (ContactsGetRes, error)
 	// ContactsList implements Contacts_list operation.
 	//
-	// List contacts with pagination.
+	// List resources with pagination.
 	//
 	// GET /contacts
 	ContactsList(ctx context.Context, params ContactsListParams) (ContactsListRes, error)
 	// ContactsUpdate implements Contacts_update operation.
 	//
-	// Update a contact.
+	// Update a resource.
 	//
 	// PUT /contacts/{id}
 	ContactsUpdate(ctx context.Context, req *UpdateContactInput, params ContactsUpdateParams) (ContactsUpdateRes, error)
@@ -103,7 +103,7 @@ type Handler interface {
 	//
 	// List unique event actions.
 	//
-	// GET /event-actions
+	// GET /events/actions
 	EventActionsList(ctx context.Context, params EventActionsListParams) (EventActionsListRes, error)
 	// EventsCreate implements Events_create operation.
 	//
@@ -113,31 +113,31 @@ type Handler interface {
 	EventsCreate(ctx context.Context, req *RecordEventsInput) (EventsCreateRes, error)
 	// SegmentsCreate implements Segments_create operation.
 	//
-	// Create a segment.
+	// Create a resource.
 	//
 	// POST /segments
 	SegmentsCreate(ctx context.Context, req *CreateSegmentInput) (SegmentsCreateRes, error)
 	// SegmentsDelete implements Segments_delete operation.
 	//
-	// Delete a segment.
+	// Delete a resource.
 	//
 	// DELETE /segments/{id}
 	SegmentsDelete(ctx context.Context, params SegmentsDeleteParams) (SegmentsDeleteRes, error)
 	// SegmentsGet implements Segments_get operation.
 	//
-	// Get a segment by ID.
+	// Get a resource by ID.
 	//
 	// GET /segments/{id}
 	SegmentsGet(ctx context.Context, params SegmentsGetParams) (SegmentsGetRes, error)
 	// SegmentsList implements Segments_list operation.
 	//
-	// List segments with pagination.
+	// List resources with pagination.
 	//
 	// GET /segments
 	SegmentsList(ctx context.Context, params SegmentsListParams) (SegmentsListRes, error)
 	// SegmentsUpdate implements Segments_update operation.
 	//
-	// Update a segment.
+	// Update a resource.
 	//
 	// PUT /segments/{id}
 	SegmentsUpdate(ctx context.Context, req *UpdateSegmentInput, params SegmentsUpdateParams) (SegmentsUpdateRes, error)

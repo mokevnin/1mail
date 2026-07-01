@@ -31,14 +31,14 @@ export function SegmentsListPage() {
 
   const segmentsList = useQuery(
     siteSegmentsListOptions({
-      path: { workspaceSlug: slug },
+      path: { slug: slug },
       query: { page, pageSize: PAGE_SIZE },
     }),
   )
 
   const deleteSegmentMutation = useResourceMutation({
     mutation: siteSegmentsDeleteMutation(),
-    invalidate: [siteSegmentsListQueryKey({ path: { workspaceSlug: slug } })],
+    invalidate: [siteSegmentsListQueryKey({ path: { slug: slug } })],
     successMessage: t(($) => $.notifications.segmentDeleted),
     errorTitle: t(($) => $.alerts.segmentDeleteErrorTitle),
   })
@@ -50,7 +50,7 @@ export function SegmentsListPage() {
     deleteSegmentMutation.reset()
     confirmDelete({
       onConfirm: () => {
-        deleteSegmentMutation.mutate({ path: { workspaceSlug: slug, id: segmentId } })
+        deleteSegmentMutation.mutate({ path: { slug: slug, id: segmentId } })
       },
     })
   }
