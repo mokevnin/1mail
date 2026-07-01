@@ -9,6 +9,7 @@ import (
 	"github.com/mokevnin/1mail/ent"
 	"github.com/mokevnin/1mail/ent/webhookendpoint"
 	siteapi "github.com/mokevnin/1mail/gen/site"
+	"github.com/mokevnin/1mail/internal/i18n"
 	"github.com/mokevnin/1mail/internal/pagination"
 	"github.com/mokevnin/1mail/internal/service"
 )
@@ -103,8 +104,8 @@ func (h *Handlers) SiteWebhooksCreate(ctx context.Context, req *siteapi.SiteCrea
 	}
 
 	if !validWebhookURL(req.URL) {
-		v := siteapi.SiteWebhooksCreateUnprocessableEntity(problemWithErrors(http.StatusUnprocessableEntity, "invalid url", map[string][]string{
-			"url": {"must be an absolute http(s) URL"},
+		v := siteapi.SiteWebhooksCreateUnprocessableEntity(problemWithErrors(http.StatusUnprocessableEntity, i18n.T("errors.url_invalid", nil), map[string][]string{
+			"url": {i18n.T("errors.url_must_be_absolute", nil)},
 		}))
 		return &v, nil
 	}
@@ -188,8 +189,8 @@ func (h *Handlers) SiteWebhooksUpdate(ctx context.Context, req *siteapi.SiteUpda
 	upd := h.ent.WebhookEndpoint.UpdateOneID(id).Where(webhookendpoint.WorkspaceID(ws))
 	if v, ok := req.URL.Get(); ok {
 		if !validWebhookURL(v) {
-			r := siteapi.SiteWebhooksUpdateUnprocessableEntity(problemWithErrors(http.StatusUnprocessableEntity, "invalid url", map[string][]string{
-				"url": {"must be an absolute http(s) URL"},
+			r := siteapi.SiteWebhooksUpdateUnprocessableEntity(problemWithErrors(http.StatusUnprocessableEntity, i18n.T("errors.url_invalid", nil), map[string][]string{
+				"url": {i18n.T("errors.url_must_be_absolute", nil)},
 			}))
 			return &r, nil
 		}

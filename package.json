@@ -66,7 +66,6 @@
     "client-only": "^0.0.1",
     "es-toolkit": "^1.49.0",
     "i18next": "^26.3.3",
-    "i18next-browser-languagedetector": "^8.2.1",
     "immer": "^11.1.8",
     "mantine-datatable": "^9.3.1",
     "react": "^19.2.7",

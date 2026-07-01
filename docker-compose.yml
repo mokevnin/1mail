@@ -40,6 +40,9 @@ services:
     environment:
       HOME: /tmp # writable home for a non-root host UID (pnpm global state)
       PNPM_STORE_DIR: /app/.pnpm-store # same FS as node_modules → pnpm hardlinks work
+      # Instance locale — the Vite dev plugin substitutes it into index.html (dev
+      # mirror of the Go backend's serve-time injection). Keep in sync with backend.
+      APP_LOCALE: en
     ports:
       - "5173:5173" # optional direct access; normal entry is via Caddy
 
@@ -66,6 +69,9 @@ services:
       SMTP_HOST: mailpit
       SMTP_PORT: "1025"
       APP_URL: https://1mail.localhost
+      # Instance locale (en|ru|es) — drives the SPA (injected into index.html) and
+      # the backend's own emails + validation messages. Change to test other locales.
+      APP_LOCALE: en
       # Push traces + metrics to the local grafana/otel-lgtm stack over OTLP/HTTP.
       # In prod (self-hosted) leave these unset: OTLP export is then off and
       # metrics are scraped from /metrics by VictoriaMetrics/Prometheus instead.

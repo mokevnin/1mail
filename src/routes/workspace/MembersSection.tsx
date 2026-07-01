@@ -28,6 +28,7 @@ import {
 import type { SiteInvitableRole, SiteMembershipRole } from '../../generated/site/types.gen.ts'
 import { useDeleteConfirmation } from '../../hooks/useDeleteConfirmation.tsx'
 import { useResourceMutation } from '../../hooks/useResourceMutation.ts'
+import { formatDate } from '../../utils/datetime.ts'
 
 const MEMBER_ROLES: SiteMembershipRole[] = ['owner', 'admin', 'member']
 const INVITABLE_ROLES: SiteInvitableRole[] = ['admin', 'member']
@@ -215,7 +216,7 @@ export function MembersSection({ slug }: { slug: string }) {
           {
             accessor: 'expiresAt',
             title: t(($) => $.settings.members.expires),
-            render: (record) => new Date(record.expiresAt).toLocaleDateString(),
+            render: (record) => formatDate(record.expiresAt),
           },
           {
             accessor: 'actions',

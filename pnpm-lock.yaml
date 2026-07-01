@@ -83,9 +83,6 @@ importers:
       i18next:
         specifier: ^26.3.3
         version: 26.3.3(typescript@6.0.3)
-      i18next-browser-languagedetector:
-        specifier: ^8.2.1
-        version: 8.2.1
       immer:
         specifier: ^11.1.8
         version: 11.1.8

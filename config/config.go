@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 	"runtime"
 
+	"github.com/mokevnin/1mail/internal/i18n"
 	"github.com/spf13/viper"
 )
 
@@ -23,6 +24,12 @@ type Config struct {
 	SMTPFrom       string
 	EncryptionKey  string
 	AutoMigrate    bool
+
+	// Locale is the instance-wide UI/email language (a SaaS deployment runs per
+	// country). One of the supported locales; anything else is coerced to "en".
+	// Drives both the SPA (injected into index.html) and the backend's own
+	// system emails and validation messages (internal/i18n).
+	Locale string
 
 	// Logging: level is one of debug|info|warn|error; format is text|json.
 	// Dev defaults to a human-readable coloured text handler, prod to JSON.
@@ -57,6 +64,7 @@ func Load(envName string) (*Config, error) {
 	v.SetDefault("SYSTEM_EMAIL_FROM", "noreply@1mail.localhost")
 	v.SetDefault("LOG_LEVEL", "info")
 	v.SetDefault("OTEL_SERVICE_NAME", "1mail")
+	v.SetDefault("APP_LOCALE", "en")
 	// Human-readable logs in dev, structured JSON everywhere else.
 	if isDevEnv(envName) {
 		v.SetDefault("LOG_FORMAT", "text")
@@ -96,6 +104,7 @@ func Load(envName string) (*Config, error) {
 		SMTPFrom:       v.GetString("SMTP_FROM"),
 		EncryptionKey:  v.GetString("ENCRYPTION_KEY"),
 		AutoMigrate:    v.GetBool("AUTO_MIGRATE"),
+		Locale:         i18n.Normalize(v.GetString("APP_LOCALE")),
 		LogLevel:       v.GetString("LOG_LEVEL"),
 		LogFormat:      v.GetString("LOG_FORMAT"),
 

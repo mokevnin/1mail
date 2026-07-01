@@ -128,7 +128,7 @@ func New(cfg *config.Config, client *ent.Client, db *sql.DB, bus *events.Bus, en
 
 	// Catch-all: the embedded SPA (release builds with -tags embed_spa). Most
 	// specific pattern wins, so this never shadows the API prefixes above.
-	mux.Handle("/", spaHandler())
+	mux.Handle("/", spaHandler(cfg.Locale))
 
 	// requestID is outermost so the correlation id is in context before recoverer
 	// runs — the panic log then carries request_id. (requestID is trivial and

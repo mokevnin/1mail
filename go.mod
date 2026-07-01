@@ -23,6 +23,7 @@ require (
 	github.com/jackc/pgx/v5 v5.10.0
 	github.com/k3a/html2text v1.4.0
 	github.com/lmittmann/tint v1.1.3
+	github.com/nicksnyder/go-i18n/v2 v2.6.1
 	github.com/nikoksr/notify v1.5.0
 	github.com/ogen-go/ogen v1.22.0
 	github.com/oklog/ulid/v2 v2.1.1
@@ -53,6 +54,7 @@ require (
 	go.opentelemetry.io/otel/trace v1.44.0
 	golang.org/x/crypto v0.53.0
 	golang.org/x/net v0.56.0
+	golang.org/x/text v0.38.0
 )
 
 require (
@@ -158,7 +160,6 @@ require (
 	golang.org/x/oauth2 v0.36.0 // indirect
 	golang.org/x/sync v0.21.0 // indirect
 	golang.org/x/sys v0.46.0 // indirect
-	golang.org/x/text v0.38.0 // indirect
 	golang.org/x/tools v0.47.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20260526163538-3dc84a4a5aaa // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20260526163538-3dc84a4a5aaa // indirect

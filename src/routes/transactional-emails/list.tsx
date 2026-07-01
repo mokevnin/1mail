@@ -8,6 +8,7 @@ import { ApiErrorAlert } from '../../components/ApiErrorAlert.tsx'
 import { siteTransactionalEmailsListOptions } from '../../generated/site/@tanstack/react-query.gen.ts'
 import type { SiteTransactionalEmailStatus } from '../../generated/site/types.gen.ts'
 import { transactionalEmailsRoute } from '../../router.tsx'
+import { formatDateTime } from '../../utils/datetime.ts'
 
 const PAGE_SIZE = 20
 
@@ -76,7 +77,7 @@ export function TransactionalEmailsListPage() {
           {
             accessor: 'createdAt',
             title: t(($) => $.transactionalEmails.sentAtLabel),
-            render: (record) => new Date(record.createdAt).toLocaleString(),
+            render: (record) => formatDateTime(record.createdAt),
           },
         ]}
         totalRecords={totalItems}

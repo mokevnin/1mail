@@ -9,6 +9,7 @@ import (
 	siteapi "github.com/mokevnin/1mail/gen/site"
 	"github.com/mokevnin/1mail/internal/api/auth"
 	"github.com/mokevnin/1mail/internal/authtoken"
+	"github.com/mokevnin/1mail/internal/i18n"
 	"github.com/mokevnin/1mail/internal/service"
 )
 
@@ -48,8 +49,8 @@ func (h *Handlers) SiteUserUpdateMe(ctx context.Context, req *siteapi.SiteUpdate
 		if name == "" {
 			v := siteapi.SiteUserUpdateMeUnprocessableEntity(problemWithErrors(
 				http.StatusUnprocessableEntity,
-				"name must not be empty",
-				map[string][]string{"name": {"name must not be empty"}},
+				i18n.T("errors.name_empty", nil),
+				map[string][]string{"name": {i18n.T("errors.name_empty", nil)}},
 			))
 			return &v, nil
 		}
@@ -62,14 +63,14 @@ func (h *Handlers) SiteUserUpdateMe(ctx context.Context, req *siteapi.SiteUpdate
 		if currentPassword == "" {
 			v := siteapi.SiteUserUpdateMeUnprocessableEntity(problemWithErrors(
 				http.StatusUnprocessableEntity,
-				"current password is required",
-				map[string][]string{"currentPassword": {"current password is required"}},
+				i18n.T("errors.current_password_required", nil),
+				map[string][]string{"currentPassword": {i18n.T("errors.current_password_required", nil)}},
 			))
 			return &v, nil
 		}
 		// Verify the current password the same way the direct login provider does.
 		if u.PasswordHash == "" || !service.VerifyPassword(u.PasswordHash, currentPassword) {
-			v := siteapi.SiteUserUpdateMeForbidden(problem(http.StatusForbidden, "current password is incorrect"))
+			v := siteapi.SiteUserUpdateMeForbidden(problem(http.StatusForbidden, i18n.T("errors.current_password_incorrect", nil)))
 			return &v, nil
 		}
 		hash, err := service.HashPassword(newPassword)
@@ -109,22 +110,22 @@ func (h *Handlers) SiteUserEmailChange(ctx context.Context, req *siteapi.SiteEma
 	if newEmail == "" {
 		v := siteapi.SiteUserEmailChangeUnprocessableEntity(problemWithErrors(
 			http.StatusUnprocessableEntity,
-			"new email is required",
-			map[string][]string{"newEmail": {"new email is required"}},
+			i18n.T("errors.new_email_required", nil),
+			map[string][]string{"newEmail": {i18n.T("errors.new_email_required", nil)}},
 		))
 		return &v, nil
 	}
 	if strings.EqualFold(newEmail, u.Email) {
 		v := siteapi.SiteUserEmailChangeUnprocessableEntity(problemWithErrors(
 			http.StatusUnprocessableEntity,
-			"new email must differ from the current one",
-			map[string][]string{"newEmail": {"new email must differ from the current one"}},
+			i18n.T("errors.new_email_must_differ", nil),
+			map[string][]string{"newEmail": {i18n.T("errors.new_email_must_differ", nil)}},
 		))
 		return &v, nil
 	}
 
 	if u.PasswordHash == "" || !service.VerifyPassword(u.PasswordHash, req.CurrentPassword) {
-		v := siteapi.SiteUserEmailChangeForbidden(problem(http.StatusForbidden, "current password is incorrect"))
+		v := siteapi.SiteUserEmailChangeForbidden(problem(http.StatusForbidden, i18n.T("errors.current_password_incorrect", nil)))
 		return &v, nil
 	}
 
@@ -135,7 +136,7 @@ func (h *Handlers) SiteUserEmailChange(ctx context.Context, req *siteapi.SiteEma
 		return nil, err
 	}
 	if taken {
-		v := siteapi.SiteUserEmailChangeConflict(problem(http.StatusConflict, "that email is already in use"))
+		v := siteapi.SiteUserEmailChangeConflict(problem(http.StatusConflict, i18n.T("errors.email_in_use", nil)))
 		return &v, nil
 	}
 

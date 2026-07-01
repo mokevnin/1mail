@@ -9,6 +9,7 @@ import (
 	"github.com/mokevnin/1mail/ent/suppression"
 	siteapi "github.com/mokevnin/1mail/gen/site"
 	"github.com/mokevnin/1mail/internal/eligibility"
+	"github.com/mokevnin/1mail/internal/i18n"
 	"github.com/mokevnin/1mail/internal/pagination"
 )
 
@@ -69,8 +70,8 @@ func (h *Handlers) SiteSuppressionsCreate(ctx context.Context, req *siteapi.Site
 
 	dest := eligibility.NormalizeDestination(req.Destination)
 	if dest == "" {
-		v := siteapi.SiteSuppressionsCreateUnprocessableEntity(problemWithErrors(http.StatusUnprocessableEntity, "invalid destination", map[string][]string{
-			"destination": {"must not be empty"},
+		v := siteapi.SiteSuppressionsCreateUnprocessableEntity(problemWithErrors(http.StatusUnprocessableEntity, i18n.T("errors.destination_invalid", nil), map[string][]string{
+			"destination": {i18n.T("errors.must_not_be_empty", nil)},
 		}))
 		return &v, nil
 	}

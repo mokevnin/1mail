@@ -14,6 +14,7 @@ import (
 	"github.com/mokevnin/1mail/ent"
 	"github.com/mokevnin/1mail/internal/db"
 	"github.com/mokevnin/1mail/internal/events"
+	"github.com/mokevnin/1mail/internal/i18n"
 	"github.com/mokevnin/1mail/internal/jobs"
 	"github.com/mokevnin/1mail/internal/messaging"
 	"github.com/mokevnin/1mail/internal/messaging/registry"
@@ -105,6 +106,10 @@ func New(env string) (*App, error) {
 		_ = injector.Shutdown()
 		return nil, err
 	}
+
+	// Set the process-wide locale for system emails and API validation messages
+	// (internal/i18n). Instance-global, read-only after this point.
+	i18n.Configure(cfg.Locale)
 
 	handler, err := do.Invoke[http.Handler](injector)
 	if err != nil {

@@ -10,6 +10,7 @@ import (
 	siteapi "github.com/mokevnin/1mail/gen/site"
 	"github.com/mokevnin/1mail/internal/convert"
 	"github.com/mokevnin/1mail/internal/events"
+	"github.com/mokevnin/1mail/internal/i18n"
 	"github.com/mokevnin/1mail/internal/pagination"
 	"github.com/mokevnin/1mail/internal/service"
 )
@@ -107,8 +108,8 @@ func (h *Handlers) SiteContactsCreate(ctx context.Context, req *siteapi.SiteCrea
 		return pub.Publish(ctx, &events.ContactCreated{WorkspaceID: ws, ContactID: c.ID, Email: email})
 	})
 	if service.IsUniqueViolation(err) {
-		v := siteapi.SiteContactsCreateConflict(problemWithErrors(http.StatusConflict, "email already exists", map[string][]string{
-			"email": {"email already exists"},
+		v := siteapi.SiteContactsCreateConflict(problemWithErrors(http.StatusConflict, i18n.T("errors.email_exists", nil), map[string][]string{
+			"email": {i18n.T("errors.email_exists", nil)},
 		}))
 		return &v, nil
 	}
@@ -183,7 +184,7 @@ func (h *Handlers) SiteContactsUpdate(ctx context.Context, req *siteapi.SiteUpda
 	}
 	c, err := q.Save(ctx)
 	if service.IsUniqueViolation(err) {
-		v := siteapi.SiteContactsUpdateConflict(problem(http.StatusConflict, "email already exists"))
+		v := siteapi.SiteContactsUpdateConflict(problem(http.StatusConflict, i18n.T("errors.email_exists", nil)))
 		return &v, nil
 	}
 	if ent.IsNotFound(err) {

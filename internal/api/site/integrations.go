@@ -11,6 +11,7 @@ import (
 	"github.com/mokevnin/1mail/ent"
 	"github.com/mokevnin/1mail/ent/integration"
 	siteapi "github.com/mokevnin/1mail/gen/site"
+	"github.com/mokevnin/1mail/internal/i18n"
 	"github.com/mokevnin/1mail/internal/messaging"
 	"github.com/mokevnin/1mail/internal/messaging/ses"
 	"github.com/mokevnin/1mail/internal/messaging/smtp"
@@ -63,8 +64,8 @@ func (h *Handlers) SiteIntegrationsCreate(ctx context.Context, req *siteapi.Site
 	name := strings.TrimSpace(req.Name)
 	if name == "" {
 		v := siteapi.SiteIntegrationsCreateUnprocessableEntity(problemWithErrors(
-			http.StatusUnprocessableEntity, "name must not be empty",
-			map[string][]string{"name": {"name must not be empty"}},
+			http.StatusUnprocessableEntity, i18n.T("errors.name_empty", nil),
+			map[string][]string{"name": {i18n.T("errors.name_empty", nil)}},
 		))
 		return &v, nil
 	}
@@ -178,8 +179,8 @@ func (h *Handlers) SiteIntegrationsUpdate(ctx context.Context, req *siteapi.Site
 		name := strings.TrimSpace(v)
 		if name == "" {
 			r := siteapi.SiteIntegrationsUpdateUnprocessableEntity(problemWithErrors(
-				http.StatusUnprocessableEntity, "name must not be empty",
-				map[string][]string{"name": {"name must not be empty"}},
+				http.StatusUnprocessableEntity, i18n.T("errors.name_empty", nil),
+				map[string][]string{"name": {i18n.T("errors.name_empty", nil)}},
 			))
 			return &r, nil
 		}
@@ -201,7 +202,7 @@ func (h *Handlers) SiteIntegrationsUpdate(ctx context.Context, req *siteapi.Site
 		if string(provider) != row.Provider.String() {
 			r := siteapi.SiteIntegrationsUpdateUnprocessableEntity(problemWithErrors(
 				http.StatusUnprocessableEntity, "config kind must match the integration provider",
-				map[string][]string{"config": {"kind must match the integration provider"}},
+				map[string][]string{"config": {i18n.T("errors.integration_kind_mismatch", nil)}},
 			))
 			return &r, nil
 		}

@@ -8,6 +8,7 @@ import (
 	"github.com/mokevnin/1mail/ent"
 	"github.com/mokevnin/1mail/ent/membership"
 	siteapi "github.com/mokevnin/1mail/gen/site"
+	"github.com/mokevnin/1mail/internal/i18n"
 )
 
 // membershipResource projects a Membership (with its User edge loaded) into the
@@ -114,7 +115,7 @@ func (h *Handlers) SiteMembershipsUpdate(ctx context.Context, req *siteapi.SiteU
 			v := siteapi.SiteMembershipsUpdateUnprocessableEntity(problemWithErrors(
 				http.StatusUnprocessableEntity,
 				"cannot demote the last owner",
-				map[string][]string{"role": {"the workspace must keep at least one owner"}},
+				map[string][]string{"role": {i18n.T("errors.keep_one_owner", nil)}},
 			))
 			return &v, nil
 		}
@@ -179,7 +180,7 @@ func (h *Handlers) SiteMembershipsDelete(ctx context.Context, params siteapi.Sit
 			v := siteapi.SiteMembershipsDeleteUnprocessableEntity(problemWithErrors(
 				http.StatusUnprocessableEntity,
 				"cannot remove the last owner",
-				map[string][]string{"member": {"the workspace must keep at least one owner"}},
+				map[string][]string{"member": {i18n.T("errors.keep_one_owner", nil)}},
 			))
 			return &v, nil
 		}

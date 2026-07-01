@@ -10,6 +10,7 @@ import {
   siteEventsListOptions,
 } from '../../generated/site/@tanstack/react-query.gen.ts'
 import { contactsDetailRoute, contactsEditRoute, contactsRoute } from '../../router.tsx'
+import { formatDateTime } from '../../utils/datetime.ts'
 
 const EVENTS_PAGE_SIZE = 10
 
@@ -99,14 +100,8 @@ export function ContactDetailPage() {
         <Field label={t(($) => $.table.firstName)} value={contact.firstName ?? ''} />
         <Field label={t(($) => $.table.lastName)} value={contact.lastName ?? ''} />
         <Field label={t(($) => $.table.timeZone)} value={contact.timeZone ?? ''} />
-        <Field
-          label={t(($) => $.activity.createdAt)}
-          value={new Date(contact.createdAt).toLocaleString()}
-        />
-        <Field
-          label={t(($) => $.contacts.updatedAt)}
-          value={new Date(contact.updatedAt).toLocaleString()}
-        />
+        <Field label={t(($) => $.activity.createdAt)} value={formatDateTime(contact.createdAt)} />
+        <Field label={t(($) => $.contacts.updatedAt)} value={formatDateTime(contact.updatedAt)} />
       </SimpleGrid>
 
       {customFields.length > 0 ? (
@@ -138,7 +133,7 @@ export function ContactDetailPage() {
           {
             accessor: 'createdAt',
             title: t(($) => $.activity.time),
-            render: (record) => new Date(record.createdAt).toLocaleString(),
+            render: (record) => formatDateTime(record.createdAt),
           },
           { accessor: 'action', title: t(($) => $.activity.action) },
         ]}
@@ -151,9 +146,7 @@ export function ContactDetailPage() {
               </Group>
               <Group gap="xs">
                 <Text fw={600}>{t(($) => $.activity.occurredAt)}:</Text>
-                <Text>
-                  {record.occurredAt ? new Date(record.occurredAt).toLocaleString() : '—'}
-                </Text>
+                <Text>{record.occurredAt ? formatDateTime(record.occurredAt) : '—'}</Text>
               </Group>
               <Stack gap="xs">
                 <Text fw={600}>{t(($) => $.activity.properties)}:</Text>

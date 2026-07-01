@@ -10,6 +10,7 @@ import (
 	"github.com/mokevnin/1mail/ent/workspace"
 	siteapi "github.com/mokevnin/1mail/gen/site"
 	"github.com/mokevnin/1mail/internal/api/auth"
+	"github.com/mokevnin/1mail/internal/i18n"
 )
 
 // SiteWorkspacesList returns the workspaces the authenticated user is a member of.
@@ -50,8 +51,8 @@ func (h *Handlers) SiteWorkspacesUpdate(ctx context.Context, req *siteapi.SiteUp
 	if name == "" {
 		v := siteapi.SiteWorkspacesUpdateUnprocessableEntity(problemWithErrors(
 			http.StatusUnprocessableEntity,
-			"name must not be empty",
-			map[string][]string{"name": {"name must not be empty"}},
+			i18n.T("errors.name_empty", nil),
+			map[string][]string{"name": {i18n.T("errors.name_empty", nil)}},
 		))
 		return &v, nil
 	}

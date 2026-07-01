@@ -10,6 +10,7 @@ import (
 	"github.com/mokevnin/1mail/ent"
 	"github.com/mokevnin/1mail/ent/apitoken"
 	siteapi "github.com/mokevnin/1mail/gen/site"
+	"github.com/mokevnin/1mail/internal/i18n"
 	"github.com/mokevnin/1mail/internal/service"
 )
 
@@ -55,8 +56,8 @@ func (h *Handlers) SiteTokensCreate(ctx context.Context, req *siteapi.SiteCreate
 	if name == "" {
 		v := siteapi.SiteTokensCreateUnprocessableEntity(problemWithErrors(
 			http.StatusUnprocessableEntity,
-			"name must not be empty",
-			map[string][]string{"name": {"name must not be empty"}},
+			i18n.T("errors.name_empty", nil),
+			map[string][]string{"name": {i18n.T("errors.name_empty", nil)}},
 		))
 		return &v, nil
 	}

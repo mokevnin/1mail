@@ -12,6 +12,7 @@ import (
 	siteapi "github.com/mokevnin/1mail/gen/site"
 	"github.com/mokevnin/1mail/internal/convert"
 	"github.com/mokevnin/1mail/internal/emailrender"
+	"github.com/mokevnin/1mail/internal/i18n"
 	"github.com/mokevnin/1mail/internal/messaging"
 	"github.com/mokevnin/1mail/internal/pagination"
 )
@@ -93,12 +94,12 @@ func (h *Handlers) SiteBroadcastsCreate(ctx context.Context, req *siteapi.SiteCr
 
 	segmentID, ok := optEntityID(req.SegmentId)
 	if !ok {
-		v := siteapi.SiteBroadcastsCreateUnprocessableEntity(problem(http.StatusUnprocessableEntity, "invalid segmentId"))
+		v := siteapi.SiteBroadcastsCreateUnprocessableEntity(problem(http.StatusUnprocessableEntity, i18n.T("errors.segment_invalid", nil)))
 		return &v, nil
 	}
 	integrationID, ok := optEntityID(req.IntegrationId)
 	if !ok {
-		v := siteapi.SiteBroadcastsCreateUnprocessableEntity(problem(http.StatusUnprocessableEntity, "invalid integrationId"))
+		v := siteapi.SiteBroadcastsCreateUnprocessableEntity(problem(http.StatusUnprocessableEntity, i18n.T("errors.integration_invalid", nil)))
 		return &v, nil
 	}
 
@@ -186,12 +187,12 @@ func (h *Handlers) SiteBroadcastsUpdate(ctx context.Context, req *siteapi.SiteUp
 
 	segmentID, ok := optEntityID(req.SegmentId)
 	if !ok {
-		v := siteapi.SiteBroadcastsUpdateUnprocessableEntity(problem(http.StatusUnprocessableEntity, "invalid segmentId"))
+		v := siteapi.SiteBroadcastsUpdateUnprocessableEntity(problem(http.StatusUnprocessableEntity, i18n.T("errors.segment_invalid", nil)))
 		return &v, nil
 	}
 	integrationID, ok := optEntityID(req.IntegrationId)
 	if !ok {
-		v := siteapi.SiteBroadcastsUpdateUnprocessableEntity(problem(http.StatusUnprocessableEntity, "invalid integrationId"))
+		v := siteapi.SiteBroadcastsUpdateUnprocessableEntity(problem(http.StatusUnprocessableEntity, i18n.T("errors.integration_invalid", nil)))
 		return &v, nil
 	}
 
@@ -280,7 +281,7 @@ func (h *Handlers) SiteBroadcastsSend(ctx context.Context, params siteapi.SiteBr
 		return nil, err
 	}
 	if b.Status != broadcast.StatusDraft && b.Status != broadcast.StatusScheduled {
-		v := siteapi.SiteBroadcastsSendUnprocessableEntity(problem(http.StatusUnprocessableEntity, "broadcast is already sending or sent"))
+		v := siteapi.SiteBroadcastsSendUnprocessableEntity(problem(http.StatusUnprocessableEntity, i18n.T("errors.broadcast_already_sending", nil)))
 		return &v, nil
 	}
 
@@ -329,7 +330,7 @@ func (h *Handlers) SiteBroadcastsSchedule(ctx context.Context, req *siteapi.Site
 		return nil, err
 	}
 	if b.Status != broadcast.StatusDraft && b.Status != broadcast.StatusScheduled {
-		v := siteapi.SiteBroadcastsScheduleUnprocessableEntity(problem(http.StatusUnprocessableEntity, "broadcast is already sending or sent"))
+		v := siteapi.SiteBroadcastsScheduleUnprocessableEntity(problem(http.StatusUnprocessableEntity, i18n.T("errors.broadcast_already_sending", nil)))
 		return &v, nil
 	}
 

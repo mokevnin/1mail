@@ -10,6 +10,7 @@ import (
 	entuser "github.com/mokevnin/1mail/ent/user"
 	siteapi "github.com/mokevnin/1mail/gen/site"
 	"github.com/mokevnin/1mail/internal/authtoken"
+	"github.com/mokevnin/1mail/internal/i18n"
 	"github.com/mokevnin/1mail/internal/service"
 )
 
@@ -49,12 +50,12 @@ func (h *Handlers) SiteAuthForgotPassword(ctx context.Context, req *siteapi.Site
 // SiteAuthResetPassword sets a new password from a reset token.
 func (h *Handlers) SiteAuthResetPassword(ctx context.Context, req *siteapi.SiteResetPasswordInput) (siteapi.SiteAuthResetPasswordRes, error) {
 	if req.Password == "" {
-		v := problem(http.StatusBadRequest, "password is required")
+		v := problem(http.StatusBadRequest, i18n.T("errors.password_required", nil))
 		return &v, nil
 	}
 	uid, _, err := h.tokens.Parse(req.Token, authtoken.PurposePasswordReset, h.passwordHashBinding(ctx))
 	if err != nil {
-		v := problem(http.StatusBadRequest, "invalid or expired reset link")
+		v := problem(http.StatusBadRequest, i18n.T("errors.reset_link_invalid", nil))
 		return &v, nil
 	}
 	hash, err := service.HashPassword(req.Password)
@@ -71,18 +72,18 @@ func (h *Handlers) SiteAuthResetPassword(ctx context.Context, req *siteapi.SiteR
 func (h *Handlers) SiteAuthVerifyEmail(ctx context.Context, req *siteapi.SiteVerifyEmailInput) (siteapi.SiteAuthVerifyEmailRes, error) {
 	uid, extra, err := h.tokens.Parse(req.Token, authtoken.PurposeEmailVerify, noBinding)
 	if err != nil {
-		v := problem(http.StatusBadRequest, "invalid or expired verification link")
+		v := problem(http.StatusBadRequest, i18n.T("errors.verify_link_invalid", nil))
 		return &v, nil
 	}
 	u, err := h.ent.User.Get(ctx, uid)
 	if err != nil {
-		v := problem(http.StatusBadRequest, "invalid verification link")
+		v := problem(http.StatusBadRequest, i18n.T("errors.verify_link_bad", nil))
 		return &v, nil
 	}
 	// A verify link is scoped to the address it was sent to; if the user has since
 	// changed their email, an old link must not mark the new address verified.
 	if claimed := extra["email"]; claimed != "" && claimed != u.Email {
-		v := problem(http.StatusBadRequest, "verification link no longer valid")
+		v := problem(http.StatusBadRequest, i18n.T("errors.verify_link_stale", nil))
 		return &v, nil
 	}
 	if u.EmailVerifiedAt == nil {
@@ -100,19 +101,19 @@ func (h *Handlers) SiteAuthVerifyEmail(ctx context.Context, req *siteapi.SiteVer
 func (h *Handlers) SiteAuthConfirmEmailChange(ctx context.Context, req *siteapi.SiteConfirmEmailChangeInput) (siteapi.SiteAuthConfirmEmailChangeRes, error) {
 	uid, extra, err := h.tokens.Parse(req.Token, authtoken.PurposeEmailChange, h.currentEmailBinding(ctx))
 	if err != nil {
-		v := siteapi.SiteAuthConfirmEmailChangeBadRequest(problem(http.StatusBadRequest, "invalid or expired confirmation link"))
+		v := siteapi.SiteAuthConfirmEmailChangeBadRequest(problem(http.StatusBadRequest, i18n.T("errors.confirm_link_invalid", nil)))
 		return &v, nil
 	}
 	newEmail := strings.TrimSpace(extra["new"])
 	if newEmail == "" {
-		v := siteapi.SiteAuthConfirmEmailChangeBadRequest(problem(http.StatusBadRequest, "invalid confirmation link"))
+		v := siteapi.SiteAuthConfirmEmailChangeBadRequest(problem(http.StatusBadRequest, i18n.T("errors.confirm_link_bad", nil)))
 		return &v, nil
 	}
 	// The new address was proven by clicking this link, so it is verified. The
 	// unique index also guards the race if the address was taken meanwhile.
 	err = h.ent.User.UpdateOneID(uid).SetEmail(newEmail).SetEmailVerifiedAt(time.Now()).Exec(ctx)
 	if service.IsUniqueViolation(err) {
-		v := siteapi.SiteAuthConfirmEmailChangeConflict(problem(http.StatusConflict, "that email is already in use"))
+		v := siteapi.SiteAuthConfirmEmailChangeConflict(problem(http.StatusConflict, i18n.T("errors.email_in_use", nil)))
 		return &v, nil
 	}
 	if err != nil {

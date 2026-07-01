@@ -8,6 +8,7 @@ import (
 
 	"github.com/riverqueue/river"
 
+	"github.com/mokevnin/1mail/internal/i18n"
 	"github.com/mokevnin/1mail/internal/messaging"
 )
 
@@ -48,28 +49,30 @@ func SendAuthMail(ctx context.Context, sender messaging.EmailSender, appURL stri
 	if sender == nil {
 		return fmt.Errorf("send auth mail: no system email sender configured")
 	}
-	subject, path, intro := authMailCopy(args.Flow)
+	subjectID, path, introID := authMailCopy(args.Flow)
 	if path == "" {
 		return fmt.Errorf("send auth mail: unknown flow %q", args.Flow)
 	}
 	link := strings.TrimRight(appURL, "/") + path + "?token=" + url.QueryEscape(args.Token)
-	body := fmt.Sprintf("%s\n\n%s\n\nIf you didn't request this, you can ignore this email.\n", intro, link)
+	body := fmt.Sprintf("%s\n\n%s\n\n%s\n", i18n.T(introID, nil), link, i18n.T("email.auth.footer", nil))
 	return sender.Send(ctx, messaging.EmailMessage{
 		To:      args.Email,
-		Subject: subject,
+		Subject: i18n.T(subjectID, nil),
 		Text:    body,
 	})
 }
 
-// authMailCopy returns the subject, SPA path, and intro line for a flow.
-func authMailCopy(flow string) (subject, path, intro string) {
+// authMailCopy returns the subject message id, SPA path, and intro message id
+// for a flow (empty path signals an unknown flow). The copy itself is localized
+// by internal/i18n at send time.
+func authMailCopy(flow string) (subjectID, path, introID string) {
 	switch flow {
 	case flowPasswordReset:
-		return "Reset your 1mail password", "/reset-password", "Follow this link to set a new password:"
+		return "email.password_reset.subject", "/reset-password", "email.password_reset.intro"
 	case flowEmailVerify:
-		return "Verify your 1mail email", "/verify-email", "Follow this link to confirm your email address:"
+		return "email.email_verify.subject", "/verify-email", "email.email_verify.intro"
 	case flowEmailChange:
-		return "Confirm your new 1mail email", "/confirm-email-change", "Follow this link to confirm your new email address:"
+		return "email.email_change.subject", "/confirm-email-change", "email.email_change.intro"
 	default:
 		return "", "", ""
 	}

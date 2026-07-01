@@ -15,6 +15,7 @@ import (
 	siteapi "github.com/mokevnin/1mail/gen/site"
 	"github.com/mokevnin/1mail/internal/api/auth"
 	"github.com/mokevnin/1mail/internal/events"
+	"github.com/mokevnin/1mail/internal/i18n"
 	"github.com/mokevnin/1mail/internal/service"
 )
 
@@ -85,8 +86,8 @@ func (h *Handlers) SiteInvitationsCreate(ctx context.Context, req *siteapi.SiteC
 	email := strings.TrimSpace(string(req.Email))
 	if email == "" {
 		v := siteapi.SiteInvitationsCreateUnprocessableEntity(problemWithErrors(
-			http.StatusUnprocessableEntity, "email must not be empty",
-			map[string][]string{"email": {"email must not be empty"}}))
+			http.StatusUnprocessableEntity, i18n.T("errors.email_empty", nil),
+			map[string][]string{"email": {i18n.T("errors.email_empty", nil)}}))
 		return &v, nil
 	}
 
@@ -98,7 +99,7 @@ func (h *Handlers) SiteInvitationsCreate(ctx context.Context, req *siteapi.SiteC
 		return nil, err
 	}
 	if alreadyMember {
-		v := siteapi.SiteInvitationsCreateConflict(problem(http.StatusConflict, "already a member"))
+		v := siteapi.SiteInvitationsCreateConflict(problem(http.StatusConflict, i18n.T("errors.already_member", nil)))
 		return &v, nil
 	}
 

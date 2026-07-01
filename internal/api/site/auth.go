@@ -8,6 +8,7 @@ import (
 
 	siteapi "github.com/mokevnin/1mail/gen/site"
 	"github.com/mokevnin/1mail/internal/authtoken"
+	"github.com/mokevnin/1mail/internal/i18n"
 	"github.com/mokevnin/1mail/internal/service"
 )
 
@@ -27,17 +28,17 @@ func (h *Handlers) SiteAuthRegister(ctx context.Context, req *siteapi.SiteRegist
 	if name == "" || email == "" || password == "" {
 		fieldErrors := map[string][]string{}
 		if name == "" {
-			fieldErrors["name"] = []string{"name is required"}
+			fieldErrors["name"] = []string{i18n.T("errors.name_required", nil)}
 		}
 		if email == "" {
-			fieldErrors["email"] = []string{"email is required"}
+			fieldErrors["email"] = []string{i18n.T("errors.email_required", nil)}
 		}
 		if password == "" {
-			fieldErrors["password"] = []string{"password is required"}
+			fieldErrors["password"] = []string{i18n.T("errors.password_required", nil)}
 		}
 		v := siteapi.SiteAuthRegisterUnprocessableEntity(problemWithErrors(
 			http.StatusUnprocessableEntity,
-			"name, email and password are required",
+			i18n.T("errors.register_required", nil),
 			fieldErrors,
 		))
 		return &v, nil
@@ -56,8 +57,8 @@ func (h *Handlers) SiteAuthRegister(ctx context.Context, req *siteapi.SiteRegist
 	if service.IsUniqueViolation(err) {
 		v := siteapi.SiteAuthRegisterConflict(problemWithErrors(
 			http.StatusConflict,
-			"email already exists",
-			map[string][]string{"email": {"email already exists"}},
+			i18n.T("errors.email_exists", nil),
+			map[string][]string{"email": {i18n.T("errors.email_exists", nil)}},
 		))
 		return &v, nil
 	}

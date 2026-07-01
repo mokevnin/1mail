@@ -6,6 +6,7 @@ import (
 
 	"github.com/riverqueue/river"
 
+	"github.com/mokevnin/1mail/internal/i18n"
 	"github.com/mokevnin/1mail/internal/messaging"
 )
 
@@ -36,12 +37,12 @@ func SendWelcome(ctx context.Context, sender messaging.EmailSender, email, name 
 	}
 	greeting := name
 	if greeting == "" {
-		greeting = "there"
+		greeting = i18n.T("email.welcome.greeting_fallback", nil)
 	}
-	body := fmt.Sprintf("Hi %s,\n\nWelcome to 1mail! Your account is ready.\n", greeting)
+	body := i18n.T("email.welcome.body", map[string]any{"Greeting": greeting})
 	return sender.Send(ctx, messaging.EmailMessage{
 		To:      email,
-		Subject: "Welcome to 1mail",
+		Subject: i18n.T("email.welcome.subject", nil),
 		Text:    body,
 	})
 }

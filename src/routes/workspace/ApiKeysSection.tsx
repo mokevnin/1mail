@@ -23,6 +23,7 @@ import {
 } from '../../generated/site/@tanstack/react-query.gen.ts'
 import { useDeleteConfirmation } from '../../hooks/useDeleteConfirmation.tsx'
 import { useResourceMutation } from '../../hooks/useResourceMutation.ts'
+import { formatDate } from '../../utils/datetime.ts'
 
 // Scopes offered in the UI. The backend stores whatever strings it receives;
 // these mirror the external API's scope vocabulary.
@@ -151,7 +152,7 @@ export function ApiKeysSection({ slug }: { slug: string }) {
           {
             accessor: 'createdAt',
             title: t(($) => $.settings.tokens.created),
-            render: (record) => new Date(record.createdAt).toLocaleDateString(),
+            render: (record) => formatDate(record.createdAt),
           },
           {
             accessor: 'actions',

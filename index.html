@@ -4,6 +4,14 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>1mail</title>
+    <!-- Instance locale, substituted at serve time: the Go backend replaces the
+         {{APP_LOCALE}} sentinel in the embedded index.html (see internal/server/spa.go),
+         and the Vite dev server does the same in dev (see vite.config.ts). The SPA reads
+         window.__APP_LOCALE__ synchronously at boot (src/i18n.ts) — no extra request —
+         and sets <html lang> from it (kept a valid "en" here so the a11y lint passes). -->
+    <script>
+      window.__APP_LOCALE__ = '{{APP_LOCALE}}'
+    </script>
   </head>
   <body>
     <div id="root"></div>

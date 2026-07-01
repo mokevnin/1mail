@@ -6,6 +6,7 @@ import { DataTable } from 'mantine-datatable'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { siteEventsListOptions } from '../../generated/site/@tanstack/react-query.gen.ts'
+import { formatDateTime } from '../../utils/datetime.ts'
 
 const PAGE_SIZE = 25
 const LIVE_REFETCH_MS = 5000
@@ -76,7 +77,7 @@ export function ActivityPage() {
           {
             accessor: 'createdAt',
             title: t(($) => $.activity.time),
-            render: (record) => new Date(record.createdAt).toLocaleString(),
+            render: (record) => formatDateTime(record.createdAt),
           },
           { accessor: 'action', title: t(($) => $.activity.action) },
           {
@@ -95,13 +96,11 @@ export function ActivityPage() {
               </Group>
               <Group gap="xs">
                 <Text fw={600}>{t(($) => $.activity.occurredAt)}:</Text>
-                <Text>
-                  {record.occurredAt ? new Date(record.occurredAt).toLocaleString() : '—'}
-                </Text>
+                <Text>{record.occurredAt ? formatDateTime(record.occurredAt) : '—'}</Text>
               </Group>
               <Group gap="xs">
                 <Text fw={600}>{t(($) => $.activity.createdAt)}:</Text>
-                <Text>{new Date(record.createdAt).toLocaleString()}</Text>
+                <Text>{formatDateTime(record.createdAt)}</Text>
               </Group>
               <Stack gap="xs">
                 <Text fw={600}>{t(($) => $.activity.properties)}:</Text>
