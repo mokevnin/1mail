@@ -1,4 +1,5 @@
-h1:Osau/KQl1ffAZAEQTycrL1UOXtuowXTj0PSuc5Za3MM=
+h1:NmnTKjaJ5OMvfmdUkNXu5fk2h/NS49Cvv5ME4y1s/Ho=
 20260630101109_init.sql h1:U64ubrprs/UMen31fEwdJVLuP/gJJp+dXviFyZDc0dE=
 20260630175449_send_eligibility_model.sql h1:f38ZMwoU25+i8me8k4t1wwbIyzOLD5zyontydf/fTm8=
 20260630204007_transactional_email.sql h1:nkaQU67G+oDDfJWMSzVyRzT3tnhQ8XNBKOhpocq+di8=
+20260701052211_add_user_email_verified_at.sql h1:NeONdDv7iXF+G2rwrJbCs1i/LQvin9h4yrwbkE6GhGo=

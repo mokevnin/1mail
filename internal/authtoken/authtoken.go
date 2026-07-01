@@ -1,0 +1,132 @@
+// Package authtoken mints and verifies the short-lived, purpose-scoped tokens
+// behind the self-service account flows: password reset, email verification, and
+// email change. Tokens are signed JWTs (HS256), reusing the app's JWT secret
+// rather than hand-rolling a MAC — the same choice as internal/tracking.
+//
+// Two properties make the single secret safe to share across flows:
+//
+//   - A `prp` (purpose) claim is validated on parse, so a token minted for one
+//     flow (say, signup verification) cannot be replayed against another (reset).
+//   - The HMAC signing key is *derived per token* from (purpose, userID, binding),
+//     where `binding` is a value that changes when the action completes — the
+//     user's password hash for reset, their current email for a change. Once the
+//     action lands, the binding no longer matches and the token stops verifying,
+//     giving single-use semantics with no extra database column.
+package authtoken
+
+import (
+	"crypto/hmac"
+	"crypto/sha256"
+	"fmt"
+	"strconv"
+	"time"
+
+	"github.com/golang-jwt/jwt/v5"
+)
+
+// Purpose scopes a token to one flow. It is both baked into the signing key and
+// carried as a validated claim.
+type Purpose string
+
+const (
+	PurposePasswordReset Purpose = "pwreset"
+	PurposeEmailVerify   Purpose = "email_verify"
+	PurposeEmailChange   Purpose = "email_change"
+)
+
+// reserved claim keys; everything else is treated as caller-supplied extra data.
+const (
+	claimUserID  = "uid"
+	claimPurpose = "prp"
+	extraPrefix  = "x_"
+)
+
+// Signer mints and parses authtoken JWTs against a single secret.
+type Signer struct {
+	secret []byte
+}
+
+// New builds a Signer from the shared JWT secret.
+func New(secret string) *Signer {
+	return &Signer{secret: []byte(secret)}
+}
+
+// Mint signs a token for purpose + userID, keyed to binding (the value that
+// changes when the action completes, giving single-use for free) and expiring
+// after ttl. extra carries purpose-specific string claims (e.g. the requested new
+// email for a change); nil is fine.
+func (s *Signer) Mint(purpose Purpose, userID int64, binding string, ttl time.Duration, extra map[string]string) (string, error) {
+	claims := jwt.MapClaims{
+		// int64 as string: jwt.MapClaims decodes JSON numbers to float64, which
+		// loses precision above 2^53.
+		claimUserID:  strconv.FormatInt(userID, 10),
+		claimPurpose: string(purpose),
+		"exp":        time.Now().Add(ttl).Unix(),
+	}
+	for k, v := range extra {
+		claims[extraPrefix+k] = v
+	}
+	tok := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	return tok.SignedString(s.deriveKey(purpose, userID, binding))
+}
+
+// Parse validates a token for the expected purpose and returns the user id plus
+// any extra claims. bindingFor loads the current binding value for the decoded
+// user id (e.g. their password hash) so a completed action invalidates the token;
+// it is called with the claimed user id before the signature is verified.
+func (s *Signer) Parse(token string, purpose Purpose, bindingFor func(userID int64) (string, error)) (int64, map[string]string, error) {
+	var userID int64
+	// golang-jwt hands keyFunc the parsed (not-yet-verified) claims, so we resolve
+	// the per-user signing key here from the claimed uid + its current binding.
+	parsed, err := jwt.Parse(token, func(tok *jwt.Token) (any, error) {
+		claims, ok := tok.Claims.(jwt.MapClaims)
+		if !ok {
+			return nil, fmt.Errorf("authtoken: unexpected claims type")
+		}
+		if p, _ := claims[claimPurpose].(string); Purpose(p) != purpose {
+			return nil, fmt.Errorf("authtoken: purpose mismatch")
+		}
+		uid, err := claimInt64(claims, claimUserID)
+		if err != nil {
+			return nil, err
+		}
+		userID = uid
+		binding, err := bindingFor(uid)
+		if err != nil {
+			return nil, err
+		}
+		return s.deriveKey(purpose, uid, binding), nil
+	}, jwt.WithValidMethods([]string{"HS256"}), jwt.WithExpirationRequired())
+	if err != nil {
+		return 0, nil, err
+	}
+	claims, ok := parsed.Claims.(jwt.MapClaims)
+	if !ok {
+		return 0, nil, fmt.Errorf("authtoken: unexpected claims type")
+	}
+	extra := map[string]string{}
+	for k, v := range claims {
+		if len(k) > len(extraPrefix) && k[:len(extraPrefix)] == extraPrefix {
+			if sv, ok := v.(string); ok {
+				extra[k[len(extraPrefix):]] = sv
+			}
+		}
+	}
+	return userID, extra, nil
+}
+
+// deriveKey binds the signing key to (purpose, userID, binding) so the token is
+// scoped to one flow and one user, and stops verifying once the binding changes.
+func (s *Signer) deriveKey(purpose Purpose, userID int64, binding string) []byte {
+	mac := hmac.New(sha256.New, s.secret)
+	fmt.Fprintf(mac, "%s|%d|%s", purpose, userID, binding)
+	return mac.Sum(nil)
+}
+
+func claimInt64(claims jwt.MapClaims, key string) (int64, error) {
+	s, ok := claims[key].(string)
+	if !ok {
+		return 0, fmt.Errorf("authtoken: missing %s claim", key)
+	}
+	return strconv.ParseInt(s, 10, 64)
+}

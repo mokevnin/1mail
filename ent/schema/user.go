@@ -33,6 +33,11 @@ func (User) Fields() []ent.Field {
 		field.String("password_hash").
 			Sensitive().
 			Optional(),
+		// When the user confirmed ownership of their email (nullable = unverified).
+		// Verification is soft: login is not gated on it; the UI surfaces a banner.
+		field.Time("email_verified_at").
+			Optional().
+			Nillable(),
 		field.Time("updated_at").
 			Default(time.Now).
 			UpdateDefault(time.Now),
