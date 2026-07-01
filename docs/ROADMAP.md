@@ -49,6 +49,8 @@ library's maintenance status at `go get` / `pnpm add` time and pick the living v
 | Send queue / retries | **river** (already in the repo) — don't write an engine |
 | Email HTML editor | **`@mantine/tiptap`** (official Mantine package) |
 | Responsive email (later) | **`github.com/Boostport/mjml-go`** (MJML) |
+| Passkeys / WebAuthn | **`github.com/go-webauthn/webauthn`** (go-pkgz/auth does not do WebAuthn) |
+| TOTP two-factor | **`github.com/pquerna/otp`** (TOTP + QR provisioning URIs) |
 
 ## Phased roadmap
 
@@ -117,6 +119,50 @@ The core model is in place; the open work is feature breadth on top of it:
 - **Phase 3 — visual MJML editor** — the body is still an MJML textarea.
 - **SMS channel** — reserved on Integration/Suppression/Unsubscribe; no implementation.
 - **Phase 7 — e-commerce** — far future.
+
+### Account security — core, not EE
+
+Authentication hardening is table-stakes, not an enterprise upsell, so these ship in the
+AGPL core (only **SSO/SAML** stays the EE line — see the open-core split). Both extend the
+current go-pkgz/auth email+password flow, which does neither natively.
+
+- **Two-factor authentication (TOTP)** — opt-in second factor per User: enrol (QR provisioning
+  URI + secret), verify at login, recovery codes, disable. Lib: `github.com/pquerna/otp`.
+  A User-level concern (2FA travels with the human across every Workspace they reach via
+  Membership), not Workspace-scoped.
+- **Passkeys (WebAuthn)** — passwordless / phishing-resistant login as an additional
+  credential on the same User. Lib: `github.com/go-webauthn/webauthn` (needs a
+  `credential`-style table keyed to User; `APP_URL` origin becomes the WebAuthn RP ID).
+  Sequence 2FA first — it establishes the "extra User credential" schema passkeys build on.
+
+### Self-hosting lifecycle — core, not EE
+
+Operating a self-hosted instance over time: knowing an update exists, applying it safely, and
+(optionally) telling us how the fleet uses the product. The version check and telemetry are
+**one outbound channel behind one opt-out gate** — the "is there a newer release?" ping *is* a
+usage signal; plan and document them together, not as two disconnected features.
+
+- **Release-update notification** — the running instance checks for a newer published release
+  and surfaces an admin-only in-app banner ("vX.Y is available"). This is the solid MVP
+  deliverable. **Auto-update is a separate, hedged follow-up** and is deployment-specific:
+  reasonable for the single **binary** install, wrong for Docker/k8s (you roll a new image —
+  that's watchtower/the orchestrator's job, not ours), and risky when a release carries
+  migrations. Scope the banner as the feature; treat auto-apply as binary-only, maybe.
+- **Update / migration / Postgres runbook** — a documented, versioned upgrade path (doc home:
+  a new **"Upgrading"** section in `docs/self-hosting.md`, extending the existing migrations
+  section). Keep two runbooks distinct — the user lumps them, the plan must not:
+  - *App upgrade* — pull the new image/binary, run `./1mail migrate` (or `AUTO_MIGRATE` on a
+    single replica), roll servers. Migrations are embedded and forward-only.
+  - *Postgres major upgrade* — a DBA operation (`pg_upgrade` or dump/restore across majors),
+    independent of the app release. The doc says "14+"; compose ships `postgres:16`.
+- **Usage telemetry (opt-out)** — anonymous self-hosted → us usage reporting, on by default with
+  a single documented kill-switch (env var) **and** an in-app toggle. This is the politically
+  sensitive item (OSS phone-home; cf. the Homebrew/Audacity blowback), so the design must
+  pin down: a stable anonymous **instance id** (no workspace/contact/PII), an *exactly
+  documented* payload (version, instance age, coarse counts, deploy shape), and the opt-out
+  honoured before the first send. **ADR candidate** — this roadmap defers to `docs/adr/*`, so
+  a bare bullet is low-signal; the payload/consent contract deserves its own ADR (not authored
+  yet — say the word).
 
 ---
 
