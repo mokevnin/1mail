@@ -38,7 +38,7 @@ export function ResetPasswordPage() {
         title: t(($) => $.resetPassword.errorTitle),
         message: getApiErrorMessage(
           error as ApiErrorLike,
-          t(($) => $.notifications.errorMessage),
+          t(($) => $.resetPassword.errorMessage),
         ),
       })
     },

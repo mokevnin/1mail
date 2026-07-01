@@ -39,7 +39,7 @@ export function RegisterPage() {
         title: t(($) => $.registration.errorTitle),
         message: getApiErrorMessage(
           error as ApiErrorLike,
-          t(($) => $.notifications.errorMessage),
+          t(($) => $.registration.errorMessage),
         ),
       })
     },

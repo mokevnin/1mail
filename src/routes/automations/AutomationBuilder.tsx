@@ -104,7 +104,7 @@ export function AutomationBuilder({ slug, automation }: AutomationBuilderProps) 
           title: t(($) => $.alerts.automationSaveErrorTitle),
           message: getApiErrorMessage(
             error as ApiErrorLike,
-            t(($) => $.notifications.errorMessage),
+            t(($) => $.alerts.automationSaveErrorMessage),
           ),
         })
         return 'error'

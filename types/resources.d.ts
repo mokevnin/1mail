@@ -32,6 +32,7 @@ export default interface Resources {
     "alerts": {
       "automationDeleteErrorTitle": "Failed to delete automation",
       "automationLoadErrorTitle": "Failed to load automations",
+      "automationSaveErrorMessage": "We couldn't save your automation. Please try again.",
       "automationSaveErrorTitle": "Failed to save automation",
       "automationStatusErrorTitle": "Failed to change automation status",
       "broadcastDeleteErrorTitle": "Failed to delete broadcast",
@@ -214,6 +215,7 @@ export default interface Resources {
     },
     "login": {
       "emailLabel": "Email",
+      "errorMessage": "Invalid email or password. Please try again.",
       "errorTitle": "Sign in failed",
       "forgotPasswordLink": "Forgot password?",
       "passwordLabel": "Password",
@@ -288,6 +290,7 @@ export default interface Resources {
     },
     "registration": {
       "emailLabel": "Email",
+      "errorMessage": "We couldn't create your account. Please check your details and try again.",
       "errorTitle": "Registration failed",
       "loginLink": "Already have an account? Sign in",
       "nameLabel": "Name",
@@ -298,6 +301,7 @@ export default interface Resources {
     },
     "resetPassword": {
       "confirmPasswordLabel": "Confirm new password",
+      "errorMessage": "We couldn't reset your password. The link may have expired — request a new one.",
       "errorTitle": "Could not reset password",
       "mismatch": "Passwords do not match",
       "missingToken": "This reset link is invalid or has expired.",
