@@ -35,3 +35,11 @@
   workspace_id: 1
   created_at: "{{daysAgo 30}}"
   updated_at: "{{daysAgo 30}}"
+# Rule that no contact matches — anchors the empty-audience broadcast (id 104).
+- id: 103
+  name: Unreachable plan
+  type: rule
+  definition: '{"combinator":"and","rules":[{"field":"custom:plan","operator":"=","value":"__none__"}]}'
+  workspace_id: 1
+  created_at: "{{daysAgo 30}}"
+  updated_at: "{{daysAgo 30}}"

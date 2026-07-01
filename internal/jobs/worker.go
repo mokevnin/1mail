@@ -5,6 +5,7 @@ package jobs
 
 import (
 	"context"
+	"log/slog"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -24,6 +25,17 @@ import (
 // webhookDeliveryTimeout bounds a single outbound webhook request.
 const webhookDeliveryTimeout = 15 * time.Second
 
+// QueueWebhooks isolates outbound webhook delivery from the default queue.
+// Webhook deliveries are external HTTP calls (up to webhookDeliveryTimeout each),
+// so a burst of them must not starve broadcast sends and automation steps.
+const QueueWebhooks = "webhooks"
+
+// QueueBroadcasts isolates broadcast sends. A single blast fans out into one job
+// per recipient; keeping them off the default queue stops a large broadcast from
+// starving automation steps and welcome emails (the same isolation QueueWebhooks
+// gives outbound webhooks).
+const QueueBroadcasts = "broadcasts"
+
 // Client wraps the river client and exposes the typed enqueue methods the API
 // handlers use, so callers don't depend on river directly.
 type Client struct {
@@ -37,6 +49,7 @@ type Client struct {
 func NewClient(pool *pgxpool.Pool, entClient *ent.Client, bus *events.Bus, resolver *messaging.Resolver, tracker *tracking.Tracker, cipher *secrets.Cipher, systemSender messaging.EmailSender) (*Client, error) {
 	workers := river.NewWorkers()
 	river.AddWorker(workers, &SendBroadcastWorker{ent: entClient, bus: bus, resolver: resolver, tracker: tracker})
+	river.AddWorker(workers, &SendRecipientWorker{ent: entClient, bus: bus, resolver: resolver, tracker: tracker})
 	river.AddWorker(workers, &EvaluateTriggerWorker{ent: entClient})
 	river.AddWorker(workers, &RunStepWorker{ent: entClient, bus: bus, resolver: resolver, tracker: tracker})
 	river.AddWorker(workers, &DeliverWebhookWorker{
@@ -46,11 +59,16 @@ func NewClient(pool *pgxpool.Pool, entClient *ent.Client, bus *events.Bus, resol
 	})
 	river.AddWorker(workers, &SendWelcomeWorker{sender: systemSender})
 
+	logger := slog.Default()
 	rc, err := river.NewClient(riverpgxv5.New(pool), &river.Config{
 		Queues: map[string]river.QueueConfig{
 			river.QueueDefault: {MaxWorkers: 5},
+			QueueBroadcasts:    {MaxWorkers: 10},
+			QueueWebhooks:      {MaxWorkers: 5},
 		},
-		Workers: workers,
+		Workers:      workers,
+		Logger:       logger,
+		ErrorHandler: &errorHandler{logger: logger},
 	})
 	if err != nil {
 		return nil, err
@@ -67,7 +85,7 @@ func (c *Client) Stop(ctx context.Context) error { return c.river.Stop(ctx) }
 // EnqueueBroadcast schedules a broadcast send. A nil scheduledAt sends ASAP;
 // otherwise the job runs at scheduledAt.
 func (c *Client) EnqueueBroadcast(ctx context.Context, broadcastID int64, scheduledAt *time.Time) error {
-	opts := &river.InsertOpts{}
+	opts := &river.InsertOpts{Queue: QueueBroadcasts}
 	if scheduledAt != nil {
 		opts.ScheduledAt = *scheduledAt
 	}

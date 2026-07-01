@@ -67,7 +67,7 @@ func (c *Client) Dispatch(ctx context.Context, workspaceID int64, eventName, del
 			EventName:  eventName,
 			DeliveryID: deliveryID,
 			Body:       body,
-		}, &river.InsertOpts{MaxAttempts: 10}); err != nil {
+		}, &river.InsertOpts{Queue: QueueWebhooks, MaxAttempts: 10}); err != nil {
 			return err
 		}
 	}

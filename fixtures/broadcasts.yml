@@ -44,6 +44,32 @@
   workspace_id: 1
   created_at: "{{daysAgo 7}}"
   updated_at: "{{daysAgo 7}}"
+# Draft targeting segment 103 (matches no contact) — the empty-audience case:
+# sending it finalizes straight to "sent" with zero recipients.
+- id: 104
+  name: Empty audience send
+  subject: Nobody home
+  from_name: CodeBasics
+  from_email: hello@codebasics.dev
+  body: '<mjml><mj-body><mj-section><mj-column><mj-text>Lorem ipsum learning content.</mj-text></mj-column></mj-section></mj-body></mjml>'
+  status: draft
+  segment_id: 103
+  workspace_id: 1
+  created_at: "{{daysAgo 3}}"
+  updated_at: "{{daysAgo 3}}"
+# Draft targeting segment 100 ("plan = pro") — the rule-segment audience case:
+# only pro-plan contacts are recipients.
+- id: 105
+  name: Pro plan perks
+  subject: Your pro perks
+  from_name: CodeBasics
+  from_email: hello@codebasics.dev
+  body: '<mjml><mj-body><mj-section><mj-column><mj-text>Lorem ipsum learning content.</mj-text></mj-column></mj-section></mj-body></mjml>'
+  status: draft
+  segment_id: 100
+  workspace_id: 1
+  created_at: "{{daysAgo 3}}"
+  updated_at: "{{daysAgo 3}}"
 
 # --- Sent campaigns (drive analytics) ---
 - id: 200
