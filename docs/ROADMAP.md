@@ -33,7 +33,10 @@ onsite forms/popups, a visual MJML editor, sending domains (DKIM/SPF), A/B testi
 SES-compatible send API, more provider adapters (Yandex/SendGrid/…), SMS channel, e-commerce.
 
 For a detailed competitive feature breakdown of drip.com, see
-[research/drip-com-feature-analysis.md](research/drip-com-feature-analysis.md).
+[research/drip-com-feature-analysis.md](research/drip-com-feature-analysis.md). For an
+analysis of the incumbent open-source competitor's pain points (Mautic) mapped to 1mail's
+position — and the net-new items it surfaced — see
+[research/mautic-pain-points-analysis.md](research/mautic-pain-points-analysis.md).
 
 ## Guiding principle: lean on maintained libraries
 
@@ -115,10 +118,66 @@ The core model is in place; the open work is feature breadth on top of it:
   off them) don't exist yet. The structural prerequisite for any teams / SSO feature.
 - **Phase 5 — Forms & onsite popups** — not started.
 - **Phase 6 remainder** — outbound SES-compatible send endpoint, sending domains + DKIM/SPF,
-  A/B testing, more provider adapters (Yandex/SendGrid/…).
+  A/B testing, more provider adapters (Yandex/SendGrid/…). See also **send-rate control &
+  IP warmup** below — a deliverability prerequisite that pairs with sending-domains.
 - **Phase 3 — visual MJML editor** — the body is still an MJML textarea.
 - **SMS channel** — reserved on Integration/Suppression/Unsubscribe; no implementation.
 - **Phase 7 — e-commerce** — far future.
+
+### Surfaced by the Mautic pain-point analysis
+
+Three items below are **not** feature-breadth parity — they come from the incumbent
+competitor analysis ([research/mautic-pain-points-analysis.md](research/mautic-pain-points-analysis.md)),
+which maps Mautic's most-repeated complaints to 1mail's position. Most of Mautic's systemic
+pains (cron architecture, upgrade friction, Redis/multi-master deployment, dated UI) 1mail
+already neutralises by design; these three are the ones still open for us:
+
+- **Scale validation — highest value.** 1mail's core bet (live rule segments, membership
+  *never materialized* — `CONTEXT.md`) structurally avoids Mautic's #1 abandonment cause
+  (~1M contacts → 5-minute segment editor, hanging pages, ~4 contacts/sec import), **but it is
+  unproven at that scale.** Load-test the segment engine (rule → SQL compile + live preview
+  count) and the broadcast send-loop audience resolution at ~1M contacts; deliverable is a
+  benchmark plus any indexes/query fixes it exposes. This is the single most impactful item
+  for competing against Mautic head-to-head.
+- **Send-rate control & IP warmup** — configurable per-provider send rate (emails/sec) and a
+  warmup ramp for new IPs/domains. Today only fixed per-queue concurrency exists
+  (`internal/jobs/worker.go` — `QueueBroadcasts: {MaxWorkers: 10}`); there is no throttle.
+  Lean on **river**'s native rate/concurrency limiting, not a hand-rolled throttler. Pairs
+  with the sending-domains (DKIM/SPF) work in Phase 6.
+- **Resource archiving** — archive (soft-hide) old Broadcasts / Automations / Segments so
+  busy workspaces stay navigable. No `archived_at`/soft-delete exists today; Mautic's clutter
+  complaint (no way to archive unused resources) applies to us too.
+- **Independently-scalable worker tier (process roles)** — deployment topology, *distinct*
+  from scale-validation above (that is query cost at 1M contacts; this is throughput
+  scaling). **Horizontal scaling already works today:** river distributes job *work* across
+  all clients via `SELECT … FOR UPDATE SKIP LOCKED` (leader only does maintenance), and the
+  watermill-sql event subscribers use **stable, role-named consumer groups** (`"persist"`,
+  `"automations"`, `"webhooks"`, `"suppression"` — `internal/events/subscriber.go`) with an
+  offset adapter, so N replicas compete per group — **no double enrollment / duplicate
+  webhook / duplicate send.** Verified, and it needs no Redis (the coordination lives in
+  Postgres — the same anti-Mautic simplicity). The *gap* is that every replica is a full
+  stack (HTTP + events + jobs), so the **worker tier cannot be scaled independently of the
+  web tier** — a big broadcast forces more full binaries behind the LB. Fix is a **run-mode
+  split**, cheap because `App.RunEvents` / `App.RunJobs` / `App.Server` are already separable
+  methods (`internal/app/app.go`) and it mirrors the existing `migrate` subcommand:
+  - `serve` (default, all-in-one) — HTTP + events + jobs. **Keep this the default** — the
+    single-binary + single-Postgres self-host story is a core positioning advantage; splitting
+    is opt-in for scale, never required.
+  - `worker` — events + jobs, no HTTP; scale this deployment for send/automation throughput.
+  - `web` — HTTP only, workers not started.
+  - Also make river's per-queue `MaxWorkers` (hardcoded 5/10/5 in `internal/jobs/worker.go`)
+    config-driven so a worker box can be sized.
+
+  Implementation gotchas to carry into the design (not a distributed-systems project — a
+  process-role flag + config):
+  - A `web`-only node must build an **insert-capable** river client (`NewClient` +
+    `Enqueue*`/`OnEvent`) but **not** call `Start()`. Confirm `app.New`/`register` can wire the
+    jobs client without starting workers — startup is currently coupled inside `RunJobs`; that
+    decoupling is the one real refactor.
+  - **Deploy constraint:** at least one `serve`/`worker` node must run — river needs a started
+    client for the leader/scheduler, or enqueued jobs never process (document it).
+  - Per-process `MaxWorkers` × replicas is **not** a fleet-wide rate limit. A global emails/sec
+    cap needs river's global rate limiting — ties back to the **send-rate control** item above.
 
 ### Account security — core, not EE
 
