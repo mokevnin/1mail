@@ -1,10 +1,11 @@
-import { Box, Stack } from '@mantine/core'
+import { Box, Stack, useComputedColorScheme } from '@mantine/core'
 import { useForm } from '@mantine/form'
 import { notifications } from '@mantine/notifications'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   type IntegrationDataFormat,
   type OnSaveExternal,
+  useWorkflowBuilderActions,
   WorkflowBuilder,
 } from '@workflowbuilder/sdk'
 // Imported as a raw string (not auto-injected): the SDK sheet carries unlayered
@@ -13,7 +14,7 @@ import {
 // touches the rest of the app (e.g. the dashboard's body scroll).
 import builderStyles from '@workflowbuilder/sdk/style.css?inline'
 import i18next from 'i18next'
-import { useCallback, useLayoutEffect, useMemo } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo } from 'react'
 import { I18nextProvider, useTranslation } from 'react-i18next'
 import {
   siteAutomationsGetQueryKey,
@@ -32,6 +33,24 @@ import { useAutomationNodeTypes } from './nodes.tsx'
 interface AutomationBuilderProps {
   slug: string
   automation: SiteAutomationResource
+}
+
+// The SDK owns its own editor theme and only auto-detects it from
+// prefers-color-scheme on first mount (reactFlowProps.colorMode is blocked to
+// avoid clashing with it). That misses Mantine's manual ThemeToggle, whose
+// choice is persisted independently. ThemeSync bridges the two: it reads the
+// computed Mantine scheme (resolving "auto" + the persisted override) and
+// drives the SDK's imperative setTheme, so the canvas follows the app. Must be
+// a descendant of <WorkflowBuilder.Root> for the actions hook to resolve.
+function ThemeSync() {
+  const { setTheme } = useWorkflowBuilderActions()
+  const scheme = useComputedColorScheme('light', { getInitialValueInEffect: true })
+
+  useEffect(() => {
+    setTheme(scheme)
+  }, [scheme, setTheme])
+
+  return null
 }
 
 // AutomationBuilder hosts the visual flow editor. Name + trigger are edited as
@@ -123,6 +142,9 @@ export function AutomationBuilder({ slug, automation }: AutomationBuilderProps) 
             strings. The app tree runs on a private instance (see main.tsx), so the
             builder subtree is bound back to the global one here. */}
         <I18nextProvider i18n={i18next}>
+          {/* Passing children replaces the SDK's default layout, so we mount
+              it explicitly (<DefaultLayout />) and add ThemeSync alongside to
+              keep the canvas theme in step with Mantine's color scheme. */}
           <WorkflowBuilder.Root
             key={automation.id}
             name={automation.name}
@@ -131,7 +153,10 @@ export function AutomationBuilder({ slug, automation }: AutomationBuilderProps) 
             initialNodes={initialGraph.nodes}
             initialEdges={initialGraph.edges}
             integration={integration}
-          />
+          >
+            <ThemeSync />
+            <WorkflowBuilder.DefaultLayout />
+          </WorkflowBuilder.Root>
         </I18nextProvider>
       </Box>
     </Stack>
