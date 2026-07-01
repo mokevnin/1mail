@@ -171,4 +171,14 @@ LDFLAGS := -s -w -X main.version=$(VERSION) -X main.commit=$(COMMIT) -X main.dat
 build: build-tracker build-spa
 	$(RUN_GO) go build -tags embed_spa -ldflags "$(LDFLAGS)" -o bin/1mail ./cmd/server
 
-.PHONY: setup install db-create db-create-test db-create-atlas db-drop db-drop-test db-migrate db-migrate-atlas db-migrate-river db-seed db-reset db-reset-test db-generate dev dev-down test test-watch test-frontend update update-npm update-go generate generate-backend generate-openapi generate-openapi-site generate-typespec generate-typespec-external generate-typespec-site generate-typespec-collect generate-i18n-types check check-fe check-i18n check-be check-fix check-fix-i18n check-fix-fe check-fix-be build-tracker build-spa build
+# Lines-of-code report (scc), excluding generated code. The set of generated files
+# is the source of truth in .gitattributes (linguist-generated=true), so we feed scc
+# only the tracked files git marks as hand-written — no fragile exclude patterns.
+# Runs on the host; needs scc + git (https://github.com/boyter/scc).
+loc:
+	git ls-files \
+	  | git check-attr --stdin linguist-generated \
+	  | awk -F': ' '$$3!="true"{print $$1}' \
+	  | xargs scc
+
+.PHONY: setup install db-create db-create-test db-create-atlas db-drop db-drop-test db-migrate db-migrate-atlas db-migrate-river db-seed db-reset db-reset-test db-generate dev dev-down test test-watch test-frontend update update-npm update-go generate generate-backend generate-openapi generate-openapi-site generate-typespec generate-typespec-external generate-typespec-site generate-typespec-collect generate-i18n-types check check-fe check-i18n check-be check-fix check-fix-i18n check-fix-fe check-fix-be build-tracker build-spa build loc
