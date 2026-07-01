@@ -244,8 +244,10 @@ still see the suspension and appeal. Enforced in the **core** send path (the AGP
 the only reliable choke point). It records **attribution**: the actor that set it (an
 automated abuse detector — actor `system` — or a platform Operator) and a reason. The
 automated path only fires above a minimum send volume (a rate is noise at low volume),
-notifies the workspace owner, and is one-click reversible by an Operator.
-_Avoid_: Ban, lockout, disable, quota (suspension is not a billing state)
+notifies the workspace owner, and is one-click reversible by an Operator. Suspension is the
+*reputation* freeze; a Billing hold is a separate money-driven freeze on the same core send
+chokepoint — the two are independent reasons, never merged.
+_Avoid_: Ban, lockout, disable, quota (suspension is not a billing state — see Billing hold)
 
 **Webhook endpoint** (outbound):
 A workspace-scoped HTTP destination that **1mail calls** when domain events occur — subscribes
@@ -291,6 +293,20 @@ materializes live Events for money the same way a Broadcast recipient's rollup m
 engagement — the Events are truth, the snapshot is the closed, reproducible figure. Carries no
 price.
 _Avoid_: Meter, counter, invoice line, quota (quota is enforcement, not measurement)
+
+**Billing hold**:
+A reversible Workspace state that **freezes all outbound sending** — all three send surfaces
+(Broadcast, Automation, Transactional), exactly like Workspace suspension — but for a *money*
+reason (non-payment / plan-limit breach) rather than reputation. It is a **distinct cause on the
+same core chokepoint**, never a repurposing of suspension: the send path asks one question ("may
+this Workspace send now?") answered by several independent freeze reasons. Two properties set it
+apart from suspension: it engages **only after a dunning grace period** (during dunning nothing
+is frozen — the grace, not the message type, is what protects a tenant's password-reset mail),
+and it is cleared by **payment (self-service)**, whereas suspension is cleared by appeal. The
+state and its dunning lifecycle are an EE concept; only the freeze check lives in the core send
+path.
+_Avoid_: Suspension (that is the reputation freeze), quota, lockout, dunning (dunning is the
+grace period, not the hold)
 
 ## Channels & future surfaces
 
