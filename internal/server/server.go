@@ -30,6 +30,7 @@ import (
 	"github.com/mokevnin/1mail/internal/logging"
 	"github.com/mokevnin/1mail/internal/messaging/registry"
 	"github.com/mokevnin/1mail/internal/secrets"
+	"github.com/mokevnin/1mail/internal/telemetry"
 	"github.com/mokevnin/1mail/internal/tracking"
 	"github.com/ogen-go/ogen/ogenerrors"
 	"github.com/rs/cors"
@@ -109,6 +110,11 @@ func New(cfg *config.Config, client *ent.Client, db *sql.DB, bus *events.Bus, en
 	// Liveness/readiness probes (no auth) for orchestrators and load balancers.
 	mux.Handle("/healthz", healthzHandler())
 	mux.Handle("/readyz", readyzHandler(db))
+
+	// Prometheus metrics exposition (no auth, like the probes). Operators should
+	// restrict scrape access at the ingress edge. A 503 stub until telemetry.Setup
+	// runs, so the mount is safe even when telemetry is disabled (e.g. tests).
+	mux.Handle("/metrics", telemetry.MetricsHandler())
 
 	// Public tracking snippet (no auth) — embedded IIFE bundle.
 	mux.Handle("/t.js", trackerHandler())

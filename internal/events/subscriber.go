@@ -36,7 +36,13 @@ type WebhookDispatcher interface {
 // subscribers); the producer side is Bus. Run the returned router in a goroutine
 // and Close it on shutdown.
 func NewRouter() (*message.Router, error) {
-	return message.NewRouter(message.RouterConfig{}, watermill.NewSlogLogger(slog.Default()))
+	router, err := message.NewRouter(message.RouterConfig{}, watermill.NewSlogLogger(slog.Default()))
+	if err != nil {
+		return nil, err
+	}
+	// Per-handler OTel spans + metrics (global providers; no-op when disabled).
+	router.AddMiddleware(otelMiddleware())
+	return router, nil
 }
 
 // RegisterSubscribers wires the domain-event consumers onto the shared watermill

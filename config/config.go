@@ -29,6 +29,11 @@ type Config struct {
 	LogLevel  string
 	LogFormat string
 
+	// OtelServiceName is the service.name reported on OTel traces/metrics. The
+	// OTLP export target itself comes from the standard OTEL_EXPORTER_OTLP_* env
+	// vars (read by the SDK); the /metrics Prometheus endpoint is always on.
+	OtelServiceName string
+
 	// System (platform) transactional email — 1mail's OWN sender, distinct from a
 	// customer's per-workspace integration. Dev uses smtp → mailpit (the SMTP_*
 	// values); prod uses ses (the SES_* values). Sent via the same messaging
@@ -51,6 +56,7 @@ func Load(envName string) (*Config, error) {
 	v.SetDefault("SYSTEM_EMAIL_PROVIDER", "smtp")
 	v.SetDefault("SYSTEM_EMAIL_FROM", "noreply@1mail.localhost")
 	v.SetDefault("LOG_LEVEL", "info")
+	v.SetDefault("OTEL_SERVICE_NAME", "1mail")
 	// Human-readable logs in dev, structured JSON everywhere else.
 	if isDevEnv(envName) {
 		v.SetDefault("LOG_FORMAT", "text")
@@ -92,6 +98,8 @@ func Load(envName string) (*Config, error) {
 		AutoMigrate:    v.GetBool("AUTO_MIGRATE"),
 		LogLevel:       v.GetString("LOG_LEVEL"),
 		LogFormat:      v.GetString("LOG_FORMAT"),
+
+		OtelServiceName: v.GetString("OTEL_SERVICE_NAME"),
 
 		SystemEmailProvider: v.GetString("SYSTEM_EMAIL_PROVIDER"),
 		SystemEmailFrom:     v.GetString("SYSTEM_EMAIL_FROM"),

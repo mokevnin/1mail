@@ -66,6 +66,11 @@ services:
       SMTP_HOST: mailpit
       SMTP_PORT: "1025"
       APP_URL: https://1mail.localhost
+      # Push traces + metrics to the local grafana/otel-lgtm stack over OTLP/HTTP.
+      # In prod (self-hosted) leave these unset: OTLP export is then off and
+      # metrics are scraped from /metrics by VictoriaMetrics/Prometheus instead.
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-lgtm:4318
+      OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
       HOME: /tmp # writable home for a non-root host UID
       # Caches under the repo bind mount → host-owned (writable by a non-root UID)
       # and visible to host gopls (point it at ./.cache/go-mod via GOMODCACHE).
@@ -81,6 +86,18 @@ services:
         condition: service_healthy
       mailpit:
         condition: service_started
+      otel-lgtm:
+        condition: service_started
+
+  # Local observability backend: Grafana + Tempo (traces) + Prometheus/Mimir
+  # (metrics) + Loki, fronted by an embedded OTel Collector. Receives the
+  # backend's OTLP push; browse traces/metrics in Grafana.
+  otel-lgtm:
+    image: grafana/otel-lgtm
+    ports:
+      - "3001:3000" # Grafana UI (http://localhost:3001)
+      - "4317:4317" # OTLP gRPC
+      - "4318:4318" # OTLP HTTP
 
   db:
     image: postgres:18

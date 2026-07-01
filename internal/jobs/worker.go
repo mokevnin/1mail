@@ -13,6 +13,8 @@ import (
 	"github.com/riverqueue/river"
 	"github.com/riverqueue/river/riverdriver/riverpgxv5"
 	"github.com/riverqueue/river/rivermigrate"
+	"github.com/riverqueue/river/rivertype"
+	"github.com/riverqueue/rivercontrib/otelriver"
 
 	"github.com/mokevnin/1mail/ent"
 	"github.com/mokevnin/1mail/internal/events"
@@ -71,6 +73,9 @@ func NewClient(pool *pgxpool.Pool, entClient *ent.Client, bus *events.Bus, resol
 		Workers:      workers,
 		Logger:       logger,
 		ErrorHandler: &errorHandler{logger: logger},
+		// OTel spans + metrics per job insert/work, via the global providers set
+		// by telemetry.Setup (a no-op when telemetry is disabled, e.g. tests).
+		Middleware: []rivertype.Middleware{otelriver.NewMiddleware(nil)},
 	})
 	if err != nil {
 		return nil, err

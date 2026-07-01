@@ -16,6 +16,7 @@ import (
 	"github.com/mokevnin/1mail/internal/app"
 	"github.com/mokevnin/1mail/internal/logging"
 	"github.com/mokevnin/1mail/internal/migrate"
+	"github.com/mokevnin/1mail/internal/telemetry"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
@@ -55,6 +56,22 @@ func main() {
 	// request-scoped handler emit through it from here on.
 	logging.Setup(cfg)
 	slog.Info("starting 1mail", "version", version, "commit", commit)
+
+	// Install the global OTel providers (traces + metrics). The ogen servers and
+	// job/event instrumentation pick these up from the globals. The shutdown is
+	// deferred at the top level so it runs after the HTTP server has stopped and
+	// the app has shut down (LIFO) — the last batched spans/metrics flush then.
+	telShutdown, err := telemetry.Setup(context.Background(), cfg, env, telemetry.BuildInfo{Version: version, Commit: commit})
+	if err != nil {
+		fatal("init telemetry", err)
+	}
+	defer func() {
+		shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		if err := telShutdown(shutdownCtx); err != nil {
+			slog.Error("telemetry shutdown", "err", err)
+		}
+	}()
 
 	// Opt-in self-migration on startup, so the single binary/image can come up
 	// against a fresh database with no extra step.
