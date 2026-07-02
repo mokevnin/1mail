@@ -21,6 +21,12 @@ Legend: 🔴 launch-blocker / "can't send otherwise" · 🟡 parity with drip.co
   token; endpoint split GET=confirm / POST=perform (fixes scanner auto-unsub); DMARC = warn-not-
   block bulk-readiness, send-gate stays DKIM-only. Complaint-rate pillar was ADR 0011. Rides on
   the ADR 0010 send-path rework. → ADR 0012; CONTEXT: *Unsubscribe*, *Sending domain*.
+- ✅ **Double opt-in / confirmed subscription** — confirmed opt-in modeled as a positive
+  destination-keyed Confirmation row + immutable `marketing.confirmed` Event (proof + signal),
+  the mirror of Unsubscribe — no subscribed flag. Workspace-level policy (default off),
+  forward-looking grandfather-backfill; import provenance (`double_opt_in`/`grandfathered`/
+  `imported`); confirmation email respects Suppression + `everything`; GET=page/POST=confirm.
+  → ADR 0013; CONTEXT: *Confirmation*, *Send-eligibility*.
 
 ## Queue
 
@@ -30,12 +36,6 @@ Distinct from suspension: suspension = abuse, quota = commerce. Absent entirely.
   suspension) vs. suspension (reuse the choke point or a separate gate?).
 - Plan/entitlement model; is it core, EE, or SaaS-only.
 - Over-quota behavior: block vs. degrade vs. dun.
-
-### 🔴 Double opt-in / confirmed subscription
-Regulatory must for EU. The model deliberately rejected a "subscribed flag" — so a confirmed
-opt-in flow (confirmation email → activation) has to be modeled *without* reintroducing a
-subscription status. Open forks: what "confirmed" is a fact about, how it coexists with the
-derived Send-eligibility model, per-source vs. global confirmation.
 
 ### 🟡 AI/MCP plane — agent-operable platform (no built-in chat)
 The strategic AI-first bet: 1mail is **operated by an agent through an MCP tool-surface**,
@@ -204,7 +204,7 @@ nature and therefore has no such tension: self-host simply has no billing.
 | Complaint/bounce-rate metrics | *no lib* — aggregate from `Event` rows in **Postgres** | build | Source of truth already exists (`email.bounced`/complaint Events); no ClickHouse needed. |
 | Billing / subscriptions / payments | **stripe/stripe-go** | Go SDK | Official, active. SaaS-only. |
 | Usage metering + entitlements/quota | **openmeterio/openmeter** (Go SDK, Stripe sync) or **getlago/lago** | service | SaaS-only, and cleanly so: billing/quotas don't exist in self-host, so these separate services never touch the single-binary path — no tension. |
-| Double opt-in | *no lib* — confirmation email + signed token (JWT), existing send path | build | Flow only; must not reintroduce a "subscribed" flag (grill it). |
+| Double opt-in | *no lib* — confirmation email + signed token (JWT, with `exp`), existing send path | build | ✅ Grilled (ADR 0013): positive Confirmation row + `marketing.confirmed` event, no subscribed flag. Ties to Contact import (provenance dedup) + GDPR tooling (purge unconfirmed). |
 | AI/MCP surface — server | **modelcontextprotocol/go-sdk** (official) | Go SDK | Chosen. Official SDK, semver-stable 1.x (v1.6.x, Anthropic + Google), streamable-HTTP transport, JSON schema generated from Go structs via `jsonschema:` tags (fits the codegen ethos). Preferred over the community **mark3labs/mcp-go** (still 0.x, concentrated maintenance) for a long-lived open-core repo. Mount as a 4th surface next to the ogen servers; auth rides the existing scoped API-token model. Grill generated-vs-projected before adopting. |
 | AI/MCP — LLM provider (for inline intents / later panel) | **anthropics/anthropic-sdk-go** | Go SDK | Provider-agnostic behind an `Integration`-style abstraction; default to Claude (Opus/Sonnet 4.x). Not needed for the BYO-agent path (client hosts the model). |
 | Prompt-injection defenses | *no lib* — taint contact-origin fields + extra send-gate | build | Mechanism is custom; the boundary + gate are the grill. |

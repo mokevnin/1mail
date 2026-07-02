@@ -68,9 +68,11 @@ _Avoid_: List, audience, group, filter, snapshot
 
 Whether a message on channel C from sending source S may reach destination D is decided in
 layers — never by a single flag on the Contact: (1) (C, D) in Suppression → never; (2) (C, D)
-unsubscribed from *everything* → never; (3) (C, D) unsubscribed from S → never; (4) otherwise,
-send. Transactional messages skip layers 2–3 (they still respect Suppression's hard bounces).
-Consent is per-channel: an email opt-out never silences SMS.
+unsubscribed from *everything* → never; (3) (C, D) unsubscribed from S → never; (4) *if the
+workspace requires confirmed opt-in* and (C, D) has no Confirmation → never (the one positive
+layer, evaluated last so the negatives always dominate); (5) otherwise, send. Transactional
+messages skip layers 2–4 (they still respect Suppression's hard bounces). Consent is
+per-channel: an email opt-out never silences SMS.
 
 **Destination**:
 The channel-specific address a message is sent to — an email address on the email channel, a
@@ -118,6 +120,23 @@ The **scope** of an unsubscribe (what the contact is opted out of) is distinct f
 **attribution** (which sent message provoked it). A broadcast unsubscribe has scope
 "broadcasts" (shared) yet is attributed to the one broadcast whose email triggered it — two
 separate facts, never one field.
+
+**Confirmation** (confirmed opt-in):
+The **positive** mirror of an Unsubscribe: a per-(workspace, channel, destination) consent fact,
+recorded as a derived destination-keyed row (the fast eligibility gate) written alongside an
+immutable `marketing.confirmed` **Event** (the source of truth — GDPR Art. 7 "demonstrate
+consent" proof, and a bus signal that can trigger a welcome Automation). It exists so double
+opt-in can be modeled **without** reintroducing a subscription status: the truth is an event, not
+a mutable flag. It matters only when the workspace's **require-confirmed-opt-in** policy is on
+(default off = today's single-opt-in, unaffected); then Send-eligibility adds the one positive
+layer (see Send-eligibility). Carries **provenance** — `double_opt_in` (clicked a confirmation
+link), `grandfathered` (existing contacts at policy-enablement), or `imported` (importer-asserted
+prior basis); the strongest provenance wins on dedup. Confirmed via a signed link whose endpoint
+is method-split (`GET` = page, `POST` = confirm) — a scanner GET must never fabricate consent. An
+`everything` unsubscribe invalidates the gate row (the event log keeps the history), so returning
+after a full opt-out requires re-confirmation. Unlike an Unsubscribe it is **not** compliance-
+required to survive erasure — losing it merely forces re-confirmation, which fails safe.
+_Avoid_: Subscribed flag, subscription status, opt-in flag, double opt-in status
 
 ### Sending
 
