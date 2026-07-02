@@ -1,6 +1,6 @@
-// Package smtp implements the SMTP email provider on top of nikoksr/notify's
-// mail service (which wraps net/smtp + STARTTLS). The native SES provider lives
-// in the sibling ses package.
+// Package smtp implements the SMTP email provider on top of wneessen/go-mail.
+// It shares messaging.BuildMIME with the SES provider so the wire message is
+// identical across providers; only the transport differs.
 package smtp
 
 import (
@@ -8,7 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/nikoksr/notify/service/mail"
+	"github.com/wneessen/go-mail"
 
 	"github.com/mokevnin/1mail/internal/messaging"
 )
@@ -71,22 +71,33 @@ type sender struct {
 }
 
 func (s *sender) Send(ctx context.Context, msg messaging.EmailMessage) error {
-	from := messaging.FirstNonEmpty(msg.From, s.cfg.From)
-	fromName := messaging.FirstNonEmpty(msg.FromName, s.cfg.FromName)
+	msg.From = messaging.FirstNonEmpty(msg.From, s.cfg.From)
+	msg.FromName = messaging.FirstNonEmpty(msg.FromName, s.cfg.FromName)
 
-	m := mail.New(messaging.FormatSender(from, fromName), fmt.Sprintf("%s:%d", s.cfg.Host, s.cfg.Port))
+	m, err := messaging.BuildMIME(msg)
+	if err != nil {
+		return err
+	}
+
+	// Opportunistic STARTTLS: encrypt when the server offers it (prod SMTP),
+	// fall back to plaintext for local relays like mailpit that don't advertise
+	// it. go-mail defaults to mandatory STARTTLS, which would break dev sends.
+	opts := []mail.Option{
+		mail.WithPort(s.cfg.Port),
+		mail.WithTLSPortPolicy(mail.TLSOpportunistic),
+	}
 	// Authenticate whenever a credential is set; an empty pair means an open relay.
 	if s.cfg.Username != "" || s.cfg.Password != "" {
-		m.AuthenticateSMTP("", s.cfg.Username, s.cfg.Password, s.cfg.Host)
+		opts = append(opts,
+			mail.WithSMTPAuth(mail.SMTPAuthPlain),
+			mail.WithUsername(s.cfg.Username),
+			mail.WithPassword(s.cfg.Password),
+		)
 	}
-	m.AddReceivers(msg.To)
 
-	body := msg.Text
-	if msg.HTML != "" {
-		m.BodyFormat(mail.HTML)
-		body = msg.HTML
-	} else {
-		m.BodyFormat(mail.PlainText)
+	client, err := mail.NewClient(s.cfg.Host, opts...)
+	if err != nil {
+		return fmt.Errorf("smtp: client: %w", err)
 	}
-	return m.Send(ctx, msg.Subject, body)
+	return client.DialAndSendWithContext(ctx, m)
 }

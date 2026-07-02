@@ -104,7 +104,10 @@ Frontend tests: `make test-watch`.
   `*TokenAuth` (workspace id + scopes) in context — **scope all external queries by workspace**.
 - **Async**: `internal/pubsub` (watermill over Postgres) — handlers registered in
   `pubsub.RegisterHandlers`, router run in a goroutine from `cmd/server/main.go`.
-  `internal/jobs` uses river (Postgres-backed queue). Email via `internal/email` (go-mail).
+  `internal/jobs` uses river (Postgres-backed queue). Email via `internal/messaging`
+  (per-workspace providers: smtp/ses). Both providers share `messaging.BuildMIME`
+  (wneessen/go-mail) — smtp sends the `*mail.Msg` directly, ses serializes it to raw
+  bytes for SES `SendRawEmail`.
 - `cmd/server` (HTTP server), `cmd/db` (create/drop DBs), `cmd/seed` (seed data).
 - The tracker snippet (`/t.js`) is the `@1mail/analytics` IIFE bundle, built and embedded:
   `make build-tracker` copies `packages/analytics/dist/t.js` into `internal/server/assets/`.

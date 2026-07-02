@@ -1,14 +1,26 @@
-// Package ses implements the Amazon SES email provider on top of nikoksr/notify's
-// amazonses service.
+// Package ses implements the Amazon SES email provider. It builds the message
+// with the shared messaging.BuildMIME (same MIME as the smtp provider) and
+// hands the raw bytes to SES SendRawEmail, so any custom headers (List-Unsubscribe,
+// DKIM later) survive intact — SendEmail's structured API would strip them.
+//
+// The client is built directly on aws-sdk-go-v2's ses client with an optional
+// BaseEndpoint override so the same provider can target AWS SES or an
+// SES-compatible service such as Yandex Cloud Postbox.
 package ses
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
 
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/credentials"
+	"github.com/aws/aws-sdk-go-v2/service/ses"
+	"github.com/aws/aws-sdk-go-v2/service/ses/types"
+
 	"github.com/mokevnin/1mail/internal/messaging"
-	"github.com/mokevnin/1mail/internal/messaging/ses/amazonses"
 )
 
 // Config is the cleartext credential shape stored (encrypted) for an SES
@@ -71,21 +83,47 @@ type sender struct {
 }
 
 func (s *sender) Send(ctx context.Context, msg messaging.EmailMessage) error {
-	from := messaging.FirstNonEmpty(msg.From, s.cfg.From)
-	fromName := messaging.FirstNonEmpty(msg.FromName, s.cfg.FromName)
+	msg.From = messaging.FirstNonEmpty(msg.From, s.cfg.From)
+	msg.FromName = messaging.FirstNonEmpty(msg.FromName, s.cfg.FromName)
 
-	svc, err := amazonses.New(
-		s.cfg.AccessKeyID, s.cfg.SecretAccessKey, s.cfg.Region, messaging.FormatSender(from, fromName),
-		amazonses.WithEndpoint(s.cfg.Endpoint),
-	)
+	m, err := messaging.BuildMIME(msg)
 	if err != nil {
 		return err
 	}
-	svc.AddReceivers(msg.To)
-
-	body := msg.Text
-	if msg.HTML != "" {
-		body = msg.HTML
+	var raw bytes.Buffer
+	if _, err := m.WriteTo(&raw); err != nil {
+		return fmt.Errorf("ses: render message: %w", err)
 	}
-	return svc.Send(ctx, msg.Subject, body)
+
+	client, err := s.client(ctx)
+	if err != nil {
+		return err
+	}
+	_, err = client.SendRawEmail(ctx, &ses.SendRawEmailInput{
+		// Source is the envelope sender; the MIME From header carries the display
+		// name. It must match a verified SES identity.
+		Source:       aws.String(msg.From),
+		Destinations: []string{msg.To},
+		RawMessage:   &types.RawMessage{Data: raw.Bytes()},
+	})
+	if err != nil {
+		return fmt.Errorf("ses: send: %w", err)
+	}
+	return nil
+}
+
+func (s *sender) client(ctx context.Context) (*ses.Client, error) {
+	creds := credentials.NewStaticCredentialsProvider(s.cfg.AccessKeyID, s.cfg.SecretAccessKey, "")
+	cfg, err := config.LoadDefaultConfig(ctx,
+		config.WithCredentialsProvider(creds),
+		config.WithRegion(s.cfg.Region),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("ses: load config: %w", err)
+	}
+	return ses.NewFromConfig(cfg, func(o *ses.Options) {
+		if s.cfg.Endpoint != "" {
+			o.BaseEndpoint = aws.String(s.cfg.Endpoint)
+		}
+	}), nil
 }

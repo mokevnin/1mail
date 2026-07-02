@@ -1,0 +1,63 @@
+package messaging_test
+
+import (
+	"bytes"
+	"strings"
+	"testing"
+
+	"github.com/mokevnin/1mail/internal/messaging"
+	"github.com/stretchr/testify/require"
+)
+
+// render serializes a built message to its raw MIME wire form for assertion.
+func render(t *testing.T, msg messaging.EmailMessage) string {
+	t.Helper()
+	m, err := messaging.BuildMIME(msg)
+	require.NoError(t, err)
+	var buf bytes.Buffer
+	_, err = m.WriteTo(&buf)
+	require.NoError(t, err)
+	return buf.String()
+}
+
+func TestBuildMIMEMultipartAlternative(t *testing.T) {
+	raw := render(t, messaging.EmailMessage{
+		From:     "sender@example.com",
+		FromName: "Sender",
+		To:       "rcpt@example.com",
+		Subject:  "Hello",
+		HTML:     "<p>hi</p>",
+		Text:     "hi",
+	})
+
+	require.Contains(t, raw, "multipart/alternative")
+	require.Contains(t, raw, "text/plain")
+	require.Contains(t, raw, "text/html")
+	require.Contains(t, raw, `From: "Sender" <sender@example.com>`)
+	require.Contains(t, raw, "To: <rcpt@example.com>")
+	require.Contains(t, raw, "Subject: Hello")
+
+	// text/plain must come before text/html so clients render HTML as the richer part.
+	require.Less(t, strings.Index(raw, "text/plain"), strings.Index(raw, "text/html"))
+}
+
+func TestBuildMIMEHTMLOnly(t *testing.T) {
+	raw := render(t, messaging.EmailMessage{
+		From: "sender@example.com", To: "rcpt@example.com", Subject: "s", HTML: "<p>hi</p>",
+	})
+	require.Contains(t, raw, "text/html")
+	require.NotContains(t, raw, "multipart/alternative")
+}
+
+func TestBuildMIMETextOnly(t *testing.T) {
+	raw := render(t, messaging.EmailMessage{
+		From: "sender@example.com", To: "rcpt@example.com", Subject: "s", Text: "hi",
+	})
+	require.Contains(t, raw, "text/plain")
+	require.NotContains(t, raw, "multipart/alternative")
+}
+
+func TestBuildMIMEInvalidFrom(t *testing.T) {
+	_, err := messaging.BuildMIME(messaging.EmailMessage{From: "not-an-address", To: "rcpt@example.com"})
+	require.Error(t, err)
+}
