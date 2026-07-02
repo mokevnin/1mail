@@ -226,6 +226,30 @@ the DKIM record disappears, the domain reverts to unverified, its sends block, a
 notified. Distinct from a **Sending source** (that is the unsubscribe scope, not an identity).
 _Avoid_: From domain, verified domain, sender identity, SPF domain
 
+**Complaint rate**:
+The reputation-monitoring ratio `complaints / (sent − hard bounces)`, per (Workspace, **Sending
+domain**), over a trailing time window. The denominator subtracts hard bounces as a cheap proxy
+for *delivered* (mailbox providers judge complaint rate over delivered mail, but 1mail only
+records `email.sent` = accepted-by-provider — see **Sent**; a plain `/sent` denominator
+understates, worst for the abusive senders that matter most). A **flow rate**: each event counts
+by its own `occurred_at`, never linked back to the originating send, so it is always current and
+needs no send↔feedback correlation. Derived from the `email.complained` / `email.sent` /
+permanent `email.bounced` Events (source of truth), **not** a stored status — a core, user-facing
+number computed live; the automated-suspension *thresholds* that read it are EE (ADR 0007). Always
+exposed as the triple `(numerator, denominator, rate)`; the rate is **undefined** below a volume
+floor, never a scary ratio off a handful of sends.
+_Avoid_: Spam score, sender score, reputation score (we expose honest ratios, not a black-box score)
+
+**Bounce rate**:
+The sibling reputation ratio `permanent_bounces / sent`, same (Workspace, Sending domain) grain
+and trailing-window flow semantics as **Complaint rate**. Only **permanent** (hard) bounces —
+the same ones that suppress and that mailbox providers penalize — count in the numerator;
+**transient** (soft) bounces are excluded from the headline (at most a secondary counter), so
+the metric measures list hygiene, not temporary blips. One hard bounce is thus used three
+coherent ways: it suppresses (Suppression), it subtracts from the Complaint-rate denominator,
+and it is the Bounce-rate numerator.
+_Avoid_: Delivery-failure rate (that would fold in transient bounces)
+
 **API token**:
 A workspace-scoped, **scoped** bearer credential for the external `/api` surface — a public
 `prefix` plus a hashed secret, carrying scopes, optional expiry, and revocation. Distinct from

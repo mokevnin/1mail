@@ -13,6 +13,9 @@ Legend: 🔴 launch-blocker / "can't send otherwise" · 🟡 parity with drip.co
   → ADR 0007, ADR 0008; CONTEXT: *Operator*, *Workspace suspension*.
 - ✅ **Sending domains** — native DKIM, verified-domain-required-to-send.
   → ADR 0009; CONTEXT: *Sending domain*.
+- ✅ **Complaint / bounce-rate metrics** — core/user-facing rate (thresholds are EE), complaint
+  rate over `(sent − hard bounces)`, per-(workspace, Sending domain) flow rate, live-query now /
+  rollup later. Blocked on Sending domains. → ADR 0010; CONTEXT: *Complaint rate*, *Bounce rate*.
 
 ## Queue
 
@@ -23,11 +26,6 @@ Table-stakes to deliver at all. Open forks:
 - Complaint-rate as a first-class, monitored metric held < 0.3% (feeds auto-suspension).
 - DMARC posture guidance (we already gate on DKIM; what do we tell users about `p=`).
 Ties to: Sending domains (ADR 0009), Suppression, Workspace suspension.
-
-### 🔴 Complaint / bounce-rate metrics
-Prerequisite for the auto-suspension detector already designed in ADR 0007 — the detector
-has nothing to read until these exist. Open forks: per-(workspace, domain) rate windows,
-where the rollup lives (Events are source of truth), what thresholds/floors mean.
 
 ### 🔴 Billing / plans / metering / quota enforcement (SaaS)
 Distinct from suspension: suspension = abuse, quota = commerce. Absent entirely. Open forks:
@@ -131,8 +129,8 @@ thresholds, not always-on** (runaway/token-cost is real → a new metered line).
   analyze/explain (read-only) · L1 propose drafts, per-action approve · L2 auto-form drafts
   within a policy/budget. The human always sends. Higher autonomy = more drafts formed
   unattended, never more sending.
-Depends on: 🔴 Complaint/bounce-rate metrics (the analyzer has nothing to read until they
-exist — same prerequisite as the ADR 0007 auto-suspension detector). Ties to: AI/MCP plane,
+Depends on: ✅ Complaint/bounce-rate metrics (ADR 0010 — the analyzer reads the same rate the
+ADR 0007 auto-suspension detector does). Ties to: AI/MCP plane,
 Billing/metering, Lead scoring, Audit log.
 
 ### 🟡 Automation action steps (beyond send/wait)
