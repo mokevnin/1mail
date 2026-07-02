@@ -12,10 +12,10 @@ Legend: 🔴 launch-blocker / "can't send otherwise" · 🟡 parity with drip.co
 - ✅ **Platform abuse control** — Workspace suspension (core mechanism) + Operator identity.
   → ADR 0007, ADR 0008; CONTEXT: *Operator*, *Workspace suspension*.
 - ✅ **Sending domains** — native DKIM, verified-domain-required-to-send.
-  → ADR 0009; CONTEXT: *Sending domain*.
+  → ADR 0010; CONTEXT: *Sending domain*.
 - ✅ **Complaint / bounce-rate metrics** — core/user-facing rate (thresholds are EE), complaint
   rate over `(sent − hard bounces)`, per-(workspace, Sending domain) flow rate, live-query now /
-  rollup later. Blocked on Sending domains. → ADR 0010; CONTEXT: *Complaint rate*, *Bounce rate*.
+  rollup later. Blocked on Sending domains. → ADR 0011; CONTEXT: *Complaint rate*, *Bounce rate*.
 
 ## Queue
 
@@ -25,7 +25,7 @@ Table-stakes to deliver at all. Open forks:
   signed token maps to the existing per-(destination, Sending source) Unsubscribe model.
 - Complaint-rate as a first-class, monitored metric held < 0.3% (feeds auto-suspension).
 - DMARC posture guidance (we already gate on DKIM; what do we tell users about `p=`).
-Ties to: Sending domains (ADR 0009), Suppression, Workspace suspension.
+Ties to: Sending domains (ADR 0010), Suppression, Workspace suspension.
 
 ### 🔴 Billing / plans / metering / quota enforcement (SaaS)
 Distinct from suspension: suspension = abuse, quota = commerce. Absent entirely. Open forks:
@@ -129,7 +129,7 @@ thresholds, not always-on** (runaway/token-cost is real → a new metered line).
   analyze/explain (read-only) · L1 propose drafts, per-action approve · L2 auto-form drafts
   within a policy/budget. The human always sends. Higher autonomy = more drafts formed
   unattended, never more sending.
-Depends on: ✅ Complaint/bounce-rate metrics (ADR 0010 — the analyzer reads the same rate the
+Depends on: ✅ Complaint/bounce-rate metrics (ADR 0011 — the analyzer reads the same rate the
 ADR 0007 auto-suspension detector does). Ties to: AI/MCP plane,
 Billing/metering, Lead scoring, Audit log.
 
@@ -200,8 +200,8 @@ nature and therefore has no such tension: self-host simply has no billing.
 
 | Item | Candidate | Kind | Status / note |
 |---|---|---|---|
-| Sending domains — DKIM sign/verify, DMARC | **emersion/go-msgauth** (`dkim`, `dmarc`, `authres`) | Go lib | MIT, v1, active (Apr 2025). The pick for ADR 0009 signing. |
-| " — SPF check | **blitiri.com.ar/go/spf** (albertito/spf) | Go lib | Standard Go SPF; slower-moving (last big update ~2022) but stable. SPF is advisory-only per ADR 0009. |
+| Sending domains — DKIM sign/verify, DMARC | **emersion/go-msgauth** (`dkim`, `dmarc`, `authres`) | Go lib | MIT, v1, active (Apr 2025). The pick for ADR 0010 signing. |
+| " — SPF check | **blitiri.com.ar/go/spf** (albertito/spf) | Go lib | Standard Go SPF; slower-moving (last big update ~2022) but stable. SPF is advisory-only per ADR 0010. |
 | " — DNS record lookups (verify TXT/CNAME) | **miekg/dns** | Go lib | De-facto Go DNS lib, very active. |
 | Bulk-sender: one-click List-Unsubscribe (RFC 8058) | *no lib* — set `List-Unsubscribe(-Post)` headers via **go-mail** (already a dep) + sign token with **JWT** (already a dep) | build | Headers + existing token signer; nothing new to add. |
 | Complaint/bounce-rate metrics | *no lib* — aggregate from `Event` rows in **Postgres** | build | Source of truth already exists (`email.bounced`/complaint Events); no ClickHouse needed. |

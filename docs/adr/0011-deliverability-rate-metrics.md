@@ -61,14 +61,14 @@ complaint-rate denominator, and it is the bounce-rate numerator.
 ### Grain = per-(Workspace, Sending domain)
 
 Mailbox providers attribute reputation to the **DKIM signing domain** — which in 1mail is the
-**Sending domain** (ADR 0009 *sending-domains*). So the metric is grained per-(Workspace, Sending domain), not a
+**Sending domain** (ADR 0010 *sending-domains*). So the metric is grained per-(Workspace, Sending domain), not a
 workspace-wide average: an average would mask one dirty domain behind a clean one — precisely the
 sender the detector must catch. Per-workspace is just the roll-up of the per-domain rates for the
 dashboard headline.
 
-**Sequencing dependency:** Sending domains (ADR 0009 *sending-domains*) are not built yet, and today's delivery
+**Sequencing dependency:** Sending domains (ADR 0010 *sending-domains*) are not built yet, and today's delivery
 Events do **not** carry the sending domain (they record the *recipient*). This metric therefore
-ships **with or after** ADR 0009, and requires two ingestion changes:
+ships **with or after** ADR 0010, and requires two ingestion changes:
 - the send path stamps the Sending domain onto `email.sent`;
 - the bounce/complaint hook stamps it onto the failure Event (SES puts the From address in the
   notification's `mail.source`).
@@ -131,7 +131,7 @@ semantic change. Deferred until product scale demands it.
   does not police itself.
 - The EE detector (ADR 0007) now has a defined input: the `(numerator, denominator, rate)` triple
   per (Workspace, Sending domain), over a window and denominator it chooses.
-- This feature is **blocked on Sending domains** (ADR 0009 *sending-domains*) and on two ingestion changes that
+- This feature is **blocked on Sending domains** (ADR 0010 *sending-domains*) and on two ingestion changes that
   stamp the Sending domain onto the send and failure Events.
 - A shared-IP-pool reputation view (the SaaS case where one tenant poisons a shared IP) is a
   future EE aggregation over this per-domain metric, deferred with the IP-pool model.
