@@ -106,6 +106,12 @@ Absence means subscribed — there is no positive subscription row and no "subsc
 the Contact. The default in-email link unsubscribes from the *sending source* only;
 "unsubscribe from everything" is a distinct, deliberate action. A bounce or complaint is not
 an Unsubscribe; those are Suppression entries.
+The opt-out is offered two ways with **identical scope**: the visible footer link and an RFC 8058
+**one-click** `List-Unsubscribe` header (Broadcast + Automation only, never Transactional — see
+ADR 0012), both carrying the same source-scoped token; a mailbox provider's one-click button never
+reaches the `everything` scope. The endpoint is **method-split for safety**: `GET` renders a
+confirmation page and changes nothing, `POST` performs the opt-out — so link scanners and security
+proxies that GET every email link cannot silently unsubscribe a live subscriber.
 _Avoid_: Opt-out flag, status
 
 The **scope** of an unsubscribe (what the contact is opted out of) is distinct from its
@@ -224,6 +230,11 @@ all three surfaces (Broadcast, Automation, Transactional) and rejects otherwise.
 DMARC are generated, shown, and checked but do **not** block). It is re-checked over time — if
 the DKIM record disappears, the domain reverts to unverified, its sends block, and the owner is
 notified. Distinct from a **Sending source** (that is the unsubscribe scope, not an identity).
+Beyond `verified` (the DKIM send-gate) the domain carries a separate **bulk-ready** signal: a
+published DMARC record (at least `p=none`), which Gmail/Yahoo hard-require of bulk senders. Its
+absence **warns but does not block** — the send-gate stays DKIM-only (ADR 0010); bulk-readiness is
+advisory-with-teeth (ADR 0012), because a missing `_dmarc` record gets otherwise-authed mail
+rejected (a bounce) or spam-foldered by bulk-sender policy.
 _Avoid_: From domain, verified domain, sender identity, SPF domain
 
 **Complaint rate**:

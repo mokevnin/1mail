@@ -16,16 +16,13 @@ Legend: 🔴 launch-blocker / "can't send otherwise" · 🟡 parity with drip.co
 - ✅ **Complaint / bounce-rate metrics** — core/user-facing rate (thresholds are EE), complaint
   rate over `(sent − hard bounces)`, per-(workspace, Sending domain) flow rate, live-query now /
   rollup later. Blocked on Sending domains. → ADR 0011; CONTEXT: *Complaint rate*, *Bounce rate*.
+- ✅ **Bulk-sender compliance** (Gmail/Yahoo 2024+) — RFC 8058 one-click (`List-Unsubscribe` +
+  `List-Unsubscribe-Post`, HTTPS-only) on Broadcast/Automation via the footer's source-scoped
+  token; endpoint split GET=confirm / POST=perform (fixes scanner auto-unsub); DMARC = warn-not-
+  block bulk-readiness, send-gate stays DKIM-only. Complaint-rate pillar was ADR 0011. Rides on
+  the ADR 0010 send-path rework. → ADR 0012; CONTEXT: *Unsubscribe*, *Sending domain*.
 
 ## Queue
-
-### 🔴 Bulk-sender compliance (Gmail/Yahoo 2024+)
-Table-stakes to deliver at all. Open forks:
-- One-click unsubscribe (`List-Unsubscribe` + `List-Unsubscribe-Post`, RFC 8058) — how the
-  signed token maps to the existing per-(destination, Sending source) Unsubscribe model.
-- Complaint-rate as a first-class, monitored metric held < 0.3% (feeds auto-suspension).
-- DMARC posture guidance (we already gate on DKIM; what do we tell users about `p=`).
-Ties to: Sending domains (ADR 0010), Suppression, Workspace suspension.
 
 ### 🔴 Billing / plans / metering / quota enforcement (SaaS)
 Distinct from suspension: suspension = abuse, quota = commerce. Absent entirely. Open forks:
@@ -203,7 +200,7 @@ nature and therefore has no such tension: self-host simply has no billing.
 | Sending domains — DKIM sign/verify, DMARC | **emersion/go-msgauth** (`dkim`, `dmarc`, `authres`) | Go lib | MIT, v1, active (Apr 2025). The pick for ADR 0010 signing. |
 | " — SPF check | **blitiri.com.ar/go/spf** (albertito/spf) | Go lib | Standard Go SPF; slower-moving (last big update ~2022) but stable. SPF is advisory-only per ADR 0010. |
 | " — DNS record lookups (verify TXT/CNAME) | **miekg/dns** | Go lib | De-facto Go DNS lib, very active. |
-| Bulk-sender: one-click List-Unsubscribe (RFC 8058) | *no lib* — set `List-Unsubscribe(-Post)` headers via **go-mail** (already a dep) + sign token with **JWT** (already a dep) | build | Headers + existing token signer; nothing new to add. |
+| Bulk-sender: one-click List-Unsubscribe (RFC 8058) | *no lib* — set `List-Unsubscribe(-Post)` headers in the raw MIME + reuse the existing **JWT** unsub token | build | ⚠️ Rides on the ADR 0010 send-path rework: today's `nikoksr/notify` stack can set **no** custom headers and go-mail is **not** yet a dep. The header + endpoint design (ADR 0012) is settled; it lands when the raw-MIME/DKIM send stack does. |
 | Complaint/bounce-rate metrics | *no lib* — aggregate from `Event` rows in **Postgres** | build | Source of truth already exists (`email.bounced`/complaint Events); no ClickHouse needed. |
 | Billing / subscriptions / payments | **stripe/stripe-go** | Go SDK | Official, active. SaaS-only. |
 | Usage metering + entitlements/quota | **openmeterio/openmeter** (Go SDK, Stripe sync) or **getlago/lago** | service | SaaS-only, and cleanly so: billing/quotas don't exist in self-host, so these separate services never touch the single-binary path — no tension. |
