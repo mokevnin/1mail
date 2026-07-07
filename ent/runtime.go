@@ -19,6 +19,7 @@ import (
 	"github.com/mokevnin/1mail/ent/membership"
 	"github.com/mokevnin/1mail/ent/schema"
 	"github.com/mokevnin/1mail/ent/segment"
+	"github.com/mokevnin/1mail/ent/sendingdomain"
 	"github.com/mokevnin/1mail/ent/suppression"
 	"github.com/mokevnin/1mail/ent/transactionalemail"
 	"github.com/mokevnin/1mail/ent/unsubscribe"
@@ -316,6 +317,34 @@ func init() {
 	segment.DefaultUpdatedAt = segmentDescUpdatedAt.Default.(func() time.Time)
 	// segment.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	segment.UpdateDefaultUpdatedAt = segmentDescUpdatedAt.UpdateDefault.(func() time.Time)
+	sendingdomainFields := schema.SendingDomain{}.Fields()
+	_ = sendingdomainFields
+	// sendingdomainDescDomain is the schema descriptor for domain field.
+	sendingdomainDescDomain := sendingdomainFields[1].Descriptor()
+	// sendingdomain.DomainValidator is a validator for the "domain" field. It is called by the builders before save.
+	sendingdomain.DomainValidator = sendingdomainDescDomain.Validators[0].(func(string) error)
+	// sendingdomainDescDkimSelector is the schema descriptor for dkim_selector field.
+	sendingdomainDescDkimSelector := sendingdomainFields[2].Descriptor()
+	// sendingdomain.DkimSelectorValidator is a validator for the "dkim_selector" field. It is called by the builders before save.
+	sendingdomain.DkimSelectorValidator = sendingdomainDescDkimSelector.Validators[0].(func(string) error)
+	// sendingdomainDescDkimPublicKey is the schema descriptor for dkim_public_key field.
+	sendingdomainDescDkimPublicKey := sendingdomainFields[4].Descriptor()
+	// sendingdomain.DkimPublicKeyValidator is a validator for the "dkim_public_key" field. It is called by the builders before save.
+	sendingdomain.DkimPublicKeyValidator = sendingdomainDescDkimPublicKey.Validators[0].(func(string) error)
+	// sendingdomainDescVerified is the schema descriptor for verified field.
+	sendingdomainDescVerified := sendingdomainFields[5].Descriptor()
+	// sendingdomain.DefaultVerified holds the default value on creation for the verified field.
+	sendingdomain.DefaultVerified = sendingdomainDescVerified.Default.(bool)
+	// sendingdomainDescCreatedAt is the schema descriptor for created_at field.
+	sendingdomainDescCreatedAt := sendingdomainFields[9].Descriptor()
+	// sendingdomain.DefaultCreatedAt holds the default value on creation for the created_at field.
+	sendingdomain.DefaultCreatedAt = sendingdomainDescCreatedAt.Default.(func() time.Time)
+	// sendingdomainDescUpdatedAt is the schema descriptor for updated_at field.
+	sendingdomainDescUpdatedAt := sendingdomainFields[10].Descriptor()
+	// sendingdomain.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	sendingdomain.DefaultUpdatedAt = sendingdomainDescUpdatedAt.Default.(func() time.Time)
+	// sendingdomain.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	sendingdomain.UpdateDefaultUpdatedAt = sendingdomainDescUpdatedAt.UpdateDefault.(func() time.Time)
 	suppressionFields := schema.Suppression{}.Fields()
 	_ = suppressionFields
 	// suppressionDescDestination is the schema descriptor for destination field.

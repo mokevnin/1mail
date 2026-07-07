@@ -494,6 +494,46 @@ var (
 			},
 		},
 	}
+	// SendingDomainsColumns holds the columns for the "sending_domains" table.
+	SendingDomainsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt64, Increment: true},
+		{Name: "domain", Type: field.TypeString},
+		{Name: "dkim_selector", Type: field.TypeString},
+		{Name: "dkim_private_key_encrypted", Type: field.TypeString},
+		{Name: "dkim_public_key", Type: field.TypeString},
+		{Name: "verified", Type: field.TypeBool, Default: false},
+		{Name: "last_checked_at", Type: field.TypeTime, Nullable: true},
+		{Name: "verified_at", Type: field.TypeTime, Nullable: true},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "workspace_id", Type: field.TypeInt64},
+	}
+	// SendingDomainsTable holds the schema information for the "sending_domains" table.
+	SendingDomainsTable = &schema.Table{
+		Name:       "sending_domains",
+		Columns:    SendingDomainsColumns,
+		PrimaryKey: []*schema.Column{SendingDomainsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "sending_domains_workspaces_sending_domains",
+				Columns:    []*schema.Column{SendingDomainsColumns[10]},
+				RefColumns: []*schema.Column{WorkspacesColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "sendingdomain_workspace_id_domain",
+				Unique:  true,
+				Columns: []*schema.Column{SendingDomainsColumns[10], SendingDomainsColumns[1]},
+			},
+			{
+				Name:    "sendingdomain_last_checked_at",
+				Unique:  false,
+				Columns: []*schema.Column{SendingDomainsColumns[6]},
+			},
+		},
+	}
 	// SuppressionsColumns holds the columns for the "suppressions" table.
 	SuppressionsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt64, Increment: true},
@@ -724,6 +764,7 @@ var (
 		InvitationsTable,
 		MembershipsTable,
 		SegmentsTable,
+		SendingDomainsTable,
 		SuppressionsTable,
 		TransactionalEmailsTable,
 		UnsubscribesTable,
@@ -790,6 +831,10 @@ func init() {
 	SegmentsTable.ForeignKeys[0].RefTable = WorkspacesTable
 	SegmentsTable.Annotation = &entsql.Annotation{
 		Table: "segments",
+	}
+	SendingDomainsTable.ForeignKeys[0].RefTable = WorkspacesTable
+	SendingDomainsTable.Annotation = &entsql.Annotation{
+		Table: "sending_domains",
 	}
 	SuppressionsTable.ForeignKeys[0].RefTable = WorkspacesTable
 	SuppressionsTable.Annotation = &entsql.Annotation{

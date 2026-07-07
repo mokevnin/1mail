@@ -26,6 +26,7 @@ import (
 	"github.com/mokevnin/1mail/ent/membership"
 	"github.com/mokevnin/1mail/ent/predicate"
 	"github.com/mokevnin/1mail/ent/segment"
+	"github.com/mokevnin/1mail/ent/sendingdomain"
 	"github.com/mokevnin/1mail/ent/suppression"
 	"github.com/mokevnin/1mail/ent/transactionalemail"
 	"github.com/mokevnin/1mail/ent/unsubscribe"
@@ -48,6 +49,7 @@ type WorkspaceQuery struct {
 	withVisitors            *VisitorQuery
 	withAPITokens           *ApiTokenQuery
 	withIntegrations        *IntegrationQuery
+	withSendingDomains      *SendingDomainQuery
 	withBroadcasts          *BroadcastQuery
 	withBroadcastRecipients *BroadcastRecipientQuery
 	withEmailTemplates      *EmailTemplateQuery
@@ -243,6 +245,28 @@ func (_q *WorkspaceQuery) QueryIntegrations() *IntegrationQuery {
 			sqlgraph.From(workspace.Table, workspace.FieldID, selector),
 			sqlgraph.To(integration.Table, integration.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, workspace.IntegrationsTable, workspace.IntegrationsColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QuerySendingDomains chains the current query on the "sending_domains" edge.
+func (_q *WorkspaceQuery) QuerySendingDomains() *SendingDomainQuery {
+	query := (&SendingDomainClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workspace.Table, workspace.FieldID, selector),
+			sqlgraph.To(sendingdomain.Table, sendingdomain.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, workspace.SendingDomainsTable, workspace.SendingDomainsColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
@@ -691,6 +715,7 @@ func (_q *WorkspaceQuery) Clone() *WorkspaceQuery {
 		withVisitors:            _q.withVisitors.Clone(),
 		withAPITokens:           _q.withAPITokens.Clone(),
 		withIntegrations:        _q.withIntegrations.Clone(),
+		withSendingDomains:      _q.withSendingDomains.Clone(),
 		withBroadcasts:          _q.withBroadcasts.Clone(),
 		withBroadcastRecipients: _q.withBroadcastRecipients.Clone(),
 		withEmailTemplates:      _q.withEmailTemplates.Clone(),
@@ -783,6 +808,17 @@ func (_q *WorkspaceQuery) WithIntegrations(opts ...func(*IntegrationQuery)) *Wor
 		opt(query)
 	}
 	_q.withIntegrations = query
+	return _q
+}
+
+// WithSendingDomains tells the query-builder to eager-load the nodes that are connected to
+// the "sending_domains" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *WorkspaceQuery) WithSendingDomains(opts ...func(*SendingDomainQuery)) *WorkspaceQuery {
+	query := (&SendingDomainClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withSendingDomains = query
 	return _q
 }
 
@@ -985,7 +1021,7 @@ func (_q *WorkspaceQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Wo
 	var (
 		nodes       = []*Workspace{}
 		_spec       = _q.querySpec()
-		loadedTypes = [18]bool{
+		loadedTypes = [19]bool{
 			_q.withContacts != nil,
 			_q.withCustomFields != nil,
 			_q.withSegments != nil,
@@ -993,6 +1029,7 @@ func (_q *WorkspaceQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Wo
 			_q.withVisitors != nil,
 			_q.withAPITokens != nil,
 			_q.withIntegrations != nil,
+			_q.withSendingDomains != nil,
 			_q.withBroadcasts != nil,
 			_q.withBroadcastRecipients != nil,
 			_q.withEmailTemplates != nil,
@@ -1073,6 +1110,13 @@ func (_q *WorkspaceQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Wo
 		if err := _q.loadIntegrations(ctx, query, nodes,
 			func(n *Workspace) { n.Edges.Integrations = []*Integration{} },
 			func(n *Workspace, e *Integration) { n.Edges.Integrations = append(n.Edges.Integrations, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := _q.withSendingDomains; query != nil {
+		if err := _q.loadSendingDomains(ctx, query, nodes,
+			func(n *Workspace) { n.Edges.SendingDomains = []*SendingDomain{} },
+			func(n *Workspace, e *SendingDomain) { n.Edges.SendingDomains = append(n.Edges.SendingDomains, e) }); err != nil {
 			return nil, err
 		}
 	}
@@ -1355,6 +1399,36 @@ func (_q *WorkspaceQuery) loadIntegrations(ctx context.Context, query *Integrati
 	}
 	query.Where(predicate.Integration(func(s *sql.Selector) {
 		s.Where(sql.InValues(s.C(workspace.IntegrationsColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.WorkspaceID
+		node, ok := nodeids[fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "workspace_id" returned %v for node %v`, fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (_q *WorkspaceQuery) loadSendingDomains(ctx context.Context, query *SendingDomainQuery, nodes []*Workspace, init func(*Workspace), assign func(*Workspace, *SendingDomain)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[int64]*Workspace)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(sendingdomain.FieldWorkspaceID)
+	}
+	query.Where(predicate.SendingDomain(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(workspace.SendingDomainsColumn), fks...))
 	}))
 	neighbors, err := query.All(ctx)
 	if err != nil {

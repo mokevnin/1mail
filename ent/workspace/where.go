@@ -586,6 +586,29 @@ func HasIntegrationsWith(preds ...predicate.Integration) predicate.Workspace {
 	})
 }
 
+// HasSendingDomains applies the HasEdge predicate on the "sending_domains" edge.
+func HasSendingDomains() predicate.Workspace {
+	return predicate.Workspace(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, SendingDomainsTable, SendingDomainsColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasSendingDomainsWith applies the HasEdge predicate on the "sending_domains" edge with a given conditions (other predicates).
+func HasSendingDomainsWith(preds ...predicate.SendingDomain) predicate.Workspace {
+	return predicate.Workspace(func(s *sql.Selector) {
+		step := newSendingDomainsStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // HasBroadcasts applies the HasEdge predicate on the "broadcasts" edge.
 func HasBroadcasts() predicate.Workspace {
 	return predicate.Workspace(func(s *sql.Selector) {

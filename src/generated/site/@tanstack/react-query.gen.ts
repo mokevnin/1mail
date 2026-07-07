@@ -4,8 +4,8 @@
 import { type DefaultError, type InfiniteData, infiniteQueryOptions, queryOptions, type UseMutationOptions } from '@tanstack/react-query';
 
 import { client } from '../client.gen.ts';
-import { type Options, siteAnalyticsOverview, siteAuthConfirmEmailChange, siteAuthDirectLogin, siteAuthForgotPassword, siteAuthRegister, siteAuthResetPassword, siteAuthVerifyEmail, siteAutomationsActivate, siteAutomationsCreate, siteAutomationsDeactivate, siteAutomationsDelete, siteAutomationsGet, siteAutomationsList, siteAutomationsUpdate, siteBroadcastsCreate, siteBroadcastsDelete, siteBroadcastsGet, siteBroadcastsList, siteBroadcastsSchedule, siteBroadcastsSend, siteBroadcastsTestSend, siteBroadcastsUpdate, siteContactsCreate, siteContactsDelete, siteContactsGet, siteContactsList, siteContactsUpdate, siteCustomFieldsList, siteEventsActions, siteEventsList, siteIntegrationsCreate, siteIntegrationsDelete, siteIntegrationsGet, siteIntegrationsList, siteIntegrationsUpdate, siteInvitationsCreate, siteInvitationsDelete, siteInvitationsList, siteMembershipsDelete, siteMembershipsList, siteMembershipsUpdate, sitePublicInvitationsAccept, sitePublicInvitationsLookup, siteSegmentsCreate, siteSegmentsDelete, siteSegmentsGet, siteSegmentsList, siteSegmentsPreview, siteSegmentsUpdate, siteSuppressionsCreate, siteSuppressionsDelete, siteSuppressionsList, siteTemplatesCreate, siteTemplatesDelete, siteTemplatesGet, siteTemplatesList, siteTemplatesUpdate, siteTokensCreate, siteTokensDelete, siteTokensList, siteTransactionalEmailsList, siteUserEmailChange, siteUserGetMe, siteUserResendVerification, siteUserUpdateMe, siteWebhooksCreate, siteWebhooksDelete, siteWebhooksGet, siteWebhooksList, siteWebhooksUpdate, siteWorkspacesList, siteWorkspacesUpdate } from '../sdk.gen.ts';
-import type { SiteAnalyticsOverviewData, SiteAnalyticsOverviewError, SiteAnalyticsOverviewResponse, SiteAuthConfirmEmailChangeData, SiteAuthConfirmEmailChangeError, SiteAuthDirectLoginData, SiteAuthDirectLoginError, SiteAuthDirectLoginResponse, SiteAuthForgotPasswordData, SiteAuthRegisterData, SiteAuthRegisterError, SiteAuthRegisterResponse, SiteAuthResetPasswordData, SiteAuthResetPasswordError, SiteAuthVerifyEmailData, SiteAuthVerifyEmailError, SiteAutomationsActivateData, SiteAutomationsActivateError, SiteAutomationsActivateResponse, SiteAutomationsCreateData, SiteAutomationsCreateError, SiteAutomationsCreateResponse, SiteAutomationsDeactivateData, SiteAutomationsDeactivateError, SiteAutomationsDeactivateResponse, SiteAutomationsDeleteData, SiteAutomationsDeleteError, SiteAutomationsDeleteResponse, SiteAutomationsGetData, SiteAutomationsGetError, SiteAutomationsGetResponse, SiteAutomationsListData, SiteAutomationsListError, SiteAutomationsListResponse, SiteAutomationsUpdateData, SiteAutomationsUpdateError, SiteAutomationsUpdateResponse, SiteBroadcastsCreateData, SiteBroadcastsCreateError, SiteBroadcastsCreateResponse, SiteBroadcastsDeleteData, SiteBroadcastsDeleteError, SiteBroadcastsDeleteResponse, SiteBroadcastsGetData, SiteBroadcastsGetError, SiteBroadcastsGetResponse, SiteBroadcastsListData, SiteBroadcastsListError, SiteBroadcastsListResponse, SiteBroadcastsScheduleData, SiteBroadcastsScheduleError, SiteBroadcastsScheduleResponse, SiteBroadcastsSendData, SiteBroadcastsSendError, SiteBroadcastsSendResponse, SiteBroadcastsTestSendData, SiteBroadcastsTestSendError, SiteBroadcastsTestSendResponse, SiteBroadcastsUpdateData, SiteBroadcastsUpdateError, SiteBroadcastsUpdateResponse, SiteContactsCreateData, SiteContactsCreateError, SiteContactsCreateResponse, SiteContactsDeleteData, SiteContactsDeleteError, SiteContactsDeleteResponse, SiteContactsGetData, SiteContactsGetError, SiteContactsGetResponse, SiteContactsListData, SiteContactsListError, SiteContactsListResponse, SiteContactsUpdateData, SiteContactsUpdateError, SiteContactsUpdateResponse, SiteCustomFieldsListData, SiteCustomFieldsListError, SiteCustomFieldsListResponse, SiteEventsActionsData, SiteEventsActionsError, SiteEventsActionsResponse, SiteEventsListData, SiteEventsListError, SiteEventsListResponse, SiteIntegrationsCreateData, SiteIntegrationsCreateError, SiteIntegrationsCreateResponse, SiteIntegrationsDeleteData, SiteIntegrationsDeleteError, SiteIntegrationsDeleteResponse, SiteIntegrationsGetData, SiteIntegrationsGetError, SiteIntegrationsGetResponse, SiteIntegrationsListData, SiteIntegrationsListError, SiteIntegrationsListResponse, SiteIntegrationsUpdateData, SiteIntegrationsUpdateError, SiteIntegrationsUpdateResponse, SiteInvitationsCreateData, SiteInvitationsCreateError, SiteInvitationsCreateResponse, SiteInvitationsDeleteData, SiteInvitationsDeleteError, SiteInvitationsDeleteResponse, SiteInvitationsListData, SiteInvitationsListError, SiteInvitationsListResponse, SiteMembershipsDeleteData, SiteMembershipsDeleteError, SiteMembershipsDeleteResponse, SiteMembershipsListData, SiteMembershipsListError, SiteMembershipsListResponse, SiteMembershipsUpdateData, SiteMembershipsUpdateError, SiteMembershipsUpdateResponse, SitePublicInvitationsAcceptData, SitePublicInvitationsAcceptError, SitePublicInvitationsLookupData, SitePublicInvitationsLookupError, SitePublicInvitationsLookupResponse, SiteSegmentsCreateData, SiteSegmentsCreateError, SiteSegmentsCreateResponse, SiteSegmentsDeleteData, SiteSegmentsDeleteError, SiteSegmentsDeleteResponse, SiteSegmentsGetData, SiteSegmentsGetError, SiteSegmentsGetResponse, SiteSegmentsListData, SiteSegmentsListError, SiteSegmentsListResponse, SiteSegmentsPreviewData, SiteSegmentsPreviewError, SiteSegmentsPreviewResponse, SiteSegmentsUpdateData, SiteSegmentsUpdateError, SiteSegmentsUpdateResponse, SiteSuppressionsCreateData, SiteSuppressionsCreateError, SiteSuppressionsCreateResponse, SiteSuppressionsDeleteData, SiteSuppressionsDeleteError, SiteSuppressionsDeleteResponse, SiteSuppressionsListData, SiteSuppressionsListError, SiteSuppressionsListResponse, SiteTemplatesCreateData, SiteTemplatesCreateError, SiteTemplatesCreateResponse, SiteTemplatesDeleteData, SiteTemplatesDeleteError, SiteTemplatesDeleteResponse, SiteTemplatesGetData, SiteTemplatesGetError, SiteTemplatesGetResponse, SiteTemplatesListData, SiteTemplatesListError, SiteTemplatesListResponse, SiteTemplatesUpdateData, SiteTemplatesUpdateError, SiteTemplatesUpdateResponse, SiteTokensCreateData, SiteTokensCreateError, SiteTokensCreateResponse, SiteTokensDeleteData, SiteTokensDeleteError, SiteTokensDeleteResponse, SiteTokensListData, SiteTokensListError, SiteTokensListResponse, SiteTransactionalEmailsListData, SiteTransactionalEmailsListError, SiteTransactionalEmailsListResponse, SiteUserEmailChangeData, SiteUserEmailChangeError, SiteUserGetMeData, SiteUserGetMeResponse, SiteUserResendVerificationData, SiteUserUpdateMeData, SiteUserUpdateMeError, SiteUserUpdateMeResponse, SiteWebhooksCreateData, SiteWebhooksCreateError, SiteWebhooksCreateResponse, SiteWebhooksDeleteData, SiteWebhooksDeleteError, SiteWebhooksDeleteResponse, SiteWebhooksGetData, SiteWebhooksGetError, SiteWebhooksGetResponse, SiteWebhooksListData, SiteWebhooksListError, SiteWebhooksListResponse, SiteWebhooksUpdateData, SiteWebhooksUpdateError, SiteWebhooksUpdateResponse, SiteWorkspacesListData, SiteWorkspacesListResponse, SiteWorkspacesUpdateData, SiteWorkspacesUpdateError, SiteWorkspacesUpdateResponse } from '../types.gen.ts';
+import { type Options, siteAnalyticsOverview, siteAuthConfirmEmailChange, siteAuthDirectLogin, siteAuthForgotPassword, siteAuthRegister, siteAuthResetPassword, siteAuthVerifyEmail, siteAutomationsActivate, siteAutomationsCreate, siteAutomationsDeactivate, siteAutomationsDelete, siteAutomationsGet, siteAutomationsList, siteAutomationsUpdate, siteBroadcastsCreate, siteBroadcastsDelete, siteBroadcastsGet, siteBroadcastsList, siteBroadcastsSchedule, siteBroadcastsSend, siteBroadcastsTestSend, siteBroadcastsUpdate, siteContactsCreate, siteContactsDelete, siteContactsGet, siteContactsList, siteContactsUpdate, siteCustomFieldsList, siteEventsActions, siteEventsList, siteIntegrationsCreate, siteIntegrationsDelete, siteIntegrationsGet, siteIntegrationsList, siteIntegrationsUpdate, siteInvitationsCreate, siteInvitationsDelete, siteInvitationsList, siteMembershipsDelete, siteMembershipsList, siteMembershipsUpdate, sitePublicInvitationsAccept, sitePublicInvitationsLookup, siteSegmentsCreate, siteSegmentsDelete, siteSegmentsGet, siteSegmentsList, siteSegmentsPreview, siteSegmentsUpdate, siteSendingDomainsCreate, siteSendingDomainsDelete, siteSendingDomainsGet, siteSendingDomainsList, siteSendingDomainsVerify, siteSuppressionsCreate, siteSuppressionsDelete, siteSuppressionsList, siteTemplatesCreate, siteTemplatesDelete, siteTemplatesGet, siteTemplatesList, siteTemplatesUpdate, siteTokensCreate, siteTokensDelete, siteTokensList, siteTransactionalEmailsList, siteUserEmailChange, siteUserGetMe, siteUserResendVerification, siteUserUpdateMe, siteWebhooksCreate, siteWebhooksDelete, siteWebhooksGet, siteWebhooksList, siteWebhooksUpdate, siteWorkspacesList, siteWorkspacesUpdate } from '../sdk.gen.ts';
+import type { SiteAnalyticsOverviewData, SiteAnalyticsOverviewError, SiteAnalyticsOverviewResponse, SiteAuthConfirmEmailChangeData, SiteAuthConfirmEmailChangeError, SiteAuthDirectLoginData, SiteAuthDirectLoginError, SiteAuthDirectLoginResponse, SiteAuthForgotPasswordData, SiteAuthRegisterData, SiteAuthRegisterError, SiteAuthRegisterResponse, SiteAuthResetPasswordData, SiteAuthResetPasswordError, SiteAuthVerifyEmailData, SiteAuthVerifyEmailError, SiteAutomationsActivateData, SiteAutomationsActivateError, SiteAutomationsActivateResponse, SiteAutomationsCreateData, SiteAutomationsCreateError, SiteAutomationsCreateResponse, SiteAutomationsDeactivateData, SiteAutomationsDeactivateError, SiteAutomationsDeactivateResponse, SiteAutomationsDeleteData, SiteAutomationsDeleteError, SiteAutomationsDeleteResponse, SiteAutomationsGetData, SiteAutomationsGetError, SiteAutomationsGetResponse, SiteAutomationsListData, SiteAutomationsListError, SiteAutomationsListResponse, SiteAutomationsUpdateData, SiteAutomationsUpdateError, SiteAutomationsUpdateResponse, SiteBroadcastsCreateData, SiteBroadcastsCreateError, SiteBroadcastsCreateResponse, SiteBroadcastsDeleteData, SiteBroadcastsDeleteError, SiteBroadcastsDeleteResponse, SiteBroadcastsGetData, SiteBroadcastsGetError, SiteBroadcastsGetResponse, SiteBroadcastsListData, SiteBroadcastsListError, SiteBroadcastsListResponse, SiteBroadcastsScheduleData, SiteBroadcastsScheduleError, SiteBroadcastsScheduleResponse, SiteBroadcastsSendData, SiteBroadcastsSendError, SiteBroadcastsSendResponse, SiteBroadcastsTestSendData, SiteBroadcastsTestSendError, SiteBroadcastsTestSendResponse, SiteBroadcastsUpdateData, SiteBroadcastsUpdateError, SiteBroadcastsUpdateResponse, SiteContactsCreateData, SiteContactsCreateError, SiteContactsCreateResponse, SiteContactsDeleteData, SiteContactsDeleteError, SiteContactsDeleteResponse, SiteContactsGetData, SiteContactsGetError, SiteContactsGetResponse, SiteContactsListData, SiteContactsListError, SiteContactsListResponse, SiteContactsUpdateData, SiteContactsUpdateError, SiteContactsUpdateResponse, SiteCustomFieldsListData, SiteCustomFieldsListError, SiteCustomFieldsListResponse, SiteEventsActionsData, SiteEventsActionsError, SiteEventsActionsResponse, SiteEventsListData, SiteEventsListError, SiteEventsListResponse, SiteIntegrationsCreateData, SiteIntegrationsCreateError, SiteIntegrationsCreateResponse, SiteIntegrationsDeleteData, SiteIntegrationsDeleteError, SiteIntegrationsDeleteResponse, SiteIntegrationsGetData, SiteIntegrationsGetError, SiteIntegrationsGetResponse, SiteIntegrationsListData, SiteIntegrationsListError, SiteIntegrationsListResponse, SiteIntegrationsUpdateData, SiteIntegrationsUpdateError, SiteIntegrationsUpdateResponse, SiteInvitationsCreateData, SiteInvitationsCreateError, SiteInvitationsCreateResponse, SiteInvitationsDeleteData, SiteInvitationsDeleteError, SiteInvitationsDeleteResponse, SiteInvitationsListData, SiteInvitationsListError, SiteInvitationsListResponse, SiteMembershipsDeleteData, SiteMembershipsDeleteError, SiteMembershipsDeleteResponse, SiteMembershipsListData, SiteMembershipsListError, SiteMembershipsListResponse, SiteMembershipsUpdateData, SiteMembershipsUpdateError, SiteMembershipsUpdateResponse, SitePublicInvitationsAcceptData, SitePublicInvitationsAcceptError, SitePublicInvitationsLookupData, SitePublicInvitationsLookupError, SitePublicInvitationsLookupResponse, SiteSegmentsCreateData, SiteSegmentsCreateError, SiteSegmentsCreateResponse, SiteSegmentsDeleteData, SiteSegmentsDeleteError, SiteSegmentsDeleteResponse, SiteSegmentsGetData, SiteSegmentsGetError, SiteSegmentsGetResponse, SiteSegmentsListData, SiteSegmentsListError, SiteSegmentsListResponse, SiteSegmentsPreviewData, SiteSegmentsPreviewError, SiteSegmentsPreviewResponse, SiteSegmentsUpdateData, SiteSegmentsUpdateError, SiteSegmentsUpdateResponse, SiteSendingDomainsCreateData, SiteSendingDomainsCreateError, SiteSendingDomainsCreateResponse, SiteSendingDomainsDeleteData, SiteSendingDomainsDeleteError, SiteSendingDomainsDeleteResponse, SiteSendingDomainsGetData, SiteSendingDomainsGetError, SiteSendingDomainsGetResponse, SiteSendingDomainsListData, SiteSendingDomainsListError, SiteSendingDomainsListResponse, SiteSendingDomainsVerifyData, SiteSendingDomainsVerifyError, SiteSendingDomainsVerifyResponse, SiteSuppressionsCreateData, SiteSuppressionsCreateError, SiteSuppressionsCreateResponse, SiteSuppressionsDeleteData, SiteSuppressionsDeleteError, SiteSuppressionsDeleteResponse, SiteSuppressionsListData, SiteSuppressionsListError, SiteSuppressionsListResponse, SiteTemplatesCreateData, SiteTemplatesCreateError, SiteTemplatesCreateResponse, SiteTemplatesDeleteData, SiteTemplatesDeleteError, SiteTemplatesDeleteResponse, SiteTemplatesGetData, SiteTemplatesGetError, SiteTemplatesGetResponse, SiteTemplatesListData, SiteTemplatesListError, SiteTemplatesListResponse, SiteTemplatesUpdateData, SiteTemplatesUpdateError, SiteTemplatesUpdateResponse, SiteTokensCreateData, SiteTokensCreateError, SiteTokensCreateResponse, SiteTokensDeleteData, SiteTokensDeleteError, SiteTokensDeleteResponse, SiteTokensListData, SiteTokensListError, SiteTokensListResponse, SiteTransactionalEmailsListData, SiteTransactionalEmailsListError, SiteTransactionalEmailsListResponse, SiteUserEmailChangeData, SiteUserEmailChangeError, SiteUserGetMeData, SiteUserGetMeResponse, SiteUserResendVerificationData, SiteUserUpdateMeData, SiteUserUpdateMeError, SiteUserUpdateMeResponse, SiteWebhooksCreateData, SiteWebhooksCreateError, SiteWebhooksCreateResponse, SiteWebhooksDeleteData, SiteWebhooksDeleteError, SiteWebhooksDeleteResponse, SiteWebhooksGetData, SiteWebhooksGetError, SiteWebhooksGetResponse, SiteWebhooksListData, SiteWebhooksListError, SiteWebhooksListResponse, SiteWebhooksUpdateData, SiteWebhooksUpdateError, SiteWebhooksUpdateResponse, SiteWorkspacesListData, SiteWorkspacesListResponse, SiteWorkspacesUpdateData, SiteWorkspacesUpdateError, SiteWorkspacesUpdateResponse } from '../types.gen.ts';
 
 /**
  * Confirm an email change from the token sent to the new address. Public:
@@ -1160,6 +1160,123 @@ export const siteSegmentsUpdateMutation = (options?: Partial<Options<SiteSegment
     const mutationOptions: UseMutationOptions<SiteSegmentsUpdateResponse, SiteSegmentsUpdateError, Options<SiteSegmentsUpdateData>> = {
         mutationFn: async (fnOptions) => {
             const { data } = await siteSegmentsUpdate({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const siteSendingDomainsListQueryKey = (options: Options<SiteSendingDomainsListData>) => createQueryKey('siteSendingDomainsList', options);
+
+/**
+ * List sending domains for the site UI
+ */
+export const siteSendingDomainsListOptions = (options: Options<SiteSendingDomainsListData>) => queryOptions<SiteSendingDomainsListResponse, SiteSendingDomainsListError, SiteSendingDomainsListResponse, ReturnType<typeof siteSendingDomainsListQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await siteSendingDomainsList({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: siteSendingDomainsListQueryKey(options)
+});
+
+export const siteSendingDomainsListInfiniteQueryKey = (options: Options<SiteSendingDomainsListData>): QueryKey<Options<SiteSendingDomainsListData>> => createQueryKey('siteSendingDomainsList', options, true);
+
+/**
+ * List sending domains for the site UI
+ */
+export const siteSendingDomainsListInfiniteOptions = (options: Options<SiteSendingDomainsListData>) => {
+    const opts = infiniteQueryOptions<SiteSendingDomainsListResponse, SiteSendingDomainsListError, InfiniteData<SiteSendingDomainsListResponse>, QueryKey<Options<SiteSendingDomainsListData>>, number | Pick<QueryKey<Options<SiteSendingDomainsListData>>[0], 'body' | 'headers' | 'path' | 'query'>>(
+    // @ts-ignore
+    {
+        queryFn: async ({ pageParam, queryKey, signal }) => {
+            // @ts-ignore
+            const page: Pick<QueryKey<Options<SiteSendingDomainsListData>>[0], 'body' | 'headers' | 'path' | 'query'> = typeof pageParam === 'object' ? pageParam : {
+                query: {
+                    page: pageParam
+                }
+            };
+            const params = createInfiniteParams(queryKey, page);
+            const { data } = await siteSendingDomainsList({
+                ...options,
+                ...params,
+                signal,
+                throwOnError: true
+            });
+            return data;
+        },
+        queryKey: siteSendingDomainsListInfiniteQueryKey(options)
+    });
+    return opts as Omit<typeof opts, 'initialData'>;
+};
+
+/**
+ * Add a sending domain; mints the DKIM keypair and returns the DNS records
+ */
+export const siteSendingDomainsCreateMutation = (options?: Partial<Options<SiteSendingDomainsCreateData>>): UseMutationOptions<SiteSendingDomainsCreateResponse, SiteSendingDomainsCreateError, Options<SiteSendingDomainsCreateData>> => {
+    const mutationOptions: UseMutationOptions<SiteSendingDomainsCreateResponse, SiteSendingDomainsCreateError, Options<SiteSendingDomainsCreateData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await siteSendingDomainsCreate({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Delete a sending domain
+ */
+export const siteSendingDomainsDeleteMutation = (options?: Partial<Options<SiteSendingDomainsDeleteData>>): UseMutationOptions<SiteSendingDomainsDeleteResponse, SiteSendingDomainsDeleteError, Options<SiteSendingDomainsDeleteData>> => {
+    const mutationOptions: UseMutationOptions<SiteSendingDomainsDeleteResponse, SiteSendingDomainsDeleteError, Options<SiteSendingDomainsDeleteData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await siteSendingDomainsDelete({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const siteSendingDomainsGetQueryKey = (options: Options<SiteSendingDomainsGetData>) => createQueryKey('siteSendingDomainsGet', options);
+
+/**
+ * Get a sending domain by ID for the site UI
+ */
+export const siteSendingDomainsGetOptions = (options: Options<SiteSendingDomainsGetData>) => queryOptions<SiteSendingDomainsGetResponse, SiteSendingDomainsGetError, SiteSendingDomainsGetResponse, ReturnType<typeof siteSendingDomainsGetQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await siteSendingDomainsGet({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: siteSendingDomainsGetQueryKey(options)
+});
+
+/**
+ * Trigger an immediate DKIM re-check (fire-and-forget)
+ */
+export const siteSendingDomainsVerifyMutation = (options?: Partial<Options<SiteSendingDomainsVerifyData>>): UseMutationOptions<SiteSendingDomainsVerifyResponse, SiteSendingDomainsVerifyError, Options<SiteSendingDomainsVerifyData>> => {
+    const mutationOptions: UseMutationOptions<SiteSendingDomainsVerifyResponse, SiteSendingDomainsVerifyError, Options<SiteSendingDomainsVerifyData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await siteSendingDomainsVerify({
                 ...options,
                 ...fnOptions,
                 throwOnError: true

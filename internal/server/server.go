@@ -38,7 +38,7 @@ import (
 
 // New builds the top-level net/http handler wiring the three ogen-generated
 // API servers (site, external, collect) plus go-pkgz/auth endpoints.
-func New(cfg *config.Config, client *ent.Client, db *sql.DB, bus *events.Bus, enqueuer apisite.BroadcastEnqueuer, welcome apisite.WelcomeEnqueuer, sysmail apisite.SystemMailEnqueuer, resolver apiexternal.SenderResolver) (http.Handler, error) {
+func New(cfg *config.Config, client *ent.Client, db *sql.DB, bus *events.Bus, enqueuer apisite.BroadcastEnqueuer, welcome apisite.WelcomeEnqueuer, sysmail apisite.SystemMailEnqueuer, domainVerify apisite.SendingDomainVerifyEnqueuer, resolver apiexternal.SenderResolver) (http.Handler, error) {
 	// Credential encryption is mandatory: fail fast at boot if the key is
 	// missing or malformed rather than at first provider write.
 	cipher, err := secrets.NewCipher(cfg.EncryptionKey)
@@ -73,7 +73,7 @@ func New(cfg *config.Config, client *ent.Client, db *sql.DB, bus *events.Bus, en
 	// Site API — /site (JWT cookie via generated SecurityHandler; register and
 	// direct-login are public per the spec).
 	siteSrv, err := siteapi.NewServer(
-		apisite.NewHandlers(client, bus, cipher, providerCatalog, enqueuer, welcome, sysmail, authtoken.New(cfg.JWTSecret), cfg.AppURL),
+		apisite.NewHandlers(client, bus, cipher, providerCatalog, enqueuer, welcome, sysmail, domainVerify, authtoken.New(cfg.JWTSecret), cfg.AppURL),
 		apiauth.NewSiteSecurityHandler(cfg.JWTSecret, client),
 		siteapi.WithPathPrefix("/site"),
 		siteapi.WithErrorHandler(problemErrorHandler),

@@ -193,6 +193,26 @@ type SiteSegmentsUpdateRes interface {
 	siteSegmentsUpdateRes()
 }
 
+type SiteSendingDomainsCreateRes interface {
+	siteSendingDomainsCreateRes()
+}
+
+type SiteSendingDomainsDeleteRes interface {
+	siteSendingDomainsDeleteRes()
+}
+
+type SiteSendingDomainsGetRes interface {
+	siteSendingDomainsGetRes()
+}
+
+type SiteSendingDomainsListRes interface {
+	siteSendingDomainsListRes()
+}
+
+type SiteSendingDomainsVerifyRes interface {
+	siteSendingDomainsVerifyRes()
+}
+
 type SiteSuppressionsCreateRes interface {
 	siteSuppressionsCreateRes()
 }

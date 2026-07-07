@@ -25,6 +25,7 @@ import (
 	"github.com/mokevnin/1mail/ent/membership"
 	"github.com/mokevnin/1mail/ent/predicate"
 	"github.com/mokevnin/1mail/ent/segment"
+	"github.com/mokevnin/1mail/ent/sendingdomain"
 	"github.com/mokevnin/1mail/ent/suppression"
 	"github.com/mokevnin/1mail/ent/transactionalemail"
 	"github.com/mokevnin/1mail/ent/unsubscribe"
@@ -56,6 +57,7 @@ const (
 	TypeInvitation         = "Invitation"
 	TypeMembership         = "Membership"
 	TypeSegment            = "Segment"
+	TypeSendingDomain      = "SendingDomain"
 	TypeSuppression        = "Suppression"
 	TypeTransactionalEmail = "TransactionalEmail"
 	TypeUnsubscribe        = "Unsubscribe"
@@ -12237,6 +12239,922 @@ func (m *SegmentMutation) ResetEdge(name string) error {
 	return fmt.Errorf("unknown Segment edge %s", name)
 }
 
+// SendingDomainMutation represents an operation that mutates the SendingDomain nodes in the graph.
+type SendingDomainMutation struct {
+	config
+	op                         Op
+	typ                        string
+	id                         *int64
+	domain                     *string
+	dkim_selector              *string
+	dkim_private_key_encrypted *string
+	dkim_public_key            *string
+	verified                   *bool
+	last_checked_at            *time.Time
+	verified_at                *time.Time
+	created_at                 *time.Time
+	updated_at                 *time.Time
+	clearedFields              map[string]struct{}
+	workspace                  *int64
+	clearedworkspace           bool
+	done                       bool
+	oldValue                   func(context.Context) (*SendingDomain, error)
+	predicates                 []predicate.SendingDomain
+}
+
+var _ ent.Mutation = (*SendingDomainMutation)(nil)
+
+// sendingdomainOption allows management of the mutation configuration using functional options.
+type sendingdomainOption func(*SendingDomainMutation)
+
+// newSendingDomainMutation creates new mutation for the SendingDomain entity.
+func newSendingDomainMutation(c config, op Op, opts ...sendingdomainOption) *SendingDomainMutation {
+	m := &SendingDomainMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeSendingDomain,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withSendingDomainID sets the ID field of the mutation.
+func withSendingDomainID(id int64) sendingdomainOption {
+	return func(m *SendingDomainMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *SendingDomain
+		)
+		m.oldValue = func(ctx context.Context) (*SendingDomain, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().SendingDomain.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withSendingDomain sets the old SendingDomain of the mutation.
+func withSendingDomain(node *SendingDomain) sendingdomainOption {
+	return func(m *SendingDomainMutation) {
+		m.oldValue = func(context.Context) (*SendingDomain, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m SendingDomainMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m SendingDomainMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of SendingDomain entities.
+func (m *SendingDomainMutation) SetID(id int64) {
+	m.id = &id
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *SendingDomainMutation) ID() (id int64, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *SendingDomainMutation) IDs(ctx context.Context) ([]int64, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []int64{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().SendingDomain.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetDomain sets the "domain" field.
+func (m *SendingDomainMutation) SetDomain(s string) {
+	m.domain = &s
+}
+
+// Domain returns the value of the "domain" field in the mutation.
+func (m *SendingDomainMutation) Domain() (r string, exists bool) {
+	v := m.domain
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldDomain returns the old "domain" field's value of the SendingDomain entity.
+// If the SendingDomain object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *SendingDomainMutation) OldDomain(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldDomain is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldDomain requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldDomain: %w", err)
+	}
+	return oldValue.Domain, nil
+}
+
+// ResetDomain resets all changes to the "domain" field.
+func (m *SendingDomainMutation) ResetDomain() {
+	m.domain = nil
+}
+
+// SetDkimSelector sets the "dkim_selector" field.
+func (m *SendingDomainMutation) SetDkimSelector(s string) {
+	m.dkim_selector = &s
+}
+
+// DkimSelector returns the value of the "dkim_selector" field in the mutation.
+func (m *SendingDomainMutation) DkimSelector() (r string, exists bool) {
+	v := m.dkim_selector
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldDkimSelector returns the old "dkim_selector" field's value of the SendingDomain entity.
+// If the SendingDomain object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *SendingDomainMutation) OldDkimSelector(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldDkimSelector is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldDkimSelector requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldDkimSelector: %w", err)
+	}
+	return oldValue.DkimSelector, nil
+}
+
+// ResetDkimSelector resets all changes to the "dkim_selector" field.
+func (m *SendingDomainMutation) ResetDkimSelector() {
+	m.dkim_selector = nil
+}
+
+// SetDkimPrivateKeyEncrypted sets the "dkim_private_key_encrypted" field.
+func (m *SendingDomainMutation) SetDkimPrivateKeyEncrypted(s string) {
+	m.dkim_private_key_encrypted = &s
+}
+
+// DkimPrivateKeyEncrypted returns the value of the "dkim_private_key_encrypted" field in the mutation.
+func (m *SendingDomainMutation) DkimPrivateKeyEncrypted() (r string, exists bool) {
+	v := m.dkim_private_key_encrypted
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldDkimPrivateKeyEncrypted returns the old "dkim_private_key_encrypted" field's value of the SendingDomain entity.
+// If the SendingDomain object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *SendingDomainMutation) OldDkimPrivateKeyEncrypted(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldDkimPrivateKeyEncrypted is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldDkimPrivateKeyEncrypted requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldDkimPrivateKeyEncrypted: %w", err)
+	}
+	return oldValue.DkimPrivateKeyEncrypted, nil
+}
+
+// ResetDkimPrivateKeyEncrypted resets all changes to the "dkim_private_key_encrypted" field.
+func (m *SendingDomainMutation) ResetDkimPrivateKeyEncrypted() {
+	m.dkim_private_key_encrypted = nil
+}
+
+// SetDkimPublicKey sets the "dkim_public_key" field.
+func (m *SendingDomainMutation) SetDkimPublicKey(s string) {
+	m.dkim_public_key = &s
+}
+
+// DkimPublicKey returns the value of the "dkim_public_key" field in the mutation.
+func (m *SendingDomainMutation) DkimPublicKey() (r string, exists bool) {
+	v := m.dkim_public_key
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldDkimPublicKey returns the old "dkim_public_key" field's value of the SendingDomain entity.
+// If the SendingDomain object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *SendingDomainMutation) OldDkimPublicKey(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldDkimPublicKey is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldDkimPublicKey requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldDkimPublicKey: %w", err)
+	}
+	return oldValue.DkimPublicKey, nil
+}
+
+// ResetDkimPublicKey resets all changes to the "dkim_public_key" field.
+func (m *SendingDomainMutation) ResetDkimPublicKey() {
+	m.dkim_public_key = nil
+}
+
+// SetVerified sets the "verified" field.
+func (m *SendingDomainMutation) SetVerified(b bool) {
+	m.verified = &b
+}
+
+// Verified returns the value of the "verified" field in the mutation.
+func (m *SendingDomainMutation) Verified() (r bool, exists bool) {
+	v := m.verified
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldVerified returns the old "verified" field's value of the SendingDomain entity.
+// If the SendingDomain object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *SendingDomainMutation) OldVerified(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldVerified is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldVerified requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldVerified: %w", err)
+	}
+	return oldValue.Verified, nil
+}
+
+// ResetVerified resets all changes to the "verified" field.
+func (m *SendingDomainMutation) ResetVerified() {
+	m.verified = nil
+}
+
+// SetLastCheckedAt sets the "last_checked_at" field.
+func (m *SendingDomainMutation) SetLastCheckedAt(t time.Time) {
+	m.last_checked_at = &t
+}
+
+// LastCheckedAt returns the value of the "last_checked_at" field in the mutation.
+func (m *SendingDomainMutation) LastCheckedAt() (r time.Time, exists bool) {
+	v := m.last_checked_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldLastCheckedAt returns the old "last_checked_at" field's value of the SendingDomain entity.
+// If the SendingDomain object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *SendingDomainMutation) OldLastCheckedAt(ctx context.Context) (v *time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldLastCheckedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldLastCheckedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldLastCheckedAt: %w", err)
+	}
+	return oldValue.LastCheckedAt, nil
+}
+
+// ClearLastCheckedAt clears the value of the "last_checked_at" field.
+func (m *SendingDomainMutation) ClearLastCheckedAt() {
+	m.last_checked_at = nil
+	m.clearedFields[sendingdomain.FieldLastCheckedAt] = struct{}{}
+}
+
+// LastCheckedAtCleared returns if the "last_checked_at" field was cleared in this mutation.
+func (m *SendingDomainMutation) LastCheckedAtCleared() bool {
+	_, ok := m.clearedFields[sendingdomain.FieldLastCheckedAt]
+	return ok
+}
+
+// ResetLastCheckedAt resets all changes to the "last_checked_at" field.
+func (m *SendingDomainMutation) ResetLastCheckedAt() {
+	m.last_checked_at = nil
+	delete(m.clearedFields, sendingdomain.FieldLastCheckedAt)
+}
+
+// SetVerifiedAt sets the "verified_at" field.
+func (m *SendingDomainMutation) SetVerifiedAt(t time.Time) {
+	m.verified_at = &t
+}
+
+// VerifiedAt returns the value of the "verified_at" field in the mutation.
+func (m *SendingDomainMutation) VerifiedAt() (r time.Time, exists bool) {
+	v := m.verified_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldVerifiedAt returns the old "verified_at" field's value of the SendingDomain entity.
+// If the SendingDomain object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *SendingDomainMutation) OldVerifiedAt(ctx context.Context) (v *time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldVerifiedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldVerifiedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldVerifiedAt: %w", err)
+	}
+	return oldValue.VerifiedAt, nil
+}
+
+// ClearVerifiedAt clears the value of the "verified_at" field.
+func (m *SendingDomainMutation) ClearVerifiedAt() {
+	m.verified_at = nil
+	m.clearedFields[sendingdomain.FieldVerifiedAt] = struct{}{}
+}
+
+// VerifiedAtCleared returns if the "verified_at" field was cleared in this mutation.
+func (m *SendingDomainMutation) VerifiedAtCleared() bool {
+	_, ok := m.clearedFields[sendingdomain.FieldVerifiedAt]
+	return ok
+}
+
+// ResetVerifiedAt resets all changes to the "verified_at" field.
+func (m *SendingDomainMutation) ResetVerifiedAt() {
+	m.verified_at = nil
+	delete(m.clearedFields, sendingdomain.FieldVerifiedAt)
+}
+
+// SetWorkspaceID sets the "workspace_id" field.
+func (m *SendingDomainMutation) SetWorkspaceID(i int64) {
+	m.workspace = &i
+}
+
+// WorkspaceID returns the value of the "workspace_id" field in the mutation.
+func (m *SendingDomainMutation) WorkspaceID() (r int64, exists bool) {
+	v := m.workspace
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldWorkspaceID returns the old "workspace_id" field's value of the SendingDomain entity.
+// If the SendingDomain object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *SendingDomainMutation) OldWorkspaceID(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldWorkspaceID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldWorkspaceID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldWorkspaceID: %w", err)
+	}
+	return oldValue.WorkspaceID, nil
+}
+
+// ResetWorkspaceID resets all changes to the "workspace_id" field.
+func (m *SendingDomainMutation) ResetWorkspaceID() {
+	m.workspace = nil
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *SendingDomainMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *SendingDomainMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the SendingDomain entity.
+// If the SendingDomain object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *SendingDomainMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *SendingDomainMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (m *SendingDomainMutation) SetUpdatedAt(t time.Time) {
+	m.updated_at = &t
+}
+
+// UpdatedAt returns the value of the "updated_at" field in the mutation.
+func (m *SendingDomainMutation) UpdatedAt() (r time.Time, exists bool) {
+	v := m.updated_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUpdatedAt returns the old "updated_at" field's value of the SendingDomain entity.
+// If the SendingDomain object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *SendingDomainMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUpdatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUpdatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUpdatedAt: %w", err)
+	}
+	return oldValue.UpdatedAt, nil
+}
+
+// ResetUpdatedAt resets all changes to the "updated_at" field.
+func (m *SendingDomainMutation) ResetUpdatedAt() {
+	m.updated_at = nil
+}
+
+// ClearWorkspace clears the "workspace" edge to the Workspace entity.
+func (m *SendingDomainMutation) ClearWorkspace() {
+	m.clearedworkspace = true
+	m.clearedFields[sendingdomain.FieldWorkspaceID] = struct{}{}
+}
+
+// WorkspaceCleared reports if the "workspace" edge to the Workspace entity was cleared.
+func (m *SendingDomainMutation) WorkspaceCleared() bool {
+	return m.clearedworkspace
+}
+
+// WorkspaceIDs returns the "workspace" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// WorkspaceID instead. It exists only for internal usage by the builders.
+func (m *SendingDomainMutation) WorkspaceIDs() (ids []int64) {
+	if id := m.workspace; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetWorkspace resets all changes to the "workspace" edge.
+func (m *SendingDomainMutation) ResetWorkspace() {
+	m.workspace = nil
+	m.clearedworkspace = false
+}
+
+// Where appends a list predicates to the SendingDomainMutation builder.
+func (m *SendingDomainMutation) Where(ps ...predicate.SendingDomain) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the SendingDomainMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *SendingDomainMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.SendingDomain, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *SendingDomainMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *SendingDomainMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (SendingDomain).
+func (m *SendingDomainMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *SendingDomainMutation) Fields() []string {
+	fields := make([]string, 0, 10)
+	if m.domain != nil {
+		fields = append(fields, sendingdomain.FieldDomain)
+	}
+	if m.dkim_selector != nil {
+		fields = append(fields, sendingdomain.FieldDkimSelector)
+	}
+	if m.dkim_private_key_encrypted != nil {
+		fields = append(fields, sendingdomain.FieldDkimPrivateKeyEncrypted)
+	}
+	if m.dkim_public_key != nil {
+		fields = append(fields, sendingdomain.FieldDkimPublicKey)
+	}
+	if m.verified != nil {
+		fields = append(fields, sendingdomain.FieldVerified)
+	}
+	if m.last_checked_at != nil {
+		fields = append(fields, sendingdomain.FieldLastCheckedAt)
+	}
+	if m.verified_at != nil {
+		fields = append(fields, sendingdomain.FieldVerifiedAt)
+	}
+	if m.workspace != nil {
+		fields = append(fields, sendingdomain.FieldWorkspaceID)
+	}
+	if m.created_at != nil {
+		fields = append(fields, sendingdomain.FieldCreatedAt)
+	}
+	if m.updated_at != nil {
+		fields = append(fields, sendingdomain.FieldUpdatedAt)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *SendingDomainMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case sendingdomain.FieldDomain:
+		return m.Domain()
+	case sendingdomain.FieldDkimSelector:
+		return m.DkimSelector()
+	case sendingdomain.FieldDkimPrivateKeyEncrypted:
+		return m.DkimPrivateKeyEncrypted()
+	case sendingdomain.FieldDkimPublicKey:
+		return m.DkimPublicKey()
+	case sendingdomain.FieldVerified:
+		return m.Verified()
+	case sendingdomain.FieldLastCheckedAt:
+		return m.LastCheckedAt()
+	case sendingdomain.FieldVerifiedAt:
+		return m.VerifiedAt()
+	case sendingdomain.FieldWorkspaceID:
+		return m.WorkspaceID()
+	case sendingdomain.FieldCreatedAt:
+		return m.CreatedAt()
+	case sendingdomain.FieldUpdatedAt:
+		return m.UpdatedAt()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *SendingDomainMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case sendingdomain.FieldDomain:
+		return m.OldDomain(ctx)
+	case sendingdomain.FieldDkimSelector:
+		return m.OldDkimSelector(ctx)
+	case sendingdomain.FieldDkimPrivateKeyEncrypted:
+		return m.OldDkimPrivateKeyEncrypted(ctx)
+	case sendingdomain.FieldDkimPublicKey:
+		return m.OldDkimPublicKey(ctx)
+	case sendingdomain.FieldVerified:
+		return m.OldVerified(ctx)
+	case sendingdomain.FieldLastCheckedAt:
+		return m.OldLastCheckedAt(ctx)
+	case sendingdomain.FieldVerifiedAt:
+		return m.OldVerifiedAt(ctx)
+	case sendingdomain.FieldWorkspaceID:
+		return m.OldWorkspaceID(ctx)
+	case sendingdomain.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	case sendingdomain.FieldUpdatedAt:
+		return m.OldUpdatedAt(ctx)
+	}
+	return nil, fmt.Errorf("unknown SendingDomain field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *SendingDomainMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case sendingdomain.FieldDomain:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetDomain(v)
+		return nil
+	case sendingdomain.FieldDkimSelector:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetDkimSelector(v)
+		return nil
+	case sendingdomain.FieldDkimPrivateKeyEncrypted:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetDkimPrivateKeyEncrypted(v)
+		return nil
+	case sendingdomain.FieldDkimPublicKey:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetDkimPublicKey(v)
+		return nil
+	case sendingdomain.FieldVerified:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetVerified(v)
+		return nil
+	case sendingdomain.FieldLastCheckedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetLastCheckedAt(v)
+		return nil
+	case sendingdomain.FieldVerifiedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetVerifiedAt(v)
+		return nil
+	case sendingdomain.FieldWorkspaceID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetWorkspaceID(v)
+		return nil
+	case sendingdomain.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	case sendingdomain.FieldUpdatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUpdatedAt(v)
+		return nil
+	}
+	return fmt.Errorf("unknown SendingDomain field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *SendingDomainMutation) AddedFields() []string {
+	var fields []string
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *SendingDomainMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *SendingDomainMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	}
+	return fmt.Errorf("unknown SendingDomain numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *SendingDomainMutation) ClearedFields() []string {
+	var fields []string
+	if m.FieldCleared(sendingdomain.FieldLastCheckedAt) {
+		fields = append(fields, sendingdomain.FieldLastCheckedAt)
+	}
+	if m.FieldCleared(sendingdomain.FieldVerifiedAt) {
+		fields = append(fields, sendingdomain.FieldVerifiedAt)
+	}
+	return fields
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *SendingDomainMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *SendingDomainMutation) ClearField(name string) error {
+	switch name {
+	case sendingdomain.FieldLastCheckedAt:
+		m.ClearLastCheckedAt()
+		return nil
+	case sendingdomain.FieldVerifiedAt:
+		m.ClearVerifiedAt()
+		return nil
+	}
+	return fmt.Errorf("unknown SendingDomain nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *SendingDomainMutation) ResetField(name string) error {
+	switch name {
+	case sendingdomain.FieldDomain:
+		m.ResetDomain()
+		return nil
+	case sendingdomain.FieldDkimSelector:
+		m.ResetDkimSelector()
+		return nil
+	case sendingdomain.FieldDkimPrivateKeyEncrypted:
+		m.ResetDkimPrivateKeyEncrypted()
+		return nil
+	case sendingdomain.FieldDkimPublicKey:
+		m.ResetDkimPublicKey()
+		return nil
+	case sendingdomain.FieldVerified:
+		m.ResetVerified()
+		return nil
+	case sendingdomain.FieldLastCheckedAt:
+		m.ResetLastCheckedAt()
+		return nil
+	case sendingdomain.FieldVerifiedAt:
+		m.ResetVerifiedAt()
+		return nil
+	case sendingdomain.FieldWorkspaceID:
+		m.ResetWorkspaceID()
+		return nil
+	case sendingdomain.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	case sendingdomain.FieldUpdatedAt:
+		m.ResetUpdatedAt()
+		return nil
+	}
+	return fmt.Errorf("unknown SendingDomain field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *SendingDomainMutation) AddedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.workspace != nil {
+		edges = append(edges, sendingdomain.EdgeWorkspace)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *SendingDomainMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case sendingdomain.EdgeWorkspace:
+		if id := m.workspace; id != nil {
+			return []ent.Value{*id}
+		}
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *SendingDomainMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 1)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *SendingDomainMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *SendingDomainMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.clearedworkspace {
+		edges = append(edges, sendingdomain.EdgeWorkspace)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *SendingDomainMutation) EdgeCleared(name string) bool {
+	switch name {
+	case sendingdomain.EdgeWorkspace:
+		return m.clearedworkspace
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *SendingDomainMutation) ClearEdge(name string) error {
+	switch name {
+	case sendingdomain.EdgeWorkspace:
+		m.ClearWorkspace()
+		return nil
+	}
+	return fmt.Errorf("unknown SendingDomain unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *SendingDomainMutation) ResetEdge(name string) error {
+	switch name {
+	case sendingdomain.EdgeWorkspace:
+		m.ResetWorkspace()
+		return nil
+	}
+	return fmt.Errorf("unknown SendingDomain edge %s", name)
+}
+
 // SuppressionMutation represents an operation that mutates the Suppression nodes in the graph.
 type SuppressionMutation struct {
 	config
@@ -17109,6 +18027,9 @@ type WorkspaceMutation struct {
 	integrations                map[int64]struct{}
 	removedintegrations         map[int64]struct{}
 	clearedintegrations         bool
+	sending_domains             map[int64]struct{}
+	removedsending_domains      map[int64]struct{}
+	clearedsending_domains      bool
 	broadcasts                  map[int64]struct{}
 	removedbroadcasts           map[int64]struct{}
 	clearedbroadcasts           bool
@@ -17843,6 +18764,60 @@ func (m *WorkspaceMutation) ResetIntegrations() {
 	m.integrations = nil
 	m.clearedintegrations = false
 	m.removedintegrations = nil
+}
+
+// AddSendingDomainIDs adds the "sending_domains" edge to the SendingDomain entity by ids.
+func (m *WorkspaceMutation) AddSendingDomainIDs(ids ...int64) {
+	if m.sending_domains == nil {
+		m.sending_domains = make(map[int64]struct{})
+	}
+	for i := range ids {
+		m.sending_domains[ids[i]] = struct{}{}
+	}
+}
+
+// ClearSendingDomains clears the "sending_domains" edge to the SendingDomain entity.
+func (m *WorkspaceMutation) ClearSendingDomains() {
+	m.clearedsending_domains = true
+}
+
+// SendingDomainsCleared reports if the "sending_domains" edge to the SendingDomain entity was cleared.
+func (m *WorkspaceMutation) SendingDomainsCleared() bool {
+	return m.clearedsending_domains
+}
+
+// RemoveSendingDomainIDs removes the "sending_domains" edge to the SendingDomain entity by IDs.
+func (m *WorkspaceMutation) RemoveSendingDomainIDs(ids ...int64) {
+	if m.removedsending_domains == nil {
+		m.removedsending_domains = make(map[int64]struct{})
+	}
+	for i := range ids {
+		delete(m.sending_domains, ids[i])
+		m.removedsending_domains[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedSendingDomains returns the removed IDs of the "sending_domains" edge to the SendingDomain entity.
+func (m *WorkspaceMutation) RemovedSendingDomainsIDs() (ids []int64) {
+	for id := range m.removedsending_domains {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// SendingDomainsIDs returns the "sending_domains" edge IDs in the mutation.
+func (m *WorkspaceMutation) SendingDomainsIDs() (ids []int64) {
+	for id := range m.sending_domains {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetSendingDomains resets all changes to the "sending_domains" edge.
+func (m *WorkspaceMutation) ResetSendingDomains() {
+	m.sending_domains = nil
+	m.clearedsending_domains = false
+	m.removedsending_domains = nil
 }
 
 // AddBroadcastIDs adds the "broadcasts" edge to the Broadcast entity by ids.
@@ -18657,7 +19632,7 @@ func (m *WorkspaceMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *WorkspaceMutation) AddedEdges() []string {
-	edges := make([]string, 0, 18)
+	edges := make([]string, 0, 19)
 	if m.contacts != nil {
 		edges = append(edges, workspace.EdgeContacts)
 	}
@@ -18678,6 +19653,9 @@ func (m *WorkspaceMutation) AddedEdges() []string {
 	}
 	if m.integrations != nil {
 		edges = append(edges, workspace.EdgeIntegrations)
+	}
+	if m.sending_domains != nil {
+		edges = append(edges, workspace.EdgeSendingDomains)
 	}
 	if m.broadcasts != nil {
 		edges = append(edges, workspace.EdgeBroadcasts)
@@ -18761,6 +19739,12 @@ func (m *WorkspaceMutation) AddedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case workspace.EdgeSendingDomains:
+		ids := make([]ent.Value, 0, len(m.sending_domains))
+		for id := range m.sending_domains {
+			ids = append(ids, id)
+		}
+		return ids
 	case workspace.EdgeBroadcasts:
 		ids := make([]ent.Value, 0, len(m.broadcasts))
 		for id := range m.broadcasts {
@@ -18833,7 +19817,7 @@ func (m *WorkspaceMutation) AddedIDs(name string) []ent.Value {
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *WorkspaceMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 18)
+	edges := make([]string, 0, 19)
 	if m.removedcontacts != nil {
 		edges = append(edges, workspace.EdgeContacts)
 	}
@@ -18854,6 +19838,9 @@ func (m *WorkspaceMutation) RemovedEdges() []string {
 	}
 	if m.removedintegrations != nil {
 		edges = append(edges, workspace.EdgeIntegrations)
+	}
+	if m.removedsending_domains != nil {
+		edges = append(edges, workspace.EdgeSendingDomains)
 	}
 	if m.removedbroadcasts != nil {
 		edges = append(edges, workspace.EdgeBroadcasts)
@@ -18937,6 +19924,12 @@ func (m *WorkspaceMutation) RemovedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case workspace.EdgeSendingDomains:
+		ids := make([]ent.Value, 0, len(m.removedsending_domains))
+		for id := range m.removedsending_domains {
+			ids = append(ids, id)
+		}
+		return ids
 	case workspace.EdgeBroadcasts:
 		ids := make([]ent.Value, 0, len(m.removedbroadcasts))
 		for id := range m.removedbroadcasts {
@@ -19009,7 +20002,7 @@ func (m *WorkspaceMutation) RemovedIDs(name string) []ent.Value {
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *WorkspaceMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 18)
+	edges := make([]string, 0, 19)
 	if m.clearedcontacts {
 		edges = append(edges, workspace.EdgeContacts)
 	}
@@ -19030,6 +20023,9 @@ func (m *WorkspaceMutation) ClearedEdges() []string {
 	}
 	if m.clearedintegrations {
 		edges = append(edges, workspace.EdgeIntegrations)
+	}
+	if m.clearedsending_domains {
+		edges = append(edges, workspace.EdgeSendingDomains)
 	}
 	if m.clearedbroadcasts {
 		edges = append(edges, workspace.EdgeBroadcasts)
@@ -19085,6 +20081,8 @@ func (m *WorkspaceMutation) EdgeCleared(name string) bool {
 		return m.clearedapi_tokens
 	case workspace.EdgeIntegrations:
 		return m.clearedintegrations
+	case workspace.EdgeSendingDomains:
+		return m.clearedsending_domains
 	case workspace.EdgeBroadcasts:
 		return m.clearedbroadcasts
 	case workspace.EdgeBroadcastRecipients:
@@ -19143,6 +20141,9 @@ func (m *WorkspaceMutation) ResetEdge(name string) error {
 		return nil
 	case workspace.EdgeIntegrations:
 		m.ResetIntegrations()
+		return nil
+	case workspace.EdgeSendingDomains:
+		m.ResetSendingDomains()
 		return nil
 	case workspace.EdgeBroadcasts:
 		m.ResetBroadcasts()

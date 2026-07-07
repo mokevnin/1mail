@@ -38,6 +38,8 @@ type Tx struct {
 	Membership *MembershipClient
 	// Segment is the client for interacting with the Segment builders.
 	Segment *SegmentClient
+	// SendingDomain is the client for interacting with the SendingDomain builders.
+	SendingDomain *SendingDomainClient
 	// Suppression is the client for interacting with the Suppression builders.
 	Suppression *SuppressionClient
 	// TransactionalEmail is the client for interacting with the TransactionalEmail builders.
@@ -196,6 +198,7 @@ func (tx *Tx) init() {
 	tx.Invitation = NewInvitationClient(tx.config)
 	tx.Membership = NewMembershipClient(tx.config)
 	tx.Segment = NewSegmentClient(tx.config)
+	tx.SendingDomain = NewSendingDomainClient(tx.config)
 	tx.Suppression = NewSuppressionClient(tx.config)
 	tx.TransactionalEmail = NewTransactionalEmailClient(tx.config)
 	tx.Unsubscribe = NewUnsubscribeClient(tx.config)

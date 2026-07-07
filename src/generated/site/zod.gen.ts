@@ -183,6 +183,14 @@ export const zSiteCreateEmailTemplateInput = z.object({
 });
 
 /**
+ * Site request body for adding a sending domain
+ */
+export const zSiteCreateSendingDomainInput = z.object({
+    domain: z.string(),
+    dkimSelector: z.string().optional()
+});
+
+/**
  * Site request body for creating a webhook endpoint
  */
 export const zSiteCreateWebhookEndpointInput = z.object({
@@ -219,6 +227,15 @@ export const zSiteDirectLoginResult = z.object({
     email: z.string().optional(),
     attrs: z.record(z.string(), z.unknown()).optional(),
     role: z.string().optional()
+});
+
+/**
+ * A DNS record the user publishes to authenticate a sending domain
+ */
+export const zSiteDnsRecord = z.object({
+    type: z.enum(['TXT']),
+    host: z.string(),
+    value: z.string()
 });
 
 /**
@@ -762,6 +779,26 @@ export const zSiteSegmentResource = z.object({
 });
 
 /**
+ * Sending domain resource used by the site UI (ADR 0010). 1mail generates the
+ * DKIM keypair; the user publishes the DKIM TXT to authenticate the domain. The
+ * private key is never exposed. `verified` is a live property re-checked in the
+ * background — it can flip back if the DNS record disappears.
+ */
+export const zSiteSendingDomainResource = z.object({
+    id: zEntityId,
+    domain: z.string(),
+    dkimSelector: z.string(),
+    verified: z.boolean(),
+    dkimRecord: zSiteDnsRecord,
+    spfRecord: zSiteDnsRecord,
+    dmarcRecord: zSiteDnsRecord,
+    lastCheckedAt: zTimestamp.nullish(),
+    verifiedAt: zTimestamp.nullish(),
+    createdAt: zTimestamp,
+    updatedAt: zTimestamp
+});
+
+/**
  * A suppressed destination: the send path skips it on every surface
  */
 export const zSiteSuppressionResource = z.object({
@@ -977,6 +1014,21 @@ export const zSiteSegmentResourceKeySlug = z.string();
  * URL-safe unique slug; the route key for nested workspace resources
  */
 export const zSiteSegmentResourceParentKey = z.string();
+
+/**
+ * Unique identifier
+ */
+export const zSiteSendingDomainResourceKeyId = zEntityId;
+
+/**
+ * URL-safe unique slug; the route key for nested workspace resources
+ */
+export const zSiteSendingDomainResourceKeySlug = z.string();
+
+/**
+ * URL-safe unique slug; the route key for nested workspace resources
+ */
+export const zSiteSendingDomainResourceParentKey = z.string();
 
 /**
  * Unique identifier
@@ -1569,6 +1621,67 @@ export const zSiteSegmentsUpdatePath = z.object({
  * The request has succeeded.
  */
 export const zSiteSegmentsUpdateResponse = zSiteSegmentResource;
+
+export const zSiteSendingDomainsListPath = z.object({
+    slug: z.string()
+});
+
+export const zSiteSendingDomainsListQuery = z.object({
+    page: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).optional().default(1),
+    pageSize: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).optional().default(25)
+});
+
+/**
+ * Paginated response
+ */
+export const zSiteSendingDomainsListResponse = z.object({
+    items: z.array(zSiteSendingDomainResource),
+    page: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
+    pageSize: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
+    totalItems: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
+    totalPages: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' })
+});
+
+export const zSiteSendingDomainsCreateBody = zSiteCreateSendingDomainInput;
+
+export const zSiteSendingDomainsCreatePath = z.object({
+    slug: z.string()
+});
+
+/**
+ * The request has succeeded and a new resource has been created as a result.
+ */
+export const zSiteSendingDomainsCreateResponse = zSiteSendingDomainResource;
+
+export const zSiteSendingDomainsDeletePath = z.object({
+    slug: z.string(),
+    id: zEntityId
+});
+
+/**
+ * There is no content to send for this request, but the headers may be useful.
+ */
+export const zSiteSendingDomainsDeleteResponse = z.void();
+
+export const zSiteSendingDomainsGetPath = z.object({
+    slug: z.string(),
+    id: zEntityId
+});
+
+/**
+ * The request has succeeded.
+ */
+export const zSiteSendingDomainsGetResponse = zSiteSendingDomainResource;
+
+export const zSiteSendingDomainsVerifyPath = z.object({
+    slug: z.string(),
+    id: zEntityId
+});
+
+/**
+ * There is no content to send for this request, but the headers may be useful.
+ */
+export const zSiteSendingDomainsVerifyResponse = z.void();
 
 export const zSiteSuppressionsListPath = z.object({
     slug: z.string()

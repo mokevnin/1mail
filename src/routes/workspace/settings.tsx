@@ -29,6 +29,7 @@ import { activityRoute } from '../../router.tsx'
 import { ApiKeysSection } from './ApiKeysSection.tsx'
 import { IntegrationsSection } from './IntegrationsSection.tsx'
 import { MembersSection } from './MembersSection.tsx'
+import { SendingDomainsSection } from './SendingDomainsSection.tsx'
 import { SuppressionsSection } from './SuppressionsSection.tsx'
 import { WebhooksSection } from './WebhooksSection.tsx'
 
@@ -229,6 +230,7 @@ export function SettingsPage() {
           <TrackingSection collectKey={workspace.collectKey} slug={workspace.slug} />
           <TestEvent collectKey={workspace.collectKey} />
           <IntegrationsSection slug={workspace.slug} />
+          <SendingDomainsSection slug={workspace.slug} />
           <ApiKeysSection slug={workspace.slug} />
           <WebhooksSection slug={workspace.slug} />
           <SesWebhookSection ingestKey={workspace.ingestKey} />

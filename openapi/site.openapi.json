@@ -58,6 +58,9 @@
     },
     {
       "name": "Site Webhooks"
+    },
+    {
+      "name": "Site Sending Domains"
     }
   ],
   "paths": {
@@ -2969,6 +2972,284 @@
         "tags": ["Site Segments"]
       }
     },
+    "/workspaces/{slug}/sending-domains": {
+      "get": {
+        "operationId": "SiteSendingDomains_list",
+        "description": "List sending domains for the site UI",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/SiteSendingDomainResourceParentKey"
+          },
+          {
+            "$ref": "#/components/parameters/PageQuery.page"
+          },
+          {
+            "$ref": "#/components/parameters/PageQuery.pageSize"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request has succeeded.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["items", "page", "pageSize", "totalItems", "totalPages"],
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/SiteSendingDomainResource"
+                      },
+                      "description": "List of items"
+                    },
+                    "page": {
+                      "type": "integer",
+                      "format": "int32",
+                      "description": "Page number (1-based)"
+                    },
+                    "pageSize": {
+                      "type": "integer",
+                      "format": "int32",
+                      "description": "Page size"
+                    },
+                    "totalItems": {
+                      "type": "integer",
+                      "format": "int32",
+                      "description": "Total number of elements"
+                    },
+                    "totalPages": {
+                      "type": "integer",
+                      "format": "int32",
+                      "description": "Total number of pages"
+                    }
+                  },
+                  "description": "Paginated response"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "RFC 7807 bad request response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "RFC 7807 not found response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "RFC 7807 validation response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Site Sending Domains"]
+      },
+      "post": {
+        "operationId": "SiteSendingDomains_create",
+        "description": "Add a sending domain; mints the DKIM keypair and returns the DNS records",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/SiteSendingDomainResourceParentKey"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "The request has succeeded and a new resource has been created as a result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SiteSendingDomainResource"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "RFC 7807 not found response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "RFC 7807 conflict response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "RFC 7807 validation response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Site Sending Domains"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SiteCreateSendingDomainInput"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workspaces/{slug}/sending-domains/{id}": {
+      "get": {
+        "operationId": "SiteSendingDomains_get",
+        "description": "Get a sending domain by ID for the site UI",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/SiteSendingDomainResourceKey.slug"
+          },
+          {
+            "$ref": "#/components/parameters/SiteSendingDomainResourceKey.id"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request has succeeded.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SiteSendingDomainResource"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "RFC 7807 bad request response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "RFC 7807 not found response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Site Sending Domains"]
+      },
+      "delete": {
+        "operationId": "SiteSendingDomains_delete",
+        "description": "Delete a sending domain",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/SiteSendingDomainResourceKey.slug"
+          },
+          {
+            "$ref": "#/components/parameters/SiteSendingDomainResourceKey.id"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "There is no content to send for this request, but the headers may be useful."
+          },
+          "400": {
+            "description": "RFC 7807 bad request response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "RFC 7807 not found response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Site Sending Domains"]
+      }
+    },
+    "/workspaces/{slug}/sending-domains/{id}/verify": {
+      "post": {
+        "operationId": "SiteSendingDomains_verify",
+        "description": "Trigger an immediate DKIM re-check (fire-and-forget)",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/SiteSendingDomainResourceKey.slug"
+          },
+          {
+            "$ref": "#/components/parameters/SiteSendingDomainResourceKey.id"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "There is no content to send for this request, but the headers may be useful."
+          },
+          "400": {
+            "description": "RFC 7807 bad request response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "RFC 7807 not found response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Site Sending Domains"]
+      }
+    },
     "/workspaces/{slug}/suppressions": {
       "post": {
         "operationId": "SiteSuppressions_create",
@@ -4251,6 +4532,33 @@
           "type": "string"
         }
       },
+      "SiteSendingDomainResourceKey.id": {
+        "name": "id",
+        "in": "path",
+        "required": true,
+        "description": "Unique identifier",
+        "schema": {
+          "$ref": "#/components/schemas/EntityId"
+        }
+      },
+      "SiteSendingDomainResourceKey.slug": {
+        "name": "slug",
+        "in": "path",
+        "required": true,
+        "description": "URL-safe unique slug; the route key for nested workspace resources",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "SiteSendingDomainResourceParentKey": {
+        "name": "slug",
+        "in": "path",
+        "required": true,
+        "description": "URL-safe unique slug; the route key for nested workspace resources",
+        "schema": {
+          "type": "string"
+        }
+      },
       "SiteSuppressionResourceKey.id": {
         "name": "id",
         "in": "path",
@@ -5196,6 +5504,21 @@
         },
         "description": "Site request body for creating a segment"
       },
+      "SiteCreateSendingDomainInput": {
+        "type": "object",
+        "required": ["domain"],
+        "properties": {
+          "domain": {
+            "type": "string",
+            "description": "The domain to authenticate, e.g. \"mail.acme.com\""
+          },
+          "dkimSelector": {
+            "type": "string",
+            "description": "DKIM selector; defaults to \"1mail\" when omitted"
+          }
+        },
+        "description": "Site request body for adding a sending domain"
+      },
       "SiteCreateSuppressionInput": {
         "type": "object",
         "required": ["destination"],
@@ -5375,6 +5698,26 @@
             "type": "string"
           }
         }
+      },
+      "SiteDnsRecord": {
+        "type": "object",
+        "required": ["type", "host", "value"],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["TXT"],
+            "description": "The record type (always TXT for the records we generate)"
+          },
+          "host": {
+            "type": "string",
+            "description": "The host / name to create the record at"
+          },
+          "value": {
+            "type": "string",
+            "description": "The record value to publish"
+          }
+        },
+        "description": "A DNS record the user publishes to authenticate a sending domain"
       },
       "SiteEmailChangeInput": {
         "type": "object",
@@ -5910,6 +6253,103 @@
         "type": "string",
         "enum": ["rule", "snapshot"],
         "description": "Segment type for site UI"
+      },
+      "SiteSendingDomainResource": {
+        "type": "object",
+        "required": [
+          "id",
+          "domain",
+          "dkimSelector",
+          "verified",
+          "dkimRecord",
+          "spfRecord",
+          "dmarcRecord",
+          "createdAt",
+          "updatedAt"
+        ],
+        "properties": {
+          "id": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EntityId"
+              }
+            ],
+            "description": "Unique identifier"
+          },
+          "domain": {
+            "type": "string",
+            "description": "The authenticated domain, e.g. \"mail.acme.com\""
+          },
+          "dkimSelector": {
+            "type": "string",
+            "description": "DKIM selector; the record host is \"<selector>._domainkey.<domain>\""
+          },
+          "verified": {
+            "type": "boolean",
+            "description": "Whether the DKIM DNS is currently published and matches our key"
+          },
+          "dkimRecord": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SiteDnsRecord"
+              }
+            ],
+            "description": "The required DKIM TXT record (gates sending in a later slice)"
+          },
+          "spfRecord": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SiteDnsRecord"
+              }
+            ],
+            "description": "The suggested SPF TXT record (advisory — does not gate)"
+          },
+          "dmarcRecord": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SiteDnsRecord"
+              }
+            ],
+            "description": "The suggested DMARC TXT record (advisory bulk-readiness signal)"
+          },
+          "lastCheckedAt": {
+            "type": "string",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Timestamp"
+              }
+            ],
+            "nullable": true,
+            "description": "When the DKIM DNS was most recently checked (null = never)"
+          },
+          "verifiedAt": {
+            "type": "string",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Timestamp"
+              }
+            ],
+            "nullable": true,
+            "description": "When the domain most recently became verified (null = never)"
+          },
+          "createdAt": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Timestamp"
+              }
+            ],
+            "description": "Creation timestamp"
+          },
+          "updatedAt": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Timestamp"
+              }
+            ],
+            "description": "Last update timestamp"
+          }
+        },
+        "description": "Sending domain resource used by the site UI (ADR 0010). 1mail generates the\nDKIM keypair; the user publishes the DKIM TXT to authenticate the domain. The\nprivate key is never exposed. `verified` is a live property re-checked in the\nbackground — it can flip back if the DNS record disappears."
       },
       "SiteSesConfig": {
         "type": "object",

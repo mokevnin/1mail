@@ -165,6 +165,18 @@ func (f SegmentFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, err
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.SegmentMutation", m)
 }
 
+// The SendingDomainFunc type is an adapter to allow the use of ordinary
+// function as SendingDomain mutator.
+type SendingDomainFunc func(context.Context, *ent.SendingDomainMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f SendingDomainFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.SendingDomainMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.SendingDomainMutation", m)
+}
+
 // The SuppressionFunc type is an adapter to allow the use of ordinary
 // function as Suppression mutator.
 type SuppressionFunc func(context.Context, *ent.SuppressionMutation) (ent.Value, error)

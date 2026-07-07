@@ -5257,6 +5257,658 @@ func decodeSiteSegmentsUpdateParams(args [2]string, argsEscaped bool, r *http.Re
 	return params, nil
 }
 
+// SiteSendingDomainsCreateParams is parameters of SiteSendingDomains_create operation.
+type SiteSendingDomainsCreateParams struct {
+	// URL-safe unique slug; the route key for nested workspace resources.
+	Slug string
+}
+
+func unpackSiteSendingDomainsCreateParams(packed middleware.Parameters) (params SiteSendingDomainsCreateParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "slug",
+			In:   "path",
+		}
+		params.Slug = packed[key].(string)
+	}
+	return params
+}
+
+func decodeSiteSendingDomainsCreateParams(args [1]string, argsEscaped bool, r *http.Request) (params SiteSendingDomainsCreateParams, _ error) {
+	// Decode path: slug.
+	if err := func() error {
+		param := args[0]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[0])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "slug",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToString(val)
+				if err != nil {
+					return err
+				}
+
+				params.Slug = c
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "slug",
+			In:   "path",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
+// SiteSendingDomainsDeleteParams is parameters of SiteSendingDomains_delete operation.
+type SiteSendingDomainsDeleteParams struct {
+	// URL-safe unique slug; the route key for nested workspace resources.
+	Slug string
+	// Unique identifier.
+	ID EntityId
+}
+
+func unpackSiteSendingDomainsDeleteParams(packed middleware.Parameters) (params SiteSendingDomainsDeleteParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "slug",
+			In:   "path",
+		}
+		params.Slug = packed[key].(string)
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "id",
+			In:   "path",
+		}
+		params.ID = packed[key].(EntityId)
+	}
+	return params
+}
+
+func decodeSiteSendingDomainsDeleteParams(args [2]string, argsEscaped bool, r *http.Request) (params SiteSendingDomainsDeleteParams, _ error) {
+	// Decode path: slug.
+	if err := func() error {
+		param := args[0]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[0])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "slug",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToString(val)
+				if err != nil {
+					return err
+				}
+
+				params.Slug = c
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "slug",
+			In:   "path",
+			Err:  err,
+		}
+	}
+	// Decode path: id.
+	if err := func() error {
+		param := args[1]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[1])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "id",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				var paramsDotIDVal string
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotIDVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.ID = EntityId(paramsDotIDVal)
+				return nil
+			}(); err != nil {
+				return err
+			}
+			if err := func() error {
+				if err := params.ID.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "id",
+			In:   "path",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
+// SiteSendingDomainsGetParams is parameters of SiteSendingDomains_get operation.
+type SiteSendingDomainsGetParams struct {
+	// URL-safe unique slug; the route key for nested workspace resources.
+	Slug string
+	// Unique identifier.
+	ID EntityId
+}
+
+func unpackSiteSendingDomainsGetParams(packed middleware.Parameters) (params SiteSendingDomainsGetParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "slug",
+			In:   "path",
+		}
+		params.Slug = packed[key].(string)
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "id",
+			In:   "path",
+		}
+		params.ID = packed[key].(EntityId)
+	}
+	return params
+}
+
+func decodeSiteSendingDomainsGetParams(args [2]string, argsEscaped bool, r *http.Request) (params SiteSendingDomainsGetParams, _ error) {
+	// Decode path: slug.
+	if err := func() error {
+		param := args[0]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[0])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "slug",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToString(val)
+				if err != nil {
+					return err
+				}
+
+				params.Slug = c
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "slug",
+			In:   "path",
+			Err:  err,
+		}
+	}
+	// Decode path: id.
+	if err := func() error {
+		param := args[1]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[1])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "id",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				var paramsDotIDVal string
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotIDVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.ID = EntityId(paramsDotIDVal)
+				return nil
+			}(); err != nil {
+				return err
+			}
+			if err := func() error {
+				if err := params.ID.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "id",
+			In:   "path",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
+// SiteSendingDomainsListParams is parameters of SiteSendingDomains_list operation.
+type SiteSendingDomainsListParams struct {
+	// URL-safe unique slug; the route key for nested workspace resources.
+	Slug string
+	// Page number (1-based).
+	Page OptInt32 `json:",omitempty,omitzero"`
+	// Page size.
+	PageSize OptInt32 `json:",omitempty,omitzero"`
+}
+
+func unpackSiteSendingDomainsListParams(packed middleware.Parameters) (params SiteSendingDomainsListParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "slug",
+			In:   "path",
+		}
+		params.Slug = packed[key].(string)
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "page",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.Page = v.(OptInt32)
+		}
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "pageSize",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.PageSize = v.(OptInt32)
+		}
+	}
+	return params
+}
+
+func decodeSiteSendingDomainsListParams(args [1]string, argsEscaped bool, r *http.Request) (params SiteSendingDomainsListParams, _ error) {
+	q := uri.NewQueryDecoder(r.URL.Query())
+	// Decode path: slug.
+	if err := func() error {
+		param := args[0]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[0])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "slug",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToString(val)
+				if err != nil {
+					return err
+				}
+
+				params.Slug = c
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "slug",
+			In:   "path",
+			Err:  err,
+		}
+	}
+	// Set default value for query: page.
+	{
+		val := int32(1)
+		params.Page.SetTo(val)
+	}
+	// Decode query: page.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "page",
+			Style:   uri.QueryStyleForm,
+			Explode: false,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotPageVal int32
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToInt32(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotPageVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.Page.SetTo(paramsDotPageVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "page",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	// Set default value for query: pageSize.
+	{
+		val := int32(25)
+		params.PageSize.SetTo(val)
+	}
+	// Decode query: pageSize.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "pageSize",
+			Style:   uri.QueryStyleForm,
+			Explode: false,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotPageSizeVal int32
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToInt32(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotPageSizeVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.PageSize.SetTo(paramsDotPageSizeVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "pageSize",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
+// SiteSendingDomainsVerifyParams is parameters of SiteSendingDomains_verify operation.
+type SiteSendingDomainsVerifyParams struct {
+	// URL-safe unique slug; the route key for nested workspace resources.
+	Slug string
+	// Unique identifier.
+	ID EntityId
+}
+
+func unpackSiteSendingDomainsVerifyParams(packed middleware.Parameters) (params SiteSendingDomainsVerifyParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "slug",
+			In:   "path",
+		}
+		params.Slug = packed[key].(string)
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "id",
+			In:   "path",
+		}
+		params.ID = packed[key].(EntityId)
+	}
+	return params
+}
+
+func decodeSiteSendingDomainsVerifyParams(args [2]string, argsEscaped bool, r *http.Request) (params SiteSendingDomainsVerifyParams, _ error) {
+	// Decode path: slug.
+	if err := func() error {
+		param := args[0]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[0])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "slug",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToString(val)
+				if err != nil {
+					return err
+				}
+
+				params.Slug = c
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "slug",
+			In:   "path",
+			Err:  err,
+		}
+	}
+	// Decode path: id.
+	if err := func() error {
+		param := args[1]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[1])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "id",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				var paramsDotIDVal string
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotIDVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.ID = EntityId(paramsDotIDVal)
+				return nil
+			}(); err != nil {
+				return err
+			}
+			if err := func() error {
+				if err := params.ID.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "id",
+			In:   "path",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
 // SiteSuppressionsCreateParams is parameters of SiteSuppressions_create operation.
 type SiteSuppressionsCreateParams struct {
 	// URL-safe unique slug; the route key for nested workspace resources.

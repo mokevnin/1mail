@@ -24,6 +24,7 @@ import (
 	"github.com/mokevnin/1mail/ent/invitation"
 	"github.com/mokevnin/1mail/ent/membership"
 	"github.com/mokevnin/1mail/ent/segment"
+	"github.com/mokevnin/1mail/ent/sendingdomain"
 	"github.com/mokevnin/1mail/ent/suppression"
 	"github.com/mokevnin/1mail/ent/transactionalemail"
 	"github.com/mokevnin/1mail/ent/unsubscribe"
@@ -201,6 +202,21 @@ func (_c *WorkspaceCreate) AddIntegrations(v ...*Integration) *WorkspaceCreate {
 		ids[i] = v[i].ID
 	}
 	return _c.AddIntegrationIDs(ids...)
+}
+
+// AddSendingDomainIDs adds the "sending_domains" edge to the SendingDomain entity by IDs.
+func (_c *WorkspaceCreate) AddSendingDomainIDs(ids ...int64) *WorkspaceCreate {
+	_c.mutation.AddSendingDomainIDs(ids...)
+	return _c
+}
+
+// AddSendingDomains adds the "sending_domains" edges to the SendingDomain entity.
+func (_c *WorkspaceCreate) AddSendingDomains(v ...*SendingDomain) *WorkspaceCreate {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddSendingDomainIDs(ids...)
 }
 
 // AddBroadcastIDs adds the "broadcasts" edge to the Broadcast entity by IDs.
@@ -615,6 +631,22 @@ func (_c *WorkspaceCreate) createSpec() (*Workspace, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(integration.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.SendingDomainsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   workspace.SendingDomainsTable,
+			Columns: []string{workspace.SendingDomainsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(sendingdomain.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {

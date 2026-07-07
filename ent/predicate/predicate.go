@@ -45,6 +45,9 @@ type Membership func(*sql.Selector)
 // Segment is the predicate function for segment builders.
 type Segment func(*sql.Selector)
 
+// SendingDomain is the predicate function for sendingdomain builders.
+type SendingDomain func(*sql.Selector)
+
 // Suppression is the predicate function for suppression builders.
 type Suppression func(*sql.Selector)
 

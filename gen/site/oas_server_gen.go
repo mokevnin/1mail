@@ -300,6 +300,36 @@ type Handler interface {
 	//
 	// PUT /workspaces/{slug}/segments/{id}
 	SiteSegmentsUpdate(ctx context.Context, req *SiteUpdateSegmentInput, params SiteSegmentsUpdateParams) (SiteSegmentsUpdateRes, error)
+	// SiteSendingDomainsCreate implements SiteSendingDomains_create operation.
+	//
+	// Add a sending domain; mints the DKIM keypair and returns the DNS records.
+	//
+	// POST /workspaces/{slug}/sending-domains
+	SiteSendingDomainsCreate(ctx context.Context, req *SiteCreateSendingDomainInput, params SiteSendingDomainsCreateParams) (SiteSendingDomainsCreateRes, error)
+	// SiteSendingDomainsDelete implements SiteSendingDomains_delete operation.
+	//
+	// Delete a sending domain.
+	//
+	// DELETE /workspaces/{slug}/sending-domains/{id}
+	SiteSendingDomainsDelete(ctx context.Context, params SiteSendingDomainsDeleteParams) (SiteSendingDomainsDeleteRes, error)
+	// SiteSendingDomainsGet implements SiteSendingDomains_get operation.
+	//
+	// Get a sending domain by ID for the site UI.
+	//
+	// GET /workspaces/{slug}/sending-domains/{id}
+	SiteSendingDomainsGet(ctx context.Context, params SiteSendingDomainsGetParams) (SiteSendingDomainsGetRes, error)
+	// SiteSendingDomainsList implements SiteSendingDomains_list operation.
+	//
+	// List sending domains for the site UI.
+	//
+	// GET /workspaces/{slug}/sending-domains
+	SiteSendingDomainsList(ctx context.Context, params SiteSendingDomainsListParams) (SiteSendingDomainsListRes, error)
+	// SiteSendingDomainsVerify implements SiteSendingDomains_verify operation.
+	//
+	// Trigger an immediate DKIM re-check (fire-and-forget).
+	//
+	// POST /workspaces/{slug}/sending-domains/{id}/verify
+	SiteSendingDomainsVerify(ctx context.Context, params SiteSendingDomainsVerifyParams) (SiteSendingDomainsVerifyRes, error)
 	// SiteSuppressionsCreate implements SiteSuppressions_create operation.
 	//
 	// Manually suppress an address (reason = manual; idempotent per address).

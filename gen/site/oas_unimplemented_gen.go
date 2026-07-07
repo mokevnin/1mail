@@ -452,6 +452,51 @@ func (UnimplementedHandler) SiteSegmentsUpdate(ctx context.Context, req *SiteUpd
 	return r, ht.ErrNotImplemented
 }
 
+// SiteSendingDomainsCreate implements SiteSendingDomains_create operation.
+//
+// Add a sending domain; mints the DKIM keypair and returns the DNS records.
+//
+// POST /workspaces/{slug}/sending-domains
+func (UnimplementedHandler) SiteSendingDomainsCreate(ctx context.Context, req *SiteCreateSendingDomainInput, params SiteSendingDomainsCreateParams) (r SiteSendingDomainsCreateRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// SiteSendingDomainsDelete implements SiteSendingDomains_delete operation.
+//
+// Delete a sending domain.
+//
+// DELETE /workspaces/{slug}/sending-domains/{id}
+func (UnimplementedHandler) SiteSendingDomainsDelete(ctx context.Context, params SiteSendingDomainsDeleteParams) (r SiteSendingDomainsDeleteRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// SiteSendingDomainsGet implements SiteSendingDomains_get operation.
+//
+// Get a sending domain by ID for the site UI.
+//
+// GET /workspaces/{slug}/sending-domains/{id}
+func (UnimplementedHandler) SiteSendingDomainsGet(ctx context.Context, params SiteSendingDomainsGetParams) (r SiteSendingDomainsGetRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// SiteSendingDomainsList implements SiteSendingDomains_list operation.
+//
+// List sending domains for the site UI.
+//
+// GET /workspaces/{slug}/sending-domains
+func (UnimplementedHandler) SiteSendingDomainsList(ctx context.Context, params SiteSendingDomainsListParams) (r SiteSendingDomainsListRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// SiteSendingDomainsVerify implements SiteSendingDomains_verify operation.
+//
+// Trigger an immediate DKIM re-check (fire-and-forget).
+//
+// POST /workspaces/{slug}/sending-domains/{id}/verify
+func (UnimplementedHandler) SiteSendingDomainsVerify(ctx context.Context, params SiteSendingDomainsVerifyParams) (r SiteSendingDomainsVerifyRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // SiteSuppressionsCreate implements SiteSuppressions_create operation.
 //
 // Manually suppress an address (reason = manual; idempotent per address).

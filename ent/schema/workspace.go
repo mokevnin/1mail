@@ -59,6 +59,7 @@ func (Workspace) Edges() []ent.Edge {
 		edge.To("visitors", Visitor.Type),
 		edge.To("api_tokens", ApiToken.Type),
 		edge.To("integrations", Integration.Type),
+		edge.To("sending_domains", SendingDomain.Type),
 		edge.To("broadcasts", Broadcast.Type),
 		edge.To("broadcast_recipients", BroadcastRecipient.Type),
 		edge.To("email_templates", EmailTemplate.Type),

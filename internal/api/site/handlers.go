@@ -48,20 +48,28 @@ type SystemMailEnqueuer interface {
 	EnqueueMemberInvite(ctx context.Context, email, inviteURL, workspaceName, inviterName string) error
 }
 
-type Handlers struct {
-	ent      *ent.Client
-	bus      *events.Bus
-	cipher   *secrets.Cipher
-	catalog  *messaging.Catalog
-	enqueuer BroadcastEnqueuer
-	welcome  WelcomeEnqueuer
-	sysmail  SystemMailEnqueuer
-	tokens   *authtoken.Signer
-	appURL   string
+// SendingDomainVerifyEnqueuer schedules an immediate DKIM re-check of one
+// Sending domain (the "Verify" button). Same jobs enqueue seam (river prod,
+// inline tests).
+type SendingDomainVerifyEnqueuer interface {
+	EnqueueSendingDomainVerify(ctx context.Context, sendingDomainID int64) error
 }
 
-func NewHandlers(client *ent.Client, bus *events.Bus, cipher *secrets.Cipher, catalog *messaging.Catalog, enqueuer BroadcastEnqueuer, welcome WelcomeEnqueuer, sysmail SystemMailEnqueuer, tokens *authtoken.Signer, appURL string) *Handlers {
-	return &Handlers{ent: client, bus: bus, cipher: cipher, catalog: catalog, enqueuer: enqueuer, welcome: welcome, sysmail: sysmail, tokens: tokens, appURL: appURL}
+type Handlers struct {
+	ent          *ent.Client
+	bus          *events.Bus
+	cipher       *secrets.Cipher
+	catalog      *messaging.Catalog
+	enqueuer     BroadcastEnqueuer
+	welcome      WelcomeEnqueuer
+	sysmail      SystemMailEnqueuer
+	domainVerify SendingDomainVerifyEnqueuer
+	tokens       *authtoken.Signer
+	appURL       string
+}
+
+func NewHandlers(client *ent.Client, bus *events.Bus, cipher *secrets.Cipher, catalog *messaging.Catalog, enqueuer BroadcastEnqueuer, welcome WelcomeEnqueuer, sysmail SystemMailEnqueuer, domainVerify SendingDomainVerifyEnqueuer, tokens *authtoken.Signer, appURL string) *Handlers {
+	return &Handlers{ent: client, bus: bus, cipher: cipher, catalog: catalog, enqueuer: enqueuer, welcome: welcome, sysmail: sysmail, domainVerify: domainVerify, tokens: tokens, appURL: appURL}
 }
 
 var _ siteapi.Handler = (*Handlers)(nil)

@@ -25,6 +25,7 @@ import (
 	"github.com/mokevnin/1mail/ent/membership"
 	"github.com/mokevnin/1mail/ent/predicate"
 	"github.com/mokevnin/1mail/ent/segment"
+	"github.com/mokevnin/1mail/ent/sendingdomain"
 	"github.com/mokevnin/1mail/ent/suppression"
 	"github.com/mokevnin/1mail/ent/transactionalemail"
 	"github.com/mokevnin/1mail/ent/unsubscribe"
@@ -212,6 +213,21 @@ func (_u *WorkspaceUpdate) AddIntegrations(v ...*Integration) *WorkspaceUpdate {
 		ids[i] = v[i].ID
 	}
 	return _u.AddIntegrationIDs(ids...)
+}
+
+// AddSendingDomainIDs adds the "sending_domains" edge to the SendingDomain entity by IDs.
+func (_u *WorkspaceUpdate) AddSendingDomainIDs(ids ...int64) *WorkspaceUpdate {
+	_u.mutation.AddSendingDomainIDs(ids...)
+	return _u
+}
+
+// AddSendingDomains adds the "sending_domains" edges to the SendingDomain entity.
+func (_u *WorkspaceUpdate) AddSendingDomains(v ...*SendingDomain) *WorkspaceUpdate {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddSendingDomainIDs(ids...)
 }
 
 // AddBroadcastIDs adds the "broadcasts" edge to the Broadcast entity by IDs.
@@ -529,6 +545,27 @@ func (_u *WorkspaceUpdate) RemoveIntegrations(v ...*Integration) *WorkspaceUpdat
 		ids[i] = v[i].ID
 	}
 	return _u.RemoveIntegrationIDs(ids...)
+}
+
+// ClearSendingDomains clears all "sending_domains" edges to the SendingDomain entity.
+func (_u *WorkspaceUpdate) ClearSendingDomains() *WorkspaceUpdate {
+	_u.mutation.ClearSendingDomains()
+	return _u
+}
+
+// RemoveSendingDomainIDs removes the "sending_domains" edge to SendingDomain entities by IDs.
+func (_u *WorkspaceUpdate) RemoveSendingDomainIDs(ids ...int64) *WorkspaceUpdate {
+	_u.mutation.RemoveSendingDomainIDs(ids...)
+	return _u
+}
+
+// RemoveSendingDomains removes "sending_domains" edges to SendingDomain entities.
+func (_u *WorkspaceUpdate) RemoveSendingDomains(v ...*SendingDomain) *WorkspaceUpdate {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveSendingDomainIDs(ids...)
 }
 
 // ClearBroadcasts clears all "broadcasts" edges to the Broadcast entity.
@@ -1164,6 +1201,51 @@ func (_u *WorkspaceUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(integration.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.SendingDomainsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   workspace.SendingDomainsTable,
+			Columns: []string{workspace.SendingDomainsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(sendingdomain.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedSendingDomainsIDs(); len(nodes) > 0 && !_u.mutation.SendingDomainsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   workspace.SendingDomainsTable,
+			Columns: []string{workspace.SendingDomainsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(sendingdomain.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.SendingDomainsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   workspace.SendingDomainsTable,
+			Columns: []string{workspace.SendingDomainsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(sendingdomain.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {
@@ -1855,6 +1937,21 @@ func (_u *WorkspaceUpdateOne) AddIntegrations(v ...*Integration) *WorkspaceUpdat
 	return _u.AddIntegrationIDs(ids...)
 }
 
+// AddSendingDomainIDs adds the "sending_domains" edge to the SendingDomain entity by IDs.
+func (_u *WorkspaceUpdateOne) AddSendingDomainIDs(ids ...int64) *WorkspaceUpdateOne {
+	_u.mutation.AddSendingDomainIDs(ids...)
+	return _u
+}
+
+// AddSendingDomains adds the "sending_domains" edges to the SendingDomain entity.
+func (_u *WorkspaceUpdateOne) AddSendingDomains(v ...*SendingDomain) *WorkspaceUpdateOne {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddSendingDomainIDs(ids...)
+}
+
 // AddBroadcastIDs adds the "broadcasts" edge to the Broadcast entity by IDs.
 func (_u *WorkspaceUpdateOne) AddBroadcastIDs(ids ...int64) *WorkspaceUpdateOne {
 	_u.mutation.AddBroadcastIDs(ids...)
@@ -2170,6 +2267,27 @@ func (_u *WorkspaceUpdateOne) RemoveIntegrations(v ...*Integration) *WorkspaceUp
 		ids[i] = v[i].ID
 	}
 	return _u.RemoveIntegrationIDs(ids...)
+}
+
+// ClearSendingDomains clears all "sending_domains" edges to the SendingDomain entity.
+func (_u *WorkspaceUpdateOne) ClearSendingDomains() *WorkspaceUpdateOne {
+	_u.mutation.ClearSendingDomains()
+	return _u
+}
+
+// RemoveSendingDomainIDs removes the "sending_domains" edge to SendingDomain entities by IDs.
+func (_u *WorkspaceUpdateOne) RemoveSendingDomainIDs(ids ...int64) *WorkspaceUpdateOne {
+	_u.mutation.RemoveSendingDomainIDs(ids...)
+	return _u
+}
+
+// RemoveSendingDomains removes "sending_domains" edges to SendingDomain entities.
+func (_u *WorkspaceUpdateOne) RemoveSendingDomains(v ...*SendingDomain) *WorkspaceUpdateOne {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveSendingDomainIDs(ids...)
 }
 
 // ClearBroadcasts clears all "broadcasts" edges to the Broadcast entity.
@@ -2835,6 +2953,51 @@ func (_u *WorkspaceUpdateOne) sqlSave(ctx context.Context) (_node *Workspace, er
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(integration.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.SendingDomainsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   workspace.SendingDomainsTable,
+			Columns: []string{workspace.SendingDomainsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(sendingdomain.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedSendingDomainsIDs(); len(nodes) > 0 && !_u.mutation.SendingDomainsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   workspace.SendingDomainsTable,
+			Columns: []string{workspace.SendingDomainsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(sendingdomain.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.SendingDomainsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   workspace.SendingDomainsTable,
+			Columns: []string{workspace.SendingDomainsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(sendingdomain.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {

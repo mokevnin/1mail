@@ -318,8 +318,9 @@ func register(injector do.Injector, env string) {
 		resolver := messaging.NewResolver(client.Client, cipher, registry.Default())
 
 		// The river jobs client implements every enqueue seam: broadcast, welcome,
-		// and the self-service account mail (reset/verify/change).
-		return server.New(cfg, client.Client, database.DB, bus.Bus, jc.Client, jc.Client, jc.Client, resolver)
+		// the self-service account mail (reset/verify/change), and sending-domain
+		// DKIM verification.
+		return server.New(cfg, client.Client, database.DB, bus.Bus, jc.Client, jc.Client, jc.Client, jc.Client, resolver)
 	})
 }
 

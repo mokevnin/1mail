@@ -28,6 +28,7 @@ import (
 	"github.com/mokevnin/1mail/ent/invitation"
 	"github.com/mokevnin/1mail/ent/membership"
 	"github.com/mokevnin/1mail/ent/segment"
+	"github.com/mokevnin/1mail/ent/sendingdomain"
 	"github.com/mokevnin/1mail/ent/suppression"
 	"github.com/mokevnin/1mail/ent/transactionalemail"
 	"github.com/mokevnin/1mail/ent/unsubscribe"
@@ -68,6 +69,8 @@ type Client struct {
 	Membership *MembershipClient
 	// Segment is the client for interacting with the Segment builders.
 	Segment *SegmentClient
+	// SendingDomain is the client for interacting with the SendingDomain builders.
+	SendingDomain *SendingDomainClient
 	// Suppression is the client for interacting with the Suppression builders.
 	Suppression *SuppressionClient
 	// TransactionalEmail is the client for interacting with the TransactionalEmail builders.
@@ -106,6 +109,7 @@ func (c *Client) init() {
 	c.Invitation = NewInvitationClient(c.config)
 	c.Membership = NewMembershipClient(c.config)
 	c.Segment = NewSegmentClient(c.config)
+	c.SendingDomain = NewSendingDomainClient(c.config)
 	c.Suppression = NewSuppressionClient(c.config)
 	c.TransactionalEmail = NewTransactionalEmailClient(c.config)
 	c.Unsubscribe = NewUnsubscribeClient(c.config)
@@ -218,6 +222,7 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		Invitation:         NewInvitationClient(cfg),
 		Membership:         NewMembershipClient(cfg),
 		Segment:            NewSegmentClient(cfg),
+		SendingDomain:      NewSendingDomainClient(cfg),
 		Suppression:        NewSuppressionClient(cfg),
 		TransactionalEmail: NewTransactionalEmailClient(cfg),
 		Unsubscribe:        NewUnsubscribeClient(cfg),
@@ -257,6 +262,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		Invitation:         NewInvitationClient(cfg),
 		Membership:         NewMembershipClient(cfg),
 		Segment:            NewSegmentClient(cfg),
+		SendingDomain:      NewSendingDomainClient(cfg),
 		Suppression:        NewSuppressionClient(cfg),
 		TransactionalEmail: NewTransactionalEmailClient(cfg),
 		Unsubscribe:        NewUnsubscribeClient(cfg),
@@ -295,8 +301,9 @@ func (c *Client) Use(hooks ...Hook) {
 	for _, n := range []interface{ Use(...Hook) }{
 		c.ApiToken, c.Automation, c.AutomationRun, c.Broadcast, c.BroadcastRecipient,
 		c.Contact, c.CustomField, c.EmailTemplate, c.Event, c.Integration,
-		c.Invitation, c.Membership, c.Segment, c.Suppression, c.TransactionalEmail,
-		c.Unsubscribe, c.User, c.Visitor, c.WebhookEndpoint, c.Workspace,
+		c.Invitation, c.Membership, c.Segment, c.SendingDomain, c.Suppression,
+		c.TransactionalEmail, c.Unsubscribe, c.User, c.Visitor, c.WebhookEndpoint,
+		c.Workspace,
 	} {
 		n.Use(hooks...)
 	}
@@ -308,8 +315,9 @@ func (c *Client) Intercept(interceptors ...Interceptor) {
 	for _, n := range []interface{ Intercept(...Interceptor) }{
 		c.ApiToken, c.Automation, c.AutomationRun, c.Broadcast, c.BroadcastRecipient,
 		c.Contact, c.CustomField, c.EmailTemplate, c.Event, c.Integration,
-		c.Invitation, c.Membership, c.Segment, c.Suppression, c.TransactionalEmail,
-		c.Unsubscribe, c.User, c.Visitor, c.WebhookEndpoint, c.Workspace,
+		c.Invitation, c.Membership, c.Segment, c.SendingDomain, c.Suppression,
+		c.TransactionalEmail, c.Unsubscribe, c.User, c.Visitor, c.WebhookEndpoint,
+		c.Workspace,
 	} {
 		n.Intercept(interceptors...)
 	}
@@ -344,6 +352,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.Membership.mutate(ctx, m)
 	case *SegmentMutation:
 		return c.Segment.mutate(ctx, m)
+	case *SendingDomainMutation:
+		return c.SendingDomain.mutate(ctx, m)
 	case *SuppressionMutation:
 		return c.Suppression.mutate(ctx, m)
 	case *TransactionalEmailMutation:
@@ -2412,6 +2422,155 @@ func (c *SegmentClient) mutate(ctx context.Context, m *SegmentMutation) (Value, 
 	}
 }
 
+// SendingDomainClient is a client for the SendingDomain schema.
+type SendingDomainClient struct {
+	config
+}
+
+// NewSendingDomainClient returns a client for the SendingDomain from the given config.
+func NewSendingDomainClient(c config) *SendingDomainClient {
+	return &SendingDomainClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `sendingdomain.Hooks(f(g(h())))`.
+func (c *SendingDomainClient) Use(hooks ...Hook) {
+	c.hooks.SendingDomain = append(c.hooks.SendingDomain, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `sendingdomain.Intercept(f(g(h())))`.
+func (c *SendingDomainClient) Intercept(interceptors ...Interceptor) {
+	c.inters.SendingDomain = append(c.inters.SendingDomain, interceptors...)
+}
+
+// Create returns a builder for creating a SendingDomain entity.
+func (c *SendingDomainClient) Create() *SendingDomainCreate {
+	mutation := newSendingDomainMutation(c.config, OpCreate)
+	return &SendingDomainCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of SendingDomain entities.
+func (c *SendingDomainClient) CreateBulk(builders ...*SendingDomainCreate) *SendingDomainCreateBulk {
+	return &SendingDomainCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *SendingDomainClient) MapCreateBulk(slice any, setFunc func(*SendingDomainCreate, int)) *SendingDomainCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &SendingDomainCreateBulk{err: fmt.Errorf("calling to SendingDomainClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*SendingDomainCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &SendingDomainCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for SendingDomain.
+func (c *SendingDomainClient) Update() *SendingDomainUpdate {
+	mutation := newSendingDomainMutation(c.config, OpUpdate)
+	return &SendingDomainUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *SendingDomainClient) UpdateOne(_m *SendingDomain) *SendingDomainUpdateOne {
+	mutation := newSendingDomainMutation(c.config, OpUpdateOne, withSendingDomain(_m))
+	return &SendingDomainUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *SendingDomainClient) UpdateOneID(id int64) *SendingDomainUpdateOne {
+	mutation := newSendingDomainMutation(c.config, OpUpdateOne, withSendingDomainID(id))
+	return &SendingDomainUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for SendingDomain.
+func (c *SendingDomainClient) Delete() *SendingDomainDelete {
+	mutation := newSendingDomainMutation(c.config, OpDelete)
+	return &SendingDomainDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *SendingDomainClient) DeleteOne(_m *SendingDomain) *SendingDomainDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *SendingDomainClient) DeleteOneID(id int64) *SendingDomainDeleteOne {
+	builder := c.Delete().Where(sendingdomain.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &SendingDomainDeleteOne{builder}
+}
+
+// Query returns a query builder for SendingDomain.
+func (c *SendingDomainClient) Query() *SendingDomainQuery {
+	return &SendingDomainQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeSendingDomain},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a SendingDomain entity by its id.
+func (c *SendingDomainClient) Get(ctx context.Context, id int64) (*SendingDomain, error) {
+	return c.Query().Where(sendingdomain.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *SendingDomainClient) GetX(ctx context.Context, id int64) *SendingDomain {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryWorkspace queries the workspace edge of a SendingDomain.
+func (c *SendingDomainClient) QueryWorkspace(_m *SendingDomain) *WorkspaceQuery {
+	query := (&WorkspaceClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(sendingdomain.Table, sendingdomain.FieldID, id),
+			sqlgraph.To(workspace.Table, workspace.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, sendingdomain.WorkspaceTable, sendingdomain.WorkspaceColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *SendingDomainClient) Hooks() []Hook {
+	return c.hooks.SendingDomain
+}
+
+// Interceptors returns the client interceptors.
+func (c *SendingDomainClient) Interceptors() []Interceptor {
+	return c.inters.SendingDomain
+}
+
+func (c *SendingDomainClient) mutate(ctx context.Context, m *SendingDomainMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&SendingDomainCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&SendingDomainUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&SendingDomainUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&SendingDomainDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown SendingDomain mutation op: %q", m.Op())
+	}
+}
+
 // SuppressionClient is a client for the Suppression schema.
 type SuppressionClient struct {
 	config
@@ -3558,6 +3717,22 @@ func (c *WorkspaceClient) QueryIntegrations(_m *Workspace) *IntegrationQuery {
 	return query
 }
 
+// QuerySendingDomains queries the sending_domains edge of a Workspace.
+func (c *WorkspaceClient) QuerySendingDomains(_m *Workspace) *SendingDomainQuery {
+	query := (&SendingDomainClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workspace.Table, workspace.FieldID, id),
+			sqlgraph.To(sendingdomain.Table, sendingdomain.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, workspace.SendingDomainsTable, workspace.SendingDomainsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // QueryBroadcasts queries the broadcasts edge of a Workspace.
 func (c *WorkspaceClient) QueryBroadcasts(_m *Workspace) *BroadcastQuery {
 	query := (&BroadcastClient{config: c.config}).Query()
@@ -3764,13 +3939,13 @@ type (
 	hooks struct {
 		ApiToken, Automation, AutomationRun, Broadcast, BroadcastRecipient, Contact,
 		CustomField, EmailTemplate, Event, Integration, Invitation, Membership,
-		Segment, Suppression, TransactionalEmail, Unsubscribe, User, Visitor,
-		WebhookEndpoint, Workspace []ent.Hook
+		Segment, SendingDomain, Suppression, TransactionalEmail, Unsubscribe, User,
+		Visitor, WebhookEndpoint, Workspace []ent.Hook
 	}
 	inters struct {
 		ApiToken, Automation, AutomationRun, Broadcast, BroadcastRecipient, Contact,
 		CustomField, EmailTemplate, Event, Integration, Invitation, Membership,
-		Segment, Suppression, TransactionalEmail, Unsubscribe, User, Visitor,
-		WebhookEndpoint, Workspace []ent.Interceptor
+		Segment, SendingDomain, Suppression, TransactionalEmail, Unsubscribe, User,
+		Visitor, WebhookEndpoint, Workspace []ent.Interceptor
 	}
 )

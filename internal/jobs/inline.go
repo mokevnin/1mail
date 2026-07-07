@@ -7,6 +7,7 @@ import (
 	"github.com/mokevnin/1mail/ent"
 	"github.com/mokevnin/1mail/internal/events"
 	"github.com/mokevnin/1mail/internal/messaging"
+	"github.com/mokevnin/1mail/internal/sending"
 	"github.com/mokevnin/1mail/internal/tracking"
 )
 
@@ -22,14 +23,17 @@ type Inline struct {
 	resolver     SenderResolver
 	tracker      *tracking.Tracker
 	systemSender messaging.EmailSender
+	lookup       sending.TXTLookup
 	appURL       string
 }
 
 // NewInline builds the inline adapter. systemSender sends platform mail; resolver
 // resolves a workspace's customer sender for broadcasts; bus carries the send's
-// transactional outbox publish (email.sent). appURL builds account-email links.
-func NewInline(entClient *ent.Client, bus *events.Bus, resolver SenderResolver, tracker *tracking.Tracker, systemSender messaging.EmailSender, appURL string) *Inline {
-	return &Inline{ent: entClient, bus: bus, resolver: resolver, tracker: tracker, systemSender: systemSender, appURL: appURL}
+// transactional outbox publish (email.sent). lookup resolves DKIM TXT for sending-
+// domain verification (a stub in tests avoids real DNS). appURL builds account-
+// email links.
+func NewInline(entClient *ent.Client, bus *events.Bus, resolver SenderResolver, tracker *tracking.Tracker, systemSender messaging.EmailSender, lookup sending.TXTLookup, appURL string) *Inline {
+	return &Inline{ent: entClient, bus: bus, resolver: resolver, tracker: tracker, systemSender: systemSender, lookup: lookup, appURL: appURL}
 }
 
 // EnqueueBroadcast runs the broadcast send now. A future scheduledAt is skipped:
@@ -60,6 +64,12 @@ func (i *Inline) EnqueueEmailVerification(ctx context.Context, email, token stri
 // EnqueueEmailChangeConfirm sends the confirm-new-email email now.
 func (i *Inline) EnqueueEmailChangeConfirm(ctx context.Context, email, token string) error {
 	return SendAuthMail(ctx, i.systemSender, i.appURL, SendAuthMailArgs{Flow: flowEmailChange, Email: email, Token: token})
+}
+
+// EnqueueSendingDomainVerify re-checks the domain's DKIM DNS now.
+func (i *Inline) EnqueueSendingDomainVerify(ctx context.Context, sendingDomainID int64) error {
+	_, err := VerifySendingDomainByID(ctx, i.ent, i.lookup, sendingDomainID)
+	return err
 }
 
 // EnqueueMemberInvite sends the workspace invite email now via the system sender.

@@ -622,6 +622,20 @@ export type SiteCreateSegmentInput = {
 };
 
 /**
+ * Site request body for adding a sending domain
+ */
+export type SiteCreateSendingDomainInput = {
+    /**
+     * The domain to authenticate, e.g. "mail.acme.com"
+     */
+    domain: string;
+    /**
+     * DKIM selector; defaults to "1mail" when omitted
+     */
+    dkimSelector?: string;
+};
+
+/**
  * Site request body for manually suppressing a destination
  */
 export type SiteCreateSuppressionInput = {
@@ -727,6 +741,24 @@ export type SiteDirectLoginResult = {
         [key: string]: unknown;
     };
     role?: string;
+};
+
+/**
+ * A DNS record the user publishes to authenticate a sending domain
+ */
+export type SiteDnsRecord = {
+    /**
+     * The record type (always TXT for the records we generate)
+     */
+    type: 'TXT';
+    /**
+     * The host / name to create the record at
+     */
+    host: string;
+    /**
+     * The record value to publish
+     */
+    value: string;
 };
 
 /**
@@ -1096,6 +1128,59 @@ export const SiteSegmentType = { RULE: 'rule', SNAPSHOT: 'snapshot' } as const;
  * Segment type for site UI
  */
 export type SiteSegmentType = typeof SiteSegmentType[keyof typeof SiteSegmentType];
+
+/**
+ * Sending domain resource used by the site UI (ADR 0010). 1mail generates the
+ * DKIM keypair; the user publishes the DKIM TXT to authenticate the domain. The
+ * private key is never exposed. `verified` is a live property re-checked in the
+ * background — it can flip back if the DNS record disappears.
+ */
+export type SiteSendingDomainResource = {
+    /**
+     * Unique identifier
+     */
+    id: EntityId;
+    /**
+     * The authenticated domain, e.g. "mail.acme.com"
+     */
+    domain: string;
+    /**
+     * DKIM selector; the record host is "<selector>._domainkey.<domain>"
+     */
+    dkimSelector: string;
+    /**
+     * Whether the DKIM DNS is currently published and matches our key
+     */
+    verified: boolean;
+    /**
+     * The required DKIM TXT record (gates sending in a later slice)
+     */
+    dkimRecord: SiteDnsRecord;
+    /**
+     * The suggested SPF TXT record (advisory — does not gate)
+     */
+    spfRecord: SiteDnsRecord;
+    /**
+     * The suggested DMARC TXT record (advisory bulk-readiness signal)
+     */
+    dmarcRecord: SiteDnsRecord;
+    /**
+     * When the DKIM DNS was most recently checked (null = never)
+     */
+    lastCheckedAt?: Timestamp | null;
+    /**
+     * When the domain most recently became verified (null = never)
+     */
+    verifiedAt?: Timestamp | null;
+    /**
+     * Creation timestamp
+     */
+    createdAt: Timestamp;
+    /**
+     * Last update timestamp
+     */
+    updatedAt: Timestamp;
+};
 
 /**
  * SES config without the secret access key
@@ -1702,6 +1787,21 @@ export type SiteSegmentResourceKeySlug = string;
  * URL-safe unique slug; the route key for nested workspace resources
  */
 export type SiteSegmentResourceParentKey = string;
+
+/**
+ * Unique identifier
+ */
+export type SiteSendingDomainResourceKeyId = EntityId;
+
+/**
+ * URL-safe unique slug; the route key for nested workspace resources
+ */
+export type SiteSendingDomainResourceKeySlug = string;
+
+/**
+ * URL-safe unique slug; the route key for nested workspace resources
+ */
+export type SiteSendingDomainResourceParentKey = string;
 
 /**
  * Unique identifier
@@ -3810,6 +3910,226 @@ export type SiteSegmentsUpdateResponses = {
 };
 
 export type SiteSegmentsUpdateResponse = SiteSegmentsUpdateResponses[keyof SiteSegmentsUpdateResponses];
+
+export type SiteSendingDomainsListData = {
+    body?: never;
+    path: {
+        /**
+         * URL-safe unique slug; the route key for nested workspace resources
+         */
+        slug: string;
+    };
+    query?: {
+        /**
+         * Page number (1-based)
+         */
+        page?: number;
+        /**
+         * Page size
+         */
+        pageSize?: number;
+    };
+    url: '/workspaces/{slug}/sending-domains';
+};
+
+export type SiteSendingDomainsListErrors = {
+    /**
+     * RFC 7807 bad request response
+     */
+    400: ProblemDetails;
+    /**
+     * RFC 7807 not found response
+     */
+    404: ProblemDetails;
+    /**
+     * RFC 7807 validation response
+     */
+    422: ProblemDetails;
+};
+
+export type SiteSendingDomainsListError = SiteSendingDomainsListErrors[keyof SiteSendingDomainsListErrors];
+
+export type SiteSendingDomainsListResponses = {
+    /**
+     * Paginated response
+     */
+    200: {
+        /**
+         * List of items
+         */
+        items: Array<SiteSendingDomainResource>;
+        /**
+         * Page number (1-based)
+         */
+        page: number;
+        /**
+         * Page size
+         */
+        pageSize: number;
+        /**
+         * Total number of elements
+         */
+        totalItems: number;
+        /**
+         * Total number of pages
+         */
+        totalPages: number;
+    };
+};
+
+export type SiteSendingDomainsListResponse = SiteSendingDomainsListResponses[keyof SiteSendingDomainsListResponses];
+
+export type SiteSendingDomainsCreateData = {
+    body: SiteCreateSendingDomainInput;
+    path: {
+        /**
+         * URL-safe unique slug; the route key for nested workspace resources
+         */
+        slug: string;
+    };
+    query?: never;
+    url: '/workspaces/{slug}/sending-domains';
+};
+
+export type SiteSendingDomainsCreateErrors = {
+    /**
+     * RFC 7807 not found response
+     */
+    404: ProblemDetails;
+    /**
+     * RFC 7807 conflict response
+     */
+    409: ProblemDetails;
+    /**
+     * RFC 7807 validation response
+     */
+    422: ProblemDetails;
+};
+
+export type SiteSendingDomainsCreateError = SiteSendingDomainsCreateErrors[keyof SiteSendingDomainsCreateErrors];
+
+export type SiteSendingDomainsCreateResponses = {
+    /**
+     * The request has succeeded and a new resource has been created as a result.
+     */
+    201: SiteSendingDomainResource;
+};
+
+export type SiteSendingDomainsCreateResponse = SiteSendingDomainsCreateResponses[keyof SiteSendingDomainsCreateResponses];
+
+export type SiteSendingDomainsDeleteData = {
+    body?: never;
+    path: {
+        /**
+         * URL-safe unique slug; the route key for nested workspace resources
+         */
+        slug: string;
+        /**
+         * Unique identifier
+         */
+        id: EntityId;
+    };
+    query?: never;
+    url: '/workspaces/{slug}/sending-domains/{id}';
+};
+
+export type SiteSendingDomainsDeleteErrors = {
+    /**
+     * RFC 7807 bad request response
+     */
+    400: ProblemDetails;
+    /**
+     * RFC 7807 not found response
+     */
+    404: ProblemDetails;
+};
+
+export type SiteSendingDomainsDeleteError = SiteSendingDomainsDeleteErrors[keyof SiteSendingDomainsDeleteErrors];
+
+export type SiteSendingDomainsDeleteResponses = {
+    /**
+     * There is no content to send for this request, but the headers may be useful.
+     */
+    204: void;
+};
+
+export type SiteSendingDomainsDeleteResponse = SiteSendingDomainsDeleteResponses[keyof SiteSendingDomainsDeleteResponses];
+
+export type SiteSendingDomainsGetData = {
+    body?: never;
+    path: {
+        /**
+         * URL-safe unique slug; the route key for nested workspace resources
+         */
+        slug: string;
+        /**
+         * Unique identifier
+         */
+        id: EntityId;
+    };
+    query?: never;
+    url: '/workspaces/{slug}/sending-domains/{id}';
+};
+
+export type SiteSendingDomainsGetErrors = {
+    /**
+     * RFC 7807 bad request response
+     */
+    400: ProblemDetails;
+    /**
+     * RFC 7807 not found response
+     */
+    404: ProblemDetails;
+};
+
+export type SiteSendingDomainsGetError = SiteSendingDomainsGetErrors[keyof SiteSendingDomainsGetErrors];
+
+export type SiteSendingDomainsGetResponses = {
+    /**
+     * The request has succeeded.
+     */
+    200: SiteSendingDomainResource;
+};
+
+export type SiteSendingDomainsGetResponse = SiteSendingDomainsGetResponses[keyof SiteSendingDomainsGetResponses];
+
+export type SiteSendingDomainsVerifyData = {
+    body?: never;
+    path: {
+        /**
+         * URL-safe unique slug; the route key for nested workspace resources
+         */
+        slug: string;
+        /**
+         * Unique identifier
+         */
+        id: EntityId;
+    };
+    query?: never;
+    url: '/workspaces/{slug}/sending-domains/{id}/verify';
+};
+
+export type SiteSendingDomainsVerifyErrors = {
+    /**
+     * RFC 7807 bad request response
+     */
+    400: ProblemDetails;
+    /**
+     * RFC 7807 not found response
+     */
+    404: ProblemDetails;
+};
+
+export type SiteSendingDomainsVerifyError = SiteSendingDomainsVerifyErrors[keyof SiteSendingDomainsVerifyErrors];
+
+export type SiteSendingDomainsVerifyResponses = {
+    /**
+     * There is no content to send for this request, but the headers may be useful.
+     */
+    204: void;
+};
+
+export type SiteSendingDomainsVerifyResponse = SiteSendingDomainsVerifyResponses[keyof SiteSendingDomainsVerifyResponses];
 
 export type SiteSuppressionsListData = {
     body?: never;

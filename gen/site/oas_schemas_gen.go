@@ -3441,6 +3441,35 @@ func (s *SiteCreateSegmentInput) SetDefinition(val OptNilString) {
 	s.Definition = val
 }
 
+// Site request body for adding a sending domain.
+// Ref: #/components/schemas/SiteCreateSendingDomainInput
+type SiteCreateSendingDomainInput struct {
+	// The domain to authenticate, e.g. "mail.acme.com".
+	Domain string `json:"domain"`
+	// DKIM selector; defaults to "1mail" when omitted.
+	DkimSelector OptString `json:"dkimSelector"`
+}
+
+// GetDomain returns the value of Domain.
+func (s *SiteCreateSendingDomainInput) GetDomain() string {
+	return s.Domain
+}
+
+// GetDkimSelector returns the value of DkimSelector.
+func (s *SiteCreateSendingDomainInput) GetDkimSelector() OptString {
+	return s.DkimSelector
+}
+
+// SetDomain sets the value of Domain.
+func (s *SiteCreateSendingDomainInput) SetDomain(val string) {
+	s.Domain = val
+}
+
+// SetDkimSelector sets the value of DkimSelector.
+func (s *SiteCreateSendingDomainInput) SetDkimSelector(val OptString) {
+	s.DkimSelector = val
+}
+
 // Site request body for manually suppressing a destination.
 // Ref: #/components/schemas/SiteCreateSuppressionInput
 type SiteCreateSuppressionInput struct {
@@ -3930,6 +3959,82 @@ func (s *SiteDirectLoginResultAttrs) init() SiteDirectLoginResultAttrs {
 		*s = m
 	}
 	return m
+}
+
+// A DNS record the user publishes to authenticate a sending domain.
+// Ref: #/components/schemas/SiteDnsRecord
+type SiteDnsRecord struct {
+	// The record type (always TXT for the records we generate).
+	Type SiteDnsRecordType `json:"type"`
+	// The host / name to create the record at.
+	Host string `json:"host"`
+	// The record value to publish.
+	Value string `json:"value"`
+}
+
+// GetType returns the value of Type.
+func (s *SiteDnsRecord) GetType() SiteDnsRecordType {
+	return s.Type
+}
+
+// GetHost returns the value of Host.
+func (s *SiteDnsRecord) GetHost() string {
+	return s.Host
+}
+
+// GetValue returns the value of Value.
+func (s *SiteDnsRecord) GetValue() string {
+	return s.Value
+}
+
+// SetType sets the value of Type.
+func (s *SiteDnsRecord) SetType(val SiteDnsRecordType) {
+	s.Type = val
+}
+
+// SetHost sets the value of Host.
+func (s *SiteDnsRecord) SetHost(val string) {
+	s.Host = val
+}
+
+// SetValue sets the value of Value.
+func (s *SiteDnsRecord) SetValue(val string) {
+	s.Value = val
+}
+
+// The record type (always TXT for the records we generate).
+type SiteDnsRecordType string
+
+const (
+	SiteDnsRecordTypeTXT SiteDnsRecordType = "TXT"
+)
+
+// AllValues returns all SiteDnsRecordType values.
+func (SiteDnsRecordType) AllValues() []SiteDnsRecordType {
+	return []SiteDnsRecordType{
+		SiteDnsRecordTypeTXT,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s SiteDnsRecordType) MarshalText() ([]byte, error) {
+	switch s {
+	case SiteDnsRecordTypeTXT:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *SiteDnsRecordType) UnmarshalText(data []byte) error {
+	switch SiteDnsRecordType(data) {
+	case SiteDnsRecordTypeTXT:
+		*s = SiteDnsRecordTypeTXT
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
 }
 
 // Request a change of the login email. The new address must be confirmed via a link sent to it before
@@ -5462,6 +5567,272 @@ func (*SiteSegmentsUpdateNotFound) siteSegmentsUpdateRes() {}
 type SiteSegmentsUpdateUnprocessableEntity ProblemDetails
 
 func (*SiteSegmentsUpdateUnprocessableEntity) siteSegmentsUpdateRes() {}
+
+// Sending domain resource used by the site UI (ADR 0010). 1mail generates the DKIM keypair; the user
+// publishes the DKIM TXT to authenticate the domain. The private key is never exposed. `verified` is a
+// live property re-checked in the background — it can flip back if the DNS record disappears.
+// Ref: #/components/schemas/SiteSendingDomainResource
+type SiteSendingDomainResource struct {
+	// Unique identifier.
+	ID EntityId `json:"id"`
+	// The authenticated domain, e.g. "mail.acme.com".
+	Domain string `json:"domain"`
+	// DKIM selector; the record host is "._domainkey.".
+	DkimSelector string `json:"dkimSelector"`
+	// Whether the DKIM DNS is currently published and matches our key.
+	Verified bool `json:"verified"`
+	// The required DKIM TXT record (gates sending in a later slice).
+	DkimRecord SiteDnsRecord `json:"dkimRecord"`
+	// The suggested SPF TXT record (advisory — does not gate).
+	SpfRecord SiteDnsRecord `json:"spfRecord"`
+	// The suggested DMARC TXT record (advisory bulk-readiness signal).
+	DmarcRecord SiteDnsRecord `json:"dmarcRecord"`
+	// When the DKIM DNS was most recently checked (null = never).
+	LastCheckedAt OptNilTimestamp `json:"lastCheckedAt"`
+	// When the domain most recently became verified (null = never).
+	VerifiedAt OptNilTimestamp `json:"verifiedAt"`
+	// Creation timestamp.
+	CreatedAt Timestamp `json:"createdAt"`
+	// Last update timestamp.
+	UpdatedAt Timestamp `json:"updatedAt"`
+}
+
+// GetID returns the value of ID.
+func (s *SiteSendingDomainResource) GetID() EntityId {
+	return s.ID
+}
+
+// GetDomain returns the value of Domain.
+func (s *SiteSendingDomainResource) GetDomain() string {
+	return s.Domain
+}
+
+// GetDkimSelector returns the value of DkimSelector.
+func (s *SiteSendingDomainResource) GetDkimSelector() string {
+	return s.DkimSelector
+}
+
+// GetVerified returns the value of Verified.
+func (s *SiteSendingDomainResource) GetVerified() bool {
+	return s.Verified
+}
+
+// GetDkimRecord returns the value of DkimRecord.
+func (s *SiteSendingDomainResource) GetDkimRecord() SiteDnsRecord {
+	return s.DkimRecord
+}
+
+// GetSpfRecord returns the value of SpfRecord.
+func (s *SiteSendingDomainResource) GetSpfRecord() SiteDnsRecord {
+	return s.SpfRecord
+}
+
+// GetDmarcRecord returns the value of DmarcRecord.
+func (s *SiteSendingDomainResource) GetDmarcRecord() SiteDnsRecord {
+	return s.DmarcRecord
+}
+
+// GetLastCheckedAt returns the value of LastCheckedAt.
+func (s *SiteSendingDomainResource) GetLastCheckedAt() OptNilTimestamp {
+	return s.LastCheckedAt
+}
+
+// GetVerifiedAt returns the value of VerifiedAt.
+func (s *SiteSendingDomainResource) GetVerifiedAt() OptNilTimestamp {
+	return s.VerifiedAt
+}
+
+// GetCreatedAt returns the value of CreatedAt.
+func (s *SiteSendingDomainResource) GetCreatedAt() Timestamp {
+	return s.CreatedAt
+}
+
+// GetUpdatedAt returns the value of UpdatedAt.
+func (s *SiteSendingDomainResource) GetUpdatedAt() Timestamp {
+	return s.UpdatedAt
+}
+
+// SetID sets the value of ID.
+func (s *SiteSendingDomainResource) SetID(val EntityId) {
+	s.ID = val
+}
+
+// SetDomain sets the value of Domain.
+func (s *SiteSendingDomainResource) SetDomain(val string) {
+	s.Domain = val
+}
+
+// SetDkimSelector sets the value of DkimSelector.
+func (s *SiteSendingDomainResource) SetDkimSelector(val string) {
+	s.DkimSelector = val
+}
+
+// SetVerified sets the value of Verified.
+func (s *SiteSendingDomainResource) SetVerified(val bool) {
+	s.Verified = val
+}
+
+// SetDkimRecord sets the value of DkimRecord.
+func (s *SiteSendingDomainResource) SetDkimRecord(val SiteDnsRecord) {
+	s.DkimRecord = val
+}
+
+// SetSpfRecord sets the value of SpfRecord.
+func (s *SiteSendingDomainResource) SetSpfRecord(val SiteDnsRecord) {
+	s.SpfRecord = val
+}
+
+// SetDmarcRecord sets the value of DmarcRecord.
+func (s *SiteSendingDomainResource) SetDmarcRecord(val SiteDnsRecord) {
+	s.DmarcRecord = val
+}
+
+// SetLastCheckedAt sets the value of LastCheckedAt.
+func (s *SiteSendingDomainResource) SetLastCheckedAt(val OptNilTimestamp) {
+	s.LastCheckedAt = val
+}
+
+// SetVerifiedAt sets the value of VerifiedAt.
+func (s *SiteSendingDomainResource) SetVerifiedAt(val OptNilTimestamp) {
+	s.VerifiedAt = val
+}
+
+// SetCreatedAt sets the value of CreatedAt.
+func (s *SiteSendingDomainResource) SetCreatedAt(val Timestamp) {
+	s.CreatedAt = val
+}
+
+// SetUpdatedAt sets the value of UpdatedAt.
+func (s *SiteSendingDomainResource) SetUpdatedAt(val Timestamp) {
+	s.UpdatedAt = val
+}
+
+func (*SiteSendingDomainResource) siteSendingDomainsCreateRes() {}
+func (*SiteSendingDomainResource) siteSendingDomainsGetRes()    {}
+
+type SiteSendingDomainsCreateConflict ProblemDetails
+
+func (*SiteSendingDomainsCreateConflict) siteSendingDomainsCreateRes() {}
+
+type SiteSendingDomainsCreateNotFound ProblemDetails
+
+func (*SiteSendingDomainsCreateNotFound) siteSendingDomainsCreateRes() {}
+
+type SiteSendingDomainsCreateUnprocessableEntity ProblemDetails
+
+func (*SiteSendingDomainsCreateUnprocessableEntity) siteSendingDomainsCreateRes() {}
+
+type SiteSendingDomainsDeleteBadRequest ProblemDetails
+
+func (*SiteSendingDomainsDeleteBadRequest) siteSendingDomainsDeleteRes() {}
+
+// SiteSendingDomainsDeleteNoContent is response for SiteSendingDomainsDelete operation.
+type SiteSendingDomainsDeleteNoContent struct{}
+
+func (*SiteSendingDomainsDeleteNoContent) siteSendingDomainsDeleteRes() {}
+
+type SiteSendingDomainsDeleteNotFound ProblemDetails
+
+func (*SiteSendingDomainsDeleteNotFound) siteSendingDomainsDeleteRes() {}
+
+type SiteSendingDomainsGetBadRequest ProblemDetails
+
+func (*SiteSendingDomainsGetBadRequest) siteSendingDomainsGetRes() {}
+
+type SiteSendingDomainsGetNotFound ProblemDetails
+
+func (*SiteSendingDomainsGetNotFound) siteSendingDomainsGetRes() {}
+
+type SiteSendingDomainsListBadRequest ProblemDetails
+
+func (*SiteSendingDomainsListBadRequest) siteSendingDomainsListRes() {}
+
+type SiteSendingDomainsListNotFound ProblemDetails
+
+func (*SiteSendingDomainsListNotFound) siteSendingDomainsListRes() {}
+
+// Paginated response.
+type SiteSendingDomainsListOK struct {
+	// List of items.
+	Items []SiteSendingDomainResource `json:"items"`
+	// Page number (1-based).
+	Page int32 `json:"page"`
+	// Page size.
+	PageSize int32 `json:"pageSize"`
+	// Total number of elements.
+	TotalItems int32 `json:"totalItems"`
+	// Total number of pages.
+	TotalPages int32 `json:"totalPages"`
+}
+
+// GetItems returns the value of Items.
+func (s *SiteSendingDomainsListOK) GetItems() []SiteSendingDomainResource {
+	return s.Items
+}
+
+// GetPage returns the value of Page.
+func (s *SiteSendingDomainsListOK) GetPage() int32 {
+	return s.Page
+}
+
+// GetPageSize returns the value of PageSize.
+func (s *SiteSendingDomainsListOK) GetPageSize() int32 {
+	return s.PageSize
+}
+
+// GetTotalItems returns the value of TotalItems.
+func (s *SiteSendingDomainsListOK) GetTotalItems() int32 {
+	return s.TotalItems
+}
+
+// GetTotalPages returns the value of TotalPages.
+func (s *SiteSendingDomainsListOK) GetTotalPages() int32 {
+	return s.TotalPages
+}
+
+// SetItems sets the value of Items.
+func (s *SiteSendingDomainsListOK) SetItems(val []SiteSendingDomainResource) {
+	s.Items = val
+}
+
+// SetPage sets the value of Page.
+func (s *SiteSendingDomainsListOK) SetPage(val int32) {
+	s.Page = val
+}
+
+// SetPageSize sets the value of PageSize.
+func (s *SiteSendingDomainsListOK) SetPageSize(val int32) {
+	s.PageSize = val
+}
+
+// SetTotalItems sets the value of TotalItems.
+func (s *SiteSendingDomainsListOK) SetTotalItems(val int32) {
+	s.TotalItems = val
+}
+
+// SetTotalPages sets the value of TotalPages.
+func (s *SiteSendingDomainsListOK) SetTotalPages(val int32) {
+	s.TotalPages = val
+}
+
+func (*SiteSendingDomainsListOK) siteSendingDomainsListRes() {}
+
+type SiteSendingDomainsListUnprocessableEntity ProblemDetails
+
+func (*SiteSendingDomainsListUnprocessableEntity) siteSendingDomainsListRes() {}
+
+type SiteSendingDomainsVerifyBadRequest ProblemDetails
+
+func (*SiteSendingDomainsVerifyBadRequest) siteSendingDomainsVerifyRes() {}
+
+// SiteSendingDomainsVerifyNoContent is response for SiteSendingDomainsVerify operation.
+type SiteSendingDomainsVerifyNoContent struct{}
+
+func (*SiteSendingDomainsVerifyNoContent) siteSendingDomainsVerifyRes() {}
+
+type SiteSendingDomainsVerifyNotFound ProblemDetails
+
+func (*SiteSendingDomainsVerifyNotFound) siteSendingDomainsVerifyRes() {}
 
 // SES config without the secret access key.
 // Ref: #/components/schemas/SiteSesConfig

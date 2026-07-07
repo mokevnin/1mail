@@ -6,6 +6,7 @@ package jobs
 import (
 	"context"
 	"log/slog"
+	"net"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -63,6 +64,10 @@ func NewClient(pool *pgxpool.Pool, entClient *ent.Client, bus *events.Bus, resol
 	river.AddWorker(workers, &SendWelcomeWorker{sender: systemSender})
 	river.AddWorker(workers, &SendAuthMailWorker{sender: systemSender, appURL: appURL})
 	river.AddWorker(workers, &SendMemberInviteWorker{sender: systemSender})
+	// Sending-domain DKIM verification (ADR 0010). LookupTXT re-checks published
+	// DNS; verified is a live property re-validated by the periodic job below.
+	river.AddWorker(workers, &VerifySendingDomainWorker{ent: entClient, lookup: net.DefaultResolver.LookupTXT})
+	river.AddWorker(workers, &RecheckSendingDomainsWorker{ent: entClient})
 
 	logger := slog.Default()
 	rc, err := river.NewClient(riverpgxv5.New(pool), &river.Config{
@@ -77,6 +82,17 @@ func NewClient(pool *pgxpool.Pool, entClient *ent.Client, bus *events.Bus, resol
 		// OTel spans + metrics per job insert/work, via the global providers set
 		// by telemetry.Setup (a no-op when telemetry is disabled, e.g. tests).
 		Middleware: []rivertype.Middleware{otelriver.NewMiddleware(nil)},
+		// Re-validate every Sending domain's DKIM DNS periodically so a record
+		// that disappears flips the domain back to unverified (ADR 0010).
+		PeriodicJobs: []*river.PeriodicJob{
+			river.NewPeriodicJob(
+				river.PeriodicInterval(15*time.Minute),
+				func() (river.JobArgs, *river.InsertOpts) {
+					return RecheckSendingDomainsArgs{}, nil
+				},
+				&river.PeriodicJobOpts{RunOnStart: true},
+			),
+		},
 	})
 	if err != nil {
 		return nil, err
@@ -98,6 +114,13 @@ func (c *Client) EnqueueBroadcast(ctx context.Context, broadcastID int64, schedu
 		opts.ScheduledAt = *scheduledAt
 	}
 	_, err := c.river.Insert(ctx, SendBroadcastArgs{BroadcastID: broadcastID}, opts)
+	return err
+}
+
+// EnqueueSendingDomainVerify schedules an immediate DKIM re-check of one Sending
+// domain (the "Verify" button). Fire-and-forget: the result lands on the row.
+func (c *Client) EnqueueSendingDomainVerify(ctx context.Context, sendingDomainID int64) error {
+	_, err := c.river.Insert(ctx, VerifySendingDomainArgs{SendingDomainID: sendingDomainID}, nil)
 	return err
 }
 

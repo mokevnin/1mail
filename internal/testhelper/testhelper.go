@@ -3,6 +3,7 @@ package testhelper
 import (
 	"context"
 	"database/sql"
+	"net"
 	"net/http"
 	"path/filepath"
 	"runtime"
@@ -135,11 +136,17 @@ func Setup(t *testing.T) *TestEnv {
 	systemMail := &CapturingSender{}
 	customerMail := &CapturingSender{}
 	resolver := fixedResolver{sender: customerMail}
-	inline := jobs.NewInline(client, bus, resolver, nil, systemMail, baseCfg.AppURL)
+	// stubTXT keeps sending-domain verification off real DNS: every lookup is
+	// NXDOMAIN, so an inline verify deterministically resolves to "not published".
+	stubTXT := func(context.Context, string) ([]string, error) {
+		return nil, &net.DNSError{IsNotFound: true}
+	}
+	inline := jobs.NewInline(client, bus, resolver, nil, systemMail, stubTXT, baseCfg.AppURL)
 	// The transactional send surface resolves a workspace sender directly (not via
 	// river), so it gets the same capturing resolver — its sends land in CustomerMail.
-	// inline implements every enqueue seam (broadcast, welcome, account mail).
-	handler, err := server.New(baseCfg, client, txDB, bus, inline, inline, inline, resolver)
+	// inline implements every enqueue seam (broadcast, welcome, account mail,
+	// sending-domain verify).
+	handler, err := server.New(baseCfg, client, txDB, bus, inline, inline, inline, inline, resolver)
 	require.NoError(t, err, "build server")
 
 	return &TestEnv{

@@ -40,6 +40,8 @@ const (
 	EdgeAPITokens = "api_tokens"
 	// EdgeIntegrations holds the string denoting the integrations edge name in mutations.
 	EdgeIntegrations = "integrations"
+	// EdgeSendingDomains holds the string denoting the sending_domains edge name in mutations.
+	EdgeSendingDomains = "sending_domains"
 	// EdgeBroadcasts holds the string denoting the broadcasts edge name in mutations.
 	EdgeBroadcasts = "broadcasts"
 	// EdgeBroadcastRecipients holds the string denoting the broadcast_recipients edge name in mutations.
@@ -113,6 +115,13 @@ const (
 	IntegrationsInverseTable = "integrations"
 	// IntegrationsColumn is the table column denoting the integrations relation/edge.
 	IntegrationsColumn = "workspace_id"
+	// SendingDomainsTable is the table that holds the sending_domains relation/edge.
+	SendingDomainsTable = "sending_domains"
+	// SendingDomainsInverseTable is the table name for the SendingDomain entity.
+	// It exists in this package in order to avoid circular dependency with the "sendingdomain" package.
+	SendingDomainsInverseTable = "sending_domains"
+	// SendingDomainsColumn is the table column denoting the sending_domains relation/edge.
+	SendingDomainsColumn = "workspace_id"
 	// BroadcastsTable is the table that holds the broadcasts relation/edge.
 	BroadcastsTable = "broadcasts"
 	// BroadcastsInverseTable is the table name for the Broadcast entity.
@@ -366,6 +375,20 @@ func ByIntegrations(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 	}
 }
 
+// BySendingDomainsCount orders the results by sending_domains count.
+func BySendingDomainsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newSendingDomainsStep(), opts...)
+	}
+}
+
+// BySendingDomains orders the results by sending_domains terms.
+func BySendingDomains(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newSendingDomainsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+
 // ByBroadcastsCount orders the results by broadcasts count.
 func ByBroadcastsCount(opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
@@ -566,6 +589,13 @@ func newIntegrationsStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(IntegrationsInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2M, false, IntegrationsTable, IntegrationsColumn),
+	)
+}
+func newSendingDomainsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(SendingDomainsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, SendingDomainsTable, SendingDomainsColumn),
 	)
 }
 func newBroadcastsStep() *sqlgraph.Step {
