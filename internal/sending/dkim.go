@@ -15,6 +15,7 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"slices"
 	"strings"
 )
 
@@ -115,12 +116,9 @@ func VerifyDKIM(ctx context.Context, lookup TXTLookup, selector, domain, expecte
 	if want == "" {
 		return false, fmt.Errorf("expected public key is empty")
 	}
-	for _, rec := range records {
-		if dkimPublicPart(rec) == want {
-			return true, nil
-		}
-	}
-	return false, nil
+	return slices.ContainsFunc(records, func(rec string) bool {
+		return dkimPublicPart(rec) == want
+	}), nil
 }
 
 // dkimPublicPart extracts and normalises the p= tag (the base64 public key) from

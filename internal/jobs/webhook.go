@@ -2,6 +2,7 @@ package jobs
 
 import (
 	"context"
+	"slices"
 
 	"github.com/riverqueue/river"
 
@@ -80,10 +81,5 @@ func matchesEvent(filter []string, name string) bool {
 	if len(filter) == 0 {
 		return true
 	}
-	for _, f := range filter {
-		if f == name {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(filter, name)
 }

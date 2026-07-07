@@ -12,6 +12,7 @@ package i18n
 import (
 	"embed"
 	"encoding/json"
+	"slices"
 	"sync"
 
 	goi18n "github.com/nicksnyder/go-i18n/v2/i18n"
@@ -48,19 +49,15 @@ func init() {
 
 // Supported returns the locales the binary ships with (copy; safe to mutate).
 func Supported() []string {
-	out := make([]string, len(supported))
-	copy(out, supported)
-	return out
+	return slices.Clone(supported)
 }
 
 // Normalize coerces an arbitrary locale string to a supported one, falling back
 // to "en" for anything unknown. Used by config and the SPA locale injection so
 // there is a single definition of "which locales are valid".
 func Normalize(locale string) string {
-	for _, l := range supported {
-		if l == locale {
-			return locale
-		}
+	if slices.Contains(supported, locale) {
+		return locale
 	}
 	return "en"
 }
