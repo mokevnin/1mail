@@ -3,6 +3,7 @@ package jobs_test
 import (
 	"context"
 	"net"
+	"slices"
 	"testing"
 
 	"github.com/mokevnin/1mail/internal/jobs"
@@ -67,18 +68,9 @@ func TestDomainsDueForRecheck_neverCheckedFirst(t *testing.T) {
 	require.Contains(t, ids, unverifiedDomainID)
 	require.Contains(t, ids, verifiedDomainID)
 
-	posNull := indexOf(ids, unverifiedDomainID)
-	posChecked := indexOf(ids, verifiedDomainID)
+	posNull := slices.Index(ids, unverifiedDomainID)
+	posChecked := slices.Index(ids, verifiedDomainID)
 	assert.Less(t, posNull, posChecked, "never-checked domain must be re-checked before an already-checked one")
-}
-
-func indexOf(ids []int64, want int64) int {
-	for i, id := range ids {
-		if id == want {
-			return i
-		}
-	}
-	return -1
 }
 
 func TestVerifySendingDomainByID_resolverErrorDoesNotChangeState(t *testing.T) {
