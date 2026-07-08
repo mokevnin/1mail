@@ -1,6 +1,7 @@
 package messaging
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/wneessen/go-mail"
@@ -42,5 +43,29 @@ func BuildMIME(msg EmailMessage) (*mail.Msg, error) {
 		m.SetBodyString(mail.TypeTextPlain, msg.Text)
 	}
 
+	return m, nil
+}
+
+// BuildSignedMIME builds the message via BuildMIME and, when signer is non-nil
+// and msg.From resolves to a verified sending domain, attaches a native DKIM
+// signer (ADR 0010). go-mail signs during WriteTo, so the same Msg signs
+// identically whether the provider writes it directly (SES raw bytes) or through
+// the SMTP DATA stream. A nil signer, or a From with no verified domain, yields
+// an unsigned message.
+func BuildSignedMIME(ctx context.Context, msg EmailMessage, signer Signer) (*mail.Msg, error) {
+	m, err := BuildMIME(msg)
+	if err != nil {
+		return nil, err
+	}
+	if signer == nil {
+		return m, nil
+	}
+	dkim, err := signer.DKIMSigner(ctx, msg.From)
+	if err != nil {
+		return nil, err
+	}
+	if dkim != nil {
+		m.SetDKIM(dkim)
+	}
 	return m, nil
 }

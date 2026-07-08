@@ -13,8 +13,9 @@ type ProviderDescriptor struct {
 	// blob (the typed API union already enforces shape and required fields).
 	Validate func(config []byte) error
 
-	// Build constructs the live sender from a decrypted config blob.
-	Build func(config []byte) (any, error)
+	// Build constructs the live sender from a decrypted config blob. The signer
+	// (may be nil) is stored by the sender to DKIM-sign outbound mail per ADR 0010.
+	Build func(config []byte, signer Signer) (any, error)
 }
 
 // Catalog holds the registered provider descriptors keyed by (channel, provider).
@@ -65,13 +66,14 @@ func (c *Catalog) Validate(channel Channel, provider Provider, config []byte) er
 	return d.Validate(config)
 }
 
-// BuildEmail builds an EmailSender for an email-channel provider.
-func (c *Catalog) BuildEmail(provider Provider, config []byte) (EmailSender, error) {
+// BuildEmail builds an EmailSender for an email-channel provider. signer (may be
+// nil) is passed to the provider for native DKIM signing.
+func (c *Catalog) BuildEmail(provider Provider, config []byte, signer Signer) (EmailSender, error) {
 	d, ok := c.Descriptor(ChannelEmail, provider)
 	if !ok {
 		return nil, fmt.Errorf("unknown email provider %q", provider)
 	}
-	built, err := d.Build(config)
+	built, err := d.Build(config, signer)
 	if err != nil {
 		return nil, err
 	}

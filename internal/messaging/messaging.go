@@ -10,7 +10,11 @@
 // channel = a new send interface + descriptors, reusing all of the above.
 package messaging
 
-import "context"
+import (
+	"context"
+
+	"github.com/wneessen/go-mail"
+)
 
 // Channel identifies a delivery medium. Values mirror the ent Integration.channel enum.
 type Channel string
@@ -44,6 +48,17 @@ type EmailMessage struct {
 // EmailSender is implemented by every email provider (smtp, ses, …).
 type EmailSender interface {
 	Send(ctx context.Context, msg EmailMessage) error
+}
+
+// Signer resolves the native DKIM signer for an outbound message (ADR 0010).
+// Signing is 1mail-native and transport-independent: the same signer applies
+// identically across providers because both serialize the message via go-mail's
+// WriteTo, which signs when a DKIM signer is set.
+type Signer interface {
+	// DKIMSigner returns a go-mail DKIM signer for mail sent from fromEmail, or
+	// (nil, nil) when fromEmail's domain has no verified sending domain in scope
+	// (slice 2 signs when possible; the send gate for unverified From is slice 3).
+	DKIMSigner(ctx context.Context, fromEmail string) (*mail.DKIMSigner, error)
 }
 
 // FirstNonEmpty returns the first non-empty string, or "" if all are empty.

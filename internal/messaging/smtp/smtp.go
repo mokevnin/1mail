@@ -50,12 +50,12 @@ func validate(raw []byte) error {
 	return nil
 }
 
-func build(raw []byte) (any, error) {
+func build(raw []byte, signer messaging.Signer) (any, error) {
 	cfg, err := parse(raw)
 	if err != nil {
 		return nil, err
 	}
-	return &sender{cfg: cfg}, nil
+	return &sender{cfg: cfg, signer: signer}, nil
 }
 
 func parse(raw []byte) (Config, error) {
@@ -67,14 +67,15 @@ func parse(raw []byte) (Config, error) {
 }
 
 type sender struct {
-	cfg Config
+	cfg    Config
+	signer messaging.Signer
 }
 
 func (s *sender) Send(ctx context.Context, msg messaging.EmailMessage) error {
 	msg.From = messaging.FirstNonEmpty(msg.From, s.cfg.From)
 	msg.FromName = messaging.FirstNonEmpty(msg.FromName, s.cfg.FromName)
 
-	m, err := messaging.BuildMIME(msg)
+	m, err := messaging.BuildSignedMIME(ctx, msg, s.signer)
 	if err != nil {
 		return err
 	}

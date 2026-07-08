@@ -49,5 +49,6 @@ func (r *Resolver) EmailSender(ctx context.Context, workspaceID int64) (EmailSen
 	if err != nil {
 		return nil, fmt.Errorf("decrypt integration %d config: %w", row.ID, err)
 	}
-	return r.catalog.BuildEmail(Provider(row.Provider), config)
+	signer := NewDKIMSigner(r.ent, r.cipher, workspaceID)
+	return r.catalog.BuildEmail(Provider(row.Provider), config, signer)
 }
