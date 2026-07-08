@@ -13,6 +13,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/credentials v1.19.27
 	github.com/aws/aws-sdk-go-v2/service/ses v1.36.0
 	github.com/doyensec/safeurl v0.2.5
+	github.com/emersion/go-msgauth v0.7.0
 	github.com/go-crypt/crypt v0.14.15
 	github.com/go-faster/errors v0.7.1
 	github.com/go-faster/jx v1.2.0
@@ -82,7 +83,6 @@ require (
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/dghubble/oauth1 v0.7.3 // indirect
 	github.com/dlclark/regexp2 v1.12.0 // indirect
-	github.com/emersion/go-msgauth v0.7.0 // indirect
 	github.com/fatih/color v1.19.0 // indirect
 	github.com/fsnotify/fsnotify v1.10.1 // indirect
 	github.com/ghodss/yaml v1.0.0 // indirect
