@@ -11,6 +11,7 @@ import (
 	"github.com/mokevnin/1mail/ent/transactionalemail"
 	externalapi "github.com/mokevnin/1mail/gen/external"
 	"github.com/mokevnin/1mail/internal/eligibility"
+	"github.com/mokevnin/1mail/internal/messaging"
 	"github.com/mokevnin/1mail/internal/testhelper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -67,6 +68,30 @@ func TestExternalEmailsSend(t *testing.T) {
 	assert.Contains(t, msgs[0].HTML, "Ada")
 	assert.Contains(t, msgs[0].HTML, "123456")
 	assert.NotContains(t, msgs[0].HTML, "{{")
+}
+
+// The verified-domain send gate (ADR 0010 slice 3): when the send path rejects an
+// unverified From domain, the transactional API returns 422 (a client-correctable
+// condition) rather than a 500, and the record is marked failed.
+func TestExternalEmailsSendRejectsUnverifiedDomain(t *testing.T) {
+	env := testhelper.Setup(t)
+	env.CustomerMail.SetErr(messaging.ErrUnverifiedSendingDomain)
+	c := client(t, env, seedToken(t, env.DB, []string{"emails:send"}))
+	ctx := context.Background()
+	tmpl := seedTemplate(t, env.DB, 1)
+
+	res, err := c.EmailsSend(ctx, &externalapi.SendTransactionalEmailInput{
+		TemplateId:  templateID(tmpl),
+		Destination: "customer@example.com",
+	}, externalapi.EmailsSendParams{})
+	require.NoError(t, err)
+	_, isUnprocessable := res.(*externalapi.EmailsSendUnprocessableEntity)
+	require.Truef(t, isUnprocessable, "got %T, want 422 unprocessable", res)
+
+	rec, err := env.DB.TransactionalEmail.Query().
+		Where(transactionalemail.DestinationEQ("customer@example.com")).Only(ctx)
+	require.NoError(t, err)
+	assert.Equal(t, transactionalemail.StatusFailed, rec.Status)
 }
 
 // A suppressed destination is skipped (Suppression is the hard floor on every

@@ -66,7 +66,7 @@ func NewClient(pool *pgxpool.Pool, entClient *ent.Client, bus *events.Bus, resol
 	river.AddWorker(workers, &SendMemberInviteWorker{sender: systemSender})
 	// Sending-domain DKIM verification (ADR 0010). LookupTXT re-checks published
 	// DNS; verified is a live property re-validated by the periodic job below.
-	river.AddWorker(workers, &VerifySendingDomainWorker{ent: entClient, lookup: net.DefaultResolver.LookupTXT})
+	river.AddWorker(workers, &VerifySendingDomainWorker{ent: entClient, lookup: net.DefaultResolver.LookupTXT, sender: systemSender})
 	river.AddWorker(workers, &RecheckSendingDomainsWorker{ent: entClient})
 
 	logger := slog.Default()

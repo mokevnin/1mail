@@ -2,6 +2,7 @@ package messaging
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -11,6 +12,13 @@ import (
 	"github.com/mokevnin/1mail/ent/sendingdomain"
 	"github.com/mokevnin/1mail/internal/secrets"
 )
+
+// ErrUnverifiedSendingDomain is returned by the send path when a workspace
+// message's From domain is not a verified sending domain (ADR 0010 slice 3): a
+// verified domain is required to send. Callers translate it — RFC 7807 on the
+// sync transactional API, a failed recipient/run on the async broadcast and
+// automation surfaces.
+var ErrUnverifiedSendingDomain = errors.New("sender domain is not a verified sending domain")
 
 // dkimSigner is the workspace-bound Signer: it maps an outbound From address to
 // the workspace's verified sending domain and builds a native go-mail DKIM
@@ -61,6 +69,25 @@ func (s *dkimSigner) DKIMSigner(ctx context.Context, fromEmail string) (*mail.DK
 		return nil, fmt.Errorf("messaging: parse dkim key for %s: %w", domain, err)
 	}
 	return mail.NewDKIMSigner(row.Domain, row.DkimSelector, key), nil
+}
+
+// HasVerifiedSendingDomain reports whether fromEmail's domain is a verified
+// sending domain in the workspace. It is the plan-time counterpart to the
+// send-time gate in BuildSignedMIME, letting callers (e.g. broadcast planning)
+// reject up front instead of failing every recipient. An empty/malformed
+// fromEmail reports false.
+func HasVerifiedSendingDomain(ctx context.Context, client *ent.Client, workspaceID int64, fromEmail string) (bool, error) {
+	domain := domainOf(fromEmail)
+	if domain == "" {
+		return false, nil
+	}
+	return client.SendingDomain.Query().
+		Where(
+			sendingdomain.WorkspaceID(workspaceID),
+			sendingdomain.Domain(domain),
+			sendingdomain.Verified(true),
+		).
+		Exist(ctx)
 }
 
 // domainOf returns the lower-cased domain of an email address, or "" when there

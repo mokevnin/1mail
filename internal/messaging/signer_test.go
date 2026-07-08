@@ -83,23 +83,20 @@ func TestBuildSignedMIMESignsVerified(t *testing.T) {
 	assert.Contains(t, raw, "s=1mail")
 }
 
-func TestBuildSignedMIMEUnsignedForUnverified(t *testing.T) {
+// The gate (slice 3): a workspace send from an unverified domain is rejected,
+// not silently sent unsigned.
+func TestBuildSignedMIMERejectsUnverified(t *testing.T) {
 	env := testhelper.Setup(t)
 	ctx := context.Background()
 	signer := messaging.NewDKIMSigner(env.DB, envCipher(t), 1)
 
-	m, err := messaging.BuildSignedMIME(ctx, messaging.EmailMessage{
+	_, err := messaging.BuildSignedMIME(ctx, messaging.EmailMessage{
 		From:    "hello@news.acme.com",
 		To:      "rcpt@example.com",
 		Subject: "unsigned",
 		Text:    "hi",
 	}, signer)
-	require.NoError(t, err)
-
-	var buf bytes.Buffer
-	_, err = m.WriteTo(&buf)
-	require.NoError(t, err)
-	assert.NotContains(t, buf.String(), "DKIM-Signature:")
+	assert.ErrorIs(t, err, messaging.ErrUnverifiedSendingDomain)
 }
 
 func TestBuildSignedMIMENilSigner(t *testing.T) {

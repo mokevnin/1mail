@@ -167,6 +167,24 @@ func PlanBroadcast(ctx context.Context, client *ent.Client, resolver SenderResol
 		return nil, fmt.Errorf("resolve sender for broadcast %d: %w", b.ID, err)
 	}
 
+	// Verified-domain send gate (ADR 0010 slice 3): when the broadcast pins an
+	// explicit From, reject the whole broadcast up front if its domain isn't a
+	// verified sending domain — rather than failing every recipient at send time.
+	// A nil From falls back to the integration's configured sender, whose effective
+	// domain is only known inside the provider; that case is left to the send-time
+	// gate in BuildSignedMIME and (known residual) fails each recipient job over its
+	// retry budget instead of failing fast here.
+	if b.FromEmail != nil {
+		ok, err := messaging.HasVerifiedSendingDomain(ctx, client, b.WorkspaceID, *b.FromEmail)
+		if err != nil {
+			return nil, fmt.Errorf("check sending domain for broadcast %d: %w", b.ID, err)
+		}
+		if !ok {
+			_, _ = b.Update().SetStatus(broadcast.StatusFailed).Save(ctx)
+			return nil, fmt.Errorf("broadcast %d: %w", b.ID, messaging.ErrUnverifiedSendingDomain)
+		}
+	}
+
 	if b, err = b.Update().SetStatus(broadcast.StatusSending).Save(ctx); err != nil {
 		return nil, err
 	}

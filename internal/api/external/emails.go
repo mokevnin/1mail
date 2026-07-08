@@ -137,6 +137,12 @@ func (h *Handlers) EmailsSend(ctx context.Context, req *externalapi.SendTransact
 		Text:    rendered.Text,
 	}); err != nil {
 		_, _ = rec.Update().SetStatus(transactionalemail.StatusFailed).SetError(err.Error()).Save(ctx)
+		// Verified-domain send gate (ADR 0010 slice 3): a From whose domain isn't a
+		// verified sending domain is a client-correctable condition, not a 500.
+		if errors.Is(err, messaging.ErrUnverifiedSendingDomain) {
+			res := externalapi.EmailsSendUnprocessableEntity(problem(http.StatusUnprocessableEntity, "sender domain is not a verified sending domain"))
+			return &res, nil
+		}
 		return nil, fmt.Errorf("transactional send: %w", err)
 	}
 

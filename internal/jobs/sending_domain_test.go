@@ -32,9 +32,10 @@ func TestVerifySendingDomainByID_becomesVerified(t *testing.T) {
 	require.False(t, dom.Verified)
 
 	// DNS now publishes the matching key.
-	ok, err := jobs.VerifySendingDomainByID(ctx, env.DB, lookupReturning([]string{dom.DkimPublicKey}, nil), unverifiedDomainID)
+	ok, flipped, err := jobs.VerifySendingDomainByID(ctx, env.DB, lookupReturning([]string{dom.DkimPublicKey}, nil), unverifiedDomainID)
 	require.NoError(t, err)
 	assert.True(t, ok)
+	assert.False(t, flipped, "becoming verified is not a flip-to-unverified")
 
 	reloaded, err := env.DB.SendingDomain.Get(ctx, unverifiedDomainID)
 	require.NoError(t, err)
@@ -48,13 +49,34 @@ func TestVerifySendingDomainByID_flipsToUnverifiedWhenRecordGone(t *testing.T) {
 	ctx := context.Background()
 
 	// Record disappeared → NXDOMAIN → verifies false, no error.
-	ok, err := jobs.VerifySendingDomainByID(ctx, env.DB, lookupReturning(nil, &net.DNSError{IsNotFound: true}), verifiedDomainID)
+	ok, flipped, err := jobs.VerifySendingDomainByID(ctx, env.DB, lookupReturning(nil, &net.DNSError{IsNotFound: true}), verifiedDomainID)
 	require.NoError(t, err)
 	assert.False(t, ok)
+	assert.True(t, flipped, "losing verification of a live domain is the notify-worthy flip")
 
 	reloaded, err := env.DB.SendingDomain.Get(ctx, verifiedDomainID)
 	require.NoError(t, err)
 	assert.False(t, reloaded.Verified, "a verified domain must flip back when its DKIM DNS is gone")
+}
+
+// On a verified→unverified flip the workspace owner is emailed (ADR 0010 slice 3).
+// Workspace 1's owner is user 1 (info@1mail.com), per the membership fixtures.
+func TestNotifySendingDomainUnverified_emailsOwner(t *testing.T) {
+	env := testhelper.Setup(t)
+	ctx := context.Background()
+
+	err := jobs.NotifySendingDomainUnverified(ctx, env.DB, env.SystemMail, verifiedDomainID)
+	require.NoError(t, err)
+
+	msgs := env.SystemMail.Messages()
+	require.Len(t, msgs, 1)
+	assert.Equal(t, "info@1mail.com", msgs[0].To)
+	assert.Contains(t, msgs[0].Subject, "mail.acme.com")
+}
+
+func TestNotifySendingDomainUnverified_nilSenderIsNoop(t *testing.T) {
+	env := testhelper.Setup(t)
+	require.NoError(t, jobs.NotifySendingDomainUnverified(context.Background(), env.DB, nil, verifiedDomainID))
 }
 
 func TestDomainsDueForRecheck_neverCheckedFirst(t *testing.T) {
@@ -77,7 +99,7 @@ func TestVerifySendingDomainByID_resolverErrorDoesNotChangeState(t *testing.T) {
 	env := testhelper.Setup(t)
 	ctx := context.Background()
 
-	_, err := jobs.VerifySendingDomainByID(ctx, env.DB, lookupReturning(nil, &net.DNSError{IsTemporary: true}), verifiedDomainID)
+	_, _, err := jobs.VerifySendingDomainByID(ctx, env.DB, lookupReturning(nil, &net.DNSError{IsTemporary: true}), verifiedDomainID)
 	require.Error(t, err)
 
 	reloaded, err := env.DB.SendingDomain.Get(ctx, verifiedDomainID)

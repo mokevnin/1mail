@@ -132,6 +132,29 @@ func countOutboxEvents(t *testing.T, env *testhelper.TestEnv, name string, broad
 
 // Suppressed addresses are skipped: no message, no recipient row, and the
 // suppressed contact is excluded from the recipients_total.
+// The verified-domain send gate (ADR 0010 slice 3): a broadcast pinned to a From
+// whose domain has no verified sending domain fails at plan time — before any
+// recipient row is created — rather than failing every recipient at send.
+func TestPlanBroadcastRejectsUnverifiedFromDomain(t *testing.T) {
+	env := testhelper.Setup(t)
+	ctx := context.Background()
+
+	// news.acme.com exists as an *unverified* sending domain (fixture id 2).
+	_, err := env.DB.Broadcast.UpdateOneID(draftBroadcastID).SetFromEmail("noreply@news.acme.com").Save(ctx)
+	require.NoError(t, err)
+
+	_, err = jobs.PlanBroadcast(ctx, env.DB, fakeResolver{sender: &fakeSender{}}, draftBroadcastID)
+	assert.ErrorIs(t, err, messaging.ErrUnverifiedSendingDomain)
+
+	got := env.DB.Broadcast.GetX(ctx, draftBroadcastID)
+	assert.Equal(t, broadcast.StatusFailed, got.Status)
+
+	n, err := env.DB.BroadcastRecipient.Query().
+		Where(broadcastrecipient.BroadcastID(draftBroadcastID)).Count(ctx)
+	require.NoError(t, err)
+	assert.Zero(t, n, "no recipient rows created when the broadcast fails the domain gate")
+}
+
 func TestSendBroadcastSkipsSuppressed(t *testing.T) {
 	env := testhelper.Setup(t)
 	ctx := context.Background()

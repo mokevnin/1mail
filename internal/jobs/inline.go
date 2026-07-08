@@ -2,6 +2,7 @@ package jobs
 
 import (
 	"context"
+	"log/slog"
 	"time"
 
 	"github.com/mokevnin/1mail/ent"
@@ -66,10 +67,20 @@ func (i *Inline) EnqueueEmailChangeConfirm(ctx context.Context, email, token str
 	return SendAuthMail(ctx, i.systemSender, i.appURL, SendAuthMailArgs{Flow: flowEmailChange, Email: email, Token: token})
 }
 
-// EnqueueSendingDomainVerify re-checks the domain's DKIM DNS now.
+// EnqueueSendingDomainVerify re-checks the domain's DKIM DNS now, notifying the
+// workspace owner if this check flips the domain to unverified (ADR 0010 slice 3).
 func (i *Inline) EnqueueSendingDomainVerify(ctx context.Context, sendingDomainID int64) error {
-	_, err := VerifySendingDomainByID(ctx, i.ent, i.lookup, sendingDomainID)
-	return err
+	_, flipped, err := VerifySendingDomainByID(ctx, i.ent, i.lookup, sendingDomainID)
+	if err != nil {
+		return err
+	}
+	if flipped {
+		if nerr := NotifySendingDomainUnverified(ctx, i.ent, i.systemSender, sendingDomainID); nerr != nil {
+			slog.WarnContext(ctx, "notify sending domain unverified failed",
+				"sending_domain_id", sendingDomainID, "err", nerr)
+		}
+	}
+	return nil
 }
 
 // EnqueueMemberInvite sends the workspace invite email now via the system sender.

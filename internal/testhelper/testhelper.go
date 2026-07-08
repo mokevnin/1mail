@@ -156,14 +156,27 @@ func Setup(t *testing.T) *TestEnv {
 }
 
 // CapturingSender is a messaging.EmailSender that records sends for assertions.
+// Set Err to make Send fail with it — used to drive the send-path error branches
+// (e.g. the verified-domain gate) that the real providers are stubbed out of.
 type CapturingSender struct {
 	mu   sync.Mutex
 	sent []messaging.EmailMessage
+	Err  error
+}
+
+// SetErr makes subsequent Send calls fail with err (nil clears it).
+func (s *CapturingSender) SetErr(err error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.Err = err
 }
 
 func (s *CapturingSender) Send(_ context.Context, msg messaging.EmailMessage) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+	if s.Err != nil {
+		return s.Err
+	}
 	s.sent = append(s.sent, msg)
 	return nil
 }

@@ -39,3 +39,11 @@ from the free-string `from_email` and needs a migration + an onboarding step.
   immediate notification and trivial re-verification).
 - Distinct from **Sending source** (the unsubscribe scope) despite the similar name — one is an
   authenticated identity, the other a consent boundary.
+- **Still open after the enforcement slice.** The send gate and the verified→unverified owner
+  notification are built, but two consequences the decision names are not: (1) an **onboarding +
+  migration** path — `from_email` is still a free string, and the hard cutover means any workspace
+  whose From domain isn't already verified has all sends rejected the moment enforcement ships;
+  (2) **local dev sending** now requires a verified domain, and the periodic re-check runs against
+  real DNS, so a seeded dev domain re-verts unless its DKIM TXT is actually published — the
+  Mailpit send loop needs a dev escape (a dev `LookupTXT` that trusts seeded domains, or a
+  dev-only gate bypass) or it stays blocked.

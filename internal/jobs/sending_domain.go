@@ -2,6 +2,8 @@ package jobs
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"log/slog"
 	"time"
 
@@ -10,7 +12,9 @@ import (
 	"github.com/riverqueue/river"
 
 	"github.com/mokevnin/1mail/ent"
+	"github.com/mokevnin/1mail/ent/membership"
 	"github.com/mokevnin/1mail/ent/sendingdomain"
+	"github.com/mokevnin/1mail/internal/messaging"
 	"github.com/mokevnin/1mail/internal/sending"
 )
 
@@ -31,11 +35,22 @@ type VerifySendingDomainWorker struct {
 	river.WorkerDefaults[VerifySendingDomainArgs]
 	ent    *ent.Client
 	lookup sending.TXTLookup
+	sender messaging.EmailSender // platform sender for the verified→unverified alert
 }
 
 func (w *VerifySendingDomainWorker) Work(ctx context.Context, job *river.Job[VerifySendingDomainArgs]) error {
-	_, err := VerifySendingDomainByID(ctx, w.ent, w.lookup, job.Args.SendingDomainID)
-	return err
+	_, flipped, err := VerifySendingDomainByID(ctx, w.ent, w.lookup, job.Args.SendingDomainID)
+	if err != nil {
+		return err
+	}
+	if flipped {
+		// Best-effort: a failed alert must not fail (and retry) the verification.
+		if nerr := NotifySendingDomainUnverified(ctx, w.ent, w.sender, job.Args.SendingDomainID); nerr != nil {
+			slog.WarnContext(ctx, "notify sending domain unverified failed",
+				"sending_domain_id", job.Args.SendingDomainID, "err", nerr)
+		}
+	}
+	return nil
 }
 
 // --- periodic re-check of all domains (verified is a live property, ADR 0010) ---
@@ -83,22 +98,20 @@ func DomainsDueForRecheck(ctx context.Context, client *ent.Client, limit int) ([
 // VerifySendingDomainByID re-checks a domain's DKIM DNS and persists the result:
 // verified, last_checked_at, and (when it becomes verified) verified_at. It is
 // pure of the queue so it can be tested directly, and returns the resulting
-// verified state.
+// verified state plus whether this check flipped a live domain to unverified —
+// the transition the owner is notified about (ADR 0010 slice 3).
 //
-// A verified→unverified flip is recorded here (structured log). ADR 0010 also
-// calls for notifying the owner "the instant it flips" — that email is
-// deliberately deferred to the send-gate slice (Slice 3): until sending is gated
-// on a verified domain, an unverified domain blocks nothing, and the
-// suspension-style notify pattern it mirrors (ADR 0007) is not built yet.
-func VerifySendingDomainByID(ctx context.Context, client *ent.Client, lookup sending.TXTLookup, id int64) (bool, error) {
+// The flip self-clears (the same write persists verified=false), so the next tick
+// computes flipped=false and the owner is alerted exactly once per loss.
+func VerifySendingDomainByID(ctx context.Context, client *ent.Client, lookup sending.TXTLookup, id int64) (verified, flippedToUnverified bool, err error) {
 	dom, err := client.SendingDomain.Get(ctx, id)
 	if err != nil {
-		return false, err
+		return false, false, err
 	}
 
-	verified, err := sending.VerifyDKIM(ctx, lookup, dom.DkimSelector, dom.Domain, dom.DkimPublicKey)
+	verified, err = sending.VerifyDKIM(ctx, lookup, dom.DkimSelector, dom.Domain, dom.DkimPublicKey)
 	if err != nil {
-		return false, err
+		return false, false, err
 	}
 
 	now := time.Now()
@@ -109,12 +122,54 @@ func VerifySendingDomainByID(ctx context.Context, client *ent.Client, lookup sen
 			upd.SetVerifiedAt(now)
 		}
 		if dom.Verified && !verified {
+			flippedToUnverified = true
 			slog.WarnContext(ctx, "sending domain DKIM verification lost",
 				"sending_domain_id", id, "workspace_id", dom.WorkspaceID, "domain", dom.Domain)
 		}
 	}
 	if err := upd.Exec(ctx); err != nil {
-		return false, err
+		return false, false, err
 	}
-	return verified, nil
+	return verified, flippedToUnverified, nil
+}
+
+// NotifySendingDomainUnverified emails the workspace owner(s) that a sending
+// domain lost DKIM verification and its sends are now blocked (ADR 0010 slice 3,
+// mirroring the workspace-suspension notify intent). Best-effort and idempotent
+// per flip: the caller invokes it only on the verified→unverified transition.
+// A nil sender (no platform sender configured, e.g. some tests) is a no-op.
+func NotifySendingDomainUnverified(ctx context.Context, client *ent.Client, sender messaging.EmailSender, id int64) error {
+	if sender == nil {
+		return nil
+	}
+	dom, err := client.SendingDomain.Get(ctx, id)
+	if err != nil {
+		return err
+	}
+	owners, err := client.Membership.Query().
+		Where(membership.WorkspaceID(dom.WorkspaceID), membership.RoleEQ(membership.RoleOwner)).
+		WithUser().
+		All(ctx)
+	if err != nil {
+		return err
+	}
+	subject := fmt.Sprintf("Action required: sending domain %s is no longer verified", dom.Domain)
+	body := fmt.Sprintf(
+		"The sending domain %q in your workspace is no longer verified: its DKIM DNS "+
+			"record (%s._domainkey.%s) could not be found.\n\nEmail sent from this domain "+
+			"is now blocked until you re-publish the record and re-verify the domain in "+
+			"your 1mail settings.\n",
+		dom.Domain, dom.DkimSelector, dom.Domain,
+	)
+	var errs []error
+	for _, m := range owners {
+		u := m.Edges.User
+		if u == nil || u.Email == "" {
+			continue
+		}
+		if serr := sender.Send(ctx, messaging.EmailMessage{To: u.Email, Subject: subject, Text: body}); serr != nil {
+			errs = append(errs, serr)
+		}
+	}
+	return errors.Join(errs...)
 }

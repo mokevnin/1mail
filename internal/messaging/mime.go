@@ -46,12 +46,15 @@ func BuildMIME(msg EmailMessage) (*mail.Msg, error) {
 	return m, nil
 }
 
-// BuildSignedMIME builds the message via BuildMIME and, when signer is non-nil
-// and msg.From resolves to a verified sending domain, attaches a native DKIM
-// signer (ADR 0010). go-mail signs during WriteTo, so the same Msg signs
-// identically whether the provider writes it directly (SES raw bytes) or through
-// the SMTP DATA stream. A nil signer, or a From with no verified domain, yields
-// an unsigned message.
+// BuildSignedMIME builds the message via BuildMIME and attaches a native DKIM
+// signer for msg.From's verified sending domain (ADR 0010). go-mail signs during
+// WriteTo, so the same Msg signs identically whether the provider writes it
+// directly (SES raw bytes) or through the SMTP DATA stream.
+//
+// The gate (slice 3): when signer is non-nil (a workspace send) and From's
+// domain is not a verified sending domain, the send is rejected with
+// ErrUnverifiedSendingDomain — a verified domain is required to send. A nil
+// signer (platform/system mail) is exempt and always sends unsigned.
 func BuildSignedMIME(ctx context.Context, msg EmailMessage, signer Signer) (*mail.Msg, error) {
 	m, err := BuildMIME(msg)
 	if err != nil {
@@ -64,8 +67,9 @@ func BuildSignedMIME(ctx context.Context, msg EmailMessage, signer Signer) (*mai
 	if err != nil {
 		return nil, err
 	}
-	if dkim != nil {
-		m.SetDKIM(dkim)
+	if dkim == nil {
+		return nil, fmt.Errorf("%w: %s", ErrUnverifiedSendingDomain, msg.From)
 	}
+	m.SetDKIM(dkim)
 	return m, nil
 }
