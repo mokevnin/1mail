@@ -51,3 +51,13 @@ minimumReleaseAgeExclude:
   - '@typescript/native-preview-win32-x64@7.0.0-dev.20260627.2'
   - '@typescript/native-preview@7.0.0-dev.20260627.2'
   - npm-check-updates@22.2.8
+  - '@biomejs/biome@2.5.3'
+  - '@biomejs/cli-darwin-arm64@2.5.3'
+  - '@biomejs/cli-darwin-x64@2.5.3'
+  - '@biomejs/cli-linux-arm64-musl@2.5.3'
+  - '@biomejs/cli-linux-arm64@2.5.3'
+  - '@biomejs/cli-linux-x64-musl@2.5.3'
+  - '@biomejs/cli-linux-x64@2.5.3'
+  - '@biomejs/cli-win32-arm64@2.5.3'
+  - '@biomejs/cli-win32-x64@2.5.3'
+  - '@types/node@26.1.1'
