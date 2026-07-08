@@ -87,6 +87,11 @@ services:
       GOCACHE: /app/.cache/go-build
     volumes:
       - .:/app # repo + caches (.cache/*) live on the host
+    # Empty mask over the bind-mounted node_modules: the backend runs only Go
+    # tooling (JS tools live in the `frontend` service), and Go's ./... walk
+    # would otherwise print "ignoring symlink" for every pnpm symlink under it.
+    tmpfs:
+      - /app/node_modules
     depends_on:
       db:
         condition: service_healthy
