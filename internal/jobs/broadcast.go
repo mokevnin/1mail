@@ -314,6 +314,7 @@ func SendToRecipient(ctx context.Context, client *ent.Client, bus *events.Bus, r
 	// Pipeline: liquid merge tags → (mjml compile) → CSS inline. Tracking is
 	// layered on AFTER, so re-parsing can't mangle the pixel/links.
 	html := email.HTML
+	var listUnsubURL string
 	if tracker != nil {
 		unsub := tracking.UnsubTarget{
 			Source:      eligibility.SourceBroadcasts,
@@ -327,6 +328,12 @@ func SendToRecipient(ctx context.Context, client *ent.Client, bus *events.Bus, r
 		} else {
 			html = tracked
 		}
+		// RFC 8058 one-click header reuses the footer's source-scoped token (ADR 0012).
+		if url, uerr := tracker.UnsubscribeURL(unsub); uerr != nil {
+			logging.FromContext(ctx).Error("broadcast: unsubscribe url failed", "broadcast_id", b.ID, "recipient_id", rec.ID, "err", uerr)
+		} else {
+			listUnsubURL = url
+		}
 	}
 
 	var fromEmail, fromName string
@@ -338,12 +345,13 @@ func SendToRecipient(ctx context.Context, client *ent.Client, bus *events.Bus, r
 	}
 
 	if serr := sender.Send(ctx, messaging.EmailMessage{
-		From:     fromEmail,
-		FromName: fromName,
-		To:       addr,
-		Subject:  email.Subject,
-		HTML:     html,
-		Text:     email.Text,
+		From:               fromEmail,
+		FromName:           fromName,
+		To:                 addr,
+		Subject:            email.Subject,
+		HTML:               html,
+		Text:               email.Text,
+		ListUnsubscribeURL: listUnsubURL,
 	}); serr != nil {
 		return fmt.Errorf("send to %s: %w", addr, serr) // retryable
 	}

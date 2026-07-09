@@ -68,6 +68,9 @@ func (s *dkimSigner) DKIMSigner(ctx context.Context, fromEmail string) (*mail.DK
 	if err != nil {
 		return nil, fmt.Errorf("messaging: parse dkim key for %s: %w", domain, err)
 	}
+	// Default signer signs the standard header set with relaxed canonicalization.
+	// The one-click List-Unsubscribe headers are added to the signed set per-message
+	// in BuildSignedMIME (only marketing sends carry them) — see the note there.
 	return mail.NewDKIMSigner(row.Domain, row.DkimSelector, key), nil
 }
 

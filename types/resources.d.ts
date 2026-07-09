@@ -559,6 +559,13 @@ export default interface Resources {
       "subtitle": "Single-recipient emails sent through the API.",
       "title": "Transactional emails"
     },
+    "unsubscribe": {
+      "body": "Press the button below to stop receiving these emails.",
+      "confirm": "Unsubscribe",
+      "errorBody": "Something went wrong. Please try again.",
+      "errorTitle": "Unsubscribe failed",
+      "title": "Unsubscribe"
+    },
     "unsubscribed": {
       "body": "You will no longer receive these emails.",
       "title": "Unsubscribed",

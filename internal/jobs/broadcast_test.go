@@ -235,6 +235,12 @@ func TestSendBroadcastSkipsUnsubscribedFromEverything(t *testing.T) {
 	assert.Contains(t, got, "alice@example.com")
 	assert.Contains(t, got, "carol@example.com")
 	assert.NotContains(t, got, "bob@example.com")
+
+	// Every broadcast carries an RFC 8058 one-click unsubscribe URL (ADR 0012),
+	// scoped to the "broadcasts" source (the /e/u/ token endpoint).
+	for _, m := range fs.sent {
+		assert.Contains(t, m.ListUnsubscribeURL, "/e/u/", "broadcast sets a one-click unsubscribe URL")
+	}
 }
 
 func TestSendBroadcastToRuleSegment(t *testing.T) {

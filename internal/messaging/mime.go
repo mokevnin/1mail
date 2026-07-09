@@ -43,6 +43,14 @@ func BuildMIME(msg EmailMessage) (*mail.Msg, error) {
 		m.SetBodyString(mail.TypeTextPlain, msg.Text)
 	}
 
+	// RFC 8058 one-click unsubscribe (ADR 0012): the HTTPS URI plus the One-Click
+	// POST directive. Set only on marketing sends; the DKIM signer (signer.go)
+	// lists both headers in h= so they ride within the signature.
+	if msg.ListUnsubscribeURL != "" {
+		m.SetGenHeader(mail.HeaderListUnsubscribe, "<"+msg.ListUnsubscribeURL+">")
+		m.SetGenHeader(mail.HeaderListUnsubscribePost, "List-Unsubscribe=One-Click")
+	}
+
 	return m, nil
 }
 
@@ -69,6 +77,22 @@ func BuildSignedMIME(ctx context.Context, msg EmailMessage, signer Signer) (*mai
 	}
 	if dkim == nil {
 		return nil, fmt.Errorf("%w: %s", ErrUnverifiedSendingDomain, msg.From)
+	}
+	// One-click unsubscribe (ADR 0012 / RFC 8058 §5): the List-Unsubscribe headers
+	// must be inside the DKIM-signed set (h=), or Gmail/Yahoo ignore one-click. Add
+	// them to the signed set on marketing sends only, and switch header
+	// canonicalization to simple for those: go-mail v0.8.0 folds a long relaxed h=
+	// mid-token (e.g. "List-Unsubscrib\r\n e"), which the signer signs unfolded but
+	// the verifier canonicalizes with a spurious space — the signature then fails.
+	// Simple emits the DKIM-Signature unfolded, so signer and wire agree. Body stays
+	// relaxed. Transactional/system mail (no header) keeps the default relaxed path.
+	if msg.ListUnsubscribeURL != "" {
+		dkim.SignHeaders(
+			"From", "To", "Subject", "Date", "Message-ID",
+			"Content-Type", "MIME-Version",
+			"List-Unsubscribe", "List-Unsubscribe-Post",
+		)
+		dkim.HeaderCanonicalization(mail.CanonicalizationSimple)
 	}
 	m.SetDKIM(dkim)
 	return m, nil

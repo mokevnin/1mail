@@ -31,6 +31,7 @@ import { TemplateCreatePage } from './routes/templates/create.tsx'
 import { TemplateEditPage } from './routes/templates/edit.tsx'
 import { TemplatesListPage } from './routes/templates/list.tsx'
 import { TransactionalEmailsListPage } from './routes/transactional-emails/list.tsx'
+import { UnsubscribePage } from './routes/unsubscribe.tsx'
 import { UnsubscribedPage } from './routes/unsubscribed.tsx'
 import { ActivityPage } from './routes/workspace/activity.tsx'
 import { OverviewPage } from './routes/workspace/overview.tsx'
@@ -250,9 +251,19 @@ export const confirmEmailChangeRoute = createRoute({
   component: ConfirmEmailChangePage,
 })
 
-// Public unsubscribe confirmation (no auth): the /e/u/{token} endpoint records the
-// opt-out then redirects here. `all` is the optional "unsubscribe from everything"
-// escalation URL the backend supplies.
+// Public unsubscribe confirm page (no auth): the GET /e/u/{token} endpoint
+// redirects here (RFC 8058 / ADR 0012 — GET records nothing). `token` is POSTed
+// back to /e/u/{token} on confirm to perform the opt-out; `all` is the optional
+// "unsubscribe from everything" escalation URL the backend supplies.
+export const unsubscribeRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/unsubscribe',
+  validateSearch: z.object({ token: z.string(), all: z.string().optional() }),
+  component: UnsubscribePage,
+})
+
+// Public unsubscribe "done" page (no auth): shown after the opt-out is recorded.
+// `all` is the optional "unsubscribe from everything" escalation URL.
 export const unsubscribedRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/unsubscribed',
@@ -293,6 +304,7 @@ const routeTree = rootRoute.addChildren([
   resetPasswordRoute,
   verifyEmailRoute,
   confirmEmailChangeRoute,
+  unsubscribeRoute,
   unsubscribedRoute,
   acceptInvitationRoute,
   accountRoute.addChildren([profileRoute]),

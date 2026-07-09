@@ -560,6 +560,13 @@
     "subtitle": "Correos de destinatario único enviados a través de la API.",
     "title": "Correos transaccionales"
   },
+  "unsubscribe": {
+    "body": "Pulsa el botón de abajo para dejar de recibir estos correos.",
+    "confirm": "Darse de baja",
+    "errorBody": "Algo salió mal. Inténtalo de nuevo.",
+    "errorTitle": "No se pudo dar de baja",
+    "title": "Darse de baja"
+  },
   "unsubscribed": {
     "body": "Ya no recibirás estos correos.",
     "title": "Baja completada",

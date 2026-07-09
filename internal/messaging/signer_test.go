@@ -114,6 +114,110 @@ func TestBuildSignedMIMENilSigner(t *testing.T) {
 	assert.NotContains(t, buf.String(), "DKIM-Signature:")
 }
 
+// dkimHeaderTag unfolds the DKIM-Signature header from a raw message and returns
+// its h= tag (the signed-header list).
+func dkimHeaderTag(t *testing.T, raw string) string {
+	t.Helper()
+	var sig strings.Builder
+	inSig := false
+	for _, ln := range strings.Split(raw, "\r\n") {
+		switch {
+		case strings.HasPrefix(ln, "DKIM-Signature:"):
+			inSig = true
+			sig.WriteString(strings.TrimPrefix(ln, "DKIM-Signature:"))
+		case inSig && (strings.HasPrefix(ln, " ") || strings.HasPrefix(ln, "\t")):
+			sig.WriteString(ln)
+		case inSig:
+			inSig = false
+		}
+	}
+	require.NotEmpty(t, sig.String(), "no DKIM-Signature header found")
+	for _, tag := range strings.Split(sig.String(), ";") {
+		if tag = strings.TrimSpace(tag); strings.HasPrefix(tag, "h=") {
+			return strings.TrimPrefix(tag, "h=")
+		}
+	}
+	t.Fatal("no h= tag in DKIM-Signature")
+	return ""
+}
+
+// RFC 8058 §5 (ADR 0012): the one-click headers must be inside the DKIM-signed
+// set (h=), or Gmail/Yahoo silently ignore one-click. Assert both are named in
+// h= and that the signature still verifies with them present.
+func TestDKIMSignsListUnsubscribeHeaders(t *testing.T) {
+	env := testhelper.Setup(t)
+	ctx := context.Background()
+	signer := messaging.NewDKIMSigner(env.DB, envCipher(t), 1)
+
+	dom, err := env.DB.SendingDomain.Get(ctx, 1)
+	require.NoError(t, err)
+	pubTXT := dom.DkimPublicKey
+
+	m, err := messaging.BuildSignedMIME(ctx, messaging.EmailMessage{
+		From:               "hello@mail.acme.com",
+		To:                 "rcpt@example.com",
+		Subject:            "one-click",
+		HTML:               "<p>hi</p>",
+		Text:               "hi",
+		ListUnsubscribeURL: "https://mail.acme.com/e/u/tok",
+	}, signer)
+	require.NoError(t, err)
+
+	var buf bytes.Buffer
+	_, err = m.WriteTo(&buf)
+	require.NoError(t, err)
+	raw := buf.String()
+
+	h := strings.ToLower(dkimHeaderTag(t, raw))
+	assert.Contains(t, h, "list-unsubscribe", "h= must cover List-Unsubscribe")
+	assert.Contains(t, h, "list-unsubscribe-post", "h= must cover List-Unsubscribe-Post")
+	// Simple header canonicalization (relaxed body) sidesteps go-mail's mid-token
+	// fold of the long h= that breaks relaxed verification.
+	assert.Contains(t, raw, "c=simple/relaxed")
+
+	verifs, err := emdkim.VerifyWithOptions(bytes.NewReader(buf.Bytes()), &emdkim.VerifyOptions{
+		LookupTXT: func(string) ([]string, error) { return []string{pubTXT}, nil },
+	})
+	require.NoError(t, err)
+	require.Len(t, verifs, 1)
+	assert.NoError(t, verifs[0].Err, "signature must verify with the one-click headers present")
+}
+
+// A transactional send (no ListUnsubscribeURL) keeps the default relaxed signing
+// path: it neither carries nor signs a List-Unsubscribe header, and verifies. The
+// one-click headers and simple canonicalization are scoped to marketing sends, so
+// transactional mail is untouched by ADR 0012.
+func TestDKIMTransactionalUnchanged(t *testing.T) {
+	env := testhelper.Setup(t)
+	ctx := context.Background()
+	signer := messaging.NewDKIMSigner(env.DB, envCipher(t), 1)
+
+	dom, err := env.DB.SendingDomain.Get(ctx, 1)
+	require.NoError(t, err)
+	pubTXT := dom.DkimPublicKey
+
+	m, err := messaging.BuildSignedMIME(ctx, messaging.EmailMessage{
+		From: "hello@mail.acme.com", To: "rcpt@example.com", Subject: "txn", Text: "hi",
+	}, signer)
+	require.NoError(t, err)
+
+	var buf bytes.Buffer
+	_, err = m.WriteTo(&buf)
+	require.NoError(t, err)
+	raw := buf.String()
+	require.NotContains(t, raw, "List-Unsubscribe:")
+	assert.NotContains(t, strings.ToLower(dkimHeaderTag(t, raw)), "list-unsubscribe",
+		"transactional h= must not name the one-click headers")
+	assert.Contains(t, raw, "c=relaxed/relaxed", "transactional stays on relaxed canonicalization")
+
+	verifs, err := emdkim.VerifyWithOptions(bytes.NewReader(buf.Bytes()), &emdkim.VerifyOptions{
+		LookupTXT: func(string) ([]string, error) { return []string{pubTXT}, nil },
+	})
+	require.NoError(t, err)
+	require.Len(t, verifs, 1)
+	assert.NoError(t, verifs[0].Err)
+}
+
 // The signature over a multipart/alternative body must verify cryptographically
 // against the domain's published public key — the go-mail body-hash must match
 // the wire body. The fixture public key is injected via LookupTXT so the check

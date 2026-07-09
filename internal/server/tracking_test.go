@@ -65,6 +65,12 @@ func TestTrackingEndpoints(t *testing.T) {
 		env.Server.ServeHTTP(w, req)
 		return w.Result()
 	}
+	post := func(path string) *http.Response {
+		req := httptest.NewRequest(http.MethodPost, path, nil)
+		w := httptest.NewRecorder()
+		env.Server.ServeHTTP(w, req)
+		return w.Result()
+	}
 
 	// Open: returns the pixel and records the open.
 	resp := get("/e/o/" + token)
@@ -82,28 +88,39 @@ func TestTrackingEndpoints(t *testing.T) {
 	assert.NotNil(t, env.DB.BroadcastRecipient.GetX(ctx, rec.ID).ClickedAt)
 	assert.Equal(t, 1, env.DB.Broadcast.GetX(ctx, b.ID).ClickedCount)
 
-	// Unsubscribe: the broadcast footer link is a "broadcasts"-scoped token; the
-	// endpoint records the opt-out, bumps the counter once, and 303-redirects to
-	// the SPA confirmation page (no server-rendered HTML).
+	// Unsubscribe (ADR 0012 / RFC 8058): the broadcast footer link is a
+	// "broadcasts"-scoped token. GET is safe — it 303-redirects to the SPA confirm
+	// page and records nothing (a link scanner's GET must not opt anyone out); only
+	// POST performs the opt-out.
 	uPath := unsubPath(t, tr, tracking.UnsubTarget{
 		Source: eligibility.SourceBroadcasts, Destination: *c.Email,
 		WorkspaceID: 1, ContactID: c.ID, BroadcastID: b.ID,
 	})
+	optedOut := func() bool {
+		ok, err := env.DB.Unsubscribe.Query().Where(
+			unsubscribe.WorkspaceID(1),
+			unsubscribe.ChannelEQ(unsubscribe.ChannelEmail),
+			unsubscribe.DestinationEQ(*c.Email),
+			unsubscribe.SendingSourceEQ(eligibility.SourceBroadcasts),
+		).Exist(ctx)
+		require.NoError(t, err)
+		return ok
+	}
+
 	resp = get(uPath)
 	assert.Equal(t, http.StatusSeeOther, resp.StatusCode)
-	assert.True(t, strings.HasPrefix(resp.Header.Get("Location"), "/unsubscribed"))
-	optedOut, err := env.DB.Unsubscribe.Query().Where(
-		unsubscribe.WorkspaceID(1),
-		unsubscribe.ChannelEQ(unsubscribe.ChannelEmail),
-		unsubscribe.DestinationEQ(*c.Email),
-		unsubscribe.SendingSourceEQ(eligibility.SourceBroadcasts),
-	).Exist(ctx)
-	require.NoError(t, err)
-	assert.True(t, optedOut, "unsubscribe writes a broadcasts-scoped opt-out")
+	assert.True(t, strings.HasPrefix(resp.Header.Get("Location"), "/unsubscribe?"))
+	assert.False(t, optedOut(), "GET records nothing")
+	assert.Equal(t, 0, env.DB.Broadcast.GetX(ctx, b.ID).UnsubscribedCount)
+
+	// POST performs the opt-out and bumps the counter once.
+	resp = post(uPath)
+	assert.Equal(t, http.StatusNoContent, resp.StatusCode)
+	assert.True(t, optedOut(), "POST writes a broadcasts-scoped opt-out")
 	assert.Equal(t, 1, env.DB.Broadcast.GetX(ctx, b.ID).UnsubscribedCount)
 
-	// Redelivery of the same unsubscribe must not double-count.
-	get(uPath)
+	// A repeated POST (mailbox retry / double click) must not double-count.
+	post(uPath)
 	assert.Equal(t, 1, env.DB.Broadcast.GetX(ctx, b.ID).UnsubscribedCount)
 
 	// Each endpoint published an engagement event onto the transactional outbox.
@@ -135,8 +152,8 @@ func TestUnsubscribeAutomationExitsEnrollment(t *testing.T) {
 	require.NoError(t, err)
 	tr := tracking.New(cfg.JWTSecret, cfg.AppURL)
 
-	get := func(path string) *http.Response {
-		req := httptest.NewRequest(http.MethodGet, path, nil)
+	post := func(path string) *http.Response {
+		req := httptest.NewRequest(http.MethodPost, path, nil)
 		w := httptest.NewRecorder()
 		env.Server.ServeHTTP(w, req)
 		return w.Result()
@@ -152,11 +169,12 @@ func TestUnsubscribeAutomationExitsEnrollment(t *testing.T) {
 		SetStatus(automationrun.StatusActive).Save(ctx)
 	require.NoError(t, err)
 
-	resp := get(unsubPath(t, tr, tracking.UnsubTarget{
+	// POST performs the opt-out (GET only renders the confirm page — ADR 0012).
+	resp := post(unsubPath(t, tr, tracking.UnsubTarget{
 		Source: eligibility.AutomationSource(a.ID), Destination: *c.Email,
 		WorkspaceID: 1, ContactID: c.ID,
 	}))
-	assert.Equal(t, http.StatusSeeOther, resp.StatusCode)
+	assert.Equal(t, http.StatusNoContent, resp.StatusCode)
 
 	optedOut, err := env.DB.Unsubscribe.Query().Where(
 		unsubscribe.WorkspaceID(1),
@@ -169,9 +187,10 @@ func TestUnsubscribeAutomationExitsEnrollment(t *testing.T) {
 		"the active enrollment is exited")
 }
 
-// The confirmation redirect carries an "unsubscribe from everything" escalation;
-// following it records an everything-scoped opt-out while the source opt-out
-// stays — two scopes coexist.
+// The confirm-page redirect carries an "unsubscribe from everything" escalation;
+// following it lands on a confirm page with no further escalation, and POSTing
+// both tokens records an everything-scoped opt-out alongside the source one — two
+// scopes coexist.
 func TestUnsubscribeEverythingEscalation(t *testing.T) {
 	env := testhelper.Setup(t)
 	ctx := context.Background()
@@ -185,32 +204,45 @@ func TestUnsubscribeEverythingEscalation(t *testing.T) {
 		env.Server.ServeHTTP(w, req)
 		return w.Result()
 	}
+	post := func(path string) *http.Response {
+		req := httptest.NewRequest(http.MethodPost, path, nil)
+		w := httptest.NewRecorder()
+		env.Server.ServeHTTP(w, req)
+		return w.Result()
+	}
 
 	c := env.DB.Contact.GetX(ctx, 1)
 	b, err := env.DB.Broadcast.Create().SetWorkspaceID(1).SetName("B").SetSubject("Hi").
 		SetStatus(broadcast.StatusSent).Save(ctx)
 	require.NoError(t, err)
 
-	// Source unsubscribe → redirect carries the escalation URL in ?all=.
-	resp := get(unsubPath(t, tr, tracking.UnsubTarget{
+	// GET the source unsubscribe → confirm-page redirect carrying the escalation
+	// URL in ?all=.
+	srcPath := unsubPath(t, tr, tracking.UnsubTarget{
 		Source: eligibility.SourceBroadcasts, Destination: *c.Email,
 		WorkspaceID: 1, ContactID: c.ID, BroadcastID: b.ID,
-	}))
+	})
+	resp := get(srcPath)
 	require.Equal(t, http.StatusSeeOther, resp.StatusCode)
 	loc, err := url.Parse(resp.Header.Get("Location"))
 	require.NoError(t, err)
 	allURL := loc.Query().Get("all")
-	require.NotEmpty(t, allURL, "redirect offers an unsubscribe-from-everything link")
+	require.NotEmpty(t, allURL, "confirm page offers an unsubscribe-from-everything link")
 
-	// Follow the escalation link.
-	_, token, ok := strings.Cut(allURL, "/e/u/")
+	// The escalation link is itself a GET /e/u/ confirm link; following it lands on
+	// a confirm page that offers no further escalation.
+	_, evToken, ok := strings.Cut(allURL, "/e/u/")
 	require.True(t, ok)
-	resp = get("/e/u/" + token)
+	evPath := "/e/u/" + evToken
+	resp = get(evPath)
 	assert.Equal(t, http.StatusSeeOther, resp.StatusCode)
-	// The everything escalation page itself offers no further escalation.
 	loc2, err := url.Parse(resp.Header.Get("Location"))
 	require.NoError(t, err)
 	assert.Empty(t, loc2.Query().Get("all"))
+
+	// POST both tokens to perform both opt-outs.
+	assert.Equal(t, http.StatusNoContent, post(srcPath).StatusCode)
+	assert.Equal(t, http.StatusNoContent, post(evPath).StatusCode)
 
 	// Both scopes now exist for the destination.
 	for _, src := range []string{eligibility.SourceBroadcasts, eligibility.SourceEverything} {

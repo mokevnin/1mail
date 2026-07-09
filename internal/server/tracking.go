@@ -26,9 +26,15 @@ var pixelGIF, _ = base64.StdEncoding.DecodeString(
 
 // trackingHandler serves the public email engagement endpoints:
 //
-//	GET /e/o/{token}        — open pixel:       record open, return a 1x1 gif
-//	GET /e/c/{token}?u=URL  — click:            record click, 302 to URL
-//	GET /e/u/{token}        — unsubscribe:      opt the destination out of the token's scope
+//	GET  /e/o/{token}       — open pixel:       record open, return a 1x1 gif
+//	GET  /e/c/{token}?u=URL — click:            record click, 302 to URL
+//	GET  /e/u/{token}       — unsubscribe confirm: render the SPA page, record nothing
+//	POST /e/u/{token}       — unsubscribe perform: opt the destination out of the scope
+//
+// Unsubscribe is split by method (ADR 0012 / RFC 8058): GET is safe and only
+// renders the confirmation page, so link scanners and security proxies that GET
+// every URL cannot unsubscribe anyone; the opt-out happens only on POST — the
+// target of both the mailbox one-click POST and the confirm page's button.
 //
 // The token is a signed per-recipient JWT. Opens always return the pixel (even
 // on a bad token) so we never leak token validity through the image.
@@ -60,28 +66,43 @@ func trackingHandler(client *ent.Client, bus *events.Bus, tracker *tracking.Trac
 	})
 
 	mux.HandleFunc("GET /e/u/{token}", func(w http.ResponseWriter, r *http.Request) {
+		tokenStr := r.PathValue("token")
+		target, err := tracker.DecodeUnsub(tokenStr)
+		if err != nil {
+			http.Error(w, "invalid token", http.StatusBadRequest)
+			return
+		}
+		// Safe method: record nothing, render the SPA confirmation page. The page's
+		// button POSTs back to this same URL to perform the opt-out. For a per-source
+		// opt-out we pass the deliberate "unsubscribe from everything" escalation link
+		// so the page can offer it (a click, never an auto-fired request).
+		http.Redirect(w, r, confirmRedirect(tracker, tokenStr, target), http.StatusSeeOther)
+	})
+
+	mux.HandleFunc("POST /e/u/{token}", func(w http.ResponseWriter, r *http.Request) {
 		target, err := tracker.DecodeUnsub(r.PathValue("token"))
 		if err != nil {
 			http.Error(w, "invalid token", http.StatusBadRequest)
 			return
 		}
+		// Performs the opt-out — the target of the mailbox provider's one-click POST
+		// (List-Unsubscribe=One-Click body) and the confirm page's button. No page is
+		// returned; the SPA transitions its UI client-side on 204.
 		recordUnsubscribe(r.Context(), client, bus, target)
-		// The confirmation page is the SPA's public /unsubscribed route — no HTML
-		// is rendered server-side. For a per-source opt-out we pass the deliberate
-		// "unsubscribe from everything" escalation link as a query param, so the
-		// page can offer it (a click, never an auto-fired second request).
-		http.Redirect(w, r, unsubscribedRedirect(tracker, target), http.StatusSeeOther)
+		w.WriteHeader(http.StatusNoContent)
 	})
 
 	return mux
 }
 
-// unsubscribedRedirect is the SPA route to land on after recording an opt-out.
-// For a per-source opt-out it carries the everything-scoped escalation URL (built
-// from the same destination) so the page can render it.
-func unsubscribedRedirect(tracker *tracking.Tracker, target tracking.UnsubTarget) string {
+// confirmRedirect is the SPA confirmation route the GET handler redirects to. It
+// carries the token so the page's button can POST it back, and for a per-source
+// opt-out the everything-scoped escalation URL (built from the same destination)
+// so the page can offer it after confirming.
+func confirmRedirect(tracker *tracking.Tracker, tokenStr string, target tracking.UnsubTarget) string {
+	base := "/unsubscribe?token=" + url.QueryEscape(tokenStr)
 	if target.Source == eligibility.SourceEverything {
-		return "/unsubscribed"
+		return base
 	}
 	allURL, err := tracker.UnsubscribeURL(tracking.UnsubTarget{
 		Source:      eligibility.SourceEverything,
@@ -90,9 +111,9 @@ func unsubscribedRedirect(tracker *tracking.Tracker, target tracking.UnsubTarget
 		ContactID:   target.ContactID,
 	})
 	if err != nil {
-		return "/unsubscribed"
+		return base
 	}
-	return "/unsubscribed?all=" + url.QueryEscape(allURL)
+	return base + "&all=" + url.QueryEscape(allURL)
 }
 
 // The record* helpers commit the state change and publish the engagement event in
@@ -167,8 +188,8 @@ func recordClick(ctx context.Context, client *ent.Client, bus *events.Bus, recip
 // destination-keying). The default in-email link is scoped to its sending source;
 // "everything" is the deliberate escalation. All effects (the row, the broadcast
 // counter, the automation enrollment exit, and the engagement event) live in one
-// transaction gated on the existence check, so a re-click or scanner prefetch is a
-// complete no-op and concurrent clicks are counted exactly once.
+// transaction gated on the existence check, so a repeated POST (mailbox retry or a
+// double click) is a complete no-op and concurrent POSTs are counted exactly once.
 func recordUnsubscribe(ctx context.Context, client *ent.Client, bus *events.Bus, target tracking.UnsubTarget) {
 	dest := eligibility.NormalizeDestination(target.Destination)
 	if dest == "" || target.WorkspaceID == 0 || target.Source == "" {

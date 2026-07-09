@@ -205,6 +205,9 @@ func TestAutomationSendIncludesUnsubscribeFooter(t *testing.T) {
 
 	require.Len(t, fs.sent, 1)
 	assert.Contains(t, fs.sent[0].HTML, "https://app.test/e/u/", "automation email carries an unsubscribe link")
+	// RFC 8058 one-click header (ADR 0012), scoped to this automation source.
+	assert.Contains(t, fs.sent[0].ListUnsubscribeURL, "https://app.test/e/u/",
+		"automation sets a one-click unsubscribe URL")
 }
 
 func TestAutomationInactiveDoesNotEnroll(t *testing.T) {

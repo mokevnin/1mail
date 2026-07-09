@@ -61,3 +61,22 @@ func TestBuildMIMEInvalidFrom(t *testing.T) {
 	_, err := messaging.BuildMIME(messaging.EmailMessage{From: "not-an-address", To: "rcpt@example.com"})
 	require.Error(t, err)
 }
+
+// RFC 8058 one-click (ADR 0012): ListUnsubscribeURL emits both headers, the URI
+// angle-bracketed and the One-Click POST directive.
+func TestBuildMIMEListUnsubscribe(t *testing.T) {
+	raw := render(t, messaging.EmailMessage{
+		From: "sender@example.com", To: "rcpt@example.com", Subject: "s", HTML: "<p>hi</p>",
+		ListUnsubscribeURL: "https://1mail.test/e/u/tok",
+	})
+	require.Contains(t, raw, "List-Unsubscribe: <https://1mail.test/e/u/tok>")
+	require.Contains(t, raw, "List-Unsubscribe-Post: List-Unsubscribe=One-Click")
+}
+
+// Transactional/default sends carry no one-click header.
+func TestBuildMIMENoListUnsubscribeByDefault(t *testing.T) {
+	raw := render(t, messaging.EmailMessage{
+		From: "sender@example.com", To: "rcpt@example.com", Subject: "s", Text: "hi",
+	})
+	require.NotContains(t, raw, "List-Unsubscribe")
+}

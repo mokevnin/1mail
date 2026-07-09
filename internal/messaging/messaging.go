@@ -43,6 +43,10 @@ type EmailMessage struct {
 	Subject  string
 	HTML     string
 	Text     string
+	// ListUnsubscribeURL, when set, emits the RFC 8058 one-click unsubscribe
+	// headers (List-Unsubscribe + List-Unsubscribe-Post). Set only on marketing
+	// surfaces (Broadcast, Automation); never on Transactional (ADR 0012).
+	ListUnsubscribeURL string
 }
 
 // EmailSender is implemented by every email provider (smtp, ses, …).

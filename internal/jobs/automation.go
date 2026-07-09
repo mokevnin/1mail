@@ -213,26 +213,36 @@ func RunStep(ctx context.Context, client *ent.Client, bus *events.Bus, resolver 
 		// Unsubscribe footer scoped to this automation: each Automation is its own
 		// sending source, and the click exits the enrollment (ADR 0001).
 		html := email.HTML
+		var listUnsubURL string
 		if tracker != nil {
-			footer, ferr := tracker.UnsubscribeFooter(tracking.UnsubTarget{
+			unsub := tracking.UnsubTarget{
 				Source:      eligibility.AutomationSource(a.ID),
 				Destination: *c.Email,
 				WorkspaceID: run.WorkspaceID,
 				ContactID:   c.ID,
-			})
+			}
+			footer, ferr := tracker.UnsubscribeFooter(unsub)
 			if ferr != nil {
 				_, _ = run.Update().SetStatus(automationrun.StatusFailed).Save(ctx)
 				return StepResult{}, fmt.Errorf("unsubscribe footer: %w", ferr)
 			}
 			html += footer
+			// RFC 8058 one-click header reuses the footer's source-scoped token (ADR 0012).
+			url, uerr := tracker.UnsubscribeURL(unsub)
+			if uerr != nil {
+				_, _ = run.Update().SetStatus(automationrun.StatusFailed).Save(ctx)
+				return StepResult{}, fmt.Errorf("unsubscribe url: %w", uerr)
+			}
+			listUnsubURL = url
 		}
 		// From/FromName left empty: the provider falls back to the integration's
 		// configured sender (messaging.FirstNonEmpty in the smtp/ses senders).
 		if err := sender.Send(ctx, messaging.EmailMessage{
-			To:      *c.Email,
-			Subject: email.Subject,
-			HTML:    html,
-			Text:    email.Text,
+			To:                 *c.Email,
+			Subject:            email.Subject,
+			HTML:               html,
+			Text:               email.Text,
+			ListUnsubscribeURL: listUnsubURL,
 		}); err != nil {
 			_, _ = run.Update().SetStatus(automationrun.StatusFailed).Save(ctx)
 			return StepResult{}, fmt.Errorf("send: %w", err)
