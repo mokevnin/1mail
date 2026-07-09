@@ -199,12 +199,48 @@ func register(injector do.Injector, env string) {
 		return &entClient{Client: db.NewEntClient(database.DB)}, nil
 	})
 
+	// Shared, stateless singletons — provided once and injected, rather than
+	// rebuilt per consumer. The provider catalog (registry of email providers),
+	// the Tink cipher (credential encryption; fails fast at boot on a bad key),
+	// and the workspace→sender resolver built from them.
+	do.Provide(injector, func(do.Injector) (*messaging.Catalog, error) {
+		return registry.Default(), nil
+	})
+
+	do.Provide(injector, func(i do.Injector) (*secrets.Cipher, error) {
+		cfg, err := do.Invoke[*config.Config](i)
+		if err != nil {
+			return nil, err
+		}
+		return secrets.NewCipher(cfg.EncryptionKey)
+	})
+
+	do.Provide(injector, func(i do.Injector) (*messaging.Resolver, error) {
+		client, err := do.Invoke[*entClient](i)
+		if err != nil {
+			return nil, err
+		}
+		cipher, err := do.Invoke[*secrets.Cipher](i)
+		if err != nil {
+			return nil, err
+		}
+		catalog, err := do.Invoke[*messaging.Catalog](i)
+		if err != nil {
+			return nil, err
+		}
+		return messaging.NewResolver(client.Client, cipher, catalog), nil
+	})
+
 	do.Provide(injector, func(i do.Injector) (*systemSender, error) {
 		cfg, err := do.Invoke[*config.Config](i)
 		if err != nil {
 			return nil, err
 		}
-		sender, err := buildSystemSender(cfg, registry.Default())
+		catalog, err := do.Invoke[*messaging.Catalog](i)
+		if err != nil {
+			return nil, err
+		}
+		sender, err := buildSystemSender(cfg, catalog)
 		if err != nil {
 			return nil, err
 		}
@@ -292,7 +328,7 @@ func register(injector do.Injector, env string) {
 		if err != nil {
 			return nil, err
 		}
-		cipher, err := secrets.NewCipher(cfg.EncryptionKey)
+		cipher, err := do.Invoke[*secrets.Cipher](i)
 		if err != nil {
 			return nil, err
 		}
@@ -304,7 +340,10 @@ func register(injector do.Injector, env string) {
 		if err != nil {
 			return nil, err
 		}
-		resolver := messaging.NewResolver(client.Client, cipher, registry.Default())
+		resolver, err := do.Invoke[*messaging.Resolver](i)
+		if err != nil {
+			return nil, err
+		}
 		tracker := tracking.New(cfg.JWTSecret, cfg.AppURL)
 
 		lookup, err := do.Invoke[*dkimLookup](i)
@@ -339,19 +378,26 @@ func register(injector do.Injector, env string) {
 		if err != nil {
 			return nil, err
 		}
-		cipher, err := secrets.NewCipher(cfg.EncryptionKey)
+		cipher, err := do.Invoke[*secrets.Cipher](i)
 		if err != nil {
 			return nil, err
 		}
-		// Resolver for the transactional send surface: same workspace→sender
-		// resolution the jobs use, so transactional mail goes through the
-		// workspace's configured integration.
-		resolver := messaging.NewResolver(client.Client, cipher, registry.Default())
+		catalog, err := do.Invoke[*messaging.Catalog](i)
+		if err != nil {
+			return nil, err
+		}
+		// Resolver for the transactional send surface: the same singleton the jobs
+		// use, so transactional mail goes through the workspace's configured
+		// integration.
+		resolver, err := do.Invoke[*messaging.Resolver](i)
+		if err != nil {
+			return nil, err
+		}
 
 		// The river jobs client implements every enqueue seam: broadcast, welcome,
 		// the self-service account mail (reset/verify/change), and sending-domain
 		// DKIM verification.
-		return server.New(cfg, client.Client, database.DB, bus.Bus, jc.Client, jc.Client, jc.Client, jc.Client, resolver)
+		return server.New(cfg, client.Client, database.DB, bus.Bus, cipher, catalog, jc.Client, jc.Client, jc.Client, jc.Client, resolver)
 	})
 }
 

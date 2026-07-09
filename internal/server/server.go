@@ -7,7 +7,6 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"net/http"
 	"runtime/debug"
 	"strings"
@@ -28,7 +27,7 @@ import (
 	"github.com/mokevnin/1mail/internal/authtoken"
 	"github.com/mokevnin/1mail/internal/events"
 	"github.com/mokevnin/1mail/internal/logging"
-	"github.com/mokevnin/1mail/internal/messaging/registry"
+	"github.com/mokevnin/1mail/internal/messaging"
 	"github.com/mokevnin/1mail/internal/secrets"
 	"github.com/mokevnin/1mail/internal/telemetry"
 	"github.com/mokevnin/1mail/internal/tracking"
@@ -38,15 +37,7 @@ import (
 
 // New builds the top-level net/http handler wiring the three ogen-generated
 // API servers (site, external, collect) plus go-pkgz/auth endpoints.
-func New(cfg *config.Config, client *ent.Client, db *sql.DB, bus *events.Bus, enqueuer apisite.BroadcastEnqueuer, welcome apisite.WelcomeEnqueuer, sysmail apisite.SystemMailEnqueuer, domainVerify apisite.SendingDomainVerifyEnqueuer, resolver apiexternal.SenderResolver) (http.Handler, error) {
-	// Credential encryption is mandatory: fail fast at boot if the key is
-	// missing or malformed rather than at first provider write.
-	cipher, err := secrets.NewCipher(cfg.EncryptionKey)
-	if err != nil {
-		return nil, fmt.Errorf("encryption key: %w", err)
-	}
-	providerCatalog := registry.Default()
-
+func New(cfg *config.Config, client *ent.Client, db *sql.DB, bus *events.Bus, cipher *secrets.Cipher, providerCatalog *messaging.Catalog, enqueuer apisite.BroadcastEnqueuer, welcome apisite.WelcomeEnqueuer, sysmail apisite.SystemMailEnqueuer, domainVerify apisite.SendingDomainVerifyEnqueuer, resolver apiexternal.SenderResolver) (http.Handler, error) {
 	mux := http.NewServeMux()
 
 	// Auth service (go-pkgz/auth) — JWT issuance + direct (email/password) provider.

@@ -22,6 +22,7 @@ import (
 	"github.com/mokevnin/1mail/internal/fixtures"
 	"github.com/mokevnin/1mail/internal/jobs"
 	"github.com/mokevnin/1mail/internal/messaging"
+	"github.com/mokevnin/1mail/internal/messaging/registry"
 	"github.com/mokevnin/1mail/internal/secrets"
 	"github.com/mokevnin/1mail/internal/server"
 	ht "github.com/ogen-go/ogen/http"
@@ -142,11 +143,16 @@ func Setup(t *testing.T) *TestEnv {
 		return nil, &net.DNSError{IsNotFound: true}
 	}
 	inline := jobs.NewInline(client, bus, resolver, nil, systemMail, stubTXT, baseCfg.AppURL)
+	// Cipher (over the fixture-sealing key) and provider catalog for the site
+	// handlers — mirrors the app's DI singletons.
+	cipher, err := secrets.NewCipher(baseCfg.EncryptionKey)
+	require.NoError(t, err, "build cipher")
+	catalog := registry.Default()
 	// The transactional send surface resolves a workspace sender directly (not via
 	// river), so it gets the same capturing resolver — its sends land in CustomerMail.
 	// inline implements every enqueue seam (broadcast, welcome, account mail,
 	// sending-domain verify).
-	handler, err := server.New(baseCfg, client, txDB, bus, inline, inline, inline, inline, resolver)
+	handler, err := server.New(baseCfg, client, txDB, bus, cipher, catalog, inline, inline, inline, inline, resolver)
 	require.NoError(t, err, "build server")
 
 	return &TestEnv{
