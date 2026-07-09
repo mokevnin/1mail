@@ -2,13 +2,21 @@
 // source may reach a destination (ADR 0001). Eligibility is never a stored flag
 // on the Contact; it is computed in layers against two destination-keyed stores:
 //
-//  1. (channel, destination) in Suppression          → never (global hard floor)
-//  2. (channel, destination) unsubscribed "everything" → never
-//  3. (channel, destination) unsubscribed from source  → never
-//  4. otherwise                                        → send
+//  1. (channel, destination) in Suppression            → never (global hard floor)
+//  2. (channel, destination) unsubscribed "everything"  → never
+//  3. (channel, destination) unsubscribed from source   → never
+//  4. requireConfirmed && no (channel, destination) Confirmation → never
+//  5. otherwise                                         → send
 //
-// Transactional sends pass respectUnsubscribe=false: they skip layers 2–3 (you
-// cannot opt out of your own password reset) but still respect Suppression.
+// Layers 1–3 are subtractive (ADR 0001). Layer 4 is the optional positive gate
+// (ADR 0013): it is added only when requireConfirmed is true — a workspace with
+// confirmed-opt-in enabled — and is the lowest priority, so the negatives always
+// dominate a confirmation. When requireConfirmed is false the confirmation store
+// is never touched and behavior is identical to the pure subtractive model.
+//
+// Transactional sends pass respectUnsubscribe=false: they skip layers 2–4 (you
+// cannot opt out of, nor must you confirm, your own password reset) but still
+// respect Suppression.
 //
 // Stored destinations are normalized (lower-cased + trimmed) on write, but
 // contact.email is not normalized at write time, so every comparison folds case
@@ -22,10 +30,12 @@ import (
 	"fmt"
 
 	"github.com/mokevnin/1mail/ent"
+	"github.com/mokevnin/1mail/ent/confirmation"
 	"github.com/mokevnin/1mail/ent/contact"
 	"github.com/mokevnin/1mail/ent/predicate"
 	"github.com/mokevnin/1mail/ent/suppression"
 	"github.com/mokevnin/1mail/ent/unsubscribe"
+	"github.com/mokevnin/1mail/ent/workspace"
 )
 
 // Reasons a destination is ineligible.
@@ -33,6 +43,7 @@ const (
 	ReasonSuppressed             = "suppressed"
 	ReasonUnsubscribedEverything = "unsubscribed_everything"
 	ReasonUnsubscribedSource     = "unsubscribed_source"
+	ReasonUnconfirmed            = "unconfirmed"
 )
 
 // Decision is the outcome of a single eligibility Check.
@@ -44,10 +55,14 @@ type Decision struct {
 
 // Predicate ANDs the eligibility floor for (channel, source) onto a Contact
 // query: not suppressed AND not unsubscribed from "everything" AND not
-// unsubscribed from the source. It composes with a segment predicate (both are
-// predicate.Contact). The correlation joins on lower(contacts.email) =
-// destination — never on contact_id — because the stores are destination-keyed.
-func Predicate(channel, source string) predicate.Contact {
+// unsubscribed from the source. When requireConfirmed is true (the workspace has
+// confirmed-opt-in enabled, ADR 0013) it also ANDs a positive layer: a
+// Confirmation must exist for the destination. When false, that clause is omitted
+// entirely, so the emitted SQL and audience are byte-for-byte the subtractive
+// model. It composes with a segment predicate (both are predicate.Contact). The
+// correlation joins on lower(contacts.email) = destination — never on contact_id
+// — because the stores are destination-keyed.
+func Predicate(channel, source string, requireConfirmed bool) predicate.Contact {
 	return func(s *sql.Selector) {
 		// Layer 1: Suppression (global hard floor).
 		sup := sql.Select(suppression.FieldID).From(sql.Table(suppression.Table))
@@ -67,6 +82,18 @@ func Predicate(channel, source string) predicate.Contact {
 			sql.In(uns.C(unsubscribe.FieldSendingSource), SourceEverything, source),
 		))
 		s.Where(sql.NotExists(uns))
+
+		// Layer 4 (positive, opt-in): a Confirmation must exist. Omitted unless the
+		// workspace requires confirmed opt-in, so the default path is unchanged.
+		if requireConfirmed {
+			conf := sql.Select(confirmation.FieldID).From(sql.Table(confirmation.Table))
+			conf.Where(sql.And(
+				destinationMatches(s, conf, confirmation.FieldDestination),
+				sql.ColumnsEQ(conf.C(confirmation.FieldWorkspaceID), s.C(contact.FieldWorkspaceID)),
+				sql.EQ(conf.C(confirmation.FieldChannel), channel),
+			))
+			s.Where(sql.Exists(conf))
+		}
 	}
 }
 
@@ -110,14 +137,31 @@ func destinationMatches(outer, sub *sql.Selector, destCol string) *sql.Predicate
 // transactional mail carries no sending source (ADR 0005). A thin wrapper over
 // Check so the call site reads as intent rather than a bare "", false.
 func CheckTransactional(ctx context.Context, client *ent.Client, workspaceID int64, channel, dest string) (Decision, error) {
-	return Check(ctx, client, workspaceID, channel, dest, "", false)
+	return Check(ctx, client, workspaceID, channel, dest, "", false, false)
+}
+
+// RequiresConfirmation reports whether the workspace has confirmed-opt-in enabled
+// (ADR 0013). Marketing send paths read it once and pass the result to Check /
+// Predicate as requireConfirmed, so the confirmation gate is applied only when the
+// policy is on.
+func RequiresConfirmation(ctx context.Context, client *ent.Client, workspaceID int64) (bool, error) {
+	on, err := client.Workspace.Query().
+		Where(workspace.ID(workspaceID)).
+		Select(workspace.FieldRequireConfirmedOptIn).
+		Bool(ctx)
+	if err != nil {
+		return false, fmt.Errorf("eligibility require-confirmed lookup: %w", err)
+	}
+	return on, nil
 }
 
 // Check decides eligibility for a single destination via point lookups. Pass
-// respectUnsubscribe=false for transactional sends (Suppression only). An empty
-// destination is treated as eligible — the caller decides what a missing
-// address means (there is nothing to suppress against).
-func Check(ctx context.Context, client *ent.Client, workspaceID int64, channel, dest, source string, respectUnsubscribe bool) (Decision, error) {
+// respectUnsubscribe=false for transactional sends (Suppression only), and
+// requireConfirmed=true only for a marketing send in a confirmed-opt-in workspace
+// (adds the positive Confirmation gate). An empty destination is treated as
+// eligible — the caller decides what a missing address means (there is nothing to
+// suppress against).
+func Check(ctx context.Context, client *ent.Client, workspaceID int64, channel, dest, source string, respectUnsubscribe, requireConfirmed bool) (Decision, error) {
 	d := NormalizeDestination(dest)
 	if d == "" {
 		return Decision{Eligible: true}, nil
@@ -169,6 +213,26 @@ func Check(ctx context.Context, client *ent.Client, workspaceID int64, channel, 
 	}
 	if fromSource {
 		return Decision{Eligible: false, Reason: ReasonUnsubscribedSource}, nil
+	}
+
+	// Layer 4 (positive, opt-in): confirmed opt-in requires a Confirmation for the
+	// destination. Lowest priority — reached only past every negative layer — and
+	// skipped entirely unless the workspace requires it, so the default path is
+	// unchanged.
+	if requireConfirmed {
+		confirmed, err := client.Confirmation.Query().
+			Where(
+				confirmation.WorkspaceID(workspaceID),
+				confirmation.ChannelEQ(confirmation.Channel(channel)),
+				confirmation.DestinationEQ(d),
+			).
+			Exist(ctx)
+		if err != nil {
+			return Decision{}, fmt.Errorf("eligibility confirmation lookup: %w", err)
+		}
+		if !confirmed {
+			return Decision{Eligible: false, Reason: ReasonUnconfirmed}, nil
+		}
 	}
 
 	return Decision{Eligible: true}, nil

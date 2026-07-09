@@ -41,6 +41,13 @@ func (Workspace) Fields() []ent.Field {
 			NotEmpty().
 			Unique().
 			Sensitive(),
+		// Confirmed opt-in policy (ADR 0013). When true, marketing sends require a
+		// Confirmation for the destination (double opt-in); when false (the default),
+		// the subtractive single-opt-in model applies unchanged. Forward-looking:
+		// enabling it backfills grandfathered confirmations rather than muting the
+		// existing list. Schema-only for now — exposed on the /site API in a later slice.
+		field.Bool("require_confirmed_opt_in").
+			Default(false),
 		field.Time("created_at").
 			Default(time.Now).
 			Immutable(),
@@ -68,6 +75,7 @@ func (Workspace) Edges() []ent.Edge {
 		edge.To("webhook_endpoints", WebhookEndpoint.Type),
 		edge.To("suppressions", Suppression.Type),
 		edge.To("unsubscribes", Unsubscribe.Type),
+		edge.To("confirmations", Confirmation.Type),
 		edge.To("transactional_emails", TransactionalEmail.Type),
 		edge.To("memberships", Membership.Type),
 		edge.To("invitations", Invitation.Type),

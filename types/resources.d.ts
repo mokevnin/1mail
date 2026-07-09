@@ -200,6 +200,17 @@ export default interface Resources {
       "successTitle": "Email updated",
       "verifying": "Confirming your new email…"
     },
+    "confirmSubscription": {
+      "body": "Press the button below to confirm your subscription and start receiving these emails.",
+      "confirm": "Confirm subscription",
+      "doneBody": "Thank you — your subscription is confirmed.",
+      "doneTitle": "Subscription confirmed",
+      "errorBody": "Something went wrong. Please try again.",
+      "errorTitle": "Confirmation failed",
+      "expiredBody": "This confirmation link has expired. Please sign up again to receive a new one.",
+      "expiredTitle": "Link expired",
+      "title": "Confirm your subscription"
+    },
     "confirmations": {
       "deleteDescription": "This action cannot be undone.",
       "deleteTitle": "Are you sure?"

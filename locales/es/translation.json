@@ -202,6 +202,17 @@
     "successTitle": "Correo actualizado",
     "verifying": "Confirmando tu nuevo correo…"
   },
+  "confirmSubscription": {
+    "body": "Pulsa el botón de abajo para confirmar tu suscripción y empezar a recibir estos correos.",
+    "confirm": "Confirmar suscripción",
+    "doneBody": "Gracias: tu suscripción está confirmada.",
+    "doneTitle": "Suscripción confirmada",
+    "errorBody": "Algo salió mal. Inténtalo de nuevo.",
+    "errorTitle": "Error de confirmación",
+    "expiredBody": "Este enlace de confirmación ha caducado. Suscríbete de nuevo para recibir uno nuevo.",
+    "expiredTitle": "Enlace caducado",
+    "title": "Confirma tu suscripción"
+  },
   "contacts": {
     "addContact": "Añadir contacto",
     "customFields": "Campos personalizados",

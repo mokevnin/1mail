@@ -16,6 +16,7 @@ import (
 	"github.com/mokevnin/1mail/ent/automationrun"
 	"github.com/mokevnin/1mail/ent/broadcast"
 	"github.com/mokevnin/1mail/ent/broadcastrecipient"
+	"github.com/mokevnin/1mail/ent/confirmation"
 	"github.com/mokevnin/1mail/ent/contact"
 	"github.com/mokevnin/1mail/ent/customfield"
 	"github.com/mokevnin/1mail/ent/emailtemplate"
@@ -62,6 +63,20 @@ func (_c *WorkspaceCreate) SetCollectKey(v string) *WorkspaceCreate {
 // SetIngestKey sets the "ingest_key" field.
 func (_c *WorkspaceCreate) SetIngestKey(v string) *WorkspaceCreate {
 	_c.mutation.SetIngestKey(v)
+	return _c
+}
+
+// SetRequireConfirmedOptIn sets the "require_confirmed_opt_in" field.
+func (_c *WorkspaceCreate) SetRequireConfirmedOptIn(v bool) *WorkspaceCreate {
+	_c.mutation.SetRequireConfirmedOptIn(v)
+	return _c
+}
+
+// SetNillableRequireConfirmedOptIn sets the "require_confirmed_opt_in" field if the given value is not nil.
+func (_c *WorkspaceCreate) SetNillableRequireConfirmedOptIn(v *bool) *WorkspaceCreate {
+	if v != nil {
+		_c.SetRequireConfirmedOptIn(*v)
+	}
 	return _c
 }
 
@@ -339,6 +354,21 @@ func (_c *WorkspaceCreate) AddUnsubscribes(v ...*Unsubscribe) *WorkspaceCreate {
 	return _c.AddUnsubscribeIDs(ids...)
 }
 
+// AddConfirmationIDs adds the "confirmations" edge to the Confirmation entity by IDs.
+func (_c *WorkspaceCreate) AddConfirmationIDs(ids ...int64) *WorkspaceCreate {
+	_c.mutation.AddConfirmationIDs(ids...)
+	return _c
+}
+
+// AddConfirmations adds the "confirmations" edges to the Confirmation entity.
+func (_c *WorkspaceCreate) AddConfirmations(v ...*Confirmation) *WorkspaceCreate {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddConfirmationIDs(ids...)
+}
+
 // AddTransactionalEmailIDs adds the "transactional_emails" edge to the TransactionalEmail entity by IDs.
 func (_c *WorkspaceCreate) AddTransactionalEmailIDs(ids ...int64) *WorkspaceCreate {
 	_c.mutation.AddTransactionalEmailIDs(ids...)
@@ -419,6 +449,10 @@ func (_c *WorkspaceCreate) ExecX(ctx context.Context) {
 
 // defaults sets the default values of the builder before save.
 func (_c *WorkspaceCreate) defaults() {
+	if _, ok := _c.mutation.RequireConfirmedOptIn(); !ok {
+		v := workspace.DefaultRequireConfirmedOptIn
+		_c.mutation.SetRequireConfirmedOptIn(v)
+	}
 	if _, ok := _c.mutation.CreatedAt(); !ok {
 		v := workspace.DefaultCreatedAt()
 		_c.mutation.SetCreatedAt(v)
@@ -462,6 +496,9 @@ func (_c *WorkspaceCreate) check() error {
 		if err := workspace.IngestKeyValidator(v); err != nil {
 			return &ValidationError{Name: "ingest_key", err: fmt.Errorf(`ent: validator failed for field "Workspace.ingest_key": %w`, err)}
 		}
+	}
+	if _, ok := _c.mutation.RequireConfirmedOptIn(); !ok {
+		return &ValidationError{Name: "require_confirmed_opt_in", err: errors.New(`ent: missing required field "Workspace.require_confirmed_opt_in"`)}
 	}
 	if _, ok := _c.mutation.CreatedAt(); !ok {
 		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "Workspace.created_at"`)}
@@ -517,6 +554,10 @@ func (_c *WorkspaceCreate) createSpec() (*Workspace, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.IngestKey(); ok {
 		_spec.SetField(workspace.FieldIngestKey, field.TypeString, value)
 		_node.IngestKey = value
+	}
+	if value, ok := _c.mutation.RequireConfirmedOptIn(); ok {
+		_spec.SetField(workspace.FieldRequireConfirmedOptIn, field.TypeBool, value)
+		_node.RequireConfirmedOptIn = value
 	}
 	if value, ok := _c.mutation.CreatedAt(); ok {
 		_spec.SetField(workspace.FieldCreatedAt, field.TypeTime, value)
@@ -782,6 +823,22 @@ func (_c *WorkspaceCreate) createSpec() (*Workspace, *sqlgraph.CreateSpec) {
 		}
 		_spec.Edges = append(_spec.Edges, edge)
 	}
+	if nodes := _c.mutation.ConfirmationsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   workspace.ConfirmationsTable,
+			Columns: []string{workspace.ConfirmationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(confirmation.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
 	if nodes := _c.mutation.TransactionalEmailsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
@@ -930,6 +987,18 @@ func (u *WorkspaceUpsert) UpdateIngestKey() *WorkspaceUpsert {
 	return u
 }
 
+// SetRequireConfirmedOptIn sets the "require_confirmed_opt_in" field.
+func (u *WorkspaceUpsert) SetRequireConfirmedOptIn(v bool) *WorkspaceUpsert {
+	u.Set(workspace.FieldRequireConfirmedOptIn, v)
+	return u
+}
+
+// UpdateRequireConfirmedOptIn sets the "require_confirmed_opt_in" field to the value that was provided on create.
+func (u *WorkspaceUpsert) UpdateRequireConfirmedOptIn() *WorkspaceUpsert {
+	u.SetExcluded(workspace.FieldRequireConfirmedOptIn)
+	return u
+}
+
 // SetUpdatedAt sets the "updated_at" field.
 func (u *WorkspaceUpsert) SetUpdatedAt(v time.Time) *WorkspaceUpsert {
 	u.Set(workspace.FieldUpdatedAt, v)
@@ -1046,6 +1115,20 @@ func (u *WorkspaceUpsertOne) SetIngestKey(v string) *WorkspaceUpsertOne {
 func (u *WorkspaceUpsertOne) UpdateIngestKey() *WorkspaceUpsertOne {
 	return u.Update(func(s *WorkspaceUpsert) {
 		s.UpdateIngestKey()
+	})
+}
+
+// SetRequireConfirmedOptIn sets the "require_confirmed_opt_in" field.
+func (u *WorkspaceUpsertOne) SetRequireConfirmedOptIn(v bool) *WorkspaceUpsertOne {
+	return u.Update(func(s *WorkspaceUpsert) {
+		s.SetRequireConfirmedOptIn(v)
+	})
+}
+
+// UpdateRequireConfirmedOptIn sets the "require_confirmed_opt_in" field to the value that was provided on create.
+func (u *WorkspaceUpsertOne) UpdateRequireConfirmedOptIn() *WorkspaceUpsertOne {
+	return u.Update(func(s *WorkspaceUpsert) {
+		s.UpdateRequireConfirmedOptIn()
 	})
 }
 
@@ -1333,6 +1416,20 @@ func (u *WorkspaceUpsertBulk) SetIngestKey(v string) *WorkspaceUpsertBulk {
 func (u *WorkspaceUpsertBulk) UpdateIngestKey() *WorkspaceUpsertBulk {
 	return u.Update(func(s *WorkspaceUpsert) {
 		s.UpdateIngestKey()
+	})
+}
+
+// SetRequireConfirmedOptIn sets the "require_confirmed_opt_in" field.
+func (u *WorkspaceUpsertBulk) SetRequireConfirmedOptIn(v bool) *WorkspaceUpsertBulk {
+	return u.Update(func(s *WorkspaceUpsert) {
+		s.SetRequireConfirmedOptIn(v)
+	})
+}
+
+// UpdateRequireConfirmedOptIn sets the "require_confirmed_opt_in" field to the value that was provided on create.
+func (u *WorkspaceUpsertBulk) UpdateRequireConfirmedOptIn() *WorkspaceUpsertBulk {
+	return u.Update(func(s *WorkspaceUpsert) {
+		s.UpdateRequireConfirmedOptIn()
 	})
 }
 

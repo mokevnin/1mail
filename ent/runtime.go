@@ -10,6 +10,7 @@ import (
 	"github.com/mokevnin/1mail/ent/automationrun"
 	"github.com/mokevnin/1mail/ent/broadcast"
 	"github.com/mokevnin/1mail/ent/broadcastrecipient"
+	"github.com/mokevnin/1mail/ent/confirmation"
 	"github.com/mokevnin/1mail/ent/contact"
 	"github.com/mokevnin/1mail/ent/customfield"
 	"github.com/mokevnin/1mail/ent/emailtemplate"
@@ -179,6 +180,22 @@ func init() {
 	broadcastrecipient.DefaultUpdatedAt = broadcastrecipientDescUpdatedAt.Default.(func() time.Time)
 	// broadcastrecipient.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	broadcastrecipient.UpdateDefaultUpdatedAt = broadcastrecipientDescUpdatedAt.UpdateDefault.(func() time.Time)
+	confirmationFields := schema.Confirmation{}.Fields()
+	_ = confirmationFields
+	// confirmationDescDestination is the schema descriptor for destination field.
+	confirmationDescDestination := confirmationFields[2].Descriptor()
+	// confirmation.DestinationValidator is a validator for the "destination" field. It is called by the builders before save.
+	confirmation.DestinationValidator = confirmationDescDestination.Validators[0].(func(string) error)
+	// confirmationDescCreatedAt is the schema descriptor for created_at field.
+	confirmationDescCreatedAt := confirmationFields[6].Descriptor()
+	// confirmation.DefaultCreatedAt holds the default value on creation for the created_at field.
+	confirmation.DefaultCreatedAt = confirmationDescCreatedAt.Default.(func() time.Time)
+	// confirmationDescUpdatedAt is the schema descriptor for updated_at field.
+	confirmationDescUpdatedAt := confirmationFields[7].Descriptor()
+	// confirmation.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	confirmation.DefaultUpdatedAt = confirmationDescUpdatedAt.Default.(func() time.Time)
+	// confirmation.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	confirmation.UpdateDefaultUpdatedAt = confirmationDescUpdatedAt.UpdateDefault.(func() time.Time)
 	contactFields := schema.Contact{}.Fields()
 	_ = contactFields
 	// contactDescCreatedAt is the schema descriptor for created_at field.
@@ -475,12 +492,16 @@ func init() {
 	workspaceDescIngestKey := workspaceFields[4].Descriptor()
 	// workspace.IngestKeyValidator is a validator for the "ingest_key" field. It is called by the builders before save.
 	workspace.IngestKeyValidator = workspaceDescIngestKey.Validators[0].(func(string) error)
+	// workspaceDescRequireConfirmedOptIn is the schema descriptor for require_confirmed_opt_in field.
+	workspaceDescRequireConfirmedOptIn := workspaceFields[5].Descriptor()
+	// workspace.DefaultRequireConfirmedOptIn holds the default value on creation for the require_confirmed_opt_in field.
+	workspace.DefaultRequireConfirmedOptIn = workspaceDescRequireConfirmedOptIn.Default.(bool)
 	// workspaceDescCreatedAt is the schema descriptor for created_at field.
-	workspaceDescCreatedAt := workspaceFields[5].Descriptor()
+	workspaceDescCreatedAt := workspaceFields[6].Descriptor()
 	// workspace.DefaultCreatedAt holds the default value on creation for the created_at field.
 	workspace.DefaultCreatedAt = workspaceDescCreatedAt.Default.(func() time.Time)
 	// workspaceDescUpdatedAt is the schema descriptor for updated_at field.
-	workspaceDescUpdatedAt := workspaceFields[6].Descriptor()
+	workspaceDescUpdatedAt := workspaceFields[7].Descriptor()
 	// workspace.DefaultUpdatedAt holds the default value on creation for the updated_at field.
 	workspace.DefaultUpdatedAt = workspaceDescUpdatedAt.Default.(func() time.Time)
 	// workspace.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.

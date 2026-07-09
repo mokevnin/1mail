@@ -191,8 +191,12 @@ func RunStep(ctx context.Context, client *ent.Client, bus *events.Bus, resolver 
 		// destination (suppressed, or unsubscribed from this automation / from
 		// everything) exits the enrollment — a run never silently keeps walking
 		// steps while skipping every email.
+		requireConfirmed, err := eligibility.RequiresConfirmation(ctx, client, run.WorkspaceID)
+		if err != nil {
+			return StepResult{}, fmt.Errorf("eligibility: %w", err)
+		}
 		decision, err := eligibility.Check(ctx, client, run.WorkspaceID,
-			eligibility.ChannelEmail, *c.Email, eligibility.AutomationSource(a.ID), true)
+			eligibility.ChannelEmail, *c.Email, eligibility.AutomationSource(a.ID), true, requireConfirmed)
 		if err != nil {
 			return StepResult{}, fmt.Errorf("eligibility: %w", err)
 		}

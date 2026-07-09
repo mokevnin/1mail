@@ -13,6 +13,7 @@ import (
 	"github.com/mokevnin/1mail/ent/automationrun"
 	"github.com/mokevnin/1mail/ent/broadcast"
 	"github.com/mokevnin/1mail/ent/broadcastrecipient"
+	"github.com/mokevnin/1mail/ent/confirmation"
 	"github.com/mokevnin/1mail/ent/unsubscribe"
 	"github.com/mokevnin/1mail/internal/eligibility"
 	"github.com/mokevnin/1mail/internal/testhelper"
@@ -30,6 +31,127 @@ func unsubPath(t *testing.T, tr *tracking.Tracker, target tracking.UnsubTarget) 
 	_, token, ok := strings.Cut(full, "/e/u/")
 	require.True(t, ok, "url %q lacks /e/u/", full)
 	return "/e/u/" + token
+}
+
+// confirmPath turns a tracker ConfirmURL into the local "/e/confirm/<token>" path
+// the in-memory test server dispatches on.
+func confirmPath(t *testing.T, tr *tracking.Tracker, target tracking.ConfirmTarget) string {
+	t.Helper()
+	full, err := tr.ConfirmURL(target)
+	require.NoError(t, err)
+	_, token, ok := strings.Cut(full, "/e/confirm/")
+	require.True(t, ok, "url %q lacks /e/confirm/", full)
+	return "/e/confirm/" + token
+}
+
+// Double opt-in (ADR 0013): GET /e/confirm/{token} renders the SPA page and records
+// nothing (scanner-safe); only POST records the confirmation, and it is idempotent
+// and publishes exactly one marketing.confirmed event.
+func TestConfirmEndpoint(t *testing.T) {
+	env := testhelper.Setup(t)
+	ctx := context.Background()
+	cfg, err := config.Load("test")
+	require.NoError(t, err)
+	tr := tracking.New(cfg.JWTSecret, cfg.AppURL)
+
+	get := func(path string) *http.Response {
+		req := httptest.NewRequest(http.MethodGet, path, nil)
+		w := httptest.NewRecorder()
+		env.Server.ServeHTTP(w, req)
+		return w.Result()
+	}
+	post := func(path string) *http.Response {
+		req := httptest.NewRequest(http.MethodPost, path, nil)
+		w := httptest.NewRecorder()
+		env.Server.ServeHTTP(w, req)
+		return w.Result()
+	}
+
+	c := env.DB.Contact.GetX(ctx, 1)
+	cPath := confirmPath(t, tr, tracking.ConfirmTarget{
+		Destination: *c.Email, WorkspaceID: 1, ContactID: c.ID,
+	})
+	confirmed := func() bool {
+		ok, err := env.DB.Confirmation.Query().Where(
+			confirmation.WorkspaceID(1),
+			confirmation.ChannelEQ(confirmation.ChannelEmail),
+			confirmation.DestinationEQ(*c.Email),
+		).Exist(ctx)
+		require.NoError(t, err)
+		return ok
+	}
+
+	// GET is safe: 303 to the SPA confirm page, records nothing.
+	resp := get(cPath)
+	assert.Equal(t, http.StatusSeeOther, resp.StatusCode)
+	assert.True(t, strings.HasPrefix(resp.Header.Get("Location"), "/confirm?token="))
+	assert.False(t, confirmed(), "GET records nothing")
+
+	// POST records the confirmation with provenance double_opt_in.
+	resp = post(cPath)
+	assert.Equal(t, http.StatusNoContent, resp.StatusCode)
+	assert.True(t, confirmed(), "POST records the confirmation")
+	row := env.DB.Confirmation.Query().Where(confirmation.DestinationEQ(*c.Email)).OnlyX(ctx)
+	assert.Equal(t, confirmation.ProvenanceDoubleOptIn, row.Provenance)
+
+	// A repeated POST is a complete no-op: still one row.
+	post(cPath)
+	n, err := env.DB.Confirmation.Query().Where(confirmation.DestinationEQ(*c.Email)).Count(ctx)
+	require.NoError(t, err)
+	assert.Equal(t, 1, n, "repeated POST does not duplicate the confirmation")
+
+	// Exactly one marketing.confirmed event was published onto the outbox.
+	var count int
+	require.NoError(t, env.SQLDB.QueryRow(
+		`SELECT count(*) FROM watermill_domain_events
+		 WHERE payload->>'name' = 'marketing.confirmed' AND payload->'data'->>'email' = $1`,
+		*c.Email).Scan(&count))
+	assert.Equal(t, 1, count, "one confirmation event, published once")
+}
+
+// The deliberate "unsubscribe from everything" invalidates a confirmation (ADR
+// 0013): it deletes the derived Confirmation row so returning requires
+// re-confirmation. A narrower per-source opt-out leaves the confirmation intact.
+func TestUnsubscribeEverythingInvalidatesConfirmation(t *testing.T) {
+	env := testhelper.Setup(t)
+	ctx := context.Background()
+	cfg, err := config.Load("test")
+	require.NoError(t, err)
+	tr := tracking.New(cfg.JWTSecret, cfg.AppURL)
+
+	post := func(path string) *http.Response {
+		req := httptest.NewRequest(http.MethodPost, path, nil)
+		w := httptest.NewRecorder()
+		env.Server.ServeHTTP(w, req)
+		return w.Result()
+	}
+
+	c := env.DB.Contact.GetX(ctx, 1)
+	_, err = env.DB.Confirmation.Create().SetWorkspaceID(1).
+		SetChannel(confirmation.ChannelEmail).SetDestination(*c.Email).
+		SetProvenance(confirmation.ProvenanceDoubleOptIn).SetContactID(c.ID).Save(ctx)
+	require.NoError(t, err)
+
+	confExists := func() bool {
+		ok, err := env.DB.Confirmation.Query().Where(
+			confirmation.WorkspaceID(1),
+			confirmation.DestinationEQ(*c.Email),
+		).Exist(ctx)
+		require.NoError(t, err)
+		return ok
+	}
+
+	// A per-source (broadcasts) opt-out must NOT invalidate the confirmation.
+	post(unsubPath(t, tr, tracking.UnsubTarget{
+		Source: eligibility.SourceBroadcasts, Destination: *c.Email, WorkspaceID: 1, ContactID: c.ID,
+	}))
+	assert.True(t, confExists(), "per-source opt-out leaves the confirmation")
+
+	// The everything opt-out deletes the confirmation row.
+	post(unsubPath(t, tr, tracking.UnsubTarget{
+		Source: eligibility.SourceEverything, Destination: *c.Email, WorkspaceID: 1, ContactID: c.ID,
+	}))
+	assert.False(t, confExists(), "everything opt-out invalidates the confirmation")
 }
 
 // The public /e/* endpoints record opens, clicks and unsubscribes against a

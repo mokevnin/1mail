@@ -16,6 +16,7 @@ import (
 	"github.com/mokevnin/1mail/ent/automationrun"
 	"github.com/mokevnin/1mail/ent/broadcast"
 	"github.com/mokevnin/1mail/ent/broadcastrecipient"
+	"github.com/mokevnin/1mail/ent/confirmation"
 	"github.com/mokevnin/1mail/ent/contact"
 	"github.com/mokevnin/1mail/ent/customfield"
 	"github.com/mokevnin/1mail/ent/emailtemplate"
@@ -49,6 +50,7 @@ const (
 	TypeAutomationRun      = "AutomationRun"
 	TypeBroadcast          = "Broadcast"
 	TypeBroadcastRecipient = "BroadcastRecipient"
+	TypeConfirmation       = "Confirmation"
 	TypeContact            = "Contact"
 	TypeCustomField        = "CustomField"
 	TypeEmailTemplate      = "EmailTemplate"
@@ -5631,6 +5633,775 @@ func (m *BroadcastRecipientMutation) ResetEdge(name string) error {
 		return nil
 	}
 	return fmt.Errorf("unknown BroadcastRecipient edge %s", name)
+}
+
+// ConfirmationMutation represents an operation that mutates the Confirmation nodes in the graph.
+type ConfirmationMutation struct {
+	config
+	op               Op
+	typ              string
+	id               *int64
+	channel          *confirmation.Channel
+	destination      *string
+	provenance       *confirmation.Provenance
+	contact_id       *int64
+	addcontact_id    *int64
+	created_at       *time.Time
+	updated_at       *time.Time
+	clearedFields    map[string]struct{}
+	workspace        *int64
+	clearedworkspace bool
+	done             bool
+	oldValue         func(context.Context) (*Confirmation, error)
+	predicates       []predicate.Confirmation
+}
+
+var _ ent.Mutation = (*ConfirmationMutation)(nil)
+
+// confirmationOption allows management of the mutation configuration using functional options.
+type confirmationOption func(*ConfirmationMutation)
+
+// newConfirmationMutation creates new mutation for the Confirmation entity.
+func newConfirmationMutation(c config, op Op, opts ...confirmationOption) *ConfirmationMutation {
+	m := &ConfirmationMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeConfirmation,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withConfirmationID sets the ID field of the mutation.
+func withConfirmationID(id int64) confirmationOption {
+	return func(m *ConfirmationMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *Confirmation
+		)
+		m.oldValue = func(ctx context.Context) (*Confirmation, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().Confirmation.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withConfirmation sets the old Confirmation of the mutation.
+func withConfirmation(node *Confirmation) confirmationOption {
+	return func(m *ConfirmationMutation) {
+		m.oldValue = func(context.Context) (*Confirmation, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m ConfirmationMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m ConfirmationMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of Confirmation entities.
+func (m *ConfirmationMutation) SetID(id int64) {
+	m.id = &id
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *ConfirmationMutation) ID() (id int64, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *ConfirmationMutation) IDs(ctx context.Context) ([]int64, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []int64{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().Confirmation.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetChannel sets the "channel" field.
+func (m *ConfirmationMutation) SetChannel(c confirmation.Channel) {
+	m.channel = &c
+}
+
+// Channel returns the value of the "channel" field in the mutation.
+func (m *ConfirmationMutation) Channel() (r confirmation.Channel, exists bool) {
+	v := m.channel
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldChannel returns the old "channel" field's value of the Confirmation entity.
+// If the Confirmation object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ConfirmationMutation) OldChannel(ctx context.Context) (v confirmation.Channel, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldChannel is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldChannel requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldChannel: %w", err)
+	}
+	return oldValue.Channel, nil
+}
+
+// ResetChannel resets all changes to the "channel" field.
+func (m *ConfirmationMutation) ResetChannel() {
+	m.channel = nil
+}
+
+// SetDestination sets the "destination" field.
+func (m *ConfirmationMutation) SetDestination(s string) {
+	m.destination = &s
+}
+
+// Destination returns the value of the "destination" field in the mutation.
+func (m *ConfirmationMutation) Destination() (r string, exists bool) {
+	v := m.destination
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldDestination returns the old "destination" field's value of the Confirmation entity.
+// If the Confirmation object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ConfirmationMutation) OldDestination(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldDestination is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldDestination requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldDestination: %w", err)
+	}
+	return oldValue.Destination, nil
+}
+
+// ResetDestination resets all changes to the "destination" field.
+func (m *ConfirmationMutation) ResetDestination() {
+	m.destination = nil
+}
+
+// SetProvenance sets the "provenance" field.
+func (m *ConfirmationMutation) SetProvenance(c confirmation.Provenance) {
+	m.provenance = &c
+}
+
+// Provenance returns the value of the "provenance" field in the mutation.
+func (m *ConfirmationMutation) Provenance() (r confirmation.Provenance, exists bool) {
+	v := m.provenance
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldProvenance returns the old "provenance" field's value of the Confirmation entity.
+// If the Confirmation object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ConfirmationMutation) OldProvenance(ctx context.Context) (v confirmation.Provenance, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldProvenance is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldProvenance requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldProvenance: %w", err)
+	}
+	return oldValue.Provenance, nil
+}
+
+// ResetProvenance resets all changes to the "provenance" field.
+func (m *ConfirmationMutation) ResetProvenance() {
+	m.provenance = nil
+}
+
+// SetContactID sets the "contact_id" field.
+func (m *ConfirmationMutation) SetContactID(i int64) {
+	m.contact_id = &i
+	m.addcontact_id = nil
+}
+
+// ContactID returns the value of the "contact_id" field in the mutation.
+func (m *ConfirmationMutation) ContactID() (r int64, exists bool) {
+	v := m.contact_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldContactID returns the old "contact_id" field's value of the Confirmation entity.
+// If the Confirmation object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ConfirmationMutation) OldContactID(ctx context.Context) (v *int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldContactID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldContactID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldContactID: %w", err)
+	}
+	return oldValue.ContactID, nil
+}
+
+// AddContactID adds i to the "contact_id" field.
+func (m *ConfirmationMutation) AddContactID(i int64) {
+	if m.addcontact_id != nil {
+		*m.addcontact_id += i
+	} else {
+		m.addcontact_id = &i
+	}
+}
+
+// AddedContactID returns the value that was added to the "contact_id" field in this mutation.
+func (m *ConfirmationMutation) AddedContactID() (r int64, exists bool) {
+	v := m.addcontact_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearContactID clears the value of the "contact_id" field.
+func (m *ConfirmationMutation) ClearContactID() {
+	m.contact_id = nil
+	m.addcontact_id = nil
+	m.clearedFields[confirmation.FieldContactID] = struct{}{}
+}
+
+// ContactIDCleared returns if the "contact_id" field was cleared in this mutation.
+func (m *ConfirmationMutation) ContactIDCleared() bool {
+	_, ok := m.clearedFields[confirmation.FieldContactID]
+	return ok
+}
+
+// ResetContactID resets all changes to the "contact_id" field.
+func (m *ConfirmationMutation) ResetContactID() {
+	m.contact_id = nil
+	m.addcontact_id = nil
+	delete(m.clearedFields, confirmation.FieldContactID)
+}
+
+// SetWorkspaceID sets the "workspace_id" field.
+func (m *ConfirmationMutation) SetWorkspaceID(i int64) {
+	m.workspace = &i
+}
+
+// WorkspaceID returns the value of the "workspace_id" field in the mutation.
+func (m *ConfirmationMutation) WorkspaceID() (r int64, exists bool) {
+	v := m.workspace
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldWorkspaceID returns the old "workspace_id" field's value of the Confirmation entity.
+// If the Confirmation object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ConfirmationMutation) OldWorkspaceID(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldWorkspaceID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldWorkspaceID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldWorkspaceID: %w", err)
+	}
+	return oldValue.WorkspaceID, nil
+}
+
+// ResetWorkspaceID resets all changes to the "workspace_id" field.
+func (m *ConfirmationMutation) ResetWorkspaceID() {
+	m.workspace = nil
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *ConfirmationMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *ConfirmationMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the Confirmation entity.
+// If the Confirmation object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ConfirmationMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *ConfirmationMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (m *ConfirmationMutation) SetUpdatedAt(t time.Time) {
+	m.updated_at = &t
+}
+
+// UpdatedAt returns the value of the "updated_at" field in the mutation.
+func (m *ConfirmationMutation) UpdatedAt() (r time.Time, exists bool) {
+	v := m.updated_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUpdatedAt returns the old "updated_at" field's value of the Confirmation entity.
+// If the Confirmation object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ConfirmationMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUpdatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUpdatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUpdatedAt: %w", err)
+	}
+	return oldValue.UpdatedAt, nil
+}
+
+// ResetUpdatedAt resets all changes to the "updated_at" field.
+func (m *ConfirmationMutation) ResetUpdatedAt() {
+	m.updated_at = nil
+}
+
+// ClearWorkspace clears the "workspace" edge to the Workspace entity.
+func (m *ConfirmationMutation) ClearWorkspace() {
+	m.clearedworkspace = true
+	m.clearedFields[confirmation.FieldWorkspaceID] = struct{}{}
+}
+
+// WorkspaceCleared reports if the "workspace" edge to the Workspace entity was cleared.
+func (m *ConfirmationMutation) WorkspaceCleared() bool {
+	return m.clearedworkspace
+}
+
+// WorkspaceIDs returns the "workspace" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// WorkspaceID instead. It exists only for internal usage by the builders.
+func (m *ConfirmationMutation) WorkspaceIDs() (ids []int64) {
+	if id := m.workspace; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetWorkspace resets all changes to the "workspace" edge.
+func (m *ConfirmationMutation) ResetWorkspace() {
+	m.workspace = nil
+	m.clearedworkspace = false
+}
+
+// Where appends a list predicates to the ConfirmationMutation builder.
+func (m *ConfirmationMutation) Where(ps ...predicate.Confirmation) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the ConfirmationMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *ConfirmationMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.Confirmation, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *ConfirmationMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *ConfirmationMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (Confirmation).
+func (m *ConfirmationMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *ConfirmationMutation) Fields() []string {
+	fields := make([]string, 0, 7)
+	if m.channel != nil {
+		fields = append(fields, confirmation.FieldChannel)
+	}
+	if m.destination != nil {
+		fields = append(fields, confirmation.FieldDestination)
+	}
+	if m.provenance != nil {
+		fields = append(fields, confirmation.FieldProvenance)
+	}
+	if m.contact_id != nil {
+		fields = append(fields, confirmation.FieldContactID)
+	}
+	if m.workspace != nil {
+		fields = append(fields, confirmation.FieldWorkspaceID)
+	}
+	if m.created_at != nil {
+		fields = append(fields, confirmation.FieldCreatedAt)
+	}
+	if m.updated_at != nil {
+		fields = append(fields, confirmation.FieldUpdatedAt)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *ConfirmationMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case confirmation.FieldChannel:
+		return m.Channel()
+	case confirmation.FieldDestination:
+		return m.Destination()
+	case confirmation.FieldProvenance:
+		return m.Provenance()
+	case confirmation.FieldContactID:
+		return m.ContactID()
+	case confirmation.FieldWorkspaceID:
+		return m.WorkspaceID()
+	case confirmation.FieldCreatedAt:
+		return m.CreatedAt()
+	case confirmation.FieldUpdatedAt:
+		return m.UpdatedAt()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *ConfirmationMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case confirmation.FieldChannel:
+		return m.OldChannel(ctx)
+	case confirmation.FieldDestination:
+		return m.OldDestination(ctx)
+	case confirmation.FieldProvenance:
+		return m.OldProvenance(ctx)
+	case confirmation.FieldContactID:
+		return m.OldContactID(ctx)
+	case confirmation.FieldWorkspaceID:
+		return m.OldWorkspaceID(ctx)
+	case confirmation.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	case confirmation.FieldUpdatedAt:
+		return m.OldUpdatedAt(ctx)
+	}
+	return nil, fmt.Errorf("unknown Confirmation field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *ConfirmationMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case confirmation.FieldChannel:
+		v, ok := value.(confirmation.Channel)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetChannel(v)
+		return nil
+	case confirmation.FieldDestination:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetDestination(v)
+		return nil
+	case confirmation.FieldProvenance:
+		v, ok := value.(confirmation.Provenance)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetProvenance(v)
+		return nil
+	case confirmation.FieldContactID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetContactID(v)
+		return nil
+	case confirmation.FieldWorkspaceID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetWorkspaceID(v)
+		return nil
+	case confirmation.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	case confirmation.FieldUpdatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUpdatedAt(v)
+		return nil
+	}
+	return fmt.Errorf("unknown Confirmation field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *ConfirmationMutation) AddedFields() []string {
+	var fields []string
+	if m.addcontact_id != nil {
+		fields = append(fields, confirmation.FieldContactID)
+	}
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *ConfirmationMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case confirmation.FieldContactID:
+		return m.AddedContactID()
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *ConfirmationMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	case confirmation.FieldContactID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddContactID(v)
+		return nil
+	}
+	return fmt.Errorf("unknown Confirmation numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *ConfirmationMutation) ClearedFields() []string {
+	var fields []string
+	if m.FieldCleared(confirmation.FieldContactID) {
+		fields = append(fields, confirmation.FieldContactID)
+	}
+	return fields
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *ConfirmationMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *ConfirmationMutation) ClearField(name string) error {
+	switch name {
+	case confirmation.FieldContactID:
+		m.ClearContactID()
+		return nil
+	}
+	return fmt.Errorf("unknown Confirmation nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *ConfirmationMutation) ResetField(name string) error {
+	switch name {
+	case confirmation.FieldChannel:
+		m.ResetChannel()
+		return nil
+	case confirmation.FieldDestination:
+		m.ResetDestination()
+		return nil
+	case confirmation.FieldProvenance:
+		m.ResetProvenance()
+		return nil
+	case confirmation.FieldContactID:
+		m.ResetContactID()
+		return nil
+	case confirmation.FieldWorkspaceID:
+		m.ResetWorkspaceID()
+		return nil
+	case confirmation.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	case confirmation.FieldUpdatedAt:
+		m.ResetUpdatedAt()
+		return nil
+	}
+	return fmt.Errorf("unknown Confirmation field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *ConfirmationMutation) AddedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.workspace != nil {
+		edges = append(edges, confirmation.EdgeWorkspace)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *ConfirmationMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case confirmation.EdgeWorkspace:
+		if id := m.workspace; id != nil {
+			return []ent.Value{*id}
+		}
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *ConfirmationMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 1)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *ConfirmationMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *ConfirmationMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.clearedworkspace {
+		edges = append(edges, confirmation.EdgeWorkspace)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *ConfirmationMutation) EdgeCleared(name string) bool {
+	switch name {
+	case confirmation.EdgeWorkspace:
+		return m.clearedworkspace
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *ConfirmationMutation) ClearEdge(name string) error {
+	switch name {
+	case confirmation.EdgeWorkspace:
+		m.ClearWorkspace()
+		return nil
+	}
+	return fmt.Errorf("unknown Confirmation unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *ConfirmationMutation) ResetEdge(name string) error {
+	switch name {
+	case confirmation.EdgeWorkspace:
+		m.ResetWorkspace()
+		return nil
+	}
+	return fmt.Errorf("unknown Confirmation edge %s", name)
 }
 
 // ContactMutation represents an operation that mutates the Contact nodes in the graph.
@@ -18003,6 +18774,7 @@ type WorkspaceMutation struct {
 	slug                        *string
 	collect_key                 *string
 	ingest_key                  *string
+	require_confirmed_opt_in    *bool
 	created_at                  *time.Time
 	updated_at                  *time.Time
 	clearedFields               map[string]struct{}
@@ -18054,6 +18826,9 @@ type WorkspaceMutation struct {
 	unsubscribes                map[int64]struct{}
 	removedunsubscribes         map[int64]struct{}
 	clearedunsubscribes         bool
+	confirmations               map[int64]struct{}
+	removedconfirmations        map[int64]struct{}
+	clearedconfirmations        bool
 	transactional_emails        map[int64]struct{}
 	removedtransactional_emails map[int64]struct{}
 	clearedtransactional_emails bool
@@ -18314,6 +19089,42 @@ func (m *WorkspaceMutation) OldIngestKey(ctx context.Context) (v string, err err
 // ResetIngestKey resets all changes to the "ingest_key" field.
 func (m *WorkspaceMutation) ResetIngestKey() {
 	m.ingest_key = nil
+}
+
+// SetRequireConfirmedOptIn sets the "require_confirmed_opt_in" field.
+func (m *WorkspaceMutation) SetRequireConfirmedOptIn(b bool) {
+	m.require_confirmed_opt_in = &b
+}
+
+// RequireConfirmedOptIn returns the value of the "require_confirmed_opt_in" field in the mutation.
+func (m *WorkspaceMutation) RequireConfirmedOptIn() (r bool, exists bool) {
+	v := m.require_confirmed_opt_in
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldRequireConfirmedOptIn returns the old "require_confirmed_opt_in" field's value of the Workspace entity.
+// If the Workspace object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WorkspaceMutation) OldRequireConfirmedOptIn(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldRequireConfirmedOptIn is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldRequireConfirmedOptIn requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldRequireConfirmedOptIn: %w", err)
+	}
+	return oldValue.RequireConfirmedOptIn, nil
+}
+
+// ResetRequireConfirmedOptIn resets all changes to the "require_confirmed_opt_in" field.
+func (m *WorkspaceMutation) ResetRequireConfirmedOptIn() {
+	m.require_confirmed_opt_in = nil
 }
 
 // SetCreatedAt sets the "created_at" field.
@@ -19252,6 +20063,60 @@ func (m *WorkspaceMutation) ResetUnsubscribes() {
 	m.removedunsubscribes = nil
 }
 
+// AddConfirmationIDs adds the "confirmations" edge to the Confirmation entity by ids.
+func (m *WorkspaceMutation) AddConfirmationIDs(ids ...int64) {
+	if m.confirmations == nil {
+		m.confirmations = make(map[int64]struct{})
+	}
+	for i := range ids {
+		m.confirmations[ids[i]] = struct{}{}
+	}
+}
+
+// ClearConfirmations clears the "confirmations" edge to the Confirmation entity.
+func (m *WorkspaceMutation) ClearConfirmations() {
+	m.clearedconfirmations = true
+}
+
+// ConfirmationsCleared reports if the "confirmations" edge to the Confirmation entity was cleared.
+func (m *WorkspaceMutation) ConfirmationsCleared() bool {
+	return m.clearedconfirmations
+}
+
+// RemoveConfirmationIDs removes the "confirmations" edge to the Confirmation entity by IDs.
+func (m *WorkspaceMutation) RemoveConfirmationIDs(ids ...int64) {
+	if m.removedconfirmations == nil {
+		m.removedconfirmations = make(map[int64]struct{})
+	}
+	for i := range ids {
+		delete(m.confirmations, ids[i])
+		m.removedconfirmations[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedConfirmations returns the removed IDs of the "confirmations" edge to the Confirmation entity.
+func (m *WorkspaceMutation) RemovedConfirmationsIDs() (ids []int64) {
+	for id := range m.removedconfirmations {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ConfirmationsIDs returns the "confirmations" edge IDs in the mutation.
+func (m *WorkspaceMutation) ConfirmationsIDs() (ids []int64) {
+	for id := range m.confirmations {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetConfirmations resets all changes to the "confirmations" edge.
+func (m *WorkspaceMutation) ResetConfirmations() {
+	m.confirmations = nil
+	m.clearedconfirmations = false
+	m.removedconfirmations = nil
+}
+
 // AddTransactionalEmailIDs adds the "transactional_emails" edge to the TransactionalEmail entity by ids.
 func (m *WorkspaceMutation) AddTransactionalEmailIDs(ids ...int64) {
 	if m.transactional_emails == nil {
@@ -19448,7 +20313,7 @@ func (m *WorkspaceMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *WorkspaceMutation) Fields() []string {
-	fields := make([]string, 0, 6)
+	fields := make([]string, 0, 7)
 	if m.name != nil {
 		fields = append(fields, workspace.FieldName)
 	}
@@ -19460,6 +20325,9 @@ func (m *WorkspaceMutation) Fields() []string {
 	}
 	if m.ingest_key != nil {
 		fields = append(fields, workspace.FieldIngestKey)
+	}
+	if m.require_confirmed_opt_in != nil {
+		fields = append(fields, workspace.FieldRequireConfirmedOptIn)
 	}
 	if m.created_at != nil {
 		fields = append(fields, workspace.FieldCreatedAt)
@@ -19483,6 +20351,8 @@ func (m *WorkspaceMutation) Field(name string) (ent.Value, bool) {
 		return m.CollectKey()
 	case workspace.FieldIngestKey:
 		return m.IngestKey()
+	case workspace.FieldRequireConfirmedOptIn:
+		return m.RequireConfirmedOptIn()
 	case workspace.FieldCreatedAt:
 		return m.CreatedAt()
 	case workspace.FieldUpdatedAt:
@@ -19504,6 +20374,8 @@ func (m *WorkspaceMutation) OldField(ctx context.Context, name string) (ent.Valu
 		return m.OldCollectKey(ctx)
 	case workspace.FieldIngestKey:
 		return m.OldIngestKey(ctx)
+	case workspace.FieldRequireConfirmedOptIn:
+		return m.OldRequireConfirmedOptIn(ctx)
 	case workspace.FieldCreatedAt:
 		return m.OldCreatedAt(ctx)
 	case workspace.FieldUpdatedAt:
@@ -19544,6 +20416,13 @@ func (m *WorkspaceMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetIngestKey(v)
+		return nil
+	case workspace.FieldRequireConfirmedOptIn:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetRequireConfirmedOptIn(v)
 		return nil
 	case workspace.FieldCreatedAt:
 		v, ok := value.(time.Time)
@@ -19620,6 +20499,9 @@ func (m *WorkspaceMutation) ResetField(name string) error {
 	case workspace.FieldIngestKey:
 		m.ResetIngestKey()
 		return nil
+	case workspace.FieldRequireConfirmedOptIn:
+		m.ResetRequireConfirmedOptIn()
+		return nil
 	case workspace.FieldCreatedAt:
 		m.ResetCreatedAt()
 		return nil
@@ -19632,7 +20514,7 @@ func (m *WorkspaceMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *WorkspaceMutation) AddedEdges() []string {
-	edges := make([]string, 0, 19)
+	edges := make([]string, 0, 20)
 	if m.contacts != nil {
 		edges = append(edges, workspace.EdgeContacts)
 	}
@@ -19680,6 +20562,9 @@ func (m *WorkspaceMutation) AddedEdges() []string {
 	}
 	if m.unsubscribes != nil {
 		edges = append(edges, workspace.EdgeUnsubscribes)
+	}
+	if m.confirmations != nil {
+		edges = append(edges, workspace.EdgeConfirmations)
 	}
 	if m.transactional_emails != nil {
 		edges = append(edges, workspace.EdgeTransactionalEmails)
@@ -19793,6 +20678,12 @@ func (m *WorkspaceMutation) AddedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case workspace.EdgeConfirmations:
+		ids := make([]ent.Value, 0, len(m.confirmations))
+		for id := range m.confirmations {
+			ids = append(ids, id)
+		}
+		return ids
 	case workspace.EdgeTransactionalEmails:
 		ids := make([]ent.Value, 0, len(m.transactional_emails))
 		for id := range m.transactional_emails {
@@ -19817,7 +20708,7 @@ func (m *WorkspaceMutation) AddedIDs(name string) []ent.Value {
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *WorkspaceMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 19)
+	edges := make([]string, 0, 20)
 	if m.removedcontacts != nil {
 		edges = append(edges, workspace.EdgeContacts)
 	}
@@ -19865,6 +20756,9 @@ func (m *WorkspaceMutation) RemovedEdges() []string {
 	}
 	if m.removedunsubscribes != nil {
 		edges = append(edges, workspace.EdgeUnsubscribes)
+	}
+	if m.removedconfirmations != nil {
+		edges = append(edges, workspace.EdgeConfirmations)
 	}
 	if m.removedtransactional_emails != nil {
 		edges = append(edges, workspace.EdgeTransactionalEmails)
@@ -19978,6 +20872,12 @@ func (m *WorkspaceMutation) RemovedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case workspace.EdgeConfirmations:
+		ids := make([]ent.Value, 0, len(m.removedconfirmations))
+		for id := range m.removedconfirmations {
+			ids = append(ids, id)
+		}
+		return ids
 	case workspace.EdgeTransactionalEmails:
 		ids := make([]ent.Value, 0, len(m.removedtransactional_emails))
 		for id := range m.removedtransactional_emails {
@@ -20002,7 +20902,7 @@ func (m *WorkspaceMutation) RemovedIDs(name string) []ent.Value {
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *WorkspaceMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 19)
+	edges := make([]string, 0, 20)
 	if m.clearedcontacts {
 		edges = append(edges, workspace.EdgeContacts)
 	}
@@ -20050,6 +20950,9 @@ func (m *WorkspaceMutation) ClearedEdges() []string {
 	}
 	if m.clearedunsubscribes {
 		edges = append(edges, workspace.EdgeUnsubscribes)
+	}
+	if m.clearedconfirmations {
+		edges = append(edges, workspace.EdgeConfirmations)
 	}
 	if m.clearedtransactional_emails {
 		edges = append(edges, workspace.EdgeTransactionalEmails)
@@ -20099,6 +21002,8 @@ func (m *WorkspaceMutation) EdgeCleared(name string) bool {
 		return m.clearedsuppressions
 	case workspace.EdgeUnsubscribes:
 		return m.clearedunsubscribes
+	case workspace.EdgeConfirmations:
+		return m.clearedconfirmations
 	case workspace.EdgeTransactionalEmails:
 		return m.clearedtransactional_emails
 	case workspace.EdgeMemberships:
@@ -20168,6 +21073,9 @@ func (m *WorkspaceMutation) ResetEdge(name string) error {
 		return nil
 	case workspace.EdgeUnsubscribes:
 		m.ResetUnsubscribes()
+		return nil
+	case workspace.EdgeConfirmations:
+		m.ResetConfirmations()
 		return nil
 	case workspace.EdgeTransactionalEmails:
 		m.ResetTransactionalEmails()

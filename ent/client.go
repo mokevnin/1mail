@@ -20,6 +20,7 @@ import (
 	"github.com/mokevnin/1mail/ent/automationrun"
 	"github.com/mokevnin/1mail/ent/broadcast"
 	"github.com/mokevnin/1mail/ent/broadcastrecipient"
+	"github.com/mokevnin/1mail/ent/confirmation"
 	"github.com/mokevnin/1mail/ent/contact"
 	"github.com/mokevnin/1mail/ent/customfield"
 	"github.com/mokevnin/1mail/ent/emailtemplate"
@@ -53,6 +54,8 @@ type Client struct {
 	Broadcast *BroadcastClient
 	// BroadcastRecipient is the client for interacting with the BroadcastRecipient builders.
 	BroadcastRecipient *BroadcastRecipientClient
+	// Confirmation is the client for interacting with the Confirmation builders.
+	Confirmation *ConfirmationClient
 	// Contact is the client for interacting with the Contact builders.
 	Contact *ContactClient
 	// CustomField is the client for interacting with the CustomField builders.
@@ -101,6 +104,7 @@ func (c *Client) init() {
 	c.AutomationRun = NewAutomationRunClient(c.config)
 	c.Broadcast = NewBroadcastClient(c.config)
 	c.BroadcastRecipient = NewBroadcastRecipientClient(c.config)
+	c.Confirmation = NewConfirmationClient(c.config)
 	c.Contact = NewContactClient(c.config)
 	c.CustomField = NewCustomFieldClient(c.config)
 	c.EmailTemplate = NewEmailTemplateClient(c.config)
@@ -214,6 +218,7 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		AutomationRun:      NewAutomationRunClient(cfg),
 		Broadcast:          NewBroadcastClient(cfg),
 		BroadcastRecipient: NewBroadcastRecipientClient(cfg),
+		Confirmation:       NewConfirmationClient(cfg),
 		Contact:            NewContactClient(cfg),
 		CustomField:        NewCustomFieldClient(cfg),
 		EmailTemplate:      NewEmailTemplateClient(cfg),
@@ -254,6 +259,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		AutomationRun:      NewAutomationRunClient(cfg),
 		Broadcast:          NewBroadcastClient(cfg),
 		BroadcastRecipient: NewBroadcastRecipientClient(cfg),
+		Confirmation:       NewConfirmationClient(cfg),
 		Contact:            NewContactClient(cfg),
 		CustomField:        NewCustomFieldClient(cfg),
 		EmailTemplate:      NewEmailTemplateClient(cfg),
@@ -300,10 +306,10 @@ func (c *Client) Close() error {
 func (c *Client) Use(hooks ...Hook) {
 	for _, n := range []interface{ Use(...Hook) }{
 		c.ApiToken, c.Automation, c.AutomationRun, c.Broadcast, c.BroadcastRecipient,
-		c.Contact, c.CustomField, c.EmailTemplate, c.Event, c.Integration,
-		c.Invitation, c.Membership, c.Segment, c.SendingDomain, c.Suppression,
-		c.TransactionalEmail, c.Unsubscribe, c.User, c.Visitor, c.WebhookEndpoint,
-		c.Workspace,
+		c.Confirmation, c.Contact, c.CustomField, c.EmailTemplate, c.Event,
+		c.Integration, c.Invitation, c.Membership, c.Segment, c.SendingDomain,
+		c.Suppression, c.TransactionalEmail, c.Unsubscribe, c.User, c.Visitor,
+		c.WebhookEndpoint, c.Workspace,
 	} {
 		n.Use(hooks...)
 	}
@@ -314,10 +320,10 @@ func (c *Client) Use(hooks ...Hook) {
 func (c *Client) Intercept(interceptors ...Interceptor) {
 	for _, n := range []interface{ Intercept(...Interceptor) }{
 		c.ApiToken, c.Automation, c.AutomationRun, c.Broadcast, c.BroadcastRecipient,
-		c.Contact, c.CustomField, c.EmailTemplate, c.Event, c.Integration,
-		c.Invitation, c.Membership, c.Segment, c.SendingDomain, c.Suppression,
-		c.TransactionalEmail, c.Unsubscribe, c.User, c.Visitor, c.WebhookEndpoint,
-		c.Workspace,
+		c.Confirmation, c.Contact, c.CustomField, c.EmailTemplate, c.Event,
+		c.Integration, c.Invitation, c.Membership, c.Segment, c.SendingDomain,
+		c.Suppression, c.TransactionalEmail, c.Unsubscribe, c.User, c.Visitor,
+		c.WebhookEndpoint, c.Workspace,
 	} {
 		n.Intercept(interceptors...)
 	}
@@ -336,6 +342,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.Broadcast.mutate(ctx, m)
 	case *BroadcastRecipientMutation:
 		return c.BroadcastRecipient.mutate(ctx, m)
+	case *ConfirmationMutation:
+		return c.Confirmation.mutate(ctx, m)
 	case *ContactMutation:
 		return c.Contact.mutate(ctx, m)
 	case *CustomFieldMutation:
@@ -1179,6 +1187,155 @@ func (c *BroadcastRecipientClient) mutate(ctx context.Context, m *BroadcastRecip
 		return (&BroadcastRecipientDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("ent: unknown BroadcastRecipient mutation op: %q", m.Op())
+	}
+}
+
+// ConfirmationClient is a client for the Confirmation schema.
+type ConfirmationClient struct {
+	config
+}
+
+// NewConfirmationClient returns a client for the Confirmation from the given config.
+func NewConfirmationClient(c config) *ConfirmationClient {
+	return &ConfirmationClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `confirmation.Hooks(f(g(h())))`.
+func (c *ConfirmationClient) Use(hooks ...Hook) {
+	c.hooks.Confirmation = append(c.hooks.Confirmation, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `confirmation.Intercept(f(g(h())))`.
+func (c *ConfirmationClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Confirmation = append(c.inters.Confirmation, interceptors...)
+}
+
+// Create returns a builder for creating a Confirmation entity.
+func (c *ConfirmationClient) Create() *ConfirmationCreate {
+	mutation := newConfirmationMutation(c.config, OpCreate)
+	return &ConfirmationCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Confirmation entities.
+func (c *ConfirmationClient) CreateBulk(builders ...*ConfirmationCreate) *ConfirmationCreateBulk {
+	return &ConfirmationCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *ConfirmationClient) MapCreateBulk(slice any, setFunc func(*ConfirmationCreate, int)) *ConfirmationCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &ConfirmationCreateBulk{err: fmt.Errorf("calling to ConfirmationClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*ConfirmationCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &ConfirmationCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Confirmation.
+func (c *ConfirmationClient) Update() *ConfirmationUpdate {
+	mutation := newConfirmationMutation(c.config, OpUpdate)
+	return &ConfirmationUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *ConfirmationClient) UpdateOne(_m *Confirmation) *ConfirmationUpdateOne {
+	mutation := newConfirmationMutation(c.config, OpUpdateOne, withConfirmation(_m))
+	return &ConfirmationUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *ConfirmationClient) UpdateOneID(id int64) *ConfirmationUpdateOne {
+	mutation := newConfirmationMutation(c.config, OpUpdateOne, withConfirmationID(id))
+	return &ConfirmationUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Confirmation.
+func (c *ConfirmationClient) Delete() *ConfirmationDelete {
+	mutation := newConfirmationMutation(c.config, OpDelete)
+	return &ConfirmationDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *ConfirmationClient) DeleteOne(_m *Confirmation) *ConfirmationDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *ConfirmationClient) DeleteOneID(id int64) *ConfirmationDeleteOne {
+	builder := c.Delete().Where(confirmation.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &ConfirmationDeleteOne{builder}
+}
+
+// Query returns a query builder for Confirmation.
+func (c *ConfirmationClient) Query() *ConfirmationQuery {
+	return &ConfirmationQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeConfirmation},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Confirmation entity by its id.
+func (c *ConfirmationClient) Get(ctx context.Context, id int64) (*Confirmation, error) {
+	return c.Query().Where(confirmation.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *ConfirmationClient) GetX(ctx context.Context, id int64) *Confirmation {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryWorkspace queries the workspace edge of a Confirmation.
+func (c *ConfirmationClient) QueryWorkspace(_m *Confirmation) *WorkspaceQuery {
+	query := (&WorkspaceClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(confirmation.Table, confirmation.FieldID, id),
+			sqlgraph.To(workspace.Table, workspace.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, confirmation.WorkspaceTable, confirmation.WorkspaceColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *ConfirmationClient) Hooks() []Hook {
+	return c.hooks.Confirmation
+}
+
+// Interceptors returns the client interceptors.
+func (c *ConfirmationClient) Interceptors() []Interceptor {
+	return c.inters.Confirmation
+}
+
+func (c *ConfirmationClient) mutate(ctx context.Context, m *ConfirmationMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&ConfirmationCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&ConfirmationUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&ConfirmationUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&ConfirmationDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown Confirmation mutation op: %q", m.Op())
 	}
 }
 
@@ -3861,6 +4018,22 @@ func (c *WorkspaceClient) QueryUnsubscribes(_m *Workspace) *UnsubscribeQuery {
 	return query
 }
 
+// QueryConfirmations queries the confirmations edge of a Workspace.
+func (c *WorkspaceClient) QueryConfirmations(_m *Workspace) *ConfirmationQuery {
+	query := (&ConfirmationClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workspace.Table, workspace.FieldID, id),
+			sqlgraph.To(confirmation.Table, confirmation.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, workspace.ConfirmationsTable, workspace.ConfirmationsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // QueryTransactionalEmails queries the transactional_emails edge of a Workspace.
 func (c *WorkspaceClient) QueryTransactionalEmails(_m *Workspace) *TransactionalEmailQuery {
 	query := (&TransactionalEmailClient{config: c.config}).Query()
@@ -3937,15 +4110,17 @@ func (c *WorkspaceClient) mutate(ctx context.Context, m *WorkspaceMutation) (Val
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		ApiToken, Automation, AutomationRun, Broadcast, BroadcastRecipient, Contact,
-		CustomField, EmailTemplate, Event, Integration, Invitation, Membership,
-		Segment, SendingDomain, Suppression, TransactionalEmail, Unsubscribe, User,
-		Visitor, WebhookEndpoint, Workspace []ent.Hook
+		ApiToken, Automation, AutomationRun, Broadcast, BroadcastRecipient,
+		Confirmation, Contact, CustomField, EmailTemplate, Event, Integration,
+		Invitation, Membership, Segment, SendingDomain, Suppression,
+		TransactionalEmail, Unsubscribe, User, Visitor, WebhookEndpoint,
+		Workspace []ent.Hook
 	}
 	inters struct {
-		ApiToken, Automation, AutomationRun, Broadcast, BroadcastRecipient, Contact,
-		CustomField, EmailTemplate, Event, Integration, Invitation, Membership,
-		Segment, SendingDomain, Suppression, TransactionalEmail, Unsubscribe, User,
-		Visitor, WebhookEndpoint, Workspace []ent.Interceptor
+		ApiToken, Automation, AutomationRun, Broadcast, BroadcastRecipient,
+		Confirmation, Contact, CustomField, EmailTemplate, Event, Integration,
+		Invitation, Membership, Segment, SendingDomain, Suppression,
+		TransactionalEmail, Unsubscribe, User, Visitor, WebhookEndpoint,
+		Workspace []ent.Interceptor
 	}
 )

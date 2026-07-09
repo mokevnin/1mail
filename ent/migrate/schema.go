@@ -209,6 +209,38 @@ var (
 			},
 		},
 	}
+	// ConfirmationsColumns holds the columns for the "confirmations" table.
+	ConfirmationsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt64, Increment: true},
+		{Name: "channel", Type: field.TypeEnum, Enums: []string{"email"}, Default: "email"},
+		{Name: "destination", Type: field.TypeString},
+		{Name: "provenance", Type: field.TypeEnum, Enums: []string{"double_opt_in", "grandfathered", "imported"}},
+		{Name: "contact_id", Type: field.TypeInt64, Nullable: true},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "workspace_id", Type: field.TypeInt64},
+	}
+	// ConfirmationsTable holds the schema information for the "confirmations" table.
+	ConfirmationsTable = &schema.Table{
+		Name:       "confirmations",
+		Columns:    ConfirmationsColumns,
+		PrimaryKey: []*schema.Column{ConfirmationsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "confirmations_workspaces_confirmations",
+				Columns:    []*schema.Column{ConfirmationsColumns[7]},
+				RefColumns: []*schema.Column{WorkspacesColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "confirmations_ws_channel_dest",
+				Unique:  true,
+				Columns: []*schema.Column{ConfirmationsColumns[7], ConfirmationsColumns[1], ConfirmationsColumns[2]},
+			},
+		},
+	}
 	// ContactsColumns holds the columns for the "contacts" table.
 	ContactsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt64, Increment: true},
@@ -740,6 +772,7 @@ var (
 		{Name: "slug", Type: field.TypeString, Unique: true},
 		{Name: "collect_key", Type: field.TypeString, Unique: true},
 		{Name: "ingest_key", Type: field.TypeString, Unique: true},
+		{Name: "require_confirmed_opt_in", Type: field.TypeBool, Default: false},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
 	}
@@ -756,6 +789,7 @@ var (
 		AutomationRunsTable,
 		BroadcastsTable,
 		BroadcastRecipientsTable,
+		ConfirmationsTable,
 		ContactsTable,
 		CustomFieldsTable,
 		EmailTemplatesTable,
@@ -797,6 +831,10 @@ func init() {
 	BroadcastRecipientsTable.ForeignKeys[1].RefTable = WorkspacesTable
 	BroadcastRecipientsTable.Annotation = &entsql.Annotation{
 		Table: "broadcast_recipients",
+	}
+	ConfirmationsTable.ForeignKeys[0].RefTable = WorkspacesTable
+	ConfirmationsTable.Annotation = &entsql.Annotation{
+		Table: "confirmations",
 	}
 	ContactsTable.ForeignKeys[0].RefTable = WorkspacesTable
 	ContactsTable.Annotation = &entsql.Annotation{

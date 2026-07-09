@@ -4,7 +4,9 @@ import (
 	"net/url"
 	"strings"
 	"testing"
+	"time"
 
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/mokevnin/1mail/internal/tracking"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -47,6 +49,43 @@ func TestUnsubTokenRoundTrip(t *testing.T) {
 	got, err := tr.DecodeUnsub(token)
 	require.NoError(t, err)
 	assert.Equal(t, target, got)
+}
+
+// confirmToken↔DecodeConfirm round-trips every field, including a large int64 id
+// that would lose precision as a JSON number (float64) instead of a string.
+func TestConfirmTokenRoundTrip(t *testing.T) {
+	tr := tracking.New("secret", "https://app.test")
+	target := tracking.ConfirmTarget{
+		Destination: "person@example.com",
+		WorkspaceID: 1,
+		ContactID:   9007199254740993, // 2^53 + 1: not representable as float64
+	}
+	urlStr, err := tr.ConfirmURL(target)
+	require.NoError(t, err)
+	assert.Contains(t, urlStr, "https://app.test/e/confirm/")
+
+	token := strings.TrimPrefix(urlStr, "https://app.test/e/confirm/")
+	got, err := tr.DecodeConfirm(token)
+	require.NoError(t, err)
+	assert.Equal(t, target, got)
+}
+
+// A confirmation link expires (ADR 0013): DecodeConfirm rejects a token whose exp
+// has passed, so a stale link cannot confirm.
+func TestDecodeConfirmRejectsExpired(t *testing.T) {
+	tr := tracking.New("secret", "https://app.test")
+	// Hand-mint a token with the confirm claim shape but an exp in the past.
+	tok := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"dest": "person@example.com",
+		"ws":   "1",
+		"cid":  "2",
+		"exp":  time.Now().Add(-time.Hour).Unix(),
+	})
+	signed, err := tok.SignedString([]byte("secret"))
+	require.NoError(t, err)
+
+	_, err = tr.DecodeConfirm(signed)
+	assert.Error(t, err, "expired confirmation token is rejected")
 }
 
 func TestRewriteWrapsLinksAndAddsPixelAndFooter(t *testing.T) {

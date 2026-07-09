@@ -22,6 +22,8 @@ type Tx struct {
 	Broadcast *BroadcastClient
 	// BroadcastRecipient is the client for interacting with the BroadcastRecipient builders.
 	BroadcastRecipient *BroadcastRecipientClient
+	// Confirmation is the client for interacting with the Confirmation builders.
+	Confirmation *ConfirmationClient
 	// Contact is the client for interacting with the Contact builders.
 	Contact *ContactClient
 	// CustomField is the client for interacting with the CustomField builders.
@@ -190,6 +192,7 @@ func (tx *Tx) init() {
 	tx.AutomationRun = NewAutomationRunClient(tx.config)
 	tx.Broadcast = NewBroadcastClient(tx.config)
 	tx.BroadcastRecipient = NewBroadcastRecipientClient(tx.config)
+	tx.Confirmation = NewConfirmationClient(tx.config)
 	tx.Contact = NewContactClient(tx.config)
 	tx.CustomField = NewCustomFieldClient(tx.config)
 	tx.EmailTemplate = NewEmailTemplateClient(tx.config)

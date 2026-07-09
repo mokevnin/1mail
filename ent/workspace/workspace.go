@@ -22,6 +22,8 @@ const (
 	FieldCollectKey = "collect_key"
 	// FieldIngestKey holds the string denoting the ingest_key field in the database.
 	FieldIngestKey = "ingest_key"
+	// FieldRequireConfirmedOptIn holds the string denoting the require_confirmed_opt_in field in the database.
+	FieldRequireConfirmedOptIn = "require_confirmed_opt_in"
 	// FieldCreatedAt holds the string denoting the created_at field in the database.
 	FieldCreatedAt = "created_at"
 	// FieldUpdatedAt holds the string denoting the updated_at field in the database.
@@ -58,6 +60,8 @@ const (
 	EdgeSuppressions = "suppressions"
 	// EdgeUnsubscribes holds the string denoting the unsubscribes edge name in mutations.
 	EdgeUnsubscribes = "unsubscribes"
+	// EdgeConfirmations holds the string denoting the confirmations edge name in mutations.
+	EdgeConfirmations = "confirmations"
 	// EdgeTransactionalEmails holds the string denoting the transactional_emails edge name in mutations.
 	EdgeTransactionalEmails = "transactional_emails"
 	// EdgeMemberships holds the string denoting the memberships edge name in mutations.
@@ -178,6 +182,13 @@ const (
 	UnsubscribesInverseTable = "unsubscribes"
 	// UnsubscribesColumn is the table column denoting the unsubscribes relation/edge.
 	UnsubscribesColumn = "workspace_id"
+	// ConfirmationsTable is the table that holds the confirmations relation/edge.
+	ConfirmationsTable = "confirmations"
+	// ConfirmationsInverseTable is the table name for the Confirmation entity.
+	// It exists in this package in order to avoid circular dependency with the "confirmation" package.
+	ConfirmationsInverseTable = "confirmations"
+	// ConfirmationsColumn is the table column denoting the confirmations relation/edge.
+	ConfirmationsColumn = "workspace_id"
 	// TransactionalEmailsTable is the table that holds the transactional_emails relation/edge.
 	TransactionalEmailsTable = "transactional_emails"
 	// TransactionalEmailsInverseTable is the table name for the TransactionalEmail entity.
@@ -208,6 +219,7 @@ var Columns = []string{
 	FieldSlug,
 	FieldCollectKey,
 	FieldIngestKey,
+	FieldRequireConfirmedOptIn,
 	FieldCreatedAt,
 	FieldUpdatedAt,
 }
@@ -231,6 +243,8 @@ var (
 	CollectKeyValidator func(string) error
 	// IngestKeyValidator is a validator for the "ingest_key" field. It is called by the builders before save.
 	IngestKeyValidator func(string) error
+	// DefaultRequireConfirmedOptIn holds the default value on creation for the "require_confirmed_opt_in" field.
+	DefaultRequireConfirmedOptIn bool
 	// DefaultCreatedAt holds the default value on creation for the "created_at" field.
 	DefaultCreatedAt func() time.Time
 	// DefaultUpdatedAt holds the default value on creation for the "updated_at" field.
@@ -265,6 +279,11 @@ func ByCollectKey(opts ...sql.OrderTermOption) OrderOption {
 // ByIngestKey orders the results by the ingest_key field.
 func ByIngestKey(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldIngestKey, opts...).ToFunc()
+}
+
+// ByRequireConfirmedOptIn orders the results by the require_confirmed_opt_in field.
+func ByRequireConfirmedOptIn(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldRequireConfirmedOptIn, opts...).ToFunc()
 }
 
 // ByCreatedAt orders the results by the created_at field.
@@ -501,6 +520,20 @@ func ByUnsubscribes(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 	}
 }
 
+// ByConfirmationsCount orders the results by confirmations count.
+func ByConfirmationsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newConfirmationsStep(), opts...)
+	}
+}
+
+// ByConfirmations orders the results by confirmations terms.
+func ByConfirmations(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newConfirmationsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+
 // ByTransactionalEmailsCount orders the results by transactional_emails count.
 func ByTransactionalEmailsCount(opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
@@ -652,6 +685,13 @@ func newUnsubscribesStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(UnsubscribesInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2M, false, UnsubscribesTable, UnsubscribesColumn),
+	)
+}
+func newConfirmationsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(ConfirmationsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, ConfirmationsTable, ConfirmationsColumn),
 	)
 }
 func newTransactionalEmailsStep() *sqlgraph.Step {

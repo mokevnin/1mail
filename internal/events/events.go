@@ -28,14 +28,15 @@ const TopicDomainEvents = "domain_events"
 // OURS and finite. A customer's action name is NOT one of these; it lives inside
 // CollectedEvent.Action.
 const (
-	NameContactCreated    = "contact.created"
-	NameEmailSent         = "email.sent"
-	NameEmailOpened       = "email.opened"
-	NameEmailClicked      = "email.clicked"
-	NameEmailUnsubscribed = "email.unsubscribed"
-	NameEmailBounced      = "email.bounced"
-	NameEmailComplained   = "email.complained"
-	NameCollected         = "event.collected"
+	NameContactCreated     = "contact.created"
+	NameEmailSent          = "email.sent"
+	NameEmailOpened        = "email.opened"
+	NameEmailClicked       = "email.clicked"
+	NameEmailUnsubscribed  = "email.unsubscribed"
+	NameEmailBounced       = "email.bounced"
+	NameEmailComplained    = "email.complained"
+	NameMarketingConfirmed = "marketing.confirmed"
+	NameCollected          = "event.collected"
 )
 
 // Bounce kinds carried by EmailDeliveryFailure. Only a permanent (hard) bounce
@@ -100,14 +101,15 @@ type identifiable interface {
 // serialized envelope can be decoded back into the right Go type. All variants
 // are ours and finite — there is no catch-all.
 var registry = map[string]func() DomainEvent{
-	NameContactCreated:    func() DomainEvent { return &ContactCreated{} },
-	NameEmailSent:         func() DomainEvent { return &EmailEngagement{} },
-	NameEmailOpened:       func() DomainEvent { return &EmailEngagement{} },
-	NameEmailClicked:      func() DomainEvent { return &EmailEngagement{} },
-	NameEmailUnsubscribed: func() DomainEvent { return &EmailEngagement{} },
-	NameEmailBounced:      func() DomainEvent { return &EmailDeliveryFailure{} },
-	NameEmailComplained:   func() DomainEvent { return &EmailDeliveryFailure{} },
-	NameCollected:         func() DomainEvent { return &CollectedEvent{} },
+	NameContactCreated:     func() DomainEvent { return &ContactCreated{} },
+	NameEmailSent:          func() DomainEvent { return &EmailEngagement{} },
+	NameEmailOpened:        func() DomainEvent { return &EmailEngagement{} },
+	NameEmailClicked:       func() DomainEvent { return &EmailEngagement{} },
+	NameEmailUnsubscribed:  func() DomainEvent { return &EmailEngagement{} },
+	NameEmailBounced:       func() DomainEvent { return &EmailDeliveryFailure{} },
+	NameEmailComplained:    func() DomainEvent { return &EmailDeliveryFailure{} },
+	NameMarketingConfirmed: func() DomainEvent { return &MarketingConfirmed{} },
+	NameCollected:          func() DomainEvent { return &CollectedEvent{} },
 }
 
 // Decode reconstructs the typed event from an envelope.
@@ -202,6 +204,33 @@ func (e *EmailDeliveryFailure) Project() Projection {
 		props["provider"] = e.Provider
 	}
 	return Projection{Subject: e.Email, Action: e.Action, Email: e.Email, Properties: props, ContactID: e.ContactID}
+}
+
+// MarketingConfirmed is emitted when a destination confirms its subscription
+// (double opt-in, ADR 0013). It is the immutable source of truth for the
+// confirmation — the derived Confirmation row is the read-model — and carries the
+// GDPR Art. 7 proof: when, how (provenance), and the confirming IP. Publishing it
+// also lets a welcome automation trigger on "marketing.confirmed".
+type MarketingConfirmed struct {
+	WorkspaceID int64  `json:"workspaceId"`
+	ContactID   int64  `json:"contactId,omitempty"`
+	Email       string `json:"email"`
+	Provenance  string `json:"provenance"`   // double_opt_in|grandfathered|imported
+	IP          string `json:"ip,omitempty"` // confirming client IP (double_opt_in only)
+}
+
+func (*MarketingConfirmed) EventName() string  { return NameMarketingConfirmed }
+func (*MarketingConfirmed) EventVersion() int  { return 1 }
+func (e *MarketingConfirmed) Workspace() int64 { return e.WorkspaceID }
+func (e *MarketingConfirmed) Project() Projection {
+	props := map[string]any{}
+	if e.Provenance != "" {
+		props["provenance"] = e.Provenance
+	}
+	if e.IP != "" {
+		props["ip"] = e.IP
+	}
+	return Projection{Subject: e.Email, Action: NameMarketingConfirmed, Email: e.Email, Properties: props, ContactID: e.ContactID}
 }
 
 // CollectedEvent wraps a customer's own event ingested via the collect or external

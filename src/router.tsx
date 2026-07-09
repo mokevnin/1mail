@@ -19,6 +19,7 @@ import { BroadcastCreatePage } from './routes/broadcasts/create.tsx'
 import { BroadcastEditPage } from './routes/broadcasts/edit.tsx'
 import { BroadcastsListPage } from './routes/broadcasts/list.tsx'
 import { BroadcastReportPage } from './routes/broadcasts/report.tsx'
+import { ConfirmSubscriptionPage } from './routes/confirm.tsx'
 import { ContactCreatePage } from './routes/contacts/create.tsx'
 import { ContactDetailPage } from './routes/contacts/detail.tsx'
 import { ContactEditPage } from './routes/contacts/edit.tsx'
@@ -251,6 +252,17 @@ export const confirmEmailChangeRoute = createRoute({
   component: ConfirmEmailChangePage,
 })
 
+// Public double opt-in confirmation page (no auth): the GET /e/confirm/{token}
+// endpoint redirects here (ADR 0013 — GET records nothing). `token` is POSTed back
+// to /e/confirm/{token} on confirm to record the confirmation; an expired/invalid
+// link arrives with `expired=1` and no token, so the page offers sign-up-again.
+export const confirmRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/confirm',
+  validateSearch: z.object({ token: z.string().optional(), expired: z.string().optional() }),
+  component: ConfirmSubscriptionPage,
+})
+
 // Public unsubscribe confirm page (no auth): the GET /e/u/{token} endpoint
 // redirects here (RFC 8058 / ADR 0012 — GET records nothing). `token` is POSTed
 // back to /e/u/{token} on confirm to perform the opt-out; `all` is the optional
@@ -304,6 +316,7 @@ const routeTree = rootRoute.addChildren([
   resetPasswordRoute,
   verifyEmailRoute,
   confirmEmailChangeRoute,
+  confirmRoute,
   unsubscribeRoute,
   unsubscribedRoute,
   acceptInvitationRoute,

@@ -17,6 +17,7 @@ import (
 	"github.com/mokevnin/1mail/ent/automationrun"
 	"github.com/mokevnin/1mail/ent/broadcast"
 	"github.com/mokevnin/1mail/ent/broadcastrecipient"
+	"github.com/mokevnin/1mail/ent/confirmation"
 	"github.com/mokevnin/1mail/ent/contact"
 	"github.com/mokevnin/1mail/ent/customfield"
 	"github.com/mokevnin/1mail/ent/emailtemplate"
@@ -58,6 +59,7 @@ type WorkspaceQuery struct {
 	withWebhookEndpoints    *WebhookEndpointQuery
 	withSuppressions        *SuppressionQuery
 	withUnsubscribes        *UnsubscribeQuery
+	withConfirmations       *ConfirmationQuery
 	withTransactionalEmails *TransactionalEmailQuery
 	withMemberships         *MembershipQuery
 	withInvitations         *InvitationQuery
@@ -450,6 +452,28 @@ func (_q *WorkspaceQuery) QueryUnsubscribes() *UnsubscribeQuery {
 	return query
 }
 
+// QueryConfirmations chains the current query on the "confirmations" edge.
+func (_q *WorkspaceQuery) QueryConfirmations() *ConfirmationQuery {
+	query := (&ConfirmationClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workspace.Table, workspace.FieldID, selector),
+			sqlgraph.To(confirmation.Table, confirmation.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, workspace.ConfirmationsTable, workspace.ConfirmationsColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
 // QueryTransactionalEmails chains the current query on the "transactional_emails" edge.
 func (_q *WorkspaceQuery) QueryTransactionalEmails() *TransactionalEmailQuery {
 	query := (&TransactionalEmailClient{config: _q.config}).Query()
@@ -724,6 +748,7 @@ func (_q *WorkspaceQuery) Clone() *WorkspaceQuery {
 		withWebhookEndpoints:    _q.withWebhookEndpoints.Clone(),
 		withSuppressions:        _q.withSuppressions.Clone(),
 		withUnsubscribes:        _q.withUnsubscribes.Clone(),
+		withConfirmations:       _q.withConfirmations.Clone(),
 		withTransactionalEmails: _q.withTransactionalEmails.Clone(),
 		withMemberships:         _q.withMemberships.Clone(),
 		withInvitations:         _q.withInvitations.Clone(),
@@ -910,6 +935,17 @@ func (_q *WorkspaceQuery) WithUnsubscribes(opts ...func(*UnsubscribeQuery)) *Wor
 	return _q
 }
 
+// WithConfirmations tells the query-builder to eager-load the nodes that are connected to
+// the "confirmations" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *WorkspaceQuery) WithConfirmations(opts ...func(*ConfirmationQuery)) *WorkspaceQuery {
+	query := (&ConfirmationClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withConfirmations = query
+	return _q
+}
+
 // WithTransactionalEmails tells the query-builder to eager-load the nodes that are connected to
 // the "transactional_emails" edge. The optional arguments are used to configure the query builder of the edge.
 func (_q *WorkspaceQuery) WithTransactionalEmails(opts ...func(*TransactionalEmailQuery)) *WorkspaceQuery {
@@ -1021,7 +1057,7 @@ func (_q *WorkspaceQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Wo
 	var (
 		nodes       = []*Workspace{}
 		_spec       = _q.querySpec()
-		loadedTypes = [19]bool{
+		loadedTypes = [20]bool{
 			_q.withContacts != nil,
 			_q.withCustomFields != nil,
 			_q.withSegments != nil,
@@ -1038,6 +1074,7 @@ func (_q *WorkspaceQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Wo
 			_q.withWebhookEndpoints != nil,
 			_q.withSuppressions != nil,
 			_q.withUnsubscribes != nil,
+			_q.withConfirmations != nil,
 			_q.withTransactionalEmails != nil,
 			_q.withMemberships != nil,
 			_q.withInvitations != nil,
@@ -1175,6 +1212,13 @@ func (_q *WorkspaceQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Wo
 		if err := _q.loadUnsubscribes(ctx, query, nodes,
 			func(n *Workspace) { n.Edges.Unsubscribes = []*Unsubscribe{} },
 			func(n *Workspace, e *Unsubscribe) { n.Edges.Unsubscribes = append(n.Edges.Unsubscribes, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := _q.withConfirmations; query != nil {
+		if err := _q.loadConfirmations(ctx, query, nodes,
+			func(n *Workspace) { n.Edges.Confirmations = []*Confirmation{} },
+			func(n *Workspace, e *Confirmation) { n.Edges.Confirmations = append(n.Edges.Confirmations, e) }); err != nil {
 			return nil, err
 		}
 	}
@@ -1669,6 +1713,36 @@ func (_q *WorkspaceQuery) loadUnsubscribes(ctx context.Context, query *Unsubscri
 	}
 	query.Where(predicate.Unsubscribe(func(s *sql.Selector) {
 		s.Where(sql.InValues(s.C(workspace.UnsubscribesColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.WorkspaceID
+		node, ok := nodeids[fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "workspace_id" returned %v for node %v`, fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (_q *WorkspaceQuery) loadConfirmations(ctx context.Context, query *ConfirmationQuery, nodes []*Workspace, init func(*Workspace), assign func(*Workspace, *Confirmation)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[int64]*Workspace)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(confirmation.FieldWorkspaceID)
+	}
+	query.Where(predicate.Confirmation(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(workspace.ConfirmationsColumn), fks...))
 	}))
 	neighbors, err := query.All(ctx)
 	if err != nil {

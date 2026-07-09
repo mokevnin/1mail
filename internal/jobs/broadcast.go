@@ -195,10 +195,15 @@ func PlanBroadcast(ctx context.Context, client *ent.Client, resolver SenderResol
 	// unsubscribed from the "broadcasts" source (or from everything) are excluded
 	// at the query level. EmailNotNil keeps un-sendable contacts out so no row is
 	// created that could never send and would block finalization forever.
+	requireConfirmed, err := eligibility.RequiresConfirmation(ctx, client, b.WorkspaceID)
+	if err != nil {
+		_, _ = b.Update().SetStatus(broadcast.StatusFailed).Save(ctx)
+		return nil, fmt.Errorf("broadcast %d: %w", b.ID, err)
+	}
 	audience := client.Contact.Query().Where(
 		contact.WorkspaceID(b.WorkspaceID),
 		contact.EmailNotNil(),
-		eligibility.Predicate(eligibility.ChannelEmail, eligibility.SourceBroadcasts),
+		eligibility.Predicate(eligibility.ChannelEmail, eligibility.SourceBroadcasts, requireConfirmed),
 	)
 	if b.SegmentID != nil {
 		seg, err := client.Segment.Query().

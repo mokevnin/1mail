@@ -67,7 +67,7 @@ func TestSendBroadcastDeliversToEligibleContacts(t *testing.T) {
 	// so alice + carol remain.
 	eligible, err := env.DB.Contact.Query().
 		Where(contact.WorkspaceID(acmeWorkspaceID),
-			eligibility.Predicate(eligibility.ChannelEmail, eligibility.SourceBroadcasts)).
+			eligibility.Predicate(eligibility.ChannelEmail, eligibility.SourceBroadcasts, false)).
 		All(ctx)
 	require.NoError(t, err)
 	eligibleCount := len(eligible)
@@ -163,7 +163,7 @@ func TestSendBroadcastSkipsSuppressed(t *testing.T) {
 	// unsubscribed from broadcasts in the fixtures).
 	eligibleBefore, err := env.DB.Contact.Query().
 		Where(contact.WorkspaceID(acmeWorkspaceID),
-			eligibility.Predicate(eligibility.ChannelEmail, eligibility.SourceBroadcasts)).
+			eligibility.Predicate(eligibility.ChannelEmail, eligibility.SourceBroadcasts, false)).
 		Count(ctx)
 	require.NoError(t, err)
 	require.GreaterOrEqual(t, eligibleBefore, 2)
@@ -297,7 +297,7 @@ func TestSendBroadcastMarksFailedOnSendError(t *testing.T) {
 
 	eligible, err := env.DB.Contact.Query().
 		Where(contact.WorkspaceID(acmeWorkspaceID),
-			eligibility.Predicate(eligibility.ChannelEmail, eligibility.SourceBroadcasts)).
+			eligibility.Predicate(eligibility.ChannelEmail, eligibility.SourceBroadcasts, false)).
 		Count(ctx)
 	require.NoError(t, err)
 	require.Greater(t, eligible, 0)

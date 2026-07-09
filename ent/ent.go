@@ -17,6 +17,7 @@ import (
 	"github.com/mokevnin/1mail/ent/automationrun"
 	"github.com/mokevnin/1mail/ent/broadcast"
 	"github.com/mokevnin/1mail/ent/broadcastrecipient"
+	"github.com/mokevnin/1mail/ent/confirmation"
 	"github.com/mokevnin/1mail/ent/contact"
 	"github.com/mokevnin/1mail/ent/customfield"
 	"github.com/mokevnin/1mail/ent/emailtemplate"
@@ -98,6 +99,7 @@ func checkColumn(t, c string) error {
 			automationrun.Table:      automationrun.ValidColumn,
 			broadcast.Table:          broadcast.ValidColumn,
 			broadcastrecipient.Table: broadcastrecipient.ValidColumn,
+			confirmation.Table:       confirmation.ValidColumn,
 			contact.Table:            contact.ValidColumn,
 			customfield.Table:        customfield.ValidColumn,
 			emailtemplate.Table:      emailtemplate.ValidColumn,

@@ -13,10 +13,17 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/net/html"
 )
+
+// confirmTTL is how long a double-opt-in confirmation link stays valid. Unlike
+// the eternal unsubscribe/tracking tokens, a confirmation link expires (ADR 0013):
+// stale consent should not be confirmable weeks later, and never-confirmed tokens
+// become purgeable. An expired link routes the recipient to "request a new one".
+const confirmTTL = 7 * 24 * time.Hour
 
 // Tracker mints recipient tokens and builds tracking URLs against baseURL.
 type Tracker struct {
@@ -117,6 +124,59 @@ func (t *Tracker) DecodeUnsub(token string) (UnsubTarget, error) {
 	return UnsubTarget{Source: src, Destination: dest, WorkspaceID: ws, ContactID: cid, BroadcastID: bid}, nil
 }
 
+// ConfirmTarget is the payload a double-opt-in confirmation link carries (ADR
+// 0013). Like the opt-out, the confirmation is destination-keyed and not
+// source-scoped: confirming an address makes it mailable across sources, so the
+// link records against the destination directly (no contact-row lookup) and
+// survives the contact being deleted between send and click.
+type ConfirmTarget struct {
+	Destination string
+	WorkspaceID int64
+	ContactID   int64
+}
+
+// confirmToken mints a signed, expiring confirmation token. int64 fields are
+// stored as strings for the same precision reason as unsubToken; the exp claim is
+// a real JWT numeric date so DecodeConfirm can reject a stale link.
+func (t *Tracker) confirmToken(target ConfirmTarget) (string, error) {
+	tok := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"dest": target.Destination,
+		"ws":   strconv.FormatInt(target.WorkspaceID, 10),
+		"cid":  strconv.FormatInt(target.ContactID, 10),
+		"exp":  time.Now().Add(confirmTTL).Unix(),
+	})
+	return tok.SignedString(t.secret)
+}
+
+// DecodeConfirm validates a confirmation token and returns its target. It
+// rejects a token whose exp has passed (and requires exp to be present), so an
+// expired link cannot confirm — the endpoint surfaces that as "request a new one".
+func (t *Tracker) DecodeConfirm(token string) (ConfirmTarget, error) {
+	parsed, err := jwt.Parse(token, func(*jwt.Token) (any, error) {
+		return t.secret, nil
+	}, jwt.WithValidMethods([]string{"HS256"}), jwt.WithExpirationRequired())
+	if err != nil {
+		return ConfirmTarget{}, err
+	}
+	claims, ok := parsed.Claims.(jwt.MapClaims)
+	if !ok {
+		return ConfirmTarget{}, fmt.Errorf("tracking: unexpected claims type")
+	}
+	dest, _ := claims["dest"].(string)
+	if dest == "" {
+		return ConfirmTarget{}, fmt.Errorf("tracking: missing dest claim")
+	}
+	ws, err := claimInt64(claims, "ws")
+	if err != nil {
+		return ConfirmTarget{}, err
+	}
+	cid, err := claimInt64(claims, "cid")
+	if err != nil {
+		return ConfirmTarget{}, err
+	}
+	return ConfirmTarget{Destination: dest, WorkspaceID: ws, ContactID: cid}, nil
+}
+
 // claimInt64 reads a string-encoded int64 claim.
 func claimInt64(claims jwt.MapClaims, key string) (int64, error) {
 	s, ok := claims[key].(string)
@@ -143,6 +203,17 @@ func (t *Tracker) UnsubscribeURL(target UnsubTarget) (string, error) {
 		return "", err
 	}
 	return t.baseURL + "/e/u/" + token, nil
+}
+
+// ConfirmURL is the public double-opt-in link (ADR 0013). Like UnsubscribeURL the
+// GET is safe: it renders the SPA confirmation page, and the confirmation is
+// recorded only when the recipient POSTs back (scanner-safe, deliberate consent).
+func (t *Tracker) ConfirmURL(target ConfirmTarget) (string, error) {
+	token, err := t.confirmToken(target)
+	if err != nil {
+		return "", err
+	}
+	return t.baseURL + "/e/confirm/" + token, nil
 }
 
 // UnsubscribeFooter is the email's unsubscribe footer, scoped to target. Shared by

@@ -25,6 +25,8 @@ type Workspace struct {
 	CollectKey string `json:"-"`
 	// IngestKey holds the value of the "ingest_key" field.
 	IngestKey string `json:"-"`
+	// RequireConfirmedOptIn holds the value of the "require_confirmed_opt_in" field.
+	RequireConfirmedOptIn bool `json:"require_confirmed_opt_in,omitempty"`
 	// CreatedAt holds the value of the "created_at" field.
 	CreatedAt time.Time `json:"created_at,omitempty"`
 	// UpdatedAt holds the value of the "updated_at" field.
@@ -69,6 +71,8 @@ type WorkspaceEdges struct {
 	Suppressions []*Suppression `json:"suppressions,omitempty"`
 	// Unsubscribes holds the value of the unsubscribes edge.
 	Unsubscribes []*Unsubscribe `json:"unsubscribes,omitempty"`
+	// Confirmations holds the value of the confirmations edge.
+	Confirmations []*Confirmation `json:"confirmations,omitempty"`
 	// TransactionalEmails holds the value of the transactional_emails edge.
 	TransactionalEmails []*TransactionalEmail `json:"transactional_emails,omitempty"`
 	// Memberships holds the value of the memberships edge.
@@ -77,7 +81,7 @@ type WorkspaceEdges struct {
 	Invitations []*Invitation `json:"invitations,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [19]bool
+	loadedTypes [20]bool
 }
 
 // ContactsOrErr returns the Contacts value or an error if the edge
@@ -224,10 +228,19 @@ func (e WorkspaceEdges) UnsubscribesOrErr() ([]*Unsubscribe, error) {
 	return nil, &NotLoadedError{edge: "unsubscribes"}
 }
 
+// ConfirmationsOrErr returns the Confirmations value or an error if the edge
+// was not loaded in eager-loading.
+func (e WorkspaceEdges) ConfirmationsOrErr() ([]*Confirmation, error) {
+	if e.loadedTypes[16] {
+		return e.Confirmations, nil
+	}
+	return nil, &NotLoadedError{edge: "confirmations"}
+}
+
 // TransactionalEmailsOrErr returns the TransactionalEmails value or an error if the edge
 // was not loaded in eager-loading.
 func (e WorkspaceEdges) TransactionalEmailsOrErr() ([]*TransactionalEmail, error) {
-	if e.loadedTypes[16] {
+	if e.loadedTypes[17] {
 		return e.TransactionalEmails, nil
 	}
 	return nil, &NotLoadedError{edge: "transactional_emails"}
@@ -236,7 +249,7 @@ func (e WorkspaceEdges) TransactionalEmailsOrErr() ([]*TransactionalEmail, error
 // MembershipsOrErr returns the Memberships value or an error if the edge
 // was not loaded in eager-loading.
 func (e WorkspaceEdges) MembershipsOrErr() ([]*Membership, error) {
-	if e.loadedTypes[17] {
+	if e.loadedTypes[18] {
 		return e.Memberships, nil
 	}
 	return nil, &NotLoadedError{edge: "memberships"}
@@ -245,7 +258,7 @@ func (e WorkspaceEdges) MembershipsOrErr() ([]*Membership, error) {
 // InvitationsOrErr returns the Invitations value or an error if the edge
 // was not loaded in eager-loading.
 func (e WorkspaceEdges) InvitationsOrErr() ([]*Invitation, error) {
-	if e.loadedTypes[18] {
+	if e.loadedTypes[19] {
 		return e.Invitations, nil
 	}
 	return nil, &NotLoadedError{edge: "invitations"}
@@ -256,6 +269,8 @@ func (*Workspace) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
+		case workspace.FieldRequireConfirmedOptIn:
+			values[i] = new(sql.NullBool)
 		case workspace.FieldID:
 			values[i] = new(sql.NullInt64)
 		case workspace.FieldName, workspace.FieldSlug, workspace.FieldCollectKey, workspace.FieldIngestKey:
@@ -306,6 +321,12 @@ func (_m *Workspace) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field ingest_key", values[i])
 			} else if value.Valid {
 				_m.IngestKey = value.String
+			}
+		case workspace.FieldRequireConfirmedOptIn:
+			if value, ok := values[i].(*sql.NullBool); !ok {
+				return fmt.Errorf("unexpected type %T for field require_confirmed_opt_in", values[i])
+			} else if value.Valid {
+				_m.RequireConfirmedOptIn = value.Bool
 			}
 		case workspace.FieldCreatedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
@@ -412,6 +433,11 @@ func (_m *Workspace) QueryUnsubscribes() *UnsubscribeQuery {
 	return NewWorkspaceClient(_m.config).QueryUnsubscribes(_m)
 }
 
+// QueryConfirmations queries the "confirmations" edge of the Workspace entity.
+func (_m *Workspace) QueryConfirmations() *ConfirmationQuery {
+	return NewWorkspaceClient(_m.config).QueryConfirmations(_m)
+}
+
 // QueryTransactionalEmails queries the "transactional_emails" edge of the Workspace entity.
 func (_m *Workspace) QueryTransactionalEmails() *TransactionalEmailQuery {
 	return NewWorkspaceClient(_m.config).QueryTransactionalEmails(_m)
@@ -459,6 +485,9 @@ func (_m *Workspace) String() string {
 	builder.WriteString("collect_key=<sensitive>")
 	builder.WriteString(", ")
 	builder.WriteString("ingest_key=<sensitive>")
+	builder.WriteString(", ")
+	builder.WriteString("require_confirmed_opt_in=")
+	builder.WriteString(fmt.Sprintf("%v", _m.RequireConfirmedOptIn))
 	builder.WriteString(", ")
 	builder.WriteString("created_at=")
 	builder.WriteString(_m.CreatedAt.Format(time.ANSIC))

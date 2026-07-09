@@ -16,6 +16,7 @@ import (
 	"github.com/mokevnin/1mail/ent/automationrun"
 	"github.com/mokevnin/1mail/ent/broadcast"
 	"github.com/mokevnin/1mail/ent/broadcastrecipient"
+	"github.com/mokevnin/1mail/ent/confirmation"
 	"github.com/mokevnin/1mail/ent/contact"
 	"github.com/mokevnin/1mail/ent/customfield"
 	"github.com/mokevnin/1mail/ent/emailtemplate"
@@ -100,6 +101,20 @@ func (_u *WorkspaceUpdate) SetIngestKey(v string) *WorkspaceUpdate {
 func (_u *WorkspaceUpdate) SetNillableIngestKey(v *string) *WorkspaceUpdate {
 	if v != nil {
 		_u.SetIngestKey(*v)
+	}
+	return _u
+}
+
+// SetRequireConfirmedOptIn sets the "require_confirmed_opt_in" field.
+func (_u *WorkspaceUpdate) SetRequireConfirmedOptIn(v bool) *WorkspaceUpdate {
+	_u.mutation.SetRequireConfirmedOptIn(v)
+	return _u
+}
+
+// SetNillableRequireConfirmedOptIn sets the "require_confirmed_opt_in" field if the given value is not nil.
+func (_u *WorkspaceUpdate) SetNillableRequireConfirmedOptIn(v *bool) *WorkspaceUpdate {
+	if v != nil {
+		_u.SetRequireConfirmedOptIn(*v)
 	}
 	return _u
 }
@@ -348,6 +363,21 @@ func (_u *WorkspaceUpdate) AddUnsubscribes(v ...*Unsubscribe) *WorkspaceUpdate {
 		ids[i] = v[i].ID
 	}
 	return _u.AddUnsubscribeIDs(ids...)
+}
+
+// AddConfirmationIDs adds the "confirmations" edge to the Confirmation entity by IDs.
+func (_u *WorkspaceUpdate) AddConfirmationIDs(ids ...int64) *WorkspaceUpdate {
+	_u.mutation.AddConfirmationIDs(ids...)
+	return _u
+}
+
+// AddConfirmations adds the "confirmations" edges to the Confirmation entity.
+func (_u *WorkspaceUpdate) AddConfirmations(v ...*Confirmation) *WorkspaceUpdate {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddConfirmationIDs(ids...)
 }
 
 // AddTransactionalEmailIDs adds the "transactional_emails" edge to the TransactionalEmail entity by IDs.
@@ -736,6 +766,27 @@ func (_u *WorkspaceUpdate) RemoveUnsubscribes(v ...*Unsubscribe) *WorkspaceUpdat
 	return _u.RemoveUnsubscribeIDs(ids...)
 }
 
+// ClearConfirmations clears all "confirmations" edges to the Confirmation entity.
+func (_u *WorkspaceUpdate) ClearConfirmations() *WorkspaceUpdate {
+	_u.mutation.ClearConfirmations()
+	return _u
+}
+
+// RemoveConfirmationIDs removes the "confirmations" edge to Confirmation entities by IDs.
+func (_u *WorkspaceUpdate) RemoveConfirmationIDs(ids ...int64) *WorkspaceUpdate {
+	_u.mutation.RemoveConfirmationIDs(ids...)
+	return _u
+}
+
+// RemoveConfirmations removes "confirmations" edges to Confirmation entities.
+func (_u *WorkspaceUpdate) RemoveConfirmations(v ...*Confirmation) *WorkspaceUpdate {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveConfirmationIDs(ids...)
+}
+
 // ClearTransactionalEmails clears all "transactional_emails" edges to the TransactionalEmail entity.
 func (_u *WorkspaceUpdate) ClearTransactionalEmails() *WorkspaceUpdate {
 	_u.mutation.ClearTransactionalEmails()
@@ -889,6 +940,9 @@ func (_u *WorkspaceUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	}
 	if value, ok := _u.mutation.IngestKey(); ok {
 		_spec.SetField(workspace.FieldIngestKey, field.TypeString, value)
+	}
+	if value, ok := _u.mutation.RequireConfirmedOptIn(); ok {
+		_spec.SetField(workspace.FieldRequireConfirmedOptIn, field.TypeBool, value)
 	}
 	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(workspace.FieldUpdatedAt, field.TypeTime, value)
@@ -1613,6 +1667,51 @@ func (_u *WorkspaceUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	if _u.mutation.ConfirmationsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   workspace.ConfirmationsTable,
+			Columns: []string{workspace.ConfirmationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(confirmation.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedConfirmationsIDs(); len(nodes) > 0 && !_u.mutation.ConfirmationsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   workspace.ConfirmationsTable,
+			Columns: []string{workspace.ConfirmationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(confirmation.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.ConfirmationsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   workspace.ConfirmationsTable,
+			Columns: []string{workspace.ConfirmationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(confirmation.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if _u.mutation.TransactionalEmailsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
@@ -1822,6 +1921,20 @@ func (_u *WorkspaceUpdateOne) SetIngestKey(v string) *WorkspaceUpdateOne {
 func (_u *WorkspaceUpdateOne) SetNillableIngestKey(v *string) *WorkspaceUpdateOne {
 	if v != nil {
 		_u.SetIngestKey(*v)
+	}
+	return _u
+}
+
+// SetRequireConfirmedOptIn sets the "require_confirmed_opt_in" field.
+func (_u *WorkspaceUpdateOne) SetRequireConfirmedOptIn(v bool) *WorkspaceUpdateOne {
+	_u.mutation.SetRequireConfirmedOptIn(v)
+	return _u
+}
+
+// SetNillableRequireConfirmedOptIn sets the "require_confirmed_opt_in" field if the given value is not nil.
+func (_u *WorkspaceUpdateOne) SetNillableRequireConfirmedOptIn(v *bool) *WorkspaceUpdateOne {
+	if v != nil {
+		_u.SetRequireConfirmedOptIn(*v)
 	}
 	return _u
 }
@@ -2070,6 +2183,21 @@ func (_u *WorkspaceUpdateOne) AddUnsubscribes(v ...*Unsubscribe) *WorkspaceUpdat
 		ids[i] = v[i].ID
 	}
 	return _u.AddUnsubscribeIDs(ids...)
+}
+
+// AddConfirmationIDs adds the "confirmations" edge to the Confirmation entity by IDs.
+func (_u *WorkspaceUpdateOne) AddConfirmationIDs(ids ...int64) *WorkspaceUpdateOne {
+	_u.mutation.AddConfirmationIDs(ids...)
+	return _u
+}
+
+// AddConfirmations adds the "confirmations" edges to the Confirmation entity.
+func (_u *WorkspaceUpdateOne) AddConfirmations(v ...*Confirmation) *WorkspaceUpdateOne {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddConfirmationIDs(ids...)
 }
 
 // AddTransactionalEmailIDs adds the "transactional_emails" edge to the TransactionalEmail entity by IDs.
@@ -2458,6 +2586,27 @@ func (_u *WorkspaceUpdateOne) RemoveUnsubscribes(v ...*Unsubscribe) *WorkspaceUp
 	return _u.RemoveUnsubscribeIDs(ids...)
 }
 
+// ClearConfirmations clears all "confirmations" edges to the Confirmation entity.
+func (_u *WorkspaceUpdateOne) ClearConfirmations() *WorkspaceUpdateOne {
+	_u.mutation.ClearConfirmations()
+	return _u
+}
+
+// RemoveConfirmationIDs removes the "confirmations" edge to Confirmation entities by IDs.
+func (_u *WorkspaceUpdateOne) RemoveConfirmationIDs(ids ...int64) *WorkspaceUpdateOne {
+	_u.mutation.RemoveConfirmationIDs(ids...)
+	return _u
+}
+
+// RemoveConfirmations removes "confirmations" edges to Confirmation entities.
+func (_u *WorkspaceUpdateOne) RemoveConfirmations(v ...*Confirmation) *WorkspaceUpdateOne {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveConfirmationIDs(ids...)
+}
+
 // ClearTransactionalEmails clears all "transactional_emails" edges to the TransactionalEmail entity.
 func (_u *WorkspaceUpdateOne) ClearTransactionalEmails() *WorkspaceUpdateOne {
 	_u.mutation.ClearTransactionalEmails()
@@ -2641,6 +2790,9 @@ func (_u *WorkspaceUpdateOne) sqlSave(ctx context.Context) (_node *Workspace, er
 	}
 	if value, ok := _u.mutation.IngestKey(); ok {
 		_spec.SetField(workspace.FieldIngestKey, field.TypeString, value)
+	}
+	if value, ok := _u.mutation.RequireConfirmedOptIn(); ok {
+		_spec.SetField(workspace.FieldRequireConfirmedOptIn, field.TypeBool, value)
 	}
 	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(workspace.FieldUpdatedAt, field.TypeTime, value)
@@ -3358,6 +3510,51 @@ func (_u *WorkspaceUpdateOne) sqlSave(ctx context.Context) (_node *Workspace, er
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(unsubscribe.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.ConfirmationsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   workspace.ConfirmationsTable,
+			Columns: []string{workspace.ConfirmationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(confirmation.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedConfirmationsIDs(); len(nodes) > 0 && !_u.mutation.ConfirmationsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   workspace.ConfirmationsTable,
+			Columns: []string{workspace.ConfirmationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(confirmation.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.ConfirmationsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   workspace.ConfirmationsTable,
+			Columns: []string{workspace.ConfirmationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(confirmation.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {
