@@ -85,13 +85,16 @@ test-watch:
 test-frontend:
 	$(RUN_FE) pnpm exec vitest run
 
-update: update-npm update-go
+update: update-npm update-go update-skills
 
 update-npm:
 	$(RUN_FE) sh -c 'pnpm exec ncu -u && pnpm update'
 
 update-go:
 	$(RUN_GO) sh -c 'go get -u ./... && go mod tidy'
+
+update-skills:
+	$(RUN_FE) npx skills@latest update -y
 
 generate-typespec-external:
 	$(RUN_FE) pnpm exec tsp compile typespec/external
@@ -181,4 +184,4 @@ loc:
 	  | awk -F': ' '$$3!="true"{print $$1}' \
 	  | xargs scc
 
-.PHONY: setup install db-create db-create-test db-create-atlas db-drop db-drop-test db-migrate db-migrate-atlas db-migrate-river db-seed db-reset db-reset-test db-generate dev dev-down test test-watch test-frontend update update-npm update-go generate generate-backend generate-openapi generate-openapi-site generate-typespec generate-typespec-external generate-typespec-site generate-typespec-collect generate-i18n-types check check-fe check-i18n check-be check-fix check-fix-i18n check-fix-fe check-fix-be build-tracker build-spa build loc
+.PHONY: setup install db-create db-create-test db-create-atlas db-drop db-drop-test db-migrate db-migrate-atlas db-migrate-river db-seed db-reset db-reset-test db-generate dev dev-down test test-watch test-frontend update update-npm update-go update-skills generate generate-backend generate-openapi generate-openapi-site generate-typespec generate-typespec-external generate-typespec-site generate-typespec-collect generate-i18n-types check check-fe check-i18n check-be check-fix check-fix-i18n check-fix-fe check-fix-be build-tracker build-spa build loc
