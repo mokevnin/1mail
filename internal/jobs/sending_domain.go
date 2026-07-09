@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"net"
+	"strings"
 	"time"
 
 	"entgo.io/ent/dialect/sql"
@@ -82,6 +84,33 @@ func (w *RecheckSendingDomainsWorker) Work(ctx context.Context, job *river.Job[R
 		}
 	}
 	return nil
+}
+
+// DevTXTLookup is the sending-domain DKIM resolver for local/dev environments:
+// instead of querying real DNS (which no local domain publishes), it echoes back
+// each domain's own stored public key, so any sending domain a developer adds
+// self-verifies and the send gate (ADR 0010) doesn't block the Mailpit loop.
+// Production uses net.DefaultResolver.LookupTXT — this trust must never be wired
+// outside a dev env.
+func DevTXTLookup(client *ent.Client) sending.TXTLookup {
+	const marker = "._domainkey."
+	return func(ctx context.Context, name string) ([]string, error) {
+		i := strings.Index(name, marker)
+		if i < 0 {
+			return nil, &net.DNSError{IsNotFound: true, Name: name}
+		}
+		domain := strings.TrimSuffix(name[i+len(marker):], ".")
+		row, err := client.SendingDomain.Query().
+			Where(sendingdomain.Domain(domain)).
+			First(ctx)
+		if ent.IsNotFound(err) {
+			return nil, &net.DNSError{IsNotFound: true, Name: name}
+		}
+		if err != nil {
+			return nil, err
+		}
+		return []string{row.DkimPublicKey}, nil
+	}
 }
 
 // DomainsDueForRecheck returns up to limit sending-domain ids to re-verify,

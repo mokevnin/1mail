@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"net"
 	"net/http"
 	"sync"
 	"time"
@@ -19,6 +20,7 @@ import (
 	"github.com/mokevnin/1mail/internal/messaging"
 	"github.com/mokevnin/1mail/internal/messaging/registry"
 	"github.com/mokevnin/1mail/internal/secrets"
+	"github.com/mokevnin/1mail/internal/sending"
 	"github.com/mokevnin/1mail/internal/server"
 	"github.com/mokevnin/1mail/internal/tracking"
 	"github.com/samber/do/v2"
@@ -74,6 +76,14 @@ type eventsBus struct {
 // config via the messaging catalog. Distinct from a workspace's customer sender.
 type systemSender struct {
 	messaging.EmailSender
+}
+
+// dkimLookup is the DI-provided DKIM DNS resolver for sending-domain
+// verification (ADR 0010). The composition root is the single place that decides
+// the implementation — real DNS in prod, a seeded-domain-trusting stub in dev —
+// so nothing downstream branches on the environment.
+type dkimLookup struct {
+	sending.TXTLookup
 }
 
 // pgxPool is the pgx connection pool river runs on (separate from the
@@ -201,6 +211,23 @@ func register(injector do.Injector, env string) {
 		return &systemSender{EmailSender: sender}, nil
 	})
 
+	do.Provide(injector, func(i do.Injector) (*dkimLookup, error) {
+		cfg, err := do.Invoke[*config.Config](i)
+		if err != nil {
+			return nil, err
+		}
+		// Dev trusts seeded domains so the local send gate isn't blocked by real
+		// DNS; prod verifies against published DKIM TXT records (ADR 0010).
+		if cfg.IsDev {
+			client, err := do.Invoke[*entClient](i)
+			if err != nil {
+				return nil, err
+			}
+			return &dkimLookup{TXTLookup: jobs.DevTXTLookup(client.Client)}, nil
+		}
+		return &dkimLookup{TXTLookup: net.DefaultResolver.LookupTXT}, nil
+	})
+
 	do.Provide(injector, func(i do.Injector) (*eventsRuntime, error) {
 		database, err := do.Invoke[*sqlDB](i)
 		if err != nil {
@@ -280,7 +307,11 @@ func register(injector do.Injector, env string) {
 		resolver := messaging.NewResolver(client.Client, cipher, registry.Default())
 		tracker := tracking.New(cfg.JWTSecret, cfg.AppURL)
 
-		jc, err := jobs.NewClient(pool.Pool, client.Client, bus.Bus, resolver, tracker, cipher, sys.EmailSender, cfg.AppURL)
+		lookup, err := do.Invoke[*dkimLookup](i)
+		if err != nil {
+			return nil, err
+		}
+		jc, err := jobs.NewClient(pool.Pool, client.Client, bus.Bus, resolver, tracker, cipher, sys.EmailSender, lookup.TXTLookup, cfg.AppURL)
 		if err != nil {
 			return nil, err
 		}

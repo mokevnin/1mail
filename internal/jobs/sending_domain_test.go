@@ -79,6 +79,21 @@ func TestNotifySendingDomainUnverified_nilSenderIsNoop(t *testing.T) {
 	require.NoError(t, jobs.NotifySendingDomainUnverified(context.Background(), env.DB, nil, verifiedDomainID))
 }
 
+// DevTXTLookup echoes each domain's own stored key, so a seeded/added domain
+// self-verifies in dev without real DNS (the local send-gate escape, ADR 0010).
+func TestDevTXTLookup_trustsSeededDomains(t *testing.T) {
+	env := testhelper.Setup(t)
+	ctx := context.Background()
+
+	dom, err := env.DB.SendingDomain.Get(ctx, unverifiedDomainID)
+	require.NoError(t, err)
+	require.False(t, dom.Verified)
+
+	ok, _, err := jobs.VerifySendingDomainByID(ctx, env.DB, jobs.DevTXTLookup(env.DB), unverifiedDomainID)
+	require.NoError(t, err)
+	assert.True(t, ok, "dev lookup makes a seeded domain verify")
+}
+
 func TestDomainsDueForRecheck_neverCheckedFirst(t *testing.T) {
 	env := testhelper.Setup(t)
 	ctx := context.Background()

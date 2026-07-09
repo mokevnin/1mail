@@ -6,7 +6,6 @@ package jobs
 import (
 	"context"
 	"log/slog"
-	"net"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -21,6 +20,7 @@ import (
 	"github.com/mokevnin/1mail/internal/events"
 	"github.com/mokevnin/1mail/internal/messaging"
 	"github.com/mokevnin/1mail/internal/secrets"
+	"github.com/mokevnin/1mail/internal/sending"
 	"github.com/mokevnin/1mail/internal/tracking"
 	"github.com/mokevnin/1mail/internal/webhook"
 )
@@ -50,7 +50,7 @@ type Client struct {
 // their own dependencies (ent client, sender resolver, secrets cipher, the
 // platform system sender). appURL is the public origin used to build the links
 // in account emails (reset/verify/change).
-func NewClient(pool *pgxpool.Pool, entClient *ent.Client, bus *events.Bus, resolver *messaging.Resolver, tracker *tracking.Tracker, cipher *secrets.Cipher, systemSender messaging.EmailSender, appURL string) (*Client, error) {
+func NewClient(pool *pgxpool.Pool, entClient *ent.Client, bus *events.Bus, resolver *messaging.Resolver, tracker *tracking.Tracker, cipher *secrets.Cipher, systemSender messaging.EmailSender, lookup sending.TXTLookup, appURL string) (*Client, error) {
 	workers := river.NewWorkers()
 	river.AddWorker(workers, &SendBroadcastWorker{ent: entClient, bus: bus, resolver: resolver, tracker: tracker})
 	river.AddWorker(workers, &SendRecipientWorker{ent: entClient, bus: bus, resolver: resolver, tracker: tracker})
@@ -66,7 +66,7 @@ func NewClient(pool *pgxpool.Pool, entClient *ent.Client, bus *events.Bus, resol
 	river.AddWorker(workers, &SendMemberInviteWorker{sender: systemSender})
 	// Sending-domain DKIM verification (ADR 0010). LookupTXT re-checks published
 	// DNS; verified is a live property re-validated by the periodic job below.
-	river.AddWorker(workers, &VerifySendingDomainWorker{ent: entClient, lookup: net.DefaultResolver.LookupTXT, sender: systemSender})
+	river.AddWorker(workers, &VerifySendingDomainWorker{ent: entClient, lookup: lookup, sender: systemSender})
 	river.AddWorker(workers, &RecheckSendingDomainsWorker{ent: entClient})
 
 	logger := slog.Default()

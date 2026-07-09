@@ -24,6 +24,10 @@ type Config struct {
 	SMTPFrom       string
 	EncryptionKey  string
 	AutoMigrate    bool
+	// IsDev is true for non-production envs (development/test). Used to relax
+	// production-only behaviour locally — e.g. the sending-domain DKIM re-check
+	// trusts seeded domains instead of hitting real DNS (ADR 0010).
+	IsDev bool
 
 	// Locale is the instance-wide UI/email language (a SaaS deployment runs per
 	// country). One of the supported locales; anything else is coerced to "en".
@@ -104,6 +108,7 @@ func Load(envName string) (*Config, error) {
 		SMTPFrom:       v.GetString("SMTP_FROM"),
 		EncryptionKey:  v.GetString("ENCRYPTION_KEY"),
 		AutoMigrate:    v.GetBool("AUTO_MIGRATE"),
+		IsDev:          isDevEnv(envName),
 		Locale:         i18n.Normalize(v.GetString("APP_LOCALE")),
 		LogLevel:       v.GetString("LOG_LEVEL"),
 		LogFormat:      v.GetString("LOG_FORMAT"),
