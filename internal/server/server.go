@@ -40,13 +40,19 @@ import (
 func New(cfg *config.Config, client *ent.Client, db *sql.DB, bus *events.Bus, cipher *secrets.Cipher, providerCatalog *messaging.Catalog, enqueuer apisite.BroadcastEnqueuer, welcome apisite.WelcomeEnqueuer, sysmail apisite.SystemMailEnqueuer, domainVerify apisite.SendingDomainVerifyEnqueuer, resolver apiexternal.SenderResolver) (http.Handler, error) {
 	mux := http.NewServeMux()
 
+	// Send the JWT cookie with the Secure attribute whenever the instance is served
+	// over HTTPS (AppURL reflects the public scheme, so this holds even though Caddy
+	// terminates TLS and the Go server itself listens on plain HTTP). Stays false for
+	// local http://localhost dev, where a Secure cookie would never be sent back.
+	secureCookies := strings.HasPrefix(cfg.AppURL, "https://")
+
 	// Auth service (go-pkgz/auth) — JWT issuance + direct (email/password) provider.
 	authSvc := goauth.NewService(goauth.Opts{
 		SecretReader:   token.SecretFunc(func(string) (string, error) { return cfg.JWTSecret, nil }),
 		TokenDuration:  time.Hour,
 		CookieDuration: 24 * time.Hour,
 		DisableXSRF:    true,
-		SecureCookies:  false,
+		SecureCookies:  secureCookies,
 		Issuer:         "1mail",
 		URL:            cfg.AppURL,
 		AvatarStore:    avatar.NewLocalFS("/tmp/1mail-avatars"),
