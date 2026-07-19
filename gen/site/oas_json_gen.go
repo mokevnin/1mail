@@ -19254,10 +19254,17 @@ func (s *SiteUpdateWorkspaceInput) encodeFields(e *jx.Encoder) {
 		e.FieldStart("name")
 		e.Str(s.Name)
 	}
+	{
+		if s.PostalAddress.Set {
+			e.FieldStart("postalAddress")
+			s.PostalAddress.Encode(e)
+		}
+	}
 }
 
-var jsonFieldsNameOfSiteUpdateWorkspaceInput = [1]string{
+var jsonFieldsNameOfSiteUpdateWorkspaceInput = [2]string{
 	0: "name",
+	1: "postalAddress",
 }
 
 // Decode decodes SiteUpdateWorkspaceInput from json.
@@ -19280,6 +19287,16 @@ func (s *SiteUpdateWorkspaceInput) Decode(d *jx.Decoder) error {
 				return nil
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"name\"")
+			}
+		case "postalAddress":
+			if err := func() error {
+				s.PostalAddress.Reset()
+				if err := s.PostalAddress.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"postalAddress\"")
 			}
 		default:
 			return d.Skip()
@@ -20645,18 +20662,23 @@ func (s *SiteWorkspaceResource) encodeFields(e *jx.Encoder) {
 		e.Str(s.IngestKey)
 	}
 	{
+		e.FieldStart("postalAddress")
+		e.Str(s.PostalAddress)
+	}
+	{
 		e.FieldStart("createdAt")
 		s.CreatedAt.Encode(e)
 	}
 }
 
-var jsonFieldsNameOfSiteWorkspaceResource = [6]string{
+var jsonFieldsNameOfSiteWorkspaceResource = [7]string{
 	0: "id",
 	1: "name",
 	2: "slug",
 	3: "collectKey",
 	4: "ingestKey",
-	5: "createdAt",
+	5: "postalAddress",
+	6: "createdAt",
 }
 
 // Decode decodes SiteWorkspaceResource from json.
@@ -20726,8 +20748,20 @@ func (s *SiteWorkspaceResource) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"ingestKey\"")
 			}
-		case "createdAt":
+		case "postalAddress":
 			requiredBitSet[0] |= 1 << 5
+			if err := func() error {
+				v, err := d.Str()
+				s.PostalAddress = string(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"postalAddress\"")
+			}
+		case "createdAt":
+			requiredBitSet[0] |= 1 << 6
 			if err := func() error {
 				if err := s.CreatedAt.Decode(d); err != nil {
 					return err
@@ -20746,7 +20780,7 @@ func (s *SiteWorkspaceResource) Decode(d *jx.Decoder) error {
 	// Validate required fields.
 	var failures []validate.FieldError
 	for i, mask := range [1]uint8{
-		0b00111111,
+		0b01111111,
 	} {
 		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
 			// Mask only required fields and check equality to mask using XOR.

@@ -6865,9 +6865,13 @@
           "name": {
             "type": "string",
             "description": "New display name"
+          },
+          "postalAddress": {
+            "type": "string",
+            "description": "Physical postal address for the marketing email footer (CAN-SPAM). Omit to\nleave it unchanged; send an empty string to clear it."
           }
         },
-        "description": "Update a workspace. The slug is immutable (it is the route key and globally\nunique); only the display name can change."
+        "description": "Update a workspace. The slug is immutable (it is the route key and globally\nunique); the display name and the CAN-SPAM postal address can change."
       },
       "SiteUserResource": {
         "type": "object",
@@ -6970,7 +6974,7 @@
       },
       "SiteWorkspaceResource": {
         "type": "object",
-        "required": ["id", "name", "slug", "collectKey", "ingestKey", "createdAt"],
+        "required": ["id", "name", "slug", "collectKey", "ingestKey", "postalAddress", "createdAt"],
         "properties": {
           "id": {
             "allOf": [
@@ -6995,6 +6999,10 @@
           "ingestKey": {
             "type": "string",
             "description": "Secret key that routes inbound provider webhooks (/hooks/{ingestKey}/...)"
+          },
+          "postalAddress": {
+            "type": "string",
+            "description": "Physical postal address printed in the marketing email footer (CAN-SPAM\n15 U.S.C. §7704(a)(5)). Empty until the workspace sets one."
           },
           "createdAt": {
             "allOf": [

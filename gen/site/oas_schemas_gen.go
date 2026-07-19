@@ -7429,12 +7429,15 @@ func (s *SiteUpdateWebhookEndpointInput) SetEnabled(val OptBool) {
 	s.Enabled = val
 }
 
-// Update a workspace. The slug is immutable (it is the route key and globally unique); only the
-// display name can change.
+// Update a workspace. The slug is immutable (it is the route key and globally unique); the display
+// name and the CAN-SPAM postal address can change.
 // Ref: #/components/schemas/SiteUpdateWorkspaceInput
 type SiteUpdateWorkspaceInput struct {
 	// New display name.
 	Name string `json:"name"`
+	// Physical postal address for the marketing email footer (CAN-SPAM). Omit to leave it unchanged; send
+	// an empty string to clear it.
+	PostalAddress OptString `json:"postalAddress"`
 }
 
 // GetName returns the value of Name.
@@ -7442,9 +7445,19 @@ func (s *SiteUpdateWorkspaceInput) GetName() string {
 	return s.Name
 }
 
+// GetPostalAddress returns the value of PostalAddress.
+func (s *SiteUpdateWorkspaceInput) GetPostalAddress() OptString {
+	return s.PostalAddress
+}
+
 // SetName sets the value of Name.
 func (s *SiteUpdateWorkspaceInput) SetName(val string) {
 	s.Name = val
+}
+
+// SetPostalAddress sets the value of PostalAddress.
+func (s *SiteUpdateWorkspaceInput) SetPostalAddress(val OptString) {
+	s.PostalAddress = val
 }
 
 // SiteUserEmailChangeAccepted is response for SiteUserEmailChange operation.
@@ -7783,6 +7796,9 @@ type SiteWorkspaceResource struct {
 	CollectKey string `json:"collectKey"`
 	// Secret key that routes inbound provider webhooks (/hooks/{ingestKey}/...).
 	IngestKey string `json:"ingestKey"`
+	// Physical postal address printed in the marketing email footer (CAN-SPAM 15 U.S.C. §7704(a)(5)).
+	// Empty until the workspace sets one.
+	PostalAddress string `json:"postalAddress"`
 	// Creation timestamp.
 	CreatedAt Timestamp `json:"createdAt"`
 }
@@ -7810,6 +7826,11 @@ func (s *SiteWorkspaceResource) GetCollectKey() string {
 // GetIngestKey returns the value of IngestKey.
 func (s *SiteWorkspaceResource) GetIngestKey() string {
 	return s.IngestKey
+}
+
+// GetPostalAddress returns the value of PostalAddress.
+func (s *SiteWorkspaceResource) GetPostalAddress() string {
+	return s.PostalAddress
 }
 
 // GetCreatedAt returns the value of CreatedAt.
@@ -7840,6 +7861,11 @@ func (s *SiteWorkspaceResource) SetCollectKey(val string) {
 // SetIngestKey sets the value of IngestKey.
 func (s *SiteWorkspaceResource) SetIngestKey(val string) {
 	s.IngestKey = val
+}
+
+// SetPostalAddress sets the value of PostalAddress.
+func (s *SiteWorkspaceResource) SetPostalAddress(val string) {
+	s.PostalAddress = val
 }
 
 // SetCreatedAt sets the value of CreatedAt.

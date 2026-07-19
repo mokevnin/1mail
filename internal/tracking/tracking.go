@@ -9,6 +9,7 @@ package tracking
 
 import (
 	"fmt"
+	stdhtml "html"
 	"io"
 	"net/url"
 	"strconv"
@@ -218,24 +219,33 @@ func (t *Tracker) ConfirmURL(target ConfirmTarget) (string, error) {
 
 // UnsubscribeFooter is the email's unsubscribe footer, scoped to target. Shared by
 // the broadcast Rewrite and the automation send step (which appends it directly).
-func (t *Tracker) UnsubscribeFooter(target UnsubTarget) (string, error) {
+// postalAddress is the sending workspace's physical address (CAN-SPAM); when
+// non-empty it is escaped and appended below the unsubscribe line (its own
+// newlines become <br>). An empty address renders the footer unchanged — the
+// address is a non-gating nudge, not a send-blocker.
+func (t *Tracker) UnsubscribeFooter(target UnsubTarget, postalAddress string) (string, error) {
 	url, err := t.UnsubscribeURL(target)
 	if err != nil {
 		return "", err
 	}
+	var address string
+	if addr := strings.TrimSpace(postalAddress); addr != "" {
+		address = "<br>" + strings.ReplaceAll(stdhtml.EscapeString(addr), "\n", "<br>")
+	}
 	return fmt.Sprintf(
 		`<p style="font-size:12px;color:#888888;margin-top:24px">`+
 			`If you no longer wish to receive these emails, `+
-			`<a href="%s">unsubscribe</a>.</p>`,
-		url,
+			`<a href="%s">unsubscribe</a>.%s</p>`,
+		url, address,
 	), nil
 }
 
 // Rewrite prepares a broadcast body for a recipient: it routes http(s) links
 // through the click tracker (rid token), appends the open pixel, and adds the
-// unsubscribe footer (scoped to unsub). On a tokenizer error it falls back to the
-// original body plus pixel and footer so a send is never blocked by odd markup.
-func (t *Tracker) Rewrite(body string, recipientID int64, unsub UnsubTarget) (string, error) {
+// unsubscribe footer (scoped to unsub, carrying the workspace's CAN-SPAM postal
+// address). On a tokenizer error it falls back to the original body plus pixel
+// and footer so a send is never blocked by odd markup.
+func (t *Tracker) Rewrite(body string, recipientID int64, unsub UnsubTarget, postalAddress string) (string, error) {
 	token, err := t.Token(recipientID)
 	if err != nil {
 		return body, err
@@ -246,7 +256,7 @@ func (t *Tracker) Rewrite(body string, recipientID int64, unsub UnsubTarget) (st
 		rewritten = body
 	}
 
-	footer, err := t.UnsubscribeFooter(unsub)
+	footer, err := t.UnsubscribeFooter(unsub, postalAddress)
 	if err != nil {
 		return body, err
 	}

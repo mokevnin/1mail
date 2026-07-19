@@ -10,6 +10,7 @@ import {
   Loader,
   Stack,
   Text,
+  Textarea,
   TextInput,
   Title,
 } from '@mantine/core'
@@ -37,7 +38,9 @@ import { WebhooksSection } from './WebhooksSection.tsx'
 // loaded workspace without an effect.
 function GeneralSection({ workspace }: { workspace: SiteWorkspaceResource }) {
   const { t } = useTranslation()
-  const form = useForm<{ name: string }>({ initialValues: { name: workspace.name } })
+  const form = useForm<{ name: string; postalAddress: string }>({
+    initialValues: { name: workspace.name, postalAddress: workspace.postalAddress },
+  })
 
   const updateMutation = useResourceMutation({
     mutation: siteWorkspacesUpdateMutation(),
@@ -55,7 +58,7 @@ function GeneralSection({ workspace }: { workspace: SiteWorkspaceResource }) {
         onSubmit={form.onSubmit((values) =>
           updateMutation.mutate({
             path: { slug: workspace.slug },
-            body: { name: values.name.trim() },
+            body: { name: values.name.trim(), postalAddress: values.postalAddress.trim() },
           }),
         )}
       >
@@ -64,6 +67,14 @@ function GeneralSection({ workspace }: { workspace: SiteWorkspaceResource }) {
             label={t(($) => $.settings.nameLabel)}
             required
             {...form.getInputProps('name')}
+          />
+          <Textarea
+            label={t(($) => $.settings.postalAddressLabel)}
+            description={t(($) => $.settings.postalAddressDescription)}
+            placeholder={t(($) => $.settings.postalAddressPlaceholder)}
+            autosize
+            minRows={2}
+            {...form.getInputProps('postalAddress')}
           />
           <Group justify="flex-end">
             <Button type="submit" loading={updateMutation.isPending}>

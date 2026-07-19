@@ -94,7 +94,7 @@ func TestRewriteWrapsLinksAndAddsPixelAndFooter(t *testing.T) {
 
 	out, err := tr.Rewrite(body, 7, tracking.UnsubTarget{
 		Source: "broadcasts", Destination: "x@y.test", WorkspaceID: 1, ContactID: 2, BroadcastID: 3,
-	})
+	}, "Acme Inc, 123 Main St, Springfield")
 	require.NoError(t, err)
 
 	// http link routed through the click tracker, with the destination preserved.
@@ -106,4 +106,21 @@ func TestRewriteWrapsLinksAndAddsPixelAndFooter(t *testing.T) {
 	assert.Contains(t, out, "https://app.test/e/o/")
 	assert.Contains(t, out, "https://app.test/e/u/")
 	assert.Contains(t, strings.ToLower(out), "unsubscribe")
+	// CAN-SPAM: the workspace's physical postal address rides in the footer.
+	assert.Contains(t, out, "Acme Inc, 123 Main St, Springfield")
+}
+
+func TestUnsubscribeFooterPostalAddress(t *testing.T) {
+	tr := tracking.New("secret", "https://app.test")
+	target := tracking.UnsubTarget{Source: "broadcasts", Destination: "x@y.test", WorkspaceID: 1}
+
+	// Empty address: the footer renders the unsubscribe line only (non-gating).
+	bare, err := tr.UnsubscribeFooter(target, "")
+	require.NoError(t, err)
+	assert.Contains(t, strings.ToLower(bare), "unsubscribe")
+
+	// A multi-line address is HTML-escaped and its newlines become <br>.
+	withAddr, err := tr.UnsubscribeFooter(target, "Acme <Inc>\n123 Main St")
+	require.NoError(t, err)
+	assert.Contains(t, withAddr, "Acme &lt;Inc&gt;<br>123 Main St")
 }

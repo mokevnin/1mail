@@ -119,6 +119,26 @@ func (_u *WorkspaceUpdate) SetNillableRequireConfirmedOptIn(v *bool) *WorkspaceU
 	return _u
 }
 
+// SetPostalAddress sets the "postal_address" field.
+func (_u *WorkspaceUpdate) SetPostalAddress(v string) *WorkspaceUpdate {
+	_u.mutation.SetPostalAddress(v)
+	return _u
+}
+
+// SetNillablePostalAddress sets the "postal_address" field if the given value is not nil.
+func (_u *WorkspaceUpdate) SetNillablePostalAddress(v *string) *WorkspaceUpdate {
+	if v != nil {
+		_u.SetPostalAddress(*v)
+	}
+	return _u
+}
+
+// ClearPostalAddress clears the value of the "postal_address" field.
+func (_u *WorkspaceUpdate) ClearPostalAddress() *WorkspaceUpdate {
+	_u.mutation.ClearPostalAddress()
+	return _u
+}
+
 // SetUpdatedAt sets the "updated_at" field.
 func (_u *WorkspaceUpdate) SetUpdatedAt(v time.Time) *WorkspaceUpdate {
 	_u.mutation.SetUpdatedAt(v)
@@ -943,6 +963,12 @@ func (_u *WorkspaceUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	}
 	if value, ok := _u.mutation.RequireConfirmedOptIn(); ok {
 		_spec.SetField(workspace.FieldRequireConfirmedOptIn, field.TypeBool, value)
+	}
+	if value, ok := _u.mutation.PostalAddress(); ok {
+		_spec.SetField(workspace.FieldPostalAddress, field.TypeString, value)
+	}
+	if _u.mutation.PostalAddressCleared() {
+		_spec.ClearField(workspace.FieldPostalAddress, field.TypeString)
 	}
 	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(workspace.FieldUpdatedAt, field.TypeTime, value)
@@ -1939,6 +1965,26 @@ func (_u *WorkspaceUpdateOne) SetNillableRequireConfirmedOptIn(v *bool) *Workspa
 	return _u
 }
 
+// SetPostalAddress sets the "postal_address" field.
+func (_u *WorkspaceUpdateOne) SetPostalAddress(v string) *WorkspaceUpdateOne {
+	_u.mutation.SetPostalAddress(v)
+	return _u
+}
+
+// SetNillablePostalAddress sets the "postal_address" field if the given value is not nil.
+func (_u *WorkspaceUpdateOne) SetNillablePostalAddress(v *string) *WorkspaceUpdateOne {
+	if v != nil {
+		_u.SetPostalAddress(*v)
+	}
+	return _u
+}
+
+// ClearPostalAddress clears the value of the "postal_address" field.
+func (_u *WorkspaceUpdateOne) ClearPostalAddress() *WorkspaceUpdateOne {
+	_u.mutation.ClearPostalAddress()
+	return _u
+}
+
 // SetUpdatedAt sets the "updated_at" field.
 func (_u *WorkspaceUpdateOne) SetUpdatedAt(v time.Time) *WorkspaceUpdateOne {
 	_u.mutation.SetUpdatedAt(v)
@@ -2793,6 +2839,12 @@ func (_u *WorkspaceUpdateOne) sqlSave(ctx context.Context) (_node *Workspace, er
 	}
 	if value, ok := _u.mutation.RequireConfirmedOptIn(); ok {
 		_spec.SetField(workspace.FieldRequireConfirmedOptIn, field.TypeBool, value)
+	}
+	if value, ok := _u.mutation.PostalAddress(); ok {
+		_spec.SetField(workspace.FieldPostalAddress, field.TypeString, value)
+	}
+	if _u.mutation.PostalAddressCleared() {
+		_spec.ClearField(workspace.FieldPostalAddress, field.TypeString)
 	}
 	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(workspace.FieldUpdatedAt, field.TypeTime, value)

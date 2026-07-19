@@ -496,12 +496,16 @@ func init() {
 	workspaceDescRequireConfirmedOptIn := workspaceFields[5].Descriptor()
 	// workspace.DefaultRequireConfirmedOptIn holds the default value on creation for the require_confirmed_opt_in field.
 	workspace.DefaultRequireConfirmedOptIn = workspaceDescRequireConfirmedOptIn.Default.(bool)
+	// workspaceDescPostalAddress is the schema descriptor for postal_address field.
+	workspaceDescPostalAddress := workspaceFields[6].Descriptor()
+	// workspace.DefaultPostalAddress holds the default value on creation for the postal_address field.
+	workspace.DefaultPostalAddress = workspaceDescPostalAddress.Default.(string)
 	// workspaceDescCreatedAt is the schema descriptor for created_at field.
-	workspaceDescCreatedAt := workspaceFields[6].Descriptor()
+	workspaceDescCreatedAt := workspaceFields[7].Descriptor()
 	// workspace.DefaultCreatedAt holds the default value on creation for the created_at field.
 	workspace.DefaultCreatedAt = workspaceDescCreatedAt.Default.(func() time.Time)
 	// workspaceDescUpdatedAt is the schema descriptor for updated_at field.
-	workspaceDescUpdatedAt := workspaceFields[7].Descriptor()
+	workspaceDescUpdatedAt := workspaceFields[8].Descriptor()
 	// workspace.DefaultUpdatedAt holds the default value on creation for the updated_at field.
 	workspace.DefaultUpdatedAt = workspaceDescUpdatedAt.Default.(func() time.Time)
 	// workspace.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.

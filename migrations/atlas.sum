@@ -1,4 +1,4 @@
-h1:NNm5Y1F2CS5VoqbajzLGtYX55b1gZdqzZ4LOK7ge5eM=
+h1:MRMSUaAr/iKnEYnEEM38N+QhupdZvk7CZEQilnxSfzE=
 20260630101109_init.sql h1:SVCZgfKgTyB6VZBUUbmQ52BZKZii1VLNc9Gb7pXzi+w=
 20260630175449_send_eligibility_model.sql h1:y0KiYIOlK2a6RqFZBOlqW23xXDfekXMZFnyS2ZZ8Drw=
 20260630204007_transactional_email.sql h1:sUDPnLR7CcP6+ECVGaJjw0k28M3T6epTDMrfIti87MQ=
@@ -6,3 +6,4 @@ h1:NNm5Y1F2CS5VoqbajzLGtYX55b1gZdqzZ4LOK7ge5eM=
 20260701123553_invitations.sql h1:72T10mdX16f+fba1eGSeSkDCT7r6oT/hamhuwEGLSq4=
 20260706140045_sending_domains.sql h1:nysf4vNU5QdUYSXa0fRQSzcuXkTkDqKvAJFmHOJEXMA=
 20260709123307_add_confirmation.sql h1:zOEv8Ft/1K/lWS2XehU4nEn+fdqPvtXK7wznQB2RUF0=
+20260709160442_workspace_postal_address.sql h1:amyPVXXOSzN2QSi4SLBYpbqSKjscChaLoswxoer8LI8=

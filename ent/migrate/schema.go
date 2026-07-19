@@ -773,6 +773,7 @@ var (
 		{Name: "collect_key", Type: field.TypeString, Unique: true},
 		{Name: "ingest_key", Type: field.TypeString, Unique: true},
 		{Name: "require_confirmed_opt_in", Type: field.TypeBool, Default: false},
+		{Name: "postal_address", Type: field.TypeString, Nullable: true, Default: ""},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
 	}

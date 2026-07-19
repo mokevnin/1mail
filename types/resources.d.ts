@@ -422,6 +422,9 @@ export default interface Resources {
         "title": "Team members"
       },
       "nameLabel": "Workspace name",
+      "postalAddressDescription": "Shown in the footer of every marketing email. US law (CAN-SPAM) requires a valid physical postal address.",
+      "postalAddressLabel": "Postal address",
+      "postalAddressPlaceholder": "Acme Inc, 123 Main St, Springfield, IL 62704, USA",
       "saved": "Workspace updated",
       "sendingDomains": {
         "create": "Add domain",

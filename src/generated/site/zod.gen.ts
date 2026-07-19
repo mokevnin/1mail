@@ -543,10 +543,11 @@ export const zSiteUpdateWebhookEndpointInput = z.object({
 
 /**
  * Update a workspace. The slug is immutable (it is the route key and globally
- * unique); only the display name can change.
+ * unique); the display name and the CAN-SPAM postal address can change.
  */
 export const zSiteUpdateWorkspaceInput = z.object({
-    name: z.string()
+    name: z.string(),
+    postalAddress: z.string().optional()
 });
 
 /**
@@ -857,6 +858,7 @@ export const zSiteWorkspaceResource = z.object({
     slug: z.string(),
     collectKey: z.string(),
     ingestKey: z.string(),
+    postalAddress: z.string(),
     createdAt: zTimestamp
 });
 

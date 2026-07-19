@@ -57,7 +57,13 @@ func (h *Handlers) SiteWorkspacesUpdate(ctx context.Context, req *siteapi.SiteUp
 		return &v, nil
 	}
 
-	w, err := h.ent.Workspace.UpdateOneID(id).SetName(name).Save(ctx)
+	upd := h.ent.Workspace.UpdateOneID(id).SetName(name)
+	// postalAddress is optional in the contract: absent = leave unchanged, present
+	// (incl. empty string) = set/clear. Trimmed so a whitespace-only value clears it.
+	if req.PostalAddress.Set {
+		upd = upd.SetPostalAddress(strings.TrimSpace(req.PostalAddress.Value))
+	}
+	w, err := upd.Save(ctx)
 	if err != nil {
 		return nil, err
 	}

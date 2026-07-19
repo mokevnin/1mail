@@ -23,15 +23,23 @@ model SiteWorkspaceResource {
   /** Secret key that routes inbound provider webhooks (/hooks/{ingestKey}/...) */
   ingestKey: string;
 
+  /** Physical postal address printed in the marketing email footer (CAN-SPAM
+   * 15 U.S.C. §7704(a)(5)). Empty until the workspace sets one. */
+  postalAddress: string;
+
   /** Creation timestamp */
   createdAt: Timestamp;
 }
 
 /** Update a workspace. The slug is immutable (it is the route key and globally
- * unique); only the display name can change. */
+ * unique); the display name and the CAN-SPAM postal address can change. */
 model SiteUpdateWorkspaceInput {
   /** New display name */
   name: string;
+
+  /** Physical postal address for the marketing email footer (CAN-SPAM). Omit to
+   * leave it unchanged; send an empty string to clear it. */
+  postalAddress?: string;
 }
 
 @route("/workspaces")

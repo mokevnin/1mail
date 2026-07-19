@@ -48,6 +48,17 @@ func (Workspace) Fields() []ent.Field {
 		// existing list. Schema-only for now — exposed on the /site API in a later slice.
 		field.Bool("require_confirmed_opt_in").
 			Default(false),
+		// Physical postal address printed in the marketing email footer, as
+		// CAN-SPAM 15 U.S.C. §7704(a)(5) requires of every commercial message.
+		// Freeform so it carries the legal sender name + address on one field
+		// (the "one powerful primitive" convention). Optional and non-gating for
+		// now: a workspace can still send without it — whether an empty address
+		// should hard-block marketing sends (like the verified-domain gate) is a
+		// separate send-path ADR. Transactional mail (ADR 0005) is exempt and
+		// never renders this footer.
+		field.String("postal_address").
+			Optional().
+			Default(""),
 		field.Time("created_at").
 			Default(time.Now).
 			Immutable(),

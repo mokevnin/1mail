@@ -80,6 +80,11 @@ func RequireConfirmedOptIn(v bool) predicate.Workspace {
 	return predicate.Workspace(sql.FieldEQ(FieldRequireConfirmedOptIn, v))
 }
 
+// PostalAddress applies equality check predicate on the "postal_address" field. It's identical to PostalAddressEQ.
+func PostalAddress(v string) predicate.Workspace {
+	return predicate.Workspace(sql.FieldEQ(FieldPostalAddress, v))
+}
+
 // CreatedAt applies equality check predicate on the "created_at" field. It's identical to CreatedAtEQ.
 func CreatedAt(v time.Time) predicate.Workspace {
 	return predicate.Workspace(sql.FieldEQ(FieldCreatedAt, v))
@@ -358,6 +363,81 @@ func RequireConfirmedOptInEQ(v bool) predicate.Workspace {
 // RequireConfirmedOptInNEQ applies the NEQ predicate on the "require_confirmed_opt_in" field.
 func RequireConfirmedOptInNEQ(v bool) predicate.Workspace {
 	return predicate.Workspace(sql.FieldNEQ(FieldRequireConfirmedOptIn, v))
+}
+
+// PostalAddressEQ applies the EQ predicate on the "postal_address" field.
+func PostalAddressEQ(v string) predicate.Workspace {
+	return predicate.Workspace(sql.FieldEQ(FieldPostalAddress, v))
+}
+
+// PostalAddressNEQ applies the NEQ predicate on the "postal_address" field.
+func PostalAddressNEQ(v string) predicate.Workspace {
+	return predicate.Workspace(sql.FieldNEQ(FieldPostalAddress, v))
+}
+
+// PostalAddressIn applies the In predicate on the "postal_address" field.
+func PostalAddressIn(vs ...string) predicate.Workspace {
+	return predicate.Workspace(sql.FieldIn(FieldPostalAddress, vs...))
+}
+
+// PostalAddressNotIn applies the NotIn predicate on the "postal_address" field.
+func PostalAddressNotIn(vs ...string) predicate.Workspace {
+	return predicate.Workspace(sql.FieldNotIn(FieldPostalAddress, vs...))
+}
+
+// PostalAddressGT applies the GT predicate on the "postal_address" field.
+func PostalAddressGT(v string) predicate.Workspace {
+	return predicate.Workspace(sql.FieldGT(FieldPostalAddress, v))
+}
+
+// PostalAddressGTE applies the GTE predicate on the "postal_address" field.
+func PostalAddressGTE(v string) predicate.Workspace {
+	return predicate.Workspace(sql.FieldGTE(FieldPostalAddress, v))
+}
+
+// PostalAddressLT applies the LT predicate on the "postal_address" field.
+func PostalAddressLT(v string) predicate.Workspace {
+	return predicate.Workspace(sql.FieldLT(FieldPostalAddress, v))
+}
+
+// PostalAddressLTE applies the LTE predicate on the "postal_address" field.
+func PostalAddressLTE(v string) predicate.Workspace {
+	return predicate.Workspace(sql.FieldLTE(FieldPostalAddress, v))
+}
+
+// PostalAddressContains applies the Contains predicate on the "postal_address" field.
+func PostalAddressContains(v string) predicate.Workspace {
+	return predicate.Workspace(sql.FieldContains(FieldPostalAddress, v))
+}
+
+// PostalAddressHasPrefix applies the HasPrefix predicate on the "postal_address" field.
+func PostalAddressHasPrefix(v string) predicate.Workspace {
+	return predicate.Workspace(sql.FieldHasPrefix(FieldPostalAddress, v))
+}
+
+// PostalAddressHasSuffix applies the HasSuffix predicate on the "postal_address" field.
+func PostalAddressHasSuffix(v string) predicate.Workspace {
+	return predicate.Workspace(sql.FieldHasSuffix(FieldPostalAddress, v))
+}
+
+// PostalAddressIsNil applies the IsNil predicate on the "postal_address" field.
+func PostalAddressIsNil() predicate.Workspace {
+	return predicate.Workspace(sql.FieldIsNull(FieldPostalAddress))
+}
+
+// PostalAddressNotNil applies the NotNil predicate on the "postal_address" field.
+func PostalAddressNotNil() predicate.Workspace {
+	return predicate.Workspace(sql.FieldNotNull(FieldPostalAddress))
+}
+
+// PostalAddressEqualFold applies the EqualFold predicate on the "postal_address" field.
+func PostalAddressEqualFold(v string) predicate.Workspace {
+	return predicate.Workspace(sql.FieldEqualFold(FieldPostalAddress, v))
+}
+
+// PostalAddressContainsFold applies the ContainsFold predicate on the "postal_address" field.
+func PostalAddressContainsFold(v string) predicate.Workspace {
+	return predicate.Workspace(sql.FieldContainsFold(FieldPostalAddress, v))
 }
 
 // CreatedAtEQ applies the EQ predicate on the "created_at" field.

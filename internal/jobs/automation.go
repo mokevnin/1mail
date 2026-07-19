@@ -225,7 +225,12 @@ func RunStep(ctx context.Context, client *ent.Client, bus *events.Bus, resolver 
 				WorkspaceID: run.WorkspaceID,
 				ContactID:   c.ID,
 			}
-			footer, ferr := tracker.UnsubscribeFooter(unsub)
+			// Workspace carries the CAN-SPAM postal address rendered in the footer.
+			ws, werr := client.Workspace.Get(ctx, run.WorkspaceID)
+			if werr != nil {
+				return StepResult{}, fmt.Errorf("load workspace %d: %w", run.WorkspaceID, werr)
+			}
+			footer, ferr := tracker.UnsubscribeFooter(unsub, ws.PostalAddress)
 			if ferr != nil {
 				_, _ = run.Update().SetStatus(automationrun.StatusFailed).Save(ctx)
 				return StepResult{}, fmt.Errorf("unsubscribe footer: %w", ferr)

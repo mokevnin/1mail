@@ -24,6 +24,8 @@ const (
 	FieldIngestKey = "ingest_key"
 	// FieldRequireConfirmedOptIn holds the string denoting the require_confirmed_opt_in field in the database.
 	FieldRequireConfirmedOptIn = "require_confirmed_opt_in"
+	// FieldPostalAddress holds the string denoting the postal_address field in the database.
+	FieldPostalAddress = "postal_address"
 	// FieldCreatedAt holds the string denoting the created_at field in the database.
 	FieldCreatedAt = "created_at"
 	// FieldUpdatedAt holds the string denoting the updated_at field in the database.
@@ -220,6 +222,7 @@ var Columns = []string{
 	FieldCollectKey,
 	FieldIngestKey,
 	FieldRequireConfirmedOptIn,
+	FieldPostalAddress,
 	FieldCreatedAt,
 	FieldUpdatedAt,
 }
@@ -245,6 +248,8 @@ var (
 	IngestKeyValidator func(string) error
 	// DefaultRequireConfirmedOptIn holds the default value on creation for the "require_confirmed_opt_in" field.
 	DefaultRequireConfirmedOptIn bool
+	// DefaultPostalAddress holds the default value on creation for the "postal_address" field.
+	DefaultPostalAddress string
 	// DefaultCreatedAt holds the default value on creation for the "created_at" field.
 	DefaultCreatedAt func() time.Time
 	// DefaultUpdatedAt holds the default value on creation for the "updated_at" field.
@@ -284,6 +289,11 @@ func ByIngestKey(opts ...sql.OrderTermOption) OrderOption {
 // ByRequireConfirmedOptIn orders the results by the require_confirmed_opt_in field.
 func ByRequireConfirmedOptIn(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldRequireConfirmedOptIn, opts...).ToFunc()
+}
+
+// ByPostalAddress orders the results by the postal_address field.
+func ByPostalAddress(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldPostalAddress, opts...).ToFunc()
 }
 
 // ByCreatedAt orders the results by the created_at field.

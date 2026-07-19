@@ -423,6 +423,9 @@
       "title": "Miembros del equipo"
     },
     "nameLabel": "Nombre del espacio de trabajo",
+    "postalAddressDescription": "Se muestra en el pie de cada correo de marketing. La ley de EE. UU. (CAN-SPAM) exige una dirección postal física válida.",
+    "postalAddressLabel": "Dirección postal",
+    "postalAddressPlaceholder": "Acme Inc, Calle Mayor 123, 28013 Madrid, España",
     "saved": "Espacio de trabajo actualizado",
     "sendingDomains": {
       "create": "Añadir dominio",

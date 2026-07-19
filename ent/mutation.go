@@ -18775,6 +18775,7 @@ type WorkspaceMutation struct {
 	collect_key                 *string
 	ingest_key                  *string
 	require_confirmed_opt_in    *bool
+	postal_address              *string
 	created_at                  *time.Time
 	updated_at                  *time.Time
 	clearedFields               map[string]struct{}
@@ -19125,6 +19126,55 @@ func (m *WorkspaceMutation) OldRequireConfirmedOptIn(ctx context.Context) (v boo
 // ResetRequireConfirmedOptIn resets all changes to the "require_confirmed_opt_in" field.
 func (m *WorkspaceMutation) ResetRequireConfirmedOptIn() {
 	m.require_confirmed_opt_in = nil
+}
+
+// SetPostalAddress sets the "postal_address" field.
+func (m *WorkspaceMutation) SetPostalAddress(s string) {
+	m.postal_address = &s
+}
+
+// PostalAddress returns the value of the "postal_address" field in the mutation.
+func (m *WorkspaceMutation) PostalAddress() (r string, exists bool) {
+	v := m.postal_address
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldPostalAddress returns the old "postal_address" field's value of the Workspace entity.
+// If the Workspace object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WorkspaceMutation) OldPostalAddress(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldPostalAddress is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldPostalAddress requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldPostalAddress: %w", err)
+	}
+	return oldValue.PostalAddress, nil
+}
+
+// ClearPostalAddress clears the value of the "postal_address" field.
+func (m *WorkspaceMutation) ClearPostalAddress() {
+	m.postal_address = nil
+	m.clearedFields[workspace.FieldPostalAddress] = struct{}{}
+}
+
+// PostalAddressCleared returns if the "postal_address" field was cleared in this mutation.
+func (m *WorkspaceMutation) PostalAddressCleared() bool {
+	_, ok := m.clearedFields[workspace.FieldPostalAddress]
+	return ok
+}
+
+// ResetPostalAddress resets all changes to the "postal_address" field.
+func (m *WorkspaceMutation) ResetPostalAddress() {
+	m.postal_address = nil
+	delete(m.clearedFields, workspace.FieldPostalAddress)
 }
 
 // SetCreatedAt sets the "created_at" field.
@@ -20313,7 +20363,7 @@ func (m *WorkspaceMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *WorkspaceMutation) Fields() []string {
-	fields := make([]string, 0, 7)
+	fields := make([]string, 0, 8)
 	if m.name != nil {
 		fields = append(fields, workspace.FieldName)
 	}
@@ -20328,6 +20378,9 @@ func (m *WorkspaceMutation) Fields() []string {
 	}
 	if m.require_confirmed_opt_in != nil {
 		fields = append(fields, workspace.FieldRequireConfirmedOptIn)
+	}
+	if m.postal_address != nil {
+		fields = append(fields, workspace.FieldPostalAddress)
 	}
 	if m.created_at != nil {
 		fields = append(fields, workspace.FieldCreatedAt)
@@ -20353,6 +20406,8 @@ func (m *WorkspaceMutation) Field(name string) (ent.Value, bool) {
 		return m.IngestKey()
 	case workspace.FieldRequireConfirmedOptIn:
 		return m.RequireConfirmedOptIn()
+	case workspace.FieldPostalAddress:
+		return m.PostalAddress()
 	case workspace.FieldCreatedAt:
 		return m.CreatedAt()
 	case workspace.FieldUpdatedAt:
@@ -20376,6 +20431,8 @@ func (m *WorkspaceMutation) OldField(ctx context.Context, name string) (ent.Valu
 		return m.OldIngestKey(ctx)
 	case workspace.FieldRequireConfirmedOptIn:
 		return m.OldRequireConfirmedOptIn(ctx)
+	case workspace.FieldPostalAddress:
+		return m.OldPostalAddress(ctx)
 	case workspace.FieldCreatedAt:
 		return m.OldCreatedAt(ctx)
 	case workspace.FieldUpdatedAt:
@@ -20424,6 +20481,13 @@ func (m *WorkspaceMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetRequireConfirmedOptIn(v)
 		return nil
+	case workspace.FieldPostalAddress:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetPostalAddress(v)
+		return nil
 	case workspace.FieldCreatedAt:
 		v, ok := value.(time.Time)
 		if !ok {
@@ -20467,7 +20531,11 @@ func (m *WorkspaceMutation) AddField(name string, value ent.Value) error {
 // ClearedFields returns all nullable fields that were cleared during this
 // mutation.
 func (m *WorkspaceMutation) ClearedFields() []string {
-	return nil
+	var fields []string
+	if m.FieldCleared(workspace.FieldPostalAddress) {
+		fields = append(fields, workspace.FieldPostalAddress)
+	}
+	return fields
 }
 
 // FieldCleared returns a boolean indicating if a field with the given name was
@@ -20480,6 +20548,11 @@ func (m *WorkspaceMutation) FieldCleared(name string) bool {
 // ClearField clears the value of the field with the given name. It returns an
 // error if the field is not defined in the schema.
 func (m *WorkspaceMutation) ClearField(name string) error {
+	switch name {
+	case workspace.FieldPostalAddress:
+		m.ClearPostalAddress()
+		return nil
+	}
 	return fmt.Errorf("unknown Workspace nullable field %s", name)
 }
 
@@ -20501,6 +20574,9 @@ func (m *WorkspaceMutation) ResetField(name string) error {
 		return nil
 	case workspace.FieldRequireConfirmedOptIn:
 		m.ResetRequireConfirmedOptIn()
+		return nil
+	case workspace.FieldPostalAddress:
+		m.ResetPostalAddress()
 		return nil
 	case workspace.FieldCreatedAt:
 		m.ResetCreatedAt()

@@ -27,6 +27,8 @@ type Workspace struct {
 	IngestKey string `json:"-"`
 	// RequireConfirmedOptIn holds the value of the "require_confirmed_opt_in" field.
 	RequireConfirmedOptIn bool `json:"require_confirmed_opt_in,omitempty"`
+	// PostalAddress holds the value of the "postal_address" field.
+	PostalAddress string `json:"postal_address,omitempty"`
 	// CreatedAt holds the value of the "created_at" field.
 	CreatedAt time.Time `json:"created_at,omitempty"`
 	// UpdatedAt holds the value of the "updated_at" field.
@@ -273,7 +275,7 @@ func (*Workspace) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullBool)
 		case workspace.FieldID:
 			values[i] = new(sql.NullInt64)
-		case workspace.FieldName, workspace.FieldSlug, workspace.FieldCollectKey, workspace.FieldIngestKey:
+		case workspace.FieldName, workspace.FieldSlug, workspace.FieldCollectKey, workspace.FieldIngestKey, workspace.FieldPostalAddress:
 			values[i] = new(sql.NullString)
 		case workspace.FieldCreatedAt, workspace.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
@@ -327,6 +329,12 @@ func (_m *Workspace) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field require_confirmed_opt_in", values[i])
 			} else if value.Valid {
 				_m.RequireConfirmedOptIn = value.Bool
+			}
+		case workspace.FieldPostalAddress:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field postal_address", values[i])
+			} else if value.Valid {
+				_m.PostalAddress = value.String
 			}
 		case workspace.FieldCreatedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
@@ -488,6 +496,9 @@ func (_m *Workspace) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("require_confirmed_opt_in=")
 	builder.WriteString(fmt.Sprintf("%v", _m.RequireConfirmedOptIn))
+	builder.WriteString(", ")
+	builder.WriteString("postal_address=")
+	builder.WriteString(_m.PostalAddress)
 	builder.WriteString(", ")
 	builder.WriteString("created_at=")
 	builder.WriteString(_m.CreatedAt.Format(time.ANSIC))

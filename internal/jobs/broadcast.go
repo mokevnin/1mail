@@ -293,6 +293,11 @@ func SendToRecipient(ctx context.Context, client *ent.Client, bus *events.Bus, r
 	if err != nil {
 		return fmt.Errorf("load broadcast %d: %w", rec.BroadcastID, err)
 	}
+	// Workspace carries the CAN-SPAM postal address rendered in the footer.
+	ws, err := client.Workspace.Get(ctx, rec.WorkspaceID)
+	if err != nil {
+		return fmt.Errorf("load workspace %d: %w", rec.WorkspaceID, err)
+	}
 	c, err := client.Contact.Get(ctx, rec.ContactID)
 	if err != nil {
 		return fmt.Errorf("load contact %d: %w", rec.ContactID, err)
@@ -328,7 +333,7 @@ func SendToRecipient(ctx context.Context, client *ent.Client, bus *events.Bus, r
 			ContactID:   c.ID,
 			BroadcastID: b.ID,
 		}
-		if tracked, terr := tracker.Rewrite(html, rec.ID, unsub); terr != nil {
+		if tracked, terr := tracker.Rewrite(html, rec.ID, unsub, ws.PostalAddress); terr != nil {
 			logging.FromContext(ctx).Error("broadcast: rewrite links failed", "broadcast_id", b.ID, "recipient_id", rec.ID, "err", terr)
 		} else {
 			html = tracked

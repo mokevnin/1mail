@@ -80,6 +80,20 @@ func (_c *WorkspaceCreate) SetNillableRequireConfirmedOptIn(v *bool) *WorkspaceC
 	return _c
 }
 
+// SetPostalAddress sets the "postal_address" field.
+func (_c *WorkspaceCreate) SetPostalAddress(v string) *WorkspaceCreate {
+	_c.mutation.SetPostalAddress(v)
+	return _c
+}
+
+// SetNillablePostalAddress sets the "postal_address" field if the given value is not nil.
+func (_c *WorkspaceCreate) SetNillablePostalAddress(v *string) *WorkspaceCreate {
+	if v != nil {
+		_c.SetPostalAddress(*v)
+	}
+	return _c
+}
+
 // SetCreatedAt sets the "created_at" field.
 func (_c *WorkspaceCreate) SetCreatedAt(v time.Time) *WorkspaceCreate {
 	_c.mutation.SetCreatedAt(v)
@@ -453,6 +467,10 @@ func (_c *WorkspaceCreate) defaults() {
 		v := workspace.DefaultRequireConfirmedOptIn
 		_c.mutation.SetRequireConfirmedOptIn(v)
 	}
+	if _, ok := _c.mutation.PostalAddress(); !ok {
+		v := workspace.DefaultPostalAddress
+		_c.mutation.SetPostalAddress(v)
+	}
 	if _, ok := _c.mutation.CreatedAt(); !ok {
 		v := workspace.DefaultCreatedAt()
 		_c.mutation.SetCreatedAt(v)
@@ -558,6 +576,10 @@ func (_c *WorkspaceCreate) createSpec() (*Workspace, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.RequireConfirmedOptIn(); ok {
 		_spec.SetField(workspace.FieldRequireConfirmedOptIn, field.TypeBool, value)
 		_node.RequireConfirmedOptIn = value
+	}
+	if value, ok := _c.mutation.PostalAddress(); ok {
+		_spec.SetField(workspace.FieldPostalAddress, field.TypeString, value)
+		_node.PostalAddress = value
 	}
 	if value, ok := _c.mutation.CreatedAt(); ok {
 		_spec.SetField(workspace.FieldCreatedAt, field.TypeTime, value)
@@ -999,6 +1021,24 @@ func (u *WorkspaceUpsert) UpdateRequireConfirmedOptIn() *WorkspaceUpsert {
 	return u
 }
 
+// SetPostalAddress sets the "postal_address" field.
+func (u *WorkspaceUpsert) SetPostalAddress(v string) *WorkspaceUpsert {
+	u.Set(workspace.FieldPostalAddress, v)
+	return u
+}
+
+// UpdatePostalAddress sets the "postal_address" field to the value that was provided on create.
+func (u *WorkspaceUpsert) UpdatePostalAddress() *WorkspaceUpsert {
+	u.SetExcluded(workspace.FieldPostalAddress)
+	return u
+}
+
+// ClearPostalAddress clears the value of the "postal_address" field.
+func (u *WorkspaceUpsert) ClearPostalAddress() *WorkspaceUpsert {
+	u.SetNull(workspace.FieldPostalAddress)
+	return u
+}
+
 // SetUpdatedAt sets the "updated_at" field.
 func (u *WorkspaceUpsert) SetUpdatedAt(v time.Time) *WorkspaceUpsert {
 	u.Set(workspace.FieldUpdatedAt, v)
@@ -1129,6 +1169,27 @@ func (u *WorkspaceUpsertOne) SetRequireConfirmedOptIn(v bool) *WorkspaceUpsertOn
 func (u *WorkspaceUpsertOne) UpdateRequireConfirmedOptIn() *WorkspaceUpsertOne {
 	return u.Update(func(s *WorkspaceUpsert) {
 		s.UpdateRequireConfirmedOptIn()
+	})
+}
+
+// SetPostalAddress sets the "postal_address" field.
+func (u *WorkspaceUpsertOne) SetPostalAddress(v string) *WorkspaceUpsertOne {
+	return u.Update(func(s *WorkspaceUpsert) {
+		s.SetPostalAddress(v)
+	})
+}
+
+// UpdatePostalAddress sets the "postal_address" field to the value that was provided on create.
+func (u *WorkspaceUpsertOne) UpdatePostalAddress() *WorkspaceUpsertOne {
+	return u.Update(func(s *WorkspaceUpsert) {
+		s.UpdatePostalAddress()
+	})
+}
+
+// ClearPostalAddress clears the value of the "postal_address" field.
+func (u *WorkspaceUpsertOne) ClearPostalAddress() *WorkspaceUpsertOne {
+	return u.Update(func(s *WorkspaceUpsert) {
+		s.ClearPostalAddress()
 	})
 }
 
@@ -1430,6 +1491,27 @@ func (u *WorkspaceUpsertBulk) SetRequireConfirmedOptIn(v bool) *WorkspaceUpsertB
 func (u *WorkspaceUpsertBulk) UpdateRequireConfirmedOptIn() *WorkspaceUpsertBulk {
 	return u.Update(func(s *WorkspaceUpsert) {
 		s.UpdateRequireConfirmedOptIn()
+	})
+}
+
+// SetPostalAddress sets the "postal_address" field.
+func (u *WorkspaceUpsertBulk) SetPostalAddress(v string) *WorkspaceUpsertBulk {
+	return u.Update(func(s *WorkspaceUpsert) {
+		s.SetPostalAddress(v)
+	})
+}
+
+// UpdatePostalAddress sets the "postal_address" field to the value that was provided on create.
+func (u *WorkspaceUpsertBulk) UpdatePostalAddress() *WorkspaceUpsertBulk {
+	return u.Update(func(s *WorkspaceUpsert) {
+		s.UpdatePostalAddress()
+	})
+}
+
+// ClearPostalAddress clears the value of the "postal_address" field.
+func (u *WorkspaceUpsertBulk) ClearPostalAddress() *WorkspaceUpsertBulk {
+	return u.Update(func(s *WorkspaceUpsert) {
+		s.ClearPostalAddress()
 	})
 }
 
