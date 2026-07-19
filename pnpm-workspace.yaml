@@ -61,3 +61,4 @@ minimumReleaseAgeExclude:
   - '@biomejs/cli-win32-arm64@2.5.3'
   - '@biomejs/cli-win32-x64@2.5.3'
   - '@types/node@26.1.1'
+  - postcss@8.5.20

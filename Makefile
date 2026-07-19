@@ -3,7 +3,7 @@
 # are overridable: CI (which installs native toolchains) runs everything natively
 # with `make check RUN_FE= RUN_GO= RUN_GO_DB=`.
 #
-#   RUN_FE    — node tooling (frontend image): tsgo, biome, tsp, openapi-ts, pnpm
+#   RUN_FE    — node tooling (frontend image): tsc, biome, tsp, openapi-ts, pnpm
 #   RUN_GO    — go tooling, no DB needed: golangci-lint, go fmt, entc, ogen, go mod
 #   RUN_GO_DB — go tooling that needs Postgres: cmd/db, atlas, go test (starts `db`)
 # Run containers as the host user so files written into the bind mount (generated
@@ -128,7 +128,7 @@ generate: generate-typespec generate-openapi generate-backend check-fix
 check: check-fe check-i18n check-be
 
 check-fe:
-	$(RUN_FE) pnpm exec tsgo --noEmit
+	$(RUN_FE) pnpm exec tsc --noEmit
 	$(RUN_FE) pnpm exec biome check .
 
 # Read-only: --dry-run never writes, --ci exits non-zero on drift.

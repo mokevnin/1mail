@@ -12,31 +12,31 @@ import type { SiteAnalyticsOverviewData, SiteAnalyticsOverviewError, SiteAnalyti
  * the link is opened from the new inbox, which has no session.
  */
 export const siteAuthConfirmEmailChangeMutation = (options?: Partial<Options<SiteAuthConfirmEmailChangeData>>): UseMutationOptions<unknown, SiteAuthConfirmEmailChangeError, Options<SiteAuthConfirmEmailChangeData>> => {
-    const mutationOptions: UseMutationOptions<unknown, SiteAuthConfirmEmailChangeError, Options<SiteAuthConfirmEmailChangeData>> = {
-        mutationFn: async (fnOptions) => {
-            const { data } = await siteAuthConfirmEmailChange({
-                ...options,
-                ...fnOptions,
-                throwOnError: true
-            });
-            return data;
-        }
-    };
-    return mutationOptions;
+  const mutationOptions: UseMutationOptions<unknown, SiteAuthConfirmEmailChangeError, Options<SiteAuthConfirmEmailChangeData>> = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await siteAuthConfirmEmailChange({
+        ...options,
+        ...fnOptions,
+        throwOnError: true
+      });
+      return data;
+    }
+  };
+  return mutationOptions;
 };
 
 export const siteAuthDirectLoginMutation = (options?: Partial<Options<SiteAuthDirectLoginData>>): UseMutationOptions<SiteAuthDirectLoginResponse, SiteAuthDirectLoginError, Options<SiteAuthDirectLoginData>> => {
-    const mutationOptions: UseMutationOptions<SiteAuthDirectLoginResponse, SiteAuthDirectLoginError, Options<SiteAuthDirectLoginData>> = {
-        mutationFn: async (fnOptions) => {
-            const { data } = await siteAuthDirectLogin({
-                ...options,
-                ...fnOptions,
-                throwOnError: true
-            });
-            return data;
-        }
-    };
-    return mutationOptions;
+  const mutationOptions: UseMutationOptions<SiteAuthDirectLoginResponse, SiteAuthDirectLoginError, Options<SiteAuthDirectLoginData>> = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await siteAuthDirectLogin({
+        ...options,
+        ...fnOptions,
+        throwOnError: true
+      });
+      return data;
+    }
+  };
+  return mutationOptions;
 };
 
 /**
@@ -44,98 +44,98 @@ export const siteAuthDirectLoginMutation = (options?: Partial<Options<SiteAuthDi
  * the email matches an account, to avoid leaking which addresses exist.
  */
 export const siteAuthForgotPasswordMutation = (options?: Partial<Options<SiteAuthForgotPasswordData>>): UseMutationOptions<unknown, DefaultError, Options<SiteAuthForgotPasswordData>> => {
-    const mutationOptions: UseMutationOptions<unknown, DefaultError, Options<SiteAuthForgotPasswordData>> = {
-        mutationFn: async (fnOptions) => {
-            const { data } = await siteAuthForgotPassword({
-                ...options,
-                ...fnOptions,
-                throwOnError: true
-            });
-            return data;
-        }
-    };
-    return mutationOptions;
+  const mutationOptions: UseMutationOptions<unknown, DefaultError, Options<SiteAuthForgotPasswordData>> = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await siteAuthForgotPassword({
+        ...options,
+        ...fnOptions,
+        throwOnError: true
+      });
+      return data;
+    }
+  };
+  return mutationOptions;
 };
 
 export const siteAuthRegisterMutation = (options?: Partial<Options<SiteAuthRegisterData>>): UseMutationOptions<SiteAuthRegisterResponse, SiteAuthRegisterError, Options<SiteAuthRegisterData>> => {
-    const mutationOptions: UseMutationOptions<SiteAuthRegisterResponse, SiteAuthRegisterError, Options<SiteAuthRegisterData>> = {
-        mutationFn: async (fnOptions) => {
-            const { data } = await siteAuthRegister({
-                ...options,
-                ...fnOptions,
-                throwOnError: true
-            });
-            return data;
-        }
-    };
-    return mutationOptions;
+  const mutationOptions: UseMutationOptions<SiteAuthRegisterResponse, SiteAuthRegisterError, Options<SiteAuthRegisterData>> = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await siteAuthRegister({
+        ...options,
+        ...fnOptions,
+        throwOnError: true
+      });
+      return data;
+    }
+  };
+  return mutationOptions;
 };
 
 /**
  * Set a new password from a reset token
  */
 export const siteAuthResetPasswordMutation = (options?: Partial<Options<SiteAuthResetPasswordData>>): UseMutationOptions<unknown, SiteAuthResetPasswordError, Options<SiteAuthResetPasswordData>> => {
-    const mutationOptions: UseMutationOptions<unknown, SiteAuthResetPasswordError, Options<SiteAuthResetPasswordData>> = {
-        mutationFn: async (fnOptions) => {
-            const { data } = await siteAuthResetPassword({
-                ...options,
-                ...fnOptions,
-                throwOnError: true
-            });
-            return data;
-        }
-    };
-    return mutationOptions;
+  const mutationOptions: UseMutationOptions<unknown, SiteAuthResetPasswordError, Options<SiteAuthResetPasswordData>> = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await siteAuthResetPassword({
+        ...options,
+        ...fnOptions,
+        throwOnError: true
+      });
+      return data;
+    }
+  };
+  return mutationOptions;
 };
 
 /**
  * Confirm an email address from a verification token (signup verification)
  */
 export const siteAuthVerifyEmailMutation = (options?: Partial<Options<SiteAuthVerifyEmailData>>): UseMutationOptions<unknown, SiteAuthVerifyEmailError, Options<SiteAuthVerifyEmailData>> => {
-    const mutationOptions: UseMutationOptions<unknown, SiteAuthVerifyEmailError, Options<SiteAuthVerifyEmailData>> = {
-        mutationFn: async (fnOptions) => {
-            const { data } = await siteAuthVerifyEmail({
-                ...options,
-                ...fnOptions,
-                throwOnError: true
-            });
-            return data;
-        }
-    };
-    return mutationOptions;
+  const mutationOptions: UseMutationOptions<unknown, SiteAuthVerifyEmailError, Options<SiteAuthVerifyEmailData>> = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await siteAuthVerifyEmail({
+        ...options,
+        ...fnOptions,
+        throwOnError: true
+      });
+      return data;
+    }
+  };
+  return mutationOptions;
 };
 
 export type QueryKey<TOptions extends Options> = [
-    Pick<TOptions, 'baseUrl' | 'body' | 'headers' | 'path' | 'query'> & {
-        _id: string;
-        _infinite?: boolean;
-        tags?: ReadonlyArray<string>;
-    }
+  Pick<TOptions, 'baseUrl' | 'body' | 'headers' | 'path' | 'query'> & {
+    _id: string;
+    _infinite?: boolean;
+    tags?: ReadonlyArray<string>;
+  }
 ];
 
 const createQueryKey = <TOptions extends Options>(id: string, options?: TOptions, infinite?: boolean, tags?: ReadonlyArray<string>): [
-    QueryKey<TOptions>[0]
+  QueryKey<TOptions>[0]
 ] => {
-    const params: QueryKey<TOptions>[0] = { _id: id, baseUrl: options?.baseUrl || (options?.client ?? client).getConfig().baseUrl } as QueryKey<TOptions>[0];
-    if (infinite) {
-        params._infinite = infinite;
-    }
-    if (tags) {
-        params.tags = tags;
-    }
-    if (options?.body) {
-        params.body = options.body;
-    }
-    if (options?.headers) {
-        params.headers = options.headers;
-    }
-    if (options?.path) {
-        params.path = options.path;
-    }
-    if (options?.query) {
-        params.query = options.query;
-    }
-    return [params];
+  const params: QueryKey<TOptions>[0] = { _id: id, baseUrl: options?.baseUrl || (options?.client ?? client).getConfig().baseUrl } as QueryKey<TOptions>[0];
+  if (infinite) {
+    params._infinite = infinite;
+  }
+  if (tags) {
+    params.tags = tags;
+  }
+  if (options?.body) {
+    params.body = options.body;
+  }
+  if (options?.headers) {
+    params.headers = options.headers;
+  }
+  if (options?.path) {
+    params.path = options.path;
+  }
+  if (options?.query) {
+    params.query = options.query;
+  }
+  return [params];
 };
 
 export const sitePublicInvitationsLookupQueryKey = (options: Options<SitePublicInvitationsLookupData>) => createQueryKey('sitePublicInvitationsLookup', options);
@@ -144,33 +144,33 @@ export const sitePublicInvitationsLookupQueryKey = (options: Options<SitePublicI
  * Look up a pending invite by its token to render the accept page
  */
 export const sitePublicInvitationsLookupOptions = (options: Options<SitePublicInvitationsLookupData>) => queryOptions<SitePublicInvitationsLookupResponse, SitePublicInvitationsLookupError, SitePublicInvitationsLookupResponse, ReturnType<typeof sitePublicInvitationsLookupQueryKey>>({
-    queryFn: async ({ queryKey, signal }) => {
-        const { data } = await sitePublicInvitationsLookup({
-            ...options,
-            ...queryKey[0],
-            signal,
-            throwOnError: true
-        });
-        return data;
-    },
-    queryKey: sitePublicInvitationsLookupQueryKey(options)
+  queryFn: async ({ queryKey, signal }) => {
+    const { data } = await sitePublicInvitationsLookup({
+      ...options,
+      ...queryKey[0],
+      signal,
+      throwOnError: true
+    });
+    return data;
+  },
+  queryKey: sitePublicInvitationsLookupQueryKey(options)
 });
 
 /**
  * Accept an invite: create or attach the User and create the Membership
  */
 export const sitePublicInvitationsAcceptMutation = (options?: Partial<Options<SitePublicInvitationsAcceptData>>): UseMutationOptions<unknown, SitePublicInvitationsAcceptError, Options<SitePublicInvitationsAcceptData>> => {
-    const mutationOptions: UseMutationOptions<unknown, SitePublicInvitationsAcceptError, Options<SitePublicInvitationsAcceptData>> = {
-        mutationFn: async (fnOptions) => {
-            const { data } = await sitePublicInvitationsAccept({
-                ...options,
-                ...fnOptions,
-                throwOnError: true
-            });
-            return data;
-        }
-    };
-    return mutationOptions;
+  const mutationOptions: UseMutationOptions<unknown, SitePublicInvitationsAcceptError, Options<SitePublicInvitationsAcceptData>> = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await sitePublicInvitationsAccept({
+        ...options,
+        ...fnOptions,
+        throwOnError: true
+      });
+      return data;
+    }
+  };
+  return mutationOptions;
 };
 
 export const siteUserGetMeQueryKey = (options?: Options<SiteUserGetMeData>) => createQueryKey('siteUserGetMe', options);
@@ -179,33 +179,33 @@ export const siteUserGetMeQueryKey = (options?: Options<SiteUserGetMeData>) => c
  * Get the authenticated user's profile
  */
 export const siteUserGetMeOptions = (options?: Options<SiteUserGetMeData>) => queryOptions<SiteUserGetMeResponse, DefaultError, SiteUserGetMeResponse, ReturnType<typeof siteUserGetMeQueryKey>>({
-    queryFn: async ({ queryKey, signal }) => {
-        const { data } = await siteUserGetMe({
-            ...options,
-            ...queryKey[0],
-            signal,
-            throwOnError: true
-        });
-        return data;
-    },
-    queryKey: siteUserGetMeQueryKey(options)
+  queryFn: async ({ queryKey, signal }) => {
+    const { data } = await siteUserGetMe({
+      ...options,
+      ...queryKey[0],
+      signal,
+      throwOnError: true
+    });
+    return data;
+  },
+  queryKey: siteUserGetMeQueryKey(options)
 });
 
 /**
  * Update the authenticated user's profile (name and/or password)
  */
 export const siteUserUpdateMeMutation = (options?: Partial<Options<SiteUserUpdateMeData>>): UseMutationOptions<SiteUserUpdateMeResponse, SiteUserUpdateMeError, Options<SiteUserUpdateMeData>> => {
-    const mutationOptions: UseMutationOptions<SiteUserUpdateMeResponse, SiteUserUpdateMeError, Options<SiteUserUpdateMeData>> = {
-        mutationFn: async (fnOptions) => {
-            const { data } = await siteUserUpdateMe({
-                ...options,
-                ...fnOptions,
-                throwOnError: true
-            });
-            return data;
-        }
-    };
-    return mutationOptions;
+  const mutationOptions: UseMutationOptions<SiteUserUpdateMeResponse, SiteUserUpdateMeError, Options<SiteUserUpdateMeData>> = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await siteUserUpdateMe({
+        ...options,
+        ...fnOptions,
+        throwOnError: true
+      });
+      return data;
+    }
+  };
+  return mutationOptions;
 };
 
 /**
@@ -213,34 +213,34 @@ export const siteUserUpdateMeMutation = (options?: Partial<Options<SiteUserUpdat
  * Requires the current password. 409 if the new address is already in use.
  */
 export const siteUserEmailChangeMutation = (options?: Partial<Options<SiteUserEmailChangeData>>): UseMutationOptions<unknown, SiteUserEmailChangeError, Options<SiteUserEmailChangeData>> => {
-    const mutationOptions: UseMutationOptions<unknown, SiteUserEmailChangeError, Options<SiteUserEmailChangeData>> = {
-        mutationFn: async (fnOptions) => {
-            const { data } = await siteUserEmailChange({
-                ...options,
-                ...fnOptions,
-                throwOnError: true
-            });
-            return data;
-        }
-    };
-    return mutationOptions;
+  const mutationOptions: UseMutationOptions<unknown, SiteUserEmailChangeError, Options<SiteUserEmailChangeData>> = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await siteUserEmailChange({
+        ...options,
+        ...fnOptions,
+        throwOnError: true
+      });
+      return data;
+    }
+  };
+  return mutationOptions;
 };
 
 /**
  * Resend the signup email-verification link to the current address
  */
 export const siteUserResendVerificationMutation = (options?: Partial<Options<SiteUserResendVerificationData>>): UseMutationOptions<unknown, DefaultError, Options<SiteUserResendVerificationData>> => {
-    const mutationOptions: UseMutationOptions<unknown, DefaultError, Options<SiteUserResendVerificationData>> = {
-        mutationFn: async (fnOptions) => {
-            const { data } = await siteUserResendVerification({
-                ...options,
-                ...fnOptions,
-                throwOnError: true
-            });
-            return data;
-        }
-    };
-    return mutationOptions;
+  const mutationOptions: UseMutationOptions<unknown, DefaultError, Options<SiteUserResendVerificationData>> = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await siteUserResendVerification({
+        ...options,
+        ...fnOptions,
+        throwOnError: true
+      });
+      return data;
+    }
+  };
+  return mutationOptions;
 };
 
 export const siteWorkspacesListQueryKey = (options?: Options<SiteWorkspacesListData>) => createQueryKey('siteWorkspacesList', options);
@@ -249,33 +249,33 @@ export const siteWorkspacesListQueryKey = (options?: Options<SiteWorkspacesListD
  * List workspaces owned by the authenticated user
  */
 export const siteWorkspacesListOptions = (options?: Options<SiteWorkspacesListData>) => queryOptions<SiteWorkspacesListResponse, DefaultError, SiteWorkspacesListResponse, ReturnType<typeof siteWorkspacesListQueryKey>>({
-    queryFn: async ({ queryKey, signal }) => {
-        const { data } = await siteWorkspacesList({
-            ...options,
-            ...queryKey[0],
-            signal,
-            throwOnError: true
-        });
-        return data;
-    },
-    queryKey: siteWorkspacesListQueryKey(options)
+  queryFn: async ({ queryKey, signal }) => {
+    const { data } = await siteWorkspacesList({
+      ...options,
+      ...queryKey[0],
+      signal,
+      throwOnError: true
+    });
+    return data;
+  },
+  queryKey: siteWorkspacesListQueryKey(options)
 });
 
 /**
  * Rename a workspace owned by the authenticated user
  */
 export const siteWorkspacesUpdateMutation = (options?: Partial<Options<SiteWorkspacesUpdateData>>): UseMutationOptions<SiteWorkspacesUpdateResponse, SiteWorkspacesUpdateError, Options<SiteWorkspacesUpdateData>> => {
-    const mutationOptions: UseMutationOptions<SiteWorkspacesUpdateResponse, SiteWorkspacesUpdateError, Options<SiteWorkspacesUpdateData>> = {
-        mutationFn: async (fnOptions) => {
-            const { data } = await siteWorkspacesUpdate({
-                ...options,
-                ...fnOptions,
-                throwOnError: true
-            });
-            return data;
-        }
-    };
-    return mutationOptions;
+  const mutationOptions: UseMutationOptions<SiteWorkspacesUpdateResponse, SiteWorkspacesUpdateError, Options<SiteWorkspacesUpdateData>> = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await siteWorkspacesUpdate({
+        ...options,
+        ...fnOptions,
+        throwOnError: true
+      });
+      return data;
+    }
+  };
+  return mutationOptions;
 };
 
 export const siteAnalyticsOverviewQueryKey = (options: Options<SiteAnalyticsOverviewData>) => createQueryKey('siteAnalyticsOverview', options);
@@ -284,16 +284,16 @@ export const siteAnalyticsOverviewQueryKey = (options: Options<SiteAnalyticsOver
  * Aggregate metrics for the workspace dashboard
  */
 export const siteAnalyticsOverviewOptions = (options: Options<SiteAnalyticsOverviewData>) => queryOptions<SiteAnalyticsOverviewResponse, SiteAnalyticsOverviewError, SiteAnalyticsOverviewResponse, ReturnType<typeof siteAnalyticsOverviewQueryKey>>({
-    queryFn: async ({ queryKey, signal }) => {
-        const { data } = await siteAnalyticsOverview({
-            ...options,
-            ...queryKey[0],
-            signal,
-            throwOnError: true
-        });
-        return data;
-    },
-    queryKey: siteAnalyticsOverviewQueryKey(options)
+  queryFn: async ({ queryKey, signal }) => {
+    const { data } = await siteAnalyticsOverview({
+      ...options,
+      ...queryKey[0],
+      signal,
+      throwOnError: true
+    });
+    return data;
+  },
+  queryKey: siteAnalyticsOverviewQueryKey(options)
 });
 
 export const siteAutomationsListQueryKey = (options: Options<SiteAutomationsListData>) => createQueryKey('siteAutomationsList', options);
@@ -302,45 +302,45 @@ export const siteAutomationsListQueryKey = (options: Options<SiteAutomationsList
  * List resources for the site UI
  */
 export const siteAutomationsListOptions = (options: Options<SiteAutomationsListData>) => queryOptions<SiteAutomationsListResponse, SiteAutomationsListError, SiteAutomationsListResponse, ReturnType<typeof siteAutomationsListQueryKey>>({
-    queryFn: async ({ queryKey, signal }) => {
-        const { data } = await siteAutomationsList({
-            ...options,
-            ...queryKey[0],
-            signal,
-            throwOnError: true
-        });
-        return data;
-    },
-    queryKey: siteAutomationsListQueryKey(options)
+  queryFn: async ({ queryKey, signal }) => {
+    const { data } = await siteAutomationsList({
+      ...options,
+      ...queryKey[0],
+      signal,
+      throwOnError: true
+    });
+    return data;
+  },
+  queryKey: siteAutomationsListQueryKey(options)
 });
 
 const createInfiniteParams = <K extends Pick<QueryKey<Options>[0], 'body' | 'headers' | 'path' | 'query'>>(queryKey: QueryKey<Options>, page: K) => {
-    const params = { ...queryKey[0] };
-    if (page.body) {
-        params.body = {
-            ...queryKey[0].body as any,
-            ...page.body as any
-        };
-    }
-    if (page.headers) {
-        params.headers = {
-            ...queryKey[0].headers,
-            ...page.headers
-        };
-    }
-    if (page.path) {
-        params.path = {
-            ...queryKey[0].path as any,
-            ...page.path as any
-        };
-    }
-    if (page.query) {
-        params.query = {
-            ...queryKey[0].query as any,
-            ...page.query as any
-        };
-    }
-    return params as unknown as typeof page;
+  const params = { ...queryKey[0] };
+  if (page.body) {
+    params.body = {
+      ...queryKey[0].body as any,
+      ...page.body as any
+    };
+  }
+  if (page.headers) {
+    params.headers = {
+      ...queryKey[0].headers,
+      ...page.headers
+    };
+  }
+  if (page.path) {
+    params.path = {
+      ...queryKey[0].path as any,
+      ...page.path as any
+    };
+  }
+  if (page.query) {
+    params.query = {
+      ...queryKey[0].query as any,
+      ...page.query as any
+    };
+  }
+  return params as unknown as typeof page;
 };
 
 export const siteAutomationsListInfiniteQueryKey = (options: Options<SiteAutomationsListData>): QueryKey<Options<SiteAutomationsListData>> => createQueryKey('siteAutomationsList', options, true);
@@ -349,62 +349,62 @@ export const siteAutomationsListInfiniteQueryKey = (options: Options<SiteAutomat
  * List resources for the site UI
  */
 export const siteAutomationsListInfiniteOptions = (options: Options<SiteAutomationsListData>) => {
-    const opts = infiniteQueryOptions<SiteAutomationsListResponse, SiteAutomationsListError, InfiniteData<SiteAutomationsListResponse>, QueryKey<Options<SiteAutomationsListData>>, number | Pick<QueryKey<Options<SiteAutomationsListData>>[0], 'body' | 'headers' | 'path' | 'query'>>(
-    // @ts-ignore
-    {
-        queryFn: async ({ pageParam, queryKey, signal }) => {
-            // @ts-ignore
-            const page: Pick<QueryKey<Options<SiteAutomationsListData>>[0], 'body' | 'headers' | 'path' | 'query'> = typeof pageParam === 'object' ? pageParam : {
-                query: {
-                    page: pageParam
-                }
-            };
-            const params = createInfiniteParams(queryKey, page);
-            const { data } = await siteAutomationsList({
-                ...options,
-                ...params,
-                signal,
-                throwOnError: true
-            });
-            return data;
-        },
-        queryKey: siteAutomationsListInfiniteQueryKey(options)
-    });
-    return opts as Omit<typeof opts, 'initialData'>;
+  const opts = infiniteQueryOptions<SiteAutomationsListResponse, SiteAutomationsListError, InfiniteData<SiteAutomationsListResponse>, QueryKey<Options<SiteAutomationsListData>>, number | Pick<QueryKey<Options<SiteAutomationsListData>>[0], 'body' | 'headers' | 'path' | 'query'>>(
+  // @ts-ignore
+  {
+    queryFn: async ({ pageParam, queryKey, signal }) => {
+      // @ts-ignore
+      const page: Pick<QueryKey<Options<SiteAutomationsListData>>[0], 'body' | 'headers' | 'path' | 'query'> = typeof pageParam === 'object' ? pageParam : {
+        query: {
+          page: pageParam
+        }
+      };
+      const params = createInfiniteParams(queryKey, page);
+      const { data } = await siteAutomationsList({
+        ...options,
+        ...params,
+        signal,
+        throwOnError: true
+      });
+      return data;
+    },
+    queryKey: siteAutomationsListInfiniteQueryKey(options)
+  });
+  return opts as Omit<typeof opts, 'initialData'>;
 };
 
 /**
  * Create a resource from the site UI
  */
 export const siteAutomationsCreateMutation = (options?: Partial<Options<SiteAutomationsCreateData>>): UseMutationOptions<SiteAutomationsCreateResponse, SiteAutomationsCreateError, Options<SiteAutomationsCreateData>> => {
-    const mutationOptions: UseMutationOptions<SiteAutomationsCreateResponse, SiteAutomationsCreateError, Options<SiteAutomationsCreateData>> = {
-        mutationFn: async (fnOptions) => {
-            const { data } = await siteAutomationsCreate({
-                ...options,
-                ...fnOptions,
-                throwOnError: true
-            });
-            return data;
-        }
-    };
-    return mutationOptions;
+  const mutationOptions: UseMutationOptions<SiteAutomationsCreateResponse, SiteAutomationsCreateError, Options<SiteAutomationsCreateData>> = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await siteAutomationsCreate({
+        ...options,
+        ...fnOptions,
+        throwOnError: true
+      });
+      return data;
+    }
+  };
+  return mutationOptions;
 };
 
 /**
  * Delete a resource from the site UI
  */
 export const siteAutomationsDeleteMutation = (options?: Partial<Options<SiteAutomationsDeleteData>>): UseMutationOptions<SiteAutomationsDeleteResponse, SiteAutomationsDeleteError, Options<SiteAutomationsDeleteData>> => {
-    const mutationOptions: UseMutationOptions<SiteAutomationsDeleteResponse, SiteAutomationsDeleteError, Options<SiteAutomationsDeleteData>> = {
-        mutationFn: async (fnOptions) => {
-            const { data } = await siteAutomationsDelete({
-                ...options,
-                ...fnOptions,
-                throwOnError: true
-            });
-            return data;
-        }
-    };
-    return mutationOptions;
+  const mutationOptions: UseMutationOptions<SiteAutomationsDeleteResponse, SiteAutomationsDeleteError, Options<SiteAutomationsDeleteData>> = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await siteAutomationsDelete({
+        ...options,
+        ...fnOptions,
+        throwOnError: true
+      });
+      return data;
+    }
+  };
+  return mutationOptions;
 };
 
 export const siteAutomationsGetQueryKey = (options: Options<SiteAutomationsGetData>) => createQueryKey('siteAutomationsGet', options);
@@ -413,67 +413,67 @@ export const siteAutomationsGetQueryKey = (options: Options<SiteAutomationsGetDa
  * Get a resource by ID for the site UI
  */
 export const siteAutomationsGetOptions = (options: Options<SiteAutomationsGetData>) => queryOptions<SiteAutomationsGetResponse, SiteAutomationsGetError, SiteAutomationsGetResponse, ReturnType<typeof siteAutomationsGetQueryKey>>({
-    queryFn: async ({ queryKey, signal }) => {
-        const { data } = await siteAutomationsGet({
-            ...options,
-            ...queryKey[0],
-            signal,
-            throwOnError: true
-        });
-        return data;
-    },
-    queryKey: siteAutomationsGetQueryKey(options)
+  queryFn: async ({ queryKey, signal }) => {
+    const { data } = await siteAutomationsGet({
+      ...options,
+      ...queryKey[0],
+      signal,
+      throwOnError: true
+    });
+    return data;
+  },
+  queryKey: siteAutomationsGetQueryKey(options)
 });
 
 /**
  * Update a resource from the site UI
  */
 export const siteAutomationsUpdateMutation = (options?: Partial<Options<SiteAutomationsUpdateData>>): UseMutationOptions<SiteAutomationsUpdateResponse, SiteAutomationsUpdateError, Options<SiteAutomationsUpdateData>> => {
-    const mutationOptions: UseMutationOptions<SiteAutomationsUpdateResponse, SiteAutomationsUpdateError, Options<SiteAutomationsUpdateData>> = {
-        mutationFn: async (fnOptions) => {
-            const { data } = await siteAutomationsUpdate({
-                ...options,
-                ...fnOptions,
-                throwOnError: true
-            });
-            return data;
-        }
-    };
-    return mutationOptions;
+  const mutationOptions: UseMutationOptions<SiteAutomationsUpdateResponse, SiteAutomationsUpdateError, Options<SiteAutomationsUpdateData>> = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await siteAutomationsUpdate({
+        ...options,
+        ...fnOptions,
+        throwOnError: true
+      });
+      return data;
+    }
+  };
+  return mutationOptions;
 };
 
 /**
  * Activate an automation (starts enrolling contacts)
  */
 export const siteAutomationsActivateMutation = (options?: Partial<Options<SiteAutomationsActivateData>>): UseMutationOptions<SiteAutomationsActivateResponse, SiteAutomationsActivateError, Options<SiteAutomationsActivateData>> => {
-    const mutationOptions: UseMutationOptions<SiteAutomationsActivateResponse, SiteAutomationsActivateError, Options<SiteAutomationsActivateData>> = {
-        mutationFn: async (fnOptions) => {
-            const { data } = await siteAutomationsActivate({
-                ...options,
-                ...fnOptions,
-                throwOnError: true
-            });
-            return data;
-        }
-    };
-    return mutationOptions;
+  const mutationOptions: UseMutationOptions<SiteAutomationsActivateResponse, SiteAutomationsActivateError, Options<SiteAutomationsActivateData>> = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await siteAutomationsActivate({
+        ...options,
+        ...fnOptions,
+        throwOnError: true
+      });
+      return data;
+    }
+  };
+  return mutationOptions;
 };
 
 /**
  * Deactivate an automation (stops new enrollments)
  */
 export const siteAutomationsDeactivateMutation = (options?: Partial<Options<SiteAutomationsDeactivateData>>): UseMutationOptions<SiteAutomationsDeactivateResponse, SiteAutomationsDeactivateError, Options<SiteAutomationsDeactivateData>> => {
-    const mutationOptions: UseMutationOptions<SiteAutomationsDeactivateResponse, SiteAutomationsDeactivateError, Options<SiteAutomationsDeactivateData>> = {
-        mutationFn: async (fnOptions) => {
-            const { data } = await siteAutomationsDeactivate({
-                ...options,
-                ...fnOptions,
-                throwOnError: true
-            });
-            return data;
-        }
-    };
-    return mutationOptions;
+  const mutationOptions: UseMutationOptions<SiteAutomationsDeactivateResponse, SiteAutomationsDeactivateError, Options<SiteAutomationsDeactivateData>> = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await siteAutomationsDeactivate({
+        ...options,
+        ...fnOptions,
+        throwOnError: true
+      });
+      return data;
+    }
+  };
+  return mutationOptions;
 };
 
 export const siteBroadcastsListQueryKey = (options: Options<SiteBroadcastsListData>) => createQueryKey('siteBroadcastsList', options);
@@ -482,16 +482,16 @@ export const siteBroadcastsListQueryKey = (options: Options<SiteBroadcastsListDa
  * List resources for the site UI
  */
 export const siteBroadcastsListOptions = (options: Options<SiteBroadcastsListData>) => queryOptions<SiteBroadcastsListResponse, SiteBroadcastsListError, SiteBroadcastsListResponse, ReturnType<typeof siteBroadcastsListQueryKey>>({
-    queryFn: async ({ queryKey, signal }) => {
-        const { data } = await siteBroadcastsList({
-            ...options,
-            ...queryKey[0],
-            signal,
-            throwOnError: true
-        });
-        return data;
-    },
-    queryKey: siteBroadcastsListQueryKey(options)
+  queryFn: async ({ queryKey, signal }) => {
+    const { data } = await siteBroadcastsList({
+      ...options,
+      ...queryKey[0],
+      signal,
+      throwOnError: true
+    });
+    return data;
+  },
+  queryKey: siteBroadcastsListQueryKey(options)
 });
 
 export const siteBroadcastsListInfiniteQueryKey = (options: Options<SiteBroadcastsListData>): QueryKey<Options<SiteBroadcastsListData>> => createQueryKey('siteBroadcastsList', options, true);
@@ -500,62 +500,62 @@ export const siteBroadcastsListInfiniteQueryKey = (options: Options<SiteBroadcas
  * List resources for the site UI
  */
 export const siteBroadcastsListInfiniteOptions = (options: Options<SiteBroadcastsListData>) => {
-    const opts = infiniteQueryOptions<SiteBroadcastsListResponse, SiteBroadcastsListError, InfiniteData<SiteBroadcastsListResponse>, QueryKey<Options<SiteBroadcastsListData>>, number | Pick<QueryKey<Options<SiteBroadcastsListData>>[0], 'body' | 'headers' | 'path' | 'query'>>(
-    // @ts-ignore
-    {
-        queryFn: async ({ pageParam, queryKey, signal }) => {
-            // @ts-ignore
-            const page: Pick<QueryKey<Options<SiteBroadcastsListData>>[0], 'body' | 'headers' | 'path' | 'query'> = typeof pageParam === 'object' ? pageParam : {
-                query: {
-                    page: pageParam
-                }
-            };
-            const params = createInfiniteParams(queryKey, page);
-            const { data } = await siteBroadcastsList({
-                ...options,
-                ...params,
-                signal,
-                throwOnError: true
-            });
-            return data;
-        },
-        queryKey: siteBroadcastsListInfiniteQueryKey(options)
-    });
-    return opts as Omit<typeof opts, 'initialData'>;
+  const opts = infiniteQueryOptions<SiteBroadcastsListResponse, SiteBroadcastsListError, InfiniteData<SiteBroadcastsListResponse>, QueryKey<Options<SiteBroadcastsListData>>, number | Pick<QueryKey<Options<SiteBroadcastsListData>>[0], 'body' | 'headers' | 'path' | 'query'>>(
+  // @ts-ignore
+  {
+    queryFn: async ({ pageParam, queryKey, signal }) => {
+      // @ts-ignore
+      const page: Pick<QueryKey<Options<SiteBroadcastsListData>>[0], 'body' | 'headers' | 'path' | 'query'> = typeof pageParam === 'object' ? pageParam : {
+        query: {
+          page: pageParam
+        }
+      };
+      const params = createInfiniteParams(queryKey, page);
+      const { data } = await siteBroadcastsList({
+        ...options,
+        ...params,
+        signal,
+        throwOnError: true
+      });
+      return data;
+    },
+    queryKey: siteBroadcastsListInfiniteQueryKey(options)
+  });
+  return opts as Omit<typeof opts, 'initialData'>;
 };
 
 /**
  * Create a resource from the site UI
  */
 export const siteBroadcastsCreateMutation = (options?: Partial<Options<SiteBroadcastsCreateData>>): UseMutationOptions<SiteBroadcastsCreateResponse, SiteBroadcastsCreateError, Options<SiteBroadcastsCreateData>> => {
-    const mutationOptions: UseMutationOptions<SiteBroadcastsCreateResponse, SiteBroadcastsCreateError, Options<SiteBroadcastsCreateData>> = {
-        mutationFn: async (fnOptions) => {
-            const { data } = await siteBroadcastsCreate({
-                ...options,
-                ...fnOptions,
-                throwOnError: true
-            });
-            return data;
-        }
-    };
-    return mutationOptions;
+  const mutationOptions: UseMutationOptions<SiteBroadcastsCreateResponse, SiteBroadcastsCreateError, Options<SiteBroadcastsCreateData>> = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await siteBroadcastsCreate({
+        ...options,
+        ...fnOptions,
+        throwOnError: true
+      });
+      return data;
+    }
+  };
+  return mutationOptions;
 };
 
 /**
  * Delete a resource from the site UI
  */
 export const siteBroadcastsDeleteMutation = (options?: Partial<Options<SiteBroadcastsDeleteData>>): UseMutationOptions<SiteBroadcastsDeleteResponse, SiteBroadcastsDeleteError, Options<SiteBroadcastsDeleteData>> => {
-    const mutationOptions: UseMutationOptions<SiteBroadcastsDeleteResponse, SiteBroadcastsDeleteError, Options<SiteBroadcastsDeleteData>> = {
-        mutationFn: async (fnOptions) => {
-            const { data } = await siteBroadcastsDelete({
-                ...options,
-                ...fnOptions,
-                throwOnError: true
-            });
-            return data;
-        }
-    };
-    return mutationOptions;
+  const mutationOptions: UseMutationOptions<SiteBroadcastsDeleteResponse, SiteBroadcastsDeleteError, Options<SiteBroadcastsDeleteData>> = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await siteBroadcastsDelete({
+        ...options,
+        ...fnOptions,
+        throwOnError: true
+      });
+      return data;
+    }
+  };
+  return mutationOptions;
 };
 
 export const siteBroadcastsGetQueryKey = (options: Options<SiteBroadcastsGetData>) => createQueryKey('siteBroadcastsGet', options);
@@ -564,84 +564,84 @@ export const siteBroadcastsGetQueryKey = (options: Options<SiteBroadcastsGetData
  * Get a resource by ID for the site UI
  */
 export const siteBroadcastsGetOptions = (options: Options<SiteBroadcastsGetData>) => queryOptions<SiteBroadcastsGetResponse, SiteBroadcastsGetError, SiteBroadcastsGetResponse, ReturnType<typeof siteBroadcastsGetQueryKey>>({
-    queryFn: async ({ queryKey, signal }) => {
-        const { data } = await siteBroadcastsGet({
-            ...options,
-            ...queryKey[0],
-            signal,
-            throwOnError: true
-        });
-        return data;
-    },
-    queryKey: siteBroadcastsGetQueryKey(options)
+  queryFn: async ({ queryKey, signal }) => {
+    const { data } = await siteBroadcastsGet({
+      ...options,
+      ...queryKey[0],
+      signal,
+      throwOnError: true
+    });
+    return data;
+  },
+  queryKey: siteBroadcastsGetQueryKey(options)
 });
 
 /**
  * Update a resource from the site UI
  */
 export const siteBroadcastsUpdateMutation = (options?: Partial<Options<SiteBroadcastsUpdateData>>): UseMutationOptions<SiteBroadcastsUpdateResponse, SiteBroadcastsUpdateError, Options<SiteBroadcastsUpdateData>> => {
-    const mutationOptions: UseMutationOptions<SiteBroadcastsUpdateResponse, SiteBroadcastsUpdateError, Options<SiteBroadcastsUpdateData>> = {
-        mutationFn: async (fnOptions) => {
-            const { data } = await siteBroadcastsUpdate({
-                ...options,
-                ...fnOptions,
-                throwOnError: true
-            });
-            return data;
-        }
-    };
-    return mutationOptions;
+  const mutationOptions: UseMutationOptions<SiteBroadcastsUpdateResponse, SiteBroadcastsUpdateError, Options<SiteBroadcastsUpdateData>> = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await siteBroadcastsUpdate({
+        ...options,
+        ...fnOptions,
+        throwOnError: true
+      });
+      return data;
+    }
+  };
+  return mutationOptions;
 };
 
 /**
  * Schedule a broadcast to send at a future time
  */
 export const siteBroadcastsScheduleMutation = (options?: Partial<Options<SiteBroadcastsScheduleData>>): UseMutationOptions<SiteBroadcastsScheduleResponse, SiteBroadcastsScheduleError, Options<SiteBroadcastsScheduleData>> => {
-    const mutationOptions: UseMutationOptions<SiteBroadcastsScheduleResponse, SiteBroadcastsScheduleError, Options<SiteBroadcastsScheduleData>> = {
-        mutationFn: async (fnOptions) => {
-            const { data } = await siteBroadcastsSchedule({
-                ...options,
-                ...fnOptions,
-                throwOnError: true
-            });
-            return data;
-        }
-    };
-    return mutationOptions;
+  const mutationOptions: UseMutationOptions<SiteBroadcastsScheduleResponse, SiteBroadcastsScheduleError, Options<SiteBroadcastsScheduleData>> = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await siteBroadcastsSchedule({
+        ...options,
+        ...fnOptions,
+        throwOnError: true
+      });
+      return data;
+    }
+  };
+  return mutationOptions;
 };
 
 /**
  * Send a broadcast immediately
  */
 export const siteBroadcastsSendMutation = (options?: Partial<Options<SiteBroadcastsSendData>>): UseMutationOptions<SiteBroadcastsSendResponse, SiteBroadcastsSendError, Options<SiteBroadcastsSendData>> => {
-    const mutationOptions: UseMutationOptions<SiteBroadcastsSendResponse, SiteBroadcastsSendError, Options<SiteBroadcastsSendData>> = {
-        mutationFn: async (fnOptions) => {
-            const { data } = await siteBroadcastsSend({
-                ...options,
-                ...fnOptions,
-                throwOnError: true
-            });
-            return data;
-        }
-    };
-    return mutationOptions;
+  const mutationOptions: UseMutationOptions<SiteBroadcastsSendResponse, SiteBroadcastsSendError, Options<SiteBroadcastsSendData>> = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await siteBroadcastsSend({
+        ...options,
+        ...fnOptions,
+        throwOnError: true
+      });
+      return data;
+    }
+  };
+  return mutationOptions;
 };
 
 /**
  * Send a one-off rendered preview to a single address
  */
 export const siteBroadcastsTestSendMutation = (options?: Partial<Options<SiteBroadcastsTestSendData>>): UseMutationOptions<SiteBroadcastsTestSendResponse, SiteBroadcastsTestSendError, Options<SiteBroadcastsTestSendData>> => {
-    const mutationOptions: UseMutationOptions<SiteBroadcastsTestSendResponse, SiteBroadcastsTestSendError, Options<SiteBroadcastsTestSendData>> = {
-        mutationFn: async (fnOptions) => {
-            const { data } = await siteBroadcastsTestSend({
-                ...options,
-                ...fnOptions,
-                throwOnError: true
-            });
-            return data;
-        }
-    };
-    return mutationOptions;
+  const mutationOptions: UseMutationOptions<SiteBroadcastsTestSendResponse, SiteBroadcastsTestSendError, Options<SiteBroadcastsTestSendData>> = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await siteBroadcastsTestSend({
+        ...options,
+        ...fnOptions,
+        throwOnError: true
+      });
+      return data;
+    }
+  };
+  return mutationOptions;
 };
 
 export const siteContactsListQueryKey = (options: Options<SiteContactsListData>) => createQueryKey('siteContactsList', options);
@@ -650,16 +650,16 @@ export const siteContactsListQueryKey = (options: Options<SiteContactsListData>)
  * List resources for the site UI
  */
 export const siteContactsListOptions = (options: Options<SiteContactsListData>) => queryOptions<SiteContactsListResponse, SiteContactsListError, SiteContactsListResponse, ReturnType<typeof siteContactsListQueryKey>>({
-    queryFn: async ({ queryKey, signal }) => {
-        const { data } = await siteContactsList({
-            ...options,
-            ...queryKey[0],
-            signal,
-            throwOnError: true
-        });
-        return data;
-    },
-    queryKey: siteContactsListQueryKey(options)
+  queryFn: async ({ queryKey, signal }) => {
+    const { data } = await siteContactsList({
+      ...options,
+      ...queryKey[0],
+      signal,
+      throwOnError: true
+    });
+    return data;
+  },
+  queryKey: siteContactsListQueryKey(options)
 });
 
 export const siteContactsListInfiniteQueryKey = (options: Options<SiteContactsListData>): QueryKey<Options<SiteContactsListData>> => createQueryKey('siteContactsList', options, true);
@@ -668,62 +668,62 @@ export const siteContactsListInfiniteQueryKey = (options: Options<SiteContactsLi
  * List resources for the site UI
  */
 export const siteContactsListInfiniteOptions = (options: Options<SiteContactsListData>) => {
-    const opts = infiniteQueryOptions<SiteContactsListResponse, SiteContactsListError, InfiniteData<SiteContactsListResponse>, QueryKey<Options<SiteContactsListData>>, number | Pick<QueryKey<Options<SiteContactsListData>>[0], 'body' | 'headers' | 'path' | 'query'>>(
-    // @ts-ignore
-    {
-        queryFn: async ({ pageParam, queryKey, signal }) => {
-            // @ts-ignore
-            const page: Pick<QueryKey<Options<SiteContactsListData>>[0], 'body' | 'headers' | 'path' | 'query'> = typeof pageParam === 'object' ? pageParam : {
-                query: {
-                    page: pageParam
-                }
-            };
-            const params = createInfiniteParams(queryKey, page);
-            const { data } = await siteContactsList({
-                ...options,
-                ...params,
-                signal,
-                throwOnError: true
-            });
-            return data;
-        },
-        queryKey: siteContactsListInfiniteQueryKey(options)
-    });
-    return opts as Omit<typeof opts, 'initialData'>;
+  const opts = infiniteQueryOptions<SiteContactsListResponse, SiteContactsListError, InfiniteData<SiteContactsListResponse>, QueryKey<Options<SiteContactsListData>>, number | Pick<QueryKey<Options<SiteContactsListData>>[0], 'body' | 'headers' | 'path' | 'query'>>(
+  // @ts-ignore
+  {
+    queryFn: async ({ pageParam, queryKey, signal }) => {
+      // @ts-ignore
+      const page: Pick<QueryKey<Options<SiteContactsListData>>[0], 'body' | 'headers' | 'path' | 'query'> = typeof pageParam === 'object' ? pageParam : {
+        query: {
+          page: pageParam
+        }
+      };
+      const params = createInfiniteParams(queryKey, page);
+      const { data } = await siteContactsList({
+        ...options,
+        ...params,
+        signal,
+        throwOnError: true
+      });
+      return data;
+    },
+    queryKey: siteContactsListInfiniteQueryKey(options)
+  });
+  return opts as Omit<typeof opts, 'initialData'>;
 };
 
 /**
  * Create a resource from the site UI
  */
 export const siteContactsCreateMutation = (options?: Partial<Options<SiteContactsCreateData>>): UseMutationOptions<SiteContactsCreateResponse, SiteContactsCreateError, Options<SiteContactsCreateData>> => {
-    const mutationOptions: UseMutationOptions<SiteContactsCreateResponse, SiteContactsCreateError, Options<SiteContactsCreateData>> = {
-        mutationFn: async (fnOptions) => {
-            const { data } = await siteContactsCreate({
-                ...options,
-                ...fnOptions,
-                throwOnError: true
-            });
-            return data;
-        }
-    };
-    return mutationOptions;
+  const mutationOptions: UseMutationOptions<SiteContactsCreateResponse, SiteContactsCreateError, Options<SiteContactsCreateData>> = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await siteContactsCreate({
+        ...options,
+        ...fnOptions,
+        throwOnError: true
+      });
+      return data;
+    }
+  };
+  return mutationOptions;
 };
 
 /**
  * Delete a resource from the site UI
  */
 export const siteContactsDeleteMutation = (options?: Partial<Options<SiteContactsDeleteData>>): UseMutationOptions<SiteContactsDeleteResponse, SiteContactsDeleteError, Options<SiteContactsDeleteData>> => {
-    const mutationOptions: UseMutationOptions<SiteContactsDeleteResponse, SiteContactsDeleteError, Options<SiteContactsDeleteData>> = {
-        mutationFn: async (fnOptions) => {
-            const { data } = await siteContactsDelete({
-                ...options,
-                ...fnOptions,
-                throwOnError: true
-            });
-            return data;
-        }
-    };
-    return mutationOptions;
+  const mutationOptions: UseMutationOptions<SiteContactsDeleteResponse, SiteContactsDeleteError, Options<SiteContactsDeleteData>> = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await siteContactsDelete({
+        ...options,
+        ...fnOptions,
+        throwOnError: true
+      });
+      return data;
+    }
+  };
+  return mutationOptions;
 };
 
 export const siteContactsGetQueryKey = (options: Options<SiteContactsGetData>) => createQueryKey('siteContactsGet', options);
@@ -732,33 +732,33 @@ export const siteContactsGetQueryKey = (options: Options<SiteContactsGetData>) =
  * Get a resource by ID for the site UI
  */
 export const siteContactsGetOptions = (options: Options<SiteContactsGetData>) => queryOptions<SiteContactsGetResponse, SiteContactsGetError, SiteContactsGetResponse, ReturnType<typeof siteContactsGetQueryKey>>({
-    queryFn: async ({ queryKey, signal }) => {
-        const { data } = await siteContactsGet({
-            ...options,
-            ...queryKey[0],
-            signal,
-            throwOnError: true
-        });
-        return data;
-    },
-    queryKey: siteContactsGetQueryKey(options)
+  queryFn: async ({ queryKey, signal }) => {
+    const { data } = await siteContactsGet({
+      ...options,
+      ...queryKey[0],
+      signal,
+      throwOnError: true
+    });
+    return data;
+  },
+  queryKey: siteContactsGetQueryKey(options)
 });
 
 /**
  * Update a resource from the site UI
  */
 export const siteContactsUpdateMutation = (options?: Partial<Options<SiteContactsUpdateData>>): UseMutationOptions<SiteContactsUpdateResponse, SiteContactsUpdateError, Options<SiteContactsUpdateData>> => {
-    const mutationOptions: UseMutationOptions<SiteContactsUpdateResponse, SiteContactsUpdateError, Options<SiteContactsUpdateData>> = {
-        mutationFn: async (fnOptions) => {
-            const { data } = await siteContactsUpdate({
-                ...options,
-                ...fnOptions,
-                throwOnError: true
-            });
-            return data;
-        }
-    };
-    return mutationOptions;
+  const mutationOptions: UseMutationOptions<SiteContactsUpdateResponse, SiteContactsUpdateError, Options<SiteContactsUpdateData>> = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await siteContactsUpdate({
+        ...options,
+        ...fnOptions,
+        throwOnError: true
+      });
+      return data;
+    }
+  };
+  return mutationOptions;
 };
 
 export const siteCustomFieldsListQueryKey = (options: Options<SiteCustomFieldsListData>) => createQueryKey('siteCustomFieldsList', options);
@@ -767,16 +767,16 @@ export const siteCustomFieldsListQueryKey = (options: Options<SiteCustomFieldsLi
  * List the workspace's custom field definitions
  */
 export const siteCustomFieldsListOptions = (options: Options<SiteCustomFieldsListData>) => queryOptions<SiteCustomFieldsListResponse, SiteCustomFieldsListError, SiteCustomFieldsListResponse, ReturnType<typeof siteCustomFieldsListQueryKey>>({
-    queryFn: async ({ queryKey, signal }) => {
-        const { data } = await siteCustomFieldsList({
-            ...options,
-            ...queryKey[0],
-            signal,
-            throwOnError: true
-        });
-        return data;
-    },
-    queryKey: siteCustomFieldsListQueryKey(options)
+  queryFn: async ({ queryKey, signal }) => {
+    const { data } = await siteCustomFieldsList({
+      ...options,
+      ...queryKey[0],
+      signal,
+      throwOnError: true
+    });
+    return data;
+  },
+  queryKey: siteCustomFieldsListQueryKey(options)
 });
 
 export const siteEventsListQueryKey = (options: Options<SiteEventsListData>) => createQueryKey('siteEventsList', options);
@@ -785,16 +785,16 @@ export const siteEventsListQueryKey = (options: Options<SiteEventsListData>) => 
  * List events for the site UI (most recent first)
  */
 export const siteEventsListOptions = (options: Options<SiteEventsListData>) => queryOptions<SiteEventsListResponse, SiteEventsListError, SiteEventsListResponse, ReturnType<typeof siteEventsListQueryKey>>({
-    queryFn: async ({ queryKey, signal }) => {
-        const { data } = await siteEventsList({
-            ...options,
-            ...queryKey[0],
-            signal,
-            throwOnError: true
-        });
-        return data;
-    },
-    queryKey: siteEventsListQueryKey(options)
+  queryFn: async ({ queryKey, signal }) => {
+    const { data } = await siteEventsList({
+      ...options,
+      ...queryKey[0],
+      signal,
+      throwOnError: true
+    });
+    return data;
+  },
+  queryKey: siteEventsListQueryKey(options)
 });
 
 export const siteEventsListInfiniteQueryKey = (options: Options<SiteEventsListData>): QueryKey<Options<SiteEventsListData>> => createQueryKey('siteEventsList', options, true);
@@ -803,28 +803,28 @@ export const siteEventsListInfiniteQueryKey = (options: Options<SiteEventsListDa
  * List events for the site UI (most recent first)
  */
 export const siteEventsListInfiniteOptions = (options: Options<SiteEventsListData>) => {
-    const opts = infiniteQueryOptions<SiteEventsListResponse, SiteEventsListError, InfiniteData<SiteEventsListResponse>, QueryKey<Options<SiteEventsListData>>, number | Pick<QueryKey<Options<SiteEventsListData>>[0], 'body' | 'headers' | 'path' | 'query'>>(
-    // @ts-ignore
-    {
-        queryFn: async ({ pageParam, queryKey, signal }) => {
-            // @ts-ignore
-            const page: Pick<QueryKey<Options<SiteEventsListData>>[0], 'body' | 'headers' | 'path' | 'query'> = typeof pageParam === 'object' ? pageParam : {
-                query: {
-                    page: pageParam
-                }
-            };
-            const params = createInfiniteParams(queryKey, page);
-            const { data } = await siteEventsList({
-                ...options,
-                ...params,
-                signal,
-                throwOnError: true
-            });
-            return data;
-        },
-        queryKey: siteEventsListInfiniteQueryKey(options)
-    });
-    return opts as Omit<typeof opts, 'initialData'>;
+  const opts = infiniteQueryOptions<SiteEventsListResponse, SiteEventsListError, InfiniteData<SiteEventsListResponse>, QueryKey<Options<SiteEventsListData>>, number | Pick<QueryKey<Options<SiteEventsListData>>[0], 'body' | 'headers' | 'path' | 'query'>>(
+  // @ts-ignore
+  {
+    queryFn: async ({ pageParam, queryKey, signal }) => {
+      // @ts-ignore
+      const page: Pick<QueryKey<Options<SiteEventsListData>>[0], 'body' | 'headers' | 'path' | 'query'> = typeof pageParam === 'object' ? pageParam : {
+        query: {
+          page: pageParam
+        }
+      };
+      const params = createInfiniteParams(queryKey, page);
+      const { data } = await siteEventsList({
+        ...options,
+        ...params,
+        signal,
+        throwOnError: true
+      });
+      return data;
+    },
+    queryKey: siteEventsListInfiniteQueryKey(options)
+  });
+  return opts as Omit<typeof opts, 'initialData'>;
 };
 
 export const siteEventsActionsQueryKey = (options: Options<SiteEventsActionsData>) => createQueryKey('siteEventsActions', options);
@@ -833,16 +833,16 @@ export const siteEventsActionsQueryKey = (options: Options<SiteEventsActionsData
  * Distinct event actions in the workspace, sorted — powers the segment builder
  */
 export const siteEventsActionsOptions = (options: Options<SiteEventsActionsData>) => queryOptions<SiteEventsActionsResponse, SiteEventsActionsError, SiteEventsActionsResponse, ReturnType<typeof siteEventsActionsQueryKey>>({
-    queryFn: async ({ queryKey, signal }) => {
-        const { data } = await siteEventsActions({
-            ...options,
-            ...queryKey[0],
-            signal,
-            throwOnError: true
-        });
-        return data;
-    },
-    queryKey: siteEventsActionsQueryKey(options)
+  queryFn: async ({ queryKey, signal }) => {
+    const { data } = await siteEventsActions({
+      ...options,
+      ...queryKey[0],
+      signal,
+      throwOnError: true
+    });
+    return data;
+  },
+  queryKey: siteEventsActionsQueryKey(options)
 });
 
 export const siteIntegrationsListQueryKey = (options: Options<SiteIntegrationsListData>) => createQueryKey('siteIntegrationsList', options);
@@ -851,50 +851,50 @@ export const siteIntegrationsListQueryKey = (options: Options<SiteIntegrationsLi
  * List the workspace's sending-provider integrations
  */
 export const siteIntegrationsListOptions = (options: Options<SiteIntegrationsListData>) => queryOptions<SiteIntegrationsListResponse, SiteIntegrationsListError, SiteIntegrationsListResponse, ReturnType<typeof siteIntegrationsListQueryKey>>({
-    queryFn: async ({ queryKey, signal }) => {
-        const { data } = await siteIntegrationsList({
-            ...options,
-            ...queryKey[0],
-            signal,
-            throwOnError: true
-        });
-        return data;
-    },
-    queryKey: siteIntegrationsListQueryKey(options)
+  queryFn: async ({ queryKey, signal }) => {
+    const { data } = await siteIntegrationsList({
+      ...options,
+      ...queryKey[0],
+      signal,
+      throwOnError: true
+    });
+    return data;
+  },
+  queryKey: siteIntegrationsListQueryKey(options)
 });
 
 /**
  * Create an integration
  */
 export const siteIntegrationsCreateMutation = (options?: Partial<Options<SiteIntegrationsCreateData>>): UseMutationOptions<SiteIntegrationsCreateResponse, SiteIntegrationsCreateError, Options<SiteIntegrationsCreateData>> => {
-    const mutationOptions: UseMutationOptions<SiteIntegrationsCreateResponse, SiteIntegrationsCreateError, Options<SiteIntegrationsCreateData>> = {
-        mutationFn: async (fnOptions) => {
-            const { data } = await siteIntegrationsCreate({
-                ...options,
-                ...fnOptions,
-                throwOnError: true
-            });
-            return data;
-        }
-    };
-    return mutationOptions;
+  const mutationOptions: UseMutationOptions<SiteIntegrationsCreateResponse, SiteIntegrationsCreateError, Options<SiteIntegrationsCreateData>> = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await siteIntegrationsCreate({
+        ...options,
+        ...fnOptions,
+        throwOnError: true
+      });
+      return data;
+    }
+  };
+  return mutationOptions;
 };
 
 /**
  * Delete an integration
  */
 export const siteIntegrationsDeleteMutation = (options?: Partial<Options<SiteIntegrationsDeleteData>>): UseMutationOptions<SiteIntegrationsDeleteResponse, SiteIntegrationsDeleteError, Options<SiteIntegrationsDeleteData>> => {
-    const mutationOptions: UseMutationOptions<SiteIntegrationsDeleteResponse, SiteIntegrationsDeleteError, Options<SiteIntegrationsDeleteData>> = {
-        mutationFn: async (fnOptions) => {
-            const { data } = await siteIntegrationsDelete({
-                ...options,
-                ...fnOptions,
-                throwOnError: true
-            });
-            return data;
-        }
-    };
-    return mutationOptions;
+  const mutationOptions: UseMutationOptions<SiteIntegrationsDeleteResponse, SiteIntegrationsDeleteError, Options<SiteIntegrationsDeleteData>> = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await siteIntegrationsDelete({
+        ...options,
+        ...fnOptions,
+        throwOnError: true
+      });
+      return data;
+    }
+  };
+  return mutationOptions;
 };
 
 export const siteIntegrationsGetQueryKey = (options: Options<SiteIntegrationsGetData>) => createQueryKey('siteIntegrationsGet', options);
@@ -903,33 +903,33 @@ export const siteIntegrationsGetQueryKey = (options: Options<SiteIntegrationsGet
  * Get an integration by id
  */
 export const siteIntegrationsGetOptions = (options: Options<SiteIntegrationsGetData>) => queryOptions<SiteIntegrationsGetResponse, SiteIntegrationsGetError, SiteIntegrationsGetResponse, ReturnType<typeof siteIntegrationsGetQueryKey>>({
-    queryFn: async ({ queryKey, signal }) => {
-        const { data } = await siteIntegrationsGet({
-            ...options,
-            ...queryKey[0],
-            signal,
-            throwOnError: true
-        });
-        return data;
-    },
-    queryKey: siteIntegrationsGetQueryKey(options)
+  queryFn: async ({ queryKey, signal }) => {
+    const { data } = await siteIntegrationsGet({
+      ...options,
+      ...queryKey[0],
+      signal,
+      throwOnError: true
+    });
+    return data;
+  },
+  queryKey: siteIntegrationsGetQueryKey(options)
 });
 
 /**
  * Update an integration
  */
 export const siteIntegrationsUpdateMutation = (options?: Partial<Options<SiteIntegrationsUpdateData>>): UseMutationOptions<SiteIntegrationsUpdateResponse, SiteIntegrationsUpdateError, Options<SiteIntegrationsUpdateData>> => {
-    const mutationOptions: UseMutationOptions<SiteIntegrationsUpdateResponse, SiteIntegrationsUpdateError, Options<SiteIntegrationsUpdateData>> = {
-        mutationFn: async (fnOptions) => {
-            const { data } = await siteIntegrationsUpdate({
-                ...options,
-                ...fnOptions,
-                throwOnError: true
-            });
-            return data;
-        }
-    };
-    return mutationOptions;
+  const mutationOptions: UseMutationOptions<SiteIntegrationsUpdateResponse, SiteIntegrationsUpdateError, Options<SiteIntegrationsUpdateData>> = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await siteIntegrationsUpdate({
+        ...options,
+        ...fnOptions,
+        throwOnError: true
+      });
+      return data;
+    }
+  };
+  return mutationOptions;
 };
 
 export const siteInvitationsListQueryKey = (options: Options<SiteInvitationsListData>) => createQueryKey('siteInvitationsList', options);
@@ -938,50 +938,50 @@ export const siteInvitationsListQueryKey = (options: Options<SiteInvitationsList
  * List pending (unaccepted) invitations for the workspace
  */
 export const siteInvitationsListOptions = (options: Options<SiteInvitationsListData>) => queryOptions<SiteInvitationsListResponse, SiteInvitationsListError, SiteInvitationsListResponse, ReturnType<typeof siteInvitationsListQueryKey>>({
-    queryFn: async ({ queryKey, signal }) => {
-        const { data } = await siteInvitationsList({
-            ...options,
-            ...queryKey[0],
-            signal,
-            throwOnError: true
-        });
-        return data;
-    },
-    queryKey: siteInvitationsListQueryKey(options)
+  queryFn: async ({ queryKey, signal }) => {
+    const { data } = await siteInvitationsList({
+      ...options,
+      ...queryKey[0],
+      signal,
+      throwOnError: true
+    });
+    return data;
+  },
+  queryKey: siteInvitationsListQueryKey(options)
 });
 
 /**
  * Invite an email address; the accept link is returned once
  */
 export const siteInvitationsCreateMutation = (options?: Partial<Options<SiteInvitationsCreateData>>): UseMutationOptions<SiteInvitationsCreateResponse, SiteInvitationsCreateError, Options<SiteInvitationsCreateData>> => {
-    const mutationOptions: UseMutationOptions<SiteInvitationsCreateResponse, SiteInvitationsCreateError, Options<SiteInvitationsCreateData>> = {
-        mutationFn: async (fnOptions) => {
-            const { data } = await siteInvitationsCreate({
-                ...options,
-                ...fnOptions,
-                throwOnError: true
-            });
-            return data;
-        }
-    };
-    return mutationOptions;
+  const mutationOptions: UseMutationOptions<SiteInvitationsCreateResponse, SiteInvitationsCreateError, Options<SiteInvitationsCreateData>> = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await siteInvitationsCreate({
+        ...options,
+        ...fnOptions,
+        throwOnError: true
+      });
+      return data;
+    }
+  };
+  return mutationOptions;
 };
 
 /**
  * Revoke a pending invitation
  */
 export const siteInvitationsDeleteMutation = (options?: Partial<Options<SiteInvitationsDeleteData>>): UseMutationOptions<SiteInvitationsDeleteResponse, SiteInvitationsDeleteError, Options<SiteInvitationsDeleteData>> => {
-    const mutationOptions: UseMutationOptions<SiteInvitationsDeleteResponse, SiteInvitationsDeleteError, Options<SiteInvitationsDeleteData>> = {
-        mutationFn: async (fnOptions) => {
-            const { data } = await siteInvitationsDelete({
-                ...options,
-                ...fnOptions,
-                throwOnError: true
-            });
-            return data;
-        }
-    };
-    return mutationOptions;
+  const mutationOptions: UseMutationOptions<SiteInvitationsDeleteResponse, SiteInvitationsDeleteError, Options<SiteInvitationsDeleteData>> = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await siteInvitationsDelete({
+        ...options,
+        ...fnOptions,
+        throwOnError: true
+      });
+      return data;
+    }
+  };
+  return mutationOptions;
 };
 
 export const siteMembershipsListQueryKey = (options: Options<SiteMembershipsListData>) => createQueryKey('siteMembershipsList', options);
@@ -990,50 +990,50 @@ export const siteMembershipsListQueryKey = (options: Options<SiteMembershipsList
  * List the workspace's members
  */
 export const siteMembershipsListOptions = (options: Options<SiteMembershipsListData>) => queryOptions<SiteMembershipsListResponse, SiteMembershipsListError, SiteMembershipsListResponse, ReturnType<typeof siteMembershipsListQueryKey>>({
-    queryFn: async ({ queryKey, signal }) => {
-        const { data } = await siteMembershipsList({
-            ...options,
-            ...queryKey[0],
-            signal,
-            throwOnError: true
-        });
-        return data;
-    },
-    queryKey: siteMembershipsListQueryKey(options)
+  queryFn: async ({ queryKey, signal }) => {
+    const { data } = await siteMembershipsList({
+      ...options,
+      ...queryKey[0],
+      signal,
+      throwOnError: true
+    });
+    return data;
+  },
+  queryKey: siteMembershipsListQueryKey(options)
 });
 
 /**
  * Remove a member (owner/admin only; the last owner cannot be removed)
  */
 export const siteMembershipsDeleteMutation = (options?: Partial<Options<SiteMembershipsDeleteData>>): UseMutationOptions<SiteMembershipsDeleteResponse, SiteMembershipsDeleteError, Options<SiteMembershipsDeleteData>> => {
-    const mutationOptions: UseMutationOptions<SiteMembershipsDeleteResponse, SiteMembershipsDeleteError, Options<SiteMembershipsDeleteData>> = {
-        mutationFn: async (fnOptions) => {
-            const { data } = await siteMembershipsDelete({
-                ...options,
-                ...fnOptions,
-                throwOnError: true
-            });
-            return data;
-        }
-    };
-    return mutationOptions;
+  const mutationOptions: UseMutationOptions<SiteMembershipsDeleteResponse, SiteMembershipsDeleteError, Options<SiteMembershipsDeleteData>> = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await siteMembershipsDelete({
+        ...options,
+        ...fnOptions,
+        throwOnError: true
+      });
+      return data;
+    }
+  };
+  return mutationOptions;
 };
 
 /**
  * Change a member's role (owner/admin only; owner-only to grant owner)
  */
 export const siteMembershipsUpdateMutation = (options?: Partial<Options<SiteMembershipsUpdateData>>): UseMutationOptions<SiteMembershipsUpdateResponse, SiteMembershipsUpdateError, Options<SiteMembershipsUpdateData>> => {
-    const mutationOptions: UseMutationOptions<SiteMembershipsUpdateResponse, SiteMembershipsUpdateError, Options<SiteMembershipsUpdateData>> = {
-        mutationFn: async (fnOptions) => {
-            const { data } = await siteMembershipsUpdate({
-                ...options,
-                ...fnOptions,
-                throwOnError: true
-            });
-            return data;
-        }
-    };
-    return mutationOptions;
+  const mutationOptions: UseMutationOptions<SiteMembershipsUpdateResponse, SiteMembershipsUpdateError, Options<SiteMembershipsUpdateData>> = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await siteMembershipsUpdate({
+        ...options,
+        ...fnOptions,
+        throwOnError: true
+      });
+      return data;
+    }
+  };
+  return mutationOptions;
 };
 
 export const siteSegmentsListQueryKey = (options: Options<SiteSegmentsListData>) => createQueryKey('siteSegmentsList', options);
@@ -1042,16 +1042,16 @@ export const siteSegmentsListQueryKey = (options: Options<SiteSegmentsListData>)
  * List resources for the site UI
  */
 export const siteSegmentsListOptions = (options: Options<SiteSegmentsListData>) => queryOptions<SiteSegmentsListResponse, SiteSegmentsListError, SiteSegmentsListResponse, ReturnType<typeof siteSegmentsListQueryKey>>({
-    queryFn: async ({ queryKey, signal }) => {
-        const { data } = await siteSegmentsList({
-            ...options,
-            ...queryKey[0],
-            signal,
-            throwOnError: true
-        });
-        return data;
-    },
-    queryKey: siteSegmentsListQueryKey(options)
+  queryFn: async ({ queryKey, signal }) => {
+    const { data } = await siteSegmentsList({
+      ...options,
+      ...queryKey[0],
+      signal,
+      throwOnError: true
+    });
+    return data;
+  },
+  queryKey: siteSegmentsListQueryKey(options)
 });
 
 export const siteSegmentsListInfiniteQueryKey = (options: Options<SiteSegmentsListData>): QueryKey<Options<SiteSegmentsListData>> => createQueryKey('siteSegmentsList', options, true);
@@ -1060,79 +1060,79 @@ export const siteSegmentsListInfiniteQueryKey = (options: Options<SiteSegmentsLi
  * List resources for the site UI
  */
 export const siteSegmentsListInfiniteOptions = (options: Options<SiteSegmentsListData>) => {
-    const opts = infiniteQueryOptions<SiteSegmentsListResponse, SiteSegmentsListError, InfiniteData<SiteSegmentsListResponse>, QueryKey<Options<SiteSegmentsListData>>, number | Pick<QueryKey<Options<SiteSegmentsListData>>[0], 'body' | 'headers' | 'path' | 'query'>>(
-    // @ts-ignore
-    {
-        queryFn: async ({ pageParam, queryKey, signal }) => {
-            // @ts-ignore
-            const page: Pick<QueryKey<Options<SiteSegmentsListData>>[0], 'body' | 'headers' | 'path' | 'query'> = typeof pageParam === 'object' ? pageParam : {
-                query: {
-                    page: pageParam
-                }
-            };
-            const params = createInfiniteParams(queryKey, page);
-            const { data } = await siteSegmentsList({
-                ...options,
-                ...params,
-                signal,
-                throwOnError: true
-            });
-            return data;
-        },
-        queryKey: siteSegmentsListInfiniteQueryKey(options)
-    });
-    return opts as Omit<typeof opts, 'initialData'>;
+  const opts = infiniteQueryOptions<SiteSegmentsListResponse, SiteSegmentsListError, InfiniteData<SiteSegmentsListResponse>, QueryKey<Options<SiteSegmentsListData>>, number | Pick<QueryKey<Options<SiteSegmentsListData>>[0], 'body' | 'headers' | 'path' | 'query'>>(
+  // @ts-ignore
+  {
+    queryFn: async ({ pageParam, queryKey, signal }) => {
+      // @ts-ignore
+      const page: Pick<QueryKey<Options<SiteSegmentsListData>>[0], 'body' | 'headers' | 'path' | 'query'> = typeof pageParam === 'object' ? pageParam : {
+        query: {
+          page: pageParam
+        }
+      };
+      const params = createInfiniteParams(queryKey, page);
+      const { data } = await siteSegmentsList({
+        ...options,
+        ...params,
+        signal,
+        throwOnError: true
+      });
+      return data;
+    },
+    queryKey: siteSegmentsListInfiniteQueryKey(options)
+  });
+  return opts as Omit<typeof opts, 'initialData'>;
 };
 
 /**
  * Create a resource from the site UI
  */
 export const siteSegmentsCreateMutation = (options?: Partial<Options<SiteSegmentsCreateData>>): UseMutationOptions<SiteSegmentsCreateResponse, SiteSegmentsCreateError, Options<SiteSegmentsCreateData>> => {
-    const mutationOptions: UseMutationOptions<SiteSegmentsCreateResponse, SiteSegmentsCreateError, Options<SiteSegmentsCreateData>> = {
-        mutationFn: async (fnOptions) => {
-            const { data } = await siteSegmentsCreate({
-                ...options,
-                ...fnOptions,
-                throwOnError: true
-            });
-            return data;
-        }
-    };
-    return mutationOptions;
+  const mutationOptions: UseMutationOptions<SiteSegmentsCreateResponse, SiteSegmentsCreateError, Options<SiteSegmentsCreateData>> = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await siteSegmentsCreate({
+        ...options,
+        ...fnOptions,
+        throwOnError: true
+      });
+      return data;
+    }
+  };
+  return mutationOptions;
 };
 
 /**
  * Preview how many active contacts match a rule definition
  */
 export const siteSegmentsPreviewMutation = (options?: Partial<Options<SiteSegmentsPreviewData>>): UseMutationOptions<SiteSegmentsPreviewResponse, SiteSegmentsPreviewError, Options<SiteSegmentsPreviewData>> => {
-    const mutationOptions: UseMutationOptions<SiteSegmentsPreviewResponse, SiteSegmentsPreviewError, Options<SiteSegmentsPreviewData>> = {
-        mutationFn: async (fnOptions) => {
-            const { data } = await siteSegmentsPreview({
-                ...options,
-                ...fnOptions,
-                throwOnError: true
-            });
-            return data;
-        }
-    };
-    return mutationOptions;
+  const mutationOptions: UseMutationOptions<SiteSegmentsPreviewResponse, SiteSegmentsPreviewError, Options<SiteSegmentsPreviewData>> = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await siteSegmentsPreview({
+        ...options,
+        ...fnOptions,
+        throwOnError: true
+      });
+      return data;
+    }
+  };
+  return mutationOptions;
 };
 
 /**
  * Delete a resource from the site UI
  */
 export const siteSegmentsDeleteMutation = (options?: Partial<Options<SiteSegmentsDeleteData>>): UseMutationOptions<SiteSegmentsDeleteResponse, SiteSegmentsDeleteError, Options<SiteSegmentsDeleteData>> => {
-    const mutationOptions: UseMutationOptions<SiteSegmentsDeleteResponse, SiteSegmentsDeleteError, Options<SiteSegmentsDeleteData>> = {
-        mutationFn: async (fnOptions) => {
-            const { data } = await siteSegmentsDelete({
-                ...options,
-                ...fnOptions,
-                throwOnError: true
-            });
-            return data;
-        }
-    };
-    return mutationOptions;
+  const mutationOptions: UseMutationOptions<SiteSegmentsDeleteResponse, SiteSegmentsDeleteError, Options<SiteSegmentsDeleteData>> = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await siteSegmentsDelete({
+        ...options,
+        ...fnOptions,
+        throwOnError: true
+      });
+      return data;
+    }
+  };
+  return mutationOptions;
 };
 
 export const siteSegmentsGetQueryKey = (options: Options<SiteSegmentsGetData>) => createQueryKey('siteSegmentsGet', options);
@@ -1141,33 +1141,33 @@ export const siteSegmentsGetQueryKey = (options: Options<SiteSegmentsGetData>) =
  * Get a resource by ID for the site UI
  */
 export const siteSegmentsGetOptions = (options: Options<SiteSegmentsGetData>) => queryOptions<SiteSegmentsGetResponse, SiteSegmentsGetError, SiteSegmentsGetResponse, ReturnType<typeof siteSegmentsGetQueryKey>>({
-    queryFn: async ({ queryKey, signal }) => {
-        const { data } = await siteSegmentsGet({
-            ...options,
-            ...queryKey[0],
-            signal,
-            throwOnError: true
-        });
-        return data;
-    },
-    queryKey: siteSegmentsGetQueryKey(options)
+  queryFn: async ({ queryKey, signal }) => {
+    const { data } = await siteSegmentsGet({
+      ...options,
+      ...queryKey[0],
+      signal,
+      throwOnError: true
+    });
+    return data;
+  },
+  queryKey: siteSegmentsGetQueryKey(options)
 });
 
 /**
  * Update a resource from the site UI
  */
 export const siteSegmentsUpdateMutation = (options?: Partial<Options<SiteSegmentsUpdateData>>): UseMutationOptions<SiteSegmentsUpdateResponse, SiteSegmentsUpdateError, Options<SiteSegmentsUpdateData>> => {
-    const mutationOptions: UseMutationOptions<SiteSegmentsUpdateResponse, SiteSegmentsUpdateError, Options<SiteSegmentsUpdateData>> = {
-        mutationFn: async (fnOptions) => {
-            const { data } = await siteSegmentsUpdate({
-                ...options,
-                ...fnOptions,
-                throwOnError: true
-            });
-            return data;
-        }
-    };
-    return mutationOptions;
+  const mutationOptions: UseMutationOptions<SiteSegmentsUpdateResponse, SiteSegmentsUpdateError, Options<SiteSegmentsUpdateData>> = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await siteSegmentsUpdate({
+        ...options,
+        ...fnOptions,
+        throwOnError: true
+      });
+      return data;
+    }
+  };
+  return mutationOptions;
 };
 
 export const siteSendingDomainsListQueryKey = (options: Options<SiteSendingDomainsListData>) => createQueryKey('siteSendingDomainsList', options);
@@ -1176,16 +1176,16 @@ export const siteSendingDomainsListQueryKey = (options: Options<SiteSendingDomai
  * List sending domains for the site UI
  */
 export const siteSendingDomainsListOptions = (options: Options<SiteSendingDomainsListData>) => queryOptions<SiteSendingDomainsListResponse, SiteSendingDomainsListError, SiteSendingDomainsListResponse, ReturnType<typeof siteSendingDomainsListQueryKey>>({
-    queryFn: async ({ queryKey, signal }) => {
-        const { data } = await siteSendingDomainsList({
-            ...options,
-            ...queryKey[0],
-            signal,
-            throwOnError: true
-        });
-        return data;
-    },
-    queryKey: siteSendingDomainsListQueryKey(options)
+  queryFn: async ({ queryKey, signal }) => {
+    const { data } = await siteSendingDomainsList({
+      ...options,
+      ...queryKey[0],
+      signal,
+      throwOnError: true
+    });
+    return data;
+  },
+  queryKey: siteSendingDomainsListQueryKey(options)
 });
 
 export const siteSendingDomainsListInfiniteQueryKey = (options: Options<SiteSendingDomainsListData>): QueryKey<Options<SiteSendingDomainsListData>> => createQueryKey('siteSendingDomainsList', options, true);
@@ -1194,62 +1194,62 @@ export const siteSendingDomainsListInfiniteQueryKey = (options: Options<SiteSend
  * List sending domains for the site UI
  */
 export const siteSendingDomainsListInfiniteOptions = (options: Options<SiteSendingDomainsListData>) => {
-    const opts = infiniteQueryOptions<SiteSendingDomainsListResponse, SiteSendingDomainsListError, InfiniteData<SiteSendingDomainsListResponse>, QueryKey<Options<SiteSendingDomainsListData>>, number | Pick<QueryKey<Options<SiteSendingDomainsListData>>[0], 'body' | 'headers' | 'path' | 'query'>>(
-    // @ts-ignore
-    {
-        queryFn: async ({ pageParam, queryKey, signal }) => {
-            // @ts-ignore
-            const page: Pick<QueryKey<Options<SiteSendingDomainsListData>>[0], 'body' | 'headers' | 'path' | 'query'> = typeof pageParam === 'object' ? pageParam : {
-                query: {
-                    page: pageParam
-                }
-            };
-            const params = createInfiniteParams(queryKey, page);
-            const { data } = await siteSendingDomainsList({
-                ...options,
-                ...params,
-                signal,
-                throwOnError: true
-            });
-            return data;
-        },
-        queryKey: siteSendingDomainsListInfiniteQueryKey(options)
-    });
-    return opts as Omit<typeof opts, 'initialData'>;
+  const opts = infiniteQueryOptions<SiteSendingDomainsListResponse, SiteSendingDomainsListError, InfiniteData<SiteSendingDomainsListResponse>, QueryKey<Options<SiteSendingDomainsListData>>, number | Pick<QueryKey<Options<SiteSendingDomainsListData>>[0], 'body' | 'headers' | 'path' | 'query'>>(
+  // @ts-ignore
+  {
+    queryFn: async ({ pageParam, queryKey, signal }) => {
+      // @ts-ignore
+      const page: Pick<QueryKey<Options<SiteSendingDomainsListData>>[0], 'body' | 'headers' | 'path' | 'query'> = typeof pageParam === 'object' ? pageParam : {
+        query: {
+          page: pageParam
+        }
+      };
+      const params = createInfiniteParams(queryKey, page);
+      const { data } = await siteSendingDomainsList({
+        ...options,
+        ...params,
+        signal,
+        throwOnError: true
+      });
+      return data;
+    },
+    queryKey: siteSendingDomainsListInfiniteQueryKey(options)
+  });
+  return opts as Omit<typeof opts, 'initialData'>;
 };
 
 /**
  * Add a sending domain; mints the DKIM keypair and returns the DNS records
  */
 export const siteSendingDomainsCreateMutation = (options?: Partial<Options<SiteSendingDomainsCreateData>>): UseMutationOptions<SiteSendingDomainsCreateResponse, SiteSendingDomainsCreateError, Options<SiteSendingDomainsCreateData>> => {
-    const mutationOptions: UseMutationOptions<SiteSendingDomainsCreateResponse, SiteSendingDomainsCreateError, Options<SiteSendingDomainsCreateData>> = {
-        mutationFn: async (fnOptions) => {
-            const { data } = await siteSendingDomainsCreate({
-                ...options,
-                ...fnOptions,
-                throwOnError: true
-            });
-            return data;
-        }
-    };
-    return mutationOptions;
+  const mutationOptions: UseMutationOptions<SiteSendingDomainsCreateResponse, SiteSendingDomainsCreateError, Options<SiteSendingDomainsCreateData>> = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await siteSendingDomainsCreate({
+        ...options,
+        ...fnOptions,
+        throwOnError: true
+      });
+      return data;
+    }
+  };
+  return mutationOptions;
 };
 
 /**
  * Delete a sending domain
  */
 export const siteSendingDomainsDeleteMutation = (options?: Partial<Options<SiteSendingDomainsDeleteData>>): UseMutationOptions<SiteSendingDomainsDeleteResponse, SiteSendingDomainsDeleteError, Options<SiteSendingDomainsDeleteData>> => {
-    const mutationOptions: UseMutationOptions<SiteSendingDomainsDeleteResponse, SiteSendingDomainsDeleteError, Options<SiteSendingDomainsDeleteData>> = {
-        mutationFn: async (fnOptions) => {
-            const { data } = await siteSendingDomainsDelete({
-                ...options,
-                ...fnOptions,
-                throwOnError: true
-            });
-            return data;
-        }
-    };
-    return mutationOptions;
+  const mutationOptions: UseMutationOptions<SiteSendingDomainsDeleteResponse, SiteSendingDomainsDeleteError, Options<SiteSendingDomainsDeleteData>> = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await siteSendingDomainsDelete({
+        ...options,
+        ...fnOptions,
+        throwOnError: true
+      });
+      return data;
+    }
+  };
+  return mutationOptions;
 };
 
 export const siteSendingDomainsGetQueryKey = (options: Options<SiteSendingDomainsGetData>) => createQueryKey('siteSendingDomainsGet', options);
@@ -1258,33 +1258,33 @@ export const siteSendingDomainsGetQueryKey = (options: Options<SiteSendingDomain
  * Get a sending domain by ID for the site UI
  */
 export const siteSendingDomainsGetOptions = (options: Options<SiteSendingDomainsGetData>) => queryOptions<SiteSendingDomainsGetResponse, SiteSendingDomainsGetError, SiteSendingDomainsGetResponse, ReturnType<typeof siteSendingDomainsGetQueryKey>>({
-    queryFn: async ({ queryKey, signal }) => {
-        const { data } = await siteSendingDomainsGet({
-            ...options,
-            ...queryKey[0],
-            signal,
-            throwOnError: true
-        });
-        return data;
-    },
-    queryKey: siteSendingDomainsGetQueryKey(options)
+  queryFn: async ({ queryKey, signal }) => {
+    const { data } = await siteSendingDomainsGet({
+      ...options,
+      ...queryKey[0],
+      signal,
+      throwOnError: true
+    });
+    return data;
+  },
+  queryKey: siteSendingDomainsGetQueryKey(options)
 });
 
 /**
  * Trigger an immediate DKIM re-check (fire-and-forget)
  */
 export const siteSendingDomainsVerifyMutation = (options?: Partial<Options<SiteSendingDomainsVerifyData>>): UseMutationOptions<SiteSendingDomainsVerifyResponse, SiteSendingDomainsVerifyError, Options<SiteSendingDomainsVerifyData>> => {
-    const mutationOptions: UseMutationOptions<SiteSendingDomainsVerifyResponse, SiteSendingDomainsVerifyError, Options<SiteSendingDomainsVerifyData>> = {
-        mutationFn: async (fnOptions) => {
-            const { data } = await siteSendingDomainsVerify({
-                ...options,
-                ...fnOptions,
-                throwOnError: true
-            });
-            return data;
-        }
-    };
-    return mutationOptions;
+  const mutationOptions: UseMutationOptions<SiteSendingDomainsVerifyResponse, SiteSendingDomainsVerifyError, Options<SiteSendingDomainsVerifyData>> = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await siteSendingDomainsVerify({
+        ...options,
+        ...fnOptions,
+        throwOnError: true
+      });
+      return data;
+    }
+  };
+  return mutationOptions;
 };
 
 export const siteSuppressionsListQueryKey = (options: Options<SiteSuppressionsListData>) => createQueryKey('siteSuppressionsList', options);
@@ -1293,16 +1293,16 @@ export const siteSuppressionsListQueryKey = (options: Options<SiteSuppressionsLi
  * List suppressed addresses
  */
 export const siteSuppressionsListOptions = (options: Options<SiteSuppressionsListData>) => queryOptions<SiteSuppressionsListResponse, SiteSuppressionsListError, SiteSuppressionsListResponse, ReturnType<typeof siteSuppressionsListQueryKey>>({
-    queryFn: async ({ queryKey, signal }) => {
-        const { data } = await siteSuppressionsList({
-            ...options,
-            ...queryKey[0],
-            signal,
-            throwOnError: true
-        });
-        return data;
-    },
-    queryKey: siteSuppressionsListQueryKey(options)
+  queryFn: async ({ queryKey, signal }) => {
+    const { data } = await siteSuppressionsList({
+      ...options,
+      ...queryKey[0],
+      signal,
+      throwOnError: true
+    });
+    return data;
+  },
+  queryKey: siteSuppressionsListQueryKey(options)
 });
 
 export const siteSuppressionsListInfiniteQueryKey = (options: Options<SiteSuppressionsListData>): QueryKey<Options<SiteSuppressionsListData>> => createQueryKey('siteSuppressionsList', options, true);
@@ -1311,62 +1311,62 @@ export const siteSuppressionsListInfiniteQueryKey = (options: Options<SiteSuppre
  * List suppressed addresses
  */
 export const siteSuppressionsListInfiniteOptions = (options: Options<SiteSuppressionsListData>) => {
-    const opts = infiniteQueryOptions<SiteSuppressionsListResponse, SiteSuppressionsListError, InfiniteData<SiteSuppressionsListResponse>, QueryKey<Options<SiteSuppressionsListData>>, number | Pick<QueryKey<Options<SiteSuppressionsListData>>[0], 'body' | 'headers' | 'path' | 'query'>>(
-    // @ts-ignore
-    {
-        queryFn: async ({ pageParam, queryKey, signal }) => {
-            // @ts-ignore
-            const page: Pick<QueryKey<Options<SiteSuppressionsListData>>[0], 'body' | 'headers' | 'path' | 'query'> = typeof pageParam === 'object' ? pageParam : {
-                query: {
-                    page: pageParam
-                }
-            };
-            const params = createInfiniteParams(queryKey, page);
-            const { data } = await siteSuppressionsList({
-                ...options,
-                ...params,
-                signal,
-                throwOnError: true
-            });
-            return data;
-        },
-        queryKey: siteSuppressionsListInfiniteQueryKey(options)
-    });
-    return opts as Omit<typeof opts, 'initialData'>;
+  const opts = infiniteQueryOptions<SiteSuppressionsListResponse, SiteSuppressionsListError, InfiniteData<SiteSuppressionsListResponse>, QueryKey<Options<SiteSuppressionsListData>>, number | Pick<QueryKey<Options<SiteSuppressionsListData>>[0], 'body' | 'headers' | 'path' | 'query'>>(
+  // @ts-ignore
+  {
+    queryFn: async ({ pageParam, queryKey, signal }) => {
+      // @ts-ignore
+      const page: Pick<QueryKey<Options<SiteSuppressionsListData>>[0], 'body' | 'headers' | 'path' | 'query'> = typeof pageParam === 'object' ? pageParam : {
+        query: {
+          page: pageParam
+        }
+      };
+      const params = createInfiniteParams(queryKey, page);
+      const { data } = await siteSuppressionsList({
+        ...options,
+        ...params,
+        signal,
+        throwOnError: true
+      });
+      return data;
+    },
+    queryKey: siteSuppressionsListInfiniteQueryKey(options)
+  });
+  return opts as Omit<typeof opts, 'initialData'>;
 };
 
 /**
  * Manually suppress an address (reason = manual; idempotent per address)
  */
 export const siteSuppressionsCreateMutation = (options?: Partial<Options<SiteSuppressionsCreateData>>): UseMutationOptions<SiteSuppressionsCreateResponse, SiteSuppressionsCreateError, Options<SiteSuppressionsCreateData>> => {
-    const mutationOptions: UseMutationOptions<SiteSuppressionsCreateResponse, SiteSuppressionsCreateError, Options<SiteSuppressionsCreateData>> = {
-        mutationFn: async (fnOptions) => {
-            const { data } = await siteSuppressionsCreate({
-                ...options,
-                ...fnOptions,
-                throwOnError: true
-            });
-            return data;
-        }
-    };
-    return mutationOptions;
+  const mutationOptions: UseMutationOptions<SiteSuppressionsCreateResponse, SiteSuppressionsCreateError, Options<SiteSuppressionsCreateData>> = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await siteSuppressionsCreate({
+        ...options,
+        ...fnOptions,
+        throwOnError: true
+      });
+      return data;
+    }
+  };
+  return mutationOptions;
 };
 
 /**
  * Remove an address from the suppression list
  */
 export const siteSuppressionsDeleteMutation = (options?: Partial<Options<SiteSuppressionsDeleteData>>): UseMutationOptions<SiteSuppressionsDeleteResponse, SiteSuppressionsDeleteError, Options<SiteSuppressionsDeleteData>> => {
-    const mutationOptions: UseMutationOptions<SiteSuppressionsDeleteResponse, SiteSuppressionsDeleteError, Options<SiteSuppressionsDeleteData>> = {
-        mutationFn: async (fnOptions) => {
-            const { data } = await siteSuppressionsDelete({
-                ...options,
-                ...fnOptions,
-                throwOnError: true
-            });
-            return data;
-        }
-    };
-    return mutationOptions;
+  const mutationOptions: UseMutationOptions<SiteSuppressionsDeleteResponse, SiteSuppressionsDeleteError, Options<SiteSuppressionsDeleteData>> = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await siteSuppressionsDelete({
+        ...options,
+        ...fnOptions,
+        throwOnError: true
+      });
+      return data;
+    }
+  };
+  return mutationOptions;
 };
 
 export const siteTemplatesListQueryKey = (options: Options<SiteTemplatesListData>) => createQueryKey('siteTemplatesList', options);
@@ -1375,16 +1375,16 @@ export const siteTemplatesListQueryKey = (options: Options<SiteTemplatesListData
  * List resources for the site UI
  */
 export const siteTemplatesListOptions = (options: Options<SiteTemplatesListData>) => queryOptions<SiteTemplatesListResponse, SiteTemplatesListError, SiteTemplatesListResponse, ReturnType<typeof siteTemplatesListQueryKey>>({
-    queryFn: async ({ queryKey, signal }) => {
-        const { data } = await siteTemplatesList({
-            ...options,
-            ...queryKey[0],
-            signal,
-            throwOnError: true
-        });
-        return data;
-    },
-    queryKey: siteTemplatesListQueryKey(options)
+  queryFn: async ({ queryKey, signal }) => {
+    const { data } = await siteTemplatesList({
+      ...options,
+      ...queryKey[0],
+      signal,
+      throwOnError: true
+    });
+    return data;
+  },
+  queryKey: siteTemplatesListQueryKey(options)
 });
 
 export const siteTemplatesListInfiniteQueryKey = (options: Options<SiteTemplatesListData>): QueryKey<Options<SiteTemplatesListData>> => createQueryKey('siteTemplatesList', options, true);
@@ -1393,62 +1393,62 @@ export const siteTemplatesListInfiniteQueryKey = (options: Options<SiteTemplates
  * List resources for the site UI
  */
 export const siteTemplatesListInfiniteOptions = (options: Options<SiteTemplatesListData>) => {
-    const opts = infiniteQueryOptions<SiteTemplatesListResponse, SiteTemplatesListError, InfiniteData<SiteTemplatesListResponse>, QueryKey<Options<SiteTemplatesListData>>, number | Pick<QueryKey<Options<SiteTemplatesListData>>[0], 'body' | 'headers' | 'path' | 'query'>>(
-    // @ts-ignore
-    {
-        queryFn: async ({ pageParam, queryKey, signal }) => {
-            // @ts-ignore
-            const page: Pick<QueryKey<Options<SiteTemplatesListData>>[0], 'body' | 'headers' | 'path' | 'query'> = typeof pageParam === 'object' ? pageParam : {
-                query: {
-                    page: pageParam
-                }
-            };
-            const params = createInfiniteParams(queryKey, page);
-            const { data } = await siteTemplatesList({
-                ...options,
-                ...params,
-                signal,
-                throwOnError: true
-            });
-            return data;
-        },
-        queryKey: siteTemplatesListInfiniteQueryKey(options)
-    });
-    return opts as Omit<typeof opts, 'initialData'>;
+  const opts = infiniteQueryOptions<SiteTemplatesListResponse, SiteTemplatesListError, InfiniteData<SiteTemplatesListResponse>, QueryKey<Options<SiteTemplatesListData>>, number | Pick<QueryKey<Options<SiteTemplatesListData>>[0], 'body' | 'headers' | 'path' | 'query'>>(
+  // @ts-ignore
+  {
+    queryFn: async ({ pageParam, queryKey, signal }) => {
+      // @ts-ignore
+      const page: Pick<QueryKey<Options<SiteTemplatesListData>>[0], 'body' | 'headers' | 'path' | 'query'> = typeof pageParam === 'object' ? pageParam : {
+        query: {
+          page: pageParam
+        }
+      };
+      const params = createInfiniteParams(queryKey, page);
+      const { data } = await siteTemplatesList({
+        ...options,
+        ...params,
+        signal,
+        throwOnError: true
+      });
+      return data;
+    },
+    queryKey: siteTemplatesListInfiniteQueryKey(options)
+  });
+  return opts as Omit<typeof opts, 'initialData'>;
 };
 
 /**
  * Create a resource from the site UI
  */
 export const siteTemplatesCreateMutation = (options?: Partial<Options<SiteTemplatesCreateData>>): UseMutationOptions<SiteTemplatesCreateResponse, SiteTemplatesCreateError, Options<SiteTemplatesCreateData>> => {
-    const mutationOptions: UseMutationOptions<SiteTemplatesCreateResponse, SiteTemplatesCreateError, Options<SiteTemplatesCreateData>> = {
-        mutationFn: async (fnOptions) => {
-            const { data } = await siteTemplatesCreate({
-                ...options,
-                ...fnOptions,
-                throwOnError: true
-            });
-            return data;
-        }
-    };
-    return mutationOptions;
+  const mutationOptions: UseMutationOptions<SiteTemplatesCreateResponse, SiteTemplatesCreateError, Options<SiteTemplatesCreateData>> = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await siteTemplatesCreate({
+        ...options,
+        ...fnOptions,
+        throwOnError: true
+      });
+      return data;
+    }
+  };
+  return mutationOptions;
 };
 
 /**
  * Delete a resource from the site UI
  */
 export const siteTemplatesDeleteMutation = (options?: Partial<Options<SiteTemplatesDeleteData>>): UseMutationOptions<SiteTemplatesDeleteResponse, SiteTemplatesDeleteError, Options<SiteTemplatesDeleteData>> => {
-    const mutationOptions: UseMutationOptions<SiteTemplatesDeleteResponse, SiteTemplatesDeleteError, Options<SiteTemplatesDeleteData>> = {
-        mutationFn: async (fnOptions) => {
-            const { data } = await siteTemplatesDelete({
-                ...options,
-                ...fnOptions,
-                throwOnError: true
-            });
-            return data;
-        }
-    };
-    return mutationOptions;
+  const mutationOptions: UseMutationOptions<SiteTemplatesDeleteResponse, SiteTemplatesDeleteError, Options<SiteTemplatesDeleteData>> = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await siteTemplatesDelete({
+        ...options,
+        ...fnOptions,
+        throwOnError: true
+      });
+      return data;
+    }
+  };
+  return mutationOptions;
 };
 
 export const siteTemplatesGetQueryKey = (options: Options<SiteTemplatesGetData>) => createQueryKey('siteTemplatesGet', options);
@@ -1457,33 +1457,33 @@ export const siteTemplatesGetQueryKey = (options: Options<SiteTemplatesGetData>)
  * Get a resource by ID for the site UI
  */
 export const siteTemplatesGetOptions = (options: Options<SiteTemplatesGetData>) => queryOptions<SiteTemplatesGetResponse, SiteTemplatesGetError, SiteTemplatesGetResponse, ReturnType<typeof siteTemplatesGetQueryKey>>({
-    queryFn: async ({ queryKey, signal }) => {
-        const { data } = await siteTemplatesGet({
-            ...options,
-            ...queryKey[0],
-            signal,
-            throwOnError: true
-        });
-        return data;
-    },
-    queryKey: siteTemplatesGetQueryKey(options)
+  queryFn: async ({ queryKey, signal }) => {
+    const { data } = await siteTemplatesGet({
+      ...options,
+      ...queryKey[0],
+      signal,
+      throwOnError: true
+    });
+    return data;
+  },
+  queryKey: siteTemplatesGetQueryKey(options)
 });
 
 /**
  * Update a resource from the site UI
  */
 export const siteTemplatesUpdateMutation = (options?: Partial<Options<SiteTemplatesUpdateData>>): UseMutationOptions<SiteTemplatesUpdateResponse, SiteTemplatesUpdateError, Options<SiteTemplatesUpdateData>> => {
-    const mutationOptions: UseMutationOptions<SiteTemplatesUpdateResponse, SiteTemplatesUpdateError, Options<SiteTemplatesUpdateData>> = {
-        mutationFn: async (fnOptions) => {
-            const { data } = await siteTemplatesUpdate({
-                ...options,
-                ...fnOptions,
-                throwOnError: true
-            });
-            return data;
-        }
-    };
-    return mutationOptions;
+  const mutationOptions: UseMutationOptions<SiteTemplatesUpdateResponse, SiteTemplatesUpdateError, Options<SiteTemplatesUpdateData>> = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await siteTemplatesUpdate({
+        ...options,
+        ...fnOptions,
+        throwOnError: true
+      });
+      return data;
+    }
+  };
+  return mutationOptions;
 };
 
 export const siteTokensListQueryKey = (options: Options<SiteTokensListData>) => createQueryKey('siteTokensList', options);
@@ -1492,50 +1492,50 @@ export const siteTokensListQueryKey = (options: Options<SiteTokensListData>) => 
  * List active (non-revoked) API tokens for the workspace
  */
 export const siteTokensListOptions = (options: Options<SiteTokensListData>) => queryOptions<SiteTokensListResponse, SiteTokensListError, SiteTokensListResponse, ReturnType<typeof siteTokensListQueryKey>>({
-    queryFn: async ({ queryKey, signal }) => {
-        const { data } = await siteTokensList({
-            ...options,
-            ...queryKey[0],
-            signal,
-            throwOnError: true
-        });
-        return data;
-    },
-    queryKey: siteTokensListQueryKey(options)
+  queryFn: async ({ queryKey, signal }) => {
+    const { data } = await siteTokensList({
+      ...options,
+      ...queryKey[0],
+      signal,
+      throwOnError: true
+    });
+    return data;
+  },
+  queryKey: siteTokensListQueryKey(options)
 });
 
 /**
  * Create an API token; the full secret is returned once
  */
 export const siteTokensCreateMutation = (options?: Partial<Options<SiteTokensCreateData>>): UseMutationOptions<SiteTokensCreateResponse, SiteTokensCreateError, Options<SiteTokensCreateData>> => {
-    const mutationOptions: UseMutationOptions<SiteTokensCreateResponse, SiteTokensCreateError, Options<SiteTokensCreateData>> = {
-        mutationFn: async (fnOptions) => {
-            const { data } = await siteTokensCreate({
-                ...options,
-                ...fnOptions,
-                throwOnError: true
-            });
-            return data;
-        }
-    };
-    return mutationOptions;
+  const mutationOptions: UseMutationOptions<SiteTokensCreateResponse, SiteTokensCreateError, Options<SiteTokensCreateData>> = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await siteTokensCreate({
+        ...options,
+        ...fnOptions,
+        throwOnError: true
+      });
+      return data;
+    }
+  };
+  return mutationOptions;
 };
 
 /**
  * Revoke an API token
  */
 export const siteTokensDeleteMutation = (options?: Partial<Options<SiteTokensDeleteData>>): UseMutationOptions<SiteTokensDeleteResponse, SiteTokensDeleteError, Options<SiteTokensDeleteData>> => {
-    const mutationOptions: UseMutationOptions<SiteTokensDeleteResponse, SiteTokensDeleteError, Options<SiteTokensDeleteData>> = {
-        mutationFn: async (fnOptions) => {
-            const { data } = await siteTokensDelete({
-                ...options,
-                ...fnOptions,
-                throwOnError: true
-            });
-            return data;
-        }
-    };
-    return mutationOptions;
+  const mutationOptions: UseMutationOptions<SiteTokensDeleteResponse, SiteTokensDeleteError, Options<SiteTokensDeleteData>> = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await siteTokensDelete({
+        ...options,
+        ...fnOptions,
+        throwOnError: true
+      });
+      return data;
+    }
+  };
+  return mutationOptions;
 };
 
 export const siteTransactionalEmailsListQueryKey = (options: Options<SiteTransactionalEmailsListData>) => createQueryKey('siteTransactionalEmailsList', options);
@@ -1544,16 +1544,16 @@ export const siteTransactionalEmailsListQueryKey = (options: Options<SiteTransac
  * List transactional sends, most recent first
  */
 export const siteTransactionalEmailsListOptions = (options: Options<SiteTransactionalEmailsListData>) => queryOptions<SiteTransactionalEmailsListResponse, SiteTransactionalEmailsListError, SiteTransactionalEmailsListResponse, ReturnType<typeof siteTransactionalEmailsListQueryKey>>({
-    queryFn: async ({ queryKey, signal }) => {
-        const { data } = await siteTransactionalEmailsList({
-            ...options,
-            ...queryKey[0],
-            signal,
-            throwOnError: true
-        });
-        return data;
-    },
-    queryKey: siteTransactionalEmailsListQueryKey(options)
+  queryFn: async ({ queryKey, signal }) => {
+    const { data } = await siteTransactionalEmailsList({
+      ...options,
+      ...queryKey[0],
+      signal,
+      throwOnError: true
+    });
+    return data;
+  },
+  queryKey: siteTransactionalEmailsListQueryKey(options)
 });
 
 export const siteTransactionalEmailsListInfiniteQueryKey = (options: Options<SiteTransactionalEmailsListData>): QueryKey<Options<SiteTransactionalEmailsListData>> => createQueryKey('siteTransactionalEmailsList', options, true);
@@ -1562,28 +1562,28 @@ export const siteTransactionalEmailsListInfiniteQueryKey = (options: Options<Sit
  * List transactional sends, most recent first
  */
 export const siteTransactionalEmailsListInfiniteOptions = (options: Options<SiteTransactionalEmailsListData>) => {
-    const opts = infiniteQueryOptions<SiteTransactionalEmailsListResponse, SiteTransactionalEmailsListError, InfiniteData<SiteTransactionalEmailsListResponse>, QueryKey<Options<SiteTransactionalEmailsListData>>, number | Pick<QueryKey<Options<SiteTransactionalEmailsListData>>[0], 'body' | 'headers' | 'path' | 'query'>>(
-    // @ts-ignore
-    {
-        queryFn: async ({ pageParam, queryKey, signal }) => {
-            // @ts-ignore
-            const page: Pick<QueryKey<Options<SiteTransactionalEmailsListData>>[0], 'body' | 'headers' | 'path' | 'query'> = typeof pageParam === 'object' ? pageParam : {
-                query: {
-                    page: pageParam
-                }
-            };
-            const params = createInfiniteParams(queryKey, page);
-            const { data } = await siteTransactionalEmailsList({
-                ...options,
-                ...params,
-                signal,
-                throwOnError: true
-            });
-            return data;
-        },
-        queryKey: siteTransactionalEmailsListInfiniteQueryKey(options)
-    });
-    return opts as Omit<typeof opts, 'initialData'>;
+  const opts = infiniteQueryOptions<SiteTransactionalEmailsListResponse, SiteTransactionalEmailsListError, InfiniteData<SiteTransactionalEmailsListResponse>, QueryKey<Options<SiteTransactionalEmailsListData>>, number | Pick<QueryKey<Options<SiteTransactionalEmailsListData>>[0], 'body' | 'headers' | 'path' | 'query'>>(
+  // @ts-ignore
+  {
+    queryFn: async ({ pageParam, queryKey, signal }) => {
+      // @ts-ignore
+      const page: Pick<QueryKey<Options<SiteTransactionalEmailsListData>>[0], 'body' | 'headers' | 'path' | 'query'> = typeof pageParam === 'object' ? pageParam : {
+        query: {
+          page: pageParam
+        }
+      };
+      const params = createInfiniteParams(queryKey, page);
+      const { data } = await siteTransactionalEmailsList({
+        ...options,
+        ...params,
+        signal,
+        throwOnError: true
+      });
+      return data;
+    },
+    queryKey: siteTransactionalEmailsListInfiniteQueryKey(options)
+  });
+  return opts as Omit<typeof opts, 'initialData'>;
 };
 
 export const siteWebhooksListQueryKey = (options: Options<SiteWebhooksListData>) => createQueryKey('siteWebhooksList', options);
@@ -1592,16 +1592,16 @@ export const siteWebhooksListQueryKey = (options: Options<SiteWebhooksListData>)
  * List resources for the site UI
  */
 export const siteWebhooksListOptions = (options: Options<SiteWebhooksListData>) => queryOptions<SiteWebhooksListResponse, SiteWebhooksListError, SiteWebhooksListResponse, ReturnType<typeof siteWebhooksListQueryKey>>({
-    queryFn: async ({ queryKey, signal }) => {
-        const { data } = await siteWebhooksList({
-            ...options,
-            ...queryKey[0],
-            signal,
-            throwOnError: true
-        });
-        return data;
-    },
-    queryKey: siteWebhooksListQueryKey(options)
+  queryFn: async ({ queryKey, signal }) => {
+    const { data } = await siteWebhooksList({
+      ...options,
+      ...queryKey[0],
+      signal,
+      throwOnError: true
+    });
+    return data;
+  },
+  queryKey: siteWebhooksListQueryKey(options)
 });
 
 export const siteWebhooksListInfiniteQueryKey = (options: Options<SiteWebhooksListData>): QueryKey<Options<SiteWebhooksListData>> => createQueryKey('siteWebhooksList', options, true);
@@ -1610,62 +1610,62 @@ export const siteWebhooksListInfiniteQueryKey = (options: Options<SiteWebhooksLi
  * List resources for the site UI
  */
 export const siteWebhooksListInfiniteOptions = (options: Options<SiteWebhooksListData>) => {
-    const opts = infiniteQueryOptions<SiteWebhooksListResponse, SiteWebhooksListError, InfiniteData<SiteWebhooksListResponse>, QueryKey<Options<SiteWebhooksListData>>, number | Pick<QueryKey<Options<SiteWebhooksListData>>[0], 'body' | 'headers' | 'path' | 'query'>>(
-    // @ts-ignore
-    {
-        queryFn: async ({ pageParam, queryKey, signal }) => {
-            // @ts-ignore
-            const page: Pick<QueryKey<Options<SiteWebhooksListData>>[0], 'body' | 'headers' | 'path' | 'query'> = typeof pageParam === 'object' ? pageParam : {
-                query: {
-                    page: pageParam
-                }
-            };
-            const params = createInfiniteParams(queryKey, page);
-            const { data } = await siteWebhooksList({
-                ...options,
-                ...params,
-                signal,
-                throwOnError: true
-            });
-            return data;
-        },
-        queryKey: siteWebhooksListInfiniteQueryKey(options)
-    });
-    return opts as Omit<typeof opts, 'initialData'>;
+  const opts = infiniteQueryOptions<SiteWebhooksListResponse, SiteWebhooksListError, InfiniteData<SiteWebhooksListResponse>, QueryKey<Options<SiteWebhooksListData>>, number | Pick<QueryKey<Options<SiteWebhooksListData>>[0], 'body' | 'headers' | 'path' | 'query'>>(
+  // @ts-ignore
+  {
+    queryFn: async ({ pageParam, queryKey, signal }) => {
+      // @ts-ignore
+      const page: Pick<QueryKey<Options<SiteWebhooksListData>>[0], 'body' | 'headers' | 'path' | 'query'> = typeof pageParam === 'object' ? pageParam : {
+        query: {
+          page: pageParam
+        }
+      };
+      const params = createInfiniteParams(queryKey, page);
+      const { data } = await siteWebhooksList({
+        ...options,
+        ...params,
+        signal,
+        throwOnError: true
+      });
+      return data;
+    },
+    queryKey: siteWebhooksListInfiniteQueryKey(options)
+  });
+  return opts as Omit<typeof opts, 'initialData'>;
 };
 
 /**
  * Create a resource from the site UI
  */
 export const siteWebhooksCreateMutation = (options?: Partial<Options<SiteWebhooksCreateData>>): UseMutationOptions<SiteWebhooksCreateResponse, SiteWebhooksCreateError, Options<SiteWebhooksCreateData>> => {
-    const mutationOptions: UseMutationOptions<SiteWebhooksCreateResponse, SiteWebhooksCreateError, Options<SiteWebhooksCreateData>> = {
-        mutationFn: async (fnOptions) => {
-            const { data } = await siteWebhooksCreate({
-                ...options,
-                ...fnOptions,
-                throwOnError: true
-            });
-            return data;
-        }
-    };
-    return mutationOptions;
+  const mutationOptions: UseMutationOptions<SiteWebhooksCreateResponse, SiteWebhooksCreateError, Options<SiteWebhooksCreateData>> = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await siteWebhooksCreate({
+        ...options,
+        ...fnOptions,
+        throwOnError: true
+      });
+      return data;
+    }
+  };
+  return mutationOptions;
 };
 
 /**
  * Delete a resource from the site UI
  */
 export const siteWebhooksDeleteMutation = (options?: Partial<Options<SiteWebhooksDeleteData>>): UseMutationOptions<SiteWebhooksDeleteResponse, SiteWebhooksDeleteError, Options<SiteWebhooksDeleteData>> => {
-    const mutationOptions: UseMutationOptions<SiteWebhooksDeleteResponse, SiteWebhooksDeleteError, Options<SiteWebhooksDeleteData>> = {
-        mutationFn: async (fnOptions) => {
-            const { data } = await siteWebhooksDelete({
-                ...options,
-                ...fnOptions,
-                throwOnError: true
-            });
-            return data;
-        }
-    };
-    return mutationOptions;
+  const mutationOptions: UseMutationOptions<SiteWebhooksDeleteResponse, SiteWebhooksDeleteError, Options<SiteWebhooksDeleteData>> = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await siteWebhooksDelete({
+        ...options,
+        ...fnOptions,
+        throwOnError: true
+      });
+      return data;
+    }
+  };
+  return mutationOptions;
 };
 
 export const siteWebhooksGetQueryKey = (options: Options<SiteWebhooksGetData>) => createQueryKey('siteWebhooksGet', options);
@@ -1674,31 +1674,31 @@ export const siteWebhooksGetQueryKey = (options: Options<SiteWebhooksGetData>) =
  * Get a resource by ID for the site UI
  */
 export const siteWebhooksGetOptions = (options: Options<SiteWebhooksGetData>) => queryOptions<SiteWebhooksGetResponse, SiteWebhooksGetError, SiteWebhooksGetResponse, ReturnType<typeof siteWebhooksGetQueryKey>>({
-    queryFn: async ({ queryKey, signal }) => {
-        const { data } = await siteWebhooksGet({
-            ...options,
-            ...queryKey[0],
-            signal,
-            throwOnError: true
-        });
-        return data;
-    },
-    queryKey: siteWebhooksGetQueryKey(options)
+  queryFn: async ({ queryKey, signal }) => {
+    const { data } = await siteWebhooksGet({
+      ...options,
+      ...queryKey[0],
+      signal,
+      throwOnError: true
+    });
+    return data;
+  },
+  queryKey: siteWebhooksGetQueryKey(options)
 });
 
 /**
  * Update a resource from the site UI
  */
 export const siteWebhooksUpdateMutation = (options?: Partial<Options<SiteWebhooksUpdateData>>): UseMutationOptions<SiteWebhooksUpdateResponse, SiteWebhooksUpdateError, Options<SiteWebhooksUpdateData>> => {
-    const mutationOptions: UseMutationOptions<SiteWebhooksUpdateResponse, SiteWebhooksUpdateError, Options<SiteWebhooksUpdateData>> = {
-        mutationFn: async (fnOptions) => {
-            const { data } = await siteWebhooksUpdate({
-                ...options,
-                ...fnOptions,
-                throwOnError: true
-            });
-            return data;
-        }
-    };
-    return mutationOptions;
+  const mutationOptions: UseMutationOptions<SiteWebhooksUpdateResponse, SiteWebhooksUpdateError, Options<SiteWebhooksUpdateData>> = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await siteWebhooksUpdate({
+        ...options,
+        ...fnOptions,
+        throwOnError: true
+      });
+      return data;
+    }
+  };
+  return mutationOptions;
 };

@@ -11,14 +11,14 @@ export const zEntityId = z.string().regex(/^[0-9]+$/);
  * RFC 7807 Problem Details
  */
 export const zProblemDetails = z.object({
-    type: z.string().optional(),
-    title: z.string().optional(),
-    status: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).optional(),
-    detail: z.string().optional(),
-    instance: z.string().optional(),
-    errors: z.record(z.string(), z.array(z.string())).optional(),
-    form: z.string().optional(),
-    fields: z.record(z.string(), z.string()).optional()
+  type: z.string().optional(),
+  title: z.string().optional(),
+  status: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).optional(),
+  detail: z.string().optional(),
+  instance: z.string().optional(),
+  errors: z.record(z.string(), z.array(z.string())).optional(),
+  form: z.string().optional(),
+  fields: z.record(z.string(), z.string()).optional()
 });
 
 /**
@@ -26,28 +26,28 @@ export const zProblemDetails = z.object({
  * account yet; ignored otherwise.
  */
 export const zSiteAcceptInvitationInput = z.object({
-    name: z.string().optional(),
-    password: z.string().optional()
+  name: z.string().optional(),
+  password: z.string().optional()
 });
 
 /**
  * Automation counts (point-in-time snapshot)
  */
 export const zSiteAnalyticsAutomations = z.object({
-    total: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
-    active: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
-    runsActive: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
-    runsCompleted: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' })
+  total: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
+  active: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
+  runsActive: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
+  runsCompleted: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' })
 });
 
 /**
  * Current contact counts (point-in-time snapshot, not range-scoped)
  */
 export const zSiteAnalyticsContacts = z.object({
-    total: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
-    active: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
-    unsubscribed: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
-    newInRange: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' })
+  total: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
+  active: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
+  unsubscribed: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
+  newInRange: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' })
 });
 
 /**
@@ -56,12 +56,12 @@ export const zSiteAnalyticsContacts = z.object({
  * the counts reconcile and the rates stay in [0,1].
  */
 export const zSiteAnalyticsEmail = z.object({
-    sentCount: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
-    openedCount: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
-    clickedCount: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
-    openRate: z.number(),
-    clickRate: z.number(),
-    clickToOpenRate: z.number()
+  sentCount: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
+  openedCount: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
+  clickedCount: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
+  openRate: z.number(),
+  clickRate: z.number(),
+  clickToOpenRate: z.number()
 });
 
 /**
@@ -69,29 +69,29 @@ export const zSiteAnalyticsEmail = z.object({
  * count the messages sent that day that were later opened/clicked.
  */
 export const zSiteAnalyticsPoint = z.object({
-    date: z.string(),
-    sent: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
-    opened: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
-    clicked: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' })
+  date: z.string(),
+  sent: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
+  opened: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
+  clicked: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' })
 });
 
 /**
  * Workspace analytics overview powering the dashboard
  */
 export const zSiteAnalyticsOverview = z.object({
-    contacts: zSiteAnalyticsContacts,
-    email: zSiteAnalyticsEmail,
-    automations: zSiteAnalyticsAutomations,
-    timeseries: z.array(zSiteAnalyticsPoint)
+  contacts: zSiteAnalyticsContacts,
+  email: zSiteAnalyticsEmail,
+  automations: zSiteAnalyticsAutomations,
+  timeseries: z.array(zSiteAnalyticsPoint)
 });
 
 /**
  * Selectable window for the analytics overview
  */
 export const zSiteAnalyticsRange = z.enum([
-    '7d',
-    '30d',
-    '90d'
+  '7d',
+  '30d',
+  '90d'
 ]);
 
 /**
@@ -109,133 +109,133 @@ export const zSiteAutomationStepType = z.enum(['email', 'wait']);
  * steps carry subject/body, wait steps carry seconds.
  */
 export const zSiteAutomationStep = z.object({
-    type: zSiteAutomationStepType,
-    subject: z.string().optional(),
-    body: z.string().optional(),
-    seconds: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).optional()
+  type: zSiteAutomationStepType,
+  subject: z.string().optional(),
+  body: z.string().optional(),
+  seconds: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).optional()
 });
 
 /**
  * Denormalized delivery counters for a broadcast
  */
 export const zSiteBroadcastStats = z.object({
-    recipientsTotal: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
-    sentCount: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
-    openedCount: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
-    clickedCount: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
-    unsubscribedCount: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
-    failedCount: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
-    deliveryRate: z.number(),
-    openRate: z.number(),
-    clickRate: z.number(),
-    clickToOpenRate: z.number(),
-    unsubscribeRate: z.number(),
-    failureRate: z.number()
+  recipientsTotal: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
+  sentCount: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
+  openedCount: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
+  clickedCount: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
+  unsubscribedCount: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
+  failedCount: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
+  deliveryRate: z.number(),
+  openRate: z.number(),
+  clickRate: z.number(),
+  clickToOpenRate: z.number(),
+  unsubscribeRate: z.number(),
+  failureRate: z.number()
 });
 
 /**
  * Broadcast lifecycle status
  */
 export const zSiteBroadcastStatus = z.enum([
-    'draft',
-    'scheduled',
-    'sending',
-    'sent',
-    'failed'
+  'draft',
+  'scheduled',
+  'sending',
+  'sent',
+  'failed'
 ]);
 
 /**
  * Confirm a requested email change using the token sent to the new address
  */
 export const zSiteConfirmEmailChangeInput = z.object({
-    token: z.string()
+  token: z.string()
 });
 
 /**
  * Site request body for creating an automation
  */
 export const zSiteCreateAutomationInput = z.object({
-    name: z.string(),
-    triggerEvent: z.string(),
-    steps: z.array(zSiteAutomationStep).optional()
+  name: z.string(),
+  triggerEvent: z.string(),
+  steps: z.array(zSiteAutomationStep).optional()
 });
 
 /**
  * Site request body for creating a broadcast
  */
 export const zSiteCreateBroadcastInput = z.object({
-    name: z.string(),
-    subject: z.string().optional(),
-    fromName: z.string().nullish(),
-    fromEmail: zEmailAddress.nullish(),
-    body: z.string().optional(),
-    segmentId: zEntityId.nullish(),
-    integrationId: zEntityId.nullish()
+  name: z.string(),
+  subject: z.string().optional(),
+  fromName: z.string().nullish(),
+  fromEmail: zEmailAddress.nullish(),
+  body: z.string().optional(),
+  segmentId: zEntityId.nullish(),
+  integrationId: zEntityId.nullish()
 });
 
 /**
  * Site request body for creating a template
  */
 export const zSiteCreateEmailTemplateInput = z.object({
-    name: z.string(),
-    subject: z.string().optional(),
-    body: z.string().optional()
+  name: z.string(),
+  subject: z.string().optional(),
+  body: z.string().optional()
 });
 
 /**
  * Site request body for adding a sending domain
  */
 export const zSiteCreateSendingDomainInput = z.object({
-    domain: z.string(),
-    dkimSelector: z.string().optional()
+  domain: z.string(),
+  dkimSelector: z.string().optional()
 });
 
 /**
  * Site request body for creating a webhook endpoint
  */
 export const zSiteCreateWebhookEndpointInput = z.object({
-    url: z.string(),
-    eventTypes: z.array(z.string()).optional(),
-    enabled: z.boolean().optional()
+  url: z.string(),
+  eventTypes: z.array(z.string()).optional(),
+  enabled: z.boolean().optional()
 });
 
 /**
  * A Custom field's value type
  */
 export const zSiteCustomFieldType = z.enum([
-    'string',
-    'number',
-    'bool',
-    'datetime'
+  'string',
+  'number',
+  'bool',
+  'datetime'
 ]);
 
 export const zSiteDirectLoginError = z.object({
-    error: z.string()
+  error: z.string()
 });
 
 export const zSiteDirectLoginInput = z.object({
-    user: z.string(),
-    passwd: z.string()
+  user: z.string(),
+  passwd: z.string()
 });
 
 export const zSiteDirectLoginResult = z.object({
-    name: z.string(),
-    id: z.string(),
-    picture: z.string().optional(),
-    aud: z.string().optional(),
-    ip: z.string().optional(),
-    email: z.string().optional(),
-    attrs: z.record(z.string(), z.unknown()).optional(),
-    role: z.string().optional()
+  name: z.string(),
+  id: z.string(),
+  picture: z.string().optional(),
+  aud: z.string().optional(),
+  ip: z.string().optional(),
+  email: z.string().optional(),
+  attrs: z.record(z.string(), z.unknown()).optional(),
+  role: z.string().optional()
 });
 
 /**
  * A DNS record the user publishes to authenticate a sending domain
  */
 export const zSiteDnsRecord = z.object({
-    type: z.enum(['TXT']),
-    host: z.string(),
-    value: z.string()
+  type: z.enum(['TXT']),
+  host: z.string(),
+  value: z.string()
 });
 
 /**
@@ -243,22 +243,22 @@ export const zSiteDnsRecord = z.object({
  * link sent to it before the change takes effect.
  */
 export const zSiteEmailChangeInput = z.object({
-    newEmail: zEmailAddress,
-    currentPassword: z.string()
+  newEmail: zEmailAddress,
+  currentPassword: z.string()
 });
 
 /**
  * Distinct event actions seen in a workspace (for segment/filter pickers)
  */
 export const zSiteEventActionsResult = z.object({
-    actions: z.array(z.string())
+  actions: z.array(z.string())
 });
 
 /**
  * Request a password-reset link (always accepted; no account enumeration)
  */
 export const zSiteForgotPasswordInput = z.object({
-    email: zEmailAddress
+  email: zEmailAddress
 });
 
 /**
@@ -280,54 +280,54 @@ export const zSiteInvitableRole = z.enum(['admin', 'member']);
  * Invite an email address to the workspace
  */
 export const zSiteCreateInvitationInput = z.object({
-    email: zEmailAddress,
-    role: zSiteInvitableRole
+  email: zEmailAddress,
+  role: zSiteInvitableRole
 });
 
 /**
  * What an invite link reveals before acceptance, for rendering the accept page
  */
 export const zSiteInvitationLookupResult = z.object({
-    workspaceName: z.string(),
-    email: zEmailAddress,
-    hasAccount: z.boolean()
+  workspaceName: z.string(),
+  email: zEmailAddress,
+  hasAccount: z.boolean()
 });
 
 /**
  * A User's permission level in a Workspace
  */
 export const zSiteMembershipRole = z.enum([
-    'owner',
-    'admin',
-    'member'
+  'owner',
+  'admin',
+  'member'
 ]);
 
 /**
  * Request body for previewing a rule definition's audience
  */
 export const zSitePreviewSegmentInput = z.object({
-    definition: z.string().nullish()
+  definition: z.string().nullish()
 });
 
 /**
  * Result of a segment preview: how many deliverable contacts match
  */
 export const zSitePreviewSegmentResult = z.object({
-    count: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' })
+  count: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' })
 });
 
 export const zSiteRegisterInput = z.object({
-    name: z.string(),
-    email: zEmailAddress,
-    password: z.string()
+  name: z.string(),
+  email: zEmailAddress,
+  password: z.string()
 });
 
 /**
  * Set a new password using a reset token
  */
 export const zSiteResetPasswordInput = z.object({
-    token: z.string(),
-    password: z.string()
+  token: z.string(),
+  password: z.string()
 });
 
 /**
@@ -339,85 +339,85 @@ export const zSiteSegmentType = z.enum(['rule', 'snapshot']);
  * Site request body for creating a segment
  */
 export const zSiteCreateSegmentInput = z.object({
-    name: z.string(),
-    type: zSiteSegmentType,
-    definition: z.string().nullish()
+  name: z.string(),
+  type: zSiteSegmentType,
+  definition: z.string().nullish()
 });
 
 /**
  * SES config without the secret access key
  */
 export const zSiteSesConfig = z.object({
-    kind: z.enum(['ses']),
-    region: z.string(),
-    from: zEmailAddress,
-    fromName: z.string().nullish(),
-    endpoint: z.string().nullish(),
-    accessKeyIdLast4: z.string().nullish()
+  kind: z.enum(['ses']),
+  region: z.string(),
+  from: zEmailAddress,
+  fromName: z.string().nullish(),
+  endpoint: z.string().nullish(),
+  accessKeyIdLast4: z.string().nullish()
 });
 
 /**
  * SES credentials
  */
 export const zSiteSesConfigInput = z.object({
-    kind: z.enum(['ses']),
-    region: z.string(),
-    accessKeyId: z.string(),
-    secretAccessKey: z.string(),
-    from: zEmailAddress,
-    fromName: z.string().nullish(),
-    endpoint: z.string().nullish()
+  kind: z.enum(['ses']),
+  region: z.string(),
+  accessKeyId: z.string(),
+  secretAccessKey: z.string(),
+  from: zEmailAddress,
+  fromName: z.string().nullish(),
+  endpoint: z.string().nullish()
 });
 
 /**
  * SMTP config without the password
  */
 export const zSiteSmtpConfig = z.object({
-    kind: z.enum(['smtp']),
-    host: z.string(),
-    port: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
-    username: z.string().nullish(),
-    from: zEmailAddress,
-    fromName: z.string().nullish()
+  kind: z.enum(['smtp']),
+  host: z.string(),
+  port: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
+  username: z.string().nullish(),
+  from: zEmailAddress,
+  fromName: z.string().nullish()
 });
 
 /**
  * Provider config returned to the UI, discriminated by `kind`. Secrets are omitted.
  */
 export const zSiteIntegrationConfig = z.discriminatedUnion('kind', [
-    zSiteSmtpConfig.extend({ kind: z.literal('smtp') }),
-    zSiteSesConfig.extend({ kind: z.literal('ses') })
+  zSiteSmtpConfig.extend({ kind: z.literal('smtp') }),
+  zSiteSesConfig.extend({ kind: z.literal('ses') })
 ]);
 
 /**
  * SMTP credentials
  */
 export const zSiteSmtpConfigInput = z.object({
-    kind: z.enum(['smtp']),
-    host: z.string(),
-    port: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
-    username: z.string().nullish(),
-    password: z.string().nullish(),
-    from: zEmailAddress,
-    fromName: z.string().nullish()
+  kind: z.enum(['smtp']),
+  host: z.string(),
+  port: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
+  username: z.string().nullish(),
+  password: z.string().nullish(),
+  from: zEmailAddress,
+  fromName: z.string().nullish()
 });
 
 /**
  * Provider config submitted by the UI, discriminated by `kind`.
  */
 export const zSiteIntegrationConfigInput = z.discriminatedUnion('kind', [
-    zSiteSmtpConfigInput.extend({ kind: z.literal('smtp') }),
-    zSiteSesConfigInput.extend({ kind: z.literal('ses') })
+  zSiteSmtpConfigInput.extend({ kind: z.literal('smtp') }),
+  zSiteSesConfigInput.extend({ kind: z.literal('ses') })
 ]);
 
 /**
  * Create a workspace integration. The provider/channel are derived from `config.kind`.
  */
 export const zSiteCreateIntegrationInput = z.object({
-    name: z.string(),
-    enabled: z.boolean().optional(),
-    isDefault: z.boolean().optional(),
-    config: zSiteIntegrationConfigInput
+  name: z.string(),
+  enabled: z.boolean().optional(),
+  isDefault: z.boolean().optional(),
+  config: zSiteIntegrationConfigInput
 });
 
 /**
@@ -429,8 +429,8 @@ export const zSiteSuppressionChannel = z.enum(['email']);
  * Site request body for manually suppressing a destination
  */
 export const zSiteCreateSuppressionInput = z.object({
-    channel: zSiteSuppressionChannel.optional(),
-    destination: z.string()
+  channel: zSiteSuppressionChannel.optional(),
+  destination: z.string()
 });
 
 /**
@@ -438,16 +438,16 @@ export const zSiteCreateSuppressionInput = z.object({
  * not a suppression — it is a separate, per-source opt-out.
  */
 export const zSiteSuppressionReason = z.enum([
-    'bounce',
-    'complaint',
-    'manual'
+  'bounce',
+  'complaint',
+  'manual'
 ]);
 
 /**
  * Site request body for a test send
  */
 export const zSiteTestSendBroadcastInput = z.object({
-    email: zEmailAddress
+  email: zEmailAddress
 });
 
 /**
@@ -459,51 +459,51 @@ export const zSiteTransactionalEmailChannel = z.enum(['email']);
  * Outcome of a transactional send
  */
 export const zSiteTransactionalEmailStatus = z.enum([
-    'pending',
-    'sent',
-    'suppressed',
-    'failed'
+  'pending',
+  'sent',
+  'suppressed',
+  'failed'
 ]);
 
 /**
  * Site request body for updating an automation
  */
 export const zSiteUpdateAutomationInput = z.object({
-    name: z.string().optional(),
-    triggerEvent: z.string().optional(),
-    steps: z.array(zSiteAutomationStep).optional()
+  name: z.string().optional(),
+  triggerEvent: z.string().optional(),
+  steps: z.array(zSiteAutomationStep).optional()
 });
 
 /**
  * Site request body for updating a broadcast
  */
 export const zSiteUpdateBroadcastInput = z.object({
-    name: z.string().optional(),
-    subject: z.string().optional(),
-    fromName: z.string().nullish(),
-    fromEmail: zEmailAddress.nullish(),
-    body: z.string().optional(),
-    segmentId: zEntityId.nullish(),
-    integrationId: zEntityId.nullish()
+  name: z.string().optional(),
+  subject: z.string().optional(),
+  fromName: z.string().nullish(),
+  fromEmail: zEmailAddress.nullish(),
+  body: z.string().optional(),
+  segmentId: zEntityId.nullish(),
+  integrationId: zEntityId.nullish()
 });
 
 /**
  * Site request body for updating a template
  */
 export const zSiteUpdateEmailTemplateInput = z.object({
-    name: z.string().optional(),
-    subject: z.string().optional(),
-    body: z.string().optional()
+  name: z.string().optional(),
+  subject: z.string().optional(),
+  body: z.string().optional()
 });
 
 /**
  * Update a workspace integration. Omit `config` to keep stored credentials.
  */
 export const zSiteUpdateIntegrationInput = z.object({
-    name: z.string().optional(),
-    enabled: z.boolean().optional(),
-    isDefault: z.boolean().optional(),
-    config: zSiteIntegrationConfigInput.nullish()
+  name: z.string().optional(),
+  enabled: z.boolean().optional(),
+  isDefault: z.boolean().optional(),
+  config: zSiteIntegrationConfigInput.nullish()
 });
 
 /**
@@ -511,34 +511,34 @@ export const zSiteUpdateIntegrationInput = z.object({
  * both currentPassword and newPassword.
  */
 export const zSiteUpdateMeInput = z.object({
-    name: z.string().optional(),
-    currentPassword: z.string().optional(),
-    newPassword: z.string().optional()
+  name: z.string().optional(),
+  currentPassword: z.string().optional(),
+  newPassword: z.string().optional()
 });
 
 /**
  * Change a member's role. Only an owner may grant/transfer the owner role.
  */
 export const zSiteUpdateMembershipInput = z.object({
-    role: zSiteMembershipRole
+  role: zSiteMembershipRole
 });
 
 /**
  * Site request body for updating a segment
  */
 export const zSiteUpdateSegmentInput = z.object({
-    name: z.string().optional(),
-    type: zSiteSegmentType.optional(),
-    definition: z.string().nullish()
+  name: z.string().optional(),
+  type: zSiteSegmentType.optional(),
+  definition: z.string().nullish()
 });
 
 /**
  * Site request body for updating a webhook endpoint
  */
 export const zSiteUpdateWebhookEndpointInput = z.object({
-    url: z.string().optional(),
-    eventTypes: z.array(z.string()).optional(),
-    enabled: z.boolean().optional()
+  url: z.string().optional(),
+  eventTypes: z.array(z.string()).optional(),
+  enabled: z.boolean().optional()
 });
 
 /**
@@ -546,15 +546,15 @@ export const zSiteUpdateWebhookEndpointInput = z.object({
  * unique); the display name and the CAN-SPAM postal address can change.
  */
 export const zSiteUpdateWorkspaceInput = z.object({
-    name: z.string(),
-    postalAddress: z.string().optional()
+  name: z.string(),
+  postalAddress: z.string().optional()
 });
 
 /**
  * Confirm ownership of an email address using a verification token
  */
 export const zSiteVerifyEmailInput = z.object({
-    token: z.string()
+  token: z.string()
 });
 
 export const zTimeZoneName = z.string();
@@ -563,26 +563,26 @@ export const zTimeZoneName = z.string();
  * Site request body for creating a contact
  */
 export const zSiteCreateContactInput = z.object({
-    subjectId: z.string().nullish(),
-    email: zEmailAddress.nullish(),
-    phone: z.string().nullish(),
-    firstName: z.string().nullish(),
-    lastName: z.string().nullish(),
-    timeZone: zTimeZoneName.nullish(),
-    customFields: z.record(z.string(), z.unknown()).nullish()
+  subjectId: z.string().nullish(),
+  email: zEmailAddress.nullish(),
+  phone: z.string().nullish(),
+  firstName: z.string().nullish(),
+  lastName: z.string().nullish(),
+  timeZone: zTimeZoneName.nullish(),
+  customFields: z.record(z.string(), z.unknown()).nullish()
 });
 
 /**
  * Site request body for updating a contact
  */
 export const zSiteUpdateContactInput = z.object({
-    subjectId: z.string().nullish(),
-    email: zEmailAddress.nullish(),
-    phone: z.string().nullish(),
-    firstName: z.string().nullish(),
-    lastName: z.string().nullish(),
-    timeZone: zTimeZoneName.nullish(),
-    customFields: z.record(z.string(), z.unknown()).nullish()
+  subjectId: z.string().nullish(),
+  email: zEmailAddress.nullish(),
+  phone: z.string().nullish(),
+  firstName: z.string().nullish(),
+  lastName: z.string().nullish(),
+  timeZone: zTimeZoneName.nullish(),
+  customFields: z.record(z.string(), z.unknown()).nullish()
 });
 
 export const zTimestamp = z.iso.datetime();
@@ -591,80 +591,80 @@ export const zTimestamp = z.iso.datetime();
  * A workspace API token (secret shown only once, at creation)
  */
 export const zSiteApiTokenResource = z.object({
-    id: zEntityId,
-    name: z.string(),
-    prefix: z.string(),
-    scopes: z.array(z.string()),
-    lastUsedAt: zTimestamp.nullish(),
-    expiresAt: zTimestamp.nullish(),
-    createdAt: zTimestamp
+  id: zEntityId,
+  name: z.string(),
+  prefix: z.string(),
+  scopes: z.array(z.string()),
+  lastUsedAt: zTimestamp.nullish(),
+  expiresAt: zTimestamp.nullish(),
+  createdAt: zTimestamp
 });
 
 /**
  * Automation resource used by the site UI
  */
 export const zSiteAutomationResource = z.object({
-    id: zEntityId,
-    name: z.string(),
-    status: zSiteAutomationStatus,
-    triggerEvent: z.string(),
-    steps: z.array(zSiteAutomationStep),
-    createdAt: zTimestamp,
-    updatedAt: zTimestamp
+  id: zEntityId,
+  name: z.string(),
+  status: zSiteAutomationStatus,
+  triggerEvent: z.string(),
+  steps: z.array(zSiteAutomationStep),
+  createdAt: zTimestamp,
+  updatedAt: zTimestamp
 });
 
 /**
  * Broadcast resource used by the site UI
  */
 export const zSiteBroadcastResource = z.object({
-    id: zEntityId,
-    name: z.string(),
-    subject: z.string(),
-    fromName: z.string().nullish(),
-    fromEmail: zEmailAddress.nullish(),
-    body: z.string(),
-    bodyText: z.string(),
-    segmentId: zEntityId.nullish(),
-    integrationId: zEntityId.nullish(),
-    status: zSiteBroadcastStatus,
-    scheduledAt: zTimestamp.nullish(),
-    sentAt: zTimestamp.nullish(),
-    stats: zSiteBroadcastStats,
-    createdAt: zTimestamp,
-    updatedAt: zTimestamp
+  id: zEntityId,
+  name: z.string(),
+  subject: z.string(),
+  fromName: z.string().nullish(),
+  fromEmail: zEmailAddress.nullish(),
+  body: z.string(),
+  bodyText: z.string(),
+  segmentId: zEntityId.nullish(),
+  integrationId: zEntityId.nullish(),
+  status: zSiteBroadcastStatus,
+  scheduledAt: zTimestamp.nullish(),
+  sentAt: zTimestamp.nullish(),
+  stats: zSiteBroadcastStats,
+  createdAt: zTimestamp,
+  updatedAt: zTimestamp
 });
 
 /**
  * Contact resource used by the site UI
  */
 export const zSiteContactResource = z.object({
-    id: zEntityId,
-    subjectId: z.string().nullish(),
-    email: zEmailAddress.nullish(),
-    phone: z.string().nullish(),
-    firstName: z.string().nullish(),
-    lastName: z.string().nullish(),
-    timeZone: zTimeZoneName.nullish(),
-    customFields: z.record(z.string(), z.unknown()).nullish(),
-    createdAt: zTimestamp,
-    updatedAt: zTimestamp
+  id: zEntityId,
+  subjectId: z.string().nullish(),
+  email: zEmailAddress.nullish(),
+  phone: z.string().nullish(),
+  firstName: z.string().nullish(),
+  lastName: z.string().nullish(),
+  timeZone: zTimeZoneName.nullish(),
+  customFields: z.record(z.string(), z.unknown()).nullish(),
+  createdAt: zTimestamp,
+  updatedAt: zTimestamp
 });
 
 /**
  * Create a workspace API token
  */
 export const zSiteCreateTokenInput = z.object({
-    name: z.string(),
-    scopes: z.array(z.string()),
-    expiresAt: zTimestamp.nullish()
+  name: z.string(),
+  scopes: z.array(z.string()),
+  expiresAt: zTimestamp.nullish()
 });
 
 /**
  * Token creation result — `token` is the full secret, shown only once
  */
 export const zSiteCreateTokenResponse = z.object({
-    token: z.string(),
-    resource: zSiteApiTokenResource
+  token: z.string(),
+  resource: zSiteApiTokenResource
 });
 
 /**
@@ -672,64 +672,64 @@ export const zSiteCreateTokenResponse = z.object({
  * on first sight from Identify; the catalogue feeds the segment builder.
  */
 export const zSiteCustomFieldResource = z.object({
-    id: zEntityId,
-    key: z.string(),
-    name: z.string(),
-    type: zSiteCustomFieldType,
-    createdAt: zTimestamp,
-    updatedAt: zTimestamp
+  id: zEntityId,
+  key: z.string(),
+  name: z.string(),
+  type: zSiteCustomFieldType,
+  createdAt: zTimestamp,
+  updatedAt: zTimestamp
 });
 
 /**
  * Reusable email template used by the site UI
  */
 export const zSiteEmailTemplateResource = z.object({
-    id: zEntityId,
-    name: z.string(),
-    subject: z.string(),
-    body: z.string(),
-    createdAt: zTimestamp,
-    updatedAt: zTimestamp
+  id: zEntityId,
+  name: z.string(),
+  subject: z.string(),
+  body: z.string(),
+  createdAt: zTimestamp,
+  updatedAt: zTimestamp
 });
 
 /**
  * A tracked event shown in the activity feed
  */
 export const zSiteEventResource = z.object({
-    id: zEntityId,
-    subjectId: z.string(),
-    email: z.string().nullish(),
-    action: z.string(),
-    properties: z.record(z.string(), z.unknown()).nullish(),
-    occurredAt: zTimestamp.nullish(),
-    createdAt: zTimestamp
+  id: zEntityId,
+  subjectId: z.string(),
+  email: z.string().nullish(),
+  action: z.string(),
+  properties: z.record(z.string(), z.unknown()).nullish(),
+  occurredAt: zTimestamp.nullish(),
+  createdAt: zTimestamp
 });
 
 /**
  * A workspace sending-provider integration
  */
 export const zSiteIntegrationResource = z.object({
-    id: zEntityId,
-    name: z.string(),
-    channel: zSiteIntegrationChannel,
-    provider: zSiteIntegrationProvider,
-    enabled: z.boolean(),
-    isDefault: z.boolean(),
-    config: zSiteIntegrationConfig,
-    createdAt: zTimestamp,
-    updatedAt: zTimestamp
+  id: zEntityId,
+  name: z.string(),
+  channel: zSiteIntegrationChannel,
+  provider: zSiteIntegrationProvider,
+  enabled: z.boolean(),
+  isDefault: z.boolean(),
+  config: zSiteIntegrationConfig,
+  createdAt: zTimestamp,
+  updatedAt: zTimestamp
 });
 
 /**
  * A pending invitation of an email address to join the workspace
  */
 export const zSiteInvitationResource = z.object({
-    id: zEntityId,
-    email: zEmailAddress,
-    role: zSiteInvitableRole,
-    expiresAt: zTimestamp,
-    invitedByEmail: z.string().nullish(),
-    createdAt: zTimestamp
+  id: zEntityId,
+  email: zEmailAddress,
+  role: zSiteInvitableRole,
+  expiresAt: zTimestamp,
+  invitedByEmail: z.string().nullish(),
+  createdAt: zTimestamp
 });
 
 /**
@@ -737,46 +737,46 @@ export const zSiteInvitationResource = z.object({
  * UI can offer "copy link"; an email is also sent best-effort.
  */
 export const zSiteCreateInvitationResponse = z.object({
-    inviteUrl: z.string(),
-    resource: zSiteInvitationResource
+  inviteUrl: z.string(),
+  resource: zSiteInvitationResource
 });
 
 /**
  * A Membership — the join granting a User access to the workspace with a Role
  */
 export const zSiteMembershipResource = z.object({
-    id: zEntityId,
-    userId: zEntityId,
-    email: zEmailAddress,
-    name: z.string(),
-    role: zSiteMembershipRole,
-    createdAt: zTimestamp
+  id: zEntityId,
+  userId: zEntityId,
+  email: zEmailAddress,
+  name: z.string(),
+  role: zSiteMembershipRole,
+  createdAt: zTimestamp
 });
 
 export const zSiteRegisterResult = z.object({
-    id: zEntityId,
-    name: z.string(),
-    email: zEmailAddress,
-    createdAt: zTimestamp
+  id: zEntityId,
+  name: z.string(),
+  email: zEmailAddress,
+  createdAt: zTimestamp
 });
 
 /**
  * Site request body for scheduling a broadcast
  */
 export const zSiteScheduleBroadcastInput = z.object({
-    scheduledAt: zTimestamp
+  scheduledAt: zTimestamp
 });
 
 /**
  * Segment resource used by the site UI
  */
 export const zSiteSegmentResource = z.object({
-    id: zEntityId,
-    name: z.string(),
-    type: zSiteSegmentType,
-    definition: z.string().nullish(),
-    createdAt: zTimestamp,
-    updatedAt: zTimestamp
+  id: zEntityId,
+  name: z.string(),
+  type: zSiteSegmentType,
+  definition: z.string().nullish(),
+  createdAt: zTimestamp,
+  updatedAt: zTimestamp
 });
 
 /**
@@ -786,80 +786,80 @@ export const zSiteSegmentResource = z.object({
  * background — it can flip back if the DNS record disappears.
  */
 export const zSiteSendingDomainResource = z.object({
-    id: zEntityId,
-    domain: z.string(),
-    dkimSelector: z.string(),
-    verified: z.boolean(),
-    dkimRecord: zSiteDnsRecord,
-    spfRecord: zSiteDnsRecord,
-    dmarcRecord: zSiteDnsRecord,
-    lastCheckedAt: zTimestamp.nullish(),
-    verifiedAt: zTimestamp.nullish(),
-    createdAt: zTimestamp,
-    updatedAt: zTimestamp
+  id: zEntityId,
+  domain: z.string(),
+  dkimSelector: z.string(),
+  verified: z.boolean(),
+  dkimRecord: zSiteDnsRecord,
+  spfRecord: zSiteDnsRecord,
+  dmarcRecord: zSiteDnsRecord,
+  lastCheckedAt: zTimestamp.nullish(),
+  verifiedAt: zTimestamp.nullish(),
+  createdAt: zTimestamp,
+  updatedAt: zTimestamp
 });
 
 /**
  * A suppressed destination: the send path skips it on every surface
  */
 export const zSiteSuppressionResource = z.object({
-    id: zEntityId,
-    channel: zSiteSuppressionChannel,
-    destination: z.string(),
-    reason: zSiteSuppressionReason,
-    createdAt: zTimestamp,
-    updatedAt: zTimestamp
+  id: zEntityId,
+  channel: zSiteSuppressionChannel,
+  destination: z.string(),
+  reason: zSiteSuppressionReason,
+  createdAt: zTimestamp,
+  updatedAt: zTimestamp
 });
 
 /**
  * One transactional send: the durable, read-only trace of an `/api/emails` call
  */
 export const zSiteTransactionalEmailResource = z.object({
-    id: zEntityId,
-    channel: zSiteTransactionalEmailChannel,
-    destination: z.string(),
-    templateId: zEntityId,
-    contactId: zEntityId.nullish(),
-    status: zSiteTransactionalEmailStatus,
-    error: z.string().nullish(),
-    createdAt: zTimestamp
+  id: zEntityId,
+  channel: zSiteTransactionalEmailChannel,
+  destination: z.string(),
+  templateId: zEntityId,
+  contactId: zEntityId.nullish(),
+  status: zSiteTransactionalEmailStatus,
+  error: z.string().nullish(),
+  createdAt: zTimestamp
 });
 
 /**
  * The authenticated dashboard user
  */
 export const zSiteUserResource = z.object({
-    id: zEntityId,
-    name: z.string(),
-    email: zEmailAddress,
-    emailVerified: z.boolean(),
-    createdAt: zTimestamp
+  id: zEntityId,
+  name: z.string(),
+  email: zEmailAddress,
+  emailVerified: z.boolean(),
+  createdAt: zTimestamp
 });
 
 /**
  * Webhook endpoint resource used by the site UI
  */
 export const zSiteWebhookEndpointResource = z.object({
-    id: zEntityId,
-    url: z.string(),
-    secret: z.string(),
-    eventTypes: z.array(z.string()),
-    enabled: z.boolean(),
-    createdAt: zTimestamp,
-    updatedAt: zTimestamp
+  id: zEntityId,
+  url: z.string(),
+  secret: z.string(),
+  eventTypes: z.array(z.string()),
+  enabled: z.boolean(),
+  createdAt: zTimestamp,
+  updatedAt: zTimestamp
 });
 
 /**
  * Workspace the current user belongs to
  */
 export const zSiteWorkspaceResource = z.object({
-    id: zEntityId,
-    name: z.string(),
-    slug: z.string(),
-    collectKey: z.string(),
-    ingestKey: z.string(),
-    postalAddress: z.string(),
-    createdAt: zTimestamp
+  id: zEntityId,
+  name: z.string(),
+  slug: z.string(),
+  collectKey: z.string(),
+  ingestKey: z.string(),
+  postalAddress: z.string(),
+  createdAt: zTimestamp
 });
 
 /**
@@ -1090,7 +1090,7 @@ export const zSiteAuthResetPasswordBody = zSiteResetPasswordInput;
 export const zSiteAuthVerifyEmailBody = zSiteVerifyEmailInput;
 
 export const zSitePublicInvitationsLookupPath = z.object({
-    token: z.string()
+  token: z.string()
 });
 
 /**
@@ -1101,7 +1101,7 @@ export const zSitePublicInvitationsLookupResponse = zSiteInvitationLookupResult;
 export const zSitePublicInvitationsAcceptBody = zSiteAcceptInvitationInput;
 
 export const zSitePublicInvitationsAcceptPath = z.object({
-    token: z.string()
+  token: z.string()
 });
 
 /**
@@ -1126,7 +1126,7 @@ export const zSiteWorkspacesListResponse = z.array(zSiteWorkspaceResource);
 export const zSiteWorkspacesUpdateBody = zSiteUpdateWorkspaceInput;
 
 export const zSiteWorkspacesUpdatePath = z.object({
-    slug: z.string()
+  slug: z.string()
 });
 
 /**
@@ -1135,11 +1135,11 @@ export const zSiteWorkspacesUpdatePath = z.object({
 export const zSiteWorkspacesUpdateResponse = zSiteWorkspaceResource;
 
 export const zSiteAnalyticsOverviewPath = z.object({
-    slug: z.string()
+  slug: z.string()
 });
 
 export const zSiteAnalyticsOverviewQuery = z.object({
-    range: zSiteAnalyticsRange.optional()
+  range: zSiteAnalyticsRange.optional()
 });
 
 /**
@@ -1148,29 +1148,29 @@ export const zSiteAnalyticsOverviewQuery = z.object({
 export const zSiteAnalyticsOverviewResponse = zSiteAnalyticsOverview;
 
 export const zSiteAutomationsListPath = z.object({
-    slug: z.string()
+  slug: z.string()
 });
 
 export const zSiteAutomationsListQuery = z.object({
-    page: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).optional().default(1),
-    pageSize: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).optional().default(25)
+  page: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).optional().default(1),
+  pageSize: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).optional().default(25)
 });
 
 /**
  * Paginated response
  */
 export const zSiteAutomationsListResponse = z.object({
-    items: z.array(zSiteAutomationResource),
-    page: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
-    pageSize: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
-    totalItems: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
-    totalPages: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' })
+  items: z.array(zSiteAutomationResource),
+  page: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
+  pageSize: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
+  totalItems: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
+  totalPages: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' })
 });
 
 export const zSiteAutomationsCreateBody = zSiteCreateAutomationInput;
 
 export const zSiteAutomationsCreatePath = z.object({
-    slug: z.string()
+  slug: z.string()
 });
 
 /**
@@ -1179,8 +1179,8 @@ export const zSiteAutomationsCreatePath = z.object({
 export const zSiteAutomationsCreateResponse = zSiteAutomationResource;
 
 export const zSiteAutomationsDeletePath = z.object({
-    slug: z.string(),
-    id: zEntityId
+  slug: z.string(),
+  id: zEntityId
 });
 
 /**
@@ -1189,8 +1189,8 @@ export const zSiteAutomationsDeletePath = z.object({
 export const zSiteAutomationsDeleteResponse = z.void();
 
 export const zSiteAutomationsGetPath = z.object({
-    slug: z.string(),
-    id: zEntityId
+  slug: z.string(),
+  id: zEntityId
 });
 
 /**
@@ -1201,8 +1201,8 @@ export const zSiteAutomationsGetResponse = zSiteAutomationResource;
 export const zSiteAutomationsUpdateBody = zSiteUpdateAutomationInput;
 
 export const zSiteAutomationsUpdatePath = z.object({
-    slug: z.string(),
-    id: zEntityId
+  slug: z.string(),
+  id: zEntityId
 });
 
 /**
@@ -1211,8 +1211,8 @@ export const zSiteAutomationsUpdatePath = z.object({
 export const zSiteAutomationsUpdateResponse = zSiteAutomationResource;
 
 export const zSiteAutomationsActivatePath = z.object({
-    slug: z.string(),
-    id: zEntityId
+  slug: z.string(),
+  id: zEntityId
 });
 
 /**
@@ -1221,8 +1221,8 @@ export const zSiteAutomationsActivatePath = z.object({
 export const zSiteAutomationsActivateResponse = zSiteAutomationResource;
 
 export const zSiteAutomationsDeactivatePath = z.object({
-    slug: z.string(),
-    id: zEntityId
+  slug: z.string(),
+  id: zEntityId
 });
 
 /**
@@ -1231,29 +1231,29 @@ export const zSiteAutomationsDeactivatePath = z.object({
 export const zSiteAutomationsDeactivateResponse = zSiteAutomationResource;
 
 export const zSiteBroadcastsListPath = z.object({
-    slug: z.string()
+  slug: z.string()
 });
 
 export const zSiteBroadcastsListQuery = z.object({
-    page: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).optional().default(1),
-    pageSize: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).optional().default(25)
+  page: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).optional().default(1),
+  pageSize: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).optional().default(25)
 });
 
 /**
  * Paginated response
  */
 export const zSiteBroadcastsListResponse = z.object({
-    items: z.array(zSiteBroadcastResource),
-    page: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
-    pageSize: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
-    totalItems: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
-    totalPages: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' })
+  items: z.array(zSiteBroadcastResource),
+  page: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
+  pageSize: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
+  totalItems: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
+  totalPages: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' })
 });
 
 export const zSiteBroadcastsCreateBody = zSiteCreateBroadcastInput;
 
 export const zSiteBroadcastsCreatePath = z.object({
-    slug: z.string()
+  slug: z.string()
 });
 
 /**
@@ -1262,8 +1262,8 @@ export const zSiteBroadcastsCreatePath = z.object({
 export const zSiteBroadcastsCreateResponse = zSiteBroadcastResource;
 
 export const zSiteBroadcastsDeletePath = z.object({
-    slug: z.string(),
-    id: zEntityId
+  slug: z.string(),
+  id: zEntityId
 });
 
 /**
@@ -1272,8 +1272,8 @@ export const zSiteBroadcastsDeletePath = z.object({
 export const zSiteBroadcastsDeleteResponse = z.void();
 
 export const zSiteBroadcastsGetPath = z.object({
-    slug: z.string(),
-    id: zEntityId
+  slug: z.string(),
+  id: zEntityId
 });
 
 /**
@@ -1284,8 +1284,8 @@ export const zSiteBroadcastsGetResponse = zSiteBroadcastResource;
 export const zSiteBroadcastsUpdateBody = zSiteUpdateBroadcastInput;
 
 export const zSiteBroadcastsUpdatePath = z.object({
-    slug: z.string(),
-    id: zEntityId
+  slug: z.string(),
+  id: zEntityId
 });
 
 /**
@@ -1296,8 +1296,8 @@ export const zSiteBroadcastsUpdateResponse = zSiteBroadcastResource;
 export const zSiteBroadcastsScheduleBody = zSiteScheduleBroadcastInput;
 
 export const zSiteBroadcastsSchedulePath = z.object({
-    slug: z.string(),
-    id: zEntityId
+  slug: z.string(),
+  id: zEntityId
 });
 
 /**
@@ -1306,8 +1306,8 @@ export const zSiteBroadcastsSchedulePath = z.object({
 export const zSiteBroadcastsScheduleResponse = zSiteBroadcastResource;
 
 export const zSiteBroadcastsSendPath = z.object({
-    slug: z.string(),
-    id: zEntityId
+  slug: z.string(),
+  id: zEntityId
 });
 
 /**
@@ -1318,8 +1318,8 @@ export const zSiteBroadcastsSendResponse = zSiteBroadcastResource;
 export const zSiteBroadcastsTestSendBody = zSiteTestSendBroadcastInput;
 
 export const zSiteBroadcastsTestSendPath = z.object({
-    slug: z.string(),
-    id: zEntityId
+  slug: z.string(),
+  id: zEntityId
 });
 
 /**
@@ -1328,29 +1328,29 @@ export const zSiteBroadcastsTestSendPath = z.object({
 export const zSiteBroadcastsTestSendResponse = z.void();
 
 export const zSiteContactsListPath = z.object({
-    slug: z.string()
+  slug: z.string()
 });
 
 export const zSiteContactsListQuery = z.object({
-    page: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).optional().default(1),
-    pageSize: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).optional().default(25)
+  page: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).optional().default(1),
+  pageSize: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).optional().default(25)
 });
 
 /**
  * Paginated response
  */
 export const zSiteContactsListResponse = z.object({
-    items: z.array(zSiteContactResource),
-    page: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
-    pageSize: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
-    totalItems: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
-    totalPages: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' })
+  items: z.array(zSiteContactResource),
+  page: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
+  pageSize: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
+  totalItems: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
+  totalPages: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' })
 });
 
 export const zSiteContactsCreateBody = zSiteCreateContactInput;
 
 export const zSiteContactsCreatePath = z.object({
-    slug: z.string()
+  slug: z.string()
 });
 
 /**
@@ -1359,8 +1359,8 @@ export const zSiteContactsCreatePath = z.object({
 export const zSiteContactsCreateResponse = zSiteContactResource;
 
 export const zSiteContactsDeletePath = z.object({
-    slug: z.string(),
-    id: zEntityId
+  slug: z.string(),
+  id: zEntityId
 });
 
 /**
@@ -1369,8 +1369,8 @@ export const zSiteContactsDeletePath = z.object({
 export const zSiteContactsDeleteResponse = z.void();
 
 export const zSiteContactsGetPath = z.object({
-    slug: z.string(),
-    id: zEntityId
+  slug: z.string(),
+  id: zEntityId
 });
 
 /**
@@ -1381,8 +1381,8 @@ export const zSiteContactsGetResponse = zSiteContactResource;
 export const zSiteContactsUpdateBody = zSiteUpdateContactInput;
 
 export const zSiteContactsUpdatePath = z.object({
-    slug: z.string(),
-    id: zEntityId
+  slug: z.string(),
+  id: zEntityId
 });
 
 /**
@@ -1391,45 +1391,45 @@ export const zSiteContactsUpdatePath = z.object({
 export const zSiteContactsUpdateResponse = zSiteContactResource;
 
 export const zSiteCustomFieldsListPath = z.object({
-    slug: z.string()
+  slug: z.string()
 });
 
 /**
  * Paginated response
  */
 export const zSiteCustomFieldsListResponse = z.object({
-    items: z.array(zSiteCustomFieldResource),
-    page: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
-    pageSize: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
-    totalItems: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
-    totalPages: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' })
+  items: z.array(zSiteCustomFieldResource),
+  page: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
+  pageSize: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
+  totalItems: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
+  totalPages: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' })
 });
 
 export const zSiteEventsListPath = z.object({
-    slug: z.string()
+  slug: z.string()
 });
 
 export const zSiteEventsListQuery = z.object({
-    page: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).optional().default(1),
-    pageSize: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).optional().default(25),
-    action: z.string().optional(),
-    contactId: zEntityId.optional(),
-    email: z.string().optional()
+  page: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).optional().default(1),
+  pageSize: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).optional().default(25),
+  action: z.string().optional(),
+  contactId: zEntityId.optional(),
+  email: z.string().optional()
 });
 
 /**
  * Paginated response
  */
 export const zSiteEventsListResponse = z.object({
-    items: z.array(zSiteEventResource),
-    page: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
-    pageSize: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
-    totalItems: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
-    totalPages: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' })
+  items: z.array(zSiteEventResource),
+  page: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
+  pageSize: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
+  totalItems: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
+  totalPages: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' })
 });
 
 export const zSiteEventsActionsPath = z.object({
-    slug: z.string()
+  slug: z.string()
 });
 
 /**
@@ -1438,7 +1438,7 @@ export const zSiteEventsActionsPath = z.object({
 export const zSiteEventsActionsResponse = zSiteEventActionsResult;
 
 export const zSiteIntegrationsListPath = z.object({
-    slug: z.string()
+  slug: z.string()
 });
 
 /**
@@ -1449,7 +1449,7 @@ export const zSiteIntegrationsListResponse = z.array(zSiteIntegrationResource);
 export const zSiteIntegrationsCreateBody = zSiteCreateIntegrationInput;
 
 export const zSiteIntegrationsCreatePath = z.object({
-    slug: z.string()
+  slug: z.string()
 });
 
 /**
@@ -1458,8 +1458,8 @@ export const zSiteIntegrationsCreatePath = z.object({
 export const zSiteIntegrationsCreateResponse = zSiteIntegrationResource;
 
 export const zSiteIntegrationsDeletePath = z.object({
-    slug: z.string(),
-    id: zEntityId
+  slug: z.string(),
+  id: zEntityId
 });
 
 /**
@@ -1468,8 +1468,8 @@ export const zSiteIntegrationsDeletePath = z.object({
 export const zSiteIntegrationsDeleteResponse = z.void();
 
 export const zSiteIntegrationsGetPath = z.object({
-    slug: z.string(),
-    id: zEntityId
+  slug: z.string(),
+  id: zEntityId
 });
 
 /**
@@ -1480,8 +1480,8 @@ export const zSiteIntegrationsGetResponse = zSiteIntegrationResource;
 export const zSiteIntegrationsUpdateBody = zSiteUpdateIntegrationInput;
 
 export const zSiteIntegrationsUpdatePath = z.object({
-    slug: z.string(),
-    id: zEntityId
+  slug: z.string(),
+  id: zEntityId
 });
 
 /**
@@ -1490,7 +1490,7 @@ export const zSiteIntegrationsUpdatePath = z.object({
 export const zSiteIntegrationsUpdateResponse = zSiteIntegrationResource;
 
 export const zSiteInvitationsListPath = z.object({
-    slug: z.string()
+  slug: z.string()
 });
 
 /**
@@ -1501,7 +1501,7 @@ export const zSiteInvitationsListResponse = z.array(zSiteInvitationResource);
 export const zSiteInvitationsCreateBody = zSiteCreateInvitationInput;
 
 export const zSiteInvitationsCreatePath = z.object({
-    slug: z.string()
+  slug: z.string()
 });
 
 /**
@@ -1510,8 +1510,8 @@ export const zSiteInvitationsCreatePath = z.object({
 export const zSiteInvitationsCreateResponse = zSiteCreateInvitationResponse;
 
 export const zSiteInvitationsDeletePath = z.object({
-    slug: z.string(),
-    id: zEntityId
+  slug: z.string(),
+  id: zEntityId
 });
 
 /**
@@ -1520,7 +1520,7 @@ export const zSiteInvitationsDeletePath = z.object({
 export const zSiteInvitationsDeleteResponse = z.void();
 
 export const zSiteMembershipsListPath = z.object({
-    slug: z.string()
+  slug: z.string()
 });
 
 /**
@@ -1529,8 +1529,8 @@ export const zSiteMembershipsListPath = z.object({
 export const zSiteMembershipsListResponse = z.array(zSiteMembershipResource);
 
 export const zSiteMembershipsDeletePath = z.object({
-    slug: z.string(),
-    id: zEntityId
+  slug: z.string(),
+  id: zEntityId
 });
 
 /**
@@ -1541,8 +1541,8 @@ export const zSiteMembershipsDeleteResponse = z.void();
 export const zSiteMembershipsUpdateBody = zSiteUpdateMembershipInput;
 
 export const zSiteMembershipsUpdatePath = z.object({
-    slug: z.string(),
-    id: zEntityId
+  slug: z.string(),
+  id: zEntityId
 });
 
 /**
@@ -1551,29 +1551,29 @@ export const zSiteMembershipsUpdatePath = z.object({
 export const zSiteMembershipsUpdateResponse = zSiteMembershipResource;
 
 export const zSiteSegmentsListPath = z.object({
-    slug: z.string()
+  slug: z.string()
 });
 
 export const zSiteSegmentsListQuery = z.object({
-    page: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).optional().default(1),
-    pageSize: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).optional().default(25)
+  page: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).optional().default(1),
+  pageSize: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).optional().default(25)
 });
 
 /**
  * Paginated response
  */
 export const zSiteSegmentsListResponse = z.object({
-    items: z.array(zSiteSegmentResource),
-    page: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
-    pageSize: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
-    totalItems: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
-    totalPages: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' })
+  items: z.array(zSiteSegmentResource),
+  page: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
+  pageSize: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
+  totalItems: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
+  totalPages: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' })
 });
 
 export const zSiteSegmentsCreateBody = zSiteCreateSegmentInput;
 
 export const zSiteSegmentsCreatePath = z.object({
-    slug: z.string()
+  slug: z.string()
 });
 
 /**
@@ -1584,7 +1584,7 @@ export const zSiteSegmentsCreateResponse = zSiteSegmentResource;
 export const zSiteSegmentsPreviewBody = zSitePreviewSegmentInput;
 
 export const zSiteSegmentsPreviewPath = z.object({
-    slug: z.string()
+  slug: z.string()
 });
 
 /**
@@ -1593,8 +1593,8 @@ export const zSiteSegmentsPreviewPath = z.object({
 export const zSiteSegmentsPreviewResponse = zSitePreviewSegmentResult;
 
 export const zSiteSegmentsDeletePath = z.object({
-    slug: z.string(),
-    id: zEntityId
+  slug: z.string(),
+  id: zEntityId
 });
 
 /**
@@ -1603,8 +1603,8 @@ export const zSiteSegmentsDeletePath = z.object({
 export const zSiteSegmentsDeleteResponse = z.void();
 
 export const zSiteSegmentsGetPath = z.object({
-    slug: z.string(),
-    id: zEntityId
+  slug: z.string(),
+  id: zEntityId
 });
 
 /**
@@ -1615,8 +1615,8 @@ export const zSiteSegmentsGetResponse = zSiteSegmentResource;
 export const zSiteSegmentsUpdateBody = zSiteUpdateSegmentInput;
 
 export const zSiteSegmentsUpdatePath = z.object({
-    slug: z.string(),
-    id: zEntityId
+  slug: z.string(),
+  id: zEntityId
 });
 
 /**
@@ -1625,29 +1625,29 @@ export const zSiteSegmentsUpdatePath = z.object({
 export const zSiteSegmentsUpdateResponse = zSiteSegmentResource;
 
 export const zSiteSendingDomainsListPath = z.object({
-    slug: z.string()
+  slug: z.string()
 });
 
 export const zSiteSendingDomainsListQuery = z.object({
-    page: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).optional().default(1),
-    pageSize: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).optional().default(25)
+  page: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).optional().default(1),
+  pageSize: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).optional().default(25)
 });
 
 /**
  * Paginated response
  */
 export const zSiteSendingDomainsListResponse = z.object({
-    items: z.array(zSiteSendingDomainResource),
-    page: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
-    pageSize: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
-    totalItems: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
-    totalPages: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' })
+  items: z.array(zSiteSendingDomainResource),
+  page: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
+  pageSize: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
+  totalItems: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
+  totalPages: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' })
 });
 
 export const zSiteSendingDomainsCreateBody = zSiteCreateSendingDomainInput;
 
 export const zSiteSendingDomainsCreatePath = z.object({
-    slug: z.string()
+  slug: z.string()
 });
 
 /**
@@ -1656,8 +1656,8 @@ export const zSiteSendingDomainsCreatePath = z.object({
 export const zSiteSendingDomainsCreateResponse = zSiteSendingDomainResource;
 
 export const zSiteSendingDomainsDeletePath = z.object({
-    slug: z.string(),
-    id: zEntityId
+  slug: z.string(),
+  id: zEntityId
 });
 
 /**
@@ -1666,8 +1666,8 @@ export const zSiteSendingDomainsDeletePath = z.object({
 export const zSiteSendingDomainsDeleteResponse = z.void();
 
 export const zSiteSendingDomainsGetPath = z.object({
-    slug: z.string(),
-    id: zEntityId
+  slug: z.string(),
+  id: zEntityId
 });
 
 /**
@@ -1676,8 +1676,8 @@ export const zSiteSendingDomainsGetPath = z.object({
 export const zSiteSendingDomainsGetResponse = zSiteSendingDomainResource;
 
 export const zSiteSendingDomainsVerifyPath = z.object({
-    slug: z.string(),
-    id: zEntityId
+  slug: z.string(),
+  id: zEntityId
 });
 
 /**
@@ -1686,29 +1686,29 @@ export const zSiteSendingDomainsVerifyPath = z.object({
 export const zSiteSendingDomainsVerifyResponse = z.void();
 
 export const zSiteSuppressionsListPath = z.object({
-    slug: z.string()
+  slug: z.string()
 });
 
 export const zSiteSuppressionsListQuery = z.object({
-    page: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).optional().default(1),
-    pageSize: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).optional().default(25)
+  page: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).optional().default(1),
+  pageSize: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).optional().default(25)
 });
 
 /**
  * Paginated response
  */
 export const zSiteSuppressionsListResponse = z.object({
-    items: z.array(zSiteSuppressionResource),
-    page: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
-    pageSize: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
-    totalItems: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
-    totalPages: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' })
+  items: z.array(zSiteSuppressionResource),
+  page: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
+  pageSize: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
+  totalItems: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
+  totalPages: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' })
 });
 
 export const zSiteSuppressionsCreateBody = zSiteCreateSuppressionInput;
 
 export const zSiteSuppressionsCreatePath = z.object({
-    slug: z.string()
+  slug: z.string()
 });
 
 /**
@@ -1717,8 +1717,8 @@ export const zSiteSuppressionsCreatePath = z.object({
 export const zSiteSuppressionsCreateResponse = zSiteSuppressionResource;
 
 export const zSiteSuppressionsDeletePath = z.object({
-    slug: z.string(),
-    id: zEntityId
+  slug: z.string(),
+  id: zEntityId
 });
 
 /**
@@ -1727,29 +1727,29 @@ export const zSiteSuppressionsDeletePath = z.object({
 export const zSiteSuppressionsDeleteResponse = z.void();
 
 export const zSiteTemplatesListPath = z.object({
-    slug: z.string()
+  slug: z.string()
 });
 
 export const zSiteTemplatesListQuery = z.object({
-    page: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).optional().default(1),
-    pageSize: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).optional().default(25)
+  page: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).optional().default(1),
+  pageSize: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).optional().default(25)
 });
 
 /**
  * Paginated response
  */
 export const zSiteTemplatesListResponse = z.object({
-    items: z.array(zSiteEmailTemplateResource),
-    page: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
-    pageSize: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
-    totalItems: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
-    totalPages: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' })
+  items: z.array(zSiteEmailTemplateResource),
+  page: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
+  pageSize: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
+  totalItems: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
+  totalPages: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' })
 });
 
 export const zSiteTemplatesCreateBody = zSiteCreateEmailTemplateInput;
 
 export const zSiteTemplatesCreatePath = z.object({
-    slug: z.string()
+  slug: z.string()
 });
 
 /**
@@ -1758,8 +1758,8 @@ export const zSiteTemplatesCreatePath = z.object({
 export const zSiteTemplatesCreateResponse = zSiteEmailTemplateResource;
 
 export const zSiteTemplatesDeletePath = z.object({
-    slug: z.string(),
-    id: zEntityId
+  slug: z.string(),
+  id: zEntityId
 });
 
 /**
@@ -1768,8 +1768,8 @@ export const zSiteTemplatesDeletePath = z.object({
 export const zSiteTemplatesDeleteResponse = z.void();
 
 export const zSiteTemplatesGetPath = z.object({
-    slug: z.string(),
-    id: zEntityId
+  slug: z.string(),
+  id: zEntityId
 });
 
 /**
@@ -1780,8 +1780,8 @@ export const zSiteTemplatesGetResponse = zSiteEmailTemplateResource;
 export const zSiteTemplatesUpdateBody = zSiteUpdateEmailTemplateInput;
 
 export const zSiteTemplatesUpdatePath = z.object({
-    slug: z.string(),
-    id: zEntityId
+  slug: z.string(),
+  id: zEntityId
 });
 
 /**
@@ -1790,7 +1790,7 @@ export const zSiteTemplatesUpdatePath = z.object({
 export const zSiteTemplatesUpdateResponse = zSiteEmailTemplateResource;
 
 export const zSiteTokensListPath = z.object({
-    slug: z.string()
+  slug: z.string()
 });
 
 /**
@@ -1801,7 +1801,7 @@ export const zSiteTokensListResponse = z.array(zSiteApiTokenResource);
 export const zSiteTokensCreateBody = zSiteCreateTokenInput;
 
 export const zSiteTokensCreatePath = z.object({
-    slug: z.string()
+  slug: z.string()
 });
 
 /**
@@ -1810,8 +1810,8 @@ export const zSiteTokensCreatePath = z.object({
 export const zSiteTokensCreateResponse = zSiteCreateTokenResponse;
 
 export const zSiteTokensDeletePath = z.object({
-    slug: z.string(),
-    id: zEntityId
+  slug: z.string(),
+  id: zEntityId
 });
 
 /**
@@ -1820,49 +1820,49 @@ export const zSiteTokensDeletePath = z.object({
 export const zSiteTokensDeleteResponse = z.void();
 
 export const zSiteTransactionalEmailsListPath = z.object({
-    slug: z.string()
+  slug: z.string()
 });
 
 export const zSiteTransactionalEmailsListQuery = z.object({
-    page: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).optional().default(1),
-    pageSize: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).optional().default(25)
+  page: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).optional().default(1),
+  pageSize: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).optional().default(25)
 });
 
 /**
  * Paginated response
  */
 export const zSiteTransactionalEmailsListResponse = z.object({
-    items: z.array(zSiteTransactionalEmailResource),
-    page: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
-    pageSize: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
-    totalItems: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
-    totalPages: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' })
+  items: z.array(zSiteTransactionalEmailResource),
+  page: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
+  pageSize: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
+  totalItems: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
+  totalPages: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' })
 });
 
 export const zSiteWebhooksListPath = z.object({
-    slug: z.string()
+  slug: z.string()
 });
 
 export const zSiteWebhooksListQuery = z.object({
-    page: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).optional().default(1),
-    pageSize: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).optional().default(25)
+  page: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).optional().default(1),
+  pageSize: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).optional().default(25)
 });
 
 /**
  * Paginated response
  */
 export const zSiteWebhooksListResponse = z.object({
-    items: z.array(zSiteWebhookEndpointResource),
-    page: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
-    pageSize: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
-    totalItems: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
-    totalPages: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' })
+  items: z.array(zSiteWebhookEndpointResource),
+  page: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
+  pageSize: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
+  totalItems: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
+  totalPages: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' })
 });
 
 export const zSiteWebhooksCreateBody = zSiteCreateWebhookEndpointInput;
 
 export const zSiteWebhooksCreatePath = z.object({
-    slug: z.string()
+  slug: z.string()
 });
 
 /**
@@ -1871,8 +1871,8 @@ export const zSiteWebhooksCreatePath = z.object({
 export const zSiteWebhooksCreateResponse = zSiteWebhookEndpointResource;
 
 export const zSiteWebhooksDeletePath = z.object({
-    slug: z.string(),
-    id: zEntityId
+  slug: z.string(),
+  id: zEntityId
 });
 
 /**
@@ -1881,8 +1881,8 @@ export const zSiteWebhooksDeletePath = z.object({
 export const zSiteWebhooksDeleteResponse = z.void();
 
 export const zSiteWebhooksGetPath = z.object({
-    slug: z.string(),
-    id: zEntityId
+  slug: z.string(),
+  id: zEntityId
 });
 
 /**
@@ -1893,8 +1893,8 @@ export const zSiteWebhooksGetResponse = zSiteWebhookEndpointResource;
 export const zSiteWebhooksUpdateBody = zSiteUpdateWebhookEndpointInput;
 
 export const zSiteWebhooksUpdatePath = z.object({
-    slug: z.string(),
-    id: zEntityId
+  slug: z.string(),
+  id: zEntityId
 });
 
 /**
