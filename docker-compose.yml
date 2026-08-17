@@ -3,10 +3,10 @@
 # Everything runs in containers: a host with only Docker can build, lint, test,
 # generate, and run the stack (see the Makefile `RUN_FE`/`RUN_GO*` runners).
 # Dependencies and tool caches live on the HOST under the repo bind mount
-# (node_modules, .pnpm-store, .cache/go-mod, .cache/go-build), so editor LSPs
-# (gopls / TS language server) resolve imports too. Install deps via the container:
-#   docker compose run --rm frontend pnpm install
-#   docker compose run --rm backend  go mod download
+# (node_modules, .cache/go-mod, .cache/go-build), so editor LSPs
+# (gopls / TS language server) resolve imports too. Install deps via `make install`:
+# it passes pnpm the store-dir flag that keeps the store out of the repo (see the
+# frontend service below), which a bare `docker compose run … pnpm install` does not.
 #
 # Containers run as the host UID/GID (the Makefile exports COMPOSE_UID/COMPOSE_GID
 # from `id`), so files written into the bind mount — generated code, caches — are
@@ -36,10 +36,16 @@ services:
     working_dir: /app
     user: "${COMPOSE_UID:-0}:${COMPOSE_GID:-0}"
     volumes:
-      - .:/app # repo (incl. node_modules + .pnpm-store) lives on the host
+      - .:/app # repo (incl. node_modules) lives on the host
+      # The host's global pnpm store, shared with every other project on the
+      # machine. The Makefile passes `--store-dir /pnpm-store` to pnpm; without an
+      # explicit store-dir pnpm sees its default ($HOME-derived, here /tmp) on a
+      # different filesystem than node_modules and relocates the store to the
+      # project's disk, i.e. back into the repo as ./.pnpm-store.
+      # Linux hosts: export PNPM_STORE_HOST_DIR=~/.local/share/pnpm/store
+      - ${PNPM_STORE_HOST_DIR:-~/Library/pnpm/store}:/pnpm-store
     environment:
       HOME: /tmp # writable home for a non-root host UID (pnpm global state)
-      PNPM_STORE_DIR: /app/.pnpm-store # same FS as node_modules → pnpm hardlinks work
       # Instance locale — the Vite dev plugin substitutes it into index.html (dev
       # mirror of the Go backend's serve-time injection). Keep in sync with backend.
       APP_LOCALE: en

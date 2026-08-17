@@ -16,6 +16,13 @@ RUN_FE    ?= $(DC) run --rm --no-deps frontend
 RUN_GO    ?= $(DC) run --rm --no-deps backend
 RUN_GO_DB ?= $(DC) run --rm backend
 
+# pnpm's store: the host's global one, bind-mounted into the frontend container at
+# /pnpm-store (see docker-compose.yml). Passed explicitly because pnpm otherwise
+# sees its default store ($HOME-derived, /tmp in the container) on a different
+# filesystem than node_modules and relocates it into the repo. Empty for a
+# host-native run (RUN_FE=), where pnpm's own default is already the global store.
+PNPM_STORE_FLAG = $(if $(RUN_FE),--store-dir /pnpm-store,)
+
 # Connection strings default to the compose `db` service. Override the host part
 # for a host-native run, e.g. `make test RUN_GO_DB= TEST_DB_URL=postgres://...@localhost:5432/1mail_test?sslmode=disable`.
 TEST_DB_URL  ?= postgres://postgres:postgres@db:5432/1mail_test?sslmode=disable
@@ -27,7 +34,7 @@ setup: install db-create db-create-test db-create-atlas db-migrate db-seed
 # compose). Go modules download into the host-bind-mounted cache (./.cache/go-mod)
 # so host gopls resolves imports. Neither needs a host toolchain.
 install:
-	$(RUN_FE) pnpm install
+	$(RUN_FE) pnpm install $(PNPM_STORE_FLAG)
 	$(RUN_GO) go mod download
 
 db-create:
@@ -88,7 +95,7 @@ test-frontend:
 update: update-npm update-go update-skills
 
 update-npm:
-	$(RUN_FE) sh -c 'pnpm exec ncu -u && pnpm update'
+	$(RUN_FE) sh -c 'pnpm exec ncu -u && pnpm update $(PNPM_STORE_FLAG)'
 
 update-go:
 	$(RUN_GO) sh -c 'go get -u ./... && go mod tidy'
