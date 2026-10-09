@@ -120,6 +120,30 @@ func TestExternalContactsCRUD(t *testing.T) {
 	assert.IsType(t, &externalapi.ContactsDeleteNoContent{}, deleted)
 }
 
+// A contact created through /api enrolls into Automations like a UI-created one:
+// it publishes contact.created onto the outbox in the same transaction.
+func TestExternalContactsCreatePublishesContactCreated(t *testing.T) {
+	env := testhelper.Setup(t)
+	c := client(t, env, seedToken(t, env.DB, []string{"contacts:write"}))
+
+	res, err := c.ContactsCreate(context.Background(), &externalapi.CreateContactInput{
+		Email: externalapi.NewOptNilEmailAddress("published@example.com"),
+	})
+	require.NoError(t, err)
+	created, ok := res.(*externalapi.ContactResource)
+	require.Truef(t, ok, "got %T", res)
+
+	var n int
+	require.NoError(t, env.SQLDB.QueryRow(
+		`SELECT count(*) FROM watermill_domain_events
+		   WHERE payload->>'name' = 'contact.created'
+		     AND payload->'data'->>'email' = $1
+		     AND (payload->'data'->>'contactId')::bigint = $2`,
+		"published@example.com", created.ID,
+	).Scan(&n))
+	assert.Equal(t, 1, n, "contact.created published once")
+}
+
 // Isolated: the unique violation aborts this test's transaction.
 func TestExternalContactsConflict(t *testing.T) {
 	env := testhelper.Setup(t)

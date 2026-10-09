@@ -9,6 +9,7 @@ import (
 	externalapi "github.com/mokevnin/1mail/gen/external"
 	"github.com/mokevnin/1mail/internal/api/auth"
 	"github.com/mokevnin/1mail/internal/convert"
+	"github.com/mokevnin/1mail/internal/events"
 	"github.com/mokevnin/1mail/internal/pagination"
 	"github.com/mokevnin/1mail/internal/service"
 )
@@ -58,25 +59,36 @@ func (h *Handlers) ContactsCreate(ctx context.Context, req *externalapi.CreateCo
 	}
 
 	ws := auth.WorkspaceID(auth.GetTokenAuth(ctx))
-	q := h.ent.Contact.Create().
-		SetWorkspaceID(ws).
-		SetNillableSubjectID(convert.StringPtr(req.SubjectId)).
-		SetNillableEmail(convert.StringPtr(req.Email)).
-		SetNillablePhone(convert.StringPtr(req.Phone)).
-		SetNillableFirstName(convert.StringPtr(req.FirstName)).
-		SetNillableLastName(convert.StringPtr(req.LastName)).
-		SetNillableTimeZone(convert.StringPtr(req.TimeZone))
-	if v, ok := req.CustomFields.Get(); ok {
-		typed, err := service.EnsureCustomFields(ctx, h.ent, ws, convert.RawMap(v))
+	var c *ent.Contact
+	err := h.bus.WithinTx(ctx, func(tx *ent.Client, pub events.Publisher) error {
+		q := tx.Contact.Create().
+			SetWorkspaceID(ws).
+			SetNillableSubjectID(convert.StringPtr(req.SubjectId)).
+			SetNillableEmail(convert.StringPtr(req.Email)).
+			SetNillablePhone(convert.StringPtr(req.Phone)).
+			SetNillableFirstName(convert.StringPtr(req.FirstName)).
+			SetNillableLastName(convert.StringPtr(req.LastName)).
+			SetNillableTimeZone(convert.StringPtr(req.TimeZone))
+		if v, ok := req.CustomFields.Get(); ok {
+			typed, err := service.EnsureCustomFields(ctx, tx, ws, convert.RawMap(v))
+			if err != nil {
+				return err
+			}
+			if len(typed) > 0 {
+				q = q.SetCustomFields(typed)
+			}
+		}
+		created, err := q.Save(ctx)
 		if err != nil {
-			return nil, err
+			return err
 		}
-		if len(typed) > 0 {
-			q = q.SetCustomFields(typed)
+		c = created
+		email := ""
+		if c.Email != nil {
+			email = *c.Email
 		}
-	}
-
-	c, err := q.Save(ctx)
+		return pub.Publish(ctx, &events.ContactCreated{WorkspaceID: ws, ContactID: c.ID, Email: email})
+	})
 	if service.IsUniqueViolation(err) {
 		res := externalapi.ContactsCreateConflict(problem(http.StatusConflict, "email already exists"))
 		return &res, nil
