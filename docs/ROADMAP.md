@@ -260,8 +260,8 @@ Follow the pattern in `ent/schema/segment.go` (workspace edge, `id` Int64 immuta
 Register the new edges on `Workspace` (`ent/schema/workspace.go`).
 **Order matters** (Atlas diffs migrations from generated `ent/`, not from `ent/schema/`):
 
-1. edit `ent/schema/*.go` → 2) `make generate-backend` (regenerates `ent/`) →
-2. `make db-generate name=add_broadcasts` → 4) `make db-migrate`.
+1. edit `ent/schema/*.go` → 2) `mise run generate:backend` (regenerates `ent/`) →
+2. `mise run db:generate name=add_broadcasts` → 4) `mise run db:migrate`.
 
 ### 2. API contract (TypeSpec → ogen → TS)
 
@@ -272,7 +272,7 @@ The frontend talks to the **site API**, so the primary contract goes there.
   **`POST .../{id}/schedule`**, a `stats` field on the resource. Wire it into `typespec/site/main.tsp`.
 - The existing `typespec/external/resources/broadcasts.tsp` — extend to the richer model later; for the
   MVP touch only the site spec.
-- `make generate-typespec` → `make generate-openapi` (TS client + react-query hooks in `src/generated/site`).
+- `mise run generate:typespec` → `mise run generate:openapi` (TS client + react-query hooks in `src/generated/site`).
 
 ### 3. Backend — handlers + converters
 
@@ -331,19 +331,19 @@ Pattern: the public tracker `internal/server/tracker.go` (serves `/t.js`, ingest
 - **Send/Schedule:** buttons calling the generated `siteBroadcastsSend/Schedule` hooks from
   `src/generated/site`.
 - **Campaign report:** stat cards (recipients/sent/opened/clicked/unsubscribed) from `stats`.
-- i18n strings in `locales/`, then `make generate-i18n-types`.
+- i18n strings in `locales/`, then `mise run generate:i18n-types`.
 
 ### 7. Tests (pattern: `internal/api/site/contacts_test.go`)
 
 - Handler tests for broadcasts CRUD + auth/workspace isolation (testhelper.Setup + typed ogen client).
 - Engine test: `SendBroadcastJob` creates recipients and sets statuses (with a fake sender).
 - Tracking test: hitting the open/click/unsub endpoints updates the recipient/contact and counters.
-- Frontend: composer-form tests (`make test-watch`).
+- Frontend: composer-form tests (`mise run test:watch`).
 
 ### Execution order (commits, directly on `main`, Conventional Commits)
 
 1. `feat`: ent schemas Broadcast + BroadcastRecipient + migration.
-2. `feat`: TypeSpec site/broadcasts + regeneration (`make generate`).
+2. `feat`: TypeSpec site/broadcasts + regeneration (`mise run generate`).
 3. `feat`: site handlers broadcasts (CRUD) + goverter mapping + tests.
 4. `feat`: river worker startup in main.go + SendBroadcastJob/SendMessageJob + render/merge tags + sender resolve.
 5. `feat`: public tracking endpoints (open/click/unsub) + link rewrite/pixel/footer.
@@ -352,7 +352,7 @@ Pattern: the public tracker `internal/server/tracker.go` (serves `/t.js`, ingest
 
 ### End-to-end verification (Phase 1)
 
-1. `make setup` / `make dev` — bring up the stack (https://1mail.localhost), mailpit on :8025.
+1. `mise run setup` / `mise run dev` — bring up the stack (https://1mail.localhost), mailpit on :8025.
 2. Create an SMTP integration (point it at mailpit) in Settings.
 3. Add a few active contacts.
 4. Create a broadcast → audience "all active" → write an email with `{{ first_name }}` → **Send**.
@@ -361,7 +361,7 @@ Pattern: the public tracker `internal/server/tracker.go` (serves `/t.js`, ingest
 6. Open the email / click a link / hit unsubscribe → confirm the **campaign report** shows
    opened/clicked/unsubscribed increasing, and the contact becomes `unsubscribed`.
 7. Scheduled send: set `scheduled_at` in the future → river sends it on time.
-8. `make test` (backend) and `make check` (tsc + oxlint/oxfmt + golangci-lint) are green.
+8. `mise run test` (backend) and `mise run check` (tsc + oxlint/oxfmt + golangci-lint) are green.
 
 ### Open questions / later
 
