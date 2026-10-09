@@ -180,8 +180,9 @@ check-fix-i18n:
 
 check-fix-fe:
 	$(RUN_FE) pnpm exec oxlint --fix
-	$(RUN_FE) pnpm exec oxfmt
+	# tsp format rewrites tspconfig.yaml quotes; oxfmt must run last to normalize them.
 	$(RUN_FE) pnpm exec tsp format typespec
+	$(RUN_FE) pnpm exec oxfmt
 
 check-fix-be:
 	$(RUN_GO) go fmt ./...
