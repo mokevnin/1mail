@@ -102,7 +102,7 @@ func main() {
 
 	go func() {
 		<-ctx.Done()
-		shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		shutdownCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 10*time.Second)
 		defer cancel()
 		_ = application.Server.Shutdown(shutdownCtx)
 		report := application.Shutdown(shutdownCtx)
@@ -115,7 +115,7 @@ func main() {
 		slog.Error("server stopped", "err", err)
 	}
 
-	shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	shutdownCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 10*time.Second)
 	defer cancel()
 	report := application.Shutdown(shutdownCtx)
 	if !report.Succeed {

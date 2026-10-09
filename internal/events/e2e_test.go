@@ -33,7 +33,7 @@ func TestDomainEventsRouterDelivery(t *testing.T) {
 	ctx := context.Background()
 	require.NoError(t, events.InitSchema(ctx, db))
 	t.Cleanup(func() {
-		_, _ = db.Exec(`DELETE FROM watermill_domain_events`)
+		_, _ = db.ExecContext(context.WithoutCancel(ctx), `DELETE FROM watermill_domain_events`)
 	})
 
 	router, err := events.NewRouter()

@@ -22,7 +22,7 @@ const fixtureWorkspace = int64(1)
 func outboxCount(t *testing.T, env *testhelper.TestEnv) int {
 	t.Helper()
 	var n int
-	err := env.SQLDB.QueryRow(`SELECT count(*) FROM watermill_domain_events`).Scan(&n)
+	err := env.SQLDB.QueryRowContext(t.Context(), `SELECT count(*) FROM watermill_domain_events`).Scan(&n)
 	require.NoError(t, err)
 	return n
 }

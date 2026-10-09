@@ -18,7 +18,7 @@ import (
 func loginStatus(t *testing.T, env *testhelper.TestEnv, email, password string) int {
 	t.Helper()
 	rec := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodPost, "/site/auth/direct/login",
+	req := httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/site/auth/direct/login",
 		strings.NewReader(`{"user":"`+email+`","passwd":"`+password+`"}`))
 	req.Header.Set("Content-Type", "application/json")
 	env.Server.ServeHTTP(rec, req)

@@ -35,7 +35,7 @@ func TestEmailEngagementDedupIDBecomesDedupKey(t *testing.T) {
 	dedupOf := func(name string) string {
 		t.Helper()
 		var v *string
-		require.NoError(t, env.SQLDB.QueryRow(
+		require.NoError(t, env.SQLDB.QueryRowContext(t.Context(),
 			`SELECT payload->>'dedupKey' FROM watermill_domain_events WHERE payload->>'name' = $1`,
 			name,
 		).Scan(&v))

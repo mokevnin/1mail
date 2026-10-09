@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"log"
 	"net/url"
 	"os"
@@ -61,9 +62,9 @@ func main() {
 
 	switch os.Args[1] {
 	case "create":
-		_, err = adminDB.Exec(`CREATE DATABASE "` + dbName + `"`)
+		_, err = adminDB.ExecContext(context.Background(), `CREATE DATABASE "`+dbName+`"`)
 		if err != nil {
-			if pgErr, ok := err.(*pgconn.PgError); ok && pgErr.Code == "42P04" {
+			if pgErr := new(pgconn.PgError); errors.As(err, &pgErr) && pgErr.Code == "42P04" {
 				log.Printf("database %q already exists, skipping", dbName)
 				return
 			}
@@ -71,7 +72,7 @@ func main() {
 		}
 		log.Printf("database %q created", dbName)
 	case "drop":
-		_, err = adminDB.Exec(`DROP DATABASE IF EXISTS "` + dbName + `"`)
+		_, err = adminDB.ExecContext(context.Background(), `DROP DATABASE IF EXISTS "`+dbName+`"`)
 		if err != nil {
 			log.Fatalf("drop database: %v", err)
 		}

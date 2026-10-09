@@ -15,7 +15,7 @@ func TestTrackerScriptServed(t *testing.T) {
 	env := testhelper.Setup(t)
 
 	rec := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodGet, "/t.js", nil)
+	req := httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/t.js", nil)
 	env.Server.ServeHTTP(rec, req)
 
 	require.Equal(t, http.StatusOK, rec.Code)
@@ -30,7 +30,7 @@ func TestCollectCORSAllowsArbitraryOrigin(t *testing.T) {
 	env := testhelper.Setup(t)
 
 	rec := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodOptions, "/collect/events", nil)
+	req := httptest.NewRequestWithContext(t.Context(), http.MethodOptions, "/collect/events", nil)
 	req.Header.Set("Origin", "https://customer.example")
 	req.Header.Set("Access-Control-Request-Method", "POST")
 	req.Header.Set("Access-Control-Request-Headers", "x-collect-key,content-type")

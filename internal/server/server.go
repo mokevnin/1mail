@@ -173,9 +173,10 @@ func chain(h http.Handler, mws ...func(http.Handler) http.Handler) http.Handler 
 
 func recoverer(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		logger := logging.FromContext(r.Context())
 		defer func() {
 			if rec := recover(); rec != nil {
-				logging.FromContext(r.Context()).Error("panic recovered",
+				logger.Error("panic recovered",
 					"err", rec,
 					"method", r.Method,
 					"path", r.URL.Path,

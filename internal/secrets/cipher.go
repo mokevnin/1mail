@@ -61,11 +61,11 @@ func (c *Cipher) Encrypt(plaintext []byte) (string, error) {
 func (c *Cipher) Decrypt(value string) ([]byte, error) {
 	ct, err := base64.StdEncoding.DecodeString(value)
 	if err != nil {
-		return nil, fmt.Errorf("%w: %v", ErrCiphertext, err)
+		return nil, fmt.Errorf("%w: %w", ErrCiphertext, err)
 	}
 	pt, err := c.aead.Decrypt(ct, nil)
 	if err != nil {
-		return nil, fmt.Errorf("%w: %v", ErrCiphertext, err)
+		return nil, fmt.Errorf("%w: %w", ErrCiphertext, err)
 	}
 	return pt, nil
 }

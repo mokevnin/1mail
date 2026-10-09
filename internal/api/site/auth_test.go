@@ -31,7 +31,7 @@ func TestSiteDirectLoginSetsJWTAndAuthorizes(t *testing.T) {
 
 	// 1. Log in. go-pkgz/auth's direct provider reads JSON {user, passwd}.
 	loginRec := httptest.NewRecorder()
-	loginReq := httptest.NewRequest(http.MethodPost, "/site/auth/direct/login",
+	loginReq := httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/site/auth/direct/login",
 		strings.NewReader(`{"user":"info@1mail.com","passwd":"password"}`))
 	loginReq.Header.Set("Content-Type", "application/json")
 	env.Server.ServeHTTP(loginRec, loginReq)
@@ -42,7 +42,7 @@ func TestSiteDirectLoginSetsJWTAndAuthorizes(t *testing.T) {
 
 	// 2. Replay the JWT cookie on a protected endpoint; it must authorize.
 	meRec := httptest.NewRecorder()
-	meReq := httptest.NewRequest(http.MethodGet, "/site/workspaces", nil)
+	meReq := httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/site/workspaces", nil)
 	meReq.AddCookie(&http.Cookie{Name: "JWT", Value: jwt})
 	env.Server.ServeHTTP(meRec, meReq)
 
@@ -53,7 +53,7 @@ func TestSiteDirectLoginRejectsBadPassword(t *testing.T) {
 	env := testhelper.Setup(t)
 
 	rec := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodPost, "/site/auth/direct/login",
+	req := httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/site/auth/direct/login",
 		strings.NewReader(`{"user":"info@1mail.com","passwd":"wrong"}`))
 	req.Header.Set("Content-Type", "application/json")
 	env.Server.ServeHTTP(rec, req)
@@ -67,7 +67,7 @@ func TestSiteWorkspacesRequireAuth(t *testing.T) {
 	env := testhelper.Setup(t)
 
 	rec := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodGet, "/site/workspaces", nil)
+	req := httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/site/workspaces", nil)
 	env.Server.ServeHTTP(rec, req)
 
 	assert.Equal(t, http.StatusUnauthorized, rec.Code)

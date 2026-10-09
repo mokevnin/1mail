@@ -25,9 +25,12 @@ func TestNewClientBlocksLoopback(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	req, err := http.NewRequest(http.MethodGet, srv.URL, nil)
+	req, err := http.NewRequestWithContext(t.Context(), http.MethodGet, srv.URL, nil)
 	require.NoError(t, err)
-	_, err = webhook.NewClient(2 * time.Second).Do(req)
+	resp, err := webhook.NewClient(2 * time.Second).Do(req)
+	if resp != nil {
+		_ = resp.Body.Close()
+	}
 	require.Error(t, err, "must refuse to dial a loopback address")
 }
 

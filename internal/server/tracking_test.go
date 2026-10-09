@@ -54,17 +54,17 @@ func TestConfirmEndpoint(t *testing.T) {
 	require.NoError(t, err)
 	tr := tracking.New(cfg.JWTSecret, cfg.AppURL)
 
-	get := func(path string) *http.Response {
-		req := httptest.NewRequest(http.MethodGet, path, nil)
+	get := func(path string) *httptest.ResponseRecorder {
+		req := httptest.NewRequestWithContext(ctx, http.MethodGet, path, nil)
 		w := httptest.NewRecorder()
 		env.Server.ServeHTTP(w, req)
-		return w.Result()
+		return w
 	}
-	post := func(path string) *http.Response {
-		req := httptest.NewRequest(http.MethodPost, path, nil)
+	post := func(path string) *httptest.ResponseRecorder {
+		req := httptest.NewRequestWithContext(ctx, http.MethodPost, path, nil)
 		w := httptest.NewRecorder()
 		env.Server.ServeHTTP(w, req)
-		return w.Result()
+		return w
 	}
 
 	c := env.DB.Contact.GetX(ctx, 1)
@@ -83,13 +83,13 @@ func TestConfirmEndpoint(t *testing.T) {
 
 	// GET is safe: 303 to the SPA confirm page, records nothing.
 	resp := get(cPath)
-	assert.Equal(t, http.StatusSeeOther, resp.StatusCode)
-	assert.True(t, strings.HasPrefix(resp.Header.Get("Location"), "/confirm?token="))
+	assert.Equal(t, http.StatusSeeOther, resp.Code)
+	assert.True(t, strings.HasPrefix(resp.Header().Get("Location"), "/confirm?token="))
 	assert.False(t, confirmed(), "GET records nothing")
 
 	// POST records the confirmation with provenance double_opt_in.
 	resp = post(cPath)
-	assert.Equal(t, http.StatusNoContent, resp.StatusCode)
+	assert.Equal(t, http.StatusNoContent, resp.Code)
 	assert.True(t, confirmed(), "POST records the confirmation")
 	row := env.DB.Confirmation.Query().Where(confirmation.DestinationEQ(*c.Email)).OnlyX(ctx)
 	assert.Equal(t, confirmation.ProvenanceDoubleOptIn, row.Provenance)
@@ -119,11 +119,11 @@ func TestUnsubscribeEverythingInvalidatesConfirmation(t *testing.T) {
 	require.NoError(t, err)
 	tr := tracking.New(cfg.JWTSecret, cfg.AppURL)
 
-	post := func(path string) *http.Response {
-		req := httptest.NewRequest(http.MethodPost, path, nil)
+	post := func(path string) *httptest.ResponseRecorder {
+		req := httptest.NewRequestWithContext(ctx, http.MethodPost, path, nil)
 		w := httptest.NewRecorder()
 		env.Server.ServeHTTP(w, req)
-		return w.Result()
+		return w
 	}
 
 	c := env.DB.Contact.GetX(ctx, 1)
@@ -181,23 +181,23 @@ func TestTrackingEndpoints(t *testing.T) {
 	token, err := tr.Token(rec.ID)
 	require.NoError(t, err)
 
-	get := func(path string) *http.Response {
-		req := httptest.NewRequest(http.MethodGet, path, nil)
+	get := func(path string) *httptest.ResponseRecorder {
+		req := httptest.NewRequestWithContext(ctx, http.MethodGet, path, nil)
 		w := httptest.NewRecorder()
 		env.Server.ServeHTTP(w, req)
-		return w.Result()
+		return w
 	}
-	post := func(path string) *http.Response {
-		req := httptest.NewRequest(http.MethodPost, path, nil)
+	post := func(path string) *httptest.ResponseRecorder {
+		req := httptest.NewRequestWithContext(ctx, http.MethodPost, path, nil)
 		w := httptest.NewRecorder()
 		env.Server.ServeHTTP(w, req)
-		return w.Result()
+		return w
 	}
 
 	// Open: returns the pixel and records the open.
 	resp := get("/e/o/" + token)
-	assert.Equal(t, http.StatusOK, resp.StatusCode)
-	assert.Equal(t, "image/gif", resp.Header.Get("Content-Type"))
+	assert.Equal(t, http.StatusOK, resp.Code)
+	assert.Equal(t, "image/gif", resp.Header().Get("Content-Type"))
 
 	gotRec := env.DB.BroadcastRecipient.GetX(ctx, rec.ID)
 	assert.NotNil(t, gotRec.OpenedAt)
@@ -205,8 +205,8 @@ func TestTrackingEndpoints(t *testing.T) {
 
 	// Click: records the click and 302-redirects to the destination.
 	resp = get("/e/c/" + token + "?u=https%3A%2F%2Fdest.test%2Fx")
-	assert.Equal(t, http.StatusFound, resp.StatusCode)
-	assert.Equal(t, "https://dest.test/x", resp.Header.Get("Location"))
+	assert.Equal(t, http.StatusFound, resp.Code)
+	assert.Equal(t, "https://dest.test/x", resp.Header().Get("Location"))
 	assert.NotNil(t, env.DB.BroadcastRecipient.GetX(ctx, rec.ID).ClickedAt)
 	assert.Equal(t, 1, env.DB.Broadcast.GetX(ctx, b.ID).ClickedCount)
 
@@ -230,14 +230,14 @@ func TestTrackingEndpoints(t *testing.T) {
 	}
 
 	resp = get(uPath)
-	assert.Equal(t, http.StatusSeeOther, resp.StatusCode)
-	assert.True(t, strings.HasPrefix(resp.Header.Get("Location"), "/unsubscribe?"))
+	assert.Equal(t, http.StatusSeeOther, resp.Code)
+	assert.True(t, strings.HasPrefix(resp.Header().Get("Location"), "/unsubscribe?"))
 	assert.False(t, optedOut(), "GET records nothing")
 	assert.Equal(t, 0, env.DB.Broadcast.GetX(ctx, b.ID).UnsubscribedCount)
 
 	// POST performs the opt-out and bumps the counter once.
 	resp = post(uPath)
-	assert.Equal(t, http.StatusNoContent, resp.StatusCode)
+	assert.Equal(t, http.StatusNoContent, resp.Code)
 	assert.True(t, optedOut(), "POST writes a broadcasts-scoped opt-out")
 	assert.Equal(t, 1, env.DB.Broadcast.GetX(ctx, b.ID).UnsubscribedCount)
 
@@ -274,11 +274,11 @@ func TestUnsubscribeAutomationExitsEnrollment(t *testing.T) {
 	require.NoError(t, err)
 	tr := tracking.New(cfg.JWTSecret, cfg.AppURL)
 
-	post := func(path string) *http.Response {
-		req := httptest.NewRequest(http.MethodPost, path, nil)
+	post := func(path string) *httptest.ResponseRecorder {
+		req := httptest.NewRequestWithContext(ctx, http.MethodPost, path, nil)
 		w := httptest.NewRecorder()
 		env.Server.ServeHTTP(w, req)
-		return w.Result()
+		return w
 	}
 
 	c := env.DB.Contact.GetX(ctx, 1)
@@ -296,7 +296,7 @@ func TestUnsubscribeAutomationExitsEnrollment(t *testing.T) {
 		Source: eligibility.AutomationSource(a.ID), Destination: *c.Email,
 		WorkspaceID: 1, ContactID: c.ID,
 	}))
-	assert.Equal(t, http.StatusNoContent, resp.StatusCode)
+	assert.Equal(t, http.StatusNoContent, resp.Code)
 
 	optedOut, err := env.DB.Unsubscribe.Query().Where(
 		unsubscribe.WorkspaceID(1),
@@ -320,17 +320,17 @@ func TestUnsubscribeEverythingEscalation(t *testing.T) {
 	require.NoError(t, err)
 	tr := tracking.New(cfg.JWTSecret, cfg.AppURL)
 
-	get := func(path string) *http.Response {
-		req := httptest.NewRequest(http.MethodGet, path, nil)
+	get := func(path string) *httptest.ResponseRecorder {
+		req := httptest.NewRequestWithContext(ctx, http.MethodGet, path, nil)
 		w := httptest.NewRecorder()
 		env.Server.ServeHTTP(w, req)
-		return w.Result()
+		return w
 	}
-	post := func(path string) *http.Response {
-		req := httptest.NewRequest(http.MethodPost, path, nil)
+	post := func(path string) *httptest.ResponseRecorder {
+		req := httptest.NewRequestWithContext(ctx, http.MethodPost, path, nil)
 		w := httptest.NewRecorder()
 		env.Server.ServeHTTP(w, req)
-		return w.Result()
+		return w
 	}
 
 	c := env.DB.Contact.GetX(ctx, 1)
@@ -345,8 +345,8 @@ func TestUnsubscribeEverythingEscalation(t *testing.T) {
 		WorkspaceID: 1, ContactID: c.ID, BroadcastID: b.ID,
 	})
 	resp := get(srcPath)
-	require.Equal(t, http.StatusSeeOther, resp.StatusCode)
-	loc, err := url.Parse(resp.Header.Get("Location"))
+	require.Equal(t, http.StatusSeeOther, resp.Code)
+	loc, err := url.Parse(resp.Header().Get("Location"))
 	require.NoError(t, err)
 	allURL := loc.Query().Get("all")
 	require.NotEmpty(t, allURL, "confirm page offers an unsubscribe-from-everything link")
@@ -357,14 +357,14 @@ func TestUnsubscribeEverythingEscalation(t *testing.T) {
 	require.True(t, ok)
 	evPath := "/e/u/" + evToken
 	resp = get(evPath)
-	assert.Equal(t, http.StatusSeeOther, resp.StatusCode)
-	loc2, err := url.Parse(resp.Header.Get("Location"))
+	assert.Equal(t, http.StatusSeeOther, resp.Code)
+	loc2, err := url.Parse(resp.Header().Get("Location"))
 	require.NoError(t, err)
 	assert.Empty(t, loc2.Query().Get("all"))
 
 	// POST both tokens to perform both opt-outs.
-	assert.Equal(t, http.StatusNoContent, post(srcPath).StatusCode)
-	assert.Equal(t, http.StatusNoContent, post(evPath).StatusCode)
+	assert.Equal(t, http.StatusNoContent, post(srcPath).Code)
+	assert.Equal(t, http.StatusNoContent, post(evPath).Code)
 
 	// Both scopes now exist for the destination.
 	for _, src := range []string{eligibility.SourceBroadcasts, eligibility.SourceEverything} {

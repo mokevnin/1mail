@@ -14,7 +14,7 @@ import (
 func TestSESHookUnknownKeyNotFound(t *testing.T) {
 	env := testhelper.Setup(t)
 
-	req := httptest.NewRequest("POST", "/hooks/omik_does_not_exist/ses",
+	req := httptest.NewRequestWithContext(t.Context(), "POST", "/hooks/omik_does_not_exist/ses",
 		strings.NewReader(`{"Type":"Notification","Message":"{}"}`))
 	rec := httptest.NewRecorder()
 	env.Server.ServeHTTP(rec, req)
@@ -28,7 +28,7 @@ func TestSESHookRejectsUnverifiedPayload(t *testing.T) {
 	env := testhelper.Setup(t)
 
 	// Fixture workspace "acme" ingest key (fixtures/workspaces.yml).
-	req := httptest.NewRequest("POST", "/hooks/omik_test_acme_ingest_key/ses",
+	req := httptest.NewRequestWithContext(t.Context(), "POST", "/hooks/omik_test_acme_ingest_key/ses",
 		strings.NewReader(`{"Type":"Notification","Message":"{}","Signature":"bogus","SigningCertURL":"https://sns.us-east-1.amazonaws.com/x.pem"}`))
 	rec := httptest.NewRecorder()
 	env.Server.ServeHTTP(rec, req)

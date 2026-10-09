@@ -24,7 +24,7 @@ func TestRecovererLogsPanicWithRequestID(t *testing.T) {
 	})
 	handler := chain(boom, requestID, recoverer)
 
-	req := httptest.NewRequest(http.MethodGet, "/explode", nil)
+	req := httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/explode", nil)
 	req.Header.Set("X-Request-Id", "req-abc")
 	rec := httptest.NewRecorder()
 	handler.ServeHTTP(rec, req)

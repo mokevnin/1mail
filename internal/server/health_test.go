@@ -12,7 +12,7 @@ import (
 func TestHealthz(t *testing.T) {
 	env := testhelper.Setup(t)
 
-	req := httptest.NewRequest(http.MethodGet, "/healthz", nil)
+	req := httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/healthz", nil)
 	w := httptest.NewRecorder()
 	env.Server.ServeHTTP(w, req)
 
@@ -23,7 +23,7 @@ func TestHealthz(t *testing.T) {
 func TestReadyz(t *testing.T) {
 	env := testhelper.Setup(t)
 
-	req := httptest.NewRequest(http.MethodGet, "/readyz", nil)
+	req := httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/readyz", nil)
 	w := httptest.NewRecorder()
 	env.Server.ServeHTTP(w, req)
 

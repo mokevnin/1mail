@@ -8,6 +8,7 @@
 package tracking
 
 import (
+	"errors"
 	"fmt"
 	stdhtml "html"
 	"io"
@@ -270,7 +271,7 @@ func (t *Tracker) rewriteLinks(body, token string) (string, error) {
 	for {
 		tt := z.Next()
 		if tt == html.ErrorToken {
-			if z.Err() == io.EOF {
+			if errors.Is(z.Err(), io.EOF) {
 				return sb.String(), nil
 			}
 			return "", z.Err()
