@@ -35,6 +35,14 @@ keys — so the Segment builder always has a real, governed field list to offer.
 and Custom fields together are a Contact's attributes.
 _Avoid_: Trait, property, attribute (unqualified), metadata
 
+**Tag**:
+A named, workspace-scoped label applied to Contacts — by hand, by import, by an Automation
+step, or through the API. Carries presence only (a Contact has the Tag or does not), no type
+and no value; that is what separates it from a Custom field. Auto-created on first use, like
+a Custom field. A Tag is an attribute, never a target set: "send to everyone tagged X" is
+always a Segment with a has-Tag rule, so Tag does not reintroduce the rejected List model.
+_Avoid_: Label, list, group, category
+
 **Visitor**:
 An anonymous device/browser identity — a `visitor_id` cookie, unique per workspace. Resolves
 to a Contact once Identify establishes who it is; before that it may belong to no Contact. One
@@ -60,7 +68,7 @@ _Avoid_: Activity, log entry, signal
 **Segment**:
 A named, reusable definition of "which contacts match these conditions" — the one
 targeting primitive. Stores a rule query (combinator + nested rules over contact fields,
-custom fields, and events), evaluated live: membership is never materialized and shifts as
+custom fields, tags, and events), evaluated live: membership is never materialized and shifts as
 data changes. There is no other segment kind; a segment is always a rule.
 _Avoid_: List, audience, group, filter, snapshot
 
