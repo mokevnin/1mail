@@ -1,5 +1,11 @@
 import { defineConfig } from '@hey-api/openapi-ts'
 
+// The generated TS types declare optional props as `field?: T` and tsconfig enables
+// exactOptionalPropertyTypes. Zod's `.optional()` / `.nullish()` output `field?: T | undefined`,
+// so a parsed value would not be assignable to the SDK body type. zod 4 has `.exactOptional()`
+// (output `field?: T`) but the generator does not emit it, so emit it for optional object
+// properties here. Fields with a default keep the stock output (the default makes them required).
+
 export default defineConfig([
   {
     input: './openapi/site.openapi.json',
@@ -23,7 +29,22 @@ export default defineConfig([
         queryOptions: true,
         mutationOptions: true,
       },
-      'zod',
+      {
+        name: 'zod',
+        '~resolvers': {
+          object: (ctx) =>
+            ctx.nodes.base({
+              ...ctx,
+              applyModifiers: (result, opts) => {
+                if (!opts.optional || result.meta.default !== undefined) {
+                  return ctx.applyModifiers(result, opts)
+                }
+                const { chain } = ctx.applyModifiers(result, { ...opts, optional: false })
+                return { chain: ctx.$(ctx.symbols.z).attr('exactOptional').call(chain) }
+              },
+            }),
+        },
+      },
     ],
   },
   // Collect ingestion contract — types only. The tracker is a tiny standalone

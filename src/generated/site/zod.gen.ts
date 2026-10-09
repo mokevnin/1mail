@@ -11,14 +11,14 @@ export const zEntityId = z.string().regex(/^[0-9]+$/);
  * RFC 7807 Problem Details
  */
 export const zProblemDetails = z.object({
-  type: z.string().optional(),
-  title: z.string().optional(),
-  status: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).optional(),
-  detail: z.string().optional(),
-  instance: z.string().optional(),
-  errors: z.record(z.string(), z.array(z.string())).optional(),
-  form: z.string().optional(),
-  fields: z.record(z.string(), z.string()).optional()
+  type: z.exactOptional(z.string()),
+  title: z.exactOptional(z.string()),
+  status: z.exactOptional(z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' })),
+  detail: z.exactOptional(z.string()),
+  instance: z.exactOptional(z.string()),
+  errors: z.exactOptional(z.record(z.string(), z.array(z.string()))),
+  form: z.exactOptional(z.string()),
+  fields: z.exactOptional(z.record(z.string(), z.string()))
 });
 
 /**
@@ -26,8 +26,8 @@ export const zProblemDetails = z.object({
  * account yet; ignored otherwise.
  */
 export const zSiteAcceptInvitationInput = z.object({
-  name: z.string().optional(),
-  password: z.string().optional()
+  name: z.exactOptional(z.string()),
+  password: z.exactOptional(z.string())
 });
 
 /**
@@ -122,10 +122,10 @@ export const zSiteAutomationStepType = z.enum([
  */
 export const zSiteAutomationStep = z.object({
   type: zSiteAutomationStepType,
-  subject: z.string().optional(),
-  body: z.string().optional(),
-  seconds: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).optional(),
-  tag: z.string().optional()
+  subject: z.exactOptional(z.string()),
+  body: z.exactOptional(z.string()),
+  seconds: z.exactOptional(z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' })),
+  tag: z.exactOptional(z.string())
 });
 
 /**
@@ -170,7 +170,7 @@ export const zSiteConfirmEmailChangeInput = z.object({
 export const zSiteCreateAutomationInput = z.object({
   name: z.string(),
   triggerEvent: z.string(),
-  steps: z.array(zSiteAutomationStep).optional()
+  steps: z.exactOptional(z.array(zSiteAutomationStep))
 });
 
 /**
@@ -178,12 +178,12 @@ export const zSiteCreateAutomationInput = z.object({
  */
 export const zSiteCreateBroadcastInput = z.object({
   name: z.string(),
-  subject: z.string().optional(),
-  fromName: z.string().nullish(),
-  fromEmail: zEmailAddress.nullish(),
-  body: z.string().optional(),
-  segmentId: zEntityId.nullish(),
-  integrationId: zEntityId.nullish()
+  subject: z.exactOptional(z.string()),
+  fromName: z.exactOptional(z.string().nullable()),
+  fromEmail: z.exactOptional(zEmailAddress.nullable()),
+  body: z.exactOptional(z.string()),
+  segmentId: z.exactOptional(zEntityId.nullable()),
+  integrationId: z.exactOptional(zEntityId.nullable())
 });
 
 /**
@@ -191,8 +191,8 @@ export const zSiteCreateBroadcastInput = z.object({
  */
 export const zSiteCreateEmailTemplateInput = z.object({
   name: z.string(),
-  subject: z.string().optional(),
-  body: z.string().optional()
+  subject: z.exactOptional(z.string()),
+  body: z.exactOptional(z.string())
 });
 
 /**
@@ -208,7 +208,7 @@ export const zSiteCreateSegmentInput = z.object({
  */
 export const zSiteCreateSendingDomainInput = z.object({
   domain: z.string(),
-  dkimSelector: z.string().optional()
+  dkimSelector: z.exactOptional(z.string())
 });
 
 /**
@@ -216,8 +216,8 @@ export const zSiteCreateSendingDomainInput = z.object({
  */
 export const zSiteCreateWebhookEndpointInput = z.object({
   url: z.string(),
-  eventTypes: z.array(z.string()).optional(),
-  enabled: z.boolean().optional()
+  eventTypes: z.exactOptional(z.array(z.string())),
+  enabled: z.exactOptional(z.boolean())
 });
 
 /**
@@ -242,12 +242,12 @@ export const zSiteDirectLoginInput = z.object({
 export const zSiteDirectLoginResult = z.object({
   name: z.string(),
   id: z.string(),
-  picture: z.string().optional(),
-  aud: z.string().optional(),
-  ip: z.string().optional(),
-  email: z.string().optional(),
-  attrs: z.record(z.string(), z.unknown()).optional(),
-  role: z.string().optional()
+  picture: z.exactOptional(z.string()),
+  aud: z.exactOptional(z.string()),
+  ip: z.exactOptional(z.string()),
+  email: z.exactOptional(z.string()),
+  attrs: z.exactOptional(z.record(z.string(), z.unknown())),
+  role: z.exactOptional(z.string())
 });
 
 /**
@@ -340,12 +340,12 @@ export const zSiteOAuthAuthorizationRequest = z.object({
 export const zSiteOAuthDecisionInput = z.object({
   clientId: z.string(),
   redirectUri: z.string(),
-  state: z.string().optional(),
+  state: z.exactOptional(z.string()),
   codeChallenge: z.string(),
-  scope: z.string().optional(),
+  scope: z.exactOptional(z.string()),
   workspaceSlug: z.string(),
   approve: z.boolean(),
-  allowSend: z.boolean().optional()
+  allowSend: z.exactOptional(z.boolean())
 });
 
 /**
@@ -359,7 +359,7 @@ export const zSiteOAuthDecisionResult = z.object({
  * Request body for previewing a rule definition's audience
  */
 export const zSitePreviewSegmentInput = z.object({
-  definition: z.string().nullish()
+  definition: z.exactOptional(z.string().nullable())
 });
 
 /**
@@ -390,9 +390,9 @@ export const zSiteSesConfig = z.object({
   kind: z.enum(['ses']),
   region: z.string(),
   from: zEmailAddress,
-  fromName: z.string().nullish(),
-  endpoint: z.string().nullish(),
-  accessKeyIdLast4: z.string().nullish()
+  fromName: z.exactOptional(z.string().nullable()),
+  endpoint: z.exactOptional(z.string().nullable()),
+  accessKeyIdLast4: z.exactOptional(z.string().nullable())
 });
 
 /**
@@ -404,8 +404,8 @@ export const zSiteSesConfigInput = z.object({
   accessKeyId: z.string(),
   secretAccessKey: z.string(),
   from: zEmailAddress,
-  fromName: z.string().nullish(),
-  endpoint: z.string().nullish()
+  fromName: z.exactOptional(z.string().nullable()),
+  endpoint: z.exactOptional(z.string().nullable())
 });
 
 /**
@@ -415,9 +415,9 @@ export const zSiteSmtpConfig = z.object({
   kind: z.enum(['smtp']),
   host: z.string(),
   port: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
-  username: z.string().nullish(),
+  username: z.exactOptional(z.string().nullable()),
   from: zEmailAddress,
-  fromName: z.string().nullish()
+  fromName: z.exactOptional(z.string().nullable())
 });
 
 /**
@@ -435,10 +435,10 @@ export const zSiteSmtpConfigInput = z.object({
   kind: z.enum(['smtp']),
   host: z.string(),
   port: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
-  username: z.string().nullish(),
-  password: z.string().nullish(),
+  username: z.exactOptional(z.string().nullable()),
+  password: z.exactOptional(z.string().nullable()),
   from: zEmailAddress,
-  fromName: z.string().nullish()
+  fromName: z.exactOptional(z.string().nullable())
 });
 
 /**
@@ -454,8 +454,8 @@ export const zSiteIntegrationConfigInput = z.discriminatedUnion('kind', [
  */
 export const zSiteCreateIntegrationInput = z.object({
   name: z.string(),
-  enabled: z.boolean().optional(),
-  isDefault: z.boolean().optional(),
+  enabled: z.exactOptional(z.boolean()),
+  isDefault: z.exactOptional(z.boolean()),
   config: zSiteIntegrationConfigInput
 });
 
@@ -468,7 +468,7 @@ export const zSiteSuppressionChannel = z.enum(['email']);
  * Site request body for manually suppressing a destination
  */
 export const zSiteCreateSuppressionInput = z.object({
-  channel: zSiteSuppressionChannel.optional(),
+  channel: z.exactOptional(zSiteSuppressionChannel),
   destination: z.string()
 });
 
@@ -508,41 +508,41 @@ export const zSiteTransactionalEmailStatus = z.enum([
  * Site request body for updating an automation
  */
 export const zSiteUpdateAutomationInput = z.object({
-  name: z.string().optional(),
-  triggerEvent: z.string().optional(),
-  steps: z.array(zSiteAutomationStep).optional()
+  name: z.exactOptional(z.string()),
+  triggerEvent: z.exactOptional(z.string()),
+  steps: z.exactOptional(z.array(zSiteAutomationStep))
 });
 
 /**
  * Site request body for updating a broadcast
  */
 export const zSiteUpdateBroadcastInput = z.object({
-  name: z.string().optional(),
-  subject: z.string().optional(),
-  fromName: z.string().nullish(),
-  fromEmail: zEmailAddress.nullish(),
-  body: z.string().optional(),
-  segmentId: zEntityId.nullish(),
-  integrationId: zEntityId.nullish()
+  name: z.exactOptional(z.string()),
+  subject: z.exactOptional(z.string()),
+  fromName: z.exactOptional(z.string().nullable()),
+  fromEmail: z.exactOptional(zEmailAddress.nullable()),
+  body: z.exactOptional(z.string()),
+  segmentId: z.exactOptional(zEntityId.nullable()),
+  integrationId: z.exactOptional(zEntityId.nullable())
 });
 
 /**
  * Site request body for updating a template
  */
 export const zSiteUpdateEmailTemplateInput = z.object({
-  name: z.string().optional(),
-  subject: z.string().optional(),
-  body: z.string().optional()
+  name: z.exactOptional(z.string()),
+  subject: z.exactOptional(z.string()),
+  body: z.exactOptional(z.string())
 });
 
 /**
  * Update a workspace integration. Omit `config` to keep stored credentials.
  */
 export const zSiteUpdateIntegrationInput = z.object({
-  name: z.string().optional(),
-  enabled: z.boolean().optional(),
-  isDefault: z.boolean().optional(),
-  config: zSiteIntegrationConfigInput.nullish()
+  name: z.exactOptional(z.string()),
+  enabled: z.exactOptional(z.boolean()),
+  isDefault: z.exactOptional(z.boolean()),
+  config: z.exactOptional(zSiteIntegrationConfigInput.nullable())
 });
 
 /**
@@ -550,9 +550,9 @@ export const zSiteUpdateIntegrationInput = z.object({
  * both currentPassword and newPassword.
  */
 export const zSiteUpdateMeInput = z.object({
-  name: z.string().optional(),
-  currentPassword: z.string().optional(),
-  newPassword: z.string().optional()
+  name: z.exactOptional(z.string()),
+  currentPassword: z.exactOptional(z.string()),
+  newPassword: z.exactOptional(z.string())
 });
 
 /**
@@ -566,17 +566,17 @@ export const zSiteUpdateMembershipInput = z.object({
  * Site request body for updating a segment
  */
 export const zSiteUpdateSegmentInput = z.object({
-  name: z.string().optional(),
-  definition: z.string().optional()
+  name: z.exactOptional(z.string()),
+  definition: z.exactOptional(z.string())
 });
 
 /**
  * Site request body for updating a webhook endpoint
  */
 export const zSiteUpdateWebhookEndpointInput = z.object({
-  url: z.string().optional(),
-  eventTypes: z.array(z.string()).optional(),
-  enabled: z.boolean().optional()
+  url: z.exactOptional(z.string()),
+  eventTypes: z.exactOptional(z.array(z.string())),
+  enabled: z.exactOptional(z.boolean())
 });
 
 /**
@@ -585,7 +585,7 @@ export const zSiteUpdateWebhookEndpointInput = z.object({
  */
 export const zSiteUpdateWorkspaceInput = z.object({
   name: z.string(),
-  postalAddress: z.string().optional()
+  postalAddress: z.exactOptional(z.string())
 });
 
 /**
@@ -601,26 +601,26 @@ export const zTimeZoneName = z.string();
  * Site request body for creating a contact
  */
 export const zSiteCreateContactInput = z.object({
-  subjectId: z.string().nullish(),
-  email: zEmailAddress.nullish(),
-  phone: z.string().nullish(),
-  firstName: z.string().nullish(),
-  lastName: z.string().nullish(),
-  timeZone: zTimeZoneName.nullish(),
-  customFields: z.record(z.string(), z.unknown()).nullish()
+  subjectId: z.exactOptional(z.string().nullable()),
+  email: z.exactOptional(zEmailAddress.nullable()),
+  phone: z.exactOptional(z.string().nullable()),
+  firstName: z.exactOptional(z.string().nullable()),
+  lastName: z.exactOptional(z.string().nullable()),
+  timeZone: z.exactOptional(zTimeZoneName.nullable()),
+  customFields: z.exactOptional(z.record(z.string(), z.unknown()).nullable())
 });
 
 /**
  * Site request body for updating a contact
  */
 export const zSiteUpdateContactInput = z.object({
-  subjectId: z.string().nullish(),
-  email: zEmailAddress.nullish(),
-  phone: z.string().nullish(),
-  firstName: z.string().nullish(),
-  lastName: z.string().nullish(),
-  timeZone: zTimeZoneName.nullish(),
-  customFields: z.record(z.string(), z.unknown()).nullish()
+  subjectId: z.exactOptional(z.string().nullable()),
+  email: z.exactOptional(zEmailAddress.nullable()),
+  phone: z.exactOptional(z.string().nullable()),
+  firstName: z.exactOptional(z.string().nullable()),
+  lastName: z.exactOptional(z.string().nullable()),
+  timeZone: z.exactOptional(zTimeZoneName.nullable()),
+  customFields: z.exactOptional(z.record(z.string(), z.unknown()).nullable())
 });
 
 export const zTimestamp = z.iso.datetime();
@@ -633,8 +633,8 @@ export const zSiteApiTokenResource = z.object({
   name: z.string(),
   prefix: z.string(),
   scopes: z.array(z.string()),
-  lastUsedAt: zTimestamp.nullish(),
-  expiresAt: zTimestamp.nullish(),
+  lastUsedAt: z.exactOptional(zTimestamp.nullable()),
+  expiresAt: z.exactOptional(zTimestamp.nullable()),
   createdAt: zTimestamp
 });
 
@@ -658,16 +658,16 @@ export const zSiteBroadcastResource = z.object({
   id: zEntityId,
   name: z.string(),
   subject: z.string(),
-  fromName: z.string().nullish(),
-  fromEmail: zEmailAddress.nullish(),
+  fromName: z.exactOptional(z.string().nullable()),
+  fromEmail: z.exactOptional(zEmailAddress.nullable()),
   body: z.string(),
   bodyText: z.string(),
-  segmentId: zEntityId.nullish(),
-  integrationId: zEntityId.nullish(),
+  segmentId: z.exactOptional(zEntityId.nullable()),
+  integrationId: z.exactOptional(zEntityId.nullable()),
   status: zSiteBroadcastStatus,
-  holdReason: z.string().nullish(),
-  scheduledAt: zTimestamp.nullish(),
-  sentAt: zTimestamp.nullish(),
+  holdReason: z.exactOptional(z.string().nullable()),
+  scheduledAt: z.exactOptional(zTimestamp.nullable()),
+  sentAt: z.exactOptional(zTimestamp.nullable()),
   stats: zSiteBroadcastStats,
   createdAt: zTimestamp,
   updatedAt: zTimestamp
@@ -678,13 +678,13 @@ export const zSiteBroadcastResource = z.object({
  */
 export const zSiteContactResource = z.object({
   id: zEntityId,
-  subjectId: z.string().nullish(),
-  email: zEmailAddress.nullish(),
-  phone: z.string().nullish(),
-  firstName: z.string().nullish(),
-  lastName: z.string().nullish(),
-  timeZone: zTimeZoneName.nullish(),
-  customFields: z.record(z.string(), z.unknown()).nullish(),
+  subjectId: z.exactOptional(z.string().nullable()),
+  email: z.exactOptional(zEmailAddress.nullable()),
+  phone: z.exactOptional(z.string().nullable()),
+  firstName: z.exactOptional(z.string().nullable()),
+  lastName: z.exactOptional(z.string().nullable()),
+  timeZone: z.exactOptional(zTimeZoneName.nullable()),
+  customFields: z.exactOptional(z.record(z.string(), z.unknown()).nullable()),
   createdAt: zTimestamp,
   updatedAt: zTimestamp
 });
@@ -695,7 +695,7 @@ export const zSiteContactResource = z.object({
 export const zSiteCreateTokenInput = z.object({
   name: z.string(),
   scopes: z.array(z.string()),
-  expiresAt: zTimestamp.nullish()
+  expiresAt: z.exactOptional(zTimestamp.nullable())
 });
 
 /**
@@ -737,10 +737,10 @@ export const zSiteEmailTemplateResource = z.object({
 export const zSiteEventResource = z.object({
   id: zEntityId,
   subjectId: z.string(),
-  email: z.string().nullish(),
+  email: z.exactOptional(z.string().nullable()),
   action: z.string(),
-  properties: z.record(z.string(), z.unknown()).nullish(),
-  occurredAt: zTimestamp.nullish(),
+  properties: z.exactOptional(z.record(z.string(), z.unknown()).nullable()),
+  occurredAt: z.exactOptional(zTimestamp.nullable()),
   createdAt: zTimestamp
 });
 
@@ -767,7 +767,7 @@ export const zSiteInvitationResource = z.object({
   email: zEmailAddress,
   role: zSiteInvitableRole,
   expiresAt: zTimestamp,
-  invitedByEmail: z.string().nullish(),
+  invitedByEmail: z.exactOptional(z.string().nullable()),
   createdAt: zTimestamp
 });
 
@@ -812,7 +812,7 @@ export const zSiteScheduleBroadcastInput = z.object({
 export const zSiteSegmentResource = z.object({
   id: zEntityId,
   name: z.string(),
-  definition: z.string().optional(),
+  definition: z.exactOptional(z.string()),
   createdAt: zTimestamp,
   updatedAt: zTimestamp
 });
@@ -831,8 +831,8 @@ export const zSiteSendingDomainResource = z.object({
   dkimRecord: zSiteDnsRecord,
   spfRecord: zSiteDnsRecord,
   dmarcRecord: zSiteDnsRecord,
-  lastCheckedAt: zTimestamp.nullish(),
-  verifiedAt: zTimestamp.nullish(),
+  lastCheckedAt: z.exactOptional(zTimestamp.nullable()),
+  verifiedAt: z.exactOptional(zTimestamp.nullable()),
   createdAt: zTimestamp,
   updatedAt: zTimestamp
 });
@@ -866,9 +866,9 @@ export const zSiteTransactionalEmailResource = z.object({
   channel: zSiteTransactionalEmailChannel,
   destination: z.string(),
   templateId: zEntityId,
-  contactId: zEntityId.nullish(),
+  contactId: z.exactOptional(zEntityId.nullable()),
   status: zSiteTransactionalEmailStatus,
-  error: z.string().nullish(),
+  error: z.exactOptional(z.string().nullable()),
   createdAt: zTimestamp
 });
 
@@ -906,8 +906,8 @@ export const zSiteWorkspaceResource = z.object({
   collectKey: z.string(),
   ingestKey: z.string(),
   postalAddress: z.string(),
-  suspendedAt: zTimestamp.nullish(),
-  suspensionReason: z.string().nullish(),
+  suspendedAt: z.exactOptional(zTimestamp.nullable()),
+  suspensionReason: z.exactOptional(z.string().nullable()),
   createdAt: zTimestamp
 });
 
@@ -1170,7 +1170,7 @@ export const zSiteUserEmailChangeBody = zSiteEmailChangeInput;
 export const zSiteOAuthDescribeQuery = z.object({
   clientId: z.string(),
   redirectUri: z.string(),
-  scope: z.string().optional()
+  scope: z.exactOptional(z.string())
 });
 
 /**
@@ -1206,7 +1206,7 @@ export const zSiteAnalyticsOverviewPath = z.object({
 });
 
 export const zSiteAnalyticsOverviewQuery = z.object({
-  range: zSiteAnalyticsRange.optional()
+  range: z.exactOptional(zSiteAnalyticsRange)
 });
 
 /**
@@ -1523,9 +1523,9 @@ export const zSiteEventsListPath = z.object({
 export const zSiteEventsListQuery = z.object({
   page: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).optional().default(1),
   pageSize: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).optional().default(25),
-  action: z.string().optional(),
-  contactId: zEntityId.optional(),
-  email: z.string().optional()
+  action: z.exactOptional(z.string()),
+  contactId: z.exactOptional(zEntityId),
+  email: z.exactOptional(z.string())
 });
 
 /**

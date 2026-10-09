@@ -9,20 +9,6 @@ type Wire = Record<string, string | null | undefined>
 // Every edited field must be a string field on the API side.
 type StringFieldsSchema = z.ZodObject<Record<string, z.ZodType<unknown, string | null | undefined>>>
 
-// The generated payload types declare optional keys without `| undefined`
-// (exactOptionalPropertyTypes), while zod's output type adds it. The codec already drops
-// absent fields at runtime, so only the type needs narrowing.
-type Exact<T> = { [K in keyof T]: Exclude<T[K], undefined> }
-
-function isExact<T extends object>(value: object): value is Exact<T> {
-  return Object.values(value).every((entry) => entry !== undefined)
-}
-
-function exact<T extends object>(value: T): Exact<T> {
-  if (!isExact<T>(value)) throw new Error('unreachable: the codec drops absent fields')
-  return value
-}
-
 // The one place form strings meet the API's null/absent semantics (JSON Merge Patch: absent
 // keeps a value, null clears it), as a zod codec between the two.
 //   - decode (form -> wire): trim; a blank value is `blankOf(field)`, or dropped when undefined.
@@ -63,16 +49,17 @@ export type ResourceFormSchema<TPayload> = {
 
 export function resourceFormSchema<TSchema extends StringFieldsSchema>(
   schema: TSchema,
-): ResourceFormSchema<Exact<z.output<TSchema>>> {
+): ResourceFormSchema<z.output<TSchema>> {
   const fields = Object.keys(schema.shape)
-  // optional/nullable come from zod's own isOptional()/isNullable() on each field schema.
+  // The generated schemas mark optional fields with z.exactOptional (see openapi-ts.config.ts),
+  // for which isOptional() is false (it parses undefined), so match the wrapper itself.
   const clearedOnUpdate = (field: string) => {
     const shape = schema.shape[field]
-    if (!shape?.isOptional()) return undefined
+    if (!(shape instanceof z.ZodExactOptional)) return undefined
     return shape.isNullable() ? null : ''
   }
   const decoder = formCodec(clearedOnUpdate)
-  const form = (codec: typeof decoder) => codec.pipe(schema).transform(exact)
+  const form = (codec: typeof decoder) => codec.pipe(schema)
   return {
     blank: Object.fromEntries(fields.map((field) => [field, ''])),
     create: form(formCodec(() => undefined)),
