@@ -241,3 +241,24 @@ func (UnimplementedHandler) SegmentsList(ctx context.Context, params SegmentsLis
 func (UnimplementedHandler) SegmentsUpdate(ctx context.Context, req *UpdateSegmentInput, params SegmentsUpdateParams) (r SegmentsUpdateRes, _ error) {
 	return r, ht.ErrNotImplemented
 }
+
+// SuppressionsCreate implements Suppressions_create operation.
+//
+// Suppress a destination so no surface sends to it (a manual Suppression). Idempotent: an
+// already-suppressed destination keeps its existing entry and reason. Lifting a suppression is not
+// available through the API.
+//
+// POST /suppressions
+func (UnimplementedHandler) SuppressionsCreate(ctx context.Context, req *CreateSuppressionInput) (r SuppressionsCreateRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// UnsubscribesCreate implements Unsubscribes_create operation.
+//
+// Record that a destination unsubscribed from a sending source (default `broadcasts`). Idempotent.
+// Resubscribing is not available through the API.
+//
+// POST /unsubscribes
+func (UnimplementedHandler) UnsubscribesCreate(ctx context.Context, req *CreateUnsubscribeInput) (r UnsubscribesCreateRes, _ error) {
+	return r, ht.ErrNotImplemented
+}

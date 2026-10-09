@@ -159,6 +159,21 @@ type Handler interface {
 	//
 	// PUT /segments/{id}
 	SegmentsUpdate(ctx context.Context, req *UpdateSegmentInput, params SegmentsUpdateParams) (SegmentsUpdateRes, error)
+	// SuppressionsCreate implements Suppressions_create operation.
+	//
+	// Suppress a destination so no surface sends to it (a manual Suppression). Idempotent: an
+	// already-suppressed destination keeps its existing entry and reason. Lifting a suppression is not
+	// available through the API.
+	//
+	// POST /suppressions
+	SuppressionsCreate(ctx context.Context, req *CreateSuppressionInput) (SuppressionsCreateRes, error)
+	// UnsubscribesCreate implements Unsubscribes_create operation.
+	//
+	// Record that a destination unsubscribed from a sending source (default `broadcasts`). Idempotent.
+	// Resubscribing is not available through the API.
+	//
+	// POST /unsubscribes
+	UnsubscribesCreate(ctx context.Context, req *CreateUnsubscribeInput) (UnsubscribesCreateRes, error)
 }
 
 // Server implements http server based on OpenAPI v3 specification and

@@ -12,6 +12,9 @@
       "name": "Events"
     },
     {
+      "name": "Consent"
+    },
+    {
       "name": "Auth"
     },
     {
@@ -1702,6 +1705,106 @@
           "hidden": true
         }
       }
+    },
+    "/suppressions": {
+      "post": {
+        "operationId": "Suppressions_create",
+        "description": "Suppress a destination so no surface sends to it (a manual Suppression).\nIdempotent: an already-suppressed destination keeps its existing entry and\nreason. Lifting a suppression is not available through the API.",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": "The request has succeeded and a new resource has been created as a result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuppressionResource"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "RFC 7807 unauthorized response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "RFC 7807 validation response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Consent"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSuppressionInput"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/unsubscribes": {
+      "post": {
+        "operationId": "Unsubscribes_create",
+        "description": "Record that a destination unsubscribed from a sending source (default\n`broadcasts`). Idempotent. Resubscribing is not available through the API.",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": "The request has succeeded and a new resource has been created as a result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnsubscribeResource"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "RFC 7807 unauthorized response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "RFC 7807 validation response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Consent"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateUnsubscribeInput"
+              }
+            }
+          }
+        }
+      }
     }
   },
   "security": [
@@ -2236,6 +2339,40 @@
         },
         "description": "Request body for creating a segment"
       },
+      "CreateSuppressionInput": {
+        "type": "object",
+        "required": ["destination"],
+        "properties": {
+          "destination": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EmailAddress"
+              }
+            ],
+            "description": "Email address to stop sending to"
+          }
+        },
+        "description": "Request body for suppressing a destination"
+      },
+      "CreateUnsubscribeInput": {
+        "type": "object",
+        "required": ["destination"],
+        "properties": {
+          "destination": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EmailAddress"
+              }
+            ],
+            "description": "Email address that opted out"
+          },
+          "sendingSource": {
+            "type": "string",
+            "description": "The sending source to opt out of: `broadcasts` (default), `automation:<id>`, or `everything` (leave entirely)"
+          }
+        },
+        "description": "Request body for recording an unsubscribe"
+      },
       "EmailAddress": {
         "type": "string",
         "format": "email"
@@ -2476,6 +2613,46 @@
         },
         "description": "Request body for setting a broadcast's audience"
       },
+      "SuppressionReason": {
+        "type": "string",
+        "enum": ["bounce", "complaint", "manual"],
+        "description": "Why a destination is on the suppression (do-not-send) list"
+      },
+      "SuppressionResource": {
+        "type": "object",
+        "required": ["id", "destination", "reason", "createdAt"],
+        "properties": {
+          "id": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EntityId"
+              }
+            ],
+            "description": "Unique identifier"
+          },
+          "destination": {
+            "type": "string",
+            "description": "Normalized (lower-cased) email address"
+          },
+          "reason": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SuppressionReason"
+              }
+            ],
+            "description": "Why the destination is suppressed"
+          },
+          "createdAt": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Timestamp"
+              }
+            ],
+            "description": "Creation timestamp"
+          }
+        },
+        "description": "A suppressed destination: no send surface delivers to it"
+      },
       "TestSendBroadcastInput": {
         "type": "object",
         "required": ["email"],
@@ -2502,6 +2679,37 @@
         "type": "string",
         "enum": ["sent", "suppressed"],
         "description": "Outcome of a transactional send"
+      },
+      "UnsubscribeResource": {
+        "type": "object",
+        "required": ["id", "destination", "sendingSource", "createdAt"],
+        "properties": {
+          "id": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EntityId"
+              }
+            ],
+            "description": "Unique identifier"
+          },
+          "destination": {
+            "type": "string",
+            "description": "Normalized (lower-cased) email address"
+          },
+          "sendingSource": {
+            "type": "string",
+            "description": "The sending source opted out of: `broadcasts`, `automation:<id>` or `everything`"
+          },
+          "createdAt": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Timestamp"
+              }
+            ],
+            "description": "Creation timestamp"
+          }
+        },
+        "description": "A per-sending-source opt-out of marketing"
       },
       "UpdateBroadcastInput": {
         "type": "object",
