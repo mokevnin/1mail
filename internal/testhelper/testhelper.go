@@ -159,7 +159,8 @@ func Setup(t *testing.T) *TestEnv {
 	stubTXT := func(context.Context, string) ([]string, error) {
 		return nil, &net.DNSError{IsNotFound: true}
 	}
-	sender := outbound.New(client, bus, resolver, tracking.New("test-secret", baseCfg.AppURL))
+	tracker := tracking.New(baseCfg.JWTSecret, baseCfg.AppURL)
+	sender := outbound.New(client, bus, resolver, tracker)
 	inline := jobs.NewInline(client, sender, systemMail, stubTXT, baseCfg.AppURL)
 	// Cipher (over the fixture-sealing key) and provider catalog for the site
 	// handlers — mirrors the app's DI singletons.
@@ -192,7 +193,7 @@ func Setup(t *testing.T) *TestEnv {
 		Segments: segmentsModule, EventLog: eventLog, Contacts: contactsModule, Tags: tagsModule,
 		Automations: automationsModule, Broadcasts: broadcastsModule,
 		Welcome: inline, SysMail: inline, DomainVerify: inline,
-		Tokens: authtoken.New(baseCfg.JWTSecret), Tracker: tracking.New(baseCfg.JWTSecret, baseCfg.AppURL), AppURL: baseCfg.AppURL,
+		Tokens: authtoken.New(baseCfg.JWTSecret), Tracker: tracker, AppURL: baseCfg.AppURL,
 	}, external, mcpHandler)
 	require.NoError(t, err, "build server")
 

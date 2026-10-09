@@ -1,6 +1,8 @@
 package site_test
 
 import (
+	"net/http"
+	"net/http/httptest"
 	"strings"
 	"testing"
 
@@ -102,4 +104,33 @@ func TestSitePublicUnsubscribesPerform(t *testing.T) {
 	out, err = anon.SitePublicUnsubscribesPerform(ctx, siteapi.SitePublicUnsubscribesPerformParams{Token: "garbage"})
 	require.NoError(t, err)
 	assert.IsType(t, &siteapi.ProblemDetails{}, out)
+}
+
+// ADR 0013: the confirmation event carries the confirming client's address as
+// proof. Through the site operation it reaches the handler via the request
+// context, so this goes over raw HTTP (an actor has no say over the proxy header).
+func TestSitePublicConfirmationsPerformRecordsClientIP(t *testing.T) {
+	env := testhelper.Setup(t)
+	ctx := t.Context()
+	tr := consentTracker(t)
+
+	c := env.DB.Contact.GetX(ctx, fixtures.ContactAliceID)
+	url, err := tr.ConfirmURL(tracking.ConfirmTarget{
+		Destination: *c.Email, WorkspaceID: fixtures.AcmeID, ContactID: c.ID,
+	})
+	require.NoError(t, err)
+	token := tokenAfter(t, url, "/e/confirm/")
+
+	req := httptest.NewRequestWithContext(ctx, http.MethodPost, "/site/confirmations/"+token, nil)
+	req.Header.Set("X-Forwarded-For", "203.0.113.7, 10.0.0.1")
+	w := httptest.NewRecorder()
+	env.Server.ServeHTTP(w, req)
+	require.Equal(t, http.StatusNoContent, w.Code)
+
+	var ip string
+	require.NoError(t, env.SQLDB.QueryRow(
+		`SELECT payload->'data'->>'ip' FROM watermill_domain_events
+		 WHERE payload->>'name' = 'marketing.confirmed' AND payload->'data'->>'email' = $1`,
+		*c.Email).Scan(&ip))
+	assert.Equal(t, "203.0.113.7", ip)
 }

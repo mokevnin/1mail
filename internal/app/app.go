@@ -436,11 +436,17 @@ func register(injector do.Injector, env string) {
 		return &jobsClient{Client: jc}, nil
 	})
 
-	do.Provide(injector, func(i do.Injector) (*outboundModule, error) {
+	// The signed-token authority for tracking, unsubscribe and confirmation links:
+	// one instance, so every surface mints and verifies with the same secret.
+	do.Provide(injector, func(i do.Injector) (*tracking.Tracker, error) {
 		cfg, err := do.Invoke[*config.Config](i)
 		if err != nil {
 			return nil, err
 		}
+		return tracking.New(cfg.JWTSecret, cfg.AppURL), nil
+	})
+
+	do.Provide(injector, func(i do.Injector) (*outboundModule, error) {
 		client, err := do.Invoke[*entClient](i)
 		if err != nil {
 			return nil, err
@@ -454,7 +460,11 @@ func register(injector do.Injector, env string) {
 		if err != nil {
 			return nil, err
 		}
-		return &outboundModule{outbound.New(client.Client, bus.Bus, resolver, tracking.New(cfg.JWTSecret, cfg.AppURL))}, nil
+		tracker, err := do.Invoke[*tracking.Tracker](i)
+		if err != nil {
+			return nil, err
+		}
+		return &outboundModule{outbound.New(client.Client, bus.Bus, resolver, tracker)}, nil
 	})
 
 	// Domain modules: each built once and shared by /site, /api and /mcp, so the
@@ -701,6 +711,10 @@ func siteDeps(i do.Injector) (apisite.Deps, error) {
 	if err != nil {
 		return apisite.Deps{}, err
 	}
+	tracker, err := do.Invoke[*tracking.Tracker](i)
+	if err != nil {
+		return apisite.Deps{}, err
+	}
 	// The river jobs client implements the remaining enqueue seams: welcome, the
 	// self-service account mail (reset/verify/change), and sending-domain DKIM
 	// verification.
@@ -712,7 +726,7 @@ func siteDeps(i do.Injector) (apisite.Deps, error) {
 		Ent: client.Client, Bus: bus.Bus, Cipher: cipher, Catalog: catalog, Outbound: sender.Module,
 		Segments: seg, EventLog: evlog, Contacts: con, Tags: tg, Automations: auto,
 		Broadcasts: bc, Welcome: jc.Client, SysMail: jc.Client, DomainVerify: jc.Client,
-		Tokens: tokens, Tracker: tracking.New(cfg.JWTSecret, cfg.AppURL), AppURL: cfg.AppURL,
+		Tokens: tokens, Tracker: tracker, AppURL: cfg.AppURL,
 	}, nil
 }
 

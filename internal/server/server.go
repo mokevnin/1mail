@@ -27,7 +27,6 @@ import (
 	"github.com/mokevnin/1mail/internal/logging"
 	"github.com/mokevnin/1mail/internal/oauthserver"
 	"github.com/mokevnin/1mail/internal/telemetry"
-	"github.com/mokevnin/1mail/internal/tracking"
 	"github.com/ogen-go/ogen/ogenerrors"
 	"github.com/rs/cors"
 )
@@ -115,7 +114,7 @@ func New(cfg *config.Config, db *sql.DB, site apisite.Deps, external, mcp http.H
 	mux.Handle("/t.js", trackerHandler())
 
 	// Public email engagement endpoints (open pixel, click redirect, unsubscribe).
-	mux.Handle("/e/", trackingHandler(client, bus, tracking.New(cfg.JWTSecret, cfg.AppURL)))
+	mux.Handle("/e/", trackingHandler(client, bus, site.Tracker))
 
 	// Inbound provider webhooks (SES bounce/complaint via SNS), routed by the
 	// workspace's secret ingest key: POST /hooks/{key}/{provider}.
