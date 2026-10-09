@@ -9,6 +9,8 @@
   "email.welcome.subject": "Te damos la bienvenida a 1mail",
   "email.welcome.greeting_fallback": "amigo",
   "email.welcome.body": "Hola {{.Greeting}}:\n\n¡Te damos la bienvenida a 1mail! Tu cuenta está lista.\n",
+  "email.workspace_suspended.subject": "Se ha suspendido el envío de correos de {{.Workspace}}",
+  "email.workspace_suspended.body": "Se ha suspendido el envío de correos salientes de su espacio de trabajo de 1mail {{.Workspace}}.\n\nMotivo: {{.Reason}}\nEstablecido por: {{.Actor}}\n\nNo se pierde nada: los envíos programados y las automatizaciones se pausan y se reanudan cuando se levante la suspensión. Aún puede iniciar sesión y consultar sus datos. Para apelar, póngase en contacto con su administrador de 1mail.\n",
 
   "errors.name_required": "el nombre es obligatorio",
   "errors.email_required": "el email es obligatorio",

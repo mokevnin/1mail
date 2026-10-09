@@ -24,6 +24,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/samber/lo"
+
 	"github.com/mokevnin/1mail/ent"
 	"github.com/mokevnin/1mail/ent/outboundmessage"
 	"github.com/mokevnin/1mail/ent/workspace"
@@ -56,6 +58,21 @@ const (
 	HoldNoIntegration    = "no_integration"
 	HoldUnverifiedDomain = "unverified_domain"
 )
+
+// HoldDetail words a Hold reason for a human (an API problem detail). The single
+// place the wording lives, so every surface that reports a Held outcome agrees.
+func HoldDetail(reason string) string {
+	switch reason {
+	case HoldSuspended:
+		return "sending is suspended for this workspace"
+	case HoldNoIntegration:
+		return "no default email provider configured"
+	case HoldUnverifiedDomain:
+		return "sender domain is not a verified sending domain"
+	default:
+		return "sending is currently on hold for this workspace: " + reason
+	}
+}
 
 // ErrInProgress means another attempt holds a live claim on this idempotency key.
 // It is retryable; a stale claim (older than the lease) is taken over instead.
@@ -248,7 +265,7 @@ func (m *Module) Send(ctx context.Context, req Request) (Result, error) {
 		if errors.Is(err, messaging.ErrUnverifiedSendingDomain) {
 			// The domain lost verification between our check and the signer's: a hold,
 			// not a failure. The claim is dropped so the same Request can run again.
-			_ = m.ent.OutboundMessage.DeleteOneID(msg.ID).Exec(ctx)
+			_, _ = m.ent.OutboundMessage.Delete().Where(holds(msg)...).Exec(ctx)
 			return Result{Outcome: Held, Reason: HoldUnverifiedDomain}, nil
 		}
 		m.release(ctx, msg)
@@ -276,13 +293,16 @@ func (m *Module) Preflight(ctx context.Context, workspaceID int64, fromEmail str
 
 // MarkFailed gives up on a pending claim for good (a queue worker calls it when the
 // final retry is spent), recording cause. It is a no-op for a message that already
-// reached a final status.
+// reached a final status or whose claim another attempt currently holds.
 func (m *Module) MarkFailed(ctx context.Context, workspaceID int64, key string, cause error) error {
 	return m.ent.OutboundMessage.Update().
 		Where(
 			outboundmessage.WorkspaceID(workspaceID),
 			outboundmessage.IdempotencyKey(key),
 			outboundmessage.StatusEQ(outboundmessage.StatusPending),
+			// Never fail a message another attempt is working on: only a claim that
+			// was released (a definite provider failure) or whose lease has expired.
+			outboundmessage.ClaimedAtLT(time.Now().Add(-m.lease)),
 		).
 		SetStatus(outboundmessage.StatusFailed).
 		SetReason(cause.Error()).
@@ -342,9 +362,7 @@ func (m *Module) gate(ctx context.Context, ws *ent.Workspace, fromEmail, fromNam
 
 func replayResult(msg *ent.OutboundMessage) Result {
 	r := Result{MessageID: msg.ID, Replayed: true}
-	if msg.Reason != nil {
-		r.Reason = *msg.Reason
-	}
+	r.Reason = lo.FromPtr(msg.Reason)
 	switch msg.Status {
 	case outboundmessage.StatusSent:
 		r.Outcome = Sent
@@ -447,14 +465,22 @@ func (m *Module) recordSent(ctx context.Context, req Request, msg *ent.OutboundM
 	}
 	now := time.Now()
 	err := m.bus.WithinTx(ctx, func(tx *ent.Client, pub events.Publisher) error {
-		upd := tx.OutboundMessage.UpdateOneID(msg.ID).
+		upd := tx.OutboundMessage.Update().
+			Where(holds(msg)...).
 			SetStatus(outboundmessage.StatusSent).
 			SetSentAt(now)
 		if receipt.MessageID != "" {
 			upd.SetProviderMessageID(receipt.MessageID)
 		}
-		if _, err := upd.Save(ctx); err != nil {
+		n, err := upd.Save(ctx)
+		if err != nil {
 			return err
+		}
+		if n == 0 {
+			// Our claim was taken over while the provider call ran (we outlived the
+			// lease). The taker owns the record; rolling back keeps it, and its
+			// email.sent Event, the only ones.
+			return ErrInProgress
 		}
 		return pub.Publish(ctx, &events.EmailEngagement{
 			Action:            events.NameEmailSent,

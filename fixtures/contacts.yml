@@ -264,3 +264,12 @@
   workspace_id: 1
   created_at: '{{daysAgo 160}}'
   updated_at: '{{daysAgo 160}}'
+# Anchor for the "held automation step" test (jobs/automation_test.go): a clean contact
+# no other scenario touches.
+- id: 130
+  email: hold.demo@codebasics.dev
+  first_name: Hal
+  last_name: Demo
+  workspace_id: 1
+  created_at: '{{daysAgo 10}}'
+  updated_at: '{{daysAgo 10}}'

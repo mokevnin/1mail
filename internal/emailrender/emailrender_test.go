@@ -41,3 +41,9 @@ func TestRenderEmailInvalidMJMLFails(t *testing.T) {
 	_, err := emailrender.RenderEmail("s", "<mjml><not-valid", nil)
 	assert.Error(t, err)
 }
+
+func TestValidateCatchesBrokenTemplatesWithoutRecipientData(t *testing.T) {
+	require.NoError(t, emailrender.Validate("Hi {{ first_name }}", sampleMJML), "unbound merge tags are fine")
+	require.Error(t, emailrender.Validate("{% if %}", sampleMJML), "liquid syntax error in the subject")
+	require.Error(t, emailrender.Validate("s", "<mjml><not-valid"), "mjml that cannot compile")
+}

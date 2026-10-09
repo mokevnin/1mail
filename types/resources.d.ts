@@ -154,6 +154,16 @@ export default interface Resources {
       "formatLabel": "Format",
       "fromEmailLabel": "From email",
       "fromNameLabel": "From name",
+      "hold": {
+        "badge": "On hold",
+        "description": "Sending is paused. Nothing is lost: the remaining recipients are sent automatically once the hold lifts.",
+        "reasons": {
+          "no_integration": "No email provider is configured for this workspace. Add a default integration to resume.",
+          "unverified_domain": "The sender domain is not verified. Publish its DKIM record and verify the domain to resume.",
+          "workspace_suspended": "Sending is suspended for this workspace. Contact your 1mail administrator."
+        },
+        "title": "Sending is on hold"
+      },
       "nameLabel": "Name",
       "noRecords": "No broadcasts yet",
       "openedLabel": "Opened",

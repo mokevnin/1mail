@@ -26,3 +26,12 @@
   workspace_id: 1
   created_at: '{{daysAgo 30}}'
   updated_at: '{{daysAgo 30}}'
+# Anchor for the "held automation step" test: one email step, trigger unused elsewhere.
+- id: 103
+  name: Hold demo
+  status: active
+  trigger_event: hold_demo
+  definition: '[{"type":"email","subject":"Hello from the hold demo","body":"<mjml><mj-body><mj-section><mj-column><mj-text>Hello there.</mj-text></mj-column></mj-section></mj-body></mjml>"}]'
+  workspace_id: 1
+  created_at: '{{daysAgo 10}}'
+  updated_at: '{{daysAgo 10}}'

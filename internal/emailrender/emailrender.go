@@ -51,6 +51,15 @@ func RenderEmail(subject, body string, bindings map[string]any) (Email, error) {
 	return Email{Subject: renderedSubject, HTML: html, Text: HTMLToText(html)}, nil
 }
 
+// Validate reports whether subject and body can render at all, without any recipient
+// data: Liquid syntax and MJML compilation errors surface; unbound merge tags simply
+// render empty. Planning code calls it so a template that would fail every recipient
+// fails the whole send once, up front (ADR 0015).
+func Validate(subject, body string) error {
+	_, err := RenderEmail(subject, body, map[string]any{})
+	return err
+}
+
 // Render renders a Liquid template with the given bindings. On a template error
 // it returns the original template unchanged together with the error (useful for
 // previews); RenderEmail treats that error as fatal.

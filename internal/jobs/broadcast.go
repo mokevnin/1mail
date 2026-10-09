@@ -15,6 +15,7 @@ import (
 	"github.com/mokevnin/1mail/ent/outboundmessage"
 	"github.com/mokevnin/1mail/ent/segment"
 	"github.com/mokevnin/1mail/internal/eligibility"
+	"github.com/mokevnin/1mail/internal/emailrender"
 	"github.com/mokevnin/1mail/internal/outbound"
 	"github.com/mokevnin/1mail/internal/segments"
 )
@@ -65,7 +66,7 @@ func (w *SendBroadcastWorker) Timeout(*river.Job[SendBroadcastArgs]) time.Durati
 func (w *SendBroadcastWorker) Work(ctx context.Context, job *river.Job[SendBroadcastArgs]) error {
 	ids, err := PlanBroadcast(ctx, w.ent, w.mod, job.Args.BroadcastID)
 	if err != nil {
-		return snoozeOnHold(err)
+		return snoozeIfDeferrable(err)
 	}
 	if len(ids) == 0 {
 		return nil // empty audience: PlanBroadcast already finalized the broadcast
@@ -100,7 +101,7 @@ func (w *SendRecipientWorker) Work(ctx context.Context, job *river.Job[SendRecip
 	if err := SendToRecipient(ctx, w.ent, w.mod, job.Args.RecipientID); err != nil {
 		if _, held := asHeld(err); held {
 			// A hold is not a failure: wait it out without spending an attempt.
-			return snoozeOnHold(err)
+			return snoozeIfDeferrable(err)
 		}
 		// On the final attempt, record the terminal failure so the broadcast can
 		// finalize instead of hanging in "sending", then surface the error (river
@@ -131,9 +132,9 @@ func SendBroadcast(ctx context.Context, client *ent.Client, mod *outbound.Module
 	}
 	for _, id := range ids {
 		if serr := SendToRecipient(ctx, client, mod, id); serr != nil {
-			if _, held := asHeld(serr); held {
-				// The source is on hold: stop, leaving the remaining recipients pending
-				// for a later run rather than consuming them.
+			if isDeferrable(serr) {
+				// The source is on hold (or a claim is live): stop, leaving the remaining
+				// recipients pending for a later run rather than consuming them.
 				return serr
 			}
 			// Synchronous path has no retry runtime — a failed send is terminal, so
@@ -173,6 +174,13 @@ func PlanBroadcast(ctx context.Context, client *ent.Client, mod *outbound.Module
 		return nil, &HeldError{Reason: hold}
 	}
 	setBroadcastHold(ctx, client, b.ID, "")
+
+	// A template that cannot render would fail every recipient: fail the broadcast once,
+	// here, before any recipient row exists (ADR 0015).
+	if verr := emailrender.Validate(b.Subject, b.Body); verr != nil {
+		_, _ = b.Update().SetStatus(broadcast.StatusFailed).Save(ctx)
+		return nil, fmt.Errorf("broadcast %d: template does not render: %w", b.ID, verr)
+	}
 
 	if b, err = b.Update().SetStatus(broadcast.StatusSending).Save(ctx); err != nil {
 		return nil, err

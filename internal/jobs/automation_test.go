@@ -257,11 +257,8 @@ func TestAutomationHeldStepWaitsAndResumes(t *testing.T) {
 	env := testhelper.Setup(t)
 	ctx := context.Background()
 
-	c := env.DB.Contact.Create().SetWorkspaceID(acmeWorkspaceID).SetEmail("held@test.dev").SetFirstName("Hal").SaveX(ctx)
-	env.DB.Automation.Create().SetWorkspaceID(acmeWorkspaceID).
-		SetName("Held").SetTriggerEvent("contact.created").SetStatus(automation.StatusActive).
-		SetDefinition("[" + emailStep + "]").ExecX(ctx)
-	runIDs, err := jobs.EvaluateTrigger(ctx, env.DB, acmeWorkspaceID, c.ID, "contact.created")
+	// Fixtures: contact 130 (clean) and the active "hold_demo" automation (id 103).
+	runIDs, err := jobs.EvaluateTrigger(ctx, env.DB, acmeWorkspaceID, 130, "hold_demo")
 	require.NoError(t, err)
 	require.Len(t, runIDs, 1)
 

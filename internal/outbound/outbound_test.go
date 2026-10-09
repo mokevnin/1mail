@@ -289,18 +289,21 @@ func TestProviderErrorIsRetryableAndReleasesTheClaim(t *testing.T) {
 func TestLiveClaimBlocksAndStaleClaimIsTakenOver(t *testing.T) {
 	env := testhelper.Setup(t)
 	ctx := context.Background()
+	// Fixture 106: a pending claim abandoned a day ago (a crashed attempt).
+	const key = "transactional:fixture-stale-claim"
+	req := transactional(key, "lease.demo@codebasics.dev")
 
-	// A claim another attempt just took, still within the lease.
-	env.DB.OutboundMessage.Create().SetWorkspaceID(acme).SetKind(outboundmessage.KindTransactional).
-		SetIdempotencyKey("tx:lease").SetDestination("a@example.com").SetClaimedAt(time.Now()).ExecX(ctx)
-	_, err := newModule(env).Send(ctx, transactional("tx:lease", "a@example.com"))
+	// The same claim, just taken by another attempt (within the lease), blocks us.
+	env.DB.OutboundMessage.Update().Where(outboundmessage.IdempotencyKey(key)).
+		SetClaimedAt(time.Now()).ExecX(ctx)
+	_, err := newModule(env).Send(ctx, req)
 	require.ErrorIs(t, err, outbound.ErrInProgress)
 	assert.Empty(t, env.CustomerMail.Messages(), "never two concurrent sends")
 
-	// The same claim, abandoned long ago (a crashed attempt), is adopted.
-	env.DB.OutboundMessage.Update().Where(outboundmessage.IdempotencyKey("tx:lease")).
+	// Abandoned long ago, it is adopted.
+	env.DB.OutboundMessage.Update().Where(outboundmessage.IdempotencyKey(key)).
 		SetClaimedAt(time.Now().Add(-time.Hour)).ExecX(ctx)
-	res, err := newModule(env).Send(ctx, transactional("tx:lease", "a@example.com"))
+	res, err := newModule(env).Send(ctx, req)
 	require.NoError(t, err)
 	assert.Equal(t, outbound.Sent, res.Outcome)
 	assert.Len(t, env.CustomerMail.Messages(), 1)
@@ -371,4 +374,52 @@ func TestSendTestSkipsEligibilityAndRecordsNothingButHonorsTheFreeze(t *testing.
 	assert.Equal(t, outbound.Held, res.Outcome)
 	assert.Equal(t, outbound.HoldSuspended, res.Reason)
 	assert.Len(t, env.CustomerMail.Messages(), 1)
+}
+
+// reentrantSender lets a test run code from inside the provider call, i.e. while the
+// attempt holds its claim — the window in which a slow attempt can outlive its lease.
+type reentrantSender struct {
+	messaging.EmailSender
+	onSend func()
+}
+
+func (s *reentrantSender) DefaultFrom() (string, string) { return "hello@codebasics.dev", "CodeBasics" }
+
+func (s *reentrantSender) Send(ctx context.Context, msg messaging.EmailMessage) (messaging.Receipt, error) {
+	if s.onSend != nil {
+		hook := s.onSend
+		s.onSend = nil // only the first (outer) call re-enters
+		hook()
+	}
+	return s.EmailSender.Send(ctx, msg)
+}
+
+// A slow attempt that outlives its lease must not record over the attempt that took
+// the claim over: every write is fenced on the claim the attempt holds, so there is
+// exactly one sent record and one email.sent Event even though two provider calls
+// happened (a provider call cannot be un-made; the record can be kept consistent).
+func TestSlowAttemptCannotRecordOverATakeover(t *testing.T) {
+	env := testhelper.Setup(t)
+	ctx := context.Background()
+	var second outbound.Result
+	var secondErr error
+
+	var m *outbound.Module
+	s := &reentrantSender{EmailSender: env.CustomerMail}
+	s.onSend = func() {
+		// The outer attempt is "slow": its lease is expired, and a retry takes over.
+		env.DB.OutboundMessage.Update().Where(outboundmessage.IdempotencyKey("tx:fence")).
+			SetClaimedAt(time.Now().Add(-time.Hour)).ExecX(ctx)
+		second, secondErr = m.Send(ctx, transactional("tx:fence", "a@example.com"))
+	}
+	m = outbound.New(env.DB, env.Bus, senders{sender: s}, tracking.New("s", "http://local"))
+
+	_, err := m.Send(ctx, transactional("tx:fence", "a@example.com"))
+	require.ErrorIs(t, err, outbound.ErrInProgress, "the slow attempt lost its claim and must not record")
+
+	require.NoError(t, secondErr)
+	assert.Equal(t, outbound.Sent, second.Outcome)
+	row := byKey(t, env, "tx:fence")
+	assert.Equal(t, outboundmessage.StatusSent, row.Status)
+	assert.Equal(t, 1, sentEvents(t, env, row.ID), "one email.sent Event, not two")
 }

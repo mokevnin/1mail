@@ -8,6 +8,7 @@ import { StatCard } from '../../components/StatCard.tsx'
 import { siteBroadcastsGetOptions } from '../../generated/site/@tanstack/react-query.gen.ts'
 import type { SiteBroadcastStats, SiteBroadcastStatus } from '../../generated/site/types.gen.ts'
 import { broadcastsReportRoute } from '../../router.tsx'
+import { BroadcastHoldAlert } from './BroadcastHold.tsx'
 
 const STATUS_COLORS: Record<SiteBroadcastStatus, string> = {
   draft: 'gray',
@@ -68,6 +69,7 @@ export function BroadcastReportPage() {
         </Badge>
       </Group>
       <Text c="dimmed">{broadcast.subject}</Text>
+      {broadcast.holdReason && <BroadcastHoldAlert reason={broadcast.holdReason} />}
 
       <SimpleGrid cols={{ base: 2, sm: 3 }}>
         {statEntries(t, broadcast.stats).map((entry) => (

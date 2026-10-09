@@ -48,6 +48,15 @@ func main() {
 		return
 	}
 
+	// `server workspace suspend|unsuspend <slug> …` is the operator toggle for a
+	// Workspace's outbound-sending freeze (ADR 0007).
+	if len(os.Args) > 1 && os.Args[1] == "workspace" {
+		if err := runWorkspaceCommand(env, os.Args[2:]); err != nil {
+			fatal("workspace", err)
+		}
+		return
+	}
+
 	cfg, err := config.Load(env)
 	if err != nil {
 		fatal("load config", err)
@@ -153,4 +162,17 @@ func applyMigrations(cfg *config.Config) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
 	return migrate.Apply(ctx, db, onemail.MigrationsFS)
+}
+
+// runWorkspaceCommand boots the minimal operator app (no listener, no event router,
+// no workers) and runs one workspace command against it.
+func runWorkspaceCommand(env string, args []string) error {
+	a, err := app.NewOperator(env)
+	if err != nil {
+		return err
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	defer func() { _ = a.Shutdown(ctx) }()
+	return runWorkspace(ctx, a, args, os.Stdout)
 }

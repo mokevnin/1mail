@@ -449,3 +449,21 @@ func TestSendBroadcastHoldsWithoutProvider(t *testing.T) {
 func newMod(env *testhelper.TestEnv, resolver outbound.Senders) *outbound.Module {
 	return outbound.New(env.DB, env.Bus, resolver, tracking.New("test-secret", "http://local"))
 }
+
+// A template that cannot render affects every recipient, so it is caught when the
+// broadcast is planned (ADR 0015): the broadcast fails as a whole, before any
+// recipient row exists, instead of failing each recipient one by one.
+func TestPlanBroadcastFailsTheWholeBroadcastOnABrokenTemplate(t *testing.T) {
+	env := testhelper.Setup(t)
+	ctx := context.Background()
+	env.DB.Broadcast.UpdateOneID(draftBroadcastID).SetSubject("{% if %}broken").ExecX(ctx)
+
+	_, err := jobs.PlanBroadcast(ctx, env.DB, newMod(env, fakeResolver{sender: &fakeSender{}}), draftBroadcastID)
+	require.Error(t, err)
+	assert.NotErrorIs(t, err, outbound.ErrInProgress)
+
+	assert.Equal(t, broadcast.StatusFailed, env.DB.Broadcast.GetX(ctx, draftBroadcastID).Status)
+	n, err := env.DB.BroadcastRecipient.Query().Where(broadcastrecipient.BroadcastID(draftBroadcastID)).Count(ctx)
+	require.NoError(t, err)
+	assert.Zero(t, n, "no recipient rows for a broadcast that cannot render")
+}

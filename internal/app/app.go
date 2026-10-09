@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"net"
 	"net/http"
 	"sync"
@@ -23,6 +24,7 @@ import (
 	"github.com/mokevnin/1mail/internal/secrets"
 	"github.com/mokevnin/1mail/internal/sending"
 	"github.com/mokevnin/1mail/internal/server"
+	"github.com/mokevnin/1mail/internal/service"
 	"github.com/mokevnin/1mail/internal/tracking"
 	"github.com/samber/do/v2"
 
@@ -157,6 +159,23 @@ func New(env string) (*App, error) {
 	}, nil
 }
 
+// NewOperator builds the minimal app the operator commands need (config, database,
+// ent client, system sender) without the HTTP server, the event router or the job
+// workers. Providers are lazy, so only what a command invokes is ever constructed;
+// that keeps `1mail workspace …` quick to start and to shut down.
+func NewOperator(env string) (*App, error) {
+	injector := do.New()
+	register(injector, env)
+
+	cfg, err := do.Invoke[*config.Config](injector)
+	if err != nil {
+		_ = injector.Shutdown()
+		return nil, err
+	}
+	i18n.Configure(cfg.Locale)
+	return &App{Config: cfg, injector: injector}, nil
+}
+
 // RunEvents runs the domain-event router (persist/automations/webhooks
 // subscribers). Blocks until ctx is cancelled; stop happens via Shutdown.
 func (a *App) RunEvents(ctx context.Context) error {
@@ -167,6 +186,46 @@ func (a *App) RunEvents(ctx context.Context) error {
 // until the context is cancelled (stop happens via Shutdown).
 func (a *App) RunJobs(ctx context.Context) error {
 	return a.jobs.Start(ctx)
+}
+
+// SuspendWorkspace freezes a Workspace's outbound sending (ADR 0007) and tells its
+// owner(s) through the system sender. It reports whether anything changed; an
+// already-suspended Workspace is left as it was and the owner is not told twice. If
+// the notice cannot be sent the suspension still stands and the error says so.
+func (a *App) SuspendWorkspace(ctx context.Context, slug, by, reason string) (bool, error) {
+	client, err := do.Invoke[*entClient](a.injector)
+	if err != nil {
+		return false, err
+	}
+	id, err := service.WorkspaceIDBySlug(ctx, client.Client, slug)
+	if err != nil {
+		return false, err
+	}
+	changed, err := service.SuspendWorkspace(ctx, client.Client, id, by, reason)
+	if err != nil || !changed {
+		return changed, err
+	}
+	sys, err := do.Invoke[*systemSender](a.injector)
+	if err != nil {
+		return true, fmt.Errorf("workspace suspended, but the owner notice could not be sent: %w", err)
+	}
+	if err := jobs.NotifyWorkspaceSuspended(ctx, client.Client, sys.EmailSender, id); err != nil {
+		return true, fmt.Errorf("workspace suspended, but the owner notice could not be sent: %w", err)
+	}
+	return true, nil
+}
+
+// UnsuspendWorkspace lifts a Workspace's suspension; held sends resume on their own.
+func (a *App) UnsuspendWorkspace(ctx context.Context, slug string) (bool, error) {
+	client, err := do.Invoke[*entClient](a.injector)
+	if err != nil {
+		return false, err
+	}
+	id, err := service.WorkspaceIDBySlug(ctx, client.Client, slug)
+	if err != nil {
+		return false, err
+	}
+	return service.UnsuspendWorkspace(ctx, client.Client, id)
 }
 
 func (a *App) Shutdown(ctx context.Context) *do.ShutdownReport {

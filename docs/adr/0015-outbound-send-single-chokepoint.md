@@ -68,23 +68,32 @@ The module returns a typed outcome and the caller decides what to do with it:
   rest of a mid-flight Broadcast so that nobody receives it after the unfreeze, contradicting
   "reversible" in ADR 0007 and "live property" in ADR 0010.
 
-**What resumes a Hold.** The caller defers, it does not poll for an unfreeze: a per-recipient or
-per-step job that gets `Held` returns a River _snooze_ (River's `JobSnooze` does not increment the
-job's attempt count, so a long hold never exhausts `MaxAttempts` — checked in river v0.40), and the
-job simply runs again later and re-asks the module. A Broadcast records the reason in a nullable
-`hold_reason` while any of its recipients is held and clears it when one sends, which is the
-visible "held" state in the UI; its status stays `sending`. An Automation Enrollment stays active
-with its current step unchanged.
+**What resumes a Hold.** The caller defers, it does not poll for an unfreeze. A
+per-recipient Broadcast job that gets `Held` returns a River _snooze_ (`JobSnooze` does not
+increment the job's attempt count, so a long hold never exhausts `MaxAttempts` — checked in
+river v0.40), and runs again later and re-asks the module. An Automation step cannot snooze
+(its next run is scheduled by the enrollment's `ResumeAt`), so a held step reschedules itself
+the same way and leaves the enrollment active with its current step unchanged. A Broadcast
+records the reason in a nullable `hold_reason` while any of its recipients is held and clears it
+when one sends, which is the visible "held" state in the UI; a mid-flight Broadcast stays
+`sending`, and a hold found when planning leaves the status as it was (the plan simply runs
+again later).
 
-**Taking over a pending claim needs a lease.** A claim row left `pending` by a crash and one whose
-request is still in flight look identical, so a retry may only take a claim over when it is
-provably stale: the row carries `claimed_at`, and takeover is a conditional update
-`… WHERE status = 'pending' AND claimed_at < now() - lease`. Otherwise a repeat call sees the live
-claim and gets "in progress" (409 for Transactional, a retryable error for queue jobs).
+**Taking over a pending claim needs a lease, and every write is fenced.** A claim row left
+`pending` by a crash and one whose request is still in flight look identical, so a retry may only
+take a claim over when it is provably stale: the row carries `claimed_at`, and takeover is a
+conditional update `… WHERE status = 'pending' AND claimed_at = <the value read>` after the lease
+has expired. Otherwise a repeat call sees the live claim and gets "in progress" (409 for
+Transactional; for queue jobs a short snooze, never a spent attempt). Taking over is not enough:
+an attempt that outlives its lease must not later record over the one that took the claim, so
+every write an attempt makes to its own row (record sent, record skipped/failed, release, delete)
+is conditional on the exact `claimed_at` token it holds and the row still being pending. A lost
+claim surfaces as "in progress" and records nothing, so the Event log and the row stay
+consistent even though a provider call, once made, cannot be un-made.
 
-A template syntax error affects every recipient, so templates are validated when a Broadcast is
-planned and the Broadcast fails as a whole; a render error on one contact's data fails only that
-message.
+A template syntax error affects every recipient, so templates are validated (without recipient
+data) when a Broadcast is planned and the Broadcast fails as a whole, before any recipient row
+exists; a render error on one contact's data fails only that message.
 
 ### Eligibility is one destination-keyed rule, evaluated per message at send time
 

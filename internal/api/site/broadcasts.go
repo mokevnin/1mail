@@ -2,6 +2,7 @@ package site
 
 import (
 	"context"
+	"github.com/samber/lo"
 	"net/http"
 	"strconv"
 	"time"
@@ -385,8 +386,8 @@ func (h *Handlers) SiteBroadcastsTestSend(ctx context.Context, req *siteapi.Site
 		Subject:     "[Test] " + b.Subject,
 		Body:        b.Body,
 		Variables:   map[string]any{"first_name": "Alex", "last_name": "Sample", "email": to},
-		FromEmail:   deref(b.FromEmail),
-		FromName:    deref(b.FromName),
+		FromEmail:   lo.FromPtr(b.FromEmail),
+		FromName:    lo.FromPtr(b.FromName),
 	})
 	if err != nil {
 		v := siteapi.SiteBroadcastsTestSendUnprocessableEntity(problem(http.StatusUnprocessableEntity, "send failed: "+err.Error()))
@@ -396,33 +397,11 @@ func (h *Handlers) SiteBroadcastsTestSend(ctx context.Context, req *siteapi.Site
 	case outbound.Sent:
 		// fall through to the 204 below
 	case outbound.Held:
-		v := siteapi.SiteBroadcastsTestSendUnprocessableEntity(problem(http.StatusUnprocessableEntity, testSendHoldDetail(res.Reason)))
+		v := siteapi.SiteBroadcastsTestSendUnprocessableEntity(problem(http.StatusUnprocessableEntity, outbound.HoldDetail(res.Reason)))
 		return &v, nil
 	default: // outbound.Failed: the content did not render
 		v := siteapi.SiteBroadcastsTestSendUnprocessableEntity(problem(http.StatusUnprocessableEntity, res.Reason))
 		return &v, nil
 	}
 	return &siteapi.SiteBroadcastsTestSendNoContent{}, nil
-}
-
-// deref returns the string a nullable column points at, or "" when unset.
-func deref(s *string) string {
-	if s == nil {
-		return ""
-	}
-	return *s
-}
-
-// testSendHoldDetail words a hold on a test send for the author.
-func testSendHoldDetail(reason string) string {
-	switch reason {
-	case outbound.HoldSuspended:
-		return "sending is suspended for this workspace"
-	case outbound.HoldNoIntegration:
-		return "no sending integration configured"
-	case outbound.HoldUnverifiedDomain:
-		return "sender domain is not a verified sending domain"
-	default:
-		return "sending is currently on hold for this workspace: " + reason
-	}
 }

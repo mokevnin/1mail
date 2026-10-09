@@ -9,6 +9,8 @@
   "email.welcome.subject": "Добро пожаловать в 1mail",
   "email.welcome.greeting_fallback": "друг",
   "email.welcome.body": "Здравствуйте, {{.Greeting}}!\n\nДобро пожаловать в 1mail! Ваш аккаунт готов к работе.\n",
+  "email.workspace_suspended.subject": "Отправка писем приостановлена для {{.Workspace}}",
+  "email.workspace_suspended.body": "Отправка исходящих писем для вашего рабочего пространства 1mail {{.Workspace}} приостановлена.\n\nПричина: {{.Reason}}\nИнициатор: {{.Actor}}\n\nНичего не потеряно: запланированные рассылки и автоматизации встанут на паузу и продолжатся после снятия приостановки. Вы по-прежнему можете войти и просматривать данные. Чтобы оспорить решение, свяжитесь с администратором 1mail.\n",
 
   "errors.name_required": "укажите имя",
   "errors.email_required": "укажите email",

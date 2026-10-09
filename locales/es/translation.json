@@ -152,6 +152,16 @@
     "formatLabel": "Formato",
     "fromEmailLabel": "Correo del remitente",
     "fromNameLabel": "Nombre del remitente",
+    "hold": {
+      "badge": "En pausa",
+      "description": "El envío está en pausa. No se pierde nada: los destinatarios restantes recibirán el correo automáticamente cuando se levante la pausa.",
+      "reasons": {
+        "no_integration": "No hay un proveedor de correo configurado para este espacio de trabajo. Añada una integración predeterminada para reanudar.",
+        "unverified_domain": "El dominio del remitente no está verificado. Publique su registro DKIM y verifique el dominio para reanudar.",
+        "workspace_suspended": "El envío está suspendido para este espacio de trabajo. Póngase en contacto con su administrador de 1mail."
+      },
+      "title": "El envío está en pausa"
+    },
     "nameLabel": "Nombre",
     "noRecords": "Aún no hay campañas",
     "openedLabel": "Aperturas",

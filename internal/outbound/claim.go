@@ -6,6 +6,7 @@ import (
 
 	"github.com/mokevnin/1mail/ent"
 	"github.com/mokevnin/1mail/ent/outboundmessage"
+	"github.com/mokevnin/1mail/ent/predicate"
 	"github.com/mokevnin/1mail/internal/logging"
 )
 
@@ -35,7 +36,7 @@ func (m *Module) claim(ctx context.Context, req Request, dest string, g gateResu
 		SetKind(req.Kind).
 		SetIdempotencyKey(req.Key).
 		SetDestination(dest).
-		SetClaimedAt(time.Now())
+		SetClaimedAt(claimTime())
 	if g.domain != "" {
 		create.SetSendingDomain(g.domain)
 	}
@@ -102,12 +103,8 @@ func (m *Module) takeOver(ctx context.Context, existing *ent.OutboundMessage) (*
 		return nil, ErrInProgress
 	}
 	n, err := m.ent.OutboundMessage.Update().
-		Where(
-			outboundmessage.ID(existing.ID),
-			outboundmessage.StatusEQ(outboundmessage.StatusPending),
-			outboundmessage.ClaimedAtEQ(existing.ClaimedAt),
-		).
-		SetClaimedAt(time.Now()).
+		Where(holds(existing)...).
+		SetClaimedAt(claimTime()).
 		Save(ctx)
 	if err != nil {
 		return nil, err
@@ -118,24 +115,46 @@ func (m *Module) takeOver(ctx context.Context, existing *ent.OutboundMessage) (*
 	return m.ent.OutboundMessage.Get(ctx, existing.ID)
 }
 
+// claimTime is "now" at the precision the database stores (microseconds), so a claim
+// token read back from the row compares equal to the one we wrote.
+func claimTime() time.Time { return time.Now().Truncate(time.Microsecond) }
+
+// holds is the fence for every write an attempt makes to its own claim: the row must
+// still be pending AND still carry the exact claimed_at token the attempt holds. An
+// attempt that outlived its lease and was taken over matches nothing, so it can never
+// record a result, release a claim or delete a row that now belongs to someone else.
+func holds(msg *ent.OutboundMessage) []predicate.OutboundMessage {
+	return []predicate.OutboundMessage{
+		outboundmessage.ID(msg.ID),
+		outboundmessage.StatusEQ(outboundmessage.StatusPending),
+		outboundmessage.ClaimedAtEQ(msg.ClaimedAt),
+	}
+}
+
 // release hands the claim back after a definite provider failure (the call
 // returned), so the next attempt may retry immediately instead of waiting out the
 // lease. Best effort: if it fails, the lease expires on its own.
 func (m *Module) release(ctx context.Context, msg *ent.OutboundMessage) {
-	if err := m.ent.OutboundMessage.UpdateOneID(msg.ID).
+	if _, err := m.ent.OutboundMessage.Update().
+		Where(holds(msg)...).
 		SetClaimedAt(time.Unix(0, 0)).
-		Exec(ctx); err != nil {
+		Save(ctx); err != nil {
 		logging.FromContext(ctx).Warn("outbound: release claim failed", "message_id", msg.ID, "err", err)
 	}
 }
 
 // finish records a final, non-sent status with its reason.
 func (m *Module) finish(ctx context.Context, msg *ent.OutboundMessage, status outboundmessage.Status, outcome Outcome, reason string) (Result, error) {
-	if err := m.ent.OutboundMessage.UpdateOneID(msg.ID).
+	n, err := m.ent.OutboundMessage.Update().
+		Where(holds(msg)...).
 		SetStatus(status).
 		SetReason(reason).
-		Exec(ctx); err != nil {
+		Save(ctx)
+	if err != nil {
 		return Result{}, err
+	}
+	if n == 0 {
+		return Result{}, ErrInProgress // the claim was taken over while we worked
 	}
 	return Result{Outcome: outcome, Reason: reason, MessageID: msg.ID}, nil
 }

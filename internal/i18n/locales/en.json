@@ -9,6 +9,8 @@
   "email.welcome.subject": "Welcome to 1mail",
   "email.welcome.greeting_fallback": "there",
   "email.welcome.body": "Hi {{.Greeting}},\n\nWelcome to 1mail! Your account is ready.\n",
+  "email.workspace_suspended.subject": "Outbound email sending is suspended for {{.Workspace}}",
+  "email.workspace_suspended.body": "Outbound email sending for your 1mail workspace {{.Workspace}} has been suspended.\n\nReason: {{.Reason}}\nSet by: {{.Actor}}\n\nNothing is lost: scheduled broadcasts and automations pause and resume when the suspension is lifted. You can still sign in and view your data. To appeal, contact your 1mail administrator.\n",
 
   "errors.name_required": "name is required",
   "errors.email_required": "email is required",

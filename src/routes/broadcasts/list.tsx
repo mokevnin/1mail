@@ -21,6 +21,7 @@ import {
   broadcastsReportRoute,
   broadcastsRoute,
 } from '../../router.tsx'
+import { BroadcastHoldBadge } from './BroadcastHold.tsx'
 
 const PAGE_SIZE = 10
 
@@ -99,7 +100,12 @@ export function BroadcastsListPage() {
           {
             accessor: 'status',
             title: t(($) => $.broadcasts.statusLabel),
-            render: (record) => <StatusBadge t={t} status={record.status} />,
+            render: (record) => (
+              <Group gap="xs">
+                <StatusBadge t={t} status={record.status} />
+                {record.holdReason && <BroadcastHoldBadge />}
+              </Group>
+            ),
           },
           {
             accessor: 'recipients',

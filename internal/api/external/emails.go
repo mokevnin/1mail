@@ -116,27 +116,13 @@ func (h *Handlers) EmailsSend(ctx context.Context, req *externalapi.SendTransact
 		r := externalapi.EmailsSendUnprocessableEntity(problem(http.StatusUnprocessableEntity, "render template: "+res.Reason))
 		return &r, nil
 	default: // outbound.Held: a reversible hold on the source, never a failed send
-		r := externalapi.EmailsSendUnprocessableEntity(problem(http.StatusUnprocessableEntity, holdDetail(res.Reason)))
+		r := externalapi.EmailsSendUnprocessableEntity(problem(http.StatusUnprocessableEntity, outbound.HoldDetail(res.Reason)))
 		return &r, nil
 	}
 }
 
 func sendResponse(id int64, status externalapi.TransactionalSendStatus, dest string) externalapi.EmailsSendRes {
 	return &externalapi.SendTransactionalEmailResponse{ID: entityID(id), Status: status, Destination: dest}
-}
-
-// holdDetail words a Held outcome as a client-readable problem detail.
-func holdDetail(reason string) string {
-	switch reason {
-	case outbound.HoldSuspended:
-		return "sending is suspended for this workspace"
-	case outbound.HoldNoIntegration:
-		return "no default email provider configured"
-	case outbound.HoldUnverifiedDomain:
-		return "sender domain is not a verified sending domain"
-	default:
-		return "sending is currently on hold for this workspace: " + reason
-	}
 }
 
 // entityID renders an int64 primary key as the API's string EntityId.
