@@ -99,3 +99,40 @@ func TestSiteBroadcastsRequireOwnedWorkspace(t *testing.T) {
 	require.NoError(t, err)
 	assert.IsType(t, &siteapi.SiteBroadcastsListNotFound{}, out)
 }
+
+// JSON Merge Patch on update: explicit null clears sender name, sender email and
+// the audience segment; absent keys keep their values. Fixture draft broadcast
+// 100 has a sender; segment 1 is an anchor segment.
+func TestSiteBroadcastsUpdateNullClearsAbsentKeeps(t *testing.T) {
+	env := testhelper.Setup(t)
+	c := env.SiteActor(t, fixtures.OwnerJohnEmail)
+	ctx := context.Background()
+	params := siteapi.SiteBroadcastsUpdateParams{Slug: fixtures.AcmeSlug, ID: "100"}
+
+	// Absent keys keep values: set the segment, the sender stays.
+	res, err := c.SiteBroadcastsUpdate(ctx, &siteapi.SiteUpdateBroadcastInput{
+		SegmentId: siteapi.NewOptNilEntityId("1"),
+	}, params)
+	require.NoError(t, err)
+	got, ok := res.(*siteapi.SiteBroadcastResource)
+	require.Truef(t, ok, "got %T", res)
+	assert.Equal(t, "1", string(got.SegmentId.Or("")))
+	assert.Equal(t, "CodeBasics", got.FromName.Or(""))
+	assert.Equal(t, "hello@codebasics.dev", string(got.FromEmail.Or("")))
+
+	// Explicit nulls clear all three.
+	var nullSeg siteapi.OptNilEntityId
+	nullSeg.SetToNull()
+	res, err = c.SiteBroadcastsUpdate(ctx, &siteapi.SiteUpdateBroadcastInput{
+		FromName:  nullString(),
+		FromEmail: nullEmail(),
+		SegmentId: nullSeg,
+	}, params)
+	require.NoError(t, err)
+	got, ok = res.(*siteapi.SiteBroadcastResource)
+	require.Truef(t, ok, "got %T", res)
+	assert.Empty(t, got.FromName.Or(""))
+	assert.Empty(t, got.FromEmail.Or(""))
+	assert.Empty(t, got.SegmentId.Or(""))
+	assert.Equal(t, "Summer sale teaser", got.Name, "absent name kept")
+}

@@ -66,6 +66,17 @@ type Attributes struct {
 	FirstName, LastName, TimeZone *string
 	// CustomFields are declared by use (ADR 0006) and stored typed.
 	CustomFields map[string]any
+	// Cleared lists the attributes an Update must clear (JSON Merge Patch: an
+	// explicit null clears, an absent key keeps). ADR 0002 keeps every alias key
+	// optional, so clearing even the last one is valid. Ignored by Create and Upsert.
+	Cleared Cleared
+}
+
+// Cleared flags the attributes an Update clears.
+type Cleared struct {
+	SubjectID, Email, Phone       bool
+	FirstName, LastName, TimeZone bool
+	CustomFields                  bool
 }
 
 // Result is the outcome of an Upsert.
@@ -130,6 +141,7 @@ func (m *Module) Update(ctx context.Context, workspaceID, id int64, attrs Attrib
 			SetNillableFirstName(attrs.FirstName).
 			SetNillableLastName(attrs.LastName).
 			SetNillableTimeZone(attrs.TimeZone)
+		attrs.Cleared.apply(q)
 		if attrs.CustomFields != nil {
 			typed, err := EnsureCustomFields(ctx, tx, workspaceID, attrs.CustomFields)
 			if err != nil {
@@ -145,6 +157,30 @@ func (m *Module) Update(ctx context.Context, workspaceID, id int64, attrs Attrib
 		return nil, domainError(err)
 	}
 	return c, nil
+}
+
+func (c Cleared) apply(q *ent.ContactUpdateOne) {
+	if c.SubjectID {
+		q.ClearSubjectID()
+	}
+	if c.Email {
+		q.ClearEmail()
+	}
+	if c.Phone {
+		q.ClearPhone()
+	}
+	if c.FirstName {
+		q.ClearFirstName()
+	}
+	if c.LastName {
+		q.ClearLastName()
+	}
+	if c.TimeZone {
+		q.ClearTimeZone()
+	}
+	if c.CustomFields {
+		q.ClearCustomFields()
+	}
 }
 
 // Upsert resolves the Contact by any present alias key (subject_id, email, phone)

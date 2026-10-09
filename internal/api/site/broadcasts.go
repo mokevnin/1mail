@@ -205,6 +205,19 @@ func (h *Handlers) SiteBroadcastsUpdate(ctx context.Context, req *siteapi.SiteUp
 		SetNillableBody(convert.StringPtr(req.Body)).
 		SetNillableSegmentID(segmentID).
 		SetNillableIntegrationID(integrationID)
+	// JSON Merge Patch: an explicit null clears the field, an absent key keeps it.
+	if req.FromName.IsNull() {
+		q = q.ClearFromName()
+	}
+	if req.FromEmail.IsNull() {
+		q = q.ClearFromEmail()
+	}
+	if req.SegmentId.IsNull() {
+		q = q.ClearSegmentID()
+	}
+	if req.IntegrationId.IsNull() {
+		q = q.ClearIntegrationID()
+	}
 	b, err := q.Save(ctx)
 	if ent.IsNotFound(err) {
 		v := siteapi.SiteBroadcastsUpdateNotFound(problem(http.StatusNotFound, "broadcast not found"))
