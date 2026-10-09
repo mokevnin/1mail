@@ -669,7 +669,7 @@ export const zSiteCreateTokenResponse = z.object({
 
 /**
  * Custom field definition — a typed, named Contact attribute (ADR 0006). Auto-created
- * on first sight from Identify; the catalogue feeds the segment builder.
+ *  on first sight from Identify; the catalogue feeds the segment builder.
  */
 export const zSiteCustomFieldResource = z.object({
   id: zEntityId,

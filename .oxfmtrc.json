@@ -14,7 +14,6 @@
     "packages/*/src/generated",
     "packages/*/dist",
     "internal/server/assets",
-    "openapi",
     "gen",
     "ent",
     "pnpm-lock.yaml",

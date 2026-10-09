@@ -12,8 +12,8 @@ local linters = new Mapping {
     // Project runs oxlint/oxfmt through pnpm (not on PATH).
     ["oxlint"] {
         glob = List("**/*.js", "**/*.jsx", "**/*.ts", "**/*.tsx")
-        check = "pnpm exec oxlint {{files}}"
-        fix = "pnpm exec oxlint --fix {{files}}"
+        check = "pnpm exec oxlint --no-error-on-unmatched-pattern {{files}}"
+        fix = "pnpm exec oxlint --fix --no-error-on-unmatched-pattern {{files}}"
     }
     ["oxfmt"] {
         glob = List("**/*.js", "**/*.jsx", "**/*.ts", "**/*.tsx", "**/*.json", "**/*.jsonc", "**/*.md", "**/*.yml", "**/*.yaml")
