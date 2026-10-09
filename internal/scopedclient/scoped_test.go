@@ -275,3 +275,12 @@ func TestScopedNotInWorkspaceIsTyped(t *testing.T) {
 	require.Error(t, err)
 	assert.True(t, errors.Is(err, ent.ErrNotInWorkspace))
 }
+
+func TestScopedWorkspaceIsTheOwnRow(t *testing.T) {
+	env := testhelper.Setup(t)
+
+	ws, err := env.DB.Scoped(fixtures.GlobexID).Workspace(t.Context())
+	require.NoError(t, err)
+	assert.EqualValues(t, fixtures.GlobexID, ws.ID)
+	assert.Equal(t, fixtures.GlobexSlug, ws.Slug)
+}

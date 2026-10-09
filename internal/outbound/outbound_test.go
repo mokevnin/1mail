@@ -35,12 +35,12 @@ type senders struct {
 	err    error
 }
 
-func (s senders) EmailSender(context.Context, int64) (messaging.EmailSender, error) {
+func (s senders) EmailSender(context.Context, *ent.Scoped) (messaging.EmailSender, error) {
 	return s.sender, s.err
 }
 
 func newModule(env *testhelper.TestEnv, opts ...outbound.Option) *outbound.Module {
-	return outbound.New(env.DB, env.Bus, senders{sender: env.CustomerMail},
+	return outbound.New(env.Bus, senders{sender: env.CustomerMail},
 		tracking.New("test-secret", "http://local"), opts...)
 }
 
@@ -184,7 +184,7 @@ func TestMarketingCarriesFooterAndOneClickHeader(t *testing.T) {
 
 func TestMarketingWithoutTrackerFailsClosed(t *testing.T) {
 	env := testhelper.Setup(t)
-	m := outbound.New(env.DB, env.Bus, senders{sender: env.CustomerMail}, nil)
+	m := outbound.New(env.Bus, senders{sender: env.CustomerMail}, nil)
 
 	_, err := m.Send(context.Background(), env.DB.Scoped(fixtures.AcmeID), marketing(t, env, "bc:notracker", fixtures.ContactAliceID))
 	require.ErrorIs(t, err, outbound.ErrNoTracker)
@@ -255,7 +255,7 @@ func TestDomainLosingVerificationAtSignTimeIsHeldAndFreesTheClaim(t *testing.T) 
 
 func TestNoIntegrationIsHeld(t *testing.T) {
 	env := testhelper.Setup(t)
-	m := outbound.New(env.DB, env.Bus, senders{err: messaging.ErrNoProvider}, tracking.New("s", "http://local"))
+	m := outbound.New(env.Bus, senders{err: messaging.ErrNoProvider}, tracking.New("s", "http://local"))
 
 	res, err := m.Send(context.Background(), env.DB.Scoped(fixtures.AcmeID), transactional("tx:noint", "a@example.com"))
 	require.NoError(t, err)
@@ -408,7 +408,7 @@ func TestSlowAttemptCannotRecordOverATakeover(t *testing.T) {
 			SetClaimedAt(time.Now().Add(-time.Hour)).ExecX(ctx)
 		second, secondErr = m.Send(ctx, env.DB.Scoped(fixtures.AcmeID), transactional("tx:fence", "a@example.com"))
 	}
-	m = outbound.New(env.DB, env.Bus, senders{sender: s}, tracking.New("s", "http://local"))
+	m = outbound.New(env.Bus, senders{sender: s}, tracking.New("s", "http://local"))
 
 	_, err := m.Send(ctx, env.DB.Scoped(fixtures.AcmeID), transactional("tx:fence", "a@example.com"))
 	require.ErrorIs(t, err, outbound.ErrInProgress, "the slow attempt lost its claim and must not record")

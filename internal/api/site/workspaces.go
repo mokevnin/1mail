@@ -6,8 +6,6 @@ import (
 	"strings"
 
 	"github.com/mokevnin/1mail/ent"
-	"github.com/mokevnin/1mail/ent/membership"
-	"github.com/mokevnin/1mail/ent/workspace"
 	siteapi "github.com/mokevnin/1mail/gen/site"
 	"github.com/mokevnin/1mail/internal/api/auth"
 	"github.com/mokevnin/1mail/internal/i18n"
@@ -20,10 +18,7 @@ func (h *Handlers) SiteWorkspacesList(ctx context.Context) ([]siteapi.SiteWorksp
 		return []siteapi.SiteWorkspaceResource{}, nil
 	}
 
-	items, err := h.ent.Workspace.Query().
-		Where(workspace.HasMembershipsWith(membership.UserID(a.UserID))).
-		Order(ent.Asc(workspace.FieldID)).
-		All(ctx)
+	items, err := h.accounts.WorkspacesOf(ctx, a.UserID)
 	if err != nil {
 		return nil, err
 	}
@@ -57,13 +52,14 @@ func (h *Handlers) SiteWorkspacesUpdate(ctx context.Context, req *siteapi.SiteUp
 		return &v, nil
 	}
 
-	upd := h.ent.Workspace.UpdateOneID(s.WorkspaceID()).SetName(name)
+	var postal *string
 	// postalAddress is optional in the contract: absent = leave unchanged, present
 	// (incl. empty string) = set/clear. Trimmed so a whitespace-only value clears it.
 	if req.PostalAddress.Set {
-		upd = upd.SetPostalAddress(strings.TrimSpace(req.PostalAddress.Value))
+		v := strings.TrimSpace(req.PostalAddress.Value)
+		postal = &v
 	}
-	w, err := upd.Save(ctx)
+	w, err := h.accounts.UpdateWorkspace(ctx, s, name, postal)
 	if err != nil {
 		return nil, err
 	}

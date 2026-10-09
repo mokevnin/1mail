@@ -45,20 +45,17 @@ type DomainRates struct {
 }
 
 // Module reads the rates.
-type Module struct {
-	client *ent.Client
-}
+type Module struct{}
 
-// New builds the module over the ent client.
-func New(client *ent.Client) *Module {
-	return &Module{client: client}
+// New builds the module.
+func New() *Module {
+	return &Module{}
 }
 
 // Rates returns the rates of every Sending domain of the workspace over the trailing
 // window ending now. A domain with no traffic is still listed, with undefined rates.
-func (m *Module) Rates(ctx context.Context, workspaceID int64, window time.Duration) ([]DomainRates, error) {
-	domains, err := m.client.SendingDomain.Query().
-		Where(sendingdomain.WorkspaceID(workspaceID)).
+func (m *Module) Rates(ctx context.Context, s *ent.Scoped, window time.Duration) ([]DomainRates, error) {
+	domains, err := s.SendingDomain().Query().
 		Order(ent.Asc(sendingdomain.FieldID)).
 		All(ctx)
 	if err != nil {
@@ -70,10 +67,10 @@ func (m *Module) Rates(ctx context.Context, workspaceID int64, window time.Durat
 	for _, d := range domains {
 		count := func(action string, extra ...predicate.Event) (int, error) {
 			preds := append([]predicate.Event{
-				event.WorkspaceID(workspaceID), event.Action(action),
+				event.Action(action),
 				inWindow(since), onDomain(d.Domain),
 			}, extra...)
-			return m.client.Event.Query().Where(preds...).Count(ctx)
+			return s.Event().Query().Where(preds...).Count(ctx)
 		}
 		sent, err := count(events.NameEmailSent)
 		if err != nil {

@@ -56,6 +56,13 @@ func (c *Client) Scoped(ws int64) *Scoped { return &Scoped{c: c, ws: ws} }
 // WorkspaceID returns the Workspace the client is confined to.
 func (s *Scoped) WorkspaceID() int64 { return s.ws }
 
+// Workspace loads the Workspace row the client is confined to. The Workspace is the
+// tenant root, not a Workspace-owned entity, so it has no wrapper of its own: this
+// read is the one way in (writes live in the accounts package).
+func (s *Scoped) Workspace(ctx context.Context) (*Workspace, error) {
+	return s.c.Workspace.Get(ctx, s.ws)
+}
+
 // uniqueIDs returns the sorted, de-duplicated ids.
 func uniqueIDs(ids []int64) []int64 {
 	s := slices.Clone(ids)

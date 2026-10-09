@@ -7,7 +7,6 @@ import (
 
 	"github.com/mokevnin/1mail/ent"
 	"github.com/mokevnin/1mail/ent/apitoken"
-	"github.com/mokevnin/1mail/ent/workspace"
 	externalapi "github.com/mokevnin/1mail/gen/external"
 	"github.com/mokevnin/1mail/internal/api/auth"
 	"github.com/mokevnin/1mail/internal/service"
@@ -72,11 +71,11 @@ func (h *Handlers) AuthTokensBootstrap(ctx context.Context, req *externalapi.Cre
 	}
 
 	// Bootstrap has no caller token: the first token goes to the oldest workspace.
-	ws, err := h.ent.Workspace.Query().Order(ent.Asc(workspace.FieldID)).First(ctx)
+	s, err := h.accounts.BootstrapScope(ctx)
 	if err != nil {
 		return nil, oops.In("external-auth").Public("no workspace to bootstrap").Wrap(err)
 	}
-	resp, err := createToken(ctx, h.ent.Scoped(ws.ID).ApiToken().Create(), req.Name, req.Scopes, req.ExpiresAt)
+	resp, err := createToken(ctx, s.ApiToken().Create(), req.Name, req.Scopes, req.ExpiresAt)
 	if err != nil {
 		return nil, err
 	}

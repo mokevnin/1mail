@@ -62,14 +62,6 @@ func TokenScoped(ctx context.Context) *ent.Scoped {
 	return nil
 }
 
-// WorkspaceID returns the workspace the authenticated token belongs to (0 if unauthenticated).
-func WorkspaceID(auth *TokenAuth) int64 {
-	if auth == nil {
-		return 0
-	}
-	return auth.WorkspaceID
-}
-
 // ExternalSecurityHandler implements externalapi.SecurityHandler (Bearer token auth).
 type ExternalSecurityHandler struct {
 	ent *ent.Client

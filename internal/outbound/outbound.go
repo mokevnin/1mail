@@ -97,7 +97,7 @@ type Result struct {
 // Senders resolves a Workspace's email provider adapter (its default Integration).
 // *messaging.Resolver satisfies it.
 type Senders interface {
-	EmailSender(ctx context.Context, workspaceID int64) (messaging.EmailSender, error)
+	EmailSender(ctx context.Context, s *ent.Scoped) (messaging.EmailSender, error)
 }
 
 // Freezer is an extra reason a Workspace may not send right now, consulted after the
@@ -113,7 +113,6 @@ const DefaultLease = 5 * time.Minute
 
 // Module is the Outbound send module.
 type Module struct {
-	ent      *ent.Client
 	bus      *events.Bus
 	senders  Senders
 	tracker  *tracking.Tracker
@@ -133,8 +132,8 @@ func WithFreezers(f ...Freezer) Option {
 }
 
 // New builds the module. tracker may be nil only if no marketing Request is sent.
-func New(client *ent.Client, bus *events.Bus, senders Senders, tracker *tracking.Tracker, opts ...Option) *Module {
-	m := &Module{ent: client, bus: bus, senders: senders, tracker: tracker, lease: DefaultLease}
+func New(bus *events.Bus, senders Senders, tracker *tracking.Tracker, opts ...Option) *Module {
+	m := &Module{bus: bus, senders: senders, tracker: tracker, lease: DefaultLease}
 	for _, o := range opts {
 		o(m)
 	}
@@ -222,7 +221,7 @@ func (m *Module) Send(ctx context.Context, s *ent.Scoped, req Request) (Result, 
 	if err != nil {
 		return Result{}, err
 	}
-	g, err := m.gate(ctx, ws, req.FromEmail, req.FromName)
+	g, err := m.gate(ctx, s, ws, req.FromEmail, req.FromName)
 	if err != nil {
 		return Result{}, err
 	}
@@ -280,7 +279,7 @@ func (m *Module) Preflight(ctx context.Context, s *ent.Scoped, fromEmail string)
 	if err != nil {
 		return "", err
 	}
-	g, err := m.gate(ctx, ws, fromEmail, "")
+	g, err := m.gate(ctx, s, ws, fromEmail, "")
 	if err != nil {
 		return "", err
 	}
@@ -304,10 +303,9 @@ func (m *Module) MarkFailed(ctx context.Context, s *ent.Scoped, key string, caus
 		Exec(ctx)
 }
 
-// workspace loads the Workspace row the scoped client is confined to. Workspace is
-// the tenant root, not a Workspace-owned entity, so it is read through the raw client.
+// workspace loads the Workspace row the scoped client is confined to.
 func (m *Module) workspace(ctx context.Context, s *ent.Scoped) (*ent.Workspace, error) {
-	ws, err := m.ent.Workspace.Get(ctx, s.WorkspaceID())
+	ws, err := s.Workspace(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("outbound: load workspace %d: %w", s.WorkspaceID(), err)
 	}
@@ -325,7 +323,7 @@ type gateResult struct {
 
 // gate runs the source-level checks, in order: Workspace freeze, an Integration to
 // send through, and a verified Sending domain for the effective From address.
-func (m *Module) gate(ctx context.Context, ws *ent.Workspace, fromEmail, fromName string) (gateResult, error) {
+func (m *Module) gate(ctx context.Context, s *ent.Scoped, ws *ent.Workspace, fromEmail, fromName string) (gateResult, error) {
 	if ws.SuspendedAt != nil {
 		return gateResult{hold: HoldSuspended}, nil
 	}
@@ -339,7 +337,7 @@ func (m *Module) gate(ctx context.Context, ws *ent.Workspace, fromEmail, fromNam
 		}
 	}
 
-	sender, err := m.senders.EmailSender(ctx, ws.ID)
+	sender, err := m.senders.EmailSender(ctx, s)
 	if errors.Is(err, messaging.ErrNoProvider) {
 		return gateResult{hold: HoldNoIntegration}, nil
 	}
@@ -355,7 +353,7 @@ func (m *Module) gate(ctx context.Context, ws *ent.Workspace, fromEmail, fromNam
 		df, dn := d.DefaultFrom()
 		from, name = messaging.FirstNonEmpty(from, df), messaging.FirstNonEmpty(name, dn)
 	}
-	verified, err := messaging.HasVerifiedSendingDomain(ctx, m.ent, ws.ID, from)
+	verified, err := messaging.HasVerifiedSendingDomain(ctx, s, from)
 	if err != nil {
 		return gateResult{}, fmt.Errorf("outbound: check sending domain: %w", err)
 	}
@@ -469,10 +467,8 @@ func (m *Module) recordSent(ctx context.Context, s *ent.Scoped, req Request, msg
 		contactID = req.Contact.ID
 	}
 	now := time.Now()
-	err := m.bus.WithinTx(ctx, func(tx *ent.Client, pub events.Publisher) error {
-		// The claim was made through the scoped client; the transaction's write goes
-		// through the same Workspace, taken from the claimed row.
-		upd := tx.Scoped(msg.WorkspaceID).OutboundMessage().Update().
+	err := m.bus.WithinScopedTx(ctx, s, func(ts *ent.Scoped, pub events.Publisher) error {
+		upd := ts.OutboundMessage().Update().
 			Where(holds(msg)...).
 			SetStatus(outboundmessage.StatusSent).
 			SetSentAt(now)
@@ -560,7 +556,7 @@ func (m *Module) SendTest(ctx context.Context, s *ent.Scoped, req TestRequest) (
 	if err != nil {
 		return Result{}, err
 	}
-	g, err := m.gate(ctx, ws, req.FromEmail, req.FromName)
+	g, err := m.gate(ctx, s, ws, req.FromEmail, req.FromName)
 	if err != nil {
 		return Result{}, err
 	}

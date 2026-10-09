@@ -4,8 +4,8 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/mokevnin/1mail/ent"
 	externalapi "github.com/mokevnin/1mail/gen/external"
+	"github.com/mokevnin/1mail/internal/accounts"
 	"github.com/mokevnin/1mail/internal/api/external/resources"
 	"github.com/mokevnin/1mail/internal/automations"
 	"github.com/mokevnin/1mail/internal/broadcasts"
@@ -24,7 +24,7 @@ var mapper = &resources.ConverterImpl{}
 
 type Handlers struct {
 	externalapi.UnimplementedHandler
-	ent            *ent.Client
+	accounts       *accounts.Accounts
 	bus            *events.Bus
 	eventlog       *eventlog.Module
 	outbound       *outbound.Module
@@ -42,7 +42,7 @@ type Handlers struct {
 // the shared singletons the composition root registers once, so /api and /site
 // cannot diverge on how a module is constructed.
 type Deps struct {
-	Ent            *ent.Client
+	Accounts       *accounts.Accounts
 	Bus            *events.Bus
 	Cipher         *secrets.Cipher
 	Outbound       *outbound.Module
@@ -58,7 +58,7 @@ type Deps struct {
 
 func NewHandlers(d Deps) *Handlers {
 	return &Handlers{
-		ent: d.Ent, bus: d.Bus, cipher: d.Cipher, outbound: d.Outbound, segments: d.Segments,
+		accounts: d.Accounts, bus: d.Bus, cipher: d.Cipher, outbound: d.Outbound, segments: d.Segments,
 		eventlog: d.EventLog, contacts: d.Contacts, tags: d.Tags, automations: d.Automations,
 		broadcasts: d.Broadcasts, reputation: d.Reputation, bootstrapToken: d.BootstrapToken,
 	}

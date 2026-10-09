@@ -19,6 +19,7 @@ import (
 	onemail "github.com/mokevnin/1mail"
 	"github.com/mokevnin/1mail/config"
 	"github.com/mokevnin/1mail/ent"
+	"github.com/mokevnin/1mail/internal/accounts"
 	apiauth "github.com/mokevnin/1mail/internal/api/auth"
 	apiexternal "github.com/mokevnin/1mail/internal/api/external"
 	apisite "github.com/mokevnin/1mail/internal/api/site"
@@ -163,7 +164,7 @@ func Setup(t *testing.T) *TestEnv {
 		return nil, &net.DNSError{IsNotFound: true}
 	}
 	tracker := tracking.New(baseCfg.JWTSecret, baseCfg.AppURL)
-	sender := outbound.New(client, bus, resolver, tracker)
+	sender := outbound.New(bus, resolver, tracker)
 	inline := jobs.NewInline(client, sender, systemMail, stubTXT, baseCfg.AppURL)
 	// Cipher (over the fixture-sealing key) and provider catalog for the site
 	// handlers — mirrors the app's DI singletons.
@@ -182,17 +183,18 @@ func Setup(t *testing.T) *TestEnv {
 	tagsModule := tags.New()
 	automationsModule := automations.New()
 	broadcastsModule := broadcasts.New(inline)
-	external, err := server.NewExternalAPI(apiexternal.Deps{
-		Ent: client, Bus: bus, Cipher: cipher, Outbound: sender,
+	acc := accounts.New(client, bus)
+	external, err := server.NewExternalAPI(client, apiexternal.Deps{
+		Accounts: acc, Bus: bus, Cipher: cipher, Outbound: sender,
 		Segments: segmentsModule, EventLog: eventLog, Contacts: contactsModule, Tags: tagsModule,
-		Automations: automationsModule, Broadcasts: broadcastsModule, Reputation: reputation.New(client),
+		Automations: automationsModule, Broadcasts: broadcastsModule, Reputation: reputation.New(),
 		BootstrapToken: baseCfg.BootstrapToken,
 	})
 	require.NoError(t, err, "build external API")
 	mcpHandler, err := mcpserver.New(onemail.ExternalOpenAPI, external, apiauth.NewExternalSecurityHandler(client), mcpserver.WithResourceMetadataURL(oauthserver.ResourceMetadataURL(baseCfg.AppURL)))
 	require.NoError(t, err, "build MCP handler")
-	handler, err := server.New(baseCfg, txDB, apisite.Deps{
-		Ent: client, Bus: bus, Cipher: cipher, Catalog: catalog, Outbound: sender,
+	handler, err := server.New(baseCfg, txDB, client, apisite.Deps{
+		Accounts: acc, OAuth: oauthserver.NewService(client), Bus: bus, Cipher: cipher, Catalog: catalog, Outbound: sender,
 		Segments: segmentsModule, EventLog: eventLog, Contacts: contactsModule, Tags: tagsModule,
 		Automations: automationsModule, Broadcasts: broadcastsModule,
 		Welcome: inline, SysMail: inline, DomainVerify: inline,
@@ -248,7 +250,7 @@ func (s *CapturingSender) Messages() []messaging.EmailMessage {
 // broadcast sends work without a configured integration.
 type fixedResolver struct{ sender messaging.EmailSender }
 
-func (r fixedResolver) EmailSender(context.Context, int64) (messaging.EmailSender, error) {
+func (r fixedResolver) EmailSender(context.Context, *ent.Scoped) (messaging.EmailSender, error) {
 	return r.sender, nil
 }
 

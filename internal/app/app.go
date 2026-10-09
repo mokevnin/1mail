@@ -15,6 +15,7 @@ import (
 	onemail "github.com/mokevnin/1mail"
 	"github.com/mokevnin/1mail/config"
 	"github.com/mokevnin/1mail/ent"
+	"github.com/mokevnin/1mail/internal/accounts"
 	apiauth "github.com/mokevnin/1mail/internal/api/auth"
 	apiexternal "github.com/mokevnin/1mail/internal/api/external"
 	apisite "github.com/mokevnin/1mail/internal/api/site"
@@ -300,10 +301,6 @@ func register(injector do.Injector, env string) {
 	})
 
 	do.Provide(injector, func(i do.Injector) (*messaging.Resolver, error) {
-		client, err := do.Invoke[*entClient](i)
-		if err != nil {
-			return nil, err
-		}
 		cipher, err := do.Invoke[*secrets.Cipher](i)
 		if err != nil {
 			return nil, err
@@ -312,7 +309,7 @@ func register(injector do.Injector, env string) {
 		if err != nil {
 			return nil, err
 		}
-		return messaging.NewResolver(client.Client, cipher, catalog), nil
+		return messaging.NewResolver(cipher, catalog), nil
 	})
 
 	do.Provide(injector, func(i do.Injector) (*systemSender, error) {
@@ -447,10 +444,6 @@ func register(injector do.Injector, env string) {
 	})
 
 	do.Provide(injector, func(i do.Injector) (*outboundModule, error) {
-		client, err := do.Invoke[*entClient](i)
-		if err != nil {
-			return nil, err
-		}
 		bus, err := do.Invoke[*eventsBus](i)
 		if err != nil {
 			return nil, err
@@ -464,7 +457,20 @@ func register(injector do.Injector, env string) {
 		if err != nil {
 			return nil, err
 		}
-		return &outboundModule{outbound.New(client.Client, bus.Bus, resolver, tracker)}, nil
+		return &outboundModule{outbound.New(bus.Bus, resolver, tracker)}, nil
+	})
+
+	// Accounts is the raw-client home of Users, Workspaces and Memberships (ADR 0017).
+	do.Provide(injector, func(i do.Injector) (*accounts.Accounts, error) {
+		client, err := do.Invoke[*entClient](i)
+		if err != nil {
+			return nil, err
+		}
+		bus, err := do.Invoke[*eventsBus](i)
+		if err != nil {
+			return nil, err
+		}
+		return accounts.New(client.Client, bus.Bus), nil
 	})
 
 	// Domain modules: each built once and shared by /site, /api and /mcp, so the
@@ -497,12 +503,8 @@ func register(injector do.Injector, env string) {
 		return eventlog.New(bus.Bus), nil
 	})
 
-	do.Provide(injector, func(i do.Injector) (*reputation.Module, error) {
-		client, err := do.Invoke[*entClient](i)
-		if err != nil {
-			return nil, err
-		}
-		return reputation.New(client.Client), nil
+	do.Provide(injector, func(do.Injector) (*reputation.Module, error) {
+		return reputation.New(), nil
 	})
 
 	// The river jobs client is the broadcasts module's enqueue seam.
@@ -523,11 +525,15 @@ func register(injector do.Injector, env string) {
 	})
 
 	do.Provide(injector, func(i do.Injector) (*externalAPI, error) {
+		client, err := do.Invoke[*entClient](i)
+		if err != nil {
+			return nil, err
+		}
 		deps, err := externalDeps(i)
 		if err != nil {
 			return nil, err
 		}
-		h, err := server.NewExternalAPI(deps)
+		h, err := server.NewExternalAPI(client.Client, deps)
 		if err != nil {
 			return nil, err
 		}
@@ -563,6 +569,10 @@ func register(injector do.Injector, env string) {
 		if err != nil {
 			return nil, err
 		}
+		client, err := do.Invoke[*entClient](i)
+		if err != nil {
+			return nil, err
+		}
 		site, err := siteDeps(i)
 		if err != nil {
 			return nil, err
@@ -576,7 +586,7 @@ func register(injector do.Injector, env string) {
 			return nil, err
 		}
 
-		return server.New(cfg, database.DB, site, external.Handler, mcp.Handler)
+		return server.New(cfg, database.DB, client.Client, site, external.Handler, mcp.Handler)
 	})
 }
 
@@ -586,7 +596,7 @@ func externalDeps(i do.Injector) (apiexternal.Deps, error) {
 	if err != nil {
 		return apiexternal.Deps{}, err
 	}
-	client, err := do.Invoke[*entClient](i)
+	acc, err := do.Invoke[*accounts.Accounts](i)
 	if err != nil {
 		return apiexternal.Deps{}, err
 	}
@@ -631,7 +641,7 @@ func externalDeps(i do.Injector) (apiexternal.Deps, error) {
 		return apiexternal.Deps{}, err
 	}
 	return apiexternal.Deps{
-		Ent: client.Client, Bus: bus.Bus, Cipher: cipher, Outbound: sender.Module,
+		Accounts: acc, Bus: bus.Bus, Cipher: cipher, Outbound: sender.Module,
 		Segments: seg, EventLog: evlog, Contacts: con, Tags: tg, Automations: auto,
 		Broadcasts: bc, Reputation: rep, BootstrapToken: cfg.BootstrapToken,
 	}, nil
@@ -644,6 +654,10 @@ func siteDeps(i do.Injector) (apisite.Deps, error) {
 		return apisite.Deps{}, err
 	}
 	client, err := do.Invoke[*entClient](i)
+	if err != nil {
+		return apisite.Deps{}, err
+	}
+	acc, err := do.Invoke[*accounts.Accounts](i)
 	if err != nil {
 		return apisite.Deps{}, err
 	}
@@ -703,7 +717,7 @@ func siteDeps(i do.Injector) (apisite.Deps, error) {
 		return apisite.Deps{}, err
 	}
 	return apisite.Deps{
-		Ent: client.Client, Bus: bus.Bus, Cipher: cipher, Catalog: catalog, Outbound: sender.Module,
+		Accounts: acc, OAuth: oauthserver.NewService(client.Client), Bus: bus.Bus, Cipher: cipher, Catalog: catalog, Outbound: sender.Module,
 		Segments: seg, EventLog: evlog, Contacts: con, Tags: tg, Automations: auto,
 		Broadcasts: bc, Welcome: jc.Client, SysMail: jc.Client, DomainVerify: jc.Client,
 		Tokens: tokens, Tracker: tracker, AppURL: cfg.AppURL,

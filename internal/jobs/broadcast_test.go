@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/mokevnin/1mail/ent"
 	"github.com/mokevnin/1mail/ent/broadcast"
 	"github.com/mokevnin/1mail/ent/broadcastrecipient"
 	"github.com/mokevnin/1mail/ent/contact"
@@ -50,7 +51,7 @@ type fakeResolver struct {
 	err    error
 }
 
-func (r fakeResolver) EmailSender(context.Context, int64) (messaging.EmailSender, error) {
+func (r fakeResolver) EmailSender(context.Context, *ent.Scoped) (messaging.EmailSender, error) {
 	return r.sender, r.err
 }
 
@@ -490,7 +491,7 @@ func TestSendBroadcastHoldsWithoutProvider(t *testing.T) {
 // newMod builds the Outbound send module over a test resolver, with a real tracker
 // so marketing sends carry their unsubscribe footer and header.
 func newMod(env *testhelper.TestEnv, resolver outbound.Senders) *outbound.Module {
-	return outbound.New(env.DB, env.Bus, resolver, tracking.New("test-secret", "http://local"))
+	return outbound.New(env.Bus, resolver, tracking.New("test-secret", "http://local"))
 }
 
 // A template that cannot render affects every recipient, so it is caught when the

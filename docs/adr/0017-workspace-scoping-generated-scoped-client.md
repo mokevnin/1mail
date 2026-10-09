@@ -8,10 +8,24 @@ Every Workspace-owned entity (GLOSSARY "Workspace") is reached through a **scope
 
 - **Create** sets `workspace_id` itself; the wrapper has no `SetWorkspaceID`.
 - **References are checked too.** A scoped `Create`/`Update` verifies, for every edge to another Workspace-owned entity whose id was set, that the target belongs to the same Workspace, and fails with a typed `ErrNotInWorkspace` instead of storing a foreign id (a request body can carry any id; `SiteBroadcastsCreate` and `SiteBroadcastsUpdate` store `segmentId`/`integrationId` without an ownership check, unlike `broadcasts.SetAudience`; today nothing reads or sends through a foreign id, so this is a validation gap, not a leak).
-- **Raw `*ent.Client` is for actors whose Workspace is not known up front:** tracking by recipient id, auth and `User`, OAuth, resolving a Workspace from its slug, the events bus. Structurally, `Handlers` in `internal/api/site`, `internal/api/external` and `internal/mcpserver` hold no `*ent.Client`: what needs raw access moves into its own package.
-- **Domain modules take the scoped client too.** `automations`, `broadcasts`, `tags`, `contacts`, `outbound` and the other modules stop holding a raw `*ent.Client` and a bare `int64` workspace id; they receive the scoped client, so no hand-written `WorkspaceID(ws)` predicate remains outside the raw-client packages. `Scoped` is built only in a closed list of places: the site membership resolver, the external token auth, and job entry points (from the loaded row's Workspace). Handlers and modules receive it and never construct it from an `int64`.
+- **Raw `*ent.Client` is for actors whose Workspace is not known up front.** Structurally, `Handlers` in `internal/api/site`, `internal/api/external` and `internal/mcpserver` (and the collect handlers) hold no `*ent.Client`; what needs raw access lives in its own package. The raw-client packages are exactly this list, and a new entry needs a decision here:
+  - `internal/accounts`: `User` (identity, credentials, profile), the Membership lookup that resolves `/w/{slug}` to a scope, the Workspace row itself (the tenant root is not Workspace-owned, so it has no wrapper; `Scoped.Workspace(ctx)` is the generated read), workspace creation, and the pending Invitation lookup by token.
+  - `internal/api/auth`: authentication (credentials check, API-token prefix lookup, collect-key lookup) and the construction of the external and collect scopes.
+  - `internal/oauthserver`: OAuth clients, codes and token issue.
+  - `internal/service`: Workspace slug resolution and suspension (operator tooling addresses a Workspace by slug).
+  - `internal/events`: the bus (transactional outbox) and its subscribers (persist, suppression, automations, webhooks).
+  - `internal/jobs`: job entry points, which load the row that names the Workspace (broadcast, recipient, automation run, sending domain, Workspace) and scope from it.
+  - `internal/server`: tracking by recipient id (open and click), the SES hook (Workspace from its secret ingest key), and the composition of the auth pieces above.
+  - composition roots and test setup: `internal/app`, `internal/db`, `internal/testhelper`.
+- **Domain modules take the scoped client too.** `automations`, `broadcasts`, `tags`, `contacts`, `outbound`, `reputation`, `messaging` (resolver, DKIM signer) and the other modules hold no raw `*ent.Client` and no bare `int64` workspace id; they receive the scoped client as an explicit parameter, so no hand-written `WorkspaceID(ws)` predicate remains outside the raw-client packages (the one exception inside them is `accounts.Scope`, which matches the Membership by `HasWorkspaceWith(slug)`). `Scoped` is built only in a closed list of places; handlers and modules receive it and never construct it from an `int64`:
+  1. site: `accounts.Accounts.Scope`, behind `Handlers.scopedFor` / `scopedWithRoleFor`;
+  2. external and MCP: `ExternalSecurityHandler.HandleBearerAuth` (the token's Workspace), read with `auth.TokenScoped(ctx)`;
+  3. collect: `CollectSecurityHandler` (the collect key's Workspace);
+  4. job entry points and event subscribers, from the loaded row's Workspace (`internal/jobs`, `events.Persist`/`Suppress`);
+  5. transaction re-scoping, the same Workspace over a transaction's client: `events.Bus.WithinScopedTx` and the invitation accept in `accounts`;
+  6. a Workspace named by a secret rather than a login: the SES hook ingest key, the signed unsubscribe/confirm token (`internal/consent`), and the bootstrap token (`accounts.BootstrapScope`, the oldest Workspace).
 - **The generated wrapper covers what production uses,** not just CRUD: conditional bulk `Update().Where`/`Delete().Where` (broadcast claim, outbound lease fencing), `OnConflict` upserts, `CreateBulk` and `GroupBy`. Anything the template cannot express is a named raw-client path.
-- **Known hole: an entity returned from a scoped read still carries the raw client.** `own.Update().SetWorkspaceID(other)` and `own.QueryContacts()` bypass the wrapper (prototype-verified). Closing it with distinct DTO types was rejected as too much generated code; it is covered by a repo-wide lint rule (`forbidigo`) banning entity-level `Update()`, with no exclusions. The raw-client packages do not call it.
+- **Known hole: an entity returned from a scoped read still carries the raw client.** `own.Update().SetWorkspaceID(other)` and `own.QueryContacts()` bypass the wrapper (prototype-verified). Closing it with distinct DTO types was rejected as too much generated code; it is covered by a repo-wide lint rule (`forbidigo`, `.golangci.yml`) banning entity-level `Update()`, with no exclusions. Update by id (`s.Tag().UpdateOneID(id)`). The lint matches by type (`analyze-types`): the entity method is `ent.<Entity>.Update`, distinguished from the legitimate client, scoped and upsert builders by their type-name suffix, which RE2 can only express as a spelled-out alternation. `QueryXxx()` on a loaded entity (read-only) is not covered.
 - Schemas share a `WorkspaceMixin` (`workspace_id` plus the `workspace` edge) and a `TimeMixin` (`created_at`, `updated_at`, on every entity including append-only ones, for uniformity).
 
 ## Considered options
@@ -25,4 +39,4 @@ Every Workspace-owned entity (GLOSSARY "Workspace") is reached through a **scope
 ## Consequences
 
 - One isolation test at the scoped-client seam covers every mixin entity; the list is taken from the generated code, so a new entity is covered without editing the test.
-- The codegen pipeline gains a step, documented in AGENTS.md when it lands.
+- The codegen pipeline gains a step (`ent/template/scoped*.tmpl` via entc), documented in AGENTS.md.

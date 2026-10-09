@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/mokevnin/1mail/ent"
-	entuser "github.com/mokevnin/1mail/ent/user"
 	siteapi "github.com/mokevnin/1mail/gen/site"
 	"github.com/mokevnin/1mail/internal/authtoken"
 	"github.com/mokevnin/1mail/internal/i18n"
@@ -29,7 +28,7 @@ func (h *Handlers) SiteAuthForgotPassword(ctx context.Context, req *siteapi.Site
 	if email == "" {
 		return nil
 	}
-	u, err := h.ent.User.Query().Where(entuser.Email(email)).Only(ctx)
+	u, err := h.accounts.UserByEmail(ctx, email)
 	if ent.IsNotFound(err) {
 		return nil
 	}
@@ -62,7 +61,7 @@ func (h *Handlers) SiteAuthResetPassword(ctx context.Context, req *siteapi.SiteR
 	if err != nil {
 		return nil, err
 	}
-	if err := h.ent.User.UpdateOneID(uid).SetPasswordHash(hash).Exec(ctx); err != nil {
+	if err := h.accounts.SetPassword(ctx, uid, hash); err != nil {
 		return nil, err
 	}
 	return &siteapi.SiteAuthResetPasswordOK{}, nil
@@ -75,7 +74,7 @@ func (h *Handlers) SiteAuthVerifyEmail(ctx context.Context, req *siteapi.SiteVer
 		v := problem(http.StatusBadRequest, i18n.T("errors.verify_link_invalid", nil))
 		return &v, nil
 	}
-	u, err := h.ent.User.Get(ctx, uid)
+	u, err := h.accounts.User(ctx, uid)
 	if err != nil {
 		v := problem(http.StatusBadRequest, i18n.T("errors.verify_link_bad", nil))
 		return &v, nil
@@ -87,7 +86,7 @@ func (h *Handlers) SiteAuthVerifyEmail(ctx context.Context, req *siteapi.SiteVer
 		return &v, nil
 	}
 	if u.EmailVerifiedAt == nil {
-		if err := h.ent.User.UpdateOneID(uid).SetEmailVerifiedAt(time.Now()).Exec(ctx); err != nil {
+		if err := h.accounts.MarkEmailVerified(ctx, uid); err != nil {
 			return nil, err
 		}
 	}
@@ -111,7 +110,7 @@ func (h *Handlers) SiteAuthConfirmEmailChange(ctx context.Context, req *siteapi.
 	}
 	// The new address was proven by clicking this link, so it is verified. The
 	// unique index also guards the race if the address was taken meanwhile.
-	err = h.ent.User.UpdateOneID(uid).SetEmail(newEmail).SetEmailVerifiedAt(time.Now()).Exec(ctx)
+	err = h.accounts.ChangeEmail(ctx, uid, newEmail)
 	if service.IsUniqueViolation(err) {
 		v := siteapi.SiteAuthConfirmEmailChangeConflict(problem(http.StatusConflict, i18n.T("errors.email_in_use", nil)))
 		return &v, nil
@@ -126,7 +125,7 @@ func (h *Handlers) SiteAuthConfirmEmailChange(ctx context.Context, req *siteapi.
 // reset tokens.
 func (h *Handlers) passwordHashBinding(ctx context.Context) func(int64) (string, error) {
 	return func(id int64) (string, error) {
-		u, err := h.ent.User.Get(ctx, id)
+		u, err := h.accounts.User(ctx, id)
 		if err != nil {
 			return "", err
 		}
@@ -138,7 +137,7 @@ func (h *Handlers) passwordHashBinding(ctx context.Context) func(int64) (string,
 // email-change tokens.
 func (h *Handlers) currentEmailBinding(ctx context.Context) func(int64) (string, error) {
 	return func(id int64) (string, error) {
-		u, err := h.ent.User.Get(ctx, id)
+		u, err := h.accounts.User(ctx, id)
 		if err != nil {
 			return "", err
 		}

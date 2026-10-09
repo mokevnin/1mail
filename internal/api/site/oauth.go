@@ -36,7 +36,7 @@ func (h *Handlers) SiteOAuthDescribe(ctx context.Context, params siteapi.SiteOAu
 // client later receives belongs to the chosen workspace, which the user must be
 // a member of with a role that may manage API tokens: consent mints one.
 func (h *Handlers) SiteOAuthDecide(ctx context.Context, req *siteapi.SiteOAuthDecisionInput) (siteapi.SiteOAuthDecideRes, error) {
-	ws, role, err := h.membershipFor(ctx, req.WorkspaceSlug)
+	s, role, err := h.scopedWithRoleFor(ctx, req.WorkspaceSlug)
 	if ent.IsNotFound(err) {
 		v := siteapi.SiteOAuthDecideNotFound(problem(http.StatusNotFound, "workspace not found"))
 		return &v, nil
@@ -55,7 +55,7 @@ func (h *Handlers) SiteOAuthDecide(ctx context.Context, req *siteapi.SiteOAuthDe
 		State:         req.State.Or(""),
 		CodeChallenge: req.CodeChallenge,
 		Scope:         req.Scope.Or(""),
-		WorkspaceID:   ws,
+		WorkspaceID:   s.WorkspaceID(),
 		Approve:       req.Approve,
 		AllowSend:     req.AllowSend.Or(false),
 	})

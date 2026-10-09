@@ -22,7 +22,7 @@ import (
 func TestDKIMSignerVerifiedDomain(t *testing.T) {
 	env := testhelper.Setup(t)
 	ctx := context.Background()
-	signer := messaging.NewDKIMSigner(env.DB, envCipher(t), 1)
+	signer := messaging.NewDKIMSigner(env.DB.Scoped(fixtures.AcmeID), envCipher(t))
 
 	dk, err := signer.DKIMSigner(ctx, "hello@mail.acme.com")
 	require.NoError(t, err)
@@ -32,7 +32,7 @@ func TestDKIMSignerVerifiedDomain(t *testing.T) {
 func TestDKIMSignerUnverifiedDomain(t *testing.T) {
 	env := testhelper.Setup(t)
 	ctx := context.Background()
-	signer := messaging.NewDKIMSigner(env.DB, envCipher(t), 1)
+	signer := messaging.NewDKIMSigner(env.DB.Scoped(fixtures.AcmeID), envCipher(t))
 
 	dk, err := signer.DKIMSigner(ctx, "hello@news.acme.com")
 	require.NoError(t, err)
@@ -42,7 +42,7 @@ func TestDKIMSignerUnverifiedDomain(t *testing.T) {
 func TestDKIMSignerUnknownDomain(t *testing.T) {
 	env := testhelper.Setup(t)
 	ctx := context.Background()
-	signer := messaging.NewDKIMSigner(env.DB, envCipher(t), 1)
+	signer := messaging.NewDKIMSigner(env.DB.Scoped(fixtures.AcmeID), envCipher(t))
 
 	dk, err := signer.DKIMSigner(ctx, "hello@nope.example")
 	require.NoError(t, err)
@@ -53,7 +53,7 @@ func TestDKIMSignerUnknownDomain(t *testing.T) {
 func TestDKIMSignerWorkspaceScoped(t *testing.T) {
 	env := testhelper.Setup(t)
 	ctx := context.Background()
-	signer := messaging.NewDKIMSigner(env.DB, envCipher(t), 2)
+	signer := messaging.NewDKIMSigner(env.DB.Scoped(fixtures.GlobexID), envCipher(t))
 
 	dk, err := signer.DKIMSigner(ctx, "hello@mail.acme.com")
 	require.NoError(t, err)
@@ -63,7 +63,7 @@ func TestDKIMSignerWorkspaceScoped(t *testing.T) {
 func TestBuildSignedMIMESignsVerified(t *testing.T) {
 	env := testhelper.Setup(t)
 	ctx := context.Background()
-	signer := messaging.NewDKIMSigner(env.DB, envCipher(t), 1)
+	signer := messaging.NewDKIMSigner(env.DB.Scoped(fixtures.AcmeID), envCipher(t))
 
 	m, err := messaging.BuildSignedMIME(ctx, messaging.EmailMessage{
 		From:    "hello@mail.acme.com",
@@ -89,7 +89,7 @@ func TestBuildSignedMIMESignsVerified(t *testing.T) {
 func TestBuildSignedMIMERejectsUnverified(t *testing.T) {
 	env := testhelper.Setup(t)
 	ctx := context.Background()
-	signer := messaging.NewDKIMSigner(env.DB, envCipher(t), 1)
+	signer := messaging.NewDKIMSigner(env.DB.Scoped(fixtures.AcmeID), envCipher(t))
 
 	_, err := messaging.BuildSignedMIME(ctx, messaging.EmailMessage{
 		From:    "hello@news.acme.com",
@@ -148,7 +148,7 @@ func dkimHeaderTag(t *testing.T, raw string) string {
 func TestDKIMSignsListUnsubscribeHeaders(t *testing.T) {
 	env := testhelper.Setup(t)
 	ctx := context.Background()
-	signer := messaging.NewDKIMSigner(env.DB, envCipher(t), 1)
+	signer := messaging.NewDKIMSigner(env.DB.Scoped(fixtures.AcmeID), envCipher(t))
 
 	dom, err := env.DB.SendingDomain.Get(ctx, fixtures.SendingDomainVerifiedID)
 	require.NoError(t, err)
@@ -191,7 +191,7 @@ func TestDKIMSignsListUnsubscribeHeaders(t *testing.T) {
 func TestDKIMTransactionalUnchanged(t *testing.T) {
 	env := testhelper.Setup(t)
 	ctx := context.Background()
-	signer := messaging.NewDKIMSigner(env.DB, envCipher(t), 1)
+	signer := messaging.NewDKIMSigner(env.DB.Scoped(fixtures.AcmeID), envCipher(t))
 
 	dom, err := env.DB.SendingDomain.Get(ctx, fixtures.SendingDomainVerifiedID)
 	require.NoError(t, err)
@@ -226,7 +226,7 @@ func TestDKIMTransactionalUnchanged(t *testing.T) {
 func TestDKIMSignatureCryptoVerifies(t *testing.T) {
 	env := testhelper.Setup(t)
 	ctx := context.Background()
-	signer := messaging.NewDKIMSigner(env.DB, envCipher(t), 1)
+	signer := messaging.NewDKIMSigner(env.DB.Scoped(fixtures.AcmeID), envCipher(t))
 
 	dom, err := env.DB.SendingDomain.Get(ctx, fixtures.SendingDomainVerifiedID)
 	require.NoError(t, err)

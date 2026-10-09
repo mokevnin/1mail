@@ -14,7 +14,6 @@ import (
 	entuser "github.com/mokevnin/1mail/ent/user"
 	siteapi "github.com/mokevnin/1mail/gen/site"
 	"github.com/mokevnin/1mail/internal/api/auth"
-	"github.com/mokevnin/1mail/internal/events"
 	"github.com/mokevnin/1mail/internal/i18n"
 	"github.com/mokevnin/1mail/internal/service"
 )
@@ -149,19 +148,19 @@ func (h *Handlers) SiteInvitationsCreate(ctx context.Context, req *siteapi.SiteC
 
 	// Send the invite email best-effort: the copy-link above already delivered
 	// the invite, so self-hosted instances without SMTP still work.
-	wsEnt, err := h.ent.Workspace.Get(ctx, s.WorkspaceID())
+	wsEnt, err := s.Workspace(ctx)
 	if err != nil {
 		return nil, err
 	}
 	inviterName := ""
-	if caller, cerr := h.ent.User.Get(ctx, a.UserID); cerr == nil {
+	if caller, cerr := h.accounts.User(ctx, a.UserID); cerr == nil {
 		inviterName = caller.Name
 	}
 	if merr := h.sysmail.EnqueueMemberInvite(ctx, email, inviteURL, wsEnt.Name, inviterName); merr != nil {
 		slog.WarnContext(ctx, "member invite email not enqueued", "error", merr, "email", email)
 	}
 
-	inv.Edges.Inviter, _ = h.ent.User.Get(ctx, a.UserID)
+	inv.Edges.Inviter, _ = h.accounts.User(ctx, a.UserID)
 	return &siteapi.SiteCreateInvitationResponse{
 		InviteUrl: inviteURL,
 		Resource:  invitationResource(inv),
@@ -204,14 +203,7 @@ func (h *Handlers) SiteInvitationsDelete(ctx context.Context, params siteapi.Sit
 
 // validInvitation looks up a pending, unexpired invitation by its raw token.
 func (h *Handlers) validInvitation(ctx context.Context, token string) (*ent.Invitation, error) {
-	return h.ent.Invitation.Query().
-		Where(
-			invitation.TokenHash(service.HashInviteToken(token)),
-			invitation.AcceptedAtIsNil(),
-			invitation.ExpiresAtGT(time.Now()),
-		).
-		WithWorkspace().
-		Only(ctx)
+	return h.accounts.PendingInvitation(ctx, token)
 }
 
 // SitePublicInvitationsLookup reveals a pending invite (workspace + email) so the
@@ -226,7 +218,7 @@ func (h *Handlers) SitePublicInvitationsLookup(ctx context.Context, params sitea
 		return nil, err
 	}
 
-	hasAccount, err := h.ent.User.Query().Where(entuser.Email(inv.Email)).Exist(ctx)
+	hasAccount, err := h.accounts.EmailTaken(ctx, inv.Email)
 	if err != nil {
 		return nil, err
 	}
@@ -255,7 +247,7 @@ func (h *Handlers) SitePublicInvitationsAccept(ctx context.Context, req *siteapi
 	name = strings.TrimSpace(name)
 	password, _ := req.Password.Get()
 
-	userExists, err := h.ent.User.Query().Where(entuser.Email(inv.Email)).Exist(ctx)
+	userExists, err := h.accounts.EmailTaken(ctx, inv.Email)
 	if err != nil {
 		return nil, err
 	}
@@ -270,38 +262,7 @@ func (h *Handlers) SitePublicInvitationsAccept(ctx context.Context, req *siteapi
 		return &v, nil
 	}
 
-	role := membership.Role(inv.Role)
-	err = h.bus.WithinTx(ctx, func(tx *ent.Client, _ events.Publisher) error {
-		u, uerr := tx.User.Query().Where(entuser.Email(inv.Email)).Only(ctx)
-		if ent.IsNotFound(uerr) {
-			hash, herr := service.HashPassword(password)
-			if herr != nil {
-				return herr
-			}
-			// The invite link proves control of the address, so the new account
-			// is created already email-verified.
-			u, uerr = tx.User.Create().
-				SetName(name).
-				SetEmail(inv.Email).
-				SetPasswordHash(hash).
-				SetEmailVerifiedAt(time.Now()).
-				Save(ctx)
-		}
-		if uerr != nil {
-			return uerr
-		}
-
-		// Idempotent join: a duplicate (already a member) is not an error.
-		ts := tx.Scoped(inv.WorkspaceID)
-		if _, merr := ts.Membership().Create().
-			SetUserID(u.ID).
-			SetRole(role).
-			Save(ctx); merr != nil && !service.IsUniqueViolation(merr) {
-			return merr
-		}
-
-		return ts.Invitation().UpdateOneID(inv.ID).SetAcceptedAt(time.Now()).Exec(ctx)
-	})
+	err = h.accounts.AcceptInvitation(ctx, inv, name, password)
 	if err != nil {
 		return nil, err
 	}
