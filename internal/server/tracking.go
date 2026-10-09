@@ -10,7 +10,6 @@ import (
 
 	"github.com/mokevnin/1mail/ent"
 	"github.com/mokevnin/1mail/ent/broadcastrecipient"
-	"github.com/mokevnin/1mail/internal/clientip"
 	"github.com/mokevnin/1mail/internal/consent"
 	"github.com/mokevnin/1mail/internal/eligibility"
 	"github.com/mokevnin/1mail/internal/events"
@@ -31,15 +30,15 @@ var pixelGIF, _ = base64.StdEncoding.DecodeString(
 //	GET  /e/u/{token}       — unsubscribe confirm: render the SPA page, record nothing
 //	POST /e/u/{token}       — unsubscribe perform: opt the destination out of the scope
 //	GET  /e/confirm/{token} — double opt-in confirm: render the SPA page, record nothing
-//	POST /e/confirm/{token} — double opt-in perform: record the confirmation
 //
-// Unsubscribe and confirm are split by method (ADR 0012 / RFC 8058, ADR 0013): GET
-// is safe and only renders the confirmation page, so link scanners and security
-// proxies that GET every URL cannot unsubscribe or confirm anyone; the state change
-// happens only on POST — the target of the mailbox one-click POST (RFC 8058). The
-// page's button performs the same effect through the site API (POST
-// /site/unsubscribes/{token}, /site/confirmations/{token}), so the SPA stays on the
-// generated client; the POST here remains for mailbox providers. Confirmation tokens additionally expire (~7 days).
+// GET on the unsubscribe and confirm links is safe (ADR 0012 / RFC 8058, ADR 0013):
+// it only redirects to the confirmation page, so link scanners and security proxies
+// that GET every URL cannot unsubscribe or confirm anyone. The state change happens
+// only on POST. Unsubscribe keeps POST /e/u/{token} here because it is the target of
+// the mailbox one-click POST (RFC 8058); every other POST, from the pages' buttons,
+// goes through the site API (POST /site/unsubscribes/{token},
+// /site/confirmations/{token}), so the SPA stays on the generated client. Confirmation
+// tokens additionally expire (~7 days).
 //
 // The token is a signed per-recipient JWT. Opens always return the pixel (even
 // on a bad token) so we never leak token validity through the image.
@@ -108,22 +107,8 @@ func trackingHandler(client *ent.Client, bus *events.Bus, tracker *tracking.Trac
 			return
 		}
 		// Safe method: record nothing, render the SPA confirmation page. The page's
-		// button POSTs back to this same URL to perform the confirmation.
+		// button performs the confirmation through the site API.
 		http.Redirect(w, r, "/confirm?token="+url.QueryEscape(tokenStr), http.StatusSeeOther)
-	})
-
-	mux.HandleFunc("POST /e/confirm/{token}", func(w http.ResponseWriter, r *http.Request) {
-		target, err := tracker.DecodeConfirm(r.PathValue("token"))
-		if err != nil {
-			http.Error(w, "invalid token", http.StatusBadRequest)
-			return
-		}
-		// Performs the confirmation — the deliberate human act required for legal
-		// validity. No page is returned; the SPA transitions its UI on 204.
-		if err := consent.RecordConfirmation(r.Context(), client, bus, target, clientip.FromRequest(r)); err != nil {
-			logging.FromContext(r.Context()).Error("tracking: confirmation failed", "destination", target.Destination, "err", err)
-		}
-		w.WriteHeader(http.StatusNoContent)
 	})
 
 	return mux

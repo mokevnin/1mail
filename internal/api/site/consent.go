@@ -11,7 +11,7 @@ import (
 )
 
 // SitePublicConfirmationsPerform is the double opt-in confirmation page's button
-// (ADR 0013): the same effect as POST /e/confirm/{token}, through the contract.
+// (ADR 0013): the one place a confirmation is performed.
 func (h *Handlers) SitePublicConfirmationsPerform(ctx context.Context, params siteapi.SitePublicConfirmationsPerformParams) (siteapi.SitePublicConfirmationsPerformRes, error) {
 	target, err := h.tracker.DecodeConfirm(params.Token)
 	if err != nil {

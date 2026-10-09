@@ -96,9 +96,10 @@ implementation.
 
 The confirmation link carries a **signed JWT** (reuse the existing HS256 signer) encoding
 workspace + destination + contact + acquisition context, with an **`exp` claim** (unlike the
-eternal unsub/tracking tokens). Endpoint is method-split: **`GET /e/confirm/{token}` renders the
-SPA page and records nothing; `POST` performs** the confirmation (writes the row + publishes
-`marketing.confirmed`, one transaction). The page's explicit "Confirm" button issues the POST.
+eternal unsub/tracking tokens). The link is method-split: **`GET /e/confirm/{token}` redirects to the
+SPA page and records nothing; `POST /site/confirmations/{token}` performs** the confirmation
+(writes the row + publishes `marketing.confirmed`, one transaction). The page's explicit
+"Confirm" button issues the POST through the generated site client; there is no POST on `/e/confirm`.
 
 Scanner-safety is **load-bearing for legal validity here, not just UX** — and higher-stakes than
 ADR 0012: a scanner GET that falsely _unsubscribes_ is annoying; a scanner GET that falsely

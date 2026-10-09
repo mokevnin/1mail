@@ -46,8 +46,9 @@ func confirmPath(t *testing.T, tr *tracking.Tracker, target tracking.ConfirmTarg
 }
 
 // Double opt-in (ADR 0013): GET /e/confirm/{token} renders the SPA page and records
-// nothing (scanner-safe); only POST records the confirmation, and it is idempotent
-// and publishes exactly one marketing.confirmed event.
+// nothing (scanner-safe); only the site API's POST /site/confirmations/{token}
+// records the confirmation, and it is idempotent and publishes exactly one
+// marketing.confirmed event.
 func TestConfirmEndpoint(t *testing.T) {
 	env := testhelper.Setup(t)
 	ctx := context.Background()
@@ -88,15 +89,24 @@ func TestConfirmEndpoint(t *testing.T) {
 	assert.True(t, strings.HasPrefix(resp.Header().Get("Location"), "/confirm?token="))
 	assert.False(t, confirmed(), "GET records nothing")
 
-	// POST records the confirmation with provenance double_opt_in.
+	// The state change is not reachable through /e/confirm any more: POST there is
+	// gone (the page's button performs it through the site API), so a stray POST
+	// from a scanner or a stale client records nothing either.
 	resp = post(cPath)
+	assert.Equal(t, http.StatusMethodNotAllowed, resp.Code)
+	assert.False(t, confirmed(), "POST /e/confirm records nothing")
+
+	// Performing it through the site API records the confirmation with provenance
+	// double_opt_in.
+	sitePath := "/site/confirmations/" + strings.TrimPrefix(cPath, "/e/confirm/")
+	resp = post(sitePath)
 	assert.Equal(t, http.StatusNoContent, resp.Code)
-	assert.True(t, confirmed(), "POST records the confirmation")
+	assert.True(t, confirmed(), "the site operation records the confirmation")
 	row := env.DB.Confirmation.Query().Where(confirmation.DestinationEQ(*c.Email)).OnlyX(ctx)
 	assert.Equal(t, confirmation.ProvenanceDoubleOptIn, row.Provenance)
 
 	// A repeated POST is a complete no-op: still one row.
-	post(cPath)
+	post(sitePath)
 	n, err := env.DB.Confirmation.Query().Where(confirmation.DestinationEQ(*c.Email)).Count(ctx)
 	require.NoError(t, err)
 	assert.Equal(t, 1, n, "repeated POST does not duplicate the confirmation")
