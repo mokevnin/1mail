@@ -12,12 +12,15 @@ import (
 
 	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/jackc/pgx/v5/pgxpool"
+	onemail "github.com/mokevnin/1mail"
 	"github.com/mokevnin/1mail/config"
 	"github.com/mokevnin/1mail/ent"
+	apiauth "github.com/mokevnin/1mail/internal/api/auth"
 	"github.com/mokevnin/1mail/internal/db"
 	"github.com/mokevnin/1mail/internal/events"
 	"github.com/mokevnin/1mail/internal/i18n"
 	"github.com/mokevnin/1mail/internal/jobs"
+	"github.com/mokevnin/1mail/internal/mcpserver"
 	"github.com/mokevnin/1mail/internal/messaging"
 	"github.com/mokevnin/1mail/internal/messaging/registry"
 	"github.com/mokevnin/1mail/internal/outbound"
@@ -103,6 +106,12 @@ func (p *pgxPool) Shutdown() {
 // outboundModule is the Outbound send module singleton (ADR 0015): the one place an
 // email leaves 1mail on a Workspace's behalf, for every send surface.
 type outboundModule struct{ *outbound.Module }
+
+// externalAPI is the external (/api) ogen server; the MCP surface dispatches through it.
+type externalAPI struct{ http.Handler }
+
+// mcpHandler is the /mcp surface (ADR 0016), projected from the external contract.
+type mcpHandler struct{ http.Handler }
 
 type jobsClient struct {
 	*jobs.Client
@@ -437,6 +446,46 @@ func register(injector do.Injector, env string) {
 		return &outboundModule{outbound.New(client.Client, bus.Bus, resolver, tracking.New(cfg.JWTSecret, cfg.AppURL))}, nil
 	})
 
+	do.Provide(injector, func(i do.Injector) (*externalAPI, error) {
+		cfg, err := do.Invoke[*config.Config](i)
+		if err != nil {
+			return nil, err
+		}
+		client, err := do.Invoke[*entClient](i)
+		if err != nil {
+			return nil, err
+		}
+		bus, err := do.Invoke[*eventsBus](i)
+		if err != nil {
+			return nil, err
+		}
+		sender, err := do.Invoke[*outboundModule](i)
+		if err != nil {
+			return nil, err
+		}
+		h, err := server.NewExternalAPI(client.Client, cfg.BootstrapToken, bus.Bus, sender.Module)
+		if err != nil {
+			return nil, err
+		}
+		return &externalAPI{h}, nil
+	})
+
+	do.Provide(injector, func(i do.Injector) (*mcpHandler, error) {
+		client, err := do.Invoke[*entClient](i)
+		if err != nil {
+			return nil, err
+		}
+		external, err := do.Invoke[*externalAPI](i)
+		if err != nil {
+			return nil, err
+		}
+		h, err := mcpserver.New(onemail.ExternalOpenAPI, external.Handler, apiauth.NewExternalSecurityHandler(client.Client))
+		if err != nil {
+			return nil, err
+		}
+		return &mcpHandler{h}, nil
+	})
+
 	do.Provide(injector, func(i do.Injector) (http.Handler, error) {
 		cfg, err := do.Invoke[*config.Config](i)
 		if err != nil {
@@ -474,7 +523,16 @@ func register(injector do.Injector, env string) {
 		// The river jobs client implements every enqueue seam: broadcast, welcome,
 		// the self-service account mail (reset/verify/change), and sending-domain
 		// DKIM verification.
-		return server.New(cfg, client.Client, database.DB, bus.Bus, cipher, catalog, jc.Client, jc.Client, jc.Client, jc.Client, sender.Module)
+		external, err := do.Invoke[*externalAPI](i)
+		if err != nil {
+			return nil, err
+		}
+		mcp, err := do.Invoke[*mcpHandler](i)
+		if err != nil {
+			return nil, err
+		}
+
+		return server.New(cfg, client.Client, database.DB, bus.Bus, cipher, catalog, jc.Client, jc.Client, jc.Client, jc.Client, sender.Module, external.Handler, mcp.Handler)
 	})
 }
 

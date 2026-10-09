@@ -39,7 +39,7 @@ import (
 
 // New builds the top-level net/http handler wiring the three ogen-generated
 // API servers (site, external, collect) plus go-pkgz/auth endpoints.
-func New(cfg *config.Config, client *ent.Client, db *sql.DB, bus *events.Bus, cipher *secrets.Cipher, providerCatalog *messaging.Catalog, enqueuer apisite.BroadcastEnqueuer, welcome apisite.WelcomeEnqueuer, sysmail apisite.SystemMailEnqueuer, domainVerify apisite.SendingDomainVerifyEnqueuer, sender *outbound.Module) (http.Handler, error) {
+func New(cfg *config.Config, client *ent.Client, db *sql.DB, bus *events.Bus, cipher *secrets.Cipher, providerCatalog *messaging.Catalog, enqueuer apisite.BroadcastEnqueuer, welcome apisite.WelcomeEnqueuer, sysmail apisite.SystemMailEnqueuer, domainVerify apisite.SendingDomainVerifyEnqueuer, sender *outbound.Module, external, mcp http.Handler) (http.Handler, error) {
 	mux := http.NewServeMux()
 
 	// Send the JWT cookie with the Secure attribute whenever the instance is served
@@ -85,17 +85,13 @@ func New(cfg *config.Config, client *ent.Client, db *sql.DB, bus *events.Bus, ci
 	}
 	mux.Handle("/site/", siteSrv)
 
-	// External API — /api (Bearer token auth via ogen SecurityHandler).
-	extSrv, err := externalapi.NewServer(
-		apiexternal.NewHandlers(client, cfg.BootstrapToken, bus, eventLog, sender),
-		apiauth.NewExternalSecurityHandler(client),
-		externalapi.WithPathPrefix("/api"),
-		externalapi.WithErrorHandler(problemErrorHandler),
-	)
-	if err != nil {
-		return nil, err
-	}
-	mux.Handle("/api/", extSrv)
+	// External API — /api (Bearer token auth via ogen SecurityHandler); built by
+	// NewExternalAPI so the MCP surface dispatches through the same server.
+	mux.Handle("/api/", external)
+
+	// MCP — /mcp (ADR 0016): tools projected from the external contract and
+	// dispatched in-process through the handler above with the caller's own token.
+	mux.Handle("/mcp", mcp)
 
 	// Collect API — /collect (x-collect-key via generated SecurityHandler).
 	colSrv, err := collectapi.NewServer(
@@ -136,6 +132,17 @@ func New(cfg *config.Config, client *ent.Client, db *sql.DB, bus *events.Bus, ci
 	// runs — the panic log then carries request_id. (requestID is trivial and
 	// cannot itself panic, so nothing downstream of recovery is lost.)
 	return chain(mux, requestID, recoverer, timeout(30*time.Second), corsMiddleware(cfg.CORSOrigins)), nil
+}
+
+// NewExternalAPI builds the external API (/api) ogen server: Bearer API-token
+// auth, RFC 7807 errors, mounted under the /api prefix.
+func NewExternalAPI(client *ent.Client, bootstrapToken string, bus *events.Bus, sender *outbound.Module) (http.Handler, error) {
+	return externalapi.NewServer(
+		apiexternal.NewHandlers(client, bootstrapToken, bus, eventlog.New(client, bus), sender),
+		apiauth.NewExternalSecurityHandler(client),
+		externalapi.WithPathPrefix("/api"),
+		externalapi.WithErrorHandler(problemErrorHandler),
+	)
 }
 
 // problemErrorHandler renders ogen errors as RFC 7807 application/problem+json.

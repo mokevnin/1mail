@@ -16,12 +16,15 @@ import (
 	"github.com/DATA-DOG/go-txdb"
 	"github.com/go-testfixtures/testfixtures/v3"
 	_ "github.com/jackc/pgx/v5/stdlib"
+	onemail "github.com/mokevnin/1mail"
 	"github.com/mokevnin/1mail/config"
 	"github.com/mokevnin/1mail/ent"
+	apiauth "github.com/mokevnin/1mail/internal/api/auth"
 	"github.com/mokevnin/1mail/internal/db"
 	"github.com/mokevnin/1mail/internal/events"
 	"github.com/mokevnin/1mail/internal/fixtures"
 	"github.com/mokevnin/1mail/internal/jobs"
+	"github.com/mokevnin/1mail/internal/mcpserver"
 	"github.com/mokevnin/1mail/internal/messaging"
 	"github.com/mokevnin/1mail/internal/messaging/registry"
 	"github.com/mokevnin/1mail/internal/outbound"
@@ -156,7 +159,11 @@ func Setup(t *testing.T) *TestEnv {
 	// river), so it gets the same capturing resolver — its sends land in CustomerMail.
 	// inline implements every enqueue seam (broadcast, welcome, account mail,
 	// sending-domain verify).
-	handler, err := server.New(baseCfg, client, txDB, bus, cipher, catalog, inline, inline, inline, inline, sender)
+	external, err := server.NewExternalAPI(client, baseCfg.BootstrapToken, bus, sender)
+	require.NoError(t, err, "build external API")
+	mcpHandler, err := mcpserver.New(onemail.ExternalOpenAPI, external, apiauth.NewExternalSecurityHandler(client))
+	require.NoError(t, err, "build MCP handler")
+	handler, err := server.New(baseCfg, client, txDB, bus, cipher, catalog, inline, inline, inline, inline, sender, external, mcpHandler)
 	require.NoError(t, err, "build server")
 
 	return &TestEnv{
