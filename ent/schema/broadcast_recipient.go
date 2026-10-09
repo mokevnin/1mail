@@ -33,8 +33,14 @@ func (BroadcastRecipient) Fields() []ent.Field {
 		field.Int64("contact_id"),
 		field.Int64("workspace_id"),
 		field.Enum("status").
-			Values("pending", "sent", "failed").
+			Values("pending", "sent", "skipped", "failed").
 			Default("pending"),
+		// The Outbound message that carried (or decided) this recipient's send, a plain
+		// id snapshot (ADR 0015): delivery state lives on the message, this row stays
+		// the frozen audience snapshot plus engagement rollup.
+		field.Int64("outbound_message_id").
+			Optional().
+			Nillable(),
 		field.String("error").
 			Optional().
 			Nillable(),

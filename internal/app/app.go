@@ -19,6 +19,7 @@ import (
 	"github.com/mokevnin/1mail/internal/jobs"
 	"github.com/mokevnin/1mail/internal/messaging"
 	"github.com/mokevnin/1mail/internal/messaging/registry"
+	"github.com/mokevnin/1mail/internal/outbound"
 	"github.com/mokevnin/1mail/internal/secrets"
 	"github.com/mokevnin/1mail/internal/sending"
 	"github.com/mokevnin/1mail/internal/server"
@@ -97,6 +98,10 @@ func (p *pgxPool) Shutdown() {
 }
 
 // jobsClient is the river-backed async job queue (workers + enqueue API).
+// outboundModule is the Outbound send module singleton (ADR 0015): the one place an
+// email leaves 1mail on a Workspace's behalf, for every send surface.
+type outboundModule struct{ *outbound.Module }
+
 type jobsClient struct {
 	*jobs.Client
 }
@@ -336,25 +341,41 @@ func register(injector do.Injector, env string) {
 		if err != nil {
 			return nil, err
 		}
-		bus, err := do.Invoke[*eventsBus](i)
+		sender, err := do.Invoke[*outboundModule](i)
 		if err != nil {
 			return nil, err
 		}
-		resolver, err := do.Invoke[*messaging.Resolver](i)
-		if err != nil {
-			return nil, err
-		}
-		tracker := tracking.New(cfg.JWTSecret, cfg.AppURL)
 
 		lookup, err := do.Invoke[*dkimLookup](i)
 		if err != nil {
 			return nil, err
 		}
-		jc, err := jobs.NewClient(pool.Pool, client.Client, bus.Bus, resolver, tracker, cipher, sys.EmailSender, lookup.TXTLookup, cfg.AppURL)
+		jc, err := jobs.NewClient(pool.Pool, client.Client, sender.Module, cipher, sys.EmailSender, lookup.TXTLookup, cfg.AppURL)
 		if err != nil {
 			return nil, err
 		}
 		return &jobsClient{Client: jc}, nil
+	})
+
+	do.Provide(injector, func(i do.Injector) (*outboundModule, error) {
+		cfg, err := do.Invoke[*config.Config](i)
+		if err != nil {
+			return nil, err
+		}
+		client, err := do.Invoke[*entClient](i)
+		if err != nil {
+			return nil, err
+		}
+		bus, err := do.Invoke[*eventsBus](i)
+		if err != nil {
+			return nil, err
+		}
+		// The workspace's configured integration (the same resolver the jobs use).
+		resolver, err := do.Invoke[*messaging.Resolver](i)
+		if err != nil {
+			return nil, err
+		}
+		return &outboundModule{outbound.New(client.Client, bus.Bus, resolver, tracking.New(cfg.JWTSecret, cfg.AppURL))}, nil
 	})
 
 	do.Provide(injector, func(i do.Injector) (http.Handler, error) {
@@ -386,10 +407,7 @@ func register(injector do.Injector, env string) {
 		if err != nil {
 			return nil, err
 		}
-		// Resolver for the transactional send surface: the same singleton the jobs
-		// use, so transactional mail goes through the workspace's configured
-		// integration.
-		resolver, err := do.Invoke[*messaging.Resolver](i)
+		sender, err := do.Invoke[*outboundModule](i)
 		if err != nil {
 			return nil, err
 		}
@@ -397,7 +415,7 @@ func register(injector do.Injector, env string) {
 		// The river jobs client implements every enqueue seam: broadcast, welcome,
 		// the self-service account mail (reset/verify/change), and sending-domain
 		// DKIM verification.
-		return server.New(cfg, client.Client, database.DB, bus.Bus, cipher, catalog, jc.Client, jc.Client, jc.Client, jc.Client, resolver)
+		return server.New(cfg, client.Client, database.DB, bus.Bus, cipher, catalog, jc.Client, jc.Client, jc.Client, jc.Client, sender.Module)
 	})
 }
 

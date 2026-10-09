@@ -196,7 +196,7 @@ func NotifySendingDomainUnverified(ctx context.Context, client *ent.Client, send
 		if u == nil || u.Email == "" {
 			continue
 		}
-		if serr := sender.Send(ctx, messaging.EmailMessage{To: u.Email, Subject: subject, Text: body}); serr != nil {
+		if _, serr := sender.Send(ctx, messaging.EmailMessage{To: u.Email, Subject: subject, Text: body}); serr != nil {
 			errs = append(errs, serr)
 		}
 	}

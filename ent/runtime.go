@@ -18,11 +18,11 @@ import (
 	"github.com/mokevnin/1mail/ent/integration"
 	"github.com/mokevnin/1mail/ent/invitation"
 	"github.com/mokevnin/1mail/ent/membership"
+	"github.com/mokevnin/1mail/ent/outboundmessage"
 	"github.com/mokevnin/1mail/ent/schema"
 	"github.com/mokevnin/1mail/ent/segment"
 	"github.com/mokevnin/1mail/ent/sendingdomain"
 	"github.com/mokevnin/1mail/ent/suppression"
-	"github.com/mokevnin/1mail/ent/transactionalemail"
 	"github.com/mokevnin/1mail/ent/unsubscribe"
 	"github.com/mokevnin/1mail/ent/user"
 	"github.com/mokevnin/1mail/ent/visitor"
@@ -158,12 +158,18 @@ func init() {
 	broadcast.DefaultFailedCount = broadcastDescFailedCount.Default.(int)
 	// broadcast.FailedCountValidator is a validator for the "failed_count" field. It is called by the builders before save.
 	broadcast.FailedCountValidator = broadcastDescFailedCount.Validators[0].(func(int) error)
+	// broadcastDescSkippedCount is the schema descriptor for skipped_count field.
+	broadcastDescSkippedCount := broadcastFields[18].Descriptor()
+	// broadcast.DefaultSkippedCount holds the default value on creation for the skipped_count field.
+	broadcast.DefaultSkippedCount = broadcastDescSkippedCount.Default.(int)
+	// broadcast.SkippedCountValidator is a validator for the "skipped_count" field. It is called by the builders before save.
+	broadcast.SkippedCountValidator = broadcastDescSkippedCount.Validators[0].(func(int) error)
 	// broadcastDescCreatedAt is the schema descriptor for created_at field.
-	broadcastDescCreatedAt := broadcastFields[19].Descriptor()
+	broadcastDescCreatedAt := broadcastFields[21].Descriptor()
 	// broadcast.DefaultCreatedAt holds the default value on creation for the created_at field.
 	broadcast.DefaultCreatedAt = broadcastDescCreatedAt.Default.(func() time.Time)
 	// broadcastDescUpdatedAt is the schema descriptor for updated_at field.
-	broadcastDescUpdatedAt := broadcastFields[20].Descriptor()
+	broadcastDescUpdatedAt := broadcastFields[22].Descriptor()
 	// broadcast.DefaultUpdatedAt holds the default value on creation for the updated_at field.
 	broadcast.DefaultUpdatedAt = broadcastDescUpdatedAt.Default.(func() time.Time)
 	// broadcast.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
@@ -171,11 +177,11 @@ func init() {
 	broadcastrecipientFields := schema.BroadcastRecipient{}.Fields()
 	_ = broadcastrecipientFields
 	// broadcastrecipientDescCreatedAt is the schema descriptor for created_at field.
-	broadcastrecipientDescCreatedAt := broadcastrecipientFields[9].Descriptor()
+	broadcastrecipientDescCreatedAt := broadcastrecipientFields[10].Descriptor()
 	// broadcastrecipient.DefaultCreatedAt holds the default value on creation for the created_at field.
 	broadcastrecipient.DefaultCreatedAt = broadcastrecipientDescCreatedAt.Default.(func() time.Time)
 	// broadcastrecipientDescUpdatedAt is the schema descriptor for updated_at field.
-	broadcastrecipientDescUpdatedAt := broadcastrecipientFields[10].Descriptor()
+	broadcastrecipientDescUpdatedAt := broadcastrecipientFields[11].Descriptor()
 	// broadcastrecipient.DefaultUpdatedAt holds the default value on creation for the updated_at field.
 	broadcastrecipient.DefaultUpdatedAt = broadcastrecipientDescUpdatedAt.Default.(func() time.Time)
 	// broadcastrecipient.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
@@ -318,6 +324,30 @@ func init() {
 	membership.DefaultUpdatedAt = membershipDescUpdatedAt.Default.(func() time.Time)
 	// membership.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	membership.UpdateDefaultUpdatedAt = membershipDescUpdatedAt.UpdateDefault.(func() time.Time)
+	outboundmessageFields := schema.OutboundMessage{}.Fields()
+	_ = outboundmessageFields
+	// outboundmessageDescIdempotencyKey is the schema descriptor for idempotency_key field.
+	outboundmessageDescIdempotencyKey := outboundmessageFields[3].Descriptor()
+	// outboundmessage.IdempotencyKeyValidator is a validator for the "idempotency_key" field. It is called by the builders before save.
+	outboundmessage.IdempotencyKeyValidator = outboundmessageDescIdempotencyKey.Validators[0].(func(string) error)
+	// outboundmessageDescDestination is the schema descriptor for destination field.
+	outboundmessageDescDestination := outboundmessageFields[5].Descriptor()
+	// outboundmessage.DestinationValidator is a validator for the "destination" field. It is called by the builders before save.
+	outboundmessage.DestinationValidator = outboundmessageDescDestination.Validators[0].(func(string) error)
+	// outboundmessageDescClaimedAt is the schema descriptor for claimed_at field.
+	outboundmessageDescClaimedAt := outboundmessageFields[12].Descriptor()
+	// outboundmessage.DefaultClaimedAt holds the default value on creation for the claimed_at field.
+	outboundmessage.DefaultClaimedAt = outboundmessageDescClaimedAt.Default.(func() time.Time)
+	// outboundmessageDescCreatedAt is the schema descriptor for created_at field.
+	outboundmessageDescCreatedAt := outboundmessageFields[20].Descriptor()
+	// outboundmessage.DefaultCreatedAt holds the default value on creation for the created_at field.
+	outboundmessage.DefaultCreatedAt = outboundmessageDescCreatedAt.Default.(func() time.Time)
+	// outboundmessageDescUpdatedAt is the schema descriptor for updated_at field.
+	outboundmessageDescUpdatedAt := outboundmessageFields[21].Descriptor()
+	// outboundmessage.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	outboundmessage.DefaultUpdatedAt = outboundmessageDescUpdatedAt.Default.(func() time.Time)
+	// outboundmessage.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	outboundmessage.UpdateDefaultUpdatedAt = outboundmessageDescUpdatedAt.UpdateDefault.(func() time.Time)
 	segmentFields := schema.Segment{}.Fields()
 	_ = segmentFields
 	// segmentDescName is the schema descriptor for name field.
@@ -378,22 +408,6 @@ func init() {
 	suppression.DefaultUpdatedAt = suppressionDescUpdatedAt.Default.(func() time.Time)
 	// suppression.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	suppression.UpdateDefaultUpdatedAt = suppressionDescUpdatedAt.UpdateDefault.(func() time.Time)
-	transactionalemailFields := schema.TransactionalEmail{}.Fields()
-	_ = transactionalemailFields
-	// transactionalemailDescDestination is the schema descriptor for destination field.
-	transactionalemailDescDestination := transactionalemailFields[2].Descriptor()
-	// transactionalemail.DestinationValidator is a validator for the "destination" field. It is called by the builders before save.
-	transactionalemail.DestinationValidator = transactionalemailDescDestination.Validators[0].(func(string) error)
-	// transactionalemailDescCreatedAt is the schema descriptor for created_at field.
-	transactionalemailDescCreatedAt := transactionalemailFields[9].Descriptor()
-	// transactionalemail.DefaultCreatedAt holds the default value on creation for the created_at field.
-	transactionalemail.DefaultCreatedAt = transactionalemailDescCreatedAt.Default.(func() time.Time)
-	// transactionalemailDescUpdatedAt is the schema descriptor for updated_at field.
-	transactionalemailDescUpdatedAt := transactionalemailFields[10].Descriptor()
-	// transactionalemail.DefaultUpdatedAt holds the default value on creation for the updated_at field.
-	transactionalemail.DefaultUpdatedAt = transactionalemailDescUpdatedAt.Default.(func() time.Time)
-	// transactionalemail.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
-	transactionalemail.UpdateDefaultUpdatedAt = transactionalemailDescUpdatedAt.UpdateDefault.(func() time.Time)
 	unsubscribeFields := schema.Unsubscribe{}.Fields()
 	_ = unsubscribeFields
 	// unsubscribeDescDestination is the schema descriptor for destination field.
@@ -501,11 +515,11 @@ func init() {
 	// workspace.DefaultPostalAddress holds the default value on creation for the postal_address field.
 	workspace.DefaultPostalAddress = workspaceDescPostalAddress.Default.(string)
 	// workspaceDescCreatedAt is the schema descriptor for created_at field.
-	workspaceDescCreatedAt := workspaceFields[7].Descriptor()
+	workspaceDescCreatedAt := workspaceFields[10].Descriptor()
 	// workspace.DefaultCreatedAt holds the default value on creation for the created_at field.
 	workspace.DefaultCreatedAt = workspaceDescCreatedAt.Default.(func() time.Time)
 	// workspaceDescUpdatedAt is the schema descriptor for updated_at field.
-	workspaceDescUpdatedAt := workspaceFields[8].Descriptor()
+	workspaceDescUpdatedAt := workspaceFields[11].Descriptor()
 	// workspace.DefaultUpdatedAt holds the default value on creation for the updated_at field.
 	workspace.DefaultUpdatedAt = workspaceDescUpdatedAt.Default.(func() time.Time)
 	// workspace.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.

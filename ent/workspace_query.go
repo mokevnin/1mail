@@ -25,11 +25,11 @@ import (
 	"github.com/mokevnin/1mail/ent/integration"
 	"github.com/mokevnin/1mail/ent/invitation"
 	"github.com/mokevnin/1mail/ent/membership"
+	"github.com/mokevnin/1mail/ent/outboundmessage"
 	"github.com/mokevnin/1mail/ent/predicate"
 	"github.com/mokevnin/1mail/ent/segment"
 	"github.com/mokevnin/1mail/ent/sendingdomain"
 	"github.com/mokevnin/1mail/ent/suppression"
-	"github.com/mokevnin/1mail/ent/transactionalemail"
 	"github.com/mokevnin/1mail/ent/unsubscribe"
 	"github.com/mokevnin/1mail/ent/visitor"
 	"github.com/mokevnin/1mail/ent/webhookendpoint"
@@ -60,7 +60,7 @@ type WorkspaceQuery struct {
 	withSuppressions        *SuppressionQuery
 	withUnsubscribes        *UnsubscribeQuery
 	withConfirmations       *ConfirmationQuery
-	withTransactionalEmails *TransactionalEmailQuery
+	withOutboundMessages    *OutboundMessageQuery
 	withMemberships         *MembershipQuery
 	withInvitations         *InvitationQuery
 	modifiers               []func(*sql.Selector)
@@ -474,9 +474,9 @@ func (_q *WorkspaceQuery) QueryConfirmations() *ConfirmationQuery {
 	return query
 }
 
-// QueryTransactionalEmails chains the current query on the "transactional_emails" edge.
-func (_q *WorkspaceQuery) QueryTransactionalEmails() *TransactionalEmailQuery {
-	query := (&TransactionalEmailClient{config: _q.config}).Query()
+// QueryOutboundMessages chains the current query on the "outbound_messages" edge.
+func (_q *WorkspaceQuery) QueryOutboundMessages() *OutboundMessageQuery {
+	query := (&OutboundMessageClient{config: _q.config}).Query()
 	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
 		if err := _q.prepareQuery(ctx); err != nil {
 			return nil, err
@@ -487,8 +487,8 @@ func (_q *WorkspaceQuery) QueryTransactionalEmails() *TransactionalEmailQuery {
 		}
 		step := sqlgraph.NewStep(
 			sqlgraph.From(workspace.Table, workspace.FieldID, selector),
-			sqlgraph.To(transactionalemail.Table, transactionalemail.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, workspace.TransactionalEmailsTable, workspace.TransactionalEmailsColumn),
+			sqlgraph.To(outboundmessage.Table, outboundmessage.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, workspace.OutboundMessagesTable, workspace.OutboundMessagesColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
@@ -749,7 +749,7 @@ func (_q *WorkspaceQuery) Clone() *WorkspaceQuery {
 		withSuppressions:        _q.withSuppressions.Clone(),
 		withUnsubscribes:        _q.withUnsubscribes.Clone(),
 		withConfirmations:       _q.withConfirmations.Clone(),
-		withTransactionalEmails: _q.withTransactionalEmails.Clone(),
+		withOutboundMessages:    _q.withOutboundMessages.Clone(),
 		withMemberships:         _q.withMemberships.Clone(),
 		withInvitations:         _q.withInvitations.Clone(),
 		// clone intermediate query.
@@ -946,14 +946,14 @@ func (_q *WorkspaceQuery) WithConfirmations(opts ...func(*ConfirmationQuery)) *W
 	return _q
 }
 
-// WithTransactionalEmails tells the query-builder to eager-load the nodes that are connected to
-// the "transactional_emails" edge. The optional arguments are used to configure the query builder of the edge.
-func (_q *WorkspaceQuery) WithTransactionalEmails(opts ...func(*TransactionalEmailQuery)) *WorkspaceQuery {
-	query := (&TransactionalEmailClient{config: _q.config}).Query()
+// WithOutboundMessages tells the query-builder to eager-load the nodes that are connected to
+// the "outbound_messages" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *WorkspaceQuery) WithOutboundMessages(opts ...func(*OutboundMessageQuery)) *WorkspaceQuery {
+	query := (&OutboundMessageClient{config: _q.config}).Query()
 	for _, opt := range opts {
 		opt(query)
 	}
-	_q.withTransactionalEmails = query
+	_q.withOutboundMessages = query
 	return _q
 }
 
@@ -1075,7 +1075,7 @@ func (_q *WorkspaceQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Wo
 			_q.withSuppressions != nil,
 			_q.withUnsubscribes != nil,
 			_q.withConfirmations != nil,
-			_q.withTransactionalEmails != nil,
+			_q.withOutboundMessages != nil,
 			_q.withMemberships != nil,
 			_q.withInvitations != nil,
 		}
@@ -1222,12 +1222,10 @@ func (_q *WorkspaceQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Wo
 			return nil, err
 		}
 	}
-	if query := _q.withTransactionalEmails; query != nil {
-		if err := _q.loadTransactionalEmails(ctx, query, nodes,
-			func(n *Workspace) { n.Edges.TransactionalEmails = []*TransactionalEmail{} },
-			func(n *Workspace, e *TransactionalEmail) {
-				n.Edges.TransactionalEmails = append(n.Edges.TransactionalEmails, e)
-			}); err != nil {
+	if query := _q.withOutboundMessages; query != nil {
+		if err := _q.loadOutboundMessages(ctx, query, nodes,
+			func(n *Workspace) { n.Edges.OutboundMessages = []*OutboundMessage{} },
+			func(n *Workspace, e *OutboundMessage) { n.Edges.OutboundMessages = append(n.Edges.OutboundMessages, e) }); err != nil {
 			return nil, err
 		}
 	}
@@ -1758,7 +1756,7 @@ func (_q *WorkspaceQuery) loadConfirmations(ctx context.Context, query *Confirma
 	}
 	return nil
 }
-func (_q *WorkspaceQuery) loadTransactionalEmails(ctx context.Context, query *TransactionalEmailQuery, nodes []*Workspace, init func(*Workspace), assign func(*Workspace, *TransactionalEmail)) error {
+func (_q *WorkspaceQuery) loadOutboundMessages(ctx context.Context, query *OutboundMessageQuery, nodes []*Workspace, init func(*Workspace), assign func(*Workspace, *OutboundMessage)) error {
 	fks := make([]driver.Value, 0, len(nodes))
 	nodeids := make(map[int64]*Workspace)
 	for i := range nodes {
@@ -1769,10 +1767,10 @@ func (_q *WorkspaceQuery) loadTransactionalEmails(ctx context.Context, query *Tr
 		}
 	}
 	if len(query.ctx.Fields) > 0 {
-		query.ctx.AppendFieldOnce(transactionalemail.FieldWorkspaceID)
+		query.ctx.AppendFieldOnce(outboundmessage.FieldWorkspaceID)
 	}
-	query.Where(predicate.TransactionalEmail(func(s *sql.Selector) {
-		s.Where(sql.InValues(s.C(workspace.TransactionalEmailsColumn), fks...))
+	query.Where(predicate.OutboundMessage(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(workspace.OutboundMessagesColumn), fks...))
 	}))
 	neighbors, err := query.All(ctx)
 	if err != nil {

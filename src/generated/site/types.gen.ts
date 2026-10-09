@@ -342,6 +342,12 @@ export type SiteBroadcastResource = {
    */
   status: SiteBroadcastStatus;
   /**
+   * Why sending is currently held, when it is: `workspace_suspended`,
+   * `unverified_domain` or `no_integration`. A hold is reversible and not a failure:
+   * the broadcast keeps its status and the remaining recipients send once it lifts.
+   */
+  holdReason?: string | null;
+  /**
    * When the broadcast is scheduled to send
    */
   scheduledAt?: Timestamp | null;

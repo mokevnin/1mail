@@ -23,6 +23,8 @@ const (
 	FieldWorkspaceID = "workspace_id"
 	// FieldStatus holds the string denoting the status field in the database.
 	FieldStatus = "status"
+	// FieldOutboundMessageID holds the string denoting the outbound_message_id field in the database.
+	FieldOutboundMessageID = "outbound_message_id"
 	// FieldError holds the string denoting the error field in the database.
 	FieldError = "error"
 	// FieldSentAt holds the string denoting the sent_at field in the database.
@@ -64,6 +66,7 @@ var Columns = []string{
 	FieldContactID,
 	FieldWorkspaceID,
 	FieldStatus,
+	FieldOutboundMessageID,
 	FieldError,
 	FieldSentAt,
 	FieldOpenedAt,
@@ -101,6 +104,7 @@ const DefaultStatus = StatusPending
 const (
 	StatusPending Status = "pending"
 	StatusSent    Status = "sent"
+	StatusSkipped Status = "skipped"
 	StatusFailed  Status = "failed"
 )
 
@@ -111,7 +115,7 @@ func (s Status) String() string {
 // StatusValidator is a validator for the "status" field enum values. It is called by the builders before save.
 func StatusValidator(s Status) error {
 	switch s {
-	case StatusPending, StatusSent, StatusFailed:
+	case StatusPending, StatusSent, StatusSkipped, StatusFailed:
 		return nil
 	default:
 		return fmt.Errorf("broadcastrecipient: invalid enum value for status field: %q", s)
@@ -144,6 +148,11 @@ func ByWorkspaceID(opts ...sql.OrderTermOption) OrderOption {
 // ByStatus orders the results by the status field.
 func ByStatus(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldStatus, opts...).ToFunc()
+}
+
+// ByOutboundMessageID orders the results by the outbound_message_id field.
+func ByOutboundMessageID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldOutboundMessageID, opts...).ToFunc()
 }
 
 // ByError orders the results by the error field.

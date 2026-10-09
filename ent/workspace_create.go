@@ -24,10 +24,10 @@ import (
 	"github.com/mokevnin/1mail/ent/integration"
 	"github.com/mokevnin/1mail/ent/invitation"
 	"github.com/mokevnin/1mail/ent/membership"
+	"github.com/mokevnin/1mail/ent/outboundmessage"
 	"github.com/mokevnin/1mail/ent/segment"
 	"github.com/mokevnin/1mail/ent/sendingdomain"
 	"github.com/mokevnin/1mail/ent/suppression"
-	"github.com/mokevnin/1mail/ent/transactionalemail"
 	"github.com/mokevnin/1mail/ent/unsubscribe"
 	"github.com/mokevnin/1mail/ent/visitor"
 	"github.com/mokevnin/1mail/ent/webhookendpoint"
@@ -90,6 +90,48 @@ func (_c *WorkspaceCreate) SetPostalAddress(v string) *WorkspaceCreate {
 func (_c *WorkspaceCreate) SetNillablePostalAddress(v *string) *WorkspaceCreate {
 	if v != nil {
 		_c.SetPostalAddress(*v)
+	}
+	return _c
+}
+
+// SetSuspendedAt sets the "suspended_at" field.
+func (_c *WorkspaceCreate) SetSuspendedAt(v time.Time) *WorkspaceCreate {
+	_c.mutation.SetSuspendedAt(v)
+	return _c
+}
+
+// SetNillableSuspendedAt sets the "suspended_at" field if the given value is not nil.
+func (_c *WorkspaceCreate) SetNillableSuspendedAt(v *time.Time) *WorkspaceCreate {
+	if v != nil {
+		_c.SetSuspendedAt(*v)
+	}
+	return _c
+}
+
+// SetSuspendedBy sets the "suspended_by" field.
+func (_c *WorkspaceCreate) SetSuspendedBy(v string) *WorkspaceCreate {
+	_c.mutation.SetSuspendedBy(v)
+	return _c
+}
+
+// SetNillableSuspendedBy sets the "suspended_by" field if the given value is not nil.
+func (_c *WorkspaceCreate) SetNillableSuspendedBy(v *string) *WorkspaceCreate {
+	if v != nil {
+		_c.SetSuspendedBy(*v)
+	}
+	return _c
+}
+
+// SetSuspensionReason sets the "suspension_reason" field.
+func (_c *WorkspaceCreate) SetSuspensionReason(v string) *WorkspaceCreate {
+	_c.mutation.SetSuspensionReason(v)
+	return _c
+}
+
+// SetNillableSuspensionReason sets the "suspension_reason" field if the given value is not nil.
+func (_c *WorkspaceCreate) SetNillableSuspensionReason(v *string) *WorkspaceCreate {
+	if v != nil {
+		_c.SetSuspensionReason(*v)
 	}
 	return _c
 }
@@ -383,19 +425,19 @@ func (_c *WorkspaceCreate) AddConfirmations(v ...*Confirmation) *WorkspaceCreate
 	return _c.AddConfirmationIDs(ids...)
 }
 
-// AddTransactionalEmailIDs adds the "transactional_emails" edge to the TransactionalEmail entity by IDs.
-func (_c *WorkspaceCreate) AddTransactionalEmailIDs(ids ...int64) *WorkspaceCreate {
-	_c.mutation.AddTransactionalEmailIDs(ids...)
+// AddOutboundMessageIDs adds the "outbound_messages" edge to the OutboundMessage entity by IDs.
+func (_c *WorkspaceCreate) AddOutboundMessageIDs(ids ...int64) *WorkspaceCreate {
+	_c.mutation.AddOutboundMessageIDs(ids...)
 	return _c
 }
 
-// AddTransactionalEmails adds the "transactional_emails" edges to the TransactionalEmail entity.
-func (_c *WorkspaceCreate) AddTransactionalEmails(v ...*TransactionalEmail) *WorkspaceCreate {
+// AddOutboundMessages adds the "outbound_messages" edges to the OutboundMessage entity.
+func (_c *WorkspaceCreate) AddOutboundMessages(v ...*OutboundMessage) *WorkspaceCreate {
 	ids := make([]int64, len(v))
 	for i := range v {
 		ids[i] = v[i].ID
 	}
-	return _c.AddTransactionalEmailIDs(ids...)
+	return _c.AddOutboundMessageIDs(ids...)
 }
 
 // AddMembershipIDs adds the "memberships" edge to the Membership entity by IDs.
@@ -580,6 +622,18 @@ func (_c *WorkspaceCreate) createSpec() (*Workspace, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.PostalAddress(); ok {
 		_spec.SetField(workspace.FieldPostalAddress, field.TypeString, value)
 		_node.PostalAddress = value
+	}
+	if value, ok := _c.mutation.SuspendedAt(); ok {
+		_spec.SetField(workspace.FieldSuspendedAt, field.TypeTime, value)
+		_node.SuspendedAt = &value
+	}
+	if value, ok := _c.mutation.SuspendedBy(); ok {
+		_spec.SetField(workspace.FieldSuspendedBy, field.TypeString, value)
+		_node.SuspendedBy = &value
+	}
+	if value, ok := _c.mutation.SuspensionReason(); ok {
+		_spec.SetField(workspace.FieldSuspensionReason, field.TypeString, value)
+		_node.SuspensionReason = &value
 	}
 	if value, ok := _c.mutation.CreatedAt(); ok {
 		_spec.SetField(workspace.FieldCreatedAt, field.TypeTime, value)
@@ -861,15 +915,15 @@ func (_c *WorkspaceCreate) createSpec() (*Workspace, *sqlgraph.CreateSpec) {
 		}
 		_spec.Edges = append(_spec.Edges, edge)
 	}
-	if nodes := _c.mutation.TransactionalEmailsIDs(); len(nodes) > 0 {
+	if nodes := _c.mutation.OutboundMessagesIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   workspace.TransactionalEmailsTable,
-			Columns: []string{workspace.TransactionalEmailsColumn},
+			Table:   workspace.OutboundMessagesTable,
+			Columns: []string{workspace.OutboundMessagesColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(transactionalemail.FieldID, field.TypeInt64),
+				IDSpec: sqlgraph.NewFieldSpec(outboundmessage.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {
@@ -1039,6 +1093,60 @@ func (u *WorkspaceUpsert) ClearPostalAddress() *WorkspaceUpsert {
 	return u
 }
 
+// SetSuspendedAt sets the "suspended_at" field.
+func (u *WorkspaceUpsert) SetSuspendedAt(v time.Time) *WorkspaceUpsert {
+	u.Set(workspace.FieldSuspendedAt, v)
+	return u
+}
+
+// UpdateSuspendedAt sets the "suspended_at" field to the value that was provided on create.
+func (u *WorkspaceUpsert) UpdateSuspendedAt() *WorkspaceUpsert {
+	u.SetExcluded(workspace.FieldSuspendedAt)
+	return u
+}
+
+// ClearSuspendedAt clears the value of the "suspended_at" field.
+func (u *WorkspaceUpsert) ClearSuspendedAt() *WorkspaceUpsert {
+	u.SetNull(workspace.FieldSuspendedAt)
+	return u
+}
+
+// SetSuspendedBy sets the "suspended_by" field.
+func (u *WorkspaceUpsert) SetSuspendedBy(v string) *WorkspaceUpsert {
+	u.Set(workspace.FieldSuspendedBy, v)
+	return u
+}
+
+// UpdateSuspendedBy sets the "suspended_by" field to the value that was provided on create.
+func (u *WorkspaceUpsert) UpdateSuspendedBy() *WorkspaceUpsert {
+	u.SetExcluded(workspace.FieldSuspendedBy)
+	return u
+}
+
+// ClearSuspendedBy clears the value of the "suspended_by" field.
+func (u *WorkspaceUpsert) ClearSuspendedBy() *WorkspaceUpsert {
+	u.SetNull(workspace.FieldSuspendedBy)
+	return u
+}
+
+// SetSuspensionReason sets the "suspension_reason" field.
+func (u *WorkspaceUpsert) SetSuspensionReason(v string) *WorkspaceUpsert {
+	u.Set(workspace.FieldSuspensionReason, v)
+	return u
+}
+
+// UpdateSuspensionReason sets the "suspension_reason" field to the value that was provided on create.
+func (u *WorkspaceUpsert) UpdateSuspensionReason() *WorkspaceUpsert {
+	u.SetExcluded(workspace.FieldSuspensionReason)
+	return u
+}
+
+// ClearSuspensionReason clears the value of the "suspension_reason" field.
+func (u *WorkspaceUpsert) ClearSuspensionReason() *WorkspaceUpsert {
+	u.SetNull(workspace.FieldSuspensionReason)
+	return u
+}
+
 // SetUpdatedAt sets the "updated_at" field.
 func (u *WorkspaceUpsert) SetUpdatedAt(v time.Time) *WorkspaceUpsert {
 	u.Set(workspace.FieldUpdatedAt, v)
@@ -1190,6 +1298,69 @@ func (u *WorkspaceUpsertOne) UpdatePostalAddress() *WorkspaceUpsertOne {
 func (u *WorkspaceUpsertOne) ClearPostalAddress() *WorkspaceUpsertOne {
 	return u.Update(func(s *WorkspaceUpsert) {
 		s.ClearPostalAddress()
+	})
+}
+
+// SetSuspendedAt sets the "suspended_at" field.
+func (u *WorkspaceUpsertOne) SetSuspendedAt(v time.Time) *WorkspaceUpsertOne {
+	return u.Update(func(s *WorkspaceUpsert) {
+		s.SetSuspendedAt(v)
+	})
+}
+
+// UpdateSuspendedAt sets the "suspended_at" field to the value that was provided on create.
+func (u *WorkspaceUpsertOne) UpdateSuspendedAt() *WorkspaceUpsertOne {
+	return u.Update(func(s *WorkspaceUpsert) {
+		s.UpdateSuspendedAt()
+	})
+}
+
+// ClearSuspendedAt clears the value of the "suspended_at" field.
+func (u *WorkspaceUpsertOne) ClearSuspendedAt() *WorkspaceUpsertOne {
+	return u.Update(func(s *WorkspaceUpsert) {
+		s.ClearSuspendedAt()
+	})
+}
+
+// SetSuspendedBy sets the "suspended_by" field.
+func (u *WorkspaceUpsertOne) SetSuspendedBy(v string) *WorkspaceUpsertOne {
+	return u.Update(func(s *WorkspaceUpsert) {
+		s.SetSuspendedBy(v)
+	})
+}
+
+// UpdateSuspendedBy sets the "suspended_by" field to the value that was provided on create.
+func (u *WorkspaceUpsertOne) UpdateSuspendedBy() *WorkspaceUpsertOne {
+	return u.Update(func(s *WorkspaceUpsert) {
+		s.UpdateSuspendedBy()
+	})
+}
+
+// ClearSuspendedBy clears the value of the "suspended_by" field.
+func (u *WorkspaceUpsertOne) ClearSuspendedBy() *WorkspaceUpsertOne {
+	return u.Update(func(s *WorkspaceUpsert) {
+		s.ClearSuspendedBy()
+	})
+}
+
+// SetSuspensionReason sets the "suspension_reason" field.
+func (u *WorkspaceUpsertOne) SetSuspensionReason(v string) *WorkspaceUpsertOne {
+	return u.Update(func(s *WorkspaceUpsert) {
+		s.SetSuspensionReason(v)
+	})
+}
+
+// UpdateSuspensionReason sets the "suspension_reason" field to the value that was provided on create.
+func (u *WorkspaceUpsertOne) UpdateSuspensionReason() *WorkspaceUpsertOne {
+	return u.Update(func(s *WorkspaceUpsert) {
+		s.UpdateSuspensionReason()
+	})
+}
+
+// ClearSuspensionReason clears the value of the "suspension_reason" field.
+func (u *WorkspaceUpsertOne) ClearSuspensionReason() *WorkspaceUpsertOne {
+	return u.Update(func(s *WorkspaceUpsert) {
+		s.ClearSuspensionReason()
 	})
 }
 
@@ -1512,6 +1683,69 @@ func (u *WorkspaceUpsertBulk) UpdatePostalAddress() *WorkspaceUpsertBulk {
 func (u *WorkspaceUpsertBulk) ClearPostalAddress() *WorkspaceUpsertBulk {
 	return u.Update(func(s *WorkspaceUpsert) {
 		s.ClearPostalAddress()
+	})
+}
+
+// SetSuspendedAt sets the "suspended_at" field.
+func (u *WorkspaceUpsertBulk) SetSuspendedAt(v time.Time) *WorkspaceUpsertBulk {
+	return u.Update(func(s *WorkspaceUpsert) {
+		s.SetSuspendedAt(v)
+	})
+}
+
+// UpdateSuspendedAt sets the "suspended_at" field to the value that was provided on create.
+func (u *WorkspaceUpsertBulk) UpdateSuspendedAt() *WorkspaceUpsertBulk {
+	return u.Update(func(s *WorkspaceUpsert) {
+		s.UpdateSuspendedAt()
+	})
+}
+
+// ClearSuspendedAt clears the value of the "suspended_at" field.
+func (u *WorkspaceUpsertBulk) ClearSuspendedAt() *WorkspaceUpsertBulk {
+	return u.Update(func(s *WorkspaceUpsert) {
+		s.ClearSuspendedAt()
+	})
+}
+
+// SetSuspendedBy sets the "suspended_by" field.
+func (u *WorkspaceUpsertBulk) SetSuspendedBy(v string) *WorkspaceUpsertBulk {
+	return u.Update(func(s *WorkspaceUpsert) {
+		s.SetSuspendedBy(v)
+	})
+}
+
+// UpdateSuspendedBy sets the "suspended_by" field to the value that was provided on create.
+func (u *WorkspaceUpsertBulk) UpdateSuspendedBy() *WorkspaceUpsertBulk {
+	return u.Update(func(s *WorkspaceUpsert) {
+		s.UpdateSuspendedBy()
+	})
+}
+
+// ClearSuspendedBy clears the value of the "suspended_by" field.
+func (u *WorkspaceUpsertBulk) ClearSuspendedBy() *WorkspaceUpsertBulk {
+	return u.Update(func(s *WorkspaceUpsert) {
+		s.ClearSuspendedBy()
+	})
+}
+
+// SetSuspensionReason sets the "suspension_reason" field.
+func (u *WorkspaceUpsertBulk) SetSuspensionReason(v string) *WorkspaceUpsertBulk {
+	return u.Update(func(s *WorkspaceUpsert) {
+		s.SetSuspensionReason(v)
+	})
+}
+
+// UpdateSuspensionReason sets the "suspension_reason" field to the value that was provided on create.
+func (u *WorkspaceUpsertBulk) UpdateSuspensionReason() *WorkspaceUpsertBulk {
+	return u.Update(func(s *WorkspaceUpsert) {
+		s.UpdateSuspensionReason()
+	})
+}
+
+// ClearSuspensionReason clears the value of the "suspension_reason" field.
+func (u *WorkspaceUpsertBulk) ClearSuspensionReason() *WorkspaceUpsertBulk {
+	return u.Update(func(s *WorkspaceUpsert) {
+		s.ClearSuspensionReason()
 	})
 }
 

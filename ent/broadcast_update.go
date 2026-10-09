@@ -361,6 +361,47 @@ func (_u *BroadcastUpdate) AddFailedCount(v int) *BroadcastUpdate {
 	return _u
 }
 
+// SetSkippedCount sets the "skipped_count" field.
+func (_u *BroadcastUpdate) SetSkippedCount(v int) *BroadcastUpdate {
+	_u.mutation.ResetSkippedCount()
+	_u.mutation.SetSkippedCount(v)
+	return _u
+}
+
+// SetNillableSkippedCount sets the "skipped_count" field if the given value is not nil.
+func (_u *BroadcastUpdate) SetNillableSkippedCount(v *int) *BroadcastUpdate {
+	if v != nil {
+		_u.SetSkippedCount(*v)
+	}
+	return _u
+}
+
+// AddSkippedCount adds value to the "skipped_count" field.
+func (_u *BroadcastUpdate) AddSkippedCount(v int) *BroadcastUpdate {
+	_u.mutation.AddSkippedCount(v)
+	return _u
+}
+
+// SetHoldReason sets the "hold_reason" field.
+func (_u *BroadcastUpdate) SetHoldReason(v string) *BroadcastUpdate {
+	_u.mutation.SetHoldReason(v)
+	return _u
+}
+
+// SetNillableHoldReason sets the "hold_reason" field if the given value is not nil.
+func (_u *BroadcastUpdate) SetNillableHoldReason(v *string) *BroadcastUpdate {
+	if v != nil {
+		_u.SetHoldReason(*v)
+	}
+	return _u
+}
+
+// ClearHoldReason clears the value of the "hold_reason" field.
+func (_u *BroadcastUpdate) ClearHoldReason() *BroadcastUpdate {
+	_u.mutation.ClearHoldReason()
+	return _u
+}
+
 // SetWorkspaceID sets the "workspace_id" field.
 func (_u *BroadcastUpdate) SetWorkspaceID(v int64) *BroadcastUpdate {
 	_u.mutation.SetWorkspaceID(v)
@@ -511,6 +552,11 @@ func (_u *BroadcastUpdate) check() error {
 			return &ValidationError{Name: "failed_count", err: fmt.Errorf(`ent: validator failed for field "Broadcast.failed_count": %w`, err)}
 		}
 	}
+	if v, ok := _u.mutation.SkippedCount(); ok {
+		if err := broadcast.SkippedCountValidator(v); err != nil {
+			return &ValidationError{Name: "skipped_count", err: fmt.Errorf(`ent: validator failed for field "Broadcast.skipped_count": %w`, err)}
+		}
+	}
 	if _u.mutation.WorkspaceCleared() && len(_u.mutation.WorkspaceIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "Broadcast.workspace"`)
 	}
@@ -627,6 +673,18 @@ func (_u *BroadcastUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	}
 	if value, ok := _u.mutation.AddedFailedCount(); ok {
 		_spec.AddField(broadcast.FieldFailedCount, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.SkippedCount(); ok {
+		_spec.SetField(broadcast.FieldSkippedCount, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.AddedSkippedCount(); ok {
+		_spec.AddField(broadcast.FieldSkippedCount, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.HoldReason(); ok {
+		_spec.SetField(broadcast.FieldHoldReason, field.TypeString, value)
+	}
+	if _u.mutation.HoldReasonCleared() {
+		_spec.ClearField(broadcast.FieldHoldReason, field.TypeString)
 	}
 	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(broadcast.FieldUpdatedAt, field.TypeTime, value)
@@ -1057,6 +1115,47 @@ func (_u *BroadcastUpdateOne) AddFailedCount(v int) *BroadcastUpdateOne {
 	return _u
 }
 
+// SetSkippedCount sets the "skipped_count" field.
+func (_u *BroadcastUpdateOne) SetSkippedCount(v int) *BroadcastUpdateOne {
+	_u.mutation.ResetSkippedCount()
+	_u.mutation.SetSkippedCount(v)
+	return _u
+}
+
+// SetNillableSkippedCount sets the "skipped_count" field if the given value is not nil.
+func (_u *BroadcastUpdateOne) SetNillableSkippedCount(v *int) *BroadcastUpdateOne {
+	if v != nil {
+		_u.SetSkippedCount(*v)
+	}
+	return _u
+}
+
+// AddSkippedCount adds value to the "skipped_count" field.
+func (_u *BroadcastUpdateOne) AddSkippedCount(v int) *BroadcastUpdateOne {
+	_u.mutation.AddSkippedCount(v)
+	return _u
+}
+
+// SetHoldReason sets the "hold_reason" field.
+func (_u *BroadcastUpdateOne) SetHoldReason(v string) *BroadcastUpdateOne {
+	_u.mutation.SetHoldReason(v)
+	return _u
+}
+
+// SetNillableHoldReason sets the "hold_reason" field if the given value is not nil.
+func (_u *BroadcastUpdateOne) SetNillableHoldReason(v *string) *BroadcastUpdateOne {
+	if v != nil {
+		_u.SetHoldReason(*v)
+	}
+	return _u
+}
+
+// ClearHoldReason clears the value of the "hold_reason" field.
+func (_u *BroadcastUpdateOne) ClearHoldReason() *BroadcastUpdateOne {
+	_u.mutation.ClearHoldReason()
+	return _u
+}
+
 // SetWorkspaceID sets the "workspace_id" field.
 func (_u *BroadcastUpdateOne) SetWorkspaceID(v int64) *BroadcastUpdateOne {
 	_u.mutation.SetWorkspaceID(v)
@@ -1220,6 +1319,11 @@ func (_u *BroadcastUpdateOne) check() error {
 			return &ValidationError{Name: "failed_count", err: fmt.Errorf(`ent: validator failed for field "Broadcast.failed_count": %w`, err)}
 		}
 	}
+	if v, ok := _u.mutation.SkippedCount(); ok {
+		if err := broadcast.SkippedCountValidator(v); err != nil {
+			return &ValidationError{Name: "skipped_count", err: fmt.Errorf(`ent: validator failed for field "Broadcast.skipped_count": %w`, err)}
+		}
+	}
 	if _u.mutation.WorkspaceCleared() && len(_u.mutation.WorkspaceIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "Broadcast.workspace"`)
 	}
@@ -1353,6 +1457,18 @@ func (_u *BroadcastUpdateOne) sqlSave(ctx context.Context) (_node *Broadcast, er
 	}
 	if value, ok := _u.mutation.AddedFailedCount(); ok {
 		_spec.AddField(broadcast.FieldFailedCount, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.SkippedCount(); ok {
+		_spec.SetField(broadcast.FieldSkippedCount, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.AddedSkippedCount(); ok {
+		_spec.AddField(broadcast.FieldSkippedCount, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.HoldReason(); ok {
+		_spec.SetField(broadcast.FieldHoldReason, field.TypeString, value)
+	}
+	if _u.mutation.HoldReasonCleared() {
+		_spec.ClearField(broadcast.FieldHoldReason, field.TypeString)
 	}
 	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(broadcast.FieldUpdatedAt, field.TypeTime, value)

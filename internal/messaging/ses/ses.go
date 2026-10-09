@@ -83,24 +83,27 @@ type sender struct {
 	signer messaging.Signer
 }
 
-func (s *sender) Send(ctx context.Context, msg messaging.EmailMessage) error {
+// DefaultFrom reports the integration's configured From (see messaging.DefaultFromer).
+func (s *sender) DefaultFrom() (string, string) { return s.cfg.From, s.cfg.FromName }
+
+func (s *sender) Send(ctx context.Context, msg messaging.EmailMessage) (messaging.Receipt, error) {
 	msg.From = messaging.FirstNonEmpty(msg.From, s.cfg.From)
 	msg.FromName = messaging.FirstNonEmpty(msg.FromName, s.cfg.FromName)
 
 	m, err := messaging.BuildSignedMIME(ctx, msg, s.signer)
 	if err != nil {
-		return err
+		return messaging.Receipt{}, err
 	}
 	var raw bytes.Buffer
 	if _, err := m.WriteTo(&raw); err != nil {
-		return fmt.Errorf("ses: render message: %w", err)
+		return messaging.Receipt{}, fmt.Errorf("ses: render message: %w", err)
 	}
 
 	client, err := s.client(ctx)
 	if err != nil {
-		return err
+		return messaging.Receipt{}, err
 	}
-	_, err = client.SendRawEmail(ctx, &ses.SendRawEmailInput{
+	out, err := client.SendRawEmail(ctx, &ses.SendRawEmailInput{
 		// Source is the envelope sender; the MIME From header carries the display
 		// name. It must match a verified SES identity.
 		Source:       aws.String(msg.From),
@@ -108,9 +111,9 @@ func (s *sender) Send(ctx context.Context, msg messaging.EmailMessage) error {
 		RawMessage:   &types.RawMessage{Data: raw.Bytes()},
 	})
 	if err != nil {
-		return fmt.Errorf("ses: send: %w", err)
+		return messaging.Receipt{}, fmt.Errorf("ses: send: %w", err)
 	}
-	return nil
+	return messaging.Receipt{MessageID: aws.ToString(out.MessageId)}, nil
 }
 
 func (s *sender) client(ctx context.Context) (*ses.Client, error) {

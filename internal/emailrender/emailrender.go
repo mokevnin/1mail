@@ -30,11 +30,18 @@ type Email struct {
 // RenderEmail renders subject + MJML body for one recipient: Liquid merge tags
 // first (so a {% if %} can change MJML structure per recipient), then MJML
 // compiles to email HTML, then the text part is derived from that HTML (before
-// any tracking is layered on). A non-nil error means the MJML failed to compile
-// — the caller should not send that message.
+// any tracking is layered on). A non-nil error means the Liquid merge tags or the
+// MJML failed to render — the caller must not send that message (sending the raw
+// template to a recipient is worse than not sending).
 func RenderEmail(subject, body string, bindings map[string]any) (Email, error) {
-	renderedSubject, _ := Render(subject, bindings)
-	renderedBody, _ := Render(body, bindings)
+	renderedSubject, err := Render(subject, bindings)
+	if err != nil {
+		return Email{}, fmt.Errorf("render subject: %w", err)
+	}
+	renderedBody, err := Render(body, bindings)
+	if err != nil {
+		return Email{}, fmt.Errorf("render body: %w", err)
+	}
 
 	html, err := mjml.Render(renderedBody)
 	if err != nil {
@@ -45,9 +52,8 @@ func RenderEmail(subject, body string, bindings map[string]any) (Email, error) {
 }
 
 // Render renders a Liquid template with the given bindings. On a template error
-// it returns the original template unchanged together with the error, so a
-// malformed template degrades gracefully (the caller logs it) instead of
-// blocking the whole send.
+// it returns the original template unchanged together with the error (useful for
+// previews); RenderEmail treats that error as fatal.
 func Render(tmpl string, bindings map[string]any) (string, error) {
 	out, err := engine.ParseAndRenderString(tmpl, bindings)
 	if err != nil {

@@ -154,6 +154,16 @@ type EmailEngagement struct {
 	BroadcastID int64  `json:"broadcastId"`
 	URL         string `json:"url,omitempty"`
 	DedupID     string `json:"dedupId,omitempty"`
+
+	// The envelope an Outbound send stamps on email.sent (ADR 0015, ADR 0011):
+	// which surface sent it, under which Sending source and Sending domain, and the
+	// ids that tie the Event back to the Outbound message and the provider's copy.
+	Surface           string `json:"surface,omitempty"`
+	SendingSource     string `json:"sendingSource,omitempty"`
+	SendingDomain     string `json:"sendingDomain,omitempty"`
+	AutomationID      int64  `json:"automationId,omitempty"`
+	OutboundMessageID int64  `json:"outboundMessageId,omitempty"`
+	ProviderMessageID string `json:"providerMessageId,omitempty"`
 }
 
 func (e *EmailEngagement) EventName() string { return e.Action }
@@ -169,6 +179,22 @@ func (e *EmailEngagement) Project() Projection {
 	}
 	if e.URL != "" {
 		props["url"] = e.URL
+	}
+	for k, v := range map[string]string{
+		"surface":           e.Surface,
+		"sendingSource":     e.SendingSource,
+		"sendingDomain":     e.SendingDomain,
+		"providerMessageId": e.ProviderMessageID,
+	} {
+		if v != "" {
+			props[k] = v
+		}
+	}
+	if e.AutomationID != 0 {
+		props["automationId"] = e.AutomationID
+	}
+	if e.OutboundMessageID != 0 {
+		props["outboundMessageId"] = e.OutboundMessageID
 	}
 	return Projection{Subject: e.Email, Action: e.Action, Email: e.Email, Properties: props, ContactID: e.ContactID}
 }

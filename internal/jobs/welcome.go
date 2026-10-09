@@ -40,11 +40,12 @@ func SendWelcome(ctx context.Context, sender messaging.EmailSender, email, name 
 		greeting = i18n.T("email.welcome.greeting_fallback", nil)
 	}
 	body := i18n.T("email.welcome.body", map[string]any{"Greeting": greeting})
-	return sender.Send(ctx, messaging.EmailMessage{
+	_, err := sender.Send(ctx, messaging.EmailMessage{
 		To:      email,
 		Subject: i18n.T("email.welcome.subject", nil),
 		Text:    body,
 	})
+	return err
 }
 
 // EnqueueWelcome schedules the welcome email (river adapter).

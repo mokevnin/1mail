@@ -32,6 +32,7 @@ func BuildMIME(msg EmailMessage) (*mail.Msg, error) {
 		return nil, fmt.Errorf("messaging: invalid to address: %w", err)
 	}
 	m.Subject(msg.Subject)
+	m.SetMessageID()
 
 	switch {
 	case msg.HTML != "" && msg.Text != "":

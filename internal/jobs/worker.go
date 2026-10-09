@@ -17,11 +17,10 @@ import (
 	"github.com/riverqueue/rivercontrib/otelriver"
 
 	"github.com/mokevnin/1mail/ent"
-	"github.com/mokevnin/1mail/internal/events"
 	"github.com/mokevnin/1mail/internal/messaging"
+	"github.com/mokevnin/1mail/internal/outbound"
 	"github.com/mokevnin/1mail/internal/secrets"
 	"github.com/mokevnin/1mail/internal/sending"
-	"github.com/mokevnin/1mail/internal/tracking"
 	"github.com/mokevnin/1mail/internal/webhook"
 )
 
@@ -50,12 +49,12 @@ type Client struct {
 // their own dependencies (ent client, sender resolver, secrets cipher, the
 // platform system sender). appURL is the public origin used to build the links
 // in account emails (reset/verify/change).
-func NewClient(pool *pgxpool.Pool, entClient *ent.Client, bus *events.Bus, resolver *messaging.Resolver, tracker *tracking.Tracker, cipher *secrets.Cipher, systemSender messaging.EmailSender, lookup sending.TXTLookup, appURL string) (*Client, error) {
+func NewClient(pool *pgxpool.Pool, entClient *ent.Client, mod *outbound.Module, cipher *secrets.Cipher, systemSender messaging.EmailSender, lookup sending.TXTLookup, appURL string) (*Client, error) {
 	workers := river.NewWorkers()
-	river.AddWorker(workers, &SendBroadcastWorker{ent: entClient, bus: bus, resolver: resolver, tracker: tracker})
-	river.AddWorker(workers, &SendRecipientWorker{ent: entClient, bus: bus, resolver: resolver, tracker: tracker})
+	river.AddWorker(workers, &SendBroadcastWorker{ent: entClient, mod: mod})
+	river.AddWorker(workers, &SendRecipientWorker{ent: entClient, mod: mod})
 	river.AddWorker(workers, &EvaluateTriggerWorker{ent: entClient})
-	river.AddWorker(workers, &RunStepWorker{ent: entClient, bus: bus, resolver: resolver, tracker: tracker})
+	river.AddWorker(workers, &RunStepWorker{ent: entClient, mod: mod})
 	river.AddWorker(workers, &DeliverWebhookWorker{
 		ent:    entClient,
 		cipher: cipher,

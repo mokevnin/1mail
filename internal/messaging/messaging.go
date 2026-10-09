@@ -51,7 +51,22 @@ type EmailMessage struct {
 
 // EmailSender is implemented by every email provider (smtp, ses, …).
 type EmailSender interface {
-	Send(ctx context.Context, msg EmailMessage) error
+	Send(ctx context.Context, msg EmailMessage) (Receipt, error)
+}
+
+// Receipt is what a provider returns for a message it accepted.
+type Receipt struct {
+	// MessageID is the provider's id for the accepted message (SES MessageId, or the
+	// MIME Message-ID for SMTP). Recorded on the Outbound message for correlation.
+	MessageID string
+}
+
+// DefaultFromer is implemented by senders that fall back to the integration's
+// configured From when a message carries none. Outbound send reads it to know the
+// effective From domain before sending, so the verified-domain gate and the
+// Sending-domain stamp use the address that will really go on the wire.
+type DefaultFromer interface {
+	DefaultFrom() (addr, name string)
 }
 
 // Signer resolves the native DKIM signer for an outbound message (ADR 0010).

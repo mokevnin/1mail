@@ -5,13 +5,13 @@ import (
 	"net/http"
 
 	"github.com/mokevnin/1mail/ent"
-	"github.com/mokevnin/1mail/ent/transactionalemail"
+	"github.com/mokevnin/1mail/ent/outboundmessage"
 	siteapi "github.com/mokevnin/1mail/gen/site"
 	"github.com/mokevnin/1mail/internal/pagination"
 )
 
 // SiteTransactionalEmailsList returns the workspace's transactional send history
-// (the durable trace written by the /api/emails surface), most recent first.
+// (the Outbound messages the /api/emails surface wrote), most recent first.
 func (h *Handlers) SiteTransactionalEmailsList(ctx context.Context, params siteapi.SiteTransactionalEmailsListParams) (siteapi.SiteTransactionalEmailsListRes, error) {
 	ws, err := h.workspaceID(ctx, params.Slug)
 	if ent.IsNotFound(err) {
@@ -31,12 +31,15 @@ func (h *Handlers) SiteTransactionalEmailsList(ctx context.Context, params sitea
 	}
 	page, pageSize := pagination.Normalize(pagePtr, pageSizePtr)
 
-	q := h.ent.TransactionalEmail.Query().Where(transactionalemail.WorkspaceID(ws))
+	q := h.ent.OutboundMessage.Query().Where(
+		outboundmessage.WorkspaceID(ws),
+		outboundmessage.KindEQ(outboundmessage.KindTransactional),
+	)
 	total, err := q.Count(ctx)
 	if err != nil {
 		return nil, err
 	}
-	items, err := q.Order(ent.Desc(transactionalemail.FieldID)).
+	items, err := q.Order(ent.Desc(outboundmessage.FieldID)).
 		Limit(pageSize).
 		Offset(pagination.Offset(page, pageSize)).
 		All(ctx)
@@ -46,7 +49,7 @@ func (h *Handlers) SiteTransactionalEmailsList(ctx context.Context, params sitea
 
 	res := make([]siteapi.SiteTransactionalEmailResource, len(items))
 	for i, t := range items {
-		res[i] = mapper.TransactionalEmailToResource(t)
+		res[i] = mapper.TransactionalMessageToResource(t)
 	}
 	return &siteapi.SiteTransactionalEmailsListOK{
 		Items:      res,

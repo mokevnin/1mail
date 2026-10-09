@@ -2203,6 +2203,10 @@ type SiteBroadcastResource struct {
 	IntegrationId OptNilEntityId `json:"integrationId"`
 	// Lifecycle status.
 	Status SiteBroadcastStatus `json:"status"`
+	// Why sending is currently held, when it is: `workspace_suspended`, `unverified_domain` or
+	// `no_integration`. A hold is reversible and not a failure: the broadcast keeps its status and the
+	// remaining recipients send once it lifts.
+	HoldReason OptNilString `json:"holdReason"`
 	// When the broadcast is scheduled to send.
 	ScheduledAt OptNilTimestamp `json:"scheduledAt"`
 	// When the broadcast finished sending.
@@ -2263,6 +2267,11 @@ func (s *SiteBroadcastResource) GetIntegrationId() OptNilEntityId {
 // GetStatus returns the value of Status.
 func (s *SiteBroadcastResource) GetStatus() SiteBroadcastStatus {
 	return s.Status
+}
+
+// GetHoldReason returns the value of HoldReason.
+func (s *SiteBroadcastResource) GetHoldReason() OptNilString {
+	return s.HoldReason
 }
 
 // GetScheduledAt returns the value of ScheduledAt.
@@ -2338,6 +2347,11 @@ func (s *SiteBroadcastResource) SetIntegrationId(val OptNilEntityId) {
 // SetStatus sets the value of Status.
 func (s *SiteBroadcastResource) SetStatus(val SiteBroadcastStatus) {
 	s.Status = val
+}
+
+// SetHoldReason sets the value of HoldReason.
+func (s *SiteBroadcastResource) SetHoldReason(val OptNilString) {
+	s.HoldReason = val
 }
 
 // SetScheduledAt sets the value of ScheduledAt.

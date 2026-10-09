@@ -12,11 +12,9 @@ import (
 	"github.com/mokevnin/1mail/ent"
 	"github.com/mokevnin/1mail/ent/automation"
 	"github.com/mokevnin/1mail/ent/automationrun"
+	"github.com/mokevnin/1mail/ent/outboundmessage"
 	"github.com/mokevnin/1mail/internal/eligibility"
-	"github.com/mokevnin/1mail/internal/emailrender"
-	"github.com/mokevnin/1mail/internal/events"
-	"github.com/mokevnin/1mail/internal/messaging"
-	"github.com/mokevnin/1mail/internal/tracking"
+	"github.com/mokevnin/1mail/internal/outbound"
 )
 
 // step is one node in an automation definition (a linear list for the MVP).
@@ -109,14 +107,12 @@ func (RunStepArgs) Kind() string { return "automation_run_step" }
 
 type RunStepWorker struct {
 	river.WorkerDefaults[RunStepArgs]
-	ent      *ent.Client
-	bus      *events.Bus
-	resolver SenderResolver
-	tracker  *tracking.Tracker
+	ent *ent.Client
+	mod *outbound.Module
 }
 
 func (w *RunStepWorker) Work(ctx context.Context, job *river.Job[RunStepArgs]) error {
-	res, err := RunStep(ctx, w.ent, w.bus, w.resolver, w.tracker, job.Args.RunID)
+	res, err := RunStep(ctx, w.ent, w.mod, job.Args.RunID)
 	if err != nil {
 		return err
 	}
@@ -140,10 +136,11 @@ type StepResult struct {
 }
 
 // RunStep executes the run's current step and advances it. Exported and queue-free
-// so a test can drive a whole automation by looping until Done. Email sends carry
-// an unsubscribe footer scoped to this automation (the tracker may be nil, e.g. in
-// tests that don't assert on it); open/click tracking is still broadcast-only.
-func RunStep(ctx context.Context, client *ent.Client, bus *events.Bus, resolver SenderResolver, tracker *tracking.Tracker, runID int64) (StepResult, error) {
+// so a test can drive a whole automation by looping until Done. An email step is
+// one Outbound send under this automation's Sending source (ADR 0015): the module
+// owns eligibility, the unsubscribe footer and headers, and the send record, and
+// RunStep only turns its Outcome into the enrollment's next state.
+func RunStep(ctx context.Context, client *ent.Client, mod *outbound.Module, runID int64) (StepResult, error) {
 	run, err := client.AutomationRun.Get(ctx, runID)
 	if err != nil {
 		return StepResult{}, fmt.Errorf("load run %d: %w", runID, err)
@@ -186,97 +183,44 @@ func RunStep(ctx context.Context, client *ent.Client, bus *events.Bus, resolver 
 			_, _ = run.Update().SetStatus(automationrun.StatusCompleted).ClearResumeAt().Save(ctx)
 			return StepResult{Done: true}, nil
 		}
-		// Send-eligibility (ADR 0001): each Automation is its own unsubscribe
-		// source, and Suppression is the global hard floor. An ineligible
-		// destination (suppressed, or unsubscribed from this automation / from
-		// everything) exits the enrollment — a run never silently keeps walking
-		// steps while skipping every email.
-		requireConfirmed, err := eligibility.RequiresConfirmation(ctx, client, run.WorkspaceID)
+		step := run.CurrentStep
+		res, err := mod.Send(ctx, outbound.Request{
+			WorkspaceID: run.WorkspaceID,
+			Kind:        outboundmessage.KindAutomation,
+			Key:         fmt.Sprintf("automation:%d:%d", run.ID, step),
+			Destination: *c.Email,
+			Contact:     c,
+			// Each Automation is its own unsubscribe Sending source; the unsubscribe
+			// click exits this enrollment (ADR 0001).
+			Source:  eligibility.AutomationSource(a.ID),
+			Subject: s.Subject,
+			Body:    s.Body,
+			Ref:     outbound.Ref{AutomationID: a.ID, AutomationRunID: run.ID, AutomationStep: &step},
+		})
 		if err != nil {
-			return StepResult{}, fmt.Errorf("eligibility: %w", err)
+			return StepResult{}, err // retryable: the worker's retry replays the same key
 		}
-		decision, err := eligibility.Check(ctx, client, run.WorkspaceID,
-			eligibility.ChannelEmail, *c.Email, eligibility.AutomationSource(a.ID), true, requireConfirmed)
-		if err != nil {
-			return StepResult{}, fmt.Errorf("eligibility: %w", err)
-		}
-		if !decision.Eligible {
+		switch res.Outcome {
+		case outbound.Sent:
+			// Advance past the email step. A crash between the send and this write
+			// replays the recorded Sent on retry, so the step never sends twice.
+			if _, err := run.Update().SetCurrentStep(step + 1).ClearResumeAt().Save(ctx); err != nil {
+				return StepResult{}, err
+			}
+			return StepResult{}, nil // continue immediately
+		case outbound.Skipped:
+			// An ineligible destination (suppressed, or unsubscribed from this
+			// automation / from everything) exits the enrollment — a run never
+			// silently keeps walking steps while skipping every email.
 			_, _ = run.Update().SetStatus(automationrun.StatusExited).ClearResumeAt().Save(ctx)
 			return StepResult{Done: true}, nil
-		}
-		sender, err := resolver.EmailSender(ctx, run.WorkspaceID)
-		if err != nil {
+		case outbound.Failed:
 			_, _ = run.Update().SetStatus(automationrun.StatusFailed).Save(ctx)
-			return StepResult{}, fmt.Errorf("resolve sender: %w", err)
+			return StepResult{}, fmt.Errorf("email step %d: %s", step, res.Reason)
+		default: // outbound.Held: the enrollment waits, unchanged, and asks again later
+			resume := time.Now().Add(holdRetryDelay)
+			return StepResult{ResumeAt: &resume}, nil
 		}
-		email, err := emailrender.RenderEmail(s.Subject, s.Body, contactBindings(c))
-		if err != nil {
-			_, _ = run.Update().SetStatus(automationrun.StatusFailed).Save(ctx)
-			return StepResult{}, fmt.Errorf("render: %w", err)
-		}
-		// Unsubscribe footer scoped to this automation: each Automation is its own
-		// sending source, and the click exits the enrollment (ADR 0001).
-		html := email.HTML
-		var listUnsubURL string
-		if tracker != nil {
-			unsub := tracking.UnsubTarget{
-				Source:      eligibility.AutomationSource(a.ID),
-				Destination: *c.Email,
-				WorkspaceID: run.WorkspaceID,
-				ContactID:   c.ID,
-			}
-			// Workspace carries the CAN-SPAM postal address rendered in the footer.
-			ws, werr := client.Workspace.Get(ctx, run.WorkspaceID)
-			if werr != nil {
-				return StepResult{}, fmt.Errorf("load workspace %d: %w", run.WorkspaceID, werr)
-			}
-			footer, ferr := tracker.UnsubscribeFooter(unsub, ws.PostalAddress)
-			if ferr != nil {
-				_, _ = run.Update().SetStatus(automationrun.StatusFailed).Save(ctx)
-				return StepResult{}, fmt.Errorf("unsubscribe footer: %w", ferr)
-			}
-			html += footer
-			// RFC 8058 one-click header reuses the footer's source-scoped token (ADR 0012).
-			url, uerr := tracker.UnsubscribeURL(unsub)
-			if uerr != nil {
-				_, _ = run.Update().SetStatus(automationrun.StatusFailed).Save(ctx)
-				return StepResult{}, fmt.Errorf("unsubscribe url: %w", uerr)
-			}
-			listUnsubURL = url
-		}
-		// From/FromName left empty: the provider falls back to the integration's
-		// configured sender (messaging.FirstNonEmpty in the smtp/ses senders).
-		if err := sender.Send(ctx, messaging.EmailMessage{
-			To:                 *c.Email,
-			Subject:            email.Subject,
-			HTML:               html,
-			Text:               email.Text,
-			ListUnsubscribeURL: listUnsubURL,
-		}); err != nil {
-			_, _ = run.Update().SetStatus(automationrun.StatusFailed).Save(ctx)
-			return StepResult{}, fmt.Errorf("send: %w", err)
-		}
-		// Advance the enrollment + publish email.sent atomically (transactional
-		// outbox), so the send fact lands in the Event log alongside broadcast sends
-		// (Events are the source of truth). The deterministic DedupID (run + step)
-		// makes persist idempotent if the step is retried after a send.
-		sentStep := run.CurrentStep
-		if err := bus.WithinTx(ctx, func(tx *ent.Client, pub events.Publisher) error {
-			if _, err := tx.AutomationRun.UpdateOneID(run.ID).
-				SetCurrentStep(sentStep + 1).ClearResumeAt().Save(ctx); err != nil {
-				return err
-			}
-			return pub.Publish(ctx, &events.EmailEngagement{
-				Action:      events.NameEmailSent,
-				WorkspaceID: run.WorkspaceID,
-				ContactID:   run.ContactID,
-				Email:       *c.Email,
-				DedupID:     fmt.Sprintf("email.sent:automation:%d:%d", run.ID, sentStep),
-			})
-		}); err != nil {
-			return StepResult{}, err
-		}
-		return StepResult{}, nil // continue immediately
 
 	default:
 		_, _ = run.Update().SetStatus(automationrun.StatusFailed).Save(ctx)

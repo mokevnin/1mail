@@ -12,14 +12,11 @@ import (
 	"github.com/mokevnin/1mail/ent/broadcast"
 	"github.com/mokevnin/1mail/ent/broadcastrecipient"
 	"github.com/mokevnin/1mail/ent/contact"
+	"github.com/mokevnin/1mail/ent/outboundmessage"
 	"github.com/mokevnin/1mail/ent/segment"
 	"github.com/mokevnin/1mail/internal/eligibility"
-	"github.com/mokevnin/1mail/internal/emailrender"
-	"github.com/mokevnin/1mail/internal/events"
-	"github.com/mokevnin/1mail/internal/logging"
-	"github.com/mokevnin/1mail/internal/messaging"
+	"github.com/mokevnin/1mail/internal/outbound"
 	"github.com/mokevnin/1mail/internal/segments"
-	"github.com/mokevnin/1mail/internal/tracking"
 )
 
 // recipientInsertChunk bounds a single CreateBulk / InsertMany so a very large
@@ -49,21 +46,13 @@ type SendRecipientArgs struct {
 
 func (SendRecipientArgs) Kind() string { return "send_broadcast_recipient" }
 
-// SenderResolver resolves a workspace's email sender. *messaging.Resolver
-// satisfies it; tests pass a fake to exercise the engine without real SMTP.
-type SenderResolver interface {
-	EmailSender(ctx context.Context, workspaceID int64) (messaging.EmailSender, error)
-}
-
 // SendBroadcastWorker is the fan-out phase: it plans the audience and enqueues a
 // per-recipient job for each, so the send scales across workers instead of
 // running the whole audience in one job under the default 1-minute JobTimeout.
 type SendBroadcastWorker struct {
 	river.WorkerDefaults[SendBroadcastArgs]
-	ent      *ent.Client
-	bus      *events.Bus
-	resolver SenderResolver
-	tracker  *tracking.Tracker
+	ent *ent.Client
+	mod *outbound.Module
 }
 
 // Timeout gives the plan phase room to resolve a large audience and enqueue the
@@ -74,9 +63,9 @@ func (w *SendBroadcastWorker) Timeout(*river.Job[SendBroadcastArgs]) time.Durati
 }
 
 func (w *SendBroadcastWorker) Work(ctx context.Context, job *river.Job[SendBroadcastArgs]) error {
-	ids, err := PlanBroadcast(ctx, w.ent, w.resolver, job.Args.BroadcastID)
+	ids, err := PlanBroadcast(ctx, w.ent, w.mod, job.Args.BroadcastID)
 	if err != nil {
-		return err
+		return snoozeOnHold(err)
 	}
 	if len(ids) == 0 {
 		return nil // empty audience: PlanBroadcast already finalized the broadcast
@@ -103,19 +92,21 @@ func (w *SendBroadcastWorker) Work(ctx context.Context, job *river.Job[SendBroad
 // rest of the audience.
 type SendRecipientWorker struct {
 	river.WorkerDefaults[SendRecipientArgs]
-	ent      *ent.Client
-	bus      *events.Bus
-	resolver SenderResolver
-	tracker  *tracking.Tracker
+	ent *ent.Client
+	mod *outbound.Module
 }
 
 func (w *SendRecipientWorker) Work(ctx context.Context, job *river.Job[SendRecipientArgs]) error {
-	if err := SendToRecipient(ctx, w.ent, w.bus, w.resolver, w.tracker, job.Args.RecipientID); err != nil {
+	if err := SendToRecipient(ctx, w.ent, w.mod, job.Args.RecipientID); err != nil {
+		if _, held := asHeld(err); held {
+			// A hold is not a failure: wait it out without spending an attempt.
+			return snoozeOnHold(err)
+		}
 		// On the final attempt, record the terminal failure so the broadcast can
 		// finalize instead of hanging in "sending", then surface the error (river
 		// discards the job and the ErrorHandler logs it).
 		if job.Attempt >= job.MaxAttempts {
-			_ = markRecipientFailed(ctx, w.ent, job.Args.RecipientID, err)
+			_ = markRecipientFailed(ctx, w.ent, w.mod, job.Args.RecipientID, err)
 			_ = FinalizeBroadcast(ctx, w.ent, job.Args.BroadcastID)
 		}
 		return err
@@ -133,16 +124,21 @@ func (w *SendRecipientWorker) Work(ctx context.Context, job *river.Job[SendRecip
 //
 // Audience = workspace contacts with an email address (optionally narrowed by a
 // segment) minus the ineligible (suppressed / unsubscribed, derived per ADR 0001).
-func SendBroadcast(ctx context.Context, client *ent.Client, bus *events.Bus, resolver SenderResolver, tracker *tracking.Tracker, broadcastID int64) error {
-	ids, err := PlanBroadcast(ctx, client, resolver, broadcastID)
+func SendBroadcast(ctx context.Context, client *ent.Client, mod *outbound.Module, broadcastID int64) error {
+	ids, err := PlanBroadcast(ctx, client, mod, broadcastID)
 	if err != nil {
 		return err
 	}
 	for _, id := range ids {
-		if serr := SendToRecipient(ctx, client, bus, resolver, tracker, id); serr != nil {
+		if serr := SendToRecipient(ctx, client, mod, id); serr != nil {
+			if _, held := asHeld(serr); held {
+				// The source is on hold: stop, leaving the remaining recipients pending
+				// for a later run rather than consuming them.
+				return serr
+			}
 			// Synchronous path has no retry runtime — a failed send is terminal, so
 			// mark the row failed (a bad recipient must not abort the batch).
-			_ = markRecipientFailed(ctx, client, id, serr)
+			_ = markRecipientFailed(ctx, client, mod, id, serr)
 		}
 	}
 	return FinalizeBroadcast(ctx, client, broadcastID)
@@ -154,36 +150,29 @@ func SendBroadcast(ctx context.Context, client *ent.Client, bus *events.Bus, res
 // recipient row IDs to send. It fails fast — before any rows exist — if the
 // workspace has no usable sender, and finalizes immediately on an empty audience
 // so the broadcast never hangs in "sending".
-func PlanBroadcast(ctx context.Context, client *ent.Client, resolver SenderResolver, broadcastID int64) ([]int64, error) {
+func PlanBroadcast(ctx context.Context, client *ent.Client, mod *outbound.Module, broadcastID int64) ([]int64, error) {
 	b, err := client.Broadcast.Get(ctx, broadcastID)
 	if err != nil {
 		return nil, fmt.Errorf("load broadcast %d: %w", broadcastID, err)
 	}
 
-	// Validate the sender up front: no usable provider means the whole broadcast
-	// fails, and we'd rather reflect that before creating any recipient rows.
-	if _, err := resolver.EmailSender(ctx, b.WorkspaceID); err != nil {
-		_, _ = b.Update().SetStatus(broadcast.StatusFailed).Save(ctx)
-		return nil, fmt.Errorf("resolve sender for broadcast %d: %w", b.ID, err)
-	}
-
-	// Verified-domain send gate (ADR 0010 slice 3): when the broadcast pins an
-	// explicit From, reject the whole broadcast up front if its domain isn't a
-	// verified sending domain — rather than failing every recipient at send time.
-	// A nil From falls back to the integration's configured sender, whose effective
-	// domain is only known inside the provider; that case is left to the send-time
-	// gate in BuildSignedMIME and (known residual) fails each recipient job over its
-	// retry budget instead of failing fast here.
+	// Ask Outbound send whether this workspace can send now, before any recipient row
+	// exists: a Workspace freeze, no Integration, or an unverified From domain is a
+	// reversible hold (ADR 0015) — the broadcast keeps its status, records why, and
+	// the plan is retried later; it is not failed.
+	var from string
 	if b.FromEmail != nil {
-		ok, err := messaging.HasVerifiedSendingDomain(ctx, client, b.WorkspaceID, *b.FromEmail)
-		if err != nil {
-			return nil, fmt.Errorf("check sending domain for broadcast %d: %w", b.ID, err)
-		}
-		if !ok {
-			_, _ = b.Update().SetStatus(broadcast.StatusFailed).Save(ctx)
-			return nil, fmt.Errorf("broadcast %d: %w", b.ID, messaging.ErrUnverifiedSendingDomain)
-		}
+		from = *b.FromEmail
 	}
+	hold, err := mod.Preflight(ctx, b.WorkspaceID, from)
+	if err != nil {
+		return nil, fmt.Errorf("preflight broadcast %d: %w", b.ID, err)
+	}
+	if hold != "" {
+		setBroadcastHold(ctx, client, b.ID, hold)
+		return nil, &HeldError{Reason: hold}
+	}
+	setBroadcastHold(ctx, client, b.ID, "")
 
 	if b, err = b.Update().SetStatus(broadcast.StatusSending).Save(ctx); err != nil {
 		return nil, err
@@ -195,15 +184,10 @@ func PlanBroadcast(ctx context.Context, client *ent.Client, resolver SenderResol
 	// unsubscribed from the "broadcasts" source (or from everything) are excluded
 	// at the query level. EmailNotNil keeps un-sendable contacts out so no row is
 	// created that could never send and would block finalization forever.
-	requireConfirmed, err := eligibility.RequiresConfirmation(ctx, client, b.WorkspaceID)
-	if err != nil {
-		_, _ = b.Update().SetStatus(broadcast.StatusFailed).Save(ctx)
-		return nil, fmt.Errorf("broadcast %d: %w", b.ID, err)
-	}
 	audience := client.Contact.Query().Where(
 		contact.WorkspaceID(b.WorkspaceID),
 		contact.EmailNotNil(),
-		eligibility.Predicate(eligibility.ChannelEmail, eligibility.SourceBroadcasts, requireConfirmed),
+		eligibility.Predicate(eligibility.ChannelEmail, eligibility.SourceBroadcasts),
 	)
 	if b.SegmentID != nil {
 		seg, err := client.Segment.Query().
@@ -274,29 +258,24 @@ func PlanBroadcast(ctx context.Context, client *ent.Client, resolver SenderResol
 	return ids, nil
 }
 
-// SendToRecipient renders and sends one broadcast recipient's email, recording
-// the outcome. It is idempotent: an already-sent recipient is skipped (so a
-// retry after a successful send never re-sends), and success records delivery +
-// publishes email.sent atomically via the transactional outbox. A send error is
-// returned (not marked failed) so the caller can retry; a render error is
-// terminal.
-func SendToRecipient(ctx context.Context, client *ent.Client, bus *events.Bus, resolver SenderResolver, tracker *tracking.Tracker, recipientID int64) error {
+// SendToRecipient hands one broadcast recipient's email to Outbound send and maps
+// the Outcome onto the recipient row. It is idempotent: a recipient already at a
+// final status is left alone, and the module's idempotency key makes a retry after
+// a committed send replay the recorded result. A returned error is retryable
+// (provider down, claim in flight); a *HeldError means the source is on hold and
+// the job should be deferred, not failed.
+func SendToRecipient(ctx context.Context, client *ent.Client, mod *outbound.Module, recipientID int64) error {
 	rec, err := client.BroadcastRecipient.Get(ctx, recipientID)
 	if err != nil {
 		return fmt.Errorf("load recipient %d: %w", recipientID, err)
 	}
-	if rec.Status == broadcastrecipient.StatusSent {
-		return nil // already delivered (retry after a committed send) — don't re-send
+	if rec.Status != broadcastrecipient.StatusPending {
+		return nil // already decided (retry after a committed send) — don't re-send
 	}
 
 	b, err := client.Broadcast.Get(ctx, rec.BroadcastID)
 	if err != nil {
 		return fmt.Errorf("load broadcast %d: %w", rec.BroadcastID, err)
-	}
-	// Workspace carries the CAN-SPAM postal address rendered in the footer.
-	ws, err := client.Workspace.Get(ctx, rec.WorkspaceID)
-	if err != nil {
-		return fmt.Errorf("load workspace %d: %w", rec.WorkspaceID, err)
 	}
 	c, err := client.Contact.Get(ctx, rec.ContactID)
 	if err != nil {
@@ -308,88 +287,63 @@ func SendToRecipient(ctx context.Context, client *ent.Client, bus *events.Bus, r
 		_, _ = rec.Update().SetStatus(broadcastrecipient.StatusFailed).SetError("contact has no email").Save(ctx)
 		return nil
 	}
-	addr := *c.Email
 
-	sender, err := resolver.EmailSender(ctx, rec.WorkspaceID)
-	if err != nil {
-		return fmt.Errorf("resolve sender: %w", err) // retryable — provider config may recover
+	req := outbound.Request{
+		WorkspaceID: rec.WorkspaceID,
+		Kind:        outboundmessage.KindBroadcast,
+		Key:         recipientKey(rec.ID),
+		Destination: *c.Email,
+		Contact:     c,
+		Source:      eligibility.SourceBroadcasts,
+		Subject:     b.Subject,
+		Body:        b.Body,
+		TrackID:     rec.ID,
+		Ref:         outbound.Ref{BroadcastID: b.ID, BroadcastRecipient: rec.ID},
 	}
-
-	email, rerr := emailrender.RenderEmail(b.Subject, b.Body, contactBindings(c))
-	if rerr != nil {
-		_, _ = rec.Update().SetStatus(broadcastrecipient.StatusFailed).SetError(rerr.Error()).Save(ctx)
-		return nil // render errors are deterministic — retrying won't help
-	}
-
-	// Pipeline: liquid merge tags → (mjml compile) → CSS inline. Tracking is
-	// layered on AFTER, so re-parsing can't mangle the pixel/links.
-	html := email.HTML
-	var listUnsubURL string
-	if tracker != nil {
-		unsub := tracking.UnsubTarget{
-			Source:      eligibility.SourceBroadcasts,
-			Destination: addr,
-			WorkspaceID: b.WorkspaceID,
-			ContactID:   c.ID,
-			BroadcastID: b.ID,
-		}
-		if tracked, terr := tracker.Rewrite(html, rec.ID, unsub, ws.PostalAddress); terr != nil {
-			logging.FromContext(ctx).Error("broadcast: rewrite links failed", "broadcast_id", b.ID, "recipient_id", rec.ID, "err", terr)
-		} else {
-			html = tracked
-		}
-		// RFC 8058 one-click header reuses the footer's source-scoped token (ADR 0012).
-		if url, uerr := tracker.UnsubscribeURL(unsub); uerr != nil {
-			logging.FromContext(ctx).Error("broadcast: unsubscribe url failed", "broadcast_id", b.ID, "recipient_id", rec.ID, "err", uerr)
-		} else {
-			listUnsubURL = url
-		}
-	}
-
-	var fromEmail, fromName string
 	if b.FromEmail != nil {
-		fromEmail = *b.FromEmail
+		req.FromEmail = *b.FromEmail
 	}
 	if b.FromName != nil {
-		fromName = *b.FromName
+		req.FromName = *b.FromName
 	}
 
-	if serr := sender.Send(ctx, messaging.EmailMessage{
-		From:               fromEmail,
-		FromName:           fromName,
-		To:                 addr,
-		Subject:            email.Subject,
-		HTML:               html,
-		Text:               email.Text,
-		ListUnsubscribeURL: listUnsubURL,
-	}); serr != nil {
-		return fmt.Errorf("send to %s: %w", addr, serr) // retryable
+	res, err := mod.Send(ctx, req)
+	if err != nil {
+		return err
 	}
-
-	// Record delivery + publish email.sent atomically (transactional outbox), so
-	// the send fact lands in the Event log iff the recipient is marked sent.
-	// The recipient row's unique (broadcast, contact) index plus the sent-skip
-	// above give exactly-once; the deterministic DedupID is defense in depth.
-	return bus.WithinTx(ctx, func(tx *ent.Client, pub events.Publisher) error {
-		if _, err := tx.BroadcastRecipient.UpdateOneID(rec.ID).
-			SetStatus(broadcastrecipient.StatusSent).
-			SetSentAt(time.Now()).Save(ctx); err != nil {
-			return err
-		}
-		return pub.Publish(ctx, &events.EmailEngagement{
-			Action:      events.NameEmailSent,
-			WorkspaceID: b.WorkspaceID,
-			ContactID:   c.ID,
-			Email:       addr,
-			BroadcastID: b.ID,
-			DedupID:     fmt.Sprintf("email.sent:%d", rec.ID),
-		})
-	})
+	upd := rec.Update()
+	if res.MessageID != 0 {
+		upd.SetOutboundMessageID(res.MessageID)
+	}
+	switch res.Outcome {
+	case outbound.Sent:
+		setBroadcastHold(ctx, client, b.ID, "") // a send went through: the hold, if any, has lifted
+		_, err = upd.SetStatus(broadcastrecipient.StatusSent).SetSentAt(time.Now()).Save(ctx)
+	case outbound.Skipped:
+		_, err = upd.SetStatus(broadcastrecipient.StatusSkipped).SetError(res.Reason).Save(ctx)
+	case outbound.Failed:
+		_, err = upd.SetStatus(broadcastrecipient.StatusFailed).SetError(res.Reason).Save(ctx)
+	default: // outbound.Held
+		setBroadcastHold(ctx, client, b.ID, res.Reason)
+		return &HeldError{Reason: res.Reason}
+	}
+	return err
 }
 
-// markRecipientFailed records a terminal delivery failure on a recipient row.
-func markRecipientFailed(ctx context.Context, client *ent.Client, recipientID int64, cause error) error {
-	_, err := client.BroadcastRecipient.UpdateOneID(recipientID).
+// recipientKey is the Outbound send idempotency key of one broadcast recipient.
+func recipientKey(recipientID int64) string {
+	return fmt.Sprintf("broadcast:%d", recipientID)
+}
+
+// markRecipientFailed records a terminal delivery failure on a recipient row and
+// gives up the Outbound claim so a stale pending message does not linger.
+func markRecipientFailed(ctx context.Context, client *ent.Client, mod *outbound.Module, recipientID int64, cause error) error {
+	rec, err := client.BroadcastRecipient.Get(ctx, recipientID)
+	if err != nil {
+		return err
+	}
+	_ = mod.MarkFailed(ctx, rec.WorkspaceID, recipientKey(recipientID), cause)
+	_, err = rec.Update().
 		SetStatus(broadcastrecipient.StatusFailed).
 		SetError(cause.Error()).
 		Save(ctx)
@@ -427,6 +381,13 @@ func FinalizeBroadcast(ctx context.Context, client *ent.Client, broadcastID int6
 	if err != nil {
 		return err
 	}
+	skipped, err := client.BroadcastRecipient.Query().
+		Where(broadcastrecipient.BroadcastID(broadcastID),
+			broadcastrecipient.StatusEQ(broadcastrecipient.StatusSkipped)).
+		Count(ctx)
+	if err != nil {
+		return err
+	}
 
 	_, err = client.Broadcast.Update().
 		Where(broadcast.IDEQ(broadcastID), broadcast.StatusEQ(broadcast.StatusSending)).
@@ -434,27 +395,8 @@ func FinalizeBroadcast(ctx context.Context, client *ent.Client, broadcastID int6
 		SetSentAt(time.Now()).
 		SetSentCount(sent).
 		SetFailedCount(failed).
+		SetSkippedCount(skipped).
+		ClearHoldReason().
 		Save(ctx)
 	return err
-}
-
-// contactBindings builds the Liquid merge-tag context for a contact: its core
-// fields plus any custom fields (custom fields can shadow nothing important and
-// keep merge tags simple, e.g. {{ first_name }}, {{ company }}).
-func contactBindings(c *ent.Contact) map[string]any {
-	b := map[string]any{
-		"email":      c.Email,
-		"first_name": "",
-		"last_name":  "",
-	}
-	if c.FirstName != nil {
-		b["first_name"] = *c.FirstName
-	}
-	if c.LastName != nil {
-		b["last_name"] = *c.LastName
-	}
-	for k, v := range c.CustomFields {
-		b[k] = v
-	}
-	return b
 }

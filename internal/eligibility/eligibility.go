@@ -1,33 +1,34 @@
 // Package eligibility derives whether a message on a channel from a sending
-// source may reach a destination (ADR 0001). Eligibility is never a stored flag
-// on the Contact; it is computed in layers against two destination-keyed stores:
+// source may reach a destination (ADR 0001, 0013). Eligibility is never a stored
+// flag on the Contact; it is computed in layers against three destination-keyed
+// stores:
 //
 //  1. (channel, destination) in Suppression            → never (global hard floor)
 //  2. (channel, destination) unsubscribed "everything"  → never
 //  3. (channel, destination) unsubscribed from source   → never
-//  4. requireConfirmed && no (channel, destination) Confirmation → never
+//  4. workspace requires confirmed opt-in and no Confirmation → never
 //  5. otherwise                                         → send
 //
-// Layers 1–3 are subtractive (ADR 0001). Layer 4 is the optional positive gate
-// (ADR 0013): it is added only when requireConfirmed is true — a workspace with
-// confirmed-opt-in enabled — and is the lowest priority, so the negatives always
-// dominate a confirmation. When requireConfirmed is false the confirmation store
-// is never touched and behavior is identical to the pure subtractive model.
+// The layers are defined exactly once (see layers) and consumed in two shapes that
+// therefore cannot drift: Check decides one (workspace, destination) pair, and
+// Predicate narrows a Contact query to the eligible audience. The rule is keyed by
+// destination, never by Contact — a transactional destination may have no Contact.
 //
-// Transactional sends pass respectUnsubscribe=false: they skip layers 2–4 (you
+// A source of "" means a transactional send (ADR 0005): it skips layers 2–4 (you
 // cannot opt out of, nor must you confirm, your own password reset) but still
-// respect Suppression.
+// respects Suppression. Whether the workspace requires confirmed opt-in is read
+// inside the rule, so no caller can forget the confirmation gate.
 //
 // Stored destinations are normalized (lower-cased + trimmed) on write, but
-// contact.email is not normalized at write time, so every comparison folds case
-// on the contact side. The batch Predicate does this with lower() in SQL; Check
-// normalizes the input before the point lookups.
+// contact.email is not, so the Contact-side comparison folds case in SQL while
+// Check normalizes its input with NormalizeDestination.
 package eligibility
 
 import (
 	"context"
-	"entgo.io/ent/dialect/sql"
 	"fmt"
+
+	"entgo.io/ent/dialect/sql"
 
 	"github.com/mokevnin/1mail/ent"
 	"github.com/mokevnin/1mail/ent/confirmation"
@@ -53,187 +54,167 @@ type Decision struct {
 	Reason string
 }
 
-// Predicate ANDs the eligibility floor for (channel, source) onto a Contact
-// query: not suppressed AND not unsubscribed from "everything" AND not
-// unsubscribed from the source. When requireConfirmed is true (the workspace has
-// confirmed-opt-in enabled, ADR 0013) it also ANDs a positive layer: a
-// Confirmation must exist for the destination. When false, that clause is omitted
-// entirely, so the emitted SQL and audience are byte-for-byte the subtractive
-// model. It composes with a segment predicate (both are predicate.Contact). The
-// correlation joins on lower(contacts.email) = destination — never on contact_id
-// — because the stores are destination-keyed.
-func Predicate(channel, source string, requireConfirmed bool) predicate.Contact {
-	return func(s *sql.Selector) {
-		// Layer 1: Suppression (global hard floor).
-		sup := sql.Select(suppression.FieldID).From(sql.Table(suppression.Table))
-		sup.Where(sql.And(
-			destinationMatches(s, sup, suppression.FieldDestination),
-			sql.ColumnsEQ(sup.C(suppression.FieldWorkspaceID), s.C(contact.FieldWorkspaceID)),
-			sql.EQ(sup.C(suppression.FieldChannel), channel),
-		))
-		s.Where(sql.NotExists(sup))
-
-		// Layers 2–3: Unsubscribe from "everything" or the source.
-		uns := sql.Select(unsubscribe.FieldID).From(sql.Table(unsubscribe.Table))
-		uns.Where(sql.And(
-			destinationMatches(s, uns, unsubscribe.FieldDestination),
-			sql.ColumnsEQ(uns.C(unsubscribe.FieldWorkspaceID), s.C(contact.FieldWorkspaceID)),
-			sql.EQ(uns.C(unsubscribe.FieldChannel), channel),
-			sql.In(uns.C(unsubscribe.FieldSendingSource), SourceEverything, source),
-		))
-		s.Where(sql.NotExists(uns))
-
-		// Layer 4 (positive, opt-in): a Confirmation must exist. Omitted unless the
-		// workspace requires confirmed opt-in, so the default path is unchanged.
-		if requireConfirmed {
-			conf := sql.Select(confirmation.FieldID).From(sql.Table(confirmation.Table))
-			conf.Where(sql.And(
-				destinationMatches(s, conf, confirmation.FieldDestination),
-				sql.ColumnsEQ(conf.C(confirmation.FieldWorkspaceID), s.C(contact.FieldWorkspaceID)),
-				sql.EQ(conf.C(confirmation.FieldChannel), channel),
-			))
-			s.Where(sql.Exists(conf))
-		}
-	}
-}
-
-// GloballyOptedOut matches contacts whose destination is non-mailable on the
-// given channel regardless of source: it is suppressed, or unsubscribed from
-// "everything". Used for the "unsubscribed" analytics KPI — the derived,
-// dashboard-level view of "fully opted out", since there is no stored contact
-// status (ADR 0001). A per-source ("broadcasts") opt-out is deliberately not
-// counted here: that contact may still be mailable from other sources.
-func GloballyOptedOut(channel string) predicate.Contact {
-	return func(s *sql.Selector) {
-		sup := sql.Select(suppression.FieldID).From(sql.Table(suppression.Table))
-		sup.Where(sql.And(
-			destinationMatches(s, sup, suppression.FieldDestination),
-			sql.ColumnsEQ(sup.C(suppression.FieldWorkspaceID), s.C(contact.FieldWorkspaceID)),
-			sql.EQ(sup.C(suppression.FieldChannel), channel),
-		))
-		uns := sql.Select(unsubscribe.FieldID).From(sql.Table(unsubscribe.Table))
-		uns.Where(sql.And(
-			destinationMatches(s, uns, unsubscribe.FieldDestination),
-			sql.ColumnsEQ(uns.C(unsubscribe.FieldWorkspaceID), s.C(contact.FieldWorkspaceID)),
-			sql.EQ(uns.C(unsubscribe.FieldChannel), channel),
-			sql.EQ(uns.C(unsubscribe.FieldSendingSource), SourceEverything),
-		))
-		s.Where(sql.Or(sql.Exists(sup), sql.Exists(uns)))
-	}
-}
-
-// destinationMatches correlates the subquery's normalized destination to the
-// outer contact's email, folding case on the (un-normalized) contact side. It
-// defers column rendering to query-build time (sql.P closure) so the dialect is
-// applied — eager string formatting would emit mis-quoted identifiers.
-func destinationMatches(outer, sub *sql.Selector, destCol string) *sql.Predicate {
-	return sql.P(func(b *sql.Builder) {
-		b.WriteString("lower(").WriteString(outer.C(contact.FieldEmail)).WriteString(") = ").WriteString(sub.C(destCol))
-	})
-}
-
-// CheckTransactional is the eligibility check for a transactional send: it
-// respects Suppression (the global hard floor) but skips Unsubscribe, because
-// transactional mail carries no sending source (ADR 0005). A thin wrapper over
-// Check so the call site reads as intent rather than a bare "", false.
-func CheckTransactional(ctx context.Context, client *ent.Client, workspaceID int64, channel, dest string) (Decision, error) {
-	return Check(ctx, client, workspaceID, channel, dest, "", false, false)
-}
-
-// RequiresConfirmation reports whether the workspace has confirmed-opt-in enabled
-// (ADR 0013). Marketing send paths read it once and pass the result to Check /
-// Predicate as requireConfirmed, so the confirmation gate is applied only when the
-// policy is on.
-func RequiresConfirmation(ctx context.Context, client *ent.Client, workspaceID int64) (bool, error) {
-	on, err := client.Workspace.Query().
-		Where(workspace.ID(workspaceID)).
-		Select(workspace.FieldRequireConfirmedOptIn).
-		Bool(ctx)
-	if err != nil {
-		return false, fmt.Errorf("eligibility require-confirmed lookup: %w", err)
-	}
-	return on, nil
-}
-
-// Check decides eligibility for a single destination via point lookups. Pass
-// respectUnsubscribe=false for transactional sends (Suppression only), and
-// requireConfirmed=true only for a marketing send in a confirmed-opt-in workspace
-// (adds the positive Confirmation gate). An empty destination is treated as
-// eligible — the caller decides what a missing address means (there is nothing to
-// suppress against).
-func Check(ctx context.Context, client *ent.Client, workspaceID int64, channel, dest, source string, respectUnsubscribe, requireConfirmed bool) (Decision, error) {
+// Check decides eligibility for one destination. source is the Sending source the
+// message goes out under, or "" for a transactional send. An empty destination is
+// treated as eligible — the caller decides what a missing address means (there is
+// nothing to suppress against).
+func Check(ctx context.Context, client *ent.Client, workspaceID int64, channel, dest, source string) (Decision, error) {
 	d := NormalizeDestination(dest)
 	if d == "" {
 		return Decision{Eligible: true}, nil
 	}
-
-	suppressed, err := client.Suppression.Query().
-		Where(
-			suppression.WorkspaceID(workspaceID),
-			suppression.ChannelEQ(suppression.Channel(channel)),
-			suppression.DestinationEQ(d),
-		).
-		Exist(ctx)
+	r := ref{
+		workspace:   func(b *sql.Builder) { b.Arg(workspaceID) },
+		destination: func(b *sql.Builder) { b.Arg(d) },
+	}
+	var reason []string
+	err := client.Workspace.Query().
+		Where(workspace.ID(workspaceID)).
+		Modify(func(s *sql.Selector) {
+			s.SelectExpr(sql.ExprFunc(func(b *sql.Builder) {
+				b.WriteString("CASE")
+				for _, l := range layers(r, channel, source) {
+					b.WriteString(" WHEN ")
+					b.Join(l.blocks)
+					b.WriteString(" THEN ").Arg(l.reason)
+				}
+				b.WriteString(" ELSE '' END")
+			}))
+		}).
+		Scan(ctx, &reason)
 	if err != nil {
-		return Decision{}, fmt.Errorf("eligibility suppression lookup: %w", err)
+		return Decision{}, fmt.Errorf("eligibility check: %w", err)
 	}
-	if suppressed {
-		return Decision{Eligible: false, Reason: ReasonSuppressed}, nil
+	if len(reason) != 1 {
+		return Decision{}, fmt.Errorf("eligibility check: workspace %d not found", workspaceID)
 	}
+	return Decision{Eligible: reason[0] == "", Reason: reason[0]}, nil
+}
 
-	if !respectUnsubscribe {
-		return Decision{Eligible: true}, nil
-	}
-
-	everything, err := client.Unsubscribe.Query().
-		Where(
-			unsubscribe.WorkspaceID(workspaceID),
-			unsubscribe.ChannelEQ(unsubscribe.Channel(channel)),
-			unsubscribe.DestinationEQ(d),
-			unsubscribe.SendingSourceEQ(SourceEverything),
-		).
-		Exist(ctx)
-	if err != nil {
-		return Decision{}, fmt.Errorf("eligibility unsubscribe(everything) lookup: %w", err)
-	}
-	if everything {
-		return Decision{Eligible: false, Reason: ReasonUnsubscribedEverything}, nil
-	}
-
-	fromSource, err := client.Unsubscribe.Query().
-		Where(
-			unsubscribe.WorkspaceID(workspaceID),
-			unsubscribe.ChannelEQ(unsubscribe.Channel(channel)),
-			unsubscribe.DestinationEQ(d),
-			unsubscribe.SendingSourceEQ(source),
-		).
-		Exist(ctx)
-	if err != nil {
-		return Decision{}, fmt.Errorf("eligibility unsubscribe(source) lookup: %w", err)
-	}
-	if fromSource {
-		return Decision{Eligible: false, Reason: ReasonUnsubscribedSource}, nil
-	}
-
-	// Layer 4 (positive, opt-in): confirmed opt-in requires a Confirmation for the
-	// destination. Lowest priority — reached only past every negative layer — and
-	// skipped entirely unless the workspace requires it, so the default path is
-	// unchanged.
-	if requireConfirmed {
-		confirmed, err := client.Confirmation.Query().
-			Where(
-				confirmation.WorkspaceID(workspaceID),
-				confirmation.ChannelEQ(confirmation.Channel(channel)),
-				confirmation.DestinationEQ(d),
-			).
-			Exist(ctx)
-		if err != nil {
-			return Decision{}, fmt.Errorf("eligibility confirmation lookup: %w", err)
-		}
-		if !confirmed {
-			return Decision{Eligible: false, Reason: ReasonUnconfirmed}, nil
+// Predicate narrows a Contact query to contacts whose email destination is
+// eligible for (channel, source); "" source means transactional (Suppression
+// only). It composes with a segment predicate (both are predicate.Contact). The
+// correlation joins on lower(contacts.email) — never on contact_id — because the
+// stores are destination-keyed.
+func Predicate(channel, source string) predicate.Contact {
+	return func(s *sql.Selector) {
+		r := contactRef(s)
+		for _, l := range layers(r, channel, source) {
+			s.Where(sql.Not(l.blocks))
 		}
 	}
+}
 
-	return Decision{Eligible: true}, nil
+// GloballyOptedOut matches contacts whose destination is non-mailable on the given
+// channel regardless of source: suppressed, or unsubscribed from "everything".
+// Used for the "unsubscribed" analytics KPI — the derived, dashboard-level view of
+// "fully opted out", since there is no stored contact status (ADR 0001). A
+// per-source opt-out is deliberately not counted: that contact may still be
+// mailable from other sources.
+func GloballyOptedOut(channel string) predicate.Contact {
+	return func(s *sql.Selector) {
+		r := contactRef(s)
+		var preds []*sql.Predicate
+		for _, l := range layers(r, channel, SourceBroadcasts) {
+			if l.reason == ReasonSuppressed || l.reason == ReasonUnsubscribedEverything {
+				preds = append(preds, l.blocks)
+			}
+		}
+		s.Where(sql.Or(preds...))
+	}
+}
+
+// ref names the (workspace, destination) a layer is evaluated for, as SQL
+// expression writers: a correlated Contact column pair for the batch form, bound
+// arguments for a single Check.
+type ref struct {
+	workspace   func(*sql.Builder)
+	destination func(*sql.Builder)
+}
+
+// contactRef correlates to the outer contacts row, folding case on the
+// (un-normalized) contact email. Writers defer column rendering to build time so
+// the outer selector's dialect is applied — eager string formatting would emit
+// mis-quoted identifiers.
+func contactRef(s *sql.Selector) ref {
+	return ref{
+		workspace: func(b *sql.Builder) { b.WriteString(s.C(contact.FieldWorkspaceID)) },
+		destination: func(b *sql.Builder) {
+			b.WriteString("lower(").WriteString(s.C(contact.FieldEmail)).WriteString(")")
+		},
+	}
+}
+
+// layer is one rule of the eligibility model: blocks is true when the layer
+// forbids the send, reason is what the Decision reports.
+type layer struct {
+	reason string
+	blocks *sql.Predicate
+}
+
+// store names the columns of one destination-keyed table a layer reads.
+type store struct{ table, id, workspace, destination, channel string }
+
+var (
+	suppressions  = store{suppression.Table, suppression.FieldID, suppression.FieldWorkspaceID, suppression.FieldDestination, suppression.FieldChannel}
+	unsubscribes  = store{unsubscribe.Table, unsubscribe.FieldID, unsubscribe.FieldWorkspaceID, unsubscribe.FieldDestination, unsubscribe.FieldChannel}
+	confirmations = store{confirmation.Table, confirmation.FieldID, confirmation.FieldWorkspaceID, confirmation.FieldDestination, confirmation.FieldChannel}
+)
+
+// layers is the single definition of the eligibility rule, in precedence order
+// (negatives first, the positive confirmation gate last so the negatives always
+// dominate). source "" is a transactional send.
+func layers(r ref, channel, source string) []layer {
+	out := []layer{{
+		reason: ReasonSuppressed,
+		blocks: sql.Exists(match(r, suppressions, channel)),
+	}}
+	if source == "" {
+		return out
+	}
+	return append(out,
+		layer{
+			reason: ReasonUnsubscribedEverything,
+			blocks: sql.Exists(match(r, unsubscribes, channel, unsubscribe.FieldSendingSource, SourceEverything)),
+		},
+		layer{
+			reason: ReasonUnsubscribedSource,
+			blocks: sql.Exists(match(r, unsubscribes, channel, unsubscribe.FieldSendingSource, source)),
+		},
+		layer{
+			reason: ReasonUnconfirmed,
+			// Only when the workspace has confirmed opt-in on (ADR 0013): the flag is
+			// read in SQL so the default single-opt-in path never touches the
+			// confirmation store and no caller can forget to pass it.
+			blocks: sql.And(requireConfirmed(r), sql.NotExists(match(r, confirmations, channel))),
+		},
+	)
+}
+
+// match builds SELECT id FROM store WHERE workspace/destination/channel equal the
+// ref [AND extraCol = extraVal]. Columns of the store's own table are qualified
+// eagerly; the ref (outer) side is rendered lazily so the dialect is applied.
+func match(r ref, st store, channel string, extra ...string) *sql.Selector {
+	sub := sql.Select(st.id).From(sql.Table(st.table))
+	conds := []*sql.Predicate{
+		sql.P(func(b *sql.Builder) { b.WriteString(sub.C(st.workspace)).WriteString(" = "); r.workspace(b) }),
+		sql.P(func(b *sql.Builder) { b.WriteString(sub.C(st.destination)).WriteString(" = "); r.destination(b) }),
+		sql.EQ(sub.C(st.channel), channel),
+	}
+	if len(extra) == 2 {
+		conds = append(conds, sql.EQ(sub.C(extra[0]), extra[1]))
+	}
+	return sub.Where(sql.And(conds...))
+}
+
+// requireConfirmed is true when the referenced workspace has confirmed opt-in on.
+func requireConfirmed(r ref) *sql.Predicate {
+	return sql.P(func(b *sql.Builder) {
+		sub := sql.Select(workspace.FieldRequireConfirmedOptIn).From(sql.Table(workspace.Table))
+		sub.Where(sql.P(func(pb *sql.Builder) {
+			pb.WriteString(sub.C(workspace.FieldID)).WriteString(" = ")
+			r.workspace(pb)
+		}))
+		b.WriteString("COALESCE((").Join(sub).WriteString("), FALSE)")
+	})
 }

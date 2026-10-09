@@ -25,10 +25,10 @@ import (
 	"github.com/mokevnin/1mail/ent/integration"
 	"github.com/mokevnin/1mail/ent/invitation"
 	"github.com/mokevnin/1mail/ent/membership"
+	"github.com/mokevnin/1mail/ent/outboundmessage"
 	"github.com/mokevnin/1mail/ent/segment"
 	"github.com/mokevnin/1mail/ent/sendingdomain"
 	"github.com/mokevnin/1mail/ent/suppression"
-	"github.com/mokevnin/1mail/ent/transactionalemail"
 	"github.com/mokevnin/1mail/ent/unsubscribe"
 	"github.com/mokevnin/1mail/ent/user"
 	"github.com/mokevnin/1mail/ent/visitor"
@@ -107,10 +107,10 @@ func checkColumn(t, c string) error {
 			integration.Table:        integration.ValidColumn,
 			invitation.Table:         invitation.ValidColumn,
 			membership.Table:         membership.ValidColumn,
+			outboundmessage.Table:    outboundmessage.ValidColumn,
 			segment.Table:            segment.ValidColumn,
 			sendingdomain.Table:      sendingdomain.ValidColumn,
 			suppression.Table:        suppression.ValidColumn,
-			transactionalemail.Table: transactionalemail.ValidColumn,
 			unsubscribe.Table:        unsubscribe.ValidColumn,
 			user.Table:               user.ValidColumn,
 			visitor.Table:            visitor.ValidColumn,

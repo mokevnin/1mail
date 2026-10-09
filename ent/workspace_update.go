@@ -24,11 +24,11 @@ import (
 	"github.com/mokevnin/1mail/ent/integration"
 	"github.com/mokevnin/1mail/ent/invitation"
 	"github.com/mokevnin/1mail/ent/membership"
+	"github.com/mokevnin/1mail/ent/outboundmessage"
 	"github.com/mokevnin/1mail/ent/predicate"
 	"github.com/mokevnin/1mail/ent/segment"
 	"github.com/mokevnin/1mail/ent/sendingdomain"
 	"github.com/mokevnin/1mail/ent/suppression"
-	"github.com/mokevnin/1mail/ent/transactionalemail"
 	"github.com/mokevnin/1mail/ent/unsubscribe"
 	"github.com/mokevnin/1mail/ent/visitor"
 	"github.com/mokevnin/1mail/ent/webhookendpoint"
@@ -136,6 +136,66 @@ func (_u *WorkspaceUpdate) SetNillablePostalAddress(v *string) *WorkspaceUpdate 
 // ClearPostalAddress clears the value of the "postal_address" field.
 func (_u *WorkspaceUpdate) ClearPostalAddress() *WorkspaceUpdate {
 	_u.mutation.ClearPostalAddress()
+	return _u
+}
+
+// SetSuspendedAt sets the "suspended_at" field.
+func (_u *WorkspaceUpdate) SetSuspendedAt(v time.Time) *WorkspaceUpdate {
+	_u.mutation.SetSuspendedAt(v)
+	return _u
+}
+
+// SetNillableSuspendedAt sets the "suspended_at" field if the given value is not nil.
+func (_u *WorkspaceUpdate) SetNillableSuspendedAt(v *time.Time) *WorkspaceUpdate {
+	if v != nil {
+		_u.SetSuspendedAt(*v)
+	}
+	return _u
+}
+
+// ClearSuspendedAt clears the value of the "suspended_at" field.
+func (_u *WorkspaceUpdate) ClearSuspendedAt() *WorkspaceUpdate {
+	_u.mutation.ClearSuspendedAt()
+	return _u
+}
+
+// SetSuspendedBy sets the "suspended_by" field.
+func (_u *WorkspaceUpdate) SetSuspendedBy(v string) *WorkspaceUpdate {
+	_u.mutation.SetSuspendedBy(v)
+	return _u
+}
+
+// SetNillableSuspendedBy sets the "suspended_by" field if the given value is not nil.
+func (_u *WorkspaceUpdate) SetNillableSuspendedBy(v *string) *WorkspaceUpdate {
+	if v != nil {
+		_u.SetSuspendedBy(*v)
+	}
+	return _u
+}
+
+// ClearSuspendedBy clears the value of the "suspended_by" field.
+func (_u *WorkspaceUpdate) ClearSuspendedBy() *WorkspaceUpdate {
+	_u.mutation.ClearSuspendedBy()
+	return _u
+}
+
+// SetSuspensionReason sets the "suspension_reason" field.
+func (_u *WorkspaceUpdate) SetSuspensionReason(v string) *WorkspaceUpdate {
+	_u.mutation.SetSuspensionReason(v)
+	return _u
+}
+
+// SetNillableSuspensionReason sets the "suspension_reason" field if the given value is not nil.
+func (_u *WorkspaceUpdate) SetNillableSuspensionReason(v *string) *WorkspaceUpdate {
+	if v != nil {
+		_u.SetSuspensionReason(*v)
+	}
+	return _u
+}
+
+// ClearSuspensionReason clears the value of the "suspension_reason" field.
+func (_u *WorkspaceUpdate) ClearSuspensionReason() *WorkspaceUpdate {
+	_u.mutation.ClearSuspensionReason()
 	return _u
 }
 
@@ -400,19 +460,19 @@ func (_u *WorkspaceUpdate) AddConfirmations(v ...*Confirmation) *WorkspaceUpdate
 	return _u.AddConfirmationIDs(ids...)
 }
 
-// AddTransactionalEmailIDs adds the "transactional_emails" edge to the TransactionalEmail entity by IDs.
-func (_u *WorkspaceUpdate) AddTransactionalEmailIDs(ids ...int64) *WorkspaceUpdate {
-	_u.mutation.AddTransactionalEmailIDs(ids...)
+// AddOutboundMessageIDs adds the "outbound_messages" edge to the OutboundMessage entity by IDs.
+func (_u *WorkspaceUpdate) AddOutboundMessageIDs(ids ...int64) *WorkspaceUpdate {
+	_u.mutation.AddOutboundMessageIDs(ids...)
 	return _u
 }
 
-// AddTransactionalEmails adds the "transactional_emails" edges to the TransactionalEmail entity.
-func (_u *WorkspaceUpdate) AddTransactionalEmails(v ...*TransactionalEmail) *WorkspaceUpdate {
+// AddOutboundMessages adds the "outbound_messages" edges to the OutboundMessage entity.
+func (_u *WorkspaceUpdate) AddOutboundMessages(v ...*OutboundMessage) *WorkspaceUpdate {
 	ids := make([]int64, len(v))
 	for i := range v {
 		ids[i] = v[i].ID
 	}
-	return _u.AddTransactionalEmailIDs(ids...)
+	return _u.AddOutboundMessageIDs(ids...)
 }
 
 // AddMembershipIDs adds the "memberships" edge to the Membership entity by IDs.
@@ -807,25 +867,25 @@ func (_u *WorkspaceUpdate) RemoveConfirmations(v ...*Confirmation) *WorkspaceUpd
 	return _u.RemoveConfirmationIDs(ids...)
 }
 
-// ClearTransactionalEmails clears all "transactional_emails" edges to the TransactionalEmail entity.
-func (_u *WorkspaceUpdate) ClearTransactionalEmails() *WorkspaceUpdate {
-	_u.mutation.ClearTransactionalEmails()
+// ClearOutboundMessages clears all "outbound_messages" edges to the OutboundMessage entity.
+func (_u *WorkspaceUpdate) ClearOutboundMessages() *WorkspaceUpdate {
+	_u.mutation.ClearOutboundMessages()
 	return _u
 }
 
-// RemoveTransactionalEmailIDs removes the "transactional_emails" edge to TransactionalEmail entities by IDs.
-func (_u *WorkspaceUpdate) RemoveTransactionalEmailIDs(ids ...int64) *WorkspaceUpdate {
-	_u.mutation.RemoveTransactionalEmailIDs(ids...)
+// RemoveOutboundMessageIDs removes the "outbound_messages" edge to OutboundMessage entities by IDs.
+func (_u *WorkspaceUpdate) RemoveOutboundMessageIDs(ids ...int64) *WorkspaceUpdate {
+	_u.mutation.RemoveOutboundMessageIDs(ids...)
 	return _u
 }
 
-// RemoveTransactionalEmails removes "transactional_emails" edges to TransactionalEmail entities.
-func (_u *WorkspaceUpdate) RemoveTransactionalEmails(v ...*TransactionalEmail) *WorkspaceUpdate {
+// RemoveOutboundMessages removes "outbound_messages" edges to OutboundMessage entities.
+func (_u *WorkspaceUpdate) RemoveOutboundMessages(v ...*OutboundMessage) *WorkspaceUpdate {
 	ids := make([]int64, len(v))
 	for i := range v {
 		ids[i] = v[i].ID
 	}
-	return _u.RemoveTransactionalEmailIDs(ids...)
+	return _u.RemoveOutboundMessageIDs(ids...)
 }
 
 // ClearMemberships clears all "memberships" edges to the Membership entity.
@@ -969,6 +1029,24 @@ func (_u *WorkspaceUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	}
 	if _u.mutation.PostalAddressCleared() {
 		_spec.ClearField(workspace.FieldPostalAddress, field.TypeString)
+	}
+	if value, ok := _u.mutation.SuspendedAt(); ok {
+		_spec.SetField(workspace.FieldSuspendedAt, field.TypeTime, value)
+	}
+	if _u.mutation.SuspendedAtCleared() {
+		_spec.ClearField(workspace.FieldSuspendedAt, field.TypeTime)
+	}
+	if value, ok := _u.mutation.SuspendedBy(); ok {
+		_spec.SetField(workspace.FieldSuspendedBy, field.TypeString, value)
+	}
+	if _u.mutation.SuspendedByCleared() {
+		_spec.ClearField(workspace.FieldSuspendedBy, field.TypeString)
+	}
+	if value, ok := _u.mutation.SuspensionReason(); ok {
+		_spec.SetField(workspace.FieldSuspensionReason, field.TypeString, value)
+	}
+	if _u.mutation.SuspensionReasonCleared() {
+		_spec.ClearField(workspace.FieldSuspensionReason, field.TypeString)
 	}
 	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(workspace.FieldUpdatedAt, field.TypeTime, value)
@@ -1738,28 +1816,28 @@ func (_u *WorkspaceUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if _u.mutation.TransactionalEmailsCleared() {
+	if _u.mutation.OutboundMessagesCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   workspace.TransactionalEmailsTable,
-			Columns: []string{workspace.TransactionalEmailsColumn},
+			Table:   workspace.OutboundMessagesTable,
+			Columns: []string{workspace.OutboundMessagesColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(transactionalemail.FieldID, field.TypeInt64),
+				IDSpec: sqlgraph.NewFieldSpec(outboundmessage.FieldID, field.TypeInt64),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := _u.mutation.RemovedTransactionalEmailsIDs(); len(nodes) > 0 && !_u.mutation.TransactionalEmailsCleared() {
+	if nodes := _u.mutation.RemovedOutboundMessagesIDs(); len(nodes) > 0 && !_u.mutation.OutboundMessagesCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   workspace.TransactionalEmailsTable,
-			Columns: []string{workspace.TransactionalEmailsColumn},
+			Table:   workspace.OutboundMessagesTable,
+			Columns: []string{workspace.OutboundMessagesColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(transactionalemail.FieldID, field.TypeInt64),
+				IDSpec: sqlgraph.NewFieldSpec(outboundmessage.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {
@@ -1767,15 +1845,15 @@ func (_u *WorkspaceUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := _u.mutation.TransactionalEmailsIDs(); len(nodes) > 0 {
+	if nodes := _u.mutation.OutboundMessagesIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   workspace.TransactionalEmailsTable,
-			Columns: []string{workspace.TransactionalEmailsColumn},
+			Table:   workspace.OutboundMessagesTable,
+			Columns: []string{workspace.OutboundMessagesColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(transactionalemail.FieldID, field.TypeInt64),
+				IDSpec: sqlgraph.NewFieldSpec(outboundmessage.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {
@@ -1982,6 +2060,66 @@ func (_u *WorkspaceUpdateOne) SetNillablePostalAddress(v *string) *WorkspaceUpda
 // ClearPostalAddress clears the value of the "postal_address" field.
 func (_u *WorkspaceUpdateOne) ClearPostalAddress() *WorkspaceUpdateOne {
 	_u.mutation.ClearPostalAddress()
+	return _u
+}
+
+// SetSuspendedAt sets the "suspended_at" field.
+func (_u *WorkspaceUpdateOne) SetSuspendedAt(v time.Time) *WorkspaceUpdateOne {
+	_u.mutation.SetSuspendedAt(v)
+	return _u
+}
+
+// SetNillableSuspendedAt sets the "suspended_at" field if the given value is not nil.
+func (_u *WorkspaceUpdateOne) SetNillableSuspendedAt(v *time.Time) *WorkspaceUpdateOne {
+	if v != nil {
+		_u.SetSuspendedAt(*v)
+	}
+	return _u
+}
+
+// ClearSuspendedAt clears the value of the "suspended_at" field.
+func (_u *WorkspaceUpdateOne) ClearSuspendedAt() *WorkspaceUpdateOne {
+	_u.mutation.ClearSuspendedAt()
+	return _u
+}
+
+// SetSuspendedBy sets the "suspended_by" field.
+func (_u *WorkspaceUpdateOne) SetSuspendedBy(v string) *WorkspaceUpdateOne {
+	_u.mutation.SetSuspendedBy(v)
+	return _u
+}
+
+// SetNillableSuspendedBy sets the "suspended_by" field if the given value is not nil.
+func (_u *WorkspaceUpdateOne) SetNillableSuspendedBy(v *string) *WorkspaceUpdateOne {
+	if v != nil {
+		_u.SetSuspendedBy(*v)
+	}
+	return _u
+}
+
+// ClearSuspendedBy clears the value of the "suspended_by" field.
+func (_u *WorkspaceUpdateOne) ClearSuspendedBy() *WorkspaceUpdateOne {
+	_u.mutation.ClearSuspendedBy()
+	return _u
+}
+
+// SetSuspensionReason sets the "suspension_reason" field.
+func (_u *WorkspaceUpdateOne) SetSuspensionReason(v string) *WorkspaceUpdateOne {
+	_u.mutation.SetSuspensionReason(v)
+	return _u
+}
+
+// SetNillableSuspensionReason sets the "suspension_reason" field if the given value is not nil.
+func (_u *WorkspaceUpdateOne) SetNillableSuspensionReason(v *string) *WorkspaceUpdateOne {
+	if v != nil {
+		_u.SetSuspensionReason(*v)
+	}
+	return _u
+}
+
+// ClearSuspensionReason clears the value of the "suspension_reason" field.
+func (_u *WorkspaceUpdateOne) ClearSuspensionReason() *WorkspaceUpdateOne {
+	_u.mutation.ClearSuspensionReason()
 	return _u
 }
 
@@ -2246,19 +2384,19 @@ func (_u *WorkspaceUpdateOne) AddConfirmations(v ...*Confirmation) *WorkspaceUpd
 	return _u.AddConfirmationIDs(ids...)
 }
 
-// AddTransactionalEmailIDs adds the "transactional_emails" edge to the TransactionalEmail entity by IDs.
-func (_u *WorkspaceUpdateOne) AddTransactionalEmailIDs(ids ...int64) *WorkspaceUpdateOne {
-	_u.mutation.AddTransactionalEmailIDs(ids...)
+// AddOutboundMessageIDs adds the "outbound_messages" edge to the OutboundMessage entity by IDs.
+func (_u *WorkspaceUpdateOne) AddOutboundMessageIDs(ids ...int64) *WorkspaceUpdateOne {
+	_u.mutation.AddOutboundMessageIDs(ids...)
 	return _u
 }
 
-// AddTransactionalEmails adds the "transactional_emails" edges to the TransactionalEmail entity.
-func (_u *WorkspaceUpdateOne) AddTransactionalEmails(v ...*TransactionalEmail) *WorkspaceUpdateOne {
+// AddOutboundMessages adds the "outbound_messages" edges to the OutboundMessage entity.
+func (_u *WorkspaceUpdateOne) AddOutboundMessages(v ...*OutboundMessage) *WorkspaceUpdateOne {
 	ids := make([]int64, len(v))
 	for i := range v {
 		ids[i] = v[i].ID
 	}
-	return _u.AddTransactionalEmailIDs(ids...)
+	return _u.AddOutboundMessageIDs(ids...)
 }
 
 // AddMembershipIDs adds the "memberships" edge to the Membership entity by IDs.
@@ -2653,25 +2791,25 @@ func (_u *WorkspaceUpdateOne) RemoveConfirmations(v ...*Confirmation) *Workspace
 	return _u.RemoveConfirmationIDs(ids...)
 }
 
-// ClearTransactionalEmails clears all "transactional_emails" edges to the TransactionalEmail entity.
-func (_u *WorkspaceUpdateOne) ClearTransactionalEmails() *WorkspaceUpdateOne {
-	_u.mutation.ClearTransactionalEmails()
+// ClearOutboundMessages clears all "outbound_messages" edges to the OutboundMessage entity.
+func (_u *WorkspaceUpdateOne) ClearOutboundMessages() *WorkspaceUpdateOne {
+	_u.mutation.ClearOutboundMessages()
 	return _u
 }
 
-// RemoveTransactionalEmailIDs removes the "transactional_emails" edge to TransactionalEmail entities by IDs.
-func (_u *WorkspaceUpdateOne) RemoveTransactionalEmailIDs(ids ...int64) *WorkspaceUpdateOne {
-	_u.mutation.RemoveTransactionalEmailIDs(ids...)
+// RemoveOutboundMessageIDs removes the "outbound_messages" edge to OutboundMessage entities by IDs.
+func (_u *WorkspaceUpdateOne) RemoveOutboundMessageIDs(ids ...int64) *WorkspaceUpdateOne {
+	_u.mutation.RemoveOutboundMessageIDs(ids...)
 	return _u
 }
 
-// RemoveTransactionalEmails removes "transactional_emails" edges to TransactionalEmail entities.
-func (_u *WorkspaceUpdateOne) RemoveTransactionalEmails(v ...*TransactionalEmail) *WorkspaceUpdateOne {
+// RemoveOutboundMessages removes "outbound_messages" edges to OutboundMessage entities.
+func (_u *WorkspaceUpdateOne) RemoveOutboundMessages(v ...*OutboundMessage) *WorkspaceUpdateOne {
 	ids := make([]int64, len(v))
 	for i := range v {
 		ids[i] = v[i].ID
 	}
-	return _u.RemoveTransactionalEmailIDs(ids...)
+	return _u.RemoveOutboundMessageIDs(ids...)
 }
 
 // ClearMemberships clears all "memberships" edges to the Membership entity.
@@ -2845,6 +2983,24 @@ func (_u *WorkspaceUpdateOne) sqlSave(ctx context.Context) (_node *Workspace, er
 	}
 	if _u.mutation.PostalAddressCleared() {
 		_spec.ClearField(workspace.FieldPostalAddress, field.TypeString)
+	}
+	if value, ok := _u.mutation.SuspendedAt(); ok {
+		_spec.SetField(workspace.FieldSuspendedAt, field.TypeTime, value)
+	}
+	if _u.mutation.SuspendedAtCleared() {
+		_spec.ClearField(workspace.FieldSuspendedAt, field.TypeTime)
+	}
+	if value, ok := _u.mutation.SuspendedBy(); ok {
+		_spec.SetField(workspace.FieldSuspendedBy, field.TypeString, value)
+	}
+	if _u.mutation.SuspendedByCleared() {
+		_spec.ClearField(workspace.FieldSuspendedBy, field.TypeString)
+	}
+	if value, ok := _u.mutation.SuspensionReason(); ok {
+		_spec.SetField(workspace.FieldSuspensionReason, field.TypeString, value)
+	}
+	if _u.mutation.SuspensionReasonCleared() {
+		_spec.ClearField(workspace.FieldSuspensionReason, field.TypeString)
 	}
 	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(workspace.FieldUpdatedAt, field.TypeTime, value)
@@ -3614,28 +3770,28 @@ func (_u *WorkspaceUpdateOne) sqlSave(ctx context.Context) (_node *Workspace, er
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if _u.mutation.TransactionalEmailsCleared() {
+	if _u.mutation.OutboundMessagesCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   workspace.TransactionalEmailsTable,
-			Columns: []string{workspace.TransactionalEmailsColumn},
+			Table:   workspace.OutboundMessagesTable,
+			Columns: []string{workspace.OutboundMessagesColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(transactionalemail.FieldID, field.TypeInt64),
+				IDSpec: sqlgraph.NewFieldSpec(outboundmessage.FieldID, field.TypeInt64),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := _u.mutation.RemovedTransactionalEmailsIDs(); len(nodes) > 0 && !_u.mutation.TransactionalEmailsCleared() {
+	if nodes := _u.mutation.RemovedOutboundMessagesIDs(); len(nodes) > 0 && !_u.mutation.OutboundMessagesCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   workspace.TransactionalEmailsTable,
-			Columns: []string{workspace.TransactionalEmailsColumn},
+			Table:   workspace.OutboundMessagesTable,
+			Columns: []string{workspace.OutboundMessagesColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(transactionalemail.FieldID, field.TypeInt64),
+				IDSpec: sqlgraph.NewFieldSpec(outboundmessage.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {
@@ -3643,15 +3799,15 @@ func (_u *WorkspaceUpdateOne) sqlSave(ctx context.Context) (_node *Workspace, er
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := _u.mutation.TransactionalEmailsIDs(); len(nodes) > 0 {
+	if nodes := _u.mutation.OutboundMessagesIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   workspace.TransactionalEmailsTable,
-			Columns: []string{workspace.TransactionalEmailsColumn},
+			Table:   workspace.OutboundMessagesTable,
+			Columns: []string{workspace.OutboundMessagesColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(transactionalemail.FieldID, field.TypeInt64),
+				IDSpec: sqlgraph.NewFieldSpec(outboundmessage.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {

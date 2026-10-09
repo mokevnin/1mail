@@ -29,6 +29,12 @@ type Workspace struct {
 	RequireConfirmedOptIn bool `json:"require_confirmed_opt_in,omitempty"`
 	// PostalAddress holds the value of the "postal_address" field.
 	PostalAddress string `json:"postal_address,omitempty"`
+	// SuspendedAt holds the value of the "suspended_at" field.
+	SuspendedAt *time.Time `json:"suspended_at,omitempty"`
+	// SuspendedBy holds the value of the "suspended_by" field.
+	SuspendedBy *string `json:"suspended_by,omitempty"`
+	// SuspensionReason holds the value of the "suspension_reason" field.
+	SuspensionReason *string `json:"suspension_reason,omitempty"`
 	// CreatedAt holds the value of the "created_at" field.
 	CreatedAt time.Time `json:"created_at,omitempty"`
 	// UpdatedAt holds the value of the "updated_at" field.
@@ -75,8 +81,8 @@ type WorkspaceEdges struct {
 	Unsubscribes []*Unsubscribe `json:"unsubscribes,omitempty"`
 	// Confirmations holds the value of the confirmations edge.
 	Confirmations []*Confirmation `json:"confirmations,omitempty"`
-	// TransactionalEmails holds the value of the transactional_emails edge.
-	TransactionalEmails []*TransactionalEmail `json:"transactional_emails,omitempty"`
+	// OutboundMessages holds the value of the outbound_messages edge.
+	OutboundMessages []*OutboundMessage `json:"outbound_messages,omitempty"`
 	// Memberships holds the value of the memberships edge.
 	Memberships []*Membership `json:"memberships,omitempty"`
 	// Invitations holds the value of the invitations edge.
@@ -239,13 +245,13 @@ func (e WorkspaceEdges) ConfirmationsOrErr() ([]*Confirmation, error) {
 	return nil, &NotLoadedError{edge: "confirmations"}
 }
 
-// TransactionalEmailsOrErr returns the TransactionalEmails value or an error if the edge
+// OutboundMessagesOrErr returns the OutboundMessages value or an error if the edge
 // was not loaded in eager-loading.
-func (e WorkspaceEdges) TransactionalEmailsOrErr() ([]*TransactionalEmail, error) {
+func (e WorkspaceEdges) OutboundMessagesOrErr() ([]*OutboundMessage, error) {
 	if e.loadedTypes[17] {
-		return e.TransactionalEmails, nil
+		return e.OutboundMessages, nil
 	}
-	return nil, &NotLoadedError{edge: "transactional_emails"}
+	return nil, &NotLoadedError{edge: "outbound_messages"}
 }
 
 // MembershipsOrErr returns the Memberships value or an error if the edge
@@ -275,9 +281,9 @@ func (*Workspace) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullBool)
 		case workspace.FieldID:
 			values[i] = new(sql.NullInt64)
-		case workspace.FieldName, workspace.FieldSlug, workspace.FieldCollectKey, workspace.FieldIngestKey, workspace.FieldPostalAddress:
+		case workspace.FieldName, workspace.FieldSlug, workspace.FieldCollectKey, workspace.FieldIngestKey, workspace.FieldPostalAddress, workspace.FieldSuspendedBy, workspace.FieldSuspensionReason:
 			values[i] = new(sql.NullString)
-		case workspace.FieldCreatedAt, workspace.FieldUpdatedAt:
+		case workspace.FieldSuspendedAt, workspace.FieldCreatedAt, workspace.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -335,6 +341,27 @@ func (_m *Workspace) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field postal_address", values[i])
 			} else if value.Valid {
 				_m.PostalAddress = value.String
+			}
+		case workspace.FieldSuspendedAt:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field suspended_at", values[i])
+			} else if value.Valid {
+				_m.SuspendedAt = new(time.Time)
+				*_m.SuspendedAt = value.Time
+			}
+		case workspace.FieldSuspendedBy:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field suspended_by", values[i])
+			} else if value.Valid {
+				_m.SuspendedBy = new(string)
+				*_m.SuspendedBy = value.String
+			}
+		case workspace.FieldSuspensionReason:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field suspension_reason", values[i])
+			} else if value.Valid {
+				_m.SuspensionReason = new(string)
+				*_m.SuspensionReason = value.String
 			}
 		case workspace.FieldCreatedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
@@ -446,9 +473,9 @@ func (_m *Workspace) QueryConfirmations() *ConfirmationQuery {
 	return NewWorkspaceClient(_m.config).QueryConfirmations(_m)
 }
 
-// QueryTransactionalEmails queries the "transactional_emails" edge of the Workspace entity.
-func (_m *Workspace) QueryTransactionalEmails() *TransactionalEmailQuery {
-	return NewWorkspaceClient(_m.config).QueryTransactionalEmails(_m)
+// QueryOutboundMessages queries the "outbound_messages" edge of the Workspace entity.
+func (_m *Workspace) QueryOutboundMessages() *OutboundMessageQuery {
+	return NewWorkspaceClient(_m.config).QueryOutboundMessages(_m)
 }
 
 // QueryMemberships queries the "memberships" edge of the Workspace entity.
@@ -499,6 +526,21 @@ func (_m *Workspace) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("postal_address=")
 	builder.WriteString(_m.PostalAddress)
+	builder.WriteString(", ")
+	if v := _m.SuspendedAt; v != nil {
+		builder.WriteString("suspended_at=")
+		builder.WriteString(v.Format(time.ANSIC))
+	}
+	builder.WriteString(", ")
+	if v := _m.SuspendedBy; v != nil {
+		builder.WriteString("suspended_by=")
+		builder.WriteString(*v)
+	}
+	builder.WriteString(", ")
+	if v := _m.SuspensionReason; v != nil {
+		builder.WriteString("suspension_reason=")
+		builder.WriteString(*v)
+	}
 	builder.WriteString(", ")
 	builder.WriteString("created_at=")
 	builder.WriteString(_m.CreatedAt.Format(time.ANSIC))

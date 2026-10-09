@@ -71,13 +71,16 @@ type sender struct {
 	signer messaging.Signer
 }
 
-func (s *sender) Send(ctx context.Context, msg messaging.EmailMessage) error {
+// DefaultFrom reports the integration's configured From (see messaging.DefaultFromer).
+func (s *sender) DefaultFrom() (string, string) { return s.cfg.From, s.cfg.FromName }
+
+func (s *sender) Send(ctx context.Context, msg messaging.EmailMessage) (messaging.Receipt, error) {
 	msg.From = messaging.FirstNonEmpty(msg.From, s.cfg.From)
 	msg.FromName = messaging.FirstNonEmpty(msg.FromName, s.cfg.FromName)
 
 	m, err := messaging.BuildSignedMIME(ctx, msg, s.signer)
 	if err != nil {
-		return err
+		return messaging.Receipt{}, err
 	}
 
 	// Opportunistic STARTTLS: encrypt when the server offers it (prod SMTP),
@@ -98,7 +101,10 @@ func (s *sender) Send(ctx context.Context, msg messaging.EmailMessage) error {
 
 	client, err := mail.NewClient(s.cfg.Host, opts...)
 	if err != nil {
-		return fmt.Errorf("smtp: client: %w", err)
+		return messaging.Receipt{}, fmt.Errorf("smtp: client: %w", err)
 	}
-	return client.DialAndSendWithContext(ctx, m)
+	if err := client.DialAndSendWithContext(ctx, m); err != nil {
+		return messaging.Receipt{}, err
+	}
+	return messaging.Receipt{MessageID: m.GetMessageID()}, nil
 }

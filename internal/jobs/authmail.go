@@ -55,11 +55,12 @@ func SendAuthMail(ctx context.Context, sender messaging.EmailSender, appURL stri
 	}
 	link := strings.TrimRight(appURL, "/") + path + "?token=" + url.QueryEscape(args.Token)
 	body := fmt.Sprintf("%s\n\n%s\n\n%s\n", i18n.T(introID, nil), link, i18n.T("email.auth.footer", nil))
-	return sender.Send(ctx, messaging.EmailMessage{
+	_, err := sender.Send(ctx, messaging.EmailMessage{
 		To:      args.Email,
 		Subject: i18n.T(subjectID, nil),
 		Text:    body,
 	})
+	return err
 }
 
 // authMailCopy returns the subject message id, SPA path, and intro message id

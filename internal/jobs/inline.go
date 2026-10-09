@@ -6,10 +6,9 @@ import (
 	"time"
 
 	"github.com/mokevnin/1mail/ent"
-	"github.com/mokevnin/1mail/internal/events"
 	"github.com/mokevnin/1mail/internal/messaging"
+	"github.com/mokevnin/1mail/internal/outbound"
 	"github.com/mokevnin/1mail/internal/sending"
-	"github.com/mokevnin/1mail/internal/tracking"
 )
 
 // Inline is the synchronous adapter of the enqueue seam (the Rails `:inline`
@@ -20,21 +19,18 @@ import (
 // asserting "a job was enqueued".
 type Inline struct {
 	ent          *ent.Client
-	bus          *events.Bus
-	resolver     SenderResolver
-	tracker      *tracking.Tracker
+	mod          *outbound.Module
 	systemSender messaging.EmailSender
 	lookup       sending.TXTLookup
 	appURL       string
 }
 
-// NewInline builds the inline adapter. systemSender sends platform mail; resolver
-// resolves a workspace's customer sender for broadcasts; bus carries the send's
-// transactional outbox publish (email.sent). lookup resolves DKIM TXT for sending-
+// NewInline builds the inline adapter. systemSender sends platform mail; mod is the
+// Outbound send module every workspace email goes through. lookup resolves DKIM TXT for sending-
 // domain verification (a stub in tests avoids real DNS). appURL builds account-
 // email links.
-func NewInline(entClient *ent.Client, bus *events.Bus, resolver SenderResolver, tracker *tracking.Tracker, systemSender messaging.EmailSender, lookup sending.TXTLookup, appURL string) *Inline {
-	return &Inline{ent: entClient, bus: bus, resolver: resolver, tracker: tracker, systemSender: systemSender, lookup: lookup, appURL: appURL}
+func NewInline(entClient *ent.Client, mod *outbound.Module, systemSender messaging.EmailSender, lookup sending.TXTLookup, appURL string) *Inline {
+	return &Inline{ent: entClient, mod: mod, systemSender: systemSender, lookup: lookup, appURL: appURL}
 }
 
 // EnqueueBroadcast runs the broadcast send now. A future scheduledAt is skipped:
@@ -44,7 +40,7 @@ func (i *Inline) EnqueueBroadcast(ctx context.Context, broadcastID int64, schedu
 	if scheduledAt != nil && scheduledAt.After(time.Now()) {
 		return nil
 	}
-	return SendBroadcast(ctx, i.ent, i.bus, i.resolver, i.tracker, broadcastID)
+	return SendBroadcast(ctx, i.ent, i.mod, broadcastID)
 }
 
 // EnqueueWelcome sends the welcome email now via the system sender.

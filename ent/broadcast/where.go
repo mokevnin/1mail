@@ -135,6 +135,16 @@ func FailedCount(v int) predicate.Broadcast {
 	return predicate.Broadcast(sql.FieldEQ(FieldFailedCount, v))
 }
 
+// SkippedCount applies equality check predicate on the "skipped_count" field. It's identical to SkippedCountEQ.
+func SkippedCount(v int) predicate.Broadcast {
+	return predicate.Broadcast(sql.FieldEQ(FieldSkippedCount, v))
+}
+
+// HoldReason applies equality check predicate on the "hold_reason" field. It's identical to HoldReasonEQ.
+func HoldReason(v string) predicate.Broadcast {
+	return predicate.Broadcast(sql.FieldEQ(FieldHoldReason, v))
+}
+
 // WorkspaceID applies equality check predicate on the "workspace_id" field. It's identical to WorkspaceIDEQ.
 func WorkspaceID(v int64) predicate.Broadcast {
 	return predicate.Broadcast(sql.FieldEQ(FieldWorkspaceID, v))
@@ -1018,6 +1028,121 @@ func FailedCountLT(v int) predicate.Broadcast {
 // FailedCountLTE applies the LTE predicate on the "failed_count" field.
 func FailedCountLTE(v int) predicate.Broadcast {
 	return predicate.Broadcast(sql.FieldLTE(FieldFailedCount, v))
+}
+
+// SkippedCountEQ applies the EQ predicate on the "skipped_count" field.
+func SkippedCountEQ(v int) predicate.Broadcast {
+	return predicate.Broadcast(sql.FieldEQ(FieldSkippedCount, v))
+}
+
+// SkippedCountNEQ applies the NEQ predicate on the "skipped_count" field.
+func SkippedCountNEQ(v int) predicate.Broadcast {
+	return predicate.Broadcast(sql.FieldNEQ(FieldSkippedCount, v))
+}
+
+// SkippedCountIn applies the In predicate on the "skipped_count" field.
+func SkippedCountIn(vs ...int) predicate.Broadcast {
+	return predicate.Broadcast(sql.FieldIn(FieldSkippedCount, vs...))
+}
+
+// SkippedCountNotIn applies the NotIn predicate on the "skipped_count" field.
+func SkippedCountNotIn(vs ...int) predicate.Broadcast {
+	return predicate.Broadcast(sql.FieldNotIn(FieldSkippedCount, vs...))
+}
+
+// SkippedCountGT applies the GT predicate on the "skipped_count" field.
+func SkippedCountGT(v int) predicate.Broadcast {
+	return predicate.Broadcast(sql.FieldGT(FieldSkippedCount, v))
+}
+
+// SkippedCountGTE applies the GTE predicate on the "skipped_count" field.
+func SkippedCountGTE(v int) predicate.Broadcast {
+	return predicate.Broadcast(sql.FieldGTE(FieldSkippedCount, v))
+}
+
+// SkippedCountLT applies the LT predicate on the "skipped_count" field.
+func SkippedCountLT(v int) predicate.Broadcast {
+	return predicate.Broadcast(sql.FieldLT(FieldSkippedCount, v))
+}
+
+// SkippedCountLTE applies the LTE predicate on the "skipped_count" field.
+func SkippedCountLTE(v int) predicate.Broadcast {
+	return predicate.Broadcast(sql.FieldLTE(FieldSkippedCount, v))
+}
+
+// HoldReasonEQ applies the EQ predicate on the "hold_reason" field.
+func HoldReasonEQ(v string) predicate.Broadcast {
+	return predicate.Broadcast(sql.FieldEQ(FieldHoldReason, v))
+}
+
+// HoldReasonNEQ applies the NEQ predicate on the "hold_reason" field.
+func HoldReasonNEQ(v string) predicate.Broadcast {
+	return predicate.Broadcast(sql.FieldNEQ(FieldHoldReason, v))
+}
+
+// HoldReasonIn applies the In predicate on the "hold_reason" field.
+func HoldReasonIn(vs ...string) predicate.Broadcast {
+	return predicate.Broadcast(sql.FieldIn(FieldHoldReason, vs...))
+}
+
+// HoldReasonNotIn applies the NotIn predicate on the "hold_reason" field.
+func HoldReasonNotIn(vs ...string) predicate.Broadcast {
+	return predicate.Broadcast(sql.FieldNotIn(FieldHoldReason, vs...))
+}
+
+// HoldReasonGT applies the GT predicate on the "hold_reason" field.
+func HoldReasonGT(v string) predicate.Broadcast {
+	return predicate.Broadcast(sql.FieldGT(FieldHoldReason, v))
+}
+
+// HoldReasonGTE applies the GTE predicate on the "hold_reason" field.
+func HoldReasonGTE(v string) predicate.Broadcast {
+	return predicate.Broadcast(sql.FieldGTE(FieldHoldReason, v))
+}
+
+// HoldReasonLT applies the LT predicate on the "hold_reason" field.
+func HoldReasonLT(v string) predicate.Broadcast {
+	return predicate.Broadcast(sql.FieldLT(FieldHoldReason, v))
+}
+
+// HoldReasonLTE applies the LTE predicate on the "hold_reason" field.
+func HoldReasonLTE(v string) predicate.Broadcast {
+	return predicate.Broadcast(sql.FieldLTE(FieldHoldReason, v))
+}
+
+// HoldReasonContains applies the Contains predicate on the "hold_reason" field.
+func HoldReasonContains(v string) predicate.Broadcast {
+	return predicate.Broadcast(sql.FieldContains(FieldHoldReason, v))
+}
+
+// HoldReasonHasPrefix applies the HasPrefix predicate on the "hold_reason" field.
+func HoldReasonHasPrefix(v string) predicate.Broadcast {
+	return predicate.Broadcast(sql.FieldHasPrefix(FieldHoldReason, v))
+}
+
+// HoldReasonHasSuffix applies the HasSuffix predicate on the "hold_reason" field.
+func HoldReasonHasSuffix(v string) predicate.Broadcast {
+	return predicate.Broadcast(sql.FieldHasSuffix(FieldHoldReason, v))
+}
+
+// HoldReasonIsNil applies the IsNil predicate on the "hold_reason" field.
+func HoldReasonIsNil() predicate.Broadcast {
+	return predicate.Broadcast(sql.FieldIsNull(FieldHoldReason))
+}
+
+// HoldReasonNotNil applies the NotNil predicate on the "hold_reason" field.
+func HoldReasonNotNil() predicate.Broadcast {
+	return predicate.Broadcast(sql.FieldNotNull(FieldHoldReason))
+}
+
+// HoldReasonEqualFold applies the EqualFold predicate on the "hold_reason" field.
+func HoldReasonEqualFold(v string) predicate.Broadcast {
+	return predicate.Broadcast(sql.FieldEqualFold(FieldHoldReason, v))
+}
+
+// HoldReasonContainsFold applies the ContainsFold predicate on the "hold_reason" field.
+func HoldReasonContainsFold(v string) predicate.Broadcast {
+	return predicate.Broadcast(sql.FieldContainsFold(FieldHoldReason, v))
 }
 
 // WorkspaceIDEQ applies the EQ predicate on the "workspace_id" field.

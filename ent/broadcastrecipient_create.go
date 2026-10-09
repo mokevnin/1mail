@@ -56,6 +56,20 @@ func (_c *BroadcastRecipientCreate) SetNillableStatus(v *broadcastrecipient.Stat
 	return _c
 }
 
+// SetOutboundMessageID sets the "outbound_message_id" field.
+func (_c *BroadcastRecipientCreate) SetOutboundMessageID(v int64) *BroadcastRecipientCreate {
+	_c.mutation.SetOutboundMessageID(v)
+	return _c
+}
+
+// SetNillableOutboundMessageID sets the "outbound_message_id" field if the given value is not nil.
+func (_c *BroadcastRecipientCreate) SetNillableOutboundMessageID(v *int64) *BroadcastRecipientCreate {
+	if v != nil {
+		_c.SetOutboundMessageID(*v)
+	}
+	return _c
+}
+
 // SetError sets the "error" field.
 func (_c *BroadcastRecipientCreate) SetError(v string) *BroadcastRecipientCreate {
 	_c.mutation.SetError(v)
@@ -277,6 +291,10 @@ func (_c *BroadcastRecipientCreate) createSpec() (*BroadcastRecipient, *sqlgraph
 		_spec.SetField(broadcastrecipient.FieldStatus, field.TypeEnum, value)
 		_node.Status = value
 	}
+	if value, ok := _c.mutation.OutboundMessageID(); ok {
+		_spec.SetField(broadcastrecipient.FieldOutboundMessageID, field.TypeInt64, value)
+		_node.OutboundMessageID = &value
+	}
 	if value, ok := _c.mutation.Error(); ok {
 		_spec.SetField(broadcastrecipient.FieldError, field.TypeString, value)
 		_node.Error = &value
@@ -438,6 +456,30 @@ func (u *BroadcastRecipientUpsert) SetStatus(v broadcastrecipient.Status) *Broad
 // UpdateStatus sets the "status" field to the value that was provided on create.
 func (u *BroadcastRecipientUpsert) UpdateStatus() *BroadcastRecipientUpsert {
 	u.SetExcluded(broadcastrecipient.FieldStatus)
+	return u
+}
+
+// SetOutboundMessageID sets the "outbound_message_id" field.
+func (u *BroadcastRecipientUpsert) SetOutboundMessageID(v int64) *BroadcastRecipientUpsert {
+	u.Set(broadcastrecipient.FieldOutboundMessageID, v)
+	return u
+}
+
+// UpdateOutboundMessageID sets the "outbound_message_id" field to the value that was provided on create.
+func (u *BroadcastRecipientUpsert) UpdateOutboundMessageID() *BroadcastRecipientUpsert {
+	u.SetExcluded(broadcastrecipient.FieldOutboundMessageID)
+	return u
+}
+
+// AddOutboundMessageID adds v to the "outbound_message_id" field.
+func (u *BroadcastRecipientUpsert) AddOutboundMessageID(v int64) *BroadcastRecipientUpsert {
+	u.Add(broadcastrecipient.FieldOutboundMessageID, v)
+	return u
+}
+
+// ClearOutboundMessageID clears the value of the "outbound_message_id" field.
+func (u *BroadcastRecipientUpsert) ClearOutboundMessageID() *BroadcastRecipientUpsert {
+	u.SetNull(broadcastrecipient.FieldOutboundMessageID)
 	return u
 }
 
@@ -636,6 +678,34 @@ func (u *BroadcastRecipientUpsertOne) SetStatus(v broadcastrecipient.Status) *Br
 func (u *BroadcastRecipientUpsertOne) UpdateStatus() *BroadcastRecipientUpsertOne {
 	return u.Update(func(s *BroadcastRecipientUpsert) {
 		s.UpdateStatus()
+	})
+}
+
+// SetOutboundMessageID sets the "outbound_message_id" field.
+func (u *BroadcastRecipientUpsertOne) SetOutboundMessageID(v int64) *BroadcastRecipientUpsertOne {
+	return u.Update(func(s *BroadcastRecipientUpsert) {
+		s.SetOutboundMessageID(v)
+	})
+}
+
+// AddOutboundMessageID adds v to the "outbound_message_id" field.
+func (u *BroadcastRecipientUpsertOne) AddOutboundMessageID(v int64) *BroadcastRecipientUpsertOne {
+	return u.Update(func(s *BroadcastRecipientUpsert) {
+		s.AddOutboundMessageID(v)
+	})
+}
+
+// UpdateOutboundMessageID sets the "outbound_message_id" field to the value that was provided on create.
+func (u *BroadcastRecipientUpsertOne) UpdateOutboundMessageID() *BroadcastRecipientUpsertOne {
+	return u.Update(func(s *BroadcastRecipientUpsert) {
+		s.UpdateOutboundMessageID()
+	})
+}
+
+// ClearOutboundMessageID clears the value of the "outbound_message_id" field.
+func (u *BroadcastRecipientUpsertOne) ClearOutboundMessageID() *BroadcastRecipientUpsertOne {
+	return u.Update(func(s *BroadcastRecipientUpsert) {
+		s.ClearOutboundMessageID()
 	})
 }
 
@@ -1014,6 +1084,34 @@ func (u *BroadcastRecipientUpsertBulk) SetStatus(v broadcastrecipient.Status) *B
 func (u *BroadcastRecipientUpsertBulk) UpdateStatus() *BroadcastRecipientUpsertBulk {
 	return u.Update(func(s *BroadcastRecipientUpsert) {
 		s.UpdateStatus()
+	})
+}
+
+// SetOutboundMessageID sets the "outbound_message_id" field.
+func (u *BroadcastRecipientUpsertBulk) SetOutboundMessageID(v int64) *BroadcastRecipientUpsertBulk {
+	return u.Update(func(s *BroadcastRecipientUpsert) {
+		s.SetOutboundMessageID(v)
+	})
+}
+
+// AddOutboundMessageID adds v to the "outbound_message_id" field.
+func (u *BroadcastRecipientUpsertBulk) AddOutboundMessageID(v int64) *BroadcastRecipientUpsertBulk {
+	return u.Update(func(s *BroadcastRecipientUpsert) {
+		s.AddOutboundMessageID(v)
+	})
+}
+
+// UpdateOutboundMessageID sets the "outbound_message_id" field to the value that was provided on create.
+func (u *BroadcastRecipientUpsertBulk) UpdateOutboundMessageID() *BroadcastRecipientUpsertBulk {
+	return u.Update(func(s *BroadcastRecipientUpsert) {
+		s.UpdateOutboundMessageID()
+	})
+}
+
+// ClearOutboundMessageID clears the value of the "outbound_message_id" field.
+func (u *BroadcastRecipientUpsertBulk) ClearOutboundMessageID() *BroadcastRecipientUpsertBulk {
+	return u.Update(func(s *BroadcastRecipientUpsert) {
+		s.ClearOutboundMessageID()
 	})
 }
 

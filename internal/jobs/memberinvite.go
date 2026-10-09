@@ -46,11 +46,12 @@ func SendMemberInvite(ctx context.Context, sender messaging.EmailSender, args Se
 		"%s invited you to join the \"%s\" workspace on 1mail.\n\nFollow this link to accept:\n\n%s\n\nIf you weren't expecting this, you can ignore this email.\n",
 		who, args.WorkspaceName, args.InviteURL,
 	)
-	return sender.Send(ctx, messaging.EmailMessage{
+	_, err := sender.Send(ctx, messaging.EmailMessage{
 		To:      args.Email,
 		Subject: fmt.Sprintf("You're invited to %s on 1mail", args.WorkspaceName),
 		Text:    body,
 	})
+	return err
 }
 
 // EnqueueMemberInvite schedules the invite email (river adapter).

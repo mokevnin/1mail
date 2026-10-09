@@ -627,6 +627,7 @@ export const zSiteBroadcastResource = z.object({
   segmentId: zEntityId.nullish(),
   integrationId: zEntityId.nullish(),
   status: zSiteBroadcastStatus,
+  holdReason: z.string().nullish(),
   scheduledAt: zTimestamp.nullish(),
   sentAt: zTimestamp.nullish(),
   stats: zSiteBroadcastStats,

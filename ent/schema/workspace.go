@@ -59,6 +59,20 @@ func (Workspace) Fields() []ent.Field {
 		field.String("postal_address").
 			Optional().
 			Default(""),
+		// Workspace suspension (ADR 0007): a reversible freeze of ALL outbound sending
+		// for reputation protection. Set => every Outbound send returns a Hold. Login,
+		// reads and /collect keep working. Attribution records who set it (the
+		// automated abuse detector, actor "system", or a platform Operator's id) and
+		// why, so the owner sees the notice and can appeal.
+		field.Time("suspended_at").
+			Optional().
+			Nillable(),
+		field.String("suspended_by").
+			Optional().
+			Nillable(),
+		field.String("suspension_reason").
+			Optional().
+			Nillable(),
 		field.Time("created_at").
 			Default(time.Now).
 			Immutable(),
@@ -87,7 +101,7 @@ func (Workspace) Edges() []ent.Edge {
 		edge.To("suppressions", Suppression.Type),
 		edge.To("unsubscribes", Unsubscribe.Type),
 		edge.To("confirmations", Confirmation.Type),
-		edge.To("transactional_emails", TransactionalEmail.Type),
+		edge.To("outbound_messages", OutboundMessage.Type),
 		edge.To("memberships", Membership.Type),
 		edge.To("invitations", Invitation.Type),
 	}

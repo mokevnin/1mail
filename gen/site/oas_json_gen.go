@@ -3715,6 +3715,12 @@ func (s *SiteBroadcastResource) encodeFields(e *jx.Encoder) {
 		s.Status.Encode(e)
 	}
 	{
+		if s.HoldReason.Set {
+			e.FieldStart("holdReason")
+			s.HoldReason.Encode(e)
+		}
+	}
+	{
 		if s.ScheduledAt.Set {
 			e.FieldStart("scheduledAt")
 			s.ScheduledAt.Encode(e)
@@ -3740,7 +3746,7 @@ func (s *SiteBroadcastResource) encodeFields(e *jx.Encoder) {
 	}
 }
 
-var jsonFieldsNameOfSiteBroadcastResource = [15]string{
+var jsonFieldsNameOfSiteBroadcastResource = [16]string{
 	0:  "id",
 	1:  "name",
 	2:  "subject",
@@ -3751,11 +3757,12 @@ var jsonFieldsNameOfSiteBroadcastResource = [15]string{
 	7:  "segmentId",
 	8:  "integrationId",
 	9:  "status",
-	10: "scheduledAt",
-	11: "sentAt",
-	12: "stats",
-	13: "createdAt",
-	14: "updatedAt",
+	10: "holdReason",
+	11: "scheduledAt",
+	12: "sentAt",
+	13: "stats",
+	14: "createdAt",
+	15: "updatedAt",
 }
 
 // Decode decodes SiteBroadcastResource from json.
@@ -3875,6 +3882,16 @@ func (s *SiteBroadcastResource) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"status\"")
 			}
+		case "holdReason":
+			if err := func() error {
+				s.HoldReason.Reset()
+				if err := s.HoldReason.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"holdReason\"")
+			}
 		case "scheduledAt":
 			if err := func() error {
 				s.ScheduledAt.Reset()
@@ -3896,7 +3913,7 @@ func (s *SiteBroadcastResource) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"sentAt\"")
 			}
 		case "stats":
-			requiredBitSet[1] |= 1 << 4
+			requiredBitSet[1] |= 1 << 5
 			if err := func() error {
 				if err := s.Stats.Decode(d); err != nil {
 					return err
@@ -3906,7 +3923,7 @@ func (s *SiteBroadcastResource) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"stats\"")
 			}
 		case "createdAt":
-			requiredBitSet[1] |= 1 << 5
+			requiredBitSet[1] |= 1 << 6
 			if err := func() error {
 				if err := s.CreatedAt.Decode(d); err != nil {
 					return err
@@ -3916,7 +3933,7 @@ func (s *SiteBroadcastResource) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"createdAt\"")
 			}
 		case "updatedAt":
-			requiredBitSet[1] |= 1 << 6
+			requiredBitSet[1] |= 1 << 7
 			if err := func() error {
 				if err := s.UpdatedAt.Decode(d); err != nil {
 					return err
@@ -3936,7 +3953,7 @@ func (s *SiteBroadcastResource) Decode(d *jx.Decoder) error {
 	var failures []validate.FieldError
 	for i, mask := range [2]uint8{
 		0b01100111,
-		0b01110010,
+		0b11100010,
 	} {
 		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
 			// Mask only required fields and check equality to mask using XOR.

@@ -11,6 +11,7 @@ import (
 
 	"github.com/go-faster/jx"
 	"github.com/mokevnin/1mail/ent"
+	"github.com/mokevnin/1mail/ent/outboundmessage"
 	siteapi "github.com/mokevnin/1mail/gen/site"
 )
 
@@ -34,6 +35,10 @@ import (
 // goverter:extend broadcastStats
 // goverter:extend automationSteps
 // goverter:extend emailVerified
+// goverter:extend requiredEntityID
+// goverter:extend transactionalChannel
+// goverter:extend transactionalStatus
+// goverter:extend transactionalError
 type Converter interface {
 	ContactToResource(source *ent.Contact) siteapi.SiteContactResource
 	SegmentToResource(source *ent.Segment) siteapi.SiteSegmentResource
@@ -58,7 +63,15 @@ type Converter interface {
 	AutomationToResource(source *ent.Automation) siteapi.SiteAutomationResource
 	SuppressionToResource(source *ent.Suppression) siteapi.SiteSuppressionResource
 	CustomFieldToResource(source *ent.CustomField) siteapi.SiteCustomFieldResource
-	TransactionalEmailToResource(source *ent.TransactionalEmail) siteapi.SiteTransactionalEmailResource
+
+	// The transactional send history is the Outbound messages of kind transactional
+	// (ADR 0015). A message skipped by Send-eligibility is shown as "suppressed" (the
+	// only reason a transactional send is skipped); the reason column is the error
+	// text only for a failed send.
+	// goverter:map . Status | transactionalStatus
+	// goverter:map . Error | transactionalError
+	// goverter:map TemplateID TemplateId | requiredEntityID
+	TransactionalMessageToResource(source *ent.OutboundMessage) siteapi.SiteTransactionalEmailResource
 }
 
 // emailVerified derives the verified flag from the nullable timestamp.
@@ -72,6 +85,44 @@ func entityID(id int64) siteapi.EntityId {
 
 func timestamp(t time.Time) siteapi.Timestamp {
 	return siteapi.Timestamp(t)
+}
+
+// transactionalChannel maps the Outbound message channel onto the transactional
+// send channel enum (email is the only channel built).
+func transactionalChannel(outboundmessage.Channel) siteapi.SiteTransactionalEmailChannel {
+	return siteapi.SiteTransactionalEmailChannelEmail
+}
+
+// requiredEntityID renders a nullable id that is always set for the row kind it is
+// used on (a transactional message always references its Template).
+func requiredEntityID(v *int64) siteapi.EntityId {
+	if v == nil {
+		return ""
+	}
+	return entityID(*v)
+}
+
+// transactionalStatus maps an Outbound message's status onto the transactional
+// send status enum.
+func transactionalStatus(m ent.OutboundMessage) siteapi.SiteTransactionalEmailStatus {
+	switch m.Status {
+	case outboundmessage.StatusSent:
+		return siteapi.SiteTransactionalEmailStatusSent
+	case outboundmessage.StatusSkipped:
+		return siteapi.SiteTransactionalEmailStatusSuppressed
+	case outboundmessage.StatusFailed:
+		return siteapi.SiteTransactionalEmailStatusFailed
+	default:
+		return siteapi.SiteTransactionalEmailStatusPending
+	}
+}
+
+// transactionalError exposes the failure text only for a failed send.
+func transactionalError(m ent.OutboundMessage) siteapi.OptNilString {
+	if m.Status != outboundmessage.StatusFailed || m.Reason == nil {
+		return siteapi.OptNilString{}
+	}
+	return siteapi.NewOptNilString(*m.Reason)
 }
 
 func optNilString(v *string) siteapi.OptNilString {

@@ -11,9 +11,8 @@ import (
 	"github.com/mokevnin/1mail/ent/broadcastrecipient"
 	siteapi "github.com/mokevnin/1mail/gen/site"
 	"github.com/mokevnin/1mail/internal/convert"
-	"github.com/mokevnin/1mail/internal/emailrender"
 	"github.com/mokevnin/1mail/internal/i18n"
-	"github.com/mokevnin/1mail/internal/messaging"
+	"github.com/mokevnin/1mail/internal/outbound"
 	"github.com/mokevnin/1mail/internal/pagination"
 )
 
@@ -379,37 +378,51 @@ func (h *Handlers) SiteBroadcastsTestSend(ctx context.Context, req *siteapi.Site
 		return nil, err
 	}
 
-	sender, err := messaging.NewResolver(h.ent, h.cipher, h.catalog).EmailSender(ctx, ws)
-	if err != nil {
-		v := siteapi.SiteBroadcastsTestSendUnprocessableEntity(problem(http.StatusUnprocessableEntity, "no sending integration configured"))
-		return &v, nil
-	}
-
 	to := string(req.Email)
-	bindings := map[string]any{"first_name": "Alex", "last_name": "Sample", "email": to}
-	email, rerr := emailrender.RenderEmail(b.Subject, b.Body, bindings)
-	if rerr != nil {
-		v := siteapi.SiteBroadcastsTestSendUnprocessableEntity(problem(http.StatusUnprocessableEntity, rerr.Error()))
-		return &v, nil
-	}
-
-	var fromEmail, fromName string
-	if b.FromEmail != nil {
-		fromEmail = *b.FromEmail
-	}
-	if b.FromName != nil {
-		fromName = *b.FromName
-	}
-	if err := sender.Send(ctx, messaging.EmailMessage{
-		From:     fromEmail,
-		FromName: fromName,
-		To:       to,
-		Subject:  "[Test] " + email.Subject,
-		HTML:     email.HTML,
-		Text:     email.Text,
-	}); err != nil {
+	res, err := h.outbound.SendTest(ctx, outbound.TestRequest{
+		WorkspaceID: ws,
+		To:          to,
+		Subject:     "[Test] " + b.Subject,
+		Body:        b.Body,
+		Variables:   map[string]any{"first_name": "Alex", "last_name": "Sample", "email": to},
+		FromEmail:   deref(b.FromEmail),
+		FromName:    deref(b.FromName),
+	})
+	if err != nil {
 		v := siteapi.SiteBroadcastsTestSendUnprocessableEntity(problem(http.StatusUnprocessableEntity, "send failed: "+err.Error()))
 		return &v, nil
 	}
+	switch res.Outcome {
+	case outbound.Sent:
+		// fall through to the 204 below
+	case outbound.Held:
+		v := siteapi.SiteBroadcastsTestSendUnprocessableEntity(problem(http.StatusUnprocessableEntity, testSendHoldDetail(res.Reason)))
+		return &v, nil
+	default: // outbound.Failed: the content did not render
+		v := siteapi.SiteBroadcastsTestSendUnprocessableEntity(problem(http.StatusUnprocessableEntity, res.Reason))
+		return &v, nil
+	}
 	return &siteapi.SiteBroadcastsTestSendNoContent{}, nil
+}
+
+// deref returns the string a nullable column points at, or "" when unset.
+func deref(s *string) string {
+	if s == nil {
+		return ""
+	}
+	return *s
+}
+
+// testSendHoldDetail words a hold on a test send for the author.
+func testSendHoldDetail(reason string) string {
+	switch reason {
+	case outbound.HoldSuspended:
+		return "sending is suspended for this workspace"
+	case outbound.HoldNoIntegration:
+		return "no sending integration configured"
+	case outbound.HoldUnverifiedDomain:
+		return "sender domain is not a verified sending domain"
+	default:
+		return "sending is currently on hold for this workspace: " + reason
+	}
 }

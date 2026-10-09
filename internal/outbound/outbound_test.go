@@ -1,0 +1,374 @@
+package outbound_test
+
+import (
+	"context"
+	"errors"
+	"strconv"
+	"testing"
+	"time"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	"github.com/mokevnin/1mail/ent"
+	"github.com/mokevnin/1mail/ent/outboundmessage"
+	"github.com/mokevnin/1mail/internal/eligibility"
+	"github.com/mokevnin/1mail/internal/messaging"
+	"github.com/mokevnin/1mail/internal/outbound"
+	"github.com/mokevnin/1mail/internal/testhelper"
+	"github.com/mokevnin/1mail/internal/tracking"
+)
+
+// Fixtures: workspace acme (1); contact 1 alice (clean), contact 2 bob (unsubscribed
+// from "broadcasts"), contact 104 ethan.data@codebasics.dev (suppressed). The
+// default integration's From is on codebasics.dev (verified); news.acme.com is an
+// unverified Sending domain.
+const (
+	acme      = int64(1)
+	aliceID   = int64(1)
+	bobID     = int64(2)
+	suppressd = "ethan.data@codebasics.dev"
+)
+
+const mjml = `<mjml><mj-body><mj-section><mj-column><mj-text>Hi {{ first_name }}</mj-text></mj-column></mj-section></mj-body></mjml>`
+
+type senders struct {
+	sender messaging.EmailSender
+	err    error
+}
+
+func (s senders) EmailSender(context.Context, int64) (messaging.EmailSender, error) {
+	return s.sender, s.err
+}
+
+func newModule(env *testhelper.TestEnv, opts ...outbound.Option) *outbound.Module {
+	return outbound.New(env.DB, env.Bus, senders{sender: env.CustomerMail},
+		tracking.New("test-secret", "http://local"), opts...)
+}
+
+func transactional(key, to string) outbound.Request {
+	return outbound.Request{
+		WorkspaceID: acme,
+		Kind:        outboundmessage.KindTransactional,
+		Key:         key,
+		Destination: to,
+		Subject:     "Receipt {{ order }}",
+		Body:        mjml,
+		Variables:   map[string]any{"order": "42"},
+	}
+}
+
+func marketing(t *testing.T, env *testhelper.TestEnv, key string, contactID int64) outbound.Request {
+	t.Helper()
+	c := env.DB.Contact.GetX(context.Background(), contactID)
+	return outbound.Request{
+		WorkspaceID: acme,
+		Kind:        outboundmessage.KindBroadcast,
+		Key:         key,
+		Destination: *c.Email,
+		Contact:     c,
+		Source:      eligibility.SourceBroadcasts,
+		Subject:     "News",
+		Body:        mjml,
+	}
+}
+
+// byKey loads the Outbound message recorded under key (the fixtures already hold
+// other rows, so tests never assume an empty table).
+func byKey(t *testing.T, env *testhelper.TestEnv, key string) *ent.OutboundMessage {
+	t.Helper()
+	return env.DB.OutboundMessage.Query().
+		Where(outboundmessage.WorkspaceID(acme), outboundmessage.IdempotencyKey(key)).
+		OnlyX(context.Background())
+}
+
+func sentEvents(t *testing.T, env *testhelper.TestEnv, messageID int64) int {
+	t.Helper()
+	var n int
+	require.NoError(t, env.SQLDB.QueryRow(
+		`SELECT count(*) FROM watermill_domain_events
+		   WHERE payload->>'name' = 'email.sent' AND payload->'data'->>'outboundMessageId' = $1`,
+		strconv.FormatInt(messageID, 10)).Scan(&n))
+	return n
+}
+
+func TestTransactionalSendRecordsMessageAndEvent(t *testing.T) {
+	env := testhelper.Setup(t)
+	ctx := context.Background()
+
+	res, err := newModule(env).Send(ctx, transactional("tx:1", "Someone@Example.com"))
+	require.NoError(t, err)
+	assert.Equal(t, outbound.Sent, res.Outcome)
+
+	msgs := env.CustomerMail.Messages()
+	require.Len(t, msgs, 1)
+	assert.Equal(t, "someone@example.com", msgs[0].To, "destination is normalized")
+	assert.Equal(t, "Receipt 42", msgs[0].Subject)
+	assert.Equal(t, "hello@codebasics.dev", msgs[0].From, "effective From is the integration's")
+	assert.Empty(t, msgs[0].ListUnsubscribeURL, "transactional carries no unsubscribe header")
+	assert.NotContains(t, msgs[0].HTML, "unsubscribe")
+
+	row := env.DB.OutboundMessage.GetX(ctx, res.MessageID)
+	assert.Equal(t, outboundmessage.StatusSent, row.Status)
+	assert.Equal(t, outboundmessage.KindTransactional, row.Kind)
+	require.NotNil(t, row.SendingDomain)
+	assert.Equal(t, "codebasics.dev", *row.SendingDomain)
+	require.NotNil(t, row.ProviderMessageID)
+	assert.NotEmpty(t, *row.ProviderMessageID)
+	assert.Nil(t, row.SendingSource)
+	assert.Equal(t, 1, sentEvents(t, env, res.MessageID), "one email.sent event, in the same transaction")
+}
+
+func TestSameKeyReplaysAndSendsOnce(t *testing.T) {
+	env := testhelper.Setup(t)
+	ctx := context.Background()
+	m := newModule(env)
+
+	first, err := m.Send(ctx, transactional("tx:replay", "a@example.com"))
+	require.NoError(t, err)
+	second, err := m.Send(ctx, transactional("tx:replay", "a@example.com"))
+	require.NoError(t, err)
+
+	assert.Equal(t, outbound.Sent, second.Outcome)
+	assert.True(t, second.Replayed)
+	assert.Equal(t, first.MessageID, second.MessageID)
+	assert.Len(t, env.CustomerMail.Messages(), 1, "the provider is called once")
+	assert.Equal(t, 1, sentEvents(t, env, first.MessageID))
+}
+
+func TestSuppressedDestinationIsSkippedEvenForTransactional(t *testing.T) {
+	env := testhelper.Setup(t)
+	ctx := context.Background()
+
+	res, err := newModule(env).Send(ctx, transactional("tx:sup", suppressd))
+	require.NoError(t, err)
+	assert.Equal(t, outbound.Skipped, res.Outcome)
+	assert.Equal(t, eligibility.ReasonSuppressed, res.Reason)
+	assert.Empty(t, env.CustomerMail.Messages())
+	row := env.DB.OutboundMessage.GetX(ctx, res.MessageID)
+	assert.Equal(t, outboundmessage.StatusSkipped, row.Status, "the skip is recorded")
+	assert.Zero(t, sentEvents(t, env, res.MessageID))
+}
+
+// The reason Send-eligibility is checked per message: an unsubscribe that exists at
+// send time wins, whatever the audience looked like when it was planned.
+func TestUnsubscribedContactIsSkippedForMarketingButNotTransactional(t *testing.T) {
+	env := testhelper.Setup(t)
+	ctx := context.Background()
+	m := newModule(env)
+
+	res, err := m.Send(ctx, marketing(t, env, "bc:bob", bobID))
+	require.NoError(t, err)
+	assert.Equal(t, outbound.Skipped, res.Outcome)
+	assert.Equal(t, eligibility.ReasonUnsubscribedSource, res.Reason)
+
+	// Bob can still receive his own transactional mail (no Sending source).
+	res, err = m.Send(ctx, transactional("tx:bob", "bob@example.com"))
+	require.NoError(t, err)
+	assert.Equal(t, outbound.Sent, res.Outcome)
+}
+
+func TestMarketingCarriesFooterAndOneClickHeader(t *testing.T) {
+	env := testhelper.Setup(t)
+	ctx := context.Background()
+
+	res, err := newModule(env).Send(ctx, marketing(t, env, "bc:alice", aliceID))
+	require.NoError(t, err)
+	require.Equal(t, outbound.Sent, res.Outcome)
+
+	msg := env.CustomerMail.Messages()[0]
+	assert.Contains(t, msg.HTML, "unsubscribe", "footer link")
+	assert.Contains(t, msg.ListUnsubscribeURL, "/e/u/", "RFC 8058 one-click URL")
+	row := env.DB.OutboundMessage.GetX(ctx, res.MessageID)
+	require.NotNil(t, row.SendingSource)
+	assert.Equal(t, eligibility.SourceBroadcasts, *row.SendingSource)
+	require.NotNil(t, row.ContactID)
+	assert.Equal(t, aliceID, *row.ContactID)
+}
+
+func TestMarketingWithoutTrackerFailsClosed(t *testing.T) {
+	env := testhelper.Setup(t)
+	m := outbound.New(env.DB, env.Bus, senders{sender: env.CustomerMail}, nil)
+
+	_, err := m.Send(context.Background(), marketing(t, env, "bc:notracker", aliceID))
+	require.ErrorIs(t, err, outbound.ErrNoTracker)
+	assert.Empty(t, env.CustomerMail.Messages(), "never sent without an unsubscribe link")
+}
+
+func TestRenderErrorIsAPermanentFailureOfThatMessage(t *testing.T) {
+	env := testhelper.Setup(t)
+	ctx := context.Background()
+
+	req := transactional("tx:badliquid", "a@example.com")
+	req.Subject = "{% if %}broken"
+	res, err := newModule(env).Send(ctx, req)
+	require.NoError(t, err)
+	assert.Equal(t, outbound.Failed, res.Outcome)
+	assert.Empty(t, env.CustomerMail.Messages(), "the raw template is never sent")
+	assert.Equal(t, outboundmessage.StatusFailed, env.DB.OutboundMessage.GetX(ctx, res.MessageID).Status)
+}
+
+func TestSuspendedWorkspaceIsHeldNotConsumed(t *testing.T) {
+	env := testhelper.Setup(t)
+	ctx := context.Background()
+	m := newModule(env)
+
+	env.DB.Workspace.UpdateOneID(acme).SetSuspendedAt(time.Now()).SetSuspendedBy("system").
+		SetSuspensionReason("complaint rate").ExecX(ctx)
+	res, err := m.Send(ctx, marketing(t, env, "bc:held", aliceID))
+	require.NoError(t, err)
+	assert.Equal(t, outbound.Held, res.Outcome)
+	assert.Equal(t, outbound.HoldSuspended, res.Reason)
+	assert.Zero(t, res.MessageID, "nothing is recorded for a hold")
+	assert.Empty(t, env.CustomerMail.Messages())
+
+	// Reversible: after the unfreeze the same Request goes out.
+	env.DB.Workspace.UpdateOneID(acme).ClearSuspendedAt().ExecX(ctx)
+	res, err = m.Send(ctx, marketing(t, env, "bc:held", aliceID))
+	require.NoError(t, err)
+	assert.Equal(t, outbound.Sent, res.Outcome)
+}
+
+func TestUnverifiedFromDomainIsHeld(t *testing.T) {
+	env := testhelper.Setup(t)
+
+	req := transactional("tx:unverified", "a@example.com")
+	req.FromEmail = "noreply@news.acme.com" // fixture domain id 2: unverified
+	res, err := newModule(env).Send(context.Background(), req)
+	require.NoError(t, err)
+	assert.Equal(t, outbound.Held, res.Outcome)
+	assert.Equal(t, outbound.HoldUnverifiedDomain, res.Reason)
+	assert.Empty(t, env.CustomerMail.Messages())
+}
+
+func TestDomainLosingVerificationAtSignTimeIsHeldAndFreesTheClaim(t *testing.T) {
+	env := testhelper.Setup(t)
+	ctx := context.Background()
+	m := newModule(env)
+
+	env.CustomerMail.SetErr(messaging.ErrUnverifiedSendingDomain)
+	res, err := m.Send(ctx, transactional("tx:race", "a@example.com"))
+	require.NoError(t, err)
+	assert.Equal(t, outbound.Held, res.Outcome)
+
+	env.CustomerMail.SetErr(nil)
+	res, err = m.Send(ctx, transactional("tx:race", "a@example.com"))
+	require.NoError(t, err)
+	assert.Equal(t, outbound.Sent, res.Outcome, "the same Request can run again")
+}
+
+func TestNoIntegrationIsHeld(t *testing.T) {
+	env := testhelper.Setup(t)
+	m := outbound.New(env.DB, env.Bus, senders{err: messaging.ErrNoProvider}, tracking.New("s", "http://local"))
+
+	res, err := m.Send(context.Background(), transactional("tx:noint", "a@example.com"))
+	require.NoError(t, err)
+	assert.Equal(t, outbound.Held, res.Outcome)
+	assert.Equal(t, outbound.HoldNoIntegration, res.Reason)
+}
+
+func TestProviderErrorIsRetryableAndReleasesTheClaim(t *testing.T) {
+	env := testhelper.Setup(t)
+	ctx := context.Background()
+	m := newModule(env)
+
+	env.CustomerMail.SetErr(errors.New("smtp unavailable"))
+	_, err := m.Send(ctx, transactional("tx:retry", "a@example.com"))
+	require.Error(t, err)
+	row := byKey(t, env, "tx:retry")
+	assert.Equal(t, outboundmessage.StatusPending, row.Status)
+
+	env.CustomerMail.SetErr(nil)
+	res, err := m.Send(ctx, transactional("tx:retry", "a@example.com"))
+	require.NoError(t, err, "a definite provider failure frees the claim immediately")
+	assert.Equal(t, outbound.Sent, res.Outcome)
+	assert.Equal(t, row.ID, res.MessageID, "the same row is reused")
+	assert.Len(t, env.CustomerMail.Messages(), 1)
+}
+
+func TestLiveClaimBlocksAndStaleClaimIsTakenOver(t *testing.T) {
+	env := testhelper.Setup(t)
+	ctx := context.Background()
+
+	// A claim another attempt just took, still within the lease.
+	env.DB.OutboundMessage.Create().SetWorkspaceID(acme).SetKind(outboundmessage.KindTransactional).
+		SetIdempotencyKey("tx:lease").SetDestination("a@example.com").SetClaimedAt(time.Now()).ExecX(ctx)
+	_, err := newModule(env).Send(ctx, transactional("tx:lease", "a@example.com"))
+	require.ErrorIs(t, err, outbound.ErrInProgress)
+	assert.Empty(t, env.CustomerMail.Messages(), "never two concurrent sends")
+
+	// The same claim, abandoned long ago (a crashed attempt), is adopted.
+	env.DB.OutboundMessage.Update().Where(outboundmessage.IdempotencyKey("tx:lease")).
+		SetClaimedAt(time.Now().Add(-time.Hour)).ExecX(ctx)
+	res, err := newModule(env).Send(ctx, transactional("tx:lease", "a@example.com"))
+	require.NoError(t, err)
+	assert.Equal(t, outbound.Sent, res.Outcome)
+	assert.Len(t, env.CustomerMail.Messages(), 1)
+}
+
+func TestConfirmedOptInIsReadInsideTheRule(t *testing.T) {
+	env := testhelper.Setup(t)
+	ctx := context.Background()
+	env.DB.Workspace.UpdateOneID(acme).SetRequireConfirmedOptIn(true).ExecX(ctx)
+
+	res, err := newModule(env).Send(ctx, marketing(t, env, "bc:unconfirmed", aliceID))
+	require.NoError(t, err)
+	assert.Equal(t, outbound.Skipped, res.Outcome)
+	assert.Equal(t, eligibility.ReasonUnconfirmed, res.Reason)
+}
+
+func TestPreflightReportsHoldsWithoutRecording(t *testing.T) {
+	env := testhelper.Setup(t)
+	ctx := context.Background()
+	m := newModule(env)
+
+	before := env.DB.OutboundMessage.Query().CountX(ctx)
+	hold, err := m.Preflight(ctx, acme, "")
+	require.NoError(t, err)
+	assert.Empty(t, hold)
+	hold, err = m.Preflight(ctx, acme, "x@news.acme.com")
+	require.NoError(t, err)
+	assert.Equal(t, outbound.HoldUnverifiedDomain, hold)
+	assert.Equal(t, before, env.DB.OutboundMessage.Query().CountX(ctx), "a preflight records nothing")
+}
+
+func TestMarkFailedOnlyTouchesPendingClaims(t *testing.T) {
+	env := testhelper.Setup(t)
+	ctx := context.Background()
+	m := newModule(env)
+
+	env.CustomerMail.SetErr(errors.New("down"))
+	_, err := m.Send(ctx, transactional("tx:giveup", "a@example.com"))
+	require.Error(t, err)
+	require.NoError(t, m.MarkFailed(ctx, acme, "tx:giveup", errors.New("retries exhausted")))
+	row := byKey(t, env, "tx:giveup")
+	assert.Equal(t, outboundmessage.StatusFailed, row.Status)
+	require.NotNil(t, row.Reason)
+	assert.Equal(t, "retries exhausted", *row.Reason)
+}
+
+func TestSendTestSkipsEligibilityAndRecordsNothingButHonorsTheFreeze(t *testing.T) {
+	env := testhelper.Setup(t)
+	ctx := context.Background()
+	m := newModule(env)
+	before := env.DB.OutboundMessage.Query().CountX(ctx)
+
+	// Even a suppressed address can be the target of an explicit author preview.
+	res, err := m.SendTest(ctx, outbound.TestRequest{WorkspaceID: acme, To: suppressd, Subject: "[Test] Hi", Body: mjml,
+		Variables: map[string]any{"first_name": "Alex"}})
+	require.NoError(t, err)
+	assert.Equal(t, outbound.Sent, res.Outcome)
+	msgs := env.CustomerMail.Messages()
+	require.Len(t, msgs, 1)
+	assert.Empty(t, msgs[0].ListUnsubscribeURL, "a preview carries no unsubscribe header")
+	assert.Equal(t, before, env.DB.OutboundMessage.Query().CountX(ctx), "a test send records no Outbound message")
+	assert.Zero(t, sentEvents(t, env, 0))
+
+	// But a suspended Workspace sends nothing, test or not.
+	env.DB.Workspace.UpdateOneID(acme).SetSuspendedAt(time.Now()).ExecX(ctx)
+	res, err = m.SendTest(ctx, outbound.TestRequest{WorkspaceID: acme, To: "a@example.com", Subject: "s", Body: mjml})
+	require.NoError(t, err)
+	assert.Equal(t, outbound.Held, res.Outcome)
+	assert.Equal(t, outbound.HoldSuspended, res.Reason)
+	assert.Len(t, env.CustomerMail.Messages(), 1)
+}

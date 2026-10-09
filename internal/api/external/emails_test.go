@@ -7,8 +7,8 @@ import (
 
 	"github.com/go-faster/jx"
 	"github.com/mokevnin/1mail/ent"
+	"github.com/mokevnin/1mail/ent/outboundmessage"
 	"github.com/mokevnin/1mail/ent/suppression"
-	"github.com/mokevnin/1mail/ent/transactionalemail"
 	externalapi "github.com/mokevnin/1mail/gen/external"
 	"github.com/mokevnin/1mail/internal/eligibility"
 	"github.com/mokevnin/1mail/internal/messaging"
@@ -72,7 +72,8 @@ func TestExternalEmailsSend(t *testing.T) {
 
 // The verified-domain send gate (ADR 0010 slice 3): when the send path rejects an
 // unverified From domain, the transactional API returns 422 (a client-correctable
-// condition) rather than a 500, and the record is marked failed.
+// condition) rather than a 500. It is a reversible hold (ADR 0015), not a failed
+// send: nothing is recorded, so the same request can succeed once the domain is back.
 func TestExternalEmailsSendRejectsUnverifiedDomain(t *testing.T) {
 	env := testhelper.Setup(t)
 	env.CustomerMail.SetErr(messaging.ErrUnverifiedSendingDomain)
@@ -88,10 +89,10 @@ func TestExternalEmailsSendRejectsUnverifiedDomain(t *testing.T) {
 	_, isUnprocessable := res.(*externalapi.EmailsSendUnprocessableEntity)
 	require.Truef(t, isUnprocessable, "got %T, want 422 unprocessable", res)
 
-	rec, err := env.DB.TransactionalEmail.Query().
-		Where(transactionalemail.DestinationEQ("customer@example.com")).Only(ctx)
+	n, err := env.DB.OutboundMessage.Query().
+		Where(outboundmessage.DestinationEQ("customer@example.com")).Count(ctx)
 	require.NoError(t, err)
-	assert.Equal(t, transactionalemail.StatusFailed, rec.Status)
+	assert.Zero(t, n, "a hold records no message")
 }
 
 // A suppressed destination is skipped (Suppression is the hard floor on every
@@ -212,12 +213,14 @@ func TestExternalEmailsSendRecordsTrace(t *testing.T) {
 	require.NoError(t, err)
 	require.IsType(t, &externalapi.SendTransactionalEmailResponse{}, res)
 
-	rec, err := env.DB.TransactionalEmail.Query().
-		Where(transactionalemail.WorkspaceID(1), transactionalemail.Destination("trace@example.com")).Only(ctx)
+	rec, err := env.DB.OutboundMessage.Query().
+		Where(outboundmessage.WorkspaceID(1), outboundmessage.Destination("trace@example.com")).Only(ctx)
 	require.NoError(t, err)
-	assert.Equal(t, transactionalemail.StatusSent, rec.Status)
+	assert.Equal(t, outboundmessage.StatusSent, rec.Status)
+	assert.Equal(t, outboundmessage.KindTransactional, rec.Kind)
 	assert.Equal(t, "trace@example.com", rec.Destination)
-	assert.Equal(t, tmpl.ID, rec.TemplateID)
+	require.NotNil(t, rec.TemplateID)
+	assert.Equal(t, tmpl.ID, *rec.TemplateID)
 	require.NotNil(t, rec.ContactID)
 	assert.Equal(t, contact.ID, *rec.ContactID, "destination resolved to the contact")
 
@@ -255,8 +258,8 @@ func TestExternalEmailsSendIdempotentReplay(t *testing.T) {
 	assert.Equal(t, externalapi.TransactionalSendStatusSent, second.Status)
 	assert.Len(t, env.CustomerMail.Messages(), 1, "the email is sent exactly once")
 
-	n, err := env.DB.TransactionalEmail.Query().
-		Where(transactionalemail.WorkspaceID(1), transactionalemail.Destination("once@example.com")).Count(ctx)
+	n, err := env.DB.OutboundMessage.Query().
+		Where(outboundmessage.WorkspaceID(1), outboundmessage.Destination("once@example.com")).Count(ctx)
 	require.NoError(t, err)
 	assert.Equal(t, 1, n, "one record for the key")
 }
@@ -282,10 +285,10 @@ func TestExternalEmailsSendSuppressedRecordsNoEvent(t *testing.T) {
 	ok := res.(*externalapi.SendTransactionalEmailResponse)
 	assert.Equal(t, externalapi.TransactionalSendStatusSuppressed, ok.Status)
 
-	rec, err := env.DB.TransactionalEmail.Query().
-		Where(transactionalemail.WorkspaceID(1), transactionalemail.Destination("blocked@example.com")).Only(ctx)
+	rec, err := env.DB.OutboundMessage.Query().
+		Where(outboundmessage.WorkspaceID(1), outboundmessage.Destination("blocked@example.com")).Only(ctx)
 	require.NoError(t, err)
-	assert.Equal(t, transactionalemail.StatusSuppressed, rec.Status)
+	assert.Equal(t, outboundmessage.StatusSkipped, rec.Status)
 
 	var events int
 	require.NoError(t, env.SQLDB.QueryRow(
@@ -304,10 +307,10 @@ func TestExternalEmailsSendConflictOnPending(t *testing.T) {
 	tmpl := seedTemplate(t, env.DB, 1)
 
 	// Simulate a concurrent request that already claimed the key and is still sending.
-	_, err := env.DB.TransactionalEmail.Create().
-		SetWorkspaceID(1).SetChannel(transactionalemail.ChannelEmail).
+	_, err := env.DB.OutboundMessage.Create().
+		SetWorkspaceID(1).SetKind(outboundmessage.KindTransactional).
 		SetDestination("busy@example.com").SetTemplateID(tmpl.ID).
-		SetStatus(transactionalemail.StatusPending).SetIdempotencyKey("inflight").Save(ctx)
+		SetStatus(outboundmessage.StatusPending).SetIdempotencyKey("transactional:inflight").Save(ctx)
 	require.NoError(t, err)
 
 	res, err := c.EmailsSend(ctx, &externalapi.SendTransactionalEmailInput{

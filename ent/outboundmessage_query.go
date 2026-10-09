@@ -11,18 +11,18 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/mokevnin/1mail/ent/outboundmessage"
 	"github.com/mokevnin/1mail/ent/predicate"
-	"github.com/mokevnin/1mail/ent/transactionalemail"
 	"github.com/mokevnin/1mail/ent/workspace"
 )
 
-// TransactionalEmailQuery is the builder for querying TransactionalEmail entities.
-type TransactionalEmailQuery struct {
+// OutboundMessageQuery is the builder for querying OutboundMessage entities.
+type OutboundMessageQuery struct {
 	config
 	ctx           *QueryContext
-	order         []transactionalemail.OrderOption
+	order         []outboundmessage.OrderOption
 	inters        []Interceptor
-	predicates    []predicate.TransactionalEmail
+	predicates    []predicate.OutboundMessage
 	withWorkspace *WorkspaceQuery
 	modifiers     []func(*sql.Selector)
 	// intermediate query (i.e. traversal path).
@@ -30,39 +30,39 @@ type TransactionalEmailQuery struct {
 	path func(context.Context) (*sql.Selector, error)
 }
 
-// Where adds a new predicate for the TransactionalEmailQuery builder.
-func (_q *TransactionalEmailQuery) Where(ps ...predicate.TransactionalEmail) *TransactionalEmailQuery {
+// Where adds a new predicate for the OutboundMessageQuery builder.
+func (_q *OutboundMessageQuery) Where(ps ...predicate.OutboundMessage) *OutboundMessageQuery {
 	_q.predicates = append(_q.predicates, ps...)
 	return _q
 }
 
 // Limit the number of records to be returned by this query.
-func (_q *TransactionalEmailQuery) Limit(limit int) *TransactionalEmailQuery {
+func (_q *OutboundMessageQuery) Limit(limit int) *OutboundMessageQuery {
 	_q.ctx.Limit = &limit
 	return _q
 }
 
 // Offset to start from.
-func (_q *TransactionalEmailQuery) Offset(offset int) *TransactionalEmailQuery {
+func (_q *OutboundMessageQuery) Offset(offset int) *OutboundMessageQuery {
 	_q.ctx.Offset = &offset
 	return _q
 }
 
 // Unique configures the query builder to filter duplicate records on query.
 // By default, unique is set to true, and can be disabled using this method.
-func (_q *TransactionalEmailQuery) Unique(unique bool) *TransactionalEmailQuery {
+func (_q *OutboundMessageQuery) Unique(unique bool) *OutboundMessageQuery {
 	_q.ctx.Unique = &unique
 	return _q
 }
 
 // Order specifies how the records should be ordered.
-func (_q *TransactionalEmailQuery) Order(o ...transactionalemail.OrderOption) *TransactionalEmailQuery {
+func (_q *OutboundMessageQuery) Order(o ...outboundmessage.OrderOption) *OutboundMessageQuery {
 	_q.order = append(_q.order, o...)
 	return _q
 }
 
 // QueryWorkspace chains the current query on the "workspace" edge.
-func (_q *TransactionalEmailQuery) QueryWorkspace() *WorkspaceQuery {
+func (_q *OutboundMessageQuery) QueryWorkspace() *WorkspaceQuery {
 	query := (&WorkspaceClient{config: _q.config}).Query()
 	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
 		if err := _q.prepareQuery(ctx); err != nil {
@@ -73,9 +73,9 @@ func (_q *TransactionalEmailQuery) QueryWorkspace() *WorkspaceQuery {
 			return nil, err
 		}
 		step := sqlgraph.NewStep(
-			sqlgraph.From(transactionalemail.Table, transactionalemail.FieldID, selector),
+			sqlgraph.From(outboundmessage.Table, outboundmessage.FieldID, selector),
 			sqlgraph.To(workspace.Table, workspace.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, true, transactionalemail.WorkspaceTable, transactionalemail.WorkspaceColumn),
+			sqlgraph.Edge(sqlgraph.M2O, true, outboundmessage.WorkspaceTable, outboundmessage.WorkspaceColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
@@ -83,21 +83,21 @@ func (_q *TransactionalEmailQuery) QueryWorkspace() *WorkspaceQuery {
 	return query
 }
 
-// First returns the first TransactionalEmail entity from the query.
-// Returns a *NotFoundError when no TransactionalEmail was found.
-func (_q *TransactionalEmailQuery) First(ctx context.Context) (*TransactionalEmail, error) {
+// First returns the first OutboundMessage entity from the query.
+// Returns a *NotFoundError when no OutboundMessage was found.
+func (_q *OutboundMessageQuery) First(ctx context.Context) (*OutboundMessage, error) {
 	nodes, err := _q.Limit(1).All(setContextOp(ctx, _q.ctx, ent.OpQueryFirst))
 	if err != nil {
 		return nil, err
 	}
 	if len(nodes) == 0 {
-		return nil, &NotFoundError{transactionalemail.Label}
+		return nil, &NotFoundError{outboundmessage.Label}
 	}
 	return nodes[0], nil
 }
 
 // FirstX is like First, but panics if an error occurs.
-func (_q *TransactionalEmailQuery) FirstX(ctx context.Context) *TransactionalEmail {
+func (_q *OutboundMessageQuery) FirstX(ctx context.Context) *OutboundMessage {
 	node, err := _q.First(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
@@ -105,22 +105,22 @@ func (_q *TransactionalEmailQuery) FirstX(ctx context.Context) *TransactionalEma
 	return node
 }
 
-// FirstID returns the first TransactionalEmail ID from the query.
-// Returns a *NotFoundError when no TransactionalEmail ID was found.
-func (_q *TransactionalEmailQuery) FirstID(ctx context.Context) (id int64, err error) {
+// FirstID returns the first OutboundMessage ID from the query.
+// Returns a *NotFoundError when no OutboundMessage ID was found.
+func (_q *OutboundMessageQuery) FirstID(ctx context.Context) (id int64, err error) {
 	var ids []int64
 	if ids, err = _q.Limit(1).IDs(setContextOp(ctx, _q.ctx, ent.OpQueryFirstID)); err != nil {
 		return
 	}
 	if len(ids) == 0 {
-		err = &NotFoundError{transactionalemail.Label}
+		err = &NotFoundError{outboundmessage.Label}
 		return
 	}
 	return ids[0], nil
 }
 
 // FirstIDX is like FirstID, but panics if an error occurs.
-func (_q *TransactionalEmailQuery) FirstIDX(ctx context.Context) int64 {
+func (_q *OutboundMessageQuery) FirstIDX(ctx context.Context) int64 {
 	id, err := _q.FirstID(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
@@ -128,10 +128,10 @@ func (_q *TransactionalEmailQuery) FirstIDX(ctx context.Context) int64 {
 	return id
 }
 
-// Only returns a single TransactionalEmail entity found by the query, ensuring it only returns one.
-// Returns a *NotSingularError when more than one TransactionalEmail entity is found.
-// Returns a *NotFoundError when no TransactionalEmail entities are found.
-func (_q *TransactionalEmailQuery) Only(ctx context.Context) (*TransactionalEmail, error) {
+// Only returns a single OutboundMessage entity found by the query, ensuring it only returns one.
+// Returns a *NotSingularError when more than one OutboundMessage entity is found.
+// Returns a *NotFoundError when no OutboundMessage entities are found.
+func (_q *OutboundMessageQuery) Only(ctx context.Context) (*OutboundMessage, error) {
 	nodes, err := _q.Limit(2).All(setContextOp(ctx, _q.ctx, ent.OpQueryOnly))
 	if err != nil {
 		return nil, err
@@ -140,14 +140,14 @@ func (_q *TransactionalEmailQuery) Only(ctx context.Context) (*TransactionalEmai
 	case 1:
 		return nodes[0], nil
 	case 0:
-		return nil, &NotFoundError{transactionalemail.Label}
+		return nil, &NotFoundError{outboundmessage.Label}
 	default:
-		return nil, &NotSingularError{transactionalemail.Label}
+		return nil, &NotSingularError{outboundmessage.Label}
 	}
 }
 
 // OnlyX is like Only, but panics if an error occurs.
-func (_q *TransactionalEmailQuery) OnlyX(ctx context.Context) *TransactionalEmail {
+func (_q *OutboundMessageQuery) OnlyX(ctx context.Context) *OutboundMessage {
 	node, err := _q.Only(ctx)
 	if err != nil {
 		panic(err)
@@ -155,10 +155,10 @@ func (_q *TransactionalEmailQuery) OnlyX(ctx context.Context) *TransactionalEmai
 	return node
 }
 
-// OnlyID is like Only, but returns the only TransactionalEmail ID in the query.
-// Returns a *NotSingularError when more than one TransactionalEmail ID is found.
+// OnlyID is like Only, but returns the only OutboundMessage ID in the query.
+// Returns a *NotSingularError when more than one OutboundMessage ID is found.
 // Returns a *NotFoundError when no entities are found.
-func (_q *TransactionalEmailQuery) OnlyID(ctx context.Context) (id int64, err error) {
+func (_q *OutboundMessageQuery) OnlyID(ctx context.Context) (id int64, err error) {
 	var ids []int64
 	if ids, err = _q.Limit(2).IDs(setContextOp(ctx, _q.ctx, ent.OpQueryOnlyID)); err != nil {
 		return
@@ -167,15 +167,15 @@ func (_q *TransactionalEmailQuery) OnlyID(ctx context.Context) (id int64, err er
 	case 1:
 		id = ids[0]
 	case 0:
-		err = &NotFoundError{transactionalemail.Label}
+		err = &NotFoundError{outboundmessage.Label}
 	default:
-		err = &NotSingularError{transactionalemail.Label}
+		err = &NotSingularError{outboundmessage.Label}
 	}
 	return
 }
 
 // OnlyIDX is like OnlyID, but panics if an error occurs.
-func (_q *TransactionalEmailQuery) OnlyIDX(ctx context.Context) int64 {
+func (_q *OutboundMessageQuery) OnlyIDX(ctx context.Context) int64 {
 	id, err := _q.OnlyID(ctx)
 	if err != nil {
 		panic(err)
@@ -183,18 +183,18 @@ func (_q *TransactionalEmailQuery) OnlyIDX(ctx context.Context) int64 {
 	return id
 }
 
-// All executes the query and returns a list of TransactionalEmails.
-func (_q *TransactionalEmailQuery) All(ctx context.Context) ([]*TransactionalEmail, error) {
+// All executes the query and returns a list of OutboundMessages.
+func (_q *OutboundMessageQuery) All(ctx context.Context) ([]*OutboundMessage, error) {
 	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryAll)
 	if err := _q.prepareQuery(ctx); err != nil {
 		return nil, err
 	}
-	qr := querierAll[[]*TransactionalEmail, *TransactionalEmailQuery]()
-	return withInterceptors[[]*TransactionalEmail](ctx, _q, qr, _q.inters)
+	qr := querierAll[[]*OutboundMessage, *OutboundMessageQuery]()
+	return withInterceptors[[]*OutboundMessage](ctx, _q, qr, _q.inters)
 }
 
 // AllX is like All, but panics if an error occurs.
-func (_q *TransactionalEmailQuery) AllX(ctx context.Context) []*TransactionalEmail {
+func (_q *OutboundMessageQuery) AllX(ctx context.Context) []*OutboundMessage {
 	nodes, err := _q.All(ctx)
 	if err != nil {
 		panic(err)
@@ -202,20 +202,20 @@ func (_q *TransactionalEmailQuery) AllX(ctx context.Context) []*TransactionalEma
 	return nodes
 }
 
-// IDs executes the query and returns a list of TransactionalEmail IDs.
-func (_q *TransactionalEmailQuery) IDs(ctx context.Context) (ids []int64, err error) {
+// IDs executes the query and returns a list of OutboundMessage IDs.
+func (_q *OutboundMessageQuery) IDs(ctx context.Context) (ids []int64, err error) {
 	if _q.ctx.Unique == nil && _q.path != nil {
 		_q.Unique(true)
 	}
 	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryIDs)
-	if err = _q.Select(transactionalemail.FieldID).Scan(ctx, &ids); err != nil {
+	if err = _q.Select(outboundmessage.FieldID).Scan(ctx, &ids); err != nil {
 		return nil, err
 	}
 	return ids, nil
 }
 
 // IDsX is like IDs, but panics if an error occurs.
-func (_q *TransactionalEmailQuery) IDsX(ctx context.Context) []int64 {
+func (_q *OutboundMessageQuery) IDsX(ctx context.Context) []int64 {
 	ids, err := _q.IDs(ctx)
 	if err != nil {
 		panic(err)
@@ -224,16 +224,16 @@ func (_q *TransactionalEmailQuery) IDsX(ctx context.Context) []int64 {
 }
 
 // Count returns the count of the given query.
-func (_q *TransactionalEmailQuery) Count(ctx context.Context) (int, error) {
+func (_q *OutboundMessageQuery) Count(ctx context.Context) (int, error) {
 	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryCount)
 	if err := _q.prepareQuery(ctx); err != nil {
 		return 0, err
 	}
-	return withInterceptors[int](ctx, _q, querierCount[*TransactionalEmailQuery](), _q.inters)
+	return withInterceptors[int](ctx, _q, querierCount[*OutboundMessageQuery](), _q.inters)
 }
 
 // CountX is like Count, but panics if an error occurs.
-func (_q *TransactionalEmailQuery) CountX(ctx context.Context) int {
+func (_q *OutboundMessageQuery) CountX(ctx context.Context) int {
 	count, err := _q.Count(ctx)
 	if err != nil {
 		panic(err)
@@ -242,7 +242,7 @@ func (_q *TransactionalEmailQuery) CountX(ctx context.Context) int {
 }
 
 // Exist returns true if the query has elements in the graph.
-func (_q *TransactionalEmailQuery) Exist(ctx context.Context) (bool, error) {
+func (_q *OutboundMessageQuery) Exist(ctx context.Context) (bool, error) {
 	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryExist)
 	switch _, err := _q.FirstID(ctx); {
 	case IsNotFound(err):
@@ -255,7 +255,7 @@ func (_q *TransactionalEmailQuery) Exist(ctx context.Context) (bool, error) {
 }
 
 // ExistX is like Exist, but panics if an error occurs.
-func (_q *TransactionalEmailQuery) ExistX(ctx context.Context) bool {
+func (_q *OutboundMessageQuery) ExistX(ctx context.Context) bool {
 	exist, err := _q.Exist(ctx)
 	if err != nil {
 		panic(err)
@@ -263,18 +263,18 @@ func (_q *TransactionalEmailQuery) ExistX(ctx context.Context) bool {
 	return exist
 }
 
-// Clone returns a duplicate of the TransactionalEmailQuery builder, including all associated steps. It can be
+// Clone returns a duplicate of the OutboundMessageQuery builder, including all associated steps. It can be
 // used to prepare common query builders and use them differently after the clone is made.
-func (_q *TransactionalEmailQuery) Clone() *TransactionalEmailQuery {
+func (_q *OutboundMessageQuery) Clone() *OutboundMessageQuery {
 	if _q == nil {
 		return nil
 	}
-	return &TransactionalEmailQuery{
+	return &OutboundMessageQuery{
 		config:        _q.config,
 		ctx:           _q.ctx.Clone(),
-		order:         append([]transactionalemail.OrderOption{}, _q.order...),
+		order:         append([]outboundmessage.OrderOption{}, _q.order...),
 		inters:        append([]Interceptor{}, _q.inters...),
-		predicates:    append([]predicate.TransactionalEmail{}, _q.predicates...),
+		predicates:    append([]predicate.OutboundMessage{}, _q.predicates...),
 		withWorkspace: _q.withWorkspace.Clone(),
 		// clone intermediate query.
 		sql:       _q.sql.Clone(),
@@ -285,7 +285,7 @@ func (_q *TransactionalEmailQuery) Clone() *TransactionalEmailQuery {
 
 // WithWorkspace tells the query-builder to eager-load the nodes that are connected to
 // the "workspace" edge. The optional arguments are used to configure the query builder of the edge.
-func (_q *TransactionalEmailQuery) WithWorkspace(opts ...func(*WorkspaceQuery)) *TransactionalEmailQuery {
+func (_q *OutboundMessageQuery) WithWorkspace(opts ...func(*WorkspaceQuery)) *OutboundMessageQuery {
 	query := (&WorkspaceClient{config: _q.config}).Query()
 	for _, opt := range opts {
 		opt(query)
@@ -300,19 +300,19 @@ func (_q *TransactionalEmailQuery) WithWorkspace(opts ...func(*WorkspaceQuery)) 
 // Example:
 //
 //	var v []struct {
-//		Channel transactionalemail.Channel `json:"channel,omitempty"`
+//		WorkspaceID int64 `json:"workspace_id,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
-//	client.TransactionalEmail.Query().
-//		GroupBy(transactionalemail.FieldChannel).
+//	client.OutboundMessage.Query().
+//		GroupBy(outboundmessage.FieldWorkspaceID).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
-func (_q *TransactionalEmailQuery) GroupBy(field string, fields ...string) *TransactionalEmailGroupBy {
+func (_q *OutboundMessageQuery) GroupBy(field string, fields ...string) *OutboundMessageGroupBy {
 	_q.ctx.Fields = append([]string{field}, fields...)
-	grbuild := &TransactionalEmailGroupBy{build: _q}
+	grbuild := &OutboundMessageGroupBy{build: _q}
 	grbuild.flds = &_q.ctx.Fields
-	grbuild.label = transactionalemail.Label
+	grbuild.label = outboundmessage.Label
 	grbuild.scan = grbuild.Scan
 	return grbuild
 }
@@ -323,26 +323,26 @@ func (_q *TransactionalEmailQuery) GroupBy(field string, fields ...string) *Tran
 // Example:
 //
 //	var v []struct {
-//		Channel transactionalemail.Channel `json:"channel,omitempty"`
+//		WorkspaceID int64 `json:"workspace_id,omitempty"`
 //	}
 //
-//	client.TransactionalEmail.Query().
-//		Select(transactionalemail.FieldChannel).
+//	client.OutboundMessage.Query().
+//		Select(outboundmessage.FieldWorkspaceID).
 //		Scan(ctx, &v)
-func (_q *TransactionalEmailQuery) Select(fields ...string) *TransactionalEmailSelect {
+func (_q *OutboundMessageQuery) Select(fields ...string) *OutboundMessageSelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)
-	sbuild := &TransactionalEmailSelect{TransactionalEmailQuery: _q}
-	sbuild.label = transactionalemail.Label
+	sbuild := &OutboundMessageSelect{OutboundMessageQuery: _q}
+	sbuild.label = outboundmessage.Label
 	sbuild.flds, sbuild.scan = &_q.ctx.Fields, sbuild.Scan
 	return sbuild
 }
 
-// Aggregate returns a TransactionalEmailSelect configured with the given aggregations.
-func (_q *TransactionalEmailQuery) Aggregate(fns ...AggregateFunc) *TransactionalEmailSelect {
+// Aggregate returns a OutboundMessageSelect configured with the given aggregations.
+func (_q *OutboundMessageQuery) Aggregate(fns ...AggregateFunc) *OutboundMessageSelect {
 	return _q.Select().Aggregate(fns...)
 }
 
-func (_q *TransactionalEmailQuery) prepareQuery(ctx context.Context) error {
+func (_q *OutboundMessageQuery) prepareQuery(ctx context.Context) error {
 	for _, inter := range _q.inters {
 		if inter == nil {
 			return fmt.Errorf("ent: uninitialized interceptor (forgotten import ent/runtime?)")
@@ -354,7 +354,7 @@ func (_q *TransactionalEmailQuery) prepareQuery(ctx context.Context) error {
 		}
 	}
 	for _, f := range _q.ctx.Fields {
-		if !transactionalemail.ValidColumn(f) {
+		if !outboundmessage.ValidColumn(f) {
 			return &ValidationError{Name: f, err: fmt.Errorf("ent: invalid field %q for query", f)}
 		}
 	}
@@ -368,19 +368,19 @@ func (_q *TransactionalEmailQuery) prepareQuery(ctx context.Context) error {
 	return nil
 }
 
-func (_q *TransactionalEmailQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*TransactionalEmail, error) {
+func (_q *OutboundMessageQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*OutboundMessage, error) {
 	var (
-		nodes       = []*TransactionalEmail{}
+		nodes       = []*OutboundMessage{}
 		_spec       = _q.querySpec()
 		loadedTypes = [1]bool{
 			_q.withWorkspace != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
-		return (*TransactionalEmail).scanValues(nil, columns)
+		return (*OutboundMessage).scanValues(nil, columns)
 	}
 	_spec.Assign = func(columns []string, values []any) error {
-		node := &TransactionalEmail{config: _q.config}
+		node := &OutboundMessage{config: _q.config}
 		nodes = append(nodes, node)
 		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(columns, values)
@@ -399,16 +399,16 @@ func (_q *TransactionalEmailQuery) sqlAll(ctx context.Context, hooks ...queryHoo
 	}
 	if query := _q.withWorkspace; query != nil {
 		if err := _q.loadWorkspace(ctx, query, nodes, nil,
-			func(n *TransactionalEmail, e *Workspace) { n.Edges.Workspace = e }); err != nil {
+			func(n *OutboundMessage, e *Workspace) { n.Edges.Workspace = e }); err != nil {
 			return nil, err
 		}
 	}
 	return nodes, nil
 }
 
-func (_q *TransactionalEmailQuery) loadWorkspace(ctx context.Context, query *WorkspaceQuery, nodes []*TransactionalEmail, init func(*TransactionalEmail), assign func(*TransactionalEmail, *Workspace)) error {
+func (_q *OutboundMessageQuery) loadWorkspace(ctx context.Context, query *WorkspaceQuery, nodes []*OutboundMessage, init func(*OutboundMessage), assign func(*OutboundMessage, *Workspace)) error {
 	ids := make([]int64, 0, len(nodes))
-	nodeids := make(map[int64][]*TransactionalEmail)
+	nodeids := make(map[int64][]*OutboundMessage)
 	for i := range nodes {
 		fk := nodes[i].WorkspaceID
 		if _, ok := nodeids[fk]; !ok {
@@ -436,7 +436,7 @@ func (_q *TransactionalEmailQuery) loadWorkspace(ctx context.Context, query *Wor
 	return nil
 }
 
-func (_q *TransactionalEmailQuery) sqlCount(ctx context.Context) (int, error) {
+func (_q *OutboundMessageQuery) sqlCount(ctx context.Context) (int, error) {
 	_spec := _q.querySpec()
 	if len(_q.modifiers) > 0 {
 		_spec.Modifiers = _q.modifiers
@@ -448,8 +448,8 @@ func (_q *TransactionalEmailQuery) sqlCount(ctx context.Context) (int, error) {
 	return sqlgraph.CountNodes(ctx, _q.driver, _spec)
 }
 
-func (_q *TransactionalEmailQuery) querySpec() *sqlgraph.QuerySpec {
-	_spec := sqlgraph.NewQuerySpec(transactionalemail.Table, transactionalemail.Columns, sqlgraph.NewFieldSpec(transactionalemail.FieldID, field.TypeInt64))
+func (_q *OutboundMessageQuery) querySpec() *sqlgraph.QuerySpec {
+	_spec := sqlgraph.NewQuerySpec(outboundmessage.Table, outboundmessage.Columns, sqlgraph.NewFieldSpec(outboundmessage.FieldID, field.TypeInt64))
 	_spec.From = _q.sql
 	if unique := _q.ctx.Unique; unique != nil {
 		_spec.Unique = *unique
@@ -458,14 +458,14 @@ func (_q *TransactionalEmailQuery) querySpec() *sqlgraph.QuerySpec {
 	}
 	if fields := _q.ctx.Fields; len(fields) > 0 {
 		_spec.Node.Columns = make([]string, 0, len(fields))
-		_spec.Node.Columns = append(_spec.Node.Columns, transactionalemail.FieldID)
+		_spec.Node.Columns = append(_spec.Node.Columns, outboundmessage.FieldID)
 		for i := range fields {
-			if fields[i] != transactionalemail.FieldID {
+			if fields[i] != outboundmessage.FieldID {
 				_spec.Node.Columns = append(_spec.Node.Columns, fields[i])
 			}
 		}
 		if _q.withWorkspace != nil {
-			_spec.Node.AddColumnOnce(transactionalemail.FieldWorkspaceID)
+			_spec.Node.AddColumnOnce(outboundmessage.FieldWorkspaceID)
 		}
 	}
 	if ps := _q.predicates; len(ps) > 0 {
@@ -491,12 +491,12 @@ func (_q *TransactionalEmailQuery) querySpec() *sqlgraph.QuerySpec {
 	return _spec
 }
 
-func (_q *TransactionalEmailQuery) sqlQuery(ctx context.Context) *sql.Selector {
+func (_q *OutboundMessageQuery) sqlQuery(ctx context.Context) *sql.Selector {
 	builder := sql.Dialect(_q.driver.Dialect())
-	t1 := builder.Table(transactionalemail.Table)
+	t1 := builder.Table(outboundmessage.Table)
 	columns := _q.ctx.Fields
 	if len(columns) == 0 {
-		columns = transactionalemail.Columns
+		columns = outboundmessage.Columns
 	}
 	selector := builder.Select(t1.Columns(columns...)...).From(t1)
 	if _q.sql != nil {
@@ -527,33 +527,33 @@ func (_q *TransactionalEmailQuery) sqlQuery(ctx context.Context) *sql.Selector {
 }
 
 // Modify adds a query modifier for attaching custom logic to queries.
-func (_q *TransactionalEmailQuery) Modify(modifiers ...func(s *sql.Selector)) *TransactionalEmailSelect {
+func (_q *OutboundMessageQuery) Modify(modifiers ...func(s *sql.Selector)) *OutboundMessageSelect {
 	_q.modifiers = append(_q.modifiers, modifiers...)
 	return _q.Select()
 }
 
-// TransactionalEmailGroupBy is the group-by builder for TransactionalEmail entities.
-type TransactionalEmailGroupBy struct {
+// OutboundMessageGroupBy is the group-by builder for OutboundMessage entities.
+type OutboundMessageGroupBy struct {
 	selector
-	build *TransactionalEmailQuery
+	build *OutboundMessageQuery
 }
 
 // Aggregate adds the given aggregation functions to the group-by query.
-func (_g *TransactionalEmailGroupBy) Aggregate(fns ...AggregateFunc) *TransactionalEmailGroupBy {
+func (_g *OutboundMessageGroupBy) Aggregate(fns ...AggregateFunc) *OutboundMessageGroupBy {
 	_g.fns = append(_g.fns, fns...)
 	return _g
 }
 
 // Scan applies the selector query and scans the result into the given value.
-func (_g *TransactionalEmailGroupBy) Scan(ctx context.Context, v any) error {
+func (_g *OutboundMessageGroupBy) Scan(ctx context.Context, v any) error {
 	ctx = setContextOp(ctx, _g.build.ctx, ent.OpQueryGroupBy)
 	if err := _g.build.prepareQuery(ctx); err != nil {
 		return err
 	}
-	return scanWithInterceptors[*TransactionalEmailQuery, *TransactionalEmailGroupBy](ctx, _g.build, _g, _g.build.inters, v)
+	return scanWithInterceptors[*OutboundMessageQuery, *OutboundMessageGroupBy](ctx, _g.build, _g, _g.build.inters, v)
 }
 
-func (_g *TransactionalEmailGroupBy) sqlScan(ctx context.Context, root *TransactionalEmailQuery, v any) error {
+func (_g *OutboundMessageGroupBy) sqlScan(ctx context.Context, root *OutboundMessageQuery, v any) error {
 	selector := root.sqlQuery(ctx).Select()
 	aggregation := make([]string, 0, len(_g.fns))
 	for _, fn := range _g.fns {
@@ -580,28 +580,28 @@ func (_g *TransactionalEmailGroupBy) sqlScan(ctx context.Context, root *Transact
 	return sql.ScanSlice(rows, v)
 }
 
-// TransactionalEmailSelect is the builder for selecting fields of TransactionalEmail entities.
-type TransactionalEmailSelect struct {
-	*TransactionalEmailQuery
+// OutboundMessageSelect is the builder for selecting fields of OutboundMessage entities.
+type OutboundMessageSelect struct {
+	*OutboundMessageQuery
 	selector
 }
 
 // Aggregate adds the given aggregation functions to the selector query.
-func (_s *TransactionalEmailSelect) Aggregate(fns ...AggregateFunc) *TransactionalEmailSelect {
+func (_s *OutboundMessageSelect) Aggregate(fns ...AggregateFunc) *OutboundMessageSelect {
 	_s.fns = append(_s.fns, fns...)
 	return _s
 }
 
 // Scan applies the selector query and scans the result into the given value.
-func (_s *TransactionalEmailSelect) Scan(ctx context.Context, v any) error {
+func (_s *OutboundMessageSelect) Scan(ctx context.Context, v any) error {
 	ctx = setContextOp(ctx, _s.ctx, ent.OpQuerySelect)
 	if err := _s.prepareQuery(ctx); err != nil {
 		return err
 	}
-	return scanWithInterceptors[*TransactionalEmailQuery, *TransactionalEmailSelect](ctx, _s.TransactionalEmailQuery, _s, _s.inters, v)
+	return scanWithInterceptors[*OutboundMessageQuery, *OutboundMessageSelect](ctx, _s.OutboundMessageQuery, _s, _s.inters, v)
 }
 
-func (_s *TransactionalEmailSelect) sqlScan(ctx context.Context, root *TransactionalEmailQuery, v any) error {
+func (_s *OutboundMessageSelect) sqlScan(ctx context.Context, root *OutboundMessageQuery, v any) error {
 	selector := root.sqlQuery(ctx)
 	aggregation := make([]string, 0, len(_s.fns))
 	for _, fn := range _s.fns {
@@ -623,7 +623,7 @@ func (_s *TransactionalEmailSelect) sqlScan(ctx context.Context, root *Transacti
 }
 
 // Modify adds a query modifier for attaching custom logic to queries.
-func (_s *TransactionalEmailSelect) Modify(modifiers ...func(s *sql.Selector)) *TransactionalEmailSelect {
+func (_s *OutboundMessageSelect) Modify(modifiers ...func(s *sql.Selector)) *OutboundMessageSelect {
 	_s.modifiers = append(_s.modifiers, modifiers...)
 	return _s
 }

@@ -28,6 +28,7 @@ import (
 	"github.com/mokevnin/1mail/internal/events"
 	"github.com/mokevnin/1mail/internal/logging"
 	"github.com/mokevnin/1mail/internal/messaging"
+	"github.com/mokevnin/1mail/internal/outbound"
 	"github.com/mokevnin/1mail/internal/secrets"
 	"github.com/mokevnin/1mail/internal/telemetry"
 	"github.com/mokevnin/1mail/internal/tracking"
@@ -37,7 +38,7 @@ import (
 
 // New builds the top-level net/http handler wiring the three ogen-generated
 // API servers (site, external, collect) plus go-pkgz/auth endpoints.
-func New(cfg *config.Config, client *ent.Client, db *sql.DB, bus *events.Bus, cipher *secrets.Cipher, providerCatalog *messaging.Catalog, enqueuer apisite.BroadcastEnqueuer, welcome apisite.WelcomeEnqueuer, sysmail apisite.SystemMailEnqueuer, domainVerify apisite.SendingDomainVerifyEnqueuer, resolver apiexternal.SenderResolver) (http.Handler, error) {
+func New(cfg *config.Config, client *ent.Client, db *sql.DB, bus *events.Bus, cipher *secrets.Cipher, providerCatalog *messaging.Catalog, enqueuer apisite.BroadcastEnqueuer, welcome apisite.WelcomeEnqueuer, sysmail apisite.SystemMailEnqueuer, domainVerify apisite.SendingDomainVerifyEnqueuer, sender *outbound.Module) (http.Handler, error) {
 	mux := http.NewServeMux()
 
 	// Send the JWT cookie with the Secure attribute whenever the instance is served
@@ -70,7 +71,7 @@ func New(cfg *config.Config, client *ent.Client, db *sql.DB, bus *events.Bus, ci
 	// Site API — /site (JWT cookie via generated SecurityHandler; register and
 	// direct-login are public per the spec).
 	siteSrv, err := siteapi.NewServer(
-		apisite.NewHandlers(client, bus, cipher, providerCatalog, enqueuer, welcome, sysmail, domainVerify, authtoken.New(cfg.JWTSecret), cfg.AppURL),
+		apisite.NewHandlers(client, bus, cipher, providerCatalog, enqueuer, welcome, sysmail, domainVerify, sender, authtoken.New(cfg.JWTSecret), cfg.AppURL),
 		apiauth.NewSiteSecurityHandler(cfg.JWTSecret, client),
 		siteapi.WithPathPrefix("/site"),
 		siteapi.WithErrorHandler(problemErrorHandler),
@@ -82,7 +83,7 @@ func New(cfg *config.Config, client *ent.Client, db *sql.DB, bus *events.Bus, ci
 
 	// External API — /api (Bearer token auth via ogen SecurityHandler).
 	extSrv, err := externalapi.NewServer(
-		apiexternal.NewHandlers(client, cfg.BootstrapToken, bus, resolver),
+		apiexternal.NewHandlers(client, cfg.BootstrapToken, bus, sender),
 		apiauth.NewExternalSecurityHandler(client),
 		externalapi.WithPathPrefix("/api"),
 		externalapi.WithErrorHandler(problemErrorHandler),

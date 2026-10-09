@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/mokevnin/1mail/ent"
 	"github.com/mokevnin/1mail/ent/confirmation"
 	"github.com/mokevnin/1mail/ent/contact"
 	"github.com/mokevnin/1mail/ent/suppression"
@@ -16,12 +17,20 @@ import (
 
 const wsID = int64(1)
 
+// enableConfirmedOptIn turns the workspace's require-confirmed-opt-in policy on
+// (ADR 0013). txdb rolls it back at test end.
+func enableConfirmedOptIn(t *testing.T, db *ent.Client, ctx context.Context) {
+	t.Helper()
+	_, err := db.Workspace.UpdateOneID(wsID).SetRequireConfirmedOptIn(true).Save(ctx)
+	require.NoError(t, err)
+}
+
 func TestCheckEligibleByDefault(t *testing.T) {
 	env := testhelper.Setup(t)
 	ctx := context.Background()
 
 	d, err := eligibility.Check(ctx, env.DB, wsID, eligibility.ChannelEmail,
-		"fresh@example.com", eligibility.SourceBroadcasts, true, false)
+		"fresh@example.com", eligibility.SourceBroadcasts)
 	require.NoError(t, err)
 	assert.True(t, d.Eligible)
 	assert.Empty(t, d.Reason)
@@ -37,13 +46,13 @@ func TestCheckSuppressed(t *testing.T) {
 	require.NoError(t, err)
 
 	d, err := eligibility.Check(ctx, env.DB, wsID, eligibility.ChannelEmail,
-		"blocked@example.com", eligibility.SourceBroadcasts, true, false)
+		"blocked@example.com", eligibility.SourceBroadcasts)
 	require.NoError(t, err)
 	assert.False(t, d.Eligible)
 	assert.Equal(t, eligibility.ReasonSuppressed, d.Reason)
 }
 
-// Transactional sends (respectUnsubscribe=false) skip layers 2–3 but still
+// Transactional sends (source "") skip layers 2–3 but still
 // respect Suppression.
 func TestCheckTransactionalSkipsUnsubscribeButNotSuppression(t *testing.T) {
 	env := testhelper.Setup(t)
@@ -56,7 +65,7 @@ func TestCheckTransactionalSkipsUnsubscribeButNotSuppression(t *testing.T) {
 	require.NoError(t, err)
 
 	d, err := eligibility.Check(ctx, env.DB, wsID, eligibility.ChannelEmail,
-		"txn@example.com", eligibility.SourceBroadcasts, false, false)
+		"txn@example.com", "")
 	require.NoError(t, err)
 	assert.True(t, d.Eligible, "transactional skips unsubscribe layers")
 
@@ -66,7 +75,7 @@ func TestCheckTransactionalSkipsUnsubscribeButNotSuppression(t *testing.T) {
 		SetReason(suppression.ReasonBounce).Save(ctx)
 	require.NoError(t, err)
 	d, err = eligibility.Check(ctx, env.DB, wsID, eligibility.ChannelEmail,
-		"txn@example.com", eligibility.SourceBroadcasts, false, false)
+		"txn@example.com", "")
 	require.NoError(t, err)
 	assert.False(t, d.Eligible)
 	assert.Equal(t, eligibility.ReasonSuppressed, d.Reason)
@@ -81,7 +90,7 @@ func TestCheckUnsubscribedEverythingVsSource(t *testing.T) {
 		SetSendingSource(eligibility.SourceEverything).Save(ctx)
 	require.NoError(t, err)
 	d, err := eligibility.Check(ctx, env.DB, wsID, eligibility.ChannelEmail,
-		"evt@example.com", eligibility.SourceBroadcasts, true, false)
+		"evt@example.com", eligibility.SourceBroadcasts)
 	require.NoError(t, err)
 	assert.Equal(t, eligibility.ReasonUnsubscribedEverything, d.Reason)
 
@@ -91,17 +100,17 @@ func TestCheckUnsubscribedEverythingVsSource(t *testing.T) {
 		SetSendingSource(src).Save(ctx)
 	require.NoError(t, err)
 	// Ineligible for that source...
-	d, err = eligibility.Check(ctx, env.DB, wsID, eligibility.ChannelEmail, "src@example.com", src, true, false)
+	d, err = eligibility.Check(ctx, env.DB, wsID, eligibility.ChannelEmail, "src@example.com", src)
 	require.NoError(t, err)
 	assert.Equal(t, eligibility.ReasonUnsubscribedSource, d.Reason)
 	// ...but eligible for a different source.
 	d, err = eligibility.Check(ctx, env.DB, wsID, eligibility.ChannelEmail,
-		"src@example.com", eligibility.SourceBroadcasts, true, false)
+		"src@example.com", eligibility.SourceBroadcasts)
 	require.NoError(t, err)
 	assert.True(t, d.Eligible)
 }
 
-// The confirmation gate (ADR 0013) is a no-op when requireConfirmed is false: an
+// The confirmation gate (ADR 0013) is a no-op when the workspace does not require it: an
 // address with no Confirmation is still eligible, and the batch predicate still
 // matches it. This is the "confirmed-opt-in off ⇒ behavior unchanged" invariant.
 func TestConfirmationGateNoopWhenOff(t *testing.T) {
@@ -109,7 +118,7 @@ func TestConfirmationGateNoopWhenOff(t *testing.T) {
 	ctx := context.Background()
 
 	d, err := eligibility.Check(ctx, env.DB, wsID, eligibility.ChannelEmail,
-		"unconfirmed@example.com", eligibility.SourceBroadcasts, true, false)
+		"unconfirmed@example.com", eligibility.SourceBroadcasts)
 	require.NoError(t, err)
 	assert.True(t, d.Eligible, "no confirmation required when the gate is off")
 
@@ -117,17 +126,18 @@ func TestConfirmationGateNoopWhenOff(t *testing.T) {
 	require.NoError(t, err)
 	matched, err := env.DB.Contact.Query().
 		Where(contact.ID(c.ID),
-			eligibility.Predicate(eligibility.ChannelEmail, eligibility.SourceBroadcasts, false)).
+			eligibility.Predicate(eligibility.ChannelEmail, eligibility.SourceBroadcasts)).
 		Exist(ctx)
 	require.NoError(t, err)
 	assert.True(t, matched, "unconfirmed contact still in the audience when the gate is off")
 }
 
-// When requireConfirmed is true, an unconfirmed address is blocked and confirming
+// When the workspace requires confirmed opt-in, an unconfirmed address is blocked and confirming
 // it makes it mailable — via both the point Check and the batch Predicate.
 func TestConfirmationGateWhenOn(t *testing.T) {
 	env := testhelper.Setup(t)
 	ctx := context.Background()
+	enableConfirmedOptIn(t, env.DB, ctx)
 
 	c, err := env.DB.Contact.Create().SetWorkspaceID(wsID).SetEmail("gate@example.com").Save(ctx)
 	require.NoError(t, err)
@@ -135,7 +145,7 @@ func TestConfirmationGateWhenOn(t *testing.T) {
 	inAudience := func() bool {
 		ok, err := env.DB.Contact.Query().
 			Where(contact.ID(c.ID),
-				eligibility.Predicate(eligibility.ChannelEmail, eligibility.SourceBroadcasts, true)).
+				eligibility.Predicate(eligibility.ChannelEmail, eligibility.SourceBroadcasts)).
 			Exist(ctx)
 		require.NoError(t, err)
 		return ok
@@ -143,7 +153,7 @@ func TestConfirmationGateWhenOn(t *testing.T) {
 
 	// Unconfirmed: blocked.
 	d, err := eligibility.Check(ctx, env.DB, wsID, eligibility.ChannelEmail,
-		"gate@example.com", eligibility.SourceBroadcasts, true, true)
+		"gate@example.com", eligibility.SourceBroadcasts)
 	require.NoError(t, err)
 	assert.False(t, d.Eligible)
 	assert.Equal(t, eligibility.ReasonUnconfirmed, d.Reason)
@@ -156,7 +166,7 @@ func TestConfirmationGateWhenOn(t *testing.T) {
 	require.NoError(t, err)
 
 	d, err = eligibility.Check(ctx, env.DB, wsID, eligibility.ChannelEmail,
-		"gate@example.com", eligibility.SourceBroadcasts, true, true)
+		"gate@example.com", eligibility.SourceBroadcasts)
 	require.NoError(t, err)
 	assert.True(t, d.Eligible)
 	assert.True(t, inAudience(), "confirmed contact included in the audience")
@@ -167,6 +177,7 @@ func TestConfirmationGateWhenOn(t *testing.T) {
 func TestConfirmationDoesNotOverrideNegatives(t *testing.T) {
 	env := testhelper.Setup(t)
 	ctx := context.Background()
+	enableConfirmedOptIn(t, env.DB, ctx)
 
 	_, err := env.DB.Confirmation.Create().SetWorkspaceID(wsID).
 		SetChannel(confirmation.ChannelEmail).SetDestination("both@example.com").
@@ -178,7 +189,7 @@ func TestConfirmationDoesNotOverrideNegatives(t *testing.T) {
 	require.NoError(t, err)
 
 	d, err := eligibility.Check(ctx, env.DB, wsID, eligibility.ChannelEmail,
-		"both@example.com", eligibility.SourceBroadcasts, true, true)
+		"both@example.com", eligibility.SourceBroadcasts)
 	require.NoError(t, err)
 	assert.False(t, d.Eligible)
 	assert.Equal(t, eligibility.ReasonSuppressed, d.Reason, "negatives dominate the confirmation")
@@ -199,7 +210,7 @@ func TestPredicateFoldsCaseAndExcludes(t *testing.T) {
 
 	matched, err := env.DB.Contact.Query().
 		Where(contact.ID(c.ID),
-			eligibility.Predicate(eligibility.ChannelEmail, eligibility.SourceBroadcasts, false)).
+			eligibility.Predicate(eligibility.ChannelEmail, eligibility.SourceBroadcasts)).
 		Exist(ctx)
 	require.NoError(t, err)
 	assert.False(t, matched, "suppressed contact excluded despite case difference")
@@ -216,7 +227,90 @@ func TestCheckFoldsCase(t *testing.T) {
 	require.NoError(t, err)
 
 	d, err := eligibility.Check(ctx, env.DB, wsID, eligibility.ChannelEmail,
-		"  Mixed@Example.com  ", eligibility.SourceBroadcasts, true, false)
+		"  Mixed@Example.com  ", eligibility.SourceBroadcasts)
 	require.NoError(t, err)
 	assert.False(t, d.Eligible, "input is normalized before lookup")
+}
+
+// The batch Predicate and the point Check are two shapes of one rule. For every
+// combination of opt-out state, source and policy they must agree — this is the
+// parity guarantee that replaced two hand-written copies of the layers.
+func TestPredicateAndCheckAgree(t *testing.T) {
+	env := testhelper.Setup(t)
+	ctx := context.Background()
+
+	auto := eligibility.AutomationSource(7)
+	type fixture struct {
+		name      string
+		email     string
+		suppress  bool
+		unsub     string // sending source, "" = none
+		confirmed bool
+	}
+	fixtures := []fixture{
+		{name: "clean", email: "p-clean@example.com"},
+		{name: "suppressed", email: "p-sup@example.com", suppress: true},
+		{name: "unsub everything", email: "p-every@example.com", unsub: eligibility.SourceEverything},
+		{name: "unsub broadcasts", email: "p-bcast@example.com", unsub: eligibility.SourceBroadcasts},
+		{name: "unsub automation", email: "p-auto@example.com", unsub: auto},
+		{name: "confirmed", email: "p-conf@example.com", confirmed: true},
+		{name: "confirmed and suppressed", email: "p-both@example.com", suppress: true, confirmed: true},
+		{name: "mixed case", email: "P-Case@Example.com", suppress: true},
+	}
+	ids := map[string]int64{}
+	for _, f := range fixtures {
+		c, err := env.DB.Contact.Create().SetWorkspaceID(wsID).SetEmail(f.email).Save(ctx)
+		require.NoError(t, err)
+		ids[f.name] = c.ID
+		dest := eligibility.NormalizeDestination(f.email)
+		if f.suppress {
+			_, err = env.DB.Suppression.Create().SetWorkspaceID(wsID).
+				SetChannel(suppression.ChannelEmail).SetDestination(dest).
+				SetReason(suppression.ReasonBounce).Save(ctx)
+			require.NoError(t, err)
+		}
+		if f.unsub != "" {
+			_, err = env.DB.Unsubscribe.Create().SetWorkspaceID(wsID).
+				SetChannel(unsubscribe.ChannelEmail).SetDestination(dest).
+				SetSendingSource(f.unsub).Save(ctx)
+			require.NoError(t, err)
+		}
+		if f.confirmed {
+			_, err = env.DB.Confirmation.Create().SetWorkspaceID(wsID).
+				SetChannel(confirmation.ChannelEmail).SetDestination(dest).
+				SetProvenance(confirmation.ProvenanceDoubleOptIn).Save(ctx)
+			require.NoError(t, err)
+		}
+	}
+
+	for _, requireConfirmed := range []bool{false, true} {
+		_, err := env.DB.Workspace.UpdateOneID(wsID).SetRequireConfirmedOptIn(requireConfirmed).Save(ctx)
+		require.NoError(t, err)
+		for _, source := range []string{"", eligibility.SourceBroadcasts, auto} {
+			for _, f := range fixtures {
+				d, err := eligibility.Check(ctx, env.DB, wsID, eligibility.ChannelEmail, f.email, source)
+				require.NoError(t, err)
+				inAudience, err := env.DB.Contact.Query().
+					Where(contact.ID(ids[f.name]), eligibility.Predicate(eligibility.ChannelEmail, source)).
+					Exist(ctx)
+				require.NoError(t, err)
+				assert.Equal(t, d.Eligible, inAudience,
+					"%s (source %q, requireConfirmed %v): Check and Predicate disagree", f.name, source, requireConfirmed)
+			}
+		}
+	}
+}
+
+// A Transactional destination may have no Contact at all; Suppression still binds.
+func TestCheckWorksWithoutAContact(t *testing.T) {
+	env := testhelper.Setup(t)
+	ctx := context.Background()
+
+	_, err := env.DB.Suppression.Create().SetWorkspaceID(wsID).
+		SetChannel(suppression.ChannelEmail).SetDestination("nocontact@example.com").
+		SetReason(suppression.ReasonComplaint).Save(ctx)
+	require.NoError(t, err)
+	d, err := eligibility.Check(ctx, env.DB, wsID, eligibility.ChannelEmail, "nocontact@example.com", "")
+	require.NoError(t, err)
+	assert.Equal(t, eligibility.ReasonSuppressed, d.Reason)
 }

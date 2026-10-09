@@ -5,18 +5,19 @@ import (
 	"testing"
 
 	"github.com/mokevnin/1mail/ent"
-	"github.com/mokevnin/1mail/ent/transactionalemail"
+	"github.com/mokevnin/1mail/ent/outboundmessage"
 	siteapi "github.com/mokevnin/1mail/gen/site"
 	"github.com/mokevnin/1mail/internal/testhelper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func seedTransactional(t *testing.T, db *ent.Client, ws int64, dest string, status transactionalemail.Status) {
+func seedTransactional(t *testing.T, db *ent.Client, ws int64, dest string, status outboundmessage.Status) {
 	t.Helper()
-	_, err := db.TransactionalEmail.Create().
+	_, err := db.OutboundMessage.Create().
 		SetWorkspaceID(ws).
-		SetChannel(transactionalemail.ChannelEmail).
+		SetKind(outboundmessage.KindTransactional).
+		SetIdempotencyKey("transactional:seed:" + dest).
 		SetDestination(dest).
 		SetTemplateID(1).
 		SetStatus(status).
@@ -36,7 +37,7 @@ func TestSiteTransactionalEmailsList(t *testing.T) {
 		SetName("Globex").SetSlug("globex-tx").
 		SetCollectKey("globex-tx-ck").SetIngestKey("globex-tx-ik").Save(ctx)
 	require.NoError(t, err)
-	seedTransactional(t, env.DB, ws2.ID, "leak@example.com", transactionalemail.StatusSent)
+	seedTransactional(t, env.DB, ws2.ID, "leak@example.com", outboundmessage.StatusSent)
 
 	c := siteClient(t, env, "info@1mail.com")
 	res, err := c.SiteTransactionalEmailsList(ctx, siteapi.SiteTransactionalEmailsListParams{Slug: "acme"})

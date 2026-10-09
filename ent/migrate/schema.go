@@ -133,6 +133,8 @@ var (
 		{Name: "clicked_count", Type: field.TypeInt, Default: 0},
 		{Name: "unsubscribed_count", Type: field.TypeInt, Default: 0},
 		{Name: "failed_count", Type: field.TypeInt, Default: 0},
+		{Name: "skipped_count", Type: field.TypeInt, Default: 0},
+		{Name: "hold_reason", Type: field.TypeString, Nullable: true},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
 		{Name: "workspace_id", Type: field.TypeInt64},
@@ -145,7 +147,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "broadcasts_workspaces_broadcasts",
-				Columns:    []*schema.Column{BroadcastsColumns[20]},
+				Columns:    []*schema.Column{BroadcastsColumns[22]},
 				RefColumns: []*schema.Column{WorkspacesColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
@@ -154,7 +156,7 @@ var (
 			{
 				Name:    "broadcast_workspace_id",
 				Unique:  false,
-				Columns: []*schema.Column{BroadcastsColumns[20]},
+				Columns: []*schema.Column{BroadcastsColumns[22]},
 			},
 		},
 	}
@@ -162,7 +164,8 @@ var (
 	BroadcastRecipientsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt64, Increment: true},
 		{Name: "contact_id", Type: field.TypeInt64},
-		{Name: "status", Type: field.TypeEnum, Enums: []string{"pending", "sent", "failed"}, Default: "pending"},
+		{Name: "status", Type: field.TypeEnum, Enums: []string{"pending", "sent", "skipped", "failed"}, Default: "pending"},
+		{Name: "outbound_message_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "error", Type: field.TypeString, Nullable: true},
 		{Name: "sent_at", Type: field.TypeTime, Nullable: true},
 		{Name: "opened_at", Type: field.TypeTime, Nullable: true},
@@ -180,13 +183,13 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "broadcast_recipients_broadcasts_recipients",
-				Columns:    []*schema.Column{BroadcastRecipientsColumns[9]},
+				Columns:    []*schema.Column{BroadcastRecipientsColumns[10]},
 				RefColumns: []*schema.Column{BroadcastsColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
 			{
 				Symbol:     "broadcast_recipients_workspaces_broadcast_recipients",
-				Columns:    []*schema.Column{BroadcastRecipientsColumns[10]},
+				Columns:    []*schema.Column{BroadcastRecipientsColumns[11]},
 				RefColumns: []*schema.Column{WorkspacesColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
@@ -195,17 +198,17 @@ var (
 			{
 				Name:    "broadcast_recipients_broadcast_id_contact_id",
 				Unique:  true,
-				Columns: []*schema.Column{BroadcastRecipientsColumns[9], BroadcastRecipientsColumns[1]},
+				Columns: []*schema.Column{BroadcastRecipientsColumns[10], BroadcastRecipientsColumns[1]},
 			},
 			{
 				Name:    "broadcastrecipient_broadcast_id",
 				Unique:  false,
-				Columns: []*schema.Column{BroadcastRecipientsColumns[9]},
+				Columns: []*schema.Column{BroadcastRecipientsColumns[10]},
 			},
 			{
 				Name:    "broadcastrecipient_workspace_id_sent_at",
 				Unique:  false,
-				Columns: []*schema.Column{BroadcastRecipientsColumns[10], BroadcastRecipientsColumns[4]},
+				Columns: []*schema.Column{BroadcastRecipientsColumns[11], BroadcastRecipientsColumns[5]},
 			},
 		},
 	}
@@ -502,6 +505,62 @@ var (
 			},
 		},
 	}
+	// OutboundMessagesColumns holds the columns for the "outbound_messages" table.
+	OutboundMessagesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt64, Increment: true},
+		{Name: "kind", Type: field.TypeEnum, Enums: []string{"broadcast", "automation", "transactional"}},
+		{Name: "idempotency_key", Type: field.TypeString},
+		{Name: "channel", Type: field.TypeEnum, Enums: []string{"email"}, Default: "email"},
+		{Name: "destination", Type: field.TypeString},
+		{Name: "contact_id", Type: field.TypeInt64, Nullable: true},
+		{Name: "sending_source", Type: field.TypeString, Nullable: true},
+		{Name: "sending_domain", Type: field.TypeString, Nullable: true},
+		{Name: "provider_message_id", Type: field.TypeString, Nullable: true},
+		{Name: "status", Type: field.TypeEnum, Enums: []string{"pending", "sent", "skipped", "failed"}, Default: "pending"},
+		{Name: "reason", Type: field.TypeString, Nullable: true},
+		{Name: "claimed_at", Type: field.TypeTime},
+		{Name: "sent_at", Type: field.TypeTime, Nullable: true},
+		{Name: "broadcast_id", Type: field.TypeInt64, Nullable: true},
+		{Name: "broadcast_recipient_id", Type: field.TypeInt64, Nullable: true},
+		{Name: "automation_id", Type: field.TypeInt64, Nullable: true},
+		{Name: "automation_run_id", Type: field.TypeInt64, Nullable: true},
+		{Name: "automation_step", Type: field.TypeInt, Nullable: true},
+		{Name: "template_id", Type: field.TypeInt64, Nullable: true},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "workspace_id", Type: field.TypeInt64},
+	}
+	// OutboundMessagesTable holds the schema information for the "outbound_messages" table.
+	OutboundMessagesTable = &schema.Table{
+		Name:       "outbound_messages",
+		Columns:    OutboundMessagesColumns,
+		PrimaryKey: []*schema.Column{OutboundMessagesColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "outbound_messages_workspaces_outbound_messages",
+				Columns:    []*schema.Column{OutboundMessagesColumns[21]},
+				RefColumns: []*schema.Column{WorkspacesColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "outbound_messages_workspace_id_idempotency_key",
+				Unique:  true,
+				Columns: []*schema.Column{OutboundMessagesColumns[21], OutboundMessagesColumns[2]},
+			},
+			{
+				Name:    "outboundmessage_workspace_id_kind_created_at",
+				Unique:  false,
+				Columns: []*schema.Column{OutboundMessagesColumns[21], OutboundMessagesColumns[1], OutboundMessagesColumns[19]},
+			},
+			{
+				Name:    "outboundmessage_workspace_id_sending_domain_created_at",
+				Unique:  false,
+				Columns: []*schema.Column{OutboundMessagesColumns[21], OutboundMessagesColumns[7], OutboundMessagesColumns[19]},
+			},
+		},
+	}
 	// SegmentsColumns holds the columns for the "segments" table.
 	SegmentsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt64, Increment: true},
@@ -595,46 +654,6 @@ var (
 				Name:    "suppressions_workspace_id_channel_destination",
 				Unique:  true,
 				Columns: []*schema.Column{SuppressionsColumns[7], SuppressionsColumns[1], SuppressionsColumns[2]},
-			},
-		},
-	}
-	// TransactionalEmailsColumns holds the columns for the "transactional_emails" table.
-	TransactionalEmailsColumns = []*schema.Column{
-		{Name: "id", Type: field.TypeInt64, Increment: true},
-		{Name: "channel", Type: field.TypeEnum, Enums: []string{"email"}, Default: "email"},
-		{Name: "destination", Type: field.TypeString},
-		{Name: "template_id", Type: field.TypeInt64},
-		{Name: "contact_id", Type: field.TypeInt64, Nullable: true},
-		{Name: "status", Type: field.TypeEnum, Enums: []string{"pending", "sent", "suppressed", "failed"}, Default: "pending"},
-		{Name: "error", Type: field.TypeString, Nullable: true},
-		{Name: "idempotency_key", Type: field.TypeString, Nullable: true},
-		{Name: "created_at", Type: field.TypeTime},
-		{Name: "updated_at", Type: field.TypeTime},
-		{Name: "workspace_id", Type: field.TypeInt64},
-	}
-	// TransactionalEmailsTable holds the schema information for the "transactional_emails" table.
-	TransactionalEmailsTable = &schema.Table{
-		Name:       "transactional_emails",
-		Columns:    TransactionalEmailsColumns,
-		PrimaryKey: []*schema.Column{TransactionalEmailsColumns[0]},
-		ForeignKeys: []*schema.ForeignKey{
-			{
-				Symbol:     "transactional_emails_workspaces_transactional_emails",
-				Columns:    []*schema.Column{TransactionalEmailsColumns[10]},
-				RefColumns: []*schema.Column{WorkspacesColumns[0]},
-				OnDelete:   schema.NoAction,
-			},
-		},
-		Indexes: []*schema.Index{
-			{
-				Name:    "transactional_emails_workspace_id_idempotency_key",
-				Unique:  true,
-				Columns: []*schema.Column{TransactionalEmailsColumns[10], TransactionalEmailsColumns[7]},
-			},
-			{
-				Name:    "transactionalemail_workspace_id_created_at",
-				Unique:  false,
-				Columns: []*schema.Column{TransactionalEmailsColumns[10], TransactionalEmailsColumns[8]},
 			},
 		},
 	}
@@ -774,6 +793,9 @@ var (
 		{Name: "ingest_key", Type: field.TypeString, Unique: true},
 		{Name: "require_confirmed_opt_in", Type: field.TypeBool, Default: false},
 		{Name: "postal_address", Type: field.TypeString, Nullable: true, Default: ""},
+		{Name: "suspended_at", Type: field.TypeTime, Nullable: true},
+		{Name: "suspended_by", Type: field.TypeString, Nullable: true},
+		{Name: "suspension_reason", Type: field.TypeString, Nullable: true},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
 	}
@@ -798,10 +820,10 @@ var (
 		IntegrationsTable,
 		InvitationsTable,
 		MembershipsTable,
+		OutboundMessagesTable,
 		SegmentsTable,
 		SendingDomainsTable,
 		SuppressionsTable,
-		TransactionalEmailsTable,
 		UnsubscribesTable,
 		UsersTable,
 		VisitorsTable,
@@ -867,6 +889,10 @@ func init() {
 	MembershipsTable.Annotation = &entsql.Annotation{
 		Table: "memberships",
 	}
+	OutboundMessagesTable.ForeignKeys[0].RefTable = WorkspacesTable
+	OutboundMessagesTable.Annotation = &entsql.Annotation{
+		Table: "outbound_messages",
+	}
 	SegmentsTable.ForeignKeys[0].RefTable = WorkspacesTable
 	SegmentsTable.Annotation = &entsql.Annotation{
 		Table: "segments",
@@ -878,10 +904,6 @@ func init() {
 	SuppressionsTable.ForeignKeys[0].RefTable = WorkspacesTable
 	SuppressionsTable.Annotation = &entsql.Annotation{
 		Table: "suppressions",
-	}
-	TransactionalEmailsTable.ForeignKeys[0].RefTable = WorkspacesTable
-	TransactionalEmailsTable.Annotation = &entsql.Annotation{
-		Table: "transactional_emails",
 	}
 	UnsubscribesTable.ForeignKeys[0].RefTable = WorkspacesTable
 	UnsubscribesTable.Annotation = &entsql.Annotation{

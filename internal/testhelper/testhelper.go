@@ -3,6 +3,7 @@ package testhelper
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"net"
 	"net/http"
 	"path/filepath"
@@ -23,8 +24,10 @@ import (
 	"github.com/mokevnin/1mail/internal/jobs"
 	"github.com/mokevnin/1mail/internal/messaging"
 	"github.com/mokevnin/1mail/internal/messaging/registry"
+	"github.com/mokevnin/1mail/internal/outbound"
 	"github.com/mokevnin/1mail/internal/secrets"
 	"github.com/mokevnin/1mail/internal/server"
+	"github.com/mokevnin/1mail/internal/tracking"
 	ht "github.com/ogen-go/ogen/http"
 	"github.com/stretchr/testify/require"
 )
@@ -142,7 +145,8 @@ func Setup(t *testing.T) *TestEnv {
 	stubTXT := func(context.Context, string) ([]string, error) {
 		return nil, &net.DNSError{IsNotFound: true}
 	}
-	inline := jobs.NewInline(client, bus, resolver, nil, systemMail, stubTXT, baseCfg.AppURL)
+	sender := outbound.New(client, bus, resolver, tracking.New("test-secret", baseCfg.AppURL))
+	inline := jobs.NewInline(client, sender, systemMail, stubTXT, baseCfg.AppURL)
 	// Cipher (over the fixture-sealing key) and provider catalog for the site
 	// handlers — mirrors the app's DI singletons.
 	cipher, err := secrets.NewCipher(baseCfg.EncryptionKey)
@@ -152,7 +156,7 @@ func Setup(t *testing.T) *TestEnv {
 	// river), so it gets the same capturing resolver — its sends land in CustomerMail.
 	// inline implements every enqueue seam (broadcast, welcome, account mail,
 	// sending-domain verify).
-	handler, err := server.New(baseCfg, client, txDB, bus, cipher, catalog, inline, inline, inline, inline, resolver)
+	handler, err := server.New(baseCfg, client, txDB, bus, cipher, catalog, inline, inline, inline, inline, sender)
 	require.NoError(t, err, "build server")
 
 	return &TestEnv{
@@ -177,14 +181,19 @@ func (s *CapturingSender) SetErr(err error) {
 	s.Err = err
 }
 
-func (s *CapturingSender) Send(_ context.Context, msg messaging.EmailMessage) error {
+// DefaultFrom is the integration-configured sender the fixtures' default
+// integration uses; its domain (codebasics.dev) is a verified Sending domain, so
+// sends without an explicit From pass Outbound send's domain gate (ADR 0010).
+func (s *CapturingSender) DefaultFrom() (string, string) { return "hello@codebasics.dev", "CodeBasics" }
+
+func (s *CapturingSender) Send(_ context.Context, msg messaging.EmailMessage) (messaging.Receipt, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	if s.Err != nil {
-		return s.Err
+		return messaging.Receipt{}, s.Err
 	}
 	s.sent = append(s.sent, msg)
-	return nil
+	return messaging.Receipt{MessageID: fmt.Sprintf("<test-%d@1mail.test>", len(s.sent))}, nil
 }
 
 // Messages returns a copy of the captured sends.

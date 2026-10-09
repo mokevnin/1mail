@@ -82,6 +82,19 @@ func (Broadcast) Fields() []ent.Field {
 		field.Int("failed_count").
 			Default(0).
 			NonNegative(),
+		// Recipients Send-eligibility skipped at send time (an unsubscribe or
+		// Suppression that landed after planning) — final for them, neither sent nor
+		// failed (ADR 0015).
+		field.Int("skipped_count").
+			Default(0).
+			NonNegative(),
+		// Why the broadcast is currently held (ADR 0015): a reversible, per-source
+		// hold — Workspace suspension, an unverified Sending domain, no Integration —
+		// not a failure. Set while any recipient is held, cleared when one sends; the
+		// status stays "sending" and the pending recipients wait for the hold to lift.
+		field.String("hold_reason").
+			Optional().
+			Nillable(),
 		field.Int64("workspace_id"),
 		field.Time("created_at").
 			Default(time.Now).

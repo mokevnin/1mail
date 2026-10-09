@@ -26,6 +26,12 @@ const (
 	FieldRequireConfirmedOptIn = "require_confirmed_opt_in"
 	// FieldPostalAddress holds the string denoting the postal_address field in the database.
 	FieldPostalAddress = "postal_address"
+	// FieldSuspendedAt holds the string denoting the suspended_at field in the database.
+	FieldSuspendedAt = "suspended_at"
+	// FieldSuspendedBy holds the string denoting the suspended_by field in the database.
+	FieldSuspendedBy = "suspended_by"
+	// FieldSuspensionReason holds the string denoting the suspension_reason field in the database.
+	FieldSuspensionReason = "suspension_reason"
 	// FieldCreatedAt holds the string denoting the created_at field in the database.
 	FieldCreatedAt = "created_at"
 	// FieldUpdatedAt holds the string denoting the updated_at field in the database.
@@ -64,8 +70,8 @@ const (
 	EdgeUnsubscribes = "unsubscribes"
 	// EdgeConfirmations holds the string denoting the confirmations edge name in mutations.
 	EdgeConfirmations = "confirmations"
-	// EdgeTransactionalEmails holds the string denoting the transactional_emails edge name in mutations.
-	EdgeTransactionalEmails = "transactional_emails"
+	// EdgeOutboundMessages holds the string denoting the outbound_messages edge name in mutations.
+	EdgeOutboundMessages = "outbound_messages"
 	// EdgeMemberships holds the string denoting the memberships edge name in mutations.
 	EdgeMemberships = "memberships"
 	// EdgeInvitations holds the string denoting the invitations edge name in mutations.
@@ -191,13 +197,13 @@ const (
 	ConfirmationsInverseTable = "confirmations"
 	// ConfirmationsColumn is the table column denoting the confirmations relation/edge.
 	ConfirmationsColumn = "workspace_id"
-	// TransactionalEmailsTable is the table that holds the transactional_emails relation/edge.
-	TransactionalEmailsTable = "transactional_emails"
-	// TransactionalEmailsInverseTable is the table name for the TransactionalEmail entity.
-	// It exists in this package in order to avoid circular dependency with the "transactionalemail" package.
-	TransactionalEmailsInverseTable = "transactional_emails"
-	// TransactionalEmailsColumn is the table column denoting the transactional_emails relation/edge.
-	TransactionalEmailsColumn = "workspace_id"
+	// OutboundMessagesTable is the table that holds the outbound_messages relation/edge.
+	OutboundMessagesTable = "outbound_messages"
+	// OutboundMessagesInverseTable is the table name for the OutboundMessage entity.
+	// It exists in this package in order to avoid circular dependency with the "outboundmessage" package.
+	OutboundMessagesInverseTable = "outbound_messages"
+	// OutboundMessagesColumn is the table column denoting the outbound_messages relation/edge.
+	OutboundMessagesColumn = "workspace_id"
 	// MembershipsTable is the table that holds the memberships relation/edge.
 	MembershipsTable = "memberships"
 	// MembershipsInverseTable is the table name for the Membership entity.
@@ -223,6 +229,9 @@ var Columns = []string{
 	FieldIngestKey,
 	FieldRequireConfirmedOptIn,
 	FieldPostalAddress,
+	FieldSuspendedAt,
+	FieldSuspendedBy,
+	FieldSuspensionReason,
 	FieldCreatedAt,
 	FieldUpdatedAt,
 }
@@ -294,6 +303,21 @@ func ByRequireConfirmedOptIn(opts ...sql.OrderTermOption) OrderOption {
 // ByPostalAddress orders the results by the postal_address field.
 func ByPostalAddress(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldPostalAddress, opts...).ToFunc()
+}
+
+// BySuspendedAt orders the results by the suspended_at field.
+func BySuspendedAt(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldSuspendedAt, opts...).ToFunc()
+}
+
+// BySuspendedBy orders the results by the suspended_by field.
+func BySuspendedBy(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldSuspendedBy, opts...).ToFunc()
+}
+
+// BySuspensionReason orders the results by the suspension_reason field.
+func BySuspensionReason(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldSuspensionReason, opts...).ToFunc()
 }
 
 // ByCreatedAt orders the results by the created_at field.
@@ -544,17 +568,17 @@ func ByConfirmations(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 	}
 }
 
-// ByTransactionalEmailsCount orders the results by transactional_emails count.
-func ByTransactionalEmailsCount(opts ...sql.OrderTermOption) OrderOption {
+// ByOutboundMessagesCount orders the results by outbound_messages count.
+func ByOutboundMessagesCount(opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborsCount(s, newTransactionalEmailsStep(), opts...)
+		sqlgraph.OrderByNeighborsCount(s, newOutboundMessagesStep(), opts...)
 	}
 }
 
-// ByTransactionalEmails orders the results by transactional_emails terms.
-func ByTransactionalEmails(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+// ByOutboundMessages orders the results by outbound_messages terms.
+func ByOutboundMessages(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborTerms(s, newTransactionalEmailsStep(), append([]sql.OrderTerm{term}, terms...)...)
+		sqlgraph.OrderByNeighborTerms(s, newOutboundMessagesStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
 
@@ -704,11 +728,11 @@ func newConfirmationsStep() *sqlgraph.Step {
 		sqlgraph.Edge(sqlgraph.O2M, false, ConfirmationsTable, ConfirmationsColumn),
 	)
 }
-func newTransactionalEmailsStep() *sqlgraph.Step {
+func newOutboundMessagesStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
-		sqlgraph.To(TransactionalEmailsInverseTable, FieldID),
-		sqlgraph.Edge(sqlgraph.O2M, false, TransactionalEmailsTable, TransactionalEmailsColumn),
+		sqlgraph.To(OutboundMessagesInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, OutboundMessagesTable, OutboundMessagesColumn),
 	)
 }
 func newMembershipsStep() *sqlgraph.Step {

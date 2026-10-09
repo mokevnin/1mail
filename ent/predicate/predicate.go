@@ -45,6 +45,9 @@ type Invitation func(*sql.Selector)
 // Membership is the predicate function for membership builders.
 type Membership func(*sql.Selector)
 
+// OutboundMessage is the predicate function for outboundmessage builders.
+type OutboundMessage func(*sql.Selector)
+
 // Segment is the predicate function for segment builders.
 type Segment func(*sql.Selector)
 
@@ -53,9 +56,6 @@ type SendingDomain func(*sql.Selector)
 
 // Suppression is the predicate function for suppression builders.
 type Suppression func(*sql.Selector)
-
-// TransactionalEmail is the predicate function for transactionalemail builders.
-type TransactionalEmail func(*sql.Selector)
 
 // Unsubscribe is the predicate function for unsubscribe builders.
 type Unsubscribe func(*sql.Selector)

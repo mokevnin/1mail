@@ -41,7 +41,7 @@ func NewDKIMSigner(client *ent.Client, cipher *secrets.Cipher, workspaceID int64
 // The match is on the exact From domain; a subdomain of a verified domain does
 // not match and is left unsigned.
 func (s *dkimSigner) DKIMSigner(ctx context.Context, fromEmail string) (*mail.DKIMSigner, error) {
-	domain := domainOf(fromEmail)
+	domain := DomainOf(fromEmail)
 	if domain == "" {
 		return nil, nil
 	}
@@ -80,7 +80,7 @@ func (s *dkimSigner) DKIMSigner(ctx context.Context, fromEmail string) (*mail.DK
 // reject up front instead of failing every recipient. An empty/malformed
 // fromEmail reports false.
 func HasVerifiedSendingDomain(ctx context.Context, client *ent.Client, workspaceID int64, fromEmail string) (bool, error) {
-	domain := domainOf(fromEmail)
+	domain := DomainOf(fromEmail)
 	if domain == "" {
 		return false, nil
 	}
@@ -95,7 +95,7 @@ func HasVerifiedSendingDomain(ctx context.Context, client *ent.Client, workspace
 
 // domainOf returns the lower-cased domain of an email address, or "" when there
 // is no single "@".
-func domainOf(email string) string {
+func DomainOf(email string) string {
 	at := strings.LastIndex(email, "@")
 	if at < 0 || at == len(email)-1 {
 		return ""

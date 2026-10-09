@@ -36,6 +36,7 @@ func (c *ConverterImpl) BroadcastToResource(source *ent.Broadcast) site.SiteBroa
 		siteapiSiteBroadcastResource.SegmentId = optNilEntityID((*source).SegmentID)
 		siteapiSiteBroadcastResource.IntegrationId = optNilEntityID((*source).IntegrationID)
 		siteapiSiteBroadcastResource.Status = site.SiteBroadcastStatus((*source).Status)
+		siteapiSiteBroadcastResource.HoldReason = optNilString((*source).HoldReason)
 		siteapiSiteBroadcastResource.ScheduledAt = optNilTimestamp((*source).ScheduledAt)
 		siteapiSiteBroadcastResource.SentAt = optNilTimestamp((*source).SentAt)
 		siteapiSiteBroadcastResource.Stats = broadcastStats((*source))
@@ -139,16 +140,16 @@ func (c *ConverterImpl) TokenToResource(source *ent.ApiToken) site.SiteApiTokenR
 	}
 	return siteapiSiteApiTokenResource
 }
-func (c *ConverterImpl) TransactionalEmailToResource(source *ent.TransactionalEmail) site.SiteTransactionalEmailResource {
+func (c *ConverterImpl) TransactionalMessageToResource(source *ent.OutboundMessage) site.SiteTransactionalEmailResource {
 	var siteapiSiteTransactionalEmailResource site.SiteTransactionalEmailResource
 	if source != nil {
 		siteapiSiteTransactionalEmailResource.ID = entityID((*source).ID)
-		siteapiSiteTransactionalEmailResource.Channel = site.SiteTransactionalEmailChannel((*source).Channel)
+		siteapiSiteTransactionalEmailResource.Channel = transactionalChannel((*source).Channel)
 		siteapiSiteTransactionalEmailResource.Destination = (*source).Destination
-		siteapiSiteTransactionalEmailResource.TemplateId = entityID((*source).TemplateID)
+		siteapiSiteTransactionalEmailResource.TemplateId = requiredEntityID((*source).TemplateID)
 		siteapiSiteTransactionalEmailResource.ContactId = optNilEntityID((*source).ContactID)
-		siteapiSiteTransactionalEmailResource.Status = site.SiteTransactionalEmailStatus((*source).Status)
-		siteapiSiteTransactionalEmailResource.Error = optNilString((*source).Error)
+		siteapiSiteTransactionalEmailResource.Status = transactionalStatus((*source))
+		siteapiSiteTransactionalEmailResource.Error = transactionalError((*source))
 		siteapiSiteTransactionalEmailResource.CreatedAt = timestamp((*source).CreatedAt)
 	}
 	return siteapiSiteTransactionalEmailResource

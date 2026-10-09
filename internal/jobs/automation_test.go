@@ -3,6 +3,7 @@ package jobs_test
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/mokevnin/1mail/ent/automation"
 	"github.com/mokevnin/1mail/ent/automationrun"
@@ -10,6 +11,7 @@ import (
 	"github.com/mokevnin/1mail/ent/unsubscribe"
 	"github.com/mokevnin/1mail/internal/eligibility"
 	"github.com/mokevnin/1mail/internal/jobs"
+	"github.com/mokevnin/1mail/internal/outbound"
 	"github.com/mokevnin/1mail/internal/testhelper"
 	"github.com/mokevnin/1mail/internal/tracking"
 	"github.com/stretchr/testify/assert"
@@ -20,11 +22,11 @@ const emailStep = `{"type":"email","subject":"Hi {{ first_name }}","body":"<mjml
 
 // drive runs RunStep until the run finishes (or a safety cap). tracker may be nil
 // (most tests don't assert on the unsubscribe footer).
-func drive(t *testing.T, env *testhelper.TestEnv, resolver jobs.SenderResolver, runID int64) {
+func drive(t *testing.T, env *testhelper.TestEnv, resolver outbound.Senders, runID int64) {
 	t.Helper()
 	ctx := context.Background()
 	for i := 0; i < 20; i++ {
-		res, err := jobs.RunStep(ctx, env.DB, env.Bus, resolver, nil, runID)
+		res, err := jobs.RunStep(ctx, env.DB, newMod(env, resolver), runID)
 		require.NoError(t, err)
 		if res.Done {
 			return
@@ -199,8 +201,8 @@ func TestAutomationSendIncludesUnsubscribeFooter(t *testing.T) {
 	require.Len(t, runIDs, 1)
 
 	fs := &fakeSender{}
-	tr := tracking.New("secret", "https://app.test")
-	_, err = jobs.RunStep(ctx, env.DB, env.Bus, fakeResolver{sender: fs}, tr, runIDs[0])
+	mod := outbound.New(env.DB, env.Bus, fakeResolver{sender: fs}, tracking.New("secret", "https://app.test"))
+	_, err = jobs.RunStep(ctx, env.DB, mod, runIDs[0])
 	require.NoError(t, err)
 
 	require.Len(t, fs.sent, 1)
@@ -242,9 +244,41 @@ func TestAutomationWaitDefersNextStep(t *testing.T) {
 	require.Len(t, runIDs, 1)
 
 	// First step is a wait: it defers (ResumeAt set), no send yet.
-	res, err := jobs.RunStep(ctx, env.DB, env.Bus, fakeResolver{sender: &fakeSender{}}, nil, runIDs[0])
+	res, err := jobs.RunStep(ctx, env.DB, newMod(env, fakeResolver{sender: &fakeSender{}}), runIDs[0])
 	require.NoError(t, err)
 	assert.False(t, res.Done)
 	require.NotNil(t, res.ResumeAt)
 	assert.NotNil(t, env.DB.AutomationRun.GetX(ctx, runIDs[0]).ResumeAt)
+}
+
+// A hold on the source (here: a suspended Workspace) leaves the enrollment exactly
+// where it was and asks to be run again later; the run is neither failed nor exited.
+func TestAutomationHeldStepWaitsAndResumes(t *testing.T) {
+	env := testhelper.Setup(t)
+	ctx := context.Background()
+
+	c := env.DB.Contact.Create().SetWorkspaceID(acmeWorkspaceID).SetEmail("held@test.dev").SetFirstName("Hal").SaveX(ctx)
+	env.DB.Automation.Create().SetWorkspaceID(acmeWorkspaceID).
+		SetName("Held").SetTriggerEvent("contact.created").SetStatus(automation.StatusActive).
+		SetDefinition("[" + emailStep + "]").ExecX(ctx)
+	runIDs, err := jobs.EvaluateTrigger(ctx, env.DB, acmeWorkspaceID, c.ID, "contact.created")
+	require.NoError(t, err)
+	require.Len(t, runIDs, 1)
+
+	fs := &fakeSender{}
+	mod := newMod(env, fakeResolver{sender: fs})
+	env.DB.Workspace.UpdateOneID(acmeWorkspaceID).SetSuspendedAt(time.Now()).ExecX(ctx)
+
+	res, err := jobs.RunStep(ctx, env.DB, mod, runIDs[0])
+	require.NoError(t, err)
+	assert.False(t, res.Done)
+	require.NotNil(t, res.ResumeAt, "the worker reschedules the same step")
+	run := env.DB.AutomationRun.GetX(ctx, runIDs[0])
+	assert.Equal(t, automationrun.StatusActive, run.Status)
+	assert.Zero(t, run.CurrentStep, "a hold does not advance the enrollment")
+	assert.Empty(t, fs.sent)
+
+	env.DB.Workspace.UpdateOneID(acmeWorkspaceID).ClearSuspendedAt().ExecX(ctx)
+	drive(t, env, fakeResolver{sender: fs}, runIDs[0])
+	assert.Len(t, fs.sent, 1, "after the unfreeze the step sends")
 }

@@ -94,6 +94,33 @@ func (_u *BroadcastRecipientUpdate) SetNillableStatus(v *broadcastrecipient.Stat
 	return _u
 }
 
+// SetOutboundMessageID sets the "outbound_message_id" field.
+func (_u *BroadcastRecipientUpdate) SetOutboundMessageID(v int64) *BroadcastRecipientUpdate {
+	_u.mutation.ResetOutboundMessageID()
+	_u.mutation.SetOutboundMessageID(v)
+	return _u
+}
+
+// SetNillableOutboundMessageID sets the "outbound_message_id" field if the given value is not nil.
+func (_u *BroadcastRecipientUpdate) SetNillableOutboundMessageID(v *int64) *BroadcastRecipientUpdate {
+	if v != nil {
+		_u.SetOutboundMessageID(*v)
+	}
+	return _u
+}
+
+// AddOutboundMessageID adds value to the "outbound_message_id" field.
+func (_u *BroadcastRecipientUpdate) AddOutboundMessageID(v int64) *BroadcastRecipientUpdate {
+	_u.mutation.AddOutboundMessageID(v)
+	return _u
+}
+
+// ClearOutboundMessageID clears the value of the "outbound_message_id" field.
+func (_u *BroadcastRecipientUpdate) ClearOutboundMessageID() *BroadcastRecipientUpdate {
+	_u.mutation.ClearOutboundMessageID()
+	return _u
+}
+
 // SetError sets the "error" field.
 func (_u *BroadcastRecipientUpdate) SetError(v string) *BroadcastRecipientUpdate {
 	_u.mutation.SetError(v)
@@ -286,6 +313,15 @@ func (_u *BroadcastRecipientUpdate) sqlSave(ctx context.Context) (_node int, err
 	if value, ok := _u.mutation.Status(); ok {
 		_spec.SetField(broadcastrecipient.FieldStatus, field.TypeEnum, value)
 	}
+	if value, ok := _u.mutation.OutboundMessageID(); ok {
+		_spec.SetField(broadcastrecipient.FieldOutboundMessageID, field.TypeInt64, value)
+	}
+	if value, ok := _u.mutation.AddedOutboundMessageID(); ok {
+		_spec.AddField(broadcastrecipient.FieldOutboundMessageID, field.TypeInt64, value)
+	}
+	if _u.mutation.OutboundMessageIDCleared() {
+		_spec.ClearField(broadcastrecipient.FieldOutboundMessageID, field.TypeInt64)
+	}
 	if value, ok := _u.mutation.Error(); ok {
 		_spec.SetField(broadcastrecipient.FieldError, field.TypeString, value)
 	}
@@ -453,6 +489,33 @@ func (_u *BroadcastRecipientUpdateOne) SetNillableStatus(v *broadcastrecipient.S
 	if v != nil {
 		_u.SetStatus(*v)
 	}
+	return _u
+}
+
+// SetOutboundMessageID sets the "outbound_message_id" field.
+func (_u *BroadcastRecipientUpdateOne) SetOutboundMessageID(v int64) *BroadcastRecipientUpdateOne {
+	_u.mutation.ResetOutboundMessageID()
+	_u.mutation.SetOutboundMessageID(v)
+	return _u
+}
+
+// SetNillableOutboundMessageID sets the "outbound_message_id" field if the given value is not nil.
+func (_u *BroadcastRecipientUpdateOne) SetNillableOutboundMessageID(v *int64) *BroadcastRecipientUpdateOne {
+	if v != nil {
+		_u.SetOutboundMessageID(*v)
+	}
+	return _u
+}
+
+// AddOutboundMessageID adds value to the "outbound_message_id" field.
+func (_u *BroadcastRecipientUpdateOne) AddOutboundMessageID(v int64) *BroadcastRecipientUpdateOne {
+	_u.mutation.AddOutboundMessageID(v)
+	return _u
+}
+
+// ClearOutboundMessageID clears the value of the "outbound_message_id" field.
+func (_u *BroadcastRecipientUpdateOne) ClearOutboundMessageID() *BroadcastRecipientUpdateOne {
+	_u.mutation.ClearOutboundMessageID()
 	return _u
 }
 
@@ -677,6 +740,15 @@ func (_u *BroadcastRecipientUpdateOne) sqlSave(ctx context.Context) (_node *Broa
 	}
 	if value, ok := _u.mutation.Status(); ok {
 		_spec.SetField(broadcastrecipient.FieldStatus, field.TypeEnum, value)
+	}
+	if value, ok := _u.mutation.OutboundMessageID(); ok {
+		_spec.SetField(broadcastrecipient.FieldOutboundMessageID, field.TypeInt64, value)
+	}
+	if value, ok := _u.mutation.AddedOutboundMessageID(); ok {
+		_spec.AddField(broadcastrecipient.FieldOutboundMessageID, field.TypeInt64, value)
+	}
+	if _u.mutation.OutboundMessageIDCleared() {
+		_spec.ClearField(broadcastrecipient.FieldOutboundMessageID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.Error(); ok {
 		_spec.SetField(broadcastrecipient.FieldError, field.TypeString, value)

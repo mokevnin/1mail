@@ -1,0 +1,91 @@
+# Workspace acme (id 1). Outbound messages (ADR 0015): the durable record of every email
+# sent on the workspace's behalf. These rows are the transactional surface's history
+# (kind: transactional); template_id is a plain id snapshot into email_templates (not
+# an FK). Outcomes cover sent / skipped (suppression) / failed; idempotency_key is
+# unique per (workspace, key) and namespaced by surface. Rows 100-105 are anchors.
+- id: 100
+  kind: transactional
+  idempotency_key: 'transactional:txn-welcome-100'
+  channel: email
+  destination: liam.python@codebasics.dev
+  contact_id: 100
+  template_id: 1
+  status: sent
+  sending_domain: codebasics.dev
+  provider_message_id: '<fixture-100@codebasics.dev>'
+  sent_at: '{{daysAgo 2}}'
+  claimed_at: '{{daysAgo 2}}'
+  workspace_id: 1
+  created_at: '{{daysAgo 2}}'
+  updated_at: '{{daysAgo 2}}'
+- id: 101
+  kind: transactional
+  idempotency_key: 'transactional:txn-receipt-101'
+  channel: email
+  destination: emma.sql@codebasics.dev
+  contact_id: 101
+  template_id: 3
+  status: sent
+  sending_domain: codebasics.dev
+  provider_message_id: '<fixture-101@codebasics.dev>'
+  sent_at: '{{daysAgo 3}}'
+  claimed_at: '{{daysAgo 3}}'
+  workspace_id: 1
+  created_at: '{{daysAgo 3}}'
+  updated_at: '{{daysAgo 3}}'
+- id: 102
+  kind: transactional
+  idempotency_key: 'transactional:txn-receipt-105'
+  channel: email
+  destination: sophia.python@codebasics.dev
+  contact_id: 105
+  template_id: 3
+  status: sent
+  sending_domain: codebasics.dev
+  provider_message_id: '<fixture-102@codebasics.dev>'
+  sent_at: '{{daysAgo 8}}'
+  claimed_at: '{{daysAgo 8}}'
+  workspace_id: 1
+  created_at: '{{daysAgo 8}}'
+  updated_at: '{{daysAgo 8}}'
+- id: 103
+  kind: transactional
+  idempotency_key: 'transactional:txn-welcome-104'
+  channel: email
+  destination: ethan.data@codebasics.dev
+  contact_id: 104
+  template_id: 1
+  status: skipped
+  reason: suppressed
+  claimed_at: '{{daysAgo 6}}'
+  workspace_id: 1
+  created_at: '{{daysAgo 6}}'
+  updated_at: '{{daysAgo 6}}'
+- id: 104
+  kind: transactional
+  idempotency_key: 'transactional:txn-welcome-102'
+  channel: email
+  destination: noah.js@codebasics.dev
+  contact_id: 102
+  template_id: 1
+  status: failed
+  reason: provider timeout
+  claimed_at: '{{daysAgo 5}}'
+  workspace_id: 1
+  created_at: '{{daysAgo 5}}'
+  updated_at: '{{daysAgo 5}}'
+- id: 105
+  kind: transactional
+  idempotency_key: 'transactional:auto:fixture-105'
+  channel: email
+  destination: ava.devops@codebasics.dev
+  contact_id: 103
+  template_id: 2
+  status: sent
+  sending_domain: codebasics.dev
+  provider_message_id: '<fixture-105@codebasics.dev>'
+  sent_at: '{{daysAgo 4}}'
+  claimed_at: '{{daysAgo 4}}'
+  workspace_id: 1
+  created_at: '{{daysAgo 4}}'
+  updated_at: '{{daysAgo 4}}'

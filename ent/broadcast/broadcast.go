@@ -49,6 +49,10 @@ const (
 	FieldUnsubscribedCount = "unsubscribed_count"
 	// FieldFailedCount holds the string denoting the failed_count field in the database.
 	FieldFailedCount = "failed_count"
+	// FieldSkippedCount holds the string denoting the skipped_count field in the database.
+	FieldSkippedCount = "skipped_count"
+	// FieldHoldReason holds the string denoting the hold_reason field in the database.
+	FieldHoldReason = "hold_reason"
 	// FieldWorkspaceID holds the string denoting the workspace_id field in the database.
 	FieldWorkspaceID = "workspace_id"
 	// FieldCreatedAt holds the string denoting the created_at field in the database.
@@ -97,6 +101,8 @@ var Columns = []string{
 	FieldClickedCount,
 	FieldUnsubscribedCount,
 	FieldFailedCount,
+	FieldSkippedCount,
+	FieldHoldReason,
 	FieldWorkspaceID,
 	FieldCreatedAt,
 	FieldUpdatedAt,
@@ -145,6 +151,10 @@ var (
 	DefaultFailedCount int
 	// FailedCountValidator is a validator for the "failed_count" field. It is called by the builders before save.
 	FailedCountValidator func(int) error
+	// DefaultSkippedCount holds the default value on creation for the "skipped_count" field.
+	DefaultSkippedCount int
+	// SkippedCountValidator is a validator for the "skipped_count" field. It is called by the builders before save.
+	SkippedCountValidator func(int) error
 	// DefaultCreatedAt holds the default value on creation for the "created_at" field.
 	DefaultCreatedAt func() time.Time
 	// DefaultUpdatedAt holds the default value on creation for the "updated_at" field.
@@ -273,6 +283,16 @@ func ByUnsubscribedCount(opts ...sql.OrderTermOption) OrderOption {
 // ByFailedCount orders the results by the failed_count field.
 func ByFailedCount(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldFailedCount, opts...).ToFunc()
+}
+
+// BySkippedCount orders the results by the skipped_count field.
+func BySkippedCount(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldSkippedCount, opts...).ToFunc()
+}
+
+// ByHoldReason orders the results by the hold_reason field.
+func ByHoldReason(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldHoldReason, opts...).ToFunc()
 }
 
 // ByWorkspaceID orders the results by the workspace_id field.

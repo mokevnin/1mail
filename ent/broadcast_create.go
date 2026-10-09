@@ -254,6 +254,34 @@ func (_c *BroadcastCreate) SetNillableFailedCount(v *int) *BroadcastCreate {
 	return _c
 }
 
+// SetSkippedCount sets the "skipped_count" field.
+func (_c *BroadcastCreate) SetSkippedCount(v int) *BroadcastCreate {
+	_c.mutation.SetSkippedCount(v)
+	return _c
+}
+
+// SetNillableSkippedCount sets the "skipped_count" field if the given value is not nil.
+func (_c *BroadcastCreate) SetNillableSkippedCount(v *int) *BroadcastCreate {
+	if v != nil {
+		_c.SetSkippedCount(*v)
+	}
+	return _c
+}
+
+// SetHoldReason sets the "hold_reason" field.
+func (_c *BroadcastCreate) SetHoldReason(v string) *BroadcastCreate {
+	_c.mutation.SetHoldReason(v)
+	return _c
+}
+
+// SetNillableHoldReason sets the "hold_reason" field if the given value is not nil.
+func (_c *BroadcastCreate) SetNillableHoldReason(v *string) *BroadcastCreate {
+	if v != nil {
+		_c.SetHoldReason(*v)
+	}
+	return _c
+}
+
 // SetWorkspaceID sets the "workspace_id" field.
 func (_c *BroadcastCreate) SetWorkspaceID(v int64) *BroadcastCreate {
 	_c.mutation.SetWorkspaceID(v)
@@ -389,6 +417,10 @@ func (_c *BroadcastCreate) defaults() {
 		v := broadcast.DefaultFailedCount
 		_c.mutation.SetFailedCount(v)
 	}
+	if _, ok := _c.mutation.SkippedCount(); !ok {
+		v := broadcast.DefaultSkippedCount
+		_c.mutation.SetSkippedCount(v)
+	}
 	if _, ok := _c.mutation.CreatedAt(); !ok {
 		v := broadcast.DefaultCreatedAt()
 		_c.mutation.SetCreatedAt(v)
@@ -472,6 +504,14 @@ func (_c *BroadcastCreate) check() error {
 	if v, ok := _c.mutation.FailedCount(); ok {
 		if err := broadcast.FailedCountValidator(v); err != nil {
 			return &ValidationError{Name: "failed_count", err: fmt.Errorf(`ent: validator failed for field "Broadcast.failed_count": %w`, err)}
+		}
+	}
+	if _, ok := _c.mutation.SkippedCount(); !ok {
+		return &ValidationError{Name: "skipped_count", err: errors.New(`ent: missing required field "Broadcast.skipped_count"`)}
+	}
+	if v, ok := _c.mutation.SkippedCount(); ok {
+		if err := broadcast.SkippedCountValidator(v); err != nil {
+			return &ValidationError{Name: "skipped_count", err: fmt.Errorf(`ent: validator failed for field "Broadcast.skipped_count": %w`, err)}
 		}
 	}
 	if _, ok := _c.mutation.WorkspaceID(); !ok {
@@ -586,6 +626,14 @@ func (_c *BroadcastCreate) createSpec() (*Broadcast, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.FailedCount(); ok {
 		_spec.SetField(broadcast.FieldFailedCount, field.TypeInt, value)
 		_node.FailedCount = value
+	}
+	if value, ok := _c.mutation.SkippedCount(); ok {
+		_spec.SetField(broadcast.FieldSkippedCount, field.TypeInt, value)
+		_node.SkippedCount = value
+	}
+	if value, ok := _c.mutation.HoldReason(); ok {
+		_spec.SetField(broadcast.FieldHoldReason, field.TypeString, value)
+		_node.HoldReason = &value
 	}
 	if value, ok := _c.mutation.CreatedAt(); ok {
 		_spec.SetField(broadcast.FieldCreatedAt, field.TypeTime, value)
@@ -965,6 +1013,42 @@ func (u *BroadcastUpsert) UpdateFailedCount() *BroadcastUpsert {
 // AddFailedCount adds v to the "failed_count" field.
 func (u *BroadcastUpsert) AddFailedCount(v int) *BroadcastUpsert {
 	u.Add(broadcast.FieldFailedCount, v)
+	return u
+}
+
+// SetSkippedCount sets the "skipped_count" field.
+func (u *BroadcastUpsert) SetSkippedCount(v int) *BroadcastUpsert {
+	u.Set(broadcast.FieldSkippedCount, v)
+	return u
+}
+
+// UpdateSkippedCount sets the "skipped_count" field to the value that was provided on create.
+func (u *BroadcastUpsert) UpdateSkippedCount() *BroadcastUpsert {
+	u.SetExcluded(broadcast.FieldSkippedCount)
+	return u
+}
+
+// AddSkippedCount adds v to the "skipped_count" field.
+func (u *BroadcastUpsert) AddSkippedCount(v int) *BroadcastUpsert {
+	u.Add(broadcast.FieldSkippedCount, v)
+	return u
+}
+
+// SetHoldReason sets the "hold_reason" field.
+func (u *BroadcastUpsert) SetHoldReason(v string) *BroadcastUpsert {
+	u.Set(broadcast.FieldHoldReason, v)
+	return u
+}
+
+// UpdateHoldReason sets the "hold_reason" field to the value that was provided on create.
+func (u *BroadcastUpsert) UpdateHoldReason() *BroadcastUpsert {
+	u.SetExcluded(broadcast.FieldHoldReason)
+	return u
+}
+
+// ClearHoldReason clears the value of the "hold_reason" field.
+func (u *BroadcastUpsert) ClearHoldReason() *BroadcastUpsert {
+	u.SetNull(broadcast.FieldHoldReason)
 	return u
 }
 
@@ -1376,6 +1460,48 @@ func (u *BroadcastUpsertOne) AddFailedCount(v int) *BroadcastUpsertOne {
 func (u *BroadcastUpsertOne) UpdateFailedCount() *BroadcastUpsertOne {
 	return u.Update(func(s *BroadcastUpsert) {
 		s.UpdateFailedCount()
+	})
+}
+
+// SetSkippedCount sets the "skipped_count" field.
+func (u *BroadcastUpsertOne) SetSkippedCount(v int) *BroadcastUpsertOne {
+	return u.Update(func(s *BroadcastUpsert) {
+		s.SetSkippedCount(v)
+	})
+}
+
+// AddSkippedCount adds v to the "skipped_count" field.
+func (u *BroadcastUpsertOne) AddSkippedCount(v int) *BroadcastUpsertOne {
+	return u.Update(func(s *BroadcastUpsert) {
+		s.AddSkippedCount(v)
+	})
+}
+
+// UpdateSkippedCount sets the "skipped_count" field to the value that was provided on create.
+func (u *BroadcastUpsertOne) UpdateSkippedCount() *BroadcastUpsertOne {
+	return u.Update(func(s *BroadcastUpsert) {
+		s.UpdateSkippedCount()
+	})
+}
+
+// SetHoldReason sets the "hold_reason" field.
+func (u *BroadcastUpsertOne) SetHoldReason(v string) *BroadcastUpsertOne {
+	return u.Update(func(s *BroadcastUpsert) {
+		s.SetHoldReason(v)
+	})
+}
+
+// UpdateHoldReason sets the "hold_reason" field to the value that was provided on create.
+func (u *BroadcastUpsertOne) UpdateHoldReason() *BroadcastUpsertOne {
+	return u.Update(func(s *BroadcastUpsert) {
+		s.UpdateHoldReason()
+	})
+}
+
+// ClearHoldReason clears the value of the "hold_reason" field.
+func (u *BroadcastUpsertOne) ClearHoldReason() *BroadcastUpsertOne {
+	return u.Update(func(s *BroadcastUpsert) {
+		s.ClearHoldReason()
 	})
 }
 
@@ -1957,6 +2083,48 @@ func (u *BroadcastUpsertBulk) AddFailedCount(v int) *BroadcastUpsertBulk {
 func (u *BroadcastUpsertBulk) UpdateFailedCount() *BroadcastUpsertBulk {
 	return u.Update(func(s *BroadcastUpsert) {
 		s.UpdateFailedCount()
+	})
+}
+
+// SetSkippedCount sets the "skipped_count" field.
+func (u *BroadcastUpsertBulk) SetSkippedCount(v int) *BroadcastUpsertBulk {
+	return u.Update(func(s *BroadcastUpsert) {
+		s.SetSkippedCount(v)
+	})
+}
+
+// AddSkippedCount adds v to the "skipped_count" field.
+func (u *BroadcastUpsertBulk) AddSkippedCount(v int) *BroadcastUpsertBulk {
+	return u.Update(func(s *BroadcastUpsert) {
+		s.AddSkippedCount(v)
+	})
+}
+
+// UpdateSkippedCount sets the "skipped_count" field to the value that was provided on create.
+func (u *BroadcastUpsertBulk) UpdateSkippedCount() *BroadcastUpsertBulk {
+	return u.Update(func(s *BroadcastUpsert) {
+		s.UpdateSkippedCount()
+	})
+}
+
+// SetHoldReason sets the "hold_reason" field.
+func (u *BroadcastUpsertBulk) SetHoldReason(v string) *BroadcastUpsertBulk {
+	return u.Update(func(s *BroadcastUpsert) {
+		s.SetHoldReason(v)
+	})
+}
+
+// UpdateHoldReason sets the "hold_reason" field to the value that was provided on create.
+func (u *BroadcastUpsertBulk) UpdateHoldReason() *BroadcastUpsertBulk {
+	return u.Update(func(s *BroadcastUpsert) {
+		s.UpdateHoldReason()
+	})
+}
+
+// ClearHoldReason clears the value of the "hold_reason" field.
+func (u *BroadcastUpsertBulk) ClearHoldReason() *BroadcastUpsertBulk {
+	return u.Update(func(s *BroadcastUpsert) {
+		s.ClearHoldReason()
 	})
 }
 

@@ -70,6 +70,11 @@ func WorkspaceID(v int64) predicate.BroadcastRecipient {
 	return predicate.BroadcastRecipient(sql.FieldEQ(FieldWorkspaceID, v))
 }
 
+// OutboundMessageID applies equality check predicate on the "outbound_message_id" field. It's identical to OutboundMessageIDEQ.
+func OutboundMessageID(v int64) predicate.BroadcastRecipient {
+	return predicate.BroadcastRecipient(sql.FieldEQ(FieldOutboundMessageID, v))
+}
+
 // Error applies equality check predicate on the "error" field. It's identical to ErrorEQ.
 func Error(v string) predicate.BroadcastRecipient {
 	return predicate.BroadcastRecipient(sql.FieldEQ(FieldError, v))
@@ -198,6 +203,56 @@ func StatusIn(vs ...Status) predicate.BroadcastRecipient {
 // StatusNotIn applies the NotIn predicate on the "status" field.
 func StatusNotIn(vs ...Status) predicate.BroadcastRecipient {
 	return predicate.BroadcastRecipient(sql.FieldNotIn(FieldStatus, vs...))
+}
+
+// OutboundMessageIDEQ applies the EQ predicate on the "outbound_message_id" field.
+func OutboundMessageIDEQ(v int64) predicate.BroadcastRecipient {
+	return predicate.BroadcastRecipient(sql.FieldEQ(FieldOutboundMessageID, v))
+}
+
+// OutboundMessageIDNEQ applies the NEQ predicate on the "outbound_message_id" field.
+func OutboundMessageIDNEQ(v int64) predicate.BroadcastRecipient {
+	return predicate.BroadcastRecipient(sql.FieldNEQ(FieldOutboundMessageID, v))
+}
+
+// OutboundMessageIDIn applies the In predicate on the "outbound_message_id" field.
+func OutboundMessageIDIn(vs ...int64) predicate.BroadcastRecipient {
+	return predicate.BroadcastRecipient(sql.FieldIn(FieldOutboundMessageID, vs...))
+}
+
+// OutboundMessageIDNotIn applies the NotIn predicate on the "outbound_message_id" field.
+func OutboundMessageIDNotIn(vs ...int64) predicate.BroadcastRecipient {
+	return predicate.BroadcastRecipient(sql.FieldNotIn(FieldOutboundMessageID, vs...))
+}
+
+// OutboundMessageIDGT applies the GT predicate on the "outbound_message_id" field.
+func OutboundMessageIDGT(v int64) predicate.BroadcastRecipient {
+	return predicate.BroadcastRecipient(sql.FieldGT(FieldOutboundMessageID, v))
+}
+
+// OutboundMessageIDGTE applies the GTE predicate on the "outbound_message_id" field.
+func OutboundMessageIDGTE(v int64) predicate.BroadcastRecipient {
+	return predicate.BroadcastRecipient(sql.FieldGTE(FieldOutboundMessageID, v))
+}
+
+// OutboundMessageIDLT applies the LT predicate on the "outbound_message_id" field.
+func OutboundMessageIDLT(v int64) predicate.BroadcastRecipient {
+	return predicate.BroadcastRecipient(sql.FieldLT(FieldOutboundMessageID, v))
+}
+
+// OutboundMessageIDLTE applies the LTE predicate on the "outbound_message_id" field.
+func OutboundMessageIDLTE(v int64) predicate.BroadcastRecipient {
+	return predicate.BroadcastRecipient(sql.FieldLTE(FieldOutboundMessageID, v))
+}
+
+// OutboundMessageIDIsNil applies the IsNil predicate on the "outbound_message_id" field.
+func OutboundMessageIDIsNil() predicate.BroadcastRecipient {
+	return predicate.BroadcastRecipient(sql.FieldIsNull(FieldOutboundMessageID))
+}
+
+// OutboundMessageIDNotNil applies the NotNil predicate on the "outbound_message_id" field.
+func OutboundMessageIDNotNil() predicate.BroadcastRecipient {
+	return predicate.BroadcastRecipient(sql.FieldNotNull(FieldOutboundMessageID))
 }
 
 // ErrorEQ applies the EQ predicate on the "error" field.
