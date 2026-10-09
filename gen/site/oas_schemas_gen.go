@@ -1233,19 +1233,18 @@ func (s *ProblemDetails) SetFields(val OptProblemDetailsFields) {
 	s.Fields = val
 }
 
-func (*ProblemDetails) siteAnalyticsOverviewRes()          {}
-func (*ProblemDetails) siteAuthDirectLoginRes()            {}
-func (*ProblemDetails) siteAuthResetPasswordRes()          {}
-func (*ProblemDetails) siteAuthVerifyEmailRes()            {}
-func (*ProblemDetails) siteEventsActionsRes()              {}
-func (*ProblemDetails) siteEventsListRes()                 {}
-func (*ProblemDetails) siteIntegrationsListRes()           {}
-func (*ProblemDetails) siteInvitationsListRes()            {}
-func (*ProblemDetails) siteMembershipsListRes()            {}
-func (*ProblemDetails) sitePublicConfirmationsPerformRes() {}
-func (*ProblemDetails) sitePublicInvitationsLookupRes()    {}
-func (*ProblemDetails) sitePublicUnsubscribesPerformRes()  {}
-func (*ProblemDetails) siteTokensListRes()                 {}
+func (*ProblemDetails) siteAnalyticsOverviewRes()         {}
+func (*ProblemDetails) siteAuthDirectLoginRes()           {}
+func (*ProblemDetails) siteAuthResetPasswordRes()         {}
+func (*ProblemDetails) siteAuthVerifyEmailRes()           {}
+func (*ProblemDetails) siteEventsActionsRes()             {}
+func (*ProblemDetails) siteEventsListRes()                {}
+func (*ProblemDetails) siteIntegrationsListRes()          {}
+func (*ProblemDetails) siteInvitationsListRes()           {}
+func (*ProblemDetails) siteMembershipsListRes()           {}
+func (*ProblemDetails) sitePublicInvitationsLookupRes()   {}
+func (*ProblemDetails) sitePublicUnsubscribesPerformRes() {}
+func (*ProblemDetails) siteTokensListRes()                {}
 
 // Validation errors grouped by field.
 type ProblemDetailsErrors map[string][]string
@@ -5363,6 +5362,14 @@ func (s *SitePreviewSegmentResult) SetCount(val int32) {
 }
 
 func (*SitePreviewSegmentResult) siteSegmentsPreviewRes() {}
+
+type SitePublicConfirmationsPerformBadRequest ProblemDetails
+
+func (*SitePublicConfirmationsPerformBadRequest) sitePublicConfirmationsPerformRes() {}
+
+type SitePublicConfirmationsPerformGone ProblemDetails
+
+func (*SitePublicConfirmationsPerformGone) sitePublicConfirmationsPerformRes() {}
 
 // SitePublicConfirmationsPerformNoContent is response for SitePublicConfirmationsPerform operation.
 type SitePublicConfirmationsPerformNoContent struct{}

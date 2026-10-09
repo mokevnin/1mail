@@ -2099,6 +2099,10 @@ export type SitePublicConfirmationsPerformErrors = {
    * RFC 7807 bad request response
    */
   400: ProblemDetails;
+  /**
+   * RFC 7807 gone response: the resource existed but is no longer available (an expired link)
+   */
+  410: ProblemDetails;
 };
 
 export type SitePublicConfirmationsPerformError = SitePublicConfirmationsPerformErrors[keyof SitePublicConfirmationsPerformErrors];

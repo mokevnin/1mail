@@ -8,14 +8,19 @@ import (
 	siteapi "github.com/mokevnin/1mail/gen/site"
 	"github.com/mokevnin/1mail/internal/clientip"
 	"github.com/mokevnin/1mail/internal/consent"
+	"github.com/mokevnin/1mail/internal/tracking"
 )
 
 // SitePublicConfirmationsPerform is the double opt-in confirmation page's button
 // (ADR 0013): the one place a confirmation is performed.
 func (h *Handlers) SitePublicConfirmationsPerform(ctx context.Context, params siteapi.SitePublicConfirmationsPerformParams) (siteapi.SitePublicConfirmationsPerformRes, error) {
 	target, err := h.tracker.DecodeConfirm(params.Token)
+	if tracking.IsExpired(err) {
+		v := siteapi.SitePublicConfirmationsPerformGone(problem(http.StatusGone, "confirmation link expired"))
+		return &v, nil
+	}
 	if err != nil {
-		v := problem(http.StatusBadRequest, "invalid token")
+		v := siteapi.SitePublicConfirmationsPerformBadRequest(problem(http.StatusBadRequest, "invalid token"))
 		return &v, nil
 	}
 	if err := consent.RecordConfirmation(ctx, h.ent, h.bus, target, clientip.FromContext(ctx)); err != nil {

@@ -226,6 +226,16 @@
         },
         "description": "RFC 7807 forbidden response"
       },
+      "GoneProblem": {
+        "type": "object",
+        "required": ["body"],
+        "properties": {
+          "body": {
+            "$ref": "#/components/schemas/ProblemDetails"
+          }
+        },
+        "description": "RFC 7807 gone response: the resource existed but is no longer available (an expired link)"
+      },
       "NotFoundProblem": {
         "type": "object",
         "required": ["body"],

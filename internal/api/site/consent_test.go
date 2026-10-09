@@ -59,7 +59,17 @@ func TestSitePublicConfirmationsPerform(t *testing.T) {
 
 	out, err = anon.SitePublicConfirmationsPerform(ctx, siteapi.SitePublicConfirmationsPerformParams{Token: "garbage"})
 	require.NoError(t, err)
-	assert.IsType(t, &siteapi.ProblemDetails{}, out)
+	assert.IsType(t, &siteapi.SitePublicConfirmationsPerformBadRequest{}, out, "an invalid token is a 400")
+
+	// An expired link is told apart from an invalid one (410), so the page can offer
+	// to sign up again instead of a generic failure.
+	expired := env.ExpiredConfirmToken(t, tracking.ConfirmTarget{
+		Destination: *c.Email, WorkspaceID: fixtures.AcmeID, ContactID: c.ID,
+	})
+	out, err = anon.SitePublicConfirmationsPerform(ctx, siteapi.SitePublicConfirmationsPerformParams{Token: expired})
+	require.NoError(t, err)
+	assert.IsType(t, &siteapi.SitePublicConfirmationsPerformGone{}, out, "an expired token is a 410")
+	assert.Equal(t, 1, count(), "an expired token records nothing more")
 }
 
 // Unsubscribe (ADR 0012): the page button performs the opt-out through the site

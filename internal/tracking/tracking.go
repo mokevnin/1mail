@@ -150,6 +150,13 @@ func (t *Tracker) confirmToken(target ConfirmTarget) (string, error) {
 	return tok.SignedString(t.secret)
 }
 
+// IsExpired reports whether err from DecodeConfirm means the link is past its TTL,
+// as opposed to malformed or signed with another key: an expired link can be
+// replaced by a new one, an invalid one is simply not ours.
+func IsExpired(err error) bool {
+	return errors.Is(err, jwt.ErrTokenExpired)
+}
+
 // DecodeConfirm validates a confirmation token and returns its target. It
 // rejects a token whose exp has passed (and requires exp to be present), so an
 // expired link cannot confirm — the endpoint surfaces that as "request a new one".

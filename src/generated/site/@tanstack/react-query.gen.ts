@@ -107,7 +107,8 @@ export const siteAuthVerifyEmailMutation = (options?: Partial<Options<SiteAuthVe
 
 /**
  * Perform a double opt-in confirmation (ADR 0013). The deliberate human act
- * behind the confirmation page's button. Repeating it is a no-op.
+ * behind the confirmation page's button. Repeating it is a no-op. 410 means the
+ * link has expired, so the page offers to sign up again; 400 is an invalid token.
  */
 export const sitePublicConfirmationsPerformMutation = (options?: Partial<Options<SitePublicConfirmationsPerformData>>): UseMutationOptions<SitePublicConfirmationsPerformResponse, SitePublicConfirmationsPerformError, Options<SitePublicConfirmationsPerformData>> => {
   const mutationOptions: UseMutationOptions<SitePublicConfirmationsPerformResponse, SitePublicConfirmationsPerformError, Options<SitePublicConfirmationsPerformData>> = {

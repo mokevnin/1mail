@@ -1903,9 +1903,21 @@ func encodeSitePublicConfirmationsPerformResponse(response SitePublicConfirmatio
 
 		return nil
 
-	case *ProblemDetails:
+	case *SitePublicConfirmationsPerformBadRequest:
 		w.Header().Set("Content-Type", "application/problem+json")
 		w.WriteHeader(400)
+
+		e := new(jx.Encoder)
+		response.Encode(e)
+		if _, err := e.WriteTo(w); err != nil {
+			return errors.Wrap(err, "write")
+		}
+
+		return nil
+
+	case *SitePublicConfirmationsPerformGone:
+		w.Header().Set("Content-Type", "application/problem+json")
+		w.WriteHeader(410)
 
 		e := new(jx.Encoder)
 		response.Encode(e)

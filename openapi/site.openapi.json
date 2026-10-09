@@ -312,7 +312,7 @@
     "/confirmations/{token}": {
       "post": {
         "operationId": "SitePublicConfirmations_perform",
-        "description": "Perform a double opt-in confirmation (ADR 0013). The deliberate human act\nbehind the confirmation page's button. Repeating it is a no-op.",
+        "description": "Perform a double opt-in confirmation (ADR 0013). The deliberate human act\nbehind the confirmation page's button. Repeating it is a no-op. 410 means the\nlink has expired, so the page offers to sign up again; 400 is an invalid token.",
         "parameters": [
           {
             "name": "token",
@@ -329,6 +329,16 @@
           },
           "400": {
             "description": "RFC 7807 bad request response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "RFC 7807 gone response: the resource existed but is no longer available (an expired link)",
             "content": {
               "application/problem+json": {
                 "schema": {

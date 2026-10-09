@@ -268,7 +268,8 @@ type Handler interface {
 	// SitePublicConfirmationsPerform implements SitePublicConfirmations_perform operation.
 	//
 	// Perform a double opt-in confirmation (ADR 0013). The deliberate human act behind the confirmation
-	// page's button. Repeating it is a no-op.
+	// page's button. Repeating it is a no-op. 410 means the link has expired, so the page offers to sign
+	// up again; 400 is an invalid token.
 	//
 	// POST /confirmations/{token}
 	SitePublicConfirmationsPerform(ctx context.Context, params SitePublicConfirmationsPerformParams) (SitePublicConfirmationsPerformRes, error)

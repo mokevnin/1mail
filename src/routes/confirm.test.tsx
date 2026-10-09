@@ -40,6 +40,16 @@ test('shows the error state when the token is rejected', async () => {
   await expect.element(screen.getByText('Confirmation failed')).toBeInTheDocument()
 })
 
+test('a link that expires before the button is pressed offers sign-up-again', async () => {
+  mockClientRoutes([perform(() => jsonResponse({ status: 410, title: 'Gone' }, { status: 410 }))])
+  const { screen } = await renderWithRouter(<ConfirmSubscription token="tok-1" />)
+
+  await screen.getByRole('button', { name: 'Confirm subscription' }).click()
+
+  await expect.element(screen.getByText('Link expired')).toBeInTheDocument()
+  await expect.element(screen.getByText('Confirmation failed')).not.toBeInTheDocument()
+})
+
 test('an expired link offers sign-up-again instead of a button', async () => {
   const { screen } = await renderWithRouter(<ConfirmSubscription expired />)
 
