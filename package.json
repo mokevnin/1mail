@@ -68,6 +68,7 @@
     "@typespec/versioning": "^0.87.0",
     "@vitejs/plugin-react": "^6.1.2",
     "@vitest/browser-playwright": "^5.0.3",
+    "@vitest/coverage-v8": "^5.0.3",
     "i18next-cli": "^1.75.1",
     "knip": "^6.40.0",
     "npm-check-updates": "^23.1.0",

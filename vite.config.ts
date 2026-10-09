@@ -45,6 +45,12 @@ export default defineConfig({
     // .cache holds the Go module cache, whose dependencies ship their own *.test.* files.
     exclude: [...configDefaults.exclude, '.cache/**', '.claude/**'],
     setupFiles: ['./src/test/setup.tsx'],
+    coverage: {
+      provider: 'v8',
+      include: ['src/**', 'packages/analytics/src/**'],
+      exclude: ['**/generated/**', '**/*.test.*', 'src/test/**', 'src/main.tsx'],
+      reporter: ['text-summary', 'html'],
+    },
     browser: {
       enabled: true,
       provider: playwright(),
