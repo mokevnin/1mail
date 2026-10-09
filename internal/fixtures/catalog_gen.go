@@ -27,6 +27,12 @@ const (
 	AnchorTokenPrefix = "testprefix01"
 	// AnchorTokenSecret is from fixtures/api_tokens.
 	AnchorTokenSecret = "test-anchor-token-secret"
+	// AutomationGlobexID is from fixtures/automations.
+	AutomationGlobexID = 900
+	// AutomationGlobexName is from fixtures/automations.
+	AutomationGlobexName = "Globex automation"
+	// AutomationRunWelcomeCompletedID is from fixtures/automation_runs.
+	AutomationRunWelcomeCompletedID = 1000
 	// AutomationTagOnEngagementID is from fixtures/automations.
 	AutomationTagOnEngagementID = 104
 	// AutomationTagOnEngagementName is from fixtures/automations.
@@ -59,6 +65,8 @@ const (
 	BroadcastProSegmentID = 105
 	// BroadcastProSegmentName is from fixtures/broadcasts.
 	BroadcastProSegmentName = "Pro plan perks"
+	// BroadcastRecipientSentID is from fixtures/broadcast_recipients.
+	BroadcastRecipientSentID = 1000
 	// BroadcastScheduledID is from fixtures/broadcasts.
 	BroadcastScheduledID = 101
 	// BroadcastScheduledName is from fixtures/broadcasts.
@@ -71,6 +79,14 @@ const (
 	BroadcastSentID = 200
 	// BroadcastSentName is from fixtures/broadcasts.
 	BroadcastSentName = "Python crash course is here"
+	// ConfirmationGlobexDestination is from fixtures/confirmations.
+	ConfirmationGlobexDestination = "pat@globex.test"
+	// ConfirmationGlobexID is from fixtures/confirmations.
+	ConfirmationGlobexID = 900
+	// ConfirmationLiamDestination is from fixtures/confirmations.
+	ConfirmationLiamDestination = "liam.python@codebasics.dev"
+	// ConfirmationLiamID is from fixtures/confirmations.
+	ConfirmationLiamID = 1
 	// ContactAliceEmail is from fixtures/contacts.
 	ContactAliceEmail = "alice@example.com"
 	// ContactAliceID is from fixtures/contacts.
@@ -83,6 +99,10 @@ const (
 	ContactCarolEmail = "carol@example.com"
 	// ContactCarolID is from fixtures/contacts.
 	ContactCarolID = 3
+	// ContactGlobexEmail is from fixtures/contacts.
+	ContactGlobexEmail = "pat@globex.test"
+	// ContactGlobexID is from fixtures/contacts.
+	ContactGlobexID = 900
 	// ContactHoldDemoEmail is from fixtures/contacts.
 	ContactHoldDemoEmail = "hold.demo@codebasics.dev"
 	// ContactHoldDemoID is from fixtures/contacts.
@@ -117,6 +137,14 @@ const (
 	GlobexOwnerMembershipID = 2
 	// GlobexSlug is from fixtures/workspaces.
 	GlobexSlug = "globex"
+	// IntegrationGlobexID is from fixtures/integrations.
+	IntegrationGlobexID = 900
+	// IntegrationGlobexName is from fixtures/integrations.
+	IntegrationGlobexName = "Globex SMTP"
+	// InvitationGlobexEmail is from fixtures/invitations.
+	InvitationGlobexEmail = "invited@globex.test"
+	// InvitationGlobexID is from fixtures/invitations.
+	InvitationGlobexID = 900
 	// MemberMaryEmail is from fixtures/users.
 	MemberMaryEmail = "mary@acme.test"
 	// MemberMaryID is from fixtures/users.
@@ -125,6 +153,10 @@ const (
 	MemberMaryName = "Mary"
 	// MemberMaryPassword is from fixtures/users.
 	MemberMaryPassword = "mary-test-password"
+	// OutboundMessageGlobexDestination is from fixtures/outbound_messages.
+	OutboundMessageGlobexDestination = "pat@globex.test"
+	// OutboundMessageGlobexID is from fixtures/outbound_messages.
+	OutboundMessageGlobexID = 900
 	// OutsiderOscarEmail is from fixtures/users.
 	OutsiderOscarEmail = "oscar@nowhere.test"
 	// OutsiderOscarID is from fixtures/users.
@@ -181,6 +213,10 @@ const (
 	SuppressionGhostBounceDestination = "ghost@codebasics.dev"
 	// SuppressionGhostBounceID is from fixtures/suppressions.
 	SuppressionGhostBounceID = 104
+	// SuppressionGlobexDestination is from fixtures/suppressions.
+	SuppressionGlobexDestination = "bounce@globex.test"
+	// SuppressionGlobexID is from fixtures/suppressions.
+	SuppressionGlobexID = 900
 	// TagGlobexID is from fixtures/tags.
 	TagGlobexID = 900
 	// TagGlobexName is from fixtures/tags.
@@ -197,6 +233,18 @@ const (
 	TemplateWelcomeID = 1
 	// TemplateWelcomeName is from fixtures/email_templates.
 	TemplateWelcomeName = "Welcome"
+	// TokenGlobexID is from fixtures/api_tokens.
+	TokenGlobexID = 900
+	// TokenGlobexName is from fixtures/api_tokens.
+	TokenGlobexName = "Globex token"
+	// TokenGlobexPrefix is from fixtures/api_tokens.
+	TokenGlobexPrefix = "globextok001"
+	// UnsubscribeGlobexDestination is from fixtures/unsubscribes.
+	UnsubscribeGlobexDestination = "pat@globex.test"
+	// UnsubscribeGlobexID is from fixtures/unsubscribes.
+	UnsubscribeGlobexID = 900
+	// VisitorGlobexID is from fixtures/visitors.
+	VisitorGlobexID = 900
 	// WebhookCodebasicsID is from fixtures/webhook_endpoints.
 	WebhookCodebasicsID = 100
 	// WebhookCodebasicsURL is from fixtures/webhook_endpoints.

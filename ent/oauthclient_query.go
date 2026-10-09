@@ -301,12 +301,12 @@ func (_q *OAuthClientQuery) WithCodes(opts ...func(*OAuthCodeQuery)) *OAuthClien
 // Example:
 //
 //	var v []struct {
-//		ClientID string `json:"client_id,omitempty"`
+//		CreatedAt time.Time `json:"created_at,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.OAuthClient.Query().
-//		GroupBy(oauthclient.FieldClientID).
+//		GroupBy(oauthclient.FieldCreatedAt).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
 func (_q *OAuthClientQuery) GroupBy(field string, fields ...string) *OAuthClientGroupBy {
@@ -324,11 +324,11 @@ func (_q *OAuthClientQuery) GroupBy(field string, fields ...string) *OAuthClient
 // Example:
 //
 //	var v []struct {
-//		ClientID string `json:"client_id,omitempty"`
+//		CreatedAt time.Time `json:"created_at,omitempty"`
 //	}
 //
 //	client.OAuthClient.Query().
-//		Select(oauthclient.FieldClientID).
+//		Select(oauthclient.FieldCreatedAt).
 //		Scan(ctx, &v)
 func (_q *OAuthClientQuery) Select(fields ...string) *OAuthClientSelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)

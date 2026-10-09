@@ -28,7 +28,7 @@ func TestCheckEligibleByDefault(t *testing.T) {
 	env := testhelper.Setup(t)
 	ctx := context.Background()
 
-	d, err := eligibility.Check(ctx, env.DB, fixtures.AcmeID, eligibility.ChannelEmail,
+	d, err := eligibility.Check(ctx, env.DB.Scoped(fixtures.AcmeID), eligibility.ChannelEmail,
 		"fresh@example.com", eligibility.SourceBroadcasts)
 	require.NoError(t, err)
 	assert.True(t, d.Eligible)
@@ -44,7 +44,7 @@ func TestCheckSuppressed(t *testing.T) {
 		SetReason(suppression.ReasonComplaint).Save(ctx)
 	require.NoError(t, err)
 
-	d, err := eligibility.Check(ctx, env.DB, fixtures.AcmeID, eligibility.ChannelEmail,
+	d, err := eligibility.Check(ctx, env.DB.Scoped(fixtures.AcmeID), eligibility.ChannelEmail,
 		"blocked@example.com", eligibility.SourceBroadcasts)
 	require.NoError(t, err)
 	assert.False(t, d.Eligible)
@@ -63,7 +63,7 @@ func TestCheckTransactionalSkipsUnsubscribeButNotSuppression(t *testing.T) {
 		SetSendingSource(eligibility.SourceEverything).Save(ctx)
 	require.NoError(t, err)
 
-	d, err := eligibility.Check(ctx, env.DB, fixtures.AcmeID, eligibility.ChannelEmail,
+	d, err := eligibility.Check(ctx, env.DB.Scoped(fixtures.AcmeID), eligibility.ChannelEmail,
 		"txn@example.com", "")
 	require.NoError(t, err)
 	assert.True(t, d.Eligible, "transactional skips unsubscribe layers")
@@ -73,7 +73,7 @@ func TestCheckTransactionalSkipsUnsubscribeButNotSuppression(t *testing.T) {
 		SetChannel(suppression.ChannelEmail).SetDestination("txn@example.com").
 		SetReason(suppression.ReasonBounce).Save(ctx)
 	require.NoError(t, err)
-	d, err = eligibility.Check(ctx, env.DB, fixtures.AcmeID, eligibility.ChannelEmail,
+	d, err = eligibility.Check(ctx, env.DB.Scoped(fixtures.AcmeID), eligibility.ChannelEmail,
 		"txn@example.com", "")
 	require.NoError(t, err)
 	assert.False(t, d.Eligible)
@@ -88,7 +88,7 @@ func TestCheckUnsubscribedEverythingVsSource(t *testing.T) {
 		SetChannel(unsubscribe.ChannelEmail).SetDestination("evt@example.com").
 		SetSendingSource(eligibility.SourceEverything).Save(ctx)
 	require.NoError(t, err)
-	d, err := eligibility.Check(ctx, env.DB, fixtures.AcmeID, eligibility.ChannelEmail,
+	d, err := eligibility.Check(ctx, env.DB.Scoped(fixtures.AcmeID), eligibility.ChannelEmail,
 		"evt@example.com", eligibility.SourceBroadcasts)
 	require.NoError(t, err)
 	assert.Equal(t, eligibility.ReasonUnsubscribedEverything, d.Reason)
@@ -99,11 +99,11 @@ func TestCheckUnsubscribedEverythingVsSource(t *testing.T) {
 		SetSendingSource(src).Save(ctx)
 	require.NoError(t, err)
 	// Ineligible for that source...
-	d, err = eligibility.Check(ctx, env.DB, fixtures.AcmeID, eligibility.ChannelEmail, "src@example.com", src)
+	d, err = eligibility.Check(ctx, env.DB.Scoped(fixtures.AcmeID), eligibility.ChannelEmail, "src@example.com", src)
 	require.NoError(t, err)
 	assert.Equal(t, eligibility.ReasonUnsubscribedSource, d.Reason)
 	// ...but eligible for a different source.
-	d, err = eligibility.Check(ctx, env.DB, fixtures.AcmeID, eligibility.ChannelEmail,
+	d, err = eligibility.Check(ctx, env.DB.Scoped(fixtures.AcmeID), eligibility.ChannelEmail,
 		"src@example.com", eligibility.SourceBroadcasts)
 	require.NoError(t, err)
 	assert.True(t, d.Eligible)
@@ -116,7 +116,7 @@ func TestConfirmationGateNoopWhenOff(t *testing.T) {
 	env := testhelper.Setup(t)
 	ctx := context.Background()
 
-	d, err := eligibility.Check(ctx, env.DB, fixtures.AcmeID, eligibility.ChannelEmail,
+	d, err := eligibility.Check(ctx, env.DB.Scoped(fixtures.AcmeID), eligibility.ChannelEmail,
 		"unconfirmed@example.com", eligibility.SourceBroadcasts)
 	require.NoError(t, err)
 	assert.True(t, d.Eligible, "no confirmation required when the gate is off")
@@ -151,7 +151,7 @@ func TestConfirmationGateWhenOn(t *testing.T) {
 	}
 
 	// Unconfirmed: blocked.
-	d, err := eligibility.Check(ctx, env.DB, fixtures.AcmeID, eligibility.ChannelEmail,
+	d, err := eligibility.Check(ctx, env.DB.Scoped(fixtures.AcmeID), eligibility.ChannelEmail,
 		"gate@example.com", eligibility.SourceBroadcasts)
 	require.NoError(t, err)
 	assert.False(t, d.Eligible)
@@ -164,7 +164,7 @@ func TestConfirmationGateWhenOn(t *testing.T) {
 		SetProvenance(confirmation.ProvenanceDoubleOptIn).Save(ctx)
 	require.NoError(t, err)
 
-	d, err = eligibility.Check(ctx, env.DB, fixtures.AcmeID, eligibility.ChannelEmail,
+	d, err = eligibility.Check(ctx, env.DB.Scoped(fixtures.AcmeID), eligibility.ChannelEmail,
 		"gate@example.com", eligibility.SourceBroadcasts)
 	require.NoError(t, err)
 	assert.True(t, d.Eligible)
@@ -187,7 +187,7 @@ func TestConfirmationDoesNotOverrideNegatives(t *testing.T) {
 		SetReason(suppression.ReasonComplaint).Save(ctx)
 	require.NoError(t, err)
 
-	d, err := eligibility.Check(ctx, env.DB, fixtures.AcmeID, eligibility.ChannelEmail,
+	d, err := eligibility.Check(ctx, env.DB.Scoped(fixtures.AcmeID), eligibility.ChannelEmail,
 		"both@example.com", eligibility.SourceBroadcasts)
 	require.NoError(t, err)
 	assert.False(t, d.Eligible)
@@ -225,7 +225,7 @@ func TestCheckFoldsCase(t *testing.T) {
 		SetReason(suppression.ReasonBounce).Save(ctx)
 	require.NoError(t, err)
 
-	d, err := eligibility.Check(ctx, env.DB, fixtures.AcmeID, eligibility.ChannelEmail,
+	d, err := eligibility.Check(ctx, env.DB.Scoped(fixtures.AcmeID), eligibility.ChannelEmail,
 		"  Mixed@Example.com  ", eligibility.SourceBroadcasts)
 	require.NoError(t, err)
 	assert.False(t, d.Eligible, "input is normalized before lookup")
@@ -287,7 +287,7 @@ func TestPredicateAndCheckAgree(t *testing.T) {
 		require.NoError(t, err)
 		for _, source := range []string{"", eligibility.SourceBroadcasts, auto} {
 			for _, f := range cases {
-				d, err := eligibility.Check(ctx, env.DB, fixtures.AcmeID, eligibility.ChannelEmail, f.email, source)
+				d, err := eligibility.Check(ctx, env.DB.Scoped(fixtures.AcmeID), eligibility.ChannelEmail, f.email, source)
 				require.NoError(t, err)
 				inAudience, err := env.DB.Contact.Query().
 					Where(contact.ID(ids[f.name]), eligibility.Predicate(eligibility.ChannelEmail, source)).
@@ -309,7 +309,7 @@ func TestCheckWorksWithoutAContact(t *testing.T) {
 		SetChannel(suppression.ChannelEmail).SetDestination("nocontact@example.com").
 		SetReason(suppression.ReasonComplaint).Save(ctx)
 	require.NoError(t, err)
-	d, err := eligibility.Check(ctx, env.DB, fixtures.AcmeID, eligibility.ChannelEmail, "nocontact@example.com", "")
+	d, err := eligibility.Check(ctx, env.DB.Scoped(fixtures.AcmeID), eligibility.ChannelEmail, "nocontact@example.com", "")
 	require.NoError(t, err)
 	assert.Equal(t, eligibility.ReasonSuppressed, d.Reason)
 }

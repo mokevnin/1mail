@@ -31,17 +31,9 @@ func (_u *MembershipUpdate) Where(ps ...predicate.Membership) *MembershipUpdate 
 	return _u
 }
 
-// SetUserID sets the "user_id" field.
-func (_u *MembershipUpdate) SetUserID(v int64) *MembershipUpdate {
-	_u.mutation.SetUserID(v)
-	return _u
-}
-
-// SetNillableUserID sets the "user_id" field if the given value is not nil.
-func (_u *MembershipUpdate) SetNillableUserID(v *int64) *MembershipUpdate {
-	if v != nil {
-		_u.SetUserID(*v)
-	}
+// SetUpdatedAt sets the "updated_at" field.
+func (_u *MembershipUpdate) SetUpdatedAt(v time.Time) *MembershipUpdate {
+	_u.mutation.SetUpdatedAt(v)
 	return _u
 }
 
@@ -55,6 +47,20 @@ func (_u *MembershipUpdate) SetWorkspaceID(v int64) *MembershipUpdate {
 func (_u *MembershipUpdate) SetNillableWorkspaceID(v *int64) *MembershipUpdate {
 	if v != nil {
 		_u.SetWorkspaceID(*v)
+	}
+	return _u
+}
+
+// SetUserID sets the "user_id" field.
+func (_u *MembershipUpdate) SetUserID(v int64) *MembershipUpdate {
+	_u.mutation.SetUserID(v)
+	return _u
+}
+
+// SetNillableUserID sets the "user_id" field if the given value is not nil.
+func (_u *MembershipUpdate) SetNillableUserID(v *int64) *MembershipUpdate {
+	if v != nil {
+		_u.SetUserID(*v)
 	}
 	return _u
 }
@@ -73,10 +79,9 @@ func (_u *MembershipUpdate) SetNillableRole(v *membership.Role) *MembershipUpdat
 	return _u
 }
 
-// SetUpdatedAt sets the "updated_at" field.
-func (_u *MembershipUpdate) SetUpdatedAt(v time.Time) *MembershipUpdate {
-	_u.mutation.SetUpdatedAt(v)
-	return _u
+// SetWorkspace sets the "workspace" edge to the Workspace entity.
+func (_u *MembershipUpdate) SetWorkspace(v *Workspace) *MembershipUpdate {
+	return _u.SetWorkspaceID(v.ID)
 }
 
 // SetUser sets the "user" edge to the User entity.
@@ -84,25 +89,20 @@ func (_u *MembershipUpdate) SetUser(v *User) *MembershipUpdate {
 	return _u.SetUserID(v.ID)
 }
 
-// SetWorkspace sets the "workspace" edge to the Workspace entity.
-func (_u *MembershipUpdate) SetWorkspace(v *Workspace) *MembershipUpdate {
-	return _u.SetWorkspaceID(v.ID)
-}
-
 // Mutation returns the MembershipMutation object of the builder.
 func (_u *MembershipUpdate) Mutation() *MembershipMutation {
 	return _u.mutation
 }
 
-// ClearUser clears the "user" edge to the User entity.
-func (_u *MembershipUpdate) ClearUser() *MembershipUpdate {
-	_u.mutation.ClearUser()
-	return _u
-}
-
 // ClearWorkspace clears the "workspace" edge to the Workspace entity.
 func (_u *MembershipUpdate) ClearWorkspace() *MembershipUpdate {
 	_u.mutation.ClearWorkspace()
+	return _u
+}
+
+// ClearUser clears the "user" edge to the User entity.
+func (_u *MembershipUpdate) ClearUser() *MembershipUpdate {
+	_u.mutation.ClearUser()
 	return _u
 }
 
@@ -149,11 +149,11 @@ func (_u *MembershipUpdate) check() error {
 			return &ValidationError{Name: "role", err: fmt.Errorf(`ent: validator failed for field "Membership.role": %w`, err)}
 		}
 	}
-	if _u.mutation.UserCleared() && len(_u.mutation.UserIDs()) > 0 {
-		return errors.New(`ent: clearing a required unique edge "Membership.user"`)
-	}
 	if _u.mutation.WorkspaceCleared() && len(_u.mutation.WorkspaceIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "Membership.workspace"`)
+	}
+	if _u.mutation.UserCleared() && len(_u.mutation.UserIDs()) > 0 {
+		return errors.New(`ent: clearing a required unique edge "Membership.user"`)
 	}
 	return nil
 }
@@ -176,40 +176,11 @@ func (_u *MembershipUpdate) sqlSave(ctx context.Context) (_node int, err error) 
 			}
 		}
 	}
-	if value, ok := _u.mutation.Role(); ok {
-		_spec.SetField(membership.FieldRole, field.TypeEnum, value)
-	}
 	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(membership.FieldUpdatedAt, field.TypeTime, value)
 	}
-	if _u.mutation.UserCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: true,
-			Table:   membership.UserTable,
-			Columns: []string{membership.UserColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt64),
-			},
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := _u.mutation.UserIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: true,
-			Table:   membership.UserTable,
-			Columns: []string{membership.UserColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt64),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	if value, ok := _u.mutation.Role(); ok {
+		_spec.SetField(membership.FieldRole, field.TypeEnum, value)
 	}
 	if _u.mutation.WorkspaceCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -240,6 +211,35 @@ func (_u *MembershipUpdate) sqlSave(ctx context.Context) (_node int, err error) 
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	if _u.mutation.UserCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   membership.UserTable,
+			Columns: []string{membership.UserColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.UserIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   membership.UserTable,
+			Columns: []string{membership.UserColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	_spec.AddModifiers(_u.modifiers...)
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -262,17 +262,9 @@ type MembershipUpdateOne struct {
 	modifiers []func(*sql.UpdateBuilder)
 }
 
-// SetUserID sets the "user_id" field.
-func (_u *MembershipUpdateOne) SetUserID(v int64) *MembershipUpdateOne {
-	_u.mutation.SetUserID(v)
-	return _u
-}
-
-// SetNillableUserID sets the "user_id" field if the given value is not nil.
-func (_u *MembershipUpdateOne) SetNillableUserID(v *int64) *MembershipUpdateOne {
-	if v != nil {
-		_u.SetUserID(*v)
-	}
+// SetUpdatedAt sets the "updated_at" field.
+func (_u *MembershipUpdateOne) SetUpdatedAt(v time.Time) *MembershipUpdateOne {
+	_u.mutation.SetUpdatedAt(v)
 	return _u
 }
 
@@ -286,6 +278,20 @@ func (_u *MembershipUpdateOne) SetWorkspaceID(v int64) *MembershipUpdateOne {
 func (_u *MembershipUpdateOne) SetNillableWorkspaceID(v *int64) *MembershipUpdateOne {
 	if v != nil {
 		_u.SetWorkspaceID(*v)
+	}
+	return _u
+}
+
+// SetUserID sets the "user_id" field.
+func (_u *MembershipUpdateOne) SetUserID(v int64) *MembershipUpdateOne {
+	_u.mutation.SetUserID(v)
+	return _u
+}
+
+// SetNillableUserID sets the "user_id" field if the given value is not nil.
+func (_u *MembershipUpdateOne) SetNillableUserID(v *int64) *MembershipUpdateOne {
+	if v != nil {
+		_u.SetUserID(*v)
 	}
 	return _u
 }
@@ -304,10 +310,9 @@ func (_u *MembershipUpdateOne) SetNillableRole(v *membership.Role) *MembershipUp
 	return _u
 }
 
-// SetUpdatedAt sets the "updated_at" field.
-func (_u *MembershipUpdateOne) SetUpdatedAt(v time.Time) *MembershipUpdateOne {
-	_u.mutation.SetUpdatedAt(v)
-	return _u
+// SetWorkspace sets the "workspace" edge to the Workspace entity.
+func (_u *MembershipUpdateOne) SetWorkspace(v *Workspace) *MembershipUpdateOne {
+	return _u.SetWorkspaceID(v.ID)
 }
 
 // SetUser sets the "user" edge to the User entity.
@@ -315,25 +320,20 @@ func (_u *MembershipUpdateOne) SetUser(v *User) *MembershipUpdateOne {
 	return _u.SetUserID(v.ID)
 }
 
-// SetWorkspace sets the "workspace" edge to the Workspace entity.
-func (_u *MembershipUpdateOne) SetWorkspace(v *Workspace) *MembershipUpdateOne {
-	return _u.SetWorkspaceID(v.ID)
-}
-
 // Mutation returns the MembershipMutation object of the builder.
 func (_u *MembershipUpdateOne) Mutation() *MembershipMutation {
 	return _u.mutation
 }
 
-// ClearUser clears the "user" edge to the User entity.
-func (_u *MembershipUpdateOne) ClearUser() *MembershipUpdateOne {
-	_u.mutation.ClearUser()
-	return _u
-}
-
 // ClearWorkspace clears the "workspace" edge to the Workspace entity.
 func (_u *MembershipUpdateOne) ClearWorkspace() *MembershipUpdateOne {
 	_u.mutation.ClearWorkspace()
+	return _u
+}
+
+// ClearUser clears the "user" edge to the User entity.
+func (_u *MembershipUpdateOne) ClearUser() *MembershipUpdateOne {
+	_u.mutation.ClearUser()
 	return _u
 }
 
@@ -393,11 +393,11 @@ func (_u *MembershipUpdateOne) check() error {
 			return &ValidationError{Name: "role", err: fmt.Errorf(`ent: validator failed for field "Membership.role": %w`, err)}
 		}
 	}
-	if _u.mutation.UserCleared() && len(_u.mutation.UserIDs()) > 0 {
-		return errors.New(`ent: clearing a required unique edge "Membership.user"`)
-	}
 	if _u.mutation.WorkspaceCleared() && len(_u.mutation.WorkspaceIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "Membership.workspace"`)
+	}
+	if _u.mutation.UserCleared() && len(_u.mutation.UserIDs()) > 0 {
+		return errors.New(`ent: clearing a required unique edge "Membership.user"`)
 	}
 	return nil
 }
@@ -437,40 +437,11 @@ func (_u *MembershipUpdateOne) sqlSave(ctx context.Context) (_node *Membership, 
 			}
 		}
 	}
-	if value, ok := _u.mutation.Role(); ok {
-		_spec.SetField(membership.FieldRole, field.TypeEnum, value)
-	}
 	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(membership.FieldUpdatedAt, field.TypeTime, value)
 	}
-	if _u.mutation.UserCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: true,
-			Table:   membership.UserTable,
-			Columns: []string{membership.UserColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt64),
-			},
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := _u.mutation.UserIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: true,
-			Table:   membership.UserTable,
-			Columns: []string{membership.UserColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt64),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	if value, ok := _u.mutation.Role(); ok {
+		_spec.SetField(membership.FieldRole, field.TypeEnum, value)
 	}
 	if _u.mutation.WorkspaceCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -494,6 +465,35 @@ func (_u *MembershipUpdateOne) sqlSave(ctx context.Context) (_node *Membership, 
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(workspace.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.UserCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   membership.UserTable,
+			Columns: []string{membership.UserColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.UserIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   membership.UserTable,
+			Columns: []string{membership.UserColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {

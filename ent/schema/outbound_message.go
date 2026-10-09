@@ -6,7 +6,6 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/entsql"
 	"entgo.io/ent/schema"
-	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
 	"entgo.io/ent/schema/index"
 )
@@ -29,12 +28,15 @@ func (OutboundMessage) Annotations() []schema.Annotation {
 	}
 }
 
+func (OutboundMessage) Mixin() []ent.Mixin {
+	return []ent.Mixin{TimeMixin{}, WorkspaceMixin{Ref: "outbound_messages"}}
+}
+
 func (OutboundMessage) Fields() []ent.Field {
 	return []ent.Field{
 		field.Int64("id").
 			StorageKey("id").
 			Immutable(),
-		field.Int64("workspace_id"),
 		// Which surface asked for the send.
 		field.Enum("kind").
 			Values("broadcast", "automation", "transactional").
@@ -55,7 +57,8 @@ func (OutboundMessage) Fields() []ent.Field {
 		// destination may have none). Display and Event attribution only.
 		field.Int64("contact_id").
 			Optional().
-			Nillable(),
+			Nillable().
+			Annotations(ScopedRef{Entity: "Contact"}),
 		// The unsubscribe Sending source; nil for transactional (it carries none).
 		field.String("sending_source").
 			Optional().
@@ -87,29 +90,18 @@ func (OutboundMessage) Fields() []ent.Field {
 			Optional().
 			Nillable(),
 		// Surface provenance, plain id snapshots.
-		field.Int64("broadcast_id").Optional().Nillable(),
-		field.Int64("broadcast_recipient_id").Optional().Nillable(),
-		field.Int64("automation_id").Optional().Nillable(),
-		field.Int64("automation_run_id").Optional().Nillable(),
+		field.Int64("broadcast_id").Optional().Nillable().
+			Annotations(ScopedRef{Entity: "Broadcast"}),
+		field.Int64("broadcast_recipient_id").Optional().Nillable().
+			Annotations(ScopedRef{Entity: "BroadcastRecipient"}),
+		field.Int64("automation_id").Optional().Nillable().
+			Annotations(ScopedRef{Entity: "Automation"}),
+		field.Int64("automation_run_id").Optional().Nillable().
+			Annotations(ScopedRef{Entity: "AutomationRun"}),
 		field.Int("automation_step").Optional().Nillable(),
 		// The Template a transactional send referenced (ADR 0005).
-		field.Int64("template_id").Optional().Nillable(),
-		field.Time("created_at").
-			Default(time.Now).
-			Immutable(),
-		field.Time("updated_at").
-			Default(time.Now).
-			UpdateDefault(time.Now),
-	}
-}
-
-func (OutboundMessage) Edges() []ent.Edge {
-	return []ent.Edge{
-		edge.From("workspace", Workspace.Type).
-			Ref("outbound_messages").
-			Field("workspace_id").
-			Required().
-			Unique(),
+		field.Int64("template_id").Optional().Nillable().
+			Annotations(ScopedRef{Entity: "EmailTemplate"}),
 	}
 }
 

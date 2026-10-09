@@ -30,6 +30,26 @@ func (_u *SuppressionUpdate) Where(ps ...predicate.Suppression) *SuppressionUpda
 	return _u
 }
 
+// SetUpdatedAt sets the "updated_at" field.
+func (_u *SuppressionUpdate) SetUpdatedAt(v time.Time) *SuppressionUpdate {
+	_u.mutation.SetUpdatedAt(v)
+	return _u
+}
+
+// SetWorkspaceID sets the "workspace_id" field.
+func (_u *SuppressionUpdate) SetWorkspaceID(v int64) *SuppressionUpdate {
+	_u.mutation.SetWorkspaceID(v)
+	return _u
+}
+
+// SetNillableWorkspaceID sets the "workspace_id" field if the given value is not nil.
+func (_u *SuppressionUpdate) SetNillableWorkspaceID(v *int64) *SuppressionUpdate {
+	if v != nil {
+		_u.SetWorkspaceID(*v)
+	}
+	return _u
+}
+
 // SetChannel sets the "channel" field.
 func (_u *SuppressionUpdate) SetChannel(v suppression.Channel) *SuppressionUpdate {
 	_u.mutation.SetChannel(v)
@@ -96,26 +116,6 @@ func (_u *SuppressionUpdate) AddContactID(v int64) *SuppressionUpdate {
 // ClearContactID clears the value of the "contact_id" field.
 func (_u *SuppressionUpdate) ClearContactID() *SuppressionUpdate {
 	_u.mutation.ClearContactID()
-	return _u
-}
-
-// SetWorkspaceID sets the "workspace_id" field.
-func (_u *SuppressionUpdate) SetWorkspaceID(v int64) *SuppressionUpdate {
-	_u.mutation.SetWorkspaceID(v)
-	return _u
-}
-
-// SetNillableWorkspaceID sets the "workspace_id" field if the given value is not nil.
-func (_u *SuppressionUpdate) SetNillableWorkspaceID(v *int64) *SuppressionUpdate {
-	if v != nil {
-		_u.SetWorkspaceID(*v)
-	}
-	return _u
-}
-
-// SetUpdatedAt sets the "updated_at" field.
-func (_u *SuppressionUpdate) SetUpdatedAt(v time.Time) *SuppressionUpdate {
-	_u.mutation.SetUpdatedAt(v)
 	return _u
 }
 
@@ -212,6 +212,9 @@ func (_u *SuppressionUpdate) sqlSave(ctx context.Context) (_node int, err error)
 			}
 		}
 	}
+	if value, ok := _u.mutation.UpdatedAt(); ok {
+		_spec.SetField(suppression.FieldUpdatedAt, field.TypeTime, value)
+	}
 	if value, ok := _u.mutation.Channel(); ok {
 		_spec.SetField(suppression.FieldChannel, field.TypeEnum, value)
 	}
@@ -229,9 +232,6 @@ func (_u *SuppressionUpdate) sqlSave(ctx context.Context) (_node int, err error)
 	}
 	if _u.mutation.ContactIDCleared() {
 		_spec.ClearField(suppression.FieldContactID, field.TypeInt64)
-	}
-	if value, ok := _u.mutation.UpdatedAt(); ok {
-		_spec.SetField(suppression.FieldUpdatedAt, field.TypeTime, value)
 	}
 	if _u.mutation.WorkspaceCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -282,6 +282,26 @@ type SuppressionUpdateOne struct {
 	hooks     []Hook
 	mutation  *SuppressionMutation
 	modifiers []func(*sql.UpdateBuilder)
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (_u *SuppressionUpdateOne) SetUpdatedAt(v time.Time) *SuppressionUpdateOne {
+	_u.mutation.SetUpdatedAt(v)
+	return _u
+}
+
+// SetWorkspaceID sets the "workspace_id" field.
+func (_u *SuppressionUpdateOne) SetWorkspaceID(v int64) *SuppressionUpdateOne {
+	_u.mutation.SetWorkspaceID(v)
+	return _u
+}
+
+// SetNillableWorkspaceID sets the "workspace_id" field if the given value is not nil.
+func (_u *SuppressionUpdateOne) SetNillableWorkspaceID(v *int64) *SuppressionUpdateOne {
+	if v != nil {
+		_u.SetWorkspaceID(*v)
+	}
+	return _u
 }
 
 // SetChannel sets the "channel" field.
@@ -350,26 +370,6 @@ func (_u *SuppressionUpdateOne) AddContactID(v int64) *SuppressionUpdateOne {
 // ClearContactID clears the value of the "contact_id" field.
 func (_u *SuppressionUpdateOne) ClearContactID() *SuppressionUpdateOne {
 	_u.mutation.ClearContactID()
-	return _u
-}
-
-// SetWorkspaceID sets the "workspace_id" field.
-func (_u *SuppressionUpdateOne) SetWorkspaceID(v int64) *SuppressionUpdateOne {
-	_u.mutation.SetWorkspaceID(v)
-	return _u
-}
-
-// SetNillableWorkspaceID sets the "workspace_id" field if the given value is not nil.
-func (_u *SuppressionUpdateOne) SetNillableWorkspaceID(v *int64) *SuppressionUpdateOne {
-	if v != nil {
-		_u.SetWorkspaceID(*v)
-	}
-	return _u
-}
-
-// SetUpdatedAt sets the "updated_at" field.
-func (_u *SuppressionUpdateOne) SetUpdatedAt(v time.Time) *SuppressionUpdateOne {
-	_u.mutation.SetUpdatedAt(v)
 	return _u
 }
 
@@ -496,6 +496,9 @@ func (_u *SuppressionUpdateOne) sqlSave(ctx context.Context) (_node *Suppression
 			}
 		}
 	}
+	if value, ok := _u.mutation.UpdatedAt(); ok {
+		_spec.SetField(suppression.FieldUpdatedAt, field.TypeTime, value)
+	}
 	if value, ok := _u.mutation.Channel(); ok {
 		_spec.SetField(suppression.FieldChannel, field.TypeEnum, value)
 	}
@@ -513,9 +516,6 @@ func (_u *SuppressionUpdateOne) sqlSave(ctx context.Context) (_node *Suppression
 	}
 	if _u.mutation.ContactIDCleared() {
 		_spec.ClearField(suppression.FieldContactID, field.TypeInt64)
-	}
-	if value, ok := _u.mutation.UpdatedAt(); ok {
-		_spec.SetField(suppression.FieldUpdatedAt, field.TypeTime, value)
 	}
 	if _u.mutation.WorkspaceCleared() {
 		edge := &sqlgraph.EdgeSpec{

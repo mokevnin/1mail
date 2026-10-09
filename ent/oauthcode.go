@@ -19,6 +19,10 @@ type OAuthCode struct {
 	config `json:"-"`
 	// ID of the ent.
 	ID int64 `json:"id,omitempty"`
+	// CreatedAt holds the value of the "created_at" field.
+	CreatedAt time.Time `json:"created_at,omitempty"`
+	// UpdatedAt holds the value of the "updated_at" field.
+	UpdatedAt time.Time `json:"updated_at,omitempty"`
 	// CodeHash holds the value of the "code_hash" field.
 	CodeHash string `json:"-"`
 	// RedirectURI holds the value of the "redirect_uri" field.
@@ -31,8 +35,6 @@ type OAuthCode struct {
 	ExpiresAt time.Time `json:"expires_at,omitempty"`
 	// UsedAt holds the value of the "used_at" field.
 	UsedAt *time.Time `json:"used_at,omitempty"`
-	// CreatedAt holds the value of the "created_at" field.
-	CreatedAt time.Time `json:"created_at,omitempty"`
 	// ClientID holds the value of the "client_id" field.
 	ClientID int64 `json:"client_id,omitempty"`
 	// WorkspaceID holds the value of the "workspace_id" field.
@@ -74,7 +76,7 @@ func (*OAuthCode) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullInt64)
 		case oauthcode.FieldCodeHash, oauthcode.FieldRedirectURI, oauthcode.FieldCodeChallenge:
 			values[i] = new(sql.NullString)
-		case oauthcode.FieldExpiresAt, oauthcode.FieldUsedAt, oauthcode.FieldCreatedAt:
+		case oauthcode.FieldCreatedAt, oauthcode.FieldUpdatedAt, oauthcode.FieldExpiresAt, oauthcode.FieldUsedAt:
 			values[i] = new(sql.NullTime)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -97,6 +99,18 @@ func (_m *OAuthCode) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field id", value)
 			}
 			_m.ID = int64(value.Int64)
+		case oauthcode.FieldCreatedAt:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field created_at", values[i])
+			} else if value.Valid {
+				_m.CreatedAt = value.Time
+			}
+		case oauthcode.FieldUpdatedAt:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field updated_at", values[i])
+			} else if value.Valid {
+				_m.UpdatedAt = value.Time
+			}
 		case oauthcode.FieldCodeHash:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field code_hash", values[i])
@@ -135,12 +149,6 @@ func (_m *OAuthCode) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				_m.UsedAt = new(time.Time)
 				*_m.UsedAt = value.Time
-			}
-		case oauthcode.FieldCreatedAt:
-			if value, ok := values[i].(*sql.NullTime); !ok {
-				return fmt.Errorf("unexpected type %T for field created_at", values[i])
-			} else if value.Valid {
-				_m.CreatedAt = value.Time
 			}
 		case oauthcode.FieldClientID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
@@ -195,6 +203,12 @@ func (_m *OAuthCode) String() string {
 	var builder strings.Builder
 	builder.WriteString("OAuthCode(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
+	builder.WriteString("created_at=")
+	builder.WriteString(_m.CreatedAt.Format(time.ANSIC))
+	builder.WriteString(", ")
+	builder.WriteString("updated_at=")
+	builder.WriteString(_m.UpdatedAt.Format(time.ANSIC))
+	builder.WriteString(", ")
 	builder.WriteString("code_hash=<sensitive>")
 	builder.WriteString(", ")
 	builder.WriteString("redirect_uri=")
@@ -213,9 +227,6 @@ func (_m *OAuthCode) String() string {
 		builder.WriteString("used_at=")
 		builder.WriteString(v.Format(time.ANSIC))
 	}
-	builder.WriteString(", ")
-	builder.WriteString("created_at=")
-	builder.WriteString(_m.CreatedAt.Format(time.ANSIC))
 	builder.WriteString(", ")
 	builder.WriteString("client_id=")
 	builder.WriteString(fmt.Sprintf("%v", _m.ClientID))

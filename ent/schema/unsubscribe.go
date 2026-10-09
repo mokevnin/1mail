@@ -1,12 +1,9 @@
 package schema
 
 import (
-	"time"
-
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/entsql"
 	"entgo.io/ent/schema"
-	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
 	"entgo.io/ent/schema/index"
 )
@@ -34,6 +31,10 @@ func (Unsubscribe) Annotations() []schema.Annotation {
 	}
 }
 
+func (Unsubscribe) Mixin() []ent.Mixin {
+	return []ent.Mixin{TimeMixin{}, WorkspaceMixin{Ref: "unsubscribes"}}
+}
+
 func (Unsubscribe) Fields() []ent.Field {
 	return []ent.Field{
 		field.Int64("id").
@@ -54,24 +55,8 @@ func (Unsubscribe) Fields() []ent.Field {
 		// the opt-out is keyed by destination and outlives the contact. Nullable.
 		field.Int64("contact_id").
 			Optional().
-			Nillable(),
-		field.Int64("workspace_id"),
-		field.Time("created_at").
-			Default(time.Now).
-			Immutable(),
-		field.Time("updated_at").
-			Default(time.Now).
-			UpdateDefault(time.Now),
-	}
-}
-
-func (Unsubscribe) Edges() []ent.Edge {
-	return []ent.Edge{
-		edge.From("workspace", Workspace.Type).
-			Ref("unsubscribes").
-			Field("workspace_id").
-			Required().
-			Unique(),
+			Nillable().
+			Annotations(ScopedRef{Entity: "Contact"}),
 	}
 }
 

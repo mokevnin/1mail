@@ -17,7 +17,7 @@ import (
 
 func TestCheckEmptyDestinationIsEligible(t *testing.T) {
 	env := testhelper.Setup(t)
-	d, err := eligibility.Check(context.Background(), env.DB, fixtures.AcmeID, eligibility.ChannelEmail,
+	d, err := eligibility.Check(context.Background(), env.DB.Scoped(fixtures.AcmeID), eligibility.ChannelEmail,
 		"   ", eligibility.SourceBroadcasts)
 	require.NoError(t, err)
 	assert.True(t, d.Eligible, "nothing to suppress against")
@@ -28,10 +28,10 @@ func TestCheckFailsClosedOnStoreErrorAndUnknownWorkspace(t *testing.T) {
 
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
-	_, err := eligibility.Check(ctx, env.DB, fixtures.AcmeID, eligibility.ChannelEmail, "a@example.com", eligibility.SourceBroadcasts)
+	_, err := eligibility.Check(ctx, env.DB.Scoped(fixtures.AcmeID), eligibility.ChannelEmail, "a@example.com", eligibility.SourceBroadcasts)
 	assert.ErrorContains(t, err, "eligibility check")
 
-	_, err = eligibility.Check(context.Background(), env.DB, 987654, eligibility.ChannelEmail, "a@example.com", eligibility.SourceBroadcasts)
+	_, err = eligibility.Check(context.Background(), env.DB.Scoped(987654), eligibility.ChannelEmail, "a@example.com", eligibility.SourceBroadcasts)
 	assert.ErrorContains(t, err, "workspace 987654 not found")
 }
 

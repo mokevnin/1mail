@@ -23,6 +23,40 @@ type EventCreate struct {
 	conflict []sql.ConflictOption
 }
 
+// SetCreatedAt sets the "created_at" field.
+func (_c *EventCreate) SetCreatedAt(v time.Time) *EventCreate {
+	_c.mutation.SetCreatedAt(v)
+	return _c
+}
+
+// SetNillableCreatedAt sets the "created_at" field if the given value is not nil.
+func (_c *EventCreate) SetNillableCreatedAt(v *time.Time) *EventCreate {
+	if v != nil {
+		_c.SetCreatedAt(*v)
+	}
+	return _c
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (_c *EventCreate) SetUpdatedAt(v time.Time) *EventCreate {
+	_c.mutation.SetUpdatedAt(v)
+	return _c
+}
+
+// SetNillableUpdatedAt sets the "updated_at" field if the given value is not nil.
+func (_c *EventCreate) SetNillableUpdatedAt(v *time.Time) *EventCreate {
+	if v != nil {
+		_c.SetUpdatedAt(*v)
+	}
+	return _c
+}
+
+// SetWorkspaceID sets the "workspace_id" field.
+func (_c *EventCreate) SetWorkspaceID(v int64) *EventCreate {
+	_c.mutation.SetWorkspaceID(v)
+	return _c
+}
+
 // SetSourceID sets the "source_id" field.
 func (_c *EventCreate) SetSourceID(v string) *EventCreate {
 	_c.mutation.SetSourceID(v)
@@ -133,26 +167,6 @@ func (_c *EventCreate) SetNillableOccurredAt(v *time.Time) *EventCreate {
 	return _c
 }
 
-// SetWorkspaceID sets the "workspace_id" field.
-func (_c *EventCreate) SetWorkspaceID(v int64) *EventCreate {
-	_c.mutation.SetWorkspaceID(v)
-	return _c
-}
-
-// SetCreatedAt sets the "created_at" field.
-func (_c *EventCreate) SetCreatedAt(v time.Time) *EventCreate {
-	_c.mutation.SetCreatedAt(v)
-	return _c
-}
-
-// SetNillableCreatedAt sets the "created_at" field if the given value is not nil.
-func (_c *EventCreate) SetNillableCreatedAt(v *time.Time) *EventCreate {
-	if v != nil {
-		_c.SetCreatedAt(*v)
-	}
-	return _c
-}
-
 // SetID sets the "id" field.
 func (_c *EventCreate) SetID(v int64) *EventCreate {
 	_c.mutation.SetID(v)
@@ -203,10 +217,23 @@ func (_c *EventCreate) defaults() {
 		v := event.DefaultCreatedAt()
 		_c.mutation.SetCreatedAt(v)
 	}
+	if _, ok := _c.mutation.UpdatedAt(); !ok {
+		v := event.DefaultUpdatedAt()
+		_c.mutation.SetUpdatedAt(v)
+	}
 }
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *EventCreate) check() error {
+	if _, ok := _c.mutation.CreatedAt(); !ok {
+		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "Event.created_at"`)}
+	}
+	if _, ok := _c.mutation.UpdatedAt(); !ok {
+		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "Event.updated_at"`)}
+	}
+	if _, ok := _c.mutation.WorkspaceID(); !ok {
+		return &ValidationError{Name: "workspace_id", err: errors.New(`ent: missing required field "Event.workspace_id"`)}
+	}
 	if _, ok := _c.mutation.Action(); !ok {
 		return &ValidationError{Name: "action", err: errors.New(`ent: missing required field "Event.action"`)}
 	}
@@ -214,12 +241,6 @@ func (_c *EventCreate) check() error {
 		if err := event.ActionValidator(v); err != nil {
 			return &ValidationError{Name: "action", err: fmt.Errorf(`ent: validator failed for field "Event.action": %w`, err)}
 		}
-	}
-	if _, ok := _c.mutation.WorkspaceID(); !ok {
-		return &ValidationError{Name: "workspace_id", err: errors.New(`ent: missing required field "Event.workspace_id"`)}
-	}
-	if _, ok := _c.mutation.CreatedAt(); !ok {
-		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "Event.created_at"`)}
 	}
 	if len(_c.mutation.WorkspaceIDs()) == 0 {
 		return &ValidationError{Name: "workspace", err: errors.New(`ent: missing required edge "Event.workspace"`)}
@@ -257,6 +278,14 @@ func (_c *EventCreate) createSpec() (*Event, *sqlgraph.CreateSpec) {
 		_node.ID = id
 		_spec.ID.Value = id
 	}
+	if value, ok := _c.mutation.CreatedAt(); ok {
+		_spec.SetField(event.FieldCreatedAt, field.TypeTime, value)
+		_node.CreatedAt = value
+	}
+	if value, ok := _c.mutation.UpdatedAt(); ok {
+		_spec.SetField(event.FieldUpdatedAt, field.TypeTime, value)
+		_node.UpdatedAt = value
+	}
 	if value, ok := _c.mutation.SourceID(); ok {
 		_spec.SetField(event.FieldSourceID, field.TypeString, value)
 		_node.SourceID = &value
@@ -293,10 +322,6 @@ func (_c *EventCreate) createSpec() (*Event, *sqlgraph.CreateSpec) {
 		_spec.SetField(event.FieldOccurredAt, field.TypeTime, value)
 		_node.OccurredAt = &value
 	}
-	if value, ok := _c.mutation.CreatedAt(); ok {
-		_spec.SetField(event.FieldCreatedAt, field.TypeTime, value)
-		_node.CreatedAt = value
-	}
 	if nodes := _c.mutation.WorkspaceIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
@@ -321,7 +346,7 @@ func (_c *EventCreate) createSpec() (*Event, *sqlgraph.CreateSpec) {
 // of the `INSERT` statement. For example:
 //
 //	client.Event.Create().
-//		SetSourceID(v).
+//		SetCreatedAt(v).
 //		OnConflict(
 //			// Update the row with the new values
 //			// the was proposed for insertion.
@@ -330,7 +355,7 @@ func (_c *EventCreate) createSpec() (*Event, *sqlgraph.CreateSpec) {
 //		// Override some of the fields with custom
 //		// update values.
 //		Update(func(u *ent.EventUpsert) {
-//			SetSourceID(v+v).
+//			SetCreatedAt(v+v).
 //		}).
 //		Exec(ctx)
 func (_c *EventCreate) OnConflict(opts ...sql.ConflictOption) *EventUpsertOne {
@@ -365,6 +390,30 @@ type (
 		*sql.UpdateSet
 	}
 )
+
+// SetUpdatedAt sets the "updated_at" field.
+func (u *EventUpsert) SetUpdatedAt(v time.Time) *EventUpsert {
+	u.Set(event.FieldUpdatedAt, v)
+	return u
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *EventUpsert) UpdateUpdatedAt() *EventUpsert {
+	u.SetExcluded(event.FieldUpdatedAt)
+	return u
+}
+
+// SetWorkspaceID sets the "workspace_id" field.
+func (u *EventUpsert) SetWorkspaceID(v int64) *EventUpsert {
+	u.Set(event.FieldWorkspaceID, v)
+	return u
+}
+
+// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
+func (u *EventUpsert) UpdateWorkspaceID() *EventUpsert {
+	u.SetExcluded(event.FieldWorkspaceID)
+	return u
+}
 
 // SetSourceID sets the "source_id" field.
 func (u *EventUpsert) SetSourceID(v string) *EventUpsert {
@@ -528,18 +577,6 @@ func (u *EventUpsert) ClearOccurredAt() *EventUpsert {
 	return u
 }
 
-// SetWorkspaceID sets the "workspace_id" field.
-func (u *EventUpsert) SetWorkspaceID(v int64) *EventUpsert {
-	u.Set(event.FieldWorkspaceID, v)
-	return u
-}
-
-// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
-func (u *EventUpsert) UpdateWorkspaceID() *EventUpsert {
-	u.SetExcluded(event.FieldWorkspaceID)
-	return u
-}
-
 // UpdateNewValues updates the mutable fields using the new values that were set on create except the ID field.
 // Using this option is equivalent to using:
 //
@@ -589,6 +626,34 @@ func (u *EventUpsertOne) Update(set func(*EventUpsert)) *EventUpsertOne {
 		set(&EventUpsert{UpdateSet: update})
 	}))
 	return u
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (u *EventUpsertOne) SetUpdatedAt(v time.Time) *EventUpsertOne {
+	return u.Update(func(s *EventUpsert) {
+		s.SetUpdatedAt(v)
+	})
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *EventUpsertOne) UpdateUpdatedAt() *EventUpsertOne {
+	return u.Update(func(s *EventUpsert) {
+		s.UpdateUpdatedAt()
+	})
+}
+
+// SetWorkspaceID sets the "workspace_id" field.
+func (u *EventUpsertOne) SetWorkspaceID(v int64) *EventUpsertOne {
+	return u.Update(func(s *EventUpsert) {
+		s.SetWorkspaceID(v)
+	})
+}
+
+// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
+func (u *EventUpsertOne) UpdateWorkspaceID() *EventUpsertOne {
+	return u.Update(func(s *EventUpsert) {
+		s.UpdateWorkspaceID()
+	})
 }
 
 // SetSourceID sets the "source_id" field.
@@ -780,20 +845,6 @@ func (u *EventUpsertOne) ClearOccurredAt() *EventUpsertOne {
 	})
 }
 
-// SetWorkspaceID sets the "workspace_id" field.
-func (u *EventUpsertOne) SetWorkspaceID(v int64) *EventUpsertOne {
-	return u.Update(func(s *EventUpsert) {
-		s.SetWorkspaceID(v)
-	})
-}
-
-// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
-func (u *EventUpsertOne) UpdateWorkspaceID() *EventUpsertOne {
-	return u.Update(func(s *EventUpsert) {
-		s.UpdateWorkspaceID()
-	})
-}
-
 // Exec executes the query.
 func (u *EventUpsertOne) Exec(ctx context.Context) error {
 	if len(u.create.conflict) == 0 {
@@ -929,7 +980,7 @@ func (_c *EventCreateBulk) ExecX(ctx context.Context) {
 //		// Override some of the fields with custom
 //		// update values.
 //		Update(func(u *ent.EventUpsert) {
-//			SetSourceID(v+v).
+//			SetCreatedAt(v+v).
 //		}).
 //		Exec(ctx)
 func (_c *EventCreateBulk) OnConflict(opts ...sql.ConflictOption) *EventUpsertBulk {
@@ -1009,6 +1060,34 @@ func (u *EventUpsertBulk) Update(set func(*EventUpsert)) *EventUpsertBulk {
 		set(&EventUpsert{UpdateSet: update})
 	}))
 	return u
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (u *EventUpsertBulk) SetUpdatedAt(v time.Time) *EventUpsertBulk {
+	return u.Update(func(s *EventUpsert) {
+		s.SetUpdatedAt(v)
+	})
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *EventUpsertBulk) UpdateUpdatedAt() *EventUpsertBulk {
+	return u.Update(func(s *EventUpsert) {
+		s.UpdateUpdatedAt()
+	})
+}
+
+// SetWorkspaceID sets the "workspace_id" field.
+func (u *EventUpsertBulk) SetWorkspaceID(v int64) *EventUpsertBulk {
+	return u.Update(func(s *EventUpsert) {
+		s.SetWorkspaceID(v)
+	})
+}
+
+// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
+func (u *EventUpsertBulk) UpdateWorkspaceID() *EventUpsertBulk {
+	return u.Update(func(s *EventUpsert) {
+		s.UpdateWorkspaceID()
+	})
 }
 
 // SetSourceID sets the "source_id" field.
@@ -1197,20 +1276,6 @@ func (u *EventUpsertBulk) UpdateOccurredAt() *EventUpsertBulk {
 func (u *EventUpsertBulk) ClearOccurredAt() *EventUpsertBulk {
 	return u.Update(func(s *EventUpsert) {
 		s.ClearOccurredAt()
-	})
-}
-
-// SetWorkspaceID sets the "workspace_id" field.
-func (u *EventUpsertBulk) SetWorkspaceID(v int64) *EventUpsertBulk {
-	return u.Update(func(s *EventUpsert) {
-		s.SetWorkspaceID(v)
-	})
-}
-
-// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
-func (u *EventUpsertBulk) UpdateWorkspaceID() *EventUpsertBulk {
-	return u.Update(func(s *EventUpsert) {
-		s.UpdateWorkspaceID()
 	})
 }
 

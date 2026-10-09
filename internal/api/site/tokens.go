@@ -24,7 +24,7 @@ func canManageTokens(role membership.Role) bool {
 
 // SiteTokensList returns the workspace's active (non-revoked) API tokens.
 func (h *Handlers) SiteTokensList(ctx context.Context, params siteapi.SiteTokensListParams) (siteapi.SiteTokensListRes, error) {
-	ws, err := h.workspaceID(ctx, params.Slug)
+	scoped, err := h.scopedFor(ctx, params.Slug)
 	if ent.IsNotFound(err) {
 		v := problem(http.StatusNotFound, "workspace not found")
 		return &v, nil
@@ -33,8 +33,8 @@ func (h *Handlers) SiteTokensList(ctx context.Context, params siteapi.SiteTokens
 		return nil, err
 	}
 
-	tokens, err := h.ent.ApiToken.Query().
-		Where(apitoken.WorkspaceID(ws), apitoken.RevokedAtIsNil()).
+	tokens, err := scoped.ApiToken().Query().
+		Where(apitoken.RevokedAtIsNil()).
 		Order(ent.Asc(apitoken.FieldID)).
 		All(ctx)
 	if err != nil {
@@ -51,7 +51,7 @@ func (h *Handlers) SiteTokensList(ctx context.Context, params siteapi.SiteTokens
 // SiteTokensCreate mints a workspace API token. The full secret is returned once;
 // only its bcrypt hash and public prefix are stored.
 func (h *Handlers) SiteTokensCreate(ctx context.Context, req *siteapi.SiteCreateTokenInput, params siteapi.SiteTokensCreateParams) (siteapi.SiteTokensCreateRes, error) {
-	ws, role, err := h.membershipFor(ctx, params.Slug)
+	scoped, role, err := h.scopedWithRoleFor(ctx, params.Slug)
 	if ent.IsNotFound(err) {
 		v := siteapi.SiteTokensCreateNotFound(problem(http.StatusNotFound, "workspace not found"))
 		return &v, nil
@@ -87,12 +87,11 @@ func (h *Handlers) SiteTokensCreate(ctx context.Context, req *siteapi.SiteCreate
 		return nil, err
 	}
 
-	create := h.ent.ApiToken.Create().
+	create := scoped.ApiToken().Create().
 		SetName(name).
 		SetPrefix(prefix).
 		SetSecretHash(hash).
-		SetScopes(req.Scopes).
-		SetWorkspaceID(ws)
+		SetScopes(req.Scopes)
 	if v, ok := req.ExpiresAt.Get(); ok {
 		create = create.SetExpiresAt(time.Time(v))
 	}
@@ -109,7 +108,7 @@ func (h *Handlers) SiteTokensCreate(ctx context.Context, req *siteapi.SiteCreate
 
 // SiteTokensDelete revokes (soft-deletes) a workspace API token.
 func (h *Handlers) SiteTokensDelete(ctx context.Context, params siteapi.SiteTokensDeleteParams) (siteapi.SiteTokensDeleteRes, error) {
-	ws, role, err := h.membershipFor(ctx, params.Slug)
+	scoped, role, err := h.scopedWithRoleFor(ctx, params.Slug)
 	if ent.IsNotFound(err) {
 		v := siteapi.SiteTokensDeleteNotFound(problem(http.StatusNotFound, "workspace not found"))
 		return &v, nil
@@ -130,8 +129,8 @@ func (h *Handlers) SiteTokensDelete(ctx context.Context, params siteapi.SiteToke
 
 	// Scope the revoke to the workspace; an unknown / non-owned / already-revoked
 	// id affects zero rows and maps to 404.
-	n, err := h.ent.ApiToken.Update().
-		Where(apitoken.ID(id), apitoken.WorkspaceID(ws), apitoken.RevokedAtIsNil()).
+	n, err := scoped.ApiToken().Update().
+		Where(apitoken.ID(id), apitoken.RevokedAtIsNil()).
 		SetRevokedAt(time.Now()).
 		Save(ctx)
 	if err != nil {

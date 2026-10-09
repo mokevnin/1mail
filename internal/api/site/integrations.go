@@ -11,6 +11,7 @@ import (
 	"github.com/mokevnin/1mail/ent"
 	"github.com/mokevnin/1mail/ent/integration"
 	siteapi "github.com/mokevnin/1mail/gen/site"
+	"github.com/mokevnin/1mail/internal/events"
 	"github.com/mokevnin/1mail/internal/i18n"
 	"github.com/mokevnin/1mail/internal/messaging"
 	"github.com/mokevnin/1mail/internal/messaging/ses"
@@ -21,7 +22,7 @@ import (
 // SiteIntegrationsList returns the workspace's sending-provider integrations
 // with secrets redacted.
 func (h *Handlers) SiteIntegrationsList(ctx context.Context, params siteapi.SiteIntegrationsListParams) (siteapi.SiteIntegrationsListRes, error) {
-	ws, err := h.workspaceID(ctx, params.Slug)
+	s, err := h.scopedFor(ctx, params.Slug)
 	if ent.IsNotFound(err) {
 		v := problem(http.StatusNotFound, "workspace not found")
 		return &v, nil
@@ -30,8 +31,7 @@ func (h *Handlers) SiteIntegrationsList(ctx context.Context, params siteapi.Site
 		return nil, err
 	}
 
-	rows, err := h.ent.Integration.Query().
-		Where(integration.WorkspaceID(ws)).
+	rows, err := s.Integration().Query().
 		Order(ent.Asc(integration.FieldID)).
 		All(ctx)
 	if err != nil {
@@ -52,7 +52,7 @@ func (h *Handlers) SiteIntegrationsList(ctx context.Context, params siteapi.Site
 // SiteIntegrationsCreate stores a new provider integration; credentials are
 // encrypted at rest and never returned.
 func (h *Handlers) SiteIntegrationsCreate(ctx context.Context, req *siteapi.SiteCreateIntegrationInput, params siteapi.SiteIntegrationsCreateParams) (siteapi.SiteIntegrationsCreateRes, error) {
-	ws, err := h.workspaceID(ctx, params.Slug)
+	s, err := h.scopedFor(ctx, params.Slug)
 	if ent.IsNotFound(err) {
 		v := siteapi.SiteIntegrationsCreateNotFound(problem(http.StatusNotFound, "workspace not found"))
 		return &v, nil
@@ -87,7 +87,7 @@ func (h *Handlers) SiteIntegrationsCreate(ctx context.Context, req *siteapi.Site
 	enabled := req.Enabled.Or(true)
 	isDefault := req.IsDefault.Or(false)
 
-	row, err := h.createIntegration(ctx, ws, name, channel, provider, encrypted, enabled, isDefault)
+	row, err := h.createIntegration(ctx, s, name, channel, provider, encrypted, enabled, isDefault)
 	if service.IsUniqueViolation(err) {
 		v := siteapi.SiteIntegrationsCreateConflict(problem(http.StatusConflict, "a default provider already exists for this channel"))
 		return &v, nil
@@ -105,7 +105,7 @@ func (h *Handlers) SiteIntegrationsCreate(ctx context.Context, req *siteapi.Site
 
 // SiteIntegrationsGet returns one integration with secrets redacted.
 func (h *Handlers) SiteIntegrationsGet(ctx context.Context, params siteapi.SiteIntegrationsGetParams) (siteapi.SiteIntegrationsGetRes, error) {
-	ws, err := h.workspaceID(ctx, params.Slug)
+	s, err := h.scopedFor(ctx, params.Slug)
 	if ent.IsNotFound(err) {
 		v := siteapi.SiteIntegrationsGetNotFound(problem(http.StatusNotFound, "workspace not found"))
 		return &v, nil
@@ -119,9 +119,7 @@ func (h *Handlers) SiteIntegrationsGet(ctx context.Context, params siteapi.SiteI
 		v := siteapi.SiteIntegrationsGetBadRequest(problem(http.StatusBadRequest, "invalid id"))
 		return &v, nil
 	}
-	row, err := h.ent.Integration.Query().
-		Where(integration.IDEQ(id), integration.WorkspaceID(ws)).
-		Only(ctx)
+	row, err := s.Integration().Get(ctx, id)
 	if ent.IsNotFound(err) {
 		v := siteapi.SiteIntegrationsGetNotFound(problem(http.StatusNotFound, "integration not found"))
 		return &v, nil
@@ -142,7 +140,7 @@ func (h *Handlers) SiteIntegrationsGet(ctx context.Context, params siteapi.SiteI
 // keep the stored secret rather than clearing it, since secrets are never echoed
 // back on read — so a partial edit cannot accidentally wipe a credential.
 func (h *Handlers) SiteIntegrationsUpdate(ctx context.Context, req *siteapi.SiteUpdateIntegrationInput, params siteapi.SiteIntegrationsUpdateParams) (siteapi.SiteIntegrationsUpdateRes, error) {
-	ws, err := h.workspaceID(ctx, params.Slug)
+	s, err := h.scopedFor(ctx, params.Slug)
 	if ent.IsNotFound(err) {
 		v := siteapi.SiteIntegrationsUpdateNotFound(problem(http.StatusNotFound, "workspace not found"))
 		return &v, nil
@@ -157,9 +155,7 @@ func (h *Handlers) SiteIntegrationsUpdate(ctx context.Context, req *siteapi.Site
 		return &v, nil
 	}
 
-	row, err := h.ent.Integration.Query().
-		Where(integration.IDEQ(id), integration.WorkspaceID(ws)).
-		Only(ctx)
+	row, err := s.Integration().Get(ctx, id)
 	if ent.IsNotFound(err) {
 		v := siteapi.SiteIntegrationsUpdateNotFound(problem(http.StatusNotFound, "integration not found"))
 		return &v, nil
@@ -237,13 +233,13 @@ func (h *Handlers) SiteIntegrationsUpdate(ctx context.Context, req *siteapi.Site
 	}
 
 	var updated *ent.Integration
-	err = h.withTx(ctx, func(tx *ent.Tx) error {
+	err = h.bus.WithinScopedTx(ctx, s, func(ts *ent.Scoped, _ events.Publisher) error {
 		if promote {
-			if err := clearDefault(ctx, tx, ws, integration.Channel(row.Channel.String())); err != nil {
+			if err := clearDefault(ctx, ts, integration.Channel(row.Channel.String())); err != nil {
 				return err
 			}
 		}
-		upd := tx.Integration.UpdateOneID(row.ID)
+		upd := ts.Integration().UpdateOneID(row.ID)
 		if setName != nil {
 			upd.SetName(*setName)
 		}
@@ -278,7 +274,7 @@ func (h *Handlers) SiteIntegrationsUpdate(ctx context.Context, req *siteapi.Site
 
 // SiteIntegrationsDelete removes an integration.
 func (h *Handlers) SiteIntegrationsDelete(ctx context.Context, params siteapi.SiteIntegrationsDeleteParams) (siteapi.SiteIntegrationsDeleteRes, error) {
-	ws, err := h.workspaceID(ctx, params.Slug)
+	s, err := h.scopedFor(ctx, params.Slug)
 	if ent.IsNotFound(err) {
 		v := siteapi.SiteIntegrationsDeleteNotFound(problem(http.StatusNotFound, "workspace not found"))
 		return &v, nil
@@ -292,8 +288,8 @@ func (h *Handlers) SiteIntegrationsDelete(ctx context.Context, params siteapi.Si
 		v := siteapi.SiteIntegrationsDeleteBadRequest(problem(http.StatusBadRequest, "invalid id"))
 		return &v, nil
 	}
-	n, err := h.ent.Integration.Delete().
-		Where(integration.IDEQ(id), integration.WorkspaceID(ws)).
+	n, err := s.Integration().Delete().
+		Where(integration.IDEQ(id)).
 		Exec(ctx)
 	if err != nil {
 		return nil, err
@@ -307,43 +303,19 @@ func (h *Handlers) SiteIntegrationsDelete(ctx context.Context, params siteapi.Si
 
 // --- helpers ---
 
-// withTx runs fn inside a transaction, rolling back on error (or panic) and
-// committing otherwise. Every write that touches sibling default rows must go
-// through here so the builders are bound to the tx connection — a builder made
-// from h.ent would run on a separate pooled connection and not see the tx's
-// uncommitted writes.
-func (h *Handlers) withTx(ctx context.Context, fn func(tx *ent.Tx) error) error {
-	tx, err := h.ent.Tx(ctx)
-	if err != nil {
-		return err
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			_ = tx.Rollback()
-			panic(r)
-		}
-	}()
-	if err := fn(tx); err != nil {
-		_ = tx.Rollback()
-		return err
-	}
-	return tx.Commit()
-}
-
 // createIntegration inserts a row in a tx, clearing any sibling default first
 // when this one is the new default (so the partial unique index never trips on
 // our own writes).
-func (h *Handlers) createIntegration(ctx context.Context, ws int64, name string, channel integration.Channel, provider integration.Provider, encrypted string, enabled, isDefault bool) (*ent.Integration, error) {
+func (h *Handlers) createIntegration(ctx context.Context, s *ent.Scoped, name string, channel integration.Channel, provider integration.Provider, encrypted string, enabled, isDefault bool) (*ent.Integration, error) {
 	var row *ent.Integration
-	err := h.withTx(ctx, func(tx *ent.Tx) error {
+	err := h.bus.WithinScopedTx(ctx, s, func(ts *ent.Scoped, _ events.Publisher) error {
 		if isDefault {
-			if err := clearDefault(ctx, tx, ws, channel); err != nil {
+			if err := clearDefault(ctx, ts, channel); err != nil {
 				return err
 			}
 		}
 		var err error
-		row, err = tx.Integration.Create().
-			SetWorkspaceID(ws).
+		row, err = ts.Integration().Create().
 			SetName(name).
 			SetChannel(channel).
 			SetProvider(provider).
@@ -360,10 +332,9 @@ func (h *Handlers) createIntegration(ctx context.Context, ws int64, name string,
 }
 
 // clearDefault unsets the existing default integration for (workspace, channel).
-func clearDefault(ctx context.Context, tx *ent.Tx, ws int64, channel integration.Channel) error {
-	_, err := tx.Integration.Update().
+func clearDefault(ctx context.Context, ts *ent.Scoped, channel integration.Channel) error {
+	_, err := ts.Integration().Update().
 		Where(
-			integration.WorkspaceID(ws),
 			integration.ChannelEQ(channel),
 			integration.IsDefault(true),
 		).

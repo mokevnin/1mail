@@ -12,7 +12,8 @@
 //     surface maps to its own transport — scope checks and RFC 7807 stay in the
 //     adapters.
 //
-// There is no repository layer over ent: the module uses the ent client directly.
+// There is no repository layer over ent: the module uses the Workspace-scoped ent
+// client (ADR 0017) it is handed, and writes no Workspace predicate.
 package contacts
 
 import (
@@ -96,16 +97,15 @@ func New(bus *events.Bus) *Module { return &Module{bus: bus} }
 
 // Create makes a Contact and publishes contact.created in one transaction. An alias
 // key already taken in the Workspace yields a *ConflictError.
-func (m *Module) Create(ctx context.Context, workspaceID int64, attrs Attributes) (*ent.Contact, error) {
+func (m *Module) Create(ctx context.Context, s *ent.Scoped, attrs Attributes) (*ent.Contact, error) {
 	attrs = attrs.normalized()
 	var c *ent.Contact
-	err := m.bus.WithinTx(ctx, func(tx *ent.Client, pub events.Publisher) error {
-		typed, err := EnsureCustomFields(ctx, tx, workspaceID, attrs.CustomFields)
+	err := m.bus.WithinScopedTx(ctx, s, func(ts *ent.Scoped, pub events.Publisher) error {
+		typed, err := EnsureCustomFields(ctx, ts, attrs.CustomFields)
 		if err != nil {
 			return err
 		}
-		q := tx.Contact.Create().
-			SetWorkspaceID(workspaceID).
+		q := ts.Contact().Create().
 			SetNillableSubjectID(attrs.SubjectID).
 			SetNillableEmail(attrs.Email).
 			SetNillablePhone(attrs.Phone).
@@ -119,7 +119,7 @@ func (m *Module) Create(ctx context.Context, workspaceID int64, attrs Attributes
 		if err != nil {
 			return err
 		}
-		return publishCreated(ctx, pub, workspaceID, c)
+		return publishCreated(ctx, pub, ts.WorkspaceID(), c)
 	})
 	if err != nil {
 		return nil, domainError(err)
@@ -129,12 +129,11 @@ func (m *Module) Create(ctx context.Context, workspaceID int64, attrs Attributes
 
 // Update changes the given attributes of a Contact; CustomFields, when given,
 // replace the stored set. ErrNotFound when the Contact is not in the Workspace.
-func (m *Module) Update(ctx context.Context, workspaceID, id int64, attrs Attributes) (*ent.Contact, error) {
+func (m *Module) Update(ctx context.Context, s *ent.Scoped, id int64, attrs Attributes) (*ent.Contact, error) {
 	attrs = attrs.normalized()
 	var c *ent.Contact
-	err := m.bus.WithinTx(ctx, func(tx *ent.Client, _ events.Publisher) error {
-		q := tx.Contact.UpdateOneID(id).
-			Where(contact.WorkspaceID(workspaceID)).
+	err := m.bus.WithinScopedTx(ctx, s, func(ts *ent.Scoped, _ events.Publisher) error {
+		q := ts.Contact().UpdateOneID(id).
 			SetNillableSubjectID(attrs.SubjectID).
 			SetNillableEmail(attrs.Email).
 			SetNillablePhone(attrs.Phone).
@@ -143,7 +142,7 @@ func (m *Module) Update(ctx context.Context, workspaceID, id int64, attrs Attrib
 			SetNillableTimeZone(attrs.TimeZone)
 		attrs.Cleared.applyTo(q)
 		if attrs.CustomFields != nil {
-			typed, err := EnsureCustomFields(ctx, tx, workspaceID, attrs.CustomFields)
+			typed, err := EnsureCustomFields(ctx, ts, attrs.CustomFields)
 			if err != nil {
 				return err
 			}
@@ -159,7 +158,7 @@ func (m *Module) Update(ctx context.Context, workspaceID, id int64, attrs Attrib
 	return c, nil
 }
 
-func (c Cleared) applyTo(q *ent.ContactUpdateOne) {
+func (c Cleared) applyTo(q *ent.ContactScopedUpdateOne) {
 	if c.SubjectID {
 		q.ClearSubjectID()
 	}
@@ -187,11 +186,11 @@ func (c Cleared) applyTo(q *ent.ContactUpdateOne) {
 // or creates one. An existing Contact is only enriched: missing attributes are
 // filled and Custom fields merged, never overwritten (identity is additive).
 // ErrIdentityRequired when no alias key is given.
-func (m *Module) Upsert(ctx context.Context, workspaceID int64, attrs Attributes) (Result, error) {
+func (m *Module) Upsert(ctx context.Context, s *ent.Scoped, attrs Attributes) (Result, error) {
 	var res Result
-	err := m.bus.WithinTx(ctx, func(tx *ent.Client, pub events.Publisher) error {
+	err := m.bus.WithinScopedTx(ctx, s, func(ts *ent.Scoped, pub events.Publisher) error {
 		var err error
-		res, err = UpsertIn(ctx, tx, pub, workspaceID, attrs)
+		res, err = UpsertIn(ctx, ts, pub, attrs)
 		return err
 	})
 	if err != nil {
@@ -210,33 +209,33 @@ type BatchOutcome struct {
 // UpsertBatch upserts each item in its own transaction, in order, so a failing item
 // neither rolls back nor blocks the others; each new Contact publishes contact.created
 // with its own commit. The outcomes are parallel to items.
-func (m *Module) UpsertBatch(ctx context.Context, workspaceID int64, items []Attributes) []BatchOutcome {
+func (m *Module) UpsertBatch(ctx context.Context, s *ent.Scoped, items []Attributes) []BatchOutcome {
 	out := make([]BatchOutcome, len(items))
 	for i, attrs := range items {
-		out[i].Result, out[i].Err = m.Upsert(ctx, workspaceID, attrs)
+		out[i].Result, out[i].Err = m.Upsert(ctx, s, attrs)
 	}
 	return out
 }
 
 // UpsertIn is Upsert inside a transaction the caller already owns (tx and pub come
-// from events.Bus.WithinTx), for flows that bind more rows to the Contact atomically
+// from events.Bus.WithinScopedTx), for flows that bind more rows to the Contact atomically
 // — the tracker's Identify. It publishes contact.created when it creates.
-func UpsertIn(ctx context.Context, tx *ent.Client, pub events.Publisher, workspaceID int64, attrs Attributes) (Result, error) {
+func UpsertIn(ctx context.Context, s *ent.Scoped, pub events.Publisher, attrs Attributes) (Result, error) {
 	attrs = attrs.normalized()
 	if lo.FromPtr(attrs.SubjectID) == "" && attrs.Email == nil && attrs.Phone == nil {
 		return Result{}, ErrIdentityRequired
 	}
-	typed, err := EnsureCustomFields(ctx, tx, workspaceID, attrs.CustomFields)
+	typed, err := EnsureCustomFields(ctx, s, attrs.CustomFields)
 	if err != nil {
 		return Result{}, err
 	}
 
-	existing, err := Resolve(ctx, tx, workspaceID, attrs.SubjectID, attrs.Email, attrs.Phone)
+	existing, err := Resolve(ctx, s, attrs.SubjectID, attrs.Email, attrs.Phone)
 	if err != nil {
 		return Result{}, err
 	}
 	if existing != nil {
-		q := tx.Contact.UpdateOneID(existing.ID)
+		q := s.Contact().UpdateOneID(existing.ID)
 		if existing.SubjectID == nil {
 			q.SetNillableSubjectID(attrs.SubjectID)
 		}
@@ -262,8 +261,7 @@ func UpsertIn(ctx context.Context, tx *ent.Client, pub events.Publisher, workspa
 		return Result{Contact: c}, err
 	}
 
-	q := tx.Contact.Create().
-		SetWorkspaceID(workspaceID).
+	q := s.Contact().Create().
 		SetNillableSubjectID(attrs.SubjectID).
 		SetNillableEmail(attrs.Email).
 		SetNillablePhone(attrs.Phone).
@@ -277,7 +275,7 @@ func UpsertIn(ctx context.Context, tx *ent.Client, pub events.Publisher, workspa
 	if err != nil {
 		return Result{}, err
 	}
-	if err := publishCreated(ctx, pub, workspaceID, c); err != nil {
+	if err := publishCreated(ctx, pub, s.WorkspaceID(), c); err != nil {
 		return Result{}, err
 	}
 	return Result{Contact: c, Created: true}, nil
@@ -286,7 +284,7 @@ func UpsertIn(ctx context.Context, tx *ent.Client, pub events.Publisher, workspa
 // Resolve finds an existing Contact by any present alias key (subject_id → email →
 // phone), or returns nil. It never creates. Keys are matched as normalized by
 // Attributes, so callers may pass raw values.
-func Resolve(ctx context.Context, client *ent.Client, workspaceID int64, subjectID, email, phone *string) (*ent.Contact, error) {
+func Resolve(ctx context.Context, s *ent.Scoped, subjectID, email, phone *string) (*ent.Contact, error) {
 	a := Attributes{SubjectID: subjectID, Email: email, Phone: phone}.normalized()
 	var keys []predicate.Contact
 	if a.SubjectID != nil {
@@ -299,7 +297,7 @@ func Resolve(ctx context.Context, client *ent.Client, workspaceID int64, subject
 		keys = append(keys, contact.Phone(*a.Phone))
 	}
 	for _, key := range keys {
-		c, err := client.Contact.Query().Where(key, contact.WorkspaceID(workspaceID)).First(ctx)
+		c, err := s.Contact().Query().Where(key).First(ctx)
 		if err == nil {
 			return c, nil
 		}

@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"strings"
 
-	entuser "github.com/mokevnin/1mail/ent/user"
 	siteapi "github.com/mokevnin/1mail/gen/site"
 	"github.com/mokevnin/1mail/internal/api/auth"
 	"github.com/mokevnin/1mail/internal/authtoken"
@@ -20,7 +19,7 @@ func (h *Handlers) SiteUserGetMe(ctx context.Context) (*siteapi.SiteUserResource
 	if a == nil {
 		return nil, auth.ErrUnauthorized
 	}
-	u, err := h.ent.User.Get(ctx, a.UserID)
+	u, err := h.accounts.User(ctx, a.UserID)
 	if err != nil {
 		return nil, err
 	}
@@ -36,13 +35,12 @@ func (h *Handlers) SiteUserUpdateMe(ctx context.Context, req *siteapi.SiteUpdate
 		v := siteapi.SiteUserUpdateMeForbidden(problem(http.StatusForbidden, "unauthorized"))
 		return &v, nil
 	}
-	u, err := h.ent.User.Get(ctx, a.UserID)
+	u, err := h.accounts.User(ctx, a.UserID)
 	if err != nil {
 		return nil, err
 	}
 
-	upd := h.ent.User.UpdateOneID(u.ID)
-	changed := false
+	var newName, newHash *string
 
 	if name, ok := req.Name.Get(); ok {
 		name = strings.TrimSpace(name)
@@ -54,8 +52,7 @@ func (h *Handlers) SiteUserUpdateMe(ctx context.Context, req *siteapi.SiteUpdate
 			))
 			return &v, nil
 		}
-		upd = upd.SetName(name)
-		changed = true
+		newName = &name
 	}
 
 	if newPassword, ok := req.NewPassword.Get(); ok && newPassword != "" {
@@ -77,12 +74,11 @@ func (h *Handlers) SiteUserUpdateMe(ctx context.Context, req *siteapi.SiteUpdate
 		if err != nil {
 			return nil, err
 		}
-		upd = upd.SetPasswordHash(hash)
-		changed = true
+		newHash = &hash
 	}
 
-	if changed {
-		u, err = upd.Save(ctx)
+	if newName != nil || newHash != nil {
+		u, err = h.accounts.UpdateProfile(ctx, u.ID, newName, newHash)
 		if err != nil {
 			return nil, err
 		}
@@ -101,7 +97,7 @@ func (h *Handlers) SiteUserEmailChange(ctx context.Context, req *siteapi.SiteEma
 		v := siteapi.SiteUserEmailChangeForbidden(problem(http.StatusForbidden, "unauthorized"))
 		return &v, nil
 	}
-	u, err := h.ent.User.Get(ctx, a.UserID)
+	u, err := h.accounts.User(ctx, a.UserID)
 	if err != nil {
 		return nil, err
 	}
@@ -131,7 +127,7 @@ func (h *Handlers) SiteUserEmailChange(ctx context.Context, req *siteapi.SiteEma
 
 	// Reject an address already taken. The confirm step re-checks under the unique
 	// index, so this is an early, friendly 409 rather than the sole guard.
-	taken, err := h.ent.User.Query().Where(entuser.Email(newEmail)).Exist(ctx)
+	taken, err := h.accounts.EmailTaken(ctx, newEmail)
 	if err != nil {
 		return nil, err
 	}
@@ -158,7 +154,7 @@ func (h *Handlers) SiteUserResendVerification(ctx context.Context) error {
 	if a == nil {
 		return auth.ErrUnauthorized
 	}
-	u, err := h.ent.User.Get(ctx, a.UserID)
+	u, err := h.accounts.User(ctx, a.UserID)
 	if err != nil {
 		return err
 	}

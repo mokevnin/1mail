@@ -64,7 +64,7 @@ type cancelingSenders struct {
 	sender messaging.EmailSender
 }
 
-func (s cancelingSenders) EmailSender(context.Context, int64) (messaging.EmailSender, error) {
+func (s cancelingSenders) EmailSender(context.Context, *ent.Scoped) (messaging.EmailSender, error) {
 	s.cancel()
 	return s.sender, nil
 }
@@ -84,7 +84,6 @@ func TestSendRejectsIncompleteRequests(t *testing.T) {
 		mutate func(*outbound.Request)
 		want   string
 	}{
-		"no workspace":   {func(r *outbound.Request) { r.WorkspaceID = 0 }, "workspace id required"},
 		"no key":         {func(r *outbound.Request) { r.Key = "" }, "idempotency key required"},
 		"no destination": {func(r *outbound.Request) { r.Destination = "   " }, "destination required"},
 	}
@@ -92,7 +91,7 @@ func TestSendRejectsIncompleteRequests(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			req := transactional("tx:invalid", "a@example.com")
 			tc.mutate(&req)
-			_, err := m.Send(context.Background(), req)
+			_, err := m.Send(context.Background(), env.DB.Scoped(fixtures.AcmeID), req)
 			assert.ErrorContains(t, err, tc.want)
 		})
 	}
@@ -104,22 +103,21 @@ func TestSendInfrastructureErrorsAreReturnedNotDecided(t *testing.T) {
 		env := testhelper.Setup(t)
 		ctx, cancel := context.WithCancel(context.Background())
 		cancel()
-		_, err := newModule(env).Send(ctx, transactional("tx:cancel", "a@example.com"))
+		_, err := newModule(env).Send(ctx, env.DB.Scoped(fixtures.AcmeID), transactional("tx:cancel", "a@example.com"))
 		assert.Error(t, err)
 	})
 
 	t.Run("unknown workspace", func(t *testing.T) {
 		env := testhelper.Setup(t)
 		req := transactional("tx:nows", "a@example.com")
-		req.WorkspaceID = 987654
-		_, err := newModule(env).Send(context.Background(), req)
+		_, err := newModule(env).Send(context.Background(), env.DB.Scoped(987654), req)
 		assert.ErrorContains(t, err, "load workspace 987654")
 	})
 
 	t.Run("sender cannot be resolved", func(t *testing.T) {
 		env := testhelper.Setup(t)
-		m := outbound.New(env.DB, env.Bus, senders{err: errors.New("vault down")}, nil)
-		_, err := m.Send(context.Background(), transactional("tx:nosender", "a@example.com"))
+		m := outbound.New(env.Bus, senders{err: errors.New("vault down")}, nil)
+		_, err := m.Send(context.Background(), env.DB.Scoped(fixtures.AcmeID), transactional("tx:nosender", "a@example.com"))
 		assert.ErrorContains(t, err, "resolve sender")
 		assert.ErrorContains(t, err, "vault down")
 	})
@@ -128,15 +126,15 @@ func TestSendInfrastructureErrorsAreReturnedNotDecided(t *testing.T) {
 		env := testhelper.Setup(t)
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
-		m := outbound.New(env.DB, env.Bus, cancelingSenders{cancel: cancel, sender: env.CustomerMail}, nil)
-		_, err := m.Send(ctx, transactional("tx:domaindb", "a@example.com"))
+		m := outbound.New(env.Bus, cancelingSenders{cancel: cancel, sender: env.CustomerMail}, nil)
+		_, err := m.Send(ctx, env.DB.Scoped(fixtures.AcmeID), transactional("tx:domaindb", "a@example.com"))
 		assert.ErrorContains(t, err, "check sending domain")
 	})
 
 	t.Run("freeze check fails", func(t *testing.T) {
 		env := testhelper.Setup(t)
 		m := newModule(env, outbound.WithFreezers(&freezer{err: errors.New("billing api down")}))
-		_, err := m.Send(context.Background(), transactional("tx:freezeerr", "a@example.com"))
+		_, err := m.Send(context.Background(), env.DB.Scoped(fixtures.AcmeID), transactional("tx:freezeerr", "a@example.com"))
 		assert.ErrorContains(t, err, "freeze check")
 		assert.Empty(t, env.CustomerMail.Messages())
 	})
@@ -149,7 +147,7 @@ func TestFreezersHoldAfterTheCoreSuspensionCheck(t *testing.T) {
 	billing := &freezer{reason: "billing_overdue"}
 	m := newModule(env, outbound.WithFreezers(open), outbound.WithFreezers(billing))
 
-	res, err := m.Send(ctx, transactional("tx:frozen", "a@example.com"))
+	res, err := m.Send(ctx, env.DB.Scoped(fixtures.AcmeID), transactional("tx:frozen", "a@example.com"))
 	require.NoError(t, err)
 	assert.Equal(t, outbound.Held, res.Outcome)
 	assert.Equal(t, "billing_overdue", res.Reason)
@@ -157,12 +155,12 @@ func TestFreezersHoldAfterTheCoreSuspensionCheck(t *testing.T) {
 	assert.Empty(t, env.CustomerMail.Messages())
 	assert.Equal(t, 1, open.calls, "freezers run in registration order, across WithFreezers calls")
 
-	hold, err := m.Preflight(ctx, fixtures.AcmeID, "")
+	hold, err := m.Preflight(ctx, env.DB.Scoped(fixtures.AcmeID), "")
 	require.NoError(t, err)
 	assert.Equal(t, "billing_overdue", hold, "Preflight applies the same gate")
 
 	billing.reason = ""
-	res, err = m.Send(ctx, transactional("tx:frozen", "a@example.com"))
+	res, err = m.Send(ctx, env.DB.Scoped(fixtures.AcmeID), transactional("tx:frozen", "a@example.com"))
 	require.NoError(t, err)
 	assert.Equal(t, outbound.Sent, res.Outcome, "the same Request goes out once the freeze lifts")
 }
@@ -173,7 +171,7 @@ func TestSuspensionIsCheckedBeforeFreezers(t *testing.T) {
 	f := &freezer{}
 	env.DB.Workspace.UpdateOneID(fixtures.AcmeID).SetSuspendedAt(time.Now()).ExecX(ctx)
 
-	res, err := newModule(env, outbound.WithFreezers(f)).Send(ctx, transactional("tx:susp", "a@example.com"))
+	res, err := newModule(env, outbound.WithFreezers(f)).Send(ctx, env.DB.Scoped(fixtures.AcmeID), transactional("tx:susp", "a@example.com"))
 	require.NoError(t, err)
 	assert.Equal(t, outbound.HoldSuspended, res.Reason)
 	assert.Zero(t, f.calls)
@@ -188,15 +186,15 @@ func TestWithLeaseControlsWhenAClaimCanBeTakenOver(t *testing.T) {
 	// under an hour-long one.
 	env.DB.OutboundMessage.Update().Where(outboundmessage.IdempotencyKey(staleClaimKey)).
 		SetClaimedAt(time.Now().Add(-10 * time.Minute)).ExecX(ctx)
-	_, err := newModule(env, outbound.WithLease(time.Hour)).Send(ctx, req)
+	_, err := newModule(env, outbound.WithLease(time.Hour)).Send(ctx, env.DB.Scoped(fixtures.AcmeID), req)
 	require.ErrorIs(t, err, outbound.ErrInProgress)
 	assert.Empty(t, env.CustomerMail.Messages())
 
 	// MarkFailed honours the same lease: it leaves a claim someone may still be working on.
-	require.NoError(t, newModule(env, outbound.WithLease(time.Hour)).MarkFailed(ctx, fixtures.AcmeID, staleClaimKey, errors.New("gave up")))
+	require.NoError(t, newModule(env, outbound.WithLease(time.Hour)).MarkFailed(ctx, env.DB.Scoped(fixtures.AcmeID), staleClaimKey, errors.New("gave up")))
 	assert.Equal(t, outboundmessage.StatusPending, byKey(t, env, staleClaimKey).Status)
 
-	res, err := newModule(env).Send(ctx, req)
+	res, err := newModule(env).Send(ctx, env.DB.Scoped(fixtures.AcmeID), req)
 	require.NoError(t, err)
 	assert.Equal(t, outbound.Sent, res.Outcome)
 }
@@ -207,11 +205,11 @@ func TestReplayReportsSkippedAndFailedOutcomes(t *testing.T) {
 	m := newModule(env)
 
 	skipped := transactional("tx:skip", suppressd)
-	first, err := m.Send(ctx, skipped)
+	first, err := m.Send(ctx, env.DB.Scoped(fixtures.AcmeID), skipped)
 	require.NoError(t, err)
 	require.Equal(t, outbound.Skipped, first.Outcome)
 	assert.Equal(t, eligibility.ReasonSuppressed, first.Reason)
-	again, err := m.Send(ctx, skipped)
+	again, err := m.Send(ctx, env.DB.Scoped(fixtures.AcmeID), skipped)
 	require.NoError(t, err)
 	assert.Equal(t, outbound.Skipped, again.Outcome)
 	assert.Equal(t, eligibility.ReasonSuppressed, again.Reason)
@@ -220,10 +218,10 @@ func TestReplayReportsSkippedAndFailedOutcomes(t *testing.T) {
 
 	broken := transactional("tx:broken", "a@example.com")
 	broken.Subject = "{% if %}broken"
-	first, err = m.Send(ctx, broken)
+	first, err = m.Send(ctx, env.DB.Scoped(fixtures.AcmeID), broken)
 	require.NoError(t, err)
 	require.Equal(t, outbound.Failed, first.Outcome)
-	again, err = m.Send(ctx, broken)
+	again, err = m.Send(ctx, env.DB.Scoped(fixtures.AcmeID), broken)
 	require.NoError(t, err)
 	assert.Equal(t, outbound.Failed, again.Outcome)
 	assert.Equal(t, first.Reason, again.Reason)
@@ -244,7 +242,7 @@ func TestComposeBindsContactFieldsWithRequestVariablesWinning(t *testing.T) {
 		CustomFields: map[string]any{"nick": "countess", "first_name": "SHADOW", "plan": "free"},
 	}
 	req.Variables = map[string]any{"plan": "pro"}
-	res, err := m.Send(context.Background(), req)
+	res, err := m.Send(context.Background(), env.DB.Scoped(fixtures.AcmeID), req)
 	require.NoError(t, err)
 	require.Equal(t, outbound.Sent, res.Outcome)
 	msgs := env.CustomerMail.Messages()
@@ -255,7 +253,7 @@ func TestComposeBindsContactFieldsWithRequestVariablesWinning(t *testing.T) {
 	bare := transactional("tx:bind-bare", "bare@example.com")
 	bare.Subject = "[{{ first_name }}][{{ email }}]"
 	bare.Contact = &ent.Contact{}
-	_, err = m.Send(context.Background(), bare)
+	_, err = m.Send(context.Background(), env.DB.Scoped(fixtures.AcmeID), bare)
 	require.NoError(t, err)
 	msgs = env.CustomerMail.Messages()
 	require.Len(t, msgs, 2)
@@ -268,7 +266,7 @@ func TestTrackedMarketingSendRewritesLinksAndAddsPixel(t *testing.T) {
 	req.TrackID = 4242
 	req.Body = `<mjml><mj-body><mj-section><mj-column><mj-text><a href="https://example.com/x">go</a></mj-text></mj-column></mj-section></mj-body></mjml>`
 
-	res, err := newModule(env).Send(context.Background(), req)
+	res, err := newModule(env).Send(context.Background(), env.DB.Scoped(fixtures.AcmeID), req)
 	require.NoError(t, err)
 	require.Equal(t, outbound.Sent, res.Outcome)
 
@@ -287,19 +285,20 @@ func TestClaimRecordsEveryRefOnTheMessage(t *testing.T) {
 	req := transactional("tx:refs", "refs@example.com")
 	req.ContactID = fixtures.ContactAliceID
 	req.Ref = outbound.Ref{
-		BroadcastID: 11, BroadcastRecipient: 12, AutomationID: 13, AutomationRunID: 14, AutomationStep: &step, TemplateID: 15,
+		BroadcastID: fixtures.BroadcastSentID, BroadcastRecipient: fixtures.BroadcastRecipientSentID, AutomationID: fixtures.AutomationWelcomeSeriesID,
+		AutomationRunID: fixtures.AutomationRunWelcomeCompletedID, AutomationStep: &step, TemplateID: fixtures.TemplateWelcomeID,
 	}
 
-	res, err := newModule(env).Send(ctx, req)
+	res, err := newModule(env).Send(ctx, env.DB.Scoped(fixtures.AcmeID), req)
 	require.NoError(t, err)
 
 	row := env.DB.OutboundMessage.GetX(ctx, res.MessageID)
-	assert.Equal(t, int64(11), *row.BroadcastID)
-	assert.Equal(t, int64(12), *row.BroadcastRecipientID)
-	assert.Equal(t, int64(13), *row.AutomationID)
-	assert.Equal(t, int64(14), *row.AutomationRunID)
+	assert.Equal(t, int64(fixtures.BroadcastSentID), *row.BroadcastID)
+	assert.Equal(t, int64(fixtures.BroadcastRecipientSentID), *row.BroadcastRecipientID)
+	assert.Equal(t, int64(fixtures.AutomationWelcomeSeriesID), *row.AutomationID)
+	assert.Equal(t, int64(fixtures.AutomationRunWelcomeCompletedID), *row.AutomationRunID)
 	assert.Equal(t, 3, *row.AutomationStep)
-	assert.Equal(t, int64(15), *row.TemplateID)
+	assert.Equal(t, int64(fixtures.TemplateWelcomeID), *row.TemplateID)
 	assert.Equal(t, int64(fixtures.ContactAliceID), *row.ContactID)
 }
 
@@ -314,7 +313,7 @@ func TestClaimErrors(t *testing.T) {
 			}
 			return next.Mutate(ctx, m)
 		})
-		_, err := newModule(env).Send(ctx, transactional("tx:insert", "a@example.com"))
+		_, err := newModule(env).Send(ctx, env.DB.Scoped(fixtures.AcmeID), transactional("tx:insert", "a@example.com"))
 		assert.ErrorContains(t, err, "disk full")
 		assert.Empty(t, env.CustomerMail.Messages())
 	})
@@ -335,7 +334,7 @@ func TestClaimErrors(t *testing.T) {
 			}
 			return next.Mutate(ctx, m)
 		})
-		res, err := newModule(env).Send(ctx, transactional("tx:race", "a@example.com"))
+		res, err := newModule(env).Send(ctx, env.DB.Scoped(fixtures.AcmeID), transactional("tx:race", "a@example.com"))
 		require.NoError(t, err)
 		assert.Equal(t, outbound.Sent, res.Outcome)
 		assert.True(t, res.Replayed)
@@ -356,7 +355,7 @@ func TestClaimErrors(t *testing.T) {
 			}
 			return next.Mutate(ctx, m)
 		})
-		_, err := newModule(env).Send(ctx, transactional("tx:race", "a@example.com"))
+		_, err := newModule(env).Send(ctx, env.DB.Scoped(fixtures.AcmeID), transactional("tx:race", "a@example.com"))
 		assert.ErrorIs(t, err, outbound.ErrInProgress)
 		assert.Empty(t, env.CustomerMail.Messages())
 	})
@@ -376,7 +375,7 @@ func TestClaimErrors(t *testing.T) {
 			}
 			return next.Mutate(ctx, m)
 		})
-		res, err := newModule(env).Send(ctx, transactional("tx:race", "a@example.com"))
+		res, err := newModule(env).Send(ctx, env.DB.Scoped(fixtures.AcmeID), transactional("tx:race", "a@example.com"))
 		require.NoError(t, err)
 		assert.Equal(t, outbound.Sent, res.Outcome)
 		assert.Len(t, env.CustomerMail.Messages(), 1)
@@ -390,7 +389,7 @@ func TestClaimErrors(t *testing.T) {
 			}
 			return next.Mutate(ctx, m)
 		})
-		_, err := newModule(env).Send(ctx, transactional("tx:ghost", "a@example.com"))
+		_, err := newModule(env).Send(ctx, env.DB.Scoped(fixtures.AcmeID), transactional("tx:ghost", "a@example.com"))
 		assert.True(t, ent.IsConstraintError(err), "the original insert error is surfaced")
 	})
 
@@ -412,7 +411,7 @@ func TestClaimErrors(t *testing.T) {
 				return next.Query(ctx, q)
 			})
 		}))
-		_, err := newModule(env).Send(ctx, transactional("tx:findfail", "a@example.com"))
+		_, err := newModule(env).Send(ctx, env.DB.Scoped(fixtures.AcmeID), transactional("tx:findfail", "a@example.com"))
 		assert.ErrorContains(t, err, "replica lag")
 	})
 
@@ -424,7 +423,7 @@ func TestClaimErrors(t *testing.T) {
 			}
 			return next.Mutate(ctx, m)
 		})
-		_, err := newModule(env).Send(ctx, transactional(staleClaimKey, "lease.demo@codebasics.dev"))
+		_, err := newModule(env).Send(ctx, env.DB.Scoped(fixtures.AcmeID), transactional(staleClaimKey, "lease.demo@codebasics.dev"))
 		assert.ErrorContains(t, err, "write refused")
 		assert.Empty(t, env.CustomerMail.Messages())
 	})
@@ -441,7 +440,7 @@ func TestClaimErrors(t *testing.T) {
 			}
 			return next.Mutate(ctx, m)
 		})
-		_, err := newModule(env).Send(ctx, transactional(staleClaimKey, "lease.demo@codebasics.dev"))
+		_, err := newModule(env).Send(ctx, env.DB.Scoped(fixtures.AcmeID), transactional(staleClaimKey, "lease.demo@codebasics.dev"))
 		assert.ErrorIs(t, err, outbound.ErrInProgress)
 		assert.Empty(t, env.CustomerMail.Messages())
 	})
@@ -452,15 +451,10 @@ func TestEligibilityFailureReleasesTheClaimAndFailsClosed(t *testing.T) {
 	ctx := context.Background()
 	logs := captureLog(t)
 
-	// The eligibility rule reads the Workspace a second time (Send loaded it first).
-	queries := 0
-	env.DB.Workspace.Intercept(ent.InterceptFunc(func(next ent.Querier) ent.Querier {
+	// The eligibility rule runs through the Workspace's Suppression query.
+	env.DB.Suppression.Intercept(ent.InterceptFunc(func(next ent.Querier) ent.Querier {
 		return ent.QuerierFunc(func(ctx context.Context, q ent.Query) (ent.Value, error) {
-			queries++
-			if queries >= 2 {
-				return nil, errors.New("rule store unavailable")
-			}
-			return next.Query(ctx, q)
+			return nil, errors.New("rule store unavailable")
 		})
 	}))
 	// And the release of the claim itself fails, which is only logged.
@@ -471,7 +465,7 @@ func TestEligibilityFailureReleasesTheClaimAndFailsClosed(t *testing.T) {
 		return next.Mutate(ctx, m)
 	})
 
-	_, err := newModule(env).Send(ctx, transactional("tx:elig", "a@example.com"))
+	_, err := newModule(env).Send(ctx, env.DB.Scoped(fixtures.AcmeID), transactional("tx:elig", "a@example.com"))
 	require.ErrorContains(t, err, "rule store unavailable")
 	assert.Empty(t, env.CustomerMail.Messages(), "fail closed: nothing is sent when eligibility cannot be checked")
 	assert.Contains(t, logs.String(), "outbound: release claim failed")
@@ -489,7 +483,7 @@ func TestFinishErrors(t *testing.T) {
 			}
 			return next.Mutate(ctx, m)
 		})
-		_, err := newModule(env).Send(ctx, transactional("tx:finish", suppressd))
+		_, err := newModule(env).Send(ctx, env.DB.Scoped(fixtures.AcmeID), transactional("tx:finish", suppressd))
 		assert.ErrorContains(t, err, "write refused")
 	})
 
@@ -502,7 +496,7 @@ func TestFinishErrors(t *testing.T) {
 			}
 			return next.Mutate(ctx, m)
 		})
-		_, err := newModule(env).Send(ctx, transactional("tx:finish", suppressd))
+		_, err := newModule(env).Send(ctx, env.DB.Scoped(fixtures.AcmeID), transactional("tx:finish", suppressd))
 		assert.ErrorIs(t, err, outbound.ErrInProgress)
 	})
 }
@@ -511,28 +505,26 @@ func TestPreflightErrors(t *testing.T) {
 	env := testhelper.Setup(t)
 	ctx := context.Background()
 
-	_, err := newModule(env).Preflight(ctx, 987654, "")
+	_, err := newModule(env).Preflight(ctx, env.DB.Scoped(987654), "")
 	assert.ErrorContains(t, err, "load workspace 987654")
 
-	_, err = newModule(env, outbound.WithFreezers(&freezer{err: errors.New("down")})).Preflight(ctx, fixtures.AcmeID, "")
+	_, err = newModule(env, outbound.WithFreezers(&freezer{err: errors.New("down")})).Preflight(ctx, env.DB.Scoped(fixtures.AcmeID), "")
 	assert.ErrorContains(t, err, "freeze check")
 }
 
 func TestSendTestOutcomes(t *testing.T) {
 	ctx := context.Background()
-	req := outbound.TestRequest{WorkspaceID: fixtures.AcmeID, To: "Preview@Example.com", Subject: "s", Body: mjml}
+	req := outbound.TestRequest{To: "Preview@Example.com", Subject: "s", Body: mjml}
 
 	t.Run("unknown workspace", func(t *testing.T) {
 		env := testhelper.Setup(t)
-		bad := req
-		bad.WorkspaceID = 987654
-		_, err := newModule(env).SendTest(ctx, bad)
+		_, err := newModule(env).SendTest(ctx, env.DB.Scoped(987654), req)
 		assert.ErrorContains(t, err, "load workspace 987654")
 	})
 
 	t.Run("gate error", func(t *testing.T) {
 		env := testhelper.Setup(t)
-		_, err := newModule(env, outbound.WithFreezers(&freezer{err: errors.New("down")})).SendTest(ctx, req)
+		_, err := newModule(env, outbound.WithFreezers(&freezer{err: errors.New("down")})).SendTest(ctx, env.DB.Scoped(fixtures.AcmeID), req)
 		assert.ErrorContains(t, err, "freeze check")
 	})
 
@@ -540,7 +532,7 @@ func TestSendTestOutcomes(t *testing.T) {
 		env := testhelper.Setup(t)
 		bad := req
 		bad.Subject = "{% if %}broken"
-		res, err := newModule(env).SendTest(ctx, bad)
+		res, err := newModule(env).SendTest(ctx, env.DB.Scoped(fixtures.AcmeID), bad)
 		require.NoError(t, err)
 		assert.Equal(t, outbound.Failed, res.Outcome)
 		assert.NotEmpty(t, res.Reason)
@@ -549,7 +541,7 @@ func TestSendTestOutcomes(t *testing.T) {
 
 	t.Run("destination is normalized", func(t *testing.T) {
 		env := testhelper.Setup(t)
-		res, err := newModule(env).SendTest(ctx, req)
+		res, err := newModule(env).SendTest(ctx, env.DB.Scoped(fixtures.AcmeID), req)
 		require.NoError(t, err)
 		assert.Equal(t, outbound.Sent, res.Outcome)
 		require.Len(t, env.CustomerMail.Messages(), 1)
@@ -559,7 +551,7 @@ func TestSendTestOutcomes(t *testing.T) {
 	t.Run("domain loses verification at sign time", func(t *testing.T) {
 		env := testhelper.Setup(t)
 		env.CustomerMail.SetErr(messaging.ErrUnverifiedSendingDomain)
-		res, err := newModule(env).SendTest(ctx, req)
+		res, err := newModule(env).SendTest(ctx, env.DB.Scoped(fixtures.AcmeID), req)
 		require.NoError(t, err)
 		assert.Equal(t, outbound.Held, res.Outcome)
 		assert.Equal(t, outbound.HoldUnverifiedDomain, res.Reason)
@@ -568,7 +560,7 @@ func TestSendTestOutcomes(t *testing.T) {
 	t.Run("provider error is returned", func(t *testing.T) {
 		env := testhelper.Setup(t)
 		env.CustomerMail.SetErr(errors.New("smtp unavailable"))
-		_, err := newModule(env).SendTest(ctx, req)
+		_, err := newModule(env).SendTest(ctx, env.DB.Scoped(fixtures.AcmeID), req)
 		assert.ErrorContains(t, err, "test send to preview@example.com")
 		assert.ErrorContains(t, err, "smtp unavailable")
 	})
@@ -583,7 +575,7 @@ func TestSendBroadcastTestWordsEveryOutcome(t *testing.T) {
 
 	t.Run("sent", func(t *testing.T) {
 		env := testhelper.Setup(t)
-		got := newModule(env).SendBroadcastTest(ctx, broadcast("Launch {{ first_name }}", mjml), "me@example.com")
+		got := newModule(env).SendBroadcastTest(ctx, env.DB.Scoped(fixtures.AcmeID), broadcast("Launch {{ first_name }}", mjml), "me@example.com")
 		assert.Empty(t, got)
 
 		msgs := env.CustomerMail.Messages()
@@ -597,21 +589,21 @@ func TestSendBroadcastTestWordsEveryOutcome(t *testing.T) {
 	t.Run("held", func(t *testing.T) {
 		env := testhelper.Setup(t)
 		env.DB.Workspace.UpdateOneID(fixtures.AcmeID).SetSuspendedAt(time.Now()).ExecX(ctx)
-		got := newModule(env).SendBroadcastTest(ctx, broadcast("s", mjml), "me@example.com")
+		got := newModule(env).SendBroadcastTest(ctx, env.DB.Scoped(fixtures.AcmeID), broadcast("s", mjml), "me@example.com")
 		assert.Equal(t, outbound.HoldDetail(outbound.HoldSuspended), got)
 	})
 
 	t.Run("send error", func(t *testing.T) {
 		env := testhelper.Setup(t)
 		env.CustomerMail.SetErr(errors.New("smtp unavailable"))
-		got := newModule(env).SendBroadcastTest(ctx, broadcast("s", mjml), "me@example.com")
+		got := newModule(env).SendBroadcastTest(ctx, env.DB.Scoped(fixtures.AcmeID), broadcast("s", mjml), "me@example.com")
 		assert.Contains(t, got, "send failed:")
 		assert.Contains(t, got, "smtp unavailable")
 	})
 
 	t.Run("content does not render", func(t *testing.T) {
 		env := testhelper.Setup(t)
-		got := newModule(env).SendBroadcastTest(ctx, broadcast("{% if %}broken", mjml), "me@example.com")
+		got := newModule(env).SendBroadcastTest(ctx, env.DB.Scoped(fixtures.AcmeID), broadcast("{% if %}broken", mjml), "me@example.com")
 		assert.NotEmpty(t, got)
 		assert.NotContains(t, got, "send failed")
 		assert.Empty(t, env.CustomerMail.Messages())

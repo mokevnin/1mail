@@ -30,6 +30,26 @@ func (_u *SegmentUpdate) Where(ps ...predicate.Segment) *SegmentUpdate {
 	return _u
 }
 
+// SetUpdatedAt sets the "updated_at" field.
+func (_u *SegmentUpdate) SetUpdatedAt(v time.Time) *SegmentUpdate {
+	_u.mutation.SetUpdatedAt(v)
+	return _u
+}
+
+// SetWorkspaceID sets the "workspace_id" field.
+func (_u *SegmentUpdate) SetWorkspaceID(v int64) *SegmentUpdate {
+	_u.mutation.SetWorkspaceID(v)
+	return _u
+}
+
+// SetNillableWorkspaceID sets the "workspace_id" field if the given value is not nil.
+func (_u *SegmentUpdate) SetNillableWorkspaceID(v *int64) *SegmentUpdate {
+	if v != nil {
+		_u.SetWorkspaceID(*v)
+	}
+	return _u
+}
+
 // SetName sets the "name" field.
 func (_u *SegmentUpdate) SetName(v string) *SegmentUpdate {
 	_u.mutation.SetName(v)
@@ -61,26 +81,6 @@ func (_u *SegmentUpdate) SetNillableDefinition(v *string) *SegmentUpdate {
 // ClearDefinition clears the value of the "definition" field.
 func (_u *SegmentUpdate) ClearDefinition() *SegmentUpdate {
 	_u.mutation.ClearDefinition()
-	return _u
-}
-
-// SetWorkspaceID sets the "workspace_id" field.
-func (_u *SegmentUpdate) SetWorkspaceID(v int64) *SegmentUpdate {
-	_u.mutation.SetWorkspaceID(v)
-	return _u
-}
-
-// SetNillableWorkspaceID sets the "workspace_id" field if the given value is not nil.
-func (_u *SegmentUpdate) SetNillableWorkspaceID(v *int64) *SegmentUpdate {
-	if v != nil {
-		_u.SetWorkspaceID(*v)
-	}
-	return _u
-}
-
-// SetUpdatedAt sets the "updated_at" field.
-func (_u *SegmentUpdate) SetUpdatedAt(v time.Time) *SegmentUpdate {
-	_u.mutation.SetUpdatedAt(v)
 	return _u
 }
 
@@ -167,6 +167,9 @@ func (_u *SegmentUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 			}
 		}
 	}
+	if value, ok := _u.mutation.UpdatedAt(); ok {
+		_spec.SetField(segment.FieldUpdatedAt, field.TypeTime, value)
+	}
 	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(segment.FieldName, field.TypeString, value)
 	}
@@ -175,9 +178,6 @@ func (_u *SegmentUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	}
 	if _u.mutation.DefinitionCleared() {
 		_spec.ClearField(segment.FieldDefinition, field.TypeString)
-	}
-	if value, ok := _u.mutation.UpdatedAt(); ok {
-		_spec.SetField(segment.FieldUpdatedAt, field.TypeTime, value)
 	}
 	if _u.mutation.WorkspaceCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -230,6 +230,26 @@ type SegmentUpdateOne struct {
 	modifiers []func(*sql.UpdateBuilder)
 }
 
+// SetUpdatedAt sets the "updated_at" field.
+func (_u *SegmentUpdateOne) SetUpdatedAt(v time.Time) *SegmentUpdateOne {
+	_u.mutation.SetUpdatedAt(v)
+	return _u
+}
+
+// SetWorkspaceID sets the "workspace_id" field.
+func (_u *SegmentUpdateOne) SetWorkspaceID(v int64) *SegmentUpdateOne {
+	_u.mutation.SetWorkspaceID(v)
+	return _u
+}
+
+// SetNillableWorkspaceID sets the "workspace_id" field if the given value is not nil.
+func (_u *SegmentUpdateOne) SetNillableWorkspaceID(v *int64) *SegmentUpdateOne {
+	if v != nil {
+		_u.SetWorkspaceID(*v)
+	}
+	return _u
+}
+
 // SetName sets the "name" field.
 func (_u *SegmentUpdateOne) SetName(v string) *SegmentUpdateOne {
 	_u.mutation.SetName(v)
@@ -261,26 +281,6 @@ func (_u *SegmentUpdateOne) SetNillableDefinition(v *string) *SegmentUpdateOne {
 // ClearDefinition clears the value of the "definition" field.
 func (_u *SegmentUpdateOne) ClearDefinition() *SegmentUpdateOne {
 	_u.mutation.ClearDefinition()
-	return _u
-}
-
-// SetWorkspaceID sets the "workspace_id" field.
-func (_u *SegmentUpdateOne) SetWorkspaceID(v int64) *SegmentUpdateOne {
-	_u.mutation.SetWorkspaceID(v)
-	return _u
-}
-
-// SetNillableWorkspaceID sets the "workspace_id" field if the given value is not nil.
-func (_u *SegmentUpdateOne) SetNillableWorkspaceID(v *int64) *SegmentUpdateOne {
-	if v != nil {
-		_u.SetWorkspaceID(*v)
-	}
-	return _u
-}
-
-// SetUpdatedAt sets the "updated_at" field.
-func (_u *SegmentUpdateOne) SetUpdatedAt(v time.Time) *SegmentUpdateOne {
-	_u.mutation.SetUpdatedAt(v)
 	return _u
 }
 
@@ -397,6 +397,9 @@ func (_u *SegmentUpdateOne) sqlSave(ctx context.Context) (_node *Segment, err er
 			}
 		}
 	}
+	if value, ok := _u.mutation.UpdatedAt(); ok {
+		_spec.SetField(segment.FieldUpdatedAt, field.TypeTime, value)
+	}
 	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(segment.FieldName, field.TypeString, value)
 	}
@@ -405,9 +408,6 @@ func (_u *SegmentUpdateOne) sqlSave(ctx context.Context) (_node *Segment, err er
 	}
 	if _u.mutation.DefinitionCleared() {
 		_spec.ClearField(segment.FieldDefinition, field.TypeString)
-	}
-	if value, ok := _u.mutation.UpdatedAt(); ok {
-		_spec.SetField(segment.FieldUpdatedAt, field.TypeTime, value)
 	}
 	if _u.mutation.WorkspaceCleared() {
 		edge := &sqlgraph.EdgeSpec{

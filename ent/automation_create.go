@@ -24,6 +24,40 @@ type AutomationCreate struct {
 	conflict []sql.ConflictOption
 }
 
+// SetCreatedAt sets the "created_at" field.
+func (_c *AutomationCreate) SetCreatedAt(v time.Time) *AutomationCreate {
+	_c.mutation.SetCreatedAt(v)
+	return _c
+}
+
+// SetNillableCreatedAt sets the "created_at" field if the given value is not nil.
+func (_c *AutomationCreate) SetNillableCreatedAt(v *time.Time) *AutomationCreate {
+	if v != nil {
+		_c.SetCreatedAt(*v)
+	}
+	return _c
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (_c *AutomationCreate) SetUpdatedAt(v time.Time) *AutomationCreate {
+	_c.mutation.SetUpdatedAt(v)
+	return _c
+}
+
+// SetNillableUpdatedAt sets the "updated_at" field if the given value is not nil.
+func (_c *AutomationCreate) SetNillableUpdatedAt(v *time.Time) *AutomationCreate {
+	if v != nil {
+		_c.SetUpdatedAt(*v)
+	}
+	return _c
+}
+
+// SetWorkspaceID sets the "workspace_id" field.
+func (_c *AutomationCreate) SetWorkspaceID(v int64) *AutomationCreate {
+	_c.mutation.SetWorkspaceID(v)
+	return _c
+}
+
 // SetName sets the "name" field.
 func (_c *AutomationCreate) SetName(v string) *AutomationCreate {
 	_c.mutation.SetName(v)
@@ -60,40 +94,6 @@ func (_c *AutomationCreate) SetDefinition(v string) *AutomationCreate {
 func (_c *AutomationCreate) SetNillableDefinition(v *string) *AutomationCreate {
 	if v != nil {
 		_c.SetDefinition(*v)
-	}
-	return _c
-}
-
-// SetWorkspaceID sets the "workspace_id" field.
-func (_c *AutomationCreate) SetWorkspaceID(v int64) *AutomationCreate {
-	_c.mutation.SetWorkspaceID(v)
-	return _c
-}
-
-// SetCreatedAt sets the "created_at" field.
-func (_c *AutomationCreate) SetCreatedAt(v time.Time) *AutomationCreate {
-	_c.mutation.SetCreatedAt(v)
-	return _c
-}
-
-// SetNillableCreatedAt sets the "created_at" field if the given value is not nil.
-func (_c *AutomationCreate) SetNillableCreatedAt(v *time.Time) *AutomationCreate {
-	if v != nil {
-		_c.SetCreatedAt(*v)
-	}
-	return _c
-}
-
-// SetUpdatedAt sets the "updated_at" field.
-func (_c *AutomationCreate) SetUpdatedAt(v time.Time) *AutomationCreate {
-	_c.mutation.SetUpdatedAt(v)
-	return _c
-}
-
-// SetNillableUpdatedAt sets the "updated_at" field if the given value is not nil.
-func (_c *AutomationCreate) SetNillableUpdatedAt(v *time.Time) *AutomationCreate {
-	if v != nil {
-		_c.SetUpdatedAt(*v)
 	}
 	return _c
 }
@@ -159,14 +159,6 @@ func (_c *AutomationCreate) ExecX(ctx context.Context) {
 
 // defaults sets the default values of the builder before save.
 func (_c *AutomationCreate) defaults() {
-	if _, ok := _c.mutation.Status(); !ok {
-		v := automation.DefaultStatus
-		_c.mutation.SetStatus(v)
-	}
-	if _, ok := _c.mutation.Definition(); !ok {
-		v := automation.DefaultDefinition
-		_c.mutation.SetDefinition(v)
-	}
 	if _, ok := _c.mutation.CreatedAt(); !ok {
 		v := automation.DefaultCreatedAt()
 		_c.mutation.SetCreatedAt(v)
@@ -175,10 +167,27 @@ func (_c *AutomationCreate) defaults() {
 		v := automation.DefaultUpdatedAt()
 		_c.mutation.SetUpdatedAt(v)
 	}
+	if _, ok := _c.mutation.Status(); !ok {
+		v := automation.DefaultStatus
+		_c.mutation.SetStatus(v)
+	}
+	if _, ok := _c.mutation.Definition(); !ok {
+		v := automation.DefaultDefinition
+		_c.mutation.SetDefinition(v)
+	}
 }
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *AutomationCreate) check() error {
+	if _, ok := _c.mutation.CreatedAt(); !ok {
+		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "Automation.created_at"`)}
+	}
+	if _, ok := _c.mutation.UpdatedAt(); !ok {
+		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "Automation.updated_at"`)}
+	}
+	if _, ok := _c.mutation.WorkspaceID(); !ok {
+		return &ValidationError{Name: "workspace_id", err: errors.New(`ent: missing required field "Automation.workspace_id"`)}
+	}
 	if _, ok := _c.mutation.Name(); !ok {
 		return &ValidationError{Name: "name", err: errors.New(`ent: missing required field "Automation.name"`)}
 	}
@@ -205,15 +214,6 @@ func (_c *AutomationCreate) check() error {
 	}
 	if _, ok := _c.mutation.Definition(); !ok {
 		return &ValidationError{Name: "definition", err: errors.New(`ent: missing required field "Automation.definition"`)}
-	}
-	if _, ok := _c.mutation.WorkspaceID(); !ok {
-		return &ValidationError{Name: "workspace_id", err: errors.New(`ent: missing required field "Automation.workspace_id"`)}
-	}
-	if _, ok := _c.mutation.CreatedAt(); !ok {
-		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "Automation.created_at"`)}
-	}
-	if _, ok := _c.mutation.UpdatedAt(); !ok {
-		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "Automation.updated_at"`)}
 	}
 	if len(_c.mutation.WorkspaceIDs()) == 0 {
 		return &ValidationError{Name: "workspace", err: errors.New(`ent: missing required edge "Automation.workspace"`)}
@@ -251,6 +251,14 @@ func (_c *AutomationCreate) createSpec() (*Automation, *sqlgraph.CreateSpec) {
 		_node.ID = id
 		_spec.ID.Value = id
 	}
+	if value, ok := _c.mutation.CreatedAt(); ok {
+		_spec.SetField(automation.FieldCreatedAt, field.TypeTime, value)
+		_node.CreatedAt = value
+	}
+	if value, ok := _c.mutation.UpdatedAt(); ok {
+		_spec.SetField(automation.FieldUpdatedAt, field.TypeTime, value)
+		_node.UpdatedAt = value
+	}
 	if value, ok := _c.mutation.Name(); ok {
 		_spec.SetField(automation.FieldName, field.TypeString, value)
 		_node.Name = value
@@ -266,14 +274,6 @@ func (_c *AutomationCreate) createSpec() (*Automation, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.Definition(); ok {
 		_spec.SetField(automation.FieldDefinition, field.TypeString, value)
 		_node.Definition = value
-	}
-	if value, ok := _c.mutation.CreatedAt(); ok {
-		_spec.SetField(automation.FieldCreatedAt, field.TypeTime, value)
-		_node.CreatedAt = value
-	}
-	if value, ok := _c.mutation.UpdatedAt(); ok {
-		_spec.SetField(automation.FieldUpdatedAt, field.TypeTime, value)
-		_node.UpdatedAt = value
 	}
 	if nodes := _c.mutation.WorkspaceIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -315,7 +315,7 @@ func (_c *AutomationCreate) createSpec() (*Automation, *sqlgraph.CreateSpec) {
 // of the `INSERT` statement. For example:
 //
 //	client.Automation.Create().
-//		SetName(v).
+//		SetCreatedAt(v).
 //		OnConflict(
 //			// Update the row with the new values
 //			// the was proposed for insertion.
@@ -324,7 +324,7 @@ func (_c *AutomationCreate) createSpec() (*Automation, *sqlgraph.CreateSpec) {
 //		// Override some of the fields with custom
 //		// update values.
 //		Update(func(u *ent.AutomationUpsert) {
-//			SetName(v+v).
+//			SetCreatedAt(v+v).
 //		}).
 //		Exec(ctx)
 func (_c *AutomationCreate) OnConflict(opts ...sql.ConflictOption) *AutomationUpsertOne {
@@ -359,6 +359,30 @@ type (
 		*sql.UpdateSet
 	}
 )
+
+// SetUpdatedAt sets the "updated_at" field.
+func (u *AutomationUpsert) SetUpdatedAt(v time.Time) *AutomationUpsert {
+	u.Set(automation.FieldUpdatedAt, v)
+	return u
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *AutomationUpsert) UpdateUpdatedAt() *AutomationUpsert {
+	u.SetExcluded(automation.FieldUpdatedAt)
+	return u
+}
+
+// SetWorkspaceID sets the "workspace_id" field.
+func (u *AutomationUpsert) SetWorkspaceID(v int64) *AutomationUpsert {
+	u.Set(automation.FieldWorkspaceID, v)
+	return u
+}
+
+// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
+func (u *AutomationUpsert) UpdateWorkspaceID() *AutomationUpsert {
+	u.SetExcluded(automation.FieldWorkspaceID)
+	return u
+}
 
 // SetName sets the "name" field.
 func (u *AutomationUpsert) SetName(v string) *AutomationUpsert {
@@ -405,30 +429,6 @@ func (u *AutomationUpsert) SetDefinition(v string) *AutomationUpsert {
 // UpdateDefinition sets the "definition" field to the value that was provided on create.
 func (u *AutomationUpsert) UpdateDefinition() *AutomationUpsert {
 	u.SetExcluded(automation.FieldDefinition)
-	return u
-}
-
-// SetWorkspaceID sets the "workspace_id" field.
-func (u *AutomationUpsert) SetWorkspaceID(v int64) *AutomationUpsert {
-	u.Set(automation.FieldWorkspaceID, v)
-	return u
-}
-
-// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
-func (u *AutomationUpsert) UpdateWorkspaceID() *AutomationUpsert {
-	u.SetExcluded(automation.FieldWorkspaceID)
-	return u
-}
-
-// SetUpdatedAt sets the "updated_at" field.
-func (u *AutomationUpsert) SetUpdatedAt(v time.Time) *AutomationUpsert {
-	u.Set(automation.FieldUpdatedAt, v)
-	return u
-}
-
-// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
-func (u *AutomationUpsert) UpdateUpdatedAt() *AutomationUpsert {
-	u.SetExcluded(automation.FieldUpdatedAt)
 	return u
 }
 
@@ -481,6 +481,34 @@ func (u *AutomationUpsertOne) Update(set func(*AutomationUpsert)) *AutomationUps
 		set(&AutomationUpsert{UpdateSet: update})
 	}))
 	return u
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (u *AutomationUpsertOne) SetUpdatedAt(v time.Time) *AutomationUpsertOne {
+	return u.Update(func(s *AutomationUpsert) {
+		s.SetUpdatedAt(v)
+	})
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *AutomationUpsertOne) UpdateUpdatedAt() *AutomationUpsertOne {
+	return u.Update(func(s *AutomationUpsert) {
+		s.UpdateUpdatedAt()
+	})
+}
+
+// SetWorkspaceID sets the "workspace_id" field.
+func (u *AutomationUpsertOne) SetWorkspaceID(v int64) *AutomationUpsertOne {
+	return u.Update(func(s *AutomationUpsert) {
+		s.SetWorkspaceID(v)
+	})
+}
+
+// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
+func (u *AutomationUpsertOne) UpdateWorkspaceID() *AutomationUpsertOne {
+	return u.Update(func(s *AutomationUpsert) {
+		s.UpdateWorkspaceID()
+	})
 }
 
 // SetName sets the "name" field.
@@ -536,34 +564,6 @@ func (u *AutomationUpsertOne) SetDefinition(v string) *AutomationUpsertOne {
 func (u *AutomationUpsertOne) UpdateDefinition() *AutomationUpsertOne {
 	return u.Update(func(s *AutomationUpsert) {
 		s.UpdateDefinition()
-	})
-}
-
-// SetWorkspaceID sets the "workspace_id" field.
-func (u *AutomationUpsertOne) SetWorkspaceID(v int64) *AutomationUpsertOne {
-	return u.Update(func(s *AutomationUpsert) {
-		s.SetWorkspaceID(v)
-	})
-}
-
-// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
-func (u *AutomationUpsertOne) UpdateWorkspaceID() *AutomationUpsertOne {
-	return u.Update(func(s *AutomationUpsert) {
-		s.UpdateWorkspaceID()
-	})
-}
-
-// SetUpdatedAt sets the "updated_at" field.
-func (u *AutomationUpsertOne) SetUpdatedAt(v time.Time) *AutomationUpsertOne {
-	return u.Update(func(s *AutomationUpsert) {
-		s.SetUpdatedAt(v)
-	})
-}
-
-// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
-func (u *AutomationUpsertOne) UpdateUpdatedAt() *AutomationUpsertOne {
-	return u.Update(func(s *AutomationUpsert) {
-		s.UpdateUpdatedAt()
 	})
 }
 
@@ -702,7 +702,7 @@ func (_c *AutomationCreateBulk) ExecX(ctx context.Context) {
 //		// Override some of the fields with custom
 //		// update values.
 //		Update(func(u *ent.AutomationUpsert) {
-//			SetName(v+v).
+//			SetCreatedAt(v+v).
 //		}).
 //		Exec(ctx)
 func (_c *AutomationCreateBulk) OnConflict(opts ...sql.ConflictOption) *AutomationUpsertBulk {
@@ -784,6 +784,34 @@ func (u *AutomationUpsertBulk) Update(set func(*AutomationUpsert)) *AutomationUp
 	return u
 }
 
+// SetUpdatedAt sets the "updated_at" field.
+func (u *AutomationUpsertBulk) SetUpdatedAt(v time.Time) *AutomationUpsertBulk {
+	return u.Update(func(s *AutomationUpsert) {
+		s.SetUpdatedAt(v)
+	})
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *AutomationUpsertBulk) UpdateUpdatedAt() *AutomationUpsertBulk {
+	return u.Update(func(s *AutomationUpsert) {
+		s.UpdateUpdatedAt()
+	})
+}
+
+// SetWorkspaceID sets the "workspace_id" field.
+func (u *AutomationUpsertBulk) SetWorkspaceID(v int64) *AutomationUpsertBulk {
+	return u.Update(func(s *AutomationUpsert) {
+		s.SetWorkspaceID(v)
+	})
+}
+
+// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
+func (u *AutomationUpsertBulk) UpdateWorkspaceID() *AutomationUpsertBulk {
+	return u.Update(func(s *AutomationUpsert) {
+		s.UpdateWorkspaceID()
+	})
+}
+
 // SetName sets the "name" field.
 func (u *AutomationUpsertBulk) SetName(v string) *AutomationUpsertBulk {
 	return u.Update(func(s *AutomationUpsert) {
@@ -837,34 +865,6 @@ func (u *AutomationUpsertBulk) SetDefinition(v string) *AutomationUpsertBulk {
 func (u *AutomationUpsertBulk) UpdateDefinition() *AutomationUpsertBulk {
 	return u.Update(func(s *AutomationUpsert) {
 		s.UpdateDefinition()
-	})
-}
-
-// SetWorkspaceID sets the "workspace_id" field.
-func (u *AutomationUpsertBulk) SetWorkspaceID(v int64) *AutomationUpsertBulk {
-	return u.Update(func(s *AutomationUpsert) {
-		s.SetWorkspaceID(v)
-	})
-}
-
-// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
-func (u *AutomationUpsertBulk) UpdateWorkspaceID() *AutomationUpsertBulk {
-	return u.Update(func(s *AutomationUpsert) {
-		s.UpdateWorkspaceID()
-	})
-}
-
-// SetUpdatedAt sets the "updated_at" field.
-func (u *AutomationUpsertBulk) SetUpdatedAt(v time.Time) *AutomationUpsertBulk {
-	return u.Update(func(s *AutomationUpsert) {
-		s.SetUpdatedAt(v)
-	})
-}
-
-// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
-func (u *AutomationUpsertBulk) UpdateUpdatedAt() *AutomationUpsertBulk {
-	return u.Update(func(s *AutomationUpsert) {
-		s.UpdateUpdatedAt()
 	})
 }
 

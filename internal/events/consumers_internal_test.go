@@ -29,7 +29,7 @@ func TestConsumersRejectUndecodableMessages(t *testing.T) {
 	consumers := map[string]message.NoPublishHandlerFunc{
 		"persist":     persistConsumer(nil),
 		"suppression": suppressionConsumer(nil),
-		"webhooks":    webhooksConsumer(nil),
+		"webhooks":    webhooksConsumer(nil, nil),
 		"automations": automationsConsumer(nil),
 	}
 	for name, handle := range consumers {

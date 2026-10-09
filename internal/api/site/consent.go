@@ -23,7 +23,7 @@ func (h *Handlers) SitePublicConfirmationsPerform(ctx context.Context, params si
 		v := siteapi.SitePublicConfirmationsPerformBadRequest(problem(http.StatusBadRequest, "invalid token"))
 		return &v, nil
 	}
-	if err := consent.RecordConfirmation(ctx, h.ent, h.bus, target, clientip.FromContext(ctx)); err != nil {
+	if err := consent.RecordConfirmation(ctx, h.bus, target, clientip.FromContext(ctx)); err != nil {
 		return nil, fmt.Errorf("record confirmation: %w", err)
 	}
 	return &siteapi.SitePublicConfirmationsPerformNoContent{}, nil
@@ -37,7 +37,7 @@ func (h *Handlers) SitePublicUnsubscribesPerform(ctx context.Context, params sit
 		v := problem(http.StatusBadRequest, "invalid token")
 		return &v, nil
 	}
-	if err := consent.RecordUnsubscribe(ctx, h.ent, h.bus, target); err != nil {
+	if err := consent.RecordUnsubscribe(ctx, h.bus, target); err != nil {
 		return nil, fmt.Errorf("record unsubscribe: %w", err)
 	}
 	return &siteapi.SitePublicUnsubscribesPerformNoContent{}, nil

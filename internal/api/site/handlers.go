@@ -2,12 +2,11 @@ package site
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/mokevnin/1mail/ent"
 	"github.com/mokevnin/1mail/ent/membership"
-	"github.com/mokevnin/1mail/ent/workspace"
 	siteapi "github.com/mokevnin/1mail/gen/site"
+	"github.com/mokevnin/1mail/internal/accounts"
 	"github.com/mokevnin/1mail/internal/api/auth"
 	"github.com/mokevnin/1mail/internal/api/site/resources"
 	"github.com/mokevnin/1mail/internal/authtoken"
@@ -21,7 +20,6 @@ import (
 	"github.com/mokevnin/1mail/internal/outbound"
 	"github.com/mokevnin/1mail/internal/secrets"
 	"github.com/mokevnin/1mail/internal/segments"
-	"github.com/mokevnin/1mail/internal/service"
 	"github.com/mokevnin/1mail/internal/tags"
 	"github.com/mokevnin/1mail/internal/tracking"
 )
@@ -61,7 +59,7 @@ type SendingDomainVerifyEnqueuer interface {
 }
 
 type Handlers struct {
-	ent          *ent.Client
+	accounts     *accounts.Accounts
 	bus          *events.Bus
 	cipher       *secrets.Cipher
 	catalog      *messaging.Catalog
@@ -85,7 +83,8 @@ type Handlers struct {
 // the shared singletons the composition root registers once, so /site and /api
 // cannot diverge on how a module is constructed.
 type Deps struct {
-	Ent          *ent.Client
+	Accounts     *accounts.Accounts
+	OAuth        *oauthserver.Service
 	Bus          *events.Bus
 	Cipher       *secrets.Cipher
 	Catalog      *messaging.Catalog
@@ -106,101 +105,33 @@ type Deps struct {
 
 func NewHandlers(d Deps) *Handlers {
 	return &Handlers{
-		ent: d.Ent, bus: d.Bus, cipher: d.Cipher, catalog: d.Catalog, outbound: d.Outbound,
+		accounts: d.Accounts, bus: d.Bus, cipher: d.Cipher, catalog: d.Catalog, outbound: d.Outbound,
 		segments: d.Segments, eventlog: d.EventLog, contacts: d.Contacts, tags: d.Tags,
 		automations: d.Automations, broadcasts: d.Broadcasts, welcome: d.Welcome,
 		sysmail: d.SysMail, domainVerify: d.DomainVerify, tokens: d.Tokens, tracker: d.Tracker, appURL: d.AppURL,
-		oauth: oauthserver.NewService(d.Ent),
+		oauth: d.OAuth,
 	}
 }
 
 var _ siteapi.Handler = (*Handlers)(nil)
 
-// membershipFor resolves the authenticated user's Membership on the workspace
-// addressed by the /w/{slug} path segment, returning the workspace id and the
-// caller's Role. Returns an ent NotFound error (so callers can map it to 404)
-// when the slug does not exist or the user has no membership on it — access is
-// "does this User have a Membership on this Workspace?", never single-owner.
-func (h *Handlers) membershipFor(ctx context.Context, slug string) (int64, membership.Role, error) {
+// scopedFor is the site's construction point of the scoped client (ADR 0017): it
+// resolves the Workspace addressed by the /w/{slug} path segment through the
+// authenticated user's Membership (accounts.Scope) and returns its scoped client.
+// Handlers pass the result to the domain modules and never build a *ent.Scoped from
+// an int64. Returns an ent NotFound error (mapped to 404) when the slug does not
+// exist or the user is not a member.
+func (h *Handlers) scopedFor(ctx context.Context, slug string) (*ent.Scoped, error) {
+	s, _, err := h.scopedWithRoleFor(ctx, slug)
+	return s, err
+}
+
+// scopedWithRoleFor is scopedFor plus the caller's role, for owner/admin-gated
+// actions.
+func (h *Handlers) scopedWithRoleFor(ctx context.Context, slug string) (*ent.Scoped, membership.Role, error) {
 	a := auth.GetSiteAuth(ctx)
 	if a == nil {
-		return 0, "", &ent.NotFoundError{}
+		return nil, "", &ent.NotFoundError{}
 	}
-	m, err := h.ent.Membership.Query().
-		Where(membership.UserID(a.UserID), membership.HasWorkspaceWith(workspace.Slug(slug))).
-		Only(ctx)
-	if err != nil {
-		return 0, "", err
-	}
-	return m.WorkspaceID, m.Role, nil
-}
-
-// workspaceID resolves the workspace addressed by the /w/{slug} path segment,
-// scoped to the authenticated user's membership. Returns an ent NotFound error
-// (mapped to 404) when the slug does not exist or the user is not a member.
-func (h *Handlers) workspaceID(ctx context.Context, slug string) (int64, error) {
-	id, _, err := h.membershipFor(ctx, slug)
-	return id, err
-}
-
-// createDefaultWorkspace creates the user's initial workspace with a unique slug
-// derived from name (falling back to "workspace"). Workspace slugs are globally
-// unique, so on collision a numeric suffix is appended.
-func (h *Handlers) createDefaultWorkspace(ctx context.Context, userID int64, name string) (*ent.Workspace, error) {
-	base := service.Slugify(name)
-	if base == "" {
-		base = "workspace"
-	}
-	for i := 0; ; i++ {
-		slug := base
-		if i > 0 {
-			slug = fmt.Sprintf("%s-%d", base, i+1)
-		}
-		exists, err := h.ent.Workspace.Query().Where(workspace.Slug(slug)).Exist(ctx)
-		if err != nil {
-			return nil, err
-		}
-		if exists {
-			continue
-		}
-		collectKey, err := service.GenerateCollectKey()
-		if err != nil {
-			return nil, err
-		}
-		ingestKey, err := service.GenerateIngestKey()
-		if err != nil {
-			return nil, err
-		}
-		// Create the workspace and the creator's owner Membership atomically — a
-		// Workspace is reached through Memberships, never owned by a User directly,
-		// so a workspace without its owner row would be inaccessible.
-		var ws *ent.Workspace
-		err = h.bus.WithinTx(ctx, func(tx *ent.Client, _ events.Publisher) error {
-			created, cerr := tx.Workspace.Create().
-				SetName(name).
-				SetSlug(slug).
-				SetCollectKey(collectKey).
-				SetIngestKey(ingestKey).
-				Save(ctx)
-			if cerr != nil {
-				return cerr
-			}
-			if _, merr := tx.Membership.Create().
-				SetUserID(userID).
-				SetWorkspaceID(created.ID).
-				SetRole(membership.RoleOwner).
-				Save(ctx); merr != nil {
-				return merr
-			}
-			ws = created
-			return nil
-		})
-		if service.IsUniqueViolation(err) {
-			continue // lost a race on the slug; try the next suffix
-		}
-		if err != nil {
-			return nil, err
-		}
-		return ws, nil
-	}
+	return h.accounts.Scope(ctx, a.UserID, slug)
 }

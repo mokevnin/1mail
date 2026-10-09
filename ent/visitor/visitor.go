@@ -14,31 +14,24 @@ const (
 	Label = "visitor"
 	// FieldID holds the string denoting the id field in the database.
 	FieldID = "id"
-	// FieldVisitorID holds the string denoting the visitor_id field in the database.
-	FieldVisitorID = "visitor_id"
-	// FieldWorkspaceID holds the string denoting the workspace_id field in the database.
-	FieldWorkspaceID = "workspace_id"
-	// FieldContactID holds the string denoting the contact_id field in the database.
-	FieldContactID = "contact_id"
 	// FieldCreatedAt holds the string denoting the created_at field in the database.
 	FieldCreatedAt = "created_at"
 	// FieldUpdatedAt holds the string denoting the updated_at field in the database.
 	FieldUpdatedAt = "updated_at"
+	// FieldWorkspaceID holds the string denoting the workspace_id field in the database.
+	FieldWorkspaceID = "workspace_id"
+	// FieldVisitorID holds the string denoting the visitor_id field in the database.
+	FieldVisitorID = "visitor_id"
+	// FieldContactID holds the string denoting the contact_id field in the database.
+	FieldContactID = "contact_id"
 	// FieldLastSeenAt holds the string denoting the last_seen_at field in the database.
 	FieldLastSeenAt = "last_seen_at"
-	// EdgeContact holds the string denoting the contact edge name in mutations.
-	EdgeContact = "contact"
 	// EdgeWorkspace holds the string denoting the workspace edge name in mutations.
 	EdgeWorkspace = "workspace"
+	// EdgeContact holds the string denoting the contact edge name in mutations.
+	EdgeContact = "contact"
 	// Table holds the table name of the visitor in the database.
 	Table = "visitors"
-	// ContactTable is the table that holds the contact relation/edge.
-	ContactTable = "visitors"
-	// ContactInverseTable is the table name for the Contact entity.
-	// It exists in this package in order to avoid circular dependency with the "contact" package.
-	ContactInverseTable = "contacts"
-	// ContactColumn is the table column denoting the contact relation/edge.
-	ContactColumn = "contact_id"
 	// WorkspaceTable is the table that holds the workspace relation/edge.
 	WorkspaceTable = "visitors"
 	// WorkspaceInverseTable is the table name for the Workspace entity.
@@ -46,16 +39,23 @@ const (
 	WorkspaceInverseTable = "workspaces"
 	// WorkspaceColumn is the table column denoting the workspace relation/edge.
 	WorkspaceColumn = "workspace_id"
+	// ContactTable is the table that holds the contact relation/edge.
+	ContactTable = "visitors"
+	// ContactInverseTable is the table name for the Contact entity.
+	// It exists in this package in order to avoid circular dependency with the "contact" package.
+	ContactInverseTable = "contacts"
+	// ContactColumn is the table column denoting the contact relation/edge.
+	ContactColumn = "contact_id"
 )
 
 // Columns holds all SQL columns for visitor fields.
 var Columns = []string{
 	FieldID,
-	FieldVisitorID,
-	FieldWorkspaceID,
-	FieldContactID,
 	FieldCreatedAt,
 	FieldUpdatedAt,
+	FieldWorkspaceID,
+	FieldVisitorID,
+	FieldContactID,
 	FieldLastSeenAt,
 }
 
@@ -70,14 +70,14 @@ func ValidColumn(column string) bool {
 }
 
 var (
-	// VisitorIDValidator is a validator for the "visitor_id" field. It is called by the builders before save.
-	VisitorIDValidator func(string) error
 	// DefaultCreatedAt holds the default value on creation for the "created_at" field.
 	DefaultCreatedAt func() time.Time
 	// DefaultUpdatedAt holds the default value on creation for the "updated_at" field.
 	DefaultUpdatedAt func() time.Time
 	// UpdateDefaultUpdatedAt holds the default value on update for the "updated_at" field.
 	UpdateDefaultUpdatedAt func() time.Time
+	// VisitorIDValidator is a validator for the "visitor_id" field. It is called by the builders before save.
+	VisitorIDValidator func(string) error
 	// DefaultLastSeenAt holds the default value on creation for the "last_seen_at" field.
 	DefaultLastSeenAt func() time.Time
 )
@@ -90,21 +90,6 @@ func ByID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldID, opts...).ToFunc()
 }
 
-// ByVisitorID orders the results by the visitor_id field.
-func ByVisitorID(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldVisitorID, opts...).ToFunc()
-}
-
-// ByWorkspaceID orders the results by the workspace_id field.
-func ByWorkspaceID(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldWorkspaceID, opts...).ToFunc()
-}
-
-// ByContactID orders the results by the contact_id field.
-func ByContactID(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldContactID, opts...).ToFunc()
-}
-
 // ByCreatedAt orders the results by the created_at field.
 func ByCreatedAt(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldCreatedAt, opts...).ToFunc()
@@ -115,16 +100,24 @@ func ByUpdatedAt(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldUpdatedAt, opts...).ToFunc()
 }
 
+// ByWorkspaceID orders the results by the workspace_id field.
+func ByWorkspaceID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldWorkspaceID, opts...).ToFunc()
+}
+
+// ByVisitorID orders the results by the visitor_id field.
+func ByVisitorID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldVisitorID, opts...).ToFunc()
+}
+
+// ByContactID orders the results by the contact_id field.
+func ByContactID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldContactID, opts...).ToFunc()
+}
+
 // ByLastSeenAt orders the results by the last_seen_at field.
 func ByLastSeenAt(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldLastSeenAt, opts...).ToFunc()
-}
-
-// ByContactField orders the results by contact field.
-func ByContactField(field string, opts ...sql.OrderTermOption) OrderOption {
-	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborTerms(s, newContactStep(), sql.OrderByField(field, opts...))
-	}
 }
 
 // ByWorkspaceField orders the results by workspace field.
@@ -133,17 +126,24 @@ func ByWorkspaceField(field string, opts ...sql.OrderTermOption) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newWorkspaceStep(), sql.OrderByField(field, opts...))
 	}
 }
-func newContactStep() *sqlgraph.Step {
-	return sqlgraph.NewStep(
-		sqlgraph.From(Table, FieldID),
-		sqlgraph.To(ContactInverseTable, FieldID),
-		sqlgraph.Edge(sqlgraph.M2O, true, ContactTable, ContactColumn),
-	)
+
+// ByContactField orders the results by contact field.
+func ByContactField(field string, opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newContactStep(), sql.OrderByField(field, opts...))
+	}
 }
 func newWorkspaceStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(WorkspaceInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.M2O, true, WorkspaceTable, WorkspaceColumn),
+	)
+}
+func newContactStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(ContactInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.M2O, true, ContactTable, ContactColumn),
 	)
 }

@@ -23,6 +23,40 @@ type ApiTokenCreate struct {
 	conflict []sql.ConflictOption
 }
 
+// SetCreatedAt sets the "created_at" field.
+func (_c *ApiTokenCreate) SetCreatedAt(v time.Time) *ApiTokenCreate {
+	_c.mutation.SetCreatedAt(v)
+	return _c
+}
+
+// SetNillableCreatedAt sets the "created_at" field if the given value is not nil.
+func (_c *ApiTokenCreate) SetNillableCreatedAt(v *time.Time) *ApiTokenCreate {
+	if v != nil {
+		_c.SetCreatedAt(*v)
+	}
+	return _c
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (_c *ApiTokenCreate) SetUpdatedAt(v time.Time) *ApiTokenCreate {
+	_c.mutation.SetUpdatedAt(v)
+	return _c
+}
+
+// SetNillableUpdatedAt sets the "updated_at" field if the given value is not nil.
+func (_c *ApiTokenCreate) SetNillableUpdatedAt(v *time.Time) *ApiTokenCreate {
+	if v != nil {
+		_c.SetUpdatedAt(*v)
+	}
+	return _c
+}
+
+// SetWorkspaceID sets the "workspace_id" field.
+func (_c *ApiTokenCreate) SetWorkspaceID(v int64) *ApiTokenCreate {
+	_c.mutation.SetWorkspaceID(v)
+	return _c
+}
+
 // SetName sets the "name" field.
 func (_c *ApiTokenCreate) SetName(v string) *ApiTokenCreate {
 	_c.mutation.SetName(v)
@@ -89,40 +123,6 @@ func (_c *ApiTokenCreate) SetNillableLastUsedAt(v *time.Time) *ApiTokenCreate {
 	return _c
 }
 
-// SetCreatedAt sets the "created_at" field.
-func (_c *ApiTokenCreate) SetCreatedAt(v time.Time) *ApiTokenCreate {
-	_c.mutation.SetCreatedAt(v)
-	return _c
-}
-
-// SetNillableCreatedAt sets the "created_at" field if the given value is not nil.
-func (_c *ApiTokenCreate) SetNillableCreatedAt(v *time.Time) *ApiTokenCreate {
-	if v != nil {
-		_c.SetCreatedAt(*v)
-	}
-	return _c
-}
-
-// SetUpdatedAt sets the "updated_at" field.
-func (_c *ApiTokenCreate) SetUpdatedAt(v time.Time) *ApiTokenCreate {
-	_c.mutation.SetUpdatedAt(v)
-	return _c
-}
-
-// SetNillableUpdatedAt sets the "updated_at" field if the given value is not nil.
-func (_c *ApiTokenCreate) SetNillableUpdatedAt(v *time.Time) *ApiTokenCreate {
-	if v != nil {
-		_c.SetUpdatedAt(*v)
-	}
-	return _c
-}
-
-// SetWorkspaceID sets the "workspace_id" field.
-func (_c *ApiTokenCreate) SetWorkspaceID(v int64) *ApiTokenCreate {
-	_c.mutation.SetWorkspaceID(v)
-	return _c
-}
-
 // SetID sets the "id" field.
 func (_c *ApiTokenCreate) SetID(v int64) *ApiTokenCreate {
 	_c.mutation.SetID(v)
@@ -169,10 +169,6 @@ func (_c *ApiTokenCreate) ExecX(ctx context.Context) {
 
 // defaults sets the default values of the builder before save.
 func (_c *ApiTokenCreate) defaults() {
-	if _, ok := _c.mutation.Scopes(); !ok {
-		v := apitoken.DefaultScopes
-		_c.mutation.SetScopes(v)
-	}
 	if _, ok := _c.mutation.CreatedAt(); !ok {
 		v := apitoken.DefaultCreatedAt()
 		_c.mutation.SetCreatedAt(v)
@@ -181,10 +177,23 @@ func (_c *ApiTokenCreate) defaults() {
 		v := apitoken.DefaultUpdatedAt()
 		_c.mutation.SetUpdatedAt(v)
 	}
+	if _, ok := _c.mutation.Scopes(); !ok {
+		v := apitoken.DefaultScopes
+		_c.mutation.SetScopes(v)
+	}
 }
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *ApiTokenCreate) check() error {
+	if _, ok := _c.mutation.CreatedAt(); !ok {
+		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "ApiToken.created_at"`)}
+	}
+	if _, ok := _c.mutation.UpdatedAt(); !ok {
+		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "ApiToken.updated_at"`)}
+	}
+	if _, ok := _c.mutation.WorkspaceID(); !ok {
+		return &ValidationError{Name: "workspace_id", err: errors.New(`ent: missing required field "ApiToken.workspace_id"`)}
+	}
 	if _, ok := _c.mutation.Name(); !ok {
 		return &ValidationError{Name: "name", err: errors.New(`ent: missing required field "ApiToken.name"`)}
 	}
@@ -211,15 +220,6 @@ func (_c *ApiTokenCreate) check() error {
 	}
 	if _, ok := _c.mutation.Scopes(); !ok {
 		return &ValidationError{Name: "scopes", err: errors.New(`ent: missing required field "ApiToken.scopes"`)}
-	}
-	if _, ok := _c.mutation.CreatedAt(); !ok {
-		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "ApiToken.created_at"`)}
-	}
-	if _, ok := _c.mutation.UpdatedAt(); !ok {
-		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "ApiToken.updated_at"`)}
-	}
-	if _, ok := _c.mutation.WorkspaceID(); !ok {
-		return &ValidationError{Name: "workspace_id", err: errors.New(`ent: missing required field "ApiToken.workspace_id"`)}
 	}
 	if len(_c.mutation.WorkspaceIDs()) == 0 {
 		return &ValidationError{Name: "workspace", err: errors.New(`ent: missing required edge "ApiToken.workspace"`)}
@@ -257,6 +257,14 @@ func (_c *ApiTokenCreate) createSpec() (*ApiToken, *sqlgraph.CreateSpec) {
 		_node.ID = id
 		_spec.ID.Value = id
 	}
+	if value, ok := _c.mutation.CreatedAt(); ok {
+		_spec.SetField(apitoken.FieldCreatedAt, field.TypeTime, value)
+		_node.CreatedAt = value
+	}
+	if value, ok := _c.mutation.UpdatedAt(); ok {
+		_spec.SetField(apitoken.FieldUpdatedAt, field.TypeTime, value)
+		_node.UpdatedAt = value
+	}
 	if value, ok := _c.mutation.Name(); ok {
 		_spec.SetField(apitoken.FieldName, field.TypeString, value)
 		_node.Name = value
@@ -285,14 +293,6 @@ func (_c *ApiTokenCreate) createSpec() (*ApiToken, *sqlgraph.CreateSpec) {
 		_spec.SetField(apitoken.FieldLastUsedAt, field.TypeTime, value)
 		_node.LastUsedAt = &value
 	}
-	if value, ok := _c.mutation.CreatedAt(); ok {
-		_spec.SetField(apitoken.FieldCreatedAt, field.TypeTime, value)
-		_node.CreatedAt = value
-	}
-	if value, ok := _c.mutation.UpdatedAt(); ok {
-		_spec.SetField(apitoken.FieldUpdatedAt, field.TypeTime, value)
-		_node.UpdatedAt = value
-	}
 	if nodes := _c.mutation.WorkspaceIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
@@ -317,7 +317,7 @@ func (_c *ApiTokenCreate) createSpec() (*ApiToken, *sqlgraph.CreateSpec) {
 // of the `INSERT` statement. For example:
 //
 //	client.ApiToken.Create().
-//		SetName(v).
+//		SetCreatedAt(v).
 //		OnConflict(
 //			// Update the row with the new values
 //			// the was proposed for insertion.
@@ -326,7 +326,7 @@ func (_c *ApiTokenCreate) createSpec() (*ApiToken, *sqlgraph.CreateSpec) {
 //		// Override some of the fields with custom
 //		// update values.
 //		Update(func(u *ent.ApiTokenUpsert) {
-//			SetName(v+v).
+//			SetCreatedAt(v+v).
 //		}).
 //		Exec(ctx)
 func (_c *ApiTokenCreate) OnConflict(opts ...sql.ConflictOption) *ApiTokenUpsertOne {
@@ -361,6 +361,30 @@ type (
 		*sql.UpdateSet
 	}
 )
+
+// SetUpdatedAt sets the "updated_at" field.
+func (u *ApiTokenUpsert) SetUpdatedAt(v time.Time) *ApiTokenUpsert {
+	u.Set(apitoken.FieldUpdatedAt, v)
+	return u
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *ApiTokenUpsert) UpdateUpdatedAt() *ApiTokenUpsert {
+	u.SetExcluded(apitoken.FieldUpdatedAt)
+	return u
+}
+
+// SetWorkspaceID sets the "workspace_id" field.
+func (u *ApiTokenUpsert) SetWorkspaceID(v int64) *ApiTokenUpsert {
+	u.Set(apitoken.FieldWorkspaceID, v)
+	return u
+}
+
+// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
+func (u *ApiTokenUpsert) UpdateWorkspaceID() *ApiTokenUpsert {
+	u.SetExcluded(apitoken.FieldWorkspaceID)
+	return u
+}
 
 // SetName sets the "name" field.
 func (u *ApiTokenUpsert) SetName(v string) *ApiTokenUpsert {
@@ -452,30 +476,6 @@ func (u *ApiTokenUpsert) ClearLastUsedAt() *ApiTokenUpsert {
 	return u
 }
 
-// SetUpdatedAt sets the "updated_at" field.
-func (u *ApiTokenUpsert) SetUpdatedAt(v time.Time) *ApiTokenUpsert {
-	u.Set(apitoken.FieldUpdatedAt, v)
-	return u
-}
-
-// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
-func (u *ApiTokenUpsert) UpdateUpdatedAt() *ApiTokenUpsert {
-	u.SetExcluded(apitoken.FieldUpdatedAt)
-	return u
-}
-
-// SetWorkspaceID sets the "workspace_id" field.
-func (u *ApiTokenUpsert) SetWorkspaceID(v int64) *ApiTokenUpsert {
-	u.Set(apitoken.FieldWorkspaceID, v)
-	return u
-}
-
-// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
-func (u *ApiTokenUpsert) UpdateWorkspaceID() *ApiTokenUpsert {
-	u.SetExcluded(apitoken.FieldWorkspaceID)
-	return u
-}
-
 // UpdateNewValues updates the mutable fields using the new values that were set on create except the ID field.
 // Using this option is equivalent to using:
 //
@@ -493,11 +493,11 @@ func (u *ApiTokenUpsertOne) UpdateNewValues() *ApiTokenUpsertOne {
 		if _, exists := u.create.mutation.ID(); exists {
 			s.SetIgnore(apitoken.FieldID)
 		}
-		if _, exists := u.create.mutation.Prefix(); exists {
-			s.SetIgnore(apitoken.FieldPrefix)
-		}
 		if _, exists := u.create.mutation.CreatedAt(); exists {
 			s.SetIgnore(apitoken.FieldCreatedAt)
+		}
+		if _, exists := u.create.mutation.Prefix(); exists {
+			s.SetIgnore(apitoken.FieldPrefix)
 		}
 	}))
 	return u
@@ -528,6 +528,34 @@ func (u *ApiTokenUpsertOne) Update(set func(*ApiTokenUpsert)) *ApiTokenUpsertOne
 		set(&ApiTokenUpsert{UpdateSet: update})
 	}))
 	return u
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (u *ApiTokenUpsertOne) SetUpdatedAt(v time.Time) *ApiTokenUpsertOne {
+	return u.Update(func(s *ApiTokenUpsert) {
+		s.SetUpdatedAt(v)
+	})
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *ApiTokenUpsertOne) UpdateUpdatedAt() *ApiTokenUpsertOne {
+	return u.Update(func(s *ApiTokenUpsert) {
+		s.UpdateUpdatedAt()
+	})
+}
+
+// SetWorkspaceID sets the "workspace_id" field.
+func (u *ApiTokenUpsertOne) SetWorkspaceID(v int64) *ApiTokenUpsertOne {
+	return u.Update(func(s *ApiTokenUpsert) {
+		s.SetWorkspaceID(v)
+	})
+}
+
+// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
+func (u *ApiTokenUpsertOne) UpdateWorkspaceID() *ApiTokenUpsertOne {
+	return u.Update(func(s *ApiTokenUpsert) {
+		s.UpdateWorkspaceID()
+	})
 }
 
 // SetName sets the "name" field.
@@ -632,34 +660,6 @@ func (u *ApiTokenUpsertOne) UpdateLastUsedAt() *ApiTokenUpsertOne {
 func (u *ApiTokenUpsertOne) ClearLastUsedAt() *ApiTokenUpsertOne {
 	return u.Update(func(s *ApiTokenUpsert) {
 		s.ClearLastUsedAt()
-	})
-}
-
-// SetUpdatedAt sets the "updated_at" field.
-func (u *ApiTokenUpsertOne) SetUpdatedAt(v time.Time) *ApiTokenUpsertOne {
-	return u.Update(func(s *ApiTokenUpsert) {
-		s.SetUpdatedAt(v)
-	})
-}
-
-// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
-func (u *ApiTokenUpsertOne) UpdateUpdatedAt() *ApiTokenUpsertOne {
-	return u.Update(func(s *ApiTokenUpsert) {
-		s.UpdateUpdatedAt()
-	})
-}
-
-// SetWorkspaceID sets the "workspace_id" field.
-func (u *ApiTokenUpsertOne) SetWorkspaceID(v int64) *ApiTokenUpsertOne {
-	return u.Update(func(s *ApiTokenUpsert) {
-		s.SetWorkspaceID(v)
-	})
-}
-
-// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
-func (u *ApiTokenUpsertOne) UpdateWorkspaceID() *ApiTokenUpsertOne {
-	return u.Update(func(s *ApiTokenUpsert) {
-		s.UpdateWorkspaceID()
 	})
 }
 
@@ -798,7 +798,7 @@ func (_c *ApiTokenCreateBulk) ExecX(ctx context.Context) {
 //		// Override some of the fields with custom
 //		// update values.
 //		Update(func(u *ent.ApiTokenUpsert) {
-//			SetName(v+v).
+//			SetCreatedAt(v+v).
 //		}).
 //		Exec(ctx)
 func (_c *ApiTokenCreateBulk) OnConflict(opts ...sql.ConflictOption) *ApiTokenUpsertBulk {
@@ -845,11 +845,11 @@ func (u *ApiTokenUpsertBulk) UpdateNewValues() *ApiTokenUpsertBulk {
 			if _, exists := b.mutation.ID(); exists {
 				s.SetIgnore(apitoken.FieldID)
 			}
-			if _, exists := b.mutation.Prefix(); exists {
-				s.SetIgnore(apitoken.FieldPrefix)
-			}
 			if _, exists := b.mutation.CreatedAt(); exists {
 				s.SetIgnore(apitoken.FieldCreatedAt)
+			}
+			if _, exists := b.mutation.Prefix(); exists {
+				s.SetIgnore(apitoken.FieldPrefix)
 			}
 		}
 	}))
@@ -881,6 +881,34 @@ func (u *ApiTokenUpsertBulk) Update(set func(*ApiTokenUpsert)) *ApiTokenUpsertBu
 		set(&ApiTokenUpsert{UpdateSet: update})
 	}))
 	return u
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (u *ApiTokenUpsertBulk) SetUpdatedAt(v time.Time) *ApiTokenUpsertBulk {
+	return u.Update(func(s *ApiTokenUpsert) {
+		s.SetUpdatedAt(v)
+	})
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *ApiTokenUpsertBulk) UpdateUpdatedAt() *ApiTokenUpsertBulk {
+	return u.Update(func(s *ApiTokenUpsert) {
+		s.UpdateUpdatedAt()
+	})
+}
+
+// SetWorkspaceID sets the "workspace_id" field.
+func (u *ApiTokenUpsertBulk) SetWorkspaceID(v int64) *ApiTokenUpsertBulk {
+	return u.Update(func(s *ApiTokenUpsert) {
+		s.SetWorkspaceID(v)
+	})
+}
+
+// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
+func (u *ApiTokenUpsertBulk) UpdateWorkspaceID() *ApiTokenUpsertBulk {
+	return u.Update(func(s *ApiTokenUpsert) {
+		s.UpdateWorkspaceID()
+	})
 }
 
 // SetName sets the "name" field.
@@ -985,34 +1013,6 @@ func (u *ApiTokenUpsertBulk) UpdateLastUsedAt() *ApiTokenUpsertBulk {
 func (u *ApiTokenUpsertBulk) ClearLastUsedAt() *ApiTokenUpsertBulk {
 	return u.Update(func(s *ApiTokenUpsert) {
 		s.ClearLastUsedAt()
-	})
-}
-
-// SetUpdatedAt sets the "updated_at" field.
-func (u *ApiTokenUpsertBulk) SetUpdatedAt(v time.Time) *ApiTokenUpsertBulk {
-	return u.Update(func(s *ApiTokenUpsert) {
-		s.SetUpdatedAt(v)
-	})
-}
-
-// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
-func (u *ApiTokenUpsertBulk) UpdateUpdatedAt() *ApiTokenUpsertBulk {
-	return u.Update(func(s *ApiTokenUpsert) {
-		s.UpdateUpdatedAt()
-	})
-}
-
-// SetWorkspaceID sets the "workspace_id" field.
-func (u *ApiTokenUpsertBulk) SetWorkspaceID(v int64) *ApiTokenUpsertBulk {
-	return u.Update(func(s *ApiTokenUpsert) {
-		s.SetWorkspaceID(v)
-	})
-}
-
-// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
-func (u *ApiTokenUpsertBulk) UpdateWorkspaceID() *ApiTokenUpsertBulk {
-	return u.Update(func(s *ApiTokenUpsert) {
-		s.UpdateWorkspaceID()
 	})
 }
 

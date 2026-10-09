@@ -109,9 +109,10 @@ func (h *sesHook) handle(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	case "Notification":
+		// The ingest key resolved the Workspace above: this is where its scope is built.
 		// On failure return 5xx so SNS redelivers rather than dropping the bounce;
 		// downstream persist/suppression dedupe on redelivery (DedupKey).
-		if err := h.handleNotification(r.Context(), ws.ID, payload); err != nil {
+		if err := h.handleNotification(r.Context(), h.ent.Scoped(ws.ID), payload); err != nil {
 			logging.FromContext(r.Context()).Error("hooks/ses: notification processing failed", "workspace_id", ws.ID, "err", err)
 			writeProblem(w, http.StatusInternalServerError, "notification processing failed")
 			return
@@ -168,13 +169,13 @@ func parseSESNotification(message string) ([]sesFailure, error) {
 	return out, nil
 }
 
-func (h *sesHook) handleNotification(ctx context.Context, workspaceID int64, payload sns.Payload) error {
+func (h *sesHook) handleNotification(ctx context.Context, s *ent.Scoped, payload sns.Payload) error {
 	failures, err := parseSESNotification(payload.Message)
 	if err != nil {
 		return err
 	}
 	for _, f := range failures {
-		if err := h.publishFailure(ctx, workspaceID, payload.MessageId, f); err != nil {
+		if err := h.publishFailure(ctx, s, payload.MessageId, f); err != nil {
 			return err
 		}
 	}
@@ -198,15 +199,15 @@ func sourceDomain(source string) string {
 // publishFailure normalizes the address, resolves the contact when known, and
 // publishes one typed EmailDeliveryFailure keyed by SNS messageId + recipient so
 // a redelivered notification dedupes downstream.
-func (h *sesHook) publishFailure(ctx context.Context, workspaceID int64, messageID string, f sesFailure) error {
+func (h *sesHook) publishFailure(ctx context.Context, s *ent.Scoped, messageID string, f sesFailure) error {
 	action, kind := f.Action, f.Kind
 	email := strings.ToLower(strings.TrimSpace(f.Email))
 	if email == "" {
 		return nil
 	}
 	var contactID int64
-	c, err := h.ent.Contact.Query().
-		Where(contact.WorkspaceID(workspaceID), contact.EmailEqualFold(email)).
+	c, err := s.Contact().Query().
+		Where(contact.EmailEqualFold(email)).
 		Only(ctx)
 	switch {
 	case err == nil:
@@ -220,7 +221,7 @@ func (h *sesHook) publishFailure(ctx context.Context, workspaceID int64, message
 	return h.bus.WithinTx(ctx, func(_ *ent.Client, pub events.Publisher) error {
 		return pub.Publish(ctx, &events.EmailDeliveryFailure{
 			Action:        action,
-			WorkspaceID:   workspaceID,
+			WorkspaceID:   s.WorkspaceID(),
 			ContactID:     contactID,
 			Email:         email,
 			BounceKind:    kind,

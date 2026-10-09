@@ -31,6 +31,12 @@ func (_u *OAuthCodeUpdate) Where(ps ...predicate.OAuthCode) *OAuthCodeUpdate {
 	return _u
 }
 
+// SetUpdatedAt sets the "updated_at" field.
+func (_u *OAuthCodeUpdate) SetUpdatedAt(v time.Time) *OAuthCodeUpdate {
+	_u.mutation.SetUpdatedAt(v)
+	return _u
+}
+
 // SetScopes sets the "scopes" field.
 func (_u *OAuthCodeUpdate) SetScopes(v []string) *OAuthCodeUpdate {
 	_u.mutation.SetScopes(v)
@@ -130,6 +136,7 @@ func (_u *OAuthCodeUpdate) ClearClient() *OAuthCodeUpdate {
 
 // Save executes the query and returns the number of nodes affected by the update operation.
 func (_u *OAuthCodeUpdate) Save(ctx context.Context) (int, error) {
+	_u.defaults()
 	return withHooks(ctx, _u.sqlSave, _u.mutation, _u.hooks)
 }
 
@@ -152,6 +159,14 @@ func (_u *OAuthCodeUpdate) Exec(ctx context.Context) error {
 func (_u *OAuthCodeUpdate) ExecX(ctx context.Context) {
 	if err := _u.Exec(ctx); err != nil {
 		panic(err)
+	}
+}
+
+// defaults sets the default values of the builder before save.
+func (_u *OAuthCodeUpdate) defaults() {
+	if _, ok := _u.mutation.UpdatedAt(); !ok {
+		v := oauthcode.UpdateDefaultUpdatedAt()
+		_u.mutation.SetUpdatedAt(v)
 	}
 }
 
@@ -180,6 +195,9 @@ func (_u *OAuthCodeUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 				ps[i](selector)
 			}
 		}
+	}
+	if value, ok := _u.mutation.UpdatedAt(); ok {
+		_spec.SetField(oauthcode.FieldUpdatedAt, field.TypeTime, value)
 	}
 	if value, ok := _u.mutation.Scopes(); ok {
 		_spec.SetField(oauthcode.FieldScopes, field.TypeJSON, value)
@@ -253,6 +271,12 @@ type OAuthCodeUpdateOne struct {
 	hooks     []Hook
 	mutation  *OAuthCodeMutation
 	modifiers []func(*sql.UpdateBuilder)
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (_u *OAuthCodeUpdateOne) SetUpdatedAt(v time.Time) *OAuthCodeUpdateOne {
+	_u.mutation.SetUpdatedAt(v)
+	return _u
 }
 
 // SetScopes sets the "scopes" field.
@@ -367,6 +391,7 @@ func (_u *OAuthCodeUpdateOne) Select(field string, fields ...string) *OAuthCodeU
 
 // Save executes the query and returns the updated OAuthCode entity.
 func (_u *OAuthCodeUpdateOne) Save(ctx context.Context) (*OAuthCode, error) {
+	_u.defaults()
 	return withHooks(ctx, _u.sqlSave, _u.mutation, _u.hooks)
 }
 
@@ -389,6 +414,14 @@ func (_u *OAuthCodeUpdateOne) Exec(ctx context.Context) error {
 func (_u *OAuthCodeUpdateOne) ExecX(ctx context.Context) {
 	if err := _u.Exec(ctx); err != nil {
 		panic(err)
+	}
+}
+
+// defaults sets the default values of the builder before save.
+func (_u *OAuthCodeUpdateOne) defaults() {
+	if _, ok := _u.mutation.UpdatedAt(); !ok {
+		v := oauthcode.UpdateDefaultUpdatedAt()
+		_u.mutation.SetUpdatedAt(v)
 	}
 }
 
@@ -434,6 +467,9 @@ func (_u *OAuthCodeUpdateOne) sqlSave(ctx context.Context) (_node *OAuthCode, er
 				ps[i](selector)
 			}
 		}
+	}
+	if value, ok := _u.mutation.UpdatedAt(); ok {
+		_spec.SetField(oauthcode.FieldUpdatedAt, field.TypeTime, value)
 	}
 	if value, ok := _u.mutation.Scopes(); ok {
 		_spec.SetField(oauthcode.FieldScopes, field.TypeJSON, value)

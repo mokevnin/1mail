@@ -42,8 +42,8 @@ func TestHasScopeAndWorkspaceIDOfTheTokenContext(t *testing.T) {
 	assert.False(t, auth.HasScope(a, ""))
 	assert.False(t, auth.HasScope(nil, "contacts:read"), "no token has no scopes")
 
-	assert.EqualValues(t, 3, auth.WorkspaceID(a))
-	assert.Zero(t, auth.WorkspaceID(nil), "unauthenticated is workspace 0, never a real tenant")
+	assert.EqualValues(t, 3, a.WorkspaceID)
+	assert.Nil(t, auth.TokenScoped(context.Background()), "unauthenticated has no scope, never a real tenant")
 }
 
 func TestAuthContextsRoundTrip(t *testing.T) {
@@ -51,7 +51,7 @@ func TestAuthContextsRoundTrip(t *testing.T) {
 	assert.Nil(t, auth.GetTokenAuth(ctx))
 	assert.Nil(t, auth.GetCollectAuth(ctx))
 	assert.Nil(t, auth.GetSiteAuth(ctx))
-	assert.Zero(t, auth.CollectWorkspaceID(ctx))
+	assert.Zero(t, collectWorkspaceID(ctx))
 
 	token := &auth.TokenAuth{TokenID: 1, WorkspaceID: 2}
 	assert.Same(t, token, auth.GetTokenAuth(auth.WithTokenAuth(ctx, token)))
@@ -59,7 +59,7 @@ func TestAuthContextsRoundTrip(t *testing.T) {
 	collect := &auth.CollectAuth{WorkspaceID: 5}
 	withCollect := auth.WithCollectAuth(ctx, collect)
 	assert.Same(t, collect, auth.GetCollectAuth(withCollect))
-	assert.EqualValues(t, 5, auth.CollectWorkspaceID(withCollect))
+	assert.EqualValues(t, 5, collectWorkspaceID(withCollect))
 
 	site := &auth.SiteAuth{UserID: 9, Email: "u@example.com"}
 	assert.Same(t, site, auth.GetSiteAuth(auth.WithSiteAuth(ctx, site)))
@@ -87,7 +87,7 @@ func TestBearerAuthResolvesAValidTokenToItsWorkspaceAndScopes(t *testing.T) {
 	scoped := env.ScopedBearerFor(t, fixtures.GlobexID, "events:read")
 	ctx, err = h.HandleBearerAuth(context.Background(), "", externalapi.BearerAuth{Token: scoped})
 	require.NoError(t, err)
-	assert.EqualValues(t, fixtures.GlobexID, auth.WorkspaceID(auth.GetTokenAuth(ctx)), "the token's own workspace, whichever it is")
+	assert.EqualValues(t, fixtures.GlobexID, auth.GetTokenAuth(ctx).WorkspaceID, "the token's own workspace, whichever it is")
 	assert.Equal(t, []string{"events:read"}, auth.GetTokenAuth(ctx).Scopes)
 }
 
@@ -142,13 +142,13 @@ func TestCollectKeyResolvesTheOwningWorkspace(t *testing.T) {
 	for key, ws := range map[string]int64{fixtures.AcmeCollectKey: fixtures.AcmeID, fixtures.GlobexCollectKey: fixtures.GlobexID} {
 		ctx, err := h.HandleApiKeyAuth(context.Background(), "", collectapi.ApiKeyAuth{APIKey: key})
 		require.NoError(t, err)
-		assert.EqualValues(t, ws, auth.CollectWorkspaceID(ctx))
+		assert.EqualValues(t, ws, collectWorkspaceID(ctx))
 	}
 
 	for name, key := range map[string]string{"empty": "", "unknown": "omck_nope", "ingest key is not a collect key": fixtures.AcmeIngestKey} {
 		ctx, err := h.HandleApiKeyAuth(context.Background(), "", collectapi.ApiKeyAuth{APIKey: key})
 		require.ErrorIs(t, err, auth.ErrUnauthorized, name)
-		assert.Zero(t, auth.CollectWorkspaceID(ctx), name)
+		assert.Zero(t, collectWorkspaceID(ctx), name)
 	}
 
 	_, err := auth.NewCollectSecurityHandler(closedClient(t)).HandleApiKeyAuth(context.Background(), "", collectapi.ApiKeyAuth{APIKey: fixtures.AcmeCollectKey})
@@ -252,4 +252,12 @@ func TestCredCheckerVerifiesLoginCredentials(t *testing.T) {
 
 	_, err = auth.NewCredChecker(closedClient(t)).Check(fixtures.OwnerJohnEmail, fixtures.OwnerJohnPassword)
 	require.Error(t, err)
+}
+
+// collectWorkspaceID is the resolved collect key's Workspace id, 0 when unauthenticated.
+func collectWorkspaceID(ctx context.Context) int64 {
+	if a := auth.GetCollectAuth(ctx); a != nil {
+		return a.WorkspaceID
+	}
+	return 0
 }

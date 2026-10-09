@@ -34,18 +34,17 @@ type senders struct {
 	err    error
 }
 
-func (s senders) EmailSender(context.Context, int64) (messaging.EmailSender, error) {
+func (s senders) EmailSender(context.Context, *ent.Scoped) (messaging.EmailSender, error) {
 	return s.sender, s.err
 }
 
 func newModule(env *testhelper.TestEnv, opts ...outbound.Option) *outbound.Module {
-	return outbound.New(env.DB, env.Bus, senders{sender: env.CustomerMail},
+	return outbound.New(env.Bus, senders{sender: env.CustomerMail},
 		tracking.New("test-secret", "http://local"), opts...)
 }
 
 func transactional(key, to string) outbound.Request {
 	return outbound.Request{
-		WorkspaceID: fixtures.AcmeID,
 		Kind:        outboundmessage.KindTransactional,
 		Key:         key,
 		Destination: to,
@@ -59,7 +58,6 @@ func marketing(t *testing.T, env *testhelper.TestEnv, key string, contactID int6
 	t.Helper()
 	c := env.DB.Contact.GetX(context.Background(), contactID)
 	return outbound.Request{
-		WorkspaceID: fixtures.AcmeID,
 		Kind:        outboundmessage.KindBroadcast,
 		Key:         key,
 		Destination: *c.Email,
@@ -88,7 +86,7 @@ func TestTransactionalSendRecordsMessageAndEvent(t *testing.T) {
 	env := testhelper.Setup(t)
 	ctx := context.Background()
 
-	res, err := newModule(env).Send(ctx, transactional("tx:1", "Someone@Example.com"))
+	res, err := newModule(env).Send(ctx, env.DB.Scoped(fixtures.AcmeID), transactional("tx:1", "Someone@Example.com"))
 	require.NoError(t, err)
 	assert.Equal(t, outbound.Sent, res.Outcome)
 
@@ -116,9 +114,9 @@ func TestSameKeyReplaysAndSendsOnce(t *testing.T) {
 	ctx := context.Background()
 	m := newModule(env)
 
-	first, err := m.Send(ctx, transactional("tx:replay", "a@example.com"))
+	first, err := m.Send(ctx, env.DB.Scoped(fixtures.AcmeID), transactional("tx:replay", "a@example.com"))
 	require.NoError(t, err)
-	second, err := m.Send(ctx, transactional("tx:replay", "a@example.com"))
+	second, err := m.Send(ctx, env.DB.Scoped(fixtures.AcmeID), transactional("tx:replay", "a@example.com"))
 	require.NoError(t, err)
 
 	assert.Equal(t, outbound.Sent, second.Outcome)
@@ -132,7 +130,7 @@ func TestSuppressedDestinationIsSkippedEvenForTransactional(t *testing.T) {
 	env := testhelper.Setup(t)
 	ctx := context.Background()
 
-	res, err := newModule(env).Send(ctx, transactional("tx:sup", suppressd))
+	res, err := newModule(env).Send(ctx, env.DB.Scoped(fixtures.AcmeID), transactional("tx:sup", suppressd))
 	require.NoError(t, err)
 	assert.Equal(t, outbound.Skipped, res.Outcome)
 	assert.Equal(t, eligibility.ReasonSuppressed, res.Reason)
@@ -149,13 +147,13 @@ func TestUnsubscribedContactIsSkippedForMarketingButNotTransactional(t *testing.
 	ctx := context.Background()
 	m := newModule(env)
 
-	res, err := m.Send(ctx, marketing(t, env, "bc:bob", fixtures.ContactBobID))
+	res, err := m.Send(ctx, env.DB.Scoped(fixtures.AcmeID), marketing(t, env, "bc:bob", fixtures.ContactBobID))
 	require.NoError(t, err)
 	assert.Equal(t, outbound.Skipped, res.Outcome)
 	assert.Equal(t, eligibility.ReasonUnsubscribedSource, res.Reason)
 
 	// Bob can still receive his own transactional mail (no Sending source).
-	res, err = m.Send(ctx, transactional("tx:bob", "bob@example.com"))
+	res, err = m.Send(ctx, env.DB.Scoped(fixtures.AcmeID), transactional("tx:bob", "bob@example.com"))
 	require.NoError(t, err)
 	assert.Equal(t, outbound.Sent, res.Outcome)
 }
@@ -164,7 +162,7 @@ func TestMarketingCarriesFooterAndOneClickHeader(t *testing.T) {
 	env := testhelper.Setup(t)
 	ctx := context.Background()
 
-	res, err := newModule(env).Send(ctx, marketing(t, env, "bc:alice", fixtures.ContactAliceID))
+	res, err := newModule(env).Send(ctx, env.DB.Scoped(fixtures.AcmeID), marketing(t, env, "bc:alice", fixtures.ContactAliceID))
 	require.NoError(t, err)
 	require.Equal(t, outbound.Sent, res.Outcome)
 
@@ -180,9 +178,9 @@ func TestMarketingCarriesFooterAndOneClickHeader(t *testing.T) {
 
 func TestMarketingWithoutTrackerFailsClosed(t *testing.T) {
 	env := testhelper.Setup(t)
-	m := outbound.New(env.DB, env.Bus, senders{sender: env.CustomerMail}, nil)
+	m := outbound.New(env.Bus, senders{sender: env.CustomerMail}, nil)
 
-	_, err := m.Send(context.Background(), marketing(t, env, "bc:notracker", fixtures.ContactAliceID))
+	_, err := m.Send(context.Background(), env.DB.Scoped(fixtures.AcmeID), marketing(t, env, "bc:notracker", fixtures.ContactAliceID))
 	require.ErrorIs(t, err, outbound.ErrNoTracker)
 	assert.Empty(t, env.CustomerMail.Messages(), "never sent without an unsubscribe link")
 }
@@ -193,7 +191,7 @@ func TestRenderErrorIsAPermanentFailureOfThatMessage(t *testing.T) {
 
 	req := transactional("tx:badliquid", "a@example.com")
 	req.Subject = "{% if %}broken"
-	res, err := newModule(env).Send(ctx, req)
+	res, err := newModule(env).Send(ctx, env.DB.Scoped(fixtures.AcmeID), req)
 	require.NoError(t, err)
 	assert.Equal(t, outbound.Failed, res.Outcome)
 	assert.Empty(t, env.CustomerMail.Messages(), "the raw template is never sent")
@@ -207,7 +205,7 @@ func TestSuspendedWorkspaceIsHeldNotConsumed(t *testing.T) {
 
 	env.DB.Workspace.UpdateOneID(fixtures.AcmeID).SetSuspendedAt(time.Now()).SetSuspendedBy("system").
 		SetSuspensionReason("complaint rate").ExecX(ctx)
-	res, err := m.Send(ctx, marketing(t, env, "bc:held", fixtures.ContactAliceID))
+	res, err := m.Send(ctx, env.DB.Scoped(fixtures.AcmeID), marketing(t, env, "bc:held", fixtures.ContactAliceID))
 	require.NoError(t, err)
 	assert.Equal(t, outbound.Held, res.Outcome)
 	assert.Equal(t, outbound.HoldSuspended, res.Reason)
@@ -216,7 +214,7 @@ func TestSuspendedWorkspaceIsHeldNotConsumed(t *testing.T) {
 
 	// Reversible: after the unfreeze the same Request goes out.
 	env.DB.Workspace.UpdateOneID(fixtures.AcmeID).ClearSuspendedAt().ExecX(ctx)
-	res, err = m.Send(ctx, marketing(t, env, "bc:held", fixtures.ContactAliceID))
+	res, err = m.Send(ctx, env.DB.Scoped(fixtures.AcmeID), marketing(t, env, "bc:held", fixtures.ContactAliceID))
 	require.NoError(t, err)
 	assert.Equal(t, outbound.Sent, res.Outcome)
 }
@@ -226,7 +224,7 @@ func TestUnverifiedFromDomainIsHeld(t *testing.T) {
 
 	req := transactional("tx:unverified", "a@example.com")
 	req.FromEmail = "noreply@news.acme.com" // fixture domain id 2: unverified
-	res, err := newModule(env).Send(context.Background(), req)
+	res, err := newModule(env).Send(context.Background(), env.DB.Scoped(fixtures.AcmeID), req)
 	require.NoError(t, err)
 	assert.Equal(t, outbound.Held, res.Outcome)
 	assert.Equal(t, outbound.HoldUnverifiedDomain, res.Reason)
@@ -239,21 +237,21 @@ func TestDomainLosingVerificationAtSignTimeIsHeldAndFreesTheClaim(t *testing.T) 
 	m := newModule(env)
 
 	env.CustomerMail.SetErr(messaging.ErrUnverifiedSendingDomain)
-	res, err := m.Send(ctx, transactional("tx:race", "a@example.com"))
+	res, err := m.Send(ctx, env.DB.Scoped(fixtures.AcmeID), transactional("tx:race", "a@example.com"))
 	require.NoError(t, err)
 	assert.Equal(t, outbound.Held, res.Outcome)
 
 	env.CustomerMail.SetErr(nil)
-	res, err = m.Send(ctx, transactional("tx:race", "a@example.com"))
+	res, err = m.Send(ctx, env.DB.Scoped(fixtures.AcmeID), transactional("tx:race", "a@example.com"))
 	require.NoError(t, err)
 	assert.Equal(t, outbound.Sent, res.Outcome, "the same Request can run again")
 }
 
 func TestNoIntegrationIsHeld(t *testing.T) {
 	env := testhelper.Setup(t)
-	m := outbound.New(env.DB, env.Bus, senders{err: messaging.ErrNoProvider}, tracking.New("s", "http://local"))
+	m := outbound.New(env.Bus, senders{err: messaging.ErrNoProvider}, tracking.New("s", "http://local"))
 
-	res, err := m.Send(context.Background(), transactional("tx:noint", "a@example.com"))
+	res, err := m.Send(context.Background(), env.DB.Scoped(fixtures.AcmeID), transactional("tx:noint", "a@example.com"))
 	require.NoError(t, err)
 	assert.Equal(t, outbound.Held, res.Outcome)
 	assert.Equal(t, outbound.HoldNoIntegration, res.Reason)
@@ -265,13 +263,13 @@ func TestProviderErrorIsRetryableAndReleasesTheClaim(t *testing.T) {
 	m := newModule(env)
 
 	env.CustomerMail.SetErr(errors.New("smtp unavailable"))
-	_, err := m.Send(ctx, transactional("tx:retry", "a@example.com"))
+	_, err := m.Send(ctx, env.DB.Scoped(fixtures.AcmeID), transactional("tx:retry", "a@example.com"))
 	require.Error(t, err)
 	row := byKey(t, env, "tx:retry")
 	assert.Equal(t, outboundmessage.StatusPending, row.Status)
 
 	env.CustomerMail.SetErr(nil)
-	res, err := m.Send(ctx, transactional("tx:retry", "a@example.com"))
+	res, err := m.Send(ctx, env.DB.Scoped(fixtures.AcmeID), transactional("tx:retry", "a@example.com"))
 	require.NoError(t, err, "a definite provider failure frees the claim immediately")
 	assert.Equal(t, outbound.Sent, res.Outcome)
 	assert.Equal(t, row.ID, res.MessageID, "the same row is reused")
@@ -288,14 +286,14 @@ func TestLiveClaimBlocksAndStaleClaimIsTakenOver(t *testing.T) {
 	// The same claim, just taken by another attempt (within the lease), blocks us.
 	env.DB.OutboundMessage.Update().Where(outboundmessage.IdempotencyKey(key)).
 		SetClaimedAt(time.Now()).ExecX(ctx)
-	_, err := newModule(env).Send(ctx, req)
+	_, err := newModule(env).Send(ctx, env.DB.Scoped(fixtures.AcmeID), req)
 	require.ErrorIs(t, err, outbound.ErrInProgress)
 	assert.Empty(t, env.CustomerMail.Messages(), "never two concurrent sends")
 
 	// Abandoned long ago, it is adopted.
 	env.DB.OutboundMessage.Update().Where(outboundmessage.IdempotencyKey(key)).
 		SetClaimedAt(time.Now().Add(-time.Hour)).ExecX(ctx)
-	res, err := newModule(env).Send(ctx, req)
+	res, err := newModule(env).Send(ctx, env.DB.Scoped(fixtures.AcmeID), req)
 	require.NoError(t, err)
 	assert.Equal(t, outbound.Sent, res.Outcome)
 	assert.Len(t, env.CustomerMail.Messages(), 1)
@@ -306,7 +304,7 @@ func TestConfirmedOptInIsReadInsideTheRule(t *testing.T) {
 	ctx := context.Background()
 	env.DB.Workspace.UpdateOneID(fixtures.AcmeID).SetRequireConfirmedOptIn(true).ExecX(ctx)
 
-	res, err := newModule(env).Send(ctx, marketing(t, env, "bc:unconfirmed", fixtures.ContactAliceID))
+	res, err := newModule(env).Send(ctx, env.DB.Scoped(fixtures.AcmeID), marketing(t, env, "bc:unconfirmed", fixtures.ContactAliceID))
 	require.NoError(t, err)
 	assert.Equal(t, outbound.Skipped, res.Outcome)
 	assert.Equal(t, eligibility.ReasonUnconfirmed, res.Reason)
@@ -318,10 +316,10 @@ func TestPreflightReportsHoldsWithoutRecording(t *testing.T) {
 	m := newModule(env)
 
 	before := env.DB.OutboundMessage.Query().CountX(ctx)
-	hold, err := m.Preflight(ctx, fixtures.AcmeID, "")
+	hold, err := m.Preflight(ctx, env.DB.Scoped(fixtures.AcmeID), "")
 	require.NoError(t, err)
 	assert.Empty(t, hold)
-	hold, err = m.Preflight(ctx, fixtures.AcmeID, "x@news.acme.com")
+	hold, err = m.Preflight(ctx, env.DB.Scoped(fixtures.AcmeID), "x@news.acme.com")
 	require.NoError(t, err)
 	assert.Equal(t, outbound.HoldUnverifiedDomain, hold)
 	assert.Equal(t, before, env.DB.OutboundMessage.Query().CountX(ctx), "a preflight records nothing")
@@ -333,9 +331,9 @@ func TestMarkFailedOnlyTouchesPendingClaims(t *testing.T) {
 	m := newModule(env)
 
 	env.CustomerMail.SetErr(errors.New("down"))
-	_, err := m.Send(ctx, transactional("tx:giveup", "a@example.com"))
+	_, err := m.Send(ctx, env.DB.Scoped(fixtures.AcmeID), transactional("tx:giveup", "a@example.com"))
 	require.Error(t, err)
-	require.NoError(t, m.MarkFailed(ctx, fixtures.AcmeID, "tx:giveup", errors.New("retries exhausted")))
+	require.NoError(t, m.MarkFailed(ctx, env.DB.Scoped(fixtures.AcmeID), "tx:giveup", errors.New("retries exhausted")))
 	row := byKey(t, env, "tx:giveup")
 	assert.Equal(t, outboundmessage.StatusFailed, row.Status)
 	require.NotNil(t, row.Reason)
@@ -349,7 +347,7 @@ func TestSendTestSkipsEligibilityAndRecordsNothingButHonorsTheFreeze(t *testing.
 	before := env.DB.OutboundMessage.Query().CountX(ctx)
 
 	// Even a suppressed address can be the target of an explicit author preview.
-	res, err := m.SendTest(ctx, outbound.TestRequest{WorkspaceID: fixtures.AcmeID, To: suppressd, Subject: "[Test] Hi", Body: mjml,
+	res, err := m.SendTest(ctx, env.DB.Scoped(fixtures.AcmeID), outbound.TestRequest{To: suppressd, Subject: "[Test] Hi", Body: mjml,
 		Variables: map[string]any{"first_name": "Alex"}})
 	require.NoError(t, err)
 	assert.Equal(t, outbound.Sent, res.Outcome)
@@ -361,7 +359,7 @@ func TestSendTestSkipsEligibilityAndRecordsNothingButHonorsTheFreeze(t *testing.
 
 	// But a suspended Workspace sends nothing, test or not.
 	env.DB.Workspace.UpdateOneID(fixtures.AcmeID).SetSuspendedAt(time.Now()).ExecX(ctx)
-	res, err = m.SendTest(ctx, outbound.TestRequest{WorkspaceID: fixtures.AcmeID, To: "a@example.com", Subject: "s", Body: mjml})
+	res, err = m.SendTest(ctx, env.DB.Scoped(fixtures.AcmeID), outbound.TestRequest{To: "a@example.com", Subject: "s", Body: mjml})
 	require.NoError(t, err)
 	assert.Equal(t, outbound.Held, res.Outcome)
 	assert.Equal(t, outbound.HoldSuspended, res.Reason)
@@ -402,11 +400,11 @@ func TestSlowAttemptCannotRecordOverATakeover(t *testing.T) {
 		// The outer attempt is "slow": its lease is expired, and a retry takes over.
 		env.DB.OutboundMessage.Update().Where(outboundmessage.IdempotencyKey("tx:fence")).
 			SetClaimedAt(time.Now().Add(-time.Hour)).ExecX(ctx)
-		second, secondErr = m.Send(ctx, transactional("tx:fence", "a@example.com"))
+		second, secondErr = m.Send(ctx, env.DB.Scoped(fixtures.AcmeID), transactional("tx:fence", "a@example.com"))
 	}
-	m = outbound.New(env.DB, env.Bus, senders{sender: s}, tracking.New("s", "http://local"))
+	m = outbound.New(env.Bus, senders{sender: s}, tracking.New("s", "http://local"))
 
-	_, err := m.Send(ctx, transactional("tx:fence", "a@example.com"))
+	_, err := m.Send(ctx, env.DB.Scoped(fixtures.AcmeID), transactional("tx:fence", "a@example.com"))
 	require.ErrorIs(t, err, outbound.ErrInProgress, "the slow attempt lost its claim and must not record")
 
 	require.NoError(t, secondErr)
@@ -414,4 +412,16 @@ func TestSlowAttemptCannotRecordOverATakeover(t *testing.T) {
 	row := byKey(t, env, "tx:fence")
 	assert.Equal(t, outboundmessage.StatusSent, row.Status)
 	assert.Equal(t, 1, sentEvents(t, env, row.ID), "one email.sent Event, not two")
+}
+
+// The claim row is written through the scoped client, so a Contact of another
+// Workspace cannot be attributed to the send.
+func TestSendRefusesAForeignContactReference(t *testing.T) {
+	env := testhelper.Setup(t)
+	req := transactional("tx:foreign-contact", "a@example.com")
+	req.ContactID = fixtures.ContactGlobexID
+
+	_, err := newModule(env).Send(context.Background(), env.DB.Scoped(fixtures.AcmeID), req)
+	require.ErrorIs(t, err, ent.ErrNotInWorkspace)
+	assert.Zero(t, env.DB.OutboundMessage.Query().Where(outboundmessage.IdempotencyKey("tx:foreign-contact")).CountX(context.Background()))
 }

@@ -300,12 +300,12 @@ func (_q *UnsubscribeQuery) WithWorkspace(opts ...func(*WorkspaceQuery)) *Unsubs
 // Example:
 //
 //	var v []struct {
-//		Channel unsubscribe.Channel `json:"channel,omitempty"`
+//		CreatedAt time.Time `json:"created_at,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.Unsubscribe.Query().
-//		GroupBy(unsubscribe.FieldChannel).
+//		GroupBy(unsubscribe.FieldCreatedAt).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
 func (_q *UnsubscribeQuery) GroupBy(field string, fields ...string) *UnsubscribeGroupBy {
@@ -323,11 +323,11 @@ func (_q *UnsubscribeQuery) GroupBy(field string, fields ...string) *Unsubscribe
 // Example:
 //
 //	var v []struct {
-//		Channel unsubscribe.Channel `json:"channel,omitempty"`
+//		CreatedAt time.Time `json:"created_at,omitempty"`
 //	}
 //
 //	client.Unsubscribe.Query().
-//		Select(unsubscribe.FieldChannel).
+//		Select(unsubscribe.FieldCreatedAt).
 //		Scan(ctx, &v)
 func (_q *UnsubscribeQuery) Select(fields ...string) *UnsubscribeSelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)

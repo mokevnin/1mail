@@ -34,7 +34,7 @@ func (h *Handlers) BroadcastsList(ctx context.Context, params externalapi.Broadc
 		res := externalapi.BroadcastsListUnauthorized(problem(http.StatusUnauthorized, "insufficient scope"))
 		return &res, nil
 	}
-	ws := auth.WorkspaceID(auth.GetTokenAuth(ctx))
+	ws := auth.TokenScoped(ctx)
 	page, pageSize := pagination.Normalize(convert.Ptr(params.Page), convert.Ptr(params.PageSize))
 
 	items, total, err := h.broadcasts.List(ctx, ws, pageSize, pagination.Offset(page, pageSize))
@@ -59,7 +59,7 @@ func (h *Handlers) BroadcastsCreate(ctx context.Context, req *externalapi.Create
 		res := externalapi.BroadcastsCreateUnprocessableEntity(problem(http.StatusUnprocessableEntity, "name must not be empty"))
 		return &res, nil
 	}
-	ws := auth.WorkspaceID(auth.GetTokenAuth(ctx))
+	ws := auth.TokenScoped(ctx)
 
 	b, err := h.broadcasts.Create(ctx, ws, broadcasts.Fields{
 		Name: &req.Name, Subject: convert.StringPtr(req.Subject), FromName: convert.StringPtr(req.FromName),
@@ -82,7 +82,7 @@ func (h *Handlers) BroadcastsGet(ctx context.Context, params externalapi.Broadca
 		res := externalapi.BroadcastsGetBadRequest(problem(http.StatusBadRequest, "invalid id"))
 		return &res, nil
 	}
-	b, err := h.broadcasts.Get(ctx, auth.WorkspaceID(auth.GetTokenAuth(ctx)), id)
+	b, err := h.broadcasts.Get(ctx, auth.TokenScoped(ctx), id)
 	if errors.Is(err, broadcasts.ErrNotFound) {
 		res := externalapi.BroadcastsGetNotFound(problem(http.StatusNotFound, "broadcast not found"))
 		return &res, nil
@@ -104,7 +104,7 @@ func (h *Handlers) BroadcastsUpdate(ctx context.Context, req *externalapi.Update
 		res := externalapi.BroadcastsUpdateBadRequest(problem(http.StatusBadRequest, "invalid id"))
 		return &res, nil
 	}
-	b, err := h.broadcasts.Update(ctx, auth.WorkspaceID(auth.GetTokenAuth(ctx)), id,
+	b, err := h.broadcasts.Update(ctx, auth.TokenScoped(ctx), id,
 		broadcasts.Fields{
 			Name: convert.StringPtr(req.Name), Subject: convert.StringPtr(req.Subject), FromName: convert.StringPtr(req.FromName),
 			FromEmail: convert.StringPtr(req.FromEmail), Body: convert.StringPtr(req.Body),
@@ -133,7 +133,7 @@ func (h *Handlers) BroadcastsDelete(ctx context.Context, params externalapi.Broa
 		res := externalapi.BroadcastsDeleteBadRequest(problem(http.StatusBadRequest, "invalid id"))
 		return &res, nil
 	}
-	err = h.broadcasts.DeleteDraft(ctx, auth.WorkspaceID(auth.GetTokenAuth(ctx)), id)
+	err = h.broadcasts.DeleteDraft(ctx, auth.TokenScoped(ctx), id)
 	switch {
 	case errors.Is(err, broadcasts.ErrNotFound):
 		res := externalapi.BroadcastsDeleteNotFound(problem(http.StatusNotFound, "broadcast not found"))
@@ -166,7 +166,7 @@ func (h *Handlers) BroadcastsSetAudience(ctx context.Context, req *externalapi.S
 		}
 		segmentID = &sid
 	}
-	b, err := h.broadcasts.SetAudience(ctx, auth.WorkspaceID(auth.GetTokenAuth(ctx)), id, segmentID)
+	b, err := h.broadcasts.SetAudience(ctx, auth.TokenScoped(ctx), id, segmentID)
 	switch {
 	case errors.Is(err, broadcasts.ErrNotFound):
 		res := externalapi.BroadcastsSetAudienceNotFound(problem(http.StatusNotFound, "broadcast not found"))
@@ -197,7 +197,7 @@ func (h *Handlers) BroadcastsSchedule(ctx context.Context, req *externalapi.Sche
 		res := externalapi.BroadcastsScheduleBadRequest(problem(http.StatusBadRequest, "invalid id"))
 		return &res, nil
 	}
-	b, err := h.broadcasts.Schedule(ctx, auth.WorkspaceID(auth.GetTokenAuth(ctx)), id, time.Time(req.ScheduledAt))
+	b, err := h.broadcasts.Schedule(ctx, auth.TokenScoped(ctx), id, time.Time(req.ScheduledAt))
 	switch {
 	case errors.Is(err, broadcasts.ErrNotFound):
 		res := externalapi.BroadcastsScheduleNotFound(problem(http.StatusNotFound, "broadcast not found"))
@@ -222,7 +222,7 @@ func (h *Handlers) BroadcastsUnschedule(ctx context.Context, params externalapi.
 		res := externalapi.BroadcastsUnscheduleBadRequest(problem(http.StatusBadRequest, "invalid id"))
 		return &res, nil
 	}
-	b, err := h.broadcasts.Unschedule(ctx, auth.WorkspaceID(auth.GetTokenAuth(ctx)), id)
+	b, err := h.broadcasts.Unschedule(ctx, auth.TokenScoped(ctx), id)
 	switch {
 	case errors.Is(err, broadcasts.ErrNotFound):
 		res := externalapi.BroadcastsUnscheduleNotFound(problem(http.StatusNotFound, "broadcast not found"))
@@ -249,7 +249,7 @@ func (h *Handlers) BroadcastsTestSend(ctx context.Context, req *externalapi.Test
 		res := externalapi.BroadcastsTestSendBadRequest(problem(http.StatusBadRequest, "invalid id"))
 		return &res, nil
 	}
-	ws := auth.WorkspaceID(auth.GetTokenAuth(ctx))
+	ws := auth.TokenScoped(ctx)
 	b, err := h.broadcasts.Get(ctx, ws, id)
 	if errors.Is(err, broadcasts.ErrNotFound) {
 		res := externalapi.BroadcastsTestSendNotFound(problem(http.StatusNotFound, "broadcast not found"))
@@ -259,7 +259,7 @@ func (h *Handlers) BroadcastsTestSend(ctx context.Context, req *externalapi.Test
 		return nil, err
 	}
 
-	if detail := h.outbound.SendBroadcastTest(ctx, b, string(req.Email)); detail != "" {
+	if detail := h.outbound.SendBroadcastTest(ctx, auth.TokenScoped(ctx), b, string(req.Email)); detail != "" {
 		res := externalapi.BroadcastsTestSendUnprocessableEntity(problem(http.StatusUnprocessableEntity, detail))
 		return &res, nil
 	}
@@ -276,7 +276,7 @@ func (h *Handlers) BroadcastsReport(ctx context.Context, params externalapi.Broa
 		res := externalapi.BroadcastsReportBadRequest(problem(http.StatusBadRequest, "invalid id"))
 		return &res, nil
 	}
-	r, err := h.broadcasts.Report(ctx, auth.WorkspaceID(auth.GetTokenAuth(ctx)), id)
+	r, err := h.broadcasts.Report(ctx, auth.TokenScoped(ctx), id)
 	if errors.Is(err, broadcasts.ErrNotFound) {
 		res := externalapi.BroadcastsReportNotFound(problem(http.StatusNotFound, "broadcast not found"))
 		return &res, nil

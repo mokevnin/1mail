@@ -30,6 +30,12 @@ func (_u *OutboundMessageUpdate) Where(ps ...predicate.OutboundMessage) *Outboun
 	return _u
 }
 
+// SetUpdatedAt sets the "updated_at" field.
+func (_u *OutboundMessageUpdate) SetUpdatedAt(v time.Time) *OutboundMessageUpdate {
+	_u.mutation.SetUpdatedAt(v)
+	return _u
+}
+
 // SetWorkspaceID sets the "workspace_id" field.
 func (_u *OutboundMessageUpdate) SetWorkspaceID(v int64) *OutboundMessageUpdate {
 	_u.mutation.SetWorkspaceID(v)
@@ -389,12 +395,6 @@ func (_u *OutboundMessageUpdate) ClearTemplateID() *OutboundMessageUpdate {
 	return _u
 }
 
-// SetUpdatedAt sets the "updated_at" field.
-func (_u *OutboundMessageUpdate) SetUpdatedAt(v time.Time) *OutboundMessageUpdate {
-	_u.mutation.SetUpdatedAt(v)
-	return _u
-}
-
 // SetWorkspace sets the "workspace" edge to the Workspace entity.
 func (_u *OutboundMessageUpdate) SetWorkspace(v *Workspace) *OutboundMessageUpdate {
 	return _u.SetWorkspaceID(v.ID)
@@ -487,6 +487,9 @@ func (_u *OutboundMessageUpdate) sqlSave(ctx context.Context) (_node int, err er
 				ps[i](selector)
 			}
 		}
+	}
+	if value, ok := _u.mutation.UpdatedAt(); ok {
+		_spec.SetField(outboundmessage.FieldUpdatedAt, field.TypeTime, value)
 	}
 	if value, ok := _u.mutation.Channel(); ok {
 		_spec.SetField(outboundmessage.FieldChannel, field.TypeEnum, value)
@@ -593,9 +596,6 @@ func (_u *OutboundMessageUpdate) sqlSave(ctx context.Context) (_node int, err er
 	if _u.mutation.TemplateIDCleared() {
 		_spec.ClearField(outboundmessage.FieldTemplateID, field.TypeInt64)
 	}
-	if value, ok := _u.mutation.UpdatedAt(); ok {
-		_spec.SetField(outboundmessage.FieldUpdatedAt, field.TypeTime, value)
-	}
 	if _u.mutation.WorkspaceCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
@@ -645,6 +645,12 @@ type OutboundMessageUpdateOne struct {
 	hooks     []Hook
 	mutation  *OutboundMessageMutation
 	modifiers []func(*sql.UpdateBuilder)
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (_u *OutboundMessageUpdateOne) SetUpdatedAt(v time.Time) *OutboundMessageUpdateOne {
+	_u.mutation.SetUpdatedAt(v)
+	return _u
 }
 
 // SetWorkspaceID sets the "workspace_id" field.
@@ -1006,12 +1012,6 @@ func (_u *OutboundMessageUpdateOne) ClearTemplateID() *OutboundMessageUpdateOne 
 	return _u
 }
 
-// SetUpdatedAt sets the "updated_at" field.
-func (_u *OutboundMessageUpdateOne) SetUpdatedAt(v time.Time) *OutboundMessageUpdateOne {
-	_u.mutation.SetUpdatedAt(v)
-	return _u
-}
-
 // SetWorkspace sets the "workspace" edge to the Workspace entity.
 func (_u *OutboundMessageUpdateOne) SetWorkspace(v *Workspace) *OutboundMessageUpdateOne {
 	return _u.SetWorkspaceID(v.ID)
@@ -1135,6 +1135,9 @@ func (_u *OutboundMessageUpdateOne) sqlSave(ctx context.Context) (_node *Outboun
 			}
 		}
 	}
+	if value, ok := _u.mutation.UpdatedAt(); ok {
+		_spec.SetField(outboundmessage.FieldUpdatedAt, field.TypeTime, value)
+	}
 	if value, ok := _u.mutation.Channel(); ok {
 		_spec.SetField(outboundmessage.FieldChannel, field.TypeEnum, value)
 	}
@@ -1239,9 +1242,6 @@ func (_u *OutboundMessageUpdateOne) sqlSave(ctx context.Context) (_node *Outboun
 	}
 	if _u.mutation.TemplateIDCleared() {
 		_spec.ClearField(outboundmessage.FieldTemplateID, field.TypeInt64)
-	}
-	if value, ok := _u.mutation.UpdatedAt(); ok {
-		_spec.SetField(outboundmessage.FieldUpdatedAt, field.TypeTime, value)
 	}
 	if _u.mutation.WorkspaceCleared() {
 		edge := &sqlgraph.EdgeSpec{

@@ -7,6 +7,7 @@ import (
 
 	"github.com/mokevnin/1mail/ent/apitoken"
 	externalapi "github.com/mokevnin/1mail/gen/external"
+	"github.com/mokevnin/1mail/internal/accounts"
 	"github.com/mokevnin/1mail/internal/api/external"
 	"github.com/mokevnin/1mail/internal/fixtures"
 	"github.com/mokevnin/1mail/internal/testhelper"
@@ -150,7 +151,7 @@ func TestExternalAuthTokensDeleteCannotTouchAnotherWorkspace(t *testing.T) {
 func TestExternalAuthTokensBootstrap(t *testing.T) {
 	env := testhelper.Setup(t)
 	ctx := context.Background()
-	h := external.NewHandlers(external.Deps{Ent: env.DB, BootstrapToken: "bootstrap-secret"})
+	h := external.NewHandlers(external.Deps{Accounts: accounts.New(env.DB, env.Bus), BootstrapToken: "bootstrap-secret"})
 	in := &externalapi.CreateApiTokenInput{Name: "first", Scopes: []externalapi.ApiTokenScope{externalapi.ApiTokenScopeTokensWrite}}
 
 	wrong, err := h.AuthTokensBootstrap(ctx, in, externalapi.AuthTokensBootstrapParams{XBootstrapToken: "nope"})
@@ -173,7 +174,7 @@ func TestExternalAuthTokensBootstrapDisabledWithoutConfiguredSecret(t *testing.T
 	in := &externalapi.CreateApiTokenInput{Name: "first"}
 
 	// Unconfigured: an empty header must not match the empty secret.
-	h := external.NewHandlers(external.Deps{Ent: env.DB})
+	h := external.NewHandlers(external.Deps{Accounts: accounts.New(env.DB, env.Bus)})
 	blank, err := h.AuthTokensBootstrap(ctx, in, externalapi.AuthTokensBootstrapParams{XBootstrapToken: ""})
 	require.NoError(t, err)
 	assert.IsType(t, &externalapi.AuthTokensBootstrapUnauthorized{}, blank)

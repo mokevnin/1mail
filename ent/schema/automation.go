@@ -1,8 +1,6 @@
 package schema
 
 import (
-	"time"
-
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/entsql"
 	"entgo.io/ent/schema"
@@ -25,6 +23,10 @@ func (Automation) Annotations() []schema.Annotation {
 	}
 }
 
+func (Automation) Mixin() []ent.Mixin {
+	return []ent.Mixin{TimeMixin{}, WorkspaceMixin{Ref: "automations"}}
+}
+
 func (Automation) Fields() []ent.Field {
 	return []ent.Field{
 		field.Int64("id").
@@ -43,23 +45,11 @@ func (Automation) Fields() []ent.Field {
 		// {"type":"wait","seconds":N}].
 		field.String("definition").
 			Default("[]"),
-		field.Int64("workspace_id"),
-		field.Time("created_at").
-			Default(time.Now).
-			Immutable(),
-		field.Time("updated_at").
-			Default(time.Now).
-			UpdateDefault(time.Now),
 	}
 }
 
 func (Automation) Edges() []ent.Edge {
 	return []ent.Edge{
-		edge.From("workspace", Workspace.Type).
-			Ref("automations").
-			Field("workspace_id").
-			Required().
-			Unique(),
 		// Deleting an Automation deletes its Enrollments with it.
 		edge.To("runs", AutomationRun.Type).
 			Annotations(entsql.OnDelete(entsql.Cascade)),

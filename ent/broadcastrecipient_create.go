@@ -24,6 +24,40 @@ type BroadcastRecipientCreate struct {
 	conflict []sql.ConflictOption
 }
 
+// SetCreatedAt sets the "created_at" field.
+func (_c *BroadcastRecipientCreate) SetCreatedAt(v time.Time) *BroadcastRecipientCreate {
+	_c.mutation.SetCreatedAt(v)
+	return _c
+}
+
+// SetNillableCreatedAt sets the "created_at" field if the given value is not nil.
+func (_c *BroadcastRecipientCreate) SetNillableCreatedAt(v *time.Time) *BroadcastRecipientCreate {
+	if v != nil {
+		_c.SetCreatedAt(*v)
+	}
+	return _c
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (_c *BroadcastRecipientCreate) SetUpdatedAt(v time.Time) *BroadcastRecipientCreate {
+	_c.mutation.SetUpdatedAt(v)
+	return _c
+}
+
+// SetNillableUpdatedAt sets the "updated_at" field if the given value is not nil.
+func (_c *BroadcastRecipientCreate) SetNillableUpdatedAt(v *time.Time) *BroadcastRecipientCreate {
+	if v != nil {
+		_c.SetUpdatedAt(*v)
+	}
+	return _c
+}
+
+// SetWorkspaceID sets the "workspace_id" field.
+func (_c *BroadcastRecipientCreate) SetWorkspaceID(v int64) *BroadcastRecipientCreate {
+	_c.mutation.SetWorkspaceID(v)
+	return _c
+}
+
 // SetBroadcastID sets the "broadcast_id" field.
 func (_c *BroadcastRecipientCreate) SetBroadcastID(v int64) *BroadcastRecipientCreate {
 	_c.mutation.SetBroadcastID(v)
@@ -33,12 +67,6 @@ func (_c *BroadcastRecipientCreate) SetBroadcastID(v int64) *BroadcastRecipientC
 // SetContactID sets the "contact_id" field.
 func (_c *BroadcastRecipientCreate) SetContactID(v int64) *BroadcastRecipientCreate {
 	_c.mutation.SetContactID(v)
-	return _c
-}
-
-// SetWorkspaceID sets the "workspace_id" field.
-func (_c *BroadcastRecipientCreate) SetWorkspaceID(v int64) *BroadcastRecipientCreate {
-	_c.mutation.SetWorkspaceID(v)
 	return _c
 }
 
@@ -126,48 +154,20 @@ func (_c *BroadcastRecipientCreate) SetNillableClickedAt(v *time.Time) *Broadcas
 	return _c
 }
 
-// SetCreatedAt sets the "created_at" field.
-func (_c *BroadcastRecipientCreate) SetCreatedAt(v time.Time) *BroadcastRecipientCreate {
-	_c.mutation.SetCreatedAt(v)
-	return _c
-}
-
-// SetNillableCreatedAt sets the "created_at" field if the given value is not nil.
-func (_c *BroadcastRecipientCreate) SetNillableCreatedAt(v *time.Time) *BroadcastRecipientCreate {
-	if v != nil {
-		_c.SetCreatedAt(*v)
-	}
-	return _c
-}
-
-// SetUpdatedAt sets the "updated_at" field.
-func (_c *BroadcastRecipientCreate) SetUpdatedAt(v time.Time) *BroadcastRecipientCreate {
-	_c.mutation.SetUpdatedAt(v)
-	return _c
-}
-
-// SetNillableUpdatedAt sets the "updated_at" field if the given value is not nil.
-func (_c *BroadcastRecipientCreate) SetNillableUpdatedAt(v *time.Time) *BroadcastRecipientCreate {
-	if v != nil {
-		_c.SetUpdatedAt(*v)
-	}
-	return _c
-}
-
 // SetID sets the "id" field.
 func (_c *BroadcastRecipientCreate) SetID(v int64) *BroadcastRecipientCreate {
 	_c.mutation.SetID(v)
 	return _c
 }
 
-// SetBroadcast sets the "broadcast" edge to the Broadcast entity.
-func (_c *BroadcastRecipientCreate) SetBroadcast(v *Broadcast) *BroadcastRecipientCreate {
-	return _c.SetBroadcastID(v.ID)
-}
-
 // SetWorkspace sets the "workspace" edge to the Workspace entity.
 func (_c *BroadcastRecipientCreate) SetWorkspace(v *Workspace) *BroadcastRecipientCreate {
 	return _c.SetWorkspaceID(v.ID)
+}
+
+// SetBroadcast sets the "broadcast" edge to the Broadcast entity.
+func (_c *BroadcastRecipientCreate) SetBroadcast(v *Broadcast) *BroadcastRecipientCreate {
+	return _c.SetBroadcastID(v.ID)
 }
 
 // Mutation returns the BroadcastRecipientMutation object of the builder.
@@ -205,10 +205,6 @@ func (_c *BroadcastRecipientCreate) ExecX(ctx context.Context) {
 
 // defaults sets the default values of the builder before save.
 func (_c *BroadcastRecipientCreate) defaults() {
-	if _, ok := _c.mutation.Status(); !ok {
-		v := broadcastrecipient.DefaultStatus
-		_c.mutation.SetStatus(v)
-	}
 	if _, ok := _c.mutation.CreatedAt(); !ok {
 		v := broadcastrecipient.DefaultCreatedAt()
 		_c.mutation.SetCreatedAt(v)
@@ -217,18 +213,28 @@ func (_c *BroadcastRecipientCreate) defaults() {
 		v := broadcastrecipient.DefaultUpdatedAt()
 		_c.mutation.SetUpdatedAt(v)
 	}
+	if _, ok := _c.mutation.Status(); !ok {
+		v := broadcastrecipient.DefaultStatus
+		_c.mutation.SetStatus(v)
+	}
 }
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *BroadcastRecipientCreate) check() error {
+	if _, ok := _c.mutation.CreatedAt(); !ok {
+		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "BroadcastRecipient.created_at"`)}
+	}
+	if _, ok := _c.mutation.UpdatedAt(); !ok {
+		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "BroadcastRecipient.updated_at"`)}
+	}
+	if _, ok := _c.mutation.WorkspaceID(); !ok {
+		return &ValidationError{Name: "workspace_id", err: errors.New(`ent: missing required field "BroadcastRecipient.workspace_id"`)}
+	}
 	if _, ok := _c.mutation.BroadcastID(); !ok {
 		return &ValidationError{Name: "broadcast_id", err: errors.New(`ent: missing required field "BroadcastRecipient.broadcast_id"`)}
 	}
 	if _, ok := _c.mutation.ContactID(); !ok {
 		return &ValidationError{Name: "contact_id", err: errors.New(`ent: missing required field "BroadcastRecipient.contact_id"`)}
-	}
-	if _, ok := _c.mutation.WorkspaceID(); !ok {
-		return &ValidationError{Name: "workspace_id", err: errors.New(`ent: missing required field "BroadcastRecipient.workspace_id"`)}
 	}
 	if _, ok := _c.mutation.Status(); !ok {
 		return &ValidationError{Name: "status", err: errors.New(`ent: missing required field "BroadcastRecipient.status"`)}
@@ -238,17 +244,11 @@ func (_c *BroadcastRecipientCreate) check() error {
 			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "BroadcastRecipient.status": %w`, err)}
 		}
 	}
-	if _, ok := _c.mutation.CreatedAt(); !ok {
-		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "BroadcastRecipient.created_at"`)}
-	}
-	if _, ok := _c.mutation.UpdatedAt(); !ok {
-		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "BroadcastRecipient.updated_at"`)}
+	if len(_c.mutation.WorkspaceIDs()) == 0 {
+		return &ValidationError{Name: "workspace", err: errors.New(`ent: missing required edge "BroadcastRecipient.workspace"`)}
 	}
 	if len(_c.mutation.BroadcastIDs()) == 0 {
 		return &ValidationError{Name: "broadcast", err: errors.New(`ent: missing required edge "BroadcastRecipient.broadcast"`)}
-	}
-	if len(_c.mutation.WorkspaceIDs()) == 0 {
-		return &ValidationError{Name: "workspace", err: errors.New(`ent: missing required edge "BroadcastRecipient.workspace"`)}
 	}
 	return nil
 }
@@ -283,6 +283,14 @@ func (_c *BroadcastRecipientCreate) createSpec() (*BroadcastRecipient, *sqlgraph
 		_node.ID = id
 		_spec.ID.Value = id
 	}
+	if value, ok := _c.mutation.CreatedAt(); ok {
+		_spec.SetField(broadcastrecipient.FieldCreatedAt, field.TypeTime, value)
+		_node.CreatedAt = value
+	}
+	if value, ok := _c.mutation.UpdatedAt(); ok {
+		_spec.SetField(broadcastrecipient.FieldUpdatedAt, field.TypeTime, value)
+		_node.UpdatedAt = value
+	}
 	if value, ok := _c.mutation.ContactID(); ok {
 		_spec.SetField(broadcastrecipient.FieldContactID, field.TypeInt64, value)
 		_node.ContactID = value
@@ -311,13 +319,22 @@ func (_c *BroadcastRecipientCreate) createSpec() (*BroadcastRecipient, *sqlgraph
 		_spec.SetField(broadcastrecipient.FieldClickedAt, field.TypeTime, value)
 		_node.ClickedAt = &value
 	}
-	if value, ok := _c.mutation.CreatedAt(); ok {
-		_spec.SetField(broadcastrecipient.FieldCreatedAt, field.TypeTime, value)
-		_node.CreatedAt = value
-	}
-	if value, ok := _c.mutation.UpdatedAt(); ok {
-		_spec.SetField(broadcastrecipient.FieldUpdatedAt, field.TypeTime, value)
-		_node.UpdatedAt = value
+	if nodes := _c.mutation.WorkspaceIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   broadcastrecipient.WorkspaceTable,
+			Columns: []string{broadcastrecipient.WorkspaceColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(workspace.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.WorkspaceID = nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
 	}
 	if nodes := _c.mutation.BroadcastIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -336,23 +353,6 @@ func (_c *BroadcastRecipientCreate) createSpec() (*BroadcastRecipient, *sqlgraph
 		_node.BroadcastID = nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
-	if nodes := _c.mutation.WorkspaceIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: true,
-			Table:   broadcastrecipient.WorkspaceTable,
-			Columns: []string{broadcastrecipient.WorkspaceColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(workspace.FieldID, field.TypeInt64),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_node.WorkspaceID = nodes[0]
-		_spec.Edges = append(_spec.Edges, edge)
-	}
 	return _node, _spec
 }
 
@@ -360,7 +360,7 @@ func (_c *BroadcastRecipientCreate) createSpec() (*BroadcastRecipient, *sqlgraph
 // of the `INSERT` statement. For example:
 //
 //	client.BroadcastRecipient.Create().
-//		SetBroadcastID(v).
+//		SetCreatedAt(v).
 //		OnConflict(
 //			// Update the row with the new values
 //			// the was proposed for insertion.
@@ -369,7 +369,7 @@ func (_c *BroadcastRecipientCreate) createSpec() (*BroadcastRecipient, *sqlgraph
 //		// Override some of the fields with custom
 //		// update values.
 //		Update(func(u *ent.BroadcastRecipientUpsert) {
-//			SetBroadcastID(v+v).
+//			SetCreatedAt(v+v).
 //		}).
 //		Exec(ctx)
 func (_c *BroadcastRecipientCreate) OnConflict(opts ...sql.ConflictOption) *BroadcastRecipientUpsertOne {
@@ -405,6 +405,30 @@ type (
 	}
 )
 
+// SetUpdatedAt sets the "updated_at" field.
+func (u *BroadcastRecipientUpsert) SetUpdatedAt(v time.Time) *BroadcastRecipientUpsert {
+	u.Set(broadcastrecipient.FieldUpdatedAt, v)
+	return u
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *BroadcastRecipientUpsert) UpdateUpdatedAt() *BroadcastRecipientUpsert {
+	u.SetExcluded(broadcastrecipient.FieldUpdatedAt)
+	return u
+}
+
+// SetWorkspaceID sets the "workspace_id" field.
+func (u *BroadcastRecipientUpsert) SetWorkspaceID(v int64) *BroadcastRecipientUpsert {
+	u.Set(broadcastrecipient.FieldWorkspaceID, v)
+	return u
+}
+
+// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
+func (u *BroadcastRecipientUpsert) UpdateWorkspaceID() *BroadcastRecipientUpsert {
+	u.SetExcluded(broadcastrecipient.FieldWorkspaceID)
+	return u
+}
+
 // SetBroadcastID sets the "broadcast_id" field.
 func (u *BroadcastRecipientUpsert) SetBroadcastID(v int64) *BroadcastRecipientUpsert {
 	u.Set(broadcastrecipient.FieldBroadcastID, v)
@@ -432,18 +456,6 @@ func (u *BroadcastRecipientUpsert) UpdateContactID() *BroadcastRecipientUpsert {
 // AddContactID adds v to the "contact_id" field.
 func (u *BroadcastRecipientUpsert) AddContactID(v int64) *BroadcastRecipientUpsert {
 	u.Add(broadcastrecipient.FieldContactID, v)
-	return u
-}
-
-// SetWorkspaceID sets the "workspace_id" field.
-func (u *BroadcastRecipientUpsert) SetWorkspaceID(v int64) *BroadcastRecipientUpsert {
-	u.Set(broadcastrecipient.FieldWorkspaceID, v)
-	return u
-}
-
-// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
-func (u *BroadcastRecipientUpsert) UpdateWorkspaceID() *BroadcastRecipientUpsert {
-	u.SetExcluded(broadcastrecipient.FieldWorkspaceID)
 	return u
 }
 
@@ -555,18 +567,6 @@ func (u *BroadcastRecipientUpsert) ClearClickedAt() *BroadcastRecipientUpsert {
 	return u
 }
 
-// SetUpdatedAt sets the "updated_at" field.
-func (u *BroadcastRecipientUpsert) SetUpdatedAt(v time.Time) *BroadcastRecipientUpsert {
-	u.Set(broadcastrecipient.FieldUpdatedAt, v)
-	return u
-}
-
-// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
-func (u *BroadcastRecipientUpsert) UpdateUpdatedAt() *BroadcastRecipientUpsert {
-	u.SetExcluded(broadcastrecipient.FieldUpdatedAt)
-	return u
-}
-
 // UpdateNewValues updates the mutable fields using the new values that were set on create except the ID field.
 // Using this option is equivalent to using:
 //
@@ -618,6 +618,34 @@ func (u *BroadcastRecipientUpsertOne) Update(set func(*BroadcastRecipientUpsert)
 	return u
 }
 
+// SetUpdatedAt sets the "updated_at" field.
+func (u *BroadcastRecipientUpsertOne) SetUpdatedAt(v time.Time) *BroadcastRecipientUpsertOne {
+	return u.Update(func(s *BroadcastRecipientUpsert) {
+		s.SetUpdatedAt(v)
+	})
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *BroadcastRecipientUpsertOne) UpdateUpdatedAt() *BroadcastRecipientUpsertOne {
+	return u.Update(func(s *BroadcastRecipientUpsert) {
+		s.UpdateUpdatedAt()
+	})
+}
+
+// SetWorkspaceID sets the "workspace_id" field.
+func (u *BroadcastRecipientUpsertOne) SetWorkspaceID(v int64) *BroadcastRecipientUpsertOne {
+	return u.Update(func(s *BroadcastRecipientUpsert) {
+		s.SetWorkspaceID(v)
+	})
+}
+
+// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
+func (u *BroadcastRecipientUpsertOne) UpdateWorkspaceID() *BroadcastRecipientUpsertOne {
+	return u.Update(func(s *BroadcastRecipientUpsert) {
+		s.UpdateWorkspaceID()
+	})
+}
+
 // SetBroadcastID sets the "broadcast_id" field.
 func (u *BroadcastRecipientUpsertOne) SetBroadcastID(v int64) *BroadcastRecipientUpsertOne {
 	return u.Update(func(s *BroadcastRecipientUpsert) {
@@ -650,20 +678,6 @@ func (u *BroadcastRecipientUpsertOne) AddContactID(v int64) *BroadcastRecipientU
 func (u *BroadcastRecipientUpsertOne) UpdateContactID() *BroadcastRecipientUpsertOne {
 	return u.Update(func(s *BroadcastRecipientUpsert) {
 		s.UpdateContactID()
-	})
-}
-
-// SetWorkspaceID sets the "workspace_id" field.
-func (u *BroadcastRecipientUpsertOne) SetWorkspaceID(v int64) *BroadcastRecipientUpsertOne {
-	return u.Update(func(s *BroadcastRecipientUpsert) {
-		s.SetWorkspaceID(v)
-	})
-}
-
-// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
-func (u *BroadcastRecipientUpsertOne) UpdateWorkspaceID() *BroadcastRecipientUpsertOne {
-	return u.Update(func(s *BroadcastRecipientUpsert) {
-		s.UpdateWorkspaceID()
 	})
 }
 
@@ -790,20 +804,6 @@ func (u *BroadcastRecipientUpsertOne) UpdateClickedAt() *BroadcastRecipientUpser
 func (u *BroadcastRecipientUpsertOne) ClearClickedAt() *BroadcastRecipientUpsertOne {
 	return u.Update(func(s *BroadcastRecipientUpsert) {
 		s.ClearClickedAt()
-	})
-}
-
-// SetUpdatedAt sets the "updated_at" field.
-func (u *BroadcastRecipientUpsertOne) SetUpdatedAt(v time.Time) *BroadcastRecipientUpsertOne {
-	return u.Update(func(s *BroadcastRecipientUpsert) {
-		s.SetUpdatedAt(v)
-	})
-}
-
-// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
-func (u *BroadcastRecipientUpsertOne) UpdateUpdatedAt() *BroadcastRecipientUpsertOne {
-	return u.Update(func(s *BroadcastRecipientUpsert) {
-		s.UpdateUpdatedAt()
 	})
 }
 
@@ -942,7 +942,7 @@ func (_c *BroadcastRecipientCreateBulk) ExecX(ctx context.Context) {
 //		// Override some of the fields with custom
 //		// update values.
 //		Update(func(u *ent.BroadcastRecipientUpsert) {
-//			SetBroadcastID(v+v).
+//			SetCreatedAt(v+v).
 //		}).
 //		Exec(ctx)
 func (_c *BroadcastRecipientCreateBulk) OnConflict(opts ...sql.ConflictOption) *BroadcastRecipientUpsertBulk {
@@ -1024,6 +1024,34 @@ func (u *BroadcastRecipientUpsertBulk) Update(set func(*BroadcastRecipientUpsert
 	return u
 }
 
+// SetUpdatedAt sets the "updated_at" field.
+func (u *BroadcastRecipientUpsertBulk) SetUpdatedAt(v time.Time) *BroadcastRecipientUpsertBulk {
+	return u.Update(func(s *BroadcastRecipientUpsert) {
+		s.SetUpdatedAt(v)
+	})
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *BroadcastRecipientUpsertBulk) UpdateUpdatedAt() *BroadcastRecipientUpsertBulk {
+	return u.Update(func(s *BroadcastRecipientUpsert) {
+		s.UpdateUpdatedAt()
+	})
+}
+
+// SetWorkspaceID sets the "workspace_id" field.
+func (u *BroadcastRecipientUpsertBulk) SetWorkspaceID(v int64) *BroadcastRecipientUpsertBulk {
+	return u.Update(func(s *BroadcastRecipientUpsert) {
+		s.SetWorkspaceID(v)
+	})
+}
+
+// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
+func (u *BroadcastRecipientUpsertBulk) UpdateWorkspaceID() *BroadcastRecipientUpsertBulk {
+	return u.Update(func(s *BroadcastRecipientUpsert) {
+		s.UpdateWorkspaceID()
+	})
+}
+
 // SetBroadcastID sets the "broadcast_id" field.
 func (u *BroadcastRecipientUpsertBulk) SetBroadcastID(v int64) *BroadcastRecipientUpsertBulk {
 	return u.Update(func(s *BroadcastRecipientUpsert) {
@@ -1056,20 +1084,6 @@ func (u *BroadcastRecipientUpsertBulk) AddContactID(v int64) *BroadcastRecipient
 func (u *BroadcastRecipientUpsertBulk) UpdateContactID() *BroadcastRecipientUpsertBulk {
 	return u.Update(func(s *BroadcastRecipientUpsert) {
 		s.UpdateContactID()
-	})
-}
-
-// SetWorkspaceID sets the "workspace_id" field.
-func (u *BroadcastRecipientUpsertBulk) SetWorkspaceID(v int64) *BroadcastRecipientUpsertBulk {
-	return u.Update(func(s *BroadcastRecipientUpsert) {
-		s.SetWorkspaceID(v)
-	})
-}
-
-// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
-func (u *BroadcastRecipientUpsertBulk) UpdateWorkspaceID() *BroadcastRecipientUpsertBulk {
-	return u.Update(func(s *BroadcastRecipientUpsert) {
-		s.UpdateWorkspaceID()
 	})
 }
 
@@ -1196,20 +1210,6 @@ func (u *BroadcastRecipientUpsertBulk) UpdateClickedAt() *BroadcastRecipientUpse
 func (u *BroadcastRecipientUpsertBulk) ClearClickedAt() *BroadcastRecipientUpsertBulk {
 	return u.Update(func(s *BroadcastRecipientUpsert) {
 		s.ClearClickedAt()
-	})
-}
-
-// SetUpdatedAt sets the "updated_at" field.
-func (u *BroadcastRecipientUpsertBulk) SetUpdatedAt(v time.Time) *BroadcastRecipientUpsertBulk {
-	return u.Update(func(s *BroadcastRecipientUpsert) {
-		s.SetUpdatedAt(v)
-	})
-}
-
-// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
-func (u *BroadcastRecipientUpsertBulk) UpdateUpdatedAt() *BroadcastRecipientUpsertBulk {
-	return u.Update(func(s *BroadcastRecipientUpsert) {
-		s.UpdateUpdatedAt()
 	})
 }
 

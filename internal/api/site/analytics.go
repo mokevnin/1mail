@@ -40,7 +40,7 @@ func rangeDays(r siteapi.OptSiteAnalyticsRange) int {
 // (BroadcastRecipient delivery timestamps) so the cards and the chart reconcile;
 // contact and automation counts are point-in-time snapshots.
 func (h *Handlers) SiteAnalyticsOverview(ctx context.Context, params siteapi.SiteAnalyticsOverviewParams) (siteapi.SiteAnalyticsOverviewRes, error) {
-	ws, err := h.workspaceID(ctx, params.Slug)
+	s, err := h.scopedFor(ctx, params.Slug)
 	if ent.IsNotFound(err) {
 		v := problem(http.StatusNotFound, "workspace not found")
 		return &v, nil
@@ -54,19 +54,19 @@ func (h *Handlers) SiteAnalyticsOverview(ctx context.Context, params siteapi.Sit
 	since := today.AddDate(0, 0, -(days - 1))
 	until := today.AddDate(0, 0, 1) // exclusive upper bound (midnight tomorrow UTC)
 
-	contacts, err := h.analyticsContacts(ctx, ws, since)
+	contacts, err := h.analyticsContacts(ctx, s, since)
 	if err != nil {
 		return nil, err
 	}
-	email, err := h.analyticsEmail(ctx, ws, since, until)
+	email, err := h.analyticsEmail(ctx, s, since, until)
 	if err != nil {
 		return nil, err
 	}
-	automations, err := h.analyticsAutomations(ctx, ws)
+	automations, err := h.analyticsAutomations(ctx, s)
 	if err != nil {
 		return nil, err
 	}
-	series, err := h.analyticsTimeseries(ctx, ws, since, until)
+	series, err := h.analyticsTimeseries(ctx, s, since, until)
 	if err != nil {
 		return nil, err
 	}
@@ -79,23 +79,23 @@ func (h *Handlers) SiteAnalyticsOverview(ctx context.Context, params siteapi.Sit
 	}, nil
 }
 
-func (h *Handlers) analyticsContacts(ctx context.Context, ws int64, since time.Time) (siteapi.SiteAnalyticsContacts, error) {
+func (h *Handlers) analyticsContacts(ctx context.Context, s *ent.Scoped, since time.Time) (siteapi.SiteAnalyticsContacts, error) {
 	var out siteapi.SiteAnalyticsContacts
-	total, err := h.ent.Contact.Query().Where(contact.WorkspaceID(ws)).Count(ctx)
+	total, err := s.Contact().Query().Count(ctx)
 	if err != nil {
 		return out, err
 	}
 	// Eligibility is derived, not stored (ADR 0001): "unsubscribed" here means the
 	// contact's email is globally non-mailable (suppressed or opted out of
 	// everything); "active" is the remainder.
-	unsub, err := h.ent.Contact.Query().
-		Where(contact.WorkspaceID(ws), eligibility.GloballyOptedOut(eligibility.ChannelEmail)).
+	unsub, err := s.Contact().Query().
+		Where(eligibility.GloballyOptedOut(eligibility.ChannelEmail)).
 		Count(ctx)
 	if err != nil {
 		return out, err
 	}
 	active := total - unsub
-	newInRange, err := h.ent.Contact.Query().Where(contact.WorkspaceID(ws), contact.CreatedAtGTE(since)).Count(ctx)
+	newInRange, err := s.Contact().Query().Where(contact.CreatedAtGTE(since)).Count(ctx)
 	if err != nil {
 		return out, err
 	}
@@ -107,15 +107,14 @@ func (h *Handlers) analyticsContacts(ctx context.Context, ws int64, since time.T
 	}, nil
 }
 
-func (h *Handlers) analyticsEmail(ctx context.Context, ws int64, since, until time.Time) (siteapi.SiteAnalyticsEmail, error) {
+func (h *Handlers) analyticsEmail(ctx context.Context, s *ent.Scoped, since, until time.Time) (siteapi.SiteAnalyticsEmail, error) {
 	var out siteapi.SiteAnalyticsEmail
 	// Cohort by send: the denominator is the messages sent in the window, and
 	// opens/clicks are counted among that same cohort. This keeps opened ≤ sent
 	// (rates stay in [0,1]) and lets the KPIs reconcile with the time series,
 	// which buckets the same cohort by send day.
 	cohort := func() *ent.BroadcastRecipientQuery {
-		return h.ent.BroadcastRecipient.Query().Where(
-			broadcastrecipient.WorkspaceID(ws),
+		return s.BroadcastRecipient().Query().Where(
 			broadcastrecipient.SentAtGTE(since),
 			broadcastrecipient.SentAtLT(until),
 		)
@@ -142,21 +141,21 @@ func (h *Handlers) analyticsEmail(ctx context.Context, ws int64, since, until ti
 	}, nil
 }
 
-func (h *Handlers) analyticsAutomations(ctx context.Context, ws int64) (siteapi.SiteAnalyticsAutomations, error) {
+func (h *Handlers) analyticsAutomations(ctx context.Context, s *ent.Scoped) (siteapi.SiteAnalyticsAutomations, error) {
 	var out siteapi.SiteAnalyticsAutomations
-	total, err := h.ent.Automation.Query().Where(automation.WorkspaceID(ws)).Count(ctx)
+	total, err := s.Automation().Query().Count(ctx)
 	if err != nil {
 		return out, err
 	}
-	active, err := h.ent.Automation.Query().Where(automation.WorkspaceID(ws), automation.StatusEQ(automation.StatusActive)).Count(ctx)
+	active, err := s.Automation().Query().Where(automation.StatusEQ(automation.StatusActive)).Count(ctx)
 	if err != nil {
 		return out, err
 	}
-	runsActive, err := h.ent.AutomationRun.Query().Where(automationrun.WorkspaceID(ws), automationrun.StatusEQ(automationrun.StatusActive)).Count(ctx)
+	runsActive, err := s.AutomationRun().Query().Where(automationrun.StatusEQ(automationrun.StatusActive)).Count(ctx)
 	if err != nil {
 		return out, err
 	}
-	runsCompleted, err := h.ent.AutomationRun.Query().Where(automationrun.WorkspaceID(ws), automationrun.StatusEQ(automationrun.StatusCompleted)).Count(ctx)
+	runsCompleted, err := s.AutomationRun().Query().Where(automationrun.StatusEQ(automationrun.StatusCompleted)).Count(ctx)
 	if err != nil {
 		return out, err
 	}
@@ -172,24 +171,23 @@ func (h *Handlers) analyticsAutomations(ctx context.Context, ws int64) (siteapi.
 // opened/clicked subsets — then zero-fills every day in [since, until) so the
 // chart has no gaps. date_trunc is forced to UTC (via AT TIME ZONE 'UTC') so the
 // bucket labels match the UTC zero-fill loop regardless of the DB session zone.
-func (h *Handlers) analyticsTimeseries(ctx context.Context, ws int64, since, until time.Time) ([]siteapi.SiteAnalyticsPoint, error) {
+func (h *Handlers) analyticsTimeseries(ctx context.Context, s *ent.Scoped, since, until time.Time) ([]siteapi.SiteAnalyticsPoint, error) {
 	var rows []struct {
 		Day     string `sql:"day"`
 		Sent    int    `sql:"sent"`
 		Opened  int    `sql:"opened"`
 		Clicked int    `sql:"clicked"`
 	}
-	err := h.ent.BroadcastRecipient.Query().
-		Modify(func(s *sql.Selector) {
-			sentAt := s.C(broadcastrecipient.FieldSentAt)
-			s.Select(
+	err := s.BroadcastRecipient().Query().
+		Modify(func(sel *sql.Selector) {
+			sentAt := sel.C(broadcastrecipient.FieldSentAt)
+			sel.Select(
 				sql.As(fmt.Sprintf("to_char(date_trunc('day', %s AT TIME ZONE 'UTC'), 'YYYY-MM-DD')", sentAt), "day"),
 				sql.As("COUNT(*)", "sent"),
-				sql.As(fmt.Sprintf("COUNT(%s)", s.C(broadcastrecipient.FieldOpenedAt)), "opened"),
-				sql.As(fmt.Sprintf("COUNT(%s)", s.C(broadcastrecipient.FieldClickedAt)), "clicked"),
+				sql.As(fmt.Sprintf("COUNT(%s)", sel.C(broadcastrecipient.FieldOpenedAt)), "opened"),
+				sql.As(fmt.Sprintf("COUNT(%s)", sel.C(broadcastrecipient.FieldClickedAt)), "clicked"),
 			).
 				Where(sql.And(
-					sql.EQ(s.C(broadcastrecipient.FieldWorkspaceID), ws),
 					sql.GTE(sentAt, since),
 					sql.LT(sentAt, until),
 				)).

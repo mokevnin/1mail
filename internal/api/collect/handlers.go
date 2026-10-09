@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/go-faster/jx"
-	"github.com/mokevnin/1mail/ent"
 	collectapi "github.com/mokevnin/1mail/gen/collect"
 	"github.com/mokevnin/1mail/internal/api/auth"
 	"github.com/mokevnin/1mail/internal/events"
@@ -15,12 +14,11 @@ import (
 )
 
 type Handlers struct {
-	ent *ent.Client
 	bus *events.Bus
 }
 
-func NewHandlers(client *ent.Client, bus *events.Bus) *Handlers {
-	return &Handlers{ent: client, bus: bus}
+func NewHandlers(bus *events.Bus) *Handlers {
+	return &Handlers{bus: bus}
 }
 
 // rawMap decodes an ogen map[string]jx.Raw into map[string]any using
@@ -57,7 +55,7 @@ func (h *Handlers) CollectEventsCreate(ctx context.Context, req *collectapi.Coll
 		return evt
 	})
 
-	if err := service.CollectEvents(ctx, h.bus, auth.CollectWorkspaceID(ctx), evts); err != nil {
+	if err := service.CollectEvents(ctx, h.bus, auth.CollectScoped(ctx), evts); err != nil {
 		return nil, err
 	}
 	return &collectapi.CollectEventsCreateNoContent{}, nil
@@ -83,7 +81,7 @@ func (h *Handlers) CollectIdentifyCreate(ctx context.Context, req *collectapi.Co
 		input.Traits = rawMap(traits)
 	}
 
-	if err := service.IdentifyVisitor(ctx, h.bus, auth.CollectWorkspaceID(ctx), input); err != nil {
+	if err := service.IdentifyVisitor(ctx, h.bus, auth.CollectScoped(ctx), input); err != nil {
 		return nil, err
 	}
 	return &collectapi.CollectOkResponse{Ok: collectapi.CollectOkResponseOkTrue}, nil

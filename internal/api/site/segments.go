@@ -15,7 +15,7 @@ import (
 )
 
 func (h *Handlers) SiteSegmentsList(ctx context.Context, params siteapi.SiteSegmentsListParams) (siteapi.SiteSegmentsListRes, error) {
-	ws, err := h.workspaceID(ctx, params.Slug)
+	ws, err := h.scopedFor(ctx, params.Slug)
 	if ent.IsNotFound(err) {
 		v := siteapi.SiteSegmentsListNotFound(problem(http.StatusNotFound, "workspace not found"))
 		return &v, nil
@@ -33,7 +33,7 @@ func (h *Handlers) SiteSegmentsList(ctx context.Context, params siteapi.SiteSegm
 	}
 	page, pageSize := pagination.Normalize(pagePtr, pageSizePtr)
 
-	q := h.ent.Segment.Query().Where(segment.WorkspaceID(ws))
+	q := ws.Segment().Query()
 
 	total, err := q.Count(ctx)
 	if err != nil {
@@ -63,7 +63,7 @@ func (h *Handlers) SiteSegmentsList(ctx context.Context, params siteapi.SiteSegm
 }
 
 func (h *Handlers) SiteSegmentsCreate(ctx context.Context, req *siteapi.SiteCreateSegmentInput, params siteapi.SiteSegmentsCreateParams) (siteapi.SiteSegmentsCreateRes, error) {
-	ws, err := h.workspaceID(ctx, params.Slug)
+	ws, err := h.scopedFor(ctx, params.Slug)
 	if ent.IsNotFound(err) {
 		v := siteapi.SiteSegmentsCreateNotFound(problem(http.StatusNotFound, "workspace not found"))
 		return &v, nil
@@ -88,7 +88,7 @@ func (h *Handlers) SiteSegmentsCreate(ctx context.Context, req *siteapi.SiteCrea
 }
 
 func (h *Handlers) SiteSegmentsGet(ctx context.Context, params siteapi.SiteSegmentsGetParams) (siteapi.SiteSegmentsGetRes, error) {
-	ws, err := h.workspaceID(ctx, params.Slug)
+	ws, err := h.scopedFor(ctx, params.Slug)
 	if ent.IsNotFound(err) {
 		v := siteapi.SiteSegmentsGetNotFound(problem(http.StatusNotFound, "workspace not found"))
 		return &v, nil
@@ -102,9 +102,7 @@ func (h *Handlers) SiteSegmentsGet(ctx context.Context, params siteapi.SiteSegme
 		v := siteapi.SiteSegmentsGetBadRequest(problem(http.StatusBadRequest, "invalid id"))
 		return &v, nil
 	}
-	s, err := h.ent.Segment.Query().
-		Where(segment.IDEQ(id), segment.WorkspaceID(ws)).
-		Only(ctx)
+	s, err := ws.Segment().Get(ctx, id)
 	if ent.IsNotFound(err) {
 		v := siteapi.SiteSegmentsGetNotFound(problem(http.StatusNotFound, "segment not found"))
 		return &v, nil
@@ -117,7 +115,7 @@ func (h *Handlers) SiteSegmentsGet(ctx context.Context, params siteapi.SiteSegme
 }
 
 func (h *Handlers) SiteSegmentsUpdate(ctx context.Context, req *siteapi.SiteUpdateSegmentInput, params siteapi.SiteSegmentsUpdateParams) (siteapi.SiteSegmentsUpdateRes, error) {
-	ws, err := h.workspaceID(ctx, params.Slug)
+	ws, err := h.scopedFor(ctx, params.Slug)
 	if ent.IsNotFound(err) {
 		v := siteapi.SiteSegmentsUpdateNotFound(problem(http.StatusNotFound, "workspace not found"))
 		return &v, nil
@@ -152,7 +150,7 @@ func (h *Handlers) SiteSegmentsUpdate(ctx context.Context, req *siteapi.SiteUpda
 }
 
 func (h *Handlers) SiteSegmentsDelete(ctx context.Context, params siteapi.SiteSegmentsDeleteParams) (siteapi.SiteSegmentsDeleteRes, error) {
-	ws, err := h.workspaceID(ctx, params.Slug)
+	ws, err := h.scopedFor(ctx, params.Slug)
 	if ent.IsNotFound(err) {
 		v := siteapi.SiteSegmentsDeleteNotFound(problem(http.StatusNotFound, "workspace not found"))
 		return &v, nil
@@ -166,7 +164,7 @@ func (h *Handlers) SiteSegmentsDelete(ctx context.Context, params siteapi.SiteSe
 		v := siteapi.SiteSegmentsDeleteBadRequest(problem(http.StatusBadRequest, "invalid id"))
 		return &v, nil
 	}
-	err = h.ent.Segment.DeleteOneID(id).Where(segment.WorkspaceID(ws)).Exec(ctx)
+	err = ws.Segment().DeleteOneID(id).Exec(ctx)
 	if ent.IsNotFound(err) {
 		v := siteapi.SiteSegmentsDeleteNotFound(problem(http.StatusNotFound, "segment not found"))
 		return &v, nil
@@ -181,7 +179,7 @@ func (h *Handlers) SiteSegmentsDelete(ctx context.Context, params siteapi.SiteSe
 // rule definition. It applies the same active filter the broadcast send path
 // uses, so the previewed number matches what a broadcast to this segment ships.
 func (h *Handlers) SiteSegmentsPreview(ctx context.Context, req *siteapi.SitePreviewSegmentInput, params siteapi.SiteSegmentsPreviewParams) (siteapi.SiteSegmentsPreviewRes, error) {
-	ws, err := h.workspaceID(ctx, params.Slug)
+	ws, err := h.scopedFor(ctx, params.Slug)
 	if ent.IsNotFound(err) {
 		v := siteapi.SiteSegmentsPreviewNotFound(problem(http.StatusNotFound, "workspace not found"))
 		return &v, nil

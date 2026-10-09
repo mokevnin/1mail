@@ -31,6 +31,10 @@ type DeliverWebhookWorker struct {
 }
 
 func (w *DeliverWebhookWorker) Work(ctx context.Context, job *river.Job[DeliverWebhookArgs]) error {
+	// Job entry point: the args carry only the endpoint id, so the Workspace is not
+	// known up front and this one read uses the raw client (ADR 0017). Everything
+	// after it needs only the loaded row; a further read would build its scope from
+	// e.WorkspaceID.
 	e, err := w.ent.WebhookEndpoint.Get(ctx, job.Args.EndpointID)
 	if ent.IsNotFound(err) {
 		return nil // endpoint deleted since enqueue; drop the delivery
@@ -51,10 +55,11 @@ func (w *DeliverWebhookWorker) Work(ctx context.Context, job *river.Job[DeliverW
 
 // Dispatch fans a domain event out to every enabled endpoint in the workspace
 // whose filter matches, enqueuing one delivery job each. Implements
-// events.WebhookDispatcher.
-func (c *Client) Dispatch(ctx context.Context, workspaceID int64, eventName, deliveryID string, body []byte) error {
-	endpoints, err := c.ent.WebhookEndpoint.Query().
-		Where(webhookendpoint.WorkspaceID(workspaceID), webhookendpoint.Enabled(true)).
+// events.WebhookDispatcher. The scope comes from the caller (the events bus
+// subscriber, a raw-client allowlist entry).
+func (c *Client) Dispatch(ctx context.Context, s *ent.Scoped, eventName, deliveryID string, body []byte) error {
+	endpoints, err := s.WebhookEndpoint().Query().
+		Where(webhookendpoint.Enabled(true)).
 		All(ctx)
 	if err != nil {
 		return err

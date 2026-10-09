@@ -141,3 +141,51 @@ func TestSiteBroadcastsUpdateNullClearsAbsentKeeps(t *testing.T) {
 	assert.Empty(t, got.IntegrationId.Or(""))
 	assert.Equal(t, "Summer sale teaser", got.Name, "absent name kept")
 }
+
+// A segment or integration id of another Workspace is refused with a client error,
+// never stored: the scoped client verifies the reference on create and on update.
+func TestSiteBroadcastsCreateRefusesAForeignSegmentOrIntegration(t *testing.T) {
+	env := testhelper.Setup(t)
+	c := env.SiteActor(t, fixtures.OwnerJohnEmail)
+	ctx := context.Background()
+	slug := siteapi.SiteBroadcastsCreateParams{Slug: fixtures.AcmeSlug}
+	before := env.DB.Broadcast.Query().CountX(ctx)
+
+	got, err := c.SiteBroadcastsCreate(ctx, &siteapi.SiteCreateBroadcastInput{
+		Name: "forged", SegmentId: siteapi.NewOptNilEntityId(idStr(fixtures.SegmentGlobexID)),
+	}, slug)
+	require.NoError(t, err)
+	assert.IsType(t, &siteapi.SiteBroadcastsCreateUnprocessableEntity{}, got)
+
+	got, err = c.SiteBroadcastsCreate(ctx, &siteapi.SiteCreateBroadcastInput{
+		Name: "forged", IntegrationId: siteapi.NewOptNilEntityId(idStr(fixtures.IntegrationGlobexID)),
+	}, slug)
+	require.NoError(t, err)
+	assert.IsType(t, &siteapi.SiteBroadcastsCreateUnprocessableEntity{}, got)
+
+	assert.Equal(t, before, env.DB.Broadcast.Query().CountX(ctx), "a refused create stores nothing")
+}
+
+func TestSiteBroadcastsUpdateRefusesAForeignSegmentOrIntegration(t *testing.T) {
+	env := testhelper.Setup(t)
+	c := env.SiteActor(t, fixtures.OwnerJohnEmail)
+	ctx := context.Background()
+	params := siteapi.SiteBroadcastsUpdateParams{Slug: fixtures.AcmeSlug, ID: idStr(fixtures.BroadcastDraftID)}
+	before := env.DB.Broadcast.GetX(ctx, fixtures.BroadcastDraftID)
+
+	got, err := c.SiteBroadcastsUpdate(ctx, &siteapi.SiteUpdateBroadcastInput{
+		SegmentId: siteapi.NewOptNilEntityId(idStr(fixtures.SegmentGlobexID)),
+	}, params)
+	require.NoError(t, err)
+	assert.IsType(t, &siteapi.SiteBroadcastsUpdateUnprocessableEntity{}, got)
+
+	got, err = c.SiteBroadcastsUpdate(ctx, &siteapi.SiteUpdateBroadcastInput{
+		IntegrationId: siteapi.NewOptNilEntityId(idStr(fixtures.IntegrationGlobexID)),
+	}, params)
+	require.NoError(t, err)
+	assert.IsType(t, &siteapi.SiteBroadcastsUpdateUnprocessableEntity{}, got)
+
+	after := env.DB.Broadcast.GetX(ctx, fixtures.BroadcastDraftID)
+	assert.Equal(t, before.SegmentID, after.SegmentID, "a refused update changes nothing")
+	assert.Equal(t, before.IntegrationID, after.IntegrationID)
+}

@@ -37,8 +37,21 @@ import (
 // (default values, validators, hooks and policies) and stitches it
 // to their package variables.
 func init() {
+	apitokenMixin := schema.ApiToken{}.Mixin()
+	apitokenMixinFields0 := apitokenMixin[0].Fields()
+	_ = apitokenMixinFields0
 	apitokenFields := schema.ApiToken{}.Fields()
 	_ = apitokenFields
+	// apitokenDescCreatedAt is the schema descriptor for created_at field.
+	apitokenDescCreatedAt := apitokenMixinFields0[0].Descriptor()
+	// apitoken.DefaultCreatedAt holds the default value on creation for the created_at field.
+	apitoken.DefaultCreatedAt = apitokenDescCreatedAt.Default.(func() time.Time)
+	// apitokenDescUpdatedAt is the schema descriptor for updated_at field.
+	apitokenDescUpdatedAt := apitokenMixinFields0[1].Descriptor()
+	// apitoken.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	apitoken.DefaultUpdatedAt = apitokenDescUpdatedAt.Default.(func() time.Time)
+	// apitoken.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	apitoken.UpdateDefaultUpdatedAt = apitokenDescUpdatedAt.UpdateDefault.(func() time.Time)
 	// apitokenDescName is the schema descriptor for name field.
 	apitokenDescName := apitokenFields[1].Descriptor()
 	// apitoken.NameValidator is a validator for the "name" field. It is called by the builders before save.
@@ -55,18 +68,21 @@ func init() {
 	apitokenDescScopes := apitokenFields[4].Descriptor()
 	// apitoken.DefaultScopes holds the default value on creation for the scopes field.
 	apitoken.DefaultScopes = apitokenDescScopes.Default.([]string)
-	// apitokenDescCreatedAt is the schema descriptor for created_at field.
-	apitokenDescCreatedAt := apitokenFields[8].Descriptor()
-	// apitoken.DefaultCreatedAt holds the default value on creation for the created_at field.
-	apitoken.DefaultCreatedAt = apitokenDescCreatedAt.Default.(func() time.Time)
-	// apitokenDescUpdatedAt is the schema descriptor for updated_at field.
-	apitokenDescUpdatedAt := apitokenFields[9].Descriptor()
-	// apitoken.DefaultUpdatedAt holds the default value on creation for the updated_at field.
-	apitoken.DefaultUpdatedAt = apitokenDescUpdatedAt.Default.(func() time.Time)
-	// apitoken.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
-	apitoken.UpdateDefaultUpdatedAt = apitokenDescUpdatedAt.UpdateDefault.(func() time.Time)
+	automationMixin := schema.Automation{}.Mixin()
+	automationMixinFields0 := automationMixin[0].Fields()
+	_ = automationMixinFields0
 	automationFields := schema.Automation{}.Fields()
 	_ = automationFields
+	// automationDescCreatedAt is the schema descriptor for created_at field.
+	automationDescCreatedAt := automationMixinFields0[0].Descriptor()
+	// automation.DefaultCreatedAt holds the default value on creation for the created_at field.
+	automation.DefaultCreatedAt = automationDescCreatedAt.Default.(func() time.Time)
+	// automationDescUpdatedAt is the schema descriptor for updated_at field.
+	automationDescUpdatedAt := automationMixinFields0[1].Descriptor()
+	// automation.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	automation.DefaultUpdatedAt = automationDescUpdatedAt.Default.(func() time.Time)
+	// automation.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	automation.UpdateDefaultUpdatedAt = automationDescUpdatedAt.UpdateDefault.(func() time.Time)
 	// automationDescName is the schema descriptor for name field.
 	automationDescName := automationFields[1].Descriptor()
 	// automation.NameValidator is a validator for the "name" field. It is called by the builders before save.
@@ -79,36 +95,42 @@ func init() {
 	automationDescDefinition := automationFields[4].Descriptor()
 	// automation.DefaultDefinition holds the default value on creation for the definition field.
 	automation.DefaultDefinition = automationDescDefinition.Default.(string)
-	// automationDescCreatedAt is the schema descriptor for created_at field.
-	automationDescCreatedAt := automationFields[6].Descriptor()
-	// automation.DefaultCreatedAt holds the default value on creation for the created_at field.
-	automation.DefaultCreatedAt = automationDescCreatedAt.Default.(func() time.Time)
-	// automationDescUpdatedAt is the schema descriptor for updated_at field.
-	automationDescUpdatedAt := automationFields[7].Descriptor()
-	// automation.DefaultUpdatedAt holds the default value on creation for the updated_at field.
-	automation.DefaultUpdatedAt = automationDescUpdatedAt.Default.(func() time.Time)
-	// automation.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
-	automation.UpdateDefaultUpdatedAt = automationDescUpdatedAt.UpdateDefault.(func() time.Time)
+	automationrunMixin := schema.AutomationRun{}.Mixin()
+	automationrunMixinFields0 := automationrunMixin[0].Fields()
+	_ = automationrunMixinFields0
 	automationrunFields := schema.AutomationRun{}.Fields()
 	_ = automationrunFields
-	// automationrunDescCurrentStep is the schema descriptor for current_step field.
-	automationrunDescCurrentStep := automationrunFields[5].Descriptor()
-	// automationrun.DefaultCurrentStep holds the default value on creation for the current_step field.
-	automationrun.DefaultCurrentStep = automationrunDescCurrentStep.Default.(int)
-	// automationrun.CurrentStepValidator is a validator for the "current_step" field. It is called by the builders before save.
-	automationrun.CurrentStepValidator = automationrunDescCurrentStep.Validators[0].(func(int) error)
 	// automationrunDescCreatedAt is the schema descriptor for created_at field.
-	automationrunDescCreatedAt := automationrunFields[7].Descriptor()
+	automationrunDescCreatedAt := automationrunMixinFields0[0].Descriptor()
 	// automationrun.DefaultCreatedAt holds the default value on creation for the created_at field.
 	automationrun.DefaultCreatedAt = automationrunDescCreatedAt.Default.(func() time.Time)
 	// automationrunDescUpdatedAt is the schema descriptor for updated_at field.
-	automationrunDescUpdatedAt := automationrunFields[8].Descriptor()
+	automationrunDescUpdatedAt := automationrunMixinFields0[1].Descriptor()
 	// automationrun.DefaultUpdatedAt holds the default value on creation for the updated_at field.
 	automationrun.DefaultUpdatedAt = automationrunDescUpdatedAt.Default.(func() time.Time)
 	// automationrun.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	automationrun.UpdateDefaultUpdatedAt = automationrunDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// automationrunDescCurrentStep is the schema descriptor for current_step field.
+	automationrunDescCurrentStep := automationrunFields[4].Descriptor()
+	// automationrun.DefaultCurrentStep holds the default value on creation for the current_step field.
+	automationrun.DefaultCurrentStep = automationrunDescCurrentStep.Default.(int)
+	// automationrun.CurrentStepValidator is a validator for the "current_step" field. It is called by the builders before save.
+	automationrun.CurrentStepValidator = automationrunDescCurrentStep.Validators[0].(func(int) error)
+	broadcastMixin := schema.Broadcast{}.Mixin()
+	broadcastMixinFields0 := broadcastMixin[0].Fields()
+	_ = broadcastMixinFields0
 	broadcastFields := schema.Broadcast{}.Fields()
 	_ = broadcastFields
+	// broadcastDescCreatedAt is the schema descriptor for created_at field.
+	broadcastDescCreatedAt := broadcastMixinFields0[0].Descriptor()
+	// broadcast.DefaultCreatedAt holds the default value on creation for the created_at field.
+	broadcast.DefaultCreatedAt = broadcastDescCreatedAt.Default.(func() time.Time)
+	// broadcastDescUpdatedAt is the schema descriptor for updated_at field.
+	broadcastDescUpdatedAt := broadcastMixinFields0[1].Descriptor()
+	// broadcast.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	broadcast.DefaultUpdatedAt = broadcastDescUpdatedAt.Default.(func() time.Time)
+	// broadcast.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	broadcast.UpdateDefaultUpdatedAt = broadcastDescUpdatedAt.UpdateDefault.(func() time.Time)
 	// broadcastDescName is the schema descriptor for name field.
 	broadcastDescName := broadcastFields[1].Descriptor()
 	// broadcast.NameValidator is a validator for the "name" field. It is called by the builders before save.
@@ -167,58 +189,70 @@ func init() {
 	broadcast.DefaultSkippedCount = broadcastDescSkippedCount.Default.(int)
 	// broadcast.SkippedCountValidator is a validator for the "skipped_count" field. It is called by the builders before save.
 	broadcast.SkippedCountValidator = broadcastDescSkippedCount.Validators[0].(func(int) error)
-	// broadcastDescCreatedAt is the schema descriptor for created_at field.
-	broadcastDescCreatedAt := broadcastFields[21].Descriptor()
-	// broadcast.DefaultCreatedAt holds the default value on creation for the created_at field.
-	broadcast.DefaultCreatedAt = broadcastDescCreatedAt.Default.(func() time.Time)
-	// broadcastDescUpdatedAt is the schema descriptor for updated_at field.
-	broadcastDescUpdatedAt := broadcastFields[22].Descriptor()
-	// broadcast.DefaultUpdatedAt holds the default value on creation for the updated_at field.
-	broadcast.DefaultUpdatedAt = broadcastDescUpdatedAt.Default.(func() time.Time)
-	// broadcast.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
-	broadcast.UpdateDefaultUpdatedAt = broadcastDescUpdatedAt.UpdateDefault.(func() time.Time)
+	broadcastrecipientMixin := schema.BroadcastRecipient{}.Mixin()
+	broadcastrecipientMixinFields0 := broadcastrecipientMixin[0].Fields()
+	_ = broadcastrecipientMixinFields0
 	broadcastrecipientFields := schema.BroadcastRecipient{}.Fields()
 	_ = broadcastrecipientFields
 	// broadcastrecipientDescCreatedAt is the schema descriptor for created_at field.
-	broadcastrecipientDescCreatedAt := broadcastrecipientFields[10].Descriptor()
+	broadcastrecipientDescCreatedAt := broadcastrecipientMixinFields0[0].Descriptor()
 	// broadcastrecipient.DefaultCreatedAt holds the default value on creation for the created_at field.
 	broadcastrecipient.DefaultCreatedAt = broadcastrecipientDescCreatedAt.Default.(func() time.Time)
 	// broadcastrecipientDescUpdatedAt is the schema descriptor for updated_at field.
-	broadcastrecipientDescUpdatedAt := broadcastrecipientFields[11].Descriptor()
+	broadcastrecipientDescUpdatedAt := broadcastrecipientMixinFields0[1].Descriptor()
 	// broadcastrecipient.DefaultUpdatedAt holds the default value on creation for the updated_at field.
 	broadcastrecipient.DefaultUpdatedAt = broadcastrecipientDescUpdatedAt.Default.(func() time.Time)
 	// broadcastrecipient.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	broadcastrecipient.UpdateDefaultUpdatedAt = broadcastrecipientDescUpdatedAt.UpdateDefault.(func() time.Time)
+	confirmationMixin := schema.Confirmation{}.Mixin()
+	confirmationMixinFields0 := confirmationMixin[0].Fields()
+	_ = confirmationMixinFields0
 	confirmationFields := schema.Confirmation{}.Fields()
 	_ = confirmationFields
-	// confirmationDescDestination is the schema descriptor for destination field.
-	confirmationDescDestination := confirmationFields[2].Descriptor()
-	// confirmation.DestinationValidator is a validator for the "destination" field. It is called by the builders before save.
-	confirmation.DestinationValidator = confirmationDescDestination.Validators[0].(func(string) error)
 	// confirmationDescCreatedAt is the schema descriptor for created_at field.
-	confirmationDescCreatedAt := confirmationFields[6].Descriptor()
+	confirmationDescCreatedAt := confirmationMixinFields0[0].Descriptor()
 	// confirmation.DefaultCreatedAt holds the default value on creation for the created_at field.
 	confirmation.DefaultCreatedAt = confirmationDescCreatedAt.Default.(func() time.Time)
 	// confirmationDescUpdatedAt is the schema descriptor for updated_at field.
-	confirmationDescUpdatedAt := confirmationFields[7].Descriptor()
+	confirmationDescUpdatedAt := confirmationMixinFields0[1].Descriptor()
 	// confirmation.DefaultUpdatedAt holds the default value on creation for the updated_at field.
 	confirmation.DefaultUpdatedAt = confirmationDescUpdatedAt.Default.(func() time.Time)
 	// confirmation.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	confirmation.UpdateDefaultUpdatedAt = confirmationDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// confirmationDescDestination is the schema descriptor for destination field.
+	confirmationDescDestination := confirmationFields[2].Descriptor()
+	// confirmation.DestinationValidator is a validator for the "destination" field. It is called by the builders before save.
+	confirmation.DestinationValidator = confirmationDescDestination.Validators[0].(func(string) error)
+	contactMixin := schema.Contact{}.Mixin()
+	contactMixinFields0 := contactMixin[0].Fields()
+	_ = contactMixinFields0
 	contactFields := schema.Contact{}.Fields()
 	_ = contactFields
 	// contactDescCreatedAt is the schema descriptor for created_at field.
-	contactDescCreatedAt := contactFields[9].Descriptor()
+	contactDescCreatedAt := contactMixinFields0[0].Descriptor()
 	// contact.DefaultCreatedAt holds the default value on creation for the created_at field.
 	contact.DefaultCreatedAt = contactDescCreatedAt.Default.(func() time.Time)
 	// contactDescUpdatedAt is the schema descriptor for updated_at field.
-	contactDescUpdatedAt := contactFields[10].Descriptor()
+	contactDescUpdatedAt := contactMixinFields0[1].Descriptor()
 	// contact.DefaultUpdatedAt holds the default value on creation for the updated_at field.
 	contact.DefaultUpdatedAt = contactDescUpdatedAt.Default.(func() time.Time)
 	// contact.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	contact.UpdateDefaultUpdatedAt = contactDescUpdatedAt.UpdateDefault.(func() time.Time)
+	customfieldMixin := schema.CustomField{}.Mixin()
+	customfieldMixinFields0 := customfieldMixin[0].Fields()
+	_ = customfieldMixinFields0
 	customfieldFields := schema.CustomField{}.Fields()
 	_ = customfieldFields
+	// customfieldDescCreatedAt is the schema descriptor for created_at field.
+	customfieldDescCreatedAt := customfieldMixinFields0[0].Descriptor()
+	// customfield.DefaultCreatedAt holds the default value on creation for the created_at field.
+	customfield.DefaultCreatedAt = customfieldDescCreatedAt.Default.(func() time.Time)
+	// customfieldDescUpdatedAt is the schema descriptor for updated_at field.
+	customfieldDescUpdatedAt := customfieldMixinFields0[1].Descriptor()
+	// customfield.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	customfield.DefaultUpdatedAt = customfieldDescUpdatedAt.Default.(func() time.Time)
+	// customfield.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	customfield.UpdateDefaultUpdatedAt = customfieldDescUpdatedAt.UpdateDefault.(func() time.Time)
 	// customfieldDescKey is the schema descriptor for key field.
 	customfieldDescKey := customfieldFields[1].Descriptor()
 	// customfield.KeyValidator is a validator for the "key" field. It is called by the builders before save.
@@ -227,18 +261,21 @@ func init() {
 	customfieldDescName := customfieldFields[2].Descriptor()
 	// customfield.NameValidator is a validator for the "name" field. It is called by the builders before save.
 	customfield.NameValidator = customfieldDescName.Validators[0].(func(string) error)
-	// customfieldDescCreatedAt is the schema descriptor for created_at field.
-	customfieldDescCreatedAt := customfieldFields[5].Descriptor()
-	// customfield.DefaultCreatedAt holds the default value on creation for the created_at field.
-	customfield.DefaultCreatedAt = customfieldDescCreatedAt.Default.(func() time.Time)
-	// customfieldDescUpdatedAt is the schema descriptor for updated_at field.
-	customfieldDescUpdatedAt := customfieldFields[6].Descriptor()
-	// customfield.DefaultUpdatedAt holds the default value on creation for the updated_at field.
-	customfield.DefaultUpdatedAt = customfieldDescUpdatedAt.Default.(func() time.Time)
-	// customfield.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
-	customfield.UpdateDefaultUpdatedAt = customfieldDescUpdatedAt.UpdateDefault.(func() time.Time)
+	emailtemplateMixin := schema.EmailTemplate{}.Mixin()
+	emailtemplateMixinFields0 := emailtemplateMixin[0].Fields()
+	_ = emailtemplateMixinFields0
 	emailtemplateFields := schema.EmailTemplate{}.Fields()
 	_ = emailtemplateFields
+	// emailtemplateDescCreatedAt is the schema descriptor for created_at field.
+	emailtemplateDescCreatedAt := emailtemplateMixinFields0[0].Descriptor()
+	// emailtemplate.DefaultCreatedAt holds the default value on creation for the created_at field.
+	emailtemplate.DefaultCreatedAt = emailtemplateDescCreatedAt.Default.(func() time.Time)
+	// emailtemplateDescUpdatedAt is the schema descriptor for updated_at field.
+	emailtemplateDescUpdatedAt := emailtemplateMixinFields0[1].Descriptor()
+	// emailtemplate.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	emailtemplate.DefaultUpdatedAt = emailtemplateDescUpdatedAt.Default.(func() time.Time)
+	// emailtemplate.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	emailtemplate.UpdateDefaultUpdatedAt = emailtemplateDescUpdatedAt.UpdateDefault.(func() time.Time)
 	// emailtemplateDescName is the schema descriptor for name field.
 	emailtemplateDescName := emailtemplateFields[1].Descriptor()
 	// emailtemplate.NameValidator is a validator for the "name" field. It is called by the builders before save.
@@ -251,28 +288,40 @@ func init() {
 	emailtemplateDescBody := emailtemplateFields[3].Descriptor()
 	// emailtemplate.DefaultBody holds the default value on creation for the body field.
 	emailtemplate.DefaultBody = emailtemplateDescBody.Default.(string)
-	// emailtemplateDescCreatedAt is the schema descriptor for created_at field.
-	emailtemplateDescCreatedAt := emailtemplateFields[5].Descriptor()
-	// emailtemplate.DefaultCreatedAt holds the default value on creation for the created_at field.
-	emailtemplate.DefaultCreatedAt = emailtemplateDescCreatedAt.Default.(func() time.Time)
-	// emailtemplateDescUpdatedAt is the schema descriptor for updated_at field.
-	emailtemplateDescUpdatedAt := emailtemplateFields[6].Descriptor()
-	// emailtemplate.DefaultUpdatedAt holds the default value on creation for the updated_at field.
-	emailtemplate.DefaultUpdatedAt = emailtemplateDescUpdatedAt.Default.(func() time.Time)
-	// emailtemplate.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
-	emailtemplate.UpdateDefaultUpdatedAt = emailtemplateDescUpdatedAt.UpdateDefault.(func() time.Time)
+	eventMixin := schema.Event{}.Mixin()
+	eventMixinFields0 := eventMixin[0].Fields()
+	_ = eventMixinFields0
 	eventFields := schema.Event{}.Fields()
 	_ = eventFields
+	// eventDescCreatedAt is the schema descriptor for created_at field.
+	eventDescCreatedAt := eventMixinFields0[0].Descriptor()
+	// event.DefaultCreatedAt holds the default value on creation for the created_at field.
+	event.DefaultCreatedAt = eventDescCreatedAt.Default.(func() time.Time)
+	// eventDescUpdatedAt is the schema descriptor for updated_at field.
+	eventDescUpdatedAt := eventMixinFields0[1].Descriptor()
+	// event.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	event.DefaultUpdatedAt = eventDescUpdatedAt.Default.(func() time.Time)
+	// event.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	event.UpdateDefaultUpdatedAt = eventDescUpdatedAt.UpdateDefault.(func() time.Time)
 	// eventDescAction is the schema descriptor for action field.
 	eventDescAction := eventFields[7].Descriptor()
 	// event.ActionValidator is a validator for the "action" field. It is called by the builders before save.
 	event.ActionValidator = eventDescAction.Validators[0].(func(string) error)
-	// eventDescCreatedAt is the schema descriptor for created_at field.
-	eventDescCreatedAt := eventFields[11].Descriptor()
-	// event.DefaultCreatedAt holds the default value on creation for the created_at field.
-	event.DefaultCreatedAt = eventDescCreatedAt.Default.(func() time.Time)
+	integrationMixin := schema.Integration{}.Mixin()
+	integrationMixinFields0 := integrationMixin[0].Fields()
+	_ = integrationMixinFields0
 	integrationFields := schema.Integration{}.Fields()
 	_ = integrationFields
+	// integrationDescCreatedAt is the schema descriptor for created_at field.
+	integrationDescCreatedAt := integrationMixinFields0[0].Descriptor()
+	// integration.DefaultCreatedAt holds the default value on creation for the created_at field.
+	integration.DefaultCreatedAt = integrationDescCreatedAt.Default.(func() time.Time)
+	// integrationDescUpdatedAt is the schema descriptor for updated_at field.
+	integrationDescUpdatedAt := integrationMixinFields0[1].Descriptor()
+	// integration.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	integration.DefaultUpdatedAt = integrationDescUpdatedAt.Default.(func() time.Time)
+	// integration.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	integration.UpdateDefaultUpdatedAt = integrationDescUpdatedAt.UpdateDefault.(func() time.Time)
 	// integrationDescName is the schema descriptor for name field.
 	integrationDescName := integrationFields[1].Descriptor()
 	// integration.NameValidator is a validator for the "name" field. It is called by the builders before save.
@@ -285,50 +334,59 @@ func init() {
 	integrationDescIsDefault := integrationFields[6].Descriptor()
 	// integration.DefaultIsDefault holds the default value on creation for the is_default field.
 	integration.DefaultIsDefault = integrationDescIsDefault.Default.(bool)
-	// integrationDescCreatedAt is the schema descriptor for created_at field.
-	integrationDescCreatedAt := integrationFields[8].Descriptor()
-	// integration.DefaultCreatedAt holds the default value on creation for the created_at field.
-	integration.DefaultCreatedAt = integrationDescCreatedAt.Default.(func() time.Time)
-	// integrationDescUpdatedAt is the schema descriptor for updated_at field.
-	integrationDescUpdatedAt := integrationFields[9].Descriptor()
-	// integration.DefaultUpdatedAt holds the default value on creation for the updated_at field.
-	integration.DefaultUpdatedAt = integrationDescUpdatedAt.Default.(func() time.Time)
-	// integration.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
-	integration.UpdateDefaultUpdatedAt = integrationDescUpdatedAt.UpdateDefault.(func() time.Time)
+	invitationMixin := schema.Invitation{}.Mixin()
+	invitationMixinFields0 := invitationMixin[0].Fields()
+	_ = invitationMixinFields0
 	invitationFields := schema.Invitation{}.Fields()
 	_ = invitationFields
-	// invitationDescEmail is the schema descriptor for email field.
-	invitationDescEmail := invitationFields[2].Descriptor()
-	// invitation.EmailValidator is a validator for the "email" field. It is called by the builders before save.
-	invitation.EmailValidator = invitationDescEmail.Validators[0].(func(string) error)
-	// invitationDescTokenHash is the schema descriptor for token_hash field.
-	invitationDescTokenHash := invitationFields[4].Descriptor()
-	// invitation.TokenHashValidator is a validator for the "token_hash" field. It is called by the builders before save.
-	invitation.TokenHashValidator = invitationDescTokenHash.Validators[0].(func(string) error)
 	// invitationDescCreatedAt is the schema descriptor for created_at field.
-	invitationDescCreatedAt := invitationFields[8].Descriptor()
+	invitationDescCreatedAt := invitationMixinFields0[0].Descriptor()
 	// invitation.DefaultCreatedAt holds the default value on creation for the created_at field.
 	invitation.DefaultCreatedAt = invitationDescCreatedAt.Default.(func() time.Time)
 	// invitationDescUpdatedAt is the schema descriptor for updated_at field.
-	invitationDescUpdatedAt := invitationFields[9].Descriptor()
+	invitationDescUpdatedAt := invitationMixinFields0[1].Descriptor()
 	// invitation.DefaultUpdatedAt holds the default value on creation for the updated_at field.
 	invitation.DefaultUpdatedAt = invitationDescUpdatedAt.Default.(func() time.Time)
 	// invitation.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	invitation.UpdateDefaultUpdatedAt = invitationDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// invitationDescEmail is the schema descriptor for email field.
+	invitationDescEmail := invitationFields[1].Descriptor()
+	// invitation.EmailValidator is a validator for the "email" field. It is called by the builders before save.
+	invitation.EmailValidator = invitationDescEmail.Validators[0].(func(string) error)
+	// invitationDescTokenHash is the schema descriptor for token_hash field.
+	invitationDescTokenHash := invitationFields[3].Descriptor()
+	// invitation.TokenHashValidator is a validator for the "token_hash" field. It is called by the builders before save.
+	invitation.TokenHashValidator = invitationDescTokenHash.Validators[0].(func(string) error)
+	membershipMixin := schema.Membership{}.Mixin()
+	membershipMixinFields0 := membershipMixin[0].Fields()
+	_ = membershipMixinFields0
 	membershipFields := schema.Membership{}.Fields()
 	_ = membershipFields
 	// membershipDescCreatedAt is the schema descriptor for created_at field.
-	membershipDescCreatedAt := membershipFields[4].Descriptor()
+	membershipDescCreatedAt := membershipMixinFields0[0].Descriptor()
 	// membership.DefaultCreatedAt holds the default value on creation for the created_at field.
 	membership.DefaultCreatedAt = membershipDescCreatedAt.Default.(func() time.Time)
 	// membershipDescUpdatedAt is the schema descriptor for updated_at field.
-	membershipDescUpdatedAt := membershipFields[5].Descriptor()
+	membershipDescUpdatedAt := membershipMixinFields0[1].Descriptor()
 	// membership.DefaultUpdatedAt holds the default value on creation for the updated_at field.
 	membership.DefaultUpdatedAt = membershipDescUpdatedAt.Default.(func() time.Time)
 	// membership.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	membership.UpdateDefaultUpdatedAt = membershipDescUpdatedAt.UpdateDefault.(func() time.Time)
+	oauthclientMixin := schema.OAuthClient{}.Mixin()
+	oauthclientMixinFields0 := oauthclientMixin[0].Fields()
+	_ = oauthclientMixinFields0
 	oauthclientFields := schema.OAuthClient{}.Fields()
 	_ = oauthclientFields
+	// oauthclientDescCreatedAt is the schema descriptor for created_at field.
+	oauthclientDescCreatedAt := oauthclientMixinFields0[0].Descriptor()
+	// oauthclient.DefaultCreatedAt holds the default value on creation for the created_at field.
+	oauthclient.DefaultCreatedAt = oauthclientDescCreatedAt.Default.(func() time.Time)
+	// oauthclientDescUpdatedAt is the schema descriptor for updated_at field.
+	oauthclientDescUpdatedAt := oauthclientMixinFields0[1].Descriptor()
+	// oauthclient.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	oauthclient.DefaultUpdatedAt = oauthclientDescUpdatedAt.Default.(func() time.Time)
+	// oauthclient.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	oauthclient.UpdateDefaultUpdatedAt = oauthclientDescUpdatedAt.UpdateDefault.(func() time.Time)
 	// oauthclientDescClientID is the schema descriptor for client_id field.
 	oauthclientDescClientID := oauthclientFields[1].Descriptor()
 	// oauthclient.ClientIDValidator is a validator for the "client_id" field. It is called by the builders before save.
@@ -337,12 +395,21 @@ func init() {
 	oauthclientDescName := oauthclientFields[2].Descriptor()
 	// oauthclient.NameValidator is a validator for the "name" field. It is called by the builders before save.
 	oauthclient.NameValidator = oauthclientDescName.Validators[0].(func(string) error)
-	// oauthclientDescCreatedAt is the schema descriptor for created_at field.
-	oauthclientDescCreatedAt := oauthclientFields[4].Descriptor()
-	// oauthclient.DefaultCreatedAt holds the default value on creation for the created_at field.
-	oauthclient.DefaultCreatedAt = oauthclientDescCreatedAt.Default.(func() time.Time)
+	oauthcodeMixin := schema.OAuthCode{}.Mixin()
+	oauthcodeMixinFields0 := oauthcodeMixin[0].Fields()
+	_ = oauthcodeMixinFields0
 	oauthcodeFields := schema.OAuthCode{}.Fields()
 	_ = oauthcodeFields
+	// oauthcodeDescCreatedAt is the schema descriptor for created_at field.
+	oauthcodeDescCreatedAt := oauthcodeMixinFields0[0].Descriptor()
+	// oauthcode.DefaultCreatedAt holds the default value on creation for the created_at field.
+	oauthcode.DefaultCreatedAt = oauthcodeDescCreatedAt.Default.(func() time.Time)
+	// oauthcodeDescUpdatedAt is the schema descriptor for updated_at field.
+	oauthcodeDescUpdatedAt := oauthcodeMixinFields0[1].Descriptor()
+	// oauthcode.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	oauthcode.DefaultUpdatedAt = oauthcodeDescUpdatedAt.Default.(func() time.Time)
+	// oauthcode.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	oauthcode.UpdateDefaultUpdatedAt = oauthcodeDescUpdatedAt.UpdateDefault.(func() time.Time)
 	// oauthcodeDescCodeHash is the schema descriptor for code_hash field.
 	oauthcodeDescCodeHash := oauthcodeFields[1].Descriptor()
 	// oauthcode.CodeHashValidator is a validator for the "code_hash" field. It is called by the builders before save.
@@ -359,52 +426,67 @@ func init() {
 	oauthcodeDescScopes := oauthcodeFields[4].Descriptor()
 	// oauthcode.DefaultScopes holds the default value on creation for the scopes field.
 	oauthcode.DefaultScopes = oauthcodeDescScopes.Default.([]string)
-	// oauthcodeDescCreatedAt is the schema descriptor for created_at field.
-	oauthcodeDescCreatedAt := oauthcodeFields[7].Descriptor()
-	// oauthcode.DefaultCreatedAt holds the default value on creation for the created_at field.
-	oauthcode.DefaultCreatedAt = oauthcodeDescCreatedAt.Default.(func() time.Time)
+	outboundmessageMixin := schema.OutboundMessage{}.Mixin()
+	outboundmessageMixinFields0 := outboundmessageMixin[0].Fields()
+	_ = outboundmessageMixinFields0
 	outboundmessageFields := schema.OutboundMessage{}.Fields()
 	_ = outboundmessageFields
-	// outboundmessageDescIdempotencyKey is the schema descriptor for idempotency_key field.
-	outboundmessageDescIdempotencyKey := outboundmessageFields[3].Descriptor()
-	// outboundmessage.IdempotencyKeyValidator is a validator for the "idempotency_key" field. It is called by the builders before save.
-	outboundmessage.IdempotencyKeyValidator = outboundmessageDescIdempotencyKey.Validators[0].(func(string) error)
-	// outboundmessageDescDestination is the schema descriptor for destination field.
-	outboundmessageDescDestination := outboundmessageFields[5].Descriptor()
-	// outboundmessage.DestinationValidator is a validator for the "destination" field. It is called by the builders before save.
-	outboundmessage.DestinationValidator = outboundmessageDescDestination.Validators[0].(func(string) error)
-	// outboundmessageDescClaimedAt is the schema descriptor for claimed_at field.
-	outboundmessageDescClaimedAt := outboundmessageFields[12].Descriptor()
-	// outboundmessage.DefaultClaimedAt holds the default value on creation for the claimed_at field.
-	outboundmessage.DefaultClaimedAt = outboundmessageDescClaimedAt.Default.(func() time.Time)
 	// outboundmessageDescCreatedAt is the schema descriptor for created_at field.
-	outboundmessageDescCreatedAt := outboundmessageFields[20].Descriptor()
+	outboundmessageDescCreatedAt := outboundmessageMixinFields0[0].Descriptor()
 	// outboundmessage.DefaultCreatedAt holds the default value on creation for the created_at field.
 	outboundmessage.DefaultCreatedAt = outboundmessageDescCreatedAt.Default.(func() time.Time)
 	// outboundmessageDescUpdatedAt is the schema descriptor for updated_at field.
-	outboundmessageDescUpdatedAt := outboundmessageFields[21].Descriptor()
+	outboundmessageDescUpdatedAt := outboundmessageMixinFields0[1].Descriptor()
 	// outboundmessage.DefaultUpdatedAt holds the default value on creation for the updated_at field.
 	outboundmessage.DefaultUpdatedAt = outboundmessageDescUpdatedAt.Default.(func() time.Time)
 	// outboundmessage.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	outboundmessage.UpdateDefaultUpdatedAt = outboundmessageDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// outboundmessageDescIdempotencyKey is the schema descriptor for idempotency_key field.
+	outboundmessageDescIdempotencyKey := outboundmessageFields[2].Descriptor()
+	// outboundmessage.IdempotencyKeyValidator is a validator for the "idempotency_key" field. It is called by the builders before save.
+	outboundmessage.IdempotencyKeyValidator = outboundmessageDescIdempotencyKey.Validators[0].(func(string) error)
+	// outboundmessageDescDestination is the schema descriptor for destination field.
+	outboundmessageDescDestination := outboundmessageFields[4].Descriptor()
+	// outboundmessage.DestinationValidator is a validator for the "destination" field. It is called by the builders before save.
+	outboundmessage.DestinationValidator = outboundmessageDescDestination.Validators[0].(func(string) error)
+	// outboundmessageDescClaimedAt is the schema descriptor for claimed_at field.
+	outboundmessageDescClaimedAt := outboundmessageFields[11].Descriptor()
+	// outboundmessage.DefaultClaimedAt holds the default value on creation for the claimed_at field.
+	outboundmessage.DefaultClaimedAt = outboundmessageDescClaimedAt.Default.(func() time.Time)
+	segmentMixin := schema.Segment{}.Mixin()
+	segmentMixinFields0 := segmentMixin[0].Fields()
+	_ = segmentMixinFields0
 	segmentFields := schema.Segment{}.Fields()
 	_ = segmentFields
-	// segmentDescName is the schema descriptor for name field.
-	segmentDescName := segmentFields[1].Descriptor()
-	// segment.NameValidator is a validator for the "name" field. It is called by the builders before save.
-	segment.NameValidator = segmentDescName.Validators[0].(func(string) error)
 	// segmentDescCreatedAt is the schema descriptor for created_at field.
-	segmentDescCreatedAt := segmentFields[4].Descriptor()
+	segmentDescCreatedAt := segmentMixinFields0[0].Descriptor()
 	// segment.DefaultCreatedAt holds the default value on creation for the created_at field.
 	segment.DefaultCreatedAt = segmentDescCreatedAt.Default.(func() time.Time)
 	// segmentDescUpdatedAt is the schema descriptor for updated_at field.
-	segmentDescUpdatedAt := segmentFields[5].Descriptor()
+	segmentDescUpdatedAt := segmentMixinFields0[1].Descriptor()
 	// segment.DefaultUpdatedAt holds the default value on creation for the updated_at field.
 	segment.DefaultUpdatedAt = segmentDescUpdatedAt.Default.(func() time.Time)
 	// segment.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	segment.UpdateDefaultUpdatedAt = segmentDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// segmentDescName is the schema descriptor for name field.
+	segmentDescName := segmentFields[1].Descriptor()
+	// segment.NameValidator is a validator for the "name" field. It is called by the builders before save.
+	segment.NameValidator = segmentDescName.Validators[0].(func(string) error)
+	sendingdomainMixin := schema.SendingDomain{}.Mixin()
+	sendingdomainMixinFields0 := sendingdomainMixin[0].Fields()
+	_ = sendingdomainMixinFields0
 	sendingdomainFields := schema.SendingDomain{}.Fields()
 	_ = sendingdomainFields
+	// sendingdomainDescCreatedAt is the schema descriptor for created_at field.
+	sendingdomainDescCreatedAt := sendingdomainMixinFields0[0].Descriptor()
+	// sendingdomain.DefaultCreatedAt holds the default value on creation for the created_at field.
+	sendingdomain.DefaultCreatedAt = sendingdomainDescCreatedAt.Default.(func() time.Time)
+	// sendingdomainDescUpdatedAt is the schema descriptor for updated_at field.
+	sendingdomainDescUpdatedAt := sendingdomainMixinFields0[1].Descriptor()
+	// sendingdomain.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	sendingdomain.DefaultUpdatedAt = sendingdomainDescUpdatedAt.Default.(func() time.Time)
+	// sendingdomain.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	sendingdomain.UpdateDefaultUpdatedAt = sendingdomainDescUpdatedAt.UpdateDefault.(func() time.Time)
 	// sendingdomainDescDomain is the schema descriptor for domain field.
 	sendingdomainDescDomain := sendingdomainFields[1].Descriptor()
 	// sendingdomain.DomainValidator is a validator for the "domain" field. It is called by the builders before save.
@@ -421,44 +503,59 @@ func init() {
 	sendingdomainDescVerified := sendingdomainFields[5].Descriptor()
 	// sendingdomain.DefaultVerified holds the default value on creation for the verified field.
 	sendingdomain.DefaultVerified = sendingdomainDescVerified.Default.(bool)
-	// sendingdomainDescCreatedAt is the schema descriptor for created_at field.
-	sendingdomainDescCreatedAt := sendingdomainFields[9].Descriptor()
-	// sendingdomain.DefaultCreatedAt holds the default value on creation for the created_at field.
-	sendingdomain.DefaultCreatedAt = sendingdomainDescCreatedAt.Default.(func() time.Time)
-	// sendingdomainDescUpdatedAt is the schema descriptor for updated_at field.
-	sendingdomainDescUpdatedAt := sendingdomainFields[10].Descriptor()
-	// sendingdomain.DefaultUpdatedAt holds the default value on creation for the updated_at field.
-	sendingdomain.DefaultUpdatedAt = sendingdomainDescUpdatedAt.Default.(func() time.Time)
-	// sendingdomain.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
-	sendingdomain.UpdateDefaultUpdatedAt = sendingdomainDescUpdatedAt.UpdateDefault.(func() time.Time)
+	suppressionMixin := schema.Suppression{}.Mixin()
+	suppressionMixinFields0 := suppressionMixin[0].Fields()
+	_ = suppressionMixinFields0
 	suppressionFields := schema.Suppression{}.Fields()
 	_ = suppressionFields
-	// suppressionDescDestination is the schema descriptor for destination field.
-	suppressionDescDestination := suppressionFields[2].Descriptor()
-	// suppression.DestinationValidator is a validator for the "destination" field. It is called by the builders before save.
-	suppression.DestinationValidator = suppressionDescDestination.Validators[0].(func(string) error)
 	// suppressionDescCreatedAt is the schema descriptor for created_at field.
-	suppressionDescCreatedAt := suppressionFields[6].Descriptor()
+	suppressionDescCreatedAt := suppressionMixinFields0[0].Descriptor()
 	// suppression.DefaultCreatedAt holds the default value on creation for the created_at field.
 	suppression.DefaultCreatedAt = suppressionDescCreatedAt.Default.(func() time.Time)
 	// suppressionDescUpdatedAt is the schema descriptor for updated_at field.
-	suppressionDescUpdatedAt := suppressionFields[7].Descriptor()
+	suppressionDescUpdatedAt := suppressionMixinFields0[1].Descriptor()
 	// suppression.DefaultUpdatedAt holds the default value on creation for the updated_at field.
 	suppression.DefaultUpdatedAt = suppressionDescUpdatedAt.Default.(func() time.Time)
 	// suppression.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	suppression.UpdateDefaultUpdatedAt = suppressionDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// suppressionDescDestination is the schema descriptor for destination field.
+	suppressionDescDestination := suppressionFields[2].Descriptor()
+	// suppression.DestinationValidator is a validator for the "destination" field. It is called by the builders before save.
+	suppression.DestinationValidator = suppressionDescDestination.Validators[0].(func(string) error)
+	tagMixin := schema.Tag{}.Mixin()
+	tagMixinFields0 := tagMixin[0].Fields()
+	_ = tagMixinFields0
 	tagFields := schema.Tag{}.Fields()
 	_ = tagFields
+	// tagDescCreatedAt is the schema descriptor for created_at field.
+	tagDescCreatedAt := tagMixinFields0[0].Descriptor()
+	// tag.DefaultCreatedAt holds the default value on creation for the created_at field.
+	tag.DefaultCreatedAt = tagDescCreatedAt.Default.(func() time.Time)
+	// tagDescUpdatedAt is the schema descriptor for updated_at field.
+	tagDescUpdatedAt := tagMixinFields0[1].Descriptor()
+	// tag.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	tag.DefaultUpdatedAt = tagDescUpdatedAt.Default.(func() time.Time)
+	// tag.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	tag.UpdateDefaultUpdatedAt = tagDescUpdatedAt.UpdateDefault.(func() time.Time)
 	// tagDescName is the schema descriptor for name field.
 	tagDescName := tagFields[1].Descriptor()
 	// tag.NameValidator is a validator for the "name" field. It is called by the builders before save.
 	tag.NameValidator = tagDescName.Validators[0].(func(string) error)
-	// tagDescCreatedAt is the schema descriptor for created_at field.
-	tagDescCreatedAt := tagFields[3].Descriptor()
-	// tag.DefaultCreatedAt holds the default value on creation for the created_at field.
-	tag.DefaultCreatedAt = tagDescCreatedAt.Default.(func() time.Time)
+	unsubscribeMixin := schema.Unsubscribe{}.Mixin()
+	unsubscribeMixinFields0 := unsubscribeMixin[0].Fields()
+	_ = unsubscribeMixinFields0
 	unsubscribeFields := schema.Unsubscribe{}.Fields()
 	_ = unsubscribeFields
+	// unsubscribeDescCreatedAt is the schema descriptor for created_at field.
+	unsubscribeDescCreatedAt := unsubscribeMixinFields0[0].Descriptor()
+	// unsubscribe.DefaultCreatedAt holds the default value on creation for the created_at field.
+	unsubscribe.DefaultCreatedAt = unsubscribeDescCreatedAt.Default.(func() time.Time)
+	// unsubscribeDescUpdatedAt is the schema descriptor for updated_at field.
+	unsubscribeDescUpdatedAt := unsubscribeMixinFields0[1].Descriptor()
+	// unsubscribe.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	unsubscribe.DefaultUpdatedAt = unsubscribeDescUpdatedAt.Default.(func() time.Time)
+	// unsubscribe.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	unsubscribe.UpdateDefaultUpdatedAt = unsubscribeDescUpdatedAt.UpdateDefault.(func() time.Time)
 	// unsubscribeDescDestination is the schema descriptor for destination field.
 	unsubscribeDescDestination := unsubscribeFields[2].Descriptor()
 	// unsubscribe.DestinationValidator is a validator for the "destination" field. It is called by the builders before save.
@@ -467,18 +564,21 @@ func init() {
 	unsubscribeDescSendingSource := unsubscribeFields[3].Descriptor()
 	// unsubscribe.SendingSourceValidator is a validator for the "sending_source" field. It is called by the builders before save.
 	unsubscribe.SendingSourceValidator = unsubscribeDescSendingSource.Validators[0].(func(string) error)
-	// unsubscribeDescCreatedAt is the schema descriptor for created_at field.
-	unsubscribeDescCreatedAt := unsubscribeFields[6].Descriptor()
-	// unsubscribe.DefaultCreatedAt holds the default value on creation for the created_at field.
-	unsubscribe.DefaultCreatedAt = unsubscribeDescCreatedAt.Default.(func() time.Time)
-	// unsubscribeDescUpdatedAt is the schema descriptor for updated_at field.
-	unsubscribeDescUpdatedAt := unsubscribeFields[7].Descriptor()
-	// unsubscribe.DefaultUpdatedAt holds the default value on creation for the updated_at field.
-	unsubscribe.DefaultUpdatedAt = unsubscribeDescUpdatedAt.Default.(func() time.Time)
-	// unsubscribe.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
-	unsubscribe.UpdateDefaultUpdatedAt = unsubscribeDescUpdatedAt.UpdateDefault.(func() time.Time)
+	userMixin := schema.User{}.Mixin()
+	userMixinFields0 := userMixin[0].Fields()
+	_ = userMixinFields0
 	userFields := schema.User{}.Fields()
 	_ = userFields
+	// userDescCreatedAt is the schema descriptor for created_at field.
+	userDescCreatedAt := userMixinFields0[0].Descriptor()
+	// user.DefaultCreatedAt holds the default value on creation for the created_at field.
+	user.DefaultCreatedAt = userDescCreatedAt.Default.(func() time.Time)
+	// userDescUpdatedAt is the schema descriptor for updated_at field.
+	userDescUpdatedAt := userMixinFields0[1].Descriptor()
+	// user.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	user.DefaultUpdatedAt = userDescUpdatedAt.Default.(func() time.Time)
+	// user.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	user.UpdateDefaultUpdatedAt = userDescUpdatedAt.UpdateDefault.(func() time.Time)
 	// userDescName is the schema descriptor for name field.
 	userDescName := userFields[1].Descriptor()
 	// user.NameValidator is a validator for the "name" field. It is called by the builders before save.
@@ -487,38 +587,44 @@ func init() {
 	userDescEmail := userFields[2].Descriptor()
 	// user.EmailValidator is a validator for the "email" field. It is called by the builders before save.
 	user.EmailValidator = userDescEmail.Validators[0].(func(string) error)
-	// userDescUpdatedAt is the schema descriptor for updated_at field.
-	userDescUpdatedAt := userFields[5].Descriptor()
-	// user.DefaultUpdatedAt holds the default value on creation for the updated_at field.
-	user.DefaultUpdatedAt = userDescUpdatedAt.Default.(func() time.Time)
-	// user.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
-	user.UpdateDefaultUpdatedAt = userDescUpdatedAt.UpdateDefault.(func() time.Time)
-	// userDescCreatedAt is the schema descriptor for created_at field.
-	userDescCreatedAt := userFields[6].Descriptor()
-	// user.DefaultCreatedAt holds the default value on creation for the created_at field.
-	user.DefaultCreatedAt = userDescCreatedAt.Default.(func() time.Time)
+	visitorMixin := schema.Visitor{}.Mixin()
+	visitorMixinFields0 := visitorMixin[0].Fields()
+	_ = visitorMixinFields0
 	visitorFields := schema.Visitor{}.Fields()
 	_ = visitorFields
-	// visitorDescVisitorID is the schema descriptor for visitor_id field.
-	visitorDescVisitorID := visitorFields[1].Descriptor()
-	// visitor.VisitorIDValidator is a validator for the "visitor_id" field. It is called by the builders before save.
-	visitor.VisitorIDValidator = visitorDescVisitorID.Validators[0].(func(string) error)
 	// visitorDescCreatedAt is the schema descriptor for created_at field.
-	visitorDescCreatedAt := visitorFields[4].Descriptor()
+	visitorDescCreatedAt := visitorMixinFields0[0].Descriptor()
 	// visitor.DefaultCreatedAt holds the default value on creation for the created_at field.
 	visitor.DefaultCreatedAt = visitorDescCreatedAt.Default.(func() time.Time)
 	// visitorDescUpdatedAt is the schema descriptor for updated_at field.
-	visitorDescUpdatedAt := visitorFields[5].Descriptor()
+	visitorDescUpdatedAt := visitorMixinFields0[1].Descriptor()
 	// visitor.DefaultUpdatedAt holds the default value on creation for the updated_at field.
 	visitor.DefaultUpdatedAt = visitorDescUpdatedAt.Default.(func() time.Time)
 	// visitor.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	visitor.UpdateDefaultUpdatedAt = visitorDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// visitorDescVisitorID is the schema descriptor for visitor_id field.
+	visitorDescVisitorID := visitorFields[1].Descriptor()
+	// visitor.VisitorIDValidator is a validator for the "visitor_id" field. It is called by the builders before save.
+	visitor.VisitorIDValidator = visitorDescVisitorID.Validators[0].(func(string) error)
 	// visitorDescLastSeenAt is the schema descriptor for last_seen_at field.
-	visitorDescLastSeenAt := visitorFields[6].Descriptor()
+	visitorDescLastSeenAt := visitorFields[3].Descriptor()
 	// visitor.DefaultLastSeenAt holds the default value on creation for the last_seen_at field.
 	visitor.DefaultLastSeenAt = visitorDescLastSeenAt.Default.(func() time.Time)
+	webhookendpointMixin := schema.WebhookEndpoint{}.Mixin()
+	webhookendpointMixinFields0 := webhookendpointMixin[0].Fields()
+	_ = webhookendpointMixinFields0
 	webhookendpointFields := schema.WebhookEndpoint{}.Fields()
 	_ = webhookendpointFields
+	// webhookendpointDescCreatedAt is the schema descriptor for created_at field.
+	webhookendpointDescCreatedAt := webhookendpointMixinFields0[0].Descriptor()
+	// webhookendpoint.DefaultCreatedAt holds the default value on creation for the created_at field.
+	webhookendpoint.DefaultCreatedAt = webhookendpointDescCreatedAt.Default.(func() time.Time)
+	// webhookendpointDescUpdatedAt is the schema descriptor for updated_at field.
+	webhookendpointDescUpdatedAt := webhookendpointMixinFields0[1].Descriptor()
+	// webhookendpoint.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	webhookendpoint.DefaultUpdatedAt = webhookendpointDescUpdatedAt.Default.(func() time.Time)
+	// webhookendpoint.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	webhookendpoint.UpdateDefaultUpdatedAt = webhookendpointDescUpdatedAt.UpdateDefault.(func() time.Time)
 	// webhookendpointDescURL is the schema descriptor for url field.
 	webhookendpointDescURL := webhookendpointFields[1].Descriptor()
 	// webhookendpoint.URLValidator is a validator for the "url" field. It is called by the builders before save.
@@ -527,18 +633,21 @@ func init() {
 	webhookendpointDescEnabled := webhookendpointFields[4].Descriptor()
 	// webhookendpoint.DefaultEnabled holds the default value on creation for the enabled field.
 	webhookendpoint.DefaultEnabled = webhookendpointDescEnabled.Default.(bool)
-	// webhookendpointDescCreatedAt is the schema descriptor for created_at field.
-	webhookendpointDescCreatedAt := webhookendpointFields[6].Descriptor()
-	// webhookendpoint.DefaultCreatedAt holds the default value on creation for the created_at field.
-	webhookendpoint.DefaultCreatedAt = webhookendpointDescCreatedAt.Default.(func() time.Time)
-	// webhookendpointDescUpdatedAt is the schema descriptor for updated_at field.
-	webhookendpointDescUpdatedAt := webhookendpointFields[7].Descriptor()
-	// webhookendpoint.DefaultUpdatedAt holds the default value on creation for the updated_at field.
-	webhookendpoint.DefaultUpdatedAt = webhookendpointDescUpdatedAt.Default.(func() time.Time)
-	// webhookendpoint.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
-	webhookendpoint.UpdateDefaultUpdatedAt = webhookendpointDescUpdatedAt.UpdateDefault.(func() time.Time)
+	workspaceMixin := schema.Workspace{}.Mixin()
+	workspaceMixinFields0 := workspaceMixin[0].Fields()
+	_ = workspaceMixinFields0
 	workspaceFields := schema.Workspace{}.Fields()
 	_ = workspaceFields
+	// workspaceDescCreatedAt is the schema descriptor for created_at field.
+	workspaceDescCreatedAt := workspaceMixinFields0[0].Descriptor()
+	// workspace.DefaultCreatedAt holds the default value on creation for the created_at field.
+	workspace.DefaultCreatedAt = workspaceDescCreatedAt.Default.(func() time.Time)
+	// workspaceDescUpdatedAt is the schema descriptor for updated_at field.
+	workspaceDescUpdatedAt := workspaceMixinFields0[1].Descriptor()
+	// workspace.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	workspace.DefaultUpdatedAt = workspaceDescUpdatedAt.Default.(func() time.Time)
+	// workspace.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	workspace.UpdateDefaultUpdatedAt = workspaceDescUpdatedAt.UpdateDefault.(func() time.Time)
 	// workspaceDescName is the schema descriptor for name field.
 	workspaceDescName := workspaceFields[1].Descriptor()
 	// workspace.NameValidator is a validator for the "name" field. It is called by the builders before save.
@@ -563,14 +672,4 @@ func init() {
 	workspaceDescPostalAddress := workspaceFields[6].Descriptor()
 	// workspace.DefaultPostalAddress holds the default value on creation for the postal_address field.
 	workspace.DefaultPostalAddress = workspaceDescPostalAddress.Default.(string)
-	// workspaceDescCreatedAt is the schema descriptor for created_at field.
-	workspaceDescCreatedAt := workspaceFields[10].Descriptor()
-	// workspace.DefaultCreatedAt holds the default value on creation for the created_at field.
-	workspace.DefaultCreatedAt = workspaceDescCreatedAt.Default.(func() time.Time)
-	// workspaceDescUpdatedAt is the schema descriptor for updated_at field.
-	workspaceDescUpdatedAt := workspaceFields[11].Descriptor()
-	// workspace.DefaultUpdatedAt holds the default value on creation for the updated_at field.
-	workspace.DefaultUpdatedAt = workspaceDescUpdatedAt.Default.(func() time.Time)
-	// workspace.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
-	workspace.UpdateDefaultUpdatedAt = workspaceDescUpdatedAt.UpdateDefault.(func() time.Time)
 }

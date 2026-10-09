@@ -337,12 +337,12 @@ func (_q *TagQuery) WithContacts(opts ...func(*ContactQuery)) *TagQuery {
 // Example:
 //
 //	var v []struct {
-//		Name string `json:"name,omitempty"`
+//		CreatedAt time.Time `json:"created_at,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.Tag.Query().
-//		GroupBy(tag.FieldName).
+//		GroupBy(tag.FieldCreatedAt).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
 func (_q *TagQuery) GroupBy(field string, fields ...string) *TagGroupBy {
@@ -360,11 +360,11 @@ func (_q *TagQuery) GroupBy(field string, fields ...string) *TagGroupBy {
 // Example:
 //
 //	var v []struct {
-//		Name string `json:"name,omitempty"`
+//		CreatedAt time.Time `json:"created_at,omitempty"`
 //	}
 //
 //	client.Tag.Query().
-//		Select(tag.FieldName).
+//		Select(tag.FieldCreatedAt).
 //		Scan(ctx, &v)
 func (_q *TagQuery) Select(fields ...string) *TagSelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)

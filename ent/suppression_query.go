@@ -300,12 +300,12 @@ func (_q *SuppressionQuery) WithWorkspace(opts ...func(*WorkspaceQuery)) *Suppre
 // Example:
 //
 //	var v []struct {
-//		Channel suppression.Channel `json:"channel,omitempty"`
+//		CreatedAt time.Time `json:"created_at,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.Suppression.Query().
-//		GroupBy(suppression.FieldChannel).
+//		GroupBy(suppression.FieldCreatedAt).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
 func (_q *SuppressionQuery) GroupBy(field string, fields ...string) *SuppressionGroupBy {
@@ -323,11 +323,11 @@ func (_q *SuppressionQuery) GroupBy(field string, fields ...string) *Suppression
 // Example:
 //
 //	var v []struct {
-//		Channel suppression.Channel `json:"channel,omitempty"`
+//		CreatedAt time.Time `json:"created_at,omitempty"`
 //	}
 //
 //	client.Suppression.Query().
-//		Select(suppression.FieldChannel).
+//		Select(suppression.FieldCreatedAt).
 //		Scan(ctx, &v)
 func (_q *SuppressionQuery) Select(fields ...string) *SuppressionSelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)

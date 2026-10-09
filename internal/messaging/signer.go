@@ -25,14 +25,13 @@ var ErrUnverifiedSendingDomain = errors.New("sender domain is not a verified sen
 // signer from the domain's Tink-encrypted private key (ADR 0010). Bound to one
 // workspace so every lookup is workspace-scoped.
 type dkimSigner struct {
-	ent         *ent.Client
-	cipher      *secrets.Cipher
-	workspaceID int64
+	scope  *ent.Scoped
+	cipher *secrets.Cipher
 }
 
-// NewDKIMSigner builds a Signer scoped to workspaceID.
-func NewDKIMSigner(client *ent.Client, cipher *secrets.Cipher, workspaceID int64) Signer {
-	return &dkimSigner{ent: client, cipher: cipher, workspaceID: workspaceID}
+// NewDKIMSigner builds a Signer for the Workspace the scoped client is confined to.
+func NewDKIMSigner(s *ent.Scoped, cipher *secrets.Cipher) Signer {
+	return &dkimSigner{scope: s, cipher: cipher}
 }
 
 // DKIMSigner returns a signer for fromEmail's domain when that domain is a
@@ -46,9 +45,8 @@ func (s *dkimSigner) DKIMSigner(ctx context.Context, fromEmail string) (*mail.DK
 		return nil, nil
 	}
 
-	row, err := s.ent.SendingDomain.Query().
+	row, err := s.scope.SendingDomain().Query().
 		Where(
-			sendingdomain.WorkspaceID(s.workspaceID),
 			sendingdomain.Domain(domain),
 			sendingdomain.Verified(true),
 		).
@@ -79,14 +77,13 @@ func (s *dkimSigner) DKIMSigner(ctx context.Context, fromEmail string) (*mail.DK
 // send-time gate in BuildSignedMIME, letting callers (e.g. broadcast planning)
 // reject up front instead of failing every recipient. An empty/malformed
 // fromEmail reports false.
-func HasVerifiedSendingDomain(ctx context.Context, client *ent.Client, workspaceID int64, fromEmail string) (bool, error) {
+func HasVerifiedSendingDomain(ctx context.Context, s *ent.Scoped, fromEmail string) (bool, error) {
 	domain := DomainOf(fromEmail)
 	if domain == "" {
 		return false, nil
 	}
-	return client.SendingDomain.Query().
+	return s.SendingDomain().Query().
 		Where(
-			sendingdomain.WorkspaceID(workspaceID),
 			sendingdomain.Domain(domain),
 			sendingdomain.Verified(true),
 		).

@@ -30,6 +30,26 @@ func (_u *ConfirmationUpdate) Where(ps ...predicate.Confirmation) *ConfirmationU
 	return _u
 }
 
+// SetUpdatedAt sets the "updated_at" field.
+func (_u *ConfirmationUpdate) SetUpdatedAt(v time.Time) *ConfirmationUpdate {
+	_u.mutation.SetUpdatedAt(v)
+	return _u
+}
+
+// SetWorkspaceID sets the "workspace_id" field.
+func (_u *ConfirmationUpdate) SetWorkspaceID(v int64) *ConfirmationUpdate {
+	_u.mutation.SetWorkspaceID(v)
+	return _u
+}
+
+// SetNillableWorkspaceID sets the "workspace_id" field if the given value is not nil.
+func (_u *ConfirmationUpdate) SetNillableWorkspaceID(v *int64) *ConfirmationUpdate {
+	if v != nil {
+		_u.SetWorkspaceID(*v)
+	}
+	return _u
+}
+
 // SetChannel sets the "channel" field.
 func (_u *ConfirmationUpdate) SetChannel(v confirmation.Channel) *ConfirmationUpdate {
 	_u.mutation.SetChannel(v)
@@ -96,26 +116,6 @@ func (_u *ConfirmationUpdate) AddContactID(v int64) *ConfirmationUpdate {
 // ClearContactID clears the value of the "contact_id" field.
 func (_u *ConfirmationUpdate) ClearContactID() *ConfirmationUpdate {
 	_u.mutation.ClearContactID()
-	return _u
-}
-
-// SetWorkspaceID sets the "workspace_id" field.
-func (_u *ConfirmationUpdate) SetWorkspaceID(v int64) *ConfirmationUpdate {
-	_u.mutation.SetWorkspaceID(v)
-	return _u
-}
-
-// SetNillableWorkspaceID sets the "workspace_id" field if the given value is not nil.
-func (_u *ConfirmationUpdate) SetNillableWorkspaceID(v *int64) *ConfirmationUpdate {
-	if v != nil {
-		_u.SetWorkspaceID(*v)
-	}
-	return _u
-}
-
-// SetUpdatedAt sets the "updated_at" field.
-func (_u *ConfirmationUpdate) SetUpdatedAt(v time.Time) *ConfirmationUpdate {
-	_u.mutation.SetUpdatedAt(v)
 	return _u
 }
 
@@ -212,6 +212,9 @@ func (_u *ConfirmationUpdate) sqlSave(ctx context.Context) (_node int, err error
 			}
 		}
 	}
+	if value, ok := _u.mutation.UpdatedAt(); ok {
+		_spec.SetField(confirmation.FieldUpdatedAt, field.TypeTime, value)
+	}
 	if value, ok := _u.mutation.Channel(); ok {
 		_spec.SetField(confirmation.FieldChannel, field.TypeEnum, value)
 	}
@@ -229,9 +232,6 @@ func (_u *ConfirmationUpdate) sqlSave(ctx context.Context) (_node int, err error
 	}
 	if _u.mutation.ContactIDCleared() {
 		_spec.ClearField(confirmation.FieldContactID, field.TypeInt64)
-	}
-	if value, ok := _u.mutation.UpdatedAt(); ok {
-		_spec.SetField(confirmation.FieldUpdatedAt, field.TypeTime, value)
 	}
 	if _u.mutation.WorkspaceCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -282,6 +282,26 @@ type ConfirmationUpdateOne struct {
 	hooks     []Hook
 	mutation  *ConfirmationMutation
 	modifiers []func(*sql.UpdateBuilder)
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (_u *ConfirmationUpdateOne) SetUpdatedAt(v time.Time) *ConfirmationUpdateOne {
+	_u.mutation.SetUpdatedAt(v)
+	return _u
+}
+
+// SetWorkspaceID sets the "workspace_id" field.
+func (_u *ConfirmationUpdateOne) SetWorkspaceID(v int64) *ConfirmationUpdateOne {
+	_u.mutation.SetWorkspaceID(v)
+	return _u
+}
+
+// SetNillableWorkspaceID sets the "workspace_id" field if the given value is not nil.
+func (_u *ConfirmationUpdateOne) SetNillableWorkspaceID(v *int64) *ConfirmationUpdateOne {
+	if v != nil {
+		_u.SetWorkspaceID(*v)
+	}
+	return _u
 }
 
 // SetChannel sets the "channel" field.
@@ -350,26 +370,6 @@ func (_u *ConfirmationUpdateOne) AddContactID(v int64) *ConfirmationUpdateOne {
 // ClearContactID clears the value of the "contact_id" field.
 func (_u *ConfirmationUpdateOne) ClearContactID() *ConfirmationUpdateOne {
 	_u.mutation.ClearContactID()
-	return _u
-}
-
-// SetWorkspaceID sets the "workspace_id" field.
-func (_u *ConfirmationUpdateOne) SetWorkspaceID(v int64) *ConfirmationUpdateOne {
-	_u.mutation.SetWorkspaceID(v)
-	return _u
-}
-
-// SetNillableWorkspaceID sets the "workspace_id" field if the given value is not nil.
-func (_u *ConfirmationUpdateOne) SetNillableWorkspaceID(v *int64) *ConfirmationUpdateOne {
-	if v != nil {
-		_u.SetWorkspaceID(*v)
-	}
-	return _u
-}
-
-// SetUpdatedAt sets the "updated_at" field.
-func (_u *ConfirmationUpdateOne) SetUpdatedAt(v time.Time) *ConfirmationUpdateOne {
-	_u.mutation.SetUpdatedAt(v)
 	return _u
 }
 
@@ -496,6 +496,9 @@ func (_u *ConfirmationUpdateOne) sqlSave(ctx context.Context) (_node *Confirmati
 			}
 		}
 	}
+	if value, ok := _u.mutation.UpdatedAt(); ok {
+		_spec.SetField(confirmation.FieldUpdatedAt, field.TypeTime, value)
+	}
 	if value, ok := _u.mutation.Channel(); ok {
 		_spec.SetField(confirmation.FieldChannel, field.TypeEnum, value)
 	}
@@ -513,9 +516,6 @@ func (_u *ConfirmationUpdateOne) sqlSave(ctx context.Context) (_node *Confirmati
 	}
 	if _u.mutation.ContactIDCleared() {
 		_spec.ClearField(confirmation.FieldContactID, field.TypeInt64)
-	}
-	if value, ok := _u.mutation.UpdatedAt(); ok {
-		_spec.SetField(confirmation.FieldUpdatedAt, field.TypeTime, value)
 	}
 	if _u.mutation.WorkspaceCleared() {
 		edge := &sqlgraph.EdgeSpec{

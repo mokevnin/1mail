@@ -1,8 +1,6 @@
 package schema
 
 import (
-	"time"
-
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/entsql"
 	"entgo.io/ent/schema"
@@ -25,6 +23,10 @@ func (Broadcast) Annotations() []schema.Annotation {
 	return []schema.Annotation{
 		entsql.Annotation{Table: "broadcasts"},
 	}
+}
+
+func (Broadcast) Mixin() []ent.Mixin {
+	return []ent.Mixin{TimeMixin{}, WorkspaceMixin{Ref: "broadcasts"}}
 }
 
 func (Broadcast) Fields() []ent.Field {
@@ -50,11 +52,13 @@ func (Broadcast) Fields() []ent.Field {
 		// Nil segment_id means "all active contacts in the workspace".
 		field.Int64("segment_id").
 			Optional().
-			Nillable(),
+			Nillable().
+			Annotations(ScopedRef{Entity: "Segment"}),
 		// Nil integration_id means "the workspace default email integration".
 		field.Int64("integration_id").
 			Optional().
-			Nillable(),
+			Nillable().
+			Annotations(ScopedRef{Entity: "Integration"}),
 		field.Enum("status").
 			Values("draft", "scheduled", "sending", "sent", "failed").
 			Default("draft"),
@@ -95,23 +99,11 @@ func (Broadcast) Fields() []ent.Field {
 		field.String("hold_reason").
 			Optional().
 			Nillable(),
-		field.Int64("workspace_id"),
-		field.Time("created_at").
-			Default(time.Now).
-			Immutable(),
-		field.Time("updated_at").
-			Default(time.Now).
-			UpdateDefault(time.Now),
 	}
 }
 
 func (Broadcast) Edges() []ent.Edge {
 	return []ent.Edge{
-		edge.From("workspace", Workspace.Type).
-			Ref("broadcasts").
-			Field("workspace_id").
-			Required().
-			Unique(),
 		edge.To("recipients", BroadcastRecipient.Type),
 	}
 }

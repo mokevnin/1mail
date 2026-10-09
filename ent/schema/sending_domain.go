@@ -1,12 +1,9 @@
 package schema
 
 import (
-	"time"
-
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/entsql"
 	"entgo.io/ent/schema"
-	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
 	"entgo.io/ent/schema/index"
 )
@@ -30,6 +27,10 @@ func (SendingDomain) Annotations() []schema.Annotation {
 	return []schema.Annotation{
 		entsql.Annotation{Table: "sending_domains"},
 	}
+}
+
+func (SendingDomain) Mixin() []ent.Mixin {
+	return []ent.Mixin{TimeMixin{}, WorkspaceMixin{Ref: "sending_domains"}}
 }
 
 func (SendingDomain) Fields() []ent.Field {
@@ -60,23 +61,6 @@ func (SendingDomain) Fields() []ent.Field {
 		field.Time("verified_at").
 			Optional().
 			Nillable(),
-		field.Int64("workspace_id"),
-		field.Time("created_at").
-			Default(time.Now).
-			Immutable(),
-		field.Time("updated_at").
-			Default(time.Now).
-			UpdateDefault(time.Now),
-	}
-}
-
-func (SendingDomain) Edges() []ent.Edge {
-	return []ent.Edge{
-		edge.From("workspace", Workspace.Type).
-			Ref("sending_domains").
-			Field("workspace_id").
-			Required().
-			Unique(),
 	}
 }
 

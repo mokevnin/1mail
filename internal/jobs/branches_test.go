@@ -137,7 +137,7 @@ func TestEvaluateTriggerEnrollsOnlyMatchingActiveAutomations(t *testing.T) {
 	mk("draft match", "trigger.match", automation.StatusDraft)
 	mk("other trigger", "trigger.other", automation.StatusActive)
 
-	ids, err := jobs.EvaluateTrigger(ctx, env.DB, fixtures.AcmeID, c.ID, "trigger.match")
+	ids, err := jobs.EvaluateTrigger(ctx, env.DB.Scoped(fixtures.AcmeID), c.ID, "trigger.match")
 	require.NoError(t, err)
 	assert.Len(t, ids, 1)
 }

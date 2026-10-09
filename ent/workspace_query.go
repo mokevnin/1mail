@@ -1021,12 +1021,12 @@ func (_q *WorkspaceQuery) WithInvitations(opts ...func(*InvitationQuery)) *Works
 // Example:
 //
 //	var v []struct {
-//		Name string `json:"name,omitempty"`
+//		CreatedAt time.Time `json:"created_at,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.Workspace.Query().
-//		GroupBy(workspace.FieldName).
+//		GroupBy(workspace.FieldCreatedAt).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
 func (_q *WorkspaceQuery) GroupBy(field string, fields ...string) *WorkspaceGroupBy {
@@ -1044,11 +1044,11 @@ func (_q *WorkspaceQuery) GroupBy(field string, fields ...string) *WorkspaceGrou
 // Example:
 //
 //	var v []struct {
-//		Name string `json:"name,omitempty"`
+//		CreatedAt time.Time `json:"created_at,omitempty"`
 //	}
 //
 //	client.Workspace.Query().
-//		Select(workspace.FieldName).
+//		Select(workspace.FieldCreatedAt).
 //		Scan(ctx, &v)
 func (_q *WorkspaceQuery) Select(fields ...string) *WorkspaceSelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)

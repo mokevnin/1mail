@@ -24,8 +24,8 @@ type MembershipQuery struct {
 	order         []membership.OrderOption
 	inters        []Interceptor
 	predicates    []predicate.Membership
-	withUser      *UserQuery
 	withWorkspace *WorkspaceQuery
+	withUser      *UserQuery
 	modifiers     []func(*sql.Selector)
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
@@ -63,28 +63,6 @@ func (_q *MembershipQuery) Order(o ...membership.OrderOption) *MembershipQuery {
 	return _q
 }
 
-// QueryUser chains the current query on the "user" edge.
-func (_q *MembershipQuery) QueryUser() *UserQuery {
-	query := (&UserClient{config: _q.config}).Query()
-	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
-		if err := _q.prepareQuery(ctx); err != nil {
-			return nil, err
-		}
-		selector := _q.sqlQuery(ctx)
-		if err := selector.Err(); err != nil {
-			return nil, err
-		}
-		step := sqlgraph.NewStep(
-			sqlgraph.From(membership.Table, membership.FieldID, selector),
-			sqlgraph.To(user.Table, user.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, true, membership.UserTable, membership.UserColumn),
-		)
-		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
-		return fromU, nil
-	}
-	return query
-}
-
 // QueryWorkspace chains the current query on the "workspace" edge.
 func (_q *MembershipQuery) QueryWorkspace() *WorkspaceQuery {
 	query := (&WorkspaceClient{config: _q.config}).Query()
@@ -100,6 +78,28 @@ func (_q *MembershipQuery) QueryWorkspace() *WorkspaceQuery {
 			sqlgraph.From(membership.Table, membership.FieldID, selector),
 			sqlgraph.To(workspace.Table, workspace.FieldID),
 			sqlgraph.Edge(sqlgraph.M2O, true, membership.WorkspaceTable, membership.WorkspaceColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryUser chains the current query on the "user" edge.
+func (_q *MembershipQuery) QueryUser() *UserQuery {
+	query := (&UserClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(membership.Table, membership.FieldID, selector),
+			sqlgraph.To(user.Table, user.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, membership.UserTable, membership.UserColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
@@ -299,24 +299,13 @@ func (_q *MembershipQuery) Clone() *MembershipQuery {
 		order:         append([]membership.OrderOption{}, _q.order...),
 		inters:        append([]Interceptor{}, _q.inters...),
 		predicates:    append([]predicate.Membership{}, _q.predicates...),
-		withUser:      _q.withUser.Clone(),
 		withWorkspace: _q.withWorkspace.Clone(),
+		withUser:      _q.withUser.Clone(),
 		// clone intermediate query.
 		sql:       _q.sql.Clone(),
 		path:      _q.path,
 		modifiers: append([]func(*sql.Selector){}, _q.modifiers...),
 	}
-}
-
-// WithUser tells the query-builder to eager-load the nodes that are connected to
-// the "user" edge. The optional arguments are used to configure the query builder of the edge.
-func (_q *MembershipQuery) WithUser(opts ...func(*UserQuery)) *MembershipQuery {
-	query := (&UserClient{config: _q.config}).Query()
-	for _, opt := range opts {
-		opt(query)
-	}
-	_q.withUser = query
-	return _q
 }
 
 // WithWorkspace tells the query-builder to eager-load the nodes that are connected to
@@ -330,18 +319,29 @@ func (_q *MembershipQuery) WithWorkspace(opts ...func(*WorkspaceQuery)) *Members
 	return _q
 }
 
+// WithUser tells the query-builder to eager-load the nodes that are connected to
+// the "user" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *MembershipQuery) WithUser(opts ...func(*UserQuery)) *MembershipQuery {
+	query := (&UserClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withUser = query
+	return _q
+}
+
 // GroupBy is used to group vertices by one or more fields/columns.
 // It is often used with aggregate functions, like: count, max, mean, min, sum.
 //
 // Example:
 //
 //	var v []struct {
-//		UserID int64 `json:"user_id,omitempty"`
+//		CreatedAt time.Time `json:"created_at,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.Membership.Query().
-//		GroupBy(membership.FieldUserID).
+//		GroupBy(membership.FieldCreatedAt).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
 func (_q *MembershipQuery) GroupBy(field string, fields ...string) *MembershipGroupBy {
@@ -359,11 +359,11 @@ func (_q *MembershipQuery) GroupBy(field string, fields ...string) *MembershipGr
 // Example:
 //
 //	var v []struct {
-//		UserID int64 `json:"user_id,omitempty"`
+//		CreatedAt time.Time `json:"created_at,omitempty"`
 //	}
 //
 //	client.Membership.Query().
-//		Select(membership.FieldUserID).
+//		Select(membership.FieldCreatedAt).
 //		Scan(ctx, &v)
 func (_q *MembershipQuery) Select(fields ...string) *MembershipSelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)
@@ -409,8 +409,8 @@ func (_q *MembershipQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*M
 		nodes       = []*Membership{}
 		_spec       = _q.querySpec()
 		loadedTypes = [2]bool{
-			_q.withUser != nil,
 			_q.withWorkspace != nil,
+			_q.withUser != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
@@ -434,50 +434,21 @@ func (_q *MembershipQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*M
 	if len(nodes) == 0 {
 		return nodes, nil
 	}
-	if query := _q.withUser; query != nil {
-		if err := _q.loadUser(ctx, query, nodes, nil,
-			func(n *Membership, e *User) { n.Edges.User = e }); err != nil {
-			return nil, err
-		}
-	}
 	if query := _q.withWorkspace; query != nil {
 		if err := _q.loadWorkspace(ctx, query, nodes, nil,
 			func(n *Membership, e *Workspace) { n.Edges.Workspace = e }); err != nil {
 			return nil, err
 		}
 	}
+	if query := _q.withUser; query != nil {
+		if err := _q.loadUser(ctx, query, nodes, nil,
+			func(n *Membership, e *User) { n.Edges.User = e }); err != nil {
+			return nil, err
+		}
+	}
 	return nodes, nil
 }
 
-func (_q *MembershipQuery) loadUser(ctx context.Context, query *UserQuery, nodes []*Membership, init func(*Membership), assign func(*Membership, *User)) error {
-	ids := make([]int64, 0, len(nodes))
-	nodeids := make(map[int64][]*Membership)
-	for i := range nodes {
-		fk := nodes[i].UserID
-		if _, ok := nodeids[fk]; !ok {
-			ids = append(ids, fk)
-		}
-		nodeids[fk] = append(nodeids[fk], nodes[i])
-	}
-	if len(ids) == 0 {
-		return nil
-	}
-	query.Where(user.IDIn(ids...))
-	neighbors, err := query.All(ctx)
-	if err != nil {
-		return err
-	}
-	for _, n := range neighbors {
-		nodes, ok := nodeids[n.ID]
-		if !ok {
-			return fmt.Errorf(`unexpected foreign-key "user_id" returned %v`, n.ID)
-		}
-		for i := range nodes {
-			assign(nodes[i], n)
-		}
-	}
-	return nil
-}
 func (_q *MembershipQuery) loadWorkspace(ctx context.Context, query *WorkspaceQuery, nodes []*Membership, init func(*Membership), assign func(*Membership, *Workspace)) error {
 	ids := make([]int64, 0, len(nodes))
 	nodeids := make(map[int64][]*Membership)
@@ -500,6 +471,35 @@ func (_q *MembershipQuery) loadWorkspace(ctx context.Context, query *WorkspaceQu
 		nodes, ok := nodeids[n.ID]
 		if !ok {
 			return fmt.Errorf(`unexpected foreign-key "workspace_id" returned %v`, n.ID)
+		}
+		for i := range nodes {
+			assign(nodes[i], n)
+		}
+	}
+	return nil
+}
+func (_q *MembershipQuery) loadUser(ctx context.Context, query *UserQuery, nodes []*Membership, init func(*Membership), assign func(*Membership, *User)) error {
+	ids := make([]int64, 0, len(nodes))
+	nodeids := make(map[int64][]*Membership)
+	for i := range nodes {
+		fk := nodes[i].UserID
+		if _, ok := nodeids[fk]; !ok {
+			ids = append(ids, fk)
+		}
+		nodeids[fk] = append(nodeids[fk], nodes[i])
+	}
+	if len(ids) == 0 {
+		return nil
+	}
+	query.Where(user.IDIn(ids...))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nodeids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected foreign-key "user_id" returned %v`, n.ID)
 		}
 		for i := range nodes {
 			assign(nodes[i], n)
@@ -536,11 +536,11 @@ func (_q *MembershipQuery) querySpec() *sqlgraph.QuerySpec {
 				_spec.Node.Columns = append(_spec.Node.Columns, fields[i])
 			}
 		}
-		if _q.withUser != nil {
-			_spec.Node.AddColumnOnce(membership.FieldUserID)
-		}
 		if _q.withWorkspace != nil {
 			_spec.Node.AddColumnOnce(membership.FieldWorkspaceID)
+		}
+		if _q.withUser != nil {
+			_spec.Node.AddColumnOnce(membership.FieldUserID)
 		}
 	}
 	if ps := _q.predicates; len(ps) > 0 {

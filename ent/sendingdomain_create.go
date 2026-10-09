@@ -23,6 +23,40 @@ type SendingDomainCreate struct {
 	conflict []sql.ConflictOption
 }
 
+// SetCreatedAt sets the "created_at" field.
+func (_c *SendingDomainCreate) SetCreatedAt(v time.Time) *SendingDomainCreate {
+	_c.mutation.SetCreatedAt(v)
+	return _c
+}
+
+// SetNillableCreatedAt sets the "created_at" field if the given value is not nil.
+func (_c *SendingDomainCreate) SetNillableCreatedAt(v *time.Time) *SendingDomainCreate {
+	if v != nil {
+		_c.SetCreatedAt(*v)
+	}
+	return _c
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (_c *SendingDomainCreate) SetUpdatedAt(v time.Time) *SendingDomainCreate {
+	_c.mutation.SetUpdatedAt(v)
+	return _c
+}
+
+// SetNillableUpdatedAt sets the "updated_at" field if the given value is not nil.
+func (_c *SendingDomainCreate) SetNillableUpdatedAt(v *time.Time) *SendingDomainCreate {
+	if v != nil {
+		_c.SetUpdatedAt(*v)
+	}
+	return _c
+}
+
+// SetWorkspaceID sets the "workspace_id" field.
+func (_c *SendingDomainCreate) SetWorkspaceID(v int64) *SendingDomainCreate {
+	_c.mutation.SetWorkspaceID(v)
+	return _c
+}
+
 // SetDomain sets the "domain" field.
 func (_c *SendingDomainCreate) SetDomain(v string) *SendingDomainCreate {
 	_c.mutation.SetDomain(v)
@@ -89,40 +123,6 @@ func (_c *SendingDomainCreate) SetNillableVerifiedAt(v *time.Time) *SendingDomai
 	return _c
 }
 
-// SetWorkspaceID sets the "workspace_id" field.
-func (_c *SendingDomainCreate) SetWorkspaceID(v int64) *SendingDomainCreate {
-	_c.mutation.SetWorkspaceID(v)
-	return _c
-}
-
-// SetCreatedAt sets the "created_at" field.
-func (_c *SendingDomainCreate) SetCreatedAt(v time.Time) *SendingDomainCreate {
-	_c.mutation.SetCreatedAt(v)
-	return _c
-}
-
-// SetNillableCreatedAt sets the "created_at" field if the given value is not nil.
-func (_c *SendingDomainCreate) SetNillableCreatedAt(v *time.Time) *SendingDomainCreate {
-	if v != nil {
-		_c.SetCreatedAt(*v)
-	}
-	return _c
-}
-
-// SetUpdatedAt sets the "updated_at" field.
-func (_c *SendingDomainCreate) SetUpdatedAt(v time.Time) *SendingDomainCreate {
-	_c.mutation.SetUpdatedAt(v)
-	return _c
-}
-
-// SetNillableUpdatedAt sets the "updated_at" field if the given value is not nil.
-func (_c *SendingDomainCreate) SetNillableUpdatedAt(v *time.Time) *SendingDomainCreate {
-	if v != nil {
-		_c.SetUpdatedAt(*v)
-	}
-	return _c
-}
-
 // SetID sets the "id" field.
 func (_c *SendingDomainCreate) SetID(v int64) *SendingDomainCreate {
 	_c.mutation.SetID(v)
@@ -169,10 +169,6 @@ func (_c *SendingDomainCreate) ExecX(ctx context.Context) {
 
 // defaults sets the default values of the builder before save.
 func (_c *SendingDomainCreate) defaults() {
-	if _, ok := _c.mutation.Verified(); !ok {
-		v := sendingdomain.DefaultVerified
-		_c.mutation.SetVerified(v)
-	}
 	if _, ok := _c.mutation.CreatedAt(); !ok {
 		v := sendingdomain.DefaultCreatedAt()
 		_c.mutation.SetCreatedAt(v)
@@ -181,10 +177,23 @@ func (_c *SendingDomainCreate) defaults() {
 		v := sendingdomain.DefaultUpdatedAt()
 		_c.mutation.SetUpdatedAt(v)
 	}
+	if _, ok := _c.mutation.Verified(); !ok {
+		v := sendingdomain.DefaultVerified
+		_c.mutation.SetVerified(v)
+	}
 }
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *SendingDomainCreate) check() error {
+	if _, ok := _c.mutation.CreatedAt(); !ok {
+		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "SendingDomain.created_at"`)}
+	}
+	if _, ok := _c.mutation.UpdatedAt(); !ok {
+		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "SendingDomain.updated_at"`)}
+	}
+	if _, ok := _c.mutation.WorkspaceID(); !ok {
+		return &ValidationError{Name: "workspace_id", err: errors.New(`ent: missing required field "SendingDomain.workspace_id"`)}
+	}
 	if _, ok := _c.mutation.Domain(); !ok {
 		return &ValidationError{Name: "domain", err: errors.New(`ent: missing required field "SendingDomain.domain"`)}
 	}
@@ -214,15 +223,6 @@ func (_c *SendingDomainCreate) check() error {
 	}
 	if _, ok := _c.mutation.Verified(); !ok {
 		return &ValidationError{Name: "verified", err: errors.New(`ent: missing required field "SendingDomain.verified"`)}
-	}
-	if _, ok := _c.mutation.WorkspaceID(); !ok {
-		return &ValidationError{Name: "workspace_id", err: errors.New(`ent: missing required field "SendingDomain.workspace_id"`)}
-	}
-	if _, ok := _c.mutation.CreatedAt(); !ok {
-		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "SendingDomain.created_at"`)}
-	}
-	if _, ok := _c.mutation.UpdatedAt(); !ok {
-		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "SendingDomain.updated_at"`)}
 	}
 	if len(_c.mutation.WorkspaceIDs()) == 0 {
 		return &ValidationError{Name: "workspace", err: errors.New(`ent: missing required edge "SendingDomain.workspace"`)}
@@ -260,6 +260,14 @@ func (_c *SendingDomainCreate) createSpec() (*SendingDomain, *sqlgraph.CreateSpe
 		_node.ID = id
 		_spec.ID.Value = id
 	}
+	if value, ok := _c.mutation.CreatedAt(); ok {
+		_spec.SetField(sendingdomain.FieldCreatedAt, field.TypeTime, value)
+		_node.CreatedAt = value
+	}
+	if value, ok := _c.mutation.UpdatedAt(); ok {
+		_spec.SetField(sendingdomain.FieldUpdatedAt, field.TypeTime, value)
+		_node.UpdatedAt = value
+	}
 	if value, ok := _c.mutation.Domain(); ok {
 		_spec.SetField(sendingdomain.FieldDomain, field.TypeString, value)
 		_node.Domain = value
@@ -288,14 +296,6 @@ func (_c *SendingDomainCreate) createSpec() (*SendingDomain, *sqlgraph.CreateSpe
 		_spec.SetField(sendingdomain.FieldVerifiedAt, field.TypeTime, value)
 		_node.VerifiedAt = &value
 	}
-	if value, ok := _c.mutation.CreatedAt(); ok {
-		_spec.SetField(sendingdomain.FieldCreatedAt, field.TypeTime, value)
-		_node.CreatedAt = value
-	}
-	if value, ok := _c.mutation.UpdatedAt(); ok {
-		_spec.SetField(sendingdomain.FieldUpdatedAt, field.TypeTime, value)
-		_node.UpdatedAt = value
-	}
 	if nodes := _c.mutation.WorkspaceIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
@@ -320,7 +320,7 @@ func (_c *SendingDomainCreate) createSpec() (*SendingDomain, *sqlgraph.CreateSpe
 // of the `INSERT` statement. For example:
 //
 //	client.SendingDomain.Create().
-//		SetDomain(v).
+//		SetCreatedAt(v).
 //		OnConflict(
 //			// Update the row with the new values
 //			// the was proposed for insertion.
@@ -329,7 +329,7 @@ func (_c *SendingDomainCreate) createSpec() (*SendingDomain, *sqlgraph.CreateSpe
 //		// Override some of the fields with custom
 //		// update values.
 //		Update(func(u *ent.SendingDomainUpsert) {
-//			SetDomain(v+v).
+//			SetCreatedAt(v+v).
 //		}).
 //		Exec(ctx)
 func (_c *SendingDomainCreate) OnConflict(opts ...sql.ConflictOption) *SendingDomainUpsertOne {
@@ -364,6 +364,30 @@ type (
 		*sql.UpdateSet
 	}
 )
+
+// SetUpdatedAt sets the "updated_at" field.
+func (u *SendingDomainUpsert) SetUpdatedAt(v time.Time) *SendingDomainUpsert {
+	u.Set(sendingdomain.FieldUpdatedAt, v)
+	return u
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *SendingDomainUpsert) UpdateUpdatedAt() *SendingDomainUpsert {
+	u.SetExcluded(sendingdomain.FieldUpdatedAt)
+	return u
+}
+
+// SetWorkspaceID sets the "workspace_id" field.
+func (u *SendingDomainUpsert) SetWorkspaceID(v int64) *SendingDomainUpsert {
+	u.Set(sendingdomain.FieldWorkspaceID, v)
+	return u
+}
+
+// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
+func (u *SendingDomainUpsert) UpdateWorkspaceID() *SendingDomainUpsert {
+	u.SetExcluded(sendingdomain.FieldWorkspaceID)
+	return u
+}
 
 // SetDomain sets the "domain" field.
 func (u *SendingDomainUpsert) SetDomain(v string) *SendingDomainUpsert {
@@ -461,30 +485,6 @@ func (u *SendingDomainUpsert) ClearVerifiedAt() *SendingDomainUpsert {
 	return u
 }
 
-// SetWorkspaceID sets the "workspace_id" field.
-func (u *SendingDomainUpsert) SetWorkspaceID(v int64) *SendingDomainUpsert {
-	u.Set(sendingdomain.FieldWorkspaceID, v)
-	return u
-}
-
-// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
-func (u *SendingDomainUpsert) UpdateWorkspaceID() *SendingDomainUpsert {
-	u.SetExcluded(sendingdomain.FieldWorkspaceID)
-	return u
-}
-
-// SetUpdatedAt sets the "updated_at" field.
-func (u *SendingDomainUpsert) SetUpdatedAt(v time.Time) *SendingDomainUpsert {
-	u.Set(sendingdomain.FieldUpdatedAt, v)
-	return u
-}
-
-// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
-func (u *SendingDomainUpsert) UpdateUpdatedAt() *SendingDomainUpsert {
-	u.SetExcluded(sendingdomain.FieldUpdatedAt)
-	return u
-}
-
 // UpdateNewValues updates the mutable fields using the new values that were set on create except the ID field.
 // Using this option is equivalent to using:
 //
@@ -534,6 +534,34 @@ func (u *SendingDomainUpsertOne) Update(set func(*SendingDomainUpsert)) *Sending
 		set(&SendingDomainUpsert{UpdateSet: update})
 	}))
 	return u
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (u *SendingDomainUpsertOne) SetUpdatedAt(v time.Time) *SendingDomainUpsertOne {
+	return u.Update(func(s *SendingDomainUpsert) {
+		s.SetUpdatedAt(v)
+	})
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *SendingDomainUpsertOne) UpdateUpdatedAt() *SendingDomainUpsertOne {
+	return u.Update(func(s *SendingDomainUpsert) {
+		s.UpdateUpdatedAt()
+	})
+}
+
+// SetWorkspaceID sets the "workspace_id" field.
+func (u *SendingDomainUpsertOne) SetWorkspaceID(v int64) *SendingDomainUpsertOne {
+	return u.Update(func(s *SendingDomainUpsert) {
+		s.SetWorkspaceID(v)
+	})
+}
+
+// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
+func (u *SendingDomainUpsertOne) UpdateWorkspaceID() *SendingDomainUpsertOne {
+	return u.Update(func(s *SendingDomainUpsert) {
+		s.UpdateWorkspaceID()
+	})
 }
 
 // SetDomain sets the "domain" field.
@@ -645,34 +673,6 @@ func (u *SendingDomainUpsertOne) UpdateVerifiedAt() *SendingDomainUpsertOne {
 func (u *SendingDomainUpsertOne) ClearVerifiedAt() *SendingDomainUpsertOne {
 	return u.Update(func(s *SendingDomainUpsert) {
 		s.ClearVerifiedAt()
-	})
-}
-
-// SetWorkspaceID sets the "workspace_id" field.
-func (u *SendingDomainUpsertOne) SetWorkspaceID(v int64) *SendingDomainUpsertOne {
-	return u.Update(func(s *SendingDomainUpsert) {
-		s.SetWorkspaceID(v)
-	})
-}
-
-// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
-func (u *SendingDomainUpsertOne) UpdateWorkspaceID() *SendingDomainUpsertOne {
-	return u.Update(func(s *SendingDomainUpsert) {
-		s.UpdateWorkspaceID()
-	})
-}
-
-// SetUpdatedAt sets the "updated_at" field.
-func (u *SendingDomainUpsertOne) SetUpdatedAt(v time.Time) *SendingDomainUpsertOne {
-	return u.Update(func(s *SendingDomainUpsert) {
-		s.SetUpdatedAt(v)
-	})
-}
-
-// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
-func (u *SendingDomainUpsertOne) UpdateUpdatedAt() *SendingDomainUpsertOne {
-	return u.Update(func(s *SendingDomainUpsert) {
-		s.UpdateUpdatedAt()
 	})
 }
 
@@ -811,7 +811,7 @@ func (_c *SendingDomainCreateBulk) ExecX(ctx context.Context) {
 //		// Override some of the fields with custom
 //		// update values.
 //		Update(func(u *ent.SendingDomainUpsert) {
-//			SetDomain(v+v).
+//			SetCreatedAt(v+v).
 //		}).
 //		Exec(ctx)
 func (_c *SendingDomainCreateBulk) OnConflict(opts ...sql.ConflictOption) *SendingDomainUpsertBulk {
@@ -891,6 +891,34 @@ func (u *SendingDomainUpsertBulk) Update(set func(*SendingDomainUpsert)) *Sendin
 		set(&SendingDomainUpsert{UpdateSet: update})
 	}))
 	return u
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (u *SendingDomainUpsertBulk) SetUpdatedAt(v time.Time) *SendingDomainUpsertBulk {
+	return u.Update(func(s *SendingDomainUpsert) {
+		s.SetUpdatedAt(v)
+	})
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *SendingDomainUpsertBulk) UpdateUpdatedAt() *SendingDomainUpsertBulk {
+	return u.Update(func(s *SendingDomainUpsert) {
+		s.UpdateUpdatedAt()
+	})
+}
+
+// SetWorkspaceID sets the "workspace_id" field.
+func (u *SendingDomainUpsertBulk) SetWorkspaceID(v int64) *SendingDomainUpsertBulk {
+	return u.Update(func(s *SendingDomainUpsert) {
+		s.SetWorkspaceID(v)
+	})
+}
+
+// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
+func (u *SendingDomainUpsertBulk) UpdateWorkspaceID() *SendingDomainUpsertBulk {
+	return u.Update(func(s *SendingDomainUpsert) {
+		s.UpdateWorkspaceID()
+	})
 }
 
 // SetDomain sets the "domain" field.
@@ -1002,34 +1030,6 @@ func (u *SendingDomainUpsertBulk) UpdateVerifiedAt() *SendingDomainUpsertBulk {
 func (u *SendingDomainUpsertBulk) ClearVerifiedAt() *SendingDomainUpsertBulk {
 	return u.Update(func(s *SendingDomainUpsert) {
 		s.ClearVerifiedAt()
-	})
-}
-
-// SetWorkspaceID sets the "workspace_id" field.
-func (u *SendingDomainUpsertBulk) SetWorkspaceID(v int64) *SendingDomainUpsertBulk {
-	return u.Update(func(s *SendingDomainUpsert) {
-		s.SetWorkspaceID(v)
-	})
-}
-
-// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
-func (u *SendingDomainUpsertBulk) UpdateWorkspaceID() *SendingDomainUpsertBulk {
-	return u.Update(func(s *SendingDomainUpsert) {
-		s.UpdateWorkspaceID()
-	})
-}
-
-// SetUpdatedAt sets the "updated_at" field.
-func (u *SendingDomainUpsertBulk) SetUpdatedAt(v time.Time) *SendingDomainUpsertBulk {
-	return u.Update(func(s *SendingDomainUpsert) {
-		s.SetUpdatedAt(v)
-	})
-}
-
-// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
-func (u *SendingDomainUpsertBulk) UpdateUpdatedAt() *SendingDomainUpsertBulk {
-	return u.Update(func(s *SendingDomainUpsert) {
-		s.UpdateUpdatedAt()
 	})
 }
 

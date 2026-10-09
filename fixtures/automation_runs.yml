@@ -2,7 +2,7 @@
 # every run status represented. Unique (automation_id, contact_id) — one row per pair.
 # Welcome series (100): completed / active(waiting) / exited / failed
 - {
-    id: 1000,
+    id: 1000, # fixture: AutomationRunWelcomeCompleted
     automation_id: 100,
     contact_id: 100,
     workspace_id: 1,
@@ -165,4 +165,16 @@
     current_step: 0,
     created_at: '{{daysAgo 1}}',
     updated_at: '{{daysAgo 1}}',
+  }
+
+# Globex (workspace 2): Pat enrolled in the Globex automation.
+- {
+    id: 900,
+    automation_id: 900,
+    contact_id: 900,
+    workspace_id: 2,
+    status: active,
+    current_step: 0,
+    created_at: '2026-01-01 00:00:00',
+    updated_at: '2026-01-01 00:00:00',
   }

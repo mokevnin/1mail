@@ -26,6 +26,9 @@ type TokenAuth struct {
 	WorkspaceID int64
 	Name        string
 	Scopes      []string
+	// Scoped is the client confined to WorkspaceID. This file is the external
+	// API's construction point of it (ADR 0017); read it with TokenScoped.
+	Scoped *ent.Scoped
 }
 
 type contextKey struct{}
@@ -48,12 +51,15 @@ func HasScope(auth *TokenAuth, scope string) bool {
 	return lo.Contains(auth.Scopes, scope)
 }
 
-// WorkspaceID returns the workspace the authenticated token belongs to (0 if unauthenticated).
-func WorkspaceID(auth *TokenAuth) int64 {
-	if auth == nil {
-		return 0
+// TokenScoped returns the Workspace-scoped client of the authenticated api token.
+// It is nil on an unauthenticated context, so call it only after the handler's
+// HasScope check (which fails for a nil TokenAuth). Handlers pass it to the
+// domain modules; they never build a *ent.Scoped from an id themselves.
+func TokenScoped(ctx context.Context) *ent.Scoped {
+	if a := GetTokenAuth(ctx); a != nil {
+		return a.Scoped
 	}
-	return auth.WorkspaceID
+	return nil
 }
 
 // ExternalSecurityHandler implements externalapi.SecurityHandler (Bearer token auth).
@@ -99,6 +105,7 @@ func (h *ExternalSecurityHandler) HandleBearerAuth(ctx context.Context, _ extern
 		WorkspaceID: token.WorkspaceID,
 		Name:        token.Name,
 		Scopes:      token.Scopes,
+		Scoped:      h.ent.Scoped(token.WorkspaceID),
 	}
 	return WithTokenAuth(ctx, auth), nil
 }
@@ -106,6 +113,9 @@ func (h *ExternalSecurityHandler) HandleBearerAuth(ctx context.Context, _ extern
 // CollectAuth holds the workspace resolved from the per-workspace collect key.
 type CollectAuth struct {
 	WorkspaceID int64
+	// Scoped is the client confined to WorkspaceID. This file is the collect
+	// API's construction point of it (ADR 0017); read it with CollectScoped.
+	Scoped *ent.Scoped
 }
 
 var collectAuthKey = struct{ name string }{"collectAuth"}
@@ -119,12 +129,14 @@ func GetCollectAuth(ctx context.Context) *CollectAuth {
 	return v
 }
 
-// CollectWorkspaceID returns the workspace resolved from the collect key (0 if unauthenticated).
-func CollectWorkspaceID(ctx context.Context) int64 {
+// CollectScoped returns the Workspace-scoped client of the resolved collect key. It
+// is nil on an unauthenticated context; the security handler runs before every
+// collect operation, so handlers can rely on it.
+func CollectScoped(ctx context.Context) *ent.Scoped {
 	if a := GetCollectAuth(ctx); a != nil {
-		return a.WorkspaceID
+		return a.Scoped
 	}
-	return 0
+	return nil
 }
 
 // CollectSecurityHandler implements collectapi.SecurityHandler: resolves the
@@ -150,7 +162,7 @@ func (h *CollectSecurityHandler) HandleApiKeyAuth(ctx context.Context, _ collect
 	if err != nil {
 		return ctx, err
 	}
-	return WithCollectAuth(ctx, &CollectAuth{WorkspaceID: ws.ID}), nil
+	return WithCollectAuth(ctx, &CollectAuth{WorkspaceID: ws.ID, Scoped: h.ent.Scoped(ws.ID)}), nil
 }
 
 // SiteAuth holds the authenticated dashboard user resolved from the JWT cookie.

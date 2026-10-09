@@ -1,12 +1,9 @@
 package schema
 
 import (
-	"time"
-
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/entsql"
 	"entgo.io/ent/schema"
-	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
 	"entgo.io/ent/schema/index"
 )
@@ -19,6 +16,10 @@ func (Event) Annotations() []schema.Annotation {
 	return []schema.Annotation{
 		entsql.Annotation{Table: "events"},
 	}
+}
+
+func (Event) Mixin() []ent.Mixin {
+	return []ent.Mixin{TimeMixin{}, WorkspaceMixin{Ref: "events"}}
 }
 
 func (Event) Fields() []ent.Field {
@@ -40,7 +41,8 @@ func (Event) Fields() []ent.Field {
 		// events before Identify; backfilled (stitched) onto the Contact at Identify.
 		field.Int64("contact_id").
 			Optional().
-			Nillable(),
+			Nillable().
+			Annotations(ScopedRef{Unchecked: true}),
 		// The anonymous device this event came from. Kept so pre-Identify anonymous
 		// events can be stitched onto a Contact by visitor_id when Identify arrives.
 		field.String("visitor_id").
@@ -63,20 +65,6 @@ func (Event) Fields() []ent.Field {
 		field.Time("occurred_at").
 			Optional().
 			Nillable(),
-		field.Int64("workspace_id"),
-		field.Time("created_at").
-			Default(time.Now).
-			Immutable(),
-	}
-}
-
-func (Event) Edges() []ent.Edge {
-	return []ent.Edge{
-		edge.From("workspace", Workspace.Type).
-			Ref("events").
-			Field("workspace_id").
-			Required().
-			Unique(),
 	}
 }
 

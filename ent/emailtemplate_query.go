@@ -300,12 +300,12 @@ func (_q *EmailTemplateQuery) WithWorkspace(opts ...func(*WorkspaceQuery)) *Emai
 // Example:
 //
 //	var v []struct {
-//		Name string `json:"name,omitempty"`
+//		CreatedAt time.Time `json:"created_at,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.EmailTemplate.Query().
-//		GroupBy(emailtemplate.FieldName).
+//		GroupBy(emailtemplate.FieldCreatedAt).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
 func (_q *EmailTemplateQuery) GroupBy(field string, fields ...string) *EmailTemplateGroupBy {
@@ -323,11 +323,11 @@ func (_q *EmailTemplateQuery) GroupBy(field string, fields ...string) *EmailTemp
 // Example:
 //
 //	var v []struct {
-//		Name string `json:"name,omitempty"`
+//		CreatedAt time.Time `json:"created_at,omitempty"`
 //	}
 //
 //	client.EmailTemplate.Query().
-//		Select(emailtemplate.FieldName).
+//		Select(emailtemplate.FieldCreatedAt).
 //		Scan(ctx, &v)
 func (_q *EmailTemplateQuery) Select(fields ...string) *EmailTemplateSelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)

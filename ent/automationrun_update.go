@@ -31,6 +31,26 @@ func (_u *AutomationRunUpdate) Where(ps ...predicate.AutomationRun) *AutomationR
 	return _u
 }
 
+// SetUpdatedAt sets the "updated_at" field.
+func (_u *AutomationRunUpdate) SetUpdatedAt(v time.Time) *AutomationRunUpdate {
+	_u.mutation.SetUpdatedAt(v)
+	return _u
+}
+
+// SetWorkspaceID sets the "workspace_id" field.
+func (_u *AutomationRunUpdate) SetWorkspaceID(v int64) *AutomationRunUpdate {
+	_u.mutation.SetWorkspaceID(v)
+	return _u
+}
+
+// SetNillableWorkspaceID sets the "workspace_id" field if the given value is not nil.
+func (_u *AutomationRunUpdate) SetNillableWorkspaceID(v *int64) *AutomationRunUpdate {
+	if v != nil {
+		_u.SetWorkspaceID(*v)
+	}
+	return _u
+}
+
 // SetAutomationID sets the "automation_id" field.
 func (_u *AutomationRunUpdate) SetAutomationID(v int64) *AutomationRunUpdate {
 	_u.mutation.SetAutomationID(v)
@@ -63,20 +83,6 @@ func (_u *AutomationRunUpdate) SetNillableContactID(v *int64) *AutomationRunUpda
 // AddContactID adds value to the "contact_id" field.
 func (_u *AutomationRunUpdate) AddContactID(v int64) *AutomationRunUpdate {
 	_u.mutation.AddContactID(v)
-	return _u
-}
-
-// SetWorkspaceID sets the "workspace_id" field.
-func (_u *AutomationRunUpdate) SetWorkspaceID(v int64) *AutomationRunUpdate {
-	_u.mutation.SetWorkspaceID(v)
-	return _u
-}
-
-// SetNillableWorkspaceID sets the "workspace_id" field if the given value is not nil.
-func (_u *AutomationRunUpdate) SetNillableWorkspaceID(v *int64) *AutomationRunUpdate {
-	if v != nil {
-		_u.SetWorkspaceID(*v)
-	}
 	return _u
 }
 
@@ -135,10 +141,9 @@ func (_u *AutomationRunUpdate) ClearResumeAt() *AutomationRunUpdate {
 	return _u
 }
 
-// SetUpdatedAt sets the "updated_at" field.
-func (_u *AutomationRunUpdate) SetUpdatedAt(v time.Time) *AutomationRunUpdate {
-	_u.mutation.SetUpdatedAt(v)
-	return _u
+// SetWorkspace sets the "workspace" edge to the Workspace entity.
+func (_u *AutomationRunUpdate) SetWorkspace(v *Workspace) *AutomationRunUpdate {
+	return _u.SetWorkspaceID(v.ID)
 }
 
 // SetAutomation sets the "automation" edge to the Automation entity.
@@ -146,25 +151,20 @@ func (_u *AutomationRunUpdate) SetAutomation(v *Automation) *AutomationRunUpdate
 	return _u.SetAutomationID(v.ID)
 }
 
-// SetWorkspace sets the "workspace" edge to the Workspace entity.
-func (_u *AutomationRunUpdate) SetWorkspace(v *Workspace) *AutomationRunUpdate {
-	return _u.SetWorkspaceID(v.ID)
-}
-
 // Mutation returns the AutomationRunMutation object of the builder.
 func (_u *AutomationRunUpdate) Mutation() *AutomationRunMutation {
 	return _u.mutation
 }
 
-// ClearAutomation clears the "automation" edge to the Automation entity.
-func (_u *AutomationRunUpdate) ClearAutomation() *AutomationRunUpdate {
-	_u.mutation.ClearAutomation()
-	return _u
-}
-
 // ClearWorkspace clears the "workspace" edge to the Workspace entity.
 func (_u *AutomationRunUpdate) ClearWorkspace() *AutomationRunUpdate {
 	_u.mutation.ClearWorkspace()
+	return _u
+}
+
+// ClearAutomation clears the "automation" edge to the Automation entity.
+func (_u *AutomationRunUpdate) ClearAutomation() *AutomationRunUpdate {
+	_u.mutation.ClearAutomation()
 	return _u
 }
 
@@ -216,11 +216,11 @@ func (_u *AutomationRunUpdate) check() error {
 			return &ValidationError{Name: "current_step", err: fmt.Errorf(`ent: validator failed for field "AutomationRun.current_step": %w`, err)}
 		}
 	}
-	if _u.mutation.AutomationCleared() && len(_u.mutation.AutomationIDs()) > 0 {
-		return errors.New(`ent: clearing a required unique edge "AutomationRun.automation"`)
-	}
 	if _u.mutation.WorkspaceCleared() && len(_u.mutation.WorkspaceIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "AutomationRun.workspace"`)
+	}
+	if _u.mutation.AutomationCleared() && len(_u.mutation.AutomationIDs()) > 0 {
+		return errors.New(`ent: clearing a required unique edge "AutomationRun.automation"`)
 	}
 	return nil
 }
@@ -243,6 +243,9 @@ func (_u *AutomationRunUpdate) sqlSave(ctx context.Context) (_node int, err erro
 			}
 		}
 	}
+	if value, ok := _u.mutation.UpdatedAt(); ok {
+		_spec.SetField(automationrun.FieldUpdatedAt, field.TypeTime, value)
+	}
 	if value, ok := _u.mutation.ContactID(); ok {
 		_spec.SetField(automationrun.FieldContactID, field.TypeInt64, value)
 	}
@@ -263,38 +266,6 @@ func (_u *AutomationRunUpdate) sqlSave(ctx context.Context) (_node int, err erro
 	}
 	if _u.mutation.ResumeAtCleared() {
 		_spec.ClearField(automationrun.FieldResumeAt, field.TypeTime)
-	}
-	if value, ok := _u.mutation.UpdatedAt(); ok {
-		_spec.SetField(automationrun.FieldUpdatedAt, field.TypeTime, value)
-	}
-	if _u.mutation.AutomationCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: true,
-			Table:   automationrun.AutomationTable,
-			Columns: []string{automationrun.AutomationColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(automation.FieldID, field.TypeInt64),
-			},
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := _u.mutation.AutomationIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: true,
-			Table:   automationrun.AutomationTable,
-			Columns: []string{automationrun.AutomationColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(automation.FieldID, field.TypeInt64),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if _u.mutation.WorkspaceCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -325,6 +296,35 @@ func (_u *AutomationRunUpdate) sqlSave(ctx context.Context) (_node int, err erro
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	if _u.mutation.AutomationCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   automationrun.AutomationTable,
+			Columns: []string{automationrun.AutomationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(automation.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.AutomationIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   automationrun.AutomationTable,
+			Columns: []string{automationrun.AutomationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(automation.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	_spec.AddModifiers(_u.modifiers...)
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -345,6 +345,26 @@ type AutomationRunUpdateOne struct {
 	hooks     []Hook
 	mutation  *AutomationRunMutation
 	modifiers []func(*sql.UpdateBuilder)
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (_u *AutomationRunUpdateOne) SetUpdatedAt(v time.Time) *AutomationRunUpdateOne {
+	_u.mutation.SetUpdatedAt(v)
+	return _u
+}
+
+// SetWorkspaceID sets the "workspace_id" field.
+func (_u *AutomationRunUpdateOne) SetWorkspaceID(v int64) *AutomationRunUpdateOne {
+	_u.mutation.SetWorkspaceID(v)
+	return _u
+}
+
+// SetNillableWorkspaceID sets the "workspace_id" field if the given value is not nil.
+func (_u *AutomationRunUpdateOne) SetNillableWorkspaceID(v *int64) *AutomationRunUpdateOne {
+	if v != nil {
+		_u.SetWorkspaceID(*v)
+	}
+	return _u
 }
 
 // SetAutomationID sets the "automation_id" field.
@@ -379,20 +399,6 @@ func (_u *AutomationRunUpdateOne) SetNillableContactID(v *int64) *AutomationRunU
 // AddContactID adds value to the "contact_id" field.
 func (_u *AutomationRunUpdateOne) AddContactID(v int64) *AutomationRunUpdateOne {
 	_u.mutation.AddContactID(v)
-	return _u
-}
-
-// SetWorkspaceID sets the "workspace_id" field.
-func (_u *AutomationRunUpdateOne) SetWorkspaceID(v int64) *AutomationRunUpdateOne {
-	_u.mutation.SetWorkspaceID(v)
-	return _u
-}
-
-// SetNillableWorkspaceID sets the "workspace_id" field if the given value is not nil.
-func (_u *AutomationRunUpdateOne) SetNillableWorkspaceID(v *int64) *AutomationRunUpdateOne {
-	if v != nil {
-		_u.SetWorkspaceID(*v)
-	}
 	return _u
 }
 
@@ -451,10 +457,9 @@ func (_u *AutomationRunUpdateOne) ClearResumeAt() *AutomationRunUpdateOne {
 	return _u
 }
 
-// SetUpdatedAt sets the "updated_at" field.
-func (_u *AutomationRunUpdateOne) SetUpdatedAt(v time.Time) *AutomationRunUpdateOne {
-	_u.mutation.SetUpdatedAt(v)
-	return _u
+// SetWorkspace sets the "workspace" edge to the Workspace entity.
+func (_u *AutomationRunUpdateOne) SetWorkspace(v *Workspace) *AutomationRunUpdateOne {
+	return _u.SetWorkspaceID(v.ID)
 }
 
 // SetAutomation sets the "automation" edge to the Automation entity.
@@ -462,25 +467,20 @@ func (_u *AutomationRunUpdateOne) SetAutomation(v *Automation) *AutomationRunUpd
 	return _u.SetAutomationID(v.ID)
 }
 
-// SetWorkspace sets the "workspace" edge to the Workspace entity.
-func (_u *AutomationRunUpdateOne) SetWorkspace(v *Workspace) *AutomationRunUpdateOne {
-	return _u.SetWorkspaceID(v.ID)
-}
-
 // Mutation returns the AutomationRunMutation object of the builder.
 func (_u *AutomationRunUpdateOne) Mutation() *AutomationRunMutation {
 	return _u.mutation
 }
 
-// ClearAutomation clears the "automation" edge to the Automation entity.
-func (_u *AutomationRunUpdateOne) ClearAutomation() *AutomationRunUpdateOne {
-	_u.mutation.ClearAutomation()
-	return _u
-}
-
 // ClearWorkspace clears the "workspace" edge to the Workspace entity.
 func (_u *AutomationRunUpdateOne) ClearWorkspace() *AutomationRunUpdateOne {
 	_u.mutation.ClearWorkspace()
+	return _u
+}
+
+// ClearAutomation clears the "automation" edge to the Automation entity.
+func (_u *AutomationRunUpdateOne) ClearAutomation() *AutomationRunUpdateOne {
+	_u.mutation.ClearAutomation()
 	return _u
 }
 
@@ -545,11 +545,11 @@ func (_u *AutomationRunUpdateOne) check() error {
 			return &ValidationError{Name: "current_step", err: fmt.Errorf(`ent: validator failed for field "AutomationRun.current_step": %w`, err)}
 		}
 	}
-	if _u.mutation.AutomationCleared() && len(_u.mutation.AutomationIDs()) > 0 {
-		return errors.New(`ent: clearing a required unique edge "AutomationRun.automation"`)
-	}
 	if _u.mutation.WorkspaceCleared() && len(_u.mutation.WorkspaceIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "AutomationRun.workspace"`)
+	}
+	if _u.mutation.AutomationCleared() && len(_u.mutation.AutomationIDs()) > 0 {
+		return errors.New(`ent: clearing a required unique edge "AutomationRun.automation"`)
 	}
 	return nil
 }
@@ -589,6 +589,9 @@ func (_u *AutomationRunUpdateOne) sqlSave(ctx context.Context) (_node *Automatio
 			}
 		}
 	}
+	if value, ok := _u.mutation.UpdatedAt(); ok {
+		_spec.SetField(automationrun.FieldUpdatedAt, field.TypeTime, value)
+	}
 	if value, ok := _u.mutation.ContactID(); ok {
 		_spec.SetField(automationrun.FieldContactID, field.TypeInt64, value)
 	}
@@ -609,38 +612,6 @@ func (_u *AutomationRunUpdateOne) sqlSave(ctx context.Context) (_node *Automatio
 	}
 	if _u.mutation.ResumeAtCleared() {
 		_spec.ClearField(automationrun.FieldResumeAt, field.TypeTime)
-	}
-	if value, ok := _u.mutation.UpdatedAt(); ok {
-		_spec.SetField(automationrun.FieldUpdatedAt, field.TypeTime, value)
-	}
-	if _u.mutation.AutomationCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: true,
-			Table:   automationrun.AutomationTable,
-			Columns: []string{automationrun.AutomationColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(automation.FieldID, field.TypeInt64),
-			},
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := _u.mutation.AutomationIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: true,
-			Table:   automationrun.AutomationTable,
-			Columns: []string{automationrun.AutomationColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(automation.FieldID, field.TypeInt64),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if _u.mutation.WorkspaceCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -664,6 +635,35 @@ func (_u *AutomationRunUpdateOne) sqlSave(ctx context.Context) (_node *Automatio
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(workspace.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.AutomationCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   automationrun.AutomationTable,
+			Columns: []string{automationrun.AutomationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(automation.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.AutomationIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   automationrun.AutomationTable,
+			Columns: []string{automationrun.AutomationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(automation.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {

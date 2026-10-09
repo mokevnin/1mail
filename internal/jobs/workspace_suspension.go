@@ -28,8 +28,8 @@ func NotifyWorkspaceSuspended(ctx context.Context, client *ent.Client, sender me
 	if ws.SuspendedAt == nil {
 		return nil
 	}
-	owners, err := client.Membership.Query().
-		Where(membership.WorkspaceID(workspaceID), membership.RoleEQ(membership.RoleOwner)).
+	owners, err := client.Scoped(ws.ID).Membership().Query().
+		Where(membership.RoleEQ(membership.RoleOwner)).
 		WithUser().
 		All(ctx)
 	if err != nil {

@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
@@ -30,17 +31,9 @@ func (_u *TagUpdate) Where(ps ...predicate.Tag) *TagUpdate {
 	return _u
 }
 
-// SetName sets the "name" field.
-func (_u *TagUpdate) SetName(v string) *TagUpdate {
-	_u.mutation.SetName(v)
-	return _u
-}
-
-// SetNillableName sets the "name" field if the given value is not nil.
-func (_u *TagUpdate) SetNillableName(v *string) *TagUpdate {
-	if v != nil {
-		_u.SetName(*v)
-	}
+// SetUpdatedAt sets the "updated_at" field.
+func (_u *TagUpdate) SetUpdatedAt(v time.Time) *TagUpdate {
+	_u.mutation.SetUpdatedAt(v)
 	return _u
 }
 
@@ -54,6 +47,20 @@ func (_u *TagUpdate) SetWorkspaceID(v int64) *TagUpdate {
 func (_u *TagUpdate) SetNillableWorkspaceID(v *int64) *TagUpdate {
 	if v != nil {
 		_u.SetWorkspaceID(*v)
+	}
+	return _u
+}
+
+// SetName sets the "name" field.
+func (_u *TagUpdate) SetName(v string) *TagUpdate {
+	_u.mutation.SetName(v)
+	return _u
+}
+
+// SetNillableName sets the "name" field if the given value is not nil.
+func (_u *TagUpdate) SetNillableName(v *string) *TagUpdate {
+	if v != nil {
+		_u.SetName(*v)
 	}
 	return _u
 }
@@ -112,6 +119,7 @@ func (_u *TagUpdate) RemoveContacts(v ...*Contact) *TagUpdate {
 
 // Save executes the query and returns the number of nodes affected by the update operation.
 func (_u *TagUpdate) Save(ctx context.Context) (int, error) {
+	_u.defaults()
 	return withHooks(ctx, _u.sqlSave, _u.mutation, _u.hooks)
 }
 
@@ -134,6 +142,14 @@ func (_u *TagUpdate) Exec(ctx context.Context) error {
 func (_u *TagUpdate) ExecX(ctx context.Context) {
 	if err := _u.Exec(ctx); err != nil {
 		panic(err)
+	}
+}
+
+// defaults sets the default values of the builder before save.
+func (_u *TagUpdate) defaults() {
+	if _, ok := _u.mutation.UpdatedAt(); !ok {
+		v := tag.UpdateDefaultUpdatedAt()
+		_u.mutation.SetUpdatedAt(v)
 	}
 }
 
@@ -167,6 +183,9 @@ func (_u *TagUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 				ps[i](selector)
 			}
 		}
+	}
+	if value, ok := _u.mutation.UpdatedAt(); ok {
+		_spec.SetField(tag.FieldUpdatedAt, field.TypeTime, value)
 	}
 	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(tag.FieldName, field.TypeString, value)
@@ -267,17 +286,9 @@ type TagUpdateOne struct {
 	modifiers []func(*sql.UpdateBuilder)
 }
 
-// SetName sets the "name" field.
-func (_u *TagUpdateOne) SetName(v string) *TagUpdateOne {
-	_u.mutation.SetName(v)
-	return _u
-}
-
-// SetNillableName sets the "name" field if the given value is not nil.
-func (_u *TagUpdateOne) SetNillableName(v *string) *TagUpdateOne {
-	if v != nil {
-		_u.SetName(*v)
-	}
+// SetUpdatedAt sets the "updated_at" field.
+func (_u *TagUpdateOne) SetUpdatedAt(v time.Time) *TagUpdateOne {
+	_u.mutation.SetUpdatedAt(v)
 	return _u
 }
 
@@ -291,6 +302,20 @@ func (_u *TagUpdateOne) SetWorkspaceID(v int64) *TagUpdateOne {
 func (_u *TagUpdateOne) SetNillableWorkspaceID(v *int64) *TagUpdateOne {
 	if v != nil {
 		_u.SetWorkspaceID(*v)
+	}
+	return _u
+}
+
+// SetName sets the "name" field.
+func (_u *TagUpdateOne) SetName(v string) *TagUpdateOne {
+	_u.mutation.SetName(v)
+	return _u
+}
+
+// SetNillableName sets the "name" field if the given value is not nil.
+func (_u *TagUpdateOne) SetNillableName(v *string) *TagUpdateOne {
+	if v != nil {
+		_u.SetName(*v)
 	}
 	return _u
 }
@@ -362,6 +387,7 @@ func (_u *TagUpdateOne) Select(field string, fields ...string) *TagUpdateOne {
 
 // Save executes the query and returns the updated Tag entity.
 func (_u *TagUpdateOne) Save(ctx context.Context) (*Tag, error) {
+	_u.defaults()
 	return withHooks(ctx, _u.sqlSave, _u.mutation, _u.hooks)
 }
 
@@ -384,6 +410,14 @@ func (_u *TagUpdateOne) Exec(ctx context.Context) error {
 func (_u *TagUpdateOne) ExecX(ctx context.Context) {
 	if err := _u.Exec(ctx); err != nil {
 		panic(err)
+	}
+}
+
+// defaults sets the default values of the builder before save.
+func (_u *TagUpdateOne) defaults() {
+	if _, ok := _u.mutation.UpdatedAt(); !ok {
+		v := tag.UpdateDefaultUpdatedAt()
+		_u.mutation.SetUpdatedAt(v)
 	}
 }
 
@@ -434,6 +468,9 @@ func (_u *TagUpdateOne) sqlSave(ctx context.Context) (_node *Tag, err error) {
 				ps[i](selector)
 			}
 		}
+	}
+	if value, ok := _u.mutation.UpdatedAt(); ok {
+		_spec.SetField(tag.FieldUpdatedAt, field.TypeTime, value)
 	}
 	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(tag.FieldName, field.TypeString, value)

@@ -31,6 +31,26 @@ func (_u *WebhookEndpointUpdate) Where(ps ...predicate.WebhookEndpoint) *Webhook
 	return _u
 }
 
+// SetUpdatedAt sets the "updated_at" field.
+func (_u *WebhookEndpointUpdate) SetUpdatedAt(v time.Time) *WebhookEndpointUpdate {
+	_u.mutation.SetUpdatedAt(v)
+	return _u
+}
+
+// SetWorkspaceID sets the "workspace_id" field.
+func (_u *WebhookEndpointUpdate) SetWorkspaceID(v int64) *WebhookEndpointUpdate {
+	_u.mutation.SetWorkspaceID(v)
+	return _u
+}
+
+// SetNillableWorkspaceID sets the "workspace_id" field if the given value is not nil.
+func (_u *WebhookEndpointUpdate) SetNillableWorkspaceID(v *int64) *WebhookEndpointUpdate {
+	if v != nil {
+		_u.SetWorkspaceID(*v)
+	}
+	return _u
+}
+
 // SetURL sets the "url" field.
 func (_u *WebhookEndpointUpdate) SetURL(v string) *WebhookEndpointUpdate {
 	_u.mutation.SetURL(v)
@@ -88,26 +108,6 @@ func (_u *WebhookEndpointUpdate) SetNillableEnabled(v *bool) *WebhookEndpointUpd
 	if v != nil {
 		_u.SetEnabled(*v)
 	}
-	return _u
-}
-
-// SetWorkspaceID sets the "workspace_id" field.
-func (_u *WebhookEndpointUpdate) SetWorkspaceID(v int64) *WebhookEndpointUpdate {
-	_u.mutation.SetWorkspaceID(v)
-	return _u
-}
-
-// SetNillableWorkspaceID sets the "workspace_id" field if the given value is not nil.
-func (_u *WebhookEndpointUpdate) SetNillableWorkspaceID(v *int64) *WebhookEndpointUpdate {
-	if v != nil {
-		_u.SetWorkspaceID(*v)
-	}
-	return _u
-}
-
-// SetUpdatedAt sets the "updated_at" field.
-func (_u *WebhookEndpointUpdate) SetUpdatedAt(v time.Time) *WebhookEndpointUpdate {
-	_u.mutation.SetUpdatedAt(v)
 	return _u
 }
 
@@ -194,6 +194,9 @@ func (_u *WebhookEndpointUpdate) sqlSave(ctx context.Context) (_node int, err er
 			}
 		}
 	}
+	if value, ok := _u.mutation.UpdatedAt(); ok {
+		_spec.SetField(webhookendpoint.FieldUpdatedAt, field.TypeTime, value)
+	}
 	if value, ok := _u.mutation.URL(); ok {
 		_spec.SetField(webhookendpoint.FieldURL, field.TypeString, value)
 	}
@@ -213,9 +216,6 @@ func (_u *WebhookEndpointUpdate) sqlSave(ctx context.Context) (_node int, err er
 	}
 	if value, ok := _u.mutation.Enabled(); ok {
 		_spec.SetField(webhookendpoint.FieldEnabled, field.TypeBool, value)
-	}
-	if value, ok := _u.mutation.UpdatedAt(); ok {
-		_spec.SetField(webhookendpoint.FieldUpdatedAt, field.TypeTime, value)
 	}
 	if _u.mutation.WorkspaceCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -266,6 +266,26 @@ type WebhookEndpointUpdateOne struct {
 	hooks     []Hook
 	mutation  *WebhookEndpointMutation
 	modifiers []func(*sql.UpdateBuilder)
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (_u *WebhookEndpointUpdateOne) SetUpdatedAt(v time.Time) *WebhookEndpointUpdateOne {
+	_u.mutation.SetUpdatedAt(v)
+	return _u
+}
+
+// SetWorkspaceID sets the "workspace_id" field.
+func (_u *WebhookEndpointUpdateOne) SetWorkspaceID(v int64) *WebhookEndpointUpdateOne {
+	_u.mutation.SetWorkspaceID(v)
+	return _u
+}
+
+// SetNillableWorkspaceID sets the "workspace_id" field if the given value is not nil.
+func (_u *WebhookEndpointUpdateOne) SetNillableWorkspaceID(v *int64) *WebhookEndpointUpdateOne {
+	if v != nil {
+		_u.SetWorkspaceID(*v)
+	}
+	return _u
 }
 
 // SetURL sets the "url" field.
@@ -325,26 +345,6 @@ func (_u *WebhookEndpointUpdateOne) SetNillableEnabled(v *bool) *WebhookEndpoint
 	if v != nil {
 		_u.SetEnabled(*v)
 	}
-	return _u
-}
-
-// SetWorkspaceID sets the "workspace_id" field.
-func (_u *WebhookEndpointUpdateOne) SetWorkspaceID(v int64) *WebhookEndpointUpdateOne {
-	_u.mutation.SetWorkspaceID(v)
-	return _u
-}
-
-// SetNillableWorkspaceID sets the "workspace_id" field if the given value is not nil.
-func (_u *WebhookEndpointUpdateOne) SetNillableWorkspaceID(v *int64) *WebhookEndpointUpdateOne {
-	if v != nil {
-		_u.SetWorkspaceID(*v)
-	}
-	return _u
-}
-
-// SetUpdatedAt sets the "updated_at" field.
-func (_u *WebhookEndpointUpdateOne) SetUpdatedAt(v time.Time) *WebhookEndpointUpdateOne {
-	_u.mutation.SetUpdatedAt(v)
 	return _u
 }
 
@@ -461,6 +461,9 @@ func (_u *WebhookEndpointUpdateOne) sqlSave(ctx context.Context) (_node *Webhook
 			}
 		}
 	}
+	if value, ok := _u.mutation.UpdatedAt(); ok {
+		_spec.SetField(webhookendpoint.FieldUpdatedAt, field.TypeTime, value)
+	}
 	if value, ok := _u.mutation.URL(); ok {
 		_spec.SetField(webhookendpoint.FieldURL, field.TypeString, value)
 	}
@@ -480,9 +483,6 @@ func (_u *WebhookEndpointUpdateOne) sqlSave(ctx context.Context) (_node *Webhook
 	}
 	if value, ok := _u.mutation.Enabled(); ok {
 		_spec.SetField(webhookendpoint.FieldEnabled, field.TypeBool, value)
-	}
-	if value, ok := _u.mutation.UpdatedAt(); ok {
-		_spec.SetField(webhookendpoint.FieldUpdatedAt, field.TypeTime, value)
 	}
 	if _u.mutation.WorkspaceCleared() {
 		edge := &sqlgraph.EdgeSpec{

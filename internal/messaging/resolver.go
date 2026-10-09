@@ -17,22 +17,20 @@ var ErrNoProvider = fmt.Errorf("no default provider configured")
 // only in-scope consumer of the catalog's Build path; the marketing send engine
 // that actually dispatches campaigns is a separate, future component.
 type Resolver struct {
-	ent     *ent.Client
 	cipher  *secrets.Cipher
 	catalog *Catalog
 }
 
 // NewResolver wires the resolver.
-func NewResolver(client *ent.Client, cipher *secrets.Cipher, catalog *Catalog) *Resolver {
-	return &Resolver{ent: client, cipher: cipher, catalog: catalog}
+func NewResolver(cipher *secrets.Cipher, catalog *Catalog) *Resolver {
+	return &Resolver{cipher: cipher, catalog: catalog}
 }
 
 // EmailSender resolves the workspace's default, enabled email provider, decrypts
 // its config and builds a ready sender. Returns ErrNoProvider when none exists.
-func (r *Resolver) EmailSender(ctx context.Context, workspaceID int64) (EmailSender, error) {
-	row, err := r.ent.Integration.Query().
+func (r *Resolver) EmailSender(ctx context.Context, s *ent.Scoped) (EmailSender, error) {
+	row, err := s.Integration().Query().
 		Where(
-			integration.WorkspaceID(workspaceID),
 			integration.ChannelEQ(integration.ChannelEmail),
 			integration.IsDefault(true),
 			integration.Enabled(true),
@@ -49,6 +47,6 @@ func (r *Resolver) EmailSender(ctx context.Context, workspaceID int64) (EmailSen
 	if err != nil {
 		return nil, fmt.Errorf("decrypt integration %d config: %w", row.ID, err)
 	}
-	signer := NewDKIMSigner(r.ent, r.cipher, workspaceID)
+	signer := NewDKIMSigner(s, r.cipher)
 	return r.catalog.BuildEmail(Provider(row.Provider), config, signer)
 }

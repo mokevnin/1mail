@@ -55,10 +55,10 @@ func TestEncodeKeepsOnlyTheFieldsOfEachStepType(t *testing.T) {
 
 func TestCreateStoresADraftWithEncodedSteps(t *testing.T) {
 	env := testhelper.Setup(t)
-	m := automations.New(env.DB)
+	m := automations.New()
 	ctx := context.Background()
 
-	a, err := m.Create(ctx, fixtures.AcmeID, automations.CreateInput{
+	a, err := m.Create(ctx, env.DB.Scoped(fixtures.AcmeID), automations.CreateInput{
 		Name: "Onboarding", TriggerEvent: "signup",
 		Steps: []automations.Step{{Type: automations.StepApplyTag, Tag: " new "}, {Type: automations.StepWait, Seconds: 5}},
 	})
@@ -69,7 +69,7 @@ func TestCreateStoresADraftWithEncodedSteps(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, []automations.Step{{Type: automations.StepApplyTag, Tag: "new"}, {Type: automations.StepWait, Seconds: 5}}, steps)
 
-	bare, err := m.Create(ctx, fixtures.AcmeID, automations.CreateInput{Name: "No steps", TriggerEvent: "x"})
+	bare, err := m.Create(ctx, env.DB.Scoped(fixtures.AcmeID), automations.CreateInput{Name: "No steps", TriggerEvent: "x"})
 	require.NoError(t, err)
 	none, err := automations.Decode(bare.Definition)
 	require.NoError(t, err)
@@ -78,7 +78,7 @@ func TestCreateStoresADraftWithEncodedSteps(t *testing.T) {
 
 func TestInvalidStepsAreRefusedAndNothingIsStored(t *testing.T) {
 	env := testhelper.Setup(t)
-	m := automations.New(env.DB)
+	m := automations.New()
 	ctx := context.Background()
 	before, err := env.DB.Automation.Query().Count(ctx)
 	require.NoError(t, err)
@@ -89,17 +89,17 @@ func TestInvalidStepsAreRefusedAndNothingIsStored(t *testing.T) {
 		"apply_tag blank tag": {{Type: automations.StepApplyTag, Tag: "  "}},
 		"remove_tag no tag":   {{Type: automations.StepRemoveTag}},
 	} {
-		_, err := m.Create(ctx, fixtures.AcmeID, automations.CreateInput{Name: "x", TriggerEvent: "y", Steps: steps})
+		_, err := m.Create(ctx, env.DB.Scoped(fixtures.AcmeID), automations.CreateInput{Name: "x", TriggerEvent: "y", Steps: steps})
 		assert.ErrorIs(t, err, automations.ErrInvalidStep, name)
 
-		_, err = m.Update(ctx, fixtures.AcmeID, fixtures.AutomationWelcomeSeriesID, automations.UpdateInput{Steps: &steps})
+		_, err = m.Update(ctx, env.DB.Scoped(fixtures.AcmeID), fixtures.AutomationWelcomeSeriesID, automations.UpdateInput{Steps: &steps})
 		assert.ErrorIs(t, err, automations.ErrInvalidStep, "update: "+name)
 	}
 
 	after, err := env.DB.Automation.Query().Count(ctx)
 	require.NoError(t, err)
 	assert.Equal(t, before, after)
-	welcome, err := m.Get(ctx, fixtures.AcmeID, fixtures.AutomationWelcomeSeriesID)
+	welcome, err := m.Get(ctx, env.DB.Scoped(fixtures.AcmeID), fixtures.AutomationWelcomeSeriesID)
 	require.NoError(t, err)
 	stored, err := automations.Decode(welcome.Definition)
 	require.NoError(t, err)
@@ -108,7 +108,7 @@ func TestInvalidStepsAreRefusedAndNothingIsStored(t *testing.T) {
 
 func TestListPagesNewestFirstWithinTheWorkspace(t *testing.T) {
 	env := testhelper.Setup(t)
-	m := automations.New(env.DB)
+	m := automations.New()
 	ctx := context.Background()
 	_, err := env.DB.Automation.Create().SetWorkspaceID(fixtures.GlobexID).SetName("Globex flow").SetTriggerEvent("x").Save(ctx)
 	require.NoError(t, err)
@@ -117,40 +117,40 @@ func TestListPagesNewestFirstWithinTheWorkspace(t *testing.T) {
 	require.NoError(t, err)
 	require.Greater(t, total, 1)
 
-	first, gotTotal, err := m.List(ctx, fixtures.AcmeID, 1, 0)
+	first, gotTotal, err := m.List(ctx, env.DB.Scoped(fixtures.AcmeID), 1, 0)
 	require.NoError(t, err)
 	assert.Equal(t, total, gotTotal)
 	require.Len(t, first, 1)
-	second, _, err := m.List(ctx, fixtures.AcmeID, 1, 1)
+	second, _, err := m.List(ctx, env.DB.Scoped(fixtures.AcmeID), 1, 1)
 	require.NoError(t, err)
 	require.Len(t, second, 1)
 	assert.Greater(t, first[0].ID, second[0].ID, "newest first")
 
-	all, _, err := m.List(ctx, fixtures.AcmeID, 100, 0)
+	all, _, err := m.List(ctx, env.DB.Scoped(fixtures.AcmeID), 100, 0)
 	require.NoError(t, err)
 	for _, a := range all {
 		assert.EqualValues(t, fixtures.AcmeID, a.WorkspaceID, "another tenant's automation leaked")
 	}
-	past, _, err := m.List(ctx, fixtures.AcmeID, 10, total)
+	past, _, err := m.List(ctx, env.DB.Scoped(fixtures.AcmeID), 10, total)
 	require.NoError(t, err)
 	assert.Empty(t, past)
 }
 
 func TestUpdateChangesOnlyWhatIsGivenAndKeepsTheStatus(t *testing.T) {
 	env := testhelper.Setup(t)
-	m := automations.New(env.DB)
+	m := automations.New()
 	ctx := context.Background()
-	before, err := m.Get(ctx, fixtures.AcmeID, fixtures.AutomationWelcomeSeriesID)
+	before, err := m.Get(ctx, env.DB.Scoped(fixtures.AcmeID), fixtures.AutomationWelcomeSeriesID)
 	require.NoError(t, err)
 
-	renamed, err := m.Update(ctx, fixtures.AcmeID, before.ID, automations.UpdateInput{Name: lo.ToPtr("Renamed"), TriggerEvent: lo.ToPtr("new.trigger")})
+	renamed, err := m.Update(ctx, env.DB.Scoped(fixtures.AcmeID), before.ID, automations.UpdateInput{Name: lo.ToPtr("Renamed"), TriggerEvent: lo.ToPtr("new.trigger")})
 	require.NoError(t, err)
 	assert.Equal(t, "Renamed", renamed.Name)
 	assert.Equal(t, "new.trigger", renamed.TriggerEvent)
 	assert.Equal(t, before.Definition, renamed.Definition, "steps untouched when not given")
 	assert.Equal(t, before.Status, renamed.Status)
 
-	resteps, err := m.Update(ctx, fixtures.AcmeID, before.ID, automations.UpdateInput{Steps: &[]automations.Step{{Type: automations.StepWait, Seconds: 1}}})
+	resteps, err := m.Update(ctx, env.DB.Scoped(fixtures.AcmeID), before.ID, automations.UpdateInput{Steps: &[]automations.Step{{Type: automations.StepWait, Seconds: 1}}})
 	require.NoError(t, err)
 	steps, err := automations.Decode(resteps.Definition)
 	require.NoError(t, err)
@@ -159,13 +159,13 @@ func TestUpdateChangesOnlyWhatIsGivenAndKeepsTheStatus(t *testing.T) {
 
 func TestActivateAndDeactivateFlipTheStatus(t *testing.T) {
 	env := testhelper.Setup(t)
-	m := automations.New(env.DB)
+	m := automations.New()
 	ctx := context.Background()
 
-	off, err := m.Deactivate(ctx, fixtures.AcmeID, fixtures.AutomationWelcomeSeriesID)
+	off, err := m.Deactivate(ctx, env.DB.Scoped(fixtures.AcmeID), fixtures.AutomationWelcomeSeriesID)
 	require.NoError(t, err)
 	assert.Equal(t, automation.StatusDraft, off.Status)
-	on, err := m.Activate(ctx, fixtures.AcmeID, fixtures.AutomationWelcomeSeriesID)
+	on, err := m.Activate(ctx, env.DB.Scoped(fixtures.AcmeID), fixtures.AutomationWelcomeSeriesID)
 	require.NoError(t, err)
 	assert.Equal(t, automation.StatusActive, on.Status)
 
@@ -176,37 +176,37 @@ func TestActivateAndDeactivateFlipTheStatus(t *testing.T) {
 
 func TestDeleteRemovesTheAutomation(t *testing.T) {
 	env := testhelper.Setup(t)
-	m := automations.New(env.DB)
+	m := automations.New()
 	ctx := context.Background()
-	a, err := m.Create(ctx, fixtures.AcmeID, automations.CreateInput{Name: "Temp", TriggerEvent: "x"})
+	a, err := m.Create(ctx, env.DB.Scoped(fixtures.AcmeID), automations.CreateInput{Name: "Temp", TriggerEvent: "x"})
 	require.NoError(t, err)
 
-	require.NoError(t, m.Delete(ctx, fixtures.AcmeID, a.ID))
-	_, err = m.Get(ctx, fixtures.AcmeID, a.ID)
+	require.NoError(t, m.Delete(ctx, env.DB.Scoped(fixtures.AcmeID), a.ID))
+	_, err = m.Get(ctx, env.DB.Scoped(fixtures.AcmeID), a.ID)
 	assert.ErrorIs(t, err, automations.ErrNotFound)
-	assert.ErrorIs(t, m.Delete(ctx, fixtures.AcmeID, a.ID), automations.ErrNotFound, "deleting twice")
+	assert.ErrorIs(t, m.Delete(ctx, env.DB.Scoped(fixtures.AcmeID), a.ID), automations.ErrNotFound, "deleting twice")
 }
 
 // Every operation is workspace-scoped: another tenant's id is "not found" and the
 // row is untouched.
 func TestOperationsNeverReachAnotherWorkspacesAutomation(t *testing.T) {
 	env := testhelper.Setup(t)
-	m := automations.New(env.DB)
+	m := automations.New()
 	ctx := context.Background()
 	foreign, err := env.DB.Automation.Create().SetWorkspaceID(fixtures.GlobexID).SetName("Globex flow").SetTriggerEvent("x").Save(ctx)
 	require.NoError(t, err)
 
-	_, err = m.Get(ctx, fixtures.AcmeID, foreign.ID)
+	_, err = m.Get(ctx, env.DB.Scoped(fixtures.AcmeID), foreign.ID)
 	assert.ErrorIs(t, err, automations.ErrNotFound)
-	_, err = m.Update(ctx, fixtures.AcmeID, foreign.ID, automations.UpdateInput{Name: lo.ToPtr("hijacked")})
+	_, err = m.Update(ctx, env.DB.Scoped(fixtures.AcmeID), foreign.ID, automations.UpdateInput{Name: lo.ToPtr("hijacked")})
 	assert.ErrorIs(t, err, automations.ErrNotFound)
-	_, err = m.Activate(ctx, fixtures.AcmeID, foreign.ID)
+	_, err = m.Activate(ctx, env.DB.Scoped(fixtures.AcmeID), foreign.ID)
 	assert.ErrorIs(t, err, automations.ErrNotFound)
-	_, err = m.Deactivate(ctx, fixtures.AcmeID, foreign.ID)
+	_, err = m.Deactivate(ctx, env.DB.Scoped(fixtures.AcmeID), foreign.ID)
 	assert.ErrorIs(t, err, automations.ErrNotFound)
-	assert.ErrorIs(t, m.Delete(ctx, fixtures.AcmeID, foreign.ID), automations.ErrNotFound)
+	assert.ErrorIs(t, m.Delete(ctx, env.DB.Scoped(fixtures.AcmeID), foreign.ID), automations.ErrNotFound)
 
-	_, err = m.Get(ctx, fixtures.AcmeID, 999999)
+	_, err = m.Get(ctx, env.DB.Scoped(fixtures.AcmeID), 999999)
 	assert.ErrorIs(t, err, automations.ErrNotFound, "an unknown id")
 
 	stored, err := env.DB.Automation.Get(ctx, foreign.ID)

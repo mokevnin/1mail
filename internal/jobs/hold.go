@@ -57,8 +57,8 @@ func snoozeIfDeferrable(err error) error {
 // setBroadcastHold records (or, with reason "", clears) why a broadcast is held.
 // Best effort: the hold itself is enforced by the send path, this is the visible
 // state, so a failed write must not mask the real outcome.
-func setBroadcastHold(ctx context.Context, client *ent.Client, broadcastID int64, reason string) {
-	upd := client.Broadcast.UpdateOneID(broadcastID)
+func setBroadcastHold(ctx context.Context, s *ent.Scoped, broadcastID int64, reason string) {
+	upd := s.Broadcast().UpdateOneID(broadcastID)
 	if reason == "" {
 		upd.ClearHoldReason()
 	} else {

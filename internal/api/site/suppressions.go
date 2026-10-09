@@ -14,7 +14,7 @@ import (
 )
 
 func (h *Handlers) SiteSuppressionsList(ctx context.Context, params siteapi.SiteSuppressionsListParams) (siteapi.SiteSuppressionsListRes, error) {
-	ws, err := h.workspaceID(ctx, params.Slug)
+	s, err := h.scopedFor(ctx, params.Slug)
 	if ent.IsNotFound(err) {
 		v := siteapi.SiteSuppressionsListNotFound(problem(http.StatusNotFound, "workspace not found"))
 		return &v, nil
@@ -32,7 +32,7 @@ func (h *Handlers) SiteSuppressionsList(ctx context.Context, params siteapi.Site
 	}
 	page, pageSize := pagination.Normalize(pagePtr, pageSizePtr)
 
-	q := h.ent.Suppression.Query().Where(suppression.WorkspaceID(ws))
+	q := s.Suppression().Query()
 	total, err := q.Count(ctx)
 	if err != nil {
 		return nil, err
@@ -46,8 +46,8 @@ func (h *Handlers) SiteSuppressionsList(ctx context.Context, params siteapi.Site
 	}
 
 	resources := make([]siteapi.SiteSuppressionResource, len(items))
-	for i, s := range items {
-		resources[i] = mapper.SuppressionToResource(s)
+	for i, item := range items {
+		resources[i] = mapper.SuppressionToResource(item)
 	}
 	return &siteapi.SiteSuppressionsListOK{
 		Items:      resources,
@@ -59,7 +59,7 @@ func (h *Handlers) SiteSuppressionsList(ctx context.Context, params siteapi.Site
 }
 
 func (h *Handlers) SiteSuppressionsCreate(ctx context.Context, req *siteapi.SiteCreateSuppressionInput, params siteapi.SiteSuppressionsCreateParams) (siteapi.SiteSuppressionsCreateRes, error) {
-	ws, err := h.workspaceID(ctx, params.Slug)
+	s, err := h.scopedFor(ctx, params.Slug)
 	if ent.IsNotFound(err) {
 		v := siteapi.SiteSuppressionsCreateNotFound(problem(http.StatusNotFound, "workspace not found"))
 		return &v, nil
@@ -78,8 +78,7 @@ func (h *Handlers) SiteSuppressionsCreate(ctx context.Context, req *siteapi.Site
 
 	// Manual suppression is idempotent per (channel, destination): keep the
 	// existing entry (and its reason) if the destination is already suppressed.
-	if err := h.ent.Suppression.Create().
-		SetWorkspaceID(ws).
+	if err := s.Suppression().Create().
 		SetChannel(suppression.ChannelEmail).
 		SetDestination(dest).
 		SetReason(suppression.ReasonManual).
@@ -89,18 +88,18 @@ func (h *Handlers) SiteSuppressionsCreate(ctx context.Context, req *siteapi.Site
 		return nil, err
 	}
 
-	s, err := h.ent.Suppression.Query().
-		Where(suppression.WorkspaceID(ws), suppression.ChannelEQ(suppression.ChannelEmail), suppression.DestinationEQ(dest)).
+	created, err := s.Suppression().Query().
+		Where(suppression.ChannelEQ(suppression.ChannelEmail), suppression.DestinationEQ(dest)).
 		Only(ctx)
 	if err != nil {
 		return nil, err
 	}
-	res := mapper.SuppressionToResource(s)
+	res := mapper.SuppressionToResource(created)
 	return &res, nil
 }
 
 func (h *Handlers) SiteSuppressionsDelete(ctx context.Context, params siteapi.SiteSuppressionsDeleteParams) (siteapi.SiteSuppressionsDeleteRes, error) {
-	ws, err := h.workspaceID(ctx, params.Slug)
+	s, err := h.scopedFor(ctx, params.Slug)
 	if ent.IsNotFound(err) {
 		v := siteapi.SiteSuppressionsDeleteNotFound(problem(http.StatusNotFound, "workspace not found"))
 		return &v, nil
@@ -114,7 +113,7 @@ func (h *Handlers) SiteSuppressionsDelete(ctx context.Context, params siteapi.Si
 		v := siteapi.SiteSuppressionsDeleteBadRequest(problem(http.StatusBadRequest, "invalid id"))
 		return &v, nil
 	}
-	err = h.ent.Suppression.DeleteOneID(id).Where(suppression.WorkspaceID(ws)).Exec(ctx)
+	err = s.Suppression().DeleteOneID(id).Exec(ctx)
 	if ent.IsNotFound(err) {
 		v := siteapi.SiteSuppressionsDeleteNotFound(problem(http.StatusNotFound, "suppression not found"))
 		return &v, nil

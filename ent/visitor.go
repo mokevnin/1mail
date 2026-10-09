@@ -19,16 +19,16 @@ type Visitor struct {
 	config `json:"-"`
 	// ID of the ent.
 	ID int64 `json:"id,omitempty"`
-	// VisitorID holds the value of the "visitor_id" field.
-	VisitorID string `json:"visitor_id,omitempty"`
-	// WorkspaceID holds the value of the "workspace_id" field.
-	WorkspaceID int64 `json:"workspace_id,omitempty"`
-	// ContactID holds the value of the "contact_id" field.
-	ContactID *int64 `json:"contact_id,omitempty"`
 	// CreatedAt holds the value of the "created_at" field.
 	CreatedAt time.Time `json:"created_at,omitempty"`
 	// UpdatedAt holds the value of the "updated_at" field.
 	UpdatedAt time.Time `json:"updated_at,omitempty"`
+	// WorkspaceID holds the value of the "workspace_id" field.
+	WorkspaceID int64 `json:"workspace_id,omitempty"`
+	// VisitorID holds the value of the "visitor_id" field.
+	VisitorID string `json:"visitor_id,omitempty"`
+	// ContactID holds the value of the "contact_id" field.
+	ContactID *int64 `json:"contact_id,omitempty"`
 	// LastSeenAt holds the value of the "last_seen_at" field.
 	LastSeenAt time.Time `json:"last_seen_at,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
@@ -39,24 +39,13 @@ type Visitor struct {
 
 // VisitorEdges holds the relations/edges for other nodes in the graph.
 type VisitorEdges struct {
-	// Contact holds the value of the contact edge.
-	Contact *Contact `json:"contact,omitempty"`
 	// Workspace holds the value of the workspace edge.
 	Workspace *Workspace `json:"workspace,omitempty"`
+	// Contact holds the value of the contact edge.
+	Contact *Contact `json:"contact,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
 	loadedTypes [2]bool
-}
-
-// ContactOrErr returns the Contact value or an error if the edge
-// was not loaded in eager-loading, or loaded but was not found.
-func (e VisitorEdges) ContactOrErr() (*Contact, error) {
-	if e.Contact != nil {
-		return e.Contact, nil
-	} else if e.loadedTypes[0] {
-		return nil, &NotFoundError{label: contact.Label}
-	}
-	return nil, &NotLoadedError{edge: "contact"}
 }
 
 // WorkspaceOrErr returns the Workspace value or an error if the edge
@@ -64,10 +53,21 @@ func (e VisitorEdges) ContactOrErr() (*Contact, error) {
 func (e VisitorEdges) WorkspaceOrErr() (*Workspace, error) {
 	if e.Workspace != nil {
 		return e.Workspace, nil
-	} else if e.loadedTypes[1] {
+	} else if e.loadedTypes[0] {
 		return nil, &NotFoundError{label: workspace.Label}
 	}
 	return nil, &NotLoadedError{edge: "workspace"}
+}
+
+// ContactOrErr returns the Contact value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e VisitorEdges) ContactOrErr() (*Contact, error) {
+	if e.Contact != nil {
+		return e.Contact, nil
+	} else if e.loadedTypes[1] {
+		return nil, &NotFoundError{label: contact.Label}
+	}
+	return nil, &NotLoadedError{edge: "contact"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -102,25 +102,6 @@ func (_m *Visitor) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field id", value)
 			}
 			_m.ID = int64(value.Int64)
-		case visitor.FieldVisitorID:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field visitor_id", values[i])
-			} else if value.Valid {
-				_m.VisitorID = value.String
-			}
-		case visitor.FieldWorkspaceID:
-			if value, ok := values[i].(*sql.NullInt64); !ok {
-				return fmt.Errorf("unexpected type %T for field workspace_id", values[i])
-			} else if value.Valid {
-				_m.WorkspaceID = value.Int64
-			}
-		case visitor.FieldContactID:
-			if value, ok := values[i].(*sql.NullInt64); !ok {
-				return fmt.Errorf("unexpected type %T for field contact_id", values[i])
-			} else if value.Valid {
-				_m.ContactID = new(int64)
-				*_m.ContactID = value.Int64
-			}
 		case visitor.FieldCreatedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
 				return fmt.Errorf("unexpected type %T for field created_at", values[i])
@@ -132,6 +113,25 @@ func (_m *Visitor) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field updated_at", values[i])
 			} else if value.Valid {
 				_m.UpdatedAt = value.Time
+			}
+		case visitor.FieldWorkspaceID:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field workspace_id", values[i])
+			} else if value.Valid {
+				_m.WorkspaceID = value.Int64
+			}
+		case visitor.FieldVisitorID:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field visitor_id", values[i])
+			} else if value.Valid {
+				_m.VisitorID = value.String
+			}
+		case visitor.FieldContactID:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field contact_id", values[i])
+			} else if value.Valid {
+				_m.ContactID = new(int64)
+				*_m.ContactID = value.Int64
 			}
 		case visitor.FieldLastSeenAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
@@ -152,14 +152,14 @@ func (_m *Visitor) Value(name string) (ent.Value, error) {
 	return _m.selectValues.Get(name)
 }
 
-// QueryContact queries the "contact" edge of the Visitor entity.
-func (_m *Visitor) QueryContact() *ContactQuery {
-	return NewVisitorClient(_m.config).QueryContact(_m)
-}
-
 // QueryWorkspace queries the "workspace" edge of the Visitor entity.
 func (_m *Visitor) QueryWorkspace() *WorkspaceQuery {
 	return NewVisitorClient(_m.config).QueryWorkspace(_m)
+}
+
+// QueryContact queries the "contact" edge of the Visitor entity.
+func (_m *Visitor) QueryContact() *ContactQuery {
+	return NewVisitorClient(_m.config).QueryContact(_m)
 }
 
 // Update returns a builder for updating this Visitor.
@@ -185,22 +185,22 @@ func (_m *Visitor) String() string {
 	var builder strings.Builder
 	builder.WriteString("Visitor(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
-	builder.WriteString("visitor_id=")
-	builder.WriteString(_m.VisitorID)
-	builder.WriteString(", ")
-	builder.WriteString("workspace_id=")
-	builder.WriteString(fmt.Sprintf("%v", _m.WorkspaceID))
-	builder.WriteString(", ")
-	if v := _m.ContactID; v != nil {
-		builder.WriteString("contact_id=")
-		builder.WriteString(fmt.Sprintf("%v", *v))
-	}
-	builder.WriteString(", ")
 	builder.WriteString("created_at=")
 	builder.WriteString(_m.CreatedAt.Format(time.ANSIC))
 	builder.WriteString(", ")
 	builder.WriteString("updated_at=")
 	builder.WriteString(_m.UpdatedAt.Format(time.ANSIC))
+	builder.WriteString(", ")
+	builder.WriteString("workspace_id=")
+	builder.WriteString(fmt.Sprintf("%v", _m.WorkspaceID))
+	builder.WriteString(", ")
+	builder.WriteString("visitor_id=")
+	builder.WriteString(_m.VisitorID)
+	builder.WriteString(", ")
+	if v := _m.ContactID; v != nil {
+		builder.WriteString("contact_id=")
+		builder.WriteString(fmt.Sprintf("%v", *v))
+	}
 	builder.WriteString(", ")
 	builder.WriteString("last_seen_at=")
 	builder.WriteString(_m.LastSeenAt.Format(time.ANSIC))

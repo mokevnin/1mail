@@ -44,7 +44,7 @@ type recordingDispatcher struct {
 	names []string
 }
 
-func (r *recordingDispatcher) Dispatch(_ context.Context, _ int64, name, _ string, _ []byte) error {
+func (r *recordingDispatcher) Dispatch(_ context.Context, _ *ent.Scoped, name, _ string, _ []byte) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	r.names = append(r.names, name)

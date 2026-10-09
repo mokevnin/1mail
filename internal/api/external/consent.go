@@ -26,7 +26,7 @@ func (h *Handlers) SuppressionsCreate(ctx context.Context, req *externalapi.Crea
 		res := externalapi.SuppressionsCreateUnauthorized(problem(http.StatusUnauthorized, "insufficient scope"))
 		return &res, nil
 	}
-	ws := auth.WorkspaceID(auth.GetTokenAuth(ctx))
+	s := auth.TokenScoped(ctx)
 
 	dest := eligibility.NormalizeDestination(string(req.Destination))
 	if dest == "" {
@@ -35,8 +35,7 @@ func (h *Handlers) SuppressionsCreate(ctx context.Context, req *externalapi.Crea
 	}
 
 	// Idempotent per (channel, destination): an existing entry keeps its reason.
-	if err := h.ent.Suppression.Create().
-		SetWorkspaceID(ws).
+	if err := s.Suppression().Create().
 		SetChannel(suppression.ChannelEmail).
 		SetDestination(dest).
 		SetReason(suppression.ReasonManual).
@@ -45,17 +44,17 @@ func (h *Handlers) SuppressionsCreate(ctx context.Context, req *externalapi.Crea
 		Exec(ctx); err != nil {
 		return nil, err
 	}
-	s, err := h.ent.Suppression.Query().
-		Where(suppression.WorkspaceID(ws), suppression.ChannelEQ(suppression.ChannelEmail), suppression.DestinationEQ(dest)).
+	created, err := s.Suppression().Query().
+		Where(suppression.ChannelEQ(suppression.ChannelEmail), suppression.DestinationEQ(dest)).
 		Only(ctx)
 	if err != nil {
 		return nil, err
 	}
 	return &externalapi.SuppressionResource{
-		ID:          entityID(s.ID),
-		Destination: s.Destination,
-		Reason:      externalapi.SuppressionReason(s.Reason),
-		CreatedAt:   externalapi.Timestamp(s.CreatedAt),
+		ID:          entityID(created.ID),
+		Destination: created.Destination,
+		Reason:      externalapi.SuppressionReason(created.Reason),
+		CreatedAt:   externalapi.Timestamp(created.CreatedAt),
 	}, nil
 }
 
@@ -64,7 +63,7 @@ func (h *Handlers) UnsubscribesCreate(ctx context.Context, req *externalapi.Crea
 		res := externalapi.UnsubscribesCreateUnauthorized(problem(http.StatusUnauthorized, "insufficient scope"))
 		return &res, nil
 	}
-	ws := auth.WorkspaceID(auth.GetTokenAuth(ctx))
+	s := auth.TokenScoped(ctx)
 	unprocessable := func(detail string) (externalapi.UnsubscribesCreateRes, error) {
 		res := externalapi.UnsubscribesCreateUnprocessableEntity(problem(http.StatusUnprocessableEntity, detail))
 		return &res, nil
@@ -78,7 +77,7 @@ func (h *Handlers) UnsubscribesCreate(ctx context.Context, req *externalapi.Crea
 	switch automationID, isAutomation := eligibility.ParseAutomationSource(source); {
 	case source == eligibility.SourceBroadcasts || source == eligibility.SourceEverything:
 	case isAutomation:
-		exists, err := h.ent.Automation.Query().Where(automation.ID(automationID), automation.WorkspaceID(ws)).Exist(ctx)
+		exists, err := s.Automation().Query().Where(automation.ID(automationID)).Exist(ctx)
 		if err != nil {
 			return nil, err
 		}
@@ -89,20 +88,19 @@ func (h *Handlers) UnsubscribesCreate(ctx context.Context, req *externalapi.Crea
 		return unprocessable("sendingSource must be broadcasts, everything or automation:<id>")
 	}
 
-	target := tracking.UnsubTarget{Source: source, Destination: dest, WorkspaceID: ws}
-	if c, err := h.ent.Contact.Query().Where(contact.WorkspaceID(ws), contact.EmailEqualFold(dest)).First(ctx); err == nil {
+	target := tracking.UnsubTarget{Source: source, Destination: dest, WorkspaceID: s.WorkspaceID()}
+	if c, err := s.Contact().Query().Where(contact.EmailEqualFold(dest)).First(ctx); err == nil {
 		target.ContactID = c.ID
 	} else if !ent.IsNotFound(err) {
 		return nil, err
 	}
 	// Same effects as the unsubscribe link: row, confirmation reset on "everything",
 	// automation exit and the engagement event, atomically and idempotently.
-	if err := consent.RecordUnsubscribe(ctx, h.ent, h.bus, target); err != nil {
+	if err := consent.RecordUnsubscribe(ctx, h.bus, target); err != nil {
 		return nil, err
 	}
 
-	u, err := h.ent.Unsubscribe.Query().Where(
-		unsubscribe.WorkspaceID(ws),
+	u, err := s.Unsubscribe().Query().Where(
 		unsubscribe.ChannelEQ(unsubscribe.ChannelEmail),
 		unsubscribe.DestinationEQ(dest),
 		unsubscribe.SendingSourceEQ(source),

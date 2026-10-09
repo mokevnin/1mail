@@ -15,35 +15,28 @@ const (
 	Label = "automation_run"
 	// FieldID holds the string denoting the id field in the database.
 	FieldID = "id"
+	// FieldCreatedAt holds the string denoting the created_at field in the database.
+	FieldCreatedAt = "created_at"
+	// FieldUpdatedAt holds the string denoting the updated_at field in the database.
+	FieldUpdatedAt = "updated_at"
+	// FieldWorkspaceID holds the string denoting the workspace_id field in the database.
+	FieldWorkspaceID = "workspace_id"
 	// FieldAutomationID holds the string denoting the automation_id field in the database.
 	FieldAutomationID = "automation_id"
 	// FieldContactID holds the string denoting the contact_id field in the database.
 	FieldContactID = "contact_id"
-	// FieldWorkspaceID holds the string denoting the workspace_id field in the database.
-	FieldWorkspaceID = "workspace_id"
 	// FieldStatus holds the string denoting the status field in the database.
 	FieldStatus = "status"
 	// FieldCurrentStep holds the string denoting the current_step field in the database.
 	FieldCurrentStep = "current_step"
 	// FieldResumeAt holds the string denoting the resume_at field in the database.
 	FieldResumeAt = "resume_at"
-	// FieldCreatedAt holds the string denoting the created_at field in the database.
-	FieldCreatedAt = "created_at"
-	// FieldUpdatedAt holds the string denoting the updated_at field in the database.
-	FieldUpdatedAt = "updated_at"
-	// EdgeAutomation holds the string denoting the automation edge name in mutations.
-	EdgeAutomation = "automation"
 	// EdgeWorkspace holds the string denoting the workspace edge name in mutations.
 	EdgeWorkspace = "workspace"
+	// EdgeAutomation holds the string denoting the automation edge name in mutations.
+	EdgeAutomation = "automation"
 	// Table holds the table name of the automationrun in the database.
 	Table = "automation_runs"
-	// AutomationTable is the table that holds the automation relation/edge.
-	AutomationTable = "automation_runs"
-	// AutomationInverseTable is the table name for the Automation entity.
-	// It exists in this package in order to avoid circular dependency with the "automation" package.
-	AutomationInverseTable = "automations"
-	// AutomationColumn is the table column denoting the automation relation/edge.
-	AutomationColumn = "automation_id"
 	// WorkspaceTable is the table that holds the workspace relation/edge.
 	WorkspaceTable = "automation_runs"
 	// WorkspaceInverseTable is the table name for the Workspace entity.
@@ -51,19 +44,26 @@ const (
 	WorkspaceInverseTable = "workspaces"
 	// WorkspaceColumn is the table column denoting the workspace relation/edge.
 	WorkspaceColumn = "workspace_id"
+	// AutomationTable is the table that holds the automation relation/edge.
+	AutomationTable = "automation_runs"
+	// AutomationInverseTable is the table name for the Automation entity.
+	// It exists in this package in order to avoid circular dependency with the "automation" package.
+	AutomationInverseTable = "automations"
+	// AutomationColumn is the table column denoting the automation relation/edge.
+	AutomationColumn = "automation_id"
 )
 
 // Columns holds all SQL columns for automationrun fields.
 var Columns = []string{
 	FieldID,
+	FieldCreatedAt,
+	FieldUpdatedAt,
+	FieldWorkspaceID,
 	FieldAutomationID,
 	FieldContactID,
-	FieldWorkspaceID,
 	FieldStatus,
 	FieldCurrentStep,
 	FieldResumeAt,
-	FieldCreatedAt,
-	FieldUpdatedAt,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -77,16 +77,16 @@ func ValidColumn(column string) bool {
 }
 
 var (
-	// DefaultCurrentStep holds the default value on creation for the "current_step" field.
-	DefaultCurrentStep int
-	// CurrentStepValidator is a validator for the "current_step" field. It is called by the builders before save.
-	CurrentStepValidator func(int) error
 	// DefaultCreatedAt holds the default value on creation for the "created_at" field.
 	DefaultCreatedAt func() time.Time
 	// DefaultUpdatedAt holds the default value on creation for the "updated_at" field.
 	DefaultUpdatedAt func() time.Time
 	// UpdateDefaultUpdatedAt holds the default value on update for the "updated_at" field.
 	UpdateDefaultUpdatedAt func() time.Time
+	// DefaultCurrentStep holds the default value on creation for the "current_step" field.
+	DefaultCurrentStep int
+	// CurrentStepValidator is a validator for the "current_step" field. It is called by the builders before save.
+	CurrentStepValidator func(int) error
 )
 
 // Status defines the type for the "status" enum field.
@@ -125,6 +125,21 @@ func ByID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldID, opts...).ToFunc()
 }
 
+// ByCreatedAt orders the results by the created_at field.
+func ByCreatedAt(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldCreatedAt, opts...).ToFunc()
+}
+
+// ByUpdatedAt orders the results by the updated_at field.
+func ByUpdatedAt(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldUpdatedAt, opts...).ToFunc()
+}
+
+// ByWorkspaceID orders the results by the workspace_id field.
+func ByWorkspaceID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldWorkspaceID, opts...).ToFunc()
+}
+
 // ByAutomationID orders the results by the automation_id field.
 func ByAutomationID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldAutomationID, opts...).ToFunc()
@@ -133,11 +148,6 @@ func ByAutomationID(opts ...sql.OrderTermOption) OrderOption {
 // ByContactID orders the results by the contact_id field.
 func ByContactID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldContactID, opts...).ToFunc()
-}
-
-// ByWorkspaceID orders the results by the workspace_id field.
-func ByWorkspaceID(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldWorkspaceID, opts...).ToFunc()
 }
 
 // ByStatus orders the results by the status field.
@@ -155,14 +165,11 @@ func ByResumeAt(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldResumeAt, opts...).ToFunc()
 }
 
-// ByCreatedAt orders the results by the created_at field.
-func ByCreatedAt(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldCreatedAt, opts...).ToFunc()
-}
-
-// ByUpdatedAt orders the results by the updated_at field.
-func ByUpdatedAt(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldUpdatedAt, opts...).ToFunc()
+// ByWorkspaceField orders the results by workspace field.
+func ByWorkspaceField(field string, opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newWorkspaceStep(), sql.OrderByField(field, opts...))
+	}
 }
 
 // ByAutomationField orders the results by automation field.
@@ -171,24 +178,17 @@ func ByAutomationField(field string, opts ...sql.OrderTermOption) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newAutomationStep(), sql.OrderByField(field, opts...))
 	}
 }
-
-// ByWorkspaceField orders the results by workspace field.
-func ByWorkspaceField(field string, opts ...sql.OrderTermOption) OrderOption {
-	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborTerms(s, newWorkspaceStep(), sql.OrderByField(field, opts...))
-	}
+func newWorkspaceStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(WorkspaceInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.M2O, true, WorkspaceTable, WorkspaceColumn),
+	)
 }
 func newAutomationStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(AutomationInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.M2O, true, AutomationTable, AutomationColumn),
-	)
-}
-func newWorkspaceStep() *sqlgraph.Step {
-	return sqlgraph.NewStep(
-		sqlgraph.From(Table, FieldID),
-		sqlgraph.To(WorkspaceInverseTable, FieldID),
-		sqlgraph.Edge(sqlgraph.M2O, true, WorkspaceTable, WorkspaceColumn),
 	)
 }

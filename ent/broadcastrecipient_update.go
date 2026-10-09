@@ -31,6 +31,26 @@ func (_u *BroadcastRecipientUpdate) Where(ps ...predicate.BroadcastRecipient) *B
 	return _u
 }
 
+// SetUpdatedAt sets the "updated_at" field.
+func (_u *BroadcastRecipientUpdate) SetUpdatedAt(v time.Time) *BroadcastRecipientUpdate {
+	_u.mutation.SetUpdatedAt(v)
+	return _u
+}
+
+// SetWorkspaceID sets the "workspace_id" field.
+func (_u *BroadcastRecipientUpdate) SetWorkspaceID(v int64) *BroadcastRecipientUpdate {
+	_u.mutation.SetWorkspaceID(v)
+	return _u
+}
+
+// SetNillableWorkspaceID sets the "workspace_id" field if the given value is not nil.
+func (_u *BroadcastRecipientUpdate) SetNillableWorkspaceID(v *int64) *BroadcastRecipientUpdate {
+	if v != nil {
+		_u.SetWorkspaceID(*v)
+	}
+	return _u
+}
+
 // SetBroadcastID sets the "broadcast_id" field.
 func (_u *BroadcastRecipientUpdate) SetBroadcastID(v int64) *BroadcastRecipientUpdate {
 	_u.mutation.SetBroadcastID(v)
@@ -63,20 +83,6 @@ func (_u *BroadcastRecipientUpdate) SetNillableContactID(v *int64) *BroadcastRec
 // AddContactID adds value to the "contact_id" field.
 func (_u *BroadcastRecipientUpdate) AddContactID(v int64) *BroadcastRecipientUpdate {
 	_u.mutation.AddContactID(v)
-	return _u
-}
-
-// SetWorkspaceID sets the "workspace_id" field.
-func (_u *BroadcastRecipientUpdate) SetWorkspaceID(v int64) *BroadcastRecipientUpdate {
-	_u.mutation.SetWorkspaceID(v)
-	return _u
-}
-
-// SetNillableWorkspaceID sets the "workspace_id" field if the given value is not nil.
-func (_u *BroadcastRecipientUpdate) SetNillableWorkspaceID(v *int64) *BroadcastRecipientUpdate {
-	if v != nil {
-		_u.SetWorkspaceID(*v)
-	}
 	return _u
 }
 
@@ -201,10 +207,9 @@ func (_u *BroadcastRecipientUpdate) ClearClickedAt() *BroadcastRecipientUpdate {
 	return _u
 }
 
-// SetUpdatedAt sets the "updated_at" field.
-func (_u *BroadcastRecipientUpdate) SetUpdatedAt(v time.Time) *BroadcastRecipientUpdate {
-	_u.mutation.SetUpdatedAt(v)
-	return _u
+// SetWorkspace sets the "workspace" edge to the Workspace entity.
+func (_u *BroadcastRecipientUpdate) SetWorkspace(v *Workspace) *BroadcastRecipientUpdate {
+	return _u.SetWorkspaceID(v.ID)
 }
 
 // SetBroadcast sets the "broadcast" edge to the Broadcast entity.
@@ -212,25 +217,20 @@ func (_u *BroadcastRecipientUpdate) SetBroadcast(v *Broadcast) *BroadcastRecipie
 	return _u.SetBroadcastID(v.ID)
 }
 
-// SetWorkspace sets the "workspace" edge to the Workspace entity.
-func (_u *BroadcastRecipientUpdate) SetWorkspace(v *Workspace) *BroadcastRecipientUpdate {
-	return _u.SetWorkspaceID(v.ID)
-}
-
 // Mutation returns the BroadcastRecipientMutation object of the builder.
 func (_u *BroadcastRecipientUpdate) Mutation() *BroadcastRecipientMutation {
 	return _u.mutation
 }
 
-// ClearBroadcast clears the "broadcast" edge to the Broadcast entity.
-func (_u *BroadcastRecipientUpdate) ClearBroadcast() *BroadcastRecipientUpdate {
-	_u.mutation.ClearBroadcast()
-	return _u
-}
-
 // ClearWorkspace clears the "workspace" edge to the Workspace entity.
 func (_u *BroadcastRecipientUpdate) ClearWorkspace() *BroadcastRecipientUpdate {
 	_u.mutation.ClearWorkspace()
+	return _u
+}
+
+// ClearBroadcast clears the "broadcast" edge to the Broadcast entity.
+func (_u *BroadcastRecipientUpdate) ClearBroadcast() *BroadcastRecipientUpdate {
+	_u.mutation.ClearBroadcast()
 	return _u
 }
 
@@ -277,11 +277,11 @@ func (_u *BroadcastRecipientUpdate) check() error {
 			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "BroadcastRecipient.status": %w`, err)}
 		}
 	}
-	if _u.mutation.BroadcastCleared() && len(_u.mutation.BroadcastIDs()) > 0 {
-		return errors.New(`ent: clearing a required unique edge "BroadcastRecipient.broadcast"`)
-	}
 	if _u.mutation.WorkspaceCleared() && len(_u.mutation.WorkspaceIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "BroadcastRecipient.workspace"`)
+	}
+	if _u.mutation.BroadcastCleared() && len(_u.mutation.BroadcastIDs()) > 0 {
+		return errors.New(`ent: clearing a required unique edge "BroadcastRecipient.broadcast"`)
 	}
 	return nil
 }
@@ -303,6 +303,9 @@ func (_u *BroadcastRecipientUpdate) sqlSave(ctx context.Context) (_node int, err
 				ps[i](selector)
 			}
 		}
+	}
+	if value, ok := _u.mutation.UpdatedAt(); ok {
+		_spec.SetField(broadcastrecipient.FieldUpdatedAt, field.TypeTime, value)
 	}
 	if value, ok := _u.mutation.ContactID(); ok {
 		_spec.SetField(broadcastrecipient.FieldContactID, field.TypeInt64, value)
@@ -346,8 +349,34 @@ func (_u *BroadcastRecipientUpdate) sqlSave(ctx context.Context) (_node int, err
 	if _u.mutation.ClickedAtCleared() {
 		_spec.ClearField(broadcastrecipient.FieldClickedAt, field.TypeTime)
 	}
-	if value, ok := _u.mutation.UpdatedAt(); ok {
-		_spec.SetField(broadcastrecipient.FieldUpdatedAt, field.TypeTime, value)
+	if _u.mutation.WorkspaceCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   broadcastrecipient.WorkspaceTable,
+			Columns: []string{broadcastrecipient.WorkspaceColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(workspace.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.WorkspaceIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   broadcastrecipient.WorkspaceTable,
+			Columns: []string{broadcastrecipient.WorkspaceColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(workspace.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if _u.mutation.BroadcastCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -378,35 +407,6 @@ func (_u *BroadcastRecipientUpdate) sqlSave(ctx context.Context) (_node int, err
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if _u.mutation.WorkspaceCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: true,
-			Table:   broadcastrecipient.WorkspaceTable,
-			Columns: []string{broadcastrecipient.WorkspaceColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(workspace.FieldID, field.TypeInt64),
-			},
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := _u.mutation.WorkspaceIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: true,
-			Table:   broadcastrecipient.WorkspaceTable,
-			Columns: []string{broadcastrecipient.WorkspaceColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(workspace.FieldID, field.TypeInt64),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
-	}
 	_spec.AddModifiers(_u.modifiers...)
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -427,6 +427,26 @@ type BroadcastRecipientUpdateOne struct {
 	hooks     []Hook
 	mutation  *BroadcastRecipientMutation
 	modifiers []func(*sql.UpdateBuilder)
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (_u *BroadcastRecipientUpdateOne) SetUpdatedAt(v time.Time) *BroadcastRecipientUpdateOne {
+	_u.mutation.SetUpdatedAt(v)
+	return _u
+}
+
+// SetWorkspaceID sets the "workspace_id" field.
+func (_u *BroadcastRecipientUpdateOne) SetWorkspaceID(v int64) *BroadcastRecipientUpdateOne {
+	_u.mutation.SetWorkspaceID(v)
+	return _u
+}
+
+// SetNillableWorkspaceID sets the "workspace_id" field if the given value is not nil.
+func (_u *BroadcastRecipientUpdateOne) SetNillableWorkspaceID(v *int64) *BroadcastRecipientUpdateOne {
+	if v != nil {
+		_u.SetWorkspaceID(*v)
+	}
+	return _u
 }
 
 // SetBroadcastID sets the "broadcast_id" field.
@@ -461,20 +481,6 @@ func (_u *BroadcastRecipientUpdateOne) SetNillableContactID(v *int64) *Broadcast
 // AddContactID adds value to the "contact_id" field.
 func (_u *BroadcastRecipientUpdateOne) AddContactID(v int64) *BroadcastRecipientUpdateOne {
 	_u.mutation.AddContactID(v)
-	return _u
-}
-
-// SetWorkspaceID sets the "workspace_id" field.
-func (_u *BroadcastRecipientUpdateOne) SetWorkspaceID(v int64) *BroadcastRecipientUpdateOne {
-	_u.mutation.SetWorkspaceID(v)
-	return _u
-}
-
-// SetNillableWorkspaceID sets the "workspace_id" field if the given value is not nil.
-func (_u *BroadcastRecipientUpdateOne) SetNillableWorkspaceID(v *int64) *BroadcastRecipientUpdateOne {
-	if v != nil {
-		_u.SetWorkspaceID(*v)
-	}
 	return _u
 }
 
@@ -599,10 +605,9 @@ func (_u *BroadcastRecipientUpdateOne) ClearClickedAt() *BroadcastRecipientUpdat
 	return _u
 }
 
-// SetUpdatedAt sets the "updated_at" field.
-func (_u *BroadcastRecipientUpdateOne) SetUpdatedAt(v time.Time) *BroadcastRecipientUpdateOne {
-	_u.mutation.SetUpdatedAt(v)
-	return _u
+// SetWorkspace sets the "workspace" edge to the Workspace entity.
+func (_u *BroadcastRecipientUpdateOne) SetWorkspace(v *Workspace) *BroadcastRecipientUpdateOne {
+	return _u.SetWorkspaceID(v.ID)
 }
 
 // SetBroadcast sets the "broadcast" edge to the Broadcast entity.
@@ -610,25 +615,20 @@ func (_u *BroadcastRecipientUpdateOne) SetBroadcast(v *Broadcast) *BroadcastReci
 	return _u.SetBroadcastID(v.ID)
 }
 
-// SetWorkspace sets the "workspace" edge to the Workspace entity.
-func (_u *BroadcastRecipientUpdateOne) SetWorkspace(v *Workspace) *BroadcastRecipientUpdateOne {
-	return _u.SetWorkspaceID(v.ID)
-}
-
 // Mutation returns the BroadcastRecipientMutation object of the builder.
 func (_u *BroadcastRecipientUpdateOne) Mutation() *BroadcastRecipientMutation {
 	return _u.mutation
 }
 
-// ClearBroadcast clears the "broadcast" edge to the Broadcast entity.
-func (_u *BroadcastRecipientUpdateOne) ClearBroadcast() *BroadcastRecipientUpdateOne {
-	_u.mutation.ClearBroadcast()
-	return _u
-}
-
 // ClearWorkspace clears the "workspace" edge to the Workspace entity.
 func (_u *BroadcastRecipientUpdateOne) ClearWorkspace() *BroadcastRecipientUpdateOne {
 	_u.mutation.ClearWorkspace()
+	return _u
+}
+
+// ClearBroadcast clears the "broadcast" edge to the Broadcast entity.
+func (_u *BroadcastRecipientUpdateOne) ClearBroadcast() *BroadcastRecipientUpdateOne {
+	_u.mutation.ClearBroadcast()
 	return _u
 }
 
@@ -688,11 +688,11 @@ func (_u *BroadcastRecipientUpdateOne) check() error {
 			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "BroadcastRecipient.status": %w`, err)}
 		}
 	}
-	if _u.mutation.BroadcastCleared() && len(_u.mutation.BroadcastIDs()) > 0 {
-		return errors.New(`ent: clearing a required unique edge "BroadcastRecipient.broadcast"`)
-	}
 	if _u.mutation.WorkspaceCleared() && len(_u.mutation.WorkspaceIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "BroadcastRecipient.workspace"`)
+	}
+	if _u.mutation.BroadcastCleared() && len(_u.mutation.BroadcastIDs()) > 0 {
+		return errors.New(`ent: clearing a required unique edge "BroadcastRecipient.broadcast"`)
 	}
 	return nil
 }
@@ -731,6 +731,9 @@ func (_u *BroadcastRecipientUpdateOne) sqlSave(ctx context.Context) (_node *Broa
 				ps[i](selector)
 			}
 		}
+	}
+	if value, ok := _u.mutation.UpdatedAt(); ok {
+		_spec.SetField(broadcastrecipient.FieldUpdatedAt, field.TypeTime, value)
 	}
 	if value, ok := _u.mutation.ContactID(); ok {
 		_spec.SetField(broadcastrecipient.FieldContactID, field.TypeInt64, value)
@@ -774,8 +777,34 @@ func (_u *BroadcastRecipientUpdateOne) sqlSave(ctx context.Context) (_node *Broa
 	if _u.mutation.ClickedAtCleared() {
 		_spec.ClearField(broadcastrecipient.FieldClickedAt, field.TypeTime)
 	}
-	if value, ok := _u.mutation.UpdatedAt(); ok {
-		_spec.SetField(broadcastrecipient.FieldUpdatedAt, field.TypeTime, value)
+	if _u.mutation.WorkspaceCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   broadcastrecipient.WorkspaceTable,
+			Columns: []string{broadcastrecipient.WorkspaceColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(workspace.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.WorkspaceIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   broadcastrecipient.WorkspaceTable,
+			Columns: []string{broadcastrecipient.WorkspaceColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(workspace.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if _u.mutation.BroadcastCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -799,35 +828,6 @@ func (_u *BroadcastRecipientUpdateOne) sqlSave(ctx context.Context) (_node *Broa
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(broadcast.FieldID, field.TypeInt64),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
-	}
-	if _u.mutation.WorkspaceCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: true,
-			Table:   broadcastrecipient.WorkspaceTable,
-			Columns: []string{broadcastrecipient.WorkspaceColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(workspace.FieldID, field.TypeInt64),
-			},
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := _u.mutation.WorkspaceIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: true,
-			Table:   broadcastrecipient.WorkspaceTable,
-			Columns: []string{broadcastrecipient.WorkspaceColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(workspace.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {

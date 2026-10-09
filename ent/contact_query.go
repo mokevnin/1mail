@@ -26,9 +26,9 @@ type ContactQuery struct {
 	order         []contact.OrderOption
 	inters        []Interceptor
 	predicates    []predicate.Contact
+	withWorkspace *WorkspaceQuery
 	withVisitors  *VisitorQuery
 	withTags      *TagQuery
-	withWorkspace *WorkspaceQuery
 	modifiers     []func(*sql.Selector)
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
@@ -64,6 +64,28 @@ func (_q *ContactQuery) Unique(unique bool) *ContactQuery {
 func (_q *ContactQuery) Order(o ...contact.OrderOption) *ContactQuery {
 	_q.order = append(_q.order, o...)
 	return _q
+}
+
+// QueryWorkspace chains the current query on the "workspace" edge.
+func (_q *ContactQuery) QueryWorkspace() *WorkspaceQuery {
+	query := (&WorkspaceClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(contact.Table, contact.FieldID, selector),
+			sqlgraph.To(workspace.Table, workspace.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, contact.WorkspaceTable, contact.WorkspaceColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
 }
 
 // QueryVisitors chains the current query on the "visitors" edge.
@@ -103,28 +125,6 @@ func (_q *ContactQuery) QueryTags() *TagQuery {
 			sqlgraph.From(contact.Table, contact.FieldID, selector),
 			sqlgraph.To(tag.Table, tag.FieldID),
 			sqlgraph.Edge(sqlgraph.M2M, false, contact.TagsTable, contact.TagsPrimaryKey...),
-		)
-		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
-		return fromU, nil
-	}
-	return query
-}
-
-// QueryWorkspace chains the current query on the "workspace" edge.
-func (_q *ContactQuery) QueryWorkspace() *WorkspaceQuery {
-	query := (&WorkspaceClient{config: _q.config}).Query()
-	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
-		if err := _q.prepareQuery(ctx); err != nil {
-			return nil, err
-		}
-		selector := _q.sqlQuery(ctx)
-		if err := selector.Err(); err != nil {
-			return nil, err
-		}
-		step := sqlgraph.NewStep(
-			sqlgraph.From(contact.Table, contact.FieldID, selector),
-			sqlgraph.To(workspace.Table, workspace.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, true, contact.WorkspaceTable, contact.WorkspaceColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
@@ -324,14 +324,25 @@ func (_q *ContactQuery) Clone() *ContactQuery {
 		order:         append([]contact.OrderOption{}, _q.order...),
 		inters:        append([]Interceptor{}, _q.inters...),
 		predicates:    append([]predicate.Contact{}, _q.predicates...),
+		withWorkspace: _q.withWorkspace.Clone(),
 		withVisitors:  _q.withVisitors.Clone(),
 		withTags:      _q.withTags.Clone(),
-		withWorkspace: _q.withWorkspace.Clone(),
 		// clone intermediate query.
 		sql:       _q.sql.Clone(),
 		path:      _q.path,
 		modifiers: append([]func(*sql.Selector){}, _q.modifiers...),
 	}
+}
+
+// WithWorkspace tells the query-builder to eager-load the nodes that are connected to
+// the "workspace" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *ContactQuery) WithWorkspace(opts ...func(*WorkspaceQuery)) *ContactQuery {
+	query := (&WorkspaceClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withWorkspace = query
+	return _q
 }
 
 // WithVisitors tells the query-builder to eager-load the nodes that are connected to
@@ -356,29 +367,18 @@ func (_q *ContactQuery) WithTags(opts ...func(*TagQuery)) *ContactQuery {
 	return _q
 }
 
-// WithWorkspace tells the query-builder to eager-load the nodes that are connected to
-// the "workspace" edge. The optional arguments are used to configure the query builder of the edge.
-func (_q *ContactQuery) WithWorkspace(opts ...func(*WorkspaceQuery)) *ContactQuery {
-	query := (&WorkspaceClient{config: _q.config}).Query()
-	for _, opt := range opts {
-		opt(query)
-	}
-	_q.withWorkspace = query
-	return _q
-}
-
 // GroupBy is used to group vertices by one or more fields/columns.
 // It is often used with aggregate functions, like: count, max, mean, min, sum.
 //
 // Example:
 //
 //	var v []struct {
-//		SubjectID string `json:"subject_id,omitempty"`
+//		CreatedAt time.Time `json:"created_at,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.Contact.Query().
-//		GroupBy(contact.FieldSubjectID).
+//		GroupBy(contact.FieldCreatedAt).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
 func (_q *ContactQuery) GroupBy(field string, fields ...string) *ContactGroupBy {
@@ -396,11 +396,11 @@ func (_q *ContactQuery) GroupBy(field string, fields ...string) *ContactGroupBy 
 // Example:
 //
 //	var v []struct {
-//		SubjectID string `json:"subject_id,omitempty"`
+//		CreatedAt time.Time `json:"created_at,omitempty"`
 //	}
 //
 //	client.Contact.Query().
-//		Select(contact.FieldSubjectID).
+//		Select(contact.FieldCreatedAt).
 //		Scan(ctx, &v)
 func (_q *ContactQuery) Select(fields ...string) *ContactSelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)
@@ -446,9 +446,9 @@ func (_q *ContactQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Cont
 		nodes       = []*Contact{}
 		_spec       = _q.querySpec()
 		loadedTypes = [3]bool{
+			_q.withWorkspace != nil,
 			_q.withVisitors != nil,
 			_q.withTags != nil,
-			_q.withWorkspace != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
@@ -472,6 +472,12 @@ func (_q *ContactQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Cont
 	if len(nodes) == 0 {
 		return nodes, nil
 	}
+	if query := _q.withWorkspace; query != nil {
+		if err := _q.loadWorkspace(ctx, query, nodes, nil,
+			func(n *Contact, e *Workspace) { n.Edges.Workspace = e }); err != nil {
+			return nil, err
+		}
+	}
 	if query := _q.withVisitors; query != nil {
 		if err := _q.loadVisitors(ctx, query, nodes,
 			func(n *Contact) { n.Edges.Visitors = []*Visitor{} },
@@ -486,15 +492,38 @@ func (_q *ContactQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Cont
 			return nil, err
 		}
 	}
-	if query := _q.withWorkspace; query != nil {
-		if err := _q.loadWorkspace(ctx, query, nodes, nil,
-			func(n *Contact, e *Workspace) { n.Edges.Workspace = e }); err != nil {
-			return nil, err
-		}
-	}
 	return nodes, nil
 }
 
+func (_q *ContactQuery) loadWorkspace(ctx context.Context, query *WorkspaceQuery, nodes []*Contact, init func(*Contact), assign func(*Contact, *Workspace)) error {
+	ids := make([]int64, 0, len(nodes))
+	nodeids := make(map[int64][]*Contact)
+	for i := range nodes {
+		fk := nodes[i].WorkspaceID
+		if _, ok := nodeids[fk]; !ok {
+			ids = append(ids, fk)
+		}
+		nodeids[fk] = append(nodeids[fk], nodes[i])
+	}
+	if len(ids) == 0 {
+		return nil
+	}
+	query.Where(workspace.IDIn(ids...))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nodeids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected foreign-key "workspace_id" returned %v`, n.ID)
+		}
+		for i := range nodes {
+			assign(nodes[i], n)
+		}
+	}
+	return nil
+}
 func (_q *ContactQuery) loadVisitors(ctx context.Context, query *VisitorQuery, nodes []*Contact, init func(*Contact), assign func(*Contact, *Visitor)) error {
 	fks := make([]driver.Value, 0, len(nodes))
 	nodeids := make(map[int64]*Contact)
@@ -585,35 +614,6 @@ func (_q *ContactQuery) loadTags(ctx context.Context, query *TagQuery, nodes []*
 		}
 		for kn := range nodes {
 			assign(kn, n)
-		}
-	}
-	return nil
-}
-func (_q *ContactQuery) loadWorkspace(ctx context.Context, query *WorkspaceQuery, nodes []*Contact, init func(*Contact), assign func(*Contact, *Workspace)) error {
-	ids := make([]int64, 0, len(nodes))
-	nodeids := make(map[int64][]*Contact)
-	for i := range nodes {
-		fk := nodes[i].WorkspaceID
-		if _, ok := nodeids[fk]; !ok {
-			ids = append(ids, fk)
-		}
-		nodeids[fk] = append(nodeids[fk], nodes[i])
-	}
-	if len(ids) == 0 {
-		return nil
-	}
-	query.Where(workspace.IDIn(ids...))
-	neighbors, err := query.All(ctx)
-	if err != nil {
-		return err
-	}
-	for _, n := range neighbors {
-		nodes, ok := nodeids[n.ID]
-		if !ok {
-			return fmt.Errorf(`unexpected foreign-key "workspace_id" returned %v`, n.ID)
-		}
-		for i := range nodes {
-			assign(nodes[i], n)
 		}
 	}
 	return nil

@@ -43,6 +43,34 @@ type WorkspaceCreate struct {
 	conflict []sql.ConflictOption
 }
 
+// SetCreatedAt sets the "created_at" field.
+func (_c *WorkspaceCreate) SetCreatedAt(v time.Time) *WorkspaceCreate {
+	_c.mutation.SetCreatedAt(v)
+	return _c
+}
+
+// SetNillableCreatedAt sets the "created_at" field if the given value is not nil.
+func (_c *WorkspaceCreate) SetNillableCreatedAt(v *time.Time) *WorkspaceCreate {
+	if v != nil {
+		_c.SetCreatedAt(*v)
+	}
+	return _c
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (_c *WorkspaceCreate) SetUpdatedAt(v time.Time) *WorkspaceCreate {
+	_c.mutation.SetUpdatedAt(v)
+	return _c
+}
+
+// SetNillableUpdatedAt sets the "updated_at" field if the given value is not nil.
+func (_c *WorkspaceCreate) SetNillableUpdatedAt(v *time.Time) *WorkspaceCreate {
+	if v != nil {
+		_c.SetUpdatedAt(*v)
+	}
+	return _c
+}
+
 // SetName sets the "name" field.
 func (_c *WorkspaceCreate) SetName(v string) *WorkspaceCreate {
 	_c.mutation.SetName(v)
@@ -133,34 +161,6 @@ func (_c *WorkspaceCreate) SetSuspensionReason(v string) *WorkspaceCreate {
 func (_c *WorkspaceCreate) SetNillableSuspensionReason(v *string) *WorkspaceCreate {
 	if v != nil {
 		_c.SetSuspensionReason(*v)
-	}
-	return _c
-}
-
-// SetCreatedAt sets the "created_at" field.
-func (_c *WorkspaceCreate) SetCreatedAt(v time.Time) *WorkspaceCreate {
-	_c.mutation.SetCreatedAt(v)
-	return _c
-}
-
-// SetNillableCreatedAt sets the "created_at" field if the given value is not nil.
-func (_c *WorkspaceCreate) SetNillableCreatedAt(v *time.Time) *WorkspaceCreate {
-	if v != nil {
-		_c.SetCreatedAt(*v)
-	}
-	return _c
-}
-
-// SetUpdatedAt sets the "updated_at" field.
-func (_c *WorkspaceCreate) SetUpdatedAt(v time.Time) *WorkspaceCreate {
-	_c.mutation.SetUpdatedAt(v)
-	return _c
-}
-
-// SetNillableUpdatedAt sets the "updated_at" field if the given value is not nil.
-func (_c *WorkspaceCreate) SetNillableUpdatedAt(v *time.Time) *WorkspaceCreate {
-	if v != nil {
-		_c.SetUpdatedAt(*v)
 	}
 	return _c
 }
@@ -521,14 +521,6 @@ func (_c *WorkspaceCreate) ExecX(ctx context.Context) {
 
 // defaults sets the default values of the builder before save.
 func (_c *WorkspaceCreate) defaults() {
-	if _, ok := _c.mutation.RequireConfirmedOptIn(); !ok {
-		v := workspace.DefaultRequireConfirmedOptIn
-		_c.mutation.SetRequireConfirmedOptIn(v)
-	}
-	if _, ok := _c.mutation.PostalAddress(); !ok {
-		v := workspace.DefaultPostalAddress
-		_c.mutation.SetPostalAddress(v)
-	}
 	if _, ok := _c.mutation.CreatedAt(); !ok {
 		v := workspace.DefaultCreatedAt()
 		_c.mutation.SetCreatedAt(v)
@@ -537,10 +529,24 @@ func (_c *WorkspaceCreate) defaults() {
 		v := workspace.DefaultUpdatedAt()
 		_c.mutation.SetUpdatedAt(v)
 	}
+	if _, ok := _c.mutation.RequireConfirmedOptIn(); !ok {
+		v := workspace.DefaultRequireConfirmedOptIn
+		_c.mutation.SetRequireConfirmedOptIn(v)
+	}
+	if _, ok := _c.mutation.PostalAddress(); !ok {
+		v := workspace.DefaultPostalAddress
+		_c.mutation.SetPostalAddress(v)
+	}
 }
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *WorkspaceCreate) check() error {
+	if _, ok := _c.mutation.CreatedAt(); !ok {
+		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "Workspace.created_at"`)}
+	}
+	if _, ok := _c.mutation.UpdatedAt(); !ok {
+		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "Workspace.updated_at"`)}
+	}
 	if _, ok := _c.mutation.Name(); !ok {
 		return &ValidationError{Name: "name", err: errors.New(`ent: missing required field "Workspace.name"`)}
 	}
@@ -576,12 +582,6 @@ func (_c *WorkspaceCreate) check() error {
 	if _, ok := _c.mutation.RequireConfirmedOptIn(); !ok {
 		return &ValidationError{Name: "require_confirmed_opt_in", err: errors.New(`ent: missing required field "Workspace.require_confirmed_opt_in"`)}
 	}
-	if _, ok := _c.mutation.CreatedAt(); !ok {
-		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "Workspace.created_at"`)}
-	}
-	if _, ok := _c.mutation.UpdatedAt(); !ok {
-		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "Workspace.updated_at"`)}
-	}
 	return nil
 }
 
@@ -614,6 +614,14 @@ func (_c *WorkspaceCreate) createSpec() (*Workspace, *sqlgraph.CreateSpec) {
 	if id, ok := _c.mutation.ID(); ok {
 		_node.ID = id
 		_spec.ID.Value = id
+	}
+	if value, ok := _c.mutation.CreatedAt(); ok {
+		_spec.SetField(workspace.FieldCreatedAt, field.TypeTime, value)
+		_node.CreatedAt = value
+	}
+	if value, ok := _c.mutation.UpdatedAt(); ok {
+		_spec.SetField(workspace.FieldUpdatedAt, field.TypeTime, value)
+		_node.UpdatedAt = value
 	}
 	if value, ok := _c.mutation.Name(); ok {
 		_spec.SetField(workspace.FieldName, field.TypeString, value)
@@ -650,14 +658,6 @@ func (_c *WorkspaceCreate) createSpec() (*Workspace, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.SuspensionReason(); ok {
 		_spec.SetField(workspace.FieldSuspensionReason, field.TypeString, value)
 		_node.SuspensionReason = &value
-	}
-	if value, ok := _c.mutation.CreatedAt(); ok {
-		_spec.SetField(workspace.FieldCreatedAt, field.TypeTime, value)
-		_node.CreatedAt = value
-	}
-	if value, ok := _c.mutation.UpdatedAt(); ok {
-		_spec.SetField(workspace.FieldUpdatedAt, field.TypeTime, value)
-		_node.UpdatedAt = value
 	}
 	if nodes := _c.mutation.ContactsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -1002,7 +1002,7 @@ func (_c *WorkspaceCreate) createSpec() (*Workspace, *sqlgraph.CreateSpec) {
 // of the `INSERT` statement. For example:
 //
 //	client.Workspace.Create().
-//		SetName(v).
+//		SetCreatedAt(v).
 //		OnConflict(
 //			// Update the row with the new values
 //			// the was proposed for insertion.
@@ -1011,7 +1011,7 @@ func (_c *WorkspaceCreate) createSpec() (*Workspace, *sqlgraph.CreateSpec) {
 //		// Override some of the fields with custom
 //		// update values.
 //		Update(func(u *ent.WorkspaceUpsert) {
-//			SetName(v+v).
+//			SetCreatedAt(v+v).
 //		}).
 //		Exec(ctx)
 func (_c *WorkspaceCreate) OnConflict(opts ...sql.ConflictOption) *WorkspaceUpsertOne {
@@ -1046,6 +1046,18 @@ type (
 		*sql.UpdateSet
 	}
 )
+
+// SetUpdatedAt sets the "updated_at" field.
+func (u *WorkspaceUpsert) SetUpdatedAt(v time.Time) *WorkspaceUpsert {
+	u.Set(workspace.FieldUpdatedAt, v)
+	return u
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *WorkspaceUpsert) UpdateUpdatedAt() *WorkspaceUpsert {
+	u.SetExcluded(workspace.FieldUpdatedAt)
+	return u
+}
 
 // SetName sets the "name" field.
 func (u *WorkspaceUpsert) SetName(v string) *WorkspaceUpsert {
@@ -1179,18 +1191,6 @@ func (u *WorkspaceUpsert) ClearSuspensionReason() *WorkspaceUpsert {
 	return u
 }
 
-// SetUpdatedAt sets the "updated_at" field.
-func (u *WorkspaceUpsert) SetUpdatedAt(v time.Time) *WorkspaceUpsert {
-	u.Set(workspace.FieldUpdatedAt, v)
-	return u
-}
-
-// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
-func (u *WorkspaceUpsert) UpdateUpdatedAt() *WorkspaceUpsert {
-	u.SetExcluded(workspace.FieldUpdatedAt)
-	return u
-}
-
 // UpdateNewValues updates the mutable fields using the new values that were set on create except the ID field.
 // Using this option is equivalent to using:
 //
@@ -1240,6 +1240,20 @@ func (u *WorkspaceUpsertOne) Update(set func(*WorkspaceUpsert)) *WorkspaceUpsert
 		set(&WorkspaceUpsert{UpdateSet: update})
 	}))
 	return u
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (u *WorkspaceUpsertOne) SetUpdatedAt(v time.Time) *WorkspaceUpsertOne {
+	return u.Update(func(s *WorkspaceUpsert) {
+		s.SetUpdatedAt(v)
+	})
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *WorkspaceUpsertOne) UpdateUpdatedAt() *WorkspaceUpsertOne {
+	return u.Update(func(s *WorkspaceUpsert) {
+		s.UpdateUpdatedAt()
+	})
 }
 
 // SetName sets the "name" field.
@@ -1396,20 +1410,6 @@ func (u *WorkspaceUpsertOne) ClearSuspensionReason() *WorkspaceUpsertOne {
 	})
 }
 
-// SetUpdatedAt sets the "updated_at" field.
-func (u *WorkspaceUpsertOne) SetUpdatedAt(v time.Time) *WorkspaceUpsertOne {
-	return u.Update(func(s *WorkspaceUpsert) {
-		s.SetUpdatedAt(v)
-	})
-}
-
-// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
-func (u *WorkspaceUpsertOne) UpdateUpdatedAt() *WorkspaceUpsertOne {
-	return u.Update(func(s *WorkspaceUpsert) {
-		s.UpdateUpdatedAt()
-	})
-}
-
 // Exec executes the query.
 func (u *WorkspaceUpsertOne) Exec(ctx context.Context) error {
 	if len(u.create.conflict) == 0 {
@@ -1545,7 +1545,7 @@ func (_c *WorkspaceCreateBulk) ExecX(ctx context.Context) {
 //		// Override some of the fields with custom
 //		// update values.
 //		Update(func(u *ent.WorkspaceUpsert) {
-//			SetName(v+v).
+//			SetCreatedAt(v+v).
 //		}).
 //		Exec(ctx)
 func (_c *WorkspaceCreateBulk) OnConflict(opts ...sql.ConflictOption) *WorkspaceUpsertBulk {
@@ -1625,6 +1625,20 @@ func (u *WorkspaceUpsertBulk) Update(set func(*WorkspaceUpsert)) *WorkspaceUpser
 		set(&WorkspaceUpsert{UpdateSet: update})
 	}))
 	return u
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (u *WorkspaceUpsertBulk) SetUpdatedAt(v time.Time) *WorkspaceUpsertBulk {
+	return u.Update(func(s *WorkspaceUpsert) {
+		s.SetUpdatedAt(v)
+	})
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *WorkspaceUpsertBulk) UpdateUpdatedAt() *WorkspaceUpsertBulk {
+	return u.Update(func(s *WorkspaceUpsert) {
+		s.UpdateUpdatedAt()
+	})
 }
 
 // SetName sets the "name" field.
@@ -1778,20 +1792,6 @@ func (u *WorkspaceUpsertBulk) UpdateSuspensionReason() *WorkspaceUpsertBulk {
 func (u *WorkspaceUpsertBulk) ClearSuspensionReason() *WorkspaceUpsertBulk {
 	return u.Update(func(s *WorkspaceUpsert) {
 		s.ClearSuspensionReason()
-	})
-}
-
-// SetUpdatedAt sets the "updated_at" field.
-func (u *WorkspaceUpsertBulk) SetUpdatedAt(v time.Time) *WorkspaceUpsertBulk {
-	return u.Update(func(s *WorkspaceUpsert) {
-		s.SetUpdatedAt(v)
-	})
-}
-
-// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
-func (u *WorkspaceUpsertBulk) UpdateUpdatedAt() *WorkspaceUpsertBulk {
-	return u.Update(func(s *WorkspaceUpsert) {
-		s.UpdateUpdatedAt()
 	})
 }
 

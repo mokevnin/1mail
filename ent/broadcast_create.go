@@ -24,6 +24,40 @@ type BroadcastCreate struct {
 	conflict []sql.ConflictOption
 }
 
+// SetCreatedAt sets the "created_at" field.
+func (_c *BroadcastCreate) SetCreatedAt(v time.Time) *BroadcastCreate {
+	_c.mutation.SetCreatedAt(v)
+	return _c
+}
+
+// SetNillableCreatedAt sets the "created_at" field if the given value is not nil.
+func (_c *BroadcastCreate) SetNillableCreatedAt(v *time.Time) *BroadcastCreate {
+	if v != nil {
+		_c.SetCreatedAt(*v)
+	}
+	return _c
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (_c *BroadcastCreate) SetUpdatedAt(v time.Time) *BroadcastCreate {
+	_c.mutation.SetUpdatedAt(v)
+	return _c
+}
+
+// SetNillableUpdatedAt sets the "updated_at" field if the given value is not nil.
+func (_c *BroadcastCreate) SetNillableUpdatedAt(v *time.Time) *BroadcastCreate {
+	if v != nil {
+		_c.SetUpdatedAt(*v)
+	}
+	return _c
+}
+
+// SetWorkspaceID sets the "workspace_id" field.
+func (_c *BroadcastCreate) SetWorkspaceID(v int64) *BroadcastCreate {
+	_c.mutation.SetWorkspaceID(v)
+	return _c
+}
+
 // SetName sets the "name" field.
 func (_c *BroadcastCreate) SetName(v string) *BroadcastCreate {
 	_c.mutation.SetName(v)
@@ -282,40 +316,6 @@ func (_c *BroadcastCreate) SetNillableHoldReason(v *string) *BroadcastCreate {
 	return _c
 }
 
-// SetWorkspaceID sets the "workspace_id" field.
-func (_c *BroadcastCreate) SetWorkspaceID(v int64) *BroadcastCreate {
-	_c.mutation.SetWorkspaceID(v)
-	return _c
-}
-
-// SetCreatedAt sets the "created_at" field.
-func (_c *BroadcastCreate) SetCreatedAt(v time.Time) *BroadcastCreate {
-	_c.mutation.SetCreatedAt(v)
-	return _c
-}
-
-// SetNillableCreatedAt sets the "created_at" field if the given value is not nil.
-func (_c *BroadcastCreate) SetNillableCreatedAt(v *time.Time) *BroadcastCreate {
-	if v != nil {
-		_c.SetCreatedAt(*v)
-	}
-	return _c
-}
-
-// SetUpdatedAt sets the "updated_at" field.
-func (_c *BroadcastCreate) SetUpdatedAt(v time.Time) *BroadcastCreate {
-	_c.mutation.SetUpdatedAt(v)
-	return _c
-}
-
-// SetNillableUpdatedAt sets the "updated_at" field if the given value is not nil.
-func (_c *BroadcastCreate) SetNillableUpdatedAt(v *time.Time) *BroadcastCreate {
-	if v != nil {
-		_c.SetUpdatedAt(*v)
-	}
-	return _c
-}
-
 // SetID sets the "id" field.
 func (_c *BroadcastCreate) SetID(v int64) *BroadcastCreate {
 	_c.mutation.SetID(v)
@@ -377,6 +377,14 @@ func (_c *BroadcastCreate) ExecX(ctx context.Context) {
 
 // defaults sets the default values of the builder before save.
 func (_c *BroadcastCreate) defaults() {
+	if _, ok := _c.mutation.CreatedAt(); !ok {
+		v := broadcast.DefaultCreatedAt()
+		_c.mutation.SetCreatedAt(v)
+	}
+	if _, ok := _c.mutation.UpdatedAt(); !ok {
+		v := broadcast.DefaultUpdatedAt()
+		_c.mutation.SetUpdatedAt(v)
+	}
 	if _, ok := _c.mutation.Subject(); !ok {
 		v := broadcast.DefaultSubject
 		_c.mutation.SetSubject(v)
@@ -421,18 +429,19 @@ func (_c *BroadcastCreate) defaults() {
 		v := broadcast.DefaultSkippedCount
 		_c.mutation.SetSkippedCount(v)
 	}
-	if _, ok := _c.mutation.CreatedAt(); !ok {
-		v := broadcast.DefaultCreatedAt()
-		_c.mutation.SetCreatedAt(v)
-	}
-	if _, ok := _c.mutation.UpdatedAt(); !ok {
-		v := broadcast.DefaultUpdatedAt()
-		_c.mutation.SetUpdatedAt(v)
-	}
 }
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *BroadcastCreate) check() error {
+	if _, ok := _c.mutation.CreatedAt(); !ok {
+		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "Broadcast.created_at"`)}
+	}
+	if _, ok := _c.mutation.UpdatedAt(); !ok {
+		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "Broadcast.updated_at"`)}
+	}
+	if _, ok := _c.mutation.WorkspaceID(); !ok {
+		return &ValidationError{Name: "workspace_id", err: errors.New(`ent: missing required field "Broadcast.workspace_id"`)}
+	}
 	if _, ok := _c.mutation.Name(); !ok {
 		return &ValidationError{Name: "name", err: errors.New(`ent: missing required field "Broadcast.name"`)}
 	}
@@ -514,15 +523,6 @@ func (_c *BroadcastCreate) check() error {
 			return &ValidationError{Name: "skipped_count", err: fmt.Errorf(`ent: validator failed for field "Broadcast.skipped_count": %w`, err)}
 		}
 	}
-	if _, ok := _c.mutation.WorkspaceID(); !ok {
-		return &ValidationError{Name: "workspace_id", err: errors.New(`ent: missing required field "Broadcast.workspace_id"`)}
-	}
-	if _, ok := _c.mutation.CreatedAt(); !ok {
-		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "Broadcast.created_at"`)}
-	}
-	if _, ok := _c.mutation.UpdatedAt(); !ok {
-		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "Broadcast.updated_at"`)}
-	}
 	if len(_c.mutation.WorkspaceIDs()) == 0 {
 		return &ValidationError{Name: "workspace", err: errors.New(`ent: missing required edge "Broadcast.workspace"`)}
 	}
@@ -558,6 +558,14 @@ func (_c *BroadcastCreate) createSpec() (*Broadcast, *sqlgraph.CreateSpec) {
 	if id, ok := _c.mutation.ID(); ok {
 		_node.ID = id
 		_spec.ID.Value = id
+	}
+	if value, ok := _c.mutation.CreatedAt(); ok {
+		_spec.SetField(broadcast.FieldCreatedAt, field.TypeTime, value)
+		_node.CreatedAt = value
+	}
+	if value, ok := _c.mutation.UpdatedAt(); ok {
+		_spec.SetField(broadcast.FieldUpdatedAt, field.TypeTime, value)
+		_node.UpdatedAt = value
 	}
 	if value, ok := _c.mutation.Name(); ok {
 		_spec.SetField(broadcast.FieldName, field.TypeString, value)
@@ -635,14 +643,6 @@ func (_c *BroadcastCreate) createSpec() (*Broadcast, *sqlgraph.CreateSpec) {
 		_spec.SetField(broadcast.FieldHoldReason, field.TypeString, value)
 		_node.HoldReason = &value
 	}
-	if value, ok := _c.mutation.CreatedAt(); ok {
-		_spec.SetField(broadcast.FieldCreatedAt, field.TypeTime, value)
-		_node.CreatedAt = value
-	}
-	if value, ok := _c.mutation.UpdatedAt(); ok {
-		_spec.SetField(broadcast.FieldUpdatedAt, field.TypeTime, value)
-		_node.UpdatedAt = value
-	}
 	if nodes := _c.mutation.WorkspaceIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
@@ -683,7 +683,7 @@ func (_c *BroadcastCreate) createSpec() (*Broadcast, *sqlgraph.CreateSpec) {
 // of the `INSERT` statement. For example:
 //
 //	client.Broadcast.Create().
-//		SetName(v).
+//		SetCreatedAt(v).
 //		OnConflict(
 //			// Update the row with the new values
 //			// the was proposed for insertion.
@@ -692,7 +692,7 @@ func (_c *BroadcastCreate) createSpec() (*Broadcast, *sqlgraph.CreateSpec) {
 //		// Override some of the fields with custom
 //		// update values.
 //		Update(func(u *ent.BroadcastUpsert) {
-//			SetName(v+v).
+//			SetCreatedAt(v+v).
 //		}).
 //		Exec(ctx)
 func (_c *BroadcastCreate) OnConflict(opts ...sql.ConflictOption) *BroadcastUpsertOne {
@@ -727,6 +727,30 @@ type (
 		*sql.UpdateSet
 	}
 )
+
+// SetUpdatedAt sets the "updated_at" field.
+func (u *BroadcastUpsert) SetUpdatedAt(v time.Time) *BroadcastUpsert {
+	u.Set(broadcast.FieldUpdatedAt, v)
+	return u
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *BroadcastUpsert) UpdateUpdatedAt() *BroadcastUpsert {
+	u.SetExcluded(broadcast.FieldUpdatedAt)
+	return u
+}
+
+// SetWorkspaceID sets the "workspace_id" field.
+func (u *BroadcastUpsert) SetWorkspaceID(v int64) *BroadcastUpsert {
+	u.Set(broadcast.FieldWorkspaceID, v)
+	return u
+}
+
+// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
+func (u *BroadcastUpsert) UpdateWorkspaceID() *BroadcastUpsert {
+	u.SetExcluded(broadcast.FieldWorkspaceID)
+	return u
+}
 
 // SetName sets the "name" field.
 func (u *BroadcastUpsert) SetName(v string) *BroadcastUpsert {
@@ -1052,30 +1076,6 @@ func (u *BroadcastUpsert) ClearHoldReason() *BroadcastUpsert {
 	return u
 }
 
-// SetWorkspaceID sets the "workspace_id" field.
-func (u *BroadcastUpsert) SetWorkspaceID(v int64) *BroadcastUpsert {
-	u.Set(broadcast.FieldWorkspaceID, v)
-	return u
-}
-
-// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
-func (u *BroadcastUpsert) UpdateWorkspaceID() *BroadcastUpsert {
-	u.SetExcluded(broadcast.FieldWorkspaceID)
-	return u
-}
-
-// SetUpdatedAt sets the "updated_at" field.
-func (u *BroadcastUpsert) SetUpdatedAt(v time.Time) *BroadcastUpsert {
-	u.Set(broadcast.FieldUpdatedAt, v)
-	return u
-}
-
-// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
-func (u *BroadcastUpsert) UpdateUpdatedAt() *BroadcastUpsert {
-	u.SetExcluded(broadcast.FieldUpdatedAt)
-	return u
-}
-
 // UpdateNewValues updates the mutable fields using the new values that were set on create except the ID field.
 // Using this option is equivalent to using:
 //
@@ -1125,6 +1125,34 @@ func (u *BroadcastUpsertOne) Update(set func(*BroadcastUpsert)) *BroadcastUpsert
 		set(&BroadcastUpsert{UpdateSet: update})
 	}))
 	return u
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (u *BroadcastUpsertOne) SetUpdatedAt(v time.Time) *BroadcastUpsertOne {
+	return u.Update(func(s *BroadcastUpsert) {
+		s.SetUpdatedAt(v)
+	})
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *BroadcastUpsertOne) UpdateUpdatedAt() *BroadcastUpsertOne {
+	return u.Update(func(s *BroadcastUpsert) {
+		s.UpdateUpdatedAt()
+	})
+}
+
+// SetWorkspaceID sets the "workspace_id" field.
+func (u *BroadcastUpsertOne) SetWorkspaceID(v int64) *BroadcastUpsertOne {
+	return u.Update(func(s *BroadcastUpsert) {
+		s.SetWorkspaceID(v)
+	})
+}
+
+// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
+func (u *BroadcastUpsertOne) UpdateWorkspaceID() *BroadcastUpsertOne {
+	return u.Update(func(s *BroadcastUpsert) {
+		s.UpdateWorkspaceID()
+	})
 }
 
 // SetName sets the "name" field.
@@ -1505,34 +1533,6 @@ func (u *BroadcastUpsertOne) ClearHoldReason() *BroadcastUpsertOne {
 	})
 }
 
-// SetWorkspaceID sets the "workspace_id" field.
-func (u *BroadcastUpsertOne) SetWorkspaceID(v int64) *BroadcastUpsertOne {
-	return u.Update(func(s *BroadcastUpsert) {
-		s.SetWorkspaceID(v)
-	})
-}
-
-// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
-func (u *BroadcastUpsertOne) UpdateWorkspaceID() *BroadcastUpsertOne {
-	return u.Update(func(s *BroadcastUpsert) {
-		s.UpdateWorkspaceID()
-	})
-}
-
-// SetUpdatedAt sets the "updated_at" field.
-func (u *BroadcastUpsertOne) SetUpdatedAt(v time.Time) *BroadcastUpsertOne {
-	return u.Update(func(s *BroadcastUpsert) {
-		s.SetUpdatedAt(v)
-	})
-}
-
-// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
-func (u *BroadcastUpsertOne) UpdateUpdatedAt() *BroadcastUpsertOne {
-	return u.Update(func(s *BroadcastUpsert) {
-		s.UpdateUpdatedAt()
-	})
-}
-
 // Exec executes the query.
 func (u *BroadcastUpsertOne) Exec(ctx context.Context) error {
 	if len(u.create.conflict) == 0 {
@@ -1668,7 +1668,7 @@ func (_c *BroadcastCreateBulk) ExecX(ctx context.Context) {
 //		// Override some of the fields with custom
 //		// update values.
 //		Update(func(u *ent.BroadcastUpsert) {
-//			SetName(v+v).
+//			SetCreatedAt(v+v).
 //		}).
 //		Exec(ctx)
 func (_c *BroadcastCreateBulk) OnConflict(opts ...sql.ConflictOption) *BroadcastUpsertBulk {
@@ -1748,6 +1748,34 @@ func (u *BroadcastUpsertBulk) Update(set func(*BroadcastUpsert)) *BroadcastUpser
 		set(&BroadcastUpsert{UpdateSet: update})
 	}))
 	return u
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (u *BroadcastUpsertBulk) SetUpdatedAt(v time.Time) *BroadcastUpsertBulk {
+	return u.Update(func(s *BroadcastUpsert) {
+		s.SetUpdatedAt(v)
+	})
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *BroadcastUpsertBulk) UpdateUpdatedAt() *BroadcastUpsertBulk {
+	return u.Update(func(s *BroadcastUpsert) {
+		s.UpdateUpdatedAt()
+	})
+}
+
+// SetWorkspaceID sets the "workspace_id" field.
+func (u *BroadcastUpsertBulk) SetWorkspaceID(v int64) *BroadcastUpsertBulk {
+	return u.Update(func(s *BroadcastUpsert) {
+		s.SetWorkspaceID(v)
+	})
+}
+
+// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
+func (u *BroadcastUpsertBulk) UpdateWorkspaceID() *BroadcastUpsertBulk {
+	return u.Update(func(s *BroadcastUpsert) {
+		s.UpdateWorkspaceID()
+	})
 }
 
 // SetName sets the "name" field.
@@ -2125,34 +2153,6 @@ func (u *BroadcastUpsertBulk) UpdateHoldReason() *BroadcastUpsertBulk {
 func (u *BroadcastUpsertBulk) ClearHoldReason() *BroadcastUpsertBulk {
 	return u.Update(func(s *BroadcastUpsert) {
 		s.ClearHoldReason()
-	})
-}
-
-// SetWorkspaceID sets the "workspace_id" field.
-func (u *BroadcastUpsertBulk) SetWorkspaceID(v int64) *BroadcastUpsertBulk {
-	return u.Update(func(s *BroadcastUpsert) {
-		s.SetWorkspaceID(v)
-	})
-}
-
-// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
-func (u *BroadcastUpsertBulk) UpdateWorkspaceID() *BroadcastUpsertBulk {
-	return u.Update(func(s *BroadcastUpsert) {
-		s.UpdateWorkspaceID()
-	})
-}
-
-// SetUpdatedAt sets the "updated_at" field.
-func (u *BroadcastUpsertBulk) SetUpdatedAt(v time.Time) *BroadcastUpsertBulk {
-	return u.Update(func(s *BroadcastUpsert) {
-		s.SetUpdatedAt(v)
-	})
-}
-
-// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
-func (u *BroadcastUpsertBulk) UpdateUpdatedAt() *BroadcastUpsertBulk {
-	return u.Update(func(s *BroadcastUpsert) {
-		s.UpdateUpdatedAt()
 	})
 }
 

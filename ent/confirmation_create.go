@@ -23,6 +23,40 @@ type ConfirmationCreate struct {
 	conflict []sql.ConflictOption
 }
 
+// SetCreatedAt sets the "created_at" field.
+func (_c *ConfirmationCreate) SetCreatedAt(v time.Time) *ConfirmationCreate {
+	_c.mutation.SetCreatedAt(v)
+	return _c
+}
+
+// SetNillableCreatedAt sets the "created_at" field if the given value is not nil.
+func (_c *ConfirmationCreate) SetNillableCreatedAt(v *time.Time) *ConfirmationCreate {
+	if v != nil {
+		_c.SetCreatedAt(*v)
+	}
+	return _c
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (_c *ConfirmationCreate) SetUpdatedAt(v time.Time) *ConfirmationCreate {
+	_c.mutation.SetUpdatedAt(v)
+	return _c
+}
+
+// SetNillableUpdatedAt sets the "updated_at" field if the given value is not nil.
+func (_c *ConfirmationCreate) SetNillableUpdatedAt(v *time.Time) *ConfirmationCreate {
+	if v != nil {
+		_c.SetUpdatedAt(*v)
+	}
+	return _c
+}
+
+// SetWorkspaceID sets the "workspace_id" field.
+func (_c *ConfirmationCreate) SetWorkspaceID(v int64) *ConfirmationCreate {
+	_c.mutation.SetWorkspaceID(v)
+	return _c
+}
+
 // SetChannel sets the "channel" field.
 func (_c *ConfirmationCreate) SetChannel(v confirmation.Channel) *ConfirmationCreate {
 	_c.mutation.SetChannel(v)
@@ -59,40 +93,6 @@ func (_c *ConfirmationCreate) SetContactID(v int64) *ConfirmationCreate {
 func (_c *ConfirmationCreate) SetNillableContactID(v *int64) *ConfirmationCreate {
 	if v != nil {
 		_c.SetContactID(*v)
-	}
-	return _c
-}
-
-// SetWorkspaceID sets the "workspace_id" field.
-func (_c *ConfirmationCreate) SetWorkspaceID(v int64) *ConfirmationCreate {
-	_c.mutation.SetWorkspaceID(v)
-	return _c
-}
-
-// SetCreatedAt sets the "created_at" field.
-func (_c *ConfirmationCreate) SetCreatedAt(v time.Time) *ConfirmationCreate {
-	_c.mutation.SetCreatedAt(v)
-	return _c
-}
-
-// SetNillableCreatedAt sets the "created_at" field if the given value is not nil.
-func (_c *ConfirmationCreate) SetNillableCreatedAt(v *time.Time) *ConfirmationCreate {
-	if v != nil {
-		_c.SetCreatedAt(*v)
-	}
-	return _c
-}
-
-// SetUpdatedAt sets the "updated_at" field.
-func (_c *ConfirmationCreate) SetUpdatedAt(v time.Time) *ConfirmationCreate {
-	_c.mutation.SetUpdatedAt(v)
-	return _c
-}
-
-// SetNillableUpdatedAt sets the "updated_at" field if the given value is not nil.
-func (_c *ConfirmationCreate) SetNillableUpdatedAt(v *time.Time) *ConfirmationCreate {
-	if v != nil {
-		_c.SetUpdatedAt(*v)
 	}
 	return _c
 }
@@ -143,10 +143,6 @@ func (_c *ConfirmationCreate) ExecX(ctx context.Context) {
 
 // defaults sets the default values of the builder before save.
 func (_c *ConfirmationCreate) defaults() {
-	if _, ok := _c.mutation.Channel(); !ok {
-		v := confirmation.DefaultChannel
-		_c.mutation.SetChannel(v)
-	}
 	if _, ok := _c.mutation.CreatedAt(); !ok {
 		v := confirmation.DefaultCreatedAt()
 		_c.mutation.SetCreatedAt(v)
@@ -155,10 +151,23 @@ func (_c *ConfirmationCreate) defaults() {
 		v := confirmation.DefaultUpdatedAt()
 		_c.mutation.SetUpdatedAt(v)
 	}
+	if _, ok := _c.mutation.Channel(); !ok {
+		v := confirmation.DefaultChannel
+		_c.mutation.SetChannel(v)
+	}
 }
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *ConfirmationCreate) check() error {
+	if _, ok := _c.mutation.CreatedAt(); !ok {
+		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "Confirmation.created_at"`)}
+	}
+	if _, ok := _c.mutation.UpdatedAt(); !ok {
+		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "Confirmation.updated_at"`)}
+	}
+	if _, ok := _c.mutation.WorkspaceID(); !ok {
+		return &ValidationError{Name: "workspace_id", err: errors.New(`ent: missing required field "Confirmation.workspace_id"`)}
+	}
 	if _, ok := _c.mutation.Channel(); !ok {
 		return &ValidationError{Name: "channel", err: errors.New(`ent: missing required field "Confirmation.channel"`)}
 	}
@@ -182,15 +191,6 @@ func (_c *ConfirmationCreate) check() error {
 		if err := confirmation.ProvenanceValidator(v); err != nil {
 			return &ValidationError{Name: "provenance", err: fmt.Errorf(`ent: validator failed for field "Confirmation.provenance": %w`, err)}
 		}
-	}
-	if _, ok := _c.mutation.WorkspaceID(); !ok {
-		return &ValidationError{Name: "workspace_id", err: errors.New(`ent: missing required field "Confirmation.workspace_id"`)}
-	}
-	if _, ok := _c.mutation.CreatedAt(); !ok {
-		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "Confirmation.created_at"`)}
-	}
-	if _, ok := _c.mutation.UpdatedAt(); !ok {
-		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "Confirmation.updated_at"`)}
 	}
 	if len(_c.mutation.WorkspaceIDs()) == 0 {
 		return &ValidationError{Name: "workspace", err: errors.New(`ent: missing required edge "Confirmation.workspace"`)}
@@ -228,6 +228,14 @@ func (_c *ConfirmationCreate) createSpec() (*Confirmation, *sqlgraph.CreateSpec)
 		_node.ID = id
 		_spec.ID.Value = id
 	}
+	if value, ok := _c.mutation.CreatedAt(); ok {
+		_spec.SetField(confirmation.FieldCreatedAt, field.TypeTime, value)
+		_node.CreatedAt = value
+	}
+	if value, ok := _c.mutation.UpdatedAt(); ok {
+		_spec.SetField(confirmation.FieldUpdatedAt, field.TypeTime, value)
+		_node.UpdatedAt = value
+	}
 	if value, ok := _c.mutation.Channel(); ok {
 		_spec.SetField(confirmation.FieldChannel, field.TypeEnum, value)
 		_node.Channel = value
@@ -243,14 +251,6 @@ func (_c *ConfirmationCreate) createSpec() (*Confirmation, *sqlgraph.CreateSpec)
 	if value, ok := _c.mutation.ContactID(); ok {
 		_spec.SetField(confirmation.FieldContactID, field.TypeInt64, value)
 		_node.ContactID = &value
-	}
-	if value, ok := _c.mutation.CreatedAt(); ok {
-		_spec.SetField(confirmation.FieldCreatedAt, field.TypeTime, value)
-		_node.CreatedAt = value
-	}
-	if value, ok := _c.mutation.UpdatedAt(); ok {
-		_spec.SetField(confirmation.FieldUpdatedAt, field.TypeTime, value)
-		_node.UpdatedAt = value
 	}
 	if nodes := _c.mutation.WorkspaceIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -276,7 +276,7 @@ func (_c *ConfirmationCreate) createSpec() (*Confirmation, *sqlgraph.CreateSpec)
 // of the `INSERT` statement. For example:
 //
 //	client.Confirmation.Create().
-//		SetChannel(v).
+//		SetCreatedAt(v).
 //		OnConflict(
 //			// Update the row with the new values
 //			// the was proposed for insertion.
@@ -285,7 +285,7 @@ func (_c *ConfirmationCreate) createSpec() (*Confirmation, *sqlgraph.CreateSpec)
 //		// Override some of the fields with custom
 //		// update values.
 //		Update(func(u *ent.ConfirmationUpsert) {
-//			SetChannel(v+v).
+//			SetCreatedAt(v+v).
 //		}).
 //		Exec(ctx)
 func (_c *ConfirmationCreate) OnConflict(opts ...sql.ConflictOption) *ConfirmationUpsertOne {
@@ -320,6 +320,30 @@ type (
 		*sql.UpdateSet
 	}
 )
+
+// SetUpdatedAt sets the "updated_at" field.
+func (u *ConfirmationUpsert) SetUpdatedAt(v time.Time) *ConfirmationUpsert {
+	u.Set(confirmation.FieldUpdatedAt, v)
+	return u
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *ConfirmationUpsert) UpdateUpdatedAt() *ConfirmationUpsert {
+	u.SetExcluded(confirmation.FieldUpdatedAt)
+	return u
+}
+
+// SetWorkspaceID sets the "workspace_id" field.
+func (u *ConfirmationUpsert) SetWorkspaceID(v int64) *ConfirmationUpsert {
+	u.Set(confirmation.FieldWorkspaceID, v)
+	return u
+}
+
+// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
+func (u *ConfirmationUpsert) UpdateWorkspaceID() *ConfirmationUpsert {
+	u.SetExcluded(confirmation.FieldWorkspaceID)
+	return u
+}
 
 // SetChannel sets the "channel" field.
 func (u *ConfirmationUpsert) SetChannel(v confirmation.Channel) *ConfirmationUpsert {
@@ -381,30 +405,6 @@ func (u *ConfirmationUpsert) ClearContactID() *ConfirmationUpsert {
 	return u
 }
 
-// SetWorkspaceID sets the "workspace_id" field.
-func (u *ConfirmationUpsert) SetWorkspaceID(v int64) *ConfirmationUpsert {
-	u.Set(confirmation.FieldWorkspaceID, v)
-	return u
-}
-
-// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
-func (u *ConfirmationUpsert) UpdateWorkspaceID() *ConfirmationUpsert {
-	u.SetExcluded(confirmation.FieldWorkspaceID)
-	return u
-}
-
-// SetUpdatedAt sets the "updated_at" field.
-func (u *ConfirmationUpsert) SetUpdatedAt(v time.Time) *ConfirmationUpsert {
-	u.Set(confirmation.FieldUpdatedAt, v)
-	return u
-}
-
-// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
-func (u *ConfirmationUpsert) UpdateUpdatedAt() *ConfirmationUpsert {
-	u.SetExcluded(confirmation.FieldUpdatedAt)
-	return u
-}
-
 // UpdateNewValues updates the mutable fields using the new values that were set on create except the ID field.
 // Using this option is equivalent to using:
 //
@@ -454,6 +454,34 @@ func (u *ConfirmationUpsertOne) Update(set func(*ConfirmationUpsert)) *Confirmat
 		set(&ConfirmationUpsert{UpdateSet: update})
 	}))
 	return u
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (u *ConfirmationUpsertOne) SetUpdatedAt(v time.Time) *ConfirmationUpsertOne {
+	return u.Update(func(s *ConfirmationUpsert) {
+		s.SetUpdatedAt(v)
+	})
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *ConfirmationUpsertOne) UpdateUpdatedAt() *ConfirmationUpsertOne {
+	return u.Update(func(s *ConfirmationUpsert) {
+		s.UpdateUpdatedAt()
+	})
+}
+
+// SetWorkspaceID sets the "workspace_id" field.
+func (u *ConfirmationUpsertOne) SetWorkspaceID(v int64) *ConfirmationUpsertOne {
+	return u.Update(func(s *ConfirmationUpsert) {
+		s.SetWorkspaceID(v)
+	})
+}
+
+// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
+func (u *ConfirmationUpsertOne) UpdateWorkspaceID() *ConfirmationUpsertOne {
+	return u.Update(func(s *ConfirmationUpsert) {
+		s.UpdateWorkspaceID()
+	})
 }
 
 // SetChannel sets the "channel" field.
@@ -523,34 +551,6 @@ func (u *ConfirmationUpsertOne) UpdateContactID() *ConfirmationUpsertOne {
 func (u *ConfirmationUpsertOne) ClearContactID() *ConfirmationUpsertOne {
 	return u.Update(func(s *ConfirmationUpsert) {
 		s.ClearContactID()
-	})
-}
-
-// SetWorkspaceID sets the "workspace_id" field.
-func (u *ConfirmationUpsertOne) SetWorkspaceID(v int64) *ConfirmationUpsertOne {
-	return u.Update(func(s *ConfirmationUpsert) {
-		s.SetWorkspaceID(v)
-	})
-}
-
-// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
-func (u *ConfirmationUpsertOne) UpdateWorkspaceID() *ConfirmationUpsertOne {
-	return u.Update(func(s *ConfirmationUpsert) {
-		s.UpdateWorkspaceID()
-	})
-}
-
-// SetUpdatedAt sets the "updated_at" field.
-func (u *ConfirmationUpsertOne) SetUpdatedAt(v time.Time) *ConfirmationUpsertOne {
-	return u.Update(func(s *ConfirmationUpsert) {
-		s.SetUpdatedAt(v)
-	})
-}
-
-// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
-func (u *ConfirmationUpsertOne) UpdateUpdatedAt() *ConfirmationUpsertOne {
-	return u.Update(func(s *ConfirmationUpsert) {
-		s.UpdateUpdatedAt()
 	})
 }
 
@@ -689,7 +689,7 @@ func (_c *ConfirmationCreateBulk) ExecX(ctx context.Context) {
 //		// Override some of the fields with custom
 //		// update values.
 //		Update(func(u *ent.ConfirmationUpsert) {
-//			SetChannel(v+v).
+//			SetCreatedAt(v+v).
 //		}).
 //		Exec(ctx)
 func (_c *ConfirmationCreateBulk) OnConflict(opts ...sql.ConflictOption) *ConfirmationUpsertBulk {
@@ -771,6 +771,34 @@ func (u *ConfirmationUpsertBulk) Update(set func(*ConfirmationUpsert)) *Confirma
 	return u
 }
 
+// SetUpdatedAt sets the "updated_at" field.
+func (u *ConfirmationUpsertBulk) SetUpdatedAt(v time.Time) *ConfirmationUpsertBulk {
+	return u.Update(func(s *ConfirmationUpsert) {
+		s.SetUpdatedAt(v)
+	})
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *ConfirmationUpsertBulk) UpdateUpdatedAt() *ConfirmationUpsertBulk {
+	return u.Update(func(s *ConfirmationUpsert) {
+		s.UpdateUpdatedAt()
+	})
+}
+
+// SetWorkspaceID sets the "workspace_id" field.
+func (u *ConfirmationUpsertBulk) SetWorkspaceID(v int64) *ConfirmationUpsertBulk {
+	return u.Update(func(s *ConfirmationUpsert) {
+		s.SetWorkspaceID(v)
+	})
+}
+
+// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
+func (u *ConfirmationUpsertBulk) UpdateWorkspaceID() *ConfirmationUpsertBulk {
+	return u.Update(func(s *ConfirmationUpsert) {
+		s.UpdateWorkspaceID()
+	})
+}
+
 // SetChannel sets the "channel" field.
 func (u *ConfirmationUpsertBulk) SetChannel(v confirmation.Channel) *ConfirmationUpsertBulk {
 	return u.Update(func(s *ConfirmationUpsert) {
@@ -838,34 +866,6 @@ func (u *ConfirmationUpsertBulk) UpdateContactID() *ConfirmationUpsertBulk {
 func (u *ConfirmationUpsertBulk) ClearContactID() *ConfirmationUpsertBulk {
 	return u.Update(func(s *ConfirmationUpsert) {
 		s.ClearContactID()
-	})
-}
-
-// SetWorkspaceID sets the "workspace_id" field.
-func (u *ConfirmationUpsertBulk) SetWorkspaceID(v int64) *ConfirmationUpsertBulk {
-	return u.Update(func(s *ConfirmationUpsert) {
-		s.SetWorkspaceID(v)
-	})
-}
-
-// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
-func (u *ConfirmationUpsertBulk) UpdateWorkspaceID() *ConfirmationUpsertBulk {
-	return u.Update(func(s *ConfirmationUpsert) {
-		s.UpdateWorkspaceID()
-	})
-}
-
-// SetUpdatedAt sets the "updated_at" field.
-func (u *ConfirmationUpsertBulk) SetUpdatedAt(v time.Time) *ConfirmationUpsertBulk {
-	return u.Update(func(s *ConfirmationUpsert) {
-		s.SetUpdatedAt(v)
-	})
-}
-
-// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
-func (u *ConfirmationUpsertBulk) UpdateUpdatedAt() *ConfirmationUpsertBulk {
-	return u.Update(func(s *ConfirmationUpsert) {
-		s.UpdateUpdatedAt()
 	})
 }
 

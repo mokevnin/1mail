@@ -55,7 +55,7 @@ func TestSiteIntegrationsErrorBranches(t *testing.T) {
 			siteapi.SiteIntegrationsCreateParams{Slug: acme})
 		require.NoError(t, err)
 		assert.IsType(t, &siteapi.SiteIntegrationsCreateUnprocessableEntity{}, r3, "an SMTP config without a host is rejected")
-		n, err := env.DB.Integration.Query().Count(ctx)
+		n, err := env.DB.Scoped(fixtures.AcmeID).Integration().Query().Count(ctx)
 		require.NoError(t, err)
 		assert.Equal(t, 3, n, "rejected creates persisted nothing")
 	})

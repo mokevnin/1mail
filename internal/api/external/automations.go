@@ -26,7 +26,7 @@ func (h *Handlers) AutomationsList(ctx context.Context, params externalapi.Autom
 	}
 
 	page, pageSize := pagination.Normalize(convert.Ptr(params.Page), convert.Ptr(params.PageSize))
-	items, total, err := h.automations.List(ctx, auth.WorkspaceID(auth.GetTokenAuth(ctx)), pageSize, pagination.Offset(page, pageSize))
+	items, total, err := h.automations.List(ctx, auth.TokenScoped(ctx), pageSize, pagination.Offset(page, pageSize))
 	if err != nil {
 		return nil, err
 	}
@@ -54,7 +54,7 @@ func (h *Handlers) AutomationsCreate(ctx context.Context, req *externalapi.Creat
 	if req.Steps != nil {
 		in.Steps = resources.AutomationSteps(req.Steps)
 	}
-	a, err := h.automations.Create(ctx, auth.WorkspaceID(auth.GetTokenAuth(ctx)), in)
+	a, err := h.automations.Create(ctx, auth.TokenScoped(ctx), in)
 	if errors.Is(err, automations.ErrInvalidStep) {
 		res := externalapi.AutomationsCreateUnprocessableEntity(problem(http.StatusUnprocessableEntity, err.Error()))
 		return &res, nil
@@ -76,7 +76,7 @@ func (h *Handlers) AutomationsGet(ctx context.Context, params externalapi.Automa
 		res := externalapi.AutomationsGetBadRequest(problem(http.StatusBadRequest, "invalid id"))
 		return &res, nil
 	}
-	a, err := h.automations.Get(ctx, auth.WorkspaceID(auth.GetTokenAuth(ctx)), id)
+	a, err := h.automations.Get(ctx, auth.TokenScoped(ctx), id)
 	if errors.Is(err, automations.ErrNotFound) {
 		res := externalapi.AutomationsGetNotFound(problem(http.StatusNotFound, "automation not found"))
 		return &res, nil
@@ -107,7 +107,7 @@ func (h *Handlers) AutomationsUpdate(ctx context.Context, req *externalapi.Updat
 		steps := resources.AutomationSteps(req.Steps)
 		in.Steps = &steps
 	}
-	a, err := h.automations.Update(ctx, auth.WorkspaceID(auth.GetTokenAuth(ctx)), id, in)
+	a, err := h.automations.Update(ctx, auth.TokenScoped(ctx), id, in)
 	switch {
 	case errors.Is(err, automations.ErrNotFound):
 		res := externalapi.AutomationsUpdateNotFound(problem(http.StatusNotFound, "automation not found"))
@@ -132,7 +132,7 @@ func (h *Handlers) AutomationsDelete(ctx context.Context, params externalapi.Aut
 		res := externalapi.AutomationsDeleteBadRequest(problem(http.StatusBadRequest, "invalid id"))
 		return &res, nil
 	}
-	err = h.automations.Delete(ctx, auth.WorkspaceID(auth.GetTokenAuth(ctx)), id)
+	err = h.automations.Delete(ctx, auth.TokenScoped(ctx), id)
 	if errors.Is(err, automations.ErrNotFound) {
 		res := externalapi.AutomationsDeleteNotFound(problem(http.StatusNotFound, "automation not found"))
 		return &res, nil
@@ -156,7 +156,7 @@ func (h *Handlers) AutomationsActivate(ctx context.Context, params externalapi.A
 		res := externalapi.AutomationsActivateBadRequest(problem(http.StatusBadRequest, "invalid id"))
 		return &res, nil
 	}
-	a, err := h.automations.Activate(ctx, auth.WorkspaceID(auth.GetTokenAuth(ctx)), id)
+	a, err := h.automations.Activate(ctx, auth.TokenScoped(ctx), id)
 	if errors.Is(err, automations.ErrNotFound) {
 		res := externalapi.AutomationsActivateNotFound(problem(http.StatusNotFound, "automation not found"))
 		return &res, nil
@@ -178,7 +178,7 @@ func (h *Handlers) AutomationsDeactivate(ctx context.Context, params externalapi
 		res := externalapi.AutomationsDeactivateBadRequest(problem(http.StatusBadRequest, "invalid id"))
 		return &res, nil
 	}
-	a, err := h.automations.Deactivate(ctx, auth.WorkspaceID(auth.GetTokenAuth(ctx)), id)
+	a, err := h.automations.Deactivate(ctx, auth.TokenScoped(ctx), id)
 	if errors.Is(err, automations.ErrNotFound) {
 		res := externalapi.AutomationsDeactivateNotFound(problem(http.StatusNotFound, "automation not found"))
 		return &res, nil

@@ -23,6 +23,34 @@ type OAuthClientCreate struct {
 	conflict []sql.ConflictOption
 }
 
+// SetCreatedAt sets the "created_at" field.
+func (_c *OAuthClientCreate) SetCreatedAt(v time.Time) *OAuthClientCreate {
+	_c.mutation.SetCreatedAt(v)
+	return _c
+}
+
+// SetNillableCreatedAt sets the "created_at" field if the given value is not nil.
+func (_c *OAuthClientCreate) SetNillableCreatedAt(v *time.Time) *OAuthClientCreate {
+	if v != nil {
+		_c.SetCreatedAt(*v)
+	}
+	return _c
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (_c *OAuthClientCreate) SetUpdatedAt(v time.Time) *OAuthClientCreate {
+	_c.mutation.SetUpdatedAt(v)
+	return _c
+}
+
+// SetNillableUpdatedAt sets the "updated_at" field if the given value is not nil.
+func (_c *OAuthClientCreate) SetNillableUpdatedAt(v *time.Time) *OAuthClientCreate {
+	if v != nil {
+		_c.SetUpdatedAt(*v)
+	}
+	return _c
+}
+
 // SetClientID sets the "client_id" field.
 func (_c *OAuthClientCreate) SetClientID(v string) *OAuthClientCreate {
 	_c.mutation.SetClientID(v)
@@ -38,20 +66,6 @@ func (_c *OAuthClientCreate) SetName(v string) *OAuthClientCreate {
 // SetRedirectUris sets the "redirect_uris" field.
 func (_c *OAuthClientCreate) SetRedirectUris(v []string) *OAuthClientCreate {
 	_c.mutation.SetRedirectUris(v)
-	return _c
-}
-
-// SetCreatedAt sets the "created_at" field.
-func (_c *OAuthClientCreate) SetCreatedAt(v time.Time) *OAuthClientCreate {
-	_c.mutation.SetCreatedAt(v)
-	return _c
-}
-
-// SetNillableCreatedAt sets the "created_at" field if the given value is not nil.
-func (_c *OAuthClientCreate) SetNillableCreatedAt(v *time.Time) *OAuthClientCreate {
-	if v != nil {
-		_c.SetCreatedAt(*v)
-	}
 	return _c
 }
 
@@ -115,10 +129,20 @@ func (_c *OAuthClientCreate) defaults() {
 		v := oauthclient.DefaultCreatedAt()
 		_c.mutation.SetCreatedAt(v)
 	}
+	if _, ok := _c.mutation.UpdatedAt(); !ok {
+		v := oauthclient.DefaultUpdatedAt()
+		_c.mutation.SetUpdatedAt(v)
+	}
 }
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *OAuthClientCreate) check() error {
+	if _, ok := _c.mutation.CreatedAt(); !ok {
+		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "OAuthClient.created_at"`)}
+	}
+	if _, ok := _c.mutation.UpdatedAt(); !ok {
+		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "OAuthClient.updated_at"`)}
+	}
 	if _, ok := _c.mutation.ClientID(); !ok {
 		return &ValidationError{Name: "client_id", err: errors.New(`ent: missing required field "OAuthClient.client_id"`)}
 	}
@@ -137,9 +161,6 @@ func (_c *OAuthClientCreate) check() error {
 	}
 	if _, ok := _c.mutation.RedirectUris(); !ok {
 		return &ValidationError{Name: "redirect_uris", err: errors.New(`ent: missing required field "OAuthClient.redirect_uris"`)}
-	}
-	if _, ok := _c.mutation.CreatedAt(); !ok {
-		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "OAuthClient.created_at"`)}
 	}
 	return nil
 }
@@ -174,6 +195,14 @@ func (_c *OAuthClientCreate) createSpec() (*OAuthClient, *sqlgraph.CreateSpec) {
 		_node.ID = id
 		_spec.ID.Value = id
 	}
+	if value, ok := _c.mutation.CreatedAt(); ok {
+		_spec.SetField(oauthclient.FieldCreatedAt, field.TypeTime, value)
+		_node.CreatedAt = value
+	}
+	if value, ok := _c.mutation.UpdatedAt(); ok {
+		_spec.SetField(oauthclient.FieldUpdatedAt, field.TypeTime, value)
+		_node.UpdatedAt = value
+	}
 	if value, ok := _c.mutation.ClientID(); ok {
 		_spec.SetField(oauthclient.FieldClientID, field.TypeString, value)
 		_node.ClientID = value
@@ -185,10 +214,6 @@ func (_c *OAuthClientCreate) createSpec() (*OAuthClient, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.RedirectUris(); ok {
 		_spec.SetField(oauthclient.FieldRedirectUris, field.TypeJSON, value)
 		_node.RedirectUris = value
-	}
-	if value, ok := _c.mutation.CreatedAt(); ok {
-		_spec.SetField(oauthclient.FieldCreatedAt, field.TypeTime, value)
-		_node.CreatedAt = value
 	}
 	if nodes := _c.mutation.CodesIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -213,7 +238,7 @@ func (_c *OAuthClientCreate) createSpec() (*OAuthClient, *sqlgraph.CreateSpec) {
 // of the `INSERT` statement. For example:
 //
 //	client.OAuthClient.Create().
-//		SetClientID(v).
+//		SetCreatedAt(v).
 //		OnConflict(
 //			// Update the row with the new values
 //			// the was proposed for insertion.
@@ -222,7 +247,7 @@ func (_c *OAuthClientCreate) createSpec() (*OAuthClient, *sqlgraph.CreateSpec) {
 //		// Override some of the fields with custom
 //		// update values.
 //		Update(func(u *ent.OAuthClientUpsert) {
-//			SetClientID(v+v).
+//			SetCreatedAt(v+v).
 //		}).
 //		Exec(ctx)
 func (_c *OAuthClientCreate) OnConflict(opts ...sql.ConflictOption) *OAuthClientUpsertOne {
@@ -257,6 +282,18 @@ type (
 		*sql.UpdateSet
 	}
 )
+
+// SetUpdatedAt sets the "updated_at" field.
+func (u *OAuthClientUpsert) SetUpdatedAt(v time.Time) *OAuthClientUpsert {
+	u.Set(oauthclient.FieldUpdatedAt, v)
+	return u
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *OAuthClientUpsert) UpdateUpdatedAt() *OAuthClientUpsert {
+	u.SetExcluded(oauthclient.FieldUpdatedAt)
+	return u
+}
 
 // SetName sets the "name" field.
 func (u *OAuthClientUpsert) SetName(v string) *OAuthClientUpsert {
@@ -299,11 +336,11 @@ func (u *OAuthClientUpsertOne) UpdateNewValues() *OAuthClientUpsertOne {
 		if _, exists := u.create.mutation.ID(); exists {
 			s.SetIgnore(oauthclient.FieldID)
 		}
-		if _, exists := u.create.mutation.ClientID(); exists {
-			s.SetIgnore(oauthclient.FieldClientID)
-		}
 		if _, exists := u.create.mutation.CreatedAt(); exists {
 			s.SetIgnore(oauthclient.FieldCreatedAt)
+		}
+		if _, exists := u.create.mutation.ClientID(); exists {
+			s.SetIgnore(oauthclient.FieldClientID)
 		}
 	}))
 	return u
@@ -334,6 +371,20 @@ func (u *OAuthClientUpsertOne) Update(set func(*OAuthClientUpsert)) *OAuthClient
 		set(&OAuthClientUpsert{UpdateSet: update})
 	}))
 	return u
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (u *OAuthClientUpsertOne) SetUpdatedAt(v time.Time) *OAuthClientUpsertOne {
+	return u.Update(func(s *OAuthClientUpsert) {
+		s.SetUpdatedAt(v)
+	})
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *OAuthClientUpsertOne) UpdateUpdatedAt() *OAuthClientUpsertOne {
+	return u.Update(func(s *OAuthClientUpsert) {
+		s.UpdateUpdatedAt()
+	})
 }
 
 // SetName sets the "name" field.
@@ -499,7 +550,7 @@ func (_c *OAuthClientCreateBulk) ExecX(ctx context.Context) {
 //		// Override some of the fields with custom
 //		// update values.
 //		Update(func(u *ent.OAuthClientUpsert) {
-//			SetClientID(v+v).
+//			SetCreatedAt(v+v).
 //		}).
 //		Exec(ctx)
 func (_c *OAuthClientCreateBulk) OnConflict(opts ...sql.ConflictOption) *OAuthClientUpsertBulk {
@@ -546,11 +597,11 @@ func (u *OAuthClientUpsertBulk) UpdateNewValues() *OAuthClientUpsertBulk {
 			if _, exists := b.mutation.ID(); exists {
 				s.SetIgnore(oauthclient.FieldID)
 			}
-			if _, exists := b.mutation.ClientID(); exists {
-				s.SetIgnore(oauthclient.FieldClientID)
-			}
 			if _, exists := b.mutation.CreatedAt(); exists {
 				s.SetIgnore(oauthclient.FieldCreatedAt)
+			}
+			if _, exists := b.mutation.ClientID(); exists {
+				s.SetIgnore(oauthclient.FieldClientID)
 			}
 		}
 	}))
@@ -582,6 +633,20 @@ func (u *OAuthClientUpsertBulk) Update(set func(*OAuthClientUpsert)) *OAuthClien
 		set(&OAuthClientUpsert{UpdateSet: update})
 	}))
 	return u
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (u *OAuthClientUpsertBulk) SetUpdatedAt(v time.Time) *OAuthClientUpsertBulk {
+	return u.Update(func(s *OAuthClientUpsert) {
+		s.SetUpdatedAt(v)
+	})
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *OAuthClientUpsertBulk) UpdateUpdatedAt() *OAuthClientUpsertBulk {
+	return u.Update(func(s *OAuthClientUpsert) {
+		s.UpdateUpdatedAt()
+	})
 }
 
 // SetName sets the "name" field.

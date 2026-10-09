@@ -23,6 +23,40 @@ type UnsubscribeCreate struct {
 	conflict []sql.ConflictOption
 }
 
+// SetCreatedAt sets the "created_at" field.
+func (_c *UnsubscribeCreate) SetCreatedAt(v time.Time) *UnsubscribeCreate {
+	_c.mutation.SetCreatedAt(v)
+	return _c
+}
+
+// SetNillableCreatedAt sets the "created_at" field if the given value is not nil.
+func (_c *UnsubscribeCreate) SetNillableCreatedAt(v *time.Time) *UnsubscribeCreate {
+	if v != nil {
+		_c.SetCreatedAt(*v)
+	}
+	return _c
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (_c *UnsubscribeCreate) SetUpdatedAt(v time.Time) *UnsubscribeCreate {
+	_c.mutation.SetUpdatedAt(v)
+	return _c
+}
+
+// SetNillableUpdatedAt sets the "updated_at" field if the given value is not nil.
+func (_c *UnsubscribeCreate) SetNillableUpdatedAt(v *time.Time) *UnsubscribeCreate {
+	if v != nil {
+		_c.SetUpdatedAt(*v)
+	}
+	return _c
+}
+
+// SetWorkspaceID sets the "workspace_id" field.
+func (_c *UnsubscribeCreate) SetWorkspaceID(v int64) *UnsubscribeCreate {
+	_c.mutation.SetWorkspaceID(v)
+	return _c
+}
+
 // SetChannel sets the "channel" field.
 func (_c *UnsubscribeCreate) SetChannel(v unsubscribe.Channel) *UnsubscribeCreate {
 	_c.mutation.SetChannel(v)
@@ -59,40 +93,6 @@ func (_c *UnsubscribeCreate) SetContactID(v int64) *UnsubscribeCreate {
 func (_c *UnsubscribeCreate) SetNillableContactID(v *int64) *UnsubscribeCreate {
 	if v != nil {
 		_c.SetContactID(*v)
-	}
-	return _c
-}
-
-// SetWorkspaceID sets the "workspace_id" field.
-func (_c *UnsubscribeCreate) SetWorkspaceID(v int64) *UnsubscribeCreate {
-	_c.mutation.SetWorkspaceID(v)
-	return _c
-}
-
-// SetCreatedAt sets the "created_at" field.
-func (_c *UnsubscribeCreate) SetCreatedAt(v time.Time) *UnsubscribeCreate {
-	_c.mutation.SetCreatedAt(v)
-	return _c
-}
-
-// SetNillableCreatedAt sets the "created_at" field if the given value is not nil.
-func (_c *UnsubscribeCreate) SetNillableCreatedAt(v *time.Time) *UnsubscribeCreate {
-	if v != nil {
-		_c.SetCreatedAt(*v)
-	}
-	return _c
-}
-
-// SetUpdatedAt sets the "updated_at" field.
-func (_c *UnsubscribeCreate) SetUpdatedAt(v time.Time) *UnsubscribeCreate {
-	_c.mutation.SetUpdatedAt(v)
-	return _c
-}
-
-// SetNillableUpdatedAt sets the "updated_at" field if the given value is not nil.
-func (_c *UnsubscribeCreate) SetNillableUpdatedAt(v *time.Time) *UnsubscribeCreate {
-	if v != nil {
-		_c.SetUpdatedAt(*v)
 	}
 	return _c
 }
@@ -143,10 +143,6 @@ func (_c *UnsubscribeCreate) ExecX(ctx context.Context) {
 
 // defaults sets the default values of the builder before save.
 func (_c *UnsubscribeCreate) defaults() {
-	if _, ok := _c.mutation.Channel(); !ok {
-		v := unsubscribe.DefaultChannel
-		_c.mutation.SetChannel(v)
-	}
 	if _, ok := _c.mutation.CreatedAt(); !ok {
 		v := unsubscribe.DefaultCreatedAt()
 		_c.mutation.SetCreatedAt(v)
@@ -155,10 +151,23 @@ func (_c *UnsubscribeCreate) defaults() {
 		v := unsubscribe.DefaultUpdatedAt()
 		_c.mutation.SetUpdatedAt(v)
 	}
+	if _, ok := _c.mutation.Channel(); !ok {
+		v := unsubscribe.DefaultChannel
+		_c.mutation.SetChannel(v)
+	}
 }
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *UnsubscribeCreate) check() error {
+	if _, ok := _c.mutation.CreatedAt(); !ok {
+		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "Unsubscribe.created_at"`)}
+	}
+	if _, ok := _c.mutation.UpdatedAt(); !ok {
+		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "Unsubscribe.updated_at"`)}
+	}
+	if _, ok := _c.mutation.WorkspaceID(); !ok {
+		return &ValidationError{Name: "workspace_id", err: errors.New(`ent: missing required field "Unsubscribe.workspace_id"`)}
+	}
 	if _, ok := _c.mutation.Channel(); !ok {
 		return &ValidationError{Name: "channel", err: errors.New(`ent: missing required field "Unsubscribe.channel"`)}
 	}
@@ -182,15 +191,6 @@ func (_c *UnsubscribeCreate) check() error {
 		if err := unsubscribe.SendingSourceValidator(v); err != nil {
 			return &ValidationError{Name: "sending_source", err: fmt.Errorf(`ent: validator failed for field "Unsubscribe.sending_source": %w`, err)}
 		}
-	}
-	if _, ok := _c.mutation.WorkspaceID(); !ok {
-		return &ValidationError{Name: "workspace_id", err: errors.New(`ent: missing required field "Unsubscribe.workspace_id"`)}
-	}
-	if _, ok := _c.mutation.CreatedAt(); !ok {
-		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "Unsubscribe.created_at"`)}
-	}
-	if _, ok := _c.mutation.UpdatedAt(); !ok {
-		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "Unsubscribe.updated_at"`)}
 	}
 	if len(_c.mutation.WorkspaceIDs()) == 0 {
 		return &ValidationError{Name: "workspace", err: errors.New(`ent: missing required edge "Unsubscribe.workspace"`)}
@@ -228,6 +228,14 @@ func (_c *UnsubscribeCreate) createSpec() (*Unsubscribe, *sqlgraph.CreateSpec) {
 		_node.ID = id
 		_spec.ID.Value = id
 	}
+	if value, ok := _c.mutation.CreatedAt(); ok {
+		_spec.SetField(unsubscribe.FieldCreatedAt, field.TypeTime, value)
+		_node.CreatedAt = value
+	}
+	if value, ok := _c.mutation.UpdatedAt(); ok {
+		_spec.SetField(unsubscribe.FieldUpdatedAt, field.TypeTime, value)
+		_node.UpdatedAt = value
+	}
 	if value, ok := _c.mutation.Channel(); ok {
 		_spec.SetField(unsubscribe.FieldChannel, field.TypeEnum, value)
 		_node.Channel = value
@@ -243,14 +251,6 @@ func (_c *UnsubscribeCreate) createSpec() (*Unsubscribe, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.ContactID(); ok {
 		_spec.SetField(unsubscribe.FieldContactID, field.TypeInt64, value)
 		_node.ContactID = &value
-	}
-	if value, ok := _c.mutation.CreatedAt(); ok {
-		_spec.SetField(unsubscribe.FieldCreatedAt, field.TypeTime, value)
-		_node.CreatedAt = value
-	}
-	if value, ok := _c.mutation.UpdatedAt(); ok {
-		_spec.SetField(unsubscribe.FieldUpdatedAt, field.TypeTime, value)
-		_node.UpdatedAt = value
 	}
 	if nodes := _c.mutation.WorkspaceIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -276,7 +276,7 @@ func (_c *UnsubscribeCreate) createSpec() (*Unsubscribe, *sqlgraph.CreateSpec) {
 // of the `INSERT` statement. For example:
 //
 //	client.Unsubscribe.Create().
-//		SetChannel(v).
+//		SetCreatedAt(v).
 //		OnConflict(
 //			// Update the row with the new values
 //			// the was proposed for insertion.
@@ -285,7 +285,7 @@ func (_c *UnsubscribeCreate) createSpec() (*Unsubscribe, *sqlgraph.CreateSpec) {
 //		// Override some of the fields with custom
 //		// update values.
 //		Update(func(u *ent.UnsubscribeUpsert) {
-//			SetChannel(v+v).
+//			SetCreatedAt(v+v).
 //		}).
 //		Exec(ctx)
 func (_c *UnsubscribeCreate) OnConflict(opts ...sql.ConflictOption) *UnsubscribeUpsertOne {
@@ -320,6 +320,30 @@ type (
 		*sql.UpdateSet
 	}
 )
+
+// SetUpdatedAt sets the "updated_at" field.
+func (u *UnsubscribeUpsert) SetUpdatedAt(v time.Time) *UnsubscribeUpsert {
+	u.Set(unsubscribe.FieldUpdatedAt, v)
+	return u
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *UnsubscribeUpsert) UpdateUpdatedAt() *UnsubscribeUpsert {
+	u.SetExcluded(unsubscribe.FieldUpdatedAt)
+	return u
+}
+
+// SetWorkspaceID sets the "workspace_id" field.
+func (u *UnsubscribeUpsert) SetWorkspaceID(v int64) *UnsubscribeUpsert {
+	u.Set(unsubscribe.FieldWorkspaceID, v)
+	return u
+}
+
+// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
+func (u *UnsubscribeUpsert) UpdateWorkspaceID() *UnsubscribeUpsert {
+	u.SetExcluded(unsubscribe.FieldWorkspaceID)
+	return u
+}
 
 // SetChannel sets the "channel" field.
 func (u *UnsubscribeUpsert) SetChannel(v unsubscribe.Channel) *UnsubscribeUpsert {
@@ -381,30 +405,6 @@ func (u *UnsubscribeUpsert) ClearContactID() *UnsubscribeUpsert {
 	return u
 }
 
-// SetWorkspaceID sets the "workspace_id" field.
-func (u *UnsubscribeUpsert) SetWorkspaceID(v int64) *UnsubscribeUpsert {
-	u.Set(unsubscribe.FieldWorkspaceID, v)
-	return u
-}
-
-// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
-func (u *UnsubscribeUpsert) UpdateWorkspaceID() *UnsubscribeUpsert {
-	u.SetExcluded(unsubscribe.FieldWorkspaceID)
-	return u
-}
-
-// SetUpdatedAt sets the "updated_at" field.
-func (u *UnsubscribeUpsert) SetUpdatedAt(v time.Time) *UnsubscribeUpsert {
-	u.Set(unsubscribe.FieldUpdatedAt, v)
-	return u
-}
-
-// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
-func (u *UnsubscribeUpsert) UpdateUpdatedAt() *UnsubscribeUpsert {
-	u.SetExcluded(unsubscribe.FieldUpdatedAt)
-	return u
-}
-
 // UpdateNewValues updates the mutable fields using the new values that were set on create except the ID field.
 // Using this option is equivalent to using:
 //
@@ -454,6 +454,34 @@ func (u *UnsubscribeUpsertOne) Update(set func(*UnsubscribeUpsert)) *Unsubscribe
 		set(&UnsubscribeUpsert{UpdateSet: update})
 	}))
 	return u
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (u *UnsubscribeUpsertOne) SetUpdatedAt(v time.Time) *UnsubscribeUpsertOne {
+	return u.Update(func(s *UnsubscribeUpsert) {
+		s.SetUpdatedAt(v)
+	})
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *UnsubscribeUpsertOne) UpdateUpdatedAt() *UnsubscribeUpsertOne {
+	return u.Update(func(s *UnsubscribeUpsert) {
+		s.UpdateUpdatedAt()
+	})
+}
+
+// SetWorkspaceID sets the "workspace_id" field.
+func (u *UnsubscribeUpsertOne) SetWorkspaceID(v int64) *UnsubscribeUpsertOne {
+	return u.Update(func(s *UnsubscribeUpsert) {
+		s.SetWorkspaceID(v)
+	})
+}
+
+// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
+func (u *UnsubscribeUpsertOne) UpdateWorkspaceID() *UnsubscribeUpsertOne {
+	return u.Update(func(s *UnsubscribeUpsert) {
+		s.UpdateWorkspaceID()
+	})
 }
 
 // SetChannel sets the "channel" field.
@@ -523,34 +551,6 @@ func (u *UnsubscribeUpsertOne) UpdateContactID() *UnsubscribeUpsertOne {
 func (u *UnsubscribeUpsertOne) ClearContactID() *UnsubscribeUpsertOne {
 	return u.Update(func(s *UnsubscribeUpsert) {
 		s.ClearContactID()
-	})
-}
-
-// SetWorkspaceID sets the "workspace_id" field.
-func (u *UnsubscribeUpsertOne) SetWorkspaceID(v int64) *UnsubscribeUpsertOne {
-	return u.Update(func(s *UnsubscribeUpsert) {
-		s.SetWorkspaceID(v)
-	})
-}
-
-// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
-func (u *UnsubscribeUpsertOne) UpdateWorkspaceID() *UnsubscribeUpsertOne {
-	return u.Update(func(s *UnsubscribeUpsert) {
-		s.UpdateWorkspaceID()
-	})
-}
-
-// SetUpdatedAt sets the "updated_at" field.
-func (u *UnsubscribeUpsertOne) SetUpdatedAt(v time.Time) *UnsubscribeUpsertOne {
-	return u.Update(func(s *UnsubscribeUpsert) {
-		s.SetUpdatedAt(v)
-	})
-}
-
-// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
-func (u *UnsubscribeUpsertOne) UpdateUpdatedAt() *UnsubscribeUpsertOne {
-	return u.Update(func(s *UnsubscribeUpsert) {
-		s.UpdateUpdatedAt()
 	})
 }
 
@@ -689,7 +689,7 @@ func (_c *UnsubscribeCreateBulk) ExecX(ctx context.Context) {
 //		// Override some of the fields with custom
 //		// update values.
 //		Update(func(u *ent.UnsubscribeUpsert) {
-//			SetChannel(v+v).
+//			SetCreatedAt(v+v).
 //		}).
 //		Exec(ctx)
 func (_c *UnsubscribeCreateBulk) OnConflict(opts ...sql.ConflictOption) *UnsubscribeUpsertBulk {
@@ -771,6 +771,34 @@ func (u *UnsubscribeUpsertBulk) Update(set func(*UnsubscribeUpsert)) *Unsubscrib
 	return u
 }
 
+// SetUpdatedAt sets the "updated_at" field.
+func (u *UnsubscribeUpsertBulk) SetUpdatedAt(v time.Time) *UnsubscribeUpsertBulk {
+	return u.Update(func(s *UnsubscribeUpsert) {
+		s.SetUpdatedAt(v)
+	})
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *UnsubscribeUpsertBulk) UpdateUpdatedAt() *UnsubscribeUpsertBulk {
+	return u.Update(func(s *UnsubscribeUpsert) {
+		s.UpdateUpdatedAt()
+	})
+}
+
+// SetWorkspaceID sets the "workspace_id" field.
+func (u *UnsubscribeUpsertBulk) SetWorkspaceID(v int64) *UnsubscribeUpsertBulk {
+	return u.Update(func(s *UnsubscribeUpsert) {
+		s.SetWorkspaceID(v)
+	})
+}
+
+// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
+func (u *UnsubscribeUpsertBulk) UpdateWorkspaceID() *UnsubscribeUpsertBulk {
+	return u.Update(func(s *UnsubscribeUpsert) {
+		s.UpdateWorkspaceID()
+	})
+}
+
 // SetChannel sets the "channel" field.
 func (u *UnsubscribeUpsertBulk) SetChannel(v unsubscribe.Channel) *UnsubscribeUpsertBulk {
 	return u.Update(func(s *UnsubscribeUpsert) {
@@ -838,34 +866,6 @@ func (u *UnsubscribeUpsertBulk) UpdateContactID() *UnsubscribeUpsertBulk {
 func (u *UnsubscribeUpsertBulk) ClearContactID() *UnsubscribeUpsertBulk {
 	return u.Update(func(s *UnsubscribeUpsert) {
 		s.ClearContactID()
-	})
-}
-
-// SetWorkspaceID sets the "workspace_id" field.
-func (u *UnsubscribeUpsertBulk) SetWorkspaceID(v int64) *UnsubscribeUpsertBulk {
-	return u.Update(func(s *UnsubscribeUpsert) {
-		s.SetWorkspaceID(v)
-	})
-}
-
-// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
-func (u *UnsubscribeUpsertBulk) UpdateWorkspaceID() *UnsubscribeUpsertBulk {
-	return u.Update(func(s *UnsubscribeUpsert) {
-		s.UpdateWorkspaceID()
-	})
-}
-
-// SetUpdatedAt sets the "updated_at" field.
-func (u *UnsubscribeUpsertBulk) SetUpdatedAt(v time.Time) *UnsubscribeUpsertBulk {
-	return u.Update(func(s *UnsubscribeUpsert) {
-		s.SetUpdatedAt(v)
-	})
-}
-
-// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
-func (u *UnsubscribeUpsertBulk) UpdateUpdatedAt() *UnsubscribeUpsertBulk {
-	return u.Update(func(s *UnsubscribeUpsert) {
-		s.UpdateUpdatedAt()
 	})
 }
 

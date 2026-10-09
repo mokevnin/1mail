@@ -17,7 +17,7 @@ func unserializable() map[string]any { return map[string]any{"bad": make(chan in
 
 func TestIngestCarriesTheEmailAndPhoneSnapshot(t *testing.T) {
 	env := testhelper.Setup(t)
-	require.NoError(t, eventlog.New(env.DB, env.Bus).Ingest(context.Background(), fixtures.AcmeID, []eventlog.Input{
+	require.NoError(t, eventlog.New(env.Bus).Ingest(context.Background(), env.DB.Scoped(fixtures.AcmeID), []eventlog.Input{
 		{SubjectID: "s-1", Action: "page_view", Email: ptr("nobody@example.com"), Phone: ptr("+15550100")},
 	}))
 
@@ -31,7 +31,7 @@ func TestIngestCarriesTheEmailAndPhoneSnapshot(t *testing.T) {
 func TestIngestIsAtomicAcrossTheBatch(t *testing.T) {
 	env := testhelper.Setup(t)
 
-	err := eventlog.New(env.DB, env.Bus).Ingest(context.Background(), fixtures.AcmeID, []eventlog.Input{
+	err := eventlog.New(env.Bus).Ingest(context.Background(), env.DB.Scoped(fixtures.AcmeID), []eventlog.Input{
 		{SubjectID: "ok", Action: "page_view"},
 		{SubjectID: "bad", Action: "page_view", Properties: unserializable()},
 	})
@@ -42,7 +42,7 @@ func TestIngestIsAtomicAcrossTheBatch(t *testing.T) {
 func TestIngestEachIsolatesItems(t *testing.T) {
 	env := testhelper.Setup(t)
 
-	errs := eventlog.New(env.DB, env.Bus).IngestEach(context.Background(), fixtures.AcmeID, []eventlog.Input{
+	errs := eventlog.New(env.Bus).IngestEach(context.Background(), env.DB.Scoped(fixtures.AcmeID), []eventlog.Input{
 		{SubjectID: "s-1", Action: "page_view"},
 		{SubjectID: "  ", Action: "page_view"},
 		{SubjectID: "s-3", Action: ""},
@@ -66,5 +66,5 @@ func TestIngestEachIsolatesItems(t *testing.T) {
 
 func TestIngestEachWithNoInputs(t *testing.T) {
 	env := testhelper.Setup(t)
-	assert.Empty(t, eventlog.New(env.DB, env.Bus).IngestEach(context.Background(), fixtures.AcmeID, nil))
+	assert.Empty(t, eventlog.New(env.Bus).IngestEach(context.Background(), env.DB.Scoped(fixtures.AcmeID), nil))
 }

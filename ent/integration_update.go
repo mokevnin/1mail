@@ -30,6 +30,26 @@ func (_u *IntegrationUpdate) Where(ps ...predicate.Integration) *IntegrationUpda
 	return _u
 }
 
+// SetUpdatedAt sets the "updated_at" field.
+func (_u *IntegrationUpdate) SetUpdatedAt(v time.Time) *IntegrationUpdate {
+	_u.mutation.SetUpdatedAt(v)
+	return _u
+}
+
+// SetWorkspaceID sets the "workspace_id" field.
+func (_u *IntegrationUpdate) SetWorkspaceID(v int64) *IntegrationUpdate {
+	_u.mutation.SetWorkspaceID(v)
+	return _u
+}
+
+// SetNillableWorkspaceID sets the "workspace_id" field if the given value is not nil.
+func (_u *IntegrationUpdate) SetNillableWorkspaceID(v *int64) *IntegrationUpdate {
+	if v != nil {
+		_u.SetWorkspaceID(*v)
+	}
+	return _u
+}
+
 // SetName sets the "name" field.
 func (_u *IntegrationUpdate) SetName(v string) *IntegrationUpdate {
 	_u.mutation.SetName(v)
@@ -111,26 +131,6 @@ func (_u *IntegrationUpdate) SetNillableIsDefault(v *bool) *IntegrationUpdate {
 	if v != nil {
 		_u.SetIsDefault(*v)
 	}
-	return _u
-}
-
-// SetWorkspaceID sets the "workspace_id" field.
-func (_u *IntegrationUpdate) SetWorkspaceID(v int64) *IntegrationUpdate {
-	_u.mutation.SetWorkspaceID(v)
-	return _u
-}
-
-// SetNillableWorkspaceID sets the "workspace_id" field if the given value is not nil.
-func (_u *IntegrationUpdate) SetNillableWorkspaceID(v *int64) *IntegrationUpdate {
-	if v != nil {
-		_u.SetWorkspaceID(*v)
-	}
-	return _u
-}
-
-// SetUpdatedAt sets the "updated_at" field.
-func (_u *IntegrationUpdate) SetUpdatedAt(v time.Time) *IntegrationUpdate {
-	_u.mutation.SetUpdatedAt(v)
 	return _u
 }
 
@@ -227,6 +227,9 @@ func (_u *IntegrationUpdate) sqlSave(ctx context.Context) (_node int, err error)
 			}
 		}
 	}
+	if value, ok := _u.mutation.UpdatedAt(); ok {
+		_spec.SetField(integration.FieldUpdatedAt, field.TypeTime, value)
+	}
 	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(integration.FieldName, field.TypeString, value)
 	}
@@ -244,9 +247,6 @@ func (_u *IntegrationUpdate) sqlSave(ctx context.Context) (_node int, err error)
 	}
 	if value, ok := _u.mutation.IsDefault(); ok {
 		_spec.SetField(integration.FieldIsDefault, field.TypeBool, value)
-	}
-	if value, ok := _u.mutation.UpdatedAt(); ok {
-		_spec.SetField(integration.FieldUpdatedAt, field.TypeTime, value)
 	}
 	if _u.mutation.WorkspaceCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -297,6 +297,26 @@ type IntegrationUpdateOne struct {
 	hooks     []Hook
 	mutation  *IntegrationMutation
 	modifiers []func(*sql.UpdateBuilder)
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (_u *IntegrationUpdateOne) SetUpdatedAt(v time.Time) *IntegrationUpdateOne {
+	_u.mutation.SetUpdatedAt(v)
+	return _u
+}
+
+// SetWorkspaceID sets the "workspace_id" field.
+func (_u *IntegrationUpdateOne) SetWorkspaceID(v int64) *IntegrationUpdateOne {
+	_u.mutation.SetWorkspaceID(v)
+	return _u
+}
+
+// SetNillableWorkspaceID sets the "workspace_id" field if the given value is not nil.
+func (_u *IntegrationUpdateOne) SetNillableWorkspaceID(v *int64) *IntegrationUpdateOne {
+	if v != nil {
+		_u.SetWorkspaceID(*v)
+	}
+	return _u
 }
 
 // SetName sets the "name" field.
@@ -380,26 +400,6 @@ func (_u *IntegrationUpdateOne) SetNillableIsDefault(v *bool) *IntegrationUpdate
 	if v != nil {
 		_u.SetIsDefault(*v)
 	}
-	return _u
-}
-
-// SetWorkspaceID sets the "workspace_id" field.
-func (_u *IntegrationUpdateOne) SetWorkspaceID(v int64) *IntegrationUpdateOne {
-	_u.mutation.SetWorkspaceID(v)
-	return _u
-}
-
-// SetNillableWorkspaceID sets the "workspace_id" field if the given value is not nil.
-func (_u *IntegrationUpdateOne) SetNillableWorkspaceID(v *int64) *IntegrationUpdateOne {
-	if v != nil {
-		_u.SetWorkspaceID(*v)
-	}
-	return _u
-}
-
-// SetUpdatedAt sets the "updated_at" field.
-func (_u *IntegrationUpdateOne) SetUpdatedAt(v time.Time) *IntegrationUpdateOne {
-	_u.mutation.SetUpdatedAt(v)
 	return _u
 }
 
@@ -526,6 +526,9 @@ func (_u *IntegrationUpdateOne) sqlSave(ctx context.Context) (_node *Integration
 			}
 		}
 	}
+	if value, ok := _u.mutation.UpdatedAt(); ok {
+		_spec.SetField(integration.FieldUpdatedAt, field.TypeTime, value)
+	}
 	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(integration.FieldName, field.TypeString, value)
 	}
@@ -543,9 +546,6 @@ func (_u *IntegrationUpdateOne) sqlSave(ctx context.Context) (_node *Integration
 	}
 	if value, ok := _u.mutation.IsDefault(); ok {
 		_spec.SetField(integration.FieldIsDefault, field.TypeBool, value)
-	}
-	if value, ok := _u.mutation.UpdatedAt(); ok {
-		_spec.SetField(integration.FieldUpdatedAt, field.TypeTime, value)
 	}
 	if _u.mutation.WorkspaceCleared() {
 		edge := &sqlgraph.EdgeSpec{

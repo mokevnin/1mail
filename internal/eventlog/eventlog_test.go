@@ -33,9 +33,9 @@ func ptr(s string) *string { return &s }
 
 func TestIngestAttachesEventToExistingContactByAlias(t *testing.T) {
 	env := testhelper.Setup(t)
-	m := eventlog.New(env.DB, env.Bus)
+	m := eventlog.New(env.Bus)
 
-	err := m.Ingest(context.Background(), fixtures.AcmeID, []eventlog.Input{
+	err := m.Ingest(context.Background(), env.DB.Scoped(fixtures.AcmeID), []eventlog.Input{
 		{SubjectID: "s-1", Action: "page_view", Email: ptr("ALICE@example.com")},
 		{SubjectID: "nobody", Action: "signup", Email: ptr("nobody@example.com")},
 	})
@@ -51,9 +51,9 @@ func TestIngestAttachesEventToExistingContactByAlias(t *testing.T) {
 
 func TestIngestCarriesPropertiesVerbatim(t *testing.T) {
 	env := testhelper.Setup(t)
-	m := eventlog.New(env.DB, env.Bus)
+	m := eventlog.New(env.Bus)
 
-	require.NoError(t, m.Ingest(context.Background(), fixtures.AcmeID, []eventlog.Input{
+	require.NoError(t, m.Ingest(context.Background(), env.DB.Scoped(fixtures.AcmeID), []eventlog.Input{
 		{SubjectID: "s", Action: "added_to_cart", Properties: map[string]any{"sku": "A1"}},
 	}))
 
@@ -65,11 +65,11 @@ func TestIngestCarriesPropertiesVerbatim(t *testing.T) {
 func TestActionsAreDistinctSortedAndWorkspaceScoped(t *testing.T) {
 	env := testhelper.Setup(t)
 	ctx := context.Background()
-	m := eventlog.New(env.DB, env.Bus)
+	m := eventlog.New(env.Bus)
 
 	env.DB.Event.Create().SetWorkspaceID(fixtures.AcmeID).SetSubjectID("dup").SetAction("page_view").SaveX(ctx)
 
-	got, err := m.Actions(ctx, 1)
+	got, err := m.Actions(ctx, env.DB.Scoped(fixtures.AcmeID))
 	require.NoError(t, err)
 	assert.True(t, sort.StringsAreSorted(got))
 	assert.Contains(t, got, "purchase")
@@ -82,7 +82,7 @@ func TestActionsAreDistinctSortedAndWorkspaceScoped(t *testing.T) {
 	}
 	assert.Equal(t, 1, count, "distinct")
 
-	other, err := m.Actions(ctx, fixtures.GlobexID)
+	other, err := m.Actions(ctx, env.DB.Scoped(fixtures.GlobexID))
 	require.NoError(t, err)
 	assert.Equal(t, []string{fixtures.EventGlobexAction}, other)
 }

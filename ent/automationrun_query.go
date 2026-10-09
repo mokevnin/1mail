@@ -24,8 +24,8 @@ type AutomationRunQuery struct {
 	order          []automationrun.OrderOption
 	inters         []Interceptor
 	predicates     []predicate.AutomationRun
-	withAutomation *AutomationQuery
 	withWorkspace  *WorkspaceQuery
+	withAutomation *AutomationQuery
 	modifiers      []func(*sql.Selector)
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
@@ -63,28 +63,6 @@ func (_q *AutomationRunQuery) Order(o ...automationrun.OrderOption) *AutomationR
 	return _q
 }
 
-// QueryAutomation chains the current query on the "automation" edge.
-func (_q *AutomationRunQuery) QueryAutomation() *AutomationQuery {
-	query := (&AutomationClient{config: _q.config}).Query()
-	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
-		if err := _q.prepareQuery(ctx); err != nil {
-			return nil, err
-		}
-		selector := _q.sqlQuery(ctx)
-		if err := selector.Err(); err != nil {
-			return nil, err
-		}
-		step := sqlgraph.NewStep(
-			sqlgraph.From(automationrun.Table, automationrun.FieldID, selector),
-			sqlgraph.To(automation.Table, automation.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, true, automationrun.AutomationTable, automationrun.AutomationColumn),
-		)
-		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
-		return fromU, nil
-	}
-	return query
-}
-
 // QueryWorkspace chains the current query on the "workspace" edge.
 func (_q *AutomationRunQuery) QueryWorkspace() *WorkspaceQuery {
 	query := (&WorkspaceClient{config: _q.config}).Query()
@@ -100,6 +78,28 @@ func (_q *AutomationRunQuery) QueryWorkspace() *WorkspaceQuery {
 			sqlgraph.From(automationrun.Table, automationrun.FieldID, selector),
 			sqlgraph.To(workspace.Table, workspace.FieldID),
 			sqlgraph.Edge(sqlgraph.M2O, true, automationrun.WorkspaceTable, automationrun.WorkspaceColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryAutomation chains the current query on the "automation" edge.
+func (_q *AutomationRunQuery) QueryAutomation() *AutomationQuery {
+	query := (&AutomationClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(automationrun.Table, automationrun.FieldID, selector),
+			sqlgraph.To(automation.Table, automation.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, automationrun.AutomationTable, automationrun.AutomationColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
@@ -299,24 +299,13 @@ func (_q *AutomationRunQuery) Clone() *AutomationRunQuery {
 		order:          append([]automationrun.OrderOption{}, _q.order...),
 		inters:         append([]Interceptor{}, _q.inters...),
 		predicates:     append([]predicate.AutomationRun{}, _q.predicates...),
-		withAutomation: _q.withAutomation.Clone(),
 		withWorkspace:  _q.withWorkspace.Clone(),
+		withAutomation: _q.withAutomation.Clone(),
 		// clone intermediate query.
 		sql:       _q.sql.Clone(),
 		path:      _q.path,
 		modifiers: append([]func(*sql.Selector){}, _q.modifiers...),
 	}
-}
-
-// WithAutomation tells the query-builder to eager-load the nodes that are connected to
-// the "automation" edge. The optional arguments are used to configure the query builder of the edge.
-func (_q *AutomationRunQuery) WithAutomation(opts ...func(*AutomationQuery)) *AutomationRunQuery {
-	query := (&AutomationClient{config: _q.config}).Query()
-	for _, opt := range opts {
-		opt(query)
-	}
-	_q.withAutomation = query
-	return _q
 }
 
 // WithWorkspace tells the query-builder to eager-load the nodes that are connected to
@@ -330,18 +319,29 @@ func (_q *AutomationRunQuery) WithWorkspace(opts ...func(*WorkspaceQuery)) *Auto
 	return _q
 }
 
+// WithAutomation tells the query-builder to eager-load the nodes that are connected to
+// the "automation" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *AutomationRunQuery) WithAutomation(opts ...func(*AutomationQuery)) *AutomationRunQuery {
+	query := (&AutomationClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withAutomation = query
+	return _q
+}
+
 // GroupBy is used to group vertices by one or more fields/columns.
 // It is often used with aggregate functions, like: count, max, mean, min, sum.
 //
 // Example:
 //
 //	var v []struct {
-//		AutomationID int64 `json:"automation_id,omitempty"`
+//		CreatedAt time.Time `json:"created_at,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.AutomationRun.Query().
-//		GroupBy(automationrun.FieldAutomationID).
+//		GroupBy(automationrun.FieldCreatedAt).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
 func (_q *AutomationRunQuery) GroupBy(field string, fields ...string) *AutomationRunGroupBy {
@@ -359,11 +359,11 @@ func (_q *AutomationRunQuery) GroupBy(field string, fields ...string) *Automatio
 // Example:
 //
 //	var v []struct {
-//		AutomationID int64 `json:"automation_id,omitempty"`
+//		CreatedAt time.Time `json:"created_at,omitempty"`
 //	}
 //
 //	client.AutomationRun.Query().
-//		Select(automationrun.FieldAutomationID).
+//		Select(automationrun.FieldCreatedAt).
 //		Scan(ctx, &v)
 func (_q *AutomationRunQuery) Select(fields ...string) *AutomationRunSelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)
@@ -409,8 +409,8 @@ func (_q *AutomationRunQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([
 		nodes       = []*AutomationRun{}
 		_spec       = _q.querySpec()
 		loadedTypes = [2]bool{
-			_q.withAutomation != nil,
 			_q.withWorkspace != nil,
+			_q.withAutomation != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
@@ -434,50 +434,21 @@ func (_q *AutomationRunQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([
 	if len(nodes) == 0 {
 		return nodes, nil
 	}
-	if query := _q.withAutomation; query != nil {
-		if err := _q.loadAutomation(ctx, query, nodes, nil,
-			func(n *AutomationRun, e *Automation) { n.Edges.Automation = e }); err != nil {
-			return nil, err
-		}
-	}
 	if query := _q.withWorkspace; query != nil {
 		if err := _q.loadWorkspace(ctx, query, nodes, nil,
 			func(n *AutomationRun, e *Workspace) { n.Edges.Workspace = e }); err != nil {
 			return nil, err
 		}
 	}
+	if query := _q.withAutomation; query != nil {
+		if err := _q.loadAutomation(ctx, query, nodes, nil,
+			func(n *AutomationRun, e *Automation) { n.Edges.Automation = e }); err != nil {
+			return nil, err
+		}
+	}
 	return nodes, nil
 }
 
-func (_q *AutomationRunQuery) loadAutomation(ctx context.Context, query *AutomationQuery, nodes []*AutomationRun, init func(*AutomationRun), assign func(*AutomationRun, *Automation)) error {
-	ids := make([]int64, 0, len(nodes))
-	nodeids := make(map[int64][]*AutomationRun)
-	for i := range nodes {
-		fk := nodes[i].AutomationID
-		if _, ok := nodeids[fk]; !ok {
-			ids = append(ids, fk)
-		}
-		nodeids[fk] = append(nodeids[fk], nodes[i])
-	}
-	if len(ids) == 0 {
-		return nil
-	}
-	query.Where(automation.IDIn(ids...))
-	neighbors, err := query.All(ctx)
-	if err != nil {
-		return err
-	}
-	for _, n := range neighbors {
-		nodes, ok := nodeids[n.ID]
-		if !ok {
-			return fmt.Errorf(`unexpected foreign-key "automation_id" returned %v`, n.ID)
-		}
-		for i := range nodes {
-			assign(nodes[i], n)
-		}
-	}
-	return nil
-}
 func (_q *AutomationRunQuery) loadWorkspace(ctx context.Context, query *WorkspaceQuery, nodes []*AutomationRun, init func(*AutomationRun), assign func(*AutomationRun, *Workspace)) error {
 	ids := make([]int64, 0, len(nodes))
 	nodeids := make(map[int64][]*AutomationRun)
@@ -500,6 +471,35 @@ func (_q *AutomationRunQuery) loadWorkspace(ctx context.Context, query *Workspac
 		nodes, ok := nodeids[n.ID]
 		if !ok {
 			return fmt.Errorf(`unexpected foreign-key "workspace_id" returned %v`, n.ID)
+		}
+		for i := range nodes {
+			assign(nodes[i], n)
+		}
+	}
+	return nil
+}
+func (_q *AutomationRunQuery) loadAutomation(ctx context.Context, query *AutomationQuery, nodes []*AutomationRun, init func(*AutomationRun), assign func(*AutomationRun, *Automation)) error {
+	ids := make([]int64, 0, len(nodes))
+	nodeids := make(map[int64][]*AutomationRun)
+	for i := range nodes {
+		fk := nodes[i].AutomationID
+		if _, ok := nodeids[fk]; !ok {
+			ids = append(ids, fk)
+		}
+		nodeids[fk] = append(nodeids[fk], nodes[i])
+	}
+	if len(ids) == 0 {
+		return nil
+	}
+	query.Where(automation.IDIn(ids...))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nodeids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected foreign-key "automation_id" returned %v`, n.ID)
 		}
 		for i := range nodes {
 			assign(nodes[i], n)
@@ -536,11 +536,11 @@ func (_q *AutomationRunQuery) querySpec() *sqlgraph.QuerySpec {
 				_spec.Node.Columns = append(_spec.Node.Columns, fields[i])
 			}
 		}
-		if _q.withAutomation != nil {
-			_spec.Node.AddColumnOnce(automationrun.FieldAutomationID)
-		}
 		if _q.withWorkspace != nil {
 			_spec.Node.AddColumnOnce(automationrun.FieldWorkspaceID)
+		}
+		if _q.withAutomation != nil {
+			_spec.Node.AddColumnOnce(automationrun.FieldAutomationID)
 		}
 	}
 	if ps := _q.predicates; len(ps) > 0 {

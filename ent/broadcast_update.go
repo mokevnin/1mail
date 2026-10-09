@@ -31,6 +31,26 @@ func (_u *BroadcastUpdate) Where(ps ...predicate.Broadcast) *BroadcastUpdate {
 	return _u
 }
 
+// SetUpdatedAt sets the "updated_at" field.
+func (_u *BroadcastUpdate) SetUpdatedAt(v time.Time) *BroadcastUpdate {
+	_u.mutation.SetUpdatedAt(v)
+	return _u
+}
+
+// SetWorkspaceID sets the "workspace_id" field.
+func (_u *BroadcastUpdate) SetWorkspaceID(v int64) *BroadcastUpdate {
+	_u.mutation.SetWorkspaceID(v)
+	return _u
+}
+
+// SetNillableWorkspaceID sets the "workspace_id" field if the given value is not nil.
+func (_u *BroadcastUpdate) SetNillableWorkspaceID(v *int64) *BroadcastUpdate {
+	if v != nil {
+		_u.SetWorkspaceID(*v)
+	}
+	return _u
+}
+
 // SetName sets the "name" field.
 func (_u *BroadcastUpdate) SetName(v string) *BroadcastUpdate {
 	_u.mutation.SetName(v)
@@ -402,26 +422,6 @@ func (_u *BroadcastUpdate) ClearHoldReason() *BroadcastUpdate {
 	return _u
 }
 
-// SetWorkspaceID sets the "workspace_id" field.
-func (_u *BroadcastUpdate) SetWorkspaceID(v int64) *BroadcastUpdate {
-	_u.mutation.SetWorkspaceID(v)
-	return _u
-}
-
-// SetNillableWorkspaceID sets the "workspace_id" field if the given value is not nil.
-func (_u *BroadcastUpdate) SetNillableWorkspaceID(v *int64) *BroadcastUpdate {
-	if v != nil {
-		_u.SetWorkspaceID(*v)
-	}
-	return _u
-}
-
-// SetUpdatedAt sets the "updated_at" field.
-func (_u *BroadcastUpdate) SetUpdatedAt(v time.Time) *BroadcastUpdate {
-	_u.mutation.SetUpdatedAt(v)
-	return _u
-}
-
 // SetWorkspace sets the "workspace" edge to the Workspace entity.
 func (_u *BroadcastUpdate) SetWorkspace(v *Workspace) *BroadcastUpdate {
 	return _u.SetWorkspaceID(v.ID)
@@ -581,6 +581,9 @@ func (_u *BroadcastUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 			}
 		}
 	}
+	if value, ok := _u.mutation.UpdatedAt(); ok {
+		_spec.SetField(broadcast.FieldUpdatedAt, field.TypeTime, value)
+	}
 	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(broadcast.FieldName, field.TypeString, value)
 	}
@@ -686,9 +689,6 @@ func (_u *BroadcastUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	if _u.mutation.HoldReasonCleared() {
 		_spec.ClearField(broadcast.FieldHoldReason, field.TypeString)
 	}
-	if value, ok := _u.mutation.UpdatedAt(); ok {
-		_spec.SetField(broadcast.FieldUpdatedAt, field.TypeTime, value)
-	}
 	if _u.mutation.WorkspaceCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
@@ -783,6 +783,26 @@ type BroadcastUpdateOne struct {
 	hooks     []Hook
 	mutation  *BroadcastMutation
 	modifiers []func(*sql.UpdateBuilder)
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (_u *BroadcastUpdateOne) SetUpdatedAt(v time.Time) *BroadcastUpdateOne {
+	_u.mutation.SetUpdatedAt(v)
+	return _u
+}
+
+// SetWorkspaceID sets the "workspace_id" field.
+func (_u *BroadcastUpdateOne) SetWorkspaceID(v int64) *BroadcastUpdateOne {
+	_u.mutation.SetWorkspaceID(v)
+	return _u
+}
+
+// SetNillableWorkspaceID sets the "workspace_id" field if the given value is not nil.
+func (_u *BroadcastUpdateOne) SetNillableWorkspaceID(v *int64) *BroadcastUpdateOne {
+	if v != nil {
+		_u.SetWorkspaceID(*v)
+	}
+	return _u
 }
 
 // SetName sets the "name" field.
@@ -1156,26 +1176,6 @@ func (_u *BroadcastUpdateOne) ClearHoldReason() *BroadcastUpdateOne {
 	return _u
 }
 
-// SetWorkspaceID sets the "workspace_id" field.
-func (_u *BroadcastUpdateOne) SetWorkspaceID(v int64) *BroadcastUpdateOne {
-	_u.mutation.SetWorkspaceID(v)
-	return _u
-}
-
-// SetNillableWorkspaceID sets the "workspace_id" field if the given value is not nil.
-func (_u *BroadcastUpdateOne) SetNillableWorkspaceID(v *int64) *BroadcastUpdateOne {
-	if v != nil {
-		_u.SetWorkspaceID(*v)
-	}
-	return _u
-}
-
-// SetUpdatedAt sets the "updated_at" field.
-func (_u *BroadcastUpdateOne) SetUpdatedAt(v time.Time) *BroadcastUpdateOne {
-	_u.mutation.SetUpdatedAt(v)
-	return _u
-}
-
 // SetWorkspace sets the "workspace" edge to the Workspace entity.
 func (_u *BroadcastUpdateOne) SetWorkspace(v *Workspace) *BroadcastUpdateOne {
 	return _u.SetWorkspaceID(v.ID)
@@ -1365,6 +1365,9 @@ func (_u *BroadcastUpdateOne) sqlSave(ctx context.Context) (_node *Broadcast, er
 			}
 		}
 	}
+	if value, ok := _u.mutation.UpdatedAt(); ok {
+		_spec.SetField(broadcast.FieldUpdatedAt, field.TypeTime, value)
+	}
 	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(broadcast.FieldName, field.TypeString, value)
 	}
@@ -1469,9 +1472,6 @@ func (_u *BroadcastUpdateOne) sqlSave(ctx context.Context) (_node *Broadcast, er
 	}
 	if _u.mutation.HoldReasonCleared() {
 		_spec.ClearField(broadcast.FieldHoldReason, field.TypeString)
-	}
-	if value, ok := _u.mutation.UpdatedAt(); ok {
-		_spec.SetField(broadcast.FieldUpdatedAt, field.TypeTime, value)
 	}
 	if _u.mutation.WorkspaceCleared() {
 		edge := &sqlgraph.EdgeSpec{

@@ -22,10 +22,9 @@ func (h *Handlers) ContactsList(ctx context.Context, params externalapi.Contacts
 		return &res, nil
 	}
 
-	ws := auth.WorkspaceID(auth.GetTokenAuth(ctx))
 	page, pageSize := pagination.Normalize(convert.Ptr(params.Page), convert.Ptr(params.PageSize))
 
-	q := h.ent.Contact.Query().Where(contact.WorkspaceID(ws))
+	q := auth.TokenScoped(ctx).Contact().Query()
 
 	total, err := q.Count(ctx)
 	if err != nil {
@@ -60,8 +59,7 @@ func (h *Handlers) ContactsCreate(ctx context.Context, req *externalapi.CreateCo
 		return &res, nil
 	}
 
-	ws := auth.WorkspaceID(auth.GetTokenAuth(ctx))
-	c, err := h.contacts.Create(ctx, ws, createContactAttributes(req))
+	c, err := h.contacts.Create(ctx, auth.TokenScoped(ctx), createContactAttributes(req))
 	var conflict *contacts.ConflictError
 	if errors.As(err, &conflict) {
 		res := externalapi.ContactsCreateConflict(conflictProblem(conflict))
@@ -87,10 +85,7 @@ func (h *Handlers) ContactsGet(ctx context.Context, params externalapi.ContactsG
 		return &res, nil
 	}
 
-	ws := auth.WorkspaceID(auth.GetTokenAuth(ctx))
-	c, err := h.ent.Contact.Query().
-		Where(contact.IDEQ(id), contact.WorkspaceID(ws)).
-		Only(ctx)
+	c, err := auth.TokenScoped(ctx).Contact().Get(ctx, id)
 	if ent.IsNotFound(err) {
 		res := externalapi.ContactsGetNotFound(problem(http.StatusNotFound, "contact not found"))
 		return &res, nil
@@ -115,8 +110,7 @@ func (h *Handlers) ContactsUpdate(ctx context.Context, req *externalapi.UpdateCo
 		return &res, nil
 	}
 
-	ws := auth.WorkspaceID(auth.GetTokenAuth(ctx))
-	c, err := h.contacts.Update(ctx, ws, id, updateContactAttributes(req))
+	c, err := h.contacts.Update(ctx, auth.TokenScoped(ctx), id, updateContactAttributes(req))
 	var conflict *contacts.ConflictError
 	if errors.As(err, &conflict) {
 		res := externalapi.ContactsUpdateConflict(conflictProblem(conflict))
@@ -146,8 +140,7 @@ func (h *Handlers) ContactsDelete(ctx context.Context, params externalapi.Contac
 		return &res, nil
 	}
 
-	ws := auth.WorkspaceID(auth.GetTokenAuth(ctx))
-	err = h.ent.Contact.DeleteOneID(id).Where(contact.WorkspaceID(ws)).Exec(ctx)
+	err = auth.TokenScoped(ctx).Contact().DeleteOneID(id).Exec(ctx)
 	if ent.IsNotFound(err) {
 		res := externalapi.ContactsDeleteNotFound(problem(http.StatusNotFound, "contact not found"))
 		return &res, nil
@@ -179,7 +172,7 @@ func (h *Handlers) ContactsBatchUpsert(ctx context.Context, req *externalapi.Ups
 			items[i].CustomFields = convert.RawMap(v)
 		}
 	}
-	outcomes := h.contacts.UpsertBatch(ctx, auth.WorkspaceID(auth.GetTokenAuth(ctx)), items)
+	outcomes := h.contacts.UpsertBatch(ctx, auth.TokenScoped(ctx), items)
 
 	results := make([]externalapi.ContactBatchItemResult, len(outcomes))
 	for i, o := range outcomes {

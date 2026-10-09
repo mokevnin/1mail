@@ -1,8 +1,6 @@
 package schema
 
 import (
-	"time"
-
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/entsql"
 	"entgo.io/ent/schema"
@@ -19,6 +17,10 @@ func (Contact) Annotations() []schema.Annotation {
 	return []schema.Annotation{
 		entsql.Annotation{Table: "contacts"},
 	}
+}
+
+func (Contact) Mixin() []ent.Mixin {
+	return []ent.Mixin{TimeMixin{}, WorkspaceMixin{Ref: "contacts"}}
 }
 
 func (Contact) Fields() []ent.Field {
@@ -52,13 +54,6 @@ func (Contact) Fields() []ent.Field {
 		// number/bool/datetime, not only strings.
 		field.JSON("custom_fields", map[string]any{}).
 			Optional(),
-		field.Int64("workspace_id"),
-		field.Time("created_at").
-			Default(time.Now).
-			Immutable(),
-		field.Time("updated_at").
-			Default(time.Now).
-			UpdateDefault(time.Now),
 	}
 }
 
@@ -69,11 +64,6 @@ func (Contact) Edges() []ent.Edge {
 		edge.To("visitors", Visitor.Type),
 		// Presence-only labels (GLOSSARY: Tag), many-to-many via contact_tags.
 		edge.To("tags", Tag.Type),
-		edge.From("workspace", Workspace.Type).
-			Ref("contacts").
-			Field("workspace_id").
-			Required().
-			Unique(),
 	}
 }
 

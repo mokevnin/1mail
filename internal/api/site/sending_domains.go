@@ -10,6 +10,7 @@ import (
 	"github.com/mokevnin/1mail/ent"
 	"github.com/mokevnin/1mail/ent/sendingdomain"
 	siteapi "github.com/mokevnin/1mail/gen/site"
+	"github.com/mokevnin/1mail/internal/events"
 	"github.com/mokevnin/1mail/internal/i18n"
 	"github.com/mokevnin/1mail/internal/pagination"
 	"github.com/mokevnin/1mail/internal/sending"
@@ -53,7 +54,7 @@ func dnsRecord(host, value string) siteapi.SiteDnsRecord {
 }
 
 func (h *Handlers) SiteSendingDomainsList(ctx context.Context, params siteapi.SiteSendingDomainsListParams) (siteapi.SiteSendingDomainsListRes, error) {
-	ws, err := h.workspaceID(ctx, params.Slug)
+	s, err := h.scopedFor(ctx, params.Slug)
 	if ent.IsNotFound(err) {
 		v := siteapi.SiteSendingDomainsListNotFound(problem(http.StatusNotFound, "workspace not found"))
 		return &v, nil
@@ -71,7 +72,7 @@ func (h *Handlers) SiteSendingDomainsList(ctx context.Context, params siteapi.Si
 	}
 	page, pageSize := pagination.Normalize(pagePtr, pageSizePtr)
 
-	q := h.ent.SendingDomain.Query().Where(sendingdomain.WorkspaceID(ws))
+	q := s.SendingDomain().Query()
 	total, err := q.Count(ctx)
 	if err != nil {
 		return nil, err
@@ -98,7 +99,7 @@ func (h *Handlers) SiteSendingDomainsList(ctx context.Context, params siteapi.Si
 }
 
 func (h *Handlers) SiteSendingDomainsCreate(ctx context.Context, req *siteapi.SiteCreateSendingDomainInput, params siteapi.SiteSendingDomainsCreateParams) (siteapi.SiteSendingDomainsCreateRes, error) {
-	ws, err := h.workspaceID(ctx, params.Slug)
+	s, err := h.scopedFor(ctx, params.Slug)
 	if ent.IsNotFound(err) {
 		v := siteapi.SiteSendingDomainsCreateNotFound(problem(http.StatusNotFound, "workspace not found"))
 		return &v, nil
@@ -131,10 +132,9 @@ func (h *Handlers) SiteSendingDomainsCreate(ctx context.Context, req *siteapi.Si
 	// Wrap the insert in a savepoint so a unique-violation (duplicate domain)
 	// rolls back only this write, not the caller's surrounding transaction.
 	var d *ent.SendingDomain
-	err = h.withTx(ctx, func(tx *ent.Tx) error {
+	err = h.bus.WithinScopedTx(ctx, s, func(ts *ent.Scoped, _ events.Publisher) error {
 		var cerr error
-		d, cerr = tx.SendingDomain.Create().
-			SetWorkspaceID(ws).
+		d, cerr = ts.SendingDomain().Create().
 			SetDomain(domain).
 			SetDkimSelector(selector).
 			SetDkimPrivateKeyEncrypted(encrypted).
@@ -154,7 +154,7 @@ func (h *Handlers) SiteSendingDomainsCreate(ctx context.Context, req *siteapi.Si
 }
 
 func (h *Handlers) SiteSendingDomainsGet(ctx context.Context, params siteapi.SiteSendingDomainsGetParams) (siteapi.SiteSendingDomainsGetRes, error) {
-	ws, err := h.workspaceID(ctx, params.Slug)
+	s, err := h.scopedFor(ctx, params.Slug)
 	if ent.IsNotFound(err) {
 		v := siteapi.SiteSendingDomainsGetNotFound(problem(http.StatusNotFound, "workspace not found"))
 		return &v, nil
@@ -168,9 +168,7 @@ func (h *Handlers) SiteSendingDomainsGet(ctx context.Context, params siteapi.Sit
 		v := siteapi.SiteSendingDomainsGetBadRequest(problem(http.StatusBadRequest, "invalid id"))
 		return &v, nil
 	}
-	d, err := h.ent.SendingDomain.Query().
-		Where(sendingdomain.IDEQ(id), sendingdomain.WorkspaceID(ws)).
-		Only(ctx)
+	d, err := s.SendingDomain().Get(ctx, id)
 	if ent.IsNotFound(err) {
 		v := siteapi.SiteSendingDomainsGetNotFound(problem(http.StatusNotFound, "sending domain not found"))
 		return &v, nil
@@ -183,7 +181,7 @@ func (h *Handlers) SiteSendingDomainsGet(ctx context.Context, params siteapi.Sit
 }
 
 func (h *Handlers) SiteSendingDomainsDelete(ctx context.Context, params siteapi.SiteSendingDomainsDeleteParams) (siteapi.SiteSendingDomainsDeleteRes, error) {
-	ws, err := h.workspaceID(ctx, params.Slug)
+	s, err := h.scopedFor(ctx, params.Slug)
 	if ent.IsNotFound(err) {
 		v := siteapi.SiteSendingDomainsDeleteNotFound(problem(http.StatusNotFound, "workspace not found"))
 		return &v, nil
@@ -197,7 +195,7 @@ func (h *Handlers) SiteSendingDomainsDelete(ctx context.Context, params siteapi.
 		v := siteapi.SiteSendingDomainsDeleteBadRequest(problem(http.StatusBadRequest, "invalid id"))
 		return &v, nil
 	}
-	err = h.ent.SendingDomain.DeleteOneID(id).Where(sendingdomain.WorkspaceID(ws)).Exec(ctx)
+	err = s.SendingDomain().DeleteOneID(id).Exec(ctx)
 	if ent.IsNotFound(err) {
 		v := siteapi.SiteSendingDomainsDeleteNotFound(problem(http.StatusNotFound, "sending domain not found"))
 		return &v, nil
@@ -209,7 +207,7 @@ func (h *Handlers) SiteSendingDomainsDelete(ctx context.Context, params siteapi.
 }
 
 func (h *Handlers) SiteSendingDomainsVerify(ctx context.Context, params siteapi.SiteSendingDomainsVerifyParams) (siteapi.SiteSendingDomainsVerifyRes, error) {
-	ws, err := h.workspaceID(ctx, params.Slug)
+	s, err := h.scopedFor(ctx, params.Slug)
 	if ent.IsNotFound(err) {
 		v := siteapi.SiteSendingDomainsVerifyNotFound(problem(http.StatusNotFound, "workspace not found"))
 		return &v, nil
@@ -224,9 +222,7 @@ func (h *Handlers) SiteSendingDomainsVerify(ctx context.Context, params siteapi.
 		return &v, nil
 	}
 	// Confirm the domain exists in this workspace before enqueuing.
-	exists, err := h.ent.SendingDomain.Query().
-		Where(sendingdomain.IDEQ(id), sendingdomain.WorkspaceID(ws)).
-		Exist(ctx)
+	exists, err := s.SendingDomain().Query().Where(sendingdomain.IDEQ(id)).Exist(ctx)
 	if err != nil {
 		return nil, err
 	}

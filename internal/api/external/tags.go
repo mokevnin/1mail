@@ -21,8 +21,8 @@ func (h *Handlers) TagsList(ctx context.Context, params externalapi.TagsListPara
 		return &res, nil
 	}
 
-	ws := auth.WorkspaceID(auth.GetTokenAuth(ctx))
-	all, err := h.tags.List(ctx, ws)
+	scoped := auth.TokenScoped(ctx)
+	all, err := h.tags.List(ctx, scoped)
 	if err != nil {
 		return nil, err
 	}
@@ -47,8 +47,8 @@ func (h *Handlers) TagsListForContact(ctx context.Context, params externalapi.Ta
 		return &res, nil
 	}
 
-	ws := auth.WorkspaceID(auth.GetTokenAuth(ctx))
-	mine, err := h.tags.ForContact(ctx, ws, id)
+	scoped := auth.TokenScoped(ctx)
+	mine, err := h.tags.ForContact(ctx, scoped, id)
 	if errors.Is(err, tags.ErrContactNotFound) {
 		res := externalapi.TagsListForContactNotFound(problem(http.StatusNotFound, "contact not found"))
 		return &res, nil
@@ -77,8 +77,8 @@ func (h *Handlers) TagsApply(ctx context.Context, req *externalapi.ApplyTagInput
 		return &res, nil
 	}
 
-	ws := auth.WorkspaceID(auth.GetTokenAuth(ctx))
-	t, err := h.tags.Apply(ctx, ws, id, req.Name)
+	scoped := auth.TokenScoped(ctx)
+	t, err := h.tags.Apply(ctx, scoped, id, req.Name)
 	if errors.Is(err, tags.ErrContactNotFound) {
 		res := externalapi.TagsApplyNotFound(problem(http.StatusNotFound, "contact not found"))
 		return &res, nil
@@ -105,8 +105,8 @@ func (h *Handlers) TagsRemove(ctx context.Context, params externalapi.TagsRemove
 		return &res, nil
 	}
 
-	ws := auth.WorkspaceID(auth.GetTokenAuth(ctx))
-	err = h.tags.Remove(ctx, ws, id, params.Name)
+	scoped := auth.TokenScoped(ctx)
+	err = h.tags.Remove(ctx, scoped, id, params.Name)
 	if errors.Is(err, tags.ErrContactNotFound) {
 		res := externalapi.TagsRemoveNotFound(problem(http.StatusNotFound, "contact not found"))
 		return &res, nil

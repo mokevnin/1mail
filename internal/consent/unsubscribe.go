@@ -23,7 +23,7 @@ import (
 // counter, the automation enrollment exit, and the engagement event) live in one
 // transaction gated on the existence check, so a repeated POST (mailbox retry or a
 // double click) is a complete no-op and concurrent POSTs are counted exactly once.
-func RecordUnsubscribe(ctx context.Context, client *ent.Client, bus *events.Bus, target tracking.UnsubTarget) error {
+func RecordUnsubscribe(ctx context.Context, bus *events.Bus, target tracking.UnsubTarget) error {
 	dest := eligibility.NormalizeDestination(target.Destination)
 	if dest == "" || target.WorkspaceID == 0 || target.Source == "" {
 		return nil
@@ -31,8 +31,10 @@ func RecordUnsubscribe(ctx context.Context, client *ent.Client, bus *events.Bus,
 	automationID, isAutomation := eligibility.ParseAutomationSource(target.Source)
 
 	return settled(bus.WithinTx(ctx, func(tx *ent.Client, pub events.Publisher) error {
-		exists, err := tx.Unsubscribe.Query().Where(
-			unsubscribe.WorkspaceID(target.WorkspaceID),
+		// The Workspace comes from the signed unsubscribe token (no membership or api
+		// token here), so this is a scope source outside the site/external/job list.
+		sc := tx.Scoped(target.WorkspaceID)
+		exists, err := sc.Unsubscribe().Query().Where(
 			unsubscribe.ChannelEQ(unsubscribe.ChannelEmail),
 			unsubscribe.DestinationEQ(dest),
 			unsubscribe.SendingSourceEQ(target.Source),
@@ -40,8 +42,7 @@ func RecordUnsubscribe(ctx context.Context, client *ent.Client, bus *events.Bus,
 		if err != nil || exists {
 			return err
 		}
-		create := tx.Unsubscribe.Create().
-			SetWorkspaceID(target.WorkspaceID).
+		create := sc.Unsubscribe().Create().
 			SetChannel(unsubscribe.ChannelEmail).
 			SetDestination(dest).
 			SetSendingSource(target.Source)
@@ -58,8 +59,7 @@ func RecordUnsubscribe(ctx context.Context, client *ent.Client, bus *events.Bus,
 		// marketing.confirmed Event is preserved as proof ("confirmed at T1, left at
 		// T2"). A narrower per-source opt-out does NOT touch confirmation.
 		if target.Source == eligibility.SourceEverything {
-			if _, err := tx.Confirmation.Delete().Where(
-				confirmation.WorkspaceID(target.WorkspaceID),
+			if _, err := sc.Confirmation().Delete().Where(
 				confirmation.ChannelEQ(confirmation.ChannelEmail),
 				confirmation.DestinationEQ(dest),
 			).Exec(ctx); err != nil {
@@ -69,14 +69,14 @@ func RecordUnsubscribe(ctx context.Context, client *ent.Client, bus *events.Bus,
 
 		// Broadcast attribution: bump the triggering broadcast's counter.
 		if target.BroadcastID != 0 {
-			if _, err := tx.Broadcast.UpdateOneID(target.BroadcastID).AddUnsubscribedCount(1).Save(ctx); err != nil {
+			if _, err := sc.Broadcast().UpdateOneID(target.BroadcastID).AddUnsubscribedCount(1).Save(ctx); err != nil {
 				return err
 			}
 		}
 		// Automation: unsubscribing from an automation also exits its active
 		// enrollment (ADR: two effects from one action).
 		if isAutomation && target.ContactID != 0 {
-			if _, err := tx.AutomationRun.Update().
+			if _, err := sc.AutomationRun().Update().
 				Where(
 					automationrun.AutomationID(automationID),
 					automationrun.ContactID(target.ContactID),

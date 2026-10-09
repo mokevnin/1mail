@@ -9,6 +9,8 @@ import (
 	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/mokevnin/1mail/ent"
 )
 
 type enrollCall struct {
@@ -67,8 +69,8 @@ type dispatchCall struct {
 
 type fakeDispatcher struct{ calls []dispatchCall }
 
-func (f *fakeDispatcher) Dispatch(_ context.Context, ws int64, name, delivery string, body []byte) error {
-	f.calls = append(f.calls, dispatchCall{ws, name, delivery, body})
+func (f *fakeDispatcher) Dispatch(_ context.Context, s *ent.Scoped, name, delivery string, body []byte) error {
+	f.calls = append(f.calls, dispatchCall{s.WorkspaceID(), name, delivery, body})
 	return nil
 }
 
@@ -76,7 +78,7 @@ func (f *fakeDispatcher) Dispatch(_ context.Context, ws int64, name, delivery st
 // from the event's projection.
 func TestWebhooksConsumerBuildsPayload(t *testing.T) {
 	d := &fakeDispatcher{}
-	handler := webhooksConsumer(d)
+	handler := webhooksConsumer(nil, d)
 
 	require.NoError(t, handler(msgFor(t, &ContactCreated{WorkspaceID: 1, ContactID: 5, Email: "a@b.c"})))
 

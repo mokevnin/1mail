@@ -22,14 +22,13 @@ import (
 
 // Module is the Events ingest and read module.
 type Module struct {
-	client *ent.Client
-	bus    *events.Bus
+	bus *events.Bus
 }
 
-// New builds the module over the ent client (reads) and the domain-event bus
-// (transactional publish).
-func New(client *ent.Client, bus *events.Bus) *Module {
-	return &Module{client: client, bus: bus}
+// New builds the module over the domain-event bus (transactional publish). Reads
+// and identity resolution go through the Workspace-scoped client each call receives.
+func New(bus *events.Bus) *Module {
+	return &Module{bus: bus}
 }
 
 // Input is one customer Event to ingest. Action and Properties are the customer's
@@ -47,15 +46,15 @@ type Input struct {
 // Ingest attaches each Event to an existing Contact by stable identity (an unknown
 // identity stays anonymous; a Contact is never created) and publishes the whole batch
 // atomically: either every Event is accepted or none is.
-func (m *Module) Ingest(ctx context.Context, workspaceID int64, inputs []Input) error {
-	return m.bus.WithinTx(ctx, func(tx *ent.Client, pub events.Publisher) error {
+func (m *Module) Ingest(ctx context.Context, s *ent.Scoped, inputs []Input) error {
+	return m.bus.WithinScopedTx(ctx, s, func(ts *ent.Scoped, pub events.Publisher) error {
 		for _, in := range inputs {
-			contactID, err := service.ResolveContactID(ctx, tx, workspaceID, in.SubjectID, in.Email, in.Phone)
+			contactID, err := service.ResolveContactID(ctx, ts, in.SubjectID, in.Email, in.Phone)
 			if err != nil {
 				return err
 			}
 			collected := &events.CollectedEvent{
-				WorkspaceID: workspaceID,
+				WorkspaceID: ts.WorkspaceID(),
 				ContactID:   contactID,
 				SubjectID:   in.SubjectID,
 				Action:      in.Action,
@@ -82,22 +81,21 @@ var ErrInvalid = errors.New("eventlog: subject id and action are required")
 // IngestEach ingests each Event in its own transaction, so an invalid or failing item
 // does not affect the others (Ingest, by contrast, is all-or-nothing). The returned
 // errors are parallel to inputs; nil means the Event was accepted.
-func (m *Module) IngestEach(ctx context.Context, workspaceID int64, inputs []Input) []error {
+func (m *Module) IngestEach(ctx context.Context, s *ent.Scoped, inputs []Input) []error {
 	errs := make([]error, len(inputs))
 	for i, in := range inputs {
 		if strings.TrimSpace(in.SubjectID) == "" || strings.TrimSpace(in.Action) == "" {
 			errs[i] = ErrInvalid
 			continue
 		}
-		errs[i] = m.Ingest(ctx, workspaceID, []Input{in})
+		errs[i] = m.Ingest(ctx, s, []Input{in})
 	}
 	return errs
 }
 
 // Actions returns the workspace's distinct Event actions, sorted.
-func (m *Module) Actions(ctx context.Context, workspaceID int64) ([]string, error) {
-	return m.client.Event.Query().
-		Where(event.WorkspaceID(workspaceID)).
+func (m *Module) Actions(ctx context.Context, s *ent.Scoped) ([]string, error) {
+	return s.Event().Query().
 		Order(ent.Asc(event.FieldAction)).
 		GroupBy(event.FieldAction).
 		Strings(ctx)

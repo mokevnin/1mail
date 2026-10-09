@@ -122,7 +122,7 @@ func TestBuildSignedMIMEPropagatesBuildAndSignerErrors(t *testing.T) {
 
 func TestDKIMSignerEmptyDomain(t *testing.T) {
 	env := testhelper.Setup(t)
-	dk, err := messaging.NewDKIMSigner(env.DB, envCipher(t), 1).DKIMSigner(context.Background(), "no-at-sign")
+	dk, err := messaging.NewDKIMSigner(env.DB.Scoped(fixtures.AcmeID), envCipher(t)).DKIMSigner(context.Background(), "no-at-sign")
 	require.NoError(t, err)
 	assert.Nil(t, dk)
 }
@@ -131,7 +131,7 @@ func TestDKIMSignerQueryError(t *testing.T) {
 	env := testhelper.Setup(t)
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
-	_, err := messaging.NewDKIMSigner(env.DB, envCipher(t), 1).DKIMSigner(ctx, "hi@mail.acme.com")
+	_, err := messaging.NewDKIMSigner(env.DB.Scoped(fixtures.AcmeID), envCipher(t)).DKIMSigner(ctx, "hi@mail.acme.com")
 	assert.Error(t, err)
 }
 
@@ -146,7 +146,7 @@ func TestDKIMSignerBrokenKeyMaterial(t *testing.T) {
 		SetDkimPrivateKeyEncrypted("not-a-ciphertext").SetDkimPublicKey("v=DKIM1").SetVerified(true).
 		Save(ctx)
 	require.NoError(t, err)
-	_, err = messaging.NewDKIMSigner(env.DB, cipher, 1).DKIMSigner(ctx, "hi@garbled.acme.com")
+	_, err = messaging.NewDKIMSigner(env.DB.Scoped(fixtures.AcmeID), cipher).DKIMSigner(ctx, "hi@garbled.acme.com")
 	assert.ErrorContains(t, err, "decrypt dkim key")
 
 	// Decrypts fine but is not a PEM private key.
@@ -157,7 +157,7 @@ func TestDKIMSignerBrokenKeyMaterial(t *testing.T) {
 		SetDkimPrivateKeyEncrypted(sealed).SetDkimPublicKey("v=DKIM1").SetVerified(true).
 		Save(ctx)
 	require.NoError(t, err)
-	_, err = messaging.NewDKIMSigner(env.DB, cipher, 1).DKIMSigner(ctx, "hi@nopem.acme.com")
+	_, err = messaging.NewDKIMSigner(env.DB.Scoped(fixtures.AcmeID), cipher).DKIMSigner(ctx, "hi@nopem.acme.com")
 	assert.ErrorContains(t, err, "parse dkim key")
 }
 
@@ -165,19 +165,19 @@ func TestHasVerifiedSendingDomain(t *testing.T) {
 	env := testhelper.Setup(t)
 	ctx := context.Background()
 
-	ok, err := messaging.HasVerifiedSendingDomain(ctx, env.DB, 1, "hi@mail.acme.com")
+	ok, err := messaging.HasVerifiedSendingDomain(ctx, env.DB.Scoped(fixtures.AcmeID), "hi@mail.acme.com")
 	require.NoError(t, err)
 	assert.True(t, ok)
 
-	ok, err = messaging.HasVerifiedSendingDomain(ctx, env.DB, 1, "hi@news.acme.com")
+	ok, err = messaging.HasVerifiedSendingDomain(ctx, env.DB.Scoped(fixtures.AcmeID), "hi@news.acme.com")
 	require.NoError(t, err)
 	assert.False(t, ok, "unverified domain")
 
-	ok, err = messaging.HasVerifiedSendingDomain(ctx, env.DB, 2, "hi@mail.acme.com")
+	ok, err = messaging.HasVerifiedSendingDomain(ctx, env.DB.Scoped(fixtures.GlobexID), "hi@mail.acme.com")
 	require.NoError(t, err)
 	assert.False(t, ok, "another workspace's domain")
 
-	ok, err = messaging.HasVerifiedSendingDomain(ctx, env.DB, 1, "malformed")
+	ok, err = messaging.HasVerifiedSendingDomain(ctx, env.DB.Scoped(fixtures.AcmeID), "malformed")
 	require.NoError(t, err)
 	assert.False(t, ok)
 }
@@ -185,11 +185,11 @@ func TestHasVerifiedSendingDomain(t *testing.T) {
 func TestResolverErrors(t *testing.T) {
 	env := testhelper.Setup(t)
 	ctx := context.Background()
-	resolver := messaging.NewResolver(env.DB, envCipher(t), registry.Default())
+	resolver := messaging.NewResolver(envCipher(t), registry.Default())
 
 	canceled, cancel := context.WithCancel(ctx)
 	cancel()
-	_, err := resolver.EmailSender(canceled, 1)
+	_, err := resolver.EmailSender(canceled, env.DB.Scoped(fixtures.AcmeID))
 	require.Error(t, err)
 	assert.NotErrorIs(t, err, messaging.ErrNoProvider)
 
@@ -198,6 +198,6 @@ func TestResolverErrors(t *testing.T) {
 		SetConfigEncrypted("not-a-ciphertext").SetIsDefault(true).
 		Save(ctx)
 	require.NoError(t, err)
-	_, err = resolver.EmailSender(ctx, fixtures.GlobexID)
+	_, err = resolver.EmailSender(ctx, env.DB.Scoped(fixtures.GlobexID))
 	assert.ErrorContains(t, err, "decrypt integration")
 }

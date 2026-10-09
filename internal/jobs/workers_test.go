@@ -152,15 +152,15 @@ func TestDispatchFansOutToMatchingEnabledEndpoints(t *testing.T) {
 	ctx := context.Background()
 
 	// Endpoint 100 filters to three event types; 101 is disabled.
-	require.NoError(t, e.client.Dispatch(ctx, fixtures.AcmeID, "email.opened", "d-1", []byte(`{}`)))
+	require.NoError(t, e.client.Dispatch(ctx, e.DB.Scoped(fixtures.AcmeID), "email.opened", "d-1", []byte(`{}`)))
 	assert.Equal(t, []string{"deliver_webhook"}, e.queued(t))
 
 	// Filtered out: no endpoint of the workspace subscribes to it.
-	require.NoError(t, e.client.Dispatch(ctx, fixtures.AcmeID, "segment.created", "d-2", []byte(`{}`)))
+	require.NoError(t, e.client.Dispatch(ctx, e.DB.Scoped(fixtures.AcmeID), "segment.created", "d-2", []byte(`{}`)))
 	assert.Len(t, e.queued(t), 1)
 
 	// An endpoint with no filter receives every event (Globex's, workspace 2).
-	require.NoError(t, e.client.Dispatch(ctx, 2, "segment.created", "d-3", []byte(`{}`)))
+	require.NoError(t, e.client.Dispatch(ctx, e.DB.Scoped(fixtures.GlobexID), "segment.created", "d-3", []byte(`{}`)))
 	assert.Len(t, e.queued(t), 2)
 }
 

@@ -13,7 +13,7 @@ import (
 // SiteTransactionalEmailsList returns the workspace's transactional send history
 // (the Outbound messages the /api/emails surface wrote), most recent first.
 func (h *Handlers) SiteTransactionalEmailsList(ctx context.Context, params siteapi.SiteTransactionalEmailsListParams) (siteapi.SiteTransactionalEmailsListRes, error) {
-	ws, err := h.workspaceID(ctx, params.Slug)
+	s, err := h.scopedFor(ctx, params.Slug)
 	if ent.IsNotFound(err) {
 		v := siteapi.SiteTransactionalEmailsListNotFound(problem(http.StatusNotFound, "workspace not found"))
 		return &v, nil
@@ -31,10 +31,7 @@ func (h *Handlers) SiteTransactionalEmailsList(ctx context.Context, params sitea
 	}
 	page, pageSize := pagination.Normalize(pagePtr, pageSizePtr)
 
-	q := h.ent.OutboundMessage.Query().Where(
-		outboundmessage.WorkspaceID(ws),
-		outboundmessage.KindEQ(outboundmessage.KindTransactional),
-	)
+	q := s.OutboundMessage().Query().Where(outboundmessage.KindEQ(outboundmessage.KindTransactional))
 	total, err := q.Count(ctx)
 	if err != nil {
 		return nil, err

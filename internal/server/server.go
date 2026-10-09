@@ -14,6 +14,7 @@ import (
 	"github.com/go-pkgz/auth/v2/avatar"
 	"github.com/go-pkgz/auth/v2/token"
 	"github.com/mokevnin/1mail/config"
+	"github.com/mokevnin/1mail/ent"
 	collectapi "github.com/mokevnin/1mail/gen/collect"
 	externalapi "github.com/mokevnin/1mail/gen/external"
 	siteapi "github.com/mokevnin/1mail/gen/site"
@@ -32,8 +33,11 @@ import (
 
 // New builds the top-level net/http handler wiring the three ogen-generated
 // API servers (site, external, collect) plus go-pkgz/auth endpoints.
-func New(cfg *config.Config, db *sql.DB, site apisite.Deps, external, mcp http.Handler) (http.Handler, error) {
-	client, bus := site.Ent, site.Bus
+// New composes the HTTP handler. client is the raw ent client: only the pieces whose
+// Workspace is not known up front take it (auth, OAuth, tracking, provider hooks);
+// the site, external and collect handlers get none (ADR 0017).
+func New(cfg *config.Config, db *sql.DB, client *ent.Client, site apisite.Deps, external, mcp http.Handler) (http.Handler, error) {
+	bus := site.Bus
 	mux := http.NewServeMux()
 
 	// Send the JWT cookie with the Secure attribute whenever the instance is served
@@ -90,7 +94,7 @@ func New(cfg *config.Config, db *sql.DB, site apisite.Deps, external, mcp http.H
 
 	// Collect API — /collect (x-collect-key via generated SecurityHandler).
 	colSrv, err := collectapi.NewServer(
-		apicollect.NewHandlers(client, bus),
+		apicollect.NewHandlers(bus),
 		apiauth.NewCollectSecurityHandler(client),
 		collectapi.WithPathPrefix("/collect"),
 		collectapi.WithErrorHandler(problemErrorHandler),
@@ -131,21 +135,26 @@ func New(cfg *config.Config, db *sql.DB, site apisite.Deps, external, mcp http.H
 
 // NewExternalAPI builds the external API (/api) ogen server: Bearer API-token
 // auth, RFC 7807 errors, mounted under the /api prefix.
-func NewExternalAPI(deps apiexternal.Deps) (http.Handler, error) {
+func NewExternalAPI(client *ent.Client, deps apiexternal.Deps) (http.Handler, error) {
 	return externalapi.NewServer(
 		apiexternal.NewHandlers(deps),
-		apiauth.NewExternalSecurityHandler(deps.Ent),
+		apiauth.NewExternalSecurityHandler(client),
 		externalapi.WithPathPrefix("/api"),
 		externalapi.WithErrorHandler(problemErrorHandler),
 	)
 }
 
 // problemErrorHandler renders ogen errors as RFC 7807 application/problem+json.
+// A reference id from another Workspace (the scoped client's ErrNotInWorkspace,
+// ADR 0017) is a client error, so it is a 422 and never a 500.
 func problemErrorHandler(_ context.Context, w http.ResponseWriter, _ *http.Request, err error) {
 	code := http.StatusInternalServerError
 	var oe ogenerrors.Error
-	if errors.As(err, &oe) {
+	switch {
+	case errors.As(err, &oe):
 		code = oe.Code()
+	case errors.Is(err, ent.ErrNotInWorkspace):
+		code = http.StatusUnprocessableEntity
 	}
 	w.Header().Set("Content-Type", "application/problem+json")
 	w.WriteHeader(code)

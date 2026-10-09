@@ -24,24 +24,6 @@ type MembershipCreate struct {
 	conflict []sql.ConflictOption
 }
 
-// SetUserID sets the "user_id" field.
-func (_c *MembershipCreate) SetUserID(v int64) *MembershipCreate {
-	_c.mutation.SetUserID(v)
-	return _c
-}
-
-// SetWorkspaceID sets the "workspace_id" field.
-func (_c *MembershipCreate) SetWorkspaceID(v int64) *MembershipCreate {
-	_c.mutation.SetWorkspaceID(v)
-	return _c
-}
-
-// SetRole sets the "role" field.
-func (_c *MembershipCreate) SetRole(v membership.Role) *MembershipCreate {
-	_c.mutation.SetRole(v)
-	return _c
-}
-
 // SetCreatedAt sets the "created_at" field.
 func (_c *MembershipCreate) SetCreatedAt(v time.Time) *MembershipCreate {
 	_c.mutation.SetCreatedAt(v)
@@ -70,20 +52,38 @@ func (_c *MembershipCreate) SetNillableUpdatedAt(v *time.Time) *MembershipCreate
 	return _c
 }
 
+// SetWorkspaceID sets the "workspace_id" field.
+func (_c *MembershipCreate) SetWorkspaceID(v int64) *MembershipCreate {
+	_c.mutation.SetWorkspaceID(v)
+	return _c
+}
+
+// SetUserID sets the "user_id" field.
+func (_c *MembershipCreate) SetUserID(v int64) *MembershipCreate {
+	_c.mutation.SetUserID(v)
+	return _c
+}
+
+// SetRole sets the "role" field.
+func (_c *MembershipCreate) SetRole(v membership.Role) *MembershipCreate {
+	_c.mutation.SetRole(v)
+	return _c
+}
+
 // SetID sets the "id" field.
 func (_c *MembershipCreate) SetID(v int64) *MembershipCreate {
 	_c.mutation.SetID(v)
 	return _c
 }
 
-// SetUser sets the "user" edge to the User entity.
-func (_c *MembershipCreate) SetUser(v *User) *MembershipCreate {
-	return _c.SetUserID(v.ID)
-}
-
 // SetWorkspace sets the "workspace" edge to the Workspace entity.
 func (_c *MembershipCreate) SetWorkspace(v *Workspace) *MembershipCreate {
 	return _c.SetWorkspaceID(v.ID)
+}
+
+// SetUser sets the "user" edge to the User entity.
+func (_c *MembershipCreate) SetUser(v *User) *MembershipCreate {
+	return _c.SetUserID(v.ID)
 }
 
 // Mutation returns the MembershipMutation object of the builder.
@@ -133,11 +133,17 @@ func (_c *MembershipCreate) defaults() {
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *MembershipCreate) check() error {
-	if _, ok := _c.mutation.UserID(); !ok {
-		return &ValidationError{Name: "user_id", err: errors.New(`ent: missing required field "Membership.user_id"`)}
+	if _, ok := _c.mutation.CreatedAt(); !ok {
+		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "Membership.created_at"`)}
+	}
+	if _, ok := _c.mutation.UpdatedAt(); !ok {
+		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "Membership.updated_at"`)}
 	}
 	if _, ok := _c.mutation.WorkspaceID(); !ok {
 		return &ValidationError{Name: "workspace_id", err: errors.New(`ent: missing required field "Membership.workspace_id"`)}
+	}
+	if _, ok := _c.mutation.UserID(); !ok {
+		return &ValidationError{Name: "user_id", err: errors.New(`ent: missing required field "Membership.user_id"`)}
 	}
 	if _, ok := _c.mutation.Role(); !ok {
 		return &ValidationError{Name: "role", err: errors.New(`ent: missing required field "Membership.role"`)}
@@ -147,17 +153,11 @@ func (_c *MembershipCreate) check() error {
 			return &ValidationError{Name: "role", err: fmt.Errorf(`ent: validator failed for field "Membership.role": %w`, err)}
 		}
 	}
-	if _, ok := _c.mutation.CreatedAt(); !ok {
-		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "Membership.created_at"`)}
-	}
-	if _, ok := _c.mutation.UpdatedAt(); !ok {
-		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "Membership.updated_at"`)}
+	if len(_c.mutation.WorkspaceIDs()) == 0 {
+		return &ValidationError{Name: "workspace", err: errors.New(`ent: missing required edge "Membership.workspace"`)}
 	}
 	if len(_c.mutation.UserIDs()) == 0 {
 		return &ValidationError{Name: "user", err: errors.New(`ent: missing required edge "Membership.user"`)}
-	}
-	if len(_c.mutation.WorkspaceIDs()) == 0 {
-		return &ValidationError{Name: "workspace", err: errors.New(`ent: missing required edge "Membership.workspace"`)}
 	}
 	return nil
 }
@@ -192,10 +192,6 @@ func (_c *MembershipCreate) createSpec() (*Membership, *sqlgraph.CreateSpec) {
 		_node.ID = id
 		_spec.ID.Value = id
 	}
-	if value, ok := _c.mutation.Role(); ok {
-		_spec.SetField(membership.FieldRole, field.TypeEnum, value)
-		_node.Role = value
-	}
 	if value, ok := _c.mutation.CreatedAt(); ok {
 		_spec.SetField(membership.FieldCreatedAt, field.TypeTime, value)
 		_node.CreatedAt = value
@@ -204,22 +200,9 @@ func (_c *MembershipCreate) createSpec() (*Membership, *sqlgraph.CreateSpec) {
 		_spec.SetField(membership.FieldUpdatedAt, field.TypeTime, value)
 		_node.UpdatedAt = value
 	}
-	if nodes := _c.mutation.UserIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: true,
-			Table:   membership.UserTable,
-			Columns: []string{membership.UserColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt64),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_node.UserID = nodes[0]
-		_spec.Edges = append(_spec.Edges, edge)
+	if value, ok := _c.mutation.Role(); ok {
+		_spec.SetField(membership.FieldRole, field.TypeEnum, value)
+		_node.Role = value
 	}
 	if nodes := _c.mutation.WorkspaceIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -238,6 +221,23 @@ func (_c *MembershipCreate) createSpec() (*Membership, *sqlgraph.CreateSpec) {
 		_node.WorkspaceID = nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
+	if nodes := _c.mutation.UserIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   membership.UserTable,
+			Columns: []string{membership.UserColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.UserID = nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
+	}
 	return _node, _spec
 }
 
@@ -245,7 +245,7 @@ func (_c *MembershipCreate) createSpec() (*Membership, *sqlgraph.CreateSpec) {
 // of the `INSERT` statement. For example:
 //
 //	client.Membership.Create().
-//		SetUserID(v).
+//		SetCreatedAt(v).
 //		OnConflict(
 //			// Update the row with the new values
 //			// the was proposed for insertion.
@@ -254,7 +254,7 @@ func (_c *MembershipCreate) createSpec() (*Membership, *sqlgraph.CreateSpec) {
 //		// Override some of the fields with custom
 //		// update values.
 //		Update(func(u *ent.MembershipUpsert) {
-//			SetUserID(v+v).
+//			SetCreatedAt(v+v).
 //		}).
 //		Exec(ctx)
 func (_c *MembershipCreate) OnConflict(opts ...sql.ConflictOption) *MembershipUpsertOne {
@@ -290,15 +290,15 @@ type (
 	}
 )
 
-// SetUserID sets the "user_id" field.
-func (u *MembershipUpsert) SetUserID(v int64) *MembershipUpsert {
-	u.Set(membership.FieldUserID, v)
+// SetUpdatedAt sets the "updated_at" field.
+func (u *MembershipUpsert) SetUpdatedAt(v time.Time) *MembershipUpsert {
+	u.Set(membership.FieldUpdatedAt, v)
 	return u
 }
 
-// UpdateUserID sets the "user_id" field to the value that was provided on create.
-func (u *MembershipUpsert) UpdateUserID() *MembershipUpsert {
-	u.SetExcluded(membership.FieldUserID)
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *MembershipUpsert) UpdateUpdatedAt() *MembershipUpsert {
+	u.SetExcluded(membership.FieldUpdatedAt)
 	return u
 }
 
@@ -314,6 +314,18 @@ func (u *MembershipUpsert) UpdateWorkspaceID() *MembershipUpsert {
 	return u
 }
 
+// SetUserID sets the "user_id" field.
+func (u *MembershipUpsert) SetUserID(v int64) *MembershipUpsert {
+	u.Set(membership.FieldUserID, v)
+	return u
+}
+
+// UpdateUserID sets the "user_id" field to the value that was provided on create.
+func (u *MembershipUpsert) UpdateUserID() *MembershipUpsert {
+	u.SetExcluded(membership.FieldUserID)
+	return u
+}
+
 // SetRole sets the "role" field.
 func (u *MembershipUpsert) SetRole(v membership.Role) *MembershipUpsert {
 	u.Set(membership.FieldRole, v)
@@ -323,18 +335,6 @@ func (u *MembershipUpsert) SetRole(v membership.Role) *MembershipUpsert {
 // UpdateRole sets the "role" field to the value that was provided on create.
 func (u *MembershipUpsert) UpdateRole() *MembershipUpsert {
 	u.SetExcluded(membership.FieldRole)
-	return u
-}
-
-// SetUpdatedAt sets the "updated_at" field.
-func (u *MembershipUpsert) SetUpdatedAt(v time.Time) *MembershipUpsert {
-	u.Set(membership.FieldUpdatedAt, v)
-	return u
-}
-
-// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
-func (u *MembershipUpsert) UpdateUpdatedAt() *MembershipUpsert {
-	u.SetExcluded(membership.FieldUpdatedAt)
 	return u
 }
 
@@ -389,17 +389,17 @@ func (u *MembershipUpsertOne) Update(set func(*MembershipUpsert)) *MembershipUps
 	return u
 }
 
-// SetUserID sets the "user_id" field.
-func (u *MembershipUpsertOne) SetUserID(v int64) *MembershipUpsertOne {
+// SetUpdatedAt sets the "updated_at" field.
+func (u *MembershipUpsertOne) SetUpdatedAt(v time.Time) *MembershipUpsertOne {
 	return u.Update(func(s *MembershipUpsert) {
-		s.SetUserID(v)
+		s.SetUpdatedAt(v)
 	})
 }
 
-// UpdateUserID sets the "user_id" field to the value that was provided on create.
-func (u *MembershipUpsertOne) UpdateUserID() *MembershipUpsertOne {
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *MembershipUpsertOne) UpdateUpdatedAt() *MembershipUpsertOne {
 	return u.Update(func(s *MembershipUpsert) {
-		s.UpdateUserID()
+		s.UpdateUpdatedAt()
 	})
 }
 
@@ -417,6 +417,20 @@ func (u *MembershipUpsertOne) UpdateWorkspaceID() *MembershipUpsertOne {
 	})
 }
 
+// SetUserID sets the "user_id" field.
+func (u *MembershipUpsertOne) SetUserID(v int64) *MembershipUpsertOne {
+	return u.Update(func(s *MembershipUpsert) {
+		s.SetUserID(v)
+	})
+}
+
+// UpdateUserID sets the "user_id" field to the value that was provided on create.
+func (u *MembershipUpsertOne) UpdateUserID() *MembershipUpsertOne {
+	return u.Update(func(s *MembershipUpsert) {
+		s.UpdateUserID()
+	})
+}
+
 // SetRole sets the "role" field.
 func (u *MembershipUpsertOne) SetRole(v membership.Role) *MembershipUpsertOne {
 	return u.Update(func(s *MembershipUpsert) {
@@ -428,20 +442,6 @@ func (u *MembershipUpsertOne) SetRole(v membership.Role) *MembershipUpsertOne {
 func (u *MembershipUpsertOne) UpdateRole() *MembershipUpsertOne {
 	return u.Update(func(s *MembershipUpsert) {
 		s.UpdateRole()
-	})
-}
-
-// SetUpdatedAt sets the "updated_at" field.
-func (u *MembershipUpsertOne) SetUpdatedAt(v time.Time) *MembershipUpsertOne {
-	return u.Update(func(s *MembershipUpsert) {
-		s.SetUpdatedAt(v)
-	})
-}
-
-// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
-func (u *MembershipUpsertOne) UpdateUpdatedAt() *MembershipUpsertOne {
-	return u.Update(func(s *MembershipUpsert) {
-		s.UpdateUpdatedAt()
 	})
 }
 
@@ -580,7 +580,7 @@ func (_c *MembershipCreateBulk) ExecX(ctx context.Context) {
 //		// Override some of the fields with custom
 //		// update values.
 //		Update(func(u *ent.MembershipUpsert) {
-//			SetUserID(v+v).
+//			SetCreatedAt(v+v).
 //		}).
 //		Exec(ctx)
 func (_c *MembershipCreateBulk) OnConflict(opts ...sql.ConflictOption) *MembershipUpsertBulk {
@@ -662,17 +662,17 @@ func (u *MembershipUpsertBulk) Update(set func(*MembershipUpsert)) *MembershipUp
 	return u
 }
 
-// SetUserID sets the "user_id" field.
-func (u *MembershipUpsertBulk) SetUserID(v int64) *MembershipUpsertBulk {
+// SetUpdatedAt sets the "updated_at" field.
+func (u *MembershipUpsertBulk) SetUpdatedAt(v time.Time) *MembershipUpsertBulk {
 	return u.Update(func(s *MembershipUpsert) {
-		s.SetUserID(v)
+		s.SetUpdatedAt(v)
 	})
 }
 
-// UpdateUserID sets the "user_id" field to the value that was provided on create.
-func (u *MembershipUpsertBulk) UpdateUserID() *MembershipUpsertBulk {
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *MembershipUpsertBulk) UpdateUpdatedAt() *MembershipUpsertBulk {
 	return u.Update(func(s *MembershipUpsert) {
-		s.UpdateUserID()
+		s.UpdateUpdatedAt()
 	})
 }
 
@@ -690,6 +690,20 @@ func (u *MembershipUpsertBulk) UpdateWorkspaceID() *MembershipUpsertBulk {
 	})
 }
 
+// SetUserID sets the "user_id" field.
+func (u *MembershipUpsertBulk) SetUserID(v int64) *MembershipUpsertBulk {
+	return u.Update(func(s *MembershipUpsert) {
+		s.SetUserID(v)
+	})
+}
+
+// UpdateUserID sets the "user_id" field to the value that was provided on create.
+func (u *MembershipUpsertBulk) UpdateUserID() *MembershipUpsertBulk {
+	return u.Update(func(s *MembershipUpsert) {
+		s.UpdateUserID()
+	})
+}
+
 // SetRole sets the "role" field.
 func (u *MembershipUpsertBulk) SetRole(v membership.Role) *MembershipUpsertBulk {
 	return u.Update(func(s *MembershipUpsert) {
@@ -701,20 +715,6 @@ func (u *MembershipUpsertBulk) SetRole(v membership.Role) *MembershipUpsertBulk 
 func (u *MembershipUpsertBulk) UpdateRole() *MembershipUpsertBulk {
 	return u.Update(func(s *MembershipUpsert) {
 		s.UpdateRole()
-	})
-}
-
-// SetUpdatedAt sets the "updated_at" field.
-func (u *MembershipUpsertBulk) SetUpdatedAt(v time.Time) *MembershipUpsertBulk {
-	return u.Update(func(s *MembershipUpsert) {
-		s.SetUpdatedAt(v)
-	})
-}
-
-// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
-func (u *MembershipUpsertBulk) UpdateUpdatedAt() *MembershipUpsertBulk {
-	return u.Update(func(s *MembershipUpsert) {
-		s.UpdateUpdatedAt()
 	})
 }
 

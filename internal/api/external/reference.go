@@ -26,10 +26,7 @@ func (h *Handlers) CustomFieldsList(ctx context.Context) (externalapi.CustomFiel
 		res := problem(http.StatusUnauthorized, "insufficient scope")
 		return &res, nil
 	}
-	ws := auth.WorkspaceID(auth.GetTokenAuth(ctx))
-
-	items, err := h.ent.CustomField.Query().
-		Where(customfield.WorkspaceID(ws)).
+	items, err := auth.TokenScoped(ctx).CustomField().Query().
 		Order(ent.Asc(customfield.FieldKey)).
 		All(ctx)
 	if err != nil {
@@ -53,10 +50,9 @@ func (h *Handlers) SendingDomainsList(ctx context.Context, params externalapi.Se
 		res := externalapi.SendingDomainsListUnauthorized(problem(http.StatusUnauthorized, "insufficient scope"))
 		return &res, nil
 	}
-	ws := auth.WorkspaceID(auth.GetTokenAuth(ctx))
 	page, pageSize := pagination.Normalize(convert.Ptr(params.Page), convert.Ptr(params.PageSize))
 
-	q := h.ent.SendingDomain.Query().Where(sendingdomain.WorkspaceID(ws))
+	q := auth.TokenScoped(ctx).SendingDomain().Query()
 	total, err := q.Count(ctx)
 	if err != nil {
 		return nil, err
@@ -88,15 +84,13 @@ func (h *Handlers) SendingDomainRatesList(ctx context.Context, params externalap
 		res := externalapi.SendingDomainRatesListUnauthorized(problem(http.StatusUnauthorized, "insufficient scope"))
 		return &res, nil
 	}
-	ws := auth.WorkspaceID(auth.GetTokenAuth(ctx))
-
 	days := params.WindowDays.Or(defaultRateWindowDays)
 	if days < 1 || days > maxRateWindowDays {
 		res := externalapi.SendingDomainRatesListBadRequest(problem(http.StatusBadRequest, "windowDays must be between 1 and 90"))
 		return &res, nil
 	}
 
-	rates, err := h.reputation.Rates(ctx, ws, time.Duration(days)*24*time.Hour)
+	rates, err := h.reputation.Rates(ctx, auth.TokenScoped(ctx), time.Duration(days)*24*time.Hour)
 	if err != nil {
 		return nil, err
 	}

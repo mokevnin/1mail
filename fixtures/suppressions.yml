@@ -41,3 +41,13 @@
   workspace_id: 1
   created_at: '{{daysAgo 5}}'
   updated_at: '{{daysAgo 5}}'
+
+# Globex (workspace 2).
+- id: 900 # fixture: SuppressionGlobex
+  channel: email
+  destination: bounce@globex.test
+  reason: bounce
+  contact_id: 900
+  workspace_id: 2
+  created_at: '2026-01-01 00:00:00'
+  updated_at: '2026-01-01 00:00:00'

@@ -19,6 +19,12 @@ type Contact struct {
 	config `json:"-"`
 	// ID of the ent.
 	ID int64 `json:"id,omitempty"`
+	// CreatedAt holds the value of the "created_at" field.
+	CreatedAt time.Time `json:"created_at,omitempty"`
+	// UpdatedAt holds the value of the "updated_at" field.
+	UpdatedAt time.Time `json:"updated_at,omitempty"`
+	// WorkspaceID holds the value of the "workspace_id" field.
+	WorkspaceID int64 `json:"workspace_id,omitempty"`
 	// SubjectID holds the value of the "subject_id" field.
 	SubjectID *string `json:"subject_id,omitempty"`
 	// Email holds the value of the "email" field.
@@ -33,12 +39,6 @@ type Contact struct {
 	TimeZone *string `json:"time_zone,omitempty"`
 	// CustomFields holds the value of the "custom_fields" field.
 	CustomFields map[string]interface{} `json:"custom_fields,omitempty"`
-	// WorkspaceID holds the value of the "workspace_id" field.
-	WorkspaceID int64 `json:"workspace_id,omitempty"`
-	// CreatedAt holds the value of the "created_at" field.
-	CreatedAt time.Time `json:"created_at,omitempty"`
-	// UpdatedAt holds the value of the "updated_at" field.
-	UpdatedAt time.Time `json:"updated_at,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the ContactQuery when eager-loading is set.
 	Edges        ContactEdges `json:"edges"`
@@ -47,21 +47,32 @@ type Contact struct {
 
 // ContactEdges holds the relations/edges for other nodes in the graph.
 type ContactEdges struct {
+	// Workspace holds the value of the workspace edge.
+	Workspace *Workspace `json:"workspace,omitempty"`
 	// Visitors holds the value of the visitors edge.
 	Visitors []*Visitor `json:"visitors,omitempty"`
 	// Tags holds the value of the tags edge.
 	Tags []*Tag `json:"tags,omitempty"`
-	// Workspace holds the value of the workspace edge.
-	Workspace *Workspace `json:"workspace,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
 	loadedTypes [3]bool
 }
 
+// WorkspaceOrErr returns the Workspace value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e ContactEdges) WorkspaceOrErr() (*Workspace, error) {
+	if e.Workspace != nil {
+		return e.Workspace, nil
+	} else if e.loadedTypes[0] {
+		return nil, &NotFoundError{label: workspace.Label}
+	}
+	return nil, &NotLoadedError{edge: "workspace"}
+}
+
 // VisitorsOrErr returns the Visitors value or an error if the edge
 // was not loaded in eager-loading.
 func (e ContactEdges) VisitorsOrErr() ([]*Visitor, error) {
-	if e.loadedTypes[0] {
+	if e.loadedTypes[1] {
 		return e.Visitors, nil
 	}
 	return nil, &NotLoadedError{edge: "visitors"}
@@ -70,21 +81,10 @@ func (e ContactEdges) VisitorsOrErr() ([]*Visitor, error) {
 // TagsOrErr returns the Tags value or an error if the edge
 // was not loaded in eager-loading.
 func (e ContactEdges) TagsOrErr() ([]*Tag, error) {
-	if e.loadedTypes[1] {
+	if e.loadedTypes[2] {
 		return e.Tags, nil
 	}
 	return nil, &NotLoadedError{edge: "tags"}
-}
-
-// WorkspaceOrErr returns the Workspace value or an error if the edge
-// was not loaded in eager-loading, or loaded but was not found.
-func (e ContactEdges) WorkspaceOrErr() (*Workspace, error) {
-	if e.Workspace != nil {
-		return e.Workspace, nil
-	} else if e.loadedTypes[2] {
-		return nil, &NotFoundError{label: workspace.Label}
-	}
-	return nil, &NotLoadedError{edge: "workspace"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -121,6 +121,24 @@ func (_m *Contact) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field id", value)
 			}
 			_m.ID = int64(value.Int64)
+		case contact.FieldCreatedAt:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field created_at", values[i])
+			} else if value.Valid {
+				_m.CreatedAt = value.Time
+			}
+		case contact.FieldUpdatedAt:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field updated_at", values[i])
+			} else if value.Valid {
+				_m.UpdatedAt = value.Time
+			}
+		case contact.FieldWorkspaceID:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field workspace_id", values[i])
+			} else if value.Valid {
+				_m.WorkspaceID = value.Int64
+			}
 		case contact.FieldSubjectID:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field subject_id", values[i])
@@ -171,24 +189,6 @@ func (_m *Contact) assignValues(columns []string, values []any) error {
 					return fmt.Errorf("unmarshal field custom_fields: %w", err)
 				}
 			}
-		case contact.FieldWorkspaceID:
-			if value, ok := values[i].(*sql.NullInt64); !ok {
-				return fmt.Errorf("unexpected type %T for field workspace_id", values[i])
-			} else if value.Valid {
-				_m.WorkspaceID = value.Int64
-			}
-		case contact.FieldCreatedAt:
-			if value, ok := values[i].(*sql.NullTime); !ok {
-				return fmt.Errorf("unexpected type %T for field created_at", values[i])
-			} else if value.Valid {
-				_m.CreatedAt = value.Time
-			}
-		case contact.FieldUpdatedAt:
-			if value, ok := values[i].(*sql.NullTime); !ok {
-				return fmt.Errorf("unexpected type %T for field updated_at", values[i])
-			} else if value.Valid {
-				_m.UpdatedAt = value.Time
-			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
 		}
@@ -202,6 +202,11 @@ func (_m *Contact) Value(name string) (ent.Value, error) {
 	return _m.selectValues.Get(name)
 }
 
+// QueryWorkspace queries the "workspace" edge of the Contact entity.
+func (_m *Contact) QueryWorkspace() *WorkspaceQuery {
+	return NewContactClient(_m.config).QueryWorkspace(_m)
+}
+
 // QueryVisitors queries the "visitors" edge of the Contact entity.
 func (_m *Contact) QueryVisitors() *VisitorQuery {
 	return NewContactClient(_m.config).QueryVisitors(_m)
@@ -210,11 +215,6 @@ func (_m *Contact) QueryVisitors() *VisitorQuery {
 // QueryTags queries the "tags" edge of the Contact entity.
 func (_m *Contact) QueryTags() *TagQuery {
 	return NewContactClient(_m.config).QueryTags(_m)
-}
-
-// QueryWorkspace queries the "workspace" edge of the Contact entity.
-func (_m *Contact) QueryWorkspace() *WorkspaceQuery {
-	return NewContactClient(_m.config).QueryWorkspace(_m)
 }
 
 // Update returns a builder for updating this Contact.
@@ -240,6 +240,15 @@ func (_m *Contact) String() string {
 	var builder strings.Builder
 	builder.WriteString("Contact(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
+	builder.WriteString("created_at=")
+	builder.WriteString(_m.CreatedAt.Format(time.ANSIC))
+	builder.WriteString(", ")
+	builder.WriteString("updated_at=")
+	builder.WriteString(_m.UpdatedAt.Format(time.ANSIC))
+	builder.WriteString(", ")
+	builder.WriteString("workspace_id=")
+	builder.WriteString(fmt.Sprintf("%v", _m.WorkspaceID))
+	builder.WriteString(", ")
 	if v := _m.SubjectID; v != nil {
 		builder.WriteString("subject_id=")
 		builder.WriteString(*v)
@@ -272,15 +281,6 @@ func (_m *Contact) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("custom_fields=")
 	builder.WriteString(fmt.Sprintf("%v", _m.CustomFields))
-	builder.WriteString(", ")
-	builder.WriteString("workspace_id=")
-	builder.WriteString(fmt.Sprintf("%v", _m.WorkspaceID))
-	builder.WriteString(", ")
-	builder.WriteString("created_at=")
-	builder.WriteString(_m.CreatedAt.Format(time.ANSIC))
-	builder.WriteString(", ")
-	builder.WriteString("updated_at=")
-	builder.WriteString(_m.UpdatedAt.Format(time.ANSIC))
 	builder.WriteByte(')')
 	return builder.String()
 }

@@ -41,9 +41,9 @@ func TestResolverEmailSender(t *testing.T) {
 	env := testhelper.Setup(t)
 	ctx := context.Background()
 
-	resolver := messaging.NewResolver(env.DB, envCipher(t), registry.Default())
+	resolver := messaging.NewResolver(envCipher(t), registry.Default())
 
-	sender, err := resolver.EmailSender(ctx, 1)
+	sender, err := resolver.EmailSender(ctx, env.DB.Scoped(fixtures.AcmeID))
 	require.NoError(t, err)
 	assert.NotNil(t, sender)
 }
@@ -54,8 +54,8 @@ func TestResolverNoDefault(t *testing.T) {
 	ctx := context.Background()
 
 	// The Globex fixture tenant has no integration.
-	resolver := messaging.NewResolver(env.DB, newTestCipher(t), registry.Default())
+	resolver := messaging.NewResolver(newTestCipher(t), registry.Default())
 
-	_, err := resolver.EmailSender(ctx, fixtures.GlobexID)
+	_, err := resolver.EmailSender(ctx, env.DB.Scoped(fixtures.GlobexID))
 	assert.ErrorIs(t, err, messaging.ErrNoProvider)
 }

@@ -26,8 +26,9 @@ func closedClient(t *testing.T) *ent.Client {
 // A storage failure surfaces as the underlying error: it is never mistaken for a
 // missing contact, an invalid name, or an empty catalogue.
 func TestStorageFailuresSurfaceAsErrors(t *testing.T) {
-	m := tags.New(closedClient(t))
+	m := tags.New()
 	ctx := context.Background()
+	wsID := closedClient(t).Scoped(fixtures.AcmeID)
 
 	_, err := m.List(ctx, wsID)
 	require.Error(t, err)
@@ -49,8 +50,9 @@ func TestStorageFailuresSurfaceAsErrors(t *testing.T) {
 // rolls back: the tag is not auto-created.
 func TestApplyToAnotherWorkspacesContactCreatesNoTag(t *testing.T) {
 	env := testhelper.Setup(t)
-	m := tags.New(env.DB)
+	m := tags.New()
 	ctx := context.Background()
+	otherWsID := env.DB.Scoped(fixtures.GlobexID)
 
 	_, err := m.Apply(ctx, otherWsID, fixtures.ContactAliceID, "sneaky")
 	require.ErrorIs(t, err, tags.ErrContactNotFound)

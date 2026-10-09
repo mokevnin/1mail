@@ -32,6 +32,26 @@ func (_u *ContactUpdate) Where(ps ...predicate.Contact) *ContactUpdate {
 	return _u
 }
 
+// SetUpdatedAt sets the "updated_at" field.
+func (_u *ContactUpdate) SetUpdatedAt(v time.Time) *ContactUpdate {
+	_u.mutation.SetUpdatedAt(v)
+	return _u
+}
+
+// SetWorkspaceID sets the "workspace_id" field.
+func (_u *ContactUpdate) SetWorkspaceID(v int64) *ContactUpdate {
+	_u.mutation.SetWorkspaceID(v)
+	return _u
+}
+
+// SetNillableWorkspaceID sets the "workspace_id" field if the given value is not nil.
+func (_u *ContactUpdate) SetNillableWorkspaceID(v *int64) *ContactUpdate {
+	if v != nil {
+		_u.SetWorkspaceID(*v)
+	}
+	return _u
+}
+
 // SetSubjectID sets the "subject_id" field.
 func (_u *ContactUpdate) SetSubjectID(v string) *ContactUpdate {
 	_u.mutation.SetSubjectID(v)
@@ -164,24 +184,9 @@ func (_u *ContactUpdate) ClearCustomFields() *ContactUpdate {
 	return _u
 }
 
-// SetWorkspaceID sets the "workspace_id" field.
-func (_u *ContactUpdate) SetWorkspaceID(v int64) *ContactUpdate {
-	_u.mutation.SetWorkspaceID(v)
-	return _u
-}
-
-// SetNillableWorkspaceID sets the "workspace_id" field if the given value is not nil.
-func (_u *ContactUpdate) SetNillableWorkspaceID(v *int64) *ContactUpdate {
-	if v != nil {
-		_u.SetWorkspaceID(*v)
-	}
-	return _u
-}
-
-// SetUpdatedAt sets the "updated_at" field.
-func (_u *ContactUpdate) SetUpdatedAt(v time.Time) *ContactUpdate {
-	_u.mutation.SetUpdatedAt(v)
-	return _u
+// SetWorkspace sets the "workspace" edge to the Workspace entity.
+func (_u *ContactUpdate) SetWorkspace(v *Workspace) *ContactUpdate {
+	return _u.SetWorkspaceID(v.ID)
 }
 
 // AddVisitorIDs adds the "visitors" edge to the Visitor entity by IDs.
@@ -214,14 +219,15 @@ func (_u *ContactUpdate) AddTags(v ...*Tag) *ContactUpdate {
 	return _u.AddTagIDs(ids...)
 }
 
-// SetWorkspace sets the "workspace" edge to the Workspace entity.
-func (_u *ContactUpdate) SetWorkspace(v *Workspace) *ContactUpdate {
-	return _u.SetWorkspaceID(v.ID)
-}
-
 // Mutation returns the ContactMutation object of the builder.
 func (_u *ContactUpdate) Mutation() *ContactMutation {
 	return _u.mutation
+}
+
+// ClearWorkspace clears the "workspace" edge to the Workspace entity.
+func (_u *ContactUpdate) ClearWorkspace() *ContactUpdate {
+	_u.mutation.ClearWorkspace()
+	return _u
 }
 
 // ClearVisitors clears all "visitors" edges to the Visitor entity.
@@ -264,12 +270,6 @@ func (_u *ContactUpdate) RemoveTags(v ...*Tag) *ContactUpdate {
 		ids[i] = v[i].ID
 	}
 	return _u.RemoveTagIDs(ids...)
-}
-
-// ClearWorkspace clears the "workspace" edge to the Workspace entity.
-func (_u *ContactUpdate) ClearWorkspace() *ContactUpdate {
-	_u.mutation.ClearWorkspace()
-	return _u
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -334,6 +334,9 @@ func (_u *ContactUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 			}
 		}
 	}
+	if value, ok := _u.mutation.UpdatedAt(); ok {
+		_spec.SetField(contact.FieldUpdatedAt, field.TypeTime, value)
+	}
 	if value, ok := _u.mutation.SubjectID(); ok {
 		_spec.SetField(contact.FieldSubjectID, field.TypeString, value)
 	}
@@ -376,8 +379,34 @@ func (_u *ContactUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	if _u.mutation.CustomFieldsCleared() {
 		_spec.ClearField(contact.FieldCustomFields, field.TypeJSON)
 	}
-	if value, ok := _u.mutation.UpdatedAt(); ok {
-		_spec.SetField(contact.FieldUpdatedAt, field.TypeTime, value)
+	if _u.mutation.WorkspaceCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   contact.WorkspaceTable,
+			Columns: []string{contact.WorkspaceColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(workspace.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.WorkspaceIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   contact.WorkspaceTable,
+			Columns: []string{contact.WorkspaceColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(workspace.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if _u.mutation.VisitorsCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -469,35 +498,6 @@ func (_u *ContactUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if _u.mutation.WorkspaceCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: true,
-			Table:   contact.WorkspaceTable,
-			Columns: []string{contact.WorkspaceColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(workspace.FieldID, field.TypeInt64),
-			},
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := _u.mutation.WorkspaceIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: true,
-			Table:   contact.WorkspaceTable,
-			Columns: []string{contact.WorkspaceColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(workspace.FieldID, field.TypeInt64),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
-	}
 	_spec.AddModifiers(_u.modifiers...)
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -518,6 +518,26 @@ type ContactUpdateOne struct {
 	hooks     []Hook
 	mutation  *ContactMutation
 	modifiers []func(*sql.UpdateBuilder)
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (_u *ContactUpdateOne) SetUpdatedAt(v time.Time) *ContactUpdateOne {
+	_u.mutation.SetUpdatedAt(v)
+	return _u
+}
+
+// SetWorkspaceID sets the "workspace_id" field.
+func (_u *ContactUpdateOne) SetWorkspaceID(v int64) *ContactUpdateOne {
+	_u.mutation.SetWorkspaceID(v)
+	return _u
+}
+
+// SetNillableWorkspaceID sets the "workspace_id" field if the given value is not nil.
+func (_u *ContactUpdateOne) SetNillableWorkspaceID(v *int64) *ContactUpdateOne {
+	if v != nil {
+		_u.SetWorkspaceID(*v)
+	}
+	return _u
 }
 
 // SetSubjectID sets the "subject_id" field.
@@ -652,24 +672,9 @@ func (_u *ContactUpdateOne) ClearCustomFields() *ContactUpdateOne {
 	return _u
 }
 
-// SetWorkspaceID sets the "workspace_id" field.
-func (_u *ContactUpdateOne) SetWorkspaceID(v int64) *ContactUpdateOne {
-	_u.mutation.SetWorkspaceID(v)
-	return _u
-}
-
-// SetNillableWorkspaceID sets the "workspace_id" field if the given value is not nil.
-func (_u *ContactUpdateOne) SetNillableWorkspaceID(v *int64) *ContactUpdateOne {
-	if v != nil {
-		_u.SetWorkspaceID(*v)
-	}
-	return _u
-}
-
-// SetUpdatedAt sets the "updated_at" field.
-func (_u *ContactUpdateOne) SetUpdatedAt(v time.Time) *ContactUpdateOne {
-	_u.mutation.SetUpdatedAt(v)
-	return _u
+// SetWorkspace sets the "workspace" edge to the Workspace entity.
+func (_u *ContactUpdateOne) SetWorkspace(v *Workspace) *ContactUpdateOne {
+	return _u.SetWorkspaceID(v.ID)
 }
 
 // AddVisitorIDs adds the "visitors" edge to the Visitor entity by IDs.
@@ -702,14 +707,15 @@ func (_u *ContactUpdateOne) AddTags(v ...*Tag) *ContactUpdateOne {
 	return _u.AddTagIDs(ids...)
 }
 
-// SetWorkspace sets the "workspace" edge to the Workspace entity.
-func (_u *ContactUpdateOne) SetWorkspace(v *Workspace) *ContactUpdateOne {
-	return _u.SetWorkspaceID(v.ID)
-}
-
 // Mutation returns the ContactMutation object of the builder.
 func (_u *ContactUpdateOne) Mutation() *ContactMutation {
 	return _u.mutation
+}
+
+// ClearWorkspace clears the "workspace" edge to the Workspace entity.
+func (_u *ContactUpdateOne) ClearWorkspace() *ContactUpdateOne {
+	_u.mutation.ClearWorkspace()
+	return _u
 }
 
 // ClearVisitors clears all "visitors" edges to the Visitor entity.
@@ -752,12 +758,6 @@ func (_u *ContactUpdateOne) RemoveTags(v ...*Tag) *ContactUpdateOne {
 		ids[i] = v[i].ID
 	}
 	return _u.RemoveTagIDs(ids...)
-}
-
-// ClearWorkspace clears the "workspace" edge to the Workspace entity.
-func (_u *ContactUpdateOne) ClearWorkspace() *ContactUpdateOne {
-	_u.mutation.ClearWorkspace()
-	return _u
 }
 
 // Where appends a list predicates to the ContactUpdate builder.
@@ -852,6 +852,9 @@ func (_u *ContactUpdateOne) sqlSave(ctx context.Context) (_node *Contact, err er
 			}
 		}
 	}
+	if value, ok := _u.mutation.UpdatedAt(); ok {
+		_spec.SetField(contact.FieldUpdatedAt, field.TypeTime, value)
+	}
 	if value, ok := _u.mutation.SubjectID(); ok {
 		_spec.SetField(contact.FieldSubjectID, field.TypeString, value)
 	}
@@ -894,8 +897,34 @@ func (_u *ContactUpdateOne) sqlSave(ctx context.Context) (_node *Contact, err er
 	if _u.mutation.CustomFieldsCleared() {
 		_spec.ClearField(contact.FieldCustomFields, field.TypeJSON)
 	}
-	if value, ok := _u.mutation.UpdatedAt(); ok {
-		_spec.SetField(contact.FieldUpdatedAt, field.TypeTime, value)
+	if _u.mutation.WorkspaceCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   contact.WorkspaceTable,
+			Columns: []string{contact.WorkspaceColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(workspace.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.WorkspaceIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   contact.WorkspaceTable,
+			Columns: []string{contact.WorkspaceColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(workspace.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if _u.mutation.VisitorsCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -980,35 +1009,6 @@ func (_u *ContactUpdateOne) sqlSave(ctx context.Context) (_node *Contact, err er
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(tag.FieldID, field.TypeInt64),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
-	}
-	if _u.mutation.WorkspaceCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: true,
-			Table:   contact.WorkspaceTable,
-			Columns: []string{contact.WorkspaceColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(workspace.FieldID, field.TypeInt64),
-			},
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := _u.mutation.WorkspaceIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: true,
-			Table:   contact.WorkspaceTable,
-			Columns: []string{contact.WorkspaceColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(workspace.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {

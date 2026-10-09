@@ -1,8 +1,6 @@
 package schema
 
 import (
-	"time"
-
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/entsql"
 	"entgo.io/ent/schema"
@@ -22,6 +20,10 @@ func (OAuthClient) Annotations() []schema.Annotation {
 	}
 }
 
+func (OAuthClient) Mixin() []ent.Mixin {
+	return []ent.Mixin{TimeMixin{}}
+}
+
 func (OAuthClient) Fields() []ent.Field {
 	return []ent.Field{
 		field.Int64("id").
@@ -36,9 +38,6 @@ func (OAuthClient) Fields() []ent.Field {
 		field.String("name").
 			NotEmpty(),
 		field.JSON("redirect_uris", []string{}),
-		field.Time("created_at").
-			Default(time.Now).
-			Immutable(),
 	}
 }
 

@@ -11,7 +11,6 @@ import (
 	"github.com/oklog/ulid/v2"
 
 	"github.com/mokevnin/1mail/ent"
-	"github.com/mokevnin/1mail/ent/emailtemplate"
 	"github.com/mokevnin/1mail/ent/outboundmessage"
 	externalapi "github.com/mokevnin/1mail/gen/external"
 	"github.com/mokevnin/1mail/internal/api/auth"
@@ -38,7 +37,6 @@ func (h *Handlers) EmailsSend(ctx context.Context, req *externalapi.SendTransact
 		res := externalapi.EmailsSendUnauthorized(problem(http.StatusUnauthorized, "insufficient scope"))
 		return &res, nil
 	}
-	ws := auth.WorkspaceID(auth.GetTokenAuth(ctx))
 
 	dest := eligibility.NormalizeDestination(string(req.Destination))
 	if dest == "" {
@@ -52,9 +50,7 @@ func (h *Handlers) EmailsSend(ctx context.Context, req *externalapi.SendTransact
 		return &res, nil
 	}
 	// Workspace-scoped: another workspace's template id must 404, never send.
-	tmpl, err := h.ent.EmailTemplate.Query().
-		Where(emailtemplate.IDEQ(templateID), emailtemplate.WorkspaceID(ws)).
-		Only(ctx)
+	tmpl, err := auth.TokenScoped(ctx).EmailTemplate().Get(ctx, templateID)
 	if ent.IsNotFound(err) {
 		res := externalapi.EmailsSendNotFound(problem(http.StatusNotFound, "template not found"))
 		return &res, nil
@@ -71,7 +67,7 @@ func (h *Handlers) EmailsSend(ctx context.Context, req *externalapi.SendTransact
 
 	// The contact this destination resolves to, when one exists (transactional mail
 	// may go to an address with no contact); the send fact attaches to it.
-	contactID, err := service.ResolveContactID(ctx, h.ent, ws, "", &dest, nil)
+	contactID, err := service.ResolveContactID(ctx, auth.TokenScoped(ctx), "", &dest, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -82,8 +78,7 @@ func (h *Handlers) EmailsSend(ctx context.Context, req *externalapi.SendTransact
 		key = "transactional:" + k
 	}
 
-	res, err := h.outbound.Send(ctx, outbound.Request{
-		WorkspaceID: ws,
+	res, err := h.outbound.Send(ctx, auth.TokenScoped(ctx), outbound.Request{
 		Kind:        outboundmessage.KindTransactional,
 		Key:         key,
 		Destination: dest,

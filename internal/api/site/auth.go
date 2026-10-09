@@ -49,11 +49,7 @@ func (h *Handlers) SiteAuthRegister(ctx context.Context, req *siteapi.SiteRegist
 		return nil, err
 	}
 
-	u, err := h.ent.User.Create().
-		SetName(name).
-		SetEmail(email).
-		SetPasswordHash(hash).
-		Save(ctx)
+	u, err := h.accounts.CreateUser(ctx, name, email, hash)
 	if service.IsUniqueViolation(err) {
 		v := siteapi.SiteAuthRegisterConflict(problemWithErrors(
 			http.StatusConflict,
@@ -66,7 +62,7 @@ func (h *Handlers) SiteAuthRegister(ctx context.Context, req *siteapi.SiteRegist
 		return nil, err
 	}
 
-	if _, err := h.createDefaultWorkspace(ctx, u.ID, name); err != nil {
+	if _, err := h.accounts.CreateWorkspace(ctx, u.ID, name); err != nil {
 		return nil, err
 	}
 

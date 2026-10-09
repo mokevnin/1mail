@@ -24,6 +24,34 @@ type InvitationCreate struct {
 	conflict []sql.ConflictOption
 }
 
+// SetCreatedAt sets the "created_at" field.
+func (_c *InvitationCreate) SetCreatedAt(v time.Time) *InvitationCreate {
+	_c.mutation.SetCreatedAt(v)
+	return _c
+}
+
+// SetNillableCreatedAt sets the "created_at" field if the given value is not nil.
+func (_c *InvitationCreate) SetNillableCreatedAt(v *time.Time) *InvitationCreate {
+	if v != nil {
+		_c.SetCreatedAt(*v)
+	}
+	return _c
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (_c *InvitationCreate) SetUpdatedAt(v time.Time) *InvitationCreate {
+	_c.mutation.SetUpdatedAt(v)
+	return _c
+}
+
+// SetNillableUpdatedAt sets the "updated_at" field if the given value is not nil.
+func (_c *InvitationCreate) SetNillableUpdatedAt(v *time.Time) *InvitationCreate {
+	if v != nil {
+		_c.SetUpdatedAt(*v)
+	}
+	return _c
+}
+
 // SetWorkspaceID sets the "workspace_id" field.
 func (_c *InvitationCreate) SetWorkspaceID(v int64) *InvitationCreate {
 	_c.mutation.SetWorkspaceID(v)
@@ -78,34 +106,6 @@ func (_c *InvitationCreate) SetAcceptedAt(v time.Time) *InvitationCreate {
 func (_c *InvitationCreate) SetNillableAcceptedAt(v *time.Time) *InvitationCreate {
 	if v != nil {
 		_c.SetAcceptedAt(*v)
-	}
-	return _c
-}
-
-// SetCreatedAt sets the "created_at" field.
-func (_c *InvitationCreate) SetCreatedAt(v time.Time) *InvitationCreate {
-	_c.mutation.SetCreatedAt(v)
-	return _c
-}
-
-// SetNillableCreatedAt sets the "created_at" field if the given value is not nil.
-func (_c *InvitationCreate) SetNillableCreatedAt(v *time.Time) *InvitationCreate {
-	if v != nil {
-		_c.SetCreatedAt(*v)
-	}
-	return _c
-}
-
-// SetUpdatedAt sets the "updated_at" field.
-func (_c *InvitationCreate) SetUpdatedAt(v time.Time) *InvitationCreate {
-	_c.mutation.SetUpdatedAt(v)
-	return _c
-}
-
-// SetNillableUpdatedAt sets the "updated_at" field if the given value is not nil.
-func (_c *InvitationCreate) SetNillableUpdatedAt(v *time.Time) *InvitationCreate {
-	if v != nil {
-		_c.SetUpdatedAt(*v)
 	}
 	return _c
 }
@@ -187,6 +187,12 @@ func (_c *InvitationCreate) defaults() {
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *InvitationCreate) check() error {
+	if _, ok := _c.mutation.CreatedAt(); !ok {
+		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "Invitation.created_at"`)}
+	}
+	if _, ok := _c.mutation.UpdatedAt(); !ok {
+		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "Invitation.updated_at"`)}
+	}
 	if _, ok := _c.mutation.WorkspaceID(); !ok {
 		return &ValidationError{Name: "workspace_id", err: errors.New(`ent: missing required field "Invitation.workspace_id"`)}
 	}
@@ -216,12 +222,6 @@ func (_c *InvitationCreate) check() error {
 	}
 	if _, ok := _c.mutation.ExpiresAt(); !ok {
 		return &ValidationError{Name: "expires_at", err: errors.New(`ent: missing required field "Invitation.expires_at"`)}
-	}
-	if _, ok := _c.mutation.CreatedAt(); !ok {
-		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "Invitation.created_at"`)}
-	}
-	if _, ok := _c.mutation.UpdatedAt(); !ok {
-		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "Invitation.updated_at"`)}
 	}
 	if len(_c.mutation.WorkspaceIDs()) == 0 {
 		return &ValidationError{Name: "workspace", err: errors.New(`ent: missing required edge "Invitation.workspace"`)}
@@ -259,6 +259,14 @@ func (_c *InvitationCreate) createSpec() (*Invitation, *sqlgraph.CreateSpec) {
 		_node.ID = id
 		_spec.ID.Value = id
 	}
+	if value, ok := _c.mutation.CreatedAt(); ok {
+		_spec.SetField(invitation.FieldCreatedAt, field.TypeTime, value)
+		_node.CreatedAt = value
+	}
+	if value, ok := _c.mutation.UpdatedAt(); ok {
+		_spec.SetField(invitation.FieldUpdatedAt, field.TypeTime, value)
+		_node.UpdatedAt = value
+	}
 	if value, ok := _c.mutation.Email(); ok {
 		_spec.SetField(invitation.FieldEmail, field.TypeString, value)
 		_node.Email = value
@@ -278,14 +286,6 @@ func (_c *InvitationCreate) createSpec() (*Invitation, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.AcceptedAt(); ok {
 		_spec.SetField(invitation.FieldAcceptedAt, field.TypeTime, value)
 		_node.AcceptedAt = &value
-	}
-	if value, ok := _c.mutation.CreatedAt(); ok {
-		_spec.SetField(invitation.FieldCreatedAt, field.TypeTime, value)
-		_node.CreatedAt = value
-	}
-	if value, ok := _c.mutation.UpdatedAt(); ok {
-		_spec.SetField(invitation.FieldUpdatedAt, field.TypeTime, value)
-		_node.UpdatedAt = value
 	}
 	if nodes := _c.mutation.WorkspaceIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -328,7 +328,7 @@ func (_c *InvitationCreate) createSpec() (*Invitation, *sqlgraph.CreateSpec) {
 // of the `INSERT` statement. For example:
 //
 //	client.Invitation.Create().
-//		SetWorkspaceID(v).
+//		SetCreatedAt(v).
 //		OnConflict(
 //			// Update the row with the new values
 //			// the was proposed for insertion.
@@ -337,7 +337,7 @@ func (_c *InvitationCreate) createSpec() (*Invitation, *sqlgraph.CreateSpec) {
 //		// Override some of the fields with custom
 //		// update values.
 //		Update(func(u *ent.InvitationUpsert) {
-//			SetWorkspaceID(v+v).
+//			SetCreatedAt(v+v).
 //		}).
 //		Exec(ctx)
 func (_c *InvitationCreate) OnConflict(opts ...sql.ConflictOption) *InvitationUpsertOne {
@@ -372,6 +372,18 @@ type (
 		*sql.UpdateSet
 	}
 )
+
+// SetUpdatedAt sets the "updated_at" field.
+func (u *InvitationUpsert) SetUpdatedAt(v time.Time) *InvitationUpsert {
+	u.Set(invitation.FieldUpdatedAt, v)
+	return u
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *InvitationUpsert) UpdateUpdatedAt() *InvitationUpsert {
+	u.SetExcluded(invitation.FieldUpdatedAt)
+	return u
+}
 
 // SetWorkspaceID sets the "workspace_id" field.
 func (u *InvitationUpsert) SetWorkspaceID(v int64) *InvitationUpsert {
@@ -469,18 +481,6 @@ func (u *InvitationUpsert) ClearAcceptedAt() *InvitationUpsert {
 	return u
 }
 
-// SetUpdatedAt sets the "updated_at" field.
-func (u *InvitationUpsert) SetUpdatedAt(v time.Time) *InvitationUpsert {
-	u.Set(invitation.FieldUpdatedAt, v)
-	return u
-}
-
-// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
-func (u *InvitationUpsert) UpdateUpdatedAt() *InvitationUpsert {
-	u.SetExcluded(invitation.FieldUpdatedAt)
-	return u
-}
-
 // UpdateNewValues updates the mutable fields using the new values that were set on create except the ID field.
 // Using this option is equivalent to using:
 //
@@ -530,6 +530,20 @@ func (u *InvitationUpsertOne) Update(set func(*InvitationUpsert)) *InvitationUps
 		set(&InvitationUpsert{UpdateSet: update})
 	}))
 	return u
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (u *InvitationUpsertOne) SetUpdatedAt(v time.Time) *InvitationUpsertOne {
+	return u.Update(func(s *InvitationUpsert) {
+		s.SetUpdatedAt(v)
+	})
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *InvitationUpsertOne) UpdateUpdatedAt() *InvitationUpsertOne {
+	return u.Update(func(s *InvitationUpsert) {
+		s.UpdateUpdatedAt()
+	})
 }
 
 // SetWorkspaceID sets the "workspace_id" field.
@@ -641,20 +655,6 @@ func (u *InvitationUpsertOne) UpdateAcceptedAt() *InvitationUpsertOne {
 func (u *InvitationUpsertOne) ClearAcceptedAt() *InvitationUpsertOne {
 	return u.Update(func(s *InvitationUpsert) {
 		s.ClearAcceptedAt()
-	})
-}
-
-// SetUpdatedAt sets the "updated_at" field.
-func (u *InvitationUpsertOne) SetUpdatedAt(v time.Time) *InvitationUpsertOne {
-	return u.Update(func(s *InvitationUpsert) {
-		s.SetUpdatedAt(v)
-	})
-}
-
-// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
-func (u *InvitationUpsertOne) UpdateUpdatedAt() *InvitationUpsertOne {
-	return u.Update(func(s *InvitationUpsert) {
-		s.UpdateUpdatedAt()
 	})
 }
 
@@ -793,7 +793,7 @@ func (_c *InvitationCreateBulk) ExecX(ctx context.Context) {
 //		// Override some of the fields with custom
 //		// update values.
 //		Update(func(u *ent.InvitationUpsert) {
-//			SetWorkspaceID(v+v).
+//			SetCreatedAt(v+v).
 //		}).
 //		Exec(ctx)
 func (_c *InvitationCreateBulk) OnConflict(opts ...sql.ConflictOption) *InvitationUpsertBulk {
@@ -873,6 +873,20 @@ func (u *InvitationUpsertBulk) Update(set func(*InvitationUpsert)) *InvitationUp
 		set(&InvitationUpsert{UpdateSet: update})
 	}))
 	return u
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (u *InvitationUpsertBulk) SetUpdatedAt(v time.Time) *InvitationUpsertBulk {
+	return u.Update(func(s *InvitationUpsert) {
+		s.SetUpdatedAt(v)
+	})
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *InvitationUpsertBulk) UpdateUpdatedAt() *InvitationUpsertBulk {
+	return u.Update(func(s *InvitationUpsert) {
+		s.UpdateUpdatedAt()
+	})
 }
 
 // SetWorkspaceID sets the "workspace_id" field.
@@ -984,20 +998,6 @@ func (u *InvitationUpsertBulk) UpdateAcceptedAt() *InvitationUpsertBulk {
 func (u *InvitationUpsertBulk) ClearAcceptedAt() *InvitationUpsertBulk {
 	return u.Update(func(s *InvitationUpsert) {
 		s.ClearAcceptedAt()
-	})
-}
-
-// SetUpdatedAt sets the "updated_at" field.
-func (u *InvitationUpsertBulk) SetUpdatedAt(v time.Time) *InvitationUpsertBulk {
-	return u.Update(func(s *InvitationUpsert) {
-		s.SetUpdatedAt(v)
-	})
-}
-
-// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
-func (u *InvitationUpsertBulk) UpdateUpdatedAt() *InvitationUpsertBulk {
-	return u.Update(func(s *InvitationUpsert) {
-		s.UpdateUpdatedAt()
 	})
 }
 

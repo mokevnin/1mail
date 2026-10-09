@@ -55,21 +55,6 @@ func IDLTE(id int64) predicate.Visitor {
 	return predicate.Visitor(sql.FieldLTE(FieldID, id))
 }
 
-// VisitorID applies equality check predicate on the "visitor_id" field. It's identical to VisitorIDEQ.
-func VisitorID(v string) predicate.Visitor {
-	return predicate.Visitor(sql.FieldEQ(FieldVisitorID, v))
-}
-
-// WorkspaceID applies equality check predicate on the "workspace_id" field. It's identical to WorkspaceIDEQ.
-func WorkspaceID(v int64) predicate.Visitor {
-	return predicate.Visitor(sql.FieldEQ(FieldWorkspaceID, v))
-}
-
-// ContactID applies equality check predicate on the "contact_id" field. It's identical to ContactIDEQ.
-func ContactID(v int64) predicate.Visitor {
-	return predicate.Visitor(sql.FieldEQ(FieldContactID, v))
-}
-
 // CreatedAt applies equality check predicate on the "created_at" field. It's identical to CreatedAtEQ.
 func CreatedAt(v time.Time) predicate.Visitor {
 	return predicate.Visitor(sql.FieldEQ(FieldCreatedAt, v))
@@ -80,124 +65,24 @@ func UpdatedAt(v time.Time) predicate.Visitor {
 	return predicate.Visitor(sql.FieldEQ(FieldUpdatedAt, v))
 }
 
-// LastSeenAt applies equality check predicate on the "last_seen_at" field. It's identical to LastSeenAtEQ.
-func LastSeenAt(v time.Time) predicate.Visitor {
-	return predicate.Visitor(sql.FieldEQ(FieldLastSeenAt, v))
-}
-
-// VisitorIDEQ applies the EQ predicate on the "visitor_id" field.
-func VisitorIDEQ(v string) predicate.Visitor {
-	return predicate.Visitor(sql.FieldEQ(FieldVisitorID, v))
-}
-
-// VisitorIDNEQ applies the NEQ predicate on the "visitor_id" field.
-func VisitorIDNEQ(v string) predicate.Visitor {
-	return predicate.Visitor(sql.FieldNEQ(FieldVisitorID, v))
-}
-
-// VisitorIDIn applies the In predicate on the "visitor_id" field.
-func VisitorIDIn(vs ...string) predicate.Visitor {
-	return predicate.Visitor(sql.FieldIn(FieldVisitorID, vs...))
-}
-
-// VisitorIDNotIn applies the NotIn predicate on the "visitor_id" field.
-func VisitorIDNotIn(vs ...string) predicate.Visitor {
-	return predicate.Visitor(sql.FieldNotIn(FieldVisitorID, vs...))
-}
-
-// VisitorIDGT applies the GT predicate on the "visitor_id" field.
-func VisitorIDGT(v string) predicate.Visitor {
-	return predicate.Visitor(sql.FieldGT(FieldVisitorID, v))
-}
-
-// VisitorIDGTE applies the GTE predicate on the "visitor_id" field.
-func VisitorIDGTE(v string) predicate.Visitor {
-	return predicate.Visitor(sql.FieldGTE(FieldVisitorID, v))
-}
-
-// VisitorIDLT applies the LT predicate on the "visitor_id" field.
-func VisitorIDLT(v string) predicate.Visitor {
-	return predicate.Visitor(sql.FieldLT(FieldVisitorID, v))
-}
-
-// VisitorIDLTE applies the LTE predicate on the "visitor_id" field.
-func VisitorIDLTE(v string) predicate.Visitor {
-	return predicate.Visitor(sql.FieldLTE(FieldVisitorID, v))
-}
-
-// VisitorIDContains applies the Contains predicate on the "visitor_id" field.
-func VisitorIDContains(v string) predicate.Visitor {
-	return predicate.Visitor(sql.FieldContains(FieldVisitorID, v))
-}
-
-// VisitorIDHasPrefix applies the HasPrefix predicate on the "visitor_id" field.
-func VisitorIDHasPrefix(v string) predicate.Visitor {
-	return predicate.Visitor(sql.FieldHasPrefix(FieldVisitorID, v))
-}
-
-// VisitorIDHasSuffix applies the HasSuffix predicate on the "visitor_id" field.
-func VisitorIDHasSuffix(v string) predicate.Visitor {
-	return predicate.Visitor(sql.FieldHasSuffix(FieldVisitorID, v))
-}
-
-// VisitorIDEqualFold applies the EqualFold predicate on the "visitor_id" field.
-func VisitorIDEqualFold(v string) predicate.Visitor {
-	return predicate.Visitor(sql.FieldEqualFold(FieldVisitorID, v))
-}
-
-// VisitorIDContainsFold applies the ContainsFold predicate on the "visitor_id" field.
-func VisitorIDContainsFold(v string) predicate.Visitor {
-	return predicate.Visitor(sql.FieldContainsFold(FieldVisitorID, v))
-}
-
-// WorkspaceIDEQ applies the EQ predicate on the "workspace_id" field.
-func WorkspaceIDEQ(v int64) predicate.Visitor {
+// WorkspaceID applies equality check predicate on the "workspace_id" field. It's identical to WorkspaceIDEQ.
+func WorkspaceID(v int64) predicate.Visitor {
 	return predicate.Visitor(sql.FieldEQ(FieldWorkspaceID, v))
 }
 
-// WorkspaceIDNEQ applies the NEQ predicate on the "workspace_id" field.
-func WorkspaceIDNEQ(v int64) predicate.Visitor {
-	return predicate.Visitor(sql.FieldNEQ(FieldWorkspaceID, v))
+// VisitorID applies equality check predicate on the "visitor_id" field. It's identical to VisitorIDEQ.
+func VisitorID(v string) predicate.Visitor {
+	return predicate.Visitor(sql.FieldEQ(FieldVisitorID, v))
 }
 
-// WorkspaceIDIn applies the In predicate on the "workspace_id" field.
-func WorkspaceIDIn(vs ...int64) predicate.Visitor {
-	return predicate.Visitor(sql.FieldIn(FieldWorkspaceID, vs...))
-}
-
-// WorkspaceIDNotIn applies the NotIn predicate on the "workspace_id" field.
-func WorkspaceIDNotIn(vs ...int64) predicate.Visitor {
-	return predicate.Visitor(sql.FieldNotIn(FieldWorkspaceID, vs...))
-}
-
-// ContactIDEQ applies the EQ predicate on the "contact_id" field.
-func ContactIDEQ(v int64) predicate.Visitor {
+// ContactID applies equality check predicate on the "contact_id" field. It's identical to ContactIDEQ.
+func ContactID(v int64) predicate.Visitor {
 	return predicate.Visitor(sql.FieldEQ(FieldContactID, v))
 }
 
-// ContactIDNEQ applies the NEQ predicate on the "contact_id" field.
-func ContactIDNEQ(v int64) predicate.Visitor {
-	return predicate.Visitor(sql.FieldNEQ(FieldContactID, v))
-}
-
-// ContactIDIn applies the In predicate on the "contact_id" field.
-func ContactIDIn(vs ...int64) predicate.Visitor {
-	return predicate.Visitor(sql.FieldIn(FieldContactID, vs...))
-}
-
-// ContactIDNotIn applies the NotIn predicate on the "contact_id" field.
-func ContactIDNotIn(vs ...int64) predicate.Visitor {
-	return predicate.Visitor(sql.FieldNotIn(FieldContactID, vs...))
-}
-
-// ContactIDIsNil applies the IsNil predicate on the "contact_id" field.
-func ContactIDIsNil() predicate.Visitor {
-	return predicate.Visitor(sql.FieldIsNull(FieldContactID))
-}
-
-// ContactIDNotNil applies the NotNil predicate on the "contact_id" field.
-func ContactIDNotNil() predicate.Visitor {
-	return predicate.Visitor(sql.FieldNotNull(FieldContactID))
+// LastSeenAt applies equality check predicate on the "last_seen_at" field. It's identical to LastSeenAtEQ.
+func LastSeenAt(v time.Time) predicate.Visitor {
+	return predicate.Visitor(sql.FieldEQ(FieldLastSeenAt, v))
 }
 
 // CreatedAtEQ applies the EQ predicate on the "created_at" field.
@@ -280,6 +165,121 @@ func UpdatedAtLTE(v time.Time) predicate.Visitor {
 	return predicate.Visitor(sql.FieldLTE(FieldUpdatedAt, v))
 }
 
+// WorkspaceIDEQ applies the EQ predicate on the "workspace_id" field.
+func WorkspaceIDEQ(v int64) predicate.Visitor {
+	return predicate.Visitor(sql.FieldEQ(FieldWorkspaceID, v))
+}
+
+// WorkspaceIDNEQ applies the NEQ predicate on the "workspace_id" field.
+func WorkspaceIDNEQ(v int64) predicate.Visitor {
+	return predicate.Visitor(sql.FieldNEQ(FieldWorkspaceID, v))
+}
+
+// WorkspaceIDIn applies the In predicate on the "workspace_id" field.
+func WorkspaceIDIn(vs ...int64) predicate.Visitor {
+	return predicate.Visitor(sql.FieldIn(FieldWorkspaceID, vs...))
+}
+
+// WorkspaceIDNotIn applies the NotIn predicate on the "workspace_id" field.
+func WorkspaceIDNotIn(vs ...int64) predicate.Visitor {
+	return predicate.Visitor(sql.FieldNotIn(FieldWorkspaceID, vs...))
+}
+
+// VisitorIDEQ applies the EQ predicate on the "visitor_id" field.
+func VisitorIDEQ(v string) predicate.Visitor {
+	return predicate.Visitor(sql.FieldEQ(FieldVisitorID, v))
+}
+
+// VisitorIDNEQ applies the NEQ predicate on the "visitor_id" field.
+func VisitorIDNEQ(v string) predicate.Visitor {
+	return predicate.Visitor(sql.FieldNEQ(FieldVisitorID, v))
+}
+
+// VisitorIDIn applies the In predicate on the "visitor_id" field.
+func VisitorIDIn(vs ...string) predicate.Visitor {
+	return predicate.Visitor(sql.FieldIn(FieldVisitorID, vs...))
+}
+
+// VisitorIDNotIn applies the NotIn predicate on the "visitor_id" field.
+func VisitorIDNotIn(vs ...string) predicate.Visitor {
+	return predicate.Visitor(sql.FieldNotIn(FieldVisitorID, vs...))
+}
+
+// VisitorIDGT applies the GT predicate on the "visitor_id" field.
+func VisitorIDGT(v string) predicate.Visitor {
+	return predicate.Visitor(sql.FieldGT(FieldVisitorID, v))
+}
+
+// VisitorIDGTE applies the GTE predicate on the "visitor_id" field.
+func VisitorIDGTE(v string) predicate.Visitor {
+	return predicate.Visitor(sql.FieldGTE(FieldVisitorID, v))
+}
+
+// VisitorIDLT applies the LT predicate on the "visitor_id" field.
+func VisitorIDLT(v string) predicate.Visitor {
+	return predicate.Visitor(sql.FieldLT(FieldVisitorID, v))
+}
+
+// VisitorIDLTE applies the LTE predicate on the "visitor_id" field.
+func VisitorIDLTE(v string) predicate.Visitor {
+	return predicate.Visitor(sql.FieldLTE(FieldVisitorID, v))
+}
+
+// VisitorIDContains applies the Contains predicate on the "visitor_id" field.
+func VisitorIDContains(v string) predicate.Visitor {
+	return predicate.Visitor(sql.FieldContains(FieldVisitorID, v))
+}
+
+// VisitorIDHasPrefix applies the HasPrefix predicate on the "visitor_id" field.
+func VisitorIDHasPrefix(v string) predicate.Visitor {
+	return predicate.Visitor(sql.FieldHasPrefix(FieldVisitorID, v))
+}
+
+// VisitorIDHasSuffix applies the HasSuffix predicate on the "visitor_id" field.
+func VisitorIDHasSuffix(v string) predicate.Visitor {
+	return predicate.Visitor(sql.FieldHasSuffix(FieldVisitorID, v))
+}
+
+// VisitorIDEqualFold applies the EqualFold predicate on the "visitor_id" field.
+func VisitorIDEqualFold(v string) predicate.Visitor {
+	return predicate.Visitor(sql.FieldEqualFold(FieldVisitorID, v))
+}
+
+// VisitorIDContainsFold applies the ContainsFold predicate on the "visitor_id" field.
+func VisitorIDContainsFold(v string) predicate.Visitor {
+	return predicate.Visitor(sql.FieldContainsFold(FieldVisitorID, v))
+}
+
+// ContactIDEQ applies the EQ predicate on the "contact_id" field.
+func ContactIDEQ(v int64) predicate.Visitor {
+	return predicate.Visitor(sql.FieldEQ(FieldContactID, v))
+}
+
+// ContactIDNEQ applies the NEQ predicate on the "contact_id" field.
+func ContactIDNEQ(v int64) predicate.Visitor {
+	return predicate.Visitor(sql.FieldNEQ(FieldContactID, v))
+}
+
+// ContactIDIn applies the In predicate on the "contact_id" field.
+func ContactIDIn(vs ...int64) predicate.Visitor {
+	return predicate.Visitor(sql.FieldIn(FieldContactID, vs...))
+}
+
+// ContactIDNotIn applies the NotIn predicate on the "contact_id" field.
+func ContactIDNotIn(vs ...int64) predicate.Visitor {
+	return predicate.Visitor(sql.FieldNotIn(FieldContactID, vs...))
+}
+
+// ContactIDIsNil applies the IsNil predicate on the "contact_id" field.
+func ContactIDIsNil() predicate.Visitor {
+	return predicate.Visitor(sql.FieldIsNull(FieldContactID))
+}
+
+// ContactIDNotNil applies the NotNil predicate on the "contact_id" field.
+func ContactIDNotNil() predicate.Visitor {
+	return predicate.Visitor(sql.FieldNotNull(FieldContactID))
+}
+
 // LastSeenAtEQ applies the EQ predicate on the "last_seen_at" field.
 func LastSeenAtEQ(v time.Time) predicate.Visitor {
 	return predicate.Visitor(sql.FieldEQ(FieldLastSeenAt, v))
@@ -320,29 +320,6 @@ func LastSeenAtLTE(v time.Time) predicate.Visitor {
 	return predicate.Visitor(sql.FieldLTE(FieldLastSeenAt, v))
 }
 
-// HasContact applies the HasEdge predicate on the "contact" edge.
-func HasContact() predicate.Visitor {
-	return predicate.Visitor(func(s *sql.Selector) {
-		step := sqlgraph.NewStep(
-			sqlgraph.From(Table, FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, true, ContactTable, ContactColumn),
-		)
-		sqlgraph.HasNeighbors(s, step)
-	})
-}
-
-// HasContactWith applies the HasEdge predicate on the "contact" edge with a given conditions (other predicates).
-func HasContactWith(preds ...predicate.Contact) predicate.Visitor {
-	return predicate.Visitor(func(s *sql.Selector) {
-		step := newContactStep()
-		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
-			for _, p := range preds {
-				p(s)
-			}
-		})
-	})
-}
-
 // HasWorkspace applies the HasEdge predicate on the "workspace" edge.
 func HasWorkspace() predicate.Visitor {
 	return predicate.Visitor(func(s *sql.Selector) {
@@ -358,6 +335,29 @@ func HasWorkspace() predicate.Visitor {
 func HasWorkspaceWith(preds ...predicate.Workspace) predicate.Visitor {
 	return predicate.Visitor(func(s *sql.Selector) {
 		step := newWorkspaceStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasContact applies the HasEdge predicate on the "contact" edge.
+func HasContact() predicate.Visitor {
+	return predicate.Visitor(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, ContactTable, ContactColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasContactWith applies the HasEdge predicate on the "contact" edge with a given conditions (other predicates).
+func HasContactWith(preds ...predicate.Contact) predicate.Visitor {
+	return predicate.Visitor(func(s *sql.Selector) {
+		step := newContactStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)

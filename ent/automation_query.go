@@ -337,12 +337,12 @@ func (_q *AutomationQuery) WithRuns(opts ...func(*AutomationRunQuery)) *Automati
 // Example:
 //
 //	var v []struct {
-//		Name string `json:"name,omitempty"`
+//		CreatedAt time.Time `json:"created_at,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.Automation.Query().
-//		GroupBy(automation.FieldName).
+//		GroupBy(automation.FieldCreatedAt).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
 func (_q *AutomationQuery) GroupBy(field string, fields ...string) *AutomationGroupBy {
@@ -360,11 +360,11 @@ func (_q *AutomationQuery) GroupBy(field string, fields ...string) *AutomationGr
 // Example:
 //
 //	var v []struct {
-//		Name string `json:"name,omitempty"`
+//		CreatedAt time.Time `json:"created_at,omitempty"`
 //	}
 //
 //	client.Automation.Query().
-//		Select(automation.FieldName).
+//		Select(automation.FieldCreatedAt).
 //		Scan(ctx, &v)
 func (_q *AutomationQuery) Select(fields ...string) *AutomationSelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)

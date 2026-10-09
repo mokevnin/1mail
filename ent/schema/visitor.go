@@ -25,6 +25,10 @@ func (Visitor) Annotations() []schema.Annotation {
 	}
 }
 
+func (Visitor) Mixin() []ent.Mixin {
+	return []ent.Mixin{TimeMixin{}, WorkspaceMixin{Ref: "visitors"}}
+}
+
 func (Visitor) Fields() []ent.Field {
 	return []ent.Field{
 		field.Int64("id").
@@ -32,17 +36,10 @@ func (Visitor) Fields() []ent.Field {
 			Immutable(),
 		field.String("visitor_id").
 			NotEmpty(),
-		field.Int64("workspace_id"),
 		// Null until Identify resolves who this device is.
 		field.Int64("contact_id").
 			Optional().
 			Nillable(),
-		field.Time("created_at").
-			Default(time.Now).
-			Immutable(),
-		field.Time("updated_at").
-			Default(time.Now).
-			UpdateDefault(time.Now),
 		field.Time("last_seen_at").
 			Default(time.Now),
 	}
@@ -53,11 +50,6 @@ func (Visitor) Edges() []ent.Edge {
 		edge.From("contact", Contact.Type).
 			Ref("visitors").
 			Field("contact_id").
-			Unique(),
-		edge.From("workspace", Workspace.Type).
-			Ref("visitors").
-			Field("workspace_id").
-			Required().
 			Unique(),
 	}
 }

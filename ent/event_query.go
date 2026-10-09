@@ -300,12 +300,12 @@ func (_q *EventQuery) WithWorkspace(opts ...func(*WorkspaceQuery)) *EventQuery {
 // Example:
 //
 //	var v []struct {
-//		SourceID string `json:"source_id,omitempty"`
+//		CreatedAt time.Time `json:"created_at,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.Event.Query().
-//		GroupBy(event.FieldSourceID).
+//		GroupBy(event.FieldCreatedAt).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
 func (_q *EventQuery) GroupBy(field string, fields ...string) *EventGroupBy {
@@ -323,11 +323,11 @@ func (_q *EventQuery) GroupBy(field string, fields ...string) *EventGroupBy {
 // Example:
 //
 //	var v []struct {
-//		SourceID string `json:"source_id,omitempty"`
+//		CreatedAt time.Time `json:"created_at,omitempty"`
 //	}
 //
 //	client.Event.Query().
-//		Select(event.FieldSourceID).
+//		Select(event.FieldCreatedAt).
 //		Scan(ctx, &v)
 func (_q *EventQuery) Select(fields ...string) *EventSelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)
