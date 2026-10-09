@@ -87,7 +87,7 @@ func New(cfg *config.Config, client *ent.Client, db *sql.DB, bus *events.Bus, ci
 
 	// External API — /api (Bearer token auth via ogen SecurityHandler).
 	extSrv, err := externalapi.NewServer(
-		apiexternal.NewHandlers(client, cfg.BootstrapToken, eventLog, sender),
+		apiexternal.NewHandlers(client, cfg.BootstrapToken, bus, eventLog, sender),
 		apiauth.NewExternalSecurityHandler(client),
 		externalapi.WithPathPrefix("/api"),
 		externalapi.WithErrorHandler(problemErrorHandler),

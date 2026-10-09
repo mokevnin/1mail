@@ -8,6 +8,7 @@ import (
 	externalapi "github.com/mokevnin/1mail/gen/external"
 	"github.com/mokevnin/1mail/internal/api/external/resources"
 	"github.com/mokevnin/1mail/internal/eventlog"
+	"github.com/mokevnin/1mail/internal/events"
 	"github.com/mokevnin/1mail/internal/outbound"
 )
 
@@ -17,13 +18,14 @@ var mapper = &resources.ConverterImpl{}
 type Handlers struct {
 	externalapi.UnimplementedHandler
 	ent            *ent.Client
+	bus            *events.Bus
 	eventlog       *eventlog.Module
 	outbound       *outbound.Module
 	bootstrapToken string
 }
 
-func NewHandlers(client *ent.Client, bootstrapToken string, events *eventlog.Module, sender *outbound.Module) *Handlers {
-	return &Handlers{ent: client, eventlog: events, outbound: sender, bootstrapToken: bootstrapToken}
+func NewHandlers(client *ent.Client, bootstrapToken string, bus *events.Bus, eventLog *eventlog.Module, sender *outbound.Module) *Handlers {
+	return &Handlers{ent: client, bus: bus, eventlog: eventLog, outbound: sender, bootstrapToken: bootstrapToken}
 }
 
 var _ externalapi.Handler = (*Handlers)(nil)
