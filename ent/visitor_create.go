@@ -52,15 +52,15 @@ func (_c *VisitorCreate) SetNillableUpdatedAt(v *time.Time) *VisitorCreate {
 	return _c
 }
 
-// SetVisitorID sets the "visitor_id" field.
-func (_c *VisitorCreate) SetVisitorID(v string) *VisitorCreate {
-	_c.mutation.SetVisitorID(v)
-	return _c
-}
-
 // SetWorkspaceID sets the "workspace_id" field.
 func (_c *VisitorCreate) SetWorkspaceID(v int64) *VisitorCreate {
 	_c.mutation.SetWorkspaceID(v)
+	return _c
+}
+
+// SetVisitorID sets the "visitor_id" field.
+func (_c *VisitorCreate) SetVisitorID(v string) *VisitorCreate {
+	_c.mutation.SetVisitorID(v)
 	return _c
 }
 
@@ -98,14 +98,14 @@ func (_c *VisitorCreate) SetID(v int64) *VisitorCreate {
 	return _c
 }
 
-// SetContact sets the "contact" edge to the Contact entity.
-func (_c *VisitorCreate) SetContact(v *Contact) *VisitorCreate {
-	return _c.SetContactID(v.ID)
-}
-
 // SetWorkspace sets the "workspace" edge to the Workspace entity.
 func (_c *VisitorCreate) SetWorkspace(v *Workspace) *VisitorCreate {
 	return _c.SetWorkspaceID(v.ID)
+}
+
+// SetContact sets the "contact" edge to the Contact entity.
+func (_c *VisitorCreate) SetContact(v *Contact) *VisitorCreate {
+	return _c.SetContactID(v.ID)
 }
 
 // Mutation returns the VisitorMutation object of the builder.
@@ -165,6 +165,9 @@ func (_c *VisitorCreate) check() error {
 	if _, ok := _c.mutation.UpdatedAt(); !ok {
 		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "Visitor.updated_at"`)}
 	}
+	if _, ok := _c.mutation.WorkspaceID(); !ok {
+		return &ValidationError{Name: "workspace_id", err: errors.New(`ent: missing required field "Visitor.workspace_id"`)}
+	}
 	if _, ok := _c.mutation.VisitorID(); !ok {
 		return &ValidationError{Name: "visitor_id", err: errors.New(`ent: missing required field "Visitor.visitor_id"`)}
 	}
@@ -172,9 +175,6 @@ func (_c *VisitorCreate) check() error {
 		if err := visitor.VisitorIDValidator(v); err != nil {
 			return &ValidationError{Name: "visitor_id", err: fmt.Errorf(`ent: validator failed for field "Visitor.visitor_id": %w`, err)}
 		}
-	}
-	if _, ok := _c.mutation.WorkspaceID(); !ok {
-		return &ValidationError{Name: "workspace_id", err: errors.New(`ent: missing required field "Visitor.workspace_id"`)}
 	}
 	if _, ok := _c.mutation.LastSeenAt(); !ok {
 		return &ValidationError{Name: "last_seen_at", err: errors.New(`ent: missing required field "Visitor.last_seen_at"`)}
@@ -231,23 +231,6 @@ func (_c *VisitorCreate) createSpec() (*Visitor, *sqlgraph.CreateSpec) {
 		_spec.SetField(visitor.FieldLastSeenAt, field.TypeTime, value)
 		_node.LastSeenAt = value
 	}
-	if nodes := _c.mutation.ContactIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: true,
-			Table:   visitor.ContactTable,
-			Columns: []string{visitor.ContactColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(contact.FieldID, field.TypeInt64),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_node.ContactID = &nodes[0]
-		_spec.Edges = append(_spec.Edges, edge)
-	}
 	if nodes := _c.mutation.WorkspaceIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
@@ -263,6 +246,23 @@ func (_c *VisitorCreate) createSpec() (*Visitor, *sqlgraph.CreateSpec) {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_node.WorkspaceID = nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.ContactIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   visitor.ContactTable,
+			Columns: []string{visitor.ContactColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(contact.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.ContactID = &nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec
@@ -329,18 +329,6 @@ func (u *VisitorUpsert) UpdateUpdatedAt() *VisitorUpsert {
 	return u
 }
 
-// SetVisitorID sets the "visitor_id" field.
-func (u *VisitorUpsert) SetVisitorID(v string) *VisitorUpsert {
-	u.Set(visitor.FieldVisitorID, v)
-	return u
-}
-
-// UpdateVisitorID sets the "visitor_id" field to the value that was provided on create.
-func (u *VisitorUpsert) UpdateVisitorID() *VisitorUpsert {
-	u.SetExcluded(visitor.FieldVisitorID)
-	return u
-}
-
 // SetWorkspaceID sets the "workspace_id" field.
 func (u *VisitorUpsert) SetWorkspaceID(v int64) *VisitorUpsert {
 	u.Set(visitor.FieldWorkspaceID, v)
@@ -350,6 +338,18 @@ func (u *VisitorUpsert) SetWorkspaceID(v int64) *VisitorUpsert {
 // UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
 func (u *VisitorUpsert) UpdateWorkspaceID() *VisitorUpsert {
 	u.SetExcluded(visitor.FieldWorkspaceID)
+	return u
+}
+
+// SetVisitorID sets the "visitor_id" field.
+func (u *VisitorUpsert) SetVisitorID(v string) *VisitorUpsert {
+	u.Set(visitor.FieldVisitorID, v)
+	return u
+}
+
+// UpdateVisitorID sets the "visitor_id" field to the value that was provided on create.
+func (u *VisitorUpsert) UpdateVisitorID() *VisitorUpsert {
+	u.SetExcluded(visitor.FieldVisitorID)
 	return u
 }
 
@@ -448,20 +448,6 @@ func (u *VisitorUpsertOne) UpdateUpdatedAt() *VisitorUpsertOne {
 	})
 }
 
-// SetVisitorID sets the "visitor_id" field.
-func (u *VisitorUpsertOne) SetVisitorID(v string) *VisitorUpsertOne {
-	return u.Update(func(s *VisitorUpsert) {
-		s.SetVisitorID(v)
-	})
-}
-
-// UpdateVisitorID sets the "visitor_id" field to the value that was provided on create.
-func (u *VisitorUpsertOne) UpdateVisitorID() *VisitorUpsertOne {
-	return u.Update(func(s *VisitorUpsert) {
-		s.UpdateVisitorID()
-	})
-}
-
 // SetWorkspaceID sets the "workspace_id" field.
 func (u *VisitorUpsertOne) SetWorkspaceID(v int64) *VisitorUpsertOne {
 	return u.Update(func(s *VisitorUpsert) {
@@ -473,6 +459,20 @@ func (u *VisitorUpsertOne) SetWorkspaceID(v int64) *VisitorUpsertOne {
 func (u *VisitorUpsertOne) UpdateWorkspaceID() *VisitorUpsertOne {
 	return u.Update(func(s *VisitorUpsert) {
 		s.UpdateWorkspaceID()
+	})
+}
+
+// SetVisitorID sets the "visitor_id" field.
+func (u *VisitorUpsertOne) SetVisitorID(v string) *VisitorUpsertOne {
+	return u.Update(func(s *VisitorUpsert) {
+		s.SetVisitorID(v)
+	})
+}
+
+// UpdateVisitorID sets the "visitor_id" field to the value that was provided on create.
+func (u *VisitorUpsertOne) UpdateVisitorID() *VisitorUpsertOne {
+	return u.Update(func(s *VisitorUpsert) {
+		s.UpdateVisitorID()
 	})
 }
 
@@ -742,20 +742,6 @@ func (u *VisitorUpsertBulk) UpdateUpdatedAt() *VisitorUpsertBulk {
 	})
 }
 
-// SetVisitorID sets the "visitor_id" field.
-func (u *VisitorUpsertBulk) SetVisitorID(v string) *VisitorUpsertBulk {
-	return u.Update(func(s *VisitorUpsert) {
-		s.SetVisitorID(v)
-	})
-}
-
-// UpdateVisitorID sets the "visitor_id" field to the value that was provided on create.
-func (u *VisitorUpsertBulk) UpdateVisitorID() *VisitorUpsertBulk {
-	return u.Update(func(s *VisitorUpsert) {
-		s.UpdateVisitorID()
-	})
-}
-
 // SetWorkspaceID sets the "workspace_id" field.
 func (u *VisitorUpsertBulk) SetWorkspaceID(v int64) *VisitorUpsertBulk {
 	return u.Update(func(s *VisitorUpsert) {
@@ -767,6 +753,20 @@ func (u *VisitorUpsertBulk) SetWorkspaceID(v int64) *VisitorUpsertBulk {
 func (u *VisitorUpsertBulk) UpdateWorkspaceID() *VisitorUpsertBulk {
 	return u.Update(func(s *VisitorUpsert) {
 		s.UpdateWorkspaceID()
+	})
+}
+
+// SetVisitorID sets the "visitor_id" field.
+func (u *VisitorUpsertBulk) SetVisitorID(v string) *VisitorUpsertBulk {
+	return u.Update(func(s *VisitorUpsert) {
+		s.SetVisitorID(v)
+	})
+}
+
+// UpdateVisitorID sets the "visitor_id" field to the value that was provided on create.
+func (u *VisitorUpsertBulk) UpdateVisitorID() *VisitorUpsertBulk {
+	return u.Update(func(s *VisitorUpsert) {
+		s.UpdateVisitorID()
 	})
 }
 

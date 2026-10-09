@@ -65,6 +65,11 @@ func UpdatedAt(v time.Time) predicate.BroadcastRecipient {
 	return predicate.BroadcastRecipient(sql.FieldEQ(FieldUpdatedAt, v))
 }
 
+// WorkspaceID applies equality check predicate on the "workspace_id" field. It's identical to WorkspaceIDEQ.
+func WorkspaceID(v int64) predicate.BroadcastRecipient {
+	return predicate.BroadcastRecipient(sql.FieldEQ(FieldWorkspaceID, v))
+}
+
 // BroadcastID applies equality check predicate on the "broadcast_id" field. It's identical to BroadcastIDEQ.
 func BroadcastID(v int64) predicate.BroadcastRecipient {
 	return predicate.BroadcastRecipient(sql.FieldEQ(FieldBroadcastID, v))
@@ -73,11 +78,6 @@ func BroadcastID(v int64) predicate.BroadcastRecipient {
 // ContactID applies equality check predicate on the "contact_id" field. It's identical to ContactIDEQ.
 func ContactID(v int64) predicate.BroadcastRecipient {
 	return predicate.BroadcastRecipient(sql.FieldEQ(FieldContactID, v))
-}
-
-// WorkspaceID applies equality check predicate on the "workspace_id" field. It's identical to WorkspaceIDEQ.
-func WorkspaceID(v int64) predicate.BroadcastRecipient {
-	return predicate.BroadcastRecipient(sql.FieldEQ(FieldWorkspaceID, v))
 }
 
 // OutboundMessageID applies equality check predicate on the "outbound_message_id" field. It's identical to OutboundMessageIDEQ.
@@ -185,6 +185,26 @@ func UpdatedAtLTE(v time.Time) predicate.BroadcastRecipient {
 	return predicate.BroadcastRecipient(sql.FieldLTE(FieldUpdatedAt, v))
 }
 
+// WorkspaceIDEQ applies the EQ predicate on the "workspace_id" field.
+func WorkspaceIDEQ(v int64) predicate.BroadcastRecipient {
+	return predicate.BroadcastRecipient(sql.FieldEQ(FieldWorkspaceID, v))
+}
+
+// WorkspaceIDNEQ applies the NEQ predicate on the "workspace_id" field.
+func WorkspaceIDNEQ(v int64) predicate.BroadcastRecipient {
+	return predicate.BroadcastRecipient(sql.FieldNEQ(FieldWorkspaceID, v))
+}
+
+// WorkspaceIDIn applies the In predicate on the "workspace_id" field.
+func WorkspaceIDIn(vs ...int64) predicate.BroadcastRecipient {
+	return predicate.BroadcastRecipient(sql.FieldIn(FieldWorkspaceID, vs...))
+}
+
+// WorkspaceIDNotIn applies the NotIn predicate on the "workspace_id" field.
+func WorkspaceIDNotIn(vs ...int64) predicate.BroadcastRecipient {
+	return predicate.BroadcastRecipient(sql.FieldNotIn(FieldWorkspaceID, vs...))
+}
+
 // BroadcastIDEQ applies the EQ predicate on the "broadcast_id" field.
 func BroadcastIDEQ(v int64) predicate.BroadcastRecipient {
 	return predicate.BroadcastRecipient(sql.FieldEQ(FieldBroadcastID, v))
@@ -243,26 +263,6 @@ func ContactIDLT(v int64) predicate.BroadcastRecipient {
 // ContactIDLTE applies the LTE predicate on the "contact_id" field.
 func ContactIDLTE(v int64) predicate.BroadcastRecipient {
 	return predicate.BroadcastRecipient(sql.FieldLTE(FieldContactID, v))
-}
-
-// WorkspaceIDEQ applies the EQ predicate on the "workspace_id" field.
-func WorkspaceIDEQ(v int64) predicate.BroadcastRecipient {
-	return predicate.BroadcastRecipient(sql.FieldEQ(FieldWorkspaceID, v))
-}
-
-// WorkspaceIDNEQ applies the NEQ predicate on the "workspace_id" field.
-func WorkspaceIDNEQ(v int64) predicate.BroadcastRecipient {
-	return predicate.BroadcastRecipient(sql.FieldNEQ(FieldWorkspaceID, v))
-}
-
-// WorkspaceIDIn applies the In predicate on the "workspace_id" field.
-func WorkspaceIDIn(vs ...int64) predicate.BroadcastRecipient {
-	return predicate.BroadcastRecipient(sql.FieldIn(FieldWorkspaceID, vs...))
-}
-
-// WorkspaceIDNotIn applies the NotIn predicate on the "workspace_id" field.
-func WorkspaceIDNotIn(vs ...int64) predicate.BroadcastRecipient {
-	return predicate.BroadcastRecipient(sql.FieldNotIn(FieldWorkspaceID, vs...))
 }
 
 // StatusEQ applies the EQ predicate on the "status" field.
@@ -560,29 +560,6 @@ func ClickedAtNotNil() predicate.BroadcastRecipient {
 	return predicate.BroadcastRecipient(sql.FieldNotNull(FieldClickedAt))
 }
 
-// HasBroadcast applies the HasEdge predicate on the "broadcast" edge.
-func HasBroadcast() predicate.BroadcastRecipient {
-	return predicate.BroadcastRecipient(func(s *sql.Selector) {
-		step := sqlgraph.NewStep(
-			sqlgraph.From(Table, FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, true, BroadcastTable, BroadcastColumn),
-		)
-		sqlgraph.HasNeighbors(s, step)
-	})
-}
-
-// HasBroadcastWith applies the HasEdge predicate on the "broadcast" edge with a given conditions (other predicates).
-func HasBroadcastWith(preds ...predicate.Broadcast) predicate.BroadcastRecipient {
-	return predicate.BroadcastRecipient(func(s *sql.Selector) {
-		step := newBroadcastStep()
-		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
-			for _, p := range preds {
-				p(s)
-			}
-		})
-	})
-}
-
 // HasWorkspace applies the HasEdge predicate on the "workspace" edge.
 func HasWorkspace() predicate.BroadcastRecipient {
 	return predicate.BroadcastRecipient(func(s *sql.Selector) {
@@ -598,6 +575,29 @@ func HasWorkspace() predicate.BroadcastRecipient {
 func HasWorkspaceWith(preds ...predicate.Workspace) predicate.BroadcastRecipient {
 	return predicate.BroadcastRecipient(func(s *sql.Selector) {
 		step := newWorkspaceStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasBroadcast applies the HasEdge predicate on the "broadcast" edge.
+func HasBroadcast() predicate.BroadcastRecipient {
+	return predicate.BroadcastRecipient(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, BroadcastTable, BroadcastColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasBroadcastWith applies the HasEdge predicate on the "broadcast" edge with a given conditions (other predicates).
+func HasBroadcastWith(preds ...predicate.Broadcast) predicate.BroadcastRecipient {
+	return predicate.BroadcastRecipient(func(s *sql.Selector) {
+		step := newBroadcastStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)

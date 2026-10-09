@@ -23,6 +23,8 @@ type ApiToken struct {
 	CreatedAt time.Time `json:"created_at,omitempty"`
 	// UpdatedAt holds the value of the "updated_at" field.
 	UpdatedAt time.Time `json:"updated_at,omitempty"`
+	// WorkspaceID holds the value of the "workspace_id" field.
+	WorkspaceID int64 `json:"workspace_id,omitempty"`
 	// Name holds the value of the "name" field.
 	Name string `json:"name,omitempty"`
 	// Prefix holds the value of the "prefix" field.
@@ -37,8 +39,6 @@ type ApiToken struct {
 	RevokedAt *time.Time `json:"revoked_at,omitempty"`
 	// LastUsedAt holds the value of the "last_used_at" field.
 	LastUsedAt *time.Time `json:"last_used_at,omitempty"`
-	// WorkspaceID holds the value of the "workspace_id" field.
-	WorkspaceID int64 `json:"workspace_id,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the ApiTokenQuery when eager-loading is set.
 	Edges        ApiTokenEdges `json:"edges"`
@@ -111,6 +111,12 @@ func (_m *ApiToken) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				_m.UpdatedAt = value.Time
 			}
+		case apitoken.FieldWorkspaceID:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field workspace_id", values[i])
+			} else if value.Valid {
+				_m.WorkspaceID = value.Int64
+			}
 		case apitoken.FieldName:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field name", values[i])
@@ -157,12 +163,6 @@ func (_m *ApiToken) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				_m.LastUsedAt = new(time.Time)
 				*_m.LastUsedAt = value.Time
-			}
-		case apitoken.FieldWorkspaceID:
-			if value, ok := values[i].(*sql.NullInt64); !ok {
-				return fmt.Errorf("unexpected type %T for field workspace_id", values[i])
-			} else if value.Valid {
-				_m.WorkspaceID = value.Int64
 			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
@@ -211,6 +211,9 @@ func (_m *ApiToken) String() string {
 	builder.WriteString("updated_at=")
 	builder.WriteString(_m.UpdatedAt.Format(time.ANSIC))
 	builder.WriteString(", ")
+	builder.WriteString("workspace_id=")
+	builder.WriteString(fmt.Sprintf("%v", _m.WorkspaceID))
+	builder.WriteString(", ")
 	builder.WriteString("name=")
 	builder.WriteString(_m.Name)
 	builder.WriteString(", ")
@@ -236,9 +239,6 @@ func (_m *ApiToken) String() string {
 		builder.WriteString("last_used_at=")
 		builder.WriteString(v.Format(time.ANSIC))
 	}
-	builder.WriteString(", ")
-	builder.WriteString("workspace_id=")
-	builder.WriteString(fmt.Sprintf("%v", _m.WorkspaceID))
 	builder.WriteByte(')')
 	return builder.String()
 }

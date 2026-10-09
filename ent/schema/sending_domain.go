@@ -4,7 +4,6 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/entsql"
 	"entgo.io/ent/schema"
-	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
 	"entgo.io/ent/schema/index"
 )
@@ -31,7 +30,7 @@ func (SendingDomain) Annotations() []schema.Annotation {
 }
 
 func (SendingDomain) Mixin() []ent.Mixin {
-	return []ent.Mixin{TimeMixin{}}
+	return []ent.Mixin{TimeMixin{}, WorkspaceMixin{Ref: "sending_domains"}}
 }
 
 func (SendingDomain) Fields() []ent.Field {
@@ -62,17 +61,6 @@ func (SendingDomain) Fields() []ent.Field {
 		field.Time("verified_at").
 			Optional().
 			Nillable(),
-		field.Int64("workspace_id"),
-	}
-}
-
-func (SendingDomain) Edges() []ent.Edge {
-	return []ent.Edge{
-		edge.From("workspace", Workspace.Type).
-			Ref("sending_domains").
-			Field("workspace_id").
-			Required().
-			Unique(),
 	}
 }
 

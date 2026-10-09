@@ -52,15 +52,15 @@ func (_c *MembershipCreate) SetNillableUpdatedAt(v *time.Time) *MembershipCreate
 	return _c
 }
 
-// SetUserID sets the "user_id" field.
-func (_c *MembershipCreate) SetUserID(v int64) *MembershipCreate {
-	_c.mutation.SetUserID(v)
-	return _c
-}
-
 // SetWorkspaceID sets the "workspace_id" field.
 func (_c *MembershipCreate) SetWorkspaceID(v int64) *MembershipCreate {
 	_c.mutation.SetWorkspaceID(v)
+	return _c
+}
+
+// SetUserID sets the "user_id" field.
+func (_c *MembershipCreate) SetUserID(v int64) *MembershipCreate {
+	_c.mutation.SetUserID(v)
 	return _c
 }
 
@@ -76,14 +76,14 @@ func (_c *MembershipCreate) SetID(v int64) *MembershipCreate {
 	return _c
 }
 
-// SetUser sets the "user" edge to the User entity.
-func (_c *MembershipCreate) SetUser(v *User) *MembershipCreate {
-	return _c.SetUserID(v.ID)
-}
-
 // SetWorkspace sets the "workspace" edge to the Workspace entity.
 func (_c *MembershipCreate) SetWorkspace(v *Workspace) *MembershipCreate {
 	return _c.SetWorkspaceID(v.ID)
+}
+
+// SetUser sets the "user" edge to the User entity.
+func (_c *MembershipCreate) SetUser(v *User) *MembershipCreate {
+	return _c.SetUserID(v.ID)
 }
 
 // Mutation returns the MembershipMutation object of the builder.
@@ -139,11 +139,11 @@ func (_c *MembershipCreate) check() error {
 	if _, ok := _c.mutation.UpdatedAt(); !ok {
 		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "Membership.updated_at"`)}
 	}
-	if _, ok := _c.mutation.UserID(); !ok {
-		return &ValidationError{Name: "user_id", err: errors.New(`ent: missing required field "Membership.user_id"`)}
-	}
 	if _, ok := _c.mutation.WorkspaceID(); !ok {
 		return &ValidationError{Name: "workspace_id", err: errors.New(`ent: missing required field "Membership.workspace_id"`)}
+	}
+	if _, ok := _c.mutation.UserID(); !ok {
+		return &ValidationError{Name: "user_id", err: errors.New(`ent: missing required field "Membership.user_id"`)}
 	}
 	if _, ok := _c.mutation.Role(); !ok {
 		return &ValidationError{Name: "role", err: errors.New(`ent: missing required field "Membership.role"`)}
@@ -153,11 +153,11 @@ func (_c *MembershipCreate) check() error {
 			return &ValidationError{Name: "role", err: fmt.Errorf(`ent: validator failed for field "Membership.role": %w`, err)}
 		}
 	}
-	if len(_c.mutation.UserIDs()) == 0 {
-		return &ValidationError{Name: "user", err: errors.New(`ent: missing required edge "Membership.user"`)}
-	}
 	if len(_c.mutation.WorkspaceIDs()) == 0 {
 		return &ValidationError{Name: "workspace", err: errors.New(`ent: missing required edge "Membership.workspace"`)}
+	}
+	if len(_c.mutation.UserIDs()) == 0 {
+		return &ValidationError{Name: "user", err: errors.New(`ent: missing required edge "Membership.user"`)}
 	}
 	return nil
 }
@@ -204,23 +204,6 @@ func (_c *MembershipCreate) createSpec() (*Membership, *sqlgraph.CreateSpec) {
 		_spec.SetField(membership.FieldRole, field.TypeEnum, value)
 		_node.Role = value
 	}
-	if nodes := _c.mutation.UserIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: true,
-			Table:   membership.UserTable,
-			Columns: []string{membership.UserColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt64),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_node.UserID = nodes[0]
-		_spec.Edges = append(_spec.Edges, edge)
-	}
 	if nodes := _c.mutation.WorkspaceIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
@@ -236,6 +219,23 @@ func (_c *MembershipCreate) createSpec() (*Membership, *sqlgraph.CreateSpec) {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_node.WorkspaceID = nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.UserIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   membership.UserTable,
+			Columns: []string{membership.UserColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.UserID = nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec
@@ -302,18 +302,6 @@ func (u *MembershipUpsert) UpdateUpdatedAt() *MembershipUpsert {
 	return u
 }
 
-// SetUserID sets the "user_id" field.
-func (u *MembershipUpsert) SetUserID(v int64) *MembershipUpsert {
-	u.Set(membership.FieldUserID, v)
-	return u
-}
-
-// UpdateUserID sets the "user_id" field to the value that was provided on create.
-func (u *MembershipUpsert) UpdateUserID() *MembershipUpsert {
-	u.SetExcluded(membership.FieldUserID)
-	return u
-}
-
 // SetWorkspaceID sets the "workspace_id" field.
 func (u *MembershipUpsert) SetWorkspaceID(v int64) *MembershipUpsert {
 	u.Set(membership.FieldWorkspaceID, v)
@@ -323,6 +311,18 @@ func (u *MembershipUpsert) SetWorkspaceID(v int64) *MembershipUpsert {
 // UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
 func (u *MembershipUpsert) UpdateWorkspaceID() *MembershipUpsert {
 	u.SetExcluded(membership.FieldWorkspaceID)
+	return u
+}
+
+// SetUserID sets the "user_id" field.
+func (u *MembershipUpsert) SetUserID(v int64) *MembershipUpsert {
+	u.Set(membership.FieldUserID, v)
+	return u
+}
+
+// UpdateUserID sets the "user_id" field to the value that was provided on create.
+func (u *MembershipUpsert) UpdateUserID() *MembershipUpsert {
+	u.SetExcluded(membership.FieldUserID)
 	return u
 }
 
@@ -403,20 +403,6 @@ func (u *MembershipUpsertOne) UpdateUpdatedAt() *MembershipUpsertOne {
 	})
 }
 
-// SetUserID sets the "user_id" field.
-func (u *MembershipUpsertOne) SetUserID(v int64) *MembershipUpsertOne {
-	return u.Update(func(s *MembershipUpsert) {
-		s.SetUserID(v)
-	})
-}
-
-// UpdateUserID sets the "user_id" field to the value that was provided on create.
-func (u *MembershipUpsertOne) UpdateUserID() *MembershipUpsertOne {
-	return u.Update(func(s *MembershipUpsert) {
-		s.UpdateUserID()
-	})
-}
-
 // SetWorkspaceID sets the "workspace_id" field.
 func (u *MembershipUpsertOne) SetWorkspaceID(v int64) *MembershipUpsertOne {
 	return u.Update(func(s *MembershipUpsert) {
@@ -428,6 +414,20 @@ func (u *MembershipUpsertOne) SetWorkspaceID(v int64) *MembershipUpsertOne {
 func (u *MembershipUpsertOne) UpdateWorkspaceID() *MembershipUpsertOne {
 	return u.Update(func(s *MembershipUpsert) {
 		s.UpdateWorkspaceID()
+	})
+}
+
+// SetUserID sets the "user_id" field.
+func (u *MembershipUpsertOne) SetUserID(v int64) *MembershipUpsertOne {
+	return u.Update(func(s *MembershipUpsert) {
+		s.SetUserID(v)
+	})
+}
+
+// UpdateUserID sets the "user_id" field to the value that was provided on create.
+func (u *MembershipUpsertOne) UpdateUserID() *MembershipUpsertOne {
+	return u.Update(func(s *MembershipUpsert) {
+		s.UpdateUserID()
 	})
 }
 
@@ -676,20 +676,6 @@ func (u *MembershipUpsertBulk) UpdateUpdatedAt() *MembershipUpsertBulk {
 	})
 }
 
-// SetUserID sets the "user_id" field.
-func (u *MembershipUpsertBulk) SetUserID(v int64) *MembershipUpsertBulk {
-	return u.Update(func(s *MembershipUpsert) {
-		s.SetUserID(v)
-	})
-}
-
-// UpdateUserID sets the "user_id" field to the value that was provided on create.
-func (u *MembershipUpsertBulk) UpdateUserID() *MembershipUpsertBulk {
-	return u.Update(func(s *MembershipUpsert) {
-		s.UpdateUserID()
-	})
-}
-
 // SetWorkspaceID sets the "workspace_id" field.
 func (u *MembershipUpsertBulk) SetWorkspaceID(v int64) *MembershipUpsertBulk {
 	return u.Update(func(s *MembershipUpsert) {
@@ -701,6 +687,20 @@ func (u *MembershipUpsertBulk) SetWorkspaceID(v int64) *MembershipUpsertBulk {
 func (u *MembershipUpsertBulk) UpdateWorkspaceID() *MembershipUpsertBulk {
 	return u.Update(func(s *MembershipUpsert) {
 		s.UpdateWorkspaceID()
+	})
+}
+
+// SetUserID sets the "user_id" field.
+func (u *MembershipUpsertBulk) SetUserID(v int64) *MembershipUpsertBulk {
+	return u.Update(func(s *MembershipUpsert) {
+		s.SetUserID(v)
+	})
+}
+
+// UpdateUserID sets the "user_id" field to the value that was provided on create.
+func (u *MembershipUpsertBulk) UpdateUserID() *MembershipUpsertBulk {
+	return u.Update(func(s *MembershipUpsert) {
+		s.UpdateUserID()
 	})
 }
 

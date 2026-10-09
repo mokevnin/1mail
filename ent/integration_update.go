@@ -36,6 +36,20 @@ func (_u *IntegrationUpdate) SetUpdatedAt(v time.Time) *IntegrationUpdate {
 	return _u
 }
 
+// SetWorkspaceID sets the "workspace_id" field.
+func (_u *IntegrationUpdate) SetWorkspaceID(v int64) *IntegrationUpdate {
+	_u.mutation.SetWorkspaceID(v)
+	return _u
+}
+
+// SetNillableWorkspaceID sets the "workspace_id" field if the given value is not nil.
+func (_u *IntegrationUpdate) SetNillableWorkspaceID(v *int64) *IntegrationUpdate {
+	if v != nil {
+		_u.SetWorkspaceID(*v)
+	}
+	return _u
+}
+
 // SetName sets the "name" field.
 func (_u *IntegrationUpdate) SetName(v string) *IntegrationUpdate {
 	_u.mutation.SetName(v)
@@ -116,20 +130,6 @@ func (_u *IntegrationUpdate) SetIsDefault(v bool) *IntegrationUpdate {
 func (_u *IntegrationUpdate) SetNillableIsDefault(v *bool) *IntegrationUpdate {
 	if v != nil {
 		_u.SetIsDefault(*v)
-	}
-	return _u
-}
-
-// SetWorkspaceID sets the "workspace_id" field.
-func (_u *IntegrationUpdate) SetWorkspaceID(v int64) *IntegrationUpdate {
-	_u.mutation.SetWorkspaceID(v)
-	return _u
-}
-
-// SetNillableWorkspaceID sets the "workspace_id" field if the given value is not nil.
-func (_u *IntegrationUpdate) SetNillableWorkspaceID(v *int64) *IntegrationUpdate {
-	if v != nil {
-		_u.SetWorkspaceID(*v)
 	}
 	return _u
 }
@@ -305,6 +305,20 @@ func (_u *IntegrationUpdateOne) SetUpdatedAt(v time.Time) *IntegrationUpdateOne 
 	return _u
 }
 
+// SetWorkspaceID sets the "workspace_id" field.
+func (_u *IntegrationUpdateOne) SetWorkspaceID(v int64) *IntegrationUpdateOne {
+	_u.mutation.SetWorkspaceID(v)
+	return _u
+}
+
+// SetNillableWorkspaceID sets the "workspace_id" field if the given value is not nil.
+func (_u *IntegrationUpdateOne) SetNillableWorkspaceID(v *int64) *IntegrationUpdateOne {
+	if v != nil {
+		_u.SetWorkspaceID(*v)
+	}
+	return _u
+}
+
 // SetName sets the "name" field.
 func (_u *IntegrationUpdateOne) SetName(v string) *IntegrationUpdateOne {
 	_u.mutation.SetName(v)
@@ -385,20 +399,6 @@ func (_u *IntegrationUpdateOne) SetIsDefault(v bool) *IntegrationUpdateOne {
 func (_u *IntegrationUpdateOne) SetNillableIsDefault(v *bool) *IntegrationUpdateOne {
 	if v != nil {
 		_u.SetIsDefault(*v)
-	}
-	return _u
-}
-
-// SetWorkspaceID sets the "workspace_id" field.
-func (_u *IntegrationUpdateOne) SetWorkspaceID(v int64) *IntegrationUpdateOne {
-	_u.mutation.SetWorkspaceID(v)
-	return _u
-}
-
-// SetNillableWorkspaceID sets the "workspace_id" field if the given value is not nil.
-func (_u *IntegrationUpdateOne) SetNillableWorkspaceID(v *int64) *IntegrationUpdateOne {
-	if v != nil {
-		_u.SetWorkspaceID(*v)
 	}
 	return _u
 }

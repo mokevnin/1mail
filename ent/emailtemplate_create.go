@@ -51,6 +51,12 @@ func (_c *EmailTemplateCreate) SetNillableUpdatedAt(v *time.Time) *EmailTemplate
 	return _c
 }
 
+// SetWorkspaceID sets the "workspace_id" field.
+func (_c *EmailTemplateCreate) SetWorkspaceID(v int64) *EmailTemplateCreate {
+	_c.mutation.SetWorkspaceID(v)
+	return _c
+}
+
 // SetName sets the "name" field.
 func (_c *EmailTemplateCreate) SetName(v string) *EmailTemplateCreate {
 	_c.mutation.SetName(v)
@@ -82,12 +88,6 @@ func (_c *EmailTemplateCreate) SetNillableBody(v *string) *EmailTemplateCreate {
 	if v != nil {
 		_c.SetBody(*v)
 	}
-	return _c
-}
-
-// SetWorkspaceID sets the "workspace_id" field.
-func (_c *EmailTemplateCreate) SetWorkspaceID(v int64) *EmailTemplateCreate {
-	_c.mutation.SetWorkspaceID(v)
 	return _c
 }
 
@@ -163,6 +163,9 @@ func (_c *EmailTemplateCreate) check() error {
 	if _, ok := _c.mutation.UpdatedAt(); !ok {
 		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "EmailTemplate.updated_at"`)}
 	}
+	if _, ok := _c.mutation.WorkspaceID(); !ok {
+		return &ValidationError{Name: "workspace_id", err: errors.New(`ent: missing required field "EmailTemplate.workspace_id"`)}
+	}
 	if _, ok := _c.mutation.Name(); !ok {
 		return &ValidationError{Name: "name", err: errors.New(`ent: missing required field "EmailTemplate.name"`)}
 	}
@@ -176,9 +179,6 @@ func (_c *EmailTemplateCreate) check() error {
 	}
 	if _, ok := _c.mutation.Body(); !ok {
 		return &ValidationError{Name: "body", err: errors.New(`ent: missing required field "EmailTemplate.body"`)}
-	}
-	if _, ok := _c.mutation.WorkspaceID(); !ok {
-		return &ValidationError{Name: "workspace_id", err: errors.New(`ent: missing required field "EmailTemplate.workspace_id"`)}
 	}
 	if len(_c.mutation.WorkspaceIDs()) == 0 {
 		return &ValidationError{Name: "workspace", err: errors.New(`ent: missing required edge "EmailTemplate.workspace"`)}
@@ -317,6 +317,18 @@ func (u *EmailTemplateUpsert) UpdateUpdatedAt() *EmailTemplateUpsert {
 	return u
 }
 
+// SetWorkspaceID sets the "workspace_id" field.
+func (u *EmailTemplateUpsert) SetWorkspaceID(v int64) *EmailTemplateUpsert {
+	u.Set(emailtemplate.FieldWorkspaceID, v)
+	return u
+}
+
+// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
+func (u *EmailTemplateUpsert) UpdateWorkspaceID() *EmailTemplateUpsert {
+	u.SetExcluded(emailtemplate.FieldWorkspaceID)
+	return u
+}
+
 // SetName sets the "name" field.
 func (u *EmailTemplateUpsert) SetName(v string) *EmailTemplateUpsert {
 	u.Set(emailtemplate.FieldName, v)
@@ -350,18 +362,6 @@ func (u *EmailTemplateUpsert) SetBody(v string) *EmailTemplateUpsert {
 // UpdateBody sets the "body" field to the value that was provided on create.
 func (u *EmailTemplateUpsert) UpdateBody() *EmailTemplateUpsert {
 	u.SetExcluded(emailtemplate.FieldBody)
-	return u
-}
-
-// SetWorkspaceID sets the "workspace_id" field.
-func (u *EmailTemplateUpsert) SetWorkspaceID(v int64) *EmailTemplateUpsert {
-	u.Set(emailtemplate.FieldWorkspaceID, v)
-	return u
-}
-
-// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
-func (u *EmailTemplateUpsert) UpdateWorkspaceID() *EmailTemplateUpsert {
-	u.SetExcluded(emailtemplate.FieldWorkspaceID)
 	return u
 }
 
@@ -430,6 +430,20 @@ func (u *EmailTemplateUpsertOne) UpdateUpdatedAt() *EmailTemplateUpsertOne {
 	})
 }
 
+// SetWorkspaceID sets the "workspace_id" field.
+func (u *EmailTemplateUpsertOne) SetWorkspaceID(v int64) *EmailTemplateUpsertOne {
+	return u.Update(func(s *EmailTemplateUpsert) {
+		s.SetWorkspaceID(v)
+	})
+}
+
+// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
+func (u *EmailTemplateUpsertOne) UpdateWorkspaceID() *EmailTemplateUpsertOne {
+	return u.Update(func(s *EmailTemplateUpsert) {
+		s.UpdateWorkspaceID()
+	})
+}
+
 // SetName sets the "name" field.
 func (u *EmailTemplateUpsertOne) SetName(v string) *EmailTemplateUpsertOne {
 	return u.Update(func(s *EmailTemplateUpsert) {
@@ -469,20 +483,6 @@ func (u *EmailTemplateUpsertOne) SetBody(v string) *EmailTemplateUpsertOne {
 func (u *EmailTemplateUpsertOne) UpdateBody() *EmailTemplateUpsertOne {
 	return u.Update(func(s *EmailTemplateUpsert) {
 		s.UpdateBody()
-	})
-}
-
-// SetWorkspaceID sets the "workspace_id" field.
-func (u *EmailTemplateUpsertOne) SetWorkspaceID(v int64) *EmailTemplateUpsertOne {
-	return u.Update(func(s *EmailTemplateUpsert) {
-		s.SetWorkspaceID(v)
-	})
-}
-
-// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
-func (u *EmailTemplateUpsertOne) UpdateWorkspaceID() *EmailTemplateUpsertOne {
-	return u.Update(func(s *EmailTemplateUpsert) {
-		s.UpdateWorkspaceID()
 	})
 }
 
@@ -717,6 +717,20 @@ func (u *EmailTemplateUpsertBulk) UpdateUpdatedAt() *EmailTemplateUpsertBulk {
 	})
 }
 
+// SetWorkspaceID sets the "workspace_id" field.
+func (u *EmailTemplateUpsertBulk) SetWorkspaceID(v int64) *EmailTemplateUpsertBulk {
+	return u.Update(func(s *EmailTemplateUpsert) {
+		s.SetWorkspaceID(v)
+	})
+}
+
+// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
+func (u *EmailTemplateUpsertBulk) UpdateWorkspaceID() *EmailTemplateUpsertBulk {
+	return u.Update(func(s *EmailTemplateUpsert) {
+		s.UpdateWorkspaceID()
+	})
+}
+
 // SetName sets the "name" field.
 func (u *EmailTemplateUpsertBulk) SetName(v string) *EmailTemplateUpsertBulk {
 	return u.Update(func(s *EmailTemplateUpsert) {
@@ -756,20 +770,6 @@ func (u *EmailTemplateUpsertBulk) SetBody(v string) *EmailTemplateUpsertBulk {
 func (u *EmailTemplateUpsertBulk) UpdateBody() *EmailTemplateUpsertBulk {
 	return u.Update(func(s *EmailTemplateUpsert) {
 		s.UpdateBody()
-	})
-}
-
-// SetWorkspaceID sets the "workspace_id" field.
-func (u *EmailTemplateUpsertBulk) SetWorkspaceID(v int64) *EmailTemplateUpsertBulk {
-	return u.Update(func(s *EmailTemplateUpsert) {
-		s.SetWorkspaceID(v)
-	})
-}
-
-// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
-func (u *EmailTemplateUpsertBulk) UpdateWorkspaceID() *EmailTemplateUpsertBulk {
-	return u.Update(func(s *EmailTemplateUpsert) {
-		s.UpdateWorkspaceID()
 	})
 }
 

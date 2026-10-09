@@ -4,7 +4,6 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/entsql"
 	"entgo.io/ent/schema"
-	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
 	"entgo.io/ent/schema/index"
 )
@@ -33,7 +32,7 @@ func (Confirmation) Annotations() []schema.Annotation {
 }
 
 func (Confirmation) Mixin() []ent.Mixin {
-	return []ent.Mixin{TimeMixin{}}
+	return []ent.Mixin{TimeMixin{}, WorkspaceMixin{Ref: "confirmations"}}
 }
 
 func (Confirmation) Fields() []ent.Field {
@@ -59,17 +58,6 @@ func (Confirmation) Fields() []ent.Field {
 		field.Int64("contact_id").
 			Optional().
 			Nillable(),
-		field.Int64("workspace_id"),
-	}
-}
-
-func (Confirmation) Edges() []ent.Edge {
-	return []ent.Edge{
-		edge.From("workspace", Workspace.Type).
-			Ref("confirmations").
-			Field("workspace_id").
-			Required().
-			Unique(),
 	}
 }
 

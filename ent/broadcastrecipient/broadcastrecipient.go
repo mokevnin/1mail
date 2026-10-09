@@ -19,12 +19,12 @@ const (
 	FieldCreatedAt = "created_at"
 	// FieldUpdatedAt holds the string denoting the updated_at field in the database.
 	FieldUpdatedAt = "updated_at"
+	// FieldWorkspaceID holds the string denoting the workspace_id field in the database.
+	FieldWorkspaceID = "workspace_id"
 	// FieldBroadcastID holds the string denoting the broadcast_id field in the database.
 	FieldBroadcastID = "broadcast_id"
 	// FieldContactID holds the string denoting the contact_id field in the database.
 	FieldContactID = "contact_id"
-	// FieldWorkspaceID holds the string denoting the workspace_id field in the database.
-	FieldWorkspaceID = "workspace_id"
 	// FieldStatus holds the string denoting the status field in the database.
 	FieldStatus = "status"
 	// FieldOutboundMessageID holds the string denoting the outbound_message_id field in the database.
@@ -37,19 +37,12 @@ const (
 	FieldOpenedAt = "opened_at"
 	// FieldClickedAt holds the string denoting the clicked_at field in the database.
 	FieldClickedAt = "clicked_at"
-	// EdgeBroadcast holds the string denoting the broadcast edge name in mutations.
-	EdgeBroadcast = "broadcast"
 	// EdgeWorkspace holds the string denoting the workspace edge name in mutations.
 	EdgeWorkspace = "workspace"
+	// EdgeBroadcast holds the string denoting the broadcast edge name in mutations.
+	EdgeBroadcast = "broadcast"
 	// Table holds the table name of the broadcastrecipient in the database.
 	Table = "broadcast_recipients"
-	// BroadcastTable is the table that holds the broadcast relation/edge.
-	BroadcastTable = "broadcast_recipients"
-	// BroadcastInverseTable is the table name for the Broadcast entity.
-	// It exists in this package in order to avoid circular dependency with the "broadcast" package.
-	BroadcastInverseTable = "broadcasts"
-	// BroadcastColumn is the table column denoting the broadcast relation/edge.
-	BroadcastColumn = "broadcast_id"
 	// WorkspaceTable is the table that holds the workspace relation/edge.
 	WorkspaceTable = "broadcast_recipients"
 	// WorkspaceInverseTable is the table name for the Workspace entity.
@@ -57,6 +50,13 @@ const (
 	WorkspaceInverseTable = "workspaces"
 	// WorkspaceColumn is the table column denoting the workspace relation/edge.
 	WorkspaceColumn = "workspace_id"
+	// BroadcastTable is the table that holds the broadcast relation/edge.
+	BroadcastTable = "broadcast_recipients"
+	// BroadcastInverseTable is the table name for the Broadcast entity.
+	// It exists in this package in order to avoid circular dependency with the "broadcast" package.
+	BroadcastInverseTable = "broadcasts"
+	// BroadcastColumn is the table column denoting the broadcast relation/edge.
+	BroadcastColumn = "broadcast_id"
 )
 
 // Columns holds all SQL columns for broadcastrecipient fields.
@@ -64,9 +64,9 @@ var Columns = []string{
 	FieldID,
 	FieldCreatedAt,
 	FieldUpdatedAt,
+	FieldWorkspaceID,
 	FieldBroadcastID,
 	FieldContactID,
-	FieldWorkspaceID,
 	FieldStatus,
 	FieldOutboundMessageID,
 	FieldError,
@@ -140,6 +140,11 @@ func ByUpdatedAt(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldUpdatedAt, opts...).ToFunc()
 }
 
+// ByWorkspaceID orders the results by the workspace_id field.
+func ByWorkspaceID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldWorkspaceID, opts...).ToFunc()
+}
+
 // ByBroadcastID orders the results by the broadcast_id field.
 func ByBroadcastID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldBroadcastID, opts...).ToFunc()
@@ -148,11 +153,6 @@ func ByBroadcastID(opts ...sql.OrderTermOption) OrderOption {
 // ByContactID orders the results by the contact_id field.
 func ByContactID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldContactID, opts...).ToFunc()
-}
-
-// ByWorkspaceID orders the results by the workspace_id field.
-func ByWorkspaceID(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldWorkspaceID, opts...).ToFunc()
 }
 
 // ByStatus orders the results by the status field.
@@ -185,30 +185,30 @@ func ByClickedAt(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldClickedAt, opts...).ToFunc()
 }
 
-// ByBroadcastField orders the results by broadcast field.
-func ByBroadcastField(field string, opts ...sql.OrderTermOption) OrderOption {
-	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborTerms(s, newBroadcastStep(), sql.OrderByField(field, opts...))
-	}
-}
-
 // ByWorkspaceField orders the results by workspace field.
 func ByWorkspaceField(field string, opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
 		sqlgraph.OrderByNeighborTerms(s, newWorkspaceStep(), sql.OrderByField(field, opts...))
 	}
 }
-func newBroadcastStep() *sqlgraph.Step {
-	return sqlgraph.NewStep(
-		sqlgraph.From(Table, FieldID),
-		sqlgraph.To(BroadcastInverseTable, FieldID),
-		sqlgraph.Edge(sqlgraph.M2O, true, BroadcastTable, BroadcastColumn),
-	)
+
+// ByBroadcastField orders the results by broadcast field.
+func ByBroadcastField(field string, opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newBroadcastStep(), sql.OrderByField(field, opts...))
+	}
 }
 func newWorkspaceStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(WorkspaceInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.M2O, true, WorkspaceTable, WorkspaceColumn),
+	)
+}
+func newBroadcastStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(BroadcastInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.M2O, true, BroadcastTable, BroadcastColumn),
 	)
 }

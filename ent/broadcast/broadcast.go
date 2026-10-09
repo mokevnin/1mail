@@ -19,6 +19,8 @@ const (
 	FieldCreatedAt = "created_at"
 	// FieldUpdatedAt holds the string denoting the updated_at field in the database.
 	FieldUpdatedAt = "updated_at"
+	// FieldWorkspaceID holds the string denoting the workspace_id field in the database.
+	FieldWorkspaceID = "workspace_id"
 	// FieldName holds the string denoting the name field in the database.
 	FieldName = "name"
 	// FieldSubject holds the string denoting the subject field in the database.
@@ -57,8 +59,6 @@ const (
 	FieldSkippedCount = "skipped_count"
 	// FieldHoldReason holds the string denoting the hold_reason field in the database.
 	FieldHoldReason = "hold_reason"
-	// FieldWorkspaceID holds the string denoting the workspace_id field in the database.
-	FieldWorkspaceID = "workspace_id"
 	// EdgeWorkspace holds the string denoting the workspace edge name in mutations.
 	EdgeWorkspace = "workspace"
 	// EdgeRecipients holds the string denoting the recipients edge name in mutations.
@@ -86,6 +86,7 @@ var Columns = []string{
 	FieldID,
 	FieldCreatedAt,
 	FieldUpdatedAt,
+	FieldWorkspaceID,
 	FieldName,
 	FieldSubject,
 	FieldFromName,
@@ -105,7 +106,6 @@ var Columns = []string{
 	FieldFailedCount,
 	FieldSkippedCount,
 	FieldHoldReason,
-	FieldWorkspaceID,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -210,6 +210,11 @@ func ByUpdatedAt(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldUpdatedAt, opts...).ToFunc()
 }
 
+// ByWorkspaceID orders the results by the workspace_id field.
+func ByWorkspaceID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldWorkspaceID, opts...).ToFunc()
+}
+
 // ByName orders the results by the name field.
 func ByName(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldName, opts...).ToFunc()
@@ -303,11 +308,6 @@ func BySkippedCount(opts ...sql.OrderTermOption) OrderOption {
 // ByHoldReason orders the results by the hold_reason field.
 func ByHoldReason(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldHoldReason, opts...).ToFunc()
-}
-
-// ByWorkspaceID orders the results by the workspace_id field.
-func ByWorkspaceID(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldWorkspaceID, opts...).ToFunc()
 }
 
 // ByWorkspaceField orders the results by workspace field.

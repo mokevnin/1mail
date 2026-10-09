@@ -52,6 +52,12 @@ func (_c *AutomationRunCreate) SetNillableUpdatedAt(v *time.Time) *AutomationRun
 	return _c
 }
 
+// SetWorkspaceID sets the "workspace_id" field.
+func (_c *AutomationRunCreate) SetWorkspaceID(v int64) *AutomationRunCreate {
+	_c.mutation.SetWorkspaceID(v)
+	return _c
+}
+
 // SetAutomationID sets the "automation_id" field.
 func (_c *AutomationRunCreate) SetAutomationID(v int64) *AutomationRunCreate {
 	_c.mutation.SetAutomationID(v)
@@ -61,12 +67,6 @@ func (_c *AutomationRunCreate) SetAutomationID(v int64) *AutomationRunCreate {
 // SetContactID sets the "contact_id" field.
 func (_c *AutomationRunCreate) SetContactID(v int64) *AutomationRunCreate {
 	_c.mutation.SetContactID(v)
-	return _c
-}
-
-// SetWorkspaceID sets the "workspace_id" field.
-func (_c *AutomationRunCreate) SetWorkspaceID(v int64) *AutomationRunCreate {
-	_c.mutation.SetWorkspaceID(v)
 	return _c
 }
 
@@ -118,14 +118,14 @@ func (_c *AutomationRunCreate) SetID(v int64) *AutomationRunCreate {
 	return _c
 }
 
-// SetAutomation sets the "automation" edge to the Automation entity.
-func (_c *AutomationRunCreate) SetAutomation(v *Automation) *AutomationRunCreate {
-	return _c.SetAutomationID(v.ID)
-}
-
 // SetWorkspace sets the "workspace" edge to the Workspace entity.
 func (_c *AutomationRunCreate) SetWorkspace(v *Workspace) *AutomationRunCreate {
 	return _c.SetWorkspaceID(v.ID)
+}
+
+// SetAutomation sets the "automation" edge to the Automation entity.
+func (_c *AutomationRunCreate) SetAutomation(v *Automation) *AutomationRunCreate {
+	return _c.SetAutomationID(v.ID)
 }
 
 // Mutation returns the AutomationRunMutation object of the builder.
@@ -189,14 +189,14 @@ func (_c *AutomationRunCreate) check() error {
 	if _, ok := _c.mutation.UpdatedAt(); !ok {
 		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "AutomationRun.updated_at"`)}
 	}
+	if _, ok := _c.mutation.WorkspaceID(); !ok {
+		return &ValidationError{Name: "workspace_id", err: errors.New(`ent: missing required field "AutomationRun.workspace_id"`)}
+	}
 	if _, ok := _c.mutation.AutomationID(); !ok {
 		return &ValidationError{Name: "automation_id", err: errors.New(`ent: missing required field "AutomationRun.automation_id"`)}
 	}
 	if _, ok := _c.mutation.ContactID(); !ok {
 		return &ValidationError{Name: "contact_id", err: errors.New(`ent: missing required field "AutomationRun.contact_id"`)}
-	}
-	if _, ok := _c.mutation.WorkspaceID(); !ok {
-		return &ValidationError{Name: "workspace_id", err: errors.New(`ent: missing required field "AutomationRun.workspace_id"`)}
 	}
 	if _, ok := _c.mutation.Status(); !ok {
 		return &ValidationError{Name: "status", err: errors.New(`ent: missing required field "AutomationRun.status"`)}
@@ -214,11 +214,11 @@ func (_c *AutomationRunCreate) check() error {
 			return &ValidationError{Name: "current_step", err: fmt.Errorf(`ent: validator failed for field "AutomationRun.current_step": %w`, err)}
 		}
 	}
-	if len(_c.mutation.AutomationIDs()) == 0 {
-		return &ValidationError{Name: "automation", err: errors.New(`ent: missing required edge "AutomationRun.automation"`)}
-	}
 	if len(_c.mutation.WorkspaceIDs()) == 0 {
 		return &ValidationError{Name: "workspace", err: errors.New(`ent: missing required edge "AutomationRun.workspace"`)}
+	}
+	if len(_c.mutation.AutomationIDs()) == 0 {
+		return &ValidationError{Name: "automation", err: errors.New(`ent: missing required edge "AutomationRun.automation"`)}
 	}
 	return nil
 }
@@ -277,23 +277,6 @@ func (_c *AutomationRunCreate) createSpec() (*AutomationRun, *sqlgraph.CreateSpe
 		_spec.SetField(automationrun.FieldResumeAt, field.TypeTime, value)
 		_node.ResumeAt = &value
 	}
-	if nodes := _c.mutation.AutomationIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: true,
-			Table:   automationrun.AutomationTable,
-			Columns: []string{automationrun.AutomationColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(automation.FieldID, field.TypeInt64),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_node.AutomationID = nodes[0]
-		_spec.Edges = append(_spec.Edges, edge)
-	}
 	if nodes := _c.mutation.WorkspaceIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
@@ -309,6 +292,23 @@ func (_c *AutomationRunCreate) createSpec() (*AutomationRun, *sqlgraph.CreateSpe
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_node.WorkspaceID = nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.AutomationIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   automationrun.AutomationTable,
+			Columns: []string{automationrun.AutomationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(automation.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.AutomationID = nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec
@@ -375,6 +375,18 @@ func (u *AutomationRunUpsert) UpdateUpdatedAt() *AutomationRunUpsert {
 	return u
 }
 
+// SetWorkspaceID sets the "workspace_id" field.
+func (u *AutomationRunUpsert) SetWorkspaceID(v int64) *AutomationRunUpsert {
+	u.Set(automationrun.FieldWorkspaceID, v)
+	return u
+}
+
+// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
+func (u *AutomationRunUpsert) UpdateWorkspaceID() *AutomationRunUpsert {
+	u.SetExcluded(automationrun.FieldWorkspaceID)
+	return u
+}
+
 // SetAutomationID sets the "automation_id" field.
 func (u *AutomationRunUpsert) SetAutomationID(v int64) *AutomationRunUpsert {
 	u.Set(automationrun.FieldAutomationID, v)
@@ -402,18 +414,6 @@ func (u *AutomationRunUpsert) UpdateContactID() *AutomationRunUpsert {
 // AddContactID adds v to the "contact_id" field.
 func (u *AutomationRunUpsert) AddContactID(v int64) *AutomationRunUpsert {
 	u.Add(automationrun.FieldContactID, v)
-	return u
-}
-
-// SetWorkspaceID sets the "workspace_id" field.
-func (u *AutomationRunUpsert) SetWorkspaceID(v int64) *AutomationRunUpsert {
-	u.Set(automationrun.FieldWorkspaceID, v)
-	return u
-}
-
-// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
-func (u *AutomationRunUpsert) UpdateWorkspaceID() *AutomationRunUpsert {
-	u.SetExcluded(automationrun.FieldWorkspaceID)
 	return u
 }
 
@@ -530,6 +530,20 @@ func (u *AutomationRunUpsertOne) UpdateUpdatedAt() *AutomationRunUpsertOne {
 	})
 }
 
+// SetWorkspaceID sets the "workspace_id" field.
+func (u *AutomationRunUpsertOne) SetWorkspaceID(v int64) *AutomationRunUpsertOne {
+	return u.Update(func(s *AutomationRunUpsert) {
+		s.SetWorkspaceID(v)
+	})
+}
+
+// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
+func (u *AutomationRunUpsertOne) UpdateWorkspaceID() *AutomationRunUpsertOne {
+	return u.Update(func(s *AutomationRunUpsert) {
+		s.UpdateWorkspaceID()
+	})
+}
+
 // SetAutomationID sets the "automation_id" field.
 func (u *AutomationRunUpsertOne) SetAutomationID(v int64) *AutomationRunUpsertOne {
 	return u.Update(func(s *AutomationRunUpsert) {
@@ -562,20 +576,6 @@ func (u *AutomationRunUpsertOne) AddContactID(v int64) *AutomationRunUpsertOne {
 func (u *AutomationRunUpsertOne) UpdateContactID() *AutomationRunUpsertOne {
 	return u.Update(func(s *AutomationRunUpsert) {
 		s.UpdateContactID()
-	})
-}
-
-// SetWorkspaceID sets the "workspace_id" field.
-func (u *AutomationRunUpsertOne) SetWorkspaceID(v int64) *AutomationRunUpsertOne {
-	return u.Update(func(s *AutomationRunUpsert) {
-		s.SetWorkspaceID(v)
-	})
-}
-
-// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
-func (u *AutomationRunUpsertOne) UpdateWorkspaceID() *AutomationRunUpsertOne {
-	return u.Update(func(s *AutomationRunUpsert) {
-		s.UpdateWorkspaceID()
 	})
 }
 
@@ -866,6 +866,20 @@ func (u *AutomationRunUpsertBulk) UpdateUpdatedAt() *AutomationRunUpsertBulk {
 	})
 }
 
+// SetWorkspaceID sets the "workspace_id" field.
+func (u *AutomationRunUpsertBulk) SetWorkspaceID(v int64) *AutomationRunUpsertBulk {
+	return u.Update(func(s *AutomationRunUpsert) {
+		s.SetWorkspaceID(v)
+	})
+}
+
+// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
+func (u *AutomationRunUpsertBulk) UpdateWorkspaceID() *AutomationRunUpsertBulk {
+	return u.Update(func(s *AutomationRunUpsert) {
+		s.UpdateWorkspaceID()
+	})
+}
+
 // SetAutomationID sets the "automation_id" field.
 func (u *AutomationRunUpsertBulk) SetAutomationID(v int64) *AutomationRunUpsertBulk {
 	return u.Update(func(s *AutomationRunUpsert) {
@@ -898,20 +912,6 @@ func (u *AutomationRunUpsertBulk) AddContactID(v int64) *AutomationRunUpsertBulk
 func (u *AutomationRunUpsertBulk) UpdateContactID() *AutomationRunUpsertBulk {
 	return u.Update(func(s *AutomationRunUpsert) {
 		s.UpdateContactID()
-	})
-}
-
-// SetWorkspaceID sets the "workspace_id" field.
-func (u *AutomationRunUpsertBulk) SetWorkspaceID(v int64) *AutomationRunUpsertBulk {
-	return u.Update(func(s *AutomationRunUpsert) {
-		s.SetWorkspaceID(v)
-	})
-}
-
-// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
-func (u *AutomationRunUpsertBulk) UpdateWorkspaceID() *AutomationRunUpsertBulk {
-	return u.Update(func(s *AutomationRunUpsert) {
-		s.UpdateWorkspaceID()
 	})
 }
 

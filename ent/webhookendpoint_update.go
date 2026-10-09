@@ -37,6 +37,20 @@ func (_u *WebhookEndpointUpdate) SetUpdatedAt(v time.Time) *WebhookEndpointUpdat
 	return _u
 }
 
+// SetWorkspaceID sets the "workspace_id" field.
+func (_u *WebhookEndpointUpdate) SetWorkspaceID(v int64) *WebhookEndpointUpdate {
+	_u.mutation.SetWorkspaceID(v)
+	return _u
+}
+
+// SetNillableWorkspaceID sets the "workspace_id" field if the given value is not nil.
+func (_u *WebhookEndpointUpdate) SetNillableWorkspaceID(v *int64) *WebhookEndpointUpdate {
+	if v != nil {
+		_u.SetWorkspaceID(*v)
+	}
+	return _u
+}
+
 // SetURL sets the "url" field.
 func (_u *WebhookEndpointUpdate) SetURL(v string) *WebhookEndpointUpdate {
 	_u.mutation.SetURL(v)
@@ -93,20 +107,6 @@ func (_u *WebhookEndpointUpdate) SetEnabled(v bool) *WebhookEndpointUpdate {
 func (_u *WebhookEndpointUpdate) SetNillableEnabled(v *bool) *WebhookEndpointUpdate {
 	if v != nil {
 		_u.SetEnabled(*v)
-	}
-	return _u
-}
-
-// SetWorkspaceID sets the "workspace_id" field.
-func (_u *WebhookEndpointUpdate) SetWorkspaceID(v int64) *WebhookEndpointUpdate {
-	_u.mutation.SetWorkspaceID(v)
-	return _u
-}
-
-// SetNillableWorkspaceID sets the "workspace_id" field if the given value is not nil.
-func (_u *WebhookEndpointUpdate) SetNillableWorkspaceID(v *int64) *WebhookEndpointUpdate {
-	if v != nil {
-		_u.SetWorkspaceID(*v)
 	}
 	return _u
 }
@@ -274,6 +274,20 @@ func (_u *WebhookEndpointUpdateOne) SetUpdatedAt(v time.Time) *WebhookEndpointUp
 	return _u
 }
 
+// SetWorkspaceID sets the "workspace_id" field.
+func (_u *WebhookEndpointUpdateOne) SetWorkspaceID(v int64) *WebhookEndpointUpdateOne {
+	_u.mutation.SetWorkspaceID(v)
+	return _u
+}
+
+// SetNillableWorkspaceID sets the "workspace_id" field if the given value is not nil.
+func (_u *WebhookEndpointUpdateOne) SetNillableWorkspaceID(v *int64) *WebhookEndpointUpdateOne {
+	if v != nil {
+		_u.SetWorkspaceID(*v)
+	}
+	return _u
+}
+
 // SetURL sets the "url" field.
 func (_u *WebhookEndpointUpdateOne) SetURL(v string) *WebhookEndpointUpdateOne {
 	_u.mutation.SetURL(v)
@@ -330,20 +344,6 @@ func (_u *WebhookEndpointUpdateOne) SetEnabled(v bool) *WebhookEndpointUpdateOne
 func (_u *WebhookEndpointUpdateOne) SetNillableEnabled(v *bool) *WebhookEndpointUpdateOne {
 	if v != nil {
 		_u.SetEnabled(*v)
-	}
-	return _u
-}
-
-// SetWorkspaceID sets the "workspace_id" field.
-func (_u *WebhookEndpointUpdateOne) SetWorkspaceID(v int64) *WebhookEndpointUpdateOne {
-	_u.mutation.SetWorkspaceID(v)
-	return _u
-}
-
-// SetNillableWorkspaceID sets the "workspace_id" field if the given value is not nil.
-func (_u *WebhookEndpointUpdateOne) SetNillableWorkspaceID(v *int64) *WebhookEndpointUpdateOne {
-	if v != nil {
-		_u.SetWorkspaceID(*v)
 	}
 	return _u
 }

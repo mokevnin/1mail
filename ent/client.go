@@ -827,22 +827,6 @@ func (c *AutomationRunClient) GetX(ctx context.Context, id int64) *AutomationRun
 	return obj
 }
 
-// QueryAutomation queries the automation edge of a AutomationRun.
-func (c *AutomationRunClient) QueryAutomation(_m *AutomationRun) *AutomationQuery {
-	query := (&AutomationClient{config: c.config}).Query()
-	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
-		id := _m.ID
-		step := sqlgraph.NewStep(
-			sqlgraph.From(automationrun.Table, automationrun.FieldID, id),
-			sqlgraph.To(automation.Table, automation.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, true, automationrun.AutomationTable, automationrun.AutomationColumn),
-		)
-		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
-		return fromV, nil
-	}
-	return query
-}
-
 // QueryWorkspace queries the workspace edge of a AutomationRun.
 func (c *AutomationRunClient) QueryWorkspace(_m *AutomationRun) *WorkspaceQuery {
 	query := (&WorkspaceClient{config: c.config}).Query()
@@ -852,6 +836,22 @@ func (c *AutomationRunClient) QueryWorkspace(_m *AutomationRun) *WorkspaceQuery 
 			sqlgraph.From(automationrun.Table, automationrun.FieldID, id),
 			sqlgraph.To(workspace.Table, workspace.FieldID),
 			sqlgraph.Edge(sqlgraph.M2O, true, automationrun.WorkspaceTable, automationrun.WorkspaceColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryAutomation queries the automation edge of a AutomationRun.
+func (c *AutomationRunClient) QueryAutomation(_m *AutomationRun) *AutomationQuery {
+	query := (&AutomationClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(automationrun.Table, automationrun.FieldID, id),
+			sqlgraph.To(automation.Table, automation.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, automationrun.AutomationTable, automationrun.AutomationColumn),
 		)
 		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
 		return fromV, nil
@@ -1157,22 +1157,6 @@ func (c *BroadcastRecipientClient) GetX(ctx context.Context, id int64) *Broadcas
 	return obj
 }
 
-// QueryBroadcast queries the broadcast edge of a BroadcastRecipient.
-func (c *BroadcastRecipientClient) QueryBroadcast(_m *BroadcastRecipient) *BroadcastQuery {
-	query := (&BroadcastClient{config: c.config}).Query()
-	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
-		id := _m.ID
-		step := sqlgraph.NewStep(
-			sqlgraph.From(broadcastrecipient.Table, broadcastrecipient.FieldID, id),
-			sqlgraph.To(broadcast.Table, broadcast.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, true, broadcastrecipient.BroadcastTable, broadcastrecipient.BroadcastColumn),
-		)
-		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
-		return fromV, nil
-	}
-	return query
-}
-
 // QueryWorkspace queries the workspace edge of a BroadcastRecipient.
 func (c *BroadcastRecipientClient) QueryWorkspace(_m *BroadcastRecipient) *WorkspaceQuery {
 	query := (&WorkspaceClient{config: c.config}).Query()
@@ -1182,6 +1166,22 @@ func (c *BroadcastRecipientClient) QueryWorkspace(_m *BroadcastRecipient) *Works
 			sqlgraph.From(broadcastrecipient.Table, broadcastrecipient.FieldID, id),
 			sqlgraph.To(workspace.Table, workspace.FieldID),
 			sqlgraph.Edge(sqlgraph.M2O, true, broadcastrecipient.WorkspaceTable, broadcastrecipient.WorkspaceColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryBroadcast queries the broadcast edge of a BroadcastRecipient.
+func (c *BroadcastRecipientClient) QueryBroadcast(_m *BroadcastRecipient) *BroadcastQuery {
+	query := (&BroadcastClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(broadcastrecipient.Table, broadcastrecipient.FieldID, id),
+			sqlgraph.To(broadcast.Table, broadcast.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, broadcastrecipient.BroadcastTable, broadcastrecipient.BroadcastColumn),
 		)
 		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
 		return fromV, nil
@@ -1471,6 +1471,22 @@ func (c *ContactClient) GetX(ctx context.Context, id int64) *Contact {
 	return obj
 }
 
+// QueryWorkspace queries the workspace edge of a Contact.
+func (c *ContactClient) QueryWorkspace(_m *Contact) *WorkspaceQuery {
+	query := (&WorkspaceClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(contact.Table, contact.FieldID, id),
+			sqlgraph.To(workspace.Table, workspace.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, contact.WorkspaceTable, contact.WorkspaceColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // QueryVisitors queries the visitors edge of a Contact.
 func (c *ContactClient) QueryVisitors(_m *Contact) *VisitorQuery {
 	query := (&VisitorClient{config: c.config}).Query()
@@ -1496,22 +1512,6 @@ func (c *ContactClient) QueryTags(_m *Contact) *TagQuery {
 			sqlgraph.From(contact.Table, contact.FieldID, id),
 			sqlgraph.To(tag.Table, tag.FieldID),
 			sqlgraph.Edge(sqlgraph.M2M, false, contact.TagsTable, contact.TagsPrimaryKey...),
-		)
-		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
-		return fromV, nil
-	}
-	return query
-}
-
-// QueryWorkspace queries the workspace edge of a Contact.
-func (c *ContactClient) QueryWorkspace(_m *Contact) *WorkspaceQuery {
-	query := (&WorkspaceClient{config: c.config}).Query()
-	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
-		id := _m.ID
-		step := sqlgraph.NewStep(
-			sqlgraph.From(contact.Table, contact.FieldID, id),
-			sqlgraph.To(workspace.Table, workspace.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, true, contact.WorkspaceTable, contact.WorkspaceColumn),
 		)
 		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
 		return fromV, nil
@@ -2413,22 +2413,6 @@ func (c *MembershipClient) GetX(ctx context.Context, id int64) *Membership {
 	return obj
 }
 
-// QueryUser queries the user edge of a Membership.
-func (c *MembershipClient) QueryUser(_m *Membership) *UserQuery {
-	query := (&UserClient{config: c.config}).Query()
-	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
-		id := _m.ID
-		step := sqlgraph.NewStep(
-			sqlgraph.From(membership.Table, membership.FieldID, id),
-			sqlgraph.To(user.Table, user.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, true, membership.UserTable, membership.UserColumn),
-		)
-		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
-		return fromV, nil
-	}
-	return query
-}
-
 // QueryWorkspace queries the workspace edge of a Membership.
 func (c *MembershipClient) QueryWorkspace(_m *Membership) *WorkspaceQuery {
 	query := (&WorkspaceClient{config: c.config}).Query()
@@ -2438,6 +2422,22 @@ func (c *MembershipClient) QueryWorkspace(_m *Membership) *WorkspaceQuery {
 			sqlgraph.From(membership.Table, membership.FieldID, id),
 			sqlgraph.To(workspace.Table, workspace.FieldID),
 			sqlgraph.Edge(sqlgraph.M2O, true, membership.WorkspaceTable, membership.WorkspaceColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryUser queries the user edge of a Membership.
+func (c *MembershipClient) QueryUser(_m *Membership) *UserQuery {
+	query := (&UserClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(membership.Table, membership.FieldID, id),
+			sqlgraph.To(user.Table, user.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, membership.UserTable, membership.UserColumn),
 		)
 		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
 		return fromV, nil
@@ -3951,22 +3951,6 @@ func (c *VisitorClient) GetX(ctx context.Context, id int64) *Visitor {
 	return obj
 }
 
-// QueryContact queries the contact edge of a Visitor.
-func (c *VisitorClient) QueryContact(_m *Visitor) *ContactQuery {
-	query := (&ContactClient{config: c.config}).Query()
-	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
-		id := _m.ID
-		step := sqlgraph.NewStep(
-			sqlgraph.From(visitor.Table, visitor.FieldID, id),
-			sqlgraph.To(contact.Table, contact.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, true, visitor.ContactTable, visitor.ContactColumn),
-		)
-		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
-		return fromV, nil
-	}
-	return query
-}
-
 // QueryWorkspace queries the workspace edge of a Visitor.
 func (c *VisitorClient) QueryWorkspace(_m *Visitor) *WorkspaceQuery {
 	query := (&WorkspaceClient{config: c.config}).Query()
@@ -3976,6 +3960,22 @@ func (c *VisitorClient) QueryWorkspace(_m *Visitor) *WorkspaceQuery {
 			sqlgraph.From(visitor.Table, visitor.FieldID, id),
 			sqlgraph.To(workspace.Table, workspace.FieldID),
 			sqlgraph.Edge(sqlgraph.M2O, true, visitor.WorkspaceTable, visitor.WorkspaceColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryContact queries the contact edge of a Visitor.
+func (c *VisitorClient) QueryContact(_m *Visitor) *ContactQuery {
+	query := (&ContactClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(visitor.Table, visitor.FieldID, id),
+			sqlgraph.To(contact.Table, contact.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, visitor.ContactTable, visitor.ContactColumn),
 		)
 		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
 		return fromV, nil

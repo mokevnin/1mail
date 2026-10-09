@@ -65,6 +65,11 @@ func UpdatedAt(v time.Time) predicate.WebhookEndpoint {
 	return predicate.WebhookEndpoint(sql.FieldEQ(FieldUpdatedAt, v))
 }
 
+// WorkspaceID applies equality check predicate on the "workspace_id" field. It's identical to WorkspaceIDEQ.
+func WorkspaceID(v int64) predicate.WebhookEndpoint {
+	return predicate.WebhookEndpoint(sql.FieldEQ(FieldWorkspaceID, v))
+}
+
 // URL applies equality check predicate on the "url" field. It's identical to URLEQ.
 func URL(v string) predicate.WebhookEndpoint {
 	return predicate.WebhookEndpoint(sql.FieldEQ(FieldURL, v))
@@ -78,11 +83,6 @@ func SecretEncrypted(v string) predicate.WebhookEndpoint {
 // Enabled applies equality check predicate on the "enabled" field. It's identical to EnabledEQ.
 func Enabled(v bool) predicate.WebhookEndpoint {
 	return predicate.WebhookEndpoint(sql.FieldEQ(FieldEnabled, v))
-}
-
-// WorkspaceID applies equality check predicate on the "workspace_id" field. It's identical to WorkspaceIDEQ.
-func WorkspaceID(v int64) predicate.WebhookEndpoint {
-	return predicate.WebhookEndpoint(sql.FieldEQ(FieldWorkspaceID, v))
 }
 
 // CreatedAtEQ applies the EQ predicate on the "created_at" field.
@@ -163,6 +163,26 @@ func UpdatedAtLT(v time.Time) predicate.WebhookEndpoint {
 // UpdatedAtLTE applies the LTE predicate on the "updated_at" field.
 func UpdatedAtLTE(v time.Time) predicate.WebhookEndpoint {
 	return predicate.WebhookEndpoint(sql.FieldLTE(FieldUpdatedAt, v))
+}
+
+// WorkspaceIDEQ applies the EQ predicate on the "workspace_id" field.
+func WorkspaceIDEQ(v int64) predicate.WebhookEndpoint {
+	return predicate.WebhookEndpoint(sql.FieldEQ(FieldWorkspaceID, v))
+}
+
+// WorkspaceIDNEQ applies the NEQ predicate on the "workspace_id" field.
+func WorkspaceIDNEQ(v int64) predicate.WebhookEndpoint {
+	return predicate.WebhookEndpoint(sql.FieldNEQ(FieldWorkspaceID, v))
+}
+
+// WorkspaceIDIn applies the In predicate on the "workspace_id" field.
+func WorkspaceIDIn(vs ...int64) predicate.WebhookEndpoint {
+	return predicate.WebhookEndpoint(sql.FieldIn(FieldWorkspaceID, vs...))
+}
+
+// WorkspaceIDNotIn applies the NotIn predicate on the "workspace_id" field.
+func WorkspaceIDNotIn(vs ...int64) predicate.WebhookEndpoint {
+	return predicate.WebhookEndpoint(sql.FieldNotIn(FieldWorkspaceID, vs...))
 }
 
 // URLEQ applies the EQ predicate on the "url" field.
@@ -313,26 +333,6 @@ func EnabledEQ(v bool) predicate.WebhookEndpoint {
 // EnabledNEQ applies the NEQ predicate on the "enabled" field.
 func EnabledNEQ(v bool) predicate.WebhookEndpoint {
 	return predicate.WebhookEndpoint(sql.FieldNEQ(FieldEnabled, v))
-}
-
-// WorkspaceIDEQ applies the EQ predicate on the "workspace_id" field.
-func WorkspaceIDEQ(v int64) predicate.WebhookEndpoint {
-	return predicate.WebhookEndpoint(sql.FieldEQ(FieldWorkspaceID, v))
-}
-
-// WorkspaceIDNEQ applies the NEQ predicate on the "workspace_id" field.
-func WorkspaceIDNEQ(v int64) predicate.WebhookEndpoint {
-	return predicate.WebhookEndpoint(sql.FieldNEQ(FieldWorkspaceID, v))
-}
-
-// WorkspaceIDIn applies the In predicate on the "workspace_id" field.
-func WorkspaceIDIn(vs ...int64) predicate.WebhookEndpoint {
-	return predicate.WebhookEndpoint(sql.FieldIn(FieldWorkspaceID, vs...))
-}
-
-// WorkspaceIDNotIn applies the NotIn predicate on the "workspace_id" field.
-func WorkspaceIDNotIn(vs ...int64) predicate.WebhookEndpoint {
-	return predicate.WebhookEndpoint(sql.FieldNotIn(FieldWorkspaceID, vs...))
 }
 
 // HasWorkspace applies the HasEdge predicate on the "workspace" edge.

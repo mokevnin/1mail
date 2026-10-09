@@ -65,14 +65,14 @@ func UpdatedAt(v time.Time) predicate.Membership {
 	return predicate.Membership(sql.FieldEQ(FieldUpdatedAt, v))
 }
 
-// UserID applies equality check predicate on the "user_id" field. It's identical to UserIDEQ.
-func UserID(v int64) predicate.Membership {
-	return predicate.Membership(sql.FieldEQ(FieldUserID, v))
-}
-
 // WorkspaceID applies equality check predicate on the "workspace_id" field. It's identical to WorkspaceIDEQ.
 func WorkspaceID(v int64) predicate.Membership {
 	return predicate.Membership(sql.FieldEQ(FieldWorkspaceID, v))
+}
+
+// UserID applies equality check predicate on the "user_id" field. It's identical to UserIDEQ.
+func UserID(v int64) predicate.Membership {
+	return predicate.Membership(sql.FieldEQ(FieldUserID, v))
 }
 
 // CreatedAtEQ applies the EQ predicate on the "created_at" field.
@@ -155,26 +155,6 @@ func UpdatedAtLTE(v time.Time) predicate.Membership {
 	return predicate.Membership(sql.FieldLTE(FieldUpdatedAt, v))
 }
 
-// UserIDEQ applies the EQ predicate on the "user_id" field.
-func UserIDEQ(v int64) predicate.Membership {
-	return predicate.Membership(sql.FieldEQ(FieldUserID, v))
-}
-
-// UserIDNEQ applies the NEQ predicate on the "user_id" field.
-func UserIDNEQ(v int64) predicate.Membership {
-	return predicate.Membership(sql.FieldNEQ(FieldUserID, v))
-}
-
-// UserIDIn applies the In predicate on the "user_id" field.
-func UserIDIn(vs ...int64) predicate.Membership {
-	return predicate.Membership(sql.FieldIn(FieldUserID, vs...))
-}
-
-// UserIDNotIn applies the NotIn predicate on the "user_id" field.
-func UserIDNotIn(vs ...int64) predicate.Membership {
-	return predicate.Membership(sql.FieldNotIn(FieldUserID, vs...))
-}
-
 // WorkspaceIDEQ applies the EQ predicate on the "workspace_id" field.
 func WorkspaceIDEQ(v int64) predicate.Membership {
 	return predicate.Membership(sql.FieldEQ(FieldWorkspaceID, v))
@@ -193,6 +173,26 @@ func WorkspaceIDIn(vs ...int64) predicate.Membership {
 // WorkspaceIDNotIn applies the NotIn predicate on the "workspace_id" field.
 func WorkspaceIDNotIn(vs ...int64) predicate.Membership {
 	return predicate.Membership(sql.FieldNotIn(FieldWorkspaceID, vs...))
+}
+
+// UserIDEQ applies the EQ predicate on the "user_id" field.
+func UserIDEQ(v int64) predicate.Membership {
+	return predicate.Membership(sql.FieldEQ(FieldUserID, v))
+}
+
+// UserIDNEQ applies the NEQ predicate on the "user_id" field.
+func UserIDNEQ(v int64) predicate.Membership {
+	return predicate.Membership(sql.FieldNEQ(FieldUserID, v))
+}
+
+// UserIDIn applies the In predicate on the "user_id" field.
+func UserIDIn(vs ...int64) predicate.Membership {
+	return predicate.Membership(sql.FieldIn(FieldUserID, vs...))
+}
+
+// UserIDNotIn applies the NotIn predicate on the "user_id" field.
+func UserIDNotIn(vs ...int64) predicate.Membership {
+	return predicate.Membership(sql.FieldNotIn(FieldUserID, vs...))
 }
 
 // RoleEQ applies the EQ predicate on the "role" field.
@@ -215,29 +215,6 @@ func RoleNotIn(vs ...Role) predicate.Membership {
 	return predicate.Membership(sql.FieldNotIn(FieldRole, vs...))
 }
 
-// HasUser applies the HasEdge predicate on the "user" edge.
-func HasUser() predicate.Membership {
-	return predicate.Membership(func(s *sql.Selector) {
-		step := sqlgraph.NewStep(
-			sqlgraph.From(Table, FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, true, UserTable, UserColumn),
-		)
-		sqlgraph.HasNeighbors(s, step)
-	})
-}
-
-// HasUserWith applies the HasEdge predicate on the "user" edge with a given conditions (other predicates).
-func HasUserWith(preds ...predicate.User) predicate.Membership {
-	return predicate.Membership(func(s *sql.Selector) {
-		step := newUserStep()
-		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
-			for _, p := range preds {
-				p(s)
-			}
-		})
-	})
-}
-
 // HasWorkspace applies the HasEdge predicate on the "workspace" edge.
 func HasWorkspace() predicate.Membership {
 	return predicate.Membership(func(s *sql.Selector) {
@@ -253,6 +230,29 @@ func HasWorkspace() predicate.Membership {
 func HasWorkspaceWith(preds ...predicate.Workspace) predicate.Membership {
 	return predicate.Membership(func(s *sql.Selector) {
 		step := newWorkspaceStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasUser applies the HasEdge predicate on the "user" edge.
+func HasUser() predicate.Membership {
+	return predicate.Membership(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, UserTable, UserColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasUserWith applies the HasEdge predicate on the "user" edge with a given conditions (other predicates).
+func HasUserWith(preds ...predicate.User) predicate.Membership {
+	return predicate.Membership(func(s *sql.Selector) {
+		step := newUserStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)

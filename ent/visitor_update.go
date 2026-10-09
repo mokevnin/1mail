@@ -37,20 +37,6 @@ func (_u *VisitorUpdate) SetUpdatedAt(v time.Time) *VisitorUpdate {
 	return _u
 }
 
-// SetVisitorID sets the "visitor_id" field.
-func (_u *VisitorUpdate) SetVisitorID(v string) *VisitorUpdate {
-	_u.mutation.SetVisitorID(v)
-	return _u
-}
-
-// SetNillableVisitorID sets the "visitor_id" field if the given value is not nil.
-func (_u *VisitorUpdate) SetNillableVisitorID(v *string) *VisitorUpdate {
-	if v != nil {
-		_u.SetVisitorID(*v)
-	}
-	return _u
-}
-
 // SetWorkspaceID sets the "workspace_id" field.
 func (_u *VisitorUpdate) SetWorkspaceID(v int64) *VisitorUpdate {
 	_u.mutation.SetWorkspaceID(v)
@@ -61,6 +47,20 @@ func (_u *VisitorUpdate) SetWorkspaceID(v int64) *VisitorUpdate {
 func (_u *VisitorUpdate) SetNillableWorkspaceID(v *int64) *VisitorUpdate {
 	if v != nil {
 		_u.SetWorkspaceID(*v)
+	}
+	return _u
+}
+
+// SetVisitorID sets the "visitor_id" field.
+func (_u *VisitorUpdate) SetVisitorID(v string) *VisitorUpdate {
+	_u.mutation.SetVisitorID(v)
+	return _u
+}
+
+// SetNillableVisitorID sets the "visitor_id" field if the given value is not nil.
+func (_u *VisitorUpdate) SetNillableVisitorID(v *string) *VisitorUpdate {
+	if v != nil {
+		_u.SetVisitorID(*v)
 	}
 	return _u
 }
@@ -99,14 +99,14 @@ func (_u *VisitorUpdate) SetNillableLastSeenAt(v *time.Time) *VisitorUpdate {
 	return _u
 }
 
-// SetContact sets the "contact" edge to the Contact entity.
-func (_u *VisitorUpdate) SetContact(v *Contact) *VisitorUpdate {
-	return _u.SetContactID(v.ID)
-}
-
 // SetWorkspace sets the "workspace" edge to the Workspace entity.
 func (_u *VisitorUpdate) SetWorkspace(v *Workspace) *VisitorUpdate {
 	return _u.SetWorkspaceID(v.ID)
+}
+
+// SetContact sets the "contact" edge to the Contact entity.
+func (_u *VisitorUpdate) SetContact(v *Contact) *VisitorUpdate {
+	return _u.SetContactID(v.ID)
 }
 
 // Mutation returns the VisitorMutation object of the builder.
@@ -114,15 +114,15 @@ func (_u *VisitorUpdate) Mutation() *VisitorMutation {
 	return _u.mutation
 }
 
-// ClearContact clears the "contact" edge to the Contact entity.
-func (_u *VisitorUpdate) ClearContact() *VisitorUpdate {
-	_u.mutation.ClearContact()
-	return _u
-}
-
 // ClearWorkspace clears the "workspace" edge to the Workspace entity.
 func (_u *VisitorUpdate) ClearWorkspace() *VisitorUpdate {
 	_u.mutation.ClearWorkspace()
+	return _u
+}
+
+// ClearContact clears the "contact" edge to the Contact entity.
+func (_u *VisitorUpdate) ClearContact() *VisitorUpdate {
+	_u.mutation.ClearContact()
 	return _u
 }
 
@@ -202,35 +202,6 @@ func (_u *VisitorUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	if value, ok := _u.mutation.LastSeenAt(); ok {
 		_spec.SetField(visitor.FieldLastSeenAt, field.TypeTime, value)
 	}
-	if _u.mutation.ContactCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: true,
-			Table:   visitor.ContactTable,
-			Columns: []string{visitor.ContactColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(contact.FieldID, field.TypeInt64),
-			},
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := _u.mutation.ContactIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: true,
-			Table:   visitor.ContactTable,
-			Columns: []string{visitor.ContactColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(contact.FieldID, field.TypeInt64),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
-	}
 	if _u.mutation.WorkspaceCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
@@ -253,6 +224,35 @@ func (_u *VisitorUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(workspace.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.ContactCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   visitor.ContactTable,
+			Columns: []string{visitor.ContactColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(contact.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.ContactIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   visitor.ContactTable,
+			Columns: []string{visitor.ContactColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(contact.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {
@@ -288,20 +288,6 @@ func (_u *VisitorUpdateOne) SetUpdatedAt(v time.Time) *VisitorUpdateOne {
 	return _u
 }
 
-// SetVisitorID sets the "visitor_id" field.
-func (_u *VisitorUpdateOne) SetVisitorID(v string) *VisitorUpdateOne {
-	_u.mutation.SetVisitorID(v)
-	return _u
-}
-
-// SetNillableVisitorID sets the "visitor_id" field if the given value is not nil.
-func (_u *VisitorUpdateOne) SetNillableVisitorID(v *string) *VisitorUpdateOne {
-	if v != nil {
-		_u.SetVisitorID(*v)
-	}
-	return _u
-}
-
 // SetWorkspaceID sets the "workspace_id" field.
 func (_u *VisitorUpdateOne) SetWorkspaceID(v int64) *VisitorUpdateOne {
 	_u.mutation.SetWorkspaceID(v)
@@ -312,6 +298,20 @@ func (_u *VisitorUpdateOne) SetWorkspaceID(v int64) *VisitorUpdateOne {
 func (_u *VisitorUpdateOne) SetNillableWorkspaceID(v *int64) *VisitorUpdateOne {
 	if v != nil {
 		_u.SetWorkspaceID(*v)
+	}
+	return _u
+}
+
+// SetVisitorID sets the "visitor_id" field.
+func (_u *VisitorUpdateOne) SetVisitorID(v string) *VisitorUpdateOne {
+	_u.mutation.SetVisitorID(v)
+	return _u
+}
+
+// SetNillableVisitorID sets the "visitor_id" field if the given value is not nil.
+func (_u *VisitorUpdateOne) SetNillableVisitorID(v *string) *VisitorUpdateOne {
+	if v != nil {
+		_u.SetVisitorID(*v)
 	}
 	return _u
 }
@@ -350,14 +350,14 @@ func (_u *VisitorUpdateOne) SetNillableLastSeenAt(v *time.Time) *VisitorUpdateOn
 	return _u
 }
 
-// SetContact sets the "contact" edge to the Contact entity.
-func (_u *VisitorUpdateOne) SetContact(v *Contact) *VisitorUpdateOne {
-	return _u.SetContactID(v.ID)
-}
-
 // SetWorkspace sets the "workspace" edge to the Workspace entity.
 func (_u *VisitorUpdateOne) SetWorkspace(v *Workspace) *VisitorUpdateOne {
 	return _u.SetWorkspaceID(v.ID)
+}
+
+// SetContact sets the "contact" edge to the Contact entity.
+func (_u *VisitorUpdateOne) SetContact(v *Contact) *VisitorUpdateOne {
+	return _u.SetContactID(v.ID)
 }
 
 // Mutation returns the VisitorMutation object of the builder.
@@ -365,15 +365,15 @@ func (_u *VisitorUpdateOne) Mutation() *VisitorMutation {
 	return _u.mutation
 }
 
-// ClearContact clears the "contact" edge to the Contact entity.
-func (_u *VisitorUpdateOne) ClearContact() *VisitorUpdateOne {
-	_u.mutation.ClearContact()
-	return _u
-}
-
 // ClearWorkspace clears the "workspace" edge to the Workspace entity.
 func (_u *VisitorUpdateOne) ClearWorkspace() *VisitorUpdateOne {
 	_u.mutation.ClearWorkspace()
+	return _u
+}
+
+// ClearContact clears the "contact" edge to the Contact entity.
+func (_u *VisitorUpdateOne) ClearContact() *VisitorUpdateOne {
+	_u.mutation.ClearContact()
 	return _u
 }
 
@@ -483,35 +483,6 @@ func (_u *VisitorUpdateOne) sqlSave(ctx context.Context) (_node *Visitor, err er
 	if value, ok := _u.mutation.LastSeenAt(); ok {
 		_spec.SetField(visitor.FieldLastSeenAt, field.TypeTime, value)
 	}
-	if _u.mutation.ContactCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: true,
-			Table:   visitor.ContactTable,
-			Columns: []string{visitor.ContactColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(contact.FieldID, field.TypeInt64),
-			},
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := _u.mutation.ContactIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: true,
-			Table:   visitor.ContactTable,
-			Columns: []string{visitor.ContactColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(contact.FieldID, field.TypeInt64),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
-	}
 	if _u.mutation.WorkspaceCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
@@ -534,6 +505,35 @@ func (_u *VisitorUpdateOne) sqlSave(ctx context.Context) (_node *Visitor, err er
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(workspace.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.ContactCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   visitor.ContactTable,
+			Columns: []string{visitor.ContactColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(contact.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.ContactIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   visitor.ContactTable,
+			Columns: []string{visitor.ContactColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(contact.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {

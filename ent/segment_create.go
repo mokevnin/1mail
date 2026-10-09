@@ -51,6 +51,12 @@ func (_c *SegmentCreate) SetNillableUpdatedAt(v *time.Time) *SegmentCreate {
 	return _c
 }
 
+// SetWorkspaceID sets the "workspace_id" field.
+func (_c *SegmentCreate) SetWorkspaceID(v int64) *SegmentCreate {
+	_c.mutation.SetWorkspaceID(v)
+	return _c
+}
+
 // SetName sets the "name" field.
 func (_c *SegmentCreate) SetName(v string) *SegmentCreate {
 	_c.mutation.SetName(v)
@@ -68,12 +74,6 @@ func (_c *SegmentCreate) SetNillableDefinition(v *string) *SegmentCreate {
 	if v != nil {
 		_c.SetDefinition(*v)
 	}
-	return _c
-}
-
-// SetWorkspaceID sets the "workspace_id" field.
-func (_c *SegmentCreate) SetWorkspaceID(v int64) *SegmentCreate {
-	_c.mutation.SetWorkspaceID(v)
 	return _c
 }
 
@@ -141,6 +141,9 @@ func (_c *SegmentCreate) check() error {
 	if _, ok := _c.mutation.UpdatedAt(); !ok {
 		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "Segment.updated_at"`)}
 	}
+	if _, ok := _c.mutation.WorkspaceID(); !ok {
+		return &ValidationError{Name: "workspace_id", err: errors.New(`ent: missing required field "Segment.workspace_id"`)}
+	}
 	if _, ok := _c.mutation.Name(); !ok {
 		return &ValidationError{Name: "name", err: errors.New(`ent: missing required field "Segment.name"`)}
 	}
@@ -148,9 +151,6 @@ func (_c *SegmentCreate) check() error {
 		if err := segment.NameValidator(v); err != nil {
 			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "Segment.name": %w`, err)}
 		}
-	}
-	if _, ok := _c.mutation.WorkspaceID(); !ok {
-		return &ValidationError{Name: "workspace_id", err: errors.New(`ent: missing required field "Segment.workspace_id"`)}
 	}
 	if len(_c.mutation.WorkspaceIDs()) == 0 {
 		return &ValidationError{Name: "workspace", err: errors.New(`ent: missing required edge "Segment.workspace"`)}
@@ -285,6 +285,18 @@ func (u *SegmentUpsert) UpdateUpdatedAt() *SegmentUpsert {
 	return u
 }
 
+// SetWorkspaceID sets the "workspace_id" field.
+func (u *SegmentUpsert) SetWorkspaceID(v int64) *SegmentUpsert {
+	u.Set(segment.FieldWorkspaceID, v)
+	return u
+}
+
+// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
+func (u *SegmentUpsert) UpdateWorkspaceID() *SegmentUpsert {
+	u.SetExcluded(segment.FieldWorkspaceID)
+	return u
+}
+
 // SetName sets the "name" field.
 func (u *SegmentUpsert) SetName(v string) *SegmentUpsert {
 	u.Set(segment.FieldName, v)
@@ -312,18 +324,6 @@ func (u *SegmentUpsert) UpdateDefinition() *SegmentUpsert {
 // ClearDefinition clears the value of the "definition" field.
 func (u *SegmentUpsert) ClearDefinition() *SegmentUpsert {
 	u.SetNull(segment.FieldDefinition)
-	return u
-}
-
-// SetWorkspaceID sets the "workspace_id" field.
-func (u *SegmentUpsert) SetWorkspaceID(v int64) *SegmentUpsert {
-	u.Set(segment.FieldWorkspaceID, v)
-	return u
-}
-
-// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
-func (u *SegmentUpsert) UpdateWorkspaceID() *SegmentUpsert {
-	u.SetExcluded(segment.FieldWorkspaceID)
 	return u
 }
 
@@ -392,6 +392,20 @@ func (u *SegmentUpsertOne) UpdateUpdatedAt() *SegmentUpsertOne {
 	})
 }
 
+// SetWorkspaceID sets the "workspace_id" field.
+func (u *SegmentUpsertOne) SetWorkspaceID(v int64) *SegmentUpsertOne {
+	return u.Update(func(s *SegmentUpsert) {
+		s.SetWorkspaceID(v)
+	})
+}
+
+// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
+func (u *SegmentUpsertOne) UpdateWorkspaceID() *SegmentUpsertOne {
+	return u.Update(func(s *SegmentUpsert) {
+		s.UpdateWorkspaceID()
+	})
+}
+
 // SetName sets the "name" field.
 func (u *SegmentUpsertOne) SetName(v string) *SegmentUpsertOne {
 	return u.Update(func(s *SegmentUpsert) {
@@ -424,20 +438,6 @@ func (u *SegmentUpsertOne) UpdateDefinition() *SegmentUpsertOne {
 func (u *SegmentUpsertOne) ClearDefinition() *SegmentUpsertOne {
 	return u.Update(func(s *SegmentUpsert) {
 		s.ClearDefinition()
-	})
-}
-
-// SetWorkspaceID sets the "workspace_id" field.
-func (u *SegmentUpsertOne) SetWorkspaceID(v int64) *SegmentUpsertOne {
-	return u.Update(func(s *SegmentUpsert) {
-		s.SetWorkspaceID(v)
-	})
-}
-
-// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
-func (u *SegmentUpsertOne) UpdateWorkspaceID() *SegmentUpsertOne {
-	return u.Update(func(s *SegmentUpsert) {
-		s.UpdateWorkspaceID()
 	})
 }
 
@@ -672,6 +672,20 @@ func (u *SegmentUpsertBulk) UpdateUpdatedAt() *SegmentUpsertBulk {
 	})
 }
 
+// SetWorkspaceID sets the "workspace_id" field.
+func (u *SegmentUpsertBulk) SetWorkspaceID(v int64) *SegmentUpsertBulk {
+	return u.Update(func(s *SegmentUpsert) {
+		s.SetWorkspaceID(v)
+	})
+}
+
+// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
+func (u *SegmentUpsertBulk) UpdateWorkspaceID() *SegmentUpsertBulk {
+	return u.Update(func(s *SegmentUpsert) {
+		s.UpdateWorkspaceID()
+	})
+}
+
 // SetName sets the "name" field.
 func (u *SegmentUpsertBulk) SetName(v string) *SegmentUpsertBulk {
 	return u.Update(func(s *SegmentUpsert) {
@@ -704,20 +718,6 @@ func (u *SegmentUpsertBulk) UpdateDefinition() *SegmentUpsertBulk {
 func (u *SegmentUpsertBulk) ClearDefinition() *SegmentUpsertBulk {
 	return u.Update(func(s *SegmentUpsert) {
 		s.ClearDefinition()
-	})
-}
-
-// SetWorkspaceID sets the "workspace_id" field.
-func (u *SegmentUpsertBulk) SetWorkspaceID(v int64) *SegmentUpsertBulk {
-	return u.Update(func(s *SegmentUpsert) {
-		s.SetWorkspaceID(v)
-	})
-}
-
-// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
-func (u *SegmentUpsertBulk) UpdateWorkspaceID() *SegmentUpsertBulk {
-	return u.Update(func(s *SegmentUpsert) {
-		s.UpdateWorkspaceID()
 	})
 }
 

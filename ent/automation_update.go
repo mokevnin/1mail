@@ -37,6 +37,20 @@ func (_u *AutomationUpdate) SetUpdatedAt(v time.Time) *AutomationUpdate {
 	return _u
 }
 
+// SetWorkspaceID sets the "workspace_id" field.
+func (_u *AutomationUpdate) SetWorkspaceID(v int64) *AutomationUpdate {
+	_u.mutation.SetWorkspaceID(v)
+	return _u
+}
+
+// SetNillableWorkspaceID sets the "workspace_id" field if the given value is not nil.
+func (_u *AutomationUpdate) SetNillableWorkspaceID(v *int64) *AutomationUpdate {
+	if v != nil {
+		_u.SetWorkspaceID(*v)
+	}
+	return _u
+}
+
 // SetName sets the "name" field.
 func (_u *AutomationUpdate) SetName(v string) *AutomationUpdate {
 	_u.mutation.SetName(v)
@@ -89,20 +103,6 @@ func (_u *AutomationUpdate) SetDefinition(v string) *AutomationUpdate {
 func (_u *AutomationUpdate) SetNillableDefinition(v *string) *AutomationUpdate {
 	if v != nil {
 		_u.SetDefinition(*v)
-	}
-	return _u
-}
-
-// SetWorkspaceID sets the "workspace_id" field.
-func (_u *AutomationUpdate) SetWorkspaceID(v int64) *AutomationUpdate {
-	_u.mutation.SetWorkspaceID(v)
-	return _u
-}
-
-// SetNillableWorkspaceID sets the "workspace_id" field if the given value is not nil.
-func (_u *AutomationUpdate) SetNillableWorkspaceID(v *int64) *AutomationUpdate {
-	if v != nil {
-		_u.SetWorkspaceID(*v)
 	}
 	return _u
 }
@@ -353,6 +353,20 @@ func (_u *AutomationUpdateOne) SetUpdatedAt(v time.Time) *AutomationUpdateOne {
 	return _u
 }
 
+// SetWorkspaceID sets the "workspace_id" field.
+func (_u *AutomationUpdateOne) SetWorkspaceID(v int64) *AutomationUpdateOne {
+	_u.mutation.SetWorkspaceID(v)
+	return _u
+}
+
+// SetNillableWorkspaceID sets the "workspace_id" field if the given value is not nil.
+func (_u *AutomationUpdateOne) SetNillableWorkspaceID(v *int64) *AutomationUpdateOne {
+	if v != nil {
+		_u.SetWorkspaceID(*v)
+	}
+	return _u
+}
+
 // SetName sets the "name" field.
 func (_u *AutomationUpdateOne) SetName(v string) *AutomationUpdateOne {
 	_u.mutation.SetName(v)
@@ -405,20 +419,6 @@ func (_u *AutomationUpdateOne) SetDefinition(v string) *AutomationUpdateOne {
 func (_u *AutomationUpdateOne) SetNillableDefinition(v *string) *AutomationUpdateOne {
 	if v != nil {
 		_u.SetDefinition(*v)
-	}
-	return _u
-}
-
-// SetWorkspaceID sets the "workspace_id" field.
-func (_u *AutomationUpdateOne) SetWorkspaceID(v int64) *AutomationUpdateOne {
-	_u.mutation.SetWorkspaceID(v)
-	return _u
-}
-
-// SetNillableWorkspaceID sets the "workspace_id" field if the given value is not nil.
-func (_u *AutomationUpdateOne) SetNillableWorkspaceID(v *int64) *AutomationUpdateOne {
-	if v != nil {
-		_u.SetWorkspaceID(*v)
 	}
 	return _u
 }

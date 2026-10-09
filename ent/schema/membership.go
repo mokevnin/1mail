@@ -22,7 +22,7 @@ func (Membership) Annotations() []schema.Annotation {
 }
 
 func (Membership) Mixin() []ent.Mixin {
-	return []ent.Mixin{TimeMixin{}}
+	return []ent.Mixin{TimeMixin{}, WorkspaceMixin{Ref: "memberships"}}
 }
 
 func (Membership) Fields() []ent.Field {
@@ -31,7 +31,6 @@ func (Membership) Fields() []ent.Field {
 			StorageKey("id").
 			Immutable(),
 		field.Int64("user_id"),
-		field.Int64("workspace_id"),
 		// The User's permission level in this Workspace. owner + admin manage
 		// members and invites; member cannot. Only owner may transfer ownership.
 		field.Enum("role").
@@ -44,11 +43,6 @@ func (Membership) Edges() []ent.Edge {
 		edge.From("user", User.Type).
 			Ref("memberships").
 			Field("user_id").
-			Required().
-			Unique(),
-		edge.From("workspace", Workspace.Type).
-			Ref("memberships").
-			Field("workspace_id").
 			Required().
 			Unique(),
 	}

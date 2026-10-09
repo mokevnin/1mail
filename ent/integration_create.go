@@ -51,6 +51,12 @@ func (_c *IntegrationCreate) SetNillableUpdatedAt(v *time.Time) *IntegrationCrea
 	return _c
 }
 
+// SetWorkspaceID sets the "workspace_id" field.
+func (_c *IntegrationCreate) SetWorkspaceID(v int64) *IntegrationCreate {
+	_c.mutation.SetWorkspaceID(v)
+	return _c
+}
+
 // SetName sets the "name" field.
 func (_c *IntegrationCreate) SetName(v string) *IntegrationCreate {
 	_c.mutation.SetName(v)
@@ -108,12 +114,6 @@ func (_c *IntegrationCreate) SetNillableIsDefault(v *bool) *IntegrationCreate {
 	if v != nil {
 		_c.SetIsDefault(*v)
 	}
-	return _c
-}
-
-// SetWorkspaceID sets the "workspace_id" field.
-func (_c *IntegrationCreate) SetWorkspaceID(v int64) *IntegrationCreate {
-	_c.mutation.SetWorkspaceID(v)
 	return _c
 }
 
@@ -193,6 +193,9 @@ func (_c *IntegrationCreate) check() error {
 	if _, ok := _c.mutation.UpdatedAt(); !ok {
 		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "Integration.updated_at"`)}
 	}
+	if _, ok := _c.mutation.WorkspaceID(); !ok {
+		return &ValidationError{Name: "workspace_id", err: errors.New(`ent: missing required field "Integration.workspace_id"`)}
+	}
 	if _, ok := _c.mutation.Name(); !ok {
 		return &ValidationError{Name: "name", err: errors.New(`ent: missing required field "Integration.name"`)}
 	}
@@ -225,9 +228,6 @@ func (_c *IntegrationCreate) check() error {
 	}
 	if _, ok := _c.mutation.IsDefault(); !ok {
 		return &ValidationError{Name: "is_default", err: errors.New(`ent: missing required field "Integration.is_default"`)}
-	}
-	if _, ok := _c.mutation.WorkspaceID(); !ok {
-		return &ValidationError{Name: "workspace_id", err: errors.New(`ent: missing required field "Integration.workspace_id"`)}
 	}
 	if len(_c.mutation.WorkspaceIDs()) == 0 {
 		return &ValidationError{Name: "workspace", err: errors.New(`ent: missing required edge "Integration.workspace"`)}
@@ -378,6 +378,18 @@ func (u *IntegrationUpsert) UpdateUpdatedAt() *IntegrationUpsert {
 	return u
 }
 
+// SetWorkspaceID sets the "workspace_id" field.
+func (u *IntegrationUpsert) SetWorkspaceID(v int64) *IntegrationUpsert {
+	u.Set(integration.FieldWorkspaceID, v)
+	return u
+}
+
+// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
+func (u *IntegrationUpsert) UpdateWorkspaceID() *IntegrationUpsert {
+	u.SetExcluded(integration.FieldWorkspaceID)
+	return u
+}
+
 // SetName sets the "name" field.
 func (u *IntegrationUpsert) SetName(v string) *IntegrationUpsert {
 	u.Set(integration.FieldName, v)
@@ -450,18 +462,6 @@ func (u *IntegrationUpsert) UpdateIsDefault() *IntegrationUpsert {
 	return u
 }
 
-// SetWorkspaceID sets the "workspace_id" field.
-func (u *IntegrationUpsert) SetWorkspaceID(v int64) *IntegrationUpsert {
-	u.Set(integration.FieldWorkspaceID, v)
-	return u
-}
-
-// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
-func (u *IntegrationUpsert) UpdateWorkspaceID() *IntegrationUpsert {
-	u.SetExcluded(integration.FieldWorkspaceID)
-	return u
-}
-
 // UpdateNewValues updates the mutable fields using the new values that were set on create except the ID field.
 // Using this option is equivalent to using:
 //
@@ -524,6 +524,20 @@ func (u *IntegrationUpsertOne) SetUpdatedAt(v time.Time) *IntegrationUpsertOne {
 func (u *IntegrationUpsertOne) UpdateUpdatedAt() *IntegrationUpsertOne {
 	return u.Update(func(s *IntegrationUpsert) {
 		s.UpdateUpdatedAt()
+	})
+}
+
+// SetWorkspaceID sets the "workspace_id" field.
+func (u *IntegrationUpsertOne) SetWorkspaceID(v int64) *IntegrationUpsertOne {
+	return u.Update(func(s *IntegrationUpsert) {
+		s.SetWorkspaceID(v)
+	})
+}
+
+// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
+func (u *IntegrationUpsertOne) UpdateWorkspaceID() *IntegrationUpsertOne {
+	return u.Update(func(s *IntegrationUpsert) {
+		s.UpdateWorkspaceID()
 	})
 }
 
@@ -608,20 +622,6 @@ func (u *IntegrationUpsertOne) SetIsDefault(v bool) *IntegrationUpsertOne {
 func (u *IntegrationUpsertOne) UpdateIsDefault() *IntegrationUpsertOne {
 	return u.Update(func(s *IntegrationUpsert) {
 		s.UpdateIsDefault()
-	})
-}
-
-// SetWorkspaceID sets the "workspace_id" field.
-func (u *IntegrationUpsertOne) SetWorkspaceID(v int64) *IntegrationUpsertOne {
-	return u.Update(func(s *IntegrationUpsert) {
-		s.SetWorkspaceID(v)
-	})
-}
-
-// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
-func (u *IntegrationUpsertOne) UpdateWorkspaceID() *IntegrationUpsertOne {
-	return u.Update(func(s *IntegrationUpsert) {
-		s.UpdateWorkspaceID()
 	})
 }
 
@@ -856,6 +856,20 @@ func (u *IntegrationUpsertBulk) UpdateUpdatedAt() *IntegrationUpsertBulk {
 	})
 }
 
+// SetWorkspaceID sets the "workspace_id" field.
+func (u *IntegrationUpsertBulk) SetWorkspaceID(v int64) *IntegrationUpsertBulk {
+	return u.Update(func(s *IntegrationUpsert) {
+		s.SetWorkspaceID(v)
+	})
+}
+
+// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
+func (u *IntegrationUpsertBulk) UpdateWorkspaceID() *IntegrationUpsertBulk {
+	return u.Update(func(s *IntegrationUpsert) {
+		s.UpdateWorkspaceID()
+	})
+}
+
 // SetName sets the "name" field.
 func (u *IntegrationUpsertBulk) SetName(v string) *IntegrationUpsertBulk {
 	return u.Update(func(s *IntegrationUpsert) {
@@ -937,20 +951,6 @@ func (u *IntegrationUpsertBulk) SetIsDefault(v bool) *IntegrationUpsertBulk {
 func (u *IntegrationUpsertBulk) UpdateIsDefault() *IntegrationUpsertBulk {
 	return u.Update(func(s *IntegrationUpsert) {
 		s.UpdateIsDefault()
-	})
-}
-
-// SetWorkspaceID sets the "workspace_id" field.
-func (u *IntegrationUpsertBulk) SetWorkspaceID(v int64) *IntegrationUpsertBulk {
-	return u.Update(func(s *IntegrationUpsert) {
-		s.SetWorkspaceID(v)
-	})
-}
-
-// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
-func (u *IntegrationUpsertBulk) UpdateWorkspaceID() *IntegrationUpsertBulk {
-	return u.Update(func(s *IntegrationUpsert) {
-		s.UpdateWorkspaceID()
 	})
 }
 

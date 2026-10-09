@@ -36,6 +36,20 @@ func (_u *ConfirmationUpdate) SetUpdatedAt(v time.Time) *ConfirmationUpdate {
 	return _u
 }
 
+// SetWorkspaceID sets the "workspace_id" field.
+func (_u *ConfirmationUpdate) SetWorkspaceID(v int64) *ConfirmationUpdate {
+	_u.mutation.SetWorkspaceID(v)
+	return _u
+}
+
+// SetNillableWorkspaceID sets the "workspace_id" field if the given value is not nil.
+func (_u *ConfirmationUpdate) SetNillableWorkspaceID(v *int64) *ConfirmationUpdate {
+	if v != nil {
+		_u.SetWorkspaceID(*v)
+	}
+	return _u
+}
+
 // SetChannel sets the "channel" field.
 func (_u *ConfirmationUpdate) SetChannel(v confirmation.Channel) *ConfirmationUpdate {
 	_u.mutation.SetChannel(v)
@@ -102,20 +116,6 @@ func (_u *ConfirmationUpdate) AddContactID(v int64) *ConfirmationUpdate {
 // ClearContactID clears the value of the "contact_id" field.
 func (_u *ConfirmationUpdate) ClearContactID() *ConfirmationUpdate {
 	_u.mutation.ClearContactID()
-	return _u
-}
-
-// SetWorkspaceID sets the "workspace_id" field.
-func (_u *ConfirmationUpdate) SetWorkspaceID(v int64) *ConfirmationUpdate {
-	_u.mutation.SetWorkspaceID(v)
-	return _u
-}
-
-// SetNillableWorkspaceID sets the "workspace_id" field if the given value is not nil.
-func (_u *ConfirmationUpdate) SetNillableWorkspaceID(v *int64) *ConfirmationUpdate {
-	if v != nil {
-		_u.SetWorkspaceID(*v)
-	}
 	return _u
 }
 
@@ -290,6 +290,20 @@ func (_u *ConfirmationUpdateOne) SetUpdatedAt(v time.Time) *ConfirmationUpdateOn
 	return _u
 }
 
+// SetWorkspaceID sets the "workspace_id" field.
+func (_u *ConfirmationUpdateOne) SetWorkspaceID(v int64) *ConfirmationUpdateOne {
+	_u.mutation.SetWorkspaceID(v)
+	return _u
+}
+
+// SetNillableWorkspaceID sets the "workspace_id" field if the given value is not nil.
+func (_u *ConfirmationUpdateOne) SetNillableWorkspaceID(v *int64) *ConfirmationUpdateOne {
+	if v != nil {
+		_u.SetWorkspaceID(*v)
+	}
+	return _u
+}
+
 // SetChannel sets the "channel" field.
 func (_u *ConfirmationUpdateOne) SetChannel(v confirmation.Channel) *ConfirmationUpdateOne {
 	_u.mutation.SetChannel(v)
@@ -356,20 +370,6 @@ func (_u *ConfirmationUpdateOne) AddContactID(v int64) *ConfirmationUpdateOne {
 // ClearContactID clears the value of the "contact_id" field.
 func (_u *ConfirmationUpdateOne) ClearContactID() *ConfirmationUpdateOne {
 	_u.mutation.ClearContactID()
-	return _u
-}
-
-// SetWorkspaceID sets the "workspace_id" field.
-func (_u *ConfirmationUpdateOne) SetWorkspaceID(v int64) *ConfirmationUpdateOne {
-	_u.mutation.SetWorkspaceID(v)
-	return _u
-}
-
-// SetNillableWorkspaceID sets the "workspace_id" field if the given value is not nil.
-func (_u *ConfirmationUpdateOne) SetNillableWorkspaceID(v *int64) *ConfirmationUpdateOne {
-	if v != nil {
-		_u.SetWorkspaceID(*v)
-	}
 	return _u
 }
 

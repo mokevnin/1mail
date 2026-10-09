@@ -22,6 +22,8 @@ type Automation struct {
 	CreatedAt time.Time `json:"created_at,omitempty"`
 	// UpdatedAt holds the value of the "updated_at" field.
 	UpdatedAt time.Time `json:"updated_at,omitempty"`
+	// WorkspaceID holds the value of the "workspace_id" field.
+	WorkspaceID int64 `json:"workspace_id,omitempty"`
 	// Name holds the value of the "name" field.
 	Name string `json:"name,omitempty"`
 	// Status holds the value of the "status" field.
@@ -30,8 +32,6 @@ type Automation struct {
 	TriggerEvent string `json:"trigger_event,omitempty"`
 	// Definition holds the value of the "definition" field.
 	Definition string `json:"definition,omitempty"`
-	// WorkspaceID holds the value of the "workspace_id" field.
-	WorkspaceID int64 `json:"workspace_id,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the AutomationQuery when eager-loading is set.
 	Edges        AutomationEdges `json:"edges"`
@@ -113,6 +113,12 @@ func (_m *Automation) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				_m.UpdatedAt = value.Time
 			}
+		case automation.FieldWorkspaceID:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field workspace_id", values[i])
+			} else if value.Valid {
+				_m.WorkspaceID = value.Int64
+			}
 		case automation.FieldName:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field name", values[i])
@@ -136,12 +142,6 @@ func (_m *Automation) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field definition", values[i])
 			} else if value.Valid {
 				_m.Definition = value.String
-			}
-		case automation.FieldWorkspaceID:
-			if value, ok := values[i].(*sql.NullInt64); !ok {
-				return fmt.Errorf("unexpected type %T for field workspace_id", values[i])
-			} else if value.Valid {
-				_m.WorkspaceID = value.Int64
 			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
@@ -195,6 +195,9 @@ func (_m *Automation) String() string {
 	builder.WriteString("updated_at=")
 	builder.WriteString(_m.UpdatedAt.Format(time.ANSIC))
 	builder.WriteString(", ")
+	builder.WriteString("workspace_id=")
+	builder.WriteString(fmt.Sprintf("%v", _m.WorkspaceID))
+	builder.WriteString(", ")
 	builder.WriteString("name=")
 	builder.WriteString(_m.Name)
 	builder.WriteString(", ")
@@ -206,9 +209,6 @@ func (_m *Automation) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("definition=")
 	builder.WriteString(_m.Definition)
-	builder.WriteString(", ")
-	builder.WriteString("workspace_id=")
-	builder.WriteString(fmt.Sprintf("%v", _m.WorkspaceID))
 	builder.WriteByte(')')
 	return builder.String()
 }

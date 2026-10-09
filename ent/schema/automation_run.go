@@ -24,7 +24,7 @@ func (AutomationRun) Annotations() []schema.Annotation {
 }
 
 func (AutomationRun) Mixin() []ent.Mixin {
-	return []ent.Mixin{TimeMixin{}}
+	return []ent.Mixin{TimeMixin{}, WorkspaceMixin{Ref: "automation_runs"}}
 }
 
 func (AutomationRun) Fields() []ent.Field {
@@ -34,7 +34,6 @@ func (AutomationRun) Fields() []ent.Field {
 			Immutable(),
 		field.Int64("automation_id"),
 		field.Int64("contact_id"),
-		field.Int64("workspace_id"),
 		// exited: the enrollment left early (e.g. an unsubscribe or suppression
 		// mid-run) — distinct from completing the sequence.
 		field.Enum("status").
@@ -54,11 +53,6 @@ func (AutomationRun) Edges() []ent.Edge {
 		edge.From("automation", Automation.Type).
 			Ref("runs").
 			Field("automation_id").
-			Required().
-			Unique(),
-		edge.From("workspace", Workspace.Type).
-			Ref("automation_runs").
-			Field("workspace_id").
 			Required().
 			Unique(),
 	}

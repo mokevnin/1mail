@@ -65,6 +65,11 @@ func UpdatedAt(v time.Time) predicate.SendingDomain {
 	return predicate.SendingDomain(sql.FieldEQ(FieldUpdatedAt, v))
 }
 
+// WorkspaceID applies equality check predicate on the "workspace_id" field. It's identical to WorkspaceIDEQ.
+func WorkspaceID(v int64) predicate.SendingDomain {
+	return predicate.SendingDomain(sql.FieldEQ(FieldWorkspaceID, v))
+}
+
 // Domain applies equality check predicate on the "domain" field. It's identical to DomainEQ.
 func Domain(v string) predicate.SendingDomain {
 	return predicate.SendingDomain(sql.FieldEQ(FieldDomain, v))
@@ -98,11 +103,6 @@ func LastCheckedAt(v time.Time) predicate.SendingDomain {
 // VerifiedAt applies equality check predicate on the "verified_at" field. It's identical to VerifiedAtEQ.
 func VerifiedAt(v time.Time) predicate.SendingDomain {
 	return predicate.SendingDomain(sql.FieldEQ(FieldVerifiedAt, v))
-}
-
-// WorkspaceID applies equality check predicate on the "workspace_id" field. It's identical to WorkspaceIDEQ.
-func WorkspaceID(v int64) predicate.SendingDomain {
-	return predicate.SendingDomain(sql.FieldEQ(FieldWorkspaceID, v))
 }
 
 // CreatedAtEQ applies the EQ predicate on the "created_at" field.
@@ -183,6 +183,26 @@ func UpdatedAtLT(v time.Time) predicate.SendingDomain {
 // UpdatedAtLTE applies the LTE predicate on the "updated_at" field.
 func UpdatedAtLTE(v time.Time) predicate.SendingDomain {
 	return predicate.SendingDomain(sql.FieldLTE(FieldUpdatedAt, v))
+}
+
+// WorkspaceIDEQ applies the EQ predicate on the "workspace_id" field.
+func WorkspaceIDEQ(v int64) predicate.SendingDomain {
+	return predicate.SendingDomain(sql.FieldEQ(FieldWorkspaceID, v))
+}
+
+// WorkspaceIDNEQ applies the NEQ predicate on the "workspace_id" field.
+func WorkspaceIDNEQ(v int64) predicate.SendingDomain {
+	return predicate.SendingDomain(sql.FieldNEQ(FieldWorkspaceID, v))
+}
+
+// WorkspaceIDIn applies the In predicate on the "workspace_id" field.
+func WorkspaceIDIn(vs ...int64) predicate.SendingDomain {
+	return predicate.SendingDomain(sql.FieldIn(FieldWorkspaceID, vs...))
+}
+
+// WorkspaceIDNotIn applies the NotIn predicate on the "workspace_id" field.
+func WorkspaceIDNotIn(vs ...int64) predicate.SendingDomain {
+	return predicate.SendingDomain(sql.FieldNotIn(FieldWorkspaceID, vs...))
 }
 
 // DomainEQ applies the EQ predicate on the "domain" field.
@@ -553,26 +573,6 @@ func VerifiedAtIsNil() predicate.SendingDomain {
 // VerifiedAtNotNil applies the NotNil predicate on the "verified_at" field.
 func VerifiedAtNotNil() predicate.SendingDomain {
 	return predicate.SendingDomain(sql.FieldNotNull(FieldVerifiedAt))
-}
-
-// WorkspaceIDEQ applies the EQ predicate on the "workspace_id" field.
-func WorkspaceIDEQ(v int64) predicate.SendingDomain {
-	return predicate.SendingDomain(sql.FieldEQ(FieldWorkspaceID, v))
-}
-
-// WorkspaceIDNEQ applies the NEQ predicate on the "workspace_id" field.
-func WorkspaceIDNEQ(v int64) predicate.SendingDomain {
-	return predicate.SendingDomain(sql.FieldNEQ(FieldWorkspaceID, v))
-}
-
-// WorkspaceIDIn applies the In predicate on the "workspace_id" field.
-func WorkspaceIDIn(vs ...int64) predicate.SendingDomain {
-	return predicate.SendingDomain(sql.FieldIn(FieldWorkspaceID, vs...))
-}
-
-// WorkspaceIDNotIn applies the NotIn predicate on the "workspace_id" field.
-func WorkspaceIDNotIn(vs ...int64) predicate.SendingDomain {
-	return predicate.SendingDomain(sql.FieldNotIn(FieldWorkspaceID, vs...))
 }
 
 // HasWorkspace applies the HasEdge predicate on the "workspace" edge.

@@ -4,7 +4,6 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/entsql"
 	"entgo.io/ent/schema"
-	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
 	"entgo.io/ent/schema/index"
 )
@@ -25,7 +24,7 @@ func (Integration) Annotations() []schema.Annotation {
 }
 
 func (Integration) Mixin() []ent.Mixin {
-	return []ent.Mixin{TimeMixin{}}
+	return []ent.Mixin{TimeMixin{}, WorkspaceMixin{Ref: "integrations"}}
 }
 
 func (Integration) Fields() []ent.Field {
@@ -49,17 +48,6 @@ func (Integration) Fields() []ent.Field {
 			Default(true),
 		field.Bool("is_default").
 			Default(false),
-		field.Int64("workspace_id"),
-	}
-}
-
-func (Integration) Edges() []ent.Edge {
-	return []ent.Edge{
-		edge.From("workspace", Workspace.Type).
-			Ref("integrations").
-			Field("workspace_id").
-			Required().
-			Unique(),
 	}
 }
 

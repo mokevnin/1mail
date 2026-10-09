@@ -24,7 +24,7 @@ func (Invitation) Annotations() []schema.Annotation {
 }
 
 func (Invitation) Mixin() []ent.Mixin {
-	return []ent.Mixin{TimeMixin{}}
+	return []ent.Mixin{TimeMixin{}, WorkspaceMixin{Ref: "invitations"}}
 }
 
 func (Invitation) Fields() []ent.Field {
@@ -32,7 +32,6 @@ func (Invitation) Fields() []ent.Field {
 		field.Int64("id").
 			StorageKey("id").
 			Immutable(),
-		field.Int64("workspace_id"),
 		field.String("email").
 			NotEmpty(),
 		field.Enum("role").
@@ -56,11 +55,6 @@ func (Invitation) Fields() []ent.Field {
 
 func (Invitation) Edges() []ent.Edge {
 	return []ent.Edge{
-		edge.From("workspace", Workspace.Type).
-			Ref("invitations").
-			Field("workspace_id").
-			Required().
-			Unique(),
 		edge.From("inviter", User.Type).
 			Ref("sent_invitations").
 			Field("invited_by").

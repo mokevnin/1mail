@@ -65,6 +65,11 @@ func UpdatedAt(v time.Time) predicate.EmailTemplate {
 	return predicate.EmailTemplate(sql.FieldEQ(FieldUpdatedAt, v))
 }
 
+// WorkspaceID applies equality check predicate on the "workspace_id" field. It's identical to WorkspaceIDEQ.
+func WorkspaceID(v int64) predicate.EmailTemplate {
+	return predicate.EmailTemplate(sql.FieldEQ(FieldWorkspaceID, v))
+}
+
 // Name applies equality check predicate on the "name" field. It's identical to NameEQ.
 func Name(v string) predicate.EmailTemplate {
 	return predicate.EmailTemplate(sql.FieldEQ(FieldName, v))
@@ -78,11 +83,6 @@ func Subject(v string) predicate.EmailTemplate {
 // Body applies equality check predicate on the "body" field. It's identical to BodyEQ.
 func Body(v string) predicate.EmailTemplate {
 	return predicate.EmailTemplate(sql.FieldEQ(FieldBody, v))
-}
-
-// WorkspaceID applies equality check predicate on the "workspace_id" field. It's identical to WorkspaceIDEQ.
-func WorkspaceID(v int64) predicate.EmailTemplate {
-	return predicate.EmailTemplate(sql.FieldEQ(FieldWorkspaceID, v))
 }
 
 // CreatedAtEQ applies the EQ predicate on the "created_at" field.
@@ -163,6 +163,26 @@ func UpdatedAtLT(v time.Time) predicate.EmailTemplate {
 // UpdatedAtLTE applies the LTE predicate on the "updated_at" field.
 func UpdatedAtLTE(v time.Time) predicate.EmailTemplate {
 	return predicate.EmailTemplate(sql.FieldLTE(FieldUpdatedAt, v))
+}
+
+// WorkspaceIDEQ applies the EQ predicate on the "workspace_id" field.
+func WorkspaceIDEQ(v int64) predicate.EmailTemplate {
+	return predicate.EmailTemplate(sql.FieldEQ(FieldWorkspaceID, v))
+}
+
+// WorkspaceIDNEQ applies the NEQ predicate on the "workspace_id" field.
+func WorkspaceIDNEQ(v int64) predicate.EmailTemplate {
+	return predicate.EmailTemplate(sql.FieldNEQ(FieldWorkspaceID, v))
+}
+
+// WorkspaceIDIn applies the In predicate on the "workspace_id" field.
+func WorkspaceIDIn(vs ...int64) predicate.EmailTemplate {
+	return predicate.EmailTemplate(sql.FieldIn(FieldWorkspaceID, vs...))
+}
+
+// WorkspaceIDNotIn applies the NotIn predicate on the "workspace_id" field.
+func WorkspaceIDNotIn(vs ...int64) predicate.EmailTemplate {
+	return predicate.EmailTemplate(sql.FieldNotIn(FieldWorkspaceID, vs...))
 }
 
 // NameEQ applies the EQ predicate on the "name" field.
@@ -358,26 +378,6 @@ func BodyEqualFold(v string) predicate.EmailTemplate {
 // BodyContainsFold applies the ContainsFold predicate on the "body" field.
 func BodyContainsFold(v string) predicate.EmailTemplate {
 	return predicate.EmailTemplate(sql.FieldContainsFold(FieldBody, v))
-}
-
-// WorkspaceIDEQ applies the EQ predicate on the "workspace_id" field.
-func WorkspaceIDEQ(v int64) predicate.EmailTemplate {
-	return predicate.EmailTemplate(sql.FieldEQ(FieldWorkspaceID, v))
-}
-
-// WorkspaceIDNEQ applies the NEQ predicate on the "workspace_id" field.
-func WorkspaceIDNEQ(v int64) predicate.EmailTemplate {
-	return predicate.EmailTemplate(sql.FieldNEQ(FieldWorkspaceID, v))
-}
-
-// WorkspaceIDIn applies the In predicate on the "workspace_id" field.
-func WorkspaceIDIn(vs ...int64) predicate.EmailTemplate {
-	return predicate.EmailTemplate(sql.FieldIn(FieldWorkspaceID, vs...))
-}
-
-// WorkspaceIDNotIn applies the NotIn predicate on the "workspace_id" field.
-func WorkspaceIDNotIn(vs ...int64) predicate.EmailTemplate {
-	return predicate.EmailTemplate(sql.FieldNotIn(FieldWorkspaceID, vs...))
 }
 
 // HasWorkspace applies the HasEdge predicate on the "workspace" edge.

@@ -111,7 +111,7 @@ func init() {
 	// automationrun.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	automationrun.UpdateDefaultUpdatedAt = automationrunDescUpdatedAt.UpdateDefault.(func() time.Time)
 	// automationrunDescCurrentStep is the schema descriptor for current_step field.
-	automationrunDescCurrentStep := automationrunFields[5].Descriptor()
+	automationrunDescCurrentStep := automationrunFields[4].Descriptor()
 	// automationrun.DefaultCurrentStep holds the default value on creation for the current_step field.
 	automationrun.DefaultCurrentStep = automationrunDescCurrentStep.Default.(int)
 	// automationrun.CurrentStepValidator is a validator for the "current_step" field. It is called by the builders before save.
@@ -350,11 +350,11 @@ func init() {
 	// invitation.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	invitation.UpdateDefaultUpdatedAt = invitationDescUpdatedAt.UpdateDefault.(func() time.Time)
 	// invitationDescEmail is the schema descriptor for email field.
-	invitationDescEmail := invitationFields[2].Descriptor()
+	invitationDescEmail := invitationFields[1].Descriptor()
 	// invitation.EmailValidator is a validator for the "email" field. It is called by the builders before save.
 	invitation.EmailValidator = invitationDescEmail.Validators[0].(func(string) error)
 	// invitationDescTokenHash is the schema descriptor for token_hash field.
-	invitationDescTokenHash := invitationFields[4].Descriptor()
+	invitationDescTokenHash := invitationFields[3].Descriptor()
 	// invitation.TokenHashValidator is a validator for the "token_hash" field. It is called by the builders before save.
 	invitation.TokenHashValidator = invitationDescTokenHash.Validators[0].(func(string) error)
 	membershipMixin := schema.Membership{}.Mixin()
@@ -442,15 +442,15 @@ func init() {
 	// outboundmessage.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	outboundmessage.UpdateDefaultUpdatedAt = outboundmessageDescUpdatedAt.UpdateDefault.(func() time.Time)
 	// outboundmessageDescIdempotencyKey is the schema descriptor for idempotency_key field.
-	outboundmessageDescIdempotencyKey := outboundmessageFields[3].Descriptor()
+	outboundmessageDescIdempotencyKey := outboundmessageFields[2].Descriptor()
 	// outboundmessage.IdempotencyKeyValidator is a validator for the "idempotency_key" field. It is called by the builders before save.
 	outboundmessage.IdempotencyKeyValidator = outboundmessageDescIdempotencyKey.Validators[0].(func(string) error)
 	// outboundmessageDescDestination is the schema descriptor for destination field.
-	outboundmessageDescDestination := outboundmessageFields[5].Descriptor()
+	outboundmessageDescDestination := outboundmessageFields[4].Descriptor()
 	// outboundmessage.DestinationValidator is a validator for the "destination" field. It is called by the builders before save.
 	outboundmessage.DestinationValidator = outboundmessageDescDestination.Validators[0].(func(string) error)
 	// outboundmessageDescClaimedAt is the schema descriptor for claimed_at field.
-	outboundmessageDescClaimedAt := outboundmessageFields[12].Descriptor()
+	outboundmessageDescClaimedAt := outboundmessageFields[11].Descriptor()
 	// outboundmessage.DefaultClaimedAt holds the default value on creation for the claimed_at field.
 	outboundmessage.DefaultClaimedAt = outboundmessageDescClaimedAt.Default.(func() time.Time)
 	segmentMixin := schema.Segment{}.Mixin()
@@ -607,7 +607,7 @@ func init() {
 	// visitor.VisitorIDValidator is a validator for the "visitor_id" field. It is called by the builders before save.
 	visitor.VisitorIDValidator = visitorDescVisitorID.Validators[0].(func(string) error)
 	// visitorDescLastSeenAt is the schema descriptor for last_seen_at field.
-	visitorDescLastSeenAt := visitorFields[4].Descriptor()
+	visitorDescLastSeenAt := visitorFields[3].Descriptor()
 	// visitor.DefaultLastSeenAt holds the default value on creation for the last_seen_at field.
 	visitor.DefaultLastSeenAt = visitorDescLastSeenAt.Default.(func() time.Time)
 	webhookendpointMixin := schema.WebhookEndpoint{}.Mixin()

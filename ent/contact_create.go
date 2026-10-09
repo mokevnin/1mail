@@ -53,6 +53,12 @@ func (_c *ContactCreate) SetNillableUpdatedAt(v *time.Time) *ContactCreate {
 	return _c
 }
 
+// SetWorkspaceID sets the "workspace_id" field.
+func (_c *ContactCreate) SetWorkspaceID(v int64) *ContactCreate {
+	_c.mutation.SetWorkspaceID(v)
+	return _c
+}
+
 // SetSubjectID sets the "subject_id" field.
 func (_c *ContactCreate) SetSubjectID(v string) *ContactCreate {
 	_c.mutation.SetSubjectID(v)
@@ -143,16 +149,15 @@ func (_c *ContactCreate) SetCustomFields(v map[string]interface{}) *ContactCreat
 	return _c
 }
 
-// SetWorkspaceID sets the "workspace_id" field.
-func (_c *ContactCreate) SetWorkspaceID(v int64) *ContactCreate {
-	_c.mutation.SetWorkspaceID(v)
-	return _c
-}
-
 // SetID sets the "id" field.
 func (_c *ContactCreate) SetID(v int64) *ContactCreate {
 	_c.mutation.SetID(v)
 	return _c
+}
+
+// SetWorkspace sets the "workspace" edge to the Workspace entity.
+func (_c *ContactCreate) SetWorkspace(v *Workspace) *ContactCreate {
+	return _c.SetWorkspaceID(v.ID)
 }
 
 // AddVisitorIDs adds the "visitors" edge to the Visitor entity by IDs.
@@ -183,11 +188,6 @@ func (_c *ContactCreate) AddTags(v ...*Tag) *ContactCreate {
 		ids[i] = v[i].ID
 	}
 	return _c.AddTagIDs(ids...)
-}
-
-// SetWorkspace sets the "workspace" edge to the Workspace entity.
-func (_c *ContactCreate) SetWorkspace(v *Workspace) *ContactCreate {
-	return _c.SetWorkspaceID(v.ID)
 }
 
 // Mutation returns the ContactMutation object of the builder.
@@ -318,6 +318,23 @@ func (_c *ContactCreate) createSpec() (*Contact, *sqlgraph.CreateSpec) {
 		_spec.SetField(contact.FieldCustomFields, field.TypeJSON, value)
 		_node.CustomFields = value
 	}
+	if nodes := _c.mutation.WorkspaceIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   contact.WorkspaceTable,
+			Columns: []string{contact.WorkspaceColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(workspace.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.WorkspaceID = nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
+	}
 	if nodes := _c.mutation.VisitorsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
@@ -348,23 +365,6 @@ func (_c *ContactCreate) createSpec() (*Contact, *sqlgraph.CreateSpec) {
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_spec.Edges = append(_spec.Edges, edge)
-	}
-	if nodes := _c.mutation.WorkspaceIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: true,
-			Table:   contact.WorkspaceTable,
-			Columns: []string{contact.WorkspaceColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(workspace.FieldID, field.TypeInt64),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_node.WorkspaceID = nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec
@@ -428,6 +428,18 @@ func (u *ContactUpsert) SetUpdatedAt(v time.Time) *ContactUpsert {
 // UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
 func (u *ContactUpsert) UpdateUpdatedAt() *ContactUpsert {
 	u.SetExcluded(contact.FieldUpdatedAt)
+	return u
+}
+
+// SetWorkspaceID sets the "workspace_id" field.
+func (u *ContactUpsert) SetWorkspaceID(v int64) *ContactUpsert {
+	u.Set(contact.FieldWorkspaceID, v)
+	return u
+}
+
+// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
+func (u *ContactUpsert) UpdateWorkspaceID() *ContactUpsert {
+	u.SetExcluded(contact.FieldWorkspaceID)
 	return u
 }
 
@@ -557,18 +569,6 @@ func (u *ContactUpsert) ClearCustomFields() *ContactUpsert {
 	return u
 }
 
-// SetWorkspaceID sets the "workspace_id" field.
-func (u *ContactUpsert) SetWorkspaceID(v int64) *ContactUpsert {
-	u.Set(contact.FieldWorkspaceID, v)
-	return u
-}
-
-// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
-func (u *ContactUpsert) UpdateWorkspaceID() *ContactUpsert {
-	u.SetExcluded(contact.FieldWorkspaceID)
-	return u
-}
-
 // UpdateNewValues updates the mutable fields using the new values that were set on create except the ID field.
 // Using this option is equivalent to using:
 //
@@ -631,6 +631,20 @@ func (u *ContactUpsertOne) SetUpdatedAt(v time.Time) *ContactUpsertOne {
 func (u *ContactUpsertOne) UpdateUpdatedAt() *ContactUpsertOne {
 	return u.Update(func(s *ContactUpsert) {
 		s.UpdateUpdatedAt()
+	})
+}
+
+// SetWorkspaceID sets the "workspace_id" field.
+func (u *ContactUpsertOne) SetWorkspaceID(v int64) *ContactUpsertOne {
+	return u.Update(func(s *ContactUpsert) {
+		s.SetWorkspaceID(v)
+	})
+}
+
+// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
+func (u *ContactUpsertOne) UpdateWorkspaceID() *ContactUpsertOne {
+	return u.Update(func(s *ContactUpsert) {
+		s.UpdateWorkspaceID()
 	})
 }
 
@@ -778,20 +792,6 @@ func (u *ContactUpsertOne) UpdateCustomFields() *ContactUpsertOne {
 func (u *ContactUpsertOne) ClearCustomFields() *ContactUpsertOne {
 	return u.Update(func(s *ContactUpsert) {
 		s.ClearCustomFields()
-	})
-}
-
-// SetWorkspaceID sets the "workspace_id" field.
-func (u *ContactUpsertOne) SetWorkspaceID(v int64) *ContactUpsertOne {
-	return u.Update(func(s *ContactUpsert) {
-		s.SetWorkspaceID(v)
-	})
-}
-
-// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
-func (u *ContactUpsertOne) UpdateWorkspaceID() *ContactUpsertOne {
-	return u.Update(func(s *ContactUpsert) {
-		s.UpdateWorkspaceID()
 	})
 }
 
@@ -1026,6 +1026,20 @@ func (u *ContactUpsertBulk) UpdateUpdatedAt() *ContactUpsertBulk {
 	})
 }
 
+// SetWorkspaceID sets the "workspace_id" field.
+func (u *ContactUpsertBulk) SetWorkspaceID(v int64) *ContactUpsertBulk {
+	return u.Update(func(s *ContactUpsert) {
+		s.SetWorkspaceID(v)
+	})
+}
+
+// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
+func (u *ContactUpsertBulk) UpdateWorkspaceID() *ContactUpsertBulk {
+	return u.Update(func(s *ContactUpsert) {
+		s.UpdateWorkspaceID()
+	})
+}
+
 // SetSubjectID sets the "subject_id" field.
 func (u *ContactUpsertBulk) SetSubjectID(v string) *ContactUpsertBulk {
 	return u.Update(func(s *ContactUpsert) {
@@ -1170,20 +1184,6 @@ func (u *ContactUpsertBulk) UpdateCustomFields() *ContactUpsertBulk {
 func (u *ContactUpsertBulk) ClearCustomFields() *ContactUpsertBulk {
 	return u.Update(func(s *ContactUpsert) {
 		s.ClearCustomFields()
-	})
-}
-
-// SetWorkspaceID sets the "workspace_id" field.
-func (u *ContactUpsertBulk) SetWorkspaceID(v int64) *ContactUpsertBulk {
-	return u.Update(func(s *ContactUpsert) {
-		s.SetWorkspaceID(v)
-	})
-}
-
-// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
-func (u *ContactUpsertBulk) UpdateWorkspaceID() *ContactUpsertBulk {
-	return u.Update(func(s *ContactUpsert) {
-		s.UpdateWorkspaceID()
 	})
 }
 

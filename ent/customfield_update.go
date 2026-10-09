@@ -36,6 +36,20 @@ func (_u *CustomFieldUpdate) SetUpdatedAt(v time.Time) *CustomFieldUpdate {
 	return _u
 }
 
+// SetWorkspaceID sets the "workspace_id" field.
+func (_u *CustomFieldUpdate) SetWorkspaceID(v int64) *CustomFieldUpdate {
+	_u.mutation.SetWorkspaceID(v)
+	return _u
+}
+
+// SetNillableWorkspaceID sets the "workspace_id" field if the given value is not nil.
+func (_u *CustomFieldUpdate) SetNillableWorkspaceID(v *int64) *CustomFieldUpdate {
+	if v != nil {
+		_u.SetWorkspaceID(*v)
+	}
+	return _u
+}
+
 // SetKey sets the "key" field.
 func (_u *CustomFieldUpdate) SetKey(v string) *CustomFieldUpdate {
 	_u.mutation.SetKey(v)
@@ -74,20 +88,6 @@ func (_u *CustomFieldUpdate) SetType(v customfield.Type) *CustomFieldUpdate {
 func (_u *CustomFieldUpdate) SetNillableType(v *customfield.Type) *CustomFieldUpdate {
 	if v != nil {
 		_u.SetType(*v)
-	}
-	return _u
-}
-
-// SetWorkspaceID sets the "workspace_id" field.
-func (_u *CustomFieldUpdate) SetWorkspaceID(v int64) *CustomFieldUpdate {
-	_u.mutation.SetWorkspaceID(v)
-	return _u
-}
-
-// SetNillableWorkspaceID sets the "workspace_id" field if the given value is not nil.
-func (_u *CustomFieldUpdate) SetNillableWorkspaceID(v *int64) *CustomFieldUpdate {
-	if v != nil {
-		_u.SetWorkspaceID(*v)
 	}
 	return _u
 }
@@ -254,6 +254,20 @@ func (_u *CustomFieldUpdateOne) SetUpdatedAt(v time.Time) *CustomFieldUpdateOne 
 	return _u
 }
 
+// SetWorkspaceID sets the "workspace_id" field.
+func (_u *CustomFieldUpdateOne) SetWorkspaceID(v int64) *CustomFieldUpdateOne {
+	_u.mutation.SetWorkspaceID(v)
+	return _u
+}
+
+// SetNillableWorkspaceID sets the "workspace_id" field if the given value is not nil.
+func (_u *CustomFieldUpdateOne) SetNillableWorkspaceID(v *int64) *CustomFieldUpdateOne {
+	if v != nil {
+		_u.SetWorkspaceID(*v)
+	}
+	return _u
+}
+
 // SetKey sets the "key" field.
 func (_u *CustomFieldUpdateOne) SetKey(v string) *CustomFieldUpdateOne {
 	_u.mutation.SetKey(v)
@@ -292,20 +306,6 @@ func (_u *CustomFieldUpdateOne) SetType(v customfield.Type) *CustomFieldUpdateOn
 func (_u *CustomFieldUpdateOne) SetNillableType(v *customfield.Type) *CustomFieldUpdateOne {
 	if v != nil {
 		_u.SetType(*v)
-	}
-	return _u
-}
-
-// SetWorkspaceID sets the "workspace_id" field.
-func (_u *CustomFieldUpdateOne) SetWorkspaceID(v int64) *CustomFieldUpdateOne {
-	_u.mutation.SetWorkspaceID(v)
-	return _u
-}
-
-// SetNillableWorkspaceID sets the "workspace_id" field if the given value is not nil.
-func (_u *CustomFieldUpdateOne) SetNillableWorkspaceID(v *int64) *CustomFieldUpdateOne {
-	if v != nil {
-		_u.SetWorkspaceID(*v)
 	}
 	return _u
 }

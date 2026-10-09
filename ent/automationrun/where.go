@@ -65,6 +65,11 @@ func UpdatedAt(v time.Time) predicate.AutomationRun {
 	return predicate.AutomationRun(sql.FieldEQ(FieldUpdatedAt, v))
 }
 
+// WorkspaceID applies equality check predicate on the "workspace_id" field. It's identical to WorkspaceIDEQ.
+func WorkspaceID(v int64) predicate.AutomationRun {
+	return predicate.AutomationRun(sql.FieldEQ(FieldWorkspaceID, v))
+}
+
 // AutomationID applies equality check predicate on the "automation_id" field. It's identical to AutomationIDEQ.
 func AutomationID(v int64) predicate.AutomationRun {
 	return predicate.AutomationRun(sql.FieldEQ(FieldAutomationID, v))
@@ -73,11 +78,6 @@ func AutomationID(v int64) predicate.AutomationRun {
 // ContactID applies equality check predicate on the "contact_id" field. It's identical to ContactIDEQ.
 func ContactID(v int64) predicate.AutomationRun {
 	return predicate.AutomationRun(sql.FieldEQ(FieldContactID, v))
-}
-
-// WorkspaceID applies equality check predicate on the "workspace_id" field. It's identical to WorkspaceIDEQ.
-func WorkspaceID(v int64) predicate.AutomationRun {
-	return predicate.AutomationRun(sql.FieldEQ(FieldWorkspaceID, v))
 }
 
 // CurrentStep applies equality check predicate on the "current_step" field. It's identical to CurrentStepEQ.
@@ -170,6 +170,26 @@ func UpdatedAtLTE(v time.Time) predicate.AutomationRun {
 	return predicate.AutomationRun(sql.FieldLTE(FieldUpdatedAt, v))
 }
 
+// WorkspaceIDEQ applies the EQ predicate on the "workspace_id" field.
+func WorkspaceIDEQ(v int64) predicate.AutomationRun {
+	return predicate.AutomationRun(sql.FieldEQ(FieldWorkspaceID, v))
+}
+
+// WorkspaceIDNEQ applies the NEQ predicate on the "workspace_id" field.
+func WorkspaceIDNEQ(v int64) predicate.AutomationRun {
+	return predicate.AutomationRun(sql.FieldNEQ(FieldWorkspaceID, v))
+}
+
+// WorkspaceIDIn applies the In predicate on the "workspace_id" field.
+func WorkspaceIDIn(vs ...int64) predicate.AutomationRun {
+	return predicate.AutomationRun(sql.FieldIn(FieldWorkspaceID, vs...))
+}
+
+// WorkspaceIDNotIn applies the NotIn predicate on the "workspace_id" field.
+func WorkspaceIDNotIn(vs ...int64) predicate.AutomationRun {
+	return predicate.AutomationRun(sql.FieldNotIn(FieldWorkspaceID, vs...))
+}
+
 // AutomationIDEQ applies the EQ predicate on the "automation_id" field.
 func AutomationIDEQ(v int64) predicate.AutomationRun {
 	return predicate.AutomationRun(sql.FieldEQ(FieldAutomationID, v))
@@ -228,26 +248,6 @@ func ContactIDLT(v int64) predicate.AutomationRun {
 // ContactIDLTE applies the LTE predicate on the "contact_id" field.
 func ContactIDLTE(v int64) predicate.AutomationRun {
 	return predicate.AutomationRun(sql.FieldLTE(FieldContactID, v))
-}
-
-// WorkspaceIDEQ applies the EQ predicate on the "workspace_id" field.
-func WorkspaceIDEQ(v int64) predicate.AutomationRun {
-	return predicate.AutomationRun(sql.FieldEQ(FieldWorkspaceID, v))
-}
-
-// WorkspaceIDNEQ applies the NEQ predicate on the "workspace_id" field.
-func WorkspaceIDNEQ(v int64) predicate.AutomationRun {
-	return predicate.AutomationRun(sql.FieldNEQ(FieldWorkspaceID, v))
-}
-
-// WorkspaceIDIn applies the In predicate on the "workspace_id" field.
-func WorkspaceIDIn(vs ...int64) predicate.AutomationRun {
-	return predicate.AutomationRun(sql.FieldIn(FieldWorkspaceID, vs...))
-}
-
-// WorkspaceIDNotIn applies the NotIn predicate on the "workspace_id" field.
-func WorkspaceIDNotIn(vs ...int64) predicate.AutomationRun {
-	return predicate.AutomationRun(sql.FieldNotIn(FieldWorkspaceID, vs...))
 }
 
 // StatusEQ applies the EQ predicate on the "status" field.
@@ -360,29 +360,6 @@ func ResumeAtNotNil() predicate.AutomationRun {
 	return predicate.AutomationRun(sql.FieldNotNull(FieldResumeAt))
 }
 
-// HasAutomation applies the HasEdge predicate on the "automation" edge.
-func HasAutomation() predicate.AutomationRun {
-	return predicate.AutomationRun(func(s *sql.Selector) {
-		step := sqlgraph.NewStep(
-			sqlgraph.From(Table, FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, true, AutomationTable, AutomationColumn),
-		)
-		sqlgraph.HasNeighbors(s, step)
-	})
-}
-
-// HasAutomationWith applies the HasEdge predicate on the "automation" edge with a given conditions (other predicates).
-func HasAutomationWith(preds ...predicate.Automation) predicate.AutomationRun {
-	return predicate.AutomationRun(func(s *sql.Selector) {
-		step := newAutomationStep()
-		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
-			for _, p := range preds {
-				p(s)
-			}
-		})
-	})
-}
-
 // HasWorkspace applies the HasEdge predicate on the "workspace" edge.
 func HasWorkspace() predicate.AutomationRun {
 	return predicate.AutomationRun(func(s *sql.Selector) {
@@ -398,6 +375,29 @@ func HasWorkspace() predicate.AutomationRun {
 func HasWorkspaceWith(preds ...predicate.Workspace) predicate.AutomationRun {
 	return predicate.AutomationRun(func(s *sql.Selector) {
 		step := newWorkspaceStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasAutomation applies the HasEdge predicate on the "automation" edge.
+func HasAutomation() predicate.AutomationRun {
+	return predicate.AutomationRun(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, AutomationTable, AutomationColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasAutomationWith applies the HasEdge predicate on the "automation" edge with a given conditions (other predicates).
+func HasAutomationWith(preds ...predicate.Automation) predicate.AutomationRun {
+	return predicate.AutomationRun(func(s *sql.Selector) {
+		step := newAutomationStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)

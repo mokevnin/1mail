@@ -65,6 +65,11 @@ func UpdatedAt(v time.Time) predicate.Broadcast {
 	return predicate.Broadcast(sql.FieldEQ(FieldUpdatedAt, v))
 }
 
+// WorkspaceID applies equality check predicate on the "workspace_id" field. It's identical to WorkspaceIDEQ.
+func WorkspaceID(v int64) predicate.Broadcast {
+	return predicate.Broadcast(sql.FieldEQ(FieldWorkspaceID, v))
+}
+
 // Name applies equality check predicate on the "name" field. It's identical to NameEQ.
 func Name(v string) predicate.Broadcast {
 	return predicate.Broadcast(sql.FieldEQ(FieldName, v))
@@ -155,11 +160,6 @@ func HoldReason(v string) predicate.Broadcast {
 	return predicate.Broadcast(sql.FieldEQ(FieldHoldReason, v))
 }
 
-// WorkspaceID applies equality check predicate on the "workspace_id" field. It's identical to WorkspaceIDEQ.
-func WorkspaceID(v int64) predicate.Broadcast {
-	return predicate.Broadcast(sql.FieldEQ(FieldWorkspaceID, v))
-}
-
 // CreatedAtEQ applies the EQ predicate on the "created_at" field.
 func CreatedAtEQ(v time.Time) predicate.Broadcast {
 	return predicate.Broadcast(sql.FieldEQ(FieldCreatedAt, v))
@@ -238,6 +238,26 @@ func UpdatedAtLT(v time.Time) predicate.Broadcast {
 // UpdatedAtLTE applies the LTE predicate on the "updated_at" field.
 func UpdatedAtLTE(v time.Time) predicate.Broadcast {
 	return predicate.Broadcast(sql.FieldLTE(FieldUpdatedAt, v))
+}
+
+// WorkspaceIDEQ applies the EQ predicate on the "workspace_id" field.
+func WorkspaceIDEQ(v int64) predicate.Broadcast {
+	return predicate.Broadcast(sql.FieldEQ(FieldWorkspaceID, v))
+}
+
+// WorkspaceIDNEQ applies the NEQ predicate on the "workspace_id" field.
+func WorkspaceIDNEQ(v int64) predicate.Broadcast {
+	return predicate.Broadcast(sql.FieldNEQ(FieldWorkspaceID, v))
+}
+
+// WorkspaceIDIn applies the In predicate on the "workspace_id" field.
+func WorkspaceIDIn(vs ...int64) predicate.Broadcast {
+	return predicate.Broadcast(sql.FieldIn(FieldWorkspaceID, vs...))
+}
+
+// WorkspaceIDNotIn applies the NotIn predicate on the "workspace_id" field.
+func WorkspaceIDNotIn(vs ...int64) predicate.Broadcast {
+	return predicate.Broadcast(sql.FieldNotIn(FieldWorkspaceID, vs...))
 }
 
 // NameEQ applies the EQ predicate on the "name" field.
@@ -1223,26 +1243,6 @@ func HoldReasonEqualFold(v string) predicate.Broadcast {
 // HoldReasonContainsFold applies the ContainsFold predicate on the "hold_reason" field.
 func HoldReasonContainsFold(v string) predicate.Broadcast {
 	return predicate.Broadcast(sql.FieldContainsFold(FieldHoldReason, v))
-}
-
-// WorkspaceIDEQ applies the EQ predicate on the "workspace_id" field.
-func WorkspaceIDEQ(v int64) predicate.Broadcast {
-	return predicate.Broadcast(sql.FieldEQ(FieldWorkspaceID, v))
-}
-
-// WorkspaceIDNEQ applies the NEQ predicate on the "workspace_id" field.
-func WorkspaceIDNEQ(v int64) predicate.Broadcast {
-	return predicate.Broadcast(sql.FieldNEQ(FieldWorkspaceID, v))
-}
-
-// WorkspaceIDIn applies the In predicate on the "workspace_id" field.
-func WorkspaceIDIn(vs ...int64) predicate.Broadcast {
-	return predicate.Broadcast(sql.FieldIn(FieldWorkspaceID, vs...))
-}
-
-// WorkspaceIDNotIn applies the NotIn predicate on the "workspace_id" field.
-func WorkspaceIDNotIn(vs ...int64) predicate.Broadcast {
-	return predicate.Broadcast(sql.FieldNotIn(FieldWorkspaceID, vs...))
 }
 
 // HasWorkspace applies the HasEdge predicate on the "workspace" edge.

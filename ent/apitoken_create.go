@@ -51,6 +51,12 @@ func (_c *ApiTokenCreate) SetNillableUpdatedAt(v *time.Time) *ApiTokenCreate {
 	return _c
 }
 
+// SetWorkspaceID sets the "workspace_id" field.
+func (_c *ApiTokenCreate) SetWorkspaceID(v int64) *ApiTokenCreate {
+	_c.mutation.SetWorkspaceID(v)
+	return _c
+}
+
 // SetName sets the "name" field.
 func (_c *ApiTokenCreate) SetName(v string) *ApiTokenCreate {
 	_c.mutation.SetName(v)
@@ -114,12 +120,6 @@ func (_c *ApiTokenCreate) SetNillableLastUsedAt(v *time.Time) *ApiTokenCreate {
 	if v != nil {
 		_c.SetLastUsedAt(*v)
 	}
-	return _c
-}
-
-// SetWorkspaceID sets the "workspace_id" field.
-func (_c *ApiTokenCreate) SetWorkspaceID(v int64) *ApiTokenCreate {
-	_c.mutation.SetWorkspaceID(v)
 	return _c
 }
 
@@ -191,6 +191,9 @@ func (_c *ApiTokenCreate) check() error {
 	if _, ok := _c.mutation.UpdatedAt(); !ok {
 		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "ApiToken.updated_at"`)}
 	}
+	if _, ok := _c.mutation.WorkspaceID(); !ok {
+		return &ValidationError{Name: "workspace_id", err: errors.New(`ent: missing required field "ApiToken.workspace_id"`)}
+	}
 	if _, ok := _c.mutation.Name(); !ok {
 		return &ValidationError{Name: "name", err: errors.New(`ent: missing required field "ApiToken.name"`)}
 	}
@@ -217,9 +220,6 @@ func (_c *ApiTokenCreate) check() error {
 	}
 	if _, ok := _c.mutation.Scopes(); !ok {
 		return &ValidationError{Name: "scopes", err: errors.New(`ent: missing required field "ApiToken.scopes"`)}
-	}
-	if _, ok := _c.mutation.WorkspaceID(); !ok {
-		return &ValidationError{Name: "workspace_id", err: errors.New(`ent: missing required field "ApiToken.workspace_id"`)}
 	}
 	if len(_c.mutation.WorkspaceIDs()) == 0 {
 		return &ValidationError{Name: "workspace", err: errors.New(`ent: missing required edge "ApiToken.workspace"`)}
@@ -374,6 +374,18 @@ func (u *ApiTokenUpsert) UpdateUpdatedAt() *ApiTokenUpsert {
 	return u
 }
 
+// SetWorkspaceID sets the "workspace_id" field.
+func (u *ApiTokenUpsert) SetWorkspaceID(v int64) *ApiTokenUpsert {
+	u.Set(apitoken.FieldWorkspaceID, v)
+	return u
+}
+
+// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
+func (u *ApiTokenUpsert) UpdateWorkspaceID() *ApiTokenUpsert {
+	u.SetExcluded(apitoken.FieldWorkspaceID)
+	return u
+}
+
 // SetName sets the "name" field.
 func (u *ApiTokenUpsert) SetName(v string) *ApiTokenUpsert {
 	u.Set(apitoken.FieldName, v)
@@ -464,18 +476,6 @@ func (u *ApiTokenUpsert) ClearLastUsedAt() *ApiTokenUpsert {
 	return u
 }
 
-// SetWorkspaceID sets the "workspace_id" field.
-func (u *ApiTokenUpsert) SetWorkspaceID(v int64) *ApiTokenUpsert {
-	u.Set(apitoken.FieldWorkspaceID, v)
-	return u
-}
-
-// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
-func (u *ApiTokenUpsert) UpdateWorkspaceID() *ApiTokenUpsert {
-	u.SetExcluded(apitoken.FieldWorkspaceID)
-	return u
-}
-
 // UpdateNewValues updates the mutable fields using the new values that were set on create except the ID field.
 // Using this option is equivalent to using:
 //
@@ -541,6 +541,20 @@ func (u *ApiTokenUpsertOne) SetUpdatedAt(v time.Time) *ApiTokenUpsertOne {
 func (u *ApiTokenUpsertOne) UpdateUpdatedAt() *ApiTokenUpsertOne {
 	return u.Update(func(s *ApiTokenUpsert) {
 		s.UpdateUpdatedAt()
+	})
+}
+
+// SetWorkspaceID sets the "workspace_id" field.
+func (u *ApiTokenUpsertOne) SetWorkspaceID(v int64) *ApiTokenUpsertOne {
+	return u.Update(func(s *ApiTokenUpsert) {
+		s.SetWorkspaceID(v)
+	})
+}
+
+// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
+func (u *ApiTokenUpsertOne) UpdateWorkspaceID() *ApiTokenUpsertOne {
+	return u.Update(func(s *ApiTokenUpsert) {
+		s.UpdateWorkspaceID()
 	})
 }
 
@@ -646,20 +660,6 @@ func (u *ApiTokenUpsertOne) UpdateLastUsedAt() *ApiTokenUpsertOne {
 func (u *ApiTokenUpsertOne) ClearLastUsedAt() *ApiTokenUpsertOne {
 	return u.Update(func(s *ApiTokenUpsert) {
 		s.ClearLastUsedAt()
-	})
-}
-
-// SetWorkspaceID sets the "workspace_id" field.
-func (u *ApiTokenUpsertOne) SetWorkspaceID(v int64) *ApiTokenUpsertOne {
-	return u.Update(func(s *ApiTokenUpsert) {
-		s.SetWorkspaceID(v)
-	})
-}
-
-// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
-func (u *ApiTokenUpsertOne) UpdateWorkspaceID() *ApiTokenUpsertOne {
-	return u.Update(func(s *ApiTokenUpsert) {
-		s.UpdateWorkspaceID()
 	})
 }
 
@@ -897,6 +897,20 @@ func (u *ApiTokenUpsertBulk) UpdateUpdatedAt() *ApiTokenUpsertBulk {
 	})
 }
 
+// SetWorkspaceID sets the "workspace_id" field.
+func (u *ApiTokenUpsertBulk) SetWorkspaceID(v int64) *ApiTokenUpsertBulk {
+	return u.Update(func(s *ApiTokenUpsert) {
+		s.SetWorkspaceID(v)
+	})
+}
+
+// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
+func (u *ApiTokenUpsertBulk) UpdateWorkspaceID() *ApiTokenUpsertBulk {
+	return u.Update(func(s *ApiTokenUpsert) {
+		s.UpdateWorkspaceID()
+	})
+}
+
 // SetName sets the "name" field.
 func (u *ApiTokenUpsertBulk) SetName(v string) *ApiTokenUpsertBulk {
 	return u.Update(func(s *ApiTokenUpsert) {
@@ -999,20 +1013,6 @@ func (u *ApiTokenUpsertBulk) UpdateLastUsedAt() *ApiTokenUpsertBulk {
 func (u *ApiTokenUpsertBulk) ClearLastUsedAt() *ApiTokenUpsertBulk {
 	return u.Update(func(s *ApiTokenUpsert) {
 		s.ClearLastUsedAt()
-	})
-}
-
-// SetWorkspaceID sets the "workspace_id" field.
-func (u *ApiTokenUpsertBulk) SetWorkspaceID(v int64) *ApiTokenUpsertBulk {
-	return u.Update(func(s *ApiTokenUpsert) {
-		s.SetWorkspaceID(v)
-	})
-}
-
-// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
-func (u *ApiTokenUpsertBulk) UpdateWorkspaceID() *ApiTokenUpsertBulk {
-	return u.Update(func(s *ApiTokenUpsert) {
-		s.UpdateWorkspaceID()
 	})
 }
 

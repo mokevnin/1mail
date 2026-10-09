@@ -18,10 +18,10 @@ const (
 	FieldCreatedAt = "created_at"
 	// FieldUpdatedAt holds the string denoting the updated_at field in the database.
 	FieldUpdatedAt = "updated_at"
-	// FieldName holds the string denoting the name field in the database.
-	FieldName = "name"
 	// FieldWorkspaceID holds the string denoting the workspace_id field in the database.
 	FieldWorkspaceID = "workspace_id"
+	// FieldName holds the string denoting the name field in the database.
+	FieldName = "name"
 	// EdgeWorkspace holds the string denoting the workspace edge name in mutations.
 	EdgeWorkspace = "workspace"
 	// EdgeContacts holds the string denoting the contacts edge name in mutations.
@@ -47,8 +47,8 @@ var Columns = []string{
 	FieldID,
 	FieldCreatedAt,
 	FieldUpdatedAt,
-	FieldName,
 	FieldWorkspaceID,
+	FieldName,
 }
 
 var (
@@ -96,14 +96,14 @@ func ByUpdatedAt(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldUpdatedAt, opts...).ToFunc()
 }
 
-// ByName orders the results by the name field.
-func ByName(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldName, opts...).ToFunc()
-}
-
 // ByWorkspaceID orders the results by the workspace_id field.
 func ByWorkspaceID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldWorkspaceID, opts...).ToFunc()
+}
+
+// ByName orders the results by the name field.
+func ByName(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldName, opts...).ToFunc()
 }
 
 // ByWorkspaceField orders the results by workspace field.

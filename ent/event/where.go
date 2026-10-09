@@ -65,6 +65,11 @@ func UpdatedAt(v time.Time) predicate.Event {
 	return predicate.Event(sql.FieldEQ(FieldUpdatedAt, v))
 }
 
+// WorkspaceID applies equality check predicate on the "workspace_id" field. It's identical to WorkspaceIDEQ.
+func WorkspaceID(v int64) predicate.Event {
+	return predicate.Event(sql.FieldEQ(FieldWorkspaceID, v))
+}
+
 // SourceID applies equality check predicate on the "source_id" field. It's identical to SourceIDEQ.
 func SourceID(v string) predicate.Event {
 	return predicate.Event(sql.FieldEQ(FieldSourceID, v))
@@ -103,11 +108,6 @@ func Action(v string) predicate.Event {
 // OccurredAt applies equality check predicate on the "occurred_at" field. It's identical to OccurredAtEQ.
 func OccurredAt(v time.Time) predicate.Event {
 	return predicate.Event(sql.FieldEQ(FieldOccurredAt, v))
-}
-
-// WorkspaceID applies equality check predicate on the "workspace_id" field. It's identical to WorkspaceIDEQ.
-func WorkspaceID(v int64) predicate.Event {
-	return predicate.Event(sql.FieldEQ(FieldWorkspaceID, v))
 }
 
 // CreatedAtEQ applies the EQ predicate on the "created_at" field.
@@ -188,6 +188,26 @@ func UpdatedAtLT(v time.Time) predicate.Event {
 // UpdatedAtLTE applies the LTE predicate on the "updated_at" field.
 func UpdatedAtLTE(v time.Time) predicate.Event {
 	return predicate.Event(sql.FieldLTE(FieldUpdatedAt, v))
+}
+
+// WorkspaceIDEQ applies the EQ predicate on the "workspace_id" field.
+func WorkspaceIDEQ(v int64) predicate.Event {
+	return predicate.Event(sql.FieldEQ(FieldWorkspaceID, v))
+}
+
+// WorkspaceIDNEQ applies the NEQ predicate on the "workspace_id" field.
+func WorkspaceIDNEQ(v int64) predicate.Event {
+	return predicate.Event(sql.FieldNEQ(FieldWorkspaceID, v))
+}
+
+// WorkspaceIDIn applies the In predicate on the "workspace_id" field.
+func WorkspaceIDIn(vs ...int64) predicate.Event {
+	return predicate.Event(sql.FieldIn(FieldWorkspaceID, vs...))
+}
+
+// WorkspaceIDNotIn applies the NotIn predicate on the "workspace_id" field.
+func WorkspaceIDNotIn(vs ...int64) predicate.Event {
+	return predicate.Event(sql.FieldNotIn(FieldWorkspaceID, vs...))
 }
 
 // SourceIDEQ applies the EQ predicate on the "source_id" field.
@@ -738,26 +758,6 @@ func OccurredAtIsNil() predicate.Event {
 // OccurredAtNotNil applies the NotNil predicate on the "occurred_at" field.
 func OccurredAtNotNil() predicate.Event {
 	return predicate.Event(sql.FieldNotNull(FieldOccurredAt))
-}
-
-// WorkspaceIDEQ applies the EQ predicate on the "workspace_id" field.
-func WorkspaceIDEQ(v int64) predicate.Event {
-	return predicate.Event(sql.FieldEQ(FieldWorkspaceID, v))
-}
-
-// WorkspaceIDNEQ applies the NEQ predicate on the "workspace_id" field.
-func WorkspaceIDNEQ(v int64) predicate.Event {
-	return predicate.Event(sql.FieldNEQ(FieldWorkspaceID, v))
-}
-
-// WorkspaceIDIn applies the In predicate on the "workspace_id" field.
-func WorkspaceIDIn(vs ...int64) predicate.Event {
-	return predicate.Event(sql.FieldIn(FieldWorkspaceID, vs...))
-}
-
-// WorkspaceIDNotIn applies the NotIn predicate on the "workspace_id" field.
-func WorkspaceIDNotIn(vs ...int64) predicate.Event {
-	return predicate.Event(sql.FieldNotIn(FieldWorkspaceID, vs...))
 }
 
 // HasWorkspace applies the HasEdge predicate on the "workspace" edge.

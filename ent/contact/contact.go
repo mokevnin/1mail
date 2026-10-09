@@ -18,6 +18,8 @@ const (
 	FieldCreatedAt = "created_at"
 	// FieldUpdatedAt holds the string denoting the updated_at field in the database.
 	FieldUpdatedAt = "updated_at"
+	// FieldWorkspaceID holds the string denoting the workspace_id field in the database.
+	FieldWorkspaceID = "workspace_id"
 	// FieldSubjectID holds the string denoting the subject_id field in the database.
 	FieldSubjectID = "subject_id"
 	// FieldEmail holds the string denoting the email field in the database.
@@ -32,16 +34,21 @@ const (
 	FieldTimeZone = "time_zone"
 	// FieldCustomFields holds the string denoting the custom_fields field in the database.
 	FieldCustomFields = "custom_fields"
-	// FieldWorkspaceID holds the string denoting the workspace_id field in the database.
-	FieldWorkspaceID = "workspace_id"
+	// EdgeWorkspace holds the string denoting the workspace edge name in mutations.
+	EdgeWorkspace = "workspace"
 	// EdgeVisitors holds the string denoting the visitors edge name in mutations.
 	EdgeVisitors = "visitors"
 	// EdgeTags holds the string denoting the tags edge name in mutations.
 	EdgeTags = "tags"
-	// EdgeWorkspace holds the string denoting the workspace edge name in mutations.
-	EdgeWorkspace = "workspace"
 	// Table holds the table name of the contact in the database.
 	Table = "contacts"
+	// WorkspaceTable is the table that holds the workspace relation/edge.
+	WorkspaceTable = "contacts"
+	// WorkspaceInverseTable is the table name for the Workspace entity.
+	// It exists in this package in order to avoid circular dependency with the "workspace" package.
+	WorkspaceInverseTable = "workspaces"
+	// WorkspaceColumn is the table column denoting the workspace relation/edge.
+	WorkspaceColumn = "workspace_id"
 	// VisitorsTable is the table that holds the visitors relation/edge.
 	VisitorsTable = "visitors"
 	// VisitorsInverseTable is the table name for the Visitor entity.
@@ -54,13 +61,6 @@ const (
 	// TagsInverseTable is the table name for the Tag entity.
 	// It exists in this package in order to avoid circular dependency with the "tag" package.
 	TagsInverseTable = "tags"
-	// WorkspaceTable is the table that holds the workspace relation/edge.
-	WorkspaceTable = "contacts"
-	// WorkspaceInverseTable is the table name for the Workspace entity.
-	// It exists in this package in order to avoid circular dependency with the "workspace" package.
-	WorkspaceInverseTable = "workspaces"
-	// WorkspaceColumn is the table column denoting the workspace relation/edge.
-	WorkspaceColumn = "workspace_id"
 )
 
 // Columns holds all SQL columns for contact fields.
@@ -68,6 +68,7 @@ var Columns = []string{
 	FieldID,
 	FieldCreatedAt,
 	FieldUpdatedAt,
+	FieldWorkspaceID,
 	FieldSubjectID,
 	FieldEmail,
 	FieldPhone,
@@ -75,7 +76,6 @@ var Columns = []string{
 	FieldLastName,
 	FieldTimeZone,
 	FieldCustomFields,
-	FieldWorkspaceID,
 }
 
 var (
@@ -121,6 +121,11 @@ func ByUpdatedAt(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldUpdatedAt, opts...).ToFunc()
 }
 
+// ByWorkspaceID orders the results by the workspace_id field.
+func ByWorkspaceID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldWorkspaceID, opts...).ToFunc()
+}
+
 // BySubjectID orders the results by the subject_id field.
 func BySubjectID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldSubjectID, opts...).ToFunc()
@@ -151,9 +156,11 @@ func ByTimeZone(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldTimeZone, opts...).ToFunc()
 }
 
-// ByWorkspaceID orders the results by the workspace_id field.
-func ByWorkspaceID(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldWorkspaceID, opts...).ToFunc()
+// ByWorkspaceField orders the results by workspace field.
+func ByWorkspaceField(field string, opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newWorkspaceStep(), sql.OrderByField(field, opts...))
+	}
 }
 
 // ByVisitorsCount orders the results by visitors count.
@@ -183,12 +190,12 @@ func ByTags(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newTagsStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
-
-// ByWorkspaceField orders the results by workspace field.
-func ByWorkspaceField(field string, opts ...sql.OrderTermOption) OrderOption {
-	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborTerms(s, newWorkspaceStep(), sql.OrderByField(field, opts...))
-	}
+func newWorkspaceStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(WorkspaceInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.M2O, true, WorkspaceTable, WorkspaceColumn),
+	)
 }
 func newVisitorsStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
@@ -202,12 +209,5 @@ func newTagsStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(TagsInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.M2M, false, TagsTable, TagsPrimaryKey...),
-	)
-}
-func newWorkspaceStep() *sqlgraph.Step {
-	return sqlgraph.NewStep(
-		sqlgraph.From(Table, FieldID),
-		sqlgraph.To(WorkspaceInverseTable, FieldID),
-		sqlgraph.Edge(sqlgraph.M2O, true, WorkspaceTable, WorkspaceColumn),
 	)
 }

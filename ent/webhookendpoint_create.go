@@ -51,6 +51,12 @@ func (_c *WebhookEndpointCreate) SetNillableUpdatedAt(v *time.Time) *WebhookEndp
 	return _c
 }
 
+// SetWorkspaceID sets the "workspace_id" field.
+func (_c *WebhookEndpointCreate) SetWorkspaceID(v int64) *WebhookEndpointCreate {
+	_c.mutation.SetWorkspaceID(v)
+	return _c
+}
+
 // SetURL sets the "url" field.
 func (_c *WebhookEndpointCreate) SetURL(v string) *WebhookEndpointCreate {
 	_c.mutation.SetURL(v)
@@ -80,12 +86,6 @@ func (_c *WebhookEndpointCreate) SetNillableEnabled(v *bool) *WebhookEndpointCre
 	if v != nil {
 		_c.SetEnabled(*v)
 	}
-	return _c
-}
-
-// SetWorkspaceID sets the "workspace_id" field.
-func (_c *WebhookEndpointCreate) SetWorkspaceID(v int64) *WebhookEndpointCreate {
-	_c.mutation.SetWorkspaceID(v)
 	return _c
 }
 
@@ -157,6 +157,9 @@ func (_c *WebhookEndpointCreate) check() error {
 	if _, ok := _c.mutation.UpdatedAt(); !ok {
 		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "WebhookEndpoint.updated_at"`)}
 	}
+	if _, ok := _c.mutation.WorkspaceID(); !ok {
+		return &ValidationError{Name: "workspace_id", err: errors.New(`ent: missing required field "WebhookEndpoint.workspace_id"`)}
+	}
 	if _, ok := _c.mutation.URL(); !ok {
 		return &ValidationError{Name: "url", err: errors.New(`ent: missing required field "WebhookEndpoint.url"`)}
 	}
@@ -170,9 +173,6 @@ func (_c *WebhookEndpointCreate) check() error {
 	}
 	if _, ok := _c.mutation.Enabled(); !ok {
 		return &ValidationError{Name: "enabled", err: errors.New(`ent: missing required field "WebhookEndpoint.enabled"`)}
-	}
-	if _, ok := _c.mutation.WorkspaceID(); !ok {
-		return &ValidationError{Name: "workspace_id", err: errors.New(`ent: missing required field "WebhookEndpoint.workspace_id"`)}
 	}
 	if len(_c.mutation.WorkspaceIDs()) == 0 {
 		return &ValidationError{Name: "workspace", err: errors.New(`ent: missing required edge "WebhookEndpoint.workspace"`)}
@@ -315,6 +315,18 @@ func (u *WebhookEndpointUpsert) UpdateUpdatedAt() *WebhookEndpointUpsert {
 	return u
 }
 
+// SetWorkspaceID sets the "workspace_id" field.
+func (u *WebhookEndpointUpsert) SetWorkspaceID(v int64) *WebhookEndpointUpsert {
+	u.Set(webhookendpoint.FieldWorkspaceID, v)
+	return u
+}
+
+// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
+func (u *WebhookEndpointUpsert) UpdateWorkspaceID() *WebhookEndpointUpsert {
+	u.SetExcluded(webhookendpoint.FieldWorkspaceID)
+	return u
+}
+
 // SetURL sets the "url" field.
 func (u *WebhookEndpointUpsert) SetURL(v string) *WebhookEndpointUpsert {
 	u.Set(webhookendpoint.FieldURL, v)
@@ -366,18 +378,6 @@ func (u *WebhookEndpointUpsert) SetEnabled(v bool) *WebhookEndpointUpsert {
 // UpdateEnabled sets the "enabled" field to the value that was provided on create.
 func (u *WebhookEndpointUpsert) UpdateEnabled() *WebhookEndpointUpsert {
 	u.SetExcluded(webhookendpoint.FieldEnabled)
-	return u
-}
-
-// SetWorkspaceID sets the "workspace_id" field.
-func (u *WebhookEndpointUpsert) SetWorkspaceID(v int64) *WebhookEndpointUpsert {
-	u.Set(webhookendpoint.FieldWorkspaceID, v)
-	return u
-}
-
-// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
-func (u *WebhookEndpointUpsert) UpdateWorkspaceID() *WebhookEndpointUpsert {
-	u.SetExcluded(webhookendpoint.FieldWorkspaceID)
 	return u
 }
 
@@ -446,6 +446,20 @@ func (u *WebhookEndpointUpsertOne) UpdateUpdatedAt() *WebhookEndpointUpsertOne {
 	})
 }
 
+// SetWorkspaceID sets the "workspace_id" field.
+func (u *WebhookEndpointUpsertOne) SetWorkspaceID(v int64) *WebhookEndpointUpsertOne {
+	return u.Update(func(s *WebhookEndpointUpsert) {
+		s.SetWorkspaceID(v)
+	})
+}
+
+// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
+func (u *WebhookEndpointUpsertOne) UpdateWorkspaceID() *WebhookEndpointUpsertOne {
+	return u.Update(func(s *WebhookEndpointUpsert) {
+		s.UpdateWorkspaceID()
+	})
+}
+
 // SetURL sets the "url" field.
 func (u *WebhookEndpointUpsertOne) SetURL(v string) *WebhookEndpointUpsertOne {
 	return u.Update(func(s *WebhookEndpointUpsert) {
@@ -506,20 +520,6 @@ func (u *WebhookEndpointUpsertOne) SetEnabled(v bool) *WebhookEndpointUpsertOne 
 func (u *WebhookEndpointUpsertOne) UpdateEnabled() *WebhookEndpointUpsertOne {
 	return u.Update(func(s *WebhookEndpointUpsert) {
 		s.UpdateEnabled()
-	})
-}
-
-// SetWorkspaceID sets the "workspace_id" field.
-func (u *WebhookEndpointUpsertOne) SetWorkspaceID(v int64) *WebhookEndpointUpsertOne {
-	return u.Update(func(s *WebhookEndpointUpsert) {
-		s.SetWorkspaceID(v)
-	})
-}
-
-// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
-func (u *WebhookEndpointUpsertOne) UpdateWorkspaceID() *WebhookEndpointUpsertOne {
-	return u.Update(func(s *WebhookEndpointUpsert) {
-		s.UpdateWorkspaceID()
 	})
 }
 
@@ -754,6 +754,20 @@ func (u *WebhookEndpointUpsertBulk) UpdateUpdatedAt() *WebhookEndpointUpsertBulk
 	})
 }
 
+// SetWorkspaceID sets the "workspace_id" field.
+func (u *WebhookEndpointUpsertBulk) SetWorkspaceID(v int64) *WebhookEndpointUpsertBulk {
+	return u.Update(func(s *WebhookEndpointUpsert) {
+		s.SetWorkspaceID(v)
+	})
+}
+
+// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
+func (u *WebhookEndpointUpsertBulk) UpdateWorkspaceID() *WebhookEndpointUpsertBulk {
+	return u.Update(func(s *WebhookEndpointUpsert) {
+		s.UpdateWorkspaceID()
+	})
+}
+
 // SetURL sets the "url" field.
 func (u *WebhookEndpointUpsertBulk) SetURL(v string) *WebhookEndpointUpsertBulk {
 	return u.Update(func(s *WebhookEndpointUpsert) {
@@ -814,20 +828,6 @@ func (u *WebhookEndpointUpsertBulk) SetEnabled(v bool) *WebhookEndpointUpsertBul
 func (u *WebhookEndpointUpsertBulk) UpdateEnabled() *WebhookEndpointUpsertBulk {
 	return u.Update(func(s *WebhookEndpointUpsert) {
 		s.UpdateEnabled()
-	})
-}
-
-// SetWorkspaceID sets the "workspace_id" field.
-func (u *WebhookEndpointUpsertBulk) SetWorkspaceID(v int64) *WebhookEndpointUpsertBulk {
-	return u.Update(func(s *WebhookEndpointUpsert) {
-		s.SetWorkspaceID(v)
-	})
-}
-
-// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
-func (u *WebhookEndpointUpsertBulk) UpdateWorkspaceID() *WebhookEndpointUpsertBulk {
-	return u.Update(func(s *WebhookEndpointUpsert) {
-		s.UpdateWorkspaceID()
 	})
 }
 

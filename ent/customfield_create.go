@@ -51,6 +51,12 @@ func (_c *CustomFieldCreate) SetNillableUpdatedAt(v *time.Time) *CustomFieldCrea
 	return _c
 }
 
+// SetWorkspaceID sets the "workspace_id" field.
+func (_c *CustomFieldCreate) SetWorkspaceID(v int64) *CustomFieldCreate {
+	_c.mutation.SetWorkspaceID(v)
+	return _c
+}
+
 // SetKey sets the "key" field.
 func (_c *CustomFieldCreate) SetKey(v string) *CustomFieldCreate {
 	_c.mutation.SetKey(v)
@@ -74,12 +80,6 @@ func (_c *CustomFieldCreate) SetNillableType(v *customfield.Type) *CustomFieldCr
 	if v != nil {
 		_c.SetType(*v)
 	}
-	return _c
-}
-
-// SetWorkspaceID sets the "workspace_id" field.
-func (_c *CustomFieldCreate) SetWorkspaceID(v int64) *CustomFieldCreate {
-	_c.mutation.SetWorkspaceID(v)
 	return _c
 }
 
@@ -151,6 +151,9 @@ func (_c *CustomFieldCreate) check() error {
 	if _, ok := _c.mutation.UpdatedAt(); !ok {
 		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "CustomField.updated_at"`)}
 	}
+	if _, ok := _c.mutation.WorkspaceID(); !ok {
+		return &ValidationError{Name: "workspace_id", err: errors.New(`ent: missing required field "CustomField.workspace_id"`)}
+	}
 	if _, ok := _c.mutation.Key(); !ok {
 		return &ValidationError{Name: "key", err: errors.New(`ent: missing required field "CustomField.key"`)}
 	}
@@ -174,9 +177,6 @@ func (_c *CustomFieldCreate) check() error {
 		if err := customfield.TypeValidator(v); err != nil {
 			return &ValidationError{Name: "type", err: fmt.Errorf(`ent: validator failed for field "CustomField.type": %w`, err)}
 		}
-	}
-	if _, ok := _c.mutation.WorkspaceID(); !ok {
-		return &ValidationError{Name: "workspace_id", err: errors.New(`ent: missing required field "CustomField.workspace_id"`)}
 	}
 	if len(_c.mutation.WorkspaceIDs()) == 0 {
 		return &ValidationError{Name: "workspace", err: errors.New(`ent: missing required edge "CustomField.workspace"`)}
@@ -315,6 +315,18 @@ func (u *CustomFieldUpsert) UpdateUpdatedAt() *CustomFieldUpsert {
 	return u
 }
 
+// SetWorkspaceID sets the "workspace_id" field.
+func (u *CustomFieldUpsert) SetWorkspaceID(v int64) *CustomFieldUpsert {
+	u.Set(customfield.FieldWorkspaceID, v)
+	return u
+}
+
+// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
+func (u *CustomFieldUpsert) UpdateWorkspaceID() *CustomFieldUpsert {
+	u.SetExcluded(customfield.FieldWorkspaceID)
+	return u
+}
+
 // SetKey sets the "key" field.
 func (u *CustomFieldUpsert) SetKey(v string) *CustomFieldUpsert {
 	u.Set(customfield.FieldKey, v)
@@ -348,18 +360,6 @@ func (u *CustomFieldUpsert) SetType(v customfield.Type) *CustomFieldUpsert {
 // UpdateType sets the "type" field to the value that was provided on create.
 func (u *CustomFieldUpsert) UpdateType() *CustomFieldUpsert {
 	u.SetExcluded(customfield.FieldType)
-	return u
-}
-
-// SetWorkspaceID sets the "workspace_id" field.
-func (u *CustomFieldUpsert) SetWorkspaceID(v int64) *CustomFieldUpsert {
-	u.Set(customfield.FieldWorkspaceID, v)
-	return u
-}
-
-// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
-func (u *CustomFieldUpsert) UpdateWorkspaceID() *CustomFieldUpsert {
-	u.SetExcluded(customfield.FieldWorkspaceID)
 	return u
 }
 
@@ -428,6 +428,20 @@ func (u *CustomFieldUpsertOne) UpdateUpdatedAt() *CustomFieldUpsertOne {
 	})
 }
 
+// SetWorkspaceID sets the "workspace_id" field.
+func (u *CustomFieldUpsertOne) SetWorkspaceID(v int64) *CustomFieldUpsertOne {
+	return u.Update(func(s *CustomFieldUpsert) {
+		s.SetWorkspaceID(v)
+	})
+}
+
+// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
+func (u *CustomFieldUpsertOne) UpdateWorkspaceID() *CustomFieldUpsertOne {
+	return u.Update(func(s *CustomFieldUpsert) {
+		s.UpdateWorkspaceID()
+	})
+}
+
 // SetKey sets the "key" field.
 func (u *CustomFieldUpsertOne) SetKey(v string) *CustomFieldUpsertOne {
 	return u.Update(func(s *CustomFieldUpsert) {
@@ -467,20 +481,6 @@ func (u *CustomFieldUpsertOne) SetType(v customfield.Type) *CustomFieldUpsertOne
 func (u *CustomFieldUpsertOne) UpdateType() *CustomFieldUpsertOne {
 	return u.Update(func(s *CustomFieldUpsert) {
 		s.UpdateType()
-	})
-}
-
-// SetWorkspaceID sets the "workspace_id" field.
-func (u *CustomFieldUpsertOne) SetWorkspaceID(v int64) *CustomFieldUpsertOne {
-	return u.Update(func(s *CustomFieldUpsert) {
-		s.SetWorkspaceID(v)
-	})
-}
-
-// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
-func (u *CustomFieldUpsertOne) UpdateWorkspaceID() *CustomFieldUpsertOne {
-	return u.Update(func(s *CustomFieldUpsert) {
-		s.UpdateWorkspaceID()
 	})
 }
 
@@ -715,6 +715,20 @@ func (u *CustomFieldUpsertBulk) UpdateUpdatedAt() *CustomFieldUpsertBulk {
 	})
 }
 
+// SetWorkspaceID sets the "workspace_id" field.
+func (u *CustomFieldUpsertBulk) SetWorkspaceID(v int64) *CustomFieldUpsertBulk {
+	return u.Update(func(s *CustomFieldUpsert) {
+		s.SetWorkspaceID(v)
+	})
+}
+
+// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
+func (u *CustomFieldUpsertBulk) UpdateWorkspaceID() *CustomFieldUpsertBulk {
+	return u.Update(func(s *CustomFieldUpsert) {
+		s.UpdateWorkspaceID()
+	})
+}
+
 // SetKey sets the "key" field.
 func (u *CustomFieldUpsertBulk) SetKey(v string) *CustomFieldUpsertBulk {
 	return u.Update(func(s *CustomFieldUpsert) {
@@ -754,20 +768,6 @@ func (u *CustomFieldUpsertBulk) SetType(v customfield.Type) *CustomFieldUpsertBu
 func (u *CustomFieldUpsertBulk) UpdateType() *CustomFieldUpsertBulk {
 	return u.Update(func(s *CustomFieldUpsert) {
 		s.UpdateType()
-	})
-}
-
-// SetWorkspaceID sets the "workspace_id" field.
-func (u *CustomFieldUpsertBulk) SetWorkspaceID(v int64) *CustomFieldUpsertBulk {
-	return u.Update(func(s *CustomFieldUpsert) {
-		s.SetWorkspaceID(v)
-	})
-}
-
-// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
-func (u *CustomFieldUpsertBulk) UpdateWorkspaceID() *CustomFieldUpsertBulk {
-	return u.Update(func(s *CustomFieldUpsert) {
-		s.UpdateWorkspaceID()
 	})
 }
 

@@ -22,6 +22,8 @@ type Broadcast struct {
 	CreatedAt time.Time `json:"created_at,omitempty"`
 	// UpdatedAt holds the value of the "updated_at" field.
 	UpdatedAt time.Time `json:"updated_at,omitempty"`
+	// WorkspaceID holds the value of the "workspace_id" field.
+	WorkspaceID int64 `json:"workspace_id,omitempty"`
 	// Name holds the value of the "name" field.
 	Name string `json:"name,omitempty"`
 	// Subject holds the value of the "subject" field.
@@ -60,8 +62,6 @@ type Broadcast struct {
 	SkippedCount int `json:"skipped_count,omitempty"`
 	// HoldReason holds the value of the "hold_reason" field.
 	HoldReason *string `json:"hold_reason,omitempty"`
-	// WorkspaceID holds the value of the "workspace_id" field.
-	WorkspaceID int64 `json:"workspace_id,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the BroadcastQuery when eager-loading is set.
 	Edges        BroadcastEdges `json:"edges"`
@@ -104,7 +104,7 @@ func (*Broadcast) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case broadcast.FieldID, broadcast.FieldSegmentID, broadcast.FieldIntegrationID, broadcast.FieldRecipientsTotal, broadcast.FieldSentCount, broadcast.FieldOpenedCount, broadcast.FieldClickedCount, broadcast.FieldUnsubscribedCount, broadcast.FieldFailedCount, broadcast.FieldSkippedCount, broadcast.FieldWorkspaceID:
+		case broadcast.FieldID, broadcast.FieldWorkspaceID, broadcast.FieldSegmentID, broadcast.FieldIntegrationID, broadcast.FieldRecipientsTotal, broadcast.FieldSentCount, broadcast.FieldOpenedCount, broadcast.FieldClickedCount, broadcast.FieldUnsubscribedCount, broadcast.FieldFailedCount, broadcast.FieldSkippedCount:
 			values[i] = new(sql.NullInt64)
 		case broadcast.FieldName, broadcast.FieldSubject, broadcast.FieldFromName, broadcast.FieldFromEmail, broadcast.FieldBody, broadcast.FieldBodyText, broadcast.FieldStatus, broadcast.FieldHoldReason:
 			values[i] = new(sql.NullString)
@@ -142,6 +142,12 @@ func (_m *Broadcast) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field updated_at", values[i])
 			} else if value.Valid {
 				_m.UpdatedAt = value.Time
+			}
+		case broadcast.FieldWorkspaceID:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field workspace_id", values[i])
+			} else if value.Valid {
+				_m.WorkspaceID = value.Int64
 			}
 		case broadcast.FieldName:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -264,12 +270,6 @@ func (_m *Broadcast) assignValues(columns []string, values []any) error {
 				_m.HoldReason = new(string)
 				*_m.HoldReason = value.String
 			}
-		case broadcast.FieldWorkspaceID:
-			if value, ok := values[i].(*sql.NullInt64); !ok {
-				return fmt.Errorf("unexpected type %T for field workspace_id", values[i])
-			} else if value.Valid {
-				_m.WorkspaceID = value.Int64
-			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
 		}
@@ -321,6 +321,9 @@ func (_m *Broadcast) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("updated_at=")
 	builder.WriteString(_m.UpdatedAt.Format(time.ANSIC))
+	builder.WriteString(", ")
+	builder.WriteString("workspace_id=")
+	builder.WriteString(fmt.Sprintf("%v", _m.WorkspaceID))
 	builder.WriteString(", ")
 	builder.WriteString("name=")
 	builder.WriteString(_m.Name)
@@ -392,9 +395,6 @@ func (_m *Broadcast) String() string {
 		builder.WriteString("hold_reason=")
 		builder.WriteString(*v)
 	}
-	builder.WriteString(", ")
-	builder.WriteString("workspace_id=")
-	builder.WriteString(fmt.Sprintf("%v", _m.WorkspaceID))
 	builder.WriteByte(')')
 	return builder.String()
 }

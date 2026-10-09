@@ -51,6 +51,12 @@ func (_c *SuppressionCreate) SetNillableUpdatedAt(v *time.Time) *SuppressionCrea
 	return _c
 }
 
+// SetWorkspaceID sets the "workspace_id" field.
+func (_c *SuppressionCreate) SetWorkspaceID(v int64) *SuppressionCreate {
+	_c.mutation.SetWorkspaceID(v)
+	return _c
+}
+
 // SetChannel sets the "channel" field.
 func (_c *SuppressionCreate) SetChannel(v suppression.Channel) *SuppressionCreate {
 	_c.mutation.SetChannel(v)
@@ -96,12 +102,6 @@ func (_c *SuppressionCreate) SetNillableContactID(v *int64) *SuppressionCreate {
 	if v != nil {
 		_c.SetContactID(*v)
 	}
-	return _c
-}
-
-// SetWorkspaceID sets the "workspace_id" field.
-func (_c *SuppressionCreate) SetWorkspaceID(v int64) *SuppressionCreate {
-	_c.mutation.SetWorkspaceID(v)
 	return _c
 }
 
@@ -177,6 +177,9 @@ func (_c *SuppressionCreate) check() error {
 	if _, ok := _c.mutation.UpdatedAt(); !ok {
 		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "Suppression.updated_at"`)}
 	}
+	if _, ok := _c.mutation.WorkspaceID(); !ok {
+		return &ValidationError{Name: "workspace_id", err: errors.New(`ent: missing required field "Suppression.workspace_id"`)}
+	}
 	if _, ok := _c.mutation.Channel(); !ok {
 		return &ValidationError{Name: "channel", err: errors.New(`ent: missing required field "Suppression.channel"`)}
 	}
@@ -200,9 +203,6 @@ func (_c *SuppressionCreate) check() error {
 		if err := suppression.ReasonValidator(v); err != nil {
 			return &ValidationError{Name: "reason", err: fmt.Errorf(`ent: validator failed for field "Suppression.reason": %w`, err)}
 		}
-	}
-	if _, ok := _c.mutation.WorkspaceID(); !ok {
-		return &ValidationError{Name: "workspace_id", err: errors.New(`ent: missing required field "Suppression.workspace_id"`)}
 	}
 	if len(_c.mutation.WorkspaceIDs()) == 0 {
 		return &ValidationError{Name: "workspace", err: errors.New(`ent: missing required edge "Suppression.workspace"`)}
@@ -345,6 +345,18 @@ func (u *SuppressionUpsert) UpdateUpdatedAt() *SuppressionUpsert {
 	return u
 }
 
+// SetWorkspaceID sets the "workspace_id" field.
+func (u *SuppressionUpsert) SetWorkspaceID(v int64) *SuppressionUpsert {
+	u.Set(suppression.FieldWorkspaceID, v)
+	return u
+}
+
+// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
+func (u *SuppressionUpsert) UpdateWorkspaceID() *SuppressionUpsert {
+	u.SetExcluded(suppression.FieldWorkspaceID)
+	return u
+}
+
 // SetChannel sets the "channel" field.
 func (u *SuppressionUpsert) SetChannel(v suppression.Channel) *SuppressionUpsert {
 	u.Set(suppression.FieldChannel, v)
@@ -402,18 +414,6 @@ func (u *SuppressionUpsert) AddContactID(v int64) *SuppressionUpsert {
 // ClearContactID clears the value of the "contact_id" field.
 func (u *SuppressionUpsert) ClearContactID() *SuppressionUpsert {
 	u.SetNull(suppression.FieldContactID)
-	return u
-}
-
-// SetWorkspaceID sets the "workspace_id" field.
-func (u *SuppressionUpsert) SetWorkspaceID(v int64) *SuppressionUpsert {
-	u.Set(suppression.FieldWorkspaceID, v)
-	return u
-}
-
-// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
-func (u *SuppressionUpsert) UpdateWorkspaceID() *SuppressionUpsert {
-	u.SetExcluded(suppression.FieldWorkspaceID)
 	return u
 }
 
@@ -479,6 +479,20 @@ func (u *SuppressionUpsertOne) SetUpdatedAt(v time.Time) *SuppressionUpsertOne {
 func (u *SuppressionUpsertOne) UpdateUpdatedAt() *SuppressionUpsertOne {
 	return u.Update(func(s *SuppressionUpsert) {
 		s.UpdateUpdatedAt()
+	})
+}
+
+// SetWorkspaceID sets the "workspace_id" field.
+func (u *SuppressionUpsertOne) SetWorkspaceID(v int64) *SuppressionUpsertOne {
+	return u.Update(func(s *SuppressionUpsert) {
+		s.SetWorkspaceID(v)
+	})
+}
+
+// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
+func (u *SuppressionUpsertOne) UpdateWorkspaceID() *SuppressionUpsertOne {
+	return u.Update(func(s *SuppressionUpsert) {
+		s.UpdateWorkspaceID()
 	})
 }
 
@@ -549,20 +563,6 @@ func (u *SuppressionUpsertOne) UpdateContactID() *SuppressionUpsertOne {
 func (u *SuppressionUpsertOne) ClearContactID() *SuppressionUpsertOne {
 	return u.Update(func(s *SuppressionUpsert) {
 		s.ClearContactID()
-	})
-}
-
-// SetWorkspaceID sets the "workspace_id" field.
-func (u *SuppressionUpsertOne) SetWorkspaceID(v int64) *SuppressionUpsertOne {
-	return u.Update(func(s *SuppressionUpsert) {
-		s.SetWorkspaceID(v)
-	})
-}
-
-// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
-func (u *SuppressionUpsertOne) UpdateWorkspaceID() *SuppressionUpsertOne {
-	return u.Update(func(s *SuppressionUpsert) {
-		s.UpdateWorkspaceID()
 	})
 }
 
@@ -797,6 +797,20 @@ func (u *SuppressionUpsertBulk) UpdateUpdatedAt() *SuppressionUpsertBulk {
 	})
 }
 
+// SetWorkspaceID sets the "workspace_id" field.
+func (u *SuppressionUpsertBulk) SetWorkspaceID(v int64) *SuppressionUpsertBulk {
+	return u.Update(func(s *SuppressionUpsert) {
+		s.SetWorkspaceID(v)
+	})
+}
+
+// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
+func (u *SuppressionUpsertBulk) UpdateWorkspaceID() *SuppressionUpsertBulk {
+	return u.Update(func(s *SuppressionUpsert) {
+		s.UpdateWorkspaceID()
+	})
+}
+
 // SetChannel sets the "channel" field.
 func (u *SuppressionUpsertBulk) SetChannel(v suppression.Channel) *SuppressionUpsertBulk {
 	return u.Update(func(s *SuppressionUpsert) {
@@ -864,20 +878,6 @@ func (u *SuppressionUpsertBulk) UpdateContactID() *SuppressionUpsertBulk {
 func (u *SuppressionUpsertBulk) ClearContactID() *SuppressionUpsertBulk {
 	return u.Update(func(s *SuppressionUpsert) {
 		s.ClearContactID()
-	})
-}
-
-// SetWorkspaceID sets the "workspace_id" field.
-func (u *SuppressionUpsertBulk) SetWorkspaceID(v int64) *SuppressionUpsertBulk {
-	return u.Update(func(s *SuppressionUpsert) {
-		s.SetWorkspaceID(v)
-	})
-}
-
-// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
-func (u *SuppressionUpsertBulk) UpdateWorkspaceID() *SuppressionUpsertBulk {
-	return u.Update(func(s *SuppressionUpsert) {
-		s.UpdateWorkspaceID()
 	})
 }
 

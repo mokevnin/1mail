@@ -51,6 +51,12 @@ func (_c *ConfirmationCreate) SetNillableUpdatedAt(v *time.Time) *ConfirmationCr
 	return _c
 }
 
+// SetWorkspaceID sets the "workspace_id" field.
+func (_c *ConfirmationCreate) SetWorkspaceID(v int64) *ConfirmationCreate {
+	_c.mutation.SetWorkspaceID(v)
+	return _c
+}
+
 // SetChannel sets the "channel" field.
 func (_c *ConfirmationCreate) SetChannel(v confirmation.Channel) *ConfirmationCreate {
 	_c.mutation.SetChannel(v)
@@ -88,12 +94,6 @@ func (_c *ConfirmationCreate) SetNillableContactID(v *int64) *ConfirmationCreate
 	if v != nil {
 		_c.SetContactID(*v)
 	}
-	return _c
-}
-
-// SetWorkspaceID sets the "workspace_id" field.
-func (_c *ConfirmationCreate) SetWorkspaceID(v int64) *ConfirmationCreate {
-	_c.mutation.SetWorkspaceID(v)
 	return _c
 }
 
@@ -165,6 +165,9 @@ func (_c *ConfirmationCreate) check() error {
 	if _, ok := _c.mutation.UpdatedAt(); !ok {
 		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "Confirmation.updated_at"`)}
 	}
+	if _, ok := _c.mutation.WorkspaceID(); !ok {
+		return &ValidationError{Name: "workspace_id", err: errors.New(`ent: missing required field "Confirmation.workspace_id"`)}
+	}
 	if _, ok := _c.mutation.Channel(); !ok {
 		return &ValidationError{Name: "channel", err: errors.New(`ent: missing required field "Confirmation.channel"`)}
 	}
@@ -188,9 +191,6 @@ func (_c *ConfirmationCreate) check() error {
 		if err := confirmation.ProvenanceValidator(v); err != nil {
 			return &ValidationError{Name: "provenance", err: fmt.Errorf(`ent: validator failed for field "Confirmation.provenance": %w`, err)}
 		}
-	}
-	if _, ok := _c.mutation.WorkspaceID(); !ok {
-		return &ValidationError{Name: "workspace_id", err: errors.New(`ent: missing required field "Confirmation.workspace_id"`)}
 	}
 	if len(_c.mutation.WorkspaceIDs()) == 0 {
 		return &ValidationError{Name: "workspace", err: errors.New(`ent: missing required edge "Confirmation.workspace"`)}
@@ -333,6 +333,18 @@ func (u *ConfirmationUpsert) UpdateUpdatedAt() *ConfirmationUpsert {
 	return u
 }
 
+// SetWorkspaceID sets the "workspace_id" field.
+func (u *ConfirmationUpsert) SetWorkspaceID(v int64) *ConfirmationUpsert {
+	u.Set(confirmation.FieldWorkspaceID, v)
+	return u
+}
+
+// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
+func (u *ConfirmationUpsert) UpdateWorkspaceID() *ConfirmationUpsert {
+	u.SetExcluded(confirmation.FieldWorkspaceID)
+	return u
+}
+
 // SetChannel sets the "channel" field.
 func (u *ConfirmationUpsert) SetChannel(v confirmation.Channel) *ConfirmationUpsert {
 	u.Set(confirmation.FieldChannel, v)
@@ -390,18 +402,6 @@ func (u *ConfirmationUpsert) AddContactID(v int64) *ConfirmationUpsert {
 // ClearContactID clears the value of the "contact_id" field.
 func (u *ConfirmationUpsert) ClearContactID() *ConfirmationUpsert {
 	u.SetNull(confirmation.FieldContactID)
-	return u
-}
-
-// SetWorkspaceID sets the "workspace_id" field.
-func (u *ConfirmationUpsert) SetWorkspaceID(v int64) *ConfirmationUpsert {
-	u.Set(confirmation.FieldWorkspaceID, v)
-	return u
-}
-
-// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
-func (u *ConfirmationUpsert) UpdateWorkspaceID() *ConfirmationUpsert {
-	u.SetExcluded(confirmation.FieldWorkspaceID)
 	return u
 }
 
@@ -467,6 +467,20 @@ func (u *ConfirmationUpsertOne) SetUpdatedAt(v time.Time) *ConfirmationUpsertOne
 func (u *ConfirmationUpsertOne) UpdateUpdatedAt() *ConfirmationUpsertOne {
 	return u.Update(func(s *ConfirmationUpsert) {
 		s.UpdateUpdatedAt()
+	})
+}
+
+// SetWorkspaceID sets the "workspace_id" field.
+func (u *ConfirmationUpsertOne) SetWorkspaceID(v int64) *ConfirmationUpsertOne {
+	return u.Update(func(s *ConfirmationUpsert) {
+		s.SetWorkspaceID(v)
+	})
+}
+
+// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
+func (u *ConfirmationUpsertOne) UpdateWorkspaceID() *ConfirmationUpsertOne {
+	return u.Update(func(s *ConfirmationUpsert) {
+		s.UpdateWorkspaceID()
 	})
 }
 
@@ -537,20 +551,6 @@ func (u *ConfirmationUpsertOne) UpdateContactID() *ConfirmationUpsertOne {
 func (u *ConfirmationUpsertOne) ClearContactID() *ConfirmationUpsertOne {
 	return u.Update(func(s *ConfirmationUpsert) {
 		s.ClearContactID()
-	})
-}
-
-// SetWorkspaceID sets the "workspace_id" field.
-func (u *ConfirmationUpsertOne) SetWorkspaceID(v int64) *ConfirmationUpsertOne {
-	return u.Update(func(s *ConfirmationUpsert) {
-		s.SetWorkspaceID(v)
-	})
-}
-
-// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
-func (u *ConfirmationUpsertOne) UpdateWorkspaceID() *ConfirmationUpsertOne {
-	return u.Update(func(s *ConfirmationUpsert) {
-		s.UpdateWorkspaceID()
 	})
 }
 
@@ -785,6 +785,20 @@ func (u *ConfirmationUpsertBulk) UpdateUpdatedAt() *ConfirmationUpsertBulk {
 	})
 }
 
+// SetWorkspaceID sets the "workspace_id" field.
+func (u *ConfirmationUpsertBulk) SetWorkspaceID(v int64) *ConfirmationUpsertBulk {
+	return u.Update(func(s *ConfirmationUpsert) {
+		s.SetWorkspaceID(v)
+	})
+}
+
+// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
+func (u *ConfirmationUpsertBulk) UpdateWorkspaceID() *ConfirmationUpsertBulk {
+	return u.Update(func(s *ConfirmationUpsert) {
+		s.UpdateWorkspaceID()
+	})
+}
+
 // SetChannel sets the "channel" field.
 func (u *ConfirmationUpsertBulk) SetChannel(v confirmation.Channel) *ConfirmationUpsertBulk {
 	return u.Update(func(s *ConfirmationUpsert) {
@@ -852,20 +866,6 @@ func (u *ConfirmationUpsertBulk) UpdateContactID() *ConfirmationUpsertBulk {
 func (u *ConfirmationUpsertBulk) ClearContactID() *ConfirmationUpsertBulk {
 	return u.Update(func(s *ConfirmationUpsert) {
 		s.ClearContactID()
-	})
-}
-
-// SetWorkspaceID sets the "workspace_id" field.
-func (u *ConfirmationUpsertBulk) SetWorkspaceID(v int64) *ConfirmationUpsertBulk {
-	return u.Update(func(s *ConfirmationUpsert) {
-		s.SetWorkspaceID(v)
-	})
-}
-
-// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
-func (u *ConfirmationUpsertBulk) UpdateWorkspaceID() *ConfirmationUpsertBulk {
-	return u.Update(func(s *ConfirmationUpsert) {
-		s.UpdateWorkspaceID()
 	})
 }
 

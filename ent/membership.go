@@ -23,10 +23,10 @@ type Membership struct {
 	CreatedAt time.Time `json:"created_at,omitempty"`
 	// UpdatedAt holds the value of the "updated_at" field.
 	UpdatedAt time.Time `json:"updated_at,omitempty"`
-	// UserID holds the value of the "user_id" field.
-	UserID int64 `json:"user_id,omitempty"`
 	// WorkspaceID holds the value of the "workspace_id" field.
 	WorkspaceID int64 `json:"workspace_id,omitempty"`
+	// UserID holds the value of the "user_id" field.
+	UserID int64 `json:"user_id,omitempty"`
 	// Role holds the value of the "role" field.
 	Role membership.Role `json:"role,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
@@ -37,24 +37,13 @@ type Membership struct {
 
 // MembershipEdges holds the relations/edges for other nodes in the graph.
 type MembershipEdges struct {
-	// User holds the value of the user edge.
-	User *User `json:"user,omitempty"`
 	// Workspace holds the value of the workspace edge.
 	Workspace *Workspace `json:"workspace,omitempty"`
+	// User holds the value of the user edge.
+	User *User `json:"user,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
 	loadedTypes [2]bool
-}
-
-// UserOrErr returns the User value or an error if the edge
-// was not loaded in eager-loading, or loaded but was not found.
-func (e MembershipEdges) UserOrErr() (*User, error) {
-	if e.User != nil {
-		return e.User, nil
-	} else if e.loadedTypes[0] {
-		return nil, &NotFoundError{label: user.Label}
-	}
-	return nil, &NotLoadedError{edge: "user"}
 }
 
 // WorkspaceOrErr returns the Workspace value or an error if the edge
@@ -62,10 +51,21 @@ func (e MembershipEdges) UserOrErr() (*User, error) {
 func (e MembershipEdges) WorkspaceOrErr() (*Workspace, error) {
 	if e.Workspace != nil {
 		return e.Workspace, nil
-	} else if e.loadedTypes[1] {
+	} else if e.loadedTypes[0] {
 		return nil, &NotFoundError{label: workspace.Label}
 	}
 	return nil, &NotLoadedError{edge: "workspace"}
+}
+
+// UserOrErr returns the User value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e MembershipEdges) UserOrErr() (*User, error) {
+	if e.User != nil {
+		return e.User, nil
+	} else if e.loadedTypes[1] {
+		return nil, &NotFoundError{label: user.Label}
+	}
+	return nil, &NotLoadedError{edge: "user"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -73,7 +73,7 @@ func (*Membership) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case membership.FieldID, membership.FieldUserID, membership.FieldWorkspaceID:
+		case membership.FieldID, membership.FieldWorkspaceID, membership.FieldUserID:
 			values[i] = new(sql.NullInt64)
 		case membership.FieldRole:
 			values[i] = new(sql.NullString)
@@ -112,17 +112,17 @@ func (_m *Membership) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				_m.UpdatedAt = value.Time
 			}
-		case membership.FieldUserID:
-			if value, ok := values[i].(*sql.NullInt64); !ok {
-				return fmt.Errorf("unexpected type %T for field user_id", values[i])
-			} else if value.Valid {
-				_m.UserID = value.Int64
-			}
 		case membership.FieldWorkspaceID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field workspace_id", values[i])
 			} else if value.Valid {
 				_m.WorkspaceID = value.Int64
+			}
+		case membership.FieldUserID:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field user_id", values[i])
+			} else if value.Valid {
+				_m.UserID = value.Int64
 			}
 		case membership.FieldRole:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -143,14 +143,14 @@ func (_m *Membership) Value(name string) (ent.Value, error) {
 	return _m.selectValues.Get(name)
 }
 
-// QueryUser queries the "user" edge of the Membership entity.
-func (_m *Membership) QueryUser() *UserQuery {
-	return NewMembershipClient(_m.config).QueryUser(_m)
-}
-
 // QueryWorkspace queries the "workspace" edge of the Membership entity.
 func (_m *Membership) QueryWorkspace() *WorkspaceQuery {
 	return NewMembershipClient(_m.config).QueryWorkspace(_m)
+}
+
+// QueryUser queries the "user" edge of the Membership entity.
+func (_m *Membership) QueryUser() *UserQuery {
+	return NewMembershipClient(_m.config).QueryUser(_m)
 }
 
 // Update returns a builder for updating this Membership.
@@ -182,11 +182,11 @@ func (_m *Membership) String() string {
 	builder.WriteString("updated_at=")
 	builder.WriteString(_m.UpdatedAt.Format(time.ANSIC))
 	builder.WriteString(", ")
-	builder.WriteString("user_id=")
-	builder.WriteString(fmt.Sprintf("%v", _m.UserID))
-	builder.WriteString(", ")
 	builder.WriteString("workspace_id=")
 	builder.WriteString(fmt.Sprintf("%v", _m.WorkspaceID))
+	builder.WriteString(", ")
+	builder.WriteString("user_id=")
+	builder.WriteString(fmt.Sprintf("%v", _m.UserID))
 	builder.WriteString(", ")
 	builder.WriteString("role=")
 	builder.WriteString(fmt.Sprintf("%v", _m.Role))

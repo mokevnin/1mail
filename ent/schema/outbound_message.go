@@ -6,7 +6,6 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/entsql"
 	"entgo.io/ent/schema"
-	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
 	"entgo.io/ent/schema/index"
 )
@@ -30,7 +29,7 @@ func (OutboundMessage) Annotations() []schema.Annotation {
 }
 
 func (OutboundMessage) Mixin() []ent.Mixin {
-	return []ent.Mixin{TimeMixin{}}
+	return []ent.Mixin{TimeMixin{}, WorkspaceMixin{Ref: "outbound_messages"}}
 }
 
 func (OutboundMessage) Fields() []ent.Field {
@@ -38,7 +37,6 @@ func (OutboundMessage) Fields() []ent.Field {
 		field.Int64("id").
 			StorageKey("id").
 			Immutable(),
-		field.Int64("workspace_id"),
 		// Which surface asked for the send.
 		field.Enum("kind").
 			Values("broadcast", "automation", "transactional").
@@ -98,16 +96,6 @@ func (OutboundMessage) Fields() []ent.Field {
 		field.Int("automation_step").Optional().Nillable(),
 		// The Template a transactional send referenced (ADR 0005).
 		field.Int64("template_id").Optional().Nillable(),
-	}
-}
-
-func (OutboundMessage) Edges() []ent.Edge {
-	return []ent.Edge{
-		edge.From("workspace", Workspace.Type).
-			Ref("outbound_messages").
-			Field("workspace_id").
-			Required().
-			Unique(),
 	}
 }
 

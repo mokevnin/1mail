@@ -23,7 +23,7 @@ func (BroadcastRecipient) Annotations() []schema.Annotation {
 }
 
 func (BroadcastRecipient) Mixin() []ent.Mixin {
-	return []ent.Mixin{TimeMixin{}}
+	return []ent.Mixin{TimeMixin{}, WorkspaceMixin{Ref: "broadcast_recipients"}}
 }
 
 func (BroadcastRecipient) Fields() []ent.Field {
@@ -33,7 +33,6 @@ func (BroadcastRecipient) Fields() []ent.Field {
 			Immutable(),
 		field.Int64("broadcast_id"),
 		field.Int64("contact_id"),
-		field.Int64("workspace_id"),
 		field.Enum("status").
 			Values("pending", "sent", "skipped", "failed").
 			Default("pending"),
@@ -63,11 +62,6 @@ func (BroadcastRecipient) Edges() []ent.Edge {
 		edge.From("broadcast", Broadcast.Type).
 			Ref("recipients").
 			Field("broadcast_id").
-			Required().
-			Unique(),
-		edge.From("workspace", Workspace.Type).
-			Ref("broadcast_recipients").
-			Field("workspace_id").
 			Required().
 			Unique(),
 	}

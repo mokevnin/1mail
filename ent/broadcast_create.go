@@ -52,6 +52,12 @@ func (_c *BroadcastCreate) SetNillableUpdatedAt(v *time.Time) *BroadcastCreate {
 	return _c
 }
 
+// SetWorkspaceID sets the "workspace_id" field.
+func (_c *BroadcastCreate) SetWorkspaceID(v int64) *BroadcastCreate {
+	_c.mutation.SetWorkspaceID(v)
+	return _c
+}
+
 // SetName sets the "name" field.
 func (_c *BroadcastCreate) SetName(v string) *BroadcastCreate {
 	_c.mutation.SetName(v)
@@ -310,12 +316,6 @@ func (_c *BroadcastCreate) SetNillableHoldReason(v *string) *BroadcastCreate {
 	return _c
 }
 
-// SetWorkspaceID sets the "workspace_id" field.
-func (_c *BroadcastCreate) SetWorkspaceID(v int64) *BroadcastCreate {
-	_c.mutation.SetWorkspaceID(v)
-	return _c
-}
-
 // SetID sets the "id" field.
 func (_c *BroadcastCreate) SetID(v int64) *BroadcastCreate {
 	_c.mutation.SetID(v)
@@ -439,6 +439,9 @@ func (_c *BroadcastCreate) check() error {
 	if _, ok := _c.mutation.UpdatedAt(); !ok {
 		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "Broadcast.updated_at"`)}
 	}
+	if _, ok := _c.mutation.WorkspaceID(); !ok {
+		return &ValidationError{Name: "workspace_id", err: errors.New(`ent: missing required field "Broadcast.workspace_id"`)}
+	}
 	if _, ok := _c.mutation.Name(); !ok {
 		return &ValidationError{Name: "name", err: errors.New(`ent: missing required field "Broadcast.name"`)}
 	}
@@ -519,9 +522,6 @@ func (_c *BroadcastCreate) check() error {
 		if err := broadcast.SkippedCountValidator(v); err != nil {
 			return &ValidationError{Name: "skipped_count", err: fmt.Errorf(`ent: validator failed for field "Broadcast.skipped_count": %w`, err)}
 		}
-	}
-	if _, ok := _c.mutation.WorkspaceID(); !ok {
-		return &ValidationError{Name: "workspace_id", err: errors.New(`ent: missing required field "Broadcast.workspace_id"`)}
 	}
 	if len(_c.mutation.WorkspaceIDs()) == 0 {
 		return &ValidationError{Name: "workspace", err: errors.New(`ent: missing required edge "Broadcast.workspace"`)}
@@ -737,6 +737,18 @@ func (u *BroadcastUpsert) SetUpdatedAt(v time.Time) *BroadcastUpsert {
 // UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
 func (u *BroadcastUpsert) UpdateUpdatedAt() *BroadcastUpsert {
 	u.SetExcluded(broadcast.FieldUpdatedAt)
+	return u
+}
+
+// SetWorkspaceID sets the "workspace_id" field.
+func (u *BroadcastUpsert) SetWorkspaceID(v int64) *BroadcastUpsert {
+	u.Set(broadcast.FieldWorkspaceID, v)
+	return u
+}
+
+// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
+func (u *BroadcastUpsert) UpdateWorkspaceID() *BroadcastUpsert {
+	u.SetExcluded(broadcast.FieldWorkspaceID)
 	return u
 }
 
@@ -1064,18 +1076,6 @@ func (u *BroadcastUpsert) ClearHoldReason() *BroadcastUpsert {
 	return u
 }
 
-// SetWorkspaceID sets the "workspace_id" field.
-func (u *BroadcastUpsert) SetWorkspaceID(v int64) *BroadcastUpsert {
-	u.Set(broadcast.FieldWorkspaceID, v)
-	return u
-}
-
-// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
-func (u *BroadcastUpsert) UpdateWorkspaceID() *BroadcastUpsert {
-	u.SetExcluded(broadcast.FieldWorkspaceID)
-	return u
-}
-
 // UpdateNewValues updates the mutable fields using the new values that were set on create except the ID field.
 // Using this option is equivalent to using:
 //
@@ -1138,6 +1138,20 @@ func (u *BroadcastUpsertOne) SetUpdatedAt(v time.Time) *BroadcastUpsertOne {
 func (u *BroadcastUpsertOne) UpdateUpdatedAt() *BroadcastUpsertOne {
 	return u.Update(func(s *BroadcastUpsert) {
 		s.UpdateUpdatedAt()
+	})
+}
+
+// SetWorkspaceID sets the "workspace_id" field.
+func (u *BroadcastUpsertOne) SetWorkspaceID(v int64) *BroadcastUpsertOne {
+	return u.Update(func(s *BroadcastUpsert) {
+		s.SetWorkspaceID(v)
+	})
+}
+
+// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
+func (u *BroadcastUpsertOne) UpdateWorkspaceID() *BroadcastUpsertOne {
+	return u.Update(func(s *BroadcastUpsert) {
+		s.UpdateWorkspaceID()
 	})
 }
 
@@ -1519,20 +1533,6 @@ func (u *BroadcastUpsertOne) ClearHoldReason() *BroadcastUpsertOne {
 	})
 }
 
-// SetWorkspaceID sets the "workspace_id" field.
-func (u *BroadcastUpsertOne) SetWorkspaceID(v int64) *BroadcastUpsertOne {
-	return u.Update(func(s *BroadcastUpsert) {
-		s.SetWorkspaceID(v)
-	})
-}
-
-// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
-func (u *BroadcastUpsertOne) UpdateWorkspaceID() *BroadcastUpsertOne {
-	return u.Update(func(s *BroadcastUpsert) {
-		s.UpdateWorkspaceID()
-	})
-}
-
 // Exec executes the query.
 func (u *BroadcastUpsertOne) Exec(ctx context.Context) error {
 	if len(u.create.conflict) == 0 {
@@ -1761,6 +1761,20 @@ func (u *BroadcastUpsertBulk) SetUpdatedAt(v time.Time) *BroadcastUpsertBulk {
 func (u *BroadcastUpsertBulk) UpdateUpdatedAt() *BroadcastUpsertBulk {
 	return u.Update(func(s *BroadcastUpsert) {
 		s.UpdateUpdatedAt()
+	})
+}
+
+// SetWorkspaceID sets the "workspace_id" field.
+func (u *BroadcastUpsertBulk) SetWorkspaceID(v int64) *BroadcastUpsertBulk {
+	return u.Update(func(s *BroadcastUpsert) {
+		s.SetWorkspaceID(v)
+	})
+}
+
+// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
+func (u *BroadcastUpsertBulk) UpdateWorkspaceID() *BroadcastUpsertBulk {
+	return u.Update(func(s *BroadcastUpsert) {
+		s.UpdateWorkspaceID()
 	})
 }
 
@@ -2139,20 +2153,6 @@ func (u *BroadcastUpsertBulk) UpdateHoldReason() *BroadcastUpsertBulk {
 func (u *BroadcastUpsertBulk) ClearHoldReason() *BroadcastUpsertBulk {
 	return u.Update(func(s *BroadcastUpsert) {
 		s.ClearHoldReason()
-	})
-}
-
-// SetWorkspaceID sets the "workspace_id" field.
-func (u *BroadcastUpsertBulk) SetWorkspaceID(v int64) *BroadcastUpsertBulk {
-	return u.Update(func(s *BroadcastUpsert) {
-		s.SetWorkspaceID(v)
-	})
-}
-
-// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
-func (u *BroadcastUpsertBulk) UpdateWorkspaceID() *BroadcastUpsertBulk {
-	return u.Update(func(s *BroadcastUpsert) {
-		s.UpdateWorkspaceID()
 	})
 }
 

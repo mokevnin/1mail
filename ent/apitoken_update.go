@@ -37,6 +37,20 @@ func (_u *ApiTokenUpdate) SetUpdatedAt(v time.Time) *ApiTokenUpdate {
 	return _u
 }
 
+// SetWorkspaceID sets the "workspace_id" field.
+func (_u *ApiTokenUpdate) SetWorkspaceID(v int64) *ApiTokenUpdate {
+	_u.mutation.SetWorkspaceID(v)
+	return _u
+}
+
+// SetNillableWorkspaceID sets the "workspace_id" field if the given value is not nil.
+func (_u *ApiTokenUpdate) SetNillableWorkspaceID(v *int64) *ApiTokenUpdate {
+	if v != nil {
+		_u.SetWorkspaceID(*v)
+	}
+	return _u
+}
+
 // SetName sets the "name" field.
 func (_u *ApiTokenUpdate) SetName(v string) *ApiTokenUpdate {
 	_u.mutation.SetName(v)
@@ -134,20 +148,6 @@ func (_u *ApiTokenUpdate) SetNillableLastUsedAt(v *time.Time) *ApiTokenUpdate {
 // ClearLastUsedAt clears the value of the "last_used_at" field.
 func (_u *ApiTokenUpdate) ClearLastUsedAt() *ApiTokenUpdate {
 	_u.mutation.ClearLastUsedAt()
-	return _u
-}
-
-// SetWorkspaceID sets the "workspace_id" field.
-func (_u *ApiTokenUpdate) SetWorkspaceID(v int64) *ApiTokenUpdate {
-	_u.mutation.SetWorkspaceID(v)
-	return _u
-}
-
-// SetNillableWorkspaceID sets the "workspace_id" field if the given value is not nil.
-func (_u *ApiTokenUpdate) SetNillableWorkspaceID(v *int64) *ApiTokenUpdate {
-	if v != nil {
-		_u.SetWorkspaceID(*v)
-	}
 	return _u
 }
 
@@ -331,6 +331,20 @@ func (_u *ApiTokenUpdateOne) SetUpdatedAt(v time.Time) *ApiTokenUpdateOne {
 	return _u
 }
 
+// SetWorkspaceID sets the "workspace_id" field.
+func (_u *ApiTokenUpdateOne) SetWorkspaceID(v int64) *ApiTokenUpdateOne {
+	_u.mutation.SetWorkspaceID(v)
+	return _u
+}
+
+// SetNillableWorkspaceID sets the "workspace_id" field if the given value is not nil.
+func (_u *ApiTokenUpdateOne) SetNillableWorkspaceID(v *int64) *ApiTokenUpdateOne {
+	if v != nil {
+		_u.SetWorkspaceID(*v)
+	}
+	return _u
+}
+
 // SetName sets the "name" field.
 func (_u *ApiTokenUpdateOne) SetName(v string) *ApiTokenUpdateOne {
 	_u.mutation.SetName(v)
@@ -428,20 +442,6 @@ func (_u *ApiTokenUpdateOne) SetNillableLastUsedAt(v *time.Time) *ApiTokenUpdate
 // ClearLastUsedAt clears the value of the "last_used_at" field.
 func (_u *ApiTokenUpdateOne) ClearLastUsedAt() *ApiTokenUpdateOne {
 	_u.mutation.ClearLastUsedAt()
-	return _u
-}
-
-// SetWorkspaceID sets the "workspace_id" field.
-func (_u *ApiTokenUpdateOne) SetWorkspaceID(v int64) *ApiTokenUpdateOne {
-	_u.mutation.SetWorkspaceID(v)
-	return _u
-}
-
-// SetNillableWorkspaceID sets the "workspace_id" field if the given value is not nil.
-func (_u *ApiTokenUpdateOne) SetNillableWorkspaceID(v *int64) *ApiTokenUpdateOne {
-	if v != nil {
-		_u.SetWorkspaceID(*v)
-	}
 	return _u
 }
 

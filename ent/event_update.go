@@ -36,6 +36,20 @@ func (_u *EventUpdate) SetUpdatedAt(v time.Time) *EventUpdate {
 	return _u
 }
 
+// SetWorkspaceID sets the "workspace_id" field.
+func (_u *EventUpdate) SetWorkspaceID(v int64) *EventUpdate {
+	_u.mutation.SetWorkspaceID(v)
+	return _u
+}
+
+// SetNillableWorkspaceID sets the "workspace_id" field if the given value is not nil.
+func (_u *EventUpdate) SetNillableWorkspaceID(v *int64) *EventUpdate {
+	if v != nil {
+		_u.SetWorkspaceID(*v)
+	}
+	return _u
+}
+
 // SetSourceID sets the "source_id" field.
 func (_u *EventUpdate) SetSourceID(v string) *EventUpdate {
 	_u.mutation.SetSourceID(v)
@@ -206,20 +220,6 @@ func (_u *EventUpdate) SetNillableOccurredAt(v *time.Time) *EventUpdate {
 // ClearOccurredAt clears the value of the "occurred_at" field.
 func (_u *EventUpdate) ClearOccurredAt() *EventUpdate {
 	_u.mutation.ClearOccurredAt()
-	return _u
-}
-
-// SetWorkspaceID sets the "workspace_id" field.
-func (_u *EventUpdate) SetWorkspaceID(v int64) *EventUpdate {
-	_u.mutation.SetWorkspaceID(v)
-	return _u
-}
-
-// SetNillableWorkspaceID sets the "workspace_id" field if the given value is not nil.
-func (_u *EventUpdate) SetNillableWorkspaceID(v *int64) *EventUpdate {
-	if v != nil {
-		_u.SetWorkspaceID(*v)
-	}
 	return _u
 }
 
@@ -420,6 +420,20 @@ func (_u *EventUpdateOne) SetUpdatedAt(v time.Time) *EventUpdateOne {
 	return _u
 }
 
+// SetWorkspaceID sets the "workspace_id" field.
+func (_u *EventUpdateOne) SetWorkspaceID(v int64) *EventUpdateOne {
+	_u.mutation.SetWorkspaceID(v)
+	return _u
+}
+
+// SetNillableWorkspaceID sets the "workspace_id" field if the given value is not nil.
+func (_u *EventUpdateOne) SetNillableWorkspaceID(v *int64) *EventUpdateOne {
+	if v != nil {
+		_u.SetWorkspaceID(*v)
+	}
+	return _u
+}
+
 // SetSourceID sets the "source_id" field.
 func (_u *EventUpdateOne) SetSourceID(v string) *EventUpdateOne {
 	_u.mutation.SetSourceID(v)
@@ -590,20 +604,6 @@ func (_u *EventUpdateOne) SetNillableOccurredAt(v *time.Time) *EventUpdateOne {
 // ClearOccurredAt clears the value of the "occurred_at" field.
 func (_u *EventUpdateOne) ClearOccurredAt() *EventUpdateOne {
 	_u.mutation.ClearOccurredAt()
-	return _u
-}
-
-// SetWorkspaceID sets the "workspace_id" field.
-func (_u *EventUpdateOne) SetWorkspaceID(v int64) *EventUpdateOne {
-	_u.mutation.SetWorkspaceID(v)
-	return _u
-}
-
-// SetNillableWorkspaceID sets the "workspace_id" field if the given value is not nil.
-func (_u *EventUpdateOne) SetNillableWorkspaceID(v *int64) *EventUpdateOne {
-	if v != nil {
-		_u.SetWorkspaceID(*v)
-	}
 	return _u
 }
 

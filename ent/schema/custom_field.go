@@ -4,7 +4,6 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/entsql"
 	"entgo.io/ent/schema"
-	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
 	"entgo.io/ent/schema/index"
 )
@@ -26,7 +25,7 @@ func (CustomField) Annotations() []schema.Annotation {
 }
 
 func (CustomField) Mixin() []ent.Mixin {
-	return []ent.Mixin{TimeMixin{}}
+	return []ent.Mixin{TimeMixin{}, WorkspaceMixin{Ref: "custom_fields"}}
 }
 
 func (CustomField) Fields() []ent.Field {
@@ -45,17 +44,6 @@ func (CustomField) Fields() []ent.Field {
 		field.Enum("type").
 			Values("string", "number", "bool", "datetime").
 			Default("string"),
-		field.Int64("workspace_id"),
-	}
-}
-
-func (CustomField) Edges() []ent.Edge {
-	return []ent.Edge{
-		edge.From("workspace", Workspace.Type).
-			Ref("custom_fields").
-			Field("workspace_id").
-			Required().
-			Unique(),
 	}
 }
 

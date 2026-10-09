@@ -23,12 +23,12 @@ type AutomationRun struct {
 	CreatedAt time.Time `json:"created_at,omitempty"`
 	// UpdatedAt holds the value of the "updated_at" field.
 	UpdatedAt time.Time `json:"updated_at,omitempty"`
+	// WorkspaceID holds the value of the "workspace_id" field.
+	WorkspaceID int64 `json:"workspace_id,omitempty"`
 	// AutomationID holds the value of the "automation_id" field.
 	AutomationID int64 `json:"automation_id,omitempty"`
 	// ContactID holds the value of the "contact_id" field.
 	ContactID int64 `json:"contact_id,omitempty"`
-	// WorkspaceID holds the value of the "workspace_id" field.
-	WorkspaceID int64 `json:"workspace_id,omitempty"`
 	// Status holds the value of the "status" field.
 	Status automationrun.Status `json:"status,omitempty"`
 	// CurrentStep holds the value of the "current_step" field.
@@ -43,24 +43,13 @@ type AutomationRun struct {
 
 // AutomationRunEdges holds the relations/edges for other nodes in the graph.
 type AutomationRunEdges struct {
-	// Automation holds the value of the automation edge.
-	Automation *Automation `json:"automation,omitempty"`
 	// Workspace holds the value of the workspace edge.
 	Workspace *Workspace `json:"workspace,omitempty"`
+	// Automation holds the value of the automation edge.
+	Automation *Automation `json:"automation,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
 	loadedTypes [2]bool
-}
-
-// AutomationOrErr returns the Automation value or an error if the edge
-// was not loaded in eager-loading, or loaded but was not found.
-func (e AutomationRunEdges) AutomationOrErr() (*Automation, error) {
-	if e.Automation != nil {
-		return e.Automation, nil
-	} else if e.loadedTypes[0] {
-		return nil, &NotFoundError{label: automation.Label}
-	}
-	return nil, &NotLoadedError{edge: "automation"}
 }
 
 // WorkspaceOrErr returns the Workspace value or an error if the edge
@@ -68,10 +57,21 @@ func (e AutomationRunEdges) AutomationOrErr() (*Automation, error) {
 func (e AutomationRunEdges) WorkspaceOrErr() (*Workspace, error) {
 	if e.Workspace != nil {
 		return e.Workspace, nil
-	} else if e.loadedTypes[1] {
+	} else if e.loadedTypes[0] {
 		return nil, &NotFoundError{label: workspace.Label}
 	}
 	return nil, &NotLoadedError{edge: "workspace"}
+}
+
+// AutomationOrErr returns the Automation value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e AutomationRunEdges) AutomationOrErr() (*Automation, error) {
+	if e.Automation != nil {
+		return e.Automation, nil
+	} else if e.loadedTypes[1] {
+		return nil, &NotFoundError{label: automation.Label}
+	}
+	return nil, &NotLoadedError{edge: "automation"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -79,7 +79,7 @@ func (*AutomationRun) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case automationrun.FieldID, automationrun.FieldAutomationID, automationrun.FieldContactID, automationrun.FieldWorkspaceID, automationrun.FieldCurrentStep:
+		case automationrun.FieldID, automationrun.FieldWorkspaceID, automationrun.FieldAutomationID, automationrun.FieldContactID, automationrun.FieldCurrentStep:
 			values[i] = new(sql.NullInt64)
 		case automationrun.FieldStatus:
 			values[i] = new(sql.NullString)
@@ -118,6 +118,12 @@ func (_m *AutomationRun) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				_m.UpdatedAt = value.Time
 			}
+		case automationrun.FieldWorkspaceID:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field workspace_id", values[i])
+			} else if value.Valid {
+				_m.WorkspaceID = value.Int64
+			}
 		case automationrun.FieldAutomationID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field automation_id", values[i])
@@ -129,12 +135,6 @@ func (_m *AutomationRun) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field contact_id", values[i])
 			} else if value.Valid {
 				_m.ContactID = value.Int64
-			}
-		case automationrun.FieldWorkspaceID:
-			if value, ok := values[i].(*sql.NullInt64); !ok {
-				return fmt.Errorf("unexpected type %T for field workspace_id", values[i])
-			} else if value.Valid {
-				_m.WorkspaceID = value.Int64
 			}
 		case automationrun.FieldStatus:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -168,14 +168,14 @@ func (_m *AutomationRun) Value(name string) (ent.Value, error) {
 	return _m.selectValues.Get(name)
 }
 
-// QueryAutomation queries the "automation" edge of the AutomationRun entity.
-func (_m *AutomationRun) QueryAutomation() *AutomationQuery {
-	return NewAutomationRunClient(_m.config).QueryAutomation(_m)
-}
-
 // QueryWorkspace queries the "workspace" edge of the AutomationRun entity.
 func (_m *AutomationRun) QueryWorkspace() *WorkspaceQuery {
 	return NewAutomationRunClient(_m.config).QueryWorkspace(_m)
+}
+
+// QueryAutomation queries the "automation" edge of the AutomationRun entity.
+func (_m *AutomationRun) QueryAutomation() *AutomationQuery {
+	return NewAutomationRunClient(_m.config).QueryAutomation(_m)
 }
 
 // Update returns a builder for updating this AutomationRun.
@@ -207,14 +207,14 @@ func (_m *AutomationRun) String() string {
 	builder.WriteString("updated_at=")
 	builder.WriteString(_m.UpdatedAt.Format(time.ANSIC))
 	builder.WriteString(", ")
+	builder.WriteString("workspace_id=")
+	builder.WriteString(fmt.Sprintf("%v", _m.WorkspaceID))
+	builder.WriteString(", ")
 	builder.WriteString("automation_id=")
 	builder.WriteString(fmt.Sprintf("%v", _m.AutomationID))
 	builder.WriteString(", ")
 	builder.WriteString("contact_id=")
 	builder.WriteString(fmt.Sprintf("%v", _m.ContactID))
-	builder.WriteString(", ")
-	builder.WriteString("workspace_id=")
-	builder.WriteString(fmt.Sprintf("%v", _m.WorkspaceID))
 	builder.WriteString(", ")
 	builder.WriteString("status=")
 	builder.WriteString(fmt.Sprintf("%v", _m.Status))

@@ -37,6 +37,20 @@ func (_u *BroadcastUpdate) SetUpdatedAt(v time.Time) *BroadcastUpdate {
 	return _u
 }
 
+// SetWorkspaceID sets the "workspace_id" field.
+func (_u *BroadcastUpdate) SetWorkspaceID(v int64) *BroadcastUpdate {
+	_u.mutation.SetWorkspaceID(v)
+	return _u
+}
+
+// SetNillableWorkspaceID sets the "workspace_id" field if the given value is not nil.
+func (_u *BroadcastUpdate) SetNillableWorkspaceID(v *int64) *BroadcastUpdate {
+	if v != nil {
+		_u.SetWorkspaceID(*v)
+	}
+	return _u
+}
+
 // SetName sets the "name" field.
 func (_u *BroadcastUpdate) SetName(v string) *BroadcastUpdate {
 	_u.mutation.SetName(v)
@@ -405,20 +419,6 @@ func (_u *BroadcastUpdate) SetNillableHoldReason(v *string) *BroadcastUpdate {
 // ClearHoldReason clears the value of the "hold_reason" field.
 func (_u *BroadcastUpdate) ClearHoldReason() *BroadcastUpdate {
 	_u.mutation.ClearHoldReason()
-	return _u
-}
-
-// SetWorkspaceID sets the "workspace_id" field.
-func (_u *BroadcastUpdate) SetWorkspaceID(v int64) *BroadcastUpdate {
-	_u.mutation.SetWorkspaceID(v)
-	return _u
-}
-
-// SetNillableWorkspaceID sets the "workspace_id" field if the given value is not nil.
-func (_u *BroadcastUpdate) SetNillableWorkspaceID(v *int64) *BroadcastUpdate {
-	if v != nil {
-		_u.SetWorkspaceID(*v)
-	}
 	return _u
 }
 
@@ -791,6 +791,20 @@ func (_u *BroadcastUpdateOne) SetUpdatedAt(v time.Time) *BroadcastUpdateOne {
 	return _u
 }
 
+// SetWorkspaceID sets the "workspace_id" field.
+func (_u *BroadcastUpdateOne) SetWorkspaceID(v int64) *BroadcastUpdateOne {
+	_u.mutation.SetWorkspaceID(v)
+	return _u
+}
+
+// SetNillableWorkspaceID sets the "workspace_id" field if the given value is not nil.
+func (_u *BroadcastUpdateOne) SetNillableWorkspaceID(v *int64) *BroadcastUpdateOne {
+	if v != nil {
+		_u.SetWorkspaceID(*v)
+	}
+	return _u
+}
+
 // SetName sets the "name" field.
 func (_u *BroadcastUpdateOne) SetName(v string) *BroadcastUpdateOne {
 	_u.mutation.SetName(v)
@@ -1159,20 +1173,6 @@ func (_u *BroadcastUpdateOne) SetNillableHoldReason(v *string) *BroadcastUpdateO
 // ClearHoldReason clears the value of the "hold_reason" field.
 func (_u *BroadcastUpdateOne) ClearHoldReason() *BroadcastUpdateOne {
 	_u.mutation.ClearHoldReason()
-	return _u
-}
-
-// SetWorkspaceID sets the "workspace_id" field.
-func (_u *BroadcastUpdateOne) SetWorkspaceID(v int64) *BroadcastUpdateOne {
-	_u.mutation.SetWorkspaceID(v)
-	return _u
-}
-
-// SetNillableWorkspaceID sets the "workspace_id" field if the given value is not nil.
-func (_u *BroadcastUpdateOne) SetNillableWorkspaceID(v *int64) *BroadcastUpdateOne {
-	if v != nil {
-		_u.SetWorkspaceID(*v)
-	}
 	return _u
 }
 

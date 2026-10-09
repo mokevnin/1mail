@@ -52,15 +52,15 @@ func (_c *TagCreate) SetNillableUpdatedAt(v *time.Time) *TagCreate {
 	return _c
 }
 
-// SetName sets the "name" field.
-func (_c *TagCreate) SetName(v string) *TagCreate {
-	_c.mutation.SetName(v)
-	return _c
-}
-
 // SetWorkspaceID sets the "workspace_id" field.
 func (_c *TagCreate) SetWorkspaceID(v int64) *TagCreate {
 	_c.mutation.SetWorkspaceID(v)
+	return _c
+}
+
+// SetName sets the "name" field.
+func (_c *TagCreate) SetName(v string) *TagCreate {
+	_c.mutation.SetName(v)
 	return _c
 }
 
@@ -143,6 +143,9 @@ func (_c *TagCreate) check() error {
 	if _, ok := _c.mutation.UpdatedAt(); !ok {
 		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "Tag.updated_at"`)}
 	}
+	if _, ok := _c.mutation.WorkspaceID(); !ok {
+		return &ValidationError{Name: "workspace_id", err: errors.New(`ent: missing required field "Tag.workspace_id"`)}
+	}
 	if _, ok := _c.mutation.Name(); !ok {
 		return &ValidationError{Name: "name", err: errors.New(`ent: missing required field "Tag.name"`)}
 	}
@@ -150,9 +153,6 @@ func (_c *TagCreate) check() error {
 		if err := tag.NameValidator(v); err != nil {
 			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "Tag.name": %w`, err)}
 		}
-	}
-	if _, ok := _c.mutation.WorkspaceID(); !ok {
-		return &ValidationError{Name: "workspace_id", err: errors.New(`ent: missing required field "Tag.workspace_id"`)}
 	}
 	if len(_c.mutation.WorkspaceIDs()) == 0 {
 		return &ValidationError{Name: "workspace", err: errors.New(`ent: missing required edge "Tag.workspace"`)}
@@ -299,18 +299,6 @@ func (u *TagUpsert) UpdateUpdatedAt() *TagUpsert {
 	return u
 }
 
-// SetName sets the "name" field.
-func (u *TagUpsert) SetName(v string) *TagUpsert {
-	u.Set(tag.FieldName, v)
-	return u
-}
-
-// UpdateName sets the "name" field to the value that was provided on create.
-func (u *TagUpsert) UpdateName() *TagUpsert {
-	u.SetExcluded(tag.FieldName)
-	return u
-}
-
 // SetWorkspaceID sets the "workspace_id" field.
 func (u *TagUpsert) SetWorkspaceID(v int64) *TagUpsert {
 	u.Set(tag.FieldWorkspaceID, v)
@@ -320,6 +308,18 @@ func (u *TagUpsert) SetWorkspaceID(v int64) *TagUpsert {
 // UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
 func (u *TagUpsert) UpdateWorkspaceID() *TagUpsert {
 	u.SetExcluded(tag.FieldWorkspaceID)
+	return u
+}
+
+// SetName sets the "name" field.
+func (u *TagUpsert) SetName(v string) *TagUpsert {
+	u.Set(tag.FieldName, v)
+	return u
+}
+
+// UpdateName sets the "name" field to the value that was provided on create.
+func (u *TagUpsert) UpdateName() *TagUpsert {
+	u.SetExcluded(tag.FieldName)
 	return u
 }
 
@@ -388,20 +388,6 @@ func (u *TagUpsertOne) UpdateUpdatedAt() *TagUpsertOne {
 	})
 }
 
-// SetName sets the "name" field.
-func (u *TagUpsertOne) SetName(v string) *TagUpsertOne {
-	return u.Update(func(s *TagUpsert) {
-		s.SetName(v)
-	})
-}
-
-// UpdateName sets the "name" field to the value that was provided on create.
-func (u *TagUpsertOne) UpdateName() *TagUpsertOne {
-	return u.Update(func(s *TagUpsert) {
-		s.UpdateName()
-	})
-}
-
 // SetWorkspaceID sets the "workspace_id" field.
 func (u *TagUpsertOne) SetWorkspaceID(v int64) *TagUpsertOne {
 	return u.Update(func(s *TagUpsert) {
@@ -413,6 +399,20 @@ func (u *TagUpsertOne) SetWorkspaceID(v int64) *TagUpsertOne {
 func (u *TagUpsertOne) UpdateWorkspaceID() *TagUpsertOne {
 	return u.Update(func(s *TagUpsert) {
 		s.UpdateWorkspaceID()
+	})
+}
+
+// SetName sets the "name" field.
+func (u *TagUpsertOne) SetName(v string) *TagUpsertOne {
+	return u.Update(func(s *TagUpsert) {
+		s.SetName(v)
+	})
+}
+
+// UpdateName sets the "name" field to the value that was provided on create.
+func (u *TagUpsertOne) UpdateName() *TagUpsertOne {
+	return u.Update(func(s *TagUpsert) {
+		s.UpdateName()
 	})
 }
 
@@ -647,20 +647,6 @@ func (u *TagUpsertBulk) UpdateUpdatedAt() *TagUpsertBulk {
 	})
 }
 
-// SetName sets the "name" field.
-func (u *TagUpsertBulk) SetName(v string) *TagUpsertBulk {
-	return u.Update(func(s *TagUpsert) {
-		s.SetName(v)
-	})
-}
-
-// UpdateName sets the "name" field to the value that was provided on create.
-func (u *TagUpsertBulk) UpdateName() *TagUpsertBulk {
-	return u.Update(func(s *TagUpsert) {
-		s.UpdateName()
-	})
-}
-
 // SetWorkspaceID sets the "workspace_id" field.
 func (u *TagUpsertBulk) SetWorkspaceID(v int64) *TagUpsertBulk {
 	return u.Update(func(s *TagUpsert) {
@@ -672,6 +658,20 @@ func (u *TagUpsertBulk) SetWorkspaceID(v int64) *TagUpsertBulk {
 func (u *TagUpsertBulk) UpdateWorkspaceID() *TagUpsertBulk {
 	return u.Update(func(s *TagUpsert) {
 		s.UpdateWorkspaceID()
+	})
+}
+
+// SetName sets the "name" field.
+func (u *TagUpsertBulk) SetName(v string) *TagUpsertBulk {
+	return u.Update(func(s *TagUpsert) {
+		s.SetName(v)
+	})
+}
+
+// UpdateName sets the "name" field to the value that was provided on create.
+func (u *TagUpsertBulk) UpdateName() *TagUpsertBulk {
+	return u.Update(func(s *TagUpsert) {
+		s.UpdateName()
 	})
 }
 

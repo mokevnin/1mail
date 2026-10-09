@@ -24,7 +24,7 @@ func (Automation) Annotations() []schema.Annotation {
 }
 
 func (Automation) Mixin() []ent.Mixin {
-	return []ent.Mixin{TimeMixin{}}
+	return []ent.Mixin{TimeMixin{}, WorkspaceMixin{Ref: "automations"}}
 }
 
 func (Automation) Fields() []ent.Field {
@@ -45,17 +45,11 @@ func (Automation) Fields() []ent.Field {
 		// {"type":"wait","seconds":N}].
 		field.String("definition").
 			Default("[]"),
-		field.Int64("workspace_id"),
 	}
 }
 
 func (Automation) Edges() []ent.Edge {
 	return []ent.Edge{
-		edge.From("workspace", Workspace.Type).
-			Ref("automations").
-			Field("workspace_id").
-			Required().
-			Unique(),
 		edge.To("runs", AutomationRun.Type),
 	}
 }

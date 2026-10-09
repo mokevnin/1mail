@@ -65,14 +65,14 @@ func UpdatedAt(v time.Time) predicate.Visitor {
 	return predicate.Visitor(sql.FieldEQ(FieldUpdatedAt, v))
 }
 
-// VisitorID applies equality check predicate on the "visitor_id" field. It's identical to VisitorIDEQ.
-func VisitorID(v string) predicate.Visitor {
-	return predicate.Visitor(sql.FieldEQ(FieldVisitorID, v))
-}
-
 // WorkspaceID applies equality check predicate on the "workspace_id" field. It's identical to WorkspaceIDEQ.
 func WorkspaceID(v int64) predicate.Visitor {
 	return predicate.Visitor(sql.FieldEQ(FieldWorkspaceID, v))
+}
+
+// VisitorID applies equality check predicate on the "visitor_id" field. It's identical to VisitorIDEQ.
+func VisitorID(v string) predicate.Visitor {
+	return predicate.Visitor(sql.FieldEQ(FieldVisitorID, v))
 }
 
 // ContactID applies equality check predicate on the "contact_id" field. It's identical to ContactIDEQ.
@@ -165,6 +165,26 @@ func UpdatedAtLTE(v time.Time) predicate.Visitor {
 	return predicate.Visitor(sql.FieldLTE(FieldUpdatedAt, v))
 }
 
+// WorkspaceIDEQ applies the EQ predicate on the "workspace_id" field.
+func WorkspaceIDEQ(v int64) predicate.Visitor {
+	return predicate.Visitor(sql.FieldEQ(FieldWorkspaceID, v))
+}
+
+// WorkspaceIDNEQ applies the NEQ predicate on the "workspace_id" field.
+func WorkspaceIDNEQ(v int64) predicate.Visitor {
+	return predicate.Visitor(sql.FieldNEQ(FieldWorkspaceID, v))
+}
+
+// WorkspaceIDIn applies the In predicate on the "workspace_id" field.
+func WorkspaceIDIn(vs ...int64) predicate.Visitor {
+	return predicate.Visitor(sql.FieldIn(FieldWorkspaceID, vs...))
+}
+
+// WorkspaceIDNotIn applies the NotIn predicate on the "workspace_id" field.
+func WorkspaceIDNotIn(vs ...int64) predicate.Visitor {
+	return predicate.Visitor(sql.FieldNotIn(FieldWorkspaceID, vs...))
+}
+
 // VisitorIDEQ applies the EQ predicate on the "visitor_id" field.
 func VisitorIDEQ(v string) predicate.Visitor {
 	return predicate.Visitor(sql.FieldEQ(FieldVisitorID, v))
@@ -228,26 +248,6 @@ func VisitorIDEqualFold(v string) predicate.Visitor {
 // VisitorIDContainsFold applies the ContainsFold predicate on the "visitor_id" field.
 func VisitorIDContainsFold(v string) predicate.Visitor {
 	return predicate.Visitor(sql.FieldContainsFold(FieldVisitorID, v))
-}
-
-// WorkspaceIDEQ applies the EQ predicate on the "workspace_id" field.
-func WorkspaceIDEQ(v int64) predicate.Visitor {
-	return predicate.Visitor(sql.FieldEQ(FieldWorkspaceID, v))
-}
-
-// WorkspaceIDNEQ applies the NEQ predicate on the "workspace_id" field.
-func WorkspaceIDNEQ(v int64) predicate.Visitor {
-	return predicate.Visitor(sql.FieldNEQ(FieldWorkspaceID, v))
-}
-
-// WorkspaceIDIn applies the In predicate on the "workspace_id" field.
-func WorkspaceIDIn(vs ...int64) predicate.Visitor {
-	return predicate.Visitor(sql.FieldIn(FieldWorkspaceID, vs...))
-}
-
-// WorkspaceIDNotIn applies the NotIn predicate on the "workspace_id" field.
-func WorkspaceIDNotIn(vs ...int64) predicate.Visitor {
-	return predicate.Visitor(sql.FieldNotIn(FieldWorkspaceID, vs...))
 }
 
 // ContactIDEQ applies the EQ predicate on the "contact_id" field.
@@ -320,29 +320,6 @@ func LastSeenAtLTE(v time.Time) predicate.Visitor {
 	return predicate.Visitor(sql.FieldLTE(FieldLastSeenAt, v))
 }
 
-// HasContact applies the HasEdge predicate on the "contact" edge.
-func HasContact() predicate.Visitor {
-	return predicate.Visitor(func(s *sql.Selector) {
-		step := sqlgraph.NewStep(
-			sqlgraph.From(Table, FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, true, ContactTable, ContactColumn),
-		)
-		sqlgraph.HasNeighbors(s, step)
-	})
-}
-
-// HasContactWith applies the HasEdge predicate on the "contact" edge with a given conditions (other predicates).
-func HasContactWith(preds ...predicate.Contact) predicate.Visitor {
-	return predicate.Visitor(func(s *sql.Selector) {
-		step := newContactStep()
-		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
-			for _, p := range preds {
-				p(s)
-			}
-		})
-	})
-}
-
 // HasWorkspace applies the HasEdge predicate on the "workspace" edge.
 func HasWorkspace() predicate.Visitor {
 	return predicate.Visitor(func(s *sql.Selector) {
@@ -358,6 +335,29 @@ func HasWorkspace() predicate.Visitor {
 func HasWorkspaceWith(preds ...predicate.Workspace) predicate.Visitor {
 	return predicate.Visitor(func(s *sql.Selector) {
 		step := newWorkspaceStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasContact applies the HasEdge predicate on the "contact" edge.
+func HasContact() predicate.Visitor {
+	return predicate.Visitor(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, ContactTable, ContactColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasContactWith applies the HasEdge predicate on the "contact" edge with a given conditions (other predicates).
+func HasContactWith(preds ...predicate.Contact) predicate.Visitor {
+	return predicate.Visitor(func(s *sql.Selector) {
+		step := newContactStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)

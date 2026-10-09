@@ -36,6 +36,20 @@ func (_u *UnsubscribeUpdate) SetUpdatedAt(v time.Time) *UnsubscribeUpdate {
 	return _u
 }
 
+// SetWorkspaceID sets the "workspace_id" field.
+func (_u *UnsubscribeUpdate) SetWorkspaceID(v int64) *UnsubscribeUpdate {
+	_u.mutation.SetWorkspaceID(v)
+	return _u
+}
+
+// SetNillableWorkspaceID sets the "workspace_id" field if the given value is not nil.
+func (_u *UnsubscribeUpdate) SetNillableWorkspaceID(v *int64) *UnsubscribeUpdate {
+	if v != nil {
+		_u.SetWorkspaceID(*v)
+	}
+	return _u
+}
+
 // SetChannel sets the "channel" field.
 func (_u *UnsubscribeUpdate) SetChannel(v unsubscribe.Channel) *UnsubscribeUpdate {
 	_u.mutation.SetChannel(v)
@@ -102,20 +116,6 @@ func (_u *UnsubscribeUpdate) AddContactID(v int64) *UnsubscribeUpdate {
 // ClearContactID clears the value of the "contact_id" field.
 func (_u *UnsubscribeUpdate) ClearContactID() *UnsubscribeUpdate {
 	_u.mutation.ClearContactID()
-	return _u
-}
-
-// SetWorkspaceID sets the "workspace_id" field.
-func (_u *UnsubscribeUpdate) SetWorkspaceID(v int64) *UnsubscribeUpdate {
-	_u.mutation.SetWorkspaceID(v)
-	return _u
-}
-
-// SetNillableWorkspaceID sets the "workspace_id" field if the given value is not nil.
-func (_u *UnsubscribeUpdate) SetNillableWorkspaceID(v *int64) *UnsubscribeUpdate {
-	if v != nil {
-		_u.SetWorkspaceID(*v)
-	}
 	return _u
 }
 
@@ -290,6 +290,20 @@ func (_u *UnsubscribeUpdateOne) SetUpdatedAt(v time.Time) *UnsubscribeUpdateOne 
 	return _u
 }
 
+// SetWorkspaceID sets the "workspace_id" field.
+func (_u *UnsubscribeUpdateOne) SetWorkspaceID(v int64) *UnsubscribeUpdateOne {
+	_u.mutation.SetWorkspaceID(v)
+	return _u
+}
+
+// SetNillableWorkspaceID sets the "workspace_id" field if the given value is not nil.
+func (_u *UnsubscribeUpdateOne) SetNillableWorkspaceID(v *int64) *UnsubscribeUpdateOne {
+	if v != nil {
+		_u.SetWorkspaceID(*v)
+	}
+	return _u
+}
+
 // SetChannel sets the "channel" field.
 func (_u *UnsubscribeUpdateOne) SetChannel(v unsubscribe.Channel) *UnsubscribeUpdateOne {
 	_u.mutation.SetChannel(v)
@@ -356,20 +370,6 @@ func (_u *UnsubscribeUpdateOne) AddContactID(v int64) *UnsubscribeUpdateOne {
 // ClearContactID clears the value of the "contact_id" field.
 func (_u *UnsubscribeUpdateOne) ClearContactID() *UnsubscribeUpdateOne {
 	_u.mutation.ClearContactID()
-	return _u
-}
-
-// SetWorkspaceID sets the "workspace_id" field.
-func (_u *UnsubscribeUpdateOne) SetWorkspaceID(v int64) *UnsubscribeUpdateOne {
-	_u.mutation.SetWorkspaceID(v)
-	return _u
-}
-
-// SetNillableWorkspaceID sets the "workspace_id" field if the given value is not nil.
-func (_u *UnsubscribeUpdateOne) SetNillableWorkspaceID(v *int64) *UnsubscribeUpdateOne {
-	if v != nil {
-		_u.SetWorkspaceID(*v)
-	}
 	return _u
 }
 

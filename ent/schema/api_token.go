@@ -4,7 +4,6 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/entsql"
 	"entgo.io/ent/schema"
-	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
 )
 
@@ -19,7 +18,7 @@ func (ApiToken) Annotations() []schema.Annotation {
 }
 
 func (ApiToken) Mixin() []ent.Mixin {
-	return []ent.Mixin{TimeMixin{}}
+	return []ent.Mixin{TimeMixin{}, WorkspaceMixin{Ref: "api_tokens"}}
 }
 
 func (ApiToken) Fields() []ent.Field {
@@ -47,16 +46,5 @@ func (ApiToken) Fields() []ent.Field {
 		field.Time("last_used_at").
 			Optional().
 			Nillable(),
-		field.Int64("workspace_id"),
-	}
-}
-
-func (ApiToken) Edges() []ent.Edge {
-	return []ent.Edge{
-		edge.From("workspace", Workspace.Type).
-			Ref("api_tokens").
-			Field("workspace_id").
-			Required().
-			Unique(),
 	}
 }

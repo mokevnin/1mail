@@ -18,6 +18,8 @@ const (
 	FieldCreatedAt = "created_at"
 	// FieldUpdatedAt holds the string denoting the updated_at field in the database.
 	FieldUpdatedAt = "updated_at"
+	// FieldWorkspaceID holds the string denoting the workspace_id field in the database.
+	FieldWorkspaceID = "workspace_id"
 	// FieldSourceID holds the string denoting the source_id field in the database.
 	FieldSourceID = "source_id"
 	// FieldContactID holds the string denoting the contact_id field in the database.
@@ -36,8 +38,6 @@ const (
 	FieldProperties = "properties"
 	// FieldOccurredAt holds the string denoting the occurred_at field in the database.
 	FieldOccurredAt = "occurred_at"
-	// FieldWorkspaceID holds the string denoting the workspace_id field in the database.
-	FieldWorkspaceID = "workspace_id"
 	// EdgeWorkspace holds the string denoting the workspace edge name in mutations.
 	EdgeWorkspace = "workspace"
 	// Table holds the table name of the event in the database.
@@ -56,6 +56,7 @@ var Columns = []string{
 	FieldID,
 	FieldCreatedAt,
 	FieldUpdatedAt,
+	FieldWorkspaceID,
 	FieldSourceID,
 	FieldContactID,
 	FieldVisitorID,
@@ -65,7 +66,6 @@ var Columns = []string{
 	FieldAction,
 	FieldProperties,
 	FieldOccurredAt,
-	FieldWorkspaceID,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -107,6 +107,11 @@ func ByUpdatedAt(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldUpdatedAt, opts...).ToFunc()
 }
 
+// ByWorkspaceID orders the results by the workspace_id field.
+func ByWorkspaceID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldWorkspaceID, opts...).ToFunc()
+}
+
 // BySourceID orders the results by the source_id field.
 func BySourceID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldSourceID, opts...).ToFunc()
@@ -145,11 +150,6 @@ func ByAction(opts ...sql.OrderTermOption) OrderOption {
 // ByOccurredAt orders the results by the occurred_at field.
 func ByOccurredAt(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldOccurredAt, opts...).ToFunc()
-}
-
-// ByWorkspaceID orders the results by the workspace_id field.
-func ByWorkspaceID(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldWorkspaceID, opts...).ToFunc()
 }
 
 // ByWorkspaceField orders the results by workspace field.

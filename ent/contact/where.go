@@ -65,6 +65,11 @@ func UpdatedAt(v time.Time) predicate.Contact {
 	return predicate.Contact(sql.FieldEQ(FieldUpdatedAt, v))
 }
 
+// WorkspaceID applies equality check predicate on the "workspace_id" field. It's identical to WorkspaceIDEQ.
+func WorkspaceID(v int64) predicate.Contact {
+	return predicate.Contact(sql.FieldEQ(FieldWorkspaceID, v))
+}
+
 // SubjectID applies equality check predicate on the "subject_id" field. It's identical to SubjectIDEQ.
 func SubjectID(v string) predicate.Contact {
 	return predicate.Contact(sql.FieldEQ(FieldSubjectID, v))
@@ -93,11 +98,6 @@ func LastName(v string) predicate.Contact {
 // TimeZone applies equality check predicate on the "time_zone" field. It's identical to TimeZoneEQ.
 func TimeZone(v string) predicate.Contact {
 	return predicate.Contact(sql.FieldEQ(FieldTimeZone, v))
-}
-
-// WorkspaceID applies equality check predicate on the "workspace_id" field. It's identical to WorkspaceIDEQ.
-func WorkspaceID(v int64) predicate.Contact {
-	return predicate.Contact(sql.FieldEQ(FieldWorkspaceID, v))
 }
 
 // CreatedAtEQ applies the EQ predicate on the "created_at" field.
@@ -178,6 +178,26 @@ func UpdatedAtLT(v time.Time) predicate.Contact {
 // UpdatedAtLTE applies the LTE predicate on the "updated_at" field.
 func UpdatedAtLTE(v time.Time) predicate.Contact {
 	return predicate.Contact(sql.FieldLTE(FieldUpdatedAt, v))
+}
+
+// WorkspaceIDEQ applies the EQ predicate on the "workspace_id" field.
+func WorkspaceIDEQ(v int64) predicate.Contact {
+	return predicate.Contact(sql.FieldEQ(FieldWorkspaceID, v))
+}
+
+// WorkspaceIDNEQ applies the NEQ predicate on the "workspace_id" field.
+func WorkspaceIDNEQ(v int64) predicate.Contact {
+	return predicate.Contact(sql.FieldNEQ(FieldWorkspaceID, v))
+}
+
+// WorkspaceIDIn applies the In predicate on the "workspace_id" field.
+func WorkspaceIDIn(vs ...int64) predicate.Contact {
+	return predicate.Contact(sql.FieldIn(FieldWorkspaceID, vs...))
+}
+
+// WorkspaceIDNotIn applies the NotIn predicate on the "workspace_id" field.
+func WorkspaceIDNotIn(vs ...int64) predicate.Contact {
+	return predicate.Contact(sql.FieldNotIn(FieldWorkspaceID, vs...))
 }
 
 // SubjectIDEQ applies the EQ predicate on the "subject_id" field.
@@ -640,24 +660,27 @@ func CustomFieldsNotNil() predicate.Contact {
 	return predicate.Contact(sql.FieldNotNull(FieldCustomFields))
 }
 
-// WorkspaceIDEQ applies the EQ predicate on the "workspace_id" field.
-func WorkspaceIDEQ(v int64) predicate.Contact {
-	return predicate.Contact(sql.FieldEQ(FieldWorkspaceID, v))
+// HasWorkspace applies the HasEdge predicate on the "workspace" edge.
+func HasWorkspace() predicate.Contact {
+	return predicate.Contact(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, WorkspaceTable, WorkspaceColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
 }
 
-// WorkspaceIDNEQ applies the NEQ predicate on the "workspace_id" field.
-func WorkspaceIDNEQ(v int64) predicate.Contact {
-	return predicate.Contact(sql.FieldNEQ(FieldWorkspaceID, v))
-}
-
-// WorkspaceIDIn applies the In predicate on the "workspace_id" field.
-func WorkspaceIDIn(vs ...int64) predicate.Contact {
-	return predicate.Contact(sql.FieldIn(FieldWorkspaceID, vs...))
-}
-
-// WorkspaceIDNotIn applies the NotIn predicate on the "workspace_id" field.
-func WorkspaceIDNotIn(vs ...int64) predicate.Contact {
-	return predicate.Contact(sql.FieldNotIn(FieldWorkspaceID, vs...))
+// HasWorkspaceWith applies the HasEdge predicate on the "workspace" edge with a given conditions (other predicates).
+func HasWorkspaceWith(preds ...predicate.Workspace) predicate.Contact {
+	return predicate.Contact(func(s *sql.Selector) {
+		step := newWorkspaceStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
 }
 
 // HasVisitors applies the HasEdge predicate on the "visitors" edge.
@@ -698,29 +721,6 @@ func HasTags() predicate.Contact {
 func HasTagsWith(preds ...predicate.Tag) predicate.Contact {
 	return predicate.Contact(func(s *sql.Selector) {
 		step := newTagsStep()
-		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
-			for _, p := range preds {
-				p(s)
-			}
-		})
-	})
-}
-
-// HasWorkspace applies the HasEdge predicate on the "workspace" edge.
-func HasWorkspace() predicate.Contact {
-	return predicate.Contact(func(s *sql.Selector) {
-		step := sqlgraph.NewStep(
-			sqlgraph.From(Table, FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, true, WorkspaceTable, WorkspaceColumn),
-		)
-		sqlgraph.HasNeighbors(s, step)
-	})
-}
-
-// HasWorkspaceWith applies the HasEdge predicate on the "workspace" edge with a given conditions (other predicates).
-func HasWorkspaceWith(preds ...predicate.Workspace) predicate.Contact {
-	return predicate.Contact(func(s *sql.Selector) {
-		step := newWorkspaceStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)

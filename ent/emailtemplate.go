@@ -22,14 +22,14 @@ type EmailTemplate struct {
 	CreatedAt time.Time `json:"created_at,omitempty"`
 	// UpdatedAt holds the value of the "updated_at" field.
 	UpdatedAt time.Time `json:"updated_at,omitempty"`
+	// WorkspaceID holds the value of the "workspace_id" field.
+	WorkspaceID int64 `json:"workspace_id,omitempty"`
 	// Name holds the value of the "name" field.
 	Name string `json:"name,omitempty"`
 	// Subject holds the value of the "subject" field.
 	Subject string `json:"subject,omitempty"`
 	// Body holds the value of the "body" field.
 	Body string `json:"body,omitempty"`
-	// WorkspaceID holds the value of the "workspace_id" field.
-	WorkspaceID int64 `json:"workspace_id,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the EmailTemplateQuery when eager-loading is set.
 	Edges        EmailTemplateEdges `json:"edges"`
@@ -100,6 +100,12 @@ func (_m *EmailTemplate) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				_m.UpdatedAt = value.Time
 			}
+		case emailtemplate.FieldWorkspaceID:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field workspace_id", values[i])
+			} else if value.Valid {
+				_m.WorkspaceID = value.Int64
+			}
 		case emailtemplate.FieldName:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field name", values[i])
@@ -117,12 +123,6 @@ func (_m *EmailTemplate) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field body", values[i])
 			} else if value.Valid {
 				_m.Body = value.String
-			}
-		case emailtemplate.FieldWorkspaceID:
-			if value, ok := values[i].(*sql.NullInt64); !ok {
-				return fmt.Errorf("unexpected type %T for field workspace_id", values[i])
-			} else if value.Valid {
-				_m.WorkspaceID = value.Int64
 			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
@@ -171,6 +171,9 @@ func (_m *EmailTemplate) String() string {
 	builder.WriteString("updated_at=")
 	builder.WriteString(_m.UpdatedAt.Format(time.ANSIC))
 	builder.WriteString(", ")
+	builder.WriteString("workspace_id=")
+	builder.WriteString(fmt.Sprintf("%v", _m.WorkspaceID))
+	builder.WriteString(", ")
 	builder.WriteString("name=")
 	builder.WriteString(_m.Name)
 	builder.WriteString(", ")
@@ -179,9 +182,6 @@ func (_m *EmailTemplate) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("body=")
 	builder.WriteString(_m.Body)
-	builder.WriteString(", ")
-	builder.WriteString("workspace_id=")
-	builder.WriteString(fmt.Sprintf("%v", _m.WorkspaceID))
 	builder.WriteByte(')')
 	return builder.String()
 }

@@ -65,6 +65,11 @@ func UpdatedAt(v time.Time) predicate.Confirmation {
 	return predicate.Confirmation(sql.FieldEQ(FieldUpdatedAt, v))
 }
 
+// WorkspaceID applies equality check predicate on the "workspace_id" field. It's identical to WorkspaceIDEQ.
+func WorkspaceID(v int64) predicate.Confirmation {
+	return predicate.Confirmation(sql.FieldEQ(FieldWorkspaceID, v))
+}
+
 // Destination applies equality check predicate on the "destination" field. It's identical to DestinationEQ.
 func Destination(v string) predicate.Confirmation {
 	return predicate.Confirmation(sql.FieldEQ(FieldDestination, v))
@@ -73,11 +78,6 @@ func Destination(v string) predicate.Confirmation {
 // ContactID applies equality check predicate on the "contact_id" field. It's identical to ContactIDEQ.
 func ContactID(v int64) predicate.Confirmation {
 	return predicate.Confirmation(sql.FieldEQ(FieldContactID, v))
-}
-
-// WorkspaceID applies equality check predicate on the "workspace_id" field. It's identical to WorkspaceIDEQ.
-func WorkspaceID(v int64) predicate.Confirmation {
-	return predicate.Confirmation(sql.FieldEQ(FieldWorkspaceID, v))
 }
 
 // CreatedAtEQ applies the EQ predicate on the "created_at" field.
@@ -158,6 +158,26 @@ func UpdatedAtLT(v time.Time) predicate.Confirmation {
 // UpdatedAtLTE applies the LTE predicate on the "updated_at" field.
 func UpdatedAtLTE(v time.Time) predicate.Confirmation {
 	return predicate.Confirmation(sql.FieldLTE(FieldUpdatedAt, v))
+}
+
+// WorkspaceIDEQ applies the EQ predicate on the "workspace_id" field.
+func WorkspaceIDEQ(v int64) predicate.Confirmation {
+	return predicate.Confirmation(sql.FieldEQ(FieldWorkspaceID, v))
+}
+
+// WorkspaceIDNEQ applies the NEQ predicate on the "workspace_id" field.
+func WorkspaceIDNEQ(v int64) predicate.Confirmation {
+	return predicate.Confirmation(sql.FieldNEQ(FieldWorkspaceID, v))
+}
+
+// WorkspaceIDIn applies the In predicate on the "workspace_id" field.
+func WorkspaceIDIn(vs ...int64) predicate.Confirmation {
+	return predicate.Confirmation(sql.FieldIn(FieldWorkspaceID, vs...))
+}
+
+// WorkspaceIDNotIn applies the NotIn predicate on the "workspace_id" field.
+func WorkspaceIDNotIn(vs ...int64) predicate.Confirmation {
+	return predicate.Confirmation(sql.FieldNotIn(FieldWorkspaceID, vs...))
 }
 
 // ChannelEQ applies the EQ predicate on the "channel" field.
@@ -313,26 +333,6 @@ func ContactIDIsNil() predicate.Confirmation {
 // ContactIDNotNil applies the NotNil predicate on the "contact_id" field.
 func ContactIDNotNil() predicate.Confirmation {
 	return predicate.Confirmation(sql.FieldNotNull(FieldContactID))
-}
-
-// WorkspaceIDEQ applies the EQ predicate on the "workspace_id" field.
-func WorkspaceIDEQ(v int64) predicate.Confirmation {
-	return predicate.Confirmation(sql.FieldEQ(FieldWorkspaceID, v))
-}
-
-// WorkspaceIDNEQ applies the NEQ predicate on the "workspace_id" field.
-func WorkspaceIDNEQ(v int64) predicate.Confirmation {
-	return predicate.Confirmation(sql.FieldNEQ(FieldWorkspaceID, v))
-}
-
-// WorkspaceIDIn applies the In predicate on the "workspace_id" field.
-func WorkspaceIDIn(vs ...int64) predicate.Confirmation {
-	return predicate.Confirmation(sql.FieldIn(FieldWorkspaceID, vs...))
-}
-
-// WorkspaceIDNotIn applies the NotIn predicate on the "workspace_id" field.
-func WorkspaceIDNotIn(vs ...int64) predicate.Confirmation {
-	return predicate.Confirmation(sql.FieldNotIn(FieldWorkspaceID, vs...))
 }
 
 // HasWorkspace applies the HasEdge predicate on the "workspace" edge.

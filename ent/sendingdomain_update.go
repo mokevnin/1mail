@@ -36,6 +36,20 @@ func (_u *SendingDomainUpdate) SetUpdatedAt(v time.Time) *SendingDomainUpdate {
 	return _u
 }
 
+// SetWorkspaceID sets the "workspace_id" field.
+func (_u *SendingDomainUpdate) SetWorkspaceID(v int64) *SendingDomainUpdate {
+	_u.mutation.SetWorkspaceID(v)
+	return _u
+}
+
+// SetNillableWorkspaceID sets the "workspace_id" field if the given value is not nil.
+func (_u *SendingDomainUpdate) SetNillableWorkspaceID(v *int64) *SendingDomainUpdate {
+	if v != nil {
+		_u.SetWorkspaceID(*v)
+	}
+	return _u
+}
+
 // SetDomain sets the "domain" field.
 func (_u *SendingDomainUpdate) SetDomain(v string) *SendingDomainUpdate {
 	_u.mutation.SetDomain(v)
@@ -143,20 +157,6 @@ func (_u *SendingDomainUpdate) SetNillableVerifiedAt(v *time.Time) *SendingDomai
 // ClearVerifiedAt clears the value of the "verified_at" field.
 func (_u *SendingDomainUpdate) ClearVerifiedAt() *SendingDomainUpdate {
 	_u.mutation.ClearVerifiedAt()
-	return _u
-}
-
-// SetWorkspaceID sets the "workspace_id" field.
-func (_u *SendingDomainUpdate) SetWorkspaceID(v int64) *SendingDomainUpdate {
-	_u.mutation.SetWorkspaceID(v)
-	return _u
-}
-
-// SetNillableWorkspaceID sets the "workspace_id" field if the given value is not nil.
-func (_u *SendingDomainUpdate) SetNillableWorkspaceID(v *int64) *SendingDomainUpdate {
-	if v != nil {
-		_u.SetWorkspaceID(*v)
-	}
 	return _u
 }
 
@@ -340,6 +340,20 @@ func (_u *SendingDomainUpdateOne) SetUpdatedAt(v time.Time) *SendingDomainUpdate
 	return _u
 }
 
+// SetWorkspaceID sets the "workspace_id" field.
+func (_u *SendingDomainUpdateOne) SetWorkspaceID(v int64) *SendingDomainUpdateOne {
+	_u.mutation.SetWorkspaceID(v)
+	return _u
+}
+
+// SetNillableWorkspaceID sets the "workspace_id" field if the given value is not nil.
+func (_u *SendingDomainUpdateOne) SetNillableWorkspaceID(v *int64) *SendingDomainUpdateOne {
+	if v != nil {
+		_u.SetWorkspaceID(*v)
+	}
+	return _u
+}
+
 // SetDomain sets the "domain" field.
 func (_u *SendingDomainUpdateOne) SetDomain(v string) *SendingDomainUpdateOne {
 	_u.mutation.SetDomain(v)
@@ -447,20 +461,6 @@ func (_u *SendingDomainUpdateOne) SetNillableVerifiedAt(v *time.Time) *SendingDo
 // ClearVerifiedAt clears the value of the "verified_at" field.
 func (_u *SendingDomainUpdateOne) ClearVerifiedAt() *SendingDomainUpdateOne {
 	_u.mutation.ClearVerifiedAt()
-	return _u
-}
-
-// SetWorkspaceID sets the "workspace_id" field.
-func (_u *SendingDomainUpdateOne) SetWorkspaceID(v int64) *SendingDomainUpdateOne {
-	_u.mutation.SetWorkspaceID(v)
-	return _u
-}
-
-// SetNillableWorkspaceID sets the "workspace_id" field if the given value is not nil.
-func (_u *SendingDomainUpdateOne) SetNillableWorkspaceID(v *int64) *SendingDomainUpdateOne {
-	if v != nil {
-		_u.SetWorkspaceID(*v)
-	}
 	return _u
 }
 

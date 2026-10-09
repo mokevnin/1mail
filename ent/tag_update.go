@@ -37,20 +37,6 @@ func (_u *TagUpdate) SetUpdatedAt(v time.Time) *TagUpdate {
 	return _u
 }
 
-// SetName sets the "name" field.
-func (_u *TagUpdate) SetName(v string) *TagUpdate {
-	_u.mutation.SetName(v)
-	return _u
-}
-
-// SetNillableName sets the "name" field if the given value is not nil.
-func (_u *TagUpdate) SetNillableName(v *string) *TagUpdate {
-	if v != nil {
-		_u.SetName(*v)
-	}
-	return _u
-}
-
 // SetWorkspaceID sets the "workspace_id" field.
 func (_u *TagUpdate) SetWorkspaceID(v int64) *TagUpdate {
 	_u.mutation.SetWorkspaceID(v)
@@ -61,6 +47,20 @@ func (_u *TagUpdate) SetWorkspaceID(v int64) *TagUpdate {
 func (_u *TagUpdate) SetNillableWorkspaceID(v *int64) *TagUpdate {
 	if v != nil {
 		_u.SetWorkspaceID(*v)
+	}
+	return _u
+}
+
+// SetName sets the "name" field.
+func (_u *TagUpdate) SetName(v string) *TagUpdate {
+	_u.mutation.SetName(v)
+	return _u
+}
+
+// SetNillableName sets the "name" field if the given value is not nil.
+func (_u *TagUpdate) SetNillableName(v *string) *TagUpdate {
+	if v != nil {
+		_u.SetName(*v)
 	}
 	return _u
 }
@@ -292,20 +292,6 @@ func (_u *TagUpdateOne) SetUpdatedAt(v time.Time) *TagUpdateOne {
 	return _u
 }
 
-// SetName sets the "name" field.
-func (_u *TagUpdateOne) SetName(v string) *TagUpdateOne {
-	_u.mutation.SetName(v)
-	return _u
-}
-
-// SetNillableName sets the "name" field if the given value is not nil.
-func (_u *TagUpdateOne) SetNillableName(v *string) *TagUpdateOne {
-	if v != nil {
-		_u.SetName(*v)
-	}
-	return _u
-}
-
 // SetWorkspaceID sets the "workspace_id" field.
 func (_u *TagUpdateOne) SetWorkspaceID(v int64) *TagUpdateOne {
 	_u.mutation.SetWorkspaceID(v)
@@ -316,6 +302,20 @@ func (_u *TagUpdateOne) SetWorkspaceID(v int64) *TagUpdateOne {
 func (_u *TagUpdateOne) SetNillableWorkspaceID(v *int64) *TagUpdateOne {
 	if v != nil {
 		_u.SetWorkspaceID(*v)
+	}
+	return _u
+}
+
+// SetName sets the "name" field.
+func (_u *TagUpdateOne) SetName(v string) *TagUpdateOne {
+	_u.mutation.SetName(v)
+	return _u
+}
+
+// SetNillableName sets the "name" field if the given value is not nil.
+func (_u *TagUpdateOne) SetNillableName(v *string) *TagUpdateOne {
+	if v != nil {
+		_u.SetName(*v)
 	}
 	return _u
 }

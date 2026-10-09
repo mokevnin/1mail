@@ -65,6 +65,11 @@ func UpdatedAt(v time.Time) predicate.CustomField {
 	return predicate.CustomField(sql.FieldEQ(FieldUpdatedAt, v))
 }
 
+// WorkspaceID applies equality check predicate on the "workspace_id" field. It's identical to WorkspaceIDEQ.
+func WorkspaceID(v int64) predicate.CustomField {
+	return predicate.CustomField(sql.FieldEQ(FieldWorkspaceID, v))
+}
+
 // Key applies equality check predicate on the "key" field. It's identical to KeyEQ.
 func Key(v string) predicate.CustomField {
 	return predicate.CustomField(sql.FieldEQ(FieldKey, v))
@@ -73,11 +78,6 @@ func Key(v string) predicate.CustomField {
 // Name applies equality check predicate on the "name" field. It's identical to NameEQ.
 func Name(v string) predicate.CustomField {
 	return predicate.CustomField(sql.FieldEQ(FieldName, v))
-}
-
-// WorkspaceID applies equality check predicate on the "workspace_id" field. It's identical to WorkspaceIDEQ.
-func WorkspaceID(v int64) predicate.CustomField {
-	return predicate.CustomField(sql.FieldEQ(FieldWorkspaceID, v))
 }
 
 // CreatedAtEQ applies the EQ predicate on the "created_at" field.
@@ -158,6 +158,26 @@ func UpdatedAtLT(v time.Time) predicate.CustomField {
 // UpdatedAtLTE applies the LTE predicate on the "updated_at" field.
 func UpdatedAtLTE(v time.Time) predicate.CustomField {
 	return predicate.CustomField(sql.FieldLTE(FieldUpdatedAt, v))
+}
+
+// WorkspaceIDEQ applies the EQ predicate on the "workspace_id" field.
+func WorkspaceIDEQ(v int64) predicate.CustomField {
+	return predicate.CustomField(sql.FieldEQ(FieldWorkspaceID, v))
+}
+
+// WorkspaceIDNEQ applies the NEQ predicate on the "workspace_id" field.
+func WorkspaceIDNEQ(v int64) predicate.CustomField {
+	return predicate.CustomField(sql.FieldNEQ(FieldWorkspaceID, v))
+}
+
+// WorkspaceIDIn applies the In predicate on the "workspace_id" field.
+func WorkspaceIDIn(vs ...int64) predicate.CustomField {
+	return predicate.CustomField(sql.FieldIn(FieldWorkspaceID, vs...))
+}
+
+// WorkspaceIDNotIn applies the NotIn predicate on the "workspace_id" field.
+func WorkspaceIDNotIn(vs ...int64) predicate.CustomField {
+	return predicate.CustomField(sql.FieldNotIn(FieldWorkspaceID, vs...))
 }
 
 // KeyEQ applies the EQ predicate on the "key" field.
@@ -308,26 +328,6 @@ func TypeIn(vs ...Type) predicate.CustomField {
 // TypeNotIn applies the NotIn predicate on the "type" field.
 func TypeNotIn(vs ...Type) predicate.CustomField {
 	return predicate.CustomField(sql.FieldNotIn(FieldType, vs...))
-}
-
-// WorkspaceIDEQ applies the EQ predicate on the "workspace_id" field.
-func WorkspaceIDEQ(v int64) predicate.CustomField {
-	return predicate.CustomField(sql.FieldEQ(FieldWorkspaceID, v))
-}
-
-// WorkspaceIDNEQ applies the NEQ predicate on the "workspace_id" field.
-func WorkspaceIDNEQ(v int64) predicate.CustomField {
-	return predicate.CustomField(sql.FieldNEQ(FieldWorkspaceID, v))
-}
-
-// WorkspaceIDIn applies the In predicate on the "workspace_id" field.
-func WorkspaceIDIn(vs ...int64) predicate.CustomField {
-	return predicate.CustomField(sql.FieldIn(FieldWorkspaceID, vs...))
-}
-
-// WorkspaceIDNotIn applies the NotIn predicate on the "workspace_id" field.
-func WorkspaceIDNotIn(vs ...int64) predicate.CustomField {
-	return predicate.CustomField(sql.FieldNotIn(FieldWorkspaceID, vs...))
 }
 
 // HasWorkspace applies the HasEdge predicate on the "workspace" edge.

@@ -65,6 +65,11 @@ func UpdatedAt(v time.Time) predicate.ApiToken {
 	return predicate.ApiToken(sql.FieldEQ(FieldUpdatedAt, v))
 }
 
+// WorkspaceID applies equality check predicate on the "workspace_id" field. It's identical to WorkspaceIDEQ.
+func WorkspaceID(v int64) predicate.ApiToken {
+	return predicate.ApiToken(sql.FieldEQ(FieldWorkspaceID, v))
+}
+
 // Name applies equality check predicate on the "name" field. It's identical to NameEQ.
 func Name(v string) predicate.ApiToken {
 	return predicate.ApiToken(sql.FieldEQ(FieldName, v))
@@ -93,11 +98,6 @@ func RevokedAt(v time.Time) predicate.ApiToken {
 // LastUsedAt applies equality check predicate on the "last_used_at" field. It's identical to LastUsedAtEQ.
 func LastUsedAt(v time.Time) predicate.ApiToken {
 	return predicate.ApiToken(sql.FieldEQ(FieldLastUsedAt, v))
-}
-
-// WorkspaceID applies equality check predicate on the "workspace_id" field. It's identical to WorkspaceIDEQ.
-func WorkspaceID(v int64) predicate.ApiToken {
-	return predicate.ApiToken(sql.FieldEQ(FieldWorkspaceID, v))
 }
 
 // CreatedAtEQ applies the EQ predicate on the "created_at" field.
@@ -178,6 +178,26 @@ func UpdatedAtLT(v time.Time) predicate.ApiToken {
 // UpdatedAtLTE applies the LTE predicate on the "updated_at" field.
 func UpdatedAtLTE(v time.Time) predicate.ApiToken {
 	return predicate.ApiToken(sql.FieldLTE(FieldUpdatedAt, v))
+}
+
+// WorkspaceIDEQ applies the EQ predicate on the "workspace_id" field.
+func WorkspaceIDEQ(v int64) predicate.ApiToken {
+	return predicate.ApiToken(sql.FieldEQ(FieldWorkspaceID, v))
+}
+
+// WorkspaceIDNEQ applies the NEQ predicate on the "workspace_id" field.
+func WorkspaceIDNEQ(v int64) predicate.ApiToken {
+	return predicate.ApiToken(sql.FieldNEQ(FieldWorkspaceID, v))
+}
+
+// WorkspaceIDIn applies the In predicate on the "workspace_id" field.
+func WorkspaceIDIn(vs ...int64) predicate.ApiToken {
+	return predicate.ApiToken(sql.FieldIn(FieldWorkspaceID, vs...))
+}
+
+// WorkspaceIDNotIn applies the NotIn predicate on the "workspace_id" field.
+func WorkspaceIDNotIn(vs ...int64) predicate.ApiToken {
+	return predicate.ApiToken(sql.FieldNotIn(FieldWorkspaceID, vs...))
 }
 
 // NameEQ applies the EQ predicate on the "name" field.
@@ -523,26 +543,6 @@ func LastUsedAtIsNil() predicate.ApiToken {
 // LastUsedAtNotNil applies the NotNil predicate on the "last_used_at" field.
 func LastUsedAtNotNil() predicate.ApiToken {
 	return predicate.ApiToken(sql.FieldNotNull(FieldLastUsedAt))
-}
-
-// WorkspaceIDEQ applies the EQ predicate on the "workspace_id" field.
-func WorkspaceIDEQ(v int64) predicate.ApiToken {
-	return predicate.ApiToken(sql.FieldEQ(FieldWorkspaceID, v))
-}
-
-// WorkspaceIDNEQ applies the NEQ predicate on the "workspace_id" field.
-func WorkspaceIDNEQ(v int64) predicate.ApiToken {
-	return predicate.ApiToken(sql.FieldNEQ(FieldWorkspaceID, v))
-}
-
-// WorkspaceIDIn applies the In predicate on the "workspace_id" field.
-func WorkspaceIDIn(vs ...int64) predicate.ApiToken {
-	return predicate.ApiToken(sql.FieldIn(FieldWorkspaceID, vs...))
-}
-
-// WorkspaceIDNotIn applies the NotIn predicate on the "workspace_id" field.
-func WorkspaceIDNotIn(vs ...int64) predicate.ApiToken {
-	return predicate.ApiToken(sql.FieldNotIn(FieldWorkspaceID, vs...))
 }
 
 // HasWorkspace applies the HasEdge predicate on the "workspace" edge.

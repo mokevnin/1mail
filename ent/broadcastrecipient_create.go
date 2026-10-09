@@ -52,6 +52,12 @@ func (_c *BroadcastRecipientCreate) SetNillableUpdatedAt(v *time.Time) *Broadcas
 	return _c
 }
 
+// SetWorkspaceID sets the "workspace_id" field.
+func (_c *BroadcastRecipientCreate) SetWorkspaceID(v int64) *BroadcastRecipientCreate {
+	_c.mutation.SetWorkspaceID(v)
+	return _c
+}
+
 // SetBroadcastID sets the "broadcast_id" field.
 func (_c *BroadcastRecipientCreate) SetBroadcastID(v int64) *BroadcastRecipientCreate {
 	_c.mutation.SetBroadcastID(v)
@@ -61,12 +67,6 @@ func (_c *BroadcastRecipientCreate) SetBroadcastID(v int64) *BroadcastRecipientC
 // SetContactID sets the "contact_id" field.
 func (_c *BroadcastRecipientCreate) SetContactID(v int64) *BroadcastRecipientCreate {
 	_c.mutation.SetContactID(v)
-	return _c
-}
-
-// SetWorkspaceID sets the "workspace_id" field.
-func (_c *BroadcastRecipientCreate) SetWorkspaceID(v int64) *BroadcastRecipientCreate {
-	_c.mutation.SetWorkspaceID(v)
 	return _c
 }
 
@@ -160,14 +160,14 @@ func (_c *BroadcastRecipientCreate) SetID(v int64) *BroadcastRecipientCreate {
 	return _c
 }
 
-// SetBroadcast sets the "broadcast" edge to the Broadcast entity.
-func (_c *BroadcastRecipientCreate) SetBroadcast(v *Broadcast) *BroadcastRecipientCreate {
-	return _c.SetBroadcastID(v.ID)
-}
-
 // SetWorkspace sets the "workspace" edge to the Workspace entity.
 func (_c *BroadcastRecipientCreate) SetWorkspace(v *Workspace) *BroadcastRecipientCreate {
 	return _c.SetWorkspaceID(v.ID)
+}
+
+// SetBroadcast sets the "broadcast" edge to the Broadcast entity.
+func (_c *BroadcastRecipientCreate) SetBroadcast(v *Broadcast) *BroadcastRecipientCreate {
+	return _c.SetBroadcastID(v.ID)
 }
 
 // Mutation returns the BroadcastRecipientMutation object of the builder.
@@ -227,14 +227,14 @@ func (_c *BroadcastRecipientCreate) check() error {
 	if _, ok := _c.mutation.UpdatedAt(); !ok {
 		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "BroadcastRecipient.updated_at"`)}
 	}
+	if _, ok := _c.mutation.WorkspaceID(); !ok {
+		return &ValidationError{Name: "workspace_id", err: errors.New(`ent: missing required field "BroadcastRecipient.workspace_id"`)}
+	}
 	if _, ok := _c.mutation.BroadcastID(); !ok {
 		return &ValidationError{Name: "broadcast_id", err: errors.New(`ent: missing required field "BroadcastRecipient.broadcast_id"`)}
 	}
 	if _, ok := _c.mutation.ContactID(); !ok {
 		return &ValidationError{Name: "contact_id", err: errors.New(`ent: missing required field "BroadcastRecipient.contact_id"`)}
-	}
-	if _, ok := _c.mutation.WorkspaceID(); !ok {
-		return &ValidationError{Name: "workspace_id", err: errors.New(`ent: missing required field "BroadcastRecipient.workspace_id"`)}
 	}
 	if _, ok := _c.mutation.Status(); !ok {
 		return &ValidationError{Name: "status", err: errors.New(`ent: missing required field "BroadcastRecipient.status"`)}
@@ -244,11 +244,11 @@ func (_c *BroadcastRecipientCreate) check() error {
 			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "BroadcastRecipient.status": %w`, err)}
 		}
 	}
-	if len(_c.mutation.BroadcastIDs()) == 0 {
-		return &ValidationError{Name: "broadcast", err: errors.New(`ent: missing required edge "BroadcastRecipient.broadcast"`)}
-	}
 	if len(_c.mutation.WorkspaceIDs()) == 0 {
 		return &ValidationError{Name: "workspace", err: errors.New(`ent: missing required edge "BroadcastRecipient.workspace"`)}
+	}
+	if len(_c.mutation.BroadcastIDs()) == 0 {
+		return &ValidationError{Name: "broadcast", err: errors.New(`ent: missing required edge "BroadcastRecipient.broadcast"`)}
 	}
 	return nil
 }
@@ -319,23 +319,6 @@ func (_c *BroadcastRecipientCreate) createSpec() (*BroadcastRecipient, *sqlgraph
 		_spec.SetField(broadcastrecipient.FieldClickedAt, field.TypeTime, value)
 		_node.ClickedAt = &value
 	}
-	if nodes := _c.mutation.BroadcastIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: true,
-			Table:   broadcastrecipient.BroadcastTable,
-			Columns: []string{broadcastrecipient.BroadcastColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(broadcast.FieldID, field.TypeInt64),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_node.BroadcastID = nodes[0]
-		_spec.Edges = append(_spec.Edges, edge)
-	}
 	if nodes := _c.mutation.WorkspaceIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
@@ -351,6 +334,23 @@ func (_c *BroadcastRecipientCreate) createSpec() (*BroadcastRecipient, *sqlgraph
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_node.WorkspaceID = nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.BroadcastIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   broadcastrecipient.BroadcastTable,
+			Columns: []string{broadcastrecipient.BroadcastColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(broadcast.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.BroadcastID = nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec
@@ -417,6 +417,18 @@ func (u *BroadcastRecipientUpsert) UpdateUpdatedAt() *BroadcastRecipientUpsert {
 	return u
 }
 
+// SetWorkspaceID sets the "workspace_id" field.
+func (u *BroadcastRecipientUpsert) SetWorkspaceID(v int64) *BroadcastRecipientUpsert {
+	u.Set(broadcastrecipient.FieldWorkspaceID, v)
+	return u
+}
+
+// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
+func (u *BroadcastRecipientUpsert) UpdateWorkspaceID() *BroadcastRecipientUpsert {
+	u.SetExcluded(broadcastrecipient.FieldWorkspaceID)
+	return u
+}
+
 // SetBroadcastID sets the "broadcast_id" field.
 func (u *BroadcastRecipientUpsert) SetBroadcastID(v int64) *BroadcastRecipientUpsert {
 	u.Set(broadcastrecipient.FieldBroadcastID, v)
@@ -444,18 +456,6 @@ func (u *BroadcastRecipientUpsert) UpdateContactID() *BroadcastRecipientUpsert {
 // AddContactID adds v to the "contact_id" field.
 func (u *BroadcastRecipientUpsert) AddContactID(v int64) *BroadcastRecipientUpsert {
 	u.Add(broadcastrecipient.FieldContactID, v)
-	return u
-}
-
-// SetWorkspaceID sets the "workspace_id" field.
-func (u *BroadcastRecipientUpsert) SetWorkspaceID(v int64) *BroadcastRecipientUpsert {
-	u.Set(broadcastrecipient.FieldWorkspaceID, v)
-	return u
-}
-
-// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
-func (u *BroadcastRecipientUpsert) UpdateWorkspaceID() *BroadcastRecipientUpsert {
-	u.SetExcluded(broadcastrecipient.FieldWorkspaceID)
 	return u
 }
 
@@ -632,6 +632,20 @@ func (u *BroadcastRecipientUpsertOne) UpdateUpdatedAt() *BroadcastRecipientUpser
 	})
 }
 
+// SetWorkspaceID sets the "workspace_id" field.
+func (u *BroadcastRecipientUpsertOne) SetWorkspaceID(v int64) *BroadcastRecipientUpsertOne {
+	return u.Update(func(s *BroadcastRecipientUpsert) {
+		s.SetWorkspaceID(v)
+	})
+}
+
+// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
+func (u *BroadcastRecipientUpsertOne) UpdateWorkspaceID() *BroadcastRecipientUpsertOne {
+	return u.Update(func(s *BroadcastRecipientUpsert) {
+		s.UpdateWorkspaceID()
+	})
+}
+
 // SetBroadcastID sets the "broadcast_id" field.
 func (u *BroadcastRecipientUpsertOne) SetBroadcastID(v int64) *BroadcastRecipientUpsertOne {
 	return u.Update(func(s *BroadcastRecipientUpsert) {
@@ -664,20 +678,6 @@ func (u *BroadcastRecipientUpsertOne) AddContactID(v int64) *BroadcastRecipientU
 func (u *BroadcastRecipientUpsertOne) UpdateContactID() *BroadcastRecipientUpsertOne {
 	return u.Update(func(s *BroadcastRecipientUpsert) {
 		s.UpdateContactID()
-	})
-}
-
-// SetWorkspaceID sets the "workspace_id" field.
-func (u *BroadcastRecipientUpsertOne) SetWorkspaceID(v int64) *BroadcastRecipientUpsertOne {
-	return u.Update(func(s *BroadcastRecipientUpsert) {
-		s.SetWorkspaceID(v)
-	})
-}
-
-// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
-func (u *BroadcastRecipientUpsertOne) UpdateWorkspaceID() *BroadcastRecipientUpsertOne {
-	return u.Update(func(s *BroadcastRecipientUpsert) {
-		s.UpdateWorkspaceID()
 	})
 }
 
@@ -1038,6 +1038,20 @@ func (u *BroadcastRecipientUpsertBulk) UpdateUpdatedAt() *BroadcastRecipientUpse
 	})
 }
 
+// SetWorkspaceID sets the "workspace_id" field.
+func (u *BroadcastRecipientUpsertBulk) SetWorkspaceID(v int64) *BroadcastRecipientUpsertBulk {
+	return u.Update(func(s *BroadcastRecipientUpsert) {
+		s.SetWorkspaceID(v)
+	})
+}
+
+// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
+func (u *BroadcastRecipientUpsertBulk) UpdateWorkspaceID() *BroadcastRecipientUpsertBulk {
+	return u.Update(func(s *BroadcastRecipientUpsert) {
+		s.UpdateWorkspaceID()
+	})
+}
+
 // SetBroadcastID sets the "broadcast_id" field.
 func (u *BroadcastRecipientUpsertBulk) SetBroadcastID(v int64) *BroadcastRecipientUpsertBulk {
 	return u.Update(func(s *BroadcastRecipientUpsert) {
@@ -1070,20 +1084,6 @@ func (u *BroadcastRecipientUpsertBulk) AddContactID(v int64) *BroadcastRecipient
 func (u *BroadcastRecipientUpsertBulk) UpdateContactID() *BroadcastRecipientUpsertBulk {
 	return u.Update(func(s *BroadcastRecipientUpsert) {
 		s.UpdateContactID()
-	})
-}
-
-// SetWorkspaceID sets the "workspace_id" field.
-func (u *BroadcastRecipientUpsertBulk) SetWorkspaceID(v int64) *BroadcastRecipientUpsertBulk {
-	return u.Update(func(s *BroadcastRecipientUpsert) {
-		s.SetWorkspaceID(v)
-	})
-}
-
-// UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
-func (u *BroadcastRecipientUpsertBulk) UpdateWorkspaceID() *BroadcastRecipientUpsertBulk {
-	return u.Update(func(s *BroadcastRecipientUpsert) {
-		s.UpdateWorkspaceID()
 	})
 }
 

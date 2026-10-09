@@ -65,6 +65,11 @@ func UpdatedAt(v time.Time) predicate.Unsubscribe {
 	return predicate.Unsubscribe(sql.FieldEQ(FieldUpdatedAt, v))
 }
 
+// WorkspaceID applies equality check predicate on the "workspace_id" field. It's identical to WorkspaceIDEQ.
+func WorkspaceID(v int64) predicate.Unsubscribe {
+	return predicate.Unsubscribe(sql.FieldEQ(FieldWorkspaceID, v))
+}
+
 // Destination applies equality check predicate on the "destination" field. It's identical to DestinationEQ.
 func Destination(v string) predicate.Unsubscribe {
 	return predicate.Unsubscribe(sql.FieldEQ(FieldDestination, v))
@@ -78,11 +83,6 @@ func SendingSource(v string) predicate.Unsubscribe {
 // ContactID applies equality check predicate on the "contact_id" field. It's identical to ContactIDEQ.
 func ContactID(v int64) predicate.Unsubscribe {
 	return predicate.Unsubscribe(sql.FieldEQ(FieldContactID, v))
-}
-
-// WorkspaceID applies equality check predicate on the "workspace_id" field. It's identical to WorkspaceIDEQ.
-func WorkspaceID(v int64) predicate.Unsubscribe {
-	return predicate.Unsubscribe(sql.FieldEQ(FieldWorkspaceID, v))
 }
 
 // CreatedAtEQ applies the EQ predicate on the "created_at" field.
@@ -163,6 +163,26 @@ func UpdatedAtLT(v time.Time) predicate.Unsubscribe {
 // UpdatedAtLTE applies the LTE predicate on the "updated_at" field.
 func UpdatedAtLTE(v time.Time) predicate.Unsubscribe {
 	return predicate.Unsubscribe(sql.FieldLTE(FieldUpdatedAt, v))
+}
+
+// WorkspaceIDEQ applies the EQ predicate on the "workspace_id" field.
+func WorkspaceIDEQ(v int64) predicate.Unsubscribe {
+	return predicate.Unsubscribe(sql.FieldEQ(FieldWorkspaceID, v))
+}
+
+// WorkspaceIDNEQ applies the NEQ predicate on the "workspace_id" field.
+func WorkspaceIDNEQ(v int64) predicate.Unsubscribe {
+	return predicate.Unsubscribe(sql.FieldNEQ(FieldWorkspaceID, v))
+}
+
+// WorkspaceIDIn applies the In predicate on the "workspace_id" field.
+func WorkspaceIDIn(vs ...int64) predicate.Unsubscribe {
+	return predicate.Unsubscribe(sql.FieldIn(FieldWorkspaceID, vs...))
+}
+
+// WorkspaceIDNotIn applies the NotIn predicate on the "workspace_id" field.
+func WorkspaceIDNotIn(vs ...int64) predicate.Unsubscribe {
+	return predicate.Unsubscribe(sql.FieldNotIn(FieldWorkspaceID, vs...))
 }
 
 // ChannelEQ applies the EQ predicate on the "channel" field.
@@ -363,26 +383,6 @@ func ContactIDIsNil() predicate.Unsubscribe {
 // ContactIDNotNil applies the NotNil predicate on the "contact_id" field.
 func ContactIDNotNil() predicate.Unsubscribe {
 	return predicate.Unsubscribe(sql.FieldNotNull(FieldContactID))
-}
-
-// WorkspaceIDEQ applies the EQ predicate on the "workspace_id" field.
-func WorkspaceIDEQ(v int64) predicate.Unsubscribe {
-	return predicate.Unsubscribe(sql.FieldEQ(FieldWorkspaceID, v))
-}
-
-// WorkspaceIDNEQ applies the NEQ predicate on the "workspace_id" field.
-func WorkspaceIDNEQ(v int64) predicate.Unsubscribe {
-	return predicate.Unsubscribe(sql.FieldNEQ(FieldWorkspaceID, v))
-}
-
-// WorkspaceIDIn applies the In predicate on the "workspace_id" field.
-func WorkspaceIDIn(vs ...int64) predicate.Unsubscribe {
-	return predicate.Unsubscribe(sql.FieldIn(FieldWorkspaceID, vs...))
-}
-
-// WorkspaceIDNotIn applies the NotIn predicate on the "workspace_id" field.
-func WorkspaceIDNotIn(vs ...int64) predicate.Unsubscribe {
-	return predicate.Unsubscribe(sql.FieldNotIn(FieldWorkspaceID, vs...))
 }
 
 // HasWorkspace applies the HasEdge predicate on the "workspace" edge.

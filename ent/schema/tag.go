@@ -24,7 +24,7 @@ func (Tag) Annotations() []schema.Annotation {
 }
 
 func (Tag) Mixin() []ent.Mixin {
-	return []ent.Mixin{TimeMixin{}}
+	return []ent.Mixin{TimeMixin{}, WorkspaceMixin{Ref: "tags"}}
 }
 
 func (Tag) Fields() []ent.Field {
@@ -36,17 +36,11 @@ func (Tag) Fields() []ent.Field {
 		// (imports, the API), so it is untrusted text (ADR 0016).
 		field.String("name").
 			NotEmpty(),
-		field.Int64("workspace_id"),
 	}
 }
 
 func (Tag) Edges() []ent.Edge {
 	return []ent.Edge{
-		edge.From("workspace", Workspace.Type).
-			Ref("tags").
-			Field("workspace_id").
-			Required().
-			Unique(),
 		edge.From("contacts", Contact.Type).
 			Ref("tags"),
 	}

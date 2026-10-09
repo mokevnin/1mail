@@ -20,7 +20,7 @@ func (Contact) Annotations() []schema.Annotation {
 }
 
 func (Contact) Mixin() []ent.Mixin {
-	return []ent.Mixin{TimeMixin{}}
+	return []ent.Mixin{TimeMixin{}, WorkspaceMixin{Ref: "contacts"}}
 }
 
 func (Contact) Fields() []ent.Field {
@@ -54,7 +54,6 @@ func (Contact) Fields() []ent.Field {
 		// number/bool/datetime, not only strings.
 		field.JSON("custom_fields", map[string]any{}).
 			Optional(),
-		field.Int64("workspace_id"),
 	}
 }
 
@@ -65,11 +64,6 @@ func (Contact) Edges() []ent.Edge {
 		edge.To("visitors", Visitor.Type),
 		// Presence-only labels (GLOSSARY: Tag), many-to-many via contact_tags.
 		edge.To("tags", Tag.Type),
-		edge.From("workspace", Workspace.Type).
-			Ref("contacts").
-			Field("workspace_id").
-			Required().
-			Unique(),
 	}
 }
 

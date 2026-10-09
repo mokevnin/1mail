@@ -65,6 +65,11 @@ func UpdatedAt(v time.Time) predicate.Integration {
 	return predicate.Integration(sql.FieldEQ(FieldUpdatedAt, v))
 }
 
+// WorkspaceID applies equality check predicate on the "workspace_id" field. It's identical to WorkspaceIDEQ.
+func WorkspaceID(v int64) predicate.Integration {
+	return predicate.Integration(sql.FieldEQ(FieldWorkspaceID, v))
+}
+
 // Name applies equality check predicate on the "name" field. It's identical to NameEQ.
 func Name(v string) predicate.Integration {
 	return predicate.Integration(sql.FieldEQ(FieldName, v))
@@ -83,11 +88,6 @@ func Enabled(v bool) predicate.Integration {
 // IsDefault applies equality check predicate on the "is_default" field. It's identical to IsDefaultEQ.
 func IsDefault(v bool) predicate.Integration {
 	return predicate.Integration(sql.FieldEQ(FieldIsDefault, v))
-}
-
-// WorkspaceID applies equality check predicate on the "workspace_id" field. It's identical to WorkspaceIDEQ.
-func WorkspaceID(v int64) predicate.Integration {
-	return predicate.Integration(sql.FieldEQ(FieldWorkspaceID, v))
 }
 
 // CreatedAtEQ applies the EQ predicate on the "created_at" field.
@@ -168,6 +168,26 @@ func UpdatedAtLT(v time.Time) predicate.Integration {
 // UpdatedAtLTE applies the LTE predicate on the "updated_at" field.
 func UpdatedAtLTE(v time.Time) predicate.Integration {
 	return predicate.Integration(sql.FieldLTE(FieldUpdatedAt, v))
+}
+
+// WorkspaceIDEQ applies the EQ predicate on the "workspace_id" field.
+func WorkspaceIDEQ(v int64) predicate.Integration {
+	return predicate.Integration(sql.FieldEQ(FieldWorkspaceID, v))
+}
+
+// WorkspaceIDNEQ applies the NEQ predicate on the "workspace_id" field.
+func WorkspaceIDNEQ(v int64) predicate.Integration {
+	return predicate.Integration(sql.FieldNEQ(FieldWorkspaceID, v))
+}
+
+// WorkspaceIDIn applies the In predicate on the "workspace_id" field.
+func WorkspaceIDIn(vs ...int64) predicate.Integration {
+	return predicate.Integration(sql.FieldIn(FieldWorkspaceID, vs...))
+}
+
+// WorkspaceIDNotIn applies the NotIn predicate on the "workspace_id" field.
+func WorkspaceIDNotIn(vs ...int64) predicate.Integration {
+	return predicate.Integration(sql.FieldNotIn(FieldWorkspaceID, vs...))
 }
 
 // NameEQ applies the EQ predicate on the "name" field.
@@ -358,26 +378,6 @@ func IsDefaultEQ(v bool) predicate.Integration {
 // IsDefaultNEQ applies the NEQ predicate on the "is_default" field.
 func IsDefaultNEQ(v bool) predicate.Integration {
 	return predicate.Integration(sql.FieldNEQ(FieldIsDefault, v))
-}
-
-// WorkspaceIDEQ applies the EQ predicate on the "workspace_id" field.
-func WorkspaceIDEQ(v int64) predicate.Integration {
-	return predicate.Integration(sql.FieldEQ(FieldWorkspaceID, v))
-}
-
-// WorkspaceIDNEQ applies the NEQ predicate on the "workspace_id" field.
-func WorkspaceIDNEQ(v int64) predicate.Integration {
-	return predicate.Integration(sql.FieldNEQ(FieldWorkspaceID, v))
-}
-
-// WorkspaceIDIn applies the In predicate on the "workspace_id" field.
-func WorkspaceIDIn(vs ...int64) predicate.Integration {
-	return predicate.Integration(sql.FieldIn(FieldWorkspaceID, vs...))
-}
-
-// WorkspaceIDNotIn applies the NotIn predicate on the "workspace_id" field.
-func WorkspaceIDNotIn(vs ...int64) predicate.Integration {
-	return predicate.Integration(sql.FieldNotIn(FieldWorkspaceID, vs...))
 }
 
 // HasWorkspace applies the HasEdge predicate on the "workspace" edge.

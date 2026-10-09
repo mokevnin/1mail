@@ -26,7 +26,7 @@ func (Broadcast) Annotations() []schema.Annotation {
 }
 
 func (Broadcast) Mixin() []ent.Mixin {
-	return []ent.Mixin{TimeMixin{}}
+	return []ent.Mixin{TimeMixin{}, WorkspaceMixin{Ref: "broadcasts"}}
 }
 
 func (Broadcast) Fields() []ent.Field {
@@ -97,17 +97,11 @@ func (Broadcast) Fields() []ent.Field {
 		field.String("hold_reason").
 			Optional().
 			Nillable(),
-		field.Int64("workspace_id"),
 	}
 }
 
 func (Broadcast) Edges() []ent.Edge {
 	return []ent.Edge{
-		edge.From("workspace", Workspace.Type).
-			Ref("broadcasts").
-			Field("workspace_id").
-			Required().
-			Unique(),
 		edge.To("recipients", BroadcastRecipient.Type),
 	}
 }

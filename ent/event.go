@@ -23,6 +23,8 @@ type Event struct {
 	CreatedAt time.Time `json:"created_at,omitempty"`
 	// UpdatedAt holds the value of the "updated_at" field.
 	UpdatedAt time.Time `json:"updated_at,omitempty"`
+	// WorkspaceID holds the value of the "workspace_id" field.
+	WorkspaceID int64 `json:"workspace_id,omitempty"`
 	// SourceID holds the value of the "source_id" field.
 	SourceID *string `json:"source_id,omitempty"`
 	// ContactID holds the value of the "contact_id" field.
@@ -41,8 +43,6 @@ type Event struct {
 	Properties map[string]interface{} `json:"properties,omitempty"`
 	// OccurredAt holds the value of the "occurred_at" field.
 	OccurredAt *time.Time `json:"occurred_at,omitempty"`
-	// WorkspaceID holds the value of the "workspace_id" field.
-	WorkspaceID int64 `json:"workspace_id,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the EventQuery when eager-loading is set.
 	Edges        EventEdges `json:"edges"`
@@ -76,7 +76,7 @@ func (*Event) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case event.FieldProperties:
 			values[i] = new([]byte)
-		case event.FieldID, event.FieldContactID, event.FieldWorkspaceID:
+		case event.FieldID, event.FieldWorkspaceID, event.FieldContactID:
 			values[i] = new(sql.NullInt64)
 		case event.FieldSourceID, event.FieldVisitorID, event.FieldSubjectID, event.FieldEmail, event.FieldPhone, event.FieldAction:
 			values[i] = new(sql.NullString)
@@ -114,6 +114,12 @@ func (_m *Event) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field updated_at", values[i])
 			} else if value.Valid {
 				_m.UpdatedAt = value.Time
+			}
+		case event.FieldWorkspaceID:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field workspace_id", values[i])
+			} else if value.Valid {
+				_m.WorkspaceID = value.Int64
 			}
 		case event.FieldSourceID:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -177,12 +183,6 @@ func (_m *Event) assignValues(columns []string, values []any) error {
 				_m.OccurredAt = new(time.Time)
 				*_m.OccurredAt = value.Time
 			}
-		case event.FieldWorkspaceID:
-			if value, ok := values[i].(*sql.NullInt64); !ok {
-				return fmt.Errorf("unexpected type %T for field workspace_id", values[i])
-			} else if value.Valid {
-				_m.WorkspaceID = value.Int64
-			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
 		}
@@ -230,6 +230,9 @@ func (_m *Event) String() string {
 	builder.WriteString("updated_at=")
 	builder.WriteString(_m.UpdatedAt.Format(time.ANSIC))
 	builder.WriteString(", ")
+	builder.WriteString("workspace_id=")
+	builder.WriteString(fmt.Sprintf("%v", _m.WorkspaceID))
+	builder.WriteString(", ")
 	if v := _m.SourceID; v != nil {
 		builder.WriteString("source_id=")
 		builder.WriteString(*v)
@@ -268,9 +271,6 @@ func (_m *Event) String() string {
 		builder.WriteString("occurred_at=")
 		builder.WriteString(v.Format(time.ANSIC))
 	}
-	builder.WriteString(", ")
-	builder.WriteString("workspace_id=")
-	builder.WriteString(fmt.Sprintf("%v", _m.WorkspaceID))
 	builder.WriteByte(')')
 	return builder.String()
 }

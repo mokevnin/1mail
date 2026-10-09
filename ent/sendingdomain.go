@@ -22,6 +22,8 @@ type SendingDomain struct {
 	CreatedAt time.Time `json:"created_at,omitempty"`
 	// UpdatedAt holds the value of the "updated_at" field.
 	UpdatedAt time.Time `json:"updated_at,omitempty"`
+	// WorkspaceID holds the value of the "workspace_id" field.
+	WorkspaceID int64 `json:"workspace_id,omitempty"`
 	// Domain holds the value of the "domain" field.
 	Domain string `json:"domain,omitempty"`
 	// DkimSelector holds the value of the "dkim_selector" field.
@@ -36,8 +38,6 @@ type SendingDomain struct {
 	LastCheckedAt *time.Time `json:"last_checked_at,omitempty"`
 	// VerifiedAt holds the value of the "verified_at" field.
 	VerifiedAt *time.Time `json:"verified_at,omitempty"`
-	// WorkspaceID holds the value of the "workspace_id" field.
-	WorkspaceID int64 `json:"workspace_id,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the SendingDomainQuery when eager-loading is set.
 	Edges        SendingDomainEdges `json:"edges"`
@@ -110,6 +110,12 @@ func (_m *SendingDomain) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				_m.UpdatedAt = value.Time
 			}
+		case sendingdomain.FieldWorkspaceID:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field workspace_id", values[i])
+			} else if value.Valid {
+				_m.WorkspaceID = value.Int64
+			}
 		case sendingdomain.FieldDomain:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field domain", values[i])
@@ -153,12 +159,6 @@ func (_m *SendingDomain) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				_m.VerifiedAt = new(time.Time)
 				*_m.VerifiedAt = value.Time
-			}
-		case sendingdomain.FieldWorkspaceID:
-			if value, ok := values[i].(*sql.NullInt64); !ok {
-				return fmt.Errorf("unexpected type %T for field workspace_id", values[i])
-			} else if value.Valid {
-				_m.WorkspaceID = value.Int64
 			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
@@ -207,6 +207,9 @@ func (_m *SendingDomain) String() string {
 	builder.WriteString("updated_at=")
 	builder.WriteString(_m.UpdatedAt.Format(time.ANSIC))
 	builder.WriteString(", ")
+	builder.WriteString("workspace_id=")
+	builder.WriteString(fmt.Sprintf("%v", _m.WorkspaceID))
+	builder.WriteString(", ")
 	builder.WriteString("domain=")
 	builder.WriteString(_m.Domain)
 	builder.WriteString(", ")
@@ -230,9 +233,6 @@ func (_m *SendingDomain) String() string {
 		builder.WriteString("verified_at=")
 		builder.WriteString(v.Format(time.ANSIC))
 	}
-	builder.WriteString(", ")
-	builder.WriteString("workspace_id=")
-	builder.WriteString(fmt.Sprintf("%v", _m.WorkspaceID))
 	builder.WriteByte(')')
 	return builder.String()
 }

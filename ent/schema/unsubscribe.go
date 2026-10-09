@@ -4,7 +4,6 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/entsql"
 	"entgo.io/ent/schema"
-	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
 	"entgo.io/ent/schema/index"
 )
@@ -33,7 +32,7 @@ func (Unsubscribe) Annotations() []schema.Annotation {
 }
 
 func (Unsubscribe) Mixin() []ent.Mixin {
-	return []ent.Mixin{TimeMixin{}}
+	return []ent.Mixin{TimeMixin{}, WorkspaceMixin{Ref: "unsubscribes"}}
 }
 
 func (Unsubscribe) Fields() []ent.Field {
@@ -57,17 +56,6 @@ func (Unsubscribe) Fields() []ent.Field {
 		field.Int64("contact_id").
 			Optional().
 			Nillable(),
-		field.Int64("workspace_id"),
-	}
-}
-
-func (Unsubscribe) Edges() []ent.Edge {
-	return []ent.Edge{
-		edge.From("workspace", Workspace.Type).
-			Ref("unsubscribes").
-			Field("workspace_id").
-			Required().
-			Unique(),
 	}
 }
 

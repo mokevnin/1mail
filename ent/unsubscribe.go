@@ -22,6 +22,8 @@ type Unsubscribe struct {
 	CreatedAt time.Time `json:"created_at,omitempty"`
 	// UpdatedAt holds the value of the "updated_at" field.
 	UpdatedAt time.Time `json:"updated_at,omitempty"`
+	// WorkspaceID holds the value of the "workspace_id" field.
+	WorkspaceID int64 `json:"workspace_id,omitempty"`
 	// Channel holds the value of the "channel" field.
 	Channel unsubscribe.Channel `json:"channel,omitempty"`
 	// Destination holds the value of the "destination" field.
@@ -30,8 +32,6 @@ type Unsubscribe struct {
 	SendingSource string `json:"sending_source,omitempty"`
 	// ContactID holds the value of the "contact_id" field.
 	ContactID *int64 `json:"contact_id,omitempty"`
-	// WorkspaceID holds the value of the "workspace_id" field.
-	WorkspaceID int64 `json:"workspace_id,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the UnsubscribeQuery when eager-loading is set.
 	Edges        UnsubscribeEdges `json:"edges"`
@@ -63,7 +63,7 @@ func (*Unsubscribe) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case unsubscribe.FieldID, unsubscribe.FieldContactID, unsubscribe.FieldWorkspaceID:
+		case unsubscribe.FieldID, unsubscribe.FieldWorkspaceID, unsubscribe.FieldContactID:
 			values[i] = new(sql.NullInt64)
 		case unsubscribe.FieldChannel, unsubscribe.FieldDestination, unsubscribe.FieldSendingSource:
 			values[i] = new(sql.NullString)
@@ -102,6 +102,12 @@ func (_m *Unsubscribe) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				_m.UpdatedAt = value.Time
 			}
+		case unsubscribe.FieldWorkspaceID:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field workspace_id", values[i])
+			} else if value.Valid {
+				_m.WorkspaceID = value.Int64
+			}
 		case unsubscribe.FieldChannel:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field channel", values[i])
@@ -126,12 +132,6 @@ func (_m *Unsubscribe) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				_m.ContactID = new(int64)
 				*_m.ContactID = value.Int64
-			}
-		case unsubscribe.FieldWorkspaceID:
-			if value, ok := values[i].(*sql.NullInt64); !ok {
-				return fmt.Errorf("unexpected type %T for field workspace_id", values[i])
-			} else if value.Valid {
-				_m.WorkspaceID = value.Int64
 			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
@@ -180,6 +180,9 @@ func (_m *Unsubscribe) String() string {
 	builder.WriteString("updated_at=")
 	builder.WriteString(_m.UpdatedAt.Format(time.ANSIC))
 	builder.WriteString(", ")
+	builder.WriteString("workspace_id=")
+	builder.WriteString(fmt.Sprintf("%v", _m.WorkspaceID))
+	builder.WriteString(", ")
 	builder.WriteString("channel=")
 	builder.WriteString(fmt.Sprintf("%v", _m.Channel))
 	builder.WriteString(", ")
@@ -193,9 +196,6 @@ func (_m *Unsubscribe) String() string {
 		builder.WriteString("contact_id=")
 		builder.WriteString(fmt.Sprintf("%v", *v))
 	}
-	builder.WriteString(", ")
-	builder.WriteString("workspace_id=")
-	builder.WriteString(fmt.Sprintf("%v", _m.WorkspaceID))
 	builder.WriteByte(')')
 	return builder.String()
 }

@@ -65,14 +65,14 @@ func UpdatedAt(v time.Time) predicate.Tag {
 	return predicate.Tag(sql.FieldEQ(FieldUpdatedAt, v))
 }
 
-// Name applies equality check predicate on the "name" field. It's identical to NameEQ.
-func Name(v string) predicate.Tag {
-	return predicate.Tag(sql.FieldEQ(FieldName, v))
-}
-
 // WorkspaceID applies equality check predicate on the "workspace_id" field. It's identical to WorkspaceIDEQ.
 func WorkspaceID(v int64) predicate.Tag {
 	return predicate.Tag(sql.FieldEQ(FieldWorkspaceID, v))
+}
+
+// Name applies equality check predicate on the "name" field. It's identical to NameEQ.
+func Name(v string) predicate.Tag {
+	return predicate.Tag(sql.FieldEQ(FieldName, v))
 }
 
 // CreatedAtEQ applies the EQ predicate on the "created_at" field.
@@ -155,6 +155,26 @@ func UpdatedAtLTE(v time.Time) predicate.Tag {
 	return predicate.Tag(sql.FieldLTE(FieldUpdatedAt, v))
 }
 
+// WorkspaceIDEQ applies the EQ predicate on the "workspace_id" field.
+func WorkspaceIDEQ(v int64) predicate.Tag {
+	return predicate.Tag(sql.FieldEQ(FieldWorkspaceID, v))
+}
+
+// WorkspaceIDNEQ applies the NEQ predicate on the "workspace_id" field.
+func WorkspaceIDNEQ(v int64) predicate.Tag {
+	return predicate.Tag(sql.FieldNEQ(FieldWorkspaceID, v))
+}
+
+// WorkspaceIDIn applies the In predicate on the "workspace_id" field.
+func WorkspaceIDIn(vs ...int64) predicate.Tag {
+	return predicate.Tag(sql.FieldIn(FieldWorkspaceID, vs...))
+}
+
+// WorkspaceIDNotIn applies the NotIn predicate on the "workspace_id" field.
+func WorkspaceIDNotIn(vs ...int64) predicate.Tag {
+	return predicate.Tag(sql.FieldNotIn(FieldWorkspaceID, vs...))
+}
+
 // NameEQ applies the EQ predicate on the "name" field.
 func NameEQ(v string) predicate.Tag {
 	return predicate.Tag(sql.FieldEQ(FieldName, v))
@@ -218,26 +238,6 @@ func NameEqualFold(v string) predicate.Tag {
 // NameContainsFold applies the ContainsFold predicate on the "name" field.
 func NameContainsFold(v string) predicate.Tag {
 	return predicate.Tag(sql.FieldContainsFold(FieldName, v))
-}
-
-// WorkspaceIDEQ applies the EQ predicate on the "workspace_id" field.
-func WorkspaceIDEQ(v int64) predicate.Tag {
-	return predicate.Tag(sql.FieldEQ(FieldWorkspaceID, v))
-}
-
-// WorkspaceIDNEQ applies the NEQ predicate on the "workspace_id" field.
-func WorkspaceIDNEQ(v int64) predicate.Tag {
-	return predicate.Tag(sql.FieldNEQ(FieldWorkspaceID, v))
-}
-
-// WorkspaceIDIn applies the In predicate on the "workspace_id" field.
-func WorkspaceIDIn(vs ...int64) predicate.Tag {
-	return predicate.Tag(sql.FieldIn(FieldWorkspaceID, vs...))
-}
-
-// WorkspaceIDNotIn applies the NotIn predicate on the "workspace_id" field.
-func WorkspaceIDNotIn(vs ...int64) predicate.Tag {
-	return predicate.Tag(sql.FieldNotIn(FieldWorkspaceID, vs...))
 }
 
 // HasWorkspace applies the HasEdge predicate on the "workspace" edge.

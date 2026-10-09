@@ -36,6 +36,20 @@ func (_u *SuppressionUpdate) SetUpdatedAt(v time.Time) *SuppressionUpdate {
 	return _u
 }
 
+// SetWorkspaceID sets the "workspace_id" field.
+func (_u *SuppressionUpdate) SetWorkspaceID(v int64) *SuppressionUpdate {
+	_u.mutation.SetWorkspaceID(v)
+	return _u
+}
+
+// SetNillableWorkspaceID sets the "workspace_id" field if the given value is not nil.
+func (_u *SuppressionUpdate) SetNillableWorkspaceID(v *int64) *SuppressionUpdate {
+	if v != nil {
+		_u.SetWorkspaceID(*v)
+	}
+	return _u
+}
+
 // SetChannel sets the "channel" field.
 func (_u *SuppressionUpdate) SetChannel(v suppression.Channel) *SuppressionUpdate {
 	_u.mutation.SetChannel(v)
@@ -102,20 +116,6 @@ func (_u *SuppressionUpdate) AddContactID(v int64) *SuppressionUpdate {
 // ClearContactID clears the value of the "contact_id" field.
 func (_u *SuppressionUpdate) ClearContactID() *SuppressionUpdate {
 	_u.mutation.ClearContactID()
-	return _u
-}
-
-// SetWorkspaceID sets the "workspace_id" field.
-func (_u *SuppressionUpdate) SetWorkspaceID(v int64) *SuppressionUpdate {
-	_u.mutation.SetWorkspaceID(v)
-	return _u
-}
-
-// SetNillableWorkspaceID sets the "workspace_id" field if the given value is not nil.
-func (_u *SuppressionUpdate) SetNillableWorkspaceID(v *int64) *SuppressionUpdate {
-	if v != nil {
-		_u.SetWorkspaceID(*v)
-	}
 	return _u
 }
 
@@ -290,6 +290,20 @@ func (_u *SuppressionUpdateOne) SetUpdatedAt(v time.Time) *SuppressionUpdateOne 
 	return _u
 }
 
+// SetWorkspaceID sets the "workspace_id" field.
+func (_u *SuppressionUpdateOne) SetWorkspaceID(v int64) *SuppressionUpdateOne {
+	_u.mutation.SetWorkspaceID(v)
+	return _u
+}
+
+// SetNillableWorkspaceID sets the "workspace_id" field if the given value is not nil.
+func (_u *SuppressionUpdateOne) SetNillableWorkspaceID(v *int64) *SuppressionUpdateOne {
+	if v != nil {
+		_u.SetWorkspaceID(*v)
+	}
+	return _u
+}
+
 // SetChannel sets the "channel" field.
 func (_u *SuppressionUpdateOne) SetChannel(v suppression.Channel) *SuppressionUpdateOne {
 	_u.mutation.SetChannel(v)
@@ -356,20 +370,6 @@ func (_u *SuppressionUpdateOne) AddContactID(v int64) *SuppressionUpdateOne {
 // ClearContactID clears the value of the "contact_id" field.
 func (_u *SuppressionUpdateOne) ClearContactID() *SuppressionUpdateOne {
 	_u.mutation.ClearContactID()
-	return _u
-}
-
-// SetWorkspaceID sets the "workspace_id" field.
-func (_u *SuppressionUpdateOne) SetWorkspaceID(v int64) *SuppressionUpdateOne {
-	_u.mutation.SetWorkspaceID(v)
-	return _u
-}
-
-// SetNillableWorkspaceID sets the "workspace_id" field if the given value is not nil.
-func (_u *SuppressionUpdateOne) SetNillableWorkspaceID(v *int64) *SuppressionUpdateOne {
-	if v != nil {
-		_u.SetWorkspaceID(*v)
-	}
 	return _u
 }
 
