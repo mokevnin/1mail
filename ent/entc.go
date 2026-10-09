@@ -26,7 +26,7 @@ func main() {
 			// binary cannot read ent:// itself).
 			gen.FeatureVersionedMigration,
 		},
-	})
+	}, entc.TemplateDir("./template"))
 	if err != nil {
 		log.Fatal("running ent codegen:", err)
 	}

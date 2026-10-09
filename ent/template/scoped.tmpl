@@ -1,0 +1,126 @@
+{{/* PROTOTYPE (branch prototype/scoped-client-tag): throwaway. Tag only. */}}
+{{ define "scoped" }}
+{{ template "header" $ }}
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"slices"
+
+	"github.com/mokevnin/1mail/ent/contact"
+	"github.com/mokevnin/1mail/ent/tag"
+)
+
+// ErrNotInWorkspace: an edge id set on a scoped builder belongs to another Workspace.
+var ErrNotInWorkspace = errors.New("ent: referenced entity is not in the workspace")
+
+func uniq(ids []int64) []int64 { s := slices.Clone(ids); slices.Sort(s); return slices.Compact(s) }
+
+// ---------------- Form A: ordinary builders, scope applied, edges checked by a hook ----------------
+
+type ScopedA struct { c *Client; ws int64 }
+
+func (c *Client) ScopedA(ws int64) *ScopedA { return &ScopedA{c: c, ws: ws} }
+
+func (s *ScopedA) Tag() *TagScopedA { return &TagScopedA{c: s.c, ws: s.ws} }
+
+type TagScopedA struct { c *Client; ws int64 }
+
+func (t *TagScopedA) Query() *TagQuery { return t.c.Tag.Query().Where(tag.WorkspaceID(t.ws)) }
+
+func (t *TagScopedA) checkHook() Hook {
+	return func(next Mutator) Mutator {
+		return MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
+			tm := m.(*TagMutation)
+			if id, ok := tm.WorkspaceID(); ok && id != t.ws {
+				return nil, ErrNotInWorkspace
+			}
+			ids := uniq(tm.ContactsIDs())
+			if len(ids) > 0 {
+				n, err := t.c.Contact.Query().Where(contact.IDIn(ids...), contact.WorkspaceID(t.ws)).Count(ctx)
+				if err != nil { return nil, err }
+				if n != len(ids) { return nil, fmt.Errorf("contacts: %w", ErrNotInWorkspace) }
+			}
+			return next.Mutate(ctx, m)
+		})
+	}
+}
+
+// Create still returns *TagCreate: SetWorkspaceID is callable (caught only by the hook at Save).
+func (t *TagScopedA) Create() *TagCreate {
+	b := t.c.Tag.Create().SetWorkspaceID(t.ws)
+	b.hooks = append(b.hooks, t.checkHook())
+	return b
+}
+
+func (t *TagScopedA) UpdateOneID(id int64) *TagUpdateOne {
+	b := t.c.Tag.UpdateOneID(id)
+	b.Where(tag.WorkspaceID(t.ws))
+	b.hooks = append(b.hooks, t.checkHook())
+	return b
+}
+
+func (t *TagScopedA) DeleteOneID(id int64) *TagDeleteOne {
+	b := t.c.Tag.DeleteOneID(id)
+	b.Where(tag.WorkspaceID(t.ws))
+	return b
+}
+
+// ---------------- Form B: distinct wrapper types, no raw setter reachable, checks inside Save ----------------
+
+type ScopedB struct { c *Client; ws int64 }
+
+func (c *Client) ScopedB(ws int64) *ScopedB { return &ScopedB{c: c, ws: ws} }
+
+func (s *ScopedB) Tag() *TagScopedB { return &TagScopedB{c: s.c, ws: s.ws} }
+
+type TagScopedB struct { c *Client; ws int64 }
+
+func (t *TagScopedB) Query() *TagQuery { return t.c.Tag.Query().Where(tag.WorkspaceID(t.ws)) }
+
+func (t *TagScopedB) checkContacts(ctx context.Context, ids []int64) error {
+	ids = uniq(ids)
+	if len(ids) == 0 { return nil }
+	n, err := t.c.Contact.Query().Where(contact.IDIn(ids...), contact.WorkspaceID(t.ws)).Count(ctx)
+	if err != nil { return err }
+	if n != len(ids) { return fmt.Errorf("contacts: %w", ErrNotInWorkspace) }
+	return nil
+}
+
+type TagScopedCreate struct { t *TagScopedB; b *TagCreate; contacts []int64 }
+
+func (t *TagScopedB) Create() *TagScopedCreate {
+	return &TagScopedCreate{t: t, b: t.c.Tag.Create().SetWorkspaceID(t.ws)}
+}
+func (x *TagScopedCreate) SetName(v string) *TagScopedCreate { x.b.SetName(v); return x }
+func (x *TagScopedCreate) AddContactIDs(ids ...int64) *TagScopedCreate {
+	x.contacts = append(x.contacts, ids...); x.b.AddContactIDs(ids...); return x
+}
+func (x *TagScopedCreate) Save(ctx context.Context) (*Tag, error) {
+	if err := x.t.checkContacts(ctx, x.contacts); err != nil { return nil, err }
+	return x.b.Save(ctx)
+}
+
+type TagScopedUpdateOne struct { t *TagScopedB; b *TagUpdateOne; contacts []int64 }
+
+func (t *TagScopedB) UpdateOneID(id int64) *TagScopedUpdateOne {
+	b := t.c.Tag.UpdateOneID(id)
+	b.Where(tag.WorkspaceID(t.ws))
+	return &TagScopedUpdateOne{t: t, b: b}
+}
+func (x *TagScopedUpdateOne) SetName(v string) *TagScopedUpdateOne { x.b.SetName(v); return x }
+func (x *TagScopedUpdateOne) AddContactIDs(ids ...int64) *TagScopedUpdateOne {
+	x.contacts = append(x.contacts, ids...); x.b.AddContactIDs(ids...); return x
+}
+func (x *TagScopedUpdateOne) Save(ctx context.Context) (*Tag, error) {
+	if err := x.t.checkContacts(ctx, x.contacts); err != nil { return nil, err }
+	return x.b.Save(ctx)
+}
+
+func (t *TagScopedB) DeleteOneID(id int64) *TagDeleteOne {
+	b := t.c.Tag.DeleteOneID(id)
+	b.Where(tag.WorkspaceID(t.ws))
+	return b
+}
+{{ end }}
