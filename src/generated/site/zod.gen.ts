@@ -860,6 +860,8 @@ export const zSiteWorkspaceResource = z.object({
   collectKey: z.string(),
   ingestKey: z.string(),
   postalAddress: z.string(),
+  suspendedAt: zTimestamp.nullish(),
+  suspensionReason: z.string().nullish(),
   createdAt: zTimestamp
 });
 

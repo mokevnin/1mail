@@ -14,9 +14,12 @@ import { ThemeToggle } from '../components/ThemeToggle.tsx'
 export function DashboardShell({
   sidebar,
   headerRight,
+  banner,
 }: {
   sidebar: ReactNode
   headerRight?: ReactNode
+  /** A notice shown above every routed page (e.g. a workspace suspension). */
+  banner?: ReactNode
 }) {
   const { t } = useTranslation()
   const [opened, { toggle, close }] = useDisclosure(false)
@@ -52,6 +55,7 @@ export function DashboardShell({
       <AppShell.Navbar p="md">{sidebar}</AppShell.Navbar>
 
       <AppShell.Main>
+        {banner}
         <Outlet />
       </AppShell.Main>
     </AppShell>

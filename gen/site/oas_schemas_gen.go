@@ -7813,6 +7813,11 @@ type SiteWorkspaceResource struct {
 	// Physical postal address printed in the marketing email footer (CAN-SPAM 15 U.S.C. §7704(a)(5)).
 	// Empty until the workspace sets one.
 	PostalAddress string `json:"postalAddress"`
+	// When outbound sending was suspended (ADR 0007); absent while the workspace can send. A suspension
+	// freezes every send surface but not login, reads or tracking.
+	SuspendedAt OptNilTimestamp `json:"suspendedAt"`
+	// Why sending was suspended, shown to the owner; present only while suspended.
+	SuspensionReason OptNilString `json:"suspensionReason"`
 	// Creation timestamp.
 	CreatedAt Timestamp `json:"createdAt"`
 }
@@ -7845,6 +7850,16 @@ func (s *SiteWorkspaceResource) GetIngestKey() string {
 // GetPostalAddress returns the value of PostalAddress.
 func (s *SiteWorkspaceResource) GetPostalAddress() string {
 	return s.PostalAddress
+}
+
+// GetSuspendedAt returns the value of SuspendedAt.
+func (s *SiteWorkspaceResource) GetSuspendedAt() OptNilTimestamp {
+	return s.SuspendedAt
+}
+
+// GetSuspensionReason returns the value of SuspensionReason.
+func (s *SiteWorkspaceResource) GetSuspensionReason() OptNilString {
+	return s.SuspensionReason
 }
 
 // GetCreatedAt returns the value of CreatedAt.
@@ -7880,6 +7895,16 @@ func (s *SiteWorkspaceResource) SetIngestKey(val string) {
 // SetPostalAddress sets the value of PostalAddress.
 func (s *SiteWorkspaceResource) SetPostalAddress(val string) {
 	s.PostalAddress = val
+}
+
+// SetSuspendedAt sets the value of SuspendedAt.
+func (s *SiteWorkspaceResource) SetSuspendedAt(val OptNilTimestamp) {
+	s.SuspendedAt = val
+}
+
+// SetSuspensionReason sets the value of SuspensionReason.
+func (s *SiteWorkspaceResource) SetSuspensionReason(val OptNilString) {
+	s.SuspensionReason = val
 }
 
 // SetCreatedAt sets the value of CreatedAt.

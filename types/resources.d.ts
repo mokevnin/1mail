@@ -611,6 +611,11 @@ export default interface Resources {
       "successBody": "Thanks — your email address is confirmed.",
       "successTitle": "Email verified",
       "verifying": "Verifying your email…"
+    },
+    "workspaceSuspension": {
+      "description": "Outbound email sending is suspended for this workspace. Scheduled broadcasts and automations are paused and resume when the suspension is lifted. You can still sign in and view your data. To appeal, contact your 1mail administrator.",
+      "reason": "Reason: {{reason}}",
+      "title": "Sending is suspended"
     }
   }
 }

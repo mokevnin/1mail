@@ -7009,6 +7009,21 @@
             "type": "string",
             "description": "Physical postal address printed in the marketing email footer (CAN-SPAM\n15 U.S.C. §7704(a)(5)). Empty until the workspace sets one."
           },
+          "suspendedAt": {
+            "type": "string",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Timestamp"
+              }
+            ],
+            "nullable": true,
+            "description": "When outbound sending was suspended (ADR 0007); absent while the workspace can\nsend. A suspension freezes every send surface but not login, reads or tracking."
+          },
+          "suspensionReason": {
+            "type": "string",
+            "nullable": true,
+            "description": "Why sending was suspended, shown to the owner; present only while suspended."
+          },
           "createdAt": {
             "allOf": [
               {

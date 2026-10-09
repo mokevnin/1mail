@@ -27,6 +27,13 @@ model SiteWorkspaceResource {
    * 15 U.S.C. §7704(a)(5)). Empty until the workspace sets one. */
   postalAddress: string;
 
+  /** When outbound sending was suspended (ADR 0007); absent while the workspace can
+   * send. A suspension freezes every send surface but not login, reads or tracking. */
+  suspendedAt?: Timestamp | null;
+
+  /** Why sending was suspended, shown to the owner; present only while suspended. */
+  suspensionReason?: string | null;
+
   /** Creation timestamp */
   createdAt: Timestamp;
 }

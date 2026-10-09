@@ -176,6 +176,8 @@ func (c *ConverterImpl) WorkspaceToResource(source *ent.Workspace) site.SiteWork
 		siteapiSiteWorkspaceResource.CollectKey = (*source).CollectKey
 		siteapiSiteWorkspaceResource.IngestKey = (*source).IngestKey
 		siteapiSiteWorkspaceResource.PostalAddress = (*source).PostalAddress
+		siteapiSiteWorkspaceResource.SuspendedAt = optNilTimestamp((*source).SuspendedAt)
+		siteapiSiteWorkspaceResource.SuspensionReason = optNilString((*source).SuspensionReason)
 		siteapiSiteWorkspaceResource.CreatedAt = timestamp((*source).CreatedAt)
 	}
 	return siteapiSiteWorkspaceResource

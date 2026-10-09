@@ -3,8 +3,10 @@ package site_test
 import (
 	"context"
 	"testing"
+	"time"
 
 	siteapi "github.com/mokevnin/1mail/gen/site"
+	"github.com/mokevnin/1mail/internal/service"
 	"github.com/mokevnin/1mail/internal/testhelper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -51,4 +53,29 @@ func TestSiteWorkspacesUpdateRejectsBlankName(t *testing.T) {
 		siteapi.SiteWorkspacesUpdateParams{Slug: "acme"})
 	require.NoError(t, err)
 	assert.IsType(t, &siteapi.SiteWorkspacesUpdateUnprocessableEntity{}, res)
+}
+
+// The owner sees a suspension (ADR 0007): the workspace resource carries when it was
+// suspended and why, so the dashboard can say so while login and reads keep working.
+func TestSiteWorkspacesListExposesSuspension(t *testing.T) {
+	env := testhelper.Setup(t)
+	c := siteClient(t, env, "info@1mail.com")
+	ctx := context.Background()
+
+	list, err := c.SiteWorkspacesList(ctx)
+	require.NoError(t, err)
+	require.Len(t, list, 1)
+	_, suspended := list[0].SuspendedAt.Get()
+	assert.False(t, suspended, "a workspace that can send carries no suspension")
+
+	_, err = service.SuspendWorkspace(ctx, env.DB, 1, "system", "complaint rate above 0.3%")
+	require.NoError(t, err)
+
+	list, err = c.SiteWorkspacesList(ctx)
+	require.NoError(t, err, "reads keep working while suspended")
+	at, suspended := list[0].SuspendedAt.Get()
+	require.True(t, suspended)
+	assert.False(t, time.Time(at).IsZero())
+	reason, _ := list[0].SuspensionReason.Get()
+	assert.Equal(t, "complaint rate above 0.3%", reason)
 }

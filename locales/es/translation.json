@@ -612,5 +612,10 @@
     "successBody": "Gracias; tu dirección de correo está confirmada.",
     "successTitle": "Correo verificado",
     "verifying": "Verificando tu correo…"
+  },
+  "workspaceSuspension": {
+    "description": "El envío de correos salientes está suspendido para este espacio de trabajo. Los envíos programados y las automatizaciones están en pausa y se reanudarán cuando se levante la suspensión. Aún puede iniciar sesión y consultar sus datos. Para apelar, póngase en contacto con su administrador de 1mail.",
+    "reason": "Motivo: {{reason}}",
+    "title": "El envío está suspendido"
   }
 }

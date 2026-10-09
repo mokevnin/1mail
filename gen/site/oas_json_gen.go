@@ -20683,19 +20683,33 @@ func (s *SiteWorkspaceResource) encodeFields(e *jx.Encoder) {
 		e.Str(s.PostalAddress)
 	}
 	{
+		if s.SuspendedAt.Set {
+			e.FieldStart("suspendedAt")
+			s.SuspendedAt.Encode(e)
+		}
+	}
+	{
+		if s.SuspensionReason.Set {
+			e.FieldStart("suspensionReason")
+			s.SuspensionReason.Encode(e)
+		}
+	}
+	{
 		e.FieldStart("createdAt")
 		s.CreatedAt.Encode(e)
 	}
 }
 
-var jsonFieldsNameOfSiteWorkspaceResource = [7]string{
+var jsonFieldsNameOfSiteWorkspaceResource = [9]string{
 	0: "id",
 	1: "name",
 	2: "slug",
 	3: "collectKey",
 	4: "ingestKey",
 	5: "postalAddress",
-	6: "createdAt",
+	6: "suspendedAt",
+	7: "suspensionReason",
+	8: "createdAt",
 }
 
 // Decode decodes SiteWorkspaceResource from json.
@@ -20703,7 +20717,7 @@ func (s *SiteWorkspaceResource) Decode(d *jx.Decoder) error {
 	if s == nil {
 		return errors.New("invalid: unable to decode SiteWorkspaceResource to nil")
 	}
-	var requiredBitSet [1]uint8
+	var requiredBitSet [2]uint8
 
 	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
 		switch string(k) {
@@ -20777,8 +20791,28 @@ func (s *SiteWorkspaceResource) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"postalAddress\"")
 			}
+		case "suspendedAt":
+			if err := func() error {
+				s.SuspendedAt.Reset()
+				if err := s.SuspendedAt.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"suspendedAt\"")
+			}
+		case "suspensionReason":
+			if err := func() error {
+				s.SuspensionReason.Reset()
+				if err := s.SuspensionReason.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"suspensionReason\"")
+			}
 		case "createdAt":
-			requiredBitSet[0] |= 1 << 6
+			requiredBitSet[1] |= 1 << 0
 			if err := func() error {
 				if err := s.CreatedAt.Decode(d); err != nil {
 					return err
@@ -20796,8 +20830,9 @@ func (s *SiteWorkspaceResource) Decode(d *jx.Decoder) error {
 	}
 	// Validate required fields.
 	var failures []validate.FieldError
-	for i, mask := range [1]uint8{
-		0b01111111,
+	for i, mask := range [2]uint8{
+		0b00111111,
+		0b00000001,
 	} {
 		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
 			// Mask only required fields and check equality to mask using XOR.
