@@ -121,6 +121,9 @@ func (h *ExternalSecurityHandler) HandleBearerAuth(ctx context.Context, _ extern
 // CollectAuth holds the workspace resolved from the per-workspace collect key.
 type CollectAuth struct {
 	WorkspaceID int64
+	// Scoped is the client confined to WorkspaceID. This file is the collect
+	// API's construction point of it (ADR 0017); read it with CollectScoped.
+	Scoped *ent.Scoped
 }
 
 var collectAuthKey = struct{ name string }{"collectAuth"}
@@ -134,12 +137,14 @@ func GetCollectAuth(ctx context.Context) *CollectAuth {
 	return v
 }
 
-// CollectWorkspaceID returns the workspace resolved from the collect key (0 if unauthenticated).
-func CollectWorkspaceID(ctx context.Context) int64 {
+// CollectScoped returns the Workspace-scoped client of the resolved collect key. It
+// is nil on an unauthenticated context; the security handler runs before every
+// collect operation, so handlers can rely on it.
+func CollectScoped(ctx context.Context) *ent.Scoped {
 	if a := GetCollectAuth(ctx); a != nil {
-		return a.WorkspaceID
+		return a.Scoped
 	}
-	return 0
+	return nil
 }
 
 // CollectSecurityHandler implements collectapi.SecurityHandler: resolves the
@@ -165,7 +170,7 @@ func (h *CollectSecurityHandler) HandleApiKeyAuth(ctx context.Context, _ collect
 	if err != nil {
 		return ctx, err
 	}
-	return WithCollectAuth(ctx, &CollectAuth{WorkspaceID: ws.ID}), nil
+	return WithCollectAuth(ctx, &CollectAuth{WorkspaceID: ws.ID, Scoped: h.ent.Scoped(ws.ID)}), nil
 }
 
 // SiteAuth holds the authenticated dashboard user resolved from the JWT cookie.

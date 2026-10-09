@@ -13,7 +13,7 @@ import (
 
 // SiteEventsList returns the workspace's events, most recent first.
 func (h *Handlers) SiteEventsList(ctx context.Context, params siteapi.SiteEventsListParams) (siteapi.SiteEventsListRes, error) {
-	ws, err := h.workspaceID(ctx, params.Slug)
+	scoped, err := h.scopedFor(ctx, params.Slug)
 	if ent.IsNotFound(err) {
 		v := problem(http.StatusNotFound, "workspace not found")
 		return &v, nil
@@ -31,7 +31,7 @@ func (h *Handlers) SiteEventsList(ctx context.Context, params siteapi.SiteEvents
 	}
 	page, pageSize := pagination.Normalize(pagePtr, pageSizePtr)
 
-	q := h.ent.Event.Query().Where(event.WorkspaceID(ws))
+	q := scoped.Event().Query()
 	if v, ok := params.Action.Get(); ok && v != "" {
 		q = q.Where(event.ActionEQ(v))
 	}
@@ -78,7 +78,7 @@ func (h *Handlers) SiteEventsList(ctx context.Context, params siteapi.SiteEvents
 // SiteEventsActions returns the distinct event actions in the workspace, sorted —
 // used to populate the segment builder's event-condition picker.
 func (h *Handlers) SiteEventsActions(ctx context.Context, params siteapi.SiteEventsActionsParams) (siteapi.SiteEventsActionsRes, error) {
-	ws, err := h.workspaceID(ctx, params.Slug)
+	scoped, err := h.scopedFor(ctx, params.Slug)
 	if ent.IsNotFound(err) {
 		v := problem(http.StatusNotFound, "workspace not found")
 		return &v, nil
@@ -87,7 +87,7 @@ func (h *Handlers) SiteEventsActions(ctx context.Context, params siteapi.SiteEve
 		return nil, err
 	}
 
-	actions, err := h.eventlog.Actions(ctx, ws)
+	actions, err := h.eventlog.Actions(ctx, scoped)
 	if err != nil {
 		return nil, err
 	}

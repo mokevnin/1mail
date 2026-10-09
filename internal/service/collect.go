@@ -34,14 +34,14 @@ type CollectEventInput struct {
 // auto-creates typed Custom fields from the traits, binds the device, and stitches
 // the device's earlier anonymous Events onto the Contact so pre-identify behavior
 // becomes visible to segmentation. A newly created Contact emits contact.created.
-func IdentifyVisitor(ctx context.Context, bus *events.Bus, workspaceID int64, input IdentifyInput) error {
+func IdentifyVisitor(ctx context.Context, bus *events.Bus, s *ent.Scoped, input IdentifyInput) error {
 	visitorID := strings.TrimSpace(input.VisitorID)
 	if visitorID == "" {
 		return errors.New("visitorId is required")
 	}
 
-	return bus.WithinTx(ctx, func(tx *ent.Client, pub events.Publisher) error {
-		res, err := contacts.UpsertIn(ctx, tx, pub, workspaceID, contacts.Attributes{
+	return bus.WithinScopedTx(ctx, s, func(ts *ent.Scoped, pub events.Publisher) error {
+		res, err := contacts.UpsertIn(ctx, ts, pub, contacts.Attributes{
 			SubjectID:    input.SubjectID,
 			Email:        input.Email,
 			Phone:        input.Phone,
@@ -55,11 +55,11 @@ func IdentifyVisitor(ctx context.Context, bus *events.Bus, workspaceID int64, in
 		}
 		c := res.Contact
 
-		vis, err := findOrCreateVisitor(ctx, tx, workspaceID, visitorID)
+		vis, err := findOrCreateVisitor(ctx, ts, visitorID)
 		if err != nil {
 			return err
 		}
-		if err := tx.Visitor.UpdateOneID(vis.ID).
+		if err := ts.Visitor().UpdateOneID(vis.ID).
 			SetContactID(c.ID).
 			SetLastSeenAt(time.Now()).
 			Exec(ctx); err != nil {
@@ -67,9 +67,8 @@ func IdentifyVisitor(ctx context.Context, bus *events.Bus, workspaceID int64, in
 		}
 
 		// Stitch: attach the device's earlier anonymous events onto the Contact.
-		if _, err := tx.Event.Update().
+		if _, err := ts.Event().Update().
 			Where(
-				event.WorkspaceID(workspaceID),
 				event.VisitorID(visitorID),
 				event.ContactIDIsNil(),
 			).
@@ -82,14 +81,14 @@ func IdentifyVisitor(ctx context.Context, bus *events.Bus, workspaceID int64, in
 	})
 }
 
-func CollectEvents(ctx context.Context, bus *events.Bus, workspaceID int64, evts []CollectEventInput) error {
+func CollectEvents(ctx context.Context, bus *events.Bus, s *ent.Scoped, evts []CollectEventInput) error {
 	for _, evt := range evts {
 		visitorID := strings.TrimSpace(evt.VisitorID)
 		// Resolve identity and publish in one transaction: the visitor upsert and the
 		// outbox row commit together. The collected event is the customer's own — its
 		// action and properties are stored as-is.
-		if err := bus.WithinTx(ctx, func(tx *ent.Client, pub events.Publisher) error {
-			res, err := resolveIdentity(ctx, tx, workspaceID, visitorID)
+		if err := bus.WithinScopedTx(ctx, s, func(ts *ent.Scoped, pub events.Publisher) error {
+			res, err := resolveIdentity(ctx, ts, visitorID)
 			if err != nil {
 				return err
 			}
@@ -98,7 +97,7 @@ func CollectEvents(ctx context.Context, bus *events.Bus, workspaceID int64, evts
 				occurred = *evt.OccurredAt
 			}
 			return pub.Publish(ctx, &events.CollectedEvent{
-				WorkspaceID: workspaceID,
+				WorkspaceID: ts.WorkspaceID(),
 				ContactID:   res.contactID,
 				VisitorID:   visitorID,
 				SubjectID:   res.subjectID,
@@ -125,15 +124,15 @@ type identityResolution struct {
 	phone     string
 }
 
-func resolveIdentity(ctx context.Context, client *ent.Client, workspaceID int64, visitorID string) (*identityResolution, error) {
-	vis, err := findOrCreateVisitor(ctx, client, workspaceID, visitorID)
+func resolveIdentity(ctx context.Context, s *ent.Scoped, visitorID string) (*identityResolution, error) {
+	vis, err := findOrCreateVisitor(ctx, s, visitorID)
 	if err != nil {
 		return nil, err
 	}
 	if vis.ContactID == nil {
 		return &identityResolution{}, nil // anonymous
 	}
-	c, err := client.Contact.Get(ctx, *vis.ContactID)
+	c, err := s.Contact().Get(ctx, *vis.ContactID)
 	if err != nil {
 		return &identityResolution{}, nil // contact gone; treat as anonymous
 	}
@@ -145,20 +144,19 @@ func resolveIdentity(ctx context.Context, client *ent.Client, workspaceID int64,
 	}, nil
 }
 
-func findOrCreateVisitor(ctx context.Context, client *ent.Client, workspaceID int64, visitorID string) (*ent.Visitor, error) {
-	existing, err := client.Visitor.Query().
-		Where(visitor.VisitorID(visitorID), visitor.WorkspaceID(workspaceID)).
+func findOrCreateVisitor(ctx context.Context, s *ent.Scoped, visitorID string) (*ent.Visitor, error) {
+	existing, err := s.Visitor().Query().
+		Where(visitor.VisitorID(visitorID)).
 		First(ctx)
 	if err == nil {
-		return client.Visitor.UpdateOneID(existing.ID).
+		return s.Visitor().UpdateOneID(existing.ID).
 			SetLastSeenAt(time.Now()).
 			Save(ctx)
 	}
 	if !ent.IsNotFound(err) {
 		return nil, err
 	}
-	return client.Visitor.Create().
-		SetWorkspaceID(workspaceID).
+	return s.Visitor().Create().
 		SetVisitorID(visitorID).
 		SetLastSeenAt(time.Now()).
 		Save(ctx)
@@ -168,8 +166,8 @@ func findOrCreateVisitor(ctx context.Context, client *ent.Client, workspaceID in
 // → email → phone) and returns its id, or 0 if none matches. It never creates a
 // Contact — used by event ingest to attach an event to a Contact by stable identity
 // when one already exists, leaving it anonymous (0) otherwise.
-func ResolveContactID(ctx context.Context, client *ent.Client, workspaceID int64, subjectID string, email, phone *string) (int64, error) {
-	c, err := contacts.Resolve(ctx, client, workspaceID, &subjectID, email, phone)
+func ResolveContactID(ctx context.Context, s *ent.Scoped, subjectID string, email, phone *string) (int64, error) {
+	c, err := contacts.Resolve(ctx, s, &subjectID, email, phone)
 	if err != nil || c == nil {
 		return 0, err
 	}

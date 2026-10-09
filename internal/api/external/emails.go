@@ -71,7 +71,7 @@ func (h *Handlers) EmailsSend(ctx context.Context, req *externalapi.SendTransact
 
 	// The contact this destination resolves to, when one exists (transactional mail
 	// may go to an address with no contact); the send fact attaches to it.
-	contactID, err := service.ResolveContactID(ctx, h.ent, ws, "", &dest, nil)
+	contactID, err := service.ResolveContactID(ctx, auth.TokenScoped(ctx), "", &dest, nil)
 	if err != nil {
 		return nil, err
 	}

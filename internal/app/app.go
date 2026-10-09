@@ -498,15 +498,11 @@ func register(injector do.Injector, env string) {
 	})
 
 	do.Provide(injector, func(i do.Injector) (*eventlog.Module, error) {
-		client, err := do.Invoke[*entClient](i)
-		if err != nil {
-			return nil, err
-		}
 		bus, err := do.Invoke[*eventsBus](i)
 		if err != nil {
 			return nil, err
 		}
-		return eventlog.New(client.Client, bus.Bus), nil
+		return eventlog.New(bus.Bus), nil
 	})
 
 	do.Provide(injector, func(i do.Injector) (*reputation.Module, error) {

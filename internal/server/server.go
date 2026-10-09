@@ -92,7 +92,7 @@ func New(cfg *config.Config, db *sql.DB, site apisite.Deps, external, mcp http.H
 
 	// Collect API — /collect (x-collect-key via generated SecurityHandler).
 	colSrv, err := collectapi.NewServer(
-		apicollect.NewHandlers(client, bus),
+		apicollect.NewHandlers(bus),
 		apiauth.NewCollectSecurityHandler(client),
 		collectapi.WithPathPrefix("/collect"),
 		collectapi.WithErrorHandler(problemErrorHandler),

@@ -18,7 +18,7 @@ import (
 // conflicting type does NOT retype or reject (declared-by-use must not break ingest);
 // the stored value keeps its own JSON type and the definition's type is left as-is —
 // widening/coercion policy is a later refinement.
-func EnsureCustomFields(ctx context.Context, client *ent.Client, workspaceID int64, kv map[string]any) (map[string]any, error) {
+func EnsureCustomFields(ctx context.Context, s *ent.Scoped, kv map[string]any) (map[string]any, error) {
 	if len(kv) == 0 {
 		return nil, nil
 	}
@@ -27,8 +27,7 @@ func EnsureCustomFields(ctx context.Context, client *ent.Client, workspaceID int
 		if key == "" {
 			continue
 		}
-		if err := client.CustomField.Create().
-			SetWorkspaceID(workspaceID).
+		if err := s.CustomField().Create().
 			SetKey(key).
 			SetName(key).
 			SetType(inferFieldType(val)).
