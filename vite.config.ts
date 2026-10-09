@@ -22,7 +22,7 @@ function devLocalePlugin(): Plugin {
 }
 
 // The app is reached via Caddy at https://1mail.localhost, which terminates TLS
-// and is the single place that routes API paths (/site, /collect, /auth,
+// and is the single place that routes API paths (/site, /collect, /auth, /mcp, /oauth, /.well-known,
 // /avatar, /api) to the Go backend. Vite serves only the SPA + HMR here.
 export default defineConfig({
   plugins: [react(), devLocalePlugin()],

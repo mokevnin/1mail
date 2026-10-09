@@ -303,6 +303,38 @@ export const zSiteMembershipRole = z.enum([
 ]);
 
 /**
+ * What an MCP client (dynamically registered) is asking permission for, as
+ * validated by the authorization server. Rendered on the consent screen.
+ */
+export const zSiteOAuthAuthorizationRequest = z.object({
+  clientName: z.string(),
+  redirectUri: z.string(),
+  scopes: z.array(z.string()),
+  sendScopes: z.array(z.string())
+});
+
+/**
+ * The user's decision on an authorization request
+ */
+export const zSiteOAuthDecisionInput = z.object({
+  clientId: z.string(),
+  redirectUri: z.string(),
+  state: z.string().optional(),
+  codeChallenge: z.string(),
+  scope: z.string().optional(),
+  workspaceSlug: z.string(),
+  approve: z.boolean(),
+  allowSend: z.boolean().optional()
+});
+
+/**
+ * Where to send the user's browser next (back to the client, with a code or an error)
+ */
+export const zSiteOAuthDecisionResult = z.object({
+  redirectUrl: z.string()
+});
+
+/**
  * Request body for previewing a rule definition's audience
  */
 export const zSitePreviewSegmentInput = z.object({
@@ -1120,6 +1152,24 @@ export const zSiteUserUpdateMeBody = zSiteUpdateMeInput;
 export const zSiteUserUpdateMeResponse = zSiteUserResource;
 
 export const zSiteUserEmailChangeBody = zSiteEmailChangeInput;
+
+export const zSiteOAuthDescribeQuery = z.object({
+  clientId: z.string(),
+  redirectUri: z.string(),
+  scope: z.string().optional()
+});
+
+/**
+ * The request has succeeded.
+ */
+export const zSiteOAuthDescribeResponse = zSiteOAuthAuthorizationRequest;
+
+export const zSiteOAuthDecideBody = zSiteOAuthDecisionInput;
+
+/**
+ * The request has succeeded.
+ */
+export const zSiteOAuthDecideResponse = zSiteOAuthDecisionResult;
 
 /**
  * The request has succeeded.

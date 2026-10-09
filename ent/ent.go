@@ -25,6 +25,8 @@ import (
 	"github.com/mokevnin/1mail/ent/integration"
 	"github.com/mokevnin/1mail/ent/invitation"
 	"github.com/mokevnin/1mail/ent/membership"
+	"github.com/mokevnin/1mail/ent/oauthclient"
+	"github.com/mokevnin/1mail/ent/oauthcode"
 	"github.com/mokevnin/1mail/ent/outboundmessage"
 	"github.com/mokevnin/1mail/ent/segment"
 	"github.com/mokevnin/1mail/ent/sendingdomain"
@@ -107,6 +109,8 @@ func checkColumn(t, c string) error {
 			integration.Table:        integration.ValidColumn,
 			invitation.Table:         invitation.ValidColumn,
 			membership.Table:         membership.ValidColumn,
+			oauthclient.Table:        oauthclient.ValidColumn,
+			oauthcode.Table:          oauthcode.ValidColumn,
 			outboundmessage.Table:    outboundmessage.ValidColumn,
 			segment.Table:            segment.ValidColumn,
 			sendingdomain.Table:      sendingdomain.ValidColumn,

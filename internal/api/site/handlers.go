@@ -15,6 +15,7 @@ import (
 	"github.com/mokevnin/1mail/internal/eventlog"
 	"github.com/mokevnin/1mail/internal/events"
 	"github.com/mokevnin/1mail/internal/messaging"
+	"github.com/mokevnin/1mail/internal/oauthserver"
 	"github.com/mokevnin/1mail/internal/outbound"
 	"github.com/mokevnin/1mail/internal/secrets"
 	"github.com/mokevnin/1mail/internal/segments"
@@ -69,10 +70,11 @@ type Handlers struct {
 	outbound     *outbound.Module
 	segments     *segments.Service
 	eventlog     *eventlog.Module
+	oauth        *oauthserver.Service
 }
 
 func NewHandlers(client *ent.Client, bus *events.Bus, cipher *secrets.Cipher, catalog *messaging.Catalog, enqueuer BroadcastEnqueuer, welcome WelcomeEnqueuer, sysmail SystemMailEnqueuer, domainVerify SendingDomainVerifyEnqueuer, sender *outbound.Module, events *eventlog.Module, tokens *authtoken.Signer, appURL string) *Handlers {
-	return &Handlers{ent: client, outbound: sender, eventlog: events, segments: segments.New(client), bus: bus, cipher: cipher, catalog: catalog, broadcasts: broadcasts.New(client, enqueuer), welcome: welcome, sysmail: sysmail, domainVerify: domainVerify, tokens: tokens, appURL: appURL}
+	return &Handlers{ent: client, outbound: sender, eventlog: events, segments: segments.New(client), bus: bus, cipher: cipher, catalog: catalog, broadcasts: broadcasts.New(client, enqueuer), welcome: welcome, sysmail: sysmail, domainVerify: domainVerify, tokens: tokens, appURL: appURL, oauth: oauthserver.NewService(client)}
 }
 
 var _ siteapi.Handler = (*Handlers)(nil)

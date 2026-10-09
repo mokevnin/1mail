@@ -27,6 +27,7 @@ import (
 	"github.com/mokevnin/1mail/internal/mcpserver"
 	"github.com/mokevnin/1mail/internal/messaging"
 	"github.com/mokevnin/1mail/internal/messaging/registry"
+	"github.com/mokevnin/1mail/internal/oauthserver"
 	"github.com/mokevnin/1mail/internal/outbound"
 	"github.com/mokevnin/1mail/internal/secrets"
 	"github.com/mokevnin/1mail/internal/server"
@@ -161,7 +162,7 @@ func Setup(t *testing.T) *TestEnv {
 	// sending-domain verify).
 	external, err := server.NewExternalAPI(client, baseCfg.BootstrapToken, bus, sender)
 	require.NoError(t, err, "build external API")
-	mcpHandler, err := mcpserver.New(onemail.ExternalOpenAPI, external, apiauth.NewExternalSecurityHandler(client))
+	mcpHandler, err := mcpserver.New(onemail.ExternalOpenAPI, external, apiauth.NewExternalSecurityHandler(client), mcpserver.WithResourceMetadataURL(oauthserver.ResourceMetadataURL(baseCfg.AppURL)))
 	require.NoError(t, err, "build MCP handler")
 	handler, err := server.New(baseCfg, client, txDB, bus, cipher, catalog, inline, inline, inline, inline, sender, external, mcpHandler)
 	require.NoError(t, err, "build server")

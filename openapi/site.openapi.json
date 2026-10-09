@@ -42,6 +42,9 @@
       "name": "Site Transactional Emails"
     },
     {
+      "name": "Site OAuth"
+    },
+    {
       "name": "Site Contacts"
     },
     {
@@ -525,6 +528,122 @@
           }
         },
         "tags": ["Site User"]
+      }
+    },
+    "/oauth/authorization": {
+      "get": {
+        "operationId": "SiteOAuth_describe",
+        "description": "Validate an OAuth authorization request for the consent screen",
+        "parameters": [
+          {
+            "name": "clientId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "explode": false
+          },
+          {
+            "name": "redirectUri",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "explode": false
+          },
+          {
+            "name": "scope",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "explode": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request has succeeded.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SiteOAuthAuthorizationRequest"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "RFC 7807 bad request response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "RFC 7807 not found response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Site OAuth"]
+      },
+      "post": {
+        "operationId": "SiteOAuth_decide",
+        "description": "Approve or deny an OAuth authorization request as the signed-in user",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "The request has succeeded.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SiteOAuthDecisionResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "RFC 7807 bad request response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "RFC 7807 not found response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Site OAuth"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SiteOAuthDecisionInput"
+              }
+            }
+          }
+        }
       }
     },
     "/workspaces": {
@@ -6121,6 +6240,82 @@
         "type": "string",
         "enum": ["owner", "admin", "member"],
         "description": "A User's permission level in a Workspace"
+      },
+      "SiteOAuthAuthorizationRequest": {
+        "type": "object",
+        "required": ["clientName", "redirectUri", "scopes", "sendScopes"],
+        "properties": {
+          "clientName": {
+            "type": "string",
+            "description": "Self-declared client name (untrusted: show as text)"
+          },
+          "redirectUri": {
+            "type": "string",
+            "description": "The URL the user is sent back to"
+          },
+          "scopes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Scopes the client asked for that 1mail will grant by default"
+          },
+          "sendScopes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Requested send-class scopes: granted only when the user opts in explicitly"
+          }
+        },
+        "description": "What an MCP client (dynamically registered) is asking permission for, as\nvalidated by the authorization server. Rendered on the consent screen."
+      },
+      "SiteOAuthDecisionInput": {
+        "type": "object",
+        "required": ["clientId", "redirectUri", "codeChallenge", "workspaceSlug", "approve"],
+        "properties": {
+          "clientId": {
+            "type": "string"
+          },
+          "redirectUri": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string",
+            "description": "Opaque client state, echoed back unchanged"
+          },
+          "codeChallenge": {
+            "type": "string",
+            "description": "PKCE S256 challenge from the authorization request"
+          },
+          "scope": {
+            "type": "string",
+            "description": "Space-delimited scopes from the authorization request"
+          },
+          "workspaceSlug": {
+            "type": "string",
+            "description": "Workspace slug the token will belong to"
+          },
+          "approve": {
+            "type": "boolean",
+            "description": "true to approve, false to deny"
+          },
+          "allowSend": {
+            "type": "boolean",
+            "description": "Opt in to the requested send-class scopes (default: not granted)"
+          }
+        },
+        "description": "The user's decision on an authorization request"
+      },
+      "SiteOAuthDecisionResult": {
+        "type": "object",
+        "required": ["redirectUrl"],
+        "properties": {
+          "redirectUrl": {
+            "type": "string"
+          }
+        },
+        "description": "Where to send the user's browser next (back to the client, with a code or an error)"
       },
       "SitePreviewSegmentInput": {
         "type": "object",

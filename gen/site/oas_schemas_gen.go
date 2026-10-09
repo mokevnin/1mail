@@ -5147,6 +5147,195 @@ type SiteMembershipsUpdateUnprocessableEntity ProblemDetails
 
 func (*SiteMembershipsUpdateUnprocessableEntity) siteMembershipsUpdateRes() {}
 
+// What an MCP client (dynamically registered) is asking permission for, as validated by the
+// authorization server. Rendered on the consent screen.
+// Ref: #/components/schemas/SiteOAuthAuthorizationRequest
+type SiteOAuthAuthorizationRequest struct {
+	// Self-declared client name (untrusted: show as text).
+	ClientName string `json:"clientName"`
+	// The URL the user is sent back to.
+	RedirectUri string `json:"redirectUri"`
+	// Scopes the client asked for that 1mail will grant by default.
+	Scopes []string `json:"scopes"`
+	// Requested send-class scopes: granted only when the user opts in explicitly.
+	SendScopes []string `json:"sendScopes"`
+}
+
+// GetClientName returns the value of ClientName.
+func (s *SiteOAuthAuthorizationRequest) GetClientName() string {
+	return s.ClientName
+}
+
+// GetRedirectUri returns the value of RedirectUri.
+func (s *SiteOAuthAuthorizationRequest) GetRedirectUri() string {
+	return s.RedirectUri
+}
+
+// GetScopes returns the value of Scopes.
+func (s *SiteOAuthAuthorizationRequest) GetScopes() []string {
+	return s.Scopes
+}
+
+// GetSendScopes returns the value of SendScopes.
+func (s *SiteOAuthAuthorizationRequest) GetSendScopes() []string {
+	return s.SendScopes
+}
+
+// SetClientName sets the value of ClientName.
+func (s *SiteOAuthAuthorizationRequest) SetClientName(val string) {
+	s.ClientName = val
+}
+
+// SetRedirectUri sets the value of RedirectUri.
+func (s *SiteOAuthAuthorizationRequest) SetRedirectUri(val string) {
+	s.RedirectUri = val
+}
+
+// SetScopes sets the value of Scopes.
+func (s *SiteOAuthAuthorizationRequest) SetScopes(val []string) {
+	s.Scopes = val
+}
+
+// SetSendScopes sets the value of SendScopes.
+func (s *SiteOAuthAuthorizationRequest) SetSendScopes(val []string) {
+	s.SendScopes = val
+}
+
+func (*SiteOAuthAuthorizationRequest) siteOAuthDescribeRes() {}
+
+type SiteOAuthDecideBadRequest ProblemDetails
+
+func (*SiteOAuthDecideBadRequest) siteOAuthDecideRes() {}
+
+type SiteOAuthDecideNotFound ProblemDetails
+
+func (*SiteOAuthDecideNotFound) siteOAuthDecideRes() {}
+
+// The user's decision on an authorization request.
+// Ref: #/components/schemas/SiteOAuthDecisionInput
+type SiteOAuthDecisionInput struct {
+	ClientId    string `json:"clientId"`
+	RedirectUri string `json:"redirectUri"`
+	// Opaque client state, echoed back unchanged.
+	State OptString `json:"state"`
+	// PKCE S256 challenge from the authorization request.
+	CodeChallenge string `json:"codeChallenge"`
+	// Space-delimited scopes from the authorization request.
+	Scope OptString `json:"scope"`
+	// Workspace slug the token will belong to.
+	WorkspaceSlug string `json:"workspaceSlug"`
+	// True to approve, false to deny.
+	Approve bool `json:"approve"`
+	// Opt in to the requested send-class scopes (default: not granted).
+	AllowSend OptBool `json:"allowSend"`
+}
+
+// GetClientId returns the value of ClientId.
+func (s *SiteOAuthDecisionInput) GetClientId() string {
+	return s.ClientId
+}
+
+// GetRedirectUri returns the value of RedirectUri.
+func (s *SiteOAuthDecisionInput) GetRedirectUri() string {
+	return s.RedirectUri
+}
+
+// GetState returns the value of State.
+func (s *SiteOAuthDecisionInput) GetState() OptString {
+	return s.State
+}
+
+// GetCodeChallenge returns the value of CodeChallenge.
+func (s *SiteOAuthDecisionInput) GetCodeChallenge() string {
+	return s.CodeChallenge
+}
+
+// GetScope returns the value of Scope.
+func (s *SiteOAuthDecisionInput) GetScope() OptString {
+	return s.Scope
+}
+
+// GetWorkspaceSlug returns the value of WorkspaceSlug.
+func (s *SiteOAuthDecisionInput) GetWorkspaceSlug() string {
+	return s.WorkspaceSlug
+}
+
+// GetApprove returns the value of Approve.
+func (s *SiteOAuthDecisionInput) GetApprove() bool {
+	return s.Approve
+}
+
+// GetAllowSend returns the value of AllowSend.
+func (s *SiteOAuthDecisionInput) GetAllowSend() OptBool {
+	return s.AllowSend
+}
+
+// SetClientId sets the value of ClientId.
+func (s *SiteOAuthDecisionInput) SetClientId(val string) {
+	s.ClientId = val
+}
+
+// SetRedirectUri sets the value of RedirectUri.
+func (s *SiteOAuthDecisionInput) SetRedirectUri(val string) {
+	s.RedirectUri = val
+}
+
+// SetState sets the value of State.
+func (s *SiteOAuthDecisionInput) SetState(val OptString) {
+	s.State = val
+}
+
+// SetCodeChallenge sets the value of CodeChallenge.
+func (s *SiteOAuthDecisionInput) SetCodeChallenge(val string) {
+	s.CodeChallenge = val
+}
+
+// SetScope sets the value of Scope.
+func (s *SiteOAuthDecisionInput) SetScope(val OptString) {
+	s.Scope = val
+}
+
+// SetWorkspaceSlug sets the value of WorkspaceSlug.
+func (s *SiteOAuthDecisionInput) SetWorkspaceSlug(val string) {
+	s.WorkspaceSlug = val
+}
+
+// SetApprove sets the value of Approve.
+func (s *SiteOAuthDecisionInput) SetApprove(val bool) {
+	s.Approve = val
+}
+
+// SetAllowSend sets the value of AllowSend.
+func (s *SiteOAuthDecisionInput) SetAllowSend(val OptBool) {
+	s.AllowSend = val
+}
+
+// Where to send the user's browser next (back to the client, with a code or an error).
+// Ref: #/components/schemas/SiteOAuthDecisionResult
+type SiteOAuthDecisionResult struct {
+	RedirectUrl string `json:"redirectUrl"`
+}
+
+// GetRedirectUrl returns the value of RedirectUrl.
+func (s *SiteOAuthDecisionResult) GetRedirectUrl() string {
+	return s.RedirectUrl
+}
+
+// SetRedirectUrl sets the value of RedirectUrl.
+func (s *SiteOAuthDecisionResult) SetRedirectUrl(val string) {
+	s.RedirectUrl = val
+}
+
+func (*SiteOAuthDecisionResult) siteOAuthDecideRes() {}
+
+type SiteOAuthDescribeBadRequest ProblemDetails
+
+func (*SiteOAuthDescribeBadRequest) siteOAuthDescribeRes() {}
+
+type SiteOAuthDescribeNotFound ProblemDetails
+
+func (*SiteOAuthDescribeNotFound) siteOAuthDescribeRes() {}
+
 // Request body for previewing a rule definition's audience.
 // Ref: #/components/schemas/SitePreviewSegmentInput
 type SitePreviewSegmentInput struct {

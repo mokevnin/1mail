@@ -505,6 +505,47 @@ var (
 			},
 		},
 	}
+	// OauthClientsColumns holds the columns for the "oauth_clients" table.
+	OauthClientsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt64, Increment: true},
+		{Name: "client_id", Type: field.TypeString, Unique: true},
+		{Name: "name", Type: field.TypeString},
+		{Name: "redirect_uris", Type: field.TypeJSON},
+		{Name: "created_at", Type: field.TypeTime},
+	}
+	// OauthClientsTable holds the schema information for the "oauth_clients" table.
+	OauthClientsTable = &schema.Table{
+		Name:       "oauth_clients",
+		Columns:    OauthClientsColumns,
+		PrimaryKey: []*schema.Column{OauthClientsColumns[0]},
+	}
+	// OauthCodesColumns holds the columns for the "oauth_codes" table.
+	OauthCodesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt64, Increment: true},
+		{Name: "code_hash", Type: field.TypeString, Unique: true},
+		{Name: "redirect_uri", Type: field.TypeString},
+		{Name: "code_challenge", Type: field.TypeString},
+		{Name: "scopes", Type: field.TypeJSON},
+		{Name: "expires_at", Type: field.TypeTime},
+		{Name: "used_at", Type: field.TypeTime, Nullable: true},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "workspace_id", Type: field.TypeInt64},
+		{Name: "client_id", Type: field.TypeInt64},
+	}
+	// OauthCodesTable holds the schema information for the "oauth_codes" table.
+	OauthCodesTable = &schema.Table{
+		Name:       "oauth_codes",
+		Columns:    OauthCodesColumns,
+		PrimaryKey: []*schema.Column{OauthCodesColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "oauth_codes_oauth_clients_codes",
+				Columns:    []*schema.Column{OauthCodesColumns[9]},
+				RefColumns: []*schema.Column{OauthClientsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+		},
+	}
 	// OutboundMessagesColumns holds the columns for the "outbound_messages" table.
 	OutboundMessagesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt64, Increment: true},
@@ -820,6 +861,8 @@ var (
 		IntegrationsTable,
 		InvitationsTable,
 		MembershipsTable,
+		OauthClientsTable,
+		OauthCodesTable,
 		OutboundMessagesTable,
 		SegmentsTable,
 		SendingDomainsTable,
@@ -888,6 +931,13 @@ func init() {
 	MembershipsTable.ForeignKeys[1].RefTable = WorkspacesTable
 	MembershipsTable.Annotation = &entsql.Annotation{
 		Table: "memberships",
+	}
+	OauthClientsTable.Annotation = &entsql.Annotation{
+		Table: "oauth_clients",
+	}
+	OauthCodesTable.ForeignKeys[0].RefTable = OauthClientsTable
+	OauthCodesTable.Annotation = &entsql.Annotation{
+		Table: "oauth_codes",
 	}
 	OutboundMessagesTable.ForeignKeys[0].RefTable = WorkspacesTable
 	OutboundMessagesTable.Annotation = &entsql.Annotation{

@@ -26,6 +26,7 @@ import { ContactDetailPage } from './routes/contacts/detail.tsx'
 import { ContactEditPage } from './routes/contacts/edit.tsx'
 import { ContactsListPage } from './routes/contacts/list.tsx'
 import { AcceptInvitationPage } from './routes/invitations/accept.tsx'
+import { OAuthConsentPage } from './routes/oauth/consent.tsx'
 import { SegmentCreatePage } from './routes/segments/create.tsx'
 import { SegmentEditPage } from './routes/segments/edit.tsx'
 import { SegmentsListPage } from './routes/segments/list.tsx'
@@ -222,6 +223,15 @@ export const registerRoute = createRoute({
 export const loginRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/login',
+  // `redirect` is a same-origin path to return to after signing in.
+  validateSearch: z.object({
+    redirect: z
+      .string()
+      .startsWith('/')
+      .refine((path) => !path.startsWith('//'))
+      .optional()
+      .catch(undefined),
+  }),
   component: LoginPage,
 })
 
@@ -292,6 +302,27 @@ export const acceptInvitationRoute = createRoute({
   component: AcceptInvitationPage,
 })
 
+// OAuth consent screen: /oauth/authorize (Go) redirects the browser here with the
+// MCP client's authorization request. Signed-out users sign in first and come back.
+export const oauthConsentRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/oauth/consent',
+  validateSearch: z.object({
+    client_id: z.string().catch(''),
+    redirect_uri: z.string().catch(''),
+    code_challenge: z.string().catch(''),
+    state: z.string().catch(''),
+    scope: z.string().catch(''),
+  }),
+  beforeLoad: async ({ location }) => {
+    const { response } = await siteWorkspacesList()
+    if (response?.status === 401) {
+      throw redirect({ to: loginRoute.to, search: { redirect: location.href } })
+    }
+  },
+  component: OAuthConsentPage,
+})
+
 // Account layout: workspace-independent settings. Authenticates via the same
 // workspace fetch (redirects to /login on 401) but renders its own shell.
 export const accountRoute = createRoute({
@@ -321,6 +352,7 @@ const routeTree = rootRoute.addChildren([
   unsubscribeRoute,
   unsubscribedRoute,
   acceptInvitationRoute,
+  oauthConsentRoute,
   accountRoute.addChildren([profileRoute]),
   workspaceRoute.addChildren([
     overviewRoute,

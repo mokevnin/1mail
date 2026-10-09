@@ -1,0 +1,7 @@
+# A dynamically registered MCP client (ADR 0016, OAuth 2.1). Anchor client id 1
+# (client_id fixture-client) backs the OAuth tests — DO NOT change it.
+- id: 1
+  client_id: fixture-client
+  name: Fixture Connector
+  redirect_uris: '["https://connector.example/callback"]'
+  created_at: '2026-01-01 00:00:00'

@@ -203,10 +203,6 @@
     "description": "This section is not available yet.",
     "title": "Coming soon"
   },
-  "confirmations": {
-    "deleteDescription": "This action cannot be undone.",
-    "deleteTitle": "Are you sure?"
-  },
   "confirmEmailChange": {
     "errorBody": "This confirmation link is invalid or has expired.",
     "errorTitle": "Confirmation failed",
@@ -225,6 +221,10 @@
     "expiredBody": "This confirmation link has expired. Please sign up again to receive a new one.",
     "expiredTitle": "Link expired",
     "title": "Confirm your subscription"
+  },
+  "confirmations": {
+    "deleteDescription": "This action cannot be undone.",
+    "deleteTitle": "Are you sure?"
   },
   "contacts": {
     "addContact": "Add contact",
@@ -293,6 +293,20 @@
     "templateDeleted": "Template deleted",
     "templateUpdated": "Template updated",
     "testSent": "Test email sent"
+  },
+  "oauthConsent": {
+    "allow": "Allow access",
+    "deny": "Deny",
+    "errorMessage": "We couldn't complete the authorization. Please try again.",
+    "errorTitle": "Authorization failed",
+    "intro": "{{client}} is asking to act on a workspace of yours through the 1mail API. It gets an API token limited to the permissions below, which you can revoke at any time in the workspace API keys.",
+    "invalid": "This authorization request is invalid. Return to the app that sent you here and start again.",
+    "scopesTitle": "Permissions granted",
+    "sendCheckbox": "Also allow sending ({{scopes}})",
+    "sendDescription": "This app also asked to send email. That is off unless you allow it here.",
+    "sendTitle": "Sending is opt-in",
+    "title": "Connect {{client}} to 1mail",
+    "workspaceLabel": "Workspace"
   },
   "overview": {
     "contactsCount": "Contacts",
