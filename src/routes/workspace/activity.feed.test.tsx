@@ -1,0 +1,82 @@
+import { expect, test } from 'vitest'
+
+import type { SiteEventsListData } from '../../generated/site/types.gen.ts'
+import { activityRoute } from '../../router.tsx'
+import { jsonResponse, mockClientRoutes, route } from '../../test/mockFetch.ts'
+import { renderWithRouter } from '../../test/renderWithRouter.tsx'
+import { routeMount } from '../../test/routeMount.ts'
+import { ActivityPage } from './activity.tsx'
+
+const SLUG = 'test'
+const mount = routeMount(activityRoute, { slug: SLUG })
+
+const event = (id: string, over: Record<string, unknown> = {}) => ({
+  id,
+  subjectId: `anon:${id}`,
+  email: null,
+  action: 'page_view',
+  properties: {},
+  occurredAt: '2026-01-02T00:00:00Z',
+  createdAt: '2026-01-02T00:00:00Z',
+  ...over,
+})
+
+type Query = { page: string | null; action: string | null }
+
+function serveEvents(queries: Query[], totalItems = 1) {
+  mockClientRoutes([
+    route<SiteEventsListData>('GET', '/workspaces/{slug}/events', { slug: SLUG }, (req) => {
+      const params = new URL(req.url).searchParams
+      queries.push({ page: params.get('page'), action: params.get('action') })
+      return jsonResponse({
+        items: [event('1')],
+        page: Number(params.get('page') ?? 1),
+        pageSize: 25,
+        totalItems,
+        totalPages: Math.ceil(totalItems / 25),
+      })
+    }),
+  ])
+}
+
+test('an event without an email shows its subject id', async () => {
+  serveEvents([])
+  const { screen } = await renderWithRouter(<ActivityPage />, mount)
+
+  await expect.element(screen.getByText('anon:1')).toBeInTheDocument()
+})
+
+test('filtering by action refetches with the action and resets to page one', async () => {
+  const queries: Query[] = []
+  serveEvents(queries, 60)
+  const { screen } = await renderWithRouter(<ActivityPage />, mount)
+
+  await expect.element(screen.getByText('anon:1')).toBeInTheDocument()
+  await screen.getByRole('button', { name: '2', exact: true }).click()
+  await expect.poll(() => queries.some((q) => q.page === '2')).toBe(true)
+
+  await screen.getByPlaceholder('Filter by action').fill('purchase')
+
+  await expect.poll(() => queries.at(-1)).toEqual({ page: '1', action: 'purchase' })
+})
+
+test('turning live mode off keeps the feed rendered', async () => {
+  serveEvents([])
+  const { screen } = await renderWithRouter(<ActivityPage />, mount)
+
+  await screen.getByLabelText('Live').click()
+
+  await expect.element(screen.getByLabelText('Live')).not.toBeChecked()
+  await expect.element(screen.getByText('anon:1')).toBeInTheDocument()
+})
+
+test('shows an error alert when the feed fails to load', async () => {
+  mockClientRoutes([
+    route<SiteEventsListData>('GET', '/workspaces/{slug}/events', { slug: SLUG }, () =>
+      jsonResponse({ status: 500, detail: 'boom' }, { status: 500 }),
+    ),
+  ])
+  const { screen } = await renderWithRouter(<ActivityPage />, mount)
+
+  await expect.element(screen.getByText('Failed to load activity').first()).toBeInTheDocument()
+})
