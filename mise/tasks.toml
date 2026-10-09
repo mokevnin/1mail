@@ -110,11 +110,7 @@ description = "Frontend tests in watch mode"
 run = "pnpm exec vitest"
 
 ["test:frontend"]
-description = "One-shot frontend run (Vitest Browser Mode, headless Chromium), used by CI"
-run = "pnpm exec vitest run"
-
-["test:coverage"]
-description = "Frontend tests with a v8 coverage report (text summary + coverage/index.html)"
+description = "One-shot frontend run with v8 coverage and thresholds (Vitest Browser Mode, headless Chromium), used by CI; html report in coverage/"
 run = "pnpm exec vitest run --coverage"
 
 # --- dependency updates ----------------------------------------------------------

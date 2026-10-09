@@ -1,6 +1,11 @@
 import { expect, test } from 'vitest'
 
-import { jsonResponse, mockClientFetch, requestOf } from '../../test/mockFetch.ts'
+import type {
+  SiteOAuthDecideData,
+  SiteOAuthDescribeData,
+  SiteWorkspacesListData,
+} from '../../generated/site/types.gen.ts'
+import { jsonResponse, mockClientRoutes, route } from '../../test/mockFetch.ts'
 import { renderWithRouter } from '../../test/renderWithRouter.tsx'
 import { OAuthConsent } from './consent.tsx'
 
@@ -26,20 +31,18 @@ function serve(
   workspaces: ReturnType<typeof workspace>[],
   decide: (req: Request) => Response | Promise<Response>,
 ) {
-  mockClientFetch((input, init) => {
-    const req = requestOf(input, init)
-    if (new URL(req.url).pathname.endsWith('/oauth/authorization')) {
-      return req.method === 'POST'
-        ? decide(req)
-        : jsonResponse({
-            clientName: 'Fixture Connector',
-            redirectUri: request.redirectUri,
-            scopes: ['contacts:read'],
-            sendScopes: [],
-          })
-    }
-    return jsonResponse(workspaces)
-  })
+  mockClientRoutes([
+    route<SiteWorkspacesListData>('GET', '/workspaces', {}, () => jsonResponse(workspaces)),
+    route<SiteOAuthDescribeData>('GET', '/oauth/authorization', {}, () =>
+      jsonResponse({
+        clientName: 'Fixture Connector',
+        redirectUri: request.redirectUri,
+        scopes: ['contacts:read'],
+        sendScopes: [],
+      }),
+    ),
+    route<SiteOAuthDecideData>('POST', '/oauth/authorization', {}, decide),
+  ])
 }
 
 test('the decision targets the workspace the user picked', async () => {

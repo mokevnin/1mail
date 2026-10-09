@@ -377,10 +377,10 @@
     "noRecords": "Сегментов пока нет",
     "previewButton": "Предпросмотр аудитории",
     "previewCount": "{{count}} подходящих контактов",
-    "previewCount_one": "segments.previewCount",
-    "previewCount_few": "",
-    "previewCount_many": "",
-    "previewCount_other": "segments.previewCount",
+    "previewCount_one": "{{count}} подходящий контакт",
+    "previewCount_few": "{{count}} подходящих контакта",
+    "previewCount_many": "{{count}} подходящих контактов",
+    "previewCount_other": "{{count}} подходящих контактов",
     "rulesLabel": "Правила"
   },
   "settings": {

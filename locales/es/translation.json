@@ -377,9 +377,9 @@
     "noRecords": "Aún no hay segmentos",
     "previewButton": "Previsualizar audiencia",
     "previewCount": "{{count}} contactos coincidentes",
-    "previewCount_one": "segments.previewCount",
-    "previewCount_many": "",
-    "previewCount_other": "segments.previewCount",
+    "previewCount_one": "{{count}} contacto coincidente",
+    "previewCount_many": "{{count}} contactos coincidentes",
+    "previewCount_other": "{{count}} contactos coincidentes",
     "rulesLabel": "Reglas"
   },
   "settings": {

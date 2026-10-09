@@ -8,13 +8,11 @@ import { routeMount } from '../../test/routeMount.ts'
 import { VerifyEmailPage } from './verify-email.tsx'
 
 // route() wants a `path` record; these operations have none, so give it an empty one.
-type PathlessOperation<D extends { url: string }> = { url: D['url']; path: Record<string, string> }
-
 const mount = routeMount(verifyEmailRoute)
 const MOUNT = { path: mount.path, initialPath: `${mount.initialPath}?token=tok-v` }
 
 const verify = (respond: (req: Request) => Response | Promise<Response>) =>
-  route<PathlessOperation<SiteAuthVerifyEmailData>>('POST', '/auth/verify-email', {}, respond)
+  route<SiteAuthVerifyEmailData>('POST', '/auth/verify-email', {}, respond)
 
 test('verifies the token on mount and offers to continue', async () => {
   const bodies: unknown[] = []

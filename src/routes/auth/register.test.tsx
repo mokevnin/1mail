@@ -7,10 +7,8 @@ import { renderWithRouter } from '../../test/renderWithRouter.tsx'
 import { RegisterPage } from './register.tsx'
 
 // route() wants a `path` record; these operations have none, so give it an empty one.
-type PathlessOperation<D extends { url: string }> = { url: D['url']; path: Record<string, string> }
-
 const register = (respond: (req: Request) => Response | Promise<Response>) =>
-  route<PathlessOperation<SiteAuthRegisterData>>('POST', '/auth/register', {}, respond)
+  route<SiteAuthRegisterData>('POST', '/auth/register', {}, respond)
 
 async function fillAndSubmit(screen: Awaited<ReturnType<typeof renderWithRouter>>['screen']) {
   await screen.getByLabelText(/^Name/).fill('  Ada Lovelace ')

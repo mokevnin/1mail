@@ -8,8 +8,6 @@ import { routeMount } from '../test/routeMount.ts'
 import { WorkspaceLayout } from './WorkspaceLayout.tsx'
 
 // route() wants a `path` record; these operations have none, so give it an empty one.
-type PathlessOperation<D extends { url: string }> = { url: D['url']; path: Record<string, string> }
-
 const MOUNT = routeMount(workspaceRoute, { slug: 'acme' })
 
 const workspace = (over: Partial<SiteWorkspaceResource>): SiteWorkspaceResource => ({
@@ -24,9 +22,7 @@ const workspace = (over: Partial<SiteWorkspaceResource>): SiteWorkspaceResource 
 })
 
 const list = (items: SiteWorkspaceResource[]) =>
-  route<PathlessOperation<SiteWorkspacesListData>>('GET', '/workspaces', {}, () =>
-    jsonResponse(items),
-  )
+  route<SiteWorkspacesListData>('GET', '/workspaces', {}, () => jsonResponse(items))
 
 test('renders the workspace sidebar and no suspension banner for an active workspace', async () => {
   mockClientRoutes([list([workspace({})])])

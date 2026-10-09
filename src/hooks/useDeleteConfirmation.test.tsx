@@ -5,16 +5,18 @@ import { useDeleteConfirmation } from './useDeleteConfirmation.tsx'
 
 type Options = Parameters<ReturnType<typeof useDeleteConfirmation>>[0]
 
+const OPEN = 'Open'
+
 function Harness({ options }: { options: Options }) {
   const confirmDelete = useDeleteConfirmation()
-  return <button onClick={() => confirmDelete(options)}>Open</button>
+  return <button onClick={() => confirmDelete(options)}>{OPEN}</button>
 }
 
 test('shows the default copy and runs onConfirm when confirmed', async () => {
   const onConfirm = vi.fn<() => void>()
   const screen = await renderWithProviders(<Harness options={{ onConfirm }} />)
 
-  await screen.getByRole('button', { name: 'Open' }).click()
+  await screen.getByRole('button', { name: OPEN }).click()
 
   await expect.element(screen.getByText('Are you sure?')).toBeInTheDocument()
   await expect.element(screen.getByText('This action cannot be undone.')).toBeInTheDocument()
@@ -28,7 +30,7 @@ test('uses a custom title and description, and cancel does not confirm', async (
     <Harness options={{ title: 'Remove contact?', description: 'Ada will be gone.', onConfirm }} />,
   )
 
-  await screen.getByRole('button', { name: 'Open' }).click()
+  await screen.getByRole('button', { name: OPEN }).click()
 
   await expect.element(screen.getByText('Remove contact?')).toBeInTheDocument()
   await expect.element(screen.getByText('Ada will be gone.')).toBeInTheDocument()

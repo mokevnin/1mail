@@ -50,6 +50,7 @@ test('sends the current rule to the audience preview', async () => {
 
   await expect.poll(() => previews.length).toBe(1)
   expect(previews).toEqual([{ definition: value }])
+  await expect.element(screen.getByText('3 matching contacts')).toBeInTheDocument()
 })
 
 test('adding a rule emits the new rule group as JSON', async () => {

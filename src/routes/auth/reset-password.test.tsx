@@ -8,13 +8,11 @@ import { routeMount } from '../../test/routeMount.ts'
 import { ResetPasswordPage } from './reset-password.tsx'
 
 // route() wants a `path` record; these operations have none, so give it an empty one.
-type PathlessOperation<D extends { url: string }> = { url: D['url']; path: Record<string, string> }
-
 const mount = routeMount(resetPasswordRoute)
 const MOUNT = { path: mount.path, initialPath: `${mount.initialPath}?token=tok-9` }
 
 const reset = (respond: (req: Request) => Response | Promise<Response>) =>
-  route<PathlessOperation<SiteAuthResetPasswordData>>('POST', '/auth/reset-password', {}, respond)
+  route<SiteAuthResetPasswordData>('POST', '/auth/reset-password', {}, respond)
 
 async function fill(
   screen: Awaited<ReturnType<typeof renderWithRouter>>['screen'],

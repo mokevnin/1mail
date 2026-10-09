@@ -8,18 +8,11 @@ import { routeMount } from '../../test/routeMount.ts'
 import { ConfirmEmailChangePage } from './confirm-email-change.tsx'
 
 // route() wants a `path` record; these operations have none, so give it an empty one.
-type PathlessOperation<D extends { url: string }> = { url: D['url']; path: Record<string, string> }
-
 const mount = routeMount(confirmEmailChangeRoute)
 const MOUNT = { path: mount.path, initialPath: `${mount.initialPath}?token=tok-c` }
 
 const confirm = (respond: (req: Request) => Response | Promise<Response>) =>
-  route<PathlessOperation<SiteAuthConfirmEmailChangeData>>(
-    'POST',
-    '/auth/confirm-email-change',
-    {},
-    respond,
-  )
+  route<SiteAuthConfirmEmailChangeData>('POST', '/auth/confirm-email-change', {}, respond)
 
 test('confirms the new email on mount and links to sign in', async () => {
   const bodies: unknown[] = []
