@@ -9,7 +9,7 @@ package onemail
 import "embed"
 
 // MigrationsFS holds the committed Atlas migration files. Consumed by
-// internal/migrate. Regenerated via `make db-generate` (Atlas), never by hand.
+// internal/migrate. Regenerated via `mise run db:generate` (Atlas), never by hand.
 //
 //go:embed migrations/*.sql
 var MigrationsFS embed.FS

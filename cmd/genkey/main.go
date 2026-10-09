@@ -1,7 +1,7 @@
 // Command genkey prints a fresh base64-encoded Tink keyset for ENCRYPTION_KEY.
 // Use it when bootstrapping a local environment:
 //
-//	make gen-encryption-key   # then paste the value into .env
+//	mise run gen:encryption-key   # then paste the value into .env
 package main
 
 import (

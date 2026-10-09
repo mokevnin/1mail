@@ -1,0 +1,284 @@
+# Project tasks, included from .mise.toml (`[task_config] includes`).
+#   mise tasks          list them
+#   mise run <task>     run one (tasks that need Postgres start the `db` daemon first)
+# Tasks run natively with the tools pinned in .mise.toml; the dev stack itself is the
+# [daemons] table there.
+
+# --- setup & dev stack ----------------------------------------------------------
+
+[install]
+description = "Install frontend and Go dependencies"
+run = ["pnpm install", "go mod download"]
+
+[setup]
+description = "Install deps, start Postgres, create dev/test/atlas DBs, migrate and seed"
+depends = ["install", "db:seed", "db:create-test"]
+
+[dev]
+description = "Start the whole dev stack (https://1mail.localhost)"
+run = "mise daemons start caddy"
+
+["dev:down"]
+description = "Stop the dev stack"
+run = "mise daemons stop"
+
+# --- database --------------------------------------------------------------------
+
+["db:create"]
+description = "Create the dev database"
+daemons = ["db"]
+run = "go run ./cmd/db create"
+
+["db:create-test"]
+description = "Create the test database"
+daemons = ["db"]
+env = { APP_ENV = "test", DATABASE_URL = "{{env.TEST_DB_URL}}" }
+run = "go run ./cmd/db create"
+
+["db:create-atlas"]
+description = "Create the scratch database atlas uses to compute migration diffs (atlas.hcl `dev`)"
+daemons = ["db"]
+env = { DATABASE_URL = "{{env.ATLAS_DEV_URL}}" }
+run = "go run ./cmd/db create"
+
+["db:drop"]
+description = "Drop the dev database"
+daemons = ["db"]
+run = "go run ./cmd/db drop"
+
+["db:drop-test"]
+description = "Drop the test database"
+daemons = ["db"]
+env = { APP_ENV = "test", DATABASE_URL = "{{env.TEST_DB_URL}}" }
+run = "go run ./cmd/db drop"
+
+["db:migrate-atlas"]
+description = "Apply Atlas migrations"
+daemons = ["db"]
+depends = ["db:create", "db:create-atlas"]
+run = "atlas migrate apply --env local --allow-dirty"
+
+["db:migrate-river"]
+description = "Apply river's own schema (river_job, ...), out of band from Atlas"
+daemons = ["db"]
+depends = ["db:create"]
+run = "go run ./cmd/db river-up"
+
+["db:migrate"]
+description = "Apply Atlas migrations, then river's schema"
+daemons = ["db"]
+depends = ["db:migrate-atlas"]
+run = "go run ./cmd/db river-up"
+
+["db:seed"]
+description = "Load seed data into the dev database"
+daemons = ["db"]
+depends = ["db:migrate"]
+run = "go run ./cmd/seed"
+
+["db:reset"]
+description = "Drop, recreate and migrate the dev database"
+run = [{ task = "db:drop" }, { task = "db:migrate" }]
+
+["db:reset-test"]
+description = "Drop and recreate the test database"
+run = [{ task = "db:drop-test" }, { task = "db:create-test" }]
+
+["db:generate"]
+description = "Generate an Atlas migration from the ent schema"
+daemons = ["db"]
+depends = ["db:create-atlas"]
+usage = 'arg "<name>" help="migration name"'
+run = 'atlas migrate diff --env local "${usage_name}"'
+
+["gen:encryption-key"]
+description = "Mint a fresh ENCRYPTION_KEY (base64 Tink keyset) to paste into your .env"
+run = "go run ./cmd/genkey"
+
+# --- tests -----------------------------------------------------------------------
+
+[test]
+description = "Go tests (creates the test DB first); pass packages/flags after `--`"
+daemons = ["db"]
+depends = ["db:create-test"]
+env = { APP_ENV = "test", DATABASE_URL = "{{env.TEST_DB_URL}}" }
+usage = 'arg "[go_test_args]" var=#true default="./..." help="packages and flags for go test"'
+run = 'go test -p 1 ${usage_go_test_args}'
+
+["test:watch"]
+description = "Frontend tests in watch mode"
+run = "pnpm exec vitest"
+
+["test:frontend"]
+description = "One-shot frontend run (Vitest Browser Mode, headless Chromium), used by CI"
+run = "pnpm exec vitest run"
+
+# --- dependency updates ----------------------------------------------------------
+
+[update]
+description = "Update npm, Go and skills dependencies"
+depends = ["update:npm", "update:go", "update:skills"]
+
+["update:npm"]
+run = "pnpm exec ncu -u && pnpm update"
+
+["update:go"]
+run = "go get -u ./... && go mod tidy"
+
+["update:skills"]
+run = "npx skills@latest update -y"
+
+# --- code generation (TypeSpec -> OpenAPI -> Go + TS) -----------------------------
+
+["generate:typespec-external"]
+run = "pnpm exec tsp compile typespec/external"
+
+["generate:typespec-site"]
+run = "pnpm exec tsp compile typespec/site"
+
+["generate:typespec-collect"]
+run = "pnpm exec tsp compile typespec/collect"
+
+["generate:typespec"]
+description = "TypeSpec -> OpenAPI"
+depends = ["generate:typespec-external", "generate:typespec-site", "generate:typespec-collect"]
+
+["generate:openapi"]
+description = "OpenAPI -> TS clients (site client and collect types, one config)"
+run = "pnpm exec openapi-ts -f openapi-ts.config.ts"
+
+["generate:i18n-types"]
+run = "pnpm run i18n:types"
+
+["generate:backend"]
+description = "OpenAPI/ent -> Go (ent, ogen, goverter)"
+run = [
+  "cd ent && go run -mod=mod entc.go",
+  "go tool ogen --target gen/site --package siteapi --clean openapi/site.openapi.json",
+  "go tool ogen --target gen/external --package externalapi --clean openapi/external.openapi.json",
+  "go tool ogen --target gen/collect --package collectapi --clean openapi/collect.openapi.json",
+  "go tool goverter gen ./internal/api/site/resources ./internal/api/external/resources",
+]
+
+[generate]
+description = "Full cycle: typespec -> openapi -> backend -> frontend -> i18n types -> format"
+run = [
+  { task = "generate:typespec" },
+  { task = "generate:openapi" },
+  { task = "generate:backend" },
+  { task = "fix" },
+]
+
+["generate:check"]
+description = "Fail when committed generated output differs from what `generate` produces (CI gate, needs a clean tree)"
+run = [
+  { task = "generate" },
+  '''test -z "$(git status --porcelain)" || { echo 'generated code is out of date; run `mise run generate` and commit:'; git status --short; git diff --stat; exit 1; }''',
+]
+
+# --- checks ----------------------------------------------------------------------
+
+[check]
+description = "Every linter, type-check and security check"
+depends = [
+  "check:fe",
+  "check:i18n",
+  "check:be",
+  "check:deps",
+  "check:security",
+  "check:ast",
+  "check:typos",
+]
+
+["check:fe"]
+description = "tsc, oxlint, oxfmt --check, no custom CSS"
+depends = ["check:css"]
+run = ["pnpm exec tsc --noEmit", "pnpm exec oxlint", "pnpm exec oxfmt --check"]
+
+["check:css"]
+description = "The project has no custom CSS: no stylesheet may be tracked (library CSS comes from node_modules)"
+run = '''
+if git ls-files | grep -Ei '\.(css|scss|sass|less|pcss|styl)$'; then
+  echo 'error: custom CSS is not allowed, style through Mantine'; exit 1
+fi
+'''
+
+["check:deps"]
+description = "Unused files, exports and dependencies (knip.json)"
+run = "pnpm exec knip"
+
+["check:i18n"]
+description = "i18n key drift (read-only: --dry-run never writes, --ci exits non-zero on drift)"
+run = [
+  "pnpm exec i18next-cli extract --ci --dry-run",
+  "pnpm exec i18next-cli types --ci",
+  "pnpm exec i18next-cli lint",
+]
+
+["check:be"]
+description = "golangci-lint, govulncheck and go.mod tidiness"
+run = ["golangci-lint run ./...", "go tool govulncheck ./...", "go mod tidy -diff"]
+
+["check:ast"]
+description = "Project-specific syntax rules (sgconfig.yml, ast-grep/): tests, then scan"
+run = ["ast-grep test", "ast-grep scan"]
+
+["check:typos"]
+description = "Spelling in code, docs and comments (_typos.toml)"
+run = "typos"
+
+["check:tracker-size"]
+description = "Tracker (t.js) gzip size budget (package.json size-limit); builds it first"
+run = ["pnpm build:tracker", "pnpm exec size-limit"]
+
+["check:security"]
+description = "Secrets and workflow linters"
+run = ["gitleaks git --no-banner --redact", "jactionlint", "zizmor --no-progress .github"]
+
+[fix]
+description = "Auto-fix i18n keys, lint and formatting"
+run = [{ task = "fix:i18n" }, { task = "fix:fe" }, { task = "fix:be" }]
+
+["fix:i18n"]
+description = "Extract i18n keys (runs first so oxfmt formats the fresh JSON)"
+run = "pnpm exec i18next-cli extract --with-types"
+
+["fix:fe"]
+description = "oxlint --fix, tsp format, oxfmt"
+# tsp format rewrites tspconfig.yaml quotes; oxfmt must run last to normalize them.
+run = ["pnpm exec oxlint --fix", "pnpm exec tsp format typespec", "pnpm exec oxfmt"]
+
+["fix:be"]
+run = "go fmt ./..."
+
+# --- build -----------------------------------------------------------------------
+
+["build:tracker"]
+description = "Build the standalone tracker (IIFE) and copy it into the Go embed tree"
+run = ["pnpm build:tracker", "cp packages/analytics/dist/t.js internal/server/assets/t.js"]
+
+["build:spa"]
+description = "Build the SPA (Vite) into the Go embed tree (gitignored; release builds only)"
+run = [
+  "pnpm build",
+  "rm -rf internal/server/assets/spa",
+  "mkdir -p internal/server/assets/spa",
+  "cp -R dist/. internal/server/assets/spa/",
+]
+
+[build]
+description = "Self-contained release binary (tracker + SPA embedded); VERSION env overrides `dev`"
+depends = ["build:tracker", "build:spa"]
+run = '''
+commit=$(git rev-parse --short HEAD 2>/dev/null || echo none)
+date=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+go build -tags embed_spa -ldflags "-s -w -X main.version=${VERSION:-dev} -X main.commit=$commit -X main.date=$date" -o bin/1mail ./cmd/server
+'''
+
+[loc]
+description = "Lines-of-code report (scc) over hand-written files only"
+# The set of generated files is the source of truth in .gitattributes
+# (linguist-generated=true), so only tracked files git marks as hand-written are fed to scc.
+run = '''
+git ls-files | git check-attr --stdin linguist-generated | awk -F': ' '$3!="true"{print $1}' | xargs scc
+'''

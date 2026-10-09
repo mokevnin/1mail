@@ -12,8 +12,8 @@ dist: dist-release
 before:
   hooks:
     # Build the embedded assets (SPA + tracker) before cross-compiling.
-    - make build-tracker
-    - make build-spa
+    - mise run build:tracker
+    - mise run build:spa
 
 builds:
   - id: onemail

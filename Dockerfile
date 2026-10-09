@@ -4,7 +4,7 @@
 # which just wraps the prebuilt binary.
 
 # --- Stage 1: frontend (SPA + tracker bundle) ---
-FROM node:25-alpine AS frontend
+FROM node:26-alpine AS frontend
 RUN npm install -g pnpm@11
 WORKDIR /src
 COPY . .
@@ -12,7 +12,7 @@ RUN pnpm install --frozen-lockfile
 RUN pnpm build:tracker && pnpm build
 
 # --- Stage 2: Go binary with embedded assets ---
-FROM golang:1.26-alpine AS gobuild
+FROM golang:1.27-alpine AS gobuild
 WORKDIR /src
 COPY go.mod go.sum ./
 RUN go mod download

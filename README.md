@@ -29,13 +29,13 @@ ent/schema/*.go     ──entc──▶ ent/*          (Go ORM)
 ```
 
 ```sh
-make generate          # full cycle: typespec → openapi → backend (ent + ogen) → frontend → i18n types → format
-make generate-typespec # typespec → openapi only
-make generate-backend  # openapi → Go only (ent + ogen)
-make generate-openapi  # openapi → TS client only
+mise run generate          # full cycle: typespec → openapi → backend (ent + ogen) → frontend → i18n types → format
+mise run generate:typespec # typespec → openapi only
+mise run generate:backend  # openapi → Go only (ent + ogen)
+mise run generate:openapi  # openapi → TS client only
 ```
 
-After changing TypeSpec or `ent/schema`, run `make generate` and commit the generated output.
+After changing TypeSpec or `ent/schema`, run `mise run generate` and commit the generated output.
 
 ## Development
 
@@ -46,14 +46,14 @@ installs the git hooks.
 
 ```sh
 mise install # install the pinned toolchain (also installs the git hooks)
-make setup   # install deps, start Postgres, create dev/test/atlas DBs, migrate, seed
-make dev     # start the whole dev stack (mise daemons)
-make test    # creates test DB, then `go test -p 1 ./...`
-make check   # tsc, oxlint, oxfmt --check, knip, golangci-lint, govulncheck, gitleaks, jactionlint, zizmor
-make generate # regenerate TypeSpec → OpenAPI → Go + TS
+mise run setup   # install deps, start Postgres, create dev/test/atlas DBs, migrate, seed
+mise run dev     # start the whole dev stack (mise daemons)
+mise run test    # creates test DB, then `go test -p 1 ./...`
+mise run check   # tsc, oxlint, oxfmt --check, knip, golangci-lint, govulncheck, gitleaks, jactionlint, zizmor
+mise run generate # regenerate TypeSpec → OpenAPI → Go + TS
 ```
 
-CI installs the same toolchain with `jdx/mise-action` and runs the same `make` targets.
+CI installs the same toolchain with `jdx/mise-action` and runs the same mise tasks (`mise tasks` lists them all).
 
 ## Deployment (development)
 
@@ -64,7 +64,7 @@ The local stack is a set of [mise daemons](https://mise.jdx.dev) (`[daemons]` in
 
    ```sh
    mise install
-   make setup
+   mise run setup
    ```
 
    No `.env` is required: `.mise.toml` supplies the dev defaults and the `db` daemon
@@ -81,8 +81,8 @@ The local stack is a set of [mise daemons](https://mise.jdx.dev) (`[daemons]` in
 3. Start the stack:
 
    ```sh
-   make dev        # mise daemons start caddy (starts everything it depends on)
-   make dev-down   # stop it
+   mise run dev        # mise daemons start caddy (starts everything it depends on)
+   mise run dev:down   # stop it
    mise daemons logs backend   # follow a daemon's output; `mise daemons ls` shows status
    ```
 
@@ -98,7 +98,7 @@ Daemons:
 | mailpit  | http://localhost:8025          | captured outbound email (SMTP UI on `:1025`)                |
 
 > The backend runs the real Go server under [air](https://github.com/air-verse/air) for
-> hot reload. Migrations run via Atlas (`make db-migrate`); the dev backend itself does not
+> hot reload. Migrations run via Atlas (`mise run db:migrate`); the dev backend itself does not
 > self-migrate. On Linux, binding `:443` needs `net.ipv4.ip_unprivileged_port_start=0`.
 > The old Grafana/OTLP dev container is gone: leave `OTEL_EXPORTER_OTLP_ENDPOINT` unset
 > (metrics are always exposed at `/metrics`) or point it at your own collector.
@@ -133,7 +133,7 @@ Release archives (`1mail_<version>_<os>_<arch>.tar.gz`) are attached to each
 (amd64/arm64). To build locally:
 
 ```sh
-make build        # → bin/1mail (build-tracker + build-spa + go build -tags embed_spa)
+mise run build    # → bin/1mail (build:tracker + build:spa + go build -tags embed_spa)
 ```
 
 Run it:
@@ -154,7 +154,7 @@ Two options:
   in-process before serving. Use only for single-replica deploys against a fresh database.
 
 > The production binary tracks applied migrations in its own `schema_migrations` table. The
-> dev Atlas CLI flow (`make db-migrate`) uses Atlas's `atlas_schema_revisions` table — never
+> dev Atlas CLI flow (`mise run db:migrate`) uses Atlas's `atlas_schema_revisions` table — never
 > point `AUTO_MIGRATE` at a database previously managed by the Atlas CLI dev flow.
 
 ### Configuration

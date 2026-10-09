@@ -1,6 +1,6 @@
 module github.com/mokevnin/1mail
 
-go 1.26.9
+go 1.27.2
 
 require (
 	ariga.io/atlas v1.2.3
