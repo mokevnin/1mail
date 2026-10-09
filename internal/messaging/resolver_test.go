@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/mokevnin/1mail/config"
+	"github.com/mokevnin/1mail/internal/fixtures"
 	"github.com/mokevnin/1mail/internal/messaging"
 	"github.com/mokevnin/1mail/internal/messaging/registry"
 	"github.com/mokevnin/1mail/internal/secrets"
@@ -55,6 +56,6 @@ func TestResolverNoDefault(t *testing.T) {
 	// The Globex fixture tenant has no integration.
 	resolver := messaging.NewResolver(env.DB, newTestCipher(t), registry.Default())
 
-	_, err := resolver.EmailSender(ctx, testhelper.GlobexWorkspaceID)
+	_, err := resolver.EmailSender(ctx, fixtures.GlobexID)
 	assert.ErrorIs(t, err, messaging.ErrNoProvider)
 }

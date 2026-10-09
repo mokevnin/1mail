@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	siteapi "github.com/mokevnin/1mail/gen/site"
+	"github.com/mokevnin/1mail/internal/fixtures"
 	"github.com/mokevnin/1mail/internal/testhelper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -12,9 +13,9 @@ import (
 
 func TestSiteAutomationsCRUDAndActivation(t *testing.T) {
 	env := testhelper.Setup(t)
-	c := siteClient(t, env, "info@1mail.com")
+	c := env.SiteActor(t, fixtures.OwnerJohnEmail)
 	ctx := context.Background()
-	slug := "acme"
+	slug := fixtures.AcmeSlug
 
 	created, err := c.SiteAutomationsCreate(ctx, &siteapi.SiteCreateAutomationInput{
 		Name:         "Welcome series",

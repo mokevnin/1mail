@@ -5,6 +5,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/mokevnin/1mail/internal/fixtures"
 	"github.com/mokevnin/1mail/internal/testhelper"
 	"github.com/stretchr/testify/assert"
 )
@@ -27,8 +28,8 @@ func TestSESHookUnknownKeyNotFound(t *testing.T) {
 func TestSESHookRejectsUnverifiedPayload(t *testing.T) {
 	env := testhelper.Setup(t)
 
-	// Fixture workspace "acme" ingest key (fixtures/workspaces.yml).
-	req := httptest.NewRequestWithContext(t.Context(), "POST", "/hooks/omik_test_acme_ingest_key/ses",
+	// The Acme workspace ingest key resolves the workspace before verification.
+	req := httptest.NewRequestWithContext(t.Context(), "POST", "/hooks/"+fixtures.AcmeIngestKey+"/ses",
 		strings.NewReader(`{"Type":"Notification","Message":"{}","Signature":"bogus","SigningCertURL":"https://sns.us-east-1.amazonaws.com/x.pem"}`))
 	rec := httptest.NewRecorder()
 	env.Server.ServeHTTP(rec, req)

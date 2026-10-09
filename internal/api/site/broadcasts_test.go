@@ -6,18 +6,19 @@ import (
 	"time"
 
 	siteapi "github.com/mokevnin/1mail/gen/site"
+	"github.com/mokevnin/1mail/internal/fixtures"
 	"github.com/mokevnin/1mail/internal/testhelper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-// Fixture user info@1mail.com owns workspace "acme". Broadcasts live under
+// The Acme owner fixture user owns the Acme workspace. Broadcasts live under
 // /w/{slug}/broadcasts and start life as drafts.
 func TestSiteBroadcastsCRUD(t *testing.T) {
 	env := testhelper.Setup(t)
-	c := siteClient(t, env, "info@1mail.com")
+	c := env.SiteActor(t, fixtures.OwnerJohnEmail)
 	ctx := context.Background()
-	slug := "acme"
+	slug := fixtures.AcmeSlug
 
 	created, err := c.SiteBroadcastsCreate(ctx, &siteapi.SiteCreateBroadcastInput{
 		Name:    "Spring sale",
@@ -91,7 +92,7 @@ func TestSiteBroadcastsCRUD(t *testing.T) {
 // Broadcasts are scoped to the workspace: a slug the user does not own is a 404.
 func TestSiteBroadcastsRequireOwnedWorkspace(t *testing.T) {
 	env := testhelper.Setup(t)
-	c := siteClient(t, env, "info@1mail.com")
+	c := env.SiteActor(t, fixtures.OwnerJohnEmail)
 	ctx := context.Background()
 
 	out, err := c.SiteBroadcastsList(ctx, siteapi.SiteBroadcastsListParams{Slug: "does-not-exist"})

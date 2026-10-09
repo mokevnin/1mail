@@ -11,16 +11,8 @@ import (
 
 	"github.com/mokevnin/1mail/ent/broadcast"
 	"github.com/mokevnin/1mail/internal/broadcasts"
+	"github.com/mokevnin/1mail/internal/fixtures"
 	"github.com/mokevnin/1mail/internal/testhelper"
-)
-
-// Fixtures (workspace acme = 1): broadcast 100 is a draft, 101 is scheduled, 102 is
-// already sending.
-const (
-	acme      = int64(1)
-	draftID   = int64(100)
-	schedID   = int64(101)
-	sendingID = int64(102)
 )
 
 type enqueued struct {
@@ -47,18 +39,18 @@ func TestSendMovesDraftToSendingAndEnqueuesImmediately(t *testing.T) {
 	q := &recorder{}
 	m := broadcasts.New(env.DB, q)
 
-	b, err := m.Send(context.Background(), acme, draftID)
+	b, err := m.Send(context.Background(), fixtures.AcmeID, fixtures.BroadcastDraftID)
 	require.NoError(t, err)
 
 	assert.Equal(t, broadcast.StatusSending, b.Status)
-	assert.Equal(t, []enqueued{{draftID, nil}}, q.calls)
+	assert.Equal(t, []enqueued{{fixtures.BroadcastDraftID, nil}}, q.calls)
 }
 
 func TestSendClearsTheScheduleOfAScheduledBroadcast(t *testing.T) {
 	env := testhelper.Setup(t)
 	m := broadcasts.New(env.DB, &recorder{})
 
-	b, err := m.Send(context.Background(), acme, schedID)
+	b, err := m.Send(context.Background(), fixtures.AcmeID, fixtures.BroadcastScheduledID)
 	require.NoError(t, err)
 
 	assert.Equal(t, broadcast.StatusSending, b.Status)
@@ -70,10 +62,10 @@ func TestSendRevertsToDraftWhenEnqueueFails(t *testing.T) {
 	boom := errors.New("queue down")
 	m := broadcasts.New(env.DB, &recorder{err: boom})
 
-	_, err := m.Send(context.Background(), acme, draftID)
+	_, err := m.Send(context.Background(), fixtures.AcmeID, fixtures.BroadcastDraftID)
 
 	require.ErrorIs(t, err, boom)
-	assert.Equal(t, broadcast.StatusDraft, env.DB.Broadcast.GetX(context.Background(), draftID).Status)
+	assert.Equal(t, broadcast.StatusDraft, env.DB.Broadcast.GetX(context.Background(), fixtures.BroadcastDraftID).Status)
 }
 
 func TestScheduleSetsTimeAndEnqueuesForThen(t *testing.T) {
@@ -82,14 +74,14 @@ func TestScheduleSetsTimeAndEnqueuesForThen(t *testing.T) {
 	m := broadcasts.New(env.DB, q)
 	when := time.Now().Add(24 * time.Hour).Truncate(time.Second)
 
-	b, err := m.Schedule(context.Background(), acme, draftID, when)
+	b, err := m.Schedule(context.Background(), fixtures.AcmeID, fixtures.BroadcastDraftID, when)
 	require.NoError(t, err)
 
 	assert.Equal(t, broadcast.StatusScheduled, b.Status)
 	require.NotNil(t, b.ScheduledAt)
 	assert.True(t, when.Equal(*b.ScheduledAt))
 	require.Len(t, q.calls, 1)
-	assert.Equal(t, draftID, q.calls[0].id)
+	assert.EqualValues(t, fixtures.BroadcastDraftID, q.calls[0].id)
 	require.NotNil(t, q.calls[0].at)
 	assert.True(t, when.Equal(*q.calls[0].at))
 }
@@ -99,10 +91,10 @@ func TestScheduleRevertsToDraftAndClearsTimeWhenEnqueueFails(t *testing.T) {
 	boom := errors.New("queue down")
 	m := broadcasts.New(env.DB, &recorder{err: boom})
 
-	_, err := m.Schedule(context.Background(), acme, draftID, time.Now().Add(time.Hour))
+	_, err := m.Schedule(context.Background(), fixtures.AcmeID, fixtures.BroadcastDraftID, time.Now().Add(time.Hour))
 
 	require.ErrorIs(t, err, boom)
-	got := env.DB.Broadcast.GetX(context.Background(), draftID)
+	got := env.DB.Broadcast.GetX(context.Background(), fixtures.BroadcastDraftID)
 	assert.Equal(t, broadcast.StatusDraft, got.Status)
 	assert.Nil(t, got.ScheduledAt)
 }
@@ -112,9 +104,9 @@ func TestTransitionsOutOfSendingAreRefused(t *testing.T) {
 	q := &recorder{}
 	m := broadcasts.New(env.DB, q)
 
-	_, err := m.Send(context.Background(), acme, sendingID)
+	_, err := m.Send(context.Background(), fixtures.AcmeID, fixtures.BroadcastSendingID)
 	assert.ErrorIs(t, err, broadcasts.ErrNotSendable)
-	_, err = m.Schedule(context.Background(), acme, sendingID, time.Now().Add(time.Hour))
+	_, err = m.Schedule(context.Background(), fixtures.AcmeID, fixtures.BroadcastSendingID, time.Now().Add(time.Hour))
 	assert.ErrorIs(t, err, broadcasts.ErrNotSendable)
 	assert.Empty(t, q.calls)
 }
@@ -123,12 +115,12 @@ func TestUnscheduleReturnsAScheduledBroadcastToDraft(t *testing.T) {
 	env := testhelper.Setup(t)
 	m := broadcasts.New(env.DB, &recorder{})
 
-	b, err := m.Unschedule(context.Background(), acme, schedID)
+	b, err := m.Unschedule(context.Background(), fixtures.AcmeID, fixtures.BroadcastScheduledID)
 	require.NoError(t, err)
 
 	assert.Equal(t, broadcast.StatusDraft, b.Status)
 	assert.Nil(t, b.ScheduledAt)
-	got := env.DB.Broadcast.GetX(context.Background(), schedID)
+	got := env.DB.Broadcast.GetX(context.Background(), fixtures.BroadcastScheduledID)
 	assert.Equal(t, broadcast.StatusDraft, got.Status)
 	assert.Nil(t, got.ScheduledAt)
 }
@@ -137,13 +129,13 @@ func TestUnscheduleRefusesWhatIsNotScheduled(t *testing.T) {
 	env := testhelper.Setup(t)
 	m := broadcasts.New(env.DB, &recorder{})
 
-	for _, id := range []int64{draftID, sendingID} {
-		_, err := m.Unschedule(context.Background(), acme, id)
+	for _, id := range []int64{fixtures.BroadcastDraftID, fixtures.BroadcastSendingID} {
+		_, err := m.Unschedule(context.Background(), fixtures.AcmeID, id)
 		assert.ErrorIs(t, err, broadcasts.ErrNotScheduled, "broadcast %d", id)
 	}
-	_, err := m.Unschedule(context.Background(), acme, 999999)
+	_, err := m.Unschedule(context.Background(), fixtures.AcmeID, 999999)
 	assert.ErrorIs(t, err, broadcasts.ErrNotFound)
-	_, err = m.Unschedule(context.Background(), acme+1000, schedID)
+	_, err = m.Unschedule(context.Background(), fixtures.AcmeID+1000, fixtures.BroadcastScheduledID)
 	assert.ErrorIs(t, err, broadcasts.ErrNotFound, "another workspace's broadcast")
 }
 
@@ -151,8 +143,8 @@ func TestUnknownOrForeignBroadcastIsNotFound(t *testing.T) {
 	env := testhelper.Setup(t)
 	m := broadcasts.New(env.DB, &recorder{})
 
-	_, err := m.Send(context.Background(), acme+1000, draftID)
+	_, err := m.Send(context.Background(), fixtures.AcmeID+1000, fixtures.BroadcastDraftID)
 	assert.ErrorIs(t, err, broadcasts.ErrNotFound)
-	_, err = m.Schedule(context.Background(), acme, 999999, time.Now().Add(time.Hour))
+	_, err = m.Schedule(context.Background(), fixtures.AcmeID, 999999, time.Now().Add(time.Hour))
 	assert.ErrorIs(t, err, broadcasts.ErrNotFound)
 }

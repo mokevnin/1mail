@@ -8,10 +8,9 @@ import (
 	"time"
 
 	"github.com/go-faster/jx"
-	"github.com/mokevnin/1mail/ent"
 	externalapi "github.com/mokevnin/1mail/gen/external"
 	"github.com/mokevnin/1mail/internal/events"
-	"github.com/mokevnin/1mail/internal/service"
+	"github.com/mokevnin/1mail/internal/fixtures"
 	"github.com/mokevnin/1mail/internal/testhelper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -50,44 +49,9 @@ func outboxCollected(t *testing.T, env *testhelper.TestEnv) []collectedRow {
 	return out
 }
 
-// seedToken inserts an ApiToken with the given scopes and returns the plaintext
-// bearer value (omtk_<prefix>_<secret>), exercising the real token crypto.
-func seedToken(t *testing.T, db *ent.Client, scopes []string) string {
-	t.Helper()
-	prefix, err := service.GenerateTokenPrefix()
-	require.NoError(t, err)
-	secret, err := service.GenerateTokenSecret()
-	require.NoError(t, err)
-	hash, err := service.HashTokenSecret(secret)
-	require.NoError(t, err)
-
-	_, err = db.ApiToken.Create().
-		SetName("test-token").SetPrefix(prefix).SetSecretHash(hash).SetScopes(scopes).
-		SetWorkspaceID(1).
-		Save(context.Background())
-	require.NoError(t, err)
-	return service.TokenValue(prefix, secret)
-}
-
-// staticToken is the client-side SecuritySource (supplies the bearer token).
-type staticToken struct{ token string }
-
-func (s staticToken) BearerAuth(context.Context, externalapi.OperationName) (externalapi.BearerAuth, error) {
-	return externalapi.BearerAuth{Token: s.token}, nil
-}
-
-// client returns the generated typed client wired to dispatch in-memory to the
-// server (no socket). It builds URLs and encodes/decodes DTOs itself.
-func client(t *testing.T, env *testhelper.TestEnv, token string) *externalapi.Client {
-	t.Helper()
-	c, err := externalapi.NewClient("http://local/api", staticToken{token}, externalapi.WithClient(env.Transport(nil)))
-	require.NoError(t, err)
-	return c
-}
-
 func TestExternalContactsCRUD(t *testing.T) {
 	env := testhelper.Setup(t)
-	c := client(t, env, seedToken(t, env.DB, []string{"contacts:read", "contacts:write"}))
+	c := env.ExternalScoped(t, "contacts:read", "contacts:write")
 	ctx := context.Background()
 
 	list, err := c.ContactsList(ctx, externalapi.ContactsListParams{})
@@ -107,7 +71,7 @@ func TestExternalContactsCRUD(t *testing.T) {
 	require.True(t, ok)
 	assert.Equal(t, externalapi.EmailAddress("new@example.com"), email)
 
-	got, err := c.ContactsGet(ctx, externalapi.ContactsGetParams{ID: "1"})
+	got, err := c.ContactsGet(ctx, externalapi.ContactsGetParams{ID: entityIDString(fixtures.ContactAliceID)})
 	require.NoError(t, err)
 	assert.IsType(t, &externalapi.ContactResource{}, got)
 
@@ -115,7 +79,7 @@ func TestExternalContactsCRUD(t *testing.T) {
 	require.NoError(t, err)
 	assert.IsType(t, &externalapi.ContactsGetNotFound{}, missing)
 
-	deleted, err := c.ContactsDelete(ctx, externalapi.ContactsDeleteParams{ID: "1"})
+	deleted, err := c.ContactsDelete(ctx, externalapi.ContactsDeleteParams{ID: entityIDString(fixtures.ContactAliceID)})
 	require.NoError(t, err)
 	assert.IsType(t, &externalapi.ContactsDeleteNoContent{}, deleted)
 }
@@ -124,7 +88,7 @@ func TestExternalContactsCRUD(t *testing.T) {
 // it publishes contact.created onto the outbox in the same transaction.
 func TestExternalContactsCreatePublishesContactCreated(t *testing.T) {
 	env := testhelper.Setup(t)
-	c := client(t, env, seedToken(t, env.DB, []string{"contacts:write"}))
+	c := env.ExternalScoped(t, "contacts:write")
 
 	res, err := c.ContactsCreate(context.Background(), &externalapi.CreateContactInput{
 		Email: externalapi.NewOptNilEmailAddress("published@example.com"),
@@ -147,9 +111,9 @@ func TestExternalContactsCreatePublishesContactCreated(t *testing.T) {
 // Isolated: the unique violation aborts this test's transaction.
 func TestExternalContactsConflict(t *testing.T) {
 	env := testhelper.Setup(t)
-	c := client(t, env, seedToken(t, env.DB, []string{"contacts:write"}))
+	c := env.ExternalScoped(t, "contacts:write")
 
-	res, err := c.ContactsCreate(context.Background(), &externalapi.CreateContactInput{Email: externalapi.NewOptNilEmailAddress("alice@example.com")})
+	res, err := c.ContactsCreate(context.Background(), &externalapi.CreateContactInput{Email: externalapi.NewOptNilEmailAddress(fixtures.ContactAliceEmail)})
 	require.NoError(t, err)
 	assert.IsType(t, &externalapi.ContactsCreateConflict{}, res)
 }
@@ -159,16 +123,16 @@ func TestExternalAuthAndScopes(t *testing.T) {
 	ctx := context.Background()
 
 	// No token / bad token → 401 Unauthorized variant.
-	res, err := client(t, env, "").ContactsList(ctx, externalapi.ContactsListParams{})
+	res, err := env.ExternalAnonymous(t).ContactsList(ctx, externalapi.ContactsListParams{})
 	require.NoError(t, err)
 	assert.IsType(t, &externalapi.ContactsListUnauthorized{}, res)
 
-	res, err = client(t, env, "omtk_deadbeef_invalidsecret").ContactsList(ctx, externalapi.ContactsListParams{})
+	res, err = env.ExternalWithToken(t, "omtk_deadbeef_invalidsecret").ContactsList(ctx, externalapi.ContactsListParams{})
 	require.NoError(t, err)
 	assert.IsType(t, &externalapi.ContactsListUnauthorized{}, res)
 
 	// Read-only token: can read, cannot create.
-	ro := client(t, env, seedToken(t, env.DB, []string{"contacts:read"}))
+	ro := env.ExternalScoped(t, "contacts:read")
 	createRes, err := ro.ContactsCreate(ctx, &externalapi.CreateContactInput{Email: externalapi.NewOptNilEmailAddress("x@example.com")})
 	require.NoError(t, err)
 	assert.IsType(t, &externalapi.ContactsCreateUnauthorized{}, createRes)
@@ -183,7 +147,7 @@ func TestExternalAuthAndScopes(t *testing.T) {
 // is what catches the NOT-NULL workspace_id bug (a bare 204 assertion would not).
 func TestExternalEventsCreate(t *testing.T) {
 	env := testhelper.Setup(t)
-	c := client(t, env, seedToken(t, env.DB, []string{"events:write"}))
+	c := env.ExternalScoped(t, "events:write")
 	ctx := context.Background()
 
 	occurred := time.Date(2026, 6, 1, 12, 0, 0, 0, time.UTC)
@@ -211,7 +175,7 @@ func TestExternalEventsCreate(t *testing.T) {
 	rows := outboxCollected(t, env)
 	require.Len(t, rows, 2)
 	for _, r := range rows {
-		assert.EqualValues(t, 1, r.envelope.WorkspaceID) // token belongs to workspace 1
+		assert.EqualValues(t, fixtures.AcmeID, r.envelope.WorkspaceID) // token belongs to Acme
 		byID[r.event.SubjectID] = r
 	}
 
@@ -234,7 +198,7 @@ func TestExternalEventsScopes(t *testing.T) {
 	ctx := context.Background()
 
 	// events:read cannot write.
-	ro := client(t, env, seedToken(t, env.DB, []string{"events:read"}))
+	ro := env.ExternalScoped(t, "events:read")
 	createRes, err := ro.EventsCreate(ctx, &externalapi.RecordEventsInput{
 		Events: []externalapi.EventInput{{SubjectId: "s", Action: "a"}},
 	})
@@ -242,7 +206,7 @@ func TestExternalEventsScopes(t *testing.T) {
 	assert.IsType(t, &externalapi.EventsCreateUnauthorized{}, createRes)
 
 	// events:write cannot read actions.
-	wo := client(t, env, seedToken(t, env.DB, []string{"events:write"}))
+	wo := env.ExternalScoped(t, "events:write")
 	listRes, err := wo.EventActionsList(ctx, externalapi.EventActionsListParams{})
 	require.NoError(t, err)
 	assert.IsType(t, &externalapi.EventActionsListUnauthorized{}, listRes)
@@ -253,7 +217,7 @@ func TestExternalEventsScopes(t *testing.T) {
 // fixture events (page_view, purchase) belong to workspace 1.
 func TestExternalEventActionsList(t *testing.T) {
 	env := testhelper.Setup(t)
-	c := client(t, env, seedToken(t, env.DB, []string{"events:read"}))
+	c := env.ExternalScoped(t, "events:read")
 
 	res, err := c.EventActionsList(context.Background(), externalapi.EventActionsListParams{})
 	require.NoError(t, err)
@@ -278,8 +242,8 @@ func TestExternalEventsWorkspaceIsolation(t *testing.T) {
 	ctx := context.Background()
 
 	// The Globex tenant has an event carrying an action unique to it (fixture).
-	// seedToken always binds to workspace 1.
-	c := client(t, env, seedToken(t, env.DB, []string{"events:read", "events:write"}))
+	// Scoped tokens always bind to Acme.
+	c := env.ExternalScoped(t, "events:read", "events:write")
 
 	// Listing for workspace 1 must not surface workspace 2's action.
 	res, err := c.EventActionsList(ctx, externalapi.EventActionsListParams{})
@@ -287,7 +251,7 @@ func TestExternalEventsWorkspaceIsolation(t *testing.T) {
 	ok := res.(*externalapi.EventActionsListOK)
 	acmeActions := make([]string, len(ok.Items))
 	for i, item := range ok.Items {
-		assert.NotEqual(t, testhelper.GlobexEventAction, item.Action, "another tenant's action leaked")
+		assert.NotEqual(t, fixtures.EventGlobexAction, item.Action, "another tenant's action leaked")
 		acmeActions[i] = item.Action
 	}
 	assert.Contains(t, acmeActions, "page_view", "the workspace's own actions are returned")
@@ -300,12 +264,12 @@ func TestExternalEventsWorkspaceIsolation(t *testing.T) {
 	rows := outboxCollected(t, env)
 	require.Len(t, rows, 1)
 	assert.Equal(t, "user:fred@example.com", rows[0].event.SubjectID)
-	assert.EqualValues(t, 1, rows[0].envelope.WorkspaceID)
+	assert.EqualValues(t, fixtures.AcmeID, rows[0].envelope.WorkspaceID)
 }
 
 func TestExternalRequestValidation(t *testing.T) {
 	env := testhelper.Setup(t)
-	c := client(t, env, seedToken(t, env.DB, []string{"contacts:write"}))
+	c := env.ExternalScoped(t, "contacts:write")
 
 	// Invalid email → ogen validation rejects with an undocumented 400, which
 	// the typed client surfaces as an error.

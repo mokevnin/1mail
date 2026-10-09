@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/mokevnin/1mail/internal/fixtures"
 	"github.com/mokevnin/1mail/internal/messaging"
 	"github.com/mokevnin/1mail/internal/testhelper"
 )
@@ -149,7 +150,7 @@ func TestDKIMSignsListUnsubscribeHeaders(t *testing.T) {
 	ctx := context.Background()
 	signer := messaging.NewDKIMSigner(env.DB, envCipher(t), 1)
 
-	dom, err := env.DB.SendingDomain.Get(ctx, 1)
+	dom, err := env.DB.SendingDomain.Get(ctx, fixtures.SendingDomainVerifiedID)
 	require.NoError(t, err)
 	pubTXT := dom.DkimPublicKey
 
@@ -192,7 +193,7 @@ func TestDKIMTransactionalUnchanged(t *testing.T) {
 	ctx := context.Background()
 	signer := messaging.NewDKIMSigner(env.DB, envCipher(t), 1)
 
-	dom, err := env.DB.SendingDomain.Get(ctx, 1)
+	dom, err := env.DB.SendingDomain.Get(ctx, fixtures.SendingDomainVerifiedID)
 	require.NoError(t, err)
 	pubTXT := dom.DkimPublicKey
 
@@ -227,7 +228,7 @@ func TestDKIMSignatureCryptoVerifies(t *testing.T) {
 	ctx := context.Background()
 	signer := messaging.NewDKIMSigner(env.DB, envCipher(t), 1)
 
-	dom, err := env.DB.SendingDomain.Get(ctx, 1)
+	dom, err := env.DB.SendingDomain.Get(ctx, fixtures.SendingDomainVerifiedID)
 	require.NoError(t, err)
 	pubTXT := dom.DkimPublicKey
 

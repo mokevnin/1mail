@@ -6,6 +6,7 @@ import (
 	"time"
 
 	siteapi "github.com/mokevnin/1mail/gen/site"
+	"github.com/mokevnin/1mail/internal/fixtures"
 	"github.com/mokevnin/1mail/internal/service"
 	"github.com/mokevnin/1mail/internal/testhelper"
 	"github.com/stretchr/testify/assert"
@@ -14,17 +15,17 @@ import (
 
 func TestSiteWorkspacesUpdateRenames(t *testing.T) {
 	env := testhelper.Setup(t)
-	c := siteClient(t, env, "info@1mail.com")
+	c := env.SiteActor(t, fixtures.OwnerJohnEmail)
 	ctx := context.Background()
 
 	res, err := c.SiteWorkspacesUpdate(ctx,
 		&siteapi.SiteUpdateWorkspaceInput{Name: "Acme Inc"},
-		siteapi.SiteWorkspacesUpdateParams{Slug: "acme"})
+		siteapi.SiteWorkspacesUpdateParams{Slug: fixtures.AcmeSlug})
 	require.NoError(t, err)
 	updated, ok := res.(*siteapi.SiteWorkspaceResource)
 	require.Truef(t, ok, "got %T", res)
 	assert.Equal(t, "Acme Inc", updated.Name)
-	assert.Equal(t, "acme", updated.Slug, "slug is immutable")
+	assert.Equal(t, fixtures.AcmeSlug, updated.Slug, "slug is immutable")
 
 	// The change is reflected in the list.
 	list, err := c.SiteWorkspacesList(ctx)
@@ -35,7 +36,7 @@ func TestSiteWorkspacesUpdateRenames(t *testing.T) {
 
 func TestSiteWorkspacesUpdateNotOwned(t *testing.T) {
 	env := testhelper.Setup(t)
-	c := siteClient(t, env, "info@1mail.com")
+	c := env.SiteActor(t, fixtures.OwnerJohnEmail)
 
 	res, err := c.SiteWorkspacesUpdate(context.Background(),
 		&siteapi.SiteUpdateWorkspaceInput{Name: "Hijacked"},
@@ -46,11 +47,11 @@ func TestSiteWorkspacesUpdateNotOwned(t *testing.T) {
 
 func TestSiteWorkspacesUpdateRejectsBlankName(t *testing.T) {
 	env := testhelper.Setup(t)
-	c := siteClient(t, env, "info@1mail.com")
+	c := env.SiteActor(t, fixtures.OwnerJohnEmail)
 
 	res, err := c.SiteWorkspacesUpdate(context.Background(),
 		&siteapi.SiteUpdateWorkspaceInput{Name: "   "},
-		siteapi.SiteWorkspacesUpdateParams{Slug: "acme"})
+		siteapi.SiteWorkspacesUpdateParams{Slug: fixtures.AcmeSlug})
 	require.NoError(t, err)
 	assert.IsType(t, &siteapi.SiteWorkspacesUpdateUnprocessableEntity{}, res)
 }
@@ -59,7 +60,7 @@ func TestSiteWorkspacesUpdateRejectsBlankName(t *testing.T) {
 // suspended and why, so the dashboard can say so while login and reads keep working.
 func TestSiteWorkspacesListExposesSuspension(t *testing.T) {
 	env := testhelper.Setup(t)
-	c := siteClient(t, env, "info@1mail.com")
+	c := env.SiteActor(t, fixtures.OwnerJohnEmail)
 	ctx := context.Background()
 
 	list, err := c.SiteWorkspacesList(ctx)

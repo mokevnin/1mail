@@ -11,24 +11,28 @@ import (
 
 	"github.com/mokevnin/1mail/ent/broadcast"
 	externalapi "github.com/mokevnin/1mail/gen/external"
+	"github.com/mokevnin/1mail/internal/fixtures"
 	"github.com/mokevnin/1mail/internal/testhelper"
 )
 
-// Fixtures (workspace acme = 1): broadcast 100 is a draft, 101 scheduled, 103 failed
-// with 2 skipped, 200 sent; segment 100 is the rule segment "Pro & team members".
-const (
-	draftBroadcast  = "100"
-	schedBroadcast  = "101"
-	failedBroadcast = "103"
-	sentBroadcast   = "200"
-	proSegment      = "100"
+// Fixtures (workspace acme): BroadcastScheduled and BroadcastFailed (2 skipped) by id;
+// SegmentProPlan is the rule segment "Pro & team members".
+var (
+	schedBroadcast  = entityIDString(fixtures.BroadcastScheduledID)
+	failedBroadcast = entityIDString(fixtures.BroadcastFailedID)
+	proSegment      = entityIDString(fixtures.SegmentProPlanID)
+)
+
+var (
+	draftBroadcast = entityIDString(fixtures.BroadcastDraftID)
+	sentBroadcast  = entityIDString(fixtures.BroadcastSentID)
 )
 
 var authorScopes = []string{"broadcasts:read", "broadcasts:write"}
 
 func TestExternalBroadcastsAreCreatedAsDraftsAndEditedWhileDraft(t *testing.T) {
 	env := testhelper.Setup(t)
-	c := client(t, env, seedToken(t, env.DB, authorScopes))
+	c := env.ExternalScoped(t, authorScopes...)
 	ctx := context.Background()
 
 	created, err := c.BroadcastsCreate(ctx, &externalapi.CreateBroadcastInput{
@@ -66,7 +70,7 @@ func TestExternalBroadcastsAreCreatedAsDraftsAndEditedWhileDraft(t *testing.T) {
 
 func TestExternalBroadcastsDeleteOnlyDrafts(t *testing.T) {
 	env := testhelper.Setup(t)
-	c := client(t, env, seedToken(t, env.DB, authorScopes))
+	c := env.ExternalScoped(t, authorScopes...)
 	ctx := context.Background()
 
 	out, err := c.BroadcastsDelete(ctx, externalapi.BroadcastsDeleteParams{ID: draftBroadcast})
@@ -80,7 +84,7 @@ func TestExternalBroadcastsDeleteOnlyDrafts(t *testing.T) {
 
 func TestExternalBroadcastAudienceIsASegmentOrEveryone(t *testing.T) {
 	env := testhelper.Setup(t)
-	c := client(t, env, seedToken(t, env.DB, authorScopes))
+	c := env.ExternalScoped(t, authorScopes...)
 	ctx := context.Background()
 
 	set, err := c.BroadcastsSetAudience(ctx, &externalapi.SetBroadcastAudienceInput{SegmentId: externalapi.NewNilEntityId(proSegment)},
@@ -110,7 +114,7 @@ func TestExternalBroadcastAudienceIsASegmentOrEveryone(t *testing.T) {
 
 func TestExternalBroadcastTestSendGoesToOneAddressOnly(t *testing.T) {
 	env := testhelper.Setup(t)
-	c := client(t, env, seedToken(t, env.DB, authorScopes))
+	c := env.ExternalScoped(t, authorScopes...)
 	ctx := context.Background()
 
 	out, err := c.BroadcastsTestSend(ctx, &externalapi.TestSendBroadcastInput{Email: "qa@test.dev"},
@@ -121,12 +125,12 @@ func TestExternalBroadcastTestSendGoesToOneAddressOnly(t *testing.T) {
 	msgs := env.CustomerMail.Messages()
 	require.Len(t, msgs, 1)
 	assert.Equal(t, "qa@test.dev", msgs[0].To)
-	assert.Equal(t, broadcast.StatusDraft, env.DB.Broadcast.GetX(ctx, 100).Status, "a test send does not touch the lifecycle")
+	assert.Equal(t, broadcast.StatusDraft, env.DB.Broadcast.GetX(ctx, fixtures.BroadcastDraftID).Status, "a test send does not touch the lifecycle")
 }
 
 func TestExternalBroadcastReport(t *testing.T) {
 	env := testhelper.Setup(t)
-	c := client(t, env, seedToken(t, env.DB, authorScopes))
+	c := env.ExternalScoped(t, authorScopes...)
 	ctx := context.Background()
 
 	got, err := c.BroadcastsReport(ctx, externalapi.BroadcastsReportParams{ID: failedBroadcast})
@@ -140,7 +144,7 @@ func TestExternalBroadcastReport(t *testing.T) {
 	sent, err := c.BroadcastsReport(ctx, externalapi.BroadcastsReportParams{ID: sentBroadcast})
 	require.NoError(t, err)
 	sr := sent.(*externalapi.BroadcastReport)
-	b := env.DB.Broadcast.GetX(ctx, 200)
+	b := env.DB.Broadcast.GetX(ctx, fixtures.BroadcastSentID)
 	assert.EqualValues(t, b.SentCount, sr.SentCount)
 	assert.EqualValues(t, b.OpenedCount, sr.OpenedCount)
 	assert.EqualValues(t, b.ClickedCount, sr.ClickedCount)
@@ -149,8 +153,8 @@ func TestExternalBroadcastReport(t *testing.T) {
 func TestExternalBroadcastsRequireScopes(t *testing.T) {
 	env := testhelper.Setup(t)
 	ctx := context.Background()
-	readOnly := client(t, env, seedToken(t, env.DB, []string{"broadcasts:read"}))
-	noScope := client(t, env, seedToken(t, env.DB, []string{"contacts:read"}))
+	readOnly := env.ExternalScoped(t, "broadcasts:read")
+	noScope := env.ExternalScoped(t, "contacts:read")
 
 	// read scope reads...
 	got, err := readOnly.BroadcastsGet(ctx, externalapi.BroadcastsGetParams{ID: draftBroadcast})
@@ -195,24 +199,24 @@ func TestExternalBroadcastScheduleNeedsTheSendScope(t *testing.T) {
 	body := &externalapi.ScheduleBroadcastInput{ScheduledAt: externalapi.Timestamp(when)}
 
 	// Authoring scopes are not enough to send, in either direction.
-	author := client(t, env, seedToken(t, env.DB, authorScopes))
+	author := env.ExternalScoped(t, authorScopes...)
 	res, err := author.BroadcastsSchedule(ctx, body, externalapi.BroadcastsScheduleParams{ID: draftBroadcast})
 	require.NoError(t, err)
 	assert.IsType(t, &externalapi.BroadcastsScheduleUnauthorized{}, res)
 	un, err := author.BroadcastsUnschedule(ctx, externalapi.BroadcastsUnscheduleParams{ID: schedBroadcast})
 	require.NoError(t, err)
 	assert.IsType(t, &externalapi.BroadcastsUnscheduleUnauthorized{}, un)
-	assert.Equal(t, broadcast.StatusDraft, env.DB.Broadcast.GetX(ctx, 100).Status)
-	assert.Equal(t, broadcast.StatusScheduled, env.DB.Broadcast.GetX(ctx, 101).Status)
+	assert.Equal(t, broadcast.StatusDraft, env.DB.Broadcast.GetX(ctx, fixtures.BroadcastDraftID).Status)
+	assert.Equal(t, broadcast.StatusScheduled, env.DB.Broadcast.GetX(ctx, fixtures.BroadcastScheduledID).Status)
 
 	// emails:send is a different lock.
-	emailer := client(t, env, seedToken(t, env.DB, []string{"emails:send"}))
+	emailer := env.ExternalScoped(t, "emails:send")
 	res, err = emailer.BroadcastsSchedule(ctx, body, externalapi.BroadcastsScheduleParams{ID: draftBroadcast})
 	require.NoError(t, err)
 	assert.IsType(t, &externalapi.BroadcastsScheduleUnauthorized{}, res)
 
 	// broadcasts:send alone schedules and unschedules.
-	sender := client(t, env, seedToken(t, env.DB, []string{"broadcasts:send"}))
+	sender := env.ExternalScoped(t, "broadcasts:send")
 	res, err = sender.BroadcastsSchedule(ctx, body, externalapi.BroadcastsScheduleParams{ID: draftBroadcast})
 	require.NoError(t, err)
 	b, ok := res.(*externalapi.BroadcastResource)
@@ -227,13 +231,13 @@ func TestExternalBroadcastScheduleNeedsTheSendScope(t *testing.T) {
 	b, ok = un.(*externalapi.BroadcastResource)
 	require.Truef(t, ok, "got %T", un)
 	assert.Equal(t, externalapi.BroadcastStatusDraft, b.Status)
-	assert.Nil(t, env.DB.Broadcast.GetX(ctx, 100).ScheduledAt)
+	assert.Nil(t, env.DB.Broadcast.GetX(ctx, fixtures.BroadcastDraftID).ScheduledAt)
 }
 
 func TestExternalBroadcastScheduleRefusesWhatCannotBeScheduled(t *testing.T) {
 	env := testhelper.Setup(t)
 	ctx := context.Background()
-	c := client(t, env, seedToken(t, env.DB, []string{"broadcasts:send"}))
+	c := env.ExternalScoped(t, "broadcasts:send")
 	body := &externalapi.ScheduleBroadcastInput{ScheduledAt: externalapi.Timestamp(time.Now().Add(time.Hour))}
 
 	res, err := c.BroadcastsSchedule(ctx, body, externalapi.BroadcastsScheduleParams{ID: sentBroadcast})
@@ -256,10 +260,10 @@ func TestExternalBroadcastsAreIsolatedToTheTokensWorkspace(t *testing.T) {
 	ctx := context.Background()
 
 	// The Globex tenant's committed broadcast and segment.
-	foreignID := externalapi.EntityId(strconv.FormatInt(testhelper.GlobexBroadcastID, 10))
-	foreignSegID := testhelper.GlobexSegmentID
+	foreignID := externalapi.EntityId(strconv.FormatInt(fixtures.BroadcastGlobexID, 10))
+	foreignSegID := int64(fixtures.SegmentGlobexID)
 
-	c := client(t, env, seedToken(t, env.DB, authorScopes)) // bound to workspace 1
+	c := env.ExternalScoped(t, authorScopes...) // bound to workspace 1
 
 	list, err := c.BroadcastsList(ctx, externalapi.BroadcastsListParams{})
 	require.NoError(t, err)
@@ -293,5 +297,5 @@ func TestExternalBroadcastsAreIsolatedToTheTokensWorkspace(t *testing.T) {
 	require.NoError(t, err)
 	assert.IsType(t, &externalapi.BroadcastsSetAudienceUnprocessableEntity{}, cross)
 
-	assert.Equal(t, testhelper.GlobexBroadcastName, env.DB.Broadcast.GetX(ctx, testhelper.GlobexBroadcastID).Name, "the foreign broadcast is untouched")
+	assert.Equal(t, fixtures.BroadcastGlobexName, env.DB.Broadcast.GetX(ctx, fixtures.BroadcastGlobexID).Name, "the foreign broadcast is untouched")
 }

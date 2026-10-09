@@ -7,6 +7,7 @@ import (
 
 	"github.com/mokevnin/1mail/ent/integration"
 	siteapi "github.com/mokevnin/1mail/gen/site"
+	"github.com/mokevnin/1mail/internal/fixtures"
 	"github.com/mokevnin/1mail/internal/testhelper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -39,9 +40,9 @@ func sesInput(region, accessKey, secret string) siteapi.SiteIntegrationConfigInp
 
 func TestSiteIntegrationsSesEndpointRoundTrips(t *testing.T) {
 	env := testhelper.Setup(t)
-	c := siteClient(t, env, "info@1mail.com")
+	c := env.SiteActor(t, fixtures.OwnerJohnEmail)
 	ctx := context.Background()
-	params := siteapi.SiteIntegrationsCreateParams{Slug: "acme"}
+	params := siteapi.SiteIntegrationsCreateParams{Slug: fixtures.AcmeSlug}
 
 	// SES integration targeting an SES-compatible endpoint (e.g. Yandex Postbox).
 	created, err := c.SiteIntegrationsCreate(ctx, &siteapi.SiteCreateIntegrationInput{
@@ -78,9 +79,9 @@ func TestSiteIntegrationsSesEndpointRoundTrips(t *testing.T) {
 
 func TestSiteIntegrationsCRUD(t *testing.T) {
 	env := testhelper.Setup(t)
-	c := siteClient(t, env, "info@1mail.com")
+	c := env.SiteActor(t, fixtures.OwnerJohnEmail)
 	ctx := context.Background()
-	params := siteapi.SiteIntegrationsCreateParams{Slug: "acme"}
+	params := siteapi.SiteIntegrationsCreateParams{Slug: fixtures.AcmeSlug}
 
 	created, err := c.SiteIntegrationsCreate(ctx, &siteapi.SiteCreateIntegrationInput{
 		Name:   "Primary SMTP",
@@ -110,7 +111,7 @@ func TestSiteIntegrationsCRUD(t *testing.T) {
 	assert.NotContains(t, row.ConfigEncrypted, "smtp.example.com", "config is encrypted, not cleartext")
 
 	// Fetch the created integration back by id (selection by key).
-	got, err := c.SiteIntegrationsGet(ctx, siteapi.SiteIntegrationsGetParams{Slug: "acme", ID: res.ID})
+	got, err := c.SiteIntegrationsGet(ctx, siteapi.SiteIntegrationsGetParams{Slug: fixtures.AcmeSlug, ID: res.ID})
 	require.NoError(t, err)
 	gotRes, ok := got.(*siteapi.SiteIntegrationResource)
 	require.Truef(t, ok, "got %T", got)
@@ -120,46 +121,46 @@ func TestSiteIntegrationsCRUD(t *testing.T) {
 	updated, err := c.SiteIntegrationsUpdate(ctx, &siteapi.SiteUpdateIntegrationInput{
 		Name:   siteapi.NewOptString("Renamed SMTP"),
 		Config: siteapi.NewOptNilSiteIntegrationConfigInput(smtpInput("smtp2.example.com", "new-pass")),
-	}, siteapi.SiteIntegrationsUpdateParams{Slug: "acme", ID: res.ID})
+	}, siteapi.SiteIntegrationsUpdateParams{Slug: fixtures.AcmeSlug, ID: res.ID})
 	require.NoError(t, err)
 	updRes := updated.(*siteapi.SiteIntegrationResource)
 	assert.Equal(t, "Renamed SMTP", updRes.Name)
 
 	// Delete removes it; a fetch by id then resolves to 404.
-	del, err := c.SiteIntegrationsDelete(ctx, siteapi.SiteIntegrationsDeleteParams{Slug: "acme", ID: res.ID})
+	del, err := c.SiteIntegrationsDelete(ctx, siteapi.SiteIntegrationsDeleteParams{Slug: fixtures.AcmeSlug, ID: res.ID})
 	require.NoError(t, err)
 	assert.IsType(t, &siteapi.SiteIntegrationsDeleteNoContent{}, del)
 
-	gone, err := c.SiteIntegrationsGet(ctx, siteapi.SiteIntegrationsGetParams{Slug: "acme", ID: res.ID})
+	gone, err := c.SiteIntegrationsGet(ctx, siteapi.SiteIntegrationsGetParams{Slug: fixtures.AcmeSlug, ID: res.ID})
 	require.NoError(t, err)
 	assert.IsType(t, &siteapi.SiteIntegrationsGetNotFound{}, gone)
 }
 
 func TestSiteIntegrationsRejectsWrongProviderOnUpdate(t *testing.T) {
 	env := testhelper.Setup(t)
-	c := siteClient(t, env, "info@1mail.com")
+	c := env.SiteActor(t, fixtures.OwnerJohnEmail)
 	ctx := context.Background()
 
 	created, err := c.SiteIntegrationsCreate(ctx, &siteapi.SiteCreateIntegrationInput{
 		Name:   "SMTP",
 		Config: smtpInput("smtp.example.com", "pw"),
-	}, siteapi.SiteIntegrationsCreateParams{Slug: "acme"})
+	}, siteapi.SiteIntegrationsCreateParams{Slug: fixtures.AcmeSlug})
 	require.NoError(t, err)
 	res := created.(*siteapi.SiteIntegrationResource)
 
 	// Swapping the config to a different provider kind is rejected.
 	got, err := c.SiteIntegrationsUpdate(ctx, &siteapi.SiteUpdateIntegrationInput{
 		Config: siteapi.NewOptNilSiteIntegrationConfigInput(sesInput("eu-west-1", "AKIA", "secret")),
-	}, siteapi.SiteIntegrationsUpdateParams{Slug: "acme", ID: res.ID})
+	}, siteapi.SiteIntegrationsUpdateParams{Slug: fixtures.AcmeSlug, ID: res.ID})
 	require.NoError(t, err)
 	assert.IsType(t, &siteapi.SiteIntegrationsUpdateUnprocessableEntity{}, got)
 }
 
 func TestSiteIntegrationsSingleDefaultPerChannel(t *testing.T) {
 	env := testhelper.Setup(t)
-	c := siteClient(t, env, "info@1mail.com")
+	c := env.SiteActor(t, fixtures.OwnerJohnEmail)
 	ctx := context.Background()
-	params := siteapi.SiteIntegrationsCreateParams{Slug: "acme"}
+	params := siteapi.SiteIntegrationsCreateParams{Slug: fixtures.AcmeSlug}
 
 	first, err := c.SiteIntegrationsCreate(ctx, &siteapi.SiteCreateIntegrationInput{
 		Name:      "First",
@@ -179,7 +180,7 @@ func TestSiteIntegrationsSingleDefaultPerChannel(t *testing.T) {
 	assert.True(t, secondRes.IsDefault)
 
 	// Promoting the second default must have demoted the first.
-	gotFirst, err := c.SiteIntegrationsGet(ctx, siteapi.SiteIntegrationsGetParams{Slug: "acme", ID: firstID})
+	gotFirst, err := c.SiteIntegrationsGet(ctx, siteapi.SiteIntegrationsGetParams{Slug: fixtures.AcmeSlug, ID: firstID})
 	require.NoError(t, err)
 	assert.False(t, gotFirst.(*siteapi.SiteIntegrationResource).IsDefault, "only one default per channel")
 
@@ -193,9 +194,9 @@ func TestSiteIntegrationsSingleDefaultPerChannel(t *testing.T) {
 
 func TestSiteIntegrationsPromoteViaUpdate(t *testing.T) {
 	env := testhelper.Setup(t)
-	c := siteClient(t, env, "info@1mail.com")
+	c := env.SiteActor(t, fixtures.OwnerJohnEmail)
 	ctx := context.Background()
-	params := siteapi.SiteIntegrationsCreateParams{Slug: "acme"}
+	params := siteapi.SiteIntegrationsCreateParams{Slug: fixtures.AcmeSlug}
 
 	first, err := c.SiteIntegrationsCreate(ctx, &siteapi.SiteCreateIntegrationInput{
 		Name:      "First",
@@ -216,11 +217,11 @@ func TestSiteIntegrationsPromoteViaUpdate(t *testing.T) {
 	// same transaction (see promote path in SiteIntegrationsUpdate).
 	updated, err := c.SiteIntegrationsUpdate(ctx, &siteapi.SiteUpdateIntegrationInput{
 		IsDefault: siteapi.NewOptBool(true),
-	}, siteapi.SiteIntegrationsUpdateParams{Slug: "acme", ID: secondID})
+	}, siteapi.SiteIntegrationsUpdateParams{Slug: fixtures.AcmeSlug, ID: secondID})
 	require.NoError(t, err)
 	assert.True(t, updated.(*siteapi.SiteIntegrationResource).IsDefault)
 
-	gotFirst, err := c.SiteIntegrationsGet(ctx, siteapi.SiteIntegrationsGetParams{Slug: "acme", ID: firstID})
+	gotFirst, err := c.SiteIntegrationsGet(ctx, siteapi.SiteIntegrationsGetParams{Slug: fixtures.AcmeSlug, ID: firstID})
 	require.NoError(t, err)
 	assert.False(t, gotFirst.(*siteapi.SiteIntegrationResource).IsDefault, "promoting the second demotes the first")
 
@@ -233,7 +234,7 @@ func TestSiteIntegrationsPromoteViaUpdate(t *testing.T) {
 
 func TestSiteIntegrationsScopedToWorkspace(t *testing.T) {
 	env := testhelper.Setup(t)
-	c := siteClient(t, env, "info@1mail.com")
+	c := env.SiteActor(t, fixtures.OwnerJohnEmail)
 
 	res, err := c.SiteIntegrationsList(context.Background(), siteapi.SiteIntegrationsListParams{Slug: "does-not-exist"})
 	require.NoError(t, err)

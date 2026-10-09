@@ -6,6 +6,7 @@ import (
 
 	"github.com/mokevnin/1mail/ent/suppression"
 	siteapi "github.com/mokevnin/1mail/gen/site"
+	"github.com/mokevnin/1mail/internal/fixtures"
 	"github.com/mokevnin/1mail/internal/testhelper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -14,9 +15,9 @@ import (
 // Manual suppression CRUD: create (normalized + idempotent), list, delete.
 func TestSiteSuppressionsCRUD(t *testing.T) {
 	env := testhelper.Setup(t)
-	c := siteClient(t, env, "info@1mail.com")
+	c := env.SiteActor(t, fixtures.OwnerJohnEmail)
 	ctx := context.Background()
-	slug := "acme"
+	slug := fixtures.AcmeSlug
 
 	// Create normalizes the destination and defaults the reason to manual.
 	created, err := c.SiteSuppressionsCreate(ctx, &siteapi.SiteCreateSuppressionInput{Destination: "Blocked@Example.com"},
@@ -37,7 +38,7 @@ func TestSiteSuppressionsCRUD(t *testing.T) {
 
 	// The row is persisted under the workspace (selected from the DB by its key).
 	exists, err := env.DB.Suppression.Query().
-		Where(suppression.WorkspaceID(1), suppression.Destination("blocked@example.com")).
+		Where(suppression.WorkspaceID(fixtures.AcmeID), suppression.Destination("blocked@example.com")).
 		Exist(ctx)
 	require.NoError(t, err)
 	assert.True(t, exists, "created suppression is persisted")
@@ -48,7 +49,7 @@ func TestSiteSuppressionsCRUD(t *testing.T) {
 	assert.IsType(t, &siteapi.SiteSuppressionsDeleteNoContent{}, del)
 
 	stillThere, err := env.DB.Suppression.Query().
-		Where(suppression.WorkspaceID(1), suppression.Destination("blocked@example.com")).
+		Where(suppression.WorkspaceID(fixtures.AcmeID), suppression.Destination("blocked@example.com")).
 		Exist(ctx)
 	require.NoError(t, err)
 	assert.False(t, stillThere, "deleted suppression is gone")
@@ -57,7 +58,7 @@ func TestSiteSuppressionsCRUD(t *testing.T) {
 // Suppressions are workspace-scoped: an unowned slug is a 404.
 func TestSiteSuppressionsRequireOwnedWorkspace(t *testing.T) {
 	env := testhelper.Setup(t)
-	c := siteClient(t, env, "info@1mail.com")
+	c := env.SiteActor(t, fixtures.OwnerJohnEmail)
 
 	out, err := c.SiteSuppressionsList(context.Background(), siteapi.SiteSuppressionsListParams{Slug: "does-not-exist"})
 	require.NoError(t, err)

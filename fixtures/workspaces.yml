@@ -1,4 +1,4 @@
-- id: 1
+- id: 1 # fixture: Acme
   name: Acme
   slug: acme
   collect_key: omck_test_acme_collect_key
@@ -8,8 +8,8 @@
 # Anchor second tenant (Globex) — DO NOT change. It holds the minimal foreign rows
 # (ids 900+ in the other fixture files, all workspace_id 2) that cross-tenant
 # isolation tests assert are never visible to, or mutable by, workspace 1. It has
-# no members, integration or contacts of its own.
-- id: 2
+# its own owner (OwnerJane, see memberships.yml) but no integration or contacts.
+- id: 2 # fixture: Globex
   name: Globex
   slug: globex
   collect_key: omck_test_globex_collect_key

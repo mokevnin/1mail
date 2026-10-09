@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	externalapi "github.com/mokevnin/1mail/gen/external"
+	"github.com/mokevnin/1mail/internal/fixtures"
 	"github.com/mokevnin/1mail/internal/testhelper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -14,11 +15,11 @@ func TestExternalCustomFieldsList(t *testing.T) {
 	env := testhelper.Setup(t)
 	ctx := context.Background()
 
-	denied, err := client(t, env, seedToken(t, env.DB, []string{"contacts:read"})).CustomFieldsList(ctx)
+	denied, err := env.ExternalScoped(t, "contacts:read").CustomFieldsList(ctx)
 	require.NoError(t, err)
 	assert.IsType(t, &externalapi.ProblemDetails{}, denied, "custom_fields:read is required")
 
-	c := client(t, env, seedToken(t, env.DB, []string{"custom_fields:read"}))
+	c := env.ExternalScoped(t, "custom_fields:read")
 	res, err := c.CustomFieldsList(ctx)
 	require.NoError(t, err)
 	ok, isOK := res.(*externalapi.CustomFieldsListOK)
@@ -38,24 +39,24 @@ func TestExternalReferenceDataIsWorkspaceScoped(t *testing.T) {
 	ctx := context.Background()
 
 	// The Globex tenant has its own field and domain; the acme token must not see them.
-	c := client(t, env, seedToken(t, env.DB, []string{"custom_fields:read", "sending_domains:read"}))
+	c := env.ExternalScoped(t, "custom_fields:read", "sending_domains:read")
 
 	fields, err := c.CustomFieldsList(ctx)
 	require.NoError(t, err)
 	for _, f := range fields.(*externalapi.CustomFieldsListOK).Items {
-		assert.NotEqual(t, testhelper.GlobexCustomFieldKey, f.Key)
+		assert.NotEqual(t, fixtures.CustomFieldGlobexKey, f.Key)
 	}
 
 	domains, err := c.SendingDomainsList(ctx, externalapi.SendingDomainsListParams{})
 	require.NoError(t, err)
 	for _, d := range domains.(*externalapi.SendingDomainsListOK).Items {
-		assert.NotEqual(t, testhelper.GlobexSendingDomain, d.Domain)
+		assert.NotEqual(t, fixtures.SendingDomainGlobexDomain, d.Domain)
 	}
 
 	rates, err := c.SendingDomainRatesList(ctx, externalapi.SendingDomainRatesListParams{})
 	require.NoError(t, err)
 	for _, r := range rates.(*externalapi.SendingDomainRatesListOK).Items {
-		assert.NotEqual(t, testhelper.GlobexSendingDomain, r.Domain)
+		assert.NotEqual(t, fixtures.SendingDomainGlobexDomain, r.Domain)
 	}
 }
 
@@ -63,12 +64,12 @@ func TestExternalSendingDomainsList(t *testing.T) {
 	env := testhelper.Setup(t)
 	ctx := context.Background()
 
-	denied, err := client(t, env, seedToken(t, env.DB, []string{"contacts:read"})).
+	denied, err := env.ExternalScoped(t, "contacts:read").
 		SendingDomainsList(ctx, externalapi.SendingDomainsListParams{})
 	require.NoError(t, err)
 	assert.IsType(t, &externalapi.SendingDomainsListUnauthorized{}, denied)
 
-	c := client(t, env, seedToken(t, env.DB, []string{"sending_domains:read"}))
+	c := env.ExternalScoped(t, "sending_domains:read")
 	res, err := c.SendingDomainsList(ctx, externalapi.SendingDomainsListParams{})
 	require.NoError(t, err)
 	ok, isOK := res.(*externalapi.SendingDomainsListOK)
@@ -98,12 +99,12 @@ func TestExternalSendingDomainRates(t *testing.T) {
 	env := testhelper.Setup(t)
 	ctx := context.Background()
 
-	denied, err := client(t, env, seedToken(t, env.DB, []string{"contacts:read"})).
+	denied, err := env.ExternalScoped(t, "contacts:read").
 		SendingDomainRatesList(ctx, externalapi.SendingDomainRatesListParams{})
 	require.NoError(t, err)
 	assert.IsType(t, &externalapi.SendingDomainRatesListUnauthorized{}, denied)
 
-	c := client(t, env, seedToken(t, env.DB, []string{"sending_domains:read"}))
+	c := env.ExternalScoped(t, "sending_domains:read")
 
 	// Default 7-day window: mail.acme.com has 8 sent, 1 hard bounce (the soft one is
 	// excluded), 1 complaint; the 40-day-old events fall outside.
@@ -145,7 +146,7 @@ func TestExternalSendingDomainRates(t *testing.T) {
 
 func TestExternalSendingDomainRatesRejectsBadWindow(t *testing.T) {
 	env := testhelper.Setup(t)
-	c := client(t, env, seedToken(t, env.DB, []string{"sending_domains:read"}))
+	c := env.ExternalScoped(t, "sending_domains:read")
 
 	for _, days := range []int32{0, 91} {
 		res, err := c.SendingDomainRatesList(context.Background(), externalapi.SendingDomainRatesListParams{

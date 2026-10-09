@@ -3,73 +3,31 @@ package site_test
 import (
 	"context"
 	"testing"
-	"time"
 
-	gptoken "github.com/go-pkgz/auth/v2/token"
-	"github.com/golang-jwt/jwt/v5"
-	"github.com/mokevnin/1mail/config"
 	siteapi "github.com/mokevnin/1mail/gen/site"
+	"github.com/mokevnin/1mail/internal/fixtures"
 	"github.com/mokevnin/1mail/internal/testhelper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-// staticJWT supplies a fixed JWT cookie value as the site security source.
-type staticJWT struct{ token string }
-
-func (s staticJWT) ApiKeyAuth(context.Context, siteapi.OperationName) (siteapi.ApiKeyAuth, error) {
-	return siteapi.ApiKeyAuth{APIKey: s.token}, nil
-}
-
-// jwtFor mints a JWT for the given login email, mirroring how go-pkgz/auth's
-// direct provider issues tokens (login stored in User.Name), signed with the
-// test config's JWT secret so SiteSecurityHandler accepts it.
-func jwtFor(t *testing.T, email string) string {
-	t.Helper()
-	cfg, err := config.Load("test")
-	require.NoError(t, err)
-
-	svc := gptoken.NewService(gptoken.Opts{
-		SecretReader: gptoken.SecretFunc(func(string) (string, error) { return cfg.JWTSecret, nil }),
-		Issuer:       "1mail",
-		DisableXSRF:  true,
-	})
-	tk, err := svc.Token(gptoken.Claims{
-		RegisteredClaims: jwt.RegisteredClaims{
-			Issuer:    "1mail",
-			Audience:  jwt.ClaimStrings{"1mail"},
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour)),
-		},
-		User: &gptoken.User{Name: email, ID: "test"},
-	})
-	require.NoError(t, err)
-	return tk
-}
-
-func siteClient(t *testing.T, env *testhelper.TestEnv, email string) *siteapi.Client {
-	t.Helper()
-	c, err := siteapi.NewClient("http://local/site", staticJWT{jwtFor(t, email)}, siteapi.WithClient(env.Transport(nil)))
-	require.NoError(t, err)
-	return c
-}
-
-// Fixture user info@1mail.com owns workspace "acme" (id 1), which owns the three
+// Fixture user info@1mail.com owns workspace fixtures.AcmeSlug (id 1), which owns the three
 // seeded contacts. The dashboard addresses contacts via /w/{slug}/contacts.
 func TestSiteContactsScopedToWorkspace(t *testing.T) {
 	env := testhelper.Setup(t)
-	c := siteClient(t, env, "info@1mail.com")
+	c := env.SiteActor(t, fixtures.OwnerJohnEmail)
 	ctx := context.Background()
 
 	// Contacts of the owned workspace are listed (the workspace has seeded
 	// contacts; assert presence, not an exact count).
-	list, err := c.SiteContactsList(ctx, siteapi.SiteContactsListParams{Slug: "acme"})
+	list, err := c.SiteContactsList(ctx, siteapi.SiteContactsListParams{Slug: fixtures.AcmeSlug})
 	require.NoError(t, err)
 	listed, ok := list.(*siteapi.SiteContactsListOK)
 	require.Truef(t, ok, "got %T", list)
 	assert.NotEmpty(t, listed.Items, "owned workspace returns its contacts")
 
 	// Creating a contact scopes it to the workspace.
-	created, err := c.SiteContactsCreate(ctx, &siteapi.SiteCreateContactInput{Email: siteapi.NewOptNilEmailAddress("site-new@example.com")}, siteapi.SiteContactsCreateParams{Slug: "acme"})
+	created, err := c.SiteContactsCreate(ctx, &siteapi.SiteCreateContactInput{Email: siteapi.NewOptNilEmailAddress("site-new@example.com")}, siteapi.SiteContactsCreateParams{Slug: fixtures.AcmeSlug})
 	require.NoError(t, err)
 	assert.IsType(t, &siteapi.SiteContactResource{}, created)
 
@@ -81,12 +39,12 @@ func TestSiteContactsScopedToWorkspace(t *testing.T) {
 
 func TestSiteWorkspacesList(t *testing.T) {
 	env := testhelper.Setup(t)
-	c := siteClient(t, env, "info@1mail.com")
+	c := env.SiteActor(t, fixtures.OwnerJohnEmail)
 
 	got, err := c.SiteWorkspacesList(context.Background())
 	require.NoError(t, err)
 	require.Len(t, got, 1)
-	assert.Equal(t, "acme", got[0].Slug)
+	assert.Equal(t, fixtures.AcmeSlug, got[0].Slug)
 }
 
 // Access is by Membership, not single ownership: a User with no Membership on a
@@ -96,13 +54,7 @@ func TestSiteWorkspaceRequiresMembership(t *testing.T) {
 	ctx := context.Background()
 
 	// A real, authenticated User who is a member of no workspace.
-	_, err := env.DB.User.Create().
-		SetName("outsider@example.com").
-		SetEmail("outsider@example.com").
-		Save(ctx)
-	require.NoError(t, err)
-
-	c := siteClient(t, env, "outsider@example.com")
+	c := env.SiteActor(t, fixtures.OutsiderOscarEmail)
 
 	// Sees no workspaces at all.
 	got, err := c.SiteWorkspacesList(ctx)
@@ -110,7 +62,23 @@ func TestSiteWorkspaceRequiresMembership(t *testing.T) {
 	assert.Empty(t, got)
 
 	// And cannot reach acme's contacts — 404, not a data leak.
-	missing, err := c.SiteContactsList(ctx, siteapi.SiteContactsListParams{Slug: "acme"})
+	missing, err := c.SiteContactsList(ctx, siteapi.SiteContactsListParams{Slug: fixtures.AcmeSlug})
+	require.NoError(t, err)
+	assert.IsType(t, &siteapi.SiteContactsListNotFound{}, missing)
+}
+
+// A member of another tenant sees only their own workspace and cannot reach Acme.
+func TestSiteWorkspaceIsolatedBetweenTenants(t *testing.T) {
+	env := testhelper.Setup(t)
+	ctx := context.Background()
+	c := env.SiteActor(t, fixtures.OwnerJaneEmail)
+
+	got, err := c.SiteWorkspacesList(ctx)
+	require.NoError(t, err)
+	require.Len(t, got, 1)
+	assert.Equal(t, fixtures.GlobexSlug, got[0].Slug)
+
+	missing, err := c.SiteContactsList(ctx, siteapi.SiteContactsListParams{Slug: fixtures.AcmeSlug})
 	require.NoError(t, err)
 	assert.IsType(t, &siteapi.SiteContactsListNotFound{}, missing)
 }

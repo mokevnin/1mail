@@ -1,13 +1,13 @@
 # Workspace acme (id 1). Anchor segments 1-2 are selected by name in the suite —
 # DO NOT change them. New rule segments use the JSON combinator definition format.
-- id: 1
+- id: 1 # fixture: SegmentActive
   name: Active subscribers
   type: rule
   definition: "status == 'active'"
   workspace_id: 1
   created_at: '2026-01-01 00:00:00'
   updated_at: '2026-01-01 00:00:00'
-- id: 2
+- id: 2 # fixture: SegmentNewsletter
   name: Newsletter snapshot
   type: snapshot
   workspace_id: 1
@@ -15,7 +15,7 @@
   updated_at: '2026-01-02 00:00:00'
 
 # --- CodeBasics segments ---
-- id: 100
+- id: 100 # fixture: SegmentProPlan
   name: Pro & team members
   type: rule
   definition: '{"combinator":"and","rules":[{"field":"custom:plan","operator":"=","value":"pro"}]}'
@@ -45,7 +45,7 @@
   updated_at: '{{daysAgo 30}}'
 
 # --- Globex (workspace 2) foreign row — DO NOT change ---
-- id: 900
+- id: 900 # fixture: SegmentGlobex
   name: Globex only
   type: snapshot
   workspace_id: 2

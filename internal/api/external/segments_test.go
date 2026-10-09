@@ -7,6 +7,7 @@ import (
 
 	"github.com/mokevnin/1mail/ent/segment"
 	externalapi "github.com/mokevnin/1mail/gen/external"
+	"github.com/mokevnin/1mail/internal/fixtures"
 	"github.com/mokevnin/1mail/internal/segments"
 	"github.com/mokevnin/1mail/internal/testhelper"
 	"github.com/stretchr/testify/assert"
@@ -18,17 +19,17 @@ import (
 func TestExternalSegmentsRead(t *testing.T) {
 	env := testhelper.Setup(t)
 	ctx := context.Background()
-	c := client(t, env, seedToken(t, env.DB, []string{"segments:read"}))
+	c := env.ExternalScoped(t, "segments:read")
 
 	list, err := c.SegmentsList(ctx, externalapi.SegmentsListParams{})
 	require.NoError(t, err)
 	ok, isOK := list.(*externalapi.SegmentsListOK)
 	require.Truef(t, isOK, "got %T", list)
-	total, err := env.DB.Segment.Query().Where(segment.WorkspaceID(1)).Count(ctx)
+	total, err := env.DB.Segment.Query().Where(segment.WorkspaceID(fixtures.AcmeID)).Count(ctx)
 	require.NoError(t, err)
 	assert.EqualValues(t, total, ok.TotalItems)
 
-	got, err := c.SegmentsGet(ctx, externalapi.SegmentsGetParams{ID: "1"})
+	got, err := c.SegmentsGet(ctx, externalapi.SegmentsGetParams{ID: entityIDString(fixtures.SegmentActiveID)})
 	require.NoError(t, err)
 	seg, isSeg := got.(*externalapi.SegmentResource)
 	require.Truef(t, isSeg, "got %T", got)
@@ -45,7 +46,7 @@ func TestExternalSegmentsRead(t *testing.T) {
 func TestExternalSegmentsWrite(t *testing.T) {
 	env := testhelper.Setup(t)
 	ctx := context.Background()
-	c := client(t, env, seedToken(t, env.DB, []string{"segments:read", "segments:write"}))
+	c := env.ExternalScoped(t, "segments:read", "segments:write")
 
 	bad, err := c.SegmentsCreate(ctx, &externalapi.CreateSegmentInput{
 		Name: "Bad", Type: externalapi.SegmentTypeRule,
@@ -85,7 +86,7 @@ func TestExternalSegmentsWrite(t *testing.T) {
 func TestExternalSegmentsPreview(t *testing.T) {
 	env := testhelper.Setup(t)
 	ctx := context.Background()
-	c := client(t, env, seedToken(t, env.DB, []string{"segments:read"}))
+	c := env.ExternalScoped(t, "segments:read")
 
 	const def = `{"combinator":"and","rules":[{"field":"custom:plan","operator":"=","value":"pro"}]}`
 	want, err := segments.New(env.DB).Preview(ctx, 1, def)
@@ -105,7 +106,7 @@ func TestExternalSegmentsScopes(t *testing.T) {
 	env := testhelper.Setup(t)
 	ctx := context.Background()
 
-	none := client(t, env, seedToken(t, env.DB, []string{"contacts:read"}))
+	none := env.ExternalScoped(t, "contacts:read")
 	list, err := none.SegmentsList(ctx, externalapi.SegmentsListParams{})
 	require.NoError(t, err)
 	assert.IsType(t, &externalapi.SegmentsListUnauthorized{}, list)
@@ -114,20 +115,20 @@ func TestExternalSegmentsScopes(t *testing.T) {
 	assert.IsType(t, &externalapi.SegmentsPreviewUnauthorized{}, prev)
 
 	// Read scope cannot write.
-	ro := client(t, env, seedToken(t, env.DB, []string{"segments:read"}))
+	ro := env.ExternalScoped(t, "segments:read")
 	cr, err := ro.SegmentsCreate(ctx, &externalapi.CreateSegmentInput{Name: "x", Type: externalapi.SegmentTypeSnapshot})
 	require.NoError(t, err)
 	assert.IsType(t, &externalapi.SegmentsCreateUnauthorized{}, cr)
-	up, err := ro.SegmentsUpdate(ctx, &externalapi.UpdateSegmentInput{}, externalapi.SegmentsUpdateParams{ID: "1"})
+	up, err := ro.SegmentsUpdate(ctx, &externalapi.UpdateSegmentInput{}, externalapi.SegmentsUpdateParams{ID: entityIDString(fixtures.SegmentActiveID)})
 	require.NoError(t, err)
 	assert.IsType(t, &externalapi.SegmentsUpdateUnauthorized{}, up)
-	del, err := ro.SegmentsDelete(ctx, externalapi.SegmentsDeleteParams{ID: "1"})
+	del, err := ro.SegmentsDelete(ctx, externalapi.SegmentsDeleteParams{ID: entityIDString(fixtures.SegmentActiveID)})
 	require.NoError(t, err)
 	assert.IsType(t, &externalapi.SegmentsDeleteUnauthorized{}, del)
 
 	// Write scope cannot read.
-	wo := client(t, env, seedToken(t, env.DB, []string{"segments:write"}))
-	get, err := wo.SegmentsGet(ctx, externalapi.SegmentsGetParams{ID: "1"})
+	wo := env.ExternalScoped(t, "segments:write")
+	get, err := wo.SegmentsGet(ctx, externalapi.SegmentsGetParams{ID: entityIDString(fixtures.SegmentActiveID)})
 	require.NoError(t, err)
 	assert.IsType(t, &externalapi.SegmentsGetUnauthorized{}, get)
 }
@@ -137,14 +138,14 @@ func TestExternalSegmentsWorkspaceIsolation(t *testing.T) {
 	env := testhelper.Setup(t)
 	ctx := context.Background()
 
-	id := externalapi.EntityId(strconv.FormatInt(testhelper.GlobexSegmentID, 10))
+	id := externalapi.EntityId(strconv.FormatInt(fixtures.SegmentGlobexID, 10))
 
-	c := client(t, env, seedToken(t, env.DB, []string{"segments:read", "segments:write"}))
+	c := env.ExternalScoped(t, "segments:read", "segments:write")
 
 	list, err := c.SegmentsList(ctx, externalapi.SegmentsListParams{})
 	require.NoError(t, err)
 	for _, s := range list.(*externalapi.SegmentsListOK).Items {
-		assert.NotEqual(t, testhelper.GlobexSegmentName, s.Name, "another tenant's segment leaked")
+		assert.NotEqual(t, fixtures.SegmentGlobexName, s.Name, "another tenant's segment leaked")
 	}
 	get, err := c.SegmentsGet(ctx, externalapi.SegmentsGetParams{ID: id})
 	require.NoError(t, err)

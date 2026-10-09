@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	siteapi "github.com/mokevnin/1mail/gen/site"
+	"github.com/mokevnin/1mail/internal/fixtures"
 	"github.com/mokevnin/1mail/internal/testhelper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -27,17 +28,17 @@ func loginStatus(t *testing.T, env *testhelper.TestEnv, email, password string) 
 
 func TestSiteUserGetMe(t *testing.T) {
 	env := testhelper.Setup(t)
-	c := siteClient(t, env, "info@1mail.com")
+	c := env.SiteActor(t, fixtures.OwnerJohnEmail)
 
 	me, err := c.SiteUserGetMe(context.Background())
 	require.NoError(t, err)
 	assert.Equal(t, "John", me.Name)
-	assert.Equal(t, siteapi.EmailAddress("info@1mail.com"), me.Email)
+	assert.Equal(t, siteapi.EmailAddress(fixtures.OwnerJohnEmail), me.Email)
 }
 
 func TestSiteUserUpdateMeName(t *testing.T) {
 	env := testhelper.Setup(t)
-	c := siteClient(t, env, "info@1mail.com")
+	c := env.SiteActor(t, fixtures.OwnerJohnEmail)
 	ctx := context.Background()
 
 	res, err := c.SiteUserUpdateMe(ctx, &siteapi.SiteUpdateMeInput{Name: siteapi.NewOptString("Renamed")})
@@ -54,7 +55,7 @@ func TestSiteUserUpdateMeName(t *testing.T) {
 
 func TestSiteUserUpdateMeRejectsBlankName(t *testing.T) {
 	env := testhelper.Setup(t)
-	c := siteClient(t, env, "info@1mail.com")
+	c := env.SiteActor(t, fixtures.OwnerJohnEmail)
 
 	res, err := c.SiteUserUpdateMe(context.Background(),
 		&siteapi.SiteUpdateMeInput{Name: siteapi.NewOptString("   ")})
@@ -64,7 +65,7 @@ func TestSiteUserUpdateMeRejectsBlankName(t *testing.T) {
 
 func TestSiteUserUpdateMePasswordWrongCurrent(t *testing.T) {
 	env := testhelper.Setup(t)
-	c := siteClient(t, env, "info@1mail.com")
+	c := env.SiteActor(t, fixtures.OwnerJohnEmail)
 
 	res, err := c.SiteUserUpdateMe(context.Background(), &siteapi.SiteUpdateMeInput{
 		CurrentPassword: siteapi.NewOptString("wrong"),
@@ -74,21 +75,21 @@ func TestSiteUserUpdateMePasswordWrongCurrent(t *testing.T) {
 	assert.IsType(t, &siteapi.SiteUserUpdateMeForbidden{}, res)
 
 	// Original password still works.
-	assert.Equal(t, http.StatusOK, loginStatus(t, env, "info@1mail.com", "password"))
+	assert.Equal(t, http.StatusOK, loginStatus(t, env, fixtures.OwnerJohnEmail, fixtures.OwnerJohnPassword))
 }
 
 func TestSiteUserUpdateMePasswordChange(t *testing.T) {
 	env := testhelper.Setup(t)
-	c := siteClient(t, env, "info@1mail.com")
+	c := env.SiteActor(t, fixtures.OwnerJohnEmail)
 
 	res, err := c.SiteUserUpdateMe(context.Background(), &siteapi.SiteUpdateMeInput{
-		CurrentPassword: siteapi.NewOptString("password"),
+		CurrentPassword: siteapi.NewOptString(fixtures.OwnerJohnPassword),
 		NewPassword:     siteapi.NewOptString("newsecret123"),
 	})
 	require.NoError(t, err)
 	assert.IsType(t, &siteapi.SiteUserResource{}, res)
 
 	// The new password works; the old one no longer does.
-	assert.Equal(t, http.StatusOK, loginStatus(t, env, "info@1mail.com", "newsecret123"))
-	assert.Equal(t, http.StatusForbidden, loginStatus(t, env, "info@1mail.com", "password"))
+	assert.Equal(t, http.StatusOK, loginStatus(t, env, fixtures.OwnerJohnEmail, "newsecret123"))
+	assert.Equal(t, http.StatusForbidden, loginStatus(t, env, fixtures.OwnerJohnEmail, fixtures.OwnerJohnPassword))
 }

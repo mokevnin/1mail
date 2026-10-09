@@ -15,6 +15,7 @@ import (
 	"github.com/mokevnin/1mail/ent/apitoken"
 	"github.com/mokevnin/1mail/ent/membership"
 	siteapi "github.com/mokevnin/1mail/gen/site"
+	"github.com/mokevnin/1mail/internal/fixtures"
 	"github.com/mokevnin/1mail/internal/oauthserver"
 	"github.com/mokevnin/1mail/internal/testhelper"
 	"github.com/stretchr/testify/assert"
@@ -22,12 +23,10 @@ import (
 	"golang.org/x/oauth2"
 )
 
-const owner = "info@1mail.com"
-
 // consent plays the signed-in owner of workspace acme answering the consent screen.
 func consent(t *testing.T, env *testhelper.TestEnv, in siteapi.SiteOAuthDecisionInput) *url.URL {
 	t.Helper()
-	res, err := env.SiteClient(t, owner).SiteOAuthDecide(t.Context(), &in)
+	res, err := env.SiteActor(t, fixtures.OwnerJohnEmail).SiteOAuthDecide(t.Context(), &in)
 	require.NoError(t, err)
 	ok, isOK := res.(*siteapi.SiteOAuthDecisionResult)
 	require.Truef(t, isOK, "got %T", res)
@@ -43,7 +42,7 @@ func approval(scope string, allowSend bool) siteapi.SiteOAuthDecisionInput {
 		State:         siteapi.NewOptString("xyz"),
 		CodeChallenge: oauth2.S256ChallengeFromVerifier(verifier),
 		Scope:         siteapi.NewOptString(scope),
-		WorkspaceSlug: "acme",
+		WorkspaceSlug: fixtures.AcmeSlug,
 		Approve:       true,
 		AllowSend:     siteapi.NewOptBool(allowSend),
 	}
@@ -69,7 +68,7 @@ func tokenForm(code string) url.Values {
 func TestConsentScreenDescribesTheRequest(t *testing.T) {
 	env := testhelper.Setup(t)
 
-	res, err := env.SiteClient(t, owner).SiteOAuthDescribe(t.Context(), siteapi.SiteOAuthDescribeParams{
+	res, err := env.SiteActor(t, fixtures.OwnerJohnEmail).SiteOAuthDescribe(t.Context(), siteapi.SiteOAuthDescribeParams{
 		ClientId:    fixtureClientID,
 		RedirectUri: fixtureRedirectURI,
 		Scope:       siteapi.NewOptString("contacts:read emails:send bogus"),
@@ -85,7 +84,7 @@ func TestConsentScreenDescribesTheRequest(t *testing.T) {
 func TestConsentScreenRejectsMismatchedRedirect(t *testing.T) {
 	env := testhelper.Setup(t)
 
-	res, err := env.SiteClient(t, owner).SiteOAuthDescribe(t.Context(), siteapi.SiteOAuthDescribeParams{
+	res, err := env.SiteActor(t, fixtures.OwnerJohnEmail).SiteOAuthDescribe(t.Context(), siteapi.SiteOAuthDescribeParams{
 		ClientId:    fixtureClientID,
 		RedirectUri: "https://evil.example/cb",
 	})
@@ -95,17 +94,8 @@ func TestConsentScreenRejectsMismatchedRedirect(t *testing.T) {
 
 func TestConsentRequiresASession(t *testing.T) {
 	env := testhelper.Setup(t)
-	c, err := siteapi.NewClient("http://local/site", noAuth{}, siteapi.WithClient(env.Transport(nil)))
-	require.NoError(t, err)
-
-	_, err = c.SiteOAuthDescribe(t.Context(), siteapi.SiteOAuthDescribeParams{ClientId: fixtureClientID, RedirectUri: fixtureRedirectURI})
+	_, err := env.SiteAnonymous(t).SiteOAuthDescribe(t.Context(), siteapi.SiteOAuthDescribeParams{ClientId: fixtureClientID, RedirectUri: fixtureRedirectURI})
 	assert.Error(t, err)
-}
-
-type noAuth struct{}
-
-func (noAuth) ApiKeyAuth(context.Context, siteapi.OperationName) (siteapi.ApiKeyAuth, error) {
-	return siteapi.ApiKeyAuth{}, nil
 }
 
 func TestDenyingConsentSendsAccessDeniedBack(t *testing.T) {
@@ -125,7 +115,7 @@ func TestConsentToAWorkspaceTheUserDoesNotBelongToIsRefused(t *testing.T) {
 	in := approval("", false)
 	in.WorkspaceSlug = "someone-elses"
 
-	res, err := env.SiteClient(t, owner).SiteOAuthDecide(t.Context(), &in)
+	res, err := env.SiteActor(t, fixtures.OwnerJohnEmail).SiteOAuthDecide(t.Context(), &in)
 	require.NoError(t, err)
 	assert.IsType(t, &siteapi.SiteOAuthDecideNotFound{}, res)
 }
@@ -135,21 +125,24 @@ func TestConsentNeedsARoleThatMayManageTokens(t *testing.T) {
 	env := testhelper.Setup(t)
 	ctx := t.Context()
 
-	for role, wantOK := range map[membership.Role]bool{
-		membership.RoleAdmin:  true,
-		membership.RoleMember: false,
+	// Admin has no fixture user (a committed admin would change the exact member
+	// list of the Acme roster), so it is created inline; the member is MemberMary.
+	admin := "admin@acme.test"
+	u, err := env.DB.User.Create().SetName(admin).SetEmail(admin).Save(ctx)
+	require.NoError(t, err)
+	_, err = env.DB.Membership.Create().SetUserID(u.ID).SetWorkspaceID(fixtures.AcmeID).SetRole(membership.RoleAdmin).Save(ctx)
+	require.NoError(t, err)
+
+	for email, wantOK := range map[string]bool{
+		admin:                    true,
+		fixtures.MemberMaryEmail: false,
 	} {
-		t.Run(string(role), func(t *testing.T) {
-			email := string(role) + "@acme.test"
-			u, err := env.DB.User.Create().SetName(email).SetEmail(email).Save(ctx)
-			require.NoError(t, err)
-			_, err = env.DB.Membership.Create().SetUserID(u.ID).SetWorkspaceID(1).SetRole(role).Save(ctx)
-			require.NoError(t, err)
+		t.Run(email, func(t *testing.T) {
 			in := approval("contacts:write", false)
 			before, err := env.DB.OAuthCode.Query().Count(ctx)
 			require.NoError(t, err)
 
-			res, err := env.SiteClient(t, email).SiteOAuthDecide(ctx, &in)
+			res, err := env.SiteActor(t, email).SiteOAuthDecide(ctx, &in)
 			require.NoError(t, err)
 
 			if wantOK {
@@ -182,7 +175,7 @@ func TestTokenEndpointIssuesAnOrdinaryScopedAPIToken(t *testing.T) {
 	row, err := env.DB.ApiToken.Query().Where(apitoken.Name("Fixture Connector (MCP)")).Only(t.Context())
 	require.NoError(t, err)
 	assert.Equal(t, []string{"contacts:read", "segments:read"}, row.Scopes)
-	assert.Equal(t, int64(1), row.WorkspaceID)
+	assert.Equal(t, int64(fixtures.AcmeID), row.WorkspaceID)
 	assert.Nil(t, row.RevokedAt)
 
 	session := env.MCPClient(t, tok["access_token"].(string))
@@ -329,13 +322,13 @@ func TestStandardMCPClientConnectsThroughOAuth(t *testing.T) {
 			}
 			q := consentURL.Query()
 
-			res, err := env.SiteClient(t, owner).SiteOAuthDecide(ctx, &siteapi.SiteOAuthDecisionInput{
+			res, err := env.SiteActor(t, fixtures.OwnerJohnEmail).SiteOAuthDecide(ctx, &siteapi.SiteOAuthDecisionInput{
 				ClientId:      q.Get("client_id"),
 				RedirectUri:   q.Get("redirect_uri"),
 				State:         siteapi.NewOptString(q.Get("state")),
 				CodeChallenge: q.Get("code_challenge"),
 				Scope:         siteapi.NewOptString(q.Get("scope")),
-				WorkspaceSlug: "acme",
+				WorkspaceSlug: fixtures.AcmeSlug,
 				Approve:       true,
 			})
 			if err != nil {
@@ -378,7 +371,7 @@ func TestStandardMCPClientConnectsThroughOAuth(t *testing.T) {
 func TestDefaultGrantCoversTheAuthoringScopes(t *testing.T) {
 	env := testhelper.Setup(t)
 
-	res, err := env.SiteClient(t, owner).SiteOAuthDescribe(t.Context(), siteapi.SiteOAuthDescribeParams{
+	res, err := env.SiteActor(t, fixtures.OwnerJohnEmail).SiteOAuthDescribe(t.Context(), siteapi.SiteOAuthDescribeParams{
 		ClientId:    fixtureClientID,
 		RedirectUri: fixtureRedirectURI,
 	})

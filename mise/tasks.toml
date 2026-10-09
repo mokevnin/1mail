@@ -160,12 +160,17 @@ run = [
   "go tool goverter gen ./internal/api/site/resources ./internal/api/external/resources",
 ]
 
+["generate:fixtures"]
+description = "fixtures/*.yml -> Go (fixture catalog constants for `# fixture: Name` rows)"
+run = "go run ./cmd/fixturegen"
+
 [generate]
-description = "Full cycle: typespec -> openapi -> backend -> frontend -> i18n types -> format"
+description = "Full cycle: typespec -> openapi -> backend -> fixture catalog -> frontend -> i18n types -> format"
 run = [
   { task = "generate:typespec" },
   { task = "generate:openapi" },
   { task = "generate:backend" },
+  { task = "generate:fixtures" },
   { task = "fix" },
 ]
 

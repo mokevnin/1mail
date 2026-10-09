@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	siteapi "github.com/mokevnin/1mail/gen/site"
+	"github.com/mokevnin/1mail/internal/fixtures"
 	"github.com/mokevnin/1mail/internal/testhelper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -12,9 +13,9 @@ import (
 
 func TestSiteTemplatesCRUD(t *testing.T) {
 	env := testhelper.Setup(t)
-	c := siteClient(t, env, "info@1mail.com")
+	c := env.SiteActor(t, fixtures.OwnerJohnEmail)
 	ctx := context.Background()
-	slug := "acme"
+	slug := fixtures.AcmeSlug
 
 	created, err := c.SiteTemplatesCreate(ctx, &siteapi.SiteCreateEmailTemplateInput{
 		Name:    "Welcome",
@@ -52,18 +53,18 @@ func TestSiteTemplatesCRUD(t *testing.T) {
 // Test-send without a configured sending integration is rejected with 422.
 func TestSiteBroadcastsTestSendWithoutIntegration(t *testing.T) {
 	env := testhelper.Setup(t)
-	c := siteClient(t, env, "info@1mail.com")
+	c := env.SiteActor(t, fixtures.OwnerJohnEmail)
 	ctx := context.Background()
 
 	created, err := c.SiteBroadcastsCreate(ctx, &siteapi.SiteCreateBroadcastInput{
 		Name: "Preview me", Subject: siteapi.NewOptString("Hi"),
-	}, siteapi.SiteBroadcastsCreateParams{Slug: "acme"})
+	}, siteapi.SiteBroadcastsCreateParams{Slug: fixtures.AcmeSlug})
 	require.NoError(t, err)
 	b := created.(*siteapi.SiteBroadcastResource)
 
 	out, err := c.SiteBroadcastsTestSend(ctx, &siteapi.SiteTestSendBroadcastInput{
 		Email: "qa@test.dev",
-	}, siteapi.SiteBroadcastsTestSendParams{Slug: "acme", ID: b.ID})
+	}, siteapi.SiteBroadcastsTestSendParams{Slug: fixtures.AcmeSlug, ID: b.ID})
 	require.NoError(t, err)
 	assert.IsType(t, &siteapi.SiteBroadcastsTestSendUnprocessableEntity{}, out)
 }

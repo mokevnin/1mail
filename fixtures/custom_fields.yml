@@ -36,7 +36,7 @@
   updated_at: '{{daysAgo 170}}'
 
 # --- Globex (workspace 2) foreign row — DO NOT change ---
-- id: 900
+- id: 900 # fixture: CustomFieldGlobex
   key: globex_only
   name: Globex only
   type: string

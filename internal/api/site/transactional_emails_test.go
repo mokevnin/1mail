@@ -7,6 +7,7 @@ import (
 	"github.com/mokevnin/1mail/ent"
 	"github.com/mokevnin/1mail/ent/outboundmessage"
 	siteapi "github.com/mokevnin/1mail/gen/site"
+	"github.com/mokevnin/1mail/internal/fixtures"
 	"github.com/mokevnin/1mail/internal/testhelper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -19,7 +20,7 @@ func seedTransactional(t *testing.T, db *ent.Client, ws int64, dest string, stat
 		SetKind(outboundmessage.KindTransactional).
 		SetIdempotencyKey("transactional:seed:" + dest).
 		SetDestination(dest).
-		SetTemplateID(1).
+		SetTemplateID(fixtures.TemplateWelcomeID).
 		SetStatus(status).
 		Save(context.Background())
 	require.NoError(t, err)
@@ -33,10 +34,10 @@ func TestSiteTransactionalEmailsList(t *testing.T) {
 
 	// acme's own transactional sends come from the fixtures. A second workspace's
 	// row is seeded only to prove it is excluded (the cross-tenant negative case).
-	seedTransactional(t, env.DB, testhelper.GlobexWorkspaceID, "leak@example.com", outboundmessage.StatusSent)
+	seedTransactional(t, env.DB, fixtures.GlobexID, "leak@example.com", outboundmessage.StatusSent)
 
-	c := siteClient(t, env, "info@1mail.com")
-	res, err := c.SiteTransactionalEmailsList(ctx, siteapi.SiteTransactionalEmailsListParams{Slug: "acme"})
+	c := env.SiteActor(t, fixtures.OwnerJohnEmail)
+	res, err := c.SiteTransactionalEmailsList(ctx, siteapi.SiteTransactionalEmailsListParams{Slug: fixtures.AcmeSlug})
 	require.NoError(t, err)
 
 	page, ok := res.(*siteapi.SiteTransactionalEmailsListOK)
@@ -50,9 +51,8 @@ func TestSiteTransactionalEmailsList(t *testing.T) {
 // The list requires a valid JWT like the rest of the site API.
 func TestSiteTransactionalEmailsRequireAuth(t *testing.T) {
 	env := testhelper.Setup(t)
-	c, err := siteapi.NewClient("http://local/site", noJWT{}, siteapi.WithClient(env.Transport(nil)))
-	require.NoError(t, err)
+	c := env.SiteAnonymous(t)
 
-	_, err = c.SiteTransactionalEmailsList(context.Background(), siteapi.SiteTransactionalEmailsListParams{Slug: "acme"})
+	_, err := c.SiteTransactionalEmailsList(context.Background(), siteapi.SiteTransactionalEmailsListParams{Slug: fixtures.AcmeSlug})
 	require.Error(t, err)
 }

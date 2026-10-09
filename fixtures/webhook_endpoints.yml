@@ -1,6 +1,6 @@
 # Workspace acme (id 1). secret_encrypted is sealed at load time via the encrypt
 # template func (per-env valid). event_types is a JSON array; empty/absent = all events.
-- id: 100
+- id: 100 # fixture: WebhookCodebasics
   url: https://codebasics.dev/webhooks/1mail
   secret_encrypted: '{{ encrypt "whsec_codebasics_primary" }}'
   event_types: '["contact.created","email.opened","email.clicked"]'
@@ -17,7 +17,7 @@
   updated_at: '{{daysAgo 50}}'
 
 # --- Globex (workspace 2) foreign row — DO NOT change ---
-- id: 900
+- id: 900 # fixture: WebhookGlobex
   url: https://globex.example/hook
   secret_encrypted: '{{ encrypt "whsec_globex" }}'
   enabled: true

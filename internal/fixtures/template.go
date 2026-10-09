@@ -7,6 +7,9 @@ import (
 	"text/template"
 	"time"
 
+	"github.com/go-crypt/crypt/algorithm/argon2"
+	"golang.org/x/crypto/bcrypt"
+
 	"github.com/mokevnin/1mail/internal/secrets"
 	"github.com/mokevnin/1mail/internal/service"
 )
@@ -42,5 +45,41 @@ func TemplateFuncs(cipher *secrets.Cipher) template.FuncMap {
 		// Invitation tokens are stored only as a SHA-256 hash; fixtures express the
 		// raw token and hash it at load time so tests can present the raw value.
 		"inviteHash": service.HashInviteToken,
+		// Anchor credentials: the fixture states the plaintext and the hash is derived
+		// at load time, so hash and secret cannot drift apart. The fixture generator
+		// lifts the plaintext literal into the catalog (e.g. fixtures.OwnerJohnPassword).
+		// Both hash at minimum cost: the production verify code reads the cost back
+		// from the stored hash, so verification still works and loading stays fast.
+		"argonHash":  hashPasswordMinCost,
+		"bcryptHash": hashTokenSecretMinCost,
 	}
+}
+
+// hashPasswordMinCost is a PHC argon2id hash at the minimum legal parameters
+// (service.VerifyPassword decodes the parameters from the hash itself).
+func hashPasswordMinCost(password string) (string, error) {
+	hasher, err := argon2.New(
+		argon2.WithVariantID(),
+		argon2.WithT(argon2.IterationsMin),
+		argon2.WithM(argon2.MemoryMin),
+		argon2.WithP(argon2.ParallelismMin),
+	)
+	if err != nil {
+		return "", err
+	}
+	digest, err := hasher.Hash(password)
+	if err != nil {
+		return "", err
+	}
+	return digest.Encode(), nil
+}
+
+// hashTokenSecretMinCost is a bcrypt hash at bcrypt.MinCost
+// (service.VerifyTokenSecret reads the cost from the hash).
+func hashTokenSecretMinCost(secret string) (string, error) {
+	hash, err := bcrypt.GenerateFromPassword([]byte(secret), bcrypt.MinCost)
+	if err != nil {
+		return "", err
+	}
+	return string(hash), nil
 }

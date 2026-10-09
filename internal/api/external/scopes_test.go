@@ -87,7 +87,7 @@ func TestExternalEveryCheckedScopeIsGrantable(t *testing.T) {
 	require.NotEmpty(t, scopes)
 
 	env := testhelper.Setup(t)
-	c := client(t, env, seedToken(t, env.DB, []string{"tokens:write"}))
+	c := env.ExternalScoped(t, "tokens:write")
 
 	for _, scope := range scopes {
 		t.Run(scope, func(t *testing.T) {

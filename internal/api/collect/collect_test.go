@@ -11,45 +11,29 @@ import (
 	"github.com/mokevnin/1mail/ent/event"
 	collectapi "github.com/mokevnin/1mail/gen/collect"
 	"github.com/mokevnin/1mail/internal/events"
+	"github.com/mokevnin/1mail/internal/fixtures"
 	"github.com/mokevnin/1mail/internal/segments"
 	"github.com/mokevnin/1mail/internal/testhelper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-// collectKey is the per-workspace write-key seeded for workspace "acme" (id 1).
-const collectKey = "omck_test_acme_collect_key"
-
-// apiKey is the client-side SecuritySource supplying the x-collect-key value.
-type apiKey struct{ key string }
-
-func (k apiKey) ApiKeyAuth(context.Context, collectapi.OperationName) (collectapi.ApiKeyAuth, error) {
-	return collectapi.ApiKeyAuth{APIKey: k.key}, nil
-}
-
-func client(t *testing.T, env *testhelper.TestEnv, key string) *collectapi.Client {
-	t.Helper()
-	c, err := collectapi.NewClient("http://local/collect", apiKey{key}, collectapi.WithClient(env.Transport(nil)))
-	require.NoError(t, err)
-	return c
-}
-
 func TestCollectKeyAuth(t *testing.T) {
 	env := testhelper.Setup(t)
 	ctx := context.Background()
 
-	res, err := client(t, env, "").CollectEventsCreate(ctx, &collectapi.CollectEventsInput{})
+	res, err := env.CollectAnonymous(t).CollectEventsCreate(ctx, &collectapi.CollectEventsInput{})
 	require.NoError(t, err)
 	assert.IsType(t, &collectapi.CollectEventsCreateUnauthorized{}, res)
 
-	res, err = client(t, env, "wrong-key").CollectEventsCreate(ctx, &collectapi.CollectEventsInput{})
+	res, err = env.CollectWithKey(t, "wrong-key").CollectEventsCreate(ctx, &collectapi.CollectEventsInput{})
 	require.NoError(t, err)
 	assert.IsType(t, &collectapi.CollectEventsCreateUnauthorized{}, res)
 }
 
 func TestCollectIdentifyAndEvents(t *testing.T) {
 	env := testhelper.Setup(t)
-	c := client(t, env, collectKey)
+	c := env.CollectAcme(t)
 	ctx := context.Background()
 
 	// Identify with typed traits — exercises map[string]jx.Raw -> map[string]any.
@@ -70,16 +54,16 @@ func TestCollectIdentifyAndEvents(t *testing.T) {
 		Where(contact.Email("trav@example.com")).Only(ctx)
 	require.NoError(t, err)
 	assert.Equal(t, "pro", ct.CustomFields["plan"])
-	assert.Equal(t, float64(3), ct.CustomFields["visits"]) // JSON numbers → float64
-	assert.Equal(t, int64(1), ct.WorkspaceID)              // scoped to the key's workspace
+	assert.Equal(t, float64(3), ct.CustomFields["visits"])  // JSON numbers → float64
+	assert.Equal(t, int64(fixtures.AcmeID), ct.WorkspaceID) // scoped to the key's workspace
 
 	// Each trait key auto-created a typed CustomField definition (declared-by-use).
 	planDef, err := env.DB.CustomField.Query().
-		Where(customfield.WorkspaceID(1), customfield.Key("plan")).Only(ctx)
+		Where(customfield.WorkspaceID(fixtures.AcmeID), customfield.Key("plan")).Only(ctx)
 	require.NoError(t, err)
 	assert.Equal(t, customfield.TypeString, planDef.Type)
 	visitsDef, err := env.DB.CustomField.Query().
-		Where(customfield.WorkspaceID(1), customfield.Key("visits")).Only(ctx)
+		Where(customfield.WorkspaceID(fixtures.AcmeID), customfield.Key("visits")).Only(ctx)
 	require.NoError(t, err)
 	assert.Equal(t, customfield.TypeNumber, visitsDef.Type)
 
@@ -107,7 +91,7 @@ func TestCollectIdentifyAndEvents(t *testing.T) {
 	var envlp events.Envelope
 	require.NoError(t, json.Unmarshal(payload, &envlp))
 	assert.Equal(t, events.NameCollected, envlp.Name)
-	assert.EqualValues(t, 1, envlp.WorkspaceID) // scoped to the key's workspace
+	assert.EqualValues(t, fixtures.AcmeID, envlp.WorkspaceID) // scoped to the key's workspace
 
 	decoded, err := events.Decode(envlp)
 	require.NoError(t, err)
@@ -126,13 +110,13 @@ func TestCollectIdentifyAndEvents(t *testing.T) {
 // visible to an event-based segment condition that keys on the stable contact_id.
 func TestCollectIdentifyStitchesAnonymousEvents(t *testing.T) {
 	env := testhelper.Setup(t)
-	c := client(t, env, collectKey)
+	c := env.CollectAcme(t)
 	ctx := context.Background()
 
 	// A pre-identify anonymous event from device "vX" (as the persist subscriber
 	// would have written it: visitor_id set, contact_id null).
 	_, err := env.DB.Event.Create().
-		SetWorkspaceID(1).SetVisitorID("vX").SetAction("page_view").Save(ctx)
+		SetWorkspaceID(fixtures.AcmeID).SetVisitorID("vX").SetAction("page_view").Save(ctx)
 	require.NoError(t, err)
 
 	// Identify the device → binds it to a Contact and backfills its anonymous events.

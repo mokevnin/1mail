@@ -9,6 +9,7 @@ import (
 	"github.com/mokevnin/1mail/ent/event"
 	"github.com/mokevnin/1mail/ent/suppression"
 	"github.com/mokevnin/1mail/internal/events"
+	"github.com/mokevnin/1mail/internal/fixtures"
 	"github.com/mokevnin/1mail/internal/testhelper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -24,11 +25,11 @@ func TestSuppressIgnoresUnsubscribe(t *testing.T) {
 		ID:          "01J0SUPPRESS00000000000000",
 		Name:        events.NameEmailUnsubscribed,
 		Version:     1,
-		WorkspaceID: fixtureWorkspace,
+		WorkspaceID: fixtures.AcmeID,
 		OccurredAt:  time.Date(2026, 6, 28, 10, 0, 0, 0, time.UTC),
 		Data: dataFor(t, &events.EmailEngagement{
 			Action:      events.NameEmailUnsubscribed,
-			WorkspaceID: fixtureWorkspace,
+			WorkspaceID: fixtures.AcmeID,
 			ContactID:   7,
 			Email:       "Unsub@Example.com",
 		}),
@@ -38,7 +39,7 @@ func TestSuppressIgnoresUnsubscribe(t *testing.T) {
 	// No suppression was created for this destination (unsubscribe is not a
 	// suppression reason). Scoped to the destination so unrelated fixtures don't matter.
 	exists, err := env.DB.Suppression.Query().
-		Where(suppression.WorkspaceID(fixtureWorkspace), suppression.Destination("unsub@example.com")).
+		Where(suppression.WorkspaceID(fixtures.AcmeID), suppression.Destination("unsub@example.com")).
 		Exist(ctx)
 	require.NoError(t, err)
 	assert.False(t, exists, "unsubscribe must not suppress")
@@ -53,11 +54,11 @@ func TestSuppressIgnoresNonSuppressingActions(t *testing.T) {
 		ID:          "01J0SUPPRESS00000000000001",
 		Name:        events.NameEmailOpened,
 		Version:     1,
-		WorkspaceID: fixtureWorkspace,
+		WorkspaceID: fixtures.AcmeID,
 		OccurredAt:  time.Date(2026, 6, 28, 10, 0, 0, 0, time.UTC),
 		Data: dataFor(t, &events.EmailEngagement{
 			Action:      events.NameEmailOpened,
-			WorkspaceID: fixtureWorkspace,
+			WorkspaceID: fixtures.AcmeID,
 			ContactID:   7,
 			Email:       "open@example.com",
 		}),
@@ -65,7 +66,7 @@ func TestSuppressIgnoresNonSuppressingActions(t *testing.T) {
 	require.NoError(t, events.Suppress(ctx, env.DB, envlp))
 
 	exists, err := env.DB.Suppression.Query().
-		Where(suppression.WorkspaceID(fixtureWorkspace), suppression.Destination("open@example.com")).
+		Where(suppression.WorkspaceID(fixtures.AcmeID), suppression.Destination("open@example.com")).
 		Exist(ctx)
 	require.NoError(t, err)
 	assert.False(t, exists)
@@ -81,7 +82,7 @@ func TestPublishDeliveryFailureWithLongDedupID(t *testing.T) {
 	err := env.Bus.WithinTx(ctx, func(_ *ent.Client, pub events.Publisher) error {
 		return pub.Publish(ctx, &events.EmailDeliveryFailure{
 			Action:      events.NameEmailBounced,
-			WorkspaceID: fixtureWorkspace,
+			WorkspaceID: fixtures.AcmeID,
 			Email:       "recipient@example.com",
 			BounceKind:  events.BounceKindPermanent,
 			Provider:    "ses",
@@ -101,11 +102,11 @@ func TestPersistDedupesOnDedupKey(t *testing.T) {
 		ID:          "01J0DELIVERYFAILURE0000001",
 		Name:        events.NameEmailBounced,
 		Version:     1,
-		WorkspaceID: fixtureWorkspace,
+		WorkspaceID: fixtures.AcmeID,
 		OccurredAt:  time.Date(2026, 6, 28, 10, 0, 0, 0, time.UTC),
 		DedupKey:    "sns-msg-1/bounce@example.com",
 		Data: dataFor(t, &events.EmailDeliveryFailure{
-			Action: events.NameEmailBounced, WorkspaceID: fixtureWorkspace,
+			Action: events.NameEmailBounced, WorkspaceID: fixtures.AcmeID,
 			Email: "bounce@example.com", BounceKind: events.BounceKindPermanent,
 		}),
 	}
@@ -128,11 +129,11 @@ func TestSuppressOnPermanentBounce(t *testing.T) {
 		ID:          "01J0SUPPRESS00000000000010",
 		Name:        events.NameEmailBounced,
 		Version:     1,
-		WorkspaceID: fixtureWorkspace,
+		WorkspaceID: fixtures.AcmeID,
 		OccurredAt:  time.Date(2026, 6, 28, 10, 0, 0, 0, time.UTC),
 		Data: dataFor(t, &events.EmailDeliveryFailure{
 			Action:      events.NameEmailBounced,
-			WorkspaceID: fixtureWorkspace,
+			WorkspaceID: fixtures.AcmeID,
 			Email:       "hardbounce@example.com",
 			BounceKind:  events.BounceKindPermanent,
 			Provider:    "ses",
@@ -141,7 +142,7 @@ func TestSuppressOnPermanentBounce(t *testing.T) {
 	require.NoError(t, events.Suppress(ctx, env.DB, envlp))
 
 	s, err := env.DB.Suppression.Query().
-		Where(suppression.WorkspaceID(fixtureWorkspace),
+		Where(suppression.WorkspaceID(fixtures.AcmeID),
 			suppression.ChannelEQ(suppression.ChannelEmail),
 			suppression.DestinationEQ("hardbounce@example.com")).
 		Only(ctx)
@@ -158,11 +159,11 @@ func TestSuppressIgnoresTransientBounce(t *testing.T) {
 		ID:          "01J0SUPPRESS00000000000011",
 		Name:        events.NameEmailBounced,
 		Version:     1,
-		WorkspaceID: fixtureWorkspace,
+		WorkspaceID: fixtures.AcmeID,
 		OccurredAt:  time.Date(2026, 6, 28, 10, 0, 0, 0, time.UTC),
 		Data: dataFor(t, &events.EmailDeliveryFailure{
 			Action:      events.NameEmailBounced,
-			WorkspaceID: fixtureWorkspace,
+			WorkspaceID: fixtures.AcmeID,
 			Email:       "softbounce@example.com",
 			BounceKind:  events.BounceKindTransient,
 			Provider:    "ses",
@@ -171,7 +172,7 @@ func TestSuppressIgnoresTransientBounce(t *testing.T) {
 	require.NoError(t, events.Suppress(ctx, env.DB, envlp))
 
 	exists, err := env.DB.Suppression.Query().
-		Where(suppression.WorkspaceID(fixtureWorkspace), suppression.Destination("softbounce@example.com")).
+		Where(suppression.WorkspaceID(fixtures.AcmeID), suppression.Destination("softbounce@example.com")).
 		Exist(ctx)
 	require.NoError(t, err)
 	assert.False(t, exists)
@@ -186,11 +187,11 @@ func TestSuppressOnComplaint(t *testing.T) {
 		ID:          "01J0SUPPRESS00000000000012",
 		Name:        events.NameEmailComplained,
 		Version:     1,
-		WorkspaceID: fixtureWorkspace,
+		WorkspaceID: fixtures.AcmeID,
 		OccurredAt:  time.Date(2026, 6, 28, 10, 0, 0, 0, time.UTC),
 		Data: dataFor(t, &events.EmailDeliveryFailure{
 			Action:      events.NameEmailComplained,
-			WorkspaceID: fixtureWorkspace,
+			WorkspaceID: fixtures.AcmeID,
 			Email:       "complaint@example.com",
 			Provider:    "ses",
 		}),
@@ -198,7 +199,7 @@ func TestSuppressOnComplaint(t *testing.T) {
 	require.NoError(t, events.Suppress(ctx, env.DB, envlp))
 
 	s, err := env.DB.Suppression.Query().
-		Where(suppression.WorkspaceID(fixtureWorkspace),
+		Where(suppression.WorkspaceID(fixtures.AcmeID),
 			suppression.ChannelEQ(suppression.ChannelEmail),
 			suppression.DestinationEQ("complaint@example.com")).
 		Only(ctx)
@@ -215,11 +216,11 @@ func TestSuppressIsIdempotent(t *testing.T) {
 		ID:          "01J0SUPPRESS00000000000002",
 		Name:        events.NameEmailComplained,
 		Version:     1,
-		WorkspaceID: fixtureWorkspace,
+		WorkspaceID: fixtures.AcmeID,
 		OccurredAt:  time.Date(2026, 6, 28, 10, 0, 0, 0, time.UTC),
 		Data: dataFor(t, &events.EmailDeliveryFailure{
 			Action:      events.NameEmailComplained,
-			WorkspaceID: fixtureWorkspace,
+			WorkspaceID: fixtures.AcmeID,
 			Email:       "dupe@example.com",
 		}),
 	}
@@ -227,7 +228,7 @@ func TestSuppressIsIdempotent(t *testing.T) {
 	require.NoError(t, events.Suppress(ctx, env.DB, envlp)) // redelivery
 
 	n, err := env.DB.Suppression.Query().
-		Where(suppression.WorkspaceID(fixtureWorkspace),
+		Where(suppression.WorkspaceID(fixtures.AcmeID),
 			suppression.ChannelEQ(suppression.ChannelEmail),
 			suppression.DestinationEQ("dupe@example.com")).
 		Count(ctx)

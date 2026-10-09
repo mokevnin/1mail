@@ -8,19 +8,11 @@ import (
 	"testing"
 
 	siteapi "github.com/mokevnin/1mail/gen/site"
+	"github.com/mokevnin/1mail/internal/fixtures"
 	"github.com/mokevnin/1mail/internal/testhelper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
-
-// publicClient builds an unauthenticated site client for the NoAuth recovery
-// endpoints (forgot/reset/verify/confirm).
-func publicClient(t *testing.T, env *testhelper.TestEnv) *siteapi.Client {
-	t.Helper()
-	c, err := siteapi.NewClient("http://local/site", noJWT{}, siteapi.WithClient(env.Transport(nil)))
-	require.NoError(t, err)
-	return c
-}
 
 // tokenFromEmail extracts the token query param from an account email's link.
 func tokenFromEmail(t *testing.T, body string) string {
@@ -47,10 +39,10 @@ func lastSystemEmail(t *testing.T, env *testhelper.TestEnv) (subject, body strin
 
 func TestForgotPasswordFullResetFlow(t *testing.T) {
 	env := testhelper.Setup(t)
-	c := publicClient(t, env)
+	c := env.SiteAnonymous(t)
 	ctx := context.Background()
 
-	require.NoError(t, c.SiteAuthForgotPassword(ctx, &siteapi.SiteForgotPasswordInput{Email: "info@1mail.com"}))
+	require.NoError(t, c.SiteAuthForgotPassword(ctx, &siteapi.SiteForgotPasswordInput{Email: fixtures.OwnerJohnEmail}))
 
 	_, body := lastSystemEmail(t, env)
 	token := tokenFromEmail(t, body)
@@ -60,8 +52,8 @@ func TestForgotPasswordFullResetFlow(t *testing.T) {
 	assert.IsType(t, &siteapi.SiteAuthResetPasswordOK{}, res)
 
 	// The new password logs in; the old one no longer does.
-	assert.Equal(t, http.StatusOK, loginStatus(t, env, "info@1mail.com", "brandnewpass1"))
-	assert.Equal(t, http.StatusForbidden, loginStatus(t, env, "info@1mail.com", "password"))
+	assert.Equal(t, http.StatusOK, loginStatus(t, env, fixtures.OwnerJohnEmail, "brandnewpass1"))
+	assert.Equal(t, http.StatusForbidden, loginStatus(t, env, fixtures.OwnerJohnEmail, fixtures.OwnerJohnPassword))
 
 	// The token is single-use: replaying it after the reset fails (the binding —
 	// the password hash — has changed).
@@ -72,7 +64,7 @@ func TestForgotPasswordFullResetFlow(t *testing.T) {
 
 func TestForgotPasswordUnknownEmailIsSilent(t *testing.T) {
 	env := testhelper.Setup(t)
-	c := publicClient(t, env)
+	c := env.SiteAnonymous(t)
 
 	require.NoError(t, c.SiteAuthForgotPassword(context.Background(),
 		&siteapi.SiteForgotPasswordInput{Email: "nobody@example.com"}))
@@ -81,7 +73,7 @@ func TestForgotPasswordUnknownEmailIsSilent(t *testing.T) {
 
 func TestResetPasswordRejectsInvalidToken(t *testing.T) {
 	env := testhelper.Setup(t)
-	c := publicClient(t, env)
+	c := env.SiteAnonymous(t)
 
 	res, err := c.SiteAuthResetPassword(context.Background(),
 		&siteapi.SiteResetPasswordInput{Token: "not-a-token", Password: "whatever123"})
@@ -91,8 +83,8 @@ func TestResetPasswordRejectsInvalidToken(t *testing.T) {
 
 func TestResetPasswordRejectsWrongPurposeToken(t *testing.T) {
 	env := testhelper.Setup(t)
-	pub := publicClient(t, env)
-	authed := siteClient(t, env, "info@1mail.com")
+	pub := env.SiteAnonymous(t)
+	authed := env.SiteActor(t, fixtures.OwnerJohnEmail)
 	ctx := context.Background()
 
 	// Mint a verify token via resend, then try to use it as a reset token.
@@ -107,8 +99,8 @@ func TestResetPasswordRejectsWrongPurposeToken(t *testing.T) {
 
 func TestVerifyEmailFlow(t *testing.T) {
 	env := testhelper.Setup(t)
-	authed := siteClient(t, env, "info@1mail.com")
-	pub := publicClient(t, env)
+	authed := env.SiteActor(t, fixtures.OwnerJohnEmail)
+	pub := env.SiteAnonymous(t)
 	ctx := context.Background()
 
 	// Seed user starts unverified.
@@ -136,7 +128,7 @@ func TestVerifyEmailFlow(t *testing.T) {
 
 func TestEmailChangeRequiresCurrentPassword(t *testing.T) {
 	env := testhelper.Setup(t)
-	c := siteClient(t, env, "info@1mail.com")
+	c := env.SiteActor(t, fixtures.OwnerJohnEmail)
 
 	res, err := c.SiteUserEmailChange(context.Background(), &siteapi.SiteEmailChangeInput{
 		NewEmail:        "new@example.com",
@@ -152,17 +144,17 @@ func TestEmailChangeRejectsTakenAddress(t *testing.T) {
 	ctx := context.Background()
 
 	// Register a second user so its address is taken.
-	pub := publicClient(t, env)
+	pub := env.SiteAnonymous(t)
 	reg, err := pub.SiteAuthRegister(ctx, &siteapi.SiteRegisterInput{
 		Name: "Jane", Email: "jane@example.com", Password: "password123",
 	})
 	require.NoError(t, err)
 	require.IsType(t, &siteapi.SiteRegisterResult{}, reg)
 
-	c := siteClient(t, env, "info@1mail.com")
+	c := env.SiteActor(t, fixtures.OwnerJohnEmail)
 	res, err := c.SiteUserEmailChange(ctx, &siteapi.SiteEmailChangeInput{
 		NewEmail:        "jane@example.com",
-		CurrentPassword: "password",
+		CurrentPassword: fixtures.OwnerJohnPassword,
 	})
 	require.NoError(t, err)
 	assert.IsType(t, &siteapi.SiteUserEmailChangeConflict{}, res)
@@ -170,13 +162,13 @@ func TestEmailChangeRejectsTakenAddress(t *testing.T) {
 
 func TestEmailChangeConfirmSwapsEmail(t *testing.T) {
 	env := testhelper.Setup(t)
-	authed := siteClient(t, env, "info@1mail.com")
-	pub := publicClient(t, env)
+	authed := env.SiteActor(t, fixtures.OwnerJohnEmail)
+	pub := env.SiteAnonymous(t)
 	ctx := context.Background()
 
 	res, err := authed.SiteUserEmailChange(ctx, &siteapi.SiteEmailChangeInput{
 		NewEmail:        "moved@example.com",
-		CurrentPassword: "password",
+		CurrentPassword: fixtures.OwnerJohnPassword,
 	})
 	require.NoError(t, err)
 	assert.IsType(t, &siteapi.SiteUserEmailChangeAccepted{}, res)
@@ -191,6 +183,6 @@ func TestEmailChangeConfirmSwapsEmail(t *testing.T) {
 	assert.IsType(t, &siteapi.SiteAuthConfirmEmailChangeOK{}, confirm)
 
 	// Login now works with the new email, not the old one.
-	assert.Equal(t, http.StatusOK, loginStatus(t, env, "moved@example.com", "password"))
-	assert.Equal(t, http.StatusForbidden, loginStatus(t, env, "info@1mail.com", "password"))
+	assert.Equal(t, http.StatusOK, loginStatus(t, env, "moved@example.com", fixtures.OwnerJohnPassword))
+	assert.Equal(t, http.StatusForbidden, loginStatus(t, env, fixtures.OwnerJohnEmail, fixtures.OwnerJohnPassword))
 }

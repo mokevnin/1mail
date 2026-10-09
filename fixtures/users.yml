@@ -1,6 +1,28 @@
-- id: 1
+# Anchor users. Passwords are stated as plaintext and hashed at load time
+# (argonHash template call); the plaintext becomes a catalog constant (fixtures.<Name>Password).
+# OwnerJohn owns Acme, OwnerJane owns Globex, MemberMary is a member of Acme,
+# OutsiderOscar has no membership.
+- id: 1 # fixture: OwnerJohn
   name: John
   email: info@1mail.com
-  password_hash: '$argon2id$v=19$m=65536,t=3,p=4$fFjVW1n2MMDnLnlbkrzKLw$tp6jMfX95/TGifKVJ6y4WJXP3Vdm3hKQmE8FVGp1Ezk'
+  password_hash: '{{argonHash "password"}}'
+  created_at: '2026-01-01 00:00:00'
+  updated_at: '2026-01-01 00:00:00'
+- id: 2 # fixture: OwnerJane
+  name: Jane
+  email: jane@globex.test
+  password_hash: '{{argonHash "jane-test-password"}}'
+  created_at: '2026-01-01 00:00:00'
+  updated_at: '2026-01-01 00:00:00'
+- id: 3 # fixture: MemberMary
+  name: Mary
+  email: mary@acme.test
+  password_hash: '{{argonHash "mary-test-password"}}'
+  created_at: '2026-01-01 00:00:00'
+  updated_at: '2026-01-01 00:00:00'
+- id: 4 # fixture: OutsiderOscar
+  name: Oscar
+  email: oscar@nowhere.test
+  password_hash: '{{argonHash "oscar-test-password"}}'
   created_at: '2026-01-01 00:00:00'
   updated_at: '2026-01-01 00:00:00'

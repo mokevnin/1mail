@@ -13,20 +13,18 @@ import (
 	"github.com/mokevnin/1mail/ent"
 	"github.com/mokevnin/1mail/ent/outboundmessage"
 	"github.com/mokevnin/1mail/internal/eligibility"
+	"github.com/mokevnin/1mail/internal/fixtures"
 	"github.com/mokevnin/1mail/internal/messaging"
 	"github.com/mokevnin/1mail/internal/outbound"
 	"github.com/mokevnin/1mail/internal/testhelper"
 	"github.com/mokevnin/1mail/internal/tracking"
 )
 
-// Fixtures: workspace acme (1); contact 1 alice (clean), contact 2 bob (unsubscribed
+// Fixtures: Acme workspace; alice (clean), bob (unsubscribed
 // from "broadcasts"), contact 104 ethan.data@codebasics.dev (suppressed). The
 // default integration's From is on codebasics.dev (verified); news.acme.com is an
 // unverified Sending domain.
 const (
-	acme      = int64(1)
-	aliceID   = int64(1)
-	bobID     = int64(2)
 	suppressd = "ethan.data@codebasics.dev"
 )
 
@@ -48,7 +46,7 @@ func newModule(env *testhelper.TestEnv, opts ...outbound.Option) *outbound.Modul
 
 func transactional(key, to string) outbound.Request {
 	return outbound.Request{
-		WorkspaceID: acme,
+		WorkspaceID: fixtures.AcmeID,
 		Kind:        outboundmessage.KindTransactional,
 		Key:         key,
 		Destination: to,
@@ -62,7 +60,7 @@ func marketing(t *testing.T, env *testhelper.TestEnv, key string, contactID int6
 	t.Helper()
 	c := env.DB.Contact.GetX(context.Background(), contactID)
 	return outbound.Request{
-		WorkspaceID: acme,
+		WorkspaceID: fixtures.AcmeID,
 		Kind:        outboundmessage.KindBroadcast,
 		Key:         key,
 		Destination: *c.Email,
@@ -78,7 +76,7 @@ func marketing(t *testing.T, env *testhelper.TestEnv, key string, contactID int6
 func byKey(t *testing.T, env *testhelper.TestEnv, key string) *ent.OutboundMessage {
 	t.Helper()
 	return env.DB.OutboundMessage.Query().
-		Where(outboundmessage.WorkspaceID(acme), outboundmessage.IdempotencyKey(key)).
+		Where(outboundmessage.WorkspaceID(fixtures.AcmeID), outboundmessage.IdempotencyKey(key)).
 		OnlyX(context.Background())
 }
 
@@ -157,7 +155,7 @@ func TestUnsubscribedContactIsSkippedForMarketingButNotTransactional(t *testing.
 	ctx := context.Background()
 	m := newModule(env)
 
-	res, err := m.Send(ctx, marketing(t, env, "bc:bob", bobID))
+	res, err := m.Send(ctx, marketing(t, env, "bc:bob", fixtures.ContactBobID))
 	require.NoError(t, err)
 	assert.Equal(t, outbound.Skipped, res.Outcome)
 	assert.Equal(t, eligibility.ReasonUnsubscribedSource, res.Reason)
@@ -172,7 +170,7 @@ func TestMarketingCarriesFooterAndOneClickHeader(t *testing.T) {
 	env := testhelper.Setup(t)
 	ctx := context.Background()
 
-	res, err := newModule(env).Send(ctx, marketing(t, env, "bc:alice", aliceID))
+	res, err := newModule(env).Send(ctx, marketing(t, env, "bc:alice", fixtures.ContactAliceID))
 	require.NoError(t, err)
 	require.Equal(t, outbound.Sent, res.Outcome)
 
@@ -183,14 +181,14 @@ func TestMarketingCarriesFooterAndOneClickHeader(t *testing.T) {
 	require.NotNil(t, row.SendingSource)
 	assert.Equal(t, eligibility.SourceBroadcasts, *row.SendingSource)
 	require.NotNil(t, row.ContactID)
-	assert.Equal(t, aliceID, *row.ContactID)
+	assert.Equal(t, int64(fixtures.ContactAliceID), *row.ContactID)
 }
 
 func TestMarketingWithoutTrackerFailsClosed(t *testing.T) {
 	env := testhelper.Setup(t)
 	m := outbound.New(env.DB, env.Bus, senders{sender: env.CustomerMail}, nil)
 
-	_, err := m.Send(context.Background(), marketing(t, env, "bc:notracker", aliceID))
+	_, err := m.Send(context.Background(), marketing(t, env, "bc:notracker", fixtures.ContactAliceID))
 	require.ErrorIs(t, err, outbound.ErrNoTracker)
 	assert.Empty(t, env.CustomerMail.Messages(), "never sent without an unsubscribe link")
 }
@@ -213,9 +211,9 @@ func TestSuspendedWorkspaceIsHeldNotConsumed(t *testing.T) {
 	ctx := context.Background()
 	m := newModule(env)
 
-	env.DB.Workspace.UpdateOneID(acme).SetSuspendedAt(time.Now()).SetSuspendedBy("system").
+	env.DB.Workspace.UpdateOneID(fixtures.AcmeID).SetSuspendedAt(time.Now()).SetSuspendedBy("system").
 		SetSuspensionReason("complaint rate").ExecX(ctx)
-	res, err := m.Send(ctx, marketing(t, env, "bc:held", aliceID))
+	res, err := m.Send(ctx, marketing(t, env, "bc:held", fixtures.ContactAliceID))
 	require.NoError(t, err)
 	assert.Equal(t, outbound.Held, res.Outcome)
 	assert.Equal(t, outbound.HoldSuspended, res.Reason)
@@ -223,8 +221,8 @@ func TestSuspendedWorkspaceIsHeldNotConsumed(t *testing.T) {
 	assert.Empty(t, env.CustomerMail.Messages())
 
 	// Reversible: after the unfreeze the same Request goes out.
-	env.DB.Workspace.UpdateOneID(acme).ClearSuspendedAt().ExecX(ctx)
-	res, err = m.Send(ctx, marketing(t, env, "bc:held", aliceID))
+	env.DB.Workspace.UpdateOneID(fixtures.AcmeID).ClearSuspendedAt().ExecX(ctx)
+	res, err = m.Send(ctx, marketing(t, env, "bc:held", fixtures.ContactAliceID))
 	require.NoError(t, err)
 	assert.Equal(t, outbound.Sent, res.Outcome)
 }
@@ -312,9 +310,9 @@ func TestLiveClaimBlocksAndStaleClaimIsTakenOver(t *testing.T) {
 func TestConfirmedOptInIsReadInsideTheRule(t *testing.T) {
 	env := testhelper.Setup(t)
 	ctx := context.Background()
-	env.DB.Workspace.UpdateOneID(acme).SetRequireConfirmedOptIn(true).ExecX(ctx)
+	env.DB.Workspace.UpdateOneID(fixtures.AcmeID).SetRequireConfirmedOptIn(true).ExecX(ctx)
 
-	res, err := newModule(env).Send(ctx, marketing(t, env, "bc:unconfirmed", aliceID))
+	res, err := newModule(env).Send(ctx, marketing(t, env, "bc:unconfirmed", fixtures.ContactAliceID))
 	require.NoError(t, err)
 	assert.Equal(t, outbound.Skipped, res.Outcome)
 	assert.Equal(t, eligibility.ReasonUnconfirmed, res.Reason)
@@ -326,10 +324,10 @@ func TestPreflightReportsHoldsWithoutRecording(t *testing.T) {
 	m := newModule(env)
 
 	before := env.DB.OutboundMessage.Query().CountX(ctx)
-	hold, err := m.Preflight(ctx, acme, "")
+	hold, err := m.Preflight(ctx, fixtures.AcmeID, "")
 	require.NoError(t, err)
 	assert.Empty(t, hold)
-	hold, err = m.Preflight(ctx, acme, "x@news.acme.com")
+	hold, err = m.Preflight(ctx, fixtures.AcmeID, "x@news.acme.com")
 	require.NoError(t, err)
 	assert.Equal(t, outbound.HoldUnverifiedDomain, hold)
 	assert.Equal(t, before, env.DB.OutboundMessage.Query().CountX(ctx), "a preflight records nothing")
@@ -343,7 +341,7 @@ func TestMarkFailedOnlyTouchesPendingClaims(t *testing.T) {
 	env.CustomerMail.SetErr(errors.New("down"))
 	_, err := m.Send(ctx, transactional("tx:giveup", "a@example.com"))
 	require.Error(t, err)
-	require.NoError(t, m.MarkFailed(ctx, acme, "tx:giveup", errors.New("retries exhausted")))
+	require.NoError(t, m.MarkFailed(ctx, fixtures.AcmeID, "tx:giveup", errors.New("retries exhausted")))
 	row := byKey(t, env, "tx:giveup")
 	assert.Equal(t, outboundmessage.StatusFailed, row.Status)
 	require.NotNil(t, row.Reason)
@@ -357,7 +355,7 @@ func TestSendTestSkipsEligibilityAndRecordsNothingButHonorsTheFreeze(t *testing.
 	before := env.DB.OutboundMessage.Query().CountX(ctx)
 
 	// Even a suppressed address can be the target of an explicit author preview.
-	res, err := m.SendTest(ctx, outbound.TestRequest{WorkspaceID: acme, To: suppressd, Subject: "[Test] Hi", Body: mjml,
+	res, err := m.SendTest(ctx, outbound.TestRequest{WorkspaceID: fixtures.AcmeID, To: suppressd, Subject: "[Test] Hi", Body: mjml,
 		Variables: map[string]any{"first_name": "Alex"}})
 	require.NoError(t, err)
 	assert.Equal(t, outbound.Sent, res.Outcome)
@@ -368,8 +366,8 @@ func TestSendTestSkipsEligibilityAndRecordsNothingButHonorsTheFreeze(t *testing.
 	assert.Zero(t, sentEvents(t, env, 0))
 
 	// But a suspended Workspace sends nothing, test or not.
-	env.DB.Workspace.UpdateOneID(acme).SetSuspendedAt(time.Now()).ExecX(ctx)
-	res, err = m.SendTest(ctx, outbound.TestRequest{WorkspaceID: acme, To: "a@example.com", Subject: "s", Body: mjml})
+	env.DB.Workspace.UpdateOneID(fixtures.AcmeID).SetSuspendedAt(time.Now()).ExecX(ctx)
+	res, err = m.SendTest(ctx, outbound.TestRequest{WorkspaceID: fixtures.AcmeID, To: "a@example.com", Subject: "s", Body: mjml})
 	require.NoError(t, err)
 	assert.Equal(t, outbound.Held, res.Outcome)
 	assert.Equal(t, outbound.HoldSuspended, res.Reason)

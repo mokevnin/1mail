@@ -1,15 +1,22 @@
 package site_test
 
 import (
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
 
+	"github.com/mokevnin/1mail/internal/fixtures"
 	"github.com/mokevnin/1mail/internal/testhelper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+// loginBody is the JSON body go-pkgz/auth's direct provider expects.
+func loginBody(user, passwd string) string {
+	return fmt.Sprintf(`{"user":%q,"passwd":%q}`, user, passwd)
+}
 
 // jwtCookie returns the value of the "JWT" cookie set on the response, or "" if absent.
 func jwtCookie(resp *http.Response) string {
@@ -24,15 +31,15 @@ func jwtCookie(resp *http.Response) string {
 // TestSiteDirectLoginSetsJWTAndAuthorizes proves the full login chain: the SPA's
 // /site/auth/direct/login is routed to the go-pkgz/auth direct provider (server.New),
 // which validates the seed user, sets a JWT cookie, and that cookie is then accepted by
-// SiteSecurityHandler on a protected endpoint. Seed user info@1mail.com / password owns
-// workspace "acme" (see fixtures).
+// SiteSecurityHandler on a protected endpoint. The Acme owner fixture user
+// owns the Acme workspace (see fixtures).
 func TestSiteDirectLoginSetsJWTAndAuthorizes(t *testing.T) {
 	env := testhelper.Setup(t)
 
 	// 1. Log in. go-pkgz/auth's direct provider reads JSON {user, passwd}.
 	loginRec := httptest.NewRecorder()
 	loginReq := httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/site/auth/direct/login",
-		strings.NewReader(`{"user":"info@1mail.com","passwd":"password"}`))
+		strings.NewReader(loginBody(fixtures.OwnerJohnEmail, fixtures.OwnerJohnPassword)))
 	loginReq.Header.Set("Content-Type", "application/json")
 	env.Server.ServeHTTP(loginRec, loginReq)
 
@@ -54,7 +61,7 @@ func TestSiteDirectLoginRejectsBadPassword(t *testing.T) {
 
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/site/auth/direct/login",
-		strings.NewReader(`{"user":"info@1mail.com","passwd":"wrong"}`))
+		strings.NewReader(loginBody(fixtures.OwnerJohnEmail, "wrong")))
 	req.Header.Set("Content-Type", "application/json")
 	env.Server.ServeHTTP(rec, req)
 

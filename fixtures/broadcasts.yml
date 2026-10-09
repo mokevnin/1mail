@@ -2,7 +2,7 @@
 # (ids 200-205) carry denormalized counters that match their rows in
 # broadcast_recipients.yml; their sent_at values are spread across the last ~70
 # days so the analytics time series has bars in both the 30d and 90d windows.
-- id: 100
+- id: 100 # fixture: BroadcastDraft
   name: Summer sale teaser
   subject: "A summer treat is coming \U0001F31E"
   from_name: CodeBasics
@@ -12,7 +12,7 @@
   workspace_id: 1
   created_at: '{{daysAgo 10}}'
   updated_at: '{{daysAgo 2}}'
-- id: 101
+- id: 101 # fixture: BroadcastScheduled
   name: New SQL course launch
   subject: "The SQL course is live \U0001F680"
   from_name: CodeBasics
@@ -23,7 +23,7 @@
   workspace_id: 1
   created_at: '{{daysAgo 5}}'
   updated_at: '{{daysAgo 1}}'
-- id: 102
+- id: 102 # fixture: BroadcastSending
   name: Weekly digest #24
   subject: Your weekly learning digest
   from_name: CodeBasics
@@ -33,7 +33,7 @@
   workspace_id: 1
   created_at: '{{daysAgo 1}}'
   updated_at: '{{hoursAgo 1}}'
-- id: 103
+- id: 103 # fixture: BroadcastFailed
   name: Broken send (provider error)
   subject: Oops
   from_name: CodeBasics
@@ -47,7 +47,7 @@
   updated_at: '{{daysAgo 7}}'
 # Draft targeting segment 103 (matches no contact) — the empty-audience case:
 # sending it finalizes straight to "sent" with zero recipients.
-- id: 104
+- id: 104 # fixture: BroadcastEmptyAudience
   name: Empty audience send
   subject: Nobody home
   from_name: CodeBasics
@@ -60,7 +60,7 @@
   updated_at: '{{daysAgo 3}}'
 # Draft targeting segment 100 ("plan = pro") — the rule-segment audience case:
 # only pro-plan contacts are recipients.
-- id: 105
+- id: 105 # fixture: BroadcastProSegment
   name: Pro plan perks
   subject: Your pro perks
   from_name: CodeBasics
@@ -73,7 +73,7 @@
   updated_at: '{{daysAgo 3}}'
 
 # --- Sent campaigns (drive analytics) ---
-- id: 200
+- id: 200 # fixture: BroadcastSent
   name: Python crash course is here
   subject: Python crash course is here
   from_name: CodeBasics
@@ -171,7 +171,7 @@
   updated_at: '{{daysAgo 70}}'
 
 # --- Globex (workspace 2) foreign row — DO NOT change ---
-- id: 900
+- id: 900 # fixture: BroadcastGlobex
   name: Globex only
   subject: Globex only
   from_name: Globex

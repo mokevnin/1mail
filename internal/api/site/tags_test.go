@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	siteapi "github.com/mokevnin/1mail/gen/site"
+	"github.com/mokevnin/1mail/internal/fixtures"
 	"github.com/mokevnin/1mail/internal/testhelper"
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"
@@ -17,10 +18,9 @@ func siteTagNames(items []siteapi.SiteTagResource) []string {
 
 func TestSiteTagsRequireAuth(t *testing.T) {
 	env := testhelper.Setup(t)
-	c, err := siteapi.NewClient("http://local/site", noJWT{}, siteapi.WithClient(env.Transport(nil)))
-	require.NoError(t, err)
+	c := env.SiteAnonymous(t)
 
-	_, err = c.SiteTagsList(context.Background(), siteapi.SiteTagsListParams{Slug: "acme"})
+	_, err := c.SiteTagsList(context.Background(), siteapi.SiteTagsListParams{Slug: fixtures.AcmeSlug})
 	require.Error(t, err)
 }
 
@@ -28,41 +28,41 @@ func TestSiteTagsRequireAuth(t *testing.T) {
 // and unused; contact 2 has none.
 func TestSiteTagsListApplyRemove(t *testing.T) {
 	env := testhelper.Setup(t)
-	c := siteClient(t, env, "info@1mail.com")
+	c := env.SiteActor(t, fixtures.OwnerJohnEmail)
 	ctx := context.Background()
 
-	all, err := c.SiteTagsList(ctx, siteapi.SiteTagsListParams{Slug: "acme"})
+	all, err := c.SiteTagsList(ctx, siteapi.SiteTagsListParams{Slug: fixtures.AcmeSlug})
 	require.NoError(t, err)
 	listed, ok := all.(*siteapi.SiteTagsListOK)
 	require.Truef(t, ok, "got %T", all)
 	assert.Equal(t, []string{"newsletter", "unused", "vip"}, siteTagNames(listed.Items))
 
-	mine, err := c.SiteTagsListForContact(ctx, siteapi.SiteTagsListForContactParams{Slug: "acme", ContactId: "1"})
+	mine, err := c.SiteTagsListForContact(ctx, siteapi.SiteTagsListForContactParams{Slug: fixtures.AcmeSlug, ContactId: idStr(fixtures.ContactAliceID)})
 	require.NoError(t, err)
 	assert.Equal(t, []string{"newsletter", "vip"}, siteTagNames(mine.(*siteapi.SiteTagsListForContactOK).Items))
 
-	applied, err := c.SiteTagsApply(ctx, &siteapi.SiteApplyTagInput{Name: "churn-risk"}, siteapi.SiteTagsApplyParams{Slug: "acme", ContactId: "2"})
+	applied, err := c.SiteTagsApply(ctx, &siteapi.SiteApplyTagInput{Name: "churn-risk"}, siteapi.SiteTagsApplyParams{Slug: fixtures.AcmeSlug, ContactId: idStr(fixtures.ContactBobID)})
 	require.NoError(t, err)
 	tag, ok := applied.(*siteapi.SiteTagResource)
 	require.Truef(t, ok, "got %T", applied)
 	assert.Equal(t, "churn-risk", tag.Name)
 
-	mine, err = c.SiteTagsListForContact(ctx, siteapi.SiteTagsListForContactParams{Slug: "acme", ContactId: "2"})
+	mine, err = c.SiteTagsListForContact(ctx, siteapi.SiteTagsListForContactParams{Slug: fixtures.AcmeSlug, ContactId: idStr(fixtures.ContactBobID)})
 	require.NoError(t, err)
 	assert.Equal(t, []string{"churn-risk"}, siteTagNames(mine.(*siteapi.SiteTagsListForContactOK).Items))
 
-	removed, err := c.SiteTagsRemove(ctx, siteapi.SiteTagsRemoveParams{Slug: "acme", ContactId: "2", Name: "churn-risk"})
+	removed, err := c.SiteTagsRemove(ctx, siteapi.SiteTagsRemoveParams{Slug: fixtures.AcmeSlug, ContactId: idStr(fixtures.ContactBobID), Name: "churn-risk"})
 	require.NoError(t, err)
 	assert.IsType(t, &siteapi.SiteTagsRemoveNoContent{}, removed)
-	mine, err = c.SiteTagsListForContact(ctx, siteapi.SiteTagsListForContactParams{Slug: "acme", ContactId: "2"})
+	mine, err = c.SiteTagsListForContact(ctx, siteapi.SiteTagsListForContactParams{Slug: fixtures.AcmeSlug, ContactId: idStr(fixtures.ContactBobID)})
 	require.NoError(t, err)
 	assert.Empty(t, mine.(*siteapi.SiteTagsListForContactOK).Items)
 
 	// Errors: unknown contact, blank name, unknown workspace.
-	nf, err := c.SiteTagsApply(ctx, &siteapi.SiteApplyTagInput{Name: "x"}, siteapi.SiteTagsApplyParams{Slug: "acme", ContactId: "999999"})
+	nf, err := c.SiteTagsApply(ctx, &siteapi.SiteApplyTagInput{Name: "x"}, siteapi.SiteTagsApplyParams{Slug: fixtures.AcmeSlug, ContactId: "999999"})
 	require.NoError(t, err)
 	assert.IsType(t, &siteapi.SiteTagsApplyNotFound{}, nf)
-	blank, err := c.SiteTagsApply(ctx, &siteapi.SiteApplyTagInput{Name: " "}, siteapi.SiteTagsApplyParams{Slug: "acme", ContactId: "2"})
+	blank, err := c.SiteTagsApply(ctx, &siteapi.SiteApplyTagInput{Name: " "}, siteapi.SiteTagsApplyParams{Slug: fixtures.AcmeSlug, ContactId: idStr(fixtures.ContactBobID)})
 	require.NoError(t, err)
 	assert.IsType(t, &siteapi.SiteTagsApplyUnprocessableEntity{}, blank)
 	ws, err := c.SiteTagsList(ctx, siteapi.SiteTagsListParams{Slug: "does-not-exist"})

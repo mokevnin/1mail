@@ -11,6 +11,7 @@ import (
 
 	"github.com/mokevnin/1mail/internal/eventlog"
 	"github.com/mokevnin/1mail/internal/events"
+	"github.com/mokevnin/1mail/internal/fixtures"
 	"github.com/mokevnin/1mail/internal/testhelper"
 )
 
@@ -46,7 +47,7 @@ func TestIngestAttachesEventToExistingContactByAlias(t *testing.T) {
 	env := testhelper.Setup(t)
 	m := eventlog.New(env.DB, env.Bus)
 
-	err := m.Ingest(context.Background(), 1, []eventlog.Input{
+	err := m.Ingest(context.Background(), fixtures.AcmeID, []eventlog.Input{
 		{SubjectID: "s-1", Action: "page_view", Email: ptr("ALICE@example.com")},
 		{SubjectID: "nobody", Action: "signup", Email: ptr("nobody@example.com")},
 	})
@@ -54,9 +55,9 @@ func TestIngestAttachesEventToExistingContactByAlias(t *testing.T) {
 
 	got := outboxCollected(t, env)
 	require.Len(t, got, 2)
-	assert.Equal(t, int64(1), got[0].ContactID, "email alias resolves to the existing contact")
+	assert.Equal(t, int64(fixtures.ContactAliceID), got[0].ContactID, "email alias resolves to the existing contact")
 	assert.Equal(t, int64(0), got[1].ContactID, "unknown identity stays anonymous")
-	assert.Equal(t, int64(1), got[0].WorkspaceID)
+	assert.Equal(t, int64(fixtures.AcmeID), got[0].WorkspaceID)
 	assert.Equal(t, "page_view", got[0].Action)
 }
 
@@ -64,7 +65,7 @@ func TestIngestCarriesPropertiesVerbatim(t *testing.T) {
 	env := testhelper.Setup(t)
 	m := eventlog.New(env.DB, env.Bus)
 
-	require.NoError(t, m.Ingest(context.Background(), 1, []eventlog.Input{
+	require.NoError(t, m.Ingest(context.Background(), fixtures.AcmeID, []eventlog.Input{
 		{SubjectID: "s", Action: "added_to_cart", Properties: map[string]any{"sku": "A1"}},
 	}))
 
@@ -78,13 +79,13 @@ func TestActionsAreDistinctSortedAndWorkspaceScoped(t *testing.T) {
 	ctx := context.Background()
 	m := eventlog.New(env.DB, env.Bus)
 
-	env.DB.Event.Create().SetWorkspaceID(1).SetSubjectID("dup").SetAction("page_view").SaveX(ctx)
+	env.DB.Event.Create().SetWorkspaceID(fixtures.AcmeID).SetSubjectID("dup").SetAction("page_view").SaveX(ctx)
 
 	got, err := m.Actions(ctx, 1)
 	require.NoError(t, err)
 	assert.True(t, sort.StringsAreSorted(got))
 	assert.Contains(t, got, "purchase")
-	assert.NotContains(t, got, testhelper.GlobexEventAction)
+	assert.NotContains(t, got, fixtures.EventGlobexAction)
 	count := 0
 	for _, a := range got {
 		if a == "page_view" {
@@ -93,7 +94,7 @@ func TestActionsAreDistinctSortedAndWorkspaceScoped(t *testing.T) {
 	}
 	assert.Equal(t, 1, count, "distinct")
 
-	other, err := m.Actions(ctx, testhelper.GlobexWorkspaceID)
+	other, err := m.Actions(ctx, fixtures.GlobexID)
 	require.NoError(t, err)
-	assert.Equal(t, []string{testhelper.GlobexEventAction}, other)
+	assert.Equal(t, []string{fixtures.EventGlobexAction}, other)
 }

@@ -7,6 +7,7 @@ import (
 	"time"
 
 	siteapi "github.com/mokevnin/1mail/gen/site"
+	"github.com/mokevnin/1mail/internal/fixtures"
 	"github.com/mokevnin/1mail/internal/testhelper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -14,9 +15,9 @@ import (
 
 func TestSiteEventsListMostRecentFirst(t *testing.T) {
 	env := testhelper.Setup(t)
-	c := siteClient(t, env, "info@1mail.com")
+	c := env.SiteActor(t, fixtures.OwnerJohnEmail)
 
-	res, err := c.SiteEventsList(context.Background(), siteapi.SiteEventsListParams{Slug: "acme"})
+	res, err := c.SiteEventsList(context.Background(), siteapi.SiteEventsListParams{Slug: fixtures.AcmeSlug})
 	require.NoError(t, err)
 	ok, isOK := res.(*siteapi.SiteEventsListOK)
 	require.Truef(t, isOK, "got %T", res)
@@ -31,10 +32,10 @@ func TestSiteEventsListMostRecentFirst(t *testing.T) {
 
 func TestSiteEventsListFilterByAction(t *testing.T) {
 	env := testhelper.Setup(t)
-	c := siteClient(t, env, "info@1mail.com")
+	c := env.SiteActor(t, fixtures.OwnerJohnEmail)
 
 	res, err := c.SiteEventsList(context.Background(), siteapi.SiteEventsListParams{
-		Slug:   "acme",
+		Slug:   fixtures.AcmeSlug,
 		Action: siteapi.NewOptString("purchase"),
 	})
 	require.NoError(t, err)
@@ -50,12 +51,12 @@ func TestSiteEventsListFilterByAction(t *testing.T) {
 
 func TestSiteEventsListFilterByEmail(t *testing.T) {
 	env := testhelper.Setup(t)
-	c := siteClient(t, env, "info@1mail.com")
+	c := env.SiteActor(t, fixtures.OwnerJohnEmail)
 
 	// Upper-cased on purpose: the match must be case-insensitive because contact
 	// emails are stored as entered while collect events are lowercased.
 	res, err := c.SiteEventsList(context.Background(), siteapi.SiteEventsListParams{
-		Slug:  "acme",
+		Slug:  fixtures.AcmeSlug,
 		Email: siteapi.NewOptString("ALICE@example.com"),
 	})
 	require.NoError(t, err)
@@ -67,14 +68,14 @@ func TestSiteEventsListFilterByEmail(t *testing.T) {
 	require.NotEmpty(t, ok.Items)
 	for _, it := range ok.Items {
 		require.True(t, it.Email.Set)
-		assert.Equal(t, "alice@example.com", it.Email.Value)
+		assert.Equal(t, fixtures.ContactAliceEmail, it.Email.Value)
 	}
 	assert.Equal(t, "page_view", ok.Items[0].Action)
 }
 
 func TestSiteEventsListUnknownWorkspace(t *testing.T) {
 	env := testhelper.Setup(t)
-	c := siteClient(t, env, "info@1mail.com")
+	c := env.SiteActor(t, fixtures.OwnerJohnEmail)
 
 	res, err := c.SiteEventsList(context.Background(), siteapi.SiteEventsListParams{Slug: "does-not-exist"})
 	require.NoError(t, err)
@@ -86,15 +87,15 @@ func TestSiteEventsListUnknownWorkspace(t *testing.T) {
 // must still appear once.
 func TestSiteEventsActions(t *testing.T) {
 	env := testhelper.Setup(t)
-	c := siteClient(t, env, "info@1mail.com")
+	c := env.SiteActor(t, fixtures.OwnerJohnEmail)
 	ctx := context.Background()
 
 	// An extra page_view exercises de-duplication (it must not appear twice).
 	_, err := env.DB.Event.Create().
-		SetWorkspaceID(1).SetSubjectID("x@test.dev").SetAction("page_view").Save(ctx)
+		SetWorkspaceID(fixtures.AcmeID).SetSubjectID("x@test.dev").SetAction("page_view").Save(ctx)
 	require.NoError(t, err)
 
-	out, err := c.SiteEventsActions(ctx, siteapi.SiteEventsActionsParams{Slug: "acme"})
+	out, err := c.SiteEventsActions(ctx, siteapi.SiteEventsActionsParams{Slug: fixtures.AcmeSlug})
 	require.NoError(t, err)
 	res, ok := out.(*siteapi.SiteEventActionsResult)
 	require.Truef(t, ok, "got %T", out)
@@ -110,7 +111,7 @@ func TestSiteEventsActions(t *testing.T) {
 
 func TestSiteEventsActionsUnknownWorkspace(t *testing.T) {
 	env := testhelper.Setup(t)
-	c := siteClient(t, env, "info@1mail.com")
+	c := env.SiteActor(t, fixtures.OwnerJohnEmail)
 
 	res, err := c.SiteEventsActions(context.Background(), siteapi.SiteEventsActionsParams{Slug: "does-not-exist"})
 	require.NoError(t, err)

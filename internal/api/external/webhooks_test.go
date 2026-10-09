@@ -2,6 +2,7 @@ package external_test
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"net/http"
 	"strings"
@@ -9,6 +10,7 @@ import (
 
 	"github.com/mokevnin/1mail/ent/webhookendpoint"
 	externalapi "github.com/mokevnin/1mail/gen/external"
+	"github.com/mokevnin/1mail/internal/fixtures"
 	"github.com/mokevnin/1mail/internal/testhelper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -16,10 +18,10 @@ import (
 
 func TestExternalWebhooksCRUD(t *testing.T) {
 	env := testhelper.Setup(t)
-	c := client(t, env, seedToken(t, env.DB, []string{"webhooks:read", "webhooks:write"}))
+	c := env.ExternalScoped(t, "webhooks:read", "webhooks:write")
 	ctx := context.Background()
 
-	got, err := c.WebhooksGet(ctx, externalapi.WebhooksGetParams{ID: "100"})
+	got, err := c.WebhooksGet(ctx, externalapi.WebhooksGetParams{ID: entityIDString(fixtures.WebhookCodebasicsID)})
 	require.NoError(t, err)
 	hook, ok := got.(*externalapi.WebhookResource)
 	require.Truef(t, ok, "got %T", got)
@@ -73,14 +75,14 @@ func TestExternalWebhooksCRUD(t *testing.T) {
 // create or update, neither in clear nor sealed.
 func TestExternalWebhooksNeverReturnSecrets(t *testing.T) {
 	env := testhelper.Setup(t)
-	token := seedToken(t, env.DB, []string{"webhooks:read", "webhooks:write"})
+	token := env.ScopedBearer(t, "webhooks:read", "webhooks:write")
 	doer := env.Transport(map[string]string{"Authorization": "Bearer " + token})
 
 	cases := []struct{ name, method, path, body string }{
 		{"list", http.MethodGet, "/api/webhooks", ""},
-		{"get", http.MethodGet, "/api/webhooks/100", ""},
+		{"get", http.MethodGet, fmt.Sprintf("/api/webhooks/%d", fixtures.WebhookCodebasicsID), ""},
 		{"create", http.MethodPost, "/api/webhooks", `{"url":"https://example.com/h"}`},
-		{"update", http.MethodPut, "/api/webhooks/100", `{"enabled":false}`},
+		{"update", http.MethodPut, fmt.Sprintf("/api/webhooks/%d", fixtures.WebhookCodebasicsID), `{"enabled":false}`},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -103,27 +105,27 @@ func TestExternalWebhooksScopes(t *testing.T) {
 	env := testhelper.Setup(t)
 	ctx := context.Background()
 
-	res, err := client(t, env, "").WebhooksList(ctx, externalapi.WebhooksListParams{})
+	res, err := env.ExternalAnonymous(t).WebhooksList(ctx, externalapi.WebhooksListParams{})
 	require.NoError(t, err)
 	assert.IsType(t, &externalapi.WebhooksListUnauthorized{}, res)
 
 	// Template scopes do not grant webhooks.
-	other := client(t, env, seedToken(t, env.DB, []string{"templates:read", "templates:write"}))
+	other := env.ExternalScoped(t, "templates:read", "templates:write")
 	l, err := other.WebhooksList(ctx, externalapi.WebhooksListParams{})
 	require.NoError(t, err)
 	assert.IsType(t, &externalapi.WebhooksListUnauthorized{}, l)
 
-	ro := client(t, env, seedToken(t, env.DB, []string{"webhooks:read"}))
-	g, err := ro.WebhooksGet(ctx, externalapi.WebhooksGetParams{ID: "100"})
+	ro := env.ExternalScoped(t, "webhooks:read")
+	g, err := ro.WebhooksGet(ctx, externalapi.WebhooksGetParams{ID: entityIDString(fixtures.WebhookCodebasicsID)})
 	require.NoError(t, err)
 	assert.IsType(t, &externalapi.WebhookResource{}, g)
 	cr, err := ro.WebhooksCreate(ctx, &externalapi.CreateWebhookInput{URL: "https://example.com/x"})
 	require.NoError(t, err)
 	assert.IsType(t, &externalapi.WebhooksCreateUnauthorized{}, cr)
-	up, err := ro.WebhooksUpdate(ctx, &externalapi.UpdateWebhookInput{}, externalapi.WebhooksUpdateParams{ID: "100"})
+	up, err := ro.WebhooksUpdate(ctx, &externalapi.UpdateWebhookInput{}, externalapi.WebhooksUpdateParams{ID: entityIDString(fixtures.WebhookCodebasicsID)})
 	require.NoError(t, err)
 	assert.IsType(t, &externalapi.WebhooksUpdateUnauthorized{}, up)
-	de, err := ro.WebhooksDelete(ctx, externalapi.WebhooksDeleteParams{ID: "100"})
+	de, err := ro.WebhooksDelete(ctx, externalapi.WebhooksDeleteParams{ID: entityIDString(fixtures.WebhookCodebasicsID)})
 	require.NoError(t, err)
 	assert.IsType(t, &externalapi.WebhooksDeleteUnauthorized{}, de)
 }
@@ -132,13 +134,13 @@ func TestExternalWebhooksAreWorkspaceScoped(t *testing.T) {
 	env := testhelper.Setup(t)
 	ctx := context.Background()
 
-	id := entityIDString(testhelper.GlobexWebhookID)
+	id := entityIDString(fixtures.WebhookGlobexID)
 
-	c := client(t, env, seedToken(t, env.DB, []string{"webhooks:read", "webhooks:write"}))
+	c := env.ExternalScoped(t, "webhooks:read", "webhooks:write")
 	list, err := c.WebhooksList(ctx, externalapi.WebhooksListParams{})
 	require.NoError(t, err)
 	for _, it := range list.(*externalapi.WebhooksListOK).Items {
-		assert.NotEqual(t, testhelper.GlobexWebhookURL, it.URL)
+		assert.NotEqual(t, fixtures.WebhookGlobexURL, it.URL)
 	}
 	g, err := c.WebhooksGet(ctx, externalapi.WebhooksGetParams{ID: id})
 	require.NoError(t, err)

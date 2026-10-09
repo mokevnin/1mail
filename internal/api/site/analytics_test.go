@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	siteapi "github.com/mokevnin/1mail/gen/site"
+	"github.com/mokevnin/1mail/internal/fixtures"
 	"github.com/mokevnin/1mail/internal/testhelper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -13,17 +14,16 @@ import (
 // The analytics overview requires a valid JWT cookie like the rest of the site API.
 func TestSiteAnalyticsRequireAuth(t *testing.T) {
 	env := testhelper.Setup(t)
-	c, err := siteapi.NewClient("http://local/site", noJWT{}, siteapi.WithClient(env.Transport(nil)))
-	require.NoError(t, err)
+	c := env.SiteAnonymous(t)
 
-	_, err = c.SiteAnalyticsOverview(context.Background(), siteapi.SiteAnalyticsOverviewParams{Slug: "acme"})
+	_, err := c.SiteAnalyticsOverview(context.Background(), siteapi.SiteAnalyticsOverviewParams{Slug: fixtures.AcmeSlug})
 	require.Error(t, err)
 }
 
 // A slug the user does not own is a 404, not a data leak.
 func TestSiteAnalyticsRequireOwnedWorkspace(t *testing.T) {
 	env := testhelper.Setup(t)
-	c := siteClient(t, env, "info@1mail.com")
+	c := env.SiteActor(t, fixtures.OwnerJohnEmail)
 
 	out, err := c.SiteAnalyticsOverview(context.Background(), siteapi.SiteAnalyticsOverviewParams{Slug: "does-not-exist"})
 	require.NoError(t, err)
@@ -37,11 +37,11 @@ func TestSiteAnalyticsRequireOwnedWorkspace(t *testing.T) {
 // 90-day window is a superset of the 30-day window.
 func TestSiteAnalyticsOverview(t *testing.T) {
 	env := testhelper.Setup(t)
-	c := siteClient(t, env, "info@1mail.com")
+	c := env.SiteActor(t, fixtures.OwnerJohnEmail)
 	ctx := context.Background()
 
 	res, err := c.SiteAnalyticsOverview(ctx, siteapi.SiteAnalyticsOverviewParams{
-		Slug:  "acme",
+		Slug:  fixtures.AcmeSlug,
 		Range: siteapi.NewOptSiteAnalyticsRange(siteapi.SiteAnalyticsRange30d),
 	})
 	require.NoError(t, err)
@@ -80,7 +80,7 @@ func TestSiteAnalyticsOverview(t *testing.T) {
 
 	// The 90-day window widens the cohort: it includes everything the 30-day one did.
 	res90, err := c.SiteAnalyticsOverview(ctx, siteapi.SiteAnalyticsOverviewParams{
-		Slug:  "acme",
+		Slug:  fixtures.AcmeSlug,
 		Range: siteapi.NewOptSiteAnalyticsRange(siteapi.SiteAnalyticsRange90d),
 	})
 	require.NoError(t, err)

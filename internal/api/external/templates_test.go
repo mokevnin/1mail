@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	externalapi "github.com/mokevnin/1mail/gen/external"
+	"github.com/mokevnin/1mail/internal/fixtures"
 	"github.com/mokevnin/1mail/internal/testhelper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -17,7 +18,7 @@ func entityIDString(id int64) externalapi.EntityId {
 
 func TestExternalTemplatesCRUD(t *testing.T) {
 	env := testhelper.Setup(t)
-	c := client(t, env, seedToken(t, env.DB, []string{"templates:read", "templates:write"}))
+	c := env.ExternalScoped(t, "templates:read", "templates:write")
 	ctx := context.Background()
 
 	list, err := c.TemplatesList(ctx, externalapi.TemplatesListParams{})
@@ -30,7 +31,7 @@ func TestExternalTemplatesCRUD(t *testing.T) {
 	}
 	assert.True(t, names["Welcome"], "fixture template 1 is listed")
 
-	got, err := c.TemplatesGet(ctx, externalapi.TemplatesGetParams{ID: "1"})
+	got, err := c.TemplatesGet(ctx, externalapi.TemplatesGetParams{ID: entityIDString(fixtures.TemplateWelcomeID)})
 	require.NoError(t, err)
 	tpl, ok := got.(*externalapi.TemplateResource)
 	require.Truef(t, ok, "got %T", got)
@@ -67,28 +68,28 @@ func TestExternalTemplatesScopes(t *testing.T) {
 	env := testhelper.Setup(t)
 	ctx := context.Background()
 
-	res, err := client(t, env, "").TemplatesList(ctx, externalapi.TemplatesListParams{})
+	res, err := env.ExternalAnonymous(t).TemplatesList(ctx, externalapi.TemplatesListParams{})
 	require.NoError(t, err)
 	assert.IsType(t, &externalapi.TemplatesListUnauthorized{}, res)
 
 	// A contacts-only token reaches no template operation.
-	other := client(t, env, seedToken(t, env.DB, []string{"contacts:read", "contacts:write"}))
+	other := env.ExternalScoped(t, "contacts:read", "contacts:write")
 	l, err := other.TemplatesList(ctx, externalapi.TemplatesListParams{})
 	require.NoError(t, err)
 	assert.IsType(t, &externalapi.TemplatesListUnauthorized{}, l)
 
 	// Read-only token cannot write.
-	ro := client(t, env, seedToken(t, env.DB, []string{"templates:read"}))
-	g, err := ro.TemplatesGet(ctx, externalapi.TemplatesGetParams{ID: "1"})
+	ro := env.ExternalScoped(t, "templates:read")
+	g, err := ro.TemplatesGet(ctx, externalapi.TemplatesGetParams{ID: entityIDString(fixtures.TemplateWelcomeID)})
 	require.NoError(t, err)
 	assert.IsType(t, &externalapi.TemplateResource{}, g)
 	cr, err := ro.TemplatesCreate(ctx, &externalapi.CreateTemplateInput{Name: "x"})
 	require.NoError(t, err)
 	assert.IsType(t, &externalapi.TemplatesCreateUnauthorized{}, cr)
-	up, err := ro.TemplatesUpdate(ctx, &externalapi.UpdateTemplateInput{}, externalapi.TemplatesUpdateParams{ID: "1"})
+	up, err := ro.TemplatesUpdate(ctx, &externalapi.UpdateTemplateInput{}, externalapi.TemplatesUpdateParams{ID: entityIDString(fixtures.TemplateWelcomeID)})
 	require.NoError(t, err)
 	assert.IsType(t, &externalapi.TemplatesUpdateUnauthorized{}, up)
-	de, err := ro.TemplatesDelete(ctx, externalapi.TemplatesDeleteParams{ID: "1"})
+	de, err := ro.TemplatesDelete(ctx, externalapi.TemplatesDeleteParams{ID: entityIDString(fixtures.TemplateWelcomeID)})
 	require.NoError(t, err)
 	assert.IsType(t, &externalapi.TemplatesDeleteUnauthorized{}, de)
 }
@@ -97,14 +98,14 @@ func TestExternalTemplatesAreWorkspaceScoped(t *testing.T) {
 	env := testhelper.Setup(t)
 	ctx := context.Background()
 
-	id := entityIDString(testhelper.GlobexTemplateID)
+	id := entityIDString(fixtures.TemplateGlobexID)
 
-	c := client(t, env, seedToken(t, env.DB, []string{"templates:read", "templates:write"}))
+	c := env.ExternalScoped(t, "templates:read", "templates:write")
 
 	list, err := c.TemplatesList(ctx, externalapi.TemplatesListParams{})
 	require.NoError(t, err)
 	for _, it := range list.(*externalapi.TemplatesListOK).Items {
-		assert.NotEqual(t, testhelper.GlobexTemplateName, it.Name)
+		assert.NotEqual(t, fixtures.TemplateGlobexName, it.Name)
 	}
 	g, err := c.TemplatesGet(ctx, externalapi.TemplatesGetParams{ID: id})
 	require.NoError(t, err)

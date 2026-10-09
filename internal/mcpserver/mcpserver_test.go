@@ -6,34 +6,17 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"slices"
+	"strconv"
 	"strings"
 	"testing"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 	"github.com/mokevnin/1mail/ent/broadcast"
-	"github.com/mokevnin/1mail/internal/service"
+	"github.com/mokevnin/1mail/internal/fixtures"
 	"github.com/mokevnin/1mail/internal/testhelper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
-
-// seedToken inserts an ApiToken in the given workspace and returns the plaintext
-// bearer value (the real token crypto is exercised).
-func seedToken(t *testing.T, env *testhelper.TestEnv, workspaceID int, scopes []string) string {
-	t.Helper()
-	prefix, err := service.GenerateTokenPrefix()
-	require.NoError(t, err)
-	secret, err := service.GenerateTokenSecret()
-	require.NoError(t, err)
-	hash, err := service.HashTokenSecret(secret)
-	require.NoError(t, err)
-	_, err = env.DB.ApiToken.Create().
-		SetName("mcp-test").SetPrefix(prefix).SetSecretHash(hash).SetScopes(scopes).
-		SetWorkspaceID(int64(workspaceID)).
-		Save(context.Background())
-	require.NoError(t, err)
-	return service.TokenValue(prefix, secret)
-}
 
 func call(t *testing.T, s *mcp.ClientSession, name string, args map[string]any) *mcp.CallToolResult {
 	t.Helper()
@@ -118,51 +101,51 @@ func TestMCPSendToolsAreListedOnlyWithMCPSend(t *testing.T) {
 	env := testhelper.Setup(t)
 
 	// The send scopes alone do not list them: mcp:send is the second lock.
-	apiOnly := listedTools(t, env.MCPClient(t, seedToken(t, env, 1, []string{"emails:send", "broadcasts:send"})))
+	apiOnly := listedTools(t, env.MCPClient(t, env.ScopedBearer(t, "emails:send", "broadcasts:send")))
 	assert.ElementsMatch(t, authoringTools, toolNames(apiOnly))
 
 	// mcp:send alone lists them too (the /api scope still gates the call).
-	withSend := listedTools(t, env.MCPClient(t, seedToken(t, env, 1, []string{"mcp:send"})))
+	withSend := listedTools(t, env.MCPClient(t, env.ScopedBearer(t, "mcp:send")))
 	assert.ElementsMatch(t, append(slices.Clone(authoringTools), sendTools...), toolNames(withSend))
 }
 
 func TestMCPSendToolCallIsRefusedWithoutMCPSend(t *testing.T) {
 	env := testhelper.Setup(t)
-	args := map[string]any{"id": "100", "scheduledAt": "2099-01-01T00:00:00Z"}
+	args := map[string]any{"id": strconv.Itoa(fixtures.BroadcastDraftID), "scheduledAt": "2099-01-01T00:00:00Z"}
 
 	// Direct call, though the token has the /api scope: refused by the MCP lock.
-	s := env.MCPClient(t, seedToken(t, env, 1, []string{"broadcasts:send"}))
+	s := env.MCPClient(t, env.ScopedBearer(t, "broadcasts:send"))
 	res := call(t, s, "broadcasts_schedule", args)
 	require.True(t, res.IsError)
 	assert.Contains(t, text(t, res), "mcp:send")
-	b, err := env.DB.Broadcast.Get(context.Background(), 100)
+	b, err := env.DB.Broadcast.Get(context.Background(), fixtures.BroadcastDraftID)
 	require.NoError(t, err)
 	assert.Equal(t, broadcast.StatusDraft, b.Status, "the refused call changed nothing")
 
 	// mcp:send without the /api scope: passes the MCP lock, refused by /api.
-	s = env.MCPClient(t, seedToken(t, env, 1, []string{"mcp:send"}))
+	s = env.MCPClient(t, env.ScopedBearer(t, "mcp:send"))
 	res = call(t, s, "broadcasts_schedule", args)
 	require.True(t, res.IsError)
 	assert.Contains(t, text(t, res), "401")
 
 	// Both: the broadcast is scheduled.
-	s = env.MCPClient(t, seedToken(t, env, 1, []string{"mcp:send", "broadcasts:send"}))
+	s = env.MCPClient(t, env.ScopedBearer(t, "mcp:send", "broadcasts:send"))
 	res = call(t, s, "broadcasts_schedule", args)
 	require.False(t, res.IsError, text(t, res))
-	b, err = env.DB.Broadcast.Get(context.Background(), 100)
+	b, err = env.DB.Broadcast.Get(context.Background(), fixtures.BroadcastDraftID)
 	require.NoError(t, err)
 	assert.Equal(t, broadcast.StatusScheduled, b.Status)
 
-	res = call(t, s, "broadcasts_unschedule", map[string]any{"id": "100"})
+	res = call(t, s, "broadcasts_unschedule", map[string]any{"id": strconv.Itoa(fixtures.BroadcastDraftID)})
 	require.False(t, res.IsError, text(t, res))
-	b, err = env.DB.Broadcast.Get(context.Background(), 100)
+	b, err = env.DB.Broadcast.Get(context.Background(), fixtures.BroadcastDraftID)
 	require.NoError(t, err)
 	assert.Equal(t, broadcast.StatusDraft, b.Status)
 }
 
 func TestMCPToolsAreTheContractMinusHiddenOperations(t *testing.T) {
 	env := testhelper.Setup(t)
-	s := env.MCPClient(t, seedToken(t, env, 1, []string{"contacts:read"}))
+	s := env.MCPClient(t, env.ScopedBearer(t, "contacts:read"))
 	got := listedTools(t, s)
 	assert.ElementsMatch(t, authoringTools, toolNames(got))
 
@@ -193,9 +176,9 @@ func TestMCPToolsAreTheContractMinusHiddenOperations(t *testing.T) {
 
 func TestMCPToolCallReturnsTheAPIResult(t *testing.T) {
 	env := testhelper.Setup(t)
-	s := env.MCPClient(t, seedToken(t, env, 1, []string{"contacts:read", "contacts:write"}))
+	s := env.MCPClient(t, env.ScopedBearer(t, "contacts:read", "contacts:write"))
 
-	res := call(t, s, "contacts_get", map[string]any{"id": "1"})
+	res := call(t, s, "contacts_get", map[string]any{"id": strconv.Itoa(fixtures.ContactAliceID)})
 	require.False(t, res.IsError, text(t, res))
 	var contact map[string]any
 	require.NoError(t, json.Unmarshal([]byte(text(t, res)), &contact))
@@ -230,7 +213,7 @@ func TestMCPToolCallReturnsTheAPIResult(t *testing.T) {
 // as another.
 func TestMCPTagToolsApplyAndRemove(t *testing.T) {
 	env := testhelper.Setup(t)
-	s := env.MCPClient(t, seedToken(t, env, 1, []string{"contacts:read", "contacts:write"}))
+	s := env.MCPClient(t, env.ScopedBearer(t, "contacts:read", "contacts:write"))
 
 	res := call(t, s, "tags_apply", map[string]any{"contactId": "2", "name": "plan / pro"})
 	require.False(t, res.IsError, text(t, res))
@@ -250,7 +233,7 @@ func TestMCPTagToolsApplyAndRemove(t *testing.T) {
 
 func TestMCPToolCallReturnsTheAPIError(t *testing.T) {
 	env := testhelper.Setup(t)
-	ro := env.MCPClient(t, seedToken(t, env, 1, []string{"contacts:read"}))
+	ro := env.MCPClient(t, env.ScopedBearer(t, "contacts:read"))
 
 	// Scope: the /api insufficient-scope problem comes back as a tool error.
 	res := call(t, ro, "contacts_create", map[string]any{"email": "nope@example.com"})
@@ -265,10 +248,10 @@ func TestMCPToolCallReturnsTheAPIError(t *testing.T) {
 
 func TestMCPCallsAreIsolatedToTheTokensWorkspace(t *testing.T) {
 	env := testhelper.Setup(t)
-	s := env.MCPClient(t, seedToken(t, env, int(testhelper.GlobexWorkspaceID), []string{"contacts:read"}))
+	s := env.MCPClient(t, env.ScopedBearerFor(t, fixtures.GlobexID, "contacts:read"))
 
-	res := call(t, s, "contacts_get", map[string]any{"id": "1"})
-	require.True(t, res.IsError, "contact 1 belongs to workspace acme")
+	res := call(t, s, "contacts_get", map[string]any{"id": strconv.Itoa(fixtures.ContactAliceID)})
+	require.True(t, res.IsError, "the contact belongs to workspace acme")
 
 	res = call(t, s, "contacts_list", nil)
 	require.False(t, res.IsError, text(t, res))
@@ -279,7 +262,7 @@ func TestMCPCallsAreIsolatedToTheTokensWorkspace(t *testing.T) {
 // record an Unsubscribe, and exposes nothing that resubscribes or lifts one.
 func TestMCPConsentOnlyNarrows(t *testing.T) {
 	env := testhelper.Setup(t)
-	s := env.MCPClient(t, seedToken(t, env, 1, []string{"contacts:write"}))
+	s := env.MCPClient(t, env.ScopedBearer(t, "contacts:write"))
 
 	list, err := s.ListTools(context.Background(), nil)
 	require.NoError(t, err)

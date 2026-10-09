@@ -37,7 +37,7 @@ func promptText(t *testing.T, s *mcp.ClientSession, name string) string {
 
 func TestMCPShippedPlaybooksAreListedAndRetrievable(t *testing.T) {
 	env := testhelper.Setup(t)
-	s := env.MCPClient(t, seedToken(t, env, 1, []string{"contacts:read"}))
+	s := env.MCPClient(t, env.ScopedBearer(t, "contacts:read"))
 
 	prompts := listedPrompts(t, s)
 	for _, name := range shippedPlaybooks {
@@ -58,11 +58,11 @@ func TestMCPShippedPlaybooksAreListedAndRetrievable(t *testing.T) {
 func TestMCPPlaybooksOnlyReferenceAuthoringTools(t *testing.T) {
 	env := testhelper.Setup(t)
 	// mcp:send lists the whole generated surface, send-class tools included.
-	surface := listedTools(t, env.MCPClient(t, seedToken(t, env, 1, []string{"mcp:send"})))
+	surface := listedTools(t, env.MCPClient(t, env.ScopedBearer(t, "mcp:send")))
 	for _, name := range sendTools {
 		require.Contains(t, surface, name)
 	}
-	s := env.MCPClient(t, seedToken(t, env, 1, []string{"contacts:read"}))
+	s := env.MCPClient(t, env.ScopedBearer(t, "contacts:read"))
 	ref := regexp.MustCompile("`([a-z][a-z0-9_]*)\\(\\)`")
 
 	for _, name := range shippedPlaybooks {

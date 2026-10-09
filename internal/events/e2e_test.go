@@ -12,6 +12,7 @@ import (
 	"github.com/mokevnin/1mail/config"
 	"github.com/mokevnin/1mail/ent"
 	"github.com/mokevnin/1mail/internal/events"
+	"github.com/mokevnin/1mail/internal/fixtures"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -63,13 +64,13 @@ func TestDomainEventsRouterDelivery(t *testing.T) {
 
 	bus := events.New(db)
 	require.NoError(t, bus.WithinTx(ctx, func(_ *ent.Client, pub events.Publisher) error {
-		return pub.Publish(ctx, &events.ContactCreated{WorkspaceID: 1, ContactID: 7, Email: "e2e@example.com"})
+		return pub.Publish(ctx, &events.ContactCreated{WorkspaceID: fixtures.AcmeID, ContactID: 7, Email: "e2e@example.com"})
 	}))
 
 	select {
 	case env := <-got:
 		assert.Equal(t, events.NameContactCreated, env.Name)
-		assert.EqualValues(t, 1, env.WorkspaceID)
+		assert.EqualValues(t, fixtures.AcmeID, env.WorkspaceID)
 		ev, err := events.Decode(env)
 		require.NoError(t, err)
 		assert.Equal(t, "e2e@example.com", ev.Project().Subject)

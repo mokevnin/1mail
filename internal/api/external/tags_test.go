@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	externalapi "github.com/mokevnin/1mail/gen/external"
+	"github.com/mokevnin/1mail/internal/fixtures"
 	"github.com/mokevnin/1mail/internal/testhelper"
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"
@@ -19,7 +20,7 @@ func tagNames(items []externalapi.TagResource) []string {
 // nobody; contact 2 has none.
 func TestExternalTagsListAndPerContact(t *testing.T) {
 	env := testhelper.Setup(t)
-	c := client(t, env, seedToken(t, env.DB, []string{"contacts:read"}))
+	c := env.ExternalScoped(t, "contacts:read")
 	ctx := context.Background()
 
 	all, err := c.TagsList(ctx, externalapi.TagsListParams{})
@@ -28,7 +29,7 @@ func TestExternalTagsListAndPerContact(t *testing.T) {
 	require.Truef(t, ok, "got %T", all)
 	assert.Equal(t, []string{"newsletter", "unused", "vip"}, tagNames(listed.Items))
 
-	mine, err := c.TagsListForContact(ctx, externalapi.TagsListForContactParams{ContactId: "1"})
+	mine, err := c.TagsListForContact(ctx, externalapi.TagsListForContactParams{ContactId: entityIDString(fixtures.ContactAliceID)})
 	require.NoError(t, err)
 	contactTags, ok := mine.(*externalapi.TagsListForContactOK)
 	require.Truef(t, ok, "got %T", mine)
@@ -41,17 +42,17 @@ func TestExternalTagsListAndPerContact(t *testing.T) {
 
 func TestExternalTagsApplyAndRemove(t *testing.T) {
 	env := testhelper.Setup(t)
-	c := client(t, env, seedToken(t, env.DB, []string{"contacts:read", "contacts:write"}))
+	c := env.ExternalScoped(t, "contacts:read", "contacts:write")
 	ctx := context.Background()
 
 	// First use creates the Tag and applies it.
-	applied, err := c.TagsApply(ctx, &externalapi.ApplyTagInput{Name: "churn-risk"}, externalapi.TagsApplyParams{ContactId: "2"})
+	applied, err := c.TagsApply(ctx, &externalapi.ApplyTagInput{Name: "churn-risk"}, externalapi.TagsApplyParams{ContactId: entityIDString(fixtures.ContactBobID)})
 	require.NoError(t, err)
 	tag, ok := applied.(*externalapi.TagResource)
 	require.Truef(t, ok, "got %T", applied)
 	assert.Equal(t, "churn-risk", tag.Name)
 
-	mine, err := c.TagsListForContact(ctx, externalapi.TagsListForContactParams{ContactId: "2"})
+	mine, err := c.TagsListForContact(ctx, externalapi.TagsListForContactParams{ContactId: entityIDString(fixtures.ContactBobID)})
 	require.NoError(t, err)
 	assert.Equal(t, []string{"churn-risk"}, tagNames(mine.(*externalapi.TagsListForContactOK).Items))
 
@@ -60,21 +61,21 @@ func TestExternalTagsApplyAndRemove(t *testing.T) {
 	require.NoError(t, err)
 	assert.Contains(t, tagNames(all.(*externalapi.TagsListOK).Items), "churn-risk")
 
-	removed, err := c.TagsRemove(ctx, externalapi.TagsRemoveParams{ContactId: "2", Name: "churn-risk"})
+	removed, err := c.TagsRemove(ctx, externalapi.TagsRemoveParams{ContactId: entityIDString(fixtures.ContactBobID), Name: "churn-risk"})
 	require.NoError(t, err)
 	assert.IsType(t, &externalapi.TagsRemoveNoContent{}, removed)
 
-	mine, err = c.TagsListForContact(ctx, externalapi.TagsListForContactParams{ContactId: "2"})
+	mine, err = c.TagsListForContact(ctx, externalapi.TagsListForContactParams{ContactId: entityIDString(fixtures.ContactBobID)})
 	require.NoError(t, err)
 	assert.Empty(t, mine.(*externalapi.TagsListForContactOK).Items)
 
 	// Names with spaces and slashes survive the path round trip.
-	_, err = c.TagsApply(ctx, &externalapi.ApplyTagInput{Name: "plan / pro"}, externalapi.TagsApplyParams{ContactId: "2"})
+	_, err = c.TagsApply(ctx, &externalapi.ApplyTagInput{Name: "plan / pro"}, externalapi.TagsApplyParams{ContactId: entityIDString(fixtures.ContactBobID)})
 	require.NoError(t, err)
-	removed, err = c.TagsRemove(ctx, externalapi.TagsRemoveParams{ContactId: "2", Name: "plan / pro"})
+	removed, err = c.TagsRemove(ctx, externalapi.TagsRemoveParams{ContactId: entityIDString(fixtures.ContactBobID), Name: "plan / pro"})
 	require.NoError(t, err)
 	assert.IsType(t, &externalapi.TagsRemoveNoContent{}, removed)
-	mine, err = c.TagsListForContact(ctx, externalapi.TagsListForContactParams{ContactId: "2"})
+	mine, err = c.TagsListForContact(ctx, externalapi.TagsListForContactParams{ContactId: entityIDString(fixtures.ContactBobID)})
 	require.NoError(t, err)
 	assert.Empty(t, mine.(*externalapi.TagsListForContactOK).Items)
 
@@ -82,7 +83,7 @@ func TestExternalTagsApplyAndRemove(t *testing.T) {
 	nf, err := c.TagsApply(ctx, &externalapi.ApplyTagInput{Name: "x"}, externalapi.TagsApplyParams{ContactId: "999999"})
 	require.NoError(t, err)
 	assert.IsType(t, &externalapi.TagsApplyNotFound{}, nf)
-	blank, err := c.TagsApply(ctx, &externalapi.ApplyTagInput{Name: "  "}, externalapi.TagsApplyParams{ContactId: "2"})
+	blank, err := c.TagsApply(ctx, &externalapi.ApplyTagInput{Name: "  "}, externalapi.TagsApplyParams{ContactId: entityIDString(fixtures.ContactBobID)})
 	require.NoError(t, err)
 	assert.IsType(t, &externalapi.TagsApplyUnprocessableEntity{}, blank)
 }
@@ -91,15 +92,15 @@ func TestExternalTagsRequireScopes(t *testing.T) {
 	env := testhelper.Setup(t)
 	ctx := context.Background()
 
-	readOnly := client(t, env, seedToken(t, env.DB, []string{"contacts:read"}))
-	denied, err := readOnly.TagsApply(ctx, &externalapi.ApplyTagInput{Name: "x"}, externalapi.TagsApplyParams{ContactId: "1"})
+	readOnly := env.ExternalScoped(t, "contacts:read")
+	denied, err := readOnly.TagsApply(ctx, &externalapi.ApplyTagInput{Name: "x"}, externalapi.TagsApplyParams{ContactId: entityIDString(fixtures.ContactAliceID)})
 	require.NoError(t, err)
 	assert.IsType(t, &externalapi.TagsApplyUnauthorized{}, denied)
-	deniedRemove, err := readOnly.TagsRemove(ctx, externalapi.TagsRemoveParams{ContactId: "1", Name: "vip"})
+	deniedRemove, err := readOnly.TagsRemove(ctx, externalapi.TagsRemoveParams{ContactId: entityIDString(fixtures.ContactAliceID), Name: "vip"})
 	require.NoError(t, err)
 	assert.IsType(t, &externalapi.TagsRemoveUnauthorized{}, deniedRemove)
 
-	writeOnly := client(t, env, seedToken(t, env.DB, []string{"contacts:write"}))
+	writeOnly := env.ExternalScoped(t, "contacts:write")
 	deniedList, err := writeOnly.TagsList(ctx, externalapi.TagsListParams{})
 	require.NoError(t, err)
 	assert.IsType(t, &externalapi.TagsListUnauthorized{}, deniedList)

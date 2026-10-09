@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	externalapi "github.com/mokevnin/1mail/gen/external"
+	"github.com/mokevnin/1mail/internal/fixtures"
 	"github.com/mokevnin/1mail/internal/testhelper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -24,13 +25,13 @@ func contactsCreatedFor(t *testing.T, env *testhelper.TestEnv, email string) int
 // lets the valid ones through; only new contacts publish contact.created.
 func TestExternalContactsBatchUpsertMixedItems(t *testing.T) {
 	env := testhelper.Setup(t)
-	c := client(t, env, seedToken(t, env.DB, []string{"contacts:write"}))
+	c := env.ExternalScoped(t, "contacts:write")
 
 	res, err := c.ContactsBatchUpsert(context.Background(), &externalapi.UpsertContactsInput{
 		Contacts: []externalapi.UpsertContactInput{
 			{Email: externalapi.NewOptNilEmailAddress("batch-new@example.com"), FirstName: externalapi.NewOptNilString("New")},
-			{Email: externalapi.NewOptNilEmailAddress("alice@example.com")}, // fixture contact 1
-			{FirstName: externalapi.NewOptNilString("Nobody")},              // no alias key
+			{Email: externalapi.NewOptNilEmailAddress(fixtures.ContactAliceEmail)},
+			{FirstName: externalapi.NewOptNilString("Nobody")}, // no alias key
 			{SubjectId: externalapi.NewOptNilString("batch-subject-1")},
 		},
 	})
@@ -46,21 +47,21 @@ func TestExternalContactsBatchUpsertMixedItems(t *testing.T) {
 	assert.True(t, ok.Results[0].ContactId.IsSet())
 	assert.Equal(t, externalapi.ContactBatchStatusUpdated, ok.Results[1].Status)
 	id, _ := ok.Results[1].ContactId.Get()
-	assert.Equal(t, externalapi.EntityId("1"), id)
+	assert.Equal(t, entityIDString(fixtures.ContactAliceID), id)
 	assert.Equal(t, externalapi.ContactBatchStatusFailed, ok.Results[2].Status)
 	assert.NotEmpty(t, ok.Results[2].Error.Or(""))
 	assert.False(t, ok.Results[2].ContactId.IsSet())
 	assert.Equal(t, externalapi.ContactBatchStatusCreated, ok.Results[3].Status)
 
 	assert.Equal(t, 1, contactsCreatedFor(t, env, "batch-new@example.com"))
-	assert.Equal(t, 0, contactsCreatedFor(t, env, "alice@example.com"))
+	assert.Equal(t, 0, contactsCreatedFor(t, env, fixtures.ContactAliceEmail))
 }
 
 func TestExternalContactsBatchUpsertLimitAndScope(t *testing.T) {
 	env := testhelper.Setup(t)
 	ctx := context.Background()
 
-	writer := client(t, env, seedToken(t, env.DB, []string{"contacts:write"}))
+	writer := env.ExternalScoped(t, "contacts:write")
 	tooMany := make([]externalapi.UpsertContactInput, 1001)
 	for i := range tooMany {
 		tooMany[i] = externalapi.UpsertContactInput{SubjectId: externalapi.NewOptNilString("limit")}
@@ -68,7 +69,7 @@ func TestExternalContactsBatchUpsertLimitAndScope(t *testing.T) {
 	_, err := writer.ContactsBatchUpsert(ctx, &externalapi.UpsertContactsInput{Contacts: tooMany})
 	require.Error(t, err, "more than 1000 items is rejected as a whole")
 
-	reader := client(t, env, seedToken(t, env.DB, []string{"contacts:read"}))
+	reader := env.ExternalScoped(t, "contacts:read")
 	res, err := reader.ContactsBatchUpsert(ctx, &externalapi.UpsertContactsInput{
 		Contacts: []externalapi.UpsertContactInput{{SubjectId: externalapi.NewOptNilString("x")}},
 	})
@@ -78,14 +79,14 @@ func TestExternalContactsBatchUpsertLimitAndScope(t *testing.T) {
 
 func TestExternalEventsBatchSubmitMixedItems(t *testing.T) {
 	env := testhelper.Setup(t)
-	c := client(t, env, seedToken(t, env.DB, []string{"events:write"}))
+	c := env.ExternalScoped(t, "events:write")
 
 	res, err := c.EventsBatchSubmit(context.Background(), &externalapi.RecordEventsBatchInput{
 		Events: []externalapi.EventInput{
-			{SubjectId: "user:alice@example.com", Action: "batch_a"},
-			{SubjectId: "user:alice@example.com", Action: "  "}, // blank action
-			{SubjectId: "", Action: "batch_c"},                  // blank subject
-			{SubjectId: "user:bob@example.com", Action: "batch_d"},
+			{SubjectId: "user:" + fixtures.ContactAliceEmail, Action: "batch_a"},
+			{SubjectId: "user:" + fixtures.ContactAliceEmail, Action: "  "}, // blank action
+			{SubjectId: "", Action: "batch_c"},                              // blank subject
+			{SubjectId: "user:" + fixtures.ContactBobEmail, Action: "batch_d"},
 		},
 	})
 	require.NoError(t, err)
@@ -114,7 +115,7 @@ func TestExternalEventsBatchSubmitMixedItems(t *testing.T) {
 
 func TestExternalEventsBatchSubmitScope(t *testing.T) {
 	env := testhelper.Setup(t)
-	c := client(t, env, seedToken(t, env.DB, []string{"events:read"}))
+	c := env.ExternalScoped(t, "events:read")
 	res, err := c.EventsBatchSubmit(context.Background(), &externalapi.RecordEventsBatchInput{
 		Events: []externalapi.EventInput{{SubjectId: "u", Action: "a"}},
 	})

@@ -14,7 +14,7 @@ Go backend + React/Vite frontend in a single repo. The data model is workspace-s
 API contracts are **one-directional**: TypeSpec → OpenAPI → generated Go + TS. Never
 hand-edit anything under `openapi/`, `gen/`, `ent/` (except `ent/schema/`),
 `src/generated/` / `packages/analytics/src/generated/`, or the `*_gen.go` files in the
-`internal/api/{site,external}/resources` packages — regenerate instead.
+`internal/api/{site,external}/resources` packages and `internal/fixtures/catalog_gen.go` — regenerate instead.
 
 ```
 typespec/{site,external,collect}   ──tsp compile──▶  openapi/*.openapi.json
@@ -23,6 +23,7 @@ typespec/{site,external,collect}   ──tsp compile──▶  openapi/*.openapi
   openapi/collect   ──ogen──▶ gen/collect     (Go server)  ──openapi-ts──▶ packages/analytics/src/generated/collect (types only)
 ent/schema/*.go     ──entc──▶ ent/*           (Go ORM)
 ent + gen/{site,external}  ──goverter──▶ internal/api/{site,external}/resources/converter_gen.go
+fixtures/*.yml (`# fixture: Name` rows)  ──cmd/fixturegen──▶ internal/fixtures/catalog_gen.go (named test constants)
 ```
 
 - **goverter** maps ent entities → ogen resource DTOs. The `Converter` interface and its
@@ -30,7 +31,7 @@ ent + gen/{site,external}  ──goverter──▶ internal/api/{site,external}/
   each package's `resources.go`; the impl (`ConverterImpl`) is generated. Adding a DTO
   field that has no source mapping fails generation — that completeness check is the point.
 
-- `mise run generate` — full cycle: typespec → openapi → backend (ent + ogen) → frontend → i18n types → format.
+- `mise run generate` — full cycle: typespec → openapi → backend (ent + ogen) → fixture catalog → frontend → i18n types → format.
 - `mise run generate:typespec` / `mise run generate:backend` / `mise run generate:openapi` — partial regens.
 - The README claims echo + oapi-codegen; that is **outdated**. The HTTP stack is **ogen**
   (`gen/*` are ogen servers, wired in `internal/server/server.go`).
@@ -40,7 +41,7 @@ ent + gen/{site,external}  ──goverter──▶ internal/api/{site,external}/
 Generated files carry a header (`Code generated … DO NOT EDIT`, or `// @ts-nocheck` on the
 frontend) and are flagged `linguist-generated` in `.gitattributes` (GitHub collapses them in
 diffs). Generated code lives in dedicated dirs — `internal/` is otherwise hand-written, its
-only generated files being the two `converter_gen.go`.
+only generated files being the two `converter_gen.go` and `internal/fixtures/catalog_gen.go`.
 
 ## Common commands
 

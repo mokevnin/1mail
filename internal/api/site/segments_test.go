@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	siteapi "github.com/mokevnin/1mail/gen/site"
+	"github.com/mokevnin/1mail/internal/fixtures"
 	"github.com/mokevnin/1mail/internal/testhelper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -13,23 +14,22 @@ import (
 // Site segments require a valid JWT cookie, like every other site resource.
 func TestSiteSegmentsRequireAuth(t *testing.T) {
 	env := testhelper.Setup(t)
-	c, err := siteapi.NewClient("http://local/site", noJWT{}, siteapi.WithClient(env.Transport(nil)))
-	require.NoError(t, err)
+	c := env.SiteAnonymous(t)
 
-	_, err = c.SiteSegmentsList(context.Background(), siteapi.SiteSegmentsListParams{})
+	_, err := c.SiteSegmentsList(context.Background(), siteapi.SiteSegmentsListParams{})
 	require.Error(t, err)
 }
 
-// Fixture workspace "acme" (id 1) owns two seeded segments. Listing, creating,
+// The Acme fixture workspace owns two seeded segments. Listing, creating,
 // reading, updating and deleting are all scoped to the authenticated user's
 // workspace; an unknown slug resolves to 404 instead of leaking data.
 func TestSiteSegmentsScopedToWorkspace(t *testing.T) {
 	env := testhelper.Setup(t)
-	c := siteClient(t, env, "info@1mail.com")
+	c := env.SiteActor(t, fixtures.OwnerJohnEmail)
 	ctx := context.Background()
 
 	// A seeded segment of the owned workspace is fetchable by id (selection by key).
-	seeded, err := c.SiteSegmentsGet(ctx, siteapi.SiteSegmentsGetParams{Slug: "acme", ID: "1"})
+	seeded, err := c.SiteSegmentsGet(ctx, siteapi.SiteSegmentsGetParams{Slug: fixtures.AcmeSlug, ID: idStr(fixtures.SegmentActiveID)})
 	require.NoError(t, err)
 	seededRes, ok := seeded.(*siteapi.SiteSegmentResource)
 	require.Truef(t, ok, "got %T", seeded)
@@ -40,7 +40,7 @@ func TestSiteSegmentsScopedToWorkspace(t *testing.T) {
 		Name:       "VIP customers",
 		Type:       siteapi.SiteSegmentTypeRule,
 		Definition: siteapi.NewOptNilString(`{"combinator":"and","rules":[{"field":"custom:plan","operator":"=","value":"vip"}]}`),
-	}, siteapi.SiteSegmentsCreateParams{Slug: "acme"})
+	}, siteapi.SiteSegmentsCreateParams{Slug: fixtures.AcmeSlug})
 	require.NoError(t, err)
 	res, ok := created.(*siteapi.SiteSegmentResource)
 	require.Truef(t, ok, "got %T", created)
@@ -48,7 +48,7 @@ func TestSiteSegmentsScopedToWorkspace(t *testing.T) {
 	assert.Equal(t, siteapi.SiteSegmentTypeRule, res.Type)
 
 	// The new segment is readable by id.
-	got, err := c.SiteSegmentsGet(ctx, siteapi.SiteSegmentsGetParams{Slug: "acme", ID: res.ID})
+	got, err := c.SiteSegmentsGet(ctx, siteapi.SiteSegmentsGetParams{Slug: fixtures.AcmeSlug, ID: res.ID})
 	require.NoError(t, err)
 	gotRes, ok := got.(*siteapi.SiteSegmentResource)
 	require.Truef(t, ok, "got %T", got)
@@ -58,7 +58,7 @@ func TestSiteSegmentsScopedToWorkspace(t *testing.T) {
 	updated, err := c.SiteSegmentsUpdate(ctx, &siteapi.SiteUpdateSegmentInput{
 		Name: siteapi.NewOptString("VIP renamed"),
 		Type: siteapi.NewOptSiteSegmentType(siteapi.SiteSegmentTypeSnapshot),
-	}, siteapi.SiteSegmentsUpdateParams{Slug: "acme", ID: res.ID})
+	}, siteapi.SiteSegmentsUpdateParams{Slug: fixtures.AcmeSlug, ID: res.ID})
 	require.NoError(t, err)
 	updRes, ok := updated.(*siteapi.SiteSegmentResource)
 	require.Truef(t, ok, "got %T", updated)
@@ -66,7 +66,7 @@ func TestSiteSegmentsScopedToWorkspace(t *testing.T) {
 	assert.Equal(t, siteapi.SiteSegmentTypeSnapshot, updRes.Type)
 
 	// Delete removes it.
-	del, err := c.SiteSegmentsDelete(ctx, siteapi.SiteSegmentsDeleteParams{Slug: "acme", ID: res.ID})
+	del, err := c.SiteSegmentsDelete(ctx, siteapi.SiteSegmentsDeleteParams{Slug: fixtures.AcmeSlug, ID: res.ID})
 	require.NoError(t, err)
 	assert.IsType(t, &siteapi.SiteSegmentsDeleteNoContent{}, del)
 

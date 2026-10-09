@@ -2,19 +2,19 @@
 # by name/id across the test suite — DO NOT change them. The bulk dev/analytics
 # contacts use ids >= 100 and the @codebasics.dev domain so they never collide
 # with the @example.com / @test.dev emails created inline by tests.
-- id: 1
+- id: 1 # fixture: ContactAlice
   email: alice@example.com
   first_name: Alice
   last_name: Smith
   workspace_id: 1
   created_at: '2026-01-01 00:00:00'
   updated_at: '2026-01-01 00:00:00'
-- id: 2
+- id: 2 # fixture: ContactBob
   email: bob@example.com
   workspace_id: 1
   created_at: '2026-01-01 00:00:00'
   updated_at: '2026-01-01 00:00:00'
-- id: 3
+- id: 3 # fixture: ContactCarol
   email: carol@example.com
   first_name: Carol
   workspace_id: 1
@@ -22,7 +22,7 @@
   updated_at: '2026-01-02 00:00:00'
 
 # --- CodeBasics students (dev data + analytics audience) ---
-- id: 100
+- id: 100 # fixture: ContactLiam
   email: liam.python@codebasics.dev
   first_name: Liam
   last_name: Walker
@@ -40,7 +40,7 @@
   workspace_id: 1
   created_at: '{{daysAgo 4}}'
   updated_at: '{{daysAgo 1}}'
-- id: 102
+- id: 102 # fixture: ContactNoah
   email: noah.js@codebasics.dev
   first_name: Noah
   last_name: Brown
@@ -266,7 +266,7 @@
   updated_at: '{{daysAgo 160}}'
 # Anchor for the "held automation step" test (jobs/automation_test.go): a clean contact
 # no other scenario touches.
-- id: 130
+- id: 130 # fixture: ContactHoldDemo
   email: hold.demo@codebasics.dev
   first_name: Hal
   last_name: Demo

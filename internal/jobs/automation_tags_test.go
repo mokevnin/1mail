@@ -8,6 +8,7 @@ import (
 	"github.com/mokevnin/1mail/ent/automationrun"
 	"github.com/mokevnin/1mail/ent/contact"
 	"github.com/mokevnin/1mail/ent/tag"
+	"github.com/mokevnin/1mail/internal/fixtures"
 	"github.com/mokevnin/1mail/internal/testhelper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -24,7 +25,7 @@ func TestAutomationTagSteps(t *testing.T) {
 
 	assert.Empty(t, fs.sent)
 	names, err := env.DB.Tag.Query().
-		Where(tag.HasContactsWith(contact.ID(1))).
+		Where(tag.HasContactsWith(contact.ID(fixtures.ContactAliceID))).
 		Order(ent.Asc(tag.FieldName)).
 		Select(tag.FieldName).
 		Strings(ctx)

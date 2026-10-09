@@ -11,13 +11,11 @@ import (
 	"github.com/mokevnin/1mail/ent/contact"
 	"github.com/mokevnin/1mail/ent/event"
 	"github.com/mokevnin/1mail/internal/events"
+	"github.com/mokevnin/1mail/internal/fixtures"
 	"github.com/mokevnin/1mail/internal/testhelper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
-
-// workspace id 1 (slug "acme") is seeded by fixtures.
-const fixtureWorkspace = int64(1)
 
 func outboxCount(t *testing.T, env *testhelper.TestEnv) int {
 	t.Helper()
@@ -44,14 +42,14 @@ func TestBusWithinTxCommitsStateAndOutbox(t *testing.T) {
 	var created *ent.Contact
 	err := env.Bus.WithinTx(ctx, func(tx *ent.Client, pub events.Publisher) error {
 		c, err := tx.Contact.Create().
-			SetWorkspaceID(fixtureWorkspace).
+			SetWorkspaceID(fixtures.AcmeID).
 			SetEmail("outbox-commit@example.com").
 			Save(ctx)
 		if err != nil {
 			return err
 		}
 		created = c
-		return pub.Publish(ctx, &events.ContactCreated{WorkspaceID: fixtureWorkspace, ContactID: c.ID, Email: *c.Email})
+		return pub.Publish(ctx, &events.ContactCreated{WorkspaceID: fixtures.AcmeID, ContactID: c.ID, Email: *c.Email})
 	})
 	require.NoError(t, err)
 
@@ -72,12 +70,12 @@ func TestBusWithinTxRollsBackBoth(t *testing.T) {
 	boom := errors.New("boom")
 	err := env.Bus.WithinTx(ctx, func(tx *ent.Client, pub events.Publisher) error {
 		if _, err := tx.Contact.Create().
-			SetWorkspaceID(fixtureWorkspace).
+			SetWorkspaceID(fixtures.AcmeID).
 			SetEmail("outbox-rollback@example.com").
 			Save(ctx); err != nil {
 			return err
 		}
-		if err := pub.Publish(ctx, &events.ContactCreated{WorkspaceID: fixtureWorkspace, Email: "outbox-rollback@example.com"}); err != nil {
+		if err := pub.Publish(ctx, &events.ContactCreated{WorkspaceID: fixtures.AcmeID, Email: "outbox-rollback@example.com"}); err != nil {
 			return err
 		}
 		return boom
@@ -100,8 +98,8 @@ func TestPersistWritesEventProjection(t *testing.T) {
 
 	occurred := time.Date(2026, 6, 28, 10, 0, 0, 0, time.UTC)
 	collected := &events.CollectedEvent{
-		WorkspaceID: fixtureWorkspace,
-		ContactID:   1, // fixture contact in the fixture workspace
+		WorkspaceID: fixtures.AcmeID,
+		ContactID:   fixtures.ContactAliceID,
 		VisitorID:   "visitor-abc",
 		SubjectID:   "visitor:abc",
 		Action:      "page_view",
@@ -114,7 +112,7 @@ func TestPersistWritesEventProjection(t *testing.T) {
 		ID:          "01J0PERSISTTEST00000000000",
 		Name:        events.NameCollected,
 		Version:     1,
-		WorkspaceID: fixtureWorkspace,
+		WorkspaceID: fixtures.AcmeID,
 		OccurredAt:  occurred,
 		Data:        dataFor(t, collected),
 	}
@@ -129,7 +127,7 @@ func TestPersistWritesEventProjection(t *testing.T) {
 	require.NotNil(t, row.Phone)
 	assert.Equal(t, "+15550100", *row.Phone)
 	require.NotNil(t, row.ContactID)
-	assert.EqualValues(t, 1, *row.ContactID)
+	assert.EqualValues(t, fixtures.ContactAliceID, *row.ContactID)
 	require.NotNil(t, row.VisitorID)
 	assert.Equal(t, "visitor-abc", *row.VisitorID)
 	require.NotNil(t, row.OccurredAt)
@@ -147,9 +145,9 @@ func TestPersistIsIdempotent(t *testing.T) {
 		ID:          "01J0IDEMPOTENT00000000000",
 		Name:        events.NameContactCreated,
 		Version:     1,
-		WorkspaceID: fixtureWorkspace,
+		WorkspaceID: fixtures.AcmeID,
 		OccurredAt:  time.Date(2026, 6, 28, 10, 0, 0, 0, time.UTC),
-		Data:        dataFor(t, &events.ContactCreated{WorkspaceID: fixtureWorkspace, ContactID: 7, Email: "dedupe@example.com"}),
+		Data:        dataFor(t, &events.ContactCreated{WorkspaceID: fixtures.AcmeID, ContactID: 7, Email: "dedupe@example.com"}),
 	}
 	require.NoError(t, events.Persist(ctx, env.DB, envlp))
 	require.NoError(t, events.Persist(ctx, env.DB, envlp)) // redelivery

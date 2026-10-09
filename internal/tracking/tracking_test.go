@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/mokevnin/1mail/internal/fixtures"
 	"github.com/mokevnin/1mail/internal/tracking"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -37,7 +38,7 @@ func TestUnsubTokenRoundTrip(t *testing.T) {
 	target := tracking.UnsubTarget{
 		Source:      "automation:7",
 		Destination: "person@example.com",
-		WorkspaceID: 1,
+		WorkspaceID: fixtures.AcmeID,
 		ContactID:   9007199254740993, // 2^53 + 1: not representable as float64
 		BroadcastID: 0,
 	}
@@ -57,7 +58,7 @@ func TestConfirmTokenRoundTrip(t *testing.T) {
 	tr := tracking.New("secret", "https://app.test")
 	target := tracking.ConfirmTarget{
 		Destination: "person@example.com",
-		WorkspaceID: 1,
+		WorkspaceID: fixtures.AcmeID,
 		ContactID:   9007199254740993, // 2^53 + 1: not representable as float64
 	}
 	urlStr, err := tr.ConfirmURL(target)
@@ -93,7 +94,7 @@ func TestRewriteWrapsLinksAndAddsPixelAndFooter(t *testing.T) {
 	body := `<p>Hello <a href="https://dest.test/path?x=1">click</a> or <a href="mailto:a@b.test">mail</a></p>`
 
 	out, err := tr.Rewrite(body, 7, tracking.UnsubTarget{
-		Source: "broadcasts", Destination: "x@y.test", WorkspaceID: 1, ContactID: 2, BroadcastID: 3,
+		Source: "broadcasts", Destination: "x@y.test", WorkspaceID: fixtures.AcmeID, ContactID: 2, BroadcastID: 3,
 	}, "Acme Inc, 123 Main St, Springfield")
 	require.NoError(t, err)
 
@@ -112,7 +113,7 @@ func TestRewriteWrapsLinksAndAddsPixelAndFooter(t *testing.T) {
 
 func TestUnsubscribeFooterPostalAddress(t *testing.T) {
 	tr := tracking.New("secret", "https://app.test")
-	target := tracking.UnsubTarget{Source: "broadcasts", Destination: "x@y.test", WorkspaceID: 1}
+	target := tracking.UnsubTarget{Source: "broadcasts", Destination: "x@y.test", WorkspaceID: fixtures.AcmeID}
 
 	// Empty address: the footer renders the unsubscribe line only (non-gating).
 	bare, err := tr.UnsubscribeFooter(target, "")

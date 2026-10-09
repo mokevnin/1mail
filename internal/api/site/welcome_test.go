@@ -16,8 +16,7 @@ import (
 // sender, so we assert the real sends — not just that jobs were enqueued.
 func TestSiteRegisterSendsWelcomeEmail(t *testing.T) {
 	env := testhelper.Setup(t)
-	c, err := siteapi.NewClient("http://local/site", noJWT{}, siteapi.WithClient(env.Transport(nil)))
-	require.NoError(t, err)
+	c := env.SiteAnonymous(t)
 	ctx := context.Background()
 
 	res, err := c.SiteAuthRegister(ctx, &siteapi.SiteRegisterInput{

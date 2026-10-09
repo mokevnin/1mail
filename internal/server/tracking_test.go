@@ -16,6 +16,7 @@ import (
 	"github.com/mokevnin/1mail/ent/confirmation"
 	"github.com/mokevnin/1mail/ent/unsubscribe"
 	"github.com/mokevnin/1mail/internal/eligibility"
+	"github.com/mokevnin/1mail/internal/fixtures"
 	"github.com/mokevnin/1mail/internal/testhelper"
 	"github.com/mokevnin/1mail/internal/tracking"
 	"github.com/stretchr/testify/assert"
@@ -67,13 +68,13 @@ func TestConfirmEndpoint(t *testing.T) {
 		return w
 	}
 
-	c := env.DB.Contact.GetX(ctx, 1)
+	c := env.DB.Contact.GetX(ctx, fixtures.ContactAliceID)
 	cPath := confirmPath(t, tr, tracking.ConfirmTarget{
-		Destination: *c.Email, WorkspaceID: 1, ContactID: c.ID,
+		Destination: *c.Email, WorkspaceID: fixtures.AcmeID, ContactID: c.ID,
 	})
 	confirmed := func() bool {
 		ok, err := env.DB.Confirmation.Query().Where(
-			confirmation.WorkspaceID(1),
+			confirmation.WorkspaceID(fixtures.AcmeID),
 			confirmation.ChannelEQ(confirmation.ChannelEmail),
 			confirmation.DestinationEQ(*c.Email),
 		).Exist(ctx)
@@ -126,15 +127,15 @@ func TestUnsubscribeEverythingInvalidatesConfirmation(t *testing.T) {
 		return w
 	}
 
-	c := env.DB.Contact.GetX(ctx, 1)
-	_, err = env.DB.Confirmation.Create().SetWorkspaceID(1).
+	c := env.DB.Contact.GetX(ctx, fixtures.ContactAliceID)
+	_, err = env.DB.Confirmation.Create().SetWorkspaceID(fixtures.AcmeID).
 		SetChannel(confirmation.ChannelEmail).SetDestination(*c.Email).
 		SetProvenance(confirmation.ProvenanceDoubleOptIn).SetContactID(c.ID).Save(ctx)
 	require.NoError(t, err)
 
 	confExists := func() bool {
 		ok, err := env.DB.Confirmation.Query().Where(
-			confirmation.WorkspaceID(1),
+			confirmation.WorkspaceID(fixtures.AcmeID),
 			confirmation.DestinationEQ(*c.Email),
 		).Exist(ctx)
 		require.NoError(t, err)
@@ -143,13 +144,13 @@ func TestUnsubscribeEverythingInvalidatesConfirmation(t *testing.T) {
 
 	// A per-source (broadcasts) opt-out must NOT invalidate the confirmation.
 	post(unsubPath(t, tr, tracking.UnsubTarget{
-		Source: eligibility.SourceBroadcasts, Destination: *c.Email, WorkspaceID: 1, ContactID: c.ID,
+		Source: eligibility.SourceBroadcasts, Destination: *c.Email, WorkspaceID: fixtures.AcmeID, ContactID: c.ID,
 	}))
 	assert.True(t, confExists(), "per-source opt-out leaves the confirmation")
 
 	// The everything opt-out deletes the confirmation row.
 	post(unsubPath(t, tr, tracking.UnsubTarget{
-		Source: eligibility.SourceEverything, Destination: *c.Email, WorkspaceID: 1, ContactID: c.ID,
+		Source: eligibility.SourceEverything, Destination: *c.Email, WorkspaceID: fixtures.AcmeID, ContactID: c.ID,
 	}))
 	assert.False(t, confExists(), "everything opt-out invalidates the confirmation")
 }
@@ -164,17 +165,17 @@ func TestTrackingEndpoints(t *testing.T) {
 	require.NoError(t, err)
 	tr := tracking.New(cfg.JWTSecret, cfg.AppURL)
 
-	// A recipient in fixture workspace acme (id 1). Alice (id 1) is not already
+	// A recipient in fixture workspace Acme. Alice is not already
 	// unsubscribed from broadcasts (bob is, in the fixtures).
-	c := env.DB.Contact.GetX(ctx, 1)
+	c := env.DB.Contact.GetX(ctx, fixtures.ContactAliceID)
 
 	b, err := env.DB.Broadcast.Create().
-		SetWorkspaceID(1).SetName("Track").SetSubject("Hi").
+		SetWorkspaceID(fixtures.AcmeID).SetName("Track").SetSubject("Hi").
 		SetStatus(broadcast.StatusSent).Save(ctx)
 	require.NoError(t, err)
 
 	rec, err := env.DB.BroadcastRecipient.Create().
-		SetBroadcastID(b.ID).SetWorkspaceID(1).SetContactID(c.ID).
+		SetBroadcastID(b.ID).SetWorkspaceID(fixtures.AcmeID).SetContactID(c.ID).
 		SetStatus(broadcastrecipient.StatusSent).Save(ctx)
 	require.NoError(t, err)
 
@@ -216,11 +217,11 @@ func TestTrackingEndpoints(t *testing.T) {
 	// POST performs the opt-out.
 	uPath := unsubPath(t, tr, tracking.UnsubTarget{
 		Source: eligibility.SourceBroadcasts, Destination: *c.Email,
-		WorkspaceID: 1, ContactID: c.ID, BroadcastID: b.ID,
+		WorkspaceID: fixtures.AcmeID, ContactID: c.ID, BroadcastID: b.ID,
 	})
 	optedOut := func() bool {
 		ok, err := env.DB.Unsubscribe.Query().Where(
-			unsubscribe.WorkspaceID(1),
+			unsubscribe.WorkspaceID(fixtures.AcmeID),
 			unsubscribe.ChannelEQ(unsubscribe.ChannelEmail),
 			unsubscribe.DestinationEQ(*c.Email),
 			unsubscribe.SendingSourceEQ(eligibility.SourceBroadcasts),
@@ -281,25 +282,25 @@ func TestUnsubscribeAutomationExitsEnrollment(t *testing.T) {
 		return w
 	}
 
-	c := env.DB.Contact.GetX(ctx, 1)
-	a, err := env.DB.Automation.Create().SetWorkspaceID(1).
+	c := env.DB.Contact.GetX(ctx, fixtures.ContactAliceID)
+	a, err := env.DB.Automation.Create().SetWorkspaceID(fixtures.AcmeID).
 		SetName("Welcome").SetTriggerEvent("contact.created").SetStatus(automation.StatusActive).
 		SetDefinition("[]").Save(ctx)
 	require.NoError(t, err)
 	run, err := env.DB.AutomationRun.Create().
-		SetWorkspaceID(1).SetAutomationID(a.ID).SetContactID(c.ID).
+		SetWorkspaceID(fixtures.AcmeID).SetAutomationID(a.ID).SetContactID(c.ID).
 		SetStatus(automationrun.StatusActive).Save(ctx)
 	require.NoError(t, err)
 
 	// POST performs the opt-out (GET only renders the confirm page — ADR 0012).
 	resp := post(unsubPath(t, tr, tracking.UnsubTarget{
 		Source: eligibility.AutomationSource(a.ID), Destination: *c.Email,
-		WorkspaceID: 1, ContactID: c.ID,
+		WorkspaceID: fixtures.AcmeID, ContactID: c.ID,
 	}))
 	assert.Equal(t, http.StatusNoContent, resp.Code)
 
 	optedOut, err := env.DB.Unsubscribe.Query().Where(
-		unsubscribe.WorkspaceID(1),
+		unsubscribe.WorkspaceID(fixtures.AcmeID),
 		unsubscribe.DestinationEQ(*c.Email),
 		unsubscribe.SendingSourceEQ(eligibility.AutomationSource(a.ID)),
 	).Exist(ctx)
@@ -333,8 +334,8 @@ func TestUnsubscribeEverythingEscalation(t *testing.T) {
 		return w
 	}
 
-	c := env.DB.Contact.GetX(ctx, 1)
-	b, err := env.DB.Broadcast.Create().SetWorkspaceID(1).SetName("B").SetSubject("Hi").
+	c := env.DB.Contact.GetX(ctx, fixtures.ContactAliceID)
+	b, err := env.DB.Broadcast.Create().SetWorkspaceID(fixtures.AcmeID).SetName("B").SetSubject("Hi").
 		SetStatus(broadcast.StatusSent).Save(ctx)
 	require.NoError(t, err)
 
@@ -342,7 +343,7 @@ func TestUnsubscribeEverythingEscalation(t *testing.T) {
 	// URL in ?all=.
 	srcPath := unsubPath(t, tr, tracking.UnsubTarget{
 		Source: eligibility.SourceBroadcasts, Destination: *c.Email,
-		WorkspaceID: 1, ContactID: c.ID, BroadcastID: b.ID,
+		WorkspaceID: fixtures.AcmeID, ContactID: c.ID, BroadcastID: b.ID,
 	})
 	resp := get(srcPath)
 	require.Equal(t, http.StatusSeeOther, resp.Code)
@@ -369,7 +370,7 @@ func TestUnsubscribeEverythingEscalation(t *testing.T) {
 	// Both scopes now exist for the destination.
 	for _, src := range []string{eligibility.SourceBroadcasts, eligibility.SourceEverything} {
 		exists, err := env.DB.Unsubscribe.Query().Where(
-			unsubscribe.WorkspaceID(1),
+			unsubscribe.WorkspaceID(fixtures.AcmeID),
 			unsubscribe.DestinationEQ(*c.Email),
 			unsubscribe.SendingSourceEQ(src),
 		).Exist(ctx)

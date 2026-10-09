@@ -6,6 +6,7 @@ import (
 	"time"
 
 	siteapi "github.com/mokevnin/1mail/gen/site"
+	"github.com/mokevnin/1mail/internal/fixtures"
 	"github.com/mokevnin/1mail/internal/testhelper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -13,12 +14,12 @@ import (
 
 func TestSiteSegmentsPreviewCountsMatchingActiveContacts(t *testing.T) {
 	env := testhelper.Setup(t)
-	c := siteClient(t, env, "info@1mail.com")
+	c := env.SiteActor(t, fixtures.OwnerJohnEmail)
 	ctx := context.Background()
 
 	// An active contact with a distinctive custom field in workspace acme (id 1).
 	_, err := env.DB.Contact.Create().
-		SetWorkspaceID(1).
+		SetWorkspaceID(fixtures.AcmeID).
 		SetEmail("preview-target@test.dev").
 		SetCustomFields(map[string]any{"plan": "preview-pro"}).
 		Save(ctx)
@@ -27,7 +28,7 @@ func TestSiteSegmentsPreviewCountsMatchingActiveContacts(t *testing.T) {
 	def := `{"combinator":"and","rules":[{"field":"custom:plan","operator":"=","value":"preview-pro"}]}`
 	out, err := c.SiteSegmentsPreview(ctx, &siteapi.SitePreviewSegmentInput{
 		Definition: siteapi.NewOptNilString(def),
-	}, siteapi.SiteSegmentsPreviewParams{Slug: "acme"})
+	}, siteapi.SiteSegmentsPreviewParams{Slug: fixtures.AcmeSlug})
 	require.NoError(t, err)
 	res, ok := out.(*siteapi.SitePreviewSegmentResult)
 	require.Truef(t, ok, "got %T", out)
@@ -36,21 +37,21 @@ func TestSiteSegmentsPreviewCountsMatchingActiveContacts(t *testing.T) {
 
 func TestSiteSegmentsPreviewEventCondition(t *testing.T) {
 	env := testhelper.Setup(t)
-	c := siteClient(t, env, "info@1mail.com")
+	c := env.SiteActor(t, fixtures.OwnerJohnEmail)
 	ctx := context.Background()
 
-	ct, err := env.DB.Contact.Create().SetWorkspaceID(1).SetEmail("ev-prev@test.dev").Save(ctx)
+	ct, err := env.DB.Contact.Create().SetWorkspaceID(fixtures.AcmeID).SetEmail("ev-prev@test.dev").Save(ctx)
 	require.NoError(t, err)
 	// Events attach by the stable contact_id (ADR 0002), not the email string.
 	_, err = env.DB.Event.Create().
-		SetWorkspaceID(1).SetContactID(ct.ID).
+		SetWorkspaceID(fixtures.AcmeID).SetContactID(ct.ID).
 		SetAction("signed_up").SetOccurredAt(time.Now()).Save(ctx)
 	require.NoError(t, err)
 
 	def := `{"combinator":"and","rules":[{"field":"event:signed_up","operator":"performed","value":"30"}]}`
 	out, err := c.SiteSegmentsPreview(ctx, &siteapi.SitePreviewSegmentInput{
 		Definition: siteapi.NewOptNilString(def),
-	}, siteapi.SiteSegmentsPreviewParams{Slug: "acme"})
+	}, siteapi.SiteSegmentsPreviewParams{Slug: fixtures.AcmeSlug})
 	require.NoError(t, err)
 	res, ok := out.(*siteapi.SitePreviewSegmentResult)
 	require.Truef(t, ok, "got %T", out)
@@ -59,45 +60,45 @@ func TestSiteSegmentsPreviewEventCondition(t *testing.T) {
 
 func TestSiteSegmentsPreviewRejectsInvalidDefinition(t *testing.T) {
 	env := testhelper.Setup(t)
-	c := siteClient(t, env, "info@1mail.com")
+	c := env.SiteActor(t, fixtures.OwnerJohnEmail)
 	ctx := context.Background()
 
 	out, err := c.SiteSegmentsPreview(ctx, &siteapi.SitePreviewSegmentInput{
 		Definition: siteapi.NewOptNilString(`{"rules":[{"field":"nope","operator":"=","value":"x"}]}`),
-	}, siteapi.SiteSegmentsPreviewParams{Slug: "acme"})
+	}, siteapi.SiteSegmentsPreviewParams{Slug: fixtures.AcmeSlug})
 	require.NoError(t, err)
 	assert.IsType(t, &siteapi.SiteSegmentsPreviewUnprocessableEntity{}, out)
 }
 
 func TestSiteSegmentsCreateRejectsInvalidRuleDefinition(t *testing.T) {
 	env := testhelper.Setup(t)
-	c := siteClient(t, env, "info@1mail.com")
+	c := env.SiteActor(t, fixtures.OwnerJohnEmail)
 	ctx := context.Background()
 
 	out, err := c.SiteSegmentsCreate(ctx, &siteapi.SiteCreateSegmentInput{
 		Name:       "Bad rule",
 		Type:       siteapi.SiteSegmentTypeRule,
 		Definition: siteapi.NewOptNilString(`{"rules":[{"field":"email","operator":"weird","value":"x"}]}`),
-	}, siteapi.SiteSegmentsCreateParams{Slug: "acme"})
+	}, siteapi.SiteSegmentsCreateParams{Slug: fixtures.AcmeSlug})
 	require.NoError(t, err)
 	assert.IsType(t, &siteapi.SiteSegmentsCreateUnprocessableEntity{}, out)
 }
 
 func TestSiteSegmentsCreateAndUpdateShareValidation(t *testing.T) {
 	env := testhelper.Setup(t)
-	c := siteClient(t, env, "info@1mail.com")
+	c := env.SiteActor(t, fixtures.OwnerJohnEmail)
 	ctx := context.Background()
 	bad := siteapi.NewOptNilString(`{"rules":[{"field":"email","operator":"weird","value":"x"}]}`)
 
 	// Create rejects a bad definition for a snapshot segment too.
 	created, err := c.SiteSegmentsCreate(ctx, &siteapi.SiteCreateSegmentInput{
 		Name: "Bad snapshot", Type: siteapi.SiteSegmentTypeSnapshot, Definition: bad,
-	}, siteapi.SiteSegmentsCreateParams{Slug: "acme"})
+	}, siteapi.SiteSegmentsCreateParams{Slug: fixtures.AcmeSlug})
 	require.NoError(t, err)
 	assert.IsType(t, &siteapi.SiteSegmentsCreateUnprocessableEntity{}, created)
 
 	updated, err := c.SiteSegmentsUpdate(ctx, &siteapi.SiteUpdateSegmentInput{Definition: bad},
-		siteapi.SiteSegmentsUpdateParams{Slug: "acme", ID: "100"})
+		siteapi.SiteSegmentsUpdateParams{Slug: fixtures.AcmeSlug, ID: idStr(fixtures.SegmentActiveID)})
 	require.NoError(t, err)
 	assert.IsType(t, &siteapi.SiteSegmentsUpdateUnprocessableEntity{}, updated)
 }

@@ -279,7 +279,7 @@
 
 # --- Globex (workspace 2) foreign row — DO NOT change. Its action is unique to
 # the workspace so a leak into workspace 1's action list is detectable. ---
-- id: 900
+- id: 900 # fixture: EventGlobex
   subject_id: user:other@globex.example
   action: globex_only
   workspace_id: 2

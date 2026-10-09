@@ -8,14 +8,13 @@ import (
 
 	"github.com/mokevnin/1mail/ent/contact"
 	"github.com/mokevnin/1mail/ent/predicate"
+	"github.com/mokevnin/1mail/internal/fixtures"
 	"github.com/mokevnin/1mail/internal/segments"
 	"github.com/mokevnin/1mail/internal/tags"
 	"github.com/mokevnin/1mail/internal/testhelper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
-
-const wsID = int64(1) // fixture workspace "acme"
 
 func rule(field, op, value string) segments.Rule {
 	return segments.Rule{Field: field, Operator: op, Value: value}
@@ -39,7 +38,7 @@ func TestCompileEvaluatesAgainstContacts(t *testing.T) {
 	ctx := context.Background()
 
 	mk := func(email, first string, custom map[string]any) {
-		c := env.DB.Contact.Create().SetWorkspaceID(wsID).SetEmail(email).SetFirstName(first)
+		c := env.DB.Contact.Create().SetWorkspaceID(fixtures.AcmeID).SetEmail(email).SetFirstName(first)
 		if custom != nil {
 			c.SetCustomFields(custom)
 		}
@@ -54,7 +53,7 @@ func TestCompileEvaluatesAgainstContacts(t *testing.T) {
 		p, err := segments.Compile(g, segments.ContactSchema())
 		require.NoError(t, err)
 		n, err := env.DB.Contact.Query().
-			Where(contact.WorkspaceID(wsID), contact.EmailContainsFold("@seg.test"), predicate.Contact(p)).
+			Where(contact.WorkspaceID(fixtures.AcmeID), contact.EmailContainsFold("@seg.test"), predicate.Contact(p)).
 			Count(ctx)
 		require.NoError(t, err)
 		return n
@@ -90,7 +89,7 @@ func TestEventConditions(t *testing.T) {
 	ctx := context.Background()
 
 	mk := func(email string) int64 {
-		c, err := env.DB.Contact.Create().SetWorkspaceID(wsID).SetEmail(email).Save(ctx)
+		c, err := env.DB.Contact.Create().SetWorkspaceID(fixtures.AcmeID).SetEmail(email).Save(ctx)
 		require.NoError(t, err)
 		return c.ID
 	}
@@ -106,15 +105,15 @@ func TestEventConditions(t *testing.T) {
 
 	// The committed Globex tenant proves the join is workspace-scoped.
 	now := time.Now()
-	mkEvent(annID, "page_view", wsID, now.AddDate(0, 0, -2))                        // recent
-	mkEvent(annID, "purchase", wsID, now.AddDate(0, 0, -40))                        // old
-	mkEvent(annID, "ws2_only", testhelper.GlobexWorkspaceID, now.AddDate(0, 0, -1)) // other workspace
+	mkEvent(annID, "page_view", fixtures.AcmeID, now.AddDate(0, 0, -2))  // recent
+	mkEvent(annID, "purchase", fixtures.AcmeID, now.AddDate(0, 0, -40))  // old
+	mkEvent(annID, "ws2_only", fixtures.GlobexID, now.AddDate(0, 0, -1)) // other workspace
 
 	count := func(g segments.Group) int {
 		p, err := segments.Compile(g, segments.ContactSchema())
 		require.NoError(t, err)
 		n, err := env.DB.Contact.Query().
-			Where(contact.WorkspaceID(wsID), contact.EmailContainsFold("@evseg.test"), predicate.Contact(p)).
+			Where(contact.WorkspaceID(fixtures.AcmeID), contact.EmailContainsFold("@evseg.test"), predicate.Contact(p)).
 			Count(ctx)
 		require.NoError(t, err)
 		return n
@@ -148,7 +147,7 @@ func TestTagConditions(t *testing.T) {
 		p, err := segments.Compile(g, segments.ContactSchema())
 		require.NoError(t, err)
 		n, err := env.DB.Contact.Query().
-			Where(contact.WorkspaceID(wsID), contact.IDIn(1, 2, 3), predicate.Contact(p)).
+			Where(contact.WorkspaceID(fixtures.AcmeID), contact.IDIn(fixtures.ContactAliceID, fixtures.ContactBobID, fixtures.ContactCarolID), predicate.Contact(p)).
 			Count(ctx)
 		require.NoError(t, err)
 		return n
@@ -170,12 +169,12 @@ func TestTagConditions(t *testing.T) {
 	}))
 
 	// Live: tagging contact 2 adds it to the audience.
-	_, err := tags.New(env.DB).Apply(ctx, wsID, 2, "vip")
+	_, err := tags.New(env.DB).Apply(ctx, fixtures.AcmeID, 2, "vip")
 	require.NoError(t, err)
 	assert.Equal(t, 3, count(has("vip")))
 
 	// A same-named Tag in another workspace never matches here.
-	assert.Equal(t, 0, count(has(testhelper.GlobexTagName)))
+	assert.Equal(t, 0, count(has(fixtures.TagGlobexName)))
 
 	// Validation: only has / doesNotHave are valid for the tag field.
 	assert.Error(t, segments.Validate(`{"rules":[{"field":"tag","operator":"=","value":"vip"}]}`, segments.ContactSchema()))

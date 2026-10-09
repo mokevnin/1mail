@@ -8,6 +8,7 @@ import (
 
 	"github.com/mokevnin/1mail/ent/sendingdomain"
 	siteapi "github.com/mokevnin/1mail/gen/site"
+	"github.com/mokevnin/1mail/internal/fixtures"
 	"github.com/mokevnin/1mail/internal/testhelper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -15,9 +16,9 @@ import (
 
 func TestSiteSendingDomainsCRUD(t *testing.T) {
 	env := testhelper.Setup(t)
-	c := siteClient(t, env, "info@1mail.com")
+	c := env.SiteActor(t, fixtures.OwnerJohnEmail)
 	ctx := context.Background()
-	slug := "acme"
+	slug := fixtures.AcmeSlug
 
 	// Invalid domain is rejected.
 	bad, err := c.SiteSendingDomainsCreate(ctx, &siteapi.SiteCreateSendingDomainInput{Domain: "not a domain"},
@@ -83,16 +84,16 @@ func TestSiteSendingDomainsCRUD(t *testing.T) {
 
 func TestSiteSendingDomainsListScopedToWorkspace(t *testing.T) {
 	env := testhelper.Setup(t)
-	c := siteClient(t, env, "info@1mail.com")
+	c := env.SiteActor(t, fixtures.OwnerJohnEmail)
 	ctx := context.Background()
 
-	list, err := c.SiteSendingDomainsList(ctx, siteapi.SiteSendingDomainsListParams{Slug: "acme"})
+	list, err := c.SiteSendingDomainsList(ctx, siteapi.SiteSendingDomainsListParams{Slug: fixtures.AcmeSlug})
 	require.NoError(t, err)
 	page, ok := list.(*siteapi.SiteSendingDomainsListOK)
 	require.Truef(t, ok, "got %T", list)
 
 	// Count matches the acme fixtures dynamically (don't hardcode dataset size).
-	want, err := env.DB.SendingDomain.Query().Where(sendingdomain.WorkspaceID(1)).Count(ctx)
+	want, err := env.DB.SendingDomain.Query().Where(sendingdomain.WorkspaceID(fixtures.AcmeID)).Count(ctx)
 	require.NoError(t, err)
 	assert.Equal(t, want, len(page.Items))
 	for _, item := range page.Items {
@@ -107,14 +108,8 @@ func TestSiteSendingDomainsRequireMembership(t *testing.T) {
 
 	// A real, authenticated user with no membership on acme must get 404 — never
 	// another tenant's sending domains.
-	_, err := env.DB.User.Create().
-		SetName("outsider@example.com").
-		SetEmail("outsider@example.com").
-		Save(ctx)
-	require.NoError(t, err)
-
-	c := siteClient(t, env, "outsider@example.com")
-	res, err := c.SiteSendingDomainsList(ctx, siteapi.SiteSendingDomainsListParams{Slug: "acme"})
+	c := env.SiteActor(t, fixtures.OutsiderOscarEmail)
+	res, err := c.SiteSendingDomainsList(ctx, siteapi.SiteSendingDomainsListParams{Slug: fixtures.AcmeSlug})
 	require.NoError(t, err)
 	assert.IsType(t, &siteapi.SiteSendingDomainsListNotFound{}, res)
 }

@@ -1,6 +1,6 @@
 # Workspace acme (id 1). Reusable MJML bodies. transactional_emails reference these
 # by id snapshot (not FK).
-- id: 1
+- id: 1 # fixture: TemplateWelcome
   name: Welcome
   subject: "Welcome to CodeBasics \U0001F44B"
   body: '<mjml><mj-body><mj-section><mj-column><mj-text font-size="20px" font-weight="bold">Welcome!</mj-text><mj-text>Start your first course today.</mj-text><mj-button href="https://codebasics.dev">Open CodeBasics</mj-button></mj-column></mj-section></mj-body></mjml>'
@@ -23,7 +23,7 @@
   updated_at: '{{daysAgo 60}}'
 
 # --- Globex (workspace 2) foreign row — DO NOT change ---
-- id: 900
+- id: 900 # fixture: TemplateGlobex
   name: Globex template
   subject: Globex
   body: '<mjml><mj-body><mj-section><mj-column><mj-text>Globex.</mj-text></mj-column></mj-section></mj-body></mjml>'

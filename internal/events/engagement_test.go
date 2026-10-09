@@ -6,6 +6,7 @@ import (
 
 	"github.com/mokevnin/1mail/ent"
 	"github.com/mokevnin/1mail/internal/events"
+	"github.com/mokevnin/1mail/internal/fixtures"
 	"github.com/mokevnin/1mail/internal/testhelper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -21,13 +22,13 @@ func TestEmailEngagementDedupIDBecomesDedupKey(t *testing.T) {
 
 	require.NoError(t, env.Bus.WithinTx(ctx, func(_ *ent.Client, pub events.Publisher) error {
 		if err := pub.Publish(ctx, &events.EmailEngagement{
-			Action: events.NameEmailSent, WorkspaceID: fixtureWorkspace,
+			Action: events.NameEmailSent, WorkspaceID: fixtures.AcmeID,
 			Email: "sent@example.com", BroadcastID: 7, DedupID: "email.sent:42",
 		}); err != nil {
 			return err
 		}
 		return pub.Publish(ctx, &events.EmailEngagement{
-			Action: events.NameEmailOpened, WorkspaceID: fixtureWorkspace,
+			Action: events.NameEmailOpened, WorkspaceID: fixtures.AcmeID,
 			Email: "sent@example.com", BroadcastID: 7,
 		})
 	}))

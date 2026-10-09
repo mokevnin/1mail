@@ -6,27 +6,28 @@ import (
 
 	"github.com/mokevnin/1mail/ent/automation"
 	externalapi "github.com/mokevnin/1mail/gen/external"
+	"github.com/mokevnin/1mail/internal/fixtures"
 	"github.com/mokevnin/1mail/internal/testhelper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-// Fixture automation 100 ("Welcome series") is active with email, wait, email steps;
-// 104 carries apply_tag and remove_tag steps.
+// Fixture automation AutomationWelcomeSeries is active with email, wait, email steps;
+// AutomationTagOnEngagement carries apply_tag and remove_tag steps.
 func TestExternalAutomationsRead(t *testing.T) {
 	env := testhelper.Setup(t)
 	ctx := context.Background()
-	c := client(t, env, seedToken(t, env.DB, []string{"automations:read"}))
+	c := env.ExternalScoped(t, "automations:read")
 
 	list, err := c.AutomationsList(ctx, externalapi.AutomationsListParams{})
 	require.NoError(t, err)
 	listed, ok := list.(*externalapi.AutomationsListOK)
 	require.Truef(t, ok, "got %T", list)
-	total, err := env.DB.Automation.Query().Where(automation.WorkspaceID(1)).Count(ctx)
+	total, err := env.DB.Automation.Query().Where(automation.WorkspaceID(fixtures.AcmeID)).Count(ctx)
 	require.NoError(t, err)
 	assert.EqualValues(t, total, listed.TotalItems)
 
-	got, err := c.AutomationsGet(ctx, externalapi.AutomationsGetParams{ID: "100"})
+	got, err := c.AutomationsGet(ctx, externalapi.AutomationsGetParams{ID: entityIDString(fixtures.AutomationWelcomeSeriesID)})
 	require.NoError(t, err)
 	a, ok := got.(*externalapi.AutomationResource)
 	require.Truef(t, ok, "got %T", got)
@@ -36,7 +37,7 @@ func TestExternalAutomationsRead(t *testing.T) {
 	assert.Equal(t, externalapi.AutomationStepTypeWait, a.Steps[1].Type)
 	assert.EqualValues(t, 86400, a.Steps[1].Seconds.Or(0))
 
-	tagged, err := c.AutomationsGet(ctx, externalapi.AutomationsGetParams{ID: "104"})
+	tagged, err := c.AutomationsGet(ctx, externalapi.AutomationsGetParams{ID: entityIDString(fixtures.AutomationTagOnEngagementID)})
 	require.NoError(t, err)
 	steps := tagged.(*externalapi.AutomationResource).Steps
 	require.Len(t, steps, 2)
@@ -48,7 +49,7 @@ func TestExternalAutomationsRead(t *testing.T) {
 	require.NoError(t, err)
 	assert.IsType(t, &externalapi.AutomationsGetNotFound{}, missing)
 
-	denied := client(t, env, seedToken(t, env.DB, []string{"contacts:read"}))
+	denied := env.ExternalScoped(t, "contacts:read")
 	res, err := denied.AutomationsList(ctx, externalapi.AutomationsListParams{})
 	require.NoError(t, err)
 	assert.IsType(t, &externalapi.AutomationsListUnauthorized{}, res)
@@ -59,7 +60,7 @@ func TestExternalAutomationsRead(t *testing.T) {
 func TestExternalAutomationsCreateUpdateDelete(t *testing.T) {
 	env := testhelper.Setup(t)
 	ctx := context.Background()
-	c := client(t, env, seedToken(t, env.DB, []string{"automations:read", "automations:write", "automations:activate"}))
+	c := env.ExternalScoped(t, "automations:read", "automations:write", "automations:activate")
 
 	created, err := c.AutomationsCreate(ctx, &externalapi.CreateAutomationInput{
 		Name:         "Tag newcomers",
@@ -106,34 +107,34 @@ func TestExternalAutomationsCreateUpdateDelete(t *testing.T) {
 	require.NoError(t, err)
 	assert.IsType(t, &externalapi.AutomationsDeleteNotFound{}, again)
 
-	readOnly := client(t, env, seedToken(t, env.DB, []string{"automations:read"}))
+	readOnly := env.ExternalScoped(t, "automations:read")
 	res, err := readOnly.AutomationsCreate(ctx, &externalapi.CreateAutomationInput{Name: "x", TriggerEvent: "y"})
 	require.NoError(t, err)
 	assert.IsType(t, &externalapi.AutomationsCreateUnauthorized{}, res)
 }
 
 // Activate and deactivate need automations:activate, which authoring scopes never
-// imply (ADR 0016). Fixture 102 is a draft.
+// imply (ADR 0016). AutomationWinBack is a draft.
 func TestExternalAutomationsActivateAndDeactivate(t *testing.T) {
 	env := testhelper.Setup(t)
 	ctx := context.Background()
 
-	authoring := client(t, env, seedToken(t, env.DB, []string{"automations:read", "automations:write"}))
-	refused, err := authoring.AutomationsActivate(ctx, externalapi.AutomationsActivateParams{ID: "102"})
+	authoring := env.ExternalScoped(t, "automations:read", "automations:write")
+	refused, err := authoring.AutomationsActivate(ctx, externalapi.AutomationsActivateParams{ID: entityIDString(fixtures.AutomationWinBackID)})
 	require.NoError(t, err)
 	assert.IsType(t, &externalapi.AutomationsActivateUnauthorized{}, refused)
-	refusedOff, err := authoring.AutomationsDeactivate(ctx, externalapi.AutomationsDeactivateParams{ID: "100"})
+	refusedOff, err := authoring.AutomationsDeactivate(ctx, externalapi.AutomationsDeactivateParams{ID: entityIDString(fixtures.AutomationWelcomeSeriesID)})
 	require.NoError(t, err)
 	assert.IsType(t, &externalapi.AutomationsDeactivateUnauthorized{}, refusedOff)
-	assert.Equal(t, automation.StatusDraft, env.DB.Automation.GetX(ctx, 102).Status)
+	assert.Equal(t, automation.StatusDraft, env.DB.Automation.GetX(ctx, fixtures.AutomationWinBackID).Status)
 
-	c := client(t, env, seedToken(t, env.DB, []string{"automations:activate"}))
-	on, err := c.AutomationsActivate(ctx, externalapi.AutomationsActivateParams{ID: "102"})
+	c := env.ExternalScoped(t, "automations:activate")
+	on, err := c.AutomationsActivate(ctx, externalapi.AutomationsActivateParams{ID: entityIDString(fixtures.AutomationWinBackID)})
 	require.NoError(t, err)
 	assert.Equal(t, externalapi.AutomationStatusActive, on.(*externalapi.AutomationResource).Status)
-	assert.Equal(t, automation.StatusActive, env.DB.Automation.GetX(ctx, 102).Status)
+	assert.Equal(t, automation.StatusActive, env.DB.Automation.GetX(ctx, fixtures.AutomationWinBackID).Status)
 
-	off, err := c.AutomationsDeactivate(ctx, externalapi.AutomationsDeactivateParams{ID: "102"})
+	off, err := c.AutomationsDeactivate(ctx, externalapi.AutomationsDeactivateParams{ID: entityIDString(fixtures.AutomationWinBackID)})
 	require.NoError(t, err)
 	assert.Equal(t, externalapi.AutomationStatusDraft, off.(*externalapi.AutomationResource).Status)
 

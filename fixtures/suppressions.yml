@@ -34,7 +34,7 @@
   created_at: '{{daysAgo 12}}'
   updated_at: '{{daysAgo 12}}'
 # A bounce for a destination with no contact (covers the contact-less case).
-- id: 104
+- id: 104 # fixture: SuppressionGhostBounce
   channel: email
   destination: ghost@codebasics.dev
   reason: bounce
