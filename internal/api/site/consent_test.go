@@ -121,7 +121,7 @@ func TestSitePublicConfirmationsPerformRecordsClientIP(t *testing.T) {
 	token := tokenAfter(t, url, "/e/confirm/")
 
 	req := httptest.NewRequestWithContext(ctx, http.MethodPost, "/site/confirmations/"+token, nil)
-	req.Header.Set("X-Forwarded-For", "203.0.113.7, 10.0.0.1")
+	req.Header.Set("X-Forwarded-For", "6.6.6.6, 203.0.113.7")
 	w := httptest.NewRecorder()
 	env.Server.ServeHTTP(w, req)
 	require.Equal(t, http.StatusNoContent, w.Code)
