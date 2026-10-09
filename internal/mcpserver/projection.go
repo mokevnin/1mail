@@ -33,6 +33,7 @@ type operation struct {
 	bodyFields map[string]bool // top-level body properties exposed as arguments
 	bodyWhole  bool            // the body is not an object: it is passed as the `body` argument
 	hasBody    bool
+	send       bool // send-class (x-mcp send): listed and callable only with the mcp:send scope
 }
 
 // project turns the OpenAPI document into one operation per non-hidden
@@ -78,6 +79,7 @@ func project(spec []byte) ([]*operation, error) {
 			if err != nil {
 				return nil, fmt.Errorf("%s %s: %w", method, path, err)
 			}
+			op.send, _ = ext["send"].(bool)
 			ops = append(ops, op)
 		}
 	}

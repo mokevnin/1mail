@@ -58,6 +58,13 @@ type Handler interface {
 	//
 	// GET /broadcasts/{id}/report
 	BroadcastsReport(ctx context.Context, params BroadcastsReportParams) (BroadcastsReportRes, error)
+	// BroadcastsSchedule implements Broadcasts_schedule operation.
+	//
+	// Schedule a draft or scheduled broadcast to send to its audience at a future time. Send-class: needs
+	// the broadcasts:send scope, and mcp:send over MCP.
+	//
+	// POST /broadcasts/{id}/schedule
+	BroadcastsSchedule(ctx context.Context, req *ScheduleBroadcastInput, params BroadcastsScheduleParams) (BroadcastsScheduleRes, error)
 	// BroadcastsSetAudience implements Broadcasts_setAudience operation.
 	//
 	// Set the audience of a draft broadcast: a Segment, or null for all active contacts. Does not send.
@@ -70,6 +77,13 @@ type Handler interface {
 	//
 	// POST /broadcasts/{id}/test-send
 	BroadcastsTestSend(ctx context.Context, req *TestSendBroadcastInput, params BroadcastsTestSendParams) (BroadcastsTestSendRes, error)
+	// BroadcastsUnschedule implements Broadcasts_unschedule operation.
+	//
+	// Cancel a scheduled broadcast and return it to draft. Send-class: needs the broadcasts:send scope,
+	// and mcp:send over MCP.
+	//
+	// POST /broadcasts/{id}/unschedule
+	BroadcastsUnschedule(ctx context.Context, params BroadcastsUnscheduleParams) (BroadcastsUnscheduleRes, error)
 	// BroadcastsUpdate implements Broadcasts_update operation.
 	//
 	// Update a resource.

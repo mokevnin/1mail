@@ -768,6 +768,83 @@
         "tags": ["Broadcasts"]
       }
     },
+    "/broadcasts/{id}/schedule": {
+      "post": {
+        "operationId": "Broadcasts_schedule",
+        "description": "Schedule a draft or scheduled broadcast to send to its audience at a future time. Send-class: needs the broadcasts:send scope, and mcp:send over MCP.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/BroadcastResourceKey"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request has succeeded.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BroadcastResource"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "RFC 7807 bad request response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "RFC 7807 unauthorized response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "RFC 7807 not found response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "RFC 7807 validation response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Broadcasts"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScheduleBroadcastInput"
+              }
+            }
+          }
+        },
+        "x-mcp": {
+          "send": true
+        }
+      }
+    },
     "/broadcasts/{id}/test-send": {
       "post": {
         "operationId": "Broadcasts_testSend",
@@ -832,6 +909,73 @@
               }
             }
           }
+        }
+      }
+    },
+    "/broadcasts/{id}/unschedule": {
+      "post": {
+        "operationId": "Broadcasts_unschedule",
+        "description": "Cancel a scheduled broadcast and return it to draft. Send-class: needs the broadcasts:send scope, and mcp:send over MCP.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/BroadcastResourceKey"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request has succeeded.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BroadcastResource"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "RFC 7807 bad request response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "RFC 7807 unauthorized response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "RFC 7807 not found response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "RFC 7807 validation response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Broadcasts"],
+        "x-mcp": {
+          "send": true
         }
       }
     },
@@ -1609,6 +1753,9 @@
               }
             }
           }
+        },
+        "x-mcp": {
+          "send": true
         }
       }
     },
@@ -3325,6 +3472,9 @@
           "webhooks:read",
           "webhooks:write",
           "emails:send",
+          "broadcasts:send",
+          "automations:activate",
+          "mcp:send",
           "tokens:manage"
         ]
       },
@@ -4130,6 +4280,21 @@
           }
         },
         "description": "Request body for recording events"
+      },
+      "ScheduleBroadcastInput": {
+        "type": "object",
+        "required": ["scheduledAt"],
+        "properties": {
+          "scheduledAt": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Timestamp"
+              }
+            ],
+            "description": "When the broadcast should be sent"
+          }
+        },
+        "description": "Request body for scheduling a broadcast"
       },
       "SegmentResource": {
         "type": "object",

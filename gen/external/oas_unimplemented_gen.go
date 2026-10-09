@@ -93,6 +93,16 @@ func (UnimplementedHandler) BroadcastsReport(ctx context.Context, params Broadca
 	return r, ht.ErrNotImplemented
 }
 
+// BroadcastsSchedule implements Broadcasts_schedule operation.
+//
+// Schedule a draft or scheduled broadcast to send to its audience at a future time. Send-class: needs
+// the broadcasts:send scope, and mcp:send over MCP.
+//
+// POST /broadcasts/{id}/schedule
+func (UnimplementedHandler) BroadcastsSchedule(ctx context.Context, req *ScheduleBroadcastInput, params BroadcastsScheduleParams) (r BroadcastsScheduleRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // BroadcastsSetAudience implements Broadcasts_setAudience operation.
 //
 // Set the audience of a draft broadcast: a Segment, or null for all active contacts. Does not send.
@@ -108,6 +118,16 @@ func (UnimplementedHandler) BroadcastsSetAudience(ctx context.Context, req *SetB
 //
 // POST /broadcasts/{id}/test-send
 func (UnimplementedHandler) BroadcastsTestSend(ctx context.Context, req *TestSendBroadcastInput, params BroadcastsTestSendParams) (r BroadcastsTestSendRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// BroadcastsUnschedule implements Broadcasts_unschedule operation.
+//
+// Cancel a scheduled broadcast and return it to draft. Send-class: needs the broadcasts:send scope,
+// and mcp:send over MCP.
+//
+// POST /broadcasts/{id}/unschedule
+func (UnimplementedHandler) BroadcastsUnschedule(ctx context.Context, params BroadcastsUnscheduleParams) (r BroadcastsUnscheduleRes, _ error) {
 	return r, ht.ErrNotImplemented
 }
 

@@ -14,6 +14,9 @@ enum ApiTokenScope {
   webhooksRead: "webhooks:read",
   webhooksWrite: "webhooks:write",
   emailsSend: "emails:send",
+  broadcastsSend: "broadcasts:send",
+  automationsActivate: "automations:activate",
+  mcpSend: "mcp:send",
   tokensManage: "tokens:manage",
 }
 

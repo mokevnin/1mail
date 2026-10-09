@@ -41,12 +41,20 @@ type BroadcastsReportRes interface {
 	broadcastsReportRes()
 }
 
+type BroadcastsScheduleRes interface {
+	broadcastsScheduleRes()
+}
+
 type BroadcastsSetAudienceRes interface {
 	broadcastsSetAudienceRes()
 }
 
 type BroadcastsTestSendRes interface {
 	broadcastsTestSendRes()
+}
+
+type BroadcastsUnscheduleRes interface {
+	broadcastsUnscheduleRes()
 }
 
 type BroadcastsUpdateRes interface {

@@ -142,6 +142,12 @@ model BroadcastReport {
   clickRate: float32;
 }
 
+/** Request body for scheduling a broadcast */
+model ScheduleBroadcastInput {
+  /** When the broadcast should be sent */
+  scheduledAt: Timestamp;
+}
+
 @tag("Broadcasts")
 interface Broadcasts
   extends ExternalCrud<
@@ -171,6 +177,29 @@ interface Broadcasts
     @body body: TestSendBroadcastInput,
   ):
     | NoContentResponse
+    | BadRequestProblem
+    | UnauthorizedProblem
+    | NotFoundProblem
+    | UnprocessableEntityProblem;
+
+  /** Schedule a draft or scheduled broadcast to send to its audience at a future time. Send-class: needs the broadcasts:send scope, and mcp:send over MCP. */
+  @action("schedule")
+  @autoRoute
+  schedule(
+    ...ResourceParameters<BroadcastResource>,
+    @body body: ScheduleBroadcastInput,
+  ):
+    | BroadcastResource
+    | BadRequestProblem
+    | UnauthorizedProblem
+    | NotFoundProblem
+    | UnprocessableEntityProblem;
+
+  /** Cancel a scheduled broadcast and return it to draft. Send-class: needs the broadcasts:send scope, and mcp:send over MCP. */
+  @action("unschedule")
+  @autoRoute
+  unschedule(...ResourceParameters<BroadcastResource>):
+    | BroadcastResource
     | BadRequestProblem
     | UnauthorizedProblem
     | NotFoundProblem

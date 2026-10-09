@@ -77,7 +77,7 @@ func TestConsentScreenDescribesTheRequest(t *testing.T) {
 	require.Truef(t, ok, "got %T", res)
 	assert.Equal(t, "Fixture Connector", got.ClientName)
 	assert.Equal(t, []string{"contacts:read"}, got.Scopes)
-	assert.Equal(t, []string{"emails:send"}, got.SendScopes, "send-class scopes await an explicit opt-in")
+	assert.Equal(t, []string{"emails:send", "mcp:send"}, got.SendScopes, "send-class scopes await an explicit opt-in, and bring the MCP send lock's key")
 }
 
 func TestConsentScreenRejectsMismatchedRedirect(t *testing.T) {
@@ -156,11 +156,11 @@ func TestTokenEndpointIssuesAnOrdinaryScopedAPIToken(t *testing.T) {
 
 func TestSendClassScopesNeedAnExplicitOptIn(t *testing.T) {
 	env := testhelper.Setup(t)
-	scope := "contacts:read emails:send"
+	scope := "contacts:read emails:send broadcasts:send automations:activate"
 
 	for allowSend, want := range map[bool][]string{
 		false: {"contacts:read"},
-		true:  {"contacts:read", "emails:send"},
+		true:  {"contacts:read", "emails:send", "broadcasts:send", "automations:activate", "mcp:send"},
 	} {
 		back := consent(t, env, approval(scope, allowSend))
 		rec := exchange(t, env, tokenForm(back.Query().Get("code")))
@@ -299,5 +299,6 @@ func TestStandardMCPClientConnectsThroughOAuth(t *testing.T) {
 	row, err := env.DB.ApiToken.Query().Where(apitoken.Name("Test Agent (MCP)")).Only(t.Context())
 	require.NoError(t, err)
 	assert.NotContains(t, row.Scopes, "emails:send", "send-class scopes are opt-in")
+	assert.NotContains(t, row.Scopes, "mcp:send", "so is the MCP send lock's key")
 	assert.Contains(t, row.Scopes, "contacts:read")
 }

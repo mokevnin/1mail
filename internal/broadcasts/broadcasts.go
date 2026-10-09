@@ -24,6 +24,8 @@ var (
 	ErrNotFound = errors.New("broadcasts: broadcast not found")
 	// ErrNotSendable: the Broadcast is past draft/scheduled (sending, sent, failed).
 	ErrNotSendable = errors.New("broadcasts: broadcast is not a draft or scheduled")
+	// ErrNotScheduled: the Broadcast is not scheduled, so there is no schedule to clear.
+	ErrNotScheduled = errors.New("broadcasts: broadcast is not scheduled")
 )
 
 // Enqueuer hands a Broadcast to the job queue (river in prod, inline in tests). A nil
@@ -74,6 +76,28 @@ func (m *Module) Schedule(ctx context.Context, workspaceID, id int64, when time.
 		return nil, err
 	}
 	return b, nil
+}
+
+// Unschedule returns a scheduled Broadcast to draft and drops its schedule. The
+// delayed job stays queued; when it fires it finds a draft and does nothing.
+func (m *Module) Unschedule(ctx context.Context, workspaceID, id int64) (*ent.Broadcast, error) {
+	n, err := m.ent.Broadcast.Update().
+		Where(broadcast.ID(id), broadcast.WorkspaceID(workspaceID), broadcast.StatusEQ(broadcast.StatusScheduled)).
+		SetStatus(broadcast.StatusDraft).ClearScheduledAt().Save(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if n == 0 {
+		exists, err := m.ent.Broadcast.Query().Where(broadcast.ID(id), broadcast.WorkspaceID(workspaceID)).Exist(ctx)
+		if err != nil {
+			return nil, err
+		}
+		if !exists {
+			return nil, ErrNotFound
+		}
+		return nil, ErrNotScheduled
+	}
+	return m.ent.Broadcast.Get(ctx, id)
 }
 
 // claim applies a transition atomically: the UPDATE only matches a draft or

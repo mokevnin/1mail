@@ -64,6 +64,9 @@ func (w *SendBroadcastWorker) Timeout(*river.Job[SendBroadcastArgs]) time.Durati
 }
 
 func (w *SendBroadcastWorker) Work(ctx context.Context, job *river.Job[SendBroadcastArgs]) error {
+	if due, err := BroadcastDue(ctx, w.ent, job.Args.BroadcastID); err != nil || !due {
+		return err // not due: unscheduled (back to draft) after this job was queued
+	}
 	ids, err := PlanBroadcast(ctx, w.ent, w.mod, job.Args.BroadcastID)
 	if err != nil {
 		return snoozeIfDeferrable(err)
@@ -86,6 +89,17 @@ func (w *SendBroadcastWorker) Work(ctx context.Context, job *river.Job[SendBroad
 		}
 	}
 	return nil
+}
+
+// BroadcastDue reports whether a queued send job should still run. A Broadcast that is
+// back in draft was unscheduled (or its enqueue was reverted) after the delayed job was
+// queued: the job must not send it.
+func BroadcastDue(ctx context.Context, client *ent.Client, broadcastID int64) (bool, error) {
+	b, err := client.Broadcast.Get(ctx, broadcastID)
+	if err != nil {
+		return false, fmt.Errorf("load broadcast %d: %w", broadcastID, err)
+	}
+	return b.Status != broadcast.StatusDraft, nil
 }
 
 // SendRecipientWorker delivers one broadcast recipient. Each recipient is its

@@ -4,6 +4,7 @@ import (
 	"context"
 	"strconv"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -185,6 +186,69 @@ func TestExternalBroadcastsRequireScopes(t *testing.T) {
 	rep, err = noScope.BroadcastsReport(ctx, externalapi.BroadcastsReportParams{ID: sentBroadcast})
 	require.NoError(t, err)
 	assert.IsType(t, &externalapi.BroadcastsReportUnauthorized{}, rep)
+}
+
+func TestExternalBroadcastScheduleNeedsTheSendScope(t *testing.T) {
+	env := testhelper.Setup(t)
+	ctx := context.Background()
+	when := time.Now().Add(48 * time.Hour).UTC().Truncate(time.Second)
+	body := &externalapi.ScheduleBroadcastInput{ScheduledAt: externalapi.Timestamp(when)}
+
+	// Authoring scopes are not enough to send, in either direction.
+	author := client(t, env, seedToken(t, env.DB, authorScopes))
+	res, err := author.BroadcastsSchedule(ctx, body, externalapi.BroadcastsScheduleParams{ID: draftBroadcast})
+	require.NoError(t, err)
+	assert.IsType(t, &externalapi.BroadcastsScheduleUnauthorized{}, res)
+	un, err := author.BroadcastsUnschedule(ctx, externalapi.BroadcastsUnscheduleParams{ID: schedBroadcast})
+	require.NoError(t, err)
+	assert.IsType(t, &externalapi.BroadcastsUnscheduleUnauthorized{}, un)
+	assert.Equal(t, broadcast.StatusDraft, env.DB.Broadcast.GetX(ctx, 100).Status)
+	assert.Equal(t, broadcast.StatusScheduled, env.DB.Broadcast.GetX(ctx, 101).Status)
+
+	// emails:send is a different lock.
+	emailer := client(t, env, seedToken(t, env.DB, []string{"emails:send"}))
+	res, err = emailer.BroadcastsSchedule(ctx, body, externalapi.BroadcastsScheduleParams{ID: draftBroadcast})
+	require.NoError(t, err)
+	assert.IsType(t, &externalapi.BroadcastsScheduleUnauthorized{}, res)
+
+	// broadcasts:send alone schedules and unschedules.
+	sender := client(t, env, seedToken(t, env.DB, []string{"broadcasts:send"}))
+	res, err = sender.BroadcastsSchedule(ctx, body, externalapi.BroadcastsScheduleParams{ID: draftBroadcast})
+	require.NoError(t, err)
+	b, ok := res.(*externalapi.BroadcastResource)
+	require.Truef(t, ok, "got %T", res)
+	assert.Equal(t, externalapi.BroadcastStatusScheduled, b.Status)
+	sched, ok := b.ScheduledAt.Get()
+	require.True(t, ok)
+	assert.True(t, when.Equal(time.Time(sched)))
+
+	un, err = sender.BroadcastsUnschedule(ctx, externalapi.BroadcastsUnscheduleParams{ID: draftBroadcast})
+	require.NoError(t, err)
+	b, ok = un.(*externalapi.BroadcastResource)
+	require.Truef(t, ok, "got %T", un)
+	assert.Equal(t, externalapi.BroadcastStatusDraft, b.Status)
+	assert.Nil(t, env.DB.Broadcast.GetX(ctx, 100).ScheduledAt)
+}
+
+func TestExternalBroadcastScheduleRefusesWhatCannotBeScheduled(t *testing.T) {
+	env := testhelper.Setup(t)
+	ctx := context.Background()
+	c := client(t, env, seedToken(t, env.DB, []string{"broadcasts:send"}))
+	body := &externalapi.ScheduleBroadcastInput{ScheduledAt: externalapi.Timestamp(time.Now().Add(time.Hour))}
+
+	res, err := c.BroadcastsSchedule(ctx, body, externalapi.BroadcastsScheduleParams{ID: sentBroadcast})
+	require.NoError(t, err)
+	assert.IsType(t, &externalapi.BroadcastsScheduleUnprocessableEntity{}, res, "a sent broadcast is history")
+	res, err = c.BroadcastsSchedule(ctx, body, externalapi.BroadcastsScheduleParams{ID: "999999"})
+	require.NoError(t, err)
+	assert.IsType(t, &externalapi.BroadcastsScheduleNotFound{}, res)
+
+	un, err := c.BroadcastsUnschedule(ctx, externalapi.BroadcastsUnscheduleParams{ID: draftBroadcast})
+	require.NoError(t, err)
+	assert.IsType(t, &externalapi.BroadcastsUnscheduleUnprocessableEntity{}, un, "nothing to unschedule on a draft")
+	un, err = c.BroadcastsUnschedule(ctx, externalapi.BroadcastsUnscheduleParams{ID: "999999"})
+	require.NoError(t, err)
+	assert.IsType(t, &externalapi.BroadcastsUnscheduleNotFound{}, un)
 }
 
 func TestExternalBroadcastsAreIsolatedToTheTokensWorkspace(t *testing.T) {

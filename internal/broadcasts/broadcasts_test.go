@@ -119,6 +119,34 @@ func TestTransitionsOutOfSendingAreRefused(t *testing.T) {
 	assert.Empty(t, q.calls)
 }
 
+func TestUnscheduleReturnsAScheduledBroadcastToDraft(t *testing.T) {
+	env := testhelper.Setup(t)
+	m := broadcasts.New(env.DB, &recorder{})
+
+	b, err := m.Unschedule(context.Background(), acme, schedID)
+	require.NoError(t, err)
+
+	assert.Equal(t, broadcast.StatusDraft, b.Status)
+	assert.Nil(t, b.ScheduledAt)
+	got := env.DB.Broadcast.GetX(context.Background(), schedID)
+	assert.Equal(t, broadcast.StatusDraft, got.Status)
+	assert.Nil(t, got.ScheduledAt)
+}
+
+func TestUnscheduleRefusesWhatIsNotScheduled(t *testing.T) {
+	env := testhelper.Setup(t)
+	m := broadcasts.New(env.DB, &recorder{})
+
+	for _, id := range []int64{draftID, sendingID} {
+		_, err := m.Unschedule(context.Background(), acme, id)
+		assert.ErrorIs(t, err, broadcasts.ErrNotScheduled, "broadcast %d", id)
+	}
+	_, err := m.Unschedule(context.Background(), acme, 999999)
+	assert.ErrorIs(t, err, broadcasts.ErrNotFound)
+	_, err = m.Unschedule(context.Background(), acme+1000, schedID)
+	assert.ErrorIs(t, err, broadcasts.ErrNotFound, "another workspace's broadcast")
+}
+
 func TestUnknownOrForeignBroadcastIsNotFound(t *testing.T) {
 	env := testhelper.Setup(t)
 	m := broadcasts.New(env.DB, &recorder{})

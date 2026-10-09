@@ -124,18 +124,21 @@ func (*ApiTokenListResponse) authTokensListRes() {}
 type ApiTokenScope string
 
 const (
-	ApiTokenScopeContactsRead    ApiTokenScope = "contacts:read"
-	ApiTokenScopeContactsWrite   ApiTokenScope = "contacts:write"
-	ApiTokenScopeSegmentsRead    ApiTokenScope = "segments:read"
-	ApiTokenScopeSegmentsWrite   ApiTokenScope = "segments:write"
-	ApiTokenScopeBroadcastsRead  ApiTokenScope = "broadcasts:read"
-	ApiTokenScopeBroadcastsWrite ApiTokenScope = "broadcasts:write"
-	ApiTokenScopeTemplatesRead   ApiTokenScope = "templates:read"
-	ApiTokenScopeTemplatesWrite  ApiTokenScope = "templates:write"
-	ApiTokenScopeWebhooksRead    ApiTokenScope = "webhooks:read"
-	ApiTokenScopeWebhooksWrite   ApiTokenScope = "webhooks:write"
-	ApiTokenScopeEmailsSend      ApiTokenScope = "emails:send"
-	ApiTokenScopeTokensManage    ApiTokenScope = "tokens:manage"
+	ApiTokenScopeContactsRead        ApiTokenScope = "contacts:read"
+	ApiTokenScopeContactsWrite       ApiTokenScope = "contacts:write"
+	ApiTokenScopeSegmentsRead        ApiTokenScope = "segments:read"
+	ApiTokenScopeSegmentsWrite       ApiTokenScope = "segments:write"
+	ApiTokenScopeBroadcastsRead      ApiTokenScope = "broadcasts:read"
+	ApiTokenScopeBroadcastsWrite     ApiTokenScope = "broadcasts:write"
+	ApiTokenScopeTemplatesRead       ApiTokenScope = "templates:read"
+	ApiTokenScopeTemplatesWrite      ApiTokenScope = "templates:write"
+	ApiTokenScopeWebhooksRead        ApiTokenScope = "webhooks:read"
+	ApiTokenScopeWebhooksWrite       ApiTokenScope = "webhooks:write"
+	ApiTokenScopeEmailsSend          ApiTokenScope = "emails:send"
+	ApiTokenScopeBroadcastsSend      ApiTokenScope = "broadcasts:send"
+	ApiTokenScopeAutomationsActivate ApiTokenScope = "automations:activate"
+	ApiTokenScopeMcpSend             ApiTokenScope = "mcp:send"
+	ApiTokenScopeTokensManage        ApiTokenScope = "tokens:manage"
 )
 
 // AllValues returns all ApiTokenScope values.
@@ -152,6 +155,9 @@ func (ApiTokenScope) AllValues() []ApiTokenScope {
 		ApiTokenScopeWebhooksRead,
 		ApiTokenScopeWebhooksWrite,
 		ApiTokenScopeEmailsSend,
+		ApiTokenScopeBroadcastsSend,
+		ApiTokenScopeAutomationsActivate,
+		ApiTokenScopeMcpSend,
 		ApiTokenScopeTokensManage,
 	}
 }
@@ -180,6 +186,12 @@ func (s ApiTokenScope) MarshalText() ([]byte, error) {
 	case ApiTokenScopeWebhooksWrite:
 		return []byte(s), nil
 	case ApiTokenScopeEmailsSend:
+		return []byte(s), nil
+	case ApiTokenScopeBroadcastsSend:
+		return []byte(s), nil
+	case ApiTokenScopeAutomationsActivate:
+		return []byte(s), nil
+	case ApiTokenScopeMcpSend:
 		return []byte(s), nil
 	case ApiTokenScopeTokensManage:
 		return []byte(s), nil
@@ -223,6 +235,15 @@ func (s *ApiTokenScope) UnmarshalText(data []byte) error {
 		return nil
 	case ApiTokenScopeEmailsSend:
 		*s = ApiTokenScopeEmailsSend
+		return nil
+	case ApiTokenScopeBroadcastsSend:
+		*s = ApiTokenScopeBroadcastsSend
+		return nil
+	case ApiTokenScopeAutomationsActivate:
+		*s = ApiTokenScopeAutomationsActivate
+		return nil
+	case ApiTokenScopeMcpSend:
+		*s = ApiTokenScopeMcpSend
 		return nil
 	case ApiTokenScopeTokensManage:
 		*s = ApiTokenScopeTokensManage
@@ -626,7 +647,9 @@ func (s *BroadcastResource) SetUpdatedAt(val Timestamp) {
 
 func (*BroadcastResource) broadcastsCreateRes()      {}
 func (*BroadcastResource) broadcastsGetRes()         {}
+func (*BroadcastResource) broadcastsScheduleRes()    {}
 func (*BroadcastResource) broadcastsSetAudienceRes() {}
+func (*BroadcastResource) broadcastsUnscheduleRes()  {}
 func (*BroadcastResource) broadcastsUpdateRes()      {}
 
 // Broadcast lifecycle status.
@@ -824,6 +847,22 @@ type BroadcastsReportUnauthorized ProblemDetails
 
 func (*BroadcastsReportUnauthorized) broadcastsReportRes() {}
 
+type BroadcastsScheduleBadRequest ProblemDetails
+
+func (*BroadcastsScheduleBadRequest) broadcastsScheduleRes() {}
+
+type BroadcastsScheduleNotFound ProblemDetails
+
+func (*BroadcastsScheduleNotFound) broadcastsScheduleRes() {}
+
+type BroadcastsScheduleUnauthorized ProblemDetails
+
+func (*BroadcastsScheduleUnauthorized) broadcastsScheduleRes() {}
+
+type BroadcastsScheduleUnprocessableEntity ProblemDetails
+
+func (*BroadcastsScheduleUnprocessableEntity) broadcastsScheduleRes() {}
+
 type BroadcastsSetAudienceBadRequest ProblemDetails
 
 func (*BroadcastsSetAudienceBadRequest) broadcastsSetAudienceRes() {}
@@ -860,6 +899,22 @@ func (*BroadcastsTestSendUnauthorized) broadcastsTestSendRes() {}
 type BroadcastsTestSendUnprocessableEntity ProblemDetails
 
 func (*BroadcastsTestSendUnprocessableEntity) broadcastsTestSendRes() {}
+
+type BroadcastsUnscheduleBadRequest ProblemDetails
+
+func (*BroadcastsUnscheduleBadRequest) broadcastsUnscheduleRes() {}
+
+type BroadcastsUnscheduleNotFound ProblemDetails
+
+func (*BroadcastsUnscheduleNotFound) broadcastsUnscheduleRes() {}
+
+type BroadcastsUnscheduleUnauthorized ProblemDetails
+
+func (*BroadcastsUnscheduleUnauthorized) broadcastsUnscheduleRes() {}
+
+type BroadcastsUnscheduleUnprocessableEntity ProblemDetails
+
+func (*BroadcastsUnscheduleUnprocessableEntity) broadcastsUnscheduleRes() {}
 
 type BroadcastsUpdateBadRequest ProblemDetails
 
@@ -3623,6 +3678,23 @@ func (s *RecordEventsInput) GetEvents() []EventInput {
 // SetEvents sets the value of Events.
 func (s *RecordEventsInput) SetEvents(val []EventInput) {
 	s.Events = val
+}
+
+// Request body for scheduling a broadcast.
+// Ref: #/components/schemas/ScheduleBroadcastInput
+type ScheduleBroadcastInput struct {
+	// When the broadcast should be sent.
+	ScheduledAt Timestamp `json:"scheduledAt"`
+}
+
+// GetScheduledAt returns the value of ScheduledAt.
+func (s *ScheduleBroadcastInput) GetScheduledAt() Timestamp {
+	return s.ScheduledAt
+}
+
+// SetScheduledAt sets the value of ScheduledAt.
+func (s *ScheduleBroadcastInput) SetScheduledAt(val Timestamp) {
+	s.ScheduledAt = val
 }
 
 // Merged schema.

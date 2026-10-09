@@ -53,14 +53,67 @@ func New(spec []byte, api http.Handler, auth Authenticator, opts ...Option) (htt
 		return nil, fmt.Errorf("project MCP tools: %w", err)
 	}
 	srv := mcp.NewServer(&mcp.Implementation{Name: "1mail", Version: "1"}, &mcp.ServerOptions{Instructions: instructions})
+	sendTools := map[string]bool{}
 	for _, op := range ops {
 		srv.AddTool(op.tool, op.handler(api))
+		if op.send {
+			sendTools[op.tool.Name] = true
+		}
 	}
+	srv.AddReceivingMiddleware(sendLock(sendTools, auth))
 	streamable := mcp.NewStreamableHTTPHandler(
 		func(*http.Request) *mcp.Server { return srv },
 		&mcp.StreamableHTTPOptions{Stateless: true, JSONResponse: true},
 	)
 	return requireToken(auth, cfg.resourceMetadataURL, streamable), nil
+}
+
+// scopeMCPSend is the second key of the send lock (ADR 0016): send-class tools
+// also need their own /api scope, which the dispatched /api call still enforces.
+const scopeMCPSend = "mcp:send"
+
+// sendLock hides send-class tools from tools/list and refuses a direct call to
+// them unless the connecting token carries mcp:send.
+func sendLock(sendTools map[string]bool, auth Authenticator) mcp.Middleware {
+	return func(next mcp.MethodHandler) mcp.MethodHandler {
+		return func(ctx context.Context, method string, req mcp.Request) (mcp.Result, error) {
+			switch method {
+			case "tools/list":
+				res, err := next(ctx, method, req)
+				list, ok := res.(*mcp.ListToolsResult)
+				if err != nil || !ok || canSend(ctx, auth, req.GetExtra()) {
+					return res, err
+				}
+				kept := *list
+				kept.Tools = make([]*mcp.Tool, 0, len(list.Tools))
+				for _, tool := range list.Tools {
+					if !sendTools[tool.Name] {
+						kept.Tools = append(kept.Tools, tool)
+					}
+				}
+				return &kept, nil
+			case "tools/call":
+				if params, ok := req.GetParams().(*mcp.CallToolParamsRaw); ok && sendTools[params.Name] &&
+					!canSend(ctx, auth, req.GetExtra()) {
+					return toolError("refused: " + params.Name + " is a send-class tool and needs the " + scopeMCPSend + " scope on the API token"), nil
+				}
+			}
+			return next(ctx, method, req)
+		}
+	}
+}
+
+// canSend reports whether the connecting token carries mcp:send.
+func canSend(ctx context.Context, auth Authenticator, extra *mcp.RequestExtra) bool {
+	if extra == nil || extra.Header == nil {
+		return false
+	}
+	token, ok := strings.CutPrefix(extra.Header.Get("Authorization"), "Bearer ")
+	if !ok {
+		return false
+	}
+	ctx, err := auth.HandleBearerAuth(ctx, "", externalapi.BearerAuth{Token: token})
+	return err == nil && apiauth.HasScope(apiauth.GetTokenAuth(ctx), scopeMCPSend)
 }
 
 // Option configures [New].

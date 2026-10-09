@@ -412,6 +412,21 @@ func TestPlanBroadcastEmptyAudienceFinalizes(t *testing.T) {
 	require.NotNil(t, got.SentAt)
 }
 
+// A delayed job outlives an unschedule: a broadcast back in draft is not due, a
+// scheduled one is.
+func TestBroadcastDueIsFalseOnlyForADraft(t *testing.T) {
+	env := testhelper.Setup(t)
+	ctx := context.Background()
+
+	due, err := jobs.BroadcastDue(ctx, env.DB, draftBroadcastID)
+	require.NoError(t, err)
+	assert.False(t, due, "draft: unscheduled after the job was queued")
+
+	due, err = jobs.BroadcastDue(ctx, env.DB, scheduledBroadcastID)
+	require.NoError(t, err)
+	assert.True(t, due)
+}
+
 // Finalizing an already-sent broadcast is a no-op: the status=sending guard
 // keeps sent_at stable across concurrent/repeated finalizers.
 func TestFinalizeBroadcastIsIdempotent(t *testing.T) {

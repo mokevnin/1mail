@@ -36,6 +36,9 @@ const SCOPE_OPTIONS = [
   'broadcasts:read',
   'broadcasts:write',
   'emails:send',
+  'broadcasts:send',
+  'automations:activate',
+  'mcp:send',
   'tokens:manage',
 ]
 

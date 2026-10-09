@@ -22,11 +22,16 @@ var grantableScopes = []string{
 
 // sendScopes are the send-class scopes (ADR 0016, "Send is a second lock"). The
 // agent authors by default: these are granted only when the user explicitly opts
-// in on the consent screen. The MCP-specific send scope arrives with the send
-// gating work and is appended here.
+// in on the consent screen. mcp:send is the MCP-specific key: send-class tools are
+// not even listed over /mcp without it, so any send-class grant brings it along.
 var sendScopes = []string{
 	"emails:send",
+	"broadcasts:send",
+	"automations:activate",
+	scopeMCPSend,
 }
+
+const scopeMCPSend = "mcp:send"
 
 // SupportedScopes lists every scope the authorization server can issue.
 func SupportedScopes() []string {
@@ -48,6 +53,9 @@ func requestedScopes(scope string) (granted, send []string) {
 		case slices.Contains(sendScopes, s) && !slices.Contains(send, s):
 			send = append(send, s)
 		}
+	}
+	if len(send) > 0 && !slices.Contains(send, scopeMCPSend) {
+		send = append(send, scopeMCPSend)
 	}
 	return granted, send
 }

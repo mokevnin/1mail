@@ -5,10 +5,12 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"slices"
 	"strings"
 	"testing"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
+	"github.com/mokevnin/1mail/ent/broadcast"
 	"github.com/mokevnin/1mail/internal/service"
 	"github.com/mokevnin/1mail/internal/testhelper"
 	"github.com/stretchr/testify/assert"
@@ -71,36 +73,96 @@ func TestMCPRequiresBearerToken(t *testing.T) {
 	}
 }
 
-func TestMCPToolsAreTheContractMinusHiddenOperations(t *testing.T) {
-	env := testhelper.Setup(t)
-	s := env.MCPClient(t, seedToken(t, env, 1, []string{"contacts:read"}))
-
-	list, err := s.ListTools(context.Background(), nil)
-	require.NoError(t, err)
-
-	got := map[string]*mcp.Tool{}
-	for _, tool := range list.Tools {
-		got[tool.Name] = tool
-	}
-	names := make([]string, 0, len(got))
-	for n := range got {
-		names = append(names, n)
-	}
-	// Independent literal: the /api operations that are not x-mcp hidden, by 1mail name.
-	// Token management is hidden; Broadcast schedule/send are not exposed yet.
-	assert.ElementsMatch(t, []string{
+// Independent literal: the /api operations that are not x-mcp hidden, by 1mail name.
+// Token management is hidden. The send-class tools (ADR 0016, "Send is a second
+// lock") are listed only for a token that also carries mcp:send.
+var (
+	authoringTools = []string{
 		"segments_list", "segments_create", "segments_get", "segments_update", "segments_delete", "segments_preview",
 		"contacts_upsert_batch", "events_record_batch",
 		"contacts_list", "contacts_create", "contacts_get", "contacts_update", "contacts_delete",
 		"broadcasts_list", "broadcasts_create", "broadcasts_get", "broadcasts_update", "broadcasts_delete",
 		"broadcasts_set_audience", "broadcasts_test_send", "broadcasts_report",
-		"emails_send", "events_record", "events_actions_list", "whoami",
+		"events_record", "events_actions_list", "whoami",
 		"custom_fields_list", "sending_domains_list", "sending_domains_rates",
 		"suppressions_create", "unsubscribes_create",
 		"templates_list", "templates_create", "templates_get", "templates_update", "templates_delete",
 		"webhooks_list", "webhooks_create", "webhooks_get", "webhooks_update", "webhooks_delete",
 		"tags_list", "tags_list_for_contact", "tags_apply", "tags_remove",
-	}, names)
+	}
+	sendTools = []string{"emails_send", "broadcasts_schedule", "broadcasts_unschedule"}
+)
+
+func listedTools(t *testing.T, s *mcp.ClientSession) map[string]*mcp.Tool {
+	t.Helper()
+	list, err := s.ListTools(context.Background(), nil)
+	require.NoError(t, err)
+	got := map[string]*mcp.Tool{}
+	for _, tool := range list.Tools {
+		got[tool.Name] = tool
+	}
+	return got
+}
+
+func toolNames(got map[string]*mcp.Tool) []string {
+	names := make([]string, 0, len(got))
+	for n := range got {
+		names = append(names, n)
+	}
+	return names
+}
+
+func TestMCPSendToolsAreListedOnlyWithMCPSend(t *testing.T) {
+	env := testhelper.Setup(t)
+
+	// The send scopes alone do not list them: mcp:send is the second lock.
+	apiOnly := listedTools(t, env.MCPClient(t, seedToken(t, env, 1, []string{"emails:send", "broadcasts:send"})))
+	assert.ElementsMatch(t, authoringTools, toolNames(apiOnly))
+
+	// mcp:send alone lists them too (the /api scope still gates the call).
+	withSend := listedTools(t, env.MCPClient(t, seedToken(t, env, 1, []string{"mcp:send"})))
+	assert.ElementsMatch(t, append(slices.Clone(authoringTools), sendTools...), toolNames(withSend))
+}
+
+func TestMCPSendToolCallIsRefusedWithoutMCPSend(t *testing.T) {
+	env := testhelper.Setup(t)
+	args := map[string]any{"id": "100", "scheduledAt": "2099-01-01T00:00:00Z"}
+
+	// Direct call, though the token has the /api scope: refused by the MCP lock.
+	s := env.MCPClient(t, seedToken(t, env, 1, []string{"broadcasts:send"}))
+	res := call(t, s, "broadcasts_schedule", args)
+	require.True(t, res.IsError)
+	assert.Contains(t, text(t, res), "mcp:send")
+	b, err := env.DB.Broadcast.Get(context.Background(), 100)
+	require.NoError(t, err)
+	assert.Equal(t, broadcast.StatusDraft, b.Status, "the refused call changed nothing")
+
+	// mcp:send without the /api scope: passes the MCP lock, refused by /api.
+	s = env.MCPClient(t, seedToken(t, env, 1, []string{"mcp:send"}))
+	res = call(t, s, "broadcasts_schedule", args)
+	require.True(t, res.IsError)
+	assert.Contains(t, text(t, res), "401")
+
+	// Both: the broadcast is scheduled.
+	s = env.MCPClient(t, seedToken(t, env, 1, []string{"mcp:send", "broadcasts:send"}))
+	res = call(t, s, "broadcasts_schedule", args)
+	require.False(t, res.IsError, text(t, res))
+	b, err = env.DB.Broadcast.Get(context.Background(), 100)
+	require.NoError(t, err)
+	assert.Equal(t, broadcast.StatusScheduled, b.Status)
+
+	res = call(t, s, "broadcasts_unschedule", map[string]any{"id": "100"})
+	require.False(t, res.IsError, text(t, res))
+	b, err = env.DB.Broadcast.Get(context.Background(), 100)
+	require.NoError(t, err)
+	assert.Equal(t, broadcast.StatusDraft, b.Status)
+}
+
+func TestMCPToolsAreTheContractMinusHiddenOperations(t *testing.T) {
+	env := testhelper.Setup(t)
+	s := env.MCPClient(t, seedToken(t, env, 1, []string{"contacts:read"}))
+	got := listedTools(t, s)
+	assert.ElementsMatch(t, authoringTools, toolNames(got))
 
 	// Hints derive from the HTTP method.
 	ro := got["contacts_list"].Annotations

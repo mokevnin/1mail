@@ -29,3 +29,10 @@ namespace OneMail;
   "x-mcp",
   #{ name: "sending_domains_rates" }
 );
+
+// Send is a second lock (ADR 0016): send-class tools are listed over MCP, and
+// callable, only for tokens that also carry the `mcp:send` scope. Automation
+// activation joins them with the automations resource.
+@@extension(Emails.send, "x-mcp", #{ send: true });
+@@extension(Broadcasts.schedule, "x-mcp", #{ send: true });
+@@extension(Broadcasts.unschedule, "x-mcp", #{ send: true });

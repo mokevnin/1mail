@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"net/http"
+	"time"
 
 	"github.com/samber/lo"
 
@@ -24,6 +25,7 @@ import (
 const (
 	scopeBroadcastsRead  = "broadcasts:read"
 	scopeBroadcastsWrite = "broadcasts:write"
+	scopeBroadcastsSend  = "broadcasts:send"
 )
 
 const detailNotDraft = "only draft broadcasts can be changed"
@@ -175,6 +177,59 @@ func (h *Handlers) BroadcastsSetAudience(ctx context.Context, req *externalapi.S
 		return &res, nil
 	case errors.Is(err, broadcasts.ErrNotDraft):
 		res := externalapi.BroadcastsSetAudienceUnprocessableEntity(problem(http.StatusUnprocessableEntity, detailNotDraft))
+		return &res, nil
+	case err != nil:
+		return nil, err
+	}
+	res := mapper.BroadcastToResource(b)
+	return &res, nil
+}
+
+// BroadcastsSchedule and BroadcastsUnschedule are send-class (ADR 0016, "Send is a
+// second lock"): they need broadcasts:send, which authoring scopes never imply. Over
+// MCP they additionally need mcp:send (the x-mcp send flag).
+func (h *Handlers) BroadcastsSchedule(ctx context.Context, req *externalapi.ScheduleBroadcastInput, params externalapi.BroadcastsScheduleParams) (externalapi.BroadcastsScheduleRes, error) {
+	if !auth.HasScope(auth.GetTokenAuth(ctx), scopeBroadcastsSend) {
+		res := externalapi.BroadcastsScheduleUnauthorized(problem(http.StatusUnauthorized, "insufficient scope"))
+		return &res, nil
+	}
+	id, err := parseEntityID(params.ID)
+	if err != nil {
+		res := externalapi.BroadcastsScheduleBadRequest(problem(http.StatusBadRequest, "invalid id"))
+		return &res, nil
+	}
+	b, err := h.broadcasts.Schedule(ctx, auth.WorkspaceID(auth.GetTokenAuth(ctx)), id, time.Time(req.ScheduledAt))
+	switch {
+	case errors.Is(err, broadcasts.ErrNotFound):
+		res := externalapi.BroadcastsScheduleNotFound(problem(http.StatusNotFound, "broadcast not found"))
+		return &res, nil
+	case errors.Is(err, broadcasts.ErrNotSendable):
+		res := externalapi.BroadcastsScheduleUnprocessableEntity(problem(http.StatusUnprocessableEntity, "only draft or scheduled broadcasts can be scheduled"))
+		return &res, nil
+	case err != nil:
+		return nil, err
+	}
+	res := mapper.BroadcastToResource(b)
+	return &res, nil
+}
+
+func (h *Handlers) BroadcastsUnschedule(ctx context.Context, params externalapi.BroadcastsUnscheduleParams) (externalapi.BroadcastsUnscheduleRes, error) {
+	if !auth.HasScope(auth.GetTokenAuth(ctx), scopeBroadcastsSend) {
+		res := externalapi.BroadcastsUnscheduleUnauthorized(problem(http.StatusUnauthorized, "insufficient scope"))
+		return &res, nil
+	}
+	id, err := parseEntityID(params.ID)
+	if err != nil {
+		res := externalapi.BroadcastsUnscheduleBadRequest(problem(http.StatusBadRequest, "invalid id"))
+		return &res, nil
+	}
+	b, err := h.broadcasts.Unschedule(ctx, auth.WorkspaceID(auth.GetTokenAuth(ctx)), id)
+	switch {
+	case errors.Is(err, broadcasts.ErrNotFound):
+		res := externalapi.BroadcastsUnscheduleNotFound(problem(http.StatusNotFound, "broadcast not found"))
+		return &res, nil
+	case errors.Is(err, broadcasts.ErrNotScheduled):
+		res := externalapi.BroadcastsUnscheduleUnprocessableEntity(problem(http.StatusUnprocessableEntity, "only scheduled broadcasts can be unscheduled"))
 		return &res, nil
 	case err != nil:
 		return nil, err
