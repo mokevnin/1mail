@@ -1,0 +1,62 @@
+id: no-path-literal-navigation
+snapshots:
+  <Link to="/login">x</Link>:
+    labels:
+      - source: to="/login"
+        style: primary
+        start: 6
+        end: 17
+      - source: '"/login"'
+        style: secondary
+        start: 9
+        end: 17
+      - source: to
+        style: secondary
+        start: 6
+        end: 8
+  <Link to={'/login'}>x</Link>:
+    labels:
+      - source: to={'/login'}
+        style: primary
+        start: 6
+        end: 19
+      - source: "'/login'"
+        style: secondary
+        start: 10
+        end: 18
+      - source: "{'/login'}"
+        style: secondary
+        start: 9
+        end: 19
+      - source: to
+        style: secondary
+        start: 6
+        end: 8
+  "navigate({ to: '/login' })":
+    labels:
+      - source: "to: '/login'"
+        style: primary
+        start: 11
+        end: 23
+      - source: "'/login'"
+        style: secondary
+        start: 15
+        end: 23
+      - source: to
+        style: secondary
+        start: 11
+        end: 13
+  'redirect({ to: `/w/${slug}` })':
+    labels:
+      - source: 'to: `/w/${slug}`'
+        style: primary
+        start: 11
+        end: 27
+      - source: '`/w/${slug}`'
+        style: secondary
+        start: 15
+        end: 27
+      - source: to
+        style: secondary
+        start: 11
+        end: 13

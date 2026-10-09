@@ -1,0 +1,13 @@
+id: no-hardcoded-color
+language: Tsx
+severity: error
+message: Use a Mantine theme color (`c="blue.6"`, theme tokens), not a hardcoded color literal.
+note: Colors come from the Mantine color system so light and dark schemes keep working.
+rule:
+  kind: string_fragment
+  regex: ^\s*(#[0-9a-fA-F]{3,8}|(rgb|rgba|hsl|hsla)\()
+files:
+  - src/**/*.ts
+  - src/**/*.tsx
+ignores:
+  - src/generated/**

@@ -106,6 +106,9 @@ export default interface Resources {
         "sent": "Sent"
       }
     },
+    "app": {
+      "name": "1mail"
+    },
     "automations": {
       "activate": "Activate",
       "addAutomation": "New automation",

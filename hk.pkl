@@ -2,7 +2,7 @@ amends "package://github.com/jdx/hk/releases/download/v2.5.0/hk@2.5.0#/Config.pk
 import "package://github.com/jdx/hk/releases/download/v2.5.0/hk@2.5.0#/Builtins.pkl"
 
 // Local git hooks. Slow whole-project checks (tsc, i18n drift, go test) stay in
-// `make check` / CI; hooks only run what is fast on staged files.
+// `mise run check` / CI; hooks only run what is fast on staged files.
 local linters = new Mapping {
     // Staged content only (the builtin scans the whole directory, ignored files included).
     ["gitleaks"] {
@@ -31,6 +31,12 @@ local linters = new Mapping {
         glob = List(".github/workflows/*.yml", ".github/workflows/*.yaml", ".github/dependabot.yml")
         check = "zizmor --no-progress {{files}}"
     }
+    ["typos"] = Builtins.typos
+    // Project-specific syntax rules (sgconfig.yml, ast-grep/rules).
+    ["ast_grep"] {
+        glob = List("src/**/*.ts", "src/**/*.tsx")
+        check = "ast-grep scan {{files}}"
+    }
     // Maintained actionlint fork (replaces the rhysd/actionlint builtin).
     ["jactionlint"] {
         glob = List(".github/workflows/*.yml", ".github/workflows/*.yaml")
@@ -39,3 +45,14 @@ local linters = new Mapping {
 }
 
 steps = linters
+
+hooks {
+    // Conventional Commits drive release-please; CI re-checks the pushed range.
+    ["commit-msg"] {
+        steps {
+            ["commitlint"] {
+                check = "pnpm exec commitlint --edit {{commit_msg_file}}"
+            }
+        }
+    }
+}

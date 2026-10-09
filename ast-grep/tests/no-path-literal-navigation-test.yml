@@ -1,0 +1,17 @@
+id: no-path-literal-navigation
+valid:
+  - |-
+    navigate({ to: contactsRoute.to, params: { slug } })
+  - |-
+    <Link to={contactsRoute.to}>x</Link>
+  - |-
+    const route = { path: '/contacts' }
+invalid:
+  - |-
+    navigate({ to: '/login' })
+  - |-
+    redirect({ to: `/w/${slug}` })
+  - |-
+    <Link to="/login">x</Link>
+  - |-
+    <Link to={'/login'}>x</Link>

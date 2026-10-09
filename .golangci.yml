@@ -18,3 +18,5 @@ linters:
           deny:
             - pkg: github.com/samber/mo
               desc: monads fight Go idioms; use stdlib or samber/lo
+            - pkg: html/template
+              desc: no HTML in Go; pages are rendered by the SPA

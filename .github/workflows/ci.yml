@@ -51,6 +51,57 @@ jobs:
       - name: Check generated code is up to date
         run: mise run generate:check
 
+  commits:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          # commitlint reads the commits in the pushed range.
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Setup mise
+        uses: jdx/mise-action@c37c93293d6b742fc901e1406b8f764f6fb19dac # v2.4.4
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # Conventional Commits drive release-please; lint only the commits being added.
+      - name: Lint commit messages
+        env:
+          FROM: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+          TO: ${{ github.sha }}
+        run: |
+          if [ -z "$FROM" ] || [ "$FROM" = "0000000000000000000000000000000000000000" ]; then
+            echo "no base commit to compare against; skipping"
+          else
+            pnpm lint:commits --from "$FROM" --to "$TO"
+          fi
+
+  tracker-size:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          persist-credentials: false
+
+      - name: Setup mise
+        uses: jdx/mise-action@c37c93293d6b742fc901e1406b8f764f6fb19dac # v2.4.4
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # The tracker is shipped to customer sites; keep it within the size budget.
+      - name: Build tracker
+        run: pnpm build:tracker
+
+      - name: Check size budget
+        run: pnpm exec size-limit
+
   test:
     runs-on: ubuntu-latest
 

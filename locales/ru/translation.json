@@ -104,6 +104,9 @@
       "sent": "Отправлено"
     }
   },
+  "app": {
+    "name": "1mail"
+  },
   "automations": {
     "activate": "Активировать",
     "addAutomation": "Новая автоматизация",

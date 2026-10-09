@@ -1,0 +1,26 @@
+id: no-hardcoded-color
+snapshots:
+  <Box bg="rgb(0, 0, 0)" />:
+    labels:
+      - source: rgb(0, 0, 0)
+        style: primary
+        start: 9
+        end: 21
+  const c = '#1a2B3c':
+    labels:
+      - source: '#1a2B3c'
+        style: primary
+        start: 11
+        end: 18
+  const c = '#fff':
+    labels:
+      - source: '#fff'
+        style: primary
+        start: 11
+        end: 15
+  const c = 'hsla(0, 0%, 0%, 0.5)':
+    labels:
+      - source: hsla(0, 0%, 0%, 0.5)
+        style: primary
+        start: 11
+        end: 31

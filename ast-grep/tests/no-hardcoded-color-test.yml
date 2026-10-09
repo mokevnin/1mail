@@ -1,0 +1,17 @@
+id: no-hardcoded-color
+valid:
+  - |-
+    const c = 'blue.6'
+  - |-
+    <Text c="dimmed">x</Text>
+  - |-
+    const id = '#anchor-link-not-a-color-but-long'
+invalid:
+  - |-
+    const c = '#fff'
+  - |-
+    const c = '#1a2B3c'
+  - |-
+    <Box bg="rgb(0, 0, 0)" />
+  - |-
+    const c = 'hsla(0, 0%, 0%, 0.5)'

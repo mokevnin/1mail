@@ -1,0 +1,37 @@
+id: no-path-literal-navigation
+language: Tsx
+severity: error
+message: Navigate with a route reference (`xRoute.to`), not a path string literal.
+note: Hardcoded paths drift from the router; `to` must come from the route object.
+rule:
+  any:
+    - kind: pair
+      has:
+        field: key
+        regex: ^to$
+      all:
+        - has:
+            field: value
+            any:
+              - kind: string
+              - kind: template_string
+    - kind: jsx_attribute
+      has:
+        kind: property_identifier
+        regex: ^to$
+      all:
+        - has:
+            any:
+              - kind: string
+              - kind: jsx_expression
+                has:
+                  any:
+                    - kind: string
+                    - kind: template_string
+files:
+  - src/**/*.ts
+  - src/**/*.tsx
+ignores:
+  - src/generated/**
+  - '**/*.test.ts'
+  - '**/*.test.tsx'

@@ -104,6 +104,9 @@
       "sent": "Enviados"
     }
   },
+  "app": {
+    "name": "1mail"
+  },
   "automations": {
     "activate": "Activar",
     "addAutomation": "Nueva automatización",

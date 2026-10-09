@@ -2,6 +2,7 @@ import { AppShell, Burger, Group, Title } from '@mantine/core'
 import { useDisclosure } from '@mantine/hooks'
 import { Outlet, useLocation } from '@tanstack/react-router'
 import { type ReactNode, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import { ThemeToggle } from '../components/ThemeToggle.tsx'
 
@@ -17,6 +18,7 @@ export function DashboardShell({
   sidebar: ReactNode
   headerRight?: ReactNode
 }) {
+  const { t } = useTranslation()
   const [opened, { toggle, close }] = useDisclosure(false)
   const location = useLocation()
 
@@ -38,7 +40,7 @@ export function DashboardShell({
         <Group h="100%" px="md" justify="space-between" wrap="nowrap">
           <Group gap="sm" wrap="nowrap">
             <Burger opened={opened} onClick={toggle} hiddenFrom="sm" size="sm" />
-            <Title order={3}>1mail</Title>
+            <Title order={3}>{t(($) => $.app.name)}</Title>
           </Group>
           <Group gap="sm" wrap="nowrap">
             {headerRight}

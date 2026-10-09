@@ -1,0 +1,32 @@
+[files]
+# Generated code, lockfiles and translated catalogs (ru/es are not English).
+extend-exclude = [
+  "gen",
+  "ent/*.go",
+  "ent/*/",
+  "openapi",
+  "**/generated",
+  "**/*_gen.go",
+  "go.mod",
+  "go.sum",
+  "pnpm-lock.yaml",
+  "mise.lock",
+  "internal/i18n/locales",
+  "locales",
+  "internal/server/assets",
+]
+
+[default]
+# Long opaque blobs (DKIM keys, hashes) are not prose.
+extend-ignore-re = ["[A-Za-z0-9+/=_-]{40,}"]
+
+[default.extend-words]
+# Intentional fragments: hyphenated "mis-quoted", a header folded mid-word in a test
+# comment, the CSS "styl" extension regex, OTP plural, and the "optin" brand spelling.
+mis = "mis"
+Unsubscrib = "Unsubscrib"
+unsubscrib = "unsubscrib"
+styl = "styl"
+OT = "OT"
+optin = "optin"
+Optin = "Optin"
