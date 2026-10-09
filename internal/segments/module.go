@@ -6,8 +6,6 @@ import (
 	"fmt"
 
 	"github.com/mokevnin/1mail/ent"
-	"github.com/mokevnin/1mail/ent/contact"
-	"github.com/mokevnin/1mail/ent/segment"
 )
 
 // Domain errors returned by Module. Callers match with errors.Is.
@@ -23,12 +21,11 @@ var (
 // (ADR 0016). Create and update share one validation rule set; handlers stay thin
 // adapters (scope check, call, map). Membership is the rule alone — Send-eligibility
 // is subtracted only at send, never folded into a count (ADR 0001).
-type Module struct {
-	db *ent.Client
-}
+type Module struct{}
 
-// New builds the Segments module over an ent client.
-func New(db *ent.Client) *Module { return &Module{db: db} }
+// New builds the Segments module. It holds no client: every call takes the
+// Workspace's scoped client (ADR 0017).
+func New() *Module { return &Module{} }
 
 // CreateInput is a new Segment. A nil or empty Definition means "no rules yet".
 type CreateInput struct {
@@ -55,28 +52,26 @@ func (s *Module) Validate(def string) error {
 }
 
 // Create validates the definition and stores the Segment.
-func (s *Module) Create(ctx context.Context, workspaceID int64, in CreateInput) (*ent.Segment, error) {
+func (s *Module) Create(ctx context.Context, ws *ent.Scoped, in CreateInput) (*ent.Segment, error) {
 	if in.Definition != nil {
 		if err := s.Validate(*in.Definition); err != nil {
 			return nil, err
 		}
 	}
-	return s.db.Segment.Create().
-		SetWorkspaceID(workspaceID).
+	return ws.Segment().Create().
 		SetName(in.Name).
 		SetNillableDefinition(in.Definition).
 		Save(ctx)
 }
 
 // Update validates a changed definition exactly as Create does, then applies the change.
-func (s *Module) Update(ctx context.Context, workspaceID, id int64, in UpdateInput) (*ent.Segment, error) {
+func (s *Module) Update(ctx context.Context, ws *ent.Scoped, id int64, in UpdateInput) (*ent.Segment, error) {
 	if in.Definition != nil {
 		if err := s.Validate(*in.Definition); err != nil {
 			return nil, err
 		}
 	}
-	q := s.db.Segment.UpdateOneID(id).
-		Where(segment.WorkspaceID(workspaceID)).
+	q := ws.Segment().UpdateOneID(id).
 		SetNillableName(in.Name).
 		SetNillableDefinition(in.Definition)
 	seg, err := q.Save(ctx)
@@ -87,7 +82,7 @@ func (s *Module) Update(ctx context.Context, workspaceID, id int64, in UpdateInp
 }
 
 // Preview counts the Contacts in the Workspace that match an unsaved definition.
-func (s *Module) Preview(ctx context.Context, workspaceID int64, def string) (int, error) {
+func (s *Module) Preview(ctx context.Context, ws *ent.Scoped, def string) (int, error) {
 	if err := s.Validate(def); err != nil {
 		return 0, err
 	}
@@ -95,14 +90,12 @@ func (s *Module) Preview(ctx context.Context, workspaceID int64, def string) (in
 	if err != nil {
 		return 0, fmt.Errorf("%w: %s", ErrInvalidDefinition, err.Error())
 	}
-	return s.db.Contact.Query().Where(contact.WorkspaceID(workspaceID), pred).Count(ctx)
+	return ws.Contact().Query().Where(pred).Count(ctx)
 }
 
 // Count counts the Contacts matching a stored Segment, evaluated live.
-func (s *Module) Count(ctx context.Context, workspaceID, id int64) (int, error) {
-	seg, err := s.db.Segment.Query().
-		Where(segment.ID(id), segment.WorkspaceID(workspaceID)).
-		Only(ctx)
+func (s *Module) Count(ctx context.Context, ws *ent.Scoped, id int64) (int, error) {
+	seg, err := ws.Segment().Get(ctx, id)
 	if ent.IsNotFound(err) {
 		return 0, ErrNotFound
 	}
@@ -113,5 +106,5 @@ func (s *Module) Count(ctx context.Context, workspaceID, id int64) (int, error) 
 	if seg.Definition != nil {
 		def = *seg.Definition
 	}
-	return s.Preview(ctx, workspaceID, def)
+	return s.Preview(ctx, ws, def)
 }

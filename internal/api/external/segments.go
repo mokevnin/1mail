@@ -20,10 +20,10 @@ func (h *Handlers) SegmentsList(ctx context.Context, params externalapi.Segments
 		return &res, nil
 	}
 
-	ws := auth.WorkspaceID(auth.GetTokenAuth(ctx))
+	ws := auth.TokenScoped(ctx)
 	page, pageSize := pagination.Normalize(convert.Ptr(params.Page), convert.Ptr(params.PageSize))
 
-	q := h.ent.Segment.Query().Where(segment.WorkspaceID(ws))
+	q := ws.Segment().Query()
 	total, err := q.Count(ctx)
 	if err != nil {
 		return nil, err
@@ -55,7 +55,7 @@ func (h *Handlers) SegmentsCreate(ctx context.Context, req *externalapi.CreateSe
 		return &res, nil
 	}
 
-	ws := auth.WorkspaceID(auth.GetTokenAuth(ctx))
+	ws := auth.TokenScoped(ctx)
 	s, err := h.segments.Create(ctx, ws, segments.CreateInput{
 		Name:       req.Name,
 		Definition: &req.Definition,
@@ -77,13 +77,13 @@ func (h *Handlers) SegmentsGet(ctx context.Context, params externalapi.SegmentsG
 		return &res, nil
 	}
 
-	ws := auth.WorkspaceID(auth.GetTokenAuth(ctx))
+	ws := auth.TokenScoped(ctx)
 	id, err := parseEntityID(params.ID)
 	if err != nil {
 		res := externalapi.SegmentsGetBadRequest(problem(http.StatusBadRequest, "invalid id"))
 		return &res, nil
 	}
-	s, err := h.ent.Segment.Query().Where(segment.ID(id), segment.WorkspaceID(ws)).Only(ctx)
+	s, err := ws.Segment().Get(ctx, id)
 	if ent.IsNotFound(err) {
 		res := externalapi.SegmentsGetNotFound(problem(http.StatusNotFound, "segment not found"))
 		return &res, nil
@@ -101,7 +101,7 @@ func (h *Handlers) SegmentsUpdate(ctx context.Context, req *externalapi.UpdateSe
 		return &res, nil
 	}
 
-	ws := auth.WorkspaceID(auth.GetTokenAuth(ctx))
+	ws := auth.TokenScoped(ctx)
 	id, err := parseEntityID(params.ID)
 	if err != nil {
 		res := externalapi.SegmentsUpdateBadRequest(problem(http.StatusBadRequest, "invalid id"))
@@ -133,13 +133,13 @@ func (h *Handlers) SegmentsDelete(ctx context.Context, params externalapi.Segmen
 		return &res, nil
 	}
 
-	ws := auth.WorkspaceID(auth.GetTokenAuth(ctx))
+	ws := auth.TokenScoped(ctx)
 	id, err := parseEntityID(params.ID)
 	if err != nil {
 		res := externalapi.SegmentsDeleteBadRequest(problem(http.StatusBadRequest, "invalid id"))
 		return &res, nil
 	}
-	err = h.ent.Segment.DeleteOneID(id).Where(segment.WorkspaceID(ws)).Exec(ctx)
+	err = ws.Segment().DeleteOneID(id).Exec(ctx)
 	if ent.IsNotFound(err) {
 		res := externalapi.SegmentsDeleteNotFound(problem(http.StatusNotFound, "segment not found"))
 		return &res, nil
@@ -156,7 +156,7 @@ func (h *Handlers) SegmentsPreview(ctx context.Context, req *externalapi.Preview
 		return &res, nil
 	}
 
-	ws := auth.WorkspaceID(auth.GetTokenAuth(ctx))
+	ws := auth.TokenScoped(ctx)
 	def := ""
 	if v := convert.StringPtr(req.Definition); v != nil {
 		def = *v

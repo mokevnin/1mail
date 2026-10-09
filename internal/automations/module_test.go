@@ -1,0 +1,38 @@
+package automations_test
+
+import (
+	"context"
+	"testing"
+
+	"github.com/mokevnin/1mail/internal/automations"
+	"github.com/mokevnin/1mail/internal/fixtures"
+	"github.com/mokevnin/1mail/internal/testhelper"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+)
+
+func TestModuleIsConfinedToTheScopedWorkspace(t *testing.T) {
+	env := testhelper.Setup(t)
+	m := automations.New()
+	ctx := context.Background()
+	acme, globex := env.DB.Scoped(fixtures.AcmeID), env.DB.Scoped(fixtures.GlobexID)
+
+	_, err := m.Get(ctx, acme, fixtures.AutomationGlobexID)
+	assert.ErrorIs(t, err, automations.ErrNotFound)
+	_, err = m.Get(ctx, globex, fixtures.AutomationWelcomeSeriesID)
+	assert.ErrorIs(t, err, automations.ErrNotFound)
+
+	_, err = m.Activate(ctx, acme, fixtures.AutomationGlobexID)
+	assert.ErrorIs(t, err, automations.ErrNotFound)
+	assert.ErrorIs(t, m.Delete(ctx, acme, fixtures.AutomationGlobexID), automations.ErrNotFound)
+
+	created, err := m.Create(ctx, acme, automations.CreateInput{Name: "New", TriggerEvent: "contact.created"})
+	require.NoError(t, err)
+	assert.EqualValues(t, fixtures.AcmeID, created.WorkspaceID)
+
+	items, _, err := m.List(ctx, globex, 100, 0)
+	require.NoError(t, err)
+	for _, a := range items {
+		assert.EqualValues(t, fixtures.GlobexID, a.WorkspaceID)
+	}
+}

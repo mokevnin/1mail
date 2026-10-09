@@ -177,10 +177,10 @@ func Setup(t *testing.T) *TestEnv {
 	// Domain modules, built once here and shared by /site and /api exactly like the
 	// app's DI singletons.
 	eventLog := eventlog.New(client, bus)
-	segmentsModule := segments.New(client)
+	segmentsModule := segments.New()
 	contactsModule := contacts.New(bus)
 	tagsModule := tags.New()
-	automationsModule := automations.New(client)
+	automationsModule := automations.New()
 	broadcastsModule := broadcasts.New(client, inline)
 	external, err := server.NewExternalAPI(apiexternal.Deps{
 		Ent: client, Bus: bus, Cipher: cipher, Outbound: sender,
