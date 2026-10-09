@@ -2,16 +2,16 @@ package external
 
 import (
 	"context"
+	"errors"
 	"net/http"
 
 	"github.com/mokevnin/1mail/ent"
 	"github.com/mokevnin/1mail/ent/contact"
 	externalapi "github.com/mokevnin/1mail/gen/external"
 	"github.com/mokevnin/1mail/internal/api/auth"
+	"github.com/mokevnin/1mail/internal/contacts"
 	"github.com/mokevnin/1mail/internal/convert"
-	"github.com/mokevnin/1mail/internal/events"
 	"github.com/mokevnin/1mail/internal/pagination"
-	"github.com/mokevnin/1mail/internal/service"
 )
 
 func (h *Handlers) ContactsList(ctx context.Context, params externalapi.ContactsListParams) (externalapi.ContactsListRes, error) {
@@ -59,38 +59,10 @@ func (h *Handlers) ContactsCreate(ctx context.Context, req *externalapi.CreateCo
 	}
 
 	ws := auth.WorkspaceID(auth.GetTokenAuth(ctx))
-	var c *ent.Contact
-	err := h.bus.WithinTx(ctx, func(tx *ent.Client, pub events.Publisher) error {
-		q := tx.Contact.Create().
-			SetWorkspaceID(ws).
-			SetNillableSubjectID(convert.StringPtr(req.SubjectId)).
-			SetNillableEmail(convert.StringPtr(req.Email)).
-			SetNillablePhone(convert.StringPtr(req.Phone)).
-			SetNillableFirstName(convert.StringPtr(req.FirstName)).
-			SetNillableLastName(convert.StringPtr(req.LastName)).
-			SetNillableTimeZone(convert.StringPtr(req.TimeZone))
-		if v, ok := req.CustomFields.Get(); ok {
-			typed, err := service.EnsureCustomFields(ctx, tx, ws, convert.RawMap(v))
-			if err != nil {
-				return err
-			}
-			if len(typed) > 0 {
-				q = q.SetCustomFields(typed)
-			}
-		}
-		created, err := q.Save(ctx)
-		if err != nil {
-			return err
-		}
-		c = created
-		email := ""
-		if c.Email != nil {
-			email = *c.Email
-		}
-		return pub.Publish(ctx, &events.ContactCreated{WorkspaceID: ws, ContactID: c.ID, Email: email})
-	})
-	if service.IsUniqueViolation(err) {
-		res := externalapi.ContactsCreateConflict(problem(http.StatusConflict, "email already exists"))
+	c, err := h.contacts.Create(ctx, ws, createContactAttributes(req))
+	var conflict *contacts.ConflictError
+	if errors.As(err, &conflict) {
+		res := externalapi.ContactsCreateConflict(conflictProblem(conflict))
 		return &res, nil
 	}
 	if err != nil {
@@ -142,28 +114,13 @@ func (h *Handlers) ContactsUpdate(ctx context.Context, req *externalapi.UpdateCo
 	}
 
 	ws := auth.WorkspaceID(auth.GetTokenAuth(ctx))
-	q := h.ent.Contact.UpdateOneID(id).
-		Where(contact.WorkspaceID(ws)).
-		SetNillableSubjectID(convert.StringPtr(req.SubjectId)).
-		SetNillableEmail(convert.StringPtr(req.Email)).
-		SetNillablePhone(convert.StringPtr(req.Phone)).
-		SetNillableFirstName(convert.StringPtr(req.FirstName)).
-		SetNillableLastName(convert.StringPtr(req.LastName)).
-		SetNillableTimeZone(convert.StringPtr(req.TimeZone))
-	if v, ok := req.CustomFields.Get(); ok {
-		typed, err := service.EnsureCustomFields(ctx, h.ent, ws, convert.RawMap(v))
-		if err != nil {
-			return nil, err
-		}
-		q = q.SetCustomFields(typed)
-	}
-
-	c, err := q.Save(ctx)
-	if service.IsUniqueViolation(err) {
-		res := externalapi.ContactsUpdateConflict(problem(http.StatusConflict, "email already exists"))
+	c, err := h.contacts.Update(ctx, ws, id, updateContactAttributes(req))
+	var conflict *contacts.ConflictError
+	if errors.As(err, &conflict) {
+		res := externalapi.ContactsUpdateConflict(conflictProblem(conflict))
 		return &res, nil
 	}
-	if ent.IsNotFound(err) {
+	if errors.Is(err, contacts.ErrNotFound) {
 		res := externalapi.ContactsUpdateNotFound(problem(http.StatusNotFound, "contact not found"))
 		return &res, nil
 	}
@@ -197,4 +154,41 @@ func (h *Handlers) ContactsDelete(ctx context.Context, params externalapi.Contac
 		return nil, err
 	}
 	return &externalapi.ContactsDeleteNoContent{}, nil
+}
+
+// conflictProblem renders a contacts.ConflictError, with the field-level error.
+func conflictProblem(c *contacts.ConflictError) externalapi.ProblemDetails {
+	p := problem(http.StatusConflict, c.Message())
+	p.Errors = externalapi.NewOptProblemDetailsErrors(externalapi.ProblemDetailsErrors{c.Field: {c.Message()}})
+	return p
+}
+
+func createContactAttributes(req *externalapi.CreateContactInput) contacts.Attributes {
+	attrs := contacts.Attributes{
+		SubjectID: convert.StringPtr(req.SubjectId),
+		Email:     convert.StringPtr(req.Email),
+		Phone:     convert.StringPtr(req.Phone),
+		FirstName: convert.StringPtr(req.FirstName),
+		LastName:  convert.StringPtr(req.LastName),
+		TimeZone:  convert.StringPtr(req.TimeZone),
+	}
+	if v, ok := req.CustomFields.Get(); ok {
+		attrs.CustomFields = convert.RawMap(v)
+	}
+	return attrs
+}
+
+func updateContactAttributes(req *externalapi.UpdateContactInput) contacts.Attributes {
+	attrs := contacts.Attributes{
+		SubjectID: convert.StringPtr(req.SubjectId),
+		Email:     convert.StringPtr(req.Email),
+		Phone:     convert.StringPtr(req.Phone),
+		FirstName: convert.StringPtr(req.FirstName),
+		LastName:  convert.StringPtr(req.LastName),
+		TimeZone:  convert.StringPtr(req.TimeZone),
+	}
+	if v, ok := req.CustomFields.Get(); ok {
+		attrs.CustomFields = convert.RawMap(v)
+	}
+	return attrs
 }
