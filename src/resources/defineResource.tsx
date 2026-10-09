@@ -15,7 +15,7 @@ import type * as z from 'zod'
 import { ApiErrorAlert } from '../components/ApiErrorAlert.tsx'
 import { useResourceMutation } from '../hooks/useResourceMutation.ts'
 import type { ApiErrorLike } from '../utils/apiErrors.ts'
-import type { FormValues, ResourceFormSchema } from './resourceFormSchema.ts'
+import type { FormValues, ResourceFormSchema, ResourceValues } from './resourceFormSchema.ts'
 
 // The form a resource's form component receives. Validation comes from the schema (parse
 // direction, errors only); the same schema yields the payload via transformValues once
@@ -62,7 +62,7 @@ export type ResourceTexts = {
 // are inferred from the generated pieces; callers never write them.
 export type ResourceDescription<
   TPayload,
-  TResource extends object,
+  TResource extends ResourceValues<TPayload>,
   TCreated extends { id: string },
   TError extends ApiErrorLike,
   TGetKey extends QueryKey,
@@ -106,7 +106,7 @@ export type ResourceEditPageProps<TResource> = {
 
 export function defineResource<
   TPayload,
-  TResource extends object,
+  TResource extends ResourceValues<TPayload>,
   TCreated extends { id: string },
   TError extends ApiErrorLike,
   TGetKey extends QueryKey,
