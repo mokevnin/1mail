@@ -1040,52 +1040,6 @@ func (o OptSiteDirectLoginResultAttrs) Or(d SiteDirectLoginResultAttrs) SiteDire
 	return d
 }
 
-// NewOptSiteSegmentType returns new OptSiteSegmentType with value set to v.
-func NewOptSiteSegmentType(v SiteSegmentType) OptSiteSegmentType {
-	return OptSiteSegmentType{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptSiteSegmentType is optional SiteSegmentType.
-type OptSiteSegmentType struct {
-	Value SiteSegmentType
-	Set   bool
-}
-
-// IsSet returns true if OptSiteSegmentType was set.
-func (o OptSiteSegmentType) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptSiteSegmentType) Reset() {
-	var v SiteSegmentType
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptSiteSegmentType) SetTo(v SiteSegmentType) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptSiteSegmentType) Get() (v SiteSegmentType, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptSiteSegmentType) Or(d SiteSegmentType) SiteSegmentType {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
 // NewOptSiteSuppressionChannel returns new OptSiteSuppressionChannel with value set to v.
 func NewOptSiteSuppressionChannel(v SiteSuppressionChannel) OptSiteSuppressionChannel {
 	return OptSiteSuppressionChannel{
@@ -3462,20 +3416,13 @@ func (*SiteCreateInvitationResponse) siteInvitationsCreateRes() {}
 type SiteCreateSegmentInput struct {
 	// Segment name.
 	Name string `json:"name"`
-	// Segment type.
-	Type SiteSegmentType `json:"type"`
-	// Segment definition (used by rule segments).
+	// Segment definition (rule query; empty matches all contacts).
 	Definition OptNilString `json:"definition"`
 }
 
 // GetName returns the value of Name.
 func (s *SiteCreateSegmentInput) GetName() string {
 	return s.Name
-}
-
-// GetType returns the value of Type.
-func (s *SiteCreateSegmentInput) GetType() SiteSegmentType {
-	return s.Type
 }
 
 // GetDefinition returns the value of Definition.
@@ -3486,11 +3433,6 @@ func (s *SiteCreateSegmentInput) GetDefinition() OptNilString {
 // SetName sets the value of Name.
 func (s *SiteCreateSegmentInput) SetName(val string) {
 	s.Name = val
-}
-
-// SetType sets the value of Type.
-func (s *SiteCreateSegmentInput) SetType(val SiteSegmentType) {
-	s.Type = val
 }
 
 // SetDefinition sets the value of Definition.
@@ -5570,9 +5512,7 @@ type SiteSegmentResource struct {
 	ID EntityId `json:"id"`
 	// Segment name.
 	Name string `json:"name"`
-	// Segment type.
-	Type SiteSegmentType `json:"type"`
-	// Segment definition (used by rule segments).
+	// Segment definition (rule query; empty matches all contacts).
 	Definition OptNilString `json:"definition"`
 	// Creation timestamp.
 	CreatedAt Timestamp `json:"createdAt"`
@@ -5588,11 +5528,6 @@ func (s *SiteSegmentResource) GetID() EntityId {
 // GetName returns the value of Name.
 func (s *SiteSegmentResource) GetName() string {
 	return s.Name
-}
-
-// GetType returns the value of Type.
-func (s *SiteSegmentResource) GetType() SiteSegmentType {
-	return s.Type
 }
 
 // GetDefinition returns the value of Definition.
@@ -5620,11 +5555,6 @@ func (s *SiteSegmentResource) SetName(val string) {
 	s.Name = val
 }
 
-// SetType sets the value of Type.
-func (s *SiteSegmentResource) SetType(val SiteSegmentType) {
-	s.Type = val
-}
-
 // SetDefinition sets the value of Definition.
 func (s *SiteSegmentResource) SetDefinition(val OptNilString) {
 	s.Definition = val
@@ -5643,49 +5573,6 @@ func (s *SiteSegmentResource) SetUpdatedAt(val Timestamp) {
 func (*SiteSegmentResource) siteSegmentsCreateRes() {}
 func (*SiteSegmentResource) siteSegmentsGetRes()    {}
 func (*SiteSegmentResource) siteSegmentsUpdateRes() {}
-
-// Segment type for site UI.
-// Ref: #/components/schemas/SiteSegmentType
-type SiteSegmentType string
-
-const (
-	SiteSegmentTypeRule     SiteSegmentType = "rule"
-	SiteSegmentTypeSnapshot SiteSegmentType = "snapshot"
-)
-
-// AllValues returns all SiteSegmentType values.
-func (SiteSegmentType) AllValues() []SiteSegmentType {
-	return []SiteSegmentType{
-		SiteSegmentTypeRule,
-		SiteSegmentTypeSnapshot,
-	}
-}
-
-// MarshalText implements encoding.TextMarshaler.
-func (s SiteSegmentType) MarshalText() ([]byte, error) {
-	switch s {
-	case SiteSegmentTypeRule:
-		return []byte(s), nil
-	case SiteSegmentTypeSnapshot:
-		return []byte(s), nil
-	default:
-		return nil, errors.Errorf("invalid value: %q", s)
-	}
-}
-
-// UnmarshalText implements encoding.TextUnmarshaler.
-func (s *SiteSegmentType) UnmarshalText(data []byte) error {
-	switch SiteSegmentType(data) {
-	case SiteSegmentTypeRule:
-		*s = SiteSegmentTypeRule
-		return nil
-	case SiteSegmentTypeSnapshot:
-		*s = SiteSegmentTypeSnapshot
-		return nil
-	default:
-		return errors.Errorf("invalid value: %q", data)
-	}
-}
 
 type SiteSegmentsCreateNotFound ProblemDetails
 
@@ -7837,20 +7724,13 @@ func (s *SiteUpdateMembershipInput) SetRole(val SiteMembershipRole) {
 type SiteUpdateSegmentInput struct {
 	// Segment name.
 	Name OptString `json:"name"`
-	// Segment type.
-	Type OptSiteSegmentType `json:"type"`
-	// Segment definition (used by rule segments).
+	// Segment definition (rule query; empty matches all contacts).
 	Definition OptNilString `json:"definition"`
 }
 
 // GetName returns the value of Name.
 func (s *SiteUpdateSegmentInput) GetName() OptString {
 	return s.Name
-}
-
-// GetType returns the value of Type.
-func (s *SiteUpdateSegmentInput) GetType() OptSiteSegmentType {
-	return s.Type
 }
 
 // GetDefinition returns the value of Definition.
@@ -7861,11 +7741,6 @@ func (s *SiteUpdateSegmentInput) GetDefinition() OptNilString {
 // SetName sets the value of Name.
 func (s *SiteUpdateSegmentInput) SetName(val OptString) {
 	s.Name = val
-}
-
-// SetType sets the value of Type.
-func (s *SiteUpdateSegmentInput) SetType(val OptSiteSegmentType) {
-	s.Type = val
 }
 
 // SetDefinition sets the value of Definition.

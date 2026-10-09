@@ -3,7 +3,6 @@
 package segment
 
 import (
-	"fmt"
 	"time"
 
 	"entgo.io/ent/dialect/sql"
@@ -17,8 +16,6 @@ const (
 	FieldID = "id"
 	// FieldName holds the string denoting the name field in the database.
 	FieldName = "name"
-	// FieldType holds the string denoting the type field in the database.
-	FieldType = "type"
 	// FieldDefinition holds the string denoting the definition field in the database.
 	FieldDefinition = "definition"
 	// FieldWorkspaceID holds the string denoting the workspace_id field in the database.
@@ -44,7 +41,6 @@ const (
 var Columns = []string{
 	FieldID,
 	FieldName,
-	FieldType,
 	FieldDefinition,
 	FieldWorkspaceID,
 	FieldCreatedAt,
@@ -72,32 +68,6 @@ var (
 	UpdateDefaultUpdatedAt func() time.Time
 )
 
-// Type defines the type for the "type" enum field.
-type Type string
-
-// TypeRule is the default value of the Type enum.
-const DefaultType = TypeRule
-
-// Type values.
-const (
-	TypeRule     Type = "rule"
-	TypeSnapshot Type = "snapshot"
-)
-
-func (_type Type) String() string {
-	return string(_type)
-}
-
-// TypeValidator is a validator for the "type" field enum values. It is called by the builders before save.
-func TypeValidator(_type Type) error {
-	switch _type {
-	case TypeRule, TypeSnapshot:
-		return nil
-	default:
-		return fmt.Errorf("segment: invalid enum value for type field: %q", _type)
-	}
-}
-
 // OrderOption defines the ordering options for the Segment queries.
 type OrderOption func(*sql.Selector)
 
@@ -109,11 +79,6 @@ func ByID(opts ...sql.OrderTermOption) OrderOption {
 // ByName orders the results by the name field.
 func ByName(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldName, opts...).ToFunc()
-}
-
-// ByType orders the results by the type field.
-func ByType(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldType, opts...).ToFunc()
 }
 
 // ByDefinition orders the results by the definition field.

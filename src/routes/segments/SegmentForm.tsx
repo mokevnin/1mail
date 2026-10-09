@@ -1,16 +1,13 @@
-import { Button, Group, Input, Select, Stack, TextInput } from '@mantine/core'
+import { Button, Group, Input, Stack, TextInput } from '@mantine/core'
 import type { useForm } from '@mantine/form'
 import { useNavigate, useParams } from '@tanstack/react-router'
-import type { TFunction } from 'i18next'
 import { useTranslation } from 'react-i18next'
 
-import { SiteSegmentType } from '../../generated/site/types.gen.ts'
 import { segmentsRoute } from '../../router.tsx'
 import { SegmentRuleBuilder } from './SegmentRuleBuilder.tsx'
 
 export interface SegmentFormValues {
   name: string
-  type: SiteSegmentType
   definition: string
 }
 
@@ -20,10 +17,6 @@ interface SegmentFormProps {
   form: SegmentFormInstance
   isPending: boolean
   onSubmit: (values: SegmentFormValues) => void
-}
-
-function translateType(t: TFunction, type: SiteSegmentType): string {
-  return t(($) => $.segments.type[type])
 }
 
 export function SegmentForm({ form, isPending, onSubmit }: SegmentFormProps) {
@@ -39,16 +32,7 @@ export function SegmentForm({ form, isPending, onSubmit }: SegmentFormProps) {
           required
           {...form.getInputProps('name')}
         />
-        <Select
-          label={t(($) => $.segments.typeLabel)}
-          data={Object.values(SiteSegmentType).map((value) => ({
-            value,
-            label: translateType(t, value),
-          }))}
-          allowDeselect={false}
-          {...form.getInputProps('type')}
-        />
-        {form.values.type === SiteSegmentType.RULE && slug ? (
+        {slug ? (
           <Input.Wrapper
             label={t(($) => $.segments.rulesLabel)}
             description={t(($) => $.segments.definitionHint)}

@@ -16125,7 +16125,6 @@ type SegmentMutation struct {
 	typ              string
 	id               *int64
 	name             *string
-	_type            *segment.Type
 	definition       *string
 	created_at       *time.Time
 	updated_at       *time.Time
@@ -16275,42 +16274,6 @@ func (m *SegmentMutation) OldName(ctx context.Context) (v string, err error) {
 // ResetName resets all changes to the "name" field.
 func (m *SegmentMutation) ResetName() {
 	m.name = nil
-}
-
-// SetType sets the "type" field.
-func (m *SegmentMutation) SetType(s segment.Type) {
-	m._type = &s
-}
-
-// GetType returns the value of the "type" field in the mutation.
-func (m *SegmentMutation) GetType() (r segment.Type, exists bool) {
-	v := m._type
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldType returns the old "type" field's value of the Segment entity.
-// If the Segment object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *SegmentMutation) OldType(ctx context.Context) (v segment.Type, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldType is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldType requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldType: %w", err)
-	}
-	return oldValue.Type, nil
-}
-
-// ResetType resets all changes to the "type" field.
-func (m *SegmentMutation) ResetType() {
-	m._type = nil
 }
 
 // SetDefinition sets the "definition" field.
@@ -16531,12 +16494,9 @@ func (m *SegmentMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *SegmentMutation) Fields() []string {
-	fields := make([]string, 0, 6)
+	fields := make([]string, 0, 5)
 	if m.name != nil {
 		fields = append(fields, segment.FieldName)
-	}
-	if m._type != nil {
-		fields = append(fields, segment.FieldType)
 	}
 	if m.definition != nil {
 		fields = append(fields, segment.FieldDefinition)
@@ -16560,8 +16520,6 @@ func (m *SegmentMutation) Field(name string) (ent.Value, bool) {
 	switch name {
 	case segment.FieldName:
 		return m.Name()
-	case segment.FieldType:
-		return m.GetType()
 	case segment.FieldDefinition:
 		return m.Definition()
 	case segment.FieldWorkspaceID:
@@ -16581,8 +16539,6 @@ func (m *SegmentMutation) OldField(ctx context.Context, name string) (ent.Value,
 	switch name {
 	case segment.FieldName:
 		return m.OldName(ctx)
-	case segment.FieldType:
-		return m.OldType(ctx)
 	case segment.FieldDefinition:
 		return m.OldDefinition(ctx)
 	case segment.FieldWorkspaceID:
@@ -16606,13 +16562,6 @@ func (m *SegmentMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetName(v)
-		return nil
-	case segment.FieldType:
-		v, ok := value.(segment.Type)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetType(v)
 		return nil
 	case segment.FieldDefinition:
 		v, ok := value.(string)
@@ -16705,9 +16654,6 @@ func (m *SegmentMutation) ResetField(name string) error {
 	switch name {
 	case segment.FieldName:
 		m.ResetName()
-		return nil
-	case segment.FieldType:
-		m.ResetType()
 		return nil
 	case segment.FieldDefinition:
 		m.ResetDefinition()

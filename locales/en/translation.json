@@ -379,12 +379,7 @@
     "previewCount": "{{count}} matching contacts",
     "previewCount_one": "segments.previewCount",
     "previewCount_other": "segments.previewCount",
-    "rulesLabel": "Rules",
-    "type": {
-      "rule": "Rule",
-      "snapshot": "Snapshot"
-    },
-    "typeLabel": "Type"
+    "rulesLabel": "Rules"
   },
   "settings": {
     "apiKeysTitle": "API keys",

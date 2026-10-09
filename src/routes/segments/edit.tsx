@@ -11,7 +11,7 @@ import {
   siteSegmentsListQueryKey,
   siteSegmentsUpdateMutation,
 } from '../../generated/site/@tanstack/react-query.gen.ts'
-import { type SiteSegmentResource, SiteSegmentType } from '../../generated/site/types.gen.ts'
+import type { SiteSegmentResource } from '../../generated/site/types.gen.ts'
 import { useResourceMutation } from '../../hooks/useResourceMutation.ts'
 import { segmentsEditRoute } from '../../router.tsx'
 import { SegmentForm, type SegmentFormValues } from './SegmentForm.tsx'
@@ -21,7 +21,7 @@ export function SegmentEditPage() {
   const { slug, segmentId } = segmentsEditRoute.useParams()
 
   const form = useForm<SegmentFormValues>({
-    initialValues: { name: '', type: SiteSegmentType.RULE, definition: '' },
+    initialValues: { name: '', definition: '' },
   })
 
   const getSegmentQuery = useQuery(siteSegmentsGetOptions({ path: { slug: slug, id: segmentId } }))
@@ -30,7 +30,6 @@ export function SegmentEditPage() {
     if (!data) return
     form.setValues({
       name: data.name,
-      type: data.type,
       definition: data.definition ?? '',
     })
   })
@@ -72,7 +71,6 @@ export function SegmentEditPage() {
             path: { slug: slug, id: segmentId },
             body: {
               name: values.name.trim(),
-              type: values.type,
               definition: values.definition.trim() || null,
             },
           })

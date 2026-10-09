@@ -394,11 +394,11 @@ func init() {
 	// segment.NameValidator is a validator for the "name" field. It is called by the builders before save.
 	segment.NameValidator = segmentDescName.Validators[0].(func(string) error)
 	// segmentDescCreatedAt is the schema descriptor for created_at field.
-	segmentDescCreatedAt := segmentFields[5].Descriptor()
+	segmentDescCreatedAt := segmentFields[4].Descriptor()
 	// segment.DefaultCreatedAt holds the default value on creation for the created_at field.
 	segment.DefaultCreatedAt = segmentDescCreatedAt.Default.(func() time.Time)
 	// segmentDescUpdatedAt is the schema descriptor for updated_at field.
-	segmentDescUpdatedAt := segmentFields[6].Descriptor()
+	segmentDescUpdatedAt := segmentFields[5].Descriptor()
 	// segment.DefaultUpdatedAt holds the default value on creation for the updated_at field.
 	segment.DefaultUpdatedAt = segmentDescUpdatedAt.Default.(func() time.Time)
 	// segment.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.

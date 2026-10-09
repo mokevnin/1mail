@@ -4,12 +4,6 @@ using TypeSpec.Rest.Resource;
 
 namespace OneMail;
 
-/** Segment type */
-enum SegmentType {
-  rule,
-  snapshot,
-}
-
 /** Segment resource */
 @resource("segments")
 @segment("segments")
@@ -30,10 +24,7 @@ model CreateSegmentInput {
   /** Segment name */
   name: string;
 
-  /** Segment type */
-  type: SegmentType;
-
-  /** Segment definition (required for rule segments) */
+  /** Segment definition (rule query; empty matches all contacts) */
   definition?: string;
 }
 
@@ -41,9 +32,6 @@ model CreateSegmentInput {
 model UpdateSegmentInput {
   /** Segment name */
   name?: string;
-
-  /** Segment type */
-  type?: SegmentType;
 
   /** Segment definition */
   definition?: string;

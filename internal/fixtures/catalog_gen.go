@@ -160,7 +160,7 @@ const (
 	// SegmentNewsletterID is from fixtures/segments.
 	SegmentNewsletterID = 2
 	// SegmentNewsletterName is from fixtures/segments.
-	SegmentNewsletterName = "Newsletter snapshot"
+	SegmentNewsletterName = "Newsletter subscribers"
 	// SegmentProPlanID is from fixtures/segments.
 	SegmentProPlanID = 100
 	// SegmentProPlanName is from fixtures/segments.

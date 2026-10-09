@@ -196,6 +196,14 @@ export const zSiteCreateEmailTemplateInput = z.object({
 });
 
 /**
+ * Site request body for creating a segment
+ */
+export const zSiteCreateSegmentInput = z.object({
+  name: z.string(),
+  definition: z.string().nullish()
+});
+
+/**
  * Site request body for adding a sending domain
  */
 export const zSiteCreateSendingDomainInput = z.object({
@@ -373,20 +381,6 @@ export const zSiteRegisterInput = z.object({
 export const zSiteResetPasswordInput = z.object({
   token: z.string(),
   password: z.string()
-});
-
-/**
- * Segment type for site UI
- */
-export const zSiteSegmentType = z.enum(['rule', 'snapshot']);
-
-/**
- * Site request body for creating a segment
- */
-export const zSiteCreateSegmentInput = z.object({
-  name: z.string(),
-  type: zSiteSegmentType,
-  definition: z.string().nullish()
 });
 
 /**
@@ -573,7 +567,6 @@ export const zSiteUpdateMembershipInput = z.object({
  */
 export const zSiteUpdateSegmentInput = z.object({
   name: z.string().optional(),
-  type: zSiteSegmentType.optional(),
   definition: z.string().nullish()
 });
 
@@ -819,7 +812,6 @@ export const zSiteScheduleBroadcastInput = z.object({
 export const zSiteSegmentResource = z.object({
   id: zEntityId,
   name: z.string(),
-  type: zSiteSegmentType,
   definition: z.string().nullish(),
   createdAt: zTimestamp,
   updatedAt: zTimestamp

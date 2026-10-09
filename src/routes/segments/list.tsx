@@ -2,7 +2,6 @@ import { Button, Group, Loader, Stack, Text } from '@mantine/core'
 import { useCounter } from '@mantine/hooks'
 import { useQuery } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
-import type { TFunction } from 'i18next'
 import { DataTable } from 'mantine-datatable'
 import { useTranslation } from 'react-i18next'
 
@@ -12,16 +11,11 @@ import {
   siteSegmentsListOptions,
   siteSegmentsListQueryKey,
 } from '../../generated/site/@tanstack/react-query.gen.ts'
-import type { SiteSegmentType } from '../../generated/site/types.gen.ts'
 import { useDeleteConfirmation } from '../../hooks/useDeleteConfirmation.tsx'
 import { useResourceMutation } from '../../hooks/useResourceMutation.ts'
 import { segmentsCreateRoute, segmentsEditRoute, segmentsRoute } from '../../router.tsx'
 
 const PAGE_SIZE = 10
-
-function translateType(t: TFunction, type: SiteSegmentType): string {
-  return t(($) => $.segments.type[type])
-}
 
 export function SegmentsListPage() {
   const { t } = useTranslation()
@@ -79,11 +73,6 @@ export function SegmentsListPage() {
         records={records}
         columns={[
           { accessor: 'name', title: t(($) => $.segments.nameLabel) },
-          {
-            accessor: 'type',
-            title: t(($) => $.segments.typeLabel),
-            render: (record) => translateType(t, record.type),
-          },
           {
             accessor: 'actions',
             title: t(($) => $.table.actions),

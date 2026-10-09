@@ -379,12 +379,7 @@ export default interface Resources {
       "noRecords": "No segments yet",
       "previewButton": "Preview audience",
       "previewCount": "{{count}} matching contacts" | "segments.previewCount" | "segments.previewCount",
-      "rulesLabel": "Rules",
-      "type": {
-        "rule": "Rule",
-        "snapshot": "Snapshot"
-      },
-      "typeLabel": "Type"
+      "rulesLabel": "Rules"
     },
     "settings": {
       "apiKeysTitle": "API keys",

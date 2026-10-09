@@ -34,7 +34,6 @@ func TestExternalSegmentsRead(t *testing.T) {
 	seg, isSeg := got.(*externalapi.SegmentResource)
 	require.Truef(t, isSeg, "got %T", got)
 	assert.Equal(t, "Active subscribers", seg.Name)
-	assert.Equal(t, externalapi.SegmentTypeRule, seg.Type)
 
 	missing, err := c.SegmentsGet(ctx, externalapi.SegmentsGetParams{ID: "999999"})
 	require.NoError(t, err)
@@ -49,7 +48,7 @@ func TestExternalSegmentsWrite(t *testing.T) {
 	c := env.ExternalScoped(t, "segments:read", "segments:write")
 
 	bad, err := c.SegmentsCreate(ctx, &externalapi.CreateSegmentInput{
-		Name: "Bad", Type: externalapi.SegmentTypeRule,
+		Name:       "Bad",
 		Definition: externalapi.NewOptString(`{"combinator":"and","rules":[{"field":"nope","operator":"=","value":"x"}]}`),
 	})
 	require.NoError(t, err)
@@ -57,7 +56,7 @@ func TestExternalSegmentsWrite(t *testing.T) {
 
 	const def = `{"combinator":"and","rules":[{"field":"custom:plan","operator":"=","value":"pro"}]}`
 	created, err := c.SegmentsCreate(ctx, &externalapi.CreateSegmentInput{
-		Name: "Pros", Type: externalapi.SegmentTypeRule, Definition: externalapi.NewOptString(def),
+		Name: "Pros", Definition: externalapi.NewOptString(def),
 	})
 	require.NoError(t, err)
 	seg, isSeg := created.(*externalapi.SegmentResource)
@@ -116,7 +115,7 @@ func TestExternalSegmentsScopes(t *testing.T) {
 
 	// Read scope cannot write.
 	ro := env.ExternalScoped(t, "segments:read")
-	cr, err := ro.SegmentsCreate(ctx, &externalapi.CreateSegmentInput{Name: "x", Type: externalapi.SegmentTypeSnapshot})
+	cr, err := ro.SegmentsCreate(ctx, &externalapi.CreateSegmentInput{Name: "x"})
 	require.NoError(t, err)
 	assert.IsType(t, &externalapi.SegmentsCreateUnauthorized{}, cr)
 	up, err := ro.SegmentsUpdate(ctx, &externalapi.UpdateSegmentInput{}, externalapi.SegmentsUpdateParams{ID: entityIDString(fixtures.SegmentActiveID)})

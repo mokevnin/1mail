@@ -7,7 +7,6 @@ import {
   siteSegmentsCreateMutation,
   siteSegmentsListQueryKey,
 } from '../../generated/site/@tanstack/react-query.gen.ts'
-import { SiteSegmentType } from '../../generated/site/types.gen.ts'
 import { useResourceMutation } from '../../hooks/useResourceMutation.ts'
 import { segmentsCreateRoute, segmentsEditRoute } from '../../router.tsx'
 import { SegmentForm, type SegmentFormValues } from './SegmentForm.tsx'
@@ -18,7 +17,7 @@ export function SegmentCreatePage() {
   const { slug } = segmentsCreateRoute.useParams()
 
   const form = useForm<SegmentFormValues>({
-    initialValues: { name: '', type: SiteSegmentType.RULE, definition: '' },
+    initialValues: { name: '', definition: '' },
   })
 
   const createMutation = useResourceMutation({
@@ -41,7 +40,6 @@ export function SegmentCreatePage() {
             path: { slug: slug },
             body: {
               name: values.name.trim(),
-              type: values.type,
               definition: values.definition.trim() || null,
             },
           })

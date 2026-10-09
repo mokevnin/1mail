@@ -2,11 +2,15 @@ package site_test
 
 import (
 	"context"
+	"io"
+	"net/http"
+	"strings"
 	"testing"
 
 	siteapi "github.com/mokevnin/1mail/gen/site"
 	"github.com/mokevnin/1mail/internal/fixtures"
 	"github.com/mokevnin/1mail/internal/testhelper"
+	ht "github.com/ogen-go/ogen/http"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -38,14 +42,12 @@ func TestSiteSegmentsScopedToWorkspace(t *testing.T) {
 	// Create scopes the segment to the workspace and returns the resource.
 	created, err := c.SiteSegmentsCreate(ctx, &siteapi.SiteCreateSegmentInput{
 		Name:       "VIP customers",
-		Type:       siteapi.SiteSegmentTypeRule,
 		Definition: siteapi.NewOptNilString(`{"combinator":"and","rules":[{"field":"custom:plan","operator":"=","value":"vip"}]}`),
 	}, siteapi.SiteSegmentsCreateParams{Slug: fixtures.AcmeSlug})
 	require.NoError(t, err)
 	res, ok := created.(*siteapi.SiteSegmentResource)
 	require.Truef(t, ok, "got %T", created)
 	assert.Equal(t, "VIP customers", res.Name)
-	assert.Equal(t, siteapi.SiteSegmentTypeRule, res.Type)
 
 	// The new segment is readable by id.
 	got, err := c.SiteSegmentsGet(ctx, siteapi.SiteSegmentsGetParams{Slug: fixtures.AcmeSlug, ID: res.ID})
@@ -57,13 +59,11 @@ func TestSiteSegmentsScopedToWorkspace(t *testing.T) {
 	// Update changes mutable fields.
 	updated, err := c.SiteSegmentsUpdate(ctx, &siteapi.SiteUpdateSegmentInput{
 		Name: siteapi.NewOptString("VIP renamed"),
-		Type: siteapi.NewOptSiteSegmentType(siteapi.SiteSegmentTypeSnapshot),
 	}, siteapi.SiteSegmentsUpdateParams{Slug: fixtures.AcmeSlug, ID: res.ID})
 	require.NoError(t, err)
 	updRes, ok := updated.(*siteapi.SiteSegmentResource)
 	require.Truef(t, ok, "got %T", updated)
 	assert.Equal(t, "VIP renamed", updRes.Name)
-	assert.Equal(t, siteapi.SiteSegmentTypeSnapshot, updRes.Type)
 
 	// Delete removes it.
 	del, err := c.SiteSegmentsDelete(ctx, siteapi.SiteSegmentsDeleteParams{Slug: fixtures.AcmeSlug, ID: res.ID})
@@ -74,4 +74,49 @@ func TestSiteSegmentsScopedToWorkspace(t *testing.T) {
 	missing, err := c.SiteSegmentsList(ctx, siteapi.SiteSegmentsListParams{Slug: "does-not-exist"})
 	require.NoError(t, err)
 	assert.IsType(t, &siteapi.SiteSegmentsListNotFound{}, missing)
+}
+
+// bodyCapture records the raw response bodies so tests can assert on the wire
+// format, which the typed client cannot show (it drops unknown fields).
+type bodyCapture struct {
+	inner interface {
+		Do(*http.Request) (*http.Response, error)
+	}
+	bodies []string
+}
+
+func (b *bodyCapture) Do(r *http.Request) (*http.Response, error) {
+	resp, err := b.inner.Do(r)
+	if err != nil {
+		return nil, err
+	}
+	raw, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+	b.bodies = append(b.bodies, string(raw))
+	resp.Body = io.NopCloser(strings.NewReader(string(raw)))
+	return resp, nil
+}
+
+// A Segment is always a rule: responses carry no type field.
+func TestSiteSegmentResponsesHaveNoType(t *testing.T) {
+	env := testhelper.Setup(t)
+	var capture *bodyCapture
+	c := env.SiteActorVia(t, fixtures.OwnerJohnEmail, func(inner ht.Client) ht.Client {
+		capture = &bodyCapture{inner: inner}
+		return capture
+	})
+	ctx := context.Background()
+
+	_, err := c.SiteSegmentsGet(ctx, siteapi.SiteSegmentsGetParams{Slug: fixtures.AcmeSlug, ID: "1"})
+	require.NoError(t, err)
+	_, err = c.SiteSegmentsList(ctx, siteapi.SiteSegmentsListParams{Slug: fixtures.AcmeSlug})
+	require.NoError(t, err)
+
+	require.Len(t, capture.bodies, 2)
+	for _, body := range capture.bodies {
+		assert.Contains(t, body, `"name"`)
+		assert.NotContains(t, body, `"type"`)
+	}
 }

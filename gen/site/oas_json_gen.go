@@ -794,39 +794,6 @@ func (s *OptSiteDirectLoginResultAttrs) UnmarshalJSON(data []byte) error {
 	return s.Decode(d)
 }
 
-// Encode encodes SiteSegmentType as json.
-func (o OptSiteSegmentType) Encode(e *jx.Encoder) {
-	if !o.Set {
-		return
-	}
-	e.Str(string(o.Value))
-}
-
-// Decode decodes SiteSegmentType from json.
-func (o *OptSiteSegmentType) Decode(d *jx.Decoder) error {
-	if o == nil {
-		return errors.New("invalid: unable to decode OptSiteSegmentType to nil")
-	}
-	o.Set = true
-	if err := o.Value.Decode(d); err != nil {
-		return err
-	}
-	return nil
-}
-
-// MarshalJSON implements stdjson.Marshaler.
-func (s OptSiteSegmentType) MarshalJSON() ([]byte, error) {
-	e := jx.Encoder{}
-	s.Encode(&e)
-	return e.Bytes(), nil
-}
-
-// UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *OptSiteSegmentType) UnmarshalJSON(data []byte) error {
-	d := jx.DecodeBytes(data)
-	return s.Decode(d)
-}
-
 // Encode encodes SiteSuppressionChannel as json.
 func (o OptSiteSuppressionChannel) Encode(e *jx.Encoder) {
 	if !o.Set {
@@ -7593,10 +7560,6 @@ func (s *SiteCreateSegmentInput) encodeFields(e *jx.Encoder) {
 		e.Str(s.Name)
 	}
 	{
-		e.FieldStart("type")
-		s.Type.Encode(e)
-	}
-	{
 		if s.Definition.Set {
 			e.FieldStart("definition")
 			s.Definition.Encode(e)
@@ -7604,10 +7567,9 @@ func (s *SiteCreateSegmentInput) encodeFields(e *jx.Encoder) {
 	}
 }
 
-var jsonFieldsNameOfSiteCreateSegmentInput = [3]string{
+var jsonFieldsNameOfSiteCreateSegmentInput = [2]string{
 	0: "name",
-	1: "type",
-	2: "definition",
+	1: "definition",
 }
 
 // Decode decodes SiteCreateSegmentInput from json.
@@ -7631,16 +7593,6 @@ func (s *SiteCreateSegmentInput) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"name\"")
 			}
-		case "type":
-			requiredBitSet[0] |= 1 << 1
-			if err := func() error {
-				if err := s.Type.Decode(d); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"type\"")
-			}
 		case "definition":
 			if err := func() error {
 				s.Definition.Reset()
@@ -7661,7 +7613,7 @@ func (s *SiteCreateSegmentInput) Decode(d *jx.Decoder) error {
 	// Validate required fields.
 	var failures []validate.FieldError
 	for i, mask := range [1]uint8{
-		0b00000011,
+		0b00000001,
 	} {
 		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
 			// Mask only required fields and check equality to mask using XOR.
@@ -14032,10 +13984,6 @@ func (s *SiteSegmentResource) encodeFields(e *jx.Encoder) {
 		e.Str(s.Name)
 	}
 	{
-		e.FieldStart("type")
-		s.Type.Encode(e)
-	}
-	{
 		if s.Definition.Set {
 			e.FieldStart("definition")
 			s.Definition.Encode(e)
@@ -14051,13 +13999,12 @@ func (s *SiteSegmentResource) encodeFields(e *jx.Encoder) {
 	}
 }
 
-var jsonFieldsNameOfSiteSegmentResource = [6]string{
+var jsonFieldsNameOfSiteSegmentResource = [5]string{
 	0: "id",
 	1: "name",
-	2: "type",
-	3: "definition",
-	4: "createdAt",
-	5: "updatedAt",
+	2: "definition",
+	3: "createdAt",
+	4: "updatedAt",
 }
 
 // Decode decodes SiteSegmentResource from json.
@@ -14091,16 +14038,6 @@ func (s *SiteSegmentResource) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"name\"")
 			}
-		case "type":
-			requiredBitSet[0] |= 1 << 2
-			if err := func() error {
-				if err := s.Type.Decode(d); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"type\"")
-			}
 		case "definition":
 			if err := func() error {
 				s.Definition.Reset()
@@ -14112,7 +14049,7 @@ func (s *SiteSegmentResource) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"definition\"")
 			}
 		case "createdAt":
-			requiredBitSet[0] |= 1 << 4
+			requiredBitSet[0] |= 1 << 3
 			if err := func() error {
 				if err := s.CreatedAt.Decode(d); err != nil {
 					return err
@@ -14122,7 +14059,7 @@ func (s *SiteSegmentResource) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"createdAt\"")
 			}
 		case "updatedAt":
-			requiredBitSet[0] |= 1 << 5
+			requiredBitSet[0] |= 1 << 4
 			if err := func() error {
 				if err := s.UpdatedAt.Decode(d); err != nil {
 					return err
@@ -14141,7 +14078,7 @@ func (s *SiteSegmentResource) Decode(d *jx.Decoder) error {
 	// Validate required fields.
 	var failures []validate.FieldError
 	for i, mask := range [1]uint8{
-		0b00110111,
+		0b00011011,
 	} {
 		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
 			// Mask only required fields and check equality to mask using XOR.
@@ -14183,46 +14120,6 @@ func (s *SiteSegmentResource) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
 func (s *SiteSegmentResource) UnmarshalJSON(data []byte) error {
-	d := jx.DecodeBytes(data)
-	return s.Decode(d)
-}
-
-// Encode encodes SiteSegmentType as json.
-func (s SiteSegmentType) Encode(e *jx.Encoder) {
-	e.Str(string(s))
-}
-
-// Decode decodes SiteSegmentType from json.
-func (s *SiteSegmentType) Decode(d *jx.Decoder) error {
-	if s == nil {
-		return errors.New("invalid: unable to decode SiteSegmentType to nil")
-	}
-	v, err := d.StrBytes()
-	if err != nil {
-		return err
-	}
-	// Try to use constant string.
-	switch SiteSegmentType(v) {
-	case SiteSegmentTypeRule:
-		*s = SiteSegmentTypeRule
-	case SiteSegmentTypeSnapshot:
-		*s = SiteSegmentTypeSnapshot
-	default:
-		*s = SiteSegmentType(v)
-	}
-
-	return nil
-}
-
-// MarshalJSON implements stdjson.Marshaler.
-func (s SiteSegmentType) MarshalJSON() ([]byte, error) {
-	e := jx.Encoder{}
-	s.Encode(&e)
-	return e.Bytes(), nil
-}
-
-// UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *SiteSegmentType) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }
@@ -20824,12 +20721,6 @@ func (s *SiteUpdateSegmentInput) encodeFields(e *jx.Encoder) {
 		}
 	}
 	{
-		if s.Type.Set {
-			e.FieldStart("type")
-			s.Type.Encode(e)
-		}
-	}
-	{
 		if s.Definition.Set {
 			e.FieldStart("definition")
 			s.Definition.Encode(e)
@@ -20837,10 +20728,9 @@ func (s *SiteUpdateSegmentInput) encodeFields(e *jx.Encoder) {
 	}
 }
 
-var jsonFieldsNameOfSiteUpdateSegmentInput = [3]string{
+var jsonFieldsNameOfSiteUpdateSegmentInput = [2]string{
 	0: "name",
-	1: "type",
-	2: "definition",
+	1: "definition",
 }
 
 // Decode decodes SiteUpdateSegmentInput from json.
@@ -20860,16 +20750,6 @@ func (s *SiteUpdateSegmentInput) Decode(d *jx.Decoder) error {
 				return nil
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"name\"")
-			}
-		case "type":
-			if err := func() error {
-				s.Type.Reset()
-				if err := s.Type.Decode(d); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"type\"")
 			}
 		case "definition":
 			if err := func() error {

@@ -606,7 +606,6 @@ var (
 	SegmentsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt64, Increment: true},
 		{Name: "name", Type: field.TypeString},
-		{Name: "type", Type: field.TypeEnum, Enums: []string{"rule", "snapshot"}, Default: "rule"},
 		{Name: "definition", Type: field.TypeString, Nullable: true},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
@@ -620,7 +619,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "segments_workspaces_segments",
-				Columns:    []*schema.Column{SegmentsColumns[6]},
+				Columns:    []*schema.Column{SegmentsColumns[5]},
 				RefColumns: []*schema.Column{WorkspacesColumns[0]},
 				OnDelete:   schema.NoAction,
 			},

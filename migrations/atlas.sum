@@ -1,4 +1,4 @@
-h1:uyi2CIswmJSoFamaZgwTiNacrbcusQjQXxB1scuz0ys=
+h1:4sfNAuyVg1mj5en/c7pPVJKCd9lhPrXA1kOK+BH+CPo=
 20260630101109_init.sql h1:SVCZgfKgTyB6VZBUUbmQ52BZKZii1VLNc9Gb7pXzi+w=
 20260630175449_send_eligibility_model.sql h1:y0KiYIOlK2a6RqFZBOlqW23xXDfekXMZFnyS2ZZ8Drw=
 20260630204007_transactional_email.sql h1:sUDPnLR7CcP6+ECVGaJjw0k28M3T6epTDMrfIti87MQ=
@@ -12,3 +12,4 @@ h1:uyi2CIswmJSoFamaZgwTiNacrbcusQjQXxB1scuz0ys=
 20261009012338_broadcast_hold_and_skipped.sql h1:UrCdm/4SD88r+c5sJRO6t4LTngqxp4PP/phMQi8Jnpw=
 20261009125713_oauth_connector.sql h1:zOnN35vVPzSkyoyXVtMlt7JgJGaLmHGJoLLEfosR2B4=
 20261009130449_tags.sql h1:uKOhS1E2ExSvLB/n11qdNbqFkxvE+ErzouWPkS/87Is=
+20261009141806_drop_segment_type.sql h1:8dLDVw5KCmGWXqdW8ZI/VWO6aL/nzWz58ytfRGz+J94=

@@ -38,9 +38,7 @@ export function BroadcastForm({ form, isPending, onSubmit }: BroadcastFormProps)
   })
   const segmentOptions = [
     { value: '', label: t(($) => $.broadcasts.audienceAll) },
-    ...(segmentsQuery.data?.items ?? [])
-      .filter((s) => s.type === 'rule')
-      .map((s) => ({ value: s.id, label: s.name })),
+    ...(segmentsQuery.data?.items ?? []).map((s) => ({ value: s.id, label: s.name })),
   ]
 
   const templatesQuery = useQuery({

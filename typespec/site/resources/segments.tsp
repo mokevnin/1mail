@@ -4,12 +4,6 @@ using TypeSpec.Rest.Resource;
 
 namespace OneMail;
 
-/** Segment type for site UI */
-enum SiteSegmentType {
-  rule,
-  snapshot,
-}
-
 /** Segment resource used by the site UI */
 @resource("segments")
 @segment("segments")
@@ -22,10 +16,7 @@ model SiteSegmentResource {
   /** Segment name */
   name: string;
 
-  /** Segment type */
-  type: SiteSegmentType;
-
-  /** Segment definition (used by rule segments) */
+  /** Segment definition (rule query; empty matches all contacts) */
   definition?: string | null;
 
   /** Creation timestamp */
@@ -40,10 +31,7 @@ model SiteCreateSegmentInput {
   /** Segment name */
   name: string;
 
-  /** Segment type */
-  type: SiteSegmentType;
-
-  /** Segment definition (used by rule segments) */
+  /** Segment definition (rule query; empty matches all contacts) */
   definition?: string | null;
 }
 
@@ -52,10 +40,7 @@ model SiteUpdateSegmentInput {
   /** Segment name */
   name?: string;
 
-  /** Segment type */
-  type?: SiteSegmentType;
-
-  /** Segment definition (used by rule segments) */
+  /** Segment definition (rule query; empty matches all contacts) */
   definition?: string | null;
 }
 

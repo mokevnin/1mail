@@ -13,6 +13,7 @@ import (
 	siteapi "github.com/mokevnin/1mail/gen/site"
 	"github.com/mokevnin/1mail/internal/fixtures"
 	"github.com/mokevnin/1mail/internal/service"
+	ht "github.com/ogen-go/ogen/http"
 	"github.com/stretchr/testify/require"
 )
 
@@ -35,6 +36,15 @@ const (
 func (env *TestEnv) SiteActor(t *testing.T, email string) *siteapi.Client {
 	t.Helper()
 	return env.siteClient(t, mintSiteJWT(t, email))
+}
+
+// SiteActorVia is SiteActor with the in-memory transport wrapped by wrap, for
+// tests that observe the wire (e.g. raw response bodies).
+func (env *TestEnv) SiteActorVia(t *testing.T, email string, wrap func(inner ht.Client) ht.Client) *siteapi.Client {
+	t.Helper()
+	c, err := siteapi.NewClient(siteBase, cookieSource{mintSiteJWT(t, email)}, siteapi.WithClient(wrap(env.Transport(nil))))
+	require.NoError(t, err)
+	return c
 }
 
 // SiteAnonymous returns a /site client carrying no credential.

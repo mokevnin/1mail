@@ -380,12 +380,7 @@
     "previewCount_one": "segments.previewCount",
     "previewCount_many": "",
     "previewCount_other": "segments.previewCount",
-    "rulesLabel": "Reglas",
-    "type": {
-      "rule": "Regla",
-      "snapshot": "Instantánea"
-    },
-    "typeLabel": "Tipo"
+    "rulesLabel": "Reglas"
   },
   "settings": {
     "apiKeysTitle": "Claves API",

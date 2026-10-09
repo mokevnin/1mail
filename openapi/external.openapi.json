@@ -4476,23 +4476,15 @@
       },
       "CreateSegmentInput": {
         "type": "object",
-        "required": ["name", "type"],
+        "required": ["name"],
         "properties": {
           "name": {
             "type": "string",
             "description": "Segment name"
           },
-          "type": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/SegmentType"
-              }
-            ],
-            "description": "Segment type"
-          },
           "definition": {
             "type": "string",
-            "description": "Segment definition (required for rule segments)"
+            "description": "Segment definition (rule query; empty matches all contacts)"
           }
         },
         "description": "Request body for creating a segment"
@@ -4911,11 +4903,6 @@
           }
         ],
         "description": "Segment resource"
-      },
-      "SegmentType": {
-        "type": "string",
-        "enum": ["rule", "snapshot"],
-        "description": "Segment type"
       },
       "SendTransactionalEmailInput": {
         "type": "object",
@@ -5345,14 +5332,6 @@
           "name": {
             "type": "string",
             "description": "Segment name"
-          },
-          "type": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/SegmentType"
-              }
-            ],
-            "description": "Segment type"
           },
           "definition": {
             "type": "string",

@@ -33,14 +33,12 @@ func New(db *ent.Client) *Module { return &Module{db: db} }
 // CreateInput is a new Segment. A nil or empty Definition means "no rules yet".
 type CreateInput struct {
 	Name       string
-	Type       segment.Type
 	Definition *string
 }
 
 // UpdateInput changes a Segment; nil fields are left as they are.
 type UpdateInput struct {
 	Name       *string
-	Type       *segment.Type
 	Definition *string
 }
 
@@ -56,7 +54,7 @@ func (s *Module) Validate(def string) error {
 	return nil
 }
 
-// Create validates the definition (whatever the Segment type) and stores the Segment.
+// Create validates the definition and stores the Segment.
 func (s *Module) Create(ctx context.Context, workspaceID int64, in CreateInput) (*ent.Segment, error) {
 	if in.Definition != nil {
 		if err := s.Validate(*in.Definition); err != nil {
@@ -66,7 +64,6 @@ func (s *Module) Create(ctx context.Context, workspaceID int64, in CreateInput) 
 	return s.db.Segment.Create().
 		SetWorkspaceID(workspaceID).
 		SetName(in.Name).
-		SetType(in.Type).
 		SetNillableDefinition(in.Definition).
 		Save(ctx)
 }
@@ -82,9 +79,6 @@ func (s *Module) Update(ctx context.Context, workspaceID, id int64, in UpdateInp
 		Where(segment.WorkspaceID(workspaceID)).
 		SetNillableName(in.Name).
 		SetNillableDefinition(in.Definition)
-	if in.Type != nil {
-		q = q.SetType(*in.Type)
-	}
 	seg, err := q.Save(ctx)
 	if ent.IsNotFound(err) {
 		return nil, ErrNotFound

@@ -2076,20 +2076,13 @@ func (s *CreateContactInputCustomFields) init() CreateContactInputCustomFields {
 type CreateSegmentInput struct {
 	// Segment name.
 	Name string `json:"name"`
-	// Segment type.
-	Type SegmentType `json:"type"`
-	// Segment definition (required for rule segments).
+	// Segment definition (rule query; empty matches all contacts).
 	Definition OptString `json:"definition"`
 }
 
 // GetName returns the value of Name.
 func (s *CreateSegmentInput) GetName() string {
 	return s.Name
-}
-
-// GetType returns the value of Type.
-func (s *CreateSegmentInput) GetType() SegmentType {
-	return s.Type
 }
 
 // GetDefinition returns the value of Definition.
@@ -2100,11 +2093,6 @@ func (s *CreateSegmentInput) GetDefinition() OptString {
 // SetName sets the value of Name.
 func (s *CreateSegmentInput) SetName(val string) {
 	s.Name = val
-}
-
-// SetType sets the value of Type.
-func (s *CreateSegmentInput) SetType(val SegmentType) {
-	s.Type = val
 }
 
 // SetDefinition sets the value of Definition.
@@ -3796,52 +3784,6 @@ func (o OptProblemDetailsFields) Or(d ProblemDetailsFields) ProblemDetailsFields
 	return d
 }
 
-// NewOptSegmentType returns new OptSegmentType with value set to v.
-func NewOptSegmentType(v SegmentType) OptSegmentType {
-	return OptSegmentType{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptSegmentType is optional SegmentType.
-type OptSegmentType struct {
-	Value SegmentType
-	Set   bool
-}
-
-// IsSet returns true if OptSegmentType was set.
-func (o OptSegmentType) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptSegmentType) Reset() {
-	var v SegmentType
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptSegmentType) SetTo(v SegmentType) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptSegmentType) Get() (v SegmentType, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptSegmentType) Or(d SegmentType) SegmentType {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
 // NewOptSendTransactionalEmailInputVariables returns new OptSendTransactionalEmailInputVariables with value set to v.
 func NewOptSendTransactionalEmailInputVariables(v SendTransactionalEmailInputVariables) OptSendTransactionalEmailInputVariables {
 	return OptSendTransactionalEmailInputVariables{
@@ -4214,9 +4156,7 @@ func (s *ScheduleBroadcastInput) SetScheduledAt(val Timestamp) {
 type SegmentResource struct {
 	// Segment name.
 	Name string `json:"name"`
-	// Segment type.
-	Type SegmentType `json:"type"`
-	// Segment definition (required for rule segments).
+	// Segment definition (rule query; empty matches all contacts).
 	Definition OptString `json:"definition"`
 	// Unique identifier.
 	ID EntityId `json:"id"`
@@ -4229,11 +4169,6 @@ type SegmentResource struct {
 // GetName returns the value of Name.
 func (s *SegmentResource) GetName() string {
 	return s.Name
-}
-
-// GetType returns the value of Type.
-func (s *SegmentResource) GetType() SegmentType {
-	return s.Type
 }
 
 // GetDefinition returns the value of Definition.
@@ -4261,11 +4196,6 @@ func (s *SegmentResource) SetName(val string) {
 	s.Name = val
 }
 
-// SetType sets the value of Type.
-func (s *SegmentResource) SetType(val SegmentType) {
-	s.Type = val
-}
-
 // SetDefinition sets the value of Definition.
 func (s *SegmentResource) SetDefinition(val OptString) {
 	s.Definition = val
@@ -4289,49 +4219,6 @@ func (s *SegmentResource) SetUpdatedAt(val Timestamp) {
 func (*SegmentResource) segmentsCreateRes() {}
 func (*SegmentResource) segmentsGetRes()    {}
 func (*SegmentResource) segmentsUpdateRes() {}
-
-// Segment type.
-// Ref: #/components/schemas/SegmentType
-type SegmentType string
-
-const (
-	SegmentTypeRule     SegmentType = "rule"
-	SegmentTypeSnapshot SegmentType = "snapshot"
-)
-
-// AllValues returns all SegmentType values.
-func (SegmentType) AllValues() []SegmentType {
-	return []SegmentType{
-		SegmentTypeRule,
-		SegmentTypeSnapshot,
-	}
-}
-
-// MarshalText implements encoding.TextMarshaler.
-func (s SegmentType) MarshalText() ([]byte, error) {
-	switch s {
-	case SegmentTypeRule:
-		return []byte(s), nil
-	case SegmentTypeSnapshot:
-		return []byte(s), nil
-	default:
-		return nil, errors.Errorf("invalid value: %q", s)
-	}
-}
-
-// UnmarshalText implements encoding.TextUnmarshaler.
-func (s *SegmentType) UnmarshalText(data []byte) error {
-	switch SegmentType(data) {
-	case SegmentTypeRule:
-		*s = SegmentTypeRule
-		return nil
-	case SegmentTypeSnapshot:
-		*s = SegmentTypeSnapshot
-		return nil
-	default:
-		return errors.Errorf("invalid value: %q", data)
-	}
-}
 
 type SegmentsCreateUnauthorized ProblemDetails
 
@@ -5774,8 +5661,6 @@ func (s *UpdateContactInputCustomFields) init() UpdateContactInputCustomFields {
 type UpdateSegmentInput struct {
 	// Segment name.
 	Name OptString `json:"name"`
-	// Segment type.
-	Type OptSegmentType `json:"type"`
 	// Segment definition.
 	Definition OptString `json:"definition"`
 }
@@ -5783,11 +5668,6 @@ type UpdateSegmentInput struct {
 // GetName returns the value of Name.
 func (s *UpdateSegmentInput) GetName() OptString {
 	return s.Name
-}
-
-// GetType returns the value of Type.
-func (s *UpdateSegmentInput) GetType() OptSegmentType {
-	return s.Type
 }
 
 // GetDefinition returns the value of Definition.
@@ -5798,11 +5678,6 @@ func (s *UpdateSegmentInput) GetDefinition() OptString {
 // SetName sets the value of Name.
 func (s *UpdateSegmentInput) SetName(val OptString) {
 	s.Name = val
-}
-
-// SetType sets the value of Type.
-func (s *UpdateSegmentInput) SetType(val OptSegmentType) {
-	s.Type = val
 }
 
 // SetDefinition sets the value of Definition.

@@ -20,8 +20,6 @@ type Segment struct {
 	ID int64 `json:"id,omitempty"`
 	// Name holds the value of the "name" field.
 	Name string `json:"name,omitempty"`
-	// Type holds the value of the "type" field.
-	Type segment.Type `json:"type,omitempty"`
 	// Definition holds the value of the "definition" field.
 	Definition *string `json:"definition,omitempty"`
 	// WorkspaceID holds the value of the "workspace_id" field.
@@ -63,7 +61,7 @@ func (*Segment) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case segment.FieldID, segment.FieldWorkspaceID:
 			values[i] = new(sql.NullInt64)
-		case segment.FieldName, segment.FieldType, segment.FieldDefinition:
+		case segment.FieldName, segment.FieldDefinition:
 			values[i] = new(sql.NullString)
 		case segment.FieldCreatedAt, segment.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
@@ -93,12 +91,6 @@ func (_m *Segment) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field name", values[i])
 			} else if value.Valid {
 				_m.Name = value.String
-			}
-		case segment.FieldType:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field type", values[i])
-			} else if value.Valid {
-				_m.Type = segment.Type(value.String)
 			}
 		case segment.FieldDefinition:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -168,9 +160,6 @@ func (_m *Segment) String() string {
 	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
 	builder.WriteString("name=")
 	builder.WriteString(_m.Name)
-	builder.WriteString(", ")
-	builder.WriteString("type=")
-	builder.WriteString(fmt.Sprintf("%v", _m.Type))
 	builder.WriteString(", ")
 	if v := _m.Definition; v != nil {
 		builder.WriteString("definition=")

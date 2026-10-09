@@ -27,9 +27,6 @@ func (Segment) Fields() []ent.Field {
 			Immutable(),
 		field.String("name").
 			NotEmpty(),
-		field.Enum("type").
-			Values("rule", "snapshot").
-			Default("rule"),
 		field.String("definition").
 			Optional().
 			Nillable(),

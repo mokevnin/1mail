@@ -381,12 +381,7 @@
     "previewCount_few": "",
     "previewCount_many": "",
     "previewCount_other": "segments.previewCount",
-    "rulesLabel": "Правила",
-    "type": {
-      "rule": "По правилу",
-      "snapshot": "Снимок"
-    },
-    "typeLabel": "Тип"
+    "rulesLabel": "Правила"
   },
   "settings": {
     "apiKeysTitle": "API-ключи",

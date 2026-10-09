@@ -637,11 +637,7 @@ export type SiteCreateSegmentInput = {
    */
   name: string;
   /**
-   * Segment type
-   */
-  type: SiteSegmentType;
-  /**
-   * Segment definition (used by rule segments)
+   * Segment definition (rule query; empty matches all contacts)
    */
   definition?: string | null;
 };
@@ -1189,11 +1185,7 @@ export type SiteSegmentResource = {
    */
   name: string;
   /**
-   * Segment type
-   */
-  type: SiteSegmentType;
-  /**
-   * Segment definition (used by rule segments)
+   * Segment definition (rule query; empty matches all contacts)
    */
   definition?: string | null;
   /**
@@ -1205,16 +1197,6 @@ export type SiteSegmentResource = {
    */
   updatedAt: Timestamp;
 };
-
-/**
- * Segment type for site UI
- */
-export const SiteSegmentType = { RULE: 'rule', SNAPSHOT: 'snapshot' } as const;
-
-/**
- * Segment type for site UI
- */
-export type SiteSegmentType = typeof SiteSegmentType[keyof typeof SiteSegmentType];
 
 /**
  * Sending domain resource used by the site UI (ADR 0010). 1mail generates the
@@ -1608,11 +1590,7 @@ export type SiteUpdateSegmentInput = {
    */
   name?: string;
   /**
-   * Segment type
-   */
-  type?: SiteSegmentType;
-  /**
-   * Segment definition (used by rule segments)
+   * Segment definition (rule query; empty matches all contacts)
    */
   definition?: string | null;
 };

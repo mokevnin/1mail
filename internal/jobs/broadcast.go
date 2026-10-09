@@ -230,10 +230,6 @@ func PlanBroadcast(ctx context.Context, client *ent.Client, mod *outbound.Module
 			_, _ = b.Update().SetStatus(broadcast.StatusFailed).Save(ctx)
 			return nil, fmt.Errorf("load segment %d: %w", *b.SegmentID, err)
 		}
-		if seg.Type != segment.TypeRule {
-			_, _ = b.Update().SetStatus(broadcast.StatusFailed).Save(ctx)
-			return nil, fmt.Errorf("segment %d: only rule segments are supported as broadcast audiences", seg.ID)
-		}
 		def := ""
 		if seg.Definition != nil {
 			def = *seg.Definition

@@ -44,20 +44,6 @@ func (_u *SegmentUpdate) SetNillableName(v *string) *SegmentUpdate {
 	return _u
 }
 
-// SetType sets the "type" field.
-func (_u *SegmentUpdate) SetType(v segment.Type) *SegmentUpdate {
-	_u.mutation.SetType(v)
-	return _u
-}
-
-// SetNillableType sets the "type" field if the given value is not nil.
-func (_u *SegmentUpdate) SetNillableType(v *segment.Type) *SegmentUpdate {
-	if v != nil {
-		_u.SetType(*v)
-	}
-	return _u
-}
-
 // SetDefinition sets the "definition" field.
 func (_u *SegmentUpdate) SetDefinition(v string) *SegmentUpdate {
 	_u.mutation.SetDefinition(v)
@@ -157,11 +143,6 @@ func (_u *SegmentUpdate) check() error {
 			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "Segment.name": %w`, err)}
 		}
 	}
-	if v, ok := _u.mutation.GetType(); ok {
-		if err := segment.TypeValidator(v); err != nil {
-			return &ValidationError{Name: "type", err: fmt.Errorf(`ent: validator failed for field "Segment.type": %w`, err)}
-		}
-	}
 	if _u.mutation.WorkspaceCleared() && len(_u.mutation.WorkspaceIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "Segment.workspace"`)
 	}
@@ -188,9 +169,6 @@ func (_u *SegmentUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	}
 	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(segment.FieldName, field.TypeString, value)
-	}
-	if value, ok := _u.mutation.GetType(); ok {
-		_spec.SetField(segment.FieldType, field.TypeEnum, value)
 	}
 	if value, ok := _u.mutation.Definition(); ok {
 		_spec.SetField(segment.FieldDefinition, field.TypeString, value)
@@ -262,20 +240,6 @@ func (_u *SegmentUpdateOne) SetName(v string) *SegmentUpdateOne {
 func (_u *SegmentUpdateOne) SetNillableName(v *string) *SegmentUpdateOne {
 	if v != nil {
 		_u.SetName(*v)
-	}
-	return _u
-}
-
-// SetType sets the "type" field.
-func (_u *SegmentUpdateOne) SetType(v segment.Type) *SegmentUpdateOne {
-	_u.mutation.SetType(v)
-	return _u
-}
-
-// SetNillableType sets the "type" field if the given value is not nil.
-func (_u *SegmentUpdateOne) SetNillableType(v *segment.Type) *SegmentUpdateOne {
-	if v != nil {
-		_u.SetType(*v)
 	}
 	return _u
 }
@@ -392,11 +356,6 @@ func (_u *SegmentUpdateOne) check() error {
 			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "Segment.name": %w`, err)}
 		}
 	}
-	if v, ok := _u.mutation.GetType(); ok {
-		if err := segment.TypeValidator(v); err != nil {
-			return &ValidationError{Name: "type", err: fmt.Errorf(`ent: validator failed for field "Segment.type": %w`, err)}
-		}
-	}
 	if _u.mutation.WorkspaceCleared() && len(_u.mutation.WorkspaceIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "Segment.workspace"`)
 	}
@@ -440,9 +399,6 @@ func (_u *SegmentUpdateOne) sqlSave(ctx context.Context) (_node *Segment, err er
 	}
 	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(segment.FieldName, field.TypeString, value)
-	}
-	if value, ok := _u.mutation.GetType(); ok {
-		_spec.SetField(segment.FieldType, field.TypeEnum, value)
 	}
 	if value, ok := _u.mutation.Definition(); ok {
 		_spec.SetField(segment.FieldDefinition, field.TypeString, value)

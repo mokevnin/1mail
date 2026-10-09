@@ -74,7 +74,6 @@ func (h *Handlers) SiteSegmentsCreate(ctx context.Context, req *siteapi.SiteCrea
 
 	s, err := h.segments.Create(ctx, ws, segments.CreateInput{
 		Name:       req.Name,
-		Type:       segment.Type(req.Type),
 		Definition: convert.StringPtr(req.Definition),
 	})
 	if errors.Is(err, segments.ErrInvalidDefinition) {
@@ -135,10 +134,6 @@ func (h *Handlers) SiteSegmentsUpdate(ctx context.Context, req *siteapi.SiteUpda
 	in := segments.UpdateInput{
 		Name:       convert.StringPtr(req.Name),
 		Definition: convert.StringPtr(req.Definition),
-	}
-	if v, ok := req.Type.Get(); ok {
-		t := segment.Type(v)
-		in.Type = &t
 	}
 	s, err := h.segments.Update(ctx, ws, id, in)
 	if errors.Is(err, segments.ErrInvalidDefinition) {

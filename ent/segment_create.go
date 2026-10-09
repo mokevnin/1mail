@@ -29,20 +29,6 @@ func (_c *SegmentCreate) SetName(v string) *SegmentCreate {
 	return _c
 }
 
-// SetType sets the "type" field.
-func (_c *SegmentCreate) SetType(v segment.Type) *SegmentCreate {
-	_c.mutation.SetType(v)
-	return _c
-}
-
-// SetNillableType sets the "type" field if the given value is not nil.
-func (_c *SegmentCreate) SetNillableType(v *segment.Type) *SegmentCreate {
-	if v != nil {
-		_c.SetType(*v)
-	}
-	return _c
-}
-
 // SetDefinition sets the "definition" field.
 func (_c *SegmentCreate) SetDefinition(v string) *SegmentCreate {
 	_c.mutation.SetDefinition(v)
@@ -137,10 +123,6 @@ func (_c *SegmentCreate) ExecX(ctx context.Context) {
 
 // defaults sets the default values of the builder before save.
 func (_c *SegmentCreate) defaults() {
-	if _, ok := _c.mutation.GetType(); !ok {
-		v := segment.DefaultType
-		_c.mutation.SetType(v)
-	}
 	if _, ok := _c.mutation.CreatedAt(); !ok {
 		v := segment.DefaultCreatedAt()
 		_c.mutation.SetCreatedAt(v)
@@ -159,14 +141,6 @@ func (_c *SegmentCreate) check() error {
 	if v, ok := _c.mutation.Name(); ok {
 		if err := segment.NameValidator(v); err != nil {
 			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "Segment.name": %w`, err)}
-		}
-	}
-	if _, ok := _c.mutation.GetType(); !ok {
-		return &ValidationError{Name: "type", err: errors.New(`ent: missing required field "Segment.type"`)}
-	}
-	if v, ok := _c.mutation.GetType(); ok {
-		if err := segment.TypeValidator(v); err != nil {
-			return &ValidationError{Name: "type", err: fmt.Errorf(`ent: validator failed for field "Segment.type": %w`, err)}
 		}
 	}
 	if _, ok := _c.mutation.WorkspaceID(); !ok {
@@ -217,10 +191,6 @@ func (_c *SegmentCreate) createSpec() (*Segment, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.Name(); ok {
 		_spec.SetField(segment.FieldName, field.TypeString, value)
 		_node.Name = value
-	}
-	if value, ok := _c.mutation.GetType(); ok {
-		_spec.SetField(segment.FieldType, field.TypeEnum, value)
-		_node.Type = value
 	}
 	if value, ok := _c.mutation.Definition(); ok {
 		_spec.SetField(segment.FieldDefinition, field.TypeString, value)
@@ -312,18 +282,6 @@ func (u *SegmentUpsert) SetName(v string) *SegmentUpsert {
 // UpdateName sets the "name" field to the value that was provided on create.
 func (u *SegmentUpsert) UpdateName() *SegmentUpsert {
 	u.SetExcluded(segment.FieldName)
-	return u
-}
-
-// SetType sets the "type" field.
-func (u *SegmentUpsert) SetType(v segment.Type) *SegmentUpsert {
-	u.Set(segment.FieldType, v)
-	return u
-}
-
-// UpdateType sets the "type" field to the value that was provided on create.
-func (u *SegmentUpsert) UpdateType() *SegmentUpsert {
-	u.SetExcluded(segment.FieldType)
 	return u
 }
 
@@ -431,20 +389,6 @@ func (u *SegmentUpsertOne) SetName(v string) *SegmentUpsertOne {
 func (u *SegmentUpsertOne) UpdateName() *SegmentUpsertOne {
 	return u.Update(func(s *SegmentUpsert) {
 		s.UpdateName()
-	})
-}
-
-// SetType sets the "type" field.
-func (u *SegmentUpsertOne) SetType(v segment.Type) *SegmentUpsertOne {
-	return u.Update(func(s *SegmentUpsert) {
-		s.SetType(v)
-	})
-}
-
-// UpdateType sets the "type" field to the value that was provided on create.
-func (u *SegmentUpsertOne) UpdateType() *SegmentUpsertOne {
-	return u.Update(func(s *SegmentUpsert) {
-		s.UpdateType()
 	})
 }
 
@@ -725,20 +669,6 @@ func (u *SegmentUpsertBulk) SetName(v string) *SegmentUpsertBulk {
 func (u *SegmentUpsertBulk) UpdateName() *SegmentUpsertBulk {
 	return u.Update(func(s *SegmentUpsert) {
 		s.UpdateName()
-	})
-}
-
-// SetType sets the "type" field.
-func (u *SegmentUpsertBulk) SetType(v segment.Type) *SegmentUpsertBulk {
-	return u.Update(func(s *SegmentUpsert) {
-		s.SetType(v)
-	})
-}
-
-// UpdateType sets the "type" field to the value that was provided on create.
-func (u *SegmentUpsertBulk) UpdateType() *SegmentUpsertBulk {
-	return u.Update(func(s *SegmentUpsert) {
-		s.UpdateType()
 	})
 }
 

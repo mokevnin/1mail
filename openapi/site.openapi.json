@@ -5987,24 +5987,16 @@
       },
       "SiteCreateSegmentInput": {
         "type": "object",
-        "required": ["name", "type"],
+        "required": ["name"],
         "properties": {
           "name": {
             "type": "string",
             "description": "Segment name"
           },
-          "type": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/SiteSegmentType"
-              }
-            ],
-            "description": "Segment type"
-          },
           "definition": {
             "type": "string",
             "nullable": true,
-            "description": "Segment definition (used by rule segments)"
+            "description": "Segment definition (rule query; empty matches all contacts)"
           }
         },
         "description": "Site request body for creating a segment"
@@ -6784,7 +6776,7 @@
       },
       "SiteSegmentResource": {
         "type": "object",
-        "required": ["id", "name", "type", "createdAt", "updatedAt"],
+        "required": ["id", "name", "createdAt", "updatedAt"],
         "properties": {
           "id": {
             "allOf": [
@@ -6798,18 +6790,10 @@
             "type": "string",
             "description": "Segment name"
           },
-          "type": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/SiteSegmentType"
-              }
-            ],
-            "description": "Segment type"
-          },
           "definition": {
             "type": "string",
             "nullable": true,
-            "description": "Segment definition (used by rule segments)"
+            "description": "Segment definition (rule query; empty matches all contacts)"
           },
           "createdAt": {
             "allOf": [
@@ -6829,11 +6813,6 @@
           }
         },
         "description": "Segment resource used by the site UI"
-      },
-      "SiteSegmentType": {
-        "type": "string",
-        "enum": ["rule", "snapshot"],
-        "description": "Segment type for site UI"
       },
       "SiteSendingDomainResource": {
         "type": "object",
@@ -7432,18 +7411,10 @@
             "type": "string",
             "description": "Segment name"
           },
-          "type": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/SiteSegmentType"
-              }
-            ],
-            "description": "Segment type"
-          },
           "definition": {
             "type": "string",
             "nullable": true,
-            "description": "Segment definition (used by rule segments)"
+            "description": "Segment definition (rule query; empty matches all contacts)"
           }
         },
         "description": "Site request body for updating a segment"

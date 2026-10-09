@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/mokevnin/1mail/ent/contact"
-	"github.com/mokevnin/1mail/ent/segment"
 	"github.com/mokevnin/1mail/internal/fixtures"
 	"github.com/mokevnin/1mail/internal/segments"
 	"github.com/mokevnin/1mail/internal/testhelper"
@@ -19,17 +18,17 @@ const (
 
 func ptr[T any](v T) *T { return &v }
 
-func TestCreateRejectsInvalidDefinitionForAnyType(t *testing.T) {
+func TestCreateRejectsInvalidDefinition(t *testing.T) {
 	env := testhelper.Setup(t)
 	m := segments.New(env.DB)
 	ctx := context.Background()
 
-	for _, typ := range []segment.Type{segment.TypeRule, segment.TypeSnapshot} {
+	{
 		before, err := env.DB.Segment.Query().Count(ctx)
 		require.NoError(t, err)
 
-		_, err = m.Create(ctx, fixtures.AcmeID, segments.CreateInput{Name: "Bad", Type: typ, Definition: ptr(badDefinition)})
-		require.ErrorIs(t, err, segments.ErrInvalidDefinition, typ)
+		_, err = m.Create(ctx, fixtures.AcmeID, segments.CreateInput{Name: "Bad", Definition: ptr(badDefinition)})
+		require.ErrorIs(t, err, segments.ErrInvalidDefinition)
 
 		after, err := env.DB.Segment.Query().Count(ctx)
 		require.NoError(t, err)
@@ -43,14 +42,14 @@ func TestCreateAcceptsValidAndEmptyDefinition(t *testing.T) {
 	ctx := context.Background()
 
 	def := `{"combinator":"and","rules":[{"field":"email","operator":"contains","value":"x"}]}`
-	s, err := m.Create(ctx, fixtures.AcmeID, segments.CreateInput{Name: "Good", Type: segment.TypeRule, Definition: ptr(def)})
+	s, err := m.Create(ctx, fixtures.AcmeID, segments.CreateInput{Name: "Good", Definition: ptr(def)})
 	require.NoError(t, err)
 	assert.EqualValues(t, fixtures.AcmeID, s.WorkspaceID)
 	assert.Equal(t, def, *s.Definition)
 
-	_, err = m.Create(ctx, fixtures.AcmeID, segments.CreateInput{Name: "Empty", Type: segment.TypeRule, Definition: ptr("")})
+	_, err = m.Create(ctx, fixtures.AcmeID, segments.CreateInput{Name: "Empty", Definition: ptr("")})
 	require.NoError(t, err)
-	_, err = m.Create(ctx, fixtures.AcmeID, segments.CreateInput{Name: "Nil", Type: segment.TypeRule})
+	_, err = m.Create(ctx, fixtures.AcmeID, segments.CreateInput{Name: "Nil"})
 	require.NoError(t, err)
 }
 
@@ -62,12 +61,11 @@ func TestUpdateValidatesLikeCreate(t *testing.T) {
 	_, err := m.Update(ctx, fixtures.AcmeID, fixtures.SegmentProPlanID, segments.UpdateInput{Definition: ptr(badDefinition)})
 	require.ErrorIs(t, err, segments.ErrInvalidDefinition)
 
-	// An invalid definition is rejected whatever the type, and leaves the row untouched.
-	_, err = m.Update(ctx, fixtures.AcmeID, fixtures.SegmentProPlanID, segments.UpdateInput{Type: ptr(segment.TypeSnapshot), Definition: ptr(badDefinition)})
+	// An invalid definition is rejected and leaves the row untouched.
+	_, err = m.Update(ctx, fixtures.AcmeID, fixtures.SegmentProPlanID, segments.UpdateInput{Definition: ptr(badDefinition)})
 	require.ErrorIs(t, err, segments.ErrInvalidDefinition)
 	s, err := env.DB.Segment.Get(ctx, fixtures.SegmentProPlanID)
 	require.NoError(t, err)
-	assert.Equal(t, segment.TypeRule, s.Type)
 	assert.NotEqual(t, badDefinition, *s.Definition)
 
 	got, err := m.Update(ctx, fixtures.AcmeID, fixtures.SegmentProPlanID, segments.UpdateInput{Name: ptr("Renamed")})

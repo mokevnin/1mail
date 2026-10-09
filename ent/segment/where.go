@@ -145,26 +145,6 @@ func NameContainsFold(v string) predicate.Segment {
 	return predicate.Segment(sql.FieldContainsFold(FieldName, v))
 }
 
-// TypeEQ applies the EQ predicate on the "type" field.
-func TypeEQ(v Type) predicate.Segment {
-	return predicate.Segment(sql.FieldEQ(FieldType, v))
-}
-
-// TypeNEQ applies the NEQ predicate on the "type" field.
-func TypeNEQ(v Type) predicate.Segment {
-	return predicate.Segment(sql.FieldNEQ(FieldType, v))
-}
-
-// TypeIn applies the In predicate on the "type" field.
-func TypeIn(vs ...Type) predicate.Segment {
-	return predicate.Segment(sql.FieldIn(FieldType, vs...))
-}
-
-// TypeNotIn applies the NotIn predicate on the "type" field.
-func TypeNotIn(vs ...Type) predicate.Segment {
-	return predicate.Segment(sql.FieldNotIn(FieldType, vs...))
-}
-
 // DefinitionEQ applies the EQ predicate on the "definition" field.
 func DefinitionEQ(v string) predicate.Segment {
 	return predicate.Segment(sql.FieldEQ(FieldDefinition, v))
