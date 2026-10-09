@@ -61,7 +61,10 @@
             }
           }
         },
-        "tags": ["Auth"]
+        "tags": ["Auth"],
+        "x-mcp": {
+          "name": "whoami"
+        }
       }
     },
     "/auth/tokens": {
@@ -120,6 +123,9 @@
               }
             }
           }
+        },
+        "x-mcp": {
+          "hidden": true
         }
       },
       "get": {
@@ -157,7 +163,10 @@
             }
           }
         },
-        "tags": ["Auth"]
+        "tags": ["Auth"],
+        "x-mcp": {
+          "hidden": true
+        }
       }
     },
     "/auth/tokens/bootstrap": {
@@ -226,7 +235,10 @@
             }
           }
         },
-        "security": [{}]
+        "security": [{}],
+        "x-mcp": {
+          "hidden": true
+        }
       }
     },
     "/auth/tokens/{id}": {
@@ -287,7 +299,10 @@
             }
           }
         },
-        "tags": ["Auth"]
+        "tags": ["Auth"],
+        "x-mcp": {
+          "hidden": true
+        }
       }
     },
     "/broadcasts": {
@@ -375,7 +390,10 @@
             }
           }
         },
-        "tags": ["Broadcasts"]
+        "tags": ["Broadcasts"],
+        "x-mcp": {
+          "hidden": true
+        }
       },
       "post": {
         "operationId": "Broadcasts_create",
@@ -423,6 +441,9 @@
               }
             }
           }
+        },
+        "x-mcp": {
+          "hidden": true
         }
       }
     },
@@ -477,7 +498,10 @@
             }
           }
         },
-        "tags": ["Broadcasts"]
+        "tags": ["Broadcasts"],
+        "x-mcp": {
+          "hidden": true
+        }
       },
       "put": {
         "operationId": "Broadcasts_update",
@@ -549,6 +573,9 @@
               }
             }
           }
+        },
+        "x-mcp": {
+          "hidden": true
         }
       },
       "delete": {
@@ -594,7 +621,10 @@
             }
           }
         },
-        "tags": ["Broadcasts"]
+        "tags": ["Broadcasts"],
+        "x-mcp": {
+          "hidden": true
+        }
       }
     },
     "/contacts": {
@@ -1044,6 +1074,9 @@
               }
             }
           }
+        },
+        "x-mcp": {
+          "name": "events_record"
         }
       }
     },
@@ -1132,7 +1165,10 @@
             }
           }
         },
-        "tags": ["Events"]
+        "tags": ["Events"],
+        "x-mcp": {
+          "name": "events_actions_list"
+        }
       }
     },
     "/segments": {
@@ -1220,7 +1256,10 @@
             }
           }
         },
-        "tags": ["Segments"]
+        "tags": ["Segments"],
+        "x-mcp": {
+          "hidden": true
+        }
       },
       "post": {
         "operationId": "Segments_create",
@@ -1268,6 +1307,9 @@
               }
             }
           }
+        },
+        "x-mcp": {
+          "hidden": true
         }
       }
     },
@@ -1322,7 +1364,10 @@
             }
           }
         },
-        "tags": ["Segments"]
+        "tags": ["Segments"],
+        "x-mcp": {
+          "hidden": true
+        }
       },
       "put": {
         "operationId": "Segments_update",
@@ -1394,6 +1439,9 @@
               }
             }
           }
+        },
+        "x-mcp": {
+          "hidden": true
         }
       },
       "delete": {
@@ -1439,7 +1487,10 @@
             }
           }
         },
-        "tags": ["Segments"]
+        "tags": ["Segments"],
+        "x-mcp": {
+          "hidden": true
+        }
       }
     }
   },
