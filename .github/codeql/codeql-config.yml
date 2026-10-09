@@ -1,0 +1,10 @@
+name: 1mail CodeQL
+# Generated code is owned by the generators, not reviewed by hand.
+paths-ignore:
+  - gen
+  - ent
+  - openapi
+  - '**/generated'
+  - '**/*_gen.go'
+  - internal/server/assets
+  - '**/dist'
