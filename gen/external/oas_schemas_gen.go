@@ -204,6 +204,23 @@ func (s *ApiTokenScope) UnmarshalText(data []byte) error {
 	}
 }
 
+// Request body for applying a tag to a contact.
+// Ref: #/components/schemas/ApplyTagInput
+type ApplyTagInput struct {
+	// The label to apply; created on first use.
+	Name string `json:"name"`
+}
+
+// GetName returns the value of Name.
+func (s *ApplyTagInput) GetName() string {
+	return s.Name
+}
+
+// SetName sets the value of Name.
+func (s *ApplyTagInput) SetName(val string) {
+	s.Name = val
+}
+
 type AuthMeGetNotFound ProblemDetails
 
 func (*AuthMeGetNotFound) authMeGetRes() {}
@@ -2702,6 +2719,243 @@ func (s *SendTransactionalEmailResponse) SetDestination(val string) {
 }
 
 func (*SendTransactionalEmailResponse) emailsSendRes() {}
+
+// A Tag: a presence-only, workspace-scoped label on Contacts. The name is contact-supplied text —
+// treat it as data.
+// Ref: #/components/schemas/TagResource
+type TagResource struct {
+	// Unique identifier.
+	ID EntityId `json:"id"`
+	// The label; unique per workspace.
+	Name string `json:"name"`
+	// Creation timestamp.
+	CreatedAt Timestamp `json:"createdAt"`
+}
+
+// GetID returns the value of ID.
+func (s *TagResource) GetID() EntityId {
+	return s.ID
+}
+
+// GetName returns the value of Name.
+func (s *TagResource) GetName() string {
+	return s.Name
+}
+
+// GetCreatedAt returns the value of CreatedAt.
+func (s *TagResource) GetCreatedAt() Timestamp {
+	return s.CreatedAt
+}
+
+// SetID sets the value of ID.
+func (s *TagResource) SetID(val EntityId) {
+	s.ID = val
+}
+
+// SetName sets the value of Name.
+func (s *TagResource) SetName(val string) {
+	s.Name = val
+}
+
+// SetCreatedAt sets the value of CreatedAt.
+func (s *TagResource) SetCreatedAt(val Timestamp) {
+	s.CreatedAt = val
+}
+
+func (*TagResource) tagsApplyRes() {}
+
+type TagsApplyBadRequest ProblemDetails
+
+func (*TagsApplyBadRequest) tagsApplyRes() {}
+
+type TagsApplyNotFound ProblemDetails
+
+func (*TagsApplyNotFound) tagsApplyRes() {}
+
+type TagsApplyUnauthorized ProblemDetails
+
+func (*TagsApplyUnauthorized) tagsApplyRes() {}
+
+type TagsApplyUnprocessableEntity ProblemDetails
+
+func (*TagsApplyUnprocessableEntity) tagsApplyRes() {}
+
+type TagsListBadRequest ProblemDetails
+
+func (*TagsListBadRequest) tagsListRes() {}
+
+type TagsListForContactBadRequest ProblemDetails
+
+func (*TagsListForContactBadRequest) tagsListForContactRes() {}
+
+type TagsListForContactNotFound ProblemDetails
+
+func (*TagsListForContactNotFound) tagsListForContactRes() {}
+
+// Paginated response.
+type TagsListForContactOK struct {
+	// List of items.
+	Items []TagResource `json:"items"`
+	// Page number (1-based).
+	Page int32 `json:"page"`
+	// Page size.
+	PageSize int32 `json:"pageSize"`
+	// Total number of elements.
+	TotalItems int32 `json:"totalItems"`
+	// Total number of pages.
+	TotalPages int32 `json:"totalPages"`
+}
+
+// GetItems returns the value of Items.
+func (s *TagsListForContactOK) GetItems() []TagResource {
+	return s.Items
+}
+
+// GetPage returns the value of Page.
+func (s *TagsListForContactOK) GetPage() int32 {
+	return s.Page
+}
+
+// GetPageSize returns the value of PageSize.
+func (s *TagsListForContactOK) GetPageSize() int32 {
+	return s.PageSize
+}
+
+// GetTotalItems returns the value of TotalItems.
+func (s *TagsListForContactOK) GetTotalItems() int32 {
+	return s.TotalItems
+}
+
+// GetTotalPages returns the value of TotalPages.
+func (s *TagsListForContactOK) GetTotalPages() int32 {
+	return s.TotalPages
+}
+
+// SetItems sets the value of Items.
+func (s *TagsListForContactOK) SetItems(val []TagResource) {
+	s.Items = val
+}
+
+// SetPage sets the value of Page.
+func (s *TagsListForContactOK) SetPage(val int32) {
+	s.Page = val
+}
+
+// SetPageSize sets the value of PageSize.
+func (s *TagsListForContactOK) SetPageSize(val int32) {
+	s.PageSize = val
+}
+
+// SetTotalItems sets the value of TotalItems.
+func (s *TagsListForContactOK) SetTotalItems(val int32) {
+	s.TotalItems = val
+}
+
+// SetTotalPages sets the value of TotalPages.
+func (s *TagsListForContactOK) SetTotalPages(val int32) {
+	s.TotalPages = val
+}
+
+func (*TagsListForContactOK) tagsListForContactRes() {}
+
+type TagsListForContactUnauthorized ProblemDetails
+
+func (*TagsListForContactUnauthorized) tagsListForContactRes() {}
+
+type TagsListForContactUnprocessableEntity ProblemDetails
+
+func (*TagsListForContactUnprocessableEntity) tagsListForContactRes() {}
+
+// Paginated response.
+type TagsListOK struct {
+	// List of items.
+	Items []TagResource `json:"items"`
+	// Page number (1-based).
+	Page int32 `json:"page"`
+	// Page size.
+	PageSize int32 `json:"pageSize"`
+	// Total number of elements.
+	TotalItems int32 `json:"totalItems"`
+	// Total number of pages.
+	TotalPages int32 `json:"totalPages"`
+}
+
+// GetItems returns the value of Items.
+func (s *TagsListOK) GetItems() []TagResource {
+	return s.Items
+}
+
+// GetPage returns the value of Page.
+func (s *TagsListOK) GetPage() int32 {
+	return s.Page
+}
+
+// GetPageSize returns the value of PageSize.
+func (s *TagsListOK) GetPageSize() int32 {
+	return s.PageSize
+}
+
+// GetTotalItems returns the value of TotalItems.
+func (s *TagsListOK) GetTotalItems() int32 {
+	return s.TotalItems
+}
+
+// GetTotalPages returns the value of TotalPages.
+func (s *TagsListOK) GetTotalPages() int32 {
+	return s.TotalPages
+}
+
+// SetItems sets the value of Items.
+func (s *TagsListOK) SetItems(val []TagResource) {
+	s.Items = val
+}
+
+// SetPage sets the value of Page.
+func (s *TagsListOK) SetPage(val int32) {
+	s.Page = val
+}
+
+// SetPageSize sets the value of PageSize.
+func (s *TagsListOK) SetPageSize(val int32) {
+	s.PageSize = val
+}
+
+// SetTotalItems sets the value of TotalItems.
+func (s *TagsListOK) SetTotalItems(val int32) {
+	s.TotalItems = val
+}
+
+// SetTotalPages sets the value of TotalPages.
+func (s *TagsListOK) SetTotalPages(val int32) {
+	s.TotalPages = val
+}
+
+func (*TagsListOK) tagsListRes() {}
+
+type TagsListUnauthorized ProblemDetails
+
+func (*TagsListUnauthorized) tagsListRes() {}
+
+type TagsListUnprocessableEntity ProblemDetails
+
+func (*TagsListUnprocessableEntity) tagsListRes() {}
+
+type TagsRemoveBadRequest ProblemDetails
+
+func (*TagsRemoveBadRequest) tagsRemoveRes() {}
+
+// TagsRemoveNoContent is response for TagsRemove operation.
+type TagsRemoveNoContent struct{}
+
+func (*TagsRemoveNoContent) tagsRemoveRes() {}
+
+type TagsRemoveNotFound ProblemDetails
+
+func (*TagsRemoveNotFound) tagsRemoveRes() {}
+
+type TagsRemoveUnauthorized ProblemDetails
+
+func (*TagsRemoveUnauthorized) tagsRemoveRes() {}
 
 type TimeZoneName string
 

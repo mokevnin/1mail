@@ -225,6 +225,22 @@ type SiteSuppressionsListRes interface {
 	siteSuppressionsListRes()
 }
 
+type SiteTagsApplyRes interface {
+	siteTagsApplyRes()
+}
+
+type SiteTagsListForContactRes interface {
+	siteTagsListForContactRes()
+}
+
+type SiteTagsListRes interface {
+	siteTagsListRes()
+}
+
+type SiteTagsRemoveRes interface {
+	siteTagsRemoveRes()
+}
+
 type SiteTemplatesCreateRes interface {
 	siteTemplatesCreateRes()
 }

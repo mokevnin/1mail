@@ -9,10 +9,11 @@ import (
 	"github.com/mokevnin/1mail/ent/contact"
 	"github.com/mokevnin/1mail/ent/event"
 	"github.com/mokevnin/1mail/ent/predicate"
+	"github.com/mokevnin/1mail/ent/tag"
 )
 
 // ContactSchema whitelists the contact fields a segment rule may target and maps
-// them to columns. Custom fields are addressed as "custom:<key>"; behavioral
+// them to columns. Tags are the "tag" field (has / doesNotHave). Custom fields are addressed as "custom:<key>"; behavioral
 // conditions as "event:<action>" (joined to the events log on the stable identity
 // link contact_id ↔ id + workspace, per ADR 0002 — never the email string).
 func ContactSchema() Schema {
@@ -34,6 +35,17 @@ func ContactSchema() Schema {
 			WorkspaceCol:      event.FieldWorkspaceID,
 			ActionCol:         event.FieldAction,
 			OccurredCol:       event.FieldOccurredAt,
+			OuterJoinCol:      contact.FieldID,
+			OuterWorkspaceCol: contact.FieldWorkspaceID,
+		},
+		Tags: &TagSchema{
+			JoinTable:         contact.TagsTable,
+			JoinSubjectCol:    contact.TagsPrimaryKey[0],
+			JoinTagCol:        contact.TagsPrimaryKey[1],
+			TagTable:          tag.Table,
+			TagIDCol:          tag.FieldID,
+			TagNameCol:        tag.FieldName,
+			TagWorkspaceCol:   tag.FieldWorkspaceID,
 			OuterJoinCol:      contact.FieldID,
 			OuterWorkspaceCol: contact.FieldWorkspaceID,
 		},

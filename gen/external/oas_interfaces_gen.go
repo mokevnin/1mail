@@ -92,3 +92,19 @@ type SegmentsListRes interface {
 type SegmentsUpdateRes interface {
 	segmentsUpdateRes()
 }
+
+type TagsApplyRes interface {
+	tagsApplyRes()
+}
+
+type TagsListForContactRes interface {
+	tagsListForContactRes()
+}
+
+type TagsListRes interface {
+	tagsListRes()
+}
+
+type TagsRemoveRes interface {
+	tagsRemoveRes()
+}

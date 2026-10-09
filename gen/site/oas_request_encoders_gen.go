@@ -346,6 +346,20 @@ func encodeSiteSuppressionsCreateRequest(
 	return nil
 }
 
+func encodeSiteTagsApplyRequest(
+	req *SiteApplyTagInput,
+	r *http.Request,
+) error {
+	const contentType = "application/json"
+	e := new(jx.Encoder)
+	{
+		req.Encode(e)
+	}
+	encoded := e.Bytes()
+	ht.SetBody(r, bytes.NewReader(encoded), contentType)
+	return nil
+}
+
 func encodeSiteTemplatesCreateRequest(
 	req *SiteCreateEmailTemplateInput,
 	r *http.Request,

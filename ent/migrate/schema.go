@@ -657,6 +657,34 @@ var (
 			},
 		},
 	}
+	// TagsColumns holds the columns for the "tags" table.
+	TagsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt64, Increment: true},
+		{Name: "name", Type: field.TypeString},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "workspace_id", Type: field.TypeInt64},
+	}
+	// TagsTable holds the schema information for the "tags" table.
+	TagsTable = &schema.Table{
+		Name:       "tags",
+		Columns:    TagsColumns,
+		PrimaryKey: []*schema.Column{TagsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "tags_workspaces_tags",
+				Columns:    []*schema.Column{TagsColumns[3]},
+				RefColumns: []*schema.Column{WorkspacesColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "tags_name_workspace_id",
+				Unique:  true,
+				Columns: []*schema.Column{TagsColumns[1], TagsColumns[3]},
+			},
+		},
+	}
 	// UnsubscribesColumns holds the columns for the "unsubscribes" table.
 	UnsubscribesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt64, Increment: true},
@@ -805,6 +833,31 @@ var (
 		Columns:    WorkspacesColumns,
 		PrimaryKey: []*schema.Column{WorkspacesColumns[0]},
 	}
+	// ContactTagsColumns holds the columns for the "contact_tags" table.
+	ContactTagsColumns = []*schema.Column{
+		{Name: "contact_id", Type: field.TypeInt64},
+		{Name: "tag_id", Type: field.TypeInt64},
+	}
+	// ContactTagsTable holds the schema information for the "contact_tags" table.
+	ContactTagsTable = &schema.Table{
+		Name:       "contact_tags",
+		Columns:    ContactTagsColumns,
+		PrimaryKey: []*schema.Column{ContactTagsColumns[0], ContactTagsColumns[1]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "contact_tags_contact_id",
+				Columns:    []*schema.Column{ContactTagsColumns[0]},
+				RefColumns: []*schema.Column{ContactsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "contact_tags_tag_id",
+				Columns:    []*schema.Column{ContactTagsColumns[1]},
+				RefColumns: []*schema.Column{TagsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+		},
+	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
 		APITokensTable,
@@ -824,11 +877,13 @@ var (
 		SegmentsTable,
 		SendingDomainsTable,
 		SuppressionsTable,
+		TagsTable,
 		UnsubscribesTable,
 		UsersTable,
 		VisitorsTable,
 		WebhookEndpointsTable,
 		WorkspacesTable,
+		ContactTagsTable,
 	}
 )
 
@@ -905,6 +960,10 @@ func init() {
 	SuppressionsTable.Annotation = &entsql.Annotation{
 		Table: "suppressions",
 	}
+	TagsTable.ForeignKeys[0].RefTable = WorkspacesTable
+	TagsTable.Annotation = &entsql.Annotation{
+		Table: "tags",
+	}
 	UnsubscribesTable.ForeignKeys[0].RefTable = WorkspacesTable
 	UnsubscribesTable.Annotation = &entsql.Annotation{
 		Table: "unsubscribes",
@@ -924,4 +983,6 @@ func init() {
 	WorkspacesTable.Annotation = &entsql.Annotation{
 		Table: "workspaces",
 	}
+	ContactTagsTable.ForeignKeys[0].RefTable = ContactsTable
+	ContactTagsTable.ForeignKeys[1].RefTable = TagsTable
 }

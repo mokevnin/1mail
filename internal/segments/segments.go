@@ -14,6 +14,7 @@ package segments
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -26,6 +27,10 @@ import (
 // eventFieldPrefix marks a leaf as a behavioral condition: field "event:<action>"
 // with operator "performed"/"notPerformed" and value = a day window ("" = ever).
 const eventFieldPrefix = "event:"
+
+// tagField marks a leaf as a Tag condition: field "tag" with operator "has" or
+// "doesNotHave" and value = the Tag name.
+const tagField = "tag"
 
 // Group is a react-querybuilder RuleGroupType. Each rules[] entry is decoded
 // lazily because it is either a nested Group or a leaf Rule.
@@ -53,6 +58,25 @@ type Schema struct {
 	// correlated (NOT) EXISTS against an events table. All names are the SQL
 	// columns (kept as strings so this engine stays ent-agnostic).
 	Events *EventSchema
+	// Tags, when set, enables the "tag" leaf (has / doesNotHave a named Tag),
+	// compiled to a correlated (NOT) EXISTS over the subject<->tag join table.
+	Tags *TagSchema
+}
+
+// TagSchema describes how a subject entity relates to its Tags: the join table
+// (subject id, tag id), the tags table (id, name, workspace), and the outer
+// subject's id/workspace columns. Names are SQL columns, keeping the engine
+// ent-agnostic.
+type TagSchema struct {
+	JoinTable         string
+	JoinSubjectCol    string
+	JoinTagCol        string
+	TagTable          string
+	TagIDCol          string
+	TagNameCol        string
+	TagWorkspaceCol   string
+	OuterJoinCol      string
+	OuterWorkspaceCol string
 }
 
 // EventSchema describes how to correlate the subject entity to its events: the
@@ -180,6 +204,9 @@ func compileRule(r Rule, schema Schema) (builder, error) {
 		}
 		return compileEvent(schema.Events, action, r.Operator, r.Value)
 	}
+	if r.Field == tagField && schema.Tags != nil {
+		return compileTag(schema.Tags, r.Operator, r.Value)
+	}
 	if col, path, ok := resolveJSON(r.Field, schema); ok {
 		return compileJSON(col, path, r.Operator, r.Value)
 	}
@@ -248,6 +275,41 @@ func compileEvent(ev *EventSchema, action, op, value string) (builder, error) {
 			preds = append(preds, sql.GTE(sub.C(ev.OccurredCol), *since))
 		}
 		sub.Where(sql.And(preds...))
+		if negate {
+			return sql.NotExists(sub)
+		}
+		return sql.Exists(sub)
+	}, nil
+}
+
+// compileTag builds a correlated (NOT) EXISTS: the subject has (or lacks) the Tag
+// named value, within the subject's own workspace. Evaluated live — membership is
+// never materialized.
+func compileTag(tg *TagSchema, op, value string) (builder, error) {
+	var negate bool
+	switch op {
+	case "has":
+		negate = false
+	case "doesNotHave":
+		negate = true
+	default:
+		return nil, fmt.Errorf("unsupported operator %q for tag field", op)
+	}
+	name := strings.TrimSpace(value)
+	if name == "" {
+		return nil, errors.New("tag name is required")
+	}
+
+	return func(s *sql.Selector) *sql.Predicate {
+		join := sql.Table(tg.JoinTable)
+		tags := sql.Table(tg.TagTable)
+		sub := sql.Select(join.C(tg.JoinSubjectCol)).From(join).
+			Join(tags).On(join.C(tg.JoinTagCol), tags.C(tg.TagIDCol))
+		sub.Where(sql.And(
+			sql.ColumnsEQ(join.C(tg.JoinSubjectCol), s.C(tg.OuterJoinCol)),
+			sql.ColumnsEQ(tags.C(tg.TagWorkspaceCol), s.C(tg.OuterWorkspaceCol)),
+			sql.EQ(tags.C(tg.TagNameCol), name),
+		))
 		if negate {
 			return sql.NotExists(sub)
 		}

@@ -214,3 +214,39 @@ func (UnimplementedHandler) SegmentsList(ctx context.Context, params SegmentsLis
 func (UnimplementedHandler) SegmentsUpdate(ctx context.Context, req *UpdateSegmentInput, params SegmentsUpdateParams) (r SegmentsUpdateRes, _ error) {
 	return r, ht.ErrNotImplemented
 }
+
+// TagsApply implements Tags_apply operation.
+//
+// Apply a tag to a contact, creating the tag on first use. Idempotent.
+//
+// POST /contacts/{contactId}/tags
+func (UnimplementedHandler) TagsApply(ctx context.Context, req *ApplyTagInput, params TagsApplyParams) (r TagsApplyRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// TagsList implements Tags_list operation.
+//
+// List the workspace's tags.
+//
+// GET /tags
+func (UnimplementedHandler) TagsList(ctx context.Context, params TagsListParams) (r TagsListRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// TagsListForContact implements Tags_listForContact operation.
+//
+// List the tags a contact has.
+//
+// GET /contacts/{contactId}/tags
+func (UnimplementedHandler) TagsListForContact(ctx context.Context, params TagsListForContactParams) (r TagsListForContactRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// TagsRemove implements Tags_remove operation.
+//
+// Remove a tag from a contact. Idempotent; the tag stays in the catalogue.
+//
+// DELETE /contacts/{contactId}/tags/{name}
+func (UnimplementedHandler) TagsRemove(ctx context.Context, params TagsRemoveParams) (r TagsRemoveRes, _ error) {
+	return r, ht.ErrNotImplemented
+}

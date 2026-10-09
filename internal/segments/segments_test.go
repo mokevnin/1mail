@@ -9,6 +9,7 @@ import (
 	"github.com/mokevnin/1mail/ent/contact"
 	"github.com/mokevnin/1mail/ent/predicate"
 	"github.com/mokevnin/1mail/internal/segments"
+	"github.com/mokevnin/1mail/internal/tags"
 	"github.com/mokevnin/1mail/internal/testhelper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -138,6 +139,55 @@ func TestEventConditions(t *testing.T) {
 	// validation: bad operator + non-numeric window are rejected.
 	assert.Error(t, segments.Validate(`{"rules":[{"field":"event:x","operator":"weird","value":""}]}`, segments.ContactSchema()))
 	assert.Error(t, segments.Validate(`{"rules":[{"field":"event:x","operator":"performed","value":"soon"}]}`, segments.ContactSchema()))
+}
+
+// Fixtures: tag "vip" is on contacts 1 and 3, "newsletter" on contact 1, "unused" on
+// nobody. Membership is live: applying or removing a Tag moves a Contact at once.
+func TestTagConditions(t *testing.T) {
+	env := testhelper.Setup(t)
+	ctx := context.Background()
+
+	// The anchor contacts 1-3 are the only ones the fixtures tag.
+	count := func(g segments.Group) int {
+		p, err := segments.Compile(g, segments.ContactSchema())
+		require.NoError(t, err)
+		n, err := env.DB.Contact.Query().
+			Where(contact.WorkspaceID(wsID), contact.IDIn(1, 2, 3), predicate.Contact(p)).
+			Count(ctx)
+		require.NoError(t, err)
+		return n
+	}
+	has := func(name string) segments.Group {
+		return segments.Group{Rules: marshal(rule("tag", "has", name))}
+	}
+
+	assert.Equal(t, 2, count(has("vip")))
+	assert.Equal(t, 1, count(has("newsletter")))
+	assert.Equal(t, 0, count(has("unused")), "an existing Tag nobody has matches no one")
+	assert.Equal(t, 0, count(has("never-created")))
+	assert.Equal(t, 1, count(segments.Group{Rules: marshal(rule("tag", "doesNotHave", "vip"))}), "contact 2")
+
+	// Composes with other rules: vip AND newsletter -> contact 1 only.
+	assert.Equal(t, 1, count(segments.Group{
+		Combinator: "and",
+		Rules:      marshal(rule("tag", "has", "vip"), rule("tag", "has", "newsletter")),
+	}))
+
+	// Live: tagging contact 2 adds it to the audience.
+	_, err := tags.New(env.DB).Apply(ctx, wsID, 2, "vip")
+	require.NoError(t, err)
+	assert.Equal(t, 3, count(has("vip")))
+
+	// A same-named Tag in another workspace never matches here.
+	ws2, err := env.DB.Workspace.Create().
+		SetName("Other").SetSlug("other-tagseg").SetCollectKey("k-tagseg").SetIngestKey("ik-tagseg").Save(ctx)
+	require.NoError(t, err)
+	_, err = env.DB.Tag.Create().SetWorkspaceID(ws2.ID).SetName("ws2-only").Save(ctx)
+	require.NoError(t, err)
+	assert.Equal(t, 0, count(has("ws2-only")))
+
+	// Validation: only has / doesNotHave are valid for the tag field.
+	assert.Error(t, segments.Validate(`{"rules":[{"field":"tag","operator":"=","value":"vip"}]}`, segments.ContactSchema()))
 }
 
 func TestParseAndValidate(t *testing.T) {

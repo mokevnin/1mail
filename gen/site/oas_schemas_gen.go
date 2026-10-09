@@ -1772,6 +1772,23 @@ func (s *SiteApiTokenResource) SetCreatedAt(val Timestamp) {
 	s.CreatedAt = val
 }
 
+// Site request body for applying a tag to a contact.
+// Ref: #/components/schemas/SiteApplyTagInput
+type SiteApplyTagInput struct {
+	// The label to apply; created on first use.
+	Name string `json:"name"`
+}
+
+// GetName returns the value of Name.
+func (s *SiteApplyTagInput) GetName() string {
+	return s.Name
+}
+
+// SetName sets the value of Name.
+func (s *SiteApplyTagInput) SetName(val string) {
+	s.Name = val
+}
+
 type SiteAuthConfirmEmailChangeBadRequest ProblemDetails
 
 func (*SiteAuthConfirmEmailChangeBadRequest) siteAuthConfirmEmailChangeRes() {}
@@ -6557,6 +6574,230 @@ func (*SiteSuppressionsListOK) siteSuppressionsListRes() {}
 type SiteSuppressionsListUnprocessableEntity ProblemDetails
 
 func (*SiteSuppressionsListUnprocessableEntity) siteSuppressionsListRes() {}
+
+// A Tag: a presence-only, workspace-scoped label on Contacts (auto-created on first use).
+// Ref: #/components/schemas/SiteTagResource
+type SiteTagResource struct {
+	// Unique identifier.
+	ID EntityId `json:"id"`
+	// The label; unique per workspace.
+	Name string `json:"name"`
+	// Creation timestamp.
+	CreatedAt Timestamp `json:"createdAt"`
+}
+
+// GetID returns the value of ID.
+func (s *SiteTagResource) GetID() EntityId {
+	return s.ID
+}
+
+// GetName returns the value of Name.
+func (s *SiteTagResource) GetName() string {
+	return s.Name
+}
+
+// GetCreatedAt returns the value of CreatedAt.
+func (s *SiteTagResource) GetCreatedAt() Timestamp {
+	return s.CreatedAt
+}
+
+// SetID sets the value of ID.
+func (s *SiteTagResource) SetID(val EntityId) {
+	s.ID = val
+}
+
+// SetName sets the value of Name.
+func (s *SiteTagResource) SetName(val string) {
+	s.Name = val
+}
+
+// SetCreatedAt sets the value of CreatedAt.
+func (s *SiteTagResource) SetCreatedAt(val Timestamp) {
+	s.CreatedAt = val
+}
+
+func (*SiteTagResource) siteTagsApplyRes() {}
+
+type SiteTagsApplyBadRequest ProblemDetails
+
+func (*SiteTagsApplyBadRequest) siteTagsApplyRes() {}
+
+type SiteTagsApplyNotFound ProblemDetails
+
+func (*SiteTagsApplyNotFound) siteTagsApplyRes() {}
+
+type SiteTagsApplyUnprocessableEntity ProblemDetails
+
+func (*SiteTagsApplyUnprocessableEntity) siteTagsApplyRes() {}
+
+type SiteTagsListBadRequest ProblemDetails
+
+func (*SiteTagsListBadRequest) siteTagsListRes() {}
+
+type SiteTagsListForContactBadRequest ProblemDetails
+
+func (*SiteTagsListForContactBadRequest) siteTagsListForContactRes() {}
+
+type SiteTagsListForContactNotFound ProblemDetails
+
+func (*SiteTagsListForContactNotFound) siteTagsListForContactRes() {}
+
+// Paginated response.
+type SiteTagsListForContactOK struct {
+	// List of items.
+	Items []SiteTagResource `json:"items"`
+	// Page number (1-based).
+	Page int32 `json:"page"`
+	// Page size.
+	PageSize int32 `json:"pageSize"`
+	// Total number of elements.
+	TotalItems int32 `json:"totalItems"`
+	// Total number of pages.
+	TotalPages int32 `json:"totalPages"`
+}
+
+// GetItems returns the value of Items.
+func (s *SiteTagsListForContactOK) GetItems() []SiteTagResource {
+	return s.Items
+}
+
+// GetPage returns the value of Page.
+func (s *SiteTagsListForContactOK) GetPage() int32 {
+	return s.Page
+}
+
+// GetPageSize returns the value of PageSize.
+func (s *SiteTagsListForContactOK) GetPageSize() int32 {
+	return s.PageSize
+}
+
+// GetTotalItems returns the value of TotalItems.
+func (s *SiteTagsListForContactOK) GetTotalItems() int32 {
+	return s.TotalItems
+}
+
+// GetTotalPages returns the value of TotalPages.
+func (s *SiteTagsListForContactOK) GetTotalPages() int32 {
+	return s.TotalPages
+}
+
+// SetItems sets the value of Items.
+func (s *SiteTagsListForContactOK) SetItems(val []SiteTagResource) {
+	s.Items = val
+}
+
+// SetPage sets the value of Page.
+func (s *SiteTagsListForContactOK) SetPage(val int32) {
+	s.Page = val
+}
+
+// SetPageSize sets the value of PageSize.
+func (s *SiteTagsListForContactOK) SetPageSize(val int32) {
+	s.PageSize = val
+}
+
+// SetTotalItems sets the value of TotalItems.
+func (s *SiteTagsListForContactOK) SetTotalItems(val int32) {
+	s.TotalItems = val
+}
+
+// SetTotalPages sets the value of TotalPages.
+func (s *SiteTagsListForContactOK) SetTotalPages(val int32) {
+	s.TotalPages = val
+}
+
+func (*SiteTagsListForContactOK) siteTagsListForContactRes() {}
+
+type SiteTagsListForContactUnprocessableEntity ProblemDetails
+
+func (*SiteTagsListForContactUnprocessableEntity) siteTagsListForContactRes() {}
+
+type SiteTagsListNotFound ProblemDetails
+
+func (*SiteTagsListNotFound) siteTagsListRes() {}
+
+// Paginated response.
+type SiteTagsListOK struct {
+	// List of items.
+	Items []SiteTagResource `json:"items"`
+	// Page number (1-based).
+	Page int32 `json:"page"`
+	// Page size.
+	PageSize int32 `json:"pageSize"`
+	// Total number of elements.
+	TotalItems int32 `json:"totalItems"`
+	// Total number of pages.
+	TotalPages int32 `json:"totalPages"`
+}
+
+// GetItems returns the value of Items.
+func (s *SiteTagsListOK) GetItems() []SiteTagResource {
+	return s.Items
+}
+
+// GetPage returns the value of Page.
+func (s *SiteTagsListOK) GetPage() int32 {
+	return s.Page
+}
+
+// GetPageSize returns the value of PageSize.
+func (s *SiteTagsListOK) GetPageSize() int32 {
+	return s.PageSize
+}
+
+// GetTotalItems returns the value of TotalItems.
+func (s *SiteTagsListOK) GetTotalItems() int32 {
+	return s.TotalItems
+}
+
+// GetTotalPages returns the value of TotalPages.
+func (s *SiteTagsListOK) GetTotalPages() int32 {
+	return s.TotalPages
+}
+
+// SetItems sets the value of Items.
+func (s *SiteTagsListOK) SetItems(val []SiteTagResource) {
+	s.Items = val
+}
+
+// SetPage sets the value of Page.
+func (s *SiteTagsListOK) SetPage(val int32) {
+	s.Page = val
+}
+
+// SetPageSize sets the value of PageSize.
+func (s *SiteTagsListOK) SetPageSize(val int32) {
+	s.PageSize = val
+}
+
+// SetTotalItems sets the value of TotalItems.
+func (s *SiteTagsListOK) SetTotalItems(val int32) {
+	s.TotalItems = val
+}
+
+// SetTotalPages sets the value of TotalPages.
+func (s *SiteTagsListOK) SetTotalPages(val int32) {
+	s.TotalPages = val
+}
+
+func (*SiteTagsListOK) siteTagsListRes() {}
+
+type SiteTagsListUnprocessableEntity ProblemDetails
+
+func (*SiteTagsListUnprocessableEntity) siteTagsListRes() {}
+
+type SiteTagsRemoveBadRequest ProblemDetails
+
+func (*SiteTagsRemoveBadRequest) siteTagsRemoveRes() {}
+
+// SiteTagsRemoveNoContent is response for SiteTagsRemove operation.
+type SiteTagsRemoveNoContent struct{}
+
+func (*SiteTagsRemoveNoContent) siteTagsRemoveRes() {}
+
+type SiteTagsRemoveNotFound ProblemDetails
+
+func (*SiteTagsRemoveNotFound) siteTagsRemoveRes() {}
 
 type SiteTemplatesCreateNotFound ProblemDetails
 

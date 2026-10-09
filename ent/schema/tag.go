@@ -1,0 +1,60 @@
+package schema
+
+import (
+	"time"
+
+	"entgo.io/ent"
+	"entgo.io/ent/dialect/entsql"
+	"entgo.io/ent/schema"
+	"entgo.io/ent/schema/edge"
+	"entgo.io/ent/schema/field"
+	"entgo.io/ent/schema/index"
+)
+
+// Tag is a named, workspace-scoped, presence-only label applied to Contacts (see
+// GLOSSARY). It carries no type and no value — a Contact has the Tag or does not —
+// which is what separates it from a CustomField. Auto-created on first use. A Tag is
+// an attribute, never a target set: "everyone tagged X" is a Segment has-Tag rule.
+type Tag struct {
+	ent.Schema
+}
+
+func (Tag) Annotations() []schema.Annotation {
+	return []schema.Annotation{
+		entsql.Annotation{Table: "tags"},
+	}
+}
+
+func (Tag) Fields() []ent.Field {
+	return []ent.Field{
+		field.Int64("id").
+			StorageKey("id").
+			Immutable(),
+		// The label itself; unique per workspace. It originates outside the workspace
+		// (imports, the API), so it is untrusted text (ADR 0016).
+		field.String("name").
+			NotEmpty(),
+		field.Int64("workspace_id"),
+		field.Time("created_at").
+			Default(time.Now).
+			Immutable(),
+	}
+}
+
+func (Tag) Edges() []ent.Edge {
+	return []ent.Edge{
+		edge.From("workspace", Workspace.Type).
+			Ref("tags").
+			Field("workspace_id").
+			Required().
+			Unique(),
+		edge.From("contacts", Contact.Type).
+			Ref("tags"),
+	}
+}
+
+func (Tag) Indexes() []ent.Index {
+	return []ent.Index{
+		index.Fields("name", "workspace_id").Unique().StorageKey("tags_name_workspace_id"),
+	}
+}

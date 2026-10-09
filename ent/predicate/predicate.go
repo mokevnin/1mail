@@ -57,6 +57,9 @@ type SendingDomain func(*sql.Selector)
 // Suppression is the predicate function for suppression builders.
 type Suppression func(*sql.Selector)
 
+// Tag is the predicate function for tag builders.
+type Tag func(*sql.Selector)
+
 // Unsubscribe is the predicate function for unsubscribe builders.
 type Unsubscribe func(*sql.Selector)
 

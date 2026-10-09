@@ -40,6 +40,8 @@ const (
 	EdgeContacts = "contacts"
 	// EdgeCustomFields holds the string denoting the custom_fields edge name in mutations.
 	EdgeCustomFields = "custom_fields"
+	// EdgeTags holds the string denoting the tags edge name in mutations.
+	EdgeTags = "tags"
 	// EdgeSegments holds the string denoting the segments edge name in mutations.
 	EdgeSegments = "segments"
 	// EdgeEvents holds the string denoting the events edge name in mutations.
@@ -92,6 +94,13 @@ const (
 	CustomFieldsInverseTable = "custom_fields"
 	// CustomFieldsColumn is the table column denoting the custom_fields relation/edge.
 	CustomFieldsColumn = "workspace_id"
+	// TagsTable is the table that holds the tags relation/edge.
+	TagsTable = "tags"
+	// TagsInverseTable is the table name for the Tag entity.
+	// It exists in this package in order to avoid circular dependency with the "tag" package.
+	TagsInverseTable = "tags"
+	// TagsColumn is the table column denoting the tags relation/edge.
+	TagsColumn = "workspace_id"
 	// SegmentsTable is the table that holds the segments relation/edge.
 	SegmentsTable = "segments"
 	// SegmentsInverseTable is the table name for the Segment entity.
@@ -358,6 +367,20 @@ func ByCustomFields(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 	}
 }
 
+// ByTagsCount orders the results by tags count.
+func ByTagsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newTagsStep(), opts...)
+	}
+}
+
+// ByTags orders the results by tags terms.
+func ByTags(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newTagsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+
 // BySegmentsCount orders the results by segments count.
 func BySegmentsCount(opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
@@ -621,6 +644,13 @@ func newCustomFieldsStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(CustomFieldsInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2M, false, CustomFieldsTable, CustomFieldsColumn),
+	)
+}
+func newTagsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(TagsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, TagsTable, TagsColumn),
 	)
 }
 func newSegmentsStep() *sqlgraph.Step {

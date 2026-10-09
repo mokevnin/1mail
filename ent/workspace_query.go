@@ -30,6 +30,7 @@ import (
 	"github.com/mokevnin/1mail/ent/segment"
 	"github.com/mokevnin/1mail/ent/sendingdomain"
 	"github.com/mokevnin/1mail/ent/suppression"
+	"github.com/mokevnin/1mail/ent/tag"
 	"github.com/mokevnin/1mail/ent/unsubscribe"
 	"github.com/mokevnin/1mail/ent/visitor"
 	"github.com/mokevnin/1mail/ent/webhookendpoint"
@@ -45,6 +46,7 @@ type WorkspaceQuery struct {
 	predicates              []predicate.Workspace
 	withContacts            *ContactQuery
 	withCustomFields        *CustomFieldQuery
+	withTags                *TagQuery
 	withSegments            *SegmentQuery
 	withEvents              *EventQuery
 	withVisitors            *VisitorQuery
@@ -137,6 +139,28 @@ func (_q *WorkspaceQuery) QueryCustomFields() *CustomFieldQuery {
 			sqlgraph.From(workspace.Table, workspace.FieldID, selector),
 			sqlgraph.To(customfield.Table, customfield.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, workspace.CustomFieldsTable, workspace.CustomFieldsColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryTags chains the current query on the "tags" edge.
+func (_q *WorkspaceQuery) QueryTags() *TagQuery {
+	query := (&TagClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workspace.Table, workspace.FieldID, selector),
+			sqlgraph.To(tag.Table, tag.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, workspace.TagsTable, workspace.TagsColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
@@ -734,6 +758,7 @@ func (_q *WorkspaceQuery) Clone() *WorkspaceQuery {
 		predicates:              append([]predicate.Workspace{}, _q.predicates...),
 		withContacts:            _q.withContacts.Clone(),
 		withCustomFields:        _q.withCustomFields.Clone(),
+		withTags:                _q.withTags.Clone(),
 		withSegments:            _q.withSegments.Clone(),
 		withEvents:              _q.withEvents.Clone(),
 		withVisitors:            _q.withVisitors.Clone(),
@@ -778,6 +803,17 @@ func (_q *WorkspaceQuery) WithCustomFields(opts ...func(*CustomFieldQuery)) *Wor
 		opt(query)
 	}
 	_q.withCustomFields = query
+	return _q
+}
+
+// WithTags tells the query-builder to eager-load the nodes that are connected to
+// the "tags" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *WorkspaceQuery) WithTags(opts ...func(*TagQuery)) *WorkspaceQuery {
+	query := (&TagClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withTags = query
 	return _q
 }
 
@@ -1057,9 +1093,10 @@ func (_q *WorkspaceQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Wo
 	var (
 		nodes       = []*Workspace{}
 		_spec       = _q.querySpec()
-		loadedTypes = [20]bool{
+		loadedTypes = [21]bool{
 			_q.withContacts != nil,
 			_q.withCustomFields != nil,
+			_q.withTags != nil,
 			_q.withSegments != nil,
 			_q.withEvents != nil,
 			_q.withVisitors != nil,
@@ -1112,6 +1149,13 @@ func (_q *WorkspaceQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Wo
 		if err := _q.loadCustomFields(ctx, query, nodes,
 			func(n *Workspace) { n.Edges.CustomFields = []*CustomField{} },
 			func(n *Workspace, e *CustomField) { n.Edges.CustomFields = append(n.Edges.CustomFields, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := _q.withTags; query != nil {
+		if err := _q.loadTags(ctx, query, nodes,
+			func(n *Workspace) { n.Edges.Tags = []*Tag{} },
+			func(n *Workspace, e *Tag) { n.Edges.Tags = append(n.Edges.Tags, e) }); err != nil {
 			return nil, err
 		}
 	}
@@ -1291,6 +1335,36 @@ func (_q *WorkspaceQuery) loadCustomFields(ctx context.Context, query *CustomFie
 	}
 	query.Where(predicate.CustomField(func(s *sql.Selector) {
 		s.Where(sql.InValues(s.C(workspace.CustomFieldsColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.WorkspaceID
+		node, ok := nodeids[fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "workspace_id" returned %v for node %v`, fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (_q *WorkspaceQuery) loadTags(ctx context.Context, query *TagQuery, nodes []*Workspace, init func(*Workspace), assign func(*Workspace, *Tag)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[int64]*Workspace)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(tag.FieldWorkspaceID)
+	}
+	query.Where(predicate.Tag(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(workspace.TagsColumn), fks...))
 	}))
 	neighbors, err := query.All(ctx)
 	if err != nil {

@@ -122,6 +122,15 @@ func (c *ConverterImpl) SuppressionToResource(source *ent.Suppression) site.Site
 	}
 	return siteapiSiteSuppressionResource
 }
+func (c *ConverterImpl) TagToResource(source *ent.Tag) site.SiteTagResource {
+	var siteapiSiteTagResource site.SiteTagResource
+	if source != nil {
+		siteapiSiteTagResource.ID = entityID((*source).ID)
+		siteapiSiteTagResource.Name = (*source).Name
+		siteapiSiteTagResource.CreatedAt = timestamp((*source).CreatedAt)
+	}
+	return siteapiSiteTagResource
+}
 func (c *ConverterImpl) TokenToResource(source *ent.ApiToken) site.SiteApiTokenResource {
 	var siteapiSiteApiTokenResource site.SiteApiTokenResource
 	if source != nil {

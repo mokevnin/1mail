@@ -49,11 +49,13 @@ type Contact struct {
 type ContactEdges struct {
 	// Visitors holds the value of the visitors edge.
 	Visitors []*Visitor `json:"visitors,omitempty"`
+	// Tags holds the value of the tags edge.
+	Tags []*Tag `json:"tags,omitempty"`
 	// Workspace holds the value of the workspace edge.
 	Workspace *Workspace `json:"workspace,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [2]bool
+	loadedTypes [3]bool
 }
 
 // VisitorsOrErr returns the Visitors value or an error if the edge
@@ -65,12 +67,21 @@ func (e ContactEdges) VisitorsOrErr() ([]*Visitor, error) {
 	return nil, &NotLoadedError{edge: "visitors"}
 }
 
+// TagsOrErr returns the Tags value or an error if the edge
+// was not loaded in eager-loading.
+func (e ContactEdges) TagsOrErr() ([]*Tag, error) {
+	if e.loadedTypes[1] {
+		return e.Tags, nil
+	}
+	return nil, &NotLoadedError{edge: "tags"}
+}
+
 // WorkspaceOrErr returns the Workspace value or an error if the edge
 // was not loaded in eager-loading, or loaded but was not found.
 func (e ContactEdges) WorkspaceOrErr() (*Workspace, error) {
 	if e.Workspace != nil {
 		return e.Workspace, nil
-	} else if e.loadedTypes[1] {
+	} else if e.loadedTypes[2] {
 		return nil, &NotFoundError{label: workspace.Label}
 	}
 	return nil, &NotLoadedError{edge: "workspace"}
@@ -194,6 +205,11 @@ func (_m *Contact) Value(name string) (ent.Value, error) {
 // QueryVisitors queries the "visitors" edge of the Contact entity.
 func (_m *Contact) QueryVisitors() *VisitorQuery {
 	return NewContactClient(_m.config).QueryVisitors(_m)
+}
+
+// QueryTags queries the "tags" edge of the Contact entity.
+func (_m *Contact) QueryTags() *TagQuery {
+	return NewContactClient(_m.config).QueryTags(_m)
 }
 
 // QueryWorkspace queries the "workspace" edge of the Contact entity.

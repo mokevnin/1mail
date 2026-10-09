@@ -141,6 +141,30 @@ type Handler interface {
 	//
 	// PUT /segments/{id}
 	SegmentsUpdate(ctx context.Context, req *UpdateSegmentInput, params SegmentsUpdateParams) (SegmentsUpdateRes, error)
+	// TagsApply implements Tags_apply operation.
+	//
+	// Apply a tag to a contact, creating the tag on first use. Idempotent.
+	//
+	// POST /contacts/{contactId}/tags
+	TagsApply(ctx context.Context, req *ApplyTagInput, params TagsApplyParams) (TagsApplyRes, error)
+	// TagsList implements Tags_list operation.
+	//
+	// List the workspace's tags.
+	//
+	// GET /tags
+	TagsList(ctx context.Context, params TagsListParams) (TagsListRes, error)
+	// TagsListForContact implements Tags_listForContact operation.
+	//
+	// List the tags a contact has.
+	//
+	// GET /contacts/{contactId}/tags
+	TagsListForContact(ctx context.Context, params TagsListForContactParams) (TagsListForContactRes, error)
+	// TagsRemove implements Tags_remove operation.
+	//
+	// Remove a tag from a contact. Idempotent; the tag stays in the catalogue.
+	//
+	// DELETE /contacts/{contactId}/tags/{name}
+	TagsRemove(ctx context.Context, params TagsRemoveParams) (TagsRemoveRes, error)
 }
 
 // Server implements http server based on OpenAPI v3 specification and

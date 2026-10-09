@@ -1,0 +1,15 @@
+# Workspace acme (id 1). Presence-only Contact labels (GLOSSARY: Tag). Tags 1-3 and
+# their contact_tags rows anchor the tags suite — DO NOT change them.
+# vip -> contacts 1, 3; newsletter -> contact 1; unused -> nobody (still listed).
+- id: 1
+  name: vip
+  workspace_id: 1
+  created_at: '2026-01-01 00:00:00'
+- id: 2
+  name: newsletter
+  workspace_id: 1
+  created_at: '2026-01-01 00:00:00'
+- id: 3
+  name: unused
+  workspace_id: 1
+  created_at: '2026-01-01 00:00:00'

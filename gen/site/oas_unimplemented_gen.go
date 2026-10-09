@@ -524,6 +524,42 @@ func (UnimplementedHandler) SiteSuppressionsList(ctx context.Context, params Sit
 	return r, ht.ErrNotImplemented
 }
 
+// SiteTagsApply implements SiteTags_apply operation.
+//
+// Apply a tag to a contact, creating the tag on first use. Idempotent.
+//
+// POST /workspaces/{slug}/contacts/{contactId}/tags
+func (UnimplementedHandler) SiteTagsApply(ctx context.Context, req *SiteApplyTagInput, params SiteTagsApplyParams) (r SiteTagsApplyRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// SiteTagsList implements SiteTags_list operation.
+//
+// List the workspace's tags (feeds the segment builder).
+//
+// GET /workspaces/{slug}/tags
+func (UnimplementedHandler) SiteTagsList(ctx context.Context, params SiteTagsListParams) (r SiteTagsListRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// SiteTagsListForContact implements SiteTags_listForContact operation.
+//
+// List the tags a contact has.
+//
+// GET /workspaces/{slug}/contacts/{contactId}/tags
+func (UnimplementedHandler) SiteTagsListForContact(ctx context.Context, params SiteTagsListForContactParams) (r SiteTagsListForContactRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// SiteTagsRemove implements SiteTags_remove operation.
+//
+// Remove a tag from a contact. Idempotent; the tag stays in the catalogue.
+//
+// DELETE /workspaces/{slug}/contacts/{contactId}/tags/{name}
+func (UnimplementedHandler) SiteTagsRemove(ctx context.Context, params SiteTagsRemoveParams) (r SiteTagsRemoveRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // SiteTemplatesCreate implements SiteTemplates_create operation.
 //
 // Create a resource from the site UI.

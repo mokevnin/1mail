@@ -91,6 +91,7 @@ func TestMCPToolsAreTheContractMinusHiddenOperations(t *testing.T) {
 	assert.ElementsMatch(t, []string{
 		"contacts_list", "contacts_create", "contacts_get", "contacts_update", "contacts_delete",
 		"emails_send", "events_record", "events_actions_list", "whoami",
+		"tags_list", "tags_list_for_contact", "tags_apply", "tags_remove",
 	}, names)
 
 	// Hints derive from the HTTP method.
@@ -151,6 +152,28 @@ func TestMCPToolCallReturnsTheAPIResult(t *testing.T) {
 	require.False(t, res.IsError, text(t, res))
 	res = call(t, s, "contacts_delete", map[string]any{"id": created["id"]})
 	require.False(t, res.IsError, text(t, res))
+}
+
+// Tags are tools: a name with a slash travels as a path parameter, and the contact id
+// as another.
+func TestMCPTagToolsApplyAndRemove(t *testing.T) {
+	env := testhelper.Setup(t)
+	s := env.MCPClient(t, seedToken(t, env, 1, []string{"contacts:read", "contacts:write"}))
+
+	res := call(t, s, "tags_apply", map[string]any{"contactId": "2", "name": "plan / pro"})
+	require.False(t, res.IsError, text(t, res))
+	assert.Contains(t, text(t, res), "plan / pro")
+
+	res = call(t, s, "tags_list_for_contact", map[string]any{"contactId": "2"})
+	require.False(t, res.IsError, text(t, res))
+	assert.Contains(t, text(t, res), "plan / pro")
+
+	res = call(t, s, "tags_remove", map[string]any{"contactId": "2", "name": "plan / pro"})
+	require.False(t, res.IsError, text(t, res))
+
+	res = call(t, s, "tags_list_for_contact", map[string]any{"contactId": "2"})
+	require.False(t, res.IsError, text(t, res))
+	assert.NotContains(t, text(t, res), "plan / pro")
 }
 
 func TestMCPToolCallReturnsTheAPIError(t *testing.T) {

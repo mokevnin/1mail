@@ -67,6 +67,8 @@ func (Contact) Edges() []ent.Edge {
 		// The anonymous devices seen as this person. A Visitor may belong to no
 		// Contact before Identify; once bound, one Contact owns many Visitors.
 		edge.To("visitors", Visitor.Type),
+		// Presence-only labels (GLOSSARY: Tag), many-to-many via contact_tags.
+		edge.To("tags", Tag.Type),
 		edge.From("workspace", Workspace.Type).
 			Ref("contacts").
 			Field("workspace_id").

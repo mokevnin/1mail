@@ -29,6 +29,7 @@ import (
 	"github.com/mokevnin/1mail/ent/segment"
 	"github.com/mokevnin/1mail/ent/sendingdomain"
 	"github.com/mokevnin/1mail/ent/suppression"
+	"github.com/mokevnin/1mail/ent/tag"
 	"github.com/mokevnin/1mail/ent/unsubscribe"
 	"github.com/mokevnin/1mail/ent/user"
 	"github.com/mokevnin/1mail/ent/visitor"
@@ -111,6 +112,7 @@ func checkColumn(t, c string) error {
 			segment.Table:            segment.ValidColumn,
 			sendingdomain.Table:      sendingdomain.ValidColumn,
 			suppression.Table:        suppression.ValidColumn,
+			tag.Table:                tag.ValidColumn,
 			unsubscribe.Table:        unsubscribe.ValidColumn,
 			user.Table:               user.ValidColumn,
 			visitor.Table:            visitor.ValidColumn,

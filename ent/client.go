@@ -32,6 +32,7 @@ import (
 	"github.com/mokevnin/1mail/ent/segment"
 	"github.com/mokevnin/1mail/ent/sendingdomain"
 	"github.com/mokevnin/1mail/ent/suppression"
+	"github.com/mokevnin/1mail/ent/tag"
 	"github.com/mokevnin/1mail/ent/unsubscribe"
 	"github.com/mokevnin/1mail/ent/user"
 	"github.com/mokevnin/1mail/ent/visitor"
@@ -78,6 +79,8 @@ type Client struct {
 	SendingDomain *SendingDomainClient
 	// Suppression is the client for interacting with the Suppression builders.
 	Suppression *SuppressionClient
+	// Tag is the client for interacting with the Tag builders.
+	Tag *TagClient
 	// Unsubscribe is the client for interacting with the Unsubscribe builders.
 	Unsubscribe *UnsubscribeClient
 	// User is the client for interacting with the User builders.
@@ -116,6 +119,7 @@ func (c *Client) init() {
 	c.Segment = NewSegmentClient(c.config)
 	c.SendingDomain = NewSendingDomainClient(c.config)
 	c.Suppression = NewSuppressionClient(c.config)
+	c.Tag = NewTagClient(c.config)
 	c.Unsubscribe = NewUnsubscribeClient(c.config)
 	c.User = NewUserClient(c.config)
 	c.Visitor = NewVisitorClient(c.config)
@@ -230,6 +234,7 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		Segment:            NewSegmentClient(cfg),
 		SendingDomain:      NewSendingDomainClient(cfg),
 		Suppression:        NewSuppressionClient(cfg),
+		Tag:                NewTagClient(cfg),
 		Unsubscribe:        NewUnsubscribeClient(cfg),
 		User:               NewUserClient(cfg),
 		Visitor:            NewVisitorClient(cfg),
@@ -271,6 +276,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		Segment:            NewSegmentClient(cfg),
 		SendingDomain:      NewSendingDomainClient(cfg),
 		Suppression:        NewSuppressionClient(cfg),
+		Tag:                NewTagClient(cfg),
 		Unsubscribe:        NewUnsubscribeClient(cfg),
 		User:               NewUserClient(cfg),
 		Visitor:            NewVisitorClient(cfg),
@@ -308,7 +314,7 @@ func (c *Client) Use(hooks ...Hook) {
 		c.ApiToken, c.Automation, c.AutomationRun, c.Broadcast, c.BroadcastRecipient,
 		c.Confirmation, c.Contact, c.CustomField, c.EmailTemplate, c.Event,
 		c.Integration, c.Invitation, c.Membership, c.OutboundMessage, c.Segment,
-		c.SendingDomain, c.Suppression, c.Unsubscribe, c.User, c.Visitor,
+		c.SendingDomain, c.Suppression, c.Tag, c.Unsubscribe, c.User, c.Visitor,
 		c.WebhookEndpoint, c.Workspace,
 	} {
 		n.Use(hooks...)
@@ -322,7 +328,7 @@ func (c *Client) Intercept(interceptors ...Interceptor) {
 		c.ApiToken, c.Automation, c.AutomationRun, c.Broadcast, c.BroadcastRecipient,
 		c.Confirmation, c.Contact, c.CustomField, c.EmailTemplate, c.Event,
 		c.Integration, c.Invitation, c.Membership, c.OutboundMessage, c.Segment,
-		c.SendingDomain, c.Suppression, c.Unsubscribe, c.User, c.Visitor,
+		c.SendingDomain, c.Suppression, c.Tag, c.Unsubscribe, c.User, c.Visitor,
 		c.WebhookEndpoint, c.Workspace,
 	} {
 		n.Intercept(interceptors...)
@@ -366,6 +372,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.SendingDomain.mutate(ctx, m)
 	case *SuppressionMutation:
 		return c.Suppression.mutate(ctx, m)
+	case *TagMutation:
+		return c.Tag.mutate(ctx, m)
 	case *UnsubscribeMutation:
 		return c.Unsubscribe.mutate(ctx, m)
 	case *UserMutation:
@@ -1456,6 +1464,22 @@ func (c *ContactClient) QueryVisitors(_m *Contact) *VisitorQuery {
 			sqlgraph.From(contact.Table, contact.FieldID, id),
 			sqlgraph.To(visitor.Table, visitor.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, contact.VisitorsTable, contact.VisitorsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryTags queries the tags edge of a Contact.
+func (c *ContactClient) QueryTags(_m *Contact) *TagQuery {
+	query := (&TagClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(contact.Table, contact.FieldID, id),
+			sqlgraph.To(tag.Table, tag.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, false, contact.TagsTable, contact.TagsPrimaryKey...),
 		)
 		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
 		return fromV, nil
@@ -3026,6 +3050,171 @@ func (c *SuppressionClient) mutate(ctx context.Context, m *SuppressionMutation) 
 	}
 }
 
+// TagClient is a client for the Tag schema.
+type TagClient struct {
+	config
+}
+
+// NewTagClient returns a client for the Tag from the given config.
+func NewTagClient(c config) *TagClient {
+	return &TagClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `tag.Hooks(f(g(h())))`.
+func (c *TagClient) Use(hooks ...Hook) {
+	c.hooks.Tag = append(c.hooks.Tag, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `tag.Intercept(f(g(h())))`.
+func (c *TagClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Tag = append(c.inters.Tag, interceptors...)
+}
+
+// Create returns a builder for creating a Tag entity.
+func (c *TagClient) Create() *TagCreate {
+	mutation := newTagMutation(c.config, OpCreate)
+	return &TagCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Tag entities.
+func (c *TagClient) CreateBulk(builders ...*TagCreate) *TagCreateBulk {
+	return &TagCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *TagClient) MapCreateBulk(slice any, setFunc func(*TagCreate, int)) *TagCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &TagCreateBulk{err: fmt.Errorf("calling to TagClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*TagCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &TagCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Tag.
+func (c *TagClient) Update() *TagUpdate {
+	mutation := newTagMutation(c.config, OpUpdate)
+	return &TagUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *TagClient) UpdateOne(_m *Tag) *TagUpdateOne {
+	mutation := newTagMutation(c.config, OpUpdateOne, withTag(_m))
+	return &TagUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *TagClient) UpdateOneID(id int64) *TagUpdateOne {
+	mutation := newTagMutation(c.config, OpUpdateOne, withTagID(id))
+	return &TagUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Tag.
+func (c *TagClient) Delete() *TagDelete {
+	mutation := newTagMutation(c.config, OpDelete)
+	return &TagDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *TagClient) DeleteOne(_m *Tag) *TagDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *TagClient) DeleteOneID(id int64) *TagDeleteOne {
+	builder := c.Delete().Where(tag.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &TagDeleteOne{builder}
+}
+
+// Query returns a query builder for Tag.
+func (c *TagClient) Query() *TagQuery {
+	return &TagQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeTag},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Tag entity by its id.
+func (c *TagClient) Get(ctx context.Context, id int64) (*Tag, error) {
+	return c.Query().Where(tag.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *TagClient) GetX(ctx context.Context, id int64) *Tag {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryWorkspace queries the workspace edge of a Tag.
+func (c *TagClient) QueryWorkspace(_m *Tag) *WorkspaceQuery {
+	query := (&WorkspaceClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(tag.Table, tag.FieldID, id),
+			sqlgraph.To(workspace.Table, workspace.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, tag.WorkspaceTable, tag.WorkspaceColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryContacts queries the contacts edge of a Tag.
+func (c *TagClient) QueryContacts(_m *Tag) *ContactQuery {
+	query := (&ContactClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(tag.Table, tag.FieldID, id),
+			sqlgraph.To(contact.Table, contact.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, true, tag.ContactsTable, tag.ContactsPrimaryKey...),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *TagClient) Hooks() []Hook {
+	return c.hooks.Tag
+}
+
+// Interceptors returns the client interceptors.
+func (c *TagClient) Interceptors() []Interceptor {
+	return c.inters.Tag
+}
+
+func (c *TagClient) mutate(ctx context.Context, m *TagMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&TagCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&TagUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&TagUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&TagDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown Tag mutation op: %q", m.Op())
+	}
+}
+
 // UnsubscribeClient is a client for the Unsubscribe schema.
 type UnsubscribeClient struct {
 	config
@@ -3794,6 +3983,22 @@ func (c *WorkspaceClient) QueryCustomFields(_m *Workspace) *CustomFieldQuery {
 	return query
 }
 
+// QueryTags queries the tags edge of a Workspace.
+func (c *WorkspaceClient) QueryTags(_m *Workspace) *TagQuery {
+	query := (&TagClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workspace.Table, workspace.FieldID, id),
+			sqlgraph.To(tag.Table, tag.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, workspace.TagsTable, workspace.TagsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // QuerySegments queries the segments edge of a Workspace.
 func (c *WorkspaceClient) QuerySegments(_m *Workspace) *SegmentQuery {
 	query := (&SegmentClient{config: c.config}).Query()
@@ -4113,12 +4318,12 @@ type (
 		ApiToken, Automation, AutomationRun, Broadcast, BroadcastRecipient,
 		Confirmation, Contact, CustomField, EmailTemplate, Event, Integration,
 		Invitation, Membership, OutboundMessage, Segment, SendingDomain, Suppression,
-		Unsubscribe, User, Visitor, WebhookEndpoint, Workspace []ent.Hook
+		Tag, Unsubscribe, User, Visitor, WebhookEndpoint, Workspace []ent.Hook
 	}
 	inters struct {
 		ApiToken, Automation, AutomationRun, Broadcast, BroadcastRecipient,
 		Confirmation, Contact, CustomField, EmailTemplate, Event, Integration,
 		Invitation, Membership, OutboundMessage, Segment, SendingDomain, Suppression,
-		Unsubscribe, User, Visitor, WebhookEndpoint, Workspace []ent.Interceptor
+		Tag, Unsubscribe, User, Visitor, WebhookEndpoint, Workspace []ent.Interceptor
 	}
 )
