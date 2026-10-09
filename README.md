@@ -12,6 +12,10 @@ reputation stays intact. Everything lives in your own workspace on your own infr
 so the customer data stays yours. The goal is a self-hostable alternative to tools like
 Drip, without the lock-in.
 
+![The 1mail workspace overview: email engagement, contacts and automations](docs/public/screenshot.png)
+
+**Documentation:** https://mokevnin.github.io/1mail/
+
 ## Stack
 
 A Go backend and a React/Vite frontend in a single repo. The data model is

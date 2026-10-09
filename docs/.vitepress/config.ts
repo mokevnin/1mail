@@ -13,6 +13,7 @@ export default defineConfig({
   vue: { template: { compilerOptions: { delimiters: ['[[vue:', ']]'] } } },
   themeConfig: {
     nav: [
+      { text: 'Guide', link: '/guide/introduction' },
       { text: 'Self-hosting', link: '/self-hosting' },
       { text: 'Architecture', link: '/adr/0001-send-eligibility-model' },
       { text: 'Roadmap', link: '/ROADMAP' },
@@ -20,7 +21,16 @@ export default defineConfig({
     sidebar: [
       {
         text: 'Guide',
-        items: [{ text: 'Self-hosting', link: '/self-hosting' }],
+        items: [
+          { text: 'Introduction', link: '/guide/introduction' },
+          { text: 'Quickstart', link: '/guide/quickstart' },
+          { text: 'Tracking visitors and events', link: '/guide/tracking' },
+          { text: 'Segments', link: '/guide/segments' },
+          { text: 'Sending email', link: '/guide/sending' },
+          { text: 'Deliverability and consent', link: '/guide/deliverability' },
+          { text: 'API', link: '/guide/api' },
+          { text: 'Self-hosting', link: '/self-hosting' },
+        ],
       },
       {
         text: 'Project',
@@ -85,7 +95,7 @@ export default defineConfig({
             link: '/adr/0010-sending-domains-native-dkim',
           },
           {
-            text: '0011 \u00b7 Deliverability rate metrics: complaint & bounce rate in core, threshol',
+            text: '0011 \u00b7 Deliverability rate metrics: complaint & bounce rate in core, threshold',
             link: '/adr/0011-deliverability-rate-metrics',
           },
           {
