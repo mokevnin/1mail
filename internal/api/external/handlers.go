@@ -38,8 +38,30 @@ type Handlers struct {
 	bootstrapToken string
 }
 
-func NewHandlers(client *ent.Client, bootstrapToken string, bus *events.Bus, eventLog *eventlog.Module, sender *outbound.Module, cipher *secrets.Cipher, enqueuer broadcasts.Enqueuer) *Handlers {
-	return &Handlers{ent: client, bus: bus, eventlog: eventLog, outbound: sender, cipher: cipher, segments: segments.New(client), broadcasts: broadcasts.New(client, enqueuer), contacts: contacts.New(bus), reputation: reputation.New(client), tags: tags.New(client), automations: automations.New(client), bootstrapToken: bootstrapToken}
+// Deps is everything the /api handlers are built from. The domain modules are
+// the shared singletons the composition root registers once, so /api and /site
+// cannot diverge on how a module is constructed.
+type Deps struct {
+	Ent            *ent.Client
+	Bus            *events.Bus
+	Cipher         *secrets.Cipher
+	Outbound       *outbound.Module
+	Segments       *segments.Module
+	EventLog       *eventlog.Module
+	Contacts       *contacts.Module
+	Tags           *tags.Module
+	Automations    *automations.Module
+	Broadcasts     *broadcasts.Module
+	Reputation     *reputation.Module
+	BootstrapToken string
+}
+
+func NewHandlers(d Deps) *Handlers {
+	return &Handlers{
+		ent: d.Ent, bus: d.Bus, cipher: d.Cipher, outbound: d.Outbound, segments: d.Segments,
+		eventlog: d.EventLog, contacts: d.Contacts, tags: d.Tags, automations: d.Automations,
+		broadcasts: d.Broadcasts, reputation: d.Reputation, bootstrapToken: d.BootstrapToken,
+	}
 }
 
 var _ externalapi.Handler = (*Handlers)(nil)

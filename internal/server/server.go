@@ -16,7 +16,6 @@ import (
 	"github.com/go-pkgz/auth/v2/avatar"
 	"github.com/go-pkgz/auth/v2/token"
 	"github.com/mokevnin/1mail/config"
-	"github.com/mokevnin/1mail/ent"
 	collectapi "github.com/mokevnin/1mail/gen/collect"
 	externalapi "github.com/mokevnin/1mail/gen/external"
 	siteapi "github.com/mokevnin/1mail/gen/site"
@@ -24,15 +23,8 @@ import (
 	apicollect "github.com/mokevnin/1mail/internal/api/collect"
 	apiexternal "github.com/mokevnin/1mail/internal/api/external"
 	apisite "github.com/mokevnin/1mail/internal/api/site"
-	"github.com/mokevnin/1mail/internal/authtoken"
-	"github.com/mokevnin/1mail/internal/broadcasts"
-	"github.com/mokevnin/1mail/internal/eventlog"
-	"github.com/mokevnin/1mail/internal/events"
 	"github.com/mokevnin/1mail/internal/logging"
-	"github.com/mokevnin/1mail/internal/messaging"
 	"github.com/mokevnin/1mail/internal/oauthserver"
-	"github.com/mokevnin/1mail/internal/outbound"
-	"github.com/mokevnin/1mail/internal/secrets"
 	"github.com/mokevnin/1mail/internal/telemetry"
 	"github.com/mokevnin/1mail/internal/tracking"
 	"github.com/ogen-go/ogen/ogenerrors"
@@ -41,7 +33,8 @@ import (
 
 // New builds the top-level net/http handler wiring the three ogen-generated
 // API servers (site, external, collect) plus go-pkgz/auth endpoints.
-func New(cfg *config.Config, client *ent.Client, db *sql.DB, bus *events.Bus, cipher *secrets.Cipher, providerCatalog *messaging.Catalog, enqueuer apisite.BroadcastEnqueuer, welcome apisite.WelcomeEnqueuer, sysmail apisite.SystemMailEnqueuer, domainVerify apisite.SendingDomainVerifyEnqueuer, sender *outbound.Module, external, mcp http.Handler) (http.Handler, error) {
+func New(cfg *config.Config, db *sql.DB, site apisite.Deps, external, mcp http.Handler) (http.Handler, error) {
+	client, bus := site.Ent, site.Bus
 	mux := http.NewServeMux()
 
 	// Send the JWT cookie with the Secure attribute whenever the instance is served
@@ -71,13 +64,10 @@ func New(cfg *config.Config, client *ent.Client, db *sql.DB, bus *events.Bus, ci
 	// the exact pattern outranks the /site/ subtree below without shadowing /site/auth/register.
 	mux.Handle("/site/auth/direct/login", authHandler)
 
-	// One Events module shared by /site and /api (ADR 0016).
-	eventLog := eventlog.New(client, bus)
-
 	// Site API — /site (JWT cookie via generated SecurityHandler; register and
 	// direct-login are public per the spec).
 	siteSrv, err := siteapi.NewServer(
-		apisite.NewHandlers(client, bus, cipher, providerCatalog, enqueuer, welcome, sysmail, domainVerify, sender, eventLog, authtoken.New(cfg.JWTSecret), cfg.AppURL),
+		apisite.NewHandlers(site),
 		apiauth.NewSiteSecurityHandler(cfg.JWTSecret, client),
 		siteapi.WithPathPrefix("/site"),
 		siteapi.WithErrorHandler(problemErrorHandler),
@@ -142,10 +132,10 @@ func New(cfg *config.Config, client *ent.Client, db *sql.DB, bus *events.Bus, ci
 
 // NewExternalAPI builds the external API (/api) ogen server: Bearer API-token
 // auth, RFC 7807 errors, mounted under the /api prefix.
-func NewExternalAPI(client *ent.Client, bootstrapToken string, bus *events.Bus, sender *outbound.Module, cipher *secrets.Cipher, enqueuer broadcasts.Enqueuer) (http.Handler, error) {
+func NewExternalAPI(deps apiexternal.Deps) (http.Handler, error) {
 	return externalapi.NewServer(
-		apiexternal.NewHandlers(client, bootstrapToken, bus, eventlog.New(client, bus), sender, cipher, enqueuer),
-		apiauth.NewExternalSecurityHandler(client),
+		apiexternal.NewHandlers(deps),
+		apiauth.NewExternalSecurityHandler(deps.Ent),
 		externalapi.WithPathPrefix("/api"),
 		externalapi.WithErrorHandler(problemErrorHandler),
 	)

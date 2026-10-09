@@ -16,7 +16,14 @@ import (
 	"github.com/mokevnin/1mail/config"
 	"github.com/mokevnin/1mail/ent"
 	apiauth "github.com/mokevnin/1mail/internal/api/auth"
+	apiexternal "github.com/mokevnin/1mail/internal/api/external"
+	apisite "github.com/mokevnin/1mail/internal/api/site"
+	"github.com/mokevnin/1mail/internal/authtoken"
+	"github.com/mokevnin/1mail/internal/automations"
+	"github.com/mokevnin/1mail/internal/broadcasts"
+	"github.com/mokevnin/1mail/internal/contacts"
 	"github.com/mokevnin/1mail/internal/db"
+	"github.com/mokevnin/1mail/internal/eventlog"
 	"github.com/mokevnin/1mail/internal/events"
 	"github.com/mokevnin/1mail/internal/i18n"
 	"github.com/mokevnin/1mail/internal/jobs"
@@ -25,10 +32,13 @@ import (
 	"github.com/mokevnin/1mail/internal/messaging/registry"
 	"github.com/mokevnin/1mail/internal/oauthserver"
 	"github.com/mokevnin/1mail/internal/outbound"
+	"github.com/mokevnin/1mail/internal/reputation"
 	"github.com/mokevnin/1mail/internal/secrets"
+	"github.com/mokevnin/1mail/internal/segments"
 	"github.com/mokevnin/1mail/internal/sending"
 	"github.com/mokevnin/1mail/internal/server"
 	"github.com/mokevnin/1mail/internal/service"
+	"github.com/mokevnin/1mail/internal/tags"
 	"github.com/mokevnin/1mail/internal/tracking"
 	"github.com/samber/do/v2"
 
@@ -447,11 +457,41 @@ func register(injector do.Injector, env string) {
 		return &outboundModule{outbound.New(client.Client, bus.Bus, resolver, tracking.New(cfg.JWTSecret, cfg.AppURL))}, nil
 	})
 
-	do.Provide(injector, func(i do.Injector) (*externalAPI, error) {
-		cfg, err := do.Invoke[*config.Config](i)
+	// Domain modules: each built once and shared by /site, /api and /mcp, so the
+	// surfaces cannot diverge on how a module is constructed.
+	do.Provide(injector, func(i do.Injector) (*segments.Module, error) {
+		client, err := do.Invoke[*entClient](i)
 		if err != nil {
 			return nil, err
 		}
+		return segments.New(client.Client), nil
+	})
+
+	do.Provide(injector, func(i do.Injector) (*contacts.Module, error) {
+		bus, err := do.Invoke[*eventsBus](i)
+		if err != nil {
+			return nil, err
+		}
+		return contacts.New(bus.Bus), nil
+	})
+
+	do.Provide(injector, func(i do.Injector) (*tags.Module, error) {
+		client, err := do.Invoke[*entClient](i)
+		if err != nil {
+			return nil, err
+		}
+		return tags.New(client.Client), nil
+	})
+
+	do.Provide(injector, func(i do.Injector) (*automations.Module, error) {
+		client, err := do.Invoke[*entClient](i)
+		if err != nil {
+			return nil, err
+		}
+		return automations.New(client.Client), nil
+	})
+
+	do.Provide(injector, func(i do.Injector) (*eventlog.Module, error) {
 		client, err := do.Invoke[*entClient](i)
 		if err != nil {
 			return nil, err
@@ -460,20 +500,44 @@ func register(injector do.Injector, env string) {
 		if err != nil {
 			return nil, err
 		}
-		sender, err := do.Invoke[*outboundModule](i)
+		return eventlog.New(client.Client, bus.Bus), nil
+	})
+
+	do.Provide(injector, func(i do.Injector) (*reputation.Module, error) {
+		client, err := do.Invoke[*entClient](i)
 		if err != nil {
 			return nil, err
 		}
-		cipher, err := do.Invoke[*secrets.Cipher](i)
+		return reputation.New(client.Client), nil
+	})
+
+	// The river jobs client is the broadcasts module's enqueue seam.
+	do.Provide(injector, func(i do.Injector) (*broadcasts.Module, error) {
+		client, err := do.Invoke[*entClient](i)
 		if err != nil {
 			return nil, err
 		}
-		// The river jobs client is the broadcasts module's enqueue seam.
 		jc, err := do.Invoke[*jobsClient](i)
 		if err != nil {
 			return nil, err
 		}
-		h, err := server.NewExternalAPI(client.Client, cfg.BootstrapToken, bus.Bus, sender.Module, cipher, jc)
+		return broadcasts.New(client.Client, jc.Client), nil
+	})
+
+	do.Provide(injector, func(i do.Injector) (*authtoken.Signer, error) {
+		cfg, err := do.Invoke[*config.Config](i)
+		if err != nil {
+			return nil, err
+		}
+		return authtoken.New(cfg.JWTSecret), nil
+	})
+
+	do.Provide(injector, func(i do.Injector) (*externalAPI, error) {
+		deps, err := externalDeps(i)
+		if err != nil {
+			return nil, err
+		}
+		h, err := server.NewExternalAPI(deps)
 		if err != nil {
 			return nil, err
 		}
@@ -505,38 +569,14 @@ func register(injector do.Injector, env string) {
 		if err != nil {
 			return nil, err
 		}
-		client, err := do.Invoke[*entClient](i)
-		if err != nil {
-			return nil, err
-		}
 		database, err := do.Invoke[*sqlDB](i)
 		if err != nil {
 			return nil, err
 		}
-		bus, err := do.Invoke[*eventsBus](i)
+		site, err := siteDeps(i)
 		if err != nil {
 			return nil, err
 		}
-		jc, err := do.Invoke[*jobsClient](i)
-		if err != nil {
-			return nil, err
-		}
-		cipher, err := do.Invoke[*secrets.Cipher](i)
-		if err != nil {
-			return nil, err
-		}
-		catalog, err := do.Invoke[*messaging.Catalog](i)
-		if err != nil {
-			return nil, err
-		}
-		sender, err := do.Invoke[*outboundModule](i)
-		if err != nil {
-			return nil, err
-		}
-
-		// The river jobs client implements every enqueue seam: broadcast, welcome,
-		// the self-service account mail (reset/verify/change), and sending-domain
-		// DKIM verification.
 		external, err := do.Invoke[*externalAPI](i)
 		if err != nil {
 			return nil, err
@@ -546,8 +586,134 @@ func register(injector do.Injector, env string) {
 			return nil, err
 		}
 
-		return server.New(cfg, client.Client, database.DB, bus.Bus, cipher, catalog, jc.Client, jc.Client, jc.Client, jc.Client, sender.Module, external.Handler, mcp.Handler)
+		return server.New(cfg, database.DB, site, external.Handler, mcp.Handler)
 	})
+}
+
+// externalDeps collects the shared singletons the /api handlers are built from.
+func externalDeps(i do.Injector) (apiexternal.Deps, error) {
+	cfg, err := do.Invoke[*config.Config](i)
+	if err != nil {
+		return apiexternal.Deps{}, err
+	}
+	client, err := do.Invoke[*entClient](i)
+	if err != nil {
+		return apiexternal.Deps{}, err
+	}
+	bus, err := do.Invoke[*eventsBus](i)
+	if err != nil {
+		return apiexternal.Deps{}, err
+	}
+	cipher, err := do.Invoke[*secrets.Cipher](i)
+	if err != nil {
+		return apiexternal.Deps{}, err
+	}
+	sender, err := do.Invoke[*outboundModule](i)
+	if err != nil {
+		return apiexternal.Deps{}, err
+	}
+	seg, err := do.Invoke[*segments.Module](i)
+	if err != nil {
+		return apiexternal.Deps{}, err
+	}
+	evlog, err := do.Invoke[*eventlog.Module](i)
+	if err != nil {
+		return apiexternal.Deps{}, err
+	}
+	con, err := do.Invoke[*contacts.Module](i)
+	if err != nil {
+		return apiexternal.Deps{}, err
+	}
+	tg, err := do.Invoke[*tags.Module](i)
+	if err != nil {
+		return apiexternal.Deps{}, err
+	}
+	auto, err := do.Invoke[*automations.Module](i)
+	if err != nil {
+		return apiexternal.Deps{}, err
+	}
+	bc, err := do.Invoke[*broadcasts.Module](i)
+	if err != nil {
+		return apiexternal.Deps{}, err
+	}
+	rep, err := do.Invoke[*reputation.Module](i)
+	if err != nil {
+		return apiexternal.Deps{}, err
+	}
+	return apiexternal.Deps{
+		Ent: client.Client, Bus: bus.Bus, Cipher: cipher, Outbound: sender.Module,
+		Segments: seg, EventLog: evlog, Contacts: con, Tags: tg, Automations: auto,
+		Broadcasts: bc, Reputation: rep, BootstrapToken: cfg.BootstrapToken,
+	}, nil
+}
+
+// siteDeps collects the shared singletons the /site handlers are built from.
+func siteDeps(i do.Injector) (apisite.Deps, error) {
+	cfg, err := do.Invoke[*config.Config](i)
+	if err != nil {
+		return apisite.Deps{}, err
+	}
+	client, err := do.Invoke[*entClient](i)
+	if err != nil {
+		return apisite.Deps{}, err
+	}
+	bus, err := do.Invoke[*eventsBus](i)
+	if err != nil {
+		return apisite.Deps{}, err
+	}
+	cipher, err := do.Invoke[*secrets.Cipher](i)
+	if err != nil {
+		return apisite.Deps{}, err
+	}
+	catalog, err := do.Invoke[*messaging.Catalog](i)
+	if err != nil {
+		return apisite.Deps{}, err
+	}
+	sender, err := do.Invoke[*outboundModule](i)
+	if err != nil {
+		return apisite.Deps{}, err
+	}
+	seg, err := do.Invoke[*segments.Module](i)
+	if err != nil {
+		return apisite.Deps{}, err
+	}
+	evlog, err := do.Invoke[*eventlog.Module](i)
+	if err != nil {
+		return apisite.Deps{}, err
+	}
+	con, err := do.Invoke[*contacts.Module](i)
+	if err != nil {
+		return apisite.Deps{}, err
+	}
+	tg, err := do.Invoke[*tags.Module](i)
+	if err != nil {
+		return apisite.Deps{}, err
+	}
+	auto, err := do.Invoke[*automations.Module](i)
+	if err != nil {
+		return apisite.Deps{}, err
+	}
+	bc, err := do.Invoke[*broadcasts.Module](i)
+	if err != nil {
+		return apisite.Deps{}, err
+	}
+	tokens, err := do.Invoke[*authtoken.Signer](i)
+	if err != nil {
+		return apisite.Deps{}, err
+	}
+	// The river jobs client implements the remaining enqueue seams: welcome, the
+	// self-service account mail (reset/verify/change), and sending-domain DKIM
+	// verification.
+	jc, err := do.Invoke[*jobsClient](i)
+	if err != nil {
+		return apisite.Deps{}, err
+	}
+	return apisite.Deps{
+		Ent: client.Client, Bus: bus.Bus, Cipher: cipher, Catalog: catalog, Outbound: sender.Module,
+		Segments: seg, EventLog: evlog, Contacts: con, Tags: tg, Automations: auto,
+		Broadcasts: bc, Welcome: jc.Client, SysMail: jc.Client, DomainVerify: jc.Client,
+		Tokens: tokens, AppURL: cfg.AppURL,
+	}, nil
 }
 
 // buildSystemSender constructs 1mail's platform email sender from config via the

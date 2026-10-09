@@ -20,7 +20,14 @@ import (
 	"github.com/mokevnin/1mail/config"
 	"github.com/mokevnin/1mail/ent"
 	apiauth "github.com/mokevnin/1mail/internal/api/auth"
+	apiexternal "github.com/mokevnin/1mail/internal/api/external"
+	apisite "github.com/mokevnin/1mail/internal/api/site"
+	"github.com/mokevnin/1mail/internal/authtoken"
+	"github.com/mokevnin/1mail/internal/automations"
+	"github.com/mokevnin/1mail/internal/broadcasts"
+	"github.com/mokevnin/1mail/internal/contacts"
 	"github.com/mokevnin/1mail/internal/db"
+	"github.com/mokevnin/1mail/internal/eventlog"
 	"github.com/mokevnin/1mail/internal/events"
 	"github.com/mokevnin/1mail/internal/fixtures"
 	"github.com/mokevnin/1mail/internal/jobs"
@@ -29,8 +36,11 @@ import (
 	"github.com/mokevnin/1mail/internal/messaging/registry"
 	"github.com/mokevnin/1mail/internal/oauthserver"
 	"github.com/mokevnin/1mail/internal/outbound"
+	"github.com/mokevnin/1mail/internal/reputation"
 	"github.com/mokevnin/1mail/internal/secrets"
+	"github.com/mokevnin/1mail/internal/segments"
 	"github.com/mokevnin/1mail/internal/server"
+	"github.com/mokevnin/1mail/internal/tags"
 	"github.com/mokevnin/1mail/internal/tracking"
 	ht "github.com/ogen-go/ogen/http"
 	"github.com/stretchr/testify/require"
@@ -160,11 +170,30 @@ func Setup(t *testing.T) *TestEnv {
 	// river), so it gets the same capturing resolver — its sends land in CustomerMail.
 	// inline implements every enqueue seam (broadcast, welcome, account mail,
 	// sending-domain verify).
-	external, err := server.NewExternalAPI(client, baseCfg.BootstrapToken, bus, sender, cipher, inline)
+	// Domain modules, built once here and shared by /site and /api exactly like the
+	// app's DI singletons.
+	eventLog := eventlog.New(client, bus)
+	segmentsModule := segments.New(client)
+	contactsModule := contacts.New(bus)
+	tagsModule := tags.New(client)
+	automationsModule := automations.New(client)
+	broadcastsModule := broadcasts.New(client, inline)
+	external, err := server.NewExternalAPI(apiexternal.Deps{
+		Ent: client, Bus: bus, Cipher: cipher, Outbound: sender,
+		Segments: segmentsModule, EventLog: eventLog, Contacts: contactsModule, Tags: tagsModule,
+		Automations: automationsModule, Broadcasts: broadcastsModule, Reputation: reputation.New(client),
+		BootstrapToken: baseCfg.BootstrapToken,
+	})
 	require.NoError(t, err, "build external API")
 	mcpHandler, err := mcpserver.New(onemail.ExternalOpenAPI, external, apiauth.NewExternalSecurityHandler(client), mcpserver.WithResourceMetadataURL(oauthserver.ResourceMetadataURL(baseCfg.AppURL)))
 	require.NoError(t, err, "build MCP handler")
-	handler, err := server.New(baseCfg, client, txDB, bus, cipher, catalog, inline, inline, inline, inline, sender, external, mcpHandler)
+	handler, err := server.New(baseCfg, txDB, apisite.Deps{
+		Ent: client, Bus: bus, Cipher: cipher, Catalog: catalog, Outbound: sender,
+		Segments: segmentsModule, EventLog: eventLog, Contacts: contactsModule, Tags: tagsModule,
+		Automations: automationsModule, Broadcasts: broadcastsModule,
+		Welcome: inline, SysMail: inline, DomainVerify: inline,
+		Tokens: authtoken.New(baseCfg.JWTSecret), AppURL: baseCfg.AppURL,
+	}, external, mcpHandler)
 	require.NoError(t, err, "build server")
 
 	return &TestEnv{
