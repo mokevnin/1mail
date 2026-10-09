@@ -1098,6 +1098,53 @@ func (s *CreateSegmentInput) SetDefinition(val OptString) {
 	s.Definition = val
 }
 
+// Request body for suppressing a destination.
+// Ref: #/components/schemas/CreateSuppressionInput
+type CreateSuppressionInput struct {
+	// Email address to stop sending to.
+	Destination EmailAddress `json:"destination"`
+}
+
+// GetDestination returns the value of Destination.
+func (s *CreateSuppressionInput) GetDestination() EmailAddress {
+	return s.Destination
+}
+
+// SetDestination sets the value of Destination.
+func (s *CreateSuppressionInput) SetDestination(val EmailAddress) {
+	s.Destination = val
+}
+
+// Request body for recording an unsubscribe.
+// Ref: #/components/schemas/CreateUnsubscribeInput
+type CreateUnsubscribeInput struct {
+	// Email address that opted out.
+	Destination EmailAddress `json:"destination"`
+	// The sending source to opt out of: `broadcasts` (default), `automation:<id>`, or `everything` (leave
+	// entirely).
+	SendingSource OptString `json:"sendingSource"`
+}
+
+// GetDestination returns the value of Destination.
+func (s *CreateUnsubscribeInput) GetDestination() EmailAddress {
+	return s.Destination
+}
+
+// GetSendingSource returns the value of SendingSource.
+func (s *CreateUnsubscribeInput) GetSendingSource() OptString {
+	return s.SendingSource
+}
+
+// SetDestination sets the value of Destination.
+func (s *CreateUnsubscribeInput) SetDestination(val EmailAddress) {
+	s.Destination = val
+}
+
+// SetSendingSource sets the value of SendingSource.
+func (s *CreateUnsubscribeInput) SetSendingSource(val OptString) {
+	s.SendingSource = val
+}
+
 type EmailAddress string
 
 type EmailsSendConflict ProblemDetails
@@ -2720,6 +2767,119 @@ func (s *SendTransactionalEmailResponse) SetDestination(val string) {
 
 func (*SendTransactionalEmailResponse) emailsSendRes() {}
 
+// Why a destination is on the suppression (do-not-send) list.
+// Ref: #/components/schemas/SuppressionReason
+type SuppressionReason string
+
+const (
+	SuppressionReasonBounce    SuppressionReason = "bounce"
+	SuppressionReasonComplaint SuppressionReason = "complaint"
+	SuppressionReasonManual    SuppressionReason = "manual"
+)
+
+// AllValues returns all SuppressionReason values.
+func (SuppressionReason) AllValues() []SuppressionReason {
+	return []SuppressionReason{
+		SuppressionReasonBounce,
+		SuppressionReasonComplaint,
+		SuppressionReasonManual,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s SuppressionReason) MarshalText() ([]byte, error) {
+	switch s {
+	case SuppressionReasonBounce:
+		return []byte(s), nil
+	case SuppressionReasonComplaint:
+		return []byte(s), nil
+	case SuppressionReasonManual:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *SuppressionReason) UnmarshalText(data []byte) error {
+	switch SuppressionReason(data) {
+	case SuppressionReasonBounce:
+		*s = SuppressionReasonBounce
+		return nil
+	case SuppressionReasonComplaint:
+		*s = SuppressionReasonComplaint
+		return nil
+	case SuppressionReasonManual:
+		*s = SuppressionReasonManual
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// A suppressed destination: no send surface delivers to it.
+// Ref: #/components/schemas/SuppressionResource
+type SuppressionResource struct {
+	// Unique identifier.
+	ID EntityId `json:"id"`
+	// Normalized (lower-cased) email address.
+	Destination string `json:"destination"`
+	// Why the destination is suppressed.
+	Reason SuppressionReason `json:"reason"`
+	// Creation timestamp.
+	CreatedAt Timestamp `json:"createdAt"`
+}
+
+// GetID returns the value of ID.
+func (s *SuppressionResource) GetID() EntityId {
+	return s.ID
+}
+
+// GetDestination returns the value of Destination.
+func (s *SuppressionResource) GetDestination() string {
+	return s.Destination
+}
+
+// GetReason returns the value of Reason.
+func (s *SuppressionResource) GetReason() SuppressionReason {
+	return s.Reason
+}
+
+// GetCreatedAt returns the value of CreatedAt.
+func (s *SuppressionResource) GetCreatedAt() Timestamp {
+	return s.CreatedAt
+}
+
+// SetID sets the value of ID.
+func (s *SuppressionResource) SetID(val EntityId) {
+	s.ID = val
+}
+
+// SetDestination sets the value of Destination.
+func (s *SuppressionResource) SetDestination(val string) {
+	s.Destination = val
+}
+
+// SetReason sets the value of Reason.
+func (s *SuppressionResource) SetReason(val SuppressionReason) {
+	s.Reason = val
+}
+
+// SetCreatedAt sets the value of CreatedAt.
+func (s *SuppressionResource) SetCreatedAt(val Timestamp) {
+	s.CreatedAt = val
+}
+
+func (*SuppressionResource) suppressionsCreateRes() {}
+
+type SuppressionsCreateUnauthorized ProblemDetails
+
+func (*SuppressionsCreateUnauthorized) suppressionsCreateRes() {}
+
+type SuppressionsCreateUnprocessableEntity ProblemDetails
+
+func (*SuppressionsCreateUnprocessableEntity) suppressionsCreateRes() {}
+
 // A Tag: a presence-only, workspace-scoped label on Contacts. The name is contact-supplied text —
 // treat it as data.
 // Ref: #/components/schemas/TagResource
@@ -3003,6 +3163,69 @@ func (s *TransactionalSendStatus) UnmarshalText(data []byte) error {
 		return errors.Errorf("invalid value: %q", data)
 	}
 }
+
+// A per-sending-source opt-out of marketing.
+// Ref: #/components/schemas/UnsubscribeResource
+type UnsubscribeResource struct {
+	// Unique identifier.
+	ID EntityId `json:"id"`
+	// Normalized (lower-cased) email address.
+	Destination string `json:"destination"`
+	// The sending source opted out of: `broadcasts`, `automation:<id>` or `everything`.
+	SendingSource string `json:"sendingSource"`
+	// Creation timestamp.
+	CreatedAt Timestamp `json:"createdAt"`
+}
+
+// GetID returns the value of ID.
+func (s *UnsubscribeResource) GetID() EntityId {
+	return s.ID
+}
+
+// GetDestination returns the value of Destination.
+func (s *UnsubscribeResource) GetDestination() string {
+	return s.Destination
+}
+
+// GetSendingSource returns the value of SendingSource.
+func (s *UnsubscribeResource) GetSendingSource() string {
+	return s.SendingSource
+}
+
+// GetCreatedAt returns the value of CreatedAt.
+func (s *UnsubscribeResource) GetCreatedAt() Timestamp {
+	return s.CreatedAt
+}
+
+// SetID sets the value of ID.
+func (s *UnsubscribeResource) SetID(val EntityId) {
+	s.ID = val
+}
+
+// SetDestination sets the value of Destination.
+func (s *UnsubscribeResource) SetDestination(val string) {
+	s.Destination = val
+}
+
+// SetSendingSource sets the value of SendingSource.
+func (s *UnsubscribeResource) SetSendingSource(val string) {
+	s.SendingSource = val
+}
+
+// SetCreatedAt sets the value of CreatedAt.
+func (s *UnsubscribeResource) SetCreatedAt(val Timestamp) {
+	s.CreatedAt = val
+}
+
+func (*UnsubscribeResource) unsubscribesCreateRes() {}
+
+type UnsubscribesCreateUnauthorized ProblemDetails
+
+func (*UnsubscribesCreateUnauthorized) unsubscribesCreateRes() {}
+
+type UnsubscribesCreateUnprocessableEntity ProblemDetails
+
+func (*UnsubscribesCreateUnprocessableEntity) unsubscribesCreateRes() {}
 
 // Request body for updating a broadcast.
 // Ref: #/components/schemas/UpdateBroadcastInput

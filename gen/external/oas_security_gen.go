@@ -56,10 +56,12 @@ var operationRolesBearerAuth = map[string][]string{
 	SegmentsGetOperation:        []string{},
 	SegmentsListOperation:       []string{},
 	SegmentsUpdateOperation:     []string{},
+	SuppressionsCreateOperation: []string{},
 	TagsApplyOperation:          []string{},
 	TagsListOperation:           []string{},
 	TagsListForContactOperation: []string{},
 	TagsRemoveOperation:         []string{},
+	UnsubscribesCreateOperation: []string{},
 }
 
 // GetRolesForBearerAuth returns the required roles for the given operation.

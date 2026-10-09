@@ -1252,6 +1252,49 @@ func encodeSegmentsUpdateResponse(response SegmentsUpdateRes, w http.ResponseWri
 	}
 }
 
+func encodeSuppressionsCreateResponse(response SuppressionsCreateRes, w http.ResponseWriter, span trace.Span) error {
+	switch response := response.(type) {
+	case *SuppressionResource:
+		w.Header().Set("Content-Type", "application/json; charset=utf-8")
+		w.WriteHeader(201)
+
+		e := new(jx.Encoder)
+		response.Encode(e)
+		if _, err := e.WriteTo(w); err != nil {
+			return errors.Wrap(err, "write")
+		}
+
+		return nil
+
+	case *SuppressionsCreateUnauthorized:
+		w.Header().Set("Content-Type", "application/problem+json")
+		w.WriteHeader(401)
+
+		e := new(jx.Encoder)
+		response.Encode(e)
+		if _, err := e.WriteTo(w); err != nil {
+			return errors.Wrap(err, "write")
+		}
+
+		return nil
+
+	case *SuppressionsCreateUnprocessableEntity:
+		w.Header().Set("Content-Type", "application/problem+json")
+		w.WriteHeader(422)
+
+		e := new(jx.Encoder)
+		response.Encode(e)
+		if _, err := e.WriteTo(w); err != nil {
+			return errors.Wrap(err, "write")
+		}
+
+		return nil
+
+	default:
+		return errors.Errorf("unexpected response type: %T", response)
+	}
+}
+
 func encodeTagsApplyResponse(response TagsApplyRes, w http.ResponseWriter, span trace.Span) error {
 	switch response := response.(type) {
 	case *TagResource:
@@ -1475,6 +1518,49 @@ func encodeTagsRemoveResponse(response TagsRemoveRes, w http.ResponseWriter, spa
 	case *TagsRemoveNotFound:
 		w.Header().Set("Content-Type", "application/problem+json")
 		w.WriteHeader(404)
+
+		e := new(jx.Encoder)
+		response.Encode(e)
+		if _, err := e.WriteTo(w); err != nil {
+			return errors.Wrap(err, "write")
+		}
+
+		return nil
+
+	default:
+		return errors.Errorf("unexpected response type: %T", response)
+	}
+}
+
+func encodeUnsubscribesCreateResponse(response UnsubscribesCreateRes, w http.ResponseWriter, span trace.Span) error {
+	switch response := response.(type) {
+	case *UnsubscribeResource:
+		w.Header().Set("Content-Type", "application/json; charset=utf-8")
+		w.WriteHeader(201)
+
+		e := new(jx.Encoder)
+		response.Encode(e)
+		if _, err := e.WriteTo(w); err != nil {
+			return errors.Wrap(err, "write")
+		}
+
+		return nil
+
+	case *UnsubscribesCreateUnauthorized:
+		w.Header().Set("Content-Type", "application/problem+json")
+		w.WriteHeader(401)
+
+		e := new(jx.Encoder)
+		response.Encode(e)
+		if _, err := e.WriteTo(w); err != nil {
+			return errors.Wrap(err, "write")
+		}
+
+		return nil
+
+	case *UnsubscribesCreateUnprocessableEntity:
+		w.Header().Set("Content-Type", "application/problem+json")
+		w.WriteHeader(422)
 
 		e := new(jx.Encoder)
 		response.Encode(e)

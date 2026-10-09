@@ -93,6 +93,10 @@ type SegmentsUpdateRes interface {
 	segmentsUpdateRes()
 }
 
+type SuppressionsCreateRes interface {
+	suppressionsCreateRes()
+}
+
 type TagsApplyRes interface {
 	tagsApplyRes()
 }
@@ -107,4 +111,8 @@ type TagsListRes interface {
 
 type TagsRemoveRes interface {
 	tagsRemoveRes()
+}
+
+type UnsubscribesCreateRes interface {
+	unsubscribesCreateRes()
 }

@@ -91,6 +91,7 @@ func TestMCPToolsAreTheContractMinusHiddenOperations(t *testing.T) {
 	assert.ElementsMatch(t, []string{
 		"contacts_list", "contacts_create", "contacts_get", "contacts_update", "contacts_delete",
 		"emails_send", "events_record", "events_actions_list", "whoami",
+		"suppressions_create", "unsubscribes_create",
 		"tags_list", "tags_list_for_contact", "tags_apply", "tags_remove",
 	}, names)
 
@@ -204,4 +205,32 @@ func TestMCPCallsAreIsolatedToTheTokensWorkspace(t *testing.T) {
 	res = call(t, s, "contacts_list", nil)
 	require.False(t, res.IsError, text(t, res))
 	assert.NotContains(t, text(t, res), "alice@example.com")
+}
+
+// Consent only narrows through the agent (ADR 0016): MCP can add a Suppression or
+// record an Unsubscribe, and exposes nothing that resubscribes or lifts one.
+func TestMCPConsentOnlyNarrows(t *testing.T) {
+	env := testhelper.Setup(t)
+	s := env.MCPClient(t, seedToken(t, env, 1, []string{"contacts:write"}))
+
+	list, err := s.ListTools(context.Background(), nil)
+	require.NoError(t, err)
+	for _, tool := range list.Tools {
+		name := strings.ToLower(tool.Name)
+		assert.NotContains(t, name, "resubscribe")
+		if strings.Contains(name, "suppression") || strings.Contains(name, "unsubscribe") {
+			assert.True(t, strings.HasSuffix(name, "_create"), "%s: consent tools only create", tool.Name)
+			require.NotNil(t, tool.Annotations)
+			require.NotNil(t, tool.Annotations.DestructiveHint)
+			assert.False(t, *tool.Annotations.DestructiveHint)
+		}
+	}
+
+	res := call(t, s, "unsubscribes_create", map[string]any{"destination": "alice@example.com"})
+	require.False(t, res.IsError, text(t, res))
+	assert.Contains(t, text(t, res), `"sendingSource":"broadcasts"`)
+
+	res = call(t, s, "suppressions_create", map[string]any{"destination": "alice@example.com"})
+	require.False(t, res.IsError, text(t, res))
+	assert.Contains(t, text(t, res), `"reason":"manual"`)
 }

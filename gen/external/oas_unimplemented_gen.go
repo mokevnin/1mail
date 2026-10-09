@@ -215,6 +215,17 @@ func (UnimplementedHandler) SegmentsUpdate(ctx context.Context, req *UpdateSegme
 	return r, ht.ErrNotImplemented
 }
 
+// SuppressionsCreate implements Suppressions_create operation.
+//
+// Suppress a destination so no surface sends to it (a manual Suppression). Idempotent: an
+// already-suppressed destination keeps its existing entry and reason. Lifting a suppression is not
+// available through the API.
+//
+// POST /suppressions
+func (UnimplementedHandler) SuppressionsCreate(ctx context.Context, req *CreateSuppressionInput) (r SuppressionsCreateRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // TagsApply implements Tags_apply operation.
 //
 // Apply a tag to a contact, creating the tag on first use. Idempotent.
@@ -248,5 +259,15 @@ func (UnimplementedHandler) TagsListForContact(ctx context.Context, params TagsL
 //
 // DELETE /contacts/{contactId}/tags/{name}
 func (UnimplementedHandler) TagsRemove(ctx context.Context, params TagsRemoveParams) (r TagsRemoveRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// UnsubscribesCreate implements Unsubscribes_create operation.
+//
+// Record that a destination unsubscribed from a sending source (default `broadcasts`). Idempotent.
+// Resubscribing is not available through the API.
+//
+// POST /unsubscribes
+func (UnimplementedHandler) UnsubscribesCreate(ctx context.Context, req *CreateUnsubscribeInput) (r UnsubscribesCreateRes, _ error) {
 	return r, ht.ErrNotImplemented
 }
