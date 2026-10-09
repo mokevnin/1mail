@@ -6,7 +6,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/mokevnin/1mail/config"
 	"github.com/mokevnin/1mail/ent/confirmation"
 	"github.com/mokevnin/1mail/ent/unsubscribe"
 	siteapi "github.com/mokevnin/1mail/gen/site"
@@ -17,13 +16,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
-
-func consentTracker(t *testing.T) *tracking.Tracker {
-	t.Helper()
-	cfg, err := config.Load("test")
-	require.NoError(t, err)
-	return tracking.New(cfg.JWTSecret, cfg.AppURL)
-}
 
 // tokenAfter returns the token segment of a tracker URL that follows marker.
 func tokenAfter(t *testing.T, url, marker string) string {
@@ -39,10 +31,9 @@ func TestSitePublicConfirmationsPerform(t *testing.T) {
 	env := testhelper.Setup(t)
 	ctx := t.Context()
 	anon := env.SiteAnonymous(t)
-	tr := consentTracker(t)
 
 	c := env.DB.Contact.GetX(ctx, fixtures.ContactAliceID)
-	url, err := tr.ConfirmURL(tracking.ConfirmTarget{
+	url, err := env.Tracker.ConfirmURL(tracking.ConfirmTarget{
 		Destination: *c.Email, WorkspaceID: fixtures.AcmeID, ContactID: c.ID,
 	})
 	require.NoError(t, err)
@@ -77,10 +68,9 @@ func TestSitePublicUnsubscribesPerform(t *testing.T) {
 	env := testhelper.Setup(t)
 	ctx := t.Context()
 	anon := env.SiteAnonymous(t)
-	tr := consentTracker(t)
 
 	c := env.DB.Contact.GetX(ctx, fixtures.ContactAliceID)
-	url, err := tr.UnsubscribeURL(tracking.UnsubTarget{
+	url, err := env.Tracker.UnsubscribeURL(tracking.UnsubTarget{
 		Source: eligibility.SourceBroadcasts, Destination: *c.Email, WorkspaceID: fixtures.AcmeID, ContactID: c.ID,
 	})
 	require.NoError(t, err)
@@ -112,10 +102,9 @@ func TestSitePublicUnsubscribesPerform(t *testing.T) {
 func TestSitePublicConfirmationsPerformRecordsClientIP(t *testing.T) {
 	env := testhelper.Setup(t)
 	ctx := t.Context()
-	tr := consentTracker(t)
 
 	c := env.DB.Contact.GetX(ctx, fixtures.ContactAliceID)
-	url, err := tr.ConfirmURL(tracking.ConfirmTarget{
+	url, err := env.Tracker.ConfirmURL(tracking.ConfirmTarget{
 		Destination: *c.Email, WorkspaceID: fixtures.AcmeID, ContactID: c.ID,
 	})
 	require.NoError(t, err)

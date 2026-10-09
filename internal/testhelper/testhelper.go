@@ -125,6 +125,9 @@ type TestEnv struct {
 	SQLDB  *sql.DB     // the same txdb connection the ent client and bus ride
 	Bus    *events.Bus // domain-event bus over SQLDB (nested savepoint per WithinTx)
 	Server http.Handler
+	// Tracker is the instance the server and the sender share: mint tracking,
+	// unsubscribe and confirmation tokens with it, never with a second one.
+	Tracker *tracking.Tracker
 
 	// Captured sends from the inline jobs adapter, for assertions.
 	SystemMail   *CapturingSender // platform mail (welcome, …)
@@ -198,7 +201,7 @@ func Setup(t *testing.T) *TestEnv {
 	require.NoError(t, err, "build server")
 
 	return &TestEnv{
-		DB: client, SQLDB: txDB, Bus: bus, Server: handler,
+		DB: client, SQLDB: txDB, Bus: bus, Server: handler, Tracker: tracker,
 		SystemMail: systemMail, CustomerMail: customerMail,
 	}
 }
