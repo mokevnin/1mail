@@ -47,3 +47,12 @@ from the free-string `from_email` and needs a migration + an onboarding step.
   real DNS, so a seeded dev domain re-verts unless its DKIM TXT is actually published — the
   Mailpit send loop needs a dev escape (a dev `LookupTXT` that trusts seeded domains, or a
   dev-only gate bypass) or it stays blocked.
+
+## Amendment: the gate lives in Outbound send and holds, it does not fail
+
+The verified-Sending-domain gate runs once, inside the Outbound send module
+([[0015-outbound-send-single-chokepoint]]), reading the stored `verified` value maintained by the
+background re-check (no live DNS lookup per message). An unverified domain is a source-level
+**`Held`** outcome: a Broadcast pauses and resumes when the domain is verified again, instead of
+failing every remaining recipient permanently because a DKIM record blipped. The plan-time
+duplicate of the check is removed; planning asks the same module.

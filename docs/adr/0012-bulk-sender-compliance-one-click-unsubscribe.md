@@ -123,3 +123,13 @@ the organizational domain and can break the sender's unrelated mail streams.
   (DKIM) — two independent signals, one gating, one advisory-with-teeth.
 - All three Gmail/Yahoo bulk pillars are now specified across ADRs: authentication (ADR 0010
   DKIM), one-click unsubscribe + DMARC (this ADR), and complaint-rate < 0.3% (ADR 0011).
+
+## Amendment: owned by Outbound send, and fail-closed
+
+Building the footer link, both RFC 8058 headers and the `h=` coverage is part of the single
+Outbound send module ([[0015-outbound-send-single-chokepoint]]), identical for Broadcast and
+Automation. If a marketing message cannot get its unsubscribe artefacts it is a failed send,
+never sent without them; the opt-in confirmation mail is not a marketing send and must not carry a
+placeholder target. Transactional is still untouched. Cited prior art: Listmonk ships one-click
+headers on opt-in mails pointing at an all-zero placeholder campaign, so a provider's one-click
+"succeeds" and changes nothing (see `docs/research/outbound-send-prior-art.md`).

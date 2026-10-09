@@ -53,3 +53,12 @@ channel without reshape.
 - Segment rules filtering on deliverability compile to a NOT-EXISTS against the
   suppression/unsubscribe tables (same shape as the existing event-correlation rules),
   rather than a column predicate on `contacts.status`.
+
+## Amendment: one rule, evaluated per message at send time
+
+The layers above are implemented **once**, as a rule keyed by (channel, destination) — not by
+Contact, because a Transactional destination may have no Contact. Audience selection for a
+Broadcast uses a batch form of that same rule (a join from Contact to destination), and the
+authoritative check is repeated for every message at send time and fails closed, so an
+unsubscribe or Suppression that lands after planning still takes effect. Address normalization
+happens in one place. See [[0015-outbound-send-single-chokepoint]].

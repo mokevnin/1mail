@@ -136,3 +136,11 @@ semantic change. Deferred until product scale demands it.
   stamp the Sending domain onto the send and failure Events.
 - A shared-IP-pool reputation view (the SaaS case where one tenant poisons a shared IP) is a
   future EE aggregation over this per-domain metric, deferred with the IP-pool model.
+
+## Amendment: the Sending-domain stamp has one home
+
+The send-side ingestion change above (stamp the Sending domain onto `email.sent`) is done in the
+single Outbound send module ([[0015-outbound-send-single-chokepoint]]), as part of a uniform
+`email.*` envelope. The Outbound message record also stores the Sending domain and provider
+message id, which makes send↔feedback correlation possible later; the metric itself stays a flow
+rate by each Event's own timestamp, exactly as decided here.

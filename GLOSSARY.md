@@ -149,12 +149,40 @@ derived, not a contact status.
 _Avoid_: Campaign, newsletter blast, mailshot, email blast
 
 **Broadcast recipient**:
-The per-(Broadcast, Contact) delivery record — the frozen audience snapshot taken at send
-time, and the home of per-recipient delivery state (sent / failed) plus a denormalized
+The per-(Broadcast, Contact) record — the frozen audience snapshot taken at send
+time, pointing at its Outbound message for delivery state (sent / failed), and the home of a denormalized
 **rollup** of engagement (opened / clicked) derived from the underlying `email.opened` /
 `email.clicked` Events, for per-broadcast stats. The Events are the source of truth; the
 rollup is a convenience view. Contrast Segment, which is a live query and never materialized.
 _Avoid_: Send log, delivery row
+
+**Outbound send**:
+The one act of sending a single email on any surface (Broadcast, Automation step,
+Transactional): Send-eligibility, the Workspace freeze check, the Sending-domain gate,
+rendering, the unsubscribe footer and headers, DKIM signing, the provider call, and the record of
+the result. Every surface goes through it; none re-implements any part.
+_Avoid_: Delivery pipeline, send path (unqualified), mailer
+
+**Outbound message**:
+The durable record of one Outbound send — which surface and which of its records it belongs to,
+the Sending source (none for Transactional), the Sending domain, the provider's message id, and
+the outcome. Claimed before the provider is called, under a per-logical-send idempotency key, so a
+retry never sends twice. Holds provenance and outcome, never rendered content. A Broadcast
+recipient points at its Outbound message; it does not replace it.
+_Avoid_: Send log, delivery row, email record
+
+**Outcome** (of an Outbound send):
+Either **per-recipient** and final for that destination — _Sent_, _Skipped_ (Suppression,
+Unsubscribe, or missing Confirmation), or a permanent failure of that one message — or
+**per-source** and reversible: a **Hold** (Workspace suspension, Billing hold, an unverified
+Sending domain, or no Integration), after which the same messages may still be sent.
+_Avoid_: Status, result (unqualified)
+
+**Hold**:
+The reversible, per-source Outcome that stops sending without consuming recipients: a Broadcast
+pauses with its remaining recipients pending, Automation Enrollments wait, a Transactional request
+is refused. Distinct from _Skipped_, which is final for one destination.
+_Avoid_: Block, failure, ban
 
 **Sent** (vs delivered):
 "Sent" means a message was _accepted by the email provider_ — not that it reached the inbox.

@@ -66,3 +66,12 @@ _before_ the provider call, so a retried or concurrent same-key request replays 
 outcome (or gets 409 while in flight) instead of sending twice — the Event-log DedupKey only
 dedupes the event row, never the send. Consistent with the by-reference rule, the record stores
 only provenance and outcome, never the rendered content.
+
+## Amendment: the per-send record is the Outbound message
+
+The `TransactionalEmail` record and its `(workspace, key)` claim generalise to every surface as
+the **Outbound message** ([[0015-outbound-send-single-chokepoint]]). A Transactional send stays
+synchronous and keeps its optional `Idempotency-Key`; the claim, the Suppression check, the
+Sending-domain gate and the freeze check now run inside the shared Outbound send module rather
+than in the HTTP handler. A reversible hold on the Workspace or its Sending domain is returned to
+the client as a 4xx, not recorded as a failed send.
