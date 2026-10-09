@@ -1,0 +1,299 @@
+// Package contacts is the one place a Contact is created, updated or upserted
+// (ADR 0016). Every surface — the /site SPA API, the external /api, the tracker's
+// Identify — hands it Attributes and gets back a Contact or a domain error; none
+// re-implements what lies between "this person is wanted" and "the row is
+// committed":
+//
+//   - alias-key normalization and resolution (subject_id, email, phone — ADR 0002);
+//   - declared-by-use Custom fields (ADR 0006);
+//   - the transaction, and the contact.created event published inside it so the
+//     event is committed iff the row is (Automations enroll off it);
+//   - domain errors (ErrNotFound, *ConflictError, ErrIdentityRequired) that each
+//     surface maps to its own transport — scope checks and RFC 7807 stay in the
+//     adapters.
+//
+// There is no repository layer over ent: the module uses the ent client directly.
+package contacts
+
+import (
+	"context"
+	"errors"
+	"strings"
+
+	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/samber/lo"
+
+	"github.com/mokevnin/1mail/ent"
+	"github.com/mokevnin/1mail/ent/contact"
+	"github.com/mokevnin/1mail/ent/predicate"
+	"github.com/mokevnin/1mail/internal/events"
+	"github.com/mokevnin/1mail/internal/i18n"
+)
+
+// Alias key fields, as reported by ConflictError.Field.
+const (
+	FieldEmail     = "email"
+	FieldPhone     = "phone"
+	FieldSubjectID = "subject_id"
+)
+
+// ErrNotFound means the Contact does not exist in the Workspace.
+var ErrNotFound = errors.New("contacts: contact not found")
+
+// ErrIdentityRequired means an upsert was given none of the alias keys, so there is
+// nothing to resolve or anchor a Contact by.
+var ErrIdentityRequired = errors.New("contacts: subject_id, email or phone is required")
+
+// ConflictError means an alias key is already held by another Contact of the
+// Workspace.
+type ConflictError struct {
+	// Field is the alias key in conflict (FieldEmail, FieldPhone, FieldSubjectID).
+	Field string
+}
+
+func (e *ConflictError) Error() string { return "contacts: " + e.Field + " already exists" }
+
+// Message words the conflict for a human, in the instance locale. The single place
+// the wording lives, so every surface reports the same conflict identically.
+func (e *ConflictError) Message() string {
+	return i18n.T("errors."+e.Field+"_exists", nil)
+}
+
+// Attributes are the writable attributes of a Contact. A nil pointer (or nil
+// CustomFields) means "not given": Create leaves it unset, Update leaves it as is.
+type Attributes struct {
+	SubjectID, Email, Phone       *string
+	FirstName, LastName, TimeZone *string
+	// CustomFields are declared by use (ADR 0006) and stored typed.
+	CustomFields map[string]any
+}
+
+// Result is the outcome of an Upsert.
+type Result struct {
+	Contact *ent.Contact
+	// Created is true when no Contact matched and a new one was made.
+	Created bool
+}
+
+// Module is the contacts module.
+type Module struct {
+	bus *events.Bus
+}
+
+// New builds the module.
+func New(bus *events.Bus) *Module { return &Module{bus: bus} }
+
+// Create makes a Contact and publishes contact.created in one transaction. An alias
+// key already taken in the Workspace yields a *ConflictError.
+func (m *Module) Create(ctx context.Context, workspaceID int64, attrs Attributes) (*ent.Contact, error) {
+	attrs = attrs.normalized()
+	var c *ent.Contact
+	err := m.bus.WithinTx(ctx, func(tx *ent.Client, pub events.Publisher) error {
+		typed, err := EnsureCustomFields(ctx, tx, workspaceID, attrs.CustomFields)
+		if err != nil {
+			return err
+		}
+		q := tx.Contact.Create().
+			SetWorkspaceID(workspaceID).
+			SetNillableSubjectID(attrs.SubjectID).
+			SetNillableEmail(attrs.Email).
+			SetNillablePhone(attrs.Phone).
+			SetNillableFirstName(attrs.FirstName).
+			SetNillableLastName(attrs.LastName).
+			SetNillableTimeZone(attrs.TimeZone)
+		if len(typed) > 0 {
+			q = q.SetCustomFields(typed)
+		}
+		c, err = q.Save(ctx)
+		if err != nil {
+			return err
+		}
+		return publishCreated(ctx, pub, workspaceID, c)
+	})
+	if err != nil {
+		return nil, domainError(err)
+	}
+	return c, nil
+}
+
+// Update changes the given attributes of a Contact; CustomFields, when given,
+// replace the stored set. ErrNotFound when the Contact is not in the Workspace.
+func (m *Module) Update(ctx context.Context, workspaceID, id int64, attrs Attributes) (*ent.Contact, error) {
+	attrs = attrs.normalized()
+	var c *ent.Contact
+	err := m.bus.WithinTx(ctx, func(tx *ent.Client, _ events.Publisher) error {
+		q := tx.Contact.UpdateOneID(id).
+			Where(contact.WorkspaceID(workspaceID)).
+			SetNillableSubjectID(attrs.SubjectID).
+			SetNillableEmail(attrs.Email).
+			SetNillablePhone(attrs.Phone).
+			SetNillableFirstName(attrs.FirstName).
+			SetNillableLastName(attrs.LastName).
+			SetNillableTimeZone(attrs.TimeZone)
+		if attrs.CustomFields != nil {
+			typed, err := EnsureCustomFields(ctx, tx, workspaceID, attrs.CustomFields)
+			if err != nil {
+				return err
+			}
+			q = q.SetCustomFields(typed)
+		}
+		var err error
+		c, err = q.Save(ctx)
+		return err
+	})
+	if err != nil {
+		return nil, domainError(err)
+	}
+	return c, nil
+}
+
+// Upsert resolves the Contact by any present alias key (subject_id, email, phone)
+// or creates one. An existing Contact is only enriched: missing attributes are
+// filled and Custom fields merged, never overwritten (identity is additive).
+// ErrIdentityRequired when no alias key is given.
+func (m *Module) Upsert(ctx context.Context, workspaceID int64, attrs Attributes) (Result, error) {
+	var res Result
+	err := m.bus.WithinTx(ctx, func(tx *ent.Client, pub events.Publisher) error {
+		var err error
+		res, err = UpsertIn(ctx, tx, pub, workspaceID, attrs)
+		return err
+	})
+	if err != nil {
+		return Result{}, domainError(err)
+	}
+	return res, nil
+}
+
+// UpsertIn is Upsert inside a transaction the caller already owns (tx and pub come
+// from events.Bus.WithinTx), for flows that bind more rows to the Contact atomically
+// — the tracker's Identify. It publishes contact.created when it creates.
+func UpsertIn(ctx context.Context, tx *ent.Client, pub events.Publisher, workspaceID int64, attrs Attributes) (Result, error) {
+	attrs = attrs.normalized()
+	if lo.FromPtr(attrs.SubjectID) == "" && attrs.Email == nil && attrs.Phone == nil {
+		return Result{}, ErrIdentityRequired
+	}
+	typed, err := EnsureCustomFields(ctx, tx, workspaceID, attrs.CustomFields)
+	if err != nil {
+		return Result{}, err
+	}
+
+	existing, err := Resolve(ctx, tx, workspaceID, attrs.SubjectID, attrs.Email, attrs.Phone)
+	if err != nil {
+		return Result{}, err
+	}
+	if existing != nil {
+		q := tx.Contact.UpdateOneID(existing.ID)
+		if existing.SubjectID == nil {
+			q.SetNillableSubjectID(attrs.SubjectID)
+		}
+		if existing.Email == nil {
+			q.SetNillableEmail(attrs.Email)
+		}
+		if existing.Phone == nil {
+			q.SetNillablePhone(attrs.Phone)
+		}
+		if existing.FirstName == nil {
+			q.SetNillableFirstName(attrs.FirstName)
+		}
+		if existing.LastName == nil {
+			q.SetNillableLastName(attrs.LastName)
+		}
+		if existing.TimeZone == nil {
+			q.SetNillableTimeZone(attrs.TimeZone)
+		}
+		if len(typed) > 0 {
+			q.SetCustomFields(lo.Assign(existing.CustomFields, typed))
+		}
+		c, err := q.Save(ctx)
+		return Result{Contact: c}, err
+	}
+
+	q := tx.Contact.Create().
+		SetWorkspaceID(workspaceID).
+		SetNillableSubjectID(attrs.SubjectID).
+		SetNillableEmail(attrs.Email).
+		SetNillablePhone(attrs.Phone).
+		SetNillableFirstName(attrs.FirstName).
+		SetNillableLastName(attrs.LastName).
+		SetNillableTimeZone(attrs.TimeZone)
+	if len(typed) > 0 {
+		q.SetCustomFields(typed)
+	}
+	c, err := q.Save(ctx)
+	if err != nil {
+		return Result{}, err
+	}
+	if err := publishCreated(ctx, pub, workspaceID, c); err != nil {
+		return Result{}, err
+	}
+	return Result{Contact: c, Created: true}, nil
+}
+
+// Resolve finds an existing Contact by any present alias key (subject_id → email →
+// phone), or returns nil. It never creates. Keys are matched as normalized by
+// Attributes, so callers may pass raw values.
+func Resolve(ctx context.Context, client *ent.Client, workspaceID int64, subjectID, email, phone *string) (*ent.Contact, error) {
+	a := Attributes{SubjectID: subjectID, Email: email, Phone: phone}.normalized()
+	var keys []predicate.Contact
+	if a.SubjectID != nil {
+		keys = append(keys, contact.SubjectID(*a.SubjectID))
+	}
+	if a.Email != nil {
+		keys = append(keys, contact.Email(*a.Email))
+	}
+	if a.Phone != nil {
+		keys = append(keys, contact.Phone(*a.Phone))
+	}
+	for _, key := range keys {
+		c, err := client.Contact.Query().Where(key, contact.WorkspaceID(workspaceID)).First(ctx)
+		if err == nil {
+			return c, nil
+		}
+		if !ent.IsNotFound(err) {
+			return nil, err
+		}
+	}
+	return nil, nil
+}
+
+func publishCreated(ctx context.Context, pub events.Publisher, workspaceID int64, c *ent.Contact) error {
+	return pub.Publish(ctx, &events.ContactCreated{WorkspaceID: workspaceID, ContactID: c.ID, Email: lo.FromPtr(c.Email)})
+}
+
+// normalized trims alias keys, lower-cases the email and drops blank ones, so
+// "Alice@X.com " and "alice@x.com" are the same alias key everywhere.
+func (a Attributes) normalized() Attributes {
+	a.SubjectID = trimmed(a.SubjectID)
+	a.Phone = trimmed(a.Phone)
+	if a.Email = trimmed(a.Email); a.Email != nil {
+		a.Email = lo.ToPtr(strings.ToLower(*a.Email))
+	}
+	return a
+}
+
+func trimmed(s *string) *string {
+	if s == nil {
+		return nil
+	}
+	v := strings.TrimSpace(*s)
+	if v == "" {
+		return nil
+	}
+	return &v
+}
+
+// domainError turns storage errors into the module's domain errors.
+func domainError(err error) error {
+	if ent.IsNotFound(err) {
+		return ErrNotFound
+	}
+	var pgErr *pgconn.PgError
+	if errors.As(err, &pgErr) && pgErr.Code == "23505" {
+		for _, f := range []string{FieldSubjectID, FieldPhone, FieldEmail} {
+			if strings.Contains(pgErr.ConstraintName, f) {
+				return &ConflictError{Field: f}
+			}
+		}
+	}
+	return err
+}
