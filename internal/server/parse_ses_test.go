@@ -46,6 +46,16 @@ func TestParseSESNotification(t *testing.T) {
 		assert.Equal(t, events.NameEmailComplained, out[0].Action)
 	})
 
+	// ADR 0011: the failure Event carries the Sending domain, taken from the From
+	// address SES echoes in mail.source (display name and case are normalized away).
+	t.Run("sending domain from mail.source", func(t *testing.T) {
+		msg := `{"notificationType":"Complaint","mail":{"source":"Acme <News@Mail.Acme.com>"},"complaint":{"complainedRecipients":[{"emailAddress":"spam@example.com"}]}}`
+		out, err := parseSESNotification(msg)
+		require.NoError(t, err)
+		require.Len(t, out, 1)
+		assert.Equal(t, "mail.acme.com", out[0].SendingDomain)
+	})
+
 	t.Run("delivery is ignored", func(t *testing.T) {
 		out, err := parseSESNotification(`{"notificationType":"Delivery","delivery":{}}`)
 		require.NoError(t, err)

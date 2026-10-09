@@ -61,6 +61,10 @@ type ContactsUpdateRes interface {
 	contactsUpdateRes()
 }
 
+type CustomFieldsListRes interface {
+	customFieldsListRes()
+}
+
 type EmailsSendRes interface {
 	emailsSendRes()
 }
@@ -91,4 +95,12 @@ type SegmentsListRes interface {
 
 type SegmentsUpdateRes interface {
 	segmentsUpdateRes()
+}
+
+type SendingDomainRatesListRes interface {
+	sendingDomainRatesListRes()
+}
+
+type SendingDomainsListRes interface {
+	sendingDomainsListRes()
 }

@@ -31,6 +31,8 @@ import (
 type Converter interface {
 	ContactToResource(source *ent.Contact) externalapi.ContactResource
 	ApiTokenToInfo(source *ent.ApiToken) externalapi.ApiTokenInfo
+	CustomFieldToResource(source *ent.CustomField) externalapi.CustomFieldResource
+	SendingDomainToResource(source *ent.SendingDomain) externalapi.SendingDomainResource
 }
 
 func entityID(id int64) externalapi.EntityId {

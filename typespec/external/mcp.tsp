@@ -31,3 +31,12 @@ namespace OneMail;
 @@extension(Auth.meGet, "x-mcp", #{ name: "whoami" });
 @@extension(Events.create, "x-mcp", #{ name: "events_record" });
 @@extension(EventActions.list, "x-mcp", #{ name: "events_actions_list" });
+
+// Read-only reference data (ADR 0016).
+@@extension(CustomFields.list, "x-mcp", #{ name: "custom_fields_list" });
+@@extension(SendingDomains.list, "x-mcp", #{ name: "sending_domains_list" });
+@@extension(
+  SendingDomainRates.list,
+  "x-mcp",
+  #{ name: "sending_domains_rates" }
+);

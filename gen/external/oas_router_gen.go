@@ -42,23 +42,32 @@ var (
 		"GET":    "Authorization",
 		"PUT":    "Authorization,Content-Type",
 	}
-	rn14AllowedHeaders = map[string]string{
-		"POST": "Authorization,Content-Type,Idempotency-Key",
-	}
-	rn17AllowedHeaders = map[string]string{
-		"POST": "Authorization,Content-Type",
-	}
-	rn16AllowedHeaders = map[string]string{
+	rn15AllowedHeaders = map[string]string{
 		"GET": "Authorization",
 	}
+	rn16AllowedHeaders = map[string]string{
+		"POST": "Authorization,Content-Type,Idempotency-Key",
+	}
+	rn19AllowedHeaders = map[string]string{
+		"POST": "Authorization,Content-Type",
+	}
 	rn18AllowedHeaders = map[string]string{
+		"GET": "Authorization",
+	}
+	rn20AllowedHeaders = map[string]string{
 		"GET":  "Authorization",
 		"POST": "Authorization,Content-Type",
 	}
-	rn20AllowedHeaders = map[string]string{
+	rn22AllowedHeaders = map[string]string{
 		"DELETE": "Authorization",
 		"GET":    "Authorization",
 		"PUT":    "Authorization,Content-Type",
+	}
+	rn25AllowedHeaders = map[string]string{
+		"GET": "Authorization",
+	}
+	rn24AllowedHeaders = map[string]string{
+		"GET": "Authorization",
 	}
 )
 
@@ -319,68 +328,107 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 				}
 
-			case 'c': // Prefix: "contacts"
+			case 'c': // Prefix: "c"
 
-				if l := len("contacts"); len(elem) >= l && elem[0:l] == "contacts" {
+				if l := len("c"); len(elem) >= l && elem[0:l] == "c" {
 					elem = elem[l:]
 				} else {
 					break
 				}
 
 				if len(elem) == 0 {
-					switch r.Method {
-					case "GET":
-						s.handleContactsListRequest([0]string{}, elemIsEscaped, w, r)
-					case "POST":
-						s.handleContactsCreateRequest([0]string{}, elemIsEscaped, w, r)
-					default:
-						s.notAllowed(w, r, notAllowedParams{
-							allowedMethods: "GET,POST",
-							allowedHeaders: rn11AllowedHeaders,
-							acceptPost:     "application/json",
-							acceptPatch:    "",
-						})
-					}
-
-					return
+					break
 				}
 				switch elem[0] {
-				case '/': // Prefix: "/"
+				case 'o': // Prefix: "ontacts"
 
-					if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
+					if l := len("ontacts"); len(elem) >= l && elem[0:l] == "ontacts" {
 						elem = elem[l:]
 					} else {
 						break
 					}
 
-					// Param: "id"
-					// Leaf parameter, slashes are prohibited
-					idx := strings.IndexByte(elem, '/')
-					if idx >= 0 {
+					if len(elem) == 0 {
+						switch r.Method {
+						case "GET":
+							s.handleContactsListRequest([0]string{}, elemIsEscaped, w, r)
+						case "POST":
+							s.handleContactsCreateRequest([0]string{}, elemIsEscaped, w, r)
+						default:
+							s.notAllowed(w, r, notAllowedParams{
+								allowedMethods: "GET,POST",
+								allowedHeaders: rn11AllowedHeaders,
+								acceptPost:     "application/json",
+								acceptPatch:    "",
+							})
+						}
+
+						return
+					}
+					switch elem[0] {
+					case '/': // Prefix: "/"
+
+						if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
+							elem = elem[l:]
+						} else {
+							break
+						}
+
+						// Param: "id"
+						// Leaf parameter, slashes are prohibited
+						idx := strings.IndexByte(elem, '/')
+						if idx >= 0 {
+							break
+						}
+						args[0] = elem
+						elem = ""
+
+						if len(elem) == 0 {
+							// Leaf node.
+							switch r.Method {
+							case "DELETE":
+								s.handleContactsDeleteRequest([1]string{
+									args[0],
+								}, elemIsEscaped, w, r)
+							case "GET":
+								s.handleContactsGetRequest([1]string{
+									args[0],
+								}, elemIsEscaped, w, r)
+							case "PUT":
+								s.handleContactsUpdateRequest([1]string{
+									args[0],
+								}, elemIsEscaped, w, r)
+							default:
+								s.notAllowed(w, r, notAllowedParams{
+									allowedMethods: "DELETE,GET,PUT",
+									allowedHeaders: rn13AllowedHeaders,
+									acceptPost:     "",
+									acceptPatch:    "",
+								})
+							}
+
+							return
+						}
+
+					}
+
+				case 'u': // Prefix: "ustom-fields"
+
+					if l := len("ustom-fields"); len(elem) >= l && elem[0:l] == "ustom-fields" {
+						elem = elem[l:]
+					} else {
 						break
 					}
-					args[0] = elem
-					elem = ""
 
 					if len(elem) == 0 {
 						// Leaf node.
 						switch r.Method {
-						case "DELETE":
-							s.handleContactsDeleteRequest([1]string{
-								args[0],
-							}, elemIsEscaped, w, r)
 						case "GET":
-							s.handleContactsGetRequest([1]string{
-								args[0],
-							}, elemIsEscaped, w, r)
-						case "PUT":
-							s.handleContactsUpdateRequest([1]string{
-								args[0],
-							}, elemIsEscaped, w, r)
+							s.handleCustomFieldsListRequest([0]string{}, elemIsEscaped, w, r)
 						default:
 							s.notAllowed(w, r, notAllowedParams{
-								allowedMethods: "DELETE,GET,PUT",
-								allowedHeaders: rn13AllowedHeaders,
+								allowedMethods: "GET",
+								allowedHeaders: rn15AllowedHeaders,
 								acceptPost:     "",
 								acceptPatch:    "",
 							})
@@ -419,7 +467,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 						default:
 							s.notAllowed(w, r, notAllowedParams{
 								allowedMethods: "POST",
-								allowedHeaders: rn14AllowedHeaders,
+								allowedHeaders: rn16AllowedHeaders,
 								acceptPost:     "application/json",
 								acceptPatch:    "",
 							})
@@ -443,7 +491,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 						default:
 							s.notAllowed(w, r, notAllowedParams{
 								allowedMethods: "POST",
-								allowedHeaders: rn17AllowedHeaders,
+								allowedHeaders: rn19AllowedHeaders,
 								acceptPost:     "application/json",
 								acceptPatch:    "",
 							})
@@ -468,7 +516,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 							default:
 								s.notAllowed(w, r, notAllowedParams{
 									allowedMethods: "GET",
-									allowedHeaders: rn16AllowedHeaders,
+									allowedHeaders: rn18AllowedHeaders,
 									acceptPost:     "",
 									acceptPatch:    "",
 								})
@@ -481,74 +529,139 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 				}
 
-			case 's': // Prefix: "segments"
+			case 's': // Prefix: "se"
 
-				if l := len("segments"); len(elem) >= l && elem[0:l] == "segments" {
+				if l := len("se"); len(elem) >= l && elem[0:l] == "se" {
 					elem = elem[l:]
 				} else {
 					break
 				}
 
 				if len(elem) == 0 {
-					switch r.Method {
-					case "GET":
-						s.handleSegmentsListRequest([0]string{}, elemIsEscaped, w, r)
-					case "POST":
-						s.handleSegmentsCreateRequest([0]string{}, elemIsEscaped, w, r)
-					default:
-						s.notAllowed(w, r, notAllowedParams{
-							allowedMethods: "GET,POST",
-							allowedHeaders: rn18AllowedHeaders,
-							acceptPost:     "application/json",
-							acceptPatch:    "",
-						})
-					}
-
-					return
+					break
 				}
 				switch elem[0] {
-				case '/': // Prefix: "/"
+				case 'g': // Prefix: "gments"
 
-					if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
+					if l := len("gments"); len(elem) >= l && elem[0:l] == "gments" {
 						elem = elem[l:]
 					} else {
 						break
 					}
 
-					// Param: "id"
-					// Leaf parameter, slashes are prohibited
-					idx := strings.IndexByte(elem, '/')
-					if idx >= 0 {
-						break
-					}
-					args[0] = elem
-					elem = ""
-
 					if len(elem) == 0 {
-						// Leaf node.
 						switch r.Method {
-						case "DELETE":
-							s.handleSegmentsDeleteRequest([1]string{
-								args[0],
-							}, elemIsEscaped, w, r)
 						case "GET":
-							s.handleSegmentsGetRequest([1]string{
-								args[0],
-							}, elemIsEscaped, w, r)
-						case "PUT":
-							s.handleSegmentsUpdateRequest([1]string{
-								args[0],
-							}, elemIsEscaped, w, r)
+							s.handleSegmentsListRequest([0]string{}, elemIsEscaped, w, r)
+						case "POST":
+							s.handleSegmentsCreateRequest([0]string{}, elemIsEscaped, w, r)
 						default:
 							s.notAllowed(w, r, notAllowedParams{
-								allowedMethods: "DELETE,GET,PUT",
+								allowedMethods: "GET,POST",
 								allowedHeaders: rn20AllowedHeaders,
+								acceptPost:     "application/json",
+								acceptPatch:    "",
+							})
+						}
+
+						return
+					}
+					switch elem[0] {
+					case '/': // Prefix: "/"
+
+						if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
+							elem = elem[l:]
+						} else {
+							break
+						}
+
+						// Param: "id"
+						// Leaf parameter, slashes are prohibited
+						idx := strings.IndexByte(elem, '/')
+						if idx >= 0 {
+							break
+						}
+						args[0] = elem
+						elem = ""
+
+						if len(elem) == 0 {
+							// Leaf node.
+							switch r.Method {
+							case "DELETE":
+								s.handleSegmentsDeleteRequest([1]string{
+									args[0],
+								}, elemIsEscaped, w, r)
+							case "GET":
+								s.handleSegmentsGetRequest([1]string{
+									args[0],
+								}, elemIsEscaped, w, r)
+							case "PUT":
+								s.handleSegmentsUpdateRequest([1]string{
+									args[0],
+								}, elemIsEscaped, w, r)
+							default:
+								s.notAllowed(w, r, notAllowedParams{
+									allowedMethods: "DELETE,GET,PUT",
+									allowedHeaders: rn22AllowedHeaders,
+									acceptPost:     "",
+									acceptPatch:    "",
+								})
+							}
+
+							return
+						}
+
+					}
+
+				case 'n': // Prefix: "nding-domains"
+
+					if l := len("nding-domains"); len(elem) >= l && elem[0:l] == "nding-domains" {
+						elem = elem[l:]
+					} else {
+						break
+					}
+
+					if len(elem) == 0 {
+						switch r.Method {
+						case "GET":
+							s.handleSendingDomainsListRequest([0]string{}, elemIsEscaped, w, r)
+						default:
+							s.notAllowed(w, r, notAllowedParams{
+								allowedMethods: "GET",
+								allowedHeaders: rn25AllowedHeaders,
 								acceptPost:     "",
 								acceptPatch:    "",
 							})
 						}
 
 						return
+					}
+					switch elem[0] {
+					case '/': // Prefix: "/rates"
+
+						if l := len("/rates"); len(elem) >= l && elem[0:l] == "/rates" {
+							elem = elem[l:]
+						} else {
+							break
+						}
+
+						if len(elem) == 0 {
+							// Leaf node.
+							switch r.Method {
+							case "GET":
+								s.handleSendingDomainRatesListRequest([0]string{}, elemIsEscaped, w, r)
+							default:
+								s.notAllowed(w, r, notAllowedParams{
+									allowedMethods: "GET",
+									allowedHeaders: rn24AllowedHeaders,
+									acceptPost:     "",
+									acceptPatch:    "",
+								})
+							}
+
+							return
+						}
+
 					}
 
 				}
@@ -879,85 +992,124 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 
 				}
 
-			case 'c': // Prefix: "contacts"
+			case 'c': // Prefix: "c"
 
-				if l := len("contacts"); len(elem) >= l && elem[0:l] == "contacts" {
+				if l := len("c"); len(elem) >= l && elem[0:l] == "c" {
 					elem = elem[l:]
 				} else {
 					break
 				}
 
 				if len(elem) == 0 {
-					switch method {
-					case "GET":
-						r.name = ContactsListOperation
-						r.summary = ""
-						r.operationID = "Contacts_list"
-						r.operationGroup = ""
-						r.pathPattern = "/contacts"
-						r.args = args
-						r.count = 0
-						return r, true
-					case "POST":
-						r.name = ContactsCreateOperation
-						r.summary = ""
-						r.operationID = "Contacts_create"
-						r.operationGroup = ""
-						r.pathPattern = "/contacts"
-						r.args = args
-						r.count = 0
-						return r, true
-					default:
-						return
-					}
+					break
 				}
 				switch elem[0] {
-				case '/': // Prefix: "/"
+				case 'o': // Prefix: "ontacts"
 
-					if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
+					if l := len("ontacts"); len(elem) >= l && elem[0:l] == "ontacts" {
 						elem = elem[l:]
 					} else {
 						break
 					}
 
-					// Param: "id"
-					// Leaf parameter, slashes are prohibited
-					idx := strings.IndexByte(elem, '/')
-					if idx >= 0 {
+					if len(elem) == 0 {
+						switch method {
+						case "GET":
+							r.name = ContactsListOperation
+							r.summary = ""
+							r.operationID = "Contacts_list"
+							r.operationGroup = ""
+							r.pathPattern = "/contacts"
+							r.args = args
+							r.count = 0
+							return r, true
+						case "POST":
+							r.name = ContactsCreateOperation
+							r.summary = ""
+							r.operationID = "Contacts_create"
+							r.operationGroup = ""
+							r.pathPattern = "/contacts"
+							r.args = args
+							r.count = 0
+							return r, true
+						default:
+							return
+						}
+					}
+					switch elem[0] {
+					case '/': // Prefix: "/"
+
+						if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
+							elem = elem[l:]
+						} else {
+							break
+						}
+
+						// Param: "id"
+						// Leaf parameter, slashes are prohibited
+						idx := strings.IndexByte(elem, '/')
+						if idx >= 0 {
+							break
+						}
+						args[0] = elem
+						elem = ""
+
+						if len(elem) == 0 {
+							// Leaf node.
+							switch method {
+							case "DELETE":
+								r.name = ContactsDeleteOperation
+								r.summary = ""
+								r.operationID = "Contacts_delete"
+								r.operationGroup = ""
+								r.pathPattern = "/contacts/{id}"
+								r.args = args
+								r.count = 1
+								return r, true
+							case "GET":
+								r.name = ContactsGetOperation
+								r.summary = ""
+								r.operationID = "Contacts_get"
+								r.operationGroup = ""
+								r.pathPattern = "/contacts/{id}"
+								r.args = args
+								r.count = 1
+								return r, true
+							case "PUT":
+								r.name = ContactsUpdateOperation
+								r.summary = ""
+								r.operationID = "Contacts_update"
+								r.operationGroup = ""
+								r.pathPattern = "/contacts/{id}"
+								r.args = args
+								r.count = 1
+								return r, true
+							default:
+								return
+							}
+						}
+
+					}
+
+				case 'u': // Prefix: "ustom-fields"
+
+					if l := len("ustom-fields"); len(elem) >= l && elem[0:l] == "ustom-fields" {
+						elem = elem[l:]
+					} else {
 						break
 					}
-					args[0] = elem
-					elem = ""
 
 					if len(elem) == 0 {
 						// Leaf node.
 						switch method {
-						case "DELETE":
-							r.name = ContactsDeleteOperation
-							r.summary = ""
-							r.operationID = "Contacts_delete"
-							r.operationGroup = ""
-							r.pathPattern = "/contacts/{id}"
-							r.args = args
-							r.count = 1
-							return r, true
 						case "GET":
-							r.name = ContactsGetOperation
+							r.name = CustomFieldsListOperation
 							r.summary = ""
-							r.operationID = "Contacts_get"
+							r.operationID = "CustomFields_list"
 							r.operationGroup = ""
-							r.pathPattern = "/contacts/{id}"
+							r.pathPattern = "/custom-fields"
 							r.args = args
-							r.count = 1
-							return r, true
-						case "PUT":
-							r.name = ContactsUpdateOperation
-							r.summary = ""
-							r.operationID = "Contacts_update"
-							r.operationGroup = ""
-							r.pathPattern = "/contacts/{id}"
-							r.args = args
-							r.count = 1
+							r.count = 0
 							return r, true
 						default:
 							return
@@ -1056,89 +1208,154 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 
 				}
 
-			case 's': // Prefix: "segments"
+			case 's': // Prefix: "se"
 
-				if l := len("segments"); len(elem) >= l && elem[0:l] == "segments" {
+				if l := len("se"); len(elem) >= l && elem[0:l] == "se" {
 					elem = elem[l:]
 				} else {
 					break
 				}
 
 				if len(elem) == 0 {
-					switch method {
-					case "GET":
-						r.name = SegmentsListOperation
-						r.summary = ""
-						r.operationID = "Segments_list"
-						r.operationGroup = ""
-						r.pathPattern = "/segments"
-						r.args = args
-						r.count = 0
-						return r, true
-					case "POST":
-						r.name = SegmentsCreateOperation
-						r.summary = ""
-						r.operationID = "Segments_create"
-						r.operationGroup = ""
-						r.pathPattern = "/segments"
-						r.args = args
-						r.count = 0
-						return r, true
-					default:
-						return
-					}
+					break
 				}
 				switch elem[0] {
-				case '/': // Prefix: "/"
+				case 'g': // Prefix: "gments"
 
-					if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
+					if l := len("gments"); len(elem) >= l && elem[0:l] == "gments" {
 						elem = elem[l:]
 					} else {
 						break
 					}
 
-					// Param: "id"
-					// Leaf parameter, slashes are prohibited
-					idx := strings.IndexByte(elem, '/')
-					if idx >= 0 {
-						break
-					}
-					args[0] = elem
-					elem = ""
-
 					if len(elem) == 0 {
-						// Leaf node.
 						switch method {
-						case "DELETE":
-							r.name = SegmentsDeleteOperation
-							r.summary = ""
-							r.operationID = "Segments_delete"
-							r.operationGroup = ""
-							r.pathPattern = "/segments/{id}"
-							r.args = args
-							r.count = 1
-							return r, true
 						case "GET":
-							r.name = SegmentsGetOperation
+							r.name = SegmentsListOperation
 							r.summary = ""
-							r.operationID = "Segments_get"
+							r.operationID = "Segments_list"
 							r.operationGroup = ""
-							r.pathPattern = "/segments/{id}"
+							r.pathPattern = "/segments"
 							r.args = args
-							r.count = 1
+							r.count = 0
 							return r, true
-						case "PUT":
-							r.name = SegmentsUpdateOperation
+						case "POST":
+							r.name = SegmentsCreateOperation
 							r.summary = ""
-							r.operationID = "Segments_update"
+							r.operationID = "Segments_create"
 							r.operationGroup = ""
-							r.pathPattern = "/segments/{id}"
+							r.pathPattern = "/segments"
 							r.args = args
-							r.count = 1
+							r.count = 0
 							return r, true
 						default:
 							return
 						}
+					}
+					switch elem[0] {
+					case '/': // Prefix: "/"
+
+						if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
+							elem = elem[l:]
+						} else {
+							break
+						}
+
+						// Param: "id"
+						// Leaf parameter, slashes are prohibited
+						idx := strings.IndexByte(elem, '/')
+						if idx >= 0 {
+							break
+						}
+						args[0] = elem
+						elem = ""
+
+						if len(elem) == 0 {
+							// Leaf node.
+							switch method {
+							case "DELETE":
+								r.name = SegmentsDeleteOperation
+								r.summary = ""
+								r.operationID = "Segments_delete"
+								r.operationGroup = ""
+								r.pathPattern = "/segments/{id}"
+								r.args = args
+								r.count = 1
+								return r, true
+							case "GET":
+								r.name = SegmentsGetOperation
+								r.summary = ""
+								r.operationID = "Segments_get"
+								r.operationGroup = ""
+								r.pathPattern = "/segments/{id}"
+								r.args = args
+								r.count = 1
+								return r, true
+							case "PUT":
+								r.name = SegmentsUpdateOperation
+								r.summary = ""
+								r.operationID = "Segments_update"
+								r.operationGroup = ""
+								r.pathPattern = "/segments/{id}"
+								r.args = args
+								r.count = 1
+								return r, true
+							default:
+								return
+							}
+						}
+
+					}
+
+				case 'n': // Prefix: "nding-domains"
+
+					if l := len("nding-domains"); len(elem) >= l && elem[0:l] == "nding-domains" {
+						elem = elem[l:]
+					} else {
+						break
+					}
+
+					if len(elem) == 0 {
+						switch method {
+						case "GET":
+							r.name = SendingDomainsListOperation
+							r.summary = ""
+							r.operationID = "SendingDomains_list"
+							r.operationGroup = ""
+							r.pathPattern = "/sending-domains"
+							r.args = args
+							r.count = 0
+							return r, true
+						default:
+							return
+						}
+					}
+					switch elem[0] {
+					case '/': // Prefix: "/rates"
+
+						if l := len("/rates"); len(elem) >= l && elem[0:l] == "/rates" {
+							elem = elem[l:]
+						} else {
+							break
+						}
+
+						if len(elem) == 0 {
+							// Leaf node.
+							switch method {
+							case "GET":
+								r.name = SendingDomainRatesListOperation
+								r.summary = ""
+								r.operationID = "SendingDomainRates_list"
+								r.operationGroup = ""
+								r.pathPattern = "/sending-domains/rates"
+								r.args = args
+								r.count = 0
+								return r, true
+							default:
+								return
+							}
+						}
+
 					}
 
 				}

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/mail"
 	"net/url"
 	"strings"
 	"time"
@@ -54,7 +55,10 @@ type sesHook struct {
 type sesNotification struct {
 	NotificationType string `json:"notificationType"`
 	EventType        string `json:"eventType"`
-	Bounce           *struct {
+	Mail             struct {
+		Source string `json:"source"` // the From address the message was sent as
+	} `json:"mail"`
+	Bounce *struct {
 		BounceType        string `json:"bounceType"` // Permanent|Transient|Undetermined
 		BouncedRecipients []struct {
 			EmailAddress string `json:"emailAddress"`
@@ -121,6 +125,8 @@ type sesFailure struct {
 	Action string // events.NameEmailBounced | events.NameEmailComplained
 	Email  string
 	Kind   string // permanent|transient for bounces; "" for complaints
+	// SendingDomain is the domain of the From address (ADR 0011), "" when SES did not echo it.
+	SendingDomain string
 }
 
 // parseSESNotification extracts the suppressing failures from an SES message
@@ -136,6 +142,7 @@ func parseSESNotification(message string) ([]sesFailure, error) {
 		typ = n.EventType
 	}
 
+	sendingDomain := sourceDomain(n.Mail.Source)
 	var out []sesFailure
 	switch typ {
 	case "Bounce":
@@ -147,14 +154,14 @@ func parseSESNotification(message string) ([]sesFailure, error) {
 			kind = events.BounceKindPermanent
 		}
 		for _, rcpt := range n.Bounce.BouncedRecipients {
-			out = append(out, sesFailure{Action: events.NameEmailBounced, Email: rcpt.EmailAddress, Kind: kind})
+			out = append(out, sesFailure{Action: events.NameEmailBounced, Email: rcpt.EmailAddress, Kind: kind, SendingDomain: sendingDomain})
 		}
 	case "Complaint":
 		if n.Complaint == nil {
 			return nil, nil
 		}
 		for _, rcpt := range n.Complaint.ComplainedRecipients {
-			out = append(out, sesFailure{Action: events.NameEmailComplained, Email: rcpt.EmailAddress})
+			out = append(out, sesFailure{Action: events.NameEmailComplained, Email: rcpt.EmailAddress, SendingDomain: sendingDomain})
 		}
 	}
 	// Other SES types (Delivery, Send, …) yield no failures.
@@ -167,18 +174,33 @@ func (h *sesHook) handleNotification(ctx context.Context, workspaceID int64, pay
 		return err
 	}
 	for _, f := range failures {
-		if err := h.publishFailure(ctx, workspaceID, payload.MessageId, f.Action, f.Email, f.Kind); err != nil {
+		if err := h.publishFailure(ctx, workspaceID, payload.MessageId, f); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
+// sourceDomain extracts the lower-cased domain of a From address ("Name <a@b.c>" or
+// "a@b.c"); "" when it cannot be parsed.
+func sourceDomain(source string) string {
+	addr, err := mail.ParseAddress(source)
+	if err != nil {
+		return ""
+	}
+	_, domain, ok := strings.Cut(addr.Address, "@")
+	if !ok {
+		return ""
+	}
+	return strings.ToLower(domain)
+}
+
 // publishFailure normalizes the address, resolves the contact when known, and
 // publishes one typed EmailDeliveryFailure keyed by SNS messageId + recipient so
 // a redelivered notification dedupes downstream.
-func (h *sesHook) publishFailure(ctx context.Context, workspaceID int64, messageID, action, email, kind string) error {
-	email = strings.ToLower(strings.TrimSpace(email))
+func (h *sesHook) publishFailure(ctx context.Context, workspaceID int64, messageID string, f sesFailure) error {
+	action, kind := f.Action, f.Kind
+	email := strings.ToLower(strings.TrimSpace(f.Email))
 	if email == "" {
 		return nil
 	}
@@ -197,13 +219,14 @@ func (h *sesHook) publishFailure(ctx context.Context, workspaceID int64, message
 	}
 	return h.bus.WithinTx(ctx, func(_ *ent.Client, pub events.Publisher) error {
 		return pub.Publish(ctx, &events.EmailDeliveryFailure{
-			Action:      action,
-			WorkspaceID: workspaceID,
-			ContactID:   contactID,
-			Email:       email,
-			BounceKind:  kind,
-			Provider:    "ses",
-			DedupID:     messageID + "/" + email,
+			Action:        action,
+			WorkspaceID:   workspaceID,
+			ContactID:     contactID,
+			Email:         email,
+			BounceKind:    kind,
+			Provider:      "ses",
+			SendingDomain: f.SendingDomain,
+			DedupID:       messageID + "/" + email,
 		})
 	})
 }

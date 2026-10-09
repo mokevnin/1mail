@@ -212,6 +212,9 @@ type EmailDeliveryFailure struct {
 	Email       string `json:"email"`
 	BounceKind  string `json:"bounceKind,omitempty"` // permanent|transient (bounces only)
 	Provider    string `json:"provider,omitempty"`   // ses, ...
+	// SendingDomain is the domain the failed message was sent from (ADR 0011), so the
+	// complaint/bounce rate can be grained per Sending domain.
+	SendingDomain string `json:"sendingDomain,omitempty"`
 	// DedupID is the stable upstream id (e.g. SNS messageId + recipient) used as
 	// the envelope id so a redelivered provider notification dedupes at persist.
 	DedupID string `json:"dedupId,omitempty"`
@@ -228,6 +231,9 @@ func (e *EmailDeliveryFailure) Project() Projection {
 	}
 	if e.Provider != "" {
 		props["provider"] = e.Provider
+	}
+	if e.SendingDomain != "" {
+		props["sendingDomain"] = e.SendingDomain
 	}
 	return Projection{Subject: e.Email, Action: e.Action, Email: e.Email, Properties: props, ContactID: e.ContactID}
 }

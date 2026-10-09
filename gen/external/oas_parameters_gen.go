@@ -1448,3 +1448,200 @@ func decodeSegmentsUpdateParams(args [1]string, argsEscaped bool, r *http.Reques
 	}
 	return params, nil
 }
+
+// SendingDomainRatesListParams is parameters of SendingDomainRates_list operation.
+type SendingDomainRatesListParams struct {
+	// Trailing window in days (1 to 90).
+	WindowDays OptInt32 `json:",omitempty,omitzero"`
+}
+
+func unpackSendingDomainRatesListParams(packed middleware.Parameters) (params SendingDomainRatesListParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "windowDays",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.WindowDays = v.(OptInt32)
+		}
+	}
+	return params
+}
+
+func decodeSendingDomainRatesListParams(args [0]string, argsEscaped bool, r *http.Request) (params SendingDomainRatesListParams, _ error) {
+	q := uri.NewQueryDecoder(r.URL.Query())
+	// Set default value for query: windowDays.
+	{
+		val := int32(7)
+		params.WindowDays.SetTo(val)
+	}
+	// Decode query: windowDays.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "windowDays",
+			Style:   uri.QueryStyleForm,
+			Explode: false,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotWindowDaysVal int32
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToInt32(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotWindowDaysVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.WindowDays.SetTo(paramsDotWindowDaysVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "windowDays",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
+// SendingDomainsListParams is parameters of SendingDomains_list operation.
+type SendingDomainsListParams struct {
+	// Page number (1-based).
+	Page OptInt32 `json:",omitempty,omitzero"`
+	// Page size.
+	PageSize OptInt32 `json:",omitempty,omitzero"`
+}
+
+func unpackSendingDomainsListParams(packed middleware.Parameters) (params SendingDomainsListParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "page",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.Page = v.(OptInt32)
+		}
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "pageSize",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.PageSize = v.(OptInt32)
+		}
+	}
+	return params
+}
+
+func decodeSendingDomainsListParams(args [0]string, argsEscaped bool, r *http.Request) (params SendingDomainsListParams, _ error) {
+	q := uri.NewQueryDecoder(r.URL.Query())
+	// Set default value for query: page.
+	{
+		val := int32(1)
+		params.Page.SetTo(val)
+	}
+	// Decode query: page.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "page",
+			Style:   uri.QueryStyleForm,
+			Explode: false,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotPageVal int32
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToInt32(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotPageVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.Page.SetTo(paramsDotPageVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "page",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	// Set default value for query: pageSize.
+	{
+		val := int32(25)
+		params.PageSize.SetTo(val)
+	}
+	// Decode query: pageSize.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "pageSize",
+			Style:   uri.QueryStyleForm,
+			Explode: false,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotPageSizeVal int32
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToInt32(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotPageSizeVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.PageSize.SetTo(paramsDotPageSizeVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "pageSize",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	return params, nil
+}

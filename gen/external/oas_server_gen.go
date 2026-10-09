@@ -88,6 +88,12 @@ type Handler interface {
 	//
 	// PUT /contacts/{id}
 	ContactsUpdate(ctx context.Context, req *UpdateContactInput, params ContactsUpdateParams) (ContactsUpdateRes, error)
+	// CustomFieldsList implements CustomFields_list operation.
+	//
+	// List the workspace's custom field definitions.
+	//
+	// GET /custom-fields
+	CustomFieldsList(ctx context.Context) (CustomFieldsListRes, error)
 	// EmailsSend implements Emails_send operation.
 	//
 	// Send a transactional email. The referenced Template's current content is rendered with the supplied
@@ -141,6 +147,18 @@ type Handler interface {
 	//
 	// PUT /segments/{id}
 	SegmentsUpdate(ctx context.Context, req *UpdateSegmentInput, params SegmentsUpdateParams) (SegmentsUpdateRes, error)
+	// SendingDomainRatesList implements SendingDomainRates_list operation.
+	//
+	// Complaint and bounce rates per sending domain over a trailing window.
+	//
+	// GET /sending-domains/rates
+	SendingDomainRatesList(ctx context.Context, params SendingDomainRatesListParams) (SendingDomainRatesListRes, error)
+	// SendingDomainsList implements SendingDomains_list operation.
+	//
+	// List the workspace's sending domains.
+	//
+	// GET /sending-domains
+	SendingDomainsList(ctx context.Context, params SendingDomainsListParams) (SendingDomainsListRes, error)
 }
 
 // Server implements http server based on OpenAPI v3 specification and
