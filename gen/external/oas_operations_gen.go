@@ -28,6 +28,7 @@ const (
 	SegmentsDeleteOperation      OperationName = "SegmentsDelete"
 	SegmentsGetOperation         OperationName = "SegmentsGet"
 	SegmentsListOperation        OperationName = "SegmentsList"
+	SegmentsPreviewOperation     OperationName = "SegmentsPreview"
 	SegmentsUpdateOperation      OperationName = "SegmentsUpdate"
 	SuppressionsCreateOperation  OperationName = "SuppressionsCreate"
 	UnsubscribesCreateOperation  OperationName = "UnsubscribesCreate"

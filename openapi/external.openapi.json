@@ -1259,10 +1259,7 @@
             }
           }
         },
-        "tags": ["Segments"],
-        "x-mcp": {
-          "hidden": true
-        }
+        "tags": ["Segments"]
       },
       "post": {
         "operationId": "Segments_create",
@@ -1310,9 +1307,66 @@
               }
             }
           }
+        }
+      }
+    },
+    "/segments/preview": {
+      "post": {
+        "operationId": "Segments_preview",
+        "description": "Count the contacts matching an unsaved rule definition",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "The request has succeeded.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PreviewSegmentResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "RFC 7807 bad request response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "RFC 7807 unauthorized response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "RFC 7807 validation response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
         },
-        "x-mcp": {
-          "hidden": true
+        "tags": ["Segments"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PreviewSegmentInput"
+              }
+            }
+          }
         }
       }
     },
@@ -1367,10 +1421,7 @@
             }
           }
         },
-        "tags": ["Segments"],
-        "x-mcp": {
-          "hidden": true
-        }
+        "tags": ["Segments"]
       },
       "put": {
         "operationId": "Segments_update",
@@ -1442,9 +1493,6 @@
               }
             }
           }
-        },
-        "x-mcp": {
-          "hidden": true
         }
       },
       "delete": {
@@ -1490,10 +1538,7 @@
             }
           }
         },
-        "tags": ["Segments"],
-        "x-mcp": {
-          "hidden": true
-        }
+        "tags": ["Segments"]
       }
     },
     "/suppressions": {
@@ -2087,6 +2132,29 @@
           }
         },
         "description": "Event payload"
+      },
+      "PreviewSegmentInput": {
+        "type": "object",
+        "properties": {
+          "definition": {
+            "type": "string",
+            "nullable": true,
+            "description": "Rule definition (react-querybuilder JSON); empty means all contacts"
+          }
+        },
+        "description": "Request body for previewing a rule definition's audience"
+      },
+      "PreviewSegmentResult": {
+        "type": "object",
+        "required": ["count"],
+        "properties": {
+          "count": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Number of contacts matching the rule"
+          }
+        },
+        "description": "Result of a segment preview"
       },
       "ProblemDetails": {
         "type": "object",

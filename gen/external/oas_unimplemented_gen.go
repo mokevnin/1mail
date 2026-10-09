@@ -206,6 +206,15 @@ func (UnimplementedHandler) SegmentsList(ctx context.Context, params SegmentsLis
 	return r, ht.ErrNotImplemented
 }
 
+// SegmentsPreview implements Segments_preview operation.
+//
+// Count the contacts matching an unsaved rule definition.
+//
+// POST /segments/preview
+func (UnimplementedHandler) SegmentsPreview(ctx context.Context, req *PreviewSegmentInput) (r SegmentsPreviewRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // SegmentsUpdate implements Segments_update operation.
 //
 // Update a resource.

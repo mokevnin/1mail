@@ -135,6 +135,12 @@ type Handler interface {
 	//
 	// GET /segments
 	SegmentsList(ctx context.Context, params SegmentsListParams) (SegmentsListRes, error)
+	// SegmentsPreview implements Segments_preview operation.
+	//
+	// Count the contacts matching an unsaved rule definition.
+	//
+	// POST /segments/preview
+	SegmentsPreview(ctx context.Context, req *PreviewSegmentInput) (SegmentsPreviewRes, error)
 	// SegmentsUpdate implements Segments_update operation.
 	//
 	// Update a resource.

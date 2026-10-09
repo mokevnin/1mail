@@ -2257,6 +2257,42 @@ func (o OptString) Or(d string) string {
 	return d
 }
 
+// Request body for previewing a rule definition's audience.
+// Ref: #/components/schemas/PreviewSegmentInput
+type PreviewSegmentInput struct {
+	// Rule definition (react-querybuilder JSON); empty means all contacts.
+	Definition OptNilString `json:"definition"`
+}
+
+// GetDefinition returns the value of Definition.
+func (s *PreviewSegmentInput) GetDefinition() OptNilString {
+	return s.Definition
+}
+
+// SetDefinition sets the value of Definition.
+func (s *PreviewSegmentInput) SetDefinition(val OptNilString) {
+	s.Definition = val
+}
+
+// Result of a segment preview.
+// Ref: #/components/schemas/PreviewSegmentResult
+type PreviewSegmentResult struct {
+	// Number of contacts matching the rule.
+	Count int32 `json:"count"`
+}
+
+// GetCount returns the value of Count.
+func (s *PreviewSegmentResult) GetCount() int32 {
+	return s.Count
+}
+
+// SetCount sets the value of Count.
+func (s *PreviewSegmentResult) SetCount(val int32) {
+	s.Count = val
+}
+
+func (*PreviewSegmentResult) segmentsPreviewRes() {}
+
 // RFC 7807 Problem Details.
 // Ref: #/components/schemas/ProblemDetails
 type ProblemDetails struct {
@@ -2637,6 +2673,18 @@ func (*SegmentsListUnauthorized) segmentsListRes() {}
 type SegmentsListUnprocessableEntity ProblemDetails
 
 func (*SegmentsListUnprocessableEntity) segmentsListRes() {}
+
+type SegmentsPreviewBadRequest ProblemDetails
+
+func (*SegmentsPreviewBadRequest) segmentsPreviewRes() {}
+
+type SegmentsPreviewUnauthorized ProblemDetails
+
+func (*SegmentsPreviewUnauthorized) segmentsPreviewRes() {}
+
+type SegmentsPreviewUnprocessableEntity ProblemDetails
+
+func (*SegmentsPreviewUnprocessableEntity) segmentsPreviewRes() {}
 
 type SegmentsUpdateBadRequest ProblemDetails
 

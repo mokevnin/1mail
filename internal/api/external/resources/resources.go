@@ -24,6 +24,7 @@ import (
 // goverter:extend entityID
 // goverter:extend timestamp
 // goverter:extend optNilString
+// goverter:extend optString
 // goverter:extend optNilEmailAddress
 // goverter:extend optNilTimeZone
 // goverter:extend optNilTimestamp
@@ -31,6 +32,7 @@ import (
 type Converter interface {
 	ContactToResource(source *ent.Contact) externalapi.ContactResource
 	ApiTokenToInfo(source *ent.ApiToken) externalapi.ApiTokenInfo
+	SegmentToResource(source *ent.Segment) externalapi.SegmentResource
 }
 
 func entityID(id int64) externalapi.EntityId {
@@ -46,6 +48,13 @@ func optNilString(v *string) externalapi.OptNilString {
 		return externalapi.OptNilString{}
 	}
 	return externalapi.NewOptNilString(*v)
+}
+
+func optString(v *string) externalapi.OptString {
+	if v == nil {
+		return externalapi.OptString{}
+	}
+	return externalapi.NewOptString(*v)
 }
 
 func optNilEmailAddress(v *string) externalapi.OptNilEmailAddress {
