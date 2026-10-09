@@ -17,6 +17,8 @@
   "errors.password_required": "password is required",
   "errors.register_required": "name, email and password are required",
   "errors.email_exists": "email already exists",
+  "errors.phone_exists": "phone already exists",
+  "errors.subject_id_exists": "subject id already exists",
   "errors.reset_link_invalid": "invalid or expired reset link",
   "errors.verify_link_invalid": "invalid or expired verification link",
   "errors.verify_link_bad": "invalid verification link",
