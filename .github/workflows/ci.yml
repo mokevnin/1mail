@@ -29,9 +29,27 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      # CI installs the toolchains natively (above), so bypass the dev containers.
       - name: Run checks
-        run: make check RUN_FE= RUN_GO= RUN_GO_DB=
+        run: make check
+
+  generated:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          persist-credentials: false
+
+      - name: Setup mise
+        uses: jdx/mise-action@c37c93293d6b742fc901e1406b8f764f6fb19dac # v2.4.4
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # Regenerates everything and fails if the committed output differs.
+      - name: Check generated code is up to date
+        run: make check-generated
 
   test:
     runs-on: ubuntu-latest
@@ -62,7 +80,7 @@ jobs:
           go-version-file: go.mod
 
       - name: Run tests
-        run: make test RUN_FE= RUN_GO= RUN_GO_DB= TEST_DB_URL="postgres://postgres:postgres@localhost:5432/1mail_test?sslmode=disable"
+        run: make test TEST_DB_URL="postgres://postgres:postgres@localhost:5432/1mail_test?sslmode=disable"
 
   test-frontend:
     runs-on: ubuntu-latest
@@ -93,4 +111,4 @@ jobs:
         run: pnpm exec playwright install --with-deps chromium
 
       - name: Run frontend tests
-        run: make test-frontend RUN_FE=
+        run: make test-frontend

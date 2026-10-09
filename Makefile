@@ -1,143 +1,133 @@
-# All tooling runs inside the dev containers (docker-compose.yml) so a host with
-# only Docker installed can build, lint, test, and generate. The runner vars below
-# are overridable: CI (which installs native toolchains) runs everything natively
-# with `make check RUN_FE= RUN_GO= RUN_GO_DB=`.
-#
-#   RUN_FE    — node tooling (frontend image): tsc, oxlint, oxfmt, knip, tsp, openapi-ts, pnpm
-#   RUN_GO    — go tooling, no DB needed: golangci-lint, go fmt, entc, ogen, go mod
-#   RUN_GO_DB — go tooling that needs Postgres: cmd/db, atlas, go test (starts `db`)
-# Run containers as the host user so files written into the bind mount (generated
-# code, caches) are owned by you, not root (matters on native-Linux hosts).
-export COMPOSE_UID ?= $(shell id -u)
-export COMPOSE_GID ?= $(shell id -g)
+# Everything runs natively with the toolchain pinned in .mise.toml (`mise install`).
+# The dev stack (Postgres, Mailpit, backend, Vite, Caddy) is a set of mise daemons:
+# `make dev` starts it, `make dev-down` stops it.
 
-DC        ?= docker compose
-RUN_FE    ?= $(DC) run --rm --no-deps frontend
-RUN_GO    ?= $(DC) run --rm --no-deps backend
-RUN_GO_DB ?= $(DC) run --rm backend
+# Dev DB URLs derive from the `db` daemon (mise exports PG*/DATABASE_URL); the test and
+# atlas scratch databases live on the same server. Override for an external Postgres.
+PGHOSTPORT   ?= $(or $(PGHOST),127.0.0.1):$(or $(PGPORT),5432)
+PGAUTH       ?= $(if $(PGUSER),$(PGUSER)@,)
+TEST_DB_URL  ?= postgres://$(PGAUTH)$(PGHOSTPORT)/1mail_test?sslmode=disable
+ATLAS_DB_URL ?= postgres://$(PGAUTH)$(PGHOSTPORT)/atlas_dev?sslmode=disable
 
-# pnpm's store: the host's global one, bind-mounted into the frontend container at
-# /pnpm-store (see docker-compose.yml). Passed explicitly because pnpm otherwise
-# sees its default store ($HOME-derived, /tmp in the container) on a different
-# filesystem than node_modules and relocates it into the repo. Empty for a
-# host-native run (RUN_FE=), where pnpm's own default is already the global store.
-PNPM_STORE_FLAG = $(if $(RUN_FE),--store-dir /pnpm-store,)
+setup: install db-up db-create db-create-test db-create-atlas db-migrate db-seed
 
-# Connection strings default to the compose `db` service. Override the host part
-# for a host-native run, e.g. `make test RUN_GO_DB= TEST_DB_URL=postgres://...@localhost:5432/1mail_test?sslmode=disable`.
-TEST_DB_URL  ?= postgres://postgres:postgres@db:5432/1mail_test?sslmode=disable
-ATLAS_DB_URL ?= postgres://postgres:postgres@db:5432/atlas_dev?sslmode=disable
-
-setup: install db-create db-create-test db-create-atlas db-migrate db-seed
-
-# Frontend deps install into the bind-mounted node_modules (Linux-native, run in
-# compose). Go modules download into the host-bind-mounted cache (./.cache/go-mod)
-# so host gopls resolves imports. Neither needs a host toolchain.
 install:
-	$(RUN_FE) pnpm install $(PNPM_STORE_FLAG)
-	$(RUN_GO) go mod download
+	mise install
+	pnpm install
+	go mod download
+
+# Starts the Postgres daemon (no-op when it is already running).
+db-up:
+	mise daemons start db
 
 db-create:
-	$(RUN_GO_DB) go run ./cmd/db create
+	go run ./cmd/db create
 
 db-create-test:
-	$(RUN_GO_DB) sh -c 'APP_ENV=test DATABASE_URL=$(TEST_DB_URL) go run ./cmd/db create'
+	APP_ENV=test DATABASE_URL=$(TEST_DB_URL) go run ./cmd/db create
 
 # Scratch DB atlas uses to compute migration diffs (see atlas.hcl `dev`).
 db-create-atlas:
-	$(RUN_GO_DB) sh -c 'DATABASE_URL=$(ATLAS_DB_URL) go run ./cmd/db create'
+	DATABASE_URL=$(ATLAS_DB_URL) go run ./cmd/db create
 
 db-drop:
-	$(RUN_GO_DB) go run ./cmd/db drop
+	go run ./cmd/db drop
 
 db-drop-test:
-	$(RUN_GO_DB) sh -c 'APP_ENV=test DATABASE_URL=$(TEST_DB_URL) go run ./cmd/db drop'
+	APP_ENV=test DATABASE_URL=$(TEST_DB_URL) go run ./cmd/db drop
 
 db-migrate: db-migrate-atlas db-migrate-river
 
 db-migrate-atlas:
-	$(RUN_GO_DB) atlas migrate apply --env local --allow-dirty
+	atlas migrate apply --env local --allow-dirty
 
 # river owns its schema (river_job, …), applied out of band from Atlas.
 db-migrate-river:
-	$(RUN_GO_DB) go run ./cmd/db river-up
+	go run ./cmd/db river-up
 
 db-seed:
-	$(RUN_GO_DB) go run ./cmd/seed
+	go run ./cmd/seed
 
 db-reset: db-drop db-create db-migrate
 
 db-reset-test: db-drop-test db-create-test
 
 db-generate:
-	$(RUN_GO_DB) atlas migrate diff --env local $(name)
+	atlas migrate diff --env local $(name)
 
 # Mint a fresh ENCRYPTION_KEY (base64 Tink keyset) to paste into your .env.
 gen-encryption-key:
-	$(RUN_GO) go run ./cmd/genkey
+	go run ./cmd/genkey
 
 dev:
-	$(DC) up
+	mise daemons start caddy
 
 dev-down:
-	$(DC) down
+	mise daemons stop
 
 test: db-create-test
-	$(RUN_GO_DB) sh -c 'APP_ENV=test DATABASE_URL=$(TEST_DB_URL) go test -p 1 ./...'
+	APP_ENV=test DATABASE_URL=$(TEST_DB_URL) go test -p 1 ./...
 
 test-watch:
-	$(RUN_FE) pnpm exec vitest
+	pnpm exec vitest
 
 # One-shot frontend run (Vitest Browser Mode, headless Chromium) for CI.
 test-frontend:
-	$(RUN_FE) pnpm exec vitest run
+	pnpm exec vitest run
 
 update: update-npm update-go update-skills
 
 update-npm:
-	$(RUN_FE) sh -c 'pnpm exec ncu -u && pnpm update $(PNPM_STORE_FLAG)'
+	sh -c 'pnpm exec ncu -u && pnpm update'
 
 update-go:
-	$(RUN_GO) sh -c 'go get -u ./... && go mod tidy'
+	sh -c 'go get -u ./... && go mod tidy'
 
 update-skills:
-	$(RUN_FE) npx skills@latest update -y
+	npx skills@latest update -y
 
 generate-typespec-external:
-	$(RUN_FE) pnpm exec tsp compile typespec/external
+	pnpm exec tsp compile typespec/external
 
 generate-typespec-site:
-	$(RUN_FE) pnpm exec tsp compile typespec/site
+	pnpm exec tsp compile typespec/site
 
 generate-typespec-collect:
-	$(RUN_FE) pnpm exec tsp compile typespec/collect
+	pnpm exec tsp compile typespec/collect
 
 generate-typespec: generate-typespec-external generate-typespec-site generate-typespec-collect
 
 # Generates both the site client and the collect types (single config, two jobs).
 generate-openapi-site:
-	$(RUN_FE) pnpm exec openapi-ts -f openapi-ts.config.ts
+	pnpm exec openapi-ts -f openapi-ts.config.ts
 
 generate-openapi: generate-openapi-site
 
 generate-i18n-types:
-	$(RUN_FE) pnpm run i18n:types
+	pnpm run i18n:types
 
 generate-backend:
-	$(RUN_GO) sh -c 'cd ent && go run -mod=mod entc.go'
-	$(RUN_GO) sh -c 'go tool ogen --target gen/site     --package siteapi     --clean openapi/site.openapi.json && \
+	sh -c 'cd ent && go run -mod=mod entc.go'
+	sh -c 'go tool ogen --target gen/site     --package siteapi     --clean openapi/site.openapi.json && \
 		go tool ogen --target gen/external --package externalapi --clean openapi/external.openapi.json && \
 		go tool ogen --target gen/collect  --package collectapi  --clean openapi/collect.openapi.json'
-	$(RUN_GO) go tool goverter gen ./internal/api/site/resources ./internal/api/external/resources
+	go tool goverter gen ./internal/api/site/resources ./internal/api/external/resources
 
 generate: generate-typespec generate-openapi generate-backend check-fix
+
+# Fails when committed generated output (openapi/, gen/, ent/, src/generated/, *_gen.go)
+# differs from what `make generate` produces: a hand-edit, or a schema/TypeSpec change
+# whose output was not committed. Needs a clean working tree, so it is a CI gate rather
+# than part of `make check`.
+check-generated: generate
+	@test -z "$$(git status --porcelain)" || { echo 'generated code is out of date; run `make generate` and commit:'; git status --short; git diff --stat; exit 1; }
 
 check: check-fe check-i18n check-be check-deps check-security
 
 check-fe: check-css
-	$(RUN_FE) pnpm exec tsc --noEmit
-	$(RUN_FE) pnpm exec oxlint
-	$(RUN_FE) pnpm exec oxfmt --check
+	pnpm exec tsc --noEmit
+	pnpm exec oxlint
+	pnpm exec oxfmt --check
 
 # The project has no custom CSS: everything is styled through Mantine. Library
 # stylesheets are imported from node_modules; no stylesheet may be tracked here.
@@ -147,19 +137,18 @@ check-css:
 
 # Unused files, exports and dependencies (knip.json).
 check-deps:
-	$(RUN_FE) pnpm exec knip
+	pnpm exec knip
 
 # Read-only: --dry-run never writes, --ci exits non-zero on drift.
 check-i18n:
-	$(RUN_FE) pnpm exec i18next-cli extract --ci --dry-run
-	$(RUN_FE) pnpm exec i18next-cli types --ci
+	pnpm exec i18next-cli extract --ci --dry-run
+	pnpm exec i18next-cli types --ci
 
 check-be:
-	$(RUN_GO) golangci-lint run ./...
-	$(RUN_GO) go tool govulncheck ./...
+	golangci-lint run ./...
+	go tool govulncheck ./...
 
-# Secrets and workflow linters. Installed by mise (.mise.toml) and run on the host
-# (locally and in CI); they are not part of the dev containers.
+# Secrets and workflow linters, installed by mise (.mise.toml).
 check-security:
 	gitleaks git --no-banner --redact
 	jactionlint
@@ -169,25 +158,26 @@ check-security:
 check-fix: check-fix-i18n check-fix-fe check-fix-be
 
 check-fix-i18n:
-	$(RUN_FE) pnpm exec i18next-cli extract --with-types
+	pnpm exec i18next-cli extract --with-types
 
 check-fix-fe:
-	$(RUN_FE) pnpm exec oxlint --fix
-	$(RUN_FE) pnpm exec oxfmt
-	$(RUN_FE) pnpm exec tsp format typespec
+	pnpm exec oxlint --fix
+	# tsp format rewrites tspconfig.yaml quotes; oxfmt must run last to normalize them.
+	pnpm exec tsp format typespec
+	pnpm exec oxfmt
 
 check-fix-be:
-	$(RUN_GO) go fmt ./...
+	go fmt ./...
 
 # Builds the standalone tracker (IIFE) and copies it into the Go embed tree.
 build-tracker:
-	$(RUN_FE) pnpm build:tracker
+	pnpm build:tracker
 	cp packages/analytics/dist/t.js internal/server/assets/t.js
 
 # Builds the SPA (Vite) and copies dist/ into the Go embed tree so the binary
 # can serve the frontend itself. Gitignored; populated only for release builds.
 build-spa:
-	$(RUN_FE) pnpm build
+	pnpm build
 	rm -rf internal/server/assets/spa
 	mkdir -p internal/server/assets/spa
 	cp -R dist/. internal/server/assets/spa/
@@ -199,7 +189,7 @@ LDFLAGS := -s -w -X main.version=$(VERSION) -X main.commit=$(COMMIT) -X main.dat
 
 # Produces the self-contained release binary: tracker + SPA embedded.
 build: build-tracker build-spa
-	$(RUN_GO) go build -tags embed_spa -ldflags "$(LDFLAGS)" -o bin/1mail ./cmd/server
+	go build -tags embed_spa -ldflags "$(LDFLAGS)" -o bin/1mail ./cmd/server
 
 # Lines-of-code report (scc), excluding generated code. The set of generated files
 # is the source of truth in .gitattributes (linguist-generated=true), so we feed scc
@@ -211,4 +201,4 @@ loc:
 	  | awk -F': ' '$$3!="true"{print $$1}' \
 	  | xargs scc
 
-.PHONY: setup install db-create db-create-test db-create-atlas db-drop db-drop-test db-migrate db-migrate-atlas db-migrate-river db-seed db-reset db-reset-test db-generate dev dev-down test test-watch test-frontend update update-npm update-go update-skills generate generate-backend generate-openapi generate-openapi-site generate-typespec generate-typespec-external generate-typespec-site generate-typespec-collect generate-i18n-types check check-fe check-i18n check-be check-fix check-fix-i18n check-fix-fe check-fix-be build-tracker build-spa build loc
+.PHONY: setup install db-up db-create db-create-test db-create-atlas db-drop db-drop-test db-migrate db-migrate-atlas db-migrate-river db-seed db-reset db-reset-test db-generate dev dev-down test test-watch test-frontend update update-npm update-go update-skills generate check-generated generate-backend generate-openapi generate-openapi-site generate-typespec generate-typespec-external generate-typespec-site generate-typespec-collect generate-i18n-types check check-fe check-css check-deps check-security check-i18n check-be check-fix check-fix-i18n check-fix-fe check-fix-be build-tracker build-spa build loc

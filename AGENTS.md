@@ -53,28 +53,31 @@ only generated files being the two `converter_gen.go`.
 
 ## Common commands
 
-Every recipe runs its toolchain **inside the dev containers** (docker-compose.yml), so a
-host with only Docker works. The runner vars are overridable — CI runs everything natively
-with `make <target> RUN_FE= RUN_GO= RUN_GO_DB=`.
+Every recipe runs natively with the toolchain pinned in `.mise.toml` / `mise.lock`
+(`mise install`); CI installs the same toolchain with `jdx/mise-action`. There are no dev
+containers. The dev stack (Postgres, Mailpit, backend, Vite, Caddy) is a set of **mise
+daemons** (`[daemons]` in `.mise.toml`, experimental).
 
 ```sh
-make setup          # build images, install deps, create dev/test/atlas DBs + migrate
-make install        # pnpm install + go mod download (both in containers)
-make dev            # docker compose up — full dev stack
+make setup          # mise install, deps, start Postgres, create dev/test/atlas DBs + migrate + seed
+make install        # mise install + pnpm install + go mod download
+make dev            # mise daemons start caddy — full dev stack (https://1mail.localhost)
+make dev-down       # mise daemons stop
 make test           # creates test DB, then `go test -p 1 ./...`
-make check          # tsc + oxlint + oxfmt --check + knip + golangci-lint + govulncheck + gitleaks + jactionlint
+make check          # tsc + oxlint + oxfmt --check + knip + golangci-lint + govulncheck + gitleaks + jactionlint + zizmor
 make check-fix      # oxlint --fix + oxfmt + tsp format + go fmt
 ```
 
-Runner vars (Makefile): `RUN_FE` (node tools, frontend image), `RUN_GO` (go tools, no DB),
-`RUN_GO_DB` (go tools that need Postgres — starts the `db` service). Recipes that need a
-specific env (`APP_ENV=test`, a test/atlas DB URL) wrap the command in `sh -c '…'` so the
-assignment works both in-container and on the CI-native override path.
+`DATABASE_URL` and `PG*` come from the `db` daemon (mise `postgres` preset, auto port from
+15432), so run `make`/`go` through a mise-activated shell (or `mise exec -- make …`). Never
+set `DATABASE_URL` in `.env`: explicit values override the daemon's. `TEST_DB_URL` and
+`ATLAS_DB_URL` derive from `PGHOST`/`PGPORT`/`PGUSER`. Recipes that need a specific env
+(`APP_ENV=test`, a test/atlas DB URL) pass it as a plain env prefix.
 
 Run a single Go test:
 
 ```sh
-docker compose run --rm backend go test ./internal/api/site -run TestSiteContactsRequireAuth
+mise exec -- sh -c 'APP_ENV=test DATABASE_URL=$TEST_DB_URL go test ./internal/api/site -run TestSiteContactsRequireAuth'
 ```
 
 Frontend tests: `make test-watch`.
@@ -82,10 +85,9 @@ Frontend tests: `make test-watch`.
 ## Database & migrations
 
 - ORM is **ent**; schemas live in `ent/schema/*.go`, generated code in `ent/`.
-- Migrations are managed by **Atlas** (`atlas.hcl`, dir `migrations/`), run in the backend
-  container, diffed from the ent schema: `make db-generate name=<desc>` then `make db-migrate`.
+- Migrations are managed by **Atlas** (`atlas.hcl`, dir `migrations/`), run natively, diffed from the ent schema: `make db-generate name=<desc>` then `make db-migrate`.
   Atlas reads its target/dev DB URLs from the environment (`DATABASE_URL` / `ATLAS_DEV_URL`),
-  using a scratch `atlas_dev` database on the compose `db` service instead of `docker://`.
+  using a scratch `atlas_dev` database on the `db` daemon instead of `docker://`.
 - `make db-reset` / `db-reset-test` to rebuild local DBs.
 - Test DB is separate (`APP_ENV=test`); tests create schema via `ent` `Schema.Create`, not Atlas.
 
@@ -146,19 +148,17 @@ created inline when no fixture expresses them.
 
 ## Dev environment
 
-`make dev` runs docker compose (`docker-compose.yml`) behind Caddy with HTTPS at
-**https://1mail.localhost**. The external API is also exposed at
+`make dev` starts the mise daemons (`.mise.toml`) behind Caddy with HTTPS at
+**https://1mail.localhost** (run `caddy trust` once). The external API is also exposed at
 **https://api.1mail.localhost** — Caddy rewrites `/*` → `/api/*` to the same backend, so
 the subdomain root mirrors the binary's `/api` path (RudderStack-style edge; the binary
 stays path-based). In prod the ingress in front of the binary does the same rewrite for
-`api.onemail.dev`. Services: caddy, frontend (vite), backend, postgres, mailpit
-(SMTP UI at :8025). Deps and the Go module cache are bind-mounted from the host
-(`node_modules` in the repo, the module cache under `./.cache/go-mod`) so host editor LSPs
-resolve imports — install via `make install` (runs in the containers). The compose
-`backend` runs the real Go server (`Dockerfile.backend.dev`, `golang:1.26-alpine` + air,
-plus golangci-lint + atlas for the tooling recipes) on `:3300` with sources bind-mounted
-and hot reload via air. Migrations run via atlas in the container (`make db-migrate`); the
-backend service does not self-migrate.
+`api.onemail.dev`. Daemons: `db` (mise `postgres` preset), `mailpit` (SMTP UI at :8025),
+`backend` (real Go server under air on `:3300`, hot reload), `frontend` (Vite on `:5173`),
+`caddy`. Inspect with `mise daemons ls|logs|status`. Migrations run via atlas
+(`make db-migrate`); the backend does not self-migrate. Dev defaults (JWT secret, dev
+`ENCRYPTION_KEY`, SMTP) live in the `[env]` table of `.mise.toml`; personal overrides go in
+the gitignored `.env` (read by the app) or `.mise.local.toml`.
 
 ## Conventions
 

@@ -1,5 +1,6 @@
 [tools]
 air = "latest"
+caddy = "latest"
 atlas-community = "latest"
 gitleaks = "latest"
 go = "1.26"
@@ -38,8 +39,66 @@ run = "make check-fix"
 
 [tasks.test]
 description = "Run backend tests"
+daemons = ["db"]
 run = "make test"
 
 [tasks.dev]
-description = "Start the dev stack in the background (pitchfork)"
-run = "pitchfork start dev"
+description = "Start the whole dev stack (https://1mail.localhost)"
+run = "mise daemons start caddy"
+
+[tasks.dev-down]
+description = "Stop the dev stack"
+run = "mise daemons stop"
+
+[settings]
+experimental = true
+
+# Dev defaults. DATABASE_URL and PG* come from the `db` daemon (do not set DATABASE_URL
+# in .env: the app reads .env too, but real env vars win). Personal overrides go in the
+# gitignored .env (read by the app) or .mise.local.toml (read by mise).
+[env]
+APP_ENV = "development"
+APP_URL = "https://1mail.localhost"
+APP_LOCALE = "en"
+PORT = "3300"
+CGO_ENABLED = "0"
+# Dev-only secret so a fresh clone authenticates out of the box.
+JWT_SECRET = "dev-secret-change-in-production"
+# Dev-only Tink keyset (same one the old .env.docker.sample shipped); never use in prod.
+ENCRYPTION_KEY = "CIamsc4JEmQKWAowdHlwZS5nb29nbGVhcGlzLmNvbS9nb29nbGUuY3J5cHRvLnRpbmsuQWVzR2NtS2V5EiIaIIOWohIqGhyD2NeiOazlLrnrHqCirukTjCjD1iMFPqiEGAEQARiGprHOCSAB"
+SMTP_HOST = "127.0.0.1"
+SMTP_PORT = "1025"
+
+# --- dev stack (replaces docker compose) -----------------------------------------
+# `mise daemons start caddy` brings up everything below in dependency order.
+# Entry point is Caddy: it terminates TLS and routes /site, /api, /collect to the
+# backend and everything else to Vite (see Caddyfile). Run `caddy trust` once so the
+# browser accepts Caddy's local CA.
+
+[daemons.db]
+preset = "postgres"
+version = "18"
+port = { auto = true, base = 15432 }
+options.database = "1mail_development"
+
+[daemons.mailpit]
+run = "exec mailpit"
+ready_port = 8025
+proxy = false
+
+[daemons.backend]
+run = "exec air"
+ready_port = 3300
+depends = ["db", "mailpit"]
+proxy = false
+
+[daemons.frontend]
+run = "exec pnpm exec vite"
+ready_port = 5173
+proxy = false
+
+[daemons.caddy]
+run = "exec caddy run --config Caddyfile --adapter caddyfile"
+ready_port = 443
+depends = ["frontend", "backend"]
+proxy = false

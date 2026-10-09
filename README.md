@@ -39,62 +39,69 @@ After changing TypeSpec or `ent/schema`, run `make generate` and commit the gene
 
 ## Development
 
-**The only prerequisite is Docker + Docker Compose.** Every `make` target runs its
-toolchain (Go, Node/pnpm, golangci-lint, atlas) inside the dev containers, so you don't
-need any of them installed on the host.
+**The only prerequisite is [mise](https://mise.jdx.dev).** It installs and pins the whole
+toolchain from `.mise.toml` / `mise.lock` (Go, Node, pnpm, golangci-lint, atlas, air,
+Caddy, Mailpit, gitleaks, jactionlint, zizmor, hk, …), runs the dev stack as daemons and
+installs the git hooks.
 
 ```sh
-make setup   # build images, install deps, create dev/test/atlas DBs + migrate
-make dev     # docker compose up — full dev stack
+mise install # install the pinned toolchain (also installs the git hooks)
+make setup   # install deps, start Postgres, create dev/test/atlas DBs, migrate, seed
+make dev     # start the whole dev stack (mise daemons)
 make test    # creates test DB, then `go test -p 1 ./...`
-make check   # tsc, oxlint, oxfmt --check, knip, golangci-lint, govulncheck, gitleaks, jactionlint
+make check   # tsc, oxlint, oxfmt --check, knip, golangci-lint, govulncheck, gitleaks, jactionlint, zizmor
 make generate # regenerate TypeSpec → OpenAPI → Go + TS
 ```
 
-Dependencies and the Go module cache are bind-mounted to the host (`node_modules` in the
-repo, the module cache under `./.cache/go-mod`). So if you _do_ run a host editor, gopls
-and the TS language server resolve imports — point gopls at the module cache with
-`go env -w GOMODCACHE=$PWD/.cache/go-mod` (optional; only needed for host LSP).
-
-> CI installs the toolchains natively and runs the same targets without containers by
-> overriding the runner vars, e.g. `make check RUN_FE= RUN_GO= RUN_GO_DB=`.
+CI installs the same toolchain with `jdx/mise-action` and runs the same `make` targets.
 
 ## Deployment (development)
 
-The local stack runs via Docker Compose behind [Caddy](https://caddyserver.com/) with HTTPS.
+The local stack is a set of [mise daemons](https://mise.jdx.dev) (`[daemons]` in
+`.mise.toml`) behind [Caddy](https://caddyserver.com/) with HTTPS.
 
-1. Build images, install deps, create the dev/test/atlas databases, and migrate:
+1. Install the toolchain, install deps, create the dev/test/atlas databases, migrate:
 
    ```sh
+   mise install
    make setup
    ```
 
-   No `.env` is required — the Compose `backend` service supplies `DATABASE_URL`,
-   `JWT_SECRET`, SMTP, etc. (Copy `.env.sample` only if you want to run the backend on the
-   host instead of in a container.)
+   No `.env` is required: `.mise.toml` supplies the dev defaults and the `db` daemon
+   supplies `DATABASE_URL`. Do **not** set `DATABASE_URL` in `.env` (real env vars win
+   over it). Personal overrides go in the gitignored `.env` (read by the app) or
+   `.mise.local.toml` (read by mise).
 
-2. Start the stack:
+2. Trust Caddy's local CA once, so the browser accepts `https://1mail.localhost`:
 
    ```sh
-   make dev        # docker compose up
+   caddy trust
+   ```
+
+3. Start the stack:
+
+   ```sh
+   make dev        # mise daemons start caddy (starts everything it depends on)
    make dev-down   # stop it
+   mise daemons logs backend   # follow a daemon's output; `mise daemons ls` shows status
    ```
 
 The entry point is **https://1mail.localhost** (Caddy terminates TLS with its internal CA).
-Services:
+Daemons:
 
-| Service  | URL / port            | Notes                                                       |
-| -------- | --------------------- | ----------------------------------------------------------- |
-| frontend | `:5173` (Vite)        | proxied by Caddy                                            |
-| backend  | `:3300`               | proxied by Caddy under `/site`, `/api`, `/collect`, `/auth` |
-| postgres | `localhost:5432`      | dev DB `1mail_development`                                  |
-| mailpit  | http://localhost:8025 | captured outbound email (SMTP UI)                           |
+| Daemon   | URL / port                     | Notes                                                       |
+| -------- | ------------------------------ | ----------------------------------------------------------- |
+| caddy    | `:443`                         | TLS + routing, see `Caddyfile`                              |
+| frontend | `:5173` (Vite)                 | proxied by Caddy                                            |
+| backend  | `:3300`                        | proxied by Caddy under `/site`, `/api`, `/collect`, `/auth` |
+| db       | `127.0.0.1:15432` (`mise env`) | mise `postgres` preset, dev DB `1mail_development`          |
+| mailpit  | http://localhost:8025          | captured outbound email (SMTP UI on `:1025`)                |
 
-> The Compose `backend` service runs the real Go server (`Dockerfile.backend.dev`,
-> `golang:1.26-alpine` + [air](https://github.com/air-verse/air) for hot reload) with
-> sources bind-mounted from the host. The same image carries golangci-lint and the Atlas
-> CLI, so it also backs the `make` tooling recipes. Migrations run via Atlas in the
-> container (`make db-migrate`); the dev backend itself does not self-migrate.
+> The backend runs the real Go server under [air](https://github.com/air-verse/air) for
+> hot reload. Migrations run via Atlas (`make db-migrate`); the dev backend itself does not
+> self-migrate. On Linux, binding `:443` needs `net.ipv4.ip_unprivileged_port_start=0`.
+> The old Grafana/OTLP dev container is gone: leave `OTEL_EXPORTER_OTLP_ENDPOINT` unset
+> (metrics are always exposed at `/metrics`) or point it at your own collector.
 
 ## Deployment (production)
 

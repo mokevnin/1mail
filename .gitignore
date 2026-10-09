@@ -72,7 +72,7 @@ gha-creds-*.json
 tmp/
 npm-cache
 
-# host-bind-mounted tool caches for the dev containers (see docker-compose.yml)
+# local tool caches
 .cache/
 
 # build artifacts
@@ -84,3 +84,12 @@ internal/server/assets/spa/
 # compiled Go binaries / goreleaser output
 bin/
 /dist-release/
+
+# personal mise overrides
+.mise.local.toml
+mise.local.toml
+.mise-skills.json
+.mise-packslip/
+.claude/skills/hk-configure
+.claude/skills/hk-debug
+.claude/skills/pitchfork
