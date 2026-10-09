@@ -34,8 +34,19 @@ type EvaluateTriggerWorker struct {
 }
 
 func (w *EvaluateTriggerWorker) Work(ctx context.Context, job *river.Job[EvaluateTriggerArgs]) error {
-	// Job entry point: the job's own Workspace argument is the scope (ADR 0017).
-	runIDs, err := EvaluateTrigger(ctx, w.ent.Scoped(job.Args.WorkspaceID), job.Args.ContactID, job.Args.Action)
+	// Job entry point (ADR 0017): the scope is built from the loaded contact's
+	// Workspace, not from the job argument.
+	c, err := w.ent.Contact.Get(ctx, job.Args.ContactID)
+	if ent.IsNotFound(err) {
+		return nil // contact deleted since enqueue; nothing to enroll
+	}
+	if err != nil {
+		return err
+	}
+	if c.WorkspaceID != job.Args.WorkspaceID {
+		return nil // stale or forged job args; never enroll across Workspaces
+	}
+	runIDs, err := EvaluateTrigger(ctx, w.ent.Scoped(c.WorkspaceID), c.ID, job.Args.Action)
 	if err != nil {
 		return err
 	}

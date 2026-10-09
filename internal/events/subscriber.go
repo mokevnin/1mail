@@ -28,7 +28,7 @@ type Enroller interface {
 // endpoints. The webhooks subscriber delegates to it, keeping durable delivery
 // (per-endpoint jobs, retries) in river.
 type WebhookDispatcher interface {
-	Dispatch(ctx context.Context, workspaceID int64, eventName, deliveryID string, body []byte) error
+	Dispatch(ctx context.Context, s *ent.Scoped, eventName, deliveryID string, body []byte) error
 }
 
 // NewRouter builds the watermill router that hosts the domain-event subscribers.
@@ -66,7 +66,7 @@ func RegisterSubscribers(router *message.Router, db *sql.DB, client *ent.Client,
 	if err != nil {
 		return fmt.Errorf("webhooks subscriber: %w", err)
 	}
-	router.AddConsumerHandler("dispatch_webhooks", TopicDomainEvents, webhooksSub, webhooksConsumer(dispatcher))
+	router.AddConsumerHandler("dispatch_webhooks", TopicDomainEvents, webhooksSub, webhooksConsumer(client, dispatcher))
 
 	suppressionSub, err := NewSubscriber(db, "suppression")
 	if err != nil {
@@ -156,7 +156,9 @@ type webhookPayload struct {
 	Data        json.RawMessage `json:"data,omitempty"`
 }
 
-func webhooksConsumer(dispatcher WebhookDispatcher) message.NoPublishHandlerFunc {
+// The bus subscriber is a raw-client allowlist entry (ADR 0017): an event envelope
+// carries only a Workspace id, so the scope handed to the dispatcher is built here.
+func webhooksConsumer(client *ent.Client, dispatcher WebhookDispatcher) message.NoPublishHandlerFunc {
 	return func(msg *message.Message) error {
 		var env Envelope
 		if err := json.Unmarshal(msg.Payload, &env); err != nil {
@@ -180,7 +182,7 @@ func webhooksConsumer(dispatcher WebhookDispatcher) message.NoPublishHandlerFunc
 			return fmt.Errorf("marshal webhook payload: %w", err)
 		}
 		// Filter/route on the semantic action (e.g. "page_view"), not the bus type.
-		return dispatcher.Dispatch(msg.Context(), env.WorkspaceID, p.Action, env.ID, body)
+		return dispatcher.Dispatch(msg.Context(), client.Scoped(env.WorkspaceID), p.Action, env.ID, body)
 	}
 }
 
