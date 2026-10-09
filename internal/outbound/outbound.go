@@ -28,7 +28,6 @@ import (
 
 	"github.com/mokevnin/1mail/ent"
 	"github.com/mokevnin/1mail/ent/outboundmessage"
-	"github.com/mokevnin/1mail/ent/workspace"
 	"github.com/mokevnin/1mail/internal/eligibility"
 	"github.com/mokevnin/1mail/internal/emailrender"
 	"github.com/mokevnin/1mail/internal/events"
@@ -157,8 +156,7 @@ type Ref struct {
 // content (a marketing surface passes its own copy, Transactional the live
 // Template's current content — see ADR 0003, 0005); the module never looks it up.
 type Request struct {
-	WorkspaceID int64
-	Kind        outboundmessage.Kind
+	Kind outboundmessage.Kind
 	// Key is unique per logical send: a retry of the same send repeats it. Required.
 	Key string
 
@@ -190,8 +188,6 @@ type Request struct {
 
 func (r Request) validate() error {
 	switch {
-	case r.WorkspaceID == 0:
-		return errors.New("outbound: workspace id required")
 	case r.Key == "":
 		return errors.New("outbound: idempotency key required")
 	case eligibility.NormalizeDestination(r.Destination) == "":
@@ -203,7 +199,7 @@ func (r Request) validate() error {
 // Send performs one Outbound send. A returned error is a retryable infrastructure
 // failure (provider unreachable, database error, ErrInProgress); every decided
 // outcome — including Skipped, Failed and Held — is a Result with a nil error.
-func (m *Module) Send(ctx context.Context, req Request) (Result, error) {
+func (m *Module) Send(ctx context.Context, s *ent.Scoped, req Request) (Result, error) {
 	if err := req.validate(); err != nil {
 		return Result{}, err
 	}
@@ -214,7 +210,7 @@ func (m *Module) Send(ctx context.Context, req Request) (Result, error) {
 
 	// A recorded send replays its Outcome — even while the Workspace is frozen: the
 	// message already left (or was already decided), nothing new is being sent.
-	existing, err := m.find(ctx, req.WorkspaceID, req.Key)
+	existing, err := m.find(ctx, s, req.Key)
 	if err != nil {
 		return Result{}, err
 	}
@@ -222,9 +218,9 @@ func (m *Module) Send(ctx context.Context, req Request) (Result, error) {
 		return replayResult(existing), nil
 	}
 
-	ws, err := m.ent.Workspace.Query().Where(workspace.ID(req.WorkspaceID)).Only(ctx)
+	ws, err := m.workspace(ctx, s)
 	if err != nil {
-		return Result{}, fmt.Errorf("outbound: load workspace %d: %w", req.WorkspaceID, err)
+		return Result{}, err
 	}
 	g, err := m.gate(ctx, ws, req.FromEmail, req.FromName)
 	if err != nil {
@@ -234,7 +230,7 @@ func (m *Module) Send(ctx context.Context, req Request) (Result, error) {
 		return Result{Outcome: Held, Reason: g.hold}, nil
 	}
 
-	msg, replay, err := m.claim(ctx, req, dest, g, existing)
+	msg, replay, err := m.claim(ctx, s, req, dest, g, existing)
 	if err != nil {
 		return Result{}, err
 	}
@@ -244,18 +240,18 @@ func (m *Module) Send(ctx context.Context, req Request) (Result, error) {
 
 	// Send-eligibility, per message at send time, fail-closed: if the check cannot
 	// be made the message is not sent and the attempt is retried.
-	dec, err := eligibility.Check(ctx, m.ent, req.WorkspaceID, eligibility.ChannelEmail, dest, req.Source)
+	dec, err := eligibility.Check(ctx, m.ent, s.WorkspaceID(), eligibility.ChannelEmail, dest, req.Source)
 	if err != nil {
-		m.release(ctx, msg)
+		m.release(ctx, s, msg)
 		return Result{}, err
 	}
 	if !dec.Eligible {
-		return m.finish(ctx, msg, outboundmessage.StatusSkipped, Skipped, dec.Reason)
+		return m.finish(ctx, s, msg, outboundmessage.StatusSkipped, Skipped, dec.Reason)
 	}
 
 	built, err := m.compose(req, dest, ws)
 	if err != nil {
-		return m.finish(ctx, msg, outboundmessage.StatusFailed, Failed, err.Error())
+		return m.finish(ctx, s, msg, outboundmessage.StatusFailed, Failed, err.Error())
 	}
 	built.msg.From, built.msg.FromName = g.from, g.fromName
 	built.msg.To = dest
@@ -265,24 +261,24 @@ func (m *Module) Send(ctx context.Context, req Request) (Result, error) {
 		if errors.Is(err, messaging.ErrUnverifiedSendingDomain) {
 			// The domain lost verification between our check and the signer's: a hold,
 			// not a failure. The claim is dropped so the same Request can run again.
-			_, _ = m.ent.OutboundMessage.Delete().Where(holds(msg)...).Exec(ctx)
+			_, _ = s.OutboundMessage().Delete().Where(holds(msg)...).Exec(ctx)
 			return Result{Outcome: Held, Reason: HoldUnverifiedDomain}, nil
 		}
-		m.release(ctx, msg)
+		m.release(ctx, s, msg)
 		return Result{}, fmt.Errorf("outbound: send to %s: %w", dest, err)
 	}
 
-	return m.recordSent(ctx, req, msg, g, dest, receipt)
+	return m.recordSent(ctx, s, req, msg, g, dest, receipt)
 }
 
 // Preflight reports whether a Workspace could send right now from fromEmail (""
 // uses the Integration's configured sender), without sending or recording anything.
 // Planning code (Broadcast) calls it to fail or pause fast instead of finding out
 // per recipient; the answer is the same gate Send applies.
-func (m *Module) Preflight(ctx context.Context, workspaceID int64, fromEmail string) (hold string, err error) {
-	ws, err := m.ent.Workspace.Query().Where(workspace.ID(workspaceID)).Only(ctx)
+func (m *Module) Preflight(ctx context.Context, s *ent.Scoped, fromEmail string) (hold string, err error) {
+	ws, err := m.workspace(ctx, s)
 	if err != nil {
-		return "", fmt.Errorf("outbound: load workspace %d: %w", workspaceID, err)
+		return "", err
 	}
 	g, err := m.gate(ctx, ws, fromEmail, "")
 	if err != nil {
@@ -294,10 +290,9 @@ func (m *Module) Preflight(ctx context.Context, workspaceID int64, fromEmail str
 // MarkFailed gives up on a pending claim for good (a queue worker calls it when the
 // final retry is spent), recording cause. It is a no-op for a message that already
 // reached a final status or whose claim another attempt currently holds.
-func (m *Module) MarkFailed(ctx context.Context, workspaceID int64, key string, cause error) error {
-	return m.ent.OutboundMessage.Update().
+func (m *Module) MarkFailed(ctx context.Context, s *ent.Scoped, key string, cause error) error {
+	return s.OutboundMessage().Update().
 		Where(
-			outboundmessage.WorkspaceID(workspaceID),
 			outboundmessage.IdempotencyKey(key),
 			outboundmessage.StatusEQ(outboundmessage.StatusPending),
 			// Never fail a message another attempt is working on: only a claim that
@@ -307,6 +302,16 @@ func (m *Module) MarkFailed(ctx context.Context, workspaceID int64, key string, 
 		SetStatus(outboundmessage.StatusFailed).
 		SetReason(cause.Error()).
 		Exec(ctx)
+}
+
+// workspace loads the Workspace row the scoped client is confined to. Workspace is
+// the tenant root, not a Workspace-owned entity, so it is read through the raw client.
+func (m *Module) workspace(ctx context.Context, s *ent.Scoped) (*ent.Workspace, error) {
+	ws, err := m.ent.Workspace.Get(ctx, s.WorkspaceID())
+	if err != nil {
+		return nil, fmt.Errorf("outbound: load workspace %d: %w", s.WorkspaceID(), err)
+	}
+	return ws, nil
 }
 
 // gateResult is the outcome of the source-level checks plus what they resolved.
@@ -399,7 +404,7 @@ func (m *Module) compose(req Request, dest string, ws *ent.Workspace) (composed,
 	unsub := tracking.UnsubTarget{
 		Source:      req.Source,
 		Destination: dest,
-		WorkspaceID: req.WorkspaceID,
+		WorkspaceID: ws.ID,
 		ContactID:   contactID,
 		BroadcastID: req.Ref.BroadcastID,
 	}
@@ -458,14 +463,16 @@ func bindings(c *ent.Contact, vars map[string]any) map[string]any {
 // the send fact reaches the Event log iff the message is recorded as sent. The
 // provider call precedes this transaction, so delivery to the provider is
 // at-least-once; the idempotency key and the Event DedupID make a retry safe.
-func (m *Module) recordSent(ctx context.Context, req Request, msg *ent.OutboundMessage, g gateResult, dest string, receipt messaging.Receipt) (Result, error) {
+func (m *Module) recordSent(ctx context.Context, s *ent.Scoped, req Request, msg *ent.OutboundMessage, g gateResult, dest string, receipt messaging.Receipt) (Result, error) {
 	contactID := req.ContactID
 	if req.Contact != nil {
 		contactID = req.Contact.ID
 	}
 	now := time.Now()
 	err := m.bus.WithinTx(ctx, func(tx *ent.Client, pub events.Publisher) error {
-		upd := tx.OutboundMessage.Update().
+		// The claim was made through the scoped client; the transaction's write goes
+		// through the same Workspace, taken from the claimed row.
+		upd := tx.Scoped(msg.WorkspaceID).OutboundMessage().Update().
 			Where(holds(msg)...).
 			SetStatus(outboundmessage.StatusSent).
 			SetSentAt(now)
@@ -484,7 +491,7 @@ func (m *Module) recordSent(ctx context.Context, req Request, msg *ent.OutboundM
 		}
 		return pub.Publish(ctx, &events.EmailEngagement{
 			Action:            events.NameEmailSent,
-			WorkspaceID:       req.WorkspaceID,
+			WorkspaceID:       s.WorkspaceID(),
 			ContactID:         contactID,
 			Email:             dest,
 			BroadcastID:       req.Ref.BroadcastID,
@@ -506,13 +513,12 @@ func (m *Module) recordSent(ctx context.Context, req Request, msg *ent.OutboundM
 // TestRequest is an operator-initiated test send of a message to an address the
 // author names explicitly (e.g. a Broadcast preview).
 type TestRequest struct {
-	WorkspaceID int64
-	To          string
-	Subject     string
-	Body        string // MJML
-	Variables   map[string]any
-	FromEmail   string
-	FromName    string
+	To        string
+	Subject   string
+	Body      string // MJML
+	Variables map[string]any
+	FromEmail string
+	FromName  string
 }
 
 // TestSubjectPrefix marks a preview send so it is never mistaken for the real mailing.
@@ -522,15 +528,14 @@ const TestSubjectPrefix = "[Test] "
 // an author to preview it. It returns "" when the message was sent, otherwise the
 // human-readable reason it was not (a send error, a Hold, or content that did not
 // render), so every surface words a refused preview the same way.
-func (m *Module) SendBroadcastTest(ctx context.Context, b *ent.Broadcast, to string) string {
-	res, err := m.SendTest(ctx, TestRequest{
-		WorkspaceID: b.WorkspaceID,
-		To:          to,
-		Subject:     TestSubjectPrefix + b.Subject,
-		Body:        b.Body,
-		Variables:   map[string]any{"first_name": "Alex", "last_name": "Sample", "email": to},
-		FromEmail:   lo.FromPtr(b.FromEmail),
-		FromName:    lo.FromPtr(b.FromName),
+func (m *Module) SendBroadcastTest(ctx context.Context, s *ent.Scoped, b *ent.Broadcast, to string) string {
+	res, err := m.SendTest(ctx, s, TestRequest{
+		To:        to,
+		Subject:   TestSubjectPrefix + b.Subject,
+		Body:      b.Body,
+		Variables: map[string]any{"first_name": "Alex", "last_name": "Sample", "email": to},
+		FromEmail: lo.FromPtr(b.FromEmail),
+		FromName:  lo.FromPtr(b.FromName),
 	})
 	switch {
 	case err != nil:
@@ -550,10 +555,10 @@ func (m *Module) SendBroadcastTest(ctx context.Context, b *ent.Broadcast, to str
 // Workspace freeze and the Sending-domain gate and is DKIM-signed like any send: a
 // suspended Workspace sends nothing, test or not (ADR 0015). Outcomes are Sent,
 // Failed (the content did not render) or Held; there is no replay.
-func (m *Module) SendTest(ctx context.Context, req TestRequest) (Result, error) {
-	ws, err := m.ent.Workspace.Query().Where(workspace.ID(req.WorkspaceID)).Only(ctx)
+func (m *Module) SendTest(ctx context.Context, s *ent.Scoped, req TestRequest) (Result, error) {
+	ws, err := m.workspace(ctx, s)
 	if err != nil {
-		return Result{}, fmt.Errorf("outbound: load workspace %d: %w", req.WorkspaceID, err)
+		return Result{}, err
 	}
 	g, err := m.gate(ctx, ws, req.FromEmail, req.FromName)
 	if err != nil {

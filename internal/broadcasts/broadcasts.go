@@ -34,19 +34,20 @@ type Enqueuer interface {
 	EnqueueBroadcast(ctx context.Context, broadcastID int64, scheduledAt *time.Time) error
 }
 
-// Module is the Broadcast send/schedule state machine.
+// Module is the Broadcast send/schedule state machine. It holds no client: every
+// call receives the Workspace-scoped client (ADR 0017) built by the entry point, so
+// the module writes no Workspace predicate and cannot name another Workspace.
 type Module struct {
-	ent *ent.Client
-	q   Enqueuer
+	q Enqueuer
 }
 
-func New(client *ent.Client, q Enqueuer) *Module { return &Module{ent: client, q: q} }
+func New(q Enqueuer) *Module { return &Module{q: q} }
 
 // Send moves a draft or scheduled Broadcast to sending (dropping any schedule) and
 // enqueues it for immediate dispatch. If the enqueue fails the Broadcast reverts to
 // draft, so it is never stranded in sending with no job behind it.
-func (m *Module) Send(ctx context.Context, workspaceID, id int64) (*ent.Broadcast, error) {
-	b, err := m.claim(ctx, workspaceID, id, func(u *ent.BroadcastUpdate) *ent.BroadcastUpdate {
+func (m *Module) Send(ctx context.Context, s *ent.Scoped, id int64) (*ent.Broadcast, error) {
+	b, err := m.claim(ctx, s, id, func(u *ent.BroadcastScopedUpdate) *ent.BroadcastScopedUpdate {
 		return u.SetStatus(broadcast.StatusSending).ClearScheduledAt()
 	})
 	if err != nil {
@@ -56,7 +57,7 @@ func (m *Module) Send(ctx context.Context, workspaceID, id int64) (*ent.Broadcas
 	// the send synchronously and advances the row to "sent"; a later write would
 	// clobber it.
 	if err := m.q.EnqueueBroadcast(ctx, b.ID, nil); err != nil {
-		m.revert(ctx, b.ID)
+		m.revert(ctx, s, b.ID)
 		return nil, err
 	}
 	return b, nil
@@ -64,15 +65,15 @@ func (m *Module) Send(ctx context.Context, workspaceID, id int64) (*ent.Broadcas
 
 // Schedule moves a draft or scheduled Broadcast to scheduled at `when` and enqueues
 // a delayed job. If the enqueue fails the Broadcast reverts to draft with no schedule.
-func (m *Module) Schedule(ctx context.Context, workspaceID, id int64, when time.Time) (*ent.Broadcast, error) {
-	b, err := m.claim(ctx, workspaceID, id, func(u *ent.BroadcastUpdate) *ent.BroadcastUpdate {
+func (m *Module) Schedule(ctx context.Context, s *ent.Scoped, id int64, when time.Time) (*ent.Broadcast, error) {
+	b, err := m.claim(ctx, s, id, func(u *ent.BroadcastScopedUpdate) *ent.BroadcastScopedUpdate {
 		return u.SetStatus(broadcast.StatusScheduled).SetScheduledAt(when)
 	})
 	if err != nil {
 		return nil, err
 	}
 	if err := m.q.EnqueueBroadcast(ctx, b.ID, &when); err != nil {
-		m.revert(ctx, b.ID)
+		m.revert(ctx, s, b.ID)
 		return nil, err
 	}
 	return b, nil
@@ -80,15 +81,15 @@ func (m *Module) Schedule(ctx context.Context, workspaceID, id int64, when time.
 
 // Unschedule returns a scheduled Broadcast to draft and drops its schedule. The
 // delayed job stays queued; when it fires it finds a draft and does nothing.
-func (m *Module) Unschedule(ctx context.Context, workspaceID, id int64) (*ent.Broadcast, error) {
-	n, err := m.ent.Broadcast.Update().
-		Where(broadcast.ID(id), broadcast.WorkspaceID(workspaceID), broadcast.StatusEQ(broadcast.StatusScheduled)).
+func (m *Module) Unschedule(ctx context.Context, s *ent.Scoped, id int64) (*ent.Broadcast, error) {
+	n, err := s.Broadcast().Update().
+		Where(broadcast.ID(id), broadcast.StatusEQ(broadcast.StatusScheduled)).
 		SetStatus(broadcast.StatusDraft).ClearScheduledAt().Save(ctx)
 	if err != nil {
 		return nil, err
 	}
 	if n == 0 {
-		exists, err := m.ent.Broadcast.Query().Where(broadcast.ID(id), broadcast.WorkspaceID(workspaceID)).Exist(ctx)
+		exists, err := s.Broadcast().Query().Where(broadcast.ID(id)).Exist(ctx)
 		if err != nil {
 			return nil, err
 		}
@@ -97,21 +98,21 @@ func (m *Module) Unschedule(ctx context.Context, workspaceID, id int64) (*ent.Br
 		}
 		return nil, ErrNotScheduled
 	}
-	return m.ent.Broadcast.Get(ctx, id)
+	return s.Broadcast().Get(ctx, id)
 }
 
 // claim applies a transition atomically: the UPDATE only matches a draft or
 // scheduled row in this Workspace, so two racing requests cannot both win.
-func (m *Module) claim(ctx context.Context, workspaceID, id int64, set func(*ent.BroadcastUpdate) *ent.BroadcastUpdate) (*ent.Broadcast, error) {
-	n, err := set(m.ent.Broadcast.Update().Where(
-		broadcast.ID(id), broadcast.WorkspaceID(workspaceID),
+func (m *Module) claim(ctx context.Context, s *ent.Scoped, id int64, set func(*ent.BroadcastScopedUpdate) *ent.BroadcastScopedUpdate) (*ent.Broadcast, error) {
+	n, err := set(s.Broadcast().Update().Where(
+		broadcast.ID(id),
 		broadcast.StatusIn(broadcast.StatusDraft, broadcast.StatusScheduled),
 	)).Save(ctx)
 	if err != nil {
 		return nil, err
 	}
 	if n == 0 {
-		exists, err := m.ent.Broadcast.Query().Where(broadcast.ID(id), broadcast.WorkspaceID(workspaceID)).Exist(ctx)
+		exists, err := s.Broadcast().Query().Where(broadcast.ID(id)).Exist(ctx)
 		if err != nil {
 			return nil, err
 		}
@@ -120,12 +121,12 @@ func (m *Module) claim(ctx context.Context, workspaceID, id int64, set func(*ent
 		}
 		return nil, ErrNotSendable
 	}
-	return m.ent.Broadcast.Get(ctx, id)
+	return s.Broadcast().Get(ctx, id)
 }
 
 // revert is best effort: the caller is already returning the enqueue error.
-func (m *Module) revert(ctx context.Context, id int64) {
-	_ = m.ent.Broadcast.UpdateOneID(id).SetStatus(broadcast.StatusDraft).ClearScheduledAt().Exec(ctx)
+func (m *Module) revert(ctx context.Context, s *ent.Scoped, id int64) {
+	_ = s.Broadcast().UpdateOneID(id).SetStatus(broadcast.StatusDraft).ClearScheduledAt().Exec(ctx)
 }
 
 // --- Authoring (ADR 0016): drafts, audience, report ---
@@ -149,8 +150,8 @@ type Fields struct {
 }
 
 // Create makes a draft Broadcast. Nothing here schedules or sends.
-func (m *Module) Create(ctx context.Context, workspaceID int64, f Fields) (*ent.Broadcast, error) {
-	q := m.ent.Broadcast.Create().SetWorkspaceID(workspaceID).
+func (m *Module) Create(ctx context.Context, s *ent.Scoped, f Fields) (*ent.Broadcast, error) {
+	q := s.Broadcast().Create().
 		SetNillableFromName(f.FromName).
 		SetNillableFromEmail(f.FromEmail)
 	if f.Name != nil {
@@ -166,8 +167,8 @@ func (m *Module) Create(ctx context.Context, workspaceID int64, f Fields) (*ent.
 }
 
 // Get returns one Broadcast of the Workspace.
-func (m *Module) Get(ctx context.Context, workspaceID, id int64) (*ent.Broadcast, error) {
-	b, err := m.ent.Broadcast.Query().Where(broadcast.ID(id), broadcast.WorkspaceID(workspaceID)).Only(ctx)
+func (m *Module) Get(ctx context.Context, s *ent.Scoped, id int64) (*ent.Broadcast, error) {
+	b, err := s.Broadcast().Query().Where(broadcast.ID(id)).Only(ctx)
 	if ent.IsNotFound(err) {
 		return nil, ErrNotFound
 	}
@@ -175,8 +176,8 @@ func (m *Module) Get(ctx context.Context, workspaceID, id int64) (*ent.Broadcast
 }
 
 // List returns one page of the Workspace's Broadcasts, newest first, and the total.
-func (m *Module) List(ctx context.Context, workspaceID int64, limit, offset int) ([]*ent.Broadcast, int, error) {
-	q := m.ent.Broadcast.Query().Where(broadcast.WorkspaceID(workspaceID))
+func (m *Module) List(ctx context.Context, s *ent.Scoped, limit, offset int) ([]*ent.Broadcast, int, error) {
+	q := s.Broadcast().Query()
 	total, err := q.Count(ctx)
 	if err != nil {
 		return nil, 0, err
@@ -187,48 +188,48 @@ func (m *Module) List(ctx context.Context, workspaceID int64, limit, offset int)
 
 // Update edits a draft. The UPDATE only matches a draft row, so a Broadcast that was
 // claimed for sending in the meantime is never edited.
-func (m *Module) Update(ctx context.Context, workspaceID, id int64, f Fields) (*ent.Broadcast, error) {
-	u := m.ent.Broadcast.Update().Where(draftOf(workspaceID, id)).
+func (m *Module) Update(ctx context.Context, s *ent.Scoped, id int64, f Fields) (*ent.Broadcast, error) {
+	u := s.Broadcast().Update().Where(draftOf(id)).
 		SetNillableName(f.Name).
 		SetNillableSubject(f.Subject).
 		SetNillableFromName(f.FromName).
 		SetNillableFromEmail(f.FromEmail).
 		SetNillableBody(f.Body)
-	return m.editDraft(ctx, workspaceID, id, u)
+	return m.editDraft(ctx, s, id, u)
 }
 
 // SetAudience points a draft at a Segment, or at all active contacts when segmentID
 // is nil. It never schedules or sends.
-func (m *Module) SetAudience(ctx context.Context, workspaceID, id int64, segmentID *int64) (*ent.Broadcast, error) {
+func (m *Module) SetAudience(ctx context.Context, s *ent.Scoped, id int64, segmentID *int64) (*ent.Broadcast, error) {
 	if segmentID != nil {
-		ok, err := m.ent.Segment.Query().Where(segment.ID(*segmentID), segment.WorkspaceID(workspaceID)).Exist(ctx)
+		ok, err := s.Segment().Query().Where(segment.ID(*segmentID)).Exist(ctx)
 		if err != nil {
 			return nil, err
 		}
 		if !ok {
 			// A foreign or unknown broadcast is still reported as such first.
-			if _, err := m.Get(ctx, workspaceID, id); err != nil {
+			if _, err := m.Get(ctx, s, id); err != nil {
 				return nil, err
 			}
 			return nil, ErrSegmentNotFound
 		}
 	}
-	u := m.ent.Broadcast.Update().Where(draftOf(workspaceID, id)).SetNillableSegmentID(segmentID)
+	u := s.Broadcast().Update().Where(draftOf(id)).SetNillableSegmentID(segmentID)
 	if segmentID == nil {
 		u.ClearSegmentID()
 	}
-	return m.editDraft(ctx, workspaceID, id, u)
+	return m.editDraft(ctx, s, id, u)
 }
 
 // DeleteDraft removes a draft Broadcast. Past draft the Broadcast is history (its
 // recipients and report) and is not removable here.
-func (m *Module) DeleteDraft(ctx context.Context, workspaceID, id int64) error {
-	n, err := m.ent.Broadcast.Delete().Where(draftOf(workspaceID, id)).Exec(ctx)
+func (m *Module) DeleteDraft(ctx context.Context, s *ent.Scoped, id int64) error {
+	n, err := s.Broadcast().Delete().Where(draftOf(id)).Exec(ctx)
 	if err != nil {
 		return err
 	}
 	if n == 0 {
-		return m.notDraftOrNotFound(ctx, workspaceID, id)
+		return m.notDraftOrNotFound(ctx, s, id)
 	}
 	return nil
 }
@@ -250,8 +251,8 @@ type Report struct {
 }
 
 // Report reads the Broadcast's denormalized delivery counters.
-func (m *Module) Report(ctx context.Context, workspaceID, id int64) (Report, error) {
-	b, err := m.Get(ctx, workspaceID, id)
+func (m *Module) Report(ctx context.Context, s *ent.Scoped, id int64) (Report, error) {
+	b, err := m.Get(ctx, s, id)
 	if err != nil {
 		return Report{}, err
 	}
@@ -270,23 +271,23 @@ func ratio(num, denom int) float32 {
 	return float32(num) / float32(denom)
 }
 
-func draftOf(workspaceID, id int64) predicate.Broadcast {
-	return broadcast.And(broadcast.ID(id), broadcast.WorkspaceID(workspaceID), broadcast.StatusEQ(broadcast.StatusDraft))
+func draftOf(id int64) predicate.Broadcast {
+	return broadcast.And(broadcast.ID(id), broadcast.StatusEQ(broadcast.StatusDraft))
 }
 
-func (m *Module) editDraft(ctx context.Context, workspaceID, id int64, u *ent.BroadcastUpdate) (*ent.Broadcast, error) {
+func (m *Module) editDraft(ctx context.Context, s *ent.Scoped, id int64, u *ent.BroadcastScopedUpdate) (*ent.Broadcast, error) {
 	n, err := u.Save(ctx)
 	if err != nil {
 		return nil, err
 	}
 	if n == 0 {
-		return nil, m.notDraftOrNotFound(ctx, workspaceID, id)
+		return nil, m.notDraftOrNotFound(ctx, s, id)
 	}
-	return m.Get(ctx, workspaceID, id)
+	return m.Get(ctx, s, id)
 }
 
-func (m *Module) notDraftOrNotFound(ctx context.Context, workspaceID, id int64) error {
-	if _, err := m.Get(ctx, workspaceID, id); err != nil {
+func (m *Module) notDraftOrNotFound(ctx context.Context, s *ent.Scoped, id int64) error {
+	if _, err := m.Get(ctx, s, id); err != nil {
 		return err
 	}
 	return ErrNotDraft

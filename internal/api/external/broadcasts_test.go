@@ -299,3 +299,16 @@ func TestExternalBroadcastsAreIsolatedToTheTokensWorkspace(t *testing.T) {
 
 	assert.Equal(t, fixtures.BroadcastGlobexName, env.DB.Broadcast.GetX(ctx, fixtures.BroadcastGlobexID).Name, "the foreign broadcast is untouched")
 }
+
+func TestExternalBroadcastAudienceRefusesAForeignSegment(t *testing.T) {
+	env := testhelper.Setup(t)
+	c := env.ExternalScoped(t, authorScopes...)
+	ctx := context.Background()
+	before := env.DB.Broadcast.GetX(ctx, fixtures.BroadcastDraftID).SegmentID
+
+	got, err := c.BroadcastsSetAudience(ctx, &externalapi.SetBroadcastAudienceInput{SegmentId: externalapi.NewNilEntityId(entityIDString(fixtures.SegmentGlobexID))},
+		externalapi.BroadcastsSetAudienceParams{ID: draftBroadcast})
+	require.NoError(t, err)
+	assert.IsType(t, &externalapi.BroadcastsSetAudienceUnprocessableEntity{}, got)
+	assert.Equal(t, before, env.DB.Broadcast.GetX(ctx, fixtures.BroadcastDraftID).SegmentID)
+}

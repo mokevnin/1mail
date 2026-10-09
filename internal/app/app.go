@@ -519,15 +519,11 @@ func register(injector do.Injector, env string) {
 
 	// The river jobs client is the broadcasts module's enqueue seam.
 	do.Provide(injector, func(i do.Injector) (*broadcasts.Module, error) {
-		client, err := do.Invoke[*entClient](i)
-		if err != nil {
-			return nil, err
-		}
 		jc, err := do.Invoke[*jobsClient](i)
 		if err != nil {
 			return nil, err
 		}
-		return broadcasts.New(client.Client, jc.Client), nil
+		return broadcasts.New(jc.Client), nil
 	})
 
 	do.Provide(injector, func(i do.Injector) (*authtoken.Signer, error) {
