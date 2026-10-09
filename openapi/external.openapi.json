@@ -15,6 +15,12 @@
       "name": "Events"
     },
     {
+      "name": "Custom fields"
+    },
+    {
+      "name": "Sending domains"
+    },
+    {
       "name": "Consent"
     },
     {
@@ -1216,6 +1222,70 @@
         "tags": ["Contacts"]
       }
     },
+    "/custom-fields": {
+      "get": {
+        "operationId": "CustomFields_list",
+        "description": "List the workspace's custom field definitions",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "The request has succeeded.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["items", "page", "pageSize", "totalItems", "totalPages"],
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/CustomFieldResource"
+                      },
+                      "description": "List of items"
+                    },
+                    "page": {
+                      "type": "integer",
+                      "format": "int32",
+                      "description": "Page number (1-based)"
+                    },
+                    "pageSize": {
+                      "type": "integer",
+                      "format": "int32",
+                      "description": "Page size"
+                    },
+                    "totalItems": {
+                      "type": "integer",
+                      "format": "int32",
+                      "description": "Total number of elements"
+                    },
+                    "totalPages": {
+                      "type": "integer",
+                      "format": "int32",
+                      "description": "Total number of pages"
+                    }
+                  },
+                  "description": "Paginated response"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "RFC 7807 unauthorized response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Custom fields"],
+        "x-mcp": {
+          "name": "custom_fields_list"
+        }
+      }
+    },
     "/emails": {
       "post": {
         "operationId": "Emails_send",
@@ -1861,6 +1931,174 @@
           }
         },
         "tags": ["Segments"]
+      }
+    },
+    "/sending-domains": {
+      "get": {
+        "operationId": "SendingDomains_list",
+        "description": "List the workspace's sending domains",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/PageQuery.page"
+          },
+          {
+            "$ref": "#/components/parameters/PageQuery.pageSize"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request has succeeded.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["items", "page", "pageSize", "totalItems", "totalPages"],
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/SendingDomainResource"
+                      },
+                      "description": "List of items"
+                    },
+                    "page": {
+                      "type": "integer",
+                      "format": "int32",
+                      "description": "Page number (1-based)"
+                    },
+                    "pageSize": {
+                      "type": "integer",
+                      "format": "int32",
+                      "description": "Page size"
+                    },
+                    "totalItems": {
+                      "type": "integer",
+                      "format": "int32",
+                      "description": "Total number of elements"
+                    },
+                    "totalPages": {
+                      "type": "integer",
+                      "format": "int32",
+                      "description": "Total number of pages"
+                    }
+                  },
+                  "description": "Paginated response"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "RFC 7807 bad request response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "RFC 7807 unauthorized response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Sending domains"],
+        "x-mcp": {
+          "name": "sending_domains_list"
+        }
+      }
+    },
+    "/sending-domains/rates": {
+      "get": {
+        "operationId": "SendingDomainRates_list",
+        "description": "Complaint and bounce rates per sending domain over a trailing window",
+        "parameters": [
+          {
+            "name": "windowDays",
+            "in": "query",
+            "required": false,
+            "description": "Trailing window in days (1 to 90)",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 7
+            },
+            "explode": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request has succeeded.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["items", "page", "pageSize", "totalItems", "totalPages"],
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/SendingDomainRatesResource"
+                      },
+                      "description": "List of items"
+                    },
+                    "page": {
+                      "type": "integer",
+                      "format": "int32",
+                      "description": "Page number (1-based)"
+                    },
+                    "pageSize": {
+                      "type": "integer",
+                      "format": "int32",
+                      "description": "Page size"
+                    },
+                    "totalItems": {
+                      "type": "integer",
+                      "format": "int32",
+                      "description": "Total number of elements"
+                    },
+                    "totalPages": {
+                      "type": "integer",
+                      "format": "int32",
+                      "description": "Total number of pages"
+                    }
+                  },
+                  "description": "Paginated response"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "RFC 7807 bad request response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "RFC 7807 unauthorized response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Sending domains"],
+        "x-mcp": {
+          "name": "sending_domains_rates"
+        }
       }
     },
     "/suppressions": {
@@ -3264,6 +3502,58 @@
         },
         "description": "Request body for creating a webhook endpoint"
       },
+      "CustomFieldResource": {
+        "type": "object",
+        "required": ["id", "key", "name", "type", "createdAt", "updatedAt"],
+        "properties": {
+          "id": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EntityId"
+              }
+            ],
+            "description": "Unique identifier"
+          },
+          "key": {
+            "type": "string",
+            "description": "Machine key, how values are addressed in custom fields and segment rules"
+          },
+          "name": {
+            "type": "string",
+            "description": "Display name"
+          },
+          "type": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CustomFieldType"
+              }
+            ],
+            "description": "Inferred value type"
+          },
+          "createdAt": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Timestamp"
+              }
+            ],
+            "description": "Creation timestamp"
+          },
+          "updatedAt": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Timestamp"
+              }
+            ],
+            "description": "Last update timestamp"
+          }
+        },
+        "description": "Custom field definition: a typed, named Contact attribute (ADR 0006)"
+      },
+      "CustomFieldType": {
+        "type": "string",
+        "enum": ["string", "number", "bool", "datetime"],
+        "description": "A Custom field's value type"
+      },
       "EmailAddress": {
         "type": "string",
         "format": "email"
@@ -3429,6 +3719,29 @@
         },
         "description": "RFC 7807 Problem Details"
       },
+      "RateTriple": {
+        "type": "object",
+        "required": ["numerator", "denominator", "rate"],
+        "properties": {
+          "numerator": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Events counted against the rate"
+          },
+          "denominator": {
+            "type": "integer",
+            "format": "int32",
+            "description": "The population the rate is over"
+          },
+          "rate": {
+            "type": "number",
+            "format": "double",
+            "nullable": true,
+            "description": "numerator / denominator, null when the denominator is zero"
+          }
+        },
+        "description": "A rate as the (numerator, denominator, rate) triple (ADR 0011). The rate is\nnull when the denominator is zero: an undefined rate is never reported as 0."
+      },
       "RecordEventsBatchInput": {
         "type": "object",
         "required": ["events"],
@@ -3568,6 +3881,87 @@
           }
         },
         "description": "Result of a transactional send"
+      },
+      "SendingDomainRatesResource": {
+        "type": "object",
+        "required": ["sendingDomainId", "domain", "windowDays", "complaintRate", "bounceRate"],
+        "properties": {
+          "sendingDomainId": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EntityId"
+              }
+            ],
+            "description": "Sending domain id"
+          },
+          "domain": {
+            "type": "string",
+            "description": "The domain the rates are for"
+          },
+          "windowDays": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Trailing window the rates cover, in days"
+          },
+          "complaintRate": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RateTriple"
+              }
+            ],
+            "description": "Complaints over delivered-ish sends (sent minus hard bounces)"
+          },
+          "bounceRate": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RateTriple"
+              }
+            ],
+            "description": "Hard bounces over sent"
+          }
+        },
+        "description": "Complaint and bounce rates of one Sending domain over a trailing window (ADR 0011).\nComplaint rate is complaints / (sent - hard bounces); bounce rate is hard bounces / sent."
+      },
+      "SendingDomainResource": {
+        "type": "object",
+        "required": ["id", "domain", "verified", "createdAt"],
+        "properties": {
+          "id": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EntityId"
+              }
+            ],
+            "description": "Unique identifier"
+          },
+          "domain": {
+            "type": "string",
+            "description": "The authenticated domain, e.g. \"mail.acme.com\""
+          },
+          "verified": {
+            "type": "boolean",
+            "description": "Whether the DKIM DNS is currently published and matches our key"
+          },
+          "verifiedAt": {
+            "type": "string",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Timestamp"
+              }
+            ],
+            "nullable": true,
+            "description": "When the domain most recently became verified (null = never)"
+          },
+          "createdAt": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Timestamp"
+              }
+            ],
+            "description": "Creation timestamp"
+          }
+        },
+        "description": "Sending domain (ADR 0010), read-only: no DNS or DKIM material is exposed"
       },
       "SetBroadcastAudienceInput": {
         "type": "object",

@@ -13,6 +13,7 @@ import "./resources/segments.tsp";
 import "./resources/broadcasts.tsp";
 import "./resources/emails.tsp";
 import "./resources/events.tsp";
+import "./resources/reference.tsp";
 import "./resources/consent.tsp";
 import "./resources/templates.tsp";
 import "./resources/webhooks.tsp";

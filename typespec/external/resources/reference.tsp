@@ -1,0 +1,117 @@
+using TypeSpec.Http;
+using TypeSpec.Rest;
+
+namespace OneMail;
+
+/** A Custom field's value type */
+enum CustomFieldType {
+  string,
+  number,
+  bool,
+  datetime,
+}
+
+/** Custom field definition: a typed, named Contact attribute (ADR 0006) */
+model CustomFieldResource {
+  /** Unique identifier */
+  id: EntityId;
+
+  /** Machine key, how values are addressed in custom fields and segment rules */
+  key: string;
+
+  /** Display name */
+  name: string;
+
+  /** Inferred value type */
+  type: CustomFieldType;
+
+  /** Creation timestamp */
+  createdAt: Timestamp;
+
+  /** Last update timestamp */
+  updatedAt: Timestamp;
+}
+
+/** Sending domain (ADR 0010), read-only: no DNS or DKIM material is exposed */
+model SendingDomainResource {
+  /** Unique identifier */
+  id: EntityId;
+
+  /** The authenticated domain, e.g. "mail.acme.com" */
+  domain: string;
+
+  /** Whether the DKIM DNS is currently published and matches our key */
+  verified: boolean;
+
+  /** When the domain most recently became verified (null = never) */
+  verifiedAt?: Timestamp | null;
+
+  /** Creation timestamp */
+  createdAt: Timestamp;
+}
+
+/**
+ * A rate as the (numerator, denominator, rate) triple (ADR 0011). The rate is
+ * null when the denominator is zero: an undefined rate is never reported as 0.
+ */
+model RateTriple {
+  /** Events counted against the rate */
+  numerator: int32;
+
+  /** The population the rate is over */
+  denominator: int32;
+
+  /** numerator / denominator, null when the denominator is zero */
+  rate: float64 | null;
+}
+
+/**
+ * Complaint and bounce rates of one Sending domain over a trailing window (ADR 0011).
+ * Complaint rate is complaints / (sent - hard bounces); bounce rate is hard bounces / sent.
+ */
+model SendingDomainRatesResource {
+  /** Sending domain id */
+  sendingDomainId: EntityId;
+
+  /** The domain the rates are for */
+  domain: string;
+
+  /** Trailing window the rates cover, in days */
+  windowDays: int32;
+
+  /** Complaints over delivered-ish sends (sent minus hard bounces) */
+  complaintRate: RateTriple;
+
+  /** Hard bounces over sent */
+  bounceRate: RateTriple;
+}
+
+@route("/custom-fields")
+@tag("Custom fields")
+namespace CustomFields {
+  /** List the workspace's custom field definitions */
+  @get
+  op list(): Page<CustomFieldResource> | UnauthorizedProblem;
+}
+
+@route("/sending-domains")
+@tag("Sending domains")
+namespace SendingDomains {
+  /** List the workspace's sending domains */
+  @get
+  op list(...PageQuery):
+    | Page<SendingDomainResource>
+    | BadRequestProblem
+    | UnauthorizedProblem;
+}
+
+@route("/sending-domains/rates")
+@tag("Sending domains")
+namespace SendingDomainRates {
+  /** Complaint and bounce rates per sending domain over a trailing window */
+  @get
+  op list(
+    /** Trailing window in days (1 to 90) */
+    @query windowDays?: int32 = 7,
+  ): Page<SendingDomainRatesResource> | BadRequestProblem | UnauthorizedProblem;
+}

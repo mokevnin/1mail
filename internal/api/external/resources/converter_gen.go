@@ -63,6 +63,18 @@ func (c *ConverterImpl) ContactToResource(source *ent.Contact) external.ContactR
 	}
 	return externalapiContactResource
 }
+func (c *ConverterImpl) CustomFieldToResource(source *ent.CustomField) external.CustomFieldResource {
+	var externalapiCustomFieldResource external.CustomFieldResource
+	if source != nil {
+		externalapiCustomFieldResource.ID = entityID((*source).ID)
+		externalapiCustomFieldResource.Key = (*source).Key
+		externalapiCustomFieldResource.Name = (*source).Name
+		externalapiCustomFieldResource.Type = external.CustomFieldType((*source).Type)
+		externalapiCustomFieldResource.CreatedAt = timestamp((*source).CreatedAt)
+		externalapiCustomFieldResource.UpdatedAt = timestamp((*source).UpdatedAt)
+	}
+	return externalapiCustomFieldResource
+}
 func (c *ConverterImpl) EmailTemplateToResource(source *ent.EmailTemplate) external.TemplateResource {
 	var externalapiTemplateResource external.TemplateResource
 	if source != nil {
@@ -86,4 +98,15 @@ func (c *ConverterImpl) SegmentToResource(source *ent.Segment) external.SegmentR
 		externalapiSegmentResource.UpdatedAt = timestamp((*source).UpdatedAt)
 	}
 	return externalapiSegmentResource
+}
+func (c *ConverterImpl) SendingDomainToResource(source *ent.SendingDomain) external.SendingDomainResource {
+	var externalapiSendingDomainResource external.SendingDomainResource
+	if source != nil {
+		externalapiSendingDomainResource.ID = entityID((*source).ID)
+		externalapiSendingDomainResource.Domain = (*source).Domain
+		externalapiSendingDomainResource.Verified = (*source).Verified
+		externalapiSendingDomainResource.VerifiedAt = optNilTimestamp((*source).VerifiedAt)
+		externalapiSendingDomainResource.CreatedAt = timestamp((*source).CreatedAt)
+	}
+	return externalapiSendingDomainResource
 }

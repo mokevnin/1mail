@@ -20,3 +20,12 @@ namespace OneMail;
 @@extension(EventActions.list, "x-mcp", #{ name: "events_actions_list" });
 @@extension(ContactsBatch.upsert, "x-mcp", #{ name: "contacts_upsert_batch" });
 @@extension(EventsBatch.submit, "x-mcp", #{ name: "events_record_batch" });
+
+// Read-only reference data (ADR 0016).
+@@extension(CustomFields.list, "x-mcp", #{ name: "custom_fields_list" });
+@@extension(SendingDomains.list, "x-mcp", #{ name: "sending_domains_list" });
+@@extension(
+  SendingDomainRates.list,
+  "x-mcp",
+  #{ name: "sending_domains_rates" }
+);

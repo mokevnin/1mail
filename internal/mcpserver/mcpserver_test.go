@@ -95,6 +95,7 @@ func TestMCPToolsAreTheContractMinusHiddenOperations(t *testing.T) {
 		"broadcasts_list", "broadcasts_create", "broadcasts_get", "broadcasts_update", "broadcasts_delete",
 		"broadcasts_set_audience", "broadcasts_test_send", "broadcasts_report",
 		"emails_send", "events_record", "events_actions_list", "whoami",
+		"custom_fields_list", "sending_domains_list", "sending_domains_rates",
 		"suppressions_create", "unsubscribes_create",
 		"templates_list", "templates_create", "templates_get", "templates_update", "templates_delete",
 		"webhooks_list", "webhooks_create", "webhooks_get", "webhooks_update", "webhooks_delete",

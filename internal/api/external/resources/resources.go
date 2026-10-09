@@ -36,6 +36,8 @@ type Converter interface {
 	ApiTokenToInfo(source *ent.ApiToken) externalapi.ApiTokenInfo
 	SegmentToResource(source *ent.Segment) externalapi.SegmentResource
 	EmailTemplateToResource(source *ent.EmailTemplate) externalapi.TemplateResource
+	CustomFieldToResource(source *ent.CustomField) externalapi.CustomFieldResource
+	SendingDomainToResource(source *ent.SendingDomain) externalapi.SendingDomainResource
 }
 
 func entityID(id int64) externalapi.EntityId {

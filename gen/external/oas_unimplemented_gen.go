@@ -174,6 +174,15 @@ func (UnimplementedHandler) ContactsUpdate(ctx context.Context, req *UpdateConta
 	return r, ht.ErrNotImplemented
 }
 
+// CustomFieldsList implements CustomFields_list operation.
+//
+// List the workspace's custom field definitions.
+//
+// GET /custom-fields
+func (UnimplementedHandler) CustomFieldsList(ctx context.Context) (r CustomFieldsListRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // EmailsSend implements Emails_send operation.
 //
 // Send a transactional email. The referenced Template's current content is rendered with the supplied
@@ -266,6 +275,24 @@ func (UnimplementedHandler) SegmentsPreview(ctx context.Context, req *PreviewSeg
 //
 // PUT /segments/{id}
 func (UnimplementedHandler) SegmentsUpdate(ctx context.Context, req *UpdateSegmentInput, params SegmentsUpdateParams) (r SegmentsUpdateRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// SendingDomainRatesList implements SendingDomainRates_list operation.
+//
+// Complaint and bounce rates per sending domain over a trailing window.
+//
+// GET /sending-domains/rates
+func (UnimplementedHandler) SendingDomainRatesList(ctx context.Context, params SendingDomainRatesListParams) (r SendingDomainRatesListRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// SendingDomainsList implements SendingDomains_list operation.
+//
+// List the workspace's sending domains.
+//
+// GET /sending-domains
+func (UnimplementedHandler) SendingDomainsList(ctx context.Context, params SendingDomainsListParams) (r SendingDomainsListRes, _ error) {
 	return r, ht.ErrNotImplemented
 }
 

@@ -1657,6 +1657,206 @@ func (s *CreateWebhookInput) SetEnabled(val OptBool) {
 	s.Enabled = val
 }
 
+// Custom field definition: a typed, named Contact attribute (ADR 0006).
+// Ref: #/components/schemas/CustomFieldResource
+type CustomFieldResource struct {
+	// Unique identifier.
+	ID EntityId `json:"id"`
+	// Machine key, how values are addressed in custom fields and segment rules.
+	Key string `json:"key"`
+	// Display name.
+	Name string `json:"name"`
+	// Inferred value type.
+	Type CustomFieldType `json:"type"`
+	// Creation timestamp.
+	CreatedAt Timestamp `json:"createdAt"`
+	// Last update timestamp.
+	UpdatedAt Timestamp `json:"updatedAt"`
+}
+
+// GetID returns the value of ID.
+func (s *CustomFieldResource) GetID() EntityId {
+	return s.ID
+}
+
+// GetKey returns the value of Key.
+func (s *CustomFieldResource) GetKey() string {
+	return s.Key
+}
+
+// GetName returns the value of Name.
+func (s *CustomFieldResource) GetName() string {
+	return s.Name
+}
+
+// GetType returns the value of Type.
+func (s *CustomFieldResource) GetType() CustomFieldType {
+	return s.Type
+}
+
+// GetCreatedAt returns the value of CreatedAt.
+func (s *CustomFieldResource) GetCreatedAt() Timestamp {
+	return s.CreatedAt
+}
+
+// GetUpdatedAt returns the value of UpdatedAt.
+func (s *CustomFieldResource) GetUpdatedAt() Timestamp {
+	return s.UpdatedAt
+}
+
+// SetID sets the value of ID.
+func (s *CustomFieldResource) SetID(val EntityId) {
+	s.ID = val
+}
+
+// SetKey sets the value of Key.
+func (s *CustomFieldResource) SetKey(val string) {
+	s.Key = val
+}
+
+// SetName sets the value of Name.
+func (s *CustomFieldResource) SetName(val string) {
+	s.Name = val
+}
+
+// SetType sets the value of Type.
+func (s *CustomFieldResource) SetType(val CustomFieldType) {
+	s.Type = val
+}
+
+// SetCreatedAt sets the value of CreatedAt.
+func (s *CustomFieldResource) SetCreatedAt(val Timestamp) {
+	s.CreatedAt = val
+}
+
+// SetUpdatedAt sets the value of UpdatedAt.
+func (s *CustomFieldResource) SetUpdatedAt(val Timestamp) {
+	s.UpdatedAt = val
+}
+
+// A Custom field's value type.
+// Ref: #/components/schemas/CustomFieldType
+type CustomFieldType string
+
+const (
+	CustomFieldTypeString   CustomFieldType = "string"
+	CustomFieldTypeNumber   CustomFieldType = "number"
+	CustomFieldTypeBool     CustomFieldType = "bool"
+	CustomFieldTypeDatetime CustomFieldType = "datetime"
+)
+
+// AllValues returns all CustomFieldType values.
+func (CustomFieldType) AllValues() []CustomFieldType {
+	return []CustomFieldType{
+		CustomFieldTypeString,
+		CustomFieldTypeNumber,
+		CustomFieldTypeBool,
+		CustomFieldTypeDatetime,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s CustomFieldType) MarshalText() ([]byte, error) {
+	switch s {
+	case CustomFieldTypeString:
+		return []byte(s), nil
+	case CustomFieldTypeNumber:
+		return []byte(s), nil
+	case CustomFieldTypeBool:
+		return []byte(s), nil
+	case CustomFieldTypeDatetime:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *CustomFieldType) UnmarshalText(data []byte) error {
+	switch CustomFieldType(data) {
+	case CustomFieldTypeString:
+		*s = CustomFieldTypeString
+		return nil
+	case CustomFieldTypeNumber:
+		*s = CustomFieldTypeNumber
+		return nil
+	case CustomFieldTypeBool:
+		*s = CustomFieldTypeBool
+		return nil
+	case CustomFieldTypeDatetime:
+		*s = CustomFieldTypeDatetime
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// Paginated response.
+type CustomFieldsListOK struct {
+	// List of items.
+	Items []CustomFieldResource `json:"items"`
+	// Page number (1-based).
+	Page int32 `json:"page"`
+	// Page size.
+	PageSize int32 `json:"pageSize"`
+	// Total number of elements.
+	TotalItems int32 `json:"totalItems"`
+	// Total number of pages.
+	TotalPages int32 `json:"totalPages"`
+}
+
+// GetItems returns the value of Items.
+func (s *CustomFieldsListOK) GetItems() []CustomFieldResource {
+	return s.Items
+}
+
+// GetPage returns the value of Page.
+func (s *CustomFieldsListOK) GetPage() int32 {
+	return s.Page
+}
+
+// GetPageSize returns the value of PageSize.
+func (s *CustomFieldsListOK) GetPageSize() int32 {
+	return s.PageSize
+}
+
+// GetTotalItems returns the value of TotalItems.
+func (s *CustomFieldsListOK) GetTotalItems() int32 {
+	return s.TotalItems
+}
+
+// GetTotalPages returns the value of TotalPages.
+func (s *CustomFieldsListOK) GetTotalPages() int32 {
+	return s.TotalPages
+}
+
+// SetItems sets the value of Items.
+func (s *CustomFieldsListOK) SetItems(val []CustomFieldResource) {
+	s.Items = val
+}
+
+// SetPage sets the value of Page.
+func (s *CustomFieldsListOK) SetPage(val int32) {
+	s.Page = val
+}
+
+// SetPageSize sets the value of PageSize.
+func (s *CustomFieldsListOK) SetPageSize(val int32) {
+	s.PageSize = val
+}
+
+// SetTotalItems sets the value of TotalItems.
+func (s *CustomFieldsListOK) SetTotalItems(val int32) {
+	s.TotalItems = val
+}
+
+// SetTotalPages sets the value of TotalPages.
+func (s *CustomFieldsListOK) SetTotalPages(val int32) {
+	s.TotalPages = val
+}
+
+func (*CustomFieldsListOK) customFieldsListRes() {}
+
 type EmailAddress string
 
 type EmailsSendConflict ProblemDetails
@@ -2005,6 +2205,51 @@ func (o NilEntityId) Get() (v EntityId, ok bool) {
 
 // Or returns value if set, or given parameter if does not.
 func (o NilEntityId) Or(d EntityId) EntityId {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewNilFloat64 returns new NilFloat64 with value set to v.
+func NewNilFloat64(v float64) NilFloat64 {
+	return NilFloat64{
+		Value: v,
+	}
+}
+
+// NilFloat64 is nullable float64.
+type NilFloat64 struct {
+	Value float64
+	Null  bool
+}
+
+// SetTo sets value to v.
+func (o *NilFloat64) SetTo(v float64) {
+	o.Null = false
+	o.Value = v
+}
+
+// IsNull returns true if value is Null.
+func (o NilFloat64) IsNull() bool { return o.Null }
+
+// SetToNull sets value to null.
+func (o *NilFloat64) SetToNull() {
+	o.Null = true
+	var v float64
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o NilFloat64) Get() (v float64, ok bool) {
+	if o.Null {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o NilFloat64) Or(d float64) float64 {
 	if v, ok := o.Get(); ok {
 		return v
 	}
@@ -3242,6 +3487,8 @@ func (s *ProblemDetails) SetFields(val OptProblemDetailsFields) {
 	s.Fields = val
 }
 
+func (*ProblemDetails) customFieldsListRes() {}
+
 // Validation errors grouped by field.
 type ProblemDetailsErrors map[string][]string
 
@@ -3264,6 +3511,48 @@ func (s *ProblemDetailsFields) init() ProblemDetailsFields {
 		*s = m
 	}
 	return m
+}
+
+// A rate as the (numerator, denominator, rate) triple (ADR 0011). The rate is null when the
+// denominator is zero: an undefined rate is never reported as 0.
+// Ref: #/components/schemas/RateTriple
+type RateTriple struct {
+	// Events counted against the rate.
+	Numerator int32 `json:"numerator"`
+	// The population the rate is over.
+	Denominator int32 `json:"denominator"`
+	// Numerator / denominator, null when the denominator is zero.
+	Rate NilFloat64 `json:"rate"`
+}
+
+// GetNumerator returns the value of Numerator.
+func (s *RateTriple) GetNumerator() int32 {
+	return s.Numerator
+}
+
+// GetDenominator returns the value of Denominator.
+func (s *RateTriple) GetDenominator() int32 {
+	return s.Denominator
+}
+
+// GetRate returns the value of Rate.
+func (s *RateTriple) GetRate() NilFloat64 {
+	return s.Rate
+}
+
+// SetNumerator sets the value of Numerator.
+func (s *RateTriple) SetNumerator(val int32) {
+	s.Numerator = val
+}
+
+// SetDenominator sets the value of Denominator.
+func (s *RateTriple) SetDenominator(val int32) {
+	s.Denominator = val
+}
+
+// SetRate sets the value of Rate.
+func (s *RateTriple) SetRate(val NilFloat64) {
+	s.Rate = val
 }
 
 // Request body for recording events one by one with per-item results.
@@ -3685,6 +3974,285 @@ func (s *SendTransactionalEmailResponse) SetDestination(val string) {
 }
 
 func (*SendTransactionalEmailResponse) emailsSendRes() {}
+
+type SendingDomainRatesListBadRequest ProblemDetails
+
+func (*SendingDomainRatesListBadRequest) sendingDomainRatesListRes() {}
+
+// Paginated response.
+type SendingDomainRatesListOK struct {
+	// List of items.
+	Items []SendingDomainRatesResource `json:"items"`
+	// Page number (1-based).
+	Page int32 `json:"page"`
+	// Page size.
+	PageSize int32 `json:"pageSize"`
+	// Total number of elements.
+	TotalItems int32 `json:"totalItems"`
+	// Total number of pages.
+	TotalPages int32 `json:"totalPages"`
+}
+
+// GetItems returns the value of Items.
+func (s *SendingDomainRatesListOK) GetItems() []SendingDomainRatesResource {
+	return s.Items
+}
+
+// GetPage returns the value of Page.
+func (s *SendingDomainRatesListOK) GetPage() int32 {
+	return s.Page
+}
+
+// GetPageSize returns the value of PageSize.
+func (s *SendingDomainRatesListOK) GetPageSize() int32 {
+	return s.PageSize
+}
+
+// GetTotalItems returns the value of TotalItems.
+func (s *SendingDomainRatesListOK) GetTotalItems() int32 {
+	return s.TotalItems
+}
+
+// GetTotalPages returns the value of TotalPages.
+func (s *SendingDomainRatesListOK) GetTotalPages() int32 {
+	return s.TotalPages
+}
+
+// SetItems sets the value of Items.
+func (s *SendingDomainRatesListOK) SetItems(val []SendingDomainRatesResource) {
+	s.Items = val
+}
+
+// SetPage sets the value of Page.
+func (s *SendingDomainRatesListOK) SetPage(val int32) {
+	s.Page = val
+}
+
+// SetPageSize sets the value of PageSize.
+func (s *SendingDomainRatesListOK) SetPageSize(val int32) {
+	s.PageSize = val
+}
+
+// SetTotalItems sets the value of TotalItems.
+func (s *SendingDomainRatesListOK) SetTotalItems(val int32) {
+	s.TotalItems = val
+}
+
+// SetTotalPages sets the value of TotalPages.
+func (s *SendingDomainRatesListOK) SetTotalPages(val int32) {
+	s.TotalPages = val
+}
+
+func (*SendingDomainRatesListOK) sendingDomainRatesListRes() {}
+
+type SendingDomainRatesListUnauthorized ProblemDetails
+
+func (*SendingDomainRatesListUnauthorized) sendingDomainRatesListRes() {}
+
+// Complaint and bounce rates of one Sending domain over a trailing window (ADR 0011). Complaint rate
+// is complaints / (sent - hard bounces); bounce rate is hard bounces / sent.
+// Ref: #/components/schemas/SendingDomainRatesResource
+type SendingDomainRatesResource struct {
+	// Sending domain id.
+	SendingDomainId EntityId `json:"sendingDomainId"`
+	// The domain the rates are for.
+	Domain string `json:"domain"`
+	// Trailing window the rates cover, in days.
+	WindowDays int32 `json:"windowDays"`
+	// Complaints over delivered-ish sends (sent minus hard bounces).
+	ComplaintRate RateTriple `json:"complaintRate"`
+	// Hard bounces over sent.
+	BounceRate RateTriple `json:"bounceRate"`
+}
+
+// GetSendingDomainId returns the value of SendingDomainId.
+func (s *SendingDomainRatesResource) GetSendingDomainId() EntityId {
+	return s.SendingDomainId
+}
+
+// GetDomain returns the value of Domain.
+func (s *SendingDomainRatesResource) GetDomain() string {
+	return s.Domain
+}
+
+// GetWindowDays returns the value of WindowDays.
+func (s *SendingDomainRatesResource) GetWindowDays() int32 {
+	return s.WindowDays
+}
+
+// GetComplaintRate returns the value of ComplaintRate.
+func (s *SendingDomainRatesResource) GetComplaintRate() RateTriple {
+	return s.ComplaintRate
+}
+
+// GetBounceRate returns the value of BounceRate.
+func (s *SendingDomainRatesResource) GetBounceRate() RateTriple {
+	return s.BounceRate
+}
+
+// SetSendingDomainId sets the value of SendingDomainId.
+func (s *SendingDomainRatesResource) SetSendingDomainId(val EntityId) {
+	s.SendingDomainId = val
+}
+
+// SetDomain sets the value of Domain.
+func (s *SendingDomainRatesResource) SetDomain(val string) {
+	s.Domain = val
+}
+
+// SetWindowDays sets the value of WindowDays.
+func (s *SendingDomainRatesResource) SetWindowDays(val int32) {
+	s.WindowDays = val
+}
+
+// SetComplaintRate sets the value of ComplaintRate.
+func (s *SendingDomainRatesResource) SetComplaintRate(val RateTriple) {
+	s.ComplaintRate = val
+}
+
+// SetBounceRate sets the value of BounceRate.
+func (s *SendingDomainRatesResource) SetBounceRate(val RateTriple) {
+	s.BounceRate = val
+}
+
+// Sending domain (ADR 0010), read-only: no DNS or DKIM material is exposed.
+// Ref: #/components/schemas/SendingDomainResource
+type SendingDomainResource struct {
+	// Unique identifier.
+	ID EntityId `json:"id"`
+	// The authenticated domain, e.g. "mail.acme.com".
+	Domain string `json:"domain"`
+	// Whether the DKIM DNS is currently published and matches our key.
+	Verified bool `json:"verified"`
+	// When the domain most recently became verified (null = never).
+	VerifiedAt OptNilTimestamp `json:"verifiedAt"`
+	// Creation timestamp.
+	CreatedAt Timestamp `json:"createdAt"`
+}
+
+// GetID returns the value of ID.
+func (s *SendingDomainResource) GetID() EntityId {
+	return s.ID
+}
+
+// GetDomain returns the value of Domain.
+func (s *SendingDomainResource) GetDomain() string {
+	return s.Domain
+}
+
+// GetVerified returns the value of Verified.
+func (s *SendingDomainResource) GetVerified() bool {
+	return s.Verified
+}
+
+// GetVerifiedAt returns the value of VerifiedAt.
+func (s *SendingDomainResource) GetVerifiedAt() OptNilTimestamp {
+	return s.VerifiedAt
+}
+
+// GetCreatedAt returns the value of CreatedAt.
+func (s *SendingDomainResource) GetCreatedAt() Timestamp {
+	return s.CreatedAt
+}
+
+// SetID sets the value of ID.
+func (s *SendingDomainResource) SetID(val EntityId) {
+	s.ID = val
+}
+
+// SetDomain sets the value of Domain.
+func (s *SendingDomainResource) SetDomain(val string) {
+	s.Domain = val
+}
+
+// SetVerified sets the value of Verified.
+func (s *SendingDomainResource) SetVerified(val bool) {
+	s.Verified = val
+}
+
+// SetVerifiedAt sets the value of VerifiedAt.
+func (s *SendingDomainResource) SetVerifiedAt(val OptNilTimestamp) {
+	s.VerifiedAt = val
+}
+
+// SetCreatedAt sets the value of CreatedAt.
+func (s *SendingDomainResource) SetCreatedAt(val Timestamp) {
+	s.CreatedAt = val
+}
+
+type SendingDomainsListBadRequest ProblemDetails
+
+func (*SendingDomainsListBadRequest) sendingDomainsListRes() {}
+
+// Paginated response.
+type SendingDomainsListOK struct {
+	// List of items.
+	Items []SendingDomainResource `json:"items"`
+	// Page number (1-based).
+	Page int32 `json:"page"`
+	// Page size.
+	PageSize int32 `json:"pageSize"`
+	// Total number of elements.
+	TotalItems int32 `json:"totalItems"`
+	// Total number of pages.
+	TotalPages int32 `json:"totalPages"`
+}
+
+// GetItems returns the value of Items.
+func (s *SendingDomainsListOK) GetItems() []SendingDomainResource {
+	return s.Items
+}
+
+// GetPage returns the value of Page.
+func (s *SendingDomainsListOK) GetPage() int32 {
+	return s.Page
+}
+
+// GetPageSize returns the value of PageSize.
+func (s *SendingDomainsListOK) GetPageSize() int32 {
+	return s.PageSize
+}
+
+// GetTotalItems returns the value of TotalItems.
+func (s *SendingDomainsListOK) GetTotalItems() int32 {
+	return s.TotalItems
+}
+
+// GetTotalPages returns the value of TotalPages.
+func (s *SendingDomainsListOK) GetTotalPages() int32 {
+	return s.TotalPages
+}
+
+// SetItems sets the value of Items.
+func (s *SendingDomainsListOK) SetItems(val []SendingDomainResource) {
+	s.Items = val
+}
+
+// SetPage sets the value of Page.
+func (s *SendingDomainsListOK) SetPage(val int32) {
+	s.Page = val
+}
+
+// SetPageSize sets the value of PageSize.
+func (s *SendingDomainsListOK) SetPageSize(val int32) {
+	s.PageSize = val
+}
+
+// SetTotalItems sets the value of TotalItems.
+func (s *SendingDomainsListOK) SetTotalItems(val int32) {
+	s.TotalItems = val
+}
+
+// SetTotalPages sets the value of TotalPages.
+func (s *SendingDomainsListOK) SetTotalPages(val int32) {
+	s.TotalPages = val
+}
+
+func (*SendingDomainsListOK) sendingDomainsListRes() {}
+
+type SendingDomainsListUnauthorized ProblemDetails
+
+func (*SendingDomainsListUnauthorized) sendingDomainsListRes() {}
 
 // Request body for setting a broadcast's audience.
 // Ref: #/components/schemas/SetBroadcastAudienceInput

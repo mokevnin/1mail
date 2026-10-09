@@ -167,3 +167,112 @@
   workspace_id: 1
   occurred_at: '{{daysAgo 3}}'
   created_at: '{{daysAgo 3}}'
+# --- Deliverability rates (ADR 0011): stamped with the Sending domain, no contact link.
+# mail.acme.com, trailing 7 days: 8 sent, 1 hard bounce, 1 soft bounce, 1 complaint, so
+#   complaint rate 1/(8-1) and bounce rate 1/8. 40 days ago: 1 sent and 1 complaint (90-day window only).
+# codebasics.dev: 2 sent, no failures. news.acme.com: no traffic (undefined rates).
+- id: 200
+  email: rates200@example.com
+  action: email.sent
+  properties: '{"sendingDomain":"mail.acme.com"}'
+  workspace_id: 1
+  occurred_at: '{{daysAgo 2}}'
+  created_at: '{{daysAgo 2}}'
+- id: 201
+  email: rates201@example.com
+  action: email.sent
+  properties: '{"sendingDomain":"mail.acme.com"}'
+  workspace_id: 1
+  occurred_at: '{{daysAgo 2}}'
+  created_at: '{{daysAgo 2}}'
+- id: 202
+  email: rates202@example.com
+  action: email.sent
+  properties: '{"sendingDomain":"mail.acme.com"}'
+  workspace_id: 1
+  occurred_at: '{{daysAgo 2}}'
+  created_at: '{{daysAgo 2}}'
+- id: 203
+  email: rates203@example.com
+  action: email.sent
+  properties: '{"sendingDomain":"mail.acme.com"}'
+  workspace_id: 1
+  occurred_at: '{{daysAgo 2}}'
+  created_at: '{{daysAgo 2}}'
+- id: 204
+  email: rates204@example.com
+  action: email.sent
+  properties: '{"sendingDomain":"mail.acme.com"}'
+  workspace_id: 1
+  occurred_at: '{{daysAgo 2}}'
+  created_at: '{{daysAgo 2}}'
+- id: 205
+  email: rates205@example.com
+  action: email.sent
+  properties: '{"sendingDomain":"mail.acme.com"}'
+  workspace_id: 1
+  occurred_at: '{{daysAgo 2}}'
+  created_at: '{{daysAgo 2}}'
+- id: 206
+  email: rates206@example.com
+  action: email.sent
+  properties: '{"sendingDomain":"mail.acme.com"}'
+  workspace_id: 1
+  occurred_at: '{{daysAgo 2}}'
+  created_at: '{{daysAgo 2}}'
+- id: 207
+  email: rates207@example.com
+  action: email.sent
+  properties: '{"sendingDomain":"mail.acme.com"}'
+  workspace_id: 1
+  occurred_at: '{{daysAgo 2}}'
+  created_at: '{{daysAgo 2}}'
+- id: 208
+  email: rates208@example.com
+  action: email.bounced
+  properties: '{"sendingDomain":"mail.acme.com","bounceKind":"permanent"}'
+  workspace_id: 1
+  occurred_at: '{{daysAgo 2}}'
+  created_at: '{{daysAgo 2}}'
+- id: 209
+  email: rates209@example.com
+  action: email.bounced
+  properties: '{"sendingDomain":"mail.acme.com","bounceKind":"transient"}'
+  workspace_id: 1
+  occurred_at: '{{daysAgo 2}}'
+  created_at: '{{daysAgo 2}}'
+- id: 210
+  email: rates210@example.com
+  action: email.complained
+  properties: '{"sendingDomain":"mail.acme.com"}'
+  workspace_id: 1
+  occurred_at: '{{daysAgo 1}}'
+  created_at: '{{daysAgo 1}}'
+- id: 211
+  email: rates211@example.com
+  action: email.sent
+  properties: '{"sendingDomain":"mail.acme.com"}'
+  workspace_id: 1
+  occurred_at: '{{daysAgo 40}}'
+  created_at: '{{daysAgo 40}}'
+- id: 212
+  email: rates212@example.com
+  action: email.complained
+  properties: '{"sendingDomain":"mail.acme.com"}'
+  workspace_id: 1
+  occurred_at: '{{daysAgo 40}}'
+  created_at: '{{daysAgo 40}}'
+- id: 213
+  email: rates213@example.com
+  action: email.sent
+  properties: '{"sendingDomain":"codebasics.dev"}'
+  workspace_id: 1
+  occurred_at: '{{daysAgo 3}}'
+  created_at: '{{daysAgo 3}}'
+- id: 214
+  email: rates214@example.com
+  action: email.sent
+  properties: '{"sendingDomain":"codebasics.dev"}'
+  workspace_id: 1
+  occurred_at: '{{daysAgo 3}}'
+  created_at: '{{daysAgo 3}}'
