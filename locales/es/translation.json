@@ -621,6 +621,9 @@
     "profile": "Perfil",
     "workspaceSettings": "Configuración del espacio de trabajo"
   },
+  "validation": {
+    "required": "Este campo es obligatorio"
+  },
   "verifyEmail": {
     "continue": "Continuar",
     "errorBody": "Este enlace de verificación no es válido o ha caducado.",

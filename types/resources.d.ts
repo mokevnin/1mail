@@ -620,6 +620,9 @@ export default interface Resources {
       "profile": "Profile",
       "workspaceSettings": "Workspace settings"
     },
+    "validation": {
+      "required": "This field is required"
+    },
     "verifyEmail": {
       "continue": "Continue",
       "errorBody": "This verification link is invalid or has expired.",

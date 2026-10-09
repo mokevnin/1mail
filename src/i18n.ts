@@ -1,5 +1,6 @@
 import { createInstance } from 'i18next'
 import { initReactI18next } from 'react-i18next'
+import * as z from 'zod'
 
 import en from '../locales/en/translation.json' with { type: 'json' }
 import es from '../locales/es/translation.json' with { type: 'json' }
@@ -45,6 +46,16 @@ void i18n.use(initReactI18next).init({
   interpolation: {
     escapeValue: false,
   },
+})
+
+// Zod's default message for a missing required value ("Invalid input: expected string,
+// received undefined") is useless in a form; resource forms drop blank required fields, so
+// this is what a user sees for them.
+z.config({
+  customError: (issue) =>
+    issue.code === 'invalid_type' && issue.input === undefined
+      ? i18n.t(($) => $.validation.required)
+      : undefined,
 })
 
 export { i18n }

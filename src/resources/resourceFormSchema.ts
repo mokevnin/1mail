@@ -30,12 +30,19 @@ export type ResourceFormSchema<TPayload> = {
 type Mode = 'create' | 'update'
 
 // A blank field on update clears it: null where the API field is nullable, otherwise an empty string.
-function normalize(values: FormValues, mode: Mode, nullable: ReadonlySet<string>) {
+// A blank required field is always dropped, so the schema reports it as missing.
+function normalize(
+  values: FormValues,
+  mode: Mode,
+  fields: { nullable: ReadonlySet<string>; required: ReadonlySet<string> },
+) {
   const normalized: Record<string, string | null | undefined> = {}
   for (const [field, value] of Object.entries(values)) {
     const trimmed = value.trim()
     if (trimmed !== '') normalized[field] = trimmed
-    else if (mode === 'update') normalized[field] = nullable.has(field) ? null : ''
+    else if (mode === 'update' && !fields.required.has(field)) {
+      normalized[field] = fields.nullable.has(field) ? null : ''
+    }
   }
   return normalized
 }
@@ -64,10 +71,13 @@ export function resourceFormSchema<TSchema extends StringFieldsSchema>(
 ): ResourceFormSchema<Exact<z.output<TSchema>>> {
   const fields = Object.keys(schema.shape)
   const nullable = new Set(fields.filter((field) => schema.shape[field]?.safeParse(null).success))
+  const required = new Set(
+    fields.filter((field) => !schema.shape[field]?.safeParse(undefined).success),
+  )
   const parse = (mode: Mode) =>
     z
       .record(z.string(), z.string())
-      .transform((values) => normalize(values, mode, nullable))
+      .transform((values) => normalize(values, mode, { nullable, required }))
       .pipe(schema)
       .transform((payload) => omitUndefined(payload))
   return {

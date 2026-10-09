@@ -1,25 +1,16 @@
 import { Button, Group, Stack, Textarea, TextInput } from '@mantine/core'
-import type { useForm } from '@mantine/form'
 import { useNavigate, useParams } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 
+import type { SiteCreateEmailTemplateInput } from '../../generated/site/types.gen.ts'
+import type { ResourceFormProps } from '../../resources/defineResource.tsx'
 import { templatesRoute } from '../../router.tsx'
 
-export interface TemplateFormValues {
-  name: string
-  subject: string
-  body: string
-}
-
-type TemplateFormInstance = ReturnType<typeof useForm<TemplateFormValues>>
-
-interface TemplateFormProps {
-  form: TemplateFormInstance
-  isPending: boolean
-  onSubmit: (values: TemplateFormValues) => void
-}
-
-export function TemplateForm({ form, isPending, onSubmit }: TemplateFormProps) {
+export function TemplateForm({
+  form,
+  isPending,
+  onSubmit,
+}: ResourceFormProps<SiteCreateEmailTemplateInput>) {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const { slug } = useParams({ strict: false })
@@ -29,7 +20,7 @@ export function TemplateForm({ form, isPending, onSubmit }: TemplateFormProps) {
       <Stack>
         <TextInput
           label={t(($) => $.templates.nameLabel)}
-          required
+          withAsterisk
           {...form.getInputProps('name')}
         />
         <TextInput label={t(($) => $.templates.subjectLabel)} {...form.getInputProps('subject')} />
