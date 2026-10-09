@@ -15,6 +15,9 @@
   "scripts": {
     "build": "vite build",
     "build:tracker": "pnpm --filter @1mail/analytics build",
+    "docs:build": "vitepress build docs",
+    "docs:dev": "vitepress dev docs",
+    "docs:preview": "vitepress preview docs",
     "fmt": "oxfmt",
     "fmt:check": "oxfmt --check",
     "i18n:extract": "i18next-cli extract",
@@ -75,6 +78,7 @@
     "size-limit": "^14.2.0",
     "typescript": "^7.0.2",
     "vite": "^8.3.4",
+    "vitepress": "^1.6.4",
     "vitest": "^5.0.3",
     "vitest-browser-react": "^2.3.0"
   },
