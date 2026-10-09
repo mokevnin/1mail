@@ -1,5 +1,6 @@
 using TypeSpec.Http;
 using TypeSpec.Rest;
+using TypeSpec.OpenAPI;
 
 namespace OneMail;
 
@@ -9,6 +10,7 @@ model EventInput {
   subjectId: string;
 
   /** Event action */
+  @extension("x-untrusted", true)
   action: string;
 
   /** Email address associated with the event */
@@ -18,6 +20,7 @@ model EventInput {
   phone?: string | null;
 
   /** Event properties */
+  @extension("x-untrusted", true)
   properties?: Record<unknown> | null;
 
   /** Event occurrence timestamp */
@@ -65,6 +68,7 @@ model RecordEventsBatchResult {
 /** Distinct event action */
 model EventActionResource {
   /** Event action */
+  @extension("x-untrusted", true)
   action: string;
 }
 

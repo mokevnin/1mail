@@ -1,5 +1,6 @@
 using TypeSpec.Http;
 using TypeSpec.Rest;
+using TypeSpec.OpenAPI;
 
 namespace OneMail;
 
@@ -17,9 +18,11 @@ model CustomFieldResource {
   id: EntityId;
 
   /** Machine key, how values are addressed in custom fields and segment rules */
+  @extension("x-untrusted", true)
   key: string;
 
   /** Display name */
+  @extension("x-untrusted", true)
   name: string;
 
   /** Inferred value type */

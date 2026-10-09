@@ -1,5 +1,6 @@
 using TypeSpec.Http;
 using TypeSpec.Rest;
+using TypeSpec.OpenAPI;
 
 namespace OneMail;
 
@@ -9,6 +10,7 @@ model TagResource {
   id: EntityId;
 
   /** The label; unique per workspace */
+  @extension("x-untrusted", true)
   name: string;
 
   /** Creation timestamp */
