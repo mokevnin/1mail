@@ -57,12 +57,13 @@ native editor under the existing `draft`/`inactive` approval gate. Open forks:
 - **Tool granularity** — intent-level domain verbs (`create_segment_from_description`,
   `draft_broadcast`, `explain_broadcast_performance`) vs. a 1:1 CRUD mirror of REST
   endpoints. Few deep tools aligned to the glossary; a CRUD mirror drowns the agent.
-- **AI is an author, not a sender (governing principle).** The AI plane's output is always an
-  _artifact_ — a Segment, a `draft` Broadcast, an `inactive` Automation, a Template, a
-  Recommendation. `send`/`activate` is **never** an AI capability: pulling the trigger is
-  always a human action. So the token scopes the AI gets are `read` + `write`-drafts only;
-  `send`/`activate` is human-only, out of the AI's mandate (not merely "gated"). The
-  `draft`/`inactive` states are the _boundary of what the AI can touch_, not just a review
+- **AI is an author by default, a sender only by opt-in (governing principle).** The AI plane's
+  output is an _artifact_ — a Segment, a `draft` Broadcast, an `inactive` Automation, a
+  Template, a Recommendation. `send`/`activate` is **not** an AI capability unless the human
+  grants it per token: the default token gets `read` + `write`-drafts only, and the send-class
+  scopes (`emails:send`, `broadcasts:send`, `automations:activate`) additionally need `mcp:send`
+  to be reachable over MCP at all (ADR 0016, "Send is a second lock"). Pulling the trigger is
+  otherwise a human action. The `draft`/`inactive` states are the _boundary of what the AI can touch_, not just a review
   gate. The core choke points (Send-eligibility, Suppression, verified domain,
   Workspace/Billing freeze) still guard the human's eventual send.
 - **AI-authorship attribution** — reuse the actor-attribution pattern (actor `system` /

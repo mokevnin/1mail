@@ -1,5 +1,5 @@
 ---
-status: proposed
+status: accepted
 ---
 
 # MCP surface: a projection of the external `/api`, not a second implementation
@@ -52,6 +52,36 @@ modelled and stay out.
   token** (no refresh token; it lives until revoked like any API token). Send-class scopes are
   granted only when the user opts in on the consent screen. Phase 3: shipped
   playbooks served as MCP prompts.
+
+## Implemented
+
+Decisions taken while building it, so the contract and code are not the only record:
+
+- **Scopes.** The `ApiTokenScope` enum is the complete vocabulary and a test keeps it so (every
+  scope an `/api` handler checks must be grantable): `contacts`, `events`, `segments`,
+  `broadcasts`, `automations`, `templates`, `webhooks` each as `:read` / `:write`;
+  `custom_fields:read`, `sending_domains:read`; the send class `emails:send`, `broadcasts:send`,
+  `automations:activate`, `mcp:send`; and `tokens:read` / `tokens:write` for `/api` token
+  management, which is hidden from MCP.
+- **`x-mcp`.** Declared in `typespec/external/mcp.tsp` with three keys: `name` (override of the
+  snake_case operation id, e.g. `whoami`, `events_record`), `hidden` (token management is never a
+  tool) and `send` (send-class: listed and callable only with `mcp:send`). Unscheduling a
+  broadcast is send-class; deactivating an automation is not.
+- **Untrusted fields.** `x-untrusted` in the contract marks the fields; the projection replaces
+  each such value in a tool result with `{"untrusted_data": <value>}` and the server instructions
+  say to treat it as data only.
+- **OAuth.** `/.well-known/oauth-protected-resource` (also under `/mcp`),
+  `/.well-known/oauth-authorization-server`, `POST /oauth/register`, `GET /oauth/authorize`,
+  `POST /oauth/token`; the consent screen is the SPA route `/oauth/consent`, backed by
+  `/site/oauth/authorization`. Public clients only, PKCE S256 required, no refresh token. A
+  `resource` parameter (RFC 8707), when sent to authorize or token, must equal the `/mcp` resource
+  URL, otherwise `invalid_target`; an absent one is accepted. Unknown scopes are dropped;
+  `tokens:*` is never grantable, so a connector cannot mint credentials.
+- **Consent role.** Approving consent mints a non-expiring workspace token, so it takes the role
+  that may create one: owner or admin. Plain members are refused (403), and `/site` token creation
+  and revocation follow the same rule.
+- **Tokens issued over OAuth** are ordinary API tokens named `<client> (MCP)`: listed and
+  revocable in workspace settings, no refresh, no expiry.
 
 ## Considered options
 
