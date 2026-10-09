@@ -87,11 +87,7 @@ func (h *Handlers) SiteEventsActions(ctx context.Context, params siteapi.SiteEve
 		return nil, err
 	}
 
-	actions, err := h.ent.Event.Query().
-		Where(event.WorkspaceID(ws)).
-		Order(ent.Asc(event.FieldAction)).
-		GroupBy(event.FieldAction).
-		Strings(ctx)
+	actions, err := h.eventlog.Actions(ctx, ws)
 	if err != nil {
 		return nil, err
 	}
