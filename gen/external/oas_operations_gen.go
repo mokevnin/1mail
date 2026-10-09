@@ -29,4 +29,6 @@ const (
 	SegmentsGetOperation         OperationName = "SegmentsGet"
 	SegmentsListOperation        OperationName = "SegmentsList"
 	SegmentsUpdateOperation      OperationName = "SegmentsUpdate"
+	SuppressionsCreateOperation  OperationName = "SuppressionsCreate"
+	UnsubscribesCreateOperation  OperationName = "UnsubscribesCreate"
 )

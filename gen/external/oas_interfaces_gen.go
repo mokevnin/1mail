@@ -92,3 +92,11 @@ type SegmentsListRes interface {
 type SegmentsUpdateRes interface {
 	segmentsUpdateRes()
 }
+
+type SuppressionsCreateRes interface {
+	suppressionsCreateRes()
+}
+
+type UnsubscribesCreateRes interface {
+	unsubscribesCreateRes()
+}
