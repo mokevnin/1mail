@@ -1,0 +1,157 @@
+import { useQuery } from '@tanstack/react-query'
+import { expect, test } from 'vitest'
+
+import {
+  siteBroadcastsGetOptions,
+  siteBroadcastsListOptions,
+} from '../../generated/site/@tanstack/react-query.gen.ts'
+import { jsonResponse, mockClientFetch } from '../../test/mockFetch.ts'
+import { renderWithRouter } from '../../test/renderWithRouter.tsx'
+import { BroadcastCreatePage, BroadcastEditPage } from './resource.tsx'
+
+const CREATE_ROUTE = {
+  path: '/workspaces/$slug/broadcasts/new',
+  initialPath: '/workspaces/test/broadcasts/new',
+}
+
+const EDIT_ROUTE = {
+  path: '/workspaces/$slug/broadcasts/$broadcastId/edit',
+  initialPath: '/workspaces/test/broadcasts/7/edit',
+}
+
+function ListProbe() {
+  useQuery(siteBroadcastsListOptions({ path: { slug: 'test' } }))
+  return null
+}
+
+function DetailProbe() {
+  useQuery(siteBroadcastsGetOptions({ path: { slug: 'test', id: '7' } }))
+  return null
+}
+
+function requestOf(input: RequestInfo | URL, init?: RequestInit) {
+  return input instanceof Request ? input : new Request(String(input), init)
+}
+
+function broadcast(status: string) {
+  return {
+    id: '7',
+    name: 'Launch',
+    subject: 'Hello',
+    fromName: 'Ada',
+    fromEmail: 'ada@example.com',
+    body: '<mjml></mjml>',
+    status,
+  }
+}
+
+// Serves the broadcasts API: records write bodies and counts list/detail fetches.
+function serve(status: string) {
+  const bodies: unknown[] = []
+  const fetches = { list: 0, detail: 0 }
+  mockClientFetch(async (input, init) => {
+    const req = requestOf(input, init)
+    const path = new URL(req.url, 'http://x').pathname
+    if (req.method === 'POST' && path.endsWith('/broadcasts')) {
+      bodies.push(await req.json())
+      return jsonResponse({ ...broadcast('draft'), id: '42' }, { status: 201 })
+    }
+    if (req.method === 'PUT' || req.method === 'PATCH') {
+      bodies.push(await req.json())
+      return jsonResponse(broadcast(status))
+    }
+    if (req.method === 'POST') return jsonResponse(broadcast(status))
+    if (path.endsWith('/broadcasts')) {
+      fetches.list++
+      return jsonResponse({ items: [], totalItems: 0 })
+    }
+    if (path.includes('/segments') || path.includes('/templates')) {
+      return jsonResponse({ items: [], totalItems: 0 })
+    }
+    fetches.detail++
+    return jsonResponse(broadcast(status))
+  })
+  return { bodies, fetches }
+}
+
+test('creating a broadcast sends only the filled keys, refreshes the list and opens the edit page', async () => {
+  const { bodies, fetches } = serve('draft')
+
+  const { screen, navigate } = await renderWithRouter(
+    <>
+      <ListProbe />
+      <BroadcastCreatePage />
+    </>,
+    CREATE_ROUTE,
+  )
+  await expect.poll(() => fetches.list).toBe(1)
+
+  await screen.getByLabelText(/^Name/).fill('Launch')
+  await screen.getByLabelText('Subject').fill('Hello')
+  await screen.getByRole('button', { name: 'Save' }).click()
+
+  await expect.poll(() => bodies).toEqual([{ name: 'Launch', subject: 'Hello' }])
+  await expect.element(screen.getByText('Broadcast created')).toBeInTheDocument()
+  await expect.poll(() => fetches.list).toBe(2)
+  await expect.poll(() => navigate.mock.calls.length).toBe(1)
+  expect(navigate.mock.calls[0]?.[0]).toMatchObject({
+    params: { slug: 'test', broadcastId: '42' },
+  })
+})
+
+test('editing a draft; a cleared sender name is sent as null and the audience is cleared too', async () => {
+  const { bodies, fetches } = serve('draft')
+
+  const { screen } = await renderWithRouter(
+    <>
+      <ListProbe />
+      <DetailProbe />
+      <BroadcastEditPage />
+    </>,
+    EDIT_ROUTE,
+  )
+
+  await expect.element(screen.getByLabelText(/^Name/)).toHaveValue('Launch')
+  await expect.element(screen.getByLabelText('From name')).toHaveValue('Ada')
+
+  await screen.getByLabelText('From name').fill('')
+  await screen.getByRole('button', { name: 'Save' }).click()
+
+  await expect
+    .poll(() => bodies)
+    .toEqual([
+      {
+        name: 'Launch',
+        subject: 'Hello',
+        fromName: null,
+        fromEmail: 'ada@example.com',
+        segmentId: null,
+        body: '<mjml></mjml>',
+      },
+    ])
+  await expect.element(screen.getByText('Broadcast updated')).toBeInTheDocument()
+  await expect.poll(() => fetches.list).toBe(2)
+  await expect.poll(() => fetches.detail).toBeGreaterThan(1)
+})
+
+test('a draft can be sent now', async () => {
+  serve('draft')
+  const { screen, navigate } = await renderWithRouter(<BroadcastEditPage />, EDIT_ROUTE)
+
+  const send = screen.getByRole('button', { name: 'Send now' })
+  await expect.element(send).toBeEnabled()
+  await send.click()
+
+  await expect.element(screen.getByText('Broadcast is sending')).toBeInTheDocument()
+  await expect.poll(() => navigate.mock.calls.length).toBe(1)
+})
+
+test('send and schedule are disabled for a non-draft broadcast, test send stays available', async () => {
+  serve('sent')
+  const { screen } = await renderWithRouter(<BroadcastEditPage />, EDIT_ROUTE)
+
+  await expect.element(screen.getByRole('button', { name: 'Send now' })).toBeDisabled()
+  await expect.element(screen.getByRole('button', { name: 'Schedule' })).toBeDisabled()
+  await screen.getByLabelText('Send a test to').fill('qa@example.com')
+  await expect.element(screen.getByRole('button', { name: 'Send test' })).toBeEnabled()
+})

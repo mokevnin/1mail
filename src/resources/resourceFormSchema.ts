@@ -9,7 +9,7 @@ type Exact<T> = { [K in keyof T]: Exclude<T[K], undefined> }
 
 // A bidirectional form schema derived from a generated (TypeSpec) zod object schema.
 //   - create / update (form -> payload): trim, then a blank string becomes "absent" on create
-//     and an explicit null on update (JSON Merge Patch: absent keeps a value, null clears it);
+//     and an explicit null on update (an empty string for fields that are not nullable) (JSON Merge Patch: absent keeps a value, null clears it);
 //     the result is validated by the generated schema, so TypeSpec stays the single source of
 //     truth for validation.
 //   - toValues (resource -> form): null or absent becomes a blank string, so inputs never see null.
@@ -29,12 +29,13 @@ export type ResourceFormSchema<TPayload> = {
 
 type Mode = 'create' | 'update'
 
-function normalize(values: FormValues, mode: Mode) {
+// A blank field on update clears it: null where the API field is nullable, otherwise an empty string.
+function normalize(values: FormValues, mode: Mode, nullable: ReadonlySet<string>) {
   const normalized: Record<string, string | null | undefined> = {}
   for (const [field, value] of Object.entries(values)) {
     const trimmed = value.trim()
     if (trimmed !== '') normalized[field] = trimmed
-    else if (mode === 'update') normalized[field] = null
+    else if (mode === 'update') normalized[field] = nullable.has(field) ? null : ''
   }
   return normalized
 }
@@ -62,10 +63,11 @@ export function resourceFormSchema<TSchema extends StringFieldsSchema>(
   schema: TSchema,
 ): ResourceFormSchema<Exact<z.output<TSchema>>> {
   const fields = Object.keys(schema.shape)
+  const nullable = new Set(fields.filter((field) => schema.shape[field]?.safeParse(null).success))
   const parse = (mode: Mode) =>
     z
       .record(z.string(), z.string())
-      .transform((values) => normalize(values, mode))
+      .transform((values) => normalize(values, mode, nullable))
       .pipe(schema)
       .transform((payload) => omitUndefined(payload))
   return {

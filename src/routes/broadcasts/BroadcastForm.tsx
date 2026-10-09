@@ -1,5 +1,4 @@
 import { Alert, Button, Group, Select, Stack, Textarea, TextInput } from '@mantine/core'
-import type { useForm } from '@mantine/form'
 import { useQuery } from '@tanstack/react-query'
 import { useNavigate, useParams } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
@@ -8,26 +7,15 @@ import {
   siteSegmentsListOptions,
   siteTemplatesListOptions,
 } from '../../generated/site/@tanstack/react-query.gen.ts'
+import type { SiteCreateBroadcastInput } from '../../generated/site/types.gen.ts'
+import type { ResourceFormProps } from '../../resources/defineResource.tsx'
 import { broadcastsRoute } from '../../router.tsx'
 
-export interface BroadcastFormValues {
-  name: string
-  subject: string
-  fromName: string
-  fromEmail: string
-  body: string
-  segmentId: string
-}
-
-type BroadcastFormInstance = ReturnType<typeof useForm<BroadcastFormValues>>
-
-interface BroadcastFormProps {
-  form: BroadcastFormInstance
-  isPending: boolean
-  onSubmit: (values: BroadcastFormValues) => void
-}
-
-export function BroadcastForm({ form, isPending, onSubmit }: BroadcastFormProps) {
+export function BroadcastForm({
+  form,
+  isPending,
+  onSubmit,
+}: ResourceFormProps<SiteCreateBroadcastInput>) {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const { slug } = useParams({ strict: false })
