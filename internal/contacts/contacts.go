@@ -141,7 +141,7 @@ func (m *Module) Update(ctx context.Context, workspaceID, id int64, attrs Attrib
 			SetNillableFirstName(attrs.FirstName).
 			SetNillableLastName(attrs.LastName).
 			SetNillableTimeZone(attrs.TimeZone)
-		attrs.Cleared.apply(q)
+		attrs.Cleared.applyTo(q)
 		if attrs.CustomFields != nil {
 			typed, err := EnsureCustomFields(ctx, tx, workspaceID, attrs.CustomFields)
 			if err != nil {
@@ -159,7 +159,7 @@ func (m *Module) Update(ctx context.Context, workspaceID, id int64, attrs Attrib
 	return c, nil
 }
 
-func (c Cleared) apply(q *ent.ContactUpdateOne) {
+func (c Cleared) applyTo(q *ent.ContactUpdateOne) {
 	if c.SubjectID {
 		q.ClearSubjectID()
 	}

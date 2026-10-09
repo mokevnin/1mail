@@ -100,8 +100,8 @@ func TestSiteBroadcastsRequireOwnedWorkspace(t *testing.T) {
 	assert.IsType(t, &siteapi.SiteBroadcastsListNotFound{}, out)
 }
 
-// JSON Merge Patch on update: explicit null clears sender name, sender email and
-// the audience segment; absent keys keep their values. Fixture draft broadcast
+// JSON Merge Patch on update: explicit null clears sender name, sender email, the
+// audience segment and the integration; absent keys keep their values. Fixture draft broadcast
 // 100 has a sender; segment 1 is an anchor segment.
 func TestSiteBroadcastsUpdateNullClearsAbsentKeeps(t *testing.T) {
 	env := testhelper.Setup(t)
@@ -111,22 +111,26 @@ func TestSiteBroadcastsUpdateNullClearsAbsentKeeps(t *testing.T) {
 
 	// Absent keys keep values: set the segment, the sender stays.
 	res, err := c.SiteBroadcastsUpdate(ctx, &siteapi.SiteUpdateBroadcastInput{
-		SegmentId: siteapi.NewOptNilEntityId("1"),
+		SegmentId:     siteapi.NewOptNilEntityId("1"),
+		IntegrationId: siteapi.NewOptNilEntityId("1"),
 	}, params)
 	require.NoError(t, err)
 	got, ok := res.(*siteapi.SiteBroadcastResource)
 	require.Truef(t, ok, "got %T", res)
 	assert.Equal(t, "1", string(got.SegmentId.Or("")))
+	assert.Equal(t, "1", string(got.IntegrationId.Or("")))
 	assert.Equal(t, "CodeBasics", got.FromName.Or(""))
 	assert.Equal(t, "hello@codebasics.dev", string(got.FromEmail.Or("")))
 
 	// Explicit nulls clear all three.
-	var nullSeg siteapi.OptNilEntityId
+	var nullSeg, nullIntegration siteapi.OptNilEntityId
 	nullSeg.SetToNull()
+	nullIntegration.SetToNull()
 	res, err = c.SiteBroadcastsUpdate(ctx, &siteapi.SiteUpdateBroadcastInput{
-		FromName:  nullString(),
-		FromEmail: nullEmail(),
-		SegmentId: nullSeg,
+		FromName:      nullString(),
+		FromEmail:     nullEmail(),
+		SegmentId:     nullSeg,
+		IntegrationId: nullIntegration,
 	}, params)
 	require.NoError(t, err)
 	got, ok = res.(*siteapi.SiteBroadcastResource)
@@ -134,5 +138,6 @@ func TestSiteBroadcastsUpdateNullClearsAbsentKeeps(t *testing.T) {
 	assert.Empty(t, got.FromName.Or(""))
 	assert.Empty(t, got.FromEmail.Or(""))
 	assert.Empty(t, got.SegmentId.Or(""))
+	assert.Empty(t, got.IntegrationId.Or(""))
 	assert.Equal(t, "Summer sale teaser", got.Name, "absent name kept")
 }

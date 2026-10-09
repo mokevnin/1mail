@@ -106,9 +106,9 @@ func TestSiteSegmentsCreateAndUpdateShareValidation(t *testing.T) {
 // (an absent key keeps the stored rule), and the stored rule is left untouched.
 func TestSiteSegmentsUpdateRejectsNullDefinition(t *testing.T) {
 	env := testhelper.Setup(t)
-	c := siteClient(t, env, "info@1mail.com")
+	c := env.SiteActor(t, fixtures.OwnerJohnEmail)
 	ctx := context.Background()
-	params := siteapi.SiteSegmentsUpdateParams{Slug: "acme", ID: "1"}
+	params := siteapi.SiteSegmentsUpdateParams{Slug: fixtures.AcmeSlug, ID: "1"}
 
 	var cleared siteapi.OptNilString
 	cleared.SetToNull()

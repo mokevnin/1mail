@@ -42,3 +42,9 @@ send-eligibility.
 - The `prospect` flag is dropped (it was write-only and never read).
 - Events remain immutable and append-only, with denormalized identity snapshot fields kept
   for debugging only — the authoritative link is the stable id.
+
+## Note: clearing alias keys
+
+A Contact need not keep any alias key (subject_id / email / phone), so an update may clear
+the last remaining one with an explicit null (JSON Merge Patch); such a Contact simply
+becomes anonymous-like. The API does not enforce "at least one alias key".
