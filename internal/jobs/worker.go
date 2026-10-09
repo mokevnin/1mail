@@ -112,7 +112,7 @@ func (c *Client) EnqueueBroadcast(ctx context.Context, broadcastID int64, schedu
 	if scheduledAt != nil {
 		opts.ScheduledAt = *scheduledAt
 	}
-	_, err := c.river.Insert(ctx, SendBroadcastArgs{BroadcastID: broadcastID}, opts)
+	_, err := c.river.Insert(ctx, SendBroadcastArgs{BroadcastID: broadcastID, ScheduledAt: scheduledAt}, opts)
 	return err
 }
 

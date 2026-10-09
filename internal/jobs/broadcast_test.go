@@ -406,13 +406,33 @@ func TestBroadcastDueIsFalseOnlyForADraft(t *testing.T) {
 	env := testhelper.Setup(t)
 	ctx := context.Background()
 
-	due, err := jobs.BroadcastDue(ctx, env.DB, fixtures.BroadcastDraftID)
+	due, err := jobs.BroadcastDue(ctx, env.DB, fixtures.BroadcastDraftID, nil)
 	require.NoError(t, err)
 	assert.False(t, due, "draft: unscheduled after the job was queued")
 
-	due, err = jobs.BroadcastDue(ctx, env.DB, fixtures.BroadcastScheduledID)
+	due, err = jobs.BroadcastDue(ctx, env.DB, fixtures.BroadcastScheduledID, nil)
 	require.NoError(t, err)
 	assert.True(t, due)
+}
+
+// A delayed job is bound to the schedule it was enqueued for: after a reschedule
+// (or unschedule + schedule) the superseded job must not send the broadcast early.
+func TestBroadcastDueIsFalseForASupersededScheduledJob(t *testing.T) {
+	env := testhelper.Setup(t)
+	ctx := context.Background()
+
+	oldAt := env.DB.Broadcast.GetX(ctx, fixtures.BroadcastScheduledID).ScheduledAt
+	require.NotNil(t, oldAt)
+	newAt := oldAt.Add(48 * time.Hour)
+	env.DB.Broadcast.UpdateOneID(fixtures.BroadcastScheduledID).SetScheduledAt(newAt).ExecX(ctx)
+
+	due, err := jobs.BroadcastDue(ctx, env.DB, fixtures.BroadcastScheduledID, oldAt)
+	require.NoError(t, err)
+	assert.False(t, due, "job for the old schedule is superseded")
+
+	due, err = jobs.BroadcastDue(ctx, env.DB, fixtures.BroadcastScheduledID, &newAt)
+	require.NoError(t, err)
+	assert.True(t, due, "job for the current schedule runs")
 }
 
 // Finalizing an already-sent broadcast is a no-op: the status=sending guard
