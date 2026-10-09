@@ -23,6 +23,7 @@ import (
 	"github.com/mokevnin/1mail/internal/mcpserver"
 	"github.com/mokevnin/1mail/internal/messaging"
 	"github.com/mokevnin/1mail/internal/messaging/registry"
+	"github.com/mokevnin/1mail/internal/oauthserver"
 	"github.com/mokevnin/1mail/internal/outbound"
 	"github.com/mokevnin/1mail/internal/secrets"
 	"github.com/mokevnin/1mail/internal/sending"
@@ -488,7 +489,11 @@ func register(injector do.Injector, env string) {
 		if err != nil {
 			return nil, err
 		}
-		h, err := mcpserver.New(onemail.ExternalOpenAPI, external.Handler, apiauth.NewExternalSecurityHandler(client.Client))
+		cfg, err := do.Invoke[*config.Config](i)
+		if err != nil {
+			return nil, err
+		}
+		h, err := mcpserver.New(onemail.ExternalOpenAPI, external.Handler, apiauth.NewExternalSecurityHandler(client.Client), mcpserver.WithResourceMetadataURL(oauthserver.ResourceMetadataURL(cfg.AppURL)))
 		if err != nil {
 			return nil, err
 		}

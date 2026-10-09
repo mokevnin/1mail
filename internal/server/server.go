@@ -30,6 +30,7 @@ import (
 	"github.com/mokevnin/1mail/internal/events"
 	"github.com/mokevnin/1mail/internal/logging"
 	"github.com/mokevnin/1mail/internal/messaging"
+	"github.com/mokevnin/1mail/internal/oauthserver"
 	"github.com/mokevnin/1mail/internal/outbound"
 	"github.com/mokevnin/1mail/internal/secrets"
 	"github.com/mokevnin/1mail/internal/telemetry"
@@ -93,6 +94,10 @@ func New(cfg *config.Config, client *ent.Client, db *sql.DB, bus *events.Bus, ci
 	// MCP — /mcp (ADR 0016): tools projected from the external contract and
 	// dispatched in-process through the handler above with the caller's own token.
 	mux.Handle("/mcp", mcp)
+
+	// OAuth 2.1 for MCP connectors (ADR 0016): discovery, dynamic client
+	// registration, authorize (hands off to the SPA consent screen) and token.
+	oauthserver.New(client, cfg.AppURL).Mount(mux)
 
 	// Collect API — /collect (x-collect-key via generated SecurityHandler).
 	colSrv, err := collectapi.NewServer(

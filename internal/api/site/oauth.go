@@ -1,0 +1,76 @@
+package site
+
+import (
+	"context"
+	"errors"
+	"net/http"
+
+	"github.com/mokevnin/1mail/ent"
+	siteapi "github.com/mokevnin/1mail/gen/site"
+	"github.com/mokevnin/1mail/internal/oauthserver"
+)
+
+// SiteOAuthDescribe validates an OAuth authorization request for the consent
+// screen (the client is untrusted: only its registered redirect URIs are honored).
+func (h *Handlers) SiteOAuthDescribe(ctx context.Context, params siteapi.SiteOAuthDescribeParams) (siteapi.SiteOAuthDescribeRes, error) {
+	req, err := h.oauth.Describe(ctx, params.ClientId, params.RedirectUri, params.Scope.Or(""))
+	switch {
+	case errors.Is(err, oauthserver.ErrUnknownClient):
+		v := siteapi.SiteOAuthDescribeNotFound(problem(http.StatusNotFound, err.Error()))
+		return &v, nil
+	case errors.Is(err, oauthserver.ErrInvalidRequest):
+		v := siteapi.SiteOAuthDescribeBadRequest(problem(http.StatusBadRequest, err.Error()))
+		return &v, nil
+	case err != nil:
+		return nil, err
+	}
+	return &siteapi.SiteOAuthAuthorizationRequest{
+		ClientName:  req.ClientName,
+		RedirectUri: req.RedirectURI,
+		Scopes:      orEmpty(req.Scopes),
+		SendScopes:  orEmpty(req.SendScopes),
+	}, nil
+}
+
+// SiteOAuthDecide records the signed-in user's consent decision. The token the
+// client later receives belongs to the chosen workspace, which the user must be
+// a member of.
+func (h *Handlers) SiteOAuthDecide(ctx context.Context, req *siteapi.SiteOAuthDecisionInput) (siteapi.SiteOAuthDecideRes, error) {
+	ws, err := h.workspaceID(ctx, req.WorkspaceSlug)
+	if ent.IsNotFound(err) {
+		v := siteapi.SiteOAuthDecideNotFound(problem(http.StatusNotFound, "workspace not found"))
+		return &v, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	target, err := h.oauth.Decide(ctx, oauthserver.Decision{
+		ClientID:      req.ClientId,
+		RedirectURI:   req.RedirectUri,
+		State:         req.State.Or(""),
+		CodeChallenge: req.CodeChallenge,
+		Scope:         req.Scope.Or(""),
+		WorkspaceID:   ws,
+		Approve:       req.Approve,
+		AllowSend:     req.AllowSend.Or(false),
+	})
+	switch {
+	case errors.Is(err, oauthserver.ErrUnknownClient):
+		v := siteapi.SiteOAuthDecideNotFound(problem(http.StatusNotFound, err.Error()))
+		return &v, nil
+	case errors.Is(err, oauthserver.ErrInvalidRequest):
+		v := siteapi.SiteOAuthDecideBadRequest(problem(http.StatusBadRequest, err.Error()))
+		return &v, nil
+	case err != nil:
+		return nil, err
+	}
+	return &siteapi.SiteOAuthDecisionResult{RedirectUrl: target}, nil
+}
+
+func orEmpty(s []string) []string {
+	if s == nil {
+		return []string{}
+	}
+	return s
+}

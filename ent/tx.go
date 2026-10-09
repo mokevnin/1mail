@@ -38,6 +38,10 @@ type Tx struct {
 	Invitation *InvitationClient
 	// Membership is the client for interacting with the Membership builders.
 	Membership *MembershipClient
+	// OAuthClient is the client for interacting with the OAuthClient builders.
+	OAuthClient *OAuthClientClient
+	// OAuthCode is the client for interacting with the OAuthCode builders.
+	OAuthCode *OAuthCodeClient
 	// OutboundMessage is the client for interacting with the OutboundMessage builders.
 	OutboundMessage *OutboundMessageClient
 	// Segment is the client for interacting with the Segment builders.
@@ -202,6 +206,8 @@ func (tx *Tx) init() {
 	tx.Integration = NewIntegrationClient(tx.config)
 	tx.Invitation = NewInvitationClient(tx.config)
 	tx.Membership = NewMembershipClient(tx.config)
+	tx.OAuthClient = NewOAuthClientClient(tx.config)
+	tx.OAuthCode = NewOAuthCodeClient(tx.config)
 	tx.OutboundMessage = NewOutboundMessageClient(tx.config)
 	tx.Segment = NewSegmentClient(tx.config)
 	tx.SendingDomain = NewSendingDomainClient(tx.config)

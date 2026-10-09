@@ -380,6 +380,24 @@ func (UnimplementedHandler) SiteMembershipsUpdate(ctx context.Context, req *Site
 	return r, ht.ErrNotImplemented
 }
 
+// SiteOAuthDecide implements SiteOAuth_decide operation.
+//
+// Approve or deny an OAuth authorization request as the signed-in user.
+//
+// POST /oauth/authorization
+func (UnimplementedHandler) SiteOAuthDecide(ctx context.Context, req *SiteOAuthDecisionInput) (r SiteOAuthDecideRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// SiteOAuthDescribe implements SiteOAuth_describe operation.
+//
+// Validate an OAuth authorization request for the consent screen.
+//
+// GET /oauth/authorization
+func (UnimplementedHandler) SiteOAuthDescribe(ctx context.Context, params SiteOAuthDescribeParams) (r SiteOAuthDescribeRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // SitePublicInvitationsAccept implements SitePublicInvitations_accept operation.
 //
 // Accept an invite: create or attach the User and create the Membership.

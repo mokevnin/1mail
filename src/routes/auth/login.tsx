@@ -2,7 +2,7 @@ import { Anchor, Button, Group, PasswordInput, Stack, TextInput, Title } from '@
 import { useForm } from '@mantine/form'
 import { notifications } from '@mantine/notifications'
 import { useMutation } from '@tanstack/react-query'
-import { useNavigate } from '@tanstack/react-router'
+import { useNavigate, useRouter, useSearch } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 
 import { siteAuthDirectLoginMutation } from '../../generated/site/@tanstack/react-query.gen.ts'
@@ -13,6 +13,9 @@ import { getApiErrorMessage } from '../../utils/apiErrors.ts'
 export function LoginPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
+  const router = useRouter()
+  // Set when a guard (e.g. the OAuth consent screen) sent the user here to sign in.
+  const { redirect } = useSearch({ strict: false })
 
   const form = useForm<SiteDirectLoginInput>({
     initialValues: {
@@ -23,7 +26,7 @@ export function LoginPage() {
 
   const loginMutation = useMutation({
     ...siteAuthDirectLoginMutation(),
-    onSuccess: () => navigate({ to: indexRoute.to }),
+    onSuccess: () => (redirect ? router.history.push(redirect) : navigate({ to: indexRoute.to })),
     onError: (error) => {
       // Drop the rejected password so the user retypes a fresh one.
       form.setFieldValue('passwd', '')

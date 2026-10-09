@@ -4409,6 +4409,158 @@ func decodeSiteMembershipsUpdateParams(args [2]string, argsEscaped bool, r *http
 	return params, nil
 }
 
+// SiteOAuthDescribeParams is parameters of SiteOAuth_describe operation.
+type SiteOAuthDescribeParams struct {
+	ClientId    string
+	RedirectUri string
+	Scope       OptString `json:",omitempty,omitzero"`
+}
+
+func unpackSiteOAuthDescribeParams(packed middleware.Parameters) (params SiteOAuthDescribeParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "clientId",
+			In:   "query",
+		}
+		params.ClientId = packed[key].(string)
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "redirectUri",
+			In:   "query",
+		}
+		params.RedirectUri = packed[key].(string)
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "scope",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.Scope = v.(OptString)
+		}
+	}
+	return params
+}
+
+func decodeSiteOAuthDescribeParams(args [0]string, argsEscaped bool, r *http.Request) (params SiteOAuthDescribeParams, _ error) {
+	q := uri.NewQueryDecoder(r.URL.Query())
+	// Decode query: clientId.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "clientId",
+			Style:   uri.QueryStyleForm,
+			Explode: false,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToString(val)
+				if err != nil {
+					return err
+				}
+
+				params.ClientId = c
+				return nil
+			}); err != nil {
+				return err
+			}
+		} else {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "clientId",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	// Decode query: redirectUri.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "redirectUri",
+			Style:   uri.QueryStyleForm,
+			Explode: false,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToString(val)
+				if err != nil {
+					return err
+				}
+
+				params.RedirectUri = c
+				return nil
+			}); err != nil {
+				return err
+			}
+		} else {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "redirectUri",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	// Decode query: scope.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "scope",
+			Style:   uri.QueryStyleForm,
+			Explode: false,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotScopeVal string
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotScopeVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.Scope.SetTo(paramsDotScopeVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "scope",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
 // SitePublicInvitationsAcceptParams is parameters of SitePublicInvitations_accept operation.
 type SitePublicInvitationsAcceptParams struct {
 	Token string

@@ -1055,6 +1055,68 @@ export const SiteMembershipRole = {
 export type SiteMembershipRole = typeof SiteMembershipRole[keyof typeof SiteMembershipRole];
 
 /**
+ * What an MCP client (dynamically registered) is asking permission for, as
+ * validated by the authorization server. Rendered on the consent screen.
+ */
+export type SiteOAuthAuthorizationRequest = {
+  /**
+   * Self-declared client name (untrusted: show as text)
+   */
+  clientName: string;
+  /**
+   * The URL the user is sent back to
+   */
+  redirectUri: string;
+  /**
+   * Scopes the client asked for that 1mail will grant by default
+   */
+  scopes: Array<string>;
+  /**
+   * Requested send-class scopes: granted only when the user opts in explicitly
+   */
+  sendScopes: Array<string>;
+};
+
+/**
+ * The user's decision on an authorization request
+ */
+export type SiteOAuthDecisionInput = {
+  clientId: string;
+  redirectUri: string;
+  /**
+   * Opaque client state, echoed back unchanged
+   */
+  state?: string;
+  /**
+   * PKCE S256 challenge from the authorization request
+   */
+  codeChallenge: string;
+  /**
+   * Space-delimited scopes from the authorization request
+   */
+  scope?: string;
+  /**
+   * Workspace slug the token will belong to
+   */
+  workspaceSlug: string;
+  /**
+   * true to approve, false to deny
+   */
+  approve: boolean;
+  /**
+   * Opt in to the requested send-class scopes (default: not granted)
+   */
+  allowSend?: boolean;
+};
+
+/**
+ * Where to send the user's browser next (back to the client, with a code or an error)
+ */
+export type SiteOAuthDecisionResult = {
+  redirectUrl: string;
+};
+
+/**
  * Request body for previewing a rule definition's audience
  */
 export type SitePreviewSegmentInput = {
@@ -2181,6 +2243,68 @@ export type SiteUserResendVerificationResponses = {
    */
   202: unknown;
 };
+
+export type SiteOAuthDescribeData = {
+  body?: never;
+  path?: never;
+  query: {
+    clientId: string;
+    redirectUri: string;
+    scope?: string;
+  };
+  url: '/oauth/authorization';
+};
+
+export type SiteOAuthDescribeErrors = {
+  /**
+   * RFC 7807 bad request response
+   */
+  400: ProblemDetails;
+  /**
+   * RFC 7807 not found response
+   */
+  404: ProblemDetails;
+};
+
+export type SiteOAuthDescribeError = SiteOAuthDescribeErrors[keyof SiteOAuthDescribeErrors];
+
+export type SiteOAuthDescribeResponses = {
+  /**
+   * The request has succeeded.
+   */
+  200: SiteOAuthAuthorizationRequest;
+};
+
+export type SiteOAuthDescribeResponse = SiteOAuthDescribeResponses[keyof SiteOAuthDescribeResponses];
+
+export type SiteOAuthDecideData = {
+  body: SiteOAuthDecisionInput;
+  path?: never;
+  query?: never;
+  url: '/oauth/authorization';
+};
+
+export type SiteOAuthDecideErrors = {
+  /**
+   * RFC 7807 bad request response
+   */
+  400: ProblemDetails;
+  /**
+   * RFC 7807 not found response
+   */
+  404: ProblemDetails;
+};
+
+export type SiteOAuthDecideError = SiteOAuthDecideErrors[keyof SiteOAuthDecideErrors];
+
+export type SiteOAuthDecideResponses = {
+  /**
+   * The request has succeeded.
+   */
+  200: SiteOAuthDecisionResult;
+};
+
+export type SiteOAuthDecideResponse = SiteOAuthDecideResponses[keyof SiteOAuthDecideResponses];
 
 export type SiteWorkspacesListData = {
   body?: never;

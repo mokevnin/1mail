@@ -18,6 +18,8 @@ import (
 	"github.com/mokevnin/1mail/ent/integration"
 	"github.com/mokevnin/1mail/ent/invitation"
 	"github.com/mokevnin/1mail/ent/membership"
+	"github.com/mokevnin/1mail/ent/oauthclient"
+	"github.com/mokevnin/1mail/ent/oauthcode"
 	"github.com/mokevnin/1mail/ent/outboundmessage"
 	"github.com/mokevnin/1mail/ent/schema"
 	"github.com/mokevnin/1mail/ent/segment"
@@ -325,6 +327,42 @@ func init() {
 	membership.DefaultUpdatedAt = membershipDescUpdatedAt.Default.(func() time.Time)
 	// membership.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	membership.UpdateDefaultUpdatedAt = membershipDescUpdatedAt.UpdateDefault.(func() time.Time)
+	oauthclientFields := schema.OAuthClient{}.Fields()
+	_ = oauthclientFields
+	// oauthclientDescClientID is the schema descriptor for client_id field.
+	oauthclientDescClientID := oauthclientFields[1].Descriptor()
+	// oauthclient.ClientIDValidator is a validator for the "client_id" field. It is called by the builders before save.
+	oauthclient.ClientIDValidator = oauthclientDescClientID.Validators[0].(func(string) error)
+	// oauthclientDescName is the schema descriptor for name field.
+	oauthclientDescName := oauthclientFields[2].Descriptor()
+	// oauthclient.NameValidator is a validator for the "name" field. It is called by the builders before save.
+	oauthclient.NameValidator = oauthclientDescName.Validators[0].(func(string) error)
+	// oauthclientDescCreatedAt is the schema descriptor for created_at field.
+	oauthclientDescCreatedAt := oauthclientFields[4].Descriptor()
+	// oauthclient.DefaultCreatedAt holds the default value on creation for the created_at field.
+	oauthclient.DefaultCreatedAt = oauthclientDescCreatedAt.Default.(func() time.Time)
+	oauthcodeFields := schema.OAuthCode{}.Fields()
+	_ = oauthcodeFields
+	// oauthcodeDescCodeHash is the schema descriptor for code_hash field.
+	oauthcodeDescCodeHash := oauthcodeFields[1].Descriptor()
+	// oauthcode.CodeHashValidator is a validator for the "code_hash" field. It is called by the builders before save.
+	oauthcode.CodeHashValidator = oauthcodeDescCodeHash.Validators[0].(func(string) error)
+	// oauthcodeDescRedirectURI is the schema descriptor for redirect_uri field.
+	oauthcodeDescRedirectURI := oauthcodeFields[2].Descriptor()
+	// oauthcode.RedirectURIValidator is a validator for the "redirect_uri" field. It is called by the builders before save.
+	oauthcode.RedirectURIValidator = oauthcodeDescRedirectURI.Validators[0].(func(string) error)
+	// oauthcodeDescCodeChallenge is the schema descriptor for code_challenge field.
+	oauthcodeDescCodeChallenge := oauthcodeFields[3].Descriptor()
+	// oauthcode.CodeChallengeValidator is a validator for the "code_challenge" field. It is called by the builders before save.
+	oauthcode.CodeChallengeValidator = oauthcodeDescCodeChallenge.Validators[0].(func(string) error)
+	// oauthcodeDescScopes is the schema descriptor for scopes field.
+	oauthcodeDescScopes := oauthcodeFields[4].Descriptor()
+	// oauthcode.DefaultScopes holds the default value on creation for the scopes field.
+	oauthcode.DefaultScopes = oauthcodeDescScopes.Default.([]string)
+	// oauthcodeDescCreatedAt is the schema descriptor for created_at field.
+	oauthcodeDescCreatedAt := oauthcodeFields[7].Descriptor()
+	// oauthcode.DefaultCreatedAt holds the default value on creation for the created_at field.
+	oauthcode.DefaultCreatedAt = oauthcodeDescCreatedAt.Default.(func() time.Time)
 	outboundmessageFields := schema.OutboundMessage{}.Fields()
 	_ = outboundmessageFields
 	// outboundmessageDescIdempotencyKey is the schema descriptor for idempotency_key field.

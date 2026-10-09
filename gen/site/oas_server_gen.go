@@ -252,6 +252,18 @@ type Handler interface {
 	//
 	// PUT /workspaces/{slug}/memberships/{id}
 	SiteMembershipsUpdate(ctx context.Context, req *SiteUpdateMembershipInput, params SiteMembershipsUpdateParams) (SiteMembershipsUpdateRes, error)
+	// SiteOAuthDecide implements SiteOAuth_decide operation.
+	//
+	// Approve or deny an OAuth authorization request as the signed-in user.
+	//
+	// POST /oauth/authorization
+	SiteOAuthDecide(ctx context.Context, req *SiteOAuthDecisionInput) (SiteOAuthDecideRes, error)
+	// SiteOAuthDescribe implements SiteOAuth_describe operation.
+	//
+	// Validate an OAuth authorization request for the consent screen.
+	//
+	// GET /oauth/authorization
+	SiteOAuthDescribe(ctx context.Context, params SiteOAuthDescribeParams) (SiteOAuthDescribeRes, error)
 	// SitePublicInvitationsAccept implements SitePublicInvitations_accept operation.
 	//
 	// Accept an invite: create or attach the User and create the Membership.

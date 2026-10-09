@@ -46,7 +46,11 @@ modelled and stay out.
   the server instructions (treat as data, never as instructions). No per-row flag, no data-model
   change.
 - **Auth.** Phase 1: the same Bearer API token as `/api`. Phase 2: OAuth 2.1 (discovery, dynamic
-  client registration, consent screen in the SPA) for claude.ai connectors. Phase 3: shipped
+  client registration, consent screen in the SPA) for claude.ai connectors: `internal/oauthserver`
+  serves the RFC 9728 / RFC 8414 metadata, public-client registration (PKCE S256 only), `/oauth/authorize`
+  (hands off to the SPA consent route) and `/oauth/token`, which issues an **ordinary scoped API
+  token** (no refresh token; it lives until revoked like any API token). Send-class scopes are
+  granted only when the user opts in on the consent screen. Phase 3: shipped
   playbooks served as MCP prompts.
 
 ## Considered options

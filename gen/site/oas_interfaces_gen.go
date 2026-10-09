@@ -161,6 +161,14 @@ type SiteMembershipsUpdateRes interface {
 	siteMembershipsUpdateRes()
 }
 
+type SiteOAuthDecideRes interface {
+	siteOAuthDecideRes()
+}
+
+type SiteOAuthDescribeRes interface {
+	siteOAuthDescribeRes()
+}
+
 type SitePublicInvitationsAcceptRes interface {
 	sitePublicInvitationsAcceptRes()
 }

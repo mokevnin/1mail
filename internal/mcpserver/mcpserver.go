@@ -40,7 +40,14 @@ var _ Authenticator = (*apiauth.ExternalSecurityHandler)(nil)
 // New builds the /mcp http.Handler: Streamable HTTP, stateless, one tool per
 // non-hidden operation of the OpenAPI spec. api is the external API handler
 // serving under /api; auth validates the connecting Bearer token.
-func New(spec []byte, api http.Handler, auth Authenticator) (http.Handler, error) {
+//
+// With [WithResourceMetadataURL], 401 responses carry a WWW-Authenticate challenge
+// pointing OAuth clients (claude.ai connectors) at the protected resource metadata.
+func New(spec []byte, api http.Handler, auth Authenticator, opts ...Option) (http.Handler, error) {
+	var cfg options
+	for _, o := range opts {
+		o(&cfg)
+	}
 	ops, err := project(spec)
 	if err != nil {
 		return nil, fmt.Errorf("project MCP tools: %w", err)
@@ -53,19 +60,42 @@ func New(spec []byte, api http.Handler, auth Authenticator) (http.Handler, error
 		func(*http.Request) *mcp.Server { return srv },
 		&mcp.StreamableHTTPOptions{Stateless: true, JSONResponse: true},
 	)
-	return requireToken(auth, streamable), nil
+	return requireToken(auth, cfg.resourceMetadataURL, streamable), nil
+}
+
+// Option configures [New].
+type Option func(*options)
+
+type options struct{ resourceMetadataURL string }
+
+// WithResourceMetadataURL advertises the RFC 9728 protected resource metadata URL
+// in the WWW-Authenticate header of 401 responses (MCP authorization spec).
+func WithResourceMetadataURL(u string) Option {
+	return func(o *options) { o.resourceMetadataURL = u }
 }
 
 // requireToken rejects requests without a valid Bearer API token (401).
-func requireToken(auth Authenticator, next http.Handler) http.Handler {
+func requireToken(auth Authenticator, metadataURL string, next http.Handler) http.Handler {
+	challenge := func(w http.ResponseWriter, params string) {
+		parts := []string{}
+		if params != "" {
+			parts = append(parts, params)
+		}
+		if metadataURL != "" {
+			parts = append(parts, fmt.Sprintf("resource_metadata=%q", metadataURL))
+		}
+		w.Header().Set("WWW-Authenticate", strings.Join(append([]string{"Bearer"}, strings.Join(parts, ", ")), " "))
+	}
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		token, ok := strings.CutPrefix(r.Header.Get("Authorization"), "Bearer ")
 		if !ok || token == "" {
+			challenge(w, "")
 			writeProblem(w, http.StatusUnauthorized, "missing bearer token")
 			return
 		}
 		if _, err := auth.HandleBearerAuth(r.Context(), "", externalapi.BearerAuth{Token: token}); err != nil {
 			if errors.Is(err, apiauth.ErrUnauthorized) {
+				challenge(w, `error="invalid_token"`)
 				writeProblem(w, http.StatusUnauthorized, "invalid bearer token")
 				return
 			}
