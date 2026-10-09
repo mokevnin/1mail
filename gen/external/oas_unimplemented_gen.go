@@ -84,6 +84,33 @@ func (UnimplementedHandler) BroadcastsList(ctx context.Context, params Broadcast
 	return r, ht.ErrNotImplemented
 }
 
+// BroadcastsReport implements Broadcasts_report operation.
+//
+// Read the delivery report: sent, skipped, failed, opened and clicked counts.
+//
+// GET /broadcasts/{id}/report
+func (UnimplementedHandler) BroadcastsReport(ctx context.Context, params BroadcastsReportParams) (r BroadcastsReportRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// BroadcastsSetAudience implements Broadcasts_setAudience operation.
+//
+// Set the audience of a draft broadcast: a Segment, or null for all active contacts. Does not send.
+//
+// PUT /broadcasts/{id}/audience
+func (UnimplementedHandler) BroadcastsSetAudience(ctx context.Context, req *SetBroadcastAudienceInput, params BroadcastsSetAudienceParams) (r BroadcastsSetAudienceRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// BroadcastsTestSend implements Broadcasts_testSend operation.
+//
+// Send a rendered preview with sample merge data to a single address. Never sends to the audience.
+//
+// POST /broadcasts/{id}/test-send
+func (UnimplementedHandler) BroadcastsTestSend(ctx context.Context, req *TestSendBroadcastInput, params BroadcastsTestSendParams) (r BroadcastsTestSendRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // BroadcastsUpdate implements Broadcasts_update operation.
 //
 // Update a resource.

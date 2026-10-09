@@ -146,7 +146,8 @@ interface ExternalCrud<
     | NoContentResponse
     | BadRequestProblem
     | UnauthorizedProblem
-    | NotFoundProblem;
+    | NotFoundProblem
+    | UnprocessableEntityProblem;
 }
 
 /** Flat external CRUD for a resource with a unique key (adds 409 on writes). */

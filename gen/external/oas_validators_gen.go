@@ -235,6 +235,51 @@ func (s *AuthTokensListUnauthorized) Validate() error {
 	return nil
 }
 
+func (s *BroadcastReport) Validate() error {
+	if s == nil {
+		return validate.ErrNilPointer
+	}
+
+	var failures []validate.FieldError
+	if err := func() error {
+		if err := s.Status.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "status",
+			Error: err,
+		})
+	}
+	if err := func() error {
+		if err := (validate.Float{}).Validate(float64(s.OpenRate)); err != nil {
+			return errors.Wrap(err, "float")
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "openRate",
+			Error: err,
+		})
+	}
+	if err := func() error {
+		if err := (validate.Float{}).Validate(float64(s.ClickRate)); err != nil {
+			return errors.Wrap(err, "float")
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "clickRate",
+			Error: err,
+		})
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+	return nil
+}
+
 func (s *BroadcastResource) Validate() error {
 	if s == nil {
 		return validate.ErrNilPointer
@@ -242,8 +287,44 @@ func (s *BroadcastResource) Validate() error {
 
 	var failures []validate.FieldError
 	if err := func() error {
-		if err := s.SegmentId.Validate(); err != nil {
+		if err := s.ID.Validate(); err != nil {
 			return err
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "id",
+			Error: err,
+		})
+	}
+	if err := func() error {
+		if value, ok := s.FromEmail.Get(); ok {
+			if err := func() error {
+				if err := value.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "fromEmail",
+			Error: err,
+		})
+	}
+	if err := func() error {
+		if value, ok := s.SegmentId.Get(); ok {
+			if err := func() error {
+				if err := value.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
 		}
 		return nil
 	}(); err != nil {
@@ -263,17 +344,6 @@ func (s *BroadcastResource) Validate() error {
 			Error: err,
 		})
 	}
-	if err := func() error {
-		if err := s.ID.Validate(); err != nil {
-			return err
-		}
-		return nil
-	}(); err != nil {
-		failures = append(failures, validate.FieldError{
-			Name:  "id",
-			Error: err,
-		})
-	}
 	if len(failures) > 0 {
 		return &validate.Error{Fields: failures}
 	}
@@ -286,7 +356,11 @@ func (s BroadcastStatus) Validate() error {
 		return nil
 	case "scheduled":
 		return nil
+	case "sending":
+		return nil
 	case "sent":
+		return nil
+	case "failed":
 		return nil
 	default:
 		return errors.Errorf("invalid value: %v", s)
@@ -326,6 +400,14 @@ func (s *BroadcastsDeleteNotFound) Validate() error {
 }
 
 func (s *BroadcastsDeleteUnauthorized) Validate() error {
+	alias := (*ProblemDetails)(s)
+	if err := alias.Validate(); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *BroadcastsDeleteUnprocessableEntity) Validate() error {
 	alias := (*ProblemDetails)(s)
 	if err := alias.Validate(); err != nil {
 		return err
@@ -414,6 +496,94 @@ func (s *BroadcastsListUnauthorized) Validate() error {
 }
 
 func (s *BroadcastsListUnprocessableEntity) Validate() error {
+	alias := (*ProblemDetails)(s)
+	if err := alias.Validate(); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *BroadcastsReportBadRequest) Validate() error {
+	alias := (*ProblemDetails)(s)
+	if err := alias.Validate(); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *BroadcastsReportNotFound) Validate() error {
+	alias := (*ProblemDetails)(s)
+	if err := alias.Validate(); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *BroadcastsReportUnauthorized) Validate() error {
+	alias := (*ProblemDetails)(s)
+	if err := alias.Validate(); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *BroadcastsSetAudienceBadRequest) Validate() error {
+	alias := (*ProblemDetails)(s)
+	if err := alias.Validate(); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *BroadcastsSetAudienceNotFound) Validate() error {
+	alias := (*ProblemDetails)(s)
+	if err := alias.Validate(); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *BroadcastsSetAudienceUnauthorized) Validate() error {
+	alias := (*ProblemDetails)(s)
+	if err := alias.Validate(); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *BroadcastsSetAudienceUnprocessableEntity) Validate() error {
+	alias := (*ProblemDetails)(s)
+	if err := alias.Validate(); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *BroadcastsTestSendBadRequest) Validate() error {
+	alias := (*ProblemDetails)(s)
+	if err := alias.Validate(); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *BroadcastsTestSendNotFound) Validate() error {
+	alias := (*ProblemDetails)(s)
+	if err := alias.Validate(); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *BroadcastsTestSendUnauthorized) Validate() error {
+	alias := (*ProblemDetails)(s)
+	if err := alias.Validate(); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *BroadcastsTestSendUnprocessableEntity) Validate() error {
 	alias := (*ProblemDetails)(s)
 	if err := alias.Validate(); err != nil {
 		return err
@@ -535,6 +705,14 @@ func (s *ContactsDeleteNotFound) Validate() error {
 }
 
 func (s *ContactsDeleteUnauthorized) Validate() error {
+	alias := (*ProblemDetails)(s)
+	if err := alias.Validate(); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *ContactsDeleteUnprocessableEntity) Validate() error {
 	alias := (*ProblemDetails)(s)
 	if err := alias.Validate(); err != nil {
 		return err
@@ -740,24 +918,20 @@ func (s *CreateBroadcastInput) Validate() error {
 
 	var failures []validate.FieldError
 	if err := func() error {
-		if err := s.SegmentId.Validate(); err != nil {
-			return err
+		if value, ok := s.FromEmail.Get(); ok {
+			if err := func() error {
+				if err := value.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
 		}
 		return nil
 	}(); err != nil {
 		failures = append(failures, validate.FieldError{
-			Name:  "segmentId",
-			Error: err,
-		})
-	}
-	if err := func() error {
-		if err := s.Status.Validate(); err != nil {
-			return err
-		}
-		return nil
-	}(); err != nil {
-		failures = append(failures, validate.FieldError{
-			Name:  "status",
+			Name:  "fromEmail",
 			Error: err,
 		})
 	}
@@ -1162,6 +1336,14 @@ func (s *SegmentsDeleteUnauthorized) Validate() error {
 	return nil
 }
 
+func (s *SegmentsDeleteUnprocessableEntity) Validate() error {
+	alias := (*ProblemDetails)(s)
+	if err := alias.Validate(); err != nil {
+		return err
+	}
+	return nil
+}
+
 func (s *SegmentsGetBadRequest) Validate() error {
 	alias := (*ProblemDetails)(s)
 	if err := alias.Validate(); err != nil {
@@ -1350,18 +1532,7 @@ func (s *SendTransactionalEmailResponse) Validate() error {
 	return nil
 }
 
-func (s TransactionalSendStatus) Validate() error {
-	switch s {
-	case "sent":
-		return nil
-	case "suppressed":
-		return nil
-	default:
-		return errors.Errorf("invalid value: %v", s)
-	}
-}
-
-func (s *UpdateBroadcastInput) Validate() error {
+func (s *SetBroadcastAudienceInput) Validate() error {
 	if s == nil {
 		return validate.ErrNilPointer
 	}
@@ -1385,8 +1556,54 @@ func (s *UpdateBroadcastInput) Validate() error {
 			Error: err,
 		})
 	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+	return nil
+}
+
+func (s *TestSendBroadcastInput) Validate() error {
+	if s == nil {
+		return validate.ErrNilPointer
+	}
+
+	var failures []validate.FieldError
 	if err := func() error {
-		if value, ok := s.Status.Get(); ok {
+		if err := s.Email.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "email",
+			Error: err,
+		})
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+	return nil
+}
+
+func (s TransactionalSendStatus) Validate() error {
+	switch s {
+	case "sent":
+		return nil
+	case "suppressed":
+		return nil
+	default:
+		return errors.Errorf("invalid value: %v", s)
+	}
+}
+
+func (s *UpdateBroadcastInput) Validate() error {
+	if s == nil {
+		return validate.ErrNilPointer
+	}
+
+	var failures []validate.FieldError
+	if err := func() error {
+		if value, ok := s.FromEmail.Get(); ok {
 			if err := func() error {
 				if err := value.Validate(); err != nil {
 					return err
@@ -1399,7 +1616,7 @@ func (s *UpdateBroadcastInput) Validate() error {
 		return nil
 	}(); err != nil {
 		failures = append(failures, validate.FieldError{
-			Name:  "status",
+			Name:  "fromEmail",
 			Error: err,
 		})
 	}

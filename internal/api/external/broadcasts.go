@@ -1,0 +1,272 @@
+package external
+
+import (
+	"context"
+	"errors"
+	"net/http"
+
+	"github.com/samber/lo"
+
+	"github.com/mokevnin/1mail/ent"
+	externalapi "github.com/mokevnin/1mail/gen/external"
+	"github.com/mokevnin/1mail/internal/api/auth"
+	"github.com/mokevnin/1mail/internal/broadcasts"
+	"github.com/mokevnin/1mail/internal/convert"
+	"github.com/mokevnin/1mail/internal/outbound"
+	"github.com/mokevnin/1mail/internal/pagination"
+)
+
+// Broadcast authoring over /api (ADR 0016): drafts, audience, test send and report.
+// Nothing here sends to the audience; scheduling and sending are separate,
+// send-class operations. The state rules live in internal/broadcasts; these
+// handlers check the scope, call it and map its errors.
+
+const (
+	scopeBroadcastsRead  = "broadcasts:read"
+	scopeBroadcastsWrite = "broadcasts:write"
+)
+
+const detailNotDraft = "only draft broadcasts can be changed"
+
+func (h *Handlers) BroadcastsList(ctx context.Context, params externalapi.BroadcastsListParams) (externalapi.BroadcastsListRes, error) {
+	if !auth.HasScope(auth.GetTokenAuth(ctx), scopeBroadcastsRead) {
+		res := externalapi.BroadcastsListUnauthorized(problem(http.StatusUnauthorized, "insufficient scope"))
+		return &res, nil
+	}
+	ws := auth.WorkspaceID(auth.GetTokenAuth(ctx))
+	page, pageSize := pagination.Normalize(convert.Ptr(params.Page), convert.Ptr(params.PageSize))
+
+	items, total, err := h.broadcasts.List(ctx, ws, pageSize, pagination.Offset(page, pageSize))
+	if err != nil {
+		return nil, err
+	}
+	return &externalapi.BroadcastsListOK{
+		Items:      lo.Map(items, func(b *ent.Broadcast, _ int) externalapi.BroadcastResource { return mapper.BroadcastToResource(b) }),
+		Page:       int32(page),
+		PageSize:   int32(pageSize),
+		TotalItems: int32(total),
+		TotalPages: int32(pagination.TotalPages(total, pageSize)),
+	}, nil
+}
+
+func (h *Handlers) BroadcastsCreate(ctx context.Context, req *externalapi.CreateBroadcastInput) (externalapi.BroadcastsCreateRes, error) {
+	if !auth.HasScope(auth.GetTokenAuth(ctx), scopeBroadcastsWrite) {
+		res := externalapi.BroadcastsCreateUnauthorized(problem(http.StatusUnauthorized, "insufficient scope"))
+		return &res, nil
+	}
+	if req.Name == "" {
+		res := externalapi.BroadcastsCreateUnprocessableEntity(problem(http.StatusUnprocessableEntity, "name must not be empty"))
+		return &res, nil
+	}
+	ws := auth.WorkspaceID(auth.GetTokenAuth(ctx))
+
+	b, err := h.broadcasts.Create(ctx, ws, broadcasts.Fields{
+		Name: &req.Name, Subject: convert.StringPtr(req.Subject), FromName: convert.StringPtr(req.FromName),
+		FromEmail: convert.StringPtr(req.FromEmail), Body: convert.StringPtr(req.Body),
+	})
+	if err != nil {
+		return nil, err
+	}
+	res := mapper.BroadcastToResource(b)
+	return &res, nil
+}
+
+func (h *Handlers) BroadcastsGet(ctx context.Context, params externalapi.BroadcastsGetParams) (externalapi.BroadcastsGetRes, error) {
+	if !auth.HasScope(auth.GetTokenAuth(ctx), scopeBroadcastsRead) {
+		res := externalapi.BroadcastsGetUnauthorized(problem(http.StatusUnauthorized, "insufficient scope"))
+		return &res, nil
+	}
+	id, err := parseEntityID(params.ID)
+	if err != nil {
+		res := externalapi.BroadcastsGetBadRequest(problem(http.StatusBadRequest, "invalid id"))
+		return &res, nil
+	}
+	b, err := h.broadcasts.Get(ctx, auth.WorkspaceID(auth.GetTokenAuth(ctx)), id)
+	if errors.Is(err, broadcasts.ErrNotFound) {
+		res := externalapi.BroadcastsGetNotFound(problem(http.StatusNotFound, "broadcast not found"))
+		return &res, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	res := mapper.BroadcastToResource(b)
+	return &res, nil
+}
+
+func (h *Handlers) BroadcastsUpdate(ctx context.Context, req *externalapi.UpdateBroadcastInput, params externalapi.BroadcastsUpdateParams) (externalapi.BroadcastsUpdateRes, error) {
+	if !auth.HasScope(auth.GetTokenAuth(ctx), scopeBroadcastsWrite) {
+		res := externalapi.BroadcastsUpdateUnauthorized(problem(http.StatusUnauthorized, "insufficient scope"))
+		return &res, nil
+	}
+	id, err := parseEntityID(params.ID)
+	if err != nil {
+		res := externalapi.BroadcastsUpdateBadRequest(problem(http.StatusBadRequest, "invalid id"))
+		return &res, nil
+	}
+	b, err := h.broadcasts.Update(ctx, auth.WorkspaceID(auth.GetTokenAuth(ctx)), id,
+		broadcasts.Fields{
+			Name: convert.StringPtr(req.Name), Subject: convert.StringPtr(req.Subject), FromName: convert.StringPtr(req.FromName),
+			FromEmail: convert.StringPtr(req.FromEmail), Body: convert.StringPtr(req.Body),
+		})
+	switch {
+	case errors.Is(err, broadcasts.ErrNotFound):
+		res := externalapi.BroadcastsUpdateNotFound(problem(http.StatusNotFound, "broadcast not found"))
+		return &res, nil
+	case errors.Is(err, broadcasts.ErrNotDraft):
+		res := externalapi.BroadcastsUpdateUnprocessableEntity(problem(http.StatusUnprocessableEntity, detailNotDraft))
+		return &res, nil
+	case err != nil:
+		return nil, err
+	}
+	res := mapper.BroadcastToResource(b)
+	return &res, nil
+}
+
+func (h *Handlers) BroadcastsDelete(ctx context.Context, params externalapi.BroadcastsDeleteParams) (externalapi.BroadcastsDeleteRes, error) {
+	if !auth.HasScope(auth.GetTokenAuth(ctx), scopeBroadcastsWrite) {
+		res := externalapi.BroadcastsDeleteUnauthorized(problem(http.StatusUnauthorized, "insufficient scope"))
+		return &res, nil
+	}
+	id, err := parseEntityID(params.ID)
+	if err != nil {
+		res := externalapi.BroadcastsDeleteBadRequest(problem(http.StatusBadRequest, "invalid id"))
+		return &res, nil
+	}
+	err = h.broadcasts.DeleteDraft(ctx, auth.WorkspaceID(auth.GetTokenAuth(ctx)), id)
+	switch {
+	case errors.Is(err, broadcasts.ErrNotFound):
+		res := externalapi.BroadcastsDeleteNotFound(problem(http.StatusNotFound, "broadcast not found"))
+		return &res, nil
+	case errors.Is(err, broadcasts.ErrNotDraft):
+		res := externalapi.BroadcastsDeleteUnprocessableEntity(problem(http.StatusUnprocessableEntity, detailNotDraft))
+		return &res, nil
+	case err != nil:
+		return nil, err
+	}
+	return &externalapi.BroadcastsDeleteNoContent{}, nil
+}
+
+func (h *Handlers) BroadcastsSetAudience(ctx context.Context, req *externalapi.SetBroadcastAudienceInput, params externalapi.BroadcastsSetAudienceParams) (externalapi.BroadcastsSetAudienceRes, error) {
+	if !auth.HasScope(auth.GetTokenAuth(ctx), scopeBroadcastsWrite) {
+		res := externalapi.BroadcastsSetAudienceUnauthorized(problem(http.StatusUnauthorized, "insufficient scope"))
+		return &res, nil
+	}
+	id, err := parseEntityID(params.ID)
+	if err != nil {
+		res := externalapi.BroadcastsSetAudienceBadRequest(problem(http.StatusBadRequest, "invalid id"))
+		return &res, nil
+	}
+	var segmentID *int64
+	if !req.SegmentId.Null {
+		sid, err := parseEntityID(req.SegmentId.Value)
+		if err != nil {
+			res := externalapi.BroadcastsSetAudienceUnprocessableEntity(problem(http.StatusUnprocessableEntity, "segment not found"))
+			return &res, nil
+		}
+		segmentID = &sid
+	}
+	b, err := h.broadcasts.SetAudience(ctx, auth.WorkspaceID(auth.GetTokenAuth(ctx)), id, segmentID)
+	switch {
+	case errors.Is(err, broadcasts.ErrNotFound):
+		res := externalapi.BroadcastsSetAudienceNotFound(problem(http.StatusNotFound, "broadcast not found"))
+		return &res, nil
+	case errors.Is(err, broadcasts.ErrSegmentNotFound):
+		res := externalapi.BroadcastsSetAudienceUnprocessableEntity(problem(http.StatusUnprocessableEntity, "segment not found"))
+		return &res, nil
+	case errors.Is(err, broadcasts.ErrNotDraft):
+		res := externalapi.BroadcastsSetAudienceUnprocessableEntity(problem(http.StatusUnprocessableEntity, detailNotDraft))
+		return &res, nil
+	case err != nil:
+		return nil, err
+	}
+	res := mapper.BroadcastToResource(b)
+	return &res, nil
+}
+
+// BroadcastsTestSend renders the broadcast with sample merge data and sends it to
+// one address: no recipient rows, no tracking, never the audience.
+func (h *Handlers) BroadcastsTestSend(ctx context.Context, req *externalapi.TestSendBroadcastInput, params externalapi.BroadcastsTestSendParams) (externalapi.BroadcastsTestSendRes, error) {
+	if !auth.HasScope(auth.GetTokenAuth(ctx), scopeBroadcastsWrite) {
+		res := externalapi.BroadcastsTestSendUnauthorized(problem(http.StatusUnauthorized, "insufficient scope"))
+		return &res, nil
+	}
+	id, err := parseEntityID(params.ID)
+	if err != nil {
+		res := externalapi.BroadcastsTestSendBadRequest(problem(http.StatusBadRequest, "invalid id"))
+		return &res, nil
+	}
+	ws := auth.WorkspaceID(auth.GetTokenAuth(ctx))
+	b, err := h.broadcasts.Get(ctx, ws, id)
+	if errors.Is(err, broadcasts.ErrNotFound) {
+		res := externalapi.BroadcastsTestSendNotFound(problem(http.StatusNotFound, "broadcast not found"))
+		return &res, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	to := string(req.Email)
+	out, err := h.outbound.SendTest(ctx, outbound.TestRequest{
+		WorkspaceID: ws,
+		To:          to,
+		Subject:     "[Test] " + b.Subject,
+		Body:        b.Body,
+		Variables:   map[string]any{"first_name": "Alex", "last_name": "Sample", "email": to},
+		FromEmail:   lo.FromPtr(b.FromEmail),
+		FromName:    lo.FromPtr(b.FromName),
+	})
+	if err != nil {
+		res := externalapi.BroadcastsTestSendUnprocessableEntity(problem(http.StatusUnprocessableEntity, "send failed: "+err.Error()))
+		return &res, nil
+	}
+	switch out.Outcome {
+	case outbound.Sent:
+		return &externalapi.BroadcastsTestSendNoContent{}, nil
+	case outbound.Held:
+		res := externalapi.BroadcastsTestSendUnprocessableEntity(problem(http.StatusUnprocessableEntity, outbound.HoldDetail(out.Reason)))
+		return &res, nil
+	default: // outbound.Failed: the content did not render
+		res := externalapi.BroadcastsTestSendUnprocessableEntity(problem(http.StatusUnprocessableEntity, out.Reason))
+		return &res, nil
+	}
+}
+
+func (h *Handlers) BroadcastsReport(ctx context.Context, params externalapi.BroadcastsReportParams) (externalapi.BroadcastsReportRes, error) {
+	if !auth.HasScope(auth.GetTokenAuth(ctx), scopeBroadcastsRead) {
+		res := externalapi.BroadcastsReportUnauthorized(problem(http.StatusUnauthorized, "insufficient scope"))
+		return &res, nil
+	}
+	id, err := parseEntityID(params.ID)
+	if err != nil {
+		res := externalapi.BroadcastsReportBadRequest(problem(http.StatusBadRequest, "invalid id"))
+		return &res, nil
+	}
+	r, err := h.broadcasts.Report(ctx, auth.WorkspaceID(auth.GetTokenAuth(ctx)), id)
+	if errors.Is(err, broadcasts.ErrNotFound) {
+		res := externalapi.BroadcastsReportNotFound(problem(http.StatusNotFound, "broadcast not found"))
+		return &res, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	return &externalapi.BroadcastReport{
+		Status:            externalapi.BroadcastStatus(r.Status),
+		HoldReason:        optNilString(r.HoldReason),
+		RecipientsTotal:   int32(r.Recipients),
+		SentCount:         int32(r.Sent),
+		SkippedCount:      int32(r.Skipped),
+		FailedCount:       int32(r.Failed),
+		OpenedCount:       int32(r.Opened),
+		ClickedCount:      int32(r.Clicked),
+		UnsubscribedCount: int32(r.Unsubscribed),
+		OpenRate:          r.OpenRate,
+		ClickRate:         r.ClickRate,
+	}, nil
+}
+
+func optNilString(v *string) externalapi.OptNilString {
+	if v == nil {
+		return externalapi.OptNilString{}
+	}
+	return externalapi.NewOptNilString(*v)
+}

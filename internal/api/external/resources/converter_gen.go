@@ -29,6 +29,24 @@ func (c *ConverterImpl) ApiTokenToInfo(source *ent.ApiToken) external.ApiTokenIn
 	}
 	return externalapiApiTokenInfo
 }
+func (c *ConverterImpl) BroadcastToResource(source *ent.Broadcast) external.BroadcastResource {
+	var externalapiBroadcastResource external.BroadcastResource
+	if source != nil {
+		externalapiBroadcastResource.ID = entityID((*source).ID)
+		externalapiBroadcastResource.Name = (*source).Name
+		externalapiBroadcastResource.Subject = (*source).Subject
+		externalapiBroadcastResource.FromName = optNilString((*source).FromName)
+		externalapiBroadcastResource.FromEmail = optNilEmailAddress((*source).FromEmail)
+		externalapiBroadcastResource.Body = (*source).Body
+		externalapiBroadcastResource.SegmentId = optNilEntityID((*source).SegmentID)
+		externalapiBroadcastResource.Status = external.BroadcastStatus((*source).Status)
+		externalapiBroadcastResource.ScheduledAt = optNilTimestamp((*source).ScheduledAt)
+		externalapiBroadcastResource.SentAt = optNilTimestamp((*source).SentAt)
+		externalapiBroadcastResource.CreatedAt = timestamp((*source).CreatedAt)
+		externalapiBroadcastResource.UpdatedAt = timestamp((*source).UpdatedAt)
+	}
+	return externalapiBroadcastResource
+}
 func (c *ConverterImpl) ContactToResource(source *ent.Contact) external.ContactResource {
 	var externalapiContactResource external.ContactResource
 	if source != nil {

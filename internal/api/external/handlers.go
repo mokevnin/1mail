@@ -7,6 +7,7 @@ import (
 	"github.com/mokevnin/1mail/ent"
 	externalapi "github.com/mokevnin/1mail/gen/external"
 	"github.com/mokevnin/1mail/internal/api/external/resources"
+	"github.com/mokevnin/1mail/internal/broadcasts"
 	"github.com/mokevnin/1mail/internal/eventlog"
 	"github.com/mokevnin/1mail/internal/events"
 	"github.com/mokevnin/1mail/internal/outbound"
@@ -21,11 +22,12 @@ type Handlers struct {
 	bus            *events.Bus
 	eventlog       *eventlog.Module
 	outbound       *outbound.Module
+	broadcasts     *broadcasts.Module
 	bootstrapToken string
 }
 
-func NewHandlers(client *ent.Client, bootstrapToken string, bus *events.Bus, eventLog *eventlog.Module, sender *outbound.Module) *Handlers {
-	return &Handlers{ent: client, bus: bus, eventlog: eventLog, outbound: sender, bootstrapToken: bootstrapToken}
+func NewHandlers(client *ent.Client, bootstrapToken string, bus *events.Bus, eventLog *eventlog.Module, sender *outbound.Module, enqueuer broadcasts.Enqueuer) *Handlers {
+	return &Handlers{ent: client, bus: bus, eventlog: eventLog, outbound: sender, broadcasts: broadcasts.New(client, enqueuer), bootstrapToken: bootstrapToken}
 }
 
 var _ externalapi.Handler = (*Handlers)(nil)

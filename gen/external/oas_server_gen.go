@@ -52,6 +52,24 @@ type Handler interface {
 	//
 	// GET /broadcasts
 	BroadcastsList(ctx context.Context, params BroadcastsListParams) (BroadcastsListRes, error)
+	// BroadcastsReport implements Broadcasts_report operation.
+	//
+	// Read the delivery report: sent, skipped, failed, opened and clicked counts.
+	//
+	// GET /broadcasts/{id}/report
+	BroadcastsReport(ctx context.Context, params BroadcastsReportParams) (BroadcastsReportRes, error)
+	// BroadcastsSetAudience implements Broadcasts_setAudience operation.
+	//
+	// Set the audience of a draft broadcast: a Segment, or null for all active contacts. Does not send.
+	//
+	// PUT /broadcasts/{id}/audience
+	BroadcastsSetAudience(ctx context.Context, req *SetBroadcastAudienceInput, params BroadcastsSetAudienceParams) (BroadcastsSetAudienceRes, error)
+	// BroadcastsTestSend implements Broadcasts_testSend operation.
+	//
+	// Send a rendered preview with sample merge data to a single address. Never sends to the audience.
+	//
+	// POST /broadcasts/{id}/test-send
+	BroadcastsTestSend(ctx context.Context, req *TestSendBroadcastInput, params BroadcastsTestSendParams) (BroadcastsTestSendRes, error)
 	// BroadcastsUpdate implements Broadcasts_update operation.
 	//
 	// Update a resource.

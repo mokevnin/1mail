@@ -159,7 +159,7 @@ func Setup(t *testing.T) *TestEnv {
 	// river), so it gets the same capturing resolver — its sends land in CustomerMail.
 	// inline implements every enqueue seam (broadcast, welcome, account mail,
 	// sending-domain verify).
-	external, err := server.NewExternalAPI(client, baseCfg.BootstrapToken, bus, sender)
+	external, err := server.NewExternalAPI(client, baseCfg.BootstrapToken, bus, sender, inline)
 	require.NoError(t, err, "build external API")
 	mcpHandler, err := mcpserver.New(onemail.ExternalOpenAPI, external, apiauth.NewExternalSecurityHandler(client))
 	require.NoError(t, err, "build MCP handler")
