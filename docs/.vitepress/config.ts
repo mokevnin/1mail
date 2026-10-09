@@ -1,4 +1,17 @@
+import { readdirSync, readFileSync } from 'node:fs'
+
 import { defineConfig } from 'vitepress'
+
+// One sidebar entry per ADR: the number plus the title up to its first colon.
+const adrDir = new URL('../adr/', import.meta.url)
+const adrItems = readdirSync(adrDir)
+  .filter((file) => file.endsWith('.md'))
+  .toSorted()
+  .map((file) => {
+    const slug = file.replace(/\.md$/, '')
+    const heading = readFileSync(new URL(file, adrDir), 'utf8').match(/^# (.+)$/m)?.[1] ?? slug
+    return { text: `${slug.slice(0, 4)} · ${heading.split(':')[0]}`, link: `/adr/${slug}` }
+  })
 
 export default defineConfig({
   title: '1mail',
@@ -53,72 +66,7 @@ export default defineConfig({
       {
         text: 'Architecture decisions',
         collapsed: false,
-        items: [
-          {
-            text: '0001 \u00b7 Send-eligibility: (channel, destination)-keyed Suppression + scoped Un',
-            link: '/adr/0001-send-eligibility-model',
-          },
-          {
-            text: '0002 \u00b7 One Contact identity: absorb the tracking profile, attach events by st',
-            link: '/adr/0002-unified-contact-identity',
-          },
-          {
-            text: '0003 \u00b7 Templates are copied at author time, never referenced (marketing)',
-            link: '/adr/0003-templates-copied-not-referenced',
-          },
-          {
-            text: '0004 \u00b7 Workspaces are multi-user via Membership, not single-owner',
-            link: '/adr/0004-multi-user-workspaces-via-membership',
-          },
-          {
-            text: '0005 \u00b7 Transactional is a first-class send surface, binding templates by refe',
-            link: '/adr/0005-transactional-send-surface',
-          },
-          {
-            text: '0006 \u00b7 One attribute concept: typed Custom fields, auto-created \u2014 no schemale',
-            link: '/adr/0006-custom-fields-not-traits',
-          },
-          {
-            text: '0007 \u00b7 Workspace suspension: mechanism in core, policy and console in EE',
-            link: '/adr/0007-workspace-suspension-in-core',
-          },
-          {
-            text: '0008 \u00b7 Platform Operator is a separate identity, not a User',
-            link: '/adr/0008-operator-separate-identity',
-          },
-          {
-            text: '0009 \u00b7 Billing boundary: metering in core, money in an external plane',
-            link: '/adr/0009-billing-boundary-metering-in-core-money-outside',
-          },
-          {
-            text: '0010 \u00b7 Sending domains: 1mail-native DKIM, verified-domain required to send',
-            link: '/adr/0010-sending-domains-native-dkim',
-          },
-          {
-            text: '0011 \u00b7 Deliverability rate metrics: complaint & bounce rate in core, threshold',
-            link: '/adr/0011-deliverability-rate-metrics',
-          },
-          {
-            text: '0012 \u00b7 Bulk-sender compliance: RFC 8058 one-click unsubscribe & DMARC readine',
-            link: '/adr/0012-bulk-sender-compliance-one-click-unsubscribe',
-          },
-          {
-            text: '0013 \u00b7 Double opt-in: confirmation as a positive event, not a subscription st',
-            link: '/adr/0013-double-opt-in-confirmation',
-          },
-          {
-            text: '0014 \u00b7 Open-core boundary: gate on org-shape, not product value',
-            link: '/adr/0014-open-core-boundary',
-          },
-          {
-            text: '0015 \u00b7 Outbound send: one module, one message record, two outcome scopes',
-            link: '/adr/0015-outbound-send-single-chokepoint',
-          },
-          {
-            text: '0016 \u00b7 MCP surface: a projection of the external `/api`, not a second impleme',
-            link: '/adr/0016-mcp-surface-projection-of-external-api',
-          },
-        ],
+        items: adrItems,
       },
     ],
     socialLinks: [{ icon: 'github', link: 'https://github.com/mokevnin/1mail' }],
