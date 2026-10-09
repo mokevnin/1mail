@@ -13,7 +13,6 @@ import (
 	"github.com/mokevnin/1mail/internal/api/auth"
 	"github.com/mokevnin/1mail/internal/broadcasts"
 	"github.com/mokevnin/1mail/internal/convert"
-	"github.com/mokevnin/1mail/internal/outbound"
 	"github.com/mokevnin/1mail/internal/pagination"
 )
 
@@ -260,30 +259,11 @@ func (h *Handlers) BroadcastsTestSend(ctx context.Context, req *externalapi.Test
 		return nil, err
 	}
 
-	to := string(req.Email)
-	out, err := h.outbound.SendTest(ctx, outbound.TestRequest{
-		WorkspaceID: ws,
-		To:          to,
-		Subject:     "[Test] " + b.Subject,
-		Body:        b.Body,
-		Variables:   map[string]any{"first_name": "Alex", "last_name": "Sample", "email": to},
-		FromEmail:   lo.FromPtr(b.FromEmail),
-		FromName:    lo.FromPtr(b.FromName),
-	})
-	if err != nil {
-		res := externalapi.BroadcastsTestSendUnprocessableEntity(problem(http.StatusUnprocessableEntity, "send failed: "+err.Error()))
+	if detail := h.outbound.SendBroadcastTest(ctx, b, string(req.Email)); detail != "" {
+		res := externalapi.BroadcastsTestSendUnprocessableEntity(problem(http.StatusUnprocessableEntity, detail))
 		return &res, nil
 	}
-	switch out.Outcome {
-	case outbound.Sent:
-		return &externalapi.BroadcastsTestSendNoContent{}, nil
-	case outbound.Held:
-		res := externalapi.BroadcastsTestSendUnprocessableEntity(problem(http.StatusUnprocessableEntity, outbound.HoldDetail(out.Reason)))
-		return &res, nil
-	default: // outbound.Failed: the content did not render
-		res := externalapi.BroadcastsTestSendUnprocessableEntity(problem(http.StatusUnprocessableEntity, out.Reason))
-		return &res, nil
-	}
+	return &externalapi.BroadcastsTestSendNoContent{}, nil
 }
 
 func (h *Handlers) BroadcastsReport(ctx context.Context, params externalapi.BroadcastsReportParams) (externalapi.BroadcastsReportRes, error) {

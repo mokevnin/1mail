@@ -515,6 +515,35 @@ type TestRequest struct {
 	FromName    string
 }
 
+// TestSubjectPrefix marks a preview send so it is never mistaken for the real mailing.
+const TestSubjectPrefix = "[Test] "
+
+// SendBroadcastTest sends the Broadcast to one address with sample merge data for
+// an author to preview it. It returns "" when the message was sent, otherwise the
+// human-readable reason it was not (a send error, a Hold, or content that did not
+// render), so every surface words a refused preview the same way.
+func (m *Module) SendBroadcastTest(ctx context.Context, b *ent.Broadcast, to string) string {
+	res, err := m.SendTest(ctx, TestRequest{
+		WorkspaceID: b.WorkspaceID,
+		To:          to,
+		Subject:     TestSubjectPrefix + b.Subject,
+		Body:        b.Body,
+		Variables:   map[string]any{"first_name": "Alex", "last_name": "Sample", "email": to},
+		FromEmail:   lo.FromPtr(b.FromEmail),
+		FromName:    lo.FromPtr(b.FromName),
+	})
+	switch {
+	case err != nil:
+		return "send failed: " + err.Error()
+	case res.Outcome == Sent:
+		return ""
+	case res.Outcome == Held:
+		return HoldDetail(res.Reason)
+	default: // Failed: the content did not render
+		return res.Reason
+	}
+}
+
 // SendTest sends one message for an author to preview. The author names the
 // address, so it skips Send-eligibility and carries no unsubscribe or tracking, and
 // it records no Outbound message and no email.sent Event — but it still passes the

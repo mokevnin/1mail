@@ -3,7 +3,6 @@ package site
 import (
 	"context"
 	"errors"
-	"github.com/samber/lo"
 	"net/http"
 	"strconv"
 	"time"
@@ -15,7 +14,6 @@ import (
 	"github.com/mokevnin/1mail/internal/broadcasts"
 	"github.com/mokevnin/1mail/internal/convert"
 	"github.com/mokevnin/1mail/internal/i18n"
-	"github.com/mokevnin/1mail/internal/outbound"
 	"github.com/mokevnin/1mail/internal/pagination"
 )
 
@@ -347,28 +345,8 @@ func (h *Handlers) SiteBroadcastsTestSend(ctx context.Context, req *siteapi.Site
 		return nil, err
 	}
 
-	to := string(req.Email)
-	res, err := h.outbound.SendTest(ctx, outbound.TestRequest{
-		WorkspaceID: ws,
-		To:          to,
-		Subject:     "[Test] " + b.Subject,
-		Body:        b.Body,
-		Variables:   map[string]any{"first_name": "Alex", "last_name": "Sample", "email": to},
-		FromEmail:   lo.FromPtr(b.FromEmail),
-		FromName:    lo.FromPtr(b.FromName),
-	})
-	if err != nil {
-		v := siteapi.SiteBroadcastsTestSendUnprocessableEntity(problem(http.StatusUnprocessableEntity, "send failed: "+err.Error()))
-		return &v, nil
-	}
-	switch res.Outcome {
-	case outbound.Sent:
-		// fall through to the 204 below
-	case outbound.Held:
-		v := siteapi.SiteBroadcastsTestSendUnprocessableEntity(problem(http.StatusUnprocessableEntity, outbound.HoldDetail(res.Reason)))
-		return &v, nil
-	default: // outbound.Failed: the content did not render
-		v := siteapi.SiteBroadcastsTestSendUnprocessableEntity(problem(http.StatusUnprocessableEntity, res.Reason))
+	if detail := h.outbound.SendBroadcastTest(ctx, b, string(req.Email)); detail != "" {
+		v := siteapi.SiteBroadcastsTestSendUnprocessableEntity(problem(http.StatusUnprocessableEntity, detail))
 		return &v, nil
 	}
 	return &siteapi.SiteBroadcastsTestSendNoContent{}, nil
