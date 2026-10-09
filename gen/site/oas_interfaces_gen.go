@@ -169,12 +169,20 @@ type SiteOAuthDescribeRes interface {
 	siteOAuthDescribeRes()
 }
 
+type SitePublicConfirmationsPerformRes interface {
+	sitePublicConfirmationsPerformRes()
+}
+
 type SitePublicInvitationsAcceptRes interface {
 	sitePublicInvitationsAcceptRes()
 }
 
 type SitePublicInvitationsLookupRes interface {
 	sitePublicInvitationsLookupRes()
+}
+
+type SitePublicUnsubscribesPerformRes interface {
+	sitePublicUnsubscribesPerformRes()
 }
 
 type SiteSegmentsCreateRes interface {

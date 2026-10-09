@@ -6,6 +6,9 @@
   },
   "tags": [
     {
+      "name": "Site Consent"
+    },
+    {
       "name": "Site Custom Fields"
     },
     {
@@ -303,6 +306,39 @@
             }
           }
         },
+        "security": [{}]
+      }
+    },
+    "/confirmations/{token}": {
+      "post": {
+        "operationId": "SitePublicConfirmations_perform",
+        "description": "Perform a double opt-in confirmation (ADR 0013). The deliberate human act\nbehind the confirmation page's button. Repeating it is a no-op.",
+        "parameters": [
+          {
+            "name": "token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "There is no content to send for this request, but the headers may be useful."
+          },
+          "400": {
+            "description": "RFC 7807 bad request response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Site Consent"],
         "security": [{}]
       }
     },
@@ -657,6 +693,39 @@
             }
           }
         }
+      }
+    },
+    "/unsubscribes/{token}": {
+      "post": {
+        "operationId": "SitePublicUnsubscribes_perform",
+        "description": "Perform an unsubscribe (ADR 0012). The button on the unsubscribe page; the\nmailbox provider one-click POST keeps using POST /e/u/{token}. Repeating it\nis a no-op.",
+        "parameters": [
+          {
+            "name": "token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "There is no content to send for this request, but the headers may be useful."
+          },
+          "400": {
+            "description": "RFC 7807 bad request response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Site Consent"],
+        "security": [{}]
       }
     },
     "/workspaces": {

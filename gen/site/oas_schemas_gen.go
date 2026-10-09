@@ -1233,17 +1233,19 @@ func (s *ProblemDetails) SetFields(val OptProblemDetailsFields) {
 	s.Fields = val
 }
 
-func (*ProblemDetails) siteAnalyticsOverviewRes()       {}
-func (*ProblemDetails) siteAuthDirectLoginRes()         {}
-func (*ProblemDetails) siteAuthResetPasswordRes()       {}
-func (*ProblemDetails) siteAuthVerifyEmailRes()         {}
-func (*ProblemDetails) siteEventsActionsRes()           {}
-func (*ProblemDetails) siteEventsListRes()              {}
-func (*ProblemDetails) siteIntegrationsListRes()        {}
-func (*ProblemDetails) siteInvitationsListRes()         {}
-func (*ProblemDetails) siteMembershipsListRes()         {}
-func (*ProblemDetails) sitePublicInvitationsLookupRes() {}
-func (*ProblemDetails) siteTokensListRes()              {}
+func (*ProblemDetails) siteAnalyticsOverviewRes()          {}
+func (*ProblemDetails) siteAuthDirectLoginRes()            {}
+func (*ProblemDetails) siteAuthResetPasswordRes()          {}
+func (*ProblemDetails) siteAuthVerifyEmailRes()            {}
+func (*ProblemDetails) siteEventsActionsRes()              {}
+func (*ProblemDetails) siteEventsListRes()                 {}
+func (*ProblemDetails) siteIntegrationsListRes()           {}
+func (*ProblemDetails) siteInvitationsListRes()            {}
+func (*ProblemDetails) siteMembershipsListRes()            {}
+func (*ProblemDetails) sitePublicConfirmationsPerformRes() {}
+func (*ProblemDetails) sitePublicInvitationsLookupRes()    {}
+func (*ProblemDetails) sitePublicUnsubscribesPerformRes()  {}
+func (*ProblemDetails) siteTokensListRes()                 {}
 
 // Validation errors grouped by field.
 type ProblemDetailsErrors map[string][]string
@@ -5362,6 +5364,11 @@ func (s *SitePreviewSegmentResult) SetCount(val int32) {
 
 func (*SitePreviewSegmentResult) siteSegmentsPreviewRes() {}
 
+// SitePublicConfirmationsPerformNoContent is response for SitePublicConfirmationsPerform operation.
+type SitePublicConfirmationsPerformNoContent struct{}
+
+func (*SitePublicConfirmationsPerformNoContent) sitePublicConfirmationsPerformRes() {}
+
 type SitePublicInvitationsAcceptNotFound ProblemDetails
 
 func (*SitePublicInvitationsAcceptNotFound) sitePublicInvitationsAcceptRes() {}
@@ -5374,6 +5381,11 @@ func (*SitePublicInvitationsAcceptOK) sitePublicInvitationsAcceptRes() {}
 type SitePublicInvitationsAcceptUnprocessableEntity ProblemDetails
 
 func (*SitePublicInvitationsAcceptUnprocessableEntity) sitePublicInvitationsAcceptRes() {}
+
+// SitePublicUnsubscribesPerformNoContent is response for SitePublicUnsubscribesPerform operation.
+type SitePublicUnsubscribesPerformNoContent struct{}
+
+func (*SitePublicUnsubscribesPerformNoContent) sitePublicUnsubscribesPerformRes() {}
 
 // Ref: #/components/schemas/SiteRegisterInput
 type SiteRegisterInput struct {

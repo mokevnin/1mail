@@ -23,6 +23,7 @@ import (
 	apicollect "github.com/mokevnin/1mail/internal/api/collect"
 	apiexternal "github.com/mokevnin/1mail/internal/api/external"
 	apisite "github.com/mokevnin/1mail/internal/api/site"
+	"github.com/mokevnin/1mail/internal/clientip"
 	"github.com/mokevnin/1mail/internal/logging"
 	"github.com/mokevnin/1mail/internal/oauthserver"
 	"github.com/mokevnin/1mail/internal/telemetry"
@@ -127,7 +128,7 @@ func New(cfg *config.Config, db *sql.DB, site apisite.Deps, external, mcp http.H
 	// requestID is outermost so the correlation id is in context before recoverer
 	// runs — the panic log then carries request_id. (requestID is trivial and
 	// cannot itself panic, so nothing downstream of recovery is lost.)
-	return chain(mux, requestID, recoverer, timeout(30*time.Second), corsMiddleware(cfg.CORSOrigins)), nil
+	return chain(mux, requestID, clientip.Middleware, recoverer, timeout(30*time.Second), corsMiddleware(cfg.CORSOrigins)), nil
 }
 
 // NewExternalAPI builds the external API (/api) ogen server: Bearer API-token

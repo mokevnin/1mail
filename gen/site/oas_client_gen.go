@@ -286,6 +286,13 @@ type Invoker interface {
 	//
 	// GET /oauth/authorization
 	SiteOAuthDescribe(ctx context.Context, params SiteOAuthDescribeParams) (SiteOAuthDescribeRes, error)
+	// SitePublicConfirmationsPerform invokes SitePublicConfirmations_perform operation.
+	//
+	// Perform a double opt-in confirmation (ADR 0013). The deliberate human act behind the confirmation
+	// page's button. Repeating it is a no-op.
+	//
+	// POST /confirmations/{token}
+	SitePublicConfirmationsPerform(ctx context.Context, params SitePublicConfirmationsPerformParams) (SitePublicConfirmationsPerformRes, error)
 	// SitePublicInvitationsAccept invokes SitePublicInvitations_accept operation.
 	//
 	// Accept an invite: create or attach the User and create the Membership.
@@ -298,6 +305,13 @@ type Invoker interface {
 	//
 	// GET /invitations/{token}
 	SitePublicInvitationsLookup(ctx context.Context, params SitePublicInvitationsLookupParams) (SitePublicInvitationsLookupRes, error)
+	// SitePublicUnsubscribesPerform invokes SitePublicUnsubscribes_perform operation.
+	//
+	// Perform an unsubscribe (ADR 0012). The button on the unsubscribe page; the mailbox provider
+	// one-click POST keeps using POST /e/u/{token}. Repeating it is a no-op.
+	//
+	// POST /unsubscribes/{token}
+	SitePublicUnsubscribesPerform(ctx context.Context, params SitePublicUnsubscribesPerformParams) (SitePublicUnsubscribesPerformRes, error)
 	// SiteSegmentsCreate invokes SiteSegments_create operation.
 	//
 	// Create a resource from the site UI.
@@ -6653,6 +6667,105 @@ func (c *Client) sendSiteOAuthDescribe(ctx context.Context, params SiteOAuthDesc
 	return result, nil
 }
 
+// SitePublicConfirmationsPerform invokes SitePublicConfirmations_perform operation.
+//
+// Perform a double opt-in confirmation (ADR 0013). The deliberate human act behind the confirmation
+// page's button. Repeating it is a no-op.
+//
+// POST /confirmations/{token}
+func (c *Client) SitePublicConfirmationsPerform(ctx context.Context, params SitePublicConfirmationsPerformParams) (SitePublicConfirmationsPerformRes, error) {
+	res, err := c.sendSitePublicConfirmationsPerform(ctx, params)
+	return res, err
+}
+
+func (c *Client) sendSitePublicConfirmationsPerform(ctx context.Context, params SitePublicConfirmationsPerformParams) (res SitePublicConfirmationsPerformRes, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("SitePublicConfirmations_perform"),
+		semconv.HTTPRequestMethodKey.String("POST"),
+		semconv.URLTemplateKey.String("/confirmations/{token}"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, SitePublicConfirmationsPerformOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	stage = "BuildURL"
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [2]string
+	pathParts[0] = "/confirmations/"
+	{
+		// Encode "token" parameter.
+		e := uri.NewPathEncoder(uri.PathEncoderConfig{
+			Param:   "token",
+			Style:   uri.PathStyleSimple,
+			Explode: false,
+		})
+		if err := func() error {
+			return e.EncodeValue(conv.StringToString(params.Token))
+		}(); err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		encoded, err := e.Result()
+		if err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		pathParts[1] = encoded
+	}
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "POST", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+
+	stage = "SendRequest"
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	body := resp.Body
+	defer func() {
+		// Drain the body to EOF before closing, so the underlying
+		// connection can be reused by the Transport regardless of the
+		// response status code. See https://github.com/ogen-go/ogen/issues/1670.
+		_, _ = io.Copy(io.Discard, body)
+		_ = body.Close()
+	}()
+
+	stage = "DecodeResponse"
+	result, err := decodeSitePublicConfirmationsPerformResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
 // SitePublicInvitationsAccept invokes SitePublicInvitations_accept operation.
 //
 // Accept an invite: create or attach the User and create the Membership.
@@ -6846,6 +6959,105 @@ func (c *Client) sendSitePublicInvitationsLookup(ctx context.Context, params Sit
 
 	stage = "DecodeResponse"
 	result, err := decodeSitePublicInvitationsLookupResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// SitePublicUnsubscribesPerform invokes SitePublicUnsubscribes_perform operation.
+//
+// Perform an unsubscribe (ADR 0012). The button on the unsubscribe page; the mailbox provider
+// one-click POST keeps using POST /e/u/{token}. Repeating it is a no-op.
+//
+// POST /unsubscribes/{token}
+func (c *Client) SitePublicUnsubscribesPerform(ctx context.Context, params SitePublicUnsubscribesPerformParams) (SitePublicUnsubscribesPerformRes, error) {
+	res, err := c.sendSitePublicUnsubscribesPerform(ctx, params)
+	return res, err
+}
+
+func (c *Client) sendSitePublicUnsubscribesPerform(ctx context.Context, params SitePublicUnsubscribesPerformParams) (res SitePublicUnsubscribesPerformRes, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("SitePublicUnsubscribes_perform"),
+		semconv.HTTPRequestMethodKey.String("POST"),
+		semconv.URLTemplateKey.String("/unsubscribes/{token}"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, SitePublicUnsubscribesPerformOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	stage = "BuildURL"
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [2]string
+	pathParts[0] = "/unsubscribes/"
+	{
+		// Encode "token" parameter.
+		e := uri.NewPathEncoder(uri.PathEncoderConfig{
+			Param:   "token",
+			Style:   uri.PathStyleSimple,
+			Explode: false,
+		})
+		if err := func() error {
+			return e.EncodeValue(conv.StringToString(params.Token))
+		}(); err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		encoded, err := e.Result()
+		if err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		pathParts[1] = encoded
+	}
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "POST", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+
+	stage = "SendRequest"
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	body := resp.Body
+	defer func() {
+		// Drain the body to EOF before closing, so the underlying
+		// connection can be reused by the Transport regardless of the
+		// response status code. See https://github.com/ogen-go/ogen/issues/1670.
+		_, _ = io.Copy(io.Discard, body)
+		_ = body.Close()
+	}()
+
+	stage = "DecodeResponse"
+	result, err := decodeSitePublicUnsubscribesPerformResponse(resp)
 	if err != nil {
 		return res, errors.Wrap(err, "decode response")
 	}

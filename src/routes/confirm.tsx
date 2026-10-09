@@ -1,33 +1,37 @@
 import { Alert, Button, Card, Stack, Text, Title } from '@mantine/core'
-import { useState } from 'react'
+import { useMutation } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 
+import { sitePublicConfirmationsPerformMutation } from '../generated/site/@tanstack/react-query.gen.ts'
 import { confirmRoute } from '../router.tsx'
 
 // Public double opt-in confirmation page (ADR 0013). The GET /e/confirm/{token}
 // endpoint redirects here and records nothing — the confirmation happens only when
-// the user presses Confirm, which POSTs back to the same token endpoint. This keeps
-// GET safe so email link scanners can't confirm anyone (a deliberate human act is
+// the user presses Confirm, which performs it through the site API. This keeps GET
+// safe so email link scanners can't confirm anyone (a deliberate human act is
 // required for legal validity). An expired/invalid token arrives here without a
 // `token` (with `expired=1`), so the page offers "sign up again" instead of a dead
-// button. The `token` is a public, signed tracking token, so a direct fetch to
-// /e/confirm/{token} is used (tracking endpoints are outside the generated client).
+// button.
 export function ConfirmSubscriptionPage() {
-  const { t } = useTranslation()
   const { token, expired } = confirmRoute.useSearch()
-  const [status, setStatus] = useState<'idle' | 'pending' | 'done' | 'error'>('idle')
+  return <ConfirmSubscription token={token} expired={expired === '1'} />
+}
 
-  const confirm = async () => {
-    setStatus('pending')
-    try {
-      const res = await fetch(`/e/confirm/${token}`, { method: 'POST' })
-      setStatus(res.ok ? 'done' : 'error')
-    } catch {
-      setStatus('error')
-    }
+export function ConfirmSubscription({
+  token,
+  expired,
+}: {
+  token?: string | undefined
+  expired?: boolean
+}) {
+  const { t } = useTranslation()
+  const mutation = useMutation(sitePublicConfirmationsPerformMutation())
+
+  const confirm = () => {
+    if (token) mutation.mutate({ path: { token } })
   }
 
-  const isExpired = expired === '1' || !token
+  const isExpired = expired || !token
 
   return (
     <Stack maw={460} mx="auto" mt="xl" align="center">
@@ -39,7 +43,7 @@ export function ConfirmSubscriptionPage() {
               {t(($) => $.confirmSubscription.expiredBody)}
             </Text>
           </Stack>
-        ) : status === 'done' ? (
+        ) : mutation.isSuccess ? (
           <Stack align="center" gap="sm">
             <Title order={3}>{t(($) => $.confirmSubscription.doneTitle)}</Title>
             <Text c="dimmed" ta="center">
@@ -52,12 +56,12 @@ export function ConfirmSubscriptionPage() {
             <Text c="dimmed" ta="center">
               {t(($) => $.confirmSubscription.body)}
             </Text>
-            {status === 'error' ? (
+            {mutation.isError ? (
               <Alert color="red" title={t(($) => $.confirmSubscription.errorTitle)} w="100%">
                 {t(($) => $.confirmSubscription.errorBody)}
               </Alert>
             ) : null}
-            <Button onClick={confirm} loading={status === 'pending'}>
+            <Button onClick={confirm} loading={mutation.isPending}>
               {t(($) => $.confirmSubscription.confirm)}
             </Button>
           </Stack>

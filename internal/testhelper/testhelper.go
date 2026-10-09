@@ -192,7 +192,7 @@ func Setup(t *testing.T) *TestEnv {
 		Segments: segmentsModule, EventLog: eventLog, Contacts: contactsModule, Tags: tagsModule,
 		Automations: automationsModule, Broadcasts: broadcastsModule,
 		Welcome: inline, SysMail: inline, DomainVerify: inline,
-		Tokens: authtoken.New(baseCfg.JWTSecret), AppURL: baseCfg.AppURL,
+		Tokens: authtoken.New(baseCfg.JWTSecret), Tracker: tracking.New(baseCfg.JWTSecret, baseCfg.AppURL), AppURL: baseCfg.AppURL,
 	}, external, mcpHandler)
 	require.NoError(t, err, "build server")
 

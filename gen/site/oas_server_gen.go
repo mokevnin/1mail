@@ -265,6 +265,13 @@ type Handler interface {
 	//
 	// GET /oauth/authorization
 	SiteOAuthDescribe(ctx context.Context, params SiteOAuthDescribeParams) (SiteOAuthDescribeRes, error)
+	// SitePublicConfirmationsPerform implements SitePublicConfirmations_perform operation.
+	//
+	// Perform a double opt-in confirmation (ADR 0013). The deliberate human act behind the confirmation
+	// page's button. Repeating it is a no-op.
+	//
+	// POST /confirmations/{token}
+	SitePublicConfirmationsPerform(ctx context.Context, params SitePublicConfirmationsPerformParams) (SitePublicConfirmationsPerformRes, error)
 	// SitePublicInvitationsAccept implements SitePublicInvitations_accept operation.
 	//
 	// Accept an invite: create or attach the User and create the Membership.
@@ -277,6 +284,13 @@ type Handler interface {
 	//
 	// GET /invitations/{token}
 	SitePublicInvitationsLookup(ctx context.Context, params SitePublicInvitationsLookupParams) (SitePublicInvitationsLookupRes, error)
+	// SitePublicUnsubscribesPerform implements SitePublicUnsubscribes_perform operation.
+	//
+	// Perform an unsubscribe (ADR 0012). The button on the unsubscribe page; the mailbox provider
+	// one-click POST keeps using POST /e/u/{token}. Repeating it is a no-op.
+	//
+	// POST /unsubscribes/{token}
+	SitePublicUnsubscribesPerform(ctx context.Context, params SitePublicUnsubscribesPerformParams) (SitePublicUnsubscribesPerformRes, error)
 	// SiteSegmentsCreate implements SiteSegments_create operation.
 	//
 	// Create a resource from the site UI.

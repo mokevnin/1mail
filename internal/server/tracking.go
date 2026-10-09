@@ -3,7 +3,6 @@ package server
 import (
 	"context"
 	"encoding/base64"
-	"net"
 	"net/http"
 	"net/url"
 	"strings"
@@ -11,7 +10,7 @@ import (
 
 	"github.com/mokevnin/1mail/ent"
 	"github.com/mokevnin/1mail/ent/broadcastrecipient"
-	"github.com/mokevnin/1mail/ent/confirmation"
+	"github.com/mokevnin/1mail/internal/clientip"
 	"github.com/mokevnin/1mail/internal/consent"
 	"github.com/mokevnin/1mail/internal/eligibility"
 	"github.com/mokevnin/1mail/internal/events"
@@ -37,8 +36,10 @@ var pixelGIF, _ = base64.StdEncoding.DecodeString(
 // Unsubscribe and confirm are split by method (ADR 0012 / RFC 8058, ADR 0013): GET
 // is safe and only renders the confirmation page, so link scanners and security
 // proxies that GET every URL cannot unsubscribe or confirm anyone; the state change
-// happens only on POST — the target of both the mailbox one-click POST and the
-// page's button. Confirmation tokens additionally expire (~7 days).
+// happens only on POST — the target of the mailbox one-click POST (RFC 8058). The
+// page's button performs the same effect through the site API (POST
+// /site/unsubscribes/{token}, /site/confirmations/{token}), so the SPA stays on the
+// generated client; the POST here remains for mailbox providers. Confirmation tokens additionally expire (~7 days).
 //
 // The token is a signed per-recipient JWT. Opens always return the pixel (even
 // on a bad token) so we never leak token validity through the image.
@@ -119,27 +120,13 @@ func trackingHandler(client *ent.Client, bus *events.Bus, tracker *tracking.Trac
 		}
 		// Performs the confirmation — the deliberate human act required for legal
 		// validity. No page is returned; the SPA transitions its UI on 204.
-		recordConfirmation(r.Context(), client, bus, target, clientIP(r))
+		if err := consent.RecordConfirmation(r.Context(), client, bus, target, clientip.FromRequest(r)); err != nil {
+			logging.FromContext(r.Context()).Error("tracking: confirmation failed", "destination", target.Destination, "err", err)
+		}
 		w.WriteHeader(http.StatusNoContent)
 	})
 
 	return mux
-}
-
-// clientIP is the best-effort confirming client address recorded as GDPR proof on
-// a double-opt-in confirmation. It prefers the first hop of X-Forwarded-For (the
-// binary runs behind Caddy/ingress) and falls back to the connection's remote host.
-func clientIP(r *http.Request) string {
-	if xff := r.Header.Get("X-Forwarded-For"); xff != "" {
-		if first, _, ok := strings.Cut(xff, ","); ok {
-			return strings.TrimSpace(first)
-		}
-		return strings.TrimSpace(xff)
-	}
-	if host, _, err := net.SplitHostPort(r.RemoteAddr); err == nil {
-		return host
-	}
-	return r.RemoteAddr
 }
 
 // confirmRedirect is the SPA confirmation route the GET handler redirects to. It
@@ -226,50 +213,5 @@ func recordClick(ctx context.Context, client *ent.Client, bus *events.Bus, recip
 	})
 	if err != nil {
 		logging.FromContext(ctx).Error("tracking: record click failed", "recipient_id", recipientID, "err", err)
-	}
-}
-
-// recordConfirmation writes the derived Confirmation read-model row (provenance
-// double_opt_in) and publishes the immutable marketing.confirmed Event in one
-// transaction (ADR 0013) — the positive mirror of consent.RecordUnsubscribe. It is keyed
-// by destination, so it records even if the contact was deleted between send and
-// click. The existence check makes a repeated POST (mailbox retry, double click)
-// a complete no-op: the confirmation stands and no second Event is logged.
-func recordConfirmation(ctx context.Context, client *ent.Client, bus *events.Bus, target tracking.ConfirmTarget, ip string) {
-	dest := eligibility.NormalizeDestination(target.Destination)
-	if dest == "" || target.WorkspaceID == 0 {
-		return
-	}
-
-	err := bus.WithinTx(ctx, func(tx *ent.Client, pub events.Publisher) error {
-		exists, err := tx.Confirmation.Query().Where(
-			confirmation.WorkspaceID(target.WorkspaceID),
-			confirmation.ChannelEQ(confirmation.ChannelEmail),
-			confirmation.DestinationEQ(dest),
-		).Exist(ctx)
-		if err != nil || exists {
-			return err
-		}
-		create := tx.Confirmation.Create().
-			SetWorkspaceID(target.WorkspaceID).
-			SetChannel(confirmation.ChannelEmail).
-			SetDestination(dest).
-			SetProvenance(confirmation.ProvenanceDoubleOptIn)
-		if target.ContactID != 0 {
-			create.SetContactID(target.ContactID)
-		}
-		if _, err := create.Save(ctx); err != nil {
-			return err
-		}
-		return pub.Publish(ctx, &events.MarketingConfirmed{
-			WorkspaceID: target.WorkspaceID,
-			ContactID:   target.ContactID,
-			Email:       dest,
-			Provenance:  string(confirmation.ProvenanceDoubleOptIn),
-			IP:          ip,
-		})
-	})
-	if err != nil {
-		logging.FromContext(ctx).Error("tracking: confirmation failed", "destination", dest, "err", err)
 	}
 }

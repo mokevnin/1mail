@@ -1896,6 +1896,30 @@ func encodeSiteOAuthDescribeResponse(response SiteOAuthDescribeRes, w http.Respo
 	}
 }
 
+func encodeSitePublicConfirmationsPerformResponse(response SitePublicConfirmationsPerformRes, w http.ResponseWriter, span trace.Span) error {
+	switch response := response.(type) {
+	case *SitePublicConfirmationsPerformNoContent:
+		w.WriteHeader(204)
+
+		return nil
+
+	case *ProblemDetails:
+		w.Header().Set("Content-Type", "application/problem+json")
+		w.WriteHeader(400)
+
+		e := new(jx.Encoder)
+		response.Encode(e)
+		if _, err := e.WriteTo(w); err != nil {
+			return errors.Wrap(err, "write")
+		}
+
+		return nil
+
+	default:
+		return errors.Errorf("unexpected response type: %T", response)
+	}
+}
+
 func encodeSitePublicInvitationsAcceptResponse(response SitePublicInvitationsAcceptRes, w http.ResponseWriter, span trace.Span) error {
 	switch response := response.(type) {
 	case *SitePublicInvitationsAcceptOK:
@@ -1949,6 +1973,30 @@ func encodeSitePublicInvitationsLookupResponse(response SitePublicInvitationsLoo
 	case *ProblemDetails:
 		w.Header().Set("Content-Type", "application/problem+json")
 		w.WriteHeader(404)
+
+		e := new(jx.Encoder)
+		response.Encode(e)
+		if _, err := e.WriteTo(w); err != nil {
+			return errors.Wrap(err, "write")
+		}
+
+		return nil
+
+	default:
+		return errors.Errorf("unexpected response type: %T", response)
+	}
+}
+
+func encodeSitePublicUnsubscribesPerformResponse(response SitePublicUnsubscribesPerformRes, w http.ResponseWriter, span trace.Span) error {
+	switch response := response.(type) {
+	case *SitePublicUnsubscribesPerformNoContent:
+		w.WriteHeader(204)
+
+		return nil
+
+	case *ProblemDetails:
+		w.Header().Set("Content-Type", "application/problem+json")
+		w.WriteHeader(400)
 
 		e := new(jx.Encoder)
 		response.Encode(e)

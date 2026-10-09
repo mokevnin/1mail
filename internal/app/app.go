@@ -712,7 +712,7 @@ func siteDeps(i do.Injector) (apisite.Deps, error) {
 		Ent: client.Client, Bus: bus.Bus, Cipher: cipher, Catalog: catalog, Outbound: sender.Module,
 		Segments: seg, EventLog: evlog, Contacts: con, Tags: tg, Automations: auto,
 		Broadcasts: bc, Welcome: jc.Client, SysMail: jc.Client, DomainVerify: jc.Client,
-		Tokens: tokens, AppURL: cfg.AppURL,
+		Tokens: tokens, Tracker: tracking.New(cfg.JWTSecret, cfg.AppURL), AppURL: cfg.AppURL,
 	}, nil
 }
 

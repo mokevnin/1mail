@@ -399,6 +399,16 @@ func (UnimplementedHandler) SiteOAuthDescribe(ctx context.Context, params SiteOA
 	return r, ht.ErrNotImplemented
 }
 
+// SitePublicConfirmationsPerform implements SitePublicConfirmations_perform operation.
+//
+// Perform a double opt-in confirmation (ADR 0013). The deliberate human act behind the confirmation
+// page's button. Repeating it is a no-op.
+//
+// POST /confirmations/{token}
+func (UnimplementedHandler) SitePublicConfirmationsPerform(ctx context.Context, params SitePublicConfirmationsPerformParams) (r SitePublicConfirmationsPerformRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // SitePublicInvitationsAccept implements SitePublicInvitations_accept operation.
 //
 // Accept an invite: create or attach the User and create the Membership.
@@ -414,6 +424,16 @@ func (UnimplementedHandler) SitePublicInvitationsAccept(ctx context.Context, req
 //
 // GET /invitations/{token}
 func (UnimplementedHandler) SitePublicInvitationsLookup(ctx context.Context, params SitePublicInvitationsLookupParams) (r SitePublicInvitationsLookupRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// SitePublicUnsubscribesPerform implements SitePublicUnsubscribes_perform operation.
+//
+// Perform an unsubscribe (ADR 0012). The button on the unsubscribe page; the mailbox provider
+// one-click POST keeps using POST /e/u/{token}. Repeating it is a no-op.
+//
+// POST /unsubscribes/{token}
+func (UnimplementedHandler) SitePublicUnsubscribesPerform(ctx context.Context, params SitePublicUnsubscribesPerformParams) (r SitePublicUnsubscribesPerformRes, _ error) {
 	return r, ht.ErrNotImplemented
 }
 

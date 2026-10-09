@@ -260,8 +260,8 @@ export const confirmEmailChangeRoute = createRoute({
 })
 
 // Public double opt-in confirmation page (no auth): the GET /e/confirm/{token}
-// endpoint redirects here (ADR 0013 — GET records nothing). `token` is POSTed back
-// to /e/confirm/{token} on confirm to record the confirmation; an expired/invalid
+// endpoint redirects here (ADR 0013 — GET records nothing). `token` is sent through
+// the site API on confirm to record the confirmation; an expired/invalid
 // link arrives with `expired=1` and no token, so the page offers sign-up-again.
 export const confirmRoute = createRoute({
   getParentRoute: () => rootRoute,
@@ -271,8 +271,8 @@ export const confirmRoute = createRoute({
 })
 
 // Public unsubscribe confirm page (no auth): the GET /e/u/{token} endpoint
-// redirects here (RFC 8058 / ADR 0012 — GET records nothing). `token` is POSTed
-// back to /e/u/{token} on confirm to perform the opt-out; `all` is the optional
+// redirects here (RFC 8058 / ADR 0012 — GET records nothing). `token` is sent through
+// the site API on confirm to perform the opt-out; `all` is the optional
 // "unsubscribe from everything" escalation URL the backend supplies.
 export const unsubscribeRoute = createRoute({
   getParentRoute: () => rootRoute,

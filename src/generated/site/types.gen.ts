@@ -2085,6 +2085,33 @@ export type SiteAuthVerifyEmailResponses = {
   200: unknown;
 };
 
+export type SitePublicConfirmationsPerformData = {
+  body?: never;
+  path: {
+    token: string;
+  };
+  query?: never;
+  url: '/confirmations/{token}';
+};
+
+export type SitePublicConfirmationsPerformErrors = {
+  /**
+   * RFC 7807 bad request response
+   */
+  400: ProblemDetails;
+};
+
+export type SitePublicConfirmationsPerformError = SitePublicConfirmationsPerformErrors[keyof SitePublicConfirmationsPerformErrors];
+
+export type SitePublicConfirmationsPerformResponses = {
+  /**
+   * There is no content to send for this request, but the headers may be useful.
+   */
+  204: void;
+};
+
+export type SitePublicConfirmationsPerformResponse = SitePublicConfirmationsPerformResponses[keyof SitePublicConfirmationsPerformResponses];
+
 export type SitePublicInvitationsLookupData = {
   body?: never;
   path: {
@@ -2296,6 +2323,33 @@ export type SiteOAuthDecideResponses = {
 };
 
 export type SiteOAuthDecideResponse = SiteOAuthDecideResponses[keyof SiteOAuthDecideResponses];
+
+export type SitePublicUnsubscribesPerformData = {
+  body?: never;
+  path: {
+    token: string;
+  };
+  query?: never;
+  url: '/unsubscribes/{token}';
+};
+
+export type SitePublicUnsubscribesPerformErrors = {
+  /**
+   * RFC 7807 bad request response
+   */
+  400: ProblemDetails;
+};
+
+export type SitePublicUnsubscribesPerformError = SitePublicUnsubscribesPerformErrors[keyof SitePublicUnsubscribesPerformErrors];
+
+export type SitePublicUnsubscribesPerformResponses = {
+  /**
+   * There is no content to send for this request, but the headers may be useful.
+   */
+  204: void;
+};
+
+export type SitePublicUnsubscribesPerformResponse = SitePublicUnsubscribesPerformResponses[keyof SitePublicUnsubscribesPerformResponses];
 
 export type SiteWorkspacesListData = {
   body?: never;

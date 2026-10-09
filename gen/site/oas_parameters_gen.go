@@ -4561,6 +4561,71 @@ func decodeSiteOAuthDescribeParams(args [0]string, argsEscaped bool, r *http.Req
 	return params, nil
 }
 
+// SitePublicConfirmationsPerformParams is parameters of SitePublicConfirmations_perform operation.
+type SitePublicConfirmationsPerformParams struct {
+	Token string
+}
+
+func unpackSitePublicConfirmationsPerformParams(packed middleware.Parameters) (params SitePublicConfirmationsPerformParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "token",
+			In:   "path",
+		}
+		params.Token = packed[key].(string)
+	}
+	return params
+}
+
+func decodeSitePublicConfirmationsPerformParams(args [1]string, argsEscaped bool, r *http.Request) (params SitePublicConfirmationsPerformParams, _ error) {
+	// Decode path: token.
+	if err := func() error {
+		param := args[0]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[0])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "token",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToString(val)
+				if err != nil {
+					return err
+				}
+
+				params.Token = c
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "token",
+			In:   "path",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
 // SitePublicInvitationsAcceptParams is parameters of SitePublicInvitations_accept operation.
 type SitePublicInvitationsAcceptParams struct {
 	Token string
@@ -4643,6 +4708,71 @@ func unpackSitePublicInvitationsLookupParams(packed middleware.Parameters) (para
 }
 
 func decodeSitePublicInvitationsLookupParams(args [1]string, argsEscaped bool, r *http.Request) (params SitePublicInvitationsLookupParams, _ error) {
+	// Decode path: token.
+	if err := func() error {
+		param := args[0]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[0])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "token",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToString(val)
+				if err != nil {
+					return err
+				}
+
+				params.Token = c
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "token",
+			In:   "path",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
+// SitePublicUnsubscribesPerformParams is parameters of SitePublicUnsubscribes_perform operation.
+type SitePublicUnsubscribesPerformParams struct {
+	Token string
+}
+
+func unpackSitePublicUnsubscribesPerformParams(packed middleware.Parameters) (params SitePublicUnsubscribesPerformParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "token",
+			In:   "path",
+		}
+		params.Token = packed[key].(string)
+	}
+	return params
+}
+
+func decodeSitePublicUnsubscribesPerformParams(args [1]string, argsEscaped bool, r *http.Request) (params SitePublicUnsubscribesPerformParams, _ error) {
 	// Decode path: token.
 	if err := func() error {
 		param := args[0]

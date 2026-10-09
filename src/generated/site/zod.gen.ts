@@ -1138,6 +1138,15 @@ export const zSiteAuthResetPasswordBody = zSiteResetPasswordInput;
 
 export const zSiteAuthVerifyEmailBody = zSiteVerifyEmailInput;
 
+export const zSitePublicConfirmationsPerformPath = z.object({
+  token: z.string()
+});
+
+/**
+ * There is no content to send for this request, but the headers may be useful.
+ */
+export const zSitePublicConfirmationsPerformResponse = z.void();
+
 export const zSitePublicInvitationsLookupPath = z.object({
   token: z.string()
 });
@@ -1184,6 +1193,15 @@ export const zSiteOAuthDecideBody = zSiteOAuthDecisionInput;
  * The request has succeeded.
  */
 export const zSiteOAuthDecideResponse = zSiteOAuthDecisionResult;
+
+export const zSitePublicUnsubscribesPerformPath = z.object({
+  token: z.string()
+});
+
+/**
+ * There is no content to send for this request, but the headers may be useful.
+ */
+export const zSitePublicUnsubscribesPerformResponse = z.void();
 
 /**
  * The request has succeeded.
