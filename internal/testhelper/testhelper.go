@@ -120,6 +120,26 @@ func initBaseline() {
 	})
 }
 
+// The committed second tenant (fixtures/workspaces.yml) and its minimal foreign
+// rows. Cross-tenant isolation tests reference these instead of creating a second
+// workspace inline; every row belongs to GlobexWorkspaceID.
+const (
+	GlobexWorkspaceID    int64 = 2
+	GlobexSegmentID      int64 = 900
+	GlobexBroadcastID    int64 = 900
+	GlobexTemplateID     int64 = 900
+	GlobexWebhookID      int64 = 900
+	GlobexTagID          int64 = 900
+	GlobexEventAction          = "globex_only"
+	GlobexCustomFieldKey       = "globex_only"
+	GlobexSendingDomain        = "mail.globex.test"
+	GlobexWebhookURL           = "https://globex.example/hook"
+	GlobexSegmentName          = "Globex only"
+	GlobexBroadcastName        = "Globex only"
+	GlobexTemplateName         = "Globex template"
+	GlobexTagName              = "globex-only"
+)
+
 type TestEnv struct {
 	DB     *ent.Client // transaction-bound; rolled back when the test finishes
 	SQLDB  *sql.DB     // the same txdb connection the ent client and bus ride

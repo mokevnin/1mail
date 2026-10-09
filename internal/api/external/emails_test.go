@@ -151,11 +151,7 @@ func TestExternalEmailsSendCrossWorkspaceTemplate(t *testing.T) {
 	env := testhelper.Setup(t)
 	ctx := context.Background()
 
-	ws2, err := env.DB.Workspace.Create().
-		SetName("Globex").SetSlug("globex-emails").
-		SetCollectKey("globex-ck").SetIngestKey("globex-ik").Save(ctx)
-	require.NoError(t, err)
-	otherTmpl := seedTemplate(t, env.DB, ws2.ID)
+	otherTmpl := env.DB.EmailTemplate.GetX(ctx, testhelper.GlobexTemplateID)
 
 	// Token belongs to workspace 1; referencing ws2's template id must 404.
 	c := client(t, env, seedToken(t, env.DB, []string{"emails:send"}))

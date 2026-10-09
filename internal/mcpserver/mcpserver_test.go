@@ -265,10 +265,7 @@ func TestMCPToolCallReturnsTheAPIError(t *testing.T) {
 
 func TestMCPCallsAreIsolatedToTheTokensWorkspace(t *testing.T) {
 	env := testhelper.Setup(t)
-	other, err := env.DB.Workspace.Create().SetName("Other").SetSlug("other").
-		SetCollectKey("omck_other").SetIngestKey("omik_other").Save(context.Background())
-	require.NoError(t, err)
-	s := env.MCPClient(t, seedToken(t, env, int(other.ID), []string{"contacts:read"}))
+	s := env.MCPClient(t, seedToken(t, env, int(testhelper.GlobexWorkspaceID), []string{"contacts:read"}))
 
 	res := call(t, s, "contacts_get", map[string]any{"id": "1"})
 	require.True(t, res.IsError, "contact 1 belongs to workspace acme")

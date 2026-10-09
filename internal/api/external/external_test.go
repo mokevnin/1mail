@@ -277,19 +277,7 @@ func TestExternalEventsWorkspaceIsolation(t *testing.T) {
 	env := testhelper.Setup(t)
 	ctx := context.Background()
 
-	// A second workspace with an event carrying an action unique to it.
-	ws2, err := env.DB.Workspace.Create().
-		SetName("Globex").SetSlug("globex").SetCollectKey("globex-collect-key").
-		SetIngestKey("globex-ingest-key").
-		Save(ctx)
-	require.NoError(t, err)
-	_, err = env.DB.Event.Create().
-		SetWorkspaceID(ws2.ID).
-		SetSubjectID("user:other@example.com").
-		SetAction("ws2_only_action").
-		Save(ctx)
-	require.NoError(t, err)
-
+	// The Globex tenant has an event carrying an action unique to it (fixture).
 	// seedToken always binds to workspace 1.
 	c := client(t, env, seedToken(t, env.DB, []string{"events:read", "events:write"}))
 
@@ -299,7 +287,7 @@ func TestExternalEventsWorkspaceIsolation(t *testing.T) {
 	ok := res.(*externalapi.EventActionsListOK)
 	acmeActions := make([]string, len(ok.Items))
 	for i, item := range ok.Items {
-		assert.NotEqual(t, "ws2_only_action", item.Action, "another tenant's action leaked")
+		assert.NotEqual(t, testhelper.GlobexEventAction, item.Action, "another tenant's action leaked")
 		acmeActions[i] = item.Action
 	}
 	assert.Contains(t, acmeActions, "page_view", "the workspace's own actions are returned")

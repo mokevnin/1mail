@@ -132,19 +132,13 @@ func TestExternalWebhooksAreWorkspaceScoped(t *testing.T) {
 	env := testhelper.Setup(t)
 	ctx := context.Background()
 
-	ws2, err := env.DB.Workspace.Create().SetName("Globex").SetSlug("globex-wh").
-		SetCollectKey("globex-wh-ck").SetIngestKey("globex-wh-ik").Save(ctx)
-	require.NoError(t, err)
-	foreign, err := env.DB.WebhookEndpoint.Create().SetWorkspaceID(ws2.ID).
-		SetURL("https://globex.example/hook").SetSecretEncrypted("x").Save(ctx)
-	require.NoError(t, err)
-	id := entityIDString(foreign.ID)
+	id := entityIDString(testhelper.GlobexWebhookID)
 
 	c := client(t, env, seedToken(t, env.DB, []string{"webhooks:read", "webhooks:write"}))
 	list, err := c.WebhooksList(ctx, externalapi.WebhooksListParams{})
 	require.NoError(t, err)
 	for _, it := range list.(*externalapi.WebhooksListOK).Items {
-		assert.NotEqual(t, "https://globex.example/hook", it.URL)
+		assert.NotEqual(t, testhelper.GlobexWebhookURL, it.URL)
 	}
 	g, err := c.WebhooksGet(ctx, externalapi.WebhooksGetParams{ID: id})
 	require.NoError(t, err)

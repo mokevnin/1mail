@@ -17,7 +17,7 @@ import (
 // contact 1; tag 3 "unused" on nobody. Contact 2 has no tags.
 const (
 	wsID      = int64(1)
-	otherWsID = int64(2)
+	otherWsID = testhelper.GlobexWorkspaceID
 )
 
 func names(ts []*ent.Tag) []string {
@@ -34,7 +34,7 @@ func TestListReturnsTheWorkspaceCatalogue(t *testing.T) {
 
 	other, err := m.List(context.Background(), otherWsID)
 	require.NoError(t, err)
-	assert.Empty(t, other)
+	assert.Equal(t, []string{testhelper.GlobexTagName}, names(other), "each workspace sees only its own tags")
 }
 
 func TestForContactListsOnlyItsTags(t *testing.T) {

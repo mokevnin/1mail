@@ -255,17 +255,9 @@ func TestExternalBroadcastsAreIsolatedToTheTokensWorkspace(t *testing.T) {
 	env := testhelper.Setup(t)
 	ctx := context.Background()
 
-	// A second workspace with its own broadcast and segment (incidental: the
-	// fixtures hold a single workspace).
-	ws2, err := env.DB.Workspace.Create().
-		SetName("Globex").SetSlug("globex").SetCollectKey("globex-collect-key").SetIngestKey("globex-ingest-key").
-		Save(ctx)
-	require.NoError(t, err)
-	foreign, err := env.DB.Broadcast.Create().SetWorkspaceID(ws2.ID).SetName("Globex only").Save(ctx)
-	require.NoError(t, err)
-	foreignID := externalapi.EntityId(strconv.FormatInt(foreign.ID, 10))
-	foreignSeg, err := env.DB.Segment.Create().SetWorkspaceID(ws2.ID).SetName("Globex segment").Save(ctx)
-	require.NoError(t, err)
+	// The Globex tenant's committed broadcast and segment.
+	foreignID := externalapi.EntityId(strconv.FormatInt(testhelper.GlobexBroadcastID, 10))
+	foreignSegID := testhelper.GlobexSegmentID
 
 	c := client(t, env, seedToken(t, env.DB, authorScopes)) // bound to workspace 1
 
@@ -296,10 +288,10 @@ func TestExternalBroadcastsAreIsolatedToTheTokensWorkspace(t *testing.T) {
 	assert.IsType(t, &externalapi.BroadcastsSetAudienceNotFound{}, aud)
 
 	// Another workspace's segment cannot be the audience of our broadcast.
-	cross, err := c.BroadcastsSetAudience(ctx, &externalapi.SetBroadcastAudienceInput{SegmentId: externalapi.NewNilEntityId(externalapi.EntityId(strconv.FormatInt(foreignSeg.ID, 10)))},
+	cross, err := c.BroadcastsSetAudience(ctx, &externalapi.SetBroadcastAudienceInput{SegmentId: externalapi.NewNilEntityId(externalapi.EntityId(strconv.FormatInt(foreignSegID, 10)))},
 		externalapi.BroadcastsSetAudienceParams{ID: draftBroadcast})
 	require.NoError(t, err)
 	assert.IsType(t, &externalapi.BroadcastsSetAudienceUnprocessableEntity{}, cross)
 
-	assert.Equal(t, "Globex only", env.DB.Broadcast.GetX(ctx, foreign.ID).Name, "the foreign broadcast is untouched")
+	assert.Equal(t, testhelper.GlobexBroadcastName, env.DB.Broadcast.GetX(ctx, testhelper.GlobexBroadcastID).Name, "the foreign broadcast is untouched")
 }

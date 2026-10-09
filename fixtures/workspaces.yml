@@ -5,3 +5,14 @@
   ingest_key: omik_test_acme_ingest_key
   created_at: '2026-01-01 00:00:00'
   updated_at: '2026-01-01 00:00:00'
+# Anchor second tenant (Globex) — DO NOT change. It holds the minimal foreign rows
+# (ids 900+ in the other fixture files, all workspace_id 2) that cross-tenant
+# isolation tests assert are never visible to, or mutable by, workspace 1. It has
+# no members, integration or contacts of its own.
+- id: 2
+  name: Globex
+  slug: globex
+  collect_key: omck_test_globex_collect_key
+  ingest_key: omik_test_globex_ingest_key
+  created_at: '2026-01-01 00:00:00'
+  updated_at: '2026-01-01 00:00:00'

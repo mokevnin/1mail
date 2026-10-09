@@ -52,13 +52,9 @@ func TestResolverNoDefault(t *testing.T) {
 	env := testhelper.Setup(t)
 	ctx := context.Background()
 
-	ws, err := env.DB.Workspace.Create().
-		SetName("No Provider").SetSlug("no-provider").
-		SetCollectKey("no-provider-ck").SetIngestKey("no-provider-ik").Save(ctx)
-	require.NoError(t, err)
-
+	// The Globex fixture tenant has no integration.
 	resolver := messaging.NewResolver(env.DB, newTestCipher(t), registry.Default())
 
-	_, err = resolver.EmailSender(ctx, ws.ID)
+	_, err := resolver.EmailSender(ctx, testhelper.GlobexWorkspaceID)
 	assert.ErrorIs(t, err, messaging.ErrNoProvider)
 }

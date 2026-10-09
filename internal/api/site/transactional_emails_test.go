@@ -33,11 +33,7 @@ func TestSiteTransactionalEmailsList(t *testing.T) {
 
 	// acme's own transactional sends come from the fixtures. A second workspace's
 	// row is seeded only to prove it is excluded (the cross-tenant negative case).
-	ws2, err := env.DB.Workspace.Create().
-		SetName("Globex").SetSlug("globex-tx").
-		SetCollectKey("globex-tx-ck").SetIngestKey("globex-tx-ik").Save(ctx)
-	require.NoError(t, err)
-	seedTransactional(t, env.DB, ws2.ID, "leak@example.com", outboundmessage.StatusSent)
+	seedTransactional(t, env.DB, testhelper.GlobexWorkspaceID, "leak@example.com", outboundmessage.StatusSent)
 
 	c := siteClient(t, env, "info@1mail.com")
 	res, err := c.SiteTransactionalEmailsList(ctx, siteapi.SiteTransactionalEmailsListParams{Slug: "acme"})

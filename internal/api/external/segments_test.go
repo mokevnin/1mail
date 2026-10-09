@@ -137,21 +137,14 @@ func TestExternalSegmentsWorkspaceIsolation(t *testing.T) {
 	env := testhelper.Setup(t)
 	ctx := context.Background()
 
-	ws2, err := env.DB.Workspace.Create().
-		SetName("Globex").SetSlug("globex").SetCollectKey("globex-collect-key").
-		SetIngestKey("globex-ingest-key").Save(ctx)
-	require.NoError(t, err)
-	other, err := env.DB.Segment.Create().SetWorkspaceID(ws2.ID).SetName("Globex only").
-		SetType(segment.TypeSnapshot).Save(ctx)
-	require.NoError(t, err)
-	id := externalapi.EntityId(strconv.FormatInt(other.ID, 10))
+	id := externalapi.EntityId(strconv.FormatInt(testhelper.GlobexSegmentID, 10))
 
 	c := client(t, env, seedToken(t, env.DB, []string{"segments:read", "segments:write"}))
 
 	list, err := c.SegmentsList(ctx, externalapi.SegmentsListParams{})
 	require.NoError(t, err)
 	for _, s := range list.(*externalapi.SegmentsListOK).Items {
-		assert.NotEqual(t, "Globex only", s.Name, "another tenant's segment leaked")
+		assert.NotEqual(t, testhelper.GlobexSegmentName, s.Name, "another tenant's segment leaked")
 	}
 	get, err := c.SegmentsGet(ctx, externalapi.SegmentsGetParams{ID: id})
 	require.NoError(t, err)

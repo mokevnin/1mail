@@ -15,3 +15,12 @@
   workspace_id: 1
   created_at: '{{daysAgo 50}}'
   updated_at: '{{daysAgo 50}}'
+
+# --- Globex (workspace 2) foreign row — DO NOT change ---
+- id: 900
+  url: https://globex.example/hook
+  secret_encrypted: '{{ encrypt "whsec_globex" }}'
+  enabled: true
+  workspace_id: 2
+  created_at: '2026-01-01 00:00:00'
+  updated_at: '2026-01-01 00:00:00'

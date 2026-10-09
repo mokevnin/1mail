@@ -78,16 +78,13 @@ func TestActionsAreDistinctSortedAndWorkspaceScoped(t *testing.T) {
 	ctx := context.Background()
 	m := eventlog.New(env.DB, env.Bus)
 
-	ws2 := env.DB.Workspace.Create().SetName("Globex").SetSlug("globex").
-		SetCollectKey("globex-collect").SetIngestKey("globex-ingest").SaveX(ctx)
-	env.DB.Event.Create().SetWorkspaceID(ws2.ID).SetSubjectID("g").SetAction("globex_only").SaveX(ctx)
 	env.DB.Event.Create().SetWorkspaceID(1).SetSubjectID("dup").SetAction("page_view").SaveX(ctx)
 
 	got, err := m.Actions(ctx, 1)
 	require.NoError(t, err)
 	assert.True(t, sort.StringsAreSorted(got))
 	assert.Contains(t, got, "purchase")
-	assert.NotContains(t, got, "globex_only")
+	assert.NotContains(t, got, testhelper.GlobexEventAction)
 	count := 0
 	for _, a := range got {
 		if a == "page_view" {
@@ -96,7 +93,7 @@ func TestActionsAreDistinctSortedAndWorkspaceScoped(t *testing.T) {
 	}
 	assert.Equal(t, 1, count, "distinct")
 
-	other, err := m.Actions(ctx, ws2.ID)
+	other, err := m.Actions(ctx, testhelper.GlobexWorkspaceID)
 	require.NoError(t, err)
-	assert.Equal(t, []string{"globex_only"}, other)
+	assert.Equal(t, []string{testhelper.GlobexEventAction}, other)
 }

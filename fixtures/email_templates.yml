@@ -21,3 +21,12 @@
   workspace_id: 1
   created_at: '{{daysAgo 120}}'
   updated_at: '{{daysAgo 60}}'
+
+# --- Globex (workspace 2) foreign row — DO NOT change ---
+- id: 900
+  name: Globex template
+  subject: Globex
+  body: '<mjml><mj-body><mj-section><mj-column><mj-text>Globex.</mj-text></mj-column></mj-section></mj-body></mjml>'
+  workspace_id: 2
+  created_at: '2026-01-01 00:00:00'
+  updated_at: '2026-01-01 00:00:00'

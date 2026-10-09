@@ -104,15 +104,11 @@ func TestEventConditions(t *testing.T) {
 	annID := mk("ann@evseg.test")
 	mk("bob@evseg.test")
 
-	// A second real workspace (FK-valid) to prove the join is workspace-scoped.
-	ws2, err := env.DB.Workspace.Create().
-		SetName("Other").SetSlug("other-evseg").SetCollectKey("k-evseg").SetIngestKey("ik-evseg").Save(ctx)
-	require.NoError(t, err)
-
+	// The committed Globex tenant proves the join is workspace-scoped.
 	now := time.Now()
-	mkEvent(annID, "page_view", wsID, now.AddDate(0, 0, -2))  // recent
-	mkEvent(annID, "purchase", wsID, now.AddDate(0, 0, -40))  // old
-	mkEvent(annID, "ws2_only", ws2.ID, now.AddDate(0, 0, -1)) // other workspace
+	mkEvent(annID, "page_view", wsID, now.AddDate(0, 0, -2))                        // recent
+	mkEvent(annID, "purchase", wsID, now.AddDate(0, 0, -40))                        // old
+	mkEvent(annID, "ws2_only", testhelper.GlobexWorkspaceID, now.AddDate(0, 0, -1)) // other workspace
 
 	count := func(g segments.Group) int {
 		p, err := segments.Compile(g, segments.ContactSchema())
@@ -179,12 +175,7 @@ func TestTagConditions(t *testing.T) {
 	assert.Equal(t, 3, count(has("vip")))
 
 	// A same-named Tag in another workspace never matches here.
-	ws2, err := env.DB.Workspace.Create().
-		SetName("Other").SetSlug("other-tagseg").SetCollectKey("k-tagseg").SetIngestKey("ik-tagseg").Save(ctx)
-	require.NoError(t, err)
-	_, err = env.DB.Tag.Create().SetWorkspaceID(ws2.ID).SetName("ws2-only").Save(ctx)
-	require.NoError(t, err)
-	assert.Equal(t, 0, count(has("ws2-only")))
+	assert.Equal(t, 0, count(has(testhelper.GlobexTagName)))
 
 	// Validation: only has / doesNotHave are valid for the tag field.
 	assert.Error(t, segments.Validate(`{"rules":[{"field":"tag","operator":"=","value":"vip"}]}`, segments.ContactSchema()))

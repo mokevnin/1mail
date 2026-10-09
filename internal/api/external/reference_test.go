@@ -37,37 +37,25 @@ func TestExternalReferenceDataIsWorkspaceScoped(t *testing.T) {
 	env := testhelper.Setup(t)
 	ctx := context.Background()
 
-	// A second workspace with its own field and domain; the acme token must not see them.
-	ws2, err := env.DB.Workspace.Create().
-		SetName("Globex").SetSlug("globex").SetCollectKey("globex-collect-key").
-		SetIngestKey("globex-ingest-key").
-		Save(ctx)
-	require.NoError(t, err)
-	_, err = env.DB.CustomField.Create().SetWorkspaceID(ws2.ID).SetKey("ws2_only").SetName("Only").
-		SetType("string").Save(ctx)
-	require.NoError(t, err)
-	_, err = env.DB.SendingDomain.Create().SetWorkspaceID(ws2.ID).SetDomain("mail.globex.test").
-		SetDkimSelector("1mail").SetDkimPrivateKeyEncrypted("x").SetDkimPublicKey("x").Save(ctx)
-	require.NoError(t, err)
-
+	// The Globex tenant has its own field and domain; the acme token must not see them.
 	c := client(t, env, seedToken(t, env.DB, []string{"custom_fields:read", "sending_domains:read"}))
 
 	fields, err := c.CustomFieldsList(ctx)
 	require.NoError(t, err)
 	for _, f := range fields.(*externalapi.CustomFieldsListOK).Items {
-		assert.NotEqual(t, "ws2_only", f.Key)
+		assert.NotEqual(t, testhelper.GlobexCustomFieldKey, f.Key)
 	}
 
 	domains, err := c.SendingDomainsList(ctx, externalapi.SendingDomainsListParams{})
 	require.NoError(t, err)
 	for _, d := range domains.(*externalapi.SendingDomainsListOK).Items {
-		assert.NotEqual(t, "mail.globex.test", d.Domain)
+		assert.NotEqual(t, testhelper.GlobexSendingDomain, d.Domain)
 	}
 
 	rates, err := c.SendingDomainRatesList(ctx, externalapi.SendingDomainRatesListParams{})
 	require.NoError(t, err)
 	for _, r := range rates.(*externalapi.SendingDomainRatesListOK).Items {
-		assert.NotEqual(t, "mail.globex.test", r.Domain)
+		assert.NotEqual(t, testhelper.GlobexSendingDomain, r.Domain)
 	}
 }
 

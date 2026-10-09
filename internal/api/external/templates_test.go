@@ -97,20 +97,14 @@ func TestExternalTemplatesAreWorkspaceScoped(t *testing.T) {
 	env := testhelper.Setup(t)
 	ctx := context.Background()
 
-	// Incidental second tenant, only to prove isolation.
-	ws2, err := env.DB.Workspace.Create().SetName("Globex").SetSlug("globex-tpl").
-		SetCollectKey("globex-tpl-ck").SetIngestKey("globex-tpl-ik").Save(ctx)
-	require.NoError(t, err)
-	foreign, err := env.DB.EmailTemplate.Create().SetWorkspaceID(ws2.ID).SetName("Foreign").Save(ctx)
-	require.NoError(t, err)
-	id := entityIDString(foreign.ID)
+	id := entityIDString(testhelper.GlobexTemplateID)
 
 	c := client(t, env, seedToken(t, env.DB, []string{"templates:read", "templates:write"}))
 
 	list, err := c.TemplatesList(ctx, externalapi.TemplatesListParams{})
 	require.NoError(t, err)
 	for _, it := range list.(*externalapi.TemplatesListOK).Items {
-		assert.NotEqual(t, "Foreign", it.Name)
+		assert.NotEqual(t, testhelper.GlobexTemplateName, it.Name)
 	}
 	g, err := c.TemplatesGet(ctx, externalapi.TemplatesGetParams{ID: id})
 	require.NoError(t, err)
