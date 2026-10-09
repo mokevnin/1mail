@@ -5,11 +5,20 @@ import {
   siteTemplatesGetOptions,
   siteTemplatesListOptions,
 } from '../../generated/site/@tanstack/react-query.gen.ts'
+import type {
+  SiteTemplatesCreateData,
+  SiteTemplatesGetData,
+  SiteTemplatesListData,
+  SiteTemplatesUpdateData,
+} from '../../generated/site/types.gen.ts'
 import { templatesCreateRoute, templatesEditRoute } from '../../router.tsx'
-import { jsonResponse, mockClientFetch } from '../../test/mockFetch.ts'
+import { jsonResponse, mockClientRoutes, route } from '../../test/mockFetch.ts'
 import { renderWithRouter } from '../../test/renderWithRouter.tsx'
 import { routeMount } from '../../test/routeMount.ts'
 import { TemplateCreatePage, TemplateEditPage } from './resource.tsx'
+
+const SLUG = { slug: 'test' }
+const ID7 = { slug: 'test', id: '7' }
 
 const CREATE_ROUTE = routeMount(templatesCreateRoute, { slug: 'test' })
 
@@ -25,22 +34,19 @@ function DetailProbe() {
   return null
 }
 
-function requestOf(input: RequestInfo | URL, init?: RequestInit) {
-  return input instanceof Request ? input : new Request(String(input), init)
-}
-
 test('creating a template sends the filled keys, refreshes the list and opens the edit page', async () => {
   const bodies: unknown[] = []
   let listFetches = 0
-  mockClientFetch(async (input, init) => {
-    const req = requestOf(input, init)
-    if (req.method === 'POST') {
+  mockClientRoutes([
+    route<SiteTemplatesCreateData>('POST', '/workspaces/{slug}/templates', SLUG, async (req) => {
       bodies.push(await req.json())
       return jsonResponse({ id: '42', name: 'Welcome' }, { status: 201 })
-    }
-    listFetches++
-    return jsonResponse({ items: [], totalItems: 0 })
-  })
+    }),
+    route<SiteTemplatesListData>('GET', '/workspaces/{slug}/templates', SLUG, () => {
+      listFetches++
+      return jsonResponse({ items: [], totalItems: 0 })
+    }),
+  ])
 
   const { screen, navigate } = await renderWithRouter(
     <>
@@ -66,10 +72,12 @@ test('creating a template sends the filled keys, refreshes the list and opens th
 
 test('a blank required name is rejected with a readable message before anything is sent', async () => {
   const bodies: unknown[] = []
-  mockClientFetch(async (input, init) => {
-    bodies.push(await requestOf(input, init).json())
-    return jsonResponse({ id: '1' }, { status: 201 })
-  })
+  mockClientRoutes([
+    route<SiteTemplatesCreateData>('POST', '/workspaces/{slug}/templates', SLUG, async (req) => {
+      bodies.push(await req.json())
+      return jsonResponse({ id: '1' }, { status: 201 })
+    }),
+  ])
 
   const { screen } = await renderWithRouter(<TemplateCreatePage />, CREATE_ROUTE)
   await screen.getByRole('button', { name: 'Save' }).click()
@@ -83,20 +91,21 @@ test('editing shows a loader, then existing values; cleared fields are sent as e
   let detailFetches = 0
   let listFetches = 0
   const detailGate = Promise.withResolvers<void>()
-  mockClientFetch(async (input, init) => {
-    const req = requestOf(input, init)
-    if (req.method === 'PUT' || req.method === 'PATCH') {
+  mockClientRoutes([
+    route<SiteTemplatesUpdateData>('PUT', '/workspaces/{slug}/templates/{id}', ID7, async (req) => {
       bodies.push(await req.json())
       return jsonResponse({ id: '7', name: 'Welcome' })
-    }
-    if (new URL(req.url, 'http://x').pathname.endsWith('/templates')) {
+    }),
+    route<SiteTemplatesListData>('GET', '/workspaces/{slug}/templates', SLUG, () => {
       listFetches++
       return jsonResponse({ items: [], totalItems: 0 })
-    }
-    detailFetches++
-    if (detailFetches === 1) await detailGate.promise
-    return jsonResponse({ id: '7', name: 'Welcome', subject: 'Hi', body: '<p>x</p>' })
-  })
+    }),
+    route<SiteTemplatesGetData>('GET', '/workspaces/{slug}/templates/{id}', ID7, async () => {
+      detailFetches++
+      if (detailFetches === 1) await detailGate.promise
+      return jsonResponse({ id: '7', name: 'Welcome', subject: 'Hi', body: '<p>x</p>' })
+    }),
+  ])
 
   const { screen } = await renderWithRouter(
     <>
@@ -123,9 +132,11 @@ test('editing shows a loader, then existing values; cleared fields are sent as e
 })
 
 test('editing shows an error alert when the template cannot be loaded', async () => {
-  mockClientFetch(() =>
-    jsonResponse({ title: 'Not Found', detail: 'template not found' }, { status: 404 }),
-  )
+  mockClientRoutes([
+    route<SiteTemplatesGetData>('GET', '/workspaces/{slug}/templates/{id}', ID7, () =>
+      jsonResponse({ title: 'Not Found', detail: 'template not found' }, { status: 404 }),
+    ),
+  ])
 
   const { screen } = await renderWithRouter(<TemplateEditPage />, EDIT_ROUTE)
 

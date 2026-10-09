@@ -5,11 +5,23 @@ import {
   siteBroadcastsGetOptions,
   siteBroadcastsListOptions,
 } from '../../generated/site/@tanstack/react-query.gen.ts'
+import type {
+  SiteBroadcastsCreateData,
+  SiteBroadcastsGetData,
+  SiteBroadcastsListData,
+  SiteBroadcastsSendData,
+  SiteBroadcastsUpdateData,
+  SiteSegmentsListData,
+  SiteTemplatesListData,
+} from '../../generated/site/types.gen.ts'
 import { broadcastsCreateRoute, broadcastsEditRoute } from '../../router.tsx'
-import { jsonResponse, mockClientFetch } from '../../test/mockFetch.ts'
+import { jsonResponse, mockClientRoutes, route } from '../../test/mockFetch.ts'
 import { renderWithRouter } from '../../test/renderWithRouter.tsx'
 import { routeMount } from '../../test/routeMount.ts'
 import { BroadcastCreatePage, BroadcastEditPage } from './resource.tsx'
+
+const SLUG = { slug: 'test' }
+const ID7 = { slug: 'test', id: '7' }
 
 const CREATE_ROUTE = routeMount(broadcastsCreateRoute, { slug: 'test' })
 
@@ -25,10 +37,6 @@ function DetailProbe() {
   return null
 }
 
-function requestOf(input: RequestInfo | URL, init?: RequestInit) {
-  return input instanceof Request ? input : new Request(String(input), init)
-}
-
 function broadcast(status: string) {
   return {
     id: '7',
@@ -41,33 +49,43 @@ function broadcast(status: string) {
   }
 }
 
+function empty() {
+  return jsonResponse({ items: [], totalItems: 0 })
+}
+
 // Serves the broadcasts API: records write bodies and counts list/detail fetches.
 function serve(status: string, detailGate?: Promise<void>) {
   const bodies: unknown[] = []
   const fetches = { list: 0, detail: 0 }
-  mockClientFetch(async (input, init) => {
-    const req = requestOf(input, init)
-    const path = new URL(req.url, 'http://x').pathname
-    if (req.method === 'POST' && path.endsWith('/broadcasts')) {
+  mockClientRoutes([
+    route<SiteBroadcastsCreateData>('POST', '/workspaces/{slug}/broadcasts', SLUG, async (req) => {
       bodies.push(await req.json())
       return jsonResponse({ ...broadcast('draft'), id: '42' }, { status: 201 })
-    }
-    if (req.method === 'PUT' || req.method === 'PATCH') {
-      bodies.push(await req.json())
-      return jsonResponse(broadcast(status))
-    }
-    if (req.method === 'POST') return jsonResponse(broadcast(status))
-    if (path.endsWith('/broadcasts')) {
+    }),
+    route<SiteBroadcastsUpdateData>(
+      'PUT',
+      '/workspaces/{slug}/broadcasts/{id}',
+      ID7,
+      async (req) => {
+        bodies.push(await req.json())
+        return jsonResponse(broadcast(status))
+      },
+    ),
+    route<SiteBroadcastsSendData>('POST', '/workspaces/{slug}/broadcasts/{id}/send', ID7, () =>
+      jsonResponse(broadcast(status)),
+    ),
+    route<SiteBroadcastsListData>('GET', '/workspaces/{slug}/broadcasts', SLUG, () => {
       fetches.list++
-      return jsonResponse({ items: [], totalItems: 0 })
-    }
-    if (path.includes('/segments') || path.includes('/templates')) {
-      return jsonResponse({ items: [], totalItems: 0 })
-    }
-    fetches.detail++
-    await detailGate
-    return jsonResponse(broadcast(status))
-  })
+      return empty()
+    }),
+    route<SiteBroadcastsGetData>('GET', '/workspaces/{slug}/broadcasts/{id}', ID7, async () => {
+      fetches.detail++
+      await detailGate
+      return jsonResponse(broadcast(status))
+    }),
+    route<SiteSegmentsListData>('GET', '/workspaces/{slug}/segments', SLUG, empty),
+    route<SiteTemplatesListData>('GET', '/workspaces/{slug}/templates', SLUG, empty),
+  ])
   return { bodies, fetches }
 }
 
@@ -166,9 +184,17 @@ test('editing shows no form while the broadcast loads, then the loaded values', 
 })
 
 test('editing shows an error alert when the broadcast cannot be loaded', async () => {
-  mockClientFetch(() =>
-    jsonResponse({ title: 'Not Found', detail: 'broadcast not found' }, { status: 404 }),
-  )
+  mockClientRoutes([
+    route<SiteBroadcastsGetData>('GET', '/workspaces/{slug}/broadcasts/{id}', ID7, () =>
+      jsonResponse({ title: 'Not Found', detail: 'broadcast not found' }, { status: 404 }),
+    ),
+    route<SiteSegmentsListData>('GET', '/workspaces/{slug}/segments', SLUG, () =>
+      jsonResponse({ items: [], totalItems: 0 }),
+    ),
+    route<SiteTemplatesListData>('GET', '/workspaces/{slug}/templates', SLUG, () =>
+      jsonResponse({ items: [], totalItems: 0 }),
+    ),
+  ])
 
   const { screen } = await renderWithRouter(<BroadcastEditPage />, EDIT_ROUTE)
 

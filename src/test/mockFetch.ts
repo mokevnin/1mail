@@ -34,3 +34,48 @@ export function mockClientFetch(
 afterEach(() => {
   client.setConfig({ baseUrl: DEFAULT_BASE_URL, fetch: globalThis.fetch })
 })
+
+type Handler = (req: Request) => Response | Promise<Response>
+
+type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'
+
+type OperationData = { url: string; path: Record<string, string> }
+
+export type Route = { method: HttpMethod; pathname: () => string; respond: Handler }
+
+// requestOf normalises the args of a fetch call into a Request.
+export function requestOf(input: RequestInfo | URL, init?: RequestInit) {
+  return input instanceof Request ? input : new Request(String(input), init)
+}
+
+// route mocks one API operation. `D` is the generated operation's Data type
+// (e.g. SiteBroadcastsListData): its `url` literal type makes the template a
+// compile-time checked copy of the contract, and the URL is built by the
+// generated client itself from the template and path params, so a renamed or
+// moved endpoint fails type-checking instead of silently never matching.
+export function route<D extends OperationData>(
+  method: HttpMethod,
+  url: D['url'],
+  path: D['path'],
+  respond: Handler,
+): Route {
+  // Built lazily: the client's baseUrl is only pinned once the stub is installed.
+  const pathname = () =>
+    new URL(
+      client.buildUrl<OperationData>({ baseUrl: client.getConfig().baseUrl, url, path }),
+      location.origin,
+    ).pathname
+  return { method, pathname, respond }
+}
+
+// mockClientRoutes serves the given operations and fails loudly on any other
+// request, so a test never passes by accident against an unmocked endpoint.
+export function mockClientRoutes(routes: Route[]) {
+  mockClientFetch((input, init) => {
+    const req = requestOf(input, init)
+    const { pathname } = new URL(req.url)
+    const hit = routes.find((r) => r.method === req.method && r.pathname() === pathname)
+    if (!hit) throw new Error(`unmocked request: ${req.method} ${pathname}`)
+    return hit.respond(req)
+  })
+}

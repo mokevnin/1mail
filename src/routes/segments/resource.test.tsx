@@ -5,8 +5,16 @@ import {
   siteSegmentsGetOptions,
   siteSegmentsListOptions,
 } from '../../generated/site/@tanstack/react-query.gen.ts'
+import type {
+  SiteCustomFieldsListData,
+  SiteEventsActionsData,
+  SiteSegmentsCreateData,
+  SiteSegmentsGetData,
+  SiteSegmentsListData,
+  SiteSegmentsUpdateData,
+} from '../../generated/site/types.gen.ts'
 import { segmentsCreateRoute, segmentsEditRoute } from '../../router.tsx'
-import { jsonResponse, mockClientFetch } from '../../test/mockFetch.ts'
+import { jsonResponse, mockClientRoutes, route } from '../../test/mockFetch.ts'
 import { renderWithRouter } from '../../test/renderWithRouter.tsx'
 import { routeMount } from '../../test/routeMount.ts'
 import { SegmentCreatePage, SegmentEditPage } from './resource.tsx'
@@ -29,36 +37,33 @@ function DetailProbe() {
   return null
 }
 
-function requestOf(input: RequestInfo | URL, init?: RequestInit) {
-  return input instanceof Request ? input : new Request(String(input), init)
-}
-
-function pathOf(req: Request) {
-  return new URL(req.url, 'http://x').pathname
-}
+const SLUG = { slug: 'test' }
+const ID7 = { slug: 'test', id: '7' }
 
 // Everything the segment form reads besides the segment itself (rule builder catalogues).
-function sideResponse(req: Request) {
-  const path = pathOf(req)
-  if (path.endsWith('/events/actions')) return jsonResponse({ actions: [] })
-  if (path.endsWith('/custom-fields')) return jsonResponse({ items: [], totalItems: 0 })
-  return undefined
-}
+const CATALOGUE_ROUTES = [
+  route<SiteEventsActionsData>('GET', '/workspaces/{slug}/events/actions', SLUG, () =>
+    jsonResponse({ actions: [] }),
+  ),
+  route<SiteCustomFieldsListData>('GET', '/workspaces/{slug}/custom-fields', SLUG, () =>
+    jsonResponse({ items: [], totalItems: 0 }),
+  ),
+]
 
 test('creating a segment sends name and a rule, refreshes the list and opens the edit page; there is no type selector', async () => {
   const bodies: unknown[] = []
   let listFetches = 0
-  mockClientFetch(async (input, init) => {
-    const req = requestOf(input, init)
-    if (req.method === 'POST') {
+  mockClientRoutes([
+    ...CATALOGUE_ROUTES,
+    route<SiteSegmentsCreateData>('POST', '/workspaces/{slug}/segments', SLUG, async (req) => {
       bodies.push(await req.json())
       return jsonResponse({ id: '42', name: 'Everyone' }, { status: 201 })
-    }
-    const side = sideResponse(req)
-    if (side) return side
-    listFetches++
-    return jsonResponse({ items: [], totalItems: 0 })
-  })
+    }),
+    route<SiteSegmentsListData>('GET', '/workspaces/{slug}/segments', SLUG, () => {
+      listFetches++
+      return jsonResponse({ items: [], totalItems: 0 })
+    }),
+  ])
 
   const { screen, navigate } = await renderWithRouter(
     <>
@@ -90,13 +95,13 @@ test('creating a segment sends name and a rule, refreshes the list and opens the
 
 test('a blank name is rejected before anything is sent', async () => {
   const bodies: unknown[] = []
-  mockClientFetch(async (input, init) => {
-    const req = requestOf(input, init)
-    const side = sideResponse(req)
-    if (side) return side
-    bodies.push(await req.json())
-    return jsonResponse({ id: '1' }, { status: 201 })
-  })
+  mockClientRoutes([
+    ...CATALOGUE_ROUTES,
+    route<SiteSegmentsCreateData>('POST', '/workspaces/{slug}/segments', SLUG, async (req) => {
+      bodies.push(await req.json())
+      return jsonResponse({ id: '1' }, { status: 201 })
+    }),
+  ])
 
   const { screen } = await renderWithRouter(<SegmentCreatePage />, CREATE_ROUTE)
 
@@ -110,21 +115,21 @@ test('editing shows the stored rule untouched, saves a renamed segment and refre
   const bodies: unknown[] = []
   let detailFetches = 0
   let listFetches = 0
-  mockClientFetch(async (input, init) => {
-    const req = requestOf(input, init)
-    if (req.method === 'PUT' || req.method === 'PATCH') {
+  mockClientRoutes([
+    ...CATALOGUE_ROUTES,
+    route<SiteSegmentsUpdateData>('PUT', '/workspaces/{slug}/segments/{id}', ID7, async (req) => {
       bodies.push(await req.json())
       return jsonResponse({ id: '7', name: 'Renamed', definition: RULE })
-    }
-    const side = sideResponse(req)
-    if (side) return side
-    if (pathOf(req).endsWith('/segments')) {
+    }),
+    route<SiteSegmentsListData>('GET', '/workspaces/{slug}/segments', SLUG, () => {
       listFetches++
       return jsonResponse({ items: [], totalItems: 0 })
-    }
-    detailFetches++
-    return jsonResponse({ id: '7', name: 'Mail users', definition: RULE })
-  })
+    }),
+    route<SiteSegmentsGetData>('GET', '/workspaces/{slug}/segments/{id}', ID7, () => {
+      detailFetches++
+      return jsonResponse({ id: '7', name: 'Mail users', definition: RULE })
+    }),
+  ])
 
   const { screen } = await renderWithRouter(
     <>
@@ -148,12 +153,12 @@ test('editing shows the stored rule untouched, saves a renamed segment and refre
 })
 
 test('editing shows an error alert when the segment cannot be loaded', async () => {
-  mockClientFetch((input, init) => {
-    const side = sideResponse(requestOf(input, init))
-    return (
-      side ?? jsonResponse({ title: 'Not Found', detail: 'segment not found' }, { status: 404 })
-    )
-  })
+  mockClientRoutes([
+    ...CATALOGUE_ROUTES,
+    route<SiteSegmentsGetData>('GET', '/workspaces/{slug}/segments/{id}', ID7, () =>
+      jsonResponse({ title: 'Not Found', detail: 'segment not found' }, { status: 404 }),
+    ),
+  ])
 
   const { screen } = await renderWithRouter(<SegmentEditPage />, EDIT_ROUTE)
 
@@ -163,12 +168,13 @@ test('editing shows an error alert when the segment cannot be loaded', async () 
 
 test('editing shows no form while the segment loads, then the loaded values', async () => {
   const gate = Promise.withResolvers<void>()
-  mockClientFetch(async (input, init) => {
-    const side = sideResponse(requestOf(input, init))
-    if (side) return side
-    await gate.promise
-    return jsonResponse({ id: '7', name: 'Mail users', definition: RULE })
-  })
+  mockClientRoutes([
+    ...CATALOGUE_ROUTES,
+    route<SiteSegmentsGetData>('GET', '/workspaces/{slug}/segments/{id}', ID7, async () => {
+      await gate.promise
+      return jsonResponse({ id: '7', name: 'Mail users', definition: RULE })
+    }),
+  ])
 
   const { screen } = await renderWithRouter(<SegmentEditPage />, EDIT_ROUTE)
 
