@@ -234,18 +234,18 @@ func UpsertIn(ctx context.Context, tx *ent.Client, pub events.Publisher, workspa
 // Attributes, so callers may pass raw values.
 func Resolve(ctx context.Context, client *ent.Client, workspaceID int64, subjectID, email, phone *string) (*ent.Contact, error) {
 	a := Attributes{SubjectID: subjectID, Email: email, Phone: phone}.normalized()
-	var whereas []predicate.Contact
+	var keys []predicate.Contact
 	if a.SubjectID != nil {
-		whereas = append(whereas, contact.SubjectID(*a.SubjectID))
+		keys = append(keys, contact.SubjectID(*a.SubjectID))
 	}
 	if a.Email != nil {
-		whereas = append(whereas, contact.Email(*a.Email))
+		keys = append(keys, contact.Email(*a.Email))
 	}
 	if a.Phone != nil {
-		whereas = append(whereas, contact.Phone(*a.Phone))
+		keys = append(keys, contact.Phone(*a.Phone))
 	}
-	for _, where := range whereas {
-		c, err := client.Contact.Query().Where(where, contact.WorkspaceID(workspaceID)).First(ctx)
+	for _, key := range keys {
+		c, err := client.Contact.Query().Where(key, contact.WorkspaceID(workspaceID)).First(ctx)
 		if err == nil {
 			return c, nil
 		}
