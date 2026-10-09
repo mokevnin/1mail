@@ -2779,13 +2779,20 @@ func (s *SiteAutomationStep) encodeFields(e *jx.Encoder) {
 			s.Seconds.Encode(e)
 		}
 	}
+	{
+		if s.Tag.Set {
+			e.FieldStart("tag")
+			s.Tag.Encode(e)
+		}
+	}
 }
 
-var jsonFieldsNameOfSiteAutomationStep = [4]string{
+var jsonFieldsNameOfSiteAutomationStep = [5]string{
 	0: "type",
 	1: "subject",
 	2: "body",
 	3: "seconds",
+	4: "tag",
 }
 
 // Decode decodes SiteAutomationStep from json.
@@ -2836,6 +2843,16 @@ func (s *SiteAutomationStep) Decode(d *jx.Decoder) error {
 				return nil
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"seconds\"")
+			}
+		case "tag":
+			if err := func() error {
+				s.Tag.Reset()
+				if err := s.Tag.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"tag\"")
 			}
 		default:
 			return d.Skip()
@@ -2913,6 +2930,10 @@ func (s *SiteAutomationStepType) Decode(d *jx.Decoder) error {
 		*s = SiteAutomationStepTypeEmail
 	case SiteAutomationStepTypeWait:
 		*s = SiteAutomationStepTypeWait
+	case SiteAutomationStepTypeApplyTag:
+		*s = SiteAutomationStepTypeApplyTag
+	case SiteAutomationStepTypeRemoveTag:
+		*s = SiteAutomationStepTypeRemoveTag
 	default:
 		*s = SiteAutomationStepType(v)
 	}

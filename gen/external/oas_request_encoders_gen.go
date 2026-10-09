@@ -38,6 +38,34 @@ func encodeAuthTokensCreateRequest(
 	return nil
 }
 
+func encodeAutomationsCreateRequest(
+	req *CreateAutomationInput,
+	r *http.Request,
+) error {
+	const contentType = "application/json"
+	e := new(jx.Encoder)
+	{
+		req.Encode(e)
+	}
+	encoded := e.Bytes()
+	ht.SetBody(r, bytes.NewReader(encoded), contentType)
+	return nil
+}
+
+func encodeAutomationsUpdateRequest(
+	req *UpdateAutomationInput,
+	r *http.Request,
+) error {
+	const contentType = "application/json"
+	e := new(jx.Encoder)
+	{
+		req.Encode(e)
+	}
+	encoded := e.Bytes()
+	ht.SetBody(r, bytes.NewReader(encoded), contentType)
+	return nil
+}
+
 func encodeBroadcastsCreateRequest(
 	req *CreateBroadcastInput,
 	r *http.Request,

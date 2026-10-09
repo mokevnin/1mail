@@ -109,7 +109,12 @@ export const zSiteAutomationStatus = z.enum(['draft', 'active']);
 /**
  * Kind of automation step
  */
-export const zSiteAutomationStepType = z.enum(['email', 'wait']);
+export const zSiteAutomationStepType = z.enum([
+  'email',
+  'wait',
+  'apply_tag',
+  'remove_tag'
+]);
 
 /**
  * One node in an automation's ordered, linear sequence. A flat shape: email
@@ -119,7 +124,8 @@ export const zSiteAutomationStep = z.object({
   type: zSiteAutomationStepType,
   subject: z.string().optional(),
   body: z.string().optional(),
-  seconds: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).optional()
+  seconds: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).optional(),
+  tag: z.string().optional()
 });
 
 /**

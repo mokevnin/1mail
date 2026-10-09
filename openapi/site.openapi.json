@@ -5451,13 +5451,17 @@
             "type": "integer",
             "format": "int32",
             "description": "Delay before the next step, in seconds (wait steps)"
+          },
+          "tag": {
+            "type": "string",
+            "description": "Tag name to apply or remove (apply_tag and remove_tag steps)"
           }
         },
         "description": "One node in an automation's ordered, linear sequence. A flat shape: email\nsteps carry subject/body, wait steps carry seconds."
       },
       "SiteAutomationStepType": {
         "type": "string",
-        "enum": ["email", "wait"],
+        "enum": ["email", "wait", "apply_tag", "remove_tag"],
         "description": "Kind of automation step"
       },
       "SiteBroadcastResource": {

@@ -1973,6 +1973,8 @@ type SiteAutomationStep struct {
 	Body OptString `json:"body"`
 	// Delay before the next step, in seconds (wait steps).
 	Seconds OptInt32 `json:"seconds"`
+	// Tag name to apply or remove (apply_tag and remove_tag steps).
+	Tag OptString `json:"tag"`
 }
 
 // GetType returns the value of Type.
@@ -1995,6 +1997,11 @@ func (s *SiteAutomationStep) GetSeconds() OptInt32 {
 	return s.Seconds
 }
 
+// GetTag returns the value of Tag.
+func (s *SiteAutomationStep) GetTag() OptString {
+	return s.Tag
+}
+
 // SetType sets the value of Type.
 func (s *SiteAutomationStep) SetType(val SiteAutomationStepType) {
 	s.Type = val
@@ -2015,13 +2022,20 @@ func (s *SiteAutomationStep) SetSeconds(val OptInt32) {
 	s.Seconds = val
 }
 
+// SetTag sets the value of Tag.
+func (s *SiteAutomationStep) SetTag(val OptString) {
+	s.Tag = val
+}
+
 // Kind of automation step.
 // Ref: #/components/schemas/SiteAutomationStepType
 type SiteAutomationStepType string
 
 const (
-	SiteAutomationStepTypeEmail SiteAutomationStepType = "email"
-	SiteAutomationStepTypeWait  SiteAutomationStepType = "wait"
+	SiteAutomationStepTypeEmail     SiteAutomationStepType = "email"
+	SiteAutomationStepTypeWait      SiteAutomationStepType = "wait"
+	SiteAutomationStepTypeApplyTag  SiteAutomationStepType = "apply_tag"
+	SiteAutomationStepTypeRemoveTag SiteAutomationStepType = "remove_tag"
 )
 
 // AllValues returns all SiteAutomationStepType values.
@@ -2029,6 +2043,8 @@ func (SiteAutomationStepType) AllValues() []SiteAutomationStepType {
 	return []SiteAutomationStepType{
 		SiteAutomationStepTypeEmail,
 		SiteAutomationStepTypeWait,
+		SiteAutomationStepTypeApplyTag,
+		SiteAutomationStepTypeRemoveTag,
 	}
 }
 
@@ -2038,6 +2054,10 @@ func (s SiteAutomationStepType) MarshalText() ([]byte, error) {
 	case SiteAutomationStepTypeEmail:
 		return []byte(s), nil
 	case SiteAutomationStepTypeWait:
+		return []byte(s), nil
+	case SiteAutomationStepTypeApplyTag:
+		return []byte(s), nil
+	case SiteAutomationStepTypeRemoveTag:
 		return []byte(s), nil
 	default:
 		return nil, errors.Errorf("invalid value: %q", s)
@@ -2052,6 +2072,12 @@ func (s *SiteAutomationStepType) UnmarshalText(data []byte) error {
 		return nil
 	case SiteAutomationStepTypeWait:
 		*s = SiteAutomationStepTypeWait
+		return nil
+	case SiteAutomationStepTypeApplyTag:
+		*s = SiteAutomationStepTypeApplyTag
+		return nil
+	case SiteAutomationStepTypeRemoveTag:
+		*s = SiteAutomationStepTypeRemoveTag
 		return nil
 	default:
 		return errors.Errorf("invalid value: %q", data)

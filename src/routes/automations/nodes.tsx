@@ -1,4 +1,9 @@
-import { type PaletteItem, sharedProperties, type UISchema } from '@workflowbuilder/sdk'
+import {
+  type PaletteItem,
+  sharedProperties,
+  type UISchema,
+  type WBIcon,
+} from '@workflowbuilder/sdk'
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -6,10 +11,13 @@ import { useTranslation } from 'react-i18next'
 // graph ↔ definition converters to tell email steps from wait steps.
 export const EMAIL_NODE_TYPE = 'email'
 export const WAIT_NODE_TYPE = 'wait'
+export const APPLY_TAG_NODE_TYPE = 'apply_tag'
+export const REMOVE_TAG_NODE_TYPE = 'remove_tag'
 
 // Phosphor icon names (WBIcon) the SDK renders in the palette and node header.
 export const EMAIL_NODE_ICON = 'Envelope'
 export const WAIT_NODE_ICON = 'Timer'
+export const TAG_NODE_ICON: WBIcon = 'Tag'
 
 // useAutomationNodeTypes builds the palette definitions for the visual builder.
 // Memoized so the array keeps a stable reference across renders — the SDK
@@ -77,6 +85,36 @@ export function useAutomationNodeTypes(): PaletteItem[] {
           ],
         } satisfies UISchema,
       },
+      ...[
+        {
+          type: APPLY_TAG_NODE_TYPE,
+          label: t(($) => $.automations.stepApplyTag),
+          description: t(($) => $.automations.applyTagNodeDescription),
+        },
+        {
+          type: REMOVE_TAG_NODE_TYPE,
+          label: t(($) => $.automations.stepRemoveTag),
+          description: t(($) => $.automations.removeTagNodeDescription),
+        },
+      ].map(({ type, label, description }) => ({
+        type,
+        icon: TAG_NODE_ICON,
+        label,
+        description,
+        defaultPropertiesData: { tag: '' },
+        schema: {
+          type: 'object' as const,
+          required: ['tag'],
+          properties: {
+            ...sharedProperties,
+            tag: { type: 'string' as const, label: t(($) => $.automations.tagNameLabel) },
+          },
+        },
+        uischema: {
+          type: 'VerticalLayout',
+          elements: [{ type: 'Text', scope: '#/properties/tag', placeholder: '' }],
+        } satisfies UISchema,
+      })),
     ],
     [t],
   )

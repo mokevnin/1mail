@@ -1,0 +1,205 @@
+// Package automations is the one place an Automation's definition is stored,
+// validated and its lifecycle changed (ADR 0016). /site and /api handlers stay thin
+// adapters over it; the step executor (internal/jobs) decodes the same Step format,
+// so the storage JSON has a single definition.
+package automations
+
+import (
+	"context"
+	"encoding/json"
+	"errors"
+	"strings"
+
+	"github.com/mokevnin/1mail/ent"
+	"github.com/mokevnin/1mail/ent/automation"
+)
+
+// Step kinds.
+const (
+	StepEmail     = "email"
+	StepWait      = "wait"
+	StepApplyTag  = "apply_tag"
+	StepRemoveTag = "remove_tag"
+)
+
+// Step is one node of an Automation's linear sequence, in the executor's on-disk
+// JSON form. Email steps carry Subject and Body (MJML), wait steps Seconds, tag
+// steps Tag (the Tag name).
+type Step struct {
+	Type    string `json:"type"`
+	Subject string `json:"subject,omitempty"`
+	Body    string `json:"body,omitempty"`
+	Seconds int    `json:"seconds,omitempty"`
+	Tag     string `json:"tag,omitempty"`
+}
+
+// Domain errors. Callers match with errors.Is.
+var (
+	// ErrNotFound: no such Automation in this Workspace.
+	ErrNotFound = errors.New("automations: automation not found")
+	// ErrInvalidStep: a step has an unknown type, a negative wait, or a tag step
+	// without a tag name.
+	ErrInvalidStep = errors.New("automations: invalid step")
+)
+
+// Decode parses a stored definition. An empty definition has no steps.
+func Decode(definition string) ([]Step, error) {
+	if definition == "" {
+		return nil, nil
+	}
+	var steps []Step
+	if err := json.Unmarshal([]byte(definition), &steps); err != nil {
+		return nil, err
+	}
+	return steps, nil
+}
+
+// Encode serializes steps into the stored definition, dropping the fields that do
+// not belong to each step's type and trimming tag names.
+func Encode(steps []Step) (string, error) {
+	stored := make([]Step, 0, len(steps))
+	for _, s := range steps {
+		switch s.Type {
+		case StepWait:
+			stored = append(stored, Step{Type: StepWait, Seconds: s.Seconds})
+		case StepApplyTag, StepRemoveTag:
+			stored = append(stored, Step{Type: s.Type, Tag: strings.TrimSpace(s.Tag)})
+		default:
+			stored = append(stored, Step{Type: StepEmail, Subject: s.Subject, Body: s.Body})
+		}
+	}
+	b, err := json.Marshal(stored)
+	return string(b), err
+}
+
+func validate(steps []Step) error {
+	for _, s := range steps {
+		switch s.Type {
+		case StepEmail:
+		case StepWait:
+			if s.Seconds < 0 {
+				return ErrInvalidStep
+			}
+		case StepApplyTag, StepRemoveTag:
+			if strings.TrimSpace(s.Tag) == "" {
+				return ErrInvalidStep
+			}
+		default:
+			return ErrInvalidStep
+		}
+	}
+	return nil
+}
+
+// Module is the automations module.
+type Module struct {
+	db *ent.Client
+}
+
+// New builds the automations module over an ent client.
+func New(db *ent.Client) *Module { return &Module{db: db} }
+
+// CreateInput is the data for a new Automation. It is always created as a draft:
+// activating is a separate, deliberate operation.
+type CreateInput struct {
+	Name         string
+	TriggerEvent string
+	Steps        []Step
+}
+
+// UpdateInput changes an Automation; nil fields are left alone.
+type UpdateInput struct {
+	Name         *string
+	TriggerEvent *string
+	Steps        *[]Step
+}
+
+// List returns one page of the Workspace's Automations (newest first) and the total.
+func (m *Module) List(ctx context.Context, workspaceID int64, limit, offset int) ([]*ent.Automation, int, error) {
+	q := m.db.Automation.Query().Where(automation.WorkspaceID(workspaceID))
+	total, err := q.Count(ctx)
+	if err != nil {
+		return nil, 0, err
+	}
+	items, err := q.Order(ent.Desc(automation.FieldID)).Limit(limit).Offset(offset).All(ctx)
+	return items, total, err
+}
+
+// Get returns one Automation of the Workspace.
+func (m *Module) Get(ctx context.Context, workspaceID, id int64) (*ent.Automation, error) {
+	a, err := m.db.Automation.Query().
+		Where(automation.ID(id), automation.WorkspaceID(workspaceID)).
+		Only(ctx)
+	return a, notFound(err)
+}
+
+// Create stores a new draft Automation.
+func (m *Module) Create(ctx context.Context, workspaceID int64, in CreateInput) (*ent.Automation, error) {
+	if err := validate(in.Steps); err != nil {
+		return nil, err
+	}
+	q := m.db.Automation.Create().
+		SetWorkspaceID(workspaceID).
+		SetName(in.Name).
+		SetTriggerEvent(in.TriggerEvent).
+		SetStatus(automation.StatusDraft)
+	if in.Steps != nil {
+		def, err := Encode(in.Steps)
+		if err != nil {
+			return nil, err
+		}
+		q = q.SetDefinition(def)
+	}
+	return q.Save(ctx)
+}
+
+// Update changes the Automation's name, trigger or steps. The status is untouched.
+func (m *Module) Update(ctx context.Context, workspaceID, id int64, in UpdateInput) (*ent.Automation, error) {
+	q := m.db.Automation.UpdateOneID(id).
+		Where(automation.WorkspaceID(workspaceID)).
+		SetNillableName(in.Name).
+		SetNillableTriggerEvent(in.TriggerEvent)
+	if in.Steps != nil {
+		if err := validate(*in.Steps); err != nil {
+			return nil, err
+		}
+		def, err := Encode(*in.Steps)
+		if err != nil {
+			return nil, err
+		}
+		q = q.SetDefinition(def)
+	}
+	a, err := q.Save(ctx)
+	return a, notFound(err)
+}
+
+// Delete removes the Automation.
+func (m *Module) Delete(ctx context.Context, workspaceID, id int64) error {
+	err := m.db.Automation.DeleteOneID(id).Where(automation.WorkspaceID(workspaceID)).Exec(ctx)
+	return notFound(err)
+}
+
+// Activate starts enrolling Contacts into the Automation.
+func (m *Module) Activate(ctx context.Context, workspaceID, id int64) (*ent.Automation, error) {
+	return m.setStatus(ctx, workspaceID, id, automation.StatusActive)
+}
+
+// Deactivate stops new enrollments; in-flight Enrollments finish.
+func (m *Module) Deactivate(ctx context.Context, workspaceID, id int64) (*ent.Automation, error) {
+	return m.setStatus(ctx, workspaceID, id, automation.StatusDraft)
+}
+
+func (m *Module) setStatus(ctx context.Context, workspaceID, id int64, status automation.Status) (*ent.Automation, error) {
+	a, err := m.db.Automation.UpdateOneID(id).
+		Where(automation.WorkspaceID(workspaceID)).
+		SetStatus(status).
+		Save(ctx)
+	return a, notFound(err)
+}
+
+func notFound(err error) error {
+	if ent.IsNotFound(err) {
+		return ErrNotFound
+	}
+	return err
+}

@@ -21,6 +21,34 @@ type AuthTokensListRes interface {
 	authTokensListRes()
 }
 
+type AutomationsActivateRes interface {
+	automationsActivateRes()
+}
+
+type AutomationsCreateRes interface {
+	automationsCreateRes()
+}
+
+type AutomationsDeactivateRes interface {
+	automationsDeactivateRes()
+}
+
+type AutomationsDeleteRes interface {
+	automationsDeleteRes()
+}
+
+type AutomationsGetRes interface {
+	automationsGetRes()
+}
+
+type AutomationsListRes interface {
+	automationsListRes()
+}
+
+type AutomationsUpdateRes interface {
+	automationsUpdateRes()
+}
+
 type BroadcastsCreateRes interface {
 	broadcastsCreateRes()
 }

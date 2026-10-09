@@ -89,8 +89,10 @@ var (
 		"templates_list", "templates_create", "templates_get", "templates_update", "templates_delete",
 		"webhooks_list", "webhooks_create", "webhooks_get", "webhooks_update", "webhooks_delete",
 		"tags_list", "tags_list_for_contact", "tags_apply", "tags_remove",
+		"automations_list", "automations_create", "automations_get", "automations_update", "automations_delete",
+		"automations_deactivate",
 	}
-	sendTools = []string{"emails_send", "broadcasts_schedule", "broadcasts_unschedule"}
+	sendTools = []string{"emails_send", "broadcasts_schedule", "broadcasts_unschedule", "automations_activate"}
 )
 
 func listedTools(t *testing.T, s *mcp.ClientSession) map[string]*mcp.Tool {

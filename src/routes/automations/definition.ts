@@ -1,7 +1,15 @@
-import type { WorkflowBuilderEdge, WorkflowBuilderNode } from '@workflowbuilder/sdk'
+import type { WBIcon, WorkflowBuilderEdge, WorkflowBuilderNode } from '@workflowbuilder/sdk'
 
 import type { SiteAutomationStep } from '../../generated/site/types.gen.ts'
-import { EMAIL_NODE_ICON, EMAIL_NODE_TYPE, WAIT_NODE_ICON, WAIT_NODE_TYPE } from './nodes.tsx'
+import {
+  APPLY_TAG_NODE_TYPE,
+  EMAIL_NODE_ICON,
+  EMAIL_NODE_TYPE,
+  REMOVE_TAG_NODE_TYPE,
+  TAG_NODE_ICON,
+  WAIT_NODE_ICON,
+  WAIT_NODE_TYPE,
+} from './nodes.tsx'
 
 // A step is the generated contract type (typed in TypeSpec; no hand-rolled
 // parse/serialize — the API carries steps as structured data, not a JSON string).
@@ -24,6 +32,19 @@ export interface AutomationGraph {
   edges: WorkflowBuilderEdge[]
 }
 
+const STEP_ICON: Record<AutomationStep['type'], WBIcon> = {
+  email: EMAIL_NODE_ICON,
+  wait: WAIT_NODE_ICON,
+  apply_tag: TAG_NODE_ICON,
+  remove_tag: TAG_NODE_ICON,
+}
+
+function stepProperties(step: AutomationStep): Record<string, unknown> {
+  if (step.type === 'wait') return { seconds: step.seconds ?? 0 }
+  if (step.type === 'apply_tag' || step.type === 'remove_tag') return { tag: step.tag ?? '' }
+  return { subject: step.subject ?? '', body: step.body ?? '' }
+}
+
 // stepsToGraph builds a linear top-to-bottom chain of nodes for the canvas from
 // the stored steps. Positions are synthesized from order, never persisted.
 export function stepsToGraph(steps: AutomationStep[]): AutomationGraph {
@@ -32,13 +53,10 @@ export function stepsToGraph(steps: AutomationStep[]): AutomationGraph {
     type: NODE_RENDERER_TYPE,
     position: { x: 0, y: i * Y_GAP },
     data: {
-      type: step.type === 'wait' ? WAIT_NODE_TYPE : EMAIL_NODE_TYPE,
-      icon: step.type === 'wait' ? WAIT_NODE_ICON : EMAIL_NODE_ICON,
+      type: step.type,
+      icon: STEP_ICON[step.type],
       segments: [],
-      properties:
-        step.type === 'wait'
-          ? { seconds: step.seconds ?? 0 }
-          : { subject: step.subject ?? '', body: step.body ?? '' },
+      properties: stepProperties(step),
     },
   }))
 
@@ -65,6 +83,12 @@ function nodeToStep(node: WorkflowBuilderNode): AutomationStep | null {
   const props = (node.data.properties ?? {}) as Record<string, unknown>
   if (node.data.type === WAIT_NODE_TYPE) {
     return { type: 'wait', seconds: Math.trunc(Number(props.seconds)) || 0 }
+  }
+  if (node.data.type === APPLY_TAG_NODE_TYPE || node.data.type === REMOVE_TAG_NODE_TYPE) {
+    return {
+      type: node.data.type === APPLY_TAG_NODE_TYPE ? 'apply_tag' : 'remove_tag',
+      tag: asText(props.tag),
+    }
   }
   if (node.data.type === EMAIL_NODE_TYPE) {
     return {

@@ -11,6 +11,7 @@ import "../common/crud.tsp";
 import "./resources/contacts.tsp";
 import "./resources/segments.tsp";
 import "./resources/tags.tsp";
+import "./resources/automations.tsp";
 import "./resources/broadcasts.tsp";
 import "./resources/emails.tsp";
 import "./resources/events.tsp";

@@ -234,9 +234,10 @@ _Avoid_: Run, automation run, journey instance, subscription
 
 **Step**:
 One node in an Automation's **ordered, linear** sequence; an Enrollment points at exactly one
-current Step. Two kinds today: **send** (an email — it holds its _own copy_ of Message
-content, per the marketing copy-at-author-time rule) and **wait** (a delay before the next
-Step). The Enrollment's single "current step" pointer is deliberate: there is no branching,
+current Step. Four kinds today: **send** (an email — it holds its _own copy_ of Message
+content, per the marketing copy-at-author-time rule), **wait** (a delay before the next
+Step), and **apply tag** / **remove tag** (change the enrolled Contact's Tags; they send
+nothing and move straight on). The Enrollment's single "current step" pointer is deliberate: there is no branching,
 no parallel paths, no per-step conditions yet. Conditional / branching steps are a real
 future want but are **deferred until the sequence builder is real** — not modelled now.
 _Avoid_: Action, node, block, stage

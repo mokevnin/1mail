@@ -13,6 +13,7 @@ import (
 	"github.com/mokevnin/1mail/ent"
 	"github.com/mokevnin/1mail/ent/outboundmessage"
 	siteapi "github.com/mokevnin/1mail/gen/site"
+	"github.com/mokevnin/1mail/internal/automations"
 )
 
 // Converter maps ent entities to site API resources. goverter generates the
@@ -220,32 +221,22 @@ func eventProperties(m map[string]any) siteapi.OptNilSiteEventResourceProperties
 	return siteapi.NewOptNilSiteEventResourceProperties(props)
 }
 
-// storedStep is the automation executor's on-disk step JSON. It is the single
-// definition of that storage format, shared by decode (automationSteps) and
-// encode (SerializeAutomationSteps) so the two can't drift.
-type storedStep struct {
-	Type    string `json:"type"`
-	Subject string `json:"subject,omitempty"`
-	Body    string `json:"body,omitempty"`
-	Seconds int    `json:"seconds,omitempty"`
-}
-
 // automationSteps decodes the stored definition string into the typed steps DTO.
 // A malformed/empty definition yields no steps rather than an error.
 func automationSteps(def string) []siteapi.SiteAutomationStep {
-	if def == "" {
-		return nil
-	}
-	var stored []storedStep
-	if err := json.Unmarshal([]byte(def), &stored); err != nil {
+	stored, err := automations.Decode(def)
+	if err != nil {
 		return nil
 	}
 	steps := make([]siteapi.SiteAutomationStep, 0, len(stored))
 	for _, s := range stored {
 		step := siteapi.SiteAutomationStep{Type: siteapi.SiteAutomationStepType(s.Type)}
-		if s.Type == string(siteapi.SiteAutomationStepTypeWait) {
+		switch s.Type {
+		case automations.StepWait:
 			step.Seconds = siteapi.NewOptInt32(int32(s.Seconds))
-		} else {
+		case automations.StepApplyTag, automations.StepRemoveTag:
+			step.Tag = siteapi.NewOptString(s.Tag)
+		default:
 			step.Subject = siteapi.NewOptString(s.Subject)
 			step.Body = siteapi.NewOptString(s.Body)
 		}
@@ -254,22 +245,17 @@ func automationSteps(def string) []siteapi.SiteAutomationStep {
 	return steps
 }
 
-// SerializeAutomationSteps encodes the typed steps into the executor's definition
-// string, dropping fields irrelevant to each step type (the inverse of
-// automationSteps). Exported for the create/update handlers.
-func SerializeAutomationSteps(steps []siteapi.SiteAutomationStep) string {
-	stored := make([]storedStep, 0, len(steps))
+// AutomationSteps converts the typed steps DTO to the automations module's steps.
+func AutomationSteps(steps []siteapi.SiteAutomationStep) []automations.Step {
+	out := make([]automations.Step, 0, len(steps))
 	for _, s := range steps {
-		switch s.Type {
-		case siteapi.SiteAutomationStepTypeWait:
-			stored = append(stored, storedStep{Type: "wait", Seconds: int(s.Seconds.Or(0))})
-		default:
-			stored = append(stored, storedStep{Type: "email", Subject: s.Subject.Or(""), Body: s.Body.Or("")})
-		}
+		out = append(out, automations.Step{
+			Type:    string(s.Type),
+			Subject: s.Subject.Or(""),
+			Body:    s.Body.Or(""),
+			Seconds: int(s.Seconds.Or(0)),
+			Tag:     s.Tag.Or(""),
+		})
 	}
-	b, err := json.Marshal(stored)
-	if err != nil {
-		return "[]"
-	}
-	return string(b)
+	return out
 }

@@ -331,6 +331,431 @@ type AuthTokensListUnauthorized ProblemDetails
 
 func (*AuthTokensListUnauthorized) authTokensListRes() {}
 
+// An Automation: an event-triggered, ordered sequence of steps. Created automations are always draft;
+// activating is a separate, send-class operation.
+// Ref: #/components/schemas/AutomationResource
+type AutomationResource struct {
+	// Unique identifier.
+	ID EntityId `json:"id"`
+	// Automation name.
+	Name string `json:"name"`
+	// Lifecycle status.
+	Status AutomationStatus `json:"status"`
+	// Event action that enrolls a contact (e.g. "contact.created", "email.opened").
+	TriggerEvent string `json:"triggerEvent"`
+	// The automation's ordered, linear steps.
+	Steps []AutomationStep `json:"steps"`
+	// Creation timestamp.
+	CreatedAt Timestamp `json:"createdAt"`
+	// Last update timestamp.
+	UpdatedAt Timestamp `json:"updatedAt"`
+}
+
+// GetID returns the value of ID.
+func (s *AutomationResource) GetID() EntityId {
+	return s.ID
+}
+
+// GetName returns the value of Name.
+func (s *AutomationResource) GetName() string {
+	return s.Name
+}
+
+// GetStatus returns the value of Status.
+func (s *AutomationResource) GetStatus() AutomationStatus {
+	return s.Status
+}
+
+// GetTriggerEvent returns the value of TriggerEvent.
+func (s *AutomationResource) GetTriggerEvent() string {
+	return s.TriggerEvent
+}
+
+// GetSteps returns the value of Steps.
+func (s *AutomationResource) GetSteps() []AutomationStep {
+	return s.Steps
+}
+
+// GetCreatedAt returns the value of CreatedAt.
+func (s *AutomationResource) GetCreatedAt() Timestamp {
+	return s.CreatedAt
+}
+
+// GetUpdatedAt returns the value of UpdatedAt.
+func (s *AutomationResource) GetUpdatedAt() Timestamp {
+	return s.UpdatedAt
+}
+
+// SetID sets the value of ID.
+func (s *AutomationResource) SetID(val EntityId) {
+	s.ID = val
+}
+
+// SetName sets the value of Name.
+func (s *AutomationResource) SetName(val string) {
+	s.Name = val
+}
+
+// SetStatus sets the value of Status.
+func (s *AutomationResource) SetStatus(val AutomationStatus) {
+	s.Status = val
+}
+
+// SetTriggerEvent sets the value of TriggerEvent.
+func (s *AutomationResource) SetTriggerEvent(val string) {
+	s.TriggerEvent = val
+}
+
+// SetSteps sets the value of Steps.
+func (s *AutomationResource) SetSteps(val []AutomationStep) {
+	s.Steps = val
+}
+
+// SetCreatedAt sets the value of CreatedAt.
+func (s *AutomationResource) SetCreatedAt(val Timestamp) {
+	s.CreatedAt = val
+}
+
+// SetUpdatedAt sets the value of UpdatedAt.
+func (s *AutomationResource) SetUpdatedAt(val Timestamp) {
+	s.UpdatedAt = val
+}
+
+func (*AutomationResource) automationsActivateRes()   {}
+func (*AutomationResource) automationsCreateRes()     {}
+func (*AutomationResource) automationsDeactivateRes() {}
+func (*AutomationResource) automationsGetRes()        {}
+func (*AutomationResource) automationsUpdateRes()     {}
+
+// Automation lifecycle status.
+// Ref: #/components/schemas/AutomationStatus
+type AutomationStatus string
+
+const (
+	AutomationStatusDraft  AutomationStatus = "draft"
+	AutomationStatusActive AutomationStatus = "active"
+)
+
+// AllValues returns all AutomationStatus values.
+func (AutomationStatus) AllValues() []AutomationStatus {
+	return []AutomationStatus{
+		AutomationStatusDraft,
+		AutomationStatusActive,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s AutomationStatus) MarshalText() ([]byte, error) {
+	switch s {
+	case AutomationStatusDraft:
+		return []byte(s), nil
+	case AutomationStatusActive:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *AutomationStatus) UnmarshalText(data []byte) error {
+	switch AutomationStatus(data) {
+	case AutomationStatusDraft:
+		*s = AutomationStatusDraft
+		return nil
+	case AutomationStatusActive:
+		*s = AutomationStatusActive
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// One node in an automation's ordered, linear sequence. A flat shape: email steps carry subject/body,
+// wait steps carry seconds, tag steps carry the tag name.
+// Ref: #/components/schemas/AutomationStep
+type AutomationStep struct {
+	// Step kind.
+	Type AutomationStepType `json:"type"`
+	// Email subject (email steps).
+	Subject OptString `json:"subject"`
+	// Email body as MJML (email steps).
+	Body OptString `json:"body"`
+	// Delay before the next step, in seconds (wait steps).
+	Seconds OptInt32 `json:"seconds"`
+	// Tag name to apply to or remove from the enrolled contact (apply_tag and remove_tag steps).
+	Tag OptString `json:"tag"`
+}
+
+// GetType returns the value of Type.
+func (s *AutomationStep) GetType() AutomationStepType {
+	return s.Type
+}
+
+// GetSubject returns the value of Subject.
+func (s *AutomationStep) GetSubject() OptString {
+	return s.Subject
+}
+
+// GetBody returns the value of Body.
+func (s *AutomationStep) GetBody() OptString {
+	return s.Body
+}
+
+// GetSeconds returns the value of Seconds.
+func (s *AutomationStep) GetSeconds() OptInt32 {
+	return s.Seconds
+}
+
+// GetTag returns the value of Tag.
+func (s *AutomationStep) GetTag() OptString {
+	return s.Tag
+}
+
+// SetType sets the value of Type.
+func (s *AutomationStep) SetType(val AutomationStepType) {
+	s.Type = val
+}
+
+// SetSubject sets the value of Subject.
+func (s *AutomationStep) SetSubject(val OptString) {
+	s.Subject = val
+}
+
+// SetBody sets the value of Body.
+func (s *AutomationStep) SetBody(val OptString) {
+	s.Body = val
+}
+
+// SetSeconds sets the value of Seconds.
+func (s *AutomationStep) SetSeconds(val OptInt32) {
+	s.Seconds = val
+}
+
+// SetTag sets the value of Tag.
+func (s *AutomationStep) SetTag(val OptString) {
+	s.Tag = val
+}
+
+// Kind of automation step.
+// Ref: #/components/schemas/AutomationStepType
+type AutomationStepType string
+
+const (
+	AutomationStepTypeEmail     AutomationStepType = "email"
+	AutomationStepTypeWait      AutomationStepType = "wait"
+	AutomationStepTypeApplyTag  AutomationStepType = "apply_tag"
+	AutomationStepTypeRemoveTag AutomationStepType = "remove_tag"
+)
+
+// AllValues returns all AutomationStepType values.
+func (AutomationStepType) AllValues() []AutomationStepType {
+	return []AutomationStepType{
+		AutomationStepTypeEmail,
+		AutomationStepTypeWait,
+		AutomationStepTypeApplyTag,
+		AutomationStepTypeRemoveTag,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s AutomationStepType) MarshalText() ([]byte, error) {
+	switch s {
+	case AutomationStepTypeEmail:
+		return []byte(s), nil
+	case AutomationStepTypeWait:
+		return []byte(s), nil
+	case AutomationStepTypeApplyTag:
+		return []byte(s), nil
+	case AutomationStepTypeRemoveTag:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *AutomationStepType) UnmarshalText(data []byte) error {
+	switch AutomationStepType(data) {
+	case AutomationStepTypeEmail:
+		*s = AutomationStepTypeEmail
+		return nil
+	case AutomationStepTypeWait:
+		*s = AutomationStepTypeWait
+		return nil
+	case AutomationStepTypeApplyTag:
+		*s = AutomationStepTypeApplyTag
+		return nil
+	case AutomationStepTypeRemoveTag:
+		*s = AutomationStepTypeRemoveTag
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+type AutomationsActivateBadRequest ProblemDetails
+
+func (*AutomationsActivateBadRequest) automationsActivateRes() {}
+
+type AutomationsActivateNotFound ProblemDetails
+
+func (*AutomationsActivateNotFound) automationsActivateRes() {}
+
+type AutomationsActivateUnauthorized ProblemDetails
+
+func (*AutomationsActivateUnauthorized) automationsActivateRes() {}
+
+type AutomationsActivateUnprocessableEntity ProblemDetails
+
+func (*AutomationsActivateUnprocessableEntity) automationsActivateRes() {}
+
+type AutomationsCreateUnauthorized ProblemDetails
+
+func (*AutomationsCreateUnauthorized) automationsCreateRes() {}
+
+type AutomationsCreateUnprocessableEntity ProblemDetails
+
+func (*AutomationsCreateUnprocessableEntity) automationsCreateRes() {}
+
+type AutomationsDeactivateBadRequest ProblemDetails
+
+func (*AutomationsDeactivateBadRequest) automationsDeactivateRes() {}
+
+type AutomationsDeactivateNotFound ProblemDetails
+
+func (*AutomationsDeactivateNotFound) automationsDeactivateRes() {}
+
+type AutomationsDeactivateUnauthorized ProblemDetails
+
+func (*AutomationsDeactivateUnauthorized) automationsDeactivateRes() {}
+
+type AutomationsDeleteBadRequest ProblemDetails
+
+func (*AutomationsDeleteBadRequest) automationsDeleteRes() {}
+
+// AutomationsDeleteNoContent is response for AutomationsDelete operation.
+type AutomationsDeleteNoContent struct{}
+
+func (*AutomationsDeleteNoContent) automationsDeleteRes() {}
+
+type AutomationsDeleteNotFound ProblemDetails
+
+func (*AutomationsDeleteNotFound) automationsDeleteRes() {}
+
+type AutomationsDeleteUnauthorized ProblemDetails
+
+func (*AutomationsDeleteUnauthorized) automationsDeleteRes() {}
+
+type AutomationsDeleteUnprocessableEntity ProblemDetails
+
+func (*AutomationsDeleteUnprocessableEntity) automationsDeleteRes() {}
+
+type AutomationsGetBadRequest ProblemDetails
+
+func (*AutomationsGetBadRequest) automationsGetRes() {}
+
+type AutomationsGetNotFound ProblemDetails
+
+func (*AutomationsGetNotFound) automationsGetRes() {}
+
+type AutomationsGetUnauthorized ProblemDetails
+
+func (*AutomationsGetUnauthorized) automationsGetRes() {}
+
+type AutomationsListBadRequest ProblemDetails
+
+func (*AutomationsListBadRequest) automationsListRes() {}
+
+// Paginated response.
+type AutomationsListOK struct {
+	// List of items.
+	Items []AutomationResource `json:"items"`
+	// Page number (1-based).
+	Page int32 `json:"page"`
+	// Page size.
+	PageSize int32 `json:"pageSize"`
+	// Total number of elements.
+	TotalItems int32 `json:"totalItems"`
+	// Total number of pages.
+	TotalPages int32 `json:"totalPages"`
+}
+
+// GetItems returns the value of Items.
+func (s *AutomationsListOK) GetItems() []AutomationResource {
+	return s.Items
+}
+
+// GetPage returns the value of Page.
+func (s *AutomationsListOK) GetPage() int32 {
+	return s.Page
+}
+
+// GetPageSize returns the value of PageSize.
+func (s *AutomationsListOK) GetPageSize() int32 {
+	return s.PageSize
+}
+
+// GetTotalItems returns the value of TotalItems.
+func (s *AutomationsListOK) GetTotalItems() int32 {
+	return s.TotalItems
+}
+
+// GetTotalPages returns the value of TotalPages.
+func (s *AutomationsListOK) GetTotalPages() int32 {
+	return s.TotalPages
+}
+
+// SetItems sets the value of Items.
+func (s *AutomationsListOK) SetItems(val []AutomationResource) {
+	s.Items = val
+}
+
+// SetPage sets the value of Page.
+func (s *AutomationsListOK) SetPage(val int32) {
+	s.Page = val
+}
+
+// SetPageSize sets the value of PageSize.
+func (s *AutomationsListOK) SetPageSize(val int32) {
+	s.PageSize = val
+}
+
+// SetTotalItems sets the value of TotalItems.
+func (s *AutomationsListOK) SetTotalItems(val int32) {
+	s.TotalItems = val
+}
+
+// SetTotalPages sets the value of TotalPages.
+func (s *AutomationsListOK) SetTotalPages(val int32) {
+	s.TotalPages = val
+}
+
+func (*AutomationsListOK) automationsListRes() {}
+
+type AutomationsListUnauthorized ProblemDetails
+
+func (*AutomationsListUnauthorized) automationsListRes() {}
+
+type AutomationsListUnprocessableEntity ProblemDetails
+
+func (*AutomationsListUnprocessableEntity) automationsListRes() {}
+
+type AutomationsUpdateBadRequest ProblemDetails
+
+func (*AutomationsUpdateBadRequest) automationsUpdateRes() {}
+
+type AutomationsUpdateNotFound ProblemDetails
+
+func (*AutomationsUpdateNotFound) automationsUpdateRes() {}
+
+type AutomationsUpdateUnauthorized ProblemDetails
+
+func (*AutomationsUpdateUnauthorized) automationsUpdateRes() {}
+
+type AutomationsUpdateUnprocessableEntity ProblemDetails
+
+func (*AutomationsUpdateUnprocessableEntity) automationsUpdateRes() {}
+
 type BearerAuth struct {
 	Token string
 	Roles []string
@@ -1392,6 +1817,44 @@ func (s *CreateApiTokenResponse) SetTokenInfo(val ApiTokenInfo) {
 
 func (*CreateApiTokenResponse) authTokensBootstrapRes() {}
 func (*CreateApiTokenResponse) authTokensCreateRes()    {}
+
+// Request body for creating an automation (always created as a draft).
+// Ref: #/components/schemas/CreateAutomationInput
+type CreateAutomationInput struct {
+	Name         string           `json:"name"`
+	TriggerEvent string           `json:"triggerEvent"`
+	Steps        []AutomationStep `json:"steps"`
+}
+
+// GetName returns the value of Name.
+func (s *CreateAutomationInput) GetName() string {
+	return s.Name
+}
+
+// GetTriggerEvent returns the value of TriggerEvent.
+func (s *CreateAutomationInput) GetTriggerEvent() string {
+	return s.TriggerEvent
+}
+
+// GetSteps returns the value of Steps.
+func (s *CreateAutomationInput) GetSteps() []AutomationStep {
+	return s.Steps
+}
+
+// SetName sets the value of Name.
+func (s *CreateAutomationInput) SetName(val string) {
+	s.Name = val
+}
+
+// SetTriggerEvent sets the value of TriggerEvent.
+func (s *CreateAutomationInput) SetTriggerEvent(val string) {
+	s.TriggerEvent = val
+}
+
+// SetSteps sets the value of Steps.
+func (s *CreateAutomationInput) SetSteps(val []AutomationStep) {
+	s.Steps = val
+}
 
 // Request body for creating a broadcast (always created as a draft).
 // Ref: #/components/schemas/CreateBroadcastInput
@@ -5052,6 +5515,44 @@ func (*UnsubscribesCreateUnauthorized) unsubscribesCreateRes() {}
 type UnsubscribesCreateUnprocessableEntity ProblemDetails
 
 func (*UnsubscribesCreateUnprocessableEntity) unsubscribesCreateRes() {}
+
+// Request body for updating an automation.
+// Ref: #/components/schemas/UpdateAutomationInput
+type UpdateAutomationInput struct {
+	Name         OptString        `json:"name"`
+	TriggerEvent OptString        `json:"triggerEvent"`
+	Steps        []AutomationStep `json:"steps"`
+}
+
+// GetName returns the value of Name.
+func (s *UpdateAutomationInput) GetName() OptString {
+	return s.Name
+}
+
+// GetTriggerEvent returns the value of TriggerEvent.
+func (s *UpdateAutomationInput) GetTriggerEvent() OptString {
+	return s.TriggerEvent
+}
+
+// GetSteps returns the value of Steps.
+func (s *UpdateAutomationInput) GetSteps() []AutomationStep {
+	return s.Steps
+}
+
+// SetName sets the value of Name.
+func (s *UpdateAutomationInput) SetName(val OptString) {
+	s.Name = val
+}
+
+// SetTriggerEvent sets the value of TriggerEvent.
+func (s *UpdateAutomationInput) SetTriggerEvent(val OptString) {
+	s.TriggerEvent = val
+}
+
+// SetSteps sets the value of Steps.
+func (s *UpdateAutomationInput) SetSteps(val []AutomationStep) {
+	s.Steps = val
+}
 
 // Request body for updating a draft broadcast.
 // Ref: #/components/schemas/UpdateBroadcastInput

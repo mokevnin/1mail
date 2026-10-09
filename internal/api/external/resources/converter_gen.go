@@ -29,6 +29,19 @@ func (c *ConverterImpl) ApiTokenToInfo(source *ent.ApiToken) external.ApiTokenIn
 	}
 	return externalapiApiTokenInfo
 }
+func (c *ConverterImpl) AutomationToResource(source *ent.Automation) external.AutomationResource {
+	var externalapiAutomationResource external.AutomationResource
+	if source != nil {
+		externalapiAutomationResource.ID = entityID((*source).ID)
+		externalapiAutomationResource.Name = (*source).Name
+		externalapiAutomationResource.Status = external.AutomationStatus((*source).Status)
+		externalapiAutomationResource.TriggerEvent = (*source).TriggerEvent
+		externalapiAutomationResource.Steps = automationSteps((*source).Definition)
+		externalapiAutomationResource.CreatedAt = timestamp((*source).CreatedAt)
+		externalapiAutomationResource.UpdatedAt = timestamp((*source).UpdatedAt)
+	}
+	return externalapiAutomationResource
+}
 func (c *ConverterImpl) BroadcastToResource(source *ent.Broadcast) external.BroadcastResource {
 	var externalapiBroadcastResource external.BroadcastResource
 	if source != nil {

@@ -14,6 +14,8 @@ enum SiteAutomationStatus {
 enum SiteAutomationStepType {
   email,
   wait,
+  apply_tag,
+  remove_tag,
 }
 
 /** One node in an automation's ordered, linear sequence. A flat shape: email
@@ -30,6 +32,9 @@ model SiteAutomationStep {
 
   /** Delay before the next step, in seconds (wait steps) */
   seconds?: int32;
+
+  /** Tag name to apply or remove (apply_tag and remove_tag steps) */
+  tag?: string;
 }
 
 /** Automation resource used by the site UI */

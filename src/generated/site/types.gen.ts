@@ -295,12 +295,21 @@ export type SiteAutomationStep = {
    * Delay before the next step, in seconds (wait steps)
    */
   seconds?: number;
+  /**
+   * Tag name to apply or remove (apply_tag and remove_tag steps)
+   */
+  tag?: string;
 };
 
 /**
  * Kind of automation step
  */
-export const SiteAutomationStepType = { EMAIL: 'email', WAIT: 'wait' } as const;
+export const SiteAutomationStepType = {
+  EMAIL: 'email',
+  WAIT: 'wait',
+  APPLY_TAG: 'apply_tag',
+  REMOVE_TAG: 'remove_tag'
+} as const;
 
 /**
  * Kind of automation step

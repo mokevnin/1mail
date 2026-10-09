@@ -28,6 +28,49 @@ type Handler interface {
 	//
 	// GET /auth/tokens
 	AuthTokensList(ctx context.Context) (AuthTokensListRes, error)
+	// AutomationsActivate implements Automations_activate operation.
+	//
+	// Activate an automation (starts enrolling contacts). Needs the automations:activate scope.
+	//
+	// POST /automations/{id}/activate
+	AutomationsActivate(ctx context.Context, params AutomationsActivateParams) (AutomationsActivateRes, error)
+	// AutomationsCreate implements Automations_create operation.
+	//
+	// Create a resource.
+	//
+	// POST /automations
+	AutomationsCreate(ctx context.Context, req *CreateAutomationInput) (AutomationsCreateRes, error)
+	// AutomationsDeactivate implements Automations_deactivate operation.
+	//
+	// Deactivate an automation (stops new enrollments; in-flight ones finish). Needs the
+	// automations:activate scope.
+	//
+	// POST /automations/{id}/deactivate
+	AutomationsDeactivate(ctx context.Context, params AutomationsDeactivateParams) (AutomationsDeactivateRes, error)
+	// AutomationsDelete implements Automations_delete operation.
+	//
+	// Delete a resource.
+	//
+	// DELETE /automations/{id}
+	AutomationsDelete(ctx context.Context, params AutomationsDeleteParams) (AutomationsDeleteRes, error)
+	// AutomationsGet implements Automations_get operation.
+	//
+	// Get a resource by ID.
+	//
+	// GET /automations/{id}
+	AutomationsGet(ctx context.Context, params AutomationsGetParams) (AutomationsGetRes, error)
+	// AutomationsList implements Automations_list operation.
+	//
+	// List resources with pagination.
+	//
+	// GET /automations
+	AutomationsList(ctx context.Context, params AutomationsListParams) (AutomationsListRes, error)
+	// AutomationsUpdate implements Automations_update operation.
+	//
+	// Update a resource.
+	//
+	// PUT /automations/{id}
+	AutomationsUpdate(ctx context.Context, req *UpdateAutomationInput, params AutomationsUpdateParams) (AutomationsUpdateRes, error)
 	// BroadcastsCreate implements Broadcasts_create operation.
 	//
 	// Create a resource.

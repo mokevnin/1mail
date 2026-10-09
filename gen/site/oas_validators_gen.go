@@ -361,6 +361,10 @@ func (s SiteAutomationStepType) Validate() error {
 		return nil
 	case "wait":
 		return nil
+	case "apply_tag":
+		return nil
+	case "remove_tag":
+		return nil
 	default:
 		return errors.Errorf("invalid value: %v", s)
 	}

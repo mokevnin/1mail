@@ -2,7 +2,6 @@ package jobs
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"time"
 
@@ -13,17 +12,11 @@ import (
 	"github.com/mokevnin/1mail/ent/automation"
 	"github.com/mokevnin/1mail/ent/automationrun"
 	"github.com/mokevnin/1mail/ent/outboundmessage"
+	"github.com/mokevnin/1mail/internal/automations"
 	"github.com/mokevnin/1mail/internal/eligibility"
 	"github.com/mokevnin/1mail/internal/outbound"
+	"github.com/mokevnin/1mail/internal/tags"
 )
-
-// step is one node in an automation definition (a linear list for the MVP).
-type step struct {
-	Type    string `json:"type"` // "email" | "wait"
-	Subject string `json:"subject,omitempty"`
-	Body    string `json:"body,omitempty"` // MJML
-	Seconds int    `json:"seconds,omitempty"`
-}
 
 // --- trigger evaluation: enroll contacts into matching automations ---
 
@@ -153,8 +146,8 @@ func RunStep(ctx context.Context, client *ent.Client, mod *outbound.Module, runI
 	if err != nil {
 		return StepResult{}, err
 	}
-	var steps []step
-	if err := json.Unmarshal([]byte(a.Definition), &steps); err != nil {
+	steps, err := automations.Decode(a.Definition)
+	if err != nil {
 		_, _ = run.Update().SetStatus(automationrun.StatusFailed).Save(ctx)
 		return StepResult{}, fmt.Errorf("automation %d definition: %w", a.ID, err)
 	}
@@ -165,14 +158,30 @@ func RunStep(ctx context.Context, client *ent.Client, mod *outbound.Module, runI
 	}
 
 	switch s := steps[run.CurrentStep]; s.Type {
-	case "wait":
+	case automations.StepWait:
 		resume := time.Now().Add(time.Duration(s.Seconds) * time.Second)
 		if _, err := run.Update().SetCurrentStep(run.CurrentStep + 1).SetResumeAt(resume).Save(ctx); err != nil {
 			return StepResult{}, err
 		}
 		return StepResult{ResumeAt: &resume}, nil
 
-	case "email":
+	case automations.StepApplyTag, automations.StepRemoveTag:
+		// A tag step changes the Contact's Tags and moves straight on; it sends nothing.
+		var err error
+		if s.Type == automations.StepApplyTag {
+			_, err = tags.New(client).Apply(ctx, run.WorkspaceID, run.ContactID, s.Tag)
+		} else {
+			err = tags.New(client).Remove(ctx, run.WorkspaceID, run.ContactID, s.Tag)
+		}
+		if err != nil {
+			return StepResult{}, err
+		}
+		if _, err := run.Update().SetCurrentStep(run.CurrentStep + 1).ClearResumeAt().Save(ctx); err != nil {
+			return StepResult{}, err
+		}
+		return StepResult{}, nil // continue immediately
+
+	case automations.StepEmail:
 		c, err := client.Contact.Get(ctx, run.ContactID)
 		if err != nil {
 			return StepResult{}, err

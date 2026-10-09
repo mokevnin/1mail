@@ -33,6 +33,9 @@
       "name": "Segments"
     },
     {
+      "name": "Automations"
+    },
+    {
       "name": "Broadcasts"
     },
     {
@@ -321,6 +324,444 @@
         "x-mcp": {
           "hidden": true
         }
+      }
+    },
+    "/automations": {
+      "get": {
+        "operationId": "Automations_list",
+        "description": "List resources with pagination",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/PageQuery.page"
+          },
+          {
+            "$ref": "#/components/parameters/PageQuery.pageSize"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request has succeeded.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["items", "page", "pageSize", "totalItems", "totalPages"],
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/AutomationResource"
+                      },
+                      "description": "List of items"
+                    },
+                    "page": {
+                      "type": "integer",
+                      "format": "int32",
+                      "description": "Page number (1-based)"
+                    },
+                    "pageSize": {
+                      "type": "integer",
+                      "format": "int32",
+                      "description": "Page size"
+                    },
+                    "totalItems": {
+                      "type": "integer",
+                      "format": "int32",
+                      "description": "Total number of elements"
+                    },
+                    "totalPages": {
+                      "type": "integer",
+                      "format": "int32",
+                      "description": "Total number of pages"
+                    }
+                  },
+                  "description": "Paginated response"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "RFC 7807 bad request response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "RFC 7807 unauthorized response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "RFC 7807 validation response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Automations"]
+      },
+      "post": {
+        "operationId": "Automations_create",
+        "description": "Create a resource",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": "The request has succeeded and a new resource has been created as a result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AutomationResource"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "RFC 7807 unauthorized response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "RFC 7807 validation response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Automations"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateAutomationInput"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/automations/{id}": {
+      "get": {
+        "operationId": "Automations_get",
+        "description": "Get a resource by ID",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AutomationResourceKey"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request has succeeded.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AutomationResource"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "RFC 7807 bad request response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "RFC 7807 unauthorized response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "RFC 7807 not found response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Automations"]
+      },
+      "put": {
+        "operationId": "Automations_update",
+        "description": "Update a resource",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AutomationResourceKey"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request has succeeded.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AutomationResource"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "RFC 7807 bad request response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "RFC 7807 unauthorized response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "RFC 7807 not found response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "RFC 7807 validation response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Automations"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateAutomationInput"
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "Automations_delete",
+        "description": "Delete a resource",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AutomationResourceKey"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "There is no content to send for this request, but the headers may be useful."
+          },
+          "400": {
+            "description": "RFC 7807 bad request response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "RFC 7807 unauthorized response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "RFC 7807 not found response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "RFC 7807 validation response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Automations"]
+      }
+    },
+    "/automations/{id}/activate": {
+      "post": {
+        "operationId": "Automations_activate",
+        "description": "Activate an automation (starts enrolling contacts). Needs the automations:activate scope.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AutomationResourceKey"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request has succeeded.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AutomationResource"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "RFC 7807 bad request response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "RFC 7807 unauthorized response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "RFC 7807 not found response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "RFC 7807 validation response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Automations"],
+        "x-mcp": {
+          "send": true
+        }
+      }
+    },
+    "/automations/{id}/deactivate": {
+      "post": {
+        "operationId": "Automations_deactivate",
+        "description": "Deactivate an automation (stops new enrollments; in-flight ones finish). Needs the automations:activate scope.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AutomationResourceKey"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request has succeeded.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AutomationResource"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "RFC 7807 bad request response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "RFC 7807 unauthorized response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "RFC 7807 not found response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Automations"]
       }
     },
     "/broadcasts": {
@@ -3324,6 +3765,15 @@
   ],
   "components": {
     "parameters": {
+      "AutomationResourceKey": {
+        "name": "id",
+        "in": "path",
+        "required": true,
+        "description": "Unique identifier",
+        "schema": {
+          "$ref": "#/components/schemas/EntityId"
+        }
+      },
       "BroadcastResourceKey": {
         "name": "id",
         "in": "path",
@@ -3488,6 +3938,102 @@
           }
         },
         "description": "Request body for applying a tag to a contact"
+      },
+      "AutomationResource": {
+        "type": "object",
+        "required": ["id", "name", "status", "triggerEvent", "steps", "createdAt", "updatedAt"],
+        "properties": {
+          "id": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EntityId"
+              }
+            ],
+            "description": "Unique identifier"
+          },
+          "name": {
+            "type": "string",
+            "description": "Automation name"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AutomationStatus"
+              }
+            ],
+            "description": "Lifecycle status"
+          },
+          "triggerEvent": {
+            "type": "string",
+            "description": "Event action that enrolls a contact (e.g. \"contact.created\", \"email.opened\")"
+          },
+          "steps": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AutomationStep"
+            },
+            "description": "The automation's ordered, linear steps"
+          },
+          "createdAt": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Timestamp"
+              }
+            ],
+            "description": "Creation timestamp"
+          },
+          "updatedAt": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Timestamp"
+              }
+            ],
+            "description": "Last update timestamp"
+          }
+        },
+        "description": "An Automation: an event-triggered, ordered sequence of steps. Created\nautomations are always draft; activating is a separate, send-class operation."
+      },
+      "AutomationStatus": {
+        "type": "string",
+        "enum": ["draft", "active"],
+        "description": "Automation lifecycle status"
+      },
+      "AutomationStep": {
+        "type": "object",
+        "required": ["type"],
+        "properties": {
+          "type": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AutomationStepType"
+              }
+            ],
+            "description": "Step kind"
+          },
+          "subject": {
+            "type": "string",
+            "description": "Email subject (email steps)"
+          },
+          "body": {
+            "type": "string",
+            "description": "Email body as MJML (email steps)"
+          },
+          "seconds": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Delay before the next step, in seconds (wait steps)"
+          },
+          "tag": {
+            "type": "string",
+            "description": "Tag name to apply to or remove from the enrolled contact (apply_tag and remove_tag steps)"
+          }
+        },
+        "description": "One node in an automation's ordered, linear sequence. A flat shape: email\nsteps carry subject/body, wait steps carry seconds, tag steps carry the tag name."
+      },
+      "AutomationStepType": {
+        "type": "string",
+        "enum": ["email", "wait", "apply_tag", "remove_tag"],
+        "description": "Kind of automation step"
       },
       "BroadcastReport": {
         "type": "object",
@@ -3818,6 +4364,25 @@
             "$ref": "#/components/schemas/ApiTokenInfo"
           }
         }
+      },
+      "CreateAutomationInput": {
+        "type": "object",
+        "required": ["name", "triggerEvent"],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "triggerEvent": {
+            "type": "string"
+          },
+          "steps": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AutomationStep"
+            }
+          }
+        },
+        "description": "Request body for creating an automation (always created as a draft)"
       },
       "CreateBroadcastInput": {
         "type": "object",
@@ -4666,6 +5231,24 @@
           }
         },
         "description": "A per-sending-source opt-out of marketing"
+      },
+      "UpdateAutomationInput": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "triggerEvent": {
+            "type": "string"
+          },
+          "steps": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AutomationStep"
+            }
+          }
+        },
+        "description": "Request body for updating an automation"
       },
       "UpdateBroadcastInput": {
         "type": "object",

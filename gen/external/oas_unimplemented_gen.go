@@ -48,6 +48,70 @@ func (UnimplementedHandler) AuthTokensList(ctx context.Context) (r AuthTokensLis
 	return r, ht.ErrNotImplemented
 }
 
+// AutomationsActivate implements Automations_activate operation.
+//
+// Activate an automation (starts enrolling contacts). Needs the automations:activate scope.
+//
+// POST /automations/{id}/activate
+func (UnimplementedHandler) AutomationsActivate(ctx context.Context, params AutomationsActivateParams) (r AutomationsActivateRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// AutomationsCreate implements Automations_create operation.
+//
+// Create a resource.
+//
+// POST /automations
+func (UnimplementedHandler) AutomationsCreate(ctx context.Context, req *CreateAutomationInput) (r AutomationsCreateRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// AutomationsDeactivate implements Automations_deactivate operation.
+//
+// Deactivate an automation (stops new enrollments; in-flight ones finish). Needs the
+// automations:activate scope.
+//
+// POST /automations/{id}/deactivate
+func (UnimplementedHandler) AutomationsDeactivate(ctx context.Context, params AutomationsDeactivateParams) (r AutomationsDeactivateRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// AutomationsDelete implements Automations_delete operation.
+//
+// Delete a resource.
+//
+// DELETE /automations/{id}
+func (UnimplementedHandler) AutomationsDelete(ctx context.Context, params AutomationsDeleteParams) (r AutomationsDeleteRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// AutomationsGet implements Automations_get operation.
+//
+// Get a resource by ID.
+//
+// GET /automations/{id}
+func (UnimplementedHandler) AutomationsGet(ctx context.Context, params AutomationsGetParams) (r AutomationsGetRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// AutomationsList implements Automations_list operation.
+//
+// List resources with pagination.
+//
+// GET /automations
+func (UnimplementedHandler) AutomationsList(ctx context.Context, params AutomationsListParams) (r AutomationsListRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// AutomationsUpdate implements Automations_update operation.
+//
+// Update a resource.
+//
+// PUT /automations/{id}
+func (UnimplementedHandler) AutomationsUpdate(ctx context.Context, req *UpdateAutomationInput, params AutomationsUpdateParams) (r AutomationsUpdateRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // BroadcastsCreate implements Broadcasts_create operation.
 //
 // Create a resource.

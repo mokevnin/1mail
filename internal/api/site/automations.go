@@ -2,13 +2,14 @@ package site
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"strconv"
 
 	"github.com/mokevnin/1mail/ent"
-	"github.com/mokevnin/1mail/ent/automation"
 	siteapi "github.com/mokevnin/1mail/gen/site"
 	"github.com/mokevnin/1mail/internal/api/site/resources"
+	"github.com/mokevnin/1mail/internal/automations"
 	"github.com/mokevnin/1mail/internal/convert"
 	"github.com/mokevnin/1mail/internal/pagination"
 )
@@ -32,15 +33,7 @@ func (h *Handlers) SiteAutomationsList(ctx context.Context, params siteapi.SiteA
 	}
 	page, pageSize := pagination.Normalize(pagePtr, pageSizePtr)
 
-	q := h.ent.Automation.Query().Where(automation.WorkspaceID(ws))
-	total, err := q.Count(ctx)
-	if err != nil {
-		return nil, err
-	}
-	items, err := q.Order(ent.Desc(automation.FieldID)).
-		Limit(pageSize).
-		Offset(pagination.Offset(page, pageSize)).
-		All(ctx)
+	items, total, err := h.automations.List(ctx, ws, pageSize, pagination.Offset(page, pageSize))
 	if err != nil {
 		return nil, err
 	}
@@ -68,14 +61,15 @@ func (h *Handlers) SiteAutomationsCreate(ctx context.Context, req *siteapi.SiteC
 		return nil, err
 	}
 
-	q := h.ent.Automation.Create().
-		SetWorkspaceID(ws).
-		SetName(req.Name).
-		SetTriggerEvent(req.TriggerEvent)
+	in := automations.CreateInput{Name: req.Name, TriggerEvent: req.TriggerEvent}
 	if req.Steps != nil {
-		q = q.SetDefinition(resources.SerializeAutomationSteps(req.Steps))
+		in.Steps = resources.AutomationSteps(req.Steps)
 	}
-	a, err := q.Save(ctx)
+	a, err := h.automations.Create(ctx, ws, in)
+	if errors.Is(err, automations.ErrInvalidStep) {
+		v := siteapi.SiteAutomationsCreateUnprocessableEntity(problem(http.StatusUnprocessableEntity, err.Error()))
+		return &v, nil
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -93,14 +87,18 @@ func (h *Handlers) SiteAutomationsGet(ctx context.Context, params siteapi.SiteAu
 		return nil, err
 	}
 
-	a, err := h.automationByID(ctx, ws, params.ID)
-	if ent.IsNotFound(err) {
+	id, err := strconv.ParseInt(string(params.ID), 10, 64)
+	if err != nil {
+		v := siteapi.SiteAutomationsGetBadRequest(problem(http.StatusBadRequest, "invalid id"))
+		return &v, nil
+	}
+	a, err := h.automations.Get(ctx, ws, id)
+	if errors.Is(err, automations.ErrNotFound) {
 		v := siteapi.SiteAutomationsGetNotFound(problem(http.StatusNotFound, "automation not found"))
 		return &v, nil
 	}
 	if err != nil {
-		v := siteapi.SiteAutomationsGetBadRequest(problem(http.StatusBadRequest, "invalid id"))
-		return &v, nil
+		return nil, err
 	}
 	res := mapper.AutomationToResource(a)
 	return &res, nil
@@ -121,16 +119,21 @@ func (h *Handlers) SiteAutomationsUpdate(ctx context.Context, req *siteapi.SiteU
 		v := siteapi.SiteAutomationsUpdateBadRequest(problem(http.StatusBadRequest, "invalid id"))
 		return &v, nil
 	}
-	q := h.ent.Automation.UpdateOneID(id).
-		Where(automation.WorkspaceID(ws)).
-		SetNillableName(convert.StringPtr(req.Name)).
-		SetNillableTriggerEvent(convert.StringPtr(req.TriggerEvent))
-	if req.Steps != nil {
-		q = q.SetDefinition(resources.SerializeAutomationSteps(req.Steps))
+	in := automations.UpdateInput{
+		Name:         convert.StringPtr(req.Name),
+		TriggerEvent: convert.StringPtr(req.TriggerEvent),
 	}
-	a, err := q.Save(ctx)
-	if ent.IsNotFound(err) {
+	if req.Steps != nil {
+		steps := resources.AutomationSteps(req.Steps)
+		in.Steps = &steps
+	}
+	a, err := h.automations.Update(ctx, ws, id, in)
+	if errors.Is(err, automations.ErrNotFound) {
 		v := siteapi.SiteAutomationsUpdateNotFound(problem(http.StatusNotFound, "automation not found"))
+		return &v, nil
+	}
+	if errors.Is(err, automations.ErrInvalidStep) {
+		v := siteapi.SiteAutomationsUpdateUnprocessableEntity(problem(http.StatusUnprocessableEntity, err.Error()))
 		return &v, nil
 	}
 	if err != nil {
@@ -155,8 +158,8 @@ func (h *Handlers) SiteAutomationsDelete(ctx context.Context, params siteapi.Sit
 		v := siteapi.SiteAutomationsDeleteBadRequest(problem(http.StatusBadRequest, "invalid id"))
 		return &v, nil
 	}
-	err = h.ent.Automation.DeleteOneID(id).Where(automation.WorkspaceID(ws)).Exec(ctx)
-	if ent.IsNotFound(err) {
+	err = h.automations.Delete(ctx, ws, id)
+	if errors.Is(err, automations.ErrNotFound) {
 		v := siteapi.SiteAutomationsDeleteNotFound(problem(http.StatusNotFound, "automation not found"))
 		return &v, nil
 	}
@@ -167,8 +170,8 @@ func (h *Handlers) SiteAutomationsDelete(ctx context.Context, params siteapi.Sit
 }
 
 func (h *Handlers) SiteAutomationsActivate(ctx context.Context, params siteapi.SiteAutomationsActivateParams) (siteapi.SiteAutomationsActivateRes, error) {
-	a, err := h.setAutomationStatus(ctx, params.Slug, params.ID, automation.StatusActive)
-	if ent.IsNotFound(err) {
+	a, err := h.setAutomationActive(ctx, params.Slug, params.ID, true)
+	if errors.Is(err, automations.ErrNotFound) || ent.IsNotFound(err) {
 		v := siteapi.SiteAutomationsActivateNotFound(problem(http.StatusNotFound, "automation not found"))
 		return &v, nil
 	}
@@ -181,8 +184,8 @@ func (h *Handlers) SiteAutomationsActivate(ctx context.Context, params siteapi.S
 }
 
 func (h *Handlers) SiteAutomationsDeactivate(ctx context.Context, params siteapi.SiteAutomationsDeactivateParams) (siteapi.SiteAutomationsDeactivateRes, error) {
-	a, err := h.setAutomationStatus(ctx, params.Slug, params.ID, automation.StatusDraft)
-	if ent.IsNotFound(err) {
+	a, err := h.setAutomationActive(ctx, params.Slug, params.ID, false)
+	if errors.Is(err, automations.ErrNotFound) || ent.IsNotFound(err) {
 		v := siteapi.SiteAutomationsDeactivateNotFound(problem(http.StatusNotFound, "automation not found"))
 		return &v, nil
 	}
@@ -194,17 +197,7 @@ func (h *Handlers) SiteAutomationsDeactivate(ctx context.Context, params siteapi
 	return &res, nil
 }
 
-func (h *Handlers) automationByID(ctx context.Context, ws int64, id siteapi.EntityId) (*ent.Automation, error) {
-	parsed, err := strconv.ParseInt(string(id), 10, 64)
-	if err != nil {
-		return nil, err
-	}
-	return h.ent.Automation.Query().
-		Where(automation.IDEQ(parsed), automation.WorkspaceID(ws)).
-		Only(ctx)
-}
-
-func (h *Handlers) setAutomationStatus(ctx context.Context, slug string, id siteapi.EntityId, status automation.Status) (*ent.Automation, error) {
+func (h *Handlers) setAutomationActive(ctx context.Context, slug string, id siteapi.EntityId, active bool) (*ent.Automation, error) {
 	ws, err := h.workspaceID(ctx, slug)
 	if err != nil {
 		return nil, err
@@ -213,8 +206,8 @@ func (h *Handlers) setAutomationStatus(ctx context.Context, slug string, id site
 	if err != nil {
 		return nil, err
 	}
-	return h.ent.Automation.UpdateOneID(parsed).
-		Where(automation.WorkspaceID(ws)).
-		SetStatus(status).
-		Save(ctx)
+	if active {
+		return h.automations.Activate(ctx, ws, parsed)
+	}
+	return h.automations.Deactivate(ctx, ws, parsed)
 }

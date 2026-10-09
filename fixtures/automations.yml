@@ -35,3 +35,12 @@
   workspace_id: 1
   created_at: '{{daysAgo 10}}'
   updated_at: '{{daysAgo 10}}'
+# Anchor for the tag-step tests: apply "engaged", then remove "vip". Trigger unused elsewhere.
+- id: 104
+  name: Tag on engagement
+  status: active
+  trigger_event: tag_demo
+  definition: '[{"type":"apply_tag","tag":"engaged"},{"type":"remove_tag","tag":"vip"}]'
+  workspace_id: 1
+  created_at: '{{daysAgo 5}}'
+  updated_at: '{{daysAgo 5}}'
