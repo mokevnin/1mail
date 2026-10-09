@@ -34,6 +34,8 @@ const recipientMaxAttempts = 3
 // each, so no single job carries the whole send.
 type SendBroadcastArgs struct {
 	BroadcastID int64 `json:"broadcast_id"`
+	// ScheduledAt is the time a delayed job was enqueued for; nil for an immediate send.
+	ScheduledAt *time.Time `json:"scheduled_at,omitempty"`
 }
 
 func (SendBroadcastArgs) Kind() string { return "send_broadcast" }
@@ -64,7 +66,7 @@ func (w *SendBroadcastWorker) Timeout(*river.Job[SendBroadcastArgs]) time.Durati
 }
 
 func (w *SendBroadcastWorker) Work(ctx context.Context, job *river.Job[SendBroadcastArgs]) error {
-	if due, err := BroadcastDue(ctx, w.ent, job.Args.BroadcastID); err != nil || !due {
+	if due, err := BroadcastDue(ctx, w.ent, job.Args.BroadcastID, job.Args.ScheduledAt); err != nil || !due {
 		return err // not due: unscheduled (back to draft) after this job was queued
 	}
 	ids, err := PlanBroadcast(ctx, w.ent, w.mod, job.Args.BroadcastID)
@@ -92,14 +94,23 @@ func (w *SendBroadcastWorker) Work(ctx context.Context, job *river.Job[SendBroad
 }
 
 // BroadcastDue reports whether a queued send job should still run. A Broadcast that is
-// back in draft was unscheduled (or its enqueue was reverted) after the delayed job was
-// queued: the job must not send it.
-func BroadcastDue(ctx context.Context, client *ent.Client, broadcastID int64) (bool, error) {
+// back in draft was unscheduled (or its enqueue was reverted) after the job was queued.
+// A delayed job (jobScheduledAt set) is also bound to the schedule it was enqueued for:
+// unscheduling leaves it queued, so after a reschedule the Broadcast carries a different
+// scheduled_at (or none, once sent now) and the superseded job must not send it early.
+func BroadcastDue(ctx context.Context, client *ent.Client, broadcastID int64, jobScheduledAt *time.Time) (bool, error) {
 	b, err := client.Broadcast.Get(ctx, broadcastID)
 	if err != nil {
 		return false, fmt.Errorf("load broadcast %d: %w", broadcastID, err)
 	}
-	return b.Status != broadcast.StatusDraft, nil
+	if b.Status == broadcast.StatusDraft {
+		return false, nil
+	}
+	if jobScheduledAt == nil {
+		return true, nil
+	}
+	// Postgres keeps microseconds; the job payload keeps nanoseconds.
+	return b.ScheduledAt != nil && b.ScheduledAt.Equal(jobScheduledAt.Truncate(time.Microsecond)), nil
 }
 
 // SendRecipientWorker delivers one broadcast recipient. Each recipient is its
