@@ -7,17 +7,30 @@ import (
 	"context"
 	"net"
 	"net/http"
-	"strings"
+
+	"github.com/realclientip/realclientip-go"
 )
 
 type ctxKey struct{}
 
-// FromRequest prefers the first hop of X-Forwarded-For (the binary runs behind
-// Caddy/ingress) and falls back to the connection's remote host.
+// forwardedFor reads exactly one trusted proxy hop: the binary runs behind one
+// Caddy/ingress, which appends the connecting address to X-Forwarded-For. Taking the
+// rightmost entry means a client cannot spoof its address (and with it the recorded
+// consent proof) by sending its own X-Forwarded-For. Raise the count if more proxies
+// sit in front.
+var forwardedFor = func() realclientip.Strategy {
+	strategy, err := realclientip.NewRightmostTrustedCountStrategy("X-Forwarded-For", 1)
+	if err != nil {
+		panic(err) // static header name and count: cannot fail
+	}
+	return strategy
+}()
+
+// FromRequest returns the address our trusted proxy saw, falling back to the
+// connection's remote host when the request did not come through one.
 func FromRequest(r *http.Request) string {
-	if xff := r.Header.Get("X-Forwarded-For"); xff != "" {
-		first, _, _ := strings.Cut(xff, ",")
-		return strings.TrimSpace(first)
+	if ip := forwardedFor.ClientIP(r.Header, r.RemoteAddr); ip != "" {
+		return ip
 	}
 	if host, _, err := net.SplitHostPort(r.RemoteAddr); err == nil {
 		return host

@@ -15,9 +15,11 @@ func TestFromRequestUsesTheRawRemoteAddrWhenItHasNoPort(t *testing.T) {
 	assert.Equal(t, "203.0.113.9", clientip.FromRequest(r))
 }
 
-func TestFromRequestTakesTheFirstForwardedHop(t *testing.T) {
+// Only the hop our own proxy appended is trusted: a client-supplied leading entry
+// cannot spoof the recorded address.
+func TestFromRequestTrustsOnlyTheHopTheProxyAppended(t *testing.T) {
 	r := httptest.NewRequestWithContext(t.Context(), "GET", "/", nil)
 	r.RemoteAddr = "10.0.0.1:4000"
-	r.Header.Set("X-Forwarded-For", " 198.51.100.7 , 10.0.0.2")
+	r.Header.Set("X-Forwarded-For", "6.6.6.6, 198.51.100.7")
 	assert.Equal(t, "198.51.100.7", clientip.FromRequest(r))
 }

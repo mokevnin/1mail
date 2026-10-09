@@ -65,9 +65,7 @@ func TestDecodeUnsubRejectsMalformedClaims(t *testing.T) {
 		"empty src":   with("src", ""),
 		"missing ws":  with("ws", nil),
 		"bad ws":      with("ws", "x"),
-		"missing cid": with("cid", nil),
 		"bad cid":     with("cid", "x"),
-		"missing bid": with("bid", nil),
 		"bad bid":     with("bid", "x"),
 	} {
 		t.Run(name, func(t *testing.T) {
@@ -75,6 +73,10 @@ func TestDecodeUnsubRejectsMalformedClaims(t *testing.T) {
 			assert.Error(t, err)
 		})
 	}
+	// A contact or broadcast id is optional: absent means "none" (0).
+	none, err := tr.DecodeUnsub(signed(t, with("bid", nil)))
+	require.NoError(t, err)
+	assert.Zero(t, none.BroadcastID)
 	_, err = tr.DecodeUnsub("garbage")
 	assert.Error(t, err)
 }
@@ -100,7 +102,6 @@ func TestDecodeConfirmRejectsMalformedClaims(t *testing.T) {
 		"missing dest": with("dest", nil),
 		"missing ws":   with("ws", nil),
 		"bad ws":       with("ws", "x"),
-		"missing cid":  with("cid", nil),
 		"bad cid":      with("cid", "x"),
 		"missing exp":  with("exp", nil),
 	} {

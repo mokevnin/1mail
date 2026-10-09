@@ -18,7 +18,6 @@ import (
 	"crypto/hmac"
 	"crypto/sha256"
 	"fmt"
-	"strconv"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -34,12 +33,15 @@ const (
 	PurposeEmailChange   Purpose = "email_change"
 )
 
-// reserved claim keys; everything else is treated as caller-supplied extra data.
-const (
-	claimUserID  = "uid"
-	claimPurpose = "prp"
-	extraPrefix  = "x_"
-)
+// claims are the token's typed payload. The user id travels as a JSON string
+// (`,string`) so it never passes through float64; extra carries purpose-specific
+// string claims under one key.
+type claims struct {
+	jwt.RegisteredClaims
+	UserID  int64             `json:"uid,string"`
+	Purpose Purpose           `json:"prp"`
+	Extra   map[string]string `json:"x,omitempty"`
+}
 
 // Signer mints and parses authtoken JWTs against a single secret.
 type Signer struct {
@@ -56,17 +58,12 @@ func New(secret string) *Signer {
 // after ttl. extra carries purpose-specific string claims (e.g. the requested new
 // email for a change); nil is fine.
 func (s *Signer) Mint(purpose Purpose, userID int64, binding string, ttl time.Duration, extra map[string]string) (string, error) {
-	claims := jwt.MapClaims{
-		// int64 as string: jwt.MapClaims decodes JSON numbers to float64, which
-		// loses precision above 2^53.
-		claimUserID:  strconv.FormatInt(userID, 10),
-		claimPurpose: string(purpose),
-		"exp":        time.Now().Add(ttl).Unix(),
-	}
-	for k, v := range extra {
-		claims[extraPrefix+k] = v
-	}
-	tok := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	tok := jwt.NewWithClaims(jwt.SigningMethodHS256, &claims{
+		RegisteredClaims: jwt.RegisteredClaims{ExpiresAt: jwt.NewNumericDate(time.Now().Add(ttl))},
+		UserID:           userID,
+		Purpose:          purpose,
+		Extra:            extra,
+	})
 	return tok.SignedString(s.deriveKey(purpose, userID, binding))
 }
 
@@ -75,44 +72,33 @@ func (s *Signer) Mint(purpose Purpose, userID int64, binding string, ttl time.Du
 // user id (e.g. their password hash) so a completed action invalidates the token;
 // it is called with the claimed user id before the signature is verified.
 func (s *Signer) Parse(token string, purpose Purpose, bindingFor func(userID int64) (string, error)) (int64, map[string]string, error) {
-	var userID int64
+	var c claims
 	// golang-jwt hands keyFunc the parsed (not-yet-verified) claims, so we resolve
 	// the per-user signing key here from the claimed uid + its current binding.
-	parsed, err := jwt.Parse(token, func(tok *jwt.Token) (any, error) {
-		claims, ok := tok.Claims.(jwt.MapClaims)
+	_, err := jwt.ParseWithClaims(token, &c, func(tok *jwt.Token) (any, error) {
+		cl, ok := tok.Claims.(*claims)
 		if !ok {
 			return nil, fmt.Errorf("authtoken: unexpected claims type")
 		}
-		if p, _ := claims[claimPurpose].(string); Purpose(p) != purpose {
+		if cl.Purpose != purpose {
 			return nil, fmt.Errorf("authtoken: purpose mismatch")
 		}
-		uid, err := claimInt64(claims, claimUserID)
+		if cl.UserID == 0 {
+			return nil, fmt.Errorf("authtoken: missing uid claim")
+		}
+		binding, err := bindingFor(cl.UserID)
 		if err != nil {
 			return nil, err
 		}
-		userID = uid
-		binding, err := bindingFor(uid)
-		if err != nil {
-			return nil, err
-		}
-		return s.deriveKey(purpose, uid, binding), nil
+		return s.deriveKey(purpose, cl.UserID, binding), nil
 	}, jwt.WithValidMethods([]string{"HS256"}), jwt.WithExpirationRequired())
 	if err != nil {
 		return 0, nil, err
 	}
-	claims, ok := parsed.Claims.(jwt.MapClaims)
-	if !ok {
-		return 0, nil, fmt.Errorf("authtoken: unexpected claims type")
+	if c.Extra == nil {
+		c.Extra = map[string]string{}
 	}
-	extra := map[string]string{}
-	for k, v := range claims {
-		if len(k) > len(extraPrefix) && k[:len(extraPrefix)] == extraPrefix {
-			if sv, ok := v.(string); ok {
-				extra[k[len(extraPrefix):]] = sv
-			}
-		}
-	}
-	return userID, extra, nil
+	return c.UserID, c.Extra, nil
 }
 
 // deriveKey binds the signing key to (purpose, userID, binding) so the token is
@@ -122,12 +108,4 @@ func (s *Signer) deriveKey(purpose Purpose, userID int64, binding string) []byte
 	// hash.Hash.Write never returns an error.
 	_, _ = fmt.Fprintf(mac, "%s|%d|%s", purpose, userID, binding)
 	return mac.Sum(nil)
-}
-
-func claimInt64(claims jwt.MapClaims, key string) (int64, error) {
-	s, ok := claims[key].(string)
-	if !ok {
-		return 0, fmt.Errorf("authtoken: missing %s claim", key)
-	}
-	return strconv.ParseInt(s, 10, 64)
 }
