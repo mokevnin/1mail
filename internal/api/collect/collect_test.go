@@ -2,7 +2,6 @@ package collect_test
 
 import (
 	"context"
-	"encoding/json"
 	"testing"
 
 	"github.com/go-faster/jx"
@@ -85,11 +84,9 @@ func TestCollectIdentifyAndEvents(t *testing.T) {
 	// persist subscriber writes the Event row asynchronously; the router isn't run
 	// under txdb). Decode the outbox row and assert the customer's event is carried
 	// as-is, with the resolved identity.
-	var payload []byte
-	err = env.SQLDB.QueryRow(`SELECT payload FROM watermill_domain_events ORDER BY "offset" DESC LIMIT 1`).Scan(&payload)
-	require.NoError(t, err)
-	var envlp events.Envelope
-	require.NoError(t, json.Unmarshal(payload, &envlp))
+	outbox := env.OutboxEnvelopes(t)
+	require.NotEmpty(t, outbox)
+	envlp := outbox[len(outbox)-1]
 	assert.Equal(t, events.NameCollected, envlp.Name)
 	assert.EqualValues(t, fixtures.AcmeID, envlp.WorkspaceID) // scoped to the key's workspace
 

@@ -73,12 +73,7 @@ func TestAutomationEnrollAndRun(t *testing.T) {
 	// Each automation send publishes email.sent onto the transactional outbox, so an
 	// automation send is segmentable through the same Event log as broadcast sends.
 	// Two email steps ⇒ two send facts for this contact.
-	var sent int
-	require.NoError(t, env.SQLDB.QueryRow(
-		`SELECT count(*) FROM watermill_domain_events
-		   WHERE payload->>'name' = 'email.sent' AND payload->'data'->>'email' = $1`,
-		"auto@test.dev",
-	).Scan(&sent))
+	sent := env.OutboxCount(t, "email.sent", map[string]any{"email": "auto@test.dev"})
 	assert.Equal(t, 2, sent)
 }
 

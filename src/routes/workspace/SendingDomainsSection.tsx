@@ -78,6 +78,12 @@ function DnsRecordRow({
   )
 }
 
+// mantine-datatable calls `content` as a plain function, not as a component, so the hooks used by
+// SendingDomainRecords need this wrapper to get their own component boundary.
+function SendingDomainRowExpansion({ record }: { record: SiteSendingDomainResource }) {
+  return <SendingDomainRecords record={record} />
+}
+
 function SendingDomainRecords({ record }: { record: SiteSendingDomainResource }) {
   const { t } = useTranslation()
   return (
@@ -242,7 +248,7 @@ export function SendingDomainsSection({ slug }: { slug: string }) {
             ),
           },
         ]}
-        rowExpansion={{ content: SendingDomainRecords }}
+        rowExpansion={{ content: SendingDomainRowExpansion }}
       />
     </Card>
   )

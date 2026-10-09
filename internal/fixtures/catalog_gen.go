@@ -31,6 +31,8 @@ const (
 	AutomationGlobexID = 900
 	// AutomationGlobexName is from fixtures/automations.
 	AutomationGlobexName = "Globex automation"
+	// AutomationRunWelcomeCompletedID is from fixtures/automation_runs.
+	AutomationRunWelcomeCompletedID = 1000
 	// AutomationTagOnEngagementID is from fixtures/automations.
 	AutomationTagOnEngagementID = 104
 	// AutomationTagOnEngagementName is from fixtures/automations.
@@ -63,6 +65,8 @@ const (
 	BroadcastProSegmentID = 105
 	// BroadcastProSegmentName is from fixtures/broadcasts.
 	BroadcastProSegmentName = "Pro plan perks"
+	// BroadcastRecipientSentID is from fixtures/broadcast_recipients.
+	BroadcastRecipientSentID = 1000
 	// BroadcastScheduledID is from fixtures/broadcasts.
 	BroadcastScheduledID = 101
 	// BroadcastScheduledName is from fixtures/broadcasts.

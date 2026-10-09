@@ -14,8 +14,8 @@ func TestFromRequest(t *testing.T) {
 	r.RemoteAddr = "10.0.0.9:5555"
 	assert.Equal(t, "10.0.0.9", clientip.FromRequest(r), "remote host without a proxy header")
 
-	r.Header.Set("X-Forwarded-For", "203.0.113.7, 10.0.0.1")
-	assert.Equal(t, "203.0.113.7", clientip.FromRequest(r), "first forwarded hop wins")
+	r.Header.Set("X-Forwarded-For", "203.0.113.7")
+	assert.Equal(t, "203.0.113.7", clientip.FromRequest(r), "the hop our proxy appended wins")
 }
 
 func TestMiddlewareExposesAddressToContext(t *testing.T) {

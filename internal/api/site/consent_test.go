@@ -59,7 +59,17 @@ func TestSitePublicConfirmationsPerform(t *testing.T) {
 
 	out, err = anon.SitePublicConfirmationsPerform(ctx, siteapi.SitePublicConfirmationsPerformParams{Token: "garbage"})
 	require.NoError(t, err)
-	assert.IsType(t, &siteapi.ProblemDetails{}, out)
+	assert.IsType(t, &siteapi.SitePublicConfirmationsPerformBadRequest{}, out, "an invalid token is a 400")
+
+	// An expired link is told apart from an invalid one (410), so the page can offer
+	// to sign up again instead of a generic failure.
+	expired := env.ExpiredConfirmToken(t, tracking.ConfirmTarget{
+		Destination: *c.Email, WorkspaceID: fixtures.AcmeID, ContactID: c.ID,
+	})
+	out, err = anon.SitePublicConfirmationsPerform(ctx, siteapi.SitePublicConfirmationsPerformParams{Token: expired})
+	require.NoError(t, err)
+	assert.IsType(t, &siteapi.SitePublicConfirmationsPerformGone{}, out, "an expired token is a 410")
+	assert.Equal(t, 1, count(), "an expired token records nothing more")
 }
 
 // Unsubscribe (ADR 0012): the page button performs the opt-out through the site
@@ -111,15 +121,59 @@ func TestSitePublicConfirmationsPerformRecordsClientIP(t *testing.T) {
 	token := tokenAfter(t, url, "/e/confirm/")
 
 	req := httptest.NewRequestWithContext(ctx, http.MethodPost, "/site/confirmations/"+token, nil)
-	req.Header.Set("X-Forwarded-For", "203.0.113.7, 10.0.0.1")
+	req.Header.Set("X-Forwarded-For", "6.6.6.6, 203.0.113.7")
 	w := httptest.NewRecorder()
 	env.Server.ServeHTTP(w, req)
 	require.Equal(t, http.StatusNoContent, w.Code)
 
-	var ip string
-	require.NoError(t, env.SQLDB.QueryRow(
-		`SELECT payload->'data'->>'ip' FROM watermill_domain_events
-		 WHERE payload->>'name' = 'marketing.confirmed' AND payload->'data'->>'email' = $1`,
-		*c.Email).Scan(&ip))
+	confirmed := env.Outbox(t, "marketing.confirmed")
+	require.Len(t, confirmed, 1)
+	ip := confirmed[0].Data["ip"]
 	assert.Equal(t, "203.0.113.7", ip)
+}
+
+// A write that really fails must not look like a success: the person would be told
+// they are unsubscribed or confirmed while nothing was recorded. A NUL byte in the
+// signed destination is a deterministic database failure (Postgres text rejects it)
+// that is not a constraint violation.
+func TestSitePublicConsentWriteFailureIsAnError(t *testing.T) {
+	env := testhelper.Setup(t)
+	ctx := t.Context()
+	anon := env.SiteAnonymous(t)
+	const poisoned = "a\x00b@example.com"
+
+	unsubURL, err := env.Tracker.UnsubscribeURL(tracking.UnsubTarget{
+		Source: eligibility.SourceBroadcasts, Destination: poisoned, WorkspaceID: fixtures.AcmeID,
+	})
+	require.NoError(t, err)
+	_, err = anon.SitePublicUnsubscribesPerform(ctx, siteapi.SitePublicUnsubscribesPerformParams{Token: tokenAfter(t, unsubURL, "/e/u/")})
+	require.Error(t, err, "a failed opt-out write must not answer 204")
+
+	confirmURL, err := env.Tracker.ConfirmURL(tracking.ConfirmTarget{Destination: poisoned, WorkspaceID: fixtures.AcmeID})
+	require.NoError(t, err)
+	_, err = anon.SitePublicConfirmationsPerform(ctx, siteapi.SitePublicConfirmationsPerformParams{Token: tokenAfter(t, confirmURL, "/e/confirm/")})
+	require.Error(t, err, "a failed confirmation write must not answer 204")
+}
+
+// A token for a Workspace that no longer exists has nothing left to record: that is
+// not a failure the person (or a retrying mailbox provider) can do anything about.
+func TestSitePublicConsentForDeletedWorkspaceIsNoOp(t *testing.T) {
+	env := testhelper.Setup(t)
+	ctx := t.Context()
+	anon := env.SiteAnonymous(t)
+	const goneWorkspace = 999999
+
+	unsubURL, err := env.Tracker.UnsubscribeURL(tracking.UnsubTarget{
+		Source: eligibility.SourceBroadcasts, Destination: fixtures.ContactAliceEmail, WorkspaceID: goneWorkspace,
+	})
+	require.NoError(t, err)
+	out, err := anon.SitePublicUnsubscribesPerform(ctx, siteapi.SitePublicUnsubscribesPerformParams{Token: tokenAfter(t, unsubURL, "/e/u/")})
+	require.NoError(t, err)
+	assert.IsType(t, &siteapi.SitePublicUnsubscribesPerformNoContent{}, out)
+
+	confirmURL, err := env.Tracker.ConfirmURL(tracking.ConfirmTarget{Destination: fixtures.ContactAliceEmail, WorkspaceID: goneWorkspace})
+	require.NoError(t, err)
+	out2, err := anon.SitePublicConfirmationsPerform(ctx, siteapi.SitePublicConfirmationsPerformParams{Token: tokenAfter(t, confirmURL, "/e/confirm/")})
+	require.NoError(t, err)
+	assert.IsType(t, &siteapi.SitePublicConfirmationsPerformNoContent{}, out2)
 }

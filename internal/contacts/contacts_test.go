@@ -18,13 +18,7 @@ import (
 
 func createdEvents(t *testing.T, env *testhelper.TestEnv, contactID int64) int {
 	t.Helper()
-	var n int
-	require.NoError(t, env.SQLDB.QueryRow(
-		`SELECT count(*) FROM watermill_domain_events
-		   WHERE payload->>'name' = 'contact.created'
-		     AND (payload->'data'->>'contactId')::bigint = $1`, contactID,
-	).Scan(&n))
-	return n
+	return env.OutboxCount(t, "contact.created", map[string]any{"contactId": contactID})
 }
 
 func TestCreatePersistsAndPublishesContactCreated(t *testing.T) {

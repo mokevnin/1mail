@@ -5,7 +5,7 @@
 
 # --- Broadcast 200: sent 3d ago, 10 sent, 5 opened, 2 clicked ---
 - {
-    id: 1000,
+    id: 1000, # fixture: BroadcastRecipientSent
     broadcast_id: 200,
     contact_id: 100,
     workspace_id: 1,

@@ -221,12 +221,7 @@ func TestExternalEmailsSendRecordsTrace(t *testing.T) {
 	require.NotNil(t, rec.ContactID)
 	assert.Equal(t, contact.ID, *rec.ContactID, "destination resolved to the contact")
 
-	var sent int
-	require.NoError(t, env.SQLDB.QueryRow(
-		`SELECT count(*) FROM watermill_domain_events
-		   WHERE payload->>'name' = 'email.sent' AND payload->'data'->>'email' = $1`,
-		"trace@example.com",
-	).Scan(&sent))
+	sent := env.OutboxCount(t, "email.sent", map[string]any{"email": "trace@example.com"})
 	assert.Equal(t, 1, sent, "email.sent published once")
 }
 
@@ -287,12 +282,7 @@ func TestExternalEmailsSendSuppressedRecordsNoEvent(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, outboundmessage.StatusSkipped, rec.Status)
 
-	var events int
-	require.NoError(t, env.SQLDB.QueryRow(
-		`SELECT count(*) FROM watermill_domain_events
-		   WHERE payload->>'name' = 'email.sent' AND payload->'data'->>'email' = $1`,
-		"blocked@example.com",
-	).Scan(&events))
+	events := env.OutboxCount(t, "email.sent", map[string]any{"email": "blocked@example.com"})
 	assert.Zero(t, events, "no send happened, so no email.sent")
 }
 

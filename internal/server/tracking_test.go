@@ -112,11 +112,7 @@ func TestConfirmEndpoint(t *testing.T) {
 	assert.Equal(t, 1, n, "repeated POST does not duplicate the confirmation")
 
 	// Exactly one marketing.confirmed event was published onto the outbox.
-	var count int
-	require.NoError(t, env.SQLDB.QueryRow(
-		`SELECT count(*) FROM watermill_domain_events
-		 WHERE payload->>'name' = 'marketing.confirmed' AND payload->'data'->>'email' = $1`,
-		*c.Email).Scan(&count))
+	count := env.OutboxCount(t, "marketing.confirmed", map[string]any{"email": *c.Email})
 	assert.Equal(t, 1, count, "one confirmation event, published once")
 }
 
@@ -260,17 +256,12 @@ func TestTrackingEndpoints(t *testing.T) {
 	// The persist + automations subscribers consume these (the router isn't run
 	// under txdb; delivery and projection are covered by the events package
 	// tests). Assert the outbox carries all three events for this recipient.
-	rows, err := env.SQLDB.Query(
-		`SELECT payload->>'name' FROM watermill_domain_events WHERE payload->'data'->>'email' = $1`, c.Email)
-	require.NoError(t, err)
-	defer func() { _ = rows.Close() }()
 	var names []string
-	for rows.Next() {
-		var n string
-		require.NoError(t, rows.Scan(&n))
-		names = append(names, n)
+	for _, m := range env.Outbox(t) {
+		if m.Data["email"] == *c.Email {
+			names = append(names, m.Envelope.Name)
+		}
 	}
-	require.NoError(t, rows.Err())
 	assert.Contains(t, names, "email.opened")
 	assert.Contains(t, names, "email.clicked")
 	assert.Contains(t, names, "email.unsubscribed")
@@ -387,4 +378,20 @@ func TestUnsubscribeEverythingEscalation(t *testing.T) {
 		require.NoError(t, err)
 		assert.Truef(t, exists, "scope %q opt-out recorded", src)
 	}
+}
+
+// The mailbox one-click POST must see a failed write as a failure (so the provider
+// retries) instead of a 204; a NUL byte in the signed destination is a real
+// database failure that is not a constraint violation.
+func TestUnsubscribeOneClickWriteFailureIsServerError(t *testing.T) {
+	env := testhelper.Setup(t)
+	path := unsubPath(t, env.Tracker, tracking.UnsubTarget{
+		Source: eligibility.SourceBroadcasts, Destination: "a\x00b@example.com", WorkspaceID: fixtures.AcmeID,
+	})
+
+	req := httptest.NewRequestWithContext(t.Context(), http.MethodPost, path, nil)
+	w := httptest.NewRecorder()
+	env.Server.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusInternalServerError, w.Code)
 }

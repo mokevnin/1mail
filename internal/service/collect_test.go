@@ -1,0 +1,159 @@
+package service_test
+
+import (
+	"context"
+	"testing"
+	"time"
+
+	"github.com/samber/lo"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	"github.com/mokevnin/1mail/ent/contact"
+	"github.com/mokevnin/1mail/ent/event"
+	"github.com/mokevnin/1mail/ent/visitor"
+	"github.com/mokevnin/1mail/internal/events"
+	"github.com/mokevnin/1mail/internal/fixtures"
+	"github.com/mokevnin/1mail/internal/service"
+	"github.com/mokevnin/1mail/internal/testhelper"
+)
+
+// outboxCollected decodes every CollectedEvent on the domain-event outbox.
+func outboxCollected(t *testing.T, env *testhelper.TestEnv) []*events.CollectedEvent {
+	t.Helper()
+	var out []*events.CollectedEvent
+	for _, ev := range env.OutboxEvents(t, events.NameCollected) {
+		ce, ok := ev.(*events.CollectedEvent)
+		require.Truef(t, ok, "got %T", ev)
+		out = append(out, ce)
+	}
+	return out
+}
+
+func TestIdentifyVisitorCreatesTheContactBindsTheDeviceAndStitchesEarlierEvents(t *testing.T) {
+	env := testhelper.Setup(t)
+	ctx := context.Background()
+
+	// An earlier anonymous event from the device, and one from another device.
+	for _, v := range []string{"dev-1", "dev-2"} {
+		_, err := env.DB.Event.Create().SetWorkspaceID(fixtures.AcmeID).SetVisitorID(v).SetAction("page_view").Save(ctx)
+		require.NoError(t, err)
+	}
+
+	err := service.IdentifyVisitor(ctx, env.Bus, env.DB.Scoped(fixtures.AcmeID), service.IdentifyInput{
+		VisitorID: "  dev-1 ",
+		Email:     lo.ToPtr("Visitor@Example.com"),
+		Traits:    map[string]any{"plan": "pro"},
+	})
+	require.NoError(t, err)
+
+	c, err := env.DB.Contact.Query().Where(contact.WorkspaceID(fixtures.AcmeID), contact.Email("visitor@example.com")).Only(ctx)
+	require.NoError(t, err)
+	assert.Equal(t, "pro", c.CustomFields["plan"])
+
+	v, err := env.DB.Visitor.Query().Where(visitor.WorkspaceID(fixtures.AcmeID), visitor.VisitorID("dev-1")).Only(ctx)
+	require.NoError(t, err)
+	assert.Equal(t, c.ID, lo.FromPtr(v.ContactID), "the device is bound to the contact")
+
+	stitched, err := env.DB.Event.Query().Where(event.VisitorID("dev-1")).Only(ctx)
+	require.NoError(t, err)
+	assert.Equal(t, c.ID, lo.FromPtr(stitched.ContactID), "pre-identify behavior is attached")
+	other, err := env.DB.Event.Query().Where(event.VisitorID("dev-2")).Only(ctx)
+	require.NoError(t, err)
+	assert.Nil(t, other.ContactID, "another device stays anonymous")
+}
+
+func TestIdentifyVisitorReusesAnExistingContactAndDevice(t *testing.T) {
+	env := testhelper.Setup(t)
+	ctx := context.Background()
+	input := service.IdentifyInput{VisitorID: "dev-known", Email: lo.ToPtr(fixtures.ContactAliceEmail)}
+
+	require.NoError(t, service.IdentifyVisitor(ctx, env.Bus, env.DB.Scoped(fixtures.AcmeID), input))
+	require.NoError(t, service.IdentifyVisitor(ctx, env.Bus, env.DB.Scoped(fixtures.AcmeID), input), "identify is idempotent")
+
+	v, err := env.DB.Visitor.Query().Where(visitor.WorkspaceID(fixtures.AcmeID), visitor.VisitorID("dev-known")).Only(ctx)
+	require.NoError(t, err)
+	assert.EqualValues(t, fixtures.ContactAliceID, lo.FromPtr(v.ContactID))
+	n, err := env.DB.Contact.Query().Where(contact.WorkspaceID(fixtures.AcmeID), contact.Email(fixtures.ContactAliceEmail)).Count(ctx)
+	require.NoError(t, err)
+	assert.Equal(t, 1, n, "no duplicate contact")
+}
+
+func TestIdentifyVisitorRefusesWhatCannotBeIdentified(t *testing.T) {
+	env := testhelper.Setup(t)
+	ctx := context.Background()
+
+	err := service.IdentifyVisitor(ctx, env.Bus, env.DB.Scoped(fixtures.AcmeID), service.IdentifyInput{VisitorID: "   ", Email: lo.ToPtr("a@example.com")})
+	require.EqualError(t, err, "visitorId is required")
+
+	err = service.IdentifyVisitor(ctx, env.Bus, env.DB.Scoped(fixtures.AcmeID), service.IdentifyInput{VisitorID: "dev-x"})
+	require.EqualError(t, err, "identify requires subjectId, email, or phone")
+	n, err := env.DB.Visitor.Query().Where(visitor.VisitorID("dev-x")).Count(ctx)
+	require.NoError(t, err)
+	assert.Zero(t, n, "a refused identify leaves no device behind")
+}
+
+func TestCollectEventsCarriesTheIdentityTheDeviceResolvesTo(t *testing.T) {
+	env := testhelper.Setup(t)
+	ctx := context.Background()
+	at := time.Date(2026, 5, 1, 9, 0, 0, 0, time.UTC)
+
+	require.NoError(t, service.IdentifyVisitor(ctx, env.Bus, env.DB.Scoped(fixtures.AcmeID), service.IdentifyInput{
+		VisitorID: "dev-id", Email: lo.ToPtr(fixtures.ContactAliceEmail), SubjectID: lo.ToPtr("alice-1"),
+	}))
+
+	require.NoError(t, service.CollectEvents(ctx, env.Bus, env.DB.Scoped(fixtures.AcmeID), []service.CollectEventInput{
+		{VisitorID: " dev-id ", Action: "signup", Properties: map[string]any{"plan": "pro"}, OccurredAt: &at},
+		{VisitorID: "dev-anon", Action: "page_view"},
+	}))
+
+	got := outboxCollected(t, env)
+	require.Len(t, got, 2)
+	known, anon := got[0], got[1]
+	assert.Equal(t, "signup", known.Action)
+	assert.EqualValues(t, fixtures.ContactAliceID, known.ContactID)
+	assert.Equal(t, fixtures.ContactAliceEmail, known.Email)
+	assert.Equal(t, "alice-1", known.SubjectID)
+	assert.Equal(t, "dev-id", known.VisitorID)
+	assert.Equal(t, "pro", known.Properties["plan"])
+	assert.True(t, known.OccurredAt.Equal(at))
+
+	assert.Equal(t, "page_view", anon.Action)
+	assert.Zero(t, anon.ContactID, "an unidentified device is anonymous")
+	assert.Equal(t, "dev-anon", anon.VisitorID)
+	assert.True(t, anon.OccurredAt.IsZero())
+
+	n, err := env.DB.Visitor.Query().Where(visitor.WorkspaceID(fixtures.AcmeID), visitor.VisitorID("dev-anon")).Count(ctx)
+	require.NoError(t, err)
+	assert.Equal(t, 1, n, "an unseen device is recorded on first event")
+}
+
+func TestCollectEventsTreatsAVanishedContactAsAnonymous(t *testing.T) {
+	env := testhelper.Setup(t)
+	ctx := context.Background()
+	require.NoError(t, service.IdentifyVisitor(ctx, env.Bus, env.DB.Scoped(fixtures.AcmeID), service.IdentifyInput{VisitorID: "dev-gone", Email: lo.ToPtr("gone@example.com")}))
+	_, err := env.DB.Contact.Delete().Where(contact.Email("gone@example.com")).Exec(ctx)
+	require.NoError(t, err)
+
+	require.NoError(t, service.CollectEvents(ctx, env.Bus, env.DB.Scoped(fixtures.AcmeID), []service.CollectEventInput{{VisitorID: "dev-gone", Action: "login"}}))
+	got := outboxCollected(t, env)
+	require.Len(t, got, 1)
+	assert.Zero(t, got[0].ContactID)
+}
+
+func TestResolveContactIDFindsExistingContactsOnly(t *testing.T) {
+	env := testhelper.Setup(t)
+	ctx := context.Background()
+
+	id, err := service.ResolveContactID(ctx, env.DB.Scoped(fixtures.AcmeID), "", lo.ToPtr(fixtures.ContactAliceEmail), nil)
+	require.NoError(t, err)
+	assert.EqualValues(t, fixtures.ContactAliceID, id)
+
+	id, err = service.ResolveContactID(ctx, env.DB.Scoped(fixtures.AcmeID), "", lo.ToPtr("nobody@example.com"), nil)
+	require.NoError(t, err)
+	assert.Zero(t, id, "never creates")
+
+	id, err = service.ResolveContactID(ctx, env.DB.Scoped(fixtures.GlobexID), "", lo.ToPtr(fixtures.ContactAliceEmail), nil)
+	require.NoError(t, err)
+	assert.Zero(t, id, "another workspace's contact is not resolved")
+}

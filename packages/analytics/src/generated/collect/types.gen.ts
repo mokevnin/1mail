@@ -58,6 +58,13 @@ export type ForbiddenProblem = {
 };
 
 /**
+ * RFC 7807 gone response: the resource existed but is no longer available (an expired link)
+ */
+export type GoneProblem = {
+  body: ProblemDetails;
+};
+
+/**
  * RFC 7807 not found response
  */
 export type NotFoundProblem = {

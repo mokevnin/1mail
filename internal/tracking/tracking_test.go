@@ -87,6 +87,11 @@ func TestDecodeConfirmRejectsExpired(t *testing.T) {
 
 	_, err = tr.DecodeConfirm(signed)
 	assert.Error(t, err, "expired confirmation token is rejected")
+	assert.True(t, tracking.IsExpired(err), "and recognised as expired")
+
+	_, err = tr.DecodeConfirm("garbage")
+	assert.Error(t, err)
+	assert.False(t, tracking.IsExpired(err), "a malformed token is invalid, not expired")
 }
 
 func TestRewriteWrapsLinksAndAddsPixelAndFooter(t *testing.T) {

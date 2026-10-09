@@ -1,0 +1,168 @@
+package site_test
+
+import (
+	"context"
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	"github.com/mokevnin/1mail/ent/sendingdomain"
+	siteapi "github.com/mokevnin/1mail/gen/site"
+	"github.com/mokevnin/1mail/internal/fixtures"
+	"github.com/mokevnin/1mail/internal/testhelper"
+)
+
+func TestSiteSendingDomainsErrorBranches(t *testing.T) {
+	env := testhelper.Setup(t)
+	c := env.SiteActor(t, fixtures.OwnerJohnEmail)
+	ctx := context.Background()
+	acme, foreign := fixtures.AcmeSlug, fixtures.GlobexSlug
+	known := idStr(fixtures.SendingDomainUnverifiedID)
+	missing := idStr(99999)
+	foreignID := idStr(fixtures.SendingDomainGlobexID)
+
+	// Create: foreign slug, invalid domain, duplicate.
+	r1, err := c.SiteSendingDomainsCreate(ctx, &siteapi.SiteCreateSendingDomainInput{Domain: "new.example.com"}, siteapi.SiteSendingDomainsCreateParams{Slug: foreign})
+	require.NoError(t, err)
+	assert.IsType(t, &siteapi.SiteSendingDomainsCreateNotFound{}, r1)
+	r2, err := c.SiteSendingDomainsCreate(ctx, &siteapi.SiteCreateSendingDomainInput{Domain: "localhost"}, siteapi.SiteSendingDomainsCreateParams{Slug: acme})
+	require.NoError(t, err)
+	assert.IsType(t, &siteapi.SiteSendingDomainsCreateUnprocessableEntity{}, r2)
+	r2b, err := c.SiteSendingDomainsCreate(ctx, &siteapi.SiteCreateSendingDomainInput{Domain: "a..example.com"}, siteapi.SiteSendingDomainsCreateParams{Slug: acme})
+	require.NoError(t, err)
+	assert.IsType(t, &siteapi.SiteSendingDomainsCreateUnprocessableEntity{}, r2b, "an empty label is invalid")
+	r3, err := c.SiteSendingDomainsCreate(ctx, &siteapi.SiteCreateSendingDomainInput{Domain: fixtures.SendingDomainVerifiedDomain}, siteapi.SiteSendingDomainsCreateParams{Slug: acme})
+	require.NoError(t, err)
+	assert.IsType(t, &siteapi.SiteSendingDomainsCreateConflict{}, r3, "a duplicate domain is a conflict")
+
+	// Create with an explicit selector persists it.
+	r4, err := c.SiteSendingDomainsCreate(ctx, &siteapi.SiteCreateSendingDomainInput{
+		Domain: " Mail.Example.COM. ", DkimSelector: siteapi.NewOptString(" sel1 "),
+	}, siteapi.SiteSendingDomainsCreateParams{Slug: acme})
+	require.NoError(t, err)
+	created, ok := r4.(*siteapi.SiteSendingDomainResource)
+	require.Truef(t, ok, "got %T", r4)
+	stored, err := env.DB.SendingDomain.Get(ctx, mustID(t, created.ID))
+	require.NoError(t, err)
+	assert.Equal(t, "mail.example.com", stored.Domain)
+	assert.Equal(t, "sel1", stored.DkimSelector)
+
+	// Get.
+	g1, err := c.SiteSendingDomainsGet(ctx, siteapi.SiteSendingDomainsGetParams{Slug: foreign, ID: known})
+	require.NoError(t, err)
+	assert.IsType(t, &siteapi.SiteSendingDomainsGetNotFound{}, g1)
+	g2, err := c.SiteSendingDomainsGet(ctx, siteapi.SiteSendingDomainsGetParams{Slug: acme, ID: overflowID})
+	require.NoError(t, err)
+	assert.IsType(t, &siteapi.SiteSendingDomainsGetBadRequest{}, g2)
+	g3, err := c.SiteSendingDomainsGet(ctx, siteapi.SiteSendingDomainsGetParams{Slug: acme, ID: foreignID})
+	require.NoError(t, err)
+	assert.IsType(t, &siteapi.SiteSendingDomainsGetNotFound{}, g3)
+	g4, err := c.SiteSendingDomainsGet(ctx, siteapi.SiteSendingDomainsGetParams{Slug: acme, ID: known})
+	require.NoError(t, err)
+	assert.IsType(t, &siteapi.SiteSendingDomainResource{}, g4)
+
+	// Verify.
+	v1, err := c.SiteSendingDomainsVerify(ctx, siteapi.SiteSendingDomainsVerifyParams{Slug: foreign, ID: known})
+	require.NoError(t, err)
+	assert.IsType(t, &siteapi.SiteSendingDomainsVerifyNotFound{}, v1)
+	v2, err := c.SiteSendingDomainsVerify(ctx, siteapi.SiteSendingDomainsVerifyParams{Slug: acme, ID: overflowID})
+	require.NoError(t, err)
+	assert.IsType(t, &siteapi.SiteSendingDomainsVerifyBadRequest{}, v2)
+	v3, err := c.SiteSendingDomainsVerify(ctx, siteapi.SiteSendingDomainsVerifyParams{Slug: acme, ID: missing})
+	require.NoError(t, err)
+	assert.IsType(t, &siteapi.SiteSendingDomainsVerifyNotFound{}, v3)
+	v4, err := c.SiteSendingDomainsVerify(ctx, siteapi.SiteSendingDomainsVerifyParams{Slug: acme, ID: foreignID})
+	require.NoError(t, err)
+	assert.IsType(t, &siteapi.SiteSendingDomainsVerifyNotFound{}, v4)
+
+	// Delete.
+	d1, err := c.SiteSendingDomainsDelete(ctx, siteapi.SiteSendingDomainsDeleteParams{Slug: foreign, ID: known})
+	require.NoError(t, err)
+	assert.IsType(t, &siteapi.SiteSendingDomainsDeleteNotFound{}, d1)
+	d2, err := c.SiteSendingDomainsDelete(ctx, siteapi.SiteSendingDomainsDeleteParams{Slug: acme, ID: overflowID})
+	require.NoError(t, err)
+	assert.IsType(t, &siteapi.SiteSendingDomainsDeleteBadRequest{}, d2)
+	d3, err := c.SiteSendingDomainsDelete(ctx, siteapi.SiteSendingDomainsDeleteParams{Slug: acme, ID: foreignID})
+	require.NoError(t, err)
+	assert.IsType(t, &siteapi.SiteSendingDomainsDeleteNotFound{}, d3)
+	d4, err := c.SiteSendingDomainsDelete(ctx, siteapi.SiteSendingDomainsDeleteParams{Slug: acme, ID: known})
+	require.NoError(t, err)
+	assert.IsType(t, &siteapi.SiteSendingDomainsDeleteNoContent{}, d4)
+	gone, err := env.DB.SendingDomain.Query().Where(sendingdomain.ID(fixtures.SendingDomainUnverifiedID)).Exist(ctx)
+	require.NoError(t, err)
+	assert.False(t, gone)
+	kept, err := env.DB.SendingDomain.Query().Where(sendingdomain.ID(fixtures.SendingDomainGlobexID)).Exist(ctx)
+	require.NoError(t, err)
+	assert.True(t, kept)
+}
+
+func TestSiteTagsErrorBranches(t *testing.T) {
+	env := testhelper.Setup(t)
+	c := env.SiteActor(t, fixtures.OwnerJohnEmail)
+	ctx := context.Background()
+	acme, foreign := fixtures.AcmeSlug, fixtures.GlobexSlug
+	alice := idStr(fixtures.ContactAliceID)
+	missing := idStr(99999)
+
+	// Listing a contact's tags.
+	l1, err := c.SiteTagsListForContact(ctx, siteapi.SiteTagsListForContactParams{Slug: foreign, ContactId: alice})
+	require.NoError(t, err)
+	assert.IsType(t, &siteapi.SiteTagsListForContactNotFound{}, l1)
+	l2, err := c.SiteTagsListForContact(ctx, siteapi.SiteTagsListForContactParams{Slug: acme, ContactId: overflowID})
+	require.NoError(t, err)
+	assert.IsType(t, &siteapi.SiteTagsListForContactBadRequest{}, l2)
+	l3, err := c.SiteTagsListForContact(ctx, siteapi.SiteTagsListForContactParams{Slug: acme, ContactId: missing})
+	require.NoError(t, err)
+	assert.IsType(t, &siteapi.SiteTagsListForContactNotFound{}, l3)
+	l4, err := c.SiteTagsListForContact(ctx, siteapi.SiteTagsListForContactParams{Slug: acme, ContactId: alice})
+	require.NoError(t, err)
+	assert.IsType(t, &siteapi.SiteTagsListForContactOK{}, l4)
+
+	// Applying.
+	a1, err := c.SiteTagsApply(ctx, &siteapi.SiteApplyTagInput{Name: "t"}, siteapi.SiteTagsApplyParams{Slug: foreign, ContactId: alice})
+	require.NoError(t, err)
+	assert.IsType(t, &siteapi.SiteTagsApplyNotFound{}, a1)
+	a2, err := c.SiteTagsApply(ctx, &siteapi.SiteApplyTagInput{Name: "t"}, siteapi.SiteTagsApplyParams{Slug: acme, ContactId: overflowID})
+	require.NoError(t, err)
+	assert.IsType(t, &siteapi.SiteTagsApplyBadRequest{}, a2)
+	a3, err := c.SiteTagsApply(ctx, &siteapi.SiteApplyTagInput{Name: "t"}, siteapi.SiteTagsApplyParams{Slug: acme, ContactId: missing})
+	require.NoError(t, err)
+	assert.IsType(t, &siteapi.SiteTagsApplyNotFound{}, a3)
+	a4, err := c.SiteTagsApply(ctx, &siteapi.SiteApplyTagInput{Name: "   "}, siteapi.SiteTagsApplyParams{Slug: acme, ContactId: alice})
+	require.NoError(t, err)
+	assert.IsType(t, &siteapi.SiteTagsApplyUnprocessableEntity{}, a4)
+
+	// Applying then removing a tag round-trips through the contact's tag list.
+	applied, err := c.SiteTagsApply(ctx, &siteapi.SiteApplyTagInput{Name: "round-trip"}, siteapi.SiteTagsApplyParams{Slug: acme, ContactId: alice})
+	require.NoError(t, err)
+	require.IsType(t, &siteapi.SiteTagResource{}, applied)
+	listed, err := c.SiteTagsListForContact(ctx, siteapi.SiteTagsListForContactParams{Slug: acme, ContactId: alice})
+	require.NoError(t, err)
+	assert.Contains(t, siteTagNames(listed.(*siteapi.SiteTagsListForContactOK).Items), "round-trip")
+
+	// Removing.
+	rm1, err := c.SiteTagsRemove(ctx, siteapi.SiteTagsRemoveParams{Slug: foreign, ContactId: alice, Name: "round-trip"})
+	require.NoError(t, err)
+	assert.IsType(t, &siteapi.SiteTagsRemoveNotFound{}, rm1)
+	rm2, err := c.SiteTagsRemove(ctx, siteapi.SiteTagsRemoveParams{Slug: acme, ContactId: overflowID, Name: "round-trip"})
+	require.NoError(t, err)
+	assert.IsType(t, &siteapi.SiteTagsRemoveBadRequest{}, rm2)
+	rm3, err := c.SiteTagsRemove(ctx, siteapi.SiteTagsRemoveParams{Slug: acme, ContactId: missing, Name: "round-trip"})
+	require.NoError(t, err)
+	assert.IsType(t, &siteapi.SiteTagsRemoveNotFound{}, rm3)
+	rm4, err := c.SiteTagsRemove(ctx, siteapi.SiteTagsRemoveParams{Slug: acme, ContactId: alice, Name: "round-trip"})
+	require.NoError(t, err)
+	assert.IsType(t, &siteapi.SiteTagsRemoveNoContent{}, rm4)
+	after, err := c.SiteTagsListForContact(ctx, siteapi.SiteTagsListForContactParams{Slug: acme, ContactId: alice})
+	require.NoError(t, err)
+	assert.NotContains(t, siteTagNames(after.(*siteapi.SiteTagsListForContactOK).Items), "round-trip")
+
+	// The workspace list pages and is workspace-scoped.
+	p, err := c.SiteTagsList(ctx, siteapi.SiteTagsListParams{Slug: acme, Page: siteapi.NewOptInt32(1), PageSize: siteapi.NewOptInt32(1)})
+	require.NoError(t, err)
+	assert.LessOrEqual(t, len(p.(*siteapi.SiteTagsListOK).Items), 1)
+	nf, err := c.SiteTagsList(ctx, siteapi.SiteTagsListParams{Slug: foreign})
+	require.NoError(t, err)
+	assert.IsType(t, &siteapi.SiteTagsListNotFound{}, nf)
+}

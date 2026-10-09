@@ -13,6 +13,7 @@ import (
 	"github.com/mokevnin/1mail/ent"
 	"github.com/mokevnin/1mail/internal/events"
 	"github.com/mokevnin/1mail/internal/fixtures"
+	"github.com/mokevnin/1mail/internal/testhelper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -34,7 +35,7 @@ func TestDomainEventsRouterDelivery(t *testing.T) {
 	ctx := context.Background()
 	require.NoError(t, events.InitSchema(ctx, db))
 	t.Cleanup(func() {
-		_, _ = db.ExecContext(context.WithoutCancel(ctx), `DELETE FROM watermill_domain_events`)
+		_ = testhelper.PurgeOutbox(context.WithoutCancel(ctx), db)
 	})
 
 	router, err := events.NewRouter()

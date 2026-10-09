@@ -2,7 +2,6 @@ package eventlog_test
 
 import (
 	"context"
-	"encoding/json"
 	"sort"
 	"testing"
 
@@ -21,23 +20,12 @@ import (
 
 func outboxCollected(t *testing.T, env *testhelper.TestEnv) []*events.CollectedEvent {
 	t.Helper()
-	rows, err := env.SQLDB.Query(`SELECT payload FROM watermill_domain_events ORDER BY "offset"`)
-	require.NoError(t, err)
-	defer func() { _ = rows.Close() }()
-
 	var out []*events.CollectedEvent
-	for rows.Next() {
-		var payload []byte
-		require.NoError(t, rows.Scan(&payload))
-		var envlp events.Envelope
-		require.NoError(t, json.Unmarshal(payload, &envlp))
-		decoded, err := events.Decode(envlp)
-		require.NoError(t, err)
-		ce, ok := decoded.(*events.CollectedEvent)
-		require.Truef(t, ok, "got %T", decoded)
+	for _, ev := range env.OutboxEvents(t) {
+		ce, ok := ev.(*events.CollectedEvent)
+		require.Truef(t, ok, "got %T", ev)
 		out = append(out, ce)
 	}
-	require.NoError(t, rows.Err())
 	return out
 }
 

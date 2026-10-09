@@ -11,11 +11,15 @@ namespace OneMail;
 @tag("Site Consent")
 namespace SitePublicConfirmations {
   /** Perform a double opt-in confirmation (ADR 0013). The deliberate human act
-   * behind the confirmation page's button. Repeating it is a no-op. */
+   * behind the confirmation page's button. Repeating it is a no-op. 410 means the
+   * link has expired, so the page offers to sign up again; 400 is an invalid token. */
   @useAuth(NoAuth)
   @post
   @route("/{token}")
-  op perform(@path token: string): NoContentResponse | BadRequestProblem;
+  op perform(@path token: string):
+    | NoContentResponse
+    | BadRequestProblem
+    | GoneProblem;
 }
 
 @route("/unsubscribes")

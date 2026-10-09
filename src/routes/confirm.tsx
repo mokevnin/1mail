@@ -31,7 +31,8 @@ export function ConfirmSubscription({
     if (token) mutation.mutate({ path: { token } })
   }
 
-  const isExpired = expired || !token
+  // Expired before the page was opened (no token / expired=1) or while it sat open (410).
+  const isExpired = expired || !token || mutation.error?.status === 410
 
   return (
     <Stack maw={460} mx="auto" mt="xl" align="center">

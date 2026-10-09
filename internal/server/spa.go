@@ -35,7 +35,12 @@ func spaHandler(locale string) http.Handler {
 			_, _ = w.Write([]byte("frontend not embedded in this build (build with -tags embed_spa); in dev it is served by Vite\n"))
 		})
 	}
+	return spaFileHandler(sub, locale)
+}
 
+// spaFileHandler serves the built frontend from sub (split out of spaHandler so
+// the serving logic is testable without an embed_spa build).
+func spaFileHandler(sub fs.FS, locale string) http.Handler {
 	// The locale is fixed for the process, so substitute it into the shell once
 	// at startup rather than per request. shell is nil if index.html is missing.
 	shell := buildIndexShell(sub, locale)

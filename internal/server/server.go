@@ -2,9 +2,7 @@ package server
 
 import (
 	"context"
-	"crypto/rand"
 	"database/sql"
-	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -29,6 +27,7 @@ import (
 	"github.com/mokevnin/1mail/internal/oauthserver"
 	"github.com/mokevnin/1mail/internal/telemetry"
 	"github.com/ogen-go/ogen/ogenerrors"
+	"github.com/oklog/ulid/v2"
 	"github.com/rs/cors"
 )
 
@@ -221,21 +220,13 @@ func requestID(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		id := r.Header.Get("X-Request-Id")
 		if id == "" {
-			id = randomID()
+			id = ulid.Make().String()
 		}
 		w.Header().Set("X-Request-Id", id)
 		// Carry the id in context so request-scoped logs (via logging.FromContext)
 		// correlate back to this request.
 		next.ServeHTTP(w, r.WithContext(logging.WithRequestID(r.Context(), id)))
 	})
-}
-
-func randomID() string {
-	b := make([]byte, 8)
-	if _, err := rand.Read(b); err != nil {
-		return "req"
-	}
-	return hex.EncodeToString(b)
 }
 
 // corsMiddleware applies two rs/cors policies by path: the public collect API

@@ -39,6 +39,13 @@ model BadRequestProblem is Response<400> {
   @body body: ProblemDetails;
 }
 
+/** RFC 7807 gone response: the resource existed but is no longer available (an expired link) */
+@error
+model GoneProblem is Response<410> {
+  @header contentType: "application/problem+json";
+  @body body: ProblemDetails;
+}
+
 /** RFC 7807 unauthorized response */
 @error
 model UnauthorizedProblem is Response<401> {

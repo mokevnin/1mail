@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"io/fs"
 	"log/slog"
 	"net/http"
 	"os"
@@ -15,10 +16,10 @@ import (
 	"github.com/mokevnin/1mail/config"
 	"github.com/mokevnin/1mail/internal/app"
 	"github.com/mokevnin/1mail/internal/logging"
-	"github.com/mokevnin/1mail/internal/migrate"
 	"github.com/mokevnin/1mail/internal/telemetry"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
+	"github.com/pressly/goose/v3"
 )
 
 // Build metadata, injected via -ldflags by the Makefile / GoReleaser.
@@ -151,7 +152,7 @@ func runMigrate(env string) error {
 }
 
 // applyMigrations opens a short-lived connection (separate from the app's DI
-// pool) and applies the embedded migrations.
+// pool) and applies the embedded migrations with goose.
 func applyMigrations(cfg *config.Config) error {
 	db, err := sql.Open("pgx", cfg.DatabaseURL)
 	if err != nil {
@@ -159,9 +160,19 @@ func applyMigrations(cfg *config.Config) error {
 	}
 	defer func() { _ = db.Close() }()
 
+	files, err := fs.Sub(onemail.MigrationsFS, "migrations")
+	if err != nil {
+		return err
+	}
+	provider, err := goose.NewProvider(goose.DialectPostgres, db, files)
+	if err != nil {
+		return err
+	}
+
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
-	return migrate.Apply(ctx, db, onemail.MigrationsFS)
+	_, err = provider.Up(ctx)
+	return err
 }
 
 // runWorkspaceCommand boots the minimal operator app (no listener, no event router,

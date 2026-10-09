@@ -1,6 +1,7 @@
 package oauthserver
 
 import (
+	"crypto/rand"
 	"crypto/subtle"
 	"encoding/json"
 	"errors"
@@ -127,11 +128,7 @@ func (s *Server) register(w http.ResponseWriter, r *http.Request) {
 		name = defaultClient
 	}
 	name = truncate(name, maxClientName)
-	clientID, err := randomString(18)
-	if err != nil {
-		writeOAuthError(w, http.StatusInternalServerError, "server_error", "")
-		return
-	}
+	clientID := rand.Text()
 	row, err := s.ent.OAuthClient.Create().
 		SetClientID(clientID).
 		SetName(name).

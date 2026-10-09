@@ -50,7 +50,9 @@ func (Automation) Fields() []ent.Field {
 
 func (Automation) Edges() []ent.Edge {
 	return []ent.Edge{
-		edge.To("runs", AutomationRun.Type),
+		// Deleting an Automation deletes its Enrollments with it.
+		edge.To("runs", AutomationRun.Type).
+			Annotations(entsql.OnDelete(entsql.Cascade)),
 	}
 }
 

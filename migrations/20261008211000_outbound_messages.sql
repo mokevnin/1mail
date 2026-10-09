@@ -1,3 +1,4 @@
+-- +goose Up
 -- Modify "workspaces" table
 ALTER TABLE "public"."workspaces" ADD COLUMN "suspended_at" timestamptz NULL, ADD COLUMN "suspended_by" character varying NULL, ADD COLUMN "suspension_reason" character varying NULL;
 -- Create "outbound_messages" table
@@ -8,3 +9,5 @@ CREATE UNIQUE INDEX "outbound_messages_workspace_id_idempotency_key" ON "public"
 CREATE INDEX "outboundmessage_workspace_id_kind_created_at" ON "public"."outbound_messages" ("workspace_id", "kind", "created_at");
 -- Create index "outboundmessage_workspace_id_sending_domain_created_at" to table: "outbound_messages"
 CREATE INDEX "outboundmessage_workspace_id_sending_domain_created_at" ON "public"."outbound_messages" ("workspace_id", "sending_domain", "created_at");
+
+-- +goose Down

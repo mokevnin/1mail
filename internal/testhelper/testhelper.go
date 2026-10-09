@@ -130,6 +130,8 @@ type TestEnv struct {
 	// unsubscribe and confirmation tokens with it, never with a second one.
 	Tracker *tracking.Tracker
 
+	jwtSecret string // for tokens a test needs in a state the Tracker never mints
+
 	// Captured sends from the inline jobs adapter, for assertions.
 	SystemMail   *CapturingSender // platform mail (welcome, …)
 	CustomerMail *CapturingSender // workspace/campaign mail (broadcasts)
@@ -203,7 +205,7 @@ func Setup(t *testing.T) *TestEnv {
 	require.NoError(t, err, "build server")
 
 	return &TestEnv{
-		DB: client, SQLDB: txDB, Bus: bus, Server: handler, Tracker: tracker,
+		DB: client, SQLDB: txDB, Bus: bus, Server: handler, Tracker: tracker, jwtSecret: baseCfg.JWTSecret,
 		SystemMail: systemMail, CustomerMail: customerMail,
 	}
 }

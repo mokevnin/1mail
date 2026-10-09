@@ -378,7 +378,7 @@ export default interface Resources {
       "nameLabel": "Name",
       "noRecords": "No segments yet",
       "previewButton": "Preview audience",
-      "previewCount": "{{count}} matching contacts" | "segments.previewCount" | "segments.previewCount",
+      "previewCount": "{{count}} matching contacts" | "{{count}} matching contact" | "{{count}} matching contacts",
       "rulesLabel": "Rules"
     },
     "settings": {

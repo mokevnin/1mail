@@ -1,3 +1,4 @@
+-- +goose Up
 -- Modify "api_tokens" table
 ALTER TABLE "api_tokens" ALTER COLUMN "created_at" SET DEFAULT CURRENT_TIMESTAMP, ALTER COLUMN "updated_at" SET DEFAULT CURRENT_TIMESTAMP;
 -- Modify "automation_runs" table
@@ -48,3 +49,5 @@ ALTER TABLE "visitors" ALTER COLUMN "created_at" SET DEFAULT CURRENT_TIMESTAMP, 
 ALTER TABLE "webhook_endpoints" ALTER COLUMN "created_at" SET DEFAULT CURRENT_TIMESTAMP, ALTER COLUMN "updated_at" SET DEFAULT CURRENT_TIMESTAMP;
 -- Modify "workspaces" table
 ALTER TABLE "workspaces" ALTER COLUMN "created_at" SET DEFAULT CURRENT_TIMESTAMP, ALTER COLUMN "updated_at" SET DEFAULT CURRENT_TIMESTAMP;
+
+-- +goose Down

@@ -35,15 +35,9 @@ func TestEmailEngagementDedupIDBecomesDedupKey(t *testing.T) {
 
 	dedupOf := func(name string) string {
 		t.Helper()
-		var v *string
-		require.NoError(t, env.SQLDB.QueryRowContext(t.Context(),
-			`SELECT payload->>'dedupKey' FROM watermill_domain_events WHERE payload->>'name' = $1`,
-			name,
-		).Scan(&v))
-		if v == nil {
-			return ""
-		}
-		return *v
+		msgs := env.OutboxEnvelopes(t, name)
+		require.Len(t, msgs, 1)
+		return msgs[0].DedupKey
 	}
 
 	assert.Equal(t, "email.sent:42", dedupOf(events.NameEmailSent),

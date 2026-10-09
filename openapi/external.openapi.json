@@ -4715,6 +4715,16 @@
         },
         "description": "Event payload"
       },
+      "GoneProblem": {
+        "type": "object",
+        "required": ["body"],
+        "properties": {
+          "body": {
+            "$ref": "#/components/schemas/ProblemDetails"
+          }
+        },
+        "description": "RFC 7807 gone response: the resource existed but is no longer available (an expired link)"
+      },
       "PreviewSegmentInput": {
         "type": "object",
         "properties": {

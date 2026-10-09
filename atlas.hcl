@@ -10,7 +10,7 @@ env "local" {
   url = getenv("DATABASE_URL")
   dev = getenv("ATLAS_DEV_URL")
   migration {
-    dir = "file://migrations"
+    dir = "file://migrations?format=goose"
   }
   format {
     migrate {

@@ -2,7 +2,7 @@
 # every run status represented. Unique (automation_id, contact_id) — one row per pair.
 # Welcome series (100): completed / active(waiting) / exited / failed
 - {
-    id: 1000,
+    id: 1000, # fixture: AutomationRunWelcomeCompleted
     automation_id: 100,
     contact_id: 100,
     workspace_id: 1,

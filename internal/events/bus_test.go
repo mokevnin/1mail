@@ -19,10 +19,7 @@ import (
 
 func outboxCount(t *testing.T, env *testhelper.TestEnv) int {
 	t.Helper()
-	var n int
-	err := env.SQLDB.QueryRowContext(t.Context(), `SELECT count(*) FROM watermill_domain_events`).Scan(&n)
-	require.NoError(t, err)
-	return n
+	return len(env.OutboxEnvelopes(t))
 }
 
 // dataFor marshals a typed event into the envelope Data, as the publisher does.

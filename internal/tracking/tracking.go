@@ -13,7 +13,6 @@ import (
 	stdhtml "html"
 	"io"
 	"net/url"
-	"strconv"
 	"strings"
 	"time"
 
@@ -53,77 +52,81 @@ type UnsubTarget struct {
 	BroadcastID int64
 }
 
+// The tokens' claims are typed: int64 ids travel as JSON strings (`,string`) so
+// they never pass through float64 and lose precision above 2^53.
+type recipientClaims struct {
+	jwt.RegisteredClaims
+	RecipientID int64 `json:"rid,string"`
+}
+
+type unsubClaims struct {
+	jwt.RegisteredClaims
+	Source      string `json:"src"`
+	Destination string `json:"dest"`
+	WorkspaceID int64  `json:"ws,string"`
+	ContactID   int64  `json:"cid,string"`
+	BroadcastID int64  `json:"bid,string"`
+}
+
+type confirmClaims struct {
+	jwt.RegisteredClaims
+	Destination string `json:"dest"`
+	WorkspaceID int64  `json:"ws,string"`
+	ContactID   int64  `json:"cid,string"`
+}
+
+func (t *Tracker) sign(claims jwt.Claims) (string, error) {
+	return jwt.NewWithClaims(jwt.SigningMethodHS256, claims).SignedString(t.secret)
+}
+
+func (t *Tracker) parse(token string, claims jwt.Claims, opts ...jwt.ParserOption) error {
+	_, err := jwt.ParseWithClaims(token, claims, func(*jwt.Token) (any, error) {
+		return t.secret, nil
+	}, append([]jwt.ParserOption{jwt.WithValidMethods([]string{"HS256"})}, opts...)...)
+	return err
+}
+
 // Token mints a signed token identifying a broadcast recipient (open/click).
 func (t *Tracker) Token(recipientID int64) (string, error) {
-	tok := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"rid": strconv.FormatInt(recipientID, 10),
-	})
-	return tok.SignedString(t.secret)
+	return t.sign(&recipientClaims{RecipientID: recipientID})
 }
 
 // Decode validates a token and returns the recipient id it carries.
 func (t *Tracker) Decode(token string) (int64, error) {
-	parsed, err := jwt.Parse(token, func(*jwt.Token) (any, error) {
-		return t.secret, nil
-	}, jwt.WithValidMethods([]string{"HS256"}))
-	if err != nil {
+	var c recipientClaims
+	if err := t.parse(token, &c); err != nil {
 		return 0, err
 	}
-	claims, ok := parsed.Claims.(jwt.MapClaims)
-	if !ok {
-		return 0, fmt.Errorf("tracking: unexpected claims type")
+	if c.RecipientID == 0 {
+		return 0, errors.New("tracking: missing rid claim")
 	}
-	rid, ok := claims["rid"].(string)
-	if !ok {
-		return 0, fmt.Errorf("tracking: missing rid claim")
-	}
-	return strconv.ParseInt(rid, 10, 64)
+	return c.RecipientID, nil
 }
 
-// unsubToken mints a signed scoped-unsubscribe token. int64 fields are stored as
-// strings: jwt.MapClaims decodes JSON numbers to float64, which loses precision
-// above 2^53.
+// unsubToken mints a signed scoped-unsubscribe token.
 func (t *Tracker) unsubToken(target UnsubTarget) (string, error) {
-	tok := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"src":  target.Source,
-		"dest": target.Destination,
-		"ws":   strconv.FormatInt(target.WorkspaceID, 10),
-		"cid":  strconv.FormatInt(target.ContactID, 10),
-		"bid":  strconv.FormatInt(target.BroadcastID, 10),
+	return t.sign(&unsubClaims{
+		Source:      target.Source,
+		Destination: target.Destination,
+		WorkspaceID: target.WorkspaceID,
+		ContactID:   target.ContactID,
+		BroadcastID: target.BroadcastID,
 	})
-	return tok.SignedString(t.secret)
 }
 
 // DecodeUnsub validates a scoped-unsubscribe token and returns its target.
 func (t *Tracker) DecodeUnsub(token string) (UnsubTarget, error) {
-	parsed, err := jwt.Parse(token, func(*jwt.Token) (any, error) {
-		return t.secret, nil
-	}, jwt.WithValidMethods([]string{"HS256"}))
-	if err != nil {
+	var c unsubClaims
+	if err := t.parse(token, &c); err != nil {
 		return UnsubTarget{}, err
 	}
-	claims, ok := parsed.Claims.(jwt.MapClaims)
-	if !ok {
-		return UnsubTarget{}, fmt.Errorf("tracking: unexpected claims type")
+	if c.Source == "" {
+		return UnsubTarget{}, errors.New("tracking: missing src claim")
 	}
-	src, _ := claims["src"].(string)
-	dest, _ := claims["dest"].(string)
-	if src == "" {
-		return UnsubTarget{}, fmt.Errorf("tracking: missing src claim")
+	if c.WorkspaceID == 0 {
+		return UnsubTarget{}, errors.New("tracking: missing ws claim")
 	}
-	ws, err := claimInt64(claims, "ws")
-	if err != nil {
-		return UnsubTarget{}, err
-	}
-	cid, err := claimInt64(claims, "cid")
-	if err != nil {
-		return UnsubTarget{}, err
-	}
-	bid, err := claimInt64(claims, "bid")
-	if err != nil {
-		return UnsubTarget{}, err
-	}
-	return UnsubTarget{Source: src, Destination: dest, WorkspaceID: ws, ContactID: cid, BroadcastID: bid}, nil
+	return UnsubTarget{Source: c.Source, Destination: c.Destination, WorkspaceID: c.WorkspaceID, ContactID: c.ContactID, BroadcastID: c.BroadcastID}, nil
 }
 
 // ConfirmTarget is the payload a double-opt-in confirmation link carries (ADR
@@ -137,55 +140,39 @@ type ConfirmTarget struct {
 	ContactID   int64
 }
 
-// confirmToken mints a signed, expiring confirmation token. int64 fields are
-// stored as strings for the same precision reason as unsubToken; the exp claim is
-// a real JWT numeric date so DecodeConfirm can reject a stale link.
+// confirmToken mints a signed, expiring confirmation token; exp is a real JWT
+// numeric date so DecodeConfirm can reject a stale link.
 func (t *Tracker) confirmToken(target ConfirmTarget) (string, error) {
-	tok := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"dest": target.Destination,
-		"ws":   strconv.FormatInt(target.WorkspaceID, 10),
-		"cid":  strconv.FormatInt(target.ContactID, 10),
-		"exp":  time.Now().Add(confirmTTL).Unix(),
+	return t.sign(&confirmClaims{
+		RegisteredClaims: jwt.RegisteredClaims{ExpiresAt: jwt.NewNumericDate(time.Now().Add(confirmTTL))},
+		Destination:      target.Destination,
+		WorkspaceID:      target.WorkspaceID,
+		ContactID:        target.ContactID,
 	})
-	return tok.SignedString(t.secret)
+}
+
+// IsExpired reports whether err from DecodeConfirm means the link is past its TTL,
+// as opposed to malformed or signed with another key: an expired link can be
+// replaced by a new one, an invalid one is simply not ours.
+func IsExpired(err error) bool {
+	return errors.Is(err, jwt.ErrTokenExpired)
 }
 
 // DecodeConfirm validates a confirmation token and returns its target. It
 // rejects a token whose exp has passed (and requires exp to be present), so an
 // expired link cannot confirm — the endpoint surfaces that as "request a new one".
 func (t *Tracker) DecodeConfirm(token string) (ConfirmTarget, error) {
-	parsed, err := jwt.Parse(token, func(*jwt.Token) (any, error) {
-		return t.secret, nil
-	}, jwt.WithValidMethods([]string{"HS256"}), jwt.WithExpirationRequired())
-	if err != nil {
+	var c confirmClaims
+	if err := t.parse(token, &c, jwt.WithExpirationRequired()); err != nil {
 		return ConfirmTarget{}, err
 	}
-	claims, ok := parsed.Claims.(jwt.MapClaims)
-	if !ok {
-		return ConfirmTarget{}, fmt.Errorf("tracking: unexpected claims type")
+	if c.Destination == "" {
+		return ConfirmTarget{}, errors.New("tracking: missing dest claim")
 	}
-	dest, _ := claims["dest"].(string)
-	if dest == "" {
-		return ConfirmTarget{}, fmt.Errorf("tracking: missing dest claim")
+	if c.WorkspaceID == 0 {
+		return ConfirmTarget{}, errors.New("tracking: missing ws claim")
 	}
-	ws, err := claimInt64(claims, "ws")
-	if err != nil {
-		return ConfirmTarget{}, err
-	}
-	cid, err := claimInt64(claims, "cid")
-	if err != nil {
-		return ConfirmTarget{}, err
-	}
-	return ConfirmTarget{Destination: dest, WorkspaceID: ws, ContactID: cid}, nil
-}
-
-// claimInt64 reads a string-encoded int64 claim.
-func claimInt64(claims jwt.MapClaims, key string) (int64, error) {
-	s, ok := claims[key].(string)
-	if !ok {
-		return 0, fmt.Errorf("tracking: missing %s claim", key)
-	}
-	return strconv.ParseInt(s, 10, 64)
+	return ConfirmTarget{Destination: c.Destination, WorkspaceID: c.WorkspaceID, ContactID: c.ContactID}, nil
 }
 
 // OpenURL is the 1x1 pixel URL that records an open.

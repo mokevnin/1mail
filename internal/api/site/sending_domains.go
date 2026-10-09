@@ -2,6 +2,7 @@ package site
 
 import (
 	"context"
+	"net"
 	"net/http"
 	"strconv"
 	"strings"
@@ -14,6 +15,7 @@ import (
 	"github.com/mokevnin/1mail/internal/pagination"
 	"github.com/mokevnin/1mail/internal/sending"
 	"github.com/mokevnin/1mail/internal/service"
+	"golang.org/x/net/idna"
 )
 
 // defaultDKIMSelector is used when the client does not supply one.
@@ -106,8 +108,8 @@ func (h *Handlers) SiteSendingDomainsCreate(ctx context.Context, req *siteapi.Si
 		return nil, err
 	}
 
-	domain := normalizeDomain(req.Domain)
-	if !validDomain(domain) {
+	domain, ok := sendingDomain(req.Domain)
+	if !ok {
 		v := siteapi.SiteSendingDomainsCreateUnprocessableEntity(problemWithErrors(http.StatusUnprocessableEntity, i18n.T("errors.validation_failed", nil), map[string][]string{
 			"domain": {i18n.T("errors.sending_domain_invalid", nil)},
 		}))
@@ -239,16 +241,17 @@ func normalizeDomain(raw string) string {
 	return strings.TrimSuffix(strings.ToLower(strings.TrimSpace(raw)), ".")
 }
 
-// validDomain is a lightweight sanity check (not a full RFC 1035 validator): at
-// least one dot, no scheme/spaces, plausible label characters.
-func validDomain(d string) bool {
-	if d == "" || len(d) > 253 || strings.ContainsAny(d, " /:@") || !strings.Contains(d, ".") {
-		return false
+// sendingDomain validates raw as a registrable domain name (IDNA registration
+// rules: label syntax, length limits, punycode) with at least one dot and not an IP
+// address, and returns its ASCII (punycode) form — the form DNS and DKIM use.
+func sendingDomain(raw string) (string, bool) {
+	d := normalizeDomain(raw)
+	if !strings.Contains(d, ".") || net.ParseIP(d) != nil {
+		return "", false
 	}
-	for _, label := range strings.Split(d, ".") {
-		if label == "" {
-			return false
-		}
+	ascii, err := idna.Registration.ToASCII(d)
+	if err != nil {
+		return "", false
 	}
-	return true
+	return ascii, true
 }

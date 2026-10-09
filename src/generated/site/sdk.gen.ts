@@ -122,7 +122,8 @@ export const siteAuthVerifyEmail = <ThrowOnError extends boolean = false>(option
 
 /**
  * Perform a double opt-in confirmation (ADR 0013). The deliberate human act
- * behind the confirmation page's button. Repeating it is a no-op.
+ * behind the confirmation page's button. Repeating it is a no-op. 410 means the
+ * link has expired, so the page offers to sign up again; 400 is an invalid token.
  */
 export const sitePublicConfirmationsPerform = <ThrowOnError extends boolean = false>(options: Options<SitePublicConfirmationsPerformData, ThrowOnError>): RequestResult<SitePublicConfirmationsPerformResponses, SitePublicConfirmationsPerformErrors, ThrowOnError> => (options.client ?? client).post<SitePublicConfirmationsPerformResponses, SitePublicConfirmationsPerformErrors, ThrowOnError>({
   requestValidator: async (data) => await z.object({

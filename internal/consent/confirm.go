@@ -22,7 +22,7 @@ func RecordConfirmation(ctx context.Context, bus *events.Bus, target tracking.Co
 		return nil
 	}
 
-	return bus.WithinTx(ctx, func(tx *ent.Client, pub events.Publisher) error {
+	return settled(bus.WithinTx(ctx, func(tx *ent.Client, pub events.Publisher) error {
 		// The Workspace comes from the signed confirmation token (no membership or api
 		// token here), so this is a scope source outside the site/external/job list.
 		sc := tx.Scoped(target.WorkspaceID)
@@ -50,5 +50,5 @@ func RecordConfirmation(ctx context.Context, bus *events.Bus, target tracking.Co
 			Provenance:  string(confirmation.ProvenanceDoubleOptIn),
 			IP:          ip,
 		})
-	})
+	}))
 }

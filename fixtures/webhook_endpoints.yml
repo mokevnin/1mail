@@ -1,8 +1,8 @@
-# Workspace acme (id 1). secret_encrypted is sealed at load time via the encrypt
+# Workspace acme (id 1). Secrets are valid Standard Webhooks secrets (whsec_ + base64). secret_encrypted is sealed at load time via the encrypt
 # template func (per-env valid). event_types is a JSON array; empty/absent = all events.
 - id: 100 # fixture: WebhookCodebasics
   url: https://codebasics.dev/webhooks/1mail
-  secret_encrypted: '{{ encrypt "whsec_codebasics_primary" }}'
+  secret_encrypted: '{{ encrypt "whsec_MfKQ9r8GKYqrTwjUPD8ILPZIo2LaLaSw" }}'
   event_types: '["contact.created","email.opened","email.clicked"]'
   enabled: true
   workspace_id: 1

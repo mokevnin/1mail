@@ -1,0 +1,17 @@
+import { expect, test } from 'vitest'
+
+import { accountRoute } from '../router.tsx'
+import { renderWithRouter } from '../test/renderWithRouter.tsx'
+import { routeMount } from '../test/routeMount.ts'
+import { AccountLayout } from './AccountLayout.tsx'
+
+test('renders the brand, the account sidebar and the user menu', async () => {
+  const { screen, navigate } = await renderWithRouter(<AccountLayout />, routeMount(accountRoute))
+
+  await expect.element(screen.getByText('1mail')).toBeInTheDocument()
+  await expect.element(screen.getByRole('button', { name: 'Toggle color scheme' })).toBeVisible()
+
+  await expect.element(screen.getByText('Dashboard')).toBeInTheDocument()
+  await expect.element(screen.getByText('Profile')).toBeInTheDocument()
+  expect(navigate).not.toHaveBeenCalled()
+})

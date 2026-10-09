@@ -39,7 +39,11 @@ type Handler = (req: Request) => Response | Promise<Response>
 
 type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'
 
-type OperationData = { url: string; path: Record<string, string> }
+type OperationData = { url: string; path?: Record<string, string> }
+
+// The path params of an operation: an empty record for operations without any (`path?: never`).
+type PathOf<D extends OperationData> =
+  D['path'] extends Record<string, string> ? D['path'] : Record<string, never>
 
 export type Route = { method: HttpMethod; pathname: () => string; respond: Handler }
 
@@ -56,7 +60,7 @@ export function requestOf(input: RequestInfo | URL, init?: RequestInit) {
 export function route<D extends OperationData>(
   method: HttpMethod,
   url: D['url'],
-  path: D['path'],
+  path: PathOf<D>,
   respond: Handler,
 ): Route {
   // Built lazily: the client's baseUrl is only pinned once the stub is installed.

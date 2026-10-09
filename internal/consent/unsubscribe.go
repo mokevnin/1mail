@@ -30,7 +30,7 @@ func RecordUnsubscribe(ctx context.Context, bus *events.Bus, target tracking.Uns
 	}
 	automationID, isAutomation := eligibility.ParseAutomationSource(target.Source)
 
-	return bus.WithinTx(ctx, func(tx *ent.Client, pub events.Publisher) error {
+	return settled(bus.WithinTx(ctx, func(tx *ent.Client, pub events.Publisher) error {
 		// The Workspace comes from the signed unsubscribe token (no membership or api
 		// token here), so this is a scope source outside the site/external/job list.
 		sc := tx.Scoped(target.WorkspaceID)
@@ -93,5 +93,15 @@ func RecordUnsubscribe(ctx context.Context, bus *events.Bus, target tracking.Uns
 			Action: events.NameEmailUnsubscribed, WorkspaceID: target.WorkspaceID, ContactID: target.ContactID,
 			Email: dest, BroadcastID: target.BroadcastID,
 		})
-	})
+	}))
+}
+
+// settled reports a write that lost to a database constraint as done: the Workspace
+// is gone (nothing is left to record) or a concurrent request recorded the same row
+// first. Any other failure is a real one and is returned.
+func settled(err error) error {
+	if ent.IsConstraintError(err) {
+		return nil
+	}
+	return err
 }

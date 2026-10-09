@@ -96,7 +96,7 @@ var (
 				Symbol:     "automation_runs_automations_runs",
 				Columns:    []*schema.Column{AutomationRunsColumns[7]},
 				RefColumns: []*schema.Column{AutomationsColumns[0]},
-				OnDelete:   schema.NoAction,
+				OnDelete:   schema.Cascade,
 			},
 			{
 				Symbol:     "automation_runs_workspaces_automation_runs",

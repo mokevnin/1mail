@@ -1,0 +1,80 @@
+import {
+  createMemoryHistory,
+  createRootRoute,
+  createRoute,
+  createRouter,
+  Link,
+  RouterProvider,
+} from '@tanstack/react-router'
+import { expect, test } from 'vitest'
+import { page } from 'vitest/browser'
+
+import { loginRoute } from '../router.tsx'
+import { renderWithProviders } from '../test/renderWithProviders.tsx'
+import { DashboardShell } from './DashboardShell.tsx'
+
+const MOBILE_WIDTH = 500
+const MOBILE_HEIGHT = 800
+const FIRST_PATH = '/'
+const SECOND_PATH = loginRoute.to
+const HEADER_SLOT = 'Header slot'
+const BANNER_SLOT = 'Banner slot'
+const FIRST_PAGE = 'First page'
+const SECOND_PAGE = 'Second page'
+
+// A real in-memory router (renderWithRouter stubs navigation) so the shell sees a genuine
+// route change: the sidebar links to a second page, and the drawer must close when it opens.
+function mountShell() {
+  const rootRoute = createRootRoute()
+  const shellRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    id: 'shell',
+    component: () => (
+      <DashboardShell
+        sidebar={<Link to={secondRoute.to}>Go second</Link>}
+        headerRight={<span>{HEADER_SLOT}</span>}
+        banner={<span>{BANNER_SLOT}</span>}
+      />
+    ),
+  })
+  const firstRoute = createRoute({
+    getParentRoute: () => shellRoute,
+    path: FIRST_PATH,
+    component: () => <p>{FIRST_PAGE}</p>,
+  })
+  const secondRoute = createRoute({
+    getParentRoute: () => shellRoute,
+    path: SECOND_PATH,
+    component: () => <p>{SECOND_PAGE}</p>,
+  })
+  const router = createRouter({
+    routeTree: rootRoute.addChildren([shellRoute.addChildren([firstRoute, secondRoute])]),
+    history: createMemoryHistory({ initialEntries: [FIRST_PATH] }),
+  })
+  return renderWithProviders(<RouterProvider router={router} />)
+}
+
+test('renders the slots around the routed page', async () => {
+  const screen = await mountShell()
+
+  await expect.element(screen.getByText(HEADER_SLOT)).toBeInTheDocument()
+  await expect.element(screen.getByText(BANNER_SLOT)).toBeInTheDocument()
+  await expect.element(screen.getByText(FIRST_PAGE)).toBeInTheDocument()
+})
+
+test('on a narrow viewport the burger toggles the sidebar and navigating closes it', async () => {
+  await page.viewport(MOBILE_WIDTH, MOBILE_HEIGHT)
+  const screen = await mountShell()
+
+  const burger = screen.getByRole('banner').getByRole('button').first()
+  // Mantine marks the Burger's inner bars with data-opened while it is open.
+  const isOpen = () => burger.element().querySelector('[data-opened]') !== null
+  await expect.poll(isOpen).toBe(false)
+  await burger.click()
+  await expect.poll(isOpen).toBe(true)
+
+  await screen.getByText('Go second').click()
+
+  await expect.element(screen.getByText(SECOND_PAGE)).toBeInTheDocument()
+  await expect.poll(isOpen).toBe(false)
+})

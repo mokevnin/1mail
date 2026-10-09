@@ -169,7 +169,7 @@ Two options:
 - **On startup** — set `AUTO_MIGRATE=true` and the binary applies pending migrations
   in-process before serving. Use only for single-replica deploys against a fresh database.
 
-> The production binary tracks applied migrations in its own `schema_migrations` table. The
+> The production binary tracks applied migrations (via goose) in its own `goose_db_version` table. The
 > dev Atlas CLI flow (`mise run db:migrate`) uses Atlas's `atlas_schema_revisions` table — never
 > point `AUTO_MIGRATE` at a database previously managed by the Atlas CLI dev flow.
 

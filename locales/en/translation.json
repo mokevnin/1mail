@@ -377,8 +377,8 @@
     "noRecords": "No segments yet",
     "previewButton": "Preview audience",
     "previewCount": "{{count}} matching contacts",
-    "previewCount_one": "segments.previewCount",
-    "previewCount_other": "segments.previewCount",
+    "previewCount_one": "{{count}} matching contact",
+    "previewCount_other": "{{count}} matching contacts",
     "rulesLabel": "Rules"
   },
   "settings": {

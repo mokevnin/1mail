@@ -60,6 +60,7 @@ type Decision struct {
 // address means (there is nothing to suppress against).
 //
 // The rule is one SQL expression (layers) whose Workspace comes from s; the
+// check fails closed (an error) for a Workspace that does not exist; the
 // confirmation gate reads the workspace flag inside it, so no caller can forget it.
 // It is anchored on the Workspace's Suppression query so it runs through the scoped
 // client; HAVING TRUE turns the select into a single-group one, so exactly one row
@@ -77,7 +78,9 @@ func Check(ctx context.Context, s *ent.Scoped, channel, dest, source string) (De
 	err := s.Suppression().Query().
 		Modify(func(sel *sql.Selector) {
 			sel.SelectExpr(sql.ExprFunc(func(b *sql.Builder) {
-				b.WriteString("CASE")
+				b.WriteString("CASE WHEN NOT EXISTS (SELECT 1 FROM ").Ident(workspace.Table).
+					WriteString(" WHERE ").Ident(workspace.FieldID).WriteString(" = ").Arg(s.WorkspaceID()).
+					WriteString(") THEN ").Arg(workspaceMissing)
 				for _, l := range layers(r, channel, source) {
 					b.WriteString(" WHEN ")
 					b.Join(l.blocks)
@@ -94,8 +97,15 @@ func Check(ctx context.Context, s *ent.Scoped, channel, dest, source string) (De
 	if len(reason) != 1 {
 		return Decision{}, fmt.Errorf("eligibility check: expected one row, got %d", len(reason))
 	}
+	if reason[0] == workspaceMissing {
+		return Decision{}, fmt.Errorf("eligibility check: workspace %d not found", s.WorkspaceID())
+	}
 	return Decision{Eligible: reason[0] == "", Reason: reason[0]}, nil
 }
+
+// workspaceMissing is the sentinel the check expression yields when the scoped
+// Workspace does not exist: the check fails closed instead of reporting eligible.
+const workspaceMissing = "!workspace"
 
 // Predicate narrows a Contact query to contacts whose email destination is
 // eligible for (channel, source); "" source means transactional (Suppression

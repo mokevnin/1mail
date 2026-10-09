@@ -8128,7 +8128,8 @@ func (s *Server) handleSiteOAuthDescribeRequest(args [0]string, argsEscaped bool
 // handleSitePublicConfirmationsPerformRequest handles SitePublicConfirmations_perform operation.
 //
 // Perform a double opt-in confirmation (ADR 0013). The deliberate human act behind the confirmation
-// page's button. Repeating it is a no-op.
+// page's button. Repeating it is a no-op. 410 means the link has expired, so the page offers to sign
+// up again; 400 is an invalid token.
 //
 // POST /confirmations/{token}
 func (s *Server) handleSitePublicConfirmationsPerformRequest(args [1]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {

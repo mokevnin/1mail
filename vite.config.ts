@@ -45,6 +45,15 @@ export default defineConfig({
     // .cache holds the Go module cache, whose dependencies ship their own *.test.* files.
     exclude: [...configDefaults.exclude, '.cache/**', '.claude/**'],
     setupFiles: ['./src/test/setup.tsx'],
+    coverage: {
+      provider: 'v8',
+      include: ['src/**', 'packages/analytics/src/**'],
+      exclude: ['**/generated/**', '**/*.test.*', 'src/test/**', 'src/main.tsx'],
+      reporter: ['text-summary', 'html'],
+      // Current coverage is ~99% lines / ~93% branches; the floor sits a little below so
+      // CI catches regressions without flaking on small changes.
+      thresholds: { statements: 96, branches: 90, functions: 96, lines: 96 },
+    },
     browser: {
       enabled: true,
       provider: playwright(),

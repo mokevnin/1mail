@@ -3,6 +3,8 @@ package mcpserver
 import (
 	"bytes"
 	"encoding/json"
+	"maps"
+	"slices"
 	"strings"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
@@ -32,7 +34,7 @@ type untrustedResponse struct {
 // responseSchema returns the JSON schema of the first 2xx application/json response.
 func responseSchema(raw, schemas map[string]any) *untrustedResponse {
 	responses, _ := raw["responses"].(map[string]any)
-	for _, code := range sortedKeys(responses) {
+	for _, code := range slices.Sorted(maps.Keys(responses)) {
 		if !strings.HasPrefix(code, "2") {
 			continue
 		}
