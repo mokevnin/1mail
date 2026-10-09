@@ -25,6 +25,7 @@ import (
 	apiexternal "github.com/mokevnin/1mail/internal/api/external"
 	apisite "github.com/mokevnin/1mail/internal/api/site"
 	"github.com/mokevnin/1mail/internal/authtoken"
+	"github.com/mokevnin/1mail/internal/eventlog"
 	"github.com/mokevnin/1mail/internal/events"
 	"github.com/mokevnin/1mail/internal/logging"
 	"github.com/mokevnin/1mail/internal/messaging"
@@ -68,10 +69,13 @@ func New(cfg *config.Config, client *ent.Client, db *sql.DB, bus *events.Bus, ci
 	// the exact pattern outranks the /site/ subtree below without shadowing /site/auth/register.
 	mux.Handle("/site/auth/direct/login", authHandler)
 
+	// One Events module shared by /site and /api (ADR 0016).
+	eventLog := eventlog.New(client, bus)
+
 	// Site API — /site (JWT cookie via generated SecurityHandler; register and
 	// direct-login are public per the spec).
 	siteSrv, err := siteapi.NewServer(
-		apisite.NewHandlers(client, bus, cipher, providerCatalog, enqueuer, welcome, sysmail, domainVerify, sender, authtoken.New(cfg.JWTSecret), cfg.AppURL),
+		apisite.NewHandlers(client, bus, cipher, providerCatalog, enqueuer, welcome, sysmail, domainVerify, sender, eventLog, authtoken.New(cfg.JWTSecret), cfg.AppURL),
 		apiauth.NewSiteSecurityHandler(cfg.JWTSecret, client),
 		siteapi.WithPathPrefix("/site"),
 		siteapi.WithErrorHandler(problemErrorHandler),
@@ -83,7 +87,7 @@ func New(cfg *config.Config, client *ent.Client, db *sql.DB, bus *events.Bus, ci
 
 	// External API — /api (Bearer token auth via ogen SecurityHandler).
 	extSrv, err := externalapi.NewServer(
-		apiexternal.NewHandlers(client, cfg.BootstrapToken, bus, sender),
+		apiexternal.NewHandlers(client, cfg.BootstrapToken, bus, eventLog, sender),
 		apiauth.NewExternalSecurityHandler(client),
 		externalapi.WithPathPrefix("/api"),
 		externalapi.WithErrorHandler(problemErrorHandler),

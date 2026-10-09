@@ -1,0 +1,102 @@
+package eventlog_test
+
+import (
+	"context"
+	"encoding/json"
+	"sort"
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	"github.com/mokevnin/1mail/internal/eventlog"
+	"github.com/mokevnin/1mail/internal/events"
+	"github.com/mokevnin/1mail/internal/testhelper"
+)
+
+// Fixtures: workspace acme (1) has events page_view and purchase; contact 1 is
+// alice@example.com. Ingest publishes to the outbox (the persist subscriber is not
+// running under txdb), so assertions read the decoded outbox rows.
+
+func outboxCollected(t *testing.T, env *testhelper.TestEnv) []*events.CollectedEvent {
+	t.Helper()
+	rows, err := env.SQLDB.Query(`SELECT payload FROM watermill_domain_events ORDER BY "offset"`)
+	require.NoError(t, err)
+	defer func() { _ = rows.Close() }()
+
+	var out []*events.CollectedEvent
+	for rows.Next() {
+		var payload []byte
+		require.NoError(t, rows.Scan(&payload))
+		var envlp events.Envelope
+		require.NoError(t, json.Unmarshal(payload, &envlp))
+		decoded, err := events.Decode(envlp)
+		require.NoError(t, err)
+		ce, ok := decoded.(*events.CollectedEvent)
+		require.Truef(t, ok, "got %T", decoded)
+		out = append(out, ce)
+	}
+	require.NoError(t, rows.Err())
+	return out
+}
+
+func ptr(s string) *string { return &s }
+
+func TestIngestAttachesEventToExistingContactByAlias(t *testing.T) {
+	env := testhelper.Setup(t)
+	m := eventlog.New(env.DB, env.Bus)
+
+	err := m.Ingest(context.Background(), 1, []eventlog.Input{
+		{SubjectID: "s-1", Action: "page_view", Email: ptr("ALICE@example.com")},
+		{SubjectID: "nobody", Action: "signup", Email: ptr("nobody@example.com")},
+	})
+	require.NoError(t, err)
+
+	got := outboxCollected(t, env)
+	require.Len(t, got, 2)
+	assert.Equal(t, int64(1), got[0].ContactID, "email alias resolves to the existing contact")
+	assert.Equal(t, int64(0), got[1].ContactID, "unknown identity stays anonymous")
+	assert.Equal(t, int64(1), got[0].WorkspaceID)
+	assert.Equal(t, "page_view", got[0].Action)
+}
+
+func TestIngestCarriesPropertiesVerbatim(t *testing.T) {
+	env := testhelper.Setup(t)
+	m := eventlog.New(env.DB, env.Bus)
+
+	require.NoError(t, m.Ingest(context.Background(), 1, []eventlog.Input{
+		{SubjectID: "s", Action: "added_to_cart", Properties: map[string]any{"sku": "A1"}},
+	}))
+
+	got := outboxCollected(t, env)
+	require.Len(t, got, 1)
+	assert.Equal(t, "A1", got[0].Properties["sku"])
+}
+
+func TestActionsAreDistinctSortedAndWorkspaceScoped(t *testing.T) {
+	env := testhelper.Setup(t)
+	ctx := context.Background()
+	m := eventlog.New(env.DB, env.Bus)
+
+	ws2 := env.DB.Workspace.Create().SetName("Globex").SetSlug("globex").
+		SetCollectKey("globex-collect").SetIngestKey("globex-ingest").SaveX(ctx)
+	env.DB.Event.Create().SetWorkspaceID(ws2.ID).SetSubjectID("g").SetAction("globex_only").SaveX(ctx)
+	env.DB.Event.Create().SetWorkspaceID(1).SetSubjectID("dup").SetAction("page_view").SaveX(ctx)
+
+	got, err := m.Actions(ctx, 1)
+	require.NoError(t, err)
+	assert.True(t, sort.StringsAreSorted(got))
+	assert.Contains(t, got, "purchase")
+	assert.NotContains(t, got, "globex_only")
+	count := 0
+	for _, a := range got {
+		if a == "page_view" {
+			count++
+		}
+	}
+	assert.Equal(t, 1, count, "distinct")
+
+	other, err := m.Actions(ctx, ws2.ID)
+	require.NoError(t, err)
+	assert.Equal(t, []string{"globex_only"}, other)
+}
