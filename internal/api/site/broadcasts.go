@@ -2,6 +2,7 @@ package site
 
 import (
 	"context"
+	"errors"
 	"github.com/samber/lo"
 	"net/http"
 	"strconv"
@@ -11,6 +12,7 @@ import (
 	"github.com/mokevnin/1mail/ent/broadcast"
 	"github.com/mokevnin/1mail/ent/broadcastrecipient"
 	siteapi "github.com/mokevnin/1mail/gen/site"
+	"github.com/mokevnin/1mail/internal/broadcasts"
 	"github.com/mokevnin/1mail/internal/convert"
 	"github.com/mokevnin/1mail/internal/i18n"
 	"github.com/mokevnin/1mail/internal/outbound"
@@ -251,9 +253,8 @@ func (h *Handlers) SiteBroadcastsDelete(ctx context.Context, params siteapi.Site
 	return &siteapi.SiteBroadcastsDeleteNoContent{}, nil
 }
 
-// SiteBroadcastsSend sends a draft broadcast immediately. The actual dispatch is
-// performed asynchronously by the river worker (wired in a later step); here we
-// validate the broadcast is sendable and move it into the sending state.
+// SiteBroadcastsSend sends a draft or scheduled broadcast immediately. The state
+// machine lives in the broadcasts module; this is the HTTP adapter.
 func (h *Handlers) SiteBroadcastsSend(ctx context.Context, params siteapi.SiteBroadcastsSendParams) (siteapi.SiteBroadcastsSendRes, error) {
 	ws, err := h.workspaceID(ctx, params.Slug)
 	if ent.IsNotFound(err) {
@@ -270,32 +271,15 @@ func (h *Handlers) SiteBroadcastsSend(ctx context.Context, params siteapi.SiteBr
 		return &v, nil
 	}
 
-	b, err := h.ent.Broadcast.Query().
-		Where(broadcast.IDEQ(id), broadcast.WorkspaceID(ws)).
-		Only(ctx)
-	if ent.IsNotFound(err) {
+	b, err := h.broadcasts.Send(ctx, ws, id)
+	switch {
+	case errors.Is(err, broadcasts.ErrNotFound):
 		v := siteapi.SiteBroadcastsSendNotFound(problem(http.StatusNotFound, "broadcast not found"))
 		return &v, nil
-	}
-	if err != nil {
-		return nil, err
-	}
-	if b.Status != broadcast.StatusDraft && b.Status != broadcast.StatusScheduled {
+	case errors.Is(err, broadcasts.ErrNotSendable):
 		v := siteapi.SiteBroadcastsSendUnprocessableEntity(problem(http.StatusUnprocessableEntity, i18n.T("errors.broadcast_already_sending", nil)))
 		return &v, nil
-	}
-
-	// Move to "sending" first, then enqueue. The inline adapter runs the send
-	// synchronously (advancing the row to "sent"); the async river path advances it
-	// later via the worker. So we must NOT write status after enqueue — that would
-	// clobber the inline "sent" back to "sending". If the enqueue itself fails,
-	// revert so the broadcast isn't stranded in "sending" with no job behind it.
-	b, err = b.Update().SetStatus(broadcast.StatusSending).ClearScheduledAt().Save(ctx)
-	if err != nil {
-		return nil, err
-	}
-	if err := h.enqueuer.EnqueueBroadcast(ctx, b.ID, nil); err != nil {
-		_, _ = b.Update().SetStatus(broadcast.StatusDraft).Save(ctx)
+	case err != nil:
 		return nil, err
 	}
 	res := mapper.BroadcastToResource(b)
@@ -319,31 +303,15 @@ func (h *Handlers) SiteBroadcastsSchedule(ctx context.Context, req *siteapi.Site
 		return &v, nil
 	}
 
-	b, err := h.ent.Broadcast.Query().
-		Where(broadcast.IDEQ(id), broadcast.WorkspaceID(ws)).
-		Only(ctx)
-	if ent.IsNotFound(err) {
+	b, err := h.broadcasts.Schedule(ctx, ws, id, time.Time(req.ScheduledAt))
+	switch {
+	case errors.Is(err, broadcasts.ErrNotFound):
 		v := siteapi.SiteBroadcastsScheduleNotFound(problem(http.StatusNotFound, "broadcast not found"))
 		return &v, nil
-	}
-	if err != nil {
-		return nil, err
-	}
-	if b.Status != broadcast.StatusDraft && b.Status != broadcast.StatusScheduled {
+	case errors.Is(err, broadcasts.ErrNotSendable):
 		v := siteapi.SiteBroadcastsScheduleUnprocessableEntity(problem(http.StatusUnprocessableEntity, i18n.T("errors.broadcast_already_sending", nil)))
 		return &v, nil
-	}
-
-	when := time.Time(req.ScheduledAt)
-	b, err = b.Update().
-		SetStatus(broadcast.StatusScheduled).
-		SetScheduledAt(when).
-		Save(ctx)
-	if err != nil {
-		return nil, err
-	}
-	if err := h.enqueuer.EnqueueBroadcast(ctx, b.ID, &when); err != nil {
-		_, _ = b.Update().SetStatus(broadcast.StatusDraft).ClearScheduledAt().Save(ctx)
+	case err != nil:
 		return nil, err
 	}
 	res := mapper.BroadcastToResource(b)
