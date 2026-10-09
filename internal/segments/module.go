@@ -10,7 +10,7 @@ import (
 	"github.com/mokevnin/1mail/ent/segment"
 )
 
-// Domain errors returned by Service. Callers match with errors.Is.
+// Domain errors returned by Module. Callers match with errors.Is.
 var (
 	// ErrInvalidDefinition: the rule definition does not parse or does not fit the
 	// Contact schema. The wrapped message is safe to show to the author.
@@ -19,16 +19,16 @@ var (
 	ErrNotFound = errors.New("segments: segment not found")
 )
 
-// Service is the one place a Segment is written, validated, previewed and counted
+// Module is the one place a Segment is written, validated, previewed and counted
 // (ADR 0016). Create and update share one validation rule set; handlers stay thin
 // adapters (scope check, call, map). Membership is the rule alone — Send-eligibility
 // is subtracted only at send, never folded into a count (ADR 0001).
-type Service struct {
+type Module struct {
 	db *ent.Client
 }
 
 // New builds the Segments module over an ent client.
-func New(db *ent.Client) *Service { return &Service{db: db} }
+func New(db *ent.Client) *Module { return &Module{db: db} }
 
 // CreateInput is a new Segment. A nil or empty Definition means "no rules yet".
 type CreateInput struct {
@@ -46,7 +46,7 @@ type UpdateInput struct {
 
 // Validate checks a definition against the Contact schema. An empty definition is
 // valid. This is the single rule set behind Create, Update, Preview and Count.
-func (s *Service) Validate(def string) error {
+func (s *Module) Validate(def string) error {
 	if def == "" {
 		return nil
 	}
@@ -57,7 +57,7 @@ func (s *Service) Validate(def string) error {
 }
 
 // Create validates the definition (whatever the Segment type) and stores the Segment.
-func (s *Service) Create(ctx context.Context, workspaceID int64, in CreateInput) (*ent.Segment, error) {
+func (s *Module) Create(ctx context.Context, workspaceID int64, in CreateInput) (*ent.Segment, error) {
 	if in.Definition != nil {
 		if err := s.Validate(*in.Definition); err != nil {
 			return nil, err
@@ -72,7 +72,7 @@ func (s *Service) Create(ctx context.Context, workspaceID int64, in CreateInput)
 }
 
 // Update validates a changed definition exactly as Create does, then applies the change.
-func (s *Service) Update(ctx context.Context, workspaceID, id int64, in UpdateInput) (*ent.Segment, error) {
+func (s *Module) Update(ctx context.Context, workspaceID, id int64, in UpdateInput) (*ent.Segment, error) {
 	if in.Definition != nil {
 		if err := s.Validate(*in.Definition); err != nil {
 			return nil, err
@@ -93,7 +93,7 @@ func (s *Service) Update(ctx context.Context, workspaceID, id int64, in UpdateIn
 }
 
 // Preview counts the Contacts in the Workspace that match an unsaved definition.
-func (s *Service) Preview(ctx context.Context, workspaceID int64, def string) (int, error) {
+func (s *Module) Preview(ctx context.Context, workspaceID int64, def string) (int, error) {
 	if err := s.Validate(def); err != nil {
 		return 0, err
 	}
@@ -105,7 +105,7 @@ func (s *Service) Preview(ctx context.Context, workspaceID int64, def string) (i
 }
 
 // Count counts the Contacts matching a stored Segment, evaluated live.
-func (s *Service) Count(ctx context.Context, workspaceID, id int64) (int, error) {
+func (s *Module) Count(ctx context.Context, workspaceID, id int64) (int, error) {
 	seg, err := s.db.Segment.Query().
 		Where(segment.ID(id), segment.WorkspaceID(workspaceID)).
 		Only(ctx)

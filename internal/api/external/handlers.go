@@ -28,7 +28,7 @@ type Handlers struct {
 	bus            *events.Bus
 	eventlog       *eventlog.Module
 	outbound       *outbound.Module
-	segments       *segments.Service
+	segments       *segments.Module
 	cipher         *secrets.Cipher
 	broadcasts     *broadcasts.Module
 	reputation     *reputation.Module

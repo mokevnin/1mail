@@ -71,7 +71,7 @@ type Handlers struct {
 	tokens       *authtoken.Signer
 	appURL       string
 	outbound     *outbound.Module
-	segments     *segments.Service
+	segments     *segments.Module
 	eventlog     *eventlog.Module
 	contacts     *contacts.Module
 	tags         *tags.Module
