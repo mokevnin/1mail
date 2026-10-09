@@ -45,6 +45,18 @@ func (c *ConverterImpl) ContactToResource(source *ent.Contact) external.ContactR
 	}
 	return externalapiContactResource
 }
+func (c *ConverterImpl) EmailTemplateToResource(source *ent.EmailTemplate) external.TemplateResource {
+	var externalapiTemplateResource external.TemplateResource
+	if source != nil {
+		externalapiTemplateResource.ID = entityID((*source).ID)
+		externalapiTemplateResource.Name = (*source).Name
+		externalapiTemplateResource.Subject = (*source).Subject
+		externalapiTemplateResource.Body = (*source).Body
+		externalapiTemplateResource.CreatedAt = timestamp((*source).CreatedAt)
+		externalapiTemplateResource.UpdatedAt = timestamp((*source).UpdatedAt)
+	}
+	return externalapiTemplateResource
+}
 func (c *ConverterImpl) SegmentToResource(source *ent.Segment) external.SegmentResource {
 	var externalapiSegmentResource external.SegmentResource
 	if source != nil {

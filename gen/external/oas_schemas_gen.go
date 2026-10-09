@@ -130,6 +130,10 @@ const (
 	ApiTokenScopeSegmentsWrite   ApiTokenScope = "segments:write"
 	ApiTokenScopeBroadcastsRead  ApiTokenScope = "broadcasts:read"
 	ApiTokenScopeBroadcastsWrite ApiTokenScope = "broadcasts:write"
+	ApiTokenScopeTemplatesRead   ApiTokenScope = "templates:read"
+	ApiTokenScopeTemplatesWrite  ApiTokenScope = "templates:write"
+	ApiTokenScopeWebhooksRead    ApiTokenScope = "webhooks:read"
+	ApiTokenScopeWebhooksWrite   ApiTokenScope = "webhooks:write"
 	ApiTokenScopeEmailsSend      ApiTokenScope = "emails:send"
 	ApiTokenScopeTokensManage    ApiTokenScope = "tokens:manage"
 )
@@ -143,6 +147,10 @@ func (ApiTokenScope) AllValues() []ApiTokenScope {
 		ApiTokenScopeSegmentsWrite,
 		ApiTokenScopeBroadcastsRead,
 		ApiTokenScopeBroadcastsWrite,
+		ApiTokenScopeTemplatesRead,
+		ApiTokenScopeTemplatesWrite,
+		ApiTokenScopeWebhooksRead,
+		ApiTokenScopeWebhooksWrite,
 		ApiTokenScopeEmailsSend,
 		ApiTokenScopeTokensManage,
 	}
@@ -162,6 +170,14 @@ func (s ApiTokenScope) MarshalText() ([]byte, error) {
 	case ApiTokenScopeBroadcastsRead:
 		return []byte(s), nil
 	case ApiTokenScopeBroadcastsWrite:
+		return []byte(s), nil
+	case ApiTokenScopeTemplatesRead:
+		return []byte(s), nil
+	case ApiTokenScopeTemplatesWrite:
+		return []byte(s), nil
+	case ApiTokenScopeWebhooksRead:
+		return []byte(s), nil
+	case ApiTokenScopeWebhooksWrite:
 		return []byte(s), nil
 	case ApiTokenScopeEmailsSend:
 		return []byte(s), nil
@@ -192,6 +208,18 @@ func (s *ApiTokenScope) UnmarshalText(data []byte) error {
 		return nil
 	case ApiTokenScopeBroadcastsWrite:
 		*s = ApiTokenScopeBroadcastsWrite
+		return nil
+	case ApiTokenScopeTemplatesRead:
+		*s = ApiTokenScopeTemplatesRead
+		return nil
+	case ApiTokenScopeTemplatesWrite:
+		*s = ApiTokenScopeTemplatesWrite
+		return nil
+	case ApiTokenScopeWebhooksRead:
+		*s = ApiTokenScopeWebhooksRead
+		return nil
+	case ApiTokenScopeWebhooksWrite:
+		*s = ApiTokenScopeWebhooksWrite
 		return nil
 	case ApiTokenScopeEmailsSend:
 		*s = ApiTokenScopeEmailsSend
@@ -1209,6 +1237,47 @@ func (s *CreateSuppressionInput) SetDestination(val EmailAddress) {
 	s.Destination = val
 }
 
+// Request body for creating a template.
+// Ref: #/components/schemas/CreateTemplateInput
+type CreateTemplateInput struct {
+	// Template name.
+	Name string `json:"name"`
+	// Default subject line.
+	Subject OptString `json:"subject"`
+	// MJML body.
+	Body OptString `json:"body"`
+}
+
+// GetName returns the value of Name.
+func (s *CreateTemplateInput) GetName() string {
+	return s.Name
+}
+
+// GetSubject returns the value of Subject.
+func (s *CreateTemplateInput) GetSubject() OptString {
+	return s.Subject
+}
+
+// GetBody returns the value of Body.
+func (s *CreateTemplateInput) GetBody() OptString {
+	return s.Body
+}
+
+// SetName sets the value of Name.
+func (s *CreateTemplateInput) SetName(val string) {
+	s.Name = val
+}
+
+// SetSubject sets the value of Subject.
+func (s *CreateTemplateInput) SetSubject(val OptString) {
+	s.Subject = val
+}
+
+// SetBody sets the value of Body.
+func (s *CreateTemplateInput) SetBody(val OptString) {
+	s.Body = val
+}
+
 // Request body for recording an unsubscribe.
 // Ref: #/components/schemas/CreateUnsubscribeInput
 type CreateUnsubscribeInput struct {
@@ -1237,6 +1306,47 @@ func (s *CreateUnsubscribeInput) SetDestination(val EmailAddress) {
 // SetSendingSource sets the value of SendingSource.
 func (s *CreateUnsubscribeInput) SetSendingSource(val OptString) {
 	s.SendingSource = val
+}
+
+// Request body for creating a webhook endpoint.
+// Ref: #/components/schemas/CreateWebhookInput
+type CreateWebhookInput struct {
+	// Destination URL (absolute http or https).
+	URL string `json:"url"`
+	// Event names to receive; empty or absent means all events.
+	EventTypes []string `json:"eventTypes"`
+	// Whether the endpoint receives deliveries (default true).
+	Enabled OptBool `json:"enabled"`
+}
+
+// GetURL returns the value of URL.
+func (s *CreateWebhookInput) GetURL() string {
+	return s.URL
+}
+
+// GetEventTypes returns the value of EventTypes.
+func (s *CreateWebhookInput) GetEventTypes() []string {
+	return s.EventTypes
+}
+
+// GetEnabled returns the value of Enabled.
+func (s *CreateWebhookInput) GetEnabled() OptBool {
+	return s.Enabled
+}
+
+// SetURL sets the value of URL.
+func (s *CreateWebhookInput) SetURL(val string) {
+	s.URL = val
+}
+
+// SetEventTypes sets the value of EventTypes.
+func (s *CreateWebhookInput) SetEventTypes(val []string) {
+	s.EventTypes = val
+}
+
+// SetEnabled sets the value of Enabled.
+func (s *CreateWebhookInput) SetEnabled(val OptBool) {
+	s.Enabled = val
 }
 
 type EmailAddress string
@@ -1547,6 +1657,52 @@ func (*EventsCreateUnauthorized) eventsCreateRes() {}
 type EventsCreateUnprocessableEntity ProblemDetails
 
 func (*EventsCreateUnprocessableEntity) eventsCreateRes() {}
+
+// NewOptBool returns new OptBool with value set to v.
+func NewOptBool(v bool) OptBool {
+	return OptBool{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptBool is optional bool.
+type OptBool struct {
+	Value bool
+	Set   bool
+}
+
+// IsSet returns true if OptBool was set.
+func (o OptBool) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptBool) Reset() {
+	var v bool
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptBool) SetTo(v bool) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptBool) Get() (v bool, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptBool) Or(d bool) bool {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
 
 // NewOptBroadcastStatus returns new OptBroadcastStatus with value set to v.
 func NewOptBroadcastStatus(v BroadcastStatus) OptBroadcastStatus {
@@ -3218,6 +3374,218 @@ type SuppressionsCreateUnprocessableEntity ProblemDetails
 
 func (*SuppressionsCreateUnprocessableEntity) suppressionsCreateRes() {}
 
+// Reusable email template.
+// Ref: #/components/schemas/TemplateResource
+type TemplateResource struct {
+	// Unique identifier.
+	ID EntityId `json:"id"`
+	// Template name.
+	Name string `json:"name"`
+	// Default subject line.
+	Subject string `json:"subject"`
+	// MJML body.
+	Body string `json:"body"`
+	// Creation timestamp.
+	CreatedAt Timestamp `json:"createdAt"`
+	// Last update timestamp.
+	UpdatedAt Timestamp `json:"updatedAt"`
+}
+
+// GetID returns the value of ID.
+func (s *TemplateResource) GetID() EntityId {
+	return s.ID
+}
+
+// GetName returns the value of Name.
+func (s *TemplateResource) GetName() string {
+	return s.Name
+}
+
+// GetSubject returns the value of Subject.
+func (s *TemplateResource) GetSubject() string {
+	return s.Subject
+}
+
+// GetBody returns the value of Body.
+func (s *TemplateResource) GetBody() string {
+	return s.Body
+}
+
+// GetCreatedAt returns the value of CreatedAt.
+func (s *TemplateResource) GetCreatedAt() Timestamp {
+	return s.CreatedAt
+}
+
+// GetUpdatedAt returns the value of UpdatedAt.
+func (s *TemplateResource) GetUpdatedAt() Timestamp {
+	return s.UpdatedAt
+}
+
+// SetID sets the value of ID.
+func (s *TemplateResource) SetID(val EntityId) {
+	s.ID = val
+}
+
+// SetName sets the value of Name.
+func (s *TemplateResource) SetName(val string) {
+	s.Name = val
+}
+
+// SetSubject sets the value of Subject.
+func (s *TemplateResource) SetSubject(val string) {
+	s.Subject = val
+}
+
+// SetBody sets the value of Body.
+func (s *TemplateResource) SetBody(val string) {
+	s.Body = val
+}
+
+// SetCreatedAt sets the value of CreatedAt.
+func (s *TemplateResource) SetCreatedAt(val Timestamp) {
+	s.CreatedAt = val
+}
+
+// SetUpdatedAt sets the value of UpdatedAt.
+func (s *TemplateResource) SetUpdatedAt(val Timestamp) {
+	s.UpdatedAt = val
+}
+
+func (*TemplateResource) templatesCreateRes() {}
+func (*TemplateResource) templatesGetRes()    {}
+func (*TemplateResource) templatesUpdateRes() {}
+
+type TemplatesCreateUnauthorized ProblemDetails
+
+func (*TemplatesCreateUnauthorized) templatesCreateRes() {}
+
+type TemplatesCreateUnprocessableEntity ProblemDetails
+
+func (*TemplatesCreateUnprocessableEntity) templatesCreateRes() {}
+
+type TemplatesDeleteBadRequest ProblemDetails
+
+func (*TemplatesDeleteBadRequest) templatesDeleteRes() {}
+
+// TemplatesDeleteNoContent is response for TemplatesDelete operation.
+type TemplatesDeleteNoContent struct{}
+
+func (*TemplatesDeleteNoContent) templatesDeleteRes() {}
+
+type TemplatesDeleteNotFound ProblemDetails
+
+func (*TemplatesDeleteNotFound) templatesDeleteRes() {}
+
+type TemplatesDeleteUnauthorized ProblemDetails
+
+func (*TemplatesDeleteUnauthorized) templatesDeleteRes() {}
+
+type TemplatesGetBadRequest ProblemDetails
+
+func (*TemplatesGetBadRequest) templatesGetRes() {}
+
+type TemplatesGetNotFound ProblemDetails
+
+func (*TemplatesGetNotFound) templatesGetRes() {}
+
+type TemplatesGetUnauthorized ProblemDetails
+
+func (*TemplatesGetUnauthorized) templatesGetRes() {}
+
+type TemplatesListBadRequest ProblemDetails
+
+func (*TemplatesListBadRequest) templatesListRes() {}
+
+// Paginated response.
+type TemplatesListOK struct {
+	// List of items.
+	Items []TemplateResource `json:"items"`
+	// Page number (1-based).
+	Page int32 `json:"page"`
+	// Page size.
+	PageSize int32 `json:"pageSize"`
+	// Total number of elements.
+	TotalItems int32 `json:"totalItems"`
+	// Total number of pages.
+	TotalPages int32 `json:"totalPages"`
+}
+
+// GetItems returns the value of Items.
+func (s *TemplatesListOK) GetItems() []TemplateResource {
+	return s.Items
+}
+
+// GetPage returns the value of Page.
+func (s *TemplatesListOK) GetPage() int32 {
+	return s.Page
+}
+
+// GetPageSize returns the value of PageSize.
+func (s *TemplatesListOK) GetPageSize() int32 {
+	return s.PageSize
+}
+
+// GetTotalItems returns the value of TotalItems.
+func (s *TemplatesListOK) GetTotalItems() int32 {
+	return s.TotalItems
+}
+
+// GetTotalPages returns the value of TotalPages.
+func (s *TemplatesListOK) GetTotalPages() int32 {
+	return s.TotalPages
+}
+
+// SetItems sets the value of Items.
+func (s *TemplatesListOK) SetItems(val []TemplateResource) {
+	s.Items = val
+}
+
+// SetPage sets the value of Page.
+func (s *TemplatesListOK) SetPage(val int32) {
+	s.Page = val
+}
+
+// SetPageSize sets the value of PageSize.
+func (s *TemplatesListOK) SetPageSize(val int32) {
+	s.PageSize = val
+}
+
+// SetTotalItems sets the value of TotalItems.
+func (s *TemplatesListOK) SetTotalItems(val int32) {
+	s.TotalItems = val
+}
+
+// SetTotalPages sets the value of TotalPages.
+func (s *TemplatesListOK) SetTotalPages(val int32) {
+	s.TotalPages = val
+}
+
+func (*TemplatesListOK) templatesListRes() {}
+
+type TemplatesListUnauthorized ProblemDetails
+
+func (*TemplatesListUnauthorized) templatesListRes() {}
+
+type TemplatesListUnprocessableEntity ProblemDetails
+
+func (*TemplatesListUnprocessableEntity) templatesListRes() {}
+
+type TemplatesUpdateBadRequest ProblemDetails
+
+func (*TemplatesUpdateBadRequest) templatesUpdateRes() {}
+
+type TemplatesUpdateNotFound ProblemDetails
+
+func (*TemplatesUpdateNotFound) templatesUpdateRes() {}
+
+type TemplatesUpdateUnauthorized ProblemDetails
+
+func (*TemplatesUpdateUnauthorized) templatesUpdateRes() {}
+
+type TemplatesUpdateUnprocessableEntity ProblemDetails
+
+func (*TemplatesUpdateUnprocessableEntity) templatesUpdateRes() {}
+
 type TimeZoneName string
 
 type Timestamp time.Time
@@ -3511,6 +3879,88 @@ func (s *UpdateSegmentInput) SetDefinition(val OptString) {
 	s.Definition = val
 }
 
+// Request body for updating a template.
+// Ref: #/components/schemas/UpdateTemplateInput
+type UpdateTemplateInput struct {
+	// Template name.
+	Name OptString `json:"name"`
+	// Default subject line.
+	Subject OptString `json:"subject"`
+	// MJML body.
+	Body OptString `json:"body"`
+}
+
+// GetName returns the value of Name.
+func (s *UpdateTemplateInput) GetName() OptString {
+	return s.Name
+}
+
+// GetSubject returns the value of Subject.
+func (s *UpdateTemplateInput) GetSubject() OptString {
+	return s.Subject
+}
+
+// GetBody returns the value of Body.
+func (s *UpdateTemplateInput) GetBody() OptString {
+	return s.Body
+}
+
+// SetName sets the value of Name.
+func (s *UpdateTemplateInput) SetName(val OptString) {
+	s.Name = val
+}
+
+// SetSubject sets the value of Subject.
+func (s *UpdateTemplateInput) SetSubject(val OptString) {
+	s.Subject = val
+}
+
+// SetBody sets the value of Body.
+func (s *UpdateTemplateInput) SetBody(val OptString) {
+	s.Body = val
+}
+
+// Request body for updating a webhook endpoint.
+// Ref: #/components/schemas/UpdateWebhookInput
+type UpdateWebhookInput struct {
+	// Destination URL (absolute http or https).
+	URL OptString `json:"url"`
+	// Event names to receive; empty means all events.
+	EventTypes []string `json:"eventTypes"`
+	// Whether the endpoint receives deliveries.
+	Enabled OptBool `json:"enabled"`
+}
+
+// GetURL returns the value of URL.
+func (s *UpdateWebhookInput) GetURL() OptString {
+	return s.URL
+}
+
+// GetEventTypes returns the value of EventTypes.
+func (s *UpdateWebhookInput) GetEventTypes() []string {
+	return s.EventTypes
+}
+
+// GetEnabled returns the value of Enabled.
+func (s *UpdateWebhookInput) GetEnabled() OptBool {
+	return s.Enabled
+}
+
+// SetURL sets the value of URL.
+func (s *UpdateWebhookInput) SetURL(val OptString) {
+	s.URL = val
+}
+
+// SetEventTypes sets the value of EventTypes.
+func (s *UpdateWebhookInput) SetEventTypes(val []string) {
+	s.EventTypes = val
+}
+
+// SetEnabled sets the value of Enabled.
+func (s *UpdateWebhookInput) SetEnabled(val OptBool) {
+	s.Enabled = val
+}
+
 // One contact to upsert, matched by its alias keys (subject id, email, phone).
 // Ref: #/components/schemas/UpsertContactInput
 type UpsertContactInput struct {
@@ -3647,3 +4097,216 @@ func (s *UpsertContactsResult) SetResults(val []ContactBatchItemResult) {
 }
 
 func (*UpsertContactsResult) contactsBatchUpsertRes() {}
+
+// Outbound webhook endpoint. The HMAC signing secret is deliberately absent: it is never returned
+// through the external API (view it in the app).
+// Ref: #/components/schemas/WebhookResource
+type WebhookResource struct {
+	// Unique identifier.
+	ID EntityId `json:"id"`
+	// Destination URL events are POSTed to.
+	URL string `json:"url"`
+	// Event names this endpoint receives; empty means all events.
+	EventTypes []string `json:"eventTypes"`
+	// Whether the endpoint receives deliveries.
+	Enabled bool `json:"enabled"`
+	// Creation timestamp.
+	CreatedAt Timestamp `json:"createdAt"`
+	// Last update timestamp.
+	UpdatedAt Timestamp `json:"updatedAt"`
+}
+
+// GetID returns the value of ID.
+func (s *WebhookResource) GetID() EntityId {
+	return s.ID
+}
+
+// GetURL returns the value of URL.
+func (s *WebhookResource) GetURL() string {
+	return s.URL
+}
+
+// GetEventTypes returns the value of EventTypes.
+func (s *WebhookResource) GetEventTypes() []string {
+	return s.EventTypes
+}
+
+// GetEnabled returns the value of Enabled.
+func (s *WebhookResource) GetEnabled() bool {
+	return s.Enabled
+}
+
+// GetCreatedAt returns the value of CreatedAt.
+func (s *WebhookResource) GetCreatedAt() Timestamp {
+	return s.CreatedAt
+}
+
+// GetUpdatedAt returns the value of UpdatedAt.
+func (s *WebhookResource) GetUpdatedAt() Timestamp {
+	return s.UpdatedAt
+}
+
+// SetID sets the value of ID.
+func (s *WebhookResource) SetID(val EntityId) {
+	s.ID = val
+}
+
+// SetURL sets the value of URL.
+func (s *WebhookResource) SetURL(val string) {
+	s.URL = val
+}
+
+// SetEventTypes sets the value of EventTypes.
+func (s *WebhookResource) SetEventTypes(val []string) {
+	s.EventTypes = val
+}
+
+// SetEnabled sets the value of Enabled.
+func (s *WebhookResource) SetEnabled(val bool) {
+	s.Enabled = val
+}
+
+// SetCreatedAt sets the value of CreatedAt.
+func (s *WebhookResource) SetCreatedAt(val Timestamp) {
+	s.CreatedAt = val
+}
+
+// SetUpdatedAt sets the value of UpdatedAt.
+func (s *WebhookResource) SetUpdatedAt(val Timestamp) {
+	s.UpdatedAt = val
+}
+
+func (*WebhookResource) webhooksCreateRes() {}
+func (*WebhookResource) webhooksGetRes()    {}
+func (*WebhookResource) webhooksUpdateRes() {}
+
+type WebhooksCreateUnauthorized ProblemDetails
+
+func (*WebhooksCreateUnauthorized) webhooksCreateRes() {}
+
+type WebhooksCreateUnprocessableEntity ProblemDetails
+
+func (*WebhooksCreateUnprocessableEntity) webhooksCreateRes() {}
+
+type WebhooksDeleteBadRequest ProblemDetails
+
+func (*WebhooksDeleteBadRequest) webhooksDeleteRes() {}
+
+// WebhooksDeleteNoContent is response for WebhooksDelete operation.
+type WebhooksDeleteNoContent struct{}
+
+func (*WebhooksDeleteNoContent) webhooksDeleteRes() {}
+
+type WebhooksDeleteNotFound ProblemDetails
+
+func (*WebhooksDeleteNotFound) webhooksDeleteRes() {}
+
+type WebhooksDeleteUnauthorized ProblemDetails
+
+func (*WebhooksDeleteUnauthorized) webhooksDeleteRes() {}
+
+type WebhooksGetBadRequest ProblemDetails
+
+func (*WebhooksGetBadRequest) webhooksGetRes() {}
+
+type WebhooksGetNotFound ProblemDetails
+
+func (*WebhooksGetNotFound) webhooksGetRes() {}
+
+type WebhooksGetUnauthorized ProblemDetails
+
+func (*WebhooksGetUnauthorized) webhooksGetRes() {}
+
+type WebhooksListBadRequest ProblemDetails
+
+func (*WebhooksListBadRequest) webhooksListRes() {}
+
+// Paginated response.
+type WebhooksListOK struct {
+	// List of items.
+	Items []WebhookResource `json:"items"`
+	// Page number (1-based).
+	Page int32 `json:"page"`
+	// Page size.
+	PageSize int32 `json:"pageSize"`
+	// Total number of elements.
+	TotalItems int32 `json:"totalItems"`
+	// Total number of pages.
+	TotalPages int32 `json:"totalPages"`
+}
+
+// GetItems returns the value of Items.
+func (s *WebhooksListOK) GetItems() []WebhookResource {
+	return s.Items
+}
+
+// GetPage returns the value of Page.
+func (s *WebhooksListOK) GetPage() int32 {
+	return s.Page
+}
+
+// GetPageSize returns the value of PageSize.
+func (s *WebhooksListOK) GetPageSize() int32 {
+	return s.PageSize
+}
+
+// GetTotalItems returns the value of TotalItems.
+func (s *WebhooksListOK) GetTotalItems() int32 {
+	return s.TotalItems
+}
+
+// GetTotalPages returns the value of TotalPages.
+func (s *WebhooksListOK) GetTotalPages() int32 {
+	return s.TotalPages
+}
+
+// SetItems sets the value of Items.
+func (s *WebhooksListOK) SetItems(val []WebhookResource) {
+	s.Items = val
+}
+
+// SetPage sets the value of Page.
+func (s *WebhooksListOK) SetPage(val int32) {
+	s.Page = val
+}
+
+// SetPageSize sets the value of PageSize.
+func (s *WebhooksListOK) SetPageSize(val int32) {
+	s.PageSize = val
+}
+
+// SetTotalItems sets the value of TotalItems.
+func (s *WebhooksListOK) SetTotalItems(val int32) {
+	s.TotalItems = val
+}
+
+// SetTotalPages sets the value of TotalPages.
+func (s *WebhooksListOK) SetTotalPages(val int32) {
+	s.TotalPages = val
+}
+
+func (*WebhooksListOK) webhooksListRes() {}
+
+type WebhooksListUnauthorized ProblemDetails
+
+func (*WebhooksListUnauthorized) webhooksListRes() {}
+
+type WebhooksListUnprocessableEntity ProblemDetails
+
+func (*WebhooksListUnprocessableEntity) webhooksListRes() {}
+
+type WebhooksUpdateBadRequest ProblemDetails
+
+func (*WebhooksUpdateBadRequest) webhooksUpdateRes() {}
+
+type WebhooksUpdateNotFound ProblemDetails
+
+func (*WebhooksUpdateNotFound) webhooksUpdateRes() {}
+
+type WebhooksUpdateUnauthorized ProblemDetails
+
+func (*WebhooksUpdateUnauthorized) webhooksUpdateRes() {}
+
+type WebhooksUpdateUnprocessableEntity ProblemDetails
+
+func (*WebhooksUpdateUnprocessableEntity) webhooksUpdateRes() {}

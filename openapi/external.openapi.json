@@ -25,6 +25,12 @@
     },
     {
       "name": "Broadcasts"
+    },
+    {
+      "name": "Templates"
+    },
+    {
+      "name": "Webhooks"
     }
   ],
   "paths": {
@@ -1697,6 +1703,313 @@
         }
       }
     },
+    "/templates": {
+      "get": {
+        "operationId": "Templates_list",
+        "description": "List resources with pagination",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/PageQuery.page"
+          },
+          {
+            "$ref": "#/components/parameters/PageQuery.pageSize"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request has succeeded.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["items", "page", "pageSize", "totalItems", "totalPages"],
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/TemplateResource"
+                      },
+                      "description": "List of items"
+                    },
+                    "page": {
+                      "type": "integer",
+                      "format": "int32",
+                      "description": "Page number (1-based)"
+                    },
+                    "pageSize": {
+                      "type": "integer",
+                      "format": "int32",
+                      "description": "Page size"
+                    },
+                    "totalItems": {
+                      "type": "integer",
+                      "format": "int32",
+                      "description": "Total number of elements"
+                    },
+                    "totalPages": {
+                      "type": "integer",
+                      "format": "int32",
+                      "description": "Total number of pages"
+                    }
+                  },
+                  "description": "Paginated response"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "RFC 7807 bad request response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "RFC 7807 unauthorized response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "RFC 7807 validation response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Templates"]
+      },
+      "post": {
+        "operationId": "Templates_create",
+        "description": "Create a resource",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": "The request has succeeded and a new resource has been created as a result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TemplateResource"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "RFC 7807 unauthorized response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "RFC 7807 validation response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Templates"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateTemplateInput"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/templates/{id}": {
+      "get": {
+        "operationId": "Templates_get",
+        "description": "Get a resource by ID",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/TemplateResourceKey"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request has succeeded.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TemplateResource"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "RFC 7807 bad request response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "RFC 7807 unauthorized response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "RFC 7807 not found response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Templates"]
+      },
+      "put": {
+        "operationId": "Templates_update",
+        "description": "Update a resource",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/TemplateResourceKey"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request has succeeded.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TemplateResource"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "RFC 7807 bad request response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "RFC 7807 unauthorized response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "RFC 7807 not found response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "RFC 7807 validation response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Templates"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateTemplateInput"
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "Templates_delete",
+        "description": "Delete a resource",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/TemplateResourceKey"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "There is no content to send for this request, but the headers may be useful."
+          },
+          "400": {
+            "description": "RFC 7807 bad request response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "RFC 7807 unauthorized response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "RFC 7807 not found response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Templates"]
+      }
+    },
     "/unsubscribes": {
       "post": {
         "operationId": "Unsubscribes_create",
@@ -1745,6 +2058,313 @@
             }
           }
         }
+      }
+    },
+    "/webhooks": {
+      "get": {
+        "operationId": "Webhooks_list",
+        "description": "List resources with pagination",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/PageQuery.page"
+          },
+          {
+            "$ref": "#/components/parameters/PageQuery.pageSize"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request has succeeded.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["items", "page", "pageSize", "totalItems", "totalPages"],
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/WebhookResource"
+                      },
+                      "description": "List of items"
+                    },
+                    "page": {
+                      "type": "integer",
+                      "format": "int32",
+                      "description": "Page number (1-based)"
+                    },
+                    "pageSize": {
+                      "type": "integer",
+                      "format": "int32",
+                      "description": "Page size"
+                    },
+                    "totalItems": {
+                      "type": "integer",
+                      "format": "int32",
+                      "description": "Total number of elements"
+                    },
+                    "totalPages": {
+                      "type": "integer",
+                      "format": "int32",
+                      "description": "Total number of pages"
+                    }
+                  },
+                  "description": "Paginated response"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "RFC 7807 bad request response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "RFC 7807 unauthorized response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "RFC 7807 validation response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Webhooks"]
+      },
+      "post": {
+        "operationId": "Webhooks_create",
+        "description": "Create a resource",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": "The request has succeeded and a new resource has been created as a result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebhookResource"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "RFC 7807 unauthorized response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "RFC 7807 validation response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Webhooks"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateWebhookInput"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/webhooks/{id}": {
+      "get": {
+        "operationId": "Webhooks_get",
+        "description": "Get a resource by ID",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WebhookResourceKey"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request has succeeded.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebhookResource"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "RFC 7807 bad request response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "RFC 7807 unauthorized response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "RFC 7807 not found response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Webhooks"]
+      },
+      "put": {
+        "operationId": "Webhooks_update",
+        "description": "Update a resource",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WebhookResourceKey"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request has succeeded.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebhookResource"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "RFC 7807 bad request response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "RFC 7807 unauthorized response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "RFC 7807 not found response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "RFC 7807 validation response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Webhooks"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateWebhookInput"
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "Webhooks_delete",
+        "description": "Delete a resource",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WebhookResourceKey"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "There is no content to send for this request, but the headers may be useful."
+          },
+          "400": {
+            "description": "RFC 7807 bad request response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "RFC 7807 unauthorized response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "RFC 7807 not found response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Webhooks"]
       }
     }
   },
@@ -1798,6 +2418,24 @@
         "explode": false
       },
       "SegmentResourceKey": {
+        "name": "id",
+        "in": "path",
+        "required": true,
+        "description": "Unique identifier",
+        "schema": {
+          "$ref": "#/components/schemas/EntityId"
+        }
+      },
+      "TemplateResourceKey": {
+        "name": "id",
+        "in": "path",
+        "required": true,
+        "description": "Unique identifier",
+        "schema": {
+          "$ref": "#/components/schemas/EntityId"
+        }
+      },
+      "WebhookResourceKey": {
         "name": "id",
         "in": "path",
         "required": true,
@@ -1880,6 +2518,10 @@
           "segments:write",
           "broadcasts:read",
           "broadcasts:write",
+          "templates:read",
+          "templates:write",
+          "webhooks:read",
+          "webhooks:write",
           "emails:send",
           "tokens:manage"
         ]
@@ -2192,6 +2834,25 @@
         },
         "description": "Request body for suppressing a destination"
       },
+      "CreateTemplateInput": {
+        "type": "object",
+        "required": ["name"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Template name"
+          },
+          "subject": {
+            "type": "string",
+            "description": "Default subject line"
+          },
+          "body": {
+            "type": "string",
+            "description": "MJML body"
+          }
+        },
+        "description": "Request body for creating a template"
+      },
       "CreateUnsubscribeInput": {
         "type": "object",
         "required": ["destination"],
@@ -2210,6 +2871,28 @@
           }
         },
         "description": "Request body for recording an unsubscribe"
+      },
+      "CreateWebhookInput": {
+        "type": "object",
+        "required": ["url"],
+        "properties": {
+          "url": {
+            "type": "string",
+            "description": "Destination URL (absolute http or https)"
+          },
+          "eventTypes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Event names to receive; empty or absent means all events"
+          },
+          "enabled": {
+            "type": "boolean",
+            "description": "Whether the endpoint receives deliveries (default true)"
+          }
+        },
+        "description": "Request body for creating a webhook endpoint"
       },
       "EmailAddress": {
         "type": "string",
@@ -2556,6 +3239,49 @@
         },
         "description": "A suppressed destination: no send surface delivers to it"
       },
+      "TemplateResource": {
+        "type": "object",
+        "required": ["id", "name", "subject", "body", "createdAt", "updatedAt"],
+        "properties": {
+          "id": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EntityId"
+              }
+            ],
+            "description": "Unique identifier"
+          },
+          "name": {
+            "type": "string",
+            "description": "Template name"
+          },
+          "subject": {
+            "type": "string",
+            "description": "Default subject line"
+          },
+          "body": {
+            "type": "string",
+            "description": "MJML body"
+          },
+          "createdAt": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Timestamp"
+              }
+            ],
+            "description": "Creation timestamp"
+          },
+          "updatedAt": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Timestamp"
+              }
+            ],
+            "description": "Last update timestamp"
+          }
+        },
+        "description": "Reusable email template"
+      },
       "TimeZoneName": {
         "type": "string"
       },
@@ -2699,6 +3425,45 @@
         },
         "description": "Request body for updating a segment"
       },
+      "UpdateTemplateInput": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Template name"
+          },
+          "subject": {
+            "type": "string",
+            "description": "Default subject line"
+          },
+          "body": {
+            "type": "string",
+            "description": "MJML body"
+          }
+        },
+        "description": "Request body for updating a template"
+      },
+      "UpdateWebhookInput": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "description": "Destination URL (absolute http or https)"
+          },
+          "eventTypes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Event names to receive; empty means all events"
+          },
+          "enabled": {
+            "type": "boolean",
+            "description": "Whether the endpoint receives deliveries"
+          }
+        },
+        "description": "Request body for updating a webhook endpoint"
+      },
       "UpsertContactInput": {
         "type": "object",
         "properties": {
@@ -2784,6 +3549,52 @@
       "Versions": {
         "type": "string",
         "enum": ["1.0.0"]
+      },
+      "WebhookResource": {
+        "type": "object",
+        "required": ["id", "url", "eventTypes", "enabled", "createdAt", "updatedAt"],
+        "properties": {
+          "id": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EntityId"
+              }
+            ],
+            "description": "Unique identifier"
+          },
+          "url": {
+            "type": "string",
+            "description": "Destination URL events are POSTed to"
+          },
+          "eventTypes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Event names this endpoint receives; empty means all events"
+          },
+          "enabled": {
+            "type": "boolean",
+            "description": "Whether the endpoint receives deliveries"
+          },
+          "createdAt": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Timestamp"
+              }
+            ],
+            "description": "Creation timestamp"
+          },
+          "updatedAt": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Timestamp"
+              }
+            ],
+            "description": "Last update timestamp"
+          }
+        },
+        "description": "Outbound webhook endpoint. The HMAC signing secret is deliberately absent:\nit is never returned through the external API (view it in the app)."
       }
     },
     "securitySchemes": {

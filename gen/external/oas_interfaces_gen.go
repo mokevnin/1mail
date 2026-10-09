@@ -109,6 +109,46 @@ type SuppressionsCreateRes interface {
 	suppressionsCreateRes()
 }
 
+type TemplatesCreateRes interface {
+	templatesCreateRes()
+}
+
+type TemplatesDeleteRes interface {
+	templatesDeleteRes()
+}
+
+type TemplatesGetRes interface {
+	templatesGetRes()
+}
+
+type TemplatesListRes interface {
+	templatesListRes()
+}
+
+type TemplatesUpdateRes interface {
+	templatesUpdateRes()
+}
+
 type UnsubscribesCreateRes interface {
 	unsubscribesCreateRes()
+}
+
+type WebhooksCreateRes interface {
+	webhooksCreateRes()
+}
+
+type WebhooksDeleteRes interface {
+	webhooksDeleteRes()
+}
+
+type WebhooksGetRes interface {
+	webhooksGetRes()
+}
+
+type WebhooksListRes interface {
+	webhooksListRes()
+}
+
+type WebhooksUpdateRes interface {
+	webhooksUpdateRes()
 }

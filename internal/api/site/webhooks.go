@@ -3,7 +3,6 @@ package site
 import (
 	"context"
 	"net/http"
-	"net/url"
 	"strconv"
 
 	"github.com/mokevnin/1mail/ent"
@@ -35,13 +34,6 @@ func (h *Handlers) webhookResource(e *ent.WebhookEndpoint) (siteapi.SiteWebhookE
 		CreatedAt:  siteapi.Timestamp(e.CreatedAt),
 		UpdatedAt:  siteapi.Timestamp(e.UpdatedAt),
 	}, nil
-}
-
-// validWebhookURL accepts only absolute http(s) URLs. (Network-level SSRF
-// defenses live in the delivery worker, which dials the resolved IP.)
-func validWebhookURL(raw string) bool {
-	u, err := url.Parse(raw)
-	return err == nil && (u.Scheme == "http" || u.Scheme == "https") && u.Host != ""
 }
 
 func (h *Handlers) SiteWebhooksList(ctx context.Context, params siteapi.SiteWebhooksListParams) (siteapi.SiteWebhooksListRes, error) {
@@ -103,7 +95,7 @@ func (h *Handlers) SiteWebhooksCreate(ctx context.Context, req *siteapi.SiteCrea
 		return nil, err
 	}
 
-	if !validWebhookURL(req.URL) {
+	if !service.ValidWebhookURL(req.URL) {
 		v := siteapi.SiteWebhooksCreateUnprocessableEntity(problemWithErrors(http.StatusUnprocessableEntity, i18n.T("errors.url_invalid", nil), map[string][]string{
 			"url": {i18n.T("errors.url_must_be_absolute", nil)},
 		}))
@@ -188,7 +180,7 @@ func (h *Handlers) SiteWebhooksUpdate(ctx context.Context, req *siteapi.SiteUpda
 
 	upd := h.ent.WebhookEndpoint.UpdateOneID(id).Where(webhookendpoint.WorkspaceID(ws))
 	if v, ok := req.URL.Get(); ok {
-		if !validWebhookURL(v) {
+		if !service.ValidWebhookURL(v) {
 			r := siteapi.SiteWebhooksUpdateUnprocessableEntity(problemWithErrors(http.StatusUnprocessableEntity, i18n.T("errors.url_invalid", nil), map[string][]string{
 				"url": {i18n.T("errors.url_must_be_absolute", nil)},
 			}))

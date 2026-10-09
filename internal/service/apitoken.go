@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"math/big"
+	"net/url"
 	"regexp"
 
 	"golang.org/x/crypto/bcrypt"
@@ -71,6 +72,13 @@ func GenerateWebhookSecret() (string, error) {
 		return "", err
 	}
 	return "whsec_" + base64.StdEncoding.EncodeToString(b), nil
+}
+
+// ValidWebhookURL accepts only absolute http(s) URLs. (Network-level SSRF
+// defenses live in the delivery worker, which dials the resolved IP.)
+func ValidWebhookURL(raw string) bool {
+	u, err := url.Parse(raw)
+	return err == nil && (u.Scheme == "http" || u.Scheme == "https") && u.Host != ""
 }
 
 func HashTokenSecret(secret string) (string, error) {

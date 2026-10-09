@@ -14,6 +14,8 @@ import "./resources/broadcasts.tsp";
 import "./resources/emails.tsp";
 import "./resources/events.tsp";
 import "./resources/consent.tsp";
+import "./resources/templates.tsp";
+import "./resources/webhooks.tsp";
 import "./resources/auth.tsp";
 import "./mcp.tsp";
 

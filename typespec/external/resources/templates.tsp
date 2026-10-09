@@ -1,0 +1,60 @@
+using TypeSpec.Http;
+using TypeSpec.Rest;
+
+namespace OneMail;
+
+/** Reusable email template */
+@resource("templates")
+@segment("templates")
+model TemplateResource {
+  /** Unique identifier */
+  @key
+  id: EntityId;
+
+  /** Template name */
+  name: string;
+
+  /** Default subject line */
+  subject: string;
+
+  /** MJML body */
+  body: string;
+
+  /** Creation timestamp */
+  createdAt: Timestamp;
+
+  /** Last update timestamp */
+  updatedAt: Timestamp;
+}
+
+/** Request body for creating a template */
+model CreateTemplateInput {
+  /** Template name */
+  name: string;
+
+  /** Default subject line */
+  subject?: string;
+
+  /** MJML body */
+  body?: string;
+}
+
+/** Request body for updating a template */
+model UpdateTemplateInput {
+  /** Template name */
+  name?: string;
+
+  /** Default subject line */
+  subject?: string;
+
+  /** MJML body */
+  body?: string;
+}
+
+@tag("Templates")
+interface Templates
+  extends ExternalCrud<
+      TemplateResource,
+      CreateTemplateInput,
+      UpdateTemplateInput
+    > {}

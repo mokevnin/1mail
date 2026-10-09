@@ -60,7 +60,17 @@ var operationRolesBearerAuth = map[string][]string{
 	SegmentsPreviewOperation:     []string{},
 	SegmentsUpdateOperation:      []string{},
 	SuppressionsCreateOperation:  []string{},
+	TemplatesCreateOperation:     []string{},
+	TemplatesDeleteOperation:     []string{},
+	TemplatesGetOperation:        []string{},
+	TemplatesListOperation:       []string{},
+	TemplatesUpdateOperation:     []string{},
 	UnsubscribesCreateOperation:  []string{},
+	WebhooksCreateOperation:      []string{},
+	WebhooksDeleteOperation:      []string{},
+	WebhooksGetOperation:         []string{},
+	WebhooksListOperation:        []string{},
+	WebhooksUpdateOperation:      []string{},
 }
 
 // GetRolesForBearerAuth returns the required roles for the given operation.

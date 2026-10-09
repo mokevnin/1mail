@@ -167,6 +167,36 @@ type Handler interface {
 	//
 	// POST /suppressions
 	SuppressionsCreate(ctx context.Context, req *CreateSuppressionInput) (SuppressionsCreateRes, error)
+	// TemplatesCreate implements Templates_create operation.
+	//
+	// Create a resource.
+	//
+	// POST /templates
+	TemplatesCreate(ctx context.Context, req *CreateTemplateInput) (TemplatesCreateRes, error)
+	// TemplatesDelete implements Templates_delete operation.
+	//
+	// Delete a resource.
+	//
+	// DELETE /templates/{id}
+	TemplatesDelete(ctx context.Context, params TemplatesDeleteParams) (TemplatesDeleteRes, error)
+	// TemplatesGet implements Templates_get operation.
+	//
+	// Get a resource by ID.
+	//
+	// GET /templates/{id}
+	TemplatesGet(ctx context.Context, params TemplatesGetParams) (TemplatesGetRes, error)
+	// TemplatesList implements Templates_list operation.
+	//
+	// List resources with pagination.
+	//
+	// GET /templates
+	TemplatesList(ctx context.Context, params TemplatesListParams) (TemplatesListRes, error)
+	// TemplatesUpdate implements Templates_update operation.
+	//
+	// Update a resource.
+	//
+	// PUT /templates/{id}
+	TemplatesUpdate(ctx context.Context, req *UpdateTemplateInput, params TemplatesUpdateParams) (TemplatesUpdateRes, error)
 	// UnsubscribesCreate implements Unsubscribes_create operation.
 	//
 	// Record that a destination unsubscribed from a sending source (default `broadcasts`). Idempotent.
@@ -174,6 +204,36 @@ type Handler interface {
 	//
 	// POST /unsubscribes
 	UnsubscribesCreate(ctx context.Context, req *CreateUnsubscribeInput) (UnsubscribesCreateRes, error)
+	// WebhooksCreate implements Webhooks_create operation.
+	//
+	// Create a resource.
+	//
+	// POST /webhooks
+	WebhooksCreate(ctx context.Context, req *CreateWebhookInput) (WebhooksCreateRes, error)
+	// WebhooksDelete implements Webhooks_delete operation.
+	//
+	// Delete a resource.
+	//
+	// DELETE /webhooks/{id}
+	WebhooksDelete(ctx context.Context, params WebhooksDeleteParams) (WebhooksDeleteRes, error)
+	// WebhooksGet implements Webhooks_get operation.
+	//
+	// Get a resource by ID.
+	//
+	// GET /webhooks/{id}
+	WebhooksGet(ctx context.Context, params WebhooksGetParams) (WebhooksGetRes, error)
+	// WebhooksList implements Webhooks_list operation.
+	//
+	// List resources with pagination.
+	//
+	// GET /webhooks
+	WebhooksList(ctx context.Context, params WebhooksListParams) (WebhooksListRes, error)
+	// WebhooksUpdate implements Webhooks_update operation.
+	//
+	// Update a resource.
+	//
+	// PUT /webhooks/{id}
+	WebhooksUpdate(ctx context.Context, req *UpdateWebhookInput, params WebhooksUpdateParams) (WebhooksUpdateRes, error)
 }
 
 // Server implements http server based on OpenAPI v3 specification and

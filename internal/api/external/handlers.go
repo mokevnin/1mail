@@ -11,6 +11,7 @@ import (
 	"github.com/mokevnin/1mail/internal/eventlog"
 	"github.com/mokevnin/1mail/internal/events"
 	"github.com/mokevnin/1mail/internal/outbound"
+	"github.com/mokevnin/1mail/internal/secrets"
 	"github.com/mokevnin/1mail/internal/segments"
 )
 
@@ -24,12 +25,13 @@ type Handlers struct {
 	eventlog       *eventlog.Module
 	outbound       *outbound.Module
 	segments       *segments.Service
+	cipher         *secrets.Cipher
 	contacts       *contacts.Module
 	bootstrapToken string
 }
 
-func NewHandlers(client *ent.Client, bootstrapToken string, bus *events.Bus, eventLog *eventlog.Module, sender *outbound.Module) *Handlers {
-	return &Handlers{ent: client, bus: bus, eventlog: eventLog, outbound: sender, segments: segments.New(client), contacts: contacts.New(bus), bootstrapToken: bootstrapToken}
+func NewHandlers(client *ent.Client, bootstrapToken string, bus *events.Bus, eventLog *eventlog.Module, sender *outbound.Module, cipher *secrets.Cipher) *Handlers {
+	return &Handlers{ent: client, bus: bus, eventlog: eventLog, outbound: sender, cipher: cipher, segments: segments.New(client), contacts: contacts.New(bus), bootstrapToken: bootstrapToken}
 }
 
 var _ externalapi.Handler = (*Handlers)(nil)
