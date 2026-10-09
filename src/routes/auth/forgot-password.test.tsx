@@ -9,7 +9,7 @@ test('shows the confirmation state after submitting', async () => {
   mockClientFetch(() => jsonResponse({}, { status: 202 }))
   const { screen } = await renderWithRouter(<ForgotPasswordPage />)
 
-  await screen.getByLabelText('Email').fill('user@example.com')
+  await screen.getByLabelText(/^Email/).fill('user@example.com')
   await screen.getByRole('button', { name: 'Send reset link' }).click()
 
   await expect.element(screen.getByText('Check your email')).toBeInTheDocument()

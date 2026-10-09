@@ -42,7 +42,7 @@ test('creates a token and reveals the one-time secret', async () => {
 
   const { screen } = await renderWithRouter(<ApiKeysSection slug="test" />)
 
-  await screen.getByLabelText('Token name').fill('CI')
+  await screen.getByLabelText(/^Token name/).fill('CI')
   await screen.getByRole('button', { name: 'Create token' }).click()
 
   // The full secret is shown once.

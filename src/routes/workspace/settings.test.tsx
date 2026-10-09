@@ -9,6 +9,8 @@ const workspace = {
   name: 'Acme',
   slug: 'test',
   collectKey: 'omck_test_key',
+  ingestKey: 'omik_test_key',
+  postalAddress: '',
   createdAt: '2026-01-01T00:00:00Z',
 }
 
@@ -43,7 +45,7 @@ test('renames the workspace and shows the tracking snippet and test command', as
   // No events yet → waiting state.
   await expect.element(screen.getByText('Waiting for the first event…')).toBeInTheDocument()
 
-  const nameInput = screen.getByLabelText('Workspace name')
+  const nameInput = screen.getByLabelText(/^Workspace name/)
   await expect.element(nameInput).toHaveValue('Acme')
   await nameInput.fill('Acme Inc')
   await screen.getByRole('button', { name: 'Save' }).click()

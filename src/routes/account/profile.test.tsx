@@ -19,7 +19,7 @@ test('loads the profile and submits a name change', async () => {
 
   const { screen } = await renderWithRouter(<ProfilePage />)
 
-  const nameInput = screen.getByLabelText('Name')
+  const nameInput = screen.getByLabelText(/^Name/)
   await expect.element(nameInput).toHaveValue('John')
 
   await nameInput.fill('Renamed')

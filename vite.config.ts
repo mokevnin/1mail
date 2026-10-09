@@ -1,7 +1,7 @@
 import react from '@vitejs/plugin-react'
 import { playwright } from '@vitest/browser-playwright'
 import type { Plugin } from 'vite'
-import { defineConfig } from 'vitest/config'
+import { configDefaults, defineConfig } from 'vitest/config'
 
 const SUPPORTED_LOCALES = ['en', 'ru', 'es']
 
@@ -40,6 +40,8 @@ export default defineConfig({
       },
   test: {
     testTimeout: 10_000,
+    // .cache holds the Go module cache, whose dependencies ship their own *.test.* files.
+    exclude: [...configDefaults.exclude, '.cache/**'],
     setupFiles: ['./src/test/setup.tsx'],
     browser: {
       enabled: true,
