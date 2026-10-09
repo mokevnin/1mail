@@ -1,25 +1,15 @@
 import { Button, Group, Input, Stack, TextInput } from '@mantine/core'
-import type { useForm } from '@mantine/form'
 import { useNavigate, useParams } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 
+import type { ResourceFormProps } from '../../resources/defineResource.tsx'
 import { segmentsRoute } from '../../router.tsx'
 import { SegmentRuleBuilder } from './SegmentRuleBuilder.tsx'
 
-export interface SegmentFormValues {
-  name: string
-  definition: string
-}
+// A Segment is always a rule, so the payload carries a definition string.
+export type SegmentPayload = { name: string; definition: string }
 
-type SegmentFormInstance = ReturnType<typeof useForm<SegmentFormValues>>
-
-interface SegmentFormProps {
-  form: SegmentFormInstance
-  isPending: boolean
-  onSubmit: (values: SegmentFormValues) => void
-}
-
-export function SegmentForm({ form, isPending, onSubmit }: SegmentFormProps) {
+export function SegmentForm({ form, isPending, onSubmit }: ResourceFormProps<SegmentPayload>) {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const { slug } = useParams({ strict: false })
@@ -29,7 +19,7 @@ export function SegmentForm({ form, isPending, onSubmit }: SegmentFormProps) {
       <Stack>
         <TextInput
           label={t(($) => $.segments.nameLabel)}
-          required
+          withAsterisk
           {...form.getInputProps('name')}
         />
         {slug ? (
@@ -39,7 +29,7 @@ export function SegmentForm({ form, isPending, onSubmit }: SegmentFormProps) {
           >
             <SegmentRuleBuilder
               slug={slug}
-              value={form.values.definition}
+              value={form.values.definition ?? ''}
               onChange={(json) => form.setFieldValue('definition', json)}
             />
           </Input.Wrapper>

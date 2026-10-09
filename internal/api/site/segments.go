@@ -131,6 +131,11 @@ func (h *Handlers) SiteSegmentsUpdate(ctx context.Context, req *siteapi.SiteUpda
 		v := siteapi.SiteSegmentsUpdateBadRequest(problem(http.StatusBadRequest, "invalid id"))
 		return &v, nil
 	}
+	// A Segment is always a rule: clearing the definition is not a valid update.
+	if req.Definition.Null {
+		v := siteapi.SiteSegmentsUpdateUnprocessableEntity(problem(http.StatusUnprocessableEntity, "definition cannot be null"))
+		return &v, nil
+	}
 	in := segments.UpdateInput{
 		Name:       convert.StringPtr(req.Name),
 		Definition: convert.StringPtr(req.Definition),

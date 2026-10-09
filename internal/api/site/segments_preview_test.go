@@ -101,3 +101,23 @@ func TestSiteSegmentsCreateAndUpdateShareValidation(t *testing.T) {
 	require.NoError(t, err)
 	assert.IsType(t, &siteapi.SiteSegmentsUpdateUnprocessableEntity{}, updated)
 }
+
+// A Segment is always a rule: an explicit null definition is rejected on update
+// (an absent key keeps the stored rule), and the stored rule is left untouched.
+func TestSiteSegmentsUpdateRejectsNullDefinition(t *testing.T) {
+	env := testhelper.Setup(t)
+	c := siteClient(t, env, "info@1mail.com")
+	ctx := context.Background()
+	params := siteapi.SiteSegmentsUpdateParams{Slug: "acme", ID: "1"}
+
+	var cleared siteapi.OptNilString
+	cleared.SetToNull()
+	out, err := c.SiteSegmentsUpdate(ctx, &siteapi.SiteUpdateSegmentInput{Definition: cleared}, params)
+	require.NoError(t, err)
+	assert.IsType(t, &siteapi.SiteSegmentsUpdateUnprocessableEntity{}, out)
+
+	// Absent definition still updates the name and keeps the rule.
+	out, err = c.SiteSegmentsUpdate(ctx, &siteapi.SiteUpdateSegmentInput{Name: siteapi.NewOptString("Renamed")}, params)
+	require.NoError(t, err)
+	assert.IsType(t, &siteapi.SiteSegmentResource{}, out)
+}
