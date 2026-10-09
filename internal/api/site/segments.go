@@ -2,11 +2,11 @@ package site
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"strconv"
 
 	"github.com/mokevnin/1mail/ent"
-	"github.com/mokevnin/1mail/ent/contact"
 	"github.com/mokevnin/1mail/ent/segment"
 	siteapi "github.com/mokevnin/1mail/gen/site"
 	"github.com/mokevnin/1mail/internal/convert"
@@ -72,19 +72,15 @@ func (h *Handlers) SiteSegmentsCreate(ctx context.Context, req *siteapi.SiteCrea
 		return nil, err
 	}
 
-	if def := convert.StringPtr(req.Definition); req.Type == siteapi.SiteSegmentTypeRule && def != nil && *def != "" {
-		if err := segments.ValidateContactDefinition(*def); err != nil {
-			v := siteapi.SiteSegmentsCreateUnprocessableEntity(problem(http.StatusUnprocessableEntity, err.Error()))
-			return &v, nil
-		}
+	s, err := h.segments.Create(ctx, ws, segments.CreateInput{
+		Name:       req.Name,
+		Type:       segment.Type(req.Type),
+		Definition: convert.StringPtr(req.Definition),
+	})
+	if errors.Is(err, segments.ErrInvalidDefinition) {
+		v := siteapi.SiteSegmentsCreateUnprocessableEntity(problem(http.StatusUnprocessableEntity, err.Error()))
+		return &v, nil
 	}
-
-	s, err := h.ent.Segment.Create().
-		SetWorkspaceID(ws).
-		SetName(req.Name).
-		SetType(segment.Type(req.Type)).
-		SetNillableDefinition(convert.StringPtr(req.Definition)).
-		Save(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -136,22 +132,20 @@ func (h *Handlers) SiteSegmentsUpdate(ctx context.Context, req *siteapi.SiteUpda
 		v := siteapi.SiteSegmentsUpdateBadRequest(problem(http.StatusBadRequest, "invalid id"))
 		return &v, nil
 	}
-	if def := convert.StringPtr(req.Definition); def != nil && *def != "" {
-		if err := segments.ValidateContactDefinition(*def); err != nil {
-			v := siteapi.SiteSegmentsUpdateUnprocessableEntity(problem(http.StatusUnprocessableEntity, err.Error()))
-			return &v, nil
-		}
+	in := segments.UpdateInput{
+		Name:       convert.StringPtr(req.Name),
+		Definition: convert.StringPtr(req.Definition),
 	}
-
-	q := h.ent.Segment.UpdateOneID(id).
-		Where(segment.WorkspaceID(ws)).
-		SetNillableName(convert.StringPtr(req.Name)).
-		SetNillableDefinition(convert.StringPtr(req.Definition))
 	if v, ok := req.Type.Get(); ok {
-		q = q.SetType(segment.Type(v))
+		t := segment.Type(v)
+		in.Type = &t
 	}
-	s, err := q.Save(ctx)
-	if ent.IsNotFound(err) {
+	s, err := h.segments.Update(ctx, ws, id, in)
+	if errors.Is(err, segments.ErrInvalidDefinition) {
+		v := siteapi.SiteSegmentsUpdateUnprocessableEntity(problem(http.StatusUnprocessableEntity, err.Error()))
+		return &v, nil
+	}
+	if errors.Is(err, segments.ErrNotFound) {
 		v := siteapi.SiteSegmentsUpdateNotFound(problem(http.StatusNotFound, "segment not found"))
 		return &v, nil
 	}
@@ -205,17 +199,11 @@ func (h *Handlers) SiteSegmentsPreview(ctx context.Context, req *siteapi.SitePre
 	if v := convert.StringPtr(req.Definition); v != nil {
 		def = *v
 	}
-	pred, err := segments.ContactPredicate(def)
-	if err != nil {
+	count, err := h.segments.Preview(ctx, ws, def)
+	if errors.Is(err, segments.ErrInvalidDefinition) {
 		v := siteapi.SiteSegmentsPreviewUnprocessableEntity(problem(http.StatusUnprocessableEntity, err.Error()))
 		return &v, nil
 	}
-
-	// Segment membership is the rule alone — eligibility (suppression/unsubscribe)
-	// is subtracted only at send, never folded into the audience count (ADR 0001).
-	count, err := h.ent.Contact.Query().
-		Where(contact.WorkspaceID(ws), pred).
-		Count(ctx)
 	if err != nil {
 		return nil, err
 	}

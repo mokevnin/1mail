@@ -82,3 +82,22 @@ func TestSiteSegmentsCreateRejectsInvalidRuleDefinition(t *testing.T) {
 	require.NoError(t, err)
 	assert.IsType(t, &siteapi.SiteSegmentsCreateUnprocessableEntity{}, out)
 }
+
+func TestSiteSegmentsCreateAndUpdateShareValidation(t *testing.T) {
+	env := testhelper.Setup(t)
+	c := siteClient(t, env, "info@1mail.com")
+	ctx := context.Background()
+	bad := siteapi.NewOptNilString(`{"rules":[{"field":"email","operator":"weird","value":"x"}]}`)
+
+	// Create rejects a bad definition for a snapshot segment too.
+	created, err := c.SiteSegmentsCreate(ctx, &siteapi.SiteCreateSegmentInput{
+		Name: "Bad snapshot", Type: siteapi.SiteSegmentTypeSnapshot, Definition: bad,
+	}, siteapi.SiteSegmentsCreateParams{Slug: "acme"})
+	require.NoError(t, err)
+	assert.IsType(t, &siteapi.SiteSegmentsCreateUnprocessableEntity{}, created)
+
+	updated, err := c.SiteSegmentsUpdate(ctx, &siteapi.SiteUpdateSegmentInput{Definition: bad},
+		siteapi.SiteSegmentsUpdateParams{Slug: "acme", ID: "100"})
+	require.NoError(t, err)
+	assert.IsType(t, &siteapi.SiteSegmentsUpdateUnprocessableEntity{}, updated)
+}
