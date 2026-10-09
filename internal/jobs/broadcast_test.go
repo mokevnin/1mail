@@ -435,6 +435,26 @@ func TestBroadcastDueIsFalseForASupersededScheduledJob(t *testing.T) {
 	assert.True(t, due, "job for the current schedule runs")
 }
 
+// A delayed job is also superseded by an immediate send (which clears scheduled_at),
+// while a retry of the job that legitimately started the send (status sending, same
+// scheduled_at) still runs.
+func TestBroadcastDueForADelayedJobAcrossSendAndRetry(t *testing.T) {
+	env := testhelper.Setup(t)
+	ctx := context.Background()
+
+	at := *env.DB.Broadcast.GetX(ctx, fixtures.BroadcastScheduledID).ScheduledAt
+
+	env.DB.Broadcast.UpdateOneID(fixtures.BroadcastScheduledID).SetStatus(broadcast.StatusSending).ExecX(ctx)
+	due, err := jobs.BroadcastDue(ctx, env.DB, fixtures.BroadcastScheduledID, &at)
+	require.NoError(t, err)
+	assert.True(t, due, "retry of the job that started the send")
+
+	env.DB.Broadcast.UpdateOneID(fixtures.BroadcastScheduledID).ClearScheduledAt().ExecX(ctx)
+	due, err = jobs.BroadcastDue(ctx, env.DB, fixtures.BroadcastScheduledID, &at)
+	require.NoError(t, err)
+	assert.False(t, due, "sent now: the delayed job is superseded")
+}
+
 // Finalizing an already-sent broadcast is a no-op: the status=sending guard
 // keeps sent_at stable across concurrent/repeated finalizers.
 func TestFinalizeBroadcastIsIdempotent(t *testing.T) {
