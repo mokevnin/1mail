@@ -35,7 +35,7 @@ func optEntityID[O interface {
 }
 
 func (h *Handlers) SiteBroadcastsList(ctx context.Context, params siteapi.SiteBroadcastsListParams) (siteapi.SiteBroadcastsListRes, error) {
-	ws, err := h.workspaceID(ctx, params.Slug)
+	ws, err := h.scopedFor(ctx, params.Slug)
 	if ent.IsNotFound(err) {
 		v := siteapi.SiteBroadcastsListNotFound(problem(http.StatusNotFound, "workspace not found"))
 		return &v, nil
@@ -53,7 +53,7 @@ func (h *Handlers) SiteBroadcastsList(ctx context.Context, params siteapi.SiteBr
 	}
 	page, pageSize := pagination.Normalize(pagePtr, pageSizePtr)
 
-	q := h.ent.Broadcast.Query().Where(broadcast.WorkspaceID(ws))
+	q := ws.Broadcast().Query()
 
 	total, err := q.Count(ctx)
 	if err != nil {
@@ -83,7 +83,7 @@ func (h *Handlers) SiteBroadcastsList(ctx context.Context, params siteapi.SiteBr
 }
 
 func (h *Handlers) SiteBroadcastsCreate(ctx context.Context, req *siteapi.SiteCreateBroadcastInput, params siteapi.SiteBroadcastsCreateParams) (siteapi.SiteBroadcastsCreateRes, error) {
-	ws, err := h.workspaceID(ctx, params.Slug)
+	ws, err := h.scopedFor(ctx, params.Slug)
 	if ent.IsNotFound(err) {
 		v := siteapi.SiteBroadcastsCreateNotFound(problem(http.StatusNotFound, "workspace not found"))
 		return &v, nil
@@ -103,8 +103,7 @@ func (h *Handlers) SiteBroadcastsCreate(ctx context.Context, req *siteapi.SiteCr
 		return &v, nil
 	}
 
-	q := h.ent.Broadcast.Create().
-		SetWorkspaceID(ws).
+	q := ws.Broadcast().Create().
 		SetName(req.Name).
 		SetNillableFromName(convert.StringPtr(req.FromName)).
 		SetNillableFromEmail(convert.StringPtr(req.FromEmail)).
@@ -125,7 +124,7 @@ func (h *Handlers) SiteBroadcastsCreate(ctx context.Context, req *siteapi.SiteCr
 }
 
 func (h *Handlers) SiteBroadcastsGet(ctx context.Context, params siteapi.SiteBroadcastsGetParams) (siteapi.SiteBroadcastsGetRes, error) {
-	ws, err := h.workspaceID(ctx, params.Slug)
+	ws, err := h.scopedFor(ctx, params.Slug)
 	if ent.IsNotFound(err) {
 		v := siteapi.SiteBroadcastsGetNotFound(problem(http.StatusNotFound, "workspace not found"))
 		return &v, nil
@@ -139,8 +138,8 @@ func (h *Handlers) SiteBroadcastsGet(ctx context.Context, params siteapi.SiteBro
 		v := siteapi.SiteBroadcastsGetBadRequest(problem(http.StatusBadRequest, "invalid id"))
 		return &v, nil
 	}
-	b, err := h.ent.Broadcast.Query().
-		Where(broadcast.IDEQ(id), broadcast.WorkspaceID(ws)).
+	b, err := ws.Broadcast().Query().
+		Where(broadcast.IDEQ(id)).
 		Only(ctx)
 	if ent.IsNotFound(err) {
 		v := siteapi.SiteBroadcastsGetNotFound(problem(http.StatusNotFound, "broadcast not found"))
@@ -154,7 +153,7 @@ func (h *Handlers) SiteBroadcastsGet(ctx context.Context, params siteapi.SiteBro
 }
 
 func (h *Handlers) SiteBroadcastsUpdate(ctx context.Context, req *siteapi.SiteUpdateBroadcastInput, params siteapi.SiteBroadcastsUpdateParams) (siteapi.SiteBroadcastsUpdateRes, error) {
-	ws, err := h.workspaceID(ctx, params.Slug)
+	ws, err := h.scopedFor(ctx, params.Slug)
 	if ent.IsNotFound(err) {
 		v := siteapi.SiteBroadcastsUpdateNotFound(problem(http.StatusNotFound, "workspace not found"))
 		return &v, nil
@@ -170,8 +169,8 @@ func (h *Handlers) SiteBroadcastsUpdate(ctx context.Context, req *siteapi.SiteUp
 	}
 
 	// A broadcast can only be edited while it is still a draft.
-	current, err := h.ent.Broadcast.Query().
-		Where(broadcast.IDEQ(id), broadcast.WorkspaceID(ws)).
+	current, err := ws.Broadcast().Query().
+		Where(broadcast.IDEQ(id)).
 		Only(ctx)
 	if ent.IsNotFound(err) {
 		v := siteapi.SiteBroadcastsUpdateNotFound(problem(http.StatusNotFound, "broadcast not found"))
@@ -196,8 +195,7 @@ func (h *Handlers) SiteBroadcastsUpdate(ctx context.Context, req *siteapi.SiteUp
 		return &v, nil
 	}
 
-	q := h.ent.Broadcast.UpdateOneID(id).
-		Where(broadcast.WorkspaceID(ws)).
+	q := ws.Broadcast().UpdateOneID(id).
 		SetNillableName(convert.StringPtr(req.Name)).
 		SetNillableSubject(convert.StringPtr(req.Subject)).
 		SetNillableFromName(convert.StringPtr(req.FromName)).
@@ -231,7 +229,7 @@ func (h *Handlers) SiteBroadcastsUpdate(ctx context.Context, req *siteapi.SiteUp
 }
 
 func (h *Handlers) SiteBroadcastsDelete(ctx context.Context, params siteapi.SiteBroadcastsDeleteParams) (siteapi.SiteBroadcastsDeleteRes, error) {
-	ws, err := h.workspaceID(ctx, params.Slug)
+	ws, err := h.scopedFor(ctx, params.Slug)
 	if ent.IsNotFound(err) {
 		v := siteapi.SiteBroadcastsDeleteNotFound(problem(http.StatusNotFound, "workspace not found"))
 		return &v, nil
@@ -248,12 +246,12 @@ func (h *Handlers) SiteBroadcastsDelete(ctx context.Context, params siteapi.Site
 	// Remove the per-recipient delivery rows first: they FK the broadcast, so a
 	// sent broadcast can't be deleted while they exist. (The engagement Event log
 	// keys on subject_id, not the broadcast, so it is unaffected.)
-	if _, err := h.ent.BroadcastRecipient.Delete().
-		Where(broadcastrecipient.BroadcastID(id), broadcastrecipient.WorkspaceID(ws)).
+	if _, err := ws.BroadcastRecipient().Delete().
+		Where(broadcastrecipient.BroadcastID(id)).
 		Exec(ctx); err != nil {
 		return nil, err
 	}
-	err = h.ent.Broadcast.DeleteOneID(id).Where(broadcast.WorkspaceID(ws)).Exec(ctx)
+	err = ws.Broadcast().DeleteOneID(id).Exec(ctx)
 	if ent.IsNotFound(err) {
 		v := siteapi.SiteBroadcastsDeleteNotFound(problem(http.StatusNotFound, "broadcast not found"))
 		return &v, nil
@@ -267,7 +265,7 @@ func (h *Handlers) SiteBroadcastsDelete(ctx context.Context, params siteapi.Site
 // SiteBroadcastsSend sends a draft or scheduled broadcast immediately. The state
 // machine lives in the broadcasts module; this is the HTTP adapter.
 func (h *Handlers) SiteBroadcastsSend(ctx context.Context, params siteapi.SiteBroadcastsSendParams) (siteapi.SiteBroadcastsSendRes, error) {
-	ws, err := h.workspaceID(ctx, params.Slug)
+	ws, err := h.scopedFor(ctx, params.Slug)
 	if ent.IsNotFound(err) {
 		v := siteapi.SiteBroadcastsSendNotFound(problem(http.StatusNotFound, "workspace not found"))
 		return &v, nil
@@ -299,7 +297,7 @@ func (h *Handlers) SiteBroadcastsSend(ctx context.Context, params siteapi.SiteBr
 
 // SiteBroadcastsSchedule schedules a draft broadcast to send at a future time.
 func (h *Handlers) SiteBroadcastsSchedule(ctx context.Context, req *siteapi.SiteScheduleBroadcastInput, params siteapi.SiteBroadcastsScheduleParams) (siteapi.SiteBroadcastsScheduleRes, error) {
-	ws, err := h.workspaceID(ctx, params.Slug)
+	ws, err := h.scopedFor(ctx, params.Slug)
 	if ent.IsNotFound(err) {
 		v := siteapi.SiteBroadcastsScheduleNotFound(problem(http.StatusNotFound, "workspace not found"))
 		return &v, nil
@@ -333,7 +331,7 @@ func (h *Handlers) SiteBroadcastsSchedule(ctx context.Context, req *siteapi.Site
 // it to a single address — no recipient rows, no tracking (a token would point
 // at a nonexistent recipient). Used to preview the rendered email.
 func (h *Handlers) SiteBroadcastsTestSend(ctx context.Context, req *siteapi.SiteTestSendBroadcastInput, params siteapi.SiteBroadcastsTestSendParams) (siteapi.SiteBroadcastsTestSendRes, error) {
-	ws, err := h.workspaceID(ctx, params.Slug)
+	ws, err := h.scopedFor(ctx, params.Slug)
 	if ent.IsNotFound(err) {
 		v := siteapi.SiteBroadcastsTestSendNotFound(problem(http.StatusNotFound, "workspace not found"))
 		return &v, nil
@@ -347,8 +345,8 @@ func (h *Handlers) SiteBroadcastsTestSend(ctx context.Context, req *siteapi.Site
 		v := siteapi.SiteBroadcastsTestSendBadRequest(problem(http.StatusBadRequest, "invalid id"))
 		return &v, nil
 	}
-	b, err := h.ent.Broadcast.Query().
-		Where(broadcast.IDEQ(id), broadcast.WorkspaceID(ws)).
+	b, err := ws.Broadcast().Query().
+		Where(broadcast.IDEQ(id)).
 		Only(ctx)
 	if ent.IsNotFound(err) {
 		v := siteapi.SiteBroadcastsTestSendNotFound(problem(http.StatusNotFound, "broadcast not found"))
@@ -358,7 +356,7 @@ func (h *Handlers) SiteBroadcastsTestSend(ctx context.Context, req *siteapi.Site
 		return nil, err
 	}
 
-	if detail := h.outbound.SendBroadcastTest(ctx, b, string(req.Email)); detail != "" {
+	if detail := h.outbound.SendBroadcastTest(ctx, ws, b, string(req.Email)); detail != "" {
 		v := siteapi.SiteBroadcastsTestSendUnprocessableEntity(problem(http.StatusUnprocessableEntity, detail))
 		return &v, nil
 	}

@@ -181,6 +181,9 @@ func PlanBroadcast(ctx context.Context, client *ent.Client, mod *outbound.Module
 	if err != nil {
 		return nil, fmt.Errorf("load broadcast %d: %w", broadcastID, err)
 	}
+	// Job entry point: the scoped client is built from the loaded row's Workspace
+	// (ADR 0017), then everything below goes through it.
+	s := client.Scoped(b.WorkspaceID)
 
 	// Ask Outbound send whether this workspace can send now, before any recipient row
 	// exists: a Workspace freeze, no Integration, or an unverified From domain is a
@@ -190,24 +193,24 @@ func PlanBroadcast(ctx context.Context, client *ent.Client, mod *outbound.Module
 	if b.FromEmail != nil {
 		from = *b.FromEmail
 	}
-	hold, err := mod.Preflight(ctx, b.WorkspaceID, from)
+	hold, err := mod.Preflight(ctx, s, from)
 	if err != nil {
 		return nil, fmt.Errorf("preflight broadcast %d: %w", b.ID, err)
 	}
 	if hold != "" {
-		setBroadcastHold(ctx, client, b.ID, hold)
+		setBroadcastHold(ctx, s, b.ID, hold)
 		return nil, &HeldError{Reason: hold}
 	}
-	setBroadcastHold(ctx, client, b.ID, "")
+	setBroadcastHold(ctx, s, b.ID, "")
 
 	// A template that cannot render would fail every recipient: fail the broadcast once,
 	// here, before any recipient row exists (ADR 0015).
 	if verr := emailrender.Validate(b.Subject, b.Body); verr != nil {
-		_, _ = b.Update().SetStatus(broadcast.StatusFailed).Save(ctx)
+		_ = s.Broadcast().UpdateOneID(b.ID).SetStatus(broadcast.StatusFailed).Exec(ctx)
 		return nil, fmt.Errorf("broadcast %d: template does not render: %w", b.ID, verr)
 	}
 
-	if b, err = b.Update().SetStatus(broadcast.StatusSending).Save(ctx); err != nil {
+	if b, err = s.Broadcast().UpdateOneID(b.ID).SetStatus(broadcast.StatusSending).Save(ctx); err != nil {
 		return nil, err
 	}
 
@@ -217,17 +220,16 @@ func PlanBroadcast(ctx context.Context, client *ent.Client, mod *outbound.Module
 	// unsubscribed from the "broadcasts" source (or from everything) are excluded
 	// at the query level. EmailNotNil keeps un-sendable contacts out so no row is
 	// created that could never send and would block finalization forever.
-	audience := client.Contact.Query().Where(
-		contact.WorkspaceID(b.WorkspaceID),
+	audience := s.Contact().Query().Where(
 		contact.EmailNotNil(),
 		eligibility.Predicate(eligibility.ChannelEmail, eligibility.SourceBroadcasts),
 	)
 	if b.SegmentID != nil {
-		seg, err := client.Segment.Query().
-			Where(segment.IDEQ(*b.SegmentID), segment.WorkspaceID(b.WorkspaceID)).
+		seg, err := s.Segment().Query().
+			Where(segment.IDEQ(*b.SegmentID)).
 			Only(ctx)
 		if err != nil {
-			_, _ = b.Update().SetStatus(broadcast.StatusFailed).Save(ctx)
+			_ = s.Broadcast().UpdateOneID(b.ID).SetStatus(broadcast.StatusFailed).Exec(ctx)
 			return nil, fmt.Errorf("load segment %d: %w", *b.SegmentID, err)
 		}
 		def := ""
@@ -236,7 +238,7 @@ func PlanBroadcast(ctx context.Context, client *ent.Client, mod *outbound.Module
 		}
 		pred, err := segments.ContactPredicate(def)
 		if err != nil {
-			_, _ = b.Update().SetStatus(broadcast.StatusFailed).Save(ctx)
+			_ = s.Broadcast().UpdateOneID(b.ID).SetStatus(broadcast.StatusFailed).Exec(ctx)
 			return nil, fmt.Errorf("segment %d definition: %w", seg.ID, err)
 		}
 		audience = audience.Where(pred)
@@ -251,14 +253,13 @@ func PlanBroadcast(ctx context.Context, client *ent.Client, mod *outbound.Module
 	// re-planned (retried) job converge instead of tripping the unique index.
 	for i := 0; i < len(contactIDs); i += recipientInsertChunk {
 		end := min(i+recipientInsertChunk, len(contactIDs))
-		builders := make([]*ent.BroadcastRecipientCreate, 0, end-i)
+		builders := make([]*ent.BroadcastRecipientScopedCreate, 0, end-i)
 		for _, cid := range contactIDs[i:end] {
-			builders = append(builders, client.BroadcastRecipient.Create().
+			builders = append(builders, s.BroadcastRecipient().Create().
 				SetBroadcastID(b.ID).
-				SetWorkspaceID(b.WorkspaceID).
 				SetContactID(cid))
 		}
-		if err := client.BroadcastRecipient.CreateBulk(builders...).
+		if err := s.BroadcastRecipient().CreateBulk(builders...).
 			OnConflictColumns("broadcast_id", "contact_id").
 			Ignore().
 			Exec(ctx); err != nil {
@@ -268,14 +269,14 @@ func PlanBroadcast(ctx context.Context, client *ent.Client, mod *outbound.Module
 
 	// Re-read the full row set so the returned IDs are complete and retry-safe
 	// (independent of which rows this attempt actually inserted).
-	ids, err := client.BroadcastRecipient.Query().
+	ids, err := s.BroadcastRecipient().Query().
 		Where(broadcastrecipient.BroadcastID(b.ID)).
 		IDs(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	if _, err := b.Update().SetRecipientsTotal(len(ids)).Save(ctx); err != nil {
+	if err := s.Broadcast().UpdateOneID(b.ID).SetRecipientsTotal(len(ids)).Exec(ctx); err != nil {
 		return nil, err
 	}
 
@@ -298,27 +299,28 @@ func SendToRecipient(ctx context.Context, client *ent.Client, mod *outbound.Modu
 	if err != nil {
 		return fmt.Errorf("load recipient %d: %w", recipientID, err)
 	}
+	// Job entry point: the scoped client is built from the loaded row's Workspace.
+	s := client.Scoped(rec.WorkspaceID)
 	if rec.Status != broadcastrecipient.StatusPending {
 		return nil // already decided (retry after a committed send) — don't re-send
 	}
 
-	b, err := client.Broadcast.Get(ctx, rec.BroadcastID)
+	b, err := s.Broadcast().Get(ctx, rec.BroadcastID)
 	if err != nil {
 		return fmt.Errorf("load broadcast %d: %w", rec.BroadcastID, err)
 	}
-	c, err := client.Contact.Get(ctx, rec.ContactID)
+	c, err := s.Contact().Get(ctx, rec.ContactID)
 	if err != nil {
 		return fmt.Errorf("load contact %d: %w", rec.ContactID, err)
 	}
 	// Guard: the audience filters EmailNotNil, but a contact could lose its email
 	// between plan and send. Terminal — the row can't ever send.
 	if c.Email == nil {
-		_, _ = rec.Update().SetStatus(broadcastrecipient.StatusFailed).SetError("contact has no email").Save(ctx)
+		_ = s.BroadcastRecipient().UpdateOneID(rec.ID).SetStatus(broadcastrecipient.StatusFailed).SetError("contact has no email").Exec(ctx)
 		return nil
 	}
 
 	req := outbound.Request{
-		WorkspaceID: rec.WorkspaceID,
 		Kind:        outboundmessage.KindBroadcast,
 		Key:         recipientKey(rec.ID),
 		Destination: *c.Email,
@@ -336,24 +338,24 @@ func SendToRecipient(ctx context.Context, client *ent.Client, mod *outbound.Modu
 		req.FromName = *b.FromName
 	}
 
-	res, err := mod.Send(ctx, req)
+	res, err := mod.Send(ctx, s, req)
 	if err != nil {
 		return err
 	}
-	upd := rec.Update()
+	upd := s.BroadcastRecipient().UpdateOneID(rec.ID)
 	if res.MessageID != 0 {
 		upd.SetOutboundMessageID(res.MessageID)
 	}
 	switch res.Outcome {
 	case outbound.Sent:
-		setBroadcastHold(ctx, client, b.ID, "") // a send went through: the hold, if any, has lifted
-		_, err = upd.SetStatus(broadcastrecipient.StatusSent).SetSentAt(time.Now()).Save(ctx)
+		setBroadcastHold(ctx, s, b.ID, "") // a send went through: the hold, if any, has lifted
+		err = upd.SetStatus(broadcastrecipient.StatusSent).SetSentAt(time.Now()).Exec(ctx)
 	case outbound.Skipped:
-		_, err = upd.SetStatus(broadcastrecipient.StatusSkipped).SetError(res.Reason).Save(ctx)
+		err = upd.SetStatus(broadcastrecipient.StatusSkipped).SetError(res.Reason).Exec(ctx)
 	case outbound.Failed:
-		_, err = upd.SetStatus(broadcastrecipient.StatusFailed).SetError(res.Reason).Save(ctx)
+		err = upd.SetStatus(broadcastrecipient.StatusFailed).SetError(res.Reason).Exec(ctx)
 	default: // outbound.Held
-		setBroadcastHold(ctx, client, b.ID, res.Reason)
+		setBroadcastHold(ctx, s, b.ID, res.Reason)
 		return &HeldError{Reason: res.Reason}
 	}
 	return err
@@ -371,12 +373,12 @@ func markRecipientFailed(ctx context.Context, client *ent.Client, mod *outbound.
 	if err != nil {
 		return err
 	}
-	_ = mod.MarkFailed(ctx, rec.WorkspaceID, recipientKey(recipientID), cause)
-	_, err = rec.Update().
+	s := client.Scoped(rec.WorkspaceID)
+	_ = mod.MarkFailed(ctx, s, recipientKey(recipientID), cause)
+	return s.BroadcastRecipient().UpdateOneID(rec.ID).
 		SetStatus(broadcastrecipient.StatusFailed).
 		SetError(cause.Error()).
-		Save(ctx)
-	return err
+		Exec(ctx)
 }
 
 // FinalizeBroadcast flips a broadcast to "sent" once none of its recipients are
@@ -385,7 +387,17 @@ func markRecipientFailed(ctx context.Context, client *ent.Client, mod *outbound.
 // per-recipient job) a no-op after the first, so sent_at is set exactly once and
 // the counters self-heal against any retry drift.
 func FinalizeBroadcast(ctx context.Context, client *ent.Client, broadcastID int64) error {
-	pending, err := client.BroadcastRecipient.Query().
+	b, err := client.Broadcast.Get(ctx, broadcastID)
+	if ent.IsNotFound(err) {
+		return nil // the broadcast was deleted: nothing to finalize
+	}
+	if err != nil {
+		return fmt.Errorf("load broadcast %d: %w", broadcastID, err)
+	}
+	// Job entry point: the scoped client is built from the loaded row's Workspace.
+	s := client.Scoped(b.WorkspaceID)
+
+	pending, err := s.BroadcastRecipient().Query().
 		Where(broadcastrecipient.BroadcastID(broadcastID),
 			broadcastrecipient.StatusEQ(broadcastrecipient.StatusPending)).
 		Count(ctx)
@@ -396,21 +408,21 @@ func FinalizeBroadcast(ctx context.Context, client *ent.Client, broadcastID int6
 		return nil // not all recipients resolved yet
 	}
 
-	sent, err := client.BroadcastRecipient.Query().
+	sent, err := s.BroadcastRecipient().Query().
 		Where(broadcastrecipient.BroadcastID(broadcastID),
 			broadcastrecipient.StatusEQ(broadcastrecipient.StatusSent)).
 		Count(ctx)
 	if err != nil {
 		return err
 	}
-	failed, err := client.BroadcastRecipient.Query().
+	failed, err := s.BroadcastRecipient().Query().
 		Where(broadcastrecipient.BroadcastID(broadcastID),
 			broadcastrecipient.StatusEQ(broadcastrecipient.StatusFailed)).
 		Count(ctx)
 	if err != nil {
 		return err
 	}
-	skipped, err := client.BroadcastRecipient.Query().
+	skipped, err := s.BroadcastRecipient().Query().
 		Where(broadcastrecipient.BroadcastID(broadcastID),
 			broadcastrecipient.StatusEQ(broadcastrecipient.StatusSkipped)).
 		Count(ctx)
@@ -418,7 +430,7 @@ func FinalizeBroadcast(ctx context.Context, client *ent.Client, broadcastID int6
 		return err
 	}
 
-	_, err = client.Broadcast.Update().
+	_, err = s.Broadcast().Update().
 		Where(broadcast.IDEQ(broadcastID), broadcast.StatusEQ(broadcast.StatusSending)).
 		SetStatus(broadcast.StatusSent).
 		SetSentAt(time.Now()).

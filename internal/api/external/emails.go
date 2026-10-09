@@ -37,7 +37,6 @@ func (h *Handlers) EmailsSend(ctx context.Context, req *externalapi.SendTransact
 		res := externalapi.EmailsSendUnauthorized(problem(http.StatusUnauthorized, "insufficient scope"))
 		return &res, nil
 	}
-	ws := auth.WorkspaceID(auth.GetTokenAuth(ctx))
 
 	dest := eligibility.NormalizeDestination(string(req.Destination))
 	if dest == "" {
@@ -79,8 +78,7 @@ func (h *Handlers) EmailsSend(ctx context.Context, req *externalapi.SendTransact
 		key = "transactional:" + k
 	}
 
-	res, err := h.outbound.Send(ctx, outbound.Request{
-		WorkspaceID: ws,
+	res, err := h.outbound.Send(ctx, auth.TokenScoped(ctx), outbound.Request{
 		Kind:        outboundmessage.KindTransactional,
 		Key:         key,
 		Destination: dest,

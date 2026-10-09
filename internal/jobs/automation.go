@@ -195,8 +195,7 @@ func RunStep(ctx context.Context, client *ent.Client, mod *outbound.Module, runI
 			return StepResult{Done: true}, nil
 		}
 		step := run.CurrentStep
-		res, err := mod.Send(ctx, outbound.Request{
-			WorkspaceID: run.WorkspaceID,
+		res, err := mod.Send(ctx, scoped, outbound.Request{
 			Kind:        outboundmessage.KindAutomation,
 			Key:         fmt.Sprintf("automation:%d:%d", run.ID, step),
 			Destination: *c.Email,
