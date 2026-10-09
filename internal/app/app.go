@@ -463,7 +463,11 @@ func register(injector do.Injector, env string) {
 		if err != nil {
 			return nil, err
 		}
-		h, err := server.NewExternalAPI(client.Client, cfg.BootstrapToken, bus.Bus, sender.Module)
+		cipher, err := do.Invoke[*secrets.Cipher](i)
+		if err != nil {
+			return nil, err
+		}
+		h, err := server.NewExternalAPI(client.Client, cfg.BootstrapToken, bus.Bus, sender.Module, cipher)
 		if err != nil {
 			return nil, err
 		}

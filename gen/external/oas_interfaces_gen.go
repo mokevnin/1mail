@@ -92,3 +92,43 @@ type SegmentsListRes interface {
 type SegmentsUpdateRes interface {
 	segmentsUpdateRes()
 }
+
+type TemplatesCreateRes interface {
+	templatesCreateRes()
+}
+
+type TemplatesDeleteRes interface {
+	templatesDeleteRes()
+}
+
+type TemplatesGetRes interface {
+	templatesGetRes()
+}
+
+type TemplatesListRes interface {
+	templatesListRes()
+}
+
+type TemplatesUpdateRes interface {
+	templatesUpdateRes()
+}
+
+type WebhooksCreateRes interface {
+	webhooksCreateRes()
+}
+
+type WebhooksDeleteRes interface {
+	webhooksDeleteRes()
+}
+
+type WebhooksGetRes interface {
+	webhooksGetRes()
+}
+
+type WebhooksListRes interface {
+	webhooksListRes()
+}
+
+type WebhooksUpdateRes interface {
+	webhooksUpdateRes()
+}

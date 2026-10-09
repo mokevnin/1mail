@@ -9,6 +9,10 @@ enum ApiTokenScope {
   segmentsWrite: "segments:write",
   broadcastsRead: "broadcasts:read",
   broadcastsWrite: "broadcasts:write",
+  templatesRead: "templates:read",
+  templatesWrite: "templates:write",
+  webhooksRead: "webhooks:read",
+  webhooksWrite: "webhooks:write",
   emailsSend: "emails:send",
   tokensManage: "tokens:manage",
 }

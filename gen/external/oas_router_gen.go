@@ -60,6 +60,24 @@ var (
 		"GET":    "Authorization",
 		"PUT":    "Authorization,Content-Type",
 	}
+	rn21AllowedHeaders = map[string]string{
+		"GET":  "Authorization",
+		"POST": "Authorization,Content-Type",
+	}
+	rn23AllowedHeaders = map[string]string{
+		"DELETE": "Authorization",
+		"GET":    "Authorization",
+		"PUT":    "Authorization,Content-Type",
+	}
+	rn24AllowedHeaders = map[string]string{
+		"GET":  "Authorization",
+		"POST": "Authorization,Content-Type",
+	}
+	rn26AllowedHeaders = map[string]string{
+		"DELETE": "Authorization",
+		"GET":    "Authorization",
+		"PUT":    "Authorization,Content-Type",
+	}
 )
 
 func (s *Server) cutPrefix(path string) (string, bool) {
@@ -543,6 +561,150 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 							s.notAllowed(w, r, notAllowedParams{
 								allowedMethods: "DELETE,GET,PUT",
 								allowedHeaders: rn20AllowedHeaders,
+								acceptPost:     "",
+								acceptPatch:    "",
+							})
+						}
+
+						return
+					}
+
+				}
+
+			case 't': // Prefix: "templates"
+
+				if l := len("templates"); len(elem) >= l && elem[0:l] == "templates" {
+					elem = elem[l:]
+				} else {
+					break
+				}
+
+				if len(elem) == 0 {
+					switch r.Method {
+					case "GET":
+						s.handleTemplatesListRequest([0]string{}, elemIsEscaped, w, r)
+					case "POST":
+						s.handleTemplatesCreateRequest([0]string{}, elemIsEscaped, w, r)
+					default:
+						s.notAllowed(w, r, notAllowedParams{
+							allowedMethods: "GET,POST",
+							allowedHeaders: rn21AllowedHeaders,
+							acceptPost:     "application/json",
+							acceptPatch:    "",
+						})
+					}
+
+					return
+				}
+				switch elem[0] {
+				case '/': // Prefix: "/"
+
+					if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
+						elem = elem[l:]
+					} else {
+						break
+					}
+
+					// Param: "id"
+					// Leaf parameter, slashes are prohibited
+					idx := strings.IndexByte(elem, '/')
+					if idx >= 0 {
+						break
+					}
+					args[0] = elem
+					elem = ""
+
+					if len(elem) == 0 {
+						// Leaf node.
+						switch r.Method {
+						case "DELETE":
+							s.handleTemplatesDeleteRequest([1]string{
+								args[0],
+							}, elemIsEscaped, w, r)
+						case "GET":
+							s.handleTemplatesGetRequest([1]string{
+								args[0],
+							}, elemIsEscaped, w, r)
+						case "PUT":
+							s.handleTemplatesUpdateRequest([1]string{
+								args[0],
+							}, elemIsEscaped, w, r)
+						default:
+							s.notAllowed(w, r, notAllowedParams{
+								allowedMethods: "DELETE,GET,PUT",
+								allowedHeaders: rn23AllowedHeaders,
+								acceptPost:     "",
+								acceptPatch:    "",
+							})
+						}
+
+						return
+					}
+
+				}
+
+			case 'w': // Prefix: "webhooks"
+
+				if l := len("webhooks"); len(elem) >= l && elem[0:l] == "webhooks" {
+					elem = elem[l:]
+				} else {
+					break
+				}
+
+				if len(elem) == 0 {
+					switch r.Method {
+					case "GET":
+						s.handleWebhooksListRequest([0]string{}, elemIsEscaped, w, r)
+					case "POST":
+						s.handleWebhooksCreateRequest([0]string{}, elemIsEscaped, w, r)
+					default:
+						s.notAllowed(w, r, notAllowedParams{
+							allowedMethods: "GET,POST",
+							allowedHeaders: rn24AllowedHeaders,
+							acceptPost:     "application/json",
+							acceptPatch:    "",
+						})
+					}
+
+					return
+				}
+				switch elem[0] {
+				case '/': // Prefix: "/"
+
+					if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
+						elem = elem[l:]
+					} else {
+						break
+					}
+
+					// Param: "id"
+					// Leaf parameter, slashes are prohibited
+					idx := strings.IndexByte(elem, '/')
+					if idx >= 0 {
+						break
+					}
+					args[0] = elem
+					elem = ""
+
+					if len(elem) == 0 {
+						// Leaf node.
+						switch r.Method {
+						case "DELETE":
+							s.handleWebhooksDeleteRequest([1]string{
+								args[0],
+							}, elemIsEscaped, w, r)
+						case "GET":
+							s.handleWebhooksGetRequest([1]string{
+								args[0],
+							}, elemIsEscaped, w, r)
+						case "PUT":
+							s.handleWebhooksUpdateRequest([1]string{
+								args[0],
+							}, elemIsEscaped, w, r)
+						default:
+							s.notAllowed(w, r, notAllowedParams{
+								allowedMethods: "DELETE,GET,PUT",
+								allowedHeaders: rn26AllowedHeaders,
 								acceptPost:     "",
 								acceptPatch:    "",
 							})
@@ -1133,6 +1295,180 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 							r.operationID = "Segments_update"
 							r.operationGroup = ""
 							r.pathPattern = "/segments/{id}"
+							r.args = args
+							r.count = 1
+							return r, true
+						default:
+							return
+						}
+					}
+
+				}
+
+			case 't': // Prefix: "templates"
+
+				if l := len("templates"); len(elem) >= l && elem[0:l] == "templates" {
+					elem = elem[l:]
+				} else {
+					break
+				}
+
+				if len(elem) == 0 {
+					switch method {
+					case "GET":
+						r.name = TemplatesListOperation
+						r.summary = ""
+						r.operationID = "Templates_list"
+						r.operationGroup = ""
+						r.pathPattern = "/templates"
+						r.args = args
+						r.count = 0
+						return r, true
+					case "POST":
+						r.name = TemplatesCreateOperation
+						r.summary = ""
+						r.operationID = "Templates_create"
+						r.operationGroup = ""
+						r.pathPattern = "/templates"
+						r.args = args
+						r.count = 0
+						return r, true
+					default:
+						return
+					}
+				}
+				switch elem[0] {
+				case '/': // Prefix: "/"
+
+					if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
+						elem = elem[l:]
+					} else {
+						break
+					}
+
+					// Param: "id"
+					// Leaf parameter, slashes are prohibited
+					idx := strings.IndexByte(elem, '/')
+					if idx >= 0 {
+						break
+					}
+					args[0] = elem
+					elem = ""
+
+					if len(elem) == 0 {
+						// Leaf node.
+						switch method {
+						case "DELETE":
+							r.name = TemplatesDeleteOperation
+							r.summary = ""
+							r.operationID = "Templates_delete"
+							r.operationGroup = ""
+							r.pathPattern = "/templates/{id}"
+							r.args = args
+							r.count = 1
+							return r, true
+						case "GET":
+							r.name = TemplatesGetOperation
+							r.summary = ""
+							r.operationID = "Templates_get"
+							r.operationGroup = ""
+							r.pathPattern = "/templates/{id}"
+							r.args = args
+							r.count = 1
+							return r, true
+						case "PUT":
+							r.name = TemplatesUpdateOperation
+							r.summary = ""
+							r.operationID = "Templates_update"
+							r.operationGroup = ""
+							r.pathPattern = "/templates/{id}"
+							r.args = args
+							r.count = 1
+							return r, true
+						default:
+							return
+						}
+					}
+
+				}
+
+			case 'w': // Prefix: "webhooks"
+
+				if l := len("webhooks"); len(elem) >= l && elem[0:l] == "webhooks" {
+					elem = elem[l:]
+				} else {
+					break
+				}
+
+				if len(elem) == 0 {
+					switch method {
+					case "GET":
+						r.name = WebhooksListOperation
+						r.summary = ""
+						r.operationID = "Webhooks_list"
+						r.operationGroup = ""
+						r.pathPattern = "/webhooks"
+						r.args = args
+						r.count = 0
+						return r, true
+					case "POST":
+						r.name = WebhooksCreateOperation
+						r.summary = ""
+						r.operationID = "Webhooks_create"
+						r.operationGroup = ""
+						r.pathPattern = "/webhooks"
+						r.args = args
+						r.count = 0
+						return r, true
+					default:
+						return
+					}
+				}
+				switch elem[0] {
+				case '/': // Prefix: "/"
+
+					if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
+						elem = elem[l:]
+					} else {
+						break
+					}
+
+					// Param: "id"
+					// Leaf parameter, slashes are prohibited
+					idx := strings.IndexByte(elem, '/')
+					if idx >= 0 {
+						break
+					}
+					args[0] = elem
+					elem = ""
+
+					if len(elem) == 0 {
+						// Leaf node.
+						switch method {
+						case "DELETE":
+							r.name = WebhooksDeleteOperation
+							r.summary = ""
+							r.operationID = "Webhooks_delete"
+							r.operationGroup = ""
+							r.pathPattern = "/webhooks/{id}"
+							r.args = args
+							r.count = 1
+							return r, true
+						case "GET":
+							r.name = WebhooksGetOperation
+							r.summary = ""
+							r.operationID = "Webhooks_get"
+							r.operationGroup = ""
+							r.pathPattern = "/webhooks/{id}"
+							r.args = args
+							r.count = 1
+							return r, true
+						case "PUT":
+							r.name = WebhooksUpdateOperation
+							r.summary = ""
+							r.operationID = "Webhooks_update"
+							r.operationGroup = ""
+							r.pathPattern = "/webhooks/{id}"
 							r.args = args
 							r.count = 1
 							return r, true

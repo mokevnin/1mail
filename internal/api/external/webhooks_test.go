@@ -1,0 +1,158 @@
+package external_test
+
+import (
+	"context"
+	"io"
+	"net/http"
+	"strings"
+	"testing"
+
+	"github.com/mokevnin/1mail/ent/webhookendpoint"
+	externalapi "github.com/mokevnin/1mail/gen/external"
+	"github.com/mokevnin/1mail/internal/testhelper"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+)
+
+func TestExternalWebhooksCRUD(t *testing.T) {
+	env := testhelper.Setup(t)
+	c := client(t, env, seedToken(t, env.DB, []string{"webhooks:read", "webhooks:write"}))
+	ctx := context.Background()
+
+	got, err := c.WebhooksGet(ctx, externalapi.WebhooksGetParams{ID: "100"})
+	require.NoError(t, err)
+	hook, ok := got.(*externalapi.WebhookResource)
+	require.Truef(t, ok, "got %T", got)
+	assert.Equal(t, "https://codebasics.dev/webhooks/1mail", hook.URL)
+	assert.Equal(t, []string{"contact.created", "email.opened", "email.clicked"}, hook.EventTypes)
+
+	bad, err := c.WebhooksCreate(ctx, &externalapi.CreateWebhookInput{URL: "not-a-url"})
+	require.NoError(t, err)
+	assert.IsType(t, &externalapi.WebhooksCreateUnprocessableEntity{}, bad)
+
+	created, err := c.WebhooksCreate(ctx, &externalapi.CreateWebhookInput{
+		URL: "https://example.com/hook", EventTypes: []string{"contact.created"},
+	})
+	require.NoError(t, err)
+	res, ok := created.(*externalapi.WebhookResource)
+	require.Truef(t, ok, "got %T", created)
+	assert.True(t, res.Enabled)
+	assert.Equal(t, []string{"contact.created"}, res.EventTypes)
+
+	// A signing secret was generated and stored encrypted, just not exposed.
+	row, err := env.DB.WebhookEndpoint.Query().Where(webhookendpoint.URL("https://example.com/hook")).Only(ctx)
+	require.NoError(t, err)
+	assert.NotEmpty(t, row.SecretEncrypted)
+
+	upd, err := c.WebhooksUpdate(ctx, &externalapi.UpdateWebhookInput{
+		Enabled: externalapi.NewOptBool(false), EventTypes: []string{},
+	}, externalapi.WebhooksUpdateParams{ID: res.ID})
+	require.NoError(t, err)
+	updated, ok := upd.(*externalapi.WebhookResource)
+	require.Truef(t, ok, "got %T", upd)
+	assert.False(t, updated.Enabled)
+	assert.Empty(t, updated.EventTypes)
+	after, err := env.DB.WebhookEndpoint.Get(ctx, row.ID)
+	require.NoError(t, err)
+	assert.Equal(t, row.SecretEncrypted, after.SecretEncrypted, "update keeps the secret")
+
+	badUpd, err := c.WebhooksUpdate(ctx, &externalapi.UpdateWebhookInput{URL: externalapi.NewOptString("ftp://x")},
+		externalapi.WebhooksUpdateParams{ID: res.ID})
+	require.NoError(t, err)
+	assert.IsType(t, &externalapi.WebhooksUpdateUnprocessableEntity{}, badUpd)
+
+	del, err := c.WebhooksDelete(ctx, externalapi.WebhooksDeleteParams{ID: res.ID})
+	require.NoError(t, err)
+	assert.IsType(t, &externalapi.WebhooksDeleteNoContent{}, del)
+	missing, err := c.WebhooksGet(ctx, externalapi.WebhooksGetParams{ID: res.ID})
+	require.NoError(t, err)
+	assert.IsType(t, &externalapi.WebhooksGetNotFound{}, missing)
+}
+
+// The signing secret is never part of any /api response: not on list, get,
+// create or update, neither in clear nor sealed.
+func TestExternalWebhooksNeverReturnSecrets(t *testing.T) {
+	env := testhelper.Setup(t)
+	token := seedToken(t, env.DB, []string{"webhooks:read", "webhooks:write"})
+	doer := env.Transport(map[string]string{"Authorization": "Bearer " + token})
+
+	cases := []struct{ name, method, path, body string }{
+		{"list", http.MethodGet, "/api/webhooks", ""},
+		{"get", http.MethodGet, "/api/webhooks/100", ""},
+		{"create", http.MethodPost, "/api/webhooks", `{"url":"https://example.com/h"}`},
+		{"update", http.MethodPut, "/api/webhooks/100", `{"enabled":false}`},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			req, err := http.NewRequestWithContext(t.Context(), tc.method, "http://local"+tc.path, strings.NewReader(tc.body))
+			require.NoError(t, err)
+			req.Header.Set("Content-Type", "application/json")
+			resp, err := doer.Do(req)
+			require.NoError(t, err)
+			defer func() { _ = resp.Body.Close() }()
+			raw, err := io.ReadAll(resp.Body)
+			require.NoError(t, err)
+			require.Less(t, resp.StatusCode, 300, string(raw))
+			assert.NotContains(t, strings.ToLower(string(raw)), "secret")
+			assert.NotContains(t, string(raw), "whsec_codebasics_primary")
+		})
+	}
+}
+
+func TestExternalWebhooksScopes(t *testing.T) {
+	env := testhelper.Setup(t)
+	ctx := context.Background()
+
+	res, err := client(t, env, "").WebhooksList(ctx, externalapi.WebhooksListParams{})
+	require.NoError(t, err)
+	assert.IsType(t, &externalapi.WebhooksListUnauthorized{}, res)
+
+	// Template scopes do not grant webhooks.
+	other := client(t, env, seedToken(t, env.DB, []string{"templates:read", "templates:write"}))
+	l, err := other.WebhooksList(ctx, externalapi.WebhooksListParams{})
+	require.NoError(t, err)
+	assert.IsType(t, &externalapi.WebhooksListUnauthorized{}, l)
+
+	ro := client(t, env, seedToken(t, env.DB, []string{"webhooks:read"}))
+	g, err := ro.WebhooksGet(ctx, externalapi.WebhooksGetParams{ID: "100"})
+	require.NoError(t, err)
+	assert.IsType(t, &externalapi.WebhookResource{}, g)
+	cr, err := ro.WebhooksCreate(ctx, &externalapi.CreateWebhookInput{URL: "https://example.com/x"})
+	require.NoError(t, err)
+	assert.IsType(t, &externalapi.WebhooksCreateUnauthorized{}, cr)
+	up, err := ro.WebhooksUpdate(ctx, &externalapi.UpdateWebhookInput{}, externalapi.WebhooksUpdateParams{ID: "100"})
+	require.NoError(t, err)
+	assert.IsType(t, &externalapi.WebhooksUpdateUnauthorized{}, up)
+	de, err := ro.WebhooksDelete(ctx, externalapi.WebhooksDeleteParams{ID: "100"})
+	require.NoError(t, err)
+	assert.IsType(t, &externalapi.WebhooksDeleteUnauthorized{}, de)
+}
+
+func TestExternalWebhooksAreWorkspaceScoped(t *testing.T) {
+	env := testhelper.Setup(t)
+	ctx := context.Background()
+
+	ws2, err := env.DB.Workspace.Create().SetName("Globex").SetSlug("globex-wh").
+		SetCollectKey("globex-wh-ck").SetIngestKey("globex-wh-ik").Save(ctx)
+	require.NoError(t, err)
+	foreign, err := env.DB.WebhookEndpoint.Create().SetWorkspaceID(ws2.ID).
+		SetURL("https://globex.example/hook").SetSecretEncrypted("x").Save(ctx)
+	require.NoError(t, err)
+	id := entityIDString(foreign.ID)
+
+	c := client(t, env, seedToken(t, env.DB, []string{"webhooks:read", "webhooks:write"}))
+	list, err := c.WebhooksList(ctx, externalapi.WebhooksListParams{})
+	require.NoError(t, err)
+	for _, it := range list.(*externalapi.WebhooksListOK).Items {
+		assert.NotEqual(t, "https://globex.example/hook", it.URL)
+	}
+	g, err := c.WebhooksGet(ctx, externalapi.WebhooksGetParams{ID: id})
+	require.NoError(t, err)
+	assert.IsType(t, &externalapi.WebhooksGetNotFound{}, g)
+	u, err := c.WebhooksUpdate(ctx, &externalapi.UpdateWebhookInput{Enabled: externalapi.NewOptBool(false)}, externalapi.WebhooksUpdateParams{ID: id})
+	require.NoError(t, err)
+	assert.IsType(t, &externalapi.WebhooksUpdateNotFound{}, u)
+	d, err := c.WebhooksDelete(ctx, externalapi.WebhooksDeleteParams{ID: id})
+	require.NoError(t, err)
+	assert.IsType(t, &externalapi.WebhooksDeleteNotFound{}, d)
+}

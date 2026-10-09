@@ -214,3 +214,93 @@ func (UnimplementedHandler) SegmentsList(ctx context.Context, params SegmentsLis
 func (UnimplementedHandler) SegmentsUpdate(ctx context.Context, req *UpdateSegmentInput, params SegmentsUpdateParams) (r SegmentsUpdateRes, _ error) {
 	return r, ht.ErrNotImplemented
 }
+
+// TemplatesCreate implements Templates_create operation.
+//
+// Create a resource.
+//
+// POST /templates
+func (UnimplementedHandler) TemplatesCreate(ctx context.Context, req *CreateTemplateInput) (r TemplatesCreateRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// TemplatesDelete implements Templates_delete operation.
+//
+// Delete a resource.
+//
+// DELETE /templates/{id}
+func (UnimplementedHandler) TemplatesDelete(ctx context.Context, params TemplatesDeleteParams) (r TemplatesDeleteRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// TemplatesGet implements Templates_get operation.
+//
+// Get a resource by ID.
+//
+// GET /templates/{id}
+func (UnimplementedHandler) TemplatesGet(ctx context.Context, params TemplatesGetParams) (r TemplatesGetRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// TemplatesList implements Templates_list operation.
+//
+// List resources with pagination.
+//
+// GET /templates
+func (UnimplementedHandler) TemplatesList(ctx context.Context, params TemplatesListParams) (r TemplatesListRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// TemplatesUpdate implements Templates_update operation.
+//
+// Update a resource.
+//
+// PUT /templates/{id}
+func (UnimplementedHandler) TemplatesUpdate(ctx context.Context, req *UpdateTemplateInput, params TemplatesUpdateParams) (r TemplatesUpdateRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// WebhooksCreate implements Webhooks_create operation.
+//
+// Create a resource.
+//
+// POST /webhooks
+func (UnimplementedHandler) WebhooksCreate(ctx context.Context, req *CreateWebhookInput) (r WebhooksCreateRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// WebhooksDelete implements Webhooks_delete operation.
+//
+// Delete a resource.
+//
+// DELETE /webhooks/{id}
+func (UnimplementedHandler) WebhooksDelete(ctx context.Context, params WebhooksDeleteParams) (r WebhooksDeleteRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// WebhooksGet implements Webhooks_get operation.
+//
+// Get a resource by ID.
+//
+// GET /webhooks/{id}
+func (UnimplementedHandler) WebhooksGet(ctx context.Context, params WebhooksGetParams) (r WebhooksGetRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// WebhooksList implements Webhooks_list operation.
+//
+// List resources with pagination.
+//
+// GET /webhooks
+func (UnimplementedHandler) WebhooksList(ctx context.Context, params WebhooksListParams) (r WebhooksListRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// WebhooksUpdate implements Webhooks_update operation.
+//
+// Update a resource.
+//
+// PUT /webhooks/{id}
+func (UnimplementedHandler) WebhooksUpdate(ctx context.Context, req *UpdateWebhookInput, params WebhooksUpdateParams) (r WebhooksUpdateRes, _ error) {
+	return r, ht.ErrNotImplemented
+}

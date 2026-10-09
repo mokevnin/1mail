@@ -91,6 +91,8 @@ func TestMCPToolsAreTheContractMinusHiddenOperations(t *testing.T) {
 	assert.ElementsMatch(t, []string{
 		"contacts_list", "contacts_create", "contacts_get", "contacts_update", "contacts_delete",
 		"emails_send", "events_record", "events_actions_list", "whoami",
+		"templates_list", "templates_create", "templates_get", "templates_update", "templates_delete",
+		"webhooks_list", "webhooks_create", "webhooks_get", "webhooks_update", "webhooks_delete",
 	}, names)
 
 	// Hints derive from the HTTP method.
