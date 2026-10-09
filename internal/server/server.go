@@ -25,6 +25,7 @@ import (
 	apiexternal "github.com/mokevnin/1mail/internal/api/external"
 	apisite "github.com/mokevnin/1mail/internal/api/site"
 	"github.com/mokevnin/1mail/internal/authtoken"
+	"github.com/mokevnin/1mail/internal/broadcasts"
 	"github.com/mokevnin/1mail/internal/eventlog"
 	"github.com/mokevnin/1mail/internal/events"
 	"github.com/mokevnin/1mail/internal/logging"
@@ -136,9 +137,9 @@ func New(cfg *config.Config, client *ent.Client, db *sql.DB, bus *events.Bus, ci
 
 // NewExternalAPI builds the external API (/api) ogen server: Bearer API-token
 // auth, RFC 7807 errors, mounted under the /api prefix.
-func NewExternalAPI(client *ent.Client, bootstrapToken string, bus *events.Bus, sender *outbound.Module, cipher *secrets.Cipher) (http.Handler, error) {
+func NewExternalAPI(client *ent.Client, bootstrapToken string, bus *events.Bus, sender *outbound.Module, cipher *secrets.Cipher, enqueuer broadcasts.Enqueuer) (http.Handler, error) {
 	return externalapi.NewServer(
-		apiexternal.NewHandlers(client, bootstrapToken, bus, eventlog.New(client, bus), sender, cipher),
+		apiexternal.NewHandlers(client, bootstrapToken, bus, eventlog.New(client, bus), sender, cipher, enqueuer),
 		apiauth.NewExternalSecurityHandler(client),
 		externalapi.WithPathPrefix("/api"),
 		externalapi.WithErrorHandler(problemErrorHandler),

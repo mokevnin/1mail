@@ -37,6 +37,18 @@ type BroadcastsListRes interface {
 	broadcastsListRes()
 }
 
+type BroadcastsReportRes interface {
+	broadcastsReportRes()
+}
+
+type BroadcastsSetAudienceRes interface {
+	broadcastsSetAudienceRes()
+}
+
+type BroadcastsTestSendRes interface {
+	broadcastsTestSendRes()
+}
+
 type BroadcastsUpdateRes interface {
 	broadcastsUpdateRes()
 }

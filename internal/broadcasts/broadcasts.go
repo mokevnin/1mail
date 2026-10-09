@@ -15,6 +15,8 @@ import (
 
 	"github.com/mokevnin/1mail/ent"
 	"github.com/mokevnin/1mail/ent/broadcast"
+	"github.com/mokevnin/1mail/ent/predicate"
+	"github.com/mokevnin/1mail/ent/segment"
 )
 
 var (
@@ -100,4 +102,168 @@ func (m *Module) claim(ctx context.Context, workspaceID, id int64, set func(*ent
 // revert is best effort: the caller is already returning the enqueue error.
 func (m *Module) revert(ctx context.Context, id int64) {
 	_ = m.ent.Broadcast.UpdateOneID(id).SetStatus(broadcast.StatusDraft).ClearScheduledAt().Exec(ctx)
+}
+
+// --- Authoring (ADR 0016): drafts, audience, report ---
+
+var (
+	// ErrNotDraft: the Broadcast is past draft (scheduled, sending, sent, failed) and
+	// can no longer be edited, re-targeted or deleted through the authoring surface.
+	ErrNotDraft = errors.New("broadcasts: broadcast is not a draft")
+	// ErrSegmentNotFound: the audience Segment does not exist in this Workspace.
+	ErrSegmentNotFound = errors.New("broadcasts: segment not found")
+)
+
+// Fields are the author-editable content of a Broadcast. A nil field is "not
+// provided": Create falls back to the schema default, Update keeps the stored value.
+type Fields struct {
+	Name      *string
+	Subject   *string
+	FromName  *string
+	FromEmail *string
+	Body      *string
+}
+
+// Create makes a draft Broadcast. Nothing here schedules or sends.
+func (m *Module) Create(ctx context.Context, workspaceID int64, f Fields) (*ent.Broadcast, error) {
+	q := m.ent.Broadcast.Create().SetWorkspaceID(workspaceID).
+		SetNillableFromName(f.FromName).
+		SetNillableFromEmail(f.FromEmail)
+	if f.Name != nil {
+		q.SetName(*f.Name)
+	}
+	if f.Subject != nil {
+		q.SetSubject(*f.Subject)
+	}
+	if f.Body != nil {
+		q.SetBody(*f.Body)
+	}
+	return q.Save(ctx)
+}
+
+// Get returns one Broadcast of the Workspace.
+func (m *Module) Get(ctx context.Context, workspaceID, id int64) (*ent.Broadcast, error) {
+	b, err := m.ent.Broadcast.Query().Where(broadcast.ID(id), broadcast.WorkspaceID(workspaceID)).Only(ctx)
+	if ent.IsNotFound(err) {
+		return nil, ErrNotFound
+	}
+	return b, err
+}
+
+// List returns one page of the Workspace's Broadcasts, newest first, and the total.
+func (m *Module) List(ctx context.Context, workspaceID int64, limit, offset int) ([]*ent.Broadcast, int, error) {
+	q := m.ent.Broadcast.Query().Where(broadcast.WorkspaceID(workspaceID))
+	total, err := q.Count(ctx)
+	if err != nil {
+		return nil, 0, err
+	}
+	items, err := q.Order(ent.Desc(broadcast.FieldID)).Limit(limit).Offset(offset).All(ctx)
+	return items, total, err
+}
+
+// Update edits a draft. The UPDATE only matches a draft row, so a Broadcast that was
+// claimed for sending in the meantime is never edited.
+func (m *Module) Update(ctx context.Context, workspaceID, id int64, f Fields) (*ent.Broadcast, error) {
+	u := m.ent.Broadcast.Update().Where(draftOf(workspaceID, id)).
+		SetNillableName(f.Name).
+		SetNillableSubject(f.Subject).
+		SetNillableFromName(f.FromName).
+		SetNillableFromEmail(f.FromEmail).
+		SetNillableBody(f.Body)
+	return m.editDraft(ctx, workspaceID, id, u)
+}
+
+// SetAudience points a draft at a Segment, or at all active contacts when segmentID
+// is nil. It never schedules or sends.
+func (m *Module) SetAudience(ctx context.Context, workspaceID, id int64, segmentID *int64) (*ent.Broadcast, error) {
+	if segmentID != nil {
+		ok, err := m.ent.Segment.Query().Where(segment.ID(*segmentID), segment.WorkspaceID(workspaceID)).Exist(ctx)
+		if err != nil {
+			return nil, err
+		}
+		if !ok {
+			// A foreign or unknown broadcast is still reported as such first.
+			if _, err := m.Get(ctx, workspaceID, id); err != nil {
+				return nil, err
+			}
+			return nil, ErrSegmentNotFound
+		}
+	}
+	u := m.ent.Broadcast.Update().Where(draftOf(workspaceID, id)).SetNillableSegmentID(segmentID)
+	if segmentID == nil {
+		u.ClearSegmentID()
+	}
+	return m.editDraft(ctx, workspaceID, id, u)
+}
+
+// DeleteDraft removes a draft Broadcast. Past draft the Broadcast is history (its
+// recipients and report) and is not removable here.
+func (m *Module) DeleteDraft(ctx context.Context, workspaceID, id int64) error {
+	n, err := m.ent.Broadcast.Delete().Where(draftOf(workspaceID, id)).Exec(ctx)
+	if err != nil {
+		return err
+	}
+	if n == 0 {
+		return m.notDraftOrNotFound(ctx, workspaceID, id)
+	}
+	return nil
+}
+
+// Report is a Broadcast's delivery report. Rates are ratios in [0,1]; a zero
+// denominator yields 0.
+type Report struct {
+	Status       broadcast.Status
+	HoldReason   *string
+	Recipients   int
+	Sent         int
+	Skipped      int
+	Failed       int
+	Opened       int
+	Clicked      int
+	Unsubscribed int
+	OpenRate     float32
+	ClickRate    float32
+}
+
+// Report reads the Broadcast's denormalized delivery counters.
+func (m *Module) Report(ctx context.Context, workspaceID, id int64) (Report, error) {
+	b, err := m.Get(ctx, workspaceID, id)
+	if err != nil {
+		return Report{}, err
+	}
+	return Report{
+		Status: b.Status, HoldReason: b.HoldReason,
+		Recipients: b.RecipientsTotal, Sent: b.SentCount, Skipped: b.SkippedCount, Failed: b.FailedCount,
+		Opened: b.OpenedCount, Clicked: b.ClickedCount, Unsubscribed: b.UnsubscribedCount,
+		OpenRate: ratio(b.OpenedCount, b.SentCount), ClickRate: ratio(b.ClickedCount, b.SentCount),
+	}, nil
+}
+
+func ratio(num, denom int) float32 {
+	if denom <= 0 {
+		return 0
+	}
+	return float32(num) / float32(denom)
+}
+
+func draftOf(workspaceID, id int64) predicate.Broadcast {
+	return broadcast.And(broadcast.ID(id), broadcast.WorkspaceID(workspaceID), broadcast.StatusEQ(broadcast.StatusDraft))
+}
+
+func (m *Module) editDraft(ctx context.Context, workspaceID, id int64, u *ent.BroadcastUpdate) (*ent.Broadcast, error) {
+	n, err := u.Save(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if n == 0 {
+		return nil, m.notDraftOrNotFound(ctx, workspaceID, id)
+	}
+	return m.Get(ctx, workspaceID, id)
+}
+
+func (m *Module) notDraftOrNotFound(ctx context.Context, workspaceID, id int64) error {
+	if _, err := m.Get(ctx, workspaceID, id); err != nil {
+		return err
+	}
+	return ErrNotDraft
 }

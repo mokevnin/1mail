@@ -28,9 +28,11 @@ import (
 // goverter:extend optNilEmailAddress
 // goverter:extend optNilTimeZone
 // goverter:extend optNilTimestamp
+// goverter:extend optNilEntityID
 // goverter:extend contactCustomFields
 type Converter interface {
 	ContactToResource(source *ent.Contact) externalapi.ContactResource
+	BroadcastToResource(source *ent.Broadcast) externalapi.BroadcastResource
 	ApiTokenToInfo(source *ent.ApiToken) externalapi.ApiTokenInfo
 	SegmentToResource(source *ent.Segment) externalapi.SegmentResource
 	EmailTemplateToResource(source *ent.EmailTemplate) externalapi.TemplateResource
@@ -63,6 +65,13 @@ func optNilEmailAddress(v *string) externalapi.OptNilEmailAddress {
 		return externalapi.OptNilEmailAddress{}
 	}
 	return externalapi.NewOptNilEmailAddress(externalapi.EmailAddress(*v))
+}
+
+func optNilEntityID(v *int64) externalapi.OptNilEntityId {
+	if v == nil {
+		return externalapi.OptNilEntityId{}
+	}
+	return externalapi.NewOptNilEntityId(entityID(*v))
 }
 
 func optNilTimeZone(v *string) externalapi.OptNilTimeZoneName {

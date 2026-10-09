@@ -467,7 +467,12 @@ func register(injector do.Injector, env string) {
 		if err != nil {
 			return nil, err
 		}
-		h, err := server.NewExternalAPI(client.Client, cfg.BootstrapToken, bus.Bus, sender.Module, cipher)
+		// The river jobs client is the broadcasts module's enqueue seam.
+		jc, err := do.Invoke[*jobsClient](i)
+		if err != nil {
+			return nil, err
+		}
+		h, err := server.NewExternalAPI(client.Client, cfg.BootstrapToken, bus.Bus, sender.Module, cipher, jc)
 		if err != nil {
 			return nil, err
 		}

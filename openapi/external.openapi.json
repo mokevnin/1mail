@@ -399,10 +399,7 @@
             }
           }
         },
-        "tags": ["Broadcasts"],
-        "x-mcp": {
-          "hidden": true
-        }
+        "tags": ["Broadcasts"]
       },
       "post": {
         "operationId": "Broadcasts_create",
@@ -450,9 +447,6 @@
               }
             }
           }
-        },
-        "x-mcp": {
-          "hidden": true
         }
       }
     },
@@ -507,10 +501,7 @@
             }
           }
         },
-        "tags": ["Broadcasts"],
-        "x-mcp": {
-          "hidden": true
-        }
+        "tags": ["Broadcasts"]
       },
       "put": {
         "operationId": "Broadcasts_update",
@@ -582,9 +573,6 @@
               }
             }
           }
-        },
-        "x-mcp": {
-          "hidden": true
         }
       },
       "delete": {
@@ -628,11 +616,213 @@
                 }
               }
             }
+          },
+          "422": {
+            "description": "RFC 7807 validation response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Broadcasts"]
+      }
+    },
+    "/broadcasts/{id}/audience": {
+      "put": {
+        "operationId": "Broadcasts_setAudience",
+        "description": "Set the audience of a draft broadcast: a Segment, or null for all active contacts. Does not send.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/BroadcastResourceKey"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request has succeeded.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BroadcastResource"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "RFC 7807 bad request response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "RFC 7807 unauthorized response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "RFC 7807 not found response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "RFC 7807 validation response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
           }
         },
         "tags": ["Broadcasts"],
-        "x-mcp": {
-          "hidden": true
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetBroadcastAudienceInput"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/broadcasts/{id}/report": {
+      "get": {
+        "operationId": "Broadcasts_report",
+        "description": "Read the delivery report: sent, skipped, failed, opened and clicked counts",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/BroadcastResourceKey"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request has succeeded.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BroadcastReport"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "RFC 7807 bad request response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "RFC 7807 unauthorized response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "RFC 7807 not found response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Broadcasts"]
+      }
+    },
+    "/broadcasts/{id}/test-send": {
+      "post": {
+        "operationId": "Broadcasts_testSend",
+        "description": "Send a rendered preview with sample merge data to a single address. Never sends to the audience.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/BroadcastResourceKey"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "There is no content to send for this request, but the headers may be useful."
+          },
+          "400": {
+            "description": "RFC 7807 bad request response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "RFC 7807 unauthorized response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "RFC 7807 not found response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "RFC 7807 validation response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Broadcasts"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TestSendBroadcastInput"
+              }
+            }
+          }
         }
       }
     },
@@ -1004,6 +1194,16 @@
           },
           "404": {
             "description": "RFC 7807 not found response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "RFC 7807 validation response",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -1648,6 +1848,16 @@
                 }
               }
             }
+          },
+          "422": {
+            "description": "RFC 7807 validation response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
           }
         },
         "tags": ["Segments"]
@@ -1998,6 +2208,16 @@
           },
           "404": {
             "description": "RFC 7807 not found response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "RFC 7807 validation response",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -2362,6 +2582,16 @@
                 }
               }
             }
+          },
+          "422": {
+            "description": "RFC 7807 validation response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
           }
         },
         "tags": ["Webhooks"]
@@ -2526,9 +2756,85 @@
           "tokens:manage"
         ]
       },
+      "BroadcastReport": {
+        "type": "object",
+        "required": [
+          "status",
+          "recipientsTotal",
+          "sentCount",
+          "skippedCount",
+          "failedCount",
+          "openedCount",
+          "clickedCount",
+          "unsubscribedCount",
+          "openRate",
+          "clickRate"
+        ],
+        "properties": {
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/BroadcastStatus"
+              }
+            ],
+            "description": "Lifecycle status"
+          },
+          "holdReason": {
+            "type": "string",
+            "nullable": true,
+            "description": "Why sending is currently held, when it is: `workspace_suspended`,\n`unverified_domain` or `no_integration`. A hold is reversible, not a failure."
+          },
+          "recipientsTotal": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Recipients the broadcast targets"
+          },
+          "sentCount": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Messages handed to the email provider"
+          },
+          "skippedCount": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Recipients skipped at send time (unsubscribed or suppressed after planning)"
+          },
+          "failedCount": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Messages that failed to send"
+          },
+          "openedCount": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Recipients that opened the email"
+          },
+          "clickedCount": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Recipients that clicked a link"
+          },
+          "unsubscribedCount": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Recipients that unsubscribed via this broadcast"
+          },
+          "openRate": {
+            "type": "number",
+            "format": "float",
+            "description": "Unique opens ÷ messages sent (0-1)"
+          },
+          "clickRate": {
+            "type": "number",
+            "format": "float",
+            "description": "Unique clicks ÷ messages sent (0-1)"
+          }
+        },
+        "description": "Delivery report of a broadcast"
+      },
       "BroadcastResource": {
         "type": "object",
-        "required": ["id", "createdAt", "updatedAt"],
+        "required": ["id", "name", "subject", "body", "status", "createdAt", "updatedAt"],
         "properties": {
           "id": {
             "allOf": [
@@ -2537,6 +2843,71 @@
               }
             ],
             "description": "Unique identifier"
+          },
+          "name": {
+            "type": "string",
+            "description": "Internal broadcast name"
+          },
+          "subject": {
+            "type": "string",
+            "description": "Email subject line"
+          },
+          "fromName": {
+            "type": "string",
+            "nullable": true,
+            "description": "Sender display name (defaults to the integration's)"
+          },
+          "fromEmail": {
+            "type": "string",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EmailAddress"
+              }
+            ],
+            "nullable": true,
+            "description": "Sender email address (defaults to the integration's)"
+          },
+          "body": {
+            "type": "string",
+            "description": "MJML body"
+          },
+          "segmentId": {
+            "type": "string",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EntityId"
+              }
+            ],
+            "nullable": true,
+            "description": "Audience: the Segment this broadcast goes to; null means all active contacts"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/BroadcastStatus"
+              }
+            ],
+            "description": "Lifecycle status. Broadcasts created here are always drafts."
+          },
+          "scheduledAt": {
+            "type": "string",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Timestamp"
+              }
+            ],
+            "nullable": true,
+            "description": "When the broadcast is scheduled to send"
+          },
+          "sentAt": {
+            "type": "string",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Timestamp"
+              }
+            ],
+            "nullable": true,
+            "description": "When the broadcast finished sending"
           },
           "createdAt": {
             "allOf": [
@@ -2555,17 +2926,12 @@
             "description": "Last update timestamp"
           }
         },
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/CreateBroadcastInput"
-          }
-        ],
         "description": "Broadcast resource"
       },
       "BroadcastStatus": {
         "type": "string",
-        "enum": ["draft", "scheduled", "sent"],
-        "description": "Broadcast status"
+        "enum": ["draft", "scheduled", "sending", "sent", "failed"],
+        "description": "Broadcast lifecycle status"
       },
       "ContactBatchItemResult": {
         "type": "object",
@@ -2719,30 +3085,34 @@
       },
       "CreateBroadcastInput": {
         "type": "object",
-        "required": ["name", "segmentId", "status"],
+        "required": ["name"],
         "properties": {
           "name": {
             "type": "string",
-            "description": "Broadcast name"
+            "description": "Internal broadcast name"
           },
-          "segmentId": {
+          "subject": {
+            "type": "string",
+            "description": "Email subject line"
+          },
+          "fromName": {
+            "type": "string",
+            "description": "Sender display name"
+          },
+          "fromEmail": {
             "allOf": [
               {
-                "$ref": "#/components/schemas/EntityId"
+                "$ref": "#/components/schemas/EmailAddress"
               }
             ],
-            "description": "Segment ID"
+            "description": "Sender email address"
           },
-          "status": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/BroadcastStatus"
-              }
-            ],
-            "description": "Broadcast status"
+          "body": {
+            "type": "string",
+            "description": "MJML body"
           }
         },
-        "description": "Request body for creating a broadcast"
+        "description": "Request body for creating a broadcast (always created as a draft)"
       },
       "CreateContactInput": {
         "type": "object",
@@ -3199,6 +3569,23 @@
         },
         "description": "Result of a transactional send"
       },
+      "SetBroadcastAudienceInput": {
+        "type": "object",
+        "required": ["segmentId"],
+        "properties": {
+          "segmentId": {
+            "type": "string",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EntityId"
+              }
+            ],
+            "nullable": true,
+            "description": "The Segment to send to; null means all active contacts"
+          }
+        },
+        "description": "Request body for setting a broadcast's audience"
+      },
       "SuppressionReason": {
         "type": "string",
         "enum": ["bounce", "complaint", "manual"],
@@ -3282,6 +3669,21 @@
         },
         "description": "Reusable email template"
       },
+      "TestSendBroadcastInput": {
+        "type": "object",
+        "required": ["email"],
+        "properties": {
+          "email": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EmailAddress"
+              }
+            ],
+            "description": "Address to send the rendered preview to"
+          }
+        },
+        "description": "Request body for a test send"
+      },
       "TimeZoneName": {
         "type": "string"
       },
@@ -3330,26 +3732,30 @@
         "properties": {
           "name": {
             "type": "string",
-            "description": "Broadcast name"
+            "description": "Internal broadcast name"
           },
-          "segmentId": {
+          "subject": {
+            "type": "string",
+            "description": "Email subject line"
+          },
+          "fromName": {
+            "type": "string",
+            "description": "Sender display name"
+          },
+          "fromEmail": {
             "allOf": [
               {
-                "$ref": "#/components/schemas/EntityId"
+                "$ref": "#/components/schemas/EmailAddress"
               }
             ],
-            "description": "Segment ID"
+            "description": "Sender email address"
           },
-          "status": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/BroadcastStatus"
-              }
-            ],
-            "description": "Broadcast status"
+          "body": {
+            "type": "string",
+            "description": "MJML body"
           }
         },
-        "description": "Request body for updating a broadcast"
+        "description": "Request body for updating a draft broadcast"
       },
       "UpdateContactInput": {
         "type": "object",

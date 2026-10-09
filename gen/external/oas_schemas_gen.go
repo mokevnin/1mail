@@ -318,21 +318,178 @@ func (s *BearerAuth) SetRoles(val []string) {
 	s.Roles = val
 }
 
-// Merged schema.
+// Delivery report of a broadcast.
+// Ref: #/components/schemas/BroadcastReport
+type BroadcastReport struct {
+	// Lifecycle status.
+	Status BroadcastStatus `json:"status"`
+	// Why sending is currently held, when it is: `workspace_suspended`, `unverified_domain` or
+	// `no_integration`. A hold is reversible, not a failure.
+	HoldReason OptNilString `json:"holdReason"`
+	// Recipients the broadcast targets.
+	RecipientsTotal int32 `json:"recipientsTotal"`
+	// Messages handed to the email provider.
+	SentCount int32 `json:"sentCount"`
+	// Recipients skipped at send time (unsubscribed or suppressed after planning).
+	SkippedCount int32 `json:"skippedCount"`
+	// Messages that failed to send.
+	FailedCount int32 `json:"failedCount"`
+	// Recipients that opened the email.
+	OpenedCount int32 `json:"openedCount"`
+	// Recipients that clicked a link.
+	ClickedCount int32 `json:"clickedCount"`
+	// Recipients that unsubscribed via this broadcast.
+	UnsubscribedCount int32 `json:"unsubscribedCount"`
+	// Unique opens ÷ messages sent (0-1).
+	OpenRate float32 `json:"openRate"`
+	// Unique clicks ÷ messages sent (0-1).
+	ClickRate float32 `json:"clickRate"`
+}
+
+// GetStatus returns the value of Status.
+func (s *BroadcastReport) GetStatus() BroadcastStatus {
+	return s.Status
+}
+
+// GetHoldReason returns the value of HoldReason.
+func (s *BroadcastReport) GetHoldReason() OptNilString {
+	return s.HoldReason
+}
+
+// GetRecipientsTotal returns the value of RecipientsTotal.
+func (s *BroadcastReport) GetRecipientsTotal() int32 {
+	return s.RecipientsTotal
+}
+
+// GetSentCount returns the value of SentCount.
+func (s *BroadcastReport) GetSentCount() int32 {
+	return s.SentCount
+}
+
+// GetSkippedCount returns the value of SkippedCount.
+func (s *BroadcastReport) GetSkippedCount() int32 {
+	return s.SkippedCount
+}
+
+// GetFailedCount returns the value of FailedCount.
+func (s *BroadcastReport) GetFailedCount() int32 {
+	return s.FailedCount
+}
+
+// GetOpenedCount returns the value of OpenedCount.
+func (s *BroadcastReport) GetOpenedCount() int32 {
+	return s.OpenedCount
+}
+
+// GetClickedCount returns the value of ClickedCount.
+func (s *BroadcastReport) GetClickedCount() int32 {
+	return s.ClickedCount
+}
+
+// GetUnsubscribedCount returns the value of UnsubscribedCount.
+func (s *BroadcastReport) GetUnsubscribedCount() int32 {
+	return s.UnsubscribedCount
+}
+
+// GetOpenRate returns the value of OpenRate.
+func (s *BroadcastReport) GetOpenRate() float32 {
+	return s.OpenRate
+}
+
+// GetClickRate returns the value of ClickRate.
+func (s *BroadcastReport) GetClickRate() float32 {
+	return s.ClickRate
+}
+
+// SetStatus sets the value of Status.
+func (s *BroadcastReport) SetStatus(val BroadcastStatus) {
+	s.Status = val
+}
+
+// SetHoldReason sets the value of HoldReason.
+func (s *BroadcastReport) SetHoldReason(val OptNilString) {
+	s.HoldReason = val
+}
+
+// SetRecipientsTotal sets the value of RecipientsTotal.
+func (s *BroadcastReport) SetRecipientsTotal(val int32) {
+	s.RecipientsTotal = val
+}
+
+// SetSentCount sets the value of SentCount.
+func (s *BroadcastReport) SetSentCount(val int32) {
+	s.SentCount = val
+}
+
+// SetSkippedCount sets the value of SkippedCount.
+func (s *BroadcastReport) SetSkippedCount(val int32) {
+	s.SkippedCount = val
+}
+
+// SetFailedCount sets the value of FailedCount.
+func (s *BroadcastReport) SetFailedCount(val int32) {
+	s.FailedCount = val
+}
+
+// SetOpenedCount sets the value of OpenedCount.
+func (s *BroadcastReport) SetOpenedCount(val int32) {
+	s.OpenedCount = val
+}
+
+// SetClickedCount sets the value of ClickedCount.
+func (s *BroadcastReport) SetClickedCount(val int32) {
+	s.ClickedCount = val
+}
+
+// SetUnsubscribedCount sets the value of UnsubscribedCount.
+func (s *BroadcastReport) SetUnsubscribedCount(val int32) {
+	s.UnsubscribedCount = val
+}
+
+// SetOpenRate sets the value of OpenRate.
+func (s *BroadcastReport) SetOpenRate(val float32) {
+	s.OpenRate = val
+}
+
+// SetClickRate sets the value of ClickRate.
+func (s *BroadcastReport) SetClickRate(val float32) {
+	s.ClickRate = val
+}
+
+func (*BroadcastReport) broadcastsReportRes() {}
+
+// Broadcast resource.
 // Ref: #/components/schemas/BroadcastResource
 type BroadcastResource struct {
-	// Broadcast name.
-	Name string `json:"name"`
-	// Segment ID.
-	SegmentId EntityId `json:"segmentId"`
-	// Broadcast status.
-	Status BroadcastStatus `json:"status"`
 	// Unique identifier.
 	ID EntityId `json:"id"`
+	// Internal broadcast name.
+	Name string `json:"name"`
+	// Email subject line.
+	Subject string `json:"subject"`
+	// Sender display name (defaults to the integration's).
+	FromName OptNilString `json:"fromName"`
+	// Sender email address (defaults to the integration's).
+	FromEmail OptNilEmailAddress `json:"fromEmail"`
+	// MJML body.
+	Body string `json:"body"`
+	// Audience: the Segment this broadcast goes to; null means all active contacts.
+	SegmentId OptNilEntityId `json:"segmentId"`
+	// Lifecycle status. Broadcasts created here are always drafts.
+	Status BroadcastStatus `json:"status"`
+	// When the broadcast is scheduled to send.
+	ScheduledAt OptNilTimestamp `json:"scheduledAt"`
+	// When the broadcast finished sending.
+	SentAt OptNilTimestamp `json:"sentAt"`
 	// Creation timestamp.
 	CreatedAt Timestamp `json:"createdAt"`
 	// Last update timestamp.
 	UpdatedAt Timestamp `json:"updatedAt"`
+}
+
+// GetID returns the value of ID.
+func (s *BroadcastResource) GetID() EntityId {
+	return s.ID
 }
 
 // GetName returns the value of Name.
@@ -340,8 +497,28 @@ func (s *BroadcastResource) GetName() string {
 	return s.Name
 }
 
+// GetSubject returns the value of Subject.
+func (s *BroadcastResource) GetSubject() string {
+	return s.Subject
+}
+
+// GetFromName returns the value of FromName.
+func (s *BroadcastResource) GetFromName() OptNilString {
+	return s.FromName
+}
+
+// GetFromEmail returns the value of FromEmail.
+func (s *BroadcastResource) GetFromEmail() OptNilEmailAddress {
+	return s.FromEmail
+}
+
+// GetBody returns the value of Body.
+func (s *BroadcastResource) GetBody() string {
+	return s.Body
+}
+
 // GetSegmentId returns the value of SegmentId.
-func (s *BroadcastResource) GetSegmentId() EntityId {
+func (s *BroadcastResource) GetSegmentId() OptNilEntityId {
 	return s.SegmentId
 }
 
@@ -350,9 +527,14 @@ func (s *BroadcastResource) GetStatus() BroadcastStatus {
 	return s.Status
 }
 
-// GetID returns the value of ID.
-func (s *BroadcastResource) GetID() EntityId {
-	return s.ID
+// GetScheduledAt returns the value of ScheduledAt.
+func (s *BroadcastResource) GetScheduledAt() OptNilTimestamp {
+	return s.ScheduledAt
+}
+
+// GetSentAt returns the value of SentAt.
+func (s *BroadcastResource) GetSentAt() OptNilTimestamp {
+	return s.SentAt
 }
 
 // GetCreatedAt returns the value of CreatedAt.
@@ -365,13 +547,38 @@ func (s *BroadcastResource) GetUpdatedAt() Timestamp {
 	return s.UpdatedAt
 }
 
+// SetID sets the value of ID.
+func (s *BroadcastResource) SetID(val EntityId) {
+	s.ID = val
+}
+
 // SetName sets the value of Name.
 func (s *BroadcastResource) SetName(val string) {
 	s.Name = val
 }
 
+// SetSubject sets the value of Subject.
+func (s *BroadcastResource) SetSubject(val string) {
+	s.Subject = val
+}
+
+// SetFromName sets the value of FromName.
+func (s *BroadcastResource) SetFromName(val OptNilString) {
+	s.FromName = val
+}
+
+// SetFromEmail sets the value of FromEmail.
+func (s *BroadcastResource) SetFromEmail(val OptNilEmailAddress) {
+	s.FromEmail = val
+}
+
+// SetBody sets the value of Body.
+func (s *BroadcastResource) SetBody(val string) {
+	s.Body = val
+}
+
 // SetSegmentId sets the value of SegmentId.
-func (s *BroadcastResource) SetSegmentId(val EntityId) {
+func (s *BroadcastResource) SetSegmentId(val OptNilEntityId) {
 	s.SegmentId = val
 }
 
@@ -380,9 +587,14 @@ func (s *BroadcastResource) SetStatus(val BroadcastStatus) {
 	s.Status = val
 }
 
-// SetID sets the value of ID.
-func (s *BroadcastResource) SetID(val EntityId) {
-	s.ID = val
+// SetScheduledAt sets the value of ScheduledAt.
+func (s *BroadcastResource) SetScheduledAt(val OptNilTimestamp) {
+	s.ScheduledAt = val
+}
+
+// SetSentAt sets the value of SentAt.
+func (s *BroadcastResource) SetSentAt(val OptNilTimestamp) {
+	s.SentAt = val
 }
 
 // SetCreatedAt sets the value of CreatedAt.
@@ -395,18 +607,21 @@ func (s *BroadcastResource) SetUpdatedAt(val Timestamp) {
 	s.UpdatedAt = val
 }
 
-func (*BroadcastResource) broadcastsCreateRes() {}
-func (*BroadcastResource) broadcastsGetRes()    {}
-func (*BroadcastResource) broadcastsUpdateRes() {}
+func (*BroadcastResource) broadcastsCreateRes()      {}
+func (*BroadcastResource) broadcastsGetRes()         {}
+func (*BroadcastResource) broadcastsSetAudienceRes() {}
+func (*BroadcastResource) broadcastsUpdateRes()      {}
 
-// Broadcast status.
+// Broadcast lifecycle status.
 // Ref: #/components/schemas/BroadcastStatus
 type BroadcastStatus string
 
 const (
 	BroadcastStatusDraft     BroadcastStatus = "draft"
 	BroadcastStatusScheduled BroadcastStatus = "scheduled"
+	BroadcastStatusSending   BroadcastStatus = "sending"
 	BroadcastStatusSent      BroadcastStatus = "sent"
+	BroadcastStatusFailed    BroadcastStatus = "failed"
 )
 
 // AllValues returns all BroadcastStatus values.
@@ -414,7 +629,9 @@ func (BroadcastStatus) AllValues() []BroadcastStatus {
 	return []BroadcastStatus{
 		BroadcastStatusDraft,
 		BroadcastStatusScheduled,
+		BroadcastStatusSending,
 		BroadcastStatusSent,
+		BroadcastStatusFailed,
 	}
 }
 
@@ -425,7 +642,11 @@ func (s BroadcastStatus) MarshalText() ([]byte, error) {
 		return []byte(s), nil
 	case BroadcastStatusScheduled:
 		return []byte(s), nil
+	case BroadcastStatusSending:
+		return []byte(s), nil
 	case BroadcastStatusSent:
+		return []byte(s), nil
+	case BroadcastStatusFailed:
 		return []byte(s), nil
 	default:
 		return nil, errors.Errorf("invalid value: %q", s)
@@ -441,8 +662,14 @@ func (s *BroadcastStatus) UnmarshalText(data []byte) error {
 	case BroadcastStatusScheduled:
 		*s = BroadcastStatusScheduled
 		return nil
+	case BroadcastStatusSending:
+		*s = BroadcastStatusSending
+		return nil
 	case BroadcastStatusSent:
 		*s = BroadcastStatusSent
+		return nil
+	case BroadcastStatusFailed:
+		*s = BroadcastStatusFailed
 		return nil
 	default:
 		return errors.Errorf("invalid value: %q", data)
@@ -473,6 +700,10 @@ func (*BroadcastsDeleteNotFound) broadcastsDeleteRes() {}
 type BroadcastsDeleteUnauthorized ProblemDetails
 
 func (*BroadcastsDeleteUnauthorized) broadcastsDeleteRes() {}
+
+type BroadcastsDeleteUnprocessableEntity ProblemDetails
+
+func (*BroadcastsDeleteUnprocessableEntity) broadcastsDeleteRes() {}
 
 type BroadcastsGetBadRequest ProblemDetails
 
@@ -563,6 +794,55 @@ func (*BroadcastsListUnauthorized) broadcastsListRes() {}
 type BroadcastsListUnprocessableEntity ProblemDetails
 
 func (*BroadcastsListUnprocessableEntity) broadcastsListRes() {}
+
+type BroadcastsReportBadRequest ProblemDetails
+
+func (*BroadcastsReportBadRequest) broadcastsReportRes() {}
+
+type BroadcastsReportNotFound ProblemDetails
+
+func (*BroadcastsReportNotFound) broadcastsReportRes() {}
+
+type BroadcastsReportUnauthorized ProblemDetails
+
+func (*BroadcastsReportUnauthorized) broadcastsReportRes() {}
+
+type BroadcastsSetAudienceBadRequest ProblemDetails
+
+func (*BroadcastsSetAudienceBadRequest) broadcastsSetAudienceRes() {}
+
+type BroadcastsSetAudienceNotFound ProblemDetails
+
+func (*BroadcastsSetAudienceNotFound) broadcastsSetAudienceRes() {}
+
+type BroadcastsSetAudienceUnauthorized ProblemDetails
+
+func (*BroadcastsSetAudienceUnauthorized) broadcastsSetAudienceRes() {}
+
+type BroadcastsSetAudienceUnprocessableEntity ProblemDetails
+
+func (*BroadcastsSetAudienceUnprocessableEntity) broadcastsSetAudienceRes() {}
+
+type BroadcastsTestSendBadRequest ProblemDetails
+
+func (*BroadcastsTestSendBadRequest) broadcastsTestSendRes() {}
+
+// BroadcastsTestSendNoContent is response for BroadcastsTestSend operation.
+type BroadcastsTestSendNoContent struct{}
+
+func (*BroadcastsTestSendNoContent) broadcastsTestSendRes() {}
+
+type BroadcastsTestSendNotFound ProblemDetails
+
+func (*BroadcastsTestSendNotFound) broadcastsTestSendRes() {}
+
+type BroadcastsTestSendUnauthorized ProblemDetails
+
+func (*BroadcastsTestSendUnauthorized) broadcastsTestSendRes() {}
+
+type BroadcastsTestSendUnprocessableEntity ProblemDetails
+
+func (*BroadcastsTestSendUnprocessableEntity) broadcastsTestSendRes() {}
 
 type BroadcastsUpdateBadRequest ProblemDetails
 
@@ -861,6 +1141,10 @@ type ContactsDeleteUnauthorized ProblemDetails
 
 func (*ContactsDeleteUnauthorized) contactsDeleteRes() {}
 
+type ContactsDeleteUnprocessableEntity ProblemDetails
+
+func (*ContactsDeleteUnprocessableEntity) contactsDeleteRes() {}
+
 type ContactsGetBadRequest ProblemDetails
 
 func (*ContactsGetBadRequest) contactsGetRes() {}
@@ -1037,15 +1321,19 @@ func (s *CreateApiTokenResponse) SetTokenInfo(val ApiTokenInfo) {
 func (*CreateApiTokenResponse) authTokensBootstrapRes() {}
 func (*CreateApiTokenResponse) authTokensCreateRes()    {}
 
-// Request body for creating a broadcast.
+// Request body for creating a broadcast (always created as a draft).
 // Ref: #/components/schemas/CreateBroadcastInput
 type CreateBroadcastInput struct {
-	// Broadcast name.
+	// Internal broadcast name.
 	Name string `json:"name"`
-	// Segment ID.
-	SegmentId EntityId `json:"segmentId"`
-	// Broadcast status.
-	Status BroadcastStatus `json:"status"`
+	// Email subject line.
+	Subject OptString `json:"subject"`
+	// Sender display name.
+	FromName OptString `json:"fromName"`
+	// Sender email address.
+	FromEmail OptEmailAddress `json:"fromEmail"`
+	// MJML body.
+	Body OptString `json:"body"`
 }
 
 // GetName returns the value of Name.
@@ -1053,14 +1341,24 @@ func (s *CreateBroadcastInput) GetName() string {
 	return s.Name
 }
 
-// GetSegmentId returns the value of SegmentId.
-func (s *CreateBroadcastInput) GetSegmentId() EntityId {
-	return s.SegmentId
+// GetSubject returns the value of Subject.
+func (s *CreateBroadcastInput) GetSubject() OptString {
+	return s.Subject
 }
 
-// GetStatus returns the value of Status.
-func (s *CreateBroadcastInput) GetStatus() BroadcastStatus {
-	return s.Status
+// GetFromName returns the value of FromName.
+func (s *CreateBroadcastInput) GetFromName() OptString {
+	return s.FromName
+}
+
+// GetFromEmail returns the value of FromEmail.
+func (s *CreateBroadcastInput) GetFromEmail() OptEmailAddress {
+	return s.FromEmail
+}
+
+// GetBody returns the value of Body.
+func (s *CreateBroadcastInput) GetBody() OptString {
+	return s.Body
 }
 
 // SetName sets the value of Name.
@@ -1068,14 +1366,24 @@ func (s *CreateBroadcastInput) SetName(val string) {
 	s.Name = val
 }
 
-// SetSegmentId sets the value of SegmentId.
-func (s *CreateBroadcastInput) SetSegmentId(val EntityId) {
-	s.SegmentId = val
+// SetSubject sets the value of Subject.
+func (s *CreateBroadcastInput) SetSubject(val OptString) {
+	s.Subject = val
 }
 
-// SetStatus sets the value of Status.
-func (s *CreateBroadcastInput) SetStatus(val BroadcastStatus) {
-	s.Status = val
+// SetFromName sets the value of FromName.
+func (s *CreateBroadcastInput) SetFromName(val OptString) {
+	s.FromName = val
+}
+
+// SetFromEmail sets the value of FromEmail.
+func (s *CreateBroadcastInput) SetFromEmail(val OptEmailAddress) {
+	s.FromEmail = val
+}
+
+// SetBody sets the value of Body.
+func (s *CreateBroadcastInput) SetBody(val OptString) {
+	s.Body = val
 }
 
 // Request body for creating a contact.
@@ -1658,6 +1966,51 @@ type EventsCreateUnprocessableEntity ProblemDetails
 
 func (*EventsCreateUnprocessableEntity) eventsCreateRes() {}
 
+// NewNilEntityId returns new NilEntityId with value set to v.
+func NewNilEntityId(v EntityId) NilEntityId {
+	return NilEntityId{
+		Value: v,
+	}
+}
+
+// NilEntityId is nullable EntityId.
+type NilEntityId struct {
+	Value EntityId
+	Null  bool
+}
+
+// SetTo sets value to v.
+func (o *NilEntityId) SetTo(v EntityId) {
+	o.Null = false
+	o.Value = v
+}
+
+// IsNull returns true if value is Null.
+func (o NilEntityId) IsNull() bool { return o.Null }
+
+// SetToNull sets value to null.
+func (o *NilEntityId) SetToNull() {
+	o.Null = true
+	var v EntityId
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o NilEntityId) Get() (v EntityId, ok bool) {
+	if o.Null {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o NilEntityId) Or(d EntityId) EntityId {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
 // NewOptBool returns new OptBool with value set to v.
 func NewOptBool(v bool) OptBool {
 	return OptBool{
@@ -1704,38 +2057,38 @@ func (o OptBool) Or(d bool) bool {
 	return d
 }
 
-// NewOptBroadcastStatus returns new OptBroadcastStatus with value set to v.
-func NewOptBroadcastStatus(v BroadcastStatus) OptBroadcastStatus {
-	return OptBroadcastStatus{
+// NewOptEmailAddress returns new OptEmailAddress with value set to v.
+func NewOptEmailAddress(v EmailAddress) OptEmailAddress {
+	return OptEmailAddress{
 		Value: v,
 		Set:   true,
 	}
 }
 
-// OptBroadcastStatus is optional BroadcastStatus.
-type OptBroadcastStatus struct {
-	Value BroadcastStatus
+// OptEmailAddress is optional EmailAddress.
+type OptEmailAddress struct {
+	Value EmailAddress
 	Set   bool
 }
 
-// IsSet returns true if OptBroadcastStatus was set.
-func (o OptBroadcastStatus) IsSet() bool { return o.Set }
+// IsSet returns true if OptEmailAddress was set.
+func (o OptEmailAddress) IsSet() bool { return o.Set }
 
 // Reset unsets value.
-func (o *OptBroadcastStatus) Reset() {
-	var v BroadcastStatus
+func (o *OptEmailAddress) Reset() {
+	var v EmailAddress
 	o.Value = v
 	o.Set = false
 }
 
 // SetTo sets value to v.
-func (o *OptBroadcastStatus) SetTo(v BroadcastStatus) {
+func (o *OptEmailAddress) SetTo(v EmailAddress) {
 	o.Set = true
 	o.Value = v
 }
 
 // Get returns value and boolean that denotes whether value was set.
-func (o OptBroadcastStatus) Get() (v BroadcastStatus, ok bool) {
+func (o OptEmailAddress) Get() (v EmailAddress, ok bool) {
 	if !o.Set {
 		return v, false
 	}
@@ -1743,7 +2096,7 @@ func (o OptBroadcastStatus) Get() (v BroadcastStatus, ok bool) {
 }
 
 // Or returns value if set, or given parameter if does not.
-func (o OptBroadcastStatus) Or(d BroadcastStatus) BroadcastStatus {
+func (o OptEmailAddress) Or(d EmailAddress) EmailAddress {
 	if v, ok := o.Get(); ok {
 		return v
 	}
@@ -2040,6 +2393,74 @@ func (o OptNilEmailAddress) Get() (v EmailAddress, ok bool) {
 
 // Or returns value if set, or given parameter if does not.
 func (o OptNilEmailAddress) Or(d EmailAddress) EmailAddress {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptNilEntityId returns new OptNilEntityId with value set to v.
+func NewOptNilEntityId(v EntityId) OptNilEntityId {
+	return OptNilEntityId{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptNilEntityId is optional nullable EntityId.
+type OptNilEntityId struct {
+	Value EntityId
+	Set   bool
+	Null  bool
+}
+
+// IsSet returns true if OptNilEntityId was set.
+func (o OptNilEntityId) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptNilEntityId) Reset() {
+	var v EntityId
+	o.Value = v
+	o.Set = false
+	o.Null = false
+}
+
+// SetTo sets value to v.
+func (o *OptNilEntityId) SetTo(v EntityId) {
+	o.Set = true
+	o.Null = false
+	o.Value = v
+}
+
+// IsNull returns true if value is Null.
+func (o OptNilEntityId) IsNull() bool { return o.Null }
+
+// SetToNull sets value to null.
+func (o *OptNilEntityId) SetToNull() {
+	o.Set = true
+	o.Null = true
+	var v EntityId
+	o.Value = v
+}
+
+// IsEmpty returns true if the field was omitted from the payload (not Set and not Null).
+func (o OptNilEntityId) IsEmpty() bool {
+	return !o.Set && !o.Null
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptNilEntityId) Get() (v EntityId, ok bool) {
+	if o.Null {
+		return v, false
+	}
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptNilEntityId) Or(d EntityId) EntityId {
 	if v, ok := o.Get(); ok {
 		return v
 	}
@@ -3047,6 +3468,10 @@ type SegmentsDeleteUnauthorized ProblemDetails
 
 func (*SegmentsDeleteUnauthorized) segmentsDeleteRes() {}
 
+type SegmentsDeleteUnprocessableEntity ProblemDetails
+
+func (*SegmentsDeleteUnprocessableEntity) segmentsDeleteRes() {}
+
 type SegmentsGetBadRequest ProblemDetails
 
 func (*SegmentsGetBadRequest) segmentsGetRes() {}
@@ -3260,6 +3685,23 @@ func (s *SendTransactionalEmailResponse) SetDestination(val string) {
 }
 
 func (*SendTransactionalEmailResponse) emailsSendRes() {}
+
+// Request body for setting a broadcast's audience.
+// Ref: #/components/schemas/SetBroadcastAudienceInput
+type SetBroadcastAudienceInput struct {
+	// The Segment to send to; null means all active contacts.
+	SegmentId NilEntityId `json:"segmentId"`
+}
+
+// GetSegmentId returns the value of SegmentId.
+func (s *SetBroadcastAudienceInput) GetSegmentId() NilEntityId {
+	return s.SegmentId
+}
+
+// SetSegmentId sets the value of SegmentId.
+func (s *SetBroadcastAudienceInput) SetSegmentId(val NilEntityId) {
+	s.SegmentId = val
+}
 
 // Why a destination is on the suppression (do-not-send) list.
 // Ref: #/components/schemas/SuppressionReason
@@ -3480,6 +3922,10 @@ type TemplatesDeleteUnauthorized ProblemDetails
 
 func (*TemplatesDeleteUnauthorized) templatesDeleteRes() {}
 
+type TemplatesDeleteUnprocessableEntity ProblemDetails
+
+func (*TemplatesDeleteUnprocessableEntity) templatesDeleteRes() {}
+
 type TemplatesGetBadRequest ProblemDetails
 
 func (*TemplatesGetBadRequest) templatesGetRes() {}
@@ -3585,6 +4031,23 @@ func (*TemplatesUpdateUnauthorized) templatesUpdateRes() {}
 type TemplatesUpdateUnprocessableEntity ProblemDetails
 
 func (*TemplatesUpdateUnprocessableEntity) templatesUpdateRes() {}
+
+// Request body for a test send.
+// Ref: #/components/schemas/TestSendBroadcastInput
+type TestSendBroadcastInput struct {
+	// Address to send the rendered preview to.
+	Email EmailAddress `json:"email"`
+}
+
+// GetEmail returns the value of Email.
+func (s *TestSendBroadcastInput) GetEmail() EmailAddress {
+	return s.Email
+}
+
+// SetEmail sets the value of Email.
+func (s *TestSendBroadcastInput) SetEmail(val EmailAddress) {
+	s.Email = val
+}
 
 type TimeZoneName string
 
@@ -3696,15 +4159,19 @@ type UnsubscribesCreateUnprocessableEntity ProblemDetails
 
 func (*UnsubscribesCreateUnprocessableEntity) unsubscribesCreateRes() {}
 
-// Request body for updating a broadcast.
+// Request body for updating a draft broadcast.
 // Ref: #/components/schemas/UpdateBroadcastInput
 type UpdateBroadcastInput struct {
-	// Broadcast name.
+	// Internal broadcast name.
 	Name OptString `json:"name"`
-	// Segment ID.
-	SegmentId OptEntityId `json:"segmentId"`
-	// Broadcast status.
-	Status OptBroadcastStatus `json:"status"`
+	// Email subject line.
+	Subject OptString `json:"subject"`
+	// Sender display name.
+	FromName OptString `json:"fromName"`
+	// Sender email address.
+	FromEmail OptEmailAddress `json:"fromEmail"`
+	// MJML body.
+	Body OptString `json:"body"`
 }
 
 // GetName returns the value of Name.
@@ -3712,14 +4179,24 @@ func (s *UpdateBroadcastInput) GetName() OptString {
 	return s.Name
 }
 
-// GetSegmentId returns the value of SegmentId.
-func (s *UpdateBroadcastInput) GetSegmentId() OptEntityId {
-	return s.SegmentId
+// GetSubject returns the value of Subject.
+func (s *UpdateBroadcastInput) GetSubject() OptString {
+	return s.Subject
 }
 
-// GetStatus returns the value of Status.
-func (s *UpdateBroadcastInput) GetStatus() OptBroadcastStatus {
-	return s.Status
+// GetFromName returns the value of FromName.
+func (s *UpdateBroadcastInput) GetFromName() OptString {
+	return s.FromName
+}
+
+// GetFromEmail returns the value of FromEmail.
+func (s *UpdateBroadcastInput) GetFromEmail() OptEmailAddress {
+	return s.FromEmail
+}
+
+// GetBody returns the value of Body.
+func (s *UpdateBroadcastInput) GetBody() OptString {
+	return s.Body
 }
 
 // SetName sets the value of Name.
@@ -3727,14 +4204,24 @@ func (s *UpdateBroadcastInput) SetName(val OptString) {
 	s.Name = val
 }
 
-// SetSegmentId sets the value of SegmentId.
-func (s *UpdateBroadcastInput) SetSegmentId(val OptEntityId) {
-	s.SegmentId = val
+// SetSubject sets the value of Subject.
+func (s *UpdateBroadcastInput) SetSubject(val OptString) {
+	s.Subject = val
 }
 
-// SetStatus sets the value of Status.
-func (s *UpdateBroadcastInput) SetStatus(val OptBroadcastStatus) {
-	s.Status = val
+// SetFromName sets the value of FromName.
+func (s *UpdateBroadcastInput) SetFromName(val OptString) {
+	s.FromName = val
+}
+
+// SetFromEmail sets the value of FromEmail.
+func (s *UpdateBroadcastInput) SetFromEmail(val OptEmailAddress) {
+	s.FromEmail = val
+}
+
+// SetBody sets the value of Body.
+func (s *UpdateBroadcastInput) SetBody(val OptString) {
+	s.Body = val
 }
 
 // Request body for updating a contact.
@@ -4204,6 +4691,10 @@ func (*WebhooksDeleteNotFound) webhooksDeleteRes() {}
 type WebhooksDeleteUnauthorized ProblemDetails
 
 func (*WebhooksDeleteUnauthorized) webhooksDeleteRes() {}
+
+type WebhooksDeleteUnprocessableEntity ProblemDetails
+
+func (*WebhooksDeleteUnprocessableEntity) webhooksDeleteRes() {}
 
 type WebhooksGetBadRequest ProblemDetails
 

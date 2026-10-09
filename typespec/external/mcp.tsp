@@ -8,14 +8,6 @@ namespace OneMail;
 // at /mcp unless it carries `x-mcp: { hidden: true }`; `x-mcp: { name }` overrides
 // the default tool name (the operation id in snake_case, e.g. `contacts_list`).
 
-// Broadcasts are declared in the contract but have no handlers yet;
-// a later ticket removes the `hidden` flag when it implements them.
-@@extension(Broadcasts.list, "x-mcp", #{ hidden: true });
-@@extension(Broadcasts.create, "x-mcp", #{ hidden: true });
-@@extension(Broadcasts.get, "x-mcp", #{ hidden: true });
-@@extension(Broadcasts.update, "x-mcp", #{ hidden: true });
-@@extension(Broadcasts.delete, "x-mcp", #{ hidden: true });
-
 // API token management is never an agent capability.
 @@extension(Auth.tokensCreate, "x-mcp", #{ hidden: true });
 @@extension(Auth.tokensList, "x-mcp", #{ hidden: true });
