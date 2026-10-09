@@ -33,7 +33,8 @@ func (AutomationRun) Fields() []ent.Field {
 			StorageKey("id").
 			Immutable(),
 		field.Int64("automation_id"),
-		field.Int64("contact_id"),
+		field.Int64("contact_id").
+			Annotations(ScopedRef{Entity: "Contact"}),
 		// exited: the enrollment left early (e.g. an unsubscribe or suppression
 		// mid-run) — distinct from completing the sequence.
 		field.Enum("status").

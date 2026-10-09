@@ -53,7 +53,8 @@ func (Suppression) Fields() []ent.Field {
 		// may arrive for a destination with no contact). Display only. Nullable.
 		field.Int64("contact_id").
 			Optional().
-			Nillable(),
+			Nillable().
+			Annotations(ScopedRef{Unchecked: true}),
 	}
 }
 

@@ -55,7 +55,8 @@ func (Unsubscribe) Fields() []ent.Field {
 		// the opt-out is keyed by destination and outlives the contact. Nullable.
 		field.Int64("contact_id").
 			Optional().
-			Nillable(),
+			Nillable().
+			Annotations(ScopedRef{Entity: "Contact"}),
 	}
 }
 

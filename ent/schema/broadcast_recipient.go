@@ -32,7 +32,8 @@ func (BroadcastRecipient) Fields() []ent.Field {
 			StorageKey("id").
 			Immutable(),
 		field.Int64("broadcast_id"),
-		field.Int64("contact_id"),
+		field.Int64("contact_id").
+			Annotations(ScopedRef{Entity: "Contact"}),
 		field.Enum("status").
 			Values("pending", "sent", "skipped", "failed").
 			Default("pending"),
@@ -41,7 +42,8 @@ func (BroadcastRecipient) Fields() []ent.Field {
 		// the frozen audience snapshot plus engagement rollup.
 		field.Int64("outbound_message_id").
 			Optional().
-			Nillable(),
+			Nillable().
+			Annotations(ScopedRef{Entity: "OutboundMessage"}),
 		field.String("error").
 			Optional().
 			Nillable(),

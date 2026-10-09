@@ -1,0 +1,145 @@
+{{/*
+The list of workspace-mixin entities, with the generic operations the isolation test
+needs (internal/... scoped_isolation_test.go). A new entity joins the list, and so the
+test, by adding the workspace mixin to its schema.
+*/}}
+{{ define "scoped_registry" }}
+{{ template "header" $ }}
+
+import (
+	"context"
+	"reflect"
+
+	{{- range $n := scopedNodes $ }}
+	"{{ $.Config.Package }}/{{ $n.Package }}"
+	{{- end }}
+)
+
+// ScopedEntity describes one workspace-mixin entity for tests that must cover every
+// such entity without naming them.
+type ScopedEntity struct {
+	// Name is the entity's schema name.
+	Name string
+	// IDs lists the ids of the Workspace's rows, read through the raw client.
+	IDs func(ctx context.Context, c *Client, ws int64) ([]int64, error)
+	// Get reads the row through the scoped client.
+	Get func(ctx context.Context, s *Scoped, id int64) error
+	// Touch updates the row by id through the scoped client (only updated_at changes).
+	Touch func(ctx context.Context, s *Scoped, id int64) error
+	// BulkTouch is the conditional bulk update of the row; it returns the rows changed.
+	BulkTouch func(ctx context.Context, s *Scoped, id int64) (int, error)
+	// Delete deletes the row by id through the scoped client.
+	Delete func(ctx context.Context, s *Scoped, id int64) error
+	// BulkDelete is the conditional bulk delete of the row; it returns the rows deleted.
+	BulkDelete func(ctx context.Context, s *Scoped, id int64) (int, error)
+	// Replant re-creates the row with the id (read through the raw client) through the
+	// scoped client, without its workspace_id. remap rewrites every reference to a
+	// scoped entity (given by the entity name and the stored id). It returns the new
+	// row's workspace_id.
+	Replant func(ctx context.Context, s *Scoped, id int64, remap func(entity string, id int64) int64) (int64, error)
+	// Refs lists the references an update can set.
+	Refs []ScopedRef
+}
+
+// ScopedRef is a reference from a scoped entity to another scoped entity.
+type ScopedRef struct {
+	// Name is the edge or field name.
+	Name string
+	// Target is the referenced entity's schema name.
+	Target string
+	// Set points the row with the id at the target row through the scoped client.
+	Set func(ctx context.Context, s *Scoped, id, target int64) error
+}
+
+// ScopedEntities lists every workspace-mixin entity.
+func ScopedEntities() []ScopedEntity {
+	return []ScopedEntity{
+		{{- range $n := scopedNodes $ }}
+		{{- $N := $n.Name }}{{ $P := $n.Package }}
+		{
+			Name: "{{ $N }}",
+			IDs: func(ctx context.Context, c *Client, ws int64) ([]int64, error) {
+				return c.{{ $N }}.Query().Where({{ $P }}.WorkspaceID(ws)).Order(Asc({{ $P }}.FieldID)).IDs(ctx)
+			},
+			Get: func(ctx context.Context, s *Scoped, id int64) error {
+				_, err := s.{{ $N }}().Get(ctx, id)
+				return err
+			},
+			Touch: func(ctx context.Context, s *Scoped, id int64) error {
+				return s.{{ $N }}().UpdateOneID(id).Exec(ctx)
+			},
+			BulkTouch: func(ctx context.Context, s *Scoped, id int64) (int, error) {
+				return s.{{ $N }}().Update().Where({{ $P }}.ID(id)).Save(ctx)
+			},
+			Delete: func(ctx context.Context, s *Scoped, id int64) error {
+				return s.{{ $N }}().DeleteOneID(id).Exec(ctx)
+			},
+			BulkDelete: func(ctx context.Context, s *Scoped, id int64) (int, error) {
+				return s.{{ $N }}().Delete().Where({{ $P }}.ID(id)).Exec(ctx)
+			},
+			Replant: func(ctx context.Context, s *Scoped, id int64, remap func(string, int64) int64) (int64, error) {
+				src, err := s.c.{{ $N }}.Get(ctx, id)
+				if err != nil {
+					return 0, err
+				}
+				_ = remap
+				b := s.{{ $N }}().Create()
+				{{- range $f := $n.Fields }}
+				{{- if not (or (eq $f.Name "workspace_id") (eq $f.Name "created_at") (eq $f.Name "updated_at")) }}
+				{{- $t := scopedRefTarget $ $f }}
+				{{- if $t }}
+				{{- if $f.Nillable }}
+				if src.{{ $f.StructField }} != nil {
+					b.Set{{ $f.StructField }}(remap("{{ $t.Name }}", *src.{{ $f.StructField }}))
+				}
+				{{- else if $f.Optional }}
+				if src.{{ $f.StructField }} != 0 {
+					b.Set{{ $f.StructField }}(remap("{{ $t.Name }}", src.{{ $f.StructField }}))
+				}
+				{{- else }}
+				b.Set{{ $f.StructField }}(remap("{{ $t.Name }}", src.{{ $f.StructField }}))
+				{{- end }}
+				{{- else if $f.Nillable }}
+				if src.{{ $f.StructField }} != nil {
+					b.Set{{ $f.StructField }}(*src.{{ $f.StructField }}{{ if and $f.Unique (eq $f.Type.String "string") }} + "-replanted"{{ end }})
+				}
+				{{- else if $f.Optional }}
+				if !reflect.ValueOf(src.{{ $f.StructField }}).IsZero() {
+					b.Set{{ $f.StructField }}(src.{{ $f.StructField }}{{ if and $f.Unique (eq $f.Type.String "string") }} + "-replanted"{{ end }})
+				}
+				{{- else }}
+				b.Set{{ $f.StructField }}(src.{{ $f.StructField }}{{ if and $f.Unique (eq $f.Type.String "string") }} + "-replanted"{{ end }})
+				{{- end }}
+				{{- end }}
+				{{- end }}
+				created, err := b.Save(ctx)
+				if err != nil {
+					return 0, err
+				}
+				return created.WorkspaceID, nil
+			},
+			Refs: []ScopedRef{
+				{{- range $e := scopedEdges $n }}
+				{{- if scopedEdgeMutable $e }}
+				{
+					Name: "{{ $e.Name }}", Target: "{{ $e.Type.Name }}",
+					Set: func(ctx context.Context, s *Scoped, id, target int64) error {
+						return s.{{ $N }}().UpdateOneID(id).{{ if $e.Unique }}{{ $e.MutationSet }}{{ else }}{{ $e.MutationAdd }}{{ end }}(target).Exec(ctx)
+					},
+				},
+				{{- end }}
+				{{- end }}
+				{{- range $r := scopedFieldRefs $ $n }}
+				{
+					Name: "{{ $r.Field.Name }}", Target: "{{ $r.Target.Name }}",
+					Set: func(ctx context.Context, s *Scoped, id, target int64) error {
+						return s.{{ $N }}().UpdateOneID(id).Set{{ $r.Field.StructField }}(target).Exec(ctx)
+					},
+				},
+				{{- end }}
+			},
+		},
+		{{- end }}
+	}
+}
+{{ end }}

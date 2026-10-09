@@ -52,11 +52,13 @@ func (Broadcast) Fields() []ent.Field {
 		// Nil segment_id means "all active contacts in the workspace".
 		field.Int64("segment_id").
 			Optional().
-			Nillable(),
+			Nillable().
+			Annotations(ScopedRef{Entity: "Segment"}),
 		// Nil integration_id means "the workspace default email integration".
 		field.Int64("integration_id").
 			Optional().
-			Nillable(),
+			Nillable().
+			Annotations(ScopedRef{Entity: "Integration"}),
 		field.Enum("status").
 			Values("draft", "scheduled", "sending", "sent", "failed").
 			Default("draft"),

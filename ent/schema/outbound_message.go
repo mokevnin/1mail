@@ -57,7 +57,8 @@ func (OutboundMessage) Fields() []ent.Field {
 		// destination may have none). Display and Event attribution only.
 		field.Int64("contact_id").
 			Optional().
-			Nillable(),
+			Nillable().
+			Annotations(ScopedRef{Entity: "Contact"}),
 		// The unsubscribe Sending source; nil for transactional (it carries none).
 		field.String("sending_source").
 			Optional().
@@ -89,13 +90,18 @@ func (OutboundMessage) Fields() []ent.Field {
 			Optional().
 			Nillable(),
 		// Surface provenance, plain id snapshots.
-		field.Int64("broadcast_id").Optional().Nillable(),
-		field.Int64("broadcast_recipient_id").Optional().Nillable(),
-		field.Int64("automation_id").Optional().Nillable(),
-		field.Int64("automation_run_id").Optional().Nillable(),
+		field.Int64("broadcast_id").Optional().Nillable().
+			Annotations(ScopedRef{Entity: "Broadcast"}),
+		field.Int64("broadcast_recipient_id").Optional().Nillable().
+			Annotations(ScopedRef{Entity: "BroadcastRecipient"}),
+		field.Int64("automation_id").Optional().Nillable().
+			Annotations(ScopedRef{Entity: "Automation"}),
+		field.Int64("automation_run_id").Optional().Nillable().
+			Annotations(ScopedRef{Entity: "AutomationRun"}),
 		field.Int("automation_step").Optional().Nillable(),
 		// The Template a transactional send referenced (ADR 0005).
-		field.Int64("template_id").Optional().Nillable(),
+		field.Int64("template_id").Optional().Nillable().
+			Annotations(ScopedRef{Entity: "EmailTemplate"}),
 	}
 }
 

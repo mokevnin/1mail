@@ -57,7 +57,8 @@ func (Confirmation) Fields() []ent.Field {
 		// confirmation is keyed by destination and outlives the contact. Nullable.
 		field.Int64("contact_id").
 			Optional().
-			Nillable(),
+			Nillable().
+			Annotations(ScopedRef{Unchecked: true}),
 	}
 }
 

@@ -6,9 +6,10 @@
   created_at: '2026-01-01 00:00:00'
   updated_at: '2026-01-01 00:00:00'
 # Anchor second tenant (Globex) — DO NOT change. It holds the minimal foreign rows
-# (ids 900+ in the other fixture files, all workspace_id 2) that cross-tenant
+# (ids 900+ in the other fixture files, all workspace_id 2; one per
+# workspace-mixin entity, so the scoped-client isolation test covers each) that cross-tenant
 # isolation tests assert are never visible to, or mutable by, workspace 1. It has
-# its own owner (OwnerJane, see memberships.yml) but no integration or contacts.
+# its own owner (OwnerJane, see memberships.yml), one non-default integration and one contact.
 - id: 2 # fixture: Globex
   name: Globex
   slug: globex

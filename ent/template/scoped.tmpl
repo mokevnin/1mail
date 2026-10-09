@@ -1,0 +1,541 @@
+{{/*
+The Workspace-scoped client (ADR 0017, "Form B"). For every entity that carries the
+workspace mixin it generates distinct wrapper types behind `client.Scoped(ws)`:
+creates cannot name a Workspace, every reference id set on a create/update is verified
+against the same Workspace when the builder is saved, and reads, update-by-id and
+delete-by-id are confined to the Workspace. Regenerate with `mise run generate`.
+*/}}
+{{ define "scoped" }}
+{{ template "header" $ }}
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"slices"
+	"time"
+
+	"entgo.io/ent/dialect/sql"
+	"{{ $.Config.Package }}/predicate"
+	{{- range $n := scopedNodes $ }}
+	"{{ $.Config.Package }}/{{ $n.Package }}"
+	{{- end }}
+)
+
+var (
+	_ = time.Time{}
+	_ predicate.Contact
+)
+
+// ErrNotInWorkspace: a reference id set on a scoped builder belongs to another Workspace
+// (or does not exist).
+var ErrNotInWorkspace = errors.New("ent: referenced entity is not in the workspace")
+
+// Scoped is the entry point to every Workspace-owned entity, confined to one Workspace.
+// Build it from a client or from a transaction's client: `tx.Client().Scoped(ws)`.
+type Scoped struct {
+	c  *Client
+	ws int64
+}
+
+// Scoped returns the client confined to the given Workspace.
+func (c *Client) Scoped(ws int64) *Scoped { return &Scoped{c: c, ws: ws} }
+
+// WorkspaceID returns the Workspace the client is confined to.
+func (s *Scoped) WorkspaceID() int64 { return s.ws }
+
+// uniqueIDs returns the sorted, de-duplicated ids.
+func uniqueIDs(ids []int64) []int64 {
+	s := slices.Clone(ids)
+	slices.Sort(s)
+	return slices.Compact(s)
+}
+
+{{ range $n := scopedNodes $ }}
+// verify{{ $n.Name }} fails with ErrNotInWorkspace unless every id is a {{ $n.Name }} of the Workspace.
+func (s *Scoped) verify{{ $n.Name }}(ctx context.Context, ids []int64) error {
+	ids = uniqueIDs(ids)
+	if len(ids) == 0 {
+		return nil
+	}
+	n, err := s.c.{{ $n.Name }}.Query().Where({{ $n.Package }}.IDIn(ids...), {{ $n.Package }}.WorkspaceID(s.ws)).Count(ctx)
+	if err != nil {
+		return err
+	}
+	if n != len(ids) {
+		return fmt.Errorf("{{ $n.Name }}: %w", ErrNotInWorkspace)
+	}
+	return nil
+}
+{{ end }}
+
+{{ range $n := scopedNodes $ }}
+{{ $N := $n.Name }}
+{{ $P := $n.Package }}
+
+// {{ $N }}Scoped reaches {{ $N }} entities of one Workspace.
+type {{ $N }}Scoped struct{ s *Scoped }
+
+// {{ $N }} returns the {{ $N }} entities of the Workspace.
+func (s *Scoped) {{ $N }}() *{{ $N }}Scoped { return &{{ $N }}Scoped{s: s} }
+
+// Query returns a {{ $N }} query already confined to the Workspace.
+func (t *{{ $N }}Scoped) Query() *{{ $N }}Query {
+	return t.s.c.{{ $N }}.Query().Where({{ $P }}.WorkspaceID(t.s.ws))
+}
+
+// Get returns the {{ $N }} with the id; a row of another Workspace is not found.
+func (t *{{ $N }}Scoped) Get(ctx context.Context, id int64) (*{{ $N }}, error) {
+	return t.Query().Where({{ $P }}.ID(id)).Only(ctx)
+}
+
+// DeleteOneID deletes the {{ $N }} with the id; a row of another Workspace is not found.
+func (t *{{ $N }}Scoped) DeleteOneID(id int64) *{{ $N }}DeleteOne {
+	return t.s.c.{{ $N }}.DeleteOneID(id).Where({{ $P }}.WorkspaceID(t.s.ws))
+}
+
+// Delete deletes the {{ $N }} entities of the Workspace that match the predicates.
+func (t *{{ $N }}Scoped) Delete() *{{ $N }}Delete {
+	return t.s.c.{{ $N }}.Delete().Where({{ $P }}.WorkspaceID(t.s.ws))
+}
+
+// ---------------------------------------------------------------- create
+
+// {{ $N }}ScopedCreate wraps {{ $N }}Create. It has no way to name a Workspace.
+type {{ $N }}ScopedCreate struct {
+	s *Scoped
+	b *{{ $N }}Create
+}
+
+// Create starts a {{ $N }} in the Workspace.
+func (t *{{ $N }}Scoped) Create() *{{ $N }}ScopedCreate {
+	return &{{ $N }}ScopedCreate{s: t.s, b: t.s.c.{{ $N }}.Create().SetWorkspaceID(t.s.ws)}
+}
+
+{{ with extend $n "Graph" $ "Node" $n "Builder" (print $N "ScopedCreate") "Mode" "create" }}
+	{{ template "helper/scopedsetters" . }}
+{{ end }}
+
+{{ with extend $n "Graph" $ "Node" $n "Builder" (print $N "ScopedCreate") }}
+	{{ template "helper/scopedcheck" . }}
+{{ end }}
+
+// Save verifies the references against the Workspace, then creates the {{ $N }}.
+func (x *{{ $N }}ScopedCreate) Save(ctx context.Context) (*{{ $N }}, error) {
+	if err := x.check(ctx); err != nil {
+		return nil, err
+	}
+	return x.b.Save(ctx)
+}
+
+// Exec is like Save, discarding the entity.
+func (x *{{ $N }}ScopedCreate) Exec(ctx context.Context) error {
+	_, err := x.Save(ctx)
+	return err
+}
+
+// ---------------------------------------------------------------- create bulk
+
+// {{ $N }}ScopedCreateBulk creates several {{ $N }} entities of one Workspace at once.
+type {{ $N }}ScopedCreateBulk struct {
+	s  *Scoped
+	xs []*{{ $N }}ScopedCreate
+}
+
+// CreateBulk batches creates started on this Workspace.
+func (t *{{ $N }}Scoped) CreateBulk(xs ...*{{ $N }}ScopedCreate) *{{ $N }}ScopedCreateBulk {
+	return &{{ $N }}ScopedCreateBulk{s: t.s, xs: xs}
+}
+
+func (b *{{ $N }}ScopedCreateBulk) raw(ctx context.Context) (*{{ $N }}CreateBulk, error) {
+	builders := make([]*{{ $N }}Create, len(b.xs))
+	for i, x := range b.xs {
+		if x.s.ws != b.s.ws {
+			return nil, fmt.Errorf("{{ $N }}: builder of another scope: %w", ErrNotInWorkspace)
+		}
+		if err := x.check(ctx); err != nil {
+			return nil, err
+		}
+		builders[i] = x.b
+	}
+	return b.s.c.{{ $N }}.CreateBulk(builders...), nil
+}
+
+// Save verifies every builder's references, then creates the {{ $N }} entities.
+func (b *{{ $N }}ScopedCreateBulk) Save(ctx context.Context) ([]*{{ $N }}, error) {
+	raw, err := b.raw(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return raw.Save(ctx)
+}
+
+// Exec is like Save, discarding the entities.
+func (b *{{ $N }}ScopedCreateBulk) Exec(ctx context.Context) error {
+	_, err := b.Save(ctx)
+	return err
+}
+
+// ---------------------------------------------------------------- upsert
+
+// {{ $N }}ScopedUpsert is the "ON CONFLICT ... DO UPDATE" setter. It cannot move a row to
+// another Workspace or point a reference at a value that was not verified on create.
+type {{ $N }}ScopedUpsert struct{ u *sql.UpdateSet }
+
+{{ range $f := $n.MutableFields }}
+{{- if ne $f.Name "workspace_id" }}
+{{- $ref := scopedRefTarget $ $f }}
+{{- if not $ref }}
+// Set{{ $f.StructField }} sets the "{{ $f.Name }}" field.
+func (u *{{ $N }}ScopedUpsert) Set{{ $f.StructField }}(v {{ $f.Type }}) *{{ $N }}ScopedUpsert {
+	u.u.Set({{ $P }}.{{ $f.Constant }}, v)
+	return u
+}
+{{- if $f.SupportsMutationAdd }}
+
+// Add{{ $f.StructField }} adds v to the "{{ $f.Name }}" field.
+func (u *{{ $N }}ScopedUpsert) Add{{ $f.StructField }}(v {{ $f.Type }}) *{{ $N }}ScopedUpsert {
+	u.u.Add({{ $P }}.{{ $f.Constant }}, v)
+	return u
+}
+{{- end }}
+{{- end }}
+
+// Update{{ $f.StructField }} sets the "{{ $f.Name }}" field to the value that was provided on create.
+func (u *{{ $N }}ScopedUpsert) Update{{ $f.StructField }}() *{{ $N }}ScopedUpsert {
+	u.u.SetExcluded({{ $P }}.{{ $f.Constant }})
+	return u
+}
+{{- if $f.Optional }}
+
+// Clear{{ $f.StructField }} clears the value of the "{{ $f.Name }}" field.
+func (u *{{ $N }}ScopedUpsert) Clear{{ $f.StructField }}() *{{ $N }}ScopedUpsert {
+	u.u.SetNull({{ $P }}.{{ $f.Constant }})
+	return u
+}
+{{- end }}
+{{ end }}
+{{ end }}
+
+// conflictOptions confines the DO UPDATE part to rows of the Workspace.
+func (t *{{ $N }}Scoped) conflictOptions(columns []string) []sql.ConflictOption {
+	return []sql.ConflictOption{
+		sql.ConflictColumns(columns...),
+		sql.UpdateWhere(sql.EQ({{ $P }}.FieldWorkspaceID, t.s.ws)),
+	}
+}
+
+// {{ $N }}ScopedUpsertOne is the "upsert" of one {{ $N }}.
+type {{ $N }}ScopedUpsertOne struct {
+	x *{{ $N }}ScopedCreate
+	u *{{ $N }}UpsertOne
+}
+
+// OnConflictColumns configures the columns as conflict target. A conflicting row of
+// another Workspace is never updated.
+func (x *{{ $N }}ScopedCreate) OnConflictColumns(columns ...string) *{{ $N }}ScopedUpsertOne {
+	return &{{ $N }}ScopedUpsertOne{x: x, u: x.b.OnConflict((&{{ $N }}Scoped{s: x.s}).conflictOptions(columns)...)}
+}
+
+// UpdateNewValues updates the mutable fields using the new values set on create.
+func (u *{{ $N }}ScopedUpsertOne) UpdateNewValues() *{{ $N }}ScopedUpsertOne {
+	u.u.UpdateNewValues()
+	return u
+}
+
+// Ignore sets each column to itself in case of conflict.
+func (u *{{ $N }}ScopedUpsertOne) Ignore() *{{ $N }}ScopedUpsertOne {
+	u.u.Ignore()
+	return u
+}
+
+// DoNothing configures the conflict_action to `DO NOTHING`.
+func (u *{{ $N }}ScopedUpsertOne) DoNothing() *{{ $N }}ScopedUpsertOne {
+	u.u.DoNothing()
+	return u
+}
+
+// Update overrides fields' `UPDATE` values.
+func (u *{{ $N }}ScopedUpsertOne) Update(set func(*{{ $N }}ScopedUpsert)) *{{ $N }}ScopedUpsertOne {
+	u.u.Update(func(s *{{ $N }}Upsert) { set(&{{ $N }}ScopedUpsert{u: s.UpdateSet}) })
+	return u
+}
+
+// Exec verifies the references, then executes the upsert.
+func (u *{{ $N }}ScopedUpsertOne) Exec(ctx context.Context) error {
+	if err := u.x.check(ctx); err != nil {
+		return err
+	}
+	return u.u.Exec(ctx)
+}
+
+// ID is like Exec, returning the inserted or updated id.
+func (u *{{ $N }}ScopedUpsertOne) ID(ctx context.Context) (int64, error) {
+	if err := u.x.check(ctx); err != nil {
+		return 0, err
+	}
+	return u.u.ID(ctx)
+}
+
+// {{ $N }}ScopedUpsertBulk is the "upsert" of several {{ $N }} entities.
+type {{ $N }}ScopedUpsertBulk struct {
+	b *{{ $N }}ScopedCreateBulk
+	t *{{ $N }}Scoped
+	columns []string
+	opts []func(*{{ $N }}UpsertBulk)
+}
+
+// OnConflictColumns configures the columns as conflict target. A conflicting row of
+// another Workspace is never updated.
+func (b *{{ $N }}ScopedCreateBulk) OnConflictColumns(columns ...string) *{{ $N }}ScopedUpsertBulk {
+	return &{{ $N }}ScopedUpsertBulk{b: b, t: &{{ $N }}Scoped{s: b.s}, columns: columns}
+}
+
+// UpdateNewValues updates the mutable fields using the new values set on create.
+func (u *{{ $N }}ScopedUpsertBulk) UpdateNewValues() *{{ $N }}ScopedUpsertBulk {
+	u.opts = append(u.opts, func(r *{{ $N }}UpsertBulk) { r.UpdateNewValues() })
+	return u
+}
+
+// Ignore sets each column to itself in case of conflict.
+func (u *{{ $N }}ScopedUpsertBulk) Ignore() *{{ $N }}ScopedUpsertBulk {
+	u.opts = append(u.opts, func(r *{{ $N }}UpsertBulk) { r.Ignore() })
+	return u
+}
+
+// DoNothing configures the conflict_action to `DO NOTHING`.
+func (u *{{ $N }}ScopedUpsertBulk) DoNothing() *{{ $N }}ScopedUpsertBulk {
+	u.opts = append(u.opts, func(r *{{ $N }}UpsertBulk) { r.DoNothing() })
+	return u
+}
+
+// Update overrides fields' `UPDATE` values.
+func (u *{{ $N }}ScopedUpsertBulk) Update(set func(*{{ $N }}ScopedUpsert)) *{{ $N }}ScopedUpsertBulk {
+	u.opts = append(u.opts, func(r *{{ $N }}UpsertBulk) {
+		r.Update(func(s *{{ $N }}Upsert) { set(&{{ $N }}ScopedUpsert{u: s.UpdateSet}) })
+	})
+	return u
+}
+
+// Exec verifies every builder's references, then executes the upsert.
+func (u *{{ $N }}ScopedUpsertBulk) Exec(ctx context.Context) error {
+	raw, err := u.b.raw(ctx)
+	if err != nil {
+		return err
+	}
+	r := raw.OnConflict(u.t.conflictOptions(u.columns)...)
+	for _, o := range u.opts {
+		o(r)
+	}
+	return r.Exec(ctx)
+}
+
+// ---------------------------------------------------------------- update
+
+// {{ $N }}ScopedUpdateOne wraps {{ $N }}UpdateOne. It has no way to move the row to another Workspace.
+type {{ $N }}ScopedUpdateOne struct {
+	s *Scoped
+	b *{{ $N }}UpdateOne
+}
+
+// UpdateOneID updates the {{ $N }} with the id; a row of another Workspace is not found.
+func (t *{{ $N }}Scoped) UpdateOneID(id int64) *{{ $N }}ScopedUpdateOne {
+	return &{{ $N }}ScopedUpdateOne{s: t.s, b: t.s.c.{{ $N }}.UpdateOneID(id).Where({{ $P }}.WorkspaceID(t.s.ws))}
+}
+
+// Where appends predicates the row must also match (fencing).
+func (x *{{ $N }}ScopedUpdateOne) Where(ps ...predicate.{{ $N }}) *{{ $N }}ScopedUpdateOne {
+	x.b.Where(ps...)
+	return x
+}
+
+{{ with extend $n "Graph" $ "Node" $n "Builder" (print $N "ScopedUpdateOne") "Mode" "update" }}
+	{{ template "helper/scopedsetters" . }}
+{{ end }}
+
+{{ with extend $n "Graph" $ "Node" $n "Builder" (print $N "ScopedUpdateOne") }}
+	{{ template "helper/scopedcheck" . }}
+{{ end }}
+
+// Save verifies the references against the Workspace, then updates the {{ $N }}.
+func (x *{{ $N }}ScopedUpdateOne) Save(ctx context.Context) (*{{ $N }}, error) {
+	if err := x.check(ctx); err != nil {
+		return nil, err
+	}
+	return x.b.Save(ctx)
+}
+
+// Exec is like Save, discarding the entity.
+func (x *{{ $N }}ScopedUpdateOne) Exec(ctx context.Context) error {
+	_, err := x.Save(ctx)
+	return err
+}
+
+// {{ $N }}ScopedUpdate wraps {{ $N }}Update: a conditional bulk update of one Workspace.
+type {{ $N }}ScopedUpdate struct {
+	s *Scoped
+	b *{{ $N }}Update
+}
+
+// Update updates the {{ $N }} entities of the Workspace that match the predicates.
+func (t *{{ $N }}Scoped) Update() *{{ $N }}ScopedUpdate {
+	return &{{ $N }}ScopedUpdate{s: t.s, b: t.s.c.{{ $N }}.Update().Where({{ $P }}.WorkspaceID(t.s.ws))}
+}
+
+// Where appends predicates the rows must match.
+func (x *{{ $N }}ScopedUpdate) Where(ps ...predicate.{{ $N }}) *{{ $N }}ScopedUpdate {
+	x.b.Where(ps...)
+	return x
+}
+
+{{ with extend $n "Graph" $ "Node" $n "Builder" (print $N "ScopedUpdate") "Mode" "update" }}
+	{{ template "helper/scopedsetters" . }}
+{{ end }}
+
+{{ with extend $n "Graph" $ "Node" $n "Builder" (print $N "ScopedUpdate") }}
+	{{ template "helper/scopedcheck" . }}
+{{ end }}
+
+// Save verifies the references against the Workspace, then updates the rows and
+// returns how many changed.
+func (x *{{ $N }}ScopedUpdate) Save(ctx context.Context) (int, error) {
+	if err := x.check(ctx); err != nil {
+		return 0, err
+	}
+	return x.b.Save(ctx)
+}
+
+// Exec is like Save, discarding the count.
+func (x *{{ $N }}ScopedUpdate) Exec(ctx context.Context) error {
+	_, err := x.Save(ctx)
+	return err
+}
+{{ end }}
+{{ end }}
+
+{{/* Setters shared by the create and the update wrappers: they delegate to the raw
+     builder in x.b, skipping workspace_id and the workspace edge. */}}
+{{ define "helper/scopedsetters" }}
+{{- $B := $.Scope.Builder }}
+{{- $updater := eq $.Scope.Mode "update" }}
+{{- $fields := $.Fields }}{{ if $updater }}{{ $fields = $.MutableFields }}{{ end }}
+{{ range $f := $fields }}
+{{- if ne $f.Name "workspace_id" }}
+// Set{{ $f.StructField }} sets the "{{ $f.Name }}" field.
+func (x *{{ $B }}) Set{{ $f.StructField }}(v {{ $f.Type }}) *{{ $B }} {
+	x.b.Set{{ $f.StructField }}(v)
+	return x
+}
+{{- $nillableC := and (not $updater) (or $f.Optional $f.Default) }}
+{{- $nillableU := and $updater (not $f.UpdateDefault) }}
+{{- if and (not $f.Type.Nillable) (or $nillableC $nillableU) }}
+
+// SetNillable{{ $f.StructField }} sets the "{{ $f.Name }}" field if the given value is not nil.
+func (x *{{ $B }}) SetNillable{{ $f.StructField }}(v *{{ $f.Type }}) *{{ $B }} {
+	x.b.SetNillable{{ $f.StructField }}(v)
+	return x
+}
+{{- end }}
+{{- if and $updater $f.SupportsMutationAdd }}
+
+// {{ $f.MutationAdd }} adds value to the "{{ $f.Name }}" field.
+func (x *{{ $B }}) {{ $f.MutationAdd }}(v {{ $f.SignedType }}) *{{ $B }} {
+	x.b.{{ $f.MutationAdd }}(v)
+	return x
+}
+{{- end }}
+{{- if and $updater $f.SupportsMutationAppend }}
+
+// {{ $f.MutationAppend }} appends value to the "{{ $f.Name }}" field.
+func (x *{{ $B }}) {{ $f.MutationAppend }}(v {{ $f.Type }}) *{{ $B }} {
+	x.b.{{ $f.MutationAppend }}(v)
+	return x
+}
+{{- end }}
+{{- if and $f.Optional $updater }}
+
+// Clear{{ $f.StructField }} clears the value of the "{{ $f.Name }}" field.
+func (x *{{ $B }}) Clear{{ $f.StructField }}() *{{ $B }} {
+	x.b.Clear{{ $f.StructField }}()
+	return x
+}
+{{- end }}
+{{ end }}
+{{ end }}
+
+{{ range $e := $.EdgesWithID }}
+{{- if ne $e.Type.Name "Workspace" }}
+{{- if or (not $updater) (scopedEdgeMutable $e) }}
+{{- $op := "add" }}{{ $idsFunc := $e.MutationAdd }}{{ if $e.Unique }}{{ $op = "set" }}{{ $idsFunc = $e.MutationSet }}{{ end }}
+{{- $withSetter := not $e.HasFieldSetter }}
+{{- if $withSetter }}
+// {{ $idsFunc }} {{ $op }}s the "{{ $e.Name }}" edge to the {{ $e.Type.Name }} entity by ID{{ if not $e.Unique }}s{{ end }}.
+func (x *{{ $B }}) {{ $idsFunc }}({{ if $e.Unique }}id{{ else }}ids ...{{ end }} {{ $e.Type.ID.Type }}) *{{ $B }} {
+	x.b.{{ $idsFunc }}({{ if $e.Unique }}id{{ else }}ids...{{ end }})
+	return x
+}
+{{- end }}
+{{- if and $e.Unique $e.Optional $withSetter }}
+
+// SetNillable{{ $e.StructField }}ID sets the "{{ $e.Name }}" edge to the {{ $e.Type.Name }} entity by ID if the given value is not nil.
+func (x *{{ $B }}) SetNillable{{ $e.StructField }}ID(id *{{ $e.Type.ID.Type }}) *{{ $B }} {
+	x.b.SetNillable{{ $e.StructField }}ID(id)
+	return x
+}
+{{- end }}
+{{- $func := print (pascal $op) $e.StructField }}
+
+// {{ $func }} {{ $op }}s the "{{ $e.Name }}" edge{{ if not $e.Unique }}s{{ end }} to the {{ $e.Type.Name }} entity.
+func (x *{{ $B }}) {{ $func }}(v {{ if not $e.Unique }}...{{ end }}*{{ $e.Type.Name }}) *{{ $B }} {
+	x.b.{{ $func }}(v{{ if not $e.Unique }}...{{ end }})
+	return x
+}
+{{- if $updater }}
+
+// {{ $e.MutationClear }} clears the "{{ $e.Name }}" edge{{ if not $e.Unique }}s{{ end }} to the {{ $e.Type.Name }} entity.
+func (x *{{ $B }}) {{ $e.MutationClear }}() *{{ $B }} {
+	x.b.{{ $e.MutationClear }}()
+	return x
+}
+{{- if not $e.Unique }}
+
+// {{ $e.MutationRemove }} removes the "{{ $e.Name }}" edge to {{ $e.Type.Name }} entities by IDs.
+func (x *{{ $B }}) {{ $e.MutationRemove }}(ids ...{{ $e.Type.ID.Type }}) *{{ $B }} {
+	x.b.{{ $e.MutationRemove }}(ids...)
+	return x
+}
+
+// Remove{{ $e.StructField }} removes "{{ $e.Name }}" edges to {{ $e.Type.Name }} entities.
+func (x *{{ $B }}) Remove{{ $e.StructField }}(v ...*{{ $e.Type.Name }}) *{{ $B }} {
+	x.b.Remove{{ $e.StructField }}(v...)
+	return x
+}
+{{- end }}
+{{- end }}
+{{ end }}
+{{ end }}
+{{ end }}
+{{ end }}
+
+{{/* check verifies every reference the builder recorded against the Workspace. */}}
+{{ define "helper/scopedcheck" }}
+{{- $B := $.Scope.Builder }}
+{{- $g := $.Scope.Graph }}
+func (x *{{ $B }}) check(ctx context.Context) error {
+	m := x.b.Mutation()
+	_ = m
+	{{- range $e := scopedEdges $.Scope.Node }}
+	if err := x.s.verify{{ $e.Type.Name }}(ctx, m.{{ $e.StructField }}IDs()); err != nil {
+		return fmt.Errorf("{{ $e.Name }}: %w", err)
+	}
+	{{- end }}
+	{{- range $r := scopedFieldRefs $g $.Scope.Node }}
+	if v, ok := m.{{ $r.Field.MutationGet }}(); ok {
+		if err := x.s.verify{{ $r.Target.Name }}(ctx, []int64{v}); err != nil {
+			return fmt.Errorf("{{ $r.Field.Name }}: %w", err)
+		}
+	}
+	{{- end }}
+	return nil
+}
+{{ end }}

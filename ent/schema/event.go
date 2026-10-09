@@ -41,7 +41,8 @@ func (Event) Fields() []ent.Field {
 		// events before Identify; backfilled (stitched) onto the Contact at Identify.
 		field.Int64("contact_id").
 			Optional().
-			Nillable(),
+			Nillable().
+			Annotations(ScopedRef{Unchecked: true}),
 		// The anonymous device this event came from. Kept so pre-Identify anonymous
 		// events can be stitched onto a Contact by visitor_id when Identify arrives.
 		field.String("visitor_id").
