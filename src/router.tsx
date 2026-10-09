@@ -1,5 +1,6 @@
 import { createRootRoute, createRoute, createRouter, redirect } from '@tanstack/react-router'
 import { z } from 'zod'
+
 import App from './App.tsx'
 import { siteWorkspacesList } from './generated/site/sdk.gen.ts'
 import type { SiteWorkspaceResource } from './generated/site/types.gen.ts'

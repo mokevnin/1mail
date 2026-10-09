@@ -3,6 +3,7 @@ import type { useForm } from '@mantine/form'
 import { useNavigate, useParams } from '@tanstack/react-router'
 import type { TFunction } from 'i18next'
 import { useTranslation } from 'react-i18next'
+
 import { SiteSegmentType } from '../../generated/site/types.gen.ts'
 import { segmentsRoute } from '../../router.tsx'
 import { SegmentRuleBuilder } from './SegmentRuleBuilder.tsx'

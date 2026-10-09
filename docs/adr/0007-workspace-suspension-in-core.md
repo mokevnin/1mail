@@ -23,7 +23,7 @@ the automated abuse detector, the Operator console, impersonation — is closed 
 
 - Self-hosted (typically one workspace, doesn't police itself) gets the full mechanism and a CLI
   toggle, and needs nothing more — no Operator, no console.
-- The automated detector only fires above a minimum send volume (a complaint/bounce *rate* is
+- The automated detector only fires above a minimum send volume (a complaint/bounce _rate_ is
   noise at low volume), notifies the owner, and is one-click reversible by an Operator — bounding
   the blast radius of a false positive on a legitimate sender.
 - Impersonation and business dashboards are deferred out of the first version.

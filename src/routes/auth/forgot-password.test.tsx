@@ -1,4 +1,5 @@
 import { expect, test } from 'vitest'
+
 import { jsonResponse, mockClientFetch } from '../../test/mockFetch.ts'
 import { renderWithRouter } from '../../test/renderWithRouter.tsx'
 import { ForgotPasswordPage } from './forgot-password.tsx'

@@ -1,6 +1,7 @@
 import { Alert, Anchor, Button, Card, Stack, Text, Title } from '@mantine/core'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
+
 import { unsubscribeRoute } from '../router.tsx'
 
 // Public unsubscribe confirmation page (ADR 0012 / RFC 8058). The GET

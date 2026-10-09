@@ -2,6 +2,7 @@ import { Button, Group, Stack, Title } from '@mantine/core'
 import { useForm } from '@mantine/form'
 import { useNavigate } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
+
 import {
   siteAutomationsCreateMutation,
   siteAutomationsListQueryKey,

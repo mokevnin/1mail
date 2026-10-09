@@ -2,6 +2,7 @@ import { Badge, Group, Loader, SimpleGrid, Stack, Text, Title } from '@mantine/c
 import { useQuery } from '@tanstack/react-query'
 import type { TFunction } from 'i18next'
 import { useTranslation } from 'react-i18next'
+
 import { ApiErrorAlert } from '../../components/ApiErrorAlert.tsx'
 import { StatCard } from '../../components/StatCard.tsx'
 import { siteBroadcastsGetOptions } from '../../generated/site/@tanstack/react-query.gen.ts'

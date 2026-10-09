@@ -7,10 +7,11 @@ status: accepted
 Gmail/Yahoo/Microsoft enforce bulk-sender requirements (2024+) as the **receiving** side: any
 mail landing in those inboxes — regardless of the transport it was sent through (SES, SMTP, …) —
 must be DKIM-authenticated, come from a domain with a published DMARC record, and (for senders
+
 > ~5k/day) carry a **one-click unsubscribe** (RFC 8058), with the spam-complaint rate held
-< 0.3%. Non-compliant mail is spam-foldered or rejected. The transport does not do this for us:
-SES ships whatever MIME we hand it and adds no `List-Unsubscribe` headers. So 1mail must build
-the headers itself, in the message, before handing it to any provider.
+> < 0.3%. Non-compliant mail is spam-foldered or rejected. The transport does not do this for us:
+> SES ships whatever MIME we hand it and adds no `List-Unsubscribe` headers. So 1mail must build
+> the headers itself, in the message, before handing it to any provider.
 
 This ADR covers the two forks still open after ADR 0011 settled the complaint-rate metric:
 one-click unsubscribe (RFC 8058) and DMARC posture. Both are table-stakes deliverability that a
@@ -25,14 +26,14 @@ The current send stack (`nikoksr/notify`) exposes no custom-header support and c
 `go-mail` is not a dependency (the backlog's "already a dep" note is wrong). ADR 0010's native
 DKIM signing **already** forces replacing this with a raw-MIME-building + signing stack. The
 `List-Unsubscribe` headers ride on that same rework — they physically cannot exist until the
-send path builds raw MIME. The *design* below is independent of the stack choice; only its
+send path builds raw MIME. The _design_ below is independent of the stack choice; only its
 implementation sequences with/after ADR 0010.
 
 **Critically, the send-path rework must include both `List-Unsubscribe` and
 `List-Unsubscribe-Post` in the DKIM-signed header list (`h=`), not merely emit them.** RFC 8058
 §5 requires the one-click headers to be covered by the DKIM signature (so a forwarder/attacker
 cannot inject a forged unsubscribe URL); Gmail/Yahoo honor one-click **only** when the headers
-are within the signed scope. Headers added *outside* `h=` produce mail that looks correct, emits
+are within the signed scope. Headers added _outside_ `h=` produce mail that looks correct, emits
 no error, and silently fails one-click — the exact trap this note exists to prevent.
 
 ### Headers on Broadcast + Automation only, never Transactional

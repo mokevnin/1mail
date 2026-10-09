@@ -12,8 +12,8 @@
   enabled: true
   is_default: true
   workspace_id: 1
-  created_at: "{{daysAgo 170}}"
-  updated_at: "{{daysAgo 170}}"
+  created_at: '{{daysAgo 170}}'
+  updated_at: '{{daysAgo 170}}'
 - id: 2
   name: Amazon SES (disabled)
   channel: email
@@ -22,5 +22,5 @@
   enabled: false
   is_default: false
   workspace_id: 1
-  created_at: "{{daysAgo 40}}"
-  updated_at: "{{daysAgo 40}}"
+  created_at: '{{daysAgo 40}}'
+  updated_at: '{{daysAgo 40}}'

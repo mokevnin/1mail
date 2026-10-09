@@ -1,6 +1,7 @@
 import { Loader, Stack, Title } from '@mantine/core'
 import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
+
 import { ApiErrorAlert } from '../../components/ApiErrorAlert.tsx'
 import { siteAutomationsGetOptions } from '../../generated/site/@tanstack/react-query.gen.ts'
 import { automationsEditRoute } from '../../router.tsx'

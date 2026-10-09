@@ -2,6 +2,7 @@ import { Button, Group, Stack, Textarea, TextInput } from '@mantine/core'
 import type { useForm } from '@mantine/form'
 import { useNavigate, useParams } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
+
 import { templatesRoute } from '../../router.tsx'
 
 export interface TemplateFormValues {

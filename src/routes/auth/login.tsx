@@ -4,10 +4,11 @@ import { notifications } from '@mantine/notifications'
 import { useMutation } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
+
 import { siteAuthDirectLoginMutation } from '../../generated/site/@tanstack/react-query.gen.ts'
 import type { SiteDirectLoginInput } from '../../generated/site/types.gen.ts'
 import { forgotPasswordRoute, indexRoute, registerRoute } from '../../router.tsx'
-import { type ApiErrorLike, getApiErrorMessage } from '../../utils/apiErrors.ts'
+import { getApiErrorMessage } from '../../utils/apiErrors.ts'
 
 export function LoginPage() {
   const { t } = useTranslation()
@@ -30,7 +31,7 @@ export function LoginPage() {
         color: 'red',
         title: t(($) => $.login.errorTitle),
         message: getApiErrorMessage(
-          error as ApiErrorLike,
+          error,
           t(($) => $.login.errorMessage),
         ),
       })

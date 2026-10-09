@@ -12,7 +12,7 @@ event (e.g. `contact.created`, `email.opened`, `broadcast.sent`) is published
 once, and any number of independent subscribers react. Producers must not know
 their consumers. This is the backbone for:
 
-- **Automations** — enrolling contacts is a *subscriber*, not a direct call.
+- **Automations** — enrolling contacts is a _subscriber_, not a direct call.
 - **Engagement log** — persisting events to the `Event` table is a subscriber.
 - **Future**: outgoing webhooks, analytics/reporting projections, audit trail —
   each is just another subscriber, added without touching producers.
@@ -39,25 +39,25 @@ and scatters the "what happened" concept. This design replaces that.
 
 **Explicitly NOT required now:** aggregate event-sourcing (rebuilding Contact /
 Broadcast state by replaying events). Our aggregates are CRUD rows in ent; events
-are a *reaction + log* layer, not the source of truth. This is the key scoping
+are a _reaction + log_ layer, not the source of truth. This is the key scoping
 decision — it rules out heavyweight ES frameworks.
 
 ## Options considered ("or is something else a better fit?")
 
-| Option | Maintained (2026-06) | Fit | Verdict |
-|---|---|---|---|
-| **watermill** (have it) | v1.5.2, 9.8k★, active | Pub/sub framework; Postgres backend (watermill-sql, already a dep); CQRS component for typed events; Forwarder for the outbox pattern | **Recommended** |
-| Hand-rolled channel bus | — | Trivial in-process fan-out | ✗ not durable, no persistence/replay, lost on crash |
-| river as the bus (have it) | v0.39, active | Insert one job per subscriber | ✗ it's a job *queue*, not fan-out pub/sub or a log; wrong tool |
-| looplab/eventhorizon | v0.17.0, 1.7k★, active | Full CQRS+ES: aggregates, projections, event store | ✗ overkill — we don't event-source aggregates |
-| hallgren/eventsourcing | v0.9.1, 279★, active | Focused ES lib (aggregate streams) | ✗ same — assumes event-sourced aggregates |
-| modernice/goes, go-eventually | 160★ / 102★, active | ES toolkits | ✗ same family, smaller |
-| EventStoreDB client | archived-ish | External event-store server | ✗ another server to run; breaks minimal self-host |
+| Option                        | Maintained (2026-06)   | Fit                                                                                                                                   | Verdict                                                        |
+| ----------------------------- | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------- |
+| **watermill** (have it)       | v1.5.2, 9.8k★, active  | Pub/sub framework; Postgres backend (watermill-sql, already a dep); CQRS component for typed events; Forwarder for the outbox pattern | **Recommended**                                                |
+| Hand-rolled channel bus       | —                      | Trivial in-process fan-out                                                                                                            | ✗ not durable, no persistence/replay, lost on crash            |
+| river as the bus (have it)    | v0.39, active          | Insert one job per subscriber                                                                                                         | ✗ it's a job _queue_, not fan-out pub/sub or a log; wrong tool |
+| looplab/eventhorizon          | v0.17.0, 1.7k★, active | Full CQRS+ES: aggregates, projections, event store                                                                                    | ✗ overkill — we don't event-source aggregates                  |
+| hallgren/eventsourcing        | v0.9.1, 279★, active   | Focused ES lib (aggregate streams)                                                                                                    | ✗ same — assumes event-sourced aggregates                      |
+| modernice/goes, go-eventually | 160★ / 102★, active    | ES toolkits                                                                                                                           | ✗ same family, smaller                                         |
+| EventStoreDB client           | archived-ish           | External event-store server                                                                                                           | ✗ another server to run; breaks minimal self-host              |
 
 **Conclusion:** watermill is the right tool and it's already in the stack — but as
 a **plain typed event bus with a transactional outbox**, not its CQRS/ES-heavy
 cousins. Full event-sourcing frameworks solve a problem we don't have (and the
-user stepped back from). river stays — but for *durable execution* (send email,
+user stepped back from). river stays — but for _durable execution_ (send email,
 wait, fan-out), which a subscriber triggers. Clean split:
 
 > **Event** = "something happened" (watermill, fan-out, logged). **Job** = "do
@@ -85,11 +85,11 @@ Inside the same ent transaction that writes the state change, they append a row
 to an **outbox table**. A relay then forwards committed outbox rows to the bus.
 This is the standard transactional-outbox / RES "append to stream" pattern and is
 why watermill-sql fits: its SQL publisher/subscriber treat a Postgres table as a
-topic with consumer offsets, so the outbox table *is* the watermill topic.
+topic with consumer offsets, so the outbox table _is_ the watermill topic.
 
 **Chosen: approach A** — watermill-sql publisher on the ent tx connection.
 Publish using the same `*sql.Tx` ent is using, so the message insert is in the
-state tx. Least code, and the outbox table *is* the watermill SQL topic. The P0
+state tx. Least code, and the outbox table _is_ the watermill SQL topic. The P0
 spike proves we can hand watermill-sql ent's transaction executor.
 
 > Fallback **B** (if the tx handoff can't be wired): an ent-owned `OutboxEvent`
@@ -100,8 +100,9 @@ spike proves we can hand watermill-sql ent's transaction executor.
 ### The `Event` table is a projection, not the bus
 
 Clarify the vocabulary so we don't conflate them:
+
 - **Domain event** = the bus message (typed struct, transient, fanned out).
-- **`Event` row** = a *projection* written by the `persist` subscriber — the
+- **`Event` row** = a _projection_ written by the `persist` subscriber — the
   durable engagement log the UI/analytics read. It is one consumer of the bus,
   not the bus itself.
 
@@ -166,7 +167,7 @@ Email}`) marshaled into `Payload`. Consumers unmarshal by `Name`+`Version`.
    `user.registered` as a subscriber or a river job).
 
 river, the automation run engine, and the broadcast engine are unchanged — only
-*how the trigger fires* moves from a direct call to a bus subscription.
+_how the trigger fires_ moves from a direct call to a bus subscription.
 
 ## Phasing
 
@@ -195,17 +196,17 @@ river, the automation run engine, and the broadcast engine are unchanged — onl
   (SSRF, resolved-IP checks) + `standard-webhooks` (interoperable signatures).
   Webhooks currently see `contact.created` + `email.*`.
 - **DONE — collect/external on the bus via a typed union.** A first attempt was
-  reverted (it tried to make a customer's runtime-named event one of *our* types,
+  reverted (it tried to make a customer's runtime-named event one of _our_ types,
   forcing a flat envelope + field-bag). The shipped model below is the correct one.
 
   **Never conflate internal and external events.**
-  - *Our* events are a **closed typed union** — `ContactCreated`, `EmailOpened/
+  - _Our_ events are a **closed typed union** — `ContactCreated`, `EmailOpened/
     Clicked/Unsubscribed`, … — each a Go type that owns its projection (`Project()`).
     Bus event names are finite and ours.
-  - A *customer's* event (`page_view`, `added_to_cart`) is the **user's domain, not
+  - A _customer's_ event (`page_view`, `added_to_cart`) is the **user's domain, not
     ours**: we know nothing about it and store it **as-is** (opaque action string +
     properties + identity).
-  - The bridge: ingesting a customer event is itself *our* typed event,
+  - The bridge: ingesting a customer event is itself _our_ typed event,
     **`CollectedEvent`** (bus name e.g. `event.collected`), whose body carries the
     user's opaque payload. The user's `page_view` is a **field** (`Action`) inside
     `CollectedEvent`, not a bus event name — so there are no "unknown" bus names and
@@ -213,6 +214,7 @@ river, the automation run engine, and the broadcast engine are unchanged — onl
     Shipped: persist/automations/webhooks `Decode()` the envelope and use
     `Project()`; automations enroll and webhooks filter on `Project().Action` (the
     customer action), not the bus name.
+
 - **Later**: analytics subscribers; per-subject ordering if needed.
 
 ## Decisions (resolved 2026-06-28)
@@ -225,7 +227,7 @@ river, the automation run engine, and the broadcast engine are unchanged — onl
    table is cheap. Add a pruning job later if it grows.
 3. ~~CQRS component~~ → **plain Publisher/Subscriber + generic Envelope**
    (revised during the P0 spike). watermill's `cqrs.EventProcessor` registers one
-   handler per *compile-time* event type, but our core subscribers don't work that
+   handler per _compile-time_ event type, but our core subscribers don't work that
    way: `persist` writes **every** event, and `automations` match a **runtime**
    `trigger_event` string — including open-ended custom events from the collect
    API that have no Go type. Neither can be a per-type CQRS handler. So a single
@@ -236,7 +238,7 @@ river, the automation run engine, and the broadcast engine are unchanged — onl
 
 - **Consumer group per subscriber.** All subscribers share the one outbox topic,
   so each must run under its **own consumer group** (its own offset cursor) to get
-  fan-out; a shared group would make them *compete* for messages.
+  fan-out; a shared group would make them _compete_ for messages.
   `events.RegisterSubscribers` builds one watermill-sql subscriber per consumer.
 - **Outbox schema at boot.** The tx publisher can't self-initialize (a CREATE
   TABLE would implicitly commit the tx), so `events.InitSchema` creates the

@@ -1,0 +1,27 @@
+{
+  "$schema": "./node_modules/oxfmt/configuration_schema.json",
+  "printWidth": 100,
+  "singleQuote": true,
+  "jsxSingleQuote": false,
+  "semi": false,
+  "trailingComma": "all",
+  "sortImports": true,
+  "sortPackageJson": true,
+  "ignorePatterns": [
+    "dist",
+    "src/generated",
+    "types/resources.d.ts",
+    "packages/*/src/generated",
+    "packages/*/dist",
+    "internal/server/assets",
+    "openapi",
+    "gen",
+    "ent",
+    "pnpm-lock.yaml",
+    "skills-lock.json",
+    ".agents",
+    ".claude",
+    ".cache",
+    "tmp"
+  ]
+}

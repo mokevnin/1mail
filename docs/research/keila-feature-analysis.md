@@ -2,7 +2,7 @@
 
 Researched July 2026 via web search + primary Keila pages (keila.io, keila.io/docs,
 keila.io/roadmap, github.com/pentacent/keila). Keila's public docs are thin on
-implementation detail, so several model claims are inferred from the docs' *usage* framing
+implementation detail, so several model claims are inferred from the docs' _usage_ framing
 and flagged inline. Where a claim below says "not in docs" it means the capability may
 exist but is undocumented — not that it is known absent.
 
@@ -10,8 +10,8 @@ Keila positions itself as **"a 100% Open Source newsletter tool, made in Germany
 in the EU"** — a self-hostable **Mailchimp/Brevo alternative** with a privacy/EU-data-control
 angle. Pentacent (the vendor) runs a managed cloud at app.keila.io alongside the AGPL binary.
 
-**At a glance:** mature *newsletter* product (broadcasts + forms + segments + transactional),
-but **no automations/drip yet** (roadmap: *Planned*) and **no on-site behavioral tracking**.
+**At a glance:** mature _newsletter_ product (broadcasts + forms + segments + transactional),
+but **no automations/drip yet** (roadmap: _Planned_) and **no on-site behavioral tracking**.
 That is precisely the layer 1mail is built around — so on our core thesis (event-driven
 automation + `/collect`) Keila is not a competitor; on newsletter fundamentals it is ahead
 of where we are and worth mining for UX and query-model ideas.
@@ -35,7 +35,7 @@ of where we are and worth mining for UX and query-model ideas.
 - Keila's send unit is a **campaign** = our **Broadcast**. Scheduling + delivery actions
   via UI and API.
 - **Editors — several parallel options:** visual **Block Editor**, **Markdown WYSIWYG**,
-  raw **MJML**, and plain text. A **Visual MJML Editor** is *In Progress* on the roadmap.
+  raw **MJML**, and plain text. A **Visual MJML Editor** is _In Progress_ on the roadmap.
   - Contrast with 1mail's deliberate **MJML-only** stance ("simple and powerful": one
     powerful primitive, not parallel toggles — see the `simple-and-powerful` memory). Keila
     took the opposite bet (many editors). Not something to copy; a validation that MJML is a
@@ -48,7 +48,7 @@ of where we are and worth mining for UX and query-model ideas.
 - Contact carries arbitrary **JSON custom data, incl. nested fields**; segment language reaches
   into it by dot-notation (`data.age`, `data.tags.foo`).
   - This is the **schemaless-trait model 1mail explicitly rejected** (CONTEXT anti-vocabulary:
-    every non-core attribute is a *typed, named, governed* **Custom field**, auto-created on
+    every non-core attribute is a _typed, named, governed_ **Custom field**, auto-created on
     first sight). Keila's JSON bag is more flexible but gives the segment builder no governed
     field list to offer — you must know your own JSON shape. Our typed-field decision looks
     better for a segment UI; Keila's is easier to ingest arbitrary payloads. Worth keeping our
@@ -59,7 +59,7 @@ of where we are and worth mining for UX and query-model ideas.
   Contact + Visitor + Identify spine has no counterpart here).
 - Contact status / subscription state: **not documented**; given the feature set it is almost
   certainly a stored subscribe/unsubscribe flag per contact — i.e. the classic model 1mail
-  deliberately replaced with *derived* Send-eligibility. (Flagged — not verified.)
+  deliberately replaced with _derived_ Send-eligibility. (Flagged — not verified.)
 
 ## 4. Segments — the most interesting part to compare
 
@@ -76,10 +76,10 @@ live (dynamic membership). Documented operators:
   `opened_at`, `clicked_at`, `bounced_at`, `complaint_received_at`, `unsubscribed_at`.
 
 **Comparison to 1mail's Segment** (combinator + nested rules over contact fields, custom fields,
-*and Events*, evaluated live, never materialized):
+_and Events_, evaluated live, never materialized):
 
 - **We are architecturally ahead on behavior.** Keila's behavior is a bolted-on `messages`
-  sub-object with a fixed set of email-engagement timestamps — it can only ask about *email*
+  sub-object with a fixed set of email-engagement timestamps — it can only ask about _email_
   interactions, one campaign at a time. 1mail folds `email.sent/opened/clicked` into the **same
   Event stream as customer-tracked actions** (CONTEXT: "engagement is segmentable through the
   very same machinery … no parallel event stream"). We can segment on arbitrary events; Keila
@@ -96,10 +96,10 @@ live (dynamic membership). Documented operators:
 - **Form Builder** — real, shipped product: design sign-up forms, add custom checkboxes / text
   fields / dropdowns, **captcha**, and **double opt-in verification**.
 - Maps onto 1mail's **ADR 0013 (double opt-in / confirmed subscription)** and the deferred
-  "on-site popup/form" surface (CONTEXT "Channels & future surfaces"). Keila has *built* the
-  capture surface + double-opt-in loop that 1mail has only *modelled the consent side* of
+  "on-site popup/form" surface (CONTEXT "Channels & future surfaces"). Keila has _built_ the
+  capture surface + double-opt-in loop that 1mail has only _modelled the consent side_ of
   (Confirmation as event + gate row). Their form builder is a reference for when we build ours.
-- **Embedded form markup generation** is on their roadmap (*Planned*) — i.e. even Keila doesn't
+- **Embedded form markup generation** is on their roadmap (_Planned_) — i.e. even Keila doesn't
   yet emit copy-paste embed snippets. Minor.
 
 ## 6. Sending & deliverability
@@ -112,9 +112,9 @@ live (dynamic membership). Documented operators:
     live verification)** — Keila surfaces the same SPF/DKIM/DMARC checks as a friendly wizard.
     Good UX reference for our sending-domain verification screen. → §9.
   - "Shared domains" (send from a pooled Keila domain) is a **cloud/onboarding** convenience;
-    less relevant to our native-signing-per-workspace-domain model, but the *low-friction first
-    send* it enables is worth noting for SaaS onboarding.
-- **Fully-European send stack** is *In Progress* (their EU-data differentiator). Not applicable
+    less relevant to our native-signing-per-workspace-domain model, but the _low-friction first
+    send_ it enables is worth noting for SaaS onboarding.
+- **Fully-European send stack** is _In Progress_ (their EU-data differentiator). Not applicable
   to us directly.
 - No evidence of per-domain reputation metrics (complaint/bounce rate) like our ADR 0011 — our
   deliverability-metrics work appears **ahead of Keila**.
@@ -124,7 +124,7 @@ live (dynamic membership). Documented operators:
 - **Transactional email via API** shipped **June 2026** (order confirmations, password resets,
   magic links) with reusable **MJML/HTML/plain-text templates**.
 - Direct parity with 1mail **ADR 0005 (transactional send surface)** + CONTEXT "Transactional
-  send". Both platforms now pitch "one service for marketing *and* transactional." Notable that
+  send". Both platforms now pitch "one service for marketing _and_ transactional." Notable that
   a mature OSS newsletter tool only added this a month ago — validates it as the right
   differentiating surface, and we're at parity by design.
 - Not confirmed whether Keila's transactional templates bind **by reference** (live) the way our
@@ -133,15 +133,15 @@ live (dynamic membership). Documented operators:
 
 ## 8. Automations — Keila's gap, our thesis
 
-- **Email Automations / drip = roadmap `#132`, status *Planned*** (8 votes, 20 comments). Not
+- **Email Automations / drip = roadmap `#132`, status _Planned_** (8 votes, 20 comments). Not
   built. No visual workflow builder, no event triggers, no delays/waits, no enrollment model.
 - 1mail already models this: **Automation / Trigger / Enrollment / Step** (CONTEXT), backed by
   **ADR 0001 (send-eligibility)** and **ADR 0002 (unified identity)**, with per-Automation
   unsubscribe scopes. This is the whole point of the product.
 - **No on-site behavioral tracking** in Keila at all — no JS snippet, no `/collect`-style
   ingestion, no anonymous→identified visitor stitching. Keila only knows email opens/clicks.
-- **Net:** Keila is a *newsletter* tool reaching toward automation; 1mail is an *automation +
-  CDP* tool that also does newsletters. Different centers of gravity. On automation and
+- **Net:** Keila is a _newsletter_ tool reaching toward automation; 1mail is an _automation +
+  CDP_ tool that also does newsletters. Different centers of gravity. On automation and
   behavioral segmentation **we lead**; there is nothing to copy from Keila here because it
   doesn't exist yet.
 
@@ -149,28 +149,29 @@ live (dynamic membership). Documented operators:
 
 1. **Public campaign archive links** (Keila §2). Low-cost, genuinely nice: a public,
    shareable web version of a sent Broadcast. Fits our SPA-renders-everything stance (a public
-   route rendering stored Message content). No consent implications (content only). *Strong
-   candidate — small, additive, no core-model change.*
+   route rendering stored Message content). No consent implications (content only). _Strong
+   candidate — small, additive, no core-model change._
 2. **Segment leaf-operator checklist** (Keila §4). Before we ship the Segment builder, make
    sure the rule-query DSL covers `$like`/wildcard, `$empty`/is-unset (null vs empty vs missing),
    and the full `< <= > >=` comparison family — not just equality. `$empty` semantics
-   (distinguishing null / empty / unset) are easy to under-spec. *Adopt as a spec checklist,
-   not code.*
+   (distinguishing null / empty / unset) are easy to under-spec. _Adopt as a spec checklist,
+   not code._
 3. **Sending-domain setup wizard with live DNS checks** (Keila §6). UX reference for our
    ADR 0010 verification screen: show SPF/DKIM/DMARC status inline with copy-paste records and
-   a re-check button, framed as a guided flow rather than a raw records table. *UX pattern to
-   borrow when we build the sending-domain screen.*
+   a re-check button, framed as a guided flow rather than a raw records table. _UX pattern to
+   borrow when we build the sending-domain screen._
 4. **Low-friction first-send onboarding** (Keila "Send with Keila", §6). For the eventual SaaS,
    the "verify DNS, then send" wizard (and optionally a shared warm-up domain) lowers time-to-
-   first-send. *Note for SaaS onboarding; revisit when cloud onboarding is scoped.*
+   first-send. _Note for SaaS onboarding; revisit when cloud onboarding is scoped._
 
 **Explicitly NOT taking:**
+
 - Multiple parallel editors (we keep MJML-only — `simple-and-powerful`).
 - Schemaless JSON custom-data bag (we keep typed, governed Custom fields — CONTEXT anti-vocab
   "Trait"). Keila's dot-notation flexibility is real but costs the governed field list our
   segment UI depends on.
-- MongoDB-style raw JSON query as the *user-facing* segment format (we have a structured rule
-  builder; borrow the operator *set*, not the hand-written-JSON UX).
+- MongoDB-style raw JSON query as the _user-facing_ segment format (we have a structured rule
+  builder; borrow the operator _set_, not the hand-written-JSON UX).
 - Email-only identity (we keep multi-key Contact + Visitor + Identify).
 
 ## 10. Uncertainty flags
@@ -181,7 +182,7 @@ live (dynamic membership). Documented operators:
 3. Segment `messages` behavioral filter — confirmed for email engagement only; unknown if any
    non-email event filtering exists (docs suggest not).
 4. "Shared domains" sending — mechanics (pooled reputation? DKIM alignment?) not detailed.
-5. No automation/drip in product is confirmed by the roadmap (*Planned*), but a partial/hidden
+5. No automation/drip in product is confirmed by the roadmap (_Planned_), but a partial/hidden
    capability can't be fully ruled out from docs alone (low risk — roadmap is explicit).
 
 ---

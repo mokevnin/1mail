@@ -18,6 +18,7 @@ import { useForm } from '@mantine/form'
 import { useQuery } from '@tanstack/react-query'
 import { useNavigate, useParams } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
+
 import {
   siteEventsListOptions,
   siteWorkspacesListOptions,

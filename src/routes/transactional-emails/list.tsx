@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 import type { TFunction } from 'i18next'
 import { DataTable } from 'mantine-datatable'
 import { useTranslation } from 'react-i18next'
+
 import { ApiErrorAlert } from '../../components/ApiErrorAlert.tsx'
 import { siteTransactionalEmailsListOptions } from '../../generated/site/@tanstack/react-query.gen.ts'
 import type { SiteTransactionalEmailStatus } from '../../generated/site/types.gen.ts'

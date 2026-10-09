@@ -6,7 +6,8 @@ import {
   RouterProvider,
 } from '@tanstack/react-router'
 import type { ReactNode } from 'react'
-import { type Mock, vi } from 'vitest'
+import { type MockInstance, vi } from 'vitest'
+
 import { renderWithProviders } from './renderWithProviders.tsx'
 
 type RenderWithRouterOptions = {
@@ -37,10 +38,11 @@ export async function renderWithRouter(
     history: createMemoryHistory({ initialEntries: [initialPath] }),
   })
 
-  // Typed as Mock so the inferred return type stays nameable (no leaked
-  // @vitest/spy internals). navigate is swapped in so tests can assert on it.
-  const navigate: Mock = vi.fn().mockResolvedValue(undefined)
-  router.navigate = navigate as unknown as typeof router.navigate
+  // Typed as MockInstance so the inferred return type stays nameable (no leaked
+  // @vitest/spy internals). navigate is stubbed so tests can assert on it.
+  const navigate: MockInstance<typeof router.navigate> = vi
+    .spyOn(router, 'navigate')
+    .mockResolvedValue(undefined)
 
   const screen = await renderWithProviders(<RouterProvider router={router} />)
   return { screen, navigate }

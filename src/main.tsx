@@ -6,6 +6,7 @@ import { RouterProvider } from '@tanstack/react-router'
 import { StrictMode, useState } from 'react'
 import { createRoot } from 'react-dom/client'
 import { I18nextProvider } from 'react-i18next'
+
 import { client } from './generated/site/client.gen.ts'
 import { i18n } from './i18n.ts'
 import { router } from './router.tsx'

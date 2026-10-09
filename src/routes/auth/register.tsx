@@ -4,10 +4,11 @@ import { notifications } from '@mantine/notifications'
 import { useMutation } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
+
 import { siteAuthRegisterMutation } from '../../generated/site/@tanstack/react-query.gen.ts'
 import type { SiteRegisterInput } from '../../generated/site/types.gen.ts'
 import { indexRoute, loginRoute } from '../../router.tsx'
-import { type ApiErrorLike, getApiErrorMessage } from '../../utils/apiErrors.ts'
+import { getApiErrorMessage } from '../../utils/apiErrors.ts'
 
 export function RegisterPage() {
   const { t } = useTranslation()
@@ -38,7 +39,7 @@ export function RegisterPage() {
         color: 'red',
         title: t(($) => $.registration.errorTitle),
         message: getApiErrorMessage(
-          error as ApiErrorLike,
+          error,
           t(($) => $.registration.errorMessage),
         ),
       })

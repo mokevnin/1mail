@@ -8,27 +8,29 @@ import {
   useWorkflowBuilderActions,
   WorkflowBuilder,
 } from '@workflowbuilder/sdk'
-// Imported as a raw string (not auto-injected): the SDK sheet carries unlayered
-// global resets and .mantine-* overrides that would leak app-wide. We mount it
-// only while the builder is on screen and remove it on unmount, so it never
-// touches the rest of the app (e.g. the dashboard's body scroll).
-import builderStyles from '@workflowbuilder/sdk/style.css?inline'
 import i18next from 'i18next'
 import { useCallback, useEffect, useLayoutEffect, useMemo } from 'react'
 import { I18nextProvider, useTranslation } from 'react-i18next'
+
 import {
   siteAutomationsGetQueryKey,
   siteAutomationsListQueryKey,
   siteAutomationsUpdateMutation,
 } from '../../generated/site/@tanstack/react-query.gen.ts'
 import type { SiteAutomationResource } from '../../generated/site/types.gen.ts'
-import { type ApiErrorLike, getApiErrorMessage } from '../../utils/apiErrors.ts'
+import { getApiErrorMessage } from '../../utils/apiErrors.ts'
 import {
   AutomationDetailsFields,
   type AutomationDetailsValues,
 } from './AutomationDetailsFields.tsx'
 import { graphToSteps, stepsToGraph } from './definition.ts'
 import { useAutomationNodeTypes } from './nodes.tsx'
+
+// Imported as a raw string (not auto-injected): the SDK sheet carries unlayered
+// global resets and .mantine-* overrides that would leak app-wide. We mount it
+// only while the builder is on screen and remove it on unmount, so it never
+// touches the rest of the app (e.g. the dashboard's body scroll).
+import builderStyles from '@workflowbuilder/sdk/style.css?inline'
 
 interface AutomationBuilderProps {
   slug: string
@@ -122,7 +124,7 @@ export function AutomationBuilder({ slug, automation }: AutomationBuilderProps) 
           color: 'red',
           title: t(($) => $.alerts.automationSaveErrorTitle),
           message: getApiErrorMessage(
-            error as ApiErrorLike,
+            error,
             t(($) => $.alerts.automationSaveErrorMessage),
           ),
         })

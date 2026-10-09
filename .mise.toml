@@ -1,2 +1,45 @@
 [tools]
+air = "latest"
+atlas-community = "latest"
+gitleaks = "latest"
+go = "1.26"
 golangci-lint = "2"
+hk = "latest"
+jactionlint = "latest"
+mailpit = "latest"
+node = "25"
+pinact = "latest"
+pitchfork = "latest"
+pkl = "latest"
+pnpm = "11"
+zizmor = "latest"
+
+# Install the git hooks (hk.pkl) once the toolchain is in place.
+[hooks]
+postinstall = "hk install"
+
+# Keep dependencies in sync when the lockfiles change (checked on the shell prompt).
+[[watch_files]]
+patterns = ["pnpm-lock.yaml"]
+run = "pnpm install --frozen-lockfile"
+
+[[watch_files]]
+patterns = ["go.mod", "go.sum"]
+run = "go mod download"
+
+# Thin wrappers over the Makefile (which owns the container-based recipes).
+[tasks.check]
+description = "Run every linter, type-check and security check"
+run = "make check"
+
+[tasks.fix]
+description = "Auto-fix formatting and lint"
+run = "make check-fix"
+
+[tasks.test]
+description = "Run backend tests"
+run = "make test"
+
+[tasks.dev]
+description = "Start the dev stack in the background (pitchfork)"
+run = "pitchfork start dev"

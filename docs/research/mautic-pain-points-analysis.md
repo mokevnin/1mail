@@ -4,14 +4,14 @@ Researched July 2026 via web search across the Mautic community forums, GitHub i
 and third-party review/hosting write-ups (G2, TrustRadius, Research.com, Autoize). Mautic
 is the incumbent open-source marketing automation platform; this doc catalogues its
 **most-repeated user complaints** and maps each to 1mail's current position, so the roadmap
-can target the pains that are genuinely *ours to win*.
+can target the pains that are genuinely _ours to win_.
 
 Mautic-side claims are cited to forum threads / issues. 1mail-side claims are grounded in
 `GLOSSARY.md` and `docs/adr/*` (the authoritative model) — where the two disagree, CONTEXT/ADRs win.
 
-**Bottom line:** Mautic's deepest pains are *systemic* (cron architecture, upgrade friction,
+**Bottom line:** Mautic's deepest pains are _systemic_ (cron architecture, upgrade friction,
 heavyweight deployment, dated UI) and 1mail neutralises them **by design** — that is the core
-positioning advantage. The two areas where 1mail is *not yet proven* against Mautic are
+positioning advantage. The two areas where 1mail is _not yet proven_ against Mautic are
 **scale** (unvalidated) and **send-rate control** (absent). On raw feature breadth Mautic is
 still ahead, and that is fine at this stage.
 
@@ -21,6 +21,7 @@ still ahead, and that is fine at this stage.
 
 **Complaint.** Mautic drives segment rebuilds, campaign steps, and email sending through
 staggered cron jobs. Consequences reported repeatedly:
+
 - Partially-executed campaigns and unsent emails on an underpowered box ([Autoize misconfig
   guide](https://autoize.com/common-mautic-misconfigurations/)).
 - ~12.5-minute average latency before a contact gets a system response under the standard
@@ -40,6 +41,7 @@ partial-campaign failure mode from a missed tick.
 ## 2. Performance / scale on large contact bases
 
 **Complaint.** Mautic degrades badly as the base grows:
+
 - 1.5M+ contacts → back-office browsing is very slow ([#8261](https://github.com/mautic/mautic/issues/8261)).
 - Opening the segment editor takes 5+ minutes on large DBs ([#9634](https://github.com/mautic/mautic/issues/9634)).
 - ~1M contacts → most pages hang; general "performance issues that cause users to abandon
@@ -50,7 +52,7 @@ partial-campaign failure mode from a missed tick.
   unusable on large/slow segments ([forum](https://forum.mautic.org/t/segment-campaign-condition-slow/25268)).
 
 **1mail position — better architecture, but UNPROVEN. ⚠️**
-Segments are **live rules compiled to SQL predicates** and membership is *never materialized*
+Segments are **live rules compiled to SQL predicates** and membership is _never materialized_
 (`GLOSSARY.md` — "membership is never materialized and shifts as data changes"; `internal/segments`),
 which structurally avoids Mautic's rebuild-the-segment-table pain. Backing store is Postgres,
 not MySQL. **However, this is an architectural bet, not a measured result:** the live-count
@@ -75,6 +77,7 @@ roadmap item.
 ## 4. Painful upgrades & framework churn
 
 **Complaint.** Upgrades are a recurring source of pain:
+
 - 4→5 migration fails at the DB step / `apply --finish`
   ([#13281](https://github.com/mautic/mautic/issues/13281)), Doctrine "table already exists"
   on 5.0.3→5.0.4 ([#13651](https://github.com/mautic/mautic/issues/13651)), 500s after upgrade
@@ -99,8 +102,8 @@ containers, **Redis** for session storage, and **multi-master MySQL**
 ([Autoize horizontal scaling](https://autoize.com/hosting-large-instances-of-mautic-with-horizontal-scaling/)).
 
 **1mail position — solved by design. ✅**
-Self-contained binary + Postgres only. Queue (river) and pub/sub (watermill) both live *in
-Postgres* — **no Redis, no S3, no separate worker process** (`docs/design/domain-events.md`,
+Self-contained binary + Postgres only. Queue (river) and pub/sub (watermill) both live _in
+Postgres_ — **no Redis, no S3, no separate worker process** (`docs/design/domain-events.md`,
 `README.md`). Runs single-replica, or multi-replica by running the migrate step once as init.
 
 ## 6. Dated UI, clutter, no archiving
@@ -113,7 +116,7 @@ and hard to navigate ([roadmap](https://mautic.org/roadmap/)).
 **1mail position — modern UI ✅, but archiving is also missing ⚠️.**
 Frontend is React 19 + Mantine with responsive layout and light/dark themes from day one
 (`CLAUDE.md` frontend conventions) — modern out of the gate, no legacy redesign debt. But
-Mautic's *clutter* complaint applies to us too: **there is no archive / soft-delete on
+Mautic's _clutter_ complaint applies to us too: **there is no archive / soft-delete on
 Broadcast, Automation, or Segment** (verified — no `archived_at`/`deleted_at`/soft-delete in
 `ent/schema` or `typespec`). Net-new roadmap item.
 
@@ -127,21 +130,21 @@ an org/governance issue, not a product capability. Noted for completeness only.
 
 ## Where Mautic is still ahead (honest gaps)
 
-1mail is an earlier-stage product; on feature *breadth* Mautic leads, echoing the review
+1mail is an earlier-stage product; on feature _breadth_ Mautic leads, echoing the review
 critique that Mautic "lacks features for precise/quantitative requirements or larger
 companies" ([Research.com](https://research.com/software/reviews/mautic)). Specifically:
 
 - **Automations are linear** — no branching / conditions / goal nodes. The xyflow builder can
-  draw branches but drops them at save (ROADMAP Phase 4 note). *Already in the roadmap backlog.*
-- **No visual email editor** — MJML body is a textarea. *Already in the roadmap (Phase 3).*
-- **No onsite forms/popups.** *Already in the roadmap (Phase 5).*
+  draw branches but drops them at save (ROADMAP Phase 4 note). _Already in the roadmap backlog._
+- **No visual email editor** — MJML body is a textarea. _Already in the roadmap (Phase 3)._
+- **No onsite forms/popups.** _Already in the roadmap (Phase 5)._
 - **No sending domains (DKIM/SPF), no A/B testing, few provider adapters (SMTP + SES).**
-  *Already in the roadmap (Phase 6).* Note sending-domains is a *deliverability* prerequisite,
+  _Already in the roadmap (Phase 6)._ Note sending-domains is a _deliverability_ prerequisite,
   not just a feature — it belongs above breadth items in priority.
-- **SMS reserved on the schema, not implemented.** *Already noted in the roadmap.*
+- **SMS reserved on the schema, not implemented.** _Already noted in the roadmap._
 
 None of these are new discoveries — they are the known parity backlog. The Mautic lens does
-not change *what* is on the roadmap here, only reinforces the *evidence* that these matter.
+not change _what_ is on the roadmap here, only reinforces the _evidence_ that these matter.
 
 ---
 
@@ -151,10 +154,10 @@ Three items are **not** already on the roadmap and are added by this analysis (s
 `docs/ROADMAP.md`):
 
 1. **Scale validation (highest value).** Load-test the segment engine (rule → SQL compilation
-   + live preview count) *and* the broadcast send-loop audience resolution at ~1M contacts.
-   This directly targets Mautic's #1 abandonment cause and is the one place 1mail's core
-   architectural bet is currently unproven. Deliverable is a benchmark + any indexes/query
-   fixes it exposes — not a vague "prove scale."
+   - live preview count) _and_ the broadcast send-loop audience resolution at ~1M contacts.
+     This directly targets Mautic's #1 abandonment cause and is the one place 1mail's core
+     architectural bet is currently unproven. Deliverable is a benchmark + any indexes/query
+     fixes it exposes — not a vague "prove scale."
 2. **Send-rate control & IP warmup.** Configurable per-provider send rate (emails/sec) and a
    warmup ramp for new sending IPs/domains. Lean on river's native rate/concurrency limiting
    rather than a hand-rolled throttler (per the roadmap's "maintained libraries" principle).

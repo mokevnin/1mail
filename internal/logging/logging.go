@@ -25,7 +25,7 @@ func New(cfg *config.Config) *slog.Logger {
 	level := parseLevel(cfg.LogLevel)
 	var handler slog.Handler
 	if strings.EqualFold(cfg.LogFormat, "text") {
-		handler = tint.NewHandler(os.Stderr, &tint.Options{Level: level})
+		handler = tint.NewTextHandler(os.Stderr, &tint.Options{Level: level})
 	} else {
 		handler = slog.NewJSONHandler(os.Stderr, &slog.HandlerOptions{Level: level})
 	}

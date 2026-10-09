@@ -17,6 +17,7 @@ import { useForm } from '@mantine/form'
 import { useQuery } from '@tanstack/react-query'
 import { DataTable } from 'mantine-datatable'
 import { useTranslation } from 'react-i18next'
+
 import {
   siteSendingDomainsCreateMutation,
   siteSendingDomainsDeleteMutation,
@@ -24,7 +25,7 @@ import {
   siteSendingDomainsListQueryKey,
   siteSendingDomainsVerifyMutation,
 } from '../../generated/site/@tanstack/react-query.gen.ts'
-import type { SiteDnsRecord } from '../../generated/site/types.gen.ts'
+import type { SiteDnsRecord, SiteSendingDomainResource } from '../../generated/site/types.gen.ts'
 import { useDeleteConfirmation } from '../../hooks/useDeleteConfirmation.tsx'
 import { useResourceMutation } from '../../hooks/useResourceMutation.ts'
 
@@ -61,7 +62,9 @@ function DnsRecordRow({
       </Table.Td>
       <Table.Td>
         <Group gap="xs" wrap="nowrap" align="flex-start">
-          <Code style={{ wordBreak: 'break-all' }}>{record.value}</Code>
+          <Code block maw={420}>
+            {record.value}
+          </Code>
           <CopyButton value={record.value}>
             {({ copied, copy }) => (
               <Button size="compact-xs" variant="light" onClick={copy}>
@@ -72,6 +75,44 @@ function DnsRecordRow({
         </Group>
       </Table.Td>
     </Table.Tr>
+  )
+}
+
+function SendingDomainRecords({ record }: { record: SiteSendingDomainResource }) {
+  const { t } = useTranslation()
+  return (
+    <Stack p="md" gap="xs">
+      <Text size="sm">{t(($) => $.settings.sendingDomains.recordsHint)}</Text>
+      <Table.ScrollContainer minWidth={480}>
+        <Table>
+          <Table.Thead>
+            <Table.Tr>
+              <Table.Th>{t(($) => $.settings.sendingDomains.recordName)}</Table.Th>
+              <Table.Th>{t(($) => $.settings.sendingDomains.recordType)}</Table.Th>
+              <Table.Th>{t(($) => $.settings.sendingDomains.recordHost)}</Table.Th>
+              <Table.Th>{t(($) => $.settings.sendingDomains.recordValue)}</Table.Th>
+            </Table.Tr>
+          </Table.Thead>
+          <Table.Tbody>
+            <DnsRecordRow
+              label={t(($) => $.settings.sendingDomains.dkim)}
+              hint={t(($) => $.settings.sendingDomains.dkimHint)}
+              record={record.dkimRecord}
+            />
+            <DnsRecordRow
+              label={t(($) => $.settings.sendingDomains.spf)}
+              hint={t(($) => $.settings.sendingDomains.spfHint)}
+              record={record.spfRecord}
+            />
+            <DnsRecordRow
+              label={t(($) => $.settings.sendingDomains.dmarc)}
+              hint={t(($) => $.settings.sendingDomains.dmarcHint)}
+              record={record.dmarcRecord}
+            />
+          </Table.Tbody>
+        </Table>
+      </Table.ScrollContainer>
+    </Stack>
   )
 }
 
@@ -201,42 +242,7 @@ export function SendingDomainsSection({ slug }: { slug: string }) {
             ),
           },
         ]}
-        rowExpansion={{
-          content: ({ record }) => (
-            <Stack p="md" gap="xs">
-              <Text size="sm">{t(($) => $.settings.sendingDomains.recordsHint)}</Text>
-              <Table.ScrollContainer minWidth={480}>
-                <Table>
-                  <Table.Thead>
-                    <Table.Tr>
-                      <Table.Th>{t(($) => $.settings.sendingDomains.recordName)}</Table.Th>
-                      <Table.Th>{t(($) => $.settings.sendingDomains.recordType)}</Table.Th>
-                      <Table.Th>{t(($) => $.settings.sendingDomains.recordHost)}</Table.Th>
-                      <Table.Th>{t(($) => $.settings.sendingDomains.recordValue)}</Table.Th>
-                    </Table.Tr>
-                  </Table.Thead>
-                  <Table.Tbody>
-                    <DnsRecordRow
-                      label={t(($) => $.settings.sendingDomains.dkim)}
-                      hint={t(($) => $.settings.sendingDomains.dkimHint)}
-                      record={record.dkimRecord}
-                    />
-                    <DnsRecordRow
-                      label={t(($) => $.settings.sendingDomains.spf)}
-                      hint={t(($) => $.settings.sendingDomains.spfHint)}
-                      record={record.spfRecord}
-                    />
-                    <DnsRecordRow
-                      label={t(($) => $.settings.sendingDomains.dmarc)}
-                      hint={t(($) => $.settings.sendingDomains.dmarcHint)}
-                      record={record.dmarcRecord}
-                    />
-                  </Table.Tbody>
-                </Table>
-              </Table.ScrollContainer>
-            </Stack>
-          ),
-        }}
+        rowExpansion={{ content: SendingDomainRecords }}
       />
     </Card>
   )

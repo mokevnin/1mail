@@ -35,7 +35,7 @@ builds:
 archives:
   - id: default
     formats: [tar.gz]
-    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    name_template: '{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}'
 
 checksum:
   name_template: checksums.txt
@@ -46,7 +46,7 @@ dockers_v2:
   - images:
       - ghcr.io/mokevnin/1mail
     tags:
-      - "{{ .Version }}"
+      - '{{ .Version }}'
       - latest
     dockerfile: Dockerfile.release
     platforms:

@@ -10,8 +10,8 @@
   body: '<mjml><mj-body><mj-section><mj-column><mj-text>Lorem ipsum learning content.</mj-text></mj-column></mj-section></mj-body></mjml>'
   status: draft
   workspace_id: 1
-  created_at: "{{daysAgo 10}}"
-  updated_at: "{{daysAgo 2}}"
+  created_at: '{{daysAgo 10}}'
+  updated_at: '{{daysAgo 2}}'
 - id: 101
   name: New SQL course launch
   subject: "The SQL course is live \U0001F680"
@@ -19,10 +19,10 @@
   from_email: hello@codebasics.dev
   body: '<mjml><mj-body><mj-section><mj-column><mj-text>Lorem ipsum learning content.</mj-text></mj-column></mj-section></mj-body></mjml>'
   status: scheduled
-  scheduled_at: "{{daysAhead 3}}"
+  scheduled_at: '{{daysAhead 3}}'
   workspace_id: 1
-  created_at: "{{daysAgo 5}}"
-  updated_at: "{{daysAgo 1}}"
+  created_at: '{{daysAgo 5}}'
+  updated_at: '{{daysAgo 1}}'
 - id: 102
   name: Weekly digest #24
   subject: Your weekly learning digest
@@ -31,8 +31,8 @@
   body: '<mjml><mj-body><mj-section><mj-column><mj-text>Lorem ipsum learning content.</mj-text></mj-column></mj-section></mj-body></mjml>'
   status: sending
   workspace_id: 1
-  created_at: "{{daysAgo 1}}"
-  updated_at: "{{hoursAgo 1}}"
+  created_at: '{{daysAgo 1}}'
+  updated_at: '{{hoursAgo 1}}'
 - id: 103
   name: Broken send (provider error)
   subject: Oops
@@ -42,8 +42,8 @@
   status: failed
   failed_count: 3
   workspace_id: 1
-  created_at: "{{daysAgo 7}}"
-  updated_at: "{{daysAgo 7}}"
+  created_at: '{{daysAgo 7}}'
+  updated_at: '{{daysAgo 7}}'
 # Draft targeting segment 103 (matches no contact) — the empty-audience case:
 # sending it finalizes straight to "sent" with zero recipients.
 - id: 104
@@ -55,8 +55,8 @@
   status: draft
   segment_id: 103
   workspace_id: 1
-  created_at: "{{daysAgo 3}}"
-  updated_at: "{{daysAgo 3}}"
+  created_at: '{{daysAgo 3}}'
+  updated_at: '{{daysAgo 3}}'
 # Draft targeting segment 100 ("plan = pro") — the rule-segment audience case:
 # only pro-plan contacts are recipients.
 - id: 105
@@ -68,8 +68,8 @@
   status: draft
   segment_id: 100
   workspace_id: 1
-  created_at: "{{daysAgo 3}}"
-  updated_at: "{{daysAgo 3}}"
+  created_at: '{{daysAgo 3}}'
+  updated_at: '{{daysAgo 3}}'
 
 # --- Sent campaigns (drive analytics) ---
 - id: 200
@@ -79,15 +79,15 @@
   from_email: hello@codebasics.dev
   body: '<mjml><mj-body><mj-section><mj-column><mj-text>Lorem ipsum learning content.</mj-text></mj-column></mj-section></mj-body></mjml>'
   status: sent
-  sent_at: "{{daysAgo 3}}"
+  sent_at: '{{daysAgo 3}}'
   recipients_total: 10
   sent_count: 10
   opened_count: 5
   clicked_count: 2
   failed_count: 0
   workspace_id: 1
-  created_at: "{{daysAgo 4}}"
-  updated_at: "{{daysAgo 3}}"
+  created_at: '{{daysAgo 4}}'
+  updated_at: '{{daysAgo 3}}'
 - id: 201
   name: Top 5 SQL mistakes to avoid
   subject: Top 5 SQL mistakes to avoid
@@ -95,15 +95,15 @@
   from_email: hello@codebasics.dev
   body: '<mjml><mj-body><mj-section><mj-column><mj-text>Lorem ipsum learning content.</mj-text></mj-column></mj-section></mj-body></mjml>'
   status: sent
-  sent_at: "{{daysAgo 9}}"
+  sent_at: '{{daysAgo 9}}'
   recipients_total: 10
   sent_count: 10
   opened_count: 4
   clicked_count: 1
   failed_count: 0
   workspace_id: 1
-  created_at: "{{daysAgo 10}}"
-  updated_at: "{{daysAgo 9}}"
+  created_at: '{{daysAgo 10}}'
+  updated_at: '{{daysAgo 9}}'
 - id: 202
   name: Build your first API
   subject: Build your first API
@@ -111,15 +111,15 @@
   from_email: hello@codebasics.dev
   body: '<mjml><mj-body><mj-section><mj-column><mj-text>Lorem ipsum learning content.</mj-text></mj-column></mj-section></mj-body></mjml>'
   status: sent
-  sent_at: "{{daysAgo 16}}"
+  sent_at: '{{daysAgo 16}}'
   recipients_total: 10
   sent_count: 10
   opened_count: 5
   clicked_count: 2
   failed_count: 0
   workspace_id: 1
-  created_at: "{{daysAgo 17}}"
-  updated_at: "{{daysAgo 16}}"
+  created_at: '{{daysAgo 17}}'
+  updated_at: '{{daysAgo 16}}'
 - id: 203
   name: DevOps roadmap 2026
   subject: DevOps roadmap 2026
@@ -127,15 +127,15 @@
   from_email: hello@codebasics.dev
   body: '<mjml><mj-body><mj-section><mj-column><mj-text>Lorem ipsum learning content.</mj-text></mj-column></mj-section></mj-body></mjml>'
   status: sent
-  sent_at: "{{daysAgo 24}}"
+  sent_at: '{{daysAgo 24}}'
   recipients_total: 10
   sent_count: 9
   opened_count: 4
   clicked_count: 1
   failed_count: 1
   workspace_id: 1
-  created_at: "{{daysAgo 25}}"
-  updated_at: "{{daysAgo 24}}"
+  created_at: '{{daysAgo 25}}'
+  updated_at: '{{daysAgo 24}}'
 - id: 204
   name: Frontend layout masterclass
   subject: Frontend layout masterclass
@@ -143,15 +143,15 @@
   from_email: hello@codebasics.dev
   body: '<mjml><mj-body><mj-section><mj-column><mj-text>Lorem ipsum learning content.</mj-text></mj-column></mj-section></mj-body></mjml>'
   status: sent
-  sent_at: "{{daysAgo 40}}"
+  sent_at: '{{daysAgo 40}}'
   recipients_total: 10
   sent_count: 10
   opened_count: 6
   clicked_count: 3
   failed_count: 0
   workspace_id: 1
-  created_at: "{{daysAgo 41}}"
-  updated_at: "{{daysAgo 40}}"
+  created_at: '{{daysAgo 41}}'
+  updated_at: '{{daysAgo 40}}'
 - id: 205
   name: Career switch stories
   subject: Career switch stories
@@ -159,12 +159,12 @@
   from_email: hello@codebasics.dev
   body: '<mjml><mj-body><mj-section><mj-column><mj-text>Lorem ipsum learning content.</mj-text></mj-column></mj-section></mj-body></mjml>'
   status: sent
-  sent_at: "{{daysAgo 70}}"
+  sent_at: '{{daysAgo 70}}'
   recipients_total: 10
   sent_count: 10
   opened_count: 4
   clicked_count: 1
   failed_count: 0
   workspace_id: 1
-  created_at: "{{daysAgo 71}}"
-  updated_at: "{{daysAgo 70}}"
+  created_at: '{{daysAgo 71}}'
+  updated_at: '{{daysAgo 70}}'

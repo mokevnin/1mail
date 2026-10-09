@@ -4,33 +4,33 @@
   name: Plan
   type: string
   workspace_id: 1
-  created_at: "{{daysAgo 170}}"
-  updated_at: "{{daysAgo 170}}"
+  created_at: '{{daysAgo 170}}'
+  updated_at: '{{daysAgo 170}}'
 - id: 2
   key: country
   name: Country
   type: string
   workspace_id: 1
-  created_at: "{{daysAgo 170}}"
-  updated_at: "{{daysAgo 170}}"
+  created_at: '{{daysAgo 170}}'
+  updated_at: '{{daysAgo 170}}'
 - id: 3
   key: signup_source
   name: Signup source
   type: string
   workspace_id: 1
-  created_at: "{{daysAgo 170}}"
-  updated_at: "{{daysAgo 170}}"
+  created_at: '{{daysAgo 170}}'
+  updated_at: '{{daysAgo 170}}'
 - id: 4
   key: courses_completed
   name: Courses completed
   type: number
   workspace_id: 1
-  created_at: "{{daysAgo 170}}"
-  updated_at: "{{daysAgo 170}}"
+  created_at: '{{daysAgo 170}}'
+  updated_at: '{{daysAgo 170}}'
 - id: 5
   key: is_trial
   name: On trial
   type: bool
   workspace_id: 1
-  created_at: "{{daysAgo 170}}"
-  updated_at: "{{daysAgo 170}}"
+  created_at: '{{daysAgo 170}}'
+  updated_at: '{{daysAgo 170}}'

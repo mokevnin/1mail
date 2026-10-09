@@ -2,6 +2,7 @@ import { NavLink, Stack } from '@mantine/core'
 import { IconArrowLeft, IconUser } from '@tabler/icons-react'
 import { useMatchRoute, useNavigate } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
+
 import { indexRoute, profileRoute } from '../router.tsx'
 
 // AccountNavbar is the sidebar for the workspace-independent account area:

@@ -40,7 +40,7 @@ type Runtime = {
 
 declare global {
   interface Window {
-    _omq?: QueueApi
+    _omq?: QueueCommand[]
   }
 }
 
@@ -93,7 +93,7 @@ function readCookie(name: string): string | null {
 }
 
 function writeCookie(name: string, value: string): void {
-  // biome-ignore lint/suspicious/noDocumentCookie: Cookie Store API is async and not suitable here
+  // document.cookie on purpose: the Cookie Store API is async and not suitable here.
   document.cookie = `${name}=${encodeURIComponent(value)}; Path=/; Max-Age=${60 * 60 * 24 * 365}; SameSite=Lax`
 }
 
@@ -226,11 +226,7 @@ export function initTracking(config?: TrackerConfig): void {
 export async function identify(payload: IdentifyInput): Promise<void> {
   if (!runtime) {
     if (isBrowser) {
-      if (!window._omq) {
-        window._omq = [] as unknown as QueueApi
-      }
-
-      const queue = window._omq as unknown as QueueCommand[]
+      const queue = (window._omq ??= [])
       Array.prototype.push.call(queue, ['identify', payload])
     }
 
@@ -256,11 +252,7 @@ export async function identify(payload: IdentifyInput): Promise<void> {
 export async function track(action: string, properties?: EventProperties): Promise<void> {
   if (!runtime) {
     if (isBrowser) {
-      if (!window._omq) {
-        window._omq = [] as unknown as QueueApi
-      }
-
-      const queue = window._omq as unknown as QueueCommand[]
+      const queue = (window._omq ??= [])
       Array.prototype.push.call(queue, ['track', action, properties])
     }
 

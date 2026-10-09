@@ -20,7 +20,7 @@ id) as alias keys, each unique per workspace and any of which may be absent. Car
 Custom fields (typed, named attributes beyond the core fields) and owns the Visitors
 (devices) seen as this person.
 The thing Events attach to and the thing a campaign is sent to. Whether a message may be sent
-is *derived* (see Send-eligibility), never a stored status — so anonymous, un-consented
+is _derived_ (see Send-eligibility), never a stored status — so anonymous, un-consented
 Contacts are harmless. There is no separate tracking "profile": this entity is both the
 behavioral identity and the marketing audience member.
 _Avoid_: Profile, tracking profile, lead, subscriber, user, recipient
@@ -29,7 +29,7 @@ _Avoid_: Profile, tracking profile, lead, subscriber, user, recipient
 A workspace-defined, typed, named attribute on the Contact, beyond the core fields
 (email / phone / subject_id / name). The one attribute concept — there is no separate,
 schemaless "trait". An unknown key arriving from Identify or an Event payload is
-*auto-created* as a Custom field with an inferred type (declared-by-use), but it is a
+_auto-created_ as a Custom field with an inferred type (declared-by-use), but it is a
 first-class, typed, renameable definition from the first sight, not an anonymous bag of
 keys — so the Segment builder always has a real, governed field list to offer. Core fields
 and Custom fields together are a Contact's attributes.
@@ -68,8 +68,8 @@ _Avoid_: List, audience, group, filter, snapshot
 
 Whether a message on channel C from sending source S may reach destination D is decided in
 layers — never by a single flag on the Contact: (1) (C, D) in Suppression → never; (2) (C, D)
-unsubscribed from *everything* → never; (3) (C, D) unsubscribed from S → never; (4) *if the
-workspace requires confirmed opt-in* and (C, D) has no Confirmation → never (the one positive
+unsubscribed from _everything_ → never; (3) (C, D) unsubscribed from S → never; (4) _if the
+workspace requires confirmed opt-in_ and (C, D) has no Confirmation → never (the one positive
 layer, evaluated last so the negatives always dominate); (5) otherwise, send. Transactional
 messages skip layers 2–4 (they still respect Suppression's hard bounces). Consent is
 per-channel: an email opt-out never silences SMS.
@@ -89,10 +89,10 @@ _Avoid_: Blacklist, denylist, do-not-mail
 
 **Sending source** (the unsubscribe scope):
 The unit a Contact unsubscribes from — and it is automatic, never hand-authored: the source
-*is* the sender. Each Automation is its own scope (unsubscribing from one drip leaves the
-others untouched); all Broadcasts share one scope ("broadcasts"); and a reserved *everything*
+_is_ the sender. Each Automation is its own scope (unsubscribing from one drip leaves the
+others untouched); all Broadcasts share one scope ("broadcasts"); and a reserved _everything_
 scope is the deliberate "leave entirely" opt-out (kept separate so a per-source unsubscribe
-never silently loses the whole contact). A source only ever *subtracts* opt-outs from a send
+never silently loses the whole contact). A source only ever _subtracts_ opt-outs from a send
 — it is never a target set ("send to everyone subscribed to source X" is the rejected List
 model leaking back; targeting is always a Segment). In the email, the unsubscribe link is
 labelled with the source's display name ("unsubscribe from this mailing list") — that
@@ -105,7 +105,7 @@ destination, not by Contact, so it survives contact deletion and re-import (the 
 case: the opt-out is the minimum data retained to honor the refusal). Toggleable: a contact can
 resubscribe.
 Absence means subscribed — there is no positive subscription row and no "subscribed" flag on
-the Contact. The default in-email link unsubscribes from the *sending source* only;
+the Contact. The default in-email link unsubscribes from the _sending source_ only;
 "unsubscribe from everything" is a distinct, deliberate action. A bounce or complaint is not
 an Unsubscribe; those are Suppression entries.
 The opt-out is offered two ways with **identical scope**: the visible footer link and an RFC 8058
@@ -157,7 +157,7 @@ rollup is a convenience view. Contrast Segment, which is a live query and never 
 _Avoid_: Send log, delivery row
 
 **Sent** (vs delivered):
-"Sent" means a message was *accepted by the email provider* — not that it reached the inbox.
+"Sent" means a message was _accepted by the email provider_ — not that it reached the inbox.
 True delivery failures surface afterward as bounces / complaints, which flow into Suppression.
 A broadcast's delivery rate is accepted-by-provider ÷ targeted, not inbox delivery.
 _Avoid_: Delivered (for the accepted-by-provider sense)
@@ -165,12 +165,12 @@ _Avoid_: Delivered (for the accepted-by-provider sense)
 **Transactional send**:
 A single-recipient email triggered by the customer's own application through the `/api`
 surface (e.g. password reset, receipt, OTP) — the third send surface alongside Broadcast and
-Automation, and what makes 1mail one service for marketing *and* transactional. It carries no
+Automation, and what makes 1mail one service for marketing _and_ transactional. It carries no
 Sending source and is **never** authored as a campaign: the app supplies a Destination, a
 referenced Template id, and per-call variables, and the content is rendered at send time. It
 skips Unsubscribe (Send-eligibility layers 2–3 — you cannot opt out of your own password
 reset) but **still respects Suppression** (a hard-bounced or complained address is never
-sent to, transactional or not). Unlike marketing, it binds its Template by *reference*, not
+sent to, transactional or not). Unlike marketing, it binds its Template by _reference_, not
 by copy (see Template).
 _Avoid_: Notification, system email, trigger (that is the Automation term), API send
 
@@ -178,7 +178,7 @@ _Avoid_: Notification, system email, trigger (that is the Automation term), API 
 A workspace-scoped, event-triggered sequence: when its Trigger fires for a Contact, the
 Contact is enrolled and walks the Automation's ordered steps (send email, wait, …). Each
 Automation is its own unsubscribe Sending source. Activating starts enrolling; deactivating
-stops *new* enrollments but lets in-flight Enrollments finish (deactivate ≠ halt).
+stops _new_ enrollments but lets in-flight Enrollments finish (deactivate ≠ halt).
 _Avoid_: Workflow, flow, journey, drip, campaign
 
 **Trigger**:
@@ -191,14 +191,14 @@ _Avoid_: Hook, rule, entry condition
 One Contact's membership-and-progress in one Automation — enrolled at most once ever
 (re-enrollment is deliberately out of scope). Holds the current step and a terminal state:
 `completed`, `failed`, or **`exited`** (left early). An unsubscribe from the Automation has two
-effects from one action — it records the durable opt-out (scope `automation:<id>`) *and* moves
+effects from one action — it records the durable opt-out (scope `automation:<id>`) _and_ moves
 the active Enrollment to `exited`; suppression and hard bounces likewise exit the Enrollment.
 A run never silently keeps walking steps while skipping every email.
 _Avoid_: Run, automation run, journey instance, subscription
 
 **Step**:
 One node in an Automation's **ordered, linear** sequence; an Enrollment points at exactly one
-current Step. Two kinds today: **send** (an email — it holds its *own copy* of Message
+current Step. Two kinds today: **send** (an email — it holds its _own copy_ of Message
 content, per the marketing copy-at-author-time rule) and **wait** (a delay before the next
 Step). The Enrollment's single "current step" pointer is deliberate: there is no branching,
 no parallel paths, no per-step conditions yet. Conditional / branching steps are a real
@@ -207,12 +207,12 @@ _Avoid_: Action, node, block, stage
 
 **Template** (email template):
 A workspace-scoped, named, reusable piece of email content — a **starting point copied at
-author time**. A Broadcast or Automation step takes a *copy* of the template's content with no
+author time**. A Broadcast or Automation step takes a _copy_ of the template's content with no
 reference back, so editing or deleting a Template never changes any already-authored or sent
 message. A content library, not a live layout that propagates.
 
 This copy-at-author-time rule is for **marketing** sends (Broadcast, Automation send step). A
-**Transactional send** binds the *opposite* way: it references a Template by id and renders
+**Transactional send** binds the _opposite_ way: it references a Template by id and renders
 its current content with per-call variables at send time, so fixing a typo in a receipt
 template instantly corrects every future receipt — without the customer redeploying their
 app. Two deliberately different binding models, one per surface: marketing copies (sent
@@ -222,7 +222,7 @@ _Avoid_: Layout, theme, master, partial
 **Message content** (a value, not an entity):
 The reusable shape every email carries — a subject plus an MJML body (compiled to email-safe
 HTML on send). A Template is the saved, named instance of it; a Broadcast and each email
-Automation send step each hold their own copy; a Transactional send renders a *referenced*
+Automation send step each hold their own copy; a Transactional send renders a _referenced_
 Template's content with per-call variables. The same value across surfaces — copied for
 marketing, referenced for transactional.
 _Avoid_: Email body, content block
@@ -232,13 +232,13 @@ _Avoid_: Email body, content block
 **Integration**:
 A workspace-scoped, **outbound** connection to an external sending provider — channel-agnostic
 by design (email today via smtp/ses; sms reserved), with encrypted credentials and at most one
-default per (workspace, channel). Broadcasts and Automations send *through* an Integration (the
+default per (workspace, channel). Broadcasts and Automations send _through_ an Integration (the
 workspace default when unspecified). Sending is one half of a loop: bounces and complaints come
 back via the Ingest hook and land in Suppression.
 _Avoid_: Provider (alone), ESP, sender, connector
 
 **Sending domain**:
-A workspace-scoped, DNS-verified domain that a Contact's mail may be sent *from* — the
+A workspace-scoped, DNS-verified domain that a Contact's mail may be sent _from_ — the
 authenticated **sending identity**, deliberately **independent of the Integration** (the
 transport). 1mail owns a per-domain DKIM keypair and **signs every outbound message itself**
 (native signing), so the same identity holds across SMTP, SES, and any future provider with no
@@ -259,13 +259,13 @@ _Avoid_: From domain, verified domain, sender identity, SPF domain
 **Complaint rate**:
 The reputation-monitoring ratio `complaints / (sent − hard bounces)`, per (Workspace, **Sending
 domain**), over a trailing time window. The denominator subtracts hard bounces as a cheap proxy
-for *delivered* (mailbox providers judge complaint rate over delivered mail, but 1mail only
+for _delivered_ (mailbox providers judge complaint rate over delivered mail, but 1mail only
 records `email.sent` = accepted-by-provider — see **Sent**; a plain `/sent` denominator
 understates, worst for the abusive senders that matter most). A **flow rate**: each event counts
 by its own `occurred_at`, never linked back to the originating send, so it is always current and
 needs no send↔feedback correlation. Derived from the `email.complained` / `email.sent` /
 permanent `email.bounced` Events (source of truth), **not** a stored status — a core, user-facing
-number computed live; the automated-suspension *thresholds* that read it are EE (ADR 0007). Always
+number computed live; the automated-suspension _thresholds_ that read it are EE (ADR 0007). Always
 exposed as the triple `(numerator, denominator, rate)`; the rate is **undefined** below a volume
 floor, never a scary ratio off a handful of sends.
 _Avoid_: Spam score, sender score, reputation score (we expose honest ratios, not a black-box score)
@@ -293,12 +293,12 @@ not a bearer token. The deliberate counterpart to an API token.
 _Avoid_: Token (for these), API key
 
 **Operator** (platform operator):
-A member of the **platform's** staff who acts *across* all Workspaces (suspend an abusive
+A member of the **platform's** staff who acts _across_ all Workspaces (suspend an abusive
 sender, impersonate for support). Deliberately **not** a User and **not** reached through a
 Membership: a distinct identity with its own store and its own auth surface, holding **no**
 Membership, so the "every query is scoped by a Workspace" invariant has no exception —
 workspace-scoped code has no path that can return an Operator. A person who is both staff and
-a customer holds two separate identities (an Operator *and* a User), by design, for
+a customer holds two separate identities (an Operator _and_ a User), by design, for
 least-privilege and clean audit. A SaaS/platform concept, absent from a plain self-hosted
 install.
 _Avoid_: Admin (that is a workspace Role), superuser, staff user, root
@@ -306,14 +306,14 @@ _Avoid_: Admin (that is a workspace Role), superuser, staff user, root
 **Workspace suspension**:
 A reversible Workspace state that **freezes all outbound sending** — every one of the three
 send surfaces (Broadcast, Automation, Transactional) refuses while it is set — as a
-platform reputation-protection measure against an abusive sender. It is *not* a lockout:
+platform reputation-protection measure against an abusive sender. It is _not_ a lockout:
 login, dashboard reads, `/api` reads, and `/collect` tracking keep working, so the owner can
 still see the suspension and appeal. Enforced in the **core** send path (the AGPL binary is
 the only reliable choke point). It records **attribution**: the actor that set it (an
 automated abuse detector — actor `system` — or a platform Operator) and a reason. The
 automated path only fires above a minimum send volume (a rate is noise at low volume),
 notifies the workspace owner, and is one-click reversible by an Operator. Suspension is the
-*reputation* freeze; a Billing hold is a separate money-driven freeze on the same core send
+_reputation_ freeze; a Billing hold is a separate money-driven freeze on the same core send
 chokepoint — the two are independent reasons, never merged.
 _Avoid_: Ban, lockout, disable, quota (suspension is not a billing state — see Billing hold)
 
@@ -347,7 +347,7 @@ _Avoid_: Permission, scope (scope is the API-token term)
 
 ### Metering & billing
 
-1mail's core *measures* billable activity; it does not *price* it. Metering (what happened,
+1mail's core _measures_ billable activity; it does not _price_ it. Metering (what happened,
 how much) is a domain concern; rating, plans, invoices, payment, and dunning are **not** — they
 live in an external billing plane and never enter the core glossary.
 
@@ -355,7 +355,7 @@ live in an external billing plane and never enter the core glossary.
 A per-(Workspace, billing period, metric) materialized aggregate of billable activity, finalized
 (made immutable) at period close — the billing-grade number a biller consumes. Distinct from the
 raw Events it is computed from, which stay the source of truth for audit and dispute. Different
-metrics aggregate differently: sends are a *sum* over `email.sent`; contact count is a
+metrics aggregate differently: sends are a _sum_ over `email.sent`; contact count is a
 **high-water-mark** (the peak reached during the period), not an instantaneous value. It
 materializes live Events for money the same way a Broadcast recipient's rollup materializes
 engagement — the Events are truth, the snapshot is the closed, reproducible figure. Carries no
@@ -364,7 +364,7 @@ _Avoid_: Meter, counter, invoice line, quota (quota is enforcement, not measurem
 
 **Billing hold**:
 A reversible Workspace state that **freezes all outbound sending** — all three send surfaces
-(Broadcast, Automation, Transactional), exactly like Workspace suspension — but for a *money*
+(Broadcast, Automation, Transactional), exactly like Workspace suspension — but for a _money_
 reason (non-payment / plan-limit breach) rather than reputation. It is a **distinct cause on the
 same core chokepoint**, never a repurposing of suspension: the send path asks one question ("may
 this Workspace send now?") answered by several independent freeze reasons. Two properties set it
@@ -379,7 +379,7 @@ grace period, not the hold)
 ## Channels & future surfaces
 
 The identity spine — **Contact + Visitor + Event** — is channel-agnostic and is the stable point
-every current and future surface plugs into. Sending is modelled *per channel*: an Integration
+every current and future surface plugs into. Sending is modelled _per channel_: an Integration
 has a channel, Send-eligibility is keyed by (channel, Destination), and Message content is
 channel-specific. Email is the only built channel; SMS is reserved.
 
@@ -400,7 +400,7 @@ the core now:
   per-(Contact, Sending source) Unsubscribe. If a feature wants "the people on list X", model
   it as a Segment.
 - **Tracking profile** — there is no separate person record for the behavioral/CDP side; the
-  Contact *is* the identity. (The old tracking profile is absorbed into Contact.)
+  Contact _is_ the identity. (The old tracking profile is absorbed into Contact.)
 - **Trait** — the schemaless CDP attribute. Not a separate concept: every non-core attribute
   is a typed, named Custom field (auto-created on first sight). We keep one governed attribute
   notion, not raw-traits-plus-promoted-fields.

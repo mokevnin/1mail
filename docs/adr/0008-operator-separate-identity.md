@@ -1,6 +1,6 @@
 # Platform Operator is a separate identity, not a User
 
-The platform needs staff who act *across* all Workspaces (suspend an abusive sender,
+The platform needs staff who act _across_ all Workspaces (suspend an abusive sender,
 impersonate for support). This collides with the model's founding invariant: every domain
 entity is workspace-scoped and every query is scoped by a Workspace, reached through
 `User → Membership(Role) → Workspace`. A global actor is exactly the thing that invariant
@@ -8,7 +8,7 @@ exists to forbid.
 
 We model the **Operator** as a **distinct identity** — its own store, its own auth surface
 (a fourth API surface alongside `/site`, `/api`, `/collect`), holding **no** Membership — so
-workspace-scoped code has *no path* that can ever return a global actor. The invariant stays
+workspace-scoped code has _no path_ that can ever return a global actor. The invariant stays
 enforceable by construction rather than by discipline. A person who is both staff and a
 customer holds two separate identities, by design, for least-privilege and clean audit.
 
@@ -25,6 +25,6 @@ customer holds two separate identities, by design, for least-privilege and clean
 
 - The Operator, its auth surface, and the console are **EE/SaaS** (see ADR-0007); a plain
   self-hosted install has no Operator concept and flips suspension via the core CLI.
-- Impersonation (a global Operator minting a temporary *scoped* workspace session) is the one
+- Impersonation (a global Operator minting a temporary _scoped_ workspace session) is the one
   place these two worlds must touch; it is deferred until support load demands it, so that
   bridge is designed against a real need rather than speculatively.

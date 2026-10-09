@@ -3,7 +3,7 @@
 # are overridable: CI (which installs native toolchains) runs everything natively
 # with `make check RUN_FE= RUN_GO= RUN_GO_DB=`.
 #
-#   RUN_FE    — node tooling (frontend image): tsc, biome, tsp, openapi-ts, pnpm
+#   RUN_FE    — node tooling (frontend image): tsc, oxlint, oxfmt, knip, tsp, openapi-ts, pnpm
 #   RUN_GO    — go tooling, no DB needed: golangci-lint, go fmt, entc, ogen, go mod
 #   RUN_GO_DB — go tooling that needs Postgres: cmd/db, atlas, go test (starts `db`)
 # Run containers as the host user so files written into the bind mount (generated
@@ -132,11 +132,22 @@ generate-backend:
 
 generate: generate-typespec generate-openapi generate-backend check-fix
 
-check: check-fe check-i18n check-be
+check: check-fe check-i18n check-be check-deps check-security
 
-check-fe:
+check-fe: check-css
 	$(RUN_FE) pnpm exec tsc --noEmit
-	$(RUN_FE) pnpm exec biome check .
+	$(RUN_FE) pnpm exec oxlint
+	$(RUN_FE) pnpm exec oxfmt --check
+
+# The project has no custom CSS: everything is styled through Mantine. Library
+# stylesheets are imported from node_modules; no stylesheet may be tracked here.
+check-css:
+	@if git ls-files | grep -Ei '\.(css|scss|sass|less|pcss|styl)$$'; then \
+		echo 'error: custom CSS is not allowed, style through Mantine'; exit 1; fi
+
+# Unused files, exports and dependencies (knip.json).
+check-deps:
+	$(RUN_FE) pnpm exec knip
 
 # Read-only: --dry-run never writes, --ci exits non-zero on drift.
 check-i18n:
@@ -145,15 +156,24 @@ check-i18n:
 
 check-be:
 	$(RUN_GO) golangci-lint run ./...
+	$(RUN_GO) go tool govulncheck ./...
 
-# i18n runs first so biome formats the freshly extracted JSON.
+# Secrets and workflow linters. Installed by mise (.mise.toml) and run on the host
+# (locally and in CI); they are not part of the dev containers.
+check-security:
+	gitleaks git --no-banner --redact
+	jactionlint
+	zizmor --no-progress .github
+
+# i18n runs first so oxfmt formats the freshly extracted JSON.
 check-fix: check-fix-i18n check-fix-fe check-fix-be
 
 check-fix-i18n:
 	$(RUN_FE) pnpm exec i18next-cli extract --with-types
 
 check-fix-fe:
-	$(RUN_FE) pnpm exec biome check --write
+	$(RUN_FE) pnpm exec oxlint --fix
+	$(RUN_FE) pnpm exec oxfmt
 	$(RUN_FE) pnpm exec tsp format typespec
 
 check-fix-be:

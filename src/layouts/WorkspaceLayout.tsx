@@ -1,6 +1,7 @@
 import { Group, Select } from '@mantine/core'
 import { useQuery } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
+
 import { AppNavbar } from '../components/AppNavbar.tsx'
 import { UserMenu } from '../components/UserMenu.tsx'
 import { siteWorkspacesListOptions } from '../generated/site/@tanstack/react-query.gen.ts'
@@ -27,7 +28,7 @@ function WorkspaceSwitcher({
       allowDeselect={false}
       onChange={(value) => {
         if (value && value !== slug) {
-          navigate({ to: overviewRoute.to, params: { slug: value } })
+          void navigate({ to: overviewRoute.to, params: { slug: value } })
         }
       }}
       w={{ base: 140, sm: 220 }}

@@ -15,6 +15,7 @@ import { useQuery } from '@tanstack/react-query'
 import { DataTable } from 'mantine-datatable'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
+
 import {
   siteTokensCreateMutation,
   siteTokensDeleteMutation,

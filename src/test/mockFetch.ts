@@ -1,4 +1,5 @@
 import { afterEach } from 'vitest'
+
 import { client } from '../generated/site/client.gen.ts'
 
 // The generated hey-api client is a singleton whose Config accepts a `fetch`

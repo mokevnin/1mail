@@ -3,7 +3,14 @@ import { QueryBuilderMantine } from '@react-querybuilder/mantine'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { type Field, type Operator, QueryBuilder, type RuleGroupType } from 'react-querybuilder'
+import {
+  type Field,
+  isRuleGroupType,
+  type Operator,
+  QueryBuilder,
+  type RuleGroupType,
+} from 'react-querybuilder'
+
 import {
   siteCustomFieldsListOptions,
   siteEventsActionsOptions,
@@ -41,7 +48,8 @@ const emptyQuery: RuleGroupType = { combinator: 'and', rules: [] }
 function parseQuery(def: string): RuleGroupType {
   if (!def.trim()) return emptyQuery
   try {
-    return JSON.parse(def) as RuleGroupType
+    const parsed: unknown = JSON.parse(def)
+    return isRuleGroupType(parsed) ? parsed : emptyQuery
   } catch {
     return emptyQuery
   }

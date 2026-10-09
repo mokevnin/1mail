@@ -1,10 +1,17 @@
 import { afterEach, expect, test, vi } from 'vitest'
+
 import { renderWithRouter } from '../test/renderWithRouter.tsx'
 import { UserMenu } from './UserMenu.tsx'
 
 afterEach(() => {
   vi.restoreAllMocks()
 })
+
+function requestUrl(input: Parameters<typeof fetch>[0]): string {
+  if (typeof input === 'string') return input
+  if (input instanceof URL) return input.pathname
+  return input.url
+}
 
 test('logout calls /auth/logout and navigates to login', async () => {
   const fetchSpy = vi
@@ -16,7 +23,7 @@ test('logout calls /auth/logout and navigates to login', async () => {
   await screen.getByText('Sign out').click()
 
   await expect
-    .poll(() => fetchSpy.mock.calls.map((c) => String(c[0])))
+    .poll(() => fetchSpy.mock.calls.map(([input]) => requestUrl(input)))
     .toContainEqual('/auth/logout')
   await expect.poll(() => navigate.mock.calls).toContainEqual([{ to: '/login' }])
 })

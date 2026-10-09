@@ -4,12 +4,23 @@ root = "."
 tmp_dir = "tmp"
 
 [build]
-  cmd = "go build -o ./tmp/server ./cmd/server"
-  entrypoint = "./tmp/server"
-  include_ext = ["go"]
-  exclude_dir = [".cache", "node_modules", "npm-cache", "tmp", "dist", "openapi", "packages", "src", "locales", ".git"]
-  delay = 500
-  stop_on_error = true
+cmd = "go build -o ./tmp/server ./cmd/server"
+entrypoint = "./tmp/server"
+include_ext = ["go"]
+exclude_dir = [
+  ".cache",
+  "node_modules",
+  "npm-cache",
+  "tmp",
+  "dist",
+  "openapi",
+  "packages",
+  "src",
+  "locales",
+  ".git",
+]
+delay = 500
+stop_on_error = true
 
 [log]
-  time = true
+time = true

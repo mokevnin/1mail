@@ -15,6 +15,7 @@ import { useQuery } from '@tanstack/react-query'
 import { DataTable } from 'mantine-datatable'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
+
 import {
   siteInvitationsCreateMutation,
   siteInvitationsDeleteMutation,
@@ -128,7 +129,7 @@ export function MembersSection({ slug }: { slug: string }) {
                   if (value && value !== record.role) {
                     roleMutation.mutate({
                       path: { slug, id: record.id },
-                      body: { role: value as SiteMembershipRole },
+                      body: { role: value },
                     })
                   }
                 }}

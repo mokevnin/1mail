@@ -1,5 +1,6 @@
 import { useForm } from '@mantine/form'
 import { expect, test, vi } from 'vitest'
+
 import { renderWithRouter } from '../../test/renderWithRouter.tsx'
 import { ContactForm, type ContactFormValues } from './ContactForm.tsx'
 
@@ -20,7 +21,7 @@ function Harness({ onSubmit }: { onSubmit: (values: ContactFormValues) => void }
 }
 
 test('submits the entered values', async () => {
-  const onSubmit = vi.fn()
+  const onSubmit = vi.fn<(values: ContactFormValues) => void>()
   const { screen } = await renderWithRouter(<Harness onSubmit={onSubmit} />)
 
   await screen.getByLabelText('Email').fill('ada@example.com')

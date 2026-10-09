@@ -5,7 +5,7 @@ status: accepted
 # Transactional is a first-class send surface, binding templates by reference
 
 1mail supports **transactional email** as a third send surface alongside Broadcast and
-Automation, so a customer can run marketing *and* transactional sends through one service
+Automation, so a customer can run marketing _and_ transactional sends through one service
 rather than bolting on a SendGrid/Postmark. A **Transactional send** is a single-recipient
 email triggered by the customer's own application through the `/api` surface (password reset,
 receipt, OTP): the app supplies a Destination, a referenced Template id, and per-call
@@ -22,12 +22,12 @@ that exercises it real.
 **Transactional binds its Template by reference, not by copy.** This is the surprising part,
 and it is the deliberate inverse of [[0003-templates-copied-not-referenced]]. Marketing sends
 copy content at author time (sent content is immutable history). A Transactional send instead
-references a Template by id and renders its *current* content with per-call variables, so
+references a Template by id and renders its _current_ content with per-call variables, so
 fixing a typo in a receipt template instantly corrects every future receipt — without the
 customer redeploying their app. ADR 0003 already foreshadowed this ("the reference/propagation
 model belongs to transactional templating"); the two binding models now coexist, one per
-surface, because the surfaces mean different things: marketing says "send *this* text",
-transactional says "send the *live* template X with these data".
+surface, because the surfaces mean different things: marketing says "send _this_ text",
+transactional says "send the _live_ template X with these data".
 
 ## Considered options
 
@@ -62,7 +62,7 @@ queryable send trace (destination, referenced `template_id`, resolved `contact_i
 surfaced in the UI, and the publisher of `email.sent` so transactional sends are segmentable
 through the Event log like the other surfaces. It is also the synchronous claim behind an
 optional `Idempotency-Key` header: the row is inserted on a unique `(workspace, key)` index
-*before* the provider call, so a retried or concurrent same-key request replays the recorded
+_before_ the provider call, so a retried or concurrent same-key request replays the recorded
 outcome (or gets 409 while in flight) instead of sending twice — the Event-log DedupKey only
 dedupes the event row, never the send. Consistent with the by-reference rule, the record stores
 only provenance and outcome, never the rendered content.

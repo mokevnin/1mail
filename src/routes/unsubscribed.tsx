@@ -1,5 +1,6 @@
 import { Anchor, Card, Stack, Text, Title } from '@mantine/core'
 import { useTranslation } from 'react-i18next'
+
 import { unsubscribedRoute } from '../router.tsx'
 
 // Public confirmation page the unsubscribe endpoint (/e/u/{token}) redirects to

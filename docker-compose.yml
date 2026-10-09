@@ -19,8 +19,8 @@ services:
   caddy:
     image: caddy:2-alpine
     ports:
-      - "80:80"
-      - "443:443"
+      - '80:80'
+      - '443:443'
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy-data:/data # local CA + certs persist across restarts
@@ -34,7 +34,7 @@ services:
       context: .
       dockerfile: Dockerfile.frontend.dev
     working_dir: /app
-    user: "${COMPOSE_UID:-0}:${COMPOSE_GID:-0}"
+    user: '${COMPOSE_UID:-0}:${COMPOSE_GID:-0}'
     volumes:
       - .:/app # repo (incl. node_modules) lives on the host
       # The host's global pnpm store, shared with every other project on the
@@ -50,7 +50,7 @@ services:
       # mirror of the Go backend's serve-time injection). Keep in sync with backend.
       APP_LOCALE: en
     ports:
-      - "5173:5173" # optional direct access; normal entry is via Caddy
+      - '5173:5173' # optional direct access; normal entry is via Caddy
 
   # Go server, and the image that backs the `make` tooling recipes
   # (`docker compose run backend …`): it carries go + air + golangci-lint + atlas.
@@ -62,18 +62,18 @@ services:
       context: .
       dockerfile: Dockerfile.backend.dev
     working_dir: /app
-    user: "${COMPOSE_UID:-0}:${COMPOSE_GID:-0}"
+    user: '${COMPOSE_UID:-0}:${COMPOSE_GID:-0}'
     environment:
       APP_ENV: development
-      CGO_ENABLED: "0" # alpine has no gcc; the server is pure Go (pgx stdlib)
-      PORT: "3300"
+      CGO_ENABLED: '0' # alpine has no gcc; the server is pure Go (pgx stdlib)
+      PORT: '3300'
       DATABASE_URL: postgres://postgres:postgres@db:5432/1mail_development?sslmode=disable
       # Dev-only secret so a fresh clone (no host .env) authenticates out of the box.
       JWT_SECRET: dev-secret-change-in-production
       # Scratch DB atlas uses to compute migration diffs (see atlas.hcl).
       ATLAS_DEV_URL: postgres://postgres:postgres@db:5432/atlas_dev?sslmode=disable
       SMTP_HOST: mailpit
-      SMTP_PORT: "1025"
+      SMTP_PORT: '1025'
       APP_URL: https://1mail.localhost
       # Instance locale (en|ru|es) — drives the SPA (injected into index.html) and
       # the backend's own emails + validation messages. Change to test other locales.
@@ -112,9 +112,9 @@ services:
   otel-lgtm:
     image: grafana/otel-lgtm
     ports:
-      - "3001:3000" # Grafana UI (http://localhost:3001)
-      - "4317:4317" # OTLP gRPC
-      - "4318:4318" # OTLP HTTP
+      - '3001:3000' # Grafana UI (http://localhost:3001)
+      - '4317:4317' # OTLP gRPC
+      - '4318:4318' # OTLP HTTP
 
   db:
     image: postgres:18
@@ -125,14 +125,14 @@ services:
     ports:
       # Host-side Go dev / atlas connect here. Override DB_HOST_PORT in a local
       # .env to avoid clashing with another Postgres already bound to 5432.
-      - "${DB_HOST_PORT:-5432}:5432"
+      - '${DB_HOST_PORT:-5432}:5432'
     volumes:
       # postgres:18 layout: mount the whole dir; PGDATA defaults to a
       # version-specific subdir (/var/lib/postgresql/18/docker), which supports
       # in-place `pg_upgrade --link` on future major bumps.
       - db-data:/var/lib/postgresql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ['CMD-SHELL', 'pg_isready -U postgres']
       interval: 5s
       timeout: 5s
       retries: 10
@@ -140,8 +140,8 @@ services:
   mailpit:
     image: axllent/mailpit
     ports:
-      - "1025:1025" # SMTP
-      - "8025:8025" # web UI
+      - '1025:1025' # SMTP
+      - '8025:8025' # web UI
 
 volumes:
   caddy-data:

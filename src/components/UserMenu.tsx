@@ -4,6 +4,7 @@ import { IconChevronDown, IconLogout, IconSettings, IconUser } from '@tabler/ico
 import { useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
+
 import { loginRoute, profileRoute, settingsRoute } from '../router.tsx'
 
 // UserMenu is the header account dropdown: profile, workspace settings, logout.

@@ -8,6 +8,7 @@ workspace-scoped multi-tenant). The goal is to incrementally bring the product t
 ECRM that drip is — e-commerce is designed-for architecturally and built later).
 
 **Current state (the core is built):**
+
 - Identity per the accepted ADRs: **Contact** is multi-key (subject_id / email / phone, all optional),
   has no `status`/`prospect` flag; **Visitor** resolves to a Contact via **Identify**, which stitches
   earlier anonymous Events; Events attach by stable `contact_id` resolved at ingest (never by email).
@@ -26,7 +27,7 @@ ECRM that drip is — e-commerce is designed-for architecturally and built later
 - Infra: watermill domain-event bus (transactional outbox), river jobs — both with real handlers.
   Three API surfaces (site/external/collect), scoped API tokens. SMTP/SES integrations
   (encrypted). **Auth is still single-owner** (`Workspace.user_id`) — ADR 0004 (Membership
-  + Role) is accepted but not yet built.
+  - Role) is accepted but not yet built.
 
 **Gaps to reach parity (the big rocks left):** automation branching / goals / per-step conditions,
 onsite forms/popups, a visual MJML editor, sending domains (DKIM/SPF), A/B testing, an outbound
@@ -43,17 +44,17 @@ position — and the net-new items it surfaced — see
 Minimize hand-rolled code. Where popular, **actively maintained** solutions exist, use them. Confirm a
 library's maintenance status at `go get` / `pnpm add` time and pick the living variant.
 
-| Task | Library (instead of hand-rolling) |
-|---|---|
-| Email templating / merge tags | **`github.com/osteele/liquid`** (Liquid, like drip); fallback `flosch/pongo2` |
-| HTML → plaintext (text part) | **`github.com/k3a/html2text`** or `jaytaylor/html2text` |
-| Link rewriting + pixel injection | **`golang.org/x/net/html`** (official parser), not regexes |
-| Signing tracking tokens | **JWT** (already a dep via go-pkgz/auth) / `golang-jwt`, not hand-rolled HMAC |
-| Send queue / retries | **river** (already in the repo) — don't write an engine |
-| Email HTML editor | **`@mantine/tiptap`** (official Mantine package) |
-| Responsive email (later) | **`github.com/Boostport/mjml-go`** (MJML) |
-| Passkeys / WebAuthn | **`github.com/go-webauthn/webauthn`** (go-pkgz/auth does not do WebAuthn) |
-| TOTP two-factor | **`github.com/pquerna/otp`** (TOTP + QR provisioning URIs) |
+| Task                             | Library (instead of hand-rolling)                                             |
+| -------------------------------- | ----------------------------------------------------------------------------- |
+| Email templating / merge tags    | **`github.com/osteele/liquid`** (Liquid, like drip); fallback `flosch/pongo2` |
+| HTML → plaintext (text part)     | **`github.com/k3a/html2text`** or `jaytaylor/html2text`                       |
+| Link rewriting + pixel injection | **`golang.org/x/net/html`** (official parser), not regexes                    |
+| Signing tracking tokens          | **JWT** (already a dep via go-pkgz/auth) / `golang-jwt`, not hand-rolled HMAC |
+| Send queue / retries             | **river** (already in the repo) — don't write an engine                       |
+| Email HTML editor                | **`@mantine/tiptap`** (official Mantine package)                              |
+| Responsive email (later)         | **`github.com/Boostport/mjml-go`** (MJML)                                     |
+| Passkeys / WebAuthn              | **`github.com/go-webauthn/webauthn`** (go-pkgz/auth does not do WebAuthn)     |
+| TOTP two-factor                  | **`github.com/pquerna/otp`** (TOTP + QR provisioning URIs)                    |
 
 ## Phased roadmap
 
@@ -61,16 +62,16 @@ Each phase builds on the previous ones. The order is chosen so that the first va
 appears quickly, and the largest block (automations) lands on a ready foundation of sending + segments +
 tracking.
 
-| Phase | Block | Status | Depends on | Summary |
-|---|---|---|---|---|
-| **1** | **Broadcasts MVP** | ✅ Done | — | One-off email campaigns end-to-end + delivery tracking (opens/clicks/unsub) + per-campaign report. Audience = all active contacts (+ rule segment). |
-| **2** | **Segment engine** | ✅ Done | 1 | react-querybuilder rule definition compiled to an ent predicate (attributes + custom fields **+ event-based conditions** — "performed event X in last N days" via a correlated EXISTS), preview count, usable as broadcast audience. |
-| **3** | **Email templates + MJML** | ✅ Done | 1 | Reusable templates; single body format — **MJML** everywhere (liquid → MJML compile → text), test sends. A proper visual MJML editor is still to come (body is an MJML textarea for now). |
-| **4** | **Automations / Workflows** | ✅ Done (linear) | 1, 2, 3 | Automation + AutomationRun schema, river-backed engine (trigger → email/wait steps, enroll-once), site CRUD API + UI (list, step editor, activate/deactivate). Triggers fire off the **domain-event bus** (`internal/events`). A visual branch/goal builder (@workflowbuilder/sdk, xyflow) is still to come — steps are a linear list for now. |
-| **ADR** | **Identity + eligibility refactors** | ✅ Done | — | ADR 0002 (unified Contact identity — multi-key, email optional, events by resolved id, anonymous-event stitching, `prospect` dropped) and ADR 0001 (send-eligibility — no `contact.status`; (channel, destination)-keyed Suppression + per-source Unsubscribe; derived eligibility) are built, wired into every send path, and tested. |
-| 5 | Forms & onsite | ⬜ | 1, 2 | Signup forms/popups, embed, feeding into contacts/events (on top of Collect API + tracker). |
-| 6 | Analytics + deliverability | 🟡 In progress | 1, 4 | Dashboards **✅** (workspace analytics overview). Suppression list **✅** (do-not-send registry, consulted in the send loop). Bounce/complaint **ingestion ✅** — SES-over-SNS adapter at `/hooks/{ingestKey}/{provider}` (signature-verified, subscription-confirm) normalizes into typed `EmailBounce`/`EmailComplaint` events → suppression (permanent bounces + complaints). Still ⬜: outbound SES-compatible endpoint (extend nikoksr/notify), sending domains + DKIM/SPF, A/B, more provider adapters (Yandex/SendGrid/…). |
-| 7 (later) | E-commerce | ⬜ | 2, 4 | Shopify/Woo connectors, product catalog, purchase/cart events, revenue attribution. Enabled architecturally via the events model from Phase 1. |
+| Phase     | Block                                | Status           | Depends on | Summary                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| --------- | ------------------------------------ | ---------------- | ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **1**     | **Broadcasts MVP**                   | ✅ Done          | —          | One-off email campaigns end-to-end + delivery tracking (opens/clicks/unsub) + per-campaign report. Audience = all active contacts (+ rule segment).                                                                                                                                                                                                                                                                                                                                                                               |
+| **2**     | **Segment engine**                   | ✅ Done          | 1          | react-querybuilder rule definition compiled to an ent predicate (attributes + custom fields **+ event-based conditions** — "performed event X in last N days" via a correlated EXISTS), preview count, usable as broadcast audience.                                                                                                                                                                                                                                                                                              |
+| **3**     | **Email templates + MJML**           | ✅ Done          | 1          | Reusable templates; single body format — **MJML** everywhere (liquid → MJML compile → text), test sends. A proper visual MJML editor is still to come (body is an MJML textarea for now).                                                                                                                                                                                                                                                                                                                                         |
+| **4**     | **Automations / Workflows**          | ✅ Done (linear) | 1, 2, 3    | Automation + AutomationRun schema, river-backed engine (trigger → email/wait steps, enroll-once), site CRUD API + UI (list, step editor, activate/deactivate). Triggers fire off the **domain-event bus** (`internal/events`). A visual branch/goal builder (@workflowbuilder/sdk, xyflow) is still to come — steps are a linear list for now.                                                                                                                                                                                    |
+| **ADR**   | **Identity + eligibility refactors** | ✅ Done          | —          | ADR 0002 (unified Contact identity — multi-key, email optional, events by resolved id, anonymous-event stitching, `prospect` dropped) and ADR 0001 (send-eligibility — no `contact.status`; (channel, destination)-keyed Suppression + per-source Unsubscribe; derived eligibility) are built, wired into every send path, and tested.                                                                                                                                                                                            |
+| 5         | Forms & onsite                       | ⬜               | 1, 2       | Signup forms/popups, embed, feeding into contacts/events (on top of Collect API + tracker).                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| 6         | Analytics + deliverability           | 🟡 In progress   | 1, 4       | Dashboards **✅** (workspace analytics overview). Suppression list **✅** (do-not-send registry, consulted in the send loop). Bounce/complaint **ingestion ✅** — SES-over-SNS adapter at `/hooks/{ingestKey}/{provider}` (signature-verified, subscription-confirm) normalizes into typed `EmailBounce`/`EmailComplaint` events → suppression (permanent bounces + complaints). Still ⬜: outbound SES-compatible endpoint (extend nikoksr/notify), sending domains + DKIM/SPF, A/B, more provider adapters (Yandex/SendGrid/…). |
+| 7 (later) | E-commerce                           | ⬜               | 2, 4       | Shopify/Woo connectors, product catalog, purchase/cart events, revenue attribution. Enabled architecturally via the events model from Phase 1.                                                                                                                                                                                                                                                                                                                                                                                    |
 
 > **Progress:** Phases 1–4 **and** the two accepted ADR refactors (0001 send-eligibility,
 > 0002 unified identity) are implemented, tested, and on `main`. Phase 2 added a
@@ -93,6 +94,7 @@ tracking.
 > **⚠️ Authoritative model — read `GLOSSARY.md` + `docs/adr/*` first.** This phased
 > roadmap predates the domain model in `GLOSSARY.md` and the accepted ADRs, which
 > supersede it where they disagree. Note in particular:
+>
 > - **"Snapshot / static segments" is rejected**, not deferred. Per `GLOSSARY.md`
 >   ("a segment is always a rule; membership is never materialized"; anti-vocabulary
 >   rejects List/snapshot), there is no second segment kind. Mentions of snapshot
@@ -133,7 +135,7 @@ pains (cron architecture, upgrade friction, Redis/multi-master deployment, dated
 already neutralises by design; these three are the ones still open for us:
 
 - **Scale validation — highest value.** 1mail's core bet (live rule segments, membership
-  *never materialized* — `GLOSSARY.md`) structurally avoids Mautic's #1 abandonment cause
+  _never materialized_ — `GLOSSARY.md`) structurally avoids Mautic's #1 abandonment cause
   (~1M contacts → 5-minute segment editor, hanging pages, ~4 contacts/sec import), **but it is
   unproven at that scale.** Load-test the segment engine (rule → SQL compile + live preview
   count) and the broadcast send-loop audience resolution at ~1M contacts; deliverable is a
@@ -147,15 +149,15 @@ already neutralises by design; these three are the ones still open for us:
 - **Resource archiving** — archive (soft-hide) old Broadcasts / Automations / Segments so
   busy workspaces stay navigable. No `archived_at`/soft-delete exists today; Mautic's clutter
   complaint (no way to archive unused resources) applies to us too.
-- **Independently-scalable worker tier (process roles)** — deployment topology, *distinct*
+- **Independently-scalable worker tier (process roles)** — deployment topology, _distinct_
   from scale-validation above (that is query cost at 1M contacts; this is throughput
-  scaling). **Horizontal scaling already works today:** river distributes job *work* across
+  scaling). **Horizontal scaling already works today:** river distributes job _work_ across
   all clients via `SELECT … FOR UPDATE SKIP LOCKED` (leader only does maintenance), and the
   watermill-sql event subscribers use **stable, role-named consumer groups** (`"persist"`,
   `"automations"`, `"webhooks"`, `"suppression"` — `internal/events/subscriber.go`) with an
   offset adapter, so N replicas compete per group — **no double enrollment / duplicate
   webhook / duplicate send.** Verified, and it needs no Redis (the coordination lives in
-  Postgres — the same anti-Mautic simplicity). The *gap* is that every replica is a full
+  Postgres — the same anti-Mautic simplicity). The _gap_ is that every replica is a full
   stack (HTTP + events + jobs), so the **worker tier cannot be scaled independently of the
   web tier** — a big broadcast forces more full binaries behind the LB. Fix is a **run-mode
   split**, cheap because `App.RunEvents` / `App.RunJobs` / `App.Server` are already separable
@@ -198,7 +200,7 @@ current go-pkgz/auth email+password flow, which does neither natively.
 
 Operating a self-hosted instance over time: knowing an update exists, applying it safely, and
 (optionally) telling us how the fleet uses the product. The version check and telemetry are
-**one outbound channel behind one opt-out gate** — the "is there a newer release?" ping *is* a
+**one outbound channel behind one opt-out gate** — the "is there a newer release?" ping _is_ a
 usage signal; plan and document them together, not as two disconnected features.
 
 - **Release-update notification** — the running instance checks for a newer published release
@@ -210,15 +212,15 @@ usage signal; plan and document them together, not as two disconnected features.
 - **Update / migration / Postgres runbook** — a documented, versioned upgrade path (doc home:
   a new **"Upgrading"** section in `docs/self-hosting.md`, extending the existing migrations
   section). Keep two runbooks distinct — the user lumps them, the plan must not:
-  - *App upgrade* — pull the new image/binary, run `./1mail migrate` (or `AUTO_MIGRATE` on a
+  - _App upgrade_ — pull the new image/binary, run `./1mail migrate` (or `AUTO_MIGRATE` on a
     single replica), roll servers. Migrations are embedded and forward-only.
-  - *Postgres major upgrade* — a DBA operation (`pg_upgrade` or dump/restore across majors),
+  - _Postgres major upgrade_ — a DBA operation (`pg_upgrade` or dump/restore across majors),
     independent of the app release. The doc says "14+"; compose ships `postgres:16`.
 - **Usage telemetry (opt-out)** — anonymous self-hosted → us usage reporting, on by default with
   a single documented kill-switch (env var) **and** an in-app toggle. This is the politically
   sensitive item (OSS phone-home; cf. the Homebrew/Audacity blowback), so the design must
-  pin down: a stable anonymous **instance id** (no workspace/contact/PII), an *exactly
-  documented* payload (version, instance age, coarse counts, deploy shape), and the opt-out
+  pin down: a stable anonymous **instance id** (no workspace/contact/PII), an _exactly
+  documented_ payload (version, instance age, coarse counts, deploy shape), and the opt-out
   honoured before the first send. **ADR candidate** — this roadmap defers to `docs/adr/*`, so
   a bare bullet is low-signal; the payload/consent contract deserves its own ADR (not authored
   yet — say the word).
@@ -231,6 +233,7 @@ Goal of the MVP: a user can **create a broadcast, pick an audience, write an ema
 and see a report** (sent / opened / clicked / unsubscribed). This is the first "sellable" value.
 
 ### MVP scope (in / out)
+
 - **In:** a single email to an audience; HTML editor; merge tags (Liquid); immediate and scheduled
   sending via the queue; open/click/unsubscribe tracking; per-campaign report.
 - **Audience (MVP):** "all active contacts in the workspace" + optionally a **rule segment**.
@@ -240,6 +243,7 @@ and see a report** (sent / opened / clicked / unsubscribed). This is the first "
   A/B, bounce/complaint handling, dedicated domains.
 
 ### 1. Data model (ent — `ent/schema/`)
+
 Follow the pattern in `ent/schema/segment.go` (workspace edge, `id` Int64 immutable, timestamps).
 
 - **`Broadcast`** — `workspace_id`, `name`, `subject`, `from_name`, `from_email` (or taken from the
@@ -255,11 +259,14 @@ Follow the pattern in `ent/schema/segment.go` (workspace edge, `id` Int64 immuta
 
 Register the new edges on `Workspace` (`ent/schema/workspace.go`).
 **Order matters** (Atlas diffs migrations from generated `ent/`, not from `ent/schema/`):
-1) edit `ent/schema/*.go` → 2) `make generate-backend` (regenerates `ent/`) →
-3) `make db-generate name=add_broadcasts` → 4) `make db-migrate`.
+
+1. edit `ent/schema/*.go` → 2) `make generate-backend` (regenerates `ent/`) →
+2. `make db-generate name=add_broadcasts` → 4) `make db-migrate`.
 
 ### 2. API contract (TypeSpec → ogen → TS)
+
 The frontend talks to the **site API**, so the primary contract goes there.
+
 - New `typespec/site/resources/broadcasts.tsp` (pattern: `typespec/site/resources/segments.tsp`):
   a resource under `/w/{slug}/broadcasts`, CRUD + actions **`POST .../{id}/send`** and
   **`POST .../{id}/schedule`**, a `stats` field on the resource. Wire it into `typespec/site/main.tsp`.
@@ -268,12 +275,14 @@ The frontend talks to the **site API**, so the primary contract goes there.
 - `make generate-typespec` → `make generate-openapi` (TS client + react-query hooks in `src/generated/site`).
 
 ### 3. Backend — handlers + converters
+
 - `internal/api/site/broadcasts.go` — handler methods (pattern: `internal/api/site/segments.go`):
   CRUD + `Send`/`Schedule`. Scope every query by workspace.
 - goverter mapping for `BroadcastResource` in `internal/api/site/sitemap/` (add methods to the
   hand-written interface next to `sitemap.go`; `converter_gen.go` is regenerated).
 
 ### 4. Send engine (river — `internal/jobs/`)
+
 river is chosen for the actual sending (retries/concurrency); worker registration pattern is in
 `internal/jobs/worker.go` (currently only `ExampleWorker`).
 
@@ -293,7 +302,9 @@ river is chosen for the actual sending (retries/concurrency); worker registratio
 - Scheduled sending: `scheduled_at` → river `ScheduledAt` (native delayed enqueue).
 
 ### 5. Delivery tracking (public endpoints — `internal/server/`)
+
 Pattern: the public tracker `internal/server/tracker.go` (serves `/t.js`, ingests events).
+
 - A signed token encodes `recipient_id`. Note: `internal/secrets/cipher.go` is **symmetric encryption**
   (for integration configs), not HMAC. Either add a small JWT/HMAC helper (key from `cfg.EncryptionKey`)
   or encrypt `recipient_id` with the existing cipher — don't assume `internal/secrets` provides a signing
@@ -311,6 +322,7 @@ Pattern: the public tracker `internal/server/tracker.go` (serves `/t.js`, ingest
   needs no backfill.
 
 ### 6. Frontend (React — `src/`)
+
 - Enable the **Campaigns** item in `src/components/AppNavbar.tsx` (currently disabled "Coming soon").
 - Routes (pattern: `src/routes/segments/` and `src/routes/contacts/`): list, create/edit (composer),
   report. Register them in `src/router.tsx`.
@@ -322,12 +334,14 @@ Pattern: the public tracker `internal/server/tracker.go` (serves `/t.js`, ingest
 - i18n strings in `locales/`, then `make generate-i18n-types`.
 
 ### 7. Tests (pattern: `internal/api/site/contacts_test.go`)
+
 - Handler tests for broadcasts CRUD + auth/workspace isolation (testhelper.Setup + typed ogen client).
 - Engine test: `SendBroadcastJob` creates recipients and sets statuses (with a fake sender).
 - Tracking test: hitting the open/click/unsub endpoints updates the recipient/contact and counters.
 - Frontend: composer-form tests (`make test-watch`).
 
 ### Execution order (commits, directly on `main`, Conventional Commits)
+
 1. `feat`: ent schemas Broadcast + BroadcastRecipient + migration.
 2. `feat`: TypeSpec site/broadcasts + regeneration (`make generate`).
 3. `feat`: site handlers broadcasts (CRUD) + goverter mapping + tests.
@@ -337,6 +351,7 @@ Pattern: the public tracker `internal/server/tracker.go` (serves `/t.js`, ingest
 7. `feat`: frontend — campaign report (stats) + i18n.
 
 ### End-to-end verification (Phase 1)
+
 1. `make setup` / `make dev` — bring up the stack (https://1mail.localhost), mailpit on :8025.
 2. Create an SMTP integration (point it at mailpit) in Settings.
 3. Add a few active contacts.
@@ -346,9 +361,10 @@ Pattern: the public tracker `internal/server/tracker.go` (serves `/t.js`, ingest
 6. Open the email / click a link / hit unsubscribe → confirm the **campaign report** shows
    opened/clicked/unsubscribed increasing, and the contact becomes `unsubscribed`.
 7. Scheduled send: set `scheduled_at` in the future → river sends it on time.
-8. `make test` (backend) and `make check` (tsgo + biome + golangci-lint) are green.
+8. `make test` (backend) and `make check` (tsc + oxlint/oxfmt + golangci-lint) are green.
 
 ### Open questions / later
+
 - ~~**Snapshot segments:**~~ **Resolved: rejected.** A segment is always a live rule (no
   `SegmentMember` membership table). See `GLOSSARY.md` anti-vocabulary.
 - **Bounce/complaint handling** (SES SNS / SMTP DSN) — Phase 6 (deliverability).

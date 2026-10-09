@@ -5,12 +5,12 @@ status: accepted
 # Templates are copied at author time, never referenced (marketing)
 
 > Scope: this decision governs **marketing** sends (Broadcast, Automation step). The later
-> [[0005-transactional-send-surface]] binds Templates by *reference* for transactional sends —
+> [[0005-transactional-send-surface]] binds Templates by _reference_ for transactional sends —
 > the deliberate opposite, one model per surface. This ADR's body already anticipated that
 > ("the reference model belongs to transactional templating").
 
 A Template is a reusable starting point for email **content** (subject + MJML body). When a
-Broadcast or an Automation email step is authored, it takes a *copy* of the template's
+Broadcast or an Automation email step is authored, it takes a _copy_ of the template's
 content — there is no foreign key and no live reference back to the Template. Editing or
 deleting a Template therefore never changes any already-authored, in-flight, or sent message.
 
@@ -31,7 +31,7 @@ three are linked by copy, never by reference.
 - **Record an informational, nullable `template_id` (provenance only, not a constraint).**
   Open — left to a follow-up decision. It would answer "which template did this broadcast
   start from?" for analytics without affecting content immutability. The default leaning is
-  *not* to add it (keep Template a pure content library).
+  _not_ to add it (keep Template a pure content library).
 
 ## Consequences
 

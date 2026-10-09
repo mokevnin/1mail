@@ -23,7 +23,7 @@ from the free-string `from_email` and needs a migration + an onboarding step.
   breaks for raw SMTP, and couples the domain to a specific Integration — fragmenting the model
   the moment a second provider lands. Native signing keeps one transport-independent story.
 - **Soft enforcement (send unsigned with a warning)** (rejected): unsigned mail from arbitrary
-  domains *is* the deliverability hole; it defeats the feature.
+  domains _is_ the deliverability hole; it defeats the feature.
 
 ## Consequences
 

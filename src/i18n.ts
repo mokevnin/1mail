@@ -1,5 +1,6 @@
-import i18next from 'i18next'
+import { createInstance } from 'i18next'
 import { initReactI18next } from 'react-i18next'
+
 import en from '../locales/en/translation.json' with { type: 'json' }
 import es from '../locales/es/translation.json' with { type: 'json' }
 import ru from '../locales/ru/translation.json' with { type: 'json' }
@@ -12,9 +13,13 @@ import ru from '../locales/ru/translation.json' with { type: 'json' }
 export const SUPPORTED_LOCALES = ['en', 'ru', 'es'] as const
 export type Locale = (typeof SUPPORTED_LOCALES)[number]
 
+function isLocale(value: unknown): value is Locale {
+  return SUPPORTED_LOCALES.some((locale) => locale === value)
+}
+
 export function resolveLocale(): Locale {
-  const injected = (window as { __APP_LOCALE__?: string }).__APP_LOCALE__
-  return SUPPORTED_LOCALES.includes(injected as Locale) ? (injected as Locale) : 'en'
+  const injected: unknown = Reflect.get(window, '__APP_LOCALE__')
+  return isLocale(injected) ? injected : 'en'
 }
 
 // The app runs on a DEDICATED i18next instance rather than the global default.
@@ -23,7 +28,7 @@ export function resolveLocale(): Locale {
 // our own instance keeps the app's strings independent of the SDK. Components must
 // reach it through the <I18nextProvider> in main.tsx (the SDK subtree is wrapped in
 // its own provider bound back to the global instance it initialises).
-const i18n = i18next.createInstance()
+const i18n = createInstance()
 
 // index.html ships a static lang="en" (so the a11y lint accepts a real code);
 // reflect the actual instance locale onto <html lang> once we know it.

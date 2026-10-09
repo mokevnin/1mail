@@ -12,6 +12,7 @@ import {
 } from '@tabler/icons-react'
 import { useMatchRoute, useNavigate } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
+
 import {
   activityRoute,
   automationsRoute,

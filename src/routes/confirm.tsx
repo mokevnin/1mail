@@ -1,6 +1,7 @@
 import { Alert, Button, Card, Stack, Text, Title } from '@mantine/core'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
+
 import { confirmRoute } from '../router.tsx'
 
 // Public double opt-in confirmation page (ADR 0013). The GET /e/confirm/{token}

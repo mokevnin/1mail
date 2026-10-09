@@ -28,7 +28,7 @@ send-eligibility.
 - **Keep two tables (TrackingProfile as CDP staging + Contact), just join events by
   `subject_id`.** Rejected: preserves duplicate identity and a Profile↔Contact sync problem,
   and "join by subject_id" breaks import-only Contacts, which have no subject_id at all. The
-  real work is one identity *resolved across every source* (import, API, form, tracker), not
+  real work is one identity _resolved across every source_ (import, API, form, tracker), not
   a join-column swap.
 - **Create a Contact for every anonymous Visitor eagerly.** Not decided here; the Contact
   may exist before identity (anonymous state) but the promotion policy (when a Visitor

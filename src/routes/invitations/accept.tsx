@@ -4,12 +4,13 @@ import { notifications } from '@mantine/notifications'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
+
 import {
   sitePublicInvitationsAcceptMutation,
   sitePublicInvitationsLookupOptions,
 } from '../../generated/site/@tanstack/react-query.gen.ts'
 import { acceptInvitationRoute, loginRoute } from '../../router.tsx'
-import { type ApiErrorLike, getApiErrorMessage } from '../../utils/apiErrors.ts'
+import { getApiErrorMessage } from '../../utils/apiErrors.ts'
 
 export function AcceptInvitationPage() {
   const { t } = useTranslation()
@@ -31,14 +32,14 @@ export function AcceptInvitationPage() {
         title: t(($) => $.acceptInvitation.successTitle),
         message: t(($) => $.acceptInvitation.successMessage),
       })
-      navigate({ to: loginRoute.to })
+      void navigate({ to: loginRoute.to })
     },
     onError: (error) => {
       notifications.show({
         color: 'red',
         title: t(($) => $.acceptInvitation.errorTitle),
         message: getApiErrorMessage(
-          error as ApiErrorLike,
+          error,
           t(($) => $.acceptInvitation.errorMessage),
         ),
       })

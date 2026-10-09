@@ -1,14 +1,11 @@
 import type { WorkflowBuilderEdge, WorkflowBuilderNode } from '@workflowbuilder/sdk'
+
 import type { SiteAutomationStep } from '../../generated/site/types.gen.ts'
 import { EMAIL_NODE_ICON, EMAIL_NODE_TYPE, WAIT_NODE_ICON, WAIT_NODE_TYPE } from './nodes.tsx'
 
 // A step is the generated contract type (typed in TypeSpec; no hand-rolled
 // parse/serialize — the API carries steps as structured data, not a JSON string).
 export type AutomationStep = SiteAutomationStep
-
-export function emptyWaitStep(): AutomationStep {
-  return { type: 'wait', seconds: 3600 }
-}
 
 // --- graph ↔ steps (the visual builder uses an xyflow graph; we persist []step) ---
 
@@ -60,6 +57,10 @@ export function stepsToGraph(steps: AutomationStep[]): AutomationGraph {
   return { nodes, edges }
 }
 
+function asText(value: unknown): string {
+  return typeof value === 'string' ? value : ''
+}
+
 function nodeToStep(node: WorkflowBuilderNode): AutomationStep | null {
   const props = (node.data.properties ?? {}) as Record<string, unknown>
   if (node.data.type === WAIT_NODE_TYPE) {
@@ -68,8 +69,8 @@ function nodeToStep(node: WorkflowBuilderNode): AutomationStep | null {
   if (node.data.type === EMAIL_NODE_TYPE) {
     return {
       type: 'email',
-      subject: String(props.subject ?? ''),
-      body: String(props.body ?? ''),
+      subject: asText(props.subject),
+      body: asText(props.body),
     }
   }
   return null

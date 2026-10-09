@@ -8,9 +8,9 @@
   role: member
   token_hash: '{{ inviteHash "inv_fixture_token_acme" }}'
   invited_by: 1
-  expires_at: "{{daysAhead 7}}"
-  created_at: "{{daysAgo 1}}"
-  updated_at: "{{daysAgo 1}}"
+  expires_at: '{{daysAhead 7}}'
+  created_at: '{{daysAgo 1}}'
+  updated_at: '{{daysAgo 1}}'
 
 # id 2: expired invite (used to assert lookup/accept reject). raw token = "inv_fixture_token_expired"
 - id: 2
@@ -19,6 +19,6 @@
   role: member
   token_hash: '{{ inviteHash "inv_fixture_token_expired" }}'
   invited_by: 1
-  expires_at: "{{daysAgo 1}}"
-  created_at: "{{daysAgo 8}}"
-  updated_at: "{{daysAgo 8}}"
+  expires_at: '{{daysAgo 1}}'
+  created_at: '{{daysAgo 8}}'
+  updated_at: '{{daysAgo 8}}'

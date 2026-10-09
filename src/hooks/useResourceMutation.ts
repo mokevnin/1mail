@@ -6,7 +6,8 @@ import {
   useQueryClient,
 } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
-import { type ApiErrorLike, getApiErrorMessage } from '../utils/apiErrors.ts'
+
+import { getApiErrorMessage } from '../utils/apiErrors.ts'
 
 // Options layered on top of a generated mutation. The three things every CRUD
 // mutation in this app repeats — invalidate the affected list query, toast on
@@ -59,7 +60,7 @@ export function useResourceMutation<TData, TError, TVars, TCtx>({
         color: 'red',
         title: errorTitle,
         message: getApiErrorMessage(
-          error as ApiErrorLike,
+          error,
           t(($) => $.notifications.errorMessage),
         ),
       })

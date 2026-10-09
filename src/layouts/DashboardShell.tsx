@@ -1,7 +1,8 @@
 import { AppShell, Burger, Group, Title } from '@mantine/core'
 import { useDisclosure } from '@mantine/hooks'
 import { Outlet, useLocation } from '@tanstack/react-router'
-import { type ReactNode, useEffect } from 'react'
+import { type ReactNode, useState } from 'react'
+
 import { ThemeToggle } from '../components/ThemeToggle.tsx'
 
 // DashboardShell is the common authenticated chrome shared by the
@@ -19,10 +20,13 @@ export function DashboardShell({
   const [opened, { toggle, close }] = useDisclosure(false)
   const location = useLocation()
 
-  // Close the mobile drawer after navigating so the overlay never lingers.
-  useEffect(() => {
+  // Close the mobile drawer after navigating so the overlay never lingers
+  // (derived during render, the documented alternative to setState in an effect).
+  const [drawerPath, setDrawerPath] = useState(location.pathname)
+  if (drawerPath !== location.pathname) {
+    setDrawerPath(location.pathname)
     close()
-  }, [location.pathname, close])
+  }
 
   return (
     <AppShell

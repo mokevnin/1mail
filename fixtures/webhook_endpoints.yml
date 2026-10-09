@@ -6,12 +6,12 @@
   event_types: '["contact.created","email.opened","email.clicked"]'
   enabled: true
   workspace_id: 1
-  created_at: "{{daysAgo 70}}"
-  updated_at: "{{daysAgo 70}}"
+  created_at: '{{daysAgo 70}}'
+  updated_at: '{{daysAgo 70}}'
 - id: 101
   url: https://hooks.codebasics.dev/disabled
   secret_encrypted: '{{ encrypt "whsec_codebasics_disabled" }}'
   enabled: false
   workspace_id: 1
-  created_at: "{{daysAgo 50}}"
-  updated_at: "{{daysAgo 50}}"
+  created_at: '{{daysAgo 50}}'
+  updated_at: '{{daysAgo 50}}'

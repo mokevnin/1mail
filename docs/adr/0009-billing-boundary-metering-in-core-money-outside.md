@@ -23,12 +23,12 @@ separate monetization mechanisms and are not unified into one "entitlement" abst
   materializes the raw Event stream the way a Broadcast recipient's rollup materializes engagement:
   the Events stay the source of truth for audit/dispute, the snapshot is the closed, reproducible
   number. The aggregator runs **in the core process** because that is the only place the raw
-  Events (and their retention) live; the *billing-period / finalization* concept is EE, invisible
+  Events (and their retention) live; the _billing-period / finalization_ concept is EE, invisible
   to an unlicensed self-hoster.
 - **v1 metrics**: `emails_sent` (sum over `email.sent`) and `contacts` (high-water-mark — the peak
   during the period, unrecoverable after the fact if not snapshotted live). Events-ingested, seats,
   and any "active/messaged contacts" metric are deferred until their pricing shape is real.
-- **Billing hold**: a reversible Workspace freeze for a *money* reason (non-payment / plan-limit
+- **Billing hold**: a reversible Workspace freeze for a _money_ reason (non-payment / plan-limit
   breach). It reuses the **same core send chokepoint** as Workspace suspension (ADR 0007) but is a
   **distinct, independent cause** — the send path asks one question ("may this Workspace send
   now?") answered by several freeze reasons, never a repurposing of suspension. It freezes all

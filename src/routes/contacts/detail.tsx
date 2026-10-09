@@ -1,9 +1,11 @@
-import { Card, Code, Group, Loader, SimpleGrid, Stack, Text, Title } from '@mantine/core'
+import { Card, Group, Loader, SimpleGrid, Stack, Text, Title } from '@mantine/core'
 import { useQuery } from '@tanstack/react-query'
 import { DataTable } from 'mantine-datatable'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
+
 import { ApiErrorAlert } from '../../components/ApiErrorAlert.tsx'
+import { EventRowDetails } from '../../components/EventRowDetails.tsx'
 import { ButtonLink } from '../../components/RouterLink.tsx'
 import {
   siteContactsGetOptions,
@@ -29,8 +31,8 @@ function Field({ label, value }: { label: string; value: string }) {
 // anything richer as compact JSON.
 function formatCustomValue(value: unknown): string {
   if (value == null) return ''
-  if (typeof value === 'object') return JSON.stringify(value)
-  return String(value)
+  if (typeof value === 'string') return value
+  return JSON.stringify(value)
 }
 
 export function ContactDetailPage() {
@@ -39,10 +41,13 @@ export function ContactDetailPage() {
   const [page, setPage] = useState(1)
 
   // The component instance is reused across contactId changes, so reset the
-  // events page to avoid requesting an out-of-range page for the next contact.
-  useEffect(() => {
+  // events page to avoid requesting an out-of-range page for the next contact
+  // (derived during render, the documented alternative to setState in an effect).
+  const [pageContactId, setPageContactId] = useState(contactId)
+  if (pageContactId !== contactId) {
+    setPageContactId(contactId)
     setPage(1)
-  }, [contactId])
+  }
 
   const contactQuery = useQuery(siteContactsGetOptions({ path: { slug: slug, id: contactId } }))
 
@@ -137,26 +142,7 @@ export function ContactDetailPage() {
           },
           { accessor: 'action', title: t(($) => $.activity.action) },
         ]}
-        rowExpansion={{
-          content: ({ record }) => (
-            <Stack p="md" gap="xs">
-              <Group gap="xs">
-                <Text fw={600}>{t(($) => $.activity.subjectId)}:</Text>
-                <Text>{record.subjectId}</Text>
-              </Group>
-              <Group gap="xs">
-                <Text fw={600}>{t(($) => $.activity.occurredAt)}:</Text>
-                <Text>{record.occurredAt ? formatDateTime(record.occurredAt) : '—'}</Text>
-              </Group>
-              <Stack gap="xs">
-                <Text fw={600}>{t(($) => $.activity.properties)}:</Text>
-                <Code block>
-                  {record.properties ? JSON.stringify(record.properties, null, 2) : '{}'}
-                </Code>
-              </Stack>
-            </Stack>
-          ),
-        }}
+        rowExpansion={{ content: EventRowDetails }}
         totalRecords={eventsTotal}
         recordsPerPage={EVENTS_PAGE_SIZE}
         page={page}

@@ -1,0 +1,41 @@
+amends "package://github.com/jdx/hk/releases/download/v2.5.0/hk@2.5.0#/Config.pkl"
+import "package://github.com/jdx/hk/releases/download/v2.5.0/hk@2.5.0#/Builtins.pkl"
+
+// Local git hooks. Slow whole-project checks (tsc, i18n drift, go test) stay in
+// `make check` / CI; hooks only run what is fast on staged files.
+local linters = new Mapping {
+    // Staged content only (the builtin scans the whole directory, ignored files included).
+    ["gitleaks"] {
+        check = "gitleaks git --staged --redact --no-banner"
+        exclusive = true
+    }
+    // Project runs oxlint/oxfmt through pnpm (not on PATH).
+    ["oxlint"] {
+        glob = List("**/*.js", "**/*.jsx", "**/*.ts", "**/*.tsx")
+        check = "pnpm exec oxlint {{files}}"
+        fix = "pnpm exec oxlint --fix {{files}}"
+    }
+    ["oxfmt"] {
+        glob = List("**/*.js", "**/*.jsx", "**/*.ts", "**/*.tsx", "**/*.json", "**/*.jsonc", "**/*.md", "**/*.yml", "**/*.yaml")
+        check = "pnpm exec oxfmt --check {{files}}"
+        fix = "pnpm exec oxfmt {{files}}"
+    }
+    // Unused files/exports/dependencies; whole-project, check only (never --fix).
+    ["knip"] {
+        check = "pnpm exec knip"
+        exclusive = true
+    }
+    ["golangci_lint"] = Builtins.golangci_lint
+    // Check only: the builtin runs `zizmor --fix` in fix mode and rewrites workflows.
+    ["zizmor"] {
+        glob = List(".github/workflows/*.yml", ".github/workflows/*.yaml", ".github/dependabot.yml")
+        check = "zizmor --no-progress {{files}}"
+    }
+    // Maintained actionlint fork (replaces the rhysd/actionlint builtin).
+    ["jactionlint"] {
+        glob = List(".github/workflows/*.yml", ".github/workflows/*.yaml")
+        check = "jactionlint {{files}}"
+    }
+}
+
+steps = linters

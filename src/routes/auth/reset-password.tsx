@@ -4,9 +4,10 @@ import { notifications } from '@mantine/notifications'
 import { useMutation } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
+
 import { siteAuthResetPasswordMutation } from '../../generated/site/@tanstack/react-query.gen.ts'
 import { loginRoute, resetPasswordRoute } from '../../router.tsx'
-import { type ApiErrorLike, getApiErrorMessage } from '../../utils/apiErrors.ts'
+import { getApiErrorMessage } from '../../utils/apiErrors.ts'
 
 export function ResetPasswordPage() {
   const { t } = useTranslation()
@@ -29,7 +30,7 @@ export function ResetPasswordPage() {
         title: t(($) => $.notifications.successTitle),
         message: t(($) => $.resetPassword.successMessage),
       })
-      navigate({ to: loginRoute.to })
+      void navigate({ to: loginRoute.to })
     },
     onError: (error) => {
       form.setValues({ password: '', confirm: '' })
@@ -37,7 +38,7 @@ export function ResetPasswordPage() {
         color: 'red',
         title: t(($) => $.resetPassword.errorTitle),
         message: getApiErrorMessage(
-          error as ApiErrorLike,
+          error,
           t(($) => $.resetPassword.errorMessage),
         ),
       })

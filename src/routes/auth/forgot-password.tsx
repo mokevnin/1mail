@@ -2,6 +2,7 @@ import { Anchor, Button, Card, Group, Stack, Text, TextInput, Title } from '@man
 import { useForm } from '@mantine/form'
 import { useMutation } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
+
 import { siteAuthForgotPasswordMutation } from '../../generated/site/@tanstack/react-query.gen.ts'
 import { loginRoute } from '../../router.tsx'
 

@@ -6,7 +6,7 @@ import { initTracking } from './index.ts'
 // When loaded via the async stub instead, document.currentScript is the injected tag and
 // configuration arrives through the _omq `init` command, resolved inside initTracking().
 function configFromScript(): TrackerConfig | undefined {
-  const script = document.currentScript as HTMLScriptElement | null
+  const script = document.currentScript instanceof HTMLScriptElement ? document.currentScript : null
   const collectKey = script?.dataset.collectKey
 
   if (!collectKey) {

@@ -2,6 +2,7 @@ import { Anchor, Card, Loader, Stack, Text, Title } from '@mantine/core'
 import { useMutation } from '@tanstack/react-query'
 import { useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
+
 import { siteAuthVerifyEmailMutation } from '../../generated/site/@tanstack/react-query.gen.ts'
 import { indexRoute, verifyEmailRoute } from '../../router.tsx'
 
@@ -10,13 +11,15 @@ export function VerifyEmailPage() {
   const { token } = verifyEmailRoute.useSearch()
   const mutation = useMutation(siteAuthVerifyEmailMutation())
 
+  const { mutate } = mutation
+
   // Fire once on mount; the ref guards against StrictMode's double-invoke.
   const fired = useRef(false)
   useEffect(() => {
     if (fired.current) return
     fired.current = true
-    mutation.mutate({ body: { token } })
-  }, [mutation.mutate, token])
+    mutate({ body: { token } })
+  }, [mutate, token])
 
   return (
     <Stack maw={460} mx="auto" mt="xl" align="center">

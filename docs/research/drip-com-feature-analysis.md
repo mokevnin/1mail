@@ -53,6 +53,7 @@ Drip positions itself as an **Ecommerce CRM (ECRM)** — "Ecommerce Email Market
 ## 6. Forms & popups (onsite campaigns)
 
 Two distinct current products (legacy "Hosted Forms" exist only for pre-Nov-2022 accounts):
+
 - **Onsite Pop-ups ("Drip Onsite")** — built on acquired **Sleeknote** tech. Formats: pop-ups, slide-ins, sticky bars, sidebars, embedded. Drag-and-drop builder with separate desktop/mobile editing; one-line install. Advanced experiences: **multistep forms, quizzes, gamification (Spin-to-Win), surveys, countdown timers, free-shipping bars, upsells, product recommendations** — used to collect zero-party data. Triggers: time delay, scroll %, exit-intent (desktop only), on-click, teaser. Targeting by URL, geolocation, session activity, cart status, segment, new-vs-returning. **No session/impression limits; unlimited popups on every plan including trial.**
 - **Embedded Forms** — static, always-visible forms added to site code; styled via your CSS; reCAPTCHA v3; GDPR consent fields.
 - **A/B testing of popups specifically is unconfirmed** (Drip lists "Smart A/B testing" as a platform feature but documents it around emails/campaigns — flagged).
@@ -123,6 +124,7 @@ Two distinct current products (legacy "Hosted Forms" exist only for pre-Nov-2022
 - **Roles** — Account Owner, Account Admin, Account Contributor; per-user login + MFA; admins/contributors scopeable to specific sub-accounts. No explicit per-seat cap/charge found (per-contact billing).
 
 ## Key uncertainty flags
+
 1. Lead scoring = legacy/deprecated (no dated sunset found).
 2. Dedicated IPs — not documented; likely not self-serve.
 3. Native unique coupon-code generation — unconfirmed (likely via Coupon Carrier integration).

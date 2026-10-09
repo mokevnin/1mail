@@ -4,14 +4,14 @@ status: accepted
 
 # Double opt-in: confirmation as a positive event, not a subscription status
 
-EU regulation requires, for many acquisition flows, a *confirmed* opt-in: the contact must
+EU regulation requires, for many acquisition flows, a _confirmed_ opt-in: the contact must
 actively confirm before marketing may flow, and the sender must be able to **demonstrate** that
 consent (GDPR Art. 7). This is table-stakes for anyone sending to the EU — self-hosters included
 — so it is **AGPL core**. Unlike ADRs 0011/0012 it needs no MIME/DKIM changes and ships
 independently.
 
 The hard part is polarity. The consent model (ADR 0001) is deliberately **subtractive**:
-mailability is *derived* from the **absence** of a (channel, destination)-keyed opt-out — there
+mailability is _derived_ from the **absence** of a (channel, destination)-keyed opt-out — there
 is no positive "subscribed" record, and a contact status flag was explicitly rejected. Double
 opt-in needs a **positive** fact. This ADR adds it **without** reintroducing a status flag, by
 extending — not reversing — ADR 0001.
@@ -28,19 +28,19 @@ periodic re-confirmation, no consent TTL, no granular per-topic consent. Those a
 ### The model: a positive Event + a derived gate row, mirroring Unsubscribe
 
 The survival asymmetry that unlocks the design: ADR 0001 keys opt-outs by destination because
-*losing an opt-out on delete+re-import re-mails a refuser — a violation*. Run the same test on a
+_losing an opt-out on delete+re-import re-mails a refuser — a violation_. Run the same test on a
 confirmation: losing it forces **re-confirmation before mailing** — friction, not a violation. It
 **fails safe**. So the reason that forces destination-keying on the negative fact does not bind
 the positive one.
 
 `Unsubscribe` already has the exact shape we need: `recordUnsubscribe` writes **both** a
-destination-keyed row (the fast eligibility read-model) *and* an `email.unsubscribed` Event (the
+destination-keyed row (the fast eligibility read-model) _and_ an `email.unsubscribed` Event (the
 immutable log + bus signal), in one transaction. Confirmation is its positive mirror:
 
 - a positive, (channel, destination)-keyed **Confirmation row** → the fast eligibility gate (a
   one-line EXISTS predicate, symmetric with the Unsubscribe NOT-EXISTS);
 - written in the same transaction as an immutable **`marketing.confirmed` Event** carrying
-  *when / how / provenance / IP* → the source of truth, GDPR Art. 7 proof, and a bus signal (a
+  _when / how / provenance / IP_ → the source of truth, GDPR Art. 7 proof, and a bus signal (a
   confirmation can trigger a welcome Automation).
 
 This is the honest answer to "no subscribed flag": the truth is an **immutable Event**, never a
@@ -64,13 +64,13 @@ nuance is carried by provenance, not a per-source gate.
 Enabling is **forward-looking, never retroactively blocking** — flipping the switch must not make
 the existing list un-mailable overnight. Enabling **backfills grandfather Confirmation records**
 for existing mailable contacts (the admin affirmatively asserts the prior-consent basis), keeping
-the eligibility gate *uniform* ("Confirmation EXISTS" always) rather than a non-auditable
+the eligibility gate _uniform_ ("Confirmation EXISTS" always) rather than a non-auditable
 time-based carve-out. "Did this contact confirm?" is answerable per-contact from a record.
 
 ### Import & provenance
 
-CSV import presents **two modes**: *already confirmed (existing relationship)* → writes a
-Confirmation with provenance `imported`; *needs confirmation* → no record, unconfirmed, sends a
+CSV import presents **two modes**: _already confirmed (existing relationship)_ → writes a
+Confirmation with provenance `imported`; _needs confirmation_ → no record, unconfirmed, sends a
 confirmation email. Every Confirmation (row + event) carries a **provenance** enum —
 `double_opt_in` (clicked — gold standard), `grandfathered` (policy-enablement), `imported`
 (importer-asserted). Dedup/merge (the Contact-import backlog item) must keep the **strongest**
@@ -78,9 +78,9 @@ provenance: a real `double_opt_in` is never downgraded by a re-import asserting 
 
 ### The confirmation email's own eligibility
 
-The confirmation email goes to an *unconfirmed* address, so it **bypasses the confirmation gate
+The confirmation email goes to an _unconfirmed_ address, so it **bypasses the confirmation gate
 and per-source Unsubscribe** (it carries no marketing sending source — a one-time consent email,
-not a campaign). But it is **not** purely transactional: it **respects Suppression** *and*
+not a campaign). But it is **not** purely transactional: it **respects Suppression** _and_
 `Unsubscribe(everything)`. `CheckTransactional` skips all unsubscribe layers; the confirmation
 email must not, because soliciting re-permission from someone who opted out of **everything** is
 itself a violation — a new form submission must not send them a confirmation email and must not
@@ -101,9 +101,9 @@ SPA page and records nothing; `POST` performs** the confirmation (writes the row
 `marketing.confirmed`, one transaction). The page's explicit "Confirm" button issues the POST.
 
 Scanner-safety is **load-bearing for legal validity here, not just UX** — and higher-stakes than
-ADR 0012: a scanner GET that falsely *unsubscribes* is annoying; a scanner GET that falsely
-*confirms* **fabricates consent you never had**, poisoning the exact audit trail double opt-in
-exists to create. The explicit button-click *is* the deliberate human act that makes the opt-in
+ADR 0012: a scanner GET that falsely _unsubscribes_ is annoying; a scanner GET that falsely
+_confirms_ **fabricates consent you never had**, poisoning the exact audit trail double opt-in
+exists to create. The explicit button-click _is_ the deliberate human act that makes the opt-in
 valid.
 
 ### Eligibility ordering: negatives dominate
@@ -112,7 +112,7 @@ The gate is the **lowest-priority layer**, after the three negative layers (Supp
 `everything`, source) — so confirmed-but-suppressed and confirmed-but-unsubscribed both correctly
 don't send. An **`everything` unsubscribe invalidates the Confirmation row** (deletes the gate
 row; the immutable event preserves "confirmed at T1, left at T2"), so returning after a full
-opt-out requires re-confirmation — stale consent never silently reactivates. A *per-source*
+opt-out requires re-confirmation — stale consent never silently reactivates. A _per-source_
 unsubscribe does not invalidate confirmation (narrower than leaving entirely).
 
 ### Expiry & purge
@@ -126,7 +126,7 @@ unsubscribe does not invalidate confirmation (narrower than leaving entirely).
 
 ## Relationship to ADR 0001
 
-This **extends, does not reverse** ADR 0001. It adds a fifth, *positive* eligibility layer, but
+This **extends, does not reverse** ADR 0001. It adds a fifth, _positive_ eligibility layer, but
 preserves 0001's core principle: the source of truth is an immutable Event plus a derived
 destination-keyed row — there is still **no stored subscription status on the Contact**. The
 positive layer is optional (off by default) and evaluated last, so single-opt-in workspaces see

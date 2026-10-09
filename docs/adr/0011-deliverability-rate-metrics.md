@@ -5,7 +5,7 @@ status: accepted
 # Deliverability rate metrics: complaint & bounce rate in core, thresholds in EE
 
 The automated abuse detector designed in ADR 0007 (auto-suspend a sender torching the shared
-reputation) has **nothing to read** until a complaint/bounce *rate* exists. This ADR defines
+reputation) has **nothing to read** until a complaint/bounce _rate_ exists. This ADR defines
 that rate: what it measures, where it is computed, and at what grain — the prerequisite metric,
 not the detector policy on top of it.
 
@@ -13,24 +13,24 @@ not the detector policy on top of it.
 
 ### Rate computation is core and user-facing; thresholds are EE
 
-A deliverability *number* is useful to everyone — a self-hoster on their own domain needs it to
+A deliverability _number_ is useful to everyone — a self-hoster on their own domain needs it to
 avoid torching their own reputation — so the **rate computation lives in the AGPL core** and is
-shown on the workspace dashboard. It is a *deliverability* signal, **not** a billing metric, so
-it does **not** enter the EE metering plane (which per ADR 0009 *billing-boundary* carries only
+shown on the workspace dashboard. It is a _deliverability_ signal, **not** a billing metric, so
+it does **not** enter the EE metering plane (which per ADR 0009 _billing-boundary_ carries only
 billing-grade Usage snapshots). What is EE is the **auto-suspension policy** — the numeric thresholds and the
 minimum-volume floor that turn a rate into a freeze decision (ADR 0007's detector). A
 self-hosted workspace with one tenant does not police itself, so that policy is SaaS-only.
 
 Clean layering: **core exposes the number, EE decides what to do with it.** This grill covers
 only the rate derived from the Events we already ingest (`email.sent` / `email.bounced` /
-`email.complained`). Google Postmaster / FBL (ARF) ingestion — *new* data sources — stay out of
+`email.complained`). Google Postmaster / FBL (ARF) ingestion — _new_ data sources — stay out of
 scope, in the separate Deliverability-observability backlog item.
 
 ### Complaint rate = `complaints / (sent − hard bounces)`
 
 The load-bearing decision. Mailbox providers (Gmail/Yahoo 2024+) define complaint rate over
 **delivered** mail and expect it held **< 0.3%**. But 1mail records only `email.sent`
-(*accepted by provider*, not delivered — see CONTEXT *Sent vs delivered*), and the SES→SNS hook
+(_accepted by provider_, not delivered — see CONTEXT _Sent vs delivered_), and the SES→SNS hook
 **discards** `Delivery` notifications. A rate over raw `sent` therefore **systematically
 understates** versus the provider's own figure — and worst for exactly the senders the detector
 must catch (a 20%-bounce sender delivers ≈ 0.8×sent, so `complaints/sent` reads ~20% low, quietly
@@ -41,7 +41,7 @@ new ingestion (hard bounces are already ingested and suppress), and `(sent − h
 good approximation of delivered. Ingesting true `Delivery` events (which would roughly double
 SES→SNS volume for a second-decimal-place gain) is deferred to Deliverability-observability.
 
-The `≈ delivered` claim is a *cohort* argument (of the messages sent, the non-bounced ones were
+The `≈ delivered` claim is a _cohort_ argument (of the messages sent, the non-bounced ones were
 delivered) but the metric is a **flow rate** (see below): the denominator is actually
 `COUNT(sent in window) − COUNT(hard bounces in window)` — two different message cohorts. This
 holds while a send's bounces are still in-window (steady state / active sending) and degrades in
@@ -61,14 +61,15 @@ complaint-rate denominator, and it is the bounce-rate numerator.
 ### Grain = per-(Workspace, Sending domain)
 
 Mailbox providers attribute reputation to the **DKIM signing domain** — which in 1mail is the
-**Sending domain** (ADR 0010 *sending-domains*). So the metric is grained per-(Workspace, Sending domain), not a
+**Sending domain** (ADR 0010 _sending-domains_). So the metric is grained per-(Workspace, Sending domain), not a
 workspace-wide average: an average would mask one dirty domain behind a clean one — precisely the
 sender the detector must catch. Per-workspace is just the roll-up of the per-domain rates for the
 dashboard headline.
 
-**Sequencing dependency:** Sending domains (ADR 0010 *sending-domains*) are not built yet, and today's delivery
-Events do **not** carry the sending domain (they record the *recipient*). This metric therefore
+**Sequencing dependency:** Sending domains (ADR 0010 _sending-domains_) are not built yet, and today's delivery
+Events do **not** carry the sending domain (they record the _recipient_). This metric therefore
 ships **with or after** ADR 0010, and requires two ingestion changes:
+
 - the send path stamps the Sending domain onto `email.sent`;
 - the bounce/complaint hook stamps it onto the failure Event (SES puts the From address in the
   notification's `mail.source`).
@@ -78,7 +79,7 @@ Workspace — `workspace = company` stays the sole tenant (no sub-accounts).
 
 ### Flow rate, by each event's own timestamp
 
-Complaints and bounces arrive *after* the send (FBL complaints can lag days). The rate is a
+Complaints and bounces arrive _after_ the send (FBL complaints can lag days). The rate is a
 **flow rate**: each Event (`sent` / `bounce` / `complaint`) counts by its own `occurred_at`
 within the trailing window — never linked back to the originating send. This needs zero
 send↔feedback correlation (the `EmailDeliveryFailure` Event carries no reference to its send
@@ -91,12 +92,12 @@ during sharp volume ramps and washes out at steady state.
 Core always exposes `(numerator, denominator, rate)` per (Workspace, Sending domain, window);
 the **rate is undefined when the denominator is zero**. The dashboard shows the denominator
 beside the rate ("0.4% of 12,000 sent") and "insufficient data" below a small display floor. The
-EE detector applies its **own** volume floor to that same denominator — the floor *value* is EE
+EE detector applies its **own** volume floor to that same denominator — the floor _value_ is EE
 policy, but it is only possible because core exposes the denominator, not just the rate.
 
 ### Live query now; materialized rollup later
 
-Unlike ADR 0009 *billing-boundary*'s Usage snapshot (immutable, reproducible, tamper-evident),
+Unlike ADR 0009 _billing-boundary_'s Usage snapshot (immutable, reproducible, tamper-evident),
 this is a **disposable health monitor** — recent and cheap matters, immutability does not. That
 ADR's "no live re-scan of raw Events" rejection therefore **does not bind** here. v1 computes the rate
 by a **live windowed query over `events`** (plus an index like
@@ -131,7 +132,7 @@ semantic change. Deferred until product scale demands it.
   does not police itself.
 - The EE detector (ADR 0007) now has a defined input: the `(numerator, denominator, rate)` triple
   per (Workspace, Sending domain), over a window and denominator it chooses.
-- This feature is **blocked on Sending domains** (ADR 0010 *sending-domains*) and on two ingestion changes that
+- This feature is **blocked on Sending domains** (ADR 0010 _sending-domains_) and on two ingestion changes that
   stamp the Sending domain onto the send and failure Events.
 - A shared-IP-pool reputation view (the SaaS case where one tenant poisons a shared IP) is a
   future EE aggregation over this per-domain metric, deferred with the IP-pool model.

@@ -7,12 +7,12 @@ status: accepted
 A Contact has no "subscribed/unsubscribed" status. Whether a message on channel C from
 sending source S may reach destination D (the channel-specific address — email, phone,
 messenger id) is decided in layers: (1) (C, D) in the **Suppression** list → never;
-(2) (C, D) **Unsubscribed** from *everything* → never; (3) (C, D) **Unsubscribed** from S →
+(2) (C, D) **Unsubscribed** from _everything_ → never; (3) (C, D) **Unsubscribed** from S →
 never; (4) otherwise send. Transactional messages skip layers 2–3 but still respect
 Suppression. Consent is per-channel — an email opt-out never silences SMS. Targeting is always
-a Segment; suppression and unsubscribe only *subtract* from a send.
+a Segment; suppression and unsubscribe only _subtract_ from a send.
 
-A sending source is automatic, never hand-authored — it *is* the sender: each Automation is
+A sending source is automatic, never hand-authored — it _is_ the sender: each Automation is
 its own unsubscribe scope, all Broadcasts share one ("broadcasts"), plus a reserved
 "everything" scope. The default in-email unsubscribe link is scoped to the source; "from
 everything" is a separate, deliberate action, so a per-source unsubscribe never silently

@@ -1,10 +1,12 @@
-import { Alert, Code, Group, Loader, Stack, Switch, Text, TextInput, Title } from '@mantine/core'
+import { Alert, Group, Loader, Stack, Switch, TextInput, Title } from '@mantine/core'
 import { useDebouncedValue } from '@mantine/hooks'
 import { useQuery } from '@tanstack/react-query'
 import { useParams } from '@tanstack/react-router'
 import { DataTable } from 'mantine-datatable'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
+
+import { DetailedEventRowDetails } from '../../components/EventRowDetails.tsx'
 import { siteEventsListOptions } from '../../generated/site/@tanstack/react-query.gen.ts'
 import { formatDateTime } from '../../utils/datetime.ts'
 
@@ -22,10 +24,13 @@ export function ActivityPage() {
   const [actionFilter, setActionFilter] = useState('')
   const [debouncedAction] = useDebouncedValue(actionFilter.trim(), 300)
 
-  // Reset to the first page whenever the action filter changes.
-  useEffect(() => {
+  // Reset to the first page whenever the action filter changes (derived during
+  // render, the documented alternative to setState in an effect).
+  const [pageAction, setPageAction] = useState(debouncedAction)
+  if (pageAction !== debouncedAction) {
+    setPageAction(debouncedAction)
     setPage(1)
-  }, [debouncedAction])
+  }
 
   const eventsQuery = useQuery({
     ...siteEventsListOptions({
@@ -86,31 +91,7 @@ export function ActivityPage() {
             render: (record) => record.email ?? record.subjectId,
           },
         ]}
-        rowExpansion={{
-          content: ({ record }) => (
-            <Stack p="md" gap="xs">
-              <Text fw={700}>{t(($) => $.activity.details)}</Text>
-              <Group gap="xs">
-                <Text fw={600}>{t(($) => $.activity.subjectId)}:</Text>
-                <Text>{record.subjectId}</Text>
-              </Group>
-              <Group gap="xs">
-                <Text fw={600}>{t(($) => $.activity.occurredAt)}:</Text>
-                <Text>{record.occurredAt ? formatDateTime(record.occurredAt) : '—'}</Text>
-              </Group>
-              <Group gap="xs">
-                <Text fw={600}>{t(($) => $.activity.createdAt)}:</Text>
-                <Text>{formatDateTime(record.createdAt)}</Text>
-              </Group>
-              <Stack gap="xs">
-                <Text fw={600}>{t(($) => $.activity.properties)}:</Text>
-                <Code block>
-                  {record.properties ? JSON.stringify(record.properties, null, 2) : '{}'}
-                </Code>
-              </Stack>
-            </Stack>
-          ),
-        }}
+        rowExpansion={{ content: DetailedEventRowDetails }}
         totalRecords={totalItems}
         recordsPerPage={PAGE_SIZE}
         page={page}

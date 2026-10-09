@@ -13,7 +13,7 @@ with compliance obligations, embedding for a platform reselling us, and scale-in
 high-volume operator. A solo self-hoster hits **no** paywall on product value; a small company
 hits one only on governance it wouldn't have without a security team.
 
-This is a **greenfield** decision: nothing is shipped yet, so the boundary is *established here*,
+This is a **greenfield** decision: nothing is shipped yet, so the boundary is _established here_,
 not retrofitted onto existing code. The trap it avoids from the start is treating "enterprise
 features" as a single bucket. Monetization runs on **three distinct mechanisms** that must not be
 conflated — conflating them is what produces a boundary that feels weak and arbitrary later.
@@ -69,13 +69,13 @@ Org-shape features that a small self-hoster does not need, so gating them does n
 - **Embedding**: white-label, multi-tenant, and embeddable components — the platform-reseller
   surface (agencies, SaaS embedding marketing automation). This is the strongest and most
   defensible lane for a CDP+automation product, and it is in EE by design from the start.
-- **Scale-infra** (gated by *form*, not product value): dedicated-IP / warmup automation and
+- **Scale-infra** (gated by _form_, not product value): dedicated-IP / warmup automation and
   data-residency / advanced-retention controls. These matter only to a high-volume or regulated
   operator; the send path itself stays free.
 
 Because this is greenfield, the split is designed in from day one: `ee/` exists as a separate
 directory from the first commit, and no feature is ever born free-then-moved. The list above is
-where new EE features are *created*, not a migration target for core code.
+where new EE features are _created_, not a migration target for core code.
 
 ## Considered options
 
@@ -84,7 +84,7 @@ where new EE features are *created*, not a migration target for core code.
   codebase. Product value stays free; we monetize org-shape, hosting, and services instead.
 - **Put migration / support / compliance docs in `ee/`** (rejected): done-for-you migration,
   support, and compliance docs are professional services (c), not code — bundling them into a
-  license key is a category error and gates nothing enforceable. (Import *tooling* is the
+  license key is a category error and gates nothing enforceable. (Import _tooling_ is the
   separate, free-core half of migration; see above.)
 - **Gate the import tooling behind EE to monetize switchers** (rejected): the highest-value
   inflow is people leaving Mautic/Mailchimp; taxing the moment they arrive throttles adoption for
@@ -98,7 +98,7 @@ where new EE features are *created*, not a migration target for core code.
   with ADR 0009): an offline runtime key and an external money contract have different lifecycles
   and failure modes.
 - **Gate the CDP core (advanced segmentation, identity resolution) behind EE** (rejected): that
-  *is* the product thesis; gating it contradicts "product value is free" and removes the reason to
+  _is_ the product thesis; gating it contradicts "product value is free" and removes the reason to
   adopt at all. Only infra-shaped scale controls around the core are gateable.
 
 ## Consequences
@@ -108,14 +108,14 @@ where new EE features are *created*, not a migration target for core code.
   guard against an open-core "rug pull" (the BSL/SSPL backlash pattern) and is what makes the
   AGPL promise credible.
 - **No self-host caps**: contacts, workspaces, API, and webhooks are uncapped in self-host.
-  Volume/seat limits are a *cloud pricing* instrument (mechanism b), never a self-host license
+  Volume/seat limits are a _cloud pricing_ instrument (mechanism b), never a self-host license
   gate.
 - EE is scoped from day one beyond the default SSO/RBAC assumption: **white-label / multi-tenant
   / embedding** is a first-class EE surface, not a later add-on.
 - The three mechanisms stay architecturally separate: `ee/` behind the license key (a); the SaaS
   billing plane (b, ADR 0009); services as contracts (c). No single "entitlement" abstraction
   unifies them.
-- This ADR sets the *policy*; it does not enumerate every future EE feature. New candidates are
+- This ADR sets the _policy_; it does not enumerate every future EE feature. New candidates are
   tested against one question: **does a single company need this to send to its own audience?**
   If yes → core. If it only matters at org-scale, for embedding, or for regulated/high-volume
   operation → EE.

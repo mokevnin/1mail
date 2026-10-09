@@ -47,12 +47,12 @@ need any of them installed on the host.
 make setup   # build images, install deps, create dev/test/atlas DBs + migrate
 make dev     # docker compose up — full dev stack
 make test    # creates test DB, then `go test -p 1 ./...`
-make check   # tsgo --noEmit, biome check, golangci-lint
+make check   # tsc, oxlint, oxfmt --check, knip, golangci-lint, govulncheck, gitleaks, jactionlint
 make generate # regenerate TypeSpec → OpenAPI → Go + TS
 ```
 
 Dependencies and the Go module cache are bind-mounted to the host (`node_modules` in the
-repo, the module cache under `./.cache/go-mod`). So if you *do* run a host editor, gopls
+repo, the module cache under `./.cache/go-mod`). So if you _do_ run a host editor, gopls
 and the TS language server resolve imports — point gopls at the module cache with
 `go env -w GOMODCACHE=$PWD/.cache/go-mod` (optional; only needed for host LSP).
 
@@ -83,12 +83,12 @@ The local stack runs via Docker Compose behind [Caddy](https://caddyserver.com/)
 The entry point is **https://1mail.localhost** (Caddy terminates TLS with its internal CA).
 Services:
 
-| Service  | URL / port                  | Notes                          |
-| -------- | --------------------------- | ------------------------------ |
-| frontend | `:5173` (Vite)              | proxied by Caddy               |
-| backend  | `:3300`                     | proxied by Caddy under `/site`, `/api`, `/collect`, `/auth` |
-| postgres | `localhost:5432`            | dev DB `1mail_development`      |
-| mailpit  | http://localhost:8025       | captured outbound email (SMTP UI) |
+| Service  | URL / port            | Notes                                                       |
+| -------- | --------------------- | ----------------------------------------------------------- |
+| frontend | `:5173` (Vite)        | proxied by Caddy                                            |
+| backend  | `:3300`               | proxied by Caddy under `/site`, `/api`, `/collect`, `/auth` |
+| postgres | `localhost:5432`      | dev DB `1mail_development`                                  |
+| mailpit  | http://localhost:8025 | captured outbound email (SMTP UI)                           |
 
 > The Compose `backend` service runs the real Go server (`Dockerfile.backend.dev`,
 > `golang:1.26-alpine` + [air](https://github.com/air-verse/air) for hot reload) with
@@ -154,15 +154,15 @@ Two options:
 
 Configuration is read from the environment (and, if present, `.env` files).
 
-| Variable                                          | Default                  | Description                                  |
-| ------------------------------------------------- | ------------------------ | -------------------------------------------- |
-| `DATABASE_URL`                                    | — (**required**)         | PostgreSQL connection string                 |
-| `PORT`                                            | `3000`                   | HTTP listen port                             |
-| `APP_URL`                                          | `http://localhost:3000`  | Public base URL (auth token issuance)        |
-| `AUTO_MIGRATE`                                    | `false`                  | Apply embedded migrations on startup         |
-| `JWT_SECRET`                                      | — (**required in prod**) | JWT signing secret; required outside development |
-| `SMTP_HOST` / `SMTP_PORT` / `SMTP_USER` / `SMTP_PASS` / `SMTP_FROM` | `SMTP_PORT=1025` | Outbound email             |
-| `CORS_ORIGINS`                                    | —                        | Allowed CORS origins                         |
+| Variable                                                            | Default                  | Description                                      |
+| ------------------------------------------------------------------- | ------------------------ | ------------------------------------------------ |
+| `DATABASE_URL`                                                      | — (**required**)         | PostgreSQL connection string                     |
+| `PORT`                                                              | `3000`                   | HTTP listen port                                 |
+| `APP_URL`                                                           | `http://localhost:3000`  | Public base URL (auth token issuance)            |
+| `AUTO_MIGRATE`                                                      | `false`                  | Apply embedded migrations on startup             |
+| `JWT_SECRET`                                                        | — (**required in prod**) | JWT signing secret; required outside development |
+| `SMTP_HOST` / `SMTP_PORT` / `SMTP_USER` / `SMTP_PASS` / `SMTP_FROM` | `SMTP_PORT=1025`         | Outbound email                                   |
+| `CORS_ORIGINS`                                                      | —                        | Allowed CORS origins                             |
 
 `COLLECT_SITE_KEY` and `BOOTSTRAP_TOKEN` are also recognized (tracker ingestion key and
 external-API bootstrap token).

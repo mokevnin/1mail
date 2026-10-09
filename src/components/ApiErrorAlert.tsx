@@ -1,5 +1,6 @@
 import { Alert } from '@mantine/core'
 import type { ReactNode } from 'react'
+
 import { type ApiErrorLike, getApiErrorMessage } from '../utils/apiErrors.ts'
 
 type ApiErrorAlertProps = {

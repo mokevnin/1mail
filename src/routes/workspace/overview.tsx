@@ -3,6 +3,7 @@ import { Group, Loader, SegmentedControl, SimpleGrid, Stack, Text, Title } from 
 import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
+
 import { ApiErrorAlert } from '../../components/ApiErrorAlert.tsx'
 import { StatCard } from '../../components/StatCard.tsx'
 import {
@@ -36,7 +37,7 @@ export function OverviewPage() {
         <Title order={2}>{workspace?.name ?? t(($) => $.overview.title)}</Title>
         <SegmentedControl
           value={range}
-          onChange={(v) => setRange(v as SiteAnalyticsRange)}
+          onChange={(v) => setRange(v)}
           data={RANGES.map((r) => ({ value: r, label: t(($) => $.analytics.range[r]) }))}
         />
       </Group>

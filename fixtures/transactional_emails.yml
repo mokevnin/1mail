@@ -9,8 +9,8 @@
   status: sent
   idempotency_key: txn-welcome-100
   workspace_id: 1
-  created_at: "{{daysAgo 2}}"
-  updated_at: "{{daysAgo 2}}"
+  created_at: '{{daysAgo 2}}'
+  updated_at: '{{daysAgo 2}}'
 - id: 101
   channel: email
   destination: emma.sql@codebasics.dev
@@ -19,8 +19,8 @@
   status: sent
   idempotency_key: txn-receipt-101
   workspace_id: 1
-  created_at: "{{daysAgo 3}}"
-  updated_at: "{{daysAgo 3}}"
+  created_at: '{{daysAgo 3}}'
+  updated_at: '{{daysAgo 3}}'
 - id: 102
   channel: email
   destination: sophia.python@codebasics.dev
@@ -29,8 +29,8 @@
   status: sent
   idempotency_key: txn-receipt-105
   workspace_id: 1
-  created_at: "{{daysAgo 8}}"
-  updated_at: "{{daysAgo 8}}"
+  created_at: '{{daysAgo 8}}'
+  updated_at: '{{daysAgo 8}}'
 # Suppressed: destination is on the do-not-send registry, so no send happened.
 - id: 103
   channel: email
@@ -40,8 +40,8 @@
   status: suppressed
   idempotency_key: txn-welcome-104
   workspace_id: 1
-  created_at: "{{daysAgo 6}}"
-  updated_at: "{{daysAgo 6}}"
+  created_at: '{{daysAgo 6}}'
+  updated_at: '{{daysAgo 6}}'
 # Failed: the provider call errored.
 - id: 104
   channel: email
@@ -52,8 +52,8 @@
   error: provider timeout
   idempotency_key: txn-welcome-102
   workspace_id: 1
-  created_at: "{{daysAgo 5}}"
-  updated_at: "{{daysAgo 5}}"
+  created_at: '{{daysAgo 5}}'
+  updated_at: '{{daysAgo 5}}'
 # Keyless send (idempotency_key null is always accepted).
 - id: 105
   channel: email
@@ -62,5 +62,5 @@
   contact_id: 103
   status: sent
   workspace_id: 1
-  created_at: "{{daysAgo 4}}"
-  updated_at: "{{daysAgo 4}}"
+  created_at: '{{daysAgo 4}}'
+  updated_at: '{{daysAgo 4}}'
