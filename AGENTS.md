@@ -136,7 +136,6 @@ the gitignored `.env` (read by the app) or `.mise.local.toml`.
 
 ## Conventions
 
-- Commit directly to `main` (no feature branches).
 - Commit messages follow **Conventional Commits** (`feat:`, `fix:`, `chore:`, `docs:`,
   `refactor:`, `ci:` …) — release-please uses them for versioning/changelog.
 - After changing TypeSpec or `ent/schema`, run `mise run generate` and commit the generated output.
