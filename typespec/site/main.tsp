@@ -9,6 +9,7 @@ import "../common/crud.tsp";
 import "./resources/contacts.tsp";
 import "./resources/custom-fields.tsp";
 import "./resources/segments.tsp";
+import "./resources/tags.tsp";
 import "./resources/auth.tsp";
 import "./resources/workspaces.tsp";
 import "./resources/memberships.tsp";

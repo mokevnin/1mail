@@ -37,3 +37,18 @@ func TotalPages(totalItems, pageSize int) int {
 	}
 	return total
 }
+
+// Paginate returns the requested page of an in-memory slice (for small catalogues
+// that are cheaper to load whole than to page in SQL). Items is never nil.
+func Paginate[T any](items []T, page, pageSize *int32) Page[T] {
+	p, ps := Normalize(page, pageSize)
+	start := min(Offset(p, ps), len(items))
+	end := min(start+ps, len(items))
+	return Page[T]{
+		Items:      append([]T{}, items[start:end]...),
+		Page:       p,
+		PageSize:   ps,
+		TotalItems: len(items),
+		TotalPages: TotalPages(len(items), ps),
+	}
+}

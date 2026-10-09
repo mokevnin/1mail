@@ -95,6 +95,13 @@ export const zSiteAnalyticsRange = z.enum([
 ]);
 
 /**
+ * Site request body for applying a tag to a contact
+ */
+export const zSiteApplyTagInput = z.object({
+  name: z.string()
+});
+
+/**
  * Automation lifecycle status
  */
 export const zSiteAutomationStatus = z.enum(['draft', 'active']);
@@ -813,6 +820,15 @@ export const zSiteSuppressionResource = z.object({
 });
 
 /**
+ * A Tag: a presence-only, workspace-scoped label on Contacts (auto-created on first use).
+ */
+export const zSiteTagResource = z.object({
+  id: zEntityId,
+  name: z.string(),
+  createdAt: zTimestamp
+});
+
+/**
  * One transactional send: the durable, read-only trace of an `/api/emails` call
  */
 export const zSiteTransactionalEmailResource = z.object({
@@ -1361,6 +1377,50 @@ export const zSiteContactsCreatePath = z.object({
  */
 export const zSiteContactsCreateResponse = zSiteContactResource;
 
+export const zSiteTagsListForContactPath = z.object({
+  slug: z.string(),
+  contactId: zEntityId
+});
+
+export const zSiteTagsListForContactQuery = z.object({
+  page: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).optional().default(1),
+  pageSize: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).optional().default(25)
+});
+
+/**
+ * Paginated response
+ */
+export const zSiteTagsListForContactResponse = z.object({
+  items: z.array(zSiteTagResource),
+  page: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
+  pageSize: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
+  totalItems: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
+  totalPages: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' })
+});
+
+export const zSiteTagsApplyBody = zSiteApplyTagInput;
+
+export const zSiteTagsApplyPath = z.object({
+  slug: z.string(),
+  contactId: zEntityId
+});
+
+/**
+ * The request has succeeded.
+ */
+export const zSiteTagsApplyResponse = zSiteTagResource;
+
+export const zSiteTagsRemovePath = z.object({
+  slug: z.string(),
+  contactId: zEntityId,
+  name: z.string()
+});
+
+/**
+ * There is no content to send for this request, but the headers may be useful.
+ */
+export const zSiteTagsRemoveResponse = z.void();
+
 export const zSiteContactsDeletePath = z.object({
   slug: z.string(),
   id: zEntityId
@@ -1728,6 +1788,26 @@ export const zSiteSuppressionsDeletePath = z.object({
  * There is no content to send for this request, but the headers may be useful.
  */
 export const zSiteSuppressionsDeleteResponse = z.void();
+
+export const zSiteTagsListPath = z.object({
+  slug: z.string()
+});
+
+export const zSiteTagsListQuery = z.object({
+  page: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).optional().default(1),
+  pageSize: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).optional().default(25)
+});
+
+/**
+ * Paginated response
+ */
+export const zSiteTagsListResponse = z.object({
+  items: z.array(zSiteTagResource),
+  page: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
+  pageSize: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
+  totalItems: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
+  totalPages: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' })
+});
 
 export const zSiteTemplatesListPath = z.object({
   slug: z.string()

@@ -133,6 +133,22 @@ type SuppressionsCreateRes interface {
 	suppressionsCreateRes()
 }
 
+type TagsApplyRes interface {
+	tagsApplyRes()
+}
+
+type TagsListForContactRes interface {
+	tagsListForContactRes()
+}
+
+type TagsListRes interface {
+	tagsListRes()
+}
+
+type TagsRemoveRes interface {
+	tagsRemoveRes()
+}
+
 type TemplatesCreateRes interface {
 	templatesCreateRes()
 }

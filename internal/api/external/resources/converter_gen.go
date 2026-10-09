@@ -110,3 +110,12 @@ func (c *ConverterImpl) SendingDomainToResource(source *ent.SendingDomain) exter
 	}
 	return externalapiSendingDomainResource
 }
+func (c *ConverterImpl) TagToResource(source *ent.Tag) external.TagResource {
+	var externalapiTagResource external.TagResource
+	if source != nil {
+		externalapiTagResource.ID = entityID((*source).ID)
+		externalapiTagResource.Name = (*source).Name
+		externalapiTagResource.CreatedAt = timestamp((*source).CreatedAt)
+	}
+	return externalapiTagResource
+}

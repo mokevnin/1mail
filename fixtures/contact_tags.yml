@@ -1,0 +1,7 @@
+# Join rows Contact <-> Tag (workspace acme). See fixtures/tags.yml.
+- contact_id: 1
+  tag_id: 1
+- contact_id: 3
+  tag_id: 1
+- contact_id: 1
+  tag_id: 2

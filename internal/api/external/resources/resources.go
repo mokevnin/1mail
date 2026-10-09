@@ -38,6 +38,7 @@ type Converter interface {
 	EmailTemplateToResource(source *ent.EmailTemplate) externalapi.TemplateResource
 	CustomFieldToResource(source *ent.CustomField) externalapi.CustomFieldResource
 	SendingDomainToResource(source *ent.SendingDomain) externalapi.SendingDomainResource
+	TagToResource(source *ent.Tag) externalapi.TagResource
 }
 
 func entityID(id int64) externalapi.EntityId {

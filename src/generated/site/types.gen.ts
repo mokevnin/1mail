@@ -221,6 +221,16 @@ export type SiteApiTokenResource = {
 };
 
 /**
+ * Site request body for applying a tag to a contact
+ */
+export type SiteApplyTagInput = {
+  /**
+   * The label to apply; created on first use
+   */
+  name: string;
+};
+
+/**
  * Automation resource used by the site UI
  */
 export type SiteAutomationResource = {
@@ -1301,6 +1311,24 @@ export type SiteSuppressionResource = {
    * Last update timestamp
    */
   updatedAt: Timestamp;
+};
+
+/**
+ * A Tag: a presence-only, workspace-scoped label on Contacts (auto-created on first use).
+ */
+export type SiteTagResource = {
+  /**
+   * Unique identifier
+   */
+  id: EntityId;
+  /**
+   * The label; unique per workspace
+   */
+  name: string;
+  /**
+   * Creation timestamp
+   */
+  createdAt: Timestamp;
 };
 
 /**
@@ -2985,6 +3013,141 @@ export type SiteContactsCreateResponses = {
 
 export type SiteContactsCreateResponse = SiteContactsCreateResponses[keyof SiteContactsCreateResponses];
 
+export type SiteTagsListForContactData = {
+  body?: never;
+  path: {
+    slug: string;
+    contactId: EntityId;
+  };
+  query?: {
+    /**
+     * Page number (1-based)
+     */
+    page?: number;
+    /**
+     * Page size
+     */
+    pageSize?: number;
+  };
+  url: '/workspaces/{slug}/contacts/{contactId}/tags';
+};
+
+export type SiteTagsListForContactErrors = {
+  /**
+   * RFC 7807 bad request response
+   */
+  400: ProblemDetails;
+  /**
+   * RFC 7807 not found response
+   */
+  404: ProblemDetails;
+  /**
+   * RFC 7807 validation response
+   */
+  422: ProblemDetails;
+};
+
+export type SiteTagsListForContactError = SiteTagsListForContactErrors[keyof SiteTagsListForContactErrors];
+
+export type SiteTagsListForContactResponses = {
+  /**
+   * Paginated response
+   */
+  200: {
+    /**
+     * List of items
+     */
+    items: Array<SiteTagResource>;
+    /**
+     * Page number (1-based)
+     */
+    page: number;
+    /**
+     * Page size
+     */
+    pageSize: number;
+    /**
+     * Total number of elements
+     */
+    totalItems: number;
+    /**
+     * Total number of pages
+     */
+    totalPages: number;
+  };
+};
+
+export type SiteTagsListForContactResponse = SiteTagsListForContactResponses[keyof SiteTagsListForContactResponses];
+
+export type SiteTagsApplyData = {
+  body: SiteApplyTagInput;
+  path: {
+    slug: string;
+    contactId: EntityId;
+  };
+  query?: never;
+  url: '/workspaces/{slug}/contacts/{contactId}/tags';
+};
+
+export type SiteTagsApplyErrors = {
+  /**
+   * RFC 7807 bad request response
+   */
+  400: ProblemDetails;
+  /**
+   * RFC 7807 not found response
+   */
+  404: ProblemDetails;
+  /**
+   * RFC 7807 validation response
+   */
+  422: ProblemDetails;
+};
+
+export type SiteTagsApplyError = SiteTagsApplyErrors[keyof SiteTagsApplyErrors];
+
+export type SiteTagsApplyResponses = {
+  /**
+   * The request has succeeded.
+   */
+  200: SiteTagResource;
+};
+
+export type SiteTagsApplyResponse = SiteTagsApplyResponses[keyof SiteTagsApplyResponses];
+
+export type SiteTagsRemoveData = {
+  body?: never;
+  path: {
+    slug: string;
+    contactId: EntityId;
+    name: string;
+  };
+  query?: never;
+  url: '/workspaces/{slug}/contacts/{contactId}/tags/{name}';
+};
+
+export type SiteTagsRemoveErrors = {
+  /**
+   * RFC 7807 bad request response
+   */
+  400: ProblemDetails;
+  /**
+   * RFC 7807 not found response
+   */
+  404: ProblemDetails;
+};
+
+export type SiteTagsRemoveError = SiteTagsRemoveErrors[keyof SiteTagsRemoveErrors];
+
+export type SiteTagsRemoveResponses = {
+  /**
+   * There is no content to send for this request, but the headers may be useful.
+   */
+  204: void;
+};
+
+export type SiteTagsRemoveResponse = SiteTagsRemoveResponses[keyof SiteTagsRemoveResponses];
+
 export type SiteContactsDeleteData = {
   body?: never;
   path: {
@@ -4295,6 +4458,71 @@ export type SiteSuppressionsDeleteResponses = {
 };
 
 export type SiteSuppressionsDeleteResponse = SiteSuppressionsDeleteResponses[keyof SiteSuppressionsDeleteResponses];
+
+export type SiteTagsListData = {
+  body?: never;
+  path: {
+    slug: string;
+  };
+  query?: {
+    /**
+     * Page number (1-based)
+     */
+    page?: number;
+    /**
+     * Page size
+     */
+    pageSize?: number;
+  };
+  url: '/workspaces/{slug}/tags';
+};
+
+export type SiteTagsListErrors = {
+  /**
+   * RFC 7807 bad request response
+   */
+  400: ProblemDetails;
+  /**
+   * RFC 7807 not found response
+   */
+  404: ProblemDetails;
+  /**
+   * RFC 7807 validation response
+   */
+  422: ProblemDetails;
+};
+
+export type SiteTagsListError = SiteTagsListErrors[keyof SiteTagsListErrors];
+
+export type SiteTagsListResponses = {
+  /**
+   * Paginated response
+   */
+  200: {
+    /**
+     * List of items
+     */
+    items: Array<SiteTagResource>;
+    /**
+     * Page number (1-based)
+     */
+    page: number;
+    /**
+     * Page size
+     */
+    pageSize: number;
+    /**
+     * Total number of elements
+     */
+    totalItems: number;
+    /**
+     * Total number of pages
+     */
+    totalPages: number;
+  };
+};
+
+export type SiteTagsListResponse = SiteTagsListResponses[keyof SiteTagsListResponses];
 
 export type SiteTemplatesListData = {
   body?: never;

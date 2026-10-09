@@ -46,6 +46,8 @@ type Tx struct {
 	SendingDomain *SendingDomainClient
 	// Suppression is the client for interacting with the Suppression builders.
 	Suppression *SuppressionClient
+	// Tag is the client for interacting with the Tag builders.
+	Tag *TagClient
 	// Unsubscribe is the client for interacting with the Unsubscribe builders.
 	Unsubscribe *UnsubscribeClient
 	// User is the client for interacting with the User builders.
@@ -204,6 +206,7 @@ func (tx *Tx) init() {
 	tx.Segment = NewSegmentClient(tx.config)
 	tx.SendingDomain = NewSendingDomainClient(tx.config)
 	tx.Suppression = NewSuppressionClient(tx.config)
+	tx.Tag = NewTagClient(tx.config)
 	tx.Unsubscribe = NewUnsubscribeClient(tx.config)
 	tx.User = NewUserClient(tx.config)
 	tx.Visitor = NewVisitorClient(tx.config)

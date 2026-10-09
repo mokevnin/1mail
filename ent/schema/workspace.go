@@ -86,6 +86,7 @@ func (Workspace) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.To("contacts", Contact.Type),
 		edge.To("custom_fields", CustomField.Type),
+		edge.To("tags", Tag.Type),
 		edge.To("segments", Segment.Type),
 		edge.To("events", Event.Type),
 		edge.To("visitors", Visitor.Type),

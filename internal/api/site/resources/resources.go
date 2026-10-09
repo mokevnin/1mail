@@ -63,6 +63,7 @@ type Converter interface {
 	AutomationToResource(source *ent.Automation) siteapi.SiteAutomationResource
 	SuppressionToResource(source *ent.Suppression) siteapi.SiteSuppressionResource
 	CustomFieldToResource(source *ent.CustomField) siteapi.SiteCustomFieldResource
+	TagToResource(source *ent.Tag) siteapi.SiteTagResource
 
 	// The transactional send history is the Outbound messages of kind transactional
 	// (ADR 0015). A message skipped by Send-eligibility is shown as "suppressed" (the
