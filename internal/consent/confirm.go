@@ -16,23 +16,24 @@ import (
 // by destination, so it records even if the contact was deleted between send and
 // click. The existence check makes a repeated POST (mailbox retry, double click)
 // a complete no-op: the confirmation stands and no second Event is logged.
-func RecordConfirmation(ctx context.Context, client *ent.Client, bus *events.Bus, target tracking.ConfirmTarget, ip string) error {
+func RecordConfirmation(ctx context.Context, bus *events.Bus, target tracking.ConfirmTarget, ip string) error {
 	dest := eligibility.NormalizeDestination(target.Destination)
 	if dest == "" || target.WorkspaceID == 0 {
 		return nil
 	}
 
 	return bus.WithinTx(ctx, func(tx *ent.Client, pub events.Publisher) error {
-		exists, err := tx.Confirmation.Query().Where(
-			confirmation.WorkspaceID(target.WorkspaceID),
+		// The Workspace comes from the signed confirmation token (no membership or api
+		// token here), so this is a scope source outside the site/external/job list.
+		sc := tx.Scoped(target.WorkspaceID)
+		exists, err := sc.Confirmation().Query().Where(
 			confirmation.ChannelEQ(confirmation.ChannelEmail),
 			confirmation.DestinationEQ(dest),
 		).Exist(ctx)
 		if err != nil || exists {
 			return err
 		}
-		create := tx.Confirmation.Create().
-			SetWorkspaceID(target.WorkspaceID).
+		create := sc.Confirmation().Create().
 			SetChannel(confirmation.ChannelEmail).
 			SetDestination(dest).
 			SetProvenance(confirmation.ProvenanceDoubleOptIn)

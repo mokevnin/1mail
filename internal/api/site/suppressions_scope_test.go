@@ -1,0 +1,32 @@
+package site_test
+
+import (
+	"context"
+	"strconv"
+	"testing"
+
+	"github.com/mokevnin/1mail/ent/suppression"
+	siteapi "github.com/mokevnin/1mail/gen/site"
+	"github.com/mokevnin/1mail/internal/fixtures"
+	"github.com/mokevnin/1mail/internal/testhelper"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+)
+
+// A Suppression id of another Workspace is invisible: deleting it is a 404 and the
+// row survives.
+func TestSiteSuppressionsDeleteForeignIDIsNotFound(t *testing.T) {
+	env := testhelper.Setup(t)
+	c := env.SiteActor(t, fixtures.OwnerJohnEmail)
+	ctx := context.Background()
+
+	out, err := c.SiteSuppressionsDelete(ctx, siteapi.SiteSuppressionsDeleteParams{
+		Slug: fixtures.AcmeSlug, ID: siteapi.EntityId(strconv.Itoa(fixtures.SuppressionGlobexID)),
+	})
+	require.NoError(t, err)
+	assert.IsType(t, &siteapi.SiteSuppressionsDeleteNotFound{}, out)
+
+	exists, err := env.DB.Suppression.Query().Where(suppression.ID(fixtures.SuppressionGlobexID)).Exist(ctx)
+	require.NoError(t, err)
+	assert.True(t, exists, "the other Workspace's row is untouched")
+}

@@ -240,7 +240,7 @@ func (m *Module) Send(ctx context.Context, s *ent.Scoped, req Request) (Result, 
 
 	// Send-eligibility, per message at send time, fail-closed: if the check cannot
 	// be made the message is not sent and the attempt is retried.
-	dec, err := eligibility.Check(ctx, m.ent, s.WorkspaceID(), eligibility.ChannelEmail, dest, req.Source)
+	dec, err := eligibility.Check(ctx, s, eligibility.ChannelEmail, dest, req.Source)
 	if err != nil {
 		m.release(ctx, s, msg)
 		return Result{}, err

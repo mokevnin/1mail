@@ -19,7 +19,7 @@ import (
 
 func eligible(t *testing.T, env *testhelper.TestEnv, dest, source string) eligibility.Decision {
 	t.Helper()
-	d, err := eligibility.Check(context.Background(), env.DB, 1, eligibility.ChannelEmail, dest, source)
+	d, err := eligibility.Check(context.Background(), env.DB.Scoped(fixtures.AcmeID), eligibility.ChannelEmail, dest, source)
 	require.NoError(t, err)
 	return d
 }
