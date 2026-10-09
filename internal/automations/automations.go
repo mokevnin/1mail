@@ -92,12 +92,11 @@ func validate(steps []Step) error {
 }
 
 // Module is the automations module.
-type Module struct {
-	db *ent.Client
-}
+type Module struct{}
 
-// New builds the automations module over an ent client.
-func New(db *ent.Client) *Module { return &Module{db: db} }
+// New builds the automations module. It holds no client: every call takes the
+// Workspace's scoped client (ADR 0017).
+func New() *Module { return &Module{} }
 
 // CreateInput is the data for a new Automation. It is always created as a draft:
 // activating is a separate, deliberate operation.
@@ -115,8 +114,8 @@ type UpdateInput struct {
 }
 
 // List returns one page of the Workspace's Automations (newest first) and the total.
-func (m *Module) List(ctx context.Context, workspaceID int64, limit, offset int) ([]*ent.Automation, int, error) {
-	q := m.db.Automation.Query().Where(automation.WorkspaceID(workspaceID))
+func (m *Module) List(ctx context.Context, s *ent.Scoped, limit, offset int) ([]*ent.Automation, int, error) {
+	q := s.Automation().Query()
 	total, err := q.Count(ctx)
 	if err != nil {
 		return nil, 0, err
@@ -126,20 +125,17 @@ func (m *Module) List(ctx context.Context, workspaceID int64, limit, offset int)
 }
 
 // Get returns one Automation of the Workspace.
-func (m *Module) Get(ctx context.Context, workspaceID, id int64) (*ent.Automation, error) {
-	a, err := m.db.Automation.Query().
-		Where(automation.ID(id), automation.WorkspaceID(workspaceID)).
-		Only(ctx)
+func (m *Module) Get(ctx context.Context, s *ent.Scoped, id int64) (*ent.Automation, error) {
+	a, err := s.Automation().Get(ctx, id)
 	return a, notFound(err)
 }
 
 // Create stores a new draft Automation.
-func (m *Module) Create(ctx context.Context, workspaceID int64, in CreateInput) (*ent.Automation, error) {
+func (m *Module) Create(ctx context.Context, s *ent.Scoped, in CreateInput) (*ent.Automation, error) {
 	if err := validate(in.Steps); err != nil {
 		return nil, err
 	}
-	q := m.db.Automation.Create().
-		SetWorkspaceID(workspaceID).
+	q := s.Automation().Create().
 		SetName(in.Name).
 		SetTriggerEvent(in.TriggerEvent).
 		SetStatus(automation.StatusDraft)
@@ -154,9 +150,8 @@ func (m *Module) Create(ctx context.Context, workspaceID int64, in CreateInput) 
 }
 
 // Update changes the Automation's name, trigger or steps. The status is untouched.
-func (m *Module) Update(ctx context.Context, workspaceID, id int64, in UpdateInput) (*ent.Automation, error) {
-	q := m.db.Automation.UpdateOneID(id).
-		Where(automation.WorkspaceID(workspaceID)).
+func (m *Module) Update(ctx context.Context, s *ent.Scoped, id int64, in UpdateInput) (*ent.Automation, error) {
+	q := s.Automation().UpdateOneID(id).
 		SetNillableName(in.Name).
 		SetNillableTriggerEvent(in.TriggerEvent)
 	if in.Steps != nil {
@@ -174,24 +169,23 @@ func (m *Module) Update(ctx context.Context, workspaceID, id int64, in UpdateInp
 }
 
 // Delete removes the Automation.
-func (m *Module) Delete(ctx context.Context, workspaceID, id int64) error {
-	err := m.db.Automation.DeleteOneID(id).Where(automation.WorkspaceID(workspaceID)).Exec(ctx)
+func (m *Module) Delete(ctx context.Context, s *ent.Scoped, id int64) error {
+	err := s.Automation().DeleteOneID(id).Exec(ctx)
 	return notFound(err)
 }
 
 // Activate starts enrolling Contacts into the Automation.
-func (m *Module) Activate(ctx context.Context, workspaceID, id int64) (*ent.Automation, error) {
-	return m.setStatus(ctx, workspaceID, id, automation.StatusActive)
+func (m *Module) Activate(ctx context.Context, s *ent.Scoped, id int64) (*ent.Automation, error) {
+	return m.setStatus(ctx, s, id, automation.StatusActive)
 }
 
 // Deactivate stops new enrollments; in-flight Enrollments finish.
-func (m *Module) Deactivate(ctx context.Context, workspaceID, id int64) (*ent.Automation, error) {
-	return m.setStatus(ctx, workspaceID, id, automation.StatusDraft)
+func (m *Module) Deactivate(ctx context.Context, s *ent.Scoped, id int64) (*ent.Automation, error) {
+	return m.setStatus(ctx, s, id, automation.StatusDraft)
 }
 
-func (m *Module) setStatus(ctx context.Context, workspaceID, id int64, status automation.Status) (*ent.Automation, error) {
-	a, err := m.db.Automation.UpdateOneID(id).
-		Where(automation.WorkspaceID(workspaceID)).
+func (m *Module) setStatus(ctx context.Context, s *ent.Scoped, id int64, status automation.Status) (*ent.Automation, error) {
+	a, err := s.Automation().UpdateOneID(id).
 		SetStatus(status).
 		Save(ctx)
 	return a, notFound(err)

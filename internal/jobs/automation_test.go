@@ -50,12 +50,12 @@ func TestAutomationEnrollAndRun(t *testing.T) {
 		Save(ctx)
 	require.NoError(t, err)
 
-	runIDs, err := jobs.EvaluateTrigger(ctx, env.DB, fixtures.AcmeID, c.ID, "contact.created")
+	runIDs, err := jobs.EvaluateTrigger(ctx, env.DB.Scoped(fixtures.AcmeID), c.ID, "contact.created")
 	require.NoError(t, err)
 	require.Len(t, runIDs, 1)
 
 	// Enroll-once: a second matching event creates no new run.
-	again, err := jobs.EvaluateTrigger(ctx, env.DB, fixtures.AcmeID, c.ID, "contact.created")
+	again, err := jobs.EvaluateTrigger(ctx, env.DB.Scoped(fixtures.AcmeID), c.ID, "contact.created")
 	require.NoError(t, err)
 	assert.Empty(t, again)
 
@@ -107,7 +107,7 @@ func TestAutomationExitsOnUnsubscribe(t *testing.T) {
 		Save(ctx)
 	require.NoError(t, err)
 
-	runIDs, err := jobs.EvaluateTrigger(ctx, env.DB, fixtures.AcmeID, c.ID, "contact.created")
+	runIDs, err := jobs.EvaluateTrigger(ctx, env.DB.Scoped(fixtures.AcmeID), c.ID, "contact.created")
 	require.NoError(t, err)
 	require.Len(t, runIDs, 1)
 
@@ -139,7 +139,7 @@ func TestAutomationExitsOnSuppression(t *testing.T) {
 	require.NoError(t, err)
 	_ = a
 
-	runIDs, err := jobs.EvaluateTrigger(ctx, env.DB, fixtures.AcmeID, c.ID, "contact.created")
+	runIDs, err := jobs.EvaluateTrigger(ctx, env.DB.Scoped(fixtures.AcmeID), c.ID, "contact.created")
 	require.NoError(t, err)
 	require.Len(t, runIDs, 1)
 
@@ -172,7 +172,7 @@ func TestAutomationUnaffectedByBroadcastUnsubscribe(t *testing.T) {
 		SetDefinition("[" + emailStep + "]").Save(ctx)
 	require.NoError(t, err)
 
-	runIDs, err := jobs.EvaluateTrigger(ctx, env.DB, fixtures.AcmeID, c.ID, "contact.created")
+	runIDs, err := jobs.EvaluateTrigger(ctx, env.DB.Scoped(fixtures.AcmeID), c.ID, "contact.created")
 	require.NoError(t, err)
 	require.Len(t, runIDs, 1)
 
@@ -197,7 +197,7 @@ func TestAutomationSendIncludesUnsubscribeFooter(t *testing.T) {
 		SetDefinition("[" + emailStep + "]").Save(ctx)
 	require.NoError(t, err)
 
-	runIDs, err := jobs.EvaluateTrigger(ctx, env.DB, fixtures.AcmeID, c.ID, "contact.created")
+	runIDs, err := jobs.EvaluateTrigger(ctx, env.DB.Scoped(fixtures.AcmeID), c.ID, "contact.created")
 	require.NoError(t, err)
 	require.Len(t, runIDs, 1)
 
@@ -223,7 +223,7 @@ func TestAutomationInactiveDoesNotEnroll(t *testing.T) {
 		SetName("Draft").SetTriggerEvent("contact.created").Save(ctx) // status defaults to draft
 	require.NoError(t, err)
 
-	runIDs, err := jobs.EvaluateTrigger(ctx, env.DB, fixtures.AcmeID, c.ID, "contact.created")
+	runIDs, err := jobs.EvaluateTrigger(ctx, env.DB.Scoped(fixtures.AcmeID), c.ID, "contact.created")
 	require.NoError(t, err)
 	assert.Empty(t, runIDs)
 }
@@ -240,7 +240,7 @@ func TestAutomationWaitDefersNextStep(t *testing.T) {
 	require.NoError(t, err)
 	_ = a
 
-	runIDs, err := jobs.EvaluateTrigger(ctx, env.DB, fixtures.AcmeID, c.ID, "contact.created")
+	runIDs, err := jobs.EvaluateTrigger(ctx, env.DB.Scoped(fixtures.AcmeID), c.ID, "contact.created")
 	require.NoError(t, err)
 	require.Len(t, runIDs, 1)
 
@@ -259,7 +259,7 @@ func TestAutomationHeldStepWaitsAndResumes(t *testing.T) {
 	ctx := context.Background()
 
 	// Fixtures: contact 130 (clean) and the active "hold_demo" automation (id 103).
-	runIDs, err := jobs.EvaluateTrigger(ctx, env.DB, fixtures.AcmeID, fixtures.ContactHoldDemoID, "hold_demo")
+	runIDs, err := jobs.EvaluateTrigger(ctx, env.DB.Scoped(fixtures.AcmeID), fixtures.ContactHoldDemoID, "hold_demo")
 	require.NoError(t, err)
 	require.Len(t, runIDs, 1)
 

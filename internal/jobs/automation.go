@@ -34,7 +34,8 @@ type EvaluateTriggerWorker struct {
 }
 
 func (w *EvaluateTriggerWorker) Work(ctx context.Context, job *river.Job[EvaluateTriggerArgs]) error {
-	runIDs, err := EvaluateTrigger(ctx, w.ent, job.Args.WorkspaceID, job.Args.ContactID, job.Args.Action)
+	// Job entry point: the job's own Workspace argument is the scope (ADR 0017).
+	runIDs, err := EvaluateTrigger(ctx, w.ent.Scoped(job.Args.WorkspaceID), job.Args.ContactID, job.Args.Action)
 	if err != nil {
 		return err
 	}
@@ -51,10 +52,9 @@ func (w *EvaluateTriggerWorker) Work(ctx context.Context, job *river.Job[Evaluat
 // whose trigger_event matches action, creating one AutomationRun each (enroll-
 // once-ever via the unique index). Returns the new run IDs to advance. Pure (no
 // queue) so it can be tested directly.
-func EvaluateTrigger(ctx context.Context, client *ent.Client, workspaceID, contactID int64, action string) ([]int64, error) {
-	autos, err := client.Automation.Query().
+func EvaluateTrigger(ctx context.Context, s *ent.Scoped, contactID int64, action string) ([]int64, error) {
+	autos, err := s.Automation().Query().
 		Where(
-			automation.WorkspaceID(workspaceID),
 			automation.StatusEQ(automation.StatusActive),
 			automation.TriggerEvent(action),
 		).
@@ -68,7 +68,7 @@ func EvaluateTrigger(ctx context.Context, client *ent.Client, workspaceID, conta
 		// Check-then-insert so the common "already enrolled" path doesn't trip the
 		// unique constraint (a violation would poison the surrounding transaction).
 		// The unique index stays as a race safety net.
-		exists, err := client.AutomationRun.Query().
+		exists, err := s.AutomationRun().Query().
 			Where(automationrun.AutomationID(a.ID), automationrun.ContactID(contactID)).
 			Exist(ctx)
 		if err != nil {
@@ -77,10 +77,9 @@ func EvaluateTrigger(ctx context.Context, client *ent.Client, workspaceID, conta
 		if exists {
 			continue
 		}
-		run, err := client.AutomationRun.Create().
+		run, err := s.AutomationRun().Create().
 			SetAutomationID(a.ID).
 			SetContactID(contactID).
-			SetWorkspaceID(workspaceID).
 			Save(ctx)
 		if err != nil {
 			continue // lost an enrollment race; skip
@@ -145,25 +144,25 @@ func RunStep(ctx context.Context, client *ent.Client, mod *outbound.Module, runI
 	// (ADR 0017), then handed to the modules.
 	scoped := client.Scoped(run.WorkspaceID)
 
-	a, err := client.Automation.Get(ctx, run.AutomationID)
+	a, err := scoped.Automation().Get(ctx, run.AutomationID)
 	if err != nil {
 		return StepResult{}, err
 	}
 	steps, err := automations.Decode(a.Definition)
 	if err != nil {
-		_, _ = run.Update().SetStatus(automationrun.StatusFailed).Save(ctx)
+		_, _ = scoped.AutomationRun().UpdateOneID(run.ID).SetStatus(automationrun.StatusFailed).Save(ctx)
 		return StepResult{}, fmt.Errorf("automation %d definition: %w", a.ID, err)
 	}
 
 	if run.CurrentStep >= len(steps) {
-		_, _ = run.Update().SetStatus(automationrun.StatusCompleted).ClearResumeAt().Save(ctx)
+		_, _ = scoped.AutomationRun().UpdateOneID(run.ID).SetStatus(automationrun.StatusCompleted).ClearResumeAt().Save(ctx)
 		return StepResult{Done: true}, nil
 	}
 
 	switch s := steps[run.CurrentStep]; s.Type {
 	case automations.StepWait:
 		resume := time.Now().Add(time.Duration(s.Seconds) * time.Second)
-		if _, err := run.Update().SetCurrentStep(run.CurrentStep + 1).SetResumeAt(resume).Save(ctx); err != nil {
+		if _, err := scoped.AutomationRun().UpdateOneID(run.ID).SetCurrentStep(run.CurrentStep + 1).SetResumeAt(resume).Save(ctx); err != nil {
 			return StepResult{}, err
 		}
 		return StepResult{ResumeAt: &resume}, nil
@@ -179,20 +178,20 @@ func RunStep(ctx context.Context, client *ent.Client, mod *outbound.Module, runI
 		if err != nil {
 			return StepResult{}, err
 		}
-		if _, err := run.Update().SetCurrentStep(run.CurrentStep + 1).ClearResumeAt().Save(ctx); err != nil {
+		if _, err := scoped.AutomationRun().UpdateOneID(run.ID).SetCurrentStep(run.CurrentStep + 1).ClearResumeAt().Save(ctx); err != nil {
 			return StepResult{}, err
 		}
 		return StepResult{}, nil // continue immediately
 
 	case automations.StepEmail:
-		c, err := client.Contact.Get(ctx, run.ContactID)
+		c, err := scoped.Contact().Get(ctx, run.ContactID)
 		if err != nil {
 			return StepResult{}, err
 		}
 		// Email channel: a Contact with no email address can't receive this step.
 		// Not an opt-out — the sequence simply completes.
 		if c.Email == nil {
-			_, _ = run.Update().SetStatus(automationrun.StatusCompleted).ClearResumeAt().Save(ctx)
+			_, _ = scoped.AutomationRun().UpdateOneID(run.ID).SetStatus(automationrun.StatusCompleted).ClearResumeAt().Save(ctx)
 			return StepResult{Done: true}, nil
 		}
 		step := run.CurrentStep
@@ -216,7 +215,7 @@ func RunStep(ctx context.Context, client *ent.Client, mod *outbound.Module, runI
 		case outbound.Sent:
 			// Advance past the email step. A crash between the send and this write
 			// replays the recorded Sent on retry, so the step never sends twice.
-			if _, err := run.Update().SetCurrentStep(step + 1).ClearResumeAt().Save(ctx); err != nil {
+			if _, err := scoped.AutomationRun().UpdateOneID(run.ID).SetCurrentStep(step + 1).ClearResumeAt().Save(ctx); err != nil {
 				return StepResult{}, err
 			}
 			return StepResult{}, nil // continue immediately
@@ -224,10 +223,10 @@ func RunStep(ctx context.Context, client *ent.Client, mod *outbound.Module, runI
 			// An ineligible destination (suppressed, or unsubscribed from this
 			// automation / from everything) exits the enrollment — a run never
 			// silently keeps walking steps while skipping every email.
-			_, _ = run.Update().SetStatus(automationrun.StatusExited).ClearResumeAt().Save(ctx)
+			_, _ = scoped.AutomationRun().UpdateOneID(run.ID).SetStatus(automationrun.StatusExited).ClearResumeAt().Save(ctx)
 			return StepResult{Done: true}, nil
 		case outbound.Failed:
-			_, _ = run.Update().SetStatus(automationrun.StatusFailed).Save(ctx)
+			_, _ = scoped.AutomationRun().UpdateOneID(run.ID).SetStatus(automationrun.StatusFailed).Save(ctx)
 			return StepResult{}, fmt.Errorf("email step %d: %s", step, res.Reason)
 		default: // outbound.Held: the enrollment waits, unchanged, and asks again later
 			resume := time.Now().Add(holdRetryDelay)
@@ -235,7 +234,7 @@ func RunStep(ctx context.Context, client *ent.Client, mod *outbound.Module, runI
 		}
 
 	default:
-		_, _ = run.Update().SetStatus(automationrun.StatusFailed).Save(ctx)
+		_, _ = scoped.AutomationRun().UpdateOneID(run.ID).SetStatus(automationrun.StatusFailed).Save(ctx)
 		return StepResult{}, fmt.Errorf("unknown step type %q", s.Type)
 	}
 }

@@ -88,7 +88,7 @@ func TestExternalSegmentsPreview(t *testing.T) {
 	c := env.ExternalScoped(t, "segments:read")
 
 	const def = `{"combinator":"and","rules":[{"field":"custom:plan","operator":"=","value":"pro"}]}`
-	want, err := segments.New(env.DB).Preview(ctx, 1, def)
+	want, err := segments.New().Preview(ctx, env.DB.Scoped(1), def)
 	require.NoError(t, err)
 	res, err := c.SegmentsPreview(ctx, &externalapi.PreviewSegmentInput{Definition: externalapi.NewOptNilString(def)})
 	require.NoError(t, err)
