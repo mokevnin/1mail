@@ -3,6 +3,7 @@ package events_test
 import (
 	"context"
 	"database/sql"
+	"slices"
 	"sync"
 	"testing"
 	"time"
@@ -42,6 +43,12 @@ func (r *recordingEnroller) count() int {
 type recordingDispatcher struct {
 	mu    sync.Mutex
 	names []string
+}
+
+func (r *recordingDispatcher) snapshot() []string {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	return slices.Clone(r.names)
 }
 
 func (r *recordingDispatcher) Dispatch(_ context.Context, _ *ent.Scoped, name, _ string, _ []byte) error {
@@ -101,7 +108,9 @@ func TestRegisterSubscribersFansEveryEventOutToAllConsumers(t *testing.T) {
 	require.Eventually(t, func() bool {
 		persisted, _ := client.Event.Query().Where(event.SubjectID(dest)).Exist(ctx)
 		suppressed, _ := client.Suppression.Query().Where(suppression.Destination(dest)).Exist(ctx)
-		return persisted && suppressed && enroller.count() == 1 && dispatcher.count() == 1
+		return persisted && suppressed && enroller.count() >= 1 && dispatcher.count() >= 1
 	}, 15*time.Second, 50*time.Millisecond, "persist, suppression, automations and webhooks must all see the event")
-	assert.Equal(t, []string{events.NameEmailBounced}, dispatcher.names)
+	// Delivery is at-least-once: a serialization failure while acking redelivers the
+	// message, so a consumer may see it more than once, never a different event.
+	assert.Subset(t, []string{events.NameEmailBounced}, dispatcher.snapshot())
 }
