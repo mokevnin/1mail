@@ -1,10 +1,22 @@
 # 1mail
 
-Open-core marketing automation platform — a Go backend and a React/Vite frontend in a
-single repo. The data model is workspace-scoped (multi-tenant): contacts, events, API
-tokens, and tracking entities all belong to a `workspace`.
+Open-core marketing automation you can run yourself. 1mail helps a business know its
+audience and talk to it at the right moment: it collects who your contacts are and what
+they do on your site or in your product, groups them into segments, and sends them email —
+one-off broadcasts, automated sequences triggered by their behavior, and transactional
+messages.
+
+It looks after the unglamorous part too: unsubscribes, bounces and spam complaints are
+honored automatically, so you never write to someone who asked you to stop, and your sender
+reputation stays intact. Everything lives in your own workspace on your own infrastructure,
+so the customer data stays yours. The goal is a self-hostable alternative to tools like
+Drip, without the lock-in.
 
 ## Stack
+
+A Go backend and a React/Vite frontend in a single repo. The data model is
+workspace-scoped (multi-tenant): contacts, events, API tokens, and tracking entities all
+belong to a `workspace`.
 
 - **Backend** — Go + [ogen](https://ogen.dev/) (HTTP servers in `gen/*`), ORM
   [ent](https://entgo.io/), queues [river](https://riverqueue.com/), pub/sub
