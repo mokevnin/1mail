@@ -19,6 +19,7 @@ coverage
 
 # Vitest Browser Mode failure screenshots / attachments
 **/__screenshots__/
+.vitest/
 .vitest-attachments/
 
 # Grunt intermediate storage (http://gruntjs.com/creating-plugins#storing-task-files)
@@ -93,3 +94,7 @@ mise.local.toml
 .claude/skills/hk-configure
 .claude/skills/hk-debug
 .claude/skills/pitchfork
+
+# Claude Code local state (agent worktrees, personal settings)
+.claude/worktrees/
+.claude/settings.local.json
