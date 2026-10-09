@@ -105,3 +105,17 @@ func TestExternalTagsRequireScopes(t *testing.T) {
 	require.NoError(t, err)
 	assert.IsType(t, &externalapi.TagsListUnauthorized{}, deniedList)
 }
+
+func TestExternalTagsApplyRefusesAForeignContact(t *testing.T) {
+	env := testhelper.Setup(t)
+	c := env.ExternalScoped(t, "contacts:read", "contacts:write")
+	ctx := context.Background()
+
+	got, err := c.TagsApply(ctx, &externalapi.ApplyTagInput{Name: "brand-new"}, externalapi.TagsApplyParams{ContactId: entityIDString(fixtures.ContactGlobexID)})
+	require.NoError(t, err)
+	assert.IsType(t, &externalapi.TagsApplyNotFound{}, got)
+
+	all, err := c.TagsList(ctx, externalapi.TagsListParams{})
+	require.NoError(t, err)
+	assert.NotContains(t, tagNames(all.(*externalapi.TagsListOK).Items), "brand-new", "a refused apply creates no Tag")
+}

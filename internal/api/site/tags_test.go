@@ -69,3 +69,17 @@ func TestSiteTagsListApplyRemove(t *testing.T) {
 	require.NoError(t, err)
 	assert.IsType(t, &siteapi.SiteTagsListNotFound{}, ws)
 }
+
+func TestSiteTagsApplyRefusesAForeignContact(t *testing.T) {
+	env := testhelper.Setup(t)
+	c := env.SiteActor(t, fixtures.OwnerJohnEmail)
+	ctx := context.Background()
+
+	got, err := c.SiteTagsApply(ctx, &siteapi.SiteApplyTagInput{Name: "brand-new"}, siteapi.SiteTagsApplyParams{Slug: fixtures.AcmeSlug, ContactId: idStr(fixtures.ContactGlobexID)})
+	require.NoError(t, err)
+	assert.IsType(t, &siteapi.SiteTagsApplyNotFound{}, got)
+
+	all, err := c.SiteTagsList(ctx, siteapi.SiteTagsListParams{Slug: fixtures.AcmeSlug})
+	require.NoError(t, err)
+	assert.NotContains(t, siteTagNames(all.(*siteapi.SiteTagsListOK).Items), "brand-new", "a refused apply creates no Tag")
+}

@@ -141,6 +141,9 @@ func RunStep(ctx context.Context, client *ent.Client, mod *outbound.Module, runI
 	if run.Status != automationrun.StatusActive {
 		return StepResult{Done: true}, nil
 	}
+	// Job entry point: the scoped client is built from the loaded row's Workspace
+	// (ADR 0017), then handed to the modules.
+	scoped := client.Scoped(run.WorkspaceID)
 
 	a, err := client.Automation.Get(ctx, run.AutomationID)
 	if err != nil {
@@ -169,9 +172,9 @@ func RunStep(ctx context.Context, client *ent.Client, mod *outbound.Module, runI
 		// A tag step changes the Contact's Tags and moves straight on; it sends nothing.
 		var err error
 		if s.Type == automations.StepApplyTag {
-			_, err = tags.New(client).Apply(ctx, run.WorkspaceID, run.ContactID, s.Tag)
+			_, err = tags.New().Apply(ctx, scoped, run.ContactID, s.Tag)
 		} else {
-			err = tags.New(client).Remove(ctx, run.WorkspaceID, run.ContactID, s.Tag)
+			err = tags.New().Remove(ctx, scoped, run.ContactID, s.Tag)
 		}
 		if err != nil {
 			return StepResult{}, err

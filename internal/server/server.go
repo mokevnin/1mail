@@ -16,6 +16,7 @@ import (
 	"github.com/go-pkgz/auth/v2/avatar"
 	"github.com/go-pkgz/auth/v2/token"
 	"github.com/mokevnin/1mail/config"
+	"github.com/mokevnin/1mail/ent"
 	collectapi "github.com/mokevnin/1mail/gen/collect"
 	externalapi "github.com/mokevnin/1mail/gen/external"
 	siteapi "github.com/mokevnin/1mail/gen/site"
@@ -142,11 +143,16 @@ func NewExternalAPI(deps apiexternal.Deps) (http.Handler, error) {
 }
 
 // problemErrorHandler renders ogen errors as RFC 7807 application/problem+json.
+// A reference id from another Workspace (the scoped client's ErrNotInWorkspace,
+// ADR 0017) is a client error, so it is a 422 and never a 500.
 func problemErrorHandler(_ context.Context, w http.ResponseWriter, _ *http.Request, err error) {
 	code := http.StatusInternalServerError
 	var oe ogenerrors.Error
-	if errors.As(err, &oe) {
+	switch {
+	case errors.As(err, &oe):
 		code = oe.Code()
+	case errors.Is(err, ent.ErrNotInWorkspace):
+		code = http.StatusUnprocessableEntity
 	}
 	w.Header().Set("Content-Type", "application/problem+json")
 	w.WriteHeader(code)

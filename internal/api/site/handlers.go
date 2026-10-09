@@ -122,17 +122,33 @@ var _ siteapi.Handler = (*Handlers)(nil)
 // when the slug does not exist or the user has no membership on it — access is
 // "does this User have a Membership on this Workspace?", never single-owner.
 func (h *Handlers) membershipFor(ctx context.Context, slug string) (int64, membership.Role, error) {
-	a := auth.GetSiteAuth(ctx)
-	if a == nil {
-		return 0, "", &ent.NotFoundError{}
-	}
-	m, err := h.ent.Membership.Query().
-		Where(membership.UserID(a.UserID), membership.HasWorkspaceWith(workspace.Slug(slug))).
-		Only(ctx)
+	m, err := h.membership(ctx, slug)
 	if err != nil {
 		return 0, "", err
 	}
 	return m.WorkspaceID, m.Role, nil
+}
+
+// scopedFor is the site's construction point of the scoped client (ADR 0017): the
+// membership resolver is the only place that turns a /w/{slug} into a Workspace
+// scope. Handlers pass the result to the domain modules and never build a
+// *ent.Scoped from an int64. NotFound semantics are those of membershipFor.
+func (h *Handlers) scopedFor(ctx context.Context, slug string) (*ent.Scoped, error) {
+	m, err := h.membership(ctx, slug)
+	if err != nil {
+		return nil, err
+	}
+	return h.ent.Scoped(m.WorkspaceID), nil
+}
+
+func (h *Handlers) membership(ctx context.Context, slug string) (*ent.Membership, error) {
+	a := auth.GetSiteAuth(ctx)
+	if a == nil {
+		return nil, &ent.NotFoundError{}
+	}
+	return h.ent.Membership.Query().
+		Where(membership.UserID(a.UserID), membership.HasWorkspaceWith(workspace.Slug(slug))).
+		Only(ctx)
 }
 
 // workspaceID resolves the workspace addressed by the /w/{slug} path segment,

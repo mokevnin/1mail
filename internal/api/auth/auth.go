@@ -26,6 +26,9 @@ type TokenAuth struct {
 	WorkspaceID int64
 	Name        string
 	Scopes      []string
+	// Scoped is the client confined to WorkspaceID. This file is the external
+	// API's construction point of it (ADR 0017); read it with TokenScoped.
+	Scoped *ent.Scoped
 }
 
 type contextKey struct{}
@@ -46,6 +49,17 @@ func HasScope(auth *TokenAuth, scope string) bool {
 		return false
 	}
 	return lo.Contains(auth.Scopes, scope)
+}
+
+// TokenScoped returns the Workspace-scoped client of the authenticated api token.
+// It is nil on an unauthenticated context, so call it only after the handler's
+// HasScope check (which fails for a nil TokenAuth). Handlers pass it to the
+// domain modules; they never build a *ent.Scoped from an id themselves.
+func TokenScoped(ctx context.Context) *ent.Scoped {
+	if a := GetTokenAuth(ctx); a != nil {
+		return a.Scoped
+	}
+	return nil
 }
 
 // WorkspaceID returns the workspace the authenticated token belongs to (0 if unauthenticated).
@@ -99,6 +113,7 @@ func (h *ExternalSecurityHandler) HandleBearerAuth(ctx context.Context, _ extern
 		WorkspaceID: token.WorkspaceID,
 		Name:        token.Name,
 		Scopes:      token.Scopes,
+		Scoped:      h.ent.Scoped(token.WorkspaceID),
 	}
 	return WithTokenAuth(ctx, auth), nil
 }

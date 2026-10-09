@@ -23,69 +23,53 @@ var (
 	ErrInvalidName = errors.New("tags: name is required")
 )
 
-// Module is the tags module.
-type Module struct {
-	db *ent.Client
-}
+// Module is the tags module. It holds no state: every call receives the
+// Workspace-scoped client (ADR 0017) built by the entry point, so the module
+// writes no Workspace predicate and cannot name another Workspace.
+type Module struct{}
 
-// New builds the tags module over an ent client.
-func New(db *ent.Client) *Module { return &Module{db: db} }
+// New builds the tags module.
+func New() *Module { return &Module{} }
 
 // List returns the Workspace's Tag catalogue ordered by name.
-func (m *Module) List(ctx context.Context, workspaceID int64) ([]*ent.Tag, error) {
-	return m.db.Tag.Query().
-		Where(tag.WorkspaceID(workspaceID)).
-		Order(ent.Asc(tag.FieldName)).
-		All(ctx)
+func (m *Module) List(ctx context.Context, s *ent.Scoped) ([]*ent.Tag, error) {
+	return s.Tag().Query().Order(ent.Asc(tag.FieldName)).All(ctx)
 }
 
 // ForContact returns the Tags a Contact has, ordered by name.
-func (m *Module) ForContact(ctx context.Context, workspaceID, contactID int64) ([]*ent.Tag, error) {
-	if err := requireContact(ctx, m.db, workspaceID, contactID); err != nil {
+func (m *Module) ForContact(ctx context.Context, s *ent.Scoped, contactID int64) ([]*ent.Tag, error) {
+	if err := requireContact(ctx, s, contactID); err != nil {
 		return nil, err
 	}
-	return m.db.Tag.Query().
-		Where(tag.WorkspaceID(workspaceID), tag.HasContactsWith(contact.ID(contactID))).
+	return s.Tag().Query().
+		Where(tag.HasContactsWith(contact.ID(contactID))).
 		Order(ent.Asc(tag.FieldName)).
 		All(ctx)
 }
 
 // Apply gives the Contact the named Tag, creating the Tag on first use. It is
-// idempotent: applying a Tag the Contact already has changes nothing.
-func (m *Module) Apply(ctx context.Context, workspaceID, contactID int64, name string) (*ent.Tag, error) {
+// idempotent: applying a Tag the Contact already has changes nothing. The Contact
+// is checked before anything is written, so a failed apply creates no Tag.
+func (m *Module) Apply(ctx context.Context, s *ent.Scoped, contactID int64, name string) (*ent.Tag, error) {
 	name = strings.TrimSpace(name)
 	if name == "" {
 		return nil, ErrInvalidName
 	}
-	tx, err := m.db.Tx(ctx)
-	if err != nil {
+	if err := requireContact(ctx, s, contactID); err != nil {
 		return nil, err
 	}
-	t, err := apply(ctx, tx, workspaceID, contactID, name)
-	if err != nil {
-		_ = tx.Rollback()
-		return nil, err
-	}
-	return t, tx.Commit()
-}
-
-func apply(ctx context.Context, tx *ent.Tx, workspaceID, contactID int64, name string) (*ent.Tag, error) {
-	if err := requireContact(ctx, tx.Client(), workspaceID, contactID); err != nil {
-		return nil, err
-	}
-	if err := tx.Tag.Create().
-		SetWorkspaceID(workspaceID).
+	if err := s.Tag().Create().
 		SetName(name).
 		OnConflictColumns(tag.FieldName, tag.FieldWorkspaceID).
 		Ignore().
 		Exec(ctx); err != nil {
 		return nil, err
 	}
-	t, err := tx.Tag.Query().Where(tag.WorkspaceID(workspaceID), tag.Name(name)).Only(ctx)
+	t, err := s.Tag().Query().Where(tag.Name(name)).Only(ctx)
 	if err != nil {
 		return nil, err
 	}
-	if err := tx.Contact.UpdateOneID(contactID).AddTagIDs(t.ID).Exec(ctx); err != nil {
+	if err := s.Contact().UpdateOneID(contactID).AddTagIDs(t.ID).Exec(ctx); err != nil {
 		return nil, err
 	}
 	return t, nil
@@ -93,31 +77,24 @@ func apply(ctx context.Context, tx *ent.Tx, workspaceID, contactID int64, name s
 
 // Remove takes the named Tag off the Contact. It is idempotent: a Tag the Contact
 // does not have (or that does not exist) is a no-op. The Tag stays in the catalogue.
-func (m *Module) Remove(ctx context.Context, workspaceID, contactID int64, name string) error {
-	if err := requireContact(ctx, m.db, workspaceID, contactID); err != nil {
+func (m *Module) Remove(ctx context.Context, s *ent.Scoped, contactID int64, name string) error {
+	if err := requireContact(ctx, s, contactID); err != nil {
 		return err
 	}
-	t, err := m.db.Tag.Query().
-		Where(tag.WorkspaceID(workspaceID), tag.Name(strings.TrimSpace(name))).
-		Only(ctx)
+	t, err := s.Tag().Query().Where(tag.Name(strings.TrimSpace(name))).Only(ctx)
 	if ent.IsNotFound(err) {
 		return nil
 	}
 	if err != nil {
 		return err
 	}
-	return m.db.Contact.UpdateOneID(contactID).RemoveTagIDs(t.ID).Exec(ctx)
+	return s.Contact().UpdateOneID(contactID).RemoveTagIDs(t.ID).Exec(ctx)
 }
 
-func requireContact(ctx context.Context, db *ent.Client, workspaceID, contactID int64) error {
-	ok, err := db.Contact.Query().
-		Where(contact.ID(contactID), contact.WorkspaceID(workspaceID)).
-		Exist(ctx)
-	if err != nil {
-		return err
-	}
-	if !ok {
+func requireContact(ctx context.Context, s *ent.Scoped, contactID int64) error {
+	_, err := s.Contact().Get(ctx, contactID)
+	if ent.IsNotFound(err) {
 		return ErrContactNotFound
 	}
-	return nil
+	return err
 }

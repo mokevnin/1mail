@@ -485,12 +485,8 @@ func register(injector do.Injector, env string) {
 		return contacts.New(bus.Bus), nil
 	})
 
-	do.Provide(injector, func(i do.Injector) (*tags.Module, error) {
-		client, err := do.Invoke[*entClient](i)
-		if err != nil {
-			return nil, err
-		}
-		return tags.New(client.Client), nil
+	do.Provide(injector, func(do.Injector) (*tags.Module, error) {
+		return tags.New(), nil
 	})
 
 	do.Provide(injector, func(i do.Injector) (*automations.Module, error) {

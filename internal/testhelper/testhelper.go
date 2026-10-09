@@ -179,7 +179,7 @@ func Setup(t *testing.T) *TestEnv {
 	eventLog := eventlog.New(client, bus)
 	segmentsModule := segments.New(client)
 	contactsModule := contacts.New(bus)
-	tagsModule := tags.New(client)
+	tagsModule := tags.New()
 	automationsModule := automations.New(client)
 	broadcastsModule := broadcasts.New(client, inline)
 	external, err := server.NewExternalAPI(apiexternal.Deps{
