@@ -33,7 +33,7 @@ func canManageMembers(role membership.Role) bool {
 
 // SiteMembershipsList returns the workspace's members. Any member may view them.
 func (h *Handlers) SiteMembershipsList(ctx context.Context, params siteapi.SiteMembershipsListParams) (siteapi.SiteMembershipsListRes, error) {
-	ws, _, err := h.membershipFor(ctx, params.Slug)
+	s, _, err := h.scopedForRole(ctx, params.Slug)
 	if ent.IsNotFound(err) {
 		v := problem(http.StatusNotFound, "workspace not found")
 		return &v, nil
@@ -42,8 +42,7 @@ func (h *Handlers) SiteMembershipsList(ctx context.Context, params siteapi.SiteM
 		return nil, err
 	}
 
-	members, err := h.ent.Membership.Query().
-		Where(membership.WorkspaceID(ws)).
+	members, err := s.Membership().Query().
 		WithUser().
 		Order(ent.Asc(membership.FieldID)).
 		All(ctx)
@@ -61,7 +60,7 @@ func (h *Handlers) SiteMembershipsList(ctx context.Context, params siteapi.SiteM
 // SiteMembershipsUpdate changes a member's role. Owner/admin only; only an owner
 // may grant the owner role, and the last owner can never be demoted.
 func (h *Handlers) SiteMembershipsUpdate(ctx context.Context, req *siteapi.SiteUpdateMembershipInput, params siteapi.SiteMembershipsUpdateParams) (siteapi.SiteMembershipsUpdateRes, error) {
-	ws, callerRole, err := h.membershipFor(ctx, params.Slug)
+	s, callerRole, err := h.scopedForRole(ctx, params.Slug)
 	if ent.IsNotFound(err) {
 		v := siteapi.SiteMembershipsUpdateNotFound(problem(http.StatusNotFound, "workspace not found"))
 		return &v, nil
@@ -80,8 +79,8 @@ func (h *Handlers) SiteMembershipsUpdate(ctx context.Context, req *siteapi.SiteU
 		return &v, nil
 	}
 
-	target, err := h.ent.Membership.Query().
-		Where(membership.ID(id), membership.WorkspaceID(ws)).
+	target, err := s.Membership().Query().
+		Where(membership.ID(id)).
 		WithUser().
 		Only(ctx)
 	if ent.IsNotFound(err) {
@@ -105,8 +104,8 @@ func (h *Handlers) SiteMembershipsUpdate(ctx context.Context, req *siteapi.SiteU
 	}
 	// The last owner cannot be demoted, or the workspace would be ownerless.
 	if target.Role == membership.RoleOwner && desired != membership.RoleOwner {
-		owners, err := h.ent.Membership.Query().
-			Where(membership.WorkspaceID(ws), membership.RoleEQ(membership.RoleOwner)).
+		owners, err := s.Membership().Query().
+			Where(membership.RoleEQ(membership.RoleOwner)).
 			Count(ctx)
 		if err != nil {
 			return nil, err
@@ -121,7 +120,7 @@ func (h *Handlers) SiteMembershipsUpdate(ctx context.Context, req *siteapi.SiteU
 		}
 	}
 
-	updated, err := target.Update().SetRole(desired).Save(ctx)
+	updated, err := s.Membership().UpdateOneID(target.ID).SetRole(desired).Save(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -133,7 +132,7 @@ func (h *Handlers) SiteMembershipsUpdate(ctx context.Context, req *siteapi.SiteU
 // SiteMembershipsDelete removes a member. Owner/admin only; the last owner cannot
 // be removed.
 func (h *Handlers) SiteMembershipsDelete(ctx context.Context, params siteapi.SiteMembershipsDeleteParams) (siteapi.SiteMembershipsDeleteRes, error) {
-	ws, callerRole, err := h.membershipFor(ctx, params.Slug)
+	s, callerRole, err := h.scopedForRole(ctx, params.Slug)
 	if ent.IsNotFound(err) {
 		v := siteapi.SiteMembershipsDeleteNotFound(problem(http.StatusNotFound, "workspace not found"))
 		return &v, nil
@@ -152,9 +151,7 @@ func (h *Handlers) SiteMembershipsDelete(ctx context.Context, params siteapi.Sit
 		return &v, nil
 	}
 
-	target, err := h.ent.Membership.Query().
-		Where(membership.ID(id), membership.WorkspaceID(ws)).
-		Only(ctx)
+	target, err := s.Membership().Get(ctx, id)
 	if ent.IsNotFound(err) {
 		v := siteapi.SiteMembershipsDeleteNotFound(problem(http.StatusNotFound, "member not found"))
 		return &v, nil
@@ -170,8 +167,8 @@ func (h *Handlers) SiteMembershipsDelete(ctx context.Context, params siteapi.Sit
 	}
 
 	if target.Role == membership.RoleOwner {
-		owners, err := h.ent.Membership.Query().
-			Where(membership.WorkspaceID(ws), membership.RoleEQ(membership.RoleOwner)).
+		owners, err := s.Membership().Query().
+			Where(membership.RoleEQ(membership.RoleOwner)).
 			Count(ctx)
 		if err != nil {
 			return nil, err
@@ -186,7 +183,7 @@ func (h *Handlers) SiteMembershipsDelete(ctx context.Context, params siteapi.Sit
 		}
 	}
 
-	if err := h.ent.Membership.DeleteOneID(target.ID).Exec(ctx); err != nil {
+	if err := s.Membership().DeleteOneID(target.ID).Exec(ctx); err != nil {
 		return nil, err
 	}
 	return &siteapi.SiteMembershipsDeleteNoContent{}, nil

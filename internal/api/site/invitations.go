@@ -41,7 +41,7 @@ func invitationResource(inv *ent.Invitation) siteapi.SiteInvitationResource {
 
 // SiteInvitationsList returns the workspace's pending (unaccepted) invitations.
 func (h *Handlers) SiteInvitationsList(ctx context.Context, params siteapi.SiteInvitationsListParams) (siteapi.SiteInvitationsListRes, error) {
-	ws, _, err := h.membershipFor(ctx, params.Slug)
+	s, _, err := h.scopedForRole(ctx, params.Slug)
 	if ent.IsNotFound(err) {
 		v := problem(http.StatusNotFound, "workspace not found")
 		return &v, nil
@@ -50,8 +50,8 @@ func (h *Handlers) SiteInvitationsList(ctx context.Context, params siteapi.SiteI
 		return nil, err
 	}
 
-	invites, err := h.ent.Invitation.Query().
-		Where(invitation.WorkspaceID(ws), invitation.AcceptedAtIsNil()).
+	invites, err := s.Invitation().Query().
+		Where(invitation.AcceptedAtIsNil()).
 		WithInviter().
 		Order(ent.Asc(invitation.FieldID)).
 		All(ctx)
@@ -70,7 +70,7 @@ func (h *Handlers) SiteInvitationsList(ctx context.Context, params siteapi.SiteI
 // only. The one-time accept link is returned (copy-link path) and an invite email
 // is sent best-effort — a missing/failed mailer must not fail the invite.
 func (h *Handlers) SiteInvitationsCreate(ctx context.Context, req *siteapi.SiteCreateInvitationInput, params siteapi.SiteInvitationsCreateParams) (siteapi.SiteInvitationsCreateRes, error) {
-	ws, callerRole, err := h.membershipFor(ctx, params.Slug)
+	s, callerRole, err := h.scopedForRole(ctx, params.Slug)
 	if ent.IsNotFound(err) {
 		v := siteapi.SiteInvitationsCreateNotFound(problem(http.StatusNotFound, "workspace not found"))
 		return &v, nil
@@ -92,8 +92,8 @@ func (h *Handlers) SiteInvitationsCreate(ctx context.Context, req *siteapi.SiteC
 	}
 
 	// Already a member? Nothing to invite.
-	alreadyMember, err := h.ent.Membership.Query().
-		Where(membership.WorkspaceID(ws), membership.HasUserWith(entuser.Email(email))).
+	alreadyMember, err := s.Membership().Query().
+		Where(membership.HasUserWith(entuser.Email(email))).
 		Exist(ctx)
 	if err != nil {
 		return nil, err
@@ -114,14 +114,13 @@ func (h *Handlers) SiteInvitationsCreate(ctx context.Context, req *siteapi.SiteC
 
 	// Upsert on the (workspace, email) unique key: re-inviting reissues the token
 	// and expiry and clears any prior acceptance.
-	existing, err := h.ent.Invitation.Query().
-		Where(invitation.WorkspaceID(ws), invitation.Email(email)).
+	existing, err := s.Invitation().Query().
+		Where(invitation.Email(email)).
 		Only(ctx)
 	var inv *ent.Invitation
 	switch {
 	case ent.IsNotFound(err):
-		inv, err = h.ent.Invitation.Create().
-			SetWorkspaceID(ws).
+		inv, err = s.Invitation().Create().
 			SetEmail(email).
 			SetRole(role).
 			SetTokenHash(tokenHash).
@@ -134,7 +133,7 @@ func (h *Handlers) SiteInvitationsCreate(ctx context.Context, req *siteapi.SiteC
 	case err != nil:
 		return nil, err
 	default:
-		inv, err = existing.Update().
+		inv, err = s.Invitation().UpdateOneID(existing.ID).
 			SetRole(role).
 			SetTokenHash(tokenHash).
 			SetExpiresAt(expiresAt).
@@ -150,7 +149,7 @@ func (h *Handlers) SiteInvitationsCreate(ctx context.Context, req *siteapi.SiteC
 
 	// Send the invite email best-effort: the copy-link above already delivered
 	// the invite, so self-hosted instances without SMTP still work.
-	wsEnt, err := h.ent.Workspace.Get(ctx, ws)
+	wsEnt, err := h.ent.Workspace.Get(ctx, s.WorkspaceID())
 	if err != nil {
 		return nil, err
 	}
@@ -171,7 +170,7 @@ func (h *Handlers) SiteInvitationsCreate(ctx context.Context, req *siteapi.SiteC
 
 // SiteInvitationsDelete revokes a pending invitation. Owner/admin only.
 func (h *Handlers) SiteInvitationsDelete(ctx context.Context, params siteapi.SiteInvitationsDeleteParams) (siteapi.SiteInvitationsDeleteRes, error) {
-	ws, callerRole, err := h.membershipFor(ctx, params.Slug)
+	s, callerRole, err := h.scopedForRole(ctx, params.Slug)
 	if ent.IsNotFound(err) {
 		v := siteapi.SiteInvitationsDeleteNotFound(problem(http.StatusNotFound, "workspace not found"))
 		return &v, nil
@@ -190,8 +189,8 @@ func (h *Handlers) SiteInvitationsDelete(ctx context.Context, params siteapi.Sit
 		return &v, nil
 	}
 
-	n, err := h.ent.Invitation.Delete().
-		Where(invitation.ID(id), invitation.WorkspaceID(ws)).
+	n, err := s.Invitation().Delete().
+		Where(invitation.ID(id)).
 		Exec(ctx)
 	if err != nil {
 		return nil, err
@@ -293,15 +292,15 @@ func (h *Handlers) SitePublicInvitationsAccept(ctx context.Context, req *siteapi
 		}
 
 		// Idempotent join: a duplicate (already a member) is not an error.
-		if _, merr := tx.Membership.Create().
+		ts := tx.Scoped(inv.WorkspaceID)
+		if _, merr := ts.Membership().Create().
 			SetUserID(u.ID).
-			SetWorkspaceID(inv.WorkspaceID).
 			SetRole(role).
 			Save(ctx); merr != nil && !service.IsUniqueViolation(merr) {
 			return merr
 		}
 
-		return tx.Invitation.UpdateOneID(inv.ID).SetAcceptedAt(time.Now()).Exec(ctx)
+		return ts.Invitation().UpdateOneID(inv.ID).SetAcceptedAt(time.Now()).Exec(ctx)
 	})
 	if err != nil {
 		return nil, err
