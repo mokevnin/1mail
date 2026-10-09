@@ -1,50 +1,18 @@
 import { Button, Group, Stack, TextInput } from '@mantine/core'
-import type { useForm } from '@mantine/form'
 import { useNavigate, useParams } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 
 import type { SiteCreateContactInput } from '../../generated/site/types.gen.ts'
+import type { ResourceFormProps } from '../../resources/defineResource.tsx'
 import { contactsRoute } from '../../router.tsx'
 
-// Identity is multi-key: subject_id / email / phone are alias keys, any of which may
-// be absent (ADR 0002). The form keeps each as a string and omits the empty ones
-// from the payload so a blank email is not sent (and fails email-format validation).
-export type ContactFormValues = Record<
-  keyof Pick<
-    SiteCreateContactInput,
-    'subjectId' | 'email' | 'phone' | 'firstName' | 'lastName' | 'timeZone'
-  >,
-  string
->
-
-// toContactPayload trims values and omits the empty ones, so optional alias keys are
-// sent only when set (respecting exactOptionalPropertyTypes and email validation).
-export function toContactPayload(v: ContactFormValues): SiteCreateContactInput {
-  const subjectId = v.subjectId.trim()
-  const email = v.email.trim()
-  const phone = v.phone.trim()
-  const firstName = v.firstName.trim()
-  const lastName = v.lastName.trim()
-  const timeZone = v.timeZone.trim()
-  return {
-    ...(subjectId && { subjectId }),
-    ...(email && { email }),
-    ...(phone && { phone }),
-    ...(firstName && { firstName }),
-    ...(lastName && { lastName }),
-    ...(timeZone && { timeZone }),
-  }
-}
-
-type ContactFormInstance = ReturnType<typeof useForm<ContactFormValues>>
-
-interface ContactFormProps {
-  form: ContactFormInstance
-  isPending: boolean
-  onSubmit: (values: ContactFormValues) => void
-}
-
-export function ContactForm({ form, isPending, onSubmit }: ContactFormProps) {
+// Identity is multi-key: subject_id / email / phone are alias keys, any of which may be
+// absent (ADR 0002); blank inputs are normalized away by the contact form schema.
+export function ContactForm({
+  form,
+  isPending,
+  onSubmit,
+}: ResourceFormProps<SiteCreateContactInput>) {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const { slug } = useParams({ strict: false })
