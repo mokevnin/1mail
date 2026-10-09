@@ -132,6 +132,13 @@ generate-backend:
 
 generate: generate-typespec generate-openapi generate-backend check-fix
 
+# Fails when committed generated output (openapi/, gen/, ent/, src/generated/, *_gen.go)
+# differs from what `make generate` produces: a hand-edit, or a schema/TypeSpec change
+# whose output was not committed. Needs a clean working tree, so it is a CI gate rather
+# than part of `make check`.
+check-generated: generate
+	@test -z "$$(git status --porcelain)" || { echo 'generated code is out of date; run `make generate` and commit:'; git status --short; git diff --stat; exit 1; }
+
 check: check-fe check-i18n check-be check-deps check-security
 
 check-fe: check-css
@@ -211,4 +218,4 @@ loc:
 	  | awk -F': ' '$$3!="true"{print $$1}' \
 	  | xargs scc
 
-.PHONY: setup install db-create db-create-test db-create-atlas db-drop db-drop-test db-migrate db-migrate-atlas db-migrate-river db-seed db-reset db-reset-test db-generate dev dev-down test test-watch test-frontend update update-npm update-go update-skills generate generate-backend generate-openapi generate-openapi-site generate-typespec generate-typespec-external generate-typespec-site generate-typespec-collect generate-i18n-types check check-fe check-i18n check-be check-fix check-fix-i18n check-fix-fe check-fix-be build-tracker build-spa build loc
+.PHONY: setup install db-create db-create-test db-create-atlas db-drop db-drop-test db-migrate db-migrate-atlas db-migrate-river db-seed db-reset db-reset-test db-generate dev dev-down test test-watch test-frontend update update-npm update-go update-skills generate check-generated generate-backend generate-openapi generate-openapi-site generate-typespec generate-typespec-external generate-typespec-site generate-typespec-collect generate-i18n-types check check-fe check-i18n check-be check-fix check-fix-i18n check-fix-fe check-fix-be build-tracker build-spa build loc
