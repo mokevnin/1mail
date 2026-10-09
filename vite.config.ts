@@ -34,6 +34,8 @@ export default defineConfig({
     ? { hmr: false }
     : {
         host: true,
+        // Agent worktrees are full repo copies; watching them triggers spurious reloads.
+        watch: { ignored: ['**/.claude/worktrees/**'] },
         allowedHosts: ['1mail.localhost'],
         // HMR runs through Caddy's HTTPS origin, so the client connects over wss:443.
         hmr: { protocol: 'wss', host: '1mail.localhost', clientPort: 443 },
