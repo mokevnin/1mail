@@ -124,7 +124,10 @@ tenant row itself (the Workspace is the tenant root, so it has no wrapper).
      in `internal/api/auth/auth.go`, read with `auth.TokenScoped(ctx)`;
   3. collect: `CollectSecurityHandler` in `internal/api/auth/auth.go`, from the collect key;
   4. jobs and event subscribers, right after the row that names the Workspace is loaded
-     (`client.Scoped(run.WorkspaceID)` in `internal/jobs`, `events.Persist`/`Suppress`);
+     (`client.Scoped(run.WorkspaceID)` in `internal/jobs`; `EvaluateTriggerWorker` loads the
+     contact and scopes from its Workspace; `events.Persist`/`Suppress`, and the webhooks
+     consumer, which builds the scope it hands to `Dispatch` from the event envelope: the
+     bus subscriber is the raw-client entry, an envelope carries only a Workspace id);
   5. transactions: `events.Bus.WithinScopedTx`, and `tx.Scoped(...)` inside
      `accounts.AcceptInvitation`, re-scope a transaction's client to the same Workspace;
   6. the Workspace comes from a secret rather than a login: the SES hook ingest key
@@ -132,11 +135,19 @@ tenant row itself (the Workspace is the tenant root, so it has no wrapper).
      (`internal/consent`), and `accounts.BootstrapScope` (the bootstrap token).
 - **The raw `*ent.Client` is allowed only in:** `internal/accounts` (User, Membership,
   Workspace, invitation by token), `internal/api/auth` (credentials, token and key lookup),
+  `internal/consent` (signed unsubscribe/confirm tokens: the Workspace comes from the token,
+  so it works on the bus's raw transaction client and scopes from the token's Workspace),
   `internal/oauthserver`, `internal/service` (suspension, slug resolution), `internal/events`
   (the bus and its subscribers), `internal/jobs` (job entry points), `internal/server`
   (tracking by recipient id, provider hooks, composition) and the composition roots
   (`internal/app`, `internal/db`, `internal/testhelper`). Needing raw access anywhere else
   means a new small package in this list, not a field on `Handlers`.
+  `internal/eligibility` holds no raw client: it takes a `*ent.Scoped` and passes
+  `s.WorkspaceID()` as a bound SQL argument inside one raw expression (the correlated
+  contact check reads the outer row's `workspace_id` column), not as a hand-written
+  `WorkspaceID(ws)` predicate.
+- **Outside the mixin:** `OAuthCode` keeps a hand-written `workspace_id` with no `workspace`
+  edge (no FK; adding one changes the DB schema), so it has no scoped wrapper.
 - **Lint:** `forbidigo` (`.golangci.yml`) bans entity-level `entity.Update()` repo-wide,
   because a loaded entity still carries the raw client. Update by id instead:
   `s.Tag().UpdateOneID(id)`. There are no exclusions.
