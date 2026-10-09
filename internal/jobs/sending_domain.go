@@ -144,7 +144,7 @@ func VerifySendingDomainByID(ctx context.Context, client *ent.Client, lookup sen
 	}
 
 	now := time.Now()
-	upd := client.SendingDomain.UpdateOneID(id).SetLastCheckedAt(now)
+	upd := client.Scoped(dom.WorkspaceID).SendingDomain().UpdateOneID(id).SetLastCheckedAt(now)
 	if verified != dom.Verified {
 		upd.SetVerified(verified)
 		if verified {
@@ -175,8 +175,8 @@ func NotifySendingDomainUnverified(ctx context.Context, client *ent.Client, send
 	if err != nil {
 		return err
 	}
-	owners, err := client.Membership.Query().
-		Where(membership.WorkspaceID(dom.WorkspaceID), membership.RoleEQ(membership.RoleOwner)).
+	owners, err := client.Scoped(dom.WorkspaceID).Membership().Query().
+		Where(membership.RoleEQ(membership.RoleOwner)).
 		WithUser().
 		All(ctx)
 	if err != nil {

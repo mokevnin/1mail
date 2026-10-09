@@ -38,7 +38,7 @@ func (h *Handlers) SiteWorkspacesList(ctx context.Context) ([]siteapi.SiteWorksp
 // SiteWorkspacesUpdate renames a workspace owned by the authenticated user. The
 // slug is immutable, so only the display name changes.
 func (h *Handlers) SiteWorkspacesUpdate(ctx context.Context, req *siteapi.SiteUpdateWorkspaceInput, params siteapi.SiteWorkspacesUpdateParams) (siteapi.SiteWorkspacesUpdateRes, error) {
-	id, err := h.workspaceID(ctx, params.Slug)
+	s, err := h.scopedFor(ctx, params.Slug)
 	if ent.IsNotFound(err) {
 		v := siteapi.SiteWorkspacesUpdateNotFound(problem(http.StatusNotFound, "workspace not found"))
 		return &v, nil
@@ -57,7 +57,7 @@ func (h *Handlers) SiteWorkspacesUpdate(ctx context.Context, req *siteapi.SiteUp
 		return &v, nil
 	}
 
-	upd := h.ent.Workspace.UpdateOneID(id).SetName(name)
+	upd := h.ent.Workspace.UpdateOneID(s.WorkspaceID()).SetName(name)
 	// postalAddress is optional in the contract: absent = leave unchanged, present
 	// (incl. empty string) = set/clear. Trimmed so a whitespace-only value clears it.
 	if req.PostalAddress.Set {

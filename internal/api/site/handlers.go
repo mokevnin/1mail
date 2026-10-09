@@ -151,6 +151,27 @@ func (h *Handlers) scopedWithRoleFor(ctx context.Context, slug string) (*ent.Sco
 	return h.ent.Scoped(m.WorkspaceID), m.Role, nil
 }
 
+// withScopedTx runs fn inside a transaction with a scoped client bound to the
+// same Workspace as s, so a handler that needs atomic multi-row writes keeps the
+// scope without holding a raw client. Rolls back on error or panic.
+func (h *Handlers) withScopedTx(ctx context.Context, s *ent.Scoped, fn func(ts *ent.Scoped) error) error {
+	tx, err := h.ent.Tx(ctx)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			_ = tx.Rollback()
+			panic(r)
+		}
+	}()
+	if err := fn(tx.Client().Scoped(s.WorkspaceID())); err != nil {
+		_ = tx.Rollback()
+		return err
+	}
+	return tx.Commit()
+}
+
 func (h *Handlers) membership(ctx context.Context, slug string) (*ent.Membership, error) {
 	a := auth.GetSiteAuth(ctx)
 	if a == nil {
