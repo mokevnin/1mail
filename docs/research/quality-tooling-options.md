@@ -356,3 +356,26 @@ excluded via `ignores:`/linter exclusions (not comments), and every tool is run 
   `thresholds` options, hk `commit-msg` support, goreleaser SBOM, TypeSpec linter enablement:
   all unverified.
 - Hosted services (Codecov, SonarQube, CodeRabbit) not researched.
+
+---
+
+## 6. Outcome (2026-10-08)
+
+Adopted and wired (`mise run check` runs the local ones; CI jobs in `.github/workflows/`):
+
+- golangci-lint widened: `bodyclose`, `contextcheck`, `depguard` (bans `samber/mo`, `html/template`), `errorlint`, `noctx`, `rowserrcheck`, `sqlclosecheck`, `usetesting`.
+- Generated-code drift check (`generate:check`, CI job `generated`); `openapi-ts` pinned to `@next` for TypeScript 7.
+- ast-grep (`sgconfig.yml`, `ast-grep/`): no path-literal navigation, no hardcoded colors.
+- typos (`_typos.toml`), `go mod tidy -diff`, `i18next-cli lint`.
+- commitlint (hk `commit-msg` hook and CI check on the pushed range), size-limit budget for `t.js` (2 kB gzip, currently 1.17 kB).
+- CodeQL, OpenSSF Scorecard and dependency-review workflows.
+
+Evaluated and **not** wired, with the reason:
+
+- `gosec`: 17 findings, mostly false positives (test secrets, admin CLI, DTO int conversions); fixing them needs `nolint` or rule exclusions, both banned. CodeQL covers the security angle.
+- ast-grep "no raw fetch": 3 real hits (`src/routes/unsubscribe.tsx`, `src/routes/confirm.tsx`, `src/components/UserMenu.tsx`) because `/e/*` and `/auth/logout` are not in the generated client. Wire the rule once those endpoints are in the TypeSpec contract.
+- ast-grep "no `client.X.Create()` in tests": 35 hits on primary entities (Contact 16, Automation 8, Workspace 5, User 4, Broadcast 2); needs a fixture refactor first.
+- squawk: 118 findings on Atlas-generated migrations, which are immutable (`atlas.sum`) and cannot be annotated.
+- hadolint: DL3018 (pin `apk add` versions) cannot be satisfied without an ignore; revisit if apk pinning is acceptable.
+- oasdiff: there is no release tag yet to diff against; add it with the first release.
+- `committed` (Rust commit linter): no macOS arm64 binary.
