@@ -8,13 +8,8 @@ namespace OneMail;
 // at /mcp unless it carries `x-mcp: { hidden: true }`; `x-mcp: { name }` overrides
 // the default tool name (the operation id in snake_case, e.g. `contacts_list`).
 
-// Segments and broadcasts are declared in the contract but have no handlers yet;
+// Broadcasts are declared in the contract but have no handlers yet;
 // a later ticket removes the `hidden` flag when it implements them.
-@@extension(Segments.list, "x-mcp", #{ hidden: true });
-@@extension(Segments.create, "x-mcp", #{ hidden: true });
-@@extension(Segments.get, "x-mcp", #{ hidden: true });
-@@extension(Segments.update, "x-mcp", #{ hidden: true });
-@@extension(Segments.delete, "x-mcp", #{ hidden: true });
 @@extension(Broadcasts.list, "x-mcp", #{ hidden: true });
 @@extension(Broadcasts.create, "x-mcp", #{ hidden: true });
 @@extension(Broadcasts.get, "x-mcp", #{ hidden: true });

@@ -45,3 +45,15 @@ func (c *ConverterImpl) ContactToResource(source *ent.Contact) external.ContactR
 	}
 	return externalapiContactResource
 }
+func (c *ConverterImpl) SegmentToResource(source *ent.Segment) external.SegmentResource {
+	var externalapiSegmentResource external.SegmentResource
+	if source != nil {
+		externalapiSegmentResource.Name = (*source).Name
+		externalapiSegmentResource.Type = external.SegmentType((*source).Type)
+		externalapiSegmentResource.Definition = optString((*source).Definition)
+		externalapiSegmentResource.ID = entityID((*source).ID)
+		externalapiSegmentResource.CreatedAt = timestamp((*source).CreatedAt)
+		externalapiSegmentResource.UpdatedAt = timestamp((*source).UpdatedAt)
+	}
+	return externalapiSegmentResource
+}

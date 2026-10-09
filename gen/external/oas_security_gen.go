@@ -55,6 +55,7 @@ var operationRolesBearerAuth = map[string][]string{
 	SegmentsDeleteOperation:   []string{},
 	SegmentsGetOperation:      []string{},
 	SegmentsListOperation:     []string{},
+	SegmentsPreviewOperation:  []string{},
 	SegmentsUpdateOperation:   []string{},
 }
 

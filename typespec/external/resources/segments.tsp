@@ -1,5 +1,6 @@
 using TypeSpec.Http;
 using TypeSpec.Rest;
+using TypeSpec.Rest.Resource;
 
 namespace OneMail;
 
@@ -48,10 +49,34 @@ model UpdateSegmentInput {
   definition?: string;
 }
 
+/** Request body for previewing a rule definition's audience */
+model PreviewSegmentInput {
+  /** Rule definition (react-querybuilder JSON); empty means all contacts */
+  definition?: string | null;
+}
+
+/** Result of a segment preview */
+model PreviewSegmentResult {
+  /** Number of contacts matching the rule */
+  count: int32;
+}
+
 @tag("Segments")
 interface Segments
   extends ExternalCrud<
       SegmentResource,
       CreateSegmentInput,
       UpdateSegmentInput
-    > {}
+    > {
+  /** Count the contacts matching an unsaved rule definition */
+  @collectionAction(SegmentResource, "preview")
+  @autoRoute
+  preview(
+    ...ResourceCollectionParameters<SegmentResource>,
+    @body body: PreviewSegmentInput,
+  ):
+    | PreviewSegmentResult
+    | BadRequestProblem
+    | UnauthorizedProblem
+    | UnprocessableEntityProblem;
+}

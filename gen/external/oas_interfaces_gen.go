@@ -89,6 +89,10 @@ type SegmentsListRes interface {
 	segmentsListRes()
 }
 
+type SegmentsPreviewRes interface {
+	segmentsPreviewRes()
+}
+
 type SegmentsUpdateRes interface {
 	segmentsUpdateRes()
 }
