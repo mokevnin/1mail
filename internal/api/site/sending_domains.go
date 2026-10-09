@@ -9,6 +9,7 @@ import (
 	"github.com/mokevnin/1mail/ent"
 	"github.com/mokevnin/1mail/ent/sendingdomain"
 	siteapi "github.com/mokevnin/1mail/gen/site"
+	"github.com/mokevnin/1mail/internal/events"
 	"github.com/mokevnin/1mail/internal/i18n"
 	"github.com/mokevnin/1mail/internal/pagination"
 	"github.com/mokevnin/1mail/internal/sending"
@@ -129,7 +130,7 @@ func (h *Handlers) SiteSendingDomainsCreate(ctx context.Context, req *siteapi.Si
 	// Wrap the insert in a savepoint so a unique-violation (duplicate domain)
 	// rolls back only this write, not the caller's surrounding transaction.
 	var d *ent.SendingDomain
-	err = h.withScopedTx(ctx, s, func(ts *ent.Scoped) error {
+	err = h.bus.WithinScopedTx(ctx, s, func(ts *ent.Scoped, _ events.Publisher) error {
 		var cerr error
 		d, cerr = ts.SendingDomain().Create().
 			SetDomain(domain).

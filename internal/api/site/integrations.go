@@ -11,6 +11,7 @@ import (
 	"github.com/mokevnin/1mail/ent"
 	"github.com/mokevnin/1mail/ent/integration"
 	siteapi "github.com/mokevnin/1mail/gen/site"
+	"github.com/mokevnin/1mail/internal/events"
 	"github.com/mokevnin/1mail/internal/i18n"
 	"github.com/mokevnin/1mail/internal/messaging"
 	"github.com/mokevnin/1mail/internal/messaging/ses"
@@ -232,7 +233,7 @@ func (h *Handlers) SiteIntegrationsUpdate(ctx context.Context, req *siteapi.Site
 	}
 
 	var updated *ent.Integration
-	err = h.withScopedTx(ctx, s, func(ts *ent.Scoped) error {
+	err = h.bus.WithinScopedTx(ctx, s, func(ts *ent.Scoped, _ events.Publisher) error {
 		if promote {
 			if err := clearDefault(ctx, ts, integration.Channel(row.Channel.String())); err != nil {
 				return err
@@ -307,7 +308,7 @@ func (h *Handlers) SiteIntegrationsDelete(ctx context.Context, params siteapi.Si
 // our own writes).
 func (h *Handlers) createIntegration(ctx context.Context, s *ent.Scoped, name string, channel integration.Channel, provider integration.Provider, encrypted string, enabled, isDefault bool) (*ent.Integration, error) {
 	var row *ent.Integration
-	err := h.withScopedTx(ctx, s, func(ts *ent.Scoped) error {
+	err := h.bus.WithinScopedTx(ctx, s, func(ts *ent.Scoped, _ events.Publisher) error {
 		if isDefault {
 			if err := clearDefault(ctx, ts, channel); err != nil {
 				return err

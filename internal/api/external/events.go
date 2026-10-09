@@ -19,15 +19,13 @@ func (h *Handlers) EventsCreate(ctx context.Context, req *externalapi.RecordEven
 		return &res, nil
 	}
 
-	ws := auth.WorkspaceID(auth.GetTokenAuth(ctx))
-
 	inputs, err := eventInputs(req.Events)
 	if err != nil {
 		return nil, err
 	}
 	// The module resolves identity and publishes the batch atomically; rows land
 	// asynchronously (accept-then-process).
-	if err := h.eventlog.Ingest(ctx, ws, inputs); err != nil {
+	if err := h.eventlog.Ingest(ctx, auth.TokenScoped(ctx), inputs); err != nil {
 		return nil, err
 	}
 	return &externalapi.EventsCreateNoContent{}, nil
@@ -71,7 +69,7 @@ func (h *Handlers) EventsBatchSubmit(ctx context.Context, req *externalapi.Recor
 	if err != nil {
 		return nil, err
 	}
-	errs := h.eventlog.IngestEach(ctx, auth.WorkspaceID(auth.GetTokenAuth(ctx)), inputs)
+	errs := h.eventlog.IngestEach(ctx, auth.TokenScoped(ctx), inputs)
 
 	results := make([]externalapi.EventBatchItemResult, len(errs))
 	for i, e := range errs {
@@ -90,10 +88,9 @@ func (h *Handlers) EventActionsList(ctx context.Context, params externalapi.Even
 		return &res, nil
 	}
 
-	ws := auth.WorkspaceID(auth.GetTokenAuth(ctx))
 	page, pageSize := pagination.Normalize(convert.Ptr(params.Page), convert.Ptr(params.PageSize))
 
-	actions, err := h.eventlog.Actions(ctx, ws)
+	actions, err := h.eventlog.Actions(ctx, auth.TokenScoped(ctx))
 	if err != nil {
 		return nil, err
 	}

@@ -15,7 +15,7 @@ import (
 )
 
 func (h *Handlers) SiteContactsList(ctx context.Context, params siteapi.SiteContactsListParams) (siteapi.SiteContactsListRes, error) {
-	ws, err := h.workspaceID(ctx, params.Slug)
+	scoped, err := h.scopedFor(ctx, params.Slug)
 	if ent.IsNotFound(err) {
 		v := siteapi.SiteContactsListNotFound(problem(http.StatusNotFound, "workspace not found"))
 		return &v, nil
@@ -33,7 +33,7 @@ func (h *Handlers) SiteContactsList(ctx context.Context, params siteapi.SiteCont
 	}
 	page, pageSize := pagination.Normalize(pagePtr, pageSizePtr)
 
-	q := h.ent.Contact.Query().Where(contact.WorkspaceID(ws))
+	q := scoped.Contact().Query()
 
 	total, err := q.Count(ctx)
 	if err != nil {
@@ -63,7 +63,7 @@ func (h *Handlers) SiteContactsList(ctx context.Context, params siteapi.SiteCont
 }
 
 func (h *Handlers) SiteContactsCreate(ctx context.Context, req *siteapi.SiteCreateContactInput, params siteapi.SiteContactsCreateParams) (siteapi.SiteContactsCreateRes, error) {
-	ws, err := h.workspaceID(ctx, params.Slug)
+	scoped, err := h.scopedFor(ctx, params.Slug)
 	if ent.IsNotFound(err) {
 		v := siteapi.SiteContactsCreateNotFound(problem(http.StatusNotFound, "workspace not found"))
 		return &v, nil
@@ -72,7 +72,7 @@ func (h *Handlers) SiteContactsCreate(ctx context.Context, req *siteapi.SiteCrea
 		return nil, err
 	}
 
-	c, err := h.contacts.Create(ctx, ws, createContactAttributes(req))
+	c, err := h.contacts.Create(ctx, scoped, createContactAttributes(req))
 	var conflict *contacts.ConflictError
 	if errors.As(err, &conflict) {
 		v := siteapi.SiteContactsCreateConflict(conflictProblem(conflict))
@@ -86,7 +86,7 @@ func (h *Handlers) SiteContactsCreate(ctx context.Context, req *siteapi.SiteCrea
 }
 
 func (h *Handlers) SiteContactsGet(ctx context.Context, params siteapi.SiteContactsGetParams) (siteapi.SiteContactsGetRes, error) {
-	ws, err := h.workspaceID(ctx, params.Slug)
+	scoped, err := h.scopedFor(ctx, params.Slug)
 	if ent.IsNotFound(err) {
 		v := siteapi.SiteContactsGetNotFound(problem(http.StatusNotFound, "workspace not found"))
 		return &v, nil
@@ -100,9 +100,7 @@ func (h *Handlers) SiteContactsGet(ctx context.Context, params siteapi.SiteConta
 		v := siteapi.SiteContactsGetBadRequest(problem(http.StatusBadRequest, "invalid id"))
 		return &v, nil
 	}
-	c, err := h.ent.Contact.Query().
-		Where(contact.IDEQ(id), contact.WorkspaceID(ws)).
-		Only(ctx)
+	c, err := scoped.Contact().Get(ctx, id)
 	if ent.IsNotFound(err) {
 		v := siteapi.SiteContactsGetNotFound(problem(http.StatusNotFound, "contact not found"))
 		return &v, nil
@@ -115,7 +113,7 @@ func (h *Handlers) SiteContactsGet(ctx context.Context, params siteapi.SiteConta
 }
 
 func (h *Handlers) SiteContactsUpdate(ctx context.Context, req *siteapi.SiteUpdateContactInput, params siteapi.SiteContactsUpdateParams) (siteapi.SiteContactsUpdateRes, error) {
-	ws, err := h.workspaceID(ctx, params.Slug)
+	scoped, err := h.scopedFor(ctx, params.Slug)
 	if ent.IsNotFound(err) {
 		v := siteapi.SiteContactsUpdateNotFound(problem(http.StatusNotFound, "workspace not found"))
 		return &v, nil
@@ -129,7 +127,7 @@ func (h *Handlers) SiteContactsUpdate(ctx context.Context, req *siteapi.SiteUpda
 		v := siteapi.SiteContactsUpdateBadRequest(problem(http.StatusBadRequest, "invalid id"))
 		return &v, nil
 	}
-	c, err := h.contacts.Update(ctx, ws, id, updateContactAttributes(req))
+	c, err := h.contacts.Update(ctx, scoped, id, updateContactAttributes(req))
 	var conflict *contacts.ConflictError
 	if errors.As(err, &conflict) {
 		v := siteapi.SiteContactsUpdateConflict(conflictProblem(conflict))
@@ -147,7 +145,7 @@ func (h *Handlers) SiteContactsUpdate(ctx context.Context, req *siteapi.SiteUpda
 }
 
 func (h *Handlers) SiteContactsDelete(ctx context.Context, params siteapi.SiteContactsDeleteParams) (siteapi.SiteContactsDeleteRes, error) {
-	ws, err := h.workspaceID(ctx, params.Slug)
+	scoped, err := h.scopedFor(ctx, params.Slug)
 	if ent.IsNotFound(err) {
 		v := siteapi.SiteContactsDeleteNotFound(problem(http.StatusNotFound, "workspace not found"))
 		return &v, nil
@@ -161,7 +159,7 @@ func (h *Handlers) SiteContactsDelete(ctx context.Context, params siteapi.SiteCo
 		v := siteapi.SiteContactsDeleteBadRequest(problem(http.StatusBadRequest, "invalid id"))
 		return &v, nil
 	}
-	err = h.ent.Contact.DeleteOneID(id).Where(contact.WorkspaceID(ws)).Exec(ctx)
+	err = scoped.Contact().DeleteOneID(id).Exec(ctx)
 	if ent.IsNotFound(err) {
 		v := siteapi.SiteContactsDeleteNotFound(problem(http.StatusNotFound, "contact not found"))
 		return &v, nil

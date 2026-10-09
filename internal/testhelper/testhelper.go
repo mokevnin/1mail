@@ -176,7 +176,7 @@ func Setup(t *testing.T) *TestEnv {
 	// sending-domain verify).
 	// Domain modules, built once here and shared by /site and /api exactly like the
 	// app's DI singletons.
-	eventLog := eventlog.New(client, bus)
+	eventLog := eventlog.New(bus)
 	segmentsModule := segments.New()
 	contactsModule := contacts.New(bus)
 	tagsModule := tags.New()
