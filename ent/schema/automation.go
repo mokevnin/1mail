@@ -60,7 +60,9 @@ func (Automation) Edges() []ent.Edge {
 			Field("workspace_id").
 			Required().
 			Unique(),
-		edge.To("runs", AutomationRun.Type),
+		// Deleting an Automation deletes its Enrollments with it.
+		edge.To("runs", AutomationRun.Type).
+			Annotations(entsql.OnDelete(entsql.Cascade)),
 	}
 }
 
