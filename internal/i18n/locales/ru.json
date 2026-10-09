@@ -17,6 +17,8 @@
   "errors.password_required": "укажите пароль",
   "errors.register_required": "укажите имя, email и пароль",
   "errors.email_exists": "email уже существует",
+  "errors.phone_exists": "телефон уже существует",
+  "errors.subject_id_exists": "идентификатор пользователя уже существует",
   "errors.reset_link_invalid": "ссылка для сброса пароля недействительна или устарела",
   "errors.verify_link_invalid": "ссылка подтверждения email недействительна или устарела",
   "errors.verify_link_bad": "недействительная ссылка подтверждения",

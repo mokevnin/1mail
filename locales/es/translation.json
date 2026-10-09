@@ -203,6 +203,10 @@
     "description": "Esta sección aún no está disponible.",
     "title": "Próximamente"
   },
+  "confirmations": {
+    "deleteDescription": "Esta acción no se puede deshacer.",
+    "deleteTitle": "¿Estás seguro?"
+  },
   "confirmEmailChange": {
     "errorBody": "Este enlace de confirmación no es válido o ha caducado.",
     "errorTitle": "Error de confirmación",
@@ -221,10 +225,6 @@
     "expiredBody": "Este enlace de confirmación ha caducado. Suscríbete de nuevo para recibir uno nuevo.",
     "expiredTitle": "Enlace caducado",
     "title": "Confirma tu suscripción"
-  },
-  "confirmations": {
-    "deleteDescription": "Esta acción no se puede deshacer.",
-    "deleteTitle": "¿Estás seguro?"
   },
   "contacts": {
     "addContact": "Añadir contacto",

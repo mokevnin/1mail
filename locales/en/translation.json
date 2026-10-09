@@ -203,6 +203,10 @@
     "description": "This section is not available yet.",
     "title": "Coming soon"
   },
+  "confirmations": {
+    "deleteDescription": "This action cannot be undone.",
+    "deleteTitle": "Are you sure?"
+  },
   "confirmEmailChange": {
     "errorBody": "This confirmation link is invalid or has expired.",
     "errorTitle": "Confirmation failed",
@@ -221,10 +225,6 @@
     "expiredBody": "This confirmation link has expired. Please sign up again to receive a new one.",
     "expiredTitle": "Link expired",
     "title": "Confirm your subscription"
-  },
-  "confirmations": {
-    "deleteDescription": "This action cannot be undone.",
-    "deleteTitle": "Are you sure?"
   },
   "contacts": {
     "addContact": "Add contact",

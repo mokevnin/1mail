@@ -1,4 +1,4 @@
-package service
+package contacts
 
 import (
 	"context"
