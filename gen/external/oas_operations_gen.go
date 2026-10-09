@@ -32,4 +32,6 @@ const (
 	SegmentsUpdateOperation         OperationName = "SegmentsUpdate"
 	SendingDomainRatesListOperation OperationName = "SendingDomainRatesList"
 	SendingDomainsListOperation     OperationName = "SendingDomainsList"
+	SuppressionsCreateOperation     OperationName = "SuppressionsCreate"
+	UnsubscribesCreateOperation     OperationName = "UnsubscribesCreate"
 )

@@ -180,6 +180,21 @@ type Invoker interface {
 	//
 	// GET /sending-domains
 	SendingDomainsList(ctx context.Context, params SendingDomainsListParams) (SendingDomainsListRes, error)
+	// SuppressionsCreate invokes Suppressions_create operation.
+	//
+	// Suppress a destination so no surface sends to it (a manual Suppression). Idempotent: an
+	// already-suppressed destination keeps its existing entry and reason. Lifting a suppression is not
+	// available through the API.
+	//
+	// POST /suppressions
+	SuppressionsCreate(ctx context.Context, request *CreateSuppressionInput) (SuppressionsCreateRes, error)
+	// UnsubscribesCreate invokes Unsubscribes_create operation.
+	//
+	// Record that a destination unsubscribed from a sending source (default `broadcasts`). Idempotent.
+	// Resubscribing is not available through the API.
+	//
+	// POST /unsubscribes
+	UnsubscribesCreate(ctx context.Context, request *CreateUnsubscribeInput) (UnsubscribesCreateRes, error)
 }
 
 // Client implements OAS client.
@@ -3598,6 +3613,241 @@ func (c *Client) sendSendingDomainsList(ctx context.Context, params SendingDomai
 
 	stage = "DecodeResponse"
 	result, err := decodeSendingDomainsListResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// SuppressionsCreate invokes Suppressions_create operation.
+//
+// Suppress a destination so no surface sends to it (a manual Suppression). Idempotent: an
+// already-suppressed destination keeps its existing entry and reason. Lifting a suppression is not
+// available through the API.
+//
+// POST /suppressions
+func (c *Client) SuppressionsCreate(ctx context.Context, request *CreateSuppressionInput) (SuppressionsCreateRes, error) {
+	res, err := c.sendSuppressionsCreate(ctx, request)
+	return res, err
+}
+
+func (c *Client) sendSuppressionsCreate(ctx context.Context, request *CreateSuppressionInput) (res SuppressionsCreateRes, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("Suppressions_create"),
+		semconv.HTTPRequestMethodKey.String("POST"),
+		semconv.URLTemplateKey.String("/suppressions"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, SuppressionsCreateOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	stage = "BuildURL"
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [1]string
+	pathParts[0] = "/suppressions"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "POST", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+	if err := encodeSuppressionsCreateRequest(request, r); err != nil {
+		return res, errors.Wrap(err, "encode request")
+	}
+
+	{
+		type bitset = [1]uint8
+		var satisfied bitset
+		{
+			stage = "Security:BearerAuth"
+			switch err := c.securityBearerAuth(ctx, SuppressionsCreateOperation, r); {
+			case err == nil: // if NO error
+				satisfied[0] |= 1 << 0
+			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
+				// Skip this security.
+			default:
+				return res, errors.Wrap(err, "security \"BearerAuth\"")
+			}
+		}
+
+		if ok := func() bool {
+		nextRequirement:
+			for _, requirement := range []bitset{
+				{0b00000001},
+			} {
+				for i, mask := range requirement {
+					if satisfied[i]&mask != mask {
+						continue nextRequirement
+					}
+				}
+				return true
+			}
+			return false
+		}(); !ok {
+			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
+		}
+	}
+
+	stage = "SendRequest"
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	body := resp.Body
+	defer func() {
+		// Drain the body to EOF before closing, so the underlying
+		// connection can be reused by the Transport regardless of the
+		// response status code. See https://github.com/ogen-go/ogen/issues/1670.
+		_, _ = io.Copy(io.Discard, body)
+		_ = body.Close()
+	}()
+
+	stage = "DecodeResponse"
+	result, err := decodeSuppressionsCreateResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// UnsubscribesCreate invokes Unsubscribes_create operation.
+//
+// Record that a destination unsubscribed from a sending source (default `broadcasts`). Idempotent.
+// Resubscribing is not available through the API.
+//
+// POST /unsubscribes
+func (c *Client) UnsubscribesCreate(ctx context.Context, request *CreateUnsubscribeInput) (UnsubscribesCreateRes, error) {
+	res, err := c.sendUnsubscribesCreate(ctx, request)
+	return res, err
+}
+
+func (c *Client) sendUnsubscribesCreate(ctx context.Context, request *CreateUnsubscribeInput) (res UnsubscribesCreateRes, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("Unsubscribes_create"),
+		semconv.HTTPRequestMethodKey.String("POST"),
+		semconv.URLTemplateKey.String("/unsubscribes"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, UnsubscribesCreateOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	stage = "BuildURL"
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [1]string
+	pathParts[0] = "/unsubscribes"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "POST", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+	if err := encodeUnsubscribesCreateRequest(request, r); err != nil {
+		return res, errors.Wrap(err, "encode request")
+	}
+
+	{
+		type bitset = [1]uint8
+		var satisfied bitset
+		{
+			stage = "Security:BearerAuth"
+			switch err := c.securityBearerAuth(ctx, UnsubscribesCreateOperation, r); {
+			case err == nil: // if NO error
+				satisfied[0] |= 1 << 0
+			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
+				// Skip this security.
+			default:
+				return res, errors.Wrap(err, "security \"BearerAuth\"")
+			}
+		}
+
+		if ok := func() bool {
+		nextRequirement:
+			for _, requirement := range []bitset{
+				{0b00000001},
+			} {
+				for i, mask := range requirement {
+					if satisfied[i]&mask != mask {
+						continue nextRequirement
+					}
+				}
+				return true
+			}
+			return false
+		}(); !ok {
+			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
+		}
+	}
+
+	stage = "SendRequest"
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	body := resp.Body
+	defer func() {
+		// Drain the body to EOF before closing, so the underlying
+		// connection can be reused by the Transport regardless of the
+		// response status code. See https://github.com/ogen-go/ogen/issues/1670.
+		_, _ = io.Copy(io.Discard, body)
+		_ = body.Close()
+	}()
+
+	stage = "DecodeResponse"
+	result, err := decodeUnsubscribesCreateResponse(resp)
 	if err != nil {
 		return res, errors.Wrap(err, "decode response")
 	}

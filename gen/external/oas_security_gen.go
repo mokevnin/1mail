@@ -59,6 +59,8 @@ var operationRolesBearerAuth = map[string][]string{
 	SegmentsUpdateOperation:         []string{},
 	SendingDomainRatesListOperation: []string{},
 	SendingDomainsListOperation:     []string{},
+	SuppressionsCreateOperation:     []string{},
+	UnsubscribesCreateOperation:     []string{},
 }
 
 // GetRolesForBearerAuth returns the required roles for the given operation.

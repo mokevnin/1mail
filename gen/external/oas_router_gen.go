@@ -69,6 +69,12 @@ var (
 	rn24AllowedHeaders = map[string]string{
 		"GET": "Authorization",
 	}
+	rn27AllowedHeaders = map[string]string{
+		"POST": "Authorization,Content-Type",
+	}
+	rn28AllowedHeaders = map[string]string{
+		"POST": "Authorization,Content-Type",
+	}
 )
 
 func (s *Server) cutPrefix(path string) (string, bool) {
@@ -529,9 +535,9 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 				}
 
-			case 's': // Prefix: "se"
+			case 's': // Prefix: "s"
 
-				if l := len("se"); len(elem) >= l && elem[0:l] == "se" {
+				if l := len("s"); len(elem) >= l && elem[0:l] == "s" {
 					elem = elem[l:]
 				} else {
 					break
@@ -541,24 +547,160 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 					break
 				}
 				switch elem[0] {
-				case 'g': // Prefix: "gments"
+				case 'e': // Prefix: "e"
 
-					if l := len("gments"); len(elem) >= l && elem[0:l] == "gments" {
+					if l := len("e"); len(elem) >= l && elem[0:l] == "e" {
 						elem = elem[l:]
 					} else {
 						break
 					}
 
 					if len(elem) == 0 {
+						break
+					}
+					switch elem[0] {
+					case 'g': // Prefix: "gments"
+
+						if l := len("gments"); len(elem) >= l && elem[0:l] == "gments" {
+							elem = elem[l:]
+						} else {
+							break
+						}
+
+						if len(elem) == 0 {
+							switch r.Method {
+							case "GET":
+								s.handleSegmentsListRequest([0]string{}, elemIsEscaped, w, r)
+							case "POST":
+								s.handleSegmentsCreateRequest([0]string{}, elemIsEscaped, w, r)
+							default:
+								s.notAllowed(w, r, notAllowedParams{
+									allowedMethods: "GET,POST",
+									allowedHeaders: rn20AllowedHeaders,
+									acceptPost:     "application/json",
+									acceptPatch:    "",
+								})
+							}
+
+							return
+						}
+						switch elem[0] {
+						case '/': // Prefix: "/"
+
+							if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
+								elem = elem[l:]
+							} else {
+								break
+							}
+
+							// Param: "id"
+							// Leaf parameter, slashes are prohibited
+							idx := strings.IndexByte(elem, '/')
+							if idx >= 0 {
+								break
+							}
+							args[0] = elem
+							elem = ""
+
+							if len(elem) == 0 {
+								// Leaf node.
+								switch r.Method {
+								case "DELETE":
+									s.handleSegmentsDeleteRequest([1]string{
+										args[0],
+									}, elemIsEscaped, w, r)
+								case "GET":
+									s.handleSegmentsGetRequest([1]string{
+										args[0],
+									}, elemIsEscaped, w, r)
+								case "PUT":
+									s.handleSegmentsUpdateRequest([1]string{
+										args[0],
+									}, elemIsEscaped, w, r)
+								default:
+									s.notAllowed(w, r, notAllowedParams{
+										allowedMethods: "DELETE,GET,PUT",
+										allowedHeaders: rn22AllowedHeaders,
+										acceptPost:     "",
+										acceptPatch:    "",
+									})
+								}
+
+								return
+							}
+
+						}
+
+					case 'n': // Prefix: "nding-domains"
+
+						if l := len("nding-domains"); len(elem) >= l && elem[0:l] == "nding-domains" {
+							elem = elem[l:]
+						} else {
+							break
+						}
+
+						if len(elem) == 0 {
+							switch r.Method {
+							case "GET":
+								s.handleSendingDomainsListRequest([0]string{}, elemIsEscaped, w, r)
+							default:
+								s.notAllowed(w, r, notAllowedParams{
+									allowedMethods: "GET",
+									allowedHeaders: rn25AllowedHeaders,
+									acceptPost:     "",
+									acceptPatch:    "",
+								})
+							}
+
+							return
+						}
+						switch elem[0] {
+						case '/': // Prefix: "/rates"
+
+							if l := len("/rates"); len(elem) >= l && elem[0:l] == "/rates" {
+								elem = elem[l:]
+							} else {
+								break
+							}
+
+							if len(elem) == 0 {
+								// Leaf node.
+								switch r.Method {
+								case "GET":
+									s.handleSendingDomainRatesListRequest([0]string{}, elemIsEscaped, w, r)
+								default:
+									s.notAllowed(w, r, notAllowedParams{
+										allowedMethods: "GET",
+										allowedHeaders: rn24AllowedHeaders,
+										acceptPost:     "",
+										acceptPatch:    "",
+									})
+								}
+
+								return
+							}
+
+						}
+
+					}
+
+				case 'u': // Prefix: "uppressions"
+
+					if l := len("uppressions"); len(elem) >= l && elem[0:l] == "uppressions" {
+						elem = elem[l:]
+					} else {
+						break
+					}
+
+					if len(elem) == 0 {
+						// Leaf node.
 						switch r.Method {
-						case "GET":
-							s.handleSegmentsListRequest([0]string{}, elemIsEscaped, w, r)
 						case "POST":
-							s.handleSegmentsCreateRequest([0]string{}, elemIsEscaped, w, r)
+							s.handleSuppressionsCreateRequest([0]string{}, elemIsEscaped, w, r)
 						default:
 							s.notAllowed(w, r, notAllowedParams{
-								allowedMethods: "GET,POST",
-								allowedHeaders: rn20AllowedHeaders,
+								allowedMethods: "POST",
+								allowedHeaders: rn27AllowedHeaders,
 								acceptPost:     "application/json",
 								acceptPatch:    "",
 							})
@@ -566,104 +708,32 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 						return
 					}
-					switch elem[0] {
-					case '/': // Prefix: "/"
 
-						if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
-							elem = elem[l:]
-						} else {
-							break
-						}
+				}
 
-						// Param: "id"
-						// Leaf parameter, slashes are prohibited
-						idx := strings.IndexByte(elem, '/')
-						if idx >= 0 {
-							break
-						}
-						args[0] = elem
-						elem = ""
+			case 'u': // Prefix: "unsubscribes"
 
-						if len(elem) == 0 {
-							// Leaf node.
-							switch r.Method {
-							case "DELETE":
-								s.handleSegmentsDeleteRequest([1]string{
-									args[0],
-								}, elemIsEscaped, w, r)
-							case "GET":
-								s.handleSegmentsGetRequest([1]string{
-									args[0],
-								}, elemIsEscaped, w, r)
-							case "PUT":
-								s.handleSegmentsUpdateRequest([1]string{
-									args[0],
-								}, elemIsEscaped, w, r)
-							default:
-								s.notAllowed(w, r, notAllowedParams{
-									allowedMethods: "DELETE,GET,PUT",
-									allowedHeaders: rn22AllowedHeaders,
-									acceptPost:     "",
-									acceptPatch:    "",
-								})
-							}
+				if l := len("unsubscribes"); len(elem) >= l && elem[0:l] == "unsubscribes" {
+					elem = elem[l:]
+				} else {
+					break
+				}
 
-							return
-						}
-
+				if len(elem) == 0 {
+					// Leaf node.
+					switch r.Method {
+					case "POST":
+						s.handleUnsubscribesCreateRequest([0]string{}, elemIsEscaped, w, r)
+					default:
+						s.notAllowed(w, r, notAllowedParams{
+							allowedMethods: "POST",
+							allowedHeaders: rn28AllowedHeaders,
+							acceptPost:     "application/json",
+							acceptPatch:    "",
+						})
 					}
 
-				case 'n': // Prefix: "nding-domains"
-
-					if l := len("nding-domains"); len(elem) >= l && elem[0:l] == "nding-domains" {
-						elem = elem[l:]
-					} else {
-						break
-					}
-
-					if len(elem) == 0 {
-						switch r.Method {
-						case "GET":
-							s.handleSendingDomainsListRequest([0]string{}, elemIsEscaped, w, r)
-						default:
-							s.notAllowed(w, r, notAllowedParams{
-								allowedMethods: "GET",
-								allowedHeaders: rn25AllowedHeaders,
-								acceptPost:     "",
-								acceptPatch:    "",
-							})
-						}
-
-						return
-					}
-					switch elem[0] {
-					case '/': // Prefix: "/rates"
-
-						if l := len("/rates"); len(elem) >= l && elem[0:l] == "/rates" {
-							elem = elem[l:]
-						} else {
-							break
-						}
-
-						if len(elem) == 0 {
-							// Leaf node.
-							switch r.Method {
-							case "GET":
-								s.handleSendingDomainRatesListRequest([0]string{}, elemIsEscaped, w, r)
-							default:
-								s.notAllowed(w, r, notAllowedParams{
-									allowedMethods: "GET",
-									allowedHeaders: rn24AllowedHeaders,
-									acceptPost:     "",
-									acceptPatch:    "",
-								})
-							}
-
-							return
-						}
-
-					}
-
+					return
 				}
 
 			}
@@ -1208,9 +1278,9 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 
 				}
 
-			case 's': // Prefix: "se"
+			case 's': // Prefix: "s"
 
-				if l := len("se"); len(elem) >= l && elem[0:l] == "se" {
+				if l := len("s"); len(elem) >= l && elem[0:l] == "s" {
 					elem = elem[l:]
 				} else {
 					break
@@ -1220,134 +1290,43 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 					break
 				}
 				switch elem[0] {
-				case 'g': // Prefix: "gments"
+				case 'e': // Prefix: "e"
 
-					if l := len("gments"); len(elem) >= l && elem[0:l] == "gments" {
+					if l := len("e"); len(elem) >= l && elem[0:l] == "e" {
 						elem = elem[l:]
 					} else {
 						break
 					}
 
 					if len(elem) == 0 {
-						switch method {
-						case "GET":
-							r.name = SegmentsListOperation
-							r.summary = ""
-							r.operationID = "Segments_list"
-							r.operationGroup = ""
-							r.pathPattern = "/segments"
-							r.args = args
-							r.count = 0
-							return r, true
-						case "POST":
-							r.name = SegmentsCreateOperation
-							r.summary = ""
-							r.operationID = "Segments_create"
-							r.operationGroup = ""
-							r.pathPattern = "/segments"
-							r.args = args
-							r.count = 0
-							return r, true
-						default:
-							return
-						}
-					}
-					switch elem[0] {
-					case '/': // Prefix: "/"
-
-						if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
-							elem = elem[l:]
-						} else {
-							break
-						}
-
-						// Param: "id"
-						// Leaf parameter, slashes are prohibited
-						idx := strings.IndexByte(elem, '/')
-						if idx >= 0 {
-							break
-						}
-						args[0] = elem
-						elem = ""
-
-						if len(elem) == 0 {
-							// Leaf node.
-							switch method {
-							case "DELETE":
-								r.name = SegmentsDeleteOperation
-								r.summary = ""
-								r.operationID = "Segments_delete"
-								r.operationGroup = ""
-								r.pathPattern = "/segments/{id}"
-								r.args = args
-								r.count = 1
-								return r, true
-							case "GET":
-								r.name = SegmentsGetOperation
-								r.summary = ""
-								r.operationID = "Segments_get"
-								r.operationGroup = ""
-								r.pathPattern = "/segments/{id}"
-								r.args = args
-								r.count = 1
-								return r, true
-							case "PUT":
-								r.name = SegmentsUpdateOperation
-								r.summary = ""
-								r.operationID = "Segments_update"
-								r.operationGroup = ""
-								r.pathPattern = "/segments/{id}"
-								r.args = args
-								r.count = 1
-								return r, true
-							default:
-								return
-							}
-						}
-
-					}
-
-				case 'n': // Prefix: "nding-domains"
-
-					if l := len("nding-domains"); len(elem) >= l && elem[0:l] == "nding-domains" {
-						elem = elem[l:]
-					} else {
 						break
 					}
-
-					if len(elem) == 0 {
-						switch method {
-						case "GET":
-							r.name = SendingDomainsListOperation
-							r.summary = ""
-							r.operationID = "SendingDomains_list"
-							r.operationGroup = ""
-							r.pathPattern = "/sending-domains"
-							r.args = args
-							r.count = 0
-							return r, true
-						default:
-							return
-						}
-					}
 					switch elem[0] {
-					case '/': // Prefix: "/rates"
+					case 'g': // Prefix: "gments"
 
-						if l := len("/rates"); len(elem) >= l && elem[0:l] == "/rates" {
+						if l := len("gments"); len(elem) >= l && elem[0:l] == "gments" {
 							elem = elem[l:]
 						} else {
 							break
 						}
 
 						if len(elem) == 0 {
-							// Leaf node.
 							switch method {
 							case "GET":
-								r.name = SendingDomainRatesListOperation
+								r.name = SegmentsListOperation
 								r.summary = ""
-								r.operationID = "SendingDomainRates_list"
+								r.operationID = "Segments_list"
 								r.operationGroup = ""
-								r.pathPattern = "/sending-domains/rates"
+								r.pathPattern = "/segments"
+								r.args = args
+								r.count = 0
+								return r, true
+							case "POST":
+								r.name = SegmentsCreateOperation
+								r.summary = ""
+								r.operationID = "Segments_create"
+								r.operationGroup = ""
+								r.pathPattern = "/segments"
 								r.args = args
 								r.count = 0
 								return r, true
@@ -1355,9 +1334,164 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 								return
 							}
 						}
+						switch elem[0] {
+						case '/': // Prefix: "/"
+
+							if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
+								elem = elem[l:]
+							} else {
+								break
+							}
+
+							// Param: "id"
+							// Leaf parameter, slashes are prohibited
+							idx := strings.IndexByte(elem, '/')
+							if idx >= 0 {
+								break
+							}
+							args[0] = elem
+							elem = ""
+
+							if len(elem) == 0 {
+								// Leaf node.
+								switch method {
+								case "DELETE":
+									r.name = SegmentsDeleteOperation
+									r.summary = ""
+									r.operationID = "Segments_delete"
+									r.operationGroup = ""
+									r.pathPattern = "/segments/{id}"
+									r.args = args
+									r.count = 1
+									return r, true
+								case "GET":
+									r.name = SegmentsGetOperation
+									r.summary = ""
+									r.operationID = "Segments_get"
+									r.operationGroup = ""
+									r.pathPattern = "/segments/{id}"
+									r.args = args
+									r.count = 1
+									return r, true
+								case "PUT":
+									r.name = SegmentsUpdateOperation
+									r.summary = ""
+									r.operationID = "Segments_update"
+									r.operationGroup = ""
+									r.pathPattern = "/segments/{id}"
+									r.args = args
+									r.count = 1
+									return r, true
+								default:
+									return
+								}
+							}
+
+						}
+
+					case 'n': // Prefix: "nding-domains"
+
+						if l := len("nding-domains"); len(elem) >= l && elem[0:l] == "nding-domains" {
+							elem = elem[l:]
+						} else {
+							break
+						}
+
+						if len(elem) == 0 {
+							switch method {
+							case "GET":
+								r.name = SendingDomainsListOperation
+								r.summary = ""
+								r.operationID = "SendingDomains_list"
+								r.operationGroup = ""
+								r.pathPattern = "/sending-domains"
+								r.args = args
+								r.count = 0
+								return r, true
+							default:
+								return
+							}
+						}
+						switch elem[0] {
+						case '/': // Prefix: "/rates"
+
+							if l := len("/rates"); len(elem) >= l && elem[0:l] == "/rates" {
+								elem = elem[l:]
+							} else {
+								break
+							}
+
+							if len(elem) == 0 {
+								// Leaf node.
+								switch method {
+								case "GET":
+									r.name = SendingDomainRatesListOperation
+									r.summary = ""
+									r.operationID = "SendingDomainRates_list"
+									r.operationGroup = ""
+									r.pathPattern = "/sending-domains/rates"
+									r.args = args
+									r.count = 0
+									return r, true
+								default:
+									return
+								}
+							}
+
+						}
 
 					}
 
+				case 'u': // Prefix: "uppressions"
+
+					if l := len("uppressions"); len(elem) >= l && elem[0:l] == "uppressions" {
+						elem = elem[l:]
+					} else {
+						break
+					}
+
+					if len(elem) == 0 {
+						// Leaf node.
+						switch method {
+						case "POST":
+							r.name = SuppressionsCreateOperation
+							r.summary = ""
+							r.operationID = "Suppressions_create"
+							r.operationGroup = ""
+							r.pathPattern = "/suppressions"
+							r.args = args
+							r.count = 0
+							return r, true
+						default:
+							return
+						}
+					}
+
+				}
+
+			case 'u': // Prefix: "unsubscribes"
+
+				if l := len("unsubscribes"); len(elem) >= l && elem[0:l] == "unsubscribes" {
+					elem = elem[l:]
+				} else {
+					break
+				}
+
+				if len(elem) == 0 {
+					// Leaf node.
+					switch method {
+					case "POST":
+						r.name = UnsubscribesCreateOperation
+						r.summary = ""
+						r.operationID = "Unsubscribes_create"
+						r.operationGroup = ""
+						r.pathPattern = "/unsubscribes"
+						r.args = args
+						r.count = 0
+						return r, true
+					default:
+						return
+					}
 				}
 
 			}

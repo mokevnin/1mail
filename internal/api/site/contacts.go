@@ -2,17 +2,16 @@ package site
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"strconv"
 
 	"github.com/mokevnin/1mail/ent"
 	"github.com/mokevnin/1mail/ent/contact"
 	siteapi "github.com/mokevnin/1mail/gen/site"
+	"github.com/mokevnin/1mail/internal/contacts"
 	"github.com/mokevnin/1mail/internal/convert"
-	"github.com/mokevnin/1mail/internal/events"
-	"github.com/mokevnin/1mail/internal/i18n"
 	"github.com/mokevnin/1mail/internal/pagination"
-	"github.com/mokevnin/1mail/internal/service"
 )
 
 func (h *Handlers) SiteContactsList(ctx context.Context, params siteapi.SiteContactsListParams) (siteapi.SiteContactsListRes, error) {
@@ -73,52 +72,15 @@ func (h *Handlers) SiteContactsCreate(ctx context.Context, req *siteapi.SiteCrea
 		return nil, err
 	}
 
-	// Create the contact and publish contact.created in one transaction
-	// (transactional outbox): the event is committed iff the row is. The
-	// "persist" subscriber writes the engagement-log Event row from the event;
-	// it is no longer written inline here.
-	var c *ent.Contact
-	err = h.bus.WithinTx(ctx, func(tx *ent.Client, pub events.Publisher) error {
-		q := tx.Contact.Create().
-			SetWorkspaceID(ws).
-			SetNillableSubjectID(convert.StringPtr(req.SubjectId)).
-			SetNillableEmail(convert.StringPtr(req.Email)).
-			SetNillablePhone(convert.StringPtr(req.Phone)).
-			SetNillableFirstName(convert.StringPtr(req.FirstName)).
-			SetNillableLastName(convert.StringPtr(req.LastName)).
-			SetNillableTimeZone(convert.StringPtr(req.TimeZone))
-		if v, ok := req.CustomFields.Get(); ok {
-			typed, err := service.EnsureCustomFields(ctx, tx, ws, convert.RawMap(v))
-			if err != nil {
-				return err
-			}
-			if len(typed) > 0 {
-				q = q.SetCustomFields(typed)
-			}
-		}
-		created, err := q.Save(ctx)
-		if err != nil {
-			return err
-		}
-		c = created
-		email := ""
-		if c.Email != nil {
-			email = *c.Email
-		}
-		return pub.Publish(ctx, &events.ContactCreated{WorkspaceID: ws, ContactID: c.ID, Email: email})
-	})
-	if service.IsUniqueViolation(err) {
-		v := siteapi.SiteContactsCreateConflict(problemWithErrors(http.StatusConflict, i18n.T("errors.email_exists", nil), map[string][]string{
-			"email": {i18n.T("errors.email_exists", nil)},
-		}))
+	c, err := h.contacts.Create(ctx, ws, createContactAttributes(req))
+	var conflict *contacts.ConflictError
+	if errors.As(err, &conflict) {
+		v := siteapi.SiteContactsCreateConflict(conflictProblem(conflict))
 		return &v, nil
 	}
 	if err != nil {
 		return nil, err
 	}
-
-	// The persist + automations subscribers handle the engagement log and
-	// enrollment off the published contact.created event — no direct calls here.
 	res := mapper.ContactToResource(c)
 	return &res, nil
 }
@@ -167,27 +129,13 @@ func (h *Handlers) SiteContactsUpdate(ctx context.Context, req *siteapi.SiteUpda
 		v := siteapi.SiteContactsUpdateBadRequest(problem(http.StatusBadRequest, "invalid id"))
 		return &v, nil
 	}
-	q := h.ent.Contact.UpdateOneID(id).
-		Where(contact.WorkspaceID(ws)).
-		SetNillableSubjectID(convert.StringPtr(req.SubjectId)).
-		SetNillableEmail(convert.StringPtr(req.Email)).
-		SetNillablePhone(convert.StringPtr(req.Phone)).
-		SetNillableFirstName(convert.StringPtr(req.FirstName)).
-		SetNillableLastName(convert.StringPtr(req.LastName)).
-		SetNillableTimeZone(convert.StringPtr(req.TimeZone))
-	if v, ok := req.CustomFields.Get(); ok {
-		typed, err := service.EnsureCustomFields(ctx, h.ent, ws, convert.RawMap(v))
-		if err != nil {
-			return nil, err
-		}
-		q = q.SetCustomFields(typed)
-	}
-	c, err := q.Save(ctx)
-	if service.IsUniqueViolation(err) {
-		v := siteapi.SiteContactsUpdateConflict(problem(http.StatusConflict, i18n.T("errors.email_exists", nil)))
+	c, err := h.contacts.Update(ctx, ws, id, updateContactAttributes(req))
+	var conflict *contacts.ConflictError
+	if errors.As(err, &conflict) {
+		v := siteapi.SiteContactsUpdateConflict(conflictProblem(conflict))
 		return &v, nil
 	}
-	if ent.IsNotFound(err) {
+	if errors.Is(err, contacts.ErrNotFound) {
 		v := siteapi.SiteContactsUpdateNotFound(problem(http.StatusNotFound, "contact not found"))
 		return &v, nil
 	}
@@ -238,4 +186,39 @@ func problemWithErrors(code int, detail string, errors map[string][]string) site
 	p := problem(code, detail)
 	p.Errors = siteapi.NewOptProblemDetailsErrors(siteapi.ProblemDetailsErrors(errors))
 	return p
+}
+
+// conflictProblem renders a contacts.ConflictError, with the field-level error.
+func conflictProblem(c *contacts.ConflictError) siteapi.ProblemDetails {
+	return problemWithErrors(http.StatusConflict, c.Message(), map[string][]string{c.Field: {c.Message()}})
+}
+
+func createContactAttributes(req *siteapi.SiteCreateContactInput) contacts.Attributes {
+	attrs := contacts.Attributes{
+		SubjectID: convert.StringPtr(req.SubjectId),
+		Email:     convert.StringPtr(req.Email),
+		Phone:     convert.StringPtr(req.Phone),
+		FirstName: convert.StringPtr(req.FirstName),
+		LastName:  convert.StringPtr(req.LastName),
+		TimeZone:  convert.StringPtr(req.TimeZone),
+	}
+	if v, ok := req.CustomFields.Get(); ok {
+		attrs.CustomFields = convert.RawMap(v)
+	}
+	return attrs
+}
+
+func updateContactAttributes(req *siteapi.SiteUpdateContactInput) contacts.Attributes {
+	attrs := contacts.Attributes{
+		SubjectID: convert.StringPtr(req.SubjectId),
+		Email:     convert.StringPtr(req.Email),
+		Phone:     convert.StringPtr(req.Phone),
+		FirstName: convert.StringPtr(req.FirstName),
+		LastName:  convert.StringPtr(req.LastName),
+		TimeZone:  convert.StringPtr(req.TimeZone),
+	}
+	if v, ok := req.CustomFields.Get(); ok {
+		attrs.CustomFields = convert.RawMap(v)
+	}
+	return attrs
 }

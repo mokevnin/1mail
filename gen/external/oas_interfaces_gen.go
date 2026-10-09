@@ -104,3 +104,11 @@ type SendingDomainRatesListRes interface {
 type SendingDomainsListRes interface {
 	sendingDomainsListRes()
 }
+
+type SuppressionsCreateRes interface {
+	suppressionsCreateRes()
+}
+
+type UnsubscribesCreateRes interface {
+	unsubscribesCreateRes()
+}
