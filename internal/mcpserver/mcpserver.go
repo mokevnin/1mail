@@ -28,7 +28,7 @@ import (
 const apiPrefix = "/api"
 
 const instructions = "1mail marketing automation. Tools mirror the 1mail external API and act on " +
-	"the workspace of the Bearer API token used to connect; results and errors are the API's."
+	"the workspace of the Bearer API token used to connect; results and errors are the API's." + untrustedInstructions
 
 // Authenticator validates a Bearer API token (the external API's security handler).
 type Authenticator interface {
@@ -184,7 +184,7 @@ func (op *operation) handler(api http.Handler) mcp.ToolHandler {
 		}
 		rec := httptest.NewRecorder()
 		api.ServeHTTP(rec, httpReq)
-		return result(rec.Result()), nil
+		return op.markUntrusted(result(rec.Result())), nil
 	}
 }
 

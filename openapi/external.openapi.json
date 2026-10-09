@@ -3738,12 +3738,14 @@
           "firstName": {
             "type": "string",
             "nullable": true,
-            "description": "First name"
+            "description": "First name",
+            "x-untrusted": true
           },
           "lastName": {
             "type": "string",
             "nullable": true,
-            "description": "Last name"
+            "description": "Last name",
+            "x-untrusted": true
           },
           "timeZone": {
             "type": "string",
@@ -3759,7 +3761,8 @@
             "type": "object",
             "additionalProperties": {},
             "nullable": true,
-            "description": "Typed custom field values keyed by the field's machine key"
+            "description": "Typed custom field values keyed by the field's machine key",
+            "x-untrusted": true
           },
           "createdAt": {
             "allOf": [
@@ -4011,11 +4014,13 @@
           },
           "key": {
             "type": "string",
-            "description": "Machine key, how values are addressed in custom fields and segment rules"
+            "description": "Machine key, how values are addressed in custom fields and segment rules",
+            "x-untrusted": true
           },
           "name": {
             "type": "string",
-            "description": "Display name"
+            "description": "Display name",
+            "x-untrusted": true
           },
           "type": {
             "allOf": [
@@ -4063,7 +4068,8 @@
         "properties": {
           "action": {
             "type": "string",
-            "description": "Event action"
+            "description": "Event action",
+            "x-untrusted": true
           }
         },
         "description": "Distinct event action"
@@ -4107,7 +4113,8 @@
           },
           "action": {
             "type": "string",
-            "description": "Event action"
+            "description": "Event action",
+            "x-untrusted": true
           },
           "email": {
             "type": "string",
@@ -4128,7 +4135,8 @@
             "type": "object",
             "additionalProperties": {},
             "nullable": true,
-            "description": "Event properties"
+            "description": "Event properties",
+            "x-untrusted": true
           },
           "occurredAt": {
             "type": "string",
@@ -4544,7 +4552,8 @@
           },
           "name": {
             "type": "string",
-            "description": "The label; unique per workspace"
+            "description": "The label; unique per workspace",
+            "x-untrusted": true
           },
           "createdAt": {
             "allOf": [

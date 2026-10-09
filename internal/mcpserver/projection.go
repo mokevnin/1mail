@@ -30,8 +30,9 @@ type operation struct {
 	method     string
 	path       string
 	params     []parameter
-	bodyFields map[string]bool // top-level body properties exposed as arguments
-	bodyWhole  bool            // the body is not an object: it is passed as the `body` argument
+	bodyFields map[string]bool    // top-level body properties exposed as arguments
+	bodyWhole  bool               // the body is not an object: it is passed as the `body` argument
+	response   *untrustedResponse // success schema, to mark untrusted fields in results
 	hasBody    bool
 	send       bool // send-class (x-mcp send): listed and callable only with the mcp:send scope
 }
@@ -87,7 +88,7 @@ func project(spec []byte) ([]*operation, error) {
 }
 
 func buildOperation(name, method, path string, raw, schemas, parameters map[string]any) (*operation, error) {
-	op := &operation{method: method, path: path, bodyFields: map[string]bool{}}
+	op := &operation{method: method, path: path, bodyFields: map[string]bool{}, response: responseSchema(raw, schemas)}
 	props := map[string]any{}
 	var required []string
 	add := func(argument string, schema map[string]any, isRequired bool) error {

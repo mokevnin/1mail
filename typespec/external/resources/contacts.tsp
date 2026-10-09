@@ -1,5 +1,6 @@
 using TypeSpec.Http;
 using TypeSpec.Rest;
+using TypeSpec.OpenAPI;
 
 namespace OneMail;
 
@@ -21,15 +22,18 @@ model ContactResource {
   phone?: string | null;
 
   /** First name */
+  @extension("x-untrusted", true)
   firstName?: string | null;
 
   /** Last name */
+  @extension("x-untrusted", true)
   lastName?: string | null;
 
   /** IANA time zone identifier */
   timeZone?: TimeZoneName | null;
 
   /** Typed custom field values keyed by the field's machine key */
+  @extension("x-untrusted", true)
   customFields?: Record<unknown> | null;
 
   /** Creation timestamp */
