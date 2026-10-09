@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
@@ -27,6 +28,12 @@ type OAuthClientUpdate struct {
 // Where appends a list predicates to the OAuthClientUpdate builder.
 func (_u *OAuthClientUpdate) Where(ps ...predicate.OAuthClient) *OAuthClientUpdate {
 	_u.mutation.Where(ps...)
+	return _u
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (_u *OAuthClientUpdate) SetUpdatedAt(v time.Time) *OAuthClientUpdate {
+	_u.mutation.SetUpdatedAt(v)
 	return _u
 }
 
@@ -99,6 +106,7 @@ func (_u *OAuthClientUpdate) RemoveCodes(v ...*OAuthCode) *OAuthClientUpdate {
 
 // Save executes the query and returns the number of nodes affected by the update operation.
 func (_u *OAuthClientUpdate) Save(ctx context.Context) (int, error) {
+	_u.defaults()
 	return withHooks(ctx, _u.sqlSave, _u.mutation, _u.hooks)
 }
 
@@ -121,6 +129,14 @@ func (_u *OAuthClientUpdate) Exec(ctx context.Context) error {
 func (_u *OAuthClientUpdate) ExecX(ctx context.Context) {
 	if err := _u.Exec(ctx); err != nil {
 		panic(err)
+	}
+}
+
+// defaults sets the default values of the builder before save.
+func (_u *OAuthClientUpdate) defaults() {
+	if _, ok := _u.mutation.UpdatedAt(); !ok {
+		v := oauthclient.UpdateDefaultUpdatedAt()
+		_u.mutation.SetUpdatedAt(v)
 	}
 }
 
@@ -151,6 +167,9 @@ func (_u *OAuthClientUpdate) sqlSave(ctx context.Context) (_node int, err error)
 				ps[i](selector)
 			}
 		}
+	}
+	if value, ok := _u.mutation.UpdatedAt(); ok {
+		_spec.SetField(oauthclient.FieldUpdatedAt, field.TypeTime, value)
 	}
 	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(oauthclient.FieldName, field.TypeString, value)
@@ -228,6 +247,12 @@ type OAuthClientUpdateOne struct {
 	hooks     []Hook
 	mutation  *OAuthClientMutation
 	modifiers []func(*sql.UpdateBuilder)
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (_u *OAuthClientUpdateOne) SetUpdatedAt(v time.Time) *OAuthClientUpdateOne {
+	_u.mutation.SetUpdatedAt(v)
+	return _u
 }
 
 // SetName sets the "name" field.
@@ -312,6 +337,7 @@ func (_u *OAuthClientUpdateOne) Select(field string, fields ...string) *OAuthCli
 
 // Save executes the query and returns the updated OAuthClient entity.
 func (_u *OAuthClientUpdateOne) Save(ctx context.Context) (*OAuthClient, error) {
+	_u.defaults()
 	return withHooks(ctx, _u.sqlSave, _u.mutation, _u.hooks)
 }
 
@@ -334,6 +360,14 @@ func (_u *OAuthClientUpdateOne) Exec(ctx context.Context) error {
 func (_u *OAuthClientUpdateOne) ExecX(ctx context.Context) {
 	if err := _u.Exec(ctx); err != nil {
 		panic(err)
+	}
+}
+
+// defaults sets the default values of the builder before save.
+func (_u *OAuthClientUpdateOne) defaults() {
+	if _, ok := _u.mutation.UpdatedAt(); !ok {
+		v := oauthclient.UpdateDefaultUpdatedAt()
+		_u.mutation.SetUpdatedAt(v)
 	}
 }
 
@@ -381,6 +415,9 @@ func (_u *OAuthClientUpdateOne) sqlSave(ctx context.Context) (_node *OAuthClient
 				ps[i](selector)
 			}
 		}
+	}
+	if value, ok := _u.mutation.UpdatedAt(); ok {
+		_spec.SetField(oauthclient.FieldUpdatedAt, field.TypeTime, value)
 	}
 	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(oauthclient.FieldName, field.TypeString, value)

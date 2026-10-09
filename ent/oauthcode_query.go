@@ -300,12 +300,12 @@ func (_q *OAuthCodeQuery) WithClient(opts ...func(*OAuthClientQuery)) *OAuthCode
 // Example:
 //
 //	var v []struct {
-//		CodeHash string `json:"code_hash,omitempty"`
+//		CreatedAt time.Time `json:"created_at,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.OAuthCode.Query().
-//		GroupBy(oauthcode.FieldCodeHash).
+//		GroupBy(oauthcode.FieldCreatedAt).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
 func (_q *OAuthCodeQuery) GroupBy(field string, fields ...string) *OAuthCodeGroupBy {
@@ -323,11 +323,11 @@ func (_q *OAuthCodeQuery) GroupBy(field string, fields ...string) *OAuthCodeGrou
 // Example:
 //
 //	var v []struct {
-//		CodeHash string `json:"code_hash,omitempty"`
+//		CreatedAt time.Time `json:"created_at,omitempty"`
 //	}
 //
 //	client.OAuthCode.Query().
-//		Select(oauthcode.FieldCodeHash).
+//		Select(oauthcode.FieldCreatedAt).
 //		Scan(ctx, &v)
 func (_q *OAuthCodeQuery) Select(fields ...string) *OAuthCodeSelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)

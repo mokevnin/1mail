@@ -300,12 +300,12 @@ func (_q *WebhookEndpointQuery) WithWorkspace(opts ...func(*WorkspaceQuery)) *We
 // Example:
 //
 //	var v []struct {
-//		URL string `json:"url,omitempty"`
+//		CreatedAt time.Time `json:"created_at,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.WebhookEndpoint.Query().
-//		GroupBy(webhookendpoint.FieldURL).
+//		GroupBy(webhookendpoint.FieldCreatedAt).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
 func (_q *WebhookEndpointQuery) GroupBy(field string, fields ...string) *WebhookEndpointGroupBy {
@@ -323,11 +323,11 @@ func (_q *WebhookEndpointQuery) GroupBy(field string, fields ...string) *Webhook
 // Example:
 //
 //	var v []struct {
-//		URL string `json:"url,omitempty"`
+//		CreatedAt time.Time `json:"created_at,omitempty"`
 //	}
 //
 //	client.WebhookEndpoint.Query().
-//		Select(webhookendpoint.FieldURL).
+//		Select(webhookendpoint.FieldCreatedAt).
 //		Scan(ctx, &v)
 func (_q *WebhookEndpointQuery) Select(fields ...string) *WebhookEndpointSelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)

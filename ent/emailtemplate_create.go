@@ -23,6 +23,34 @@ type EmailTemplateCreate struct {
 	conflict []sql.ConflictOption
 }
 
+// SetCreatedAt sets the "created_at" field.
+func (_c *EmailTemplateCreate) SetCreatedAt(v time.Time) *EmailTemplateCreate {
+	_c.mutation.SetCreatedAt(v)
+	return _c
+}
+
+// SetNillableCreatedAt sets the "created_at" field if the given value is not nil.
+func (_c *EmailTemplateCreate) SetNillableCreatedAt(v *time.Time) *EmailTemplateCreate {
+	if v != nil {
+		_c.SetCreatedAt(*v)
+	}
+	return _c
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (_c *EmailTemplateCreate) SetUpdatedAt(v time.Time) *EmailTemplateCreate {
+	_c.mutation.SetUpdatedAt(v)
+	return _c
+}
+
+// SetNillableUpdatedAt sets the "updated_at" field if the given value is not nil.
+func (_c *EmailTemplateCreate) SetNillableUpdatedAt(v *time.Time) *EmailTemplateCreate {
+	if v != nil {
+		_c.SetUpdatedAt(*v)
+	}
+	return _c
+}
+
 // SetName sets the "name" field.
 func (_c *EmailTemplateCreate) SetName(v string) *EmailTemplateCreate {
 	_c.mutation.SetName(v)
@@ -60,34 +88,6 @@ func (_c *EmailTemplateCreate) SetNillableBody(v *string) *EmailTemplateCreate {
 // SetWorkspaceID sets the "workspace_id" field.
 func (_c *EmailTemplateCreate) SetWorkspaceID(v int64) *EmailTemplateCreate {
 	_c.mutation.SetWorkspaceID(v)
-	return _c
-}
-
-// SetCreatedAt sets the "created_at" field.
-func (_c *EmailTemplateCreate) SetCreatedAt(v time.Time) *EmailTemplateCreate {
-	_c.mutation.SetCreatedAt(v)
-	return _c
-}
-
-// SetNillableCreatedAt sets the "created_at" field if the given value is not nil.
-func (_c *EmailTemplateCreate) SetNillableCreatedAt(v *time.Time) *EmailTemplateCreate {
-	if v != nil {
-		_c.SetCreatedAt(*v)
-	}
-	return _c
-}
-
-// SetUpdatedAt sets the "updated_at" field.
-func (_c *EmailTemplateCreate) SetUpdatedAt(v time.Time) *EmailTemplateCreate {
-	_c.mutation.SetUpdatedAt(v)
-	return _c
-}
-
-// SetNillableUpdatedAt sets the "updated_at" field if the given value is not nil.
-func (_c *EmailTemplateCreate) SetNillableUpdatedAt(v *time.Time) *EmailTemplateCreate {
-	if v != nil {
-		_c.SetUpdatedAt(*v)
-	}
 	return _c
 }
 
@@ -137,14 +137,6 @@ func (_c *EmailTemplateCreate) ExecX(ctx context.Context) {
 
 // defaults sets the default values of the builder before save.
 func (_c *EmailTemplateCreate) defaults() {
-	if _, ok := _c.mutation.Subject(); !ok {
-		v := emailtemplate.DefaultSubject
-		_c.mutation.SetSubject(v)
-	}
-	if _, ok := _c.mutation.Body(); !ok {
-		v := emailtemplate.DefaultBody
-		_c.mutation.SetBody(v)
-	}
 	if _, ok := _c.mutation.CreatedAt(); !ok {
 		v := emailtemplate.DefaultCreatedAt()
 		_c.mutation.SetCreatedAt(v)
@@ -153,10 +145,24 @@ func (_c *EmailTemplateCreate) defaults() {
 		v := emailtemplate.DefaultUpdatedAt()
 		_c.mutation.SetUpdatedAt(v)
 	}
+	if _, ok := _c.mutation.Subject(); !ok {
+		v := emailtemplate.DefaultSubject
+		_c.mutation.SetSubject(v)
+	}
+	if _, ok := _c.mutation.Body(); !ok {
+		v := emailtemplate.DefaultBody
+		_c.mutation.SetBody(v)
+	}
 }
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *EmailTemplateCreate) check() error {
+	if _, ok := _c.mutation.CreatedAt(); !ok {
+		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "EmailTemplate.created_at"`)}
+	}
+	if _, ok := _c.mutation.UpdatedAt(); !ok {
+		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "EmailTemplate.updated_at"`)}
+	}
 	if _, ok := _c.mutation.Name(); !ok {
 		return &ValidationError{Name: "name", err: errors.New(`ent: missing required field "EmailTemplate.name"`)}
 	}
@@ -173,12 +179,6 @@ func (_c *EmailTemplateCreate) check() error {
 	}
 	if _, ok := _c.mutation.WorkspaceID(); !ok {
 		return &ValidationError{Name: "workspace_id", err: errors.New(`ent: missing required field "EmailTemplate.workspace_id"`)}
-	}
-	if _, ok := _c.mutation.CreatedAt(); !ok {
-		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "EmailTemplate.created_at"`)}
-	}
-	if _, ok := _c.mutation.UpdatedAt(); !ok {
-		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "EmailTemplate.updated_at"`)}
 	}
 	if len(_c.mutation.WorkspaceIDs()) == 0 {
 		return &ValidationError{Name: "workspace", err: errors.New(`ent: missing required edge "EmailTemplate.workspace"`)}
@@ -216,6 +216,14 @@ func (_c *EmailTemplateCreate) createSpec() (*EmailTemplate, *sqlgraph.CreateSpe
 		_node.ID = id
 		_spec.ID.Value = id
 	}
+	if value, ok := _c.mutation.CreatedAt(); ok {
+		_spec.SetField(emailtemplate.FieldCreatedAt, field.TypeTime, value)
+		_node.CreatedAt = value
+	}
+	if value, ok := _c.mutation.UpdatedAt(); ok {
+		_spec.SetField(emailtemplate.FieldUpdatedAt, field.TypeTime, value)
+		_node.UpdatedAt = value
+	}
 	if value, ok := _c.mutation.Name(); ok {
 		_spec.SetField(emailtemplate.FieldName, field.TypeString, value)
 		_node.Name = value
@@ -227,14 +235,6 @@ func (_c *EmailTemplateCreate) createSpec() (*EmailTemplate, *sqlgraph.CreateSpe
 	if value, ok := _c.mutation.Body(); ok {
 		_spec.SetField(emailtemplate.FieldBody, field.TypeString, value)
 		_node.Body = value
-	}
-	if value, ok := _c.mutation.CreatedAt(); ok {
-		_spec.SetField(emailtemplate.FieldCreatedAt, field.TypeTime, value)
-		_node.CreatedAt = value
-	}
-	if value, ok := _c.mutation.UpdatedAt(); ok {
-		_spec.SetField(emailtemplate.FieldUpdatedAt, field.TypeTime, value)
-		_node.UpdatedAt = value
 	}
 	if nodes := _c.mutation.WorkspaceIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -260,7 +260,7 @@ func (_c *EmailTemplateCreate) createSpec() (*EmailTemplate, *sqlgraph.CreateSpe
 // of the `INSERT` statement. For example:
 //
 //	client.EmailTemplate.Create().
-//		SetName(v).
+//		SetCreatedAt(v).
 //		OnConflict(
 //			// Update the row with the new values
 //			// the was proposed for insertion.
@@ -269,7 +269,7 @@ func (_c *EmailTemplateCreate) createSpec() (*EmailTemplate, *sqlgraph.CreateSpe
 //		// Override some of the fields with custom
 //		// update values.
 //		Update(func(u *ent.EmailTemplateUpsert) {
-//			SetName(v+v).
+//			SetCreatedAt(v+v).
 //		}).
 //		Exec(ctx)
 func (_c *EmailTemplateCreate) OnConflict(opts ...sql.ConflictOption) *EmailTemplateUpsertOne {
@@ -304,6 +304,18 @@ type (
 		*sql.UpdateSet
 	}
 )
+
+// SetUpdatedAt sets the "updated_at" field.
+func (u *EmailTemplateUpsert) SetUpdatedAt(v time.Time) *EmailTemplateUpsert {
+	u.Set(emailtemplate.FieldUpdatedAt, v)
+	return u
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *EmailTemplateUpsert) UpdateUpdatedAt() *EmailTemplateUpsert {
+	u.SetExcluded(emailtemplate.FieldUpdatedAt)
+	return u
+}
 
 // SetName sets the "name" field.
 func (u *EmailTemplateUpsert) SetName(v string) *EmailTemplateUpsert {
@@ -350,18 +362,6 @@ func (u *EmailTemplateUpsert) SetWorkspaceID(v int64) *EmailTemplateUpsert {
 // UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
 func (u *EmailTemplateUpsert) UpdateWorkspaceID() *EmailTemplateUpsert {
 	u.SetExcluded(emailtemplate.FieldWorkspaceID)
-	return u
-}
-
-// SetUpdatedAt sets the "updated_at" field.
-func (u *EmailTemplateUpsert) SetUpdatedAt(v time.Time) *EmailTemplateUpsert {
-	u.Set(emailtemplate.FieldUpdatedAt, v)
-	return u
-}
-
-// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
-func (u *EmailTemplateUpsert) UpdateUpdatedAt() *EmailTemplateUpsert {
-	u.SetExcluded(emailtemplate.FieldUpdatedAt)
 	return u
 }
 
@@ -414,6 +414,20 @@ func (u *EmailTemplateUpsertOne) Update(set func(*EmailTemplateUpsert)) *EmailTe
 		set(&EmailTemplateUpsert{UpdateSet: update})
 	}))
 	return u
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (u *EmailTemplateUpsertOne) SetUpdatedAt(v time.Time) *EmailTemplateUpsertOne {
+	return u.Update(func(s *EmailTemplateUpsert) {
+		s.SetUpdatedAt(v)
+	})
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *EmailTemplateUpsertOne) UpdateUpdatedAt() *EmailTemplateUpsertOne {
+	return u.Update(func(s *EmailTemplateUpsert) {
+		s.UpdateUpdatedAt()
+	})
 }
 
 // SetName sets the "name" field.
@@ -469,20 +483,6 @@ func (u *EmailTemplateUpsertOne) SetWorkspaceID(v int64) *EmailTemplateUpsertOne
 func (u *EmailTemplateUpsertOne) UpdateWorkspaceID() *EmailTemplateUpsertOne {
 	return u.Update(func(s *EmailTemplateUpsert) {
 		s.UpdateWorkspaceID()
-	})
-}
-
-// SetUpdatedAt sets the "updated_at" field.
-func (u *EmailTemplateUpsertOne) SetUpdatedAt(v time.Time) *EmailTemplateUpsertOne {
-	return u.Update(func(s *EmailTemplateUpsert) {
-		s.SetUpdatedAt(v)
-	})
-}
-
-// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
-func (u *EmailTemplateUpsertOne) UpdateUpdatedAt() *EmailTemplateUpsertOne {
-	return u.Update(func(s *EmailTemplateUpsert) {
-		s.UpdateUpdatedAt()
 	})
 }
 
@@ -621,7 +621,7 @@ func (_c *EmailTemplateCreateBulk) ExecX(ctx context.Context) {
 //		// Override some of the fields with custom
 //		// update values.
 //		Update(func(u *ent.EmailTemplateUpsert) {
-//			SetName(v+v).
+//			SetCreatedAt(v+v).
 //		}).
 //		Exec(ctx)
 func (_c *EmailTemplateCreateBulk) OnConflict(opts ...sql.ConflictOption) *EmailTemplateUpsertBulk {
@@ -703,6 +703,20 @@ func (u *EmailTemplateUpsertBulk) Update(set func(*EmailTemplateUpsert)) *EmailT
 	return u
 }
 
+// SetUpdatedAt sets the "updated_at" field.
+func (u *EmailTemplateUpsertBulk) SetUpdatedAt(v time.Time) *EmailTemplateUpsertBulk {
+	return u.Update(func(s *EmailTemplateUpsert) {
+		s.SetUpdatedAt(v)
+	})
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *EmailTemplateUpsertBulk) UpdateUpdatedAt() *EmailTemplateUpsertBulk {
+	return u.Update(func(s *EmailTemplateUpsert) {
+		s.UpdateUpdatedAt()
+	})
+}
+
 // SetName sets the "name" field.
 func (u *EmailTemplateUpsertBulk) SetName(v string) *EmailTemplateUpsertBulk {
 	return u.Update(func(s *EmailTemplateUpsert) {
@@ -756,20 +770,6 @@ func (u *EmailTemplateUpsertBulk) SetWorkspaceID(v int64) *EmailTemplateUpsertBu
 func (u *EmailTemplateUpsertBulk) UpdateWorkspaceID() *EmailTemplateUpsertBulk {
 	return u.Update(func(s *EmailTemplateUpsert) {
 		s.UpdateWorkspaceID()
-	})
-}
-
-// SetUpdatedAt sets the "updated_at" field.
-func (u *EmailTemplateUpsertBulk) SetUpdatedAt(v time.Time) *EmailTemplateUpsertBulk {
-	return u.Update(func(s *EmailTemplateUpsert) {
-		s.SetUpdatedAt(v)
-	})
-}
-
-// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
-func (u *EmailTemplateUpsertBulk) UpdateUpdatedAt() *EmailTemplateUpsertBulk {
-	return u.Update(func(s *EmailTemplateUpsert) {
-		s.UpdateUpdatedAt()
 	})
 }
 

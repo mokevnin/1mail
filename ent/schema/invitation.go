@@ -1,8 +1,6 @@
 package schema
 
 import (
-	"time"
-
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/entsql"
 	"entgo.io/ent/schema"
@@ -23,6 +21,10 @@ func (Invitation) Annotations() []schema.Annotation {
 	return []schema.Annotation{
 		entsql.Annotation{Table: "invitations"},
 	}
+}
+
+func (Invitation) Mixin() []ent.Mixin {
+	return []ent.Mixin{TimeMixin{}}
 }
 
 func (Invitation) Fields() []ent.Field {
@@ -49,12 +51,6 @@ func (Invitation) Fields() []ent.Field {
 		field.Time("accepted_at").
 			Optional().
 			Nillable(),
-		field.Time("created_at").
-			Default(time.Now).
-			Immutable(),
-		field.Time("updated_at").
-			Default(time.Now).
-			UpdateDefault(time.Now),
 	}
 }
 

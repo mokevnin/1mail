@@ -23,6 +23,34 @@ type OutboundMessageCreate struct {
 	conflict []sql.ConflictOption
 }
 
+// SetCreatedAt sets the "created_at" field.
+func (_c *OutboundMessageCreate) SetCreatedAt(v time.Time) *OutboundMessageCreate {
+	_c.mutation.SetCreatedAt(v)
+	return _c
+}
+
+// SetNillableCreatedAt sets the "created_at" field if the given value is not nil.
+func (_c *OutboundMessageCreate) SetNillableCreatedAt(v *time.Time) *OutboundMessageCreate {
+	if v != nil {
+		_c.SetCreatedAt(*v)
+	}
+	return _c
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (_c *OutboundMessageCreate) SetUpdatedAt(v time.Time) *OutboundMessageCreate {
+	_c.mutation.SetUpdatedAt(v)
+	return _c
+}
+
+// SetNillableUpdatedAt sets the "updated_at" field if the given value is not nil.
+func (_c *OutboundMessageCreate) SetNillableUpdatedAt(v *time.Time) *OutboundMessageCreate {
+	if v != nil {
+		_c.SetUpdatedAt(*v)
+	}
+	return _c
+}
+
 // SetWorkspaceID sets the "workspace_id" field.
 func (_c *OutboundMessageCreate) SetWorkspaceID(v int64) *OutboundMessageCreate {
 	_c.mutation.SetWorkspaceID(v)
@@ -257,34 +285,6 @@ func (_c *OutboundMessageCreate) SetNillableTemplateID(v *int64) *OutboundMessag
 	return _c
 }
 
-// SetCreatedAt sets the "created_at" field.
-func (_c *OutboundMessageCreate) SetCreatedAt(v time.Time) *OutboundMessageCreate {
-	_c.mutation.SetCreatedAt(v)
-	return _c
-}
-
-// SetNillableCreatedAt sets the "created_at" field if the given value is not nil.
-func (_c *OutboundMessageCreate) SetNillableCreatedAt(v *time.Time) *OutboundMessageCreate {
-	if v != nil {
-		_c.SetCreatedAt(*v)
-	}
-	return _c
-}
-
-// SetUpdatedAt sets the "updated_at" field.
-func (_c *OutboundMessageCreate) SetUpdatedAt(v time.Time) *OutboundMessageCreate {
-	_c.mutation.SetUpdatedAt(v)
-	return _c
-}
-
-// SetNillableUpdatedAt sets the "updated_at" field if the given value is not nil.
-func (_c *OutboundMessageCreate) SetNillableUpdatedAt(v *time.Time) *OutboundMessageCreate {
-	if v != nil {
-		_c.SetUpdatedAt(*v)
-	}
-	return _c
-}
-
 // SetID sets the "id" field.
 func (_c *OutboundMessageCreate) SetID(v int64) *OutboundMessageCreate {
 	_c.mutation.SetID(v)
@@ -331,6 +331,14 @@ func (_c *OutboundMessageCreate) ExecX(ctx context.Context) {
 
 // defaults sets the default values of the builder before save.
 func (_c *OutboundMessageCreate) defaults() {
+	if _, ok := _c.mutation.CreatedAt(); !ok {
+		v := outboundmessage.DefaultCreatedAt()
+		_c.mutation.SetCreatedAt(v)
+	}
+	if _, ok := _c.mutation.UpdatedAt(); !ok {
+		v := outboundmessage.DefaultUpdatedAt()
+		_c.mutation.SetUpdatedAt(v)
+	}
 	if _, ok := _c.mutation.Channel(); !ok {
 		v := outboundmessage.DefaultChannel
 		_c.mutation.SetChannel(v)
@@ -343,18 +351,16 @@ func (_c *OutboundMessageCreate) defaults() {
 		v := outboundmessage.DefaultClaimedAt()
 		_c.mutation.SetClaimedAt(v)
 	}
-	if _, ok := _c.mutation.CreatedAt(); !ok {
-		v := outboundmessage.DefaultCreatedAt()
-		_c.mutation.SetCreatedAt(v)
-	}
-	if _, ok := _c.mutation.UpdatedAt(); !ok {
-		v := outboundmessage.DefaultUpdatedAt()
-		_c.mutation.SetUpdatedAt(v)
-	}
 }
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *OutboundMessageCreate) check() error {
+	if _, ok := _c.mutation.CreatedAt(); !ok {
+		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "OutboundMessage.created_at"`)}
+	}
+	if _, ok := _c.mutation.UpdatedAt(); !ok {
+		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "OutboundMessage.updated_at"`)}
+	}
 	if _, ok := _c.mutation.WorkspaceID(); !ok {
 		return &ValidationError{Name: "workspace_id", err: errors.New(`ent: missing required field "OutboundMessage.workspace_id"`)}
 	}
@@ -401,12 +407,6 @@ func (_c *OutboundMessageCreate) check() error {
 	if _, ok := _c.mutation.ClaimedAt(); !ok {
 		return &ValidationError{Name: "claimed_at", err: errors.New(`ent: missing required field "OutboundMessage.claimed_at"`)}
 	}
-	if _, ok := _c.mutation.CreatedAt(); !ok {
-		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "OutboundMessage.created_at"`)}
-	}
-	if _, ok := _c.mutation.UpdatedAt(); !ok {
-		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "OutboundMessage.updated_at"`)}
-	}
 	if len(_c.mutation.WorkspaceIDs()) == 0 {
 		return &ValidationError{Name: "workspace", err: errors.New(`ent: missing required edge "OutboundMessage.workspace"`)}
 	}
@@ -442,6 +442,14 @@ func (_c *OutboundMessageCreate) createSpec() (*OutboundMessage, *sqlgraph.Creat
 	if id, ok := _c.mutation.ID(); ok {
 		_node.ID = id
 		_spec.ID.Value = id
+	}
+	if value, ok := _c.mutation.CreatedAt(); ok {
+		_spec.SetField(outboundmessage.FieldCreatedAt, field.TypeTime, value)
+		_node.CreatedAt = value
+	}
+	if value, ok := _c.mutation.UpdatedAt(); ok {
+		_spec.SetField(outboundmessage.FieldUpdatedAt, field.TypeTime, value)
+		_node.UpdatedAt = value
 	}
 	if value, ok := _c.mutation.Kind(); ok {
 		_spec.SetField(outboundmessage.FieldKind, field.TypeEnum, value)
@@ -515,14 +523,6 @@ func (_c *OutboundMessageCreate) createSpec() (*OutboundMessage, *sqlgraph.Creat
 		_spec.SetField(outboundmessage.FieldTemplateID, field.TypeInt64, value)
 		_node.TemplateID = &value
 	}
-	if value, ok := _c.mutation.CreatedAt(); ok {
-		_spec.SetField(outboundmessage.FieldCreatedAt, field.TypeTime, value)
-		_node.CreatedAt = value
-	}
-	if value, ok := _c.mutation.UpdatedAt(); ok {
-		_spec.SetField(outboundmessage.FieldUpdatedAt, field.TypeTime, value)
-		_node.UpdatedAt = value
-	}
 	if nodes := _c.mutation.WorkspaceIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
@@ -547,7 +547,7 @@ func (_c *OutboundMessageCreate) createSpec() (*OutboundMessage, *sqlgraph.Creat
 // of the `INSERT` statement. For example:
 //
 //	client.OutboundMessage.Create().
-//		SetWorkspaceID(v).
+//		SetCreatedAt(v).
 //		OnConflict(
 //			// Update the row with the new values
 //			// the was proposed for insertion.
@@ -556,7 +556,7 @@ func (_c *OutboundMessageCreate) createSpec() (*OutboundMessage, *sqlgraph.Creat
 //		// Override some of the fields with custom
 //		// update values.
 //		Update(func(u *ent.OutboundMessageUpsert) {
-//			SetWorkspaceID(v+v).
+//			SetCreatedAt(v+v).
 //		}).
 //		Exec(ctx)
 func (_c *OutboundMessageCreate) OnConflict(opts ...sql.ConflictOption) *OutboundMessageUpsertOne {
@@ -591,6 +591,18 @@ type (
 		*sql.UpdateSet
 	}
 )
+
+// SetUpdatedAt sets the "updated_at" field.
+func (u *OutboundMessageUpsert) SetUpdatedAt(v time.Time) *OutboundMessageUpsert {
+	u.Set(outboundmessage.FieldUpdatedAt, v)
+	return u
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *OutboundMessageUpsert) UpdateUpdatedAt() *OutboundMessageUpsert {
+	u.SetExcluded(outboundmessage.FieldUpdatedAt)
+	return u
+}
 
 // SetWorkspaceID sets the "workspace_id" field.
 func (u *OutboundMessageUpsert) SetWorkspaceID(v int64) *OutboundMessageUpsert {
@@ -910,18 +922,6 @@ func (u *OutboundMessageUpsert) ClearTemplateID() *OutboundMessageUpsert {
 	return u
 }
 
-// SetUpdatedAt sets the "updated_at" field.
-func (u *OutboundMessageUpsert) SetUpdatedAt(v time.Time) *OutboundMessageUpsert {
-	u.Set(outboundmessage.FieldUpdatedAt, v)
-	return u
-}
-
-// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
-func (u *OutboundMessageUpsert) UpdateUpdatedAt() *OutboundMessageUpsert {
-	u.SetExcluded(outboundmessage.FieldUpdatedAt)
-	return u
-}
-
 // UpdateNewValues updates the mutable fields using the new values that were set on create except the ID field.
 // Using this option is equivalent to using:
 //
@@ -939,14 +939,14 @@ func (u *OutboundMessageUpsertOne) UpdateNewValues() *OutboundMessageUpsertOne {
 		if _, exists := u.create.mutation.ID(); exists {
 			s.SetIgnore(outboundmessage.FieldID)
 		}
+		if _, exists := u.create.mutation.CreatedAt(); exists {
+			s.SetIgnore(outboundmessage.FieldCreatedAt)
+		}
 		if _, exists := u.create.mutation.Kind(); exists {
 			s.SetIgnore(outboundmessage.FieldKind)
 		}
 		if _, exists := u.create.mutation.IdempotencyKey(); exists {
 			s.SetIgnore(outboundmessage.FieldIdempotencyKey)
-		}
-		if _, exists := u.create.mutation.CreatedAt(); exists {
-			s.SetIgnore(outboundmessage.FieldCreatedAt)
 		}
 	}))
 	return u
@@ -977,6 +977,20 @@ func (u *OutboundMessageUpsertOne) Update(set func(*OutboundMessageUpsert)) *Out
 		set(&OutboundMessageUpsert{UpdateSet: update})
 	}))
 	return u
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (u *OutboundMessageUpsertOne) SetUpdatedAt(v time.Time) *OutboundMessageUpsertOne {
+	return u.Update(func(s *OutboundMessageUpsert) {
+		s.SetUpdatedAt(v)
+	})
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *OutboundMessageUpsertOne) UpdateUpdatedAt() *OutboundMessageUpsertOne {
+	return u.Update(func(s *OutboundMessageUpsert) {
+		s.UpdateUpdatedAt()
+	})
 }
 
 // SetWorkspaceID sets the "workspace_id" field.
@@ -1350,20 +1364,6 @@ func (u *OutboundMessageUpsertOne) ClearTemplateID() *OutboundMessageUpsertOne {
 	})
 }
 
-// SetUpdatedAt sets the "updated_at" field.
-func (u *OutboundMessageUpsertOne) SetUpdatedAt(v time.Time) *OutboundMessageUpsertOne {
-	return u.Update(func(s *OutboundMessageUpsert) {
-		s.SetUpdatedAt(v)
-	})
-}
-
-// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
-func (u *OutboundMessageUpsertOne) UpdateUpdatedAt() *OutboundMessageUpsertOne {
-	return u.Update(func(s *OutboundMessageUpsert) {
-		s.UpdateUpdatedAt()
-	})
-}
-
 // Exec executes the query.
 func (u *OutboundMessageUpsertOne) Exec(ctx context.Context) error {
 	if len(u.create.conflict) == 0 {
@@ -1499,7 +1499,7 @@ func (_c *OutboundMessageCreateBulk) ExecX(ctx context.Context) {
 //		// Override some of the fields with custom
 //		// update values.
 //		Update(func(u *ent.OutboundMessageUpsert) {
-//			SetWorkspaceID(v+v).
+//			SetCreatedAt(v+v).
 //		}).
 //		Exec(ctx)
 func (_c *OutboundMessageCreateBulk) OnConflict(opts ...sql.ConflictOption) *OutboundMessageUpsertBulk {
@@ -1546,14 +1546,14 @@ func (u *OutboundMessageUpsertBulk) UpdateNewValues() *OutboundMessageUpsertBulk
 			if _, exists := b.mutation.ID(); exists {
 				s.SetIgnore(outboundmessage.FieldID)
 			}
+			if _, exists := b.mutation.CreatedAt(); exists {
+				s.SetIgnore(outboundmessage.FieldCreatedAt)
+			}
 			if _, exists := b.mutation.Kind(); exists {
 				s.SetIgnore(outboundmessage.FieldKind)
 			}
 			if _, exists := b.mutation.IdempotencyKey(); exists {
 				s.SetIgnore(outboundmessage.FieldIdempotencyKey)
-			}
-			if _, exists := b.mutation.CreatedAt(); exists {
-				s.SetIgnore(outboundmessage.FieldCreatedAt)
 			}
 		}
 	}))
@@ -1585,6 +1585,20 @@ func (u *OutboundMessageUpsertBulk) Update(set func(*OutboundMessageUpsert)) *Ou
 		set(&OutboundMessageUpsert{UpdateSet: update})
 	}))
 	return u
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (u *OutboundMessageUpsertBulk) SetUpdatedAt(v time.Time) *OutboundMessageUpsertBulk {
+	return u.Update(func(s *OutboundMessageUpsert) {
+		s.SetUpdatedAt(v)
+	})
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *OutboundMessageUpsertBulk) UpdateUpdatedAt() *OutboundMessageUpsertBulk {
+	return u.Update(func(s *OutboundMessageUpsert) {
+		s.UpdateUpdatedAt()
+	})
 }
 
 // SetWorkspaceID sets the "workspace_id" field.
@@ -1955,20 +1969,6 @@ func (u *OutboundMessageUpsertBulk) UpdateTemplateID() *OutboundMessageUpsertBul
 func (u *OutboundMessageUpsertBulk) ClearTemplateID() *OutboundMessageUpsertBulk {
 	return u.Update(func(s *OutboundMessageUpsert) {
 		s.ClearTemplateID()
-	})
-}
-
-// SetUpdatedAt sets the "updated_at" field.
-func (u *OutboundMessageUpsertBulk) SetUpdatedAt(v time.Time) *OutboundMessageUpsertBulk {
-	return u.Update(func(s *OutboundMessageUpsert) {
-		s.SetUpdatedAt(v)
-	})
-}
-
-// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
-func (u *OutboundMessageUpsertBulk) UpdateUpdatedAt() *OutboundMessageUpsertBulk {
-	return u.Update(func(s *OutboundMessageUpsert) {
-		s.UpdateUpdatedAt()
 	})
 }
 

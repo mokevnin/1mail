@@ -30,6 +30,12 @@ func (_u *UnsubscribeUpdate) Where(ps ...predicate.Unsubscribe) *UnsubscribeUpda
 	return _u
 }
 
+// SetUpdatedAt sets the "updated_at" field.
+func (_u *UnsubscribeUpdate) SetUpdatedAt(v time.Time) *UnsubscribeUpdate {
+	_u.mutation.SetUpdatedAt(v)
+	return _u
+}
+
 // SetChannel sets the "channel" field.
 func (_u *UnsubscribeUpdate) SetChannel(v unsubscribe.Channel) *UnsubscribeUpdate {
 	_u.mutation.SetChannel(v)
@@ -110,12 +116,6 @@ func (_u *UnsubscribeUpdate) SetNillableWorkspaceID(v *int64) *UnsubscribeUpdate
 	if v != nil {
 		_u.SetWorkspaceID(*v)
 	}
-	return _u
-}
-
-// SetUpdatedAt sets the "updated_at" field.
-func (_u *UnsubscribeUpdate) SetUpdatedAt(v time.Time) *UnsubscribeUpdate {
-	_u.mutation.SetUpdatedAt(v)
 	return _u
 }
 
@@ -212,6 +212,9 @@ func (_u *UnsubscribeUpdate) sqlSave(ctx context.Context) (_node int, err error)
 			}
 		}
 	}
+	if value, ok := _u.mutation.UpdatedAt(); ok {
+		_spec.SetField(unsubscribe.FieldUpdatedAt, field.TypeTime, value)
+	}
 	if value, ok := _u.mutation.Channel(); ok {
 		_spec.SetField(unsubscribe.FieldChannel, field.TypeEnum, value)
 	}
@@ -229,9 +232,6 @@ func (_u *UnsubscribeUpdate) sqlSave(ctx context.Context) (_node int, err error)
 	}
 	if _u.mutation.ContactIDCleared() {
 		_spec.ClearField(unsubscribe.FieldContactID, field.TypeInt64)
-	}
-	if value, ok := _u.mutation.UpdatedAt(); ok {
-		_spec.SetField(unsubscribe.FieldUpdatedAt, field.TypeTime, value)
 	}
 	if _u.mutation.WorkspaceCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -282,6 +282,12 @@ type UnsubscribeUpdateOne struct {
 	hooks     []Hook
 	mutation  *UnsubscribeMutation
 	modifiers []func(*sql.UpdateBuilder)
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (_u *UnsubscribeUpdateOne) SetUpdatedAt(v time.Time) *UnsubscribeUpdateOne {
+	_u.mutation.SetUpdatedAt(v)
+	return _u
 }
 
 // SetChannel sets the "channel" field.
@@ -364,12 +370,6 @@ func (_u *UnsubscribeUpdateOne) SetNillableWorkspaceID(v *int64) *UnsubscribeUpd
 	if v != nil {
 		_u.SetWorkspaceID(*v)
 	}
-	return _u
-}
-
-// SetUpdatedAt sets the "updated_at" field.
-func (_u *UnsubscribeUpdateOne) SetUpdatedAt(v time.Time) *UnsubscribeUpdateOne {
-	_u.mutation.SetUpdatedAt(v)
 	return _u
 }
 
@@ -496,6 +496,9 @@ func (_u *UnsubscribeUpdateOne) sqlSave(ctx context.Context) (_node *Unsubscribe
 			}
 		}
 	}
+	if value, ok := _u.mutation.UpdatedAt(); ok {
+		_spec.SetField(unsubscribe.FieldUpdatedAt, field.TypeTime, value)
+	}
 	if value, ok := _u.mutation.Channel(); ok {
 		_spec.SetField(unsubscribe.FieldChannel, field.TypeEnum, value)
 	}
@@ -513,9 +516,6 @@ func (_u *UnsubscribeUpdateOne) sqlSave(ctx context.Context) (_node *Unsubscribe
 	}
 	if _u.mutation.ContactIDCleared() {
 		_spec.ClearField(unsubscribe.FieldContactID, field.TypeInt64)
-	}
-	if value, ok := _u.mutation.UpdatedAt(); ok {
-		_spec.SetField(unsubscribe.FieldUpdatedAt, field.TypeTime, value)
 	}
 	if _u.mutation.WorkspaceCleared() {
 		edge := &sqlgraph.EdgeSpec{

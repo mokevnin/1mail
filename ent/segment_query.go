@@ -300,12 +300,12 @@ func (_q *SegmentQuery) WithWorkspace(opts ...func(*WorkspaceQuery)) *SegmentQue
 // Example:
 //
 //	var v []struct {
-//		Name string `json:"name,omitempty"`
+//		CreatedAt time.Time `json:"created_at,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.Segment.Query().
-//		GroupBy(segment.FieldName).
+//		GroupBy(segment.FieldCreatedAt).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
 func (_q *SegmentQuery) GroupBy(field string, fields ...string) *SegmentGroupBy {
@@ -323,11 +323,11 @@ func (_q *SegmentQuery) GroupBy(field string, fields ...string) *SegmentGroupBy 
 // Example:
 //
 //	var v []struct {
-//		Name string `json:"name,omitempty"`
+//		CreatedAt time.Time `json:"created_at,omitempty"`
 //	}
 //
 //	client.Segment.Query().
-//		Select(segment.FieldName).
+//		Select(segment.FieldCreatedAt).
 //		Scan(ctx, &v)
 func (_q *SegmentQuery) Select(fields ...string) *SegmentSelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)

@@ -50,6 +50,12 @@ func (_u *WorkspaceUpdate) Where(ps ...predicate.Workspace) *WorkspaceUpdate {
 	return _u
 }
 
+// SetUpdatedAt sets the "updated_at" field.
+func (_u *WorkspaceUpdate) SetUpdatedAt(v time.Time) *WorkspaceUpdate {
+	_u.mutation.SetUpdatedAt(v)
+	return _u
+}
+
 // SetName sets the "name" field.
 func (_u *WorkspaceUpdate) SetName(v string) *WorkspaceUpdate {
 	_u.mutation.SetName(v)
@@ -197,12 +203,6 @@ func (_u *WorkspaceUpdate) SetNillableSuspensionReason(v *string) *WorkspaceUpda
 // ClearSuspensionReason clears the value of the "suspension_reason" field.
 func (_u *WorkspaceUpdate) ClearSuspensionReason() *WorkspaceUpdate {
 	_u.mutation.ClearSuspensionReason()
-	return _u
-}
-
-// SetUpdatedAt sets the "updated_at" field.
-func (_u *WorkspaceUpdate) SetUpdatedAt(v time.Time) *WorkspaceUpdate {
-	_u.mutation.SetUpdatedAt(v)
 	return _u
 }
 
@@ -1046,6 +1046,9 @@ func (_u *WorkspaceUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 			}
 		}
 	}
+	if value, ok := _u.mutation.UpdatedAt(); ok {
+		_spec.SetField(workspace.FieldUpdatedAt, field.TypeTime, value)
+	}
 	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(workspace.FieldName, field.TypeString, value)
 	}
@@ -1084,9 +1087,6 @@ func (_u *WorkspaceUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	}
 	if _u.mutation.SuspensionReasonCleared() {
 		_spec.ClearField(workspace.FieldSuspensionReason, field.TypeString)
-	}
-	if value, ok := _u.mutation.UpdatedAt(); ok {
-		_spec.SetField(workspace.FieldUpdatedAt, field.TypeTime, value)
 	}
 	if _u.mutation.ContactsCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -2055,6 +2055,12 @@ type WorkspaceUpdateOne struct {
 	modifiers []func(*sql.UpdateBuilder)
 }
 
+// SetUpdatedAt sets the "updated_at" field.
+func (_u *WorkspaceUpdateOne) SetUpdatedAt(v time.Time) *WorkspaceUpdateOne {
+	_u.mutation.SetUpdatedAt(v)
+	return _u
+}
+
 // SetName sets the "name" field.
 func (_u *WorkspaceUpdateOne) SetName(v string) *WorkspaceUpdateOne {
 	_u.mutation.SetName(v)
@@ -2202,12 +2208,6 @@ func (_u *WorkspaceUpdateOne) SetNillableSuspensionReason(v *string) *WorkspaceU
 // ClearSuspensionReason clears the value of the "suspension_reason" field.
 func (_u *WorkspaceUpdateOne) ClearSuspensionReason() *WorkspaceUpdateOne {
 	_u.mutation.ClearSuspensionReason()
-	return _u
-}
-
-// SetUpdatedAt sets the "updated_at" field.
-func (_u *WorkspaceUpdateOne) SetUpdatedAt(v time.Time) *WorkspaceUpdateOne {
-	_u.mutation.SetUpdatedAt(v)
 	return _u
 }
 
@@ -3081,6 +3081,9 @@ func (_u *WorkspaceUpdateOne) sqlSave(ctx context.Context) (_node *Workspace, er
 			}
 		}
 	}
+	if value, ok := _u.mutation.UpdatedAt(); ok {
+		_spec.SetField(workspace.FieldUpdatedAt, field.TypeTime, value)
+	}
 	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(workspace.FieldName, field.TypeString, value)
 	}
@@ -3119,9 +3122,6 @@ func (_u *WorkspaceUpdateOne) sqlSave(ctx context.Context) (_node *Workspace, er
 	}
 	if _u.mutation.SuspensionReasonCleared() {
 		_spec.ClearField(workspace.FieldSuspensionReason, field.TypeString)
-	}
-	if value, ok := _u.mutation.UpdatedAt(); ok {
-		_spec.SetField(workspace.FieldUpdatedAt, field.TypeTime, value)
 	}
 	if _u.mutation.ContactsCleared() {
 		edge := &sqlgraph.EdgeSpec{

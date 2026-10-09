@@ -30,6 +30,12 @@ func (_u *SendingDomainUpdate) Where(ps ...predicate.SendingDomain) *SendingDoma
 	return _u
 }
 
+// SetUpdatedAt sets the "updated_at" field.
+func (_u *SendingDomainUpdate) SetUpdatedAt(v time.Time) *SendingDomainUpdate {
+	_u.mutation.SetUpdatedAt(v)
+	return _u
+}
+
 // SetDomain sets the "domain" field.
 func (_u *SendingDomainUpdate) SetDomain(v string) *SendingDomainUpdate {
 	_u.mutation.SetDomain(v)
@@ -154,12 +160,6 @@ func (_u *SendingDomainUpdate) SetNillableWorkspaceID(v *int64) *SendingDomainUp
 	return _u
 }
 
-// SetUpdatedAt sets the "updated_at" field.
-func (_u *SendingDomainUpdate) SetUpdatedAt(v time.Time) *SendingDomainUpdate {
-	_u.mutation.SetUpdatedAt(v)
-	return _u
-}
-
 // SetWorkspace sets the "workspace" edge to the Workspace entity.
 func (_u *SendingDomainUpdate) SetWorkspace(v *Workspace) *SendingDomainUpdate {
 	return _u.SetWorkspaceID(v.ID)
@@ -253,6 +253,9 @@ func (_u *SendingDomainUpdate) sqlSave(ctx context.Context) (_node int, err erro
 			}
 		}
 	}
+	if value, ok := _u.mutation.UpdatedAt(); ok {
+		_spec.SetField(sendingdomain.FieldUpdatedAt, field.TypeTime, value)
+	}
 	if value, ok := _u.mutation.Domain(); ok {
 		_spec.SetField(sendingdomain.FieldDomain, field.TypeString, value)
 	}
@@ -279,9 +282,6 @@ func (_u *SendingDomainUpdate) sqlSave(ctx context.Context) (_node int, err erro
 	}
 	if _u.mutation.VerifiedAtCleared() {
 		_spec.ClearField(sendingdomain.FieldVerifiedAt, field.TypeTime)
-	}
-	if value, ok := _u.mutation.UpdatedAt(); ok {
-		_spec.SetField(sendingdomain.FieldUpdatedAt, field.TypeTime, value)
 	}
 	if _u.mutation.WorkspaceCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -332,6 +332,12 @@ type SendingDomainUpdateOne struct {
 	hooks     []Hook
 	mutation  *SendingDomainMutation
 	modifiers []func(*sql.UpdateBuilder)
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (_u *SendingDomainUpdateOne) SetUpdatedAt(v time.Time) *SendingDomainUpdateOne {
+	_u.mutation.SetUpdatedAt(v)
+	return _u
 }
 
 // SetDomain sets the "domain" field.
@@ -458,12 +464,6 @@ func (_u *SendingDomainUpdateOne) SetNillableWorkspaceID(v *int64) *SendingDomai
 	return _u
 }
 
-// SetUpdatedAt sets the "updated_at" field.
-func (_u *SendingDomainUpdateOne) SetUpdatedAt(v time.Time) *SendingDomainUpdateOne {
-	_u.mutation.SetUpdatedAt(v)
-	return _u
-}
-
 // SetWorkspace sets the "workspace" edge to the Workspace entity.
 func (_u *SendingDomainUpdateOne) SetWorkspace(v *Workspace) *SendingDomainUpdateOne {
 	return _u.SetWorkspaceID(v.ID)
@@ -587,6 +587,9 @@ func (_u *SendingDomainUpdateOne) sqlSave(ctx context.Context) (_node *SendingDo
 			}
 		}
 	}
+	if value, ok := _u.mutation.UpdatedAt(); ok {
+		_spec.SetField(sendingdomain.FieldUpdatedAt, field.TypeTime, value)
+	}
 	if value, ok := _u.mutation.Domain(); ok {
 		_spec.SetField(sendingdomain.FieldDomain, field.TypeString, value)
 	}
@@ -613,9 +616,6 @@ func (_u *SendingDomainUpdateOne) sqlSave(ctx context.Context) (_node *SendingDo
 	}
 	if _u.mutation.VerifiedAtCleared() {
 		_spec.ClearField(sendingdomain.FieldVerifiedAt, field.TypeTime)
-	}
-	if value, ok := _u.mutation.UpdatedAt(); ok {
-		_spec.SetField(sendingdomain.FieldUpdatedAt, field.TypeTime, value)
 	}
 	if _u.mutation.WorkspaceCleared() {
 		edge := &sqlgraph.EdgeSpec{

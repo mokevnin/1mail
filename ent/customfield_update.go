@@ -30,6 +30,12 @@ func (_u *CustomFieldUpdate) Where(ps ...predicate.CustomField) *CustomFieldUpda
 	return _u
 }
 
+// SetUpdatedAt sets the "updated_at" field.
+func (_u *CustomFieldUpdate) SetUpdatedAt(v time.Time) *CustomFieldUpdate {
+	_u.mutation.SetUpdatedAt(v)
+	return _u
+}
+
 // SetKey sets the "key" field.
 func (_u *CustomFieldUpdate) SetKey(v string) *CustomFieldUpdate {
 	_u.mutation.SetKey(v)
@@ -83,12 +89,6 @@ func (_u *CustomFieldUpdate) SetNillableWorkspaceID(v *int64) *CustomFieldUpdate
 	if v != nil {
 		_u.SetWorkspaceID(*v)
 	}
-	return _u
-}
-
-// SetUpdatedAt sets the "updated_at" field.
-func (_u *CustomFieldUpdate) SetUpdatedAt(v time.Time) *CustomFieldUpdate {
-	_u.mutation.SetUpdatedAt(v)
 	return _u
 }
 
@@ -185,6 +185,9 @@ func (_u *CustomFieldUpdate) sqlSave(ctx context.Context) (_node int, err error)
 			}
 		}
 	}
+	if value, ok := _u.mutation.UpdatedAt(); ok {
+		_spec.SetField(customfield.FieldUpdatedAt, field.TypeTime, value)
+	}
 	if value, ok := _u.mutation.Key(); ok {
 		_spec.SetField(customfield.FieldKey, field.TypeString, value)
 	}
@@ -193,9 +196,6 @@ func (_u *CustomFieldUpdate) sqlSave(ctx context.Context) (_node int, err error)
 	}
 	if value, ok := _u.mutation.GetType(); ok {
 		_spec.SetField(customfield.FieldType, field.TypeEnum, value)
-	}
-	if value, ok := _u.mutation.UpdatedAt(); ok {
-		_spec.SetField(customfield.FieldUpdatedAt, field.TypeTime, value)
 	}
 	if _u.mutation.WorkspaceCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -246,6 +246,12 @@ type CustomFieldUpdateOne struct {
 	hooks     []Hook
 	mutation  *CustomFieldMutation
 	modifiers []func(*sql.UpdateBuilder)
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (_u *CustomFieldUpdateOne) SetUpdatedAt(v time.Time) *CustomFieldUpdateOne {
+	_u.mutation.SetUpdatedAt(v)
+	return _u
 }
 
 // SetKey sets the "key" field.
@@ -301,12 +307,6 @@ func (_u *CustomFieldUpdateOne) SetNillableWorkspaceID(v *int64) *CustomFieldUpd
 	if v != nil {
 		_u.SetWorkspaceID(*v)
 	}
-	return _u
-}
-
-// SetUpdatedAt sets the "updated_at" field.
-func (_u *CustomFieldUpdateOne) SetUpdatedAt(v time.Time) *CustomFieldUpdateOne {
-	_u.mutation.SetUpdatedAt(v)
 	return _u
 }
 
@@ -433,6 +433,9 @@ func (_u *CustomFieldUpdateOne) sqlSave(ctx context.Context) (_node *CustomField
 			}
 		}
 	}
+	if value, ok := _u.mutation.UpdatedAt(); ok {
+		_spec.SetField(customfield.FieldUpdatedAt, field.TypeTime, value)
+	}
 	if value, ok := _u.mutation.Key(); ok {
 		_spec.SetField(customfield.FieldKey, field.TypeString, value)
 	}
@@ -441,9 +444,6 @@ func (_u *CustomFieldUpdateOne) sqlSave(ctx context.Context) (_node *CustomField
 	}
 	if value, ok := _u.mutation.GetType(); ok {
 		_spec.SetField(customfield.FieldType, field.TypeEnum, value)
-	}
-	if value, ok := _u.mutation.UpdatedAt(); ok {
-		_spec.SetField(customfield.FieldUpdatedAt, field.TypeTime, value)
 	}
 	if _u.mutation.WorkspaceCleared() {
 		edge := &sqlgraph.EdgeSpec{

@@ -23,6 +23,34 @@ type IntegrationCreate struct {
 	conflict []sql.ConflictOption
 }
 
+// SetCreatedAt sets the "created_at" field.
+func (_c *IntegrationCreate) SetCreatedAt(v time.Time) *IntegrationCreate {
+	_c.mutation.SetCreatedAt(v)
+	return _c
+}
+
+// SetNillableCreatedAt sets the "created_at" field if the given value is not nil.
+func (_c *IntegrationCreate) SetNillableCreatedAt(v *time.Time) *IntegrationCreate {
+	if v != nil {
+		_c.SetCreatedAt(*v)
+	}
+	return _c
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (_c *IntegrationCreate) SetUpdatedAt(v time.Time) *IntegrationCreate {
+	_c.mutation.SetUpdatedAt(v)
+	return _c
+}
+
+// SetNillableUpdatedAt sets the "updated_at" field if the given value is not nil.
+func (_c *IntegrationCreate) SetNillableUpdatedAt(v *time.Time) *IntegrationCreate {
+	if v != nil {
+		_c.SetUpdatedAt(*v)
+	}
+	return _c
+}
+
 // SetName sets the "name" field.
 func (_c *IntegrationCreate) SetName(v string) *IntegrationCreate {
 	_c.mutation.SetName(v)
@@ -89,34 +117,6 @@ func (_c *IntegrationCreate) SetWorkspaceID(v int64) *IntegrationCreate {
 	return _c
 }
 
-// SetCreatedAt sets the "created_at" field.
-func (_c *IntegrationCreate) SetCreatedAt(v time.Time) *IntegrationCreate {
-	_c.mutation.SetCreatedAt(v)
-	return _c
-}
-
-// SetNillableCreatedAt sets the "created_at" field if the given value is not nil.
-func (_c *IntegrationCreate) SetNillableCreatedAt(v *time.Time) *IntegrationCreate {
-	if v != nil {
-		_c.SetCreatedAt(*v)
-	}
-	return _c
-}
-
-// SetUpdatedAt sets the "updated_at" field.
-func (_c *IntegrationCreate) SetUpdatedAt(v time.Time) *IntegrationCreate {
-	_c.mutation.SetUpdatedAt(v)
-	return _c
-}
-
-// SetNillableUpdatedAt sets the "updated_at" field if the given value is not nil.
-func (_c *IntegrationCreate) SetNillableUpdatedAt(v *time.Time) *IntegrationCreate {
-	if v != nil {
-		_c.SetUpdatedAt(*v)
-	}
-	return _c
-}
-
 // SetID sets the "id" field.
 func (_c *IntegrationCreate) SetID(v int64) *IntegrationCreate {
 	_c.mutation.SetID(v)
@@ -163,6 +163,14 @@ func (_c *IntegrationCreate) ExecX(ctx context.Context) {
 
 // defaults sets the default values of the builder before save.
 func (_c *IntegrationCreate) defaults() {
+	if _, ok := _c.mutation.CreatedAt(); !ok {
+		v := integration.DefaultCreatedAt()
+		_c.mutation.SetCreatedAt(v)
+	}
+	if _, ok := _c.mutation.UpdatedAt(); !ok {
+		v := integration.DefaultUpdatedAt()
+		_c.mutation.SetUpdatedAt(v)
+	}
 	if _, ok := _c.mutation.Channel(); !ok {
 		v := integration.DefaultChannel
 		_c.mutation.SetChannel(v)
@@ -175,18 +183,16 @@ func (_c *IntegrationCreate) defaults() {
 		v := integration.DefaultIsDefault
 		_c.mutation.SetIsDefault(v)
 	}
-	if _, ok := _c.mutation.CreatedAt(); !ok {
-		v := integration.DefaultCreatedAt()
-		_c.mutation.SetCreatedAt(v)
-	}
-	if _, ok := _c.mutation.UpdatedAt(); !ok {
-		v := integration.DefaultUpdatedAt()
-		_c.mutation.SetUpdatedAt(v)
-	}
 }
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *IntegrationCreate) check() error {
+	if _, ok := _c.mutation.CreatedAt(); !ok {
+		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "Integration.created_at"`)}
+	}
+	if _, ok := _c.mutation.UpdatedAt(); !ok {
+		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "Integration.updated_at"`)}
+	}
 	if _, ok := _c.mutation.Name(); !ok {
 		return &ValidationError{Name: "name", err: errors.New(`ent: missing required field "Integration.name"`)}
 	}
@@ -222,12 +228,6 @@ func (_c *IntegrationCreate) check() error {
 	}
 	if _, ok := _c.mutation.WorkspaceID(); !ok {
 		return &ValidationError{Name: "workspace_id", err: errors.New(`ent: missing required field "Integration.workspace_id"`)}
-	}
-	if _, ok := _c.mutation.CreatedAt(); !ok {
-		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "Integration.created_at"`)}
-	}
-	if _, ok := _c.mutation.UpdatedAt(); !ok {
-		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "Integration.updated_at"`)}
 	}
 	if len(_c.mutation.WorkspaceIDs()) == 0 {
 		return &ValidationError{Name: "workspace", err: errors.New(`ent: missing required edge "Integration.workspace"`)}
@@ -265,6 +265,14 @@ func (_c *IntegrationCreate) createSpec() (*Integration, *sqlgraph.CreateSpec) {
 		_node.ID = id
 		_spec.ID.Value = id
 	}
+	if value, ok := _c.mutation.CreatedAt(); ok {
+		_spec.SetField(integration.FieldCreatedAt, field.TypeTime, value)
+		_node.CreatedAt = value
+	}
+	if value, ok := _c.mutation.UpdatedAt(); ok {
+		_spec.SetField(integration.FieldUpdatedAt, field.TypeTime, value)
+		_node.UpdatedAt = value
+	}
 	if value, ok := _c.mutation.Name(); ok {
 		_spec.SetField(integration.FieldName, field.TypeString, value)
 		_node.Name = value
@@ -288,14 +296,6 @@ func (_c *IntegrationCreate) createSpec() (*Integration, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.IsDefault(); ok {
 		_spec.SetField(integration.FieldIsDefault, field.TypeBool, value)
 		_node.IsDefault = value
-	}
-	if value, ok := _c.mutation.CreatedAt(); ok {
-		_spec.SetField(integration.FieldCreatedAt, field.TypeTime, value)
-		_node.CreatedAt = value
-	}
-	if value, ok := _c.mutation.UpdatedAt(); ok {
-		_spec.SetField(integration.FieldUpdatedAt, field.TypeTime, value)
-		_node.UpdatedAt = value
 	}
 	if nodes := _c.mutation.WorkspaceIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -321,7 +321,7 @@ func (_c *IntegrationCreate) createSpec() (*Integration, *sqlgraph.CreateSpec) {
 // of the `INSERT` statement. For example:
 //
 //	client.Integration.Create().
-//		SetName(v).
+//		SetCreatedAt(v).
 //		OnConflict(
 //			// Update the row with the new values
 //			// the was proposed for insertion.
@@ -330,7 +330,7 @@ func (_c *IntegrationCreate) createSpec() (*Integration, *sqlgraph.CreateSpec) {
 //		// Override some of the fields with custom
 //		// update values.
 //		Update(func(u *ent.IntegrationUpsert) {
-//			SetName(v+v).
+//			SetCreatedAt(v+v).
 //		}).
 //		Exec(ctx)
 func (_c *IntegrationCreate) OnConflict(opts ...sql.ConflictOption) *IntegrationUpsertOne {
@@ -365,6 +365,18 @@ type (
 		*sql.UpdateSet
 	}
 )
+
+// SetUpdatedAt sets the "updated_at" field.
+func (u *IntegrationUpsert) SetUpdatedAt(v time.Time) *IntegrationUpsert {
+	u.Set(integration.FieldUpdatedAt, v)
+	return u
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *IntegrationUpsert) UpdateUpdatedAt() *IntegrationUpsert {
+	u.SetExcluded(integration.FieldUpdatedAt)
+	return u
+}
 
 // SetName sets the "name" field.
 func (u *IntegrationUpsert) SetName(v string) *IntegrationUpsert {
@@ -450,18 +462,6 @@ func (u *IntegrationUpsert) UpdateWorkspaceID() *IntegrationUpsert {
 	return u
 }
 
-// SetUpdatedAt sets the "updated_at" field.
-func (u *IntegrationUpsert) SetUpdatedAt(v time.Time) *IntegrationUpsert {
-	u.Set(integration.FieldUpdatedAt, v)
-	return u
-}
-
-// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
-func (u *IntegrationUpsert) UpdateUpdatedAt() *IntegrationUpsert {
-	u.SetExcluded(integration.FieldUpdatedAt)
-	return u
-}
-
 // UpdateNewValues updates the mutable fields using the new values that were set on create except the ID field.
 // Using this option is equivalent to using:
 //
@@ -511,6 +511,20 @@ func (u *IntegrationUpsertOne) Update(set func(*IntegrationUpsert)) *Integration
 		set(&IntegrationUpsert{UpdateSet: update})
 	}))
 	return u
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (u *IntegrationUpsertOne) SetUpdatedAt(v time.Time) *IntegrationUpsertOne {
+	return u.Update(func(s *IntegrationUpsert) {
+		s.SetUpdatedAt(v)
+	})
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *IntegrationUpsertOne) UpdateUpdatedAt() *IntegrationUpsertOne {
+	return u.Update(func(s *IntegrationUpsert) {
+		s.UpdateUpdatedAt()
+	})
 }
 
 // SetName sets the "name" field.
@@ -608,20 +622,6 @@ func (u *IntegrationUpsertOne) SetWorkspaceID(v int64) *IntegrationUpsertOne {
 func (u *IntegrationUpsertOne) UpdateWorkspaceID() *IntegrationUpsertOne {
 	return u.Update(func(s *IntegrationUpsert) {
 		s.UpdateWorkspaceID()
-	})
-}
-
-// SetUpdatedAt sets the "updated_at" field.
-func (u *IntegrationUpsertOne) SetUpdatedAt(v time.Time) *IntegrationUpsertOne {
-	return u.Update(func(s *IntegrationUpsert) {
-		s.SetUpdatedAt(v)
-	})
-}
-
-// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
-func (u *IntegrationUpsertOne) UpdateUpdatedAt() *IntegrationUpsertOne {
-	return u.Update(func(s *IntegrationUpsert) {
-		s.UpdateUpdatedAt()
 	})
 }
 
@@ -760,7 +760,7 @@ func (_c *IntegrationCreateBulk) ExecX(ctx context.Context) {
 //		// Override some of the fields with custom
 //		// update values.
 //		Update(func(u *ent.IntegrationUpsert) {
-//			SetName(v+v).
+//			SetCreatedAt(v+v).
 //		}).
 //		Exec(ctx)
 func (_c *IntegrationCreateBulk) OnConflict(opts ...sql.ConflictOption) *IntegrationUpsertBulk {
@@ -840,6 +840,20 @@ func (u *IntegrationUpsertBulk) Update(set func(*IntegrationUpsert)) *Integratio
 		set(&IntegrationUpsert{UpdateSet: update})
 	}))
 	return u
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (u *IntegrationUpsertBulk) SetUpdatedAt(v time.Time) *IntegrationUpsertBulk {
+	return u.Update(func(s *IntegrationUpsert) {
+		s.SetUpdatedAt(v)
+	})
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *IntegrationUpsertBulk) UpdateUpdatedAt() *IntegrationUpsertBulk {
+	return u.Update(func(s *IntegrationUpsert) {
+		s.UpdateUpdatedAt()
+	})
 }
 
 // SetName sets the "name" field.
@@ -937,20 +951,6 @@ func (u *IntegrationUpsertBulk) SetWorkspaceID(v int64) *IntegrationUpsertBulk {
 func (u *IntegrationUpsertBulk) UpdateWorkspaceID() *IntegrationUpsertBulk {
 	return u.Update(func(s *IntegrationUpsert) {
 		s.UpdateWorkspaceID()
-	})
-}
-
-// SetUpdatedAt sets the "updated_at" field.
-func (u *IntegrationUpsertBulk) SetUpdatedAt(v time.Time) *IntegrationUpsertBulk {
-	return u.Update(func(s *IntegrationUpsert) {
-		s.SetUpdatedAt(v)
-	})
-}
-
-// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
-func (u *IntegrationUpsertBulk) UpdateUpdatedAt() *IntegrationUpsertBulk {
-	return u.Update(func(s *IntegrationUpsert) {
-		s.UpdateUpdatedAt()
 	})
 }
 

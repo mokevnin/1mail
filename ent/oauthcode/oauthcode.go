@@ -14,6 +14,10 @@ const (
 	Label = "oauth_code"
 	// FieldID holds the string denoting the id field in the database.
 	FieldID = "id"
+	// FieldCreatedAt holds the string denoting the created_at field in the database.
+	FieldCreatedAt = "created_at"
+	// FieldUpdatedAt holds the string denoting the updated_at field in the database.
+	FieldUpdatedAt = "updated_at"
 	// FieldCodeHash holds the string denoting the code_hash field in the database.
 	FieldCodeHash = "code_hash"
 	// FieldRedirectURI holds the string denoting the redirect_uri field in the database.
@@ -26,8 +30,6 @@ const (
 	FieldExpiresAt = "expires_at"
 	// FieldUsedAt holds the string denoting the used_at field in the database.
 	FieldUsedAt = "used_at"
-	// FieldCreatedAt holds the string denoting the created_at field in the database.
-	FieldCreatedAt = "created_at"
 	// FieldClientID holds the string denoting the client_id field in the database.
 	FieldClientID = "client_id"
 	// FieldWorkspaceID holds the string denoting the workspace_id field in the database.
@@ -48,13 +50,14 @@ const (
 // Columns holds all SQL columns for oauthcode fields.
 var Columns = []string{
 	FieldID,
+	FieldCreatedAt,
+	FieldUpdatedAt,
 	FieldCodeHash,
 	FieldRedirectURI,
 	FieldCodeChallenge,
 	FieldScopes,
 	FieldExpiresAt,
 	FieldUsedAt,
-	FieldCreatedAt,
 	FieldClientID,
 	FieldWorkspaceID,
 }
@@ -70,6 +73,12 @@ func ValidColumn(column string) bool {
 }
 
 var (
+	// DefaultCreatedAt holds the default value on creation for the "created_at" field.
+	DefaultCreatedAt func() time.Time
+	// DefaultUpdatedAt holds the default value on creation for the "updated_at" field.
+	DefaultUpdatedAt func() time.Time
+	// UpdateDefaultUpdatedAt holds the default value on update for the "updated_at" field.
+	UpdateDefaultUpdatedAt func() time.Time
 	// CodeHashValidator is a validator for the "code_hash" field. It is called by the builders before save.
 	CodeHashValidator func(string) error
 	// RedirectURIValidator is a validator for the "redirect_uri" field. It is called by the builders before save.
@@ -78,8 +87,6 @@ var (
 	CodeChallengeValidator func(string) error
 	// DefaultScopes holds the default value on creation for the "scopes" field.
 	DefaultScopes []string
-	// DefaultCreatedAt holds the default value on creation for the "created_at" field.
-	DefaultCreatedAt func() time.Time
 )
 
 // OrderOption defines the ordering options for the OAuthCode queries.
@@ -88,6 +95,16 @@ type OrderOption func(*sql.Selector)
 // ByID orders the results by the id field.
 func ByID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldID, opts...).ToFunc()
+}
+
+// ByCreatedAt orders the results by the created_at field.
+func ByCreatedAt(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldCreatedAt, opts...).ToFunc()
+}
+
+// ByUpdatedAt orders the results by the updated_at field.
+func ByUpdatedAt(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldUpdatedAt, opts...).ToFunc()
 }
 
 // ByCodeHash orders the results by the code_hash field.
@@ -113,11 +130,6 @@ func ByExpiresAt(opts ...sql.OrderTermOption) OrderOption {
 // ByUsedAt orders the results by the used_at field.
 func ByUsedAt(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldUsedAt, opts...).ToFunc()
-}
-
-// ByCreatedAt orders the results by the created_at field.
-func ByCreatedAt(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldCreatedAt, opts...).ToFunc()
 }
 
 // ByClientID orders the results by the client_id field.

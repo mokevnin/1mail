@@ -31,6 +31,12 @@ func (_u *VisitorUpdate) Where(ps ...predicate.Visitor) *VisitorUpdate {
 	return _u
 }
 
+// SetUpdatedAt sets the "updated_at" field.
+func (_u *VisitorUpdate) SetUpdatedAt(v time.Time) *VisitorUpdate {
+	_u.mutation.SetUpdatedAt(v)
+	return _u
+}
+
 // SetVisitorID sets the "visitor_id" field.
 func (_u *VisitorUpdate) SetVisitorID(v string) *VisitorUpdate {
 	_u.mutation.SetVisitorID(v)
@@ -76,12 +82,6 @@ func (_u *VisitorUpdate) SetNillableContactID(v *int64) *VisitorUpdate {
 // ClearContactID clears the value of the "contact_id" field.
 func (_u *VisitorUpdate) ClearContactID() *VisitorUpdate {
 	_u.mutation.ClearContactID()
-	return _u
-}
-
-// SetUpdatedAt sets the "updated_at" field.
-func (_u *VisitorUpdate) SetUpdatedAt(v time.Time) *VisitorUpdate {
-	_u.mutation.SetUpdatedAt(v)
 	return _u
 }
 
@@ -193,11 +193,11 @@ func (_u *VisitorUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 			}
 		}
 	}
-	if value, ok := _u.mutation.VisitorID(); ok {
-		_spec.SetField(visitor.FieldVisitorID, field.TypeString, value)
-	}
 	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(visitor.FieldUpdatedAt, field.TypeTime, value)
+	}
+	if value, ok := _u.mutation.VisitorID(); ok {
+		_spec.SetField(visitor.FieldVisitorID, field.TypeString, value)
 	}
 	if value, ok := _u.mutation.LastSeenAt(); ok {
 		_spec.SetField(visitor.FieldLastSeenAt, field.TypeTime, value)
@@ -282,6 +282,12 @@ type VisitorUpdateOne struct {
 	modifiers []func(*sql.UpdateBuilder)
 }
 
+// SetUpdatedAt sets the "updated_at" field.
+func (_u *VisitorUpdateOne) SetUpdatedAt(v time.Time) *VisitorUpdateOne {
+	_u.mutation.SetUpdatedAt(v)
+	return _u
+}
+
 // SetVisitorID sets the "visitor_id" field.
 func (_u *VisitorUpdateOne) SetVisitorID(v string) *VisitorUpdateOne {
 	_u.mutation.SetVisitorID(v)
@@ -327,12 +333,6 @@ func (_u *VisitorUpdateOne) SetNillableContactID(v *int64) *VisitorUpdateOne {
 // ClearContactID clears the value of the "contact_id" field.
 func (_u *VisitorUpdateOne) ClearContactID() *VisitorUpdateOne {
 	_u.mutation.ClearContactID()
-	return _u
-}
-
-// SetUpdatedAt sets the "updated_at" field.
-func (_u *VisitorUpdateOne) SetUpdatedAt(v time.Time) *VisitorUpdateOne {
-	_u.mutation.SetUpdatedAt(v)
 	return _u
 }
 
@@ -474,11 +474,11 @@ func (_u *VisitorUpdateOne) sqlSave(ctx context.Context) (_node *Visitor, err er
 			}
 		}
 	}
-	if value, ok := _u.mutation.VisitorID(); ok {
-		_spec.SetField(visitor.FieldVisitorID, field.TypeString, value)
-	}
 	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(visitor.FieldUpdatedAt, field.TypeTime, value)
+	}
+	if value, ok := _u.mutation.VisitorID(); ok {
+		_spec.SetField(visitor.FieldVisitorID, field.TypeString, value)
 	}
 	if value, ok := _u.mutation.LastSeenAt(); ok {
 		_spec.SetField(visitor.FieldLastSeenAt, field.TypeTime, value)

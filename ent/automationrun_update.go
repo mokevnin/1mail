@@ -31,6 +31,12 @@ func (_u *AutomationRunUpdate) Where(ps ...predicate.AutomationRun) *AutomationR
 	return _u
 }
 
+// SetUpdatedAt sets the "updated_at" field.
+func (_u *AutomationRunUpdate) SetUpdatedAt(v time.Time) *AutomationRunUpdate {
+	_u.mutation.SetUpdatedAt(v)
+	return _u
+}
+
 // SetAutomationID sets the "automation_id" field.
 func (_u *AutomationRunUpdate) SetAutomationID(v int64) *AutomationRunUpdate {
 	_u.mutation.SetAutomationID(v)
@@ -132,12 +138,6 @@ func (_u *AutomationRunUpdate) SetNillableResumeAt(v *time.Time) *AutomationRunU
 // ClearResumeAt clears the value of the "resume_at" field.
 func (_u *AutomationRunUpdate) ClearResumeAt() *AutomationRunUpdate {
 	_u.mutation.ClearResumeAt()
-	return _u
-}
-
-// SetUpdatedAt sets the "updated_at" field.
-func (_u *AutomationRunUpdate) SetUpdatedAt(v time.Time) *AutomationRunUpdate {
-	_u.mutation.SetUpdatedAt(v)
 	return _u
 }
 
@@ -243,6 +243,9 @@ func (_u *AutomationRunUpdate) sqlSave(ctx context.Context) (_node int, err erro
 			}
 		}
 	}
+	if value, ok := _u.mutation.UpdatedAt(); ok {
+		_spec.SetField(automationrun.FieldUpdatedAt, field.TypeTime, value)
+	}
 	if value, ok := _u.mutation.ContactID(); ok {
 		_spec.SetField(automationrun.FieldContactID, field.TypeInt64, value)
 	}
@@ -263,9 +266,6 @@ func (_u *AutomationRunUpdate) sqlSave(ctx context.Context) (_node int, err erro
 	}
 	if _u.mutation.ResumeAtCleared() {
 		_spec.ClearField(automationrun.FieldResumeAt, field.TypeTime)
-	}
-	if value, ok := _u.mutation.UpdatedAt(); ok {
-		_spec.SetField(automationrun.FieldUpdatedAt, field.TypeTime, value)
 	}
 	if _u.mutation.AutomationCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -345,6 +345,12 @@ type AutomationRunUpdateOne struct {
 	hooks     []Hook
 	mutation  *AutomationRunMutation
 	modifiers []func(*sql.UpdateBuilder)
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (_u *AutomationRunUpdateOne) SetUpdatedAt(v time.Time) *AutomationRunUpdateOne {
+	_u.mutation.SetUpdatedAt(v)
+	return _u
 }
 
 // SetAutomationID sets the "automation_id" field.
@@ -448,12 +454,6 @@ func (_u *AutomationRunUpdateOne) SetNillableResumeAt(v *time.Time) *AutomationR
 // ClearResumeAt clears the value of the "resume_at" field.
 func (_u *AutomationRunUpdateOne) ClearResumeAt() *AutomationRunUpdateOne {
 	_u.mutation.ClearResumeAt()
-	return _u
-}
-
-// SetUpdatedAt sets the "updated_at" field.
-func (_u *AutomationRunUpdateOne) SetUpdatedAt(v time.Time) *AutomationRunUpdateOne {
-	_u.mutation.SetUpdatedAt(v)
 	return _u
 }
 
@@ -589,6 +589,9 @@ func (_u *AutomationRunUpdateOne) sqlSave(ctx context.Context) (_node *Automatio
 			}
 		}
 	}
+	if value, ok := _u.mutation.UpdatedAt(); ok {
+		_spec.SetField(automationrun.FieldUpdatedAt, field.TypeTime, value)
+	}
 	if value, ok := _u.mutation.ContactID(); ok {
 		_spec.SetField(automationrun.FieldContactID, field.TypeInt64, value)
 	}
@@ -609,9 +612,6 @@ func (_u *AutomationRunUpdateOne) sqlSave(ctx context.Context) (_node *Automatio
 	}
 	if _u.mutation.ResumeAtCleared() {
 		_spec.ClearField(automationrun.FieldResumeAt, field.TypeTime)
-	}
-	if value, ok := _u.mutation.UpdatedAt(); ok {
-		_spec.SetField(automationrun.FieldUpdatedAt, field.TypeTime, value)
 	}
 	if _u.mutation.AutomationCleared() {
 		edge := &sqlgraph.EdgeSpec{

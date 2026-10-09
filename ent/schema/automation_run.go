@@ -1,8 +1,6 @@
 package schema
 
 import (
-	"time"
-
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/entsql"
 	"entgo.io/ent/schema"
@@ -25,6 +23,10 @@ func (AutomationRun) Annotations() []schema.Annotation {
 	}
 }
 
+func (AutomationRun) Mixin() []ent.Mixin {
+	return []ent.Mixin{TimeMixin{}}
+}
+
 func (AutomationRun) Fields() []ent.Field {
 	return []ent.Field{
 		field.Int64("id").
@@ -44,12 +46,6 @@ func (AutomationRun) Fields() []ent.Field {
 		field.Time("resume_at").
 			Optional().
 			Nillable(),
-		field.Time("created_at").
-			Default(time.Now).
-			Immutable(),
-		field.Time("updated_at").
-			Default(time.Now).
-			UpdateDefault(time.Now),
 	}
 }
 

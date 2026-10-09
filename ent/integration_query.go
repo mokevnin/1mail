@@ -300,12 +300,12 @@ func (_q *IntegrationQuery) WithWorkspace(opts ...func(*WorkspaceQuery)) *Integr
 // Example:
 //
 //	var v []struct {
-//		Name string `json:"name,omitempty"`
+//		CreatedAt time.Time `json:"created_at,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.Integration.Query().
-//		GroupBy(integration.FieldName).
+//		GroupBy(integration.FieldCreatedAt).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
 func (_q *IntegrationQuery) GroupBy(field string, fields ...string) *IntegrationGroupBy {
@@ -323,11 +323,11 @@ func (_q *IntegrationQuery) GroupBy(field string, fields ...string) *Integration
 // Example:
 //
 //	var v []struct {
-//		Name string `json:"name,omitempty"`
+//		CreatedAt time.Time `json:"created_at,omitempty"`
 //	}
 //
 //	client.Integration.Query().
-//		Select(integration.FieldName).
+//		Select(integration.FieldCreatedAt).
 //		Scan(ctx, &v)
 func (_q *IntegrationQuery) Select(fields ...string) *IntegrationSelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)

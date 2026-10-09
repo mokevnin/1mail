@@ -24,18 +24,6 @@ type TagCreate struct {
 	conflict []sql.ConflictOption
 }
 
-// SetName sets the "name" field.
-func (_c *TagCreate) SetName(v string) *TagCreate {
-	_c.mutation.SetName(v)
-	return _c
-}
-
-// SetWorkspaceID sets the "workspace_id" field.
-func (_c *TagCreate) SetWorkspaceID(v int64) *TagCreate {
-	_c.mutation.SetWorkspaceID(v)
-	return _c
-}
-
 // SetCreatedAt sets the "created_at" field.
 func (_c *TagCreate) SetCreatedAt(v time.Time) *TagCreate {
 	_c.mutation.SetCreatedAt(v)
@@ -47,6 +35,32 @@ func (_c *TagCreate) SetNillableCreatedAt(v *time.Time) *TagCreate {
 	if v != nil {
 		_c.SetCreatedAt(*v)
 	}
+	return _c
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (_c *TagCreate) SetUpdatedAt(v time.Time) *TagCreate {
+	_c.mutation.SetUpdatedAt(v)
+	return _c
+}
+
+// SetNillableUpdatedAt sets the "updated_at" field if the given value is not nil.
+func (_c *TagCreate) SetNillableUpdatedAt(v *time.Time) *TagCreate {
+	if v != nil {
+		_c.SetUpdatedAt(*v)
+	}
+	return _c
+}
+
+// SetName sets the "name" field.
+func (_c *TagCreate) SetName(v string) *TagCreate {
+	_c.mutation.SetName(v)
+	return _c
+}
+
+// SetWorkspaceID sets the "workspace_id" field.
+func (_c *TagCreate) SetWorkspaceID(v int64) *TagCreate {
+	_c.mutation.SetWorkspaceID(v)
 	return _c
 }
 
@@ -115,10 +129,20 @@ func (_c *TagCreate) defaults() {
 		v := tag.DefaultCreatedAt()
 		_c.mutation.SetCreatedAt(v)
 	}
+	if _, ok := _c.mutation.UpdatedAt(); !ok {
+		v := tag.DefaultUpdatedAt()
+		_c.mutation.SetUpdatedAt(v)
+	}
 }
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *TagCreate) check() error {
+	if _, ok := _c.mutation.CreatedAt(); !ok {
+		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "Tag.created_at"`)}
+	}
+	if _, ok := _c.mutation.UpdatedAt(); !ok {
+		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "Tag.updated_at"`)}
+	}
 	if _, ok := _c.mutation.Name(); !ok {
 		return &ValidationError{Name: "name", err: errors.New(`ent: missing required field "Tag.name"`)}
 	}
@@ -129,9 +153,6 @@ func (_c *TagCreate) check() error {
 	}
 	if _, ok := _c.mutation.WorkspaceID(); !ok {
 		return &ValidationError{Name: "workspace_id", err: errors.New(`ent: missing required field "Tag.workspace_id"`)}
-	}
-	if _, ok := _c.mutation.CreatedAt(); !ok {
-		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "Tag.created_at"`)}
 	}
 	if len(_c.mutation.WorkspaceIDs()) == 0 {
 		return &ValidationError{Name: "workspace", err: errors.New(`ent: missing required edge "Tag.workspace"`)}
@@ -169,13 +190,17 @@ func (_c *TagCreate) createSpec() (*Tag, *sqlgraph.CreateSpec) {
 		_node.ID = id
 		_spec.ID.Value = id
 	}
-	if value, ok := _c.mutation.Name(); ok {
-		_spec.SetField(tag.FieldName, field.TypeString, value)
-		_node.Name = value
-	}
 	if value, ok := _c.mutation.CreatedAt(); ok {
 		_spec.SetField(tag.FieldCreatedAt, field.TypeTime, value)
 		_node.CreatedAt = value
+	}
+	if value, ok := _c.mutation.UpdatedAt(); ok {
+		_spec.SetField(tag.FieldUpdatedAt, field.TypeTime, value)
+		_node.UpdatedAt = value
+	}
+	if value, ok := _c.mutation.Name(); ok {
+		_spec.SetField(tag.FieldName, field.TypeString, value)
+		_node.Name = value
 	}
 	if nodes := _c.mutation.WorkspaceIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -217,7 +242,7 @@ func (_c *TagCreate) createSpec() (*Tag, *sqlgraph.CreateSpec) {
 // of the `INSERT` statement. For example:
 //
 //	client.Tag.Create().
-//		SetName(v).
+//		SetCreatedAt(v).
 //		OnConflict(
 //			// Update the row with the new values
 //			// the was proposed for insertion.
@@ -226,7 +251,7 @@ func (_c *TagCreate) createSpec() (*Tag, *sqlgraph.CreateSpec) {
 //		// Override some of the fields with custom
 //		// update values.
 //		Update(func(u *ent.TagUpsert) {
-//			SetName(v+v).
+//			SetCreatedAt(v+v).
 //		}).
 //		Exec(ctx)
 func (_c *TagCreate) OnConflict(opts ...sql.ConflictOption) *TagUpsertOne {
@@ -261,6 +286,18 @@ type (
 		*sql.UpdateSet
 	}
 )
+
+// SetUpdatedAt sets the "updated_at" field.
+func (u *TagUpsert) SetUpdatedAt(v time.Time) *TagUpsert {
+	u.Set(tag.FieldUpdatedAt, v)
+	return u
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *TagUpsert) UpdateUpdatedAt() *TagUpsert {
+	u.SetExcluded(tag.FieldUpdatedAt)
+	return u
+}
 
 // SetName sets the "name" field.
 func (u *TagUpsert) SetName(v string) *TagUpsert {
@@ -335,6 +372,20 @@ func (u *TagUpsertOne) Update(set func(*TagUpsert)) *TagUpsertOne {
 		set(&TagUpsert{UpdateSet: update})
 	}))
 	return u
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (u *TagUpsertOne) SetUpdatedAt(v time.Time) *TagUpsertOne {
+	return u.Update(func(s *TagUpsert) {
+		s.SetUpdatedAt(v)
+	})
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *TagUpsertOne) UpdateUpdatedAt() *TagUpsertOne {
+	return u.Update(func(s *TagUpsert) {
+		s.UpdateUpdatedAt()
+	})
 }
 
 // SetName sets the "name" field.
@@ -500,7 +551,7 @@ func (_c *TagCreateBulk) ExecX(ctx context.Context) {
 //		// Override some of the fields with custom
 //		// update values.
 //		Update(func(u *ent.TagUpsert) {
-//			SetName(v+v).
+//			SetCreatedAt(v+v).
 //		}).
 //		Exec(ctx)
 func (_c *TagCreateBulk) OnConflict(opts ...sql.ConflictOption) *TagUpsertBulk {
@@ -580,6 +631,20 @@ func (u *TagUpsertBulk) Update(set func(*TagUpsert)) *TagUpsertBulk {
 		set(&TagUpsert{UpdateSet: update})
 	}))
 	return u
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (u *TagUpsertBulk) SetUpdatedAt(v time.Time) *TagUpsertBulk {
+	return u.Update(func(s *TagUpsert) {
+		s.SetUpdatedAt(v)
+	})
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *TagUpsertBulk) UpdateUpdatedAt() *TagUpsertBulk {
+	return u.Update(func(s *TagUpsert) {
+		s.UpdateUpdatedAt()
+	})
 }
 
 // SetName sets the "name" field.

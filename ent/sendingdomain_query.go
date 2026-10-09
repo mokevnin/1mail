@@ -300,12 +300,12 @@ func (_q *SendingDomainQuery) WithWorkspace(opts ...func(*WorkspaceQuery)) *Send
 // Example:
 //
 //	var v []struct {
-//		Domain string `json:"domain,omitempty"`
+//		CreatedAt time.Time `json:"created_at,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.SendingDomain.Query().
-//		GroupBy(sendingdomain.FieldDomain).
+//		GroupBy(sendingdomain.FieldCreatedAt).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
 func (_q *SendingDomainQuery) GroupBy(field string, fields ...string) *SendingDomainGroupBy {
@@ -323,11 +323,11 @@ func (_q *SendingDomainQuery) GroupBy(field string, fields ...string) *SendingDo
 // Example:
 //
 //	var v []struct {
-//		Domain string `json:"domain,omitempty"`
+//		CreatedAt time.Time `json:"created_at,omitempty"`
 //	}
 //
 //	client.SendingDomain.Query().
-//		Select(sendingdomain.FieldDomain).
+//		Select(sendingdomain.FieldCreatedAt).
 //		Scan(ctx, &v)
 func (_q *SendingDomainQuery) Select(fields ...string) *SendingDomainSelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)

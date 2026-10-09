@@ -300,12 +300,12 @@ func (_q *ApiTokenQuery) WithWorkspace(opts ...func(*WorkspaceQuery)) *ApiTokenQ
 // Example:
 //
 //	var v []struct {
-//		Name string `json:"name,omitempty"`
+//		CreatedAt time.Time `json:"created_at,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.ApiToken.Query().
-//		GroupBy(apitoken.FieldName).
+//		GroupBy(apitoken.FieldCreatedAt).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
 func (_q *ApiTokenQuery) GroupBy(field string, fields ...string) *ApiTokenGroupBy {
@@ -323,11 +323,11 @@ func (_q *ApiTokenQuery) GroupBy(field string, fields ...string) *ApiTokenGroupB
 // Example:
 //
 //	var v []struct {
-//		Name string `json:"name,omitempty"`
+//		CreatedAt time.Time `json:"created_at,omitempty"`
 //	}
 //
 //	client.ApiToken.Query().
-//		Select(apitoken.FieldName).
+//		Select(apitoken.FieldCreatedAt).
 //		Scan(ctx, &v)
 func (_q *ApiTokenQuery) Select(fields ...string) *ApiTokenSelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)

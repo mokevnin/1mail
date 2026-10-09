@@ -31,6 +31,12 @@ func (_u *MembershipUpdate) Where(ps ...predicate.Membership) *MembershipUpdate 
 	return _u
 }
 
+// SetUpdatedAt sets the "updated_at" field.
+func (_u *MembershipUpdate) SetUpdatedAt(v time.Time) *MembershipUpdate {
+	_u.mutation.SetUpdatedAt(v)
+	return _u
+}
+
 // SetUserID sets the "user_id" field.
 func (_u *MembershipUpdate) SetUserID(v int64) *MembershipUpdate {
 	_u.mutation.SetUserID(v)
@@ -70,12 +76,6 @@ func (_u *MembershipUpdate) SetNillableRole(v *membership.Role) *MembershipUpdat
 	if v != nil {
 		_u.SetRole(*v)
 	}
-	return _u
-}
-
-// SetUpdatedAt sets the "updated_at" field.
-func (_u *MembershipUpdate) SetUpdatedAt(v time.Time) *MembershipUpdate {
-	_u.mutation.SetUpdatedAt(v)
 	return _u
 }
 
@@ -176,11 +176,11 @@ func (_u *MembershipUpdate) sqlSave(ctx context.Context) (_node int, err error) 
 			}
 		}
 	}
-	if value, ok := _u.mutation.Role(); ok {
-		_spec.SetField(membership.FieldRole, field.TypeEnum, value)
-	}
 	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(membership.FieldUpdatedAt, field.TypeTime, value)
+	}
+	if value, ok := _u.mutation.Role(); ok {
+		_spec.SetField(membership.FieldRole, field.TypeEnum, value)
 	}
 	if _u.mutation.UserCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -262,6 +262,12 @@ type MembershipUpdateOne struct {
 	modifiers []func(*sql.UpdateBuilder)
 }
 
+// SetUpdatedAt sets the "updated_at" field.
+func (_u *MembershipUpdateOne) SetUpdatedAt(v time.Time) *MembershipUpdateOne {
+	_u.mutation.SetUpdatedAt(v)
+	return _u
+}
+
 // SetUserID sets the "user_id" field.
 func (_u *MembershipUpdateOne) SetUserID(v int64) *MembershipUpdateOne {
 	_u.mutation.SetUserID(v)
@@ -301,12 +307,6 @@ func (_u *MembershipUpdateOne) SetNillableRole(v *membership.Role) *MembershipUp
 	if v != nil {
 		_u.SetRole(*v)
 	}
-	return _u
-}
-
-// SetUpdatedAt sets the "updated_at" field.
-func (_u *MembershipUpdateOne) SetUpdatedAt(v time.Time) *MembershipUpdateOne {
-	_u.mutation.SetUpdatedAt(v)
 	return _u
 }
 
@@ -437,11 +437,11 @@ func (_u *MembershipUpdateOne) sqlSave(ctx context.Context) (_node *Membership, 
 			}
 		}
 	}
-	if value, ok := _u.mutation.Role(); ok {
-		_spec.SetField(membership.FieldRole, field.TypeEnum, value)
-	}
 	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(membership.FieldUpdatedAt, field.TypeTime, value)
+	}
+	if value, ok := _u.mutation.Role(); ok {
+		_spec.SetField(membership.FieldRole, field.TypeEnum, value)
 	}
 	if _u.mutation.UserCleared() {
 		edge := &sqlgraph.EdgeSpec{

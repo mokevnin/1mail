@@ -31,6 +31,12 @@ func (_u *InvitationUpdate) Where(ps ...predicate.Invitation) *InvitationUpdate 
 	return _u
 }
 
+// SetUpdatedAt sets the "updated_at" field.
+func (_u *InvitationUpdate) SetUpdatedAt(v time.Time) *InvitationUpdate {
+	_u.mutation.SetUpdatedAt(v)
+	return _u
+}
+
 // SetWorkspaceID sets the "workspace_id" field.
 func (_u *InvitationUpdate) SetWorkspaceID(v int64) *InvitationUpdate {
 	_u.mutation.SetWorkspaceID(v)
@@ -138,12 +144,6 @@ func (_u *InvitationUpdate) SetNillableAcceptedAt(v *time.Time) *InvitationUpdat
 // ClearAcceptedAt clears the value of the "accepted_at" field.
 func (_u *InvitationUpdate) ClearAcceptedAt() *InvitationUpdate {
 	_u.mutation.ClearAcceptedAt()
-	return _u
-}
-
-// SetUpdatedAt sets the "updated_at" field.
-func (_u *InvitationUpdate) SetUpdatedAt(v time.Time) *InvitationUpdate {
-	_u.mutation.SetUpdatedAt(v)
 	return _u
 }
 
@@ -265,6 +265,9 @@ func (_u *InvitationUpdate) sqlSave(ctx context.Context) (_node int, err error) 
 			}
 		}
 	}
+	if value, ok := _u.mutation.UpdatedAt(); ok {
+		_spec.SetField(invitation.FieldUpdatedAt, field.TypeTime, value)
+	}
 	if value, ok := _u.mutation.Email(); ok {
 		_spec.SetField(invitation.FieldEmail, field.TypeString, value)
 	}
@@ -282,9 +285,6 @@ func (_u *InvitationUpdate) sqlSave(ctx context.Context) (_node int, err error) 
 	}
 	if _u.mutation.AcceptedAtCleared() {
 		_spec.ClearField(invitation.FieldAcceptedAt, field.TypeTime)
-	}
-	if value, ok := _u.mutation.UpdatedAt(); ok {
-		_spec.SetField(invitation.FieldUpdatedAt, field.TypeTime, value)
 	}
 	if _u.mutation.WorkspaceCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -364,6 +364,12 @@ type InvitationUpdateOne struct {
 	hooks     []Hook
 	mutation  *InvitationMutation
 	modifiers []func(*sql.UpdateBuilder)
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (_u *InvitationUpdateOne) SetUpdatedAt(v time.Time) *InvitationUpdateOne {
+	_u.mutation.SetUpdatedAt(v)
+	return _u
 }
 
 // SetWorkspaceID sets the "workspace_id" field.
@@ -473,12 +479,6 @@ func (_u *InvitationUpdateOne) SetNillableAcceptedAt(v *time.Time) *InvitationUp
 // ClearAcceptedAt clears the value of the "accepted_at" field.
 func (_u *InvitationUpdateOne) ClearAcceptedAt() *InvitationUpdateOne {
 	_u.mutation.ClearAcceptedAt()
-	return _u
-}
-
-// SetUpdatedAt sets the "updated_at" field.
-func (_u *InvitationUpdateOne) SetUpdatedAt(v time.Time) *InvitationUpdateOne {
-	_u.mutation.SetUpdatedAt(v)
 	return _u
 }
 
@@ -630,6 +630,9 @@ func (_u *InvitationUpdateOne) sqlSave(ctx context.Context) (_node *Invitation, 
 			}
 		}
 	}
+	if value, ok := _u.mutation.UpdatedAt(); ok {
+		_spec.SetField(invitation.FieldUpdatedAt, field.TypeTime, value)
+	}
 	if value, ok := _u.mutation.Email(); ok {
 		_spec.SetField(invitation.FieldEmail, field.TypeString, value)
 	}
@@ -647,9 +650,6 @@ func (_u *InvitationUpdateOne) sqlSave(ctx context.Context) (_node *Invitation, 
 	}
 	if _u.mutation.AcceptedAtCleared() {
 		_spec.ClearField(invitation.FieldAcceptedAt, field.TypeTime)
-	}
-	if value, ok := _u.mutation.UpdatedAt(); ok {
-		_spec.SetField(invitation.FieldUpdatedAt, field.TypeTime, value)
 	}
 	if _u.mutation.WorkspaceCleared() {
 		edge := &sqlgraph.EdgeSpec{

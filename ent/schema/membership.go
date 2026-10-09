@@ -1,8 +1,6 @@
 package schema
 
 import (
-	"time"
-
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/entsql"
 	"entgo.io/ent/schema"
@@ -23,6 +21,10 @@ func (Membership) Annotations() []schema.Annotation {
 	}
 }
 
+func (Membership) Mixin() []ent.Mixin {
+	return []ent.Mixin{TimeMixin{}}
+}
+
 func (Membership) Fields() []ent.Field {
 	return []ent.Field{
 		field.Int64("id").
@@ -34,12 +36,6 @@ func (Membership) Fields() []ent.Field {
 		// members and invites; member cannot. Only owner may transfer ownership.
 		field.Enum("role").
 			Values("owner", "admin", "member"),
-		field.Time("created_at").
-			Default(time.Now).
-			Immutable(),
-		field.Time("updated_at").
-			Default(time.Now).
-			UpdateDefault(time.Now),
 	}
 }
 

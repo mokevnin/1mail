@@ -300,12 +300,12 @@ func (_q *CustomFieldQuery) WithWorkspace(opts ...func(*WorkspaceQuery)) *Custom
 // Example:
 //
 //	var v []struct {
-//		Key string `json:"key,omitempty"`
+//		CreatedAt time.Time `json:"created_at,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.CustomField.Query().
-//		GroupBy(customfield.FieldKey).
+//		GroupBy(customfield.FieldCreatedAt).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
 func (_q *CustomFieldQuery) GroupBy(field string, fields ...string) *CustomFieldGroupBy {
@@ -323,11 +323,11 @@ func (_q *CustomFieldQuery) GroupBy(field string, fields ...string) *CustomField
 // Example:
 //
 //	var v []struct {
-//		Key string `json:"key,omitempty"`
+//		CreatedAt time.Time `json:"created_at,omitempty"`
 //	}
 //
 //	client.CustomField.Query().
-//		Select(customfield.FieldKey).
+//		Select(customfield.FieldCreatedAt).
 //		Scan(ctx, &v)
 func (_q *CustomFieldQuery) Select(fields ...string) *CustomFieldSelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)

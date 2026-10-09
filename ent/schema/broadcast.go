@@ -1,8 +1,6 @@
 package schema
 
 import (
-	"time"
-
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/entsql"
 	"entgo.io/ent/schema"
@@ -25,6 +23,10 @@ func (Broadcast) Annotations() []schema.Annotation {
 	return []schema.Annotation{
 		entsql.Annotation{Table: "broadcasts"},
 	}
+}
+
+func (Broadcast) Mixin() []ent.Mixin {
+	return []ent.Mixin{TimeMixin{}}
 }
 
 func (Broadcast) Fields() []ent.Field {
@@ -96,12 +98,6 @@ func (Broadcast) Fields() []ent.Field {
 			Optional().
 			Nillable(),
 		field.Int64("workspace_id"),
-		field.Time("created_at").
-			Default(time.Now).
-			Immutable(),
-		field.Time("updated_at").
-			Default(time.Now).
-			UpdateDefault(time.Now),
 	}
 }
 

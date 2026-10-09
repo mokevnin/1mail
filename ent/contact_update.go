@@ -32,6 +32,12 @@ func (_u *ContactUpdate) Where(ps ...predicate.Contact) *ContactUpdate {
 	return _u
 }
 
+// SetUpdatedAt sets the "updated_at" field.
+func (_u *ContactUpdate) SetUpdatedAt(v time.Time) *ContactUpdate {
+	_u.mutation.SetUpdatedAt(v)
+	return _u
+}
+
 // SetSubjectID sets the "subject_id" field.
 func (_u *ContactUpdate) SetSubjectID(v string) *ContactUpdate {
 	_u.mutation.SetSubjectID(v)
@@ -175,12 +181,6 @@ func (_u *ContactUpdate) SetNillableWorkspaceID(v *int64) *ContactUpdate {
 	if v != nil {
 		_u.SetWorkspaceID(*v)
 	}
-	return _u
-}
-
-// SetUpdatedAt sets the "updated_at" field.
-func (_u *ContactUpdate) SetUpdatedAt(v time.Time) *ContactUpdate {
-	_u.mutation.SetUpdatedAt(v)
 	return _u
 }
 
@@ -334,6 +334,9 @@ func (_u *ContactUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 			}
 		}
 	}
+	if value, ok := _u.mutation.UpdatedAt(); ok {
+		_spec.SetField(contact.FieldUpdatedAt, field.TypeTime, value)
+	}
 	if value, ok := _u.mutation.SubjectID(); ok {
 		_spec.SetField(contact.FieldSubjectID, field.TypeString, value)
 	}
@@ -375,9 +378,6 @@ func (_u *ContactUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	}
 	if _u.mutation.CustomFieldsCleared() {
 		_spec.ClearField(contact.FieldCustomFields, field.TypeJSON)
-	}
-	if value, ok := _u.mutation.UpdatedAt(); ok {
-		_spec.SetField(contact.FieldUpdatedAt, field.TypeTime, value)
 	}
 	if _u.mutation.VisitorsCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -518,6 +518,12 @@ type ContactUpdateOne struct {
 	hooks     []Hook
 	mutation  *ContactMutation
 	modifiers []func(*sql.UpdateBuilder)
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (_u *ContactUpdateOne) SetUpdatedAt(v time.Time) *ContactUpdateOne {
+	_u.mutation.SetUpdatedAt(v)
+	return _u
 }
 
 // SetSubjectID sets the "subject_id" field.
@@ -663,12 +669,6 @@ func (_u *ContactUpdateOne) SetNillableWorkspaceID(v *int64) *ContactUpdateOne {
 	if v != nil {
 		_u.SetWorkspaceID(*v)
 	}
-	return _u
-}
-
-// SetUpdatedAt sets the "updated_at" field.
-func (_u *ContactUpdateOne) SetUpdatedAt(v time.Time) *ContactUpdateOne {
-	_u.mutation.SetUpdatedAt(v)
 	return _u
 }
 
@@ -852,6 +852,9 @@ func (_u *ContactUpdateOne) sqlSave(ctx context.Context) (_node *Contact, err er
 			}
 		}
 	}
+	if value, ok := _u.mutation.UpdatedAt(); ok {
+		_spec.SetField(contact.FieldUpdatedAt, field.TypeTime, value)
+	}
 	if value, ok := _u.mutation.SubjectID(); ok {
 		_spec.SetField(contact.FieldSubjectID, field.TypeString, value)
 	}
@@ -893,9 +896,6 @@ func (_u *ContactUpdateOne) sqlSave(ctx context.Context) (_node *Contact, err er
 	}
 	if _u.mutation.CustomFieldsCleared() {
 		_spec.ClearField(contact.FieldCustomFields, field.TypeJSON)
-	}
-	if value, ok := _u.mutation.UpdatedAt(); ok {
-		_spec.SetField(contact.FieldUpdatedAt, field.TypeTime, value)
 	}
 	if _u.mutation.VisitorsCleared() {
 		edge := &sqlgraph.EdgeSpec{

@@ -1,8 +1,6 @@
 package schema
 
 import (
-	"time"
-
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/entsql"
 	"entgo.io/ent/schema"
@@ -24,6 +22,10 @@ func (EmailTemplate) Annotations() []schema.Annotation {
 	}
 }
 
+func (EmailTemplate) Mixin() []ent.Mixin {
+	return []ent.Mixin{TimeMixin{}}
+}
+
 func (EmailTemplate) Fields() []ent.Field {
 	return []ent.Field{
 		field.Int64("id").
@@ -37,12 +39,6 @@ func (EmailTemplate) Fields() []ent.Field {
 		field.String("body").
 			Default(""),
 		field.Int64("workspace_id"),
-		field.Time("created_at").
-			Default(time.Now).
-			Immutable(),
-		field.Time("updated_at").
-			Default(time.Now).
-			UpdateDefault(time.Now),
 	}
 }
 

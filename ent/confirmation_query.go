@@ -300,12 +300,12 @@ func (_q *ConfirmationQuery) WithWorkspace(opts ...func(*WorkspaceQuery)) *Confi
 // Example:
 //
 //	var v []struct {
-//		Channel confirmation.Channel `json:"channel,omitempty"`
+//		CreatedAt time.Time `json:"created_at,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.Confirmation.Query().
-//		GroupBy(confirmation.FieldChannel).
+//		GroupBy(confirmation.FieldCreatedAt).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
 func (_q *ConfirmationQuery) GroupBy(field string, fields ...string) *ConfirmationGroupBy {
@@ -323,11 +323,11 @@ func (_q *ConfirmationQuery) GroupBy(field string, fields ...string) *Confirmati
 // Example:
 //
 //	var v []struct {
-//		Channel confirmation.Channel `json:"channel,omitempty"`
+//		CreatedAt time.Time `json:"created_at,omitempty"`
 //	}
 //
 //	client.Confirmation.Query().
-//		Select(confirmation.FieldChannel).
+//		Select(confirmation.FieldCreatedAt).
 //		Scan(ctx, &v)
 func (_q *ConfirmationQuery) Select(fields ...string) *ConfirmationSelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)

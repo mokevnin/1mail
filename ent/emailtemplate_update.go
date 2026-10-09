@@ -30,6 +30,12 @@ func (_u *EmailTemplateUpdate) Where(ps ...predicate.EmailTemplate) *EmailTempla
 	return _u
 }
 
+// SetUpdatedAt sets the "updated_at" field.
+func (_u *EmailTemplateUpdate) SetUpdatedAt(v time.Time) *EmailTemplateUpdate {
+	_u.mutation.SetUpdatedAt(v)
+	return _u
+}
+
 // SetName sets the "name" field.
 func (_u *EmailTemplateUpdate) SetName(v string) *EmailTemplateUpdate {
 	_u.mutation.SetName(v)
@@ -83,12 +89,6 @@ func (_u *EmailTemplateUpdate) SetNillableWorkspaceID(v *int64) *EmailTemplateUp
 	if v != nil {
 		_u.SetWorkspaceID(*v)
 	}
-	return _u
-}
-
-// SetUpdatedAt sets the "updated_at" field.
-func (_u *EmailTemplateUpdate) SetUpdatedAt(v time.Time) *EmailTemplateUpdate {
-	_u.mutation.SetUpdatedAt(v)
 	return _u
 }
 
@@ -175,6 +175,9 @@ func (_u *EmailTemplateUpdate) sqlSave(ctx context.Context) (_node int, err erro
 			}
 		}
 	}
+	if value, ok := _u.mutation.UpdatedAt(); ok {
+		_spec.SetField(emailtemplate.FieldUpdatedAt, field.TypeTime, value)
+	}
 	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(emailtemplate.FieldName, field.TypeString, value)
 	}
@@ -183,9 +186,6 @@ func (_u *EmailTemplateUpdate) sqlSave(ctx context.Context) (_node int, err erro
 	}
 	if value, ok := _u.mutation.Body(); ok {
 		_spec.SetField(emailtemplate.FieldBody, field.TypeString, value)
-	}
-	if value, ok := _u.mutation.UpdatedAt(); ok {
-		_spec.SetField(emailtemplate.FieldUpdatedAt, field.TypeTime, value)
 	}
 	if _u.mutation.WorkspaceCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -236,6 +236,12 @@ type EmailTemplateUpdateOne struct {
 	hooks     []Hook
 	mutation  *EmailTemplateMutation
 	modifiers []func(*sql.UpdateBuilder)
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (_u *EmailTemplateUpdateOne) SetUpdatedAt(v time.Time) *EmailTemplateUpdateOne {
+	_u.mutation.SetUpdatedAt(v)
+	return _u
 }
 
 // SetName sets the "name" field.
@@ -291,12 +297,6 @@ func (_u *EmailTemplateUpdateOne) SetNillableWorkspaceID(v *int64) *EmailTemplat
 	if v != nil {
 		_u.SetWorkspaceID(*v)
 	}
-	return _u
-}
-
-// SetUpdatedAt sets the "updated_at" field.
-func (_u *EmailTemplateUpdateOne) SetUpdatedAt(v time.Time) *EmailTemplateUpdateOne {
-	_u.mutation.SetUpdatedAt(v)
 	return _u
 }
 
@@ -413,6 +413,9 @@ func (_u *EmailTemplateUpdateOne) sqlSave(ctx context.Context) (_node *EmailTemp
 			}
 		}
 	}
+	if value, ok := _u.mutation.UpdatedAt(); ok {
+		_spec.SetField(emailtemplate.FieldUpdatedAt, field.TypeTime, value)
+	}
 	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(emailtemplate.FieldName, field.TypeString, value)
 	}
@@ -421,9 +424,6 @@ func (_u *EmailTemplateUpdateOne) sqlSave(ctx context.Context) (_node *EmailTemp
 	}
 	if value, ok := _u.mutation.Body(); ok {
 		_spec.SetField(emailtemplate.FieldBody, field.TypeString, value)
-	}
-	if value, ok := _u.mutation.UpdatedAt(); ok {
-		_spec.SetField(emailtemplate.FieldUpdatedAt, field.TypeTime, value)
 	}
 	if _u.mutation.WorkspaceCleared() {
 		edge := &sqlgraph.EdgeSpec{

@@ -15,6 +15,10 @@ const (
 	Label = "broadcast_recipient"
 	// FieldID holds the string denoting the id field in the database.
 	FieldID = "id"
+	// FieldCreatedAt holds the string denoting the created_at field in the database.
+	FieldCreatedAt = "created_at"
+	// FieldUpdatedAt holds the string denoting the updated_at field in the database.
+	FieldUpdatedAt = "updated_at"
 	// FieldBroadcastID holds the string denoting the broadcast_id field in the database.
 	FieldBroadcastID = "broadcast_id"
 	// FieldContactID holds the string denoting the contact_id field in the database.
@@ -33,10 +37,6 @@ const (
 	FieldOpenedAt = "opened_at"
 	// FieldClickedAt holds the string denoting the clicked_at field in the database.
 	FieldClickedAt = "clicked_at"
-	// FieldCreatedAt holds the string denoting the created_at field in the database.
-	FieldCreatedAt = "created_at"
-	// FieldUpdatedAt holds the string denoting the updated_at field in the database.
-	FieldUpdatedAt = "updated_at"
 	// EdgeBroadcast holds the string denoting the broadcast edge name in mutations.
 	EdgeBroadcast = "broadcast"
 	// EdgeWorkspace holds the string denoting the workspace edge name in mutations.
@@ -62,6 +62,8 @@ const (
 // Columns holds all SQL columns for broadcastrecipient fields.
 var Columns = []string{
 	FieldID,
+	FieldCreatedAt,
+	FieldUpdatedAt,
 	FieldBroadcastID,
 	FieldContactID,
 	FieldWorkspaceID,
@@ -71,8 +73,6 @@ var Columns = []string{
 	FieldSentAt,
 	FieldOpenedAt,
 	FieldClickedAt,
-	FieldCreatedAt,
-	FieldUpdatedAt,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -130,6 +130,16 @@ func ByID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldID, opts...).ToFunc()
 }
 
+// ByCreatedAt orders the results by the created_at field.
+func ByCreatedAt(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldCreatedAt, opts...).ToFunc()
+}
+
+// ByUpdatedAt orders the results by the updated_at field.
+func ByUpdatedAt(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldUpdatedAt, opts...).ToFunc()
+}
+
 // ByBroadcastID orders the results by the broadcast_id field.
 func ByBroadcastID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldBroadcastID, opts...).ToFunc()
@@ -173,16 +183,6 @@ func ByOpenedAt(opts ...sql.OrderTermOption) OrderOption {
 // ByClickedAt orders the results by the clicked_at field.
 func ByClickedAt(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldClickedAt, opts...).ToFunc()
-}
-
-// ByCreatedAt orders the results by the created_at field.
-func ByCreatedAt(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldCreatedAt, opts...).ToFunc()
-}
-
-// ByUpdatedAt orders the results by the updated_at field.
-func ByUpdatedAt(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldUpdatedAt, opts...).ToFunc()
 }
 
 // ByBroadcastField orders the results by broadcast field.

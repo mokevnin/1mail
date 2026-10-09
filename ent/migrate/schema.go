@@ -12,6 +12,8 @@ var (
 	// APITokensColumns holds the columns for the "api_tokens" table.
 	APITokensColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt64, Increment: true},
+		{Name: "created_at", Type: field.TypeTime, Default: "CURRENT_TIMESTAMP"},
+		{Name: "updated_at", Type: field.TypeTime, Default: "CURRENT_TIMESTAMP"},
 		{Name: "name", Type: field.TypeString},
 		{Name: "prefix", Type: field.TypeString, Unique: true},
 		{Name: "secret_hash", Type: field.TypeString},
@@ -19,8 +21,6 @@ var (
 		{Name: "expires_at", Type: field.TypeTime, Nullable: true},
 		{Name: "revoked_at", Type: field.TypeTime, Nullable: true},
 		{Name: "last_used_at", Type: field.TypeTime, Nullable: true},
-		{Name: "created_at", Type: field.TypeTime},
-		{Name: "updated_at", Type: field.TypeTime},
 		{Name: "workspace_id", Type: field.TypeInt64},
 	}
 	// APITokensTable holds the schema information for the "api_tokens" table.
@@ -40,12 +40,12 @@ var (
 	// AutomationsColumns holds the columns for the "automations" table.
 	AutomationsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt64, Increment: true},
+		{Name: "created_at", Type: field.TypeTime, Default: "CURRENT_TIMESTAMP"},
+		{Name: "updated_at", Type: field.TypeTime, Default: "CURRENT_TIMESTAMP"},
 		{Name: "name", Type: field.TypeString},
 		{Name: "status", Type: field.TypeEnum, Enums: []string{"draft", "active"}, Default: "draft"},
 		{Name: "trigger_event", Type: field.TypeString},
 		{Name: "definition", Type: field.TypeString, Default: "[]"},
-		{Name: "created_at", Type: field.TypeTime},
-		{Name: "updated_at", Type: field.TypeTime},
 		{Name: "workspace_id", Type: field.TypeInt64},
 	}
 	// AutomationsTable holds the schema information for the "automations" table.
@@ -70,19 +70,19 @@ var (
 			{
 				Name:    "automation_workspace_id_status_trigger_event",
 				Unique:  false,
-				Columns: []*schema.Column{AutomationsColumns[7], AutomationsColumns[2], AutomationsColumns[3]},
+				Columns: []*schema.Column{AutomationsColumns[7], AutomationsColumns[4], AutomationsColumns[5]},
 			},
 		},
 	}
 	// AutomationRunsColumns holds the columns for the "automation_runs" table.
 	AutomationRunsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt64, Increment: true},
+		{Name: "created_at", Type: field.TypeTime, Default: "CURRENT_TIMESTAMP"},
+		{Name: "updated_at", Type: field.TypeTime, Default: "CURRENT_TIMESTAMP"},
 		{Name: "contact_id", Type: field.TypeInt64},
 		{Name: "status", Type: field.TypeEnum, Enums: []string{"active", "completed", "failed", "exited"}, Default: "active"},
 		{Name: "current_step", Type: field.TypeInt, Default: 0},
 		{Name: "resume_at", Type: field.TypeTime, Nullable: true},
-		{Name: "created_at", Type: field.TypeTime},
-		{Name: "updated_at", Type: field.TypeTime},
 		{Name: "automation_id", Type: field.TypeInt64},
 		{Name: "workspace_id", Type: field.TypeInt64},
 	}
@@ -109,13 +109,15 @@ var (
 			{
 				Name:    "automation_runs_automation_id_contact_id",
 				Unique:  true,
-				Columns: []*schema.Column{AutomationRunsColumns[7], AutomationRunsColumns[1]},
+				Columns: []*schema.Column{AutomationRunsColumns[7], AutomationRunsColumns[3]},
 			},
 		},
 	}
 	// BroadcastsColumns holds the columns for the "broadcasts" table.
 	BroadcastsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt64, Increment: true},
+		{Name: "created_at", Type: field.TypeTime, Default: "CURRENT_TIMESTAMP"},
+		{Name: "updated_at", Type: field.TypeTime, Default: "CURRENT_TIMESTAMP"},
 		{Name: "name", Type: field.TypeString},
 		{Name: "subject", Type: field.TypeString, Default: ""},
 		{Name: "from_name", Type: field.TypeString, Nullable: true},
@@ -135,8 +137,6 @@ var (
 		{Name: "failed_count", Type: field.TypeInt, Default: 0},
 		{Name: "skipped_count", Type: field.TypeInt, Default: 0},
 		{Name: "hold_reason", Type: field.TypeString, Nullable: true},
-		{Name: "created_at", Type: field.TypeTime},
-		{Name: "updated_at", Type: field.TypeTime},
 		{Name: "workspace_id", Type: field.TypeInt64},
 	}
 	// BroadcastsTable holds the schema information for the "broadcasts" table.
@@ -163,6 +163,8 @@ var (
 	// BroadcastRecipientsColumns holds the columns for the "broadcast_recipients" table.
 	BroadcastRecipientsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt64, Increment: true},
+		{Name: "created_at", Type: field.TypeTime, Default: "CURRENT_TIMESTAMP"},
+		{Name: "updated_at", Type: field.TypeTime, Default: "CURRENT_TIMESTAMP"},
 		{Name: "contact_id", Type: field.TypeInt64},
 		{Name: "status", Type: field.TypeEnum, Enums: []string{"pending", "sent", "skipped", "failed"}, Default: "pending"},
 		{Name: "outbound_message_id", Type: field.TypeInt64, Nullable: true},
@@ -170,8 +172,6 @@ var (
 		{Name: "sent_at", Type: field.TypeTime, Nullable: true},
 		{Name: "opened_at", Type: field.TypeTime, Nullable: true},
 		{Name: "clicked_at", Type: field.TypeTime, Nullable: true},
-		{Name: "created_at", Type: field.TypeTime},
-		{Name: "updated_at", Type: field.TypeTime},
 		{Name: "broadcast_id", Type: field.TypeInt64},
 		{Name: "workspace_id", Type: field.TypeInt64},
 	}
@@ -198,7 +198,7 @@ var (
 			{
 				Name:    "broadcast_recipients_broadcast_id_contact_id",
 				Unique:  true,
-				Columns: []*schema.Column{BroadcastRecipientsColumns[10], BroadcastRecipientsColumns[1]},
+				Columns: []*schema.Column{BroadcastRecipientsColumns[10], BroadcastRecipientsColumns[3]},
 			},
 			{
 				Name:    "broadcastrecipient_broadcast_id",
@@ -208,19 +208,19 @@ var (
 			{
 				Name:    "broadcastrecipient_workspace_id_sent_at",
 				Unique:  false,
-				Columns: []*schema.Column{BroadcastRecipientsColumns[11], BroadcastRecipientsColumns[5]},
+				Columns: []*schema.Column{BroadcastRecipientsColumns[11], BroadcastRecipientsColumns[7]},
 			},
 		},
 	}
 	// ConfirmationsColumns holds the columns for the "confirmations" table.
 	ConfirmationsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt64, Increment: true},
+		{Name: "created_at", Type: field.TypeTime, Default: "CURRENT_TIMESTAMP"},
+		{Name: "updated_at", Type: field.TypeTime, Default: "CURRENT_TIMESTAMP"},
 		{Name: "channel", Type: field.TypeEnum, Enums: []string{"email"}, Default: "email"},
 		{Name: "destination", Type: field.TypeString},
 		{Name: "provenance", Type: field.TypeEnum, Enums: []string{"double_opt_in", "grandfathered", "imported"}},
 		{Name: "contact_id", Type: field.TypeInt64, Nullable: true},
-		{Name: "created_at", Type: field.TypeTime},
-		{Name: "updated_at", Type: field.TypeTime},
 		{Name: "workspace_id", Type: field.TypeInt64},
 	}
 	// ConfirmationsTable holds the schema information for the "confirmations" table.
@@ -240,13 +240,15 @@ var (
 			{
 				Name:    "confirmations_ws_channel_dest",
 				Unique:  true,
-				Columns: []*schema.Column{ConfirmationsColumns[7], ConfirmationsColumns[1], ConfirmationsColumns[2]},
+				Columns: []*schema.Column{ConfirmationsColumns[7], ConfirmationsColumns[3], ConfirmationsColumns[4]},
 			},
 		},
 	}
 	// ContactsColumns holds the columns for the "contacts" table.
 	ContactsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt64, Increment: true},
+		{Name: "created_at", Type: field.TypeTime, Default: "CURRENT_TIMESTAMP"},
+		{Name: "updated_at", Type: field.TypeTime, Default: "CURRENT_TIMESTAMP"},
 		{Name: "subject_id", Type: field.TypeString, Nullable: true},
 		{Name: "email", Type: field.TypeString, Nullable: true},
 		{Name: "phone", Type: field.TypeString, Nullable: true},
@@ -254,8 +256,6 @@ var (
 		{Name: "last_name", Type: field.TypeString, Nullable: true},
 		{Name: "time_zone", Type: field.TypeString, Nullable: true},
 		{Name: "custom_fields", Type: field.TypeJSON, Nullable: true},
-		{Name: "created_at", Type: field.TypeTime},
-		{Name: "updated_at", Type: field.TypeTime},
 		{Name: "workspace_id", Type: field.TypeInt64},
 	}
 	// ContactsTable holds the schema information for the "contacts" table.
@@ -275,28 +275,28 @@ var (
 			{
 				Name:    "contacts_email_workspace_id",
 				Unique:  true,
-				Columns: []*schema.Column{ContactsColumns[2], ContactsColumns[10]},
+				Columns: []*schema.Column{ContactsColumns[4], ContactsColumns[10]},
 			},
 			{
 				Name:    "contacts_subject_id_workspace_id",
 				Unique:  true,
-				Columns: []*schema.Column{ContactsColumns[1], ContactsColumns[10]},
+				Columns: []*schema.Column{ContactsColumns[3], ContactsColumns[10]},
 			},
 			{
 				Name:    "contacts_phone_workspace_id",
 				Unique:  true,
-				Columns: []*schema.Column{ContactsColumns[3], ContactsColumns[10]},
+				Columns: []*schema.Column{ContactsColumns[5], ContactsColumns[10]},
 			},
 		},
 	}
 	// CustomFieldsColumns holds the columns for the "custom_fields" table.
 	CustomFieldsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt64, Increment: true},
+		{Name: "created_at", Type: field.TypeTime, Default: "CURRENT_TIMESTAMP"},
+		{Name: "updated_at", Type: field.TypeTime, Default: "CURRENT_TIMESTAMP"},
 		{Name: "key", Type: field.TypeString},
 		{Name: "name", Type: field.TypeString},
 		{Name: "type", Type: field.TypeEnum, Enums: []string{"string", "number", "bool", "datetime"}, Default: "string"},
-		{Name: "created_at", Type: field.TypeTime},
-		{Name: "updated_at", Type: field.TypeTime},
 		{Name: "workspace_id", Type: field.TypeInt64},
 	}
 	// CustomFieldsTable holds the schema information for the "custom_fields" table.
@@ -316,18 +316,18 @@ var (
 			{
 				Name:    "custom_fields_key_workspace_id",
 				Unique:  true,
-				Columns: []*schema.Column{CustomFieldsColumns[1], CustomFieldsColumns[6]},
+				Columns: []*schema.Column{CustomFieldsColumns[3], CustomFieldsColumns[6]},
 			},
 		},
 	}
 	// EmailTemplatesColumns holds the columns for the "email_templates" table.
 	EmailTemplatesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt64, Increment: true},
+		{Name: "created_at", Type: field.TypeTime, Default: "CURRENT_TIMESTAMP"},
+		{Name: "updated_at", Type: field.TypeTime, Default: "CURRENT_TIMESTAMP"},
 		{Name: "name", Type: field.TypeString},
 		{Name: "subject", Type: field.TypeString, Default: ""},
 		{Name: "body", Type: field.TypeString, Default: ""},
-		{Name: "created_at", Type: field.TypeTime},
-		{Name: "updated_at", Type: field.TypeTime},
 		{Name: "workspace_id", Type: field.TypeInt64},
 	}
 	// EmailTemplatesTable holds the schema information for the "email_templates" table.
@@ -354,6 +354,8 @@ var (
 	// EventsColumns holds the columns for the "events" table.
 	EventsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt64, Increment: true},
+		{Name: "created_at", Type: field.TypeTime, Default: "CURRENT_TIMESTAMP"},
+		{Name: "updated_at", Type: field.TypeTime, Default: "CURRENT_TIMESTAMP"},
 		{Name: "source_id", Type: field.TypeString, Unique: true, Nullable: true},
 		{Name: "contact_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "visitor_id", Type: field.TypeString, Nullable: true},
@@ -363,7 +365,6 @@ var (
 		{Name: "action", Type: field.TypeString},
 		{Name: "properties", Type: field.TypeJSON, Nullable: true},
 		{Name: "occurred_at", Type: field.TypeTime, Nullable: true},
-		{Name: "created_at", Type: field.TypeTime},
 		{Name: "workspace_id", Type: field.TypeInt64},
 	}
 	// EventsTable holds the schema information for the "events" table.
@@ -374,7 +375,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "events_workspaces_events",
-				Columns:    []*schema.Column{EventsColumns[11]},
+				Columns:    []*schema.Column{EventsColumns[12]},
 				RefColumns: []*schema.Column{WorkspacesColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
@@ -383,26 +384,26 @@ var (
 			{
 				Name:    "event_workspace_id_contact_id_action",
 				Unique:  false,
-				Columns: []*schema.Column{EventsColumns[11], EventsColumns[2], EventsColumns[7]},
+				Columns: []*schema.Column{EventsColumns[12], EventsColumns[4], EventsColumns[9]},
 			},
 			{
 				Name:    "event_workspace_id_visitor_id",
 				Unique:  false,
-				Columns: []*schema.Column{EventsColumns[11], EventsColumns[3]},
+				Columns: []*schema.Column{EventsColumns[12], EventsColumns[5]},
 			},
 		},
 	}
 	// IntegrationsColumns holds the columns for the "integrations" table.
 	IntegrationsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt64, Increment: true},
+		{Name: "created_at", Type: field.TypeTime, Default: "CURRENT_TIMESTAMP"},
+		{Name: "updated_at", Type: field.TypeTime, Default: "CURRENT_TIMESTAMP"},
 		{Name: "name", Type: field.TypeString},
 		{Name: "channel", Type: field.TypeEnum, Enums: []string{"email", "sms"}, Default: "email"},
 		{Name: "provider", Type: field.TypeEnum, Enums: []string{"smtp", "ses"}},
 		{Name: "config_encrypted", Type: field.TypeString},
 		{Name: "enabled", Type: field.TypeBool, Default: true},
 		{Name: "is_default", Type: field.TypeBool, Default: false},
-		{Name: "created_at", Type: field.TypeTime},
-		{Name: "updated_at", Type: field.TypeTime},
 		{Name: "workspace_id", Type: field.TypeInt64},
 	}
 	// IntegrationsTable holds the schema information for the "integrations" table.
@@ -422,7 +423,7 @@ var (
 			{
 				Name:    "integration_workspace_id_channel",
 				Unique:  true,
-				Columns: []*schema.Column{IntegrationsColumns[9], IntegrationsColumns[2]},
+				Columns: []*schema.Column{IntegrationsColumns[9], IntegrationsColumns[4]},
 				Annotation: &entsql.IndexAnnotation{
 					Where: "is_default",
 				},
@@ -432,13 +433,13 @@ var (
 	// InvitationsColumns holds the columns for the "invitations" table.
 	InvitationsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt64, Increment: true},
+		{Name: "created_at", Type: field.TypeTime, Default: "CURRENT_TIMESTAMP"},
+		{Name: "updated_at", Type: field.TypeTime, Default: "CURRENT_TIMESTAMP"},
 		{Name: "email", Type: field.TypeString},
 		{Name: "role", Type: field.TypeEnum, Enums: []string{"admin", "member"}},
 		{Name: "token_hash", Type: field.TypeString},
 		{Name: "expires_at", Type: field.TypeTime},
 		{Name: "accepted_at", Type: field.TypeTime, Nullable: true},
-		{Name: "created_at", Type: field.TypeTime},
-		{Name: "updated_at", Type: field.TypeTime},
 		{Name: "invited_by", Type: field.TypeInt64, Nullable: true},
 		{Name: "workspace_id", Type: field.TypeInt64},
 	}
@@ -465,16 +466,16 @@ var (
 			{
 				Name:    "invitation_workspace_id_email",
 				Unique:  true,
-				Columns: []*schema.Column{InvitationsColumns[9], InvitationsColumns[1]},
+				Columns: []*schema.Column{InvitationsColumns[9], InvitationsColumns[3]},
 			},
 		},
 	}
 	// MembershipsColumns holds the columns for the "memberships" table.
 	MembershipsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt64, Increment: true},
+		{Name: "created_at", Type: field.TypeTime, Default: "CURRENT_TIMESTAMP"},
+		{Name: "updated_at", Type: field.TypeTime, Default: "CURRENT_TIMESTAMP"},
 		{Name: "role", Type: field.TypeEnum, Enums: []string{"owner", "admin", "member"}},
-		{Name: "created_at", Type: field.TypeTime},
-		{Name: "updated_at", Type: field.TypeTime},
 		{Name: "user_id", Type: field.TypeInt64},
 		{Name: "workspace_id", Type: field.TypeInt64},
 	}
@@ -508,10 +509,11 @@ var (
 	// OauthClientsColumns holds the columns for the "oauth_clients" table.
 	OauthClientsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt64, Increment: true},
+		{Name: "created_at", Type: field.TypeTime, Default: "CURRENT_TIMESTAMP"},
+		{Name: "updated_at", Type: field.TypeTime, Default: "CURRENT_TIMESTAMP"},
 		{Name: "client_id", Type: field.TypeString, Unique: true},
 		{Name: "name", Type: field.TypeString},
 		{Name: "redirect_uris", Type: field.TypeJSON},
-		{Name: "created_at", Type: field.TypeTime},
 	}
 	// OauthClientsTable holds the schema information for the "oauth_clients" table.
 	OauthClientsTable = &schema.Table{
@@ -522,13 +524,14 @@ var (
 	// OauthCodesColumns holds the columns for the "oauth_codes" table.
 	OauthCodesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt64, Increment: true},
+		{Name: "created_at", Type: field.TypeTime, Default: "CURRENT_TIMESTAMP"},
+		{Name: "updated_at", Type: field.TypeTime, Default: "CURRENT_TIMESTAMP"},
 		{Name: "code_hash", Type: field.TypeString, Unique: true},
 		{Name: "redirect_uri", Type: field.TypeString},
 		{Name: "code_challenge", Type: field.TypeString},
 		{Name: "scopes", Type: field.TypeJSON},
 		{Name: "expires_at", Type: field.TypeTime},
 		{Name: "used_at", Type: field.TypeTime, Nullable: true},
-		{Name: "created_at", Type: field.TypeTime},
 		{Name: "workspace_id", Type: field.TypeInt64},
 		{Name: "client_id", Type: field.TypeInt64},
 	}
@@ -540,7 +543,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "oauth_codes_oauth_clients_codes",
-				Columns:    []*schema.Column{OauthCodesColumns[9]},
+				Columns:    []*schema.Column{OauthCodesColumns[10]},
 				RefColumns: []*schema.Column{OauthClientsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
@@ -549,6 +552,8 @@ var (
 	// OutboundMessagesColumns holds the columns for the "outbound_messages" table.
 	OutboundMessagesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt64, Increment: true},
+		{Name: "created_at", Type: field.TypeTime, Default: "CURRENT_TIMESTAMP"},
+		{Name: "updated_at", Type: field.TypeTime, Default: "CURRENT_TIMESTAMP"},
 		{Name: "kind", Type: field.TypeEnum, Enums: []string{"broadcast", "automation", "transactional"}},
 		{Name: "idempotency_key", Type: field.TypeString},
 		{Name: "channel", Type: field.TypeEnum, Enums: []string{"email"}, Default: "email"},
@@ -567,8 +572,6 @@ var (
 		{Name: "automation_run_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "automation_step", Type: field.TypeInt, Nullable: true},
 		{Name: "template_id", Type: field.TypeInt64, Nullable: true},
-		{Name: "created_at", Type: field.TypeTime},
-		{Name: "updated_at", Type: field.TypeTime},
 		{Name: "workspace_id", Type: field.TypeInt64},
 	}
 	// OutboundMessagesTable holds the schema information for the "outbound_messages" table.
@@ -588,27 +591,27 @@ var (
 			{
 				Name:    "outbound_messages_workspace_id_idempotency_key",
 				Unique:  true,
-				Columns: []*schema.Column{OutboundMessagesColumns[21], OutboundMessagesColumns[2]},
+				Columns: []*schema.Column{OutboundMessagesColumns[21], OutboundMessagesColumns[4]},
 			},
 			{
 				Name:    "outboundmessage_workspace_id_kind_created_at",
 				Unique:  false,
-				Columns: []*schema.Column{OutboundMessagesColumns[21], OutboundMessagesColumns[1], OutboundMessagesColumns[19]},
+				Columns: []*schema.Column{OutboundMessagesColumns[21], OutboundMessagesColumns[3], OutboundMessagesColumns[1]},
 			},
 			{
 				Name:    "outboundmessage_workspace_id_sending_domain_created_at",
 				Unique:  false,
-				Columns: []*schema.Column{OutboundMessagesColumns[21], OutboundMessagesColumns[7], OutboundMessagesColumns[19]},
+				Columns: []*schema.Column{OutboundMessagesColumns[21], OutboundMessagesColumns[9], OutboundMessagesColumns[1]},
 			},
 		},
 	}
 	// SegmentsColumns holds the columns for the "segments" table.
 	SegmentsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt64, Increment: true},
+		{Name: "created_at", Type: field.TypeTime, Default: "CURRENT_TIMESTAMP"},
+		{Name: "updated_at", Type: field.TypeTime, Default: "CURRENT_TIMESTAMP"},
 		{Name: "name", Type: field.TypeString},
 		{Name: "definition", Type: field.TypeString, Nullable: true},
-		{Name: "created_at", Type: field.TypeTime},
-		{Name: "updated_at", Type: field.TypeTime},
 		{Name: "workspace_id", Type: field.TypeInt64},
 	}
 	// SegmentsTable holds the schema information for the "segments" table.
@@ -628,6 +631,8 @@ var (
 	// SendingDomainsColumns holds the columns for the "sending_domains" table.
 	SendingDomainsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt64, Increment: true},
+		{Name: "created_at", Type: field.TypeTime, Default: "CURRENT_TIMESTAMP"},
+		{Name: "updated_at", Type: field.TypeTime, Default: "CURRENT_TIMESTAMP"},
 		{Name: "domain", Type: field.TypeString},
 		{Name: "dkim_selector", Type: field.TypeString},
 		{Name: "dkim_private_key_encrypted", Type: field.TypeString},
@@ -635,8 +640,6 @@ var (
 		{Name: "verified", Type: field.TypeBool, Default: false},
 		{Name: "last_checked_at", Type: field.TypeTime, Nullable: true},
 		{Name: "verified_at", Type: field.TypeTime, Nullable: true},
-		{Name: "created_at", Type: field.TypeTime},
-		{Name: "updated_at", Type: field.TypeTime},
 		{Name: "workspace_id", Type: field.TypeInt64},
 	}
 	// SendingDomainsTable holds the schema information for the "sending_domains" table.
@@ -656,24 +659,24 @@ var (
 			{
 				Name:    "sendingdomain_workspace_id_domain",
 				Unique:  true,
-				Columns: []*schema.Column{SendingDomainsColumns[10], SendingDomainsColumns[1]},
+				Columns: []*schema.Column{SendingDomainsColumns[10], SendingDomainsColumns[3]},
 			},
 			{
 				Name:    "sendingdomain_last_checked_at",
 				Unique:  false,
-				Columns: []*schema.Column{SendingDomainsColumns[6]},
+				Columns: []*schema.Column{SendingDomainsColumns[8]},
 			},
 		},
 	}
 	// SuppressionsColumns holds the columns for the "suppressions" table.
 	SuppressionsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt64, Increment: true},
+		{Name: "created_at", Type: field.TypeTime, Default: "CURRENT_TIMESTAMP"},
+		{Name: "updated_at", Type: field.TypeTime, Default: "CURRENT_TIMESTAMP"},
 		{Name: "channel", Type: field.TypeEnum, Enums: []string{"email"}, Default: "email"},
 		{Name: "destination", Type: field.TypeString},
 		{Name: "reason", Type: field.TypeEnum, Enums: []string{"bounce", "complaint", "manual"}, Default: "manual"},
 		{Name: "contact_id", Type: field.TypeInt64, Nullable: true},
-		{Name: "created_at", Type: field.TypeTime},
-		{Name: "updated_at", Type: field.TypeTime},
 		{Name: "workspace_id", Type: field.TypeInt64},
 	}
 	// SuppressionsTable holds the schema information for the "suppressions" table.
@@ -693,15 +696,16 @@ var (
 			{
 				Name:    "suppressions_workspace_id_channel_destination",
 				Unique:  true,
-				Columns: []*schema.Column{SuppressionsColumns[7], SuppressionsColumns[1], SuppressionsColumns[2]},
+				Columns: []*schema.Column{SuppressionsColumns[7], SuppressionsColumns[3], SuppressionsColumns[4]},
 			},
 		},
 	}
 	// TagsColumns holds the columns for the "tags" table.
 	TagsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt64, Increment: true},
+		{Name: "created_at", Type: field.TypeTime, Default: "CURRENT_TIMESTAMP"},
+		{Name: "updated_at", Type: field.TypeTime, Default: "CURRENT_TIMESTAMP"},
 		{Name: "name", Type: field.TypeString},
-		{Name: "created_at", Type: field.TypeTime},
 		{Name: "workspace_id", Type: field.TypeInt64},
 	}
 	// TagsTable holds the schema information for the "tags" table.
@@ -712,7 +716,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "tags_workspaces_tags",
-				Columns:    []*schema.Column{TagsColumns[3]},
+				Columns:    []*schema.Column{TagsColumns[4]},
 				RefColumns: []*schema.Column{WorkspacesColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
@@ -721,19 +725,19 @@ var (
 			{
 				Name:    "tags_name_workspace_id",
 				Unique:  true,
-				Columns: []*schema.Column{TagsColumns[1], TagsColumns[3]},
+				Columns: []*schema.Column{TagsColumns[3], TagsColumns[4]},
 			},
 		},
 	}
 	// UnsubscribesColumns holds the columns for the "unsubscribes" table.
 	UnsubscribesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt64, Increment: true},
+		{Name: "created_at", Type: field.TypeTime, Default: "CURRENT_TIMESTAMP"},
+		{Name: "updated_at", Type: field.TypeTime, Default: "CURRENT_TIMESTAMP"},
 		{Name: "channel", Type: field.TypeEnum, Enums: []string{"email"}, Default: "email"},
 		{Name: "destination", Type: field.TypeString},
 		{Name: "sending_source", Type: field.TypeString},
 		{Name: "contact_id", Type: field.TypeInt64, Nullable: true},
-		{Name: "created_at", Type: field.TypeTime},
-		{Name: "updated_at", Type: field.TypeTime},
 		{Name: "workspace_id", Type: field.TypeInt64},
 	}
 	// UnsubscribesTable holds the schema information for the "unsubscribes" table.
@@ -753,24 +757,24 @@ var (
 			{
 				Name:    "unsubscribes_ws_channel_dest_source",
 				Unique:  true,
-				Columns: []*schema.Column{UnsubscribesColumns[7], UnsubscribesColumns[1], UnsubscribesColumns[2], UnsubscribesColumns[3]},
+				Columns: []*schema.Column{UnsubscribesColumns[7], UnsubscribesColumns[3], UnsubscribesColumns[4], UnsubscribesColumns[5]},
 			},
 			{
 				Name:    "unsubscribes_ws_channel_dest",
 				Unique:  false,
-				Columns: []*schema.Column{UnsubscribesColumns[7], UnsubscribesColumns[1], UnsubscribesColumns[2]},
+				Columns: []*schema.Column{UnsubscribesColumns[7], UnsubscribesColumns[3], UnsubscribesColumns[4]},
 			},
 		},
 	}
 	// UsersColumns holds the columns for the "users" table.
 	UsersColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt64, Increment: true},
+		{Name: "created_at", Type: field.TypeTime, Default: "CURRENT_TIMESTAMP"},
+		{Name: "updated_at", Type: field.TypeTime, Default: "CURRENT_TIMESTAMP"},
 		{Name: "name", Type: field.TypeString},
 		{Name: "email", Type: field.TypeString, Unique: true},
 		{Name: "password_hash", Type: field.TypeString, Nullable: true},
 		{Name: "email_verified_at", Type: field.TypeTime, Nullable: true},
-		{Name: "updated_at", Type: field.TypeTime},
-		{Name: "created_at", Type: field.TypeTime},
 	}
 	// UsersTable holds the schema information for the "users" table.
 	UsersTable = &schema.Table{
@@ -781,9 +785,9 @@ var (
 	// VisitorsColumns holds the columns for the "visitors" table.
 	VisitorsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt64, Increment: true},
+		{Name: "created_at", Type: field.TypeTime, Default: "CURRENT_TIMESTAMP"},
+		{Name: "updated_at", Type: field.TypeTime, Default: "CURRENT_TIMESTAMP"},
 		{Name: "visitor_id", Type: field.TypeString},
-		{Name: "created_at", Type: field.TypeTime},
-		{Name: "updated_at", Type: field.TypeTime},
 		{Name: "last_seen_at", Type: field.TypeTime},
 		{Name: "contact_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "workspace_id", Type: field.TypeInt64},
@@ -811,19 +815,19 @@ var (
 			{
 				Name:    "visitors_visitor_id_workspace_id",
 				Unique:  true,
-				Columns: []*schema.Column{VisitorsColumns[1], VisitorsColumns[6]},
+				Columns: []*schema.Column{VisitorsColumns[3], VisitorsColumns[6]},
 			},
 		},
 	}
 	// WebhookEndpointsColumns holds the columns for the "webhook_endpoints" table.
 	WebhookEndpointsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt64, Increment: true},
+		{Name: "created_at", Type: field.TypeTime, Default: "CURRENT_TIMESTAMP"},
+		{Name: "updated_at", Type: field.TypeTime, Default: "CURRENT_TIMESTAMP"},
 		{Name: "url", Type: field.TypeString},
 		{Name: "secret_encrypted", Type: field.TypeString},
 		{Name: "event_types", Type: field.TypeJSON, Nullable: true},
 		{Name: "enabled", Type: field.TypeBool, Default: true},
-		{Name: "created_at", Type: field.TypeTime},
-		{Name: "updated_at", Type: field.TypeTime},
 		{Name: "workspace_id", Type: field.TypeInt64},
 	}
 	// WebhookEndpointsTable holds the schema information for the "webhook_endpoints" table.
@@ -848,13 +852,15 @@ var (
 			{
 				Name:    "webhookendpoint_workspace_id_enabled",
 				Unique:  false,
-				Columns: []*schema.Column{WebhookEndpointsColumns[7], WebhookEndpointsColumns[4]},
+				Columns: []*schema.Column{WebhookEndpointsColumns[7], WebhookEndpointsColumns[6]},
 			},
 		},
 	}
 	// WorkspacesColumns holds the columns for the "workspaces" table.
 	WorkspacesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt64, Increment: true},
+		{Name: "created_at", Type: field.TypeTime, Default: "CURRENT_TIMESTAMP"},
+		{Name: "updated_at", Type: field.TypeTime, Default: "CURRENT_TIMESTAMP"},
 		{Name: "name", Type: field.TypeString},
 		{Name: "slug", Type: field.TypeString, Unique: true},
 		{Name: "collect_key", Type: field.TypeString, Unique: true},
@@ -864,8 +870,6 @@ var (
 		{Name: "suspended_at", Type: field.TypeTime, Nullable: true},
 		{Name: "suspended_by", Type: field.TypeString, Nullable: true},
 		{Name: "suspension_reason", Type: field.TypeString, Nullable: true},
-		{Name: "created_at", Type: field.TypeTime},
-		{Name: "updated_at", Type: field.TypeTime},
 	}
 	// WorkspacesTable holds the schema information for the "workspaces" table.
 	WorkspacesTable = &schema.Table{

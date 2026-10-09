@@ -23,6 +23,34 @@ type OAuthCodeCreate struct {
 	conflict []sql.ConflictOption
 }
 
+// SetCreatedAt sets the "created_at" field.
+func (_c *OAuthCodeCreate) SetCreatedAt(v time.Time) *OAuthCodeCreate {
+	_c.mutation.SetCreatedAt(v)
+	return _c
+}
+
+// SetNillableCreatedAt sets the "created_at" field if the given value is not nil.
+func (_c *OAuthCodeCreate) SetNillableCreatedAt(v *time.Time) *OAuthCodeCreate {
+	if v != nil {
+		_c.SetCreatedAt(*v)
+	}
+	return _c
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (_c *OAuthCodeCreate) SetUpdatedAt(v time.Time) *OAuthCodeCreate {
+	_c.mutation.SetUpdatedAt(v)
+	return _c
+}
+
+// SetNillableUpdatedAt sets the "updated_at" field if the given value is not nil.
+func (_c *OAuthCodeCreate) SetNillableUpdatedAt(v *time.Time) *OAuthCodeCreate {
+	if v != nil {
+		_c.SetUpdatedAt(*v)
+	}
+	return _c
+}
+
 // SetCodeHash sets the "code_hash" field.
 func (_c *OAuthCodeCreate) SetCodeHash(v string) *OAuthCodeCreate {
 	_c.mutation.SetCodeHash(v)
@@ -63,20 +91,6 @@ func (_c *OAuthCodeCreate) SetUsedAt(v time.Time) *OAuthCodeCreate {
 func (_c *OAuthCodeCreate) SetNillableUsedAt(v *time.Time) *OAuthCodeCreate {
 	if v != nil {
 		_c.SetUsedAt(*v)
-	}
-	return _c
-}
-
-// SetCreatedAt sets the "created_at" field.
-func (_c *OAuthCodeCreate) SetCreatedAt(v time.Time) *OAuthCodeCreate {
-	_c.mutation.SetCreatedAt(v)
-	return _c
-}
-
-// SetNillableCreatedAt sets the "created_at" field if the given value is not nil.
-func (_c *OAuthCodeCreate) SetNillableCreatedAt(v *time.Time) *OAuthCodeCreate {
-	if v != nil {
-		_c.SetCreatedAt(*v)
 	}
 	return _c
 }
@@ -139,18 +153,28 @@ func (_c *OAuthCodeCreate) ExecX(ctx context.Context) {
 
 // defaults sets the default values of the builder before save.
 func (_c *OAuthCodeCreate) defaults() {
-	if _, ok := _c.mutation.Scopes(); !ok {
-		v := oauthcode.DefaultScopes
-		_c.mutation.SetScopes(v)
-	}
 	if _, ok := _c.mutation.CreatedAt(); !ok {
 		v := oauthcode.DefaultCreatedAt()
 		_c.mutation.SetCreatedAt(v)
+	}
+	if _, ok := _c.mutation.UpdatedAt(); !ok {
+		v := oauthcode.DefaultUpdatedAt()
+		_c.mutation.SetUpdatedAt(v)
+	}
+	if _, ok := _c.mutation.Scopes(); !ok {
+		v := oauthcode.DefaultScopes
+		_c.mutation.SetScopes(v)
 	}
 }
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *OAuthCodeCreate) check() error {
+	if _, ok := _c.mutation.CreatedAt(); !ok {
+		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "OAuthCode.created_at"`)}
+	}
+	if _, ok := _c.mutation.UpdatedAt(); !ok {
+		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "OAuthCode.updated_at"`)}
+	}
 	if _, ok := _c.mutation.CodeHash(); !ok {
 		return &ValidationError{Name: "code_hash", err: errors.New(`ent: missing required field "OAuthCode.code_hash"`)}
 	}
@@ -180,9 +204,6 @@ func (_c *OAuthCodeCreate) check() error {
 	}
 	if _, ok := _c.mutation.ExpiresAt(); !ok {
 		return &ValidationError{Name: "expires_at", err: errors.New(`ent: missing required field "OAuthCode.expires_at"`)}
-	}
-	if _, ok := _c.mutation.CreatedAt(); !ok {
-		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "OAuthCode.created_at"`)}
 	}
 	if _, ok := _c.mutation.ClientID(); !ok {
 		return &ValidationError{Name: "client_id", err: errors.New(`ent: missing required field "OAuthCode.client_id"`)}
@@ -226,6 +247,14 @@ func (_c *OAuthCodeCreate) createSpec() (*OAuthCode, *sqlgraph.CreateSpec) {
 		_node.ID = id
 		_spec.ID.Value = id
 	}
+	if value, ok := _c.mutation.CreatedAt(); ok {
+		_spec.SetField(oauthcode.FieldCreatedAt, field.TypeTime, value)
+		_node.CreatedAt = value
+	}
+	if value, ok := _c.mutation.UpdatedAt(); ok {
+		_spec.SetField(oauthcode.FieldUpdatedAt, field.TypeTime, value)
+		_node.UpdatedAt = value
+	}
 	if value, ok := _c.mutation.CodeHash(); ok {
 		_spec.SetField(oauthcode.FieldCodeHash, field.TypeString, value)
 		_node.CodeHash = value
@@ -249,10 +278,6 @@ func (_c *OAuthCodeCreate) createSpec() (*OAuthCode, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.UsedAt(); ok {
 		_spec.SetField(oauthcode.FieldUsedAt, field.TypeTime, value)
 		_node.UsedAt = &value
-	}
-	if value, ok := _c.mutation.CreatedAt(); ok {
-		_spec.SetField(oauthcode.FieldCreatedAt, field.TypeTime, value)
-		_node.CreatedAt = value
 	}
 	if value, ok := _c.mutation.WorkspaceID(); ok {
 		_spec.SetField(oauthcode.FieldWorkspaceID, field.TypeInt64, value)
@@ -282,7 +307,7 @@ func (_c *OAuthCodeCreate) createSpec() (*OAuthCode, *sqlgraph.CreateSpec) {
 // of the `INSERT` statement. For example:
 //
 //	client.OAuthCode.Create().
-//		SetCodeHash(v).
+//		SetCreatedAt(v).
 //		OnConflict(
 //			// Update the row with the new values
 //			// the was proposed for insertion.
@@ -291,7 +316,7 @@ func (_c *OAuthCodeCreate) createSpec() (*OAuthCode, *sqlgraph.CreateSpec) {
 //		// Override some of the fields with custom
 //		// update values.
 //		Update(func(u *ent.OAuthCodeUpsert) {
-//			SetCodeHash(v+v).
+//			SetCreatedAt(v+v).
 //		}).
 //		Exec(ctx)
 func (_c *OAuthCodeCreate) OnConflict(opts ...sql.ConflictOption) *OAuthCodeUpsertOne {
@@ -326,6 +351,18 @@ type (
 		*sql.UpdateSet
 	}
 )
+
+// SetUpdatedAt sets the "updated_at" field.
+func (u *OAuthCodeUpsert) SetUpdatedAt(v time.Time) *OAuthCodeUpsert {
+	u.Set(oauthcode.FieldUpdatedAt, v)
+	return u
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *OAuthCodeUpsert) UpdateUpdatedAt() *OAuthCodeUpsert {
+	u.SetExcluded(oauthcode.FieldUpdatedAt)
+	return u
+}
 
 // SetScopes sets the "scopes" field.
 func (u *OAuthCodeUpsert) SetScopes(v []string) *OAuthCodeUpsert {
@@ -416,6 +453,9 @@ func (u *OAuthCodeUpsertOne) UpdateNewValues() *OAuthCodeUpsertOne {
 		if _, exists := u.create.mutation.ID(); exists {
 			s.SetIgnore(oauthcode.FieldID)
 		}
+		if _, exists := u.create.mutation.CreatedAt(); exists {
+			s.SetIgnore(oauthcode.FieldCreatedAt)
+		}
 		if _, exists := u.create.mutation.CodeHash(); exists {
 			s.SetIgnore(oauthcode.FieldCodeHash)
 		}
@@ -424,9 +464,6 @@ func (u *OAuthCodeUpsertOne) UpdateNewValues() *OAuthCodeUpsertOne {
 		}
 		if _, exists := u.create.mutation.CodeChallenge(); exists {
 			s.SetIgnore(oauthcode.FieldCodeChallenge)
-		}
-		if _, exists := u.create.mutation.CreatedAt(); exists {
-			s.SetIgnore(oauthcode.FieldCreatedAt)
 		}
 	}))
 	return u
@@ -457,6 +494,20 @@ func (u *OAuthCodeUpsertOne) Update(set func(*OAuthCodeUpsert)) *OAuthCodeUpsert
 		set(&OAuthCodeUpsert{UpdateSet: update})
 	}))
 	return u
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (u *OAuthCodeUpsertOne) SetUpdatedAt(v time.Time) *OAuthCodeUpsertOne {
+	return u.Update(func(s *OAuthCodeUpsert) {
+		s.SetUpdatedAt(v)
+	})
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *OAuthCodeUpsertOne) UpdateUpdatedAt() *OAuthCodeUpsertOne {
+	return u.Update(func(s *OAuthCodeUpsert) {
+		s.UpdateUpdatedAt()
+	})
 }
 
 // SetScopes sets the "scopes" field.
@@ -678,7 +729,7 @@ func (_c *OAuthCodeCreateBulk) ExecX(ctx context.Context) {
 //		// Override some of the fields with custom
 //		// update values.
 //		Update(func(u *ent.OAuthCodeUpsert) {
-//			SetCodeHash(v+v).
+//			SetCreatedAt(v+v).
 //		}).
 //		Exec(ctx)
 func (_c *OAuthCodeCreateBulk) OnConflict(opts ...sql.ConflictOption) *OAuthCodeUpsertBulk {
@@ -725,6 +776,9 @@ func (u *OAuthCodeUpsertBulk) UpdateNewValues() *OAuthCodeUpsertBulk {
 			if _, exists := b.mutation.ID(); exists {
 				s.SetIgnore(oauthcode.FieldID)
 			}
+			if _, exists := b.mutation.CreatedAt(); exists {
+				s.SetIgnore(oauthcode.FieldCreatedAt)
+			}
 			if _, exists := b.mutation.CodeHash(); exists {
 				s.SetIgnore(oauthcode.FieldCodeHash)
 			}
@@ -733,9 +787,6 @@ func (u *OAuthCodeUpsertBulk) UpdateNewValues() *OAuthCodeUpsertBulk {
 			}
 			if _, exists := b.mutation.CodeChallenge(); exists {
 				s.SetIgnore(oauthcode.FieldCodeChallenge)
-			}
-			if _, exists := b.mutation.CreatedAt(); exists {
-				s.SetIgnore(oauthcode.FieldCreatedAt)
 			}
 		}
 	}))
@@ -767,6 +818,20 @@ func (u *OAuthCodeUpsertBulk) Update(set func(*OAuthCodeUpsert)) *OAuthCodeUpser
 		set(&OAuthCodeUpsert{UpdateSet: update})
 	}))
 	return u
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (u *OAuthCodeUpsertBulk) SetUpdatedAt(v time.Time) *OAuthCodeUpsertBulk {
+	return u.Update(func(s *OAuthCodeUpsert) {
+		s.SetUpdatedAt(v)
+	})
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *OAuthCodeUpsertBulk) UpdateUpdatedAt() *OAuthCodeUpsertBulk {
+	return u.Update(func(s *OAuthCodeUpsert) {
+		s.UpdateUpdatedAt()
+	})
 }
 
 // SetScopes sets the "scopes" field.

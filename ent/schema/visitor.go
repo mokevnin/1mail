@@ -25,6 +25,10 @@ func (Visitor) Annotations() []schema.Annotation {
 	}
 }
 
+func (Visitor) Mixin() []ent.Mixin {
+	return []ent.Mixin{TimeMixin{}}
+}
+
 func (Visitor) Fields() []ent.Field {
 	return []ent.Field{
 		field.Int64("id").
@@ -37,12 +41,6 @@ func (Visitor) Fields() []ent.Field {
 		field.Int64("contact_id").
 			Optional().
 			Nillable(),
-		field.Time("created_at").
-			Default(time.Now).
-			Immutable(),
-		field.Time("updated_at").
-			Default(time.Now).
-			UpdateDefault(time.Now),
 		field.Time("last_seen_at").
 			Default(time.Now),
 	}

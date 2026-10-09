@@ -1,8 +1,6 @@
 package schema
 
 import (
-	"time"
-
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/entsql"
 	"entgo.io/ent/schema"
@@ -19,6 +17,10 @@ func (Event) Annotations() []schema.Annotation {
 	return []schema.Annotation{
 		entsql.Annotation{Table: "events"},
 	}
+}
+
+func (Event) Mixin() []ent.Mixin {
+	return []ent.Mixin{TimeMixin{}}
 }
 
 func (Event) Fields() []ent.Field {
@@ -64,9 +66,6 @@ func (Event) Fields() []ent.Field {
 			Optional().
 			Nillable(),
 		field.Int64("workspace_id"),
-		field.Time("created_at").
-			Default(time.Now).
-			Immutable(),
 	}
 }
 

@@ -336,12 +336,12 @@ func (_q *MembershipQuery) WithWorkspace(opts ...func(*WorkspaceQuery)) *Members
 // Example:
 //
 //	var v []struct {
-//		UserID int64 `json:"user_id,omitempty"`
+//		CreatedAt time.Time `json:"created_at,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.Membership.Query().
-//		GroupBy(membership.FieldUserID).
+//		GroupBy(membership.FieldCreatedAt).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
 func (_q *MembershipQuery) GroupBy(field string, fields ...string) *MembershipGroupBy {
@@ -359,11 +359,11 @@ func (_q *MembershipQuery) GroupBy(field string, fields ...string) *MembershipGr
 // Example:
 //
 //	var v []struct {
-//		UserID int64 `json:"user_id,omitempty"`
+//		CreatedAt time.Time `json:"created_at,omitempty"`
 //	}
 //
 //	client.Membership.Query().
-//		Select(membership.FieldUserID).
+//		Select(membership.FieldCreatedAt).
 //		Scan(ctx, &v)
 func (_q *MembershipQuery) Select(fields ...string) *MembershipSelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)

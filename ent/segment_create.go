@@ -23,32 +23,6 @@ type SegmentCreate struct {
 	conflict []sql.ConflictOption
 }
 
-// SetName sets the "name" field.
-func (_c *SegmentCreate) SetName(v string) *SegmentCreate {
-	_c.mutation.SetName(v)
-	return _c
-}
-
-// SetDefinition sets the "definition" field.
-func (_c *SegmentCreate) SetDefinition(v string) *SegmentCreate {
-	_c.mutation.SetDefinition(v)
-	return _c
-}
-
-// SetNillableDefinition sets the "definition" field if the given value is not nil.
-func (_c *SegmentCreate) SetNillableDefinition(v *string) *SegmentCreate {
-	if v != nil {
-		_c.SetDefinition(*v)
-	}
-	return _c
-}
-
-// SetWorkspaceID sets the "workspace_id" field.
-func (_c *SegmentCreate) SetWorkspaceID(v int64) *SegmentCreate {
-	_c.mutation.SetWorkspaceID(v)
-	return _c
-}
-
 // SetCreatedAt sets the "created_at" field.
 func (_c *SegmentCreate) SetCreatedAt(v time.Time) *SegmentCreate {
 	_c.mutation.SetCreatedAt(v)
@@ -74,6 +48,32 @@ func (_c *SegmentCreate) SetNillableUpdatedAt(v *time.Time) *SegmentCreate {
 	if v != nil {
 		_c.SetUpdatedAt(*v)
 	}
+	return _c
+}
+
+// SetName sets the "name" field.
+func (_c *SegmentCreate) SetName(v string) *SegmentCreate {
+	_c.mutation.SetName(v)
+	return _c
+}
+
+// SetDefinition sets the "definition" field.
+func (_c *SegmentCreate) SetDefinition(v string) *SegmentCreate {
+	_c.mutation.SetDefinition(v)
+	return _c
+}
+
+// SetNillableDefinition sets the "definition" field if the given value is not nil.
+func (_c *SegmentCreate) SetNillableDefinition(v *string) *SegmentCreate {
+	if v != nil {
+		_c.SetDefinition(*v)
+	}
+	return _c
+}
+
+// SetWorkspaceID sets the "workspace_id" field.
+func (_c *SegmentCreate) SetWorkspaceID(v int64) *SegmentCreate {
+	_c.mutation.SetWorkspaceID(v)
 	return _c
 }
 
@@ -135,6 +135,12 @@ func (_c *SegmentCreate) defaults() {
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *SegmentCreate) check() error {
+	if _, ok := _c.mutation.CreatedAt(); !ok {
+		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "Segment.created_at"`)}
+	}
+	if _, ok := _c.mutation.UpdatedAt(); !ok {
+		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "Segment.updated_at"`)}
+	}
 	if _, ok := _c.mutation.Name(); !ok {
 		return &ValidationError{Name: "name", err: errors.New(`ent: missing required field "Segment.name"`)}
 	}
@@ -145,12 +151,6 @@ func (_c *SegmentCreate) check() error {
 	}
 	if _, ok := _c.mutation.WorkspaceID(); !ok {
 		return &ValidationError{Name: "workspace_id", err: errors.New(`ent: missing required field "Segment.workspace_id"`)}
-	}
-	if _, ok := _c.mutation.CreatedAt(); !ok {
-		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "Segment.created_at"`)}
-	}
-	if _, ok := _c.mutation.UpdatedAt(); !ok {
-		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "Segment.updated_at"`)}
 	}
 	if len(_c.mutation.WorkspaceIDs()) == 0 {
 		return &ValidationError{Name: "workspace", err: errors.New(`ent: missing required edge "Segment.workspace"`)}
@@ -188,14 +188,6 @@ func (_c *SegmentCreate) createSpec() (*Segment, *sqlgraph.CreateSpec) {
 		_node.ID = id
 		_spec.ID.Value = id
 	}
-	if value, ok := _c.mutation.Name(); ok {
-		_spec.SetField(segment.FieldName, field.TypeString, value)
-		_node.Name = value
-	}
-	if value, ok := _c.mutation.Definition(); ok {
-		_spec.SetField(segment.FieldDefinition, field.TypeString, value)
-		_node.Definition = &value
-	}
 	if value, ok := _c.mutation.CreatedAt(); ok {
 		_spec.SetField(segment.FieldCreatedAt, field.TypeTime, value)
 		_node.CreatedAt = value
@@ -203,6 +195,14 @@ func (_c *SegmentCreate) createSpec() (*Segment, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.UpdatedAt(); ok {
 		_spec.SetField(segment.FieldUpdatedAt, field.TypeTime, value)
 		_node.UpdatedAt = value
+	}
+	if value, ok := _c.mutation.Name(); ok {
+		_spec.SetField(segment.FieldName, field.TypeString, value)
+		_node.Name = value
+	}
+	if value, ok := _c.mutation.Definition(); ok {
+		_spec.SetField(segment.FieldDefinition, field.TypeString, value)
+		_node.Definition = &value
 	}
 	if nodes := _c.mutation.WorkspaceIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -228,7 +228,7 @@ func (_c *SegmentCreate) createSpec() (*Segment, *sqlgraph.CreateSpec) {
 // of the `INSERT` statement. For example:
 //
 //	client.Segment.Create().
-//		SetName(v).
+//		SetCreatedAt(v).
 //		OnConflict(
 //			// Update the row with the new values
 //			// the was proposed for insertion.
@@ -237,7 +237,7 @@ func (_c *SegmentCreate) createSpec() (*Segment, *sqlgraph.CreateSpec) {
 //		// Override some of the fields with custom
 //		// update values.
 //		Update(func(u *ent.SegmentUpsert) {
-//			SetName(v+v).
+//			SetCreatedAt(v+v).
 //		}).
 //		Exec(ctx)
 func (_c *SegmentCreate) OnConflict(opts ...sql.ConflictOption) *SegmentUpsertOne {
@@ -272,6 +272,18 @@ type (
 		*sql.UpdateSet
 	}
 )
+
+// SetUpdatedAt sets the "updated_at" field.
+func (u *SegmentUpsert) SetUpdatedAt(v time.Time) *SegmentUpsert {
+	u.Set(segment.FieldUpdatedAt, v)
+	return u
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *SegmentUpsert) UpdateUpdatedAt() *SegmentUpsert {
+	u.SetExcluded(segment.FieldUpdatedAt)
+	return u
+}
 
 // SetName sets the "name" field.
 func (u *SegmentUpsert) SetName(v string) *SegmentUpsert {
@@ -312,18 +324,6 @@ func (u *SegmentUpsert) SetWorkspaceID(v int64) *SegmentUpsert {
 // UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
 func (u *SegmentUpsert) UpdateWorkspaceID() *SegmentUpsert {
 	u.SetExcluded(segment.FieldWorkspaceID)
-	return u
-}
-
-// SetUpdatedAt sets the "updated_at" field.
-func (u *SegmentUpsert) SetUpdatedAt(v time.Time) *SegmentUpsert {
-	u.Set(segment.FieldUpdatedAt, v)
-	return u
-}
-
-// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
-func (u *SegmentUpsert) UpdateUpdatedAt() *SegmentUpsert {
-	u.SetExcluded(segment.FieldUpdatedAt)
 	return u
 }
 
@@ -378,6 +378,20 @@ func (u *SegmentUpsertOne) Update(set func(*SegmentUpsert)) *SegmentUpsertOne {
 	return u
 }
 
+// SetUpdatedAt sets the "updated_at" field.
+func (u *SegmentUpsertOne) SetUpdatedAt(v time.Time) *SegmentUpsertOne {
+	return u.Update(func(s *SegmentUpsert) {
+		s.SetUpdatedAt(v)
+	})
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *SegmentUpsertOne) UpdateUpdatedAt() *SegmentUpsertOne {
+	return u.Update(func(s *SegmentUpsert) {
+		s.UpdateUpdatedAt()
+	})
+}
+
 // SetName sets the "name" field.
 func (u *SegmentUpsertOne) SetName(v string) *SegmentUpsertOne {
 	return u.Update(func(s *SegmentUpsert) {
@@ -424,20 +438,6 @@ func (u *SegmentUpsertOne) SetWorkspaceID(v int64) *SegmentUpsertOne {
 func (u *SegmentUpsertOne) UpdateWorkspaceID() *SegmentUpsertOne {
 	return u.Update(func(s *SegmentUpsert) {
 		s.UpdateWorkspaceID()
-	})
-}
-
-// SetUpdatedAt sets the "updated_at" field.
-func (u *SegmentUpsertOne) SetUpdatedAt(v time.Time) *SegmentUpsertOne {
-	return u.Update(func(s *SegmentUpsert) {
-		s.SetUpdatedAt(v)
-	})
-}
-
-// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
-func (u *SegmentUpsertOne) UpdateUpdatedAt() *SegmentUpsertOne {
-	return u.Update(func(s *SegmentUpsert) {
-		s.UpdateUpdatedAt()
 	})
 }
 
@@ -576,7 +576,7 @@ func (_c *SegmentCreateBulk) ExecX(ctx context.Context) {
 //		// Override some of the fields with custom
 //		// update values.
 //		Update(func(u *ent.SegmentUpsert) {
-//			SetName(v+v).
+//			SetCreatedAt(v+v).
 //		}).
 //		Exec(ctx)
 func (_c *SegmentCreateBulk) OnConflict(opts ...sql.ConflictOption) *SegmentUpsertBulk {
@@ -658,6 +658,20 @@ func (u *SegmentUpsertBulk) Update(set func(*SegmentUpsert)) *SegmentUpsertBulk 
 	return u
 }
 
+// SetUpdatedAt sets the "updated_at" field.
+func (u *SegmentUpsertBulk) SetUpdatedAt(v time.Time) *SegmentUpsertBulk {
+	return u.Update(func(s *SegmentUpsert) {
+		s.SetUpdatedAt(v)
+	})
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *SegmentUpsertBulk) UpdateUpdatedAt() *SegmentUpsertBulk {
+	return u.Update(func(s *SegmentUpsert) {
+		s.UpdateUpdatedAt()
+	})
+}
+
 // SetName sets the "name" field.
 func (u *SegmentUpsertBulk) SetName(v string) *SegmentUpsertBulk {
 	return u.Update(func(s *SegmentUpsert) {
@@ -704,20 +718,6 @@ func (u *SegmentUpsertBulk) SetWorkspaceID(v int64) *SegmentUpsertBulk {
 func (u *SegmentUpsertBulk) UpdateWorkspaceID() *SegmentUpsertBulk {
 	return u.Update(func(s *SegmentUpsert) {
 		s.UpdateWorkspaceID()
-	})
-}
-
-// SetUpdatedAt sets the "updated_at" field.
-func (u *SegmentUpsertBulk) SetUpdatedAt(v time.Time) *SegmentUpsertBulk {
-	return u.Update(func(s *SegmentUpsert) {
-		s.SetUpdatedAt(v)
-	})
-}
-
-// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
-func (u *SegmentUpsertBulk) UpdateUpdatedAt() *SegmentUpsertBulk {
-	return u.Update(func(s *SegmentUpsert) {
-		s.UpdateUpdatedAt()
 	})
 }
 

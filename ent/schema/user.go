@@ -1,8 +1,6 @@
 package schema
 
 import (
-	"time"
-
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/entsql"
 	"entgo.io/ent/schema"
@@ -18,6 +16,10 @@ func (User) Annotations() []schema.Annotation {
 	return []schema.Annotation{
 		entsql.Annotation{Table: "users"},
 	}
+}
+
+func (User) Mixin() []ent.Mixin {
+	return []ent.Mixin{TimeMixin{}}
 }
 
 func (User) Fields() []ent.Field {
@@ -38,12 +40,6 @@ func (User) Fields() []ent.Field {
 		field.Time("email_verified_at").
 			Optional().
 			Nillable(),
-		field.Time("updated_at").
-			Default(time.Now).
-			UpdateDefault(time.Now),
-		field.Time("created_at").
-			Default(time.Now).
-			Immutable(),
 	}
 }
 

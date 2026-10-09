@@ -23,6 +23,34 @@ type SuppressionCreate struct {
 	conflict []sql.ConflictOption
 }
 
+// SetCreatedAt sets the "created_at" field.
+func (_c *SuppressionCreate) SetCreatedAt(v time.Time) *SuppressionCreate {
+	_c.mutation.SetCreatedAt(v)
+	return _c
+}
+
+// SetNillableCreatedAt sets the "created_at" field if the given value is not nil.
+func (_c *SuppressionCreate) SetNillableCreatedAt(v *time.Time) *SuppressionCreate {
+	if v != nil {
+		_c.SetCreatedAt(*v)
+	}
+	return _c
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (_c *SuppressionCreate) SetUpdatedAt(v time.Time) *SuppressionCreate {
+	_c.mutation.SetUpdatedAt(v)
+	return _c
+}
+
+// SetNillableUpdatedAt sets the "updated_at" field if the given value is not nil.
+func (_c *SuppressionCreate) SetNillableUpdatedAt(v *time.Time) *SuppressionCreate {
+	if v != nil {
+		_c.SetUpdatedAt(*v)
+	}
+	return _c
+}
+
 // SetChannel sets the "channel" field.
 func (_c *SuppressionCreate) SetChannel(v suppression.Channel) *SuppressionCreate {
 	_c.mutation.SetChannel(v)
@@ -77,34 +105,6 @@ func (_c *SuppressionCreate) SetWorkspaceID(v int64) *SuppressionCreate {
 	return _c
 }
 
-// SetCreatedAt sets the "created_at" field.
-func (_c *SuppressionCreate) SetCreatedAt(v time.Time) *SuppressionCreate {
-	_c.mutation.SetCreatedAt(v)
-	return _c
-}
-
-// SetNillableCreatedAt sets the "created_at" field if the given value is not nil.
-func (_c *SuppressionCreate) SetNillableCreatedAt(v *time.Time) *SuppressionCreate {
-	if v != nil {
-		_c.SetCreatedAt(*v)
-	}
-	return _c
-}
-
-// SetUpdatedAt sets the "updated_at" field.
-func (_c *SuppressionCreate) SetUpdatedAt(v time.Time) *SuppressionCreate {
-	_c.mutation.SetUpdatedAt(v)
-	return _c
-}
-
-// SetNillableUpdatedAt sets the "updated_at" field if the given value is not nil.
-func (_c *SuppressionCreate) SetNillableUpdatedAt(v *time.Time) *SuppressionCreate {
-	if v != nil {
-		_c.SetUpdatedAt(*v)
-	}
-	return _c
-}
-
 // SetID sets the "id" field.
 func (_c *SuppressionCreate) SetID(v int64) *SuppressionCreate {
 	_c.mutation.SetID(v)
@@ -151,14 +151,6 @@ func (_c *SuppressionCreate) ExecX(ctx context.Context) {
 
 // defaults sets the default values of the builder before save.
 func (_c *SuppressionCreate) defaults() {
-	if _, ok := _c.mutation.Channel(); !ok {
-		v := suppression.DefaultChannel
-		_c.mutation.SetChannel(v)
-	}
-	if _, ok := _c.mutation.Reason(); !ok {
-		v := suppression.DefaultReason
-		_c.mutation.SetReason(v)
-	}
 	if _, ok := _c.mutation.CreatedAt(); !ok {
 		v := suppression.DefaultCreatedAt()
 		_c.mutation.SetCreatedAt(v)
@@ -167,10 +159,24 @@ func (_c *SuppressionCreate) defaults() {
 		v := suppression.DefaultUpdatedAt()
 		_c.mutation.SetUpdatedAt(v)
 	}
+	if _, ok := _c.mutation.Channel(); !ok {
+		v := suppression.DefaultChannel
+		_c.mutation.SetChannel(v)
+	}
+	if _, ok := _c.mutation.Reason(); !ok {
+		v := suppression.DefaultReason
+		_c.mutation.SetReason(v)
+	}
 }
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *SuppressionCreate) check() error {
+	if _, ok := _c.mutation.CreatedAt(); !ok {
+		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "Suppression.created_at"`)}
+	}
+	if _, ok := _c.mutation.UpdatedAt(); !ok {
+		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "Suppression.updated_at"`)}
+	}
 	if _, ok := _c.mutation.Channel(); !ok {
 		return &ValidationError{Name: "channel", err: errors.New(`ent: missing required field "Suppression.channel"`)}
 	}
@@ -197,12 +203,6 @@ func (_c *SuppressionCreate) check() error {
 	}
 	if _, ok := _c.mutation.WorkspaceID(); !ok {
 		return &ValidationError{Name: "workspace_id", err: errors.New(`ent: missing required field "Suppression.workspace_id"`)}
-	}
-	if _, ok := _c.mutation.CreatedAt(); !ok {
-		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "Suppression.created_at"`)}
-	}
-	if _, ok := _c.mutation.UpdatedAt(); !ok {
-		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "Suppression.updated_at"`)}
 	}
 	if len(_c.mutation.WorkspaceIDs()) == 0 {
 		return &ValidationError{Name: "workspace", err: errors.New(`ent: missing required edge "Suppression.workspace"`)}
@@ -240,6 +240,14 @@ func (_c *SuppressionCreate) createSpec() (*Suppression, *sqlgraph.CreateSpec) {
 		_node.ID = id
 		_spec.ID.Value = id
 	}
+	if value, ok := _c.mutation.CreatedAt(); ok {
+		_spec.SetField(suppression.FieldCreatedAt, field.TypeTime, value)
+		_node.CreatedAt = value
+	}
+	if value, ok := _c.mutation.UpdatedAt(); ok {
+		_spec.SetField(suppression.FieldUpdatedAt, field.TypeTime, value)
+		_node.UpdatedAt = value
+	}
 	if value, ok := _c.mutation.Channel(); ok {
 		_spec.SetField(suppression.FieldChannel, field.TypeEnum, value)
 		_node.Channel = value
@@ -255,14 +263,6 @@ func (_c *SuppressionCreate) createSpec() (*Suppression, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.ContactID(); ok {
 		_spec.SetField(suppression.FieldContactID, field.TypeInt64, value)
 		_node.ContactID = &value
-	}
-	if value, ok := _c.mutation.CreatedAt(); ok {
-		_spec.SetField(suppression.FieldCreatedAt, field.TypeTime, value)
-		_node.CreatedAt = value
-	}
-	if value, ok := _c.mutation.UpdatedAt(); ok {
-		_spec.SetField(suppression.FieldUpdatedAt, field.TypeTime, value)
-		_node.UpdatedAt = value
 	}
 	if nodes := _c.mutation.WorkspaceIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -288,7 +288,7 @@ func (_c *SuppressionCreate) createSpec() (*Suppression, *sqlgraph.CreateSpec) {
 // of the `INSERT` statement. For example:
 //
 //	client.Suppression.Create().
-//		SetChannel(v).
+//		SetCreatedAt(v).
 //		OnConflict(
 //			// Update the row with the new values
 //			// the was proposed for insertion.
@@ -297,7 +297,7 @@ func (_c *SuppressionCreate) createSpec() (*Suppression, *sqlgraph.CreateSpec) {
 //		// Override some of the fields with custom
 //		// update values.
 //		Update(func(u *ent.SuppressionUpsert) {
-//			SetChannel(v+v).
+//			SetCreatedAt(v+v).
 //		}).
 //		Exec(ctx)
 func (_c *SuppressionCreate) OnConflict(opts ...sql.ConflictOption) *SuppressionUpsertOne {
@@ -332,6 +332,18 @@ type (
 		*sql.UpdateSet
 	}
 )
+
+// SetUpdatedAt sets the "updated_at" field.
+func (u *SuppressionUpsert) SetUpdatedAt(v time.Time) *SuppressionUpsert {
+	u.Set(suppression.FieldUpdatedAt, v)
+	return u
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *SuppressionUpsert) UpdateUpdatedAt() *SuppressionUpsert {
+	u.SetExcluded(suppression.FieldUpdatedAt)
+	return u
+}
 
 // SetChannel sets the "channel" field.
 func (u *SuppressionUpsert) SetChannel(v suppression.Channel) *SuppressionUpsert {
@@ -405,18 +417,6 @@ func (u *SuppressionUpsert) UpdateWorkspaceID() *SuppressionUpsert {
 	return u
 }
 
-// SetUpdatedAt sets the "updated_at" field.
-func (u *SuppressionUpsert) SetUpdatedAt(v time.Time) *SuppressionUpsert {
-	u.Set(suppression.FieldUpdatedAt, v)
-	return u
-}
-
-// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
-func (u *SuppressionUpsert) UpdateUpdatedAt() *SuppressionUpsert {
-	u.SetExcluded(suppression.FieldUpdatedAt)
-	return u
-}
-
 // UpdateNewValues updates the mutable fields using the new values that were set on create except the ID field.
 // Using this option is equivalent to using:
 //
@@ -466,6 +466,20 @@ func (u *SuppressionUpsertOne) Update(set func(*SuppressionUpsert)) *Suppression
 		set(&SuppressionUpsert{UpdateSet: update})
 	}))
 	return u
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (u *SuppressionUpsertOne) SetUpdatedAt(v time.Time) *SuppressionUpsertOne {
+	return u.Update(func(s *SuppressionUpsert) {
+		s.SetUpdatedAt(v)
+	})
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *SuppressionUpsertOne) UpdateUpdatedAt() *SuppressionUpsertOne {
+	return u.Update(func(s *SuppressionUpsert) {
+		s.UpdateUpdatedAt()
+	})
 }
 
 // SetChannel sets the "channel" field.
@@ -549,20 +563,6 @@ func (u *SuppressionUpsertOne) SetWorkspaceID(v int64) *SuppressionUpsertOne {
 func (u *SuppressionUpsertOne) UpdateWorkspaceID() *SuppressionUpsertOne {
 	return u.Update(func(s *SuppressionUpsert) {
 		s.UpdateWorkspaceID()
-	})
-}
-
-// SetUpdatedAt sets the "updated_at" field.
-func (u *SuppressionUpsertOne) SetUpdatedAt(v time.Time) *SuppressionUpsertOne {
-	return u.Update(func(s *SuppressionUpsert) {
-		s.SetUpdatedAt(v)
-	})
-}
-
-// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
-func (u *SuppressionUpsertOne) UpdateUpdatedAt() *SuppressionUpsertOne {
-	return u.Update(func(s *SuppressionUpsert) {
-		s.UpdateUpdatedAt()
 	})
 }
 
@@ -701,7 +701,7 @@ func (_c *SuppressionCreateBulk) ExecX(ctx context.Context) {
 //		// Override some of the fields with custom
 //		// update values.
 //		Update(func(u *ent.SuppressionUpsert) {
-//			SetChannel(v+v).
+//			SetCreatedAt(v+v).
 //		}).
 //		Exec(ctx)
 func (_c *SuppressionCreateBulk) OnConflict(opts ...sql.ConflictOption) *SuppressionUpsertBulk {
@@ -781,6 +781,20 @@ func (u *SuppressionUpsertBulk) Update(set func(*SuppressionUpsert)) *Suppressio
 		set(&SuppressionUpsert{UpdateSet: update})
 	}))
 	return u
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (u *SuppressionUpsertBulk) SetUpdatedAt(v time.Time) *SuppressionUpsertBulk {
+	return u.Update(func(s *SuppressionUpsert) {
+		s.SetUpdatedAt(v)
+	})
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *SuppressionUpsertBulk) UpdateUpdatedAt() *SuppressionUpsertBulk {
+	return u.Update(func(s *SuppressionUpsert) {
+		s.UpdateUpdatedAt()
+	})
 }
 
 // SetChannel sets the "channel" field.
@@ -864,20 +878,6 @@ func (u *SuppressionUpsertBulk) SetWorkspaceID(v int64) *SuppressionUpsertBulk {
 func (u *SuppressionUpsertBulk) UpdateWorkspaceID() *SuppressionUpsertBulk {
 	return u.Update(func(s *SuppressionUpsert) {
 		s.UpdateWorkspaceID()
-	})
-}
-
-// SetUpdatedAt sets the "updated_at" field.
-func (u *SuppressionUpsertBulk) SetUpdatedAt(v time.Time) *SuppressionUpsertBulk {
-	return u.Update(func(s *SuppressionUpsert) {
-		s.SetUpdatedAt(v)
-	})
-}
-
-// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
-func (u *SuppressionUpsertBulk) UpdateUpdatedAt() *SuppressionUpsertBulk {
-	return u.Update(func(s *SuppressionUpsert) {
-		s.UpdateUpdatedAt()
 	})
 }
 

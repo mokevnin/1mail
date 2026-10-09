@@ -31,6 +31,12 @@ func (_u *ApiTokenUpdate) Where(ps ...predicate.ApiToken) *ApiTokenUpdate {
 	return _u
 }
 
+// SetUpdatedAt sets the "updated_at" field.
+func (_u *ApiTokenUpdate) SetUpdatedAt(v time.Time) *ApiTokenUpdate {
+	_u.mutation.SetUpdatedAt(v)
+	return _u
+}
+
 // SetName sets the "name" field.
 func (_u *ApiTokenUpdate) SetName(v string) *ApiTokenUpdate {
 	_u.mutation.SetName(v)
@@ -128,12 +134,6 @@ func (_u *ApiTokenUpdate) SetNillableLastUsedAt(v *time.Time) *ApiTokenUpdate {
 // ClearLastUsedAt clears the value of the "last_used_at" field.
 func (_u *ApiTokenUpdate) ClearLastUsedAt() *ApiTokenUpdate {
 	_u.mutation.ClearLastUsedAt()
-	return _u
-}
-
-// SetUpdatedAt sets the "updated_at" field.
-func (_u *ApiTokenUpdate) SetUpdatedAt(v time.Time) *ApiTokenUpdate {
-	_u.mutation.SetUpdatedAt(v)
 	return _u
 }
 
@@ -239,6 +239,9 @@ func (_u *ApiTokenUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 			}
 		}
 	}
+	if value, ok := _u.mutation.UpdatedAt(); ok {
+		_spec.SetField(apitoken.FieldUpdatedAt, field.TypeTime, value)
+	}
 	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(apitoken.FieldName, field.TypeString, value)
 	}
@@ -270,9 +273,6 @@ func (_u *ApiTokenUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	}
 	if _u.mutation.LastUsedAtCleared() {
 		_spec.ClearField(apitoken.FieldLastUsedAt, field.TypeTime)
-	}
-	if value, ok := _u.mutation.UpdatedAt(); ok {
-		_spec.SetField(apitoken.FieldUpdatedAt, field.TypeTime, value)
 	}
 	if _u.mutation.WorkspaceCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -323,6 +323,12 @@ type ApiTokenUpdateOne struct {
 	hooks     []Hook
 	mutation  *ApiTokenMutation
 	modifiers []func(*sql.UpdateBuilder)
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (_u *ApiTokenUpdateOne) SetUpdatedAt(v time.Time) *ApiTokenUpdateOne {
+	_u.mutation.SetUpdatedAt(v)
+	return _u
 }
 
 // SetName sets the "name" field.
@@ -422,12 +428,6 @@ func (_u *ApiTokenUpdateOne) SetNillableLastUsedAt(v *time.Time) *ApiTokenUpdate
 // ClearLastUsedAt clears the value of the "last_used_at" field.
 func (_u *ApiTokenUpdateOne) ClearLastUsedAt() *ApiTokenUpdateOne {
 	_u.mutation.ClearLastUsedAt()
-	return _u
-}
-
-// SetUpdatedAt sets the "updated_at" field.
-func (_u *ApiTokenUpdateOne) SetUpdatedAt(v time.Time) *ApiTokenUpdateOne {
-	_u.mutation.SetUpdatedAt(v)
 	return _u
 }
 
@@ -563,6 +563,9 @@ func (_u *ApiTokenUpdateOne) sqlSave(ctx context.Context) (_node *ApiToken, err 
 			}
 		}
 	}
+	if value, ok := _u.mutation.UpdatedAt(); ok {
+		_spec.SetField(apitoken.FieldUpdatedAt, field.TypeTime, value)
+	}
 	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(apitoken.FieldName, field.TypeString, value)
 	}
@@ -594,9 +597,6 @@ func (_u *ApiTokenUpdateOne) sqlSave(ctx context.Context) (_node *ApiToken, err 
 	}
 	if _u.mutation.LastUsedAtCleared() {
 		_spec.ClearField(apitoken.FieldLastUsedAt, field.TypeTime)
-	}
-	if value, ok := _u.mutation.UpdatedAt(); ok {
-		_spec.SetField(apitoken.FieldUpdatedAt, field.TypeTime, value)
 	}
 	if _u.mutation.WorkspaceCleared() {
 		edge := &sqlgraph.EdgeSpec{

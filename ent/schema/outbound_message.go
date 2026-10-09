@@ -29,6 +29,10 @@ func (OutboundMessage) Annotations() []schema.Annotation {
 	}
 }
 
+func (OutboundMessage) Mixin() []ent.Mixin {
+	return []ent.Mixin{TimeMixin{}}
+}
+
 func (OutboundMessage) Fields() []ent.Field {
 	return []ent.Field{
 		field.Int64("id").
@@ -94,12 +98,6 @@ func (OutboundMessage) Fields() []ent.Field {
 		field.Int("automation_step").Optional().Nillable(),
 		// The Template a transactional send referenced (ADR 0005).
 		field.Int64("template_id").Optional().Nillable(),
-		field.Time("created_at").
-			Default(time.Now).
-			Immutable(),
-		field.Time("updated_at").
-			Default(time.Now).
-			UpdateDefault(time.Now),
 	}
 }
 

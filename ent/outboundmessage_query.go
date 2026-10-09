@@ -300,12 +300,12 @@ func (_q *OutboundMessageQuery) WithWorkspace(opts ...func(*WorkspaceQuery)) *Ou
 // Example:
 //
 //	var v []struct {
-//		WorkspaceID int64 `json:"workspace_id,omitempty"`
+//		CreatedAt time.Time `json:"created_at,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.OutboundMessage.Query().
-//		GroupBy(outboundmessage.FieldWorkspaceID).
+//		GroupBy(outboundmessage.FieldCreatedAt).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
 func (_q *OutboundMessageQuery) GroupBy(field string, fields ...string) *OutboundMessageGroupBy {
@@ -323,11 +323,11 @@ func (_q *OutboundMessageQuery) GroupBy(field string, fields ...string) *Outboun
 // Example:
 //
 //	var v []struct {
-//		WorkspaceID int64 `json:"workspace_id,omitempty"`
+//		CreatedAt time.Time `json:"created_at,omitempty"`
 //	}
 //
 //	client.OutboundMessage.Query().
-//		Select(outboundmessage.FieldWorkspaceID).
+//		Select(outboundmessage.FieldCreatedAt).
 //		Scan(ctx, &v)
 func (_q *OutboundMessageQuery) Select(fields ...string) *OutboundMessageSelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)

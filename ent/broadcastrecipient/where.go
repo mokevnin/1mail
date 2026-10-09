@@ -55,6 +55,16 @@ func IDLTE(id int64) predicate.BroadcastRecipient {
 	return predicate.BroadcastRecipient(sql.FieldLTE(FieldID, id))
 }
 
+// CreatedAt applies equality check predicate on the "created_at" field. It's identical to CreatedAtEQ.
+func CreatedAt(v time.Time) predicate.BroadcastRecipient {
+	return predicate.BroadcastRecipient(sql.FieldEQ(FieldCreatedAt, v))
+}
+
+// UpdatedAt applies equality check predicate on the "updated_at" field. It's identical to UpdatedAtEQ.
+func UpdatedAt(v time.Time) predicate.BroadcastRecipient {
+	return predicate.BroadcastRecipient(sql.FieldEQ(FieldUpdatedAt, v))
+}
+
 // BroadcastID applies equality check predicate on the "broadcast_id" field. It's identical to BroadcastIDEQ.
 func BroadcastID(v int64) predicate.BroadcastRecipient {
 	return predicate.BroadcastRecipient(sql.FieldEQ(FieldBroadcastID, v))
@@ -95,14 +105,84 @@ func ClickedAt(v time.Time) predicate.BroadcastRecipient {
 	return predicate.BroadcastRecipient(sql.FieldEQ(FieldClickedAt, v))
 }
 
-// CreatedAt applies equality check predicate on the "created_at" field. It's identical to CreatedAtEQ.
-func CreatedAt(v time.Time) predicate.BroadcastRecipient {
+// CreatedAtEQ applies the EQ predicate on the "created_at" field.
+func CreatedAtEQ(v time.Time) predicate.BroadcastRecipient {
 	return predicate.BroadcastRecipient(sql.FieldEQ(FieldCreatedAt, v))
 }
 
-// UpdatedAt applies equality check predicate on the "updated_at" field. It's identical to UpdatedAtEQ.
-func UpdatedAt(v time.Time) predicate.BroadcastRecipient {
+// CreatedAtNEQ applies the NEQ predicate on the "created_at" field.
+func CreatedAtNEQ(v time.Time) predicate.BroadcastRecipient {
+	return predicate.BroadcastRecipient(sql.FieldNEQ(FieldCreatedAt, v))
+}
+
+// CreatedAtIn applies the In predicate on the "created_at" field.
+func CreatedAtIn(vs ...time.Time) predicate.BroadcastRecipient {
+	return predicate.BroadcastRecipient(sql.FieldIn(FieldCreatedAt, vs...))
+}
+
+// CreatedAtNotIn applies the NotIn predicate on the "created_at" field.
+func CreatedAtNotIn(vs ...time.Time) predicate.BroadcastRecipient {
+	return predicate.BroadcastRecipient(sql.FieldNotIn(FieldCreatedAt, vs...))
+}
+
+// CreatedAtGT applies the GT predicate on the "created_at" field.
+func CreatedAtGT(v time.Time) predicate.BroadcastRecipient {
+	return predicate.BroadcastRecipient(sql.FieldGT(FieldCreatedAt, v))
+}
+
+// CreatedAtGTE applies the GTE predicate on the "created_at" field.
+func CreatedAtGTE(v time.Time) predicate.BroadcastRecipient {
+	return predicate.BroadcastRecipient(sql.FieldGTE(FieldCreatedAt, v))
+}
+
+// CreatedAtLT applies the LT predicate on the "created_at" field.
+func CreatedAtLT(v time.Time) predicate.BroadcastRecipient {
+	return predicate.BroadcastRecipient(sql.FieldLT(FieldCreatedAt, v))
+}
+
+// CreatedAtLTE applies the LTE predicate on the "created_at" field.
+func CreatedAtLTE(v time.Time) predicate.BroadcastRecipient {
+	return predicate.BroadcastRecipient(sql.FieldLTE(FieldCreatedAt, v))
+}
+
+// UpdatedAtEQ applies the EQ predicate on the "updated_at" field.
+func UpdatedAtEQ(v time.Time) predicate.BroadcastRecipient {
 	return predicate.BroadcastRecipient(sql.FieldEQ(FieldUpdatedAt, v))
+}
+
+// UpdatedAtNEQ applies the NEQ predicate on the "updated_at" field.
+func UpdatedAtNEQ(v time.Time) predicate.BroadcastRecipient {
+	return predicate.BroadcastRecipient(sql.FieldNEQ(FieldUpdatedAt, v))
+}
+
+// UpdatedAtIn applies the In predicate on the "updated_at" field.
+func UpdatedAtIn(vs ...time.Time) predicate.BroadcastRecipient {
+	return predicate.BroadcastRecipient(sql.FieldIn(FieldUpdatedAt, vs...))
+}
+
+// UpdatedAtNotIn applies the NotIn predicate on the "updated_at" field.
+func UpdatedAtNotIn(vs ...time.Time) predicate.BroadcastRecipient {
+	return predicate.BroadcastRecipient(sql.FieldNotIn(FieldUpdatedAt, vs...))
+}
+
+// UpdatedAtGT applies the GT predicate on the "updated_at" field.
+func UpdatedAtGT(v time.Time) predicate.BroadcastRecipient {
+	return predicate.BroadcastRecipient(sql.FieldGT(FieldUpdatedAt, v))
+}
+
+// UpdatedAtGTE applies the GTE predicate on the "updated_at" field.
+func UpdatedAtGTE(v time.Time) predicate.BroadcastRecipient {
+	return predicate.BroadcastRecipient(sql.FieldGTE(FieldUpdatedAt, v))
+}
+
+// UpdatedAtLT applies the LT predicate on the "updated_at" field.
+func UpdatedAtLT(v time.Time) predicate.BroadcastRecipient {
+	return predicate.BroadcastRecipient(sql.FieldLT(FieldUpdatedAt, v))
+}
+
+// UpdatedAtLTE applies the LTE predicate on the "updated_at" field.
+func UpdatedAtLTE(v time.Time) predicate.BroadcastRecipient {
+	return predicate.BroadcastRecipient(sql.FieldLTE(FieldUpdatedAt, v))
 }
 
 // BroadcastIDEQ applies the EQ predicate on the "broadcast_id" field.
@@ -478,86 +558,6 @@ func ClickedAtIsNil() predicate.BroadcastRecipient {
 // ClickedAtNotNil applies the NotNil predicate on the "clicked_at" field.
 func ClickedAtNotNil() predicate.BroadcastRecipient {
 	return predicate.BroadcastRecipient(sql.FieldNotNull(FieldClickedAt))
-}
-
-// CreatedAtEQ applies the EQ predicate on the "created_at" field.
-func CreatedAtEQ(v time.Time) predicate.BroadcastRecipient {
-	return predicate.BroadcastRecipient(sql.FieldEQ(FieldCreatedAt, v))
-}
-
-// CreatedAtNEQ applies the NEQ predicate on the "created_at" field.
-func CreatedAtNEQ(v time.Time) predicate.BroadcastRecipient {
-	return predicate.BroadcastRecipient(sql.FieldNEQ(FieldCreatedAt, v))
-}
-
-// CreatedAtIn applies the In predicate on the "created_at" field.
-func CreatedAtIn(vs ...time.Time) predicate.BroadcastRecipient {
-	return predicate.BroadcastRecipient(sql.FieldIn(FieldCreatedAt, vs...))
-}
-
-// CreatedAtNotIn applies the NotIn predicate on the "created_at" field.
-func CreatedAtNotIn(vs ...time.Time) predicate.BroadcastRecipient {
-	return predicate.BroadcastRecipient(sql.FieldNotIn(FieldCreatedAt, vs...))
-}
-
-// CreatedAtGT applies the GT predicate on the "created_at" field.
-func CreatedAtGT(v time.Time) predicate.BroadcastRecipient {
-	return predicate.BroadcastRecipient(sql.FieldGT(FieldCreatedAt, v))
-}
-
-// CreatedAtGTE applies the GTE predicate on the "created_at" field.
-func CreatedAtGTE(v time.Time) predicate.BroadcastRecipient {
-	return predicate.BroadcastRecipient(sql.FieldGTE(FieldCreatedAt, v))
-}
-
-// CreatedAtLT applies the LT predicate on the "created_at" field.
-func CreatedAtLT(v time.Time) predicate.BroadcastRecipient {
-	return predicate.BroadcastRecipient(sql.FieldLT(FieldCreatedAt, v))
-}
-
-// CreatedAtLTE applies the LTE predicate on the "created_at" field.
-func CreatedAtLTE(v time.Time) predicate.BroadcastRecipient {
-	return predicate.BroadcastRecipient(sql.FieldLTE(FieldCreatedAt, v))
-}
-
-// UpdatedAtEQ applies the EQ predicate on the "updated_at" field.
-func UpdatedAtEQ(v time.Time) predicate.BroadcastRecipient {
-	return predicate.BroadcastRecipient(sql.FieldEQ(FieldUpdatedAt, v))
-}
-
-// UpdatedAtNEQ applies the NEQ predicate on the "updated_at" field.
-func UpdatedAtNEQ(v time.Time) predicate.BroadcastRecipient {
-	return predicate.BroadcastRecipient(sql.FieldNEQ(FieldUpdatedAt, v))
-}
-
-// UpdatedAtIn applies the In predicate on the "updated_at" field.
-func UpdatedAtIn(vs ...time.Time) predicate.BroadcastRecipient {
-	return predicate.BroadcastRecipient(sql.FieldIn(FieldUpdatedAt, vs...))
-}
-
-// UpdatedAtNotIn applies the NotIn predicate on the "updated_at" field.
-func UpdatedAtNotIn(vs ...time.Time) predicate.BroadcastRecipient {
-	return predicate.BroadcastRecipient(sql.FieldNotIn(FieldUpdatedAt, vs...))
-}
-
-// UpdatedAtGT applies the GT predicate on the "updated_at" field.
-func UpdatedAtGT(v time.Time) predicate.BroadcastRecipient {
-	return predicate.BroadcastRecipient(sql.FieldGT(FieldUpdatedAt, v))
-}
-
-// UpdatedAtGTE applies the GTE predicate on the "updated_at" field.
-func UpdatedAtGTE(v time.Time) predicate.BroadcastRecipient {
-	return predicate.BroadcastRecipient(sql.FieldGTE(FieldUpdatedAt, v))
-}
-
-// UpdatedAtLT applies the LT predicate on the "updated_at" field.
-func UpdatedAtLT(v time.Time) predicate.BroadcastRecipient {
-	return predicate.BroadcastRecipient(sql.FieldLT(FieldUpdatedAt, v))
-}
-
-// UpdatedAtLTE applies the LTE predicate on the "updated_at" field.
-func UpdatedAtLTE(v time.Time) predicate.BroadcastRecipient {
-	return predicate.BroadcastRecipient(sql.FieldLTE(FieldUpdatedAt, v))
 }
 
 // HasBroadcast applies the HasEdge predicate on the "broadcast" edge.

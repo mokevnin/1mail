@@ -1,8 +1,6 @@
 package schema
 
 import (
-	"time"
-
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/entsql"
 	"entgo.io/ent/schema"
@@ -18,6 +16,10 @@ func (Workspace) Annotations() []schema.Annotation {
 	return []schema.Annotation{
 		entsql.Annotation{Table: "workspaces"},
 	}
+}
+
+func (Workspace) Mixin() []ent.Mixin {
+	return []ent.Mixin{TimeMixin{}}
 }
 
 func (Workspace) Fields() []ent.Field {
@@ -73,12 +75,6 @@ func (Workspace) Fields() []ent.Field {
 		field.String("suspension_reason").
 			Optional().
 			Nillable(),
-		field.Time("created_at").
-			Default(time.Now).
-			Immutable(),
-		field.Time("updated_at").
-			Default(time.Now).
-			UpdateDefault(time.Now),
 	}
 }
 

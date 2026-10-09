@@ -19,6 +19,10 @@ type AutomationRun struct {
 	config `json:"-"`
 	// ID of the ent.
 	ID int64 `json:"id,omitempty"`
+	// CreatedAt holds the value of the "created_at" field.
+	CreatedAt time.Time `json:"created_at,omitempty"`
+	// UpdatedAt holds the value of the "updated_at" field.
+	UpdatedAt time.Time `json:"updated_at,omitempty"`
 	// AutomationID holds the value of the "automation_id" field.
 	AutomationID int64 `json:"automation_id,omitempty"`
 	// ContactID holds the value of the "contact_id" field.
@@ -31,10 +35,6 @@ type AutomationRun struct {
 	CurrentStep int `json:"current_step,omitempty"`
 	// ResumeAt holds the value of the "resume_at" field.
 	ResumeAt *time.Time `json:"resume_at,omitempty"`
-	// CreatedAt holds the value of the "created_at" field.
-	CreatedAt time.Time `json:"created_at,omitempty"`
-	// UpdatedAt holds the value of the "updated_at" field.
-	UpdatedAt time.Time `json:"updated_at,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the AutomationRunQuery when eager-loading is set.
 	Edges        AutomationRunEdges `json:"edges"`
@@ -83,7 +83,7 @@ func (*AutomationRun) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullInt64)
 		case automationrun.FieldStatus:
 			values[i] = new(sql.NullString)
-		case automationrun.FieldResumeAt, automationrun.FieldCreatedAt, automationrun.FieldUpdatedAt:
+		case automationrun.FieldCreatedAt, automationrun.FieldUpdatedAt, automationrun.FieldResumeAt:
 			values[i] = new(sql.NullTime)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -106,6 +106,18 @@ func (_m *AutomationRun) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field id", value)
 			}
 			_m.ID = int64(value.Int64)
+		case automationrun.FieldCreatedAt:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field created_at", values[i])
+			} else if value.Valid {
+				_m.CreatedAt = value.Time
+			}
+		case automationrun.FieldUpdatedAt:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field updated_at", values[i])
+			} else if value.Valid {
+				_m.UpdatedAt = value.Time
+			}
 		case automationrun.FieldAutomationID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field automation_id", values[i])
@@ -142,18 +154,6 @@ func (_m *AutomationRun) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				_m.ResumeAt = new(time.Time)
 				*_m.ResumeAt = value.Time
-			}
-		case automationrun.FieldCreatedAt:
-			if value, ok := values[i].(*sql.NullTime); !ok {
-				return fmt.Errorf("unexpected type %T for field created_at", values[i])
-			} else if value.Valid {
-				_m.CreatedAt = value.Time
-			}
-		case automationrun.FieldUpdatedAt:
-			if value, ok := values[i].(*sql.NullTime); !ok {
-				return fmt.Errorf("unexpected type %T for field updated_at", values[i])
-			} else if value.Valid {
-				_m.UpdatedAt = value.Time
 			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
@@ -201,6 +201,12 @@ func (_m *AutomationRun) String() string {
 	var builder strings.Builder
 	builder.WriteString("AutomationRun(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
+	builder.WriteString("created_at=")
+	builder.WriteString(_m.CreatedAt.Format(time.ANSIC))
+	builder.WriteString(", ")
+	builder.WriteString("updated_at=")
+	builder.WriteString(_m.UpdatedAt.Format(time.ANSIC))
+	builder.WriteString(", ")
 	builder.WriteString("automation_id=")
 	builder.WriteString(fmt.Sprintf("%v", _m.AutomationID))
 	builder.WriteString(", ")
@@ -220,12 +226,6 @@ func (_m *AutomationRun) String() string {
 		builder.WriteString("resume_at=")
 		builder.WriteString(v.Format(time.ANSIC))
 	}
-	builder.WriteString(", ")
-	builder.WriteString("created_at=")
-	builder.WriteString(_m.CreatedAt.Format(time.ANSIC))
-	builder.WriteString(", ")
-	builder.WriteString("updated_at=")
-	builder.WriteString(_m.UpdatedAt.Format(time.ANSIC))
 	builder.WriteByte(')')
 	return builder.String()
 }

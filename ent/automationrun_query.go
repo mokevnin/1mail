@@ -336,12 +336,12 @@ func (_q *AutomationRunQuery) WithWorkspace(opts ...func(*WorkspaceQuery)) *Auto
 // Example:
 //
 //	var v []struct {
-//		AutomationID int64 `json:"automation_id,omitempty"`
+//		CreatedAt time.Time `json:"created_at,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.AutomationRun.Query().
-//		GroupBy(automationrun.FieldAutomationID).
+//		GroupBy(automationrun.FieldCreatedAt).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
 func (_q *AutomationRunQuery) GroupBy(field string, fields ...string) *AutomationRunGroupBy {
@@ -359,11 +359,11 @@ func (_q *AutomationRunQuery) GroupBy(field string, fields ...string) *Automatio
 // Example:
 //
 //	var v []struct {
-//		AutomationID int64 `json:"automation_id,omitempty"`
+//		CreatedAt time.Time `json:"created_at,omitempty"`
 //	}
 //
 //	client.AutomationRun.Query().
-//		Select(automationrun.FieldAutomationID).
+//		Select(automationrun.FieldCreatedAt).
 //		Scan(ctx, &v)
 func (_q *AutomationRunQuery) Select(fields ...string) *AutomationRunSelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)

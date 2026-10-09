@@ -31,6 +31,12 @@ func (_u *AutomationUpdate) Where(ps ...predicate.Automation) *AutomationUpdate 
 	return _u
 }
 
+// SetUpdatedAt sets the "updated_at" field.
+func (_u *AutomationUpdate) SetUpdatedAt(v time.Time) *AutomationUpdate {
+	_u.mutation.SetUpdatedAt(v)
+	return _u
+}
+
 // SetName sets the "name" field.
 func (_u *AutomationUpdate) SetName(v string) *AutomationUpdate {
 	_u.mutation.SetName(v)
@@ -98,12 +104,6 @@ func (_u *AutomationUpdate) SetNillableWorkspaceID(v *int64) *AutomationUpdate {
 	if v != nil {
 		_u.SetWorkspaceID(*v)
 	}
-	return _u
-}
-
-// SetUpdatedAt sets the "updated_at" field.
-func (_u *AutomationUpdate) SetUpdatedAt(v time.Time) *AutomationUpdate {
-	_u.mutation.SetUpdatedAt(v)
 	return _u
 }
 
@@ -236,6 +236,9 @@ func (_u *AutomationUpdate) sqlSave(ctx context.Context) (_node int, err error) 
 			}
 		}
 	}
+	if value, ok := _u.mutation.UpdatedAt(); ok {
+		_spec.SetField(automation.FieldUpdatedAt, field.TypeTime, value)
+	}
 	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(automation.FieldName, field.TypeString, value)
 	}
@@ -247,9 +250,6 @@ func (_u *AutomationUpdate) sqlSave(ctx context.Context) (_node int, err error) 
 	}
 	if value, ok := _u.mutation.Definition(); ok {
 		_spec.SetField(automation.FieldDefinition, field.TypeString, value)
-	}
-	if value, ok := _u.mutation.UpdatedAt(); ok {
-		_spec.SetField(automation.FieldUpdatedAt, field.TypeTime, value)
 	}
 	if _u.mutation.WorkspaceCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -347,6 +347,12 @@ type AutomationUpdateOne struct {
 	modifiers []func(*sql.UpdateBuilder)
 }
 
+// SetUpdatedAt sets the "updated_at" field.
+func (_u *AutomationUpdateOne) SetUpdatedAt(v time.Time) *AutomationUpdateOne {
+	_u.mutation.SetUpdatedAt(v)
+	return _u
+}
+
 // SetName sets the "name" field.
 func (_u *AutomationUpdateOne) SetName(v string) *AutomationUpdateOne {
 	_u.mutation.SetName(v)
@@ -414,12 +420,6 @@ func (_u *AutomationUpdateOne) SetNillableWorkspaceID(v *int64) *AutomationUpdat
 	if v != nil {
 		_u.SetWorkspaceID(*v)
 	}
-	return _u
-}
-
-// SetUpdatedAt sets the "updated_at" field.
-func (_u *AutomationUpdateOne) SetUpdatedAt(v time.Time) *AutomationUpdateOne {
-	_u.mutation.SetUpdatedAt(v)
 	return _u
 }
 
@@ -582,6 +582,9 @@ func (_u *AutomationUpdateOne) sqlSave(ctx context.Context) (_node *Automation, 
 			}
 		}
 	}
+	if value, ok := _u.mutation.UpdatedAt(); ok {
+		_spec.SetField(automation.FieldUpdatedAt, field.TypeTime, value)
+	}
 	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(automation.FieldName, field.TypeString, value)
 	}
@@ -593,9 +596,6 @@ func (_u *AutomationUpdateOne) sqlSave(ctx context.Context) (_node *Automation, 
 	}
 	if value, ok := _u.mutation.Definition(); ok {
 		_spec.SetField(automation.FieldDefinition, field.TypeString, value)
-	}
-	if value, ok := _u.mutation.UpdatedAt(); ok {
-		_spec.SetField(automation.FieldUpdatedAt, field.TypeTime, value)
 	}
 	if _u.mutation.WorkspaceCleared() {
 		edge := &sqlgraph.EdgeSpec{

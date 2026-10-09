@@ -1,8 +1,6 @@
 package schema
 
 import (
-	"time"
-
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/entsql"
 	"entgo.io/ent/schema"
@@ -24,6 +22,10 @@ func (Integration) Annotations() []schema.Annotation {
 	return []schema.Annotation{
 		entsql.Annotation{Table: "integrations"},
 	}
+}
+
+func (Integration) Mixin() []ent.Mixin {
+	return []ent.Mixin{TimeMixin{}}
 }
 
 func (Integration) Fields() []ent.Field {
@@ -48,12 +50,6 @@ func (Integration) Fields() []ent.Field {
 		field.Bool("is_default").
 			Default(false),
 		field.Int64("workspace_id"),
-		field.Time("created_at").
-			Default(time.Now).
-			Immutable(),
-		field.Time("updated_at").
-			Default(time.Now).
-			UpdateDefault(time.Now),
 	}
 }
 

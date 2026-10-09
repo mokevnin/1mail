@@ -24,6 +24,34 @@ type BroadcastRecipientCreate struct {
 	conflict []sql.ConflictOption
 }
 
+// SetCreatedAt sets the "created_at" field.
+func (_c *BroadcastRecipientCreate) SetCreatedAt(v time.Time) *BroadcastRecipientCreate {
+	_c.mutation.SetCreatedAt(v)
+	return _c
+}
+
+// SetNillableCreatedAt sets the "created_at" field if the given value is not nil.
+func (_c *BroadcastRecipientCreate) SetNillableCreatedAt(v *time.Time) *BroadcastRecipientCreate {
+	if v != nil {
+		_c.SetCreatedAt(*v)
+	}
+	return _c
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (_c *BroadcastRecipientCreate) SetUpdatedAt(v time.Time) *BroadcastRecipientCreate {
+	_c.mutation.SetUpdatedAt(v)
+	return _c
+}
+
+// SetNillableUpdatedAt sets the "updated_at" field if the given value is not nil.
+func (_c *BroadcastRecipientCreate) SetNillableUpdatedAt(v *time.Time) *BroadcastRecipientCreate {
+	if v != nil {
+		_c.SetUpdatedAt(*v)
+	}
+	return _c
+}
+
 // SetBroadcastID sets the "broadcast_id" field.
 func (_c *BroadcastRecipientCreate) SetBroadcastID(v int64) *BroadcastRecipientCreate {
 	_c.mutation.SetBroadcastID(v)
@@ -126,34 +154,6 @@ func (_c *BroadcastRecipientCreate) SetNillableClickedAt(v *time.Time) *Broadcas
 	return _c
 }
 
-// SetCreatedAt sets the "created_at" field.
-func (_c *BroadcastRecipientCreate) SetCreatedAt(v time.Time) *BroadcastRecipientCreate {
-	_c.mutation.SetCreatedAt(v)
-	return _c
-}
-
-// SetNillableCreatedAt sets the "created_at" field if the given value is not nil.
-func (_c *BroadcastRecipientCreate) SetNillableCreatedAt(v *time.Time) *BroadcastRecipientCreate {
-	if v != nil {
-		_c.SetCreatedAt(*v)
-	}
-	return _c
-}
-
-// SetUpdatedAt sets the "updated_at" field.
-func (_c *BroadcastRecipientCreate) SetUpdatedAt(v time.Time) *BroadcastRecipientCreate {
-	_c.mutation.SetUpdatedAt(v)
-	return _c
-}
-
-// SetNillableUpdatedAt sets the "updated_at" field if the given value is not nil.
-func (_c *BroadcastRecipientCreate) SetNillableUpdatedAt(v *time.Time) *BroadcastRecipientCreate {
-	if v != nil {
-		_c.SetUpdatedAt(*v)
-	}
-	return _c
-}
-
 // SetID sets the "id" field.
 func (_c *BroadcastRecipientCreate) SetID(v int64) *BroadcastRecipientCreate {
 	_c.mutation.SetID(v)
@@ -205,10 +205,6 @@ func (_c *BroadcastRecipientCreate) ExecX(ctx context.Context) {
 
 // defaults sets the default values of the builder before save.
 func (_c *BroadcastRecipientCreate) defaults() {
-	if _, ok := _c.mutation.Status(); !ok {
-		v := broadcastrecipient.DefaultStatus
-		_c.mutation.SetStatus(v)
-	}
 	if _, ok := _c.mutation.CreatedAt(); !ok {
 		v := broadcastrecipient.DefaultCreatedAt()
 		_c.mutation.SetCreatedAt(v)
@@ -217,10 +213,20 @@ func (_c *BroadcastRecipientCreate) defaults() {
 		v := broadcastrecipient.DefaultUpdatedAt()
 		_c.mutation.SetUpdatedAt(v)
 	}
+	if _, ok := _c.mutation.Status(); !ok {
+		v := broadcastrecipient.DefaultStatus
+		_c.mutation.SetStatus(v)
+	}
 }
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *BroadcastRecipientCreate) check() error {
+	if _, ok := _c.mutation.CreatedAt(); !ok {
+		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "BroadcastRecipient.created_at"`)}
+	}
+	if _, ok := _c.mutation.UpdatedAt(); !ok {
+		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "BroadcastRecipient.updated_at"`)}
+	}
 	if _, ok := _c.mutation.BroadcastID(); !ok {
 		return &ValidationError{Name: "broadcast_id", err: errors.New(`ent: missing required field "BroadcastRecipient.broadcast_id"`)}
 	}
@@ -237,12 +243,6 @@ func (_c *BroadcastRecipientCreate) check() error {
 		if err := broadcastrecipient.StatusValidator(v); err != nil {
 			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "BroadcastRecipient.status": %w`, err)}
 		}
-	}
-	if _, ok := _c.mutation.CreatedAt(); !ok {
-		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "BroadcastRecipient.created_at"`)}
-	}
-	if _, ok := _c.mutation.UpdatedAt(); !ok {
-		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "BroadcastRecipient.updated_at"`)}
 	}
 	if len(_c.mutation.BroadcastIDs()) == 0 {
 		return &ValidationError{Name: "broadcast", err: errors.New(`ent: missing required edge "BroadcastRecipient.broadcast"`)}
@@ -283,6 +283,14 @@ func (_c *BroadcastRecipientCreate) createSpec() (*BroadcastRecipient, *sqlgraph
 		_node.ID = id
 		_spec.ID.Value = id
 	}
+	if value, ok := _c.mutation.CreatedAt(); ok {
+		_spec.SetField(broadcastrecipient.FieldCreatedAt, field.TypeTime, value)
+		_node.CreatedAt = value
+	}
+	if value, ok := _c.mutation.UpdatedAt(); ok {
+		_spec.SetField(broadcastrecipient.FieldUpdatedAt, field.TypeTime, value)
+		_node.UpdatedAt = value
+	}
 	if value, ok := _c.mutation.ContactID(); ok {
 		_spec.SetField(broadcastrecipient.FieldContactID, field.TypeInt64, value)
 		_node.ContactID = value
@@ -310,14 +318,6 @@ func (_c *BroadcastRecipientCreate) createSpec() (*BroadcastRecipient, *sqlgraph
 	if value, ok := _c.mutation.ClickedAt(); ok {
 		_spec.SetField(broadcastrecipient.FieldClickedAt, field.TypeTime, value)
 		_node.ClickedAt = &value
-	}
-	if value, ok := _c.mutation.CreatedAt(); ok {
-		_spec.SetField(broadcastrecipient.FieldCreatedAt, field.TypeTime, value)
-		_node.CreatedAt = value
-	}
-	if value, ok := _c.mutation.UpdatedAt(); ok {
-		_spec.SetField(broadcastrecipient.FieldUpdatedAt, field.TypeTime, value)
-		_node.UpdatedAt = value
 	}
 	if nodes := _c.mutation.BroadcastIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -360,7 +360,7 @@ func (_c *BroadcastRecipientCreate) createSpec() (*BroadcastRecipient, *sqlgraph
 // of the `INSERT` statement. For example:
 //
 //	client.BroadcastRecipient.Create().
-//		SetBroadcastID(v).
+//		SetCreatedAt(v).
 //		OnConflict(
 //			// Update the row with the new values
 //			// the was proposed for insertion.
@@ -369,7 +369,7 @@ func (_c *BroadcastRecipientCreate) createSpec() (*BroadcastRecipient, *sqlgraph
 //		// Override some of the fields with custom
 //		// update values.
 //		Update(func(u *ent.BroadcastRecipientUpsert) {
-//			SetBroadcastID(v+v).
+//			SetCreatedAt(v+v).
 //		}).
 //		Exec(ctx)
 func (_c *BroadcastRecipientCreate) OnConflict(opts ...sql.ConflictOption) *BroadcastRecipientUpsertOne {
@@ -404,6 +404,18 @@ type (
 		*sql.UpdateSet
 	}
 )
+
+// SetUpdatedAt sets the "updated_at" field.
+func (u *BroadcastRecipientUpsert) SetUpdatedAt(v time.Time) *BroadcastRecipientUpsert {
+	u.Set(broadcastrecipient.FieldUpdatedAt, v)
+	return u
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *BroadcastRecipientUpsert) UpdateUpdatedAt() *BroadcastRecipientUpsert {
+	u.SetExcluded(broadcastrecipient.FieldUpdatedAt)
+	return u
+}
 
 // SetBroadcastID sets the "broadcast_id" field.
 func (u *BroadcastRecipientUpsert) SetBroadcastID(v int64) *BroadcastRecipientUpsert {
@@ -555,18 +567,6 @@ func (u *BroadcastRecipientUpsert) ClearClickedAt() *BroadcastRecipientUpsert {
 	return u
 }
 
-// SetUpdatedAt sets the "updated_at" field.
-func (u *BroadcastRecipientUpsert) SetUpdatedAt(v time.Time) *BroadcastRecipientUpsert {
-	u.Set(broadcastrecipient.FieldUpdatedAt, v)
-	return u
-}
-
-// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
-func (u *BroadcastRecipientUpsert) UpdateUpdatedAt() *BroadcastRecipientUpsert {
-	u.SetExcluded(broadcastrecipient.FieldUpdatedAt)
-	return u
-}
-
 // UpdateNewValues updates the mutable fields using the new values that were set on create except the ID field.
 // Using this option is equivalent to using:
 //
@@ -616,6 +616,20 @@ func (u *BroadcastRecipientUpsertOne) Update(set func(*BroadcastRecipientUpsert)
 		set(&BroadcastRecipientUpsert{UpdateSet: update})
 	}))
 	return u
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (u *BroadcastRecipientUpsertOne) SetUpdatedAt(v time.Time) *BroadcastRecipientUpsertOne {
+	return u.Update(func(s *BroadcastRecipientUpsert) {
+		s.SetUpdatedAt(v)
+	})
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *BroadcastRecipientUpsertOne) UpdateUpdatedAt() *BroadcastRecipientUpsertOne {
+	return u.Update(func(s *BroadcastRecipientUpsert) {
+		s.UpdateUpdatedAt()
+	})
 }
 
 // SetBroadcastID sets the "broadcast_id" field.
@@ -793,20 +807,6 @@ func (u *BroadcastRecipientUpsertOne) ClearClickedAt() *BroadcastRecipientUpsert
 	})
 }
 
-// SetUpdatedAt sets the "updated_at" field.
-func (u *BroadcastRecipientUpsertOne) SetUpdatedAt(v time.Time) *BroadcastRecipientUpsertOne {
-	return u.Update(func(s *BroadcastRecipientUpsert) {
-		s.SetUpdatedAt(v)
-	})
-}
-
-// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
-func (u *BroadcastRecipientUpsertOne) UpdateUpdatedAt() *BroadcastRecipientUpsertOne {
-	return u.Update(func(s *BroadcastRecipientUpsert) {
-		s.UpdateUpdatedAt()
-	})
-}
-
 // Exec executes the query.
 func (u *BroadcastRecipientUpsertOne) Exec(ctx context.Context) error {
 	if len(u.create.conflict) == 0 {
@@ -942,7 +942,7 @@ func (_c *BroadcastRecipientCreateBulk) ExecX(ctx context.Context) {
 //		// Override some of the fields with custom
 //		// update values.
 //		Update(func(u *ent.BroadcastRecipientUpsert) {
-//			SetBroadcastID(v+v).
+//			SetCreatedAt(v+v).
 //		}).
 //		Exec(ctx)
 func (_c *BroadcastRecipientCreateBulk) OnConflict(opts ...sql.ConflictOption) *BroadcastRecipientUpsertBulk {
@@ -1022,6 +1022,20 @@ func (u *BroadcastRecipientUpsertBulk) Update(set func(*BroadcastRecipientUpsert
 		set(&BroadcastRecipientUpsert{UpdateSet: update})
 	}))
 	return u
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (u *BroadcastRecipientUpsertBulk) SetUpdatedAt(v time.Time) *BroadcastRecipientUpsertBulk {
+	return u.Update(func(s *BroadcastRecipientUpsert) {
+		s.SetUpdatedAt(v)
+	})
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *BroadcastRecipientUpsertBulk) UpdateUpdatedAt() *BroadcastRecipientUpsertBulk {
+	return u.Update(func(s *BroadcastRecipientUpsert) {
+		s.UpdateUpdatedAt()
+	})
 }
 
 // SetBroadcastID sets the "broadcast_id" field.
@@ -1196,20 +1210,6 @@ func (u *BroadcastRecipientUpsertBulk) UpdateClickedAt() *BroadcastRecipientUpse
 func (u *BroadcastRecipientUpsertBulk) ClearClickedAt() *BroadcastRecipientUpsertBulk {
 	return u.Update(func(s *BroadcastRecipientUpsert) {
 		s.ClearClickedAt()
-	})
-}
-
-// SetUpdatedAt sets the "updated_at" field.
-func (u *BroadcastRecipientUpsertBulk) SetUpdatedAt(v time.Time) *BroadcastRecipientUpsertBulk {
-	return u.Update(func(s *BroadcastRecipientUpsert) {
-		s.SetUpdatedAt(v)
-	})
-}
-
-// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
-func (u *BroadcastRecipientUpsertBulk) UpdateUpdatedAt() *BroadcastRecipientUpsertBulk {
-	return u.Update(func(s *BroadcastRecipientUpsert) {
-		s.UpdateUpdatedAt()
 	})
 }
 

@@ -23,6 +23,34 @@ type CustomFieldCreate struct {
 	conflict []sql.ConflictOption
 }
 
+// SetCreatedAt sets the "created_at" field.
+func (_c *CustomFieldCreate) SetCreatedAt(v time.Time) *CustomFieldCreate {
+	_c.mutation.SetCreatedAt(v)
+	return _c
+}
+
+// SetNillableCreatedAt sets the "created_at" field if the given value is not nil.
+func (_c *CustomFieldCreate) SetNillableCreatedAt(v *time.Time) *CustomFieldCreate {
+	if v != nil {
+		_c.SetCreatedAt(*v)
+	}
+	return _c
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (_c *CustomFieldCreate) SetUpdatedAt(v time.Time) *CustomFieldCreate {
+	_c.mutation.SetUpdatedAt(v)
+	return _c
+}
+
+// SetNillableUpdatedAt sets the "updated_at" field if the given value is not nil.
+func (_c *CustomFieldCreate) SetNillableUpdatedAt(v *time.Time) *CustomFieldCreate {
+	if v != nil {
+		_c.SetUpdatedAt(*v)
+	}
+	return _c
+}
+
 // SetKey sets the "key" field.
 func (_c *CustomFieldCreate) SetKey(v string) *CustomFieldCreate {
 	_c.mutation.SetKey(v)
@@ -52,34 +80,6 @@ func (_c *CustomFieldCreate) SetNillableType(v *customfield.Type) *CustomFieldCr
 // SetWorkspaceID sets the "workspace_id" field.
 func (_c *CustomFieldCreate) SetWorkspaceID(v int64) *CustomFieldCreate {
 	_c.mutation.SetWorkspaceID(v)
-	return _c
-}
-
-// SetCreatedAt sets the "created_at" field.
-func (_c *CustomFieldCreate) SetCreatedAt(v time.Time) *CustomFieldCreate {
-	_c.mutation.SetCreatedAt(v)
-	return _c
-}
-
-// SetNillableCreatedAt sets the "created_at" field if the given value is not nil.
-func (_c *CustomFieldCreate) SetNillableCreatedAt(v *time.Time) *CustomFieldCreate {
-	if v != nil {
-		_c.SetCreatedAt(*v)
-	}
-	return _c
-}
-
-// SetUpdatedAt sets the "updated_at" field.
-func (_c *CustomFieldCreate) SetUpdatedAt(v time.Time) *CustomFieldCreate {
-	_c.mutation.SetUpdatedAt(v)
-	return _c
-}
-
-// SetNillableUpdatedAt sets the "updated_at" field if the given value is not nil.
-func (_c *CustomFieldCreate) SetNillableUpdatedAt(v *time.Time) *CustomFieldCreate {
-	if v != nil {
-		_c.SetUpdatedAt(*v)
-	}
 	return _c
 }
 
@@ -129,10 +129,6 @@ func (_c *CustomFieldCreate) ExecX(ctx context.Context) {
 
 // defaults sets the default values of the builder before save.
 func (_c *CustomFieldCreate) defaults() {
-	if _, ok := _c.mutation.GetType(); !ok {
-		v := customfield.DefaultType
-		_c.mutation.SetType(v)
-	}
 	if _, ok := _c.mutation.CreatedAt(); !ok {
 		v := customfield.DefaultCreatedAt()
 		_c.mutation.SetCreatedAt(v)
@@ -141,10 +137,20 @@ func (_c *CustomFieldCreate) defaults() {
 		v := customfield.DefaultUpdatedAt()
 		_c.mutation.SetUpdatedAt(v)
 	}
+	if _, ok := _c.mutation.GetType(); !ok {
+		v := customfield.DefaultType
+		_c.mutation.SetType(v)
+	}
 }
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *CustomFieldCreate) check() error {
+	if _, ok := _c.mutation.CreatedAt(); !ok {
+		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "CustomField.created_at"`)}
+	}
+	if _, ok := _c.mutation.UpdatedAt(); !ok {
+		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "CustomField.updated_at"`)}
+	}
 	if _, ok := _c.mutation.Key(); !ok {
 		return &ValidationError{Name: "key", err: errors.New(`ent: missing required field "CustomField.key"`)}
 	}
@@ -171,12 +177,6 @@ func (_c *CustomFieldCreate) check() error {
 	}
 	if _, ok := _c.mutation.WorkspaceID(); !ok {
 		return &ValidationError{Name: "workspace_id", err: errors.New(`ent: missing required field "CustomField.workspace_id"`)}
-	}
-	if _, ok := _c.mutation.CreatedAt(); !ok {
-		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "CustomField.created_at"`)}
-	}
-	if _, ok := _c.mutation.UpdatedAt(); !ok {
-		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "CustomField.updated_at"`)}
 	}
 	if len(_c.mutation.WorkspaceIDs()) == 0 {
 		return &ValidationError{Name: "workspace", err: errors.New(`ent: missing required edge "CustomField.workspace"`)}
@@ -214,6 +214,14 @@ func (_c *CustomFieldCreate) createSpec() (*CustomField, *sqlgraph.CreateSpec) {
 		_node.ID = id
 		_spec.ID.Value = id
 	}
+	if value, ok := _c.mutation.CreatedAt(); ok {
+		_spec.SetField(customfield.FieldCreatedAt, field.TypeTime, value)
+		_node.CreatedAt = value
+	}
+	if value, ok := _c.mutation.UpdatedAt(); ok {
+		_spec.SetField(customfield.FieldUpdatedAt, field.TypeTime, value)
+		_node.UpdatedAt = value
+	}
 	if value, ok := _c.mutation.Key(); ok {
 		_spec.SetField(customfield.FieldKey, field.TypeString, value)
 		_node.Key = value
@@ -225,14 +233,6 @@ func (_c *CustomFieldCreate) createSpec() (*CustomField, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.GetType(); ok {
 		_spec.SetField(customfield.FieldType, field.TypeEnum, value)
 		_node.Type = value
-	}
-	if value, ok := _c.mutation.CreatedAt(); ok {
-		_spec.SetField(customfield.FieldCreatedAt, field.TypeTime, value)
-		_node.CreatedAt = value
-	}
-	if value, ok := _c.mutation.UpdatedAt(); ok {
-		_spec.SetField(customfield.FieldUpdatedAt, field.TypeTime, value)
-		_node.UpdatedAt = value
 	}
 	if nodes := _c.mutation.WorkspaceIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -258,7 +258,7 @@ func (_c *CustomFieldCreate) createSpec() (*CustomField, *sqlgraph.CreateSpec) {
 // of the `INSERT` statement. For example:
 //
 //	client.CustomField.Create().
-//		SetKey(v).
+//		SetCreatedAt(v).
 //		OnConflict(
 //			// Update the row with the new values
 //			// the was proposed for insertion.
@@ -267,7 +267,7 @@ func (_c *CustomFieldCreate) createSpec() (*CustomField, *sqlgraph.CreateSpec) {
 //		// Override some of the fields with custom
 //		// update values.
 //		Update(func(u *ent.CustomFieldUpsert) {
-//			SetKey(v+v).
+//			SetCreatedAt(v+v).
 //		}).
 //		Exec(ctx)
 func (_c *CustomFieldCreate) OnConflict(opts ...sql.ConflictOption) *CustomFieldUpsertOne {
@@ -302,6 +302,18 @@ type (
 		*sql.UpdateSet
 	}
 )
+
+// SetUpdatedAt sets the "updated_at" field.
+func (u *CustomFieldUpsert) SetUpdatedAt(v time.Time) *CustomFieldUpsert {
+	u.Set(customfield.FieldUpdatedAt, v)
+	return u
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *CustomFieldUpsert) UpdateUpdatedAt() *CustomFieldUpsert {
+	u.SetExcluded(customfield.FieldUpdatedAt)
+	return u
+}
 
 // SetKey sets the "key" field.
 func (u *CustomFieldUpsert) SetKey(v string) *CustomFieldUpsert {
@@ -348,18 +360,6 @@ func (u *CustomFieldUpsert) SetWorkspaceID(v int64) *CustomFieldUpsert {
 // UpdateWorkspaceID sets the "workspace_id" field to the value that was provided on create.
 func (u *CustomFieldUpsert) UpdateWorkspaceID() *CustomFieldUpsert {
 	u.SetExcluded(customfield.FieldWorkspaceID)
-	return u
-}
-
-// SetUpdatedAt sets the "updated_at" field.
-func (u *CustomFieldUpsert) SetUpdatedAt(v time.Time) *CustomFieldUpsert {
-	u.Set(customfield.FieldUpdatedAt, v)
-	return u
-}
-
-// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
-func (u *CustomFieldUpsert) UpdateUpdatedAt() *CustomFieldUpsert {
-	u.SetExcluded(customfield.FieldUpdatedAt)
 	return u
 }
 
@@ -412,6 +412,20 @@ func (u *CustomFieldUpsertOne) Update(set func(*CustomFieldUpsert)) *CustomField
 		set(&CustomFieldUpsert{UpdateSet: update})
 	}))
 	return u
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (u *CustomFieldUpsertOne) SetUpdatedAt(v time.Time) *CustomFieldUpsertOne {
+	return u.Update(func(s *CustomFieldUpsert) {
+		s.SetUpdatedAt(v)
+	})
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *CustomFieldUpsertOne) UpdateUpdatedAt() *CustomFieldUpsertOne {
+	return u.Update(func(s *CustomFieldUpsert) {
+		s.UpdateUpdatedAt()
+	})
 }
 
 // SetKey sets the "key" field.
@@ -467,20 +481,6 @@ func (u *CustomFieldUpsertOne) SetWorkspaceID(v int64) *CustomFieldUpsertOne {
 func (u *CustomFieldUpsertOne) UpdateWorkspaceID() *CustomFieldUpsertOne {
 	return u.Update(func(s *CustomFieldUpsert) {
 		s.UpdateWorkspaceID()
-	})
-}
-
-// SetUpdatedAt sets the "updated_at" field.
-func (u *CustomFieldUpsertOne) SetUpdatedAt(v time.Time) *CustomFieldUpsertOne {
-	return u.Update(func(s *CustomFieldUpsert) {
-		s.SetUpdatedAt(v)
-	})
-}
-
-// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
-func (u *CustomFieldUpsertOne) UpdateUpdatedAt() *CustomFieldUpsertOne {
-	return u.Update(func(s *CustomFieldUpsert) {
-		s.UpdateUpdatedAt()
 	})
 }
 
@@ -619,7 +619,7 @@ func (_c *CustomFieldCreateBulk) ExecX(ctx context.Context) {
 //		// Override some of the fields with custom
 //		// update values.
 //		Update(func(u *ent.CustomFieldUpsert) {
-//			SetKey(v+v).
+//			SetCreatedAt(v+v).
 //		}).
 //		Exec(ctx)
 func (_c *CustomFieldCreateBulk) OnConflict(opts ...sql.ConflictOption) *CustomFieldUpsertBulk {
@@ -701,6 +701,20 @@ func (u *CustomFieldUpsertBulk) Update(set func(*CustomFieldUpsert)) *CustomFiel
 	return u
 }
 
+// SetUpdatedAt sets the "updated_at" field.
+func (u *CustomFieldUpsertBulk) SetUpdatedAt(v time.Time) *CustomFieldUpsertBulk {
+	return u.Update(func(s *CustomFieldUpsert) {
+		s.SetUpdatedAt(v)
+	})
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *CustomFieldUpsertBulk) UpdateUpdatedAt() *CustomFieldUpsertBulk {
+	return u.Update(func(s *CustomFieldUpsert) {
+		s.UpdateUpdatedAt()
+	})
+}
+
 // SetKey sets the "key" field.
 func (u *CustomFieldUpsertBulk) SetKey(v string) *CustomFieldUpsertBulk {
 	return u.Update(func(s *CustomFieldUpsert) {
@@ -754,20 +768,6 @@ func (u *CustomFieldUpsertBulk) SetWorkspaceID(v int64) *CustomFieldUpsertBulk {
 func (u *CustomFieldUpsertBulk) UpdateWorkspaceID() *CustomFieldUpsertBulk {
 	return u.Update(func(s *CustomFieldUpsert) {
 		s.UpdateWorkspaceID()
-	})
-}
-
-// SetUpdatedAt sets the "updated_at" field.
-func (u *CustomFieldUpsertBulk) SetUpdatedAt(v time.Time) *CustomFieldUpsertBulk {
-	return u.Update(func(s *CustomFieldUpsert) {
-		s.SetUpdatedAt(v)
-	})
-}
-
-// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
-func (u *CustomFieldUpsertBulk) UpdateUpdatedAt() *CustomFieldUpsertBulk {
-	return u.Update(func(s *CustomFieldUpsert) {
-		s.UpdateUpdatedAt()
 	})
 }
 

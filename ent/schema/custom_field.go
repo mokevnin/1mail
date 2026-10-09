@@ -1,8 +1,6 @@
 package schema
 
 import (
-	"time"
-
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/entsql"
 	"entgo.io/ent/schema"
@@ -27,6 +25,10 @@ func (CustomField) Annotations() []schema.Annotation {
 	}
 }
 
+func (CustomField) Mixin() []ent.Mixin {
+	return []ent.Mixin{TimeMixin{}}
+}
+
 func (CustomField) Fields() []ent.Field {
 	return []ent.Field{
 		field.Int64("id").
@@ -44,12 +46,6 @@ func (CustomField) Fields() []ent.Field {
 			Values("string", "number", "bool", "datetime").
 			Default("string"),
 		field.Int64("workspace_id"),
-		field.Time("created_at").
-			Default(time.Now).
-			Immutable(),
-		field.Time("updated_at").
-			Default(time.Now).
-			UpdateDefault(time.Now),
 	}
 }
 

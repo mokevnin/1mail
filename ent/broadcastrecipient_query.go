@@ -336,12 +336,12 @@ func (_q *BroadcastRecipientQuery) WithWorkspace(opts ...func(*WorkspaceQuery)) 
 // Example:
 //
 //	var v []struct {
-//		BroadcastID int64 `json:"broadcast_id,omitempty"`
+//		CreatedAt time.Time `json:"created_at,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.BroadcastRecipient.Query().
-//		GroupBy(broadcastrecipient.FieldBroadcastID).
+//		GroupBy(broadcastrecipient.FieldCreatedAt).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
 func (_q *BroadcastRecipientQuery) GroupBy(field string, fields ...string) *BroadcastRecipientGroupBy {
@@ -359,11 +359,11 @@ func (_q *BroadcastRecipientQuery) GroupBy(field string, fields ...string) *Broa
 // Example:
 //
 //	var v []struct {
-//		BroadcastID int64 `json:"broadcast_id,omitempty"`
+//		CreatedAt time.Time `json:"created_at,omitempty"`
 //	}
 //
 //	client.BroadcastRecipient.Query().
-//		Select(broadcastrecipient.FieldBroadcastID).
+//		Select(broadcastrecipient.FieldCreatedAt).
 //		Scan(ctx, &v)
 func (_q *BroadcastRecipientQuery) Select(fields ...string) *BroadcastRecipientSelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)

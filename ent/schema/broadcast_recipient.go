@@ -1,8 +1,6 @@
 package schema
 
 import (
-	"time"
-
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/entsql"
 	"entgo.io/ent/schema"
@@ -22,6 +20,10 @@ func (BroadcastRecipient) Annotations() []schema.Annotation {
 	return []schema.Annotation{
 		entsql.Annotation{Table: "broadcast_recipients"},
 	}
+}
+
+func (BroadcastRecipient) Mixin() []ent.Mixin {
+	return []ent.Mixin{TimeMixin{}}
 }
 
 func (BroadcastRecipient) Fields() []ent.Field {
@@ -53,12 +55,6 @@ func (BroadcastRecipient) Fields() []ent.Field {
 		field.Time("clicked_at").
 			Optional().
 			Nillable(),
-		field.Time("created_at").
-			Default(time.Now).
-			Immutable(),
-		field.Time("updated_at").
-			Default(time.Now).
-			UpdateDefault(time.Now),
 	}
 }
 

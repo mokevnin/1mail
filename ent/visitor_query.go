@@ -336,12 +336,12 @@ func (_q *VisitorQuery) WithWorkspace(opts ...func(*WorkspaceQuery)) *VisitorQue
 // Example:
 //
 //	var v []struct {
-//		VisitorID string `json:"visitor_id,omitempty"`
+//		CreatedAt time.Time `json:"created_at,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.Visitor.Query().
-//		GroupBy(visitor.FieldVisitorID).
+//		GroupBy(visitor.FieldCreatedAt).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
 func (_q *VisitorQuery) GroupBy(field string, fields ...string) *VisitorGroupBy {
@@ -359,11 +359,11 @@ func (_q *VisitorQuery) GroupBy(field string, fields ...string) *VisitorGroupBy 
 // Example:
 //
 //	var v []struct {
-//		VisitorID string `json:"visitor_id,omitempty"`
+//		CreatedAt time.Time `json:"created_at,omitempty"`
 //	}
 //
 //	client.Visitor.Query().
-//		Select(visitor.FieldVisitorID).
+//		Select(visitor.FieldCreatedAt).
 //		Scan(ctx, &v)
 func (_q *VisitorQuery) Select(fields ...string) *VisitorSelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)

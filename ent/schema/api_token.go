@@ -1,8 +1,6 @@
 package schema
 
 import (
-	"time"
-
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/entsql"
 	"entgo.io/ent/schema"
@@ -18,6 +16,10 @@ func (ApiToken) Annotations() []schema.Annotation {
 	return []schema.Annotation{
 		entsql.Annotation{Table: "api_tokens"},
 	}
+}
+
+func (ApiToken) Mixin() []ent.Mixin {
+	return []ent.Mixin{TimeMixin{}}
 }
 
 func (ApiToken) Fields() []ent.Field {
@@ -45,12 +47,6 @@ func (ApiToken) Fields() []ent.Field {
 		field.Time("last_used_at").
 			Optional().
 			Nillable(),
-		field.Time("created_at").
-			Default(time.Now).
-			Immutable(),
-		field.Time("updated_at").
-			Default(time.Now).
-			UpdateDefault(time.Now),
 		field.Int64("workspace_id"),
 	}
 }

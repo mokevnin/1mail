@@ -25,6 +25,34 @@ type ContactCreate struct {
 	conflict []sql.ConflictOption
 }
 
+// SetCreatedAt sets the "created_at" field.
+func (_c *ContactCreate) SetCreatedAt(v time.Time) *ContactCreate {
+	_c.mutation.SetCreatedAt(v)
+	return _c
+}
+
+// SetNillableCreatedAt sets the "created_at" field if the given value is not nil.
+func (_c *ContactCreate) SetNillableCreatedAt(v *time.Time) *ContactCreate {
+	if v != nil {
+		_c.SetCreatedAt(*v)
+	}
+	return _c
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (_c *ContactCreate) SetUpdatedAt(v time.Time) *ContactCreate {
+	_c.mutation.SetUpdatedAt(v)
+	return _c
+}
+
+// SetNillableUpdatedAt sets the "updated_at" field if the given value is not nil.
+func (_c *ContactCreate) SetNillableUpdatedAt(v *time.Time) *ContactCreate {
+	if v != nil {
+		_c.SetUpdatedAt(*v)
+	}
+	return _c
+}
+
 // SetSubjectID sets the "subject_id" field.
 func (_c *ContactCreate) SetSubjectID(v string) *ContactCreate {
 	_c.mutation.SetSubjectID(v)
@@ -121,34 +149,6 @@ func (_c *ContactCreate) SetWorkspaceID(v int64) *ContactCreate {
 	return _c
 }
 
-// SetCreatedAt sets the "created_at" field.
-func (_c *ContactCreate) SetCreatedAt(v time.Time) *ContactCreate {
-	_c.mutation.SetCreatedAt(v)
-	return _c
-}
-
-// SetNillableCreatedAt sets the "created_at" field if the given value is not nil.
-func (_c *ContactCreate) SetNillableCreatedAt(v *time.Time) *ContactCreate {
-	if v != nil {
-		_c.SetCreatedAt(*v)
-	}
-	return _c
-}
-
-// SetUpdatedAt sets the "updated_at" field.
-func (_c *ContactCreate) SetUpdatedAt(v time.Time) *ContactCreate {
-	_c.mutation.SetUpdatedAt(v)
-	return _c
-}
-
-// SetNillableUpdatedAt sets the "updated_at" field if the given value is not nil.
-func (_c *ContactCreate) SetNillableUpdatedAt(v *time.Time) *ContactCreate {
-	if v != nil {
-		_c.SetUpdatedAt(*v)
-	}
-	return _c
-}
-
 // SetID sets the "id" field.
 func (_c *ContactCreate) SetID(v int64) *ContactCreate {
 	_c.mutation.SetID(v)
@@ -237,14 +237,14 @@ func (_c *ContactCreate) defaults() {
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *ContactCreate) check() error {
-	if _, ok := _c.mutation.WorkspaceID(); !ok {
-		return &ValidationError{Name: "workspace_id", err: errors.New(`ent: missing required field "Contact.workspace_id"`)}
-	}
 	if _, ok := _c.mutation.CreatedAt(); !ok {
 		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "Contact.created_at"`)}
 	}
 	if _, ok := _c.mutation.UpdatedAt(); !ok {
 		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "Contact.updated_at"`)}
+	}
+	if _, ok := _c.mutation.WorkspaceID(); !ok {
+		return &ValidationError{Name: "workspace_id", err: errors.New(`ent: missing required field "Contact.workspace_id"`)}
 	}
 	if len(_c.mutation.WorkspaceIDs()) == 0 {
 		return &ValidationError{Name: "workspace", err: errors.New(`ent: missing required edge "Contact.workspace"`)}
@@ -282,6 +282,14 @@ func (_c *ContactCreate) createSpec() (*Contact, *sqlgraph.CreateSpec) {
 		_node.ID = id
 		_spec.ID.Value = id
 	}
+	if value, ok := _c.mutation.CreatedAt(); ok {
+		_spec.SetField(contact.FieldCreatedAt, field.TypeTime, value)
+		_node.CreatedAt = value
+	}
+	if value, ok := _c.mutation.UpdatedAt(); ok {
+		_spec.SetField(contact.FieldUpdatedAt, field.TypeTime, value)
+		_node.UpdatedAt = value
+	}
 	if value, ok := _c.mutation.SubjectID(); ok {
 		_spec.SetField(contact.FieldSubjectID, field.TypeString, value)
 		_node.SubjectID = &value
@@ -309,14 +317,6 @@ func (_c *ContactCreate) createSpec() (*Contact, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.CustomFields(); ok {
 		_spec.SetField(contact.FieldCustomFields, field.TypeJSON, value)
 		_node.CustomFields = value
-	}
-	if value, ok := _c.mutation.CreatedAt(); ok {
-		_spec.SetField(contact.FieldCreatedAt, field.TypeTime, value)
-		_node.CreatedAt = value
-	}
-	if value, ok := _c.mutation.UpdatedAt(); ok {
-		_spec.SetField(contact.FieldUpdatedAt, field.TypeTime, value)
-		_node.UpdatedAt = value
 	}
 	if nodes := _c.mutation.VisitorsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -374,7 +374,7 @@ func (_c *ContactCreate) createSpec() (*Contact, *sqlgraph.CreateSpec) {
 // of the `INSERT` statement. For example:
 //
 //	client.Contact.Create().
-//		SetSubjectID(v).
+//		SetCreatedAt(v).
 //		OnConflict(
 //			// Update the row with the new values
 //			// the was proposed for insertion.
@@ -383,7 +383,7 @@ func (_c *ContactCreate) createSpec() (*Contact, *sqlgraph.CreateSpec) {
 //		// Override some of the fields with custom
 //		// update values.
 //		Update(func(u *ent.ContactUpsert) {
-//			SetSubjectID(v+v).
+//			SetCreatedAt(v+v).
 //		}).
 //		Exec(ctx)
 func (_c *ContactCreate) OnConflict(opts ...sql.ConflictOption) *ContactUpsertOne {
@@ -418,6 +418,18 @@ type (
 		*sql.UpdateSet
 	}
 )
+
+// SetUpdatedAt sets the "updated_at" field.
+func (u *ContactUpsert) SetUpdatedAt(v time.Time) *ContactUpsert {
+	u.Set(contact.FieldUpdatedAt, v)
+	return u
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *ContactUpsert) UpdateUpdatedAt() *ContactUpsert {
+	u.SetExcluded(contact.FieldUpdatedAt)
+	return u
+}
 
 // SetSubjectID sets the "subject_id" field.
 func (u *ContactUpsert) SetSubjectID(v string) *ContactUpsert {
@@ -557,18 +569,6 @@ func (u *ContactUpsert) UpdateWorkspaceID() *ContactUpsert {
 	return u
 }
 
-// SetUpdatedAt sets the "updated_at" field.
-func (u *ContactUpsert) SetUpdatedAt(v time.Time) *ContactUpsert {
-	u.Set(contact.FieldUpdatedAt, v)
-	return u
-}
-
-// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
-func (u *ContactUpsert) UpdateUpdatedAt() *ContactUpsert {
-	u.SetExcluded(contact.FieldUpdatedAt)
-	return u
-}
-
 // UpdateNewValues updates the mutable fields using the new values that were set on create except the ID field.
 // Using this option is equivalent to using:
 //
@@ -618,6 +618,20 @@ func (u *ContactUpsertOne) Update(set func(*ContactUpsert)) *ContactUpsertOne {
 		set(&ContactUpsert{UpdateSet: update})
 	}))
 	return u
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (u *ContactUpsertOne) SetUpdatedAt(v time.Time) *ContactUpsertOne {
+	return u.Update(func(s *ContactUpsert) {
+		s.SetUpdatedAt(v)
+	})
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *ContactUpsertOne) UpdateUpdatedAt() *ContactUpsertOne {
+	return u.Update(func(s *ContactUpsert) {
+		s.UpdateUpdatedAt()
+	})
 }
 
 // SetSubjectID sets the "subject_id" field.
@@ -781,20 +795,6 @@ func (u *ContactUpsertOne) UpdateWorkspaceID() *ContactUpsertOne {
 	})
 }
 
-// SetUpdatedAt sets the "updated_at" field.
-func (u *ContactUpsertOne) SetUpdatedAt(v time.Time) *ContactUpsertOne {
-	return u.Update(func(s *ContactUpsert) {
-		s.SetUpdatedAt(v)
-	})
-}
-
-// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
-func (u *ContactUpsertOne) UpdateUpdatedAt() *ContactUpsertOne {
-	return u.Update(func(s *ContactUpsert) {
-		s.UpdateUpdatedAt()
-	})
-}
-
 // Exec executes the query.
 func (u *ContactUpsertOne) Exec(ctx context.Context) error {
 	if len(u.create.conflict) == 0 {
@@ -930,7 +930,7 @@ func (_c *ContactCreateBulk) ExecX(ctx context.Context) {
 //		// Override some of the fields with custom
 //		// update values.
 //		Update(func(u *ent.ContactUpsert) {
-//			SetSubjectID(v+v).
+//			SetCreatedAt(v+v).
 //		}).
 //		Exec(ctx)
 func (_c *ContactCreateBulk) OnConflict(opts ...sql.ConflictOption) *ContactUpsertBulk {
@@ -1010,6 +1010,20 @@ func (u *ContactUpsertBulk) Update(set func(*ContactUpsert)) *ContactUpsertBulk 
 		set(&ContactUpsert{UpdateSet: update})
 	}))
 	return u
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (u *ContactUpsertBulk) SetUpdatedAt(v time.Time) *ContactUpsertBulk {
+	return u.Update(func(s *ContactUpsert) {
+		s.SetUpdatedAt(v)
+	})
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *ContactUpsertBulk) UpdateUpdatedAt() *ContactUpsertBulk {
+	return u.Update(func(s *ContactUpsert) {
+		s.UpdateUpdatedAt()
+	})
 }
 
 // SetSubjectID sets the "subject_id" field.
@@ -1170,20 +1184,6 @@ func (u *ContactUpsertBulk) SetWorkspaceID(v int64) *ContactUpsertBulk {
 func (u *ContactUpsertBulk) UpdateWorkspaceID() *ContactUpsertBulk {
 	return u.Update(func(s *ContactUpsert) {
 		s.UpdateWorkspaceID()
-	})
-}
-
-// SetUpdatedAt sets the "updated_at" field.
-func (u *ContactUpsertBulk) SetUpdatedAt(v time.Time) *ContactUpsertBulk {
-	return u.Update(func(s *ContactUpsert) {
-		s.SetUpdatedAt(v)
-	})
-}
-
-// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
-func (u *ContactUpsertBulk) UpdateUpdatedAt() *ContactUpsertBulk {
-	return u.Update(func(s *ContactUpsert) {
-		s.UpdateUpdatedAt()
 	})
 }
 

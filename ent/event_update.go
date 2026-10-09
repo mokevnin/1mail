@@ -30,6 +30,12 @@ func (_u *EventUpdate) Where(ps ...predicate.Event) *EventUpdate {
 	return _u
 }
 
+// SetUpdatedAt sets the "updated_at" field.
+func (_u *EventUpdate) SetUpdatedAt(v time.Time) *EventUpdate {
+	_u.mutation.SetUpdatedAt(v)
+	return _u
+}
+
 // SetSourceID sets the "source_id" field.
 func (_u *EventUpdate) SetSourceID(v string) *EventUpdate {
 	_u.mutation.SetSourceID(v)
@@ -235,6 +241,7 @@ func (_u *EventUpdate) ClearWorkspace() *EventUpdate {
 
 // Save executes the query and returns the number of nodes affected by the update operation.
 func (_u *EventUpdate) Save(ctx context.Context) (int, error) {
+	_u.defaults()
 	return withHooks(ctx, _u.sqlSave, _u.mutation, _u.hooks)
 }
 
@@ -257,6 +264,14 @@ func (_u *EventUpdate) Exec(ctx context.Context) error {
 func (_u *EventUpdate) ExecX(ctx context.Context) {
 	if err := _u.Exec(ctx); err != nil {
 		panic(err)
+	}
+}
+
+// defaults sets the default values of the builder before save.
+func (_u *EventUpdate) defaults() {
+	if _, ok := _u.mutation.UpdatedAt(); !ok {
+		v := event.UpdateDefaultUpdatedAt()
+		_u.mutation.SetUpdatedAt(v)
 	}
 }
 
@@ -290,6 +305,9 @@ func (_u *EventUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 				ps[i](selector)
 			}
 		}
+	}
+	if value, ok := _u.mutation.UpdatedAt(); ok {
+		_spec.SetField(event.FieldUpdatedAt, field.TypeTime, value)
 	}
 	if value, ok := _u.mutation.SourceID(); ok {
 		_spec.SetField(event.FieldSourceID, field.TypeString, value)
@@ -394,6 +412,12 @@ type EventUpdateOne struct {
 	hooks     []Hook
 	mutation  *EventMutation
 	modifiers []func(*sql.UpdateBuilder)
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (_u *EventUpdateOne) SetUpdatedAt(v time.Time) *EventUpdateOne {
+	_u.mutation.SetUpdatedAt(v)
+	return _u
 }
 
 // SetSourceID sets the "source_id" field.
@@ -614,6 +638,7 @@ func (_u *EventUpdateOne) Select(field string, fields ...string) *EventUpdateOne
 
 // Save executes the query and returns the updated Event entity.
 func (_u *EventUpdateOne) Save(ctx context.Context) (*Event, error) {
+	_u.defaults()
 	return withHooks(ctx, _u.sqlSave, _u.mutation, _u.hooks)
 }
 
@@ -636,6 +661,14 @@ func (_u *EventUpdateOne) Exec(ctx context.Context) error {
 func (_u *EventUpdateOne) ExecX(ctx context.Context) {
 	if err := _u.Exec(ctx); err != nil {
 		panic(err)
+	}
+}
+
+// defaults sets the default values of the builder before save.
+func (_u *EventUpdateOne) defaults() {
+	if _, ok := _u.mutation.UpdatedAt(); !ok {
+		v := event.UpdateDefaultUpdatedAt()
+		_u.mutation.SetUpdatedAt(v)
 	}
 }
 
@@ -686,6 +719,9 @@ func (_u *EventUpdateOne) sqlSave(ctx context.Context) (_node *Event, err error)
 				ps[i](selector)
 			}
 		}
+	}
+	if value, ok := _u.mutation.UpdatedAt(); ok {
+		_spec.SetField(event.FieldUpdatedAt, field.TypeTime, value)
 	}
 	if value, ok := _u.mutation.SourceID(); ok {
 		_spec.SetField(event.FieldSourceID, field.TypeString, value)

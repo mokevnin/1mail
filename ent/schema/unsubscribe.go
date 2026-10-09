@@ -1,8 +1,6 @@
 package schema
 
 import (
-	"time"
-
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/entsql"
 	"entgo.io/ent/schema"
@@ -34,6 +32,10 @@ func (Unsubscribe) Annotations() []schema.Annotation {
 	}
 }
 
+func (Unsubscribe) Mixin() []ent.Mixin {
+	return []ent.Mixin{TimeMixin{}}
+}
+
 func (Unsubscribe) Fields() []ent.Field {
 	return []ent.Field{
 		field.Int64("id").
@@ -56,12 +58,6 @@ func (Unsubscribe) Fields() []ent.Field {
 			Optional().
 			Nillable(),
 		field.Int64("workspace_id"),
-		field.Time("created_at").
-			Default(time.Now).
-			Immutable(),
-		field.Time("updated_at").
-			Default(time.Now).
-			UpdateDefault(time.Now),
 	}
 }
 

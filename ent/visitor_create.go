@@ -24,32 +24,6 @@ type VisitorCreate struct {
 	conflict []sql.ConflictOption
 }
 
-// SetVisitorID sets the "visitor_id" field.
-func (_c *VisitorCreate) SetVisitorID(v string) *VisitorCreate {
-	_c.mutation.SetVisitorID(v)
-	return _c
-}
-
-// SetWorkspaceID sets the "workspace_id" field.
-func (_c *VisitorCreate) SetWorkspaceID(v int64) *VisitorCreate {
-	_c.mutation.SetWorkspaceID(v)
-	return _c
-}
-
-// SetContactID sets the "contact_id" field.
-func (_c *VisitorCreate) SetContactID(v int64) *VisitorCreate {
-	_c.mutation.SetContactID(v)
-	return _c
-}
-
-// SetNillableContactID sets the "contact_id" field if the given value is not nil.
-func (_c *VisitorCreate) SetNillableContactID(v *int64) *VisitorCreate {
-	if v != nil {
-		_c.SetContactID(*v)
-	}
-	return _c
-}
-
 // SetCreatedAt sets the "created_at" field.
 func (_c *VisitorCreate) SetCreatedAt(v time.Time) *VisitorCreate {
 	_c.mutation.SetCreatedAt(v)
@@ -74,6 +48,32 @@ func (_c *VisitorCreate) SetUpdatedAt(v time.Time) *VisitorCreate {
 func (_c *VisitorCreate) SetNillableUpdatedAt(v *time.Time) *VisitorCreate {
 	if v != nil {
 		_c.SetUpdatedAt(*v)
+	}
+	return _c
+}
+
+// SetVisitorID sets the "visitor_id" field.
+func (_c *VisitorCreate) SetVisitorID(v string) *VisitorCreate {
+	_c.mutation.SetVisitorID(v)
+	return _c
+}
+
+// SetWorkspaceID sets the "workspace_id" field.
+func (_c *VisitorCreate) SetWorkspaceID(v int64) *VisitorCreate {
+	_c.mutation.SetWorkspaceID(v)
+	return _c
+}
+
+// SetContactID sets the "contact_id" field.
+func (_c *VisitorCreate) SetContactID(v int64) *VisitorCreate {
+	_c.mutation.SetContactID(v)
+	return _c
+}
+
+// SetNillableContactID sets the "contact_id" field if the given value is not nil.
+func (_c *VisitorCreate) SetNillableContactID(v *int64) *VisitorCreate {
+	if v != nil {
+		_c.SetContactID(*v)
 	}
 	return _c
 }
@@ -159,6 +159,12 @@ func (_c *VisitorCreate) defaults() {
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *VisitorCreate) check() error {
+	if _, ok := _c.mutation.CreatedAt(); !ok {
+		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "Visitor.created_at"`)}
+	}
+	if _, ok := _c.mutation.UpdatedAt(); !ok {
+		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "Visitor.updated_at"`)}
+	}
 	if _, ok := _c.mutation.VisitorID(); !ok {
 		return &ValidationError{Name: "visitor_id", err: errors.New(`ent: missing required field "Visitor.visitor_id"`)}
 	}
@@ -169,12 +175,6 @@ func (_c *VisitorCreate) check() error {
 	}
 	if _, ok := _c.mutation.WorkspaceID(); !ok {
 		return &ValidationError{Name: "workspace_id", err: errors.New(`ent: missing required field "Visitor.workspace_id"`)}
-	}
-	if _, ok := _c.mutation.CreatedAt(); !ok {
-		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "Visitor.created_at"`)}
-	}
-	if _, ok := _c.mutation.UpdatedAt(); !ok {
-		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "Visitor.updated_at"`)}
 	}
 	if _, ok := _c.mutation.LastSeenAt(); !ok {
 		return &ValidationError{Name: "last_seen_at", err: errors.New(`ent: missing required field "Visitor.last_seen_at"`)}
@@ -215,10 +215,6 @@ func (_c *VisitorCreate) createSpec() (*Visitor, *sqlgraph.CreateSpec) {
 		_node.ID = id
 		_spec.ID.Value = id
 	}
-	if value, ok := _c.mutation.VisitorID(); ok {
-		_spec.SetField(visitor.FieldVisitorID, field.TypeString, value)
-		_node.VisitorID = value
-	}
 	if value, ok := _c.mutation.CreatedAt(); ok {
 		_spec.SetField(visitor.FieldCreatedAt, field.TypeTime, value)
 		_node.CreatedAt = value
@@ -226,6 +222,10 @@ func (_c *VisitorCreate) createSpec() (*Visitor, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.UpdatedAt(); ok {
 		_spec.SetField(visitor.FieldUpdatedAt, field.TypeTime, value)
 		_node.UpdatedAt = value
+	}
+	if value, ok := _c.mutation.VisitorID(); ok {
+		_spec.SetField(visitor.FieldVisitorID, field.TypeString, value)
+		_node.VisitorID = value
 	}
 	if value, ok := _c.mutation.LastSeenAt(); ok {
 		_spec.SetField(visitor.FieldLastSeenAt, field.TypeTime, value)
@@ -272,7 +272,7 @@ func (_c *VisitorCreate) createSpec() (*Visitor, *sqlgraph.CreateSpec) {
 // of the `INSERT` statement. For example:
 //
 //	client.Visitor.Create().
-//		SetVisitorID(v).
+//		SetCreatedAt(v).
 //		OnConflict(
 //			// Update the row with the new values
 //			// the was proposed for insertion.
@@ -281,7 +281,7 @@ func (_c *VisitorCreate) createSpec() (*Visitor, *sqlgraph.CreateSpec) {
 //		// Override some of the fields with custom
 //		// update values.
 //		Update(func(u *ent.VisitorUpsert) {
-//			SetVisitorID(v+v).
+//			SetCreatedAt(v+v).
 //		}).
 //		Exec(ctx)
 func (_c *VisitorCreate) OnConflict(opts ...sql.ConflictOption) *VisitorUpsertOne {
@@ -316,6 +316,18 @@ type (
 		*sql.UpdateSet
 	}
 )
+
+// SetUpdatedAt sets the "updated_at" field.
+func (u *VisitorUpsert) SetUpdatedAt(v time.Time) *VisitorUpsert {
+	u.Set(visitor.FieldUpdatedAt, v)
+	return u
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *VisitorUpsert) UpdateUpdatedAt() *VisitorUpsert {
+	u.SetExcluded(visitor.FieldUpdatedAt)
+	return u
+}
 
 // SetVisitorID sets the "visitor_id" field.
 func (u *VisitorUpsert) SetVisitorID(v string) *VisitorUpsert {
@@ -356,18 +368,6 @@ func (u *VisitorUpsert) UpdateContactID() *VisitorUpsert {
 // ClearContactID clears the value of the "contact_id" field.
 func (u *VisitorUpsert) ClearContactID() *VisitorUpsert {
 	u.SetNull(visitor.FieldContactID)
-	return u
-}
-
-// SetUpdatedAt sets the "updated_at" field.
-func (u *VisitorUpsert) SetUpdatedAt(v time.Time) *VisitorUpsert {
-	u.Set(visitor.FieldUpdatedAt, v)
-	return u
-}
-
-// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
-func (u *VisitorUpsert) UpdateUpdatedAt() *VisitorUpsert {
-	u.SetExcluded(visitor.FieldUpdatedAt)
 	return u
 }
 
@@ -434,6 +434,20 @@ func (u *VisitorUpsertOne) Update(set func(*VisitorUpsert)) *VisitorUpsertOne {
 	return u
 }
 
+// SetUpdatedAt sets the "updated_at" field.
+func (u *VisitorUpsertOne) SetUpdatedAt(v time.Time) *VisitorUpsertOne {
+	return u.Update(func(s *VisitorUpsert) {
+		s.SetUpdatedAt(v)
+	})
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *VisitorUpsertOne) UpdateUpdatedAt() *VisitorUpsertOne {
+	return u.Update(func(s *VisitorUpsert) {
+		s.UpdateUpdatedAt()
+	})
+}
+
 // SetVisitorID sets the "visitor_id" field.
 func (u *VisitorUpsertOne) SetVisitorID(v string) *VisitorUpsertOne {
 	return u.Update(func(s *VisitorUpsert) {
@@ -480,20 +494,6 @@ func (u *VisitorUpsertOne) UpdateContactID() *VisitorUpsertOne {
 func (u *VisitorUpsertOne) ClearContactID() *VisitorUpsertOne {
 	return u.Update(func(s *VisitorUpsert) {
 		s.ClearContactID()
-	})
-}
-
-// SetUpdatedAt sets the "updated_at" field.
-func (u *VisitorUpsertOne) SetUpdatedAt(v time.Time) *VisitorUpsertOne {
-	return u.Update(func(s *VisitorUpsert) {
-		s.SetUpdatedAt(v)
-	})
-}
-
-// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
-func (u *VisitorUpsertOne) UpdateUpdatedAt() *VisitorUpsertOne {
-	return u.Update(func(s *VisitorUpsert) {
-		s.UpdateUpdatedAt()
 	})
 }
 
@@ -646,7 +646,7 @@ func (_c *VisitorCreateBulk) ExecX(ctx context.Context) {
 //		// Override some of the fields with custom
 //		// update values.
 //		Update(func(u *ent.VisitorUpsert) {
-//			SetVisitorID(v+v).
+//			SetCreatedAt(v+v).
 //		}).
 //		Exec(ctx)
 func (_c *VisitorCreateBulk) OnConflict(opts ...sql.ConflictOption) *VisitorUpsertBulk {
@@ -728,6 +728,20 @@ func (u *VisitorUpsertBulk) Update(set func(*VisitorUpsert)) *VisitorUpsertBulk 
 	return u
 }
 
+// SetUpdatedAt sets the "updated_at" field.
+func (u *VisitorUpsertBulk) SetUpdatedAt(v time.Time) *VisitorUpsertBulk {
+	return u.Update(func(s *VisitorUpsert) {
+		s.SetUpdatedAt(v)
+	})
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *VisitorUpsertBulk) UpdateUpdatedAt() *VisitorUpsertBulk {
+	return u.Update(func(s *VisitorUpsert) {
+		s.UpdateUpdatedAt()
+	})
+}
+
 // SetVisitorID sets the "visitor_id" field.
 func (u *VisitorUpsertBulk) SetVisitorID(v string) *VisitorUpsertBulk {
 	return u.Update(func(s *VisitorUpsert) {
@@ -774,20 +788,6 @@ func (u *VisitorUpsertBulk) UpdateContactID() *VisitorUpsertBulk {
 func (u *VisitorUpsertBulk) ClearContactID() *VisitorUpsertBulk {
 	return u.Update(func(s *VisitorUpsert) {
 		s.ClearContactID()
-	})
-}
-
-// SetUpdatedAt sets the "updated_at" field.
-func (u *VisitorUpsertBulk) SetUpdatedAt(v time.Time) *VisitorUpsertBulk {
-	return u.Update(func(s *VisitorUpsert) {
-		s.SetUpdatedAt(v)
-	})
-}
-
-// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
-func (u *VisitorUpsertBulk) UpdateUpdatedAt() *VisitorUpsertBulk {
-	return u.Update(func(s *VisitorUpsert) {
-		s.UpdateUpdatedAt()
 	})
 }
 

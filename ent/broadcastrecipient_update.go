@@ -31,6 +31,12 @@ func (_u *BroadcastRecipientUpdate) Where(ps ...predicate.BroadcastRecipient) *B
 	return _u
 }
 
+// SetUpdatedAt sets the "updated_at" field.
+func (_u *BroadcastRecipientUpdate) SetUpdatedAt(v time.Time) *BroadcastRecipientUpdate {
+	_u.mutation.SetUpdatedAt(v)
+	return _u
+}
+
 // SetBroadcastID sets the "broadcast_id" field.
 func (_u *BroadcastRecipientUpdate) SetBroadcastID(v int64) *BroadcastRecipientUpdate {
 	_u.mutation.SetBroadcastID(v)
@@ -201,12 +207,6 @@ func (_u *BroadcastRecipientUpdate) ClearClickedAt() *BroadcastRecipientUpdate {
 	return _u
 }
 
-// SetUpdatedAt sets the "updated_at" field.
-func (_u *BroadcastRecipientUpdate) SetUpdatedAt(v time.Time) *BroadcastRecipientUpdate {
-	_u.mutation.SetUpdatedAt(v)
-	return _u
-}
-
 // SetBroadcast sets the "broadcast" edge to the Broadcast entity.
 func (_u *BroadcastRecipientUpdate) SetBroadcast(v *Broadcast) *BroadcastRecipientUpdate {
 	return _u.SetBroadcastID(v.ID)
@@ -304,6 +304,9 @@ func (_u *BroadcastRecipientUpdate) sqlSave(ctx context.Context) (_node int, err
 			}
 		}
 	}
+	if value, ok := _u.mutation.UpdatedAt(); ok {
+		_spec.SetField(broadcastrecipient.FieldUpdatedAt, field.TypeTime, value)
+	}
 	if value, ok := _u.mutation.ContactID(); ok {
 		_spec.SetField(broadcastrecipient.FieldContactID, field.TypeInt64, value)
 	}
@@ -345,9 +348,6 @@ func (_u *BroadcastRecipientUpdate) sqlSave(ctx context.Context) (_node int, err
 	}
 	if _u.mutation.ClickedAtCleared() {
 		_spec.ClearField(broadcastrecipient.FieldClickedAt, field.TypeTime)
-	}
-	if value, ok := _u.mutation.UpdatedAt(); ok {
-		_spec.SetField(broadcastrecipient.FieldUpdatedAt, field.TypeTime, value)
 	}
 	if _u.mutation.BroadcastCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -427,6 +427,12 @@ type BroadcastRecipientUpdateOne struct {
 	hooks     []Hook
 	mutation  *BroadcastRecipientMutation
 	modifiers []func(*sql.UpdateBuilder)
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (_u *BroadcastRecipientUpdateOne) SetUpdatedAt(v time.Time) *BroadcastRecipientUpdateOne {
+	_u.mutation.SetUpdatedAt(v)
+	return _u
 }
 
 // SetBroadcastID sets the "broadcast_id" field.
@@ -599,12 +605,6 @@ func (_u *BroadcastRecipientUpdateOne) ClearClickedAt() *BroadcastRecipientUpdat
 	return _u
 }
 
-// SetUpdatedAt sets the "updated_at" field.
-func (_u *BroadcastRecipientUpdateOne) SetUpdatedAt(v time.Time) *BroadcastRecipientUpdateOne {
-	_u.mutation.SetUpdatedAt(v)
-	return _u
-}
-
 // SetBroadcast sets the "broadcast" edge to the Broadcast entity.
 func (_u *BroadcastRecipientUpdateOne) SetBroadcast(v *Broadcast) *BroadcastRecipientUpdateOne {
 	return _u.SetBroadcastID(v.ID)
@@ -732,6 +732,9 @@ func (_u *BroadcastRecipientUpdateOne) sqlSave(ctx context.Context) (_node *Broa
 			}
 		}
 	}
+	if value, ok := _u.mutation.UpdatedAt(); ok {
+		_spec.SetField(broadcastrecipient.FieldUpdatedAt, field.TypeTime, value)
+	}
 	if value, ok := _u.mutation.ContactID(); ok {
 		_spec.SetField(broadcastrecipient.FieldContactID, field.TypeInt64, value)
 	}
@@ -773,9 +776,6 @@ func (_u *BroadcastRecipientUpdateOne) sqlSave(ctx context.Context) (_node *Broa
 	}
 	if _u.mutation.ClickedAtCleared() {
 		_spec.ClearField(broadcastrecipient.FieldClickedAt, field.TypeTime)
-	}
-	if value, ok := _u.mutation.UpdatedAt(); ok {
-		_spec.SetField(broadcastrecipient.FieldUpdatedAt, field.TypeTime, value)
 	}
 	if _u.mutation.BroadcastCleared() {
 		edge := &sqlgraph.EdgeSpec{
