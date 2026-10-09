@@ -2,8 +2,8 @@
 
 A prioritized queue of **design decisions worth grilling** — each clears the bar of
 *hard-to-reverse + surprising + real trade-off*, and each output is a glossary term
-(`CONTEXT.md`) and/or an ADR (`docs/adr/`). This is the working queue for
-`/grill-with-docs` sessions; it is not itself authoritative (CONTEXT.md + ADRs are).
+(`GLOSSARY.md`) and/or an ADR (`docs/adr/`). This is the working queue for
+`/grill-with-docs` sessions; it is not itself authoritative (GLOSSARY.md + ADRs are).
 
 Legend: 🔴 launch-blocker / "can't send otherwise" · 🟡 parity with drip.com · ⚪ later.
 
@@ -138,7 +138,7 @@ another Automation. Open forks: which actions are first-class Step kinds vs. def
 Grill *before or with* automation branching (they reshape the same Step/Enrollment model).
 
 ### 🟡 Automation branching / goals / per-step conditions
-CONTEXT.md deferred this "until the sequence builder is real" — the builder now is. Attacks
+GLOSSARY.md deferred this "until the sequence builder is real" — the builder now is. Attacks
 the stated invariant *"Enrollment points at exactly one current Step… no branching"*. Open
 forks: branch/condition model, goals & exit conditions, whether the single-current-step
 pointer survives, re-enrollment (currently out of scope).

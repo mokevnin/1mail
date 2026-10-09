@@ -90,10 +90,10 @@ tracking.
 > retired with an inline jobs adapter; Phase 2 event-based segment conditions;
 > ADR 0001/0002 refactors; transactional send [ADR 0005]; visual automation builder.)
 
-> **⚠️ Authoritative model — read `CONTEXT.md` + `docs/adr/*` first.** This phased
-> roadmap predates the domain model in `CONTEXT.md` and the accepted ADRs, which
+> **⚠️ Authoritative model — read `GLOSSARY.md` + `docs/adr/*` first.** This phased
+> roadmap predates the domain model in `GLOSSARY.md` and the accepted ADRs, which
 > supersede it where they disagree. Note in particular:
-> - **"Snapshot / static segments" is rejected**, not deferred. Per `CONTEXT.md`
+> - **"Snapshot / static segments" is rejected**, not deferred. Per `GLOSSARY.md`
 >   ("a segment is always a rule; membership is never materialized"; anti-vocabulary
 >   rejects List/snapshot), there is no second segment kind. Mentions of snapshot
 >   below are obsolete.
@@ -108,7 +108,7 @@ The core model is in place; the open work is feature breadth on top of it:
 
 - **Automation branching / goals / per-step conditions** — the visual builder exists but
   linearizes; the schema + engine model only ordered send/wait steps. Now that the builder
-  is real, this is the natural next increment (CONTEXT.md deferred it "until the sequence
+  is real, this is the natural next increment (GLOSSARY.md deferred it "until the sequence
   builder is real").
 - **Anonymous-Contact promotion policy** — left open by ADR 0002: a Visitor resolves to a
   Contact only via Identify/API/import; whether/when an anonymous Visitor is promoted to a
@@ -133,7 +133,7 @@ pains (cron architecture, upgrade friction, Redis/multi-master deployment, dated
 already neutralises by design; these three are the ones still open for us:
 
 - **Scale validation — highest value.** 1mail's core bet (live rule segments, membership
-  *never materialized* — `CONTEXT.md`) structurally avoids Mautic's #1 abandonment cause
+  *never materialized* — `GLOSSARY.md`) structurally avoids Mautic's #1 abandonment cause
   (~1M contacts → 5-minute segment editor, hanging pages, ~4 contacts/sec import), **but it is
   unproven at that scale.** Load-test the segment engine (rule → SQL compile + live preview
   count) and the broadcast send-loop audience resolution at ~1M contacts; deliverable is a
@@ -235,7 +235,7 @@ and see a report** (sent / opened / clicked / unsubscribed). This is the first "
   sending via the queue; open/click/unsubscribe tracking; per-campaign report.
 - **Audience (MVP):** "all active contacts in the workspace" + optionally a **rule segment**.
   (Historical note: this originally read "snapshot segment"; that concept was later **rejected**
-  — see `CONTEXT.md`. A segment is always a live rule; there is no static/snapshot kind.)
+  — see `GLOSSARY.md`. A segment is always a live rule; there is no static/snapshot kind.)
 - **Out (later phases):** visual drag-and-drop builder, reusable templates, full Liquid feature set,
   A/B, bounce/complaint handling, dedicated domains.
 
@@ -350,6 +350,6 @@ Pattern: the public tracker `internal/server/tracker.go` (serves `/t.js`, ingest
 
 ### Open questions / later
 - ~~**Snapshot segments:**~~ **Resolved: rejected.** A segment is always a live rule (no
-  `SegmentMember` membership table). See `CONTEXT.md` anti-vocabulary.
+  `SegmentMember` membership table). See `GLOSSARY.md` anti-vocabulary.
 - **Bounce/complaint handling** (SES SNS / SMTP DSN) — Phase 6 (deliverability).
 - **External API broadcasts** — after the site contract stabilizes.

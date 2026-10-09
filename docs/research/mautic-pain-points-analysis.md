@@ -7,7 +7,7 @@ is the incumbent open-source marketing automation platform; this doc catalogues 
 can target the pains that are genuinely *ours to win*.
 
 Mautic-side claims are cited to forum threads / issues. 1mail-side claims are grounded in
-`CONTEXT.md` and `docs/adr/*` (the authoritative model) — where the two disagree, CONTEXT/ADRs win.
+`GLOSSARY.md` and `docs/adr/*` (the authoritative model) — where the two disagree, CONTEXT/ADRs win.
 
 **Bottom line:** Mautic's deepest pains are *systemic* (cron architecture, upgrade friction,
 heavyweight deployment, dated UI) and 1mail neutralises them **by design** — that is the core
@@ -51,7 +51,7 @@ partial-campaign failure mode from a missed tick.
 
 **1mail position — better architecture, but UNPROVEN. ⚠️**
 Segments are **live rules compiled to SQL predicates** and membership is *never materialized*
-(`CONTEXT.md` — "membership is never materialized and shifts as data changes"; `internal/segments`),
+(`GLOSSARY.md` — "membership is never materialized and shifts as data changes"; `internal/segments`),
 which structurally avoids Mautic's rebuild-the-segment-table pain. Backing store is Postgres,
 not MySQL. **However, this is an architectural bet, not a measured result:** the live-count
 preview and the send-loop audience resolution have not been load-tested at ~1M contacts. This

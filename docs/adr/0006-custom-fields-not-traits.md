@@ -23,7 +23,7 @@ a real, typed, named field catalogue to target.
 
 - **Two concepts: freeform traits + promoted custom fields.** Rejected: two parallel attribute
   notions for one job, an explicit "promote" step nobody maintains, and an ungoverned trait
-  space that the segment builder can't safely surface. (See [[CONTEXT.md]] Anti-vocabulary →
+  space that the segment builder can't safely surface. (See [[GLOSSARY.md]] Anti-vocabulary →
   Trait.)
 - **Schema-first: reject unknown keys until declared.** Rejected: breaks the tracker/API
   ingest ergonomics — a customer sending `identify(id, {plan})` would silently lose `plan`

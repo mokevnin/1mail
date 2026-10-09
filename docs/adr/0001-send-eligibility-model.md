@@ -42,7 +42,7 @@ channel without reshape.
   facts (bounce/complaint) that may arrive for addresses with no contact at all.
 - **Hand-authored Topics as the consent unit.** Rejected: nobody wants to author consent
   categories; the natural, automatic scope is the sender itself — each Automation is its own
-  scope, all Broadcasts share one. (See [[CONTEXT.md]] "Sending source".)
+  scope, all Broadcasts share one. (See [[GLOSSARY.md]] "Sending source".)
 - **Mailing Lists.** Rejected entirely: Lists fuse container + targeting + consent. We keep
   them split — pool = Contacts, targeting = Segment, consent = per-source Unsubscribe.
 
