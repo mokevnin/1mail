@@ -10,7 +10,7 @@ import (
 	"slices"
 	"strings"
 
-	atlasmigrate "ariga.io/atlas/sql/migrate"
+	"ariga.io/atlas/sql/sqltool"
 	"entgo.io/ent/dialect"
 	"entgo.io/ent/dialect/sql/schema"
 	"github.com/jackc/pgx/v5/pgconn"
@@ -109,7 +109,7 @@ func generateMigration(args []string) {
 	if devURL == "" {
 		log.Fatal("ATLAS_DEV_URL is not set (the scratch database Atlas diffs against)")
 	}
-	dir, err := atlasmigrate.NewLocalDir("migrations")
+	dir, err := sqltool.NewGooseDir("migrations")
 	if err != nil {
 		log.Fatalf("open migrations dir: %v", err)
 	}
@@ -117,7 +117,7 @@ func generateMigration(args []string) {
 		schema.WithDir(dir),
 		schema.WithMigrationMode(schema.ModeReplay),
 		schema.WithDialect(dialect.Postgres),
-		schema.WithFormatter(atlasmigrate.DefaultFormatter),
+		schema.WithFormatter(sqltool.GooseFormatter),
 	); err != nil {
 		log.Fatalf("generate migration: %v", err)
 	}

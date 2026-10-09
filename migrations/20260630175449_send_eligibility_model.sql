@@ -1,3 +1,4 @@
+-- +goose Up
 -- Modify "contacts" table
 ALTER TABLE "public"."contacts" DROP COLUMN "status";
 -- Modify "suppressions" table
@@ -21,3 +22,5 @@ CREATE TABLE "public"."unsubscribes" (
 CREATE INDEX "unsubscribes_ws_channel_dest" ON "public"."unsubscribes" ("workspace_id", "channel", "destination");
 -- Create index "unsubscribes_ws_channel_dest_source" to table: "unsubscribes"
 CREATE UNIQUE INDEX "unsubscribes_ws_channel_dest_source" ON "public"."unsubscribes" ("workspace_id", "channel", "destination", "sending_source");
+
+-- +goose Down

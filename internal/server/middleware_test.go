@@ -74,7 +74,7 @@ func TestRequestIDIsEchoedOrGenerated(t *testing.T) {
 	h := requestID(http.HandlerFunc(func(http.ResponseWriter, *http.Request) {}))
 	assert.Equal(t, "abc-123", do(t, h, http.MethodGet, "/", map[string]string{"X-Request-Id": "abc-123"}).Header().Get("X-Request-Id"))
 	generated := do(t, h, http.MethodGet, "/", nil).Header().Get("X-Request-Id")
-	assert.Len(t, generated, 16)
+	assert.Len(t, generated, 26)
 	assert.NotEqual(t, generated, do(t, h, http.MethodGet, "/", nil).Header().Get("X-Request-Id"))
 }
 

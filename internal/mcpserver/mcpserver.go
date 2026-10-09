@@ -15,7 +15,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
-	"sort"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -257,7 +257,7 @@ func (op *operation) request(ctx context.Context, args map[string]any, extra *mc
 		for k := range rest {
 			unknown = append(unknown, k)
 		}
-		sort.Strings(unknown)
+		slices.Sort(unknown)
 		return nil, errors.New("unknown arguments: " + strings.Join(unknown, ", "))
 	}
 

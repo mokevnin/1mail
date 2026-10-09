@@ -45,7 +45,7 @@ Migrations are embedded in the binary. You apply them one of two ways:
   Use it as a pre-deploy job or a Kubernetes init container, then start the servers
   without `AUTO_MIGRATE`.
 
-> The binary tracks applied migrations in its own `schema_migrations` table. Don't point
+> The binary tracks applied migrations (via goose) in its own `goose_db_version` table. Don't point
 > it at a database previously managed by the Atlas dev-CLI flow (which uses
 > `atlas_schema_revisions`).
 

@@ -1,3 +1,4 @@
+-- +goose Up
 -- Modify "workspaces" table
 ALTER TABLE "public"."workspaces" ADD COLUMN "require_confirmed_opt_in" boolean NOT NULL DEFAULT false;
 -- Create "confirmations" table
@@ -15,3 +16,5 @@ CREATE TABLE "public"."confirmations" (
 );
 -- Create index "confirmations_ws_channel_dest" to table: "confirmations"
 CREATE UNIQUE INDEX "confirmations_ws_channel_dest" ON "public"."confirmations" ("workspace_id", "channel", "destination");
+
+-- +goose Down

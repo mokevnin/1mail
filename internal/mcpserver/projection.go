@@ -3,8 +3,9 @@ package mcpserver
 import (
 	"encoding/json"
 	"fmt"
+	"maps"
 	"net/http"
-	"sort"
+	"slices"
 	"strings"
 	"unicode"
 
@@ -52,7 +53,7 @@ func project(spec []byte) ([]*operation, error) {
 
 	var ops []*operation
 	seen := map[string]string{}
-	for _, path := range sortedKeys(paths) {
+	for _, path := range slices.Sorted(maps.Keys(paths)) {
 		item, _ := paths[path].(map[string]any)
 		for _, method := range []string{"get", "post", "put", "patch", "delete"} {
 			raw, ok := item[method].(map[string]any)
@@ -152,7 +153,7 @@ func buildOperation(name, method, path string, raw, schemas, parameters map[stri
 					requiredSet[s] = true
 				}
 			}
-			for _, field := range sortedKeys(bodyProps) {
+			for _, field := range slices.Sorted(maps.Keys(bodyProps)) {
 				fieldSchema, _ := bodyProps[field].(map[string]any)
 				if err := add(field, copySchema(fieldSchema), requiredSet[field]); err != nil {
 					return nil, err
@@ -162,7 +163,7 @@ func buildOperation(name, method, path string, raw, schemas, parameters map[stri
 		}
 	}
 
-	sort.Strings(required)
+	slices.Sort(required)
 	input := map[string]any{"type": "object", "properties": props}
 	if len(required) > 0 {
 		input["required"] = required
@@ -296,13 +297,4 @@ func collectDefs(input map[string]any, schemas map[string]any) map[string]any {
 	}
 	visit(input)
 	return defs
-}
-
-func sortedKeys(m map[string]any) []string {
-	keys := make([]string, 0, len(m))
-	for k := range m {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
-	return keys
 }

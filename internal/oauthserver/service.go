@@ -11,7 +11,6 @@ import (
 	"context"
 	"crypto/rand"
 	"crypto/sha256"
-	"encoding/base64"
 	"encoding/hex"
 	"errors"
 	"fmt"
@@ -106,10 +105,7 @@ func (s *Service) Decide(ctx context.Context, d Decision) (string, error) {
 		granted = append(granted, send...)
 	}
 
-	code, err := randomString(32)
-	if err != nil {
-		return "", err
-	}
+	code := rand.Text()
 	_, err = s.ent.OAuthCode.Create().
 		SetCodeHash(hashCode(code)).
 		SetClientID(client.ID).
@@ -168,14 +164,6 @@ func validPKCE(s string) bool {
 		}
 	}
 	return true
-}
-
-func randomString(n int) (string, error) {
-	b := make([]byte, n)
-	if _, err := rand.Read(b); err != nil {
-		return "", err
-	}
-	return base64.RawURLEncoding.EncodeToString(b), nil
 }
 
 func hashCode(code string) string {
