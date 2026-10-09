@@ -69,6 +69,7 @@ export function ApiKeysSection({ slug }: { slug: string }) {
     mutation: siteTokensCreateMutation(),
     invalidate: [queryKey],
     errorTitle: t(($) => $.settings.tokens.createError),
+    forbiddenMessage: t(($) => $.settings.tokens.forbidden),
     onDone: (data) => {
       setNewSecret(data.token)
       form.reset()
@@ -79,6 +80,7 @@ export function ApiKeysSection({ slug }: { slug: string }) {
     mutation: siteTokensDeleteMutation(),
     invalidate: [queryKey],
     errorTitle: t(($) => $.settings.tokens.revokeError),
+    forbiddenMessage: t(($) => $.settings.tokens.forbidden),
   })
 
   const onRevoke = (id: string) => {

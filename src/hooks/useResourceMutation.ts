@@ -7,7 +7,7 @@ import {
 } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 
-import { getApiErrorMessage } from '../utils/apiErrors.ts'
+import { getApiErrorMessage, isForbiddenError } from '../utils/apiErrors.ts'
 
 // Options layered on top of a generated mutation. The three things every CRUD
 // mutation in this app repeats — invalidate the affected list query, toast on
@@ -23,6 +23,9 @@ interface ResourceMutationOptions<TData, TError, TVars, TCtx> {
   // Title used for the error toast. The message is the API error detail, or a
   // generic fallback when the API gives none — never a copy of the title.
   errorTitle: string
+  // Message shown instead of the API detail when the API answers 403 (the action
+  // is role-gated and the caller lacks the role) — localized, unlike the detail.
+  forbiddenMessage?: string
   // Extra success work — navigation, form reset — run after invalidation.
   onDone?: (data: TData, variables: TVars) => void | Promise<void>
 }
@@ -35,6 +38,7 @@ export function useResourceMutation<TData, TError, TVars, TCtx>({
   invalidate,
   successMessage,
   errorTitle,
+  forbiddenMessage,
   onDone,
 }: ResourceMutationOptions<TData, TError, TVars, TCtx>) {
   const { t } = useTranslation()
@@ -59,10 +63,13 @@ export function useResourceMutation<TData, TError, TVars, TCtx>({
       notifications.show({
         color: 'red',
         title: errorTitle,
-        message: getApiErrorMessage(
-          error,
-          t(($) => $.notifications.errorMessage),
-        ),
+        message:
+          forbiddenMessage && isForbiddenError(error)
+            ? forbiddenMessage
+            : getApiErrorMessage(
+                error,
+                t(($) => $.notifications.errorMessage),
+              ),
       })
     },
   })

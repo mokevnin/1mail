@@ -48,3 +48,25 @@ test('creates a token and reveals the one-time secret', async () => {
   // The full secret is shown once.
   await expect.element(screen.getByText('omtk_newprefix_supersecret')).toBeInTheDocument()
 })
+
+test('a plain member who is forbidden to create a token sees why', async () => {
+  mockClientFetch((input) => {
+    const req = input instanceof Request ? input : new Request(String(input))
+    if (req.method === 'POST') {
+      return jsonResponse(
+        { status: 403, detail: 'only owners and admins can manage API tokens' },
+        { status: 403 },
+      )
+    }
+    return jsonResponse([])
+  })
+
+  const { screen } = await renderWithRouter(<ApiKeysSection slug="test" />)
+
+  await screen.getByLabelText(/^Token name/).fill('CI')
+  await screen.getByRole('button', { name: 'Create token' }).click()
+
+  await expect
+    .element(screen.getByText(/Only workspace owners and admins can manage API tokens/))
+    .toBeInTheDocument()
+})

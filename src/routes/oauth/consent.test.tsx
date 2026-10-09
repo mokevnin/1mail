@@ -102,3 +102,31 @@ test('an invalid request shows an error instead of the form', async () => {
 
   await expect.element(screen.getByText(/authorization request is invalid/)).toBeInTheDocument()
 })
+
+test('a plain member who is forbidden sees why, not a generic error', async () => {
+  mockClientFetch(async (input) => {
+    const req = input instanceof Request ? input : new Request(String(input))
+    if (req.url.includes('/oauth/authorization')) {
+      if (req.method === 'POST') {
+        return jsonResponse(
+          { status: 403, detail: 'only owners and admins can connect an application' },
+          { status: 403 },
+        )
+      }
+      return jsonResponse({
+        clientName: 'Fixture Connector',
+        redirectUri: request.redirectUri,
+        scopes: ['contacts:read'],
+        sendScopes: [],
+      })
+    }
+    return jsonResponse([workspace])
+  })
+  const { screen } = await renderWithRouter(<OAuthConsent request={request} />)
+
+  await screen.getByRole('button', { name: 'Allow access' }).click()
+
+  await expect
+    .element(screen.getByText(/Only workspace owners and admins can connect an application/))
+    .toBeInTheDocument()
+})

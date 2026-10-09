@@ -22,7 +22,7 @@ import {
   siteWorkspacesListOptions,
 } from '../../generated/site/@tanstack/react-query.gen.ts'
 import { oauthConsentRoute } from '../../router.tsx'
-import { getApiErrorMessage } from '../../utils/apiErrors.ts'
+import { getApiErrorMessage, isForbiddenError } from '../../utils/apiErrors.ts'
 
 // The authorization request exactly as the OAuth client sent it (the backend's
 // /oauth/authorize hands the browser here with the same query string).
@@ -74,6 +74,10 @@ export function OAuthConsent({ request }: { request: ConsentRequest }) {
     // Hand the browser back to the client (an external URL the server built).
     onSuccess: (data) => window.location.assign(data.redirectUrl),
     onError: (error) => {
+      // A 403 is explained inline (below) so it stays visible; other failures toast.
+      if (isForbiddenError(error)) {
+        return
+      }
       notifications.show({
         color: 'red',
         title: t(($) => $.oauthConsent.errorTitle),
@@ -161,6 +165,12 @@ export function OAuthConsent({ request }: { request: ConsentRequest }) {
               label={t(($) => $.oauthConsent.sendCheckbox, { scopes: info.sendScopes.join(', ') })}
             />
           </Stack>
+        </Alert>
+      ) : null}
+
+      {decide.isError && isForbiddenError(decide.error) ? (
+        <Alert color="red" title={t(($) => $.oauthConsent.errorTitle)}>
+          {t(($) => $.oauthConsent.forbidden)}
         </Alert>
       ) : null}
 
