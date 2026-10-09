@@ -99,6 +99,7 @@ export function SegmentRuleBuilder({ slug, value, onChange }: SegmentRuleBuilder
           fields={fields}
           operators={operators}
           query={query}
+          enableMountQueryChange={false}
           onQueryChange={(q) => onChange(JSON.stringify(q))}
         />
       </QueryBuilderMantine>

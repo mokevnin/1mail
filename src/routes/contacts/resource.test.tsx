@@ -5,14 +5,13 @@ import {
   siteContactsGetOptions,
   siteContactsListOptions,
 } from '../../generated/site/@tanstack/react-query.gen.ts'
+import { contactsCreateRoute, contactsEditRoute } from '../../router.tsx'
 import { jsonResponse, mockClientFetch } from '../../test/mockFetch.ts'
 import { renderWithRouter } from '../../test/renderWithRouter.tsx'
+import { routeMount } from '../../test/routeMount.ts'
 import { ContactCreatePage, ContactEditPage } from './resource.tsx'
 
-const CREATE_ROUTE = {
-  path: '/workspaces/$slug/contacts/new',
-  initialPath: '/workspaces/test/contacts/new',
-}
+const CREATE_ROUTE = routeMount(contactsCreateRoute, { slug: 'test' })
 
 // Stands in for the contacts list screen: an active list query, so invalidation after a save
 // is observable as a refetch.
@@ -76,10 +75,7 @@ test('a malformed email is rejected before anything is sent', async () => {
   expect(bodies).toEqual([])
 })
 
-const EDIT_ROUTE = {
-  path: '/workspaces/$slug/contacts/$contactId/edit',
-  initialPath: '/workspaces/test/contacts/7/edit',
-}
+const EDIT_ROUTE = routeMount(contactsEditRoute, { slug: 'test', contactId: '7' })
 
 const LOADED_CONTACT = {
   id: '7',
@@ -155,4 +151,19 @@ test('editing shows an error alert when the contact cannot be loaded', async () 
 
   await expect.element(screen.getByText('Failed to load contacts')).toBeVisible()
   await expect.element(screen.getByText('contact not found')).toBeVisible()
+})
+
+test('editing shows no form while the contact loads, then the loaded values', async () => {
+  const gate = Promise.withResolvers<void>()
+  mockClientFetch(async () => {
+    await gate.promise
+    return jsonResponse(LOADED_CONTACT)
+  })
+
+  const { screen } = await renderWithRouter(<ContactEditPage />, EDIT_ROUTE)
+
+  await expect.element(screen.getByLabelText('Email')).not.toBeInTheDocument()
+  gate.resolve()
+
+  await expect.element(screen.getByLabelText('Email')).toHaveValue('ada@example.com')
 })

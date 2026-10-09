@@ -5,21 +5,17 @@ import {
   siteSegmentsGetOptions,
   siteSegmentsListOptions,
 } from '../../generated/site/@tanstack/react-query.gen.ts'
+import { segmentsCreateRoute, segmentsEditRoute } from '../../router.tsx'
 import { jsonResponse, mockClientFetch } from '../../test/mockFetch.ts'
 import { renderWithRouter } from '../../test/renderWithRouter.tsx'
+import { routeMount } from '../../test/routeMount.ts'
 import { SegmentCreatePage, SegmentEditPage } from './resource.tsx'
 
 const RULE = '{"combinator":"and","rules":[{"field":"email","operator":"contains","value":"@x"}]}'
 
-const CREATE_ROUTE = {
-  path: '/workspaces/$slug/segments/new',
-  initialPath: '/workspaces/test/segments/new',
-}
+const CREATE_ROUTE = routeMount(segmentsCreateRoute, { slug: 'test' })
 
-const EDIT_ROUTE = {
-  path: '/workspaces/$slug/segments/$segmentId/edit',
-  initialPath: '/workspaces/test/segments/7/edit',
-}
+const EDIT_ROUTE = routeMount(segmentsEditRoute, { slug: 'test', segmentId: '7' })
 
 // Stands in for the segments list screen: an active list query, so invalidation after a save
 // is observable as a refetch.
@@ -163,4 +159,21 @@ test('editing shows an error alert when the segment cannot be loaded', async () 
 
   await expect.element(screen.getByText('Failed to load segments')).toBeVisible()
   await expect.element(screen.getByText('segment not found')).toBeVisible()
+})
+
+test('editing shows no form while the segment loads, then the loaded values', async () => {
+  const gate = Promise.withResolvers<void>()
+  mockClientFetch(async (input, init) => {
+    const side = sideResponse(requestOf(input, init))
+    if (side) return side
+    await gate.promise
+    return jsonResponse({ id: '7', name: 'Mail users', definition: RULE })
+  })
+
+  const { screen } = await renderWithRouter(<SegmentEditPage />, EDIT_ROUTE)
+
+  await expect.element(screen.getByLabelText('Name', { exact: false })).not.toBeInTheDocument()
+  gate.resolve()
+
+  await expect.element(screen.getByLabelText('Name', { exact: false })).toHaveValue('Mail users')
 })

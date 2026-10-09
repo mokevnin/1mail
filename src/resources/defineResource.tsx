@@ -8,7 +8,7 @@ import {
 } from '@tanstack/react-query'
 import { useNavigate, useParams } from '@tanstack/react-router'
 import type { TFunction } from 'i18next'
-import { type ComponentType, type ReactNode, useEffect, useEffectEvent } from 'react'
+import { type ComponentType, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import type * as z from 'zod'
 
@@ -27,9 +27,12 @@ export type ResourceForm<TPayload> = Omit<
   'validate' | 'validateField' | 'isValid'
 >
 
-function useResourceForm<TPayload>(blank: FormValues, schema: z.ZodType<TPayload, FormValues>) {
+function useResourceForm<TPayload>(
+  initialValues: FormValues,
+  schema: z.ZodType<TPayload, FormValues>,
+) {
   return useForm<FormValues, TPayload>({
-    initialValues: blank,
+    initialValues,
     validate: schemaResolver(schema, { sync: true }),
     transformValues: (values) => schema.parse(values),
   })
@@ -136,26 +139,21 @@ export function defineResource<
     )
   }
 
-  function EditPage({ children }: ResourceEditPageProps<TResource>) {
+  // Mounted only once the resource is loaded, so the form is created with the hydrated values
+  // (the schema's encode direction) and never renders blank. It is keyed by resource id by the
+  // caller and not by the fetched data: a background refetch (invalidation, window focus) must
+  // not remount the form and clobber unsaved edits. After a successful save the form is reset
+  // to the saved resource instead, so it is clean and shows the server's normalized values.
+  function EditForm({
+    slug,
+    id,
+    loaded,
+    children,
+  }: ResourceEditPageProps<TResource> & { slug: string; id: string; loaded: TResource }) {
     const { t } = useTranslation()
-    const params = useParams({ strict: false })
-    const slug = params.slug ?? ''
-    const id = String(Reflect.get(params, resource.idParam))
     const texts = resource.texts(t)
 
-    const form = useResourceForm(resource.schema.blank, resource.schema.update)
-
-    const query = useQuery(resource.getOptions({ path: { slug, id } }))
-
-    // Hydration: the loaded resource goes through the schema's encode direction.
-    const hydrate = useEffectEvent((loaded: TResource) => {
-      const values = resource.schema.toValues(loaded)
-      form.setValues(values)
-      form.resetDirty(values)
-    })
-    useEffect(() => {
-      if (query.data) hydrate(query.data)
-    }, [query.data])
+    const form = useResourceForm(resource.schema.toValues(loaded), resource.schema.update)
 
     const mutation = useResourceMutation({
       mutation: resource.updateMutation(),
@@ -165,7 +163,34 @@ export function defineResource<
       ],
       successMessage: texts.updated,
       errorTitle: texts.saveErrorTitle,
+      onDone: (saved) => {
+        const values = resource.schema.toValues(saved)
+        form.setValues(values)
+        form.resetDirty(values)
+      },
     })
+
+    return (
+      <Stack>
+        <Title order={4}>{texts.editTitle}</Title>
+        <resource.Form
+          form={form}
+          isPending={mutation.isPending}
+          onSubmit={(body) => mutation.mutate({ path: { slug, id }, body })}
+        />
+        {children?.(loaded)}
+      </Stack>
+    )
+  }
+
+  function EditPage({ children }: ResourceEditPageProps<TResource>) {
+    const { t } = useTranslation()
+    const params = useParams({ strict: false })
+    const slug = params.slug ?? ''
+    const id = String(Reflect.get(params, resource.idParam))
+    const texts = resource.texts(t)
+
+    const query = useQuery(resource.getOptions({ path: { slug, id } }))
 
     if (query.isLoading) return <Loader />
     if (query.isError || !query.data) {
@@ -179,15 +204,7 @@ export function defineResource<
     }
 
     return (
-      <Stack>
-        <Title order={4}>{texts.editTitle}</Title>
-        <resource.Form
-          form={form}
-          isPending={mutation.isPending}
-          onSubmit={(body) => mutation.mutate({ path: { slug, id }, body })}
-        />
-        {children?.(query.data)}
-      </Stack>
+      <EditForm key={id} slug={slug} id={id} loaded={query.data} {...(children && { children })} />
     )
   }
 

@@ -5,19 +5,15 @@ import {
   siteTemplatesGetOptions,
   siteTemplatesListOptions,
 } from '../../generated/site/@tanstack/react-query.gen.ts'
+import { templatesCreateRoute, templatesEditRoute } from '../../router.tsx'
 import { jsonResponse, mockClientFetch } from '../../test/mockFetch.ts'
 import { renderWithRouter } from '../../test/renderWithRouter.tsx'
+import { routeMount } from '../../test/routeMount.ts'
 import { TemplateCreatePage, TemplateEditPage } from './resource.tsx'
 
-const CREATE_ROUTE = {
-  path: '/workspaces/$slug/templates/new',
-  initialPath: '/workspaces/test/templates/new',
-}
+const CREATE_ROUTE = routeMount(templatesCreateRoute, { slug: 'test' })
 
-const EDIT_ROUTE = {
-  path: '/workspaces/$slug/templates/$templateId/edit',
-  initialPath: '/workspaces/test/templates/7/edit',
-}
+const EDIT_ROUTE = routeMount(templatesEditRoute, { slug: 'test', templateId: '7' })
 
 function ListProbe() {
   useQuery(siteTemplatesListOptions({ path: { slug: 'test' } }))

@@ -5,19 +5,15 @@ import {
   siteBroadcastsGetOptions,
   siteBroadcastsListOptions,
 } from '../../generated/site/@tanstack/react-query.gen.ts'
+import { broadcastsCreateRoute, broadcastsEditRoute } from '../../router.tsx'
 import { jsonResponse, mockClientFetch } from '../../test/mockFetch.ts'
 import { renderWithRouter } from '../../test/renderWithRouter.tsx'
+import { routeMount } from '../../test/routeMount.ts'
 import { BroadcastCreatePage, BroadcastEditPage } from './resource.tsx'
 
-const CREATE_ROUTE = {
-  path: '/workspaces/$slug/broadcasts/new',
-  initialPath: '/workspaces/test/broadcasts/new',
-}
+const CREATE_ROUTE = routeMount(broadcastsCreateRoute, { slug: 'test' })
 
-const EDIT_ROUTE = {
-  path: '/workspaces/$slug/broadcasts/$broadcastId/edit',
-  initialPath: '/workspaces/test/broadcasts/7/edit',
-}
+const EDIT_ROUTE = routeMount(broadcastsEditRoute, { slug: 'test', broadcastId: '7' })
 
 function ListProbe() {
   useQuery(siteBroadcastsListOptions({ path: { slug: 'test' } }))
@@ -46,7 +42,7 @@ function broadcast(status: string) {
 }
 
 // Serves the broadcasts API: records write bodies and counts list/detail fetches.
-function serve(status: string) {
+function serve(status: string, detailGate?: Promise<void>) {
   const bodies: unknown[] = []
   const fetches = { list: 0, detail: 0 }
   mockClientFetch(async (input, init) => {
@@ -69,6 +65,7 @@ function serve(status: string) {
       return jsonResponse({ items: [], totalItems: 0 })
     }
     fetches.detail++
+    await detailGate
     return jsonResponse(broadcast(status))
   })
   return { bodies, fetches }
@@ -154,4 +151,27 @@ test('send and schedule are disabled for a non-draft broadcast, test send stays 
   await expect.element(screen.getByRole('button', { name: 'Schedule' })).toBeDisabled()
   await screen.getByLabelText('Send a test to').fill('qa@example.com')
   await expect.element(screen.getByRole('button', { name: 'Send test' })).toBeEnabled()
+})
+
+test('editing shows no form while the broadcast loads, then the loaded values', async () => {
+  const gate = Promise.withResolvers<void>()
+  serve('draft', gate.promise)
+
+  const { screen } = await renderWithRouter(<BroadcastEditPage />, EDIT_ROUTE)
+
+  await expect.element(screen.getByLabelText(/^Name/)).not.toBeInTheDocument()
+  gate.resolve()
+
+  await expect.element(screen.getByLabelText(/^Name/)).toHaveValue('Launch')
+})
+
+test('editing shows an error alert when the broadcast cannot be loaded', async () => {
+  mockClientFetch(() =>
+    jsonResponse({ title: 'Not Found', detail: 'broadcast not found' }, { status: 404 }),
+  )
+
+  const { screen } = await renderWithRouter(<BroadcastEditPage />, EDIT_ROUTE)
+
+  await expect.element(screen.getByText('Failed to load broadcasts')).toBeVisible()
+  await expect.element(screen.getByText('broadcast not found')).toBeVisible()
 })
