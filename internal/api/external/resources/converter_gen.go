@@ -103,9 +103,9 @@ func (c *ConverterImpl) EmailTemplateToResource(source *ent.EmailTemplate) exter
 func (c *ConverterImpl) SegmentToResource(source *ent.Segment) external.SegmentResource {
 	var externalapiSegmentResource external.SegmentResource
 	if source != nil {
+		externalapiSegmentResource.ID = entityID((*source).ID)
 		externalapiSegmentResource.Name = (*source).Name
 		externalapiSegmentResource.Definition = optString((*source).Definition)
-		externalapiSegmentResource.ID = entityID((*source).ID)
 		externalapiSegmentResource.CreatedAt = timestamp((*source).CreatedAt)
 		externalapiSegmentResource.UpdatedAt = timestamp((*source).UpdatedAt)
 	}

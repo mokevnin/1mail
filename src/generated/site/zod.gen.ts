@@ -200,7 +200,7 @@ export const zSiteCreateEmailTemplateInput = z.object({
  */
 export const zSiteCreateSegmentInput = z.object({
   name: z.string(),
-  definition: z.string().nullish()
+  definition: z.string()
 });
 
 /**
@@ -567,7 +567,7 @@ export const zSiteUpdateMembershipInput = z.object({
  */
 export const zSiteUpdateSegmentInput = z.object({
   name: z.string().optional(),
-  definition: z.string().nullish()
+  definition: z.string().optional()
 });
 
 /**
@@ -812,7 +812,7 @@ export const zSiteScheduleBroadcastInput = z.object({
 export const zSiteSegmentResource = z.object({
   id: zEntityId,
   name: z.string(),
-  definition: z.string().nullish(),
+  definition: z.string().optional(),
   createdAt: zTimestamp,
   updatedAt: zTimestamp
 });

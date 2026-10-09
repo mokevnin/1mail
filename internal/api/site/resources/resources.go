@@ -27,6 +27,7 @@ import (
 // goverter:extend entityID
 // goverter:extend timestamp
 // goverter:extend optNilString
+// goverter:extend optString
 // goverter:extend optNilEmailAddress
 // goverter:extend optNilEntityID
 // goverter:extend optNilTimeZone
@@ -125,6 +126,13 @@ func transactionalError(m ent.OutboundMessage) siteapi.OptNilString {
 		return siteapi.OptNilString{}
 	}
 	return siteapi.NewOptNilString(*m.Reason)
+}
+
+func optString(v *string) siteapi.OptString {
+	if v == nil {
+		return siteapi.OptString{}
+	}
+	return siteapi.NewOptString(*v)
 }
 
 func optNilString(v *string) siteapi.OptNilString {

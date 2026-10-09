@@ -74,7 +74,7 @@ func (h *Handlers) SiteSegmentsCreate(ctx context.Context, req *siteapi.SiteCrea
 
 	s, err := h.segments.Create(ctx, ws, segments.CreateInput{
 		Name:       req.Name,
-		Definition: convert.StringPtr(req.Definition),
+		Definition: &req.Definition,
 	})
 	if errors.Is(err, segments.ErrInvalidDefinition) {
 		v := siteapi.SiteSegmentsCreateUnprocessableEntity(problem(http.StatusUnprocessableEntity, err.Error()))
@@ -129,11 +129,6 @@ func (h *Handlers) SiteSegmentsUpdate(ctx context.Context, req *siteapi.SiteUpda
 	id, err := strconv.ParseInt(string(params.ID), 10, 64)
 	if err != nil {
 		v := siteapi.SiteSegmentsUpdateBadRequest(problem(http.StatusBadRequest, "invalid id"))
-		return &v, nil
-	}
-	// A Segment is always a rule: clearing the definition is not a valid update.
-	if req.Definition.Null {
-		v := siteapi.SiteSegmentsUpdateUnprocessableEntity(problem(http.StatusUnprocessableEntity, "definition cannot be null"))
 		return &v, nil
 	}
 	in := segments.UpdateInput{

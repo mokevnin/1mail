@@ -6847,10 +6847,8 @@ func (s *CreateSegmentInput) encodeFields(e *jx.Encoder) {
 		e.Str(s.Name)
 	}
 	{
-		if s.Definition.Set {
-			e.FieldStart("definition")
-			s.Definition.Encode(e)
-		}
+		e.FieldStart("definition")
+		e.Str(s.Definition)
 	}
 }
 
@@ -6881,9 +6879,11 @@ func (s *CreateSegmentInput) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"name\"")
 			}
 		case "definition":
+			requiredBitSet[0] |= 1 << 1
 			if err := func() error {
-				s.Definition.Reset()
-				if err := s.Definition.Decode(d); err != nil {
+				v, err := d.Str()
+				s.Definition = string(v)
+				if err != nil {
 					return err
 				}
 				return nil
@@ -6900,7 +6900,7 @@ func (s *CreateSegmentInput) Decode(d *jx.Decoder) error {
 	// Validate required fields.
 	var failures []validate.FieldError
 	for i, mask := range [1]uint8{
-		0b00000001,
+		0b00000011,
 	} {
 		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
 			// Mask only required fields and check equality to mask using XOR.
@@ -10865,6 +10865,10 @@ func (s *SegmentResource) Encode(e *jx.Encoder) {
 // encodeFields encodes fields.
 func (s *SegmentResource) encodeFields(e *jx.Encoder) {
 	{
+		e.FieldStart("id")
+		s.ID.Encode(e)
+	}
+	{
 		e.FieldStart("name")
 		e.Str(s.Name)
 	}
@@ -10873,10 +10877,6 @@ func (s *SegmentResource) encodeFields(e *jx.Encoder) {
 			e.FieldStart("definition")
 			s.Definition.Encode(e)
 		}
-	}
-	{
-		e.FieldStart("id")
-		s.ID.Encode(e)
 	}
 	{
 		e.FieldStart("createdAt")
@@ -10889,9 +10889,9 @@ func (s *SegmentResource) encodeFields(e *jx.Encoder) {
 }
 
 var jsonFieldsNameOfSegmentResource = [5]string{
-	0: "name",
-	1: "definition",
-	2: "id",
+	0: "id",
+	1: "name",
+	2: "definition",
 	3: "createdAt",
 	4: "updatedAt",
 }
@@ -10905,8 +10905,18 @@ func (s *SegmentResource) Decode(d *jx.Decoder) error {
 
 	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
 		switch string(k) {
-		case "name":
+		case "id":
 			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				if err := s.ID.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"id\"")
+			}
+		case "name":
+			requiredBitSet[0] |= 1 << 1
 			if err := func() error {
 				v, err := d.Str()
 				s.Name = string(v)
@@ -10926,16 +10936,6 @@ func (s *SegmentResource) Decode(d *jx.Decoder) error {
 				return nil
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"definition\"")
-			}
-		case "id":
-			requiredBitSet[0] |= 1 << 2
-			if err := func() error {
-				if err := s.ID.Decode(d); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"id\"")
 			}
 		case "createdAt":
 			requiredBitSet[0] |= 1 << 3
@@ -10967,7 +10967,7 @@ func (s *SegmentResource) Decode(d *jx.Decoder) error {
 	// Validate required fields.
 	var failures []validate.FieldError
 	for i, mask := range [1]uint8{
-		0b00011101,
+		0b00011011,
 	} {
 		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
 			// Mask only required fields and check equality to mask using XOR.

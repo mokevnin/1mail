@@ -49,14 +49,14 @@ func TestExternalSegmentsWrite(t *testing.T) {
 
 	bad, err := c.SegmentsCreate(ctx, &externalapi.CreateSegmentInput{
 		Name:       "Bad",
-		Definition: externalapi.NewOptString(`{"combinator":"and","rules":[{"field":"nope","operator":"=","value":"x"}]}`),
+		Definition: `{"combinator":"and","rules":[{"field":"nope","operator":"=","value":"x"}]}`,
 	})
 	require.NoError(t, err)
 	assert.IsType(t, &externalapi.SegmentsCreateUnprocessableEntity{}, bad)
 
 	const def = `{"combinator":"and","rules":[{"field":"custom:plan","operator":"=","value":"pro"}]}`
 	created, err := c.SegmentsCreate(ctx, &externalapi.CreateSegmentInput{
-		Name: "Pros", Definition: externalapi.NewOptString(def),
+		Name: "Pros", Definition: def,
 	})
 	require.NoError(t, err)
 	seg, isSeg := created.(*externalapi.SegmentResource)

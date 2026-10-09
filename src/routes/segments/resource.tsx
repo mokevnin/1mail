@@ -13,17 +13,14 @@ import { resourceFormSchema } from '../../resources/resourceFormSchema.ts'
 import { segmentsEditRoute } from '../../router.tsx'
 import { SegmentForm } from './SegmentForm.tsx'
 
-// A Segment is always a rule: a blank definition is the empty rule group (matches all
-// contacts), never an absent or null definition (the API rejects null on update).
+// A Segment is always a rule: a stored segment without a definition loads as the empty
+// rule group (matches all contacts); the contract has no null definition.
 const EMPTY_RULE = '{"combinator":"and","rules":[]}'
 
 const segmentSchema = resourceFormSchema(
   z.object({
     name: zSiteCreateSegmentInput.shape.name,
-    definition: z
-      .string()
-      .nullish()
-      .transform((definition) => definition ?? EMPTY_RULE),
+    definition: z.string().default(EMPTY_RULE),
   }),
 )
 

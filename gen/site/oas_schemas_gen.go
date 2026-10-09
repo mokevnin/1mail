@@ -3416,8 +3416,9 @@ func (*SiteCreateInvitationResponse) siteInvitationsCreateRes() {}
 type SiteCreateSegmentInput struct {
 	// Segment name.
 	Name string `json:"name"`
-	// Segment definition (rule query; empty matches all contacts).
-	Definition OptNilString `json:"definition"`
+	// Segment definition: the rule query (react-querybuilder JSON); an empty rule group matches all
+	// contacts.
+	Definition string `json:"definition"`
 }
 
 // GetName returns the value of Name.
@@ -3426,7 +3427,7 @@ func (s *SiteCreateSegmentInput) GetName() string {
 }
 
 // GetDefinition returns the value of Definition.
-func (s *SiteCreateSegmentInput) GetDefinition() OptNilString {
+func (s *SiteCreateSegmentInput) GetDefinition() string {
 	return s.Definition
 }
 
@@ -3436,7 +3437,7 @@ func (s *SiteCreateSegmentInput) SetName(val string) {
 }
 
 // SetDefinition sets the value of Definition.
-func (s *SiteCreateSegmentInput) SetDefinition(val OptNilString) {
+func (s *SiteCreateSegmentInput) SetDefinition(val string) {
 	s.Definition = val
 }
 
@@ -5512,8 +5513,9 @@ type SiteSegmentResource struct {
 	ID EntityId `json:"id"`
 	// Segment name.
 	Name string `json:"name"`
-	// Segment definition (rule query; empty matches all contacts).
-	Definition OptNilString `json:"definition"`
+	// Segment definition: the rule query (react-querybuilder JSON); an empty rule group matches all
+	// contacts.
+	Definition OptString `json:"definition"`
 	// Creation timestamp.
 	CreatedAt Timestamp `json:"createdAt"`
 	// Last update timestamp.
@@ -5531,7 +5533,7 @@ func (s *SiteSegmentResource) GetName() string {
 }
 
 // GetDefinition returns the value of Definition.
-func (s *SiteSegmentResource) GetDefinition() OptNilString {
+func (s *SiteSegmentResource) GetDefinition() OptString {
 	return s.Definition
 }
 
@@ -5556,7 +5558,7 @@ func (s *SiteSegmentResource) SetName(val string) {
 }
 
 // SetDefinition sets the value of Definition.
-func (s *SiteSegmentResource) SetDefinition(val OptNilString) {
+func (s *SiteSegmentResource) SetDefinition(val OptString) {
 	s.Definition = val
 }
 
@@ -7724,8 +7726,9 @@ func (s *SiteUpdateMembershipInput) SetRole(val SiteMembershipRole) {
 type SiteUpdateSegmentInput struct {
 	// Segment name.
 	Name OptString `json:"name"`
-	// Segment definition (rule query; empty matches all contacts).
-	Definition OptNilString `json:"definition"`
+	// Segment definition: the rule query (react-querybuilder JSON); an empty rule group matches all
+	// contacts.
+	Definition OptString `json:"definition"`
 }
 
 // GetName returns the value of Name.
@@ -7734,7 +7737,7 @@ func (s *SiteUpdateSegmentInput) GetName() OptString {
 }
 
 // GetDefinition returns the value of Definition.
-func (s *SiteUpdateSegmentInput) GetDefinition() OptNilString {
+func (s *SiteUpdateSegmentInput) GetDefinition() OptString {
 	return s.Definition
 }
 
@@ -7744,7 +7747,7 @@ func (s *SiteUpdateSegmentInput) SetName(val OptString) {
 }
 
 // SetDefinition sets the value of Definition.
-func (s *SiteUpdateSegmentInput) SetDefinition(val OptNilString) {
+func (s *SiteUpdateSegmentInput) SetDefinition(val OptString) {
 	s.Definition = val
 }
 

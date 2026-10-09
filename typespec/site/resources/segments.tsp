@@ -16,8 +16,8 @@ model SiteSegmentResource {
   /** Segment name */
   name: string;
 
-  /** Segment definition (rule query; empty matches all contacts) */
-  definition?: string | null;
+  /** Segment definition: the rule query (react-querybuilder JSON); an empty rule group matches all contacts */
+  definition?: string;
 
   /** Creation timestamp */
   createdAt: Timestamp;
@@ -31,8 +31,8 @@ model SiteCreateSegmentInput {
   /** Segment name */
   name: string;
 
-  /** Segment definition (rule query; empty matches all contacts) */
-  definition?: string | null;
+  /** Segment definition: the rule query (react-querybuilder JSON); an empty rule group matches all contacts */
+  definition: string;
 }
 
 /** Site request body for updating a segment */
@@ -40,8 +40,8 @@ model SiteUpdateSegmentInput {
   /** Segment name */
   name?: string;
 
-  /** Segment definition (rule query; empty matches all contacts) */
-  definition?: string | null;
+  /** Segment definition: the rule query (react-querybuilder JSON); an empty rule group matches all contacts */
+  definition?: string;
 }
 
 /** Request body for previewing a rule definition's audience */

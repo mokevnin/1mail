@@ -5987,7 +5987,7 @@
       },
       "SiteCreateSegmentInput": {
         "type": "object",
-        "required": ["name"],
+        "required": ["name", "definition"],
         "properties": {
           "name": {
             "type": "string",
@@ -5995,8 +5995,7 @@
           },
           "definition": {
             "type": "string",
-            "nullable": true,
-            "description": "Segment definition (rule query; empty matches all contacts)"
+            "description": "Segment definition: the rule query (react-querybuilder JSON); an empty rule group matches all contacts"
           }
         },
         "description": "Site request body for creating a segment"
@@ -6792,8 +6791,7 @@
           },
           "definition": {
             "type": "string",
-            "nullable": true,
-            "description": "Segment definition (rule query; empty matches all contacts)"
+            "description": "Segment definition: the rule query (react-querybuilder JSON); an empty rule group matches all contacts"
           },
           "createdAt": {
             "allOf": [
@@ -7413,8 +7411,7 @@
           },
           "definition": {
             "type": "string",
-            "nullable": true,
-            "description": "Segment definition (rule query; empty matches all contacts)"
+            "description": "Segment definition: the rule query (react-querybuilder JSON); an empty rule group matches all contacts"
           }
         },
         "description": "Site request body for updating a segment"

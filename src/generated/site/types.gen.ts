@@ -637,9 +637,9 @@ export type SiteCreateSegmentInput = {
    */
   name: string;
   /**
-   * Segment definition (rule query; empty matches all contacts)
+   * Segment definition: the rule query (react-querybuilder JSON); an empty rule group matches all contacts
    */
-  definition?: string | null;
+  definition: string;
 };
 
 /**
@@ -1185,9 +1185,9 @@ export type SiteSegmentResource = {
    */
   name: string;
   /**
-   * Segment definition (rule query; empty matches all contacts)
+   * Segment definition: the rule query (react-querybuilder JSON); an empty rule group matches all contacts
    */
-  definition?: string | null;
+  definition?: string;
   /**
    * Creation timestamp
    */
@@ -1590,9 +1590,9 @@ export type SiteUpdateSegmentInput = {
    */
   name?: string;
   /**
-   * Segment definition (rule query; empty matches all contacts)
+   * Segment definition: the rule query (react-querybuilder JSON); an empty rule group matches all contacts
    */
-  definition?: string | null;
+  definition?: string;
 };
 
 /**

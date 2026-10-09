@@ -7,10 +7,16 @@ namespace OneMail;
 /** Segment resource */
 @resource("segments")
 @segment("segments")
-model SegmentResource extends CreateSegmentInput {
+model SegmentResource {
   /** Unique identifier */
   @key
   id: EntityId;
+
+  /** Segment name */
+  name: string;
+
+  /** Segment definition: the rule query (react-querybuilder JSON); an empty rule group matches all contacts */
+  definition?: string;
 
   /** Creation timestamp */
   createdAt: Timestamp;
@@ -24,8 +30,8 @@ model CreateSegmentInput {
   /** Segment name */
   name: string;
 
-  /** Segment definition (rule query; empty matches all contacts) */
-  definition?: string;
+  /** Segment definition: the rule query (react-querybuilder JSON); an empty rule group matches all contacts */
+  definition: string;
 }
 
 /** Request body for updating a segment */
@@ -33,7 +39,7 @@ model UpdateSegmentInput {
   /** Segment name */
   name?: string;
 
-  /** Segment definition */
+  /** Segment definition: the rule query (react-querybuilder JSON); an empty rule group matches all contacts */
   definition?: string;
 }
 

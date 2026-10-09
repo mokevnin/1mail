@@ -4476,7 +4476,7 @@
       },
       "CreateSegmentInput": {
         "type": "object",
-        "required": ["name"],
+        "required": ["name", "definition"],
         "properties": {
           "name": {
             "type": "string",
@@ -4484,7 +4484,7 @@
           },
           "definition": {
             "type": "string",
-            "description": "Segment definition (rule query; empty matches all contacts)"
+            "description": "Segment definition: the rule query (react-querybuilder JSON); an empty rule group matches all contacts"
           }
         },
         "description": "Request body for creating a segment"
@@ -4870,7 +4870,7 @@
       },
       "SegmentResource": {
         "type": "object",
-        "required": ["id", "createdAt", "updatedAt"],
+        "required": ["id", "name", "createdAt", "updatedAt"],
         "properties": {
           "id": {
             "allOf": [
@@ -4879,6 +4879,14 @@
               }
             ],
             "description": "Unique identifier"
+          },
+          "name": {
+            "type": "string",
+            "description": "Segment name"
+          },
+          "definition": {
+            "type": "string",
+            "description": "Segment definition: the rule query (react-querybuilder JSON); an empty rule group matches all contacts"
           },
           "createdAt": {
             "allOf": [
@@ -4897,11 +4905,6 @@
             "description": "Last update timestamp"
           }
         },
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/CreateSegmentInput"
-          }
-        ],
         "description": "Segment resource"
       },
       "SendTransactionalEmailInput": {
@@ -5335,7 +5338,7 @@
           },
           "definition": {
             "type": "string",
-            "description": "Segment definition"
+            "description": "Segment definition: the rule query (react-querybuilder JSON); an empty rule group matches all contacts"
           }
         },
         "description": "Request body for updating a segment"

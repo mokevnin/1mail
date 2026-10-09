@@ -103,7 +103,7 @@ func (c *ConverterImpl) SegmentToResource(source *ent.Segment) site.SiteSegmentR
 	if source != nil {
 		siteapiSiteSegmentResource.ID = entityID((*source).ID)
 		siteapiSiteSegmentResource.Name = (*source).Name
-		siteapiSiteSegmentResource.Definition = optNilString((*source).Definition)
+		siteapiSiteSegmentResource.Definition = optString((*source).Definition)
 		siteapiSiteSegmentResource.CreatedAt = timestamp((*source).CreatedAt)
 		siteapiSiteSegmentResource.UpdatedAt = timestamp((*source).UpdatedAt)
 	}

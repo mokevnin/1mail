@@ -58,7 +58,7 @@ func (h *Handlers) SegmentsCreate(ctx context.Context, req *externalapi.CreateSe
 	ws := auth.WorkspaceID(auth.GetTokenAuth(ctx))
 	s, err := h.segments.Create(ctx, ws, segments.CreateInput{
 		Name:       req.Name,
-		Definition: convert.StringPtr(req.Definition),
+		Definition: &req.Definition,
 	})
 	if errors.Is(err, segments.ErrInvalidDefinition) {
 		res := externalapi.SegmentsCreateUnprocessableEntity(problem(http.StatusUnprocessableEntity, err.Error()))

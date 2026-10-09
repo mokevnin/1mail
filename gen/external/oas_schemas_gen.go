@@ -2076,8 +2076,9 @@ func (s *CreateContactInputCustomFields) init() CreateContactInputCustomFields {
 type CreateSegmentInput struct {
 	// Segment name.
 	Name string `json:"name"`
-	// Segment definition (rule query; empty matches all contacts).
-	Definition OptString `json:"definition"`
+	// Segment definition: the rule query (react-querybuilder JSON); an empty rule group matches all
+	// contacts.
+	Definition string `json:"definition"`
 }
 
 // GetName returns the value of Name.
@@ -2086,7 +2087,7 @@ func (s *CreateSegmentInput) GetName() string {
 }
 
 // GetDefinition returns the value of Definition.
-func (s *CreateSegmentInput) GetDefinition() OptString {
+func (s *CreateSegmentInput) GetDefinition() string {
 	return s.Definition
 }
 
@@ -2096,7 +2097,7 @@ func (s *CreateSegmentInput) SetName(val string) {
 }
 
 // SetDefinition sets the value of Definition.
-func (s *CreateSegmentInput) SetDefinition(val OptString) {
+func (s *CreateSegmentInput) SetDefinition(val string) {
 	s.Definition = val
 }
 
@@ -4151,19 +4152,25 @@ func (s *ScheduleBroadcastInput) SetScheduledAt(val Timestamp) {
 	s.ScheduledAt = val
 }
 
-// Merged schema.
+// Segment resource.
 // Ref: #/components/schemas/SegmentResource
 type SegmentResource struct {
-	// Segment name.
-	Name string `json:"name"`
-	// Segment definition (rule query; empty matches all contacts).
-	Definition OptString `json:"definition"`
 	// Unique identifier.
 	ID EntityId `json:"id"`
+	// Segment name.
+	Name string `json:"name"`
+	// Segment definition: the rule query (react-querybuilder JSON); an empty rule group matches all
+	// contacts.
+	Definition OptString `json:"definition"`
 	// Creation timestamp.
 	CreatedAt Timestamp `json:"createdAt"`
 	// Last update timestamp.
 	UpdatedAt Timestamp `json:"updatedAt"`
+}
+
+// GetID returns the value of ID.
+func (s *SegmentResource) GetID() EntityId {
+	return s.ID
 }
 
 // GetName returns the value of Name.
@@ -4176,11 +4183,6 @@ func (s *SegmentResource) GetDefinition() OptString {
 	return s.Definition
 }
 
-// GetID returns the value of ID.
-func (s *SegmentResource) GetID() EntityId {
-	return s.ID
-}
-
 // GetCreatedAt returns the value of CreatedAt.
 func (s *SegmentResource) GetCreatedAt() Timestamp {
 	return s.CreatedAt
@@ -4191,6 +4193,11 @@ func (s *SegmentResource) GetUpdatedAt() Timestamp {
 	return s.UpdatedAt
 }
 
+// SetID sets the value of ID.
+func (s *SegmentResource) SetID(val EntityId) {
+	s.ID = val
+}
+
 // SetName sets the value of Name.
 func (s *SegmentResource) SetName(val string) {
 	s.Name = val
@@ -4199,11 +4206,6 @@ func (s *SegmentResource) SetName(val string) {
 // SetDefinition sets the value of Definition.
 func (s *SegmentResource) SetDefinition(val OptString) {
 	s.Definition = val
-}
-
-// SetID sets the value of ID.
-func (s *SegmentResource) SetID(val EntityId) {
-	s.ID = val
 }
 
 // SetCreatedAt sets the value of CreatedAt.
@@ -5661,7 +5663,8 @@ func (s *UpdateContactInputCustomFields) init() UpdateContactInputCustomFields {
 type UpdateSegmentInput struct {
 	// Segment name.
 	Name OptString `json:"name"`
-	// Segment definition.
+	// Segment definition: the rule query (react-querybuilder JSON); an empty rule group matches all
+	// contacts.
 	Definition OptString `json:"definition"`
 }
 

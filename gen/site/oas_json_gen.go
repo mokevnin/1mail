@@ -7560,10 +7560,8 @@ func (s *SiteCreateSegmentInput) encodeFields(e *jx.Encoder) {
 		e.Str(s.Name)
 	}
 	{
-		if s.Definition.Set {
-			e.FieldStart("definition")
-			s.Definition.Encode(e)
-		}
+		e.FieldStart("definition")
+		e.Str(s.Definition)
 	}
 }
 
@@ -7594,9 +7592,11 @@ func (s *SiteCreateSegmentInput) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"name\"")
 			}
 		case "definition":
+			requiredBitSet[0] |= 1 << 1
 			if err := func() error {
-				s.Definition.Reset()
-				if err := s.Definition.Decode(d); err != nil {
+				v, err := d.Str()
+				s.Definition = string(v)
+				if err != nil {
 					return err
 				}
 				return nil
@@ -7613,7 +7613,7 @@ func (s *SiteCreateSegmentInput) Decode(d *jx.Decoder) error {
 	// Validate required fields.
 	var failures []validate.FieldError
 	for i, mask := range [1]uint8{
-		0b00000001,
+		0b00000011,
 	} {
 		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
 			// Mask only required fields and check equality to mask using XOR.
