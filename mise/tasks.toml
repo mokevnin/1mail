@@ -204,7 +204,7 @@ fi
 '''
 
 ["check:deps"]
-description = "Unused files, exports and dependencies (knip.json)"
+description = "Unused files, exports and dependencies (knip.ts)"
 run = "pnpm exec knip"
 
 ["check:i18n"]
