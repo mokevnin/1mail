@@ -262,7 +262,7 @@ export const siteOAuthDescribeOptions = (options: Options<SiteOAuthDescribeData>
 });
 
 /**
- * Approve or deny an OAuth authorization request as the signed-in user
+ * Approve or deny an OAuth authorization request as the signed-in user. Approving mints an API token, so it needs the same role as creating one (owner or admin).
  */
 export const siteOAuthDecideMutation = (options?: Partial<Options<SiteOAuthDecideData>>): UseMutationOptions<SiteOAuthDecideResponse, SiteOAuthDecideError, Options<SiteOAuthDecideData>> => {
   const mutationOptions: UseMutationOptions<SiteOAuthDecideResponse, SiteOAuthDecideError, Options<SiteOAuthDecideData>> = {
@@ -1670,7 +1670,7 @@ export const siteTokensListOptions = (options: Options<SiteTokensListData>) => q
 });
 
 /**
- * Create an API token; the full secret is returned once
+ * Create an API token; the full secret is returned once. Owners and admins only.
  */
 export const siteTokensCreateMutation = (options?: Partial<Options<SiteTokensCreateData>>): UseMutationOptions<SiteTokensCreateResponse, SiteTokensCreateError, Options<SiteTokensCreateData>> => {
   const mutationOptions: UseMutationOptions<SiteTokensCreateResponse, SiteTokensCreateError, Options<SiteTokensCreateData>> = {
@@ -1687,7 +1687,7 @@ export const siteTokensCreateMutation = (options?: Partial<Options<SiteTokensCre
 };
 
 /**
- * Revoke an API token
+ * Revoke an API token. Owners and admins only.
  */
 export const siteTokensDeleteMutation = (options?: Partial<Options<SiteTokensDeleteData>>): UseMutationOptions<SiteTokensDeleteResponse, SiteTokensDeleteError, Options<SiteTokensDeleteData>> => {
   const mutationOptions: UseMutationOptions<SiteTokensDeleteResponse, SiteTokensDeleteError, Options<SiteTokensDeleteData>> = {

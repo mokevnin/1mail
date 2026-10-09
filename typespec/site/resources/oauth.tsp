@@ -64,7 +64,7 @@ namespace SiteOAuth {
     | BadRequestProblem
     | NotFoundProblem;
 
-  /** Approve or deny an OAuth authorization request as the signed-in user */
+  /** Approve or deny an OAuth authorization request as the signed-in user. Approving mints an API token, so it needs the same role as creating one (owner or admin). */
   @post
   op decide(@body body: SiteOAuthDecisionInput):
     | {
@@ -72,5 +72,6 @@ namespace SiteOAuth {
         @body body: SiteOAuthDecisionResult;
       }
     | BadRequestProblem
+    | ForbiddenProblem
     | NotFoundProblem;
 }

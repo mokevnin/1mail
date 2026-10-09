@@ -602,7 +602,7 @@
       },
       "post": {
         "operationId": "SiteOAuth_decide",
-        "description": "Approve or deny an OAuth authorization request as the signed-in user",
+        "description": "Approve or deny an OAuth authorization request as the signed-in user. Approving mints an API token, so it needs the same role as creating one (owner or admin).",
         "parameters": [],
         "responses": {
           "200": {
@@ -617,6 +617,16 @@
           },
           "400": {
             "description": "RFC 7807 bad request response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "RFC 7807 forbidden response",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -4219,7 +4229,7 @@
       },
       "post": {
         "operationId": "SiteTokens_create",
-        "description": "Create an API token; the full secret is returned once",
+        "description": "Create an API token; the full secret is returned once. Owners and admins only.",
         "parameters": [
           {
             "$ref": "#/components/parameters/SiteApiTokenResourceParentKey"
@@ -4232,6 +4242,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/SiteCreateTokenResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "RFC 7807 forbidden response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -4273,7 +4293,7 @@
     "/workspaces/{slug}/tokens/{id}": {
       "delete": {
         "operationId": "SiteTokens_delete",
-        "description": "Revoke an API token",
+        "description": "Revoke an API token. Owners and admins only.",
         "parameters": [
           {
             "$ref": "#/components/parameters/SiteApiTokenResourceKey.slug"
@@ -4288,6 +4308,16 @@
           },
           "400": {
             "description": "RFC 7807 bad request response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "RFC 7807 forbidden response",
             "content": {
               "application/problem+json": {
                 "schema": {

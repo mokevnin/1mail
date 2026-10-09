@@ -2299,6 +2299,10 @@ export type SiteOAuthDecideErrors = {
    */
   400: ProblemDetails;
   /**
+   * RFC 7807 forbidden response
+   */
+  403: ProblemDetails;
+  /**
    * RFC 7807 not found response
    */
   404: ProblemDetails;
@@ -4921,6 +4925,10 @@ export type SiteTokensCreateData = {
 
 export type SiteTokensCreateErrors = {
   /**
+   * RFC 7807 forbidden response
+   */
+  403: ProblemDetails;
+  /**
    * RFC 7807 not found response
    */
   404: ProblemDetails;
@@ -4962,6 +4970,10 @@ export type SiteTokensDeleteErrors = {
    * RFC 7807 bad request response
    */
   400: ProblemDetails;
+  /**
+   * RFC 7807 forbidden response
+   */
+  403: ProblemDetails;
   /**
    * RFC 7807 not found response
    */

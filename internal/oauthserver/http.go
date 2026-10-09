@@ -172,10 +172,10 @@ func (s *Server) authorize(w http.ResponseWriter, r *http.Request) {
 		writeOAuthError(w, http.StatusInternalServerError, "server_error", "")
 		return
 	}
-	if msg := checkAuthorizeParams(q, ResourceURL(s.issuer)); msg != "" {
-		target, err := redirectWith(redirectURI, url.Values{"error": {"invalid_request"}, "error_description": {msg}}, q.Get("state"))
+	if kind, msg := checkAuthorizeParams(q, ResourceURL(s.issuer)); msg != "" {
+		target, err := redirectWith(redirectURI, url.Values{"error": {kind}, "error_description": {msg}}, q.Get("state"))
 		if err != nil {
-			writeOAuthError(w, http.StatusBadRequest, "invalid_request", msg)
+			writeOAuthError(w, http.StatusBadRequest, kind, msg)
 			return
 		}
 		http.Redirect(w, r, target, http.StatusFound)
@@ -184,16 +184,19 @@ func (s *Server) authorize(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, s.issuer+ConsentPath+"?"+q.Encode(), http.StatusFound)
 }
 
-func checkAuthorizeParams(q url.Values, resource string) string {
+// checkAuthorizeParams returns the OAuth error code and description for an
+// invalid authorization request. A resource indicator (RFC 8707), when sent,
+// must name the MCP resource this server protects; an absent one is accepted.
+func checkAuthorizeParams(q url.Values, resource string) (kind, msg string) {
 	switch {
 	case q.Get("response_type") != "code":
-		return "response_type must be code"
+		return "invalid_request", "response_type must be code"
 	case q.Get("code_challenge_method") != "S256" || !validPKCE(q.Get("code_challenge")):
-		return "PKCE with code_challenge_method S256 is required"
+		return "invalid_request", "PKCE with code_challenge_method S256 is required"
 	case q.Get("resource") != "" && q.Get("resource") != resource:
-		return "unknown resource"
+		return "invalid_target", "unknown resource"
 	}
-	return ""
+	return "", ""
 }
 
 // token exchanges an authorization code (with its PKCE verifier) for an ordinary
@@ -205,6 +208,10 @@ func (s *Server) token(w http.ResponseWriter, r *http.Request) {
 	}
 	if r.PostForm.Get("grant_type") != "authorization_code" {
 		writeOAuthError(w, http.StatusBadRequest, "unsupported_grant_type", "only authorization_code is supported")
+		return
+	}
+	if res := r.PostForm.Get("resource"); res != "" && res != ResourceURL(s.issuer) {
+		writeOAuthError(w, http.StatusBadRequest, "invalid_target", "unknown resource")
 		return
 	}
 	ctx := r.Context()

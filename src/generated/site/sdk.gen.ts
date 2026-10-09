@@ -250,7 +250,7 @@ export const siteOAuthDescribe = <ThrowOnError extends boolean = false>(options:
 });
 
 /**
- * Approve or deny an OAuth authorization request as the signed-in user
+ * Approve or deny an OAuth authorization request as the signed-in user. Approving mints an API token, so it needs the same role as creating one (owner or admin).
  */
 export const siteOAuthDecide = <ThrowOnError extends boolean = false>(options: Options<SiteOAuthDecideData, ThrowOnError>): RequestResult<SiteOAuthDecideResponses, SiteOAuthDecideErrors, ThrowOnError> => (options.client ?? client).post<SiteOAuthDecideResponses, SiteOAuthDecideErrors, ThrowOnError>({
   requestValidator: async (data) => await z.object({
@@ -1454,7 +1454,7 @@ export const siteTokensList = <ThrowOnError extends boolean = false>(options: Op
 });
 
 /**
- * Create an API token; the full secret is returned once
+ * Create an API token; the full secret is returned once. Owners and admins only.
  */
 export const siteTokensCreate = <ThrowOnError extends boolean = false>(options: Options<SiteTokensCreateData, ThrowOnError>): RequestResult<SiteTokensCreateResponses, SiteTokensCreateErrors, ThrowOnError> => (options.client ?? client).post<SiteTokensCreateResponses, SiteTokensCreateErrors, ThrowOnError>({
   requestValidator: async (data) => await z.object({
@@ -1476,7 +1476,7 @@ export const siteTokensCreate = <ThrowOnError extends boolean = false>(options: 
 });
 
 /**
- * Revoke an API token
+ * Revoke an API token. Owners and admins only.
  */
 export const siteTokensDelete = <ThrowOnError extends boolean = false>(options: Options<SiteTokensDeleteData, ThrowOnError>): RequestResult<SiteTokensDeleteResponses, SiteTokensDeleteErrors, ThrowOnError> => (options.client ?? client).delete<SiteTokensDeleteResponses, SiteTokensDeleteErrors, ThrowOnError>({
   requestValidator: async (data) => await z.object({

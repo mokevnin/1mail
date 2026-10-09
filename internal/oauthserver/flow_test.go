@@ -13,7 +13,9 @@ import (
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 	"github.com/modelcontextprotocol/go-sdk/oauthex"
 	"github.com/mokevnin/1mail/ent/apitoken"
+	"github.com/mokevnin/1mail/ent/membership"
 	siteapi "github.com/mokevnin/1mail/gen/site"
+	"github.com/mokevnin/1mail/internal/oauthserver"
 	"github.com/mokevnin/1mail/internal/testhelper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -128,6 +130,40 @@ func TestConsentToAWorkspaceTheUserDoesNotBelongToIsRefused(t *testing.T) {
 	assert.IsType(t, &siteapi.SiteOAuthDecideNotFound{}, res)
 }
 
+// Approving mints a non-expiring API token, so it takes the role that may create one.
+func TestConsentNeedsARoleThatMayManageTokens(t *testing.T) {
+	env := testhelper.Setup(t)
+	ctx := t.Context()
+
+	for role, wantOK := range map[membership.Role]bool{
+		membership.RoleAdmin:  true,
+		membership.RoleMember: false,
+	} {
+		t.Run(string(role), func(t *testing.T) {
+			email := string(role) + "@acme.test"
+			u, err := env.DB.User.Create().SetName(email).SetEmail(email).Save(ctx)
+			require.NoError(t, err)
+			_, err = env.DB.Membership.Create().SetUserID(u.ID).SetWorkspaceID(1).SetRole(role).Save(ctx)
+			require.NoError(t, err)
+			in := approval("contacts:write", false)
+			before, err := env.DB.OAuthCode.Query().Count(ctx)
+			require.NoError(t, err)
+
+			res, err := env.SiteClient(t, email).SiteOAuthDecide(ctx, &in)
+			require.NoError(t, err)
+
+			if wantOK {
+				assert.IsType(t, &siteapi.SiteOAuthDecisionResult{}, res)
+				return
+			}
+			assert.IsType(t, &siteapi.SiteOAuthDecideForbidden{}, res)
+			after, err := env.DB.OAuthCode.Query().Count(ctx)
+			require.NoError(t, err)
+			assert.Equal(t, before, after, "a refused consent issues no code")
+		})
+	}
+}
+
 func TestTokenEndpointIssuesAnOrdinaryScopedAPIToken(t *testing.T) {
 	env := testhelper.Setup(t)
 	back := consent(t, env, approval("contacts:read segments:read", false))
@@ -206,6 +242,40 @@ func TestTokenEndpointChecksPKCEAndTheOriginalRequest(t *testing.T) {
 			assert.NotContains(t, rec.Body.String(), "access_token")
 		})
 	}
+}
+
+func TestResourceIndicatorMustBeTheMCPResource(t *testing.T) {
+	env := testhelper.Setup(t)
+	mcpResource := oauthserver.ResourceURL(appURL(t))
+
+	t.Run("authorize", func(t *testing.T) {
+		rec := authorize(t, env, authorizeQuery(url.Values{"resource": {"https://elsewhere.example/mcp"}}))
+		require.Equal(t, http.StatusFound, rec.Code)
+		loc, err := url.Parse(rec.Header().Get("Location"))
+		require.NoError(t, err)
+		assert.Equal(t, "invalid_target", loc.Query().Get("error"))
+
+		ok := authorize(t, env, authorizeQuery(url.Values{"resource": {mcpResource}}))
+		loc, err = url.Parse(ok.Header().Get("Location"))
+		require.NoError(t, err)
+		assert.Empty(t, loc.Query().Get("error"))
+	})
+
+	t.Run("token", func(t *testing.T) {
+		bad := tokenForm(consent(t, env, approval("contacts:read", false)).Query().Get("code"))
+		bad.Set("resource", "https://elsewhere.example/mcp")
+		rec := exchange(t, env, bad)
+		assert.Equal(t, http.StatusBadRequest, rec.Code)
+		assert.Contains(t, rec.Body.String(), "invalid_target")
+		assert.NotContains(t, rec.Body.String(), "access_token")
+
+		good := tokenForm(consent(t, env, approval("contacts:read", false)).Query().Get("code"))
+		good.Set("resource", mcpResource)
+		assert.Equal(t, http.StatusOK, exchange(t, env, good).Code)
+
+		omitted := tokenForm(consent(t, env, approval("contacts:read", false)).Query().Get("code"))
+		assert.Equal(t, http.StatusOK, exchange(t, env, omitted).Code, "a missing resource stays accepted")
+	})
 }
 
 // roundTripper serves requests straight from the in-memory app.

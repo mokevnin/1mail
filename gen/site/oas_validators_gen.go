@@ -2352,6 +2352,14 @@ func (s *SiteOAuthDecideBadRequest) Validate() error {
 	return nil
 }
 
+func (s *SiteOAuthDecideForbidden) Validate() error {
+	alias := (*ProblemDetails)(s)
+	if err := alias.Validate(); err != nil {
+		return err
+	}
+	return nil
+}
+
 func (s *SiteOAuthDecideNotFound) Validate() error {
 	alias := (*ProblemDetails)(s)
 	if err := alias.Validate(); err != nil {
@@ -3531,6 +3539,14 @@ func (s *SiteTestSendBroadcastInput) Validate() error {
 	return nil
 }
 
+func (s *SiteTokensCreateForbidden) Validate() error {
+	alias := (*ProblemDetails)(s)
+	if err := alias.Validate(); err != nil {
+		return err
+	}
+	return nil
+}
+
 func (s *SiteTokensCreateNotFound) Validate() error {
 	alias := (*ProblemDetails)(s)
 	if err := alias.Validate(); err != nil {
@@ -3548,6 +3564,14 @@ func (s *SiteTokensCreateUnprocessableEntity) Validate() error {
 }
 
 func (s *SiteTokensDeleteBadRequest) Validate() error {
+	alias := (*ProblemDetails)(s)
+	if err := alias.Validate(); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *SiteTokensDeleteForbidden) Validate() error {
 	alias := (*ProblemDetails)(s)
 	if err := alias.Validate(); err != nil {
 		return err

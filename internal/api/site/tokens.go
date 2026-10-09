@@ -9,10 +9,18 @@ import (
 
 	"github.com/mokevnin/1mail/ent"
 	"github.com/mokevnin/1mail/ent/apitoken"
+	"github.com/mokevnin/1mail/ent/membership"
 	siteapi "github.com/mokevnin/1mail/gen/site"
 	"github.com/mokevnin/1mail/internal/i18n"
 	"github.com/mokevnin/1mail/internal/service"
 )
+
+// canManageTokens reports whether role may mint or revoke API tokens. A token is
+// a standing credential for the whole workspace, so it is an owner/admin action;
+// OAuth consent mints one too and takes the same role.
+func canManageTokens(role membership.Role) bool {
+	return role == membership.RoleOwner || role == membership.RoleAdmin
+}
 
 // SiteTokensList returns the workspace's active (non-revoked) API tokens.
 func (h *Handlers) SiteTokensList(ctx context.Context, params siteapi.SiteTokensListParams) (siteapi.SiteTokensListRes, error) {
@@ -43,13 +51,17 @@ func (h *Handlers) SiteTokensList(ctx context.Context, params siteapi.SiteTokens
 // SiteTokensCreate mints a workspace API token. The full secret is returned once;
 // only its bcrypt hash and public prefix are stored.
 func (h *Handlers) SiteTokensCreate(ctx context.Context, req *siteapi.SiteCreateTokenInput, params siteapi.SiteTokensCreateParams) (siteapi.SiteTokensCreateRes, error) {
-	ws, err := h.workspaceID(ctx, params.Slug)
+	ws, role, err := h.membershipFor(ctx, params.Slug)
 	if ent.IsNotFound(err) {
 		v := siteapi.SiteTokensCreateNotFound(problem(http.StatusNotFound, "workspace not found"))
 		return &v, nil
 	}
 	if err != nil {
 		return nil, err
+	}
+	if !canManageTokens(role) {
+		v := siteapi.SiteTokensCreateForbidden(problem(http.StatusForbidden, "only owners and admins can manage API tokens"))
+		return &v, nil
 	}
 
 	name := strings.TrimSpace(req.Name)
@@ -97,13 +109,17 @@ func (h *Handlers) SiteTokensCreate(ctx context.Context, req *siteapi.SiteCreate
 
 // SiteTokensDelete revokes (soft-deletes) a workspace API token.
 func (h *Handlers) SiteTokensDelete(ctx context.Context, params siteapi.SiteTokensDeleteParams) (siteapi.SiteTokensDeleteRes, error) {
-	ws, err := h.workspaceID(ctx, params.Slug)
+	ws, role, err := h.membershipFor(ctx, params.Slug)
 	if ent.IsNotFound(err) {
 		v := siteapi.SiteTokensDeleteNotFound(problem(http.StatusNotFound, "workspace not found"))
 		return &v, nil
 	}
 	if err != nil {
 		return nil, err
+	}
+	if !canManageTokens(role) {
+		v := siteapi.SiteTokensDeleteForbidden(problem(http.StatusForbidden, "only owners and admins can manage API tokens"))
+		return &v, nil
 	}
 
 	id, err := strconv.ParseInt(string(params.ID), 10, 64)

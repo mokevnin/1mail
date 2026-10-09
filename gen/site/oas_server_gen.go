@@ -254,7 +254,8 @@ type Handler interface {
 	SiteMembershipsUpdate(ctx context.Context, req *SiteUpdateMembershipInput, params SiteMembershipsUpdateParams) (SiteMembershipsUpdateRes, error)
 	// SiteOAuthDecide implements SiteOAuth_decide operation.
 	//
-	// Approve or deny an OAuth authorization request as the signed-in user.
+	// Approve or deny an OAuth authorization request as the signed-in user. Approving mints an API token,
+	// so it needs the same role as creating one (owner or admin).
 	//
 	// POST /oauth/authorization
 	SiteOAuthDecide(ctx context.Context, req *SiteOAuthDecisionInput) (SiteOAuthDecideRes, error)
@@ -416,13 +417,13 @@ type Handler interface {
 	SiteTemplatesUpdate(ctx context.Context, req *SiteUpdateEmailTemplateInput, params SiteTemplatesUpdateParams) (SiteTemplatesUpdateRes, error)
 	// SiteTokensCreate implements SiteTokens_create operation.
 	//
-	// Create an API token; the full secret is returned once.
+	// Create an API token; the full secret is returned once. Owners and admins only.
 	//
 	// POST /workspaces/{slug}/tokens
 	SiteTokensCreate(ctx context.Context, req *SiteCreateTokenInput, params SiteTokensCreateParams) (SiteTokensCreateRes, error)
 	// SiteTokensDelete implements SiteTokens_delete operation.
 	//
-	// Revoke an API token.
+	// Revoke an API token. Owners and admins only.
 	//
 	// DELETE /workspaces/{slug}/tokens/{id}
 	SiteTokensDelete(ctx context.Context, params SiteTokensDeleteParams) (SiteTokensDeleteRes, error)

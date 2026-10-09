@@ -275,7 +275,8 @@ type Invoker interface {
 	SiteMembershipsUpdate(ctx context.Context, request *SiteUpdateMembershipInput, params SiteMembershipsUpdateParams) (SiteMembershipsUpdateRes, error)
 	// SiteOAuthDecide invokes SiteOAuth_decide operation.
 	//
-	// Approve or deny an OAuth authorization request as the signed-in user.
+	// Approve or deny an OAuth authorization request as the signed-in user. Approving mints an API token,
+	// so it needs the same role as creating one (owner or admin).
 	//
 	// POST /oauth/authorization
 	SiteOAuthDecide(ctx context.Context, request *SiteOAuthDecisionInput) (SiteOAuthDecideRes, error)
@@ -437,13 +438,13 @@ type Invoker interface {
 	SiteTemplatesUpdate(ctx context.Context, request *SiteUpdateEmailTemplateInput, params SiteTemplatesUpdateParams) (SiteTemplatesUpdateRes, error)
 	// SiteTokensCreate invokes SiteTokens_create operation.
 	//
-	// Create an API token; the full secret is returned once.
+	// Create an API token; the full secret is returned once. Owners and admins only.
 	//
 	// POST /workspaces/{slug}/tokens
 	SiteTokensCreate(ctx context.Context, request *SiteCreateTokenInput, params SiteTokensCreateParams) (SiteTokensCreateRes, error)
 	// SiteTokensDelete invokes SiteTokens_delete operation.
 	//
-	// Revoke an API token.
+	// Revoke an API token. Owners and admins only.
 	//
 	// DELETE /workspaces/{slug}/tokens/{id}
 	SiteTokensDelete(ctx context.Context, params SiteTokensDeleteParams) (SiteTokensDeleteRes, error)
@@ -6375,7 +6376,8 @@ func (c *Client) sendSiteMembershipsUpdate(ctx context.Context, request *SiteUpd
 
 // SiteOAuthDecide invokes SiteOAuth_decide operation.
 //
-// Approve or deny an OAuth authorization request as the signed-in user.
+// Approve or deny an OAuth authorization request as the signed-in user. Approving mints an API token,
+// so it needs the same role as creating one (owner or admin).
 //
 // POST /oauth/authorization
 func (c *Client) SiteOAuthDecide(ctx context.Context, request *SiteOAuthDecisionInput) (SiteOAuthDecideRes, error) {
@@ -10436,7 +10438,7 @@ func (c *Client) sendSiteTemplatesUpdate(ctx context.Context, request *SiteUpdat
 
 // SiteTokensCreate invokes SiteTokens_create operation.
 //
-// Create an API token; the full secret is returned once.
+// Create an API token; the full secret is returned once. Owners and admins only.
 //
 // POST /workspaces/{slug}/tokens
 func (c *Client) SiteTokensCreate(ctx context.Context, request *SiteCreateTokenInput, params SiteTokensCreateParams) (SiteTokensCreateRes, error) {
@@ -10571,7 +10573,7 @@ func (c *Client) sendSiteTokensCreate(ctx context.Context, request *SiteCreateTo
 
 // SiteTokensDelete invokes SiteTokens_delete operation.
 //
-// Revoke an API token.
+// Revoke an API token. Owners and admins only.
 //
 // DELETE /workspaces/{slug}/tokens/{id}
 func (c *Client) SiteTokensDelete(ctx context.Context, params SiteTokensDeleteParams) (SiteTokensDeleteRes, error) {

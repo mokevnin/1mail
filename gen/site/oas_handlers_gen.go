@@ -7744,7 +7744,8 @@ func (s *Server) handleSiteMembershipsUpdateRequest(args [2]string, argsEscaped 
 
 // handleSiteOAuthDecideRequest handles SiteOAuth_decide operation.
 //
-// Approve or deny an OAuth authorization request as the signed-in user.
+// Approve or deny an OAuth authorization request as the signed-in user. Approving mints an API token,
+// so it needs the same role as creating one (owner or admin).
 //
 // POST /oauth/authorization
 func (s *Server) handleSiteOAuthDecideRequest(args [0]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
@@ -12952,7 +12953,7 @@ func (s *Server) handleSiteTemplatesUpdateRequest(args [2]string, argsEscaped bo
 
 // handleSiteTokensCreateRequest handles SiteTokens_create operation.
 //
-// Create an API token; the full secret is returned once.
+// Create an API token; the full secret is returned once. Owners and admins only.
 //
 // POST /workspaces/{slug}/tokens
 func (s *Server) handleSiteTokensCreateRequest(args [1]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
@@ -13154,7 +13155,7 @@ func (s *Server) handleSiteTokensCreateRequest(args [1]string, argsEscaped bool,
 
 // handleSiteTokensDeleteRequest handles SiteTokens_delete operation.
 //
-// Revoke an API token.
+// Revoke an API token. Owners and admins only.
 //
 // DELETE /workspaces/{slug}/tokens/{id}
 func (s *Server) handleSiteTokensDeleteRequest(args [2]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {

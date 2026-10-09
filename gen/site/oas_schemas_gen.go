@@ -5250,6 +5250,10 @@ type SiteOAuthDecideBadRequest ProblemDetails
 
 func (*SiteOAuthDecideBadRequest) siteOAuthDecideRes() {}
 
+type SiteOAuthDecideForbidden ProblemDetails
+
+func (*SiteOAuthDecideForbidden) siteOAuthDecideRes() {}
+
 type SiteOAuthDecideNotFound ProblemDetails
 
 func (*SiteOAuthDecideNotFound) siteOAuthDecideRes() {}
@@ -7150,6 +7154,10 @@ func (s *SiteTestSendBroadcastInput) SetEmail(val EmailAddress) {
 	s.Email = val
 }
 
+type SiteTokensCreateForbidden ProblemDetails
+
+func (*SiteTokensCreateForbidden) siteTokensCreateRes() {}
+
 type SiteTokensCreateNotFound ProblemDetails
 
 func (*SiteTokensCreateNotFound) siteTokensCreateRes() {}
@@ -7161,6 +7169,10 @@ func (*SiteTokensCreateUnprocessableEntity) siteTokensCreateRes() {}
 type SiteTokensDeleteBadRequest ProblemDetails
 
 func (*SiteTokensDeleteBadRequest) siteTokensDeleteRes() {}
+
+type SiteTokensDeleteForbidden ProblemDetails
+
+func (*SiteTokensDeleteForbidden) siteTokensDeleteRes() {}
 
 // SiteTokensDeleteNoContent is response for SiteTokensDelete operation.
 type SiteTokensDeleteNoContent struct{}

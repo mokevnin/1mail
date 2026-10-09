@@ -34,15 +34,19 @@ func (h *Handlers) SiteOAuthDescribe(ctx context.Context, params siteapi.SiteOAu
 
 // SiteOAuthDecide records the signed-in user's consent decision. The token the
 // client later receives belongs to the chosen workspace, which the user must be
-// a member of.
+// a member of with a role that may manage API tokens: consent mints one.
 func (h *Handlers) SiteOAuthDecide(ctx context.Context, req *siteapi.SiteOAuthDecisionInput) (siteapi.SiteOAuthDecideRes, error) {
-	ws, err := h.workspaceID(ctx, req.WorkspaceSlug)
+	ws, role, err := h.membershipFor(ctx, req.WorkspaceSlug)
 	if ent.IsNotFound(err) {
 		v := siteapi.SiteOAuthDecideNotFound(problem(http.StatusNotFound, "workspace not found"))
 		return &v, nil
 	}
 	if err != nil {
 		return nil, err
+	}
+	if !canManageTokens(role) {
+		v := siteapi.SiteOAuthDecideForbidden(problem(http.StatusForbidden, "only owners and admins can connect an application"))
+		return &v, nil
 	}
 
 	target, err := h.oauth.Decide(ctx, oauthserver.Decision{

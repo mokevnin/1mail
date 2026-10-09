@@ -60,7 +60,7 @@ namespace SiteTokens {
       }
     | NotFoundProblem;
 
-  /** Create an API token; the full secret is returned once */
+  /** Create an API token; the full secret is returned once. Owners and admins only. */
   @createsResource(SiteApiTokenResource)
   @post
   @autoRoute
@@ -72,15 +72,17 @@ namespace SiteTokens {
         @statusCode statusCode: 201;
         @body body: SiteCreateTokenResponse;
       }
+    | ForbiddenProblem
     | NotFoundProblem
     | UnprocessableEntityProblem;
 
-  /** Revoke an API token */
+  /** Revoke an API token. Owners and admins only. */
   @deletesResource(SiteApiTokenResource)
   @delete
   @autoRoute
   op delete(...ResourceParameters<SiteApiTokenResource>):
     | NoContentResponse
+    | ForbiddenProblem
     | NotFoundProblem
     | BadRequestProblem;
 }

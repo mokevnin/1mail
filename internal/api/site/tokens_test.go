@@ -2,9 +2,11 @@ package site_test
 
 import (
 	"context"
+	"strconv"
 	"testing"
 
 	"github.com/mokevnin/1mail/ent/apitoken"
+	"github.com/mokevnin/1mail/ent/membership"
 	siteapi "github.com/mokevnin/1mail/gen/site"
 	"github.com/mokevnin/1mail/internal/service"
 	"github.com/mokevnin/1mail/internal/testhelper"
@@ -65,4 +67,29 @@ func TestSiteTokensWorkspaceNotFound(t *testing.T) {
 	res, err := c.SiteTokensList(context.Background(), siteapi.SiteTokensListParams{Slug: "does-not-exist"})
 	require.NoError(t, err)
 	assert.IsType(t, &siteapi.ProblemDetails{}, res)
+}
+
+func TestSiteTokensNeedAnOwnerOrAdmin(t *testing.T) {
+	env := testhelper.Setup(t)
+	addMember(t, env, "plainmember@acme.test", membership.RoleMember)
+	addMember(t, env, "admin@acme.test", membership.RoleAdmin)
+	c := siteClient(t, env, "plainmember@acme.test")
+	ctx := context.Background()
+
+	created, err := c.SiteTokensCreate(ctx,
+		&siteapi.SiteCreateTokenInput{Name: "sneaky", Scopes: []string{"contacts:write"}},
+		siteapi.SiteTokensCreateParams{Slug: "acme"})
+	require.NoError(t, err)
+	assert.IsType(t, &siteapi.SiteTokensCreateForbidden{}, created)
+
+	tok := env.DB.ApiToken.Query().FirstX(ctx)
+	deleted, err := c.SiteTokensDelete(ctx, siteapi.SiteTokensDeleteParams{Slug: "acme", ID: siteapi.EntityId(strconv.FormatInt(tok.ID, 10))})
+	require.NoError(t, err)
+	assert.IsType(t, &siteapi.SiteTokensDeleteForbidden{}, deleted)
+
+	ok, err := siteClient(t, env, "admin@acme.test").SiteTokensCreate(ctx,
+		&siteapi.SiteCreateTokenInput{Name: "ci", Scopes: []string{"contacts:read"}},
+		siteapi.SiteTokensCreateParams{Slug: "acme"})
+	require.NoError(t, err)
+	assert.IsType(t, &siteapi.SiteCreateTokenResponse{}, ok)
 }
