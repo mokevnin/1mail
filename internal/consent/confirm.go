@@ -22,7 +22,7 @@ func RecordConfirmation(ctx context.Context, client *ent.Client, bus *events.Bus
 		return nil
 	}
 
-	return bus.WithinTx(ctx, func(tx *ent.Client, pub events.Publisher) error {
+	return settled(bus.WithinTx(ctx, func(tx *ent.Client, pub events.Publisher) error {
 		exists, err := tx.Confirmation.Query().Where(
 			confirmation.WorkspaceID(target.WorkspaceID),
 			confirmation.ChannelEQ(confirmation.ChannelEmail),
@@ -49,5 +49,5 @@ func RecordConfirmation(ctx context.Context, client *ent.Client, bus *events.Bus
 			Provenance:  string(confirmation.ProvenanceDoubleOptIn),
 			IP:          ip,
 		})
-	})
+	}))
 }

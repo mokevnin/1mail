@@ -123,3 +123,49 @@ func TestSitePublicConfirmationsPerformRecordsClientIP(t *testing.T) {
 		*c.Email).Scan(&ip))
 	assert.Equal(t, "203.0.113.7", ip)
 }
+
+// A write that really fails must not look like a success: the person would be told
+// they are unsubscribed or confirmed while nothing was recorded. A NUL byte in the
+// signed destination is a deterministic database failure (Postgres text rejects it)
+// that is not a constraint violation.
+func TestSitePublicConsentWriteFailureIsAnError(t *testing.T) {
+	env := testhelper.Setup(t)
+	ctx := t.Context()
+	anon := env.SiteAnonymous(t)
+	const poisoned = "a\x00b@example.com"
+
+	unsubURL, err := env.Tracker.UnsubscribeURL(tracking.UnsubTarget{
+		Source: eligibility.SourceBroadcasts, Destination: poisoned, WorkspaceID: fixtures.AcmeID,
+	})
+	require.NoError(t, err)
+	_, err = anon.SitePublicUnsubscribesPerform(ctx, siteapi.SitePublicUnsubscribesPerformParams{Token: tokenAfter(t, unsubURL, "/e/u/")})
+	require.Error(t, err, "a failed opt-out write must not answer 204")
+
+	confirmURL, err := env.Tracker.ConfirmURL(tracking.ConfirmTarget{Destination: poisoned, WorkspaceID: fixtures.AcmeID})
+	require.NoError(t, err)
+	_, err = anon.SitePublicConfirmationsPerform(ctx, siteapi.SitePublicConfirmationsPerformParams{Token: tokenAfter(t, confirmURL, "/e/confirm/")})
+	require.Error(t, err, "a failed confirmation write must not answer 204")
+}
+
+// A token for a Workspace that no longer exists has nothing left to record: that is
+// not a failure the person (or a retrying mailbox provider) can do anything about.
+func TestSitePublicConsentForDeletedWorkspaceIsNoOp(t *testing.T) {
+	env := testhelper.Setup(t)
+	ctx := t.Context()
+	anon := env.SiteAnonymous(t)
+	const goneWorkspace = 999999
+
+	unsubURL, err := env.Tracker.UnsubscribeURL(tracking.UnsubTarget{
+		Source: eligibility.SourceBroadcasts, Destination: fixtures.ContactAliceEmail, WorkspaceID: goneWorkspace,
+	})
+	require.NoError(t, err)
+	out, err := anon.SitePublicUnsubscribesPerform(ctx, siteapi.SitePublicUnsubscribesPerformParams{Token: tokenAfter(t, unsubURL, "/e/u/")})
+	require.NoError(t, err)
+	assert.IsType(t, &siteapi.SitePublicUnsubscribesPerformNoContent{}, out)
+
+	confirmURL, err := env.Tracker.ConfirmURL(tracking.ConfirmTarget{Destination: fixtures.ContactAliceEmail, WorkspaceID: goneWorkspace})
+	require.NoError(t, err)
+	out2, err := anon.SitePublicConfirmationsPerform(ctx, siteapi.SitePublicConfirmationsPerformParams{Token: tokenAfter(t, confirmURL, "/e/confirm/")})
+	require.NoError(t, err)
+	assert.IsType(t, &siteapi.SitePublicConfirmationsPerformNoContent{}, out2)
+}

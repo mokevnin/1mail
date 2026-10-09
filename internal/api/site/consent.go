@@ -2,12 +2,12 @@ package site
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 
 	siteapi "github.com/mokevnin/1mail/gen/site"
 	"github.com/mokevnin/1mail/internal/clientip"
 	"github.com/mokevnin/1mail/internal/consent"
-	"github.com/mokevnin/1mail/internal/logging"
 )
 
 // SitePublicConfirmationsPerform is the double opt-in confirmation page's button
@@ -19,7 +19,7 @@ func (h *Handlers) SitePublicConfirmationsPerform(ctx context.Context, params si
 		return &v, nil
 	}
 	if err := consent.RecordConfirmation(ctx, h.ent, h.bus, target, clientip.FromContext(ctx)); err != nil {
-		logging.FromContext(ctx).Error("site: confirmation failed", "destination", target.Destination, "err", err)
+		return nil, fmt.Errorf("record confirmation: %w", err)
 	}
 	return &siteapi.SitePublicConfirmationsPerformNoContent{}, nil
 }
@@ -33,7 +33,7 @@ func (h *Handlers) SitePublicUnsubscribesPerform(ctx context.Context, params sit
 		return &v, nil
 	}
 	if err := consent.RecordUnsubscribe(ctx, h.ent, h.bus, target); err != nil {
-		logging.FromContext(ctx).Error("site: unsubscribe failed", "destination", target.Destination, "source", target.Source, "err", err)
+		return nil, fmt.Errorf("record unsubscribe: %w", err)
 	}
 	return &siteapi.SitePublicUnsubscribesPerformNoContent{}, nil
 }
