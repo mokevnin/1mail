@@ -53,8 +53,8 @@ func (w *DeliverWebhookWorker) Work(ctx context.Context, job *river.Job[DeliverW
 // whose filter matches, enqueuing one delivery job each. Implements
 // events.WebhookDispatcher.
 func (c *Client) Dispatch(ctx context.Context, workspaceID int64, eventName, deliveryID string, body []byte) error {
-	endpoints, err := c.ent.WebhookEndpoint.Query().
-		Where(webhookendpoint.WorkspaceID(workspaceID), webhookendpoint.Enabled(true)).
+	endpoints, err := c.ent.Scoped(workspaceID).WebhookEndpoint().Query().
+		Where(webhookendpoint.Enabled(true)).
 		All(ctx)
 	if err != nil {
 		return err

@@ -141,6 +141,16 @@ func (h *Handlers) scopedFor(ctx context.Context, slug string) (*ent.Scoped, err
 	return h.ent.Scoped(m.WorkspaceID), nil
 }
 
+// scopedWithRoleFor is scopedFor plus the caller's role, for owner/admin-gated
+// actions. It is a construction point of the scoped client like scopedFor.
+func (h *Handlers) scopedWithRoleFor(ctx context.Context, slug string) (*ent.Scoped, membership.Role, error) {
+	m, err := h.membership(ctx, slug)
+	if err != nil {
+		return nil, "", err
+	}
+	return h.ent.Scoped(m.WorkspaceID), m.Role, nil
+}
+
 func (h *Handlers) membership(ctx context.Context, slug string) (*ent.Membership, error) {
 	a := auth.GetSiteAuth(ctx)
 	if a == nil {

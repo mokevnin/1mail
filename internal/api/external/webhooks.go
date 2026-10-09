@@ -41,10 +41,10 @@ func (h *Handlers) WebhooksList(ctx context.Context, params externalapi.Webhooks
 		return &res, nil
 	}
 
-	ws := auth.WorkspaceID(auth.GetTokenAuth(ctx))
+	scoped := auth.TokenScoped(ctx)
 	page, pageSize := pagination.Normalize(convert.Ptr(params.Page), convert.Ptr(params.PageSize))
 
-	q := h.ent.WebhookEndpoint.Query().Where(webhookendpoint.WorkspaceID(ws))
+	q := scoped.WebhookEndpoint().Query()
 	total, err := q.Count(ctx)
 	if err != nil {
 		return nil, err
@@ -87,9 +87,8 @@ func (h *Handlers) WebhooksCreate(ctx context.Context, req *externalapi.CreateWe
 		return nil, err
 	}
 
-	ws := auth.WorkspaceID(auth.GetTokenAuth(ctx))
-	q := h.ent.WebhookEndpoint.Create().
-		SetWorkspaceID(ws).
+	scoped := auth.TokenScoped(ctx)
+	q := scoped.WebhookEndpoint().Create().
 		SetURL(req.URL).
 		SetSecretEncrypted(sealed).
 		SetEventTypes(req.EventTypes).
@@ -114,10 +113,8 @@ func (h *Handlers) WebhooksGet(ctx context.Context, params externalapi.WebhooksG
 		return &res, nil
 	}
 
-	ws := auth.WorkspaceID(auth.GetTokenAuth(ctx))
-	e, err := h.ent.WebhookEndpoint.Query().
-		Where(webhookendpoint.IDEQ(id), webhookendpoint.WorkspaceID(ws)).
-		Only(ctx)
+	scoped := auth.TokenScoped(ctx)
+	e, err := scoped.WebhookEndpoint().Get(ctx, id)
 	if ent.IsNotFound(err) {
 		res := externalapi.WebhooksGetNotFound(problem(http.StatusNotFound, "webhook not found"))
 		return &res, nil
@@ -145,9 +142,8 @@ func (h *Handlers) WebhooksUpdate(ctx context.Context, req *externalapi.UpdateWe
 		return &res, nil
 	}
 
-	ws := auth.WorkspaceID(auth.GetTokenAuth(ctx))
-	upd := h.ent.WebhookEndpoint.UpdateOneID(id).
-		Where(webhookendpoint.WorkspaceID(ws)).
+	scoped := auth.TokenScoped(ctx)
+	upd := scoped.WebhookEndpoint().UpdateOneID(id).
 		SetNillableURL(convert.StringPtr(req.URL)).
 		SetNillableEnabled(convert.Ptr(req.Enabled))
 	if req.EventTypes != nil {
@@ -177,8 +173,8 @@ func (h *Handlers) WebhooksDelete(ctx context.Context, params externalapi.Webhoo
 		return &res, nil
 	}
 
-	ws := auth.WorkspaceID(auth.GetTokenAuth(ctx))
-	err = h.ent.WebhookEndpoint.DeleteOneID(id).Where(webhookendpoint.WorkspaceID(ws)).Exec(ctx)
+	scoped := auth.TokenScoped(ctx)
+	err = scoped.WebhookEndpoint().DeleteOneID(id).Exec(ctx)
 	if ent.IsNotFound(err) {
 		res := externalapi.WebhooksDeleteNotFound(problem(http.StatusNotFound, "webhook not found"))
 		return &res, nil

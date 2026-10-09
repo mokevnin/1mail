@@ -21,7 +21,7 @@ func (h *Handlers) AuthMeGet(ctx context.Context) (externalapi.AuthMeGetRes, err
 		return &res, nil
 	}
 
-	token, err := h.ent.ApiToken.Get(ctx, a.TokenID)
+	token, err := auth.TokenScoped(ctx).ApiToken().Get(ctx, a.TokenID)
 	if ent.IsNotFound(err) {
 		res := externalapi.AuthMeGetNotFound(problem(http.StatusNotFound, "token not found"))
 		return &res, nil
@@ -40,7 +40,7 @@ func (h *Handlers) AuthTokensList(ctx context.Context) (externalapi.AuthTokensLi
 		return &res, nil
 	}
 
-	tokens, err := h.ent.ApiToken.Query().Where(apitoken.WorkspaceID(auth.WorkspaceID(auth.GetTokenAuth(ctx)))).All(ctx)
+	tokens, err := auth.TokenScoped(ctx).ApiToken().Query().All(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -58,7 +58,7 @@ func (h *Handlers) AuthTokensCreate(ctx context.Context, req *externalapi.Create
 		return &res, nil
 	}
 
-	resp, err := createToken(ctx, h.ent, auth.WorkspaceID(auth.GetTokenAuth(ctx)), req.Name, req.Scopes, req.ExpiresAt)
+	resp, err := createToken(ctx, auth.TokenScoped(ctx).ApiToken().Create(), req.Name, req.Scopes, req.ExpiresAt)
 	if err != nil {
 		return nil, err
 	}
@@ -76,7 +76,7 @@ func (h *Handlers) AuthTokensBootstrap(ctx context.Context, req *externalapi.Cre
 	if err != nil {
 		return nil, oops.In("external-auth").Public("no workspace to bootstrap").Wrap(err)
 	}
-	resp, err := createToken(ctx, h.ent, ws.ID, req.Name, req.Scopes, req.ExpiresAt)
+	resp, err := createToken(ctx, h.ent.Scoped(ws.ID).ApiToken().Create(), req.Name, req.Scopes, req.ExpiresAt)
 	if err != nil {
 		return nil, err
 	}
@@ -95,8 +95,8 @@ func (h *Handlers) AuthTokensDelete(ctx context.Context, params externalapi.Auth
 		return &res, nil
 	}
 
-	n, err := h.ent.ApiToken.Update().
-		Where(apitoken.ID(id), apitoken.WorkspaceID(auth.WorkspaceID(auth.GetTokenAuth(ctx)))).
+	n, err := auth.TokenScoped(ctx).ApiToken().Update().
+		Where(apitoken.ID(id)).
 		SetRevokedAt(time.Now()).
 		Save(ctx)
 	if err != nil {
@@ -109,7 +109,7 @@ func (h *Handlers) AuthTokensDelete(ctx context.Context, params externalapi.Auth
 	return &externalapi.AuthTokensDeleteNoContent{}, nil
 }
 
-func createToken(ctx context.Context, client *ent.Client, workspaceID int64, name string, scopes []externalapi.ApiTokenScope, expiresAt externalapi.OptNilTimestamp) (*externalapi.CreateApiTokenResponse, error) {
+func createToken(ctx context.Context, create *ent.ApiTokenScopedCreate, name string, scopes []externalapi.ApiTokenScope, expiresAt externalapi.OptNilTimestamp) (*externalapi.CreateApiTokenResponse, error) {
 	prefix, err := service.GenerateTokenPrefix()
 	if err != nil {
 		return nil, oops.In("external-auth").Public("could not create token").Wrap(err)
@@ -128,12 +128,11 @@ func createToken(ctx context.Context, client *ent.Client, workspaceID int64, nam
 		scopeStrings[i] = string(s)
 	}
 
-	q := client.ApiToken.Create().
+	q := create.
 		SetName(name).
 		SetPrefix(prefix).
 		SetSecretHash(hash).
-		SetScopes(scopeStrings).
-		SetWorkspaceID(workspaceID)
+		SetScopes(scopeStrings)
 
 	if v, ok := expiresAt.Get(); ok {
 		q = q.SetExpiresAt(time.Time(v))
