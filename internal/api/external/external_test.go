@@ -2,7 +2,6 @@ package external_test
 
 import (
 	"context"
-	"encoding/json"
 	"sort"
 	"testing"
 	"time"
@@ -28,16 +27,8 @@ type collectedRow struct {
 // txdb), so the outbox is where the assertions land.
 func outboxCollected(t *testing.T, env *testhelper.TestEnv) []collectedRow {
 	t.Helper()
-	rows, err := env.SQLDB.Query(`SELECT payload FROM watermill_domain_events ORDER BY "offset"`)
-	require.NoError(t, err)
-	defer func() { _ = rows.Close() }()
-
 	var out []collectedRow
-	for rows.Next() {
-		var payload []byte
-		require.NoError(t, rows.Scan(&payload))
-		var envlp events.Envelope
-		require.NoError(t, json.Unmarshal(payload, &envlp))
+	for _, envlp := range env.OutboxEnvelopes(t) {
 		require.Equal(t, events.NameCollected, envlp.Name)
 		decoded, err := events.Decode(envlp)
 		require.NoError(t, err)
@@ -45,7 +36,6 @@ func outboxCollected(t *testing.T, env *testhelper.TestEnv) []collectedRow {
 		require.Truef(t, ok, "got %T", decoded)
 		out = append(out, collectedRow{envelope: envlp, event: ce})
 	}
-	require.NoError(t, rows.Err())
 	return out
 }
 
@@ -97,14 +87,7 @@ func TestExternalContactsCreatePublishesContactCreated(t *testing.T) {
 	created, ok := res.(*externalapi.ContactResource)
 	require.Truef(t, ok, "got %T", res)
 
-	var n int
-	require.NoError(t, env.SQLDB.QueryRow(
-		`SELECT count(*) FROM watermill_domain_events
-		   WHERE payload->>'name' = 'contact.created'
-		     AND payload->'data'->>'email' = $1
-		     AND (payload->'data'->>'contactId')::bigint = $2`,
-		"published@example.com", created.ID,
-	).Scan(&n))
+	n := env.OutboxCount(t, "contact.created", map[string]any{"email": "published@example.com", "contactId": created.ID})
 	assert.Equal(t, 1, n, "contact.created published once")
 }
 

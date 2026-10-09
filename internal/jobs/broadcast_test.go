@@ -3,7 +3,6 @@ package jobs_test
 import (
 	"context"
 	"errors"
-	"strconv"
 	"testing"
 	"time"
 
@@ -116,14 +115,7 @@ func TestSendBroadcastDeliversToEligibleContacts(t *testing.T) {
 // broadcast sit in the transactional outbox.
 func countOutboxEvents(t *testing.T, env *testhelper.TestEnv, name string, broadcastID int64) int {
 	t.Helper()
-	var n int
-	err := env.SQLDB.QueryRow(
-		`SELECT count(*) FROM watermill_domain_events
-		   WHERE payload->>'name' = $1 AND payload->'data'->>'broadcastId' = $2`,
-		name, strconv.FormatInt(broadcastID, 10),
-	).Scan(&n)
-	require.NoError(t, err)
-	return n
+	return env.OutboxCount(t, name, map[string]any{"broadcastId": broadcastID})
 }
 
 // The verified-domain send gate (ADR 0010, 0015): a broadcast pinned to a From whose

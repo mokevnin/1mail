@@ -139,6 +139,10 @@ the gitignored `.env` (read by the app) or `.mise.local.toml`.
 - Commit messages follow **Conventional Commits** (`feat:`, `fix:`, `chore:`, `docs:`,
   `refactor:`, `ci:` …) — release-please uses them for versioning/changelog.
 - After changing TypeSpec or `ent/schema`, run `mise run generate` and commit the generated output.
+- **No direct SQL in tests.** Tests read and write through ent (`env.DB`), river's own API, or a
+  `testhelper` abstraction for tables ent doesn't model (the domain-event outbox: `env.Outbox*`,
+  `env.OutboxCount`). `forbidigo` in `.golangci.yml` rejects `*sql.DB` `Exec`/`Query`/`QueryRow` in
+  `_test.go` files. Inject faults with ent hooks/interceptors, never DDL or triggers.
 - **No custom CSS anywhere in the repo.** Style the frontend exclusively through Mantine — components, style
   props (`p`, `c`, `w`, responsive object syntax), the color system, the theme, and the
   configured breakpoints. Do not add custom `.css`/CSS-module files, inline `style={{…}}`,

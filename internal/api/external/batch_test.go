@@ -13,12 +13,7 @@ import (
 
 func contactsCreatedFor(t *testing.T, env *testhelper.TestEnv, email string) int {
 	t.Helper()
-	var n int
-	require.NoError(t, env.SQLDB.QueryRow(
-		`SELECT count(*) FROM watermill_domain_events
-		   WHERE payload->>'name' = 'contact.created' AND payload->'data'->>'email' = $1`, email,
-	).Scan(&n))
-	return n
+	return env.OutboxCount(t, "contact.created", map[string]any{"email": email})
 }
 
 // A batch mixing new, existing and unidentifiable contacts reports each item and

@@ -6,6 +6,7 @@ linters:
     - contextcheck
     - depguard
     - errorlint
+    - forbidigo
     - noctx
     - rowserrcheck
     - sqlclosecheck
@@ -20,3 +21,14 @@ linters:
               desc: monads fight Go idioms; use stdlib or samber/lo
             - pkg: html/template
               desc: no HTML in Go; pages are rendered by the SPA
+    forbidigo:
+      analyze-types: true
+      forbid:
+        - pattern: sql\.DB\)?\.(Exec|Query|QueryRow)(Context)?$
+          msg: no direct SQL in tests; use ent (env.DB) or a testhelper abstraction (e.g. env.Outbox*)
+  exclusions:
+    rules:
+      # The SQL rule is for tests; production data access and testhelper itself talk SQL.
+      - path-except: _test\.go$
+        linters:
+          - forbidigo

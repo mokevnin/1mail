@@ -1,0 +1,54 @@
+package server
+
+import (
+	"net/http"
+	"net/http/httptest"
+	"testing"
+	"testing/fstest"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+)
+
+func serveSPA(t *testing.T, h http.Handler, path string) *httptest.ResponseRecorder {
+	t.Helper()
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, httptest.NewRequestWithContext(t.Context(), http.MethodGet, path, nil))
+	return rec
+}
+
+func TestSPAFileHandler(t *testing.T) {
+	sub := fstest.MapFS{
+		"index.html":    {Data: []byte(`<html lang="{{APP_LOCALE}}"></html>`)},
+		"assets/app.js": {Data: []byte(`console.log(1)`)},
+	}
+	h := spaFileHandler(sub, "es")
+
+	// Real files are served as-is.
+	rec := serveSPA(t, h, "/assets/app.js")
+	assert.Equal(t, http.StatusOK, rec.Code)
+	assert.Equal(t, "console.log(1)", rec.Body.String())
+
+	// "/", index.html, a deep link and a directory all return the locale-injected shell.
+	for _, p := range []string{"/", "/index.html", "/workspaces/acme/contacts", "/assets"} {
+		rec = serveSPA(t, h, p)
+		require.Equal(t, http.StatusOK, rec.Code, p)
+		assert.Equal(t, `<html lang="es"></html>`, rec.Body.String(), p)
+		assert.Equal(t, "text/html; charset=utf-8", rec.Header().Get("Content-Type"), p)
+	}
+}
+
+func TestSPAFileHandlerWithoutIndexIsAnError(t *testing.T) {
+	rec := serveSPA(t, spaFileHandler(fstest.MapFS{"assets/app.js": {Data: []byte("x")}}, "en"), "/deep/link")
+	assert.Equal(t, http.StatusInternalServerError, rec.Code)
+}
+
+// Without an embedded frontend (the default build) the catch-all answers with a hint.
+func TestSPAHandlerNotEmbeddedHint(t *testing.T) {
+	if _, embedded := spaFS(); embedded {
+		t.Skip("frontend is embedded in this build")
+	}
+	rec := serveSPA(t, spaHandler("en"), "/")
+	assert.Equal(t, http.StatusNotImplemented, rec.Code)
+	assert.Contains(t, rec.Body.String(), "embed_spa")
+}

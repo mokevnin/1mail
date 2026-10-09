@@ -3,7 +3,6 @@ package outbound_test
 import (
 	"context"
 	"errors"
-	"strconv"
 	"testing"
 	"time"
 
@@ -82,12 +81,7 @@ func byKey(t *testing.T, env *testhelper.TestEnv, key string) *ent.OutboundMessa
 
 func sentEvents(t *testing.T, env *testhelper.TestEnv, messageID int64) int {
 	t.Helper()
-	var n int
-	require.NoError(t, env.SQLDB.QueryRow(
-		`SELECT count(*) FROM watermill_domain_events
-		   WHERE payload->>'name' = 'email.sent' AND payload->'data'->>'outboundMessageId' = $1`,
-		strconv.FormatInt(messageID, 10)).Scan(&n))
-	return n
+	return env.OutboxCount(t, "email.sent", map[string]any{"outboundMessageId": messageID})
 }
 
 func TestTransactionalSendRecordsMessageAndEvent(t *testing.T) {

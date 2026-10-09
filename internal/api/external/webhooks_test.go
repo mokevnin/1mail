@@ -96,7 +96,7 @@ func TestExternalWebhooksNeverReturnSecrets(t *testing.T) {
 			require.NoError(t, err)
 			require.Less(t, resp.StatusCode, 300, string(raw))
 			assert.NotContains(t, strings.ToLower(string(raw)), "secret")
-			assert.NotContains(t, string(raw), "whsec_codebasics_primary")
+			assert.NotContains(t, string(raw), "whsec_MfKQ9r8GKYqrTwjUPD8ILPZIo2LaLaSw")
 		})
 	}
 }

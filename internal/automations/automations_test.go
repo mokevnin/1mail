@@ -1,0 +1,216 @@
+package automations_test
+
+import (
+	"context"
+	"testing"
+
+	"github.com/samber/lo"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	"github.com/mokevnin/1mail/ent/automation"
+	"github.com/mokevnin/1mail/internal/automations"
+	"github.com/mokevnin/1mail/internal/fixtures"
+	"github.com/mokevnin/1mail/internal/testhelper"
+)
+
+func TestDecodeReadsTheStoredDefinition(t *testing.T) {
+	steps, err := automations.Decode(`[{"type":"email","subject":"Hi","body":"<mjml/>"},{"type":"wait","seconds":60},{"type":"apply_tag","tag":"vip"}]`)
+	require.NoError(t, err)
+	assert.Equal(t, []automations.Step{
+		{Type: automations.StepEmail, Subject: "Hi", Body: "<mjml/>"},
+		{Type: automations.StepWait, Seconds: 60},
+		{Type: automations.StepApplyTag, Tag: "vip"},
+	}, steps)
+
+	none, err := automations.Decode("")
+	require.NoError(t, err)
+	assert.Empty(t, none, "an empty definition has no steps")
+
+	_, err = automations.Decode("{not json")
+	require.Error(t, err)
+}
+
+func TestEncodeKeepsOnlyTheFieldsOfEachStepType(t *testing.T) {
+	def, err := automations.Encode([]automations.Step{
+		{Type: automations.StepEmail, Subject: "Hi", Body: "b", Seconds: 9, Tag: "stray"},
+		{Type: automations.StepWait, Seconds: 30, Subject: "stray"},
+		{Type: automations.StepApplyTag, Tag: "  vip ", Body: "stray"},
+		{Type: automations.StepRemoveTag, Tag: "old"},
+		{Subject: "untyped steps are emails"},
+	})
+	require.NoError(t, err)
+	assert.JSONEq(t, `[
+		{"type":"email","subject":"Hi","body":"b"},
+		{"type":"wait","seconds":30},
+		{"type":"apply_tag","tag":"vip"},
+		{"type":"remove_tag","tag":"old"},
+		{"type":"email","subject":"untyped steps are emails"}
+	]`, def)
+
+	empty, err := automations.Encode(nil)
+	require.NoError(t, err)
+	assert.Equal(t, "[]", empty)
+}
+
+func TestCreateStoresADraftWithEncodedSteps(t *testing.T) {
+	env := testhelper.Setup(t)
+	m := automations.New(env.DB)
+	ctx := context.Background()
+
+	a, err := m.Create(ctx, fixtures.AcmeID, automations.CreateInput{
+		Name: "Onboarding", TriggerEvent: "signup",
+		Steps: []automations.Step{{Type: automations.StepApplyTag, Tag: " new "}, {Type: automations.StepWait, Seconds: 5}},
+	})
+	require.NoError(t, err)
+	assert.Equal(t, automation.StatusDraft, a.Status)
+	assert.EqualValues(t, fixtures.AcmeID, a.WorkspaceID)
+	steps, err := automations.Decode(a.Definition)
+	require.NoError(t, err)
+	assert.Equal(t, []automations.Step{{Type: automations.StepApplyTag, Tag: "new"}, {Type: automations.StepWait, Seconds: 5}}, steps)
+
+	bare, err := m.Create(ctx, fixtures.AcmeID, automations.CreateInput{Name: "No steps", TriggerEvent: "x"})
+	require.NoError(t, err)
+	none, err := automations.Decode(bare.Definition)
+	require.NoError(t, err)
+	assert.Empty(t, none)
+}
+
+func TestInvalidStepsAreRefusedAndNothingIsStored(t *testing.T) {
+	env := testhelper.Setup(t)
+	m := automations.New(env.DB)
+	ctx := context.Background()
+	before, err := env.DB.Automation.Query().Count(ctx)
+	require.NoError(t, err)
+
+	for name, steps := range map[string][]automations.Step{
+		"unknown type":        {{Type: "sms"}},
+		"negative wait":       {{Type: automations.StepWait, Seconds: -1}},
+		"apply_tag blank tag": {{Type: automations.StepApplyTag, Tag: "  "}},
+		"remove_tag no tag":   {{Type: automations.StepRemoveTag}},
+	} {
+		_, err := m.Create(ctx, fixtures.AcmeID, automations.CreateInput{Name: "x", TriggerEvent: "y", Steps: steps})
+		assert.ErrorIs(t, err, automations.ErrInvalidStep, name)
+
+		_, err = m.Update(ctx, fixtures.AcmeID, fixtures.AutomationWelcomeSeriesID, automations.UpdateInput{Steps: &steps})
+		assert.ErrorIs(t, err, automations.ErrInvalidStep, "update: "+name)
+	}
+
+	after, err := env.DB.Automation.Query().Count(ctx)
+	require.NoError(t, err)
+	assert.Equal(t, before, after)
+	welcome, err := m.Get(ctx, fixtures.AcmeID, fixtures.AutomationWelcomeSeriesID)
+	require.NoError(t, err)
+	stored, err := automations.Decode(welcome.Definition)
+	require.NoError(t, err)
+	assert.Len(t, stored, 3, "a refused update leaves the definition as it was")
+}
+
+func TestListPagesNewestFirstWithinTheWorkspace(t *testing.T) {
+	env := testhelper.Setup(t)
+	m := automations.New(env.DB)
+	ctx := context.Background()
+	_, err := env.DB.Automation.Create().SetWorkspaceID(fixtures.GlobexID).SetName("Globex flow").SetTriggerEvent("x").Save(ctx)
+	require.NoError(t, err)
+
+	total, err := env.DB.Automation.Query().Where(automation.WorkspaceID(fixtures.AcmeID)).Count(ctx)
+	require.NoError(t, err)
+	require.Greater(t, total, 1)
+
+	first, gotTotal, err := m.List(ctx, fixtures.AcmeID, 1, 0)
+	require.NoError(t, err)
+	assert.Equal(t, total, gotTotal)
+	require.Len(t, first, 1)
+	second, _, err := m.List(ctx, fixtures.AcmeID, 1, 1)
+	require.NoError(t, err)
+	require.Len(t, second, 1)
+	assert.Greater(t, first[0].ID, second[0].ID, "newest first")
+
+	all, _, err := m.List(ctx, fixtures.AcmeID, 100, 0)
+	require.NoError(t, err)
+	for _, a := range all {
+		assert.EqualValues(t, fixtures.AcmeID, a.WorkspaceID, "another tenant's automation leaked")
+	}
+	past, _, err := m.List(ctx, fixtures.AcmeID, 10, total)
+	require.NoError(t, err)
+	assert.Empty(t, past)
+}
+
+func TestUpdateChangesOnlyWhatIsGivenAndKeepsTheStatus(t *testing.T) {
+	env := testhelper.Setup(t)
+	m := automations.New(env.DB)
+	ctx := context.Background()
+	before, err := m.Get(ctx, fixtures.AcmeID, fixtures.AutomationWelcomeSeriesID)
+	require.NoError(t, err)
+
+	renamed, err := m.Update(ctx, fixtures.AcmeID, before.ID, automations.UpdateInput{Name: lo.ToPtr("Renamed"), TriggerEvent: lo.ToPtr("new.trigger")})
+	require.NoError(t, err)
+	assert.Equal(t, "Renamed", renamed.Name)
+	assert.Equal(t, "new.trigger", renamed.TriggerEvent)
+	assert.Equal(t, before.Definition, renamed.Definition, "steps untouched when not given")
+	assert.Equal(t, before.Status, renamed.Status)
+
+	resteps, err := m.Update(ctx, fixtures.AcmeID, before.ID, automations.UpdateInput{Steps: &[]automations.Step{{Type: automations.StepWait, Seconds: 1}}})
+	require.NoError(t, err)
+	steps, err := automations.Decode(resteps.Definition)
+	require.NoError(t, err)
+	assert.Equal(t, []automations.Step{{Type: automations.StepWait, Seconds: 1}}, steps)
+}
+
+func TestActivateAndDeactivateFlipTheStatus(t *testing.T) {
+	env := testhelper.Setup(t)
+	m := automations.New(env.DB)
+	ctx := context.Background()
+
+	off, err := m.Deactivate(ctx, fixtures.AcmeID, fixtures.AutomationWelcomeSeriesID)
+	require.NoError(t, err)
+	assert.Equal(t, automation.StatusDraft, off.Status)
+	on, err := m.Activate(ctx, fixtures.AcmeID, fixtures.AutomationWelcomeSeriesID)
+	require.NoError(t, err)
+	assert.Equal(t, automation.StatusActive, on.Status)
+
+	stored, err := env.DB.Automation.Get(ctx, fixtures.AutomationWelcomeSeriesID)
+	require.NoError(t, err)
+	assert.Equal(t, automation.StatusActive, stored.Status)
+}
+
+func TestDeleteRemovesTheAutomation(t *testing.T) {
+	env := testhelper.Setup(t)
+	m := automations.New(env.DB)
+	ctx := context.Background()
+	a, err := m.Create(ctx, fixtures.AcmeID, automations.CreateInput{Name: "Temp", TriggerEvent: "x"})
+	require.NoError(t, err)
+
+	require.NoError(t, m.Delete(ctx, fixtures.AcmeID, a.ID))
+	_, err = m.Get(ctx, fixtures.AcmeID, a.ID)
+	assert.ErrorIs(t, err, automations.ErrNotFound)
+	assert.ErrorIs(t, m.Delete(ctx, fixtures.AcmeID, a.ID), automations.ErrNotFound, "deleting twice")
+}
+
+// Every operation is workspace-scoped: another tenant's id is "not found" and the
+// row is untouched.
+func TestOperationsNeverReachAnotherWorkspacesAutomation(t *testing.T) {
+	env := testhelper.Setup(t)
+	m := automations.New(env.DB)
+	ctx := context.Background()
+	foreign, err := env.DB.Automation.Create().SetWorkspaceID(fixtures.GlobexID).SetName("Globex flow").SetTriggerEvent("x").Save(ctx)
+	require.NoError(t, err)
+
+	_, err = m.Get(ctx, fixtures.AcmeID, foreign.ID)
+	assert.ErrorIs(t, err, automations.ErrNotFound)
+	_, err = m.Update(ctx, fixtures.AcmeID, foreign.ID, automations.UpdateInput{Name: lo.ToPtr("hijacked")})
+	assert.ErrorIs(t, err, automations.ErrNotFound)
+	_, err = m.Activate(ctx, fixtures.AcmeID, foreign.ID)
+	assert.ErrorIs(t, err, automations.ErrNotFound)
+	_, err = m.Deactivate(ctx, fixtures.AcmeID, foreign.ID)
+	assert.ErrorIs(t, err, automations.ErrNotFound)
+	assert.ErrorIs(t, m.Delete(ctx, fixtures.AcmeID, foreign.ID), automations.ErrNotFound)
+
+	_, err = m.Get(ctx, fixtures.AcmeID, 999999)
+	assert.ErrorIs(t, err, automations.ErrNotFound, "an unknown id")
+
+	stored, err := env.DB.Automation.Get(ctx, foreign.ID)
+	require.NoError(t, err)
+	assert.Equal(t, "Globex flow", stored.Name)
+	assert.Equal(t, automation.StatusDraft, stored.Status)
+}

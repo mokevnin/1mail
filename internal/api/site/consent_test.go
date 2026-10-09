@@ -126,11 +126,9 @@ func TestSitePublicConfirmationsPerformRecordsClientIP(t *testing.T) {
 	env.Server.ServeHTTP(w, req)
 	require.Equal(t, http.StatusNoContent, w.Code)
 
-	var ip string
-	require.NoError(t, env.SQLDB.QueryRow(
-		`SELECT payload->'data'->>'ip' FROM watermill_domain_events
-		 WHERE payload->>'name' = 'marketing.confirmed' AND payload->'data'->>'email' = $1`,
-		*c.Email).Scan(&ip))
+	confirmed := env.Outbox(t, "marketing.confirmed")
+	require.Len(t, confirmed, 1)
+	ip := confirmed[0].Data["ip"]
 	assert.Equal(t, "203.0.113.7", ip)
 }
 
