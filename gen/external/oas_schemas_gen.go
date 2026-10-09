@@ -128,17 +128,24 @@ const (
 	ApiTokenScopeContactsWrite       ApiTokenScope = "contacts:write"
 	ApiTokenScopeSegmentsRead        ApiTokenScope = "segments:read"
 	ApiTokenScopeSegmentsWrite       ApiTokenScope = "segments:write"
+	ApiTokenScopeEventsRead          ApiTokenScope = "events:read"
+	ApiTokenScopeEventsWrite         ApiTokenScope = "events:write"
 	ApiTokenScopeBroadcastsRead      ApiTokenScope = "broadcasts:read"
 	ApiTokenScopeBroadcastsWrite     ApiTokenScope = "broadcasts:write"
+	ApiTokenScopeAutomationsRead     ApiTokenScope = "automations:read"
+	ApiTokenScopeAutomationsWrite    ApiTokenScope = "automations:write"
 	ApiTokenScopeTemplatesRead       ApiTokenScope = "templates:read"
 	ApiTokenScopeTemplatesWrite      ApiTokenScope = "templates:write"
 	ApiTokenScopeWebhooksRead        ApiTokenScope = "webhooks:read"
 	ApiTokenScopeWebhooksWrite       ApiTokenScope = "webhooks:write"
+	ApiTokenScopeCustomFieldsRead    ApiTokenScope = "custom_fields:read"
+	ApiTokenScopeSendingDomainsRead  ApiTokenScope = "sending_domains:read"
 	ApiTokenScopeEmailsSend          ApiTokenScope = "emails:send"
 	ApiTokenScopeBroadcastsSend      ApiTokenScope = "broadcasts:send"
 	ApiTokenScopeAutomationsActivate ApiTokenScope = "automations:activate"
 	ApiTokenScopeMcpSend             ApiTokenScope = "mcp:send"
-	ApiTokenScopeTokensManage        ApiTokenScope = "tokens:manage"
+	ApiTokenScopeTokensRead          ApiTokenScope = "tokens:read"
+	ApiTokenScopeTokensWrite         ApiTokenScope = "tokens:write"
 )
 
 // AllValues returns all ApiTokenScope values.
@@ -148,17 +155,24 @@ func (ApiTokenScope) AllValues() []ApiTokenScope {
 		ApiTokenScopeContactsWrite,
 		ApiTokenScopeSegmentsRead,
 		ApiTokenScopeSegmentsWrite,
+		ApiTokenScopeEventsRead,
+		ApiTokenScopeEventsWrite,
 		ApiTokenScopeBroadcastsRead,
 		ApiTokenScopeBroadcastsWrite,
+		ApiTokenScopeAutomationsRead,
+		ApiTokenScopeAutomationsWrite,
 		ApiTokenScopeTemplatesRead,
 		ApiTokenScopeTemplatesWrite,
 		ApiTokenScopeWebhooksRead,
 		ApiTokenScopeWebhooksWrite,
+		ApiTokenScopeCustomFieldsRead,
+		ApiTokenScopeSendingDomainsRead,
 		ApiTokenScopeEmailsSend,
 		ApiTokenScopeBroadcastsSend,
 		ApiTokenScopeAutomationsActivate,
 		ApiTokenScopeMcpSend,
-		ApiTokenScopeTokensManage,
+		ApiTokenScopeTokensRead,
+		ApiTokenScopeTokensWrite,
 	}
 }
 
@@ -173,9 +187,17 @@ func (s ApiTokenScope) MarshalText() ([]byte, error) {
 		return []byte(s), nil
 	case ApiTokenScopeSegmentsWrite:
 		return []byte(s), nil
+	case ApiTokenScopeEventsRead:
+		return []byte(s), nil
+	case ApiTokenScopeEventsWrite:
+		return []byte(s), nil
 	case ApiTokenScopeBroadcastsRead:
 		return []byte(s), nil
 	case ApiTokenScopeBroadcastsWrite:
+		return []byte(s), nil
+	case ApiTokenScopeAutomationsRead:
+		return []byte(s), nil
+	case ApiTokenScopeAutomationsWrite:
 		return []byte(s), nil
 	case ApiTokenScopeTemplatesRead:
 		return []byte(s), nil
@@ -185,6 +207,10 @@ func (s ApiTokenScope) MarshalText() ([]byte, error) {
 		return []byte(s), nil
 	case ApiTokenScopeWebhooksWrite:
 		return []byte(s), nil
+	case ApiTokenScopeCustomFieldsRead:
+		return []byte(s), nil
+	case ApiTokenScopeSendingDomainsRead:
+		return []byte(s), nil
 	case ApiTokenScopeEmailsSend:
 		return []byte(s), nil
 	case ApiTokenScopeBroadcastsSend:
@@ -193,7 +219,9 @@ func (s ApiTokenScope) MarshalText() ([]byte, error) {
 		return []byte(s), nil
 	case ApiTokenScopeMcpSend:
 		return []byte(s), nil
-	case ApiTokenScopeTokensManage:
+	case ApiTokenScopeTokensRead:
+		return []byte(s), nil
+	case ApiTokenScopeTokensWrite:
 		return []byte(s), nil
 	default:
 		return nil, errors.Errorf("invalid value: %q", s)
@@ -215,11 +243,23 @@ func (s *ApiTokenScope) UnmarshalText(data []byte) error {
 	case ApiTokenScopeSegmentsWrite:
 		*s = ApiTokenScopeSegmentsWrite
 		return nil
+	case ApiTokenScopeEventsRead:
+		*s = ApiTokenScopeEventsRead
+		return nil
+	case ApiTokenScopeEventsWrite:
+		*s = ApiTokenScopeEventsWrite
+		return nil
 	case ApiTokenScopeBroadcastsRead:
 		*s = ApiTokenScopeBroadcastsRead
 		return nil
 	case ApiTokenScopeBroadcastsWrite:
 		*s = ApiTokenScopeBroadcastsWrite
+		return nil
+	case ApiTokenScopeAutomationsRead:
+		*s = ApiTokenScopeAutomationsRead
+		return nil
+	case ApiTokenScopeAutomationsWrite:
+		*s = ApiTokenScopeAutomationsWrite
 		return nil
 	case ApiTokenScopeTemplatesRead:
 		*s = ApiTokenScopeTemplatesRead
@@ -233,6 +273,12 @@ func (s *ApiTokenScope) UnmarshalText(data []byte) error {
 	case ApiTokenScopeWebhooksWrite:
 		*s = ApiTokenScopeWebhooksWrite
 		return nil
+	case ApiTokenScopeCustomFieldsRead:
+		*s = ApiTokenScopeCustomFieldsRead
+		return nil
+	case ApiTokenScopeSendingDomainsRead:
+		*s = ApiTokenScopeSendingDomainsRead
+		return nil
 	case ApiTokenScopeEmailsSend:
 		*s = ApiTokenScopeEmailsSend
 		return nil
@@ -245,8 +291,11 @@ func (s *ApiTokenScope) UnmarshalText(data []byte) error {
 	case ApiTokenScopeMcpSend:
 		*s = ApiTokenScopeMcpSend
 		return nil
-	case ApiTokenScopeTokensManage:
-		*s = ApiTokenScopeTokensManage
+	case ApiTokenScopeTokensRead:
+		*s = ApiTokenScopeTokensRead
+		return nil
+	case ApiTokenScopeTokensWrite:
+		*s = ApiTokenScopeTokensWrite
 		return nil
 	default:
 		return errors.Errorf("invalid value: %q", data)

@@ -110,9 +110,17 @@ func (s ApiTokenScope) Validate() error {
 		return nil
 	case "segments:write":
 		return nil
+	case "events:read":
+		return nil
+	case "events:write":
+		return nil
 	case "broadcasts:read":
 		return nil
 	case "broadcasts:write":
+		return nil
+	case "automations:read":
+		return nil
+	case "automations:write":
 		return nil
 	case "templates:read":
 		return nil
@@ -122,6 +130,10 @@ func (s ApiTokenScope) Validate() error {
 		return nil
 	case "webhooks:write":
 		return nil
+	case "custom_fields:read":
+		return nil
+	case "sending_domains:read":
+		return nil
 	case "emails:send":
 		return nil
 	case "broadcasts:send":
@@ -130,7 +142,9 @@ func (s ApiTokenScope) Validate() error {
 		return nil
 	case "mcp:send":
 		return nil
-	case "tokens:manage":
+	case "tokens:read":
+		return nil
+	case "tokens:write":
 		return nil
 	default:
 		return errors.Errorf("invalid value: %v", s)

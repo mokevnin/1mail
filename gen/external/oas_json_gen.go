@@ -362,10 +362,18 @@ func (s *ApiTokenScope) Decode(d *jx.Decoder) error {
 		*s = ApiTokenScopeSegmentsRead
 	case ApiTokenScopeSegmentsWrite:
 		*s = ApiTokenScopeSegmentsWrite
+	case ApiTokenScopeEventsRead:
+		*s = ApiTokenScopeEventsRead
+	case ApiTokenScopeEventsWrite:
+		*s = ApiTokenScopeEventsWrite
 	case ApiTokenScopeBroadcastsRead:
 		*s = ApiTokenScopeBroadcastsRead
 	case ApiTokenScopeBroadcastsWrite:
 		*s = ApiTokenScopeBroadcastsWrite
+	case ApiTokenScopeAutomationsRead:
+		*s = ApiTokenScopeAutomationsRead
+	case ApiTokenScopeAutomationsWrite:
+		*s = ApiTokenScopeAutomationsWrite
 	case ApiTokenScopeTemplatesRead:
 		*s = ApiTokenScopeTemplatesRead
 	case ApiTokenScopeTemplatesWrite:
@@ -374,6 +382,10 @@ func (s *ApiTokenScope) Decode(d *jx.Decoder) error {
 		*s = ApiTokenScopeWebhooksRead
 	case ApiTokenScopeWebhooksWrite:
 		*s = ApiTokenScopeWebhooksWrite
+	case ApiTokenScopeCustomFieldsRead:
+		*s = ApiTokenScopeCustomFieldsRead
+	case ApiTokenScopeSendingDomainsRead:
+		*s = ApiTokenScopeSendingDomainsRead
 	case ApiTokenScopeEmailsSend:
 		*s = ApiTokenScopeEmailsSend
 	case ApiTokenScopeBroadcastsSend:
@@ -382,8 +394,10 @@ func (s *ApiTokenScope) Decode(d *jx.Decoder) error {
 		*s = ApiTokenScopeAutomationsActivate
 	case ApiTokenScopeMcpSend:
 		*s = ApiTokenScopeMcpSend
-	case ApiTokenScopeTokensManage:
-		*s = ApiTokenScopeTokensManage
+	case ApiTokenScopeTokensRead:
+		*s = ApiTokenScopeTokensRead
+	case ApiTokenScopeTokensWrite:
+		*s = ApiTokenScopeTokensWrite
 	default:
 		*s = ApiTokenScope(v)
 	}

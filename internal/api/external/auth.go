@@ -6,6 +6,8 @@ import (
 	"time"
 
 	"github.com/mokevnin/1mail/ent"
+	"github.com/mokevnin/1mail/ent/apitoken"
+	"github.com/mokevnin/1mail/ent/workspace"
 	externalapi "github.com/mokevnin/1mail/gen/external"
 	"github.com/mokevnin/1mail/internal/api/auth"
 	"github.com/mokevnin/1mail/internal/service"
@@ -38,7 +40,7 @@ func (h *Handlers) AuthTokensList(ctx context.Context) (externalapi.AuthTokensLi
 		return &res, nil
 	}
 
-	tokens, err := h.ent.ApiToken.Query().All(ctx)
+	tokens, err := h.ent.ApiToken.Query().Where(apitoken.WorkspaceID(auth.WorkspaceID(auth.GetTokenAuth(ctx)))).All(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -56,7 +58,7 @@ func (h *Handlers) AuthTokensCreate(ctx context.Context, req *externalapi.Create
 		return &res, nil
 	}
 
-	resp, err := createToken(ctx, h.ent, req.Name, req.Scopes, req.ExpiresAt)
+	resp, err := createToken(ctx, h.ent, auth.WorkspaceID(auth.GetTokenAuth(ctx)), req.Name, req.Scopes, req.ExpiresAt)
 	if err != nil {
 		return nil, err
 	}
@@ -69,7 +71,12 @@ func (h *Handlers) AuthTokensBootstrap(ctx context.Context, req *externalapi.Cre
 		return &res, nil
 	}
 
-	resp, err := createToken(ctx, h.ent, req.Name, req.Scopes, req.ExpiresAt)
+	// Bootstrap has no caller token: the first token goes to the oldest workspace.
+	ws, err := h.ent.Workspace.Query().Order(ent.Asc(workspace.FieldID)).First(ctx)
+	if err != nil {
+		return nil, oops.In("external-auth").Public("no workspace to bootstrap").Wrap(err)
+	}
+	resp, err := createToken(ctx, h.ent, ws.ID, req.Name, req.Scopes, req.ExpiresAt)
 	if err != nil {
 		return nil, err
 	}
@@ -88,18 +95,21 @@ func (h *Handlers) AuthTokensDelete(ctx context.Context, params externalapi.Auth
 		return &res, nil
 	}
 
-	_, err = h.ent.ApiToken.UpdateOneID(id).SetRevokedAt(time.Now()).Save(ctx)
-	if ent.IsNotFound(err) {
-		res := externalapi.AuthTokensDeleteNotFound(problem(http.StatusNotFound, "token not found"))
-		return &res, nil
-	}
+	n, err := h.ent.ApiToken.Update().
+		Where(apitoken.ID(id), apitoken.WorkspaceID(auth.WorkspaceID(auth.GetTokenAuth(ctx)))).
+		SetRevokedAt(time.Now()).
+		Save(ctx)
 	if err != nil {
 		return nil, err
+	}
+	if n == 0 {
+		res := externalapi.AuthTokensDeleteNotFound(problem(http.StatusNotFound, "token not found"))
+		return &res, nil
 	}
 	return &externalapi.AuthTokensDeleteNoContent{}, nil
 }
 
-func createToken(ctx context.Context, client *ent.Client, name string, scopes []externalapi.ApiTokenScope, expiresAt externalapi.OptNilTimestamp) (*externalapi.CreateApiTokenResponse, error) {
+func createToken(ctx context.Context, client *ent.Client, workspaceID int64, name string, scopes []externalapi.ApiTokenScope, expiresAt externalapi.OptNilTimestamp) (*externalapi.CreateApiTokenResponse, error) {
 	prefix, err := service.GenerateTokenPrefix()
 	if err != nil {
 		return nil, oops.In("external-auth").Public("could not create token").Wrap(err)
@@ -122,7 +132,8 @@ func createToken(ctx context.Context, client *ent.Client, name string, scopes []
 		SetName(name).
 		SetPrefix(prefix).
 		SetSecretHash(hash).
-		SetScopes(scopeStrings)
+		SetScopes(scopeStrings).
+		SetWorkspaceID(workspaceID)
 
 	if v, ok := expiresAt.Get(); ok {
 		q = q.SetExpiresAt(time.Time(v))

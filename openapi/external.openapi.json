@@ -3915,17 +3915,24 @@
           "contacts:write",
           "segments:read",
           "segments:write",
+          "events:read",
+          "events:write",
           "broadcasts:read",
           "broadcasts:write",
+          "automations:read",
+          "automations:write",
           "templates:read",
           "templates:write",
           "webhooks:read",
           "webhooks:write",
+          "custom_fields:read",
+          "sending_domains:read",
           "emails:send",
           "broadcasts:send",
           "automations:activate",
           "mcp:send",
-          "tokens:manage"
+          "tokens:read",
+          "tokens:write"
         ]
       },
       "ApplyTagInput": {

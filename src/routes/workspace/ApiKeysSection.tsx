@@ -31,15 +31,26 @@ import { formatDate } from '../../utils/datetime.ts'
 const SCOPE_OPTIONS = [
   'contacts:read',
   'contacts:write',
+  'events:read',
+  'events:write',
   'segments:read',
   'segments:write',
   'broadcasts:read',
   'broadcasts:write',
+  'automations:read',
+  'automations:write',
+  'templates:read',
+  'templates:write',
+  'webhooks:read',
+  'webhooks:write',
+  'custom_fields:read',
+  'sending_domains:read',
   'emails:send',
   'broadcasts:send',
   'automations:activate',
   'mcp:send',
-  'tokens:manage',
+  'tokens:read',
+  'tokens:write',
 ]
 
 export function ApiKeysSection({ slug }: { slug: string }) {
