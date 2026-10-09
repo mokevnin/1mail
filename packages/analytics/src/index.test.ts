@@ -224,3 +224,38 @@ test('trackPageView sends a page.view event with the page details', async () => 
   const { events } = sentBody(fetchStub, '/collect/events')
   expect(events[0]).toMatchObject({ action: 'page.view', properties: page })
 })
+
+test('falls back to a generated visitor id when crypto.randomUUID is unavailable', async () => {
+  vi.stubGlobal('crypto', {})
+  const { initTracking, track } = await loadTracker()
+  initTracking(CONFIG)
+  await track('a')
+  await vi.advanceTimersByTimeAsync(200)
+
+  const visitorId = sentBody(fetchStub, '/collect/events').events[0]?.visitorId
+  expect(visitorId).toMatch(/^vid_[a-z0-9]+$/)
+  expect(document.cookie).toContain(`om_vid=${visitorId}`)
+})
+
+test('an empty visitor cookie is replaced by a new id', async () => {
+  document.cookie = 'om_vid=; Path=/'
+  const { initTracking, track } = await loadTracker()
+  initTracking(CONFIG)
+  await track('a')
+  await vi.advanceTimersByTimeAsync(200)
+
+  expect(sentBody(fetchStub, '/collect/events').events[0]?.visitorId).toMatch(/.+/)
+})
+
+test('an untyped snippet queue may omit the config base url and the identify payload', async () => {
+  // The inline snippet is plain JS, so its queue is not checked against the command types.
+  window._omq = JSON.parse('[["init", {"collectKey": "ck_snippet"}], ["identify"]]')
+  const { initTracking } = await loadTracker()
+
+  initTracking()
+  await vi.advanceTimersByTimeAsync(200)
+
+  const { url } = firstCall(fetchStub)
+  expect(url).toBe('/collect/identify')
+  expect(sentBody(fetchStub, '/collect/identify')).toMatchObject({ email: null, traits: null })
+})

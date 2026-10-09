@@ -50,9 +50,9 @@ export default defineConfig({
       include: ['src/**', 'packages/analytics/src/**'],
       exclude: ['**/generated/**', '**/*.test.*', 'src/test/**', 'src/main.tsx'],
       reporter: ['text-summary', 'html'],
-      // Current coverage is ~96% lines / ~90% branches; the floor sits a little below so
+      // Current coverage is ~99% lines / ~93% branches; the floor sits a little below so
       // CI catches regressions without flaking on small changes.
-      thresholds: { statements: 92, branches: 85, functions: 92, lines: 92 },
+      thresholds: { statements: 96, branches: 90, functions: 96, lines: 96 },
     },
     browser: {
       enabled: true,

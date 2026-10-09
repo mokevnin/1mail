@@ -86,3 +86,38 @@ test('deleting a contact asks for confirmation, deletes it and refreshes the lis
   await expect.poll(() => listFetches).toBe(2)
   await expect.element(screen.getByText('alice@example.com')).not.toBeInTheDocument()
 })
+
+test('changing the page requests page 2 of the contacts', async () => {
+  const pages: (string | null)[] = []
+  mockClientRoutes([
+    route<SiteContactsListData>('GET', '/workspaces/{slug}/contacts', SLUG, (req) => {
+      pages.push(new URL(req.url).searchParams.get('page'))
+      return jsonResponse({ items: [ALICE], totalItems: 25 })
+    }),
+  ])
+
+  const { screen } = await renderWithRouter(<ContactsListPage />, LIST_ROUTE)
+  await expect.element(screen.getByText('alice@example.com')).toBeInTheDocument()
+  await screen.getByRole('button', { name: '2', exact: true }).click()
+
+  await expect.poll(() => pages).toEqual(['1', '2'])
+})
+
+test('a failed delete shows the error toast and keeps the contact', async () => {
+  mockClientRoutes([
+    listRoute(() => jsonResponse({ items: [ALICE], totalItems: 1 })),
+    route<SiteContactsDeleteData>(
+      'DELETE',
+      '/workspaces/{slug}/contacts/{id}',
+      { ...SLUG, id: '1' },
+      () => jsonResponse({ title: 'Boom', status: 500 }, { status: 500 }),
+    ),
+  ])
+
+  const { screen } = await renderWithRouter(<ContactsListPage />, LIST_ROUTE)
+  await screen.getByRole('button', { name: 'Delete' }).first().click()
+  await screen.getByRole('dialog').getByRole('button', { name: 'Delete' }).click()
+
+  await expect.element(screen.getByText('Failed to delete', { exact: false })).toBeInTheDocument()
+  await expect.element(screen.getByText('alice@example.com')).toBeInTheDocument()
+})

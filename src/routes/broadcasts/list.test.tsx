@@ -116,3 +116,38 @@ test('deleting a broadcast asks for confirmation, deletes it and refreshes the l
   await expect.poll(() => listFetches).toBe(2)
   await expect.element(screen.getByText('Spring launch')).not.toBeInTheDocument()
 })
+
+test('changing the page requests page 2 of the broadcasts', async () => {
+  const pages: (string | null)[] = []
+  mockClientRoutes([
+    route<SiteBroadcastsListData>('GET', '/workspaces/{slug}/broadcasts', SLUG, (req) => {
+      pages.push(new URL(req.url).searchParams.get('page'))
+      return jsonResponse({ items: [DRAFT], totalItems: 25 })
+    }),
+  ])
+
+  const { screen } = await renderWithRouter(<BroadcastsListPage />, LIST_ROUTE)
+  await expect.element(screen.getByText('Spring launch')).toBeInTheDocument()
+  await screen.getByRole('button', { name: '2', exact: true }).click()
+
+  await expect.poll(() => pages).toEqual(['1', '2'])
+})
+
+test('a failed delete shows the error toast and keeps the broadcast', async () => {
+  mockClientRoutes([
+    listRoute(() => jsonResponse({ items: [DRAFT], totalItems: 1 })),
+    route<SiteBroadcastsDeleteData>(
+      'DELETE',
+      '/workspaces/{slug}/broadcasts/{id}',
+      { ...SLUG, id: '1' },
+      () => jsonResponse({ title: 'Boom', status: 500 }, { status: 500 }),
+    ),
+  ])
+
+  const { screen } = await renderWithRouter(<BroadcastsListPage />, LIST_ROUTE)
+  await screen.getByRole('button', { name: 'Delete' }).first().click()
+  await screen.getByRole('dialog').getByRole('button', { name: 'Delete' }).click()
+
+  await expect.element(screen.getByText('Failed to delete broadcast')).toBeInTheDocument()
+  await expect.element(screen.getByText('Spring launch')).toBeInTheDocument()
+})
