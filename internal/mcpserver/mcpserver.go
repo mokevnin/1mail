@@ -60,6 +60,13 @@ func New(spec []byte, api http.Handler, auth Authenticator, opts ...Option) (htt
 			sendTools[op.tool.Name] = true
 		}
 	}
+	books, err := loadPlaybooks()
+	if err != nil {
+		return nil, fmt.Errorf("load playbooks: %w", err)
+	}
+	for _, book := range books {
+		srv.AddPrompt(book.prompt(), book.handler)
+	}
 	srv.AddReceivingMiddleware(sendLock(sendTools, auth))
 	streamable := mcp.NewStreamableHTTPHandler(
 		func(*http.Request) *mcp.Server { return srv },

@@ -302,3 +302,25 @@ func TestStandardMCPClientConnectsThroughOAuth(t *testing.T) {
 	assert.NotContains(t, row.Scopes, "mcp:send", "so is the MCP send lock's key")
 	assert.Contains(t, row.Scopes, "contacts:read")
 }
+
+// The default grant must cover the authoring tools the shipped playbooks use, so a
+// connector that asks for no particular scope can author (never send).
+func TestDefaultGrantCoversTheAuthoringScopes(t *testing.T) {
+	env := testhelper.Setup(t)
+
+	res, err := env.SiteClient(t, owner).SiteOAuthDescribe(t.Context(), siteapi.SiteOAuthDescribeParams{
+		ClientId:    fixtureClientID,
+		RedirectUri: fixtureRedirectURI,
+	})
+	require.NoError(t, err)
+	got, ok := res.(*siteapi.SiteOAuthAuthorizationRequest)
+	require.Truef(t, ok, "got %T", res)
+	assert.Subset(t, got.Scopes, []string{
+		"contacts:read", "contacts:write", "events:read", "events:write",
+		"segments:read", "segments:write", "broadcasts:read", "broadcasts:write",
+		"automations:read", "automations:write", "templates:read", "templates:write",
+		"webhooks:read", "webhooks:write", "custom_fields:read", "sending_domains:read",
+	})
+	assert.Empty(t, got.SendScopes)
+	assert.NotContains(t, got.Scopes, "tokens:write", "a connector never mints credentials")
+}
