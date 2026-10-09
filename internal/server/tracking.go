@@ -92,7 +92,7 @@ func trackingHandler(client *ent.Client, bus *events.Bus, tracker *tracking.Trac
 		// Performs the opt-out — the target of the mailbox provider's one-click POST
 		// (List-Unsubscribe=One-Click body) and the confirm page's button. No page is
 		// returned; the SPA transitions its UI client-side on 204.
-		if err := consent.RecordUnsubscribe(r.Context(), client, bus, target); err != nil {
+		if err := consent.RecordUnsubscribe(r.Context(), bus, target); err != nil {
 			logging.FromContext(r.Context()).Error("tracking: unsubscribe failed", "destination", target.Destination, "source", target.Source, "err", err)
 		}
 		w.WriteHeader(http.StatusNoContent)

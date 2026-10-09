@@ -54,24 +54,29 @@ type Decision struct {
 	Reason string
 }
 
-// Check decides eligibility for one destination. source is the Sending source the
-// message goes out under, or "" for a transactional send. An empty destination is
-// treated as eligible — the caller decides what a missing address means (there is
-// nothing to suppress against).
-func Check(ctx context.Context, client *ent.Client, workspaceID int64, channel, dest, source string) (Decision, error) {
+// Check decides eligibility for one destination in the scoped Workspace. source is
+// the Sending source the message goes out under, or "" for a transactional send. An
+// empty destination is treated as eligible — the caller decides what a missing
+// address means (there is nothing to suppress against).
+//
+// The rule is one SQL expression (layers) whose Workspace comes from s; the
+// confirmation gate reads the workspace flag inside it, so no caller can forget it.
+// It is anchored on the Workspace's Suppression query so it runs through the scoped
+// client; HAVING TRUE turns the select into a single-group one, so exactly one row
+// comes back whether or not the Workspace has any Suppression.
+func Check(ctx context.Context, s *ent.Scoped, channel, dest, source string) (Decision, error) {
 	d := NormalizeDestination(dest)
 	if d == "" {
 		return Decision{Eligible: true}, nil
 	}
 	r := ref{
-		workspace:   func(b *sql.Builder) { b.Arg(workspaceID) },
+		workspace:   func(b *sql.Builder) { b.Arg(s.WorkspaceID()) },
 		destination: func(b *sql.Builder) { b.Arg(d) },
 	}
 	var reason []string
-	err := client.Workspace.Query().
-		Where(workspace.ID(workspaceID)).
-		Modify(func(s *sql.Selector) {
-			s.SelectExpr(sql.ExprFunc(func(b *sql.Builder) {
+	err := s.Suppression().Query().
+		Modify(func(sel *sql.Selector) {
+			sel.SelectExpr(sql.ExprFunc(func(b *sql.Builder) {
 				b.WriteString("CASE")
 				for _, l := range layers(r, channel, source) {
 					b.WriteString(" WHEN ")
@@ -80,13 +85,14 @@ func Check(ctx context.Context, client *ent.Client, workspaceID int64, channel, 
 				}
 				b.WriteString(" ELSE '' END")
 			}))
+			sel.Having(sql.P(func(b *sql.Builder) { b.WriteString("TRUE") }))
 		}).
 		Scan(ctx, &reason)
 	if err != nil {
 		return Decision{}, fmt.Errorf("eligibility check: %w", err)
 	}
 	if len(reason) != 1 {
-		return Decision{}, fmt.Errorf("eligibility check: workspace %d not found", workspaceID)
+		return Decision{}, fmt.Errorf("eligibility check: expected one row, got %d", len(reason))
 	}
 	return Decision{Eligible: reason[0] == "", Reason: reason[0]}, nil
 }

@@ -127,8 +127,9 @@ func Suppress(ctx context.Context, client *ent.Client, env Envelope) error {
 	if dest == "" {
 		return nil
 	}
-	create := client.Suppression.Create().
-		SetWorkspaceID(env.WorkspaceID).
+	// The Workspace comes from the event envelope: a consumer has no membership or
+	// api token, so this is a scope source outside the site/external/job list.
+	create := client.Scoped(env.WorkspaceID).Suppression().Create().
 		SetChannel(suppression.ChannelEmail).
 		SetDestination(dest).
 		SetReason(reason)
