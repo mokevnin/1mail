@@ -552,6 +552,109 @@ type BroadcastsUpdateUnprocessableEntity ProblemDetails
 
 func (*BroadcastsUpdateUnprocessableEntity) broadcastsUpdateRes() {}
 
+// Per-item result of a contacts batch, in request order.
+// Ref: #/components/schemas/ContactBatchItemResult
+type ContactBatchItemResult struct {
+	// Zero-based position of the item in the request.
+	Index int32 `json:"index"`
+	// Created or updated on success; failed when the item was rejected.
+	Status ContactBatchStatus `json:"status"`
+	// The contact the item resolved to; absent when failed.
+	ContactId OptEntityId `json:"contactId"`
+	// Why the item failed; absent on success.
+	Error OptString `json:"error"`
+}
+
+// GetIndex returns the value of Index.
+func (s *ContactBatchItemResult) GetIndex() int32 {
+	return s.Index
+}
+
+// GetStatus returns the value of Status.
+func (s *ContactBatchItemResult) GetStatus() ContactBatchStatus {
+	return s.Status
+}
+
+// GetContactId returns the value of ContactId.
+func (s *ContactBatchItemResult) GetContactId() OptEntityId {
+	return s.ContactId
+}
+
+// GetError returns the value of Error.
+func (s *ContactBatchItemResult) GetError() OptString {
+	return s.Error
+}
+
+// SetIndex sets the value of Index.
+func (s *ContactBatchItemResult) SetIndex(val int32) {
+	s.Index = val
+}
+
+// SetStatus sets the value of Status.
+func (s *ContactBatchItemResult) SetStatus(val ContactBatchStatus) {
+	s.Status = val
+}
+
+// SetContactId sets the value of ContactId.
+func (s *ContactBatchItemResult) SetContactId(val OptEntityId) {
+	s.ContactId = val
+}
+
+// SetError sets the value of Error.
+func (s *ContactBatchItemResult) SetError(val OptString) {
+	s.Error = val
+}
+
+// Outcome of one item of a contacts batch.
+// Ref: #/components/schemas/ContactBatchStatus
+type ContactBatchStatus string
+
+const (
+	ContactBatchStatusCreated ContactBatchStatus = "created"
+	ContactBatchStatusUpdated ContactBatchStatus = "updated"
+	ContactBatchStatusFailed  ContactBatchStatus = "failed"
+)
+
+// AllValues returns all ContactBatchStatus values.
+func (ContactBatchStatus) AllValues() []ContactBatchStatus {
+	return []ContactBatchStatus{
+		ContactBatchStatusCreated,
+		ContactBatchStatusUpdated,
+		ContactBatchStatusFailed,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s ContactBatchStatus) MarshalText() ([]byte, error) {
+	switch s {
+	case ContactBatchStatusCreated:
+		return []byte(s), nil
+	case ContactBatchStatusUpdated:
+		return []byte(s), nil
+	case ContactBatchStatusFailed:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *ContactBatchStatus) UnmarshalText(data []byte) error {
+	switch ContactBatchStatus(data) {
+	case ContactBatchStatusCreated:
+		*s = ContactBatchStatusCreated
+		return nil
+	case ContactBatchStatusUpdated:
+		*s = ContactBatchStatusUpdated
+		return nil
+	case ContactBatchStatusFailed:
+		*s = ContactBatchStatusFailed
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
 // Contact resource.
 // Ref: #/components/schemas/ContactResource
 type ContactResource struct {
@@ -692,6 +795,14 @@ func (s *ContactResourceCustomFields) init() ContactResourceCustomFields {
 	}
 	return m
 }
+
+type ContactsBatchUpsertUnauthorized ProblemDetails
+
+func (*ContactsBatchUpsertUnauthorized) contactsBatchUpsertRes() {}
+
+type ContactsBatchUpsertUnprocessableEntity ProblemDetails
+
+func (*ContactsBatchUpsertUnprocessableEntity) contactsBatchUpsertRes() {}
 
 type ContactsCreateConflict ProblemDetails
 
@@ -1243,6 +1354,90 @@ type EventActionsListUnprocessableEntity ProblemDetails
 
 func (*EventActionsListUnprocessableEntity) eventActionsListRes() {}
 
+// Per-item result of an events batch, in request order.
+// Ref: #/components/schemas/EventBatchItemResult
+type EventBatchItemResult struct {
+	// Zero-based position of the item in the request.
+	Index int32 `json:"index"`
+	// Accepted when published; failed when the item was rejected.
+	Status EventBatchStatus `json:"status"`
+	// Why the item failed; absent when accepted.
+	Error OptString `json:"error"`
+}
+
+// GetIndex returns the value of Index.
+func (s *EventBatchItemResult) GetIndex() int32 {
+	return s.Index
+}
+
+// GetStatus returns the value of Status.
+func (s *EventBatchItemResult) GetStatus() EventBatchStatus {
+	return s.Status
+}
+
+// GetError returns the value of Error.
+func (s *EventBatchItemResult) GetError() OptString {
+	return s.Error
+}
+
+// SetIndex sets the value of Index.
+func (s *EventBatchItemResult) SetIndex(val int32) {
+	s.Index = val
+}
+
+// SetStatus sets the value of Status.
+func (s *EventBatchItemResult) SetStatus(val EventBatchStatus) {
+	s.Status = val
+}
+
+// SetError sets the value of Error.
+func (s *EventBatchItemResult) SetError(val OptString) {
+	s.Error = val
+}
+
+// Outcome of one item of an events batch.
+// Ref: #/components/schemas/EventBatchStatus
+type EventBatchStatus string
+
+const (
+	EventBatchStatusAccepted EventBatchStatus = "accepted"
+	EventBatchStatusFailed   EventBatchStatus = "failed"
+)
+
+// AllValues returns all EventBatchStatus values.
+func (EventBatchStatus) AllValues() []EventBatchStatus {
+	return []EventBatchStatus{
+		EventBatchStatusAccepted,
+		EventBatchStatusFailed,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s EventBatchStatus) MarshalText() ([]byte, error) {
+	switch s {
+	case EventBatchStatusAccepted:
+		return []byte(s), nil
+	case EventBatchStatusFailed:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *EventBatchStatus) UnmarshalText(data []byte) error {
+	switch EventBatchStatus(data) {
+	case EventBatchStatusAccepted:
+		*s = EventBatchStatusAccepted
+		return nil
+	case EventBatchStatusFailed:
+		*s = EventBatchStatusFailed
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
 // Event payload.
 // Ref: #/components/schemas/EventInput
 type EventInput struct {
@@ -1331,6 +1526,14 @@ func (s *EventInputProperties) init() EventInputProperties {
 	}
 	return m
 }
+
+type EventsBatchSubmitUnauthorized ProblemDetails
+
+func (*EventsBatchSubmitUnauthorized) eventsBatchSubmitRes() {}
+
+type EventsBatchSubmitUnprocessableEntity ProblemDetails
+
+func (*EventsBatchSubmitUnprocessableEntity) eventsBatchSubmitRes() {}
 
 // EventsCreateNoContent is response for EventsCreate operation.
 type EventsCreateNoContent struct{}
@@ -2027,6 +2230,74 @@ func (o OptNilUpdateContactInputCustomFields) Or(d UpdateContactInputCustomField
 	return d
 }
 
+// NewOptNilUpsertContactInputCustomFields returns new OptNilUpsertContactInputCustomFields with value set to v.
+func NewOptNilUpsertContactInputCustomFields(v UpsertContactInputCustomFields) OptNilUpsertContactInputCustomFields {
+	return OptNilUpsertContactInputCustomFields{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptNilUpsertContactInputCustomFields is optional nullable UpsertContactInputCustomFields.
+type OptNilUpsertContactInputCustomFields struct {
+	Value UpsertContactInputCustomFields
+	Set   bool
+	Null  bool
+}
+
+// IsSet returns true if OptNilUpsertContactInputCustomFields was set.
+func (o OptNilUpsertContactInputCustomFields) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptNilUpsertContactInputCustomFields) Reset() {
+	var v UpsertContactInputCustomFields
+	o.Value = v
+	o.Set = false
+	o.Null = false
+}
+
+// SetTo sets value to v.
+func (o *OptNilUpsertContactInputCustomFields) SetTo(v UpsertContactInputCustomFields) {
+	o.Set = true
+	o.Null = false
+	o.Value = v
+}
+
+// IsNull returns true if value is Null.
+func (o OptNilUpsertContactInputCustomFields) IsNull() bool { return o.Null }
+
+// SetToNull sets value to null.
+func (o *OptNilUpsertContactInputCustomFields) SetToNull() {
+	o.Set = true
+	o.Null = true
+	var v UpsertContactInputCustomFields
+	o.Value = v
+}
+
+// IsEmpty returns true if the field was omitted from the payload (not Set and not Null).
+func (o OptNilUpsertContactInputCustomFields) IsEmpty() bool {
+	return !o.Set && !o.Null
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptNilUpsertContactInputCustomFields) Get() (v UpsertContactInputCustomFields, ok bool) {
+	if o.Null {
+		return v, false
+	}
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptNilUpsertContactInputCustomFields) Or(d UpsertContactInputCustomFields) UpsertContactInputCustomFields {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
 // NewOptProblemDetailsErrors returns new OptProblemDetailsErrors with value set to v.
 func NewOptProblemDetailsErrors(v ProblemDetailsErrors) OptProblemDetailsErrors {
 	return OptProblemDetailsErrors{
@@ -2417,6 +2688,42 @@ func (s *ProblemDetailsFields) init() ProblemDetailsFields {
 	}
 	return m
 }
+
+// Request body for recording events one by one with per-item results.
+// Ref: #/components/schemas/RecordEventsBatchInput
+type RecordEventsBatchInput struct {
+	// Events to record, at most 1000.
+	Events []EventInput `json:"events"`
+}
+
+// GetEvents returns the value of Events.
+func (s *RecordEventsBatchInput) GetEvents() []EventInput {
+	return s.Events
+}
+
+// SetEvents sets the value of Events.
+func (s *RecordEventsBatchInput) SetEvents(val []EventInput) {
+	s.Events = val
+}
+
+// Per-item results of an events batch.
+// Ref: #/components/schemas/RecordEventsBatchResult
+type RecordEventsBatchResult struct {
+	// One result per request item, in request order.
+	Results []EventBatchItemResult `json:"results"`
+}
+
+// GetResults returns the value of Results.
+func (s *RecordEventsBatchResult) GetResults() []EventBatchItemResult {
+	return s.Results
+}
+
+// SetResults sets the value of Results.
+func (s *RecordEventsBatchResult) SetResults(val []EventBatchItemResult) {
+	s.Results = val
+}
+
+func (*RecordEventsBatchResult) eventsBatchSubmitRes() {}
 
 // Request body for recording events.
 // Ref: #/components/schemas/RecordEventsInput
@@ -3203,3 +3510,140 @@ func (s *UpdateSegmentInput) SetType(val OptSegmentType) {
 func (s *UpdateSegmentInput) SetDefinition(val OptString) {
 	s.Definition = val
 }
+
+// One contact to upsert, matched by its alias keys (subject id, email, phone).
+// Ref: #/components/schemas/UpsertContactInput
+type UpsertContactInput struct {
+	// The customer's own user id — an alias key.
+	SubjectId OptNilString `json:"subjectId"`
+	// Email address — an alias key.
+	Email OptNilEmailAddress `json:"email"`
+	// Phone number — an alias key.
+	Phone OptNilString `json:"phone"`
+	// First name — filled only when the contact has none.
+	FirstName OptNilString `json:"firstName"`
+	// Last name — filled only when the contact has none.
+	LastName OptNilString `json:"lastName"`
+	// IANA time zone identifier — filled only when the contact has none.
+	TimeZone OptNilTimeZoneName `json:"timeZone"`
+	// Typed custom field values keyed by the field's machine key, merged into the contact's.
+	CustomFields OptNilUpsertContactInputCustomFields `json:"customFields"`
+}
+
+// GetSubjectId returns the value of SubjectId.
+func (s *UpsertContactInput) GetSubjectId() OptNilString {
+	return s.SubjectId
+}
+
+// GetEmail returns the value of Email.
+func (s *UpsertContactInput) GetEmail() OptNilEmailAddress {
+	return s.Email
+}
+
+// GetPhone returns the value of Phone.
+func (s *UpsertContactInput) GetPhone() OptNilString {
+	return s.Phone
+}
+
+// GetFirstName returns the value of FirstName.
+func (s *UpsertContactInput) GetFirstName() OptNilString {
+	return s.FirstName
+}
+
+// GetLastName returns the value of LastName.
+func (s *UpsertContactInput) GetLastName() OptNilString {
+	return s.LastName
+}
+
+// GetTimeZone returns the value of TimeZone.
+func (s *UpsertContactInput) GetTimeZone() OptNilTimeZoneName {
+	return s.TimeZone
+}
+
+// GetCustomFields returns the value of CustomFields.
+func (s *UpsertContactInput) GetCustomFields() OptNilUpsertContactInputCustomFields {
+	return s.CustomFields
+}
+
+// SetSubjectId sets the value of SubjectId.
+func (s *UpsertContactInput) SetSubjectId(val OptNilString) {
+	s.SubjectId = val
+}
+
+// SetEmail sets the value of Email.
+func (s *UpsertContactInput) SetEmail(val OptNilEmailAddress) {
+	s.Email = val
+}
+
+// SetPhone sets the value of Phone.
+func (s *UpsertContactInput) SetPhone(val OptNilString) {
+	s.Phone = val
+}
+
+// SetFirstName sets the value of FirstName.
+func (s *UpsertContactInput) SetFirstName(val OptNilString) {
+	s.FirstName = val
+}
+
+// SetLastName sets the value of LastName.
+func (s *UpsertContactInput) SetLastName(val OptNilString) {
+	s.LastName = val
+}
+
+// SetTimeZone sets the value of TimeZone.
+func (s *UpsertContactInput) SetTimeZone(val OptNilTimeZoneName) {
+	s.TimeZone = val
+}
+
+// SetCustomFields sets the value of CustomFields.
+func (s *UpsertContactInput) SetCustomFields(val OptNilUpsertContactInputCustomFields) {
+	s.CustomFields = val
+}
+
+// Typed custom field values keyed by the field's machine key, merged into the contact's.
+type UpsertContactInputCustomFields map[string]jx.Raw
+
+func (s *UpsertContactInputCustomFields) init() UpsertContactInputCustomFields {
+	m := *s
+	if m == nil {
+		m = map[string]jx.Raw{}
+		*s = m
+	}
+	return m
+}
+
+// Request body for upserting contacts in batch.
+// Ref: #/components/schemas/UpsertContactsInput
+type UpsertContactsInput struct {
+	// Contacts to upsert, at most 1000.
+	Contacts []UpsertContactInput `json:"contacts"`
+}
+
+// GetContacts returns the value of Contacts.
+func (s *UpsertContactsInput) GetContacts() []UpsertContactInput {
+	return s.Contacts
+}
+
+// SetContacts sets the value of Contacts.
+func (s *UpsertContactsInput) SetContacts(val []UpsertContactInput) {
+	s.Contacts = val
+}
+
+// Per-item results of a contacts batch.
+// Ref: #/components/schemas/UpsertContactsResult
+type UpsertContactsResult struct {
+	// One result per request item, in request order.
+	Results []ContactBatchItemResult `json:"results"`
+}
+
+// GetResults returns the value of Results.
+func (s *UpsertContactsResult) GetResults() []ContactBatchItemResult {
+	return s.Results
+}
+
+// SetResults sets the value of Results.
+func (s *UpsertContactsResult) SetResults(val []ContactBatchItemResult) {
+	s.Results = val
+}
+
+func (*UpsertContactsResult) contactsBatchUpsertRes() {}

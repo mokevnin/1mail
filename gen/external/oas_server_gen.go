@@ -58,6 +58,12 @@ type Handler interface {
 	//
 	// PUT /broadcasts/{id}
 	BroadcastsUpdate(ctx context.Context, req *UpdateBroadcastInput, params BroadcastsUpdateParams) (BroadcastsUpdateRes, error)
+	// ContactsBatchUpsert implements ContactsBatch_upsert operation.
+	//
+	// Upsert up to 1000 contacts by alias keys; a failing item does not affect the others.
+	//
+	// POST /contacts/batch
+	ContactsBatchUpsert(ctx context.Context, req *UpsertContactsInput) (ContactsBatchUpsertRes, error)
 	// ContactsCreate implements Contacts_create operation.
 	//
 	// Create a resource.
@@ -105,6 +111,12 @@ type Handler interface {
 	//
 	// GET /events/actions
 	EventActionsList(ctx context.Context, params EventActionsListParams) (EventActionsListRes, error)
+	// EventsBatchSubmit implements EventsBatch_submit operation.
+	//
+	// Record up to 1000 events; a failing item does not affect the others.
+	//
+	// POST /events/batch
+	EventsBatchSubmit(ctx context.Context, req *RecordEventsBatchInput) (EventsBatchSubmitRes, error)
 	// EventsCreate implements Events_create operation.
 	//
 	// Record events in batch.

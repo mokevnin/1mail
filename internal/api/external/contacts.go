@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"net/http"
+	"strconv"
 
 	"github.com/mokevnin/1mail/ent"
 	"github.com/mokevnin/1mail/ent/contact"
@@ -11,6 +12,7 @@ import (
 	"github.com/mokevnin/1mail/internal/api/auth"
 	"github.com/mokevnin/1mail/internal/contacts"
 	"github.com/mokevnin/1mail/internal/convert"
+	"github.com/mokevnin/1mail/internal/eventlog"
 	"github.com/mokevnin/1mail/internal/pagination"
 )
 
@@ -154,6 +156,62 @@ func (h *Handlers) ContactsDelete(ctx context.Context, params externalapi.Contac
 		return nil, err
 	}
 	return &externalapi.ContactsDeleteNoContent{}, nil
+}
+
+// ContactsBatchUpsert upserts each Contact independently and reports a per-item result.
+func (h *Handlers) ContactsBatchUpsert(ctx context.Context, req *externalapi.UpsertContactsInput) (externalapi.ContactsBatchUpsertRes, error) {
+	if !auth.HasScope(auth.GetTokenAuth(ctx), "contacts:write") {
+		res := externalapi.ContactsBatchUpsertUnauthorized(problem(http.StatusUnauthorized, "insufficient scope"))
+		return &res, nil
+	}
+
+	items := make([]contacts.Attributes, len(req.Contacts))
+	for i, c := range req.Contacts {
+		items[i] = contacts.Attributes{
+			SubjectID: convert.StringPtr(c.SubjectId),
+			Email:     convert.StringPtr(c.Email),
+			Phone:     convert.StringPtr(c.Phone),
+			FirstName: convert.StringPtr(c.FirstName),
+			LastName:  convert.StringPtr(c.LastName),
+			TimeZone:  convert.StringPtr(c.TimeZone),
+		}
+		if v, ok := c.CustomFields.Get(); ok {
+			items[i].CustomFields = convert.RawMap(v)
+		}
+	}
+	outcomes := h.contacts.UpsertBatch(ctx, auth.WorkspaceID(auth.GetTokenAuth(ctx)), items)
+
+	results := make([]externalapi.ContactBatchItemResult, len(outcomes))
+	for i, o := range outcomes {
+		results[i].Index = int32(i)
+		switch {
+		case o.Err != nil:
+			results[i].Status = externalapi.ContactBatchStatusFailed
+			results[i].Error = externalapi.NewOptString(itemError(o.Err))
+		case o.Result.Created:
+			results[i].Status = externalapi.ContactBatchStatusCreated
+		default:
+			results[i].Status = externalapi.ContactBatchStatusUpdated
+		}
+		if o.Err == nil {
+			results[i].ContactId = externalapi.NewOptEntityId(externalapi.EntityId(strconv.FormatInt(o.Result.Contact.ID, 10)))
+		}
+	}
+	return &externalapi.UpsertContactsResult{Results: results}, nil
+}
+
+// itemError words a batch item's failure for the caller: domain errors as their own
+// message, anything else (storage) as a generic one so internals do not leak.
+func itemError(err error) string {
+	var conflict *contacts.ConflictError
+	switch {
+	case errors.As(err, &conflict):
+		return conflict.Message()
+	case errors.Is(err, contacts.ErrIdentityRequired), errors.Is(err, eventlog.ErrInvalid):
+		return err.Error()
+	default:
+		return "internal error"
+	}
 }
 
 // conflictProblem renders a contacts.ConflictError, with the field-level error.

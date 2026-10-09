@@ -90,6 +90,7 @@ func TestMCPToolsAreTheContractMinusHiddenOperations(t *testing.T) {
 	// Broadcasts and token management are hidden.
 	assert.ElementsMatch(t, []string{
 		"segments_list", "segments_create", "segments_get", "segments_update", "segments_delete", "segments_preview",
+		"contacts_upsert_batch", "events_record_batch",
 		"contacts_list", "contacts_create", "contacts_get", "contacts_update", "contacts_delete",
 		"emails_send", "events_record", "events_actions_list", "whoami",
 		"suppressions_create", "unsubscribes_create",

@@ -66,6 +66,20 @@ func encodeBroadcastsUpdateRequest(
 	return nil
 }
 
+func encodeContactsBatchUpsertRequest(
+	req *UpsertContactsInput,
+	r *http.Request,
+) error {
+	const contentType = "application/json"
+	e := new(jx.Encoder)
+	{
+		req.Encode(e)
+	}
+	encoded := e.Bytes()
+	ht.SetBody(r, bytes.NewReader(encoded), contentType)
+	return nil
+}
+
 func encodeContactsCreateRequest(
 	req *CreateContactInput,
 	r *http.Request,
@@ -96,6 +110,20 @@ func encodeContactsUpdateRequest(
 
 func encodeEmailsSendRequest(
 	req *SendTransactionalEmailInput,
+	r *http.Request,
+) error {
+	const contentType = "application/json"
+	e := new(jx.Encoder)
+	{
+		req.Encode(e)
+	}
+	encoded := e.Bytes()
+	ht.SetBody(r, bytes.NewReader(encoded), contentType)
+	return nil
+}
+
+func encodeEventsBatchSubmitRequest(
+	req *RecordEventsBatchInput,
 	r *http.Request,
 ) error {
 	const contentType = "application/json"

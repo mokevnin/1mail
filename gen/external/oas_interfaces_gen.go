@@ -41,6 +41,10 @@ type BroadcastsUpdateRes interface {
 	broadcastsUpdateRes()
 }
 
+type ContactsBatchUpsertRes interface {
+	contactsBatchUpsertRes()
+}
+
 type ContactsCreateRes interface {
 	contactsCreateRes()
 }
@@ -67,6 +71,10 @@ type EmailsSendRes interface {
 
 type EventActionsListRes interface {
 	eventActionsListRes()
+}
+
+type EventsBatchSubmitRes interface {
+	eventsBatchSubmitRes()
 }
 
 type EventsCreateRes interface {

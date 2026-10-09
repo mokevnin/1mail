@@ -21,8 +21,21 @@ func (h *Handlers) EventsCreate(ctx context.Context, req *externalapi.RecordEven
 
 	ws := auth.WorkspaceID(auth.GetTokenAuth(ctx))
 
-	inputs := make([]eventlog.Input, len(req.Events))
-	for i, e := range req.Events {
+	inputs, err := eventInputs(req.Events)
+	if err != nil {
+		return nil, err
+	}
+	// The module resolves identity and publishes the batch atomically; rows land
+	// asynchronously (accept-then-process).
+	if err := h.eventlog.Ingest(ctx, ws, inputs); err != nil {
+		return nil, err
+	}
+	return &externalapi.EventsCreateNoContent{}, nil
+}
+
+func eventInputs(events []externalapi.EventInput) ([]eventlog.Input, error) {
+	inputs := make([]eventlog.Input, len(events))
+	for i, e := range events {
 		in := eventlog.Input{
 			SubjectID: e.SubjectId,
 			Email:     convert.StringPtr(e.Email),
@@ -44,12 +57,31 @@ func (h *Handlers) EventsCreate(ctx context.Context, req *externalapi.RecordEven
 		}
 		inputs[i] = in
 	}
-	// The module resolves identity and publishes the batch atomically; rows land
-	// asynchronously (accept-then-process).
-	if err := h.eventlog.Ingest(ctx, ws, inputs); err != nil {
+	return inputs, nil
+}
+
+// EventsBatchSubmit records each Event independently and reports a per-item result.
+func (h *Handlers) EventsBatchSubmit(ctx context.Context, req *externalapi.RecordEventsBatchInput) (externalapi.EventsBatchSubmitRes, error) {
+	if !auth.HasScope(auth.GetTokenAuth(ctx), "events:write") {
+		res := externalapi.EventsBatchSubmitUnauthorized(problem(http.StatusUnauthorized, "insufficient scope"))
+		return &res, nil
+	}
+
+	inputs, err := eventInputs(req.Events)
+	if err != nil {
 		return nil, err
 	}
-	return &externalapi.EventsCreateNoContent{}, nil
+	errs := h.eventlog.IngestEach(ctx, auth.WorkspaceID(auth.GetTokenAuth(ctx)), inputs)
+
+	results := make([]externalapi.EventBatchItemResult, len(errs))
+	for i, e := range errs {
+		results[i] = externalapi.EventBatchItemResult{Index: int32(i), Status: externalapi.EventBatchStatusAccepted}
+		if e != nil {
+			results[i].Status = externalapi.EventBatchStatusFailed
+			results[i].Error = externalapi.NewOptString(itemError(e))
+		}
+	}
+	return &externalapi.RecordEventsBatchResult{Results: results}, nil
 }
 
 func (h *Handlers) EventActionsList(ctx context.Context, params externalapi.EventActionsListParams) (externalapi.EventActionsListRes, error) {
