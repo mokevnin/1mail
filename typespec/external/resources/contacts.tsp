@@ -94,3 +94,74 @@ interface Contacts
       CreateContactInput,
       UpdateContactInput
     > {}
+
+/** One contact to upsert, matched by its alias keys (subject id, email, phone) */
+model UpsertContactInput {
+  /** The customer's own user id — an alias key */
+  subjectId?: string | null;
+
+  /** Email address — an alias key */
+  email?: EmailAddress | null;
+
+  /** Phone number — an alias key */
+  phone?: string | null;
+
+  /** First name — filled only when the contact has none */
+  firstName?: string | null;
+
+  /** Last name — filled only when the contact has none */
+  lastName?: string | null;
+
+  /** IANA time zone identifier — filled only when the contact has none */
+  timeZone?: TimeZoneName | null;
+
+  /** Typed custom field values keyed by the field's machine key, merged into the contact's */
+  customFields?: Record<unknown> | null;
+}
+
+/** Request body for upserting contacts in batch */
+model UpsertContactsInput {
+  /** Contacts to upsert, at most 1000 */
+  @minItems(1)
+  @maxItems(1000)
+  contacts: UpsertContactInput[];
+}
+
+/** Outcome of one item of a contacts batch */
+enum ContactBatchStatus {
+  created,
+  updated,
+  failed,
+}
+
+/** Per-item result of a contacts batch, in request order */
+model ContactBatchItemResult {
+  /** Zero-based position of the item in the request */
+  index: int32;
+
+  /** created or updated on success; failed when the item was rejected */
+  status: ContactBatchStatus;
+
+  /** The contact the item resolved to; absent when failed */
+  contactId?: EntityId;
+
+  /** Why the item failed; absent on success */
+  error?: string;
+}
+
+/** Per-item results of a contacts batch */
+model UpsertContactsResult {
+  /** One result per request item, in request order */
+  results: ContactBatchItemResult[];
+}
+
+@route("/contacts/batch")
+@tag("Contacts")
+namespace ContactsBatch {
+  /** Upsert up to 1000 contacts by alias keys; a failing item does not affect the others */
+  @post
+  op upsert(@body body: UpsertContactsInput):
+    | UpsertContactsResult
+    | UnauthorizedProblem
+    | UnprocessableEntityProblem;
+}

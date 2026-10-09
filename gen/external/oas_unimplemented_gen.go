@@ -93,6 +93,15 @@ func (UnimplementedHandler) BroadcastsUpdate(ctx context.Context, req *UpdateBro
 	return r, ht.ErrNotImplemented
 }
 
+// ContactsBatchUpsert implements ContactsBatch_upsert operation.
+//
+// Upsert up to 1000 contacts by alias keys; a failing item does not affect the others.
+//
+// POST /contacts/batch
+func (UnimplementedHandler) ContactsBatchUpsert(ctx context.Context, req *UpsertContactsInput) (r ContactsBatchUpsertRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // ContactsCreate implements Contacts_create operation.
 //
 // Create a resource.
@@ -158,6 +167,15 @@ func (UnimplementedHandler) EmailsSend(ctx context.Context, req *SendTransaction
 //
 // GET /events/actions
 func (UnimplementedHandler) EventActionsList(ctx context.Context, params EventActionsListParams) (r EventActionsListRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// EventsBatchSubmit implements EventsBatch_submit operation.
+//
+// Record up to 1000 events; a failing item does not affect the others.
+//
+// POST /events/batch
+func (UnimplementedHandler) EventsBatchSubmit(ctx context.Context, req *RecordEventsBatchInput) (r EventsBatchSubmitRes, _ error) {
 	return r, ht.ErrNotImplemented
 }
 

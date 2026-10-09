@@ -1,0 +1,123 @@
+package external_test
+
+import (
+	"context"
+	"testing"
+
+	externalapi "github.com/mokevnin/1mail/gen/external"
+	"github.com/mokevnin/1mail/internal/testhelper"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+)
+
+func contactsCreatedFor(t *testing.T, env *testhelper.TestEnv, email string) int {
+	t.Helper()
+	var n int
+	require.NoError(t, env.SQLDB.QueryRow(
+		`SELECT count(*) FROM watermill_domain_events
+		   WHERE payload->>'name' = 'contact.created' AND payload->'data'->>'email' = $1`, email,
+	).Scan(&n))
+	return n
+}
+
+// A batch mixing new, existing and unidentifiable contacts reports each item and
+// lets the valid ones through; only new contacts publish contact.created.
+func TestExternalContactsBatchUpsertMixedItems(t *testing.T) {
+	env := testhelper.Setup(t)
+	c := client(t, env, seedToken(t, env.DB, []string{"contacts:write"}))
+
+	res, err := c.ContactsBatchUpsert(context.Background(), &externalapi.UpsertContactsInput{
+		Contacts: []externalapi.UpsertContactInput{
+			{Email: externalapi.NewOptNilEmailAddress("batch-new@example.com"), FirstName: externalapi.NewOptNilString("New")},
+			{Email: externalapi.NewOptNilEmailAddress("alice@example.com")}, // fixture contact 1
+			{FirstName: externalapi.NewOptNilString("Nobody")},              // no alias key
+			{SubjectId: externalapi.NewOptNilString("batch-subject-1")},
+		},
+	})
+	require.NoError(t, err)
+	ok, isOK := res.(*externalapi.UpsertContactsResult)
+	require.Truef(t, isOK, "got %T", res)
+	require.Len(t, ok.Results, 4)
+
+	for i, r := range ok.Results {
+		assert.EqualValues(t, i, r.Index)
+	}
+	assert.Equal(t, externalapi.ContactBatchStatusCreated, ok.Results[0].Status)
+	assert.True(t, ok.Results[0].ContactId.IsSet())
+	assert.Equal(t, externalapi.ContactBatchStatusUpdated, ok.Results[1].Status)
+	id, _ := ok.Results[1].ContactId.Get()
+	assert.Equal(t, externalapi.EntityId("1"), id)
+	assert.Equal(t, externalapi.ContactBatchStatusFailed, ok.Results[2].Status)
+	assert.NotEmpty(t, ok.Results[2].Error.Or(""))
+	assert.False(t, ok.Results[2].ContactId.IsSet())
+	assert.Equal(t, externalapi.ContactBatchStatusCreated, ok.Results[3].Status)
+
+	assert.Equal(t, 1, contactsCreatedFor(t, env, "batch-new@example.com"))
+	assert.Equal(t, 0, contactsCreatedFor(t, env, "alice@example.com"))
+}
+
+func TestExternalContactsBatchUpsertLimitAndScope(t *testing.T) {
+	env := testhelper.Setup(t)
+	ctx := context.Background()
+
+	writer := client(t, env, seedToken(t, env.DB, []string{"contacts:write"}))
+	tooMany := make([]externalapi.UpsertContactInput, 1001)
+	for i := range tooMany {
+		tooMany[i] = externalapi.UpsertContactInput{SubjectId: externalapi.NewOptNilString("limit")}
+	}
+	_, err := writer.ContactsBatchUpsert(ctx, &externalapi.UpsertContactsInput{Contacts: tooMany})
+	require.Error(t, err, "more than 1000 items is rejected as a whole")
+
+	reader := client(t, env, seedToken(t, env.DB, []string{"contacts:read"}))
+	res, err := reader.ContactsBatchUpsert(ctx, &externalapi.UpsertContactsInput{
+		Contacts: []externalapi.UpsertContactInput{{SubjectId: externalapi.NewOptNilString("x")}},
+	})
+	require.NoError(t, err)
+	assert.IsType(t, &externalapi.ContactsBatchUpsertUnauthorized{}, res)
+}
+
+func TestExternalEventsBatchSubmitMixedItems(t *testing.T) {
+	env := testhelper.Setup(t)
+	c := client(t, env, seedToken(t, env.DB, []string{"events:write"}))
+
+	res, err := c.EventsBatchSubmit(context.Background(), &externalapi.RecordEventsBatchInput{
+		Events: []externalapi.EventInput{
+			{SubjectId: "user:alice@example.com", Action: "batch_a"},
+			{SubjectId: "user:alice@example.com", Action: "  "}, // blank action
+			{SubjectId: "", Action: "batch_c"},                  // blank subject
+			{SubjectId: "user:bob@example.com", Action: "batch_d"},
+		},
+	})
+	require.NoError(t, err)
+	ok, isOK := res.(*externalapi.RecordEventsBatchResult)
+	require.Truef(t, isOK, "got %T", res)
+	require.Len(t, ok.Results, 4)
+
+	want := []externalapi.EventBatchStatus{
+		externalapi.EventBatchStatusAccepted, externalapi.EventBatchStatusFailed,
+		externalapi.EventBatchStatusFailed, externalapi.EventBatchStatusAccepted,
+	}
+	for i, r := range ok.Results {
+		assert.EqualValues(t, i, r.Index)
+		assert.Equal(t, want[i], r.Status)
+		if r.Status == externalapi.EventBatchStatusFailed {
+			assert.NotEmpty(t, r.Error.Or(""))
+		}
+	}
+
+	var actions []string
+	for _, r := range outboxCollected(t, env) {
+		actions = append(actions, r.event.Action)
+	}
+	assert.ElementsMatch(t, []string{"batch_a", "batch_d"}, actions, "only the valid items were published")
+}
+
+func TestExternalEventsBatchSubmitScope(t *testing.T) {
+	env := testhelper.Setup(t)
+	c := client(t, env, seedToken(t, env.DB, []string{"events:read"}))
+	res, err := c.EventsBatchSubmit(context.Background(), &externalapi.RecordEventsBatchInput{
+		Events: []externalapi.EventInput{{SubjectId: "u", Action: "a"}},
+	})
+	require.NoError(t, err)
+	assert.IsType(t, &externalapi.EventsBatchSubmitUnauthorized{}, res)
+}

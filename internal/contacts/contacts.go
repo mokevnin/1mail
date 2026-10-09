@@ -164,6 +164,24 @@ func (m *Module) Upsert(ctx context.Context, workspaceID int64, attrs Attributes
 	return res, nil
 }
 
+// BatchOutcome is the result of one item of UpsertBatch: Result on success, Err (a
+// domain error, or a storage error) otherwise.
+type BatchOutcome struct {
+	Result Result
+	Err    error
+}
+
+// UpsertBatch upserts each item in its own transaction, in order, so a failing item
+// neither rolls back nor blocks the others; each new Contact publishes contact.created
+// with its own commit. The outcomes are parallel to items.
+func (m *Module) UpsertBatch(ctx context.Context, workspaceID int64, items []Attributes) []BatchOutcome {
+	out := make([]BatchOutcome, len(items))
+	for i, attrs := range items {
+		out[i].Result, out[i].Err = m.Upsert(ctx, workspaceID, attrs)
+	}
+	return out
+}
+
 // UpsertIn is Upsert inside a transaction the caller already owns (tx and pub come
 // from events.Bus.WithinTx), for flows that bind more rows to the Contact atomically
 // — the tracker's Identify. It publishes contact.created when it creates.

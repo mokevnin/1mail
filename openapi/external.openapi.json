@@ -6,6 +6,9 @@
   },
   "tags": [
     {
+      "name": "Contacts"
+    },
+    {
       "name": "Emails"
     },
     {
@@ -13,9 +16,6 @@
     },
     {
       "name": "Auth"
-    },
-    {
-      "name": "Contacts"
     },
     {
       "name": "Segments"
@@ -773,6 +773,59 @@
         }
       }
     },
+    "/contacts/batch": {
+      "post": {
+        "operationId": "ContactsBatch_upsert",
+        "description": "Upsert up to 1000 contacts by alias keys; a failing item does not affect the others",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "The request has succeeded.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpsertContactsResult"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "RFC 7807 unauthorized response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "RFC 7807 validation response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Contacts"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpsertContactsInput"
+              }
+            }
+          }
+        },
+        "x-mcp": {
+          "name": "contacts_upsert_batch"
+        }
+      }
+    },
     "/contacts/{id}": {
       "get": {
         "operationId": "Contacts_get",
@@ -1168,6 +1221,59 @@
         "tags": ["Events"],
         "x-mcp": {
           "name": "events_actions_list"
+        }
+      }
+    },
+    "/events/batch": {
+      "post": {
+        "operationId": "EventsBatch_submit",
+        "description": "Record up to 1000 events; a failing item does not affect the others",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "The request has succeeded.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecordEventsBatchResult"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "RFC 7807 unauthorized response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "RFC 7807 validation response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Events"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecordEventsBatchInput"
+              }
+            }
+          }
+        },
+        "x-mcp": {
+          "name": "events_record_batch"
         }
       }
     },
@@ -1671,6 +1777,43 @@
         "enum": ["draft", "scheduled", "sent"],
         "description": "Broadcast status"
       },
+      "ContactBatchItemResult": {
+        "type": "object",
+        "required": ["index", "status"],
+        "properties": {
+          "index": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Zero-based position of the item in the request"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ContactBatchStatus"
+              }
+            ],
+            "description": "created or updated on success; failed when the item was rejected"
+          },
+          "contactId": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EntityId"
+              }
+            ],
+            "description": "The contact the item resolved to; absent when failed"
+          },
+          "error": {
+            "type": "string",
+            "description": "Why the item failed; absent on success"
+          }
+        },
+        "description": "Per-item result of a contacts batch, in request order"
+      },
+      "ContactBatchStatus": {
+        "type": "string",
+        "enum": ["created", "updated", "failed"],
+        "description": "Outcome of one item of a contacts batch"
+      },
       "ContactResource": {
         "type": "object",
         "required": ["id", "createdAt", "updatedAt"],
@@ -1905,6 +2048,35 @@
         },
         "description": "Distinct event action"
       },
+      "EventBatchItemResult": {
+        "type": "object",
+        "required": ["index", "status"],
+        "properties": {
+          "index": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Zero-based position of the item in the request"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EventBatchStatus"
+              }
+            ],
+            "description": "accepted when published; failed when the item was rejected"
+          },
+          "error": {
+            "type": "string",
+            "description": "Why the item failed; absent when accepted"
+          }
+        },
+        "description": "Per-item result of an events batch, in request order"
+      },
+      "EventBatchStatus": {
+        "type": "string",
+        "enum": ["accepted", "failed"],
+        "description": "Outcome of one item of an events batch"
+      },
       "EventInput": {
         "type": "object",
         "required": ["subjectId", "action"],
@@ -1998,6 +2170,36 @@
           }
         },
         "description": "RFC 7807 Problem Details"
+      },
+      "RecordEventsBatchInput": {
+        "type": "object",
+        "required": ["events"],
+        "properties": {
+          "events": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EventInput"
+            },
+            "minItems": 1,
+            "maxItems": 1000,
+            "description": "Events to record, at most 1000"
+          }
+        },
+        "description": "Request body for recording events one by one with per-item results"
+      },
+      "RecordEventsBatchResult": {
+        "type": "object",
+        "required": ["results"],
+        "properties": {
+          "results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EventBatchItemResult"
+            },
+            "description": "One result per request item, in request order"
+          }
+        },
+        "description": "Per-item results of an events batch"
       },
       "RecordEventsInput": {
         "type": "object",
@@ -2220,6 +2422,88 @@
           }
         },
         "description": "Request body for updating a segment"
+      },
+      "UpsertContactInput": {
+        "type": "object",
+        "properties": {
+          "subjectId": {
+            "type": "string",
+            "nullable": true,
+            "description": "The customer's own user id — an alias key"
+          },
+          "email": {
+            "type": "string",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EmailAddress"
+              }
+            ],
+            "nullable": true,
+            "description": "Email address — an alias key"
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true,
+            "description": "Phone number — an alias key"
+          },
+          "firstName": {
+            "type": "string",
+            "nullable": true,
+            "description": "First name — filled only when the contact has none"
+          },
+          "lastName": {
+            "type": "string",
+            "nullable": true,
+            "description": "Last name — filled only when the contact has none"
+          },
+          "timeZone": {
+            "type": "string",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TimeZoneName"
+              }
+            ],
+            "nullable": true,
+            "description": "IANA time zone identifier — filled only when the contact has none"
+          },
+          "customFields": {
+            "type": "object",
+            "additionalProperties": {},
+            "nullable": true,
+            "description": "Typed custom field values keyed by the field's machine key, merged into the contact's"
+          }
+        },
+        "description": "One contact to upsert, matched by its alias keys (subject id, email, phone)"
+      },
+      "UpsertContactsInput": {
+        "type": "object",
+        "required": ["contacts"],
+        "properties": {
+          "contacts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UpsertContactInput"
+            },
+            "minItems": 1,
+            "maxItems": 1000,
+            "description": "Contacts to upsert, at most 1000"
+          }
+        },
+        "description": "Request body for upserting contacts in batch"
+      },
+      "UpsertContactsResult": {
+        "type": "object",
+        "required": ["results"],
+        "properties": {
+          "results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ContactBatchItemResult"
+            },
+            "description": "One result per request item, in request order"
+          }
+        },
+        "description": "Per-item results of a contacts batch"
       },
       "Versions": {
         "type": "string",

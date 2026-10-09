@@ -79,6 +79,12 @@ type Invoker interface {
 	//
 	// PUT /broadcasts/{id}
 	BroadcastsUpdate(ctx context.Context, request *UpdateBroadcastInput, params BroadcastsUpdateParams) (BroadcastsUpdateRes, error)
+	// ContactsBatchUpsert invokes ContactsBatch_upsert operation.
+	//
+	// Upsert up to 1000 contacts by alias keys; a failing item does not affect the others.
+	//
+	// POST /contacts/batch
+	ContactsBatchUpsert(ctx context.Context, request *UpsertContactsInput) (ContactsBatchUpsertRes, error)
 	// ContactsCreate invokes Contacts_create operation.
 	//
 	// Create a resource.
@@ -126,6 +132,12 @@ type Invoker interface {
 	//
 	// GET /events/actions
 	EventActionsList(ctx context.Context, params EventActionsListParams) (EventActionsListRes, error)
+	// EventsBatchSubmit invokes EventsBatch_submit operation.
+	//
+	// Record up to 1000 events; a failing item does not affect the others.
+	//
+	// POST /events/batch
+	EventsBatchSubmit(ctx context.Context, request *RecordEventsBatchInput) (EventsBatchSubmitRes, error)
 	// EventsCreate invokes Events_create operation.
 	//
 	// Record events in batch.
@@ -1440,6 +1452,122 @@ func (c *Client) sendBroadcastsUpdate(ctx context.Context, request *UpdateBroadc
 	return result, nil
 }
 
+// ContactsBatchUpsert invokes ContactsBatch_upsert operation.
+//
+// Upsert up to 1000 contacts by alias keys; a failing item does not affect the others.
+//
+// POST /contacts/batch
+func (c *Client) ContactsBatchUpsert(ctx context.Context, request *UpsertContactsInput) (ContactsBatchUpsertRes, error) {
+	res, err := c.sendContactsBatchUpsert(ctx, request)
+	return res, err
+}
+
+func (c *Client) sendContactsBatchUpsert(ctx context.Context, request *UpsertContactsInput) (res ContactsBatchUpsertRes, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("ContactsBatch_upsert"),
+		semconv.HTTPRequestMethodKey.String("POST"),
+		semconv.URLTemplateKey.String("/contacts/batch"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, ContactsBatchUpsertOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	stage = "BuildURL"
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [1]string
+	pathParts[0] = "/contacts/batch"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "POST", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+	if err := encodeContactsBatchUpsertRequest(request, r); err != nil {
+		return res, errors.Wrap(err, "encode request")
+	}
+
+	{
+		type bitset = [1]uint8
+		var satisfied bitset
+		{
+			stage = "Security:BearerAuth"
+			switch err := c.securityBearerAuth(ctx, ContactsBatchUpsertOperation, r); {
+			case err == nil: // if NO error
+				satisfied[0] |= 1 << 0
+			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
+				// Skip this security.
+			default:
+				return res, errors.Wrap(err, "security \"BearerAuth\"")
+			}
+		}
+
+		if ok := func() bool {
+		nextRequirement:
+			for _, requirement := range []bitset{
+				{0b00000001},
+			} {
+				for i, mask := range requirement {
+					if satisfied[i]&mask != mask {
+						continue nextRequirement
+					}
+				}
+				return true
+			}
+			return false
+		}(); !ok {
+			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
+		}
+	}
+
+	stage = "SendRequest"
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	body := resp.Body
+	defer func() {
+		// Drain the body to EOF before closing, so the underlying
+		// connection can be reused by the Transport regardless of the
+		// response status code. See https://github.com/ogen-go/ogen/issues/1670.
+		_, _ = io.Copy(io.Discard, body)
+		_ = body.Close()
+	}()
+
+	stage = "DecodeResponse"
+	result, err := decodeContactsBatchUpsertResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
 // ContactsCreate invokes Contacts_create operation.
 //
 // Create a resource.
@@ -2394,6 +2522,122 @@ func (c *Client) sendEventActionsList(ctx context.Context, params EventActionsLi
 
 	stage = "DecodeResponse"
 	result, err := decodeEventActionsListResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// EventsBatchSubmit invokes EventsBatch_submit operation.
+//
+// Record up to 1000 events; a failing item does not affect the others.
+//
+// POST /events/batch
+func (c *Client) EventsBatchSubmit(ctx context.Context, request *RecordEventsBatchInput) (EventsBatchSubmitRes, error) {
+	res, err := c.sendEventsBatchSubmit(ctx, request)
+	return res, err
+}
+
+func (c *Client) sendEventsBatchSubmit(ctx context.Context, request *RecordEventsBatchInput) (res EventsBatchSubmitRes, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("EventsBatch_submit"),
+		semconv.HTTPRequestMethodKey.String("POST"),
+		semconv.URLTemplateKey.String("/events/batch"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, EventsBatchSubmitOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	stage = "BuildURL"
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [1]string
+	pathParts[0] = "/events/batch"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "POST", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+	if err := encodeEventsBatchSubmitRequest(request, r); err != nil {
+		return res, errors.Wrap(err, "encode request")
+	}
+
+	{
+		type bitset = [1]uint8
+		var satisfied bitset
+		{
+			stage = "Security:BearerAuth"
+			switch err := c.securityBearerAuth(ctx, EventsBatchSubmitOperation, r); {
+			case err == nil: // if NO error
+				satisfied[0] |= 1 << 0
+			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
+				// Skip this security.
+			default:
+				return res, errors.Wrap(err, "security \"BearerAuth\"")
+			}
+		}
+
+		if ok := func() bool {
+		nextRequirement:
+			for _, requirement := range []bitset{
+				{0b00000001},
+			} {
+				for i, mask := range requirement {
+					if satisfied[i]&mask != mask {
+						continue nextRequirement
+					}
+				}
+				return true
+			}
+			return false
+		}(); !ok {
+			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
+		}
+	}
+
+	stage = "SendRequest"
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	body := resp.Body
+	defer func() {
+		// Drain the body to EOF before closing, so the underlying
+		// connection can be reused by the Transport regardless of the
+		// response status code. See https://github.com/ogen-go/ogen/issues/1670.
+		_, _ = io.Copy(io.Discard, body)
+		_ = body.Close()
+	}()
+
+	stage = "DecodeResponse"
+	result, err := decodeEventsBatchSubmitResponse(resp)
 	if err != nil {
 		return res, errors.Wrap(err, "decode response")
 	}

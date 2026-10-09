@@ -10,6 +10,8 @@ package eventlog
 
 import (
 	"context"
+	"errors"
+	"strings"
 	"time"
 
 	"github.com/mokevnin/1mail/ent"
@@ -72,6 +74,24 @@ func (m *Module) Ingest(ctx context.Context, workspaceID int64, inputs []Input) 
 		}
 		return nil
 	})
+}
+
+// ErrInvalid means an Event lacks its subject id or its action.
+var ErrInvalid = errors.New("eventlog: subject id and action are required")
+
+// IngestEach ingests each Event in its own transaction, so an invalid or failing item
+// does not affect the others (Ingest, by contrast, is all-or-nothing). The returned
+// errors are parallel to inputs; nil means the Event was accepted.
+func (m *Module) IngestEach(ctx context.Context, workspaceID int64, inputs []Input) []error {
+	errs := make([]error, len(inputs))
+	for i, in := range inputs {
+		if strings.TrimSpace(in.SubjectID) == "" || strings.TrimSpace(in.Action) == "" {
+			errs[i] = ErrInvalid
+			continue
+		}
+		errs[i] = m.Ingest(ctx, workspaceID, []Input{in})
+	}
+	return errs
 }
 
 // Actions returns the workspace's distinct Event actions, sorted.

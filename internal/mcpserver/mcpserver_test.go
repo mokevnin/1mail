@@ -89,6 +89,7 @@ func TestMCPToolsAreTheContractMinusHiddenOperations(t *testing.T) {
 	// Independent literal: the /api operations that are not x-mcp hidden, by 1mail name.
 	// Segments, broadcasts and token management are hidden.
 	assert.ElementsMatch(t, []string{
+		"contacts_upsert_batch", "events_record_batch",
 		"contacts_list", "contacts_create", "contacts_get", "contacts_update", "contacts_delete",
 		"emails_send", "events_record", "events_actions_list", "whoami",
 	}, names)

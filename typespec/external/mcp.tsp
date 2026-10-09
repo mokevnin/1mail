@@ -31,3 +31,5 @@ namespace OneMail;
 @@extension(Auth.meGet, "x-mcp", #{ name: "whoami" });
 @@extension(Events.create, "x-mcp", #{ name: "events_record" });
 @@extension(EventActions.list, "x-mcp", #{ name: "events_actions_list" });
+@@extension(ContactsBatch.upsert, "x-mcp", #{ name: "contacts_upsert_batch" });
+@@extension(EventsBatch.submit, "x-mcp", #{ name: "events_record_batch" });
