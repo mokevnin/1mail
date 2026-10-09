@@ -18,10 +18,10 @@ func (h *Handlers) TemplatesList(ctx context.Context, params externalapi.Templat
 		return &res, nil
 	}
 
-	ws := auth.WorkspaceID(auth.GetTokenAuth(ctx))
+	scoped := auth.TokenScoped(ctx)
 	page, pageSize := pagination.Normalize(convert.Ptr(params.Page), convert.Ptr(params.PageSize))
 
-	q := h.ent.EmailTemplate.Query().Where(emailtemplate.WorkspaceID(ws))
+	q := scoped.EmailTemplate().Query()
 	total, err := q.Count(ctx)
 	if err != nil {
 		return nil, err
@@ -53,9 +53,8 @@ func (h *Handlers) TemplatesCreate(ctx context.Context, req *externalapi.CreateT
 		return &res, nil
 	}
 
-	ws := auth.WorkspaceID(auth.GetTokenAuth(ctx))
-	tpl, err := h.ent.EmailTemplate.Create().
-		SetWorkspaceID(ws).
+	scoped := auth.TokenScoped(ctx)
+	tpl, err := scoped.EmailTemplate().Create().
 		SetName(req.Name).
 		SetNillableSubject(convert.StringPtr(req.Subject)).
 		SetNillableBody(convert.StringPtr(req.Body)).
@@ -83,10 +82,8 @@ func (h *Handlers) TemplatesGet(ctx context.Context, params externalapi.Template
 		return &res, nil
 	}
 
-	ws := auth.WorkspaceID(auth.GetTokenAuth(ctx))
-	tpl, err := h.ent.EmailTemplate.Query().
-		Where(emailtemplate.IDEQ(id), emailtemplate.WorkspaceID(ws)).
-		Only(ctx)
+	scoped := auth.TokenScoped(ctx)
+	tpl, err := scoped.EmailTemplate().Get(ctx, id)
 	if ent.IsNotFound(err) {
 		res := externalapi.TemplatesGetNotFound(problem(http.StatusNotFound, "template not found"))
 		return &res, nil
@@ -110,9 +107,8 @@ func (h *Handlers) TemplatesUpdate(ctx context.Context, req *externalapi.UpdateT
 		return &res, nil
 	}
 
-	ws := auth.WorkspaceID(auth.GetTokenAuth(ctx))
-	tpl, err := h.ent.EmailTemplate.UpdateOneID(id).
-		Where(emailtemplate.WorkspaceID(ws)).
+	scoped := auth.TokenScoped(ctx)
+	tpl, err := scoped.EmailTemplate().UpdateOneID(id).
 		SetNillableName(convert.StringPtr(req.Name)).
 		SetNillableSubject(convert.StringPtr(req.Subject)).
 		SetNillableBody(convert.StringPtr(req.Body)).
@@ -144,8 +140,8 @@ func (h *Handlers) TemplatesDelete(ctx context.Context, params externalapi.Templ
 		return &res, nil
 	}
 
-	ws := auth.WorkspaceID(auth.GetTokenAuth(ctx))
-	err = h.ent.EmailTemplate.DeleteOneID(id).Where(emailtemplate.WorkspaceID(ws)).Exec(ctx)
+	scoped := auth.TokenScoped(ctx)
+	err = scoped.EmailTemplate().DeleteOneID(id).Exec(ctx)
 	if ent.IsNotFound(err) {
 		res := externalapi.TemplatesDeleteNotFound(problem(http.StatusNotFound, "template not found"))
 		return &res, nil

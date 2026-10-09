@@ -37,7 +37,7 @@ func (h *Handlers) webhookResource(e *ent.WebhookEndpoint) (siteapi.SiteWebhookE
 }
 
 func (h *Handlers) SiteWebhooksList(ctx context.Context, params siteapi.SiteWebhooksListParams) (siteapi.SiteWebhooksListRes, error) {
-	ws, err := h.workspaceID(ctx, params.Slug)
+	scoped, err := h.scopedFor(ctx, params.Slug)
 	if ent.IsNotFound(err) {
 		v := siteapi.SiteWebhooksListNotFound(problem(http.StatusNotFound, "workspace not found"))
 		return &v, nil
@@ -55,7 +55,7 @@ func (h *Handlers) SiteWebhooksList(ctx context.Context, params siteapi.SiteWebh
 	}
 	page, pageSize := pagination.Normalize(pagePtr, pageSizePtr)
 
-	q := h.ent.WebhookEndpoint.Query().Where(webhookendpoint.WorkspaceID(ws))
+	q := scoped.WebhookEndpoint().Query()
 	total, err := q.Count(ctx)
 	if err != nil {
 		return nil, err
@@ -86,7 +86,7 @@ func (h *Handlers) SiteWebhooksList(ctx context.Context, params siteapi.SiteWebh
 }
 
 func (h *Handlers) SiteWebhooksCreate(ctx context.Context, req *siteapi.SiteCreateWebhookEndpointInput, params siteapi.SiteWebhooksCreateParams) (siteapi.SiteWebhooksCreateRes, error) {
-	ws, err := h.workspaceID(ctx, params.Slug)
+	scoped, err := h.scopedFor(ctx, params.Slug)
 	if ent.IsNotFound(err) {
 		v := siteapi.SiteWebhooksCreateNotFound(problem(http.StatusNotFound, "workspace not found"))
 		return &v, nil
@@ -111,8 +111,7 @@ func (h *Handlers) SiteWebhooksCreate(ctx context.Context, req *siteapi.SiteCrea
 		return nil, err
 	}
 
-	q := h.ent.WebhookEndpoint.Create().
-		SetWorkspaceID(ws).
+	q := scoped.WebhookEndpoint().Create().
 		SetURL(req.URL).
 		SetSecretEncrypted(encrypted).
 		SetEventTypes(req.EventTypes)
@@ -131,7 +130,7 @@ func (h *Handlers) SiteWebhooksCreate(ctx context.Context, req *siteapi.SiteCrea
 }
 
 func (h *Handlers) SiteWebhooksGet(ctx context.Context, params siteapi.SiteWebhooksGetParams) (siteapi.SiteWebhooksGetRes, error) {
-	ws, err := h.workspaceID(ctx, params.Slug)
+	scoped, err := h.scopedFor(ctx, params.Slug)
 	if ent.IsNotFound(err) {
 		v := siteapi.SiteWebhooksGetNotFound(problem(http.StatusNotFound, "workspace not found"))
 		return &v, nil
@@ -145,9 +144,7 @@ func (h *Handlers) SiteWebhooksGet(ctx context.Context, params siteapi.SiteWebho
 		v := siteapi.SiteWebhooksGetBadRequest(problem(http.StatusBadRequest, "invalid id"))
 		return &v, nil
 	}
-	e, err := h.ent.WebhookEndpoint.Query().
-		Where(webhookendpoint.IDEQ(id), webhookendpoint.WorkspaceID(ws)).
-		Only(ctx)
+	e, err := scoped.WebhookEndpoint().Get(ctx, id)
 	if ent.IsNotFound(err) {
 		v := siteapi.SiteWebhooksGetNotFound(problem(http.StatusNotFound, "webhook not found"))
 		return &v, nil
@@ -163,7 +160,7 @@ func (h *Handlers) SiteWebhooksGet(ctx context.Context, params siteapi.SiteWebho
 }
 
 func (h *Handlers) SiteWebhooksUpdate(ctx context.Context, req *siteapi.SiteUpdateWebhookEndpointInput, params siteapi.SiteWebhooksUpdateParams) (siteapi.SiteWebhooksUpdateRes, error) {
-	ws, err := h.workspaceID(ctx, params.Slug)
+	scoped, err := h.scopedFor(ctx, params.Slug)
 	if ent.IsNotFound(err) {
 		v := siteapi.SiteWebhooksUpdateNotFound(problem(http.StatusNotFound, "workspace not found"))
 		return &v, nil
@@ -178,7 +175,7 @@ func (h *Handlers) SiteWebhooksUpdate(ctx context.Context, req *siteapi.SiteUpda
 		return &v, nil
 	}
 
-	upd := h.ent.WebhookEndpoint.UpdateOneID(id).Where(webhookendpoint.WorkspaceID(ws))
+	upd := scoped.WebhookEndpoint().UpdateOneID(id)
 	if v, ok := req.URL.Get(); ok {
 		if !service.ValidWebhookURL(v) {
 			r := siteapi.SiteWebhooksUpdateUnprocessableEntity(problemWithErrors(http.StatusUnprocessableEntity, i18n.T("errors.url_invalid", nil), map[string][]string{
@@ -210,7 +207,7 @@ func (h *Handlers) SiteWebhooksUpdate(ctx context.Context, req *siteapi.SiteUpda
 }
 
 func (h *Handlers) SiteWebhooksDelete(ctx context.Context, params siteapi.SiteWebhooksDeleteParams) (siteapi.SiteWebhooksDeleteRes, error) {
-	ws, err := h.workspaceID(ctx, params.Slug)
+	scoped, err := h.scopedFor(ctx, params.Slug)
 	if ent.IsNotFound(err) {
 		v := siteapi.SiteWebhooksDeleteNotFound(problem(http.StatusNotFound, "workspace not found"))
 		return &v, nil
@@ -224,7 +221,7 @@ func (h *Handlers) SiteWebhooksDelete(ctx context.Context, params siteapi.SiteWe
 		v := siteapi.SiteWebhooksDeleteBadRequest(problem(http.StatusBadRequest, "invalid id"))
 		return &v, nil
 	}
-	err = h.ent.WebhookEndpoint.DeleteOneID(id).Where(webhookendpoint.WorkspaceID(ws)).Exec(ctx)
+	err = scoped.WebhookEndpoint().DeleteOneID(id).Exec(ctx)
 	if ent.IsNotFound(err) {
 		v := siteapi.SiteWebhooksDeleteNotFound(problem(http.StatusNotFound, "webhook not found"))
 		return &v, nil

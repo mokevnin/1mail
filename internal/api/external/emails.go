@@ -11,7 +11,6 @@ import (
 	"github.com/oklog/ulid/v2"
 
 	"github.com/mokevnin/1mail/ent"
-	"github.com/mokevnin/1mail/ent/emailtemplate"
 	"github.com/mokevnin/1mail/ent/outboundmessage"
 	externalapi "github.com/mokevnin/1mail/gen/external"
 	"github.com/mokevnin/1mail/internal/api/auth"
@@ -52,9 +51,7 @@ func (h *Handlers) EmailsSend(ctx context.Context, req *externalapi.SendTransact
 		return &res, nil
 	}
 	// Workspace-scoped: another workspace's template id must 404, never send.
-	tmpl, err := h.ent.EmailTemplate.Query().
-		Where(emailtemplate.IDEQ(templateID), emailtemplate.WorkspaceID(ws)).
-		Only(ctx)
+	tmpl, err := auth.TokenScoped(ctx).EmailTemplate().Get(ctx, templateID)
 	if ent.IsNotFound(err) {
 		res := externalapi.EmailsSendNotFound(problem(http.StatusNotFound, "template not found"))
 		return &res, nil
