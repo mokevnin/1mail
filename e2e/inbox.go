@@ -65,23 +65,15 @@ func (in *Inbox) RequireNone(m Match, window ...time.Duration) {
 	if len(window) > 0 {
 		w = window[0]
 	}
-	deadline := time.NewTimer(w)
-	defer deadline.Stop()
-	tick := time.NewTicker(in.mp.poll)
-	defer tick.Stop()
-	for {
-		// A failing lookup fails the test: an unreachable Mailpit must not read as absence.
+	// A failing lookup fails the test: an unreachable Mailpit must not read as absence.
+	require.Never(in.t, func() bool {
 		found, err := in.seen(m)
-		require.NoError(in.t, err, "could not check the inbox for absence of %q for %s", m.Subject, m.To)
-		require.False(in.t, found, "unexpected email %q for %s", m.Subject, m.To)
-		select {
-		case <-deadline.C:
-			return
-		case <-in.t.Context().Done():
-			return
-		case <-tick.C:
+		if err != nil {
+			in.t.Errorf("could not check the inbox for absence of %q for %s: %v", m.Subject, m.To, err)
+			return true
 		}
-	}
+		return found
+	}, w, in.mp.poll, "the inbox must stay free of %q for %s", m.Subject, m.To)
 }
 
 // wait is Wait with an explicit timeout, returning the diagnostic instead of failing.
