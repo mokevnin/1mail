@@ -45,34 +45,46 @@ func NewRouter() (*message.Router, error) {
 	return router, nil
 }
 
+// Consumer groups of the domain-events outbox. Each registered subscriber owns
+// one group (its own offset cursor), and the outbox prune reads this registry to
+// know whose cursors bound what it may delete, so a new subscriber is added here
+// and nowhere else.
+const (
+	GroupPersist     = "persist"
+	GroupAutomations = "automations"
+	GroupWebhooks    = "webhooks"
+	GroupSuppression = "suppression"
+)
+
+// ConsumerGroups lists every consumer group registered in code, in registration
+// order. RegisterSubscribers wires exactly these groups.
+func ConsumerGroups() []string {
+	return []string{GroupPersist, GroupAutomations, GroupWebhooks, GroupSuppression}
+}
+
 // RegisterSubscribers wires the domain-event consumers onto the shared watermill
-// router. Each consumer gets its OWN subscriber with a distinct consumer group,
-// so every subscriber receives every event (fan-out) rather than competing for
-// messages. Add new subscribers here without touching producers.
+// router. Each consumer gets its OWN subscriber with a distinct consumer group
+// (see ConsumerGroups), so every subscriber receives every event (fan-out) rather
+// than competing for messages. Add new subscribers to the table below and to
+// ConsumerGroups without touching producers.
 func RegisterSubscribers(router *message.Router, db *sql.DB, client *ent.Client, enroller Enroller, dispatcher WebhookDispatcher) error {
-	persistSub, err := NewSubscriber(db, "persist")
-	if err != nil {
-		return fmt.Errorf("persist subscriber: %w", err)
+	handlers := map[string]struct {
+		name    string
+		handler message.NoPublishHandlerFunc
+	}{
+		GroupPersist:     {"persist_event", persistConsumer(client)},
+		GroupAutomations: {"enroll_automations", automationsConsumer(enroller)},
+		GroupWebhooks:    {"dispatch_webhooks", webhooksConsumer(client, dispatcher)},
+		GroupSuppression: {"update_suppression", suppressionConsumer(client)},
 	}
-	router.AddConsumerHandler("persist_event", TopicDomainEvents, persistSub, persistConsumer(client))
-
-	automationsSub, err := NewSubscriber(db, "automations")
-	if err != nil {
-		return fmt.Errorf("automations subscriber: %w", err)
+	for _, group := range ConsumerGroups() {
+		h := handlers[group]
+		sub, err := NewSubscriber(db, group)
+		if err != nil {
+			return fmt.Errorf("%s subscriber: %w", group, err)
+		}
+		router.AddConsumerHandler(h.name, TopicDomainEvents, sub, h.handler)
 	}
-	router.AddConsumerHandler("enroll_automations", TopicDomainEvents, automationsSub, automationsConsumer(enroller))
-
-	webhooksSub, err := NewSubscriber(db, "webhooks")
-	if err != nil {
-		return fmt.Errorf("webhooks subscriber: %w", err)
-	}
-	router.AddConsumerHandler("dispatch_webhooks", TopicDomainEvents, webhooksSub, webhooksConsumer(client, dispatcher))
-
-	suppressionSub, err := NewSubscriber(db, "suppression")
-	if err != nil {
-		return fmt.Errorf("suppression subscriber: %w", err)
-	}
-	router.AddConsumerHandler("update_suppression", TopicDomainEvents, suppressionSub, suppressionConsumer(client))
 	return nil
 }
 

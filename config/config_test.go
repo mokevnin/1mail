@@ -1,6 +1,9 @@
 package config
 
-import "testing"
+import (
+	"testing"
+	"time"
+)
 
 func TestConfigValidate_JWTSecret(t *testing.T) {
 	cases := []struct {
@@ -38,5 +41,30 @@ func TestConfigLoadBodyLimitDefaults(t *testing.T) {
 	}
 	if cfg.BodyLimits != (BodyLimits{Default: 1 << 20, Collect: 64 << 10}) {
 		t.Fatalf("defaults = %+v", cfg.BodyLimits)
+	}
+}
+
+func TestConfigLoadOutboxFloor(t *testing.T) {
+	t.Setenv("DATABASE_URL", "postgres://x")
+	cfg, err := Load("test")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if cfg.OutboxFloor != 7*24*time.Hour {
+		t.Fatalf("default OutboxFloor = %v, want 7 days", cfg.OutboxFloor)
+	}
+
+	t.Setenv("OUTBOX_RETENTION_FLOOR_DAYS", "14")
+	cfg, err = Load("test")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if cfg.OutboxFloor != 14*24*time.Hour {
+		t.Fatalf("OutboxFloor = %v, want 14 days", cfg.OutboxFloor)
+	}
+
+	t.Setenv("OUTBOX_RETENTION_FLOOR_DAYS", "-1")
+	if _, err := Load("test"); err == nil {
+		t.Fatal("a negative floor must be rejected")
 	}
 }

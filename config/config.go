@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"path/filepath"
 	"runtime"
+	"time"
 
 	"github.com/mokevnin/1mail/internal/i18n"
 	"github.com/spf13/viper"
@@ -33,6 +34,9 @@ type Config struct {
 	EncryptionKey  string
 	AutoMigrate    bool
 	BodyLimits     BodyLimits
+	// OutboxFloor is the minimum age of a domain-event outbox row before the
+	// prune job may delete it (OUTBOX_RETENTION_FLOOR_DAYS, default 7; ADR 0019).
+	OutboxFloor time.Duration
 	// IsDev is true for non-production envs (development/test). Used to relax
 	// production-only behaviour locally — e.g. the sending-domain DKIM re-check
 	// trusts seeded domains instead of hitting real DNS (ADR 0010).
@@ -80,6 +84,7 @@ func Load(envName string) (*Config, error) {
 	v.SetDefault("APP_LOCALE", "en")
 	v.SetDefault("MAX_BODY_BYTES", 1<<20)
 	v.SetDefault("COLLECT_MAX_BODY_BYTES", 64<<10)
+	v.SetDefault("OUTBOX_RETENTION_FLOOR_DAYS", 7)
 	// Human-readable logs in dev, structured JSON everywhere else.
 	if isDevEnv(envName) {
 		v.SetDefault("LOG_FORMAT", "text")
@@ -124,10 +129,11 @@ func Load(envName string) (*Config, error) {
 			Default: v.GetInt64("MAX_BODY_BYTES"),
 			Collect: v.GetInt64("COLLECT_MAX_BODY_BYTES"),
 		},
-		IsDev:     isDevEnv(envName),
-		Locale:    i18n.Normalize(v.GetString("APP_LOCALE")),
-		LogLevel:  v.GetString("LOG_LEVEL"),
-		LogFormat: v.GetString("LOG_FORMAT"),
+		OutboxFloor: time.Duration(v.GetInt("OUTBOX_RETENTION_FLOOR_DAYS")) * 24 * time.Hour,
+		IsDev:       isDevEnv(envName),
+		Locale:      i18n.Normalize(v.GetString("APP_LOCALE")),
+		LogLevel:    v.GetString("LOG_LEVEL"),
+		LogFormat:   v.GetString("LOG_FORMAT"),
 
 		OtelServiceName: v.GetString("OTEL_SERVICE_NAME"),
 
@@ -156,6 +162,9 @@ func (c *Config) validate(envName string) error {
 	}
 	if c.BodyLimits.Collect <= 0 {
 		return fmt.Errorf("COLLECT_MAX_BODY_BYTES must be positive")
+	}
+	if c.OutboxFloor < 0 {
+		return fmt.Errorf("OUTBOX_RETENTION_FLOOR_DAYS must not be negative")
 	}
 	return nil
 }
