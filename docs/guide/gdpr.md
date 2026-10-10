@@ -29,29 +29,47 @@ undo it.
 
 - **Site UI:** open the contact and choose **Erase**, then confirm. Only Workspace owners and admins
   see the action; anyone else is refused.
-- **External API:** `DELETE /api/contacts/{id}` with a token that has the `contacts:erase` scope.
-  A token with only `contacts:write` is refused. MCP inherits the scope.
+- **External API, by id:** `DELETE /api/contacts/{id}` with a token that has the `contacts:erase`
+  scope. A token with only `contacts:write` is refused. MCP inherits the scope (`contacts_delete`).
+- **External API, by email or visitor id:** `DELETE /api/contacts/erase?email=<address>` or
+  `DELETE /api/contacts/erase?visitorId=<id>` (exactly one of the two), under the same
+  `contacts:erase` scope (MCP: `contacts_erase_by`). By email it erases the contact with that
+  address and also anonymizes the delivery records of an address that never had a contact (for
+  example a one-off transactional send). By `visitorId` it erases the contact the visitor is bound
+  to, or, for an anonymous visitor that never identified, the visitor and its events. An
+  identifier that matches nothing in the Workspace is reported as not found.
 
-Erasure is synchronous and atomic: it either completes or changes nothing, and it returns an empty
-success. A contact in another Workspace is reported as not found.
+The Site UI erases a contact by id only. Erasure is synchronous and atomic: it either completes or
+changes nothing, and it returns an empty success. A contact in another Workspace is reported as not
+found.
 
-Today you identify the contact by its id. Erasing by email address, and erasing an anonymous
-visitor that never became a contact (by `visitor_id`), are specified in ADR 0021 and tracked in
-[#114](https://github.com/mokevnin/1mail/issues/114); they are not available until that ships. To
-erase by email now, look the contact up first (`GET /api/contacts`) and erase it by id.
+### Work already under way
+
+Erasure also stops what was about to happen to the person, in the same transaction:
+
+- The contact's automation runs are deleted, so no further step is sent.
+- The contact's recipients in Broadcasts that have not been sent are removed, and the Broadcast's
+  recipient total shrinks with them. A Broadcast left with nothing pending settles as sent.
+- Queued background work that refers to the contact or its address is deleted from the internal
+  queues: pending domain events (the outbox), queued automation work, queued Broadcast sends and
+  queued webhook deliveries whose payload names the contact or its address. A job that is already
+  running is not interrupted.
+- A send that was queued just before the request is dropped at the last check before delivery,
+  because the contact no longer exists. A message already handed to the email provider is not
+  recalled.
 
 ### What Erasure removes, anonymizes and keeps
 
-| Data                                                     | Result                                                            |
-| -------------------------------------------------------- | ----------------------------------------------------------------- |
-| The contact, its tags and custom field values            | Deleted                                                           |
-| Visitors (anonymous devices) bound to the contact        | Deleted                                                           |
-| Events you tracked for the contact                       | Deleted                                                           |
-| `marketing.confirmed` events and the confirmation record | Deleted (a new confirmation is needed if the person returns)      |
-| Automation runs                                          | Deleted                                                           |
-| System events: `email.*` and `contact.created`           | Kept as anonymous rows: identity and free-form properties cleared |
-| Outbound messages and broadcast recipients               | Kept as anonymous rows: address and contact reference cleared     |
-| Unsubscribes and suppressions                            | Kept with the plain address, contact reference cleared            |
+| Data                                                     | Result                                                                                             |
+| -------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| The contact, its tags and custom field values            | Deleted                                                                                            |
+| Visitors (anonymous devices) bound to the contact        | Deleted                                                                                            |
+| Events you tracked for the contact                       | Deleted                                                                                            |
+| `marketing.confirmed` events and the confirmation record | Deleted (a new confirmation is needed if the person returns)                                       |
+| Automation runs                                          | Deleted                                                                                            |
+| System events: `email.*` and `contact.created`           | Kept as anonymous rows: identity cleared, properties reduced to the sending domain and bounce kind |
+| Outbound messages and broadcast recipients               | Kept as anonymous rows: address and contact reference cleared                                      |
+| Unsubscribes and suppressions                            | Kept with the plain address, contact reference cleared                                             |
 
 The anonymous rows keep their status and timing, so your complaint rate, bounce rate and billable
 usage do not change after a request. Unsubscribes and suppressions are the minimum kept to keep
@@ -59,8 +77,7 @@ honoring the person's refusal: if the same person is imported or identified agai
 clean contact, but mail to an address they opted out of is still refused. Erasure does not block
 re-creating a contact.
 
-A message that has already been handed to the email provider is not recalled. Application logs
-carry no email addresses or phone numbers, so there is nothing to scrub there.
+Application logs carry no email addresses or phone numbers, so there is nothing to scrub there.
 
 ## Downstream cleanup: the `contact.erased` webhook
 
