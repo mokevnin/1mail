@@ -166,6 +166,7 @@ interface Broadcasts
     | BroadcastResource
     | BadRequestProblem
     | UnauthorizedProblem
+    | TooManyRequestsProblem
     | NotFoundProblem
     | UnprocessableEntityProblem;
 
@@ -179,6 +180,7 @@ interface Broadcasts
     | NoContentResponse
     | BadRequestProblem
     | UnauthorizedProblem
+    | TooManyRequestsProblem
     | NotFoundProblem
     | UnprocessableEntityProblem;
 
@@ -192,6 +194,7 @@ interface Broadcasts
     | BroadcastResource
     | BadRequestProblem
     | UnauthorizedProblem
+    | TooManyRequestsProblem
     | NotFoundProblem
     | UnprocessableEntityProblem;
 
@@ -202,6 +205,7 @@ interface Broadcasts
     | BroadcastResource
     | BadRequestProblem
     | UnauthorizedProblem
+    | TooManyRequestsProblem
     | NotFoundProblem
     | UnprocessableEntityProblem;
 
@@ -213,5 +217,6 @@ interface Broadcasts
     | BroadcastReport
     | BadRequestProblem
     | UnauthorizedProblem
+    | TooManyRequestsProblem
     | NotFoundProblem;
 }

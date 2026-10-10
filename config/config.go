@@ -25,6 +25,13 @@ type RateLimits struct {
 	// Human caps the public human-facing endpoints (signup, invitation accept,
 	// consent confirm) per client IP and endpoint.
 	Human int
+	// APIBurst caps /api and /mcp per Workspace per second (one shared budget).
+	APIBurst int
+	// APIPerMinute caps /api and /mcp per Workspace per minute, stacked on APIBurst.
+	APIPerMinute int
+	// FailedAuth caps failed credential checks (bearer token, collect key) per
+	// client IP per minute; successful ones are not counted.
+	FailedAuth int
 	// Tracking caps how many opens and clicks one client IP may have recorded per
 	// minute. It never refuses a recipient: over it the event is not recorded.
 	Tracking int
@@ -36,7 +43,7 @@ type RateLimits struct {
 }
 
 // DefaultRateLimits are the production budgets.
-var DefaultRateLimits = RateLimits{Human: 60, Tracking: 600, LoginFailures: 5, LoginIP: 20}
+var DefaultRateLimits = RateLimits{Human: 60, APIBurst: 20, APIPerMinute: 600, FailedAuth: 30, Tracking: 600, LoginFailures: 5, LoginIP: 20}
 
 type Config struct {
 	DatabaseURL    string
@@ -108,6 +115,9 @@ func Load(envName string) (*Config, error) {
 	v.SetDefault("MAX_BODY_BYTES", 1<<20)
 	v.SetDefault("COLLECT_MAX_BODY_BYTES", 64<<10)
 	v.SetDefault("RATE_LIMIT_HUMAN_PER_MINUTE", DefaultRateLimits.Human)
+	v.SetDefault("RATE_LIMIT_API_BURST_PER_SECOND", DefaultRateLimits.APIBurst)
+	v.SetDefault("RATE_LIMIT_API_PER_MINUTE", DefaultRateLimits.APIPerMinute)
+	v.SetDefault("RATE_LIMIT_FAILED_AUTH_PER_MINUTE", DefaultRateLimits.FailedAuth)
 	v.SetDefault("RATE_LIMIT_TRACKING_PER_MINUTE", DefaultRateLimits.Tracking)
 	v.SetDefault("RATE_LIMIT_LOGIN_FAILURES", DefaultRateLimits.LoginFailures)
 	v.SetDefault("RATE_LIMIT_LOGIN_IP_PER_MINUTE", DefaultRateLimits.LoginIP)
@@ -157,6 +167,9 @@ func Load(envName string) (*Config, error) {
 		},
 		RateLimits: RateLimits{
 			Human:         v.GetInt("RATE_LIMIT_HUMAN_PER_MINUTE"),
+			APIBurst:      v.GetInt("RATE_LIMIT_API_BURST_PER_SECOND"),
+			APIPerMinute:  v.GetInt("RATE_LIMIT_API_PER_MINUTE"),
+			FailedAuth:    v.GetInt("RATE_LIMIT_FAILED_AUTH_PER_MINUTE"),
 			Tracking:      v.GetInt("RATE_LIMIT_TRACKING_PER_MINUTE"),
 			LoginFailures: v.GetInt("RATE_LIMIT_LOGIN_FAILURES"),
 			LoginIP:       v.GetInt("RATE_LIMIT_LOGIN_IP_PER_MINUTE"),
@@ -195,8 +208,15 @@ func (c *Config) validate(envName string) error {
 	if c.BodyLimits.Collect <= 0 {
 		return fmt.Errorf("COLLECT_MAX_BODY_BYTES must be positive")
 	}
-	if c.RateLimits.Human < 0 {
-		return fmt.Errorf("RATE_LIMIT_HUMAN_PER_MINUTE must not be negative (0 disables)")
+	for name, limit := range map[string]int{
+		"RATE_LIMIT_HUMAN_PER_MINUTE":       c.RateLimits.Human,
+		"RATE_LIMIT_API_BURST_PER_SECOND":   c.RateLimits.APIBurst,
+		"RATE_LIMIT_API_PER_MINUTE":         c.RateLimits.APIPerMinute,
+		"RATE_LIMIT_FAILED_AUTH_PER_MINUTE": c.RateLimits.FailedAuth,
+	} {
+		if limit < 0 {
+			return fmt.Errorf("%s must not be negative (0 disables)", name)
+		}
 	}
 	if c.RateLimits.Tracking < 0 {
 		return fmt.Errorf("RATE_LIMIT_TRACKING_PER_MINUTE must not be negative (0 disables)")

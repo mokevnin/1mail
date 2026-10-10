@@ -32,6 +32,7 @@ namespace Tags {
     | Page<TagResource>
     | BadRequestProblem
     | UnauthorizedProblem
+    | TooManyRequestsProblem
     | UnprocessableEntityProblem;
 
   /** List the tags a contact has */
@@ -41,6 +42,7 @@ namespace Tags {
     | Page<TagResource>
     | BadRequestProblem
     | UnauthorizedProblem
+    | TooManyRequestsProblem
     | NotFoundProblem
     | UnprocessableEntityProblem;
 
@@ -51,6 +53,7 @@ namespace Tags {
     | TagResource
     | BadRequestProblem
     | UnauthorizedProblem
+    | TooManyRequestsProblem
     | NotFoundProblem
     | UnprocessableEntityProblem;
 
@@ -61,5 +64,6 @@ namespace Tags {
     | NoContentResponse
     | BadRequestProblem
     | UnauthorizedProblem
+    | TooManyRequestsProblem
     | NotFoundProblem;
 }

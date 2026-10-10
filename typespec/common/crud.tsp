@@ -101,6 +101,7 @@ interface ExternalCrud<
     | Page<Resource>
     | BadRequestProblem
     | UnauthorizedProblem
+    | TooManyRequestsProblem
     | UnprocessableEntityProblem;
 
   /** Create a resource */
@@ -113,6 +114,7 @@ interface ExternalCrud<
         @body body: Resource;
       }
     | UnauthorizedProblem
+    | TooManyRequestsProblem
     | WriteConflict
     | UnprocessableEntityProblem;
 
@@ -124,6 +126,7 @@ interface ExternalCrud<
     | Resource
     | BadRequestProblem
     | UnauthorizedProblem
+    | TooManyRequestsProblem
     | NotFoundProblem;
 
   /** Update a resource */
@@ -134,6 +137,7 @@ interface ExternalCrud<
     | Resource
     | BadRequestProblem
     | UnauthorizedProblem
+    | TooManyRequestsProblem
     | NotFoundProblem
     | WriteConflict
     | UnprocessableEntityProblem;
@@ -146,6 +150,7 @@ interface ExternalCrud<
     | NoContentResponse
     | BadRequestProblem
     | UnauthorizedProblem
+    | TooManyRequestsProblem
     | NotFoundProblem
     | UnprocessableEntityProblem;
 }

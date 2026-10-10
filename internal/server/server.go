@@ -158,6 +158,13 @@ func NewExternalAPI(client *ent.Client, deps apiexternal.Deps) (http.Handler, er
 // A reference id from another Workspace (the scoped client's ErrNotInWorkspace,
 // ADR 0017) is a client error, so it is a 422 and never a 500.
 func problemErrorHandler(_ context.Context, w http.ResponseWriter, _ *http.Request, err error) {
+	// A rate limit rejection already set its headers on the shared writer and was
+	// counted and logged where it was decided (ratelimit.LimitedError).
+	var limited *ratelimit.LimitedError
+	if errors.As(err, &limited) {
+		ratelimit.WriteProblem(w)
+		return
+	}
 	code := http.StatusInternalServerError
 	var oe ogenerrors.Error
 	var tooBig *http.MaxBytesError

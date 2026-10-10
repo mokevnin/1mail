@@ -6,7 +6,11 @@
 //     rejection, answers the 429 itself (headers, problem body, metric, log);
 //   - Rejected is the policy-named metric + warn log for callers that render the
 //     429 their own way (e.g. a typed error from an ogen security handler);
-//   - WriteProblem renders the 429 body.
+//   - WriteProblem renders the 429 body;
+//   - Exchange is the request's writer and request, carried in the context by
+//     Middleware, for code that only receives a ctx (the ogen security handlers):
+//     it charges the Workspace budget and the failed-authentication limit and
+//     reports a *LimitedError that the error handler renders with WriteProblem.
 package ratelimit
 
 import (
@@ -16,6 +20,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"sync/atomic"
 	"time"
 
 	"github.com/go-chi/httprate"
@@ -30,7 +35,10 @@ import (
 // Policy names. They are the `policy` label of ratelimit_rejected_total, so they
 // must stay a small bounded set.
 const (
-	PolicyHuman = "human"
+	PolicyHuman      = "human"
+	PolicyAPIBurst   = "api-burst"
+	PolicyAPI        = "api"
+	PolicyFailedAuth = "failed-auth"
 	// PolicyTracking is the recording guard of opens and clicks. It never refuses.
 	PolicyTracking = "tracking"
 	// PolicyLoginAccount is the per-account login delay, PolicyLoginIP the per-IP cap
@@ -39,14 +47,26 @@ const (
 	PolicyLoginIP      = "login-ip"
 )
 
-const window = time.Minute
+const (
+	window      = time.Minute
+	burstWindow = time.Second
+)
 
 // Policy is one named limiter. The zero value and nil allow everything, which is
 // what a disabled (0) limit builds.
 type Policy struct {
-	name string
-	rl   *httprate.RateLimiter
+	name   string
+	limit  int
+	window time.Duration
+	rl     *httprate.RateLimiter
 }
+
+// LimitedError is a rejection by a Policy. The 429 headers are already on the
+// response writer and the rejection is counted and logged; whoever receives it
+// only has to render the body with WriteProblem.
+type LimitedError struct{ Policy string }
+
+func (e *LimitedError) Error() string { return "rate limit exceeded: " + e.Policy }
 
 // NewPolicy builds a limiter of limit requests per window. It returns nil when
 // limit is not positive (disabled).
@@ -54,19 +74,48 @@ func NewPolicy(name string, limit int, window time.Duration) *Policy {
 	if limit <= 0 {
 		return nil
 	}
-	return &Policy{name: name, rl: httprate.NewRateLimiter(limit, window)}
+	return &Policy{name: name, limit: limit, window: window, rl: httprate.NewRateLimiter(limit, window)}
 }
 
 // Allow counts one request against key and reports whether it may proceed. On a
 // rejection it has already answered 429 (X-RateLimit-* and Retry-After headers,
 // problem body), counted and logged it, and the caller must stop.
 func (p *Policy) Allow(w http.ResponseWriter, r *http.Request, key string) bool {
-	if p == nil || !p.rl.OnLimit(w, r, key) {
+	if p.Reject(w, r, key) == nil {
 		return true
 	}
-	Rejected(r.Context(), p.name)
 	WriteProblem(w)
 	return false
+}
+
+// Reject counts one request against key like Allow but leaves the response to the
+// caller: it returns a *LimitedError (headers set, rejection counted and logged)
+// when the budget is spent and nil otherwise. X-RateLimit-* headers are set on w
+// either way, so they reach the successful response too.
+func (p *Policy) Reject(w http.ResponseWriter, r *http.Request, key string) error {
+	if p == nil || !p.rl.OnLimit(w, r, key) {
+		return nil
+	}
+	Rejected(r.Context(), p.name)
+	return &LimitedError{Policy: p.name}
+}
+
+// Blocked reports, without counting, whether key has already spent its budget. It
+// answers like Reject (429 headers, counted, logged), for limits that count only
+// some outcomes (failed authentications) and must refuse before the work is done.
+func (p *Policy) Blocked(w http.ResponseWriter, r *http.Request, key string) error {
+	if p == nil {
+		return nil
+	}
+	ok, rate, err := p.rl.Status(key)
+	if err == nil && ok && rate < float64(p.limit) {
+		return nil
+	}
+	w.Header().Set("X-RateLimit-Limit", strconv.Itoa(p.limit))
+	w.Header().Set("X-RateLimit-Remaining", "0")
+	w.Header().Set("Retry-After", strconv.Itoa(int(p.window.Seconds())))
+	Rejected(r.Context(), p.name)
+	return &LimitedError{Policy: p.name}
 }
 
 // Exceeded counts one request against key and reports whether the budget is spent.
@@ -134,18 +183,83 @@ func Wait(w http.ResponseWriter, r *http.Request, policy string, limit int, wait
 
 // Limiter holds every policy built from the configured limits.
 type Limiter struct {
-	human    *Policy
-	tracking *Policy
-	loginIP  *Policy
+	human      *Policy
+	apiBurst   *Policy
+	api        *Policy
+	failedAuth *Policy
+	tracking   *Policy
+	loginIP    *Policy
 }
 
 // New builds the policies from limits.
 func New(limits config.RateLimits) *Limiter {
 	return &Limiter{
-		human:    NewPolicy(PolicyHuman, limits.Human, window),
-		tracking: NewPolicy(PolicyTracking, limits.Tracking, window),
-		loginIP:  NewPolicy(PolicyLoginIP, limits.LoginIP, window),
+		human:      NewPolicy(PolicyHuman, limits.Human, window),
+		apiBurst:   NewPolicy(PolicyAPIBurst, limits.APIBurst, burstWindow),
+		api:        NewPolicy(PolicyAPI, limits.APIPerMinute, window),
+		failedAuth: NewPolicy(PolicyFailedAuth, limits.FailedAuth, window),
+		tracking:   NewPolicy(PolicyTracking, limits.Tracking, window),
+		loginIP:    NewPolicy(PolicyLoginIP, limits.LoginIP, window),
 	}
+}
+
+// Exchange is one HTTP request's writer and request, carried in the context by
+// Middleware so that code which receives only a ctx (the ogen security handlers,
+// where the Workspace first becomes known) can apply the limiter. Its methods are
+// safe on a nil Exchange (a ctx without Middleware), where they allow everything.
+type Exchange struct {
+	w       http.ResponseWriter
+	r       *http.Request
+	limiter *Limiter
+	charged atomic.Bool
+}
+
+type exchangeKey struct{}
+
+// FromContext returns the request's Exchange, nil outside Middleware.
+func FromContext(ctx context.Context) *Exchange {
+	e, _ := ctx.Value(exchangeKey{}).(*Exchange)
+	return e
+}
+
+// ChargeWorkspace counts the request against the Workspace budget, the burst and
+// steady windows stacked. It charges at most once per HTTP request however many
+// times the request is authenticated (/mcp authenticates its call again when it
+// dispatches in-process to /api), so /api and /mcp draw one budget at one request
+// each. Its X-RateLimit-* headers land on the shared writer and so on the
+// successful response.
+func (e *Exchange) ChargeWorkspace(workspaceID int64) error {
+	if e == nil || !e.charged.CompareAndSwap(false, true) {
+		return nil
+	}
+	key := strconv.FormatInt(workspaceID, 10)
+	if err := e.limiter.apiBurst.Reject(e.w, e.r, key); err != nil {
+		return err
+	}
+	return e.limiter.api.Reject(e.w, e.r, key)
+}
+
+// AuthBlocked refuses before a credential is even checked when the client address
+// has already spent its failed-authentication budget, so guessing cannot continue
+// past the limit.
+func (e *Exchange) AuthBlocked() error {
+	if e == nil {
+		return nil
+	}
+	return e.limiter.failedAuth.Blocked(e.w, e.r, e.ip())
+}
+
+// AuthFailed counts one failed authentication against the client address. Only
+// failures are counted, so legitimate traffic never spends this budget.
+func (e *Exchange) AuthFailed() error {
+	if e == nil {
+		return nil
+	}
+	return e.limiter.failedAuth.Reject(e.w, e.r, e.ip())
+}
+
+func (e *Exchange) ip() string {
+	return httprate.CanonicalizeIP(clientip.FromContext(e.r.Context()))
 }
 
 // RecordsTracking reports whether the engagement of this request may be recorded:
@@ -164,9 +278,11 @@ func (l *Limiter) LoginIP() *Policy { return l.loginIP }
 // Operational endpoints are never limited, whatever policies exist.
 func (l *Limiter) Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := context.WithValue(r.Context(), exchangeKey{}, &Exchange{w: w, r: r, limiter: l})
+		r = r.WithContext(ctx)
 		if !exempt(r.URL.Path) {
 			if route := humanRoute(r); route != "" &&
-				!l.human.Allow(w, r, httprate.CanonicalizeIP(clientip.FromContext(r.Context()))+"|"+route) {
+				!l.human.Allow(w, r, httprate.CanonicalizeIP(clientip.FromContext(ctx))+"|"+route) {
 				return
 			}
 		}
