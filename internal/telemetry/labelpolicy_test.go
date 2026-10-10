@@ -52,7 +52,7 @@ func TestMetricsExpositionCarriesNoTenantLabels(t *testing.T) {
 	})
 
 	srv := telemetry.NewMetricsServer("127.0.0.1:0")
-	require.NoError(t, srv.Listen())
+	require.NoError(t, srv.Listen(t.Context()))
 	go func() { _ = srv.Serve() }()
 	t.Cleanup(func() { _ = srv.Shutdown(context.Background()) })
 
