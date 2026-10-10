@@ -3,6 +3,7 @@ package collect
 import (
 	"context"
 	"encoding/json"
+	"net/http"
 	"time"
 
 	"github.com/go-faster/jx"
@@ -15,10 +16,24 @@ import (
 
 type Handlers struct {
 	bus *events.Bus
+	// eventLimit is the largest accepted event in bytes: the per-event cap inside a
+	// batch, which the body cap alone cannot enforce.
+	eventLimit int64
 }
 
-func NewHandlers(bus *events.Bus) *Handlers {
-	return &Handlers{bus: bus}
+func NewHandlers(bus *events.Bus, eventLimit int64) *Handlers {
+	return &Handlers{bus: bus, eventLimit: eventLimit}
+}
+
+// eventSize approximates an event's payload bytes: its strings and raw property JSON.
+func eventSize(e collectapi.CollectEventInput) int64 {
+	n := len(e.VisitorId) + len(e.Action)
+	if props, ok := e.Properties.Get(); ok {
+		for k, v := range props {
+			n += len(k) + len(v)
+		}
+	}
+	return int64(n)
 }
 
 // rawMap decodes an ogen map[string]jx.Raw into map[string]any using
@@ -40,6 +55,12 @@ func rawMap(m map[string]jx.Raw) map[string]any {
 }
 
 func (h *Handlers) CollectEventsCreate(ctx context.Context, req *collectapi.CollectEventsInput) (collectapi.CollectEventsCreateRes, error) {
+	for _, e := range req.Events {
+		if eventSize(e) > h.eventLimit {
+			// Rendered as 413 by the server's problem error handler.
+			return nil, &http.MaxBytesError{Limit: h.eventLimit}
+		}
+	}
 	evts := lo.Map(req.Events, func(e collectapi.CollectEventInput, _ int) service.CollectEventInput {
 		evt := service.CollectEventInput{
 			VisitorID: e.VisitorId,

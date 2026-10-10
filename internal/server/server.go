@@ -104,7 +104,7 @@ func New(cfg *config.Config, db *sql.DB, client *ent.Client, site apisite.Deps, 
 
 	// Collect API — /collect (x-collect-key via generated SecurityHandler).
 	colSrv, err := collectapi.NewServer(
-		apicollect.NewHandlers(bus),
+		apicollect.NewHandlers(bus, cfg.BodyLimits.CollectEvent),
 		apiauth.NewCollectSecurityHandler(client),
 		collectapi.WithPathPrefix(collectPrefix),
 		collectapi.WithErrorHandler(problemErrorHandler),
@@ -248,14 +248,17 @@ const collectPrefix = "/collect"
 func isCollectPath(path string) bool { return strings.HasPrefix(path, collectPrefix+"/") }
 
 // bodyLimit caps every request body before a handler or the ogen decoder reads it:
-// collect gets its own (smaller) cap, everything else the default. An oversized
+// collect gets its own (smaller) caps (a batch of events, or a single event), everything else the default. An oversized
 // body surfaces as *http.MaxBytesError, which problemErrorHandler renders as 413.
 func bodyLimit(limits config.BodyLimits) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			limit := limits.Default
-			if isCollectPath(r.URL.Path) {
-				limit = limits.Collect
+			switch {
+			case r.URL.Path == collectPrefix+"/events":
+				limit = limits.Collect // a batch
+			case isCollectPath(r.URL.Path):
+				limit = limits.CollectEvent // one event
 			}
 			r.Body = http.MaxBytesReader(w, r.Body, limit)
 			next.ServeHTTP(w, r)

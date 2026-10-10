@@ -97,6 +97,10 @@ type CollectEventsCreateNoContent struct{}
 
 func (*CollectEventsCreateNoContent) collectEventsCreateRes() {}
 
+type CollectEventsCreateRequestEntityTooLarge ProblemDetails
+
+func (*CollectEventsCreateRequestEntityTooLarge) collectEventsCreateRes() {}
+
 type CollectEventsCreateUnauthorized ProblemDetails
 
 func (*CollectEventsCreateUnauthorized) collectEventsCreateRes() {}
@@ -119,6 +123,10 @@ func (s *CollectEventsInput) GetEvents() []CollectEventInput {
 func (s *CollectEventsInput) SetEvents(val []CollectEventInput) {
 	s.Events = val
 }
+
+type CollectIdentifyCreateRequestEntityTooLarge ProblemDetails
+
+func (*CollectIdentifyCreateRequestEntityTooLarge) collectIdentifyCreateRes() {}
 
 type CollectIdentifyCreateUnauthorized ProblemDetails
 
@@ -890,5 +898,67 @@ func (s *ProblemDetailsFields) init() ProblemDetailsFields {
 	}
 	return m
 }
+
+// ProblemDetailsHeaders wraps ProblemDetails with response headers.
+type ProblemDetailsHeaders struct {
+	RetryAfter          int32
+	XRateLimitLimit     int32
+	XRateLimitRemaining int32
+	XRateLimitReset     int64
+	Response            ProblemDetails
+}
+
+// GetRetryAfter returns the value of RetryAfter.
+func (s *ProblemDetailsHeaders) GetRetryAfter() int32 {
+	return s.RetryAfter
+}
+
+// GetXRateLimitLimit returns the value of XRateLimitLimit.
+func (s *ProblemDetailsHeaders) GetXRateLimitLimit() int32 {
+	return s.XRateLimitLimit
+}
+
+// GetXRateLimitRemaining returns the value of XRateLimitRemaining.
+func (s *ProblemDetailsHeaders) GetXRateLimitRemaining() int32 {
+	return s.XRateLimitRemaining
+}
+
+// GetXRateLimitReset returns the value of XRateLimitReset.
+func (s *ProblemDetailsHeaders) GetXRateLimitReset() int64 {
+	return s.XRateLimitReset
+}
+
+// GetResponse returns the value of Response.
+func (s *ProblemDetailsHeaders) GetResponse() ProblemDetails {
+	return s.Response
+}
+
+// SetRetryAfter sets the value of RetryAfter.
+func (s *ProblemDetailsHeaders) SetRetryAfter(val int32) {
+	s.RetryAfter = val
+}
+
+// SetXRateLimitLimit sets the value of XRateLimitLimit.
+func (s *ProblemDetailsHeaders) SetXRateLimitLimit(val int32) {
+	s.XRateLimitLimit = val
+}
+
+// SetXRateLimitRemaining sets the value of XRateLimitRemaining.
+func (s *ProblemDetailsHeaders) SetXRateLimitRemaining(val int32) {
+	s.XRateLimitRemaining = val
+}
+
+// SetXRateLimitReset sets the value of XRateLimitReset.
+func (s *ProblemDetailsHeaders) SetXRateLimitReset(val int64) {
+	s.XRateLimitReset = val
+}
+
+// SetResponse sets the value of Response.
+func (s *ProblemDetailsHeaders) SetResponse(val ProblemDetails) {
+	s.Response = val
+}
+
+func (*ProblemDetailsHeaders) collectEventsCreateRes()   {}
+func (*ProblemDetailsHeaders) collectIdentifyCreateRes() {}
 
 type Timestamp time.Time

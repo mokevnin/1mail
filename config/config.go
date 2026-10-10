@@ -11,12 +11,14 @@ import (
 	"github.com/spf13/viper"
 )
 
-// BodyLimits are the request body caps in bytes. Collect is the public tracking
-// ingestion (its key ships in customer pages, so anyone can post to it); Default
-// applies to every other surface.
+// BodyLimits are the request body caps in bytes. /collect is the public tracking
+// ingestion (its key ships in customer pages, so anyone can post to it): Collect
+// caps a batch (POST /collect/events), CollectEvent one event (an identify body, or
+// each event inside a batch). Default applies to every other surface.
 type BodyLimits struct {
-	Default int64
-	Collect int64
+	Default      int64
+	Collect      int64
+	CollectEvent int64
 }
 
 // RateLimits are the per-policy request budgets per minute (ADR 0018). Every limit
@@ -40,6 +42,11 @@ type RateLimits struct {
 	LoginFailures int
 	// LoginIP caps login requests per client IP per minute.
 	LoginIP int
+	// Collect caps /collect per Workspace per minute (a budget of its own, apart
+	// from /api and /mcp).
+	Collect int
+	// CollectIP caps /collect per client IP per minute.
+	CollectIP int
 	// ForgotAddress is how many password-reset mails one address may be sent per
 	// hour. Over it the request is still answered 202 and nothing is sent.
 	ForgotAddress int
@@ -48,7 +55,7 @@ type RateLimits struct {
 }
 
 // DefaultRateLimits are the production budgets.
-var DefaultRateLimits = RateLimits{Human: 60, APIBurst: 20, APIPerMinute: 600, FailedAuth: 30, Tracking: 600, LoginFailures: 5, LoginIP: 20, ForgotAddress: 3, ForgotIP: 10}
+var DefaultRateLimits = RateLimits{Human: 60, APIBurst: 20, APIPerMinute: 600, FailedAuth: 30, Tracking: 600, LoginFailures: 5, LoginIP: 20, Collect: 6000, CollectIP: 300, ForgotAddress: 3, ForgotIP: 10}
 
 type Config struct {
 	DatabaseURL    string
@@ -118,7 +125,8 @@ func Load(envName string) (*Config, error) {
 	v.SetDefault("OTEL_SERVICE_NAME", "1mail")
 	v.SetDefault("APP_LOCALE", "en")
 	v.SetDefault("MAX_BODY_BYTES", 1<<20)
-	v.SetDefault("COLLECT_MAX_BODY_BYTES", 64<<10)
+	v.SetDefault("COLLECT_MAX_BODY_BYTES", 500<<10)
+	v.SetDefault("COLLECT_MAX_EVENT_BYTES", 32<<10)
 	v.SetDefault("RATE_LIMIT_HUMAN_PER_MINUTE", DefaultRateLimits.Human)
 	v.SetDefault("RATE_LIMIT_API_BURST_PER_SECOND", DefaultRateLimits.APIBurst)
 	v.SetDefault("RATE_LIMIT_API_PER_MINUTE", DefaultRateLimits.APIPerMinute)
@@ -126,6 +134,8 @@ func Load(envName string) (*Config, error) {
 	v.SetDefault("RATE_LIMIT_TRACKING_PER_MINUTE", DefaultRateLimits.Tracking)
 	v.SetDefault("RATE_LIMIT_LOGIN_FAILURES", DefaultRateLimits.LoginFailures)
 	v.SetDefault("RATE_LIMIT_LOGIN_IP_PER_MINUTE", DefaultRateLimits.LoginIP)
+	v.SetDefault("RATE_LIMIT_COLLECT_PER_MINUTE", DefaultRateLimits.Collect)
+	v.SetDefault("RATE_LIMIT_COLLECT_IP_PER_MINUTE", DefaultRateLimits.CollectIP)
 	v.SetDefault("RATE_LIMIT_FORGOT_PASSWORD_PER_ADDRESS_PER_HOUR", DefaultRateLimits.ForgotAddress)
 	v.SetDefault("RATE_LIMIT_FORGOT_PASSWORD_IP_PER_HOUR", DefaultRateLimits.ForgotIP)
 	// Human-readable logs in dev, structured JSON everywhere else.
@@ -169,8 +179,9 @@ func Load(envName string) (*Config, error) {
 		AutoMigrate:    v.GetBool("AUTO_MIGRATE"),
 
 		BodyLimits: BodyLimits{
-			Default: v.GetInt64("MAX_BODY_BYTES"),
-			Collect: v.GetInt64("COLLECT_MAX_BODY_BYTES"),
+			Default:      v.GetInt64("MAX_BODY_BYTES"),
+			Collect:      v.GetInt64("COLLECT_MAX_BODY_BYTES"),
+			CollectEvent: v.GetInt64("COLLECT_MAX_EVENT_BYTES"),
 		},
 		RateLimits: RateLimits{
 			Human:         v.GetInt("RATE_LIMIT_HUMAN_PER_MINUTE"),
@@ -180,6 +191,8 @@ func Load(envName string) (*Config, error) {
 			Tracking:      v.GetInt("RATE_LIMIT_TRACKING_PER_MINUTE"),
 			LoginFailures: v.GetInt("RATE_LIMIT_LOGIN_FAILURES"),
 			LoginIP:       v.GetInt("RATE_LIMIT_LOGIN_IP_PER_MINUTE"),
+			Collect:       v.GetInt("RATE_LIMIT_COLLECT_PER_MINUTE"),
+			CollectIP:     v.GetInt("RATE_LIMIT_COLLECT_IP_PER_MINUTE"),
 			ForgotAddress: v.GetInt("RATE_LIMIT_FORGOT_PASSWORD_PER_ADDRESS_PER_HOUR"),
 			ForgotIP:      v.GetInt("RATE_LIMIT_FORGOT_PASSWORD_IP_PER_HOUR"),
 		},
@@ -217,6 +230,9 @@ func (c *Config) validate(envName string) error {
 	if c.BodyLimits.Collect <= 0 {
 		return fmt.Errorf("COLLECT_MAX_BODY_BYTES must be positive")
 	}
+	if c.BodyLimits.CollectEvent <= 0 {
+		return fmt.Errorf("COLLECT_MAX_EVENT_BYTES must be positive")
+	}
 	for name, limit := range map[string]int{
 		"RATE_LIMIT_HUMAN_PER_MINUTE":       c.RateLimits.Human,
 		"RATE_LIMIT_API_BURST_PER_SECOND":   c.RateLimits.APIBurst,
@@ -235,6 +251,12 @@ func (c *Config) validate(envName string) error {
 	}
 	if c.RateLimits.LoginIP < 0 {
 		return fmt.Errorf("RATE_LIMIT_LOGIN_IP_PER_MINUTE must not be negative (0 disables)")
+	}
+	if c.RateLimits.Collect < 0 {
+		return fmt.Errorf("RATE_LIMIT_COLLECT_PER_MINUTE must not be negative (0 disables)")
+	}
+	if c.RateLimits.CollectIP < 0 {
+		return fmt.Errorf("RATE_LIMIT_COLLECT_IP_PER_MINUTE must not be negative (0 disables)")
 	}
 	if c.RateLimits.ForgotAddress < 0 {
 		return fmt.Errorf("RATE_LIMIT_FORGOT_PASSWORD_PER_ADDRESS_PER_HOUR must not be negative (0 disables)")
