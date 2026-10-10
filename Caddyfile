@@ -1,19 +1,28 @@
-1mail.localhost {
+# Dev edge. Every address, host and port comes from the mise environment (.mise.toml):
+# the primary checkout serves 1mail.localhost on :443, a linked worktree serves its own
+# <dir>.1mail.localhost on its own port, so several stacks run side by side.
+{
+	# The default admin endpoint (:2019) and the :80 redirect listener are single-instance.
+	admin off
+	auto_https disable_redirects
+}
+
+{$APP_HOST}:{$CADDY_PORT} {
 	tls internal
 
 	# API → Go backend
 	@api path /site* /collect* /auth* /avatar* /api* /mcp* /.well-known/* /oauth/authorize /oauth/token /oauth/register
-	reverse_proxy @api localhost:3300
+	reverse_proxy @api localhost:{$BACKEND_PORT}
 
 	# Everything else → Vite dev server (includes HMR websocket upgrade)
-	reverse_proxy localhost:5173
+	reverse_proxy localhost:{$FRONTEND_PORT}
 }
 
-api.1mail.localhost {
+{$API_HOST}:{$CADDY_PORT} {
 	tls internal
 
 	# Subdomain root maps to the binary's /api path prefix (RudderStack-style edge).
 	# The Go binary stays path-based (/api); the public subdomain lives only here.
 	rewrite * /api{uri}
-	reverse_proxy localhost:3300
+	reverse_proxy localhost:{$BACKEND_PORT}
 }

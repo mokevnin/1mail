@@ -41,18 +41,25 @@ experimental = true
 # gitignored .env (read by the app) or .mise.local.toml (read by mise).
 [env]
 APP_ENV = "development"
-APP_URL = "https://1mail.localhost"
+# The primary checkout is https://1mail.localhost on :443. A linked worktree gets its own
+# origin, https://<dir-name>.1mail.localhost:<caddy port>: browser cookies are shared across
+# ports of one host, so a per-worktree host keeps the session cookies apart.
+APP_HOST = "{% if env.CADDY_PORT == '443' %}1mail.localhost{% else %}{{ config_root | basename | lower | replace(from='_', to='-') }}.1mail.localhost{% endif %}"
+API_HOST = "api.{{ env.APP_HOST }}"
+APP_URL = "https://{{ env.APP_HOST }}{% if env.CADDY_PORT != '443' %}:{{ env.CADDY_PORT }}{% endif %}"
 APP_LOCALE = "en"
-PORT = "3300"
-# Opt-in Prometheus listener (ADR 0018); never reachable through Caddy.
-METRICS_ADDR = "127.0.0.1:9090"
+PORT = "{{ env.BACKEND_PORT }}"
+# Opt-in Prometheus listener (ADR 0018); never reachable through Caddy. Every daemon port is
+# its base plus the checkout's slot offset (0 in the primary checkout, one offset for all
+# daemons), so ports with no daemon of their own (this one, SMTP) are derived from it.
+METRICS_ADDR = "127.0.0.1:{{ env.BACKEND_PORT | int - 3300 + 9090 }}"
 CGO_ENABLED = "0"
 # Dev-only secret so a fresh clone authenticates out of the box.
 JWT_SECRET = "dev-secret-change-in-production"
 # Dev-only Tink keyset (same one the old .env.docker.sample shipped); never use in prod.
 ENCRYPTION_KEY = "CIamsc4JEmQKWAowdHlwZS5nb29nbGVhcGlzLmNvbS9nb29nbGUuY3J5cHRvLnRpbmsuQWVzR2NtS2V5EiIaIIOWohIqGhyD2NeiOazlLrnrHqCirukTjCjD1iMFPqiEGAEQARiGprHOCSAB"
 SMTP_HOST = "127.0.0.1"
-SMTP_PORT = "1025"
+SMTP_PORT = "{{ env.MAILPIT_PORT | int - 8025 + 1025 }}"
 # Test, e2e and atlas scratch databases sit next to the checkout's dev database, named after it
 # (<PGDATABASE>_test, _e2e, _atlas), so every checkout has its own set on a shared server and
 # `mise run worktrees:gc` can tell which ones are live. Set TEST_DB_URL / E2E_DB_URL /
@@ -62,7 +69,10 @@ E2E_DB_URL = "{{ get_env(name='E2E_DB_URL', default='postgres://' ~ env.PGUSER ~
 ATLAS_DEV_URL = "{{ get_env(name='ATLAS_DEV_URL', default='postgres://' ~ env.PGUSER ~ '@' ~ env.PGHOST ~ ':' ~ env.PGPORT ~ '/' ~ env.PGDATABASE ~ '_atlas?sslmode=disable') }}"
 
 # --- dev stack (replaces docker compose) -----------------------------------------
-# `mise daemons start caddy` brings up everything below in dependency order.
+# `mise daemons start caddy` brings up everything below in dependency order. Each daemon's
+# `port` is `auto`: the primary checkout gets the base port (today's ports), a linked worktree
+# a free slot (base + offset), exported as <NAME>_PORT and visible to `mise env` before any
+# daemon runs. `ready_port` cannot be templated, so readiness is a `ready_cmd` on that port.
 # Entry point is Caddy: it terminates TLS and routes /site, /api, /collect to the
 # backend and everything else to Vite (see Caddyfile). Run `caddy trust` once so the
 # browser accepts Caddy's local CA.
@@ -74,24 +84,28 @@ port = { auto = true, base = 15432 }
 options.database = "1mail_development"
 
 [daemons.mailpit]
-run = "exec mailpit"
-ready_port = 8025
+run = "exec mailpit --listen 0.0.0.0:$MAILPIT_PORT --smtp 0.0.0.0:$SMTP_PORT"
+port = { auto = true, base = 8025 }
+ready_cmd = "nc -z 127.0.0.1 $MAILPIT_PORT"
 proxy = false
 
 [daemons.backend]
 run = "exec air"
-ready_port = 3300
+port = { auto = true, base = 3300 }
+ready_cmd = "nc -z 127.0.0.1 $BACKEND_PORT"
 depends = ["db", "mailpit"]
 proxy = false
 
 [daemons.frontend]
 run = "exec pnpm exec vite"
-ready_port = 5173
+port = { auto = true, base = 5173 }
+ready_cmd = "nc -z 127.0.0.1 $FRONTEND_PORT"
 proxy = false
 
 [daemons.caddy]
 run = "exec caddy run --config Caddyfile --adapter caddyfile"
-ready_port = 443
+port = { auto = true, base = 443 }
+ready_cmd = "nc -z 127.0.0.1 $CADDY_PORT"
 depends = ["frontend", "backend"]
 proxy = false
 
