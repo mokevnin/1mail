@@ -1297,6 +1297,15 @@ export const zSiteAuditListQuery = z.object({
  */
 export const zSiteAuditListResponse = zSiteAuditEntryList;
 
+export const zSiteAuditExportPath = z.object({
+  slug: z.string()
+});
+
+/**
+ * The request has succeeded.
+ */
+export const zSiteAuditExportResponse = z.string();
+
 export const zSiteAutomationsListPath = z.object({
   slug: z.string()
 });

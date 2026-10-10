@@ -23,6 +23,11 @@ import (
 	"github.com/mokevnin/1mail/internal/testhelper"
 )
 
+// audit:read is never grantable to a connector (ADR 0016, ADR 0022).
+func TestAuditReadIsNotAnOAuthScope(t *testing.T) {
+	assert.NotContains(t, oauthserver.SupportedScopes(), "audit:read")
+}
+
 func closedClient(t *testing.T) *ent.Client {
 	t.Helper()
 	sqlDB, err := sql.Open("pgx", "postgres://closed.invalid/none")

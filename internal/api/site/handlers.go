@@ -2,6 +2,7 @@ package site
 
 import (
 	"context"
+	"io"
 	"strconv"
 
 	"github.com/mokevnin/1mail/ent"
@@ -89,6 +90,8 @@ type AuditLog interface {
 	// Entries returns up to limit entries, newest first, preceding the cursor entry
 	// id (0 = from the newest), and the next page's cursor (0 = last page).
 	Entries(ctx context.Context, s *ent.Scoped, cursor int64, limit int) ([]*ent.AuditEntry, int64, error)
+	// ExportCSV streams the whole log, newest first, as CSV.
+	ExportCSV(ctx context.Context, s *ent.Scoped, w io.Writer) error
 }
 
 // Deps is everything the /site handlers are built from. The domain modules are

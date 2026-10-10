@@ -391,6 +391,8 @@
       "actorToken": "Token de API n.º {{id}}",
       "changes": "Cambios",
       "empty": "Aún no hay cambios auditados",
+      "exportCsv": "Exportar CSV",
+      "exportError": "No se pudo exportar el registro de auditoría",
       "loadError": "No se pudo cargar el registro de auditoría",
       "loadMore": "Cargar más",
       "target": "Objeto",

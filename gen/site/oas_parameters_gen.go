@@ -147,6 +147,71 @@ func decodeSiteAnalyticsOverviewParams(args [1]string, argsEscaped bool, r *http
 	return params, nil
 }
 
+// SiteAuditExportParams is parameters of SiteAudit_export operation.
+type SiteAuditExportParams struct {
+	Slug string
+}
+
+func unpackSiteAuditExportParams(packed middleware.Parameters) (params SiteAuditExportParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "slug",
+			In:   "path",
+		}
+		params.Slug = packed[key].(string)
+	}
+	return params
+}
+
+func decodeSiteAuditExportParams(args [1]string, argsEscaped bool, r *http.Request) (params SiteAuditExportParams, _ error) {
+	// Decode path: slug.
+	if err := func() error {
+		param := args[0]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[0])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "slug",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToString(val)
+				if err != nil {
+					return err
+				}
+
+				params.Slug = c
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "slug",
+			In:   "path",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
 // SiteAuditListParams is parameters of SiteAudit_list operation.
 type SiteAuditListParams struct {
 	Slug string

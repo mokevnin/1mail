@@ -702,10 +702,14 @@ func externalDeps(i do.Injector) (apiexternal.Deps, error) {
 	if err != nil {
 		return apiexternal.Deps{}, err
 	}
+	edition, err := do.Invoke[*ee.Edition](i)
+	if err != nil {
+		return apiexternal.Deps{}, err
+	}
 	return apiexternal.Deps{
 		Accounts: acc, Bus: bus.Bus, Cipher: cipher, Outbound: sender.Module,
 		Segments: seg, EventLog: evlog, Contacts: con, Tags: tg, Automations: auto,
-		Broadcasts: bc, Reputation: rep, BootstrapToken: cfg.BootstrapToken,
+		Broadcasts: bc, Reputation: rep, BootstrapToken: cfg.BootstrapToken, Audit: edition.Audit,
 	}, nil
 }
 

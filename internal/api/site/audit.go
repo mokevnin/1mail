@@ -3,6 +3,7 @@ package site
 import (
 	"context"
 	"encoding/json"
+	"io"
 	"net/http"
 	"strconv"
 
@@ -15,9 +16,6 @@ import (
 const (
 	defaultAuditLimit = 25
 	maxAuditLimit     = 100
-	// operatorLabel is how a platform Operator appears to the customer (ADR 0022):
-	// the staff identity is never exposed.
-	operatorLabel = "1mail staff"
 )
 
 // SiteAuditList shows the Workspace's Audit log, newest first. Owner and admin only;
@@ -66,6 +64,42 @@ func (h *Handlers) SiteAuditList(ctx context.Context, params siteapi.SiteAuditLi
 	return out, nil
 }
 
+// SiteAuditExport downloads the whole Audit log as CSV, newest first. Same access as
+// the list: owner and admin only, 402 without an Enterprise license. The export has
+// no filter yet; when the log gains filters (ticket #141) it takes the same filter
+// as SiteAuditList and passes it through ee/audit.
+func (h *Handlers) SiteAuditExport(ctx context.Context, params siteapi.SiteAuditExportParams) (siteapi.SiteAuditExportRes, error) {
+	s, role, err := h.scopedWithRoleFor(ctx, params.Slug)
+	if ent.IsNotFound(err) {
+		v := siteapi.SiteAuditExportNotFound(problem(http.StatusNotFound, "workspace not found"))
+		return &v, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	if !canManageMembers(role) {
+		v := siteapi.SiteAuditExportForbidden(problem(http.StatusForbidden, "insufficient role"))
+		return &v, nil
+	}
+	if h.audit == nil || !h.audit.Licensed() {
+		v := siteapi.SiteAuditExportPaymentRequired(problem(http.StatusPaymentRequired, "the audit log needs an Enterprise license"))
+		return &v, nil
+	}
+
+	// Stream through a pipe so a long log never sits in memory. If the response ends
+	// early the context is cancelled, which closes the pipe and stops the writer.
+	pr, pw := io.Pipe()
+	stop := context.AfterFunc(ctx, func() { _ = pw.CloseWithError(ctx.Err()) })
+	go func() {
+		defer stop()
+		_ = pw.CloseWithError(h.audit.ExportCSV(ctx, s, pw))
+	}()
+	return &siteapi.SiteAuditExportOKHeaders{
+		ContentDisposition: `attachment; filename="audit-log-` + params.Slug + `.csv"`,
+		Response:           siteapi.SiteAuditExportOK{Data: pr},
+	}, nil
+}
+
 func auditEntryResource(e *ent.AuditEntry) siteapi.SiteAuditEntryResource {
 	actor := siteapi.SiteAuditActor{
 		Kind: siteapi.SiteAuditActorKind(e.ActorKind),
@@ -74,7 +108,7 @@ func auditEntryResource(e *ent.AuditEntry) siteapi.SiteAuditEntryResource {
 	}
 	if e.ActorKind == events.ActorOperator {
 		actor.ID = siteapi.OptNilString{}
-		actor.Name = siteapi.NewOptNilString(operatorLabel)
+		actor.Name = siteapi.NewOptNilString(events.OperatorLabel)
 	}
 	res := siteapi.SiteAuditEntryResource{
 		ID:         siteapi.EntityId(strconv.FormatInt(e.ID, 10)),

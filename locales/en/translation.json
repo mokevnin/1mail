@@ -390,6 +390,8 @@
       "actorToken": "API token #{{id}}",
       "changes": "Changes",
       "empty": "No audited changes yet",
+      "exportCsv": "Export CSV",
+      "exportError": "Failed to export the audit log",
       "loadError": "Failed to load the audit log",
       "loadMore": "Load more",
       "target": "Target",

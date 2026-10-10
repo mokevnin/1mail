@@ -14,6 +14,9 @@ namespace OneMail;
 @@extension(Auth.tokensDelete, "x-mcp", #{ hidden: true });
 @@extension(Auth.tokensBootstrap, "x-mcp", #{ hidden: true });
 
+// The Audit log is never an agent capability (ADR 0016, ADR 0022).
+@@extension(AuditEntries.list, "x-mcp", #{ hidden: true });
+
 // Names in 1mail vocabulary where the default would read poorly.
 @@extension(Auth.meGet, "x-mcp", #{ name: "whoami" });
 @@extension(Events.create, "x-mcp", #{ name: "events_record" });

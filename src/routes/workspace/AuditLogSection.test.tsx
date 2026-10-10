@@ -1,6 +1,10 @@
-import { expect, test } from 'vitest'
+import { expect, test, vi } from 'vitest'
 
-import type { SiteAuditEntryResource, SiteAuditListData } from '../../generated/site/types.gen.ts'
+import type {
+  SiteAuditEntryResource,
+  SiteAuditExportData,
+  SiteAuditListData,
+} from '../../generated/site/types.gen.ts'
 import { jsonResponse, mockClientRoutes, route } from '../../test/mockFetch.ts'
 import { renderWithRouter } from '../../test/renderWithRouter.tsx'
 import { AuditLogSection } from './AuditLogSection.tsx'
@@ -52,4 +56,26 @@ test.each([402, 403])('renders nothing when the API answers %i', async (status) 
   const { screen } = await renderWithRouter(<AuditLogSection slug={SLUG} />)
 
   await expect.element(screen.getByText('Audit log')).not.toBeInTheDocument()
+})
+
+test('exports the log as CSV through the generated client', async () => {
+  let exported = 0
+  mockClientRoutes([
+    list(() => jsonResponse({ items: [entry()] })),
+    route<SiteAuditExportData>(
+      'GET',
+      '/workspaces/{slug}/audit-entries/export',
+      { slug: SLUG },
+      () => {
+        exported += 1
+        return new Response('id,action\n2,membership.update\n', {
+          headers: { 'content-type': 'text/csv' },
+        })
+      },
+    ),
+  ])
+  const { screen } = await renderWithRouter(<AuditLogSection slug={SLUG} />)
+
+  await screen.getByRole('button', { name: 'Export CSV' }).click()
+  await vi.waitFor(() => expect(exported).toBe(1))
 })

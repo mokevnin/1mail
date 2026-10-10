@@ -14,6 +14,12 @@ type Handler interface {
 	//
 	// GET /workspaces/{slug}/analytics/overview
 	SiteAnalyticsOverview(ctx context.Context, params SiteAnalyticsOverviewParams) (SiteAnalyticsOverviewRes, error)
+	// SiteAuditExport implements SiteAudit_export operation.
+	//
+	// Export the whole Audit log as CSV, newest first (Enterprise; owner and admin only).
+	//
+	// GET /workspaces/{slug}/audit-entries/export
+	SiteAuditExport(ctx context.Context, params SiteAuditExportParams) (SiteAuditExportRes, error)
 	// SiteAuditList implements SiteAudit_list operation.
 	//
 	// List the workspace's Audit log, newest first (Enterprise; owner and admin only).
