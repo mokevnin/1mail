@@ -20,6 +20,7 @@ import (
 	"github.com/mokevnin/1mail/ee/licensekey"
 	"github.com/mokevnin/1mail/ent"
 	"github.com/mokevnin/1mail/internal/accounts"
+	"github.com/mokevnin/1mail/internal/analytics"
 	apiauth "github.com/mokevnin/1mail/internal/api/auth"
 	apiexternal "github.com/mokevnin/1mail/internal/api/external"
 	apisite "github.com/mokevnin/1mail/internal/api/site"
@@ -742,6 +743,10 @@ func register(injector do.Injector, env string, o options) {
 		return eventlog.New(bus.Bus), nil
 	})
 
+	do.Provide(injector, func(do.Injector) (*analytics.Module, error) {
+		return analytics.New(), nil
+	})
+
 	do.Provide(injector, func(do.Injector) (*reputation.Module, error) {
 		return reputation.New(), nil
 	})
@@ -991,11 +996,15 @@ func siteDeps(i do.Injector) (apisite.Deps, error) {
 	if err != nil {
 		return apisite.Deps{}, err
 	}
+	an, err := do.Invoke[*analytics.Module](i)
+	if err != nil {
+		return apisite.Deps{}, err
+	}
 	return apisite.Deps{
 		Accounts: acc, Attempts: attempts, OAuth: oauthserver.NewService(client.Client), Bus: bus.Bus, Cipher: cipher, Outbound: sender.Module,
 		Segments: seg, EventLog: evlog, Contacts: con, Erasure: er, Tags: tg, Automations: auto,
 		Broadcasts: bc, Welcome: jc.Client, SysMail: jc.Client, SendingDomains: sd, Integrations: integ,
-		Tokens: tokens, Tracker: tracker, AppURL: cfg.AppURL, Audit: edition.Audit,
+		Tokens: tokens, Tracker: tracker, AppURL: cfg.AppURL, Audit: edition.Audit, Analytics: an,
 	}, nil
 }
 

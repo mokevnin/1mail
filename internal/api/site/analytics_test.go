@@ -30,68 +30,29 @@ func TestSiteAnalyticsRequireOwnedWorkspace(t *testing.T) {
 	assert.IsType(t, &siteapi.ProblemDetails{}, out)
 }
 
-// The overview reads entirely from the seeded fixtures (broadcast_recipients with
-// recent, templated sent_at). Rather than pin exact totals — which would couple
-// the test to fixture volume — it asserts the invariants the dashboard relies on:
-// rates are well-formed ratios, the time series reconciles with the KPIs, and the
-// 90-day window is a superset of the 30-day window.
-func TestSiteAnalyticsOverview(t *testing.T) {
+// The handler only maps the analytics module's Overview (rules are tested in
+// internal/analytics): the range param picks the window and the fields carry over.
+func TestSiteAnalyticsOverviewMapsTheModule(t *testing.T) {
 	env := testhelper.Setup(t)
 	c := env.SiteActor(t, fixtures.OwnerJohnEmail)
 	ctx := context.Background()
 
 	res, err := c.SiteAnalyticsOverview(ctx, siteapi.SiteAnalyticsOverviewParams{
 		Slug:  fixtures.AcmeSlug,
-		Range: siteapi.NewOptSiteAnalyticsRange(siteapi.SiteAnalyticsRange30d),
+		Range: siteapi.NewOptSiteAnalyticsRange(siteapi.SiteAnalyticsRange7d),
 	})
 	require.NoError(t, err)
 	ov, ok := res.(*siteapi.SiteAnalyticsOverview)
 	require.Truef(t, ok, "got %T", res)
 
-	// Contacts snapshot: the workspace has contacts, and the derived split adds up.
+	assert.Len(t, ov.Timeseries, 7)
+	assert.Equal(t, int32(11), ov.Email.SentCount)
+	assert.Equal(t, int32(5), ov.Email.OpenedCount)
+	assert.Equal(t, int32(2), ov.Email.ClickedCount)
 	assert.Greater(t, ov.Contacts.Total, int32(0))
-	assert.Equal(t, ov.Contacts.Total, ov.Contacts.Active+ov.Contacts.Unsubscribed, "active + unsubscribed == total")
-	assert.Greater(t, ov.Contacts.Unsubscribed, int32(0), "seeded suppressions / everything opt-outs are non-mailable")
-	assert.GreaterOrEqual(t, ov.Contacts.NewInRange, int32(0))
-
-	// Engagement KPIs are send-cohort scoped and form valid ratios.
-	assert.Greater(t, ov.Email.SentCount, int32(0), "the 30d window has seeded sends")
-	assert.LessOrEqual(t, ov.Email.OpenedCount, ov.Email.SentCount, "opened <= sent")
-	assert.LessOrEqual(t, ov.Email.ClickedCount, ov.Email.OpenedCount, "clicked <= opened")
-	assert.InDelta(t, ratioOf(ov.Email.OpenedCount, ov.Email.SentCount), ov.Email.OpenRate, 0.001)
-	assert.InDelta(t, ratioOf(ov.Email.ClickedCount, ov.Email.SentCount), ov.Email.ClickRate, 0.001)
-	assert.LessOrEqual(t, ov.Email.OpenRate, float32(1.0))
-
-	// Automations snapshot reflects the seeded active automations + runs.
 	assert.Greater(t, ov.Automations.Total, int32(0))
-	assert.GreaterOrEqual(t, ov.Automations.RunsCompleted, int32(0))
 
-	// Time series: one zero-filled point per day in the window, reconciling with KPIs.
-	assert.Len(t, ov.Timeseries, 30)
-	var sumSent, sumOpened, sumClicked int32
-	for _, p := range ov.Timeseries {
-		sumSent += p.Sent
-		sumOpened += p.Opened
-		sumClicked += p.Clicked
-	}
-	assert.Equal(t, ov.Email.SentCount, sumSent, "series sent reconciles with KPI")
-	assert.Equal(t, ov.Email.OpenedCount, sumOpened, "series opened reconciles with KPI")
-	assert.Equal(t, ov.Email.ClickedCount, sumClicked, "series clicked reconciles with KPI")
-
-	// The 90-day window widens the cohort: it includes everything the 30-day one did.
-	res90, err := c.SiteAnalyticsOverview(ctx, siteapi.SiteAnalyticsOverviewParams{
-		Slug:  fixtures.AcmeSlug,
-		Range: siteapi.NewOptSiteAnalyticsRange(siteapi.SiteAnalyticsRange90d),
-	})
+	res, err = c.SiteAnalyticsOverview(ctx, siteapi.SiteAnalyticsOverviewParams{Slug: fixtures.AcmeSlug})
 	require.NoError(t, err)
-	ov90 := res90.(*siteapi.SiteAnalyticsOverview)
-	assert.GreaterOrEqual(t, ov90.Email.SentCount, ov.Email.SentCount, "90d sent >= 30d sent")
-	assert.Len(t, ov90.Timeseries, 90)
-}
-
-func ratioOf(num, den int32) float32 {
-	if den == 0 {
-		return 0
-	}
-	return float32(num) / float32(den)
+	assert.Len(t, res.(*siteapi.SiteAnalyticsOverview).Timeseries, 30, "30d is the default window")
 }

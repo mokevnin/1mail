@@ -25,6 +25,7 @@ import (
 	"github.com/mokevnin/1mail/ee/licensekey"
 	"github.com/mokevnin/1mail/ent"
 	"github.com/mokevnin/1mail/internal/accounts"
+	"github.com/mokevnin/1mail/internal/analytics"
 	apiauth "github.com/mokevnin/1mail/internal/api/auth"
 	apiexternal "github.com/mokevnin/1mail/internal/api/external"
 	apisite "github.com/mokevnin/1mail/internal/api/site"
@@ -290,7 +291,7 @@ func Setup(t *testing.T, opts ...Option) *TestEnv {
 		Segments: segmentsModule, EventLog: eventLog, Contacts: contactsModule, Erasure: erasureModule, Tags: tagsModule,
 		Automations: automationsModule, Broadcasts: broadcastsModule,
 		Welcome: inline, SysMail: inline, SendingDomains: sendingDomainsModule, Integrations: integrationsModule,
-		Tokens: authtoken.New(baseCfg.JWTSecret), Tracker: tracker, AppURL: baseCfg.AppURL, Audit: edition.Audit,
+		Tokens: authtoken.New(baseCfg.JWTSecret), Tracker: tracker, AppURL: baseCfg.AppURL, Audit: edition.Audit, Analytics: analytics.New(),
 	}, external, mcpHandler)
 	require.NoError(t, err, "build server")
 
