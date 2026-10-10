@@ -252,9 +252,12 @@ func recordAuditCallSites(t *testing.T) []string {
 			if rerr != nil {
 				return rerr
 			}
-			if strings.Contains(string(src), "RecordAudit(") {
-				rel, _ := filepath.Rel(root, path)
-				sites = append(sites, filepath.ToSlash(rel))
+			rel, _ := filepath.Rel(root, path)
+			rel = filepath.ToSlash(rel)
+			// events/scoped.go is the automatic path (the generated scoped-client
+			// wrappers publish through it), not an explicit call.
+			if strings.Contains(string(src), "RecordAudit(") && rel != "internal/events/scoped.go" {
+				sites = append(sites, rel)
 			}
 			return nil
 		}))
