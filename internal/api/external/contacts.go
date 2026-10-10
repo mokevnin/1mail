@@ -129,6 +129,11 @@ func (h *Handlers) ContactsUpdate(ctx context.Context, req *externalapi.UpdateCo
 	return &resource, nil
 }
 
+// tokenOperator is the API token behind the request, as the operator of an Erasure.
+func tokenOperator(ctx context.Context) erasure.Operator {
+	return erasure.Operator{Kind: erasure.OperatorAPIToken, ID: auth.GetTokenAuth(ctx).TokenID}
+}
+
 // ContactsDelete is Erasure (ADR 0021): deleting a Contact removes its personal data.
 // It has its own scope, separate from contacts:write, because it is irreversible.
 func (h *Handlers) ContactsDelete(ctx context.Context, params externalapi.ContactsDeleteParams) (externalapi.ContactsDeleteRes, error) {
@@ -144,7 +149,7 @@ func (h *Handlers) ContactsDelete(ctx context.Context, params externalapi.Contac
 	}
 
 	err = h.erasure.Erase(ctx, auth.TokenScoped(ctx), erasure.ByContactID(id),
-		erasure.Operator{Kind: erasure.OperatorAPIToken, ID: auth.GetTokenAuth(ctx).TokenID})
+		tokenOperator(ctx))
 	if errors.Is(err, erasure.ErrNotFound) {
 		res := externalapi.ContactsDeleteNotFound(problem(http.StatusNotFound, "contact not found"))
 		return &res, nil
@@ -175,7 +180,7 @@ func (h *Handlers) ContactsEraseBy(ctx context.Context, params externalapi.Conta
 	}
 
 	err := h.erasure.Erase(ctx, auth.TokenScoped(ctx), id,
-		erasure.Operator{Kind: erasure.OperatorAPIToken, ID: auth.GetTokenAuth(ctx).TokenID})
+		tokenOperator(ctx))
 	if errors.Is(err, erasure.ErrNotFound) {
 		res := externalapi.ContactsEraseByNotFound(problem(http.StatusNotFound, "nothing found for the identifier"))
 		return &res, nil

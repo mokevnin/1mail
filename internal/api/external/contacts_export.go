@@ -8,7 +8,6 @@ import (
 	externalapi "github.com/mokevnin/1mail/gen/external"
 	"github.com/mokevnin/1mail/internal/api/auth"
 	"github.com/mokevnin/1mail/internal/contactexport"
-	"github.com/samber/lo"
 )
 
 // ContactsExport streams the subject-access Data export of one contact (ADR 0021),
@@ -19,22 +18,12 @@ func (h *Handlers) ContactsExport(ctx context.Context, params externalapi.Contac
 		return &res, nil
 	}
 
-	var id *int64
-	if v, ok := params.ID.Get(); ok {
-		parsed, err := parseEntityID(v)
-		if err != nil {
-			res := externalapi.ContactsExportBadRequest(problem(http.StatusBadRequest, "invalid id"))
-			return &res, nil
-		}
-		id = &parsed
-	}
-	var email *string
-	if v, ok := params.Email.Get(); ok {
-		email = lo.ToPtr(string(v))
-	}
-
 	s := auth.TokenScoped(ctx)
-	c, err := contactexport.Find(ctx, s, id, email)
+	c, err := contactexport.Find(ctx, s, contactexport.Ref(params.ID.Get()), contactexport.Ref(params.Email.Get()))
+	if errors.Is(err, contactexport.ErrInvalidID) {
+		res := externalapi.ContactsExportBadRequest(problem(http.StatusBadRequest, "invalid id"))
+		return &res, nil
+	}
 	if errors.Is(err, contactexport.ErrIdentifier) {
 		res := externalapi.ContactsExportBadRequest(problem(http.StatusBadRequest, "pass exactly one of id or email"))
 		return &res, nil

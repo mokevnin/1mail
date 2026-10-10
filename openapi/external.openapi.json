@@ -1622,7 +1622,7 @@
     "/contacts/erase": {
       "delete": {
         "operationId": "Contacts_eraseBy",
-        "description": "Erase by an identifier other than the contact id (GDPR Art. 17): by `email`\n(also anonymizes delivery records to an address that never had a contact) or\nby `visitor_id` (an anonymous visitor and its events). Exactly one of the two.\nThe same rules as deleting by id apply. Requires the contacts:erase scope.",
+        "description": "Erase by an identifier other than the contact id (GDPR Art. 17): by `email`\n(also anonymizes delivery records to an address that never had a contact) or\nby `visitorId` (an anonymous visitor and its events). Exactly one of the two.\nThe same rules as deleting by id apply. Requires the contacts:erase scope.",
         "parameters": [
           {
             "name": "email",

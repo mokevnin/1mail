@@ -11,17 +11,18 @@ import { EventRowDetails } from '../../components/EventRowDetails.tsx'
 import { ButtonLink } from '../../components/RouterLink.tsx'
 import {
   siteContactsDeleteMutation,
-  siteContactsExportMutation,
   siteContactsGetOptions,
   siteContactsListQueryKey,
   siteEventsListOptions,
 } from '../../generated/site/@tanstack/react-query.gen.ts'
+import { siteContactsExport } from '../../generated/site/sdk.gen.ts'
 import { useCurrentRole } from '../../hooks/useCurrentRole.ts'
 import { useDeleteConfirmation } from '../../hooks/useDeleteConfirmation.tsx'
 import { useResourceMutation } from '../../hooks/useResourceMutation.ts'
 import { contactsDetailRoute, contactsEditRoute, contactsRoute } from '../../router.tsx'
 import { getApiErrorMessage } from '../../utils/apiErrors.ts'
 import { formatDateTime } from '../../utils/datetime.ts'
+import { dispositionFilename, saveBlob } from '../../utils/download.ts'
 
 const EVENTS_PAGE_SIZE = 10
 
@@ -42,16 +43,6 @@ function formatCustomValue(value: unknown): string {
   if (value == null) return ''
   if (typeof value === 'string') return value
   return JSON.stringify(value)
-}
-
-// Hands a downloaded Blob to the browser as a file save.
-function saveBlob(data: Blob, filename: string) {
-  const url = URL.createObjectURL(data)
-  const link = document.createElement('a')
-  link.href = url
-  link.download = filename
-  link.click()
-  URL.revokeObjectURL(url)
 }
 
 export function ContactDetailPage() {
@@ -98,8 +89,11 @@ export function ContactDetailPage() {
   })
 
   const exportMutation = useMutation({
-    ...siteContactsExportMutation(),
-    onSuccess: (data) => saveBlob(data, `contact-${contactId}.json`),
+    // The generated mutation helper drops the response; the filename is the server's
+    // (Content-Disposition), so call the generated SDK function and keep both.
+    mutationFn: () =>
+      siteContactsExport({ path: { slug }, query: { id: contactId }, throwOnError: true }),
+    onSuccess: ({ data, response }) => saveBlob(data, dispositionFilename(response)),
     onError: (error) =>
       notifications.show({
         color: 'red',
@@ -142,7 +136,7 @@ export function ContactDetailPage() {
           <Button
             variant="default"
             loading={exportMutation.isPending}
-            onClick={() => exportMutation.mutate({ path: { slug }, query: { id: contactId } })}
+            onClick={() => exportMutation.mutate()}
           >
             {t(($) => $.contacts.export)}
           </Button>

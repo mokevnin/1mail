@@ -209,6 +209,22 @@ func TestMCPToolCallReturnsTheAPIResult(t *testing.T) {
 	require.False(t, res.IsError, text(t, res))
 }
 
+// Erasure is irreversible: a token that can write Contacts cannot erase them through
+// MCP either, since every tool call is the /api call under the caller's own scopes.
+func TestMCPContactDeleteNeedsTheEraseScope(t *testing.T) {
+	env := testhelper.Setup(t)
+	s := env.MCPClient(t, env.ScopedBearer(t, "contacts:read", "contacts:write"))
+
+	id := strconv.Itoa(fixtures.ContactAliceID)
+	res := call(t, s, "contacts_delete", map[string]any{"id": id})
+	assert.True(t, res.IsError, "contacts:write is not contacts:erase")
+	res = call(t, s, "contacts_erase_by", map[string]any{"email": fixtures.ContactAliceEmail})
+	assert.True(t, res.IsError)
+
+	res = call(t, s, "contacts_get", map[string]any{"id": id})
+	require.False(t, res.IsError, text(t, res))
+}
+
 // Tags are tools: a name with a slash travels as a path parameter, and the contact id
 // as another.
 func TestMCPTagToolsApplyAndRemove(t *testing.T) {

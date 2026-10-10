@@ -4,12 +4,10 @@ import (
 	"context"
 	"errors"
 	"net/http"
-	"strconv"
 
 	"github.com/mokevnin/1mail/ent"
 	siteapi "github.com/mokevnin/1mail/gen/site"
 	"github.com/mokevnin/1mail/internal/contactexport"
-	"github.com/samber/lo"
 )
 
 // SiteContactsExport streams the subject-access Data export of one contact (ADR
@@ -24,21 +22,11 @@ func (h *Handlers) SiteContactsExport(ctx context.Context, params siteapi.SiteCo
 		return nil, err
 	}
 
-	var id *int64
-	if v, ok := params.ID.Get(); ok {
-		parsed, err := strconv.ParseInt(string(v), 10, 64)
-		if err != nil {
-			res := siteapi.SiteContactsExportBadRequest(problem(http.StatusBadRequest, "invalid id"))
-			return &res, nil
-		}
-		id = &parsed
+	c, err := contactexport.Find(ctx, scoped, contactexport.Ref(params.ID.Get()), contactexport.Ref(params.Email.Get()))
+	if errors.Is(err, contactexport.ErrInvalidID) {
+		res := siteapi.SiteContactsExportBadRequest(problem(http.StatusBadRequest, "invalid id"))
+		return &res, nil
 	}
-	var email *string
-	if v, ok := params.Email.Get(); ok {
-		email = lo.ToPtr(string(v))
-	}
-
-	c, err := contactexport.Find(ctx, scoped, id, email)
 	if errors.Is(err, contactexport.ErrIdentifier) {
 		res := siteapi.SiteContactsExportBadRequest(problem(http.StatusBadRequest, "pass exactly one of id or email"))
 		return &res, nil
