@@ -18,7 +18,8 @@ export const zProblemDetails = z.object({
   instance: z.exactOptional(z.string()),
   errors: z.exactOptional(z.record(z.string(), z.array(z.string()))),
   form: z.exactOptional(z.string()),
-  fields: z.exactOptional(z.record(z.string(), z.string()))
+  fields: z.exactOptional(z.record(z.string(), z.string())),
+  retryAfter: z.exactOptional(z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }))
 });
 
 /**

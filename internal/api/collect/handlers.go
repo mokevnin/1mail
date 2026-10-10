@@ -17,6 +17,8 @@ type Handlers struct {
 	bus *events.Bus
 }
 
+// NewHandlers builds the collect handlers. Payload size caps (batch, per event) are
+// enforced before decoding, in internal/server.
 func NewHandlers(bus *events.Bus) *Handlers {
 	return &Handlers{bus: bus}
 }

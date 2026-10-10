@@ -13,13 +13,51 @@ import (
 	"github.com/spf13/viper"
 )
 
-// BodyLimits are the request body caps in bytes. Collect is the public tracking
-// ingestion (its key ships in customer pages, so anyone can post to it); Default
-// applies to every other surface.
+// BodyLimits are the request body caps in bytes. /collect is the public tracking
+// ingestion (its key ships in customer pages, so anyone can post to it): Collect
+// caps a batch (POST /collect/events), CollectEvent one event (an identify body, or
+// each event inside a batch). Default applies to every other surface.
 type BodyLimits struct {
-	Default int64
-	Collect int64
+	Default      int64
+	Collect      int64
+	CollectEvent int64
 }
+
+// RateLimits are the per-policy request budgets per minute (ADR 0025). Every limit
+// has a default and 0 disables it. They are core, never gated by the EE licence.
+type RateLimits struct {
+	// Human caps the public human-facing endpoints (signup, invitation accept,
+	// consent confirm) per client IP and endpoint.
+	Human int
+	// APIBurst caps /api and /mcp per Workspace per second (one shared budget).
+	APIBurst int
+	// APIPerMinute caps /api and /mcp per Workspace per minute, stacked on APIBurst.
+	APIPerMinute int
+	// FailedAuth caps failed credential checks (bearer token, collect key) per
+	// client IP per minute; successful ones are not counted.
+	FailedAuth int
+	// Tracking caps how many opens and clicks one client IP may have recorded per
+	// minute. It never refuses a recipient: over it the event is not recorded.
+	Tracking int
+	// LoginFailures is how many failed logins one account may have within 15 minutes
+	// before login answers 429 with an exponentially growing delay (no lockout).
+	LoginFailures int
+	// LoginIP caps login requests per client IP per minute.
+	LoginIP int
+	// Collect caps /collect per Workspace per minute (a budget of its own, apart
+	// from /api and /mcp).
+	Collect int
+	// CollectIP caps /collect per client IP per minute.
+	CollectIP int
+	// ForgotAddress is how many password-reset mails one address may be sent per
+	// hour. Over it the request is still answered 202 and nothing is sent.
+	ForgotAddress int
+	// ForgotIP caps forgot-password requests per client IP per hour (429 over it).
+	ForgotIP int
+}
+
+// DefaultRateLimits are the production budgets.
+var DefaultRateLimits = RateLimits{Human: 60, APIBurst: 20, APIPerMinute: 600, FailedAuth: 30, Tracking: 600, LoginFailures: 5, LoginIP: 20, Collect: 6000, CollectIP: 300, ForgotAddress: 3, ForgotIP: 10}
 
 // DBPool bounds the Postgres connections one replica may open: the
 // database/sql pool (ent, pubsub) and the pgx pool river runs on. Defaults
@@ -49,6 +87,7 @@ type Config struct {
 	EncryptionKey  string
 	AutoMigrate    bool
 	BodyLimits     BodyLimits
+	RateLimits     RateLimits
 	// OutboxFloor is the minimum age of a domain-event outbox row before the
 	// prune job may delete it (OUTBOX_RETENTION_FLOOR_DAYS, default 7; ADR 0019).
 	OutboxFloor time.Duration
@@ -79,7 +118,7 @@ type Config struct {
 
 	// MetricsAddr (host:port) is where the opt-in Prometheus listener binds. Empty
 	// (the default) means no listener; the public port never serves /metrics
-	// (ADR 0018).
+	// (ADR 0025).
 	MetricsAddr string
 
 	// System (platform) transactional email — 1mail's OWN sender, distinct from a
@@ -107,7 +146,19 @@ func Load(envName string) (*Config, error) {
 	v.SetDefault("OTEL_SERVICE_NAME", "1mail")
 	v.SetDefault("APP_LOCALE", "en")
 	v.SetDefault("MAX_BODY_BYTES", 1<<20)
-	v.SetDefault("COLLECT_MAX_BODY_BYTES", 64<<10)
+	v.SetDefault("COLLECT_MAX_BODY_BYTES", 500<<10)
+	v.SetDefault("COLLECT_MAX_EVENT_BYTES", 32<<10)
+	v.SetDefault("RATE_LIMIT_HUMAN_PER_MINUTE", DefaultRateLimits.Human)
+	v.SetDefault("RATE_LIMIT_API_BURST_PER_SECOND", DefaultRateLimits.APIBurst)
+	v.SetDefault("RATE_LIMIT_API_PER_MINUTE", DefaultRateLimits.APIPerMinute)
+	v.SetDefault("RATE_LIMIT_FAILED_AUTH_PER_MINUTE", DefaultRateLimits.FailedAuth)
+	v.SetDefault("RATE_LIMIT_TRACKING_PER_MINUTE", DefaultRateLimits.Tracking)
+	v.SetDefault("RATE_LIMIT_LOGIN_FAILURES", DefaultRateLimits.LoginFailures)
+	v.SetDefault("RATE_LIMIT_LOGIN_IP_PER_MINUTE", DefaultRateLimits.LoginIP)
+	v.SetDefault("RATE_LIMIT_COLLECT_PER_MINUTE", DefaultRateLimits.Collect)
+	v.SetDefault("RATE_LIMIT_COLLECT_IP_PER_MINUTE", DefaultRateLimits.CollectIP)
+	v.SetDefault("RATE_LIMIT_FORGOT_PASSWORD_PER_ADDRESS_PER_HOUR", DefaultRateLimits.ForgotAddress)
+	v.SetDefault("RATE_LIMIT_FORGOT_PASSWORD_IP_PER_HOUR", DefaultRateLimits.ForgotIP)
 	v.SetDefault("OUTBOX_RETENTION_FLOOR_DAYS", 7)
 	v.SetDefault("EVENTS_RETENTION_DAYS", 400)
 	v.SetDefault("DB_MAX_OPEN_CONNS", 15)
@@ -161,8 +212,22 @@ func Load(envName string) (*Config, error) {
 		AutoMigrate:    v.GetBool("AUTO_MIGRATE"),
 
 		BodyLimits: BodyLimits{
-			Default: v.GetInt64("MAX_BODY_BYTES"),
-			Collect: v.GetInt64("COLLECT_MAX_BODY_BYTES"),
+			Default:      v.GetInt64("MAX_BODY_BYTES"),
+			Collect:      v.GetInt64("COLLECT_MAX_BODY_BYTES"),
+			CollectEvent: v.GetInt64("COLLECT_MAX_EVENT_BYTES"),
+		},
+		RateLimits: RateLimits{
+			Human:         v.GetInt("RATE_LIMIT_HUMAN_PER_MINUTE"),
+			APIBurst:      v.GetInt("RATE_LIMIT_API_BURST_PER_SECOND"),
+			APIPerMinute:  v.GetInt("RATE_LIMIT_API_PER_MINUTE"),
+			FailedAuth:    v.GetInt("RATE_LIMIT_FAILED_AUTH_PER_MINUTE"),
+			Tracking:      v.GetInt("RATE_LIMIT_TRACKING_PER_MINUTE"),
+			LoginFailures: v.GetInt("RATE_LIMIT_LOGIN_FAILURES"),
+			LoginIP:       v.GetInt("RATE_LIMIT_LOGIN_IP_PER_MINUTE"),
+			Collect:       v.GetInt("RATE_LIMIT_COLLECT_PER_MINUTE"),
+			CollectIP:     v.GetInt("RATE_LIMIT_COLLECT_IP_PER_MINUTE"),
+			ForgotAddress: v.GetInt("RATE_LIMIT_FORGOT_PASSWORD_PER_ADDRESS_PER_HOUR"),
+			ForgotIP:      v.GetInt("RATE_LIMIT_FORGOT_PASSWORD_IP_PER_HOUR"),
 		},
 		DBPool: DBPool{
 			MaxOpenConns:    maxOpen,
@@ -207,6 +272,40 @@ func (c *Config) validate(envName string) error {
 	}
 	if c.BodyLimits.Collect <= 0 {
 		return fmt.Errorf("COLLECT_MAX_BODY_BYTES must be positive")
+	}
+	if c.BodyLimits.CollectEvent <= 0 {
+		return fmt.Errorf("COLLECT_MAX_EVENT_BYTES must be positive")
+	}
+	for name, limit := range map[string]int{
+		"RATE_LIMIT_HUMAN_PER_MINUTE":       c.RateLimits.Human,
+		"RATE_LIMIT_API_BURST_PER_SECOND":   c.RateLimits.APIBurst,
+		"RATE_LIMIT_API_PER_MINUTE":         c.RateLimits.APIPerMinute,
+		"RATE_LIMIT_FAILED_AUTH_PER_MINUTE": c.RateLimits.FailedAuth,
+	} {
+		if limit < 0 {
+			return fmt.Errorf("%s must not be negative (0 disables)", name)
+		}
+	}
+	if c.RateLimits.Tracking < 0 {
+		return fmt.Errorf("RATE_LIMIT_TRACKING_PER_MINUTE must not be negative (0 disables)")
+	}
+	if c.RateLimits.LoginFailures < 0 {
+		return fmt.Errorf("RATE_LIMIT_LOGIN_FAILURES must not be negative (0 disables)")
+	}
+	if c.RateLimits.LoginIP < 0 {
+		return fmt.Errorf("RATE_LIMIT_LOGIN_IP_PER_MINUTE must not be negative (0 disables)")
+	}
+	if c.RateLimits.Collect < 0 {
+		return fmt.Errorf("RATE_LIMIT_COLLECT_PER_MINUTE must not be negative (0 disables)")
+	}
+	if c.RateLimits.CollectIP < 0 {
+		return fmt.Errorf("RATE_LIMIT_COLLECT_IP_PER_MINUTE must not be negative (0 disables)")
+	}
+	if c.RateLimits.ForgotAddress < 0 {
+		return fmt.Errorf("RATE_LIMIT_FORGOT_PASSWORD_PER_ADDRESS_PER_HOUR must not be negative (0 disables)")
+	}
+	if c.RateLimits.ForgotIP < 0 {
+		return fmt.Errorf("RATE_LIMIT_FORGOT_PASSWORD_IP_PER_HOUR must not be negative (0 disables)")
 	}
 	if c.OutboxFloor < 0 {
 		return fmt.Errorf("OUTBOX_RETENTION_FLOOR_DAYS must not be negative")

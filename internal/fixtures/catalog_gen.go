@@ -95,6 +95,10 @@ const (
 	BroadcastRecipientErasableSoloID = 3004
 	// BroadcastRecipientSentID is from fixtures/broadcast_recipients.
 	BroadcastRecipientSentID = 1000
+	// BroadcastRecipientUnengagedFirstID is from fixtures/broadcast_recipients.
+	BroadcastRecipientUnengagedFirstID = 1005
+	// BroadcastRecipientUnengagedSecondID is from fixtures/broadcast_recipients.
+	BroadcastRecipientUnengagedSecondID = 1006
 	// BroadcastScheduledID is from fixtures/broadcasts.
 	BroadcastScheduledID = 101
 	// BroadcastScheduledName is from fixtures/broadcasts.
@@ -297,6 +301,14 @@ const (
 	EventRecentAnalyticalEmail = "old310@example.com"
 	// EventRecentAnalyticalID is from fixtures/events.
 	EventRecentAnalyticalID = 310
+	// FreshLoginAttemptEmail is from fixtures/auth_attempts.
+	FreshLoginAttemptEmail = "fresh@attempts.test"
+	// FreshLoginAttemptID is from fixtures/auth_attempts.
+	FreshLoginAttemptID = 101
+	// GhostLoginAttemptEmail is from fixtures/auth_attempts.
+	GhostLoginAttemptEmail = "ghost@attempts.test"
+	// GhostLoginAttemptID is from fixtures/auth_attempts.
+	GhostLoginAttemptID = 102
 	// GlobexCollectKey is from fixtures/workspaces.
 	GlobexCollectKey = "omck_test_globex_collect_key"
 	// GlobexID is from fixtures/workspaces.
@@ -411,6 +423,10 @@ const (
 	SendingDomainVerifiedDomain = "mail.acme.com"
 	// SendingDomainVerifiedID is from fixtures/sending_domains.
 	SendingDomainVerifiedID = 1
+	// StaleLoginAttemptEmail is from fixtures/auth_attempts.
+	StaleLoginAttemptEmail = "stale@attempts.test"
+	// StaleLoginAttemptID is from fixtures/auth_attempts.
+	StaleLoginAttemptID = 100
 	// SuppressionErasableDestination is from fixtures/suppressions.
 	SuppressionErasableDestination = "erin@initech.test"
 	// SuppressionErasableID is from fixtures/suppressions.

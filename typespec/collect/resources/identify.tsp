@@ -21,5 +21,7 @@ namespace CollectIdentify {
   op create(@body body: CollectIdentifyInput):
     | CollectOkResponse
     | UnauthorizedProblem
+    | PayloadTooLargeProblem
+    | TooManyRequestsProblem
     | UnprocessableEntityProblem;
 }

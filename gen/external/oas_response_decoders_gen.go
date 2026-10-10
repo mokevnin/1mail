@@ -150,6 +150,181 @@ func decodeAuthMeGetResponse(resp *http.Response) (res AuthMeGetRes, _ error) {
 		default:
 			return res, validate.InvalidContentType(ct)
 		}
+	case 429:
+		// Code 429.
+		ct, _, err := mime.ParseMediaType(resp.Header.Get("Content-Type"))
+		if err != nil {
+			return res, errors.Wrap(err, "parse media type")
+		}
+		switch {
+		case ct == "application/problem+json":
+			buf, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return res, err
+			}
+			d := jx.DecodeBytes(buf)
+
+			var response ProblemDetails
+			if err := func() error {
+				if err := response.Decode(d); err != nil {
+					return err
+				}
+				if err := d.Skip(); err != io.EOF {
+					return errors.New("unexpected trailing data")
+				}
+				return nil
+			}(); err != nil {
+				err = &ogenerrors.DecodeBodyError{
+					ContentType: ct,
+					Body:        buf,
+					Err:         err,
+				}
+				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
+			var wrapper ProblemDetailsHeaders
+			wrapper.Response = response
+			h := uri.NewHeaderDecoder(resp.Header)
+			// Parse "Retry-After" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "Retry-After",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.RetryAfter = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse Retry-After header")
+				}
+			}
+			// Parse "X-RateLimit-Limit" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Limit",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitLimit = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Limit header")
+				}
+			}
+			// Parse "X-RateLimit-Remaining" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Remaining",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitRemaining = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Remaining header")
+				}
+			}
+			// Parse "X-RateLimit-Reset" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Reset",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt64(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitReset = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Reset header")
+				}
+			}
+			return &wrapper, nil
+		default:
+			return res, validate.InvalidContentType(ct)
+		}
 	}
 	return res, validate.UnexpectedStatusCodeWithResponse(resp)
 }
@@ -332,6 +507,181 @@ func decodeAuthTokensBootstrapResponse(resp *http.Response) (res AuthTokensBoots
 		default:
 			return res, validate.InvalidContentType(ct)
 		}
+	case 429:
+		// Code 429.
+		ct, _, err := mime.ParseMediaType(resp.Header.Get("Content-Type"))
+		if err != nil {
+			return res, errors.Wrap(err, "parse media type")
+		}
+		switch {
+		case ct == "application/problem+json":
+			buf, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return res, err
+			}
+			d := jx.DecodeBytes(buf)
+
+			var response ProblemDetails
+			if err := func() error {
+				if err := response.Decode(d); err != nil {
+					return err
+				}
+				if err := d.Skip(); err != io.EOF {
+					return errors.New("unexpected trailing data")
+				}
+				return nil
+			}(); err != nil {
+				err = &ogenerrors.DecodeBodyError{
+					ContentType: ct,
+					Body:        buf,
+					Err:         err,
+				}
+				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
+			var wrapper ProblemDetailsHeaders
+			wrapper.Response = response
+			h := uri.NewHeaderDecoder(resp.Header)
+			// Parse "Retry-After" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "Retry-After",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.RetryAfter = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse Retry-After header")
+				}
+			}
+			// Parse "X-RateLimit-Limit" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Limit",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitLimit = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Limit header")
+				}
+			}
+			// Parse "X-RateLimit-Remaining" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Remaining",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitRemaining = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Remaining header")
+				}
+			}
+			// Parse "X-RateLimit-Reset" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Reset",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt64(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitReset = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Reset header")
+				}
+			}
+			return &wrapper, nil
+		default:
+			return res, validate.InvalidContentType(ct)
+		}
 	}
 	return res, validate.UnexpectedStatusCodeWithResponse(resp)
 }
@@ -511,6 +861,181 @@ func decodeAuthTokensCreateResponse(resp *http.Response) (res AuthTokensCreateRe
 				return res, errors.Wrap(err, "validate")
 			}
 			return &response, nil
+		default:
+			return res, validate.InvalidContentType(ct)
+		}
+	case 429:
+		// Code 429.
+		ct, _, err := mime.ParseMediaType(resp.Header.Get("Content-Type"))
+		if err != nil {
+			return res, errors.Wrap(err, "parse media type")
+		}
+		switch {
+		case ct == "application/problem+json":
+			buf, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return res, err
+			}
+			d := jx.DecodeBytes(buf)
+
+			var response ProblemDetails
+			if err := func() error {
+				if err := response.Decode(d); err != nil {
+					return err
+				}
+				if err := d.Skip(); err != io.EOF {
+					return errors.New("unexpected trailing data")
+				}
+				return nil
+			}(); err != nil {
+				err = &ogenerrors.DecodeBodyError{
+					ContentType: ct,
+					Body:        buf,
+					Err:         err,
+				}
+				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
+			var wrapper ProblemDetailsHeaders
+			wrapper.Response = response
+			h := uri.NewHeaderDecoder(resp.Header)
+			// Parse "Retry-After" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "Retry-After",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.RetryAfter = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse Retry-After header")
+				}
+			}
+			// Parse "X-RateLimit-Limit" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Limit",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitLimit = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Limit header")
+				}
+			}
+			// Parse "X-RateLimit-Remaining" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Remaining",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitRemaining = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Remaining header")
+				}
+			}
+			// Parse "X-RateLimit-Reset" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Reset",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt64(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitReset = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Reset header")
+				}
+			}
+			return &wrapper, nil
 		default:
 			return res, validate.InvalidContentType(ct)
 		}
@@ -699,6 +1224,181 @@ func decodeAuthTokensDeleteResponse(resp *http.Response) (res AuthTokensDeleteRe
 		default:
 			return res, validate.InvalidContentType(ct)
 		}
+	case 429:
+		// Code 429.
+		ct, _, err := mime.ParseMediaType(resp.Header.Get("Content-Type"))
+		if err != nil {
+			return res, errors.Wrap(err, "parse media type")
+		}
+		switch {
+		case ct == "application/problem+json":
+			buf, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return res, err
+			}
+			d := jx.DecodeBytes(buf)
+
+			var response ProblemDetails
+			if err := func() error {
+				if err := response.Decode(d); err != nil {
+					return err
+				}
+				if err := d.Skip(); err != io.EOF {
+					return errors.New("unexpected trailing data")
+				}
+				return nil
+			}(); err != nil {
+				err = &ogenerrors.DecodeBodyError{
+					ContentType: ct,
+					Body:        buf,
+					Err:         err,
+				}
+				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
+			var wrapper ProblemDetailsHeaders
+			wrapper.Response = response
+			h := uri.NewHeaderDecoder(resp.Header)
+			// Parse "Retry-After" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "Retry-After",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.RetryAfter = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse Retry-After header")
+				}
+			}
+			// Parse "X-RateLimit-Limit" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Limit",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitLimit = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Limit header")
+				}
+			}
+			// Parse "X-RateLimit-Remaining" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Remaining",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitRemaining = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Remaining header")
+				}
+			}
+			// Parse "X-RateLimit-Reset" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Reset",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt64(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitReset = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Reset header")
+				}
+			}
+			return &wrapper, nil
+		default:
+			return res, validate.InvalidContentType(ct)
+		}
 	}
 	return res, validate.UnexpectedStatusCodeWithResponse(resp)
 }
@@ -834,6 +1534,181 @@ func decodeAuthTokensListResponse(resp *http.Response) (res AuthTokensListRes, _
 				return res, errors.Wrap(err, "validate")
 			}
 			return &response, nil
+		default:
+			return res, validate.InvalidContentType(ct)
+		}
+	case 429:
+		// Code 429.
+		ct, _, err := mime.ParseMediaType(resp.Header.Get("Content-Type"))
+		if err != nil {
+			return res, errors.Wrap(err, "parse media type")
+		}
+		switch {
+		case ct == "application/problem+json":
+			buf, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return res, err
+			}
+			d := jx.DecodeBytes(buf)
+
+			var response ProblemDetails
+			if err := func() error {
+				if err := response.Decode(d); err != nil {
+					return err
+				}
+				if err := d.Skip(); err != io.EOF {
+					return errors.New("unexpected trailing data")
+				}
+				return nil
+			}(); err != nil {
+				err = &ogenerrors.DecodeBodyError{
+					ContentType: ct,
+					Body:        buf,
+					Err:         err,
+				}
+				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
+			var wrapper ProblemDetailsHeaders
+			wrapper.Response = response
+			h := uri.NewHeaderDecoder(resp.Header)
+			// Parse "Retry-After" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "Retry-After",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.RetryAfter = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse Retry-After header")
+				}
+			}
+			// Parse "X-RateLimit-Limit" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Limit",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitLimit = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Limit header")
+				}
+			}
+			// Parse "X-RateLimit-Remaining" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Remaining",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitRemaining = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Remaining header")
+				}
+			}
+			// Parse "X-RateLimit-Reset" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Reset",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt64(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitReset = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Reset header")
+				}
+			}
+			return &wrapper, nil
 		default:
 			return res, validate.InvalidContentType(ct)
 		}
@@ -1063,6 +1938,181 @@ func decodeAutomationsActivateResponse(resp *http.Response) (res AutomationsActi
 		default:
 			return res, validate.InvalidContentType(ct)
 		}
+	case 429:
+		// Code 429.
+		ct, _, err := mime.ParseMediaType(resp.Header.Get("Content-Type"))
+		if err != nil {
+			return res, errors.Wrap(err, "parse media type")
+		}
+		switch {
+		case ct == "application/problem+json":
+			buf, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return res, err
+			}
+			d := jx.DecodeBytes(buf)
+
+			var response ProblemDetails
+			if err := func() error {
+				if err := response.Decode(d); err != nil {
+					return err
+				}
+				if err := d.Skip(); err != io.EOF {
+					return errors.New("unexpected trailing data")
+				}
+				return nil
+			}(); err != nil {
+				err = &ogenerrors.DecodeBodyError{
+					ContentType: ct,
+					Body:        buf,
+					Err:         err,
+				}
+				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
+			var wrapper ProblemDetailsHeaders
+			wrapper.Response = response
+			h := uri.NewHeaderDecoder(resp.Header)
+			// Parse "Retry-After" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "Retry-After",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.RetryAfter = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse Retry-After header")
+				}
+			}
+			// Parse "X-RateLimit-Limit" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Limit",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitLimit = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Limit header")
+				}
+			}
+			// Parse "X-RateLimit-Remaining" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Remaining",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitRemaining = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Remaining header")
+				}
+			}
+			// Parse "X-RateLimit-Reset" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Reset",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt64(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitReset = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Reset header")
+				}
+			}
+			return &wrapper, nil
+		default:
+			return res, validate.InvalidContentType(ct)
+		}
 	}
 	return res, validate.UnexpectedStatusCodeWithResponse(resp)
 }
@@ -1198,6 +2248,181 @@ func decodeAutomationsCreateResponse(resp *http.Response) (res AutomationsCreate
 				return res, errors.Wrap(err, "validate")
 			}
 			return &response, nil
+		default:
+			return res, validate.InvalidContentType(ct)
+		}
+	case 429:
+		// Code 429.
+		ct, _, err := mime.ParseMediaType(resp.Header.Get("Content-Type"))
+		if err != nil {
+			return res, errors.Wrap(err, "parse media type")
+		}
+		switch {
+		case ct == "application/problem+json":
+			buf, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return res, err
+			}
+			d := jx.DecodeBytes(buf)
+
+			var response ProblemDetails
+			if err := func() error {
+				if err := response.Decode(d); err != nil {
+					return err
+				}
+				if err := d.Skip(); err != io.EOF {
+					return errors.New("unexpected trailing data")
+				}
+				return nil
+			}(); err != nil {
+				err = &ogenerrors.DecodeBodyError{
+					ContentType: ct,
+					Body:        buf,
+					Err:         err,
+				}
+				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
+			var wrapper ProblemDetailsHeaders
+			wrapper.Response = response
+			h := uri.NewHeaderDecoder(resp.Header)
+			// Parse "Retry-After" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "Retry-After",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.RetryAfter = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse Retry-After header")
+				}
+			}
+			// Parse "X-RateLimit-Limit" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Limit",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitLimit = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Limit header")
+				}
+			}
+			// Parse "X-RateLimit-Remaining" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Remaining",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitRemaining = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Remaining header")
+				}
+			}
+			// Parse "X-RateLimit-Reset" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Reset",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt64(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitReset = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Reset header")
+				}
+			}
+			return &wrapper, nil
 		default:
 			return res, validate.InvalidContentType(ct)
 		}
@@ -1380,6 +2605,181 @@ func decodeAutomationsDeactivateResponse(resp *http.Response) (res AutomationsDe
 				return res, errors.Wrap(err, "validate")
 			}
 			return &response, nil
+		default:
+			return res, validate.InvalidContentType(ct)
+		}
+	case 429:
+		// Code 429.
+		ct, _, err := mime.ParseMediaType(resp.Header.Get("Content-Type"))
+		if err != nil {
+			return res, errors.Wrap(err, "parse media type")
+		}
+		switch {
+		case ct == "application/problem+json":
+			buf, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return res, err
+			}
+			d := jx.DecodeBytes(buf)
+
+			var response ProblemDetails
+			if err := func() error {
+				if err := response.Decode(d); err != nil {
+					return err
+				}
+				if err := d.Skip(); err != io.EOF {
+					return errors.New("unexpected trailing data")
+				}
+				return nil
+			}(); err != nil {
+				err = &ogenerrors.DecodeBodyError{
+					ContentType: ct,
+					Body:        buf,
+					Err:         err,
+				}
+				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
+			var wrapper ProblemDetailsHeaders
+			wrapper.Response = response
+			h := uri.NewHeaderDecoder(resp.Header)
+			// Parse "Retry-After" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "Retry-After",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.RetryAfter = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse Retry-After header")
+				}
+			}
+			// Parse "X-RateLimit-Limit" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Limit",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitLimit = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Limit header")
+				}
+			}
+			// Parse "X-RateLimit-Remaining" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Remaining",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitRemaining = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Remaining header")
+				}
+			}
+			// Parse "X-RateLimit-Reset" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Reset",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt64(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitReset = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Reset header")
+				}
+			}
+			return &wrapper, nil
 		default:
 			return res, validate.InvalidContentType(ct)
 		}
@@ -1568,6 +2968,181 @@ func decodeAutomationsDeleteResponse(resp *http.Response) (res AutomationsDelete
 		default:
 			return res, validate.InvalidContentType(ct)
 		}
+	case 429:
+		// Code 429.
+		ct, _, err := mime.ParseMediaType(resp.Header.Get("Content-Type"))
+		if err != nil {
+			return res, errors.Wrap(err, "parse media type")
+		}
+		switch {
+		case ct == "application/problem+json":
+			buf, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return res, err
+			}
+			d := jx.DecodeBytes(buf)
+
+			var response ProblemDetails
+			if err := func() error {
+				if err := response.Decode(d); err != nil {
+					return err
+				}
+				if err := d.Skip(); err != io.EOF {
+					return errors.New("unexpected trailing data")
+				}
+				return nil
+			}(); err != nil {
+				err = &ogenerrors.DecodeBodyError{
+					ContentType: ct,
+					Body:        buf,
+					Err:         err,
+				}
+				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
+			var wrapper ProblemDetailsHeaders
+			wrapper.Response = response
+			h := uri.NewHeaderDecoder(resp.Header)
+			// Parse "Retry-After" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "Retry-After",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.RetryAfter = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse Retry-After header")
+				}
+			}
+			// Parse "X-RateLimit-Limit" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Limit",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitLimit = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Limit header")
+				}
+			}
+			// Parse "X-RateLimit-Remaining" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Remaining",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitRemaining = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Remaining header")
+				}
+			}
+			// Parse "X-RateLimit-Reset" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Reset",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt64(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitReset = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Reset header")
+				}
+			}
+			return &wrapper, nil
+		default:
+			return res, validate.InvalidContentType(ct)
+		}
 	}
 	return res, validate.UnexpectedStatusCodeWithResponse(resp)
 }
@@ -1750,6 +3325,181 @@ func decodeAutomationsGetResponse(resp *http.Response) (res AutomationsGetRes, _
 		default:
 			return res, validate.InvalidContentType(ct)
 		}
+	case 429:
+		// Code 429.
+		ct, _, err := mime.ParseMediaType(resp.Header.Get("Content-Type"))
+		if err != nil {
+			return res, errors.Wrap(err, "parse media type")
+		}
+		switch {
+		case ct == "application/problem+json":
+			buf, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return res, err
+			}
+			d := jx.DecodeBytes(buf)
+
+			var response ProblemDetails
+			if err := func() error {
+				if err := response.Decode(d); err != nil {
+					return err
+				}
+				if err := d.Skip(); err != io.EOF {
+					return errors.New("unexpected trailing data")
+				}
+				return nil
+			}(); err != nil {
+				err = &ogenerrors.DecodeBodyError{
+					ContentType: ct,
+					Body:        buf,
+					Err:         err,
+				}
+				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
+			var wrapper ProblemDetailsHeaders
+			wrapper.Response = response
+			h := uri.NewHeaderDecoder(resp.Header)
+			// Parse "Retry-After" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "Retry-After",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.RetryAfter = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse Retry-After header")
+				}
+			}
+			// Parse "X-RateLimit-Limit" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Limit",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitLimit = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Limit header")
+				}
+			}
+			// Parse "X-RateLimit-Remaining" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Remaining",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitRemaining = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Remaining header")
+				}
+			}
+			// Parse "X-RateLimit-Reset" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Reset",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt64(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitReset = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Reset header")
+				}
+			}
+			return &wrapper, nil
+		default:
+			return res, validate.InvalidContentType(ct)
+		}
 	}
 	return res, validate.UnexpectedStatusCodeWithResponse(resp)
 }
@@ -1929,6 +3679,181 @@ func decodeAutomationsListResponse(resp *http.Response) (res AutomationsListRes,
 				return res, errors.Wrap(err, "validate")
 			}
 			return &response, nil
+		default:
+			return res, validate.InvalidContentType(ct)
+		}
+	case 429:
+		// Code 429.
+		ct, _, err := mime.ParseMediaType(resp.Header.Get("Content-Type"))
+		if err != nil {
+			return res, errors.Wrap(err, "parse media type")
+		}
+		switch {
+		case ct == "application/problem+json":
+			buf, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return res, err
+			}
+			d := jx.DecodeBytes(buf)
+
+			var response ProblemDetails
+			if err := func() error {
+				if err := response.Decode(d); err != nil {
+					return err
+				}
+				if err := d.Skip(); err != io.EOF {
+					return errors.New("unexpected trailing data")
+				}
+				return nil
+			}(); err != nil {
+				err = &ogenerrors.DecodeBodyError{
+					ContentType: ct,
+					Body:        buf,
+					Err:         err,
+				}
+				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
+			var wrapper ProblemDetailsHeaders
+			wrapper.Response = response
+			h := uri.NewHeaderDecoder(resp.Header)
+			// Parse "Retry-After" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "Retry-After",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.RetryAfter = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse Retry-After header")
+				}
+			}
+			// Parse "X-RateLimit-Limit" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Limit",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitLimit = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Limit header")
+				}
+			}
+			// Parse "X-RateLimit-Remaining" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Remaining",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitRemaining = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Remaining header")
+				}
+			}
+			// Parse "X-RateLimit-Reset" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Reset",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt64(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitReset = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Reset header")
+				}
+			}
+			return &wrapper, nil
 		default:
 			return res, validate.InvalidContentType(ct)
 		}
@@ -2158,6 +4083,181 @@ func decodeAutomationsUpdateResponse(resp *http.Response) (res AutomationsUpdate
 		default:
 			return res, validate.InvalidContentType(ct)
 		}
+	case 429:
+		// Code 429.
+		ct, _, err := mime.ParseMediaType(resp.Header.Get("Content-Type"))
+		if err != nil {
+			return res, errors.Wrap(err, "parse media type")
+		}
+		switch {
+		case ct == "application/problem+json":
+			buf, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return res, err
+			}
+			d := jx.DecodeBytes(buf)
+
+			var response ProblemDetails
+			if err := func() error {
+				if err := response.Decode(d); err != nil {
+					return err
+				}
+				if err := d.Skip(); err != io.EOF {
+					return errors.New("unexpected trailing data")
+				}
+				return nil
+			}(); err != nil {
+				err = &ogenerrors.DecodeBodyError{
+					ContentType: ct,
+					Body:        buf,
+					Err:         err,
+				}
+				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
+			var wrapper ProblemDetailsHeaders
+			wrapper.Response = response
+			h := uri.NewHeaderDecoder(resp.Header)
+			// Parse "Retry-After" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "Retry-After",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.RetryAfter = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse Retry-After header")
+				}
+			}
+			// Parse "X-RateLimit-Limit" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Limit",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitLimit = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Limit header")
+				}
+			}
+			// Parse "X-RateLimit-Remaining" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Remaining",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitRemaining = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Remaining header")
+				}
+			}
+			// Parse "X-RateLimit-Reset" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Reset",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt64(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitReset = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Reset header")
+				}
+			}
+			return &wrapper, nil
+		default:
+			return res, validate.InvalidContentType(ct)
+		}
 	}
 	return res, validate.UnexpectedStatusCodeWithResponse(resp)
 }
@@ -2293,6 +4393,181 @@ func decodeBroadcastsCreateResponse(resp *http.Response) (res BroadcastsCreateRe
 				return res, errors.Wrap(err, "validate")
 			}
 			return &response, nil
+		default:
+			return res, validate.InvalidContentType(ct)
+		}
+	case 429:
+		// Code 429.
+		ct, _, err := mime.ParseMediaType(resp.Header.Get("Content-Type"))
+		if err != nil {
+			return res, errors.Wrap(err, "parse media type")
+		}
+		switch {
+		case ct == "application/problem+json":
+			buf, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return res, err
+			}
+			d := jx.DecodeBytes(buf)
+
+			var response ProblemDetails
+			if err := func() error {
+				if err := response.Decode(d); err != nil {
+					return err
+				}
+				if err := d.Skip(); err != io.EOF {
+					return errors.New("unexpected trailing data")
+				}
+				return nil
+			}(); err != nil {
+				err = &ogenerrors.DecodeBodyError{
+					ContentType: ct,
+					Body:        buf,
+					Err:         err,
+				}
+				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
+			var wrapper ProblemDetailsHeaders
+			wrapper.Response = response
+			h := uri.NewHeaderDecoder(resp.Header)
+			// Parse "Retry-After" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "Retry-After",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.RetryAfter = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse Retry-After header")
+				}
+			}
+			// Parse "X-RateLimit-Limit" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Limit",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitLimit = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Limit header")
+				}
+			}
+			// Parse "X-RateLimit-Remaining" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Remaining",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitRemaining = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Remaining header")
+				}
+			}
+			// Parse "X-RateLimit-Reset" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Reset",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt64(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitReset = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Reset header")
+				}
+			}
+			return &wrapper, nil
 		default:
 			return res, validate.InvalidContentType(ct)
 		}
@@ -2481,6 +4756,181 @@ func decodeBroadcastsDeleteResponse(resp *http.Response) (res BroadcastsDeleteRe
 		default:
 			return res, validate.InvalidContentType(ct)
 		}
+	case 429:
+		// Code 429.
+		ct, _, err := mime.ParseMediaType(resp.Header.Get("Content-Type"))
+		if err != nil {
+			return res, errors.Wrap(err, "parse media type")
+		}
+		switch {
+		case ct == "application/problem+json":
+			buf, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return res, err
+			}
+			d := jx.DecodeBytes(buf)
+
+			var response ProblemDetails
+			if err := func() error {
+				if err := response.Decode(d); err != nil {
+					return err
+				}
+				if err := d.Skip(); err != io.EOF {
+					return errors.New("unexpected trailing data")
+				}
+				return nil
+			}(); err != nil {
+				err = &ogenerrors.DecodeBodyError{
+					ContentType: ct,
+					Body:        buf,
+					Err:         err,
+				}
+				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
+			var wrapper ProblemDetailsHeaders
+			wrapper.Response = response
+			h := uri.NewHeaderDecoder(resp.Header)
+			// Parse "Retry-After" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "Retry-After",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.RetryAfter = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse Retry-After header")
+				}
+			}
+			// Parse "X-RateLimit-Limit" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Limit",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitLimit = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Limit header")
+				}
+			}
+			// Parse "X-RateLimit-Remaining" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Remaining",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitRemaining = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Remaining header")
+				}
+			}
+			// Parse "X-RateLimit-Reset" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Reset",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt64(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitReset = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Reset header")
+				}
+			}
+			return &wrapper, nil
+		default:
+			return res, validate.InvalidContentType(ct)
+		}
 	}
 	return res, validate.UnexpectedStatusCodeWithResponse(resp)
 }
@@ -2660,6 +5110,181 @@ func decodeBroadcastsGetResponse(resp *http.Response) (res BroadcastsGetRes, _ e
 				return res, errors.Wrap(err, "validate")
 			}
 			return &response, nil
+		default:
+			return res, validate.InvalidContentType(ct)
+		}
+	case 429:
+		// Code 429.
+		ct, _, err := mime.ParseMediaType(resp.Header.Get("Content-Type"))
+		if err != nil {
+			return res, errors.Wrap(err, "parse media type")
+		}
+		switch {
+		case ct == "application/problem+json":
+			buf, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return res, err
+			}
+			d := jx.DecodeBytes(buf)
+
+			var response ProblemDetails
+			if err := func() error {
+				if err := response.Decode(d); err != nil {
+					return err
+				}
+				if err := d.Skip(); err != io.EOF {
+					return errors.New("unexpected trailing data")
+				}
+				return nil
+			}(); err != nil {
+				err = &ogenerrors.DecodeBodyError{
+					ContentType: ct,
+					Body:        buf,
+					Err:         err,
+				}
+				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
+			var wrapper ProblemDetailsHeaders
+			wrapper.Response = response
+			h := uri.NewHeaderDecoder(resp.Header)
+			// Parse "Retry-After" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "Retry-After",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.RetryAfter = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse Retry-After header")
+				}
+			}
+			// Parse "X-RateLimit-Limit" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Limit",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitLimit = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Limit header")
+				}
+			}
+			// Parse "X-RateLimit-Remaining" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Remaining",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitRemaining = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Remaining header")
+				}
+			}
+			// Parse "X-RateLimit-Reset" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Reset",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt64(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitReset = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Reset header")
+				}
+			}
+			return &wrapper, nil
 		default:
 			return res, validate.InvalidContentType(ct)
 		}
@@ -2845,6 +5470,181 @@ func decodeBroadcastsListResponse(resp *http.Response) (res BroadcastsListRes, _
 		default:
 			return res, validate.InvalidContentType(ct)
 		}
+	case 429:
+		// Code 429.
+		ct, _, err := mime.ParseMediaType(resp.Header.Get("Content-Type"))
+		if err != nil {
+			return res, errors.Wrap(err, "parse media type")
+		}
+		switch {
+		case ct == "application/problem+json":
+			buf, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return res, err
+			}
+			d := jx.DecodeBytes(buf)
+
+			var response ProblemDetails
+			if err := func() error {
+				if err := response.Decode(d); err != nil {
+					return err
+				}
+				if err := d.Skip(); err != io.EOF {
+					return errors.New("unexpected trailing data")
+				}
+				return nil
+			}(); err != nil {
+				err = &ogenerrors.DecodeBodyError{
+					ContentType: ct,
+					Body:        buf,
+					Err:         err,
+				}
+				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
+			var wrapper ProblemDetailsHeaders
+			wrapper.Response = response
+			h := uri.NewHeaderDecoder(resp.Header)
+			// Parse "Retry-After" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "Retry-After",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.RetryAfter = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse Retry-After header")
+				}
+			}
+			// Parse "X-RateLimit-Limit" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Limit",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitLimit = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Limit header")
+				}
+			}
+			// Parse "X-RateLimit-Remaining" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Remaining",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitRemaining = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Remaining header")
+				}
+			}
+			// Parse "X-RateLimit-Reset" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Reset",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt64(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitReset = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Reset header")
+				}
+			}
+			return &wrapper, nil
+		default:
+			return res, validate.InvalidContentType(ct)
+		}
 	}
 	return res, validate.UnexpectedStatusCodeWithResponse(resp)
 }
@@ -3024,6 +5824,181 @@ func decodeBroadcastsReportResponse(resp *http.Response) (res BroadcastsReportRe
 				return res, errors.Wrap(err, "validate")
 			}
 			return &response, nil
+		default:
+			return res, validate.InvalidContentType(ct)
+		}
+	case 429:
+		// Code 429.
+		ct, _, err := mime.ParseMediaType(resp.Header.Get("Content-Type"))
+		if err != nil {
+			return res, errors.Wrap(err, "parse media type")
+		}
+		switch {
+		case ct == "application/problem+json":
+			buf, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return res, err
+			}
+			d := jx.DecodeBytes(buf)
+
+			var response ProblemDetails
+			if err := func() error {
+				if err := response.Decode(d); err != nil {
+					return err
+				}
+				if err := d.Skip(); err != io.EOF {
+					return errors.New("unexpected trailing data")
+				}
+				return nil
+			}(); err != nil {
+				err = &ogenerrors.DecodeBodyError{
+					ContentType: ct,
+					Body:        buf,
+					Err:         err,
+				}
+				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
+			var wrapper ProblemDetailsHeaders
+			wrapper.Response = response
+			h := uri.NewHeaderDecoder(resp.Header)
+			// Parse "Retry-After" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "Retry-After",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.RetryAfter = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse Retry-After header")
+				}
+			}
+			// Parse "X-RateLimit-Limit" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Limit",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitLimit = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Limit header")
+				}
+			}
+			// Parse "X-RateLimit-Remaining" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Remaining",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitRemaining = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Remaining header")
+				}
+			}
+			// Parse "X-RateLimit-Reset" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Reset",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt64(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitReset = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Reset header")
+				}
+			}
+			return &wrapper, nil
 		default:
 			return res, validate.InvalidContentType(ct)
 		}
@@ -3253,6 +6228,181 @@ func decodeBroadcastsScheduleResponse(resp *http.Response) (res BroadcastsSchedu
 		default:
 			return res, validate.InvalidContentType(ct)
 		}
+	case 429:
+		// Code 429.
+		ct, _, err := mime.ParseMediaType(resp.Header.Get("Content-Type"))
+		if err != nil {
+			return res, errors.Wrap(err, "parse media type")
+		}
+		switch {
+		case ct == "application/problem+json":
+			buf, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return res, err
+			}
+			d := jx.DecodeBytes(buf)
+
+			var response ProblemDetails
+			if err := func() error {
+				if err := response.Decode(d); err != nil {
+					return err
+				}
+				if err := d.Skip(); err != io.EOF {
+					return errors.New("unexpected trailing data")
+				}
+				return nil
+			}(); err != nil {
+				err = &ogenerrors.DecodeBodyError{
+					ContentType: ct,
+					Body:        buf,
+					Err:         err,
+				}
+				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
+			var wrapper ProblemDetailsHeaders
+			wrapper.Response = response
+			h := uri.NewHeaderDecoder(resp.Header)
+			// Parse "Retry-After" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "Retry-After",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.RetryAfter = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse Retry-After header")
+				}
+			}
+			// Parse "X-RateLimit-Limit" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Limit",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitLimit = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Limit header")
+				}
+			}
+			// Parse "X-RateLimit-Remaining" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Remaining",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitRemaining = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Remaining header")
+				}
+			}
+			// Parse "X-RateLimit-Reset" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Reset",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt64(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitReset = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Reset header")
+				}
+			}
+			return &wrapper, nil
+		default:
+			return res, validate.InvalidContentType(ct)
+		}
 	}
 	return res, validate.UnexpectedStatusCodeWithResponse(resp)
 }
@@ -3479,6 +6629,181 @@ func decodeBroadcastsSetAudienceResponse(resp *http.Response) (res BroadcastsSet
 		default:
 			return res, validate.InvalidContentType(ct)
 		}
+	case 429:
+		// Code 429.
+		ct, _, err := mime.ParseMediaType(resp.Header.Get("Content-Type"))
+		if err != nil {
+			return res, errors.Wrap(err, "parse media type")
+		}
+		switch {
+		case ct == "application/problem+json":
+			buf, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return res, err
+			}
+			d := jx.DecodeBytes(buf)
+
+			var response ProblemDetails
+			if err := func() error {
+				if err := response.Decode(d); err != nil {
+					return err
+				}
+				if err := d.Skip(); err != io.EOF {
+					return errors.New("unexpected trailing data")
+				}
+				return nil
+			}(); err != nil {
+				err = &ogenerrors.DecodeBodyError{
+					ContentType: ct,
+					Body:        buf,
+					Err:         err,
+				}
+				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
+			var wrapper ProblemDetailsHeaders
+			wrapper.Response = response
+			h := uri.NewHeaderDecoder(resp.Header)
+			// Parse "Retry-After" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "Retry-After",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.RetryAfter = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse Retry-After header")
+				}
+			}
+			// Parse "X-RateLimit-Limit" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Limit",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitLimit = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Limit header")
+				}
+			}
+			// Parse "X-RateLimit-Remaining" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Remaining",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitRemaining = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Remaining header")
+				}
+			}
+			// Parse "X-RateLimit-Reset" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Reset",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt64(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitReset = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Reset header")
+				}
+			}
+			return &wrapper, nil
+		default:
+			return res, validate.InvalidContentType(ct)
+		}
 	}
 	return res, validate.UnexpectedStatusCodeWithResponse(resp)
 }
@@ -3661,6 +6986,181 @@ func decodeBroadcastsTestSendResponse(resp *http.Response) (res BroadcastsTestSe
 				return res, errors.Wrap(err, "validate")
 			}
 			return &response, nil
+		default:
+			return res, validate.InvalidContentType(ct)
+		}
+	case 429:
+		// Code 429.
+		ct, _, err := mime.ParseMediaType(resp.Header.Get("Content-Type"))
+		if err != nil {
+			return res, errors.Wrap(err, "parse media type")
+		}
+		switch {
+		case ct == "application/problem+json":
+			buf, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return res, err
+			}
+			d := jx.DecodeBytes(buf)
+
+			var response ProblemDetails
+			if err := func() error {
+				if err := response.Decode(d); err != nil {
+					return err
+				}
+				if err := d.Skip(); err != io.EOF {
+					return errors.New("unexpected trailing data")
+				}
+				return nil
+			}(); err != nil {
+				err = &ogenerrors.DecodeBodyError{
+					ContentType: ct,
+					Body:        buf,
+					Err:         err,
+				}
+				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
+			var wrapper ProblemDetailsHeaders
+			wrapper.Response = response
+			h := uri.NewHeaderDecoder(resp.Header)
+			// Parse "Retry-After" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "Retry-After",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.RetryAfter = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse Retry-After header")
+				}
+			}
+			// Parse "X-RateLimit-Limit" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Limit",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitLimit = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Limit header")
+				}
+			}
+			// Parse "X-RateLimit-Remaining" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Remaining",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitRemaining = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Remaining header")
+				}
+			}
+			// Parse "X-RateLimit-Reset" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Reset",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt64(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitReset = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Reset header")
+				}
+			}
+			return &wrapper, nil
 		default:
 			return res, validate.InvalidContentType(ct)
 		}
@@ -3890,6 +7390,181 @@ func decodeBroadcastsUnscheduleResponse(resp *http.Response) (res BroadcastsUnsc
 		default:
 			return res, validate.InvalidContentType(ct)
 		}
+	case 429:
+		// Code 429.
+		ct, _, err := mime.ParseMediaType(resp.Header.Get("Content-Type"))
+		if err != nil {
+			return res, errors.Wrap(err, "parse media type")
+		}
+		switch {
+		case ct == "application/problem+json":
+			buf, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return res, err
+			}
+			d := jx.DecodeBytes(buf)
+
+			var response ProblemDetails
+			if err := func() error {
+				if err := response.Decode(d); err != nil {
+					return err
+				}
+				if err := d.Skip(); err != io.EOF {
+					return errors.New("unexpected trailing data")
+				}
+				return nil
+			}(); err != nil {
+				err = &ogenerrors.DecodeBodyError{
+					ContentType: ct,
+					Body:        buf,
+					Err:         err,
+				}
+				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
+			var wrapper ProblemDetailsHeaders
+			wrapper.Response = response
+			h := uri.NewHeaderDecoder(resp.Header)
+			// Parse "Retry-After" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "Retry-After",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.RetryAfter = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse Retry-After header")
+				}
+			}
+			// Parse "X-RateLimit-Limit" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Limit",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitLimit = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Limit header")
+				}
+			}
+			// Parse "X-RateLimit-Remaining" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Remaining",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitRemaining = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Remaining header")
+				}
+			}
+			// Parse "X-RateLimit-Reset" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Reset",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt64(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitReset = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Reset header")
+				}
+			}
+			return &wrapper, nil
+		default:
+			return res, validate.InvalidContentType(ct)
+		}
 	}
 	return res, validate.UnexpectedStatusCodeWithResponse(resp)
 }
@@ -4116,6 +7791,181 @@ func decodeBroadcastsUpdateResponse(resp *http.Response) (res BroadcastsUpdateRe
 		default:
 			return res, validate.InvalidContentType(ct)
 		}
+	case 429:
+		// Code 429.
+		ct, _, err := mime.ParseMediaType(resp.Header.Get("Content-Type"))
+		if err != nil {
+			return res, errors.Wrap(err, "parse media type")
+		}
+		switch {
+		case ct == "application/problem+json":
+			buf, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return res, err
+			}
+			d := jx.DecodeBytes(buf)
+
+			var response ProblemDetails
+			if err := func() error {
+				if err := response.Decode(d); err != nil {
+					return err
+				}
+				if err := d.Skip(); err != io.EOF {
+					return errors.New("unexpected trailing data")
+				}
+				return nil
+			}(); err != nil {
+				err = &ogenerrors.DecodeBodyError{
+					ContentType: ct,
+					Body:        buf,
+					Err:         err,
+				}
+				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
+			var wrapper ProblemDetailsHeaders
+			wrapper.Response = response
+			h := uri.NewHeaderDecoder(resp.Header)
+			// Parse "Retry-After" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "Retry-After",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.RetryAfter = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse Retry-After header")
+				}
+			}
+			// Parse "X-RateLimit-Limit" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Limit",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitLimit = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Limit header")
+				}
+			}
+			// Parse "X-RateLimit-Remaining" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Remaining",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitRemaining = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Remaining header")
+				}
+			}
+			// Parse "X-RateLimit-Reset" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Reset",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt64(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitReset = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Reset header")
+				}
+			}
+			return &wrapper, nil
+		default:
+			return res, validate.InvalidContentType(ct)
+		}
 	}
 	return res, validate.UnexpectedStatusCodeWithResponse(resp)
 }
@@ -4251,6 +8101,181 @@ func decodeContactsBatchUpsertResponse(resp *http.Response) (res ContactsBatchUp
 				return res, errors.Wrap(err, "validate")
 			}
 			return &response, nil
+		default:
+			return res, validate.InvalidContentType(ct)
+		}
+	case 429:
+		// Code 429.
+		ct, _, err := mime.ParseMediaType(resp.Header.Get("Content-Type"))
+		if err != nil {
+			return res, errors.Wrap(err, "parse media type")
+		}
+		switch {
+		case ct == "application/problem+json":
+			buf, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return res, err
+			}
+			d := jx.DecodeBytes(buf)
+
+			var response ProblemDetails
+			if err := func() error {
+				if err := response.Decode(d); err != nil {
+					return err
+				}
+				if err := d.Skip(); err != io.EOF {
+					return errors.New("unexpected trailing data")
+				}
+				return nil
+			}(); err != nil {
+				err = &ogenerrors.DecodeBodyError{
+					ContentType: ct,
+					Body:        buf,
+					Err:         err,
+				}
+				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
+			var wrapper ProblemDetailsHeaders
+			wrapper.Response = response
+			h := uri.NewHeaderDecoder(resp.Header)
+			// Parse "Retry-After" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "Retry-After",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.RetryAfter = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse Retry-After header")
+				}
+			}
+			// Parse "X-RateLimit-Limit" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Limit",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitLimit = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Limit header")
+				}
+			}
+			// Parse "X-RateLimit-Remaining" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Remaining",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitRemaining = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Remaining header")
+				}
+			}
+			// Parse "X-RateLimit-Reset" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Reset",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt64(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitReset = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Reset header")
+				}
+			}
+			return &wrapper, nil
 		default:
 			return res, validate.InvalidContentType(ct)
 		}
@@ -4436,6 +8461,181 @@ func decodeContactsCreateResponse(resp *http.Response) (res ContactsCreateRes, _
 		default:
 			return res, validate.InvalidContentType(ct)
 		}
+	case 429:
+		// Code 429.
+		ct, _, err := mime.ParseMediaType(resp.Header.Get("Content-Type"))
+		if err != nil {
+			return res, errors.Wrap(err, "parse media type")
+		}
+		switch {
+		case ct == "application/problem+json":
+			buf, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return res, err
+			}
+			d := jx.DecodeBytes(buf)
+
+			var response ProblemDetails
+			if err := func() error {
+				if err := response.Decode(d); err != nil {
+					return err
+				}
+				if err := d.Skip(); err != io.EOF {
+					return errors.New("unexpected trailing data")
+				}
+				return nil
+			}(); err != nil {
+				err = &ogenerrors.DecodeBodyError{
+					ContentType: ct,
+					Body:        buf,
+					Err:         err,
+				}
+				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
+			var wrapper ProblemDetailsHeaders
+			wrapper.Response = response
+			h := uri.NewHeaderDecoder(resp.Header)
+			// Parse "Retry-After" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "Retry-After",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.RetryAfter = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse Retry-After header")
+				}
+			}
+			// Parse "X-RateLimit-Limit" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Limit",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitLimit = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Limit header")
+				}
+			}
+			// Parse "X-RateLimit-Remaining" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Remaining",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitRemaining = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Remaining header")
+				}
+			}
+			// Parse "X-RateLimit-Reset" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Reset",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt64(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitReset = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Reset header")
+				}
+			}
+			return &wrapper, nil
+		default:
+			return res, validate.InvalidContentType(ct)
+		}
 	}
 	return res, validate.UnexpectedStatusCodeWithResponse(resp)
 }
@@ -4618,6 +8818,181 @@ func decodeContactsDeleteResponse(resp *http.Response) (res ContactsDeleteRes, _
 				return res, errors.Wrap(err, "validate")
 			}
 			return &response, nil
+		default:
+			return res, validate.InvalidContentType(ct)
+		}
+	case 429:
+		// Code 429.
+		ct, _, err := mime.ParseMediaType(resp.Header.Get("Content-Type"))
+		if err != nil {
+			return res, errors.Wrap(err, "parse media type")
+		}
+		switch {
+		case ct == "application/problem+json":
+			buf, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return res, err
+			}
+			d := jx.DecodeBytes(buf)
+
+			var response ProblemDetails
+			if err := func() error {
+				if err := response.Decode(d); err != nil {
+					return err
+				}
+				if err := d.Skip(); err != io.EOF {
+					return errors.New("unexpected trailing data")
+				}
+				return nil
+			}(); err != nil {
+				err = &ogenerrors.DecodeBodyError{
+					ContentType: ct,
+					Body:        buf,
+					Err:         err,
+				}
+				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
+			var wrapper ProblemDetailsHeaders
+			wrapper.Response = response
+			h := uri.NewHeaderDecoder(resp.Header)
+			// Parse "Retry-After" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "Retry-After",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.RetryAfter = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse Retry-After header")
+				}
+			}
+			// Parse "X-RateLimit-Limit" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Limit",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitLimit = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Limit header")
+				}
+			}
+			// Parse "X-RateLimit-Remaining" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Remaining",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitRemaining = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Remaining header")
+				}
+			}
+			// Parse "X-RateLimit-Reset" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Reset",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt64(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitReset = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Reset header")
+				}
+			}
+			return &wrapper, nil
 		default:
 			return res, validate.InvalidContentType(ct)
 		}
@@ -5136,6 +9511,181 @@ func decodeContactsGetResponse(resp *http.Response) (res ContactsGetRes, _ error
 		default:
 			return res, validate.InvalidContentType(ct)
 		}
+	case 429:
+		// Code 429.
+		ct, _, err := mime.ParseMediaType(resp.Header.Get("Content-Type"))
+		if err != nil {
+			return res, errors.Wrap(err, "parse media type")
+		}
+		switch {
+		case ct == "application/problem+json":
+			buf, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return res, err
+			}
+			d := jx.DecodeBytes(buf)
+
+			var response ProblemDetails
+			if err := func() error {
+				if err := response.Decode(d); err != nil {
+					return err
+				}
+				if err := d.Skip(); err != io.EOF {
+					return errors.New("unexpected trailing data")
+				}
+				return nil
+			}(); err != nil {
+				err = &ogenerrors.DecodeBodyError{
+					ContentType: ct,
+					Body:        buf,
+					Err:         err,
+				}
+				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
+			var wrapper ProblemDetailsHeaders
+			wrapper.Response = response
+			h := uri.NewHeaderDecoder(resp.Header)
+			// Parse "Retry-After" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "Retry-After",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.RetryAfter = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse Retry-After header")
+				}
+			}
+			// Parse "X-RateLimit-Limit" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Limit",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitLimit = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Limit header")
+				}
+			}
+			// Parse "X-RateLimit-Remaining" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Remaining",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitRemaining = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Remaining header")
+				}
+			}
+			// Parse "X-RateLimit-Reset" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Reset",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt64(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitReset = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Reset header")
+				}
+			}
+			return &wrapper, nil
+		default:
+			return res, validate.InvalidContentType(ct)
+		}
 	}
 	return res, validate.UnexpectedStatusCodeWithResponse(resp)
 }
@@ -5315,6 +9865,181 @@ func decodeContactsListResponse(resp *http.Response) (res ContactsListRes, _ err
 				return res, errors.Wrap(err, "validate")
 			}
 			return &response, nil
+		default:
+			return res, validate.InvalidContentType(ct)
+		}
+	case 429:
+		// Code 429.
+		ct, _, err := mime.ParseMediaType(resp.Header.Get("Content-Type"))
+		if err != nil {
+			return res, errors.Wrap(err, "parse media type")
+		}
+		switch {
+		case ct == "application/problem+json":
+			buf, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return res, err
+			}
+			d := jx.DecodeBytes(buf)
+
+			var response ProblemDetails
+			if err := func() error {
+				if err := response.Decode(d); err != nil {
+					return err
+				}
+				if err := d.Skip(); err != io.EOF {
+					return errors.New("unexpected trailing data")
+				}
+				return nil
+			}(); err != nil {
+				err = &ogenerrors.DecodeBodyError{
+					ContentType: ct,
+					Body:        buf,
+					Err:         err,
+				}
+				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
+			var wrapper ProblemDetailsHeaders
+			wrapper.Response = response
+			h := uri.NewHeaderDecoder(resp.Header)
+			// Parse "Retry-After" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "Retry-After",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.RetryAfter = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse Retry-After header")
+				}
+			}
+			// Parse "X-RateLimit-Limit" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Limit",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitLimit = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Limit header")
+				}
+			}
+			// Parse "X-RateLimit-Remaining" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Remaining",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitRemaining = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Remaining header")
+				}
+			}
+			// Parse "X-RateLimit-Reset" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Reset",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt64(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitReset = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Reset header")
+				}
+			}
+			return &wrapper, nil
 		default:
 			return res, validate.InvalidContentType(ct)
 		}
@@ -5588,6 +10313,181 @@ func decodeContactsUpdateResponse(resp *http.Response) (res ContactsUpdateRes, _
 		default:
 			return res, validate.InvalidContentType(ct)
 		}
+	case 429:
+		// Code 429.
+		ct, _, err := mime.ParseMediaType(resp.Header.Get("Content-Type"))
+		if err != nil {
+			return res, errors.Wrap(err, "parse media type")
+		}
+		switch {
+		case ct == "application/problem+json":
+			buf, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return res, err
+			}
+			d := jx.DecodeBytes(buf)
+
+			var response ProblemDetails
+			if err := func() error {
+				if err := response.Decode(d); err != nil {
+					return err
+				}
+				if err := d.Skip(); err != io.EOF {
+					return errors.New("unexpected trailing data")
+				}
+				return nil
+			}(); err != nil {
+				err = &ogenerrors.DecodeBodyError{
+					ContentType: ct,
+					Body:        buf,
+					Err:         err,
+				}
+				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
+			var wrapper ProblemDetailsHeaders
+			wrapper.Response = response
+			h := uri.NewHeaderDecoder(resp.Header)
+			// Parse "Retry-After" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "Retry-After",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.RetryAfter = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse Retry-After header")
+				}
+			}
+			// Parse "X-RateLimit-Limit" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Limit",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitLimit = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Limit header")
+				}
+			}
+			// Parse "X-RateLimit-Remaining" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Remaining",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitRemaining = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Remaining header")
+				}
+			}
+			// Parse "X-RateLimit-Reset" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Reset",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt64(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitReset = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Reset header")
+				}
+			}
+			return &wrapper, nil
+		default:
+			return res, validate.InvalidContentType(ct)
+		}
 	}
 	return res, validate.UnexpectedStatusCodeWithResponse(resp)
 }
@@ -5679,6 +10579,181 @@ func decodeCustomFieldsListResponse(resp *http.Response) (res CustomFieldsListRe
 				return res, errors.Wrap(err, "validate")
 			}
 			return &response, nil
+		default:
+			return res, validate.InvalidContentType(ct)
+		}
+	case 429:
+		// Code 429.
+		ct, _, err := mime.ParseMediaType(resp.Header.Get("Content-Type"))
+		if err != nil {
+			return res, errors.Wrap(err, "parse media type")
+		}
+		switch {
+		case ct == "application/problem+json":
+			buf, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return res, err
+			}
+			d := jx.DecodeBytes(buf)
+
+			var response ProblemDetails
+			if err := func() error {
+				if err := response.Decode(d); err != nil {
+					return err
+				}
+				if err := d.Skip(); err != io.EOF {
+					return errors.New("unexpected trailing data")
+				}
+				return nil
+			}(); err != nil {
+				err = &ogenerrors.DecodeBodyError{
+					ContentType: ct,
+					Body:        buf,
+					Err:         err,
+				}
+				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
+			var wrapper ProblemDetailsHeaders
+			wrapper.Response = response
+			h := uri.NewHeaderDecoder(resp.Header)
+			// Parse "Retry-After" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "Retry-After",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.RetryAfter = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse Retry-After header")
+				}
+			}
+			// Parse "X-RateLimit-Limit" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Limit",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitLimit = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Limit header")
+				}
+			}
+			// Parse "X-RateLimit-Remaining" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Remaining",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitRemaining = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Remaining header")
+				}
+			}
+			// Parse "X-RateLimit-Reset" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Reset",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt64(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitReset = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Reset header")
+				}
+			}
+			return &wrapper, nil
 		default:
 			return res, validate.InvalidContentType(ct)
 		}
@@ -5908,6 +10983,181 @@ func decodeEmailsSendResponse(resp *http.Response) (res EmailsSendRes, _ error) 
 		default:
 			return res, validate.InvalidContentType(ct)
 		}
+	case 429:
+		// Code 429.
+		ct, _, err := mime.ParseMediaType(resp.Header.Get("Content-Type"))
+		if err != nil {
+			return res, errors.Wrap(err, "parse media type")
+		}
+		switch {
+		case ct == "application/problem+json":
+			buf, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return res, err
+			}
+			d := jx.DecodeBytes(buf)
+
+			var response ProblemDetails
+			if err := func() error {
+				if err := response.Decode(d); err != nil {
+					return err
+				}
+				if err := d.Skip(); err != io.EOF {
+					return errors.New("unexpected trailing data")
+				}
+				return nil
+			}(); err != nil {
+				err = &ogenerrors.DecodeBodyError{
+					ContentType: ct,
+					Body:        buf,
+					Err:         err,
+				}
+				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
+			var wrapper ProblemDetailsHeaders
+			wrapper.Response = response
+			h := uri.NewHeaderDecoder(resp.Header)
+			// Parse "Retry-After" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "Retry-After",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.RetryAfter = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse Retry-After header")
+				}
+			}
+			// Parse "X-RateLimit-Limit" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Limit",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitLimit = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Limit header")
+				}
+			}
+			// Parse "X-RateLimit-Remaining" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Remaining",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitRemaining = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Remaining header")
+				}
+			}
+			// Parse "X-RateLimit-Reset" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Reset",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt64(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitReset = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Reset header")
+				}
+			}
+			return &wrapper, nil
+		default:
+			return res, validate.InvalidContentType(ct)
+		}
 	}
 	return res, validate.UnexpectedStatusCodeWithResponse(resp)
 }
@@ -6090,6 +11340,181 @@ func decodeEventActionsListResponse(resp *http.Response) (res EventActionsListRe
 		default:
 			return res, validate.InvalidContentType(ct)
 		}
+	case 429:
+		// Code 429.
+		ct, _, err := mime.ParseMediaType(resp.Header.Get("Content-Type"))
+		if err != nil {
+			return res, errors.Wrap(err, "parse media type")
+		}
+		switch {
+		case ct == "application/problem+json":
+			buf, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return res, err
+			}
+			d := jx.DecodeBytes(buf)
+
+			var response ProblemDetails
+			if err := func() error {
+				if err := response.Decode(d); err != nil {
+					return err
+				}
+				if err := d.Skip(); err != io.EOF {
+					return errors.New("unexpected trailing data")
+				}
+				return nil
+			}(); err != nil {
+				err = &ogenerrors.DecodeBodyError{
+					ContentType: ct,
+					Body:        buf,
+					Err:         err,
+				}
+				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
+			var wrapper ProblemDetailsHeaders
+			wrapper.Response = response
+			h := uri.NewHeaderDecoder(resp.Header)
+			// Parse "Retry-After" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "Retry-After",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.RetryAfter = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse Retry-After header")
+				}
+			}
+			// Parse "X-RateLimit-Limit" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Limit",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitLimit = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Limit header")
+				}
+			}
+			// Parse "X-RateLimit-Remaining" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Remaining",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitRemaining = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Remaining header")
+				}
+			}
+			// Parse "X-RateLimit-Reset" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Reset",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt64(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitReset = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Reset header")
+				}
+			}
+			return &wrapper, nil
+		default:
+			return res, validate.InvalidContentType(ct)
+		}
 	}
 	return res, validate.UnexpectedStatusCodeWithResponse(resp)
 }
@@ -6228,6 +11653,181 @@ func decodeEventsBatchSubmitResponse(resp *http.Response) (res EventsBatchSubmit
 		default:
 			return res, validate.InvalidContentType(ct)
 		}
+	case 429:
+		// Code 429.
+		ct, _, err := mime.ParseMediaType(resp.Header.Get("Content-Type"))
+		if err != nil {
+			return res, errors.Wrap(err, "parse media type")
+		}
+		switch {
+		case ct == "application/problem+json":
+			buf, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return res, err
+			}
+			d := jx.DecodeBytes(buf)
+
+			var response ProblemDetails
+			if err := func() error {
+				if err := response.Decode(d); err != nil {
+					return err
+				}
+				if err := d.Skip(); err != io.EOF {
+					return errors.New("unexpected trailing data")
+				}
+				return nil
+			}(); err != nil {
+				err = &ogenerrors.DecodeBodyError{
+					ContentType: ct,
+					Body:        buf,
+					Err:         err,
+				}
+				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
+			var wrapper ProblemDetailsHeaders
+			wrapper.Response = response
+			h := uri.NewHeaderDecoder(resp.Header)
+			// Parse "Retry-After" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "Retry-After",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.RetryAfter = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse Retry-After header")
+				}
+			}
+			// Parse "X-RateLimit-Limit" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Limit",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitLimit = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Limit header")
+				}
+			}
+			// Parse "X-RateLimit-Remaining" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Remaining",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitRemaining = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Remaining header")
+				}
+			}
+			// Parse "X-RateLimit-Reset" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Reset",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt64(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitReset = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Reset header")
+				}
+			}
+			return &wrapper, nil
+		default:
+			return res, validate.InvalidContentType(ct)
+		}
 	}
 	return res, validate.UnexpectedStatusCodeWithResponse(resp)
 }
@@ -6322,6 +11922,181 @@ func decodeEventsCreateResponse(resp *http.Response) (res EventsCreateRes, _ err
 				return res, errors.Wrap(err, "validate")
 			}
 			return &response, nil
+		default:
+			return res, validate.InvalidContentType(ct)
+		}
+	case 429:
+		// Code 429.
+		ct, _, err := mime.ParseMediaType(resp.Header.Get("Content-Type"))
+		if err != nil {
+			return res, errors.Wrap(err, "parse media type")
+		}
+		switch {
+		case ct == "application/problem+json":
+			buf, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return res, err
+			}
+			d := jx.DecodeBytes(buf)
+
+			var response ProblemDetails
+			if err := func() error {
+				if err := response.Decode(d); err != nil {
+					return err
+				}
+				if err := d.Skip(); err != io.EOF {
+					return errors.New("unexpected trailing data")
+				}
+				return nil
+			}(); err != nil {
+				err = &ogenerrors.DecodeBodyError{
+					ContentType: ct,
+					Body:        buf,
+					Err:         err,
+				}
+				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
+			var wrapper ProblemDetailsHeaders
+			wrapper.Response = response
+			h := uri.NewHeaderDecoder(resp.Header)
+			// Parse "Retry-After" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "Retry-After",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.RetryAfter = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse Retry-After header")
+				}
+			}
+			// Parse "X-RateLimit-Limit" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Limit",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitLimit = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Limit header")
+				}
+			}
+			// Parse "X-RateLimit-Remaining" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Remaining",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitRemaining = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Remaining header")
+				}
+			}
+			// Parse "X-RateLimit-Reset" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Reset",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt64(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitReset = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Reset header")
+				}
+			}
+			return &wrapper, nil
 		default:
 			return res, validate.InvalidContentType(ct)
 		}
@@ -6460,6 +12235,181 @@ func decodeSegmentsCreateResponse(resp *http.Response) (res SegmentsCreateRes, _
 				return res, errors.Wrap(err, "validate")
 			}
 			return &response, nil
+		default:
+			return res, validate.InvalidContentType(ct)
+		}
+	case 429:
+		// Code 429.
+		ct, _, err := mime.ParseMediaType(resp.Header.Get("Content-Type"))
+		if err != nil {
+			return res, errors.Wrap(err, "parse media type")
+		}
+		switch {
+		case ct == "application/problem+json":
+			buf, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return res, err
+			}
+			d := jx.DecodeBytes(buf)
+
+			var response ProblemDetails
+			if err := func() error {
+				if err := response.Decode(d); err != nil {
+					return err
+				}
+				if err := d.Skip(); err != io.EOF {
+					return errors.New("unexpected trailing data")
+				}
+				return nil
+			}(); err != nil {
+				err = &ogenerrors.DecodeBodyError{
+					ContentType: ct,
+					Body:        buf,
+					Err:         err,
+				}
+				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
+			var wrapper ProblemDetailsHeaders
+			wrapper.Response = response
+			h := uri.NewHeaderDecoder(resp.Header)
+			// Parse "Retry-After" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "Retry-After",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.RetryAfter = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse Retry-After header")
+				}
+			}
+			// Parse "X-RateLimit-Limit" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Limit",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitLimit = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Limit header")
+				}
+			}
+			// Parse "X-RateLimit-Remaining" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Remaining",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitRemaining = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Remaining header")
+				}
+			}
+			// Parse "X-RateLimit-Reset" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Reset",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt64(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitReset = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Reset header")
+				}
+			}
+			return &wrapper, nil
 		default:
 			return res, validate.InvalidContentType(ct)
 		}
@@ -6648,6 +12598,181 @@ func decodeSegmentsDeleteResponse(resp *http.Response) (res SegmentsDeleteRes, _
 		default:
 			return res, validate.InvalidContentType(ct)
 		}
+	case 429:
+		// Code 429.
+		ct, _, err := mime.ParseMediaType(resp.Header.Get("Content-Type"))
+		if err != nil {
+			return res, errors.Wrap(err, "parse media type")
+		}
+		switch {
+		case ct == "application/problem+json":
+			buf, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return res, err
+			}
+			d := jx.DecodeBytes(buf)
+
+			var response ProblemDetails
+			if err := func() error {
+				if err := response.Decode(d); err != nil {
+					return err
+				}
+				if err := d.Skip(); err != io.EOF {
+					return errors.New("unexpected trailing data")
+				}
+				return nil
+			}(); err != nil {
+				err = &ogenerrors.DecodeBodyError{
+					ContentType: ct,
+					Body:        buf,
+					Err:         err,
+				}
+				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
+			var wrapper ProblemDetailsHeaders
+			wrapper.Response = response
+			h := uri.NewHeaderDecoder(resp.Header)
+			// Parse "Retry-After" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "Retry-After",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.RetryAfter = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse Retry-After header")
+				}
+			}
+			// Parse "X-RateLimit-Limit" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Limit",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitLimit = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Limit header")
+				}
+			}
+			// Parse "X-RateLimit-Remaining" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Remaining",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitRemaining = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Remaining header")
+				}
+			}
+			// Parse "X-RateLimit-Reset" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Reset",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt64(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitReset = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Reset header")
+				}
+			}
+			return &wrapper, nil
+		default:
+			return res, validate.InvalidContentType(ct)
+		}
 	}
 	return res, validate.UnexpectedStatusCodeWithResponse(resp)
 }
@@ -6827,6 +12952,181 @@ func decodeSegmentsGetResponse(resp *http.Response) (res SegmentsGetRes, _ error
 				return res, errors.Wrap(err, "validate")
 			}
 			return &response, nil
+		default:
+			return res, validate.InvalidContentType(ct)
+		}
+	case 429:
+		// Code 429.
+		ct, _, err := mime.ParseMediaType(resp.Header.Get("Content-Type"))
+		if err != nil {
+			return res, errors.Wrap(err, "parse media type")
+		}
+		switch {
+		case ct == "application/problem+json":
+			buf, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return res, err
+			}
+			d := jx.DecodeBytes(buf)
+
+			var response ProblemDetails
+			if err := func() error {
+				if err := response.Decode(d); err != nil {
+					return err
+				}
+				if err := d.Skip(); err != io.EOF {
+					return errors.New("unexpected trailing data")
+				}
+				return nil
+			}(); err != nil {
+				err = &ogenerrors.DecodeBodyError{
+					ContentType: ct,
+					Body:        buf,
+					Err:         err,
+				}
+				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
+			var wrapper ProblemDetailsHeaders
+			wrapper.Response = response
+			h := uri.NewHeaderDecoder(resp.Header)
+			// Parse "Retry-After" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "Retry-After",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.RetryAfter = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse Retry-After header")
+				}
+			}
+			// Parse "X-RateLimit-Limit" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Limit",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitLimit = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Limit header")
+				}
+			}
+			// Parse "X-RateLimit-Remaining" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Remaining",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitRemaining = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Remaining header")
+				}
+			}
+			// Parse "X-RateLimit-Reset" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Reset",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt64(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitReset = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Reset header")
+				}
+			}
+			return &wrapper, nil
 		default:
 			return res, validate.InvalidContentType(ct)
 		}
@@ -7012,6 +13312,181 @@ func decodeSegmentsListResponse(resp *http.Response) (res SegmentsListRes, _ err
 		default:
 			return res, validate.InvalidContentType(ct)
 		}
+	case 429:
+		// Code 429.
+		ct, _, err := mime.ParseMediaType(resp.Header.Get("Content-Type"))
+		if err != nil {
+			return res, errors.Wrap(err, "parse media type")
+		}
+		switch {
+		case ct == "application/problem+json":
+			buf, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return res, err
+			}
+			d := jx.DecodeBytes(buf)
+
+			var response ProblemDetails
+			if err := func() error {
+				if err := response.Decode(d); err != nil {
+					return err
+				}
+				if err := d.Skip(); err != io.EOF {
+					return errors.New("unexpected trailing data")
+				}
+				return nil
+			}(); err != nil {
+				err = &ogenerrors.DecodeBodyError{
+					ContentType: ct,
+					Body:        buf,
+					Err:         err,
+				}
+				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
+			var wrapper ProblemDetailsHeaders
+			wrapper.Response = response
+			h := uri.NewHeaderDecoder(resp.Header)
+			// Parse "Retry-After" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "Retry-After",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.RetryAfter = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse Retry-After header")
+				}
+			}
+			// Parse "X-RateLimit-Limit" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Limit",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitLimit = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Limit header")
+				}
+			}
+			// Parse "X-RateLimit-Remaining" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Remaining",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitRemaining = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Remaining header")
+				}
+			}
+			// Parse "X-RateLimit-Reset" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Reset",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt64(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitReset = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Reset header")
+				}
+			}
+			return &wrapper, nil
+		default:
+			return res, validate.InvalidContentType(ct)
+		}
 	}
 	return res, validate.UnexpectedStatusCodeWithResponse(resp)
 }
@@ -7182,6 +13657,181 @@ func decodeSegmentsPreviewResponse(resp *http.Response) (res SegmentsPreviewRes,
 				return res, errors.Wrap(err, "validate")
 			}
 			return &response, nil
+		default:
+			return res, validate.InvalidContentType(ct)
+		}
+	case 429:
+		// Code 429.
+		ct, _, err := mime.ParseMediaType(resp.Header.Get("Content-Type"))
+		if err != nil {
+			return res, errors.Wrap(err, "parse media type")
+		}
+		switch {
+		case ct == "application/problem+json":
+			buf, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return res, err
+			}
+			d := jx.DecodeBytes(buf)
+
+			var response ProblemDetails
+			if err := func() error {
+				if err := response.Decode(d); err != nil {
+					return err
+				}
+				if err := d.Skip(); err != io.EOF {
+					return errors.New("unexpected trailing data")
+				}
+				return nil
+			}(); err != nil {
+				err = &ogenerrors.DecodeBodyError{
+					ContentType: ct,
+					Body:        buf,
+					Err:         err,
+				}
+				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
+			var wrapper ProblemDetailsHeaders
+			wrapper.Response = response
+			h := uri.NewHeaderDecoder(resp.Header)
+			// Parse "Retry-After" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "Retry-After",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.RetryAfter = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse Retry-After header")
+				}
+			}
+			// Parse "X-RateLimit-Limit" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Limit",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitLimit = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Limit header")
+				}
+			}
+			// Parse "X-RateLimit-Remaining" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Remaining",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitRemaining = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Remaining header")
+				}
+			}
+			// Parse "X-RateLimit-Reset" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Reset",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt64(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitReset = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Reset header")
+				}
+			}
+			return &wrapper, nil
 		default:
 			return res, validate.InvalidContentType(ct)
 		}
@@ -7411,6 +14061,181 @@ func decodeSegmentsUpdateResponse(resp *http.Response) (res SegmentsUpdateRes, _
 		default:
 			return res, validate.InvalidContentType(ct)
 		}
+	case 429:
+		// Code 429.
+		ct, _, err := mime.ParseMediaType(resp.Header.Get("Content-Type"))
+		if err != nil {
+			return res, errors.Wrap(err, "parse media type")
+		}
+		switch {
+		case ct == "application/problem+json":
+			buf, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return res, err
+			}
+			d := jx.DecodeBytes(buf)
+
+			var response ProblemDetails
+			if err := func() error {
+				if err := response.Decode(d); err != nil {
+					return err
+				}
+				if err := d.Skip(); err != io.EOF {
+					return errors.New("unexpected trailing data")
+				}
+				return nil
+			}(); err != nil {
+				err = &ogenerrors.DecodeBodyError{
+					ContentType: ct,
+					Body:        buf,
+					Err:         err,
+				}
+				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
+			var wrapper ProblemDetailsHeaders
+			wrapper.Response = response
+			h := uri.NewHeaderDecoder(resp.Header)
+			// Parse "Retry-After" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "Retry-After",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.RetryAfter = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse Retry-After header")
+				}
+			}
+			// Parse "X-RateLimit-Limit" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Limit",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitLimit = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Limit header")
+				}
+			}
+			// Parse "X-RateLimit-Remaining" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Remaining",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitRemaining = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Remaining header")
+				}
+			}
+			// Parse "X-RateLimit-Reset" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Reset",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt64(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitReset = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Reset header")
+				}
+			}
+			return &wrapper, nil
+		default:
+			return res, validate.InvalidContentType(ct)
+		}
 	}
 	return res, validate.UnexpectedStatusCodeWithResponse(resp)
 }
@@ -7546,6 +14371,181 @@ func decodeSendingDomainRatesListResponse(resp *http.Response) (res SendingDomai
 				return res, errors.Wrap(err, "validate")
 			}
 			return &response, nil
+		default:
+			return res, validate.InvalidContentType(ct)
+		}
+	case 429:
+		// Code 429.
+		ct, _, err := mime.ParseMediaType(resp.Header.Get("Content-Type"))
+		if err != nil {
+			return res, errors.Wrap(err, "parse media type")
+		}
+		switch {
+		case ct == "application/problem+json":
+			buf, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return res, err
+			}
+			d := jx.DecodeBytes(buf)
+
+			var response ProblemDetails
+			if err := func() error {
+				if err := response.Decode(d); err != nil {
+					return err
+				}
+				if err := d.Skip(); err != io.EOF {
+					return errors.New("unexpected trailing data")
+				}
+				return nil
+			}(); err != nil {
+				err = &ogenerrors.DecodeBodyError{
+					ContentType: ct,
+					Body:        buf,
+					Err:         err,
+				}
+				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
+			var wrapper ProblemDetailsHeaders
+			wrapper.Response = response
+			h := uri.NewHeaderDecoder(resp.Header)
+			// Parse "Retry-After" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "Retry-After",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.RetryAfter = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse Retry-After header")
+				}
+			}
+			// Parse "X-RateLimit-Limit" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Limit",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitLimit = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Limit header")
+				}
+			}
+			// Parse "X-RateLimit-Remaining" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Remaining",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitRemaining = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Remaining header")
+				}
+			}
+			// Parse "X-RateLimit-Reset" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Reset",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt64(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitReset = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Reset header")
+				}
+			}
+			return &wrapper, nil
 		default:
 			return res, validate.InvalidContentType(ct)
 		}
@@ -7687,6 +14687,181 @@ func decodeSendingDomainsListResponse(resp *http.Response) (res SendingDomainsLi
 		default:
 			return res, validate.InvalidContentType(ct)
 		}
+	case 429:
+		// Code 429.
+		ct, _, err := mime.ParseMediaType(resp.Header.Get("Content-Type"))
+		if err != nil {
+			return res, errors.Wrap(err, "parse media type")
+		}
+		switch {
+		case ct == "application/problem+json":
+			buf, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return res, err
+			}
+			d := jx.DecodeBytes(buf)
+
+			var response ProblemDetails
+			if err := func() error {
+				if err := response.Decode(d); err != nil {
+					return err
+				}
+				if err := d.Skip(); err != io.EOF {
+					return errors.New("unexpected trailing data")
+				}
+				return nil
+			}(); err != nil {
+				err = &ogenerrors.DecodeBodyError{
+					ContentType: ct,
+					Body:        buf,
+					Err:         err,
+				}
+				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
+			var wrapper ProblemDetailsHeaders
+			wrapper.Response = response
+			h := uri.NewHeaderDecoder(resp.Header)
+			// Parse "Retry-After" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "Retry-After",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.RetryAfter = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse Retry-After header")
+				}
+			}
+			// Parse "X-RateLimit-Limit" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Limit",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitLimit = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Limit header")
+				}
+			}
+			// Parse "X-RateLimit-Remaining" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Remaining",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitRemaining = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Remaining header")
+				}
+			}
+			// Parse "X-RateLimit-Reset" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Reset",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt64(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitReset = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Reset header")
+				}
+			}
+			return &wrapper, nil
+		default:
+			return res, validate.InvalidContentType(ct)
+		}
 	}
 	return res, validate.UnexpectedStatusCodeWithResponse(resp)
 }
@@ -7822,6 +14997,181 @@ func decodeSuppressionsCreateResponse(resp *http.Response) (res SuppressionsCrea
 				return res, errors.Wrap(err, "validate")
 			}
 			return &response, nil
+		default:
+			return res, validate.InvalidContentType(ct)
+		}
+	case 429:
+		// Code 429.
+		ct, _, err := mime.ParseMediaType(resp.Header.Get("Content-Type"))
+		if err != nil {
+			return res, errors.Wrap(err, "parse media type")
+		}
+		switch {
+		case ct == "application/problem+json":
+			buf, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return res, err
+			}
+			d := jx.DecodeBytes(buf)
+
+			var response ProblemDetails
+			if err := func() error {
+				if err := response.Decode(d); err != nil {
+					return err
+				}
+				if err := d.Skip(); err != io.EOF {
+					return errors.New("unexpected trailing data")
+				}
+				return nil
+			}(); err != nil {
+				err = &ogenerrors.DecodeBodyError{
+					ContentType: ct,
+					Body:        buf,
+					Err:         err,
+				}
+				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
+			var wrapper ProblemDetailsHeaders
+			wrapper.Response = response
+			h := uri.NewHeaderDecoder(resp.Header)
+			// Parse "Retry-After" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "Retry-After",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.RetryAfter = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse Retry-After header")
+				}
+			}
+			// Parse "X-RateLimit-Limit" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Limit",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitLimit = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Limit header")
+				}
+			}
+			// Parse "X-RateLimit-Remaining" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Remaining",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitRemaining = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Remaining header")
+				}
+			}
+			// Parse "X-RateLimit-Reset" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Reset",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt64(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitReset = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Reset header")
+				}
+			}
+			return &wrapper, nil
 		default:
 			return res, validate.InvalidContentType(ct)
 		}
@@ -8051,6 +15401,181 @@ func decodeTagsApplyResponse(resp *http.Response) (res TagsApplyRes, _ error) {
 		default:
 			return res, validate.InvalidContentType(ct)
 		}
+	case 429:
+		// Code 429.
+		ct, _, err := mime.ParseMediaType(resp.Header.Get("Content-Type"))
+		if err != nil {
+			return res, errors.Wrap(err, "parse media type")
+		}
+		switch {
+		case ct == "application/problem+json":
+			buf, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return res, err
+			}
+			d := jx.DecodeBytes(buf)
+
+			var response ProblemDetails
+			if err := func() error {
+				if err := response.Decode(d); err != nil {
+					return err
+				}
+				if err := d.Skip(); err != io.EOF {
+					return errors.New("unexpected trailing data")
+				}
+				return nil
+			}(); err != nil {
+				err = &ogenerrors.DecodeBodyError{
+					ContentType: ct,
+					Body:        buf,
+					Err:         err,
+				}
+				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
+			var wrapper ProblemDetailsHeaders
+			wrapper.Response = response
+			h := uri.NewHeaderDecoder(resp.Header)
+			// Parse "Retry-After" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "Retry-After",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.RetryAfter = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse Retry-After header")
+				}
+			}
+			// Parse "X-RateLimit-Limit" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Limit",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitLimit = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Limit header")
+				}
+			}
+			// Parse "X-RateLimit-Remaining" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Remaining",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitRemaining = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Remaining header")
+				}
+			}
+			// Parse "X-RateLimit-Reset" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Reset",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt64(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitReset = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Reset header")
+				}
+			}
+			return &wrapper, nil
+		default:
+			return res, validate.InvalidContentType(ct)
+		}
 	}
 	return res, validate.UnexpectedStatusCodeWithResponse(resp)
 }
@@ -8230,6 +15755,181 @@ func decodeTagsListResponse(resp *http.Response) (res TagsListRes, _ error) {
 				return res, errors.Wrap(err, "validate")
 			}
 			return &response, nil
+		default:
+			return res, validate.InvalidContentType(ct)
+		}
+	case 429:
+		// Code 429.
+		ct, _, err := mime.ParseMediaType(resp.Header.Get("Content-Type"))
+		if err != nil {
+			return res, errors.Wrap(err, "parse media type")
+		}
+		switch {
+		case ct == "application/problem+json":
+			buf, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return res, err
+			}
+			d := jx.DecodeBytes(buf)
+
+			var response ProblemDetails
+			if err := func() error {
+				if err := response.Decode(d); err != nil {
+					return err
+				}
+				if err := d.Skip(); err != io.EOF {
+					return errors.New("unexpected trailing data")
+				}
+				return nil
+			}(); err != nil {
+				err = &ogenerrors.DecodeBodyError{
+					ContentType: ct,
+					Body:        buf,
+					Err:         err,
+				}
+				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
+			var wrapper ProblemDetailsHeaders
+			wrapper.Response = response
+			h := uri.NewHeaderDecoder(resp.Header)
+			// Parse "Retry-After" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "Retry-After",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.RetryAfter = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse Retry-After header")
+				}
+			}
+			// Parse "X-RateLimit-Limit" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Limit",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitLimit = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Limit header")
+				}
+			}
+			// Parse "X-RateLimit-Remaining" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Remaining",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitRemaining = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Remaining header")
+				}
+			}
+			// Parse "X-RateLimit-Reset" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Reset",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt64(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitReset = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Reset header")
+				}
+			}
+			return &wrapper, nil
 		default:
 			return res, validate.InvalidContentType(ct)
 		}
@@ -8459,6 +16159,181 @@ func decodeTagsListForContactResponse(resp *http.Response) (res TagsListForConta
 		default:
 			return res, validate.InvalidContentType(ct)
 		}
+	case 429:
+		// Code 429.
+		ct, _, err := mime.ParseMediaType(resp.Header.Get("Content-Type"))
+		if err != nil {
+			return res, errors.Wrap(err, "parse media type")
+		}
+		switch {
+		case ct == "application/problem+json":
+			buf, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return res, err
+			}
+			d := jx.DecodeBytes(buf)
+
+			var response ProblemDetails
+			if err := func() error {
+				if err := response.Decode(d); err != nil {
+					return err
+				}
+				if err := d.Skip(); err != io.EOF {
+					return errors.New("unexpected trailing data")
+				}
+				return nil
+			}(); err != nil {
+				err = &ogenerrors.DecodeBodyError{
+					ContentType: ct,
+					Body:        buf,
+					Err:         err,
+				}
+				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
+			var wrapper ProblemDetailsHeaders
+			wrapper.Response = response
+			h := uri.NewHeaderDecoder(resp.Header)
+			// Parse "Retry-After" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "Retry-After",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.RetryAfter = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse Retry-After header")
+				}
+			}
+			// Parse "X-RateLimit-Limit" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Limit",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitLimit = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Limit header")
+				}
+			}
+			// Parse "X-RateLimit-Remaining" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Remaining",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitRemaining = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Remaining header")
+				}
+			}
+			// Parse "X-RateLimit-Reset" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Reset",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt64(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitReset = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Reset header")
+				}
+			}
+			return &wrapper, nil
+		default:
+			return res, validate.InvalidContentType(ct)
+		}
 	}
 	return res, validate.UnexpectedStatusCodeWithResponse(resp)
 }
@@ -8600,6 +16475,181 @@ func decodeTagsRemoveResponse(resp *http.Response) (res TagsRemoveRes, _ error) 
 		default:
 			return res, validate.InvalidContentType(ct)
 		}
+	case 429:
+		// Code 429.
+		ct, _, err := mime.ParseMediaType(resp.Header.Get("Content-Type"))
+		if err != nil {
+			return res, errors.Wrap(err, "parse media type")
+		}
+		switch {
+		case ct == "application/problem+json":
+			buf, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return res, err
+			}
+			d := jx.DecodeBytes(buf)
+
+			var response ProblemDetails
+			if err := func() error {
+				if err := response.Decode(d); err != nil {
+					return err
+				}
+				if err := d.Skip(); err != io.EOF {
+					return errors.New("unexpected trailing data")
+				}
+				return nil
+			}(); err != nil {
+				err = &ogenerrors.DecodeBodyError{
+					ContentType: ct,
+					Body:        buf,
+					Err:         err,
+				}
+				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
+			var wrapper ProblemDetailsHeaders
+			wrapper.Response = response
+			h := uri.NewHeaderDecoder(resp.Header)
+			// Parse "Retry-After" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "Retry-After",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.RetryAfter = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse Retry-After header")
+				}
+			}
+			// Parse "X-RateLimit-Limit" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Limit",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitLimit = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Limit header")
+				}
+			}
+			// Parse "X-RateLimit-Remaining" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Remaining",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitRemaining = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Remaining header")
+				}
+			}
+			// Parse "X-RateLimit-Reset" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Reset",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt64(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitReset = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Reset header")
+				}
+			}
+			return &wrapper, nil
+		default:
+			return res, validate.InvalidContentType(ct)
+		}
 	}
 	return res, validate.UnexpectedStatusCodeWithResponse(resp)
 }
@@ -8735,6 +16785,181 @@ func decodeTemplatesCreateResponse(resp *http.Response) (res TemplatesCreateRes,
 				return res, errors.Wrap(err, "validate")
 			}
 			return &response, nil
+		default:
+			return res, validate.InvalidContentType(ct)
+		}
+	case 429:
+		// Code 429.
+		ct, _, err := mime.ParseMediaType(resp.Header.Get("Content-Type"))
+		if err != nil {
+			return res, errors.Wrap(err, "parse media type")
+		}
+		switch {
+		case ct == "application/problem+json":
+			buf, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return res, err
+			}
+			d := jx.DecodeBytes(buf)
+
+			var response ProblemDetails
+			if err := func() error {
+				if err := response.Decode(d); err != nil {
+					return err
+				}
+				if err := d.Skip(); err != io.EOF {
+					return errors.New("unexpected trailing data")
+				}
+				return nil
+			}(); err != nil {
+				err = &ogenerrors.DecodeBodyError{
+					ContentType: ct,
+					Body:        buf,
+					Err:         err,
+				}
+				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
+			var wrapper ProblemDetailsHeaders
+			wrapper.Response = response
+			h := uri.NewHeaderDecoder(resp.Header)
+			// Parse "Retry-After" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "Retry-After",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.RetryAfter = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse Retry-After header")
+				}
+			}
+			// Parse "X-RateLimit-Limit" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Limit",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitLimit = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Limit header")
+				}
+			}
+			// Parse "X-RateLimit-Remaining" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Remaining",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitRemaining = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Remaining header")
+				}
+			}
+			// Parse "X-RateLimit-Reset" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Reset",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt64(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitReset = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Reset header")
+				}
+			}
+			return &wrapper, nil
 		default:
 			return res, validate.InvalidContentType(ct)
 		}
@@ -8923,6 +17148,181 @@ func decodeTemplatesDeleteResponse(resp *http.Response) (res TemplatesDeleteRes,
 		default:
 			return res, validate.InvalidContentType(ct)
 		}
+	case 429:
+		// Code 429.
+		ct, _, err := mime.ParseMediaType(resp.Header.Get("Content-Type"))
+		if err != nil {
+			return res, errors.Wrap(err, "parse media type")
+		}
+		switch {
+		case ct == "application/problem+json":
+			buf, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return res, err
+			}
+			d := jx.DecodeBytes(buf)
+
+			var response ProblemDetails
+			if err := func() error {
+				if err := response.Decode(d); err != nil {
+					return err
+				}
+				if err := d.Skip(); err != io.EOF {
+					return errors.New("unexpected trailing data")
+				}
+				return nil
+			}(); err != nil {
+				err = &ogenerrors.DecodeBodyError{
+					ContentType: ct,
+					Body:        buf,
+					Err:         err,
+				}
+				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
+			var wrapper ProblemDetailsHeaders
+			wrapper.Response = response
+			h := uri.NewHeaderDecoder(resp.Header)
+			// Parse "Retry-After" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "Retry-After",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.RetryAfter = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse Retry-After header")
+				}
+			}
+			// Parse "X-RateLimit-Limit" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Limit",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitLimit = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Limit header")
+				}
+			}
+			// Parse "X-RateLimit-Remaining" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Remaining",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitRemaining = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Remaining header")
+				}
+			}
+			// Parse "X-RateLimit-Reset" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Reset",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt64(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitReset = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Reset header")
+				}
+			}
+			return &wrapper, nil
+		default:
+			return res, validate.InvalidContentType(ct)
+		}
 	}
 	return res, validate.UnexpectedStatusCodeWithResponse(resp)
 }
@@ -9105,6 +17505,181 @@ func decodeTemplatesGetResponse(resp *http.Response) (res TemplatesGetRes, _ err
 		default:
 			return res, validate.InvalidContentType(ct)
 		}
+	case 429:
+		// Code 429.
+		ct, _, err := mime.ParseMediaType(resp.Header.Get("Content-Type"))
+		if err != nil {
+			return res, errors.Wrap(err, "parse media type")
+		}
+		switch {
+		case ct == "application/problem+json":
+			buf, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return res, err
+			}
+			d := jx.DecodeBytes(buf)
+
+			var response ProblemDetails
+			if err := func() error {
+				if err := response.Decode(d); err != nil {
+					return err
+				}
+				if err := d.Skip(); err != io.EOF {
+					return errors.New("unexpected trailing data")
+				}
+				return nil
+			}(); err != nil {
+				err = &ogenerrors.DecodeBodyError{
+					ContentType: ct,
+					Body:        buf,
+					Err:         err,
+				}
+				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
+			var wrapper ProblemDetailsHeaders
+			wrapper.Response = response
+			h := uri.NewHeaderDecoder(resp.Header)
+			// Parse "Retry-After" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "Retry-After",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.RetryAfter = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse Retry-After header")
+				}
+			}
+			// Parse "X-RateLimit-Limit" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Limit",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitLimit = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Limit header")
+				}
+			}
+			// Parse "X-RateLimit-Remaining" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Remaining",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitRemaining = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Remaining header")
+				}
+			}
+			// Parse "X-RateLimit-Reset" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Reset",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt64(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitReset = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Reset header")
+				}
+			}
+			return &wrapper, nil
+		default:
+			return res, validate.InvalidContentType(ct)
+		}
 	}
 	return res, validate.UnexpectedStatusCodeWithResponse(resp)
 }
@@ -9284,6 +17859,181 @@ func decodeTemplatesListResponse(resp *http.Response) (res TemplatesListRes, _ e
 				return res, errors.Wrap(err, "validate")
 			}
 			return &response, nil
+		default:
+			return res, validate.InvalidContentType(ct)
+		}
+	case 429:
+		// Code 429.
+		ct, _, err := mime.ParseMediaType(resp.Header.Get("Content-Type"))
+		if err != nil {
+			return res, errors.Wrap(err, "parse media type")
+		}
+		switch {
+		case ct == "application/problem+json":
+			buf, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return res, err
+			}
+			d := jx.DecodeBytes(buf)
+
+			var response ProblemDetails
+			if err := func() error {
+				if err := response.Decode(d); err != nil {
+					return err
+				}
+				if err := d.Skip(); err != io.EOF {
+					return errors.New("unexpected trailing data")
+				}
+				return nil
+			}(); err != nil {
+				err = &ogenerrors.DecodeBodyError{
+					ContentType: ct,
+					Body:        buf,
+					Err:         err,
+				}
+				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
+			var wrapper ProblemDetailsHeaders
+			wrapper.Response = response
+			h := uri.NewHeaderDecoder(resp.Header)
+			// Parse "Retry-After" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "Retry-After",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.RetryAfter = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse Retry-After header")
+				}
+			}
+			// Parse "X-RateLimit-Limit" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Limit",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitLimit = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Limit header")
+				}
+			}
+			// Parse "X-RateLimit-Remaining" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Remaining",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitRemaining = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Remaining header")
+				}
+			}
+			// Parse "X-RateLimit-Reset" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Reset",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt64(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitReset = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Reset header")
+				}
+			}
+			return &wrapper, nil
 		default:
 			return res, validate.InvalidContentType(ct)
 		}
@@ -9513,6 +18263,181 @@ func decodeTemplatesUpdateResponse(resp *http.Response) (res TemplatesUpdateRes,
 		default:
 			return res, validate.InvalidContentType(ct)
 		}
+	case 429:
+		// Code 429.
+		ct, _, err := mime.ParseMediaType(resp.Header.Get("Content-Type"))
+		if err != nil {
+			return res, errors.Wrap(err, "parse media type")
+		}
+		switch {
+		case ct == "application/problem+json":
+			buf, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return res, err
+			}
+			d := jx.DecodeBytes(buf)
+
+			var response ProblemDetails
+			if err := func() error {
+				if err := response.Decode(d); err != nil {
+					return err
+				}
+				if err := d.Skip(); err != io.EOF {
+					return errors.New("unexpected trailing data")
+				}
+				return nil
+			}(); err != nil {
+				err = &ogenerrors.DecodeBodyError{
+					ContentType: ct,
+					Body:        buf,
+					Err:         err,
+				}
+				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
+			var wrapper ProblemDetailsHeaders
+			wrapper.Response = response
+			h := uri.NewHeaderDecoder(resp.Header)
+			// Parse "Retry-After" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "Retry-After",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.RetryAfter = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse Retry-After header")
+				}
+			}
+			// Parse "X-RateLimit-Limit" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Limit",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitLimit = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Limit header")
+				}
+			}
+			// Parse "X-RateLimit-Remaining" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Remaining",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitRemaining = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Remaining header")
+				}
+			}
+			// Parse "X-RateLimit-Reset" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Reset",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt64(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitReset = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Reset header")
+				}
+			}
+			return &wrapper, nil
+		default:
+			return res, validate.InvalidContentType(ct)
+		}
 	}
 	return res, validate.UnexpectedStatusCodeWithResponse(resp)
 }
@@ -9651,6 +18576,181 @@ func decodeUnsubscribesCreateResponse(resp *http.Response) (res UnsubscribesCrea
 		default:
 			return res, validate.InvalidContentType(ct)
 		}
+	case 429:
+		// Code 429.
+		ct, _, err := mime.ParseMediaType(resp.Header.Get("Content-Type"))
+		if err != nil {
+			return res, errors.Wrap(err, "parse media type")
+		}
+		switch {
+		case ct == "application/problem+json":
+			buf, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return res, err
+			}
+			d := jx.DecodeBytes(buf)
+
+			var response ProblemDetails
+			if err := func() error {
+				if err := response.Decode(d); err != nil {
+					return err
+				}
+				if err := d.Skip(); err != io.EOF {
+					return errors.New("unexpected trailing data")
+				}
+				return nil
+			}(); err != nil {
+				err = &ogenerrors.DecodeBodyError{
+					ContentType: ct,
+					Body:        buf,
+					Err:         err,
+				}
+				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
+			var wrapper ProblemDetailsHeaders
+			wrapper.Response = response
+			h := uri.NewHeaderDecoder(resp.Header)
+			// Parse "Retry-After" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "Retry-After",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.RetryAfter = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse Retry-After header")
+				}
+			}
+			// Parse "X-RateLimit-Limit" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Limit",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitLimit = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Limit header")
+				}
+			}
+			// Parse "X-RateLimit-Remaining" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Remaining",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitRemaining = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Remaining header")
+				}
+			}
+			// Parse "X-RateLimit-Reset" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Reset",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt64(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitReset = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Reset header")
+				}
+			}
+			return &wrapper, nil
+		default:
+			return res, validate.InvalidContentType(ct)
+		}
 	}
 	return res, validate.UnexpectedStatusCodeWithResponse(resp)
 }
@@ -9786,6 +18886,181 @@ func decodeWebhooksCreateResponse(resp *http.Response) (res WebhooksCreateRes, _
 				return res, errors.Wrap(err, "validate")
 			}
 			return &response, nil
+		default:
+			return res, validate.InvalidContentType(ct)
+		}
+	case 429:
+		// Code 429.
+		ct, _, err := mime.ParseMediaType(resp.Header.Get("Content-Type"))
+		if err != nil {
+			return res, errors.Wrap(err, "parse media type")
+		}
+		switch {
+		case ct == "application/problem+json":
+			buf, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return res, err
+			}
+			d := jx.DecodeBytes(buf)
+
+			var response ProblemDetails
+			if err := func() error {
+				if err := response.Decode(d); err != nil {
+					return err
+				}
+				if err := d.Skip(); err != io.EOF {
+					return errors.New("unexpected trailing data")
+				}
+				return nil
+			}(); err != nil {
+				err = &ogenerrors.DecodeBodyError{
+					ContentType: ct,
+					Body:        buf,
+					Err:         err,
+				}
+				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
+			var wrapper ProblemDetailsHeaders
+			wrapper.Response = response
+			h := uri.NewHeaderDecoder(resp.Header)
+			// Parse "Retry-After" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "Retry-After",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.RetryAfter = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse Retry-After header")
+				}
+			}
+			// Parse "X-RateLimit-Limit" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Limit",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitLimit = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Limit header")
+				}
+			}
+			// Parse "X-RateLimit-Remaining" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Remaining",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitRemaining = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Remaining header")
+				}
+			}
+			// Parse "X-RateLimit-Reset" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Reset",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt64(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitReset = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Reset header")
+				}
+			}
+			return &wrapper, nil
 		default:
 			return res, validate.InvalidContentType(ct)
 		}
@@ -9974,6 +19249,181 @@ func decodeWebhooksDeleteResponse(resp *http.Response) (res WebhooksDeleteRes, _
 		default:
 			return res, validate.InvalidContentType(ct)
 		}
+	case 429:
+		// Code 429.
+		ct, _, err := mime.ParseMediaType(resp.Header.Get("Content-Type"))
+		if err != nil {
+			return res, errors.Wrap(err, "parse media type")
+		}
+		switch {
+		case ct == "application/problem+json":
+			buf, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return res, err
+			}
+			d := jx.DecodeBytes(buf)
+
+			var response ProblemDetails
+			if err := func() error {
+				if err := response.Decode(d); err != nil {
+					return err
+				}
+				if err := d.Skip(); err != io.EOF {
+					return errors.New("unexpected trailing data")
+				}
+				return nil
+			}(); err != nil {
+				err = &ogenerrors.DecodeBodyError{
+					ContentType: ct,
+					Body:        buf,
+					Err:         err,
+				}
+				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
+			var wrapper ProblemDetailsHeaders
+			wrapper.Response = response
+			h := uri.NewHeaderDecoder(resp.Header)
+			// Parse "Retry-After" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "Retry-After",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.RetryAfter = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse Retry-After header")
+				}
+			}
+			// Parse "X-RateLimit-Limit" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Limit",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitLimit = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Limit header")
+				}
+			}
+			// Parse "X-RateLimit-Remaining" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Remaining",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitRemaining = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Remaining header")
+				}
+			}
+			// Parse "X-RateLimit-Reset" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Reset",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt64(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitReset = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Reset header")
+				}
+			}
+			return &wrapper, nil
+		default:
+			return res, validate.InvalidContentType(ct)
+		}
 	}
 	return res, validate.UnexpectedStatusCodeWithResponse(resp)
 }
@@ -10156,6 +19606,181 @@ func decodeWebhooksGetResponse(resp *http.Response) (res WebhooksGetRes, _ error
 		default:
 			return res, validate.InvalidContentType(ct)
 		}
+	case 429:
+		// Code 429.
+		ct, _, err := mime.ParseMediaType(resp.Header.Get("Content-Type"))
+		if err != nil {
+			return res, errors.Wrap(err, "parse media type")
+		}
+		switch {
+		case ct == "application/problem+json":
+			buf, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return res, err
+			}
+			d := jx.DecodeBytes(buf)
+
+			var response ProblemDetails
+			if err := func() error {
+				if err := response.Decode(d); err != nil {
+					return err
+				}
+				if err := d.Skip(); err != io.EOF {
+					return errors.New("unexpected trailing data")
+				}
+				return nil
+			}(); err != nil {
+				err = &ogenerrors.DecodeBodyError{
+					ContentType: ct,
+					Body:        buf,
+					Err:         err,
+				}
+				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
+			var wrapper ProblemDetailsHeaders
+			wrapper.Response = response
+			h := uri.NewHeaderDecoder(resp.Header)
+			// Parse "Retry-After" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "Retry-After",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.RetryAfter = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse Retry-After header")
+				}
+			}
+			// Parse "X-RateLimit-Limit" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Limit",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitLimit = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Limit header")
+				}
+			}
+			// Parse "X-RateLimit-Remaining" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Remaining",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitRemaining = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Remaining header")
+				}
+			}
+			// Parse "X-RateLimit-Reset" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Reset",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt64(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitReset = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Reset header")
+				}
+			}
+			return &wrapper, nil
+		default:
+			return res, validate.InvalidContentType(ct)
+		}
 	}
 	return res, validate.UnexpectedStatusCodeWithResponse(resp)
 }
@@ -10335,6 +19960,181 @@ func decodeWebhooksListResponse(resp *http.Response) (res WebhooksListRes, _ err
 				return res, errors.Wrap(err, "validate")
 			}
 			return &response, nil
+		default:
+			return res, validate.InvalidContentType(ct)
+		}
+	case 429:
+		// Code 429.
+		ct, _, err := mime.ParseMediaType(resp.Header.Get("Content-Type"))
+		if err != nil {
+			return res, errors.Wrap(err, "parse media type")
+		}
+		switch {
+		case ct == "application/problem+json":
+			buf, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return res, err
+			}
+			d := jx.DecodeBytes(buf)
+
+			var response ProblemDetails
+			if err := func() error {
+				if err := response.Decode(d); err != nil {
+					return err
+				}
+				if err := d.Skip(); err != io.EOF {
+					return errors.New("unexpected trailing data")
+				}
+				return nil
+			}(); err != nil {
+				err = &ogenerrors.DecodeBodyError{
+					ContentType: ct,
+					Body:        buf,
+					Err:         err,
+				}
+				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
+			var wrapper ProblemDetailsHeaders
+			wrapper.Response = response
+			h := uri.NewHeaderDecoder(resp.Header)
+			// Parse "Retry-After" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "Retry-After",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.RetryAfter = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse Retry-After header")
+				}
+			}
+			// Parse "X-RateLimit-Limit" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Limit",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitLimit = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Limit header")
+				}
+			}
+			// Parse "X-RateLimit-Remaining" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Remaining",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitRemaining = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Remaining header")
+				}
+			}
+			// Parse "X-RateLimit-Reset" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Reset",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt64(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitReset = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Reset header")
+				}
+			}
+			return &wrapper, nil
 		default:
 			return res, validate.InvalidContentType(ct)
 		}
@@ -10561,6 +20361,181 @@ func decodeWebhooksUpdateResponse(resp *http.Response) (res WebhooksUpdateRes, _
 				return res, errors.Wrap(err, "validate")
 			}
 			return &response, nil
+		default:
+			return res, validate.InvalidContentType(ct)
+		}
+	case 429:
+		// Code 429.
+		ct, _, err := mime.ParseMediaType(resp.Header.Get("Content-Type"))
+		if err != nil {
+			return res, errors.Wrap(err, "parse media type")
+		}
+		switch {
+		case ct == "application/problem+json":
+			buf, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return res, err
+			}
+			d := jx.DecodeBytes(buf)
+
+			var response ProblemDetails
+			if err := func() error {
+				if err := response.Decode(d); err != nil {
+					return err
+				}
+				if err := d.Skip(); err != io.EOF {
+					return errors.New("unexpected trailing data")
+				}
+				return nil
+			}(); err != nil {
+				err = &ogenerrors.DecodeBodyError{
+					ContentType: ct,
+					Body:        buf,
+					Err:         err,
+				}
+				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
+			var wrapper ProblemDetailsHeaders
+			wrapper.Response = response
+			h := uri.NewHeaderDecoder(resp.Header)
+			// Parse "Retry-After" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "Retry-After",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.RetryAfter = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse Retry-After header")
+				}
+			}
+			// Parse "X-RateLimit-Limit" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Limit",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitLimit = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Limit header")
+				}
+			}
+			// Parse "X-RateLimit-Remaining" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Remaining",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt32(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitRemaining = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Remaining header")
+				}
+			}
+			// Parse "X-RateLimit-Reset" header.
+			{
+				cfg := uri.HeaderParameterDecodingConfig{
+					Name:    "X-RateLimit-Reset",
+					Explode: false,
+				}
+				if err := func() error {
+					if err := h.HasParam(cfg); err == nil {
+						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToInt64(val)
+							if err != nil {
+								return err
+							}
+
+							wrapper.XRateLimitReset = c
+							return nil
+						}); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+					return nil
+				}(); err != nil {
+					return res, errors.Wrap(err, "parse X-RateLimit-Reset header")
+				}
+			}
+			return &wrapper, nil
 		default:
 			return res, validate.InvalidContentType(ct)
 		}

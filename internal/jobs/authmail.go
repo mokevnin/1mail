@@ -26,6 +26,11 @@ type SendAuthMailArgs struct {
 	Flow  string `json:"flow"`
 	Email string `json:"email"`
 	Token string `json:"token"`
+	// Discard builds the mail and drops it. Forgot-password enqueues a Discard job
+	// for an address that gets no mail (unknown, or over its budget), so every
+	// request does the same work and the response time says nothing about the
+	// address.
+	Discard bool `json:"discard,omitempty"`
 }
 
 func (SendAuthMailArgs) Kind() string { return "send_auth_mail" }
@@ -49,18 +54,23 @@ func SendAuthMail(ctx context.Context, sender messaging.EmailSender, appURL stri
 	if sender == nil {
 		return fmt.Errorf("send auth mail: no system email sender configured")
 	}
+	msg, err := buildAuthMail(appURL, args)
+	if err != nil || args.Discard {
+		return err
+	}
+	_, err = sender.Send(ctx, msg)
+	return err
+}
+
+// buildAuthMail renders an account email without sending it.
+func buildAuthMail(appURL string, args SendAuthMailArgs) (messaging.EmailMessage, error) {
 	subjectID, path, introID := authMailCopy(args.Flow)
 	if path == "" {
-		return fmt.Errorf("send auth mail: unknown flow %q", args.Flow)
+		return messaging.EmailMessage{}, fmt.Errorf("send auth mail: unknown flow %q", args.Flow)
 	}
 	link := strings.TrimRight(appURL, "/") + path + "?token=" + url.QueryEscape(args.Token)
 	body := fmt.Sprintf("%s\n\n%s\n\n%s\n", i18n.T(introID, nil), link, i18n.T("email.auth.footer", nil))
-	_, err := sender.Send(ctx, messaging.EmailMessage{
-		To:      args.Email,
-		Subject: i18n.T(subjectID, nil),
-		Text:    body,
-	})
-	return err
+	return messaging.EmailMessage{To: args.Email, Subject: i18n.T(subjectID, nil), Text: body}, nil
 }
 
 // authMailCopy returns the subject message id, SPA path, and intro message id
@@ -79,23 +89,24 @@ func authMailCopy(flow string) (subjectID, path, introID string) {
 	}
 }
 
-// EnqueuePasswordReset schedules the password-reset email (river adapter).
-func (c *Client) EnqueuePasswordReset(ctx context.Context, email, token string) error {
-	return c.enqueueAuthMail(ctx, flowPasswordReset, email, token)
+// EnqueuePasswordReset schedules the password-reset email (river adapter). With
+// send false the job is queued all the same but its worker drops the mail.
+func (c *Client) EnqueuePasswordReset(ctx context.Context, email, token string, send bool) error {
+	return c.enqueue(ctx, SendAuthMailArgs{Flow: flowPasswordReset, Email: email, Token: token, Discard: !send})
 }
 
 // EnqueueEmailVerification schedules the signup email-verification email.
 func (c *Client) EnqueueEmailVerification(ctx context.Context, email, token string) error {
-	return c.enqueueAuthMail(ctx, flowEmailVerify, email, token)
+	return c.enqueue(ctx, SendAuthMailArgs{Flow: flowEmailVerify, Email: email, Token: token})
 }
 
 // EnqueueEmailChangeConfirm schedules the confirm-new-email email (sent to the
 // requested new address).
 func (c *Client) EnqueueEmailChangeConfirm(ctx context.Context, email, token string) error {
-	return c.enqueueAuthMail(ctx, flowEmailChange, email, token)
+	return c.enqueue(ctx, SendAuthMailArgs{Flow: flowEmailChange, Email: email, Token: token})
 }
 
-func (c *Client) enqueueAuthMail(ctx context.Context, flow, email, token string) error {
-	_, err := c.river.Insert(ctx, SendAuthMailArgs{Flow: flow, Email: email, Token: token}, nil)
+func (c *Client) enqueue(ctx context.Context, args SendAuthMailArgs) error {
+	_, err := c.river.Insert(ctx, args, nil)
 	return err
 }

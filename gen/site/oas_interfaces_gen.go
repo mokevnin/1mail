@@ -13,6 +13,10 @@ type SiteAuthDirectLoginRes interface {
 	siteAuthDirectLoginRes()
 }
 
+type SiteAuthForgotPasswordRes interface {
+	siteAuthForgotPasswordRes()
+}
+
 type SiteAuthRegisterRes interface {
 	siteAuthRegisterRes()
 }

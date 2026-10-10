@@ -111,6 +111,10 @@ export type ProblemDetails = {
   fields?: {
     [key: string]: string;
   };
+  /**
+   * Seconds to wait before retrying; set on a 429 so a client that only sees the body can show the wait
+   */
+  retryAfter?: number;
 };
 
 export type TimeZoneName = string;
@@ -130,9 +134,17 @@ export type CollectEventsCreateErrors = {
    */
   401: ProblemDetails;
   /**
+   * RFC 7807 payload too large response: the body exceeds the size cap (ADR 0025)
+   */
+  413: ProblemDetails;
+  /**
    * RFC 7807 validation response
    */
   422: ProblemDetails;
+  /**
+   * RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)
+   */
+  429: ProblemDetails;
 };
 
 export type CollectEventsCreateError = CollectEventsCreateErrors[keyof CollectEventsCreateErrors];
@@ -159,9 +171,17 @@ export type CollectIdentifyCreateErrors = {
    */
   401: ProblemDetails;
   /**
+   * RFC 7807 payload too large response: the body exceeds the size cap (ADR 0025)
+   */
+  413: ProblemDetails;
+  /**
    * RFC 7807 validation response
    */
   422: ProblemDetails;
+  /**
+   * RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)
+   */
+  429: ProblemDetails;
 };
 
 export type CollectIdentifyCreateError = CollectIdentifyCreateErrors[keyof CollectIdentifyCreateErrors];

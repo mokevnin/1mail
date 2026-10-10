@@ -43,7 +43,10 @@ type WelcomeEnqueuer interface {
 // sender. Same jobs enqueue seam (river prod, inline tests). The token is minted
 // by the handler; the job builds the link.
 type SystemMailEnqueuer interface {
-	EnqueuePasswordReset(ctx context.Context, email, token string) error
+	// EnqueuePasswordReset queues the reset mail. With send false the job is queued
+	// all the same but nothing is delivered, so forgot-password costs the same
+	// for every address.
+	EnqueuePasswordReset(ctx context.Context, email, token string, send bool) error
 	EnqueueEmailVerification(ctx context.Context, email, token string) error
 	EnqueueEmailChangeConfirm(ctx context.Context, email, token string) error
 	// EnqueueMemberInvite sends the workspace invite email. It is best-effort:
@@ -61,6 +64,7 @@ type SendingDomainVerifyEnqueuer interface {
 
 type Handlers struct {
 	accounts     *accounts.Accounts
+	attempts     *accounts.Attempts
 	bus          *events.Bus
 	cipher       *secrets.Cipher
 	catalog      *messaging.Catalog
@@ -85,7 +89,11 @@ type Handlers struct {
 // the shared singletons the composition root registers once, so /site and /api
 // cannot diverge on how a module is constructed.
 type Deps struct {
-	Accounts     *accounts.Accounts
+	Accounts *accounts.Accounts
+	// Attempts counts failed logins and password-reset mails per account (ADR
+	// 0025); the login route's credential checker and throttle wrapper and
+	// forgot-password share it.
+	Attempts     *accounts.Attempts
 	OAuth        *oauthserver.Service
 	Bus          *events.Bus
 	Cipher       *secrets.Cipher
@@ -108,7 +116,7 @@ type Deps struct {
 
 func NewHandlers(d Deps) *Handlers {
 	return &Handlers{
-		accounts: d.Accounts, bus: d.Bus, cipher: d.Cipher, catalog: d.Catalog, outbound: d.Outbound,
+		accounts: d.Accounts, attempts: d.Attempts, bus: d.Bus, cipher: d.Cipher, catalog: d.Catalog, outbound: d.Outbound,
 		segments: d.Segments, eventlog: d.EventLog, contacts: d.Contacts, erasure: d.Erasure, tags: d.Tags,
 		automations: d.Automations, broadcasts: d.Broadcasts, welcome: d.Welcome,
 		sysmail: d.SysMail, domainVerify: d.DomainVerify, tokens: d.Tokens, tracker: d.Tracker, appURL: d.AppURL,

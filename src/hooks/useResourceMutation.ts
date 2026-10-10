@@ -7,7 +7,8 @@ import {
 } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 
-import { getApiErrorMessage, isForbiddenError } from '../utils/apiErrors.ts'
+import { isForbiddenError } from '../utils/apiErrors.ts'
+import { useApiErrorMessage } from './useApiErrorMessage.ts'
 
 // Options layered on top of a generated mutation. The three things every CRUD
 // mutation in this app repeats — invalidate the affected list query, toast on
@@ -43,6 +44,7 @@ export function useResourceMutation<TData, TError, TVars, TCtx>({
 }: ResourceMutationOptions<TData, TError, TVars, TCtx>) {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
+  const apiErrorMessage = useApiErrorMessage()
 
   return useMutation({
     ...mutation,
@@ -66,7 +68,7 @@ export function useResourceMutation<TData, TError, TVars, TCtx>({
         message:
           forbiddenMessage && isForbiddenError(error)
             ? forbiddenMessage
-            : getApiErrorMessage(
+            : apiErrorMessage(
                 error,
                 t(($) => $.notifications.errorMessage),
               ),

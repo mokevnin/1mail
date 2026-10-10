@@ -72,3 +72,7 @@ func (c *Client) River() *river.Client[pgx.Tx] { return c.river }
 
 // NewErrorHandler builds river's error sink over logger.
 func NewErrorHandler(logger *slog.Logger) river.ErrorHandler { return &errorHandler{logger: logger} }
+
+func NewPurgeAuthAttemptsWorker(client *ent.Client) *PurgeAuthAttemptsWorker {
+	return &PurgeAuthAttemptsWorker{ent: client}
+}

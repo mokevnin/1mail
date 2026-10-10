@@ -74,7 +74,8 @@ namespace SiteAuth {
         @body body: SiteRegisterResult;
       }
     | ConflictProblem
-    | UnprocessableEntityProblem;
+    | UnprocessableEntityProblem
+    | TooManyRequestsProblem;
 
   @useAuth(NoAuth)
   @post
@@ -85,14 +86,19 @@ namespace SiteAuth {
         @body body: SiteDirectLoginResult;
       }
     | SiteDirectLoginForbidden
-    | BadRequestProblem;
+    | BadRequestProblem
+    | TooManyRequestsProblem;
 
   /** Request a password-reset link. Always returns 202 regardless of whether
-   * the email matches an account, to avoid leaking which addresses exist. */
+   * the email matches an account and even when the address has used its hourly
+   * mail budget, to avoid leaking which addresses exist. Answers 429 over the
+   * per-IP limit. */
   @useAuth(NoAuth)
   @post
   @route("/forgot-password")
-  op forgotPassword(@body body: SiteForgotPasswordInput): AcceptedResponse;
+  op forgotPassword(@body body: SiteForgotPasswordInput):
+    | AcceptedResponse
+    | TooManyRequestsProblem;
 
   /** Set a new password from a reset token */
   @useAuth(NoAuth)

@@ -221,6 +221,7 @@ namespace ContactsBatch {
   op upsert(@body body: UpsertContactsInput):
     | UpsertContactsResult
     | UnauthorizedProblem
+    | TooManyRequestsProblem
     | UnprocessableEntityProblem;
 }
 

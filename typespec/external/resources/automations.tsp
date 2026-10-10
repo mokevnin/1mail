@@ -93,6 +93,7 @@ interface Automations
     | AutomationResource
     | BadRequestProblem
     | UnauthorizedProblem
+    | TooManyRequestsProblem
     | NotFoundProblem
     | UnprocessableEntityProblem;
 
@@ -103,5 +104,6 @@ interface Automations
     | AutomationResource
     | BadRequestProblem
     | UnauthorizedProblem
+    | TooManyRequestsProblem
     | NotFoundProblem;
 }

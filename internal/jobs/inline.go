@@ -48,9 +48,10 @@ func (i *Inline) EnqueueWelcome(ctx context.Context, email, name string) error {
 	return SendWelcome(ctx, i.systemSender, email, name)
 }
 
-// EnqueuePasswordReset sends the password-reset email now.
-func (i *Inline) EnqueuePasswordReset(ctx context.Context, email, token string) error {
-	return SendAuthMail(ctx, i.systemSender, i.appURL, SendAuthMailArgs{Flow: flowPasswordReset, Email: email, Token: token})
+// EnqueuePasswordReset sends the password-reset email now, or only builds it when
+// send is false.
+func (i *Inline) EnqueuePasswordReset(ctx context.Context, email, token string, send bool) error {
+	return SendAuthMail(ctx, i.systemSender, i.appURL, SendAuthMailArgs{Flow: flowPasswordReset, Email: email, Token: token, Discard: !send})
 }
 
 // EnqueueEmailVerification sends the signup email-verification email now.

@@ -7,6 +7,8 @@ import (
 
 	"github.com/go-faster/errors"
 	"github.com/go-faster/jx"
+	"github.com/ogen-go/ogen/conv"
+	"github.com/ogen-go/ogen/uri"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -29,12 +31,89 @@ func encodeCollectEventsCreateResponse(response CollectEventsCreateRes, w http.R
 
 		return nil
 
+	case *CollectEventsCreateRequestEntityTooLarge:
+		w.Header().Set("Content-Type", "application/problem+json")
+		w.WriteHeader(413)
+
+		e := new(jx.Encoder)
+		response.Encode(e)
+		if _, err := e.WriteTo(w); err != nil {
+			return errors.Wrap(err, "write")
+		}
+
+		return nil
+
 	case *CollectEventsCreateUnprocessableEntity:
 		w.Header().Set("Content-Type", "application/problem+json")
 		w.WriteHeader(422)
 
 		e := new(jx.Encoder)
 		response.Encode(e)
+		if _, err := e.WriteTo(w); err != nil {
+			return errors.Wrap(err, "write")
+		}
+
+		return nil
+
+	case *ProblemDetailsHeaders:
+		w.Header().Set("Content-Type", "application/problem+json")
+		w.Header().Set("Access-Control-Expose-Headers", "Retry-After,X-Ratelimit-Limit,X-Ratelimit-Remaining,X-Ratelimit-Reset")
+		// Encoding response headers.
+		{
+			h := uri.NewHeaderEncoder(w.Header())
+			// Encode "Retry-After" header.
+			{
+				cfg := uri.HeaderParameterEncodingConfig{
+					Name:    "Retry-After",
+					Explode: false,
+				}
+				if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
+					return e.EncodeValue(conv.Int32ToString(response.RetryAfter))
+				}); err != nil {
+					return errors.Wrap(err, "encode Retry-After header")
+				}
+			}
+			// Encode "X-RateLimit-Limit" header.
+			{
+				cfg := uri.HeaderParameterEncodingConfig{
+					Name:    "X-RateLimit-Limit",
+					Explode: false,
+				}
+				if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
+					return e.EncodeValue(conv.Int32ToString(response.XRateLimitLimit))
+				}); err != nil {
+					return errors.Wrap(err, "encode X-RateLimit-Limit header")
+				}
+			}
+			// Encode "X-RateLimit-Remaining" header.
+			{
+				cfg := uri.HeaderParameterEncodingConfig{
+					Name:    "X-RateLimit-Remaining",
+					Explode: false,
+				}
+				if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
+					return e.EncodeValue(conv.Int32ToString(response.XRateLimitRemaining))
+				}); err != nil {
+					return errors.Wrap(err, "encode X-RateLimit-Remaining header")
+				}
+			}
+			// Encode "X-RateLimit-Reset" header.
+			{
+				cfg := uri.HeaderParameterEncodingConfig{
+					Name:    "X-RateLimit-Reset",
+					Explode: false,
+				}
+				if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
+					return e.EncodeValue(conv.Int64ToString(response.XRateLimitReset))
+				}); err != nil {
+					return errors.Wrap(err, "encode X-RateLimit-Reset header")
+				}
+			}
+		}
+		w.WriteHeader(429)
+
+		e := new(jx.Encoder)
+		response.Response.Encode(e)
 		if _, err := e.WriteTo(w); err != nil {
 			return errors.Wrap(err, "write")
 		}
@@ -72,12 +151,89 @@ func encodeCollectIdentifyCreateResponse(response CollectIdentifyCreateRes, w ht
 
 		return nil
 
+	case *CollectIdentifyCreateRequestEntityTooLarge:
+		w.Header().Set("Content-Type", "application/problem+json")
+		w.WriteHeader(413)
+
+		e := new(jx.Encoder)
+		response.Encode(e)
+		if _, err := e.WriteTo(w); err != nil {
+			return errors.Wrap(err, "write")
+		}
+
+		return nil
+
 	case *CollectIdentifyCreateUnprocessableEntity:
 		w.Header().Set("Content-Type", "application/problem+json")
 		w.WriteHeader(422)
 
 		e := new(jx.Encoder)
 		response.Encode(e)
+		if _, err := e.WriteTo(w); err != nil {
+			return errors.Wrap(err, "write")
+		}
+
+		return nil
+
+	case *ProblemDetailsHeaders:
+		w.Header().Set("Content-Type", "application/problem+json")
+		w.Header().Set("Access-Control-Expose-Headers", "Retry-After,X-Ratelimit-Limit,X-Ratelimit-Remaining,X-Ratelimit-Reset")
+		// Encoding response headers.
+		{
+			h := uri.NewHeaderEncoder(w.Header())
+			// Encode "Retry-After" header.
+			{
+				cfg := uri.HeaderParameterEncodingConfig{
+					Name:    "Retry-After",
+					Explode: false,
+				}
+				if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
+					return e.EncodeValue(conv.Int32ToString(response.RetryAfter))
+				}); err != nil {
+					return errors.Wrap(err, "encode Retry-After header")
+				}
+			}
+			// Encode "X-RateLimit-Limit" header.
+			{
+				cfg := uri.HeaderParameterEncodingConfig{
+					Name:    "X-RateLimit-Limit",
+					Explode: false,
+				}
+				if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
+					return e.EncodeValue(conv.Int32ToString(response.XRateLimitLimit))
+				}); err != nil {
+					return errors.Wrap(err, "encode X-RateLimit-Limit header")
+				}
+			}
+			// Encode "X-RateLimit-Remaining" header.
+			{
+				cfg := uri.HeaderParameterEncodingConfig{
+					Name:    "X-RateLimit-Remaining",
+					Explode: false,
+				}
+				if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
+					return e.EncodeValue(conv.Int32ToString(response.XRateLimitRemaining))
+				}); err != nil {
+					return errors.Wrap(err, "encode X-RateLimit-Remaining header")
+				}
+			}
+			// Encode "X-RateLimit-Reset" header.
+			{
+				cfg := uri.HeaderParameterEncodingConfig{
+					Name:    "X-RateLimit-Reset",
+					Explode: false,
+				}
+				if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
+					return e.EncodeValue(conv.Int64ToString(response.XRateLimitReset))
+				}); err != nil {
+					return errors.Wrap(err, "encode X-RateLimit-Reset header")
+				}
+			}
+		}
+		w.WriteHeader(429)
+
+		e := new(jx.Encoder)
+		response.Response.Encode(e)
 		if _, err := e.WriteTo(w); err != nil {
 			return errors.Wrap(err, "write")
 		}

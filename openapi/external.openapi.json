@@ -80,6 +80,50 @@
                 }
               }
             }
+          },
+          "429": {
+            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)",
+            "headers": {
+              "Retry-After": {
+                "required": true,
+                "description": "Seconds to wait before retrying",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Limit": {
+                "required": true,
+                "description": "The request budget of the window that was exceeded",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "required": true,
+                "description": "Requests left in the current window",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Reset": {
+                "required": true,
+                "description": "Unix time at which the window resets",
+                "schema": {
+                  "type": "integer",
+                  "format": "int64"
+                }
+              }
+            },
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
           }
         },
         "tags": ["Auth"],
@@ -132,6 +176,50 @@
                 }
               }
             }
+          },
+          "429": {
+            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)",
+            "headers": {
+              "Retry-After": {
+                "required": true,
+                "description": "Seconds to wait before retrying",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Limit": {
+                "required": true,
+                "description": "The request budget of the window that was exceeded",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "required": true,
+                "description": "Requests left in the current window",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Reset": {
+                "required": true,
+                "description": "Unix time at which the window resets",
+                "schema": {
+                  "type": "integer",
+                  "format": "int64"
+                }
+              }
+            },
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
           }
         },
         "tags": ["Auth"],
@@ -175,6 +263,50 @@
           },
           "403": {
             "description": "RFC 7807 forbidden response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)",
+            "headers": {
+              "Retry-After": {
+                "required": true,
+                "description": "Seconds to wait before retrying",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Limit": {
+                "required": true,
+                "description": "The request budget of the window that was exceeded",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "required": true,
+                "description": "Requests left in the current window",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Reset": {
+                "required": true,
+                "description": "Unix time at which the window resets",
+                "schema": {
+                  "type": "integer",
+                  "format": "int64"
+                }
+              }
+            },
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -236,6 +368,50 @@
           },
           "403": {
             "description": "RFC 7807 forbidden response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)",
+            "headers": {
+              "Retry-After": {
+                "required": true,
+                "description": "Seconds to wait before retrying",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Limit": {
+                "required": true,
+                "description": "The request budget of the window that was exceeded",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "required": true,
+                "description": "Requests left in the current window",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Reset": {
+                "required": true,
+                "description": "Unix time at which the window resets",
+                "schema": {
+                  "type": "integer",
+                  "format": "int64"
+                }
+              }
+            },
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -311,6 +487,50 @@
           },
           "404": {
             "description": "RFC 7807 not found response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)",
+            "headers": {
+              "Retry-After": {
+                "required": true,
+                "description": "Seconds to wait before retrying",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Limit": {
+                "required": true,
+                "description": "The request budget of the window that was exceeded",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "required": true,
+                "description": "Requests left in the current window",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Reset": {
+                "required": true,
+                "description": "Unix time at which the window resets",
+                "schema": {
+                  "type": "integer",
+                  "format": "int64"
+                }
+              }
+            },
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -409,6 +629,50 @@
                 }
               }
             }
+          },
+          "429": {
+            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)",
+            "headers": {
+              "Retry-After": {
+                "required": true,
+                "description": "Seconds to wait before retrying",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Limit": {
+                "required": true,
+                "description": "The request budget of the window that was exceeded",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "required": true,
+                "description": "Requests left in the current window",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Reset": {
+                "required": true,
+                "description": "Unix time at which the window resets",
+                "schema": {
+                  "type": "integer",
+                  "format": "int64"
+                }
+              }
+            },
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
           }
         },
         "tags": ["Automations"]
@@ -440,6 +704,50 @@
           },
           "422": {
             "description": "RFC 7807 validation response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)",
+            "headers": {
+              "Retry-After": {
+                "required": true,
+                "description": "Seconds to wait before retrying",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Limit": {
+                "required": true,
+                "description": "The request budget of the window that was exceeded",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "required": true,
+                "description": "Requests left in the current window",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Reset": {
+                "required": true,
+                "description": "Unix time at which the window resets",
+                "schema": {
+                  "type": "integer",
+                  "format": "int64"
+                }
+              }
+            },
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -511,6 +819,50 @@
                 }
               }
             }
+          },
+          "429": {
+            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)",
+            "headers": {
+              "Retry-After": {
+                "required": true,
+                "description": "Seconds to wait before retrying",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Limit": {
+                "required": true,
+                "description": "The request budget of the window that was exceeded",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "required": true,
+                "description": "Requests left in the current window",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Reset": {
+                "required": true,
+                "description": "Unix time at which the window resets",
+                "schema": {
+                  "type": "integer",
+                  "format": "int64"
+                }
+              }
+            },
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
           }
         },
         "tags": ["Automations"]
@@ -566,6 +918,50 @@
           },
           "422": {
             "description": "RFC 7807 validation response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)",
+            "headers": {
+              "Retry-After": {
+                "required": true,
+                "description": "Seconds to wait before retrying",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Limit": {
+                "required": true,
+                "description": "The request budget of the window that was exceeded",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "required": true,
+                "description": "Requests left in the current window",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Reset": {
+                "required": true,
+                "description": "Unix time at which the window resets",
+                "schema": {
+                  "type": "integer",
+                  "format": "int64"
+                }
+              }
+            },
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -638,6 +1034,50 @@
                 }
               }
             }
+          },
+          "429": {
+            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)",
+            "headers": {
+              "Retry-After": {
+                "required": true,
+                "description": "Seconds to wait before retrying",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Limit": {
+                "required": true,
+                "description": "The request budget of the window that was exceeded",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "required": true,
+                "description": "Requests left in the current window",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Reset": {
+                "required": true,
+                "description": "Unix time at which the window resets",
+                "schema": {
+                  "type": "integer",
+                  "format": "int64"
+                }
+              }
+            },
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
           }
         },
         "tags": ["Automations"]
@@ -702,6 +1142,50 @@
                 }
               }
             }
+          },
+          "429": {
+            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)",
+            "headers": {
+              "Retry-After": {
+                "required": true,
+                "description": "Seconds to wait before retrying",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Limit": {
+                "required": true,
+                "description": "The request budget of the window that was exceeded",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "required": true,
+                "description": "Requests left in the current window",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Reset": {
+                "required": true,
+                "description": "Unix time at which the window resets",
+                "schema": {
+                  "type": "integer",
+                  "format": "int64"
+                }
+              }
+            },
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
           }
         },
         "tags": ["Automations"],
@@ -752,6 +1236,50 @@
           },
           "404": {
             "description": "RFC 7807 not found response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)",
+            "headers": {
+              "Retry-After": {
+                "required": true,
+                "description": "Seconds to wait before retrying",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Limit": {
+                "required": true,
+                "description": "The request budget of the window that was exceeded",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "required": true,
+                "description": "Requests left in the current window",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Reset": {
+                "required": true,
+                "description": "Unix time at which the window resets",
+                "schema": {
+                  "type": "integer",
+                  "format": "int64"
+                }
+              }
+            },
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -847,6 +1375,50 @@
                 }
               }
             }
+          },
+          "429": {
+            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)",
+            "headers": {
+              "Retry-After": {
+                "required": true,
+                "description": "Seconds to wait before retrying",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Limit": {
+                "required": true,
+                "description": "The request budget of the window that was exceeded",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "required": true,
+                "description": "Requests left in the current window",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Reset": {
+                "required": true,
+                "description": "Unix time at which the window resets",
+                "schema": {
+                  "type": "integer",
+                  "format": "int64"
+                }
+              }
+            },
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
           }
         },
         "tags": ["Broadcasts"]
@@ -878,6 +1450,50 @@
           },
           "422": {
             "description": "RFC 7807 validation response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)",
+            "headers": {
+              "Retry-After": {
+                "required": true,
+                "description": "Seconds to wait before retrying",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Limit": {
+                "required": true,
+                "description": "The request budget of the window that was exceeded",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "required": true,
+                "description": "Requests left in the current window",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Reset": {
+                "required": true,
+                "description": "Unix time at which the window resets",
+                "schema": {
+                  "type": "integer",
+                  "format": "int64"
+                }
+              }
+            },
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -949,6 +1565,50 @@
                 }
               }
             }
+          },
+          "429": {
+            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)",
+            "headers": {
+              "Retry-After": {
+                "required": true,
+                "description": "Seconds to wait before retrying",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Limit": {
+                "required": true,
+                "description": "The request budget of the window that was exceeded",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "required": true,
+                "description": "Requests left in the current window",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Reset": {
+                "required": true,
+                "description": "Unix time at which the window resets",
+                "schema": {
+                  "type": "integer",
+                  "format": "int64"
+                }
+              }
+            },
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
           }
         },
         "tags": ["Broadcasts"]
@@ -1004,6 +1664,50 @@
           },
           "422": {
             "description": "RFC 7807 validation response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)",
+            "headers": {
+              "Retry-After": {
+                "required": true,
+                "description": "Seconds to wait before retrying",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Limit": {
+                "required": true,
+                "description": "The request budget of the window that was exceeded",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "required": true,
+                "description": "Requests left in the current window",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Reset": {
+                "required": true,
+                "description": "Unix time at which the window resets",
+                "schema": {
+                  "type": "integer",
+                  "format": "int64"
+                }
+              }
+            },
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -1076,6 +1780,50 @@
                 }
               }
             }
+          },
+          "429": {
+            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)",
+            "headers": {
+              "Retry-After": {
+                "required": true,
+                "description": "Seconds to wait before retrying",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Limit": {
+                "required": true,
+                "description": "The request budget of the window that was exceeded",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "required": true,
+                "description": "Requests left in the current window",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Reset": {
+                "required": true,
+                "description": "Unix time at which the window resets",
+                "schema": {
+                  "type": "integer",
+                  "format": "int64"
+                }
+              }
+            },
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
           }
         },
         "tags": ["Broadcasts"]
@@ -1133,6 +1881,50 @@
           },
           "422": {
             "description": "RFC 7807 validation response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)",
+            "headers": {
+              "Retry-After": {
+                "required": true,
+                "description": "Seconds to wait before retrying",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Limit": {
+                "required": true,
+                "description": "The request budget of the window that was exceeded",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "required": true,
+                "description": "Requests left in the current window",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Reset": {
+                "required": true,
+                "description": "Unix time at which the window resets",
+                "schema": {
+                  "type": "integer",
+                  "format": "int64"
+                }
+              }
+            },
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -1204,6 +1996,50 @@
                 }
               }
             }
+          },
+          "429": {
+            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)",
+            "headers": {
+              "Retry-After": {
+                "required": true,
+                "description": "Seconds to wait before retrying",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Limit": {
+                "required": true,
+                "description": "The request budget of the window that was exceeded",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "required": true,
+                "description": "Requests left in the current window",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Reset": {
+                "required": true,
+                "description": "Unix time at which the window resets",
+                "schema": {
+                  "type": "integer",
+                  "format": "int64"
+                }
+              }
+            },
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
           }
         },
         "tags": ["Broadcasts"]
@@ -1261,6 +2097,50 @@
           },
           "422": {
             "description": "RFC 7807 validation response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)",
+            "headers": {
+              "Retry-After": {
+                "required": true,
+                "description": "Seconds to wait before retrying",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Limit": {
+                "required": true,
+                "description": "The request budget of the window that was exceeded",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "required": true,
+                "description": "Requests left in the current window",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Reset": {
+                "required": true,
+                "description": "Unix time at which the window resets",
+                "schema": {
+                  "type": "integer",
+                  "format": "int64"
+                }
+              }
+            },
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -1338,6 +2218,50 @@
                 }
               }
             }
+          },
+          "429": {
+            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)",
+            "headers": {
+              "Retry-After": {
+                "required": true,
+                "description": "Seconds to wait before retrying",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Limit": {
+                "required": true,
+                "description": "The request budget of the window that was exceeded",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "required": true,
+                "description": "Requests left in the current window",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Reset": {
+                "required": true,
+                "description": "Unix time at which the window resets",
+                "schema": {
+                  "type": "integer",
+                  "format": "int64"
+                }
+              }
+            },
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
           }
         },
         "tags": ["Broadcasts"],
@@ -1405,6 +2329,50 @@
           },
           "422": {
             "description": "RFC 7807 validation response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)",
+            "headers": {
+              "Retry-After": {
+                "required": true,
+                "description": "Seconds to wait before retrying",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Limit": {
+                "required": true,
+                "description": "The request budget of the window that was exceeded",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "required": true,
+                "description": "Requests left in the current window",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Reset": {
+                "required": true,
+                "description": "Unix time at which the window resets",
+                "schema": {
+                  "type": "integer",
+                  "format": "int64"
+                }
+              }
+            },
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -1503,6 +2471,50 @@
                 }
               }
             }
+          },
+          "429": {
+            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)",
+            "headers": {
+              "Retry-After": {
+                "required": true,
+                "description": "Seconds to wait before retrying",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Limit": {
+                "required": true,
+                "description": "The request budget of the window that was exceeded",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "required": true,
+                "description": "Requests left in the current window",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Reset": {
+                "required": true,
+                "description": "Unix time at which the window resets",
+                "schema": {
+                  "type": "integer",
+                  "format": "int64"
+                }
+              }
+            },
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
           }
         },
         "tags": ["Contacts"]
@@ -1544,6 +2556,50 @@
           },
           "422": {
             "description": "RFC 7807 validation response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)",
+            "headers": {
+              "Retry-After": {
+                "required": true,
+                "description": "Seconds to wait before retrying",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Limit": {
+                "required": true,
+                "description": "The request budget of the window that was exceeded",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "required": true,
+                "description": "Requests left in the current window",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Reset": {
+                "required": true,
+                "description": "Unix time at which the window resets",
+                "schema": {
+                  "type": "integer",
+                  "format": "int64"
+                }
+              }
+            },
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -1594,6 +2650,50 @@
           },
           "422": {
             "description": "RFC 7807 validation response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)",
+            "headers": {
+              "Retry-After": {
+                "required": true,
+                "description": "Seconds to wait before retrying",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Limit": {
+                "required": true,
+                "description": "The request budget of the window that was exceeded",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "required": true,
+                "description": "Requests left in the current window",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Reset": {
+                "required": true,
+                "description": "Unix time at which the window resets",
+                "schema": {
+                  "type": "integer",
+                  "format": "int64"
+                }
+              }
+            },
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -1864,6 +2964,50 @@
                 }
               }
             }
+          },
+          "429": {
+            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)",
+            "headers": {
+              "Retry-After": {
+                "required": true,
+                "description": "Seconds to wait before retrying",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Limit": {
+                "required": true,
+                "description": "The request budget of the window that was exceeded",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "required": true,
+                "description": "Requests left in the current window",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Reset": {
+                "required": true,
+                "description": "Unix time at which the window resets",
+                "schema": {
+                  "type": "integer",
+                  "format": "int64"
+                }
+              }
+            },
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
           }
         },
         "tags": ["Tags"]
@@ -1924,6 +3068,50 @@
           },
           "422": {
             "description": "RFC 7807 validation response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)",
+            "headers": {
+              "Retry-After": {
+                "required": true,
+                "description": "Seconds to wait before retrying",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Limit": {
+                "required": true,
+                "description": "The request budget of the window that was exceeded",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "required": true,
+                "description": "Requests left in the current window",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Reset": {
+                "required": true,
+                "description": "Unix time at which the window resets",
+                "schema": {
+                  "type": "integer",
+                  "format": "int64"
+                }
+              }
+            },
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -2001,6 +3189,50 @@
                 }
               }
             }
+          },
+          "429": {
+            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)",
+            "headers": {
+              "Retry-After": {
+                "required": true,
+                "description": "Seconds to wait before retrying",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Limit": {
+                "required": true,
+                "description": "The request budget of the window that was exceeded",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "required": true,
+                "description": "Requests left in the current window",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Reset": {
+                "required": true,
+                "description": "Unix time at which the window resets",
+                "schema": {
+                  "type": "integer",
+                  "format": "int64"
+                }
+              }
+            },
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
           }
         },
         "tags": ["Tags"]
@@ -2048,6 +3280,50 @@
           },
           "404": {
             "description": "RFC 7807 not found response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)",
+            "headers": {
+              "Retry-After": {
+                "required": true,
+                "description": "Seconds to wait before retrying",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Limit": {
+                "required": true,
+                "description": "The request budget of the window that was exceeded",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "required": true,
+                "description": "Requests left in the current window",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Reset": {
+                "required": true,
+                "description": "Unix time at which the window resets",
+                "schema": {
+                  "type": "integer",
+                  "format": "int64"
+                }
+              }
+            },
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -2127,6 +3403,50 @@
                 }
               }
             }
+          },
+          "429": {
+            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)",
+            "headers": {
+              "Retry-After": {
+                "required": true,
+                "description": "Seconds to wait before retrying",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Limit": {
+                "required": true,
+                "description": "The request budget of the window that was exceeded",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "required": true,
+                "description": "Requests left in the current window",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Reset": {
+                "required": true,
+                "description": "Unix time at which the window resets",
+                "schema": {
+                  "type": "integer",
+                  "format": "int64"
+                }
+              }
+            },
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
           }
         },
         "tags": ["Contacts"],
@@ -2192,6 +3512,50 @@
                 }
               }
             }
+          },
+          "429": {
+            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)",
+            "headers": {
+              "Retry-After": {
+                "required": true,
+                "description": "Seconds to wait before retrying",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Limit": {
+                "required": true,
+                "description": "The request budget of the window that was exceeded",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "required": true,
+                "description": "Requests left in the current window",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Reset": {
+                "required": true,
+                "description": "Unix time at which the window resets",
+                "schema": {
+                  "type": "integer",
+                  "format": "int64"
+                }
+              }
+            },
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
           }
         },
         "tags": ["Contacts"]
@@ -2246,6 +3610,50 @@
           },
           "401": {
             "description": "RFC 7807 unauthorized response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)",
+            "headers": {
+              "Retry-After": {
+                "required": true,
+                "description": "Seconds to wait before retrying",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Limit": {
+                "required": true,
+                "description": "The request budget of the window that was exceeded",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "required": true,
+                "description": "Requests left in the current window",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Reset": {
+                "required": true,
+                "description": "Unix time at which the window resets",
+                "schema": {
+                  "type": "integer",
+                  "format": "int64"
+                }
+              }
+            },
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -2326,6 +3734,50 @@
                 }
               }
             }
+          },
+          "429": {
+            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)",
+            "headers": {
+              "Retry-After": {
+                "required": true,
+                "description": "Seconds to wait before retrying",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Limit": {
+                "required": true,
+                "description": "The request budget of the window that was exceeded",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "required": true,
+                "description": "Requests left in the current window",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Reset": {
+                "required": true,
+                "description": "Unix time at which the window resets",
+                "schema": {
+                  "type": "integer",
+                  "format": "int64"
+                }
+              }
+            },
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
           }
         },
         "tags": ["Emails"],
@@ -2365,6 +3817,50 @@
           },
           "422": {
             "description": "RFC 7807 validation response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)",
+            "headers": {
+              "Retry-After": {
+                "required": true,
+                "description": "Seconds to wait before retrying",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Limit": {
+                "required": true,
+                "description": "The request budget of the window that was exceeded",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "required": true,
+                "description": "Requests left in the current window",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Reset": {
+                "required": true,
+                "description": "Unix time at which the window resets",
+                "schema": {
+                  "type": "integer",
+                  "format": "int64"
+                }
+              }
+            },
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -2473,6 +3969,50 @@
                 }
               }
             }
+          },
+          "429": {
+            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)",
+            "headers": {
+              "Retry-After": {
+                "required": true,
+                "description": "Seconds to wait before retrying",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Limit": {
+                "required": true,
+                "description": "The request budget of the window that was exceeded",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "required": true,
+                "description": "Requests left in the current window",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Reset": {
+                "required": true,
+                "description": "Unix time at which the window resets",
+                "schema": {
+                  "type": "integer",
+                  "format": "int64"
+                }
+              }
+            },
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
           }
         },
         "tags": ["Events"],
@@ -2509,6 +4049,50 @@
           },
           "422": {
             "description": "RFC 7807 validation response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)",
+            "headers": {
+              "Retry-After": {
+                "required": true,
+                "description": "Seconds to wait before retrying",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Limit": {
+                "required": true,
+                "description": "The request budget of the window that was exceeded",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "required": true,
+                "description": "Requests left in the current window",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Reset": {
+                "required": true,
+                "description": "Unix time at which the window resets",
+                "schema": {
+                  "type": "integer",
+                  "format": "int64"
+                }
+              }
+            },
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -2617,6 +4201,50 @@
                 }
               }
             }
+          },
+          "429": {
+            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)",
+            "headers": {
+              "Retry-After": {
+                "required": true,
+                "description": "Seconds to wait before retrying",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Limit": {
+                "required": true,
+                "description": "The request budget of the window that was exceeded",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "required": true,
+                "description": "Requests left in the current window",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Reset": {
+                "required": true,
+                "description": "Unix time at which the window resets",
+                "schema": {
+                  "type": "integer",
+                  "format": "int64"
+                }
+              }
+            },
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
           }
         },
         "tags": ["Segments"]
@@ -2648,6 +4276,50 @@
           },
           "422": {
             "description": "RFC 7807 validation response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)",
+            "headers": {
+              "Retry-After": {
+                "required": true,
+                "description": "Seconds to wait before retrying",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Limit": {
+                "required": true,
+                "description": "The request budget of the window that was exceeded",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "required": true,
+                "description": "Requests left in the current window",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Reset": {
+                "required": true,
+                "description": "Unix time at which the window resets",
+                "schema": {
+                  "type": "integer",
+                  "format": "int64"
+                }
+              }
+            },
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -2708,6 +4380,50 @@
           },
           "422": {
             "description": "RFC 7807 validation response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)",
+            "headers": {
+              "Retry-After": {
+                "required": true,
+                "description": "Seconds to wait before retrying",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Limit": {
+                "required": true,
+                "description": "The request budget of the window that was exceeded",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "required": true,
+                "description": "Requests left in the current window",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Reset": {
+                "required": true,
+                "description": "Unix time at which the window resets",
+                "schema": {
+                  "type": "integer",
+                  "format": "int64"
+                }
+              }
+            },
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -2779,6 +4495,50 @@
                 }
               }
             }
+          },
+          "429": {
+            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)",
+            "headers": {
+              "Retry-After": {
+                "required": true,
+                "description": "Seconds to wait before retrying",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Limit": {
+                "required": true,
+                "description": "The request budget of the window that was exceeded",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "required": true,
+                "description": "Requests left in the current window",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Reset": {
+                "required": true,
+                "description": "Unix time at which the window resets",
+                "schema": {
+                  "type": "integer",
+                  "format": "int64"
+                }
+              }
+            },
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
           }
         },
         "tags": ["Segments"]
@@ -2834,6 +4594,50 @@
           },
           "422": {
             "description": "RFC 7807 validation response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)",
+            "headers": {
+              "Retry-After": {
+                "required": true,
+                "description": "Seconds to wait before retrying",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Limit": {
+                "required": true,
+                "description": "The request budget of the window that was exceeded",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "required": true,
+                "description": "Requests left in the current window",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Reset": {
+                "required": true,
+                "description": "Unix time at which the window resets",
+                "schema": {
+                  "type": "integer",
+                  "format": "int64"
+                }
+              }
+            },
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -2899,6 +4703,50 @@
           },
           "422": {
             "description": "RFC 7807 validation response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)",
+            "headers": {
+              "Retry-After": {
+                "required": true,
+                "description": "Seconds to wait before retrying",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Limit": {
+                "required": true,
+                "description": "The request budget of the window that was exceeded",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "required": true,
+                "description": "Requests left in the current window",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Reset": {
+                "required": true,
+                "description": "Unix time at which the window resets",
+                "schema": {
+                  "type": "integer",
+                  "format": "int64"
+                }
+              }
+            },
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -2977,6 +4825,50 @@
           },
           "401": {
             "description": "RFC 7807 unauthorized response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)",
+            "headers": {
+              "Retry-After": {
+                "required": true,
+                "description": "Seconds to wait before retrying",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Limit": {
+                "required": true,
+                "description": "The request budget of the window that was exceeded",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "required": true,
+                "description": "Requests left in the current window",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Reset": {
+                "required": true,
+                "description": "Unix time at which the window resets",
+                "schema": {
+                  "type": "integer",
+                  "format": "int64"
+                }
+              }
+            },
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -3071,6 +4963,50 @@
                 }
               }
             }
+          },
+          "429": {
+            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)",
+            "headers": {
+              "Retry-After": {
+                "required": true,
+                "description": "Seconds to wait before retrying",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Limit": {
+                "required": true,
+                "description": "The request budget of the window that was exceeded",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "required": true,
+                "description": "Requests left in the current window",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Reset": {
+                "required": true,
+                "description": "Unix time at which the window resets",
+                "schema": {
+                  "type": "integer",
+                  "format": "int64"
+                }
+              }
+            },
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
           }
         },
         "tags": ["Sending domains"],
@@ -3107,6 +5043,50 @@
           },
           "422": {
             "description": "RFC 7807 validation response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)",
+            "headers": {
+              "Retry-After": {
+                "required": true,
+                "description": "Seconds to wait before retrying",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Limit": {
+                "required": true,
+                "description": "The request budget of the window that was exceeded",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "required": true,
+                "description": "Requests left in the current window",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Reset": {
+                "required": true,
+                "description": "Unix time at which the window resets",
+                "schema": {
+                  "type": "integer",
+                  "format": "int64"
+                }
+              }
+            },
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -3212,6 +5192,50 @@
                 }
               }
             }
+          },
+          "429": {
+            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)",
+            "headers": {
+              "Retry-After": {
+                "required": true,
+                "description": "Seconds to wait before retrying",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Limit": {
+                "required": true,
+                "description": "The request budget of the window that was exceeded",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "required": true,
+                "description": "Requests left in the current window",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Reset": {
+                "required": true,
+                "description": "Unix time at which the window resets",
+                "schema": {
+                  "type": "integer",
+                  "format": "int64"
+                }
+              }
+            },
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
           }
         },
         "tags": ["Tags"]
@@ -3300,6 +5324,50 @@
                 }
               }
             }
+          },
+          "429": {
+            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)",
+            "headers": {
+              "Retry-After": {
+                "required": true,
+                "description": "Seconds to wait before retrying",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Limit": {
+                "required": true,
+                "description": "The request budget of the window that was exceeded",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "required": true,
+                "description": "Requests left in the current window",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Reset": {
+                "required": true,
+                "description": "Unix time at which the window resets",
+                "schema": {
+                  "type": "integer",
+                  "format": "int64"
+                }
+              }
+            },
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
           }
         },
         "tags": ["Templates"]
@@ -3331,6 +5399,50 @@
           },
           "422": {
             "description": "RFC 7807 validation response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)",
+            "headers": {
+              "Retry-After": {
+                "required": true,
+                "description": "Seconds to wait before retrying",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Limit": {
+                "required": true,
+                "description": "The request budget of the window that was exceeded",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "required": true,
+                "description": "Requests left in the current window",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Reset": {
+                "required": true,
+                "description": "Unix time at which the window resets",
+                "schema": {
+                  "type": "integer",
+                  "format": "int64"
+                }
+              }
+            },
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -3402,6 +5514,50 @@
                 }
               }
             }
+          },
+          "429": {
+            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)",
+            "headers": {
+              "Retry-After": {
+                "required": true,
+                "description": "Seconds to wait before retrying",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Limit": {
+                "required": true,
+                "description": "The request budget of the window that was exceeded",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "required": true,
+                "description": "Requests left in the current window",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Reset": {
+                "required": true,
+                "description": "Unix time at which the window resets",
+                "schema": {
+                  "type": "integer",
+                  "format": "int64"
+                }
+              }
+            },
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
           }
         },
         "tags": ["Templates"]
@@ -3457,6 +5613,50 @@
           },
           "422": {
             "description": "RFC 7807 validation response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)",
+            "headers": {
+              "Retry-After": {
+                "required": true,
+                "description": "Seconds to wait before retrying",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Limit": {
+                "required": true,
+                "description": "The request budget of the window that was exceeded",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "required": true,
+                "description": "Requests left in the current window",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Reset": {
+                "required": true,
+                "description": "Unix time at which the window resets",
+                "schema": {
+                  "type": "integer",
+                  "format": "int64"
+                }
+              }
+            },
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -3529,6 +5729,50 @@
                 }
               }
             }
+          },
+          "429": {
+            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)",
+            "headers": {
+              "Retry-After": {
+                "required": true,
+                "description": "Seconds to wait before retrying",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Limit": {
+                "required": true,
+                "description": "The request budget of the window that was exceeded",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "required": true,
+                "description": "Requests left in the current window",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Reset": {
+                "required": true,
+                "description": "Unix time at which the window resets",
+                "schema": {
+                  "type": "integer",
+                  "format": "int64"
+                }
+              }
+            },
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
           }
         },
         "tags": ["Templates"]
@@ -3562,6 +5806,50 @@
           },
           "422": {
             "description": "RFC 7807 validation response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)",
+            "headers": {
+              "Retry-After": {
+                "required": true,
+                "description": "Seconds to wait before retrying",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Limit": {
+                "required": true,
+                "description": "The request budget of the window that was exceeded",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "required": true,
+                "description": "Requests left in the current window",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Reset": {
+                "required": true,
+                "description": "Unix time at which the window resets",
+                "schema": {
+                  "type": "integer",
+                  "format": "int64"
+                }
+              }
+            },
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -3667,6 +5955,50 @@
                 }
               }
             }
+          },
+          "429": {
+            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)",
+            "headers": {
+              "Retry-After": {
+                "required": true,
+                "description": "Seconds to wait before retrying",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Limit": {
+                "required": true,
+                "description": "The request budget of the window that was exceeded",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "required": true,
+                "description": "Requests left in the current window",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Reset": {
+                "required": true,
+                "description": "Unix time at which the window resets",
+                "schema": {
+                  "type": "integer",
+                  "format": "int64"
+                }
+              }
+            },
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
           }
         },
         "tags": ["Webhooks"]
@@ -3698,6 +6030,50 @@
           },
           "422": {
             "description": "RFC 7807 validation response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)",
+            "headers": {
+              "Retry-After": {
+                "required": true,
+                "description": "Seconds to wait before retrying",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Limit": {
+                "required": true,
+                "description": "The request budget of the window that was exceeded",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "required": true,
+                "description": "Requests left in the current window",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Reset": {
+                "required": true,
+                "description": "Unix time at which the window resets",
+                "schema": {
+                  "type": "integer",
+                  "format": "int64"
+                }
+              }
+            },
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -3769,6 +6145,50 @@
                 }
               }
             }
+          },
+          "429": {
+            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)",
+            "headers": {
+              "Retry-After": {
+                "required": true,
+                "description": "Seconds to wait before retrying",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Limit": {
+                "required": true,
+                "description": "The request budget of the window that was exceeded",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "required": true,
+                "description": "Requests left in the current window",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Reset": {
+                "required": true,
+                "description": "Unix time at which the window resets",
+                "schema": {
+                  "type": "integer",
+                  "format": "int64"
+                }
+              }
+            },
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
           }
         },
         "tags": ["Webhooks"]
@@ -3824,6 +6244,50 @@
           },
           "422": {
             "description": "RFC 7807 validation response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)",
+            "headers": {
+              "Retry-After": {
+                "required": true,
+                "description": "Seconds to wait before retrying",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Limit": {
+                "required": true,
+                "description": "The request budget of the window that was exceeded",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "required": true,
+                "description": "Requests left in the current window",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Reset": {
+                "required": true,
+                "description": "Unix time at which the window resets",
+                "schema": {
+                  "type": "integer",
+                  "format": "int64"
+                }
+              }
+            },
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -3889,6 +6353,50 @@
           },
           "422": {
             "description": "RFC 7807 validation response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0025)",
+            "headers": {
+              "Retry-After": {
+                "required": true,
+                "description": "Seconds to wait before retrying",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Limit": {
+                "required": true,
+                "description": "The request budget of the window that was exceeded",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "required": true,
+                "description": "Requests left in the current window",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-RateLimit-Reset": {
+                "required": true,
+                "description": "Unix time at which the window resets",
+                "schema": {
+                  "type": "integer",
+                  "format": "int64"
+                }
+              }
+            },
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -4937,6 +7445,11 @@
               "type": "string"
             },
             "description": "Field validation errors"
+          },
+          "retryAfter": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Seconds to wait before retrying; set on a 429 so a client that only sees the body can show the wait"
           }
         },
         "description": "RFC 7807 Problem Details"
