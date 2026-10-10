@@ -2,8 +2,11 @@ package config
 
 import (
 	"fmt"
+	"net"
 	"path/filepath"
 	"runtime"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/mokevnin/1mail/internal/i18n"
@@ -65,8 +68,13 @@ type Config struct {
 
 	// OtelServiceName is the service.name reported on OTel traces/metrics. The
 	// OTLP export target itself comes from the standard OTEL_EXPORTER_OTLP_* env
-	// vars (read by the SDK); the /metrics Prometheus endpoint is always on.
+	// vars (read by the SDK).
 	OtelServiceName string
+
+	// MetricsAddr (host:port) is where the opt-in Prometheus listener binds. Empty
+	// (the default) means no listener; the public port never serves /metrics
+	// (ADR 0018).
+	MetricsAddr string
 
 	// System (platform) transactional email — 1mail's OWN sender, distinct from a
 	// customer's per-workspace integration. Dev uses smtp → mailpit (the SMTP_*
@@ -160,6 +168,7 @@ func Load(envName string) (*Config, error) {
 		LogFormat: v.GetString("LOG_FORMAT"),
 
 		OtelServiceName: v.GetString("OTEL_SERVICE_NAME"),
+		MetricsAddr:     v.GetString("METRICS_ADDR"),
 
 		SystemEmailProvider: v.GetString("SYSTEM_EMAIL_PROVIDER"),
 		SystemEmailFrom:     v.GetString("SYSTEM_EMAIL_FROM"),
@@ -178,8 +187,10 @@ func Load(envName string) (*Config, error) {
 func (c *Config) validate(envName string) error {
 	// Outside development/test, an empty JWT_SECRET silently signs auth tokens
 	// with an empty key — refuse to boot rather than ship that footgun.
-	if !isDevEnv(envName) && c.JWTSecret == "" {
-		return fmt.Errorf("JWT_SECRET is required outside development")
+	if !isDevEnv(envName) {
+		if err := validateJWTSecret(c.JWTSecret); err != nil {
+			return err
+		}
 	}
 	if c.BodyLimits.Default <= 0 {
 		return fmt.Errorf("MAX_BODY_BYTES must be positive")
@@ -198,6 +209,50 @@ func (c *Config) validate(envName string) error {
 	}
 	if c.DBPool.PGXMaxConns <= 0 {
 		return fmt.Errorf("PGX_MAX_CONNS must be positive")
+	}
+	return c.validateMetricsAddr()
+}
+
+// validateMetricsAddr rejects a malformed METRICS_ADDR and one sharing the public
+// PORT (the public server binds every interface, so any host collides).
+func (c *Config) validateMetricsAddr() error {
+	if c.MetricsAddr == "" {
+		return nil
+	}
+	_, portStr, err := net.SplitHostPort(c.MetricsAddr)
+	if err != nil {
+		return fmt.Errorf("METRICS_ADDR must be host:port: %w", err)
+	}
+	port, err := strconv.Atoi(portStr)
+	if err != nil || port < 1 || port > 65535 {
+		return fmt.Errorf("METRICS_ADDR port %q is not a valid port", portStr)
+	}
+	if public, err := strconv.Atoi(c.Port); err == nil && public == port {
+		return fmt.Errorf("METRICS_ADDR must not use the public PORT (%d)", port)
+	}
+	return nil
+}
+
+// minJWTSecretLength is the shortest JWT_SECRET accepted outside development
+// (32 characters = 256 bits when the secret is hex/random, the HS256 key size).
+const minJWTSecretLength = 32
+
+// placeholderSecretMarkers are lowercase fragments of documented example and
+// development secrets; a secret containing one was copied, not generated.
+var placeholderSecretMarkers = []string{"change-me", "changeme", "change-in-production", "dev-secret", "a-strong-secret"}
+
+func validateJWTSecret(secret string) error {
+	if secret == "" {
+		return fmt.Errorf("JWT_SECRET is required outside development")
+	}
+	if len(secret) < minJWTSecretLength {
+		return fmt.Errorf("JWT_SECRET must be at least %d characters outside development (e.g. `openssl rand -hex 32`)", minJWTSecretLength)
+	}
+	lower := strings.ToLower(secret)
+	for _, m := range placeholderSecretMarkers {
+		if strings.Contains(lower, m) {
+			return fmt.Errorf("JWT_SECRET looks like a placeholder; generate one with `openssl rand -hex 32`")
+		}
 	}
 	return nil
 }

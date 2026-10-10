@@ -46,6 +46,14 @@ export default defineConfig({
         ],
       },
       {
+        text: 'Operations',
+        items: [
+          { text: 'Overview', link: '/operations/' },
+          { text: 'Backup and restore', link: '/operations/backup' },
+          { text: 'Upgrading', link: '/operations/upgrading' },
+        ],
+      },
+      {
         text: 'Project',
         items: [
           { text: 'Roadmap', link: '/ROADMAP' },
