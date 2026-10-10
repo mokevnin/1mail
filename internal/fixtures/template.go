@@ -56,7 +56,7 @@ func TemplateFuncs(cipher *secrets.Cipher) template.FuncMap {
 }
 
 // hashPasswordMinCost is a PHC argon2id hash at the minimum legal parameters
-// (service.VerifyPassword decodes the parameters from the hash itself).
+// (credentials.VerifyPassword decodes the parameters from the hash itself).
 func hashPasswordMinCost(password string) (string, error) {
 	hasher, err := argon2.New(
 		argon2.WithVariantID(),
@@ -75,7 +75,7 @@ func hashPasswordMinCost(password string) (string, error) {
 }
 
 // hashTokenSecretMinCost is a bcrypt hash at bcrypt.MinCost
-// (service.VerifyTokenSecret reads the cost from the hash).
+// (credentials.VerifyTokenSecret reads the cost from the hash).
 func hashTokenSecretMinCost(secret string) (string, error) {
 	hash, err := bcrypt.GenerateFromPassword([]byte(secret), bcrypt.MinCost)
 	if err != nil {

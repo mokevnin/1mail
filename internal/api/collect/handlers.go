@@ -9,7 +9,7 @@ import (
 	collectapi "github.com/mokevnin/1mail/gen/collect"
 	"github.com/mokevnin/1mail/internal/api/auth"
 	"github.com/mokevnin/1mail/internal/events"
-	"github.com/mokevnin/1mail/internal/service"
+	"github.com/mokevnin/1mail/internal/visitors"
 	"github.com/samber/lo"
 )
 
@@ -42,8 +42,8 @@ func rawMap(m map[string]jx.Raw) map[string]any {
 }
 
 func (h *Handlers) CollectEventsCreate(ctx context.Context, req *collectapi.CollectEventsInput) (collectapi.CollectEventsCreateRes, error) {
-	evts := lo.Map(req.Events, func(e collectapi.CollectEventInput, _ int) service.CollectEventInput {
-		evt := service.CollectEventInput{
+	evts := lo.Map(req.Events, func(e collectapi.CollectEventInput, _ int) visitors.CollectEventInput {
+		evt := visitors.CollectEventInput{
 			VisitorID: e.VisitorId,
 			Action:    e.Action,
 		}
@@ -57,14 +57,14 @@ func (h *Handlers) CollectEventsCreate(ctx context.Context, req *collectapi.Coll
 		return evt
 	})
 
-	if err := service.CollectEvents(ctx, h.bus, auth.CollectScoped(ctx), evts); err != nil {
+	if err := visitors.CollectEvents(ctx, h.bus, auth.CollectScoped(ctx), evts); err != nil {
 		return nil, err
 	}
 	return &collectapi.CollectEventsCreateNoContent{}, nil
 }
 
 func (h *Handlers) CollectIdentifyCreate(ctx context.Context, req *collectapi.CollectIdentifyInput) (collectapi.CollectIdentifyCreateRes, error) {
-	input := service.IdentifyInput{
+	input := visitors.IdentifyInput{
 		VisitorID: req.VisitorId,
 	}
 	if v, ok := req.Email.Get(); ok {
@@ -83,7 +83,7 @@ func (h *Handlers) CollectIdentifyCreate(ctx context.Context, req *collectapi.Co
 		input.Traits = rawMap(traits)
 	}
 
-	if err := service.IdentifyVisitor(ctx, h.bus, auth.CollectScoped(ctx), input); err != nil {
+	if err := visitors.IdentifyVisitor(ctx, h.bus, auth.CollectScoped(ctx), input); err != nil {
 		return nil, err
 	}
 	return &collectapi.CollectOkResponse{Ok: collectapi.CollectOkResponseOkTrue}, nil

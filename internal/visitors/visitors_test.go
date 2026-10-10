@@ -1,4 +1,4 @@
-package service_test
+package visitors_test
 
 import (
 	"context"
@@ -14,8 +14,8 @@ import (
 	"github.com/mokevnin/1mail/ent/visitor"
 	"github.com/mokevnin/1mail/internal/events"
 	"github.com/mokevnin/1mail/internal/fixtures"
-	"github.com/mokevnin/1mail/internal/service"
 	"github.com/mokevnin/1mail/internal/testhelper"
+	"github.com/mokevnin/1mail/internal/visitors"
 )
 
 // outboxCollected decodes every CollectedEvent on the domain-event outbox.
@@ -40,7 +40,7 @@ func TestIdentifyVisitorCreatesTheContactBindsTheDeviceAndStitchesEarlierEvents(
 		require.NoError(t, err)
 	}
 
-	err := service.IdentifyVisitor(ctx, env.Bus, env.DB.Scoped(fixtures.AcmeID), service.IdentifyInput{
+	err := visitors.IdentifyVisitor(ctx, env.Bus, env.DB.Scoped(fixtures.AcmeID), visitors.IdentifyInput{
 		VisitorID: "  dev-1 ",
 		Email:     lo.ToPtr("Visitor@Example.com"),
 		Traits:    map[string]any{"plan": "pro"},
@@ -66,10 +66,10 @@ func TestIdentifyVisitorCreatesTheContactBindsTheDeviceAndStitchesEarlierEvents(
 func TestIdentifyVisitorReusesAnExistingContactAndDevice(t *testing.T) {
 	env := testhelper.Setup(t)
 	ctx := context.Background()
-	input := service.IdentifyInput{VisitorID: "dev-known", Email: lo.ToPtr(fixtures.ContactAliceEmail)}
+	input := visitors.IdentifyInput{VisitorID: "dev-known", Email: lo.ToPtr(fixtures.ContactAliceEmail)}
 
-	require.NoError(t, service.IdentifyVisitor(ctx, env.Bus, env.DB.Scoped(fixtures.AcmeID), input))
-	require.NoError(t, service.IdentifyVisitor(ctx, env.Bus, env.DB.Scoped(fixtures.AcmeID), input), "identify is idempotent")
+	require.NoError(t, visitors.IdentifyVisitor(ctx, env.Bus, env.DB.Scoped(fixtures.AcmeID), input))
+	require.NoError(t, visitors.IdentifyVisitor(ctx, env.Bus, env.DB.Scoped(fixtures.AcmeID), input), "identify is idempotent")
 
 	v, err := env.DB.Visitor.Query().Where(visitor.WorkspaceID(fixtures.AcmeID), visitor.VisitorID("dev-known")).Only(ctx)
 	require.NoError(t, err)
@@ -83,10 +83,10 @@ func TestIdentifyVisitorRefusesWhatCannotBeIdentified(t *testing.T) {
 	env := testhelper.Setup(t)
 	ctx := context.Background()
 
-	err := service.IdentifyVisitor(ctx, env.Bus, env.DB.Scoped(fixtures.AcmeID), service.IdentifyInput{VisitorID: "   ", Email: lo.ToPtr("a@example.com")})
+	err := visitors.IdentifyVisitor(ctx, env.Bus, env.DB.Scoped(fixtures.AcmeID), visitors.IdentifyInput{VisitorID: "   ", Email: lo.ToPtr("a@example.com")})
 	require.EqualError(t, err, "visitorId is required")
 
-	err = service.IdentifyVisitor(ctx, env.Bus, env.DB.Scoped(fixtures.AcmeID), service.IdentifyInput{VisitorID: "dev-x"})
+	err = visitors.IdentifyVisitor(ctx, env.Bus, env.DB.Scoped(fixtures.AcmeID), visitors.IdentifyInput{VisitorID: "dev-x"})
 	require.EqualError(t, err, "identify requires subjectId, email, or phone")
 	n, err := env.DB.Visitor.Query().Where(visitor.VisitorID("dev-x")).Count(ctx)
 	require.NoError(t, err)
@@ -98,11 +98,11 @@ func TestCollectEventsCarriesTheIdentityTheDeviceResolvesTo(t *testing.T) {
 	ctx := context.Background()
 	at := time.Date(2026, 5, 1, 9, 0, 0, 0, time.UTC)
 
-	require.NoError(t, service.IdentifyVisitor(ctx, env.Bus, env.DB.Scoped(fixtures.AcmeID), service.IdentifyInput{
+	require.NoError(t, visitors.IdentifyVisitor(ctx, env.Bus, env.DB.Scoped(fixtures.AcmeID), visitors.IdentifyInput{
 		VisitorID: "dev-id", Email: lo.ToPtr(fixtures.ContactAliceEmail), SubjectID: lo.ToPtr("alice-1"),
 	}))
 
-	require.NoError(t, service.CollectEvents(ctx, env.Bus, env.DB.Scoped(fixtures.AcmeID), []service.CollectEventInput{
+	require.NoError(t, visitors.CollectEvents(ctx, env.Bus, env.DB.Scoped(fixtures.AcmeID), []visitors.CollectEventInput{
 		{VisitorID: " dev-id ", Action: "signup", Properties: map[string]any{"plan": "pro"}, OccurredAt: &at},
 		{VisitorID: "dev-anon", Action: "page_view"},
 	}))
@@ -131,29 +131,12 @@ func TestCollectEventsCarriesTheIdentityTheDeviceResolvesTo(t *testing.T) {
 func TestCollectEventsTreatsAVanishedContactAsAnonymous(t *testing.T) {
 	env := testhelper.Setup(t)
 	ctx := context.Background()
-	require.NoError(t, service.IdentifyVisitor(ctx, env.Bus, env.DB.Scoped(fixtures.AcmeID), service.IdentifyInput{VisitorID: "dev-gone", Email: lo.ToPtr("gone@example.com")}))
+	require.NoError(t, visitors.IdentifyVisitor(ctx, env.Bus, env.DB.Scoped(fixtures.AcmeID), visitors.IdentifyInput{VisitorID: "dev-gone", Email: lo.ToPtr("gone@example.com")}))
 	_, err := env.DB.Contact.Delete().Where(contact.Email("gone@example.com")).Exec(ctx)
 	require.NoError(t, err)
 
-	require.NoError(t, service.CollectEvents(ctx, env.Bus, env.DB.Scoped(fixtures.AcmeID), []service.CollectEventInput{{VisitorID: "dev-gone", Action: "login"}}))
+	require.NoError(t, visitors.CollectEvents(ctx, env.Bus, env.DB.Scoped(fixtures.AcmeID), []visitors.CollectEventInput{{VisitorID: "dev-gone", Action: "login"}}))
 	got := outboxCollected(t, env)
 	require.Len(t, got, 1)
 	assert.Zero(t, got[0].ContactID)
-}
-
-func TestResolveContactIDFindsExistingContactsOnly(t *testing.T) {
-	env := testhelper.Setup(t)
-	ctx := context.Background()
-
-	id, err := service.ResolveContactID(ctx, env.DB.Scoped(fixtures.AcmeID), "", lo.ToPtr(fixtures.ContactAliceEmail), nil)
-	require.NoError(t, err)
-	assert.EqualValues(t, fixtures.ContactAliceID, id)
-
-	id, err = service.ResolveContactID(ctx, env.DB.Scoped(fixtures.AcmeID), "", lo.ToPtr("nobody@example.com"), nil)
-	require.NoError(t, err)
-	assert.Zero(t, id, "never creates")
-
-	id, err = service.ResolveContactID(ctx, env.DB.Scoped(fixtures.GlobexID), "", lo.ToPtr(fixtures.ContactAliceEmail), nil)
-	require.NoError(t, err)
-	assert.Zero(t, id, "another workspace's contact is not resolved")
 }

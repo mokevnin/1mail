@@ -19,8 +19,9 @@ import (
 	"github.com/mokevnin/1mail/ent/membership"
 	"github.com/mokevnin/1mail/ent/user"
 	"github.com/mokevnin/1mail/ent/workspace"
+	"github.com/mokevnin/1mail/internal/credentials"
+	"github.com/mokevnin/1mail/internal/db"
 	"github.com/mokevnin/1mail/internal/events"
-	"github.com/mokevnin/1mail/internal/service"
 )
 
 // Accounts reads and writes Users, Workspaces and Memberships over the raw client.
@@ -162,7 +163,7 @@ func ptrEqual(a, b *int) bool {
 // created atomically: a Workspace is reached through Memberships, so one without its
 // owner row would be inaccessible.
 func (a *Accounts) CreateWorkspace(ctx context.Context, userID int64, name string) (*ent.Workspace, error) {
-	base := service.Slugify(name)
+	base := Slugify(name)
 	if base == "" {
 		base = "workspace"
 	}
@@ -178,11 +179,11 @@ func (a *Accounts) CreateWorkspace(ctx context.Context, userID int64, name strin
 		if exists {
 			continue
 		}
-		collectKey, err := service.GenerateCollectKey()
+		collectKey, err := credentials.GenerateCollectKey()
 		if err != nil {
 			return nil, err
 		}
-		ingestKey, err := service.GenerateIngestKey()
+		ingestKey, err := credentials.GenerateIngestKey()
 		if err != nil {
 			return nil, err
 		}
@@ -207,7 +208,7 @@ func (a *Accounts) CreateWorkspace(ctx context.Context, userID int64, name strin
 			ws = created
 			return nil
 		})
-		if service.IsUniqueViolation(err) {
+		if db.IsUniqueViolation(err) {
 			continue // lost a race on the slug; try the next suffix
 		}
 		if err != nil {
@@ -310,7 +311,7 @@ func (a *Accounts) MarkEmailVerified(ctx context.Context, id int64) error {
 
 // ChangeEmail swaps the login email for one proven by a confirmation link, so it is
 // stored verified. The unique index guards a race on the address (see
-// service.IsUniqueViolation).
+// db.IsUniqueViolation).
 func (a *Accounts) ChangeEmail(ctx context.Context, id int64, newEmail string) error {
 	return a.ent.User.UpdateOneID(id).SetEmail(newEmail).SetEmailVerifiedAt(time.Now()).Exec(ctx)
 }
@@ -338,7 +339,7 @@ func (a *Accounts) AcceptInvitation(ctx context.Context, inv *ent.Invitation, na
 	return a.bus.WithinTx(ctx, func(tx *ent.Client, pub events.Publisher) error {
 		u, uerr := tx.User.Query().Where(user.Email(inv.Email)).Only(ctx)
 		if ent.IsNotFound(uerr) {
-			hash, herr := service.HashPassword(password)
+			hash, herr := credentials.HashPassword(password)
 			if herr != nil {
 				return herr
 			}
@@ -357,7 +358,7 @@ func (a *Accounts) AcceptInvitation(ctx context.Context, inv *ent.Invitation, na
 		if _, merr := ts.Membership().Create().
 			SetUserID(u.ID).
 			SetRole(role).
-			Save(ctx); merr != nil && !service.IsUniqueViolation(merr) {
+			Save(ctx); merr != nil && !db.IsUniqueViolation(merr) {
 			return merr
 		}
 

@@ -7,7 +7,7 @@ import (
 
 	siteapi "github.com/mokevnin/1mail/gen/site"
 	"github.com/mokevnin/1mail/internal/fixtures"
-	"github.com/mokevnin/1mail/internal/service"
+	"github.com/mokevnin/1mail/internal/suspension"
 	"github.com/mokevnin/1mail/internal/testhelper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -69,7 +69,7 @@ func TestSiteWorkspacesListExposesSuspension(t *testing.T) {
 	_, suspended := list[0].SuspendedAt.Get()
 	assert.False(t, suspended, "a workspace that can send carries no suspension")
 
-	_, err = service.SuspendWorkspace(ctx, env.Bus, 1, "system", "complaint rate above 0.3%")
+	_, err = suspension.SuspendWorkspace(ctx, env.Bus, 1, "system", "complaint rate above 0.3%")
 	require.NoError(t, err)
 
 	list, err = c.SiteWorkspacesList(ctx)

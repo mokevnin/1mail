@@ -17,13 +17,13 @@ import (
 
 	"github.com/mokevnin/1mail/ent"
 	"github.com/mokevnin/1mail/ent/integration"
+	"github.com/mokevnin/1mail/internal/db"
 	"github.com/mokevnin/1mail/internal/events"
 	"github.com/mokevnin/1mail/internal/i18n"
 	"github.com/mokevnin/1mail/internal/messaging"
 	"github.com/mokevnin/1mail/internal/messaging/ses"
 	"github.com/mokevnin/1mail/internal/messaging/smtp"
 	"github.com/mokevnin/1mail/internal/secrets"
-	"github.com/mokevnin/1mail/internal/service"
 )
 
 // ErrDefaultConflict means another default Integration already exists for the channel.
@@ -166,7 +166,7 @@ func (m *Module) Create(ctx context.Context, s *ent.Scoped, in CreateInput) (*en
 			Save(ctx)
 		return err
 	})
-	if service.IsUniqueViolation(err) {
+	if db.IsUniqueViolation(err) {
 		return nil, ErrDefaultConflict
 	}
 	if err != nil {
@@ -248,7 +248,7 @@ func (m *Module) Update(ctx context.Context, s *ent.Scoped, id int64, in UpdateI
 		updated, err = upd.Save(ctx)
 		return err
 	})
-	if service.IsUniqueViolation(err) {
+	if db.IsUniqueViolation(err) {
 		return nil, ErrDefaultConflict
 	}
 	if err != nil {

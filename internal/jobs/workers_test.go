@@ -30,7 +30,7 @@ import (
 	"github.com/mokevnin/1mail/internal/jobs"
 	"github.com/mokevnin/1mail/internal/messaging/registry"
 	"github.com/mokevnin/1mail/internal/secrets"
-	"github.com/mokevnin/1mail/internal/service"
+	"github.com/mokevnin/1mail/internal/suspension"
 	"github.com/mokevnin/1mail/internal/testhelper"
 )
 
@@ -390,7 +390,7 @@ func TestBroadcastWorkers(t *testing.T) {
 	assert.Len(t, e.queued(t), before)
 
 	// A suspended workspace holds: the job snoozes rather than fails.
-	_, err := service.SuspendWorkspace(ctx, e.Bus, fixtures.AcmeID, "system", "complaints")
+	_, err := suspension.SuspendWorkspace(ctx, e.Bus, fixtures.AcmeID, "system", "complaints")
 	require.NoError(t, err)
 	e.DB.Broadcast.UpdateOneID(fixtures.BroadcastProSegmentID).SetStatus(broadcast.StatusSending).ExecX(ctx)
 	var snooze *river.JobSnoozeError
