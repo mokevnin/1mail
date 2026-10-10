@@ -205,14 +205,51 @@ func TestRunJobsStartsTheWorkerPool(t *testing.T) {
 
 func TestNewOperatorIsMinimal(t *testing.T) {
 	baseline(t)
+	t.Setenv("METRICS_ADDR", freeAddr(t))
 	a, err := NewOperator("test")
 	require.NoError(t, err)
 	t.Cleanup(func() { _ = a.Shutdown(context.Background()) })
 
 	require.NotNil(t, a.Config)
 	assert.Nil(t, a.Server)
+	assert.Nil(t, a.Metrics, "operator commands expose no metrics listener")
 	assert.Nil(t, a.events)
 	assert.Nil(t, a.jobs)
+}
+
+// freeAddr returns a loopback host:port that was free a moment ago (config rejects
+// port 0, so the app cannot be handed an ephemeral one).
+func freeAddr(t *testing.T) string {
+	t.Helper()
+	ln, err := (&net.ListenConfig{}).Listen(t.Context(), "tcp", "127.0.0.1:0")
+	require.NoError(t, err)
+	addr := ln.Addr().String()
+	require.NoError(t, ln.Close())
+	return addr
+}
+
+func TestStopShutsDownTheMetricsServer(t *testing.T) {
+	baseline(t)
+	t.Setenv("METRICS_ADDR", freeAddr(t))
+	a, err := New("test")
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = a.Shutdown(context.Background()) })
+	require.NotNil(t, a.Metrics)
+
+	require.NoError(t, a.BindMetrics())
+	go func() { _ = a.Metrics.Serve() }()
+	url := "http://" + a.Metrics.Addr() + "/metrics"
+	require.Eventually(t, func() bool {
+		code, _, err := testhelper.TryHTTPGet(t.Context(), url)
+		return err == nil && code != 0
+	}, 5*time.Second, 20*time.Millisecond, "metrics listener accepts before Stop")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	require.NoError(t, a.Stop(ctx))
+
+	_, _, err = testhelper.TryHTTPGet(t.Context(), url)
+	assert.Error(t, err, "metrics listener stopped accepting after Stop")
 }
 
 // ownedWorkspace creates a throwaway workspace with one owner on the real database

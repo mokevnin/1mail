@@ -87,7 +87,8 @@ func TestExternalEveryCheckedScopeIsGrantable(t *testing.T) {
 	require.NotEmpty(t, scopes)
 
 	env := testhelper.Setup(t)
-	c := env.ExternalScoped(t, "tokens:write")
+	// The minter holds every scope under test: a token can only grant what it has.
+	c := env.ExternalScoped(t, append(slices.Clone(scopes), "tokens:write")...)
 
 	for _, scope := range scopes {
 		t.Run(scope, func(t *testing.T) {

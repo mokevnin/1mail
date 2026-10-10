@@ -71,8 +71,10 @@ status `suppressed`.
 Add one or more integrations in **Settings → Integrations**:
 
 - **SMTP**: any server that accepts SMTP.
-- **Amazon SES**: send through SES. Bounce and complaint notifications delivered over SNS are
-  ingested and turned into suppressions.
+- **SES-compatible API**: Amazon SES, or any service that implements the same API, such as Yandex
+  Cloud Postbox. Set the integration's **endpoint** to the service's URL; leave it empty for
+  Amazon SES itself. Bounce and complaint notifications delivered over SNS are ingested and turned
+  into suppressions.
 
 Credentials are encrypted at rest. Because DKIM signing happens in 1mail itself, switching
 transport does not mean re-verifying your domain.

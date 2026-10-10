@@ -44,4 +44,3 @@ All three share templates, the same sending domain checks and the same consent r
 - [Quickstart](/guide/quickstart): from zero to a first broadcast.
 - [Tracking visitors and events](/guide/tracking): connect your site or product.
 - [Self-hosting](/self-hosting): configuration, migrations and health checks.
-- [Architecture decisions](/adr/0001-send-eligibility-model): why it is built this way.
