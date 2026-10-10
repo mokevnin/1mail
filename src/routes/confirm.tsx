@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 
 import { sitePublicConfirmationsPerformMutation } from '../generated/site/@tanstack/react-query.gen.ts'
 import { confirmRoute } from '../router.tsx'
+import { isRateLimitedError } from '../utils/apiErrors.ts'
 
 // Public double opt-in confirmation page (ADR 0013). The GET /e/confirm/{token}
 // endpoint redirects here and records nothing — the confirmation happens only when
@@ -59,7 +60,9 @@ export function ConfirmSubscription({
             </Text>
             {mutation.isError ? (
               <Alert color="red" title={t(($) => $.confirmSubscription.errorTitle)} w="100%">
-                {t(($) => $.confirmSubscription.errorBody)}
+                {isRateLimitedError(mutation.error)
+                  ? t(($) => $.notifications.rateLimited)
+                  : t(($) => $.confirmSubscription.errorBody)}
               </Alert>
             ) : null}
             <Button onClick={confirm} loading={mutation.isPending}>

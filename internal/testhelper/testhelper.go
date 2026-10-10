@@ -137,10 +137,29 @@ type TestEnv struct {
 	CustomerMail *CapturingSender // workspace/campaign mail (broadcasts)
 }
 
-func Setup(t *testing.T) *TestEnv {
+// Option tunes the server a test builds with Setup.
+type Option func(*config.Config)
+
+// WithConfig edits a private copy of the test config before the server is built.
+func WithConfig(edit func(*config.Config)) Option { return Option(edit) }
+
+// WithRateLimits turns the rate limits on with the given (small) budgets. Without
+// it every limit is 0 (disabled), so tests never throttle each other; limiters
+// are per Setup, so budgets never leak between tests either.
+func WithRateLimits(limits config.RateLimits) Option {
+	return func(c *config.Config) { c.RateLimits = limits }
+}
+
+func Setup(t *testing.T, opts ...Option) *TestEnv {
 	t.Helper()
 	initBaseline()
 	require.NoError(t, loadErr, "init test baseline")
+
+	cfg := *baseCfg
+	cfg.RateLimits = config.RateLimits{}
+	for _, opt := range opts {
+		opt(&cfg)
+	}
 
 	// dsn arg is just a pool identifier; each Open is its own transaction.
 	txDB, err := sql.Open("txdb", t.Name())
@@ -165,12 +184,12 @@ func Setup(t *testing.T) *TestEnv {
 	stubTXT := func(context.Context, string) ([]string, error) {
 		return nil, &net.DNSError{IsNotFound: true}
 	}
-	tracker := tracking.New(baseCfg.JWTSecret, baseCfg.AppURL)
+	tracker := tracking.New(cfg.JWTSecret, cfg.AppURL)
 	sender := outbound.New(bus, resolver, tracker)
-	inline := jobs.NewInline(client, sender, systemMail, stubTXT, baseCfg.AppURL)
+	inline := jobs.NewInline(client, sender, systemMail, stubTXT, cfg.AppURL)
 	// Cipher (over the fixture-sealing key) and provider catalog for the site
 	// handlers — mirrors the app's DI singletons.
-	cipher, err := secrets.NewCipher(baseCfg.EncryptionKey)
+	cipher, err := secrets.NewCipher(cfg.EncryptionKey)
 	require.NoError(t, err, "build cipher")
 	catalog := registry.Default()
 	// The transactional send surface resolves a workspace sender directly (not via
@@ -190,22 +209,22 @@ func Setup(t *testing.T) *TestEnv {
 		Accounts: acc, Bus: bus, Cipher: cipher, Outbound: sender,
 		Segments: segmentsModule, EventLog: eventLog, Contacts: contactsModule, Tags: tagsModule,
 		Automations: automationsModule, Broadcasts: broadcastsModule, Reputation: reputation.New(),
-		BootstrapToken: baseCfg.BootstrapToken,
+		BootstrapToken: cfg.BootstrapToken,
 	})
 	require.NoError(t, err, "build external API")
-	mcpHandler, err := mcpserver.New(onemail.ExternalOpenAPI, external, apiauth.NewExternalSecurityHandler(client), mcpserver.WithResourceMetadataURL(oauthserver.ResourceMetadataURL(baseCfg.AppURL)))
+	mcpHandler, err := mcpserver.New(onemail.ExternalOpenAPI, external, apiauth.NewExternalSecurityHandler(client), mcpserver.WithResourceMetadataURL(oauthserver.ResourceMetadataURL(cfg.AppURL)))
 	require.NoError(t, err, "build MCP handler")
-	handler, err := server.New(baseCfg, txDB, client, apisite.Deps{
+	handler, err := server.New(&cfg, txDB, client, apisite.Deps{
 		Accounts: acc, OAuth: oauthserver.NewService(client), Bus: bus, Cipher: cipher, Catalog: catalog, Outbound: sender,
 		Segments: segmentsModule, EventLog: eventLog, Contacts: contactsModule, Tags: tagsModule,
 		Automations: automationsModule, Broadcasts: broadcastsModule,
 		Welcome: inline, SysMail: inline, DomainVerify: inline,
-		Tokens: authtoken.New(baseCfg.JWTSecret), Tracker: tracker, AppURL: baseCfg.AppURL,
+		Tokens: authtoken.New(cfg.JWTSecret), Tracker: tracker, AppURL: cfg.AppURL,
 	}, external, mcpHandler)
 	require.NoError(t, err, "build server")
 
 	return &TestEnv{
-		DB: client, SQLDB: txDB, Bus: bus, Server: handler, Tracker: tracker, jwtSecret: baseCfg.JWTSecret,
+		DB: client, SQLDB: txDB, Bus: bus, Server: handler, Tracker: tracker, jwtSecret: cfg.JWTSecret,
 		SystemMail: systemMail, CustomerMail: customerMail,
 	}
 }

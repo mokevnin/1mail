@@ -5203,6 +5203,16 @@
         "type": "string",
         "format": "date-time"
       },
+      "TooManyRequestsProblem": {
+        "type": "object",
+        "required": ["body"],
+        "properties": {
+          "body": {
+            "$ref": "#/components/schemas/ProblemDetails"
+          }
+        },
+        "description": "RFC 7807 too many requests response: a rate limit was exceeded (ADR 0018)"
+      },
       "TransactionalSendStatus": {
         "type": "string",
         "enum": ["sent", "suppressed"],

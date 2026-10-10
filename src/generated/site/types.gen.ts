@@ -2026,6 +2026,10 @@ export type SiteAuthRegisterErrors = {
    * RFC 7807 validation response
    */
   422: ProblemDetails;
+  /**
+   * RFC 7807 too many requests response: a rate limit was exceeded (ADR 0018)
+   */
+  429: ProblemDetails;
 };
 
 export type SiteAuthRegisterError = SiteAuthRegisterErrors[keyof SiteAuthRegisterErrors];
@@ -2103,6 +2107,10 @@ export type SitePublicConfirmationsPerformErrors = {
    * RFC 7807 gone response: the resource existed but is no longer available (an expired link)
    */
   410: ProblemDetails;
+  /**
+   * RFC 7807 too many requests response: a rate limit was exceeded (ADR 0018)
+   */
+  429: ProblemDetails;
 };
 
 export type SitePublicConfirmationsPerformError = SitePublicConfirmationsPerformErrors[keyof SitePublicConfirmationsPerformErrors];
@@ -2161,6 +2169,10 @@ export type SitePublicInvitationsAcceptErrors = {
    * RFC 7807 validation response
    */
   422: ProblemDetails;
+  /**
+   * RFC 7807 too many requests response: a rate limit was exceeded (ADR 0018)
+   */
+  429: ProblemDetails;
 };
 
 export type SitePublicInvitationsAcceptError = SitePublicInvitationsAcceptErrors[keyof SitePublicInvitationsAcceptErrors];

@@ -74,7 +74,8 @@ namespace SiteAuth {
         @body body: SiteRegisterResult;
       }
     | ConflictProblem
-    | UnprocessableEntityProblem;
+    | UnprocessableEntityProblem
+    | TooManyRequestsProblem;
 
   @useAuth(NoAuth)
   @post

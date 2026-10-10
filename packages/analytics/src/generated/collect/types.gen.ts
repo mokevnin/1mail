@@ -117,6 +117,13 @@ export type TimeZoneName = string;
 
 export type Timestamp = string;
 
+/**
+ * RFC 7807 too many requests response: a rate limit was exceeded (ADR 0018)
+ */
+export type TooManyRequestsProblem = {
+  body: ProblemDetails;
+};
+
 export type CollectEventsCreateData = {
   body: CollectEventsInput;
   path?: never;

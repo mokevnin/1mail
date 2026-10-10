@@ -19,6 +19,17 @@ type BodyLimits struct {
 	Collect int64
 }
 
+// RateLimits are the per-policy request budgets per minute (ADR 0018). Every limit
+// has a default and 0 disables it. They are core, never gated by the EE licence.
+type RateLimits struct {
+	// Human caps the public human-facing endpoints (signup, invitation accept,
+	// consent confirm) per client IP and endpoint.
+	Human int
+}
+
+// DefaultRateLimits are the production budgets.
+var DefaultRateLimits = RateLimits{Human: 60}
+
 type Config struct {
 	DatabaseURL    string
 	Port           string
@@ -35,6 +46,7 @@ type Config struct {
 	EncryptionKey  string
 	AutoMigrate    bool
 	BodyLimits     BodyLimits
+	RateLimits     RateLimits
 	// IsDev is true for non-production envs (development/test). Used to relax
 	// production-only behaviour locally — e.g. the sending-domain DKIM re-check
 	// trusts seeded domains instead of hitting real DNS (ADR 0010).
@@ -87,6 +99,7 @@ func Load(envName string) (*Config, error) {
 	v.SetDefault("APP_LOCALE", "en")
 	v.SetDefault("MAX_BODY_BYTES", 1<<20)
 	v.SetDefault("COLLECT_MAX_BODY_BYTES", 64<<10)
+	v.SetDefault("RATE_LIMIT_HUMAN_PER_MINUTE", DefaultRateLimits.Human)
 	// Human-readable logs in dev, structured JSON everywhere else.
 	if isDevEnv(envName) {
 		v.SetDefault("LOG_FORMAT", "text")
@@ -131,6 +144,9 @@ func Load(envName string) (*Config, error) {
 			Default: v.GetInt64("MAX_BODY_BYTES"),
 			Collect: v.GetInt64("COLLECT_MAX_BODY_BYTES"),
 		},
+		RateLimits: RateLimits{
+			Human: v.GetInt("RATE_LIMIT_HUMAN_PER_MINUTE"),
+		},
 		IsDev:     isDevEnv(envName),
 		Locale:    i18n.Normalize(v.GetString("APP_LOCALE")),
 		LogLevel:  v.GetString("LOG_LEVEL"),
@@ -164,6 +180,9 @@ func (c *Config) validate(envName string) error {
 	}
 	if c.BodyLimits.Collect <= 0 {
 		return fmt.Errorf("COLLECT_MAX_BODY_BYTES must be positive")
+	}
+	if c.RateLimits.Human < 0 {
+		return fmt.Errorf("RATE_LIMIT_HUMAN_PER_MINUTE must not be negative (0 disables)")
 	}
 	return c.validateMetricsAddr()
 }

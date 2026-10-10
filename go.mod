@@ -14,6 +14,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/ses v1.36.1
 	github.com/doyensec/safeurl v0.2.5
 	github.com/emersion/go-msgauth v0.7.0
+	github.com/go-chi/httprate v0.16.1
 	github.com/go-crypt/crypt v0.14.15
 	github.com/go-faster/errors v0.8.0
 	github.com/go-faster/jx v1.2.0
@@ -117,6 +118,7 @@ require (
 	github.com/jackc/puddle/v2 v2.2.2 // indirect
 	github.com/jmattheis/goverter v1.9.4 // indirect
 	github.com/klauspost/compress v1.19.2 // indirect
+	github.com/klauspost/cpuid/v2 v2.2.10 // indirect
 	github.com/lithammer/shortuuid/v3 v3.0.7 // indirect
 	github.com/mattn/go-colorable v0.1.15 // indirect
 	github.com/mattn/go-isatty v0.0.24 // indirect
@@ -156,6 +158,7 @@ require (
 	github.com/yuin/goldmark v1.8.2 // indirect
 	github.com/zclconf/go-cty v1.19.0 // indirect
 	github.com/zclconf/go-cty-yaml v1.2.0 // indirect
+	github.com/zeebo/xxh3 v1.0.2 // indirect
 	go.etcd.io/bbolt v1.5.0 // indirect
 	go.mongodb.org/mongo-driver v1.17.9 // indirect
 	go.opentelemetry.io/auto/sdk v1.2.1 // indirect
