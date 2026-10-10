@@ -11,8 +11,9 @@ description = "Install frontend and Go dependencies"
 run = ["pnpm install", "go mod download"]
 
 [setup]
-description = "Install deps, start Postgres, create dev/test/atlas DBs, migrate and seed"
+description = "Install deps, start Postgres, create dev/test/atlas DBs, migrate and seed, drop the databases of deleted worktrees"
 depends = ["install", "db:seed", "db:create-test"]
+run = [{ task = "worktrees:gc --apply" }]
 
 [dev]
 description = "Start the whole dev stack (https://1mail.localhost)"
@@ -98,7 +99,7 @@ run = "go run ./cmd/server genkey"
 # --- worktrees ----------------------------------------------------------------------
 
 ["worktrees:prune"]
-description = "Remove clean worktrees whose branch is already in origin/main (each runs its own Postgres daemon, and ~30 of them exhaust macOS shared memory); dry run unless --apply"
+description = "Remove clean worktrees whose branch is already in origin/main, then run worktrees:gc; dry run unless --apply"
 usage = 'flag "--apply" help="actually remove, instead of listing"'
 run = '''
 git fetch -q origin main
@@ -110,10 +111,72 @@ while IFS=$'\t' read -r path ref; do
   [ -n "$(git -C "$path" status --porcelain)" ] && { echo "keep    $path ($branch): uncommitted changes"; continue; }
   git merge-base --is-ancestor "$ref" origin/main || { echo "keep    $path ($branch): not in origin/main"; continue; }
   if [ -z "${usage_apply:-}" ]; then echo "would remove $path ($branch)"; continue; fi
-  (cd "$path" && mise daemons stop >/dev/null 2>&1) || true
   git worktree unlock "$path" 2>/dev/null || true
   git worktree remove "$path" && git branch -D "$branch" >/dev/null && echo "removed $path ($branch)"
 done
+# What the removed worktrees leave behind (daemons, databases) is worktrees:gc's to sweep.
+mise run worktrees:gc ${usage_apply:+--apply}
+'''
+
+["worktrees:gc"]
+description = "Sweep what deleted worktrees leave behind: databases on the shared Postgres (MISE_ENV=shared) that no live worktree owns, and daemon state (mise daemons prune); idempotent, dry run unless --apply"
+usage = 'flag "--apply" help="actually drop and prune, instead of listing"'
+quiet = true
+run = '''
+#!/usr/bin/env bash
+set -euo pipefail
+apply=${usage_apply:-}
+status=0
+
+# 1. Databases. Only a shared server (the db daemon is a consumer of the global `onemail-pg`
+#    provider, mise.shared.toml) holds several checkouts' databases; a per-checkout daemon
+#    lives and dies with its worktree's state (step 2).
+if ! mise daemons ls --json | grep -q '"ownership": "consumer"'; then
+  echo "db: this checkout runs its own Postgres (MISE_ENV is not shared): no shared server to sweep"
+else
+  mise daemons start db >/dev/null 2>&1
+  keep=$(mktemp)
+  trap 'rm -f "$keep"' EXIT
+  refuse=""
+  # A live worktree is a `git worktree list` entry whose directory exists. Its databases are
+  # its PGDATABASE and the _test, _e2e and _atlas twins, read from the worktree's own mise
+  # environment. Whatever cannot be read leaves the keep list incomplete: drop nothing then.
+  worktrees=$(git worktree list --porcelain | awk '/^worktree /{p=substr($0,10); pr=0} /^prunable/{pr=1} /^$/{if(p) print p"\t"pr; p=""} END{if(p) print p"\t"pr}') || worktrees=""
+  [ -n "$worktrees" ] || refuse="cannot enumerate git worktrees"
+  while IFS=$'\t' read -r path prunable; do
+    [ -n "$path" ] || continue
+    if [ ! -d "$path" ]; then
+      if [ "$prunable" = 1 ]; then echo "gone    $path (deleted worktree)"; continue; fi
+      refuse="$refuse; $path is missing but git does not mark it prunable"; continue
+    fi
+    if ! out=$(mise -C "$path" env 2>/dev/null); then
+      refuse="$refuse; cannot read the mise environment of $path (mise trust it?)"; continue
+    fi
+    db=$(printf '%s\n' "$out" | sed -n "s/^export PGDATABASE=//p" | tr -d "'")
+    if [ -z "$db" ]; then echo "nodb    $path (declares no database)"; continue; fi
+    # Postgres truncates identifiers at 63 bytes: a long name would make its twins collide.
+    if [ $(($(printf '%s' "$db" | wc -c) + 6)) -gt 63 ]; then refuse="$refuse; $db is too long for its _test/_e2e/_atlas twins"; continue; fi
+    printf '%s\n%s_test\n%s_e2e\n%s_atlas\n' "$db" "$db" "$db" "$db" >> "$keep"
+    echo "live    $path -> $db"
+  done <<< "$worktrees"
+
+  if [ -n "$refuse" ]; then
+    echo "db: refusing to drop anything: ${refuse#; }" >&2
+    status=1
+  else
+    psql="psql -X -A -t -q -d postgres"
+    for d in $($psql -c "select datname from pg_database where not datistemplate and datname <> 'postgres'"); do
+      if grep -qxF "$d" "$keep"; then continue; fi
+      case "$d" in *\"*) echo "keep    database $d (unusual name)"; continue ;; esac
+      if [ -z "$apply" ]; then echo "would drop database $d"; continue; fi
+      $psql -c "drop database \"$d\" with (force)" >/dev/null && echo "dropped database $d"
+    done
+  fi
+fi
+
+# 2. Daemon state of deleted worktrees and projects (stops their daemons, deletes state and data).
+if [ -z "$apply" ]; then mise daemons prune --dry-run; else mise daemons prune --yes; fi
+exit "$status"
 '''
 
 # --- tests -----------------------------------------------------------------------
