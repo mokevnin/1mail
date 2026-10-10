@@ -1,14 +1,16 @@
-import { expect, test, vi } from 'vitest'
+import { HttpResponse } from 'msw'
+import { beforeEach, expect, test, vi } from 'vitest'
 
-import type {
-  SiteAuditEntryResource,
-  SiteAuditExportData,
-  SiteAuditGetRetentionData,
-  SiteAuditListData,
-  SiteAuditSetRetentionData,
-} from '../../generated/site/types.gen.ts'
-import { jsonResponse, mockClientRoutes, route } from '../../test/mockFetch.ts'
+import {
+  handleSiteAuditExport,
+  handleSiteAuditGetRetention,
+  handleSiteAuditList,
+  handleSiteAuditSetRetention,
+} from '../../generated/site/msw.gen.ts'
+import type { SiteAuditEntryResource } from '../../generated/site/types.gen.ts'
+import { problem } from '../../test/problem.ts'
 import { renderWithRouter } from '../../test/renderWithRouter.tsx'
+import { worker } from '../../test/worker.ts'
 import type { AuditFilter } from './auditFilter.ts'
 import { AuditLogSection, ChangeHistoryLink } from './AuditLogSection.tsx'
 
@@ -26,11 +28,13 @@ function entry(over: Partial<SiteAuditEntryResource> = {}): SiteAuditEntryResour
   }
 }
 
-const list = (respond: () => Response) =>
-  route<SiteAuditListData>('GET', '/workspaces/{slug}/audit-entries', { slug: SLUG }, respond)
+// The section always reads the retention window; tests that care override it.
+beforeEach(() => {
+  worker.use(handleSiteAuditGetRetention({ body: { retentionDays: 90 } }))
+})
 
 test('lists who changed what, with the change', async () => {
-  mockClientRoutes([list(() => jsonResponse({ items: [entry()] }))])
+  worker.use(handleSiteAuditList({ body: { items: [entry()] } }))
   const { screen } = await renderWithRouter(
     <AuditLogSection slug={SLUG} onFilterChange={() => {}} />,
   )
@@ -42,7 +46,7 @@ test('lists who changed what, with the change', async () => {
 })
 
 test('expands an entry to its before/after diff', async () => {
-  mockClientRoutes([list(() => jsonResponse({ items: [entry()] }))])
+  worker.use(handleSiteAuditList({ body: { items: [entry()] } }))
   const { screen } = await renderWithRouter(
     <AuditLogSection slug={SLUG} onFilterChange={() => {}} />,
   )
@@ -55,7 +59,7 @@ test('expands an entry to its before/after diff', async () => {
 })
 
 test('shows a sensitive field as changed only', async () => {
-  mockClientRoutes([list(() => jsonResponse({ items: [entry({ diff: { secret: 'changed' } })] }))])
+  worker.use(handleSiteAuditList({ body: { items: [entry({ diff: { secret: 'changed' } })] } }))
   const { screen } = await renderWithRouter(
     <AuditLogSection slug={SLUG} onFilterChange={() => {}} />,
   )
@@ -68,21 +72,16 @@ test('shows a sensitive field as changed only', async () => {
 test('sends the applied filter to the list and to the export', async () => {
   const queries: string[] = []
   let exported = ''
-  mockClientRoutes([
-    route<SiteAuditListData>('GET', '/workspaces/{slug}/audit-entries', { slug: SLUG }, (req) => {
-      queries.push(new URL(req.url).search)
-      return jsonResponse({ items: [entry()] })
+  worker.use(
+    handleSiteAuditList(({ request }) => {
+      queries.push(new URL(request.url).search)
+      return HttpResponse.json({ items: [entry()] })
     }),
-    route<SiteAuditExportData>(
-      'GET',
-      '/workspaces/{slug}/audit-entries/export',
-      { slug: SLUG },
-      (req) => {
-        exported = new URL(req.url).search
-        return new Response('id\n', { headers: { 'content-type': 'text/csv' } })
-      },
-    ),
-  ])
+    handleSiteAuditExport(({ request }) => {
+      exported = new URL(request.url).search
+      return new HttpResponse('id\n', { headers: { 'content-type': 'text/csv' } })
+    }),
+  )
   const { screen } = await renderWithRouter(
     <AuditLogSection
       slug={SLUG}
@@ -105,7 +104,7 @@ test('sends the applied filter to the list and to the export', async () => {
 })
 
 test('applying the form hands the new filter up, and reset clears it', async () => {
-  mockClientRoutes([list(() => jsonResponse({ items: [entry()] }))])
+  worker.use(handleSiteAuditList({ body: { items: [entry()] } }))
   const onFilterChange = vi.fn<(filter: AuditFilter) => void>()
   const { screen } = await renderWithRouter(
     <AuditLogSection slug={SLUG} onFilterChange={onFilterChange} />,
@@ -124,7 +123,7 @@ test('applying the form hands the new filter up, and reset clears it', async () 
 })
 
 test('says so when the filter matches nothing', async () => {
-  mockClientRoutes([list(() => jsonResponse({ items: [] }))])
+  worker.use(handleSiteAuditList({ body: { items: [] } }))
   const { screen } = await renderWithRouter(
     <AuditLogSection slug={SLUG} filter={{ ip: '1.2.3.4' }} onFilterChange={() => {}} />,
   )
@@ -133,7 +132,7 @@ test('says so when the filter matches nothing', async () => {
 })
 
 test('the change history link opens the log filtered to the object', async () => {
-  mockClientRoutes([list(() => jsonResponse({ items: [] }))])
+  worker.use(handleSiteAuditList({ body: { items: [] } }))
   const { screen } = await renderWithRouter(
     <ChangeHistoryLink slug={SLUG} targetType="integration" targetId="5" />,
   )
@@ -146,7 +145,7 @@ test('the change history link opens the log filtered to the object', async () =>
 })
 
 test('the change history link is not offered without the log', async () => {
-  mockClientRoutes([list(() => jsonResponse({ status: 402, detail: 'no' }, { status: 402 }))])
+  worker.use(handleSiteAuditList(() => problem(402, { detail: 'no' })))
   const { screen } = await renderWithRouter(
     <ChangeHistoryLink slug={SLUG} targetType="integration" targetId="5" />,
   )
@@ -155,7 +154,7 @@ test('the change history link is not offered without the log', async () => {
 })
 
 test('shows the empty state', async () => {
-  mockClientRoutes([list(() => jsonResponse({ items: [] }))])
+  worker.use(handleSiteAuditList({ body: { items: [] } }))
   const { screen } = await renderWithRouter(
     <AuditLogSection slug={SLUG} onFilterChange={() => {}} />,
   )
@@ -164,7 +163,7 @@ test('shows the empty state', async () => {
 })
 
 test('offers the next page while a cursor is returned', async () => {
-  mockClientRoutes([list(() => jsonResponse({ items: [entry()], nextCursor: '2' }))])
+  worker.use(handleSiteAuditList({ body: { items: [entry()], nextCursor: '2' } }))
   const { screen } = await renderWithRouter(
     <AuditLogSection slug={SLUG} onFilterChange={() => {}} />,
   )
@@ -173,7 +172,7 @@ test('offers the next page while a cursor is returned', async () => {
 })
 
 test.each([402, 403])('renders nothing when the API answers %i', async (status) => {
-  mockClientRoutes([list(() => jsonResponse({ status, detail: 'refused' }, { status }))])
+  worker.use(handleSiteAuditList(() => problem(status, { detail: 'refused' })))
   const { screen } = await renderWithRouter(
     <AuditLogSection slug={SLUG} onFilterChange={() => {}} />,
   )
@@ -183,20 +182,15 @@ test.each([402, 403])('renders nothing when the API answers %i', async (status) 
 
 test('exports the log as CSV through the generated client', async () => {
   let exported = 0
-  mockClientRoutes([
-    list(() => jsonResponse({ items: [entry()] })),
-    route<SiteAuditExportData>(
-      'GET',
-      '/workspaces/{slug}/audit-entries/export',
-      { slug: SLUG },
-      () => {
-        exported += 1
-        return new Response('id,action\n2,membership.update\n', {
-          headers: { 'content-type': 'text/csv' },
-        })
-      },
-    ),
-  ])
+  worker.use(
+    handleSiteAuditList({ body: { items: [entry()] } }),
+    handleSiteAuditExport(() => {
+      exported += 1
+      return new HttpResponse('id,action\n2,membership.update\n', {
+        headers: { 'content-type': 'text/csv' },
+      })
+    }),
+  )
   const { screen } = await renderWithRouter(
     <AuditLogSection slug={SLUG} onFilterChange={() => {}} />,
   )
@@ -205,29 +199,16 @@ test('exports the log as CSV through the generated client', async () => {
   await vi.waitFor(() => expect(exported).toBe(1))
 })
 
-const retentionRoute = (respond: () => Response) =>
-  route<SiteAuditGetRetentionData>(
-    'GET',
-    '/workspaces/{slug}/audit-entries/retention',
-    { slug: SLUG },
-    respond,
-  )
-
 test('shows the retention window and saves a new one', async () => {
   let saved: unknown
-  mockClientRoutes([
-    list(() => jsonResponse({ items: [entry()] })),
-    retentionRoute(() => jsonResponse({ retentionDays: 90 })),
-    route<SiteAuditSetRetentionData>(
-      'PUT',
-      '/workspaces/{slug}/audit-entries/retention',
-      { slug: SLUG },
-      async (req) => {
-        saved = await req.json()
-        return jsonResponse({ retentionDays: null })
-      },
-    ),
-  ])
+  worker.use(
+    handleSiteAuditList({ body: { items: [entry()] } }),
+    handleSiteAuditGetRetention({ body: { retentionDays: 90 } }),
+    handleSiteAuditSetRetention(async ({ request }) => {
+      saved = await request.json()
+      return HttpResponse.json({ retentionDays: null })
+    }),
+  )
   const { screen } = await renderWithRouter(
     <AuditLogSection slug={SLUG} onFilterChange={() => {}} />,
   )
@@ -241,19 +222,14 @@ test('shows the retention window and saves a new one', async () => {
 
 test('an empty retention window keeps the log forever', async () => {
   let saved: unknown
-  mockClientRoutes([
-    list(() => jsonResponse({ items: [entry()] })),
-    retentionRoute(() => jsonResponse({ retentionDays: 90 })),
-    route<SiteAuditSetRetentionData>(
-      'PUT',
-      '/workspaces/{slug}/audit-entries/retention',
-      { slug: SLUG },
-      async (req) => {
-        saved = await req.json()
-        return jsonResponse({ retentionDays: null })
-      },
-    ),
-  ])
+  worker.use(
+    handleSiteAuditList({ body: { items: [entry()] } }),
+    handleSiteAuditGetRetention({ body: { retentionDays: 90 } }),
+    handleSiteAuditSetRetention(async ({ request }) => {
+      saved = await request.json()
+      return HttpResponse.json({ retentionDays: null })
+    }),
+  )
   const { screen } = await renderWithRouter(
     <AuditLogSection slug={SLUG} onFilterChange={() => {}} />,
   )
@@ -264,16 +240,11 @@ test('an empty retention window keeps the log forever', async () => {
 })
 
 test('a failed retention save is reported', async () => {
-  mockClientRoutes([
-    list(() => jsonResponse({ items: [entry()] })),
-    retentionRoute(() => jsonResponse({ retentionDays: null })),
-    route<SiteAuditSetRetentionData>(
-      'PUT',
-      '/workspaces/{slug}/audit-entries/retention',
-      { slug: SLUG },
-      () => jsonResponse({ status: 422, detail: 'bad window' }, { status: 422 }),
-    ),
-  ])
+  worker.use(
+    handleSiteAuditList({ body: { items: [entry()] } }),
+    handleSiteAuditGetRetention({ body: { retentionDays: null } }),
+    handleSiteAuditSetRetention(() => problem(422, { detail: 'bad window' })),
+  )
   const { screen } = await renderWithRouter(
     <AuditLogSection slug={SLUG} onFilterChange={() => {}} />,
   )
@@ -284,22 +255,27 @@ test('a failed retention save is reported', async () => {
 })
 
 test('the retention control is not offered without its license', async () => {
-  mockClientRoutes([
-    list(() => jsonResponse({ items: [entry()] })),
-    retentionRoute(() => jsonResponse({ status: 402, detail: 'no' }, { status: 402 })),
-  ])
+  let retentionAnswered = 0
+  worker.use(
+    handleSiteAuditList({ body: { items: [entry()] } }),
+    handleSiteAuditGetRetention(() => {
+      retentionAnswered++
+      return problem(402, { detail: 'no' })
+    }),
+  )
   const { screen } = await renderWithRouter(
     <AuditLogSection slug={SLUG} onFilterChange={() => {}} />,
   )
 
   await expect.element(screen.getByText('Audit log')).toBeInTheDocument()
+  await expect.poll(() => retentionAnswered).toBeGreaterThan(0)
   await expect.element(screen.getByLabelText('Keep the log for (days)')).not.toBeInTheDocument()
 })
 
 test('an entry without a diff or a name falls back gracefully', async () => {
-  mockClientRoutes([
-    list(() =>
-      jsonResponse({
+  worker.use(
+    handleSiteAuditList({
+      body: {
         items: [
           entry({
             id: '3',
@@ -314,9 +290,9 @@ test('an entry without a diff or a name falls back gracefully', async () => {
             diff: { a: { from: null, to: '' }, b: { from: { x: 1 }, to: 2 } },
           }),
         ],
-      }),
-    ),
-  ])
+      },
+    }),
+  )
   const { screen } = await renderWithRouter(
     <AuditLogSection slug={SLUG} onFilterChange={() => {}} />,
   )

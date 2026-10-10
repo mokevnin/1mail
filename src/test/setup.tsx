@@ -6,7 +6,7 @@
 import '@mantine/core/styles.css'
 import '@mantine/notifications/styles.css'
 import '../i18n.ts'
-import { afterAll, afterEach, beforeAll } from 'vitest'
+import { afterEach, beforeAll } from 'vitest'
 
 import { client } from '../generated/site/client.gen.ts'
 import { worker } from './worker.ts'
@@ -14,7 +14,41 @@ import { worker } from './worker.ts'
 // The app pins the generated client's base URL in src/main.tsx; mirror it here.
 client.setConfig({ baseUrl: '/site' })
 
-// A request without a handler fails the test loudly; handlers are dropped after every test.
-beforeAll(() => worker.start({ onUnhandledRequest: 'error', quiet: true }))
-afterEach(() => worker.resetHandlers())
-afterAll(() => worker.stop())
+// MSW answers a request without a handler with a 500 and only logs it, which the app may
+// swallow. Record each one and fail the test that made it; handlers are dropped after every test.
+const unhandled: string[] = []
+
+function isSiteApiFrame({ data }: { data: unknown }) {
+  if (typeof data !== 'object' || data === null || !('request' in data)) return false
+  const { request } = data
+  return request instanceof Request && new URL(request.url).pathname.startsWith('/site/')
+}
+
+beforeAll(() =>
+  worker.start({
+    quiet: true,
+    onUnhandledFrame: async ({ frame, defaults }) => {
+      // Page assets and the analytics package's own traffic are not the app's API.
+      if (!isSiteApiFrame(frame)) {
+        frame.passthrough()
+        return
+      }
+      unhandled.push(await frame.getUnhandledMessage())
+      defaults.error()
+    },
+  }),
+)
+// A test may end before its own requests have reached the worker (the round-trip takes a beat).
+// Give them that beat while the test's handlers are still installed, or they would be answered
+// by the next test's handlers and reported as unmocked there.
+afterEach(async () => {
+  await new Promise((resolve) => setTimeout(resolve, 20))
+  worker.resetHandlers()
+  const messages = unhandled.splice(0)
+  if (messages.length > 0) {
+    throw new Error(`unmocked request:\n${messages.join('\n')}`)
+  }
+})
+
+// The worker is never stopped: `worker.stop()` hangs while a never-resolving request (the
+// loading-state tests) is pending, and the page teardown drops the worker anyway.

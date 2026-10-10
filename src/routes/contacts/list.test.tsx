@@ -3,6 +3,7 @@ import { expect, test } from 'vitest'
 
 import { handleSiteContactsDelete, handleSiteContactsList } from '../../generated/site/msw.gen.ts'
 import { contactsRoute } from '../../router.tsx'
+import { page, TIMESTAMPS } from '../../test/payloads.ts'
 import { problem } from '../../test/problem.ts'
 import { renderWithRouter } from '../../test/renderWithRouter.tsx'
 import { routeMount } from '../../test/routeMount.ts'
@@ -11,11 +12,17 @@ import { ContactsListPage } from './list.tsx'
 
 const LIST_ROUTE = routeMount(contactsRoute, { slug: 'test' })
 
-const ALICE = { id: '1', email: 'alice@example.com', firstName: 'Alice', lastName: 'Smith' }
-const BOB = { id: '2', email: 'bob@example.com' }
+const ALICE = {
+  id: '1',
+  email: 'alice@example.com',
+  firstName: 'Alice',
+  lastName: 'Smith',
+  ...TIMESTAMPS,
+}
+const BOB = { id: '2', email: 'bob@example.com', ...TIMESTAMPS }
 
 test('lists the workspace contacts', async () => {
-  worker.use(handleSiteContactsList({ body: { items: [ALICE, BOB], totalItems: 2 } }))
+  worker.use(handleSiteContactsList({ body: page([ALICE, BOB], 2) }))
 
   const { screen } = await renderWithRouter(<ContactsListPage />, LIST_ROUTE)
 
@@ -25,7 +32,7 @@ test('lists the workspace contacts', async () => {
 })
 
 test('shows the empty state when there are no contacts', async () => {
-  worker.use(handleSiteContactsList({ body: { items: [], totalItems: 0 } }))
+  worker.use(handleSiteContactsList({ body: page([], 0) }))
 
   const { screen } = await renderWithRouter(<ContactsListPage />, LIST_ROUTE)
 
@@ -41,7 +48,7 @@ test('shows an error alert when the list fails to load', async () => {
 })
 
 test('Add contact navigates to the create page', async () => {
-  worker.use(handleSiteContactsList({ body: { items: [], totalItems: 0 } }))
+  worker.use(handleSiteContactsList({ body: page([], 0) }))
 
   const { screen, navigate } = await renderWithRouter(<ContactsListPage />, LIST_ROUTE)
   await screen.getByRole('button', { name: 'Add contact' }).click()
@@ -94,7 +101,7 @@ test('changing the page requests page 2 of the contacts', async () => {
 
 test('a failed delete shows the error toast and keeps the contact', async () => {
   worker.use(
-    handleSiteContactsList({ body: { items: [ALICE], totalItems: 1 } }),
+    handleSiteContactsList({ body: page([ALICE], 1) }),
     handleSiteContactsDelete(() => problem(500)),
   )
 

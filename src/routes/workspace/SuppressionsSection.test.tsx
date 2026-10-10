@@ -1,13 +1,15 @@
+import { HttpResponse } from 'msw'
 import { expect, test } from 'vitest'
 
-import type {
-  SiteSuppressionResource,
-  SiteSuppressionsCreateData,
-  SiteSuppressionsDeleteData,
-  SiteSuppressionsListData,
-} from '../../generated/site/types.gen.ts'
-import { jsonResponse, mockClientRoutes, route } from '../../test/mockFetch.ts'
+import {
+  handleSiteSuppressionsCreate,
+  handleSiteSuppressionsDelete,
+  handleSiteSuppressionsList,
+} from '../../generated/site/msw.gen.ts'
+import type { SiteSuppressionResource } from '../../generated/site/types.gen.ts'
+import { problem } from '../../test/problem.ts'
 import { renderWithRouter } from '../../test/renderWithRouter.tsx'
+import { worker } from '../../test/worker.ts'
 import { SuppressionsSection } from './SuppressionsSection.tsx'
 
 const SLUG = 'test'
@@ -25,18 +27,18 @@ function suppression(over: Partial<SiteSuppressionResource> = {}): SiteSuppressi
 }
 
 const list = (items: SiteSuppressionResource[], totalItems = items.length) =>
-  route<SiteSuppressionsListData>('GET', '/workspaces/{slug}/suppressions', { slug: SLUG }, () =>
-    jsonResponse({ items, page: 1, pageSize: 20, totalItems, totalPages: 1 }),
-  )
+  handleSiteSuppressionsList({
+    body: { items, page: 1, pageSize: 20, totalItems, totalPages: 1 },
+  })
 
 test('lists suppressed addresses with their reason', async () => {
-  mockClientRoutes([
+  worker.use(
     list([
       suppression(),
       suppression({ id: '2', destination: 'angry@example.com', reason: 'complaint' }),
       suppression({ id: '3', destination: 'manual@example.com', reason: 'manual' }),
     ]),
-  ])
+  )
   const { screen } = await renderWithRouter(<SuppressionsSection slug={SLUG} />)
 
   await expect.element(screen.getByText('bounced@example.com')).toBeInTheDocument()
@@ -47,18 +49,13 @@ test('lists suppressed addresses with their reason', async () => {
 
 test('adds a suppression', async () => {
   const bodies: unknown[] = []
-  mockClientRoutes([
+  worker.use(
     list([]),
-    route<SiteSuppressionsCreateData>(
-      'POST',
-      '/workspaces/{slug}/suppressions',
-      { slug: SLUG },
-      async (req) => {
-        bodies.push(await req.json())
-        return jsonResponse(suppression({ reason: 'manual' }), { status: 201 })
-      },
-    ),
-  ])
+    handleSiteSuppressionsCreate(async ({ request }) => {
+      bodies.push(await request.json())
+      return HttpResponse.json(suppression({ reason: 'manual' }), { status: 201 })
+    }),
+  )
   const { screen } = await renderWithRouter(<SuppressionsSection slug={SLUG} />)
 
   await screen.getByLabelText(/^Email address/).fill('blocked@example.com')
@@ -69,18 +66,13 @@ test('adds a suppression', async () => {
 
 test('removes a suppression after confirmation', async () => {
   let deleted = false
-  mockClientRoutes([
+  worker.use(
     list([suppression()]),
-    route<SiteSuppressionsDeleteData>(
-      'DELETE',
-      '/workspaces/{slug}/suppressions/{id}',
-      { slug: SLUG, id: '1' },
-      () => {
-        deleted = true
-        return new Response(null, { status: 204 })
-      },
-    ),
-  ])
+    handleSiteSuppressionsDelete(() => {
+      deleted = true
+      return new HttpResponse(null, { status: 204 })
+    }),
+  )
   const { screen } = await renderWithRouter(<SuppressionsSection slug={SLUG} />)
 
   await screen.getByRole('button', { name: 'Remove' }).click()
@@ -90,11 +82,7 @@ test('removes a suppression after confirmation', async () => {
 })
 
 test('shows an error alert when the list fails to load', async () => {
-  mockClientRoutes([
-    route<SiteSuppressionsListData>('GET', '/workspaces/{slug}/suppressions', { slug: SLUG }, () =>
-      jsonResponse({ status: 500, detail: 'boom' }, { status: 500 }),
-    ),
-  ])
+  worker.use(handleSiteSuppressionsList(() => problem(500, { detail: 'boom' })))
   const { screen } = await renderWithRouter(<SuppressionsSection slug={SLUG} />)
 
   await expect
@@ -104,23 +92,18 @@ test('shows an error alert when the list fails to load', async () => {
 
 test('requests the next page when paginating', async () => {
   const pages: (string | null)[] = []
-  mockClientRoutes([
-    route<SiteSuppressionsListData>(
-      'GET',
-      '/workspaces/{slug}/suppressions',
-      { slug: SLUG },
-      (req) => {
-        pages.push(new URL(req.url).searchParams.get('page'))
-        return jsonResponse({
-          items: [suppression()],
-          page: 1,
-          pageSize: 20,
-          totalItems: 45,
-          totalPages: 3,
-        })
-      },
-    ),
-  ])
+  worker.use(
+    handleSiteSuppressionsList(({ request }) => {
+      pages.push(new URL(request.url).searchParams.get('page'))
+      return HttpResponse.json({
+        items: [suppression()],
+        page: 1,
+        pageSize: 20,
+        totalItems: 45,
+        totalPages: 3,
+      })
+    }),
+  )
   const { screen } = await renderWithRouter(<SuppressionsSection slug={SLUG} />)
 
   await expect.element(screen.getByText('bounced@example.com')).toBeInTheDocument()
@@ -130,15 +113,10 @@ test('requests the next page when paginating', async () => {
 })
 
 test('reports a create failure', async () => {
-  mockClientRoutes([
+  worker.use(
     list([]),
-    route<SiteSuppressionsCreateData>(
-      'POST',
-      '/workspaces/{slug}/suppressions',
-      { slug: SLUG },
-      () => jsonResponse({ status: 422, detail: 'bad address' }, { status: 422 }),
-    ),
-  ])
+    handleSiteSuppressionsCreate(() => problem(422, { detail: 'bad address' })),
+  )
   const { screen } = await renderWithRouter(<SuppressionsSection slug={SLUG} />)
 
   await screen.getByLabelText(/^Email address/).fill('x@example.com')

@@ -1,21 +1,22 @@
 import { notifications } from '@mantine/notifications'
+import { HttpResponse } from 'msw'
 import { afterEach, expect, test } from 'vitest'
 
-import type {
-  SiteAutomationResource,
-  SiteAutomationsActivateData,
-  SiteAutomationsDeactivateData,
-  SiteAutomationsDeleteData,
-  SiteAutomationsListData,
-} from '../../generated/site/types.gen.ts'
+import {
+  handleSiteAutomationsActivate,
+  handleSiteAutomationsDeactivate,
+  handleSiteAutomationsDelete,
+  handleSiteAutomationsList,
+} from '../../generated/site/msw.gen.ts'
+import type { SiteAutomationResource } from '../../generated/site/types.gen.ts'
 import { automationsRoute } from '../../router.tsx'
-import { jsonResponse, mockClientRoutes, route } from '../../test/mockFetch.ts'
+import { problem } from '../../test/problem.ts'
 import { renderWithRouter } from '../../test/renderWithRouter.tsx'
 import { routeMount } from '../../test/routeMount.ts'
+import { worker } from '../../test/worker.ts'
 import { AutomationsListPage } from './list.tsx'
 
-const SLUG = { slug: 'test' }
-const LIST_ROUTE = routeMount(automationsRoute, SLUG)
+const LIST_ROUTE = routeMount(automationsRoute, { slug: 'test' })
 const NOW = '2026-01-01T00:00:00Z'
 
 const WELCOME: SiteAutomationResource = {
@@ -40,12 +41,12 @@ afterEach(() => {
   notifications.clean()
 })
 
-function listRoute(respond: () => Response) {
-  return route<SiteAutomationsListData>('GET', '/workspaces/{slug}/automations', SLUG, respond)
-}
-
 test('lists automations with their status', async () => {
-  mockClientRoutes([listRoute(() => jsonResponse({ items: [WELCOME, NURTURE], totalItems: 2 }))])
+  worker.use(
+    handleSiteAutomationsList(() =>
+      HttpResponse.json({ items: [WELCOME, NURTURE], totalItems: 2 }),
+    ),
+  )
 
   const { screen } = await renderWithRouter(<AutomationsListPage />, LIST_ROUTE)
 
@@ -56,7 +57,7 @@ test('lists automations with their status', async () => {
 })
 
 test('shows the empty state when there are no automations', async () => {
-  mockClientRoutes([listRoute(() => jsonResponse({ items: [], totalItems: 0 }))])
+  worker.use(handleSiteAutomationsList(() => HttpResponse.json({ items: [], totalItems: 0 })))
 
   const { screen } = await renderWithRouter(<AutomationsListPage />, LIST_ROUTE)
 
@@ -64,7 +65,7 @@ test('shows the empty state when there are no automations', async () => {
 })
 
 test('shows an error alert when the list fails to load', async () => {
-  mockClientRoutes([listRoute(() => jsonResponse({ title: 'Boom', status: 500 }, { status: 500 }))])
+  worker.use(handleSiteAutomationsList(() => problem(500)))
 
   const { screen } = await renderWithRouter(<AutomationsListPage />, LIST_ROUTE)
 
@@ -72,7 +73,9 @@ test('shows an error alert when the list fails to load', async () => {
 })
 
 test('New automation and Edit navigate to the create and edit pages', async () => {
-  mockClientRoutes([listRoute(() => jsonResponse({ items: [WELCOME], totalItems: 1 }))])
+  worker.use(
+    handleSiteAutomationsList(() => HttpResponse.json({ items: [WELCOME], totalItems: 1 })),
+  )
 
   const { screen, navigate } = await renderWithRouter(<AutomationsListPage />, LIST_ROUTE)
   await expect.element(screen.getByText('Welcome flow')).toBeInTheDocument()
@@ -89,21 +92,16 @@ test('New automation and Edit navigate to the create and edit pages', async () =
 test('activating a draft automation calls the API and refreshes the list', async () => {
   const activated: string[] = []
   let listFetches = 0
-  mockClientRoutes([
-    listRoute(() => {
+  worker.use(
+    handleSiteAutomationsList(() => {
       listFetches++
-      return jsonResponse({ items: [NURTURE], totalItems: 1 })
+      return HttpResponse.json({ items: [NURTURE], totalItems: 1 })
     }),
-    route<SiteAutomationsActivateData>(
-      'POST',
-      '/workspaces/{slug}/automations/{id}/activate',
-      { ...SLUG, id: '2' },
-      () => {
-        activated.push('2')
-        return jsonResponse({ ...NURTURE, status: 'active' })
-      },
-    ),
-  ])
+    handleSiteAutomationsActivate(({ params }) => {
+      activated.push(params.id)
+      return HttpResponse.json({ ...NURTURE, status: 'active' })
+    }),
+  )
 
   const { screen } = await renderWithRouter(<AutomationsListPage />, LIST_ROUTE)
   await screen.getByRole('button', { name: 'Activate' }).click()
@@ -115,18 +113,13 @@ test('activating a draft automation calls the API and refreshes the list', async
 
 test('deactivating an active automation calls the API', async () => {
   const deactivated: string[] = []
-  mockClientRoutes([
-    listRoute(() => jsonResponse({ items: [WELCOME], totalItems: 1 })),
-    route<SiteAutomationsDeactivateData>(
-      'POST',
-      '/workspaces/{slug}/automations/{id}/deactivate',
-      { ...SLUG, id: '1' },
-      () => {
-        deactivated.push('1')
-        return jsonResponse({ ...WELCOME, status: 'draft' })
-      },
-    ),
-  ])
+  worker.use(
+    handleSiteAutomationsList(() => HttpResponse.json({ items: [WELCOME], totalItems: 1 })),
+    handleSiteAutomationsDeactivate(({ params }) => {
+      deactivated.push(params.id)
+      return HttpResponse.json({ ...WELCOME, status: 'draft' })
+    }),
+  )
 
   const { screen } = await renderWithRouter(<AutomationsListPage />, LIST_ROUTE)
   await screen.getByRole('button', { name: 'Deactivate' }).click()
@@ -137,18 +130,13 @@ test('deactivating an active automation calls the API', async () => {
 
 test('deleting an automation asks for confirmation first', async () => {
   const deleted: string[] = []
-  mockClientRoutes([
-    listRoute(() => jsonResponse({ items: [WELCOME], totalItems: 1 })),
-    route<SiteAutomationsDeleteData>(
-      'DELETE',
-      '/workspaces/{slug}/automations/{id}',
-      { ...SLUG, id: '1' },
-      () => {
-        deleted.push('1')
-        return new Response(null, { status: 204 })
-      },
-    ),
-  ])
+  worker.use(
+    handleSiteAutomationsList(() => HttpResponse.json({ items: [WELCOME], totalItems: 1 })),
+    handleSiteAutomationsDelete(({ params }) => {
+      deleted.push(params.id)
+      return new HttpResponse(null, { status: 204 })
+    }),
+  )
 
   const { screen } = await renderWithRouter(<AutomationsListPage />, LIST_ROUTE)
   await expect.element(screen.getByText('Welcome flow')).toBeInTheDocument()

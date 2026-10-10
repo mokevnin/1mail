@@ -1,17 +1,17 @@
+import { HttpResponse } from 'msw'
 import { expect, test } from 'vitest'
 
-import type {
-  SiteBroadcastsCreateData,
-  SiteSegmentsListData,
-  SiteTemplatesListData,
-} from '../../generated/site/types.gen.ts'
+import {
+  handleSiteBroadcastsCreate,
+  handleSiteSegmentsList,
+  handleSiteTemplatesList,
+} from '../../generated/site/msw.gen.ts'
 import { broadcastsCreateRoute, broadcastsRoute } from '../../router.tsx'
-import { jsonResponse, mockClientRoutes, route } from '../../test/mockFetch.ts'
 import { renderWithRouter } from '../../test/renderWithRouter.tsx'
 import { routeMount } from '../../test/routeMount.ts'
+import { worker } from '../../test/worker.ts'
 import { BroadcastCreatePage } from './resource.tsx'
 
-const SLUG = { slug: 'test' }
 const mount = routeMount(broadcastsCreateRoute, { slug: 'test' })
 
 const template = (id: string, subject: string) => ({
@@ -24,18 +24,18 @@ const template = (id: string, subject: string) => ({
 })
 
 function serve(templates: ReturnType<typeof template>[], bodies: unknown[] = []) {
-  mockClientRoutes([
-    route<SiteSegmentsListData>('GET', '/workspaces/{slug}/segments', SLUG, () =>
-      jsonResponse({ items: [{ id: '9', name: 'VIPs' }], totalItems: 1 }),
+  worker.use(
+    handleSiteSegmentsList(() =>
+      HttpResponse.json({ items: [{ id: '9', name: 'VIPs' }], totalItems: 1 }),
     ),
-    route<SiteTemplatesListData>('GET', '/workspaces/{slug}/templates', SLUG, () =>
-      jsonResponse({ items: templates, totalItems: templates.length }),
+    handleSiteTemplatesList(() =>
+      HttpResponse.json({ items: templates, totalItems: templates.length }),
     ),
-    route<SiteBroadcastsCreateData>('POST', '/workspaces/{slug}/broadcasts', SLUG, async (req) => {
-      bodies.push(await req.json())
-      return jsonResponse({ id: '42', name: 'x' }, { status: 201 })
+    handleSiteBroadcastsCreate(async ({ request }) => {
+      bodies.push(await request.json())
+      return HttpResponse.json({ id: '42', name: 'x' }, { status: 201 })
     }),
-  ])
+  )
 }
 
 test('picking a template copies its subject and body into the form', async () => {

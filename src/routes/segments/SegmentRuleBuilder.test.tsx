@@ -1,40 +1,30 @@
+import { HttpResponse } from 'msw'
 import { expect, test, vi } from 'vitest'
 
-import type {
-  SiteCustomFieldsListData,
-  SiteEventsActionsData,
-  SiteSegmentsPreviewData,
-} from '../../generated/site/types.gen.ts'
-import { jsonResponse, mockClientRoutes, route } from '../../test/mockFetch.ts'
+import {
+  handleSiteCustomFieldsList,
+  handleSiteEventsActions,
+  handleSiteSegmentsPreview,
+} from '../../generated/site/msw.gen.ts'
+import { page, TIMESTAMPS } from '../../test/payloads.ts'
 import { renderWithRouter } from '../../test/renderWithRouter.tsx'
+import { worker } from '../../test/worker.ts'
 import { SegmentRuleBuilder } from './SegmentRuleBuilder.tsx'
 
-const SLUG = { slug: 'test' }
-
 function serve(previewBodies: unknown[] = []) {
-  mockClientRoutes([
-    route<SiteEventsActionsData>('GET', '/workspaces/{slug}/events/actions', SLUG, () =>
-      jsonResponse({ actions: ['purchase'] }),
-    ),
-    route<SiteCustomFieldsListData>('GET', '/workspaces/{slug}/custom-fields', SLUG, () =>
-      jsonResponse({
-        items: [
-          { id: '1', key: 'plan', name: 'Plan', type: 'text' },
-          { id: '2', key: 'age', name: 'Age', type: 'number' },
-        ],
-        totalItems: 2,
-      }),
-    ),
-    route<SiteSegmentsPreviewData>(
-      'POST',
-      '/workspaces/{slug}/segments/preview',
-      SLUG,
-      async (req) => {
-        previewBodies.push(await req.json())
-        return jsonResponse({ count: 3 })
-      },
-    ),
-  ])
+  worker.use(
+    handleSiteEventsActions({ body: { actions: ['purchase'] } }),
+    handleSiteCustomFieldsList({
+      body: page([
+        { id: '1', key: 'plan', name: 'Plan', type: 'string', ...TIMESTAMPS },
+        { id: '2', key: 'age', name: 'Age', type: 'number', ...TIMESTAMPS },
+      ]),
+    }),
+    handleSiteSegmentsPreview(async ({ request }) => {
+      previewBodies.push(await request.json())
+      return HttpResponse.json({ count: 3 })
+    }),
+  )
 }
 
 test('sends the current rule to the audience preview', async () => {

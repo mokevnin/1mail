@@ -1,14 +1,12 @@
+import { HttpResponse } from 'msw'
 import { expect, test } from 'vitest'
 
-import type { SiteAuthRegisterData } from '../../generated/site/types.gen.ts'
+import { handleSiteAuthRegister } from '../../generated/site/msw.gen.ts'
 import { indexRoute } from '../../router.tsx'
-import { jsonResponse, mockClientRoutes, route } from '../../test/mockFetch.ts'
+import { problem } from '../../test/problem.ts'
 import { renderWithRouter } from '../../test/renderWithRouter.tsx'
+import { worker } from '../../test/worker.ts'
 import { RegisterPage } from './register.tsx'
-
-// route() wants a `path` record; these operations have none, so give it an empty one.
-const register = (respond: (req: Request) => Response | Promise<Response>) =>
-  route<SiteAuthRegisterData>('POST', '/auth/register', {}, respond)
 
 async function fillAndSubmit(screen: Awaited<ReturnType<typeof renderWithRouter>>['screen']) {
   await screen.getByLabelText(/^Name/).fill('  Ada Lovelace ')
@@ -19,12 +17,12 @@ async function fillAndSubmit(screen: Awaited<ReturnType<typeof renderWithRouter>
 
 test('registers with trimmed fields, notifies and navigates home', async () => {
   const bodies: unknown[] = []
-  mockClientRoutes([
-    register(async (req) => {
-      bodies.push(await req.json())
-      return jsonResponse({})
+  worker.use(
+    handleSiteAuthRegister(async ({ request }) => {
+      bodies.push(await request.json())
+      return HttpResponse.json({})
     }),
-  ])
+  )
   const { screen, navigate } = await renderWithRouter(<RegisterPage />)
 
   await fillAndSubmit(screen)
@@ -37,9 +35,7 @@ test('registers with trimmed fields, notifies and navigates home', async () => {
 })
 
 test('shows the API error and clears the password when registration fails', async () => {
-  mockClientRoutes([
-    register(() => jsonResponse({ detail: 'Email already taken' }, { status: 409 })),
-  ])
+  worker.use(handleSiteAuthRegister(() => problem(409, { detail: 'Email already taken' })))
   const { screen, navigate } = await renderWithRouter(<RegisterPage />)
 
   await fillAndSubmit(screen)
@@ -51,7 +47,7 @@ test('shows the API error and clears the password when registration fails', asyn
 })
 
 test('falls back to the generic message when the error has no detail', async () => {
-  mockClientRoutes([register(() => jsonResponse({}, { status: 500 }))])
+  worker.use(handleSiteAuthRegister(() => problem(500, {})))
   const { screen } = await renderWithRouter(<RegisterPage />)
 
   await fillAndSubmit(screen)
