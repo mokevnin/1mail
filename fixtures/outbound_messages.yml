@@ -119,8 +119,8 @@
   created_at: '{{hoursAgo 2}}'
   updated_at: '{{hoursAgo 2}}'
 - id: 108
-  kind: transactional
-  idempotency_key: 'transactional:fixture-usage-108'
+  kind: automation
+  idempotency_key: 'automation:fixture-usage-108'
   channel: email
   destination: usage.two@codebasics.dev
   status: sent
