@@ -27,6 +27,8 @@
   "errors.confirm_link_bad": "enlace de confirmación no válido",
   "errors.email_in_use": "ese email ya está en uso",
   "errors.name_empty": "el nombre no puede estar vacío",
+  "errors.sending_domain_invalid": "no es un nombre de dominio válido",
+  "errors.dkim_selector_invalid": "no es un selector DKIM válido",
   "errors.current_password_required": "la contraseña actual es obligatoria",
   "errors.current_password_incorrect": "la contraseña actual es incorrecta",
   "errors.new_email_required": "el nuevo email es obligatorio",

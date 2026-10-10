@@ -43,6 +43,7 @@ import (
 	"github.com/mokevnin/1mail/internal/reputation"
 	"github.com/mokevnin/1mail/internal/secrets"
 	"github.com/mokevnin/1mail/internal/segments"
+	"github.com/mokevnin/1mail/internal/sendingdomains"
 	"github.com/mokevnin/1mail/internal/server"
 	"github.com/mokevnin/1mail/internal/tags"
 	"github.com/mokevnin/1mail/internal/tracking"
@@ -237,6 +238,7 @@ func Setup(t *testing.T, opts ...Option) *TestEnv {
 	erasureModule := erasure.New(bus)
 	tagsModule := tags.New()
 	integrationsModule := integrations.New(bus, cipher, catalog, inline)
+	sendingDomainsModule := sendingdomains.New(bus, cipher, inline)
 	automationsModule := automations.New()
 	broadcastsModule := broadcasts.New(inline)
 	acc := accounts.New(client, bus)
@@ -246,7 +248,7 @@ func Setup(t *testing.T, opts ...Option) *TestEnv {
 	external, err := server.NewExternalAPI(client, apiexternal.Deps{
 		Accounts: acc, Bus: bus, Cipher: cipher, Outbound: sender,
 		Segments: segmentsModule, EventLog: eventLog, Contacts: contactsModule, Erasure: erasureModule, Tags: tagsModule,
-		Automations: automationsModule, Broadcasts: broadcastsModule, Reputation: reputation.New(), Integrations: integrationsModule,
+		Automations: automationsModule, Broadcasts: broadcastsModule, Reputation: reputation.New(), Integrations: integrationsModule, SendingDomains: sendingDomainsModule,
 		BootstrapToken: cfg.BootstrapToken,
 	})
 	require.NoError(t, err, "build external API")
@@ -256,7 +258,7 @@ func Setup(t *testing.T, opts ...Option) *TestEnv {
 		Accounts: acc, Attempts: attempts, OAuth: oauthserver.NewService(client), Bus: bus, Cipher: cipher, Outbound: sender,
 		Segments: segmentsModule, EventLog: eventLog, Contacts: contactsModule, Erasure: erasureModule, Tags: tagsModule,
 		Automations: automationsModule, Broadcasts: broadcastsModule,
-		Welcome: inline, SysMail: inline, DomainVerify: inline, Integrations: integrationsModule,
+		Welcome: inline, SysMail: inline, SendingDomains: sendingDomainsModule, Integrations: integrationsModule,
 		Tokens: authtoken.New(cfg.JWTSecret), Tracker: tracker, AppURL: cfg.AppURL,
 	}, external, mcpHandler)
 	require.NoError(t, err, "build server")

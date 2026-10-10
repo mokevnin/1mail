@@ -46,6 +46,7 @@ const SCOPE_OPTIONS = [
   'webhooks:write',
   'custom_fields:read',
   'sending_domains:read',
+  'sending_domains:write',
   'integrations:read',
   'integrations:write',
   'emails:send',

@@ -27,6 +27,8 @@
   "errors.confirm_link_bad": "недействительная ссылка подтверждения",
   "errors.email_in_use": "этот email уже используется",
   "errors.name_empty": "имя не должно быть пустым",
+  "errors.sending_domain_invalid": "некорректное доменное имя",
+  "errors.dkim_selector_invalid": "некорректный селектор DKIM",
   "errors.current_password_required": "укажите текущий пароль",
   "errors.current_password_incorrect": "неверный текущий пароль",
   "errors.new_email_required": "укажите новый email",
