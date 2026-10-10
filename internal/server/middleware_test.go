@@ -11,6 +11,7 @@ import (
 	"time"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
+	"github.com/mokevnin/1mail/config"
 	"github.com/ogen-go/ogen/ogenerrors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -188,7 +189,7 @@ func TestChainRunsMiddlewareOutermostFirst(t *testing.T) {
 }
 
 func TestBodyLimitCapsCollectSeparatelyAndRendersProblem413(t *testing.T) {
-	h := bodyLimit(8, 4)(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	h := bodyLimit(config.BodyLimits{Default: 8, Collect: 4})(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if _, err := io.ReadAll(r.Body); err != nil {
 			problemErrorHandler(r.Context(), w, r, err)
 			return

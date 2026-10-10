@@ -9,6 +9,14 @@ import (
 	"github.com/spf13/viper"
 )
 
+// BodyLimits are the request body caps in bytes. Collect is the public tracking
+// ingestion (its key ships in customer pages, so anyone can post to it); Default
+// applies to every other surface.
+type BodyLimits struct {
+	Default int64
+	Collect int64
+}
+
 type Config struct {
 	DatabaseURL    string
 	Port           string
@@ -24,11 +32,7 @@ type Config struct {
 	SMTPFrom       string
 	EncryptionKey  string
 	AutoMigrate    bool
-	// MaxBodyBytes caps a request body on every surface but /collect;
-	// CollectMaxBodyBytes caps the public tracking ingestion (its key ships in
-	// customer pages, so anyone can post to it).
-	MaxBodyBytes        int64
-	CollectMaxBodyBytes int64
+	BodyLimits     BodyLimits
 	// IsDev is true for non-production envs (development/test). Used to relax
 	// production-only behaviour locally — e.g. the sending-domain DKIM re-check
 	// trusts seeded domains instead of hitting real DNS (ADR 0010).
@@ -116,12 +120,14 @@ func Load(envName string) (*Config, error) {
 		EncryptionKey:  v.GetString("ENCRYPTION_KEY"),
 		AutoMigrate:    v.GetBool("AUTO_MIGRATE"),
 
-		MaxBodyBytes:        v.GetInt64("MAX_BODY_BYTES"),
-		CollectMaxBodyBytes: v.GetInt64("COLLECT_MAX_BODY_BYTES"),
-		IsDev:               isDevEnv(envName),
-		Locale:              i18n.Normalize(v.GetString("APP_LOCALE")),
-		LogLevel:            v.GetString("LOG_LEVEL"),
-		LogFormat:           v.GetString("LOG_FORMAT"),
+		BodyLimits: BodyLimits{
+			Default: v.GetInt64("MAX_BODY_BYTES"),
+			Collect: v.GetInt64("COLLECT_MAX_BODY_BYTES"),
+		},
+		IsDev:     isDevEnv(envName),
+		Locale:    i18n.Normalize(v.GetString("APP_LOCALE")),
+		LogLevel:  v.GetString("LOG_LEVEL"),
+		LogFormat: v.GetString("LOG_FORMAT"),
 
 		OtelServiceName: v.GetString("OTEL_SERVICE_NAME"),
 
@@ -145,8 +151,11 @@ func (c *Config) validate(envName string) error {
 	if !isDevEnv(envName) && c.JWTSecret == "" {
 		return fmt.Errorf("JWT_SECRET is required outside development")
 	}
-	if c.MaxBodyBytes <= 0 || c.CollectMaxBodyBytes <= 0 {
-		return fmt.Errorf("MAX_BODY_BYTES and COLLECT_MAX_BODY_BYTES must be positive")
+	if c.BodyLimits.Default <= 0 {
+		return fmt.Errorf("MAX_BODY_BYTES must be positive")
+	}
+	if c.BodyLimits.Collect <= 0 {
+		return fmt.Errorf("COLLECT_MAX_BODY_BYTES must be positive")
 	}
 	return nil
 }

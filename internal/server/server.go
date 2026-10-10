@@ -100,13 +100,13 @@ func New(cfg *config.Config, db *sql.DB, client *ent.Client, site apisite.Deps, 
 	colSrv, err := collectapi.NewServer(
 		apicollect.NewHandlers(bus),
 		apiauth.NewCollectSecurityHandler(client),
-		collectapi.WithPathPrefix("/collect"),
+		collectapi.WithPathPrefix(collectPrefix),
 		collectapi.WithErrorHandler(problemErrorHandler),
 	)
 	if err != nil {
 		return nil, err
 	}
-	mux.Handle("/collect/", colSrv)
+	mux.Handle(collectPrefix+"/", colSrv)
 
 	// Liveness/readiness probes (no auth) for orchestrators and load balancers.
 	mux.Handle("/healthz", healthzHandler())
@@ -140,7 +140,7 @@ func New(cfg *config.Config, db *sql.DB, client *ent.Client, site apisite.Deps, 
 	// runs — the panic log then carries request_id. (requestID is trivial and
 	// cannot itself panic, so nothing downstream of recovery is lost.)
 	// guard sits inside corsMiddleware so preflights are answered before the check.
-	return chain(mux, requestID, clientip.Middleware, recoverer, timeout(30*time.Second), bodyLimit(cfg.MaxBodyBytes, cfg.CollectMaxBodyBytes), corsMiddleware(cfg.CORSOrigins), guard), nil
+	return chain(mux, requestID, clientip.Middleware, recoverer, timeout(30*time.Second), bodyLimit(cfg.BodyLimits), corsMiddleware(cfg.CORSOrigins), guard), nil
 }
 
 // NewExternalAPI builds the external API (/api) ogen server: Bearer API-token
@@ -229,15 +229,21 @@ func timeout(d time.Duration) func(http.Handler) http.Handler {
 	}
 }
 
+// collectPrefix mounts the public tracking ingestion; it is cut off from the rest
+// of the app by its own CORS policy, auth scheme and body cap.
+const collectPrefix = "/collect"
+
+func isCollectPath(path string) bool { return strings.HasPrefix(path, collectPrefix+"/") }
+
 // bodyLimit caps every request body before a handler or the ogen decoder reads it:
 // collect gets its own (smaller) cap, everything else the default. An oversized
 // body surfaces as *http.MaxBytesError, which problemErrorHandler renders as 413.
-func bodyLimit(def, collect int64) func(http.Handler) http.Handler {
+func bodyLimit(limits config.BodyLimits) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			limit := def
-			if strings.HasPrefix(r.URL.Path, "/collect/") {
-				limit = collect
+			limit := limits.Default
+			if isCollectPath(r.URL.Path) {
+				limit = limits.Collect
 			}
 			r.Body = http.MaxBytesReader(w, r.Body, limit)
 			next.ServeHTTP(w, r)
@@ -306,7 +312,7 @@ func corsMiddleware(origins []string) func(http.Handler) http.Handler {
 		}
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			switch {
-			case strings.HasPrefix(r.URL.Path, "/collect/"):
+			case isCollectPath(r.URL.Path):
 				collectH.ServeHTTP(w, r)
 			case cookiePath(r.URL.Path):
 				cookieH.ServeHTTP(w, r)

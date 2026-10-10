@@ -18,7 +18,7 @@ func TestConfigValidate_JWTSecret(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			c := &Config{JWTSecret: tc.jwtSecret, MaxBodyBytes: 1, CollectMaxBodyBytes: 1}
+			c := &Config{JWTSecret: tc.jwtSecret, BodyLimits: BodyLimits{Default: 1, Collect: 1}}
 			err := c.validate(tc.env)
 			if tc.wantErr && err == nil {
 				t.Fatalf("validate(%q) with secret %q: want error, got nil", tc.env, tc.jwtSecret)
@@ -36,7 +36,7 @@ func TestConfigLoadBodyLimitDefaults(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if cfg.MaxBodyBytes != 1<<20 || cfg.CollectMaxBodyBytes != 64<<10 {
-		t.Fatalf("defaults = %d, %d", cfg.MaxBodyBytes, cfg.CollectMaxBodyBytes)
+	if cfg.BodyLimits != (BodyLimits{Default: 1 << 20, Collect: 64 << 10}) {
+		t.Fatalf("defaults = %+v", cfg.BodyLimits)
 	}
 }
