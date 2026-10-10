@@ -160,12 +160,39 @@ func (s EmailAddress) Validate() error {
 	return nil
 }
 
+func (s ProblemCode) Validate() error {
+	switch s {
+	case "second_factor_required":
+		return nil
+	default:
+		return errors.Errorf("invalid value: %v", s)
+	}
+}
+
 func (s *ProblemDetails) Validate() error {
 	if s == nil {
 		return validate.ErrNilPointer
 	}
 
 	var failures []validate.FieldError
+	if err := func() error {
+		if value, ok := s.Code.Get(); ok {
+			if err := func() error {
+				if err := value.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "code",
+			Error: err,
+		})
+	}
 	if err := func() error {
 		if value, ok := s.Errors.Get(); ok {
 			if err := func() error {

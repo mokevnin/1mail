@@ -1,3 +1,5 @@
+import { ProblemCode } from '../generated/site/types.gen.ts'
+
 export type ApiErrorLike = {
   detail?: string | null
   form?: string | null
@@ -5,6 +7,7 @@ export type ApiErrorLike = {
   error?: string | null
   status?: number | null
   retryAfter?: number | null
+  code?: string | null
 }
 
 function isApiErrorLike(error: unknown): error is ApiErrorLike {
@@ -15,6 +18,17 @@ function isApiErrorLike(error: unknown): error is ApiErrorLike {
 // it for role-gated actions a plain member is not allowed to perform.
 export function isForbiddenError(error: unknown) {
   return isApiErrorLike(error) && error.status === 403
+}
+
+// A 403 problem with code second_factor_required: the Workspace requires a Second
+// factor and the User's grace is over (ADR 0020). Any request to that Workspace
+// answers it until the User enrolls one.
+export function isSecondFactorRequiredError(error: unknown) {
+  return (
+    isApiErrorLike(error) &&
+    error.status === 403 &&
+    error.code === ProblemCode.SECOND_FACTOR_REQUIRED
+  )
 }
 
 // A 429 problem body carries `status: 429` (RFC 7807): a rate limit was hit

@@ -95,6 +95,9 @@ var (
 	rn52AllowedHeaders = map[string]string{
 		"PUT": "Content-Type",
 	}
+	rn103AllowedHeaders = map[string]string{
+		"PUT": "Content-Type",
+	}
 	rn68AllowedHeaders = map[string]string{
 		"POST": "Content-Type",
 	}
@@ -1935,6 +1938,33 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 									break
 								}
 								switch elem[0] {
+								case 'c': // Prefix: "cond-factor-requirement"
+
+									if l := len("cond-factor-requirement"); len(elem) >= l && elem[0:l] == "cond-factor-requirement" {
+										elem = elem[l:]
+									} else {
+										break
+									}
+
+									if len(elem) == 0 {
+										// Leaf node.
+										switch r.Method {
+										case "PUT":
+											s.handleSiteWorkspacesSetSecondFactorRequirementRequest([1]string{
+												args[0],
+											}, elemIsEscaped, w, r)
+										default:
+											s.notAllowed(w, r, notAllowedParams{
+												allowedMethods: "PUT",
+												allowedHeaders: rn103AllowedHeaders,
+												acceptPost:     "",
+												acceptPatch:    "",
+											})
+										}
+
+										return
+									}
+
 								case 'g': // Prefix: "gments"
 
 									if l := len("gments"); len(elem) >= l && elem[0:l] == "gments" {
@@ -4387,6 +4417,31 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 									break
 								}
 								switch elem[0] {
+								case 'c': // Prefix: "cond-factor-requirement"
+
+									if l := len("cond-factor-requirement"); len(elem) >= l && elem[0:l] == "cond-factor-requirement" {
+										elem = elem[l:]
+									} else {
+										break
+									}
+
+									if len(elem) == 0 {
+										// Leaf node.
+										switch method {
+										case "PUT":
+											r.name = SiteWorkspacesSetSecondFactorRequirementOperation
+											r.summary = ""
+											r.operationID = "SiteWorkspaces_setSecondFactorRequirement"
+											r.operationGroup = ""
+											r.pathPattern = "/workspaces/{slug}/second-factor-requirement"
+											r.args = args
+											r.count = 1
+											return r, true
+										default:
+											return
+										}
+									}
+
 								case 'g': // Prefix: "gments"
 
 									if l := len("gments"); len(elem) >= l && elem[0:l] == "gments" {

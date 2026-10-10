@@ -32,6 +32,8 @@ const (
 	FieldPostalAddress = "postal_address"
 	// FieldRetentionDays holds the string denoting the retention_days field in the database.
 	FieldRetentionDays = "retention_days"
+	// FieldSecondFactorRequiredAt holds the string denoting the second_factor_required_at field in the database.
+	FieldSecondFactorRequiredAt = "second_factor_required_at"
 	// FieldSuspendedAt holds the string denoting the suspended_at field in the database.
 	FieldSuspendedAt = "suspended_at"
 	// FieldSuspendedBy holds the string denoting the suspended_by field in the database.
@@ -261,6 +263,7 @@ var Columns = []string{
 	FieldRequireConfirmedOptIn,
 	FieldPostalAddress,
 	FieldRetentionDays,
+	FieldSecondFactorRequiredAt,
 	FieldSuspendedAt,
 	FieldSuspendedBy,
 	FieldSuspensionReason,
@@ -350,6 +353,11 @@ func ByPostalAddress(opts ...sql.OrderTermOption) OrderOption {
 // ByRetentionDays orders the results by the retention_days field.
 func ByRetentionDays(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldRetentionDays, opts...).ToFunc()
+}
+
+// BySecondFactorRequiredAt orders the results by the second_factor_required_at field.
+func BySecondFactorRequiredAt(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldSecondFactorRequiredAt, opts...).ToFunc()
 }
 
 // BySuspendedAt orders the results by the suspended_at field.

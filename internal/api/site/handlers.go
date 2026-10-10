@@ -84,6 +84,7 @@ type Handlers struct {
 	audit          AuditLog
 	sessions       *auth.Sessions
 	secondFactor   *secondfactor.Module
+	now            func() time.Time
 }
 
 // AuditLog is the read seam of the Enterprise Audit log (ADR 0022), implemented by
@@ -132,18 +133,23 @@ type Deps struct {
 	Sessions *auth.Sessions
 	// SecondFactor enrolls and verifies a User's TOTP Second factor (ADR 0020).
 	SecondFactor *secondfactor.Module
-	// Clock is the time the site session's expiry is checked against (ADR 0020);
-	// nil means time.Now. Tests inject one to move past a session's lifetime.
+	// Clock is the time the site session's expiry and a Two-factor requirement's
+	// grace are checked against (ADR 0020); nil means time.Now. Tests inject one to
+	// move past a session's lifetime or a grace period.
 	Clock func() time.Time
 }
 
 func NewHandlers(d Deps) *Handlers {
+	now := d.Clock
+	if now == nil {
+		now = time.Now
+	}
 	return &Handlers{
 		accounts: d.Accounts, attempts: d.Attempts, bus: d.Bus, cipher: d.Cipher, outbound: d.Outbound,
 		segments: d.Segments, eventlog: d.EventLog, contacts: d.Contacts, erasure: d.Erasure, tags: d.Tags,
 		automations: d.Automations, broadcasts: d.Broadcasts, welcome: d.Welcome,
 		sysmail: d.SysMail, sendingDomains: d.SendingDomains, integrations: d.Integrations, tokens: d.Tokens, tracker: d.Tracker, appURL: d.AppURL,
-		oauth: d.OAuth, audit: d.Audit, sessions: d.Sessions, secondFactor: d.SecondFactor,
+		oauth: d.OAuth, audit: d.Audit, sessions: d.Sessions, secondFactor: d.SecondFactor, now: now,
 	}
 }
 
@@ -178,9 +184,29 @@ func (h *Handlers) actor(ctx context.Context) events.Actor {
 // scopedWithRoleFor is scopedFor plus the caller's role, for owner/admin-gated
 // actions.
 func (h *Handlers) scopedWithRoleFor(ctx context.Context, slug string) (*ent.Scoped, membership.Role, error) {
+	s, m, err := h.membershipFor(ctx, slug)
+	if err != nil {
+		return nil, "", err
+	}
+	return s, m.Role, nil
+}
+
+// membershipFor is scopedFor plus the caller's Membership (its User and Workspace
+// loaded). It is where the Two-factor requirement is enforced (ADR 0020): once a
+// User's grace in a requiring Workspace has ended without a Second factor, every
+// request to that Workspace fails with secondfactor.ErrRequired (403
+// second_factor_required); other Workspaces and the /me endpoints are unaffected.
+func (h *Handlers) membershipFor(ctx context.Context, slug string) (*ent.Scoped, *ent.Membership, error) {
 	a := auth.GetSiteAuth(ctx)
 	if a == nil {
-		return nil, "", &ent.NotFoundError{}
+		return nil, nil, &ent.NotFoundError{}
 	}
-	return h.accounts.Scope(ctx, a.UserID, slug)
+	s, m, err := h.accounts.Scope(ctx, a.UserID, slug)
+	if err != nil {
+		return nil, nil, err
+	}
+	if secondfactor.Withheld(m, h.now()) {
+		return nil, nil, secondfactor.ErrRequired
+	}
+	return s, m, nil
 }

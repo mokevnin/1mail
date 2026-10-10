@@ -175,6 +175,26 @@ func (_u *WorkspaceUpdate) ClearRetentionDays() *WorkspaceUpdate {
 	return _u
 }
 
+// SetSecondFactorRequiredAt sets the "second_factor_required_at" field.
+func (_u *WorkspaceUpdate) SetSecondFactorRequiredAt(v time.Time) *WorkspaceUpdate {
+	_u.mutation.SetSecondFactorRequiredAt(v)
+	return _u
+}
+
+// SetNillableSecondFactorRequiredAt sets the "second_factor_required_at" field if the given value is not nil.
+func (_u *WorkspaceUpdate) SetNillableSecondFactorRequiredAt(v *time.Time) *WorkspaceUpdate {
+	if v != nil {
+		_u.SetSecondFactorRequiredAt(*v)
+	}
+	return _u
+}
+
+// ClearSecondFactorRequiredAt clears the value of the "second_factor_required_at" field.
+func (_u *WorkspaceUpdate) ClearSecondFactorRequiredAt() *WorkspaceUpdate {
+	_u.mutation.ClearSecondFactorRequiredAt()
+	return _u
+}
+
 // SetSuspendedAt sets the "suspended_at" field.
 func (_u *WorkspaceUpdate) SetSuspendedAt(v time.Time) *WorkspaceUpdate {
 	_u.mutation.SetSuspendedAt(v)
@@ -1184,6 +1204,12 @@ func (_u *WorkspaceUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	}
 	if _u.mutation.RetentionDaysCleared() {
 		_spec.ClearField(workspace.FieldRetentionDays, field.TypeInt)
+	}
+	if value, ok := _u.mutation.SecondFactorRequiredAt(); ok {
+		_spec.SetField(workspace.FieldSecondFactorRequiredAt, field.TypeTime, value)
+	}
+	if _u.mutation.SecondFactorRequiredAtCleared() {
+		_spec.ClearField(workspace.FieldSecondFactorRequiredAt, field.TypeTime)
 	}
 	if value, ok := _u.mutation.SuspendedAt(); ok {
 		_spec.SetField(workspace.FieldSuspendedAt, field.TypeTime, value)
@@ -2383,6 +2409,26 @@ func (_u *WorkspaceUpdateOne) ClearRetentionDays() *WorkspaceUpdateOne {
 	return _u
 }
 
+// SetSecondFactorRequiredAt sets the "second_factor_required_at" field.
+func (_u *WorkspaceUpdateOne) SetSecondFactorRequiredAt(v time.Time) *WorkspaceUpdateOne {
+	_u.mutation.SetSecondFactorRequiredAt(v)
+	return _u
+}
+
+// SetNillableSecondFactorRequiredAt sets the "second_factor_required_at" field if the given value is not nil.
+func (_u *WorkspaceUpdateOne) SetNillableSecondFactorRequiredAt(v *time.Time) *WorkspaceUpdateOne {
+	if v != nil {
+		_u.SetSecondFactorRequiredAt(*v)
+	}
+	return _u
+}
+
+// ClearSecondFactorRequiredAt clears the value of the "second_factor_required_at" field.
+func (_u *WorkspaceUpdateOne) ClearSecondFactorRequiredAt() *WorkspaceUpdateOne {
+	_u.mutation.ClearSecondFactorRequiredAt()
+	return _u
+}
+
 // SetSuspendedAt sets the "suspended_at" field.
 func (_u *WorkspaceUpdateOne) SetSuspendedAt(v time.Time) *WorkspaceUpdateOne {
 	_u.mutation.SetSuspendedAt(v)
@@ -3422,6 +3468,12 @@ func (_u *WorkspaceUpdateOne) sqlSave(ctx context.Context) (_node *Workspace, er
 	}
 	if _u.mutation.RetentionDaysCleared() {
 		_spec.ClearField(workspace.FieldRetentionDays, field.TypeInt)
+	}
+	if value, ok := _u.mutation.SecondFactorRequiredAt(); ok {
+		_spec.SetField(workspace.FieldSecondFactorRequiredAt, field.TypeTime, value)
+	}
+	if _u.mutation.SecondFactorRequiredAtCleared() {
+		_spec.ClearField(workspace.FieldSecondFactorRequiredAt, field.TypeTime)
 	}
 	if value, ok := _u.mutation.SuspendedAt(); ok {
 		_spec.SetField(workspace.FieldSuspendedAt, field.TypeTime, value)

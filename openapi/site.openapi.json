@@ -4029,6 +4029,65 @@
         "tags": ["Site Memberships"]
       }
     },
+    "/workspaces/{slug}/second-factor-requirement": {
+      "put": {
+        "operationId": "SiteWorkspaces_setSecondFactorRequirement",
+        "description": "Switch the Two-factor requirement on or off (owner and admin only). Switching\nit on while it is already on keeps the original start, so no one's grace\nrestarts. A change is recorded as an Audit entry.",
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request has succeeded.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SiteWorkspaceResource"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "RFC 7807 forbidden response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "RFC 7807 not found response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Site Workspaces"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SiteSecondFactorRequirementInput"
+              }
+            }
+          }
+        }
+      }
+    },
     "/workspaces/{slug}/segments": {
       "get": {
         "operationId": "SiteSegments_list",
@@ -6830,9 +6889,22 @@
         "type": "string",
         "pattern": "^[0-9]+$"
       },
+      "ProblemCode": {
+        "type": "string",
+        "enum": ["second_factor_required"],
+        "description": "A machine-readable reason a client branches on, beyond the HTTP status"
+      },
       "ProblemDetails": {
         "type": "object",
         "properties": {
+          "code": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ProblemCode"
+              }
+            ],
+            "description": "Why the request was refused, when the client should act on it"
+          },
           "type": {
             "type": "string",
             "description": "A URI reference that identifies the problem type"
@@ -8776,6 +8848,17 @@
         },
         "description": "A pending enrollment: the TOTP secret to add to an authenticator app"
       },
+      "SiteSecondFactorRequirementInput": {
+        "type": "object",
+        "required": ["required"],
+        "properties": {
+          "required": {
+            "type": "boolean",
+            "description": "Whether every User with a Membership must have a Second factor"
+          }
+        },
+        "description": "Switch the Two-factor requirement on or off"
+      },
       "SiteSecondFactorStatus": {
         "type": "object",
         "required": ["enabled", "pending", "recoveryCodesRemaining"],
@@ -9704,6 +9787,26 @@
             "type": "string",
             "nullable": true,
             "description": "Why sending was suspended, shown to the owner; present only while suspended."
+          },
+          "secondFactorRequiredAt": {
+            "type": "string",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Timestamp"
+              }
+            ],
+            "nullable": true,
+            "description": "When an Owner or Admin switched on the Two-factor requirement (ADR 0020);\nabsent while every member may work without a Second factor."
+          },
+          "secondFactorGraceEndsAt": {
+            "type": "string",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Timestamp"
+              }
+            ],
+            "nullable": true,
+            "description": "When the authenticated User's grace under the Two-factor requirement ends:\n7 days after the later of the requirement's start and their Membership's\ncreation. Absent without a requirement or once the User has a Second factor.\nAfter it, every request to this Workspace answers 403 with code\nsecond_factor_required until the User enrolls one."
           },
           "createdAt": {
             "allOf": [

@@ -379,9 +379,23 @@ export type EmailAddress = string;
 export type EntityId = string;
 
 /**
+ * A machine-readable reason a client branches on, beyond the HTTP status
+ */
+export const ProblemCode = { SECOND_FACTOR_REQUIRED: 'second_factor_required' } as const;
+
+/**
+ * A machine-readable reason a client branches on, beyond the HTTP status
+ */
+export type ProblemCode = typeof ProblemCode[keyof typeof ProblemCode];
+
+/**
  * RFC 7807 Problem Details
  */
 export type ProblemDetails = {
+  /**
+   * Why the request was refused, when the client should act on it
+   */
+  code?: ProblemCode;
   /**
    * A URI reference that identifies the problem type
    */
@@ -1782,6 +1796,16 @@ export type SiteSecondFactorEnrollment = {
 };
 
 /**
+ * Switch the Two-factor requirement on or off
+ */
+export type SiteSecondFactorRequirementInput = {
+  /**
+   * Whether every User with a Membership must have a Second factor
+   */
+  required: boolean;
+};
+
+/**
  * The authenticated User's Second factor (ADR 0020). Recovery codes are never
  * readable here: only how many are left.
  */
@@ -2417,6 +2441,19 @@ export type SiteWorkspaceResource = {
    * Why sending was suspended, shown to the owner; present only while suspended.
    */
   suspensionReason?: string | null;
+  /**
+   * When an Owner or Admin switched on the Two-factor requirement (ADR 0020);
+   * absent while every member may work without a Second factor.
+   */
+  secondFactorRequiredAt?: Timestamp | null;
+  /**
+   * When the authenticated User's grace under the Two-factor requirement ends:
+   * 7 days after the later of the requirement's start and their Membership's
+   * creation. Absent without a requirement or once the User has a Second factor.
+   * After it, every request to this Workspace answers 403 with code
+   * second_factor_required until the User enrolls one.
+   */
+  secondFactorGraceEndsAt?: Timestamp | null;
   /**
    * Creation timestamp
    */
@@ -5212,6 +5249,37 @@ export type SiteMembershipsUpdateResponses = {
 };
 
 export type SiteMembershipsUpdateResponse = SiteMembershipsUpdateResponses[keyof SiteMembershipsUpdateResponses];
+
+export type SiteWorkspacesSetSecondFactorRequirementData = {
+  body: SiteSecondFactorRequirementInput;
+  path: {
+    slug: string;
+  };
+  query?: never;
+  url: '/workspaces/{slug}/second-factor-requirement';
+};
+
+export type SiteWorkspacesSetSecondFactorRequirementErrors = {
+  /**
+   * RFC 7807 forbidden response
+   */
+  403: ProblemDetails;
+  /**
+   * RFC 7807 not found response
+   */
+  404: ProblemDetails;
+};
+
+export type SiteWorkspacesSetSecondFactorRequirementError = SiteWorkspacesSetSecondFactorRequirementErrors[keyof SiteWorkspacesSetSecondFactorRequirementErrors];
+
+export type SiteWorkspacesSetSecondFactorRequirementResponses = {
+  /**
+   * The request has succeeded.
+   */
+  200: SiteWorkspaceResource;
+};
+
+export type SiteWorkspacesSetSecondFactorRequirementResponse = SiteWorkspacesSetSecondFactorRequirementResponses[keyof SiteWorkspacesSetSecondFactorRequirementResponses];
 
 export type SiteSegmentsListData = {
   body?: never;

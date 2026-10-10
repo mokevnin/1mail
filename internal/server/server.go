@@ -25,6 +25,7 @@ import (
 	"github.com/mokevnin/1mail/internal/logging"
 	"github.com/mokevnin/1mail/internal/oauthserver"
 	"github.com/mokevnin/1mail/internal/ratelimit"
+	"github.com/mokevnin/1mail/internal/secondfactor"
 	"github.com/ogen-go/ogen/ogenerrors"
 	"github.com/oklog/ulid/v2"
 	"github.com/rs/cors"
@@ -139,6 +140,17 @@ func problemErrorHandler(_ context.Context, w http.ResponseWriter, _ *http.Reque
 	var limited *ratelimit.LimitedError
 	if errors.As(err, &limited) {
 		ratelimit.WriteProblem(w)
+		return
+	}
+	if errors.Is(err, secondfactor.ErrRequired) {
+		w.Header().Set("Content-Type", "application/problem+json")
+		w.WriteHeader(http.StatusForbidden)
+		_ = json.NewEncoder(w).Encode(map[string]any{
+			"status": http.StatusForbidden,
+			"title":  http.StatusText(http.StatusForbidden),
+			"detail": "this workspace requires a second factor",
+			"code":   siteapi.ProblemCodeSecondFactorRequired,
+		})
 		return
 	}
 	code := http.StatusInternalServerError

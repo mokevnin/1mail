@@ -394,6 +394,20 @@ export default interface Resources {
       "successMessage": "Your password has been reset. Please sign in.",
       "title": "Set a new password"
     },
+    "secondFactorRequirement": {
+      "blockedDescription": "This workspace requires two-factor authentication and your grace period is over. Set it up to regain access; your other workspaces are not affected.",
+      "blockedTitle": "Two-factor authentication required",
+      "errorTitle": "Could not update the two-factor requirement",
+      "forbidden": "Only owners and admins can change the two-factor requirement.",
+      "graceDescription": "Set up two-factor authentication by {{date}} to keep access to this workspace.",
+      "graceTitle": "This workspace requires two-factor authentication",
+      "graceVisibility": "Required since {{since}}. Members who joined before then have until {{until}}; later members get 7 days from joining.",
+      "saved": "Two-factor requirement updated",
+      "setUp": "Set up two-factor authentication",
+      "settingDescription": "Require everyone in this workspace to use two-factor authentication. Members without it get 7 days to set it up, counted from when the requirement is turned on or from when they join, whichever is later.",
+      "settingTitle": "Two-factor requirement",
+      "switchLabel": "Require two-factor authentication"
+    },
     "security": {
       "codeLabel": "Code from the app",
       "codesRemaining": "{{count}} recovery codes left" | "{{count}} recovery code left" | "{{count}} recovery codes left",

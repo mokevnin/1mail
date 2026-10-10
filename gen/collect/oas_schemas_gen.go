@@ -5,6 +5,7 @@ package collectapi
 import (
 	"time"
 
+	"github.com/go-faster/errors"
 	"github.com/go-faster/jx"
 )
 
@@ -624,6 +625,52 @@ func (o OptNilTimestamp) Or(d Timestamp) Timestamp {
 	return d
 }
 
+// NewOptProblemCode returns new OptProblemCode with value set to v.
+func NewOptProblemCode(v ProblemCode) OptProblemCode {
+	return OptProblemCode{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptProblemCode is optional ProblemCode.
+type OptProblemCode struct {
+	Value ProblemCode
+	Set   bool
+}
+
+// IsSet returns true if OptProblemCode was set.
+func (o OptProblemCode) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptProblemCode) Reset() {
+	var v ProblemCode
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptProblemCode) SetTo(v ProblemCode) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptProblemCode) Get() (v ProblemCode, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptProblemCode) Or(d ProblemCode) ProblemCode {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
 // NewOptProblemDetailsErrors returns new OptProblemDetailsErrors with value set to v.
 func NewOptProblemDetailsErrors(v ProblemDetailsErrors) OptProblemDetailsErrors {
 	return OptProblemDetailsErrors{
@@ -762,9 +809,47 @@ func (o OptString) Or(d string) string {
 	return d
 }
 
+// A machine-readable reason a client branches on, beyond the HTTP status.
+// Ref: #/components/schemas/ProblemCode
+type ProblemCode string
+
+const (
+	ProblemCodeSecondFactorRequired ProblemCode = "second_factor_required"
+)
+
+// AllValues returns all ProblemCode values.
+func (ProblemCode) AllValues() []ProblemCode {
+	return []ProblemCode{
+		ProblemCodeSecondFactorRequired,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s ProblemCode) MarshalText() ([]byte, error) {
+	switch s {
+	case ProblemCodeSecondFactorRequired:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *ProblemCode) UnmarshalText(data []byte) error {
+	switch ProblemCode(data) {
+	case ProblemCodeSecondFactorRequired:
+		*s = ProblemCodeSecondFactorRequired
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
 // RFC 7807 Problem Details.
 // Ref: #/components/schemas/ProblemDetails
 type ProblemDetails struct {
+	// Why the request was refused, when the client should act on it.
+	Code OptProblemCode `json:"code"`
 	// A URI reference that identifies the problem type.
 	Type OptString `json:"type"`
 	// A short, human-readable summary of the problem type.
@@ -783,6 +868,11 @@ type ProblemDetails struct {
 	Fields OptProblemDetailsFields `json:"fields"`
 	// Seconds to wait before retrying; set on a 429 so a client that only sees the body can show the wait.
 	RetryAfter OptInt32 `json:"retryAfter"`
+}
+
+// GetCode returns the value of Code.
+func (s *ProblemDetails) GetCode() OptProblemCode {
+	return s.Code
 }
 
 // GetType returns the value of Type.
@@ -828,6 +918,11 @@ func (s *ProblemDetails) GetFields() OptProblemDetailsFields {
 // GetRetryAfter returns the value of RetryAfter.
 func (s *ProblemDetails) GetRetryAfter() OptInt32 {
 	return s.RetryAfter
+}
+
+// SetCode sets the value of Code.
+func (s *ProblemDetails) SetCode(val OptProblemCode) {
+	s.Code = val
 }
 
 // SetType sets the value of Type.

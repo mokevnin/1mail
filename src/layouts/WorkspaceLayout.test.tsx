@@ -1,7 +1,13 @@
+import { useQuery } from '@tanstack/react-query'
 import { expect, test } from 'vitest'
 
-import type { SiteWorkspaceResource, SiteWorkspacesListData } from '../generated/site/types.gen.ts'
-import { overviewRoute, workspaceRoute } from '../router.tsx'
+import { siteTagsListOptions } from '../generated/site/@tanstack/react-query.gen.ts'
+import type {
+  SiteTagsListData,
+  SiteWorkspaceResource,
+  SiteWorkspacesListData,
+} from '../generated/site/types.gen.ts'
+import { overviewRoute, securityRoute, workspaceRoute } from '../router.tsx'
 import { jsonResponse, mockClientRoutes, route } from '../test/mockFetch.ts'
 import { renderWithRouter } from '../test/renderWithRouter.tsx'
 import { routeMount } from '../test/routeMount.ts'
@@ -58,4 +64,60 @@ test('the switcher navigates to the chosen workspace overview', async () => {
   await screen.getByRole('option', { name: 'Beta' }).click()
 
   expect(navigate).toHaveBeenCalledWith({ to: overviewRoute.to, params: { slug: 'beta' } })
+})
+
+// TagsProbe stands in for a workspace page whose query the server refuses.
+function TagsProbe() {
+  useQuery({ ...siteTagsListOptions({ path: { slug: 'acme' } }), retry: false })
+  return null
+}
+
+const DAY = 24 * 60 * 60 * 1000
+
+test('during the grace of a Two-factor requirement a banner leads to enrollment', async () => {
+  const endsAt = new Date(Date.now() + 3 * DAY).toISOString()
+  mockClientRoutes([list([workspace({ secondFactorGraceEndsAt: endsAt })])])
+  const { screen } = await renderWithRouter(<WorkspaceLayout />, MOUNT)
+
+  await expect
+    .element(screen.getByText('This workspace requires two-factor authentication'))
+    .toBeInTheDocument()
+  await expect
+    .element(screen.getByRole('link', { name: 'Set up two-factor authentication' }))
+    .toHaveAttribute('href', securityRoute.to)
+  await expect
+    .element(screen.getByText('Two-factor authentication required'))
+    .not.toBeInTheDocument()
+})
+
+test('after the grace the workspace is replaced by the screen that leads to enrollment', async () => {
+  const endsAt = new Date(Date.now() - DAY).toISOString()
+  mockClientRoutes([list([workspace({ secondFactorGraceEndsAt: endsAt })])])
+  const { screen } = await renderWithRouter(<WorkspaceLayout />, MOUNT)
+
+  await expect.element(screen.getByText('Two-factor authentication required')).toBeInTheDocument()
+  await expect
+    .element(screen.getByRole('link', { name: 'Set up two-factor authentication' }))
+    .toHaveAttribute('href', securityRoute.to)
+})
+
+test('a 403 second_factor_required from the workspace shows the blocked screen', async () => {
+  mockClientRoutes([
+    list([workspace({})]),
+    route<SiteTagsListData>('GET', '/workspaces/{slug}/tags', { slug: 'acme' }, () =>
+      jsonResponse(
+        { status: 403, title: 'Forbidden', code: 'second_factor_required' },
+        { status: 403 },
+      ),
+    ),
+  ])
+  const { screen } = await renderWithRouter(
+    <>
+      <WorkspaceLayout />
+      <TagsProbe />
+    </>,
+    MOUNT,
+  )
+
+  await expect.element(screen.getByText('Two-factor authentication required')).toBeInTheDocument()
 })

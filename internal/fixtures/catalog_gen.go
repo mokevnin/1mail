@@ -361,6 +361,8 @@ const (
 	InitechIngestKey = "omik_test_initech_ingest_key"
 	// InitechName is from fixtures/workspaces.
 	InitechName = "Initech"
+	// InitechRitaMembershipID is from fixtures/memberships.
+	InitechRitaMembershipID = 9
 	// InitechSlug is from fixtures/workspaces.
 	InitechSlug = "initech"
 	// IntegrationAcmeDefaultID is from fixtures/integrations.
@@ -527,6 +529,38 @@ const (
 	TokenGlobexName = "Globex token"
 	// TokenGlobexPrefix is from fixtures/api_tokens.
 	TokenGlobexPrefix = "globextok001"
+	// UmbrellaCollectKey is from fixtures/workspaces.
+	UmbrellaCollectKey = "omck_test_umbrella_collect_key"
+	// UmbrellaID is from fixtures/workspaces.
+	UmbrellaID = 4
+	// UmbrellaIngestKey is from fixtures/workspaces.
+	UmbrellaIngestKey = "omik_test_umbrella_ingest_key"
+	// UmbrellaMemberNinaEmail is from fixtures/users.
+	UmbrellaMemberNinaEmail = "nina@umbrella.test"
+	// UmbrellaMemberNinaID is from fixtures/users.
+	UmbrellaMemberNinaID = 7
+	// UmbrellaMemberNinaName is from fixtures/users.
+	UmbrellaMemberNinaName = "Nina"
+	// UmbrellaMemberNinaPassword is from fixtures/users.
+	UmbrellaMemberNinaPassword = "nina-test-password"
+	// UmbrellaName is from fixtures/workspaces.
+	UmbrellaName = "Umbrella"
+	// UmbrellaNinaMembershipID is from fixtures/memberships.
+	UmbrellaNinaMembershipID = 7
+	// UmbrellaOwnerRitaEmail is from fixtures/users.
+	UmbrellaOwnerRitaEmail = "rita@umbrella.test"
+	// UmbrellaOwnerRitaID is from fixtures/users.
+	UmbrellaOwnerRitaID = 6
+	// UmbrellaOwnerRitaName is from fixtures/users.
+	UmbrellaOwnerRitaName = "Rita"
+	// UmbrellaOwnerRitaPassword is from fixtures/users.
+	UmbrellaOwnerRitaPassword = "rita-test-password"
+	// UmbrellaRitaMembershipID is from fixtures/memberships.
+	UmbrellaRitaMembershipID = 6
+	// UmbrellaSamMembershipID is from fixtures/memberships.
+	UmbrellaSamMembershipID = 8
+	// UmbrellaSlug is from fixtures/workspaces.
+	UmbrellaSlug = "umbrella"
 	// UnsubscribeErasableDestination is from fixtures/unsubscribes.
 	UnsubscribeErasableDestination = "erin@initech.test"
 	// UnsubscribeErasableID is from fixtures/unsubscribes.

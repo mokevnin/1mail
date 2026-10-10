@@ -28,7 +28,8 @@
   updated_at: '2026-01-01 00:00:00'
 # Sam has an active TOTP Second factor (ADR 0020): the secret is sealed at load time
 # and lifted into fixtures.SecondFactorSamTotpSecret; his Recovery codes are in
-# recovery_codes.yml. He is a member of Globex (Acme's member list stays exact).
+# recovery_codes.yml. He is a member of Globex and an admin of Umbrella (Acme's member list
+# stays exact).
 - id: 5 # fixture: SecondFactorSam
   name: Sam
   email: sam@globex.test
@@ -37,3 +38,20 @@
   second_factor_confirmed_at: '2026-01-01 00:00:00'
   created_at: '2026-01-01 00:00:00'
   updated_at: '2026-01-01 00:00:00'
+# Rita owns Umbrella, the Workspace with a Two-factor requirement, through a Membership
+# older than the requirement (her grace ends 2026-03-08), and has no Second factor. She is
+# also a member of Initech, which requires none, so that Workspace stays reachable.
+- id: 6 # fixture: UmbrellaOwnerRita
+  name: Rita
+  email: rita@umbrella.test
+  password_hash: '{{argonHash "rita-test-password"}}'
+  created_at: '2026-01-01 00:00:00'
+  updated_at: '2026-01-01 00:00:00'
+# Nina joined Umbrella after its requirement started (her grace ends 2026-03-12) and has no
+# Second factor.
+- id: 7 # fixture: UmbrellaMemberNina
+  name: Nina
+  email: nina@umbrella.test
+  password_hash: '{{argonHash "nina-test-password"}}'
+  created_at: '2026-03-05 00:00:00'
+  updated_at: '2026-03-05 00:00:00'

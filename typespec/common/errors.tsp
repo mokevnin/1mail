@@ -5,8 +5,18 @@ namespace OneMail;
 alias ValidationErrors = Record<string[]>;
 alias FormValidationFields = Record<string>;
 
+/** A machine-readable reason a client branches on, beyond the HTTP status */
+enum ProblemCode {
+  /** The Workspace requires a Second factor, the User has none and their grace
+   * period is over (ADR 0020); enrolling one lifts the block */
+  secondFactorRequired: "second_factor_required",
+}
+
 /** RFC 7807 Problem Details */
 model ProblemDetails {
+  /** Why the request was refused, when the client should act on it */
+  code?: ProblemCode;
+
   /** A URI reference that identifies the problem type */
   type?: string;
 

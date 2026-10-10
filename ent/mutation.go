@@ -27078,6 +27078,7 @@ type WorkspaceMutation struct {
 	postal_address              *string
 	retention_days              *int
 	addretention_days           *int
+	second_factor_required_at   *time.Time
 	suspended_at                *time.Time
 	suspended_by                *string
 	suspension_reason           *string
@@ -27629,6 +27630,55 @@ func (m *WorkspaceMutation) ResetRetentionDays() {
 	m.retention_days = nil
 	m.addretention_days = nil
 	delete(m.clearedFields, workspace.FieldRetentionDays)
+}
+
+// SetSecondFactorRequiredAt sets the "second_factor_required_at" field.
+func (m *WorkspaceMutation) SetSecondFactorRequiredAt(t time.Time) {
+	m.second_factor_required_at = &t
+}
+
+// SecondFactorRequiredAt returns the value of the "second_factor_required_at" field in the mutation.
+func (m *WorkspaceMutation) SecondFactorRequiredAt() (r time.Time, exists bool) {
+	v := m.second_factor_required_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSecondFactorRequiredAt returns the old "second_factor_required_at" field's value of the Workspace entity.
+// If the Workspace object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WorkspaceMutation) OldSecondFactorRequiredAt(ctx context.Context) (v *time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSecondFactorRequiredAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSecondFactorRequiredAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSecondFactorRequiredAt: %w", err)
+	}
+	return oldValue.SecondFactorRequiredAt, nil
+}
+
+// ClearSecondFactorRequiredAt clears the value of the "second_factor_required_at" field.
+func (m *WorkspaceMutation) ClearSecondFactorRequiredAt() {
+	m.second_factor_required_at = nil
+	m.clearedFields[workspace.FieldSecondFactorRequiredAt] = struct{}{}
+}
+
+// SecondFactorRequiredAtCleared returns if the "second_factor_required_at" field was cleared in this mutation.
+func (m *WorkspaceMutation) SecondFactorRequiredAtCleared() bool {
+	_, ok := m.clearedFields[workspace.FieldSecondFactorRequiredAt]
+	return ok
+}
+
+// ResetSecondFactorRequiredAt resets all changes to the "second_factor_required_at" field.
+func (m *WorkspaceMutation) ResetSecondFactorRequiredAt() {
+	m.second_factor_required_at = nil
+	delete(m.clearedFields, workspace.FieldSecondFactorRequiredAt)
 }
 
 // SetSuspendedAt sets the "suspended_at" field.
@@ -29054,7 +29104,7 @@ func (m *WorkspaceMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *WorkspaceMutation) Fields() []string {
-	fields := make([]string, 0, 12)
+	fields := make([]string, 0, 13)
 	if m.created_at != nil {
 		fields = append(fields, workspace.FieldCreatedAt)
 	}
@@ -29081,6 +29131,9 @@ func (m *WorkspaceMutation) Fields() []string {
 	}
 	if m.retention_days != nil {
 		fields = append(fields, workspace.FieldRetentionDays)
+	}
+	if m.second_factor_required_at != nil {
+		fields = append(fields, workspace.FieldSecondFactorRequiredAt)
 	}
 	if m.suspended_at != nil {
 		fields = append(fields, workspace.FieldSuspendedAt)
@@ -29117,6 +29170,8 @@ func (m *WorkspaceMutation) Field(name string) (ent.Value, bool) {
 		return m.PostalAddress()
 	case workspace.FieldRetentionDays:
 		return m.RetentionDays()
+	case workspace.FieldSecondFactorRequiredAt:
+		return m.SecondFactorRequiredAt()
 	case workspace.FieldSuspendedAt:
 		return m.SuspendedAt()
 	case workspace.FieldSuspendedBy:
@@ -29150,6 +29205,8 @@ func (m *WorkspaceMutation) OldField(ctx context.Context, name string) (ent.Valu
 		return m.OldPostalAddress(ctx)
 	case workspace.FieldRetentionDays:
 		return m.OldRetentionDays(ctx)
+	case workspace.FieldSecondFactorRequiredAt:
+		return m.OldSecondFactorRequiredAt(ctx)
 	case workspace.FieldSuspendedAt:
 		return m.OldSuspendedAt(ctx)
 	case workspace.FieldSuspendedBy:
@@ -29228,6 +29285,13 @@ func (m *WorkspaceMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetRetentionDays(v)
 		return nil
+	case workspace.FieldSecondFactorRequiredAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSecondFactorRequiredAt(v)
+		return nil
 	case workspace.FieldSuspendedAt:
 		v, ok := value.(time.Time)
 		if !ok {
@@ -29300,6 +29364,9 @@ func (m *WorkspaceMutation) ClearedFields() []string {
 	if m.FieldCleared(workspace.FieldRetentionDays) {
 		fields = append(fields, workspace.FieldRetentionDays)
 	}
+	if m.FieldCleared(workspace.FieldSecondFactorRequiredAt) {
+		fields = append(fields, workspace.FieldSecondFactorRequiredAt)
+	}
 	if m.FieldCleared(workspace.FieldSuspendedAt) {
 		fields = append(fields, workspace.FieldSuspendedAt)
 	}
@@ -29328,6 +29395,9 @@ func (m *WorkspaceMutation) ClearField(name string) error {
 		return nil
 	case workspace.FieldRetentionDays:
 		m.ClearRetentionDays()
+		return nil
+	case workspace.FieldSecondFactorRequiredAt:
+		m.ClearSecondFactorRequiredAt()
 		return nil
 	case workspace.FieldSuspendedAt:
 		m.ClearSuspendedAt()
@@ -29372,6 +29442,9 @@ func (m *WorkspaceMutation) ResetField(name string) error {
 		return nil
 	case workspace.FieldRetentionDays:
 		m.ResetRetentionDays()
+		return nil
+	case workspace.FieldSecondFactorRequiredAt:
+		m.ResetSecondFactorRequiredAt()
 		return nil
 	case workspace.FieldSuspendedAt:
 		m.ResetSuspendedAt()

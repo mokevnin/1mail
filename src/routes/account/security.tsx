@@ -27,6 +27,7 @@ import {
   siteSecondFactorGetStatusQueryKey,
   siteSecondFactorRegenerateRecoveryCodesMutation,
   siteSecondFactorStartEnrollmentMutation,
+  siteWorkspacesListQueryKey,
 } from '../../generated/site/@tanstack/react-query.gen.ts'
 import type {
   SiteSecondFactorEnrollment,
@@ -74,7 +75,9 @@ function Enrollment({
   const form = useForm({ initialValues: { code: '' } })
   const confirm = useResourceMutation({
     mutation: siteSecondFactorConfirmEnrollmentMutation(),
-    invalidate: [siteSecondFactorGetStatusQueryKey()],
+    // The Workspaces carry the grace deadline of a Two-factor requirement, which
+    // a confirmed Second factor lifts.
+    invalidate: [siteSecondFactorGetStatusQueryKey(), siteWorkspacesListQueryKey()],
     successMessage: t(($) => $.security.enabledMessage),
     errorTitle: t(($) => $.security.confirmErrorTitle),
     onDone: (data) => onConfirmed(data.codes),
@@ -164,7 +167,7 @@ function Enabled({
   })
   const disable = useResourceMutation({
     mutation: siteSecondFactorDisableMutation(),
-    invalidate: [siteSecondFactorGetStatusQueryKey()],
+    invalidate: [siteSecondFactorGetStatusQueryKey(), siteWorkspacesListQueryKey()],
     successMessage: t(($) => $.security.disabledMessage),
     errorTitle: t(($) => $.security.disableErrorTitle),
   })

@@ -410,6 +410,20 @@
     "successMessage": "Tu contraseña se ha restablecido. Inicia sesión.",
     "title": "Establecer una nueva contraseña"
   },
+  "secondFactorRequirement": {
+    "blockedDescription": "Este espacio de trabajo requiere la autenticación en dos pasos y tu periodo de gracia ha terminado. Configúrala para recuperar el acceso; tus otros espacios de trabajo no se ven afectados.",
+    "blockedTitle": "Se requiere la autenticación en dos pasos",
+    "errorTitle": "No se pudo actualizar el requisito de autenticación en dos pasos",
+    "forbidden": "Solo los propietarios y administradores pueden cambiar el requisito de autenticación en dos pasos.",
+    "graceDescription": "Configura la autenticación en dos pasos antes del {{date}} para conservar el acceso a este espacio de trabajo.",
+    "graceTitle": "Este espacio de trabajo requiere la autenticación en dos pasos",
+    "graceVisibility": "Obligatoria desde el {{since}}. Quienes se unieron antes tienen hasta el {{until}}; quienes se unan después disponen de 7 días desde que se unen.",
+    "saved": "Requisito de autenticación en dos pasos actualizado",
+    "settingDescription": "Exige la autenticación en dos pasos a todos en este espacio de trabajo. Quienes no la tengan disponen de 7 días para configurarla, contados desde que se activa el requisito o desde que se unen, lo que ocurra después.",
+    "settingTitle": "Autenticación en dos pasos obligatoria",
+    "setUp": "Configurar la autenticación en dos pasos",
+    "switchLabel": "Exigir la autenticación en dos pasos"
+  },
   "security": {
     "codeLabel": "Código de la aplicación",
     "codesRemaining": "Quedan {{count}} códigos de recuperación",

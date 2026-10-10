@@ -34,6 +34,17 @@ model SiteWorkspaceResource {
   /** Why sending was suspended, shown to the owner; present only while suspended. */
   suspensionReason?: string | null;
 
+  /** When an Owner or Admin switched on the Two-factor requirement (ADR 0020);
+   * absent while every member may work without a Second factor. */
+  secondFactorRequiredAt?: Timestamp | null;
+
+  /** When the authenticated User's grace under the Two-factor requirement ends:
+   * 7 days after the later of the requirement's start and their Membership's
+   * creation. Absent without a requirement or once the User has a Second factor.
+   * After it, every request to this Workspace answers 403 with code
+   * second_factor_required until the User enrolls one. */
+  secondFactorGraceEndsAt?: Timestamp | null;
+
   /** Creation timestamp */
   createdAt: Timestamp;
 }
@@ -47,6 +58,12 @@ model SiteUpdateWorkspaceInput {
   /** Physical postal address for the marketing email footer (CAN-SPAM). Omit to
    * leave it unchanged; send an empty string to clear it. */
   postalAddress?: string;
+}
+
+/** Switch the Two-factor requirement on or off */
+model SiteSecondFactorRequirementInput {
+  /** Whether every User with a Membership must have a Second factor */
+  required: boolean;
 }
 
 @route("/workspaces")
@@ -66,4 +83,14 @@ namespace SiteWorkspaces {
     | SiteWorkspaceResource
     | NotFoundProblem
     | UnprocessableEntityProblem;
+
+  /** Switch the Two-factor requirement on or off (owner and admin only). Switching
+   * it on while it is already on keeps the original start, so no one's grace
+   * restarts. A change is recorded as an Audit entry. */
+  @put
+  @route("/{slug}/second-factor-requirement")
+  op setSecondFactorRequirement(
+    @path slug: string,
+    @body body: SiteSecondFactorRequirementInput,
+  ): SiteWorkspaceResource | ForbiddenProblem | NotFoundProblem;
 }

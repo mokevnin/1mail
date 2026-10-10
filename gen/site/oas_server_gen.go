@@ -608,6 +608,14 @@ type Handler interface {
 	//
 	// GET /workspaces
 	SiteWorkspacesList(ctx context.Context) ([]SiteWorkspaceResource, error)
+	// SiteWorkspacesSetSecondFactorRequirement implements SiteWorkspaces_setSecondFactorRequirement operation.
+	//
+	// Switch the Two-factor requirement on or off (owner and admin only). Switching it on while it is
+	// already on keeps the original start, so no one's grace restarts. A change is recorded as an Audit
+	// entry.
+	//
+	// PUT /workspaces/{slug}/second-factor-requirement
+	SiteWorkspacesSetSecondFactorRequirement(ctx context.Context, req *SiteSecondFactorRequirementInput, params SiteWorkspacesSetSecondFactorRequirementParams) (SiteWorkspacesSetSecondFactorRequirementRes, error)
 	// SiteWorkspacesUpdate implements SiteWorkspaces_update operation.
 	//
 	// Rename a workspace owned by the authenticated user.

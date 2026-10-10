@@ -33,6 +33,7 @@ import { type AuditFilter, auditFilterSchema } from './auditFilter.ts'
 import { AuditLogSection } from './AuditLogSection.tsx'
 import { IntegrationsSection } from './IntegrationsSection.tsx'
 import { MembersSection } from './MembersSection.tsx'
+import { SecondFactorRequirementSection } from './SecondFactorRequirementSection.tsx'
 import { SendingDomainsSection } from './SendingDomainsSection.tsx'
 import { SuppressionsSection } from './SuppressionsSection.tsx'
 import { WebhooksSection } from './WebhooksSection.tsx'
@@ -247,6 +248,7 @@ export function SettingsPage() {
         <>
           <GeneralSection workspace={workspace} />
           <MembersSection slug={workspace.slug} />
+          <SecondFactorRequirementSection workspace={workspace} />
           <AuditLogSection
             slug={workspace.slug}
             filter={auditFilter}

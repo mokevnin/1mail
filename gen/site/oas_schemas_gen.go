@@ -2393,6 +2393,52 @@ func (o OptNilTimestamp) Or(d Timestamp) Timestamp {
 	return d
 }
 
+// NewOptProblemCode returns new OptProblemCode with value set to v.
+func NewOptProblemCode(v ProblemCode) OptProblemCode {
+	return OptProblemCode{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptProblemCode is optional ProblemCode.
+type OptProblemCode struct {
+	Value ProblemCode
+	Set   bool
+}
+
+// IsSet returns true if OptProblemCode was set.
+func (o OptProblemCode) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptProblemCode) Reset() {
+	var v ProblemCode
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptProblemCode) SetTo(v ProblemCode) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptProblemCode) Get() (v ProblemCode, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptProblemCode) Or(d ProblemCode) ProblemCode {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
 // NewOptProblemDetailsErrors returns new OptProblemDetailsErrors with value set to v.
 func NewOptProblemDetailsErrors(v ProblemDetailsErrors) OptProblemDetailsErrors {
 	return OptProblemDetailsErrors{
@@ -2715,9 +2761,47 @@ func (o OptTimestamp) Or(d Timestamp) Timestamp {
 	return d
 }
 
+// A machine-readable reason a client branches on, beyond the HTTP status.
+// Ref: #/components/schemas/ProblemCode
+type ProblemCode string
+
+const (
+	ProblemCodeSecondFactorRequired ProblemCode = "second_factor_required"
+)
+
+// AllValues returns all ProblemCode values.
+func (ProblemCode) AllValues() []ProblemCode {
+	return []ProblemCode{
+		ProblemCodeSecondFactorRequired,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s ProblemCode) MarshalText() ([]byte, error) {
+	switch s {
+	case ProblemCodeSecondFactorRequired:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *ProblemCode) UnmarshalText(data []byte) error {
+	switch ProblemCode(data) {
+	case ProblemCodeSecondFactorRequired:
+		*s = ProblemCodeSecondFactorRequired
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
 // RFC 7807 Problem Details.
 // Ref: #/components/schemas/ProblemDetails
 type ProblemDetails struct {
+	// Why the request was refused, when the client should act on it.
+	Code OptProblemCode `json:"code"`
 	// A URI reference that identifies the problem type.
 	Type OptString `json:"type"`
 	// A short, human-readable summary of the problem type.
@@ -2736,6 +2820,11 @@ type ProblemDetails struct {
 	Fields OptProblemDetailsFields `json:"fields"`
 	// Seconds to wait before retrying; set on a 429 so a client that only sees the body can show the wait.
 	RetryAfter OptInt32 `json:"retryAfter"`
+}
+
+// GetCode returns the value of Code.
+func (s *ProblemDetails) GetCode() OptProblemCode {
+	return s.Code
 }
 
 // GetType returns the value of Type.
@@ -2781,6 +2870,11 @@ func (s *ProblemDetails) GetFields() OptProblemDetailsFields {
 // GetRetryAfter returns the value of RetryAfter.
 func (s *ProblemDetails) GetRetryAfter() OptInt32 {
 	return s.RetryAfter
+}
+
+// SetCode sets the value of Code.
+func (s *ProblemDetails) SetCode(val OptProblemCode) {
+	s.Code = val
 }
 
 // SetType sets the value of Type.
@@ -7961,6 +8055,23 @@ type SiteSecondFactorRegenerateRecoveryCodesForbidden ProblemDetails
 func (*SiteSecondFactorRegenerateRecoveryCodesForbidden) siteSecondFactorRegenerateRecoveryCodesRes() {
 }
 
+// Switch the Two-factor requirement on or off.
+// Ref: #/components/schemas/SiteSecondFactorRequirementInput
+type SiteSecondFactorRequirementInput struct {
+	// Whether every User with a Membership must have a Second factor.
+	Required bool `json:"required"`
+}
+
+// GetRequired returns the value of Required.
+func (s *SiteSecondFactorRequirementInput) GetRequired() bool {
+	return s.Required
+}
+
+// SetRequired sets the value of Required.
+func (s *SiteSecondFactorRequirementInput) SetRequired(val bool) {
+	s.Required = val
+}
+
 // The authenticated User's Second factor (ADR 0020). Recovery codes are never readable here: only how
 // many are left.
 // Ref: #/components/schemas/SiteSecondFactorStatus
@@ -10894,6 +11005,14 @@ type SiteWorkspaceResource struct {
 	SuspendedAt OptNilTimestamp `json:"suspendedAt"`
 	// Why sending was suspended, shown to the owner; present only while suspended.
 	SuspensionReason OptNilString `json:"suspensionReason"`
+	// When an Owner or Admin switched on the Two-factor requirement (ADR 0020); absent while every member
+	// may work without a Second factor.
+	SecondFactorRequiredAt OptNilTimestamp `json:"secondFactorRequiredAt"`
+	// When the authenticated User's grace under the Two-factor requirement ends: 7 days after the later of
+	// the requirement's start and their Membership's creation. Absent without a requirement or once the
+	// User has a Second factor. After it, every request to this Workspace answers 403 with code
+	// second_factor_required until the User enrolls one.
+	SecondFactorGraceEndsAt OptNilTimestamp `json:"secondFactorGraceEndsAt"`
 	// Creation timestamp.
 	CreatedAt Timestamp `json:"createdAt"`
 }
@@ -10936,6 +11055,16 @@ func (s *SiteWorkspaceResource) GetSuspendedAt() OptNilTimestamp {
 // GetSuspensionReason returns the value of SuspensionReason.
 func (s *SiteWorkspaceResource) GetSuspensionReason() OptNilString {
 	return s.SuspensionReason
+}
+
+// GetSecondFactorRequiredAt returns the value of SecondFactorRequiredAt.
+func (s *SiteWorkspaceResource) GetSecondFactorRequiredAt() OptNilTimestamp {
+	return s.SecondFactorRequiredAt
+}
+
+// GetSecondFactorGraceEndsAt returns the value of SecondFactorGraceEndsAt.
+func (s *SiteWorkspaceResource) GetSecondFactorGraceEndsAt() OptNilTimestamp {
+	return s.SecondFactorGraceEndsAt
 }
 
 // GetCreatedAt returns the value of CreatedAt.
@@ -10983,12 +11112,33 @@ func (s *SiteWorkspaceResource) SetSuspensionReason(val OptNilString) {
 	s.SuspensionReason = val
 }
 
+// SetSecondFactorRequiredAt sets the value of SecondFactorRequiredAt.
+func (s *SiteWorkspaceResource) SetSecondFactorRequiredAt(val OptNilTimestamp) {
+	s.SecondFactorRequiredAt = val
+}
+
+// SetSecondFactorGraceEndsAt sets the value of SecondFactorGraceEndsAt.
+func (s *SiteWorkspaceResource) SetSecondFactorGraceEndsAt(val OptNilTimestamp) {
+	s.SecondFactorGraceEndsAt = val
+}
+
 // SetCreatedAt sets the value of CreatedAt.
 func (s *SiteWorkspaceResource) SetCreatedAt(val Timestamp) {
 	s.CreatedAt = val
 }
 
-func (*SiteWorkspaceResource) siteWorkspacesUpdateRes() {}
+func (*SiteWorkspaceResource) siteWorkspacesSetSecondFactorRequirementRes() {}
+func (*SiteWorkspaceResource) siteWorkspacesUpdateRes()                     {}
+
+type SiteWorkspacesSetSecondFactorRequirementForbidden ProblemDetails
+
+func (*SiteWorkspacesSetSecondFactorRequirementForbidden) siteWorkspacesSetSecondFactorRequirementRes() {
+}
+
+type SiteWorkspacesSetSecondFactorRequirementNotFound ProblemDetails
+
+func (*SiteWorkspacesSetSecondFactorRequirementNotFound) siteWorkspacesSetSecondFactorRequirementRes() {
+}
 
 type SiteWorkspacesUpdateNotFound ProblemDetails
 

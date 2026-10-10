@@ -139,6 +139,20 @@ func (_c *WorkspaceCreate) SetNillableRetentionDays(v *int) *WorkspaceCreate {
 	return _c
 }
 
+// SetSecondFactorRequiredAt sets the "second_factor_required_at" field.
+func (_c *WorkspaceCreate) SetSecondFactorRequiredAt(v time.Time) *WorkspaceCreate {
+	_c.mutation.SetSecondFactorRequiredAt(v)
+	return _c
+}
+
+// SetNillableSecondFactorRequiredAt sets the "second_factor_required_at" field if the given value is not nil.
+func (_c *WorkspaceCreate) SetNillableSecondFactorRequiredAt(v *time.Time) *WorkspaceCreate {
+	if v != nil {
+		_c.SetSecondFactorRequiredAt(*v)
+	}
+	return _c
+}
+
 // SetSuspendedAt sets the "suspended_at" field.
 func (_c *WorkspaceCreate) SetSuspendedAt(v time.Time) *WorkspaceCreate {
 	_c.mutation.SetSuspendedAt(v)
@@ -702,6 +716,10 @@ func (_c *WorkspaceCreate) createSpec() (*Workspace, *sqlgraph.CreateSpec) {
 		_spec.SetField(workspace.FieldRetentionDays, field.TypeInt, value)
 		_node.RetentionDays = &value
 	}
+	if value, ok := _c.mutation.SecondFactorRequiredAt(); ok {
+		_spec.SetField(workspace.FieldSecondFactorRequiredAt, field.TypeTime, value)
+		_node.SecondFactorRequiredAt = &value
+	}
 	if value, ok := _c.mutation.SuspendedAt(); ok {
 		_spec.SetField(workspace.FieldSuspendedAt, field.TypeTime, value)
 		_node.SuspendedAt = &value
@@ -1248,6 +1266,24 @@ func (u *WorkspaceUpsert) ClearRetentionDays() *WorkspaceUpsert {
 	return u
 }
 
+// SetSecondFactorRequiredAt sets the "second_factor_required_at" field.
+func (u *WorkspaceUpsert) SetSecondFactorRequiredAt(v time.Time) *WorkspaceUpsert {
+	u.Set(workspace.FieldSecondFactorRequiredAt, v)
+	return u
+}
+
+// UpdateSecondFactorRequiredAt sets the "second_factor_required_at" field to the value that was provided on create.
+func (u *WorkspaceUpsert) UpdateSecondFactorRequiredAt() *WorkspaceUpsert {
+	u.SetExcluded(workspace.FieldSecondFactorRequiredAt)
+	return u
+}
+
+// ClearSecondFactorRequiredAt clears the value of the "second_factor_required_at" field.
+func (u *WorkspaceUpsert) ClearSecondFactorRequiredAt() *WorkspaceUpsert {
+	u.SetNull(workspace.FieldSecondFactorRequiredAt)
+	return u
+}
+
 // SetSuspendedAt sets the "suspended_at" field.
 func (u *WorkspaceUpsert) SetSuspendedAt(v time.Time) *WorkspaceUpsert {
 	u.Set(workspace.FieldSuspendedAt, v)
@@ -1483,6 +1519,27 @@ func (u *WorkspaceUpsertOne) UpdateRetentionDays() *WorkspaceUpsertOne {
 func (u *WorkspaceUpsertOne) ClearRetentionDays() *WorkspaceUpsertOne {
 	return u.Update(func(s *WorkspaceUpsert) {
 		s.ClearRetentionDays()
+	})
+}
+
+// SetSecondFactorRequiredAt sets the "second_factor_required_at" field.
+func (u *WorkspaceUpsertOne) SetSecondFactorRequiredAt(v time.Time) *WorkspaceUpsertOne {
+	return u.Update(func(s *WorkspaceUpsert) {
+		s.SetSecondFactorRequiredAt(v)
+	})
+}
+
+// UpdateSecondFactorRequiredAt sets the "second_factor_required_at" field to the value that was provided on create.
+func (u *WorkspaceUpsertOne) UpdateSecondFactorRequiredAt() *WorkspaceUpsertOne {
+	return u.Update(func(s *WorkspaceUpsert) {
+		s.UpdateSecondFactorRequiredAt()
+	})
+}
+
+// ClearSecondFactorRequiredAt clears the value of the "second_factor_required_at" field.
+func (u *WorkspaceUpsertOne) ClearSecondFactorRequiredAt() *WorkspaceUpsertOne {
+	return u.Update(func(s *WorkspaceUpsert) {
+		s.ClearSecondFactorRequiredAt()
 	})
 }
 
@@ -1896,6 +1953,27 @@ func (u *WorkspaceUpsertBulk) UpdateRetentionDays() *WorkspaceUpsertBulk {
 func (u *WorkspaceUpsertBulk) ClearRetentionDays() *WorkspaceUpsertBulk {
 	return u.Update(func(s *WorkspaceUpsert) {
 		s.ClearRetentionDays()
+	})
+}
+
+// SetSecondFactorRequiredAt sets the "second_factor_required_at" field.
+func (u *WorkspaceUpsertBulk) SetSecondFactorRequiredAt(v time.Time) *WorkspaceUpsertBulk {
+	return u.Update(func(s *WorkspaceUpsert) {
+		s.SetSecondFactorRequiredAt(v)
+	})
+}
+
+// UpdateSecondFactorRequiredAt sets the "second_factor_required_at" field to the value that was provided on create.
+func (u *WorkspaceUpsertBulk) UpdateSecondFactorRequiredAt() *WorkspaceUpsertBulk {
+	return u.Update(func(s *WorkspaceUpsert) {
+		s.UpdateSecondFactorRequiredAt()
+	})
+}
+
+// ClearSecondFactorRequiredAt clears the value of the "second_factor_required_at" field.
+func (u *WorkspaceUpsertBulk) ClearSecondFactorRequiredAt() *WorkspaceUpsertBulk {
+	return u.Update(func(s *WorkspaceUpsert) {
+		s.ClearSecondFactorRequiredAt()
 	})
 }
 

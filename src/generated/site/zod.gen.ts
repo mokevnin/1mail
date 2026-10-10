@@ -13,9 +13,15 @@ export const zEmailAddress = z.email();
 export const zEntityId = z.string().regex(/^[0-9]+$/);
 
 /**
+ * A machine-readable reason a client branches on, beyond the HTTP status
+ */
+export const zProblemCode = z.enum(['second_factor_required']);
+
+/**
  * RFC 7807 Problem Details
  */
 export const zProblemDetails = z.object({
+  code: z.exactOptional(zProblemCode),
   type: z.exactOptional(z.string()),
   title: z.exactOptional(z.string()),
   status: z.exactOptional(z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' })),
@@ -469,6 +475,13 @@ export const zSiteSecondFactorEnrollment = z.object({
   secret: z.string(),
   otpauthUri: z.string(),
   qrCode: z.string()
+});
+
+/**
+ * Switch the Two-factor requirement on or off
+ */
+export const zSiteSecondFactorRequirementInput = z.object({
+  required: z.boolean()
 });
 
 /**
@@ -1213,6 +1226,8 @@ export const zSiteWorkspaceResource = z.object({
   postalAddress: z.string(),
   suspendedAt: z.exactOptional(zTimestamp.nullable()),
   suspensionReason: z.exactOptional(z.string().nullable()),
+  secondFactorRequiredAt: z.exactOptional(zTimestamp.nullable()),
+  secondFactorGraceEndsAt: z.exactOptional(zTimestamp.nullable()),
   createdAt: zTimestamp
 });
 
@@ -2147,6 +2162,17 @@ export const zSiteMembershipsUpdatePath = z.object({
  * The request has succeeded.
  */
 export const zSiteMembershipsUpdateResponse = zSiteMembershipResource;
+
+export const zSiteWorkspacesSetSecondFactorRequirementBody = zSiteSecondFactorRequirementInput;
+
+export const zSiteWorkspacesSetSecondFactorRequirementPath = z.object({
+  slug: z.string()
+});
+
+/**
+ * The request has succeeded.
+ */
+export const zSiteWorkspacesSetSecondFactorRequirementResponse = zSiteWorkspaceResource;
 
 export const zSiteSegmentsListPath = z.object({
   slug: z.string()

@@ -35,23 +35,25 @@ func New(client *ent.Client, bus *events.Bus) *Accounts {
 }
 
 // Scope resolves the Workspace addressed by a /w/{slug} path segment for a User and
-// returns its scoped client with the User's Role. It is the site's construction
+// returns its scoped client with the User's Membership (its User and Workspace
+// loaded, for the Role and the Two-factor requirement). It is the site's construction
 // point of the scoped client: access is "does this User have a Membership on this
 // Workspace?". An ent NotFound error means the slug does not exist or the User is
 // not a member.
-func (a *Accounts) Scope(ctx context.Context, userID int64, slug string) (*ent.Scoped, membership.Role, error) {
+func (a *Accounts) Scope(ctx context.Context, userID int64, slug string) (*ent.Scoped, *ent.Membership, error) {
 	m, err := a.ent.Membership.Query().
 		Where(membership.UserID(userID), membership.HasWorkspaceWith(workspace.Slug(slug))).
 		WithUser().
+		WithWorkspace().
 		Only(ctx)
 	if err != nil {
-		return nil, "", err
+		return nil, nil, err
 	}
 	actor := events.Actor{Kind: events.ActorUser, ID: strconv.FormatInt(userID, 10)}
 	if u := m.Edges.User; u != nil {
 		actor.Name = u.Name
 	}
-	return a.bus.Act(a.ent.Scoped(m.WorkspaceID), actor), m.Role, nil
+	return a.bus.Act(a.ent.Scoped(m.WorkspaceID), actor), m, nil
 }
 
 // BootstrapScope is the scoped client of the oldest Workspace, for the bootstrap
@@ -64,11 +66,14 @@ func (a *Accounts) BootstrapScope(ctx context.Context) (*ent.Scoped, error) {
 	return events.Ingest(a.ent.Scoped(id)), nil
 }
 
-// WorkspacesOf lists the Workspaces a User is a member of, oldest first.
-func (a *Accounts) WorkspacesOf(ctx context.Context, userID int64) ([]*ent.Workspace, error) {
-	return a.ent.Workspace.Query().
-		Where(workspace.HasMembershipsWith(membership.UserID(userID))).
-		Order(ent.Asc(workspace.FieldID)).
+// MembershipsOf lists a User's Memberships with their User and Workspace loaded,
+// oldest Workspace first.
+func (a *Accounts) MembershipsOf(ctx context.Context, userID int64) ([]*ent.Membership, error) {
+	return a.ent.Membership.Query().
+		Where(membership.UserID(userID)).
+		WithUser().
+		WithWorkspace().
+		Order(ent.Asc(membership.FieldWorkspaceID)).
 		All(ctx)
 }
 
@@ -146,6 +151,46 @@ func (a *Accounts) SetAuditRetention(ctx context.Context, s *ent.Scoped, actor e
 			Diff:        map[string]any{"retention_days": map[string]any{"from": before.RetentionDays, "to": days}},
 		})
 	})
+}
+
+// SetSecondFactorRequirement switches the scoped Workspace's Two-factor requirement
+// (ADR 0020) on, starting at now, or off. Switching it on while it is on keeps the
+// original start, so no member's grace restarts. A change is recorded as a
+// `workspace.update` Audit entry in the same transaction. The caller has checked the
+// role. switchedOn reports that this call turned the requirement on.
+func (a *Accounts) SetSecondFactorRequirement(ctx context.Context, s *ent.Scoped, actor events.Actor, required bool, now time.Time) (updated *ent.Workspace, switchedOn bool, err error) {
+	err = a.bus.WithinTx(ctx, func(tx *ent.Client, pub events.Publisher) error {
+		before, err := tx.Workspace.Get(ctx, s.WorkspaceID())
+		if err != nil {
+			return err
+		}
+		updated = before
+		if (before.SecondFactorRequiredAt != nil) == required {
+			return nil
+		}
+		upd := tx.Workspace.UpdateOneID(s.WorkspaceID())
+		if required {
+			upd = upd.SetSecondFactorRequiredAt(now)
+		} else {
+			upd = upd.ClearSecondFactorRequiredAt()
+		}
+		if updated, err = upd.Save(ctx); err != nil {
+			return err
+		}
+		switchedOn = required
+		return events.RecordAudit(ctx, pub, &events.AuditEntry{
+			WorkspaceID: s.WorkspaceID(),
+			Actor:       actor,
+			Action:      events.ActionWorkspaceUpdate,
+			TargetType:  "workspace",
+			TargetID:    strconv.FormatInt(before.ID, 10),
+			TargetName:  before.Name,
+			Diff: map[string]any{"second_factor_required_at": map[string]any{
+				"from": before.SecondFactorRequiredAt, "to": updated.SecondFactorRequiredAt,
+			}},
+		})
+	})
+	return updated, switchedOn, err
 }
 
 func ptrEqual(a, b *int) bool {

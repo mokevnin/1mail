@@ -15,11 +15,14 @@ export function DashboardShell({
   sidebar,
   headerRight,
   banner,
+  content,
 }: {
   sidebar: ReactNode
   headerRight?: ReactNode
   /** A notice shown above every routed page (e.g. a workspace suspension). */
   banner?: ReactNode
+  /** Shown instead of the routed page (e.g. a Workspace withheld by its Two-factor requirement). */
+  content?: ReactNode
 }) {
   const { t } = useTranslation()
   const [opened, { toggle, close }] = useDisclosure(false)
@@ -56,7 +59,7 @@ export function DashboardShell({
 
       <AppShell.Main>
         {banner}
-        <Outlet />
+        {content ?? <Outlet />}
       </AppShell.Main>
     </AppShell>
   )

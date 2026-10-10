@@ -15460,6 +15460,39 @@ func (s *OptNilUpsertContactInputCustomFields) UnmarshalJSON(data []byte) error 
 	return s.Decode(d)
 }
 
+// Encode encodes ProblemCode as json.
+func (o OptProblemCode) Encode(e *jx.Encoder) {
+	if !o.Set {
+		return
+	}
+	e.Str(string(o.Value))
+}
+
+// Decode decodes ProblemCode from json.
+func (o *OptProblemCode) Decode(d *jx.Decoder) error {
+	if o == nil {
+		return errors.New("invalid: unable to decode OptProblemCode to nil")
+	}
+	o.Set = true
+	if err := o.Value.Decode(d); err != nil {
+		return err
+	}
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s OptProblemCode) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *OptProblemCode) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
 // Encode encodes ProblemDetailsErrors as json.
 func (o OptProblemDetailsErrors) Encode(e *jx.Encoder) {
 	if !o.Set {
@@ -15756,6 +15789,44 @@ func (s *PreviewSegmentResult) UnmarshalJSON(data []byte) error {
 	return s.Decode(d)
 }
 
+// Encode encodes ProblemCode as json.
+func (s ProblemCode) Encode(e *jx.Encoder) {
+	e.Str(string(s))
+}
+
+// Decode decodes ProblemCode from json.
+func (s *ProblemCode) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode ProblemCode to nil")
+	}
+	v, err := d.StrBytes()
+	if err != nil {
+		return err
+	}
+	// Try to use constant string.
+	switch ProblemCode(v) {
+	case ProblemCodeSecondFactorRequired:
+		*s = ProblemCodeSecondFactorRequired
+	default:
+		*s = ProblemCode(v)
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s ProblemCode) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *ProblemCode) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
 // Encode implements json.Marshaler.
 func (s *ProblemDetails) Encode(e *jx.Encoder) {
 	e.ObjStart()
@@ -15765,6 +15836,12 @@ func (s *ProblemDetails) Encode(e *jx.Encoder) {
 
 // encodeFields encodes fields.
 func (s *ProblemDetails) encodeFields(e *jx.Encoder) {
+	{
+		if s.Code.Set {
+			e.FieldStart("code")
+			s.Code.Encode(e)
+		}
+	}
 	{
 		if s.Type.Set {
 			e.FieldStart("type")
@@ -15821,16 +15898,17 @@ func (s *ProblemDetails) encodeFields(e *jx.Encoder) {
 	}
 }
 
-var jsonFieldsNameOfProblemDetails = [9]string{
-	0: "type",
-	1: "title",
-	2: "status",
-	3: "detail",
-	4: "instance",
-	5: "errors",
-	6: "form",
-	7: "fields",
-	8: "retryAfter",
+var jsonFieldsNameOfProblemDetails = [10]string{
+	0: "code",
+	1: "type",
+	2: "title",
+	3: "status",
+	4: "detail",
+	5: "instance",
+	6: "errors",
+	7: "form",
+	8: "fields",
+	9: "retryAfter",
 }
 
 // Decode decodes ProblemDetails from json.
@@ -15841,6 +15919,16 @@ func (s *ProblemDetails) Decode(d *jx.Decoder) error {
 
 	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
 		switch string(k) {
+		case "code":
+			if err := func() error {
+				s.Code.Reset()
+				if err := s.Code.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"code\"")
+			}
 		case "type":
 			if err := func() error {
 				s.Type.Reset()

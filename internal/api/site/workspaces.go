@@ -9,6 +9,7 @@ import (
 	siteapi "github.com/mokevnin/1mail/gen/site"
 	"github.com/mokevnin/1mail/internal/api/auth"
 	"github.com/mokevnin/1mail/internal/i18n"
+	"github.com/mokevnin/1mail/internal/secondfactor"
 )
 
 // SiteWorkspacesList returns the workspaces the authenticated user is a member of.
@@ -18,22 +19,63 @@ func (h *Handlers) SiteWorkspacesList(ctx context.Context) ([]siteapi.SiteWorksp
 		return []siteapi.SiteWorkspaceResource{}, nil
 	}
 
-	items, err := h.accounts.WorkspacesOf(ctx, a.UserID)
+	items, err := h.accounts.MembershipsOf(ctx, a.UserID)
 	if err != nil {
 		return nil, err
 	}
 
 	resources := make([]siteapi.SiteWorkspaceResource, len(items))
-	for i, w := range items {
-		resources[i] = mapper.WorkspaceToResource(w)
+	for i, m := range items {
+		resources[i] = workspaceResource(m)
 	}
 	return resources, nil
+}
+
+// workspaceResource is the Membership's Workspace as the Membership's User sees it,
+// with their grace end under the Two-factor requirement (ADR 0020). The Membership's
+// User and Workspace edges must be loaded.
+func workspaceResource(m *ent.Membership) siteapi.SiteWorkspaceResource {
+	r := mapper.WorkspaceToResource(m.Edges.Workspace)
+	if end, ok := secondfactor.Deadline(m); ok {
+		r.SecondFactorGraceEndsAt = siteapi.NewOptNilTimestamp(siteapi.Timestamp(end))
+	}
+	return r
+}
+
+// withWorkspace is the Membership with its Workspace replaced by w (after an update).
+func withWorkspace(m *ent.Membership, w *ent.Workspace) *ent.Membership {
+	c := *m
+	c.Edges.Workspace = w
+	return &c
+}
+
+// SiteWorkspacesSetSecondFactorRequirement switches the Workspace's Two-factor
+// requirement on or off; owner and admin only.
+func (h *Handlers) SiteWorkspacesSetSecondFactorRequirement(ctx context.Context, req *siteapi.SiteSecondFactorRequirementInput, params siteapi.SiteWorkspacesSetSecondFactorRequirementParams) (siteapi.SiteWorkspacesSetSecondFactorRequirementRes, error) {
+	s, m, err := h.membershipFor(ctx, params.Slug)
+	if ent.IsNotFound(err) {
+		v := siteapi.SiteWorkspacesSetSecondFactorRequirementNotFound(problem(http.StatusNotFound, "workspace not found"))
+		return &v, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	if !canManageMembers(m.Role) {
+		v := siteapi.SiteWorkspacesSetSecondFactorRequirementForbidden(problem(http.StatusForbidden, "only owners and admins can change the two-factor requirement"))
+		return &v, nil
+	}
+	w, _, err := h.accounts.SetSecondFactorRequirement(ctx, s, h.actor(ctx), req.Required, h.now())
+	if err != nil {
+		return nil, err
+	}
+	r := workspaceResource(withWorkspace(m, w))
+	return &r, nil
 }
 
 // SiteWorkspacesUpdate renames a workspace owned by the authenticated user. The
 // slug is immutable, so only the display name changes.
 func (h *Handlers) SiteWorkspacesUpdate(ctx context.Context, req *siteapi.SiteUpdateWorkspaceInput, params siteapi.SiteWorkspacesUpdateParams) (siteapi.SiteWorkspacesUpdateRes, error) {
-	s, err := h.scopedFor(ctx, params.Slug)
+	s, m, err := h.membershipFor(ctx, params.Slug)
 	if ent.IsNotFound(err) {
 		v := siteapi.SiteWorkspacesUpdateNotFound(problem(http.StatusNotFound, "workspace not found"))
 		return &v, nil
@@ -63,6 +105,6 @@ func (h *Handlers) SiteWorkspacesUpdate(ctx context.Context, req *siteapi.SiteUp
 	if err != nil {
 		return nil, err
 	}
-	resource := mapper.WorkspaceToResource(w)
+	resource := workspaceResource(withWorkspace(m, w))
 	return &resource, nil
 }

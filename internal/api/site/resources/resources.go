@@ -51,6 +51,9 @@ type Converter interface {
 	// Verification is derived: a non-nil email_verified_at means verified.
 	// goverter:map EmailVerifiedAt EmailVerified | emailVerified
 	UserToResource(source *ent.User) *siteapi.SiteUserResource
+	// The grace end belongs to the authenticated User's Membership, which the
+	// mapper cannot see: the handler attaches it.
+	// goverter:ignore SecondFactorGraceEndsAt
 	WorkspaceToResource(source *ent.Workspace) siteapi.SiteWorkspaceResource
 	EventToResource(source *ent.Event) siteapi.SiteEventResource
 

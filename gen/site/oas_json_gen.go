@@ -3274,6 +3274,39 @@ func (s *OptNilTimestamp) UnmarshalJSON(data []byte) error {
 	return s.Decode(d)
 }
 
+// Encode encodes ProblemCode as json.
+func (o OptProblemCode) Encode(e *jx.Encoder) {
+	if !o.Set {
+		return
+	}
+	e.Str(string(o.Value))
+}
+
+// Decode decodes ProblemCode from json.
+func (o *OptProblemCode) Decode(d *jx.Decoder) error {
+	if o == nil {
+		return errors.New("invalid: unable to decode OptProblemCode to nil")
+	}
+	o.Set = true
+	if err := o.Value.Decode(d); err != nil {
+		return err
+	}
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s OptProblemCode) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *OptProblemCode) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
 // Encode encodes ProblemDetailsErrors as json.
 func (o OptProblemDetailsErrors) Encode(e *jx.Encoder) {
 	if !o.Set {
@@ -3443,6 +3476,44 @@ func (s *OptTimestamp) UnmarshalJSON(data []byte) error {
 	return s.Decode(d)
 }
 
+// Encode encodes ProblemCode as json.
+func (s ProblemCode) Encode(e *jx.Encoder) {
+	e.Str(string(s))
+}
+
+// Decode decodes ProblemCode from json.
+func (s *ProblemCode) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode ProblemCode to nil")
+	}
+	v, err := d.StrBytes()
+	if err != nil {
+		return err
+	}
+	// Try to use constant string.
+	switch ProblemCode(v) {
+	case ProblemCodeSecondFactorRequired:
+		*s = ProblemCodeSecondFactorRequired
+	default:
+		*s = ProblemCode(v)
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s ProblemCode) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *ProblemCode) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
 // Encode implements json.Marshaler.
 func (s *ProblemDetails) Encode(e *jx.Encoder) {
 	e.ObjStart()
@@ -3452,6 +3523,12 @@ func (s *ProblemDetails) Encode(e *jx.Encoder) {
 
 // encodeFields encodes fields.
 func (s *ProblemDetails) encodeFields(e *jx.Encoder) {
+	{
+		if s.Code.Set {
+			e.FieldStart("code")
+			s.Code.Encode(e)
+		}
+	}
 	{
 		if s.Type.Set {
 			e.FieldStart("type")
@@ -3508,16 +3585,17 @@ func (s *ProblemDetails) encodeFields(e *jx.Encoder) {
 	}
 }
 
-var jsonFieldsNameOfProblemDetails = [9]string{
-	0: "type",
-	1: "title",
-	2: "status",
-	3: "detail",
-	4: "instance",
-	5: "errors",
-	6: "form",
-	7: "fields",
-	8: "retryAfter",
+var jsonFieldsNameOfProblemDetails = [10]string{
+	0: "code",
+	1: "type",
+	2: "title",
+	3: "status",
+	4: "detail",
+	5: "instance",
+	6: "errors",
+	7: "form",
+	8: "fields",
+	9: "retryAfter",
 }
 
 // Decode decodes ProblemDetails from json.
@@ -3528,6 +3606,16 @@ func (s *ProblemDetails) Decode(d *jx.Decoder) error {
 
 	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
 		switch string(k) {
+		case "code":
+			if err := func() error {
+				s.Code.Reset()
+				if err := s.Code.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"code\"")
+			}
 		case "type":
 			if err := func() error {
 				s.Type.Reset()
@@ -18968,6 +19056,102 @@ func (s *SiteSecondFactorRegenerateRecoveryCodesForbidden) UnmarshalJSON(data []
 }
 
 // Encode implements json.Marshaler.
+func (s *SiteSecondFactorRequirementInput) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *SiteSecondFactorRequirementInput) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("required")
+		e.Bool(s.Required)
+	}
+}
+
+var jsonFieldsNameOfSiteSecondFactorRequirementInput = [1]string{
+	0: "required",
+}
+
+// Decode decodes SiteSecondFactorRequirementInput from json.
+func (s *SiteSecondFactorRequirementInput) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode SiteSecondFactorRequirementInput to nil")
+	}
+	var requiredBitSet [1]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "required":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				v, err := d.Bool()
+				s.Required = bool(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"required\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode SiteSecondFactorRequirementInput")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b00000001,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfSiteSecondFactorRequirementInput) {
+					name = jsonFieldsNameOfSiteSecondFactorRequirementInput[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *SiteSecondFactorRequirementInput) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *SiteSecondFactorRequirementInput) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
 func (s *SiteSecondFactorStatus) Encode(e *jx.Encoder) {
 	e.ObjStart()
 	s.encodeFields(e)
@@ -27839,21 +28023,35 @@ func (s *SiteWorkspaceResource) encodeFields(e *jx.Encoder) {
 		}
 	}
 	{
+		if s.SecondFactorRequiredAt.Set {
+			e.FieldStart("secondFactorRequiredAt")
+			s.SecondFactorRequiredAt.Encode(e)
+		}
+	}
+	{
+		if s.SecondFactorGraceEndsAt.Set {
+			e.FieldStart("secondFactorGraceEndsAt")
+			s.SecondFactorGraceEndsAt.Encode(e)
+		}
+	}
+	{
 		e.FieldStart("createdAt")
 		s.CreatedAt.Encode(e)
 	}
 }
 
-var jsonFieldsNameOfSiteWorkspaceResource = [9]string{
-	0: "id",
-	1: "name",
-	2: "slug",
-	3: "collectKey",
-	4: "ingestKey",
-	5: "postalAddress",
-	6: "suspendedAt",
-	7: "suspensionReason",
-	8: "createdAt",
+var jsonFieldsNameOfSiteWorkspaceResource = [11]string{
+	0:  "id",
+	1:  "name",
+	2:  "slug",
+	3:  "collectKey",
+	4:  "ingestKey",
+	5:  "postalAddress",
+	6:  "suspendedAt",
+	7:  "suspensionReason",
+	8:  "secondFactorRequiredAt",
+	9:  "secondFactorGraceEndsAt",
+	10: "createdAt",
 }
 
 // Decode decodes SiteWorkspaceResource from json.
@@ -27955,8 +28153,28 @@ func (s *SiteWorkspaceResource) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"suspensionReason\"")
 			}
+		case "secondFactorRequiredAt":
+			if err := func() error {
+				s.SecondFactorRequiredAt.Reset()
+				if err := s.SecondFactorRequiredAt.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"secondFactorRequiredAt\"")
+			}
+		case "secondFactorGraceEndsAt":
+			if err := func() error {
+				s.SecondFactorGraceEndsAt.Reset()
+				if err := s.SecondFactorGraceEndsAt.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"secondFactorGraceEndsAt\"")
+			}
 		case "createdAt":
-			requiredBitSet[1] |= 1 << 0
+			requiredBitSet[1] |= 1 << 2
 			if err := func() error {
 				if err := s.CreatedAt.Decode(d); err != nil {
 					return err
@@ -27976,7 +28194,7 @@ func (s *SiteWorkspaceResource) Decode(d *jx.Decoder) error {
 	var failures []validate.FieldError
 	for i, mask := range [2]uint8{
 		0b00111111,
-		0b00000001,
+		0b00000100,
 	} {
 		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
 			// Mask only required fields and check equality to mask using XOR.
@@ -28018,6 +28236,82 @@ func (s *SiteWorkspaceResource) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
 func (s *SiteWorkspaceResource) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes SiteWorkspacesSetSecondFactorRequirementForbidden as json.
+func (s *SiteWorkspacesSetSecondFactorRequirementForbidden) Encode(e *jx.Encoder) {
+	unwrapped := (*ProblemDetails)(s)
+
+	unwrapped.Encode(e)
+}
+
+// Decode decodes SiteWorkspacesSetSecondFactorRequirementForbidden from json.
+func (s *SiteWorkspacesSetSecondFactorRequirementForbidden) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode SiteWorkspacesSetSecondFactorRequirementForbidden to nil")
+	}
+	var unwrapped ProblemDetails
+	if err := func() error {
+		if err := unwrapped.Decode(d); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "alias")
+	}
+	*s = SiteWorkspacesSetSecondFactorRequirementForbidden(unwrapped)
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *SiteWorkspacesSetSecondFactorRequirementForbidden) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *SiteWorkspacesSetSecondFactorRequirementForbidden) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes SiteWorkspacesSetSecondFactorRequirementNotFound as json.
+func (s *SiteWorkspacesSetSecondFactorRequirementNotFound) Encode(e *jx.Encoder) {
+	unwrapped := (*ProblemDetails)(s)
+
+	unwrapped.Encode(e)
+}
+
+// Decode decodes SiteWorkspacesSetSecondFactorRequirementNotFound from json.
+func (s *SiteWorkspacesSetSecondFactorRequirementNotFound) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode SiteWorkspacesSetSecondFactorRequirementNotFound to nil")
+	}
+	var unwrapped ProblemDetails
+	if err := func() error {
+		if err := unwrapped.Decode(d); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		return errors.Wrap(err, "alias")
+	}
+	*s = SiteWorkspacesSetSecondFactorRequirementNotFound(unwrapped)
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *SiteWorkspacesSetSecondFactorRequirementNotFound) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *SiteWorkspacesSetSecondFactorRequirementNotFound) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }
