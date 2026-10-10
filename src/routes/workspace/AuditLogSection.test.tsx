@@ -3,7 +3,9 @@ import { expect, test, vi } from 'vitest'
 import type {
   SiteAuditEntryResource,
   SiteAuditExportData,
+  SiteAuditGetRetentionData,
   SiteAuditListData,
+  SiteAuditSetRetentionData,
 } from '../../generated/site/types.gen.ts'
 import { jsonResponse, mockClientRoutes, route } from '../../test/mockFetch.ts'
 import { renderWithRouter } from '../../test/renderWithRouter.tsx'
@@ -201,4 +203,125 @@ test('exports the log as CSV through the generated client', async () => {
 
   await screen.getByRole('button', { name: 'Export CSV' }).click()
   await vi.waitFor(() => expect(exported).toBe(1))
+})
+
+const retentionRoute = (respond: () => Response) =>
+  route<SiteAuditGetRetentionData>(
+    'GET',
+    '/workspaces/{slug}/audit-entries/retention',
+    { slug: SLUG },
+    respond,
+  )
+
+test('shows the retention window and saves a new one', async () => {
+  let saved: unknown
+  mockClientRoutes([
+    list(() => jsonResponse({ items: [entry()] })),
+    retentionRoute(() => jsonResponse({ retentionDays: 90 })),
+    route<SiteAuditSetRetentionData>(
+      'PUT',
+      '/workspaces/{slug}/audit-entries/retention',
+      { slug: SLUG },
+      async (req) => {
+        saved = await req.json()
+        return jsonResponse({ retentionDays: null })
+      },
+    ),
+  ])
+  const { screen } = await renderWithRouter(
+    <AuditLogSection slug={SLUG} onFilterChange={() => {}} />,
+  )
+
+  const input = screen.getByLabelText('Keep the log for (days)')
+  await expect.element(input).toHaveValue('90')
+  await input.fill('30')
+  await screen.getByRole('button', { name: 'Save retention' }).click()
+  await vi.waitFor(() => expect(saved).toEqual({ retentionDays: 30 }))
+})
+
+test('an empty retention window keeps the log forever', async () => {
+  let saved: unknown
+  mockClientRoutes([
+    list(() => jsonResponse({ items: [entry()] })),
+    retentionRoute(() => jsonResponse({ retentionDays: 90 })),
+    route<SiteAuditSetRetentionData>(
+      'PUT',
+      '/workspaces/{slug}/audit-entries/retention',
+      { slug: SLUG },
+      async (req) => {
+        saved = await req.json()
+        return jsonResponse({ retentionDays: null })
+      },
+    ),
+  ])
+  const { screen } = await renderWithRouter(
+    <AuditLogSection slug={SLUG} onFilterChange={() => {}} />,
+  )
+
+  await screen.getByLabelText('Keep the log for (days)').fill('')
+  await screen.getByRole('button', { name: 'Save retention' }).click()
+  await vi.waitFor(() => expect(saved).toEqual({ retentionDays: null }))
+})
+
+test('a failed retention save is reported', async () => {
+  mockClientRoutes([
+    list(() => jsonResponse({ items: [entry()] })),
+    retentionRoute(() => jsonResponse({ retentionDays: null })),
+    route<SiteAuditSetRetentionData>(
+      'PUT',
+      '/workspaces/{slug}/audit-entries/retention',
+      { slug: SLUG },
+      () => jsonResponse({ status: 422, detail: 'bad window' }, { status: 422 }),
+    ),
+  ])
+  const { screen } = await renderWithRouter(
+    <AuditLogSection slug={SLUG} onFilterChange={() => {}} />,
+  )
+
+  await screen.getByLabelText('Keep the log for (days)').fill('5')
+  await screen.getByRole('button', { name: 'Save retention' }).click()
+  await expect.element(screen.getByText('Could not save the retention')).toBeInTheDocument()
+})
+
+test('the retention control is not offered without its license', async () => {
+  mockClientRoutes([
+    list(() => jsonResponse({ items: [entry()] })),
+    retentionRoute(() => jsonResponse({ status: 402, detail: 'no' }, { status: 402 })),
+  ])
+  const { screen } = await renderWithRouter(
+    <AuditLogSection slug={SLUG} onFilterChange={() => {}} />,
+  )
+
+  await expect.element(screen.getByText('Audit log')).toBeInTheDocument()
+  await expect.element(screen.getByLabelText('Keep the log for (days)')).not.toBeInTheDocument()
+})
+
+test('an entry without a diff or a name falls back gracefully', async () => {
+  mockClientRoutes([
+    list(() =>
+      jsonResponse({
+        items: [
+          entry({
+            id: '3',
+            actor: { kind: 'api_token', id: '7' },
+            target: { type: 'tag', id: '9' },
+            diff: null,
+          }),
+          entry({ id: '4', actor: { kind: 'system' }, target: { type: 'webhook_endpoint' } }),
+          entry({
+            id: '5',
+            actor: { kind: 'user', id: '2' },
+            diff: { a: { from: null, to: '' }, b: { from: { x: 1 }, to: 2 } },
+          }),
+        ],
+      }),
+    ),
+  ])
+  const { screen } = await renderWithRouter(
+    <AuditLogSection slug={SLUG} onFilterChange={() => {}} />,
+  )
+
+  await expect.element(screen.getByText('API token #7')).toBeInTheDocument()
+  await expect.element(screen.getByRole('cell', { name: 'System' })).toBeInTheDocument()
+  await expect.element(screen.getByText('tag #9')).toBeInTheDocument()
 })

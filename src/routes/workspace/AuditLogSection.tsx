@@ -7,6 +7,7 @@ import {
   Code,
   Group,
   Loader,
+  NumberInput,
   Select,
   SimpleGrid,
   Stack,
@@ -25,9 +26,13 @@ import { useTranslation } from 'react-i18next'
 import { ButtonLink } from '../../components/RouterLink.tsx'
 import {
   siteAuditExportOptions,
+  siteAuditGetRetentionOptions,
+  siteAuditGetRetentionQueryKey,
   siteAuditListOptions,
+  siteAuditSetRetentionMutation,
 } from '../../generated/site/@tanstack/react-query.gen.ts'
 import type { SiteAuditEntryResource } from '../../generated/site/types.gen.ts'
+import { useResourceMutation } from '../../hooks/useResourceMutation.ts'
 import { settingsRoute } from '../../router.tsx'
 import { formatDateTime } from '../../utils/datetime.ts'
 import { type AuditFilter, auditQuery } from './auditFilter.ts'
@@ -280,6 +285,60 @@ function ExportButton({ slug, filter }: { slug: string; filter: AuditFilter }) {
   )
 }
 
+// RetentionForm sets how many days the log is kept; an empty value keeps it forever. The
+// change is recorded as an Audit entry by the API.
+function RetentionForm({ slug, days }: { slug: string; days: number | null }) {
+  const { t } = useTranslation()
+  const [value, setValue] = useState<string | number>(days ?? '')
+  const mutation = useResourceMutation({
+    mutation: siteAuditSetRetentionMutation(),
+    invalidate: [siteAuditGetRetentionQueryKey({ path: { slug } })],
+    successMessage: t(($) => $.settings.auditLog.retentionSaved),
+    errorTitle: t(($) => $.settings.auditLog.retentionError),
+  })
+
+  return (
+    <Group align="flex-end" gap="sm">
+      <NumberInput
+        label={t(($) => $.settings.auditLog.retentionLabel)}
+        description={t(($) => $.settings.auditLog.retentionDescription)}
+        placeholder={t(($) => $.settings.auditLog.retentionPlaceholder)}
+        min={1}
+        max={3650}
+        allowDecimal={false}
+        value={value}
+        onChange={setValue}
+      />
+      <Button
+        size="xs"
+        loading={mutation.isPending}
+        onClick={() =>
+          mutation.mutate({
+            path: { slug },
+            body: { retentionDays: typeof value === 'number' ? value : null },
+          })
+        }
+      >
+        {t(($) => $.settings.auditLog.retentionSave)}
+      </Button>
+    </Group>
+  )
+}
+
+// RetentionControl is the Enterprise advanced-retention window for the log. It renders
+// nothing where the setting is not offered (a plain member, or no license).
+function RetentionControl({ slug }: { slug: string }) {
+  const query = useQuery(siteAuditGetRetentionOptions({ path: { slug } }))
+  if (!query.isSuccess) return null
+  return (
+    <RetentionForm
+      key={String(query.data.retentionDays)}
+      slug={slug}
+      days={query.data.retentionDays}
+    />
+  )
+}
+
 const TEXT_FIELDS = ['actorId', 'action', 'targetType', 'targetId', 'ip', 'requestId'] as const
 
 // FilterForm edits the filter and hands it up on apply, so the route's search stays the
@@ -447,6 +506,7 @@ export function AuditLogSection({
           <Title order={4}>{t(($) => $.settings.auditLog.title)}</Title>
           <ExportButton slug={slug} filter={filter} />
         </Group>
+        <RetentionControl slug={slug} />
         <FilterForm key={filterKey} filter={filter} onChange={onFilterChange} />
         <AuditPage key={filterKey} slug={slug} filter={filter} first />
       </Stack>
