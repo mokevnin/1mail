@@ -230,7 +230,7 @@ func Setup(t *testing.T, opts ...Option) *TestEnv {
 		Accounts: acc, Bus: bus, Cipher: cipher, Outbound: sender,
 		Segments: segmentsModule, EventLog: eventLog, Contacts: contactsModule, Tags: tagsModule,
 		Automations: automationsModule, Broadcasts: broadcastsModule, Reputation: reputation.New(),
-		BootstrapToken: baseCfg.BootstrapToken,
+		BootstrapToken: baseCfg.BootstrapToken, Audit: edition.Audit,
 	})
 	require.NoError(t, err, "build external API")
 	mcpHandler, err := mcpserver.New(onemail.ExternalOpenAPI, external, apiauth.NewExternalSecurityHandler(client, bus), mcpserver.WithResourceMetadataURL(oauthserver.ResourceMetadataURL(baseCfg.AppURL)))

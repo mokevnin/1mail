@@ -146,6 +146,7 @@ const (
 	ApiTokenScopeMcpSend             ApiTokenScope = "mcp:send"
 	ApiTokenScopeTokensRead          ApiTokenScope = "tokens:read"
 	ApiTokenScopeTokensWrite         ApiTokenScope = "tokens:write"
+	ApiTokenScopeAuditRead           ApiTokenScope = "audit:read"
 )
 
 // AllValues returns all ApiTokenScope values.
@@ -173,6 +174,7 @@ func (ApiTokenScope) AllValues() []ApiTokenScope {
 		ApiTokenScopeMcpSend,
 		ApiTokenScopeTokensRead,
 		ApiTokenScopeTokensWrite,
+		ApiTokenScopeAuditRead,
 	}
 }
 
@@ -222,6 +224,8 @@ func (s ApiTokenScope) MarshalText() ([]byte, error) {
 	case ApiTokenScopeTokensRead:
 		return []byte(s), nil
 	case ApiTokenScopeTokensWrite:
+		return []byte(s), nil
+	case ApiTokenScopeAuditRead:
 		return []byte(s), nil
 	default:
 		return nil, errors.Errorf("invalid value: %q", s)
@@ -297,6 +301,9 @@ func (s *ApiTokenScope) UnmarshalText(data []byte) error {
 	case ApiTokenScopeTokensWrite:
 		*s = ApiTokenScopeTokensWrite
 		return nil
+	case ApiTokenScopeAuditRead:
+		*s = ApiTokenScopeAuditRead
+		return nil
 	default:
 		return errors.Errorf("invalid value: %q", data)
 	}
@@ -316,6 +323,312 @@ func (s *ApplyTagInput) GetName() string {
 
 // SetName sets the value of Name.
 func (s *ApplyTagInput) SetName(val string) {
+	s.Name = val
+}
+
+// The actor of an Audit entry.
+// Ref: #/components/schemas/AuditActor
+type AuditActor struct {
+	// The kind of actor; an operator is shown as "1mail staff".
+	Kind AuditActorKind `json:"kind"`
+	// The actor's id (a User id or an API token id); absent for the system.
+	ID OptNilString `json:"id"`
+	// Display name snapshot taken when the entry was written.
+	Name OptNilString `json:"name"`
+}
+
+// GetKind returns the value of Kind.
+func (s *AuditActor) GetKind() AuditActorKind {
+	return s.Kind
+}
+
+// GetID returns the value of ID.
+func (s *AuditActor) GetID() OptNilString {
+	return s.ID
+}
+
+// GetName returns the value of Name.
+func (s *AuditActor) GetName() OptNilString {
+	return s.Name
+}
+
+// SetKind sets the value of Kind.
+func (s *AuditActor) SetKind(val AuditActorKind) {
+	s.Kind = val
+}
+
+// SetID sets the value of ID.
+func (s *AuditActor) SetID(val OptNilString) {
+	s.ID = val
+}
+
+// SetName sets the value of Name.
+func (s *AuditActor) SetName(val OptNilString) {
+	s.Name = val
+}
+
+// Who performed an audited change.
+// Ref: #/components/schemas/AuditActorKind
+type AuditActorKind string
+
+const (
+	AuditActorKindUser     AuditActorKind = "user"
+	AuditActorKindAPIToken AuditActorKind = "api_token"
+	AuditActorKindOperator AuditActorKind = "operator"
+	AuditActorKindSystem   AuditActorKind = "system"
+)
+
+// AllValues returns all AuditActorKind values.
+func (AuditActorKind) AllValues() []AuditActorKind {
+	return []AuditActorKind{
+		AuditActorKindUser,
+		AuditActorKindAPIToken,
+		AuditActorKindOperator,
+		AuditActorKindSystem,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s AuditActorKind) MarshalText() ([]byte, error) {
+	switch s {
+	case AuditActorKindUser:
+		return []byte(s), nil
+	case AuditActorKindAPIToken:
+		return []byte(s), nil
+	case AuditActorKindOperator:
+		return []byte(s), nil
+	case AuditActorKindSystem:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *AuditActorKind) UnmarshalText(data []byte) error {
+	switch AuditActorKind(data) {
+	case AuditActorKindUser:
+		*s = AuditActorKindUser
+		return nil
+	case AuditActorKindAPIToken:
+		*s = AuditActorKindAPIToken
+		return nil
+	case AuditActorKindOperator:
+		*s = AuditActorKindOperator
+		return nil
+	case AuditActorKindSystem:
+		*s = AuditActorKindSystem
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+type AuditEntriesListBadRequest ProblemDetails
+
+func (*AuditEntriesListBadRequest) auditEntriesListRes() {}
+
+type AuditEntriesListPaymentRequired ProblemDetails
+
+func (*AuditEntriesListPaymentRequired) auditEntriesListRes() {}
+
+type AuditEntriesListUnauthorized ProblemDetails
+
+func (*AuditEntriesListUnauthorized) auditEntriesListRes() {}
+
+// A page of Audit entries, newest first.
+// Ref: #/components/schemas/AuditEntryList
+type AuditEntryList struct {
+	Items []AuditEntryResource `json:"items"`
+	// Pass as `cursor` for the next page; absent on the last page.
+	NextCursor OptNilString `json:"nextCursor"`
+}
+
+// GetItems returns the value of Items.
+func (s *AuditEntryList) GetItems() []AuditEntryResource {
+	return s.Items
+}
+
+// GetNextCursor returns the value of NextCursor.
+func (s *AuditEntryList) GetNextCursor() OptNilString {
+	return s.NextCursor
+}
+
+// SetItems sets the value of Items.
+func (s *AuditEntryList) SetItems(val []AuditEntryResource) {
+	s.Items = val
+}
+
+// SetNextCursor sets the value of NextCursor.
+func (s *AuditEntryList) SetNextCursor(val OptNilString) {
+	s.NextCursor = val
+}
+
+func (*AuditEntryList) auditEntriesListRes() {}
+
+// One immutable Audit entry (Enterprise).
+// Ref: #/components/schemas/AuditEntryResource
+type AuditEntryResource struct {
+	// Unique identifier.
+	ID EntityId `json:"id"`
+	// When the change happened.
+	OccurredAt Timestamp `json:"occurredAt"`
+	// Who did it.
+	Actor AuditActor `json:"actor"`
+	// What was done, as `<entity>.<verb>`.
+	Action string `json:"action"`
+	// What it was done to.
+	Target AuditTarget `json:"target"`
+	// Before/after of the changed fields; secrets appear as changed only.
+	Diff OptNilAuditEntryResourceDiff `json:"diff"`
+	// Request id of the change.
+	RequestId OptNilString `json:"requestId"`
+	// Client address of the change.
+	IP OptNilString `json:"ip"`
+	// Client user agent of the change.
+	UserAgent OptNilString `json:"userAgent"`
+}
+
+// GetID returns the value of ID.
+func (s *AuditEntryResource) GetID() EntityId {
+	return s.ID
+}
+
+// GetOccurredAt returns the value of OccurredAt.
+func (s *AuditEntryResource) GetOccurredAt() Timestamp {
+	return s.OccurredAt
+}
+
+// GetActor returns the value of Actor.
+func (s *AuditEntryResource) GetActor() AuditActor {
+	return s.Actor
+}
+
+// GetAction returns the value of Action.
+func (s *AuditEntryResource) GetAction() string {
+	return s.Action
+}
+
+// GetTarget returns the value of Target.
+func (s *AuditEntryResource) GetTarget() AuditTarget {
+	return s.Target
+}
+
+// GetDiff returns the value of Diff.
+func (s *AuditEntryResource) GetDiff() OptNilAuditEntryResourceDiff {
+	return s.Diff
+}
+
+// GetRequestId returns the value of RequestId.
+func (s *AuditEntryResource) GetRequestId() OptNilString {
+	return s.RequestId
+}
+
+// GetIP returns the value of IP.
+func (s *AuditEntryResource) GetIP() OptNilString {
+	return s.IP
+}
+
+// GetUserAgent returns the value of UserAgent.
+func (s *AuditEntryResource) GetUserAgent() OptNilString {
+	return s.UserAgent
+}
+
+// SetID sets the value of ID.
+func (s *AuditEntryResource) SetID(val EntityId) {
+	s.ID = val
+}
+
+// SetOccurredAt sets the value of OccurredAt.
+func (s *AuditEntryResource) SetOccurredAt(val Timestamp) {
+	s.OccurredAt = val
+}
+
+// SetActor sets the value of Actor.
+func (s *AuditEntryResource) SetActor(val AuditActor) {
+	s.Actor = val
+}
+
+// SetAction sets the value of Action.
+func (s *AuditEntryResource) SetAction(val string) {
+	s.Action = val
+}
+
+// SetTarget sets the value of Target.
+func (s *AuditEntryResource) SetTarget(val AuditTarget) {
+	s.Target = val
+}
+
+// SetDiff sets the value of Diff.
+func (s *AuditEntryResource) SetDiff(val OptNilAuditEntryResourceDiff) {
+	s.Diff = val
+}
+
+// SetRequestId sets the value of RequestId.
+func (s *AuditEntryResource) SetRequestId(val OptNilString) {
+	s.RequestId = val
+}
+
+// SetIP sets the value of IP.
+func (s *AuditEntryResource) SetIP(val OptNilString) {
+	s.IP = val
+}
+
+// SetUserAgent sets the value of UserAgent.
+func (s *AuditEntryResource) SetUserAgent(val OptNilString) {
+	s.UserAgent = val
+}
+
+// Before/after of the changed fields; secrets appear as changed only.
+type AuditEntryResourceDiff map[string]jx.Raw
+
+func (s *AuditEntryResourceDiff) init() AuditEntryResourceDiff {
+	m := *s
+	if m == nil {
+		m = map[string]jx.Raw{}
+		*s = m
+	}
+	return m
+}
+
+// What an audited change was done to.
+// Ref: #/components/schemas/AuditTarget
+type AuditTarget struct {
+	// Entity type, e.g. membership.
+	Type string `json:"type"`
+	// The target's id.
+	ID OptNilString `json:"id"`
+	// Name snapshot taken when the entry was written; absent for a Contact.
+	Name OptNilString `json:"name"`
+}
+
+// GetType returns the value of Type.
+func (s *AuditTarget) GetType() string {
+	return s.Type
+}
+
+// GetID returns the value of ID.
+func (s *AuditTarget) GetID() OptNilString {
+	return s.ID
+}
+
+// GetName returns the value of Name.
+func (s *AuditTarget) GetName() OptNilString {
+	return s.Name
+}
+
+// SetType sets the value of Type.
+func (s *AuditTarget) SetType(val string) {
+	s.Type = val
+}
+
+// SetID sets the value of ID.
+func (s *AuditTarget) SetID(val OptNilString) {
+	s.ID = val
+}
+
+// SetName sets the value of Name.
+func (s *AuditTarget) SetName(val OptNilString) {
 	s.Name = val
 }
 
@@ -3007,6 +3320,74 @@ func (o OptInt32) Get() (v int32, ok bool) {
 
 // Or returns value if set, or given parameter if does not.
 func (o OptInt32) Or(d int32) int32 {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptNilAuditEntryResourceDiff returns new OptNilAuditEntryResourceDiff with value set to v.
+func NewOptNilAuditEntryResourceDiff(v AuditEntryResourceDiff) OptNilAuditEntryResourceDiff {
+	return OptNilAuditEntryResourceDiff{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptNilAuditEntryResourceDiff is optional nullable AuditEntryResourceDiff.
+type OptNilAuditEntryResourceDiff struct {
+	Value AuditEntryResourceDiff
+	Set   bool
+	Null  bool
+}
+
+// IsSet returns true if OptNilAuditEntryResourceDiff was set.
+func (o OptNilAuditEntryResourceDiff) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptNilAuditEntryResourceDiff) Reset() {
+	var v AuditEntryResourceDiff
+	o.Value = v
+	o.Set = false
+	o.Null = false
+}
+
+// SetTo sets value to v.
+func (o *OptNilAuditEntryResourceDiff) SetTo(v AuditEntryResourceDiff) {
+	o.Set = true
+	o.Null = false
+	o.Value = v
+}
+
+// IsNull returns true if value is Null.
+func (o OptNilAuditEntryResourceDiff) IsNull() bool { return o.Null }
+
+// SetToNull sets value to null.
+func (o *OptNilAuditEntryResourceDiff) SetToNull() {
+	o.Set = true
+	o.Null = true
+	var v AuditEntryResourceDiff
+	o.Value = v
+}
+
+// IsEmpty returns true if the field was omitted from the payload (not Set and not Null).
+func (o OptNilAuditEntryResourceDiff) IsEmpty() bool {
+	return !o.Set && !o.Null
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptNilAuditEntryResourceDiff) Get() (v AuditEntryResourceDiff, ok bool) {
+	if o.Null {
+		return v, false
+	}
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptNilAuditEntryResourceDiff) Or(d AuditEntryResourceDiff) AuditEntryResourceDiff {
 	if v, ok := o.Get(); ok {
 		return v
 	}

@@ -1,9 +1,14 @@
-import { Alert, Button, Card, Code, Loader, Stack, Table, Text, Title } from '@mantine/core'
-import { useQuery } from '@tanstack/react-query'
+import { Alert, Button, Card, Code, Group, Loader, Stack, Table, Text, Title } from '@mantine/core'
+import { notifications } from '@mantine/notifications'
+import { IconDownload } from '@tabler/icons-react'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { siteAuditListOptions } from '../../generated/site/@tanstack/react-query.gen.ts'
+import {
+  siteAuditExportOptions,
+  siteAuditListOptions,
+} from '../../generated/site/@tanstack/react-query.gen.ts'
 import type { SiteAuditEntryResource } from '../../generated/site/types.gen.ts'
 import { formatDateTime } from '../../utils/datetime.ts'
 
@@ -116,6 +121,47 @@ function AuditPage({ slug, cursor, first }: { slug: string; cursor?: string; fir
   )
 }
 
+// saveCsv hands the exported text to the browser as a file download.
+function saveCsv(csv: string, filename: string) {
+  const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }))
+  const link = document.createElement('a')
+  link.href = url
+  link.download = filename
+  link.click()
+  URL.revokeObjectURL(url)
+}
+
+function ExportButton({ slug }: { slug: string }) {
+  const { t } = useTranslation()
+  const queryClient = useQueryClient()
+  const exportCsv = useMutation({
+    mutationFn: () =>
+      queryClient.fetchQuery({
+        ...siteAuditExportOptions({ path: { slug } }),
+        staleTime: 0,
+        gcTime: 0,
+      }),
+    onSuccess: (csv) => saveCsv(csv, `audit-log-${slug}.csv`),
+    onError: () =>
+      notifications.show({
+        color: 'red',
+        message: t(($) => $.settings.auditLog.exportError),
+      }),
+  })
+
+  return (
+    <Button
+      variant="default"
+      size="xs"
+      leftSection={<IconDownload size={14} />}
+      loading={exportCsv.isPending}
+      onClick={() => exportCsv.mutate()}
+    >
+      {t(($) => $.settings.auditLog.exportCsv)}
+    </Button>
+  )
+}
+
 // AuditLogSection is the Enterprise Audit log of the workspace: who changed what and
 // when, newest first. It renders nothing for a plain member or without a license.
 export function AuditLogSection({ slug }: { slug: string }) {
@@ -126,7 +172,10 @@ export function AuditLogSection({ slug }: { slug: string }) {
   return (
     <Card withBorder>
       <Stack>
-        <Title order={4}>{t(($) => $.settings.auditLog.title)}</Title>
+        <Group justify="space-between">
+          <Title order={4}>{t(($) => $.settings.auditLog.title)}</Title>
+          <ExportButton slug={slug} />
+        </Group>
         <AuditPage slug={slug} first />
       </Stack>
     </Card>

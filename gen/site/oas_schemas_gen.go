@@ -3,6 +3,7 @@
 package siteapi
 
 import (
+	"io"
 	"time"
 
 	"github.com/go-faster/errors"
@@ -2064,6 +2065,60 @@ func (s *SiteAuditEntryResourceDiff) init() SiteAuditEntryResourceDiff {
 	}
 	return m
 }
+
+type SiteAuditExportForbidden ProblemDetails
+
+func (*SiteAuditExportForbidden) siteAuditExportRes() {}
+
+type SiteAuditExportNotFound ProblemDetails
+
+func (*SiteAuditExportNotFound) siteAuditExportRes() {}
+
+type SiteAuditExportOK struct {
+	Data io.Reader
+}
+
+// Read reads data from the Data reader.
+//
+// Kept to satisfy the io.Reader interface.
+func (s SiteAuditExportOK) Read(p []byte) (n int, err error) {
+	if s.Data == nil {
+		return 0, io.EOF
+	}
+	return s.Data.Read(p)
+}
+
+// SiteAuditExportOKHeaders wraps SiteAuditExportOK with response headers.
+type SiteAuditExportOKHeaders struct {
+	ContentDisposition string
+	Response           SiteAuditExportOK
+}
+
+// GetContentDisposition returns the value of ContentDisposition.
+func (s *SiteAuditExportOKHeaders) GetContentDisposition() string {
+	return s.ContentDisposition
+}
+
+// GetResponse returns the value of Response.
+func (s *SiteAuditExportOKHeaders) GetResponse() SiteAuditExportOK {
+	return s.Response
+}
+
+// SetContentDisposition sets the value of ContentDisposition.
+func (s *SiteAuditExportOKHeaders) SetContentDisposition(val string) {
+	s.ContentDisposition = val
+}
+
+// SetResponse sets the value of Response.
+func (s *SiteAuditExportOKHeaders) SetResponse(val SiteAuditExportOK) {
+	s.Response = val
+}
+
+func (*SiteAuditExportOKHeaders) siteAuditExportRes() {}
+
+type SiteAuditExportPaymentRequired ProblemDetails
+
+func (*SiteAuditExportPaymentRequired) siteAuditExportRes() {}
 
 type SiteAuditListBadRequest ProblemDetails
 

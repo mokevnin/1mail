@@ -2588,6 +2588,41 @@ export type SiteAuditListResponses = {
 
 export type SiteAuditListResponse = SiteAuditListResponses[keyof SiteAuditListResponses];
 
+export type SiteAuditExportData = {
+  body?: never;
+  path: {
+    slug: string;
+  };
+  query?: never;
+  url: '/workspaces/{slug}/audit-entries/export';
+};
+
+export type SiteAuditExportErrors = {
+  /**
+   * RFC 7807 payment required response: the feature needs an Enterprise license
+   */
+  402: ProblemDetails;
+  /**
+   * RFC 7807 forbidden response
+   */
+  403: ProblemDetails;
+  /**
+   * RFC 7807 not found response
+   */
+  404: ProblemDetails;
+};
+
+export type SiteAuditExportError = SiteAuditExportErrors[keyof SiteAuditExportErrors];
+
+export type SiteAuditExportResponses = {
+  /**
+   * The request has succeeded.
+   */
+  200: string;
+};
+
+export type SiteAuditExportResponse = SiteAuditExportResponses[keyof SiteAuditExportResponses];
+
 export type SiteAutomationsListData = {
   body?: never;
   path: {

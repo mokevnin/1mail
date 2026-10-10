@@ -1,9 +1,11 @@
 package external
 
 import (
+	"context"
 	"net/http"
 	"strconv"
 
+	"github.com/mokevnin/1mail/ent"
 	externalapi "github.com/mokevnin/1mail/gen/external"
 	"github.com/mokevnin/1mail/internal/accounts"
 	"github.com/mokevnin/1mail/internal/api/external/resources"
@@ -36,6 +38,17 @@ type Handlers struct {
 	tags           *tags.Module
 	automations    *automations.Module
 	bootstrapToken string
+	audit          AuditLog
+}
+
+// AuditLog is the read seam of the Enterprise Audit log (ADR 0022), implemented by
+// ee/audit. Core knows only this interface: without a license Licensed is false and
+// the read answers 402.
+type AuditLog interface {
+	Licensed() bool
+	// Entries returns up to limit entries, newest first, preceding the cursor entry
+	// id (0 = from the newest), and the next page's cursor (0 = last page).
+	Entries(ctx context.Context, s *ent.Scoped, cursor int64, limit int) ([]*ent.AuditEntry, int64, error)
 }
 
 // Deps is everything the /api handlers are built from. The domain modules are
@@ -54,6 +67,7 @@ type Deps struct {
 	Broadcasts     *broadcasts.Module
 	Reputation     *reputation.Module
 	BootstrapToken string
+	Audit          AuditLog
 }
 
 func NewHandlers(d Deps) *Handlers {
@@ -61,6 +75,7 @@ func NewHandlers(d Deps) *Handlers {
 		accounts: d.Accounts, bus: d.Bus, cipher: d.Cipher, outbound: d.Outbound, segments: d.Segments,
 		eventlog: d.EventLog, contacts: d.Contacts, tags: d.Tags, automations: d.Automations,
 		broadcasts: d.Broadcasts, reputation: d.Reputation, bootstrapToken: d.BootstrapToken,
+		audit: d.Audit,
 	}
 }
 

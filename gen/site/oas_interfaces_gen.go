@@ -5,6 +5,10 @@ type SiteAnalyticsOverviewRes interface {
 	siteAnalyticsOverviewRes()
 }
 
+type SiteAuditExportRes interface {
+	siteAuditExportRes()
+}
+
 type SiteAuditListRes interface {
 	siteAuditListRes()
 }

@@ -30,6 +30,9 @@
       "name": "Auth"
     },
     {
+      "name": "Audit"
+    },
+    {
       "name": "Segments"
     },
     {
@@ -46,6 +49,82 @@
     }
   ],
   "paths": {
+    "/audit-entries": {
+      "get": {
+        "operationId": "AuditEntries_list",
+        "description": "List the Workspace's Audit log, newest first (Enterprise; needs the `audit:read` scope)",
+        "parameters": [
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "description": "Cursor from a previous page",
+            "schema": {
+              "type": "string"
+            },
+            "explode": false
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "description": "Page size",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 25
+            },
+            "explode": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request has succeeded.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuditEntryList"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "RFC 7807 bad request response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "RFC 7807 unauthorized response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "RFC 7807 payment required response: the feature needs an Enterprise license",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Audit"],
+        "x-mcp": {
+          "hidden": true
+        }
+      }
+    },
     "/auth/me": {
       "get": {
         "operationId": "Auth_meGet",
@@ -3932,7 +4011,8 @@
           "automations:activate",
           "mcp:send",
           "tokens:read",
-          "tokens:write"
+          "tokens:write",
+          "audit:read"
         ]
       },
       "ApplyTagInput": {
@@ -3945,6 +4025,139 @@
           }
         },
         "description": "Request body for applying a tag to a contact"
+      },
+      "AuditActor": {
+        "type": "object",
+        "required": ["kind"],
+        "properties": {
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AuditActorKind"
+              }
+            ],
+            "description": "The kind of actor; an operator is shown as \"1mail staff\""
+          },
+          "id": {
+            "type": "string",
+            "nullable": true,
+            "description": "The actor's id (a User id or an API token id); absent for the system"
+          },
+          "name": {
+            "type": "string",
+            "nullable": true,
+            "description": "Display name snapshot taken when the entry was written"
+          }
+        },
+        "description": "The actor of an Audit entry"
+      },
+      "AuditActorKind": {
+        "type": "string",
+        "enum": ["user", "api_token", "operator", "system"],
+        "description": "Who performed an audited change"
+      },
+      "AuditEntryList": {
+        "type": "object",
+        "required": ["items"],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AuditEntryResource"
+            }
+          },
+          "nextCursor": {
+            "type": "string",
+            "nullable": true,
+            "description": "Pass as `cursor` for the next page; absent on the last page"
+          }
+        },
+        "description": "A page of Audit entries, newest first"
+      },
+      "AuditEntryResource": {
+        "type": "object",
+        "required": ["id", "occurredAt", "actor", "action", "target"],
+        "properties": {
+          "id": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EntityId"
+              }
+            ],
+            "description": "Unique identifier"
+          },
+          "occurredAt": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Timestamp"
+              }
+            ],
+            "description": "When the change happened"
+          },
+          "actor": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AuditActor"
+              }
+            ],
+            "description": "Who did it"
+          },
+          "action": {
+            "type": "string",
+            "description": "What was done, as `<entity>.<verb>`"
+          },
+          "target": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AuditTarget"
+              }
+            ],
+            "description": "What it was done to"
+          },
+          "diff": {
+            "type": "object",
+            "additionalProperties": {},
+            "nullable": true,
+            "description": "Before/after of the changed fields; secrets appear as changed only"
+          },
+          "requestId": {
+            "type": "string",
+            "nullable": true,
+            "description": "Request id of the change"
+          },
+          "ip": {
+            "type": "string",
+            "nullable": true,
+            "description": "Client address of the change"
+          },
+          "userAgent": {
+            "type": "string",
+            "nullable": true,
+            "description": "Client user agent of the change"
+          }
+        },
+        "description": "One immutable Audit entry (Enterprise)"
+      },
+      "AuditTarget": {
+        "type": "object",
+        "required": ["type"],
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "Entity type, e.g. membership"
+          },
+          "id": {
+            "type": "string",
+            "nullable": true,
+            "description": "The target's id"
+          },
+          "name": {
+            "type": "string",
+            "nullable": true,
+            "description": "Name snapshot taken when the entry was written; absent for a Contact"
+          }
+        },
+        "description": "What an audited change was done to"
       },
       "AutomationResource": {
         "type": "object",
@@ -4724,16 +4937,6 @@
           }
         },
         "description": "RFC 7807 gone response: the resource existed but is no longer available (an expired link)"
-      },
-      "PaymentRequiredProblem": {
-        "type": "object",
-        "required": ["body"],
-        "properties": {
-          "body": {
-            "$ref": "#/components/schemas/ProblemDetails"
-          }
-        },
-        "description": "RFC 7807 payment required response: the feature needs an Enterprise license"
       },
       "PreviewSegmentInput": {
         "type": "object",
