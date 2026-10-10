@@ -94,6 +94,20 @@ func encodeSiteAuthResetPasswordRequest(
 	return nil
 }
 
+func encodeSiteAuthSecondFactorRequest(
+	req *SiteLoginSecondFactorInput,
+	r *http.Request,
+) error {
+	const contentType = "application/json"
+	e := new(jx.Encoder)
+	{
+		req.Encode(e)
+	}
+	encoded := e.Bytes()
+	ht.SetBody(r, bytes.NewReader(encoded), contentType)
+	return nil
+}
+
 func encodeSiteAuthVerifyEmailRequest(
 	req *SiteVerifyEmailInput,
 	r *http.Request,

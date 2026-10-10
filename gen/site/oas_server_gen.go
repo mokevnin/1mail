@@ -81,6 +81,15 @@ type Handler interface {
 	//
 	// POST /auth/reset-password
 	SiteAuthResetPassword(ctx context.Context, req *SiteResetPasswordInput) (SiteAuthResetPasswordRes, error)
+	// SiteAuthSecondFactor implements SiteAuth_secondFactor operation.
+	//
+	// The second login step of a User with a Second factor: verify the challenge and a TOTP or Recovery
+	// code, then start the session. An expired, reused or forged challenge and a wrong code answer the
+	// same 401; wrong codes feed the Login throttle of the User's address, which answers 429 even for a
+	// correct code while its delay runs (ADR 0020, ADR 0025).
+	//
+	// POST /auth/second-factor
+	SiteAuthSecondFactor(ctx context.Context, req *SiteLoginSecondFactorInput) (SiteAuthSecondFactorRes, error)
 	// SiteAuthVerifyEmail implements SiteAuth_verifyEmail operation.
 	//
 	// Confirm an email address from a verification token (signup verification).

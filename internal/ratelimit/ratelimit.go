@@ -305,9 +305,9 @@ func (l *Limiter) Middleware(next http.Handler) http.Handler {
 			!l.forgotIP.Allow(w, r, httprate.CanonicalizeIP(clientip.FromContext(ctx))) {
 			return
 		}
-		// The per-IP login cap spans accounts (password spraying); the per-account
-		// delay follows in the login operation, which knows the address.
-		if r.Method == http.MethodPost && r.URL.Path == "/site/auth/login" &&
+		// The per-IP login cap spans accounts (password spraying) and both login
+		// steps; the per-account delay follows in the operations, which know the address.
+		if r.Method == http.MethodPost && (r.URL.Path == "/site/auth/login" || r.URL.Path == "/site/auth/second-factor") &&
 			!l.loginIP.Allow(w, r, "login|"+httprate.CanonicalizeIP(clientip.FromContext(ctx))) {
 			return
 		}

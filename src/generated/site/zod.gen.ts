@@ -345,13 +345,23 @@ export const zSiteLoginInput = z.object({
 });
 
 /**
- * What a login granted. `session`: the session cookie is set. A User with a
- * Second factor will get a challenge outcome instead (ADR 0020).
+ * What a login granted (ADR 0020). `session`: the session cookie is set.
+ * `challenge`: the password was right but the User has a Second factor; no session
+ * exists yet, and the `challenge` goes with a code to `/auth/second-factor`.
  */
-export const zSiteLoginOutcome = z.enum(['session']);
+export const zSiteLoginOutcome = z.enum(['session', 'challenge']);
 
 export const zSiteLoginResult = z.object({
-  outcome: zSiteLoginOutcome
+  outcome: zSiteLoginOutcome,
+  challenge: z.exactOptional(z.string())
+});
+
+/**
+ * The second login step: the challenge from the password step and a code
+ */
+export const zSiteLoginSecondFactorInput = z.object({
+  challenge: z.string(),
+  code: z.string()
 });
 
 /**
@@ -1490,6 +1500,13 @@ export const zSiteAuthRegisterBody = zSiteRegisterInput;
 export const zSiteAuthRegisterResponse = zSiteRegisterResult;
 
 export const zSiteAuthResetPasswordBody = zSiteResetPasswordInput;
+
+export const zSiteAuthSecondFactorBody = zSiteLoginSecondFactorInput;
+
+/**
+ * The request has succeeded.
+ */
+export const zSiteAuthSecondFactorResponse = zSiteLoginResult;
 
 export const zSiteAuthVerifyEmailBody = zSiteVerifyEmailInput;
 

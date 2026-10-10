@@ -273,6 +273,7 @@ export default interface Resources {
       "editTitle": "Edit contact"
     },
     "login": {
+      "codeLabel": "Authentication code",
       "emailLabel": "Email",
       "errorMessage": "Invalid email or password. Please try again.",
       "errorTitle": "Sign in failed",
@@ -281,8 +282,12 @@ export default interface Resources {
       "rateLimitedMinutes": "Too many sign-in attempts. Try again in {{count}} minutes." | "Too many sign-in attempts. Try again in {{count}} minute." | "Too many sign-in attempts. Try again in {{count}} minutes.",
       "rateLimitedSeconds": "Too many sign-in attempts. Try again in {{count}} seconds." | "Too many sign-in attempts. Try again in {{count}} second." | "Too many sign-in attempts. Try again in {{count}} seconds.",
       "registerLink": "Create account",
+      "secondStepDescription": "Enter the code from your authenticator app, or one of your recovery codes.",
+      "secondStepTitle": "Two-step verification",
+      "startOver": "Start over",
       "submitButton": "Sign in",
-      "title": "Sign in"
+      "title": "Sign in",
+      "verifyButton": "Verify"
     },
     "nav": {
       "activity": "Activity",

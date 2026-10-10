@@ -102,6 +102,15 @@ type Invoker interface {
 	//
 	// POST /auth/reset-password
 	SiteAuthResetPassword(ctx context.Context, request *SiteResetPasswordInput) (SiteAuthResetPasswordRes, error)
+	// SiteAuthSecondFactor invokes SiteAuth_secondFactor operation.
+	//
+	// The second login step of a User with a Second factor: verify the challenge and a TOTP or Recovery
+	// code, then start the session. An expired, reused or forged challenge and a wrong code answer the
+	// same 401; wrong codes feed the Login throttle of the User's address, which answers 429 even for a
+	// correct code while its delay runs (ADR 0020, ADR 0025).
+	//
+	// POST /auth/second-factor
+	SiteAuthSecondFactor(ctx context.Context, request *SiteLoginSecondFactorInput) (SiteAuthSecondFactorRes, error)
 	// SiteAuthVerifyEmail invokes SiteAuth_verifyEmail operation.
 	//
 	// Confirm an email address from a verification token (signup verification).
@@ -2236,6 +2245,92 @@ func (c *Client) sendSiteAuthResetPassword(ctx context.Context, request *SiteRes
 
 	stage = "DecodeResponse"
 	result, err := decodeSiteAuthResetPasswordResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// SiteAuthSecondFactor invokes SiteAuth_secondFactor operation.
+//
+// The second login step of a User with a Second factor: verify the challenge and a TOTP or Recovery
+// code, then start the session. An expired, reused or forged challenge and a wrong code answer the
+// same 401; wrong codes feed the Login throttle of the User's address, which answers 429 even for a
+// correct code while its delay runs (ADR 0020, ADR 0025).
+//
+// POST /auth/second-factor
+func (c *Client) SiteAuthSecondFactor(ctx context.Context, request *SiteLoginSecondFactorInput) (SiteAuthSecondFactorRes, error) {
+	res, err := c.sendSiteAuthSecondFactor(ctx, request)
+	return res, err
+}
+
+func (c *Client) sendSiteAuthSecondFactor(ctx context.Context, request *SiteLoginSecondFactorInput) (res SiteAuthSecondFactorRes, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("SiteAuth_secondFactor"),
+		semconv.HTTPRequestMethodKey.String("POST"),
+		semconv.URLTemplateKey.String("/auth/second-factor"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, SiteAuthSecondFactorOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	stage = "BuildURL"
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [1]string
+	pathParts[0] = "/auth/second-factor"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "POST", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+	if err := encodeSiteAuthSecondFactorRequest(request, r); err != nil {
+		return res, errors.Wrap(err, "encode request")
+	}
+
+	stage = "SendRequest"
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	body := resp.Body
+	defer func() {
+		// Drain the body to EOF before closing, so the underlying
+		// connection can be reused by the Transport regardless of the
+		// response status code. See https://github.com/ogen-go/ogen/issues/1670.
+		_, _ = io.Copy(io.Discard, body)
+		_ = body.Close()
+	}()
+
+	stage = "DecodeResponse"
+	result, err := decodeSiteAuthSecondFactorResponse(resp)
 	if err != nil {
 		return res, errors.Wrap(err, "decode response")
 	}

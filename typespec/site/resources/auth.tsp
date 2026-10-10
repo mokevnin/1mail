@@ -22,14 +22,28 @@ model SiteLoginInput {
   password: string;
 }
 
-/** What a login granted. `session`: the session cookie is set. A User with a
- * Second factor will get a challenge outcome instead (ADR 0020). */
+/** What a login granted (ADR 0020). `session`: the session cookie is set.
+ * `challenge`: the password was right but the User has a Second factor; no session
+ * exists yet, and the `challenge` goes with a code to `/auth/second-factor`. */
 enum SiteLoginOutcome {
   session,
+  challenge,
 }
 
 model SiteLoginResult {
   outcome: SiteLoginOutcome;
+
+  /** The signed challenge, present when the outcome is `challenge`. It is bound to
+   * the User, valid for 5 minutes and works for one successful second step. */
+  challenge?: string;
+}
+
+/** The second login step: the challenge from the password step and a code */
+model SiteLoginSecondFactorInput {
+  challenge: string;
+
+  /** A current TOTP code from the authenticator app, or an unused Recovery code */
+  code: string;
 }
 
 /** Request a password-reset link (always accepted; no account enumeration) */
@@ -79,6 +93,27 @@ namespace SiteAuth {
         @statusCode statusCode: 200;
 
         /** The session cookie, set when the outcome is `session` */
+        @header("Set-Cookie") setCookie?: string;
+
+        @body body: SiteLoginResult;
+      }
+    | UnauthorizedProblem
+    | TooManyRequestsProblem;
+
+  /** The second login step of a User with a Second factor: verify the challenge
+   * and a TOTP or Recovery code, then start the session. An expired, reused or
+   * forged challenge and a wrong code answer the same 401; wrong codes feed the
+   * Login throttle of the User's address, which answers 429 even for a correct code
+   * while its delay runs (ADR 0020, ADR 0025). */
+  @useAuth(NoAuth)
+  @post
+  @route("/second-factor")
+  op secondFactor(@body body: SiteLoginSecondFactorInput):
+    | {
+        @statusCode statusCode: 200;
+
+        /** The session cookie (always set here; optional only because the
+         * response shares its shape with the login operation's) */
         @header("Set-Cookie") setCookie?: string;
 
         @body body: SiteLoginResult;

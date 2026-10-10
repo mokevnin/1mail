@@ -119,6 +119,18 @@ func (UnimplementedHandler) SiteAuthResetPassword(ctx context.Context, req *Site
 	return r, ht.ErrNotImplemented
 }
 
+// SiteAuthSecondFactor implements SiteAuth_secondFactor operation.
+//
+// The second login step of a User with a Second factor: verify the challenge and a TOTP or Recovery
+// code, then start the session. An expired, reused or forged challenge and a wrong code answer the
+// same 401; wrong codes feed the Login throttle of the User's address, which answers 429 even for a
+// correct code while its delay runs (ADR 0020, ADR 0025).
+//
+// POST /auth/second-factor
+func (UnimplementedHandler) SiteAuthSecondFactor(ctx context.Context, req *SiteLoginSecondFactorInput) (r SiteAuthSecondFactorRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // SiteAuthVerifyEmail implements SiteAuth_verifyEmail operation.
 //
 // Confirm an email address from a verification token (signup verification).

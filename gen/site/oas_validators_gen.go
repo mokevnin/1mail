@@ -3009,6 +3009,8 @@ func (s SiteLoginOutcome) Validate() error {
 	switch s {
 	case "session":
 		return nil
+	case "challenge":
+		return nil
 	default:
 		return errors.Errorf("invalid value: %v", s)
 	}

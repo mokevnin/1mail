@@ -12,6 +12,7 @@ import (
 	"github.com/mokevnin/1mail/internal/accounts"
 	"github.com/mokevnin/1mail/internal/i18n"
 	"github.com/mokevnin/1mail/internal/ratelimit"
+	"github.com/mokevnin/1mail/internal/secondfactor"
 	"github.com/mokevnin/1mail/internal/service"
 )
 
@@ -23,8 +24,9 @@ import (
 // failure of the address. A success resets the counter, sets the session cookie and
 // is recorded as `user.login` in each of the User's Workspaces (ADR 0022).
 //
-// The outcome field leaves room for the Second factor: a User who has one will get
-// a challenge here instead of the cookie.
+// A User with an active Second factor gets a challenge instead of the cookie, and
+// the counter is not reset: only the second step resets it, else knowing the
+// password would buy a fresh round of code guesses on every login.
 func (h *Handlers) SiteAuthLogin(ctx context.Context, req *siteapi.SiteLoginInput) (siteapi.SiteAuthLoginRes, error) {
 	email := strings.TrimSpace(req.Email)
 	wait, err := h.attempts.Delay(ctx, accounts.KindLogin, email)
@@ -47,10 +49,25 @@ func (h *Handlers) SiteAuthLogin(ctx context.Context, req *siteapi.SiteLoginInpu
 		v := problem(http.StatusUnauthorized, i18n.T("errors.invalid_credentials", nil))
 		return &v, nil
 	}
-	if err := h.attempts.RecordSuccess(ctx, accounts.KindLogin, email); err != nil {
+	if secondfactor.Active(u) {
+		challenge, err := h.mintLoginChallenge(ctx, u)
+		if err != nil {
+			return nil, err
+		}
+		return &siteapi.SiteLoginResultHeaders{Response: siteapi.SiteLoginResult{
+			Outcome:   siteapi.SiteLoginOutcomeChallenge,
+			Challenge: siteapi.NewOptString(challenge),
+		}}, nil
+	}
+	return h.startSession(ctx, u)
+}
+
+// startSession ends a successful login: it resets the address's counter, issues
+// the session cookie and records `user.login`.
+func (h *Handlers) startSession(ctx context.Context, u *ent.User) (*siteapi.SiteLoginResultHeaders, error) {
+	if err := h.attempts.RecordSuccess(ctx, accounts.KindLogin, u.Email); err != nil {
 		return nil, err
 	}
-
 	cookie, err := h.sessions.Issue(u)
 	if err != nil {
 		return nil, err

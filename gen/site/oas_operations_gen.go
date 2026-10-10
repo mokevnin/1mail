@@ -17,6 +17,7 @@ const (
 	SiteAuthLogoutOperation                          OperationName = "SiteAuthLogout"
 	SiteAuthRegisterOperation                        OperationName = "SiteAuthRegister"
 	SiteAuthResetPasswordOperation                   OperationName = "SiteAuthResetPassword"
+	SiteAuthSecondFactorOperation                    OperationName = "SiteAuthSecondFactor"
 	SiteAuthVerifyEmailOperation                     OperationName = "SiteAuthVerifyEmail"
 	SiteAutomationsActivateOperation                 OperationName = "SiteAutomationsActivate"
 	SiteAutomationsCreateOperation                   OperationName = "SiteAutomationsCreate"
