@@ -247,6 +247,8 @@ export default interface Resources {
       "backToLogin": "Back to sign in",
       "description": "Enter your email and we'll send you a reset link.",
       "emailLabel": "Email",
+      "rateLimitedMinutes": "Too many reset requests. Try again in {{count}} minutes." | "Too many reset requests. Try again in {{count}} minute." | "Too many reset requests. Try again in {{count}} minutes.",
+      "rateLimitedSeconds": "Too many reset requests. Try again in {{count}} seconds." | "Too many reset requests. Try again in {{count}} second." | "Too many reset requests. Try again in {{count}} seconds.",
       "submitButton": "Send reset link",
       "successBody": "If an account exists for that address, we've sent a password reset link.",
       "successTitle": "Check your email",

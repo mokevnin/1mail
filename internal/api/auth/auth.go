@@ -81,24 +81,41 @@ var _ externalapi.SecurityHandler = (*ExternalSecurityHandler)(nil)
 // success charges the Workspace's shared /api and /mcp budget. Rejections surface
 // as *ratelimit.LimitedError.
 func (h *ExternalSecurityHandler) HandleBearerAuth(ctx context.Context, op externalapi.OperationName, t externalapi.BearerAuth) (context.Context, error) {
-	limits := ratelimit.FromContext(ctx)
-	if err := limits.AuthBlocked(); err != nil {
-		return ctx, err
-	}
-	ctx, err := h.authenticate(ctx, op, t)
-	if errors.Is(err, ErrUnauthorized) {
-		if limited := limits.AuthFailed(); limited != nil {
-			return ctx, limited
-		}
-		return ctx, err
-	}
+	authed, err := guardedAuth(ctx,
+		func() (context.Context, error) { return h.authenticate(ctx, op, t) },
+		func(limits *ratelimit.Exchange, authed context.Context) error {
+			return limits.ChargeWorkspace(GetTokenAuth(authed).WorkspaceID)
+		})
 	if err != nil {
 		return ctx, err
 	}
-	if err := limits.ChargeWorkspace(GetTokenAuth(ctx).WorkspaceID); err != nil {
-		return ctx, err
+	return authed, nil
+}
+
+// guardedAuth is the sequence both token surfaces share (ADR 0018): a client address
+// that spent its failed-authentication budget is refused before the credential is
+// looked at, an ErrUnauthorized counts against that budget, and a success is charged
+// by charge (the Workspace's budget of the surface).
+func guardedAuth[T any](ctx context.Context, authenticate func() (T, error), charge func(*ratelimit.Exchange, T) error) (T, error) {
+	var zero T
+	limits := ratelimit.FromContext(ctx)
+	if err := limits.AuthBlocked(ctx); err != nil {
+		return zero, err
 	}
-	return ctx, nil
+	authed, err := authenticate()
+	if errors.Is(err, ErrUnauthorized) {
+		if limited := limits.AuthFailed(ctx); limited != nil {
+			return zero, limited
+		}
+		return zero, err
+	}
+	if err != nil {
+		return zero, err
+	}
+	if err := charge(limits, authed); err != nil {
+		return zero, err
+	}
+	return authed, nil
 }
 
 func (h *ExternalSecurityHandler) authenticate(ctx context.Context, _ externalapi.OperationName, t externalapi.BearerAuth) (context.Context, error) {
@@ -185,21 +202,10 @@ var _ collectapi.SecurityHandler = (*CollectSecurityHandler)(nil)
 // success charges the Workspace's /collect budget. Rejections surface as
 // *ratelimit.LimitedError.
 func (h *CollectSecurityHandler) HandleApiKeyAuth(ctx context.Context, _ collectapi.OperationName, t collectapi.ApiKeyAuth) (context.Context, error) {
-	limits := ratelimit.FromContext(ctx)
-	if err := limits.AuthBlocked(); err != nil {
-		return ctx, err
-	}
-	ws, err := h.workspaceByKey(ctx, t.APIKey)
-	if errors.Is(err, ErrUnauthorized) {
-		if limited := limits.AuthFailed(); limited != nil {
-			return ctx, limited
-		}
-		return ctx, err
-	}
+	ws, err := guardedAuth(ctx,
+		func() (*ent.Workspace, error) { return h.workspaceByKey(ctx, t.APIKey) },
+		func(limits *ratelimit.Exchange, ws *ent.Workspace) error { return limits.ChargeCollect(ws.ID) })
 	if err != nil {
-		return ctx, err
-	}
-	if err := limits.ChargeCollect(ws.ID); err != nil {
 		return ctx, err
 	}
 	return WithCollectAuth(ctx, &CollectAuth{WorkspaceID: ws.ID, Scoped: h.ent.Scoped(ws.ID)}), nil

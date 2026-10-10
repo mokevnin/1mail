@@ -9,7 +9,7 @@ import { siteAuthDirectLoginMutation } from '../../generated/site/@tanstack/reac
 import type { SiteDirectLoginInput } from '../../generated/site/types.gen.ts'
 import { useApiErrorMessage } from '../../hooks/useApiErrorMessage.ts'
 import { forgotPasswordRoute, indexRoute, registerRoute } from '../../router.tsx'
-import { getRetryAfterSeconds, isRateLimitedError } from '../../utils/apiErrors.ts'
+import { getRateLimitWait } from '../../utils/apiErrors.ts'
 
 export function LoginPage() {
   const { t } = useTranslation()
@@ -20,14 +20,13 @@ export function LoginPage() {
 
   const apiErrorMessage = useApiErrorMessage()
 
-  // How long to wait, when the throttle says so (ADR 0018): whole minutes from a
-  // minute up, seconds below.
+  // How long to wait, when the throttle says so (ADR 0018).
   const rateLimitMessage = (error: unknown) => {
-    const seconds = getRetryAfterSeconds(error)
-    if (!isRateLimitedError(error) || seconds === undefined) return undefined
-    return seconds >= 60
-      ? t(($) => $.login.rateLimitedMinutes, { count: Math.ceil(seconds / 60) })
-      : t(($) => $.login.rateLimitedSeconds, { count: seconds })
+    const wait = getRateLimitWait(error)
+    if (!wait) return undefined
+    return wait.unit === 'minutes'
+      ? t(($) => $.login.rateLimitedMinutes, { count: wait.count })
+      : t(($) => $.login.rateLimitedSeconds, { count: wait.count })
   }
 
   const form = useForm<SiteDirectLoginInput>({

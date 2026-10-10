@@ -26,10 +26,21 @@ export function isRateLimitedError(error: unknown) {
 
 // The seconds a 429 problem asks the caller to wait (`retryAfter`, the body twin of
 // the Retry-After header), or undefined when the error carries none.
-export function getRetryAfterSeconds(error: unknown) {
+function getRetryAfterSeconds(error: unknown) {
   if (!isApiErrorLike(error)) return undefined
   const { retryAfter } = error
   return typeof retryAfter === 'number' && retryAfter > 0 ? retryAfter : undefined
+}
+
+// How long a 429 asks the caller to wait, as a whole count of one unit: minutes
+// (rounded up) from a minute on, seconds below. Undefined when the error is not a
+// 429 or carries no wait. Screens pick their own localized sentence from it.
+export function getRateLimitWait(error: unknown) {
+  const seconds = getRetryAfterSeconds(error)
+  if (!isRateLimitedError(error) || seconds === undefined) return undefined
+  return seconds >= 60
+    ? ({ unit: 'minutes', count: Math.ceil(seconds / 60) } as const)
+    : ({ unit: 'seconds', count: seconds } as const)
 }
 
 export function getApiErrorMessage(error: unknown, fallback: string) {
