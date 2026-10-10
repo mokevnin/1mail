@@ -15,3 +15,14 @@ type Quota struct {
 type QuotaReader interface {
 	SendQuota(ctx context.Context) (Quota, error)
 }
+
+// AsQuotaReader reports the QuotaReader behind sender, looking through the metrics
+// decorator Catalog.BuildEmail wraps every sender in (a type assertion on the
+// decorator alone would never see the provider's own interface).
+func AsQuotaReader(sender EmailSender) (QuotaReader, bool) {
+	if i, ok := sender.(instrumentedSender); ok {
+		sender = i.EmailSender
+	}
+	reader, ok := sender.(QuotaReader)
+	return reader, ok
+}

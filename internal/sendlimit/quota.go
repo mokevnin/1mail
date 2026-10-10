@@ -36,7 +36,7 @@ func RefreshQuota(ctx context.Context, s *ent.Scoped, cipher *secrets.Cipher, ca
 	if err != nil {
 		return err
 	}
-	reader, ok := built.(messaging.QuotaReader)
+	reader, ok := messaging.AsQuotaReader(built)
 	if !ok {
 		return nil
 	}
