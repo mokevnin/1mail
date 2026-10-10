@@ -1246,7 +1246,36 @@ func encodeSiteContactsDeleteResponse(response SiteContactsDeleteRes, w http.Res
 
 func encodeSiteContactsExportResponse(response SiteContactsExportRes, w http.ResponseWriter, span trace.Span) error {
 	switch response := response.(type) {
-	case *SiteContactsExportOKHeaders:
+	case *ContactExportDocumentHeaders:
+		w.Header().Set("Content-Type", "application/json; charset=utf-8")
+		w.Header().Set("Access-Control-Expose-Headers", "Content-Disposition")
+		// Encoding response headers.
+		{
+			h := uri.NewHeaderEncoder(w.Header())
+			// Encode "Content-Disposition" header.
+			{
+				cfg := uri.HeaderParameterEncodingConfig{
+					Name:    "Content-Disposition",
+					Explode: false,
+				}
+				if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
+					return e.EncodeValue(conv.StringToString(response.ContentDisposition))
+				}); err != nil {
+					return errors.Wrap(err, "encode Content-Disposition header")
+				}
+			}
+		}
+		w.WriteHeader(200)
+
+		e := new(jx.Encoder)
+		response.Response.Encode(e)
+		if _, err := e.WriteTo(w); err != nil {
+			return errors.Wrap(err, "write")
+		}
+
+		return nil
+
+	case *SiteContactsExportOKApplicationOctetStreamHeaders:
 		w.Header().Set("Content-Type", "application/octet-stream")
 		w.Header().Set("Access-Control-Expose-Headers", "Content-Disposition")
 		// Encoding response headers.

@@ -7,6 +7,7 @@ import (
 
 	"github.com/mokevnin/1mail/ent"
 	siteapi "github.com/mokevnin/1mail/gen/site"
+	"github.com/mokevnin/1mail/internal/api/site/resources"
 	"github.com/mokevnin/1mail/internal/contactexport"
 )
 
@@ -39,8 +40,10 @@ func (h *Handlers) SiteContactsExport(ctx context.Context, params siteapi.SiteCo
 		return nil, err
 	}
 
-	return &siteapi.SiteContactsExportOKHeaders{
+	return &siteapi.SiteContactsExportOKApplicationOctetStreamHeaders{
 		ContentDisposition: `attachment; filename="` + contactexport.Filename(c) + `"`,
-		Response:           siteapi.SiteContactsExportOK{Data: contactexport.Open(ctx, scoped, c)},
+		Response: siteapi.SiteContactsExportOKApplicationOctetStream{
+			Data: contactexport.Open(ctx, scoped, resources.ExportMapper{Converter: mapper}, c),
+		},
 	}, nil
 }

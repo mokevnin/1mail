@@ -33,6 +33,8 @@ import (
 // goverter:extend optNilTimeZone
 // goverter:extend optNilTimestamp
 // goverter:extend contactCustomFields
+// goverter:extend optNilInt32
+// goverter:extend exportJSON
 // goverter:extend eventProperties
 // goverter:extend broadcastStats
 // goverter:extend automationSteps
@@ -75,6 +77,67 @@ type Converter interface {
 	// goverter:map . Error | transactionalError
 	// goverter:map TemplateID TemplateId | requiredEntityID
 	TransactionalMessageToResource(source *ent.OutboundMessage) siteapi.SiteTransactionalEmailResource
+
+	// The Data export members (ADR 0021): the contract's typed projection of the
+	// stored rows, so the ent JSON tags are never the public format.
+	ContactToExport(source *ent.Contact) siteapi.ContactExportContact
+	TagToExport(source *ent.Tag) siteapi.ContactExportTag
+	VisitorToExport(source *ent.Visitor) siteapi.ContactExportVisitor
+	EventToExport(source *ent.Event) siteapi.ContactExportEvent
+	UnsubscribeToExport(source *ent.Unsubscribe) siteapi.ContactExportUnsubscribe
+	SuppressionToExport(source *ent.Suppression) siteapi.ContactExportSuppression
+	ConfirmationToExport(source *ent.Confirmation) siteapi.ContactExportConfirmation
+	OutboundMessageToExport(source *ent.OutboundMessage) siteapi.ContactExportOutboundMessage
+	BroadcastRecipientToExport(source *ent.BroadcastRecipient) siteapi.ContactExportBroadcastRecipient
+}
+
+// ExportMapper adapts the Converter to contactexport.Mapper.
+type ExportMapper struct{ Converter }
+
+func (m ExportMapper) Contact(r *ent.Contact) json.Marshaler { return ptr(m.ContactToExport(r)) }
+func (m ExportMapper) Tag(r *ent.Tag) json.Marshaler         { return ptr(m.TagToExport(r)) }
+func (m ExportMapper) Visitor(r *ent.Visitor) json.Marshaler { return ptr(m.VisitorToExport(r)) }
+func (m ExportMapper) Event(r *ent.Event) json.Marshaler     { return ptr(m.EventToExport(r)) }
+func (m ExportMapper) Unsubscribe(r *ent.Unsubscribe) json.Marshaler {
+	return ptr(m.UnsubscribeToExport(r))
+}
+func (m ExportMapper) Suppression(r *ent.Suppression) json.Marshaler {
+	return ptr(m.SuppressionToExport(r))
+}
+func (m ExportMapper) Confirmation(r *ent.Confirmation) json.Marshaler {
+	return ptr(m.ConfirmationToExport(r))
+}
+func (m ExportMapper) OutboundMessage(r *ent.OutboundMessage) json.Marshaler {
+	return ptr(m.OutboundMessageToExport(r))
+}
+func (m ExportMapper) BroadcastRecipient(r *ent.BroadcastRecipient) json.Marshaler {
+	return ptr(m.BroadcastRecipientToExport(r))
+}
+
+// ptr returns the address of v; the generated JSON encoders have pointer receivers.
+func ptr[T any](v T) *T { return &v }
+
+func optNilInt32(v *int) siteapi.OptNilInt32 {
+	if v == nil {
+		return siteapi.OptNilInt32{}
+	}
+	return siteapi.NewOptNilInt32(int32(*v))
+}
+
+// exportJSON renders a stored JSON object (custom fields, event properties).
+func exportJSON(m map[string]any) siteapi.OptNilContactExportJson {
+	if len(m) == 0 {
+		return siteapi.OptNilContactExportJson{}
+	}
+	out := make(siteapi.ContactExportJson, len(m))
+	for k, v := range m {
+		b, err := json.Marshal(v)
+		if err != nil {
+			continue
+		}
+		out[k] = jx.Raw(b)
+	}
+	return siteapi.NewOptNilContactExportJson(out)
 }
 
 // emailVerified derives the verified flag from the nullable timestamp.

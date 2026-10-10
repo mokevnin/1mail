@@ -38,6 +38,7 @@ require (
 	github.com/prometheus/common v0.72.0
 	github.com/realclientip/realclientip-go v1.0.0
 	github.com/riverqueue/river v0.49.0
+	github.com/riverqueue/river/riverdriver/riverdatabasesql v0.49.0
 	github.com/riverqueue/river/riverdriver/riverpgxv5 v0.49.0
 	github.com/riverqueue/river/rivertype v0.49.0
 	github.com/riverqueue/rivercontrib/otelriver v0.12.0
@@ -121,6 +122,7 @@ require (
 	github.com/jmattheis/goverter v1.9.4 // indirect
 	github.com/klauspost/compress v1.20.1 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.10 // indirect
+	github.com/lib/pq v1.12.3 // indirect
 	github.com/lithammer/shortuuid/v3 v3.0.7 // indirect
 	github.com/mattn/go-colorable v0.1.16 // indirect
 	github.com/mattn/go-isatty v0.0.24 // indirect
