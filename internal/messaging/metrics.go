@@ -2,6 +2,7 @@ package messaging
 
 import (
 	"context"
+	"errors"
 
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
@@ -20,6 +21,12 @@ const (
 	SendAccepted SendStatus = "accepted"
 	// SendError: the provider call failed.
 	SendError SendStatus = "error"
+	// SendBusy: the provider said we are sending too fast; the message is deferred
+	// and retried, not failed (ADR 0023). Kept out of the error ratio.
+	SendBusy SendStatus = "busy"
+	// SendQuotaExceeded: the provider's daily quota is spent; the message is deferred
+	// (ADR 0023). Kept out of the error ratio.
+	SendQuotaExceeded SendStatus = "quota_exceeded"
 	// SendBounce: the provider reported a bounce for a message it had accepted.
 	SendBounce SendStatus = "bounce"
 	// SendComplaint: the provider reported a spam complaint.
@@ -42,7 +49,8 @@ func RecordSendOutcome(ctx context.Context, provider Provider, status SendStatus
 	))
 }
 
-// instrumentedSender counts accepted/error per provider around Send.
+// instrumentedSender counts accepted, error, busy and quota_exceeded per provider
+// around Send.
 type instrumentedSender struct {
 	EmailSender
 	provider Provider
@@ -59,10 +67,21 @@ func (s instrumentedSender) DefaultFrom() (string, string) {
 
 func (s instrumentedSender) Send(ctx context.Context, msg EmailMessage) (Receipt, error) {
 	receipt, err := s.EmailSender.Send(ctx, msg)
-	if err != nil {
-		RecordSendOutcome(ctx, s.provider, SendError)
-		return receipt, err
+	RecordSendOutcome(ctx, s.provider, sendStatusOf(err))
+	return receipt, err
+}
+
+// sendStatusOf is the outcome label of one Send result: a deferral (the provider is
+// busy or its quota is spent) is not an error.
+func sendStatusOf(err error) SendStatus {
+	switch {
+	case err == nil:
+		return SendAccepted
+	case errors.Is(err, ErrQuotaExceeded):
+		return SendQuotaExceeded
+	case errors.Is(err, ErrBusy):
+		return SendBusy
+	default:
+		return SendError
 	}
-	RecordSendOutcome(ctx, s.provider, SendAccepted)
-	return receipt, nil
 }
