@@ -26,9 +26,6 @@ type QueuePurger interface {
 	PurgeWebhookJobs(ctx context.Context, kind string, endpointIDs []int64, contactID int64, destinations []string) error
 }
 
-// outboxTable is the watermill-sql table of the domain-events topic.
-const outboxTable = "watermill_" + TopicDomainEvents
-
 func (p *txPublisher) PurgeOutbox(ctx context.Context, workspaceID, contactID int64, destinations []string) error {
 	lowered := lowerAll(destinations)
 	// contactID 0 is "no Contact" (an address erased on its own); events with no
@@ -42,7 +39,7 @@ func (p *txPublisher) PurgeOutbox(ctx context.Context, workspaceID, contactID in
 	_, err := p.tx.ExecContext(ctx, fmt.Sprintf(`DELETE FROM %s
 WHERE (payload::jsonb->>'workspaceId')::bigint = $1
   AND ((payload::jsonb->'data'->>'contactId') = $2
-       OR lower(payload::jsonb->'data'->>'email') = ANY($3))`, outboxTable),
+       OR lower(payload::jsonb->'data'->>'email') = ANY($3))`, outboxTable()),
 		workspaceID, id, lowered)
 	return err
 }

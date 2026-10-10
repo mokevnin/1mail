@@ -1,4 +1,4 @@
-h1:jY1M+Q/STIHzuRyQDlF6J0eF0g9BTF4y4ETbFo8QO5s=
+h1:xFATyeEZefVuoIw3uV44S1WSWy+C34yAUOI8t0Qw5oQ=
 20260630101109_init.sql h1:Pgj3WXyEdlsbabERn8ue309EON5bAyWNV1X8O9IkKos=
 20260630175449_send_eligibility_model.sql h1:vEOs/vQyOdwj2FK2h5B0795pY2DVs3jbv3IpH5A/njw=
 20260630204007_transactional_email.sql h1:sotbb1MKWbZO2UzTf7TruRuFpMaXirns67+ithjM1Lc=
@@ -15,4 +15,6 @@ h1:jY1M+Q/STIHzuRyQDlF6J0eF0g9BTF4y4ETbFo8QO5s=
 20261009141806_drop_segment_type.sql h1:ur6wudUqZcqe6Zb+us//xjYbBRNn1QPBHwkPw0YTOvQ=
 20261009202454_time_mixin.sql h1:O1FDK/alw0tjpyNmjIE5/k/DFirhySwnNsxyt0FpV/I=
 20261009214823_automation_runs_cascade_on_delete.sql h1:benqkhYU740Biykj5stiXOjlEoDuhPUL86ec5HyRPhw=
-20261010023503_erasure_anonymizable_delivery.sql h1:qU73EQrxEzy9+5upuTqSKE17IDuelcgFg4IEG9SA2j4=
+20261010000000_events_autovacuum.sql h1:I34q5J312qJROInGioIxAY3dt47Lk9Dh0NxDuQgTXAg=
+20261010010000_events_retention_index.sql h1:Kp2O0BEui4JBTQjLAwWDclmJYInJO4Bjv2XfVKXtAio=
+20261010023503_erasure_anonymizable_delivery.sql h1:CFlTF73kmKfrQywDhIh7nQ292atBC/W14uQaApveVUs=

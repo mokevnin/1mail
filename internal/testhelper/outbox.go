@@ -7,7 +7,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"slices"
+	"strconv"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 
@@ -113,4 +115,100 @@ func readOutbox(ctx context.Context, db *sql.DB, names []string) ([]events.Envel
 		}
 	}
 	return out, rows.Err()
+}
+
+// OutboxRow is one raw outbox row: its position in the (transaction_id, offset)
+// order the subscribers read in, and when it was written.
+type OutboxRow struct {
+	TxID      uint64
+	Offset    int64
+	CreatedAt time.Time
+}
+
+// OutboxRows returns every outbox row of this test's transaction in
+// (transaction_id, offset) order.
+func (env *TestEnv) OutboxRows(t *testing.T) []OutboxRow {
+	t.Helper()
+	rows, err := env.SQLDB.QueryContext(t.Context(),
+		`SELECT transaction_id::text::bigint, "offset", created_at FROM watermill_domain_events ORDER BY transaction_id, "offset"`)
+	require.NoError(t, err)
+	defer func() { _ = rows.Close() }()
+	var out []OutboxRow
+	for rows.Next() {
+		var r OutboxRow
+		var tx int64
+		require.NoError(t, rows.Scan(&tx, &r.Offset, &r.CreatedAt))
+		r.TxID = uint64(tx)
+		out = append(out, r)
+	}
+	require.NoError(t, rows.Err())
+	return out
+}
+
+// AgeOutbox backdates the outbox rows with the given offsets by age (all rows when
+// no offsets are given), so a test can place rows on either side of a retention
+// floor; the producer always stamps rows with the current time.
+func (env *TestEnv) AgeOutbox(t *testing.T, age time.Duration, offsets ...int64) {
+	t.Helper()
+	q := `UPDATE watermill_domain_events SET created_at = created_at - make_interval(secs => $1)`
+	args := []any{age.Seconds()}
+	if len(offsets) > 0 {
+		q += ` WHERE "offset" = ANY($2)`
+		args = append(args, offsets)
+	}
+	_, err := env.SQLDB.ExecContext(t.Context(), q, args...)
+	require.NoError(t, err)
+}
+
+// OutboxCursor is one consumer group's stored position. Acked is nil for a
+// group that has never acknowledged a message.
+type OutboxCursor struct {
+	TxID  uint64
+	Acked *int64
+}
+
+// SetOutboxCursor upserts a consumer group's offsets row, as if that group had
+// acknowledged the message at offset acked of transaction txID (nil acked leaves
+// the ack NULL).
+func (env *TestEnv) SetOutboxCursor(t *testing.T, group string, txID uint64, acked *int64) {
+	t.Helper()
+	_, err := env.SQLDB.ExecContext(t.Context(), `
+		INSERT INTO watermill_offsets_domain_events (consumer_group, offset_acked, last_processed_transaction_id)
+		VALUES ($1, $2, $3::text::xid8)
+		ON CONFLICT (consumer_group) DO UPDATE
+		SET offset_acked = EXCLUDED.offset_acked, last_processed_transaction_id = EXCLUDED.last_processed_transaction_id`,
+		group, acked, strconv.FormatUint(txID, 10))
+	require.NoError(t, err)
+}
+
+// OutboxCursors returns every consumer group's offsets row, keyed by group.
+func (env *TestEnv) OutboxCursors(t *testing.T) map[string]OutboxCursor {
+	t.Helper()
+	rows, err := env.SQLDB.QueryContext(t.Context(),
+		`SELECT consumer_group, offset_acked, last_processed_transaction_id::text::bigint FROM watermill_offsets_domain_events`)
+	require.NoError(t, err)
+	defer func() { _ = rows.Close() }()
+	out := map[string]OutboxCursor{}
+	for rows.Next() {
+		var group string
+		var acked sql.NullInt64
+		var tx int64
+		require.NoError(t, rows.Scan(&group, &acked, &tx))
+		c := OutboxCursor{TxID: uint64(tx)}
+		if acked.Valid {
+			c.Acked = &acked.Int64
+		}
+		out[group] = c
+	}
+	require.NoError(t, rows.Err())
+	return out
+}
+
+// ClearOutboxCursors removes every consumer group's offsets row in this test's
+// transaction, so a test starts from a known state whatever real-database tests
+// (the router tests) left committed.
+func (env *TestEnv) ClearOutboxCursors(t *testing.T) {
+	t.Helper()
+	_, err := env.SQLDB.ExecContext(t.Context(), `DELETE FROM watermill_offsets_domain_events`)
+	require.NoError(t, err)
 }

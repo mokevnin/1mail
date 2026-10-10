@@ -1,7 +1,9 @@
 package jobs
 
 import (
+	"database/sql"
 	"log/slog"
+	"time"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/riverqueue/river"
@@ -39,6 +41,14 @@ func NewVerifySendingDomainWorker(client *ent.Client, lookup sending.TXTLookup, 
 
 func NewRecheckSendingDomainsWorker(client *ent.Client) *RecheckSendingDomainsWorker {
 	return &RecheckSendingDomainsWorker{ent: client}
+}
+
+func NewPruneOutboxWorker(db *sql.DB, floor time.Duration) *PruneOutboxWorker {
+	return &PruneOutboxWorker{db: db, floor: floor}
+}
+
+func NewPruneEventsWorker(db *sql.DB, retention time.Duration) *PruneEventsWorker {
+	return &PruneEventsWorker{db: db, retention: retention}
 }
 
 func NewEvaluateTriggerWorker(client *ent.Client) *EvaluateTriggerWorker {

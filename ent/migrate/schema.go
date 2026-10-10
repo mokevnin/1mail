@@ -391,6 +391,14 @@ var (
 				Unique:  false,
 				Columns: []*schema.Column{EventsColumns[12], EventsColumns[5]},
 			},
+			{
+				Name:    "events_created_at_analytical_idx",
+				Unique:  false,
+				Columns: []*schema.Column{EventsColumns[1]},
+				Annotation: &entsql.IndexAnnotation{
+					Where: "action NOT IN ('marketing.confirmed', 'email.complained', 'email.unsubscribed') AND NOT (action = 'email.bounced' AND COALESCE(properties->>'bounceKind', '') = 'permanent')",
+				},
+			},
 		},
 	}
 	// IntegrationsColumns holds the columns for the "integrations" table.
