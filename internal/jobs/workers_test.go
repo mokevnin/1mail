@@ -6,7 +6,6 @@ import (
 	"errors"
 	"io"
 	"log/slog"
-	"net"
 	"net/http"
 	"strings"
 	"sync"
@@ -26,6 +25,7 @@ import (
 	"github.com/mokevnin/1mail/ent/automationrun"
 	"github.com/mokevnin/1mail/ent/broadcast"
 	"github.com/mokevnin/1mail/ent/broadcastrecipient"
+	"github.com/mokevnin/1mail/internal/dnstest"
 	"github.com/mokevnin/1mail/internal/fixtures"
 	"github.com/mokevnin/1mail/internal/jobs"
 	"github.com/mokevnin/1mail/internal/messaging/registry"
@@ -277,7 +277,7 @@ func TestDeliverWebhookWorker(t *testing.T) {
 func TestVerifySendingDomainWorker(t *testing.T) {
 	env := testhelper.Setup(t)
 	ctx := context.Background()
-	gone := lookupReturning(nil, &net.DNSError{IsNotFound: true})
+	gone := dnstest.Resolver(t, nil).LookupTXT
 
 	// Verified domain whose DNS vanished: flips, owner is emailed.
 	w := jobs.NewVerifySendingDomainWorker(env.DB, gone, env.SystemMail)

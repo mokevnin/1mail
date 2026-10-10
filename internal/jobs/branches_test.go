@@ -3,7 +3,6 @@ package jobs_test
 import (
 	"context"
 	"errors"
-	"net"
 	"testing"
 	"time"
 
@@ -14,6 +13,7 @@ import (
 	"github.com/mokevnin/1mail/ent/automationrun"
 	"github.com/mokevnin/1mail/ent/broadcast"
 	"github.com/mokevnin/1mail/ent/broadcastrecipient"
+	"github.com/mokevnin/1mail/internal/dnstest"
 	"github.com/mokevnin/1mail/internal/fixtures"
 	"github.com/mokevnin/1mail/internal/jobs"
 	"github.com/mokevnin/1mail/internal/messaging/registry"
@@ -239,7 +239,7 @@ func TestOwnerNotificationsSurfaceSenderErrors(t *testing.T) {
 func TestInlineSendingDomainVerifyNotifiesOnFlip(t *testing.T) {
 	env := testhelper.Setup(t)
 	ctx := context.Background()
-	gone := lookupReturning(nil, errNotFound())
+	gone := dnstest.Resolver(t, nil).LookupTXT
 	inline := jobs.NewInline(env.DB, newMod(env, fakeResolver{sender: &fakeSender{}}), env.SystemMail, gone, envCipher(t), registry.Default(), "http://local")
 
 	require.NoError(t, inline.EnqueueSendingDomainVerify(ctx, fixtures.SendingDomainVerifiedID))
@@ -256,5 +256,3 @@ func TestInlineSendingDomainVerifyNotifiesOnFlip(t *testing.T) {
 
 	require.Error(t, inline.EnqueueSendingDomainVerify(ctx, 424242))
 }
-
-func errNotFound() error { return &net.DNSError{IsNotFound: true} }
