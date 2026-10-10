@@ -89,6 +89,9 @@ type Config struct {
 	// kind so a User of the same address never shares a counter. Nil disables the
 	// throttle.
 	Attempts *accounts.Attempts
+	// VolumeFloor is the fewest sends in the rate window (per Sending domain) for a
+	// rate to be defined (ADR 0026); zero is DefaultVolumeFloor.
+	VolumeFloor int
 }
 
 // Validate refuses a configuration an Operator surface cannot run on. It is checked
@@ -115,6 +118,7 @@ type Module struct {
 	challenges *authtoken.Signer
 	attempts   *accounts.Attempts
 	now        func() time.Time
+	floor      int
 }
 
 // NewModule builds the module over the raw client.
@@ -123,8 +127,12 @@ func NewModule(client *ent.Client, lic *licensekey.License, auditLog *audit.Log,
 	if now == nil {
 		now = time.Now
 	}
+	floor := cfg.VolumeFloor
+	if floor <= 0 {
+		floor = DefaultVolumeFloor
+	}
 	return &Module{
-		ent: client, lic: lic, audit: auditLog, cipher: cipher, attempts: cfg.Attempts, now: now,
+		ent: client, lic: lic, audit: auditLog, cipher: cipher, attempts: cfg.Attempts, now: now, floor: floor,
 		challenges: authtoken.New(cfg.Secret).WithClock(now),
 	}
 }

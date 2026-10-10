@@ -816,7 +816,7 @@ func (s *Server) handleOperatorWorkspaceAuditListRequest(args [1]string, argsEsc
 
 // handleOperatorWorkspacesGetRequest handles OperatorWorkspaces_get operation.
 //
-// One Workspace's metadata and suspension state.
+// One Workspace's metadata, suspension state, rates and send volume.
 //
 // GET /workspaces/{workspaceId}
 func (s *Server) handleOperatorWorkspacesGetRequest(args [1]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {

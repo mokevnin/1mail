@@ -64,7 +64,7 @@ func (UnimplementedHandler) OperatorWorkspaceAuditList(ctx context.Context, para
 
 // OperatorWorkspacesGet implements OperatorWorkspaces_get operation.
 //
-// One Workspace's metadata and suspension state.
+// One Workspace's metadata, suspension state, rates and send volume.
 //
 // GET /workspaces/{workspaceId}
 func (UnimplementedHandler) OperatorWorkspacesGet(ctx context.Context, params OperatorWorkspacesGetParams) (r OperatorWorkspacesGetRes, _ error) {

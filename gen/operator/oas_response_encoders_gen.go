@@ -332,7 +332,7 @@ func encodeOperatorWorkspaceAuditListResponse(response OperatorWorkspaceAuditLis
 
 func encodeOperatorWorkspacesGetResponse(response OperatorWorkspacesGetRes, w http.ResponseWriter, span trace.Span) error {
 	switch response := response.(type) {
-	case *OperatorWorkspaceResource:
+	case *OperatorWorkspaceDetailResource:
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 		w.WriteHeader(200)
 

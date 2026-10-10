@@ -51,3 +51,14 @@
   suspension_reason: abuse report
   created_at: '2026-01-01 00:00:00'
   updated_at: '2026-01-01 00:00:00'
+# Sixth tenant (Soylent) - carries deliverability traffic inside the last day, the data the
+# Operator console's rates and send volume read (ADR 0026, ADR 0011). Its two Sending domains,
+# SendingDomainSoylent (traffic) and SendingDomainSoylentIdle (none), and its Events
+# (ids 400+ in events.yml) never touch Acme's rate fixtures.
+- id: 6 # fixture: Soylent
+  name: Soylent
+  slug: soylent
+  collect_key: omck_test_soylent_collect_key
+  ingest_key: omik_test_soylent_ingest_key
+  created_at: '2026-01-01 00:00:00'
+  updated_at: '2026-01-01 00:00:00'

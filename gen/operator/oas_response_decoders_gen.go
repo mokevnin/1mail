@@ -923,7 +923,7 @@ func decodeOperatorWorkspacesGetResponse(resp *http.Response) (res OperatorWorks
 			}
 			d := jx.DecodeBytes(buf)
 
-			var response OperatorWorkspaceResource
+			var response OperatorWorkspaceDetailResource
 			if err := func() error {
 				if err := response.Decode(d); err != nil {
 					return err

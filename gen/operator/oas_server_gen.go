@@ -44,7 +44,7 @@ type Handler interface {
 	OperatorWorkspaceAuditList(ctx context.Context, params OperatorWorkspaceAuditListParams) (OperatorWorkspaceAuditListRes, error)
 	// OperatorWorkspacesGet implements OperatorWorkspaces_get operation.
 	//
-	// One Workspace's metadata and suspension state.
+	// One Workspace's metadata, suspension state, rates and send volume.
 	//
 	// GET /workspaces/{workspaceId}
 	OperatorWorkspacesGet(ctx context.Context, params OperatorWorkspacesGetParams) (OperatorWorkspacesGetRes, error)

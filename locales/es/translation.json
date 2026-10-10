@@ -306,6 +306,16 @@
       "loadError": "No se pudo cargar el espacio de trabajo",
       "noReason": "Sin motivo indicado",
       "notSuspended": "El envío no está suspendido.",
+      "rates": {
+        "belowFloor": "Datos insuficientes (menos de {{floor}} enviados)",
+        "bounceRate": "Tasa de rebotes",
+        "complaintRate": "Tasa de quejas",
+        "domain": "Dominio de envío",
+        "noDomains": "Sin dominios de envío.",
+        "sendVolume": "Enviados",
+        "title": "Entregabilidad",
+        "window": "Últimas {{hours}} horas"
+      },
       "reason": "Motivo",
       "suspendedAt": "Suspendido el",
       "suspendedBy": "Suspendido por",

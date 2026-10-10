@@ -571,6 +571,14 @@ const (
 	SendingDomainInitechDomain = "mail.initech.test"
 	// SendingDomainInitechID is from fixtures/sending_domains.
 	SendingDomainInitechID = 300
+	// SendingDomainSoylentDomain is from fixtures/sending_domains.
+	SendingDomainSoylentDomain = "mail.soylent.test"
+	// SendingDomainSoylentID is from fixtures/sending_domains.
+	SendingDomainSoylentID = 400
+	// SendingDomainSoylentIdleDomain is from fixtures/sending_domains.
+	SendingDomainSoylentIdleDomain = "idle.soylent.test"
+	// SendingDomainSoylentIdleID is from fixtures/sending_domains.
+	SendingDomainSoylentIdleID = 401
 	// SendingDomainUnverifiedDomain is from fixtures/sending_domains.
 	SendingDomainUnverifiedDomain = "news.acme.com"
 	// SendingDomainUnverifiedID is from fixtures/sending_domains.
@@ -579,6 +587,16 @@ const (
 	SendingDomainVerifiedDomain = "mail.acme.com"
 	// SendingDomainVerifiedID is from fixtures/sending_domains.
 	SendingDomainVerifiedID = 1
+	// SoylentCollectKey is from fixtures/workspaces.
+	SoylentCollectKey = "omck_test_soylent_collect_key"
+	// SoylentID is from fixtures/workspaces.
+	SoylentID = 6
+	// SoylentIngestKey is from fixtures/workspaces.
+	SoylentIngestKey = "omik_test_soylent_ingest_key"
+	// SoylentName is from fixtures/workspaces.
+	SoylentName = "Soylent"
+	// SoylentSlug is from fixtures/workspaces.
+	SoylentSlug = "soylent"
 	// StaleLoginAttemptEmail is from fixtures/auth_attempts.
 	StaleLoginAttemptEmail = "stale@attempts.test"
 	// StaleLoginAttemptID is from fixtures/auth_attempts.

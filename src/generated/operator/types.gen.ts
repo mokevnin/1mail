@@ -137,6 +137,51 @@ export type OperatorAuditTarget = {
 };
 
 /**
+ * A Workspace's deliverability over the trailing window: the rates of ADR 0011 per
+ * Sending domain, and how much it sent. Counts only, never message content.
+ */
+export type OperatorDeliverability = {
+  /**
+   * Length of the trailing window, in hours
+   */
+  windowHours: number;
+  /**
+   * Fewest sends in the window (per Sending domain) for a rate to be defined
+   */
+  volumeFloor: number;
+  /**
+   * Messages sent in the window across all Sending domains
+   */
+  sendVolume: number;
+  /**
+   * One entry per Sending domain, oldest first
+   */
+  domains: Array<OperatorDomainRates>;
+};
+
+/**
+ * The Complaint and Bounce rates of one Sending domain over the trailing window
+ */
+export type OperatorDomainRates = {
+  /**
+   * Sending domain id
+   */
+  sendingDomainId: EntityId;
+  /**
+   * The domain the rates are for
+   */
+  domain: string;
+  /**
+   * Complaints over sent minus hard bounces
+   */
+  complaintRate: OperatorRate;
+  /**
+   * Hard bounces over sent
+   */
+  bounceRate: OperatorRate;
+};
+
+/**
  * A TOTP secret awaiting its first confirming code
  */
 export type OperatorEnrolment = {
@@ -190,6 +235,25 @@ export type OperatorLoginResult = {
    * Present when the outcome is `enrolment`
    */
   enrolment?: OperatorEnrolment;
+};
+
+/**
+ * A rate as the (numerator, denominator, rate) triple (ADR 0011)
+ */
+export type OperatorRate = {
+  /**
+   * Events counted against the rate
+   */
+  numerator: number;
+  /**
+   * The population the rate is over
+   */
+  denominator: number;
+  /**
+   * numerator / denominator; null (undefined) when fewer sends than the volume floor
+   * were made in the window, never reported as 0
+   */
+  rate: number | null;
 };
 
 /**
@@ -259,6 +323,27 @@ export const OperatorSuspensionActorKind = {
  * Who set a Workspace suspension (ADR 0026)
  */
 export type OperatorSuspensionActorKind = typeof OperatorSuspensionActorKind[keyof typeof OperatorSuspensionActorKind];
+
+/**
+ * A Workspace with its deliverability, as the detail page shows it
+ */
+export type OperatorWorkspaceDetailResource = {
+  /**
+   * Unique identifier
+   */
+  id: EntityId;
+  slug: string;
+  name: string;
+  /**
+   * When the Workspace was created
+   */
+  createdAt: Timestamp;
+  /**
+   * Present only while sending is suspended
+   */
+  suspension?: OperatorSuspension | null;
+  deliverability: OperatorDeliverability;
+};
 
 /**
  * A Workspace as the Operator console sees it: metadata only, never Contacts,
@@ -558,7 +643,7 @@ export type OperatorWorkspacesGetResponses = {
   /**
    * The request has succeeded.
    */
-  200: OperatorWorkspaceResource;
+  200: OperatorWorkspaceDetailResource;
 };
 
 export type OperatorWorkspacesGetResponse = OperatorWorkspacesGetResponses[keyof OperatorWorkspacesGetResponses];
