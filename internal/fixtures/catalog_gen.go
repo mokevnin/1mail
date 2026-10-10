@@ -168,77 +168,77 @@ const (
 	// EventAnonymousVisitorAction is from fixtures/events.
 	EventAnonymousVisitorAction = "pricing_viewed"
 	// EventAnonymousVisitorID is from fixtures/events.
-	EventAnonymousVisitorID = 330
+	EventAnonymousVisitorID = 980
 	// EventBystanderCustomAction is from fixtures/events.
 	EventBystanderCustomAction = "plan_upgraded"
 	// EventBystanderCustomEmail is from fixtures/events.
 	EventBystanderCustomEmail = "ben@initech.test"
 	// EventBystanderCustomID is from fixtures/events.
-	EventBystanderCustomID = 320
+	EventBystanderCustomID = 970
 	// EventBystanderSentAction is from fixtures/events.
 	EventBystanderSentAction = "email.sent"
 	// EventBystanderSentEmail is from fixtures/events.
 	EventBystanderSentEmail = "ben@initech.test"
 	// EventBystanderSentID is from fixtures/events.
-	EventBystanderSentID = 321
+	EventBystanderSentID = 971
 	// EventErasableAnonymousAction is from fixtures/events.
 	EventErasableAnonymousAction = "pricing_viewed"
 	// EventErasableAnonymousID is from fixtures/events.
-	EventErasableAnonymousID = 301
+	EventErasableAnonymousID = 951
 	// EventErasableBouncedAction is from fixtures/events.
 	EventErasableBouncedAction = "email.bounced"
 	// EventErasableBouncedEmail is from fixtures/events.
 	EventErasableBouncedEmail = "erin@initech.test"
 	// EventErasableBouncedID is from fixtures/events.
-	EventErasableBouncedID = 305
+	EventErasableBouncedID = 955
 	// EventErasableClickedAction is from fixtures/events.
 	EventErasableClickedAction = "email.clicked"
 	// EventErasableClickedEmail is from fixtures/events.
 	EventErasableClickedEmail = "erin@initech.test"
 	// EventErasableClickedID is from fixtures/events.
-	EventErasableClickedID = 304
+	EventErasableClickedID = 954
 	// EventErasableComplainedAction is from fixtures/events.
 	EventErasableComplainedAction = "email.complained"
 	// EventErasableComplainedEmail is from fixtures/events.
 	EventErasableComplainedEmail = "erin@initech.test"
 	// EventErasableComplainedID is from fixtures/events.
-	EventErasableComplainedID = 306
+	EventErasableComplainedID = 956
 	// EventErasableConfirmedAction is from fixtures/events.
 	EventErasableConfirmedAction = "marketing.confirmed"
 	// EventErasableConfirmedEmail is from fixtures/events.
 	EventErasableConfirmedEmail = "erin@initech.test"
 	// EventErasableConfirmedID is from fixtures/events.
-	EventErasableConfirmedID = 309
+	EventErasableConfirmedID = 959
 	// EventErasableCreatedAction is from fixtures/events.
 	EventErasableCreatedAction = "contact.created"
 	// EventErasableCreatedEmail is from fixtures/events.
 	EventErasableCreatedEmail = "erin@initech.test"
 	// EventErasableCreatedID is from fixtures/events.
-	EventErasableCreatedID = 308
+	EventErasableCreatedID = 958
 	// EventErasableCustomAction is from fixtures/events.
 	EventErasableCustomAction = "plan_upgraded"
 	// EventErasableCustomEmail is from fixtures/events.
 	EventErasableCustomEmail = "erin@initech.test"
 	// EventErasableCustomID is from fixtures/events.
-	EventErasableCustomID = 300
+	EventErasableCustomID = 950
 	// EventErasableOpenedAction is from fixtures/events.
 	EventErasableOpenedAction = "email.opened"
 	// EventErasableOpenedEmail is from fixtures/events.
 	EventErasableOpenedEmail = "erin@initech.test"
 	// EventErasableOpenedID is from fixtures/events.
-	EventErasableOpenedID = 303
+	EventErasableOpenedID = 953
 	// EventErasableSentAction is from fixtures/events.
 	EventErasableSentAction = "email.sent"
 	// EventErasableSentEmail is from fixtures/events.
 	EventErasableSentEmail = "erin@initech.test"
 	// EventErasableSentID is from fixtures/events.
-	EventErasableSentID = 302
+	EventErasableSentID = 952
 	// EventErasableUnsubscribedAction is from fixtures/events.
 	EventErasableUnsubscribedAction = "email.unsubscribed"
 	// EventErasableUnsubscribedEmail is from fixtures/events.
 	EventErasableUnsubscribedEmail = "erin@initech.test"
 	// EventErasableUnsubscribedID is from fixtures/events.
-	EventErasableUnsubscribedID = 307
+	EventErasableUnsubscribedID = 957
 	// EventExportCustomAction is from fixtures/events.
 	EventExportCustomAction = "export_subject_custom"
 	// EventExportCustomEmail is from fixtures/events.

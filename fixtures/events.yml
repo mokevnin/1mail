@@ -342,7 +342,7 @@
 
 # --- Initech (workspace 3): ContactErasable's Events, one of every kind the Erasure
 # matrix distinguishes, plus ContactBystander's. ---
-- id: 300 # fixture: EventErasableCustom
+- id: 950 # fixture: EventErasableCustom
   contact_id: 300
   subject_id: user-erin-300
   email: erin@initech.test
@@ -351,14 +351,14 @@
   workspace_id: 3
   occurred_at: '2026-01-02 00:00:00'
   created_at: '2026-01-02 00:00:00'
-- id: 301 # fixture: EventErasableAnonymous
+- id: 951 # fixture: EventErasableAnonymous
   visitor_id: vis-erasable-laptop
   action: pricing_viewed
   properties: '{"path":"/pricing"}'
   workspace_id: 3
   occurred_at: '2026-01-01 12:00:00'
   created_at: '2026-01-01 12:00:00'
-- id: 302 # fixture: EventErasableSent
+- id: 952 # fixture: EventErasableSent
   contact_id: 300
   subject_id: erin@initech.test
   email: erin@initech.test
@@ -367,7 +367,7 @@
   workspace_id: 3
   occurred_at: '2026-01-02 00:00:00'
   created_at: '2026-01-02 00:00:00'
-- id: 303 # fixture: EventErasableOpened
+- id: 953 # fixture: EventErasableOpened
   contact_id: 300
   subject_id: erin@initech.test
   email: erin@initech.test
@@ -376,7 +376,7 @@
   workspace_id: 3
   occurred_at: '2026-01-02 01:00:00'
   created_at: '2026-01-02 01:00:00'
-- id: 304 # fixture: EventErasableClicked
+- id: 954 # fixture: EventErasableClicked
   contact_id: 300
   subject_id: erin@initech.test
   email: erin@initech.test
@@ -385,7 +385,7 @@
   workspace_id: 3
   occurred_at: '2026-01-02 02:00:00'
   created_at: '2026-01-02 02:00:00'
-- id: 305 # fixture: EventErasableBounced
+- id: 955 # fixture: EventErasableBounced
   contact_id: 300
   subject_id: erin@initech.test
   email: erin@initech.test
@@ -394,7 +394,7 @@
   workspace_id: 3
   occurred_at: '2026-01-02 03:00:00'
   created_at: '2026-01-02 03:00:00'
-- id: 306 # fixture: EventErasableComplained
+- id: 956 # fixture: EventErasableComplained
   contact_id: 300
   subject_id: erin@initech.test
   email: erin@initech.test
@@ -403,7 +403,7 @@
   workspace_id: 3
   occurred_at: '2026-01-02 04:00:00'
   created_at: '2026-01-02 04:00:00'
-- id: 307 # fixture: EventErasableUnsubscribed
+- id: 957 # fixture: EventErasableUnsubscribed
   contact_id: 300
   subject_id: erin@initech.test
   email: erin@initech.test
@@ -412,7 +412,7 @@
   workspace_id: 3
   occurred_at: '2026-01-02 05:00:00'
   created_at: '2026-01-02 05:00:00'
-- id: 308 # fixture: EventErasableCreated
+- id: 958 # fixture: EventErasableCreated
   contact_id: 300
   subject_id: user-erin-300
   email: erin@initech.test
@@ -422,7 +422,7 @@
   workspace_id: 3
   occurred_at: '2026-01-01 00:00:00'
   created_at: '2026-01-01 00:00:00'
-- id: 309 # fixture: EventErasableConfirmed
+- id: 959 # fixture: EventErasableConfirmed
   contact_id: 300
   subject_id: erin@initech.test
   email: erin@initech.test
@@ -431,7 +431,7 @@
   workspace_id: 3
   occurred_at: '2026-01-01 06:00:00'
   created_at: '2026-01-01 06:00:00'
-- id: 320 # fixture: EventBystanderCustom
+- id: 970 # fixture: EventBystanderCustom
   contact_id: 301
   email: ben@initech.test
   action: plan_upgraded
@@ -439,7 +439,7 @@
   workspace_id: 3
   occurred_at: '2026-01-02 00:00:00'
   created_at: '2026-01-02 00:00:00'
-- id: 321 # fixture: EventBystanderSent
+- id: 971 # fixture: EventBystanderSent
   contact_id: 301
   email: ben@initech.test
   action: email.sent
@@ -447,7 +447,7 @@
   workspace_id: 3
   occurred_at: '2026-01-02 00:00:00'
   created_at: '2026-01-02 00:00:00'
-- id: 330 # fixture: EventAnonymousVisitor
+- id: 980 # fixture: EventAnonymousVisitor
   visitor_id: vis-anonymous-301
   action: pricing_viewed
   properties: '{"path":"/pricing"}'
