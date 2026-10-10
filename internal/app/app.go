@@ -173,6 +173,27 @@ func New(env string) (*App, error) {
 		return nil, err
 	}
 
+	// Operational gauges (outbox lag, queue depth). They read on scrape through the
+	// shared pools and live for the process, so they are never unregistered.
+	database, err := do.Invoke[*sqlDB](injector)
+	if err != nil {
+		_ = injector.Shutdown()
+		return nil, err
+	}
+	pool, err := do.Invoke[*pgxPool](injector)
+	if err != nil {
+		_ = injector.Shutdown()
+		return nil, err
+	}
+	if _, err := events.RegisterLagGauge(database.DB); err != nil {
+		_ = injector.Shutdown()
+		return nil, err
+	}
+	if _, err := jobs.RegisterQueueMetrics(pool.Pool); err != nil {
+		_ = injector.Shutdown()
+		return nil, err
+	}
+
 	var metrics *telemetry.MetricsServer
 	if cfg.MetricsAddr != "" {
 		metrics = telemetry.NewMetricsServer(cfg.MetricsAddr)

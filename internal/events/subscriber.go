@@ -45,30 +45,42 @@ func NewRouter() (*message.Router, error) {
 	return router, nil
 }
 
+// The consumer groups registered by RegisterSubscribers, one per subscriber.
+const (
+	GroupPersist     = "persist"
+	GroupAutomations = "automations"
+	GroupWebhooks    = "webhooks"
+	GroupSuppression = "suppression"
+)
+
+// ConsumerGroups lists every consumer group RegisterSubscribers registers. Per-group
+// outbox lag is reported for exactly these groups.
+var ConsumerGroups = []string{GroupPersist, GroupAutomations, GroupWebhooks, GroupSuppression}
+
 // RegisterSubscribers wires the domain-event consumers onto the shared watermill
 // router. Each consumer gets its OWN subscriber with a distinct consumer group,
 // so every subscriber receives every event (fan-out) rather than competing for
 // messages. Add new subscribers here without touching producers.
 func RegisterSubscribers(router *message.Router, db *sql.DB, client *ent.Client, enroller Enroller, dispatcher WebhookDispatcher) error {
-	persistSub, err := NewSubscriber(db, "persist")
+	persistSub, err := NewSubscriber(db, GroupPersist)
 	if err != nil {
 		return fmt.Errorf("persist subscriber: %w", err)
 	}
 	router.AddConsumerHandler("persist_event", TopicDomainEvents, persistSub, persistConsumer(client))
 
-	automationsSub, err := NewSubscriber(db, "automations")
+	automationsSub, err := NewSubscriber(db, GroupAutomations)
 	if err != nil {
 		return fmt.Errorf("automations subscriber: %w", err)
 	}
 	router.AddConsumerHandler("enroll_automations", TopicDomainEvents, automationsSub, automationsConsumer(enroller))
 
-	webhooksSub, err := NewSubscriber(db, "webhooks")
+	webhooksSub, err := NewSubscriber(db, GroupWebhooks)
 	if err != nil {
 		return fmt.Errorf("webhooks subscriber: %w", err)
 	}
 	router.AddConsumerHandler("dispatch_webhooks", TopicDomainEvents, webhooksSub, webhooksConsumer(client, dispatcher))
 
-	suppressionSub, err := NewSubscriber(db, "suppression")
+	suppressionSub, err := NewSubscriber(db, GroupSuppression)
 	if err != nil {
 		return fmt.Errorf("suppression subscriber: %w", err)
 	}
