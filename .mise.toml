@@ -36,9 +36,9 @@ run = "go mod download"
 [settings]
 experimental = true
 
-# Dev defaults. DATABASE_URL and PG* come from the `db` daemon (do not set DATABASE_URL
-# in .env: the app reads .env too, but real env vars win). Personal overrides go in the
-# gitignored .env (read by the app) or .mise.local.toml (read by mise).
+# Dev defaults. DATABASE_URL and PG* are set below, the same in every checkout (do not set
+# DATABASE_URL in .env: the app reads .env too, but real env vars win). Personal overrides go
+# in the gitignored .env (read by the app) or .mise.local.toml (read by mise).
 [env]
 APP_ENV = "development"
 # The primary checkout is https://1mail.localhost on :443. A linked worktree gets its own
@@ -64,16 +64,28 @@ JWT_SECRET = "dev-secret-change-in-production"
 ENCRYPTION_KEY = "CIamsc4JEmQKWAowdHlwZS5nb29nbGVhcGlzLmNvbS9nb29nbGUuY3J5cHRvLnRpbmsuQWVzR2NtS2V5EiIaIIOWohIqGhyD2NeiOazlLrnrHqCirukTjCjD1iMFPqiEGAEQARiGprHOCSAB"
 SMTP_HOST = "127.0.0.1"
 SMTP_PORT = "{{ env.MAILPIT_PORT | int - 8025 + 1025 }}"
-# Test, e2e and atlas scratch databases sit next to the checkout's dev database, named after it
-# (<PGDATABASE>_test, _e2e, _atlas), so every checkout has its own set on a shared server and
-# `mise run worktrees:gc` can tell which ones are live. Set TEST_DB_URL / E2E_DB_URL /
-# ATLAS_DEV_URL in the environment to use an external Postgres.
+# One Postgres serves every checkout: the primary checkout's `db` daemon (below), started
+# by `mise run db:up`. A daemon declared in a linked worktree would export its own offset port
+# and database, so the connection is spelled out here, from the checkout's directory name:
+# 1mail_<dir> (lowercased, [a-z0-9_]; over 40 characters it is cut to 31 plus a hash of the path),
+# with the _test, _e2e and _atlas twins, so each name fits Postgres's 63-byte identifier limit.
+# ONEMAIL_PG_HOST / ONEMAIL_PG_PORT point every checkout at another server (an external Postgres,
+# a CI service); a server that already answers there is used as is and never started.
+PGHOST = "{{ get_env(name='ONEMAIL_PG_HOST', default='127.0.0.1') }}"
+PGPORT = "{{ get_env(name='ONEMAIL_PG_PORT', default='15432') }}"
+PGUSER = "postgres"
+PGDATABASE = "{% set n = config_root | basename | lower | slugify | replace(from='-', to='_') %}1mail_{% if n | length > 40 %}{{ n | truncate(length=31, end='') }}_{{ config_root | hash(len=8) }}{% else %}{{ n }}{% endif %}"
+DATABASE_URL = "postgres://{{ env.PGUSER }}@{{ env.PGHOST }}:{{ env.PGPORT }}/{{ env.PGDATABASE }}?sslmode=disable"
+# Every database of this checkout; db:up creates them, worktrees:gc keeps them.
+DB_NAMES = "{{ env.PGDATABASE }} {{ env.PGDATABASE }}_test {{ env.PGDATABASE }}_e2e {{ env.PGDATABASE }}_atlas"
+# Set TEST_DB_URL / E2E_DB_URL / ATLAS_DEV_URL in the environment to use other databases.
 TEST_DB_URL = "{{ get_env(name='TEST_DB_URL', default='postgres://' ~ env.PGUSER ~ '@' ~ env.PGHOST ~ ':' ~ env.PGPORT ~ '/' ~ env.PGDATABASE ~ '_test?sslmode=disable') }}"
 E2E_DB_URL = "{{ get_env(name='E2E_DB_URL', default='postgres://' ~ env.PGUSER ~ '@' ~ env.PGHOST ~ ':' ~ env.PGPORT ~ '/' ~ env.PGDATABASE ~ '_e2e?sslmode=disable') }}"
 ATLAS_DEV_URL = "{{ get_env(name='ATLAS_DEV_URL', default='postgres://' ~ env.PGUSER ~ '@' ~ env.PGHOST ~ ':' ~ env.PGPORT ~ '/' ~ env.PGDATABASE ~ '_atlas?sslmode=disable') }}"
 
 # --- dev stack (replaces docker compose) -----------------------------------------
-# `mise daemons start caddy` brings up everything below in dependency order. Each daemon's
+# `mise run dev` runs db:up, then `mise daemons start caddy`, which brings up everything below
+# in dependency order. Each daemon's
 # `port` is `auto`: the primary checkout gets the base port (today's ports), a linked worktree
 # a free slot (base + offset), exported as <NAME>_PORT and visible to `mise env` before any
 # daemon runs. `ready_port` cannot be templated, so readiness is a `ready_cmd` on that port.
@@ -81,11 +93,15 @@ ATLAS_DEV_URL = "{{ get_env(name='ATLAS_DEV_URL', default='postgres://' ~ env.PG
 # backend and everything else to Vite (see Caddyfile). Run `caddy trust` once so the
 # browser accepts Caddy's local CA.
 
+# The one Postgres. Only the primary checkout (the first `git worktree list` entry, a stable
+# project root that `mise daemons prune` never sees as deleted) runs it, at a fixed port, and
+# `mise run db:up` starts it from any checkout. Nothing else depends on it or starts it: a
+# postmaster per worktree takes one of macOS's 32 SysV shared-memory segments (kern.sysv.shmmni)
+# and ~30 worktrees exhaust them ("shmget ... No space left on device").
 [daemons.db]
 preset = "postgres"
 version = "18"
-port = { auto = true, base = 15432 }
-options.database = "1mail_development"
+port = 15432
 
 [daemons.mailpit]
 run = "exec mailpit --listen 0.0.0.0:$MAILPIT_PORT --smtp 0.0.0.0:$SMTP_PORT"
@@ -97,7 +113,7 @@ proxy = false
 run = "exec air"
 port = { auto = true, base = 3300 }
 ready_cmd = "nc -z 127.0.0.1 $BACKEND_PORT"
-depends = ["db", "mailpit"]
+depends = ["mailpit"]
 proxy = false
 
 [daemons.frontend]

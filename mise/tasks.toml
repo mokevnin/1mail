@@ -1,6 +1,6 @@
 # Project tasks, included from .mise.toml (`[task_config] includes`).
 #   mise tasks          list them
-#   mise run <task>     run one (tasks that need Postgres start the `db` daemon first)
+#   mise run <task>     run one (tasks that need Postgres depend on db:up)
 # Tasks run natively with the tools pinned in .mise.toml; the dev stack itself is the
 # [daemons] table there.
 
@@ -11,84 +11,93 @@ description = "Install frontend and Go dependencies"
 run = ["pnpm install", "go mod download"]
 
 [setup]
-description = "Install deps, start Postgres, create dev/test/atlas DBs, migrate and seed, drop the databases of deleted worktrees"
-depends = ["install", "db:seed", "db:create-test"]
+description = "Install deps, start Postgres, create this checkout's DBs, migrate and seed, drop the databases of deleted worktrees"
+depends = ["install", "db:seed"]
 run = [{ task = "worktrees:gc --apply" }]
 
 [dev]
-description = "Start the whole dev stack (https://1mail.localhost)"
+description = "Start the whole dev stack (https://1mail.localhost in the primary checkout, `mise env | grep APP_URL` elsewhere)"
+depends = ["db:up"]
 run = "mise daemons start caddy"
 
 ["dev:down"]
-description = "Stop the dev stack"
-run = "mise daemons stop"
+description = "Stop this checkout's dev stack (never the shared Postgres: `mise -C <primary checkout> daemons stop db` stops it for everyone)"
+run = "mise daemons stop caddy backend frontend mailpit"
 
 # --- database --------------------------------------------------------------------
 
-["db:create"]
-description = "Create the dev database"
-daemons = ["db"]
-run = "go run ./cmd/db create"
-
-["db:create-test"]
-description = "Create the test database"
-daemons = ["db"]
-env = { APP_ENV = "test", DATABASE_URL = "{{env.TEST_DB_URL}}" }
-run = "go run ./cmd/db create"
-
-["db:create-atlas"]
-description = "Create the scratch database atlas uses to compute migration diffs (atlas.hcl `dev`)"
-daemons = ["db"]
-env = { DATABASE_URL = "{{env.ATLAS_DEV_URL}}" }
-run = "go run ./cmd/db create"
+["db:up"]
+description = "Make sure the shared Postgres runs (the primary checkout's db daemon) and this checkout's databases exist; idempotent, silent when there is nothing to do"
+quiet = true
+run = '''
+#!/usr/bin/env bash
+set -euo pipefail
+# A server answering at PGHOST:PGPORT is used as is: that is the no-op case, an external
+# Postgres (ONEMAIL_PG_*), and what makes concurrent callers safe. Otherwise the primary
+# checkout's daemon is started (pitchfork treats a start of a running or starting daemon as
+# done), and we wait for the port.
+if ! nc -z "$PGHOST" "$PGPORT" 2>/dev/null; then
+  case "$PGHOST" in
+    127.0.0.1|localhost) ;;
+    *) echo "db:up: no Postgres answers at $PGHOST:$PGPORT and it is not local, so it is not started" >&2; exit 1 ;;
+  esac
+  primary=$(git worktree list --porcelain | sed -n '1s/^worktree //p')
+  mise -C "$primary" daemons start db >/dev/null 2>&1 || true
+  for _ in $(seq 1 120); do nc -z "$PGHOST" "$PGPORT" 2>/dev/null && break; sleep 0.5; done
+  nc -z "$PGHOST" "$PGPORT" 2>/dev/null || { echo "db:up: Postgres did not come up at $PGHOST:$PGPORT; see: mise -C $primary daemons logs db" >&2; exit 1; }
+fi
+psql=psql
+command -v psql >/dev/null || psql="mise x postgres@18 -- psql"
+# One session under an advisory lock, so two checkouts creating at once cannot collide.
+$psql -X -q -t -A -o /dev/null -h "$PGHOST" -p "$PGPORT" -U "$PGUSER" -d postgres -v ON_ERROR_STOP=1 <<SQL
+select pg_advisory_lock(1982370041);
+select format('create database %I', n) from unnest(string_to_array('$DB_NAMES', ' ')) as n
+  where not exists (select from pg_database where datname = n) \\gexec
+SQL
+'''
 
 ["db:drop"]
 description = "Drop the dev database"
-daemons = ["db"]
+depends = ["db:up"]
 run = "go run ./cmd/db drop"
 
 ["db:drop-test"]
 description = "Drop the test database"
-daemons = ["db"]
+depends = ["db:up"]
 env = { APP_ENV = "test", DATABASE_URL = "{{env.TEST_DB_URL}}" }
 run = "go run ./cmd/db drop"
 
 ["db:migrate-atlas"]
 description = "Apply Atlas migrations"
-daemons = ["db"]
-depends = ["db:create", "db:create-atlas"]
+depends = ["db:up"]
 run = "atlas migrate apply --env local --allow-dirty"
 
 ["db:migrate-river"]
 description = "Apply river's own schema (river_job, ...), out of band from Atlas"
-daemons = ["db"]
-depends = ["db:create"]
+depends = ["db:up"]
 run = "go run ./cmd/db river-up"
 
 ["db:migrate"]
 description = "Apply Atlas migrations, then river's schema"
-daemons = ["db"]
 depends = ["db:migrate-atlas"]
 run = "go run ./cmd/db river-up"
 
 ["db:seed"]
 description = "Load seed data into the dev database"
-daemons = ["db"]
 depends = ["db:migrate"]
 run = "go run ./cmd/seed"
 
 ["db:reset"]
 description = "Drop, recreate and migrate the dev database"
-run = [{ task = "db:drop" }, { task = "db:migrate" }]
+run = [{ task = "db:drop" }, { task = "db:up" }, { task = "db:migrate" }]
 
 ["db:reset-test"]
 description = "Drop and recreate the test database"
-run = [{ task = "db:drop-test" }, { task = "db:create-test" }]
+run = [{ task = "db:drop-test" }, { task = "db:up" }]
 
 ["db:generate"]
 description = "Generate an Atlas migration from the ent schema (ent's own diff engine; the community Atlas binary cannot read ent://)"
-daemons = ["db"]
-depends = ["db:create-atlas"]
+depends = ["db:up"]
 usage = 'arg "<name>" help="migration name"'
 run = 'go run ./cmd/db generate "${usage_name}"'
 
@@ -119,63 +128,58 @@ mise run worktrees:gc ${usage_apply:+--apply}
 '''
 
 ["worktrees:gc"]
-description = "Sweep what deleted worktrees leave behind: databases on the shared Postgres (MISE_ENV=shared) that no live worktree owns, and daemon state (mise daemons prune); idempotent, dry run unless --apply"
+description = "Drop the databases of deleted worktrees from the shared Postgres and the daemon state they left (mise daemons prune); idempotent, dry run unless --apply"
 usage = 'flag "--apply" help="actually drop and prune, instead of listing"'
 quiet = true
 run = '''
 #!/usr/bin/env bash
 set -euo pipefail
 apply=${usage_apply:-}
-status=0
 
-# 1. Databases. Only a shared server (the db daemon is a consumer of the global `onemail-pg`
-#    provider, mise.shared.toml) holds several checkouts' databases; a per-checkout daemon
-#    lives and dies with its worktree's state (step 2).
-if ! mise daemons ls --json | grep -q '"ownership": "consumer"'; then
-  echo "db: this checkout runs its own Postgres (MISE_ENV is not shared): no shared server to sweep"
-else
-  mise daemons start db >/dev/null 2>&1
-  keep=$(mktemp)
-  trap 'rm -f "$keep"' EXIT
-  refuse=""
-  # A live worktree is a `git worktree list` entry whose directory exists. Its databases are
-  # its PGDATABASE and the _test, _e2e and _atlas twins, read from the worktree's own mise
-  # environment. Whatever cannot be read leaves the keep list incomplete: drop nothing then.
-  worktrees=$(git worktree list --porcelain | awk '/^worktree /{p=substr($0,10); pr=0} /^prunable/{pr=1} /^$/{if(p) print p"\t"pr; p=""} END{if(p) print p"\t"pr}') || worktrees=""
-  [ -n "$worktrees" ] || refuse="cannot enumerate git worktrees"
-  while IFS=$'\t' read -r path prunable; do
-    [ -n "$path" ] || continue
-    if [ ! -d "$path" ]; then
-      if [ "$prunable" = 1 ]; then echo "gone    $path (deleted worktree)"; continue; fi
-      refuse="$refuse; $path is missing but git does not mark it prunable"; continue
-    fi
-    if ! out=$(mise -C "$path" env 2>/dev/null); then
-      refuse="$refuse; cannot read the mise environment of $path (mise trust it?)"; continue
-    fi
-    db=$(printf '%s\n' "$out" | sed -n "s/^export PGDATABASE=//p" | tr -d "'")
-    # Every checkout declares `db`: an empty name means its environment was not read properly.
-    if [ -z "$db" ]; then refuse="$refuse; $path exports no PGDATABASE"; continue; fi
-    # Postgres truncates identifiers at 63 bytes: a long name would make its twins collide.
-    if [ $(($(printf '%s' "$db" | wc -c) + 6)) -gt 63 ]; then refuse="$refuse; $db is too long for its _test/_e2e/_atlas twins"; continue; fi
-    printf '%s\n%s_test\n%s_e2e\n%s_atlas\n' "$db" "$db" "$db" "$db" >> "$keep"
-    echo "live    $path -> $db"
-  done <<< "$worktrees"
-
-  if [ -n "$refuse" ]; then
-    echo "db: refusing to drop anything: ${refuse#; }" >&2
-    status=1
-  else
-    psql="psql -X -A -t -q -d postgres"
-    for d in $($psql -c "select datname from pg_database where not datistemplate and datname <> 'postgres'"); do
-      if grep -qxF "$d" "$keep"; then continue; fi
-      case "$d" in *\"*) echo "keep    database $d (unusual name)"; continue ;; esac
-      if [ -z "$apply" ]; then echo "would drop database $d"; continue; fi
-      $psql -c "drop database \"$d\" with (force)" >/dev/null && echo "dropped database $d"
-    done
+# 1. Databases. The shared server only holds 1mail databases, each checkout's DB_NAMES (see
+#    .mise.toml). A live worktree is a `git worktree list` entry whose directory exists; its
+#    names are read from its own mise environment. Whatever cannot be read leaves the keep
+#    list incomplete (a worktree on a commit before DB_NAMES, an untrusted config), so then
+#    nothing is dropped. The server itself is never touched: it is the primary's daemon.
+keep=$(mktemp)
+trap 'rm -f "$keep"' EXIT
+refuse=""
+worktrees=$(git worktree list --porcelain | awk '/^worktree /{p=substr($0,10); pr=0} /^prunable/{pr=1} /^$/{if(p) print p"\t"pr; p=""} END{if(p) print p"\t"pr}') || worktrees=""
+[ -n "$worktrees" ] || refuse="cannot enumerate git worktrees"
+while IFS=$'\t' read -r path prunable; do
+  [ -n "$path" ] || continue
+  if [ ! -d "$path" ]; then
+    if [ "$prunable" = 1 ]; then echo "gone    $path (deleted worktree)"; continue; fi
+    refuse="$refuse; $path is missing but git does not mark it prunable"; continue
   fi
+  if ! out=$(mise -C "$path" env 2>/dev/null); then
+    refuse="$refuse; cannot read the mise environment of $path (mise trust it?)"; continue
+  fi
+  names=$(printf '%s\n' "$out" | sed -n "s/^export DB_NAMES=//p" | tr -d "'")
+  if [ -z "$names" ]; then refuse="$refuse; $path exports no DB_NAMES (merge main into it)"; continue; fi
+  printf '%s\n' $names >> "$keep"
+  echo "live    $path -> ${names%% *}"
+done <<< "$worktrees"
+
+status=0
+if [ -n "$refuse" ]; then
+  echo "db: refusing to drop anything: ${refuse#; }" >&2
+elif ! nc -z "$PGHOST" "$PGPORT" 2>/dev/null; then
+  echo "db: no Postgres at $PGHOST:$PGPORT, nothing to sweep (mise run db:up starts it)"
+else
+  psql=psql
+  command -v psql >/dev/null || psql="mise x postgres@18 -- psql"
+  psql="$psql -X -A -t -q -h $PGHOST -p $PGPORT -U $PGUSER -d postgres"
+  for d in $($psql -c "select datname from pg_database where not datistemplate and datname <> 'postgres'"); do
+    if grep -qxF "$d" "$keep"; then continue; fi
+    case "$d" in *\"*) echo "keep    database $d (unusual name)"; continue ;; esac
+    if [ -z "$apply" ]; then echo "would drop database $d"; continue; fi
+    $psql -c "drop database \"$d\" with (force)" >/dev/null && echo "dropped database $d"
+  done
 fi
 
-# 2. Daemon state of deleted worktrees and projects (stops their daemons, deletes state and data).
+# 2. Daemon state of deleted worktrees and projects (stops their daemons, deletes state and
+#    data). Live checkouts, the primary and its Postgres included, are never touched.
 if [ -z "$apply" ]; then mise daemons prune --dry-run; else mise daemons prune --yes; fi
 exit "$status"
 '''
@@ -184,15 +188,14 @@ exit "$status"
 
 [test]
 description = "Go tests, shuffled (creates the test DB first); pass packages/flags after `--`"
-daemons = ["db"]
-depends = ["db:create-test"]
+depends = ["db:up"]
 env = { APP_ENV = "test", DATABASE_URL = "{{env.TEST_DB_URL}}" }
 usage = 'arg "[go_test_args]" var=#true default="./..." help="packages and flags for go test"'
 run = 'eval "set -- $usage_go_test_args"; go test -p 1 -shuffle=on "$@"'
 
 ["test:e2e"]
 description = "End-to-end suite (ADR 0024): rebuilds the dedicated e2e DB, starts its own Mailpit, boots the app in-process; pass `go test` flags after `--`; HOLD=true keeps the stack up after the run for inspection"
-daemons = ["db"]
+depends = ["db:up"]
 env = { APP_ENV = "e2e", DATABASE_URL = "{{env.E2E_DB_URL}}", METRICS_ADDR = "" }
 usage = 'arg "[go_test_args]" var=#true default="./e2e/..." help="packages and flags for go test"'
 run = [
