@@ -29,3 +29,14 @@ func TestConfigValidate_JWTSecret(t *testing.T) {
 		})
 	}
 }
+
+func TestConfigLoadBodyLimitDefaults(t *testing.T) {
+	t.Setenv("DATABASE_URL", "postgres://x")
+	cfg, err := Load("test")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if cfg.MaxBodyBytes != 1<<20 || cfg.CollectMaxBodyBytes != 64<<10 {
+		t.Fatalf("defaults = %d, %d", cfg.MaxBodyBytes, cfg.CollectMaxBodyBytes)
+	}
+}

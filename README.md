@@ -186,6 +186,7 @@ Configuration is read from the environment (and, if present, `.env` files).
 | `JWT_SECRET`                                                        | — (**required in prod**) | JWT signing secret; required outside development                                                 |
 | `SMTP_HOST` / `SMTP_PORT` / `SMTP_USER` / `SMTP_PASS` / `SMTP_FROM` | `SMTP_PORT=1025`         | Outbound email                                                                                   |
 | `CORS_ORIGINS`                                                      | —                        | Origins allowed credentialed CORS on the cookie API (`/site`, `/auth`); empty = same-origin only |
+| `MAX_BODY_BYTES` / `COLLECT_MAX_BODY_BYTES`                         | `1048576` / `65536`      | Largest accepted request body in bytes (`/collect` has its own cap); larger bodies get `413`     |
 
 `COLLECT_SITE_KEY` and `BOOTSTRAP_TOKEN` are also recognized (tracker ingestion key and
 external-API bootstrap token).
