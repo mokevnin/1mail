@@ -48,7 +48,7 @@ type AuditLog interface {
 	Licensed() bool
 	// Entries returns up to limit entries, newest first, preceding the cursor entry
 	// id (0 = from the newest), and the next page's cursor (0 = last page).
-	Entries(ctx context.Context, s *ent.Scoped, cursor int64, limit int) ([]*ent.AuditEntry, int64, error)
+	Entries(ctx context.Context, s *ent.Scoped, f events.AuditFilter, cursor int64, limit int) ([]*ent.AuditEntry, int64, error)
 }
 
 // Deps is everything the /api handlers are built from. The domain modules are

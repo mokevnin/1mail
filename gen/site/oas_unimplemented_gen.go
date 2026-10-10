@@ -24,7 +24,8 @@ func (UnimplementedHandler) SiteAnalyticsOverview(ctx context.Context, params Si
 
 // SiteAuditExport implements SiteAudit_export operation.
 //
-// Export the whole Audit log as CSV, newest first (Enterprise; owner and admin only).
+// Export the Audit log as CSV, newest first, narrowed by the same filter as the list (Enterprise;
+// owner and admin only).
 //
 // GET /workspaces/{slug}/audit-entries/export
 func (UnimplementedHandler) SiteAuditExport(ctx context.Context, params SiteAuditExportParams) (r SiteAuditExportRes, _ error) {

@@ -87,11 +87,11 @@ type Handlers struct {
 // the page answers 402.
 type AuditLog interface {
 	Licensed() bool
-	// Entries returns up to limit entries, newest first, preceding the cursor entry
-	// id (0 = from the newest), and the next page's cursor (0 = last page).
-	Entries(ctx context.Context, s *ent.Scoped, cursor int64, limit int) ([]*ent.AuditEntry, int64, error)
-	// ExportCSV streams the whole log, newest first, as CSV.
-	ExportCSV(ctx context.Context, s *ent.Scoped, w io.Writer) error
+	// Entries returns up to limit entries matching the filter, newest first, preceding
+	// the cursor entry id (0 = from the newest), and the next page's cursor (0 = last page).
+	Entries(ctx context.Context, s *ent.Scoped, f events.AuditFilter, cursor int64, limit int) ([]*ent.AuditEntry, int64, error)
+	// ExportCSV streams the entries matching the filter, newest first, as CSV.
+	ExportCSV(ctx context.Context, s *ent.Scoped, f events.AuditFilter, w io.Writer) error
 }
 
 // Deps is everything the /site handlers are built from. The domain modules are

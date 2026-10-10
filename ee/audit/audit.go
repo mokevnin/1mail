@@ -13,6 +13,7 @@ import (
 	"github.com/mokevnin/1mail/ee/licensekey"
 	"github.com/mokevnin/1mail/ent"
 	"github.com/mokevnin/1mail/ent/auditentry"
+	"github.com/mokevnin/1mail/ent/predicate"
 	"github.com/mokevnin/1mail/internal/events"
 )
 
@@ -114,12 +115,12 @@ func NewLog(lic *licensekey.License) *Log { return &Log{lic: lic} }
 // Licensed reports whether this instance may show an Audit log.
 func (l *Log) Licensed() bool { return l != nil && l.lic.Has(licensekey.FeatureAudit) }
 
-// Entries returns up to limit entries of the scoped Workspace, newest first, that
-// precede the cursor (an entry id; 0 starts from the newest), and the cursor of the
+// Entries returns up to limit entries of the scoped Workspace matching the filter,
+// newest first, that precede the cursor (an entry id; 0 starts from the newest), and the cursor of the
 // next page (0 on the last page). The caller has already checked Licensed and the
 // reader's role.
-func (l *Log) Entries(ctx context.Context, s *ent.Scoped, cursor int64, limit int) ([]*ent.AuditEntry, int64, error) {
-	q := s.AuditEntry().Query().Order(ent.Desc(auditentry.FieldID)).Limit(limit + 1)
+func (l *Log) Entries(ctx context.Context, s *ent.Scoped, f events.AuditFilter, cursor int64, limit int) ([]*ent.AuditEntry, int64, error) {
+	q := s.AuditEntry().Query().Where(predicates(f)...).Order(ent.Desc(auditentry.FieldID)).Limit(limit + 1)
 	if cursor > 0 {
 		q = q.Where(auditentry.IDLT(cursor))
 	}
@@ -132,4 +133,37 @@ func (l *Log) Entries(ctx context.Context, s *ent.Scoped, cursor int64, limit in
 	}
 	rows = rows[:limit]
 	return rows, rows[limit-1].ID, nil
+}
+
+// predicates turns the filter into query predicates; an unset field adds none.
+func predicates(f events.AuditFilter) []predicate.AuditEntry {
+	var ps []predicate.AuditEntry
+	if !f.From.IsZero() {
+		ps = append(ps, auditentry.OccurredAtGTE(f.From))
+	}
+	if !f.To.IsZero() {
+		ps = append(ps, auditentry.OccurredAtLT(f.To))
+	}
+	if f.ActorKind != "" {
+		ps = append(ps, auditentry.ActorKind(f.ActorKind))
+	}
+	if f.ActorID != "" {
+		ps = append(ps, auditentry.ActorID(f.ActorID))
+	}
+	if f.Action != "" {
+		ps = append(ps, auditentry.Action(f.Action))
+	}
+	if f.TargetType != "" {
+		ps = append(ps, auditentry.TargetType(f.TargetType))
+	}
+	if f.TargetID != "" {
+		ps = append(ps, auditentry.TargetID(f.TargetID))
+	}
+	if f.IP != "" {
+		ps = append(ps, auditentry.IP(f.IP))
+	}
+	if f.RequestID != "" {
+		ps = append(ps, auditentry.RequestID(f.RequestID))
+	}
+	return ps
 }

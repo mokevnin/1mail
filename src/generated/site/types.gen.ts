@@ -1867,6 +1867,51 @@ export type SiteApiTokenResourceKeySlug = string;
 export type SiteApiTokenResourceParentKey = string;
 
 /**
+ * Only entries with exactly this action, e.g. membership.update
+ */
+export type SiteAuditFilterAction = string;
+
+/**
+ * Only entries by the actor with this id (a User id or an API token id)
+ */
+export type SiteAuditFilterActorId = string;
+
+/**
+ * Only entries by this kind of actor
+ */
+export type SiteAuditFilterActorKind = SiteAuditActorKind;
+
+/**
+ * Only entries at or after this time
+ */
+export type SiteAuditFilterFrom = Timestamp;
+
+/**
+ * Only entries from this client address
+ */
+export type SiteAuditFilterIp = string;
+
+/**
+ * Only entries made under this request id
+ */
+export type SiteAuditFilterRequestId = string;
+
+/**
+ * Only entries about the target with this id
+ */
+export type SiteAuditFilterTargetId = string;
+
+/**
+ * Only entries about this target type, e.g. integration
+ */
+export type SiteAuditFilterTargetType = string;
+
+/**
+ * Only entries strictly before this time
+ */
+export type SiteAuditFilterTo = Timestamp;
+
+/**
  * Unique identifier
  */
 export type SiteAutomationResourceKeyId = EntityId;
@@ -2547,6 +2592,42 @@ export type SiteAuditListData = {
   };
   query?: {
     /**
+     * Only entries at or after this time
+     */
+    from?: Timestamp;
+    /**
+     * Only entries strictly before this time
+     */
+    to?: Timestamp;
+    /**
+     * Only entries by this kind of actor
+     */
+    actorKind?: SiteAuditActorKind;
+    /**
+     * Only entries by the actor with this id (a User id or an API token id)
+     */
+    actorId?: string;
+    /**
+     * Only entries with exactly this action, e.g. membership.update
+     */
+    action?: string;
+    /**
+     * Only entries about this target type, e.g. integration
+     */
+    targetType?: string;
+    /**
+     * Only entries about the target with this id
+     */
+    targetId?: string;
+    /**
+     * Only entries from this client address
+     */
+    ip?: string;
+    /**
+     * Only entries made under this request id
+     */
+    requestId?: string;
+    /**
      * Cursor from a previous page
      */
     cursor?: string;
@@ -2593,7 +2674,44 @@ export type SiteAuditExportData = {
   path: {
     slug: string;
   };
-  query?: never;
+  query?: {
+    /**
+     * Only entries at or after this time
+     */
+    from?: Timestamp;
+    /**
+     * Only entries strictly before this time
+     */
+    to?: Timestamp;
+    /**
+     * Only entries by this kind of actor
+     */
+    actorKind?: SiteAuditActorKind;
+    /**
+     * Only entries by the actor with this id (a User id or an API token id)
+     */
+    actorId?: string;
+    /**
+     * Only entries with exactly this action, e.g. membership.update
+     */
+    action?: string;
+    /**
+     * Only entries about this target type, e.g. integration
+     */
+    targetType?: string;
+    /**
+     * Only entries about the target with this id
+     */
+    targetId?: string;
+    /**
+     * Only entries from this client address
+     */
+    ip?: string;
+    /**
+     * Only entries made under this request id
+     */
+    requestId?: string;
+  };
   url: '/workspaces/{slug}/audit-entries/export';
 };
 
