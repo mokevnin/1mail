@@ -3,7 +3,6 @@
 package e2e
 
 import (
-	"context"
 	"io"
 	"net/http"
 	"regexp"
@@ -14,6 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	externalapi "github.com/mokevnin/1mail/gen/external"
+	"github.com/mokevnin/1mail/internal/eligibility"
 )
 
 // angleURL picks the <...> entries of a List-Unsubscribe value (RFC 2369).
@@ -70,7 +70,7 @@ func (w *Workspace) RequireUnsubscribed(email string) {
 			return false
 		}
 		for _, u := range doc.Unsubscribes {
-			if strings.EqualFold(u.Destination, email) && u.SendingSource == "broadcasts" {
+			if strings.EqualFold(u.Destination, email) && u.SendingSource == eligibility.SourceBroadcasts {
 				return true
 			}
 		}
@@ -83,12 +83,7 @@ func (w *Workspace) RequireUnsubscribed(email string) {
 // mail to the same address does not count).
 func (w *Workspace) WaitForEmailWithSubject(recipient, subject string) Message {
 	w.t.Helper()
-	require.Eventually(w.t, func() bool { return w.find(recipient, subject) != "" },
-		EmailTimeout, 100*time.Millisecond, "no email %q for %s", subject, recipient)
-	msg, err := w.env.Mailpit.Get(context.WithoutCancel(w.t.Context()), w.find(recipient, subject))
-	require.NoError(w.t, err)
-	w.msgIDs = append(w.msgIDs, msg.ID)
-	return msg
+	return w.waitForEmail(recipient, subject)
 }
 
 // RequireNoEmailWithSubject asserts that no message with subject reaches recipient
@@ -96,25 +91,12 @@ func (w *Workspace) WaitForEmailWithSubject(recipient, subject string) Message {
 // delivery of the same send and keep the window short.
 func (w *Workspace) RequireNoEmailWithSubject(recipient, subject string, window time.Duration) {
 	w.t.Helper()
-	require.Never(w.t, func() bool { return w.find(recipient, subject) != "" },
+	require.Never(w.t, func() bool { return w.has(recipient, subject) },
 		window, 100*time.Millisecond, "unexpected email %q for %s", subject, recipient)
 }
 
-// find returns the id of the inbox message for recipient with subject, or "".
-func (w *Workspace) find(recipient, subject string) string {
-	found, err := w.env.Mailpit.Search(w.t.Context(), `to:"`+recipient+`"`)
-	if err != nil {
-		return ""
-	}
-	for _, s := range found {
-		if s.Subject != subject {
-			continue
-		}
-		for _, a := range s.To {
-			if strings.EqualFold(a.Address, recipient) {
-				return s.ID
-			}
-		}
-	}
-	return ""
+// has reports whether the inbox holds a message for recipient with subject.
+func (w *Workspace) has(recipient, subject string) bool {
+	id, err := w.env.Mailpit.FindID(w.t.Context(), recipient, subject)
+	return err == nil && id != ""
 }

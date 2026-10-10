@@ -184,7 +184,7 @@ func New(env string, opts ...Option) (*App, error) {
 		return nil, ErrE2EOnly
 	}
 	injector := do.New()
-	register(injector, env, o.listener, o.e2eDKIMLookup)
+	register(injector, env, o)
 
 	cfg, err := do.Invoke[*config.Config](injector)
 	if err != nil {
@@ -298,7 +298,7 @@ func (a *App) Stop(ctx context.Context) error {
 // that keeps `1mail workspace …` quick to start and to shut down.
 func NewOperator(env string) (*App, error) {
 	injector := do.New()
-	register(injector, env, nil, false)
+	register(injector, env, options{})
 
 	cfg, err := do.Invoke[*config.Config](injector)
 	if err != nil {
@@ -361,6 +361,13 @@ func (a *App) UnsuspendWorkspace(ctx context.Context, slug string) (bool, error)
 	return service.UnsuspendWorkspace(ctx, client.Client, id)
 }
 
+// Accounts is the product's Accounts module from the DI container, for harnesses that
+// arrange users and Workspaces through the same instance the HTTP surface runs on
+// (the end-to-end suite), so they open no second connection pool.
+func (a *App) Accounts() (*accounts.Accounts, error) {
+	return do.Invoke[*accounts.Accounts](a.injector)
+}
+
 func (a *App) Shutdown(ctx context.Context) *do.ShutdownReport {
 	a.shutdownOnce.Do(func() {
 		a.shutdownReport = a.injector.ShutdownWithContext(ctx)
@@ -368,14 +375,14 @@ func (a *App) Shutdown(ctx context.Context) *do.ShutdownReport {
 	return a.shutdownReport
 }
 
-func register(injector do.Injector, env string, ln net.Listener, e2eDKIM bool) {
+func register(injector do.Injector, env string, o options) {
 	do.Provide(injector, func(do.Injector) (*config.Config, error) {
 		cfg, err := config.Load(env)
 		if err != nil {
 			return nil, err
 		}
-		if ln != nil {
-			cfg.UseListener(ln.Addr())
+		if o.listener != nil {
+			cfg.UseListener(o.listener.Addr())
 		}
 		return cfg, nil
 	})
@@ -456,7 +463,7 @@ func register(injector do.Injector, env string, ln net.Listener, e2eDKIM bool) {
 		}
 		// Dev trusts seeded domains so the local send gate isn't blocked by real
 		// DNS; prod verifies against published DKIM TXT records (ADR 0010).
-		if cfg.IsDev || e2eDKIM {
+		if cfg.IsDev || o.e2eDKIMLookup {
 			client, err := do.Invoke[*entClient](i)
 			if err != nil {
 				return nil, err

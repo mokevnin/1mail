@@ -212,7 +212,14 @@ func (w *Workspace) SendBroadcast(b Broadcast) {
 // returns it with its headers. The failure message lists what the inbox held.
 func (w *Workspace) WaitForEmail(recipient string) Message {
 	w.t.Helper()
-	msg, err := w.env.Mailpit.WaitForRecipient(w.t.Context(), recipient, EmailTimeout)
+	return w.waitForEmail(recipient, "")
+}
+
+// waitForEmail is the shared wait behind WaitForEmail and WaitForEmailWithSubject
+// (subject "" matches any); it remembers the message for cleanup.
+func (w *Workspace) waitForEmail(recipient, subject string) Message {
+	w.t.Helper()
+	msg, err := w.env.Mailpit.WaitForMessage(w.t.Context(), recipient, subject, EmailTimeout)
 	require.NoError(w.t, err)
 	w.msgIDs = append(w.msgIDs, msg.ID)
 	return msg
