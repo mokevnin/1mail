@@ -5,7 +5,6 @@ package e2e
 import (
 	"io"
 	"net/http"
-	"regexp"
 	"strings"
 	"time"
 
@@ -16,23 +15,14 @@ import (
 	"github.com/mokevnin/1mail/internal/eligibility"
 )
 
-// angleURL picks the <...> entries of a List-Unsubscribe value (RFC 2369).
-var angleURL = regexp.MustCompile(`<([^>]*)>`)
-
 // OneClickUnsubscribe performs the RFC 8058 one-click request exactly as a mailbox
 // provider would: it uses only the https URL from the message's List-Unsubscribe
 // header and the body from List-Unsubscribe-Post, and requires success (2xx).
 func (w *Workspace) OneClickUnsubscribe(msg Message) {
 	w.t.Helper()
-	var target string
-	for _, m := range angleURL.FindAllStringSubmatch(msg.Header("List-Unsubscribe"), -1) {
-		if strings.HasPrefix(m[1], "https://") || strings.HasPrefix(m[1], "http://") {
-			target = m[1]
-			break
-		}
-	}
+	target := msg.UnsubscribeURL()
 	require.NotEmpty(w.t, target, "List-Unsubscribe carries an http(s) URL, got %q", msg.Header("List-Unsubscribe"))
-	body := msg.Header("List-Unsubscribe-Post")
+	body := msg.OneClickBody()
 	require.Equal(w.t, "List-Unsubscribe=One-Click", body, "List-Unsubscribe-Post announces one-click")
 
 	req, err := http.NewRequestWithContext(w.t.Context(), http.MethodPost, target, strings.NewReader(body))

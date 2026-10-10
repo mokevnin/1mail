@@ -31,31 +31,6 @@ type summary struct {
 	Subject string
 }
 
-// Message is a delivered email with the fields the scenarios assert on.
-type Message struct {
-	ID      string
-	From    Address
-	To      []Address
-	Subject string
-	Text    string
-	HTML    string
-	// Headers are the raw header values keyed by canonical name, so a scenario can
-	// read List-Unsubscribe and List-Unsubscribe-Post exactly as they went on the wire.
-	Headers map[string][]string
-}
-
-// Header returns the first value of the named header ("" when absent).
-func (m Message) Header(name string) string {
-	return first(m.Headers[http.CanonicalHeaderKey(name)])
-}
-
-func first(v []string) string {
-	if len(v) == 0 {
-		return ""
-	}
-	return v[0]
-}
-
 // Mailpit is a thin client over Mailpit's HTTP API (it publishes only Swagger 2.0,
 // which the project's OpenAPI generator rejects, and three endpoints are enough).
 type Mailpit struct {
