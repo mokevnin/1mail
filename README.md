@@ -132,9 +132,10 @@ tagged with the version and `latest`.
 
 ```sh
 docker run -p 3000:3000 \
-  -e DATABASE_URL="postgres://user:pass@host:5432/1mail?sslmode=disable" \
+  -e APP_ENV=production \
+  -e DATABASE_URL="postgres://user:pass@host:5432/1mail?sslmode=require" \
   -e APP_URL="https://example.com" \
-  -e JWT_SECRET="<a-strong-secret>" \
+  -e JWT_SECRET="$(openssl rand -hex 32)" \
   -e AUTO_MIGRATE=true \
   ghcr.io/mokevnin/1mail:latest
 ```

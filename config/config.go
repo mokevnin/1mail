@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"path/filepath"
 	"runtime"
+	"strings"
 
 	"github.com/mokevnin/1mail/internal/i18n"
 	"github.com/spf13/viper"
@@ -148,14 +149,40 @@ func Load(envName string) (*Config, error) {
 func (c *Config) validate(envName string) error {
 	// Outside development/test, an empty JWT_SECRET silently signs auth tokens
 	// with an empty key — refuse to boot rather than ship that footgun.
-	if !isDevEnv(envName) && c.JWTSecret == "" {
-		return fmt.Errorf("JWT_SECRET is required outside development")
+	if !isDevEnv(envName) {
+		if err := validateJWTSecret(c.JWTSecret); err != nil {
+			return err
+		}
 	}
 	if c.BodyLimits.Default <= 0 {
 		return fmt.Errorf("MAX_BODY_BYTES must be positive")
 	}
 	if c.BodyLimits.Collect <= 0 {
 		return fmt.Errorf("COLLECT_MAX_BODY_BYTES must be positive")
+	}
+	return nil
+}
+
+// minJWTSecretLength is the shortest JWT_SECRET accepted outside development
+// (32 characters = 256 bits when the secret is hex/random, the HS256 key size).
+const minJWTSecretLength = 32
+
+// placeholderSecretMarkers are lowercase fragments of documented example and
+// development secrets; a secret containing one was copied, not generated.
+var placeholderSecretMarkers = []string{"change-me", "changeme", "change-in-production", "dev-secret", "a-strong-secret"}
+
+func validateJWTSecret(secret string) error {
+	if secret == "" {
+		return fmt.Errorf("JWT_SECRET is required outside development")
+	}
+	if len(secret) < minJWTSecretLength {
+		return fmt.Errorf("JWT_SECRET must be at least %d characters outside development (e.g. `openssl rand -hex 32`)", minJWTSecretLength)
+	}
+	lower := strings.ToLower(secret)
+	for _, m := range placeholderSecretMarkers {
+		if strings.Contains(lower, m) {
+			return fmt.Errorf("JWT_SECRET looks like a placeholder; generate one with `openssl rand -hex 32`")
+		}
 	}
 	return nil
 }

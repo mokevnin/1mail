@@ -12,12 +12,12 @@ and pub/sub both ride on Postgres — no Redis, no object storage, no separate w
 
 Configuration is read from environment variables (and, if present, `.env` files next to
 the binary). `APP_ENV` selects the environment (`development` by default; set it to
-`production` when self-hosting).
+`production` when self-hosting — the published Docker images already default to `production`).
 
 | Variable                                                            | Required        | Default                   | Description                                                                                                                                                                                                          |
 | ------------------------------------------------------------------- | --------------- | ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `DATABASE_URL`                                                      | **yes**         | —                         | PostgreSQL connection string (`postgres://user:pass@host:5432/db?sslmode=…`).                                                                                                                                        |
-| `JWT_SECRET`                                                        | **yes in prod** | —                         | Signing secret for auth tokens. The server refuses to boot outside `development`/`test` if this is empty.                                                                                                            |
+| `DATABASE_URL`                                                      | **yes**         | —                         | PostgreSQL connection string (`postgres://user:pass@host:5432/db?sslmode=require`). Use `sslmode=verify-full` (with `sslrootcert`) to also verify the server certificate.                                            |
+| `JWT_SECRET`                                                        | **yes in prod** | —                         | Signing secret for auth tokens. Outside `development`/`test` the server refuses to boot if it is empty, shorter than 32 characters, or a known placeholder. Generate one with `openssl rand -hex 32`.                |
 | `ENCRYPTION_KEY`                                                    | **yes**         | —                         | Base64 Tink keyset used to encrypt stored provider credentials. Generate one with `go run ./cmd/genkey` (or `1mail`-side tooling). Boot fails if missing.                                                            |
 | `APP_URL`                                                           | no              | `http://localhost:3000`   | Public base URL — used when issuing auth tokens and building tracking/unsubscribe links. Set to your real origin.                                                                                                    |
 | `PORT`                                                              | no              | `3000`                    | HTTP listen port.                                                                                                                                                                                                    |
@@ -58,7 +58,7 @@ Migrations are embedded in the binary. You apply them one of two ways:
 ```sh
 docker run -p 3000:3000 \
   -e APP_ENV=production \
-  -e DATABASE_URL="postgres://user:pass@db:5432/1mail?sslmode=disable" \
+  -e DATABASE_URL="postgres://user:pass@db:5432/1mail?sslmode=require" \
   -e JWT_SECRET="$(openssl rand -hex 32)" \
   -e ENCRYPTION_KEY="<base64 tink keyset>" \
   -e APP_URL="https://mail.example.com" \
@@ -69,44 +69,11 @@ docker run -p 3000:3000 \
 The image declares a `HEALTHCHECK` against `/healthz`, so `docker ps` reports `healthy`
 once the process is serving.
 
-### docker-compose
-
-```yaml
-services:
-  app:
-    image: ghcr.io/mokevnin/1mail:latest
-    ports: ['3000:3000']
-    environment:
-      APP_ENV: production
-      DATABASE_URL: postgres://postgres:postgres@db:5432/1mail?sslmode=disable
-      JWT_SECRET: change-me
-      ENCRYPTION_KEY: <base64 tink keyset>
-      APP_URL: https://mail.example.com
-      AUTO_MIGRATE: 'true'
-    depends_on:
-      db:
-        condition: service_healthy
-  db:
-    image: postgres:16-alpine
-    environment:
-      POSTGRES_DB: 1mail
-      POSTGRES_PASSWORD: postgres
-    healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U postgres']
-      interval: 5s
-      timeout: 3s
-      retries: 10
-    volumes: ['pgdata:/var/lib/postgresql/data']
-
-volumes:
-  pgdata:
-```
-
 ### Binary
 
 ```sh
 export APP_ENV=production
-export DATABASE_URL="postgres://user:pass@host:5432/1mail?sslmode=disable"
+export DATABASE_URL="postgres://user:pass@host:5432/1mail?sslmode=require"
 export JWT_SECRET="$(openssl rand -hex 32)"
 export ENCRYPTION_KEY="<base64 tink keyset>"
 export APP_URL="https://mail.example.com"
