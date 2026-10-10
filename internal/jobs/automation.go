@@ -9,6 +9,7 @@ import (
 	"github.com/riverqueue/river"
 
 	"github.com/mokevnin/1mail/ent"
+	"github.com/mokevnin/1mail/internal/jobkind"
 	"github.com/mokevnin/1mail/ent/automation"
 	"github.com/mokevnin/1mail/ent/automationrun"
 	"github.com/mokevnin/1mail/ent/outboundmessage"
@@ -26,7 +27,7 @@ type EvaluateTriggerArgs struct {
 	Action      string `json:"action"`
 }
 
-func (EvaluateTriggerArgs) Kind() string { return "automation_evaluate_trigger" }
+func (EvaluateTriggerArgs) Kind() string { return jobkind.EvaluateTrigger }
 
 type EvaluateTriggerWorker struct {
 	river.WorkerDefaults[EvaluateTriggerArgs]
@@ -106,7 +107,7 @@ type RunStepArgs struct {
 	RunID int64 `json:"run_id"`
 }
 
-func (RunStepArgs) Kind() string { return "automation_run_step" }
+func (RunStepArgs) Kind() string { return jobkind.RunStep }
 
 type RunStepWorker struct {
 	river.WorkerDefaults[RunStepArgs]

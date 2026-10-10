@@ -2,7 +2,6 @@ package erasure
 
 import (
 	"context"
-	"errors"
 
 	"github.com/samber/lo"
 
@@ -11,28 +10,20 @@ import (
 	"github.com/mokevnin/1mail/ent/broadcastrecipient"
 	"github.com/mokevnin/1mail/internal/broadcasts"
 	"github.com/mokevnin/1mail/internal/events"
-	"github.com/mokevnin/1mail/internal/jobs"
+	"github.com/mokevnin/1mail/internal/jobkind"
 )
-
-// errNoQueuePurger means the transaction's Publisher cannot clear the internal
-// queues: erasing without clearing them would leave personal data behind.
-var errNoQueuePurger = errors.New("erasure: publisher cannot purge the internal queues")
 
 // cancelInFlight stops work already under way for the subject and clears the internal
 // queues of what refers to it: the Contact's recipients in unsent Broadcasts are
 // removed (a Broadcast left with nothing pending settles), and the domain-event outbox
 // rows and river job arguments naming the Contact, its runs or its recipients are
-// deleted. A send a worker already handed to the provider is not recalled; one queued
+// deleted, as are the queued webhook deliveries whose payload names the Contact or
+// its address. A send a worker already handed to the provider is not recalled; one queued
 // but not started finds its row gone and, at the send chokepoint, its Contact gone.
 //
 // It must run before the steps that delete the rows it reads ids from, and before the
 // erasure publishes its own signal, which names no Contact.
-func cancelInFlight(ctx context.Context, s *ent.Scoped, t *Target, pub events.Publisher) error {
-	purger, ok := pub.(events.QueuePurger)
-	if !ok {
-		return errNoQueuePurger
-	}
-
+func cancelInFlight(ctx context.Context, s *ent.Scoped, t *Target, purger events.PurgingPublisher) error {
 	runIDs, err := s.AutomationRun().Query().Where(automationrun.ContactID(t.ContactID)).IDs(ctx)
 	if err != nil {
 		return err
@@ -44,18 +35,25 @@ func cancelInFlight(ctx context.Context, s *ent.Scoped, t *Target, pub events.Pu
 		return err
 	}
 	recipientIDs := lo.Map(unsent, func(r *ent.BroadcastRecipient, _ int) int64 { return r.ID })
-	affected := lo.Uniq(lo.Map(unsent, func(r *ent.BroadcastRecipient, _ int) int64 { return r.BroadcastID }))
+	removedBy := lo.CountValuesBy(unsent, func(r *ent.BroadcastRecipient) int64 { return r.BroadcastID })
 
 	if err := purger.PurgeOutbox(ctx, s.WorkspaceID(), t.ContactID, t.Destinations); err != nil {
 		return err
 	}
-	if err := purger.PurgeJobs(ctx, jobs.EvaluateTriggerArgs{}.Kind(), "contact_id", []int64{t.ContactID}); err != nil {
+	if err := purger.PurgeJobs(ctx, jobkind.EvaluateTrigger, "contact_id", []int64{t.ContactID}); err != nil {
 		return err
 	}
-	if err := purger.PurgeJobs(ctx, jobs.RunStepArgs{}.Kind(), "run_id", runIDs); err != nil {
+	endpointIDs, err := s.WebhookEndpoint().Query().IDs(ctx)
+	if err != nil {
 		return err
 	}
-	if err := purger.PurgeJobs(ctx, jobs.SendRecipientArgs{}.Kind(), "recipient_id", recipientIDs); err != nil {
+	if err := purger.PurgeWebhookJobs(ctx, jobkind.DeliverWebhook, endpointIDs, t.ContactID, t.Destinations); err != nil {
+		return err
+	}
+	if err := purger.PurgeJobs(ctx, jobkind.RunStep, "run_id", runIDs); err != nil {
+		return err
+	}
+	if err := purger.PurgeJobs(ctx, jobkind.SendRecipient, "recipient_id", recipientIDs); err != nil {
 		return err
 	}
 
@@ -65,7 +63,12 @@ func cancelInFlight(ctx context.Context, s *ent.Scoped, t *Target, pub events.Pu
 	if _, err := s.BroadcastRecipient().Delete().Where(broadcastrecipient.IDIn(recipientIDs...)).Exec(ctx); err != nil {
 		return err
 	}
-	for _, id := range affected {
+	for id, removed := range removedBy {
+		// recipients_total counts the Broadcast's recipient rows (it is what the delivery
+		// and failure rates divide by), so it shrinks with them.
+		if err := s.Broadcast().UpdateOneID(id).AddRecipientsTotal(-removed).Exec(ctx); err != nil {
+			return err
+		}
 		if err := broadcasts.Finalize(ctx, s, id); err != nil {
 			return err
 		}

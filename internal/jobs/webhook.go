@@ -7,6 +7,7 @@ import (
 	"github.com/riverqueue/river"
 
 	"github.com/mokevnin/1mail/ent"
+	"github.com/mokevnin/1mail/internal/jobkind"
 	"github.com/mokevnin/1mail/ent/webhookendpoint"
 	"github.com/mokevnin/1mail/internal/secrets"
 	"github.com/mokevnin/1mail/internal/webhook"
@@ -21,7 +22,7 @@ type DeliverWebhookArgs struct {
 	Body       []byte `json:"body"`
 }
 
-func (DeliverWebhookArgs) Kind() string { return "deliver_webhook" }
+func (DeliverWebhookArgs) Kind() string { return jobkind.DeliverWebhook }
 
 type DeliverWebhookWorker struct {
 	river.WorkerDefaults[DeliverWebhookArgs]

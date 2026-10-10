@@ -4,7 +4,7 @@
 // and an Identifier and gets back nil or a domain error; none re-implements what is
 // removed, anonymized or kept.
 //
-// The whole erasure is one transaction, opened through events.Bus.WithinScopedTx so
+// The whole erasure is one transaction, opened through events.Bus.WithinScopedPurgeTx so
 // the Contact change and the domain-event outbox commit together. Inside it the work
 // is an ordered list of steps (see Module.steps), each a small function over the
 // resolved Target; extending Erasure (another identifier kind, another dependent
@@ -95,7 +95,7 @@ type Target struct {
 }
 
 // step is one part of the erasure, run inside the transaction.
-type step func(ctx context.Context, s *ent.Scoped, t *Target, pub events.Publisher) error
+type step func(ctx context.Context, s *ent.Scoped, t *Target, pub events.PurgingPublisher) error
 
 // Module erases data subjects.
 type Module struct {
@@ -111,7 +111,7 @@ func New(bus *events.Bus) *Module {
 // happens or none. ErrNotFound means the identifier resolves to nothing in the
 // Workspace (including a row of another Workspace).
 func (m *Module) Erase(ctx context.Context, s *ent.Scoped, id Identifier, op Operator) error {
-	return m.bus.WithinScopedTx(ctx, s, func(ts *ent.Scoped, pub events.Publisher) error {
+	return m.bus.WithinScopedPurgeTx(ctx, s, func(ts *ent.Scoped, pub events.PurgingPublisher) error {
 		target, err := resolve(ctx, ts, id)
 		if err != nil {
 			return err

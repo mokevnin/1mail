@@ -19,16 +19,18 @@ type QueuePurger interface {
 	// args integer field key is one of ids. A running job is left to finish: its
 	// worker re-checks that what it refers to still exists.
 	PurgeJobs(ctx context.Context, kind, key string, ids []int64) error
+	// PurgeWebhookJobs deletes the queued deliveries to the given webhook endpoints
+	// (the Workspace's own) whose body names the Contact (contactId) or one of its
+	// destinations (data.email, case-insensitively). The body is the event payload
+	// the endpoint would receive. A running delivery is left to finish.
+	PurgeWebhookJobs(ctx context.Context, kind string, endpointIDs []int64, contactID int64, destinations []string) error
 }
 
 // outboxTable is the watermill-sql table of the domain-events topic.
 const outboxTable = "watermill_" + TopicDomainEvents
 
 func (p *txPublisher) PurgeOutbox(ctx context.Context, workspaceID, contactID int64, destinations []string) error {
-	lowered := make([]string, len(destinations))
-	for i, d := range destinations {
-		lowered[i] = strings.ToLower(strings.TrimSpace(d))
-	}
+	lowered := lowerAll(destinations)
 	// contactID 0 is "no Contact" (an address erased on its own); events with no
 	// Contact carry contactId 0 or none, so 0 must never match.
 	id := ""
@@ -53,6 +55,37 @@ func (p *txPublisher) PurgeJobs(ctx context.Context, kind, key string, ids []int
 WHERE kind = $1 AND state <> 'running' AND (args->>$2)::bigint = ANY($3)`,
 		kind, key, ids)
 	return err
+}
+
+func (p *txPublisher) PurgeWebhookJobs(ctx context.Context, kind string, endpointIDs []int64, contactID int64, destinations []string) error {
+	if len(endpointIDs) == 0 {
+		return nil
+	}
+	id := ""
+	if contactID != 0 {
+		id = fmt.Sprint(contactID)
+	}
+	// DeliverWebhookArgs.Body is []byte, so river stores it as a base64 JSON string; it
+	// is the JSON event payload, naming the Contact at contactId / data.contactId and
+	// the address at data.email.
+	_, err := p.tx.ExecContext(ctx, `DELETE FROM river_job
+WHERE kind = $1 AND state <> 'running'
+  AND (args->>'endpoint_id')::bigint = ANY($2)
+  AND EXISTS (
+    SELECT 1 FROM (SELECT convert_from(decode(args->>'body', 'base64'), 'UTF8')::jsonb AS body) b
+    WHERE b.body->>'contactId' = $3
+       OR b.body->'data'->>'contactId' = $3
+       OR lower(b.body->'data'->>'email') = ANY($4))`,
+		kind, endpointIDs, id, lowerAll(destinations))
+	return err
+}
+
+func lowerAll(in []string) []string {
+	out := make([]string, len(in))
+	for i, d := range in {
+		out[i] = strings.ToLower(strings.TrimSpace(d))
+	}
+	return out
 }
 
 var _ QueuePurger = (*txPublisher)(nil)

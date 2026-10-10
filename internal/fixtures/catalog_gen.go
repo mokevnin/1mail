@@ -423,4 +423,8 @@ const (
 	WebhookGlobexID = 900
 	// WebhookGlobexURL is from fixtures/webhook_endpoints.
 	WebhookGlobexURL = "https://globex.example/hook"
+	// WebhookInitechID is from fixtures/webhook_endpoints.
+	WebhookInitechID = 300
+	// WebhookInitechURL is from fixtures/webhook_endpoints.
+	WebhookInitechURL = "https://initech.example/hook"
 )

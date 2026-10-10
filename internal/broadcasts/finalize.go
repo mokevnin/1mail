@@ -16,38 +16,32 @@ import (
 // after the first, so sent_at is set exactly once and the counters self-heal
 // against any retry drift.
 func Finalize(ctx context.Context, s *ent.Scoped, broadcastID int64) error {
-	count := func(status broadcastrecipient.Status) (int, error) {
-		return s.BroadcastRecipient().Query().
-			Where(broadcastrecipient.BroadcastID(broadcastID), broadcastrecipient.StatusEQ(status)).
-			Count(ctx)
+	var rows []struct {
+		Status broadcastrecipient.Status `json:"status"`
+		Count  int                       `json:"count"`
 	}
-	pending, err := count(broadcastrecipient.StatusPending)
-	if err != nil {
+	if err := s.BroadcastRecipient().Query().
+		Where(broadcastrecipient.BroadcastID(broadcastID)).
+		GroupBy(broadcastrecipient.FieldStatus).
+		Aggregate(ent.Count()).
+		Scan(ctx, &rows); err != nil {
 		return err
 	}
-	if pending > 0 {
+	counts := map[broadcastrecipient.Status]int{}
+	for _, r := range rows {
+		counts[r.Status] = r.Count
+	}
+	if counts[broadcastrecipient.StatusPending] > 0 {
 		return nil // not all recipients resolved yet
 	}
-	sent, err := count(broadcastrecipient.StatusSent)
-	if err != nil {
-		return err
-	}
-	failed, err := count(broadcastrecipient.StatusFailed)
-	if err != nil {
-		return err
-	}
-	skipped, err := count(broadcastrecipient.StatusSkipped)
-	if err != nil {
-		return err
-	}
 
-	_, err = s.Broadcast().Update().
+	_, err := s.Broadcast().Update().
 		Where(broadcast.IDEQ(broadcastID), broadcast.StatusEQ(broadcast.StatusSending)).
 		SetStatus(broadcast.StatusSent).
 		SetSentAt(time.Now()).
-		SetSentCount(sent).
-		SetFailedCount(failed).
-		SetSkippedCount(skipped).
+		SetSentCount(counts[broadcastrecipient.StatusSent]).
+		SetFailedCount(counts[broadcastrecipient.StatusFailed]).
+		SetSkippedCount(counts[broadcastrecipient.StatusSkipped]).
 		ClearHoldReason().
 		Save(ctx)
 	return err

@@ -13,6 +13,7 @@ import (
 	"github.com/mokevnin/1mail/ent/broadcastrecipient"
 	"github.com/mokevnin/1mail/internal/events"
 	"github.com/mokevnin/1mail/internal/fixtures"
+	"github.com/mokevnin/1mail/internal/jobkind"
 	"github.com/mokevnin/1mail/internal/jobs"
 	"github.com/mokevnin/1mail/internal/testhelper"
 )
@@ -44,6 +45,11 @@ func TestExternalContactsEraseRemovesUnsentBroadcastRecipients(t *testing.T) {
 	still, err := env.DB.Broadcast.Get(ctx, fixtures.BroadcastInitechSendingID)
 	require.NoError(t, err)
 	assert.Equal(t, broadcast.StatusSending, still.Status)
+
+	// recipients_total follows the recipient rows: one pending recipient removed from
+	// each Broadcast, so reports' rates do not divide by recipients that are gone.
+	assert.Equal(t, 0, solo.RecipientsTotal)
+	assert.Equal(t, 1, still.RecipientsTotal)
 }
 
 func TestExternalContactsEraseClearsOutboxAndJobArguments(t *testing.T) {
@@ -84,4 +90,31 @@ func TestExternalContactsEraseClearsOutboxAndJobArguments(t *testing.T) {
 	recipients := env.JobsOf(t, jobs.SendRecipientArgs{}.Kind())
 	require.Len(t, recipients, 1)
 	assert.EqualValues(t, fixtures.BroadcastRecipientBystanderPendingID, recipients[0]["recipient_id"])
+}
+
+func TestExternalContactsEraseClearsQueuedWebhookDeliveries(t *testing.T) {
+	env := testhelper.Setup(t)
+
+	delivery := func(endpoint int64, id, body string) {
+		env.EnqueueJob(t, jobkind.DeliverWebhook, jobs.DeliverWebhookArgs{
+			EndpointID: endpoint, EventName: "email.sent", DeliveryID: id, Body: []byte(body),
+		})
+	}
+	// Queued deliveries of the erased Contact's events, by contact id and by address
+	// (in either case), next to the bystander's, a payload naming nobody, and a Globex
+	// delivery for the same address, which is another tenant's and must survive.
+	delivery(fixtures.WebhookInitechID, "by-top-level-id", fmt.Sprintf(`{"contactId":%d,"data":{}}`, fixtures.ContactErasableID))
+	delivery(fixtures.WebhookInitechID, "by-data-id", fmt.Sprintf(`{"data":{"contactId":%d}}`, fixtures.ContactErasableID))
+	delivery(fixtures.WebhookInitechID, "by-address", `{"data":{"email":"Erin@Initech.test"}}`)
+	delivery(fixtures.WebhookInitechID, "bystander", fmt.Sprintf(`{"contactId":%d,"data":{"email":"ben@initech.test"}}`, fixtures.ContactBystanderID))
+	delivery(fixtures.WebhookInitechID, "nobody", `{"data":{}}`)
+	delivery(fixtures.WebhookGlobexID, "other-tenant", `{"data":{"email":"erin@initech.test"}}`)
+
+	eraseErasable(t, env)
+
+	var left []string
+	for _, args := range env.JobsOf(t, jobkind.DeliverWebhook) {
+		left = append(left, fmt.Sprint(args["delivery_id"]))
+	}
+	assert.ElementsMatch(t, []string{"bystander", "nobody", "other-tenant"}, left)
 }

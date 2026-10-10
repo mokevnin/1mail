@@ -63,7 +63,13 @@ func (b *Bus) Use(hooks ...ent.Hook) {
 //
 // In tests this rides go-txdb's savepoint nesting, so the commit here is a
 // RELEASE SAVEPOINT contained by the per-test rollback.
-func (b *Bus) WithinTx(ctx context.Context, fn func(tx *ent.Client, pub Publisher) error) (err error) {
+func (b *Bus) WithinTx(ctx context.Context, fn func(tx *ent.Client, pub Publisher) error) error {
+	return b.within(ctx, func(tx *ent.Client, pub *txPublisher) error { return fn(tx, pub) })
+}
+
+// within is WithinTx over the concrete transaction publisher, which also implements
+// QueuePurger (see WithinScopedPurgeTx).
+func (b *Bus) within(ctx context.Context, fn func(tx *ent.Client, pub *txPublisher) error) (err error) {
 	sqlTx, err := b.db.BeginTx(ctx, nil)
 	if err != nil {
 		return fmt.Errorf("begin tx: %w", err)

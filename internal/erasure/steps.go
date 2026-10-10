@@ -48,7 +48,7 @@ func visitorOf(contactID int64) predicate.Visitor { return visitor.ContactID(con
 // eraseEvents deletes the subject's customer-tracked Events and anonymizes its
 // system Events in place. Events are found by contact_id (Identify stitched earlier
 // anonymous Events onto it) and by the subject's visitor ids (Events not yet stitched).
-func eraseEvents(ctx context.Context, s *ent.Scoped, t *Target, _ events.Publisher) error {
+func eraseEvents(ctx context.Context, s *ent.Scoped, t *Target, _ events.PurgingPublisher) error {
 	var matches []predicate.Event
 	if t.ContactID != 0 {
 		matches = append(matches, event.ContactID(t.ContactID))
@@ -107,7 +107,7 @@ func eraseEvents(ctx context.Context, s *ent.Scoped, t *Target, _ events.Publish
 	return nil
 }
 
-func eraseVisitors(ctx context.Context, s *ent.Scoped, t *Target, _ events.Publisher) error {
+func eraseVisitors(ctx context.Context, s *ent.Scoped, t *Target, _ events.PurgingPublisher) error {
 	match := visitor.VisitorIDIn(t.VisitorIDs...)
 	if t.ContactID != 0 {
 		match = visitor.Or(visitorOf(t.ContactID), match)
@@ -117,19 +117,19 @@ func eraseVisitors(ctx context.Context, s *ent.Scoped, t *Target, _ events.Publi
 }
 
 // eraseConfirmations deletes the Confirmation; losing it fails safe (re-confirmation).
-func eraseConfirmations(ctx context.Context, s *ent.Scoped, t *Target, _ events.Publisher) error {
+func eraseConfirmations(ctx context.Context, s *ent.Scoped, t *Target, _ events.PurgingPublisher) error {
 	_, err := s.Confirmation().Delete().Where(confirmation.ContactID(t.ContactID)).Exec(ctx)
 	return err
 }
 
-func eraseRuns(ctx context.Context, s *ent.Scoped, t *Target, _ events.Publisher) error {
+func eraseRuns(ctx context.Context, s *ent.Scoped, t *Target, _ events.PurgingPublisher) error {
 	_, err := s.AutomationRun().Delete().Where(automationrun.ContactID(t.ContactID)).Exec(ctx)
 	return err
 }
 
 // detachOptOuts keeps the Unsubscribe and Suppression rows, which are keyed by
 // Destination and keep honoring the refusal, and only clears their Contact reference.
-func detachOptOuts(ctx context.Context, s *ent.Scoped, t *Target, _ events.Publisher) error {
+func detachOptOuts(ctx context.Context, s *ent.Scoped, t *Target, _ events.PurgingPublisher) error {
 	if _, err := s.Unsubscribe().Update().Where(unsubscribe.ContactID(t.ContactID)).ClearContactID().Save(ctx); err != nil {
 		return err
 	}
@@ -139,7 +139,7 @@ func detachOptOuts(ctx context.Context, s *ent.Scoped, t *Target, _ events.Publi
 
 // anonymizeDelivery turns the subject's delivery records into anonymous rows: they keep
 // their status and timing, so reports keep their totals, but no longer name anyone.
-func anonymizeDelivery(ctx context.Context, s *ent.Scoped, t *Target, _ events.Publisher) error {
+func anonymizeDelivery(ctx context.Context, s *ent.Scoped, t *Target, _ events.PurgingPublisher) error {
 	if _, err := s.OutboundMessage().Update().Where(outboundmessage.ContactID(t.ContactID)).
 		ClearContactID().ClearDestination().Save(ctx); err != nil {
 		return err
@@ -160,7 +160,7 @@ func anonymizeDelivery(ctx context.Context, s *ent.Scoped, t *Target, _ events.P
 
 // eraseContact removes the Contact itself; its Tag links and Custom field values go
 // with the row.
-func eraseContact(ctx context.Context, s *ent.Scoped, t *Target, _ events.Publisher) error {
+func eraseContact(ctx context.Context, s *ent.Scoped, t *Target, _ events.PurgingPublisher) error {
 	if t.ContactID == 0 {
 		return nil
 	}
@@ -170,7 +170,7 @@ func eraseContact(ctx context.Context, s *ent.Scoped, t *Target, _ events.Publis
 // publishErased emits the PII-free contact.erased Event in the erasure's transaction,
 // once per Erasure. The subject id travels in the message for the webhook delivery
 // and is not stored on the Event (events.ContactErased.Project).
-func publishErased(ctx context.Context, s *ent.Scoped, t *Target, pub events.Publisher) error {
+func publishErased(ctx context.Context, s *ent.Scoped, t *Target, pub events.PurgingPublisher) error {
 	return pub.Publish(ctx, &events.ContactErased{
 		WorkspaceID:    s.WorkspaceID(),
 		SubjectID:      t.SubjectID,

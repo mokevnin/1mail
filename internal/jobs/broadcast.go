@@ -9,6 +9,7 @@ import (
 	"github.com/riverqueue/river"
 
 	"github.com/mokevnin/1mail/ent"
+	"github.com/mokevnin/1mail/internal/jobkind"
 	"github.com/mokevnin/1mail/ent/broadcast"
 	"github.com/mokevnin/1mail/ent/broadcastrecipient"
 	"github.com/mokevnin/1mail/ent/contact"
@@ -48,7 +49,7 @@ type SendRecipientArgs struct {
 	BroadcastID int64 `json:"broadcast_id"`
 }
 
-func (SendRecipientArgs) Kind() string { return "send_broadcast_recipient" }
+func (SendRecipientArgs) Kind() string { return jobkind.SendRecipient }
 
 // SendBroadcastWorker is the fan-out phase: it plans the audience and enqueues a
 // per-recipient job for each, so the send scales across workers instead of
