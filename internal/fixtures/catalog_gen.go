@@ -365,6 +365,16 @@ const (
 	GlobexSamMembershipID = 9
 	// GlobexSlug is from fixtures/workspaces.
 	GlobexSlug = "globex"
+	// HooliCollectKey is from fixtures/workspaces.
+	HooliCollectKey = "omck_test_hooli_collect_key"
+	// HooliID is from fixtures/workspaces.
+	HooliID = 5
+	// HooliIngestKey is from fixtures/workspaces.
+	HooliIngestKey = "omik_test_hooli_ingest_key"
+	// HooliName is from fixtures/workspaces.
+	HooliName = "Hooli"
+	// HooliSlug is from fixtures/workspaces.
+	HooliSlug = "hooli"
 	// InitechAdminAdaEmail is from fixtures/users.
 	InitechAdminAdaEmail = "ada@initech.test"
 	// InitechAdminAdaID is from fixtures/users.
