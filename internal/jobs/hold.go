@@ -46,9 +46,13 @@ const deferralJitter = 0.2
 type DeferredError struct {
 	// Wait is how long until capacity returns for one more message.
 	Wait time.Duration
-	// Backlog is how many recipients of the same Broadcast are still pending ahead of
+	// Backlog is how many recipients of the same Broadcast are still pending, awake (not
+	// themselves sleeping on a Deferral) and ahead of
 	// this one; each needs a token of its own before this one gets its turn.
 	Backlog int
+	// Delay, when set, is the snooze already chosen for this deferral (it was recorded
+	// on the recipient so the backlog of later jobs can tell it is asleep).
+	Delay time.Duration
 }
 
 func (e *DeferredError) Error() string { return "send deferred: send rate limit spent" }
@@ -91,6 +95,9 @@ func snoozeIfDeferrable(err error) error {
 		return river.JobSnooze(holdRetryDelay)
 	}
 	if d, deferred := asDeferred(err); deferred {
+		if d.Delay > 0 {
+			return river.JobSnooze(d.Delay)
+		}
 		return river.JobSnooze(deferralDelay(d.Wait, d.Backlog, rand.Float64()))
 	}
 	if errors.Is(err, outbound.ErrInProgress) {

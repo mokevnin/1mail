@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/mokevnin/1mail/ent"
 	"github.com/mokevnin/1mail/ent/broadcast"
 	"github.com/mokevnin/1mail/ent/broadcastrecipient"
 	"github.com/mokevnin/1mail/ent/suppression"
@@ -163,4 +164,30 @@ func TestLoweringTheLimitMidSendDefersTheRemainingJobs(t *testing.T) {
 	assert.Len(t, e.sender.sent, 1, "one second's worth went out")
 	assert.Equal(t, len(recs)-1, deferred)
 	assert.Nil(t, e.DB.Broadcast.GetX(ctx, fixtures.BroadcastDraftID).HoldReason, "busy is not a hold")
+}
+
+// A deferred job waits behind only the recipients that are awake and ahead of it: one
+// whose own job is asleep on a Deferral is not queueing for a token, so it must not
+// stretch the snooze of later jobs (ADR 0023, "scaled by the backlog ahead").
+func TestDeferralBacklogIgnoresRecipientsAsleepOnTheirOwnDeferral(t *testing.T) {
+	e := newRiverEnv(t)
+	ctx := e.workCtx()
+	e.planBroadcast(t, fixtures.BroadcastDraftID)
+	e.DB.Integration.UpdateOneID(fixtures.IntegrationAcmeDefaultID).SetMaxPerSecond(1).ExecX(ctx)
+
+	rw := jobs.NewSendRecipientWorker(e.DB, newMod(e.TestEnv, fakeResolver{sender: e.sender}))
+	recs := e.DB.BroadcastRecipient.Query().Where(broadcastrecipient.BroadcastID(fixtures.BroadcastDraftID)).
+		Order(ent.Asc(broadcastrecipient.FieldID)).AllX(ctx)
+	require.Greater(t, len(recs), 2)
+	work := func(i int) error {
+		return rw.Work(ctx, job(jobs.SendRecipientArgs{RecipientID: recs[i].ID, BroadcastID: fixtures.BroadcastDraftID}))
+	}
+	require.NoError(t, work(0)) // spends the second's one token
+	var snooze *river.JobSnoozeError
+	require.ErrorAs(t, work(1), &snooze) // deferred: recipient 1 is now asleep
+
+	require.ErrorAs(t, work(2), &snooze)
+	// Recipient 1 is pending with a lower id but asleep: nobody is ahead, so the delay is
+	// about the wait (about a second) plus jitter, not the two tokens' worth it would be.
+	assert.LessOrEqual(t, snooze.Duration, 1300*time.Millisecond)
 }

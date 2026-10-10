@@ -4204,6 +4204,18 @@ func (x *BroadcastRecipientScopedCreate) SetNillableError(v *string) *BroadcastR
 	return x
 }
 
+// SetDeferredUntil sets the "deferred_until" field.
+func (x *BroadcastRecipientScopedCreate) SetDeferredUntil(v time.Time) *BroadcastRecipientScopedCreate {
+	x.b.SetDeferredUntil(v)
+	return x
+}
+
+// SetNillableDeferredUntil sets the "deferred_until" field if the given value is not nil.
+func (x *BroadcastRecipientScopedCreate) SetNillableDeferredUntil(v *time.Time) *BroadcastRecipientScopedCreate {
+	x.b.SetNillableDeferredUntil(v)
+	return x
+}
+
 // SetSentAt sets the "sent_at" field.
 func (x *BroadcastRecipientScopedCreate) SetSentAt(v time.Time) *BroadcastRecipientScopedCreate {
 	x.b.SetSentAt(v)
@@ -4390,6 +4402,24 @@ func (u *BroadcastRecipientScopedUpsert) UpdateError() *BroadcastRecipientScoped
 // ClearError clears the value of the "error" field.
 func (u *BroadcastRecipientScopedUpsert) ClearError() *BroadcastRecipientScopedUpsert {
 	u.u.SetNull(broadcastrecipient.FieldError)
+	return u
+}
+
+// SetDeferredUntil sets the "deferred_until" field.
+func (u *BroadcastRecipientScopedUpsert) SetDeferredUntil(v time.Time) *BroadcastRecipientScopedUpsert {
+	u.u.Set(broadcastrecipient.FieldDeferredUntil, v)
+	return u
+}
+
+// UpdateDeferredUntil sets the "deferred_until" field to the value that was provided on create.
+func (u *BroadcastRecipientScopedUpsert) UpdateDeferredUntil() *BroadcastRecipientScopedUpsert {
+	u.u.SetExcluded(broadcastrecipient.FieldDeferredUntil)
+	return u
+}
+
+// ClearDeferredUntil clears the value of the "deferred_until" field.
+func (u *BroadcastRecipientScopedUpsert) ClearDeferredUntil() *BroadcastRecipientScopedUpsert {
+	u.u.SetNull(broadcastrecipient.FieldDeferredUntil)
 	return u
 }
 
@@ -4669,6 +4699,24 @@ func (x *BroadcastRecipientScopedUpdateOne) ClearError() *BroadcastRecipientScop
 	return x
 }
 
+// SetDeferredUntil sets the "deferred_until" field.
+func (x *BroadcastRecipientScopedUpdateOne) SetDeferredUntil(v time.Time) *BroadcastRecipientScopedUpdateOne {
+	x.b.SetDeferredUntil(v)
+	return x
+}
+
+// SetNillableDeferredUntil sets the "deferred_until" field if the given value is not nil.
+func (x *BroadcastRecipientScopedUpdateOne) SetNillableDeferredUntil(v *time.Time) *BroadcastRecipientScopedUpdateOne {
+	x.b.SetNillableDeferredUntil(v)
+	return x
+}
+
+// ClearDeferredUntil clears the value of the "deferred_until" field.
+func (x *BroadcastRecipientScopedUpdateOne) ClearDeferredUntil() *BroadcastRecipientScopedUpdateOne {
+	x.b.ClearDeferredUntil()
+	return x
+}
+
 // SetSentAt sets the "sent_at" field.
 func (x *BroadcastRecipientScopedUpdateOne) SetSentAt(v time.Time) *BroadcastRecipientScopedUpdateOne {
 	x.b.SetSentAt(v)
@@ -4880,6 +4928,24 @@ func (x *BroadcastRecipientScopedUpdate) SetNillableError(v *string) *BroadcastR
 // ClearError clears the value of the "error" field.
 func (x *BroadcastRecipientScopedUpdate) ClearError() *BroadcastRecipientScopedUpdate {
 	x.b.ClearError()
+	return x
+}
+
+// SetDeferredUntil sets the "deferred_until" field.
+func (x *BroadcastRecipientScopedUpdate) SetDeferredUntil(v time.Time) *BroadcastRecipientScopedUpdate {
+	x.b.SetDeferredUntil(v)
+	return x
+}
+
+// SetNillableDeferredUntil sets the "deferred_until" field if the given value is not nil.
+func (x *BroadcastRecipientScopedUpdate) SetNillableDeferredUntil(v *time.Time) *BroadcastRecipientScopedUpdate {
+	x.b.SetNillableDeferredUntil(v)
+	return x
+}
+
+// ClearDeferredUntil clears the value of the "deferred_until" field.
+func (x *BroadcastRecipientScopedUpdate) ClearDeferredUntil() *BroadcastRecipientScopedUpdate {
+	x.b.ClearDeferredUntil()
 	return x
 }
 
