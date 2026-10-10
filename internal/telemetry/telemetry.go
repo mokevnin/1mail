@@ -9,8 +9,8 @@
 // metrics from the globals alone.
 //
 // Metrics are exposed two ways off a single MeterProvider:
-//   - a Prometheus /metrics endpoint (pull) — always on, the canonical interface
-//     for self-hosted operators (VictoriaMetrics/Prometheus scrape it directly);
+//   - a Prometheus /metrics endpoint (pull) — served only by the opt-in listener
+//     on METRICS_ADDR (see MetricsServer, ADR 0018), never on the public port;
 //   - an OTLP push exporter — enabled only when the standard OTEL_EXPORTER_OTLP_*
 //     env vars point at a collector (dev grafana/otel-lgtm, or any OTLP backend).
 //
