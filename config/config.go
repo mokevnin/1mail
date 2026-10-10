@@ -148,17 +148,21 @@ func Load(envName string) (*Config, error) {
 	v.SetDefault("MAX_BODY_BYTES", 1<<20)
 	v.SetDefault("COLLECT_MAX_BODY_BYTES", 500<<10)
 	v.SetDefault("COLLECT_MAX_EVENT_BYTES", 32<<10)
-	v.SetDefault("RATE_LIMIT_HUMAN_PER_MINUTE", DefaultRateLimits.Human)
-	v.SetDefault("RATE_LIMIT_API_BURST_PER_SECOND", DefaultRateLimits.APIBurst)
-	v.SetDefault("RATE_LIMIT_API_PER_MINUTE", DefaultRateLimits.APIPerMinute)
-	v.SetDefault("RATE_LIMIT_FAILED_AUTH_PER_MINUTE", DefaultRateLimits.FailedAuth)
-	v.SetDefault("RATE_LIMIT_TRACKING_PER_MINUTE", DefaultRateLimits.Tracking)
-	v.SetDefault("RATE_LIMIT_LOGIN_FAILURES", DefaultRateLimits.LoginFailures)
-	v.SetDefault("RATE_LIMIT_LOGIN_IP_PER_MINUTE", DefaultRateLimits.LoginIP)
-	v.SetDefault("RATE_LIMIT_COLLECT_PER_MINUTE", DefaultRateLimits.Collect)
-	v.SetDefault("RATE_LIMIT_COLLECT_IP_PER_MINUTE", DefaultRateLimits.CollectIP)
-	v.SetDefault("RATE_LIMIT_FORGOT_PASSWORD_PER_ADDRESS_PER_HOUR", DefaultRateLimits.ForgotAddress)
-	v.SetDefault("RATE_LIMIT_FORGOT_PASSWORD_IP_PER_HOUR", DefaultRateLimits.ForgotIP)
+	limits := DefaultRateLimits
+	if envName == EnvE2E {
+		limits = RateLimits{} // the end-to-end profile polls freely: every budget is disabled
+	}
+	v.SetDefault("RATE_LIMIT_HUMAN_PER_MINUTE", limits.Human)
+	v.SetDefault("RATE_LIMIT_API_BURST_PER_SECOND", limits.APIBurst)
+	v.SetDefault("RATE_LIMIT_API_PER_MINUTE", limits.APIPerMinute)
+	v.SetDefault("RATE_LIMIT_FAILED_AUTH_PER_MINUTE", limits.FailedAuth)
+	v.SetDefault("RATE_LIMIT_TRACKING_PER_MINUTE", limits.Tracking)
+	v.SetDefault("RATE_LIMIT_LOGIN_FAILURES", limits.LoginFailures)
+	v.SetDefault("RATE_LIMIT_LOGIN_IP_PER_MINUTE", limits.LoginIP)
+	v.SetDefault("RATE_LIMIT_COLLECT_PER_MINUTE", limits.Collect)
+	v.SetDefault("RATE_LIMIT_COLLECT_IP_PER_MINUTE", limits.CollectIP)
+	v.SetDefault("RATE_LIMIT_FORGOT_PASSWORD_PER_ADDRESS_PER_HOUR", limits.ForgotAddress)
+	v.SetDefault("RATE_LIMIT_FORGOT_PASSWORD_IP_PER_HOUR", limits.ForgotIP)
 	v.SetDefault("OUTBOX_RETENTION_FLOOR_DAYS", 7)
 	v.SetDefault("EVENTS_RETENTION_DAYS", 400)
 	v.SetDefault("DB_MAX_OPEN_CONNS", 15)
@@ -262,7 +266,7 @@ func Load(envName string) (*Config, error) {
 func (c *Config) validate(envName string) error {
 	// Outside development/test, an empty JWT_SECRET silently signs auth tokens
 	// with an empty key — refuse to boot rather than ship that footgun.
-	if !isDevEnv(envName) {
+	if !isDevEnv(envName) && envName != EnvE2E {
 		if err := validateJWTSecret(c.JWTSecret); err != nil {
 			return err
 		}
@@ -371,6 +375,22 @@ func validateJWTSecret(secret string) error {
 	}
 	return nil
 }
+
+// UseListener points the public URL and PORT at a listener the caller opened, so
+// links built from AppURL reach that listener.
+func (c *Config) UseListener(addr net.Addr) {
+	c.AppURL = "http://" + addr.String()
+	if _, port, err := net.SplitHostPort(addr.String()); err == nil {
+		c.Port = port
+	}
+}
+
+// EnvE2E is the end-to-end profile: a non-production env whose per-policy rate
+// limits default to disabled (0), so a polling test client never trips ADR 0018/0025
+// budgets. An explicit RATE_LIMIT_* variable still wins. It tolerates a missing
+// JWT_SECRET like development does, but is not IsDev: the dev DKIM lookup stays off
+// and the harness injects its own.
+const EnvE2E = "e2e"
 
 // isDevEnv reports whether the env is a non-production one where missing
 // security secrets are tolerated (so local dev and tests boot without ceremony).
