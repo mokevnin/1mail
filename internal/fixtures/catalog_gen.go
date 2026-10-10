@@ -137,6 +137,10 @@ const (
 	GlobexOwnerMembershipID = 2
 	// GlobexSlug is from fixtures/workspaces.
 	GlobexSlug = "globex"
+	// IntegrationAcmeDefaultID is from fixtures/integrations.
+	IntegrationAcmeDefaultID = 1
+	// IntegrationAcmeDefaultName is from fixtures/integrations.
+	IntegrationAcmeDefaultName = "Mailpit (dev SMTP)"
 	// IntegrationGlobexID is from fixtures/integrations.
 	IntegrationGlobexID = 900
 	// IntegrationGlobexName is from fixtures/integrations.
@@ -197,6 +201,10 @@ const (
 	SegmentProPlanID = 100
 	// SegmentProPlanName is from fixtures/segments.
 	SegmentProPlanName = "Pro & team members"
+	// SendLimiterAcmeID is from fixtures/send_limiters.
+	SendLimiterAcmeID = 1
+	// SendLimiterGlobexID is from fixtures/send_limiters.
+	SendLimiterGlobexID = 900
 	// SendingDomainGlobexDomain is from fixtures/sending_domains.
 	SendingDomainGlobexDomain = "mail.globex.test"
 	// SendingDomainGlobexID is from fixtures/sending_domains.

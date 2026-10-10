@@ -608,6 +608,14 @@ export type SiteCreateIntegrationInput = {
   name: string;
   enabled?: boolean;
   isDefault?: boolean;
+  /**
+   * Most messages per second (positive); omit or null for no limit
+   */
+  maxPerSecond?: number | null;
+  /**
+   * Most messages per rolling 24 hours (positive); omit or null for no limit
+   */
+  maxPerDay?: number | null;
   config: SiteIntegrationConfigInput;
 };
 
@@ -943,6 +951,14 @@ export type SiteIntegrationResource = {
    * Whether this is the default provider for its channel
    */
   isDefault: boolean;
+  /**
+   * Send rate limit: most messages per second; null means no per-second limit
+   */
+  maxPerSecond: number | null;
+  /**
+   * Send rate limit: most messages per rolling 24 hours; null means no daily limit
+   */
+  maxPerDay: number | null;
   /**
    * Provider config (secrets redacted)
    */
@@ -1552,6 +1568,14 @@ export type SiteUpdateIntegrationInput = {
   name?: string;
   enabled?: boolean;
   isDefault?: boolean;
+  /**
+   * Most messages per second (positive); null clears the limit, omit to keep
+   */
+  maxPerSecond?: number | null;
+  /**
+   * Most messages per rolling 24 hours (positive); null clears the limit, omit to keep
+   */
+  maxPerDay?: number | null;
   config?: SiteIntegrationConfigInput | null;
 };
 

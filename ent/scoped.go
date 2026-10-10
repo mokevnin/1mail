@@ -27,6 +27,7 @@ import (
 	"github.com/mokevnin/1mail/ent/predicate"
 	"github.com/mokevnin/1mail/ent/segment"
 	"github.com/mokevnin/1mail/ent/sendingdomain"
+	"github.com/mokevnin/1mail/ent/sendlimiter"
 	"github.com/mokevnin/1mail/ent/suppression"
 	"github.com/mokevnin/1mail/ent/tag"
 	"github.com/mokevnin/1mail/ent/unsubscribe"
@@ -306,6 +307,22 @@ func (s *Scoped) verifySegment(ctx context.Context, ids []int64) error {
 	}
 	if n != len(ids) {
 		return fmt.Errorf("Segment: %w", ErrNotInWorkspace)
+	}
+	return nil
+}
+
+// verifySendLimiter fails with ErrNotInWorkspace unless every id is a SendLimiter of the Workspace.
+func (s *Scoped) verifySendLimiter(ctx context.Context, ids []int64) error {
+	ids = uniqueIDs(ids)
+	if len(ids) == 0 {
+		return nil
+	}
+	n, err := s.c.SendLimiter.Query().Where(sendlimiter.IDIn(ids...), sendlimiter.WorkspaceID(s.ws)).Count(ctx)
+	if err != nil {
+		return err
+	}
+	if n != len(ids) {
+		return fmt.Errorf("SendLimiter: %w", ErrNotInWorkspace)
 	}
 	return nil
 }
@@ -964,6 +981,14 @@ func (x *ApiTokenScopedUpdate) Where(ps ...predicate.ApiToken) *ApiTokenScopedUp
 	return x
 }
 
+// Modify adds a statement modifier for computed assignments the typed setters cannot
+// express (SET col = LEAST(col + ..., ...)). The Workspace predicate is already part
+// of the statement, so a modifier can only narrow it, never widen it.
+func (x *ApiTokenScopedUpdate) Modify(modifiers ...func(u *sql.UpdateBuilder)) *ApiTokenScopedUpdate {
+	x.b.Modify(modifiers...)
+	return x
+}
+
 // SetUpdatedAt sets the "updated_at" field.
 func (x *ApiTokenScopedUpdate) SetUpdatedAt(v time.Time) *ApiTokenScopedUpdate {
 	x.b.SetUpdatedAt(v)
@@ -1576,6 +1601,14 @@ func (t *AutomationScoped) Update() *AutomationScopedUpdate {
 // Where appends predicates the rows must match.
 func (x *AutomationScopedUpdate) Where(ps ...predicate.Automation) *AutomationScopedUpdate {
 	x.b.Where(ps...)
+	return x
+}
+
+// Modify adds a statement modifier for computed assignments the typed setters cannot
+// express (SET col = LEAST(col + ..., ...)). The Workspace predicate is already part
+// of the statement, so a modifier can only narrow it, never widen it.
+func (x *AutomationScopedUpdate) Modify(modifiers ...func(u *sql.UpdateBuilder)) *AutomationScopedUpdate {
+	x.b.Modify(modifiers...)
 	return x
 }
 
@@ -2222,6 +2255,14 @@ func (t *AutomationRunScoped) Update() *AutomationRunScopedUpdate {
 // Where appends predicates the rows must match.
 func (x *AutomationRunScopedUpdate) Where(ps ...predicate.AutomationRun) *AutomationRunScopedUpdate {
 	x.b.Where(ps...)
+	return x
+}
+
+// Modify adds a statement modifier for computed assignments the typed setters cannot
+// express (SET col = LEAST(col + ..., ...)). The Workspace predicate is already part
+// of the statement, so a modifier can only narrow it, never widen it.
+func (x *AutomationRunScopedUpdate) Modify(modifiers ...func(u *sql.UpdateBuilder)) *AutomationRunScopedUpdate {
+	x.b.Modify(modifiers...)
 	return x
 }
 
@@ -3582,6 +3623,14 @@ func (x *BroadcastScopedUpdate) Where(ps ...predicate.Broadcast) *BroadcastScope
 	return x
 }
 
+// Modify adds a statement modifier for computed assignments the typed setters cannot
+// express (SET col = LEAST(col + ..., ...)). The Workspace predicate is already part
+// of the statement, so a modifier can only narrow it, never widen it.
+func (x *BroadcastScopedUpdate) Modify(modifiers ...func(u *sql.UpdateBuilder)) *BroadcastScopedUpdate {
+	x.b.Modify(modifiers...)
+	return x
+}
+
 // SetUpdatedAt sets the "updated_at" field.
 func (x *BroadcastScopedUpdate) SetUpdatedAt(v time.Time) *BroadcastScopedUpdate {
 	x.b.SetUpdatedAt(v)
@@ -4670,6 +4719,14 @@ func (x *BroadcastRecipientScopedUpdate) Where(ps ...predicate.BroadcastRecipien
 	return x
 }
 
+// Modify adds a statement modifier for computed assignments the typed setters cannot
+// express (SET col = LEAST(col + ..., ...)). The Workspace predicate is already part
+// of the statement, so a modifier can only narrow it, never widen it.
+func (x *BroadcastRecipientScopedUpdate) Modify(modifiers ...func(u *sql.UpdateBuilder)) *BroadcastRecipientScopedUpdate {
+	x.b.Modify(modifiers...)
+	return x
+}
+
 // SetUpdatedAt sets the "updated_at" field.
 func (x *BroadcastRecipientScopedUpdate) SetUpdatedAt(v time.Time) *BroadcastRecipientScopedUpdate {
 	x.b.SetUpdatedAt(v)
@@ -5331,6 +5388,14 @@ func (t *ConfirmationScoped) Update() *ConfirmationScopedUpdate {
 // Where appends predicates the rows must match.
 func (x *ConfirmationScopedUpdate) Where(ps ...predicate.Confirmation) *ConfirmationScopedUpdate {
 	x.b.Where(ps...)
+	return x
+}
+
+// Modify adds a statement modifier for computed assignments the typed setters cannot
+// express (SET col = LEAST(col + ..., ...)). The Workspace predicate is already part
+// of the statement, so a modifier can only narrow it, never widen it.
+func (x *ConfirmationScopedUpdate) Modify(modifiers ...func(u *sql.UpdateBuilder)) *ConfirmationScopedUpdate {
+	x.b.Modify(modifiers...)
 	return x
 }
 
@@ -6159,6 +6224,14 @@ func (x *ContactScopedUpdate) Where(ps ...predicate.Contact) *ContactScopedUpdat
 	return x
 }
 
+// Modify adds a statement modifier for computed assignments the typed setters cannot
+// express (SET col = LEAST(col + ..., ...)). The Workspace predicate is already part
+// of the statement, so a modifier can only narrow it, never widen it.
+func (x *ContactScopedUpdate) Modify(modifiers ...func(u *sql.UpdateBuilder)) *ContactScopedUpdate {
+	x.b.Modify(modifiers...)
+	return x
+}
+
 // SetUpdatedAt sets the "updated_at" field.
 func (x *ContactScopedUpdate) SetUpdatedAt(v time.Time) *ContactScopedUpdate {
 	x.b.SetUpdatedAt(v)
@@ -6786,6 +6859,14 @@ func (x *CustomFieldScopedUpdate) Where(ps ...predicate.CustomField) *CustomFiel
 	return x
 }
 
+// Modify adds a statement modifier for computed assignments the typed setters cannot
+// express (SET col = LEAST(col + ..., ...)). The Workspace predicate is already part
+// of the statement, so a modifier can only narrow it, never widen it.
+func (x *CustomFieldScopedUpdate) Modify(modifiers ...func(u *sql.UpdateBuilder)) *CustomFieldScopedUpdate {
+	x.b.Modify(modifiers...)
+	return x
+}
+
 // SetUpdatedAt sets the "updated_at" field.
 func (x *CustomFieldScopedUpdate) SetUpdatedAt(v time.Time) *CustomFieldScopedUpdate {
 	x.b.SetUpdatedAt(v)
@@ -7266,6 +7347,14 @@ func (t *EmailTemplateScoped) Update() *EmailTemplateScopedUpdate {
 // Where appends predicates the rows must match.
 func (x *EmailTemplateScopedUpdate) Where(ps ...predicate.EmailTemplate) *EmailTemplateScopedUpdate {
 	x.b.Where(ps...)
+	return x
+}
+
+// Modify adds a statement modifier for computed assignments the typed setters cannot
+// express (SET col = LEAST(col + ..., ...)). The Workspace predicate is already part
+// of the statement, so a modifier can only narrow it, never widen it.
+func (x *EmailTemplateScopedUpdate) Modify(modifiers ...func(u *sql.UpdateBuilder)) *EmailTemplateScopedUpdate {
+	x.b.Modify(modifiers...)
 	return x
 }
 
@@ -8064,6 +8153,14 @@ func (x *EventScopedUpdate) Where(ps ...predicate.Event) *EventScopedUpdate {
 	return x
 }
 
+// Modify adds a statement modifier for computed assignments the typed setters cannot
+// express (SET col = LEAST(col + ..., ...)). The Workspace predicate is already part
+// of the statement, so a modifier can only narrow it, never widen it.
+func (x *EventScopedUpdate) Modify(modifiers ...func(u *sql.UpdateBuilder)) *EventScopedUpdate {
+	x.b.Modify(modifiers...)
+	return x
+}
+
 // SetUpdatedAt sets the "updated_at" field.
 func (x *EventScopedUpdate) SetUpdatedAt(v time.Time) *EventScopedUpdate {
 	x.b.SetUpdatedAt(v)
@@ -8364,9 +8461,54 @@ func (x *IntegrationScopedCreate) SetNillableIsDefault(v *bool) *IntegrationScop
 	return x
 }
 
+// SetMaxPerSecond sets the "max_per_second" field.
+func (x *IntegrationScopedCreate) SetMaxPerSecond(v int) *IntegrationScopedCreate {
+	x.b.SetMaxPerSecond(v)
+	return x
+}
+
+// SetNillableMaxPerSecond sets the "max_per_second" field if the given value is not nil.
+func (x *IntegrationScopedCreate) SetNillableMaxPerSecond(v *int) *IntegrationScopedCreate {
+	x.b.SetNillableMaxPerSecond(v)
+	return x
+}
+
+// SetMaxPerDay sets the "max_per_day" field.
+func (x *IntegrationScopedCreate) SetMaxPerDay(v int) *IntegrationScopedCreate {
+	x.b.SetMaxPerDay(v)
+	return x
+}
+
+// SetNillableMaxPerDay sets the "max_per_day" field if the given value is not nil.
+func (x *IntegrationScopedCreate) SetNillableMaxPerDay(v *int) *IntegrationScopedCreate {
+	x.b.SetNillableMaxPerDay(v)
+	return x
+}
+
+// SetSendLimiterID sets the "send_limiter" edge to the SendLimiter entity by ID.
+func (x *IntegrationScopedCreate) SetSendLimiterID(id int64) *IntegrationScopedCreate {
+	x.b.SetSendLimiterID(id)
+	return x
+}
+
+// SetNillableSendLimiterID sets the "send_limiter" edge to the SendLimiter entity by ID if the given value is not nil.
+func (x *IntegrationScopedCreate) SetNillableSendLimiterID(id *int64) *IntegrationScopedCreate {
+	x.b.SetNillableSendLimiterID(id)
+	return x
+}
+
+// SetSendLimiter sets the "send_limiter" edge to the SendLimiter entity.
+func (x *IntegrationScopedCreate) SetSendLimiter(v *SendLimiter) *IntegrationScopedCreate {
+	x.b.SetSendLimiter(v)
+	return x
+}
+
 func (x *IntegrationScopedCreate) check(ctx context.Context) error {
 	m := x.b.Mutation()
 	_ = m
+	if err := x.s.verifySendLimiter(ctx, m.SendLimiterIDs()); err != nil {
+		return fmt.Errorf("send_limiter: %w", err)
+	}
 	return nil
 }
 
@@ -8513,6 +8655,54 @@ func (u *IntegrationScopedUpsert) SetIsDefault(v bool) *IntegrationScopedUpsert 
 // UpdateIsDefault sets the "is_default" field to the value that was provided on create.
 func (u *IntegrationScopedUpsert) UpdateIsDefault() *IntegrationScopedUpsert {
 	u.u.SetExcluded(integration.FieldIsDefault)
+	return u
+}
+
+// SetMaxPerSecond sets the "max_per_second" field.
+func (u *IntegrationScopedUpsert) SetMaxPerSecond(v int) *IntegrationScopedUpsert {
+	u.u.Set(integration.FieldMaxPerSecond, v)
+	return u
+}
+
+// AddMaxPerSecond adds v to the "max_per_second" field.
+func (u *IntegrationScopedUpsert) AddMaxPerSecond(v int) *IntegrationScopedUpsert {
+	u.u.Add(integration.FieldMaxPerSecond, v)
+	return u
+}
+
+// UpdateMaxPerSecond sets the "max_per_second" field to the value that was provided on create.
+func (u *IntegrationScopedUpsert) UpdateMaxPerSecond() *IntegrationScopedUpsert {
+	u.u.SetExcluded(integration.FieldMaxPerSecond)
+	return u
+}
+
+// ClearMaxPerSecond clears the value of the "max_per_second" field.
+func (u *IntegrationScopedUpsert) ClearMaxPerSecond() *IntegrationScopedUpsert {
+	u.u.SetNull(integration.FieldMaxPerSecond)
+	return u
+}
+
+// SetMaxPerDay sets the "max_per_day" field.
+func (u *IntegrationScopedUpsert) SetMaxPerDay(v int) *IntegrationScopedUpsert {
+	u.u.Set(integration.FieldMaxPerDay, v)
+	return u
+}
+
+// AddMaxPerDay adds v to the "max_per_day" field.
+func (u *IntegrationScopedUpsert) AddMaxPerDay(v int) *IntegrationScopedUpsert {
+	u.u.Add(integration.FieldMaxPerDay, v)
+	return u
+}
+
+// UpdateMaxPerDay sets the "max_per_day" field to the value that was provided on create.
+func (u *IntegrationScopedUpsert) UpdateMaxPerDay() *IntegrationScopedUpsert {
+	u.u.SetExcluded(integration.FieldMaxPerDay)
+	return u
+}
+
+// ClearMaxPerDay clears the value of the "max_per_day" field.
+func (u *IntegrationScopedUpsert) ClearMaxPerDay() *IntegrationScopedUpsert {
+	u.u.SetNull(integration.FieldMaxPerDay)
 	return u
 }
 
@@ -8726,9 +8916,84 @@ func (x *IntegrationScopedUpdateOne) SetNillableIsDefault(v *bool) *IntegrationS
 	return x
 }
 
+// SetMaxPerSecond sets the "max_per_second" field.
+func (x *IntegrationScopedUpdateOne) SetMaxPerSecond(v int) *IntegrationScopedUpdateOne {
+	x.b.SetMaxPerSecond(v)
+	return x
+}
+
+// SetNillableMaxPerSecond sets the "max_per_second" field if the given value is not nil.
+func (x *IntegrationScopedUpdateOne) SetNillableMaxPerSecond(v *int) *IntegrationScopedUpdateOne {
+	x.b.SetNillableMaxPerSecond(v)
+	return x
+}
+
+// AddMaxPerSecond adds value to the "max_per_second" field.
+func (x *IntegrationScopedUpdateOne) AddMaxPerSecond(v int) *IntegrationScopedUpdateOne {
+	x.b.AddMaxPerSecond(v)
+	return x
+}
+
+// ClearMaxPerSecond clears the value of the "max_per_second" field.
+func (x *IntegrationScopedUpdateOne) ClearMaxPerSecond() *IntegrationScopedUpdateOne {
+	x.b.ClearMaxPerSecond()
+	return x
+}
+
+// SetMaxPerDay sets the "max_per_day" field.
+func (x *IntegrationScopedUpdateOne) SetMaxPerDay(v int) *IntegrationScopedUpdateOne {
+	x.b.SetMaxPerDay(v)
+	return x
+}
+
+// SetNillableMaxPerDay sets the "max_per_day" field if the given value is not nil.
+func (x *IntegrationScopedUpdateOne) SetNillableMaxPerDay(v *int) *IntegrationScopedUpdateOne {
+	x.b.SetNillableMaxPerDay(v)
+	return x
+}
+
+// AddMaxPerDay adds value to the "max_per_day" field.
+func (x *IntegrationScopedUpdateOne) AddMaxPerDay(v int) *IntegrationScopedUpdateOne {
+	x.b.AddMaxPerDay(v)
+	return x
+}
+
+// ClearMaxPerDay clears the value of the "max_per_day" field.
+func (x *IntegrationScopedUpdateOne) ClearMaxPerDay() *IntegrationScopedUpdateOne {
+	x.b.ClearMaxPerDay()
+	return x
+}
+
+// SetSendLimiterID sets the "send_limiter" edge to the SendLimiter entity by ID.
+func (x *IntegrationScopedUpdateOne) SetSendLimiterID(id int64) *IntegrationScopedUpdateOne {
+	x.b.SetSendLimiterID(id)
+	return x
+}
+
+// SetNillableSendLimiterID sets the "send_limiter" edge to the SendLimiter entity by ID if the given value is not nil.
+func (x *IntegrationScopedUpdateOne) SetNillableSendLimiterID(id *int64) *IntegrationScopedUpdateOne {
+	x.b.SetNillableSendLimiterID(id)
+	return x
+}
+
+// SetSendLimiter sets the "send_limiter" edge to the SendLimiter entity.
+func (x *IntegrationScopedUpdateOne) SetSendLimiter(v *SendLimiter) *IntegrationScopedUpdateOne {
+	x.b.SetSendLimiter(v)
+	return x
+}
+
+// ClearSendLimiter clears the "send_limiter" edge to the SendLimiter entity.
+func (x *IntegrationScopedUpdateOne) ClearSendLimiter() *IntegrationScopedUpdateOne {
+	x.b.ClearSendLimiter()
+	return x
+}
+
 func (x *IntegrationScopedUpdateOne) check(ctx context.Context) error {
 	m := x.b.Mutation()
 	_ = m
+	if err := x.s.verifySendLimiter(ctx, m.SendLimiterIDs()); err != nil {
+		return fmt.Errorf("send_limiter: %w", err)
+	}
 	return nil
 }
 
@@ -8760,6 +9025,14 @@ func (t *IntegrationScoped) Update() *IntegrationScopedUpdate {
 // Where appends predicates the rows must match.
 func (x *IntegrationScopedUpdate) Where(ps ...predicate.Integration) *IntegrationScopedUpdate {
 	x.b.Where(ps...)
+	return x
+}
+
+// Modify adds a statement modifier for computed assignments the typed setters cannot
+// express (SET col = LEAST(col + ..., ...)). The Workspace predicate is already part
+// of the statement, so a modifier can only narrow it, never widen it.
+func (x *IntegrationScopedUpdate) Modify(modifiers ...func(u *sql.UpdateBuilder)) *IntegrationScopedUpdate {
+	x.b.Modify(modifiers...)
 	return x
 }
 
@@ -8841,9 +9114,84 @@ func (x *IntegrationScopedUpdate) SetNillableIsDefault(v *bool) *IntegrationScop
 	return x
 }
 
+// SetMaxPerSecond sets the "max_per_second" field.
+func (x *IntegrationScopedUpdate) SetMaxPerSecond(v int) *IntegrationScopedUpdate {
+	x.b.SetMaxPerSecond(v)
+	return x
+}
+
+// SetNillableMaxPerSecond sets the "max_per_second" field if the given value is not nil.
+func (x *IntegrationScopedUpdate) SetNillableMaxPerSecond(v *int) *IntegrationScopedUpdate {
+	x.b.SetNillableMaxPerSecond(v)
+	return x
+}
+
+// AddMaxPerSecond adds value to the "max_per_second" field.
+func (x *IntegrationScopedUpdate) AddMaxPerSecond(v int) *IntegrationScopedUpdate {
+	x.b.AddMaxPerSecond(v)
+	return x
+}
+
+// ClearMaxPerSecond clears the value of the "max_per_second" field.
+func (x *IntegrationScopedUpdate) ClearMaxPerSecond() *IntegrationScopedUpdate {
+	x.b.ClearMaxPerSecond()
+	return x
+}
+
+// SetMaxPerDay sets the "max_per_day" field.
+func (x *IntegrationScopedUpdate) SetMaxPerDay(v int) *IntegrationScopedUpdate {
+	x.b.SetMaxPerDay(v)
+	return x
+}
+
+// SetNillableMaxPerDay sets the "max_per_day" field if the given value is not nil.
+func (x *IntegrationScopedUpdate) SetNillableMaxPerDay(v *int) *IntegrationScopedUpdate {
+	x.b.SetNillableMaxPerDay(v)
+	return x
+}
+
+// AddMaxPerDay adds value to the "max_per_day" field.
+func (x *IntegrationScopedUpdate) AddMaxPerDay(v int) *IntegrationScopedUpdate {
+	x.b.AddMaxPerDay(v)
+	return x
+}
+
+// ClearMaxPerDay clears the value of the "max_per_day" field.
+func (x *IntegrationScopedUpdate) ClearMaxPerDay() *IntegrationScopedUpdate {
+	x.b.ClearMaxPerDay()
+	return x
+}
+
+// SetSendLimiterID sets the "send_limiter" edge to the SendLimiter entity by ID.
+func (x *IntegrationScopedUpdate) SetSendLimiterID(id int64) *IntegrationScopedUpdate {
+	x.b.SetSendLimiterID(id)
+	return x
+}
+
+// SetNillableSendLimiterID sets the "send_limiter" edge to the SendLimiter entity by ID if the given value is not nil.
+func (x *IntegrationScopedUpdate) SetNillableSendLimiterID(id *int64) *IntegrationScopedUpdate {
+	x.b.SetNillableSendLimiterID(id)
+	return x
+}
+
+// SetSendLimiter sets the "send_limiter" edge to the SendLimiter entity.
+func (x *IntegrationScopedUpdate) SetSendLimiter(v *SendLimiter) *IntegrationScopedUpdate {
+	x.b.SetSendLimiter(v)
+	return x
+}
+
+// ClearSendLimiter clears the "send_limiter" edge to the SendLimiter entity.
+func (x *IntegrationScopedUpdate) ClearSendLimiter() *IntegrationScopedUpdate {
+	x.b.ClearSendLimiter()
+	return x
+}
+
 func (x *IntegrationScopedUpdate) check(ctx context.Context) error {
 	m := x.b.Mutation()
 	_ = m
+	if err := x.s.verifySendLimiter(ctx, m.SendLimiterIDs()); err != nil {
+		return fmt.Errorf("send_limiter: %w", err)
+	}
 	return nil
 }
 
@@ -9438,6 +9786,14 @@ func (x *InvitationScopedUpdate) Where(ps ...predicate.Invitation) *InvitationSc
 	return x
 }
 
+// Modify adds a statement modifier for computed assignments the typed setters cannot
+// express (SET col = LEAST(col + ..., ...)). The Workspace predicate is already part
+// of the statement, so a modifier can only narrow it, never widen it.
+func (x *InvitationScopedUpdate) Modify(modifiers ...func(u *sql.UpdateBuilder)) *InvitationScopedUpdate {
+	x.b.Modify(modifiers...)
+	return x
+}
+
 // SetUpdatedAt sets the "updated_at" field.
 func (x *InvitationScopedUpdate) SetUpdatedAt(v time.Time) *InvitationScopedUpdate {
 	x.b.SetUpdatedAt(v)
@@ -9966,6 +10322,14 @@ func (t *MembershipScoped) Update() *MembershipScopedUpdate {
 // Where appends predicates the rows must match.
 func (x *MembershipScopedUpdate) Where(ps ...predicate.Membership) *MembershipScopedUpdate {
 	x.b.Where(ps...)
+	return x
+}
+
+// Modify adds a statement modifier for computed assignments the typed setters cannot
+// express (SET col = LEAST(col + ..., ...)). The Workspace predicate is already part
+// of the statement, so a modifier can only narrow it, never widen it.
+func (x *MembershipScopedUpdate) Modify(modifiers ...func(u *sql.UpdateBuilder)) *MembershipScopedUpdate {
+	x.b.Modify(modifiers...)
 	return x
 }
 
@@ -11148,6 +11512,14 @@ func (x *OutboundMessageScopedUpdate) Where(ps ...predicate.OutboundMessage) *Ou
 	return x
 }
 
+// Modify adds a statement modifier for computed assignments the typed setters cannot
+// express (SET col = LEAST(col + ..., ...)). The Workspace predicate is already part
+// of the statement, so a modifier can only narrow it, never widen it.
+func (x *OutboundMessageScopedUpdate) Modify(modifiers ...func(u *sql.UpdateBuilder)) *OutboundMessageScopedUpdate {
+	x.b.Modify(modifiers...)
+	return x
+}
+
 // SetUpdatedAt sets the "updated_at" field.
 func (x *OutboundMessageScopedUpdate) SetUpdatedAt(v time.Time) *OutboundMessageScopedUpdate {
 	x.b.SetUpdatedAt(v)
@@ -11907,6 +12279,14 @@ func (x *SegmentScopedUpdate) Where(ps ...predicate.Segment) *SegmentScopedUpdat
 	return x
 }
 
+// Modify adds a statement modifier for computed assignments the typed setters cannot
+// express (SET col = LEAST(col + ..., ...)). The Workspace predicate is already part
+// of the statement, so a modifier can only narrow it, never widen it.
+func (x *SegmentScopedUpdate) Modify(modifiers ...func(u *sql.UpdateBuilder)) *SegmentScopedUpdate {
+	x.b.Modify(modifiers...)
+	return x
+}
+
 // SetUpdatedAt sets the "updated_at" field.
 func (x *SegmentScopedUpdate) SetUpdatedAt(v time.Time) *SegmentScopedUpdate {
 	x.b.SetUpdatedAt(v)
@@ -11960,6 +12340,542 @@ func (x *SegmentScopedUpdate) Save(ctx context.Context) (int, error) {
 
 // Exec is like Save, discarding the count.
 func (x *SegmentScopedUpdate) Exec(ctx context.Context) error {
+	_, err := x.Save(ctx)
+	return err
+}
+
+// SendLimiterScoped reaches SendLimiter entities of one Workspace.
+type SendLimiterScoped struct{ s *Scoped }
+
+// SendLimiter returns the SendLimiter entities of the Workspace.
+func (s *Scoped) SendLimiter() *SendLimiterScoped { return &SendLimiterScoped{s: s} }
+
+// Query returns a SendLimiter query already confined to the Workspace.
+func (t *SendLimiterScoped) Query() *SendLimiterQuery {
+	return t.s.c.SendLimiter.Query().Where(sendlimiter.WorkspaceID(t.s.ws))
+}
+
+// Get returns the SendLimiter with the id; a row of another Workspace is not found.
+func (t *SendLimiterScoped) Get(ctx context.Context, id int64) (*SendLimiter, error) {
+	return t.Query().Where(sendlimiter.ID(id)).Only(ctx)
+}
+
+// DeleteOneID deletes the SendLimiter with the id; a row of another Workspace is not found.
+func (t *SendLimiterScoped) DeleteOneID(id int64) *SendLimiterDeleteOne {
+	return t.s.c.SendLimiter.DeleteOneID(id).Where(sendlimiter.WorkspaceID(t.s.ws))
+}
+
+// Delete deletes the SendLimiter entities of the Workspace that match the predicates.
+func (t *SendLimiterScoped) Delete() *SendLimiterDelete {
+	return t.s.c.SendLimiter.Delete().Where(sendlimiter.WorkspaceID(t.s.ws))
+}
+
+// ---------------------------------------------------------------- create
+
+// SendLimiterScopedCreate wraps SendLimiterCreate. It has no way to name a Workspace.
+type SendLimiterScopedCreate struct {
+	s *Scoped
+	b *SendLimiterCreate
+}
+
+// Create starts a SendLimiter in the Workspace.
+func (t *SendLimiterScoped) Create() *SendLimiterScopedCreate {
+	return &SendLimiterScopedCreate{s: t.s, b: t.s.c.SendLimiter.Create().SetWorkspaceID(t.s.ws)}
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (x *SendLimiterScopedCreate) SetCreatedAt(v time.Time) *SendLimiterScopedCreate {
+	x.b.SetCreatedAt(v)
+	return x
+}
+
+// SetNillableCreatedAt sets the "created_at" field if the given value is not nil.
+func (x *SendLimiterScopedCreate) SetNillableCreatedAt(v *time.Time) *SendLimiterScopedCreate {
+	x.b.SetNillableCreatedAt(v)
+	return x
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (x *SendLimiterScopedCreate) SetUpdatedAt(v time.Time) *SendLimiterScopedCreate {
+	x.b.SetUpdatedAt(v)
+	return x
+}
+
+// SetNillableUpdatedAt sets the "updated_at" field if the given value is not nil.
+func (x *SendLimiterScopedCreate) SetNillableUpdatedAt(v *time.Time) *SendLimiterScopedCreate {
+	x.b.SetNillableUpdatedAt(v)
+	return x
+}
+
+// SetIntegrationID sets the "integration_id" field.
+func (x *SendLimiterScopedCreate) SetIntegrationID(v int64) *SendLimiterScopedCreate {
+	x.b.SetIntegrationID(v)
+	return x
+}
+
+// SetSecondFill sets the "second_fill" field.
+func (x *SendLimiterScopedCreate) SetSecondFill(v float64) *SendLimiterScopedCreate {
+	x.b.SetSecondFill(v)
+	return x
+}
+
+// SetDayFill sets the "day_fill" field.
+func (x *SendLimiterScopedCreate) SetDayFill(v float64) *SendLimiterScopedCreate {
+	x.b.SetDayFill(v)
+	return x
+}
+
+// SetRefilledAt sets the "refilled_at" field.
+func (x *SendLimiterScopedCreate) SetRefilledAt(v time.Time) *SendLimiterScopedCreate {
+	x.b.SetRefilledAt(v)
+	return x
+}
+
+// SetIntegration sets the "integration" edge to the Integration entity.
+func (x *SendLimiterScopedCreate) SetIntegration(v *Integration) *SendLimiterScopedCreate {
+	x.b.SetIntegration(v)
+	return x
+}
+
+func (x *SendLimiterScopedCreate) check(ctx context.Context) error {
+	m := x.b.Mutation()
+	_ = m
+	if err := x.s.verifyIntegration(ctx, m.IntegrationIDs()); err != nil {
+		return fmt.Errorf("integration: %w", err)
+	}
+	return nil
+}
+
+// Save verifies the references against the Workspace, then creates the SendLimiter.
+func (x *SendLimiterScopedCreate) Save(ctx context.Context) (*SendLimiter, error) {
+	if err := x.check(ctx); err != nil {
+		return nil, err
+	}
+	return x.b.Save(ctx)
+}
+
+// Exec is like Save, discarding the entity.
+func (x *SendLimiterScopedCreate) Exec(ctx context.Context) error {
+	_, err := x.Save(ctx)
+	return err
+}
+
+// ---------------------------------------------------------------- create bulk
+
+// SendLimiterScopedCreateBulk creates several SendLimiter entities of one Workspace at once.
+type SendLimiterScopedCreateBulk struct {
+	s  *Scoped
+	xs []*SendLimiterScopedCreate
+}
+
+// CreateBulk batches creates started on this Workspace.
+func (t *SendLimiterScoped) CreateBulk(xs ...*SendLimiterScopedCreate) *SendLimiterScopedCreateBulk {
+	return &SendLimiterScopedCreateBulk{s: t.s, xs: xs}
+}
+
+func (b *SendLimiterScopedCreateBulk) raw(ctx context.Context) (*SendLimiterCreateBulk, error) {
+	builders := make([]*SendLimiterCreate, len(b.xs))
+	for i, x := range b.xs {
+		if x.s.ws != b.s.ws {
+			return nil, fmt.Errorf("SendLimiter: builder of another scope: %w", ErrNotInWorkspace)
+		}
+		if err := x.check(ctx); err != nil {
+			return nil, err
+		}
+		builders[i] = x.b
+	}
+	return b.s.c.SendLimiter.CreateBulk(builders...), nil
+}
+
+// Save verifies every builder's references, then creates the SendLimiter entities.
+func (b *SendLimiterScopedCreateBulk) Save(ctx context.Context) ([]*SendLimiter, error) {
+	raw, err := b.raw(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return raw.Save(ctx)
+}
+
+// Exec is like Save, discarding the entities.
+func (b *SendLimiterScopedCreateBulk) Exec(ctx context.Context) error {
+	_, err := b.Save(ctx)
+	return err
+}
+
+// ---------------------------------------------------------------- upsert
+
+// SendLimiterScopedUpsert is the "ON CONFLICT ... DO UPDATE" setter. It cannot move a row to
+// another Workspace or point a reference at a value that was not verified on create.
+type SendLimiterScopedUpsert struct{ u *sql.UpdateSet }
+
+// SetUpdatedAt sets the "updated_at" field.
+func (u *SendLimiterScopedUpsert) SetUpdatedAt(v time.Time) *SendLimiterScopedUpsert {
+	u.u.Set(sendlimiter.FieldUpdatedAt, v)
+	return u
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *SendLimiterScopedUpsert) UpdateUpdatedAt() *SendLimiterScopedUpsert {
+	u.u.SetExcluded(sendlimiter.FieldUpdatedAt)
+	return u
+}
+
+// SetSecondFill sets the "second_fill" field.
+func (u *SendLimiterScopedUpsert) SetSecondFill(v float64) *SendLimiterScopedUpsert {
+	u.u.Set(sendlimiter.FieldSecondFill, v)
+	return u
+}
+
+// AddSecondFill adds v to the "second_fill" field.
+func (u *SendLimiterScopedUpsert) AddSecondFill(v float64) *SendLimiterScopedUpsert {
+	u.u.Add(sendlimiter.FieldSecondFill, v)
+	return u
+}
+
+// UpdateSecondFill sets the "second_fill" field to the value that was provided on create.
+func (u *SendLimiterScopedUpsert) UpdateSecondFill() *SendLimiterScopedUpsert {
+	u.u.SetExcluded(sendlimiter.FieldSecondFill)
+	return u
+}
+
+// SetDayFill sets the "day_fill" field.
+func (u *SendLimiterScopedUpsert) SetDayFill(v float64) *SendLimiterScopedUpsert {
+	u.u.Set(sendlimiter.FieldDayFill, v)
+	return u
+}
+
+// AddDayFill adds v to the "day_fill" field.
+func (u *SendLimiterScopedUpsert) AddDayFill(v float64) *SendLimiterScopedUpsert {
+	u.u.Add(sendlimiter.FieldDayFill, v)
+	return u
+}
+
+// UpdateDayFill sets the "day_fill" field to the value that was provided on create.
+func (u *SendLimiterScopedUpsert) UpdateDayFill() *SendLimiterScopedUpsert {
+	u.u.SetExcluded(sendlimiter.FieldDayFill)
+	return u
+}
+
+// SetRefilledAt sets the "refilled_at" field.
+func (u *SendLimiterScopedUpsert) SetRefilledAt(v time.Time) *SendLimiterScopedUpsert {
+	u.u.Set(sendlimiter.FieldRefilledAt, v)
+	return u
+}
+
+// UpdateRefilledAt sets the "refilled_at" field to the value that was provided on create.
+func (u *SendLimiterScopedUpsert) UpdateRefilledAt() *SendLimiterScopedUpsert {
+	u.u.SetExcluded(sendlimiter.FieldRefilledAt)
+	return u
+}
+
+// conflictOptions confines the DO UPDATE part to rows of the Workspace.
+func (t *SendLimiterScoped) conflictOptions(columns []string) []sql.ConflictOption {
+	return []sql.ConflictOption{
+		sql.ConflictColumns(columns...),
+		sql.UpdateWhere(sql.EQ(sendlimiter.FieldWorkspaceID, t.s.ws)),
+	}
+}
+
+// SendLimiterScopedUpsertOne is the "upsert" of one SendLimiter.
+type SendLimiterScopedUpsertOne struct {
+	x *SendLimiterScopedCreate
+	u *SendLimiterUpsertOne
+}
+
+// OnConflictColumns configures the columns as conflict target. A conflicting row of
+// another Workspace is never updated.
+func (x *SendLimiterScopedCreate) OnConflictColumns(columns ...string) *SendLimiterScopedUpsertOne {
+	return &SendLimiterScopedUpsertOne{x: x, u: x.b.OnConflict((&SendLimiterScoped{s: x.s}).conflictOptions(columns)...)}
+}
+
+// UpdateNewValues updates the mutable fields using the new values set on create.
+func (u *SendLimiterScopedUpsertOne) UpdateNewValues() *SendLimiterScopedUpsertOne {
+	u.u.UpdateNewValues()
+	return u
+}
+
+// Ignore sets each column to itself in case of conflict.
+func (u *SendLimiterScopedUpsertOne) Ignore() *SendLimiterScopedUpsertOne {
+	u.u.Ignore()
+	return u
+}
+
+// DoNothing configures the conflict_action to `DO NOTHING`.
+func (u *SendLimiterScopedUpsertOne) DoNothing() *SendLimiterScopedUpsertOne {
+	u.u.DoNothing()
+	return u
+}
+
+// Update overrides fields' `UPDATE` values.
+func (u *SendLimiterScopedUpsertOne) Update(set func(*SendLimiterScopedUpsert)) *SendLimiterScopedUpsertOne {
+	u.u.Update(func(s *SendLimiterUpsert) { set(&SendLimiterScopedUpsert{u: s.UpdateSet}) })
+	return u
+}
+
+// Exec verifies the references, then executes the upsert.
+func (u *SendLimiterScopedUpsertOne) Exec(ctx context.Context) error {
+	if err := u.x.check(ctx); err != nil {
+		return err
+	}
+	return u.u.Exec(ctx)
+}
+
+// ID is like Exec, returning the inserted or updated id.
+func (u *SendLimiterScopedUpsertOne) ID(ctx context.Context) (int64, error) {
+	if err := u.x.check(ctx); err != nil {
+		return 0, err
+	}
+	return u.u.ID(ctx)
+}
+
+// SendLimiterScopedUpsertBulk is the "upsert" of several SendLimiter entities.
+type SendLimiterScopedUpsertBulk struct {
+	b       *SendLimiterScopedCreateBulk
+	t       *SendLimiterScoped
+	columns []string
+	opts    []func(*SendLimiterUpsertBulk)
+}
+
+// OnConflictColumns configures the columns as conflict target. A conflicting row of
+// another Workspace is never updated.
+func (b *SendLimiterScopedCreateBulk) OnConflictColumns(columns ...string) *SendLimiterScopedUpsertBulk {
+	return &SendLimiterScopedUpsertBulk{b: b, t: &SendLimiterScoped{s: b.s}, columns: columns}
+}
+
+// UpdateNewValues updates the mutable fields using the new values set on create.
+func (u *SendLimiterScopedUpsertBulk) UpdateNewValues() *SendLimiterScopedUpsertBulk {
+	u.opts = append(u.opts, func(r *SendLimiterUpsertBulk) { r.UpdateNewValues() })
+	return u
+}
+
+// Ignore sets each column to itself in case of conflict.
+func (u *SendLimiterScopedUpsertBulk) Ignore() *SendLimiterScopedUpsertBulk {
+	u.opts = append(u.opts, func(r *SendLimiterUpsertBulk) { r.Ignore() })
+	return u
+}
+
+// DoNothing configures the conflict_action to `DO NOTHING`.
+func (u *SendLimiterScopedUpsertBulk) DoNothing() *SendLimiterScopedUpsertBulk {
+	u.opts = append(u.opts, func(r *SendLimiterUpsertBulk) { r.DoNothing() })
+	return u
+}
+
+// Update overrides fields' `UPDATE` values.
+func (u *SendLimiterScopedUpsertBulk) Update(set func(*SendLimiterScopedUpsert)) *SendLimiterScopedUpsertBulk {
+	u.opts = append(u.opts, func(r *SendLimiterUpsertBulk) {
+		r.Update(func(s *SendLimiterUpsert) { set(&SendLimiterScopedUpsert{u: s.UpdateSet}) })
+	})
+	return u
+}
+
+// Exec verifies every builder's references, then executes the upsert.
+func (u *SendLimiterScopedUpsertBulk) Exec(ctx context.Context) error {
+	raw, err := u.b.raw(ctx)
+	if err != nil {
+		return err
+	}
+	r := raw.OnConflict(u.t.conflictOptions(u.columns)...)
+	for _, o := range u.opts {
+		o(r)
+	}
+	return r.Exec(ctx)
+}
+
+// ---------------------------------------------------------------- update
+
+// SendLimiterScopedUpdateOne wraps SendLimiterUpdateOne. It has no way to move the row to another Workspace.
+type SendLimiterScopedUpdateOne struct {
+	s *Scoped
+	b *SendLimiterUpdateOne
+}
+
+// UpdateOneID updates the SendLimiter with the id; a row of another Workspace is not found.
+func (t *SendLimiterScoped) UpdateOneID(id int64) *SendLimiterScopedUpdateOne {
+	return &SendLimiterScopedUpdateOne{s: t.s, b: t.s.c.SendLimiter.UpdateOneID(id).Where(sendlimiter.WorkspaceID(t.s.ws))}
+}
+
+// Where appends predicates the row must also match (fencing).
+func (x *SendLimiterScopedUpdateOne) Where(ps ...predicate.SendLimiter) *SendLimiterScopedUpdateOne {
+	x.b.Where(ps...)
+	return x
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (x *SendLimiterScopedUpdateOne) SetUpdatedAt(v time.Time) *SendLimiterScopedUpdateOne {
+	x.b.SetUpdatedAt(v)
+	return x
+}
+
+// SetSecondFill sets the "second_fill" field.
+func (x *SendLimiterScopedUpdateOne) SetSecondFill(v float64) *SendLimiterScopedUpdateOne {
+	x.b.SetSecondFill(v)
+	return x
+}
+
+// SetNillableSecondFill sets the "second_fill" field if the given value is not nil.
+func (x *SendLimiterScopedUpdateOne) SetNillableSecondFill(v *float64) *SendLimiterScopedUpdateOne {
+	x.b.SetNillableSecondFill(v)
+	return x
+}
+
+// AddSecondFill adds value to the "second_fill" field.
+func (x *SendLimiterScopedUpdateOne) AddSecondFill(v float64) *SendLimiterScopedUpdateOne {
+	x.b.AddSecondFill(v)
+	return x
+}
+
+// SetDayFill sets the "day_fill" field.
+func (x *SendLimiterScopedUpdateOne) SetDayFill(v float64) *SendLimiterScopedUpdateOne {
+	x.b.SetDayFill(v)
+	return x
+}
+
+// SetNillableDayFill sets the "day_fill" field if the given value is not nil.
+func (x *SendLimiterScopedUpdateOne) SetNillableDayFill(v *float64) *SendLimiterScopedUpdateOne {
+	x.b.SetNillableDayFill(v)
+	return x
+}
+
+// AddDayFill adds value to the "day_fill" field.
+func (x *SendLimiterScopedUpdateOne) AddDayFill(v float64) *SendLimiterScopedUpdateOne {
+	x.b.AddDayFill(v)
+	return x
+}
+
+// SetRefilledAt sets the "refilled_at" field.
+func (x *SendLimiterScopedUpdateOne) SetRefilledAt(v time.Time) *SendLimiterScopedUpdateOne {
+	x.b.SetRefilledAt(v)
+	return x
+}
+
+// SetNillableRefilledAt sets the "refilled_at" field if the given value is not nil.
+func (x *SendLimiterScopedUpdateOne) SetNillableRefilledAt(v *time.Time) *SendLimiterScopedUpdateOne {
+	x.b.SetNillableRefilledAt(v)
+	return x
+}
+
+func (x *SendLimiterScopedUpdateOne) check(ctx context.Context) error {
+	m := x.b.Mutation()
+	_ = m
+	if err := x.s.verifyIntegration(ctx, m.IntegrationIDs()); err != nil {
+		return fmt.Errorf("integration: %w", err)
+	}
+	return nil
+}
+
+// Save verifies the references against the Workspace, then updates the SendLimiter.
+func (x *SendLimiterScopedUpdateOne) Save(ctx context.Context) (*SendLimiter, error) {
+	if err := x.check(ctx); err != nil {
+		return nil, err
+	}
+	return x.b.Save(ctx)
+}
+
+// Exec is like Save, discarding the entity.
+func (x *SendLimiterScopedUpdateOne) Exec(ctx context.Context) error {
+	_, err := x.Save(ctx)
+	return err
+}
+
+// SendLimiterScopedUpdate wraps SendLimiterUpdate: a conditional bulk update of one Workspace.
+type SendLimiterScopedUpdate struct {
+	s *Scoped
+	b *SendLimiterUpdate
+}
+
+// Update updates the SendLimiter entities of the Workspace that match the predicates.
+func (t *SendLimiterScoped) Update() *SendLimiterScopedUpdate {
+	return &SendLimiterScopedUpdate{s: t.s, b: t.s.c.SendLimiter.Update().Where(sendlimiter.WorkspaceID(t.s.ws))}
+}
+
+// Where appends predicates the rows must match.
+func (x *SendLimiterScopedUpdate) Where(ps ...predicate.SendLimiter) *SendLimiterScopedUpdate {
+	x.b.Where(ps...)
+	return x
+}
+
+// Modify adds a statement modifier for computed assignments the typed setters cannot
+// express (SET col = LEAST(col + ..., ...)). The Workspace predicate is already part
+// of the statement, so a modifier can only narrow it, never widen it.
+func (x *SendLimiterScopedUpdate) Modify(modifiers ...func(u *sql.UpdateBuilder)) *SendLimiterScopedUpdate {
+	x.b.Modify(modifiers...)
+	return x
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (x *SendLimiterScopedUpdate) SetUpdatedAt(v time.Time) *SendLimiterScopedUpdate {
+	x.b.SetUpdatedAt(v)
+	return x
+}
+
+// SetSecondFill sets the "second_fill" field.
+func (x *SendLimiterScopedUpdate) SetSecondFill(v float64) *SendLimiterScopedUpdate {
+	x.b.SetSecondFill(v)
+	return x
+}
+
+// SetNillableSecondFill sets the "second_fill" field if the given value is not nil.
+func (x *SendLimiterScopedUpdate) SetNillableSecondFill(v *float64) *SendLimiterScopedUpdate {
+	x.b.SetNillableSecondFill(v)
+	return x
+}
+
+// AddSecondFill adds value to the "second_fill" field.
+func (x *SendLimiterScopedUpdate) AddSecondFill(v float64) *SendLimiterScopedUpdate {
+	x.b.AddSecondFill(v)
+	return x
+}
+
+// SetDayFill sets the "day_fill" field.
+func (x *SendLimiterScopedUpdate) SetDayFill(v float64) *SendLimiterScopedUpdate {
+	x.b.SetDayFill(v)
+	return x
+}
+
+// SetNillableDayFill sets the "day_fill" field if the given value is not nil.
+func (x *SendLimiterScopedUpdate) SetNillableDayFill(v *float64) *SendLimiterScopedUpdate {
+	x.b.SetNillableDayFill(v)
+	return x
+}
+
+// AddDayFill adds value to the "day_fill" field.
+func (x *SendLimiterScopedUpdate) AddDayFill(v float64) *SendLimiterScopedUpdate {
+	x.b.AddDayFill(v)
+	return x
+}
+
+// SetRefilledAt sets the "refilled_at" field.
+func (x *SendLimiterScopedUpdate) SetRefilledAt(v time.Time) *SendLimiterScopedUpdate {
+	x.b.SetRefilledAt(v)
+	return x
+}
+
+// SetNillableRefilledAt sets the "refilled_at" field if the given value is not nil.
+func (x *SendLimiterScopedUpdate) SetNillableRefilledAt(v *time.Time) *SendLimiterScopedUpdate {
+	x.b.SetNillableRefilledAt(v)
+	return x
+}
+
+func (x *SendLimiterScopedUpdate) check(ctx context.Context) error {
+	m := x.b.Mutation()
+	_ = m
+	if err := x.s.verifyIntegration(ctx, m.IntegrationIDs()); err != nil {
+		return fmt.Errorf("integration: %w", err)
+	}
+	return nil
+}
+
+// Save verifies the references against the Workspace, then updates the rows and
+// returns how many changed.
+func (x *SendLimiterScopedUpdate) Save(ctx context.Context) (int, error) {
+	if err := x.check(ctx); err != nil {
+		return 0, err
+	}
+	return x.b.Save(ctx)
+}
+
+// Exec is like Save, discarding the count.
+func (x *SendLimiterScopedUpdate) Exec(ctx context.Context) error {
 	_, err := x.Save(ctx)
 	return err
 }
@@ -12531,6 +13447,14 @@ func (t *SendingDomainScoped) Update() *SendingDomainScopedUpdate {
 // Where appends predicates the rows must match.
 func (x *SendingDomainScopedUpdate) Where(ps ...predicate.SendingDomain) *SendingDomainScopedUpdate {
 	x.b.Where(ps...)
+	return x
+}
+
+// Modify adds a statement modifier for computed assignments the typed setters cannot
+// express (SET col = LEAST(col + ..., ...)). The Workspace predicate is already part
+// of the statement, so a modifier can only narrow it, never widen it.
+func (x *SendingDomainScopedUpdate) Modify(modifiers ...func(u *sql.UpdateBuilder)) *SendingDomainScopedUpdate {
+	x.b.Modify(modifiers...)
 	return x
 }
 
@@ -13137,6 +14061,14 @@ func (x *SuppressionScopedUpdate) Where(ps ...predicate.Suppression) *Suppressio
 	return x
 }
 
+// Modify adds a statement modifier for computed assignments the typed setters cannot
+// express (SET col = LEAST(col + ..., ...)). The Workspace predicate is already part
+// of the statement, so a modifier can only narrow it, never widen it.
+func (x *SuppressionScopedUpdate) Modify(modifiers ...func(u *sql.UpdateBuilder)) *SuppressionScopedUpdate {
+	x.b.Modify(modifiers...)
+	return x
+}
+
 // SetUpdatedAt sets the "updated_at" field.
 func (x *SuppressionScopedUpdate) SetUpdatedAt(v time.Time) *SuppressionScopedUpdate {
 	x.b.SetUpdatedAt(v)
@@ -13617,6 +14549,14 @@ func (t *TagScoped) Update() *TagScopedUpdate {
 // Where appends predicates the rows must match.
 func (x *TagScopedUpdate) Where(ps ...predicate.Tag) *TagScopedUpdate {
 	x.b.Where(ps...)
+	return x
+}
+
+// Modify adds a statement modifier for computed assignments the typed setters cannot
+// express (SET col = LEAST(col + ..., ...)). The Workspace predicate is already part
+// of the statement, so a modifier can only narrow it, never widen it.
+func (x *TagScopedUpdate) Modify(modifiers ...func(u *sql.UpdateBuilder)) *TagScopedUpdate {
+	x.b.Modify(modifiers...)
 	return x
 }
 
@@ -14164,6 +15104,14 @@ func (x *UnsubscribeScopedUpdate) Where(ps ...predicate.Unsubscribe) *Unsubscrib
 	return x
 }
 
+// Modify adds a statement modifier for computed assignments the typed setters cannot
+// express (SET col = LEAST(col + ..., ...)). The Workspace predicate is already part
+// of the statement, so a modifier can only narrow it, never widen it.
+func (x *UnsubscribeScopedUpdate) Modify(modifiers ...func(u *sql.UpdateBuilder)) *UnsubscribeScopedUpdate {
+	x.b.Modify(modifiers...)
+	return x
+}
+
 // SetUpdatedAt sets the "updated_at" field.
 func (x *UnsubscribeScopedUpdate) SetUpdatedAt(v time.Time) *UnsubscribeScopedUpdate {
 	x.b.SetUpdatedAt(v)
@@ -14706,6 +15654,14 @@ func (x *VisitorScopedUpdate) Where(ps ...predicate.Visitor) *VisitorScopedUpdat
 	return x
 }
 
+// Modify adds a statement modifier for computed assignments the typed setters cannot
+// express (SET col = LEAST(col + ..., ...)). The Workspace predicate is already part
+// of the statement, so a modifier can only narrow it, never widen it.
+func (x *VisitorScopedUpdate) Modify(modifiers ...func(u *sql.UpdateBuilder)) *VisitorScopedUpdate {
+	x.b.Modify(modifiers...)
+	return x
+}
+
 // SetUpdatedAt sets the "updated_at" field.
 func (x *VisitorScopedUpdate) SetUpdatedAt(v time.Time) *VisitorScopedUpdate {
 	x.b.SetUpdatedAt(v)
@@ -15243,6 +16199,14 @@ func (t *WebhookEndpointScoped) Update() *WebhookEndpointScopedUpdate {
 // Where appends predicates the rows must match.
 func (x *WebhookEndpointScopedUpdate) Where(ps ...predicate.WebhookEndpoint) *WebhookEndpointScopedUpdate {
 	x.b.Where(ps...)
+	return x
+}
+
+// Modify adds a statement modifier for computed assignments the typed setters cannot
+// express (SET col = LEAST(col + ..., ...)). The Workspace predicate is already part
+// of the statement, so a modifier can only narrow it, never widen it.
+func (x *WebhookEndpointScopedUpdate) Modify(modifiers ...func(u *sql.UpdateBuilder)) *WebhookEndpointScopedUpdate {
+	x.b.Modify(modifiers...)
 	return x
 }
 

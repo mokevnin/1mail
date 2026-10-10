@@ -93,6 +93,52 @@ func (s *EntityId) UnmarshalJSON(data []byte) error {
 	return s.Decode(d)
 }
 
+// Encode encodes int32 as json.
+func (o NilInt32) Encode(e *jx.Encoder) {
+	if o.Null {
+		e.Null()
+		return
+	}
+	e.Int32(int32(o.Value))
+}
+
+// Decode decodes int32 from json.
+func (o *NilInt32) Decode(d *jx.Decoder) error {
+	if o == nil {
+		return errors.New("invalid: unable to decode NilInt32 to nil")
+	}
+	if d.Next() == jx.Null {
+		if err := d.Null(); err != nil {
+			return err
+		}
+
+		var v int32
+		o.Value = v
+		o.Null = true
+		return nil
+	}
+	o.Null = false
+	v, err := d.Int32()
+	if err != nil {
+		return err
+	}
+	o.Value = int32(v)
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s NilInt32) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *NilInt32) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
 // Encode encodes bool as json.
 func (o OptBool) Encode(e *jx.Encoder) {
 	if !o.Set {
@@ -290,6 +336,57 @@ func (s OptNilEntityId) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
 func (s *OptNilEntityId) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes int32 as json.
+func (o OptNilInt32) Encode(e *jx.Encoder) {
+	if !o.Set {
+		return
+	}
+	if o.Null {
+		e.Null()
+		return
+	}
+	e.Int32(int32(o.Value))
+}
+
+// Decode decodes int32 from json.
+func (o *OptNilInt32) Decode(d *jx.Decoder) error {
+	if o == nil {
+		return errors.New("invalid: unable to decode OptNilInt32 to nil")
+	}
+	if d.Next() == jx.Null {
+		if err := d.Null(); err != nil {
+			return err
+		}
+
+		var v int32
+		o.Value = v
+		o.Set = true
+		o.Null = true
+		return nil
+	}
+	o.Set = true
+	o.Null = false
+	v, err := d.Int32()
+	if err != nil {
+		return err
+	}
+	o.Value = int32(v)
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s OptNilInt32) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *OptNilInt32) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }
@@ -7207,16 +7304,30 @@ func (s *SiteCreateIntegrationInput) encodeFields(e *jx.Encoder) {
 		}
 	}
 	{
+		if s.MaxPerSecond.Set {
+			e.FieldStart("maxPerSecond")
+			s.MaxPerSecond.Encode(e)
+		}
+	}
+	{
+		if s.MaxPerDay.Set {
+			e.FieldStart("maxPerDay")
+			s.MaxPerDay.Encode(e)
+		}
+	}
+	{
 		e.FieldStart("config")
 		s.Config.Encode(e)
 	}
 }
 
-var jsonFieldsNameOfSiteCreateIntegrationInput = [4]string{
+var jsonFieldsNameOfSiteCreateIntegrationInput = [6]string{
 	0: "name",
 	1: "enabled",
 	2: "isDefault",
-	3: "config",
+	3: "maxPerSecond",
+	4: "maxPerDay",
+	5: "config",
 }
 
 // Decode decodes SiteCreateIntegrationInput from json.
@@ -7260,8 +7371,28 @@ func (s *SiteCreateIntegrationInput) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"isDefault\"")
 			}
+		case "maxPerSecond":
+			if err := func() error {
+				s.MaxPerSecond.Reset()
+				if err := s.MaxPerSecond.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"maxPerSecond\"")
+			}
+		case "maxPerDay":
+			if err := func() error {
+				s.MaxPerDay.Reset()
+				if err := s.MaxPerDay.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"maxPerDay\"")
+			}
 		case "config":
-			requiredBitSet[0] |= 1 << 3
+			requiredBitSet[0] |= 1 << 5
 			if err := func() error {
 				if err := s.Config.Decode(d); err != nil {
 					return err
@@ -7280,7 +7411,7 @@ func (s *SiteCreateIntegrationInput) Decode(d *jx.Decoder) error {
 	// Validate required fields.
 	var failures []validate.FieldError
 	for i, mask := range [1]uint8{
-		0b00001001,
+		0b00100001,
 	} {
 		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
 			// Mask only required fields and check equality to mask using XOR.
@@ -10820,6 +10951,14 @@ func (s *SiteIntegrationResource) encodeFields(e *jx.Encoder) {
 		e.Bool(s.IsDefault)
 	}
 	{
+		e.FieldStart("maxPerSecond")
+		s.MaxPerSecond.Encode(e)
+	}
+	{
+		e.FieldStart("maxPerDay")
+		s.MaxPerDay.Encode(e)
+	}
+	{
 		e.FieldStart("config")
 		s.Config.Encode(e)
 	}
@@ -10833,16 +10972,18 @@ func (s *SiteIntegrationResource) encodeFields(e *jx.Encoder) {
 	}
 }
 
-var jsonFieldsNameOfSiteIntegrationResource = [9]string{
-	0: "id",
-	1: "name",
-	2: "channel",
-	3: "provider",
-	4: "enabled",
-	5: "isDefault",
-	6: "config",
-	7: "createdAt",
-	8: "updatedAt",
+var jsonFieldsNameOfSiteIntegrationResource = [11]string{
+	0:  "id",
+	1:  "name",
+	2:  "channel",
+	3:  "provider",
+	4:  "enabled",
+	5:  "isDefault",
+	6:  "maxPerSecond",
+	7:  "maxPerDay",
+	8:  "config",
+	9:  "createdAt",
+	10: "updatedAt",
 }
 
 // Decode decodes SiteIntegrationResource from json.
@@ -10920,8 +11061,28 @@ func (s *SiteIntegrationResource) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"isDefault\"")
 			}
-		case "config":
+		case "maxPerSecond":
 			requiredBitSet[0] |= 1 << 6
+			if err := func() error {
+				if err := s.MaxPerSecond.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"maxPerSecond\"")
+			}
+		case "maxPerDay":
+			requiredBitSet[0] |= 1 << 7
+			if err := func() error {
+				if err := s.MaxPerDay.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"maxPerDay\"")
+			}
+		case "config":
+			requiredBitSet[1] |= 1 << 0
 			if err := func() error {
 				if err := s.Config.Decode(d); err != nil {
 					return err
@@ -10931,7 +11092,7 @@ func (s *SiteIntegrationResource) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"config\"")
 			}
 		case "createdAt":
-			requiredBitSet[0] |= 1 << 7
+			requiredBitSet[1] |= 1 << 1
 			if err := func() error {
 				if err := s.CreatedAt.Decode(d); err != nil {
 					return err
@@ -10941,7 +11102,7 @@ func (s *SiteIntegrationResource) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"createdAt\"")
 			}
 		case "updatedAt":
-			requiredBitSet[1] |= 1 << 0
+			requiredBitSet[1] |= 1 << 2
 			if err := func() error {
 				if err := s.UpdatedAt.Decode(d); err != nil {
 					return err
@@ -10961,7 +11122,7 @@ func (s *SiteIntegrationResource) Decode(d *jx.Decoder) error {
 	var failures []validate.FieldError
 	for i, mask := range [2]uint8{
 		0b11111111,
-		0b00000001,
+		0b00000111,
 	} {
 		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
 			// Mask only required fields and check equality to mask using XOR.
@@ -20504,6 +20665,18 @@ func (s *SiteUpdateIntegrationInput) encodeFields(e *jx.Encoder) {
 		}
 	}
 	{
+		if s.MaxPerSecond.Set {
+			e.FieldStart("maxPerSecond")
+			s.MaxPerSecond.Encode(e)
+		}
+	}
+	{
+		if s.MaxPerDay.Set {
+			e.FieldStart("maxPerDay")
+			s.MaxPerDay.Encode(e)
+		}
+	}
+	{
 		if s.Config.Set {
 			e.FieldStart("config")
 			s.Config.Encode(e)
@@ -20511,11 +20684,13 @@ func (s *SiteUpdateIntegrationInput) encodeFields(e *jx.Encoder) {
 	}
 }
 
-var jsonFieldsNameOfSiteUpdateIntegrationInput = [4]string{
+var jsonFieldsNameOfSiteUpdateIntegrationInput = [6]string{
 	0: "name",
 	1: "enabled",
 	2: "isDefault",
-	3: "config",
+	3: "maxPerSecond",
+	4: "maxPerDay",
+	5: "config",
 }
 
 // Decode decodes SiteUpdateIntegrationInput from json.
@@ -20555,6 +20730,26 @@ func (s *SiteUpdateIntegrationInput) Decode(d *jx.Decoder) error {
 				return nil
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"isDefault\"")
+			}
+		case "maxPerSecond":
+			if err := func() error {
+				s.MaxPerSecond.Reset()
+				if err := s.MaxPerSecond.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"maxPerSecond\"")
+			}
+		case "maxPerDay":
+			if err := func() error {
+				s.MaxPerDay.Reset()
+				if err := s.MaxPerDay.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"maxPerDay\"")
 			}
 		case "config":
 			if err := func() error {

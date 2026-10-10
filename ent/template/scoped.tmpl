@@ -395,6 +395,14 @@ func (x *{{ $N }}ScopedUpdate) Where(ps ...predicate.{{ $N }}) *{{ $N }}ScopedUp
 	return x
 }
 
+// Modify adds a statement modifier for computed assignments the typed setters cannot
+// express (SET col = LEAST(col + ..., ...)). The Workspace predicate is already part
+// of the statement, so a modifier can only narrow it, never widen it.
+func (x *{{ $N }}ScopedUpdate) Modify(modifiers ...func(u *sql.UpdateBuilder)) *{{ $N }}ScopedUpdate {
+	x.b.Modify(modifiers...)
+	return x
+}
+
 {{ with extend $n "Graph" $ "Node" $n "Builder" (print $N "ScopedUpdate") "Mode" "update" }}
 	{{ template "helper/scopedsetters" . }}
 {{ end }}

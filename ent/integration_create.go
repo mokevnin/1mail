@@ -12,6 +12,7 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/mokevnin/1mail/ent/integration"
+	"github.com/mokevnin/1mail/ent/sendlimiter"
 	"github.com/mokevnin/1mail/ent/workspace"
 )
 
@@ -117,6 +118,34 @@ func (_c *IntegrationCreate) SetNillableIsDefault(v *bool) *IntegrationCreate {
 	return _c
 }
 
+// SetMaxPerSecond sets the "max_per_second" field.
+func (_c *IntegrationCreate) SetMaxPerSecond(v int) *IntegrationCreate {
+	_c.mutation.SetMaxPerSecond(v)
+	return _c
+}
+
+// SetNillableMaxPerSecond sets the "max_per_second" field if the given value is not nil.
+func (_c *IntegrationCreate) SetNillableMaxPerSecond(v *int) *IntegrationCreate {
+	if v != nil {
+		_c.SetMaxPerSecond(*v)
+	}
+	return _c
+}
+
+// SetMaxPerDay sets the "max_per_day" field.
+func (_c *IntegrationCreate) SetMaxPerDay(v int) *IntegrationCreate {
+	_c.mutation.SetMaxPerDay(v)
+	return _c
+}
+
+// SetNillableMaxPerDay sets the "max_per_day" field if the given value is not nil.
+func (_c *IntegrationCreate) SetNillableMaxPerDay(v *int) *IntegrationCreate {
+	if v != nil {
+		_c.SetMaxPerDay(*v)
+	}
+	return _c
+}
+
 // SetID sets the "id" field.
 func (_c *IntegrationCreate) SetID(v int64) *IntegrationCreate {
 	_c.mutation.SetID(v)
@@ -126,6 +155,25 @@ func (_c *IntegrationCreate) SetID(v int64) *IntegrationCreate {
 // SetWorkspace sets the "workspace" edge to the Workspace entity.
 func (_c *IntegrationCreate) SetWorkspace(v *Workspace) *IntegrationCreate {
 	return _c.SetWorkspaceID(v.ID)
+}
+
+// SetSendLimiterID sets the "send_limiter" edge to the SendLimiter entity by ID.
+func (_c *IntegrationCreate) SetSendLimiterID(id int64) *IntegrationCreate {
+	_c.mutation.SetSendLimiterID(id)
+	return _c
+}
+
+// SetNillableSendLimiterID sets the "send_limiter" edge to the SendLimiter entity by ID if the given value is not nil.
+func (_c *IntegrationCreate) SetNillableSendLimiterID(id *int64) *IntegrationCreate {
+	if id != nil {
+		_c = _c.SetSendLimiterID(*id)
+	}
+	return _c
+}
+
+// SetSendLimiter sets the "send_limiter" edge to the SendLimiter entity.
+func (_c *IntegrationCreate) SetSendLimiter(v *SendLimiter) *IntegrationCreate {
+	return _c.SetSendLimiterID(v.ID)
 }
 
 // Mutation returns the IntegrationMutation object of the builder.
@@ -229,6 +277,16 @@ func (_c *IntegrationCreate) check() error {
 	if _, ok := _c.mutation.IsDefault(); !ok {
 		return &ValidationError{Name: "is_default", err: errors.New(`ent: missing required field "Integration.is_default"`)}
 	}
+	if v, ok := _c.mutation.MaxPerSecond(); ok {
+		if err := integration.MaxPerSecondValidator(v); err != nil {
+			return &ValidationError{Name: "max_per_second", err: fmt.Errorf(`ent: validator failed for field "Integration.max_per_second": %w`, err)}
+		}
+	}
+	if v, ok := _c.mutation.MaxPerDay(); ok {
+		if err := integration.MaxPerDayValidator(v); err != nil {
+			return &ValidationError{Name: "max_per_day", err: fmt.Errorf(`ent: validator failed for field "Integration.max_per_day": %w`, err)}
+		}
+	}
 	if len(_c.mutation.WorkspaceIDs()) == 0 {
 		return &ValidationError{Name: "workspace", err: errors.New(`ent: missing required edge "Integration.workspace"`)}
 	}
@@ -297,6 +355,14 @@ func (_c *IntegrationCreate) createSpec() (*Integration, *sqlgraph.CreateSpec) {
 		_spec.SetField(integration.FieldIsDefault, field.TypeBool, value)
 		_node.IsDefault = value
 	}
+	if value, ok := _c.mutation.MaxPerSecond(); ok {
+		_spec.SetField(integration.FieldMaxPerSecond, field.TypeInt, value)
+		_node.MaxPerSecond = &value
+	}
+	if value, ok := _c.mutation.MaxPerDay(); ok {
+		_spec.SetField(integration.FieldMaxPerDay, field.TypeInt, value)
+		_node.MaxPerDay = &value
+	}
 	if nodes := _c.mutation.WorkspaceIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
@@ -312,6 +378,22 @@ func (_c *IntegrationCreate) createSpec() (*Integration, *sqlgraph.CreateSpec) {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_node.WorkspaceID = nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.SendLimiterIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   integration.SendLimiterTable,
+			Columns: []string{integration.SendLimiterColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(sendlimiter.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec
@@ -459,6 +541,54 @@ func (u *IntegrationUpsert) SetIsDefault(v bool) *IntegrationUpsert {
 // UpdateIsDefault sets the "is_default" field to the value that was provided on create.
 func (u *IntegrationUpsert) UpdateIsDefault() *IntegrationUpsert {
 	u.SetExcluded(integration.FieldIsDefault)
+	return u
+}
+
+// SetMaxPerSecond sets the "max_per_second" field.
+func (u *IntegrationUpsert) SetMaxPerSecond(v int) *IntegrationUpsert {
+	u.Set(integration.FieldMaxPerSecond, v)
+	return u
+}
+
+// UpdateMaxPerSecond sets the "max_per_second" field to the value that was provided on create.
+func (u *IntegrationUpsert) UpdateMaxPerSecond() *IntegrationUpsert {
+	u.SetExcluded(integration.FieldMaxPerSecond)
+	return u
+}
+
+// AddMaxPerSecond adds v to the "max_per_second" field.
+func (u *IntegrationUpsert) AddMaxPerSecond(v int) *IntegrationUpsert {
+	u.Add(integration.FieldMaxPerSecond, v)
+	return u
+}
+
+// ClearMaxPerSecond clears the value of the "max_per_second" field.
+func (u *IntegrationUpsert) ClearMaxPerSecond() *IntegrationUpsert {
+	u.SetNull(integration.FieldMaxPerSecond)
+	return u
+}
+
+// SetMaxPerDay sets the "max_per_day" field.
+func (u *IntegrationUpsert) SetMaxPerDay(v int) *IntegrationUpsert {
+	u.Set(integration.FieldMaxPerDay, v)
+	return u
+}
+
+// UpdateMaxPerDay sets the "max_per_day" field to the value that was provided on create.
+func (u *IntegrationUpsert) UpdateMaxPerDay() *IntegrationUpsert {
+	u.SetExcluded(integration.FieldMaxPerDay)
+	return u
+}
+
+// AddMaxPerDay adds v to the "max_per_day" field.
+func (u *IntegrationUpsert) AddMaxPerDay(v int) *IntegrationUpsert {
+	u.Add(integration.FieldMaxPerDay, v)
+	return u
+}
+
+// ClearMaxPerDay clears the value of the "max_per_day" field.
+func (u *IntegrationUpsert) ClearMaxPerDay() *IntegrationUpsert {
+	u.SetNull(integration.FieldMaxPerDay)
 	return u
 }
 
@@ -622,6 +752,62 @@ func (u *IntegrationUpsertOne) SetIsDefault(v bool) *IntegrationUpsertOne {
 func (u *IntegrationUpsertOne) UpdateIsDefault() *IntegrationUpsertOne {
 	return u.Update(func(s *IntegrationUpsert) {
 		s.UpdateIsDefault()
+	})
+}
+
+// SetMaxPerSecond sets the "max_per_second" field.
+func (u *IntegrationUpsertOne) SetMaxPerSecond(v int) *IntegrationUpsertOne {
+	return u.Update(func(s *IntegrationUpsert) {
+		s.SetMaxPerSecond(v)
+	})
+}
+
+// AddMaxPerSecond adds v to the "max_per_second" field.
+func (u *IntegrationUpsertOne) AddMaxPerSecond(v int) *IntegrationUpsertOne {
+	return u.Update(func(s *IntegrationUpsert) {
+		s.AddMaxPerSecond(v)
+	})
+}
+
+// UpdateMaxPerSecond sets the "max_per_second" field to the value that was provided on create.
+func (u *IntegrationUpsertOne) UpdateMaxPerSecond() *IntegrationUpsertOne {
+	return u.Update(func(s *IntegrationUpsert) {
+		s.UpdateMaxPerSecond()
+	})
+}
+
+// ClearMaxPerSecond clears the value of the "max_per_second" field.
+func (u *IntegrationUpsertOne) ClearMaxPerSecond() *IntegrationUpsertOne {
+	return u.Update(func(s *IntegrationUpsert) {
+		s.ClearMaxPerSecond()
+	})
+}
+
+// SetMaxPerDay sets the "max_per_day" field.
+func (u *IntegrationUpsertOne) SetMaxPerDay(v int) *IntegrationUpsertOne {
+	return u.Update(func(s *IntegrationUpsert) {
+		s.SetMaxPerDay(v)
+	})
+}
+
+// AddMaxPerDay adds v to the "max_per_day" field.
+func (u *IntegrationUpsertOne) AddMaxPerDay(v int) *IntegrationUpsertOne {
+	return u.Update(func(s *IntegrationUpsert) {
+		s.AddMaxPerDay(v)
+	})
+}
+
+// UpdateMaxPerDay sets the "max_per_day" field to the value that was provided on create.
+func (u *IntegrationUpsertOne) UpdateMaxPerDay() *IntegrationUpsertOne {
+	return u.Update(func(s *IntegrationUpsert) {
+		s.UpdateMaxPerDay()
+	})
+}
+
+// ClearMaxPerDay clears the value of the "max_per_day" field.
+func (u *IntegrationUpsertOne) ClearMaxPerDay() *IntegrationUpsertOne {
+	return u.Update(func(s *IntegrationUpsert) {
+		s.ClearMaxPerDay()
 	})
 }
 
@@ -951,6 +1137,62 @@ func (u *IntegrationUpsertBulk) SetIsDefault(v bool) *IntegrationUpsertBulk {
 func (u *IntegrationUpsertBulk) UpdateIsDefault() *IntegrationUpsertBulk {
 	return u.Update(func(s *IntegrationUpsert) {
 		s.UpdateIsDefault()
+	})
+}
+
+// SetMaxPerSecond sets the "max_per_second" field.
+func (u *IntegrationUpsertBulk) SetMaxPerSecond(v int) *IntegrationUpsertBulk {
+	return u.Update(func(s *IntegrationUpsert) {
+		s.SetMaxPerSecond(v)
+	})
+}
+
+// AddMaxPerSecond adds v to the "max_per_second" field.
+func (u *IntegrationUpsertBulk) AddMaxPerSecond(v int) *IntegrationUpsertBulk {
+	return u.Update(func(s *IntegrationUpsert) {
+		s.AddMaxPerSecond(v)
+	})
+}
+
+// UpdateMaxPerSecond sets the "max_per_second" field to the value that was provided on create.
+func (u *IntegrationUpsertBulk) UpdateMaxPerSecond() *IntegrationUpsertBulk {
+	return u.Update(func(s *IntegrationUpsert) {
+		s.UpdateMaxPerSecond()
+	})
+}
+
+// ClearMaxPerSecond clears the value of the "max_per_second" field.
+func (u *IntegrationUpsertBulk) ClearMaxPerSecond() *IntegrationUpsertBulk {
+	return u.Update(func(s *IntegrationUpsert) {
+		s.ClearMaxPerSecond()
+	})
+}
+
+// SetMaxPerDay sets the "max_per_day" field.
+func (u *IntegrationUpsertBulk) SetMaxPerDay(v int) *IntegrationUpsertBulk {
+	return u.Update(func(s *IntegrationUpsert) {
+		s.SetMaxPerDay(v)
+	})
+}
+
+// AddMaxPerDay adds v to the "max_per_day" field.
+func (u *IntegrationUpsertBulk) AddMaxPerDay(v int) *IntegrationUpsertBulk {
+	return u.Update(func(s *IntegrationUpsert) {
+		s.AddMaxPerDay(v)
+	})
+}
+
+// UpdateMaxPerDay sets the "max_per_day" field to the value that was provided on create.
+func (u *IntegrationUpsertBulk) UpdateMaxPerDay() *IntegrationUpsertBulk {
+	return u.Update(func(s *IntegrationUpsert) {
+		s.UpdateMaxPerDay()
+	})
+}
+
+// ClearMaxPerDay clears the value of the "max_per_day" field.
+func (u *IntegrationUpsertBulk) ClearMaxPerDay() *IntegrationUpsertBulk {
+	return u.Update(func(s *IntegrationUpsert) {
+		s.ClearMaxPerDay()
 	})
 }
 

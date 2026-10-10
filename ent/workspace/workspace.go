@@ -54,6 +54,8 @@ const (
 	EdgeIntegrations = "integrations"
 	// EdgeSendingDomains holds the string denoting the sending_domains edge name in mutations.
 	EdgeSendingDomains = "sending_domains"
+	// EdgeSendLimiters holds the string denoting the send_limiters edge name in mutations.
+	EdgeSendLimiters = "send_limiters"
 	// EdgeBroadcasts holds the string denoting the broadcasts edge name in mutations.
 	EdgeBroadcasts = "broadcasts"
 	// EdgeBroadcastRecipients holds the string denoting the broadcast_recipients edge name in mutations.
@@ -143,6 +145,13 @@ const (
 	SendingDomainsInverseTable = "sending_domains"
 	// SendingDomainsColumn is the table column denoting the sending_domains relation/edge.
 	SendingDomainsColumn = "workspace_id"
+	// SendLimitersTable is the table that holds the send_limiters relation/edge.
+	SendLimitersTable = "send_limiters"
+	// SendLimitersInverseTable is the table name for the SendLimiter entity.
+	// It exists in this package in order to avoid circular dependency with the "sendlimiter" package.
+	SendLimitersInverseTable = "send_limiters"
+	// SendLimitersColumn is the table column denoting the send_limiters relation/edge.
+	SendLimitersColumn = "workspace_id"
 	// BroadcastsTable is the table that holds the broadcasts relation/edge.
 	BroadcastsTable = "broadcasts"
 	// BroadcastsInverseTable is the table name for the Broadcast entity.
@@ -465,6 +474,20 @@ func BySendingDomains(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 	}
 }
 
+// BySendLimitersCount orders the results by send_limiters count.
+func BySendLimitersCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newSendLimitersStep(), opts...)
+	}
+}
+
+// BySendLimiters orders the results by send_limiters terms.
+func BySendLimiters(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newSendLimitersStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+
 // ByBroadcastsCount orders the results by broadcasts count.
 func ByBroadcastsCount(opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
@@ -693,6 +716,13 @@ func newSendingDomainsStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(SendingDomainsInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2M, false, SendingDomainsTable, SendingDomainsColumn),
+	)
+}
+func newSendLimitersStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(SendLimitersInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, SendLimitersTable, SendLimitersColumn),
 	)
 }
 func newBroadcastsStep() *sqlgraph.Step {

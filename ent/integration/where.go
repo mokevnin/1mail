@@ -90,6 +90,16 @@ func IsDefault(v bool) predicate.Integration {
 	return predicate.Integration(sql.FieldEQ(FieldIsDefault, v))
 }
 
+// MaxPerSecond applies equality check predicate on the "max_per_second" field. It's identical to MaxPerSecondEQ.
+func MaxPerSecond(v int) predicate.Integration {
+	return predicate.Integration(sql.FieldEQ(FieldMaxPerSecond, v))
+}
+
+// MaxPerDay applies equality check predicate on the "max_per_day" field. It's identical to MaxPerDayEQ.
+func MaxPerDay(v int) predicate.Integration {
+	return predicate.Integration(sql.FieldEQ(FieldMaxPerDay, v))
+}
+
 // CreatedAtEQ applies the EQ predicate on the "created_at" field.
 func CreatedAtEQ(v time.Time) predicate.Integration {
 	return predicate.Integration(sql.FieldEQ(FieldCreatedAt, v))
@@ -380,6 +390,106 @@ func IsDefaultNEQ(v bool) predicate.Integration {
 	return predicate.Integration(sql.FieldNEQ(FieldIsDefault, v))
 }
 
+// MaxPerSecondEQ applies the EQ predicate on the "max_per_second" field.
+func MaxPerSecondEQ(v int) predicate.Integration {
+	return predicate.Integration(sql.FieldEQ(FieldMaxPerSecond, v))
+}
+
+// MaxPerSecondNEQ applies the NEQ predicate on the "max_per_second" field.
+func MaxPerSecondNEQ(v int) predicate.Integration {
+	return predicate.Integration(sql.FieldNEQ(FieldMaxPerSecond, v))
+}
+
+// MaxPerSecondIn applies the In predicate on the "max_per_second" field.
+func MaxPerSecondIn(vs ...int) predicate.Integration {
+	return predicate.Integration(sql.FieldIn(FieldMaxPerSecond, vs...))
+}
+
+// MaxPerSecondNotIn applies the NotIn predicate on the "max_per_second" field.
+func MaxPerSecondNotIn(vs ...int) predicate.Integration {
+	return predicate.Integration(sql.FieldNotIn(FieldMaxPerSecond, vs...))
+}
+
+// MaxPerSecondGT applies the GT predicate on the "max_per_second" field.
+func MaxPerSecondGT(v int) predicate.Integration {
+	return predicate.Integration(sql.FieldGT(FieldMaxPerSecond, v))
+}
+
+// MaxPerSecondGTE applies the GTE predicate on the "max_per_second" field.
+func MaxPerSecondGTE(v int) predicate.Integration {
+	return predicate.Integration(sql.FieldGTE(FieldMaxPerSecond, v))
+}
+
+// MaxPerSecondLT applies the LT predicate on the "max_per_second" field.
+func MaxPerSecondLT(v int) predicate.Integration {
+	return predicate.Integration(sql.FieldLT(FieldMaxPerSecond, v))
+}
+
+// MaxPerSecondLTE applies the LTE predicate on the "max_per_second" field.
+func MaxPerSecondLTE(v int) predicate.Integration {
+	return predicate.Integration(sql.FieldLTE(FieldMaxPerSecond, v))
+}
+
+// MaxPerSecondIsNil applies the IsNil predicate on the "max_per_second" field.
+func MaxPerSecondIsNil() predicate.Integration {
+	return predicate.Integration(sql.FieldIsNull(FieldMaxPerSecond))
+}
+
+// MaxPerSecondNotNil applies the NotNil predicate on the "max_per_second" field.
+func MaxPerSecondNotNil() predicate.Integration {
+	return predicate.Integration(sql.FieldNotNull(FieldMaxPerSecond))
+}
+
+// MaxPerDayEQ applies the EQ predicate on the "max_per_day" field.
+func MaxPerDayEQ(v int) predicate.Integration {
+	return predicate.Integration(sql.FieldEQ(FieldMaxPerDay, v))
+}
+
+// MaxPerDayNEQ applies the NEQ predicate on the "max_per_day" field.
+func MaxPerDayNEQ(v int) predicate.Integration {
+	return predicate.Integration(sql.FieldNEQ(FieldMaxPerDay, v))
+}
+
+// MaxPerDayIn applies the In predicate on the "max_per_day" field.
+func MaxPerDayIn(vs ...int) predicate.Integration {
+	return predicate.Integration(sql.FieldIn(FieldMaxPerDay, vs...))
+}
+
+// MaxPerDayNotIn applies the NotIn predicate on the "max_per_day" field.
+func MaxPerDayNotIn(vs ...int) predicate.Integration {
+	return predicate.Integration(sql.FieldNotIn(FieldMaxPerDay, vs...))
+}
+
+// MaxPerDayGT applies the GT predicate on the "max_per_day" field.
+func MaxPerDayGT(v int) predicate.Integration {
+	return predicate.Integration(sql.FieldGT(FieldMaxPerDay, v))
+}
+
+// MaxPerDayGTE applies the GTE predicate on the "max_per_day" field.
+func MaxPerDayGTE(v int) predicate.Integration {
+	return predicate.Integration(sql.FieldGTE(FieldMaxPerDay, v))
+}
+
+// MaxPerDayLT applies the LT predicate on the "max_per_day" field.
+func MaxPerDayLT(v int) predicate.Integration {
+	return predicate.Integration(sql.FieldLT(FieldMaxPerDay, v))
+}
+
+// MaxPerDayLTE applies the LTE predicate on the "max_per_day" field.
+func MaxPerDayLTE(v int) predicate.Integration {
+	return predicate.Integration(sql.FieldLTE(FieldMaxPerDay, v))
+}
+
+// MaxPerDayIsNil applies the IsNil predicate on the "max_per_day" field.
+func MaxPerDayIsNil() predicate.Integration {
+	return predicate.Integration(sql.FieldIsNull(FieldMaxPerDay))
+}
+
+// MaxPerDayNotNil applies the NotNil predicate on the "max_per_day" field.
+func MaxPerDayNotNil() predicate.Integration {
+	return predicate.Integration(sql.FieldNotNull(FieldMaxPerDay))
+}
+
 // HasWorkspace applies the HasEdge predicate on the "workspace" edge.
 func HasWorkspace() predicate.Integration {
 	return predicate.Integration(func(s *sql.Selector) {
@@ -395,6 +505,29 @@ func HasWorkspace() predicate.Integration {
 func HasWorkspaceWith(preds ...predicate.Workspace) predicate.Integration {
 	return predicate.Integration(func(s *sql.Selector) {
 		step := newWorkspaceStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasSendLimiter applies the HasEdge predicate on the "send_limiter" edge.
+func HasSendLimiter() predicate.Integration {
+	return predicate.Integration(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2O, false, SendLimiterTable, SendLimiterColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasSendLimiterWith applies the HasEdge predicate on the "send_limiter" edge with a given conditions (other predicates).
+func HasSendLimiterWith(preds ...predicate.SendLimiter) predicate.Integration {
+	return predicate.Integration(func(s *sql.Selector) {
+		step := newSendLimiterStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)

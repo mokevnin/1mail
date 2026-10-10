@@ -27,6 +27,7 @@ import (
 	"github.com/mokevnin/1mail/ent/outboundmessage"
 	"github.com/mokevnin/1mail/ent/segment"
 	"github.com/mokevnin/1mail/ent/sendingdomain"
+	"github.com/mokevnin/1mail/ent/sendlimiter"
 	"github.com/mokevnin/1mail/ent/suppression"
 	"github.com/mokevnin/1mail/ent/tag"
 	"github.com/mokevnin/1mail/ent/unsubscribe"
@@ -304,6 +305,21 @@ func (_c *WorkspaceCreate) AddSendingDomains(v ...*SendingDomain) *WorkspaceCrea
 		ids[i] = v[i].ID
 	}
 	return _c.AddSendingDomainIDs(ids...)
+}
+
+// AddSendLimiterIDs adds the "send_limiters" edge to the SendLimiter entity by IDs.
+func (_c *WorkspaceCreate) AddSendLimiterIDs(ids ...int64) *WorkspaceCreate {
+	_c.mutation.AddSendLimiterIDs(ids...)
+	return _c
+}
+
+// AddSendLimiters adds the "send_limiters" edges to the SendLimiter entity.
+func (_c *WorkspaceCreate) AddSendLimiters(v ...*SendLimiter) *WorkspaceCreate {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddSendLimiterIDs(ids...)
 }
 
 // AddBroadcastIDs adds the "broadcasts" edge to the Broadcast entity by IDs.
@@ -796,6 +812,22 @@ func (_c *WorkspaceCreate) createSpec() (*Workspace, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(sendingdomain.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.SendLimitersIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   workspace.SendLimitersTable,
+			Columns: []string{workspace.SendLimitersColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(sendlimiter.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {

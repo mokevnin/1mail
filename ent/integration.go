@@ -10,6 +10,7 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
 	"github.com/mokevnin/1mail/ent/integration"
+	"github.com/mokevnin/1mail/ent/sendlimiter"
 	"github.com/mokevnin/1mail/ent/workspace"
 )
 
@@ -36,6 +37,10 @@ type Integration struct {
 	Enabled bool `json:"enabled,omitempty"`
 	// IsDefault holds the value of the "is_default" field.
 	IsDefault bool `json:"is_default,omitempty"`
+	// MaxPerSecond holds the value of the "max_per_second" field.
+	MaxPerSecond *int `json:"max_per_second,omitempty"`
+	// MaxPerDay holds the value of the "max_per_day" field.
+	MaxPerDay *int `json:"max_per_day,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the IntegrationQuery when eager-loading is set.
 	Edges        IntegrationEdges `json:"edges"`
@@ -46,9 +51,11 @@ type Integration struct {
 type IntegrationEdges struct {
 	// Workspace holds the value of the workspace edge.
 	Workspace *Workspace `json:"workspace,omitempty"`
+	// SendLimiter holds the value of the send_limiter edge.
+	SendLimiter *SendLimiter `json:"send_limiter,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [1]bool
+	loadedTypes [2]bool
 }
 
 // WorkspaceOrErr returns the Workspace value or an error if the edge
@@ -62,6 +69,17 @@ func (e IntegrationEdges) WorkspaceOrErr() (*Workspace, error) {
 	return nil, &NotLoadedError{edge: "workspace"}
 }
 
+// SendLimiterOrErr returns the SendLimiter value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e IntegrationEdges) SendLimiterOrErr() (*SendLimiter, error) {
+	if e.SendLimiter != nil {
+		return e.SendLimiter, nil
+	} else if e.loadedTypes[1] {
+		return nil, &NotFoundError{label: sendlimiter.Label}
+	}
+	return nil, &NotLoadedError{edge: "send_limiter"}
+}
+
 // scanValues returns the types for scanning values from sql.Rows.
 func (*Integration) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
@@ -69,7 +87,7 @@ func (*Integration) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case integration.FieldEnabled, integration.FieldIsDefault:
 			values[i] = new(sql.NullBool)
-		case integration.FieldID, integration.FieldWorkspaceID:
+		case integration.FieldID, integration.FieldWorkspaceID, integration.FieldMaxPerSecond, integration.FieldMaxPerDay:
 			values[i] = new(sql.NullInt64)
 		case integration.FieldName, integration.FieldChannel, integration.FieldProvider, integration.FieldConfigEncrypted:
 			values[i] = new(sql.NullString)
@@ -150,6 +168,20 @@ func (_m *Integration) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				_m.IsDefault = value.Bool
 			}
+		case integration.FieldMaxPerSecond:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field max_per_second", values[i])
+			} else if value.Valid {
+				_m.MaxPerSecond = new(int)
+				*_m.MaxPerSecond = int(value.Int64)
+			}
+		case integration.FieldMaxPerDay:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field max_per_day", values[i])
+			} else if value.Valid {
+				_m.MaxPerDay = new(int)
+				*_m.MaxPerDay = int(value.Int64)
+			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
 		}
@@ -166,6 +198,11 @@ func (_m *Integration) Value(name string) (ent.Value, error) {
 // QueryWorkspace queries the "workspace" edge of the Integration entity.
 func (_m *Integration) QueryWorkspace() *WorkspaceQuery {
 	return NewIntegrationClient(_m.config).QueryWorkspace(_m)
+}
+
+// QuerySendLimiter queries the "send_limiter" edge of the Integration entity.
+func (_m *Integration) QuerySendLimiter() *SendLimiterQuery {
+	return NewIntegrationClient(_m.config).QuerySendLimiter(_m)
 }
 
 // Update returns a builder for updating this Integration.
@@ -216,6 +253,16 @@ func (_m *Integration) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("is_default=")
 	builder.WriteString(fmt.Sprintf("%v", _m.IsDefault))
+	builder.WriteString(", ")
+	if v := _m.MaxPerSecond; v != nil {
+		builder.WriteString("max_per_second=")
+		builder.WriteString(fmt.Sprintf("%v", *v))
+	}
+	builder.WriteString(", ")
+	if v := _m.MaxPerDay; v != nil {
+		builder.WriteString("max_per_day=")
+		builder.WriteString(fmt.Sprintf("%v", *v))
+	}
 	builder.WriteByte(')')
 	return builder.String()
 }

@@ -124,8 +124,8 @@ type SendRecipientWorker struct {
 
 func (w *SendRecipientWorker) Work(ctx context.Context, job *river.Job[SendRecipientArgs]) error {
 	if err := SendToRecipient(ctx, w.ent, w.mod, job.Args.RecipientID); err != nil {
-		if _, held := asHeld(err); held {
-			// A hold is not a failure: wait it out without spending an attempt.
+		if isDeferrable(err) {
+			// A hold or a Deferral is not a failure: wait it out without spending an attempt.
 			return snoozeIfDeferrable(err)
 		}
 		// On the final attempt, record the terminal failure so the broadcast can
@@ -292,8 +292,9 @@ func PlanBroadcast(ctx context.Context, client *ent.Client, mod *outbound.Module
 // the Outcome onto the recipient row. It is idempotent: a recipient already at a
 // final status is left alone, and the module's idempotency key makes a retry after
 // a committed send replay the recorded result. A returned error is retryable
-// (provider down, claim in flight); a *HeldError means the source is on hold and
-// the job should be deferred, not failed.
+// (provider down, claim in flight); a *HeldError means the source is on hold and a
+// *DeferredError that its Send rate limit is spent; either way the job should be
+// deferred, not failed.
 func SendToRecipient(ctx context.Context, client *ent.Client, mod *outbound.Module, recipientID int64) error {
 	rec, err := client.BroadcastRecipient.Get(ctx, recipientID)
 	if err != nil {
@@ -354,6 +355,19 @@ func SendToRecipient(ctx context.Context, client *ent.Client, mod *outbound.Modu
 		err = upd.SetStatus(broadcastrecipient.StatusSkipped).SetError(res.Reason).Exec(ctx)
 	case outbound.Failed:
 		err = upd.SetStatus(broadcastrecipient.StatusFailed).SetError(res.Reason).Exec(ctx)
+	case outbound.Deferral:
+		// The Integration is busy, not blocked: the Broadcast stays sending with no hold
+		// reason and this recipient stays pending, retried after the wait.
+		ahead, cerr := s.BroadcastRecipient().Query().
+			Where(
+				broadcastrecipient.BroadcastID(rec.BroadcastID),
+				broadcastrecipient.StatusEQ(broadcastrecipient.StatusPending),
+				broadcastrecipient.IDLT(rec.ID),
+			).Count(ctx)
+		if cerr != nil {
+			ahead = 0 // the estimate only spreads retries; never fail the send over it
+		}
+		return &DeferredError{Wait: res.Wait, Backlog: ahead}
 	default: // outbound.Held
 		setBroadcastHold(ctx, s, b.ID, res.Reason)
 		return &HeldError{Reason: res.Reason}

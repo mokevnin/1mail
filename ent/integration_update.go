@@ -13,6 +13,7 @@ import (
 	"entgo.io/ent/schema/field"
 	"github.com/mokevnin/1mail/ent/integration"
 	"github.com/mokevnin/1mail/ent/predicate"
+	"github.com/mokevnin/1mail/ent/sendlimiter"
 	"github.com/mokevnin/1mail/ent/workspace"
 )
 
@@ -134,9 +135,82 @@ func (_u *IntegrationUpdate) SetNillableIsDefault(v *bool) *IntegrationUpdate {
 	return _u
 }
 
+// SetMaxPerSecond sets the "max_per_second" field.
+func (_u *IntegrationUpdate) SetMaxPerSecond(v int) *IntegrationUpdate {
+	_u.mutation.ResetMaxPerSecond()
+	_u.mutation.SetMaxPerSecond(v)
+	return _u
+}
+
+// SetNillableMaxPerSecond sets the "max_per_second" field if the given value is not nil.
+func (_u *IntegrationUpdate) SetNillableMaxPerSecond(v *int) *IntegrationUpdate {
+	if v != nil {
+		_u.SetMaxPerSecond(*v)
+	}
+	return _u
+}
+
+// AddMaxPerSecond adds value to the "max_per_second" field.
+func (_u *IntegrationUpdate) AddMaxPerSecond(v int) *IntegrationUpdate {
+	_u.mutation.AddMaxPerSecond(v)
+	return _u
+}
+
+// ClearMaxPerSecond clears the value of the "max_per_second" field.
+func (_u *IntegrationUpdate) ClearMaxPerSecond() *IntegrationUpdate {
+	_u.mutation.ClearMaxPerSecond()
+	return _u
+}
+
+// SetMaxPerDay sets the "max_per_day" field.
+func (_u *IntegrationUpdate) SetMaxPerDay(v int) *IntegrationUpdate {
+	_u.mutation.ResetMaxPerDay()
+	_u.mutation.SetMaxPerDay(v)
+	return _u
+}
+
+// SetNillableMaxPerDay sets the "max_per_day" field if the given value is not nil.
+func (_u *IntegrationUpdate) SetNillableMaxPerDay(v *int) *IntegrationUpdate {
+	if v != nil {
+		_u.SetMaxPerDay(*v)
+	}
+	return _u
+}
+
+// AddMaxPerDay adds value to the "max_per_day" field.
+func (_u *IntegrationUpdate) AddMaxPerDay(v int) *IntegrationUpdate {
+	_u.mutation.AddMaxPerDay(v)
+	return _u
+}
+
+// ClearMaxPerDay clears the value of the "max_per_day" field.
+func (_u *IntegrationUpdate) ClearMaxPerDay() *IntegrationUpdate {
+	_u.mutation.ClearMaxPerDay()
+	return _u
+}
+
 // SetWorkspace sets the "workspace" edge to the Workspace entity.
 func (_u *IntegrationUpdate) SetWorkspace(v *Workspace) *IntegrationUpdate {
 	return _u.SetWorkspaceID(v.ID)
+}
+
+// SetSendLimiterID sets the "send_limiter" edge to the SendLimiter entity by ID.
+func (_u *IntegrationUpdate) SetSendLimiterID(id int64) *IntegrationUpdate {
+	_u.mutation.SetSendLimiterID(id)
+	return _u
+}
+
+// SetNillableSendLimiterID sets the "send_limiter" edge to the SendLimiter entity by ID if the given value is not nil.
+func (_u *IntegrationUpdate) SetNillableSendLimiterID(id *int64) *IntegrationUpdate {
+	if id != nil {
+		_u = _u.SetSendLimiterID(*id)
+	}
+	return _u
+}
+
+// SetSendLimiter sets the "send_limiter" edge to the SendLimiter entity.
+func (_u *IntegrationUpdate) SetSendLimiter(v *SendLimiter) *IntegrationUpdate {
+	return _u.SetSendLimiterID(v.ID)
 }
 
 // Mutation returns the IntegrationMutation object of the builder.
@@ -147,6 +221,12 @@ func (_u *IntegrationUpdate) Mutation() *IntegrationMutation {
 // ClearWorkspace clears the "workspace" edge to the Workspace entity.
 func (_u *IntegrationUpdate) ClearWorkspace() *IntegrationUpdate {
 	_u.mutation.ClearWorkspace()
+	return _u
+}
+
+// ClearSendLimiter clears the "send_limiter" edge to the SendLimiter entity.
+func (_u *IntegrationUpdate) ClearSendLimiter() *IntegrationUpdate {
+	_u.mutation.ClearSendLimiter()
 	return _u
 }
 
@@ -203,6 +283,16 @@ func (_u *IntegrationUpdate) check() error {
 			return &ValidationError{Name: "provider", err: fmt.Errorf(`ent: validator failed for field "Integration.provider": %w`, err)}
 		}
 	}
+	if v, ok := _u.mutation.MaxPerSecond(); ok {
+		if err := integration.MaxPerSecondValidator(v); err != nil {
+			return &ValidationError{Name: "max_per_second", err: fmt.Errorf(`ent: validator failed for field "Integration.max_per_second": %w`, err)}
+		}
+	}
+	if v, ok := _u.mutation.MaxPerDay(); ok {
+		if err := integration.MaxPerDayValidator(v); err != nil {
+			return &ValidationError{Name: "max_per_day", err: fmt.Errorf(`ent: validator failed for field "Integration.max_per_day": %w`, err)}
+		}
+	}
 	if _u.mutation.WorkspaceCleared() && len(_u.mutation.WorkspaceIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "Integration.workspace"`)
 	}
@@ -248,6 +338,24 @@ func (_u *IntegrationUpdate) sqlSave(ctx context.Context) (_node int, err error)
 	if value, ok := _u.mutation.IsDefault(); ok {
 		_spec.SetField(integration.FieldIsDefault, field.TypeBool, value)
 	}
+	if value, ok := _u.mutation.MaxPerSecond(); ok {
+		_spec.SetField(integration.FieldMaxPerSecond, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.AddedMaxPerSecond(); ok {
+		_spec.AddField(integration.FieldMaxPerSecond, field.TypeInt, value)
+	}
+	if _u.mutation.MaxPerSecondCleared() {
+		_spec.ClearField(integration.FieldMaxPerSecond, field.TypeInt)
+	}
+	if value, ok := _u.mutation.MaxPerDay(); ok {
+		_spec.SetField(integration.FieldMaxPerDay, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.AddedMaxPerDay(); ok {
+		_spec.AddField(integration.FieldMaxPerDay, field.TypeInt, value)
+	}
+	if _u.mutation.MaxPerDayCleared() {
+		_spec.ClearField(integration.FieldMaxPerDay, field.TypeInt)
+	}
 	if _u.mutation.WorkspaceCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
@@ -270,6 +378,35 @@ func (_u *IntegrationUpdate) sqlSave(ctx context.Context) (_node int, err error)
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(workspace.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.SendLimiterCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   integration.SendLimiterTable,
+			Columns: []string{integration.SendLimiterColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(sendlimiter.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.SendLimiterIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   integration.SendLimiterTable,
+			Columns: []string{integration.SendLimiterColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(sendlimiter.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {
@@ -403,9 +540,82 @@ func (_u *IntegrationUpdateOne) SetNillableIsDefault(v *bool) *IntegrationUpdate
 	return _u
 }
 
+// SetMaxPerSecond sets the "max_per_second" field.
+func (_u *IntegrationUpdateOne) SetMaxPerSecond(v int) *IntegrationUpdateOne {
+	_u.mutation.ResetMaxPerSecond()
+	_u.mutation.SetMaxPerSecond(v)
+	return _u
+}
+
+// SetNillableMaxPerSecond sets the "max_per_second" field if the given value is not nil.
+func (_u *IntegrationUpdateOne) SetNillableMaxPerSecond(v *int) *IntegrationUpdateOne {
+	if v != nil {
+		_u.SetMaxPerSecond(*v)
+	}
+	return _u
+}
+
+// AddMaxPerSecond adds value to the "max_per_second" field.
+func (_u *IntegrationUpdateOne) AddMaxPerSecond(v int) *IntegrationUpdateOne {
+	_u.mutation.AddMaxPerSecond(v)
+	return _u
+}
+
+// ClearMaxPerSecond clears the value of the "max_per_second" field.
+func (_u *IntegrationUpdateOne) ClearMaxPerSecond() *IntegrationUpdateOne {
+	_u.mutation.ClearMaxPerSecond()
+	return _u
+}
+
+// SetMaxPerDay sets the "max_per_day" field.
+func (_u *IntegrationUpdateOne) SetMaxPerDay(v int) *IntegrationUpdateOne {
+	_u.mutation.ResetMaxPerDay()
+	_u.mutation.SetMaxPerDay(v)
+	return _u
+}
+
+// SetNillableMaxPerDay sets the "max_per_day" field if the given value is not nil.
+func (_u *IntegrationUpdateOne) SetNillableMaxPerDay(v *int) *IntegrationUpdateOne {
+	if v != nil {
+		_u.SetMaxPerDay(*v)
+	}
+	return _u
+}
+
+// AddMaxPerDay adds value to the "max_per_day" field.
+func (_u *IntegrationUpdateOne) AddMaxPerDay(v int) *IntegrationUpdateOne {
+	_u.mutation.AddMaxPerDay(v)
+	return _u
+}
+
+// ClearMaxPerDay clears the value of the "max_per_day" field.
+func (_u *IntegrationUpdateOne) ClearMaxPerDay() *IntegrationUpdateOne {
+	_u.mutation.ClearMaxPerDay()
+	return _u
+}
+
 // SetWorkspace sets the "workspace" edge to the Workspace entity.
 func (_u *IntegrationUpdateOne) SetWorkspace(v *Workspace) *IntegrationUpdateOne {
 	return _u.SetWorkspaceID(v.ID)
+}
+
+// SetSendLimiterID sets the "send_limiter" edge to the SendLimiter entity by ID.
+func (_u *IntegrationUpdateOne) SetSendLimiterID(id int64) *IntegrationUpdateOne {
+	_u.mutation.SetSendLimiterID(id)
+	return _u
+}
+
+// SetNillableSendLimiterID sets the "send_limiter" edge to the SendLimiter entity by ID if the given value is not nil.
+func (_u *IntegrationUpdateOne) SetNillableSendLimiterID(id *int64) *IntegrationUpdateOne {
+	if id != nil {
+		_u = _u.SetSendLimiterID(*id)
+	}
+	return _u
+}
+
+// SetSendLimiter sets the "send_limiter" edge to the SendLimiter entity.
+func (_u *IntegrationUpdateOne) SetSendLimiter(v *SendLimiter) *IntegrationUpdateOne {
+	return _u.SetSendLimiterID(v.ID)
 }
 
 // Mutation returns the IntegrationMutation object of the builder.
@@ -416,6 +626,12 @@ func (_u *IntegrationUpdateOne) Mutation() *IntegrationMutation {
 // ClearWorkspace clears the "workspace" edge to the Workspace entity.
 func (_u *IntegrationUpdateOne) ClearWorkspace() *IntegrationUpdateOne {
 	_u.mutation.ClearWorkspace()
+	return _u
+}
+
+// ClearSendLimiter clears the "send_limiter" edge to the SendLimiter entity.
+func (_u *IntegrationUpdateOne) ClearSendLimiter() *IntegrationUpdateOne {
+	_u.mutation.ClearSendLimiter()
 	return _u
 }
 
@@ -485,6 +701,16 @@ func (_u *IntegrationUpdateOne) check() error {
 			return &ValidationError{Name: "provider", err: fmt.Errorf(`ent: validator failed for field "Integration.provider": %w`, err)}
 		}
 	}
+	if v, ok := _u.mutation.MaxPerSecond(); ok {
+		if err := integration.MaxPerSecondValidator(v); err != nil {
+			return &ValidationError{Name: "max_per_second", err: fmt.Errorf(`ent: validator failed for field "Integration.max_per_second": %w`, err)}
+		}
+	}
+	if v, ok := _u.mutation.MaxPerDay(); ok {
+		if err := integration.MaxPerDayValidator(v); err != nil {
+			return &ValidationError{Name: "max_per_day", err: fmt.Errorf(`ent: validator failed for field "Integration.max_per_day": %w`, err)}
+		}
+	}
 	if _u.mutation.WorkspaceCleared() && len(_u.mutation.WorkspaceIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "Integration.workspace"`)
 	}
@@ -547,6 +773,24 @@ func (_u *IntegrationUpdateOne) sqlSave(ctx context.Context) (_node *Integration
 	if value, ok := _u.mutation.IsDefault(); ok {
 		_spec.SetField(integration.FieldIsDefault, field.TypeBool, value)
 	}
+	if value, ok := _u.mutation.MaxPerSecond(); ok {
+		_spec.SetField(integration.FieldMaxPerSecond, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.AddedMaxPerSecond(); ok {
+		_spec.AddField(integration.FieldMaxPerSecond, field.TypeInt, value)
+	}
+	if _u.mutation.MaxPerSecondCleared() {
+		_spec.ClearField(integration.FieldMaxPerSecond, field.TypeInt)
+	}
+	if value, ok := _u.mutation.MaxPerDay(); ok {
+		_spec.SetField(integration.FieldMaxPerDay, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.AddedMaxPerDay(); ok {
+		_spec.AddField(integration.FieldMaxPerDay, field.TypeInt, value)
+	}
+	if _u.mutation.MaxPerDayCleared() {
+		_spec.ClearField(integration.FieldMaxPerDay, field.TypeInt)
+	}
 	if _u.mutation.WorkspaceCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
@@ -569,6 +813,35 @@ func (_u *IntegrationUpdateOne) sqlSave(ctx context.Context) (_node *Integration
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(workspace.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.SendLimiterCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   integration.SendLimiterTable,
+			Columns: []string{integration.SendLimiterColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(sendlimiter.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.SendLimiterIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   integration.SendLimiterTable,
+			Columns: []string{integration.SendLimiterColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(sendlimiter.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {

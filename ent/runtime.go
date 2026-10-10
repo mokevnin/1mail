@@ -24,6 +24,7 @@ import (
 	"github.com/mokevnin/1mail/ent/schema"
 	"github.com/mokevnin/1mail/ent/segment"
 	"github.com/mokevnin/1mail/ent/sendingdomain"
+	"github.com/mokevnin/1mail/ent/sendlimiter"
 	"github.com/mokevnin/1mail/ent/suppression"
 	"github.com/mokevnin/1mail/ent/tag"
 	"github.com/mokevnin/1mail/ent/unsubscribe"
@@ -334,6 +335,14 @@ func init() {
 	integrationDescIsDefault := integrationFields[6].Descriptor()
 	// integration.DefaultIsDefault holds the default value on creation for the is_default field.
 	integration.DefaultIsDefault = integrationDescIsDefault.Default.(bool)
+	// integrationDescMaxPerSecond is the schema descriptor for max_per_second field.
+	integrationDescMaxPerSecond := integrationFields[7].Descriptor()
+	// integration.MaxPerSecondValidator is a validator for the "max_per_second" field. It is called by the builders before save.
+	integration.MaxPerSecondValidator = integrationDescMaxPerSecond.Validators[0].(func(int) error)
+	// integrationDescMaxPerDay is the schema descriptor for max_per_day field.
+	integrationDescMaxPerDay := integrationFields[8].Descriptor()
+	// integration.MaxPerDayValidator is a validator for the "max_per_day" field. It is called by the builders before save.
+	integration.MaxPerDayValidator = integrationDescMaxPerDay.Validators[0].(func(int) error)
 	invitationMixin := schema.Invitation{}.Mixin()
 	invitationMixinFields0 := invitationMixin[0].Fields()
 	_ = invitationMixinFields0
@@ -472,6 +481,21 @@ func init() {
 	segmentDescName := segmentFields[1].Descriptor()
 	// segment.NameValidator is a validator for the "name" field. It is called by the builders before save.
 	segment.NameValidator = segmentDescName.Validators[0].(func(string) error)
+	sendlimiterMixin := schema.SendLimiter{}.Mixin()
+	sendlimiterMixinFields0 := sendlimiterMixin[0].Fields()
+	_ = sendlimiterMixinFields0
+	sendlimiterFields := schema.SendLimiter{}.Fields()
+	_ = sendlimiterFields
+	// sendlimiterDescCreatedAt is the schema descriptor for created_at field.
+	sendlimiterDescCreatedAt := sendlimiterMixinFields0[0].Descriptor()
+	// sendlimiter.DefaultCreatedAt holds the default value on creation for the created_at field.
+	sendlimiter.DefaultCreatedAt = sendlimiterDescCreatedAt.Default.(func() time.Time)
+	// sendlimiterDescUpdatedAt is the schema descriptor for updated_at field.
+	sendlimiterDescUpdatedAt := sendlimiterMixinFields0[1].Descriptor()
+	// sendlimiter.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	sendlimiter.DefaultUpdatedAt = sendlimiterDescUpdatedAt.Default.(func() time.Time)
+	// sendlimiter.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	sendlimiter.UpdateDefaultUpdatedAt = sendlimiterDescUpdatedAt.UpdateDefault.(func() time.Time)
 	sendingdomainMixin := schema.SendingDomain{}.Mixin()
 	sendingdomainMixinFields0 := sendingdomainMixin[0].Fields()
 	_ = sendingdomainMixinFields0

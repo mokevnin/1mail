@@ -84,10 +84,22 @@ func (h *Handlers) SiteIntegrationsCreate(ctx context.Context, req *siteapi.Site
 		return nil, err
 	}
 
+	maxPerSecond, perSecondErr := limitValue(req.MaxPerSecond)
+	maxPerDay, perDayErr := limitValue(req.MaxPerDay)
+	if limitErrs := limitProblems(perSecondErr, perDayErr); limitErrs != nil {
+		v := siteapi.SiteIntegrationsCreateUnprocessableEntity(problemWithErrors(
+			http.StatusUnprocessableEntity, i18n.T("errors.integration_limit_positive", nil), limitErrs,
+		))
+		return &v, nil
+	}
+
 	enabled := req.Enabled.Or(true)
 	isDefault := req.IsDefault.Or(false)
 
-	row, err := h.createIntegration(ctx, s, name, channel, provider, encrypted, enabled, isDefault)
+	row, err := h.createIntegration(ctx, s, integrationDraft{
+		name: name, channel: channel, provider: provider, encrypted: encrypted,
+		enabled: enabled, isDefault: isDefault, maxPerSecond: maxPerSecond, maxPerDay: maxPerDay,
+	})
 	if service.IsUniqueViolation(err) {
 		v := siteapi.SiteIntegrationsCreateConflict(problem(http.StatusConflict, "a default provider already exists for this channel"))
 		return &v, nil
@@ -185,6 +197,14 @@ func (h *Handlers) SiteIntegrationsUpdate(ctx context.Context, req *siteapi.Site
 	if v, ok := req.Enabled.Get(); ok {
 		setEnabled = &v
 	}
+	perSecond, perSecondErr := limitValue(req.MaxPerSecond)
+	perDay, perDayErr := limitValue(req.MaxPerDay)
+	if limitErrs := limitProblems(perSecondErr, perDayErr); limitErrs != nil {
+		r := siteapi.SiteIntegrationsUpdateUnprocessableEntity(problemWithErrors(
+			http.StatusUnprocessableEntity, i18n.T("errors.integration_limit_positive", nil), limitErrs,
+		))
+		return &r, nil
+	}
 
 	if cfg, ok := req.Config.Get(); ok {
 		provider, _, plaintext, verr := h.encodeConfigInput(cfg)
@@ -249,6 +269,18 @@ func (h *Handlers) SiteIntegrationsUpdate(ctx context.Context, req *siteapi.Site
 		if setEncrypted != nil {
 			upd.SetConfigEncrypted(*setEncrypted)
 		}
+		switch {
+		case perSecond != nil:
+			upd.SetMaxPerSecond(*perSecond)
+		case req.MaxPerSecond.IsSet(): // explicit null
+			upd.ClearMaxPerSecond()
+		}
+		switch {
+		case perDay != nil:
+			upd.SetMaxPerDay(*perDay)
+		case req.MaxPerDay.IsSet():
+			upd.ClearMaxPerDay()
+		}
 		if promote {
 			upd.SetIsDefault(true)
 		} else if setDefault != nil {
@@ -303,25 +335,70 @@ func (h *Handlers) SiteIntegrationsDelete(ctx context.Context, params siteapi.Si
 
 // --- helpers ---
 
+// integrationDraft is the validated input of a new Integration.
+type integrationDraft struct {
+	name         string
+	channel      integration.Channel
+	provider     integration.Provider
+	encrypted    string
+	enabled      bool
+	isDefault    bool
+	maxPerSecond *int
+	maxPerDay    *int
+}
+
+// limitValue reads one Send rate limit from its request field: a set value must be
+// positive; null (and, on create, omitted) means no limit and yields a nil pointer.
+func limitValue(in siteapi.OptNilInt32) (*int, error) {
+	v, ok := in.Get()
+	if !ok {
+		return nil, nil
+	}
+	if v < 1 {
+		return nil, errLimitNotPositive
+	}
+	n := int(v)
+	return &n, nil
+}
+
+var errLimitNotPositive = errors.New("a send rate limit must be a positive number")
+
+// limitProblems keys the invalid limits by field for a 422, nil when both are valid.
+func limitProblems(perSecond, perDay error) map[string][]string {
+	out := map[string][]string{}
+	if perSecond != nil {
+		out["maxPerSecond"] = []string{i18n.T("errors.integration_limit_positive", nil)}
+	}
+	if perDay != nil {
+		out["maxPerDay"] = []string{i18n.T("errors.integration_limit_positive", nil)}
+	}
+	if len(out) == 0 {
+		return nil
+	}
+	return out
+}
+
 // createIntegration inserts a row in a tx, clearing any sibling default first
 // when this one is the new default (so the partial unique index never trips on
 // our own writes).
-func (h *Handlers) createIntegration(ctx context.Context, s *ent.Scoped, name string, channel integration.Channel, provider integration.Provider, encrypted string, enabled, isDefault bool) (*ent.Integration, error) {
+func (h *Handlers) createIntegration(ctx context.Context, s *ent.Scoped, d integrationDraft) (*ent.Integration, error) {
 	var row *ent.Integration
 	err := h.bus.WithinScopedTx(ctx, s, func(ts *ent.Scoped, _ events.Publisher) error {
-		if isDefault {
-			if err := clearDefault(ctx, ts, channel); err != nil {
+		if d.isDefault {
+			if err := clearDefault(ctx, ts, d.channel); err != nil {
 				return err
 			}
 		}
 		var err error
 		row, err = ts.Integration().Create().
-			SetName(name).
-			SetChannel(channel).
-			SetProvider(provider).
-			SetConfigEncrypted(encrypted).
-			SetEnabled(enabled).
-			SetIsDefault(isDefault).
+			SetName(d.name).
+			SetChannel(d.channel).
+			SetProvider(d.provider).
+			SetConfigEncrypted(d.encrypted).
+			SetEnabled(d.enabled).
+			SetIsDefault(d.isDefault).
+			SetNillableMaxPerSecond(d.maxPerSecond).
+			SetNillableMaxPerDay(d.maxPerDay).
 			Save(ctx)
 		return err
 	})
@@ -431,14 +508,16 @@ func mergeSecrets(provider integration.Provider, next, prev []byte) ([]byte, err
 // with all secrets redacted.
 func (h *Handlers) integrationToResource(row *ent.Integration) (siteapi.SiteIntegrationResource, error) {
 	res := siteapi.SiteIntegrationResource{
-		ID:        siteapi.EntityId(strconv.FormatInt(row.ID, 10)),
-		Name:      row.Name,
-		Channel:   siteapi.SiteIntegrationChannel(row.Channel.String()),
-		Provider:  siteapi.SiteIntegrationProvider(row.Provider.String()),
-		Enabled:   row.Enabled,
-		IsDefault: row.IsDefault,
-		CreatedAt: siteapi.Timestamp(row.CreatedAt),
-		UpdatedAt: siteapi.Timestamp(row.UpdatedAt),
+		ID:           siteapi.EntityId(strconv.FormatInt(row.ID, 10)),
+		Name:         row.Name,
+		Channel:      siteapi.SiteIntegrationChannel(row.Channel.String()),
+		Provider:     siteapi.SiteIntegrationProvider(row.Provider.String()),
+		Enabled:      row.Enabled,
+		IsDefault:    row.IsDefault,
+		MaxPerSecond: limitOpt(row.MaxPerSecond),
+		MaxPerDay:    limitOpt(row.MaxPerDay),
+		CreatedAt:    siteapi.Timestamp(row.CreatedAt),
+		UpdatedAt:    siteapi.Timestamp(row.UpdatedAt),
 	}
 
 	plaintext, err := h.cipher.Decrypt(row.ConfigEncrypted)
@@ -485,6 +564,14 @@ func (h *Handlers) integrationToResource(row *ent.Integration) (siteapi.SiteInte
 		return res, errUnknownProvider
 	}
 	return res, nil
+}
+
+// limitOpt renders a stored limit: null when there is none.
+func limitOpt(v *int) siteapi.NilInt32 {
+	if v == nil {
+		return siteapi.NilInt32{Null: true}
+	}
+	return siteapi.NewNilInt32(int32(*v))
 }
 
 // optNilString returns a set OptNilString for non-empty input, else the zero

@@ -3,6 +3,7 @@ package jobs
 import (
 	"context"
 	"fmt"
+	"math/rand/v2"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -238,6 +239,11 @@ func RunStep(ctx context.Context, client *ent.Client, mod *outbound.Module, runI
 		case outbound.Failed:
 			_, _ = scoped.AutomationRun().UpdateOneID(run.ID).SetStatus(automationrun.StatusFailed).Save(ctx)
 			return StepResult{}, fmt.Errorf("email step %d: %s", step, res.Reason)
+		case outbound.Deferral:
+			// The Integration is busy: the enrollment waits, unchanged, for the limit's wait
+			// (an Automation step cannot snooze, so it reschedules itself like a Hold).
+			resume := time.Now().Add(deferralDelay(res.Wait, 0, rand.Float64()))
+			return StepResult{ResumeAt: &resume}, nil
 		default: // outbound.Held: the enrollment waits, unchanged, and asks again later
 			resume := time.Now().Add(holdRetryDelay)
 			return StepResult{ResumeAt: &resume}, nil
