@@ -45,6 +45,7 @@ const (
 	ActionUserPasswordChange = "user.password_change"
 	ActionWorkspaceSuspend   = "workspace.suspend"
 	ActionWorkspaceUnsuspend = "workspace.unsuspend"
+	ActionContactImport      = "contact.import"
 )
 
 // ExplicitAuditActions lists every action emitted by an explicit RecordAudit call.
@@ -58,6 +59,7 @@ var ExplicitAuditActions = []string{
 	ActionUserPasswordChange,
 	ActionWorkspaceSuspend,
 	ActionWorkspaceUnsuspend,
+	ActionContactImport,
 }
 
 // Unprojected is an optional DomainEvent capability: an event that is not a

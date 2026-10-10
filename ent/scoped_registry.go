@@ -189,7 +189,7 @@ func ScopedEntities() []ScopedEntity {
 		},
 		{
 			Name:    "Automation",
-			Audited: false,
+			Audited: true,
 			IDs: func(ctx context.Context, c *Client, ws int64) ([]int64, error) {
 				return c.Automation.Query().Where(automation.WorkspaceID(ws)).Order(Asc(automation.FieldID)).IDs(ctx)
 			},
@@ -294,7 +294,7 @@ func ScopedEntities() []ScopedEntity {
 		},
 		{
 			Name:    "Broadcast",
-			Audited: false,
+			Audited: true,
 			IDs: func(ctx context.Context, c *Client, ws int64) ([]int64, error) {
 				return c.Broadcast.Query().Where(broadcast.WorkspaceID(ws)).Order(Asc(broadcast.FieldID)).IDs(ctx)
 			},
@@ -500,7 +500,7 @@ func ScopedEntities() []ScopedEntity {
 		},
 		{
 			Name:    "Contact",
-			Audited: false,
+			Audited: true,
 			IDs: func(ctx context.Context, c *Client, ws int64) ([]int64, error) {
 				return c.Contact.Query().Where(contact.WorkspaceID(ws)).Order(Asc(contact.FieldID)).IDs(ctx)
 			},
@@ -571,7 +571,7 @@ func ScopedEntities() []ScopedEntity {
 		},
 		{
 			Name:    "CustomField",
-			Audited: false,
+			Audited: true,
 			IDs: func(ctx context.Context, c *Client, ws int64) ([]int64, error) {
 				return c.CustomField.Query().Where(customfield.WorkspaceID(ws)).Order(Asc(customfield.FieldID)).IDs(ctx)
 			},
@@ -611,7 +611,7 @@ func ScopedEntities() []ScopedEntity {
 		},
 		{
 			Name:    "EmailTemplate",
-			Audited: false,
+			Audited: true,
 			IDs: func(ctx context.Context, c *Client, ws int64) ([]int64, error) {
 				return c.EmailTemplate.Query().Where(emailtemplate.WorkspaceID(ws)).Order(Asc(emailtemplate.FieldID)).IDs(ctx)
 			},
@@ -958,7 +958,7 @@ func ScopedEntities() []ScopedEntity {
 		},
 		{
 			Name:    "Segment",
-			Audited: false,
+			Audited: true,
 			IDs: func(ctx context.Context, c *Client, ws int64) ([]int64, error) {
 				return c.Segment.Query().Where(segment.WorkspaceID(ws)).Order(Asc(segment.FieldID)).IDs(ctx)
 			},

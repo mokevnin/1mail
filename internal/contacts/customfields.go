@@ -2,7 +2,9 @@ package contacts
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
+	"errors"
 
 	"github.com/mokevnin/1mail/ent"
 	"github.com/mokevnin/1mail/ent/customfield"
@@ -27,13 +29,15 @@ func EnsureCustomFields(ctx context.Context, s *ent.Scoped, kv map[string]any) (
 		if key == "" {
 			continue
 		}
+		// DO NOTHING, not Ignore: an insert is the audited create of the definition under
+		// a User or API token (ADR 0022); a conflict writes nothing and reports sql.ErrNoRows.
 		if err := s.CustomField().Create().
 			SetKey(key).
 			SetName(key).
 			SetType(inferFieldType(val)).
 			OnConflictColumns(customfield.FieldWorkspaceID, customfield.FieldKey).
-			Ignore().
-			Exec(ctx); err != nil {
+			DoNothing().
+			Exec(ctx); err != nil && !errors.Is(err, sql.ErrNoRows) {
 			return nil, err
 		}
 		out[key] = val
