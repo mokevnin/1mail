@@ -65,6 +65,26 @@ system-generated actions — so engagement is segmentable through the very same 
 customer-tracked actions, with no parallel event stream.
 _Avoid_: Activity, log entry, signal
 
+**Erasure**:
+Removing a Contact's personal data at the Workspace's request (GDPR Art. 17). It is what deleting
+a Contact _is_ — there is no softer delete that keeps personal data. The Contact, its Visitors,
+Custom field values, Tags and Confirmation are removed, as are its customer-tracked Events; the
+reserved `email.*` Events and delivery records stay as anonymous rows, so deliverability and
+metering counts do not change. What survives is the minimum that keeps the refusal honored: the
+Unsubscribe and Suppression rows for its Destinations. It leaves a PII-free `contact.erased`
+Event, stored without any Contact reference (its webhook delivery carries the customer's own
+subject_id so downstream copies can be erased). A person who later reappears (Identify, import) is a new Contact and
+is not blocked; surviving opt-outs still apply to them. The Workspace is the controller and 1mail
+the processor, so Erasure is an operator action, never a data-subject self-service form.
+_Avoid_: Anonymization (that is only what happens to the delivery rows), forget, purge (purge is
+bulk retention policy, a separate concern)
+
+**Data export** (subject access):
+A machine-readable bundle of everything held about one Contact (GDPR Art. 15/20): the Contact,
+its attributes, Tags, Visitors, Events, opt-outs and delivery metadata — not rendered message
+bodies.
+_Avoid_: Backup, dump, contact export (that is the bulk list export)
+
 **Retention**:
 How long an Event is kept before it is deleted. Events split by purpose: **evidentiary** Events
 (consent proof such as `marketing.confirmed`, permanent bounces and complaints, unsubscribes)

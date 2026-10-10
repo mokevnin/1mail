@@ -5,6 +5,7 @@ package jobs
 
 import (
 	"context"
+	"database/sql"
 	"log/slog"
 	"time"
 
@@ -52,11 +53,21 @@ type Extension struct {
 	PeriodicJobs []*river.PeriodicJob
 }
 
+// Retention groups the data-retention settings of the prune jobs.
+type Retention struct {
+	// OutboxFloor is the minimum age of a pruned outbox row.
+	OutboxFloor time.Duration
+	// Events is the age past which analytical Events are deleted (0 disables).
+	Events time.Duration
+}
+
 // NewClient builds the river client with all workers registered. Workers carry
 // their own dependencies (ent client, sender resolver, secrets cipher, the
 // platform system sender). appURL is the public origin used to build the links
-// in account emails (reset/verify/change).
-func NewClient(pool *pgxpool.Pool, entClient *ent.Client, mod *outbound.Module, cipher *secrets.Cipher, systemSender messaging.EmailSender, lookup sending.TXTLookup, appURL string, ext ...Extension) (*Client, error) {
+// in account emails (reset/verify/change). db is the raw handle the instance-wide
+// outbox prune runs on; retention carries the prune settings. ext plugs in the
+// Enterprise Edition's workers and periodic jobs.
+func NewClient(pool *pgxpool.Pool, entClient *ent.Client, db *sql.DB, mod *outbound.Module, cipher *secrets.Cipher, systemSender messaging.EmailSender, lookup sending.TXTLookup, appURL string, retention Retention, ext ...Extension) (*Client, error) {
 	workers := river.NewWorkers()
 	river.AddWorker(workers, &SendBroadcastWorker{ent: entClient, mod: mod})
 	river.AddWorker(workers, &SendRecipientWorker{ent: entClient, mod: mod})
@@ -74,27 +85,40 @@ func NewClient(pool *pgxpool.Pool, entClient *ent.Client, mod *outbound.Module, 
 	// DNS; verified is a live property re-validated by the periodic job below.
 	river.AddWorker(workers, &VerifySendingDomainWorker{ent: entClient, lookup: lookup, sender: systemSender})
 	river.AddWorker(workers, &RecheckSendingDomainsWorker{ent: entClient})
+	river.AddWorker(workers, &PruneOutboxWorker{db: db, floor: retention.OutboxFloor})
+	river.AddWorker(workers, &PruneEventsWorker{db: db, retention: retention.Events})
 
-	// Re-validate every Sending domain's DKIM DNS periodically so a record
-	// that disappears flips the domain back to unverified (ADR 0010).
-	periodic := []*river.PeriodicJob{
-		river.NewPeriodicJob(
-			river.PeriodicInterval(15*time.Minute),
-			func() (river.JobArgs, *river.InsertOpts) {
-				return RecheckSendingDomainsArgs{}, nil
-			},
-			&river.PeriodicJobOpts{RunOnStart: true},
-		),
-	}
+	var extraPeriodic []*river.PeriodicJob
 	for _, e := range ext {
 		if e.Workers != nil {
 			e.Workers(workers)
 		}
-		periodic = append(periodic, e.PeriodicJobs...)
+		extraPeriodic = append(extraPeriodic, e.PeriodicJobs...)
 	}
 
 	logger := slog.Default()
-	rc, err := river.NewClient(riverpgxv5.New(pool), &river.Config{
+	rc, err := river.NewClient(riverpgxv5.New(pool), newRiverConfig(workers, logger, extraPeriodic...))
+	if err != nil {
+		return nil, err
+	}
+	return &Client{river: rc, ent: entClient}, nil
+}
+
+// River job retention, explicit rather than river's defaults: bounds the
+// river_job table (Event retention is separate, ADR 0019).
+const (
+	completedJobRetention = 24 * time.Hour
+	cancelledJobRetention = 24 * time.Hour
+	discardedJobRetention = 14 * 24 * time.Hour
+)
+
+// newRiverConfig builds the river config; extra are the Edition's periodic jobs, added to
+// core's.
+func newRiverConfig(workers *river.Workers, logger *slog.Logger, extra ...*river.PeriodicJob) *river.Config {
+	return &river.Config{
+		CompletedJobRetentionPeriod: completedJobRetention,
+		CancelledJobRetentionPeriod: cancelledJobRetention,
+		DiscardedJobRetentionPeriod: discardedJobRetention,
 		Queues: map[string]river.QueueConfig{
 			river.QueueDefault: {MaxWorkers: 5},
 			QueueBroadcasts:    {MaxWorkers: 10},
@@ -105,13 +129,35 @@ func NewClient(pool *pgxpool.Pool, entClient *ent.Client, mod *outbound.Module, 
 		ErrorHandler: &errorHandler{logger: logger},
 		// OTel spans + metrics per job insert/work, via the global providers set
 		// by telemetry.Setup (a no-op when telemetry is disabled, e.g. tests).
-		Middleware:   []rivertype.Middleware{otelriver.NewMiddleware(nil)},
-		PeriodicJobs: periodic,
-	})
-	if err != nil {
-		return nil, err
+		Middleware: []rivertype.Middleware{otelriver.NewMiddleware(nil)},
+		// Re-validate every Sending domain's DKIM DNS periodically so a record
+		// that disappears flips the domain back to unverified (ADR 0010).
+		PeriodicJobs: append([]*river.PeriodicJob{
+			river.NewPeriodicJob(
+				river.PeriodicInterval(15*time.Minute),
+				func() (river.JobArgs, *river.InsertOpts) {
+					return RecheckSendingDomainsArgs{}, nil
+				},
+				&river.PeriodicJobOpts{RunOnStart: true},
+			),
+			// Prune the domain-events outbox below the slowest consumer (ADR 0019).
+			river.NewPeriodicJob(
+				river.PeriodicInterval(outboxPruneInterval),
+				func() (river.JobArgs, *river.InsertOpts) {
+					return PruneOutboxArgs{}, nil
+				},
+				&river.PeriodicJobOpts{RunOnStart: true},
+			),
+			// Delete expired analytical Events daily at 03:00 UTC (ADR 0019).
+			river.NewPeriodicJob(
+				dailyAtUTC{hour: eventsRetentionHourUTC},
+				func() (river.JobArgs, *river.InsertOpts) {
+					return PruneEventsArgs{}, nil
+				},
+				nil,
+			),
+		}, extra...),
 	}
-	return &Client{river: rc, ent: entClient}, nil
 }
 
 // Start begins processing jobs (run in a goroutine; returns once started).

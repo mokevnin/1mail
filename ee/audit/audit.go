@@ -18,7 +18,7 @@ import (
 )
 
 // ConsumerName names the bus consumer group of the audit subscriber.
-const ConsumerName = "audit"
+const ConsumerName = events.GroupAudit
 
 // Consumer is the audit subscriber. It is the raw-client entry for audit entries (an
 // event envelope carries only a Workspace id, ADR 0017). It persists `audit.entry`

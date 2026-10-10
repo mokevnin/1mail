@@ -2,17 +2,19 @@ package site
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"strconv"
-	"strings"
 	"time"
+
+	"github.com/samber/lo"
 
 	"github.com/mokevnin/1mail/ent"
 	"github.com/mokevnin/1mail/ent/apitoken"
 	"github.com/mokevnin/1mail/ent/membership"
 	siteapi "github.com/mokevnin/1mail/gen/site"
+	"github.com/mokevnin/1mail/internal/apitokens"
 	"github.com/mokevnin/1mail/internal/i18n"
-	"github.com/mokevnin/1mail/internal/service"
 )
 
 // canManageTokens reports whether role may mint or revoke API tokens. A token is
@@ -64,45 +66,34 @@ func (h *Handlers) SiteTokensCreate(ctx context.Context, req *siteapi.SiteCreate
 		return &v, nil
 	}
 
-	name := strings.TrimSpace(req.Name)
-	if name == "" {
+	in := apitokens.Input{Name: req.Name, Scopes: req.Scopes}
+	if v, ok := req.ExpiresAt.Get(); ok {
+		in.ExpiresAt = lo.ToPtr(time.Time(v))
+	}
+	// Owners and admins may grant any scope of the vocabulary.
+	minted, err := apitokens.Mint(ctx, scoped, in)
+	switch {
+	case errors.Is(err, apitokens.ErrNameEmpty):
 		v := siteapi.SiteTokensCreateUnprocessableEntity(problemWithErrors(
 			http.StatusUnprocessableEntity,
 			i18n.T("errors.name_empty", nil),
 			map[string][]string{"name": {i18n.T("errors.name_empty", nil)}},
 		))
 		return &v, nil
-	}
-
-	prefix, err := service.GenerateTokenPrefix()
-	if err != nil {
-		return nil, err
-	}
-	secret, err := service.GenerateTokenSecret()
-	if err != nil {
-		return nil, err
-	}
-	hash, err := service.HashTokenSecret(secret)
-	if err != nil {
-		return nil, err
-	}
-
-	create := scoped.ApiToken().Create().
-		SetName(name).
-		SetPrefix(prefix).
-		SetSecretHash(hash).
-		SetScopes(req.Scopes)
-	if v, ok := req.ExpiresAt.Get(); ok {
-		create = create.SetExpiresAt(time.Time(v))
-	}
-	token, err := create.Save(ctx)
-	if err != nil {
+	case errors.Is(err, apitokens.ErrUnknownScope):
+		v := siteapi.SiteTokensCreateUnprocessableEntity(problemWithErrors(
+			http.StatusUnprocessableEntity,
+			"unknown scope",
+			map[string][]string{"scopes": {"unknown scope"}},
+		))
+		return &v, nil
+	case err != nil:
 		return nil, err
 	}
 
 	return &siteapi.SiteCreateTokenResponse{
-		Token:    service.TokenValue(prefix, secret),
-		Resource: mapper.TokenToResource(token),
+		Token:    minted.Value,
+		Resource: mapper.TokenToResource(minted.Token),
 	}, nil
 }
 
@@ -127,18 +118,14 @@ func (h *Handlers) SiteTokensDelete(ctx context.Context, params siteapi.SiteToke
 		return &v, nil
 	}
 
-	// Scope the revoke to the workspace; an unknown / non-owned / already-revoked
-	// id affects zero rows and maps to 404.
-	n, err := scoped.ApiToken().Update().
-		Where(apitoken.ID(id), apitoken.RevokedAtIsNil()).
-		SetRevokedAt(time.Now()).
-		Save(ctx)
-	if err != nil {
-		return nil, err
-	}
-	if n == 0 {
+	// An unknown, foreign or already-revoked id is a 404.
+	err = apitokens.Revoke(ctx, scoped, id)
+	if errors.Is(err, apitokens.ErrNotFound) {
 		v := siteapi.SiteTokensDeleteNotFound(problem(http.StatusNotFound, "token not found"))
 		return &v, nil
+	}
+	if err != nil {
+		return nil, err
 	}
 	return &siteapi.SiteTokensDeleteNoContent{}, nil
 }

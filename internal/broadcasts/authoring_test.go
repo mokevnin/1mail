@@ -249,3 +249,19 @@ func TestAnotherWorkspacesBroadcastAndSegmentAreRefused(t *testing.T) {
 	_, err = m.SetAudience(ctx, acme, fixtures.BroadcastDraftID, ptr(int64(fixtures.SegmentGlobexID)))
 	assert.ErrorIs(t, err, broadcasts.ErrSegmentNotFound)
 }
+
+func TestDeleteRemovesABroadcastOfAnyStatusAndIsWorkspaceScoped(t *testing.T) {
+	env := testhelper.Setup(t)
+	m := broadcasts.New(&recorder{})
+	ctx := context.Background()
+	s := env.DB.Scoped(fixtures.AcmeID)
+
+	require.NoError(t, m.Delete(ctx, s, fixtures.BroadcastFailedID))
+	_, err := m.Get(ctx, s, fixtures.BroadcastFailedID)
+	assert.ErrorIs(t, err, broadcasts.ErrNotFound)
+
+	assert.ErrorIs(t, m.Delete(ctx, env.DB.Scoped(fixtures.GlobexID), fixtures.BroadcastDraftID), broadcasts.ErrNotFound,
+		"another Workspace's Broadcast is not found")
+	_, err = m.Get(ctx, s, fixtures.BroadcastDraftID)
+	assert.NoError(t, err)
+}

@@ -134,7 +134,7 @@ func (h *Handlers) SiteInvitationsCreate(ctx context.Context, req *siteapi.SiteC
 		inviterName = caller.Name
 	}
 	if merr := h.sysmail.EnqueueMemberInvite(ctx, email, inviteURL, wsEnt.Name, inviterName); merr != nil {
-		slog.WarnContext(ctx, "member invite email not enqueued", "error", merr, "email", email)
+		slog.WarnContext(ctx, "member invite email not enqueued", "error", merr, "invitation_id", inv.ID)
 	}
 
 	inv.Edges.Inviter, _ = h.accounts.User(ctx, a.UserID)

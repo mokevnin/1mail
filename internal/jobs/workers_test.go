@@ -61,7 +61,7 @@ func newRiverEnv(t *testing.T) *riverEnv {
 	require.NoError(t, err)
 	fs := &fakeSender{}
 	mod := newMod(env, fakeResolver{sender: fs})
-	client, err := jobs.NewClient(pool, env.DB, mod, cipher, env.SystemMail, nil, cfg.AppURL)
+	client, err := jobs.NewClient(pool, env.DB, env.SQLDB, mod, cipher, env.SystemMail, nil, cfg.AppURL, jobs.Retention{OutboxFloor: cfg.OutboxFloor, Events: cfg.EventsRetention})
 	require.NoError(t, err)
 	e := &riverEnv{TestEnv: env, pool: pool, client: client, cipher: cipher, cfg: cfg, sender: fs}
 	e.clearQueue(t)
@@ -327,8 +327,8 @@ func TestEvaluateTriggerAndRunStepWorkers(t *testing.T) {
 	assert.Equal(t, automationrun.StatusCompleted, e.DB.AutomationRun.GetX(ctx, run.ID).Status)
 	assert.Len(t, e.queued(t), 4, "a finished run queues nothing")
 
-	// An unknown run is an error.
-	require.Error(t, w.Work(ctx, job(jobs.RunStepArgs{RunID: 424242})))
+	// An unknown run (erased with its Contact) is finished, not retried.
+	require.NoError(t, w.Work(ctx, job(jobs.RunStepArgs{RunID: 424242})))
 }
 
 func TestBroadcastWorkers(t *testing.T) {

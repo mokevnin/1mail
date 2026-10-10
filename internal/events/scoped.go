@@ -54,3 +54,22 @@ func (p auditPublisher) PublishAudit(ctx context.Context, workspaceID int64, c e
 		Diff:        c.Diff,
 	})
 }
+
+// PurgingPublisher is the Publisher of a transaction that may also clear the internal
+// queues (see QueuePurger). Only WithinScopedPurgeTx hands one out.
+type PurgingPublisher interface {
+	Publisher
+	QueuePurger
+}
+
+// WithinScopedPurgeTx is WithinScopedTx for the one caller that clears the internal
+// queues in the same transaction: Erasure (ADR 0021). Asking for the purging
+// publisher here, not by type assertion on a Publisher, makes it a compile-time
+// dependency.
+func (b *Bus) WithinScopedPurgeTx(ctx context.Context, s *ent.Scoped, fn func(ts *ent.Scoped, pub PurgingPublisher) error) error {
+	return b.within(ctx, func(tx *ent.Client, pub *txPublisher) error {
+		// The scope keeps its actor, so deleting the Contact is audited (id only) in the
+		// erasure's own transaction (ADR 0022).
+		return fn(s.InTx(tx, auditPublisher{pub: pub}), pub)
+	})
+}

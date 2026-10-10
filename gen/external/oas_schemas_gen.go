@@ -3,6 +3,7 @@
 package externalapi
 
 import (
+	"io"
 	"time"
 
 	"github.com/go-faster/errors"
@@ -126,6 +127,7 @@ type ApiTokenScope string
 const (
 	ApiTokenScopeContactsRead        ApiTokenScope = "contacts:read"
 	ApiTokenScopeContactsWrite       ApiTokenScope = "contacts:write"
+	ApiTokenScopeContactsErase       ApiTokenScope = "contacts:erase"
 	ApiTokenScopeSegmentsRead        ApiTokenScope = "segments:read"
 	ApiTokenScopeSegmentsWrite       ApiTokenScope = "segments:write"
 	ApiTokenScopeEventsRead          ApiTokenScope = "events:read"
@@ -154,6 +156,7 @@ func (ApiTokenScope) AllValues() []ApiTokenScope {
 	return []ApiTokenScope{
 		ApiTokenScopeContactsRead,
 		ApiTokenScopeContactsWrite,
+		ApiTokenScopeContactsErase,
 		ApiTokenScopeSegmentsRead,
 		ApiTokenScopeSegmentsWrite,
 		ApiTokenScopeEventsRead,
@@ -184,6 +187,8 @@ func (s ApiTokenScope) MarshalText() ([]byte, error) {
 	case ApiTokenScopeContactsRead:
 		return []byte(s), nil
 	case ApiTokenScopeContactsWrite:
+		return []byte(s), nil
+	case ApiTokenScopeContactsErase:
 		return []byte(s), nil
 	case ApiTokenScopeSegmentsRead:
 		return []byte(s), nil
@@ -240,6 +245,9 @@ func (s *ApiTokenScope) UnmarshalText(data []byte) error {
 		return nil
 	case ApiTokenScopeContactsWrite:
 		*s = ApiTokenScopeContactsWrite
+		return nil
+	case ApiTokenScopeContactsErase:
+		*s = ApiTokenScopeContactsErase
 		return nil
 	case ApiTokenScopeSegmentsRead:
 		*s = ApiTokenScopeSegmentsRead
@@ -2003,6 +2011,77 @@ func (*ContactsDeleteUnauthorized) contactsDeleteRes() {}
 type ContactsDeleteUnprocessableEntity ProblemDetails
 
 func (*ContactsDeleteUnprocessableEntity) contactsDeleteRes() {}
+
+type ContactsEraseByBadRequest ProblemDetails
+
+func (*ContactsEraseByBadRequest) contactsEraseByRes() {}
+
+// ContactsEraseByNoContent is response for ContactsEraseBy operation.
+type ContactsEraseByNoContent struct{}
+
+func (*ContactsEraseByNoContent) contactsEraseByRes() {}
+
+type ContactsEraseByNotFound ProblemDetails
+
+func (*ContactsEraseByNotFound) contactsEraseByRes() {}
+
+type ContactsEraseByUnauthorized ProblemDetails
+
+func (*ContactsEraseByUnauthorized) contactsEraseByRes() {}
+
+type ContactsExportBadRequest ProblemDetails
+
+func (*ContactsExportBadRequest) contactsExportRes() {}
+
+type ContactsExportNotFound ProblemDetails
+
+func (*ContactsExportNotFound) contactsExportRes() {}
+
+type ContactsExportOK struct {
+	Data io.Reader
+}
+
+// Read reads data from the Data reader.
+//
+// Kept to satisfy the io.Reader interface.
+func (s ContactsExportOK) Read(p []byte) (n int, err error) {
+	if s.Data == nil {
+		return 0, io.EOF
+	}
+	return s.Data.Read(p)
+}
+
+// ContactsExportOKHeaders wraps ContactsExportOK with response headers.
+type ContactsExportOKHeaders struct {
+	ContentDisposition string
+	Response           ContactsExportOK
+}
+
+// GetContentDisposition returns the value of ContentDisposition.
+func (s *ContactsExportOKHeaders) GetContentDisposition() string {
+	return s.ContentDisposition
+}
+
+// GetResponse returns the value of Response.
+func (s *ContactsExportOKHeaders) GetResponse() ContactsExportOK {
+	return s.Response
+}
+
+// SetContentDisposition sets the value of ContentDisposition.
+func (s *ContactsExportOKHeaders) SetContentDisposition(val string) {
+	s.ContentDisposition = val
+}
+
+// SetResponse sets the value of Response.
+func (s *ContactsExportOKHeaders) SetResponse(val ContactsExportOK) {
+	s.Response = val
+}
+
+func (*ContactsExportOKHeaders) contactsExportRes() {}
+
+type ContactsExportUnauthorized ProblemDetails
+
+func (*ContactsExportUnauthorized) contactsExportRes() {}
 
 type ContactsGetBadRequest ProblemDetails
 

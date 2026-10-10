@@ -3693,6 +3693,221 @@ func decodeSiteContactsDeleteParams(args [2]string, argsEscaped bool, r *http.Re
 	return params, nil
 }
 
+// SiteContactsExportParams is parameters of SiteContacts_export operation.
+type SiteContactsExportParams struct {
+	// URL-safe unique slug; the route key for nested workspace resources.
+	Slug string
+	// The contact's id.
+	ID OptEntityId `json:",omitempty,omitzero"`
+	// The contact's email address.
+	Email OptEmailAddress `json:",omitempty,omitzero"`
+}
+
+func unpackSiteContactsExportParams(packed middleware.Parameters) (params SiteContactsExportParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "slug",
+			In:   "path",
+		}
+		params.Slug = packed[key].(string)
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "id",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.ID = v.(OptEntityId)
+		}
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "email",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.Email = v.(OptEmailAddress)
+		}
+	}
+	return params
+}
+
+func decodeSiteContactsExportParams(args [1]string, argsEscaped bool, r *http.Request) (params SiteContactsExportParams, _ error) {
+	q := uri.NewQueryDecoder(r.URL.Query())
+	// Decode path: slug.
+	if err := func() error {
+		param := args[0]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[0])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "slug",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToString(val)
+				if err != nil {
+					return err
+				}
+
+				params.Slug = c
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "slug",
+			In:   "path",
+			Err:  err,
+		}
+	}
+	// Decode query: id.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "id",
+			Style:   uri.QueryStyleForm,
+			Explode: false,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotIDVal EntityId
+				if err := func() error {
+					var paramsDotIDValVal string
+					if err := func() error {
+						val, err := d.DecodeValue()
+						if err != nil {
+							return err
+						}
+
+						c, err := conv.ToString(val)
+						if err != nil {
+							return err
+						}
+
+						paramsDotIDValVal = c
+						return nil
+					}(); err != nil {
+						return err
+					}
+					paramsDotIDVal = EntityId(paramsDotIDValVal)
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.ID.SetTo(paramsDotIDVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if value, ok := params.ID.Get(); ok {
+					if err := func() error {
+						if err := value.Validate(); err != nil {
+							return err
+						}
+						return nil
+					}(); err != nil {
+						return err
+					}
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "id",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	// Decode query: email.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "email",
+			Style:   uri.QueryStyleForm,
+			Explode: false,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotEmailVal EmailAddress
+				if err := func() error {
+					var paramsDotEmailValVal string
+					if err := func() error {
+						val, err := d.DecodeValue()
+						if err != nil {
+							return err
+						}
+
+						c, err := conv.ToString(val)
+						if err != nil {
+							return err
+						}
+
+						paramsDotEmailValVal = c
+						return nil
+					}(); err != nil {
+						return err
+					}
+					paramsDotEmailVal = EmailAddress(paramsDotEmailValVal)
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.Email.SetTo(paramsDotEmailVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if value, ok := params.Email.Get(); ok {
+					if err := func() error {
+						if err := value.Validate(); err != nil {
+							return err
+						}
+						return nil
+					}(); err != nil {
+						return err
+					}
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "email",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
 // SiteContactsGetParams is parameters of SiteContacts_get operation.
 type SiteContactsGetParams struct {
 	// URL-safe unique slug; the route key for nested workspace resources.

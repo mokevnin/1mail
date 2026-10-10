@@ -411,7 +411,9 @@ func ScopedEntities() []ScopedEntity {
 				_ = remap
 				b := s.BroadcastRecipient().Create()
 				b.SetBroadcastID(remap("Broadcast", src.BroadcastID))
-				b.SetContactID(remap("Contact", src.ContactID))
+				if src.ContactID != 0 {
+					b.SetContactID(remap("Contact", src.ContactID))
+				}
 				b.SetStatus(src.Status)
 				if src.OutboundMessageID != nil {
 					b.SetOutboundMessageID(remap("OutboundMessage", *src.OutboundMessageID))
@@ -872,7 +874,9 @@ func ScopedEntities() []ScopedEntity {
 				b.SetKind(src.Kind)
 				b.SetIdempotencyKey(src.IdempotencyKey)
 				b.SetChannel(src.Channel)
-				b.SetDestination(src.Destination)
+				if !reflect.ValueOf(src.Destination).IsZero() {
+					b.SetDestination(src.Destination)
+				}
 				if src.ContactID != nil {
 					b.SetContactID(remap("Contact", *src.ContactID))
 				}

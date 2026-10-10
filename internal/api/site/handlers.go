@@ -15,6 +15,7 @@ import (
 	"github.com/mokevnin/1mail/internal/automations"
 	"github.com/mokevnin/1mail/internal/broadcasts"
 	"github.com/mokevnin/1mail/internal/contacts"
+	"github.com/mokevnin/1mail/internal/erasure"
 	"github.com/mokevnin/1mail/internal/eventlog"
 	"github.com/mokevnin/1mail/internal/events"
 	"github.com/mokevnin/1mail/internal/messaging"
@@ -76,6 +77,7 @@ type Handlers struct {
 	segments     *segments.Module
 	eventlog     *eventlog.Module
 	contacts     *contacts.Module
+	erasure      *erasure.Module
 	tags         *tags.Module
 	automations  *automations.Module
 	oauth        *oauthserver.Service
@@ -109,6 +111,7 @@ type Deps struct {
 	Segments     *segments.Module
 	EventLog     *eventlog.Module
 	Contacts     *contacts.Module
+	Erasure      *erasure.Module
 	Tags         *tags.Module
 	Automations  *automations.Module
 	Broadcasts   *broadcasts.Module
@@ -124,7 +127,7 @@ type Deps struct {
 func NewHandlers(d Deps) *Handlers {
 	return &Handlers{
 		accounts: d.Accounts, bus: d.Bus, cipher: d.Cipher, catalog: d.Catalog, outbound: d.Outbound,
-		segments: d.Segments, eventlog: d.EventLog, contacts: d.Contacts, tags: d.Tags,
+		segments: d.Segments, eventlog: d.EventLog, contacts: d.Contacts, erasure: d.Erasure, tags: d.Tags,
 		automations: d.Automations, broadcasts: d.Broadcasts, welcome: d.Welcome,
 		sysmail: d.SysMail, domainVerify: d.DomainVerify, tokens: d.Tokens, tracker: d.Tracker, appURL: d.AppURL,
 		oauth: d.OAuth, audit: d.Audit,

@@ -1,0 +1,46 @@
+package site
+
+import (
+	"context"
+	"errors"
+	"net/http"
+
+	"github.com/mokevnin/1mail/ent"
+	siteapi "github.com/mokevnin/1mail/gen/site"
+	"github.com/mokevnin/1mail/internal/contactexport"
+)
+
+// SiteContactsExport streams the subject-access Data export of one contact (ADR
+// 0021). Any Workspace member may export: it needs contact read access only.
+func (h *Handlers) SiteContactsExport(ctx context.Context, params siteapi.SiteContactsExportParams) (siteapi.SiteContactsExportRes, error) {
+	scoped, err := h.scopedFor(ctx, params.Slug)
+	if ent.IsNotFound(err) {
+		v := siteapi.SiteContactsExportNotFound(problem(http.StatusNotFound, "workspace not found"))
+		return &v, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	c, err := contactexport.Find(ctx, scoped, contactexport.Ref(params.ID.Get()), contactexport.Ref(params.Email.Get()))
+	if errors.Is(err, contactexport.ErrInvalidID) {
+		res := siteapi.SiteContactsExportBadRequest(problem(http.StatusBadRequest, "invalid id"))
+		return &res, nil
+	}
+	if errors.Is(err, contactexport.ErrIdentifier) {
+		res := siteapi.SiteContactsExportBadRequest(problem(http.StatusBadRequest, "pass exactly one of id or email"))
+		return &res, nil
+	}
+	if errors.Is(err, contactexport.ErrNotFound) {
+		res := siteapi.SiteContactsExportNotFound(problem(http.StatusNotFound, "contact not found"))
+		return &res, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	return &siteapi.SiteContactsExportOKHeaders{
+		ContentDisposition: `attachment; filename="` + contactexport.Filename(c) + `"`,
+		Response:           siteapi.SiteContactsExportOK{Data: contactexport.Open(ctx, scoped, c)},
+	}, nil
+}

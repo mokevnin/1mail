@@ -477,10 +477,6 @@ func init() {
 	outboundmessageDescIdempotencyKey := outboundmessageFields[2].Descriptor()
 	// outboundmessage.IdempotencyKeyValidator is a validator for the "idempotency_key" field. It is called by the builders before save.
 	outboundmessage.IdempotencyKeyValidator = outboundmessageDescIdempotencyKey.Validators[0].(func(string) error)
-	// outboundmessageDescDestination is the schema descriptor for destination field.
-	outboundmessageDescDestination := outboundmessageFields[4].Descriptor()
-	// outboundmessage.DestinationValidator is a validator for the "destination" field. It is called by the builders before save.
-	outboundmessage.DestinationValidator = outboundmessageDescDestination.Validators[0].(func(string) error)
 	// outboundmessageDescClaimedAt is the schema descriptor for claimed_at field.
 	outboundmessageDescClaimedAt := outboundmessageFields[11].Descriptor()
 	// outboundmessage.DefaultClaimedAt holds the default value on creation for the claimed_at field.

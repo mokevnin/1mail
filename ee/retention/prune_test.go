@@ -45,7 +45,7 @@ func TestPruneRemovesEntriesOlderThanTheWorkspaceRetention(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, 1, n)
 	assert.Zero(t, countEntries(t, env, fixtures.AcmeID))
-	assert.Equal(t, 1, countEntries(t, env, fixtures.GlobexID), "a Workspace with no retention keeps its log")
+	assert.Equal(t, 5, countEntries(t, env, fixtures.GlobexID), "a Workspace with no retention keeps its log")
 }
 
 func TestPruneKeepsEntriesInsideTheWindow(t *testing.T) {

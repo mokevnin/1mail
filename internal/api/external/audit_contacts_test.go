@@ -48,7 +48,7 @@ func TestExternalBatchUpsertRecordsOneImportEntry(t *testing.T) {
 // deleting the Contact (erasure) leaves the entry as it was: it holds no personal data.
 func TestExternalContactEditIsAuditedWithNamesOnly(t *testing.T) {
 	env := testhelper.Setup(t)
-	c := env.ExternalAnchor(t)
+	c := env.ExternalScoped(t, "contacts:write", "contacts:erase")
 	ctx := context.Background()
 
 	_, err := c.ContactsUpdate(ctx, &externalapi.UpdateContactInput{FirstName: externalapi.NewOptNilString("Renamed")},

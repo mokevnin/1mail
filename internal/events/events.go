@@ -29,6 +29,7 @@ const TopicDomainEvents = "domain_events"
 // CollectedEvent.Action.
 const (
 	NameContactCreated     = "contact.created"
+	NameContactErased      = "contact.erased"
 	NameEmailSent          = "email.sent"
 	NameEmailOpened        = "email.opened"
 	NameEmailClicked       = "email.clicked"
@@ -102,6 +103,7 @@ type identifiable interface {
 // are ours and finite — there is no catch-all.
 var registry = map[string]func() DomainEvent{
 	NameContactCreated:     func() DomainEvent { return &ContactCreated{} },
+	NameContactErased:      func() DomainEvent { return &ContactErased{} },
 	NameEmailSent:          func() DomainEvent { return &EmailEngagement{} },
 	NameEmailOpened:        func() DomainEvent { return &EmailEngagement{} },
 	NameEmailClicked:       func() DomainEvent { return &EmailEngagement{} },
@@ -138,6 +140,30 @@ func (*ContactCreated) EventVersion() int  { return 1 }
 func (e *ContactCreated) Workspace() int64 { return e.WorkspaceID }
 func (e *ContactCreated) Project() Projection {
 	return Projection{Subject: e.Email, Action: NameContactCreated, Email: e.Email, ContactID: e.ContactID}
+}
+
+// ContactErased is emitted once per Erasure (ADR 0021): the PII-free accountability
+// record, and the signal the customer's webhook uses to erase downstream copies.
+// SubjectID is the Contact's own subject_id, or its 1mail id when it had none. It
+// exists only in this message (so the webhook payload carries it): Project() leaves
+// it, and any Contact reference or address, off the stored Event.
+type ContactErased struct {
+	WorkspaceID    int64  `json:"workspaceId"`
+	SubjectID      string `json:"subjectId"`
+	IdentifierKind string `json:"identifierKind"` // what the operator identified the person by
+	OperatorKind   string `json:"operatorKind"`   // user|api_token
+	OperatorID     int64  `json:"operatorId"`
+}
+
+func (*ContactErased) EventName() string  { return NameContactErased }
+func (*ContactErased) EventVersion() int  { return 1 }
+func (e *ContactErased) Workspace() int64 { return e.WorkspaceID }
+func (e *ContactErased) Project() Projection {
+	return Projection{Action: NameContactErased, Properties: map[string]any{
+		"identifierKind": e.IdentifierKind,
+		"operatorKind":   e.OperatorKind,
+		"operatorId":     e.OperatorID,
+	}}
 }
 
 // EmailEngagement is emitted when one of our emails is sent to a recipient, or

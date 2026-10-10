@@ -663,3 +663,68 @@
     created_at: '2026-01-01 00:00:00',
     updated_at: '2026-01-01 00:00:00',
   }
+
+# Initech (workspace 3): broadcast 300 reached ContactErasable and ContactBystander.
+- {
+    id: 3000, # fixture: BroadcastRecipientErasable
+    broadcast_id: 300,
+    contact_id: 300,
+    outbound_message_id: 300,
+    workspace_id: 3,
+    status: sent,
+    sent_at: '2026-01-02 00:00:00',
+    created_at: '2026-01-02 00:00:00',
+    updated_at: '2026-01-02 00:00:00',
+  }
+- {
+    id: 3001, # fixture: BroadcastRecipientBystander
+    broadcast_id: 300,
+    contact_id: 301,
+    outbound_message_id: 302,
+    workspace_id: 3,
+    status: sent,
+    sent_at: '2026-01-02 00:00:00',
+    created_at: '2026-01-02 00:00:00',
+    updated_at: '2026-01-02 00:00:00',
+  }
+
+# Initech (workspace 3): recipients still pending on the Broadcasts mid-send.
+- {
+    id: 3002, # fixture: BroadcastRecipientErasablePending
+    broadcast_id: 301,
+    contact_id: 300,
+    workspace_id: 3,
+    status: pending,
+    created_at: '2026-01-03 00:00:00',
+    updated_at: '2026-01-03 00:00:00',
+  }
+- {
+    id: 3003, # fixture: BroadcastRecipientBystanderPending
+    broadcast_id: 301,
+    contact_id: 301,
+    workspace_id: 3,
+    status: pending,
+    created_at: '2026-01-03 00:00:00',
+    updated_at: '2026-01-03 00:00:00',
+  }
+- {
+    id: 3004, # fixture: BroadcastRecipientErasableSolo
+    broadcast_id: 302,
+    contact_id: 300,
+    workspace_id: 3,
+    status: pending,
+    created_at: '2026-01-03 00:00:00',
+    updated_at: '2026-01-03 00:00:00',
+  }
+
+# Export subject (contact 800) on sent broadcast 200.
+- {
+    id: 800,
+    broadcast_id: 200,
+    contact_id: 800,
+    workspace_id: 1,
+    status: sent,
+    sent_at: '{{daysAgo 3}}',
+    created_at: '{{daysAgo 3}}',
+    updated_at: '{{daysAgo 3}}',
+  }

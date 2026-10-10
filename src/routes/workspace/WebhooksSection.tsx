@@ -32,6 +32,7 @@ import { ChangeHistoryLink } from './AuditLogSection.tsx'
 // events; audit.entry (Enterprise) is never included and must be chosen explicitly.
 const EVENT_OPTIONS = [
   'contact.created',
+  'contact.erased',
   'email.opened',
   'email.clicked',
   'email.unsubscribed',

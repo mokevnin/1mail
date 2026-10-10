@@ -3577,6 +3577,49 @@ export type SiteContactsCreateResponses = {
 
 export type SiteContactsCreateResponse = SiteContactsCreateResponses[keyof SiteContactsCreateResponses];
 
+export type SiteContactsExportData = {
+  body?: never;
+  path: {
+    /**
+     * URL-safe unique slug; the route key for nested workspace resources
+     */
+    slug: string;
+  };
+  query?: {
+    /**
+     * The contact's id
+     */
+    id?: EntityId;
+    /**
+     * The contact's email address
+     */
+    email?: EmailAddress;
+  };
+  url: '/workspaces/{slug}/contacts/export';
+};
+
+export type SiteContactsExportErrors = {
+  /**
+   * RFC 7807 bad request response
+   */
+  400: ProblemDetails;
+  /**
+   * RFC 7807 not found response
+   */
+  404: ProblemDetails;
+};
+
+export type SiteContactsExportError = SiteContactsExportErrors[keyof SiteContactsExportErrors];
+
+export type SiteContactsExportResponses = {
+  /**
+   * Streamed JSON download of everything held about one contact (subject access, GDPR Art. 15/20)
+   */
+  200: Blob | File;
+};
+
+export type SiteContactsExportResponse = SiteContactsExportResponses[keyof SiteContactsExportResponses];
+
 export type SiteTagsListForContactData = {
   body?: never;
   path: {
@@ -3733,6 +3776,10 @@ export type SiteContactsDeleteErrors = {
    * RFC 7807 bad request response
    */
   400: ProblemDetails;
+  /**
+   * RFC 7807 forbidden response
+   */
+  403: ProblemDetails;
   /**
    * RFC 7807 not found response
    */

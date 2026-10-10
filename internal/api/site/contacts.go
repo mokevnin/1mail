@@ -8,9 +8,12 @@ import (
 
 	"github.com/mokevnin/1mail/ent"
 	"github.com/mokevnin/1mail/ent/contact"
+	"github.com/mokevnin/1mail/ent/membership"
 	siteapi "github.com/mokevnin/1mail/gen/site"
+	"github.com/mokevnin/1mail/internal/api/auth"
 	"github.com/mokevnin/1mail/internal/contacts"
 	"github.com/mokevnin/1mail/internal/convert"
+	"github.com/mokevnin/1mail/internal/erasure"
 	"github.com/mokevnin/1mail/internal/pagination"
 )
 
@@ -144,8 +147,16 @@ func (h *Handlers) SiteContactsUpdate(ctx context.Context, req *siteapi.SiteUpda
 	return &res, nil
 }
 
+// canErase is the core gate of Erasure: owner and admin, the accountable roles (RBAC
+// detail beyond that is EE). It is its own check, not canManageMembers, so the two
+// can diverge.
+func canErase(role membership.Role) bool {
+	return role == membership.RoleOwner || role == membership.RoleAdmin
+}
+
+// SiteContactsDelete is Erasure (ADR 0021): irreversible, so owner or admin only.
 func (h *Handlers) SiteContactsDelete(ctx context.Context, params siteapi.SiteContactsDeleteParams) (siteapi.SiteContactsDeleteRes, error) {
-	scoped, err := h.scopedFor(ctx, params.Slug)
+	scoped, role, err := h.scopedWithRoleFor(ctx, params.Slug)
 	if ent.IsNotFound(err) {
 		v := siteapi.SiteContactsDeleteNotFound(problem(http.StatusNotFound, "workspace not found"))
 		return &v, nil
@@ -153,14 +164,19 @@ func (h *Handlers) SiteContactsDelete(ctx context.Context, params siteapi.SiteCo
 	if err != nil {
 		return nil, err
 	}
+	if !canErase(role) {
+		v := siteapi.SiteContactsDeleteForbidden(problem(http.StatusForbidden, "insufficient role"))
+		return &v, nil
+	}
 
 	id, err := strconv.ParseInt(string(params.ID), 10, 64)
 	if err != nil {
 		v := siteapi.SiteContactsDeleteBadRequest(problem(http.StatusBadRequest, "invalid id"))
 		return &v, nil
 	}
-	err = scoped.Contact().DeleteOneID(id).Exec(ctx)
-	if ent.IsNotFound(err) {
+	err = h.erasure.Erase(ctx, scoped, erasure.ByContactID(id),
+		erasure.Operator{Kind: erasure.OperatorUser, ID: auth.GetSiteAuth(ctx).UserID})
+	if errors.Is(err, erasure.ErrNotFound) {
 		v := siteapi.SiteContactsDeleteNotFound(problem(http.StatusNotFound, "contact not found"))
 		return &v, nil
 	}

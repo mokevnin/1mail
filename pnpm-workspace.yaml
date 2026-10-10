@@ -33,7 +33,7 @@ minimumReleaseAgeExclude:
   - playwright@1.61.1
   - vite@8.1.0 || 8.3.4
   - npm-check-updates@22.2.8
-  - '@types/node@26.1.1'
+  - '@types/node@26.1.1 || 26.6.5'
   - '@typespec/asset-emitter@0.79.3'
   - '@typespec/compiler@1.17.0'
   - '@typespec/http@1.17.0'
@@ -41,4 +41,5 @@ minimumReleaseAgeExclude:
   - '@typespec/openapi@1.17.0'
   - '@typespec/rest@0.87.0'
   - '@typespec/versioning@0.87.0'
-  - i18next-cli@1.75.1
+  - i18next-cli@1.75.1 || 1.75.2
+  - knip@6.41.0

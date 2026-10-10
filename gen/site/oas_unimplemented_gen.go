@@ -258,10 +258,21 @@ func (UnimplementedHandler) SiteContactsCreate(ctx context.Context, req *SiteCre
 
 // SiteContactsDelete implements SiteContacts_delete operation.
 //
-// Delete a resource from the site UI.
+// Erase a contact (GDPR Art. 17): its personal data is removed, delivery records are anonymized and
+// its opt-outs survive. Owner or admin only.
 //
 // DELETE /workspaces/{slug}/contacts/{id}
 func (UnimplementedHandler) SiteContactsDelete(ctx context.Context, params SiteContactsDeleteParams) (r SiteContactsDeleteRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// SiteContactsExport implements SiteContacts_export operation.
+//
+// Export everything held about one contact as a streamed JSON download. Identify the contact by
+// exactly one of `id` or `email`. Available to any Workspace member (contact read access).
+//
+// POST /workspaces/{slug}/contacts/export
+func (UnimplementedHandler) SiteContactsExport(ctx context.Context, params SiteContactsExportParams) (r SiteContactsExportRes, _ error) {
 	return r, ht.ErrNotImplemented
 }
 

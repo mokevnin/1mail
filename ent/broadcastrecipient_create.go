@@ -70,6 +70,14 @@ func (_c *BroadcastRecipientCreate) SetContactID(v int64) *BroadcastRecipientCre
 	return _c
 }
 
+// SetNillableContactID sets the "contact_id" field if the given value is not nil.
+func (_c *BroadcastRecipientCreate) SetNillableContactID(v *int64) *BroadcastRecipientCreate {
+	if v != nil {
+		_c.SetContactID(*v)
+	}
+	return _c
+}
+
 // SetStatus sets the "status" field.
 func (_c *BroadcastRecipientCreate) SetStatus(v broadcastrecipient.Status) *BroadcastRecipientCreate {
 	_c.mutation.SetStatus(v)
@@ -232,9 +240,6 @@ func (_c *BroadcastRecipientCreate) check() error {
 	}
 	if _, ok := _c.mutation.BroadcastID(); !ok {
 		return &ValidationError{Name: "broadcast_id", err: errors.New(`ent: missing required field "BroadcastRecipient.broadcast_id"`)}
-	}
-	if _, ok := _c.mutation.ContactID(); !ok {
-		return &ValidationError{Name: "contact_id", err: errors.New(`ent: missing required field "BroadcastRecipient.contact_id"`)}
 	}
 	if _, ok := _c.mutation.Status(); !ok {
 		return &ValidationError{Name: "status", err: errors.New(`ent: missing required field "BroadcastRecipient.status"`)}
@@ -459,6 +464,12 @@ func (u *BroadcastRecipientUpsert) AddContactID(v int64) *BroadcastRecipientUpse
 	return u
 }
 
+// ClearContactID clears the value of the "contact_id" field.
+func (u *BroadcastRecipientUpsert) ClearContactID() *BroadcastRecipientUpsert {
+	u.SetNull(broadcastrecipient.FieldContactID)
+	return u
+}
+
 // SetStatus sets the "status" field.
 func (u *BroadcastRecipientUpsert) SetStatus(v broadcastrecipient.Status) *BroadcastRecipientUpsert {
 	u.Set(broadcastrecipient.FieldStatus, v)
@@ -678,6 +689,13 @@ func (u *BroadcastRecipientUpsertOne) AddContactID(v int64) *BroadcastRecipientU
 func (u *BroadcastRecipientUpsertOne) UpdateContactID() *BroadcastRecipientUpsertOne {
 	return u.Update(func(s *BroadcastRecipientUpsert) {
 		s.UpdateContactID()
+	})
+}
+
+// ClearContactID clears the value of the "contact_id" field.
+func (u *BroadcastRecipientUpsertOne) ClearContactID() *BroadcastRecipientUpsertOne {
+	return u.Update(func(s *BroadcastRecipientUpsert) {
+		s.ClearContactID()
 	})
 }
 
@@ -1084,6 +1102,13 @@ func (u *BroadcastRecipientUpsertBulk) AddContactID(v int64) *BroadcastRecipient
 func (u *BroadcastRecipientUpsertBulk) UpdateContactID() *BroadcastRecipientUpsertBulk {
 	return u.Update(func(s *BroadcastRecipientUpsert) {
 		s.UpdateContactID()
+	})
+}
+
+// ClearContactID clears the value of the "contact_id" field.
+func (u *BroadcastRecipientUpsertBulk) ClearContactID() *BroadcastRecipientUpsertBulk {
+	return u.Update(func(s *BroadcastRecipientUpsert) {
+		s.ClearContactID()
 	})
 }
 

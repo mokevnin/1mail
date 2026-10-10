@@ -32,7 +32,10 @@ func (BroadcastRecipient) Fields() []ent.Field {
 			StorageKey("id").
 			Immutable(),
 		field.Int64("broadcast_id"),
+		// Cleared (NULL) when the Contact is erased (ADR 0021): the row stays as an
+		// anonymous delivery record.
 		field.Int64("contact_id").
+			Optional().
 			Annotations(ScopedRef{Entity: "Contact"}),
 		field.Enum("status").
 			Values("pending", "sent", "skipped", "failed").

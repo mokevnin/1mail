@@ -17,3 +17,13 @@
   ingest_key: omik_test_globex_ingest_key
   created_at: '2026-01-01 00:00:00'
   updated_at: '2026-01-01 00:00:00'
+# Third tenant (Initech) - holds the all-dependents Contact the Erasure tests use
+# (ContactErasable, ids 300+ in the other fixture files). A tenant of its own keeps the
+# system Events it carries out of Acme's deliverability and analytics fixtures.
+- id: 3 # fixture: Initech
+  name: Initech
+  slug: initech
+  collect_key: omck_test_initech_collect_key
+  ingest_key: omik_test_initech_ingest_key
+  created_at: '2026-01-01 00:00:00'
+  updated_at: '2026-01-01 00:00:00'

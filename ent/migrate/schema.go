@@ -211,7 +211,7 @@ var (
 		{Name: "id", Type: field.TypeInt64, Increment: true},
 		{Name: "created_at", Type: field.TypeTime, Default: "CURRENT_TIMESTAMP"},
 		{Name: "updated_at", Type: field.TypeTime, Default: "CURRENT_TIMESTAMP"},
-		{Name: "contact_id", Type: field.TypeInt64},
+		{Name: "contact_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "status", Type: field.TypeEnum, Enums: []string{"pending", "sent", "skipped", "failed"}, Default: "pending"},
 		{Name: "outbound_message_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "error", Type: field.TypeString, Nullable: true},
@@ -437,6 +437,14 @@ var (
 				Unique:  false,
 				Columns: []*schema.Column{EventsColumns[12], EventsColumns[5]},
 			},
+			{
+				Name:    "events_created_at_analytical_idx",
+				Unique:  false,
+				Columns: []*schema.Column{EventsColumns[1]},
+				Annotation: &entsql.IndexAnnotation{
+					Where: "action NOT IN ('marketing.confirmed', 'email.complained', 'email.unsubscribed') AND NOT (action = 'email.bounced' AND COALESCE(properties->>'bounceKind', '') = 'permanent')",
+				},
+			},
 		},
 	}
 	// IntegrationsColumns holds the columns for the "integrations" table.
@@ -603,7 +611,7 @@ var (
 		{Name: "kind", Type: field.TypeEnum, Enums: []string{"broadcast", "automation", "transactional"}},
 		{Name: "idempotency_key", Type: field.TypeString},
 		{Name: "channel", Type: field.TypeEnum, Enums: []string{"email"}, Default: "email"},
-		{Name: "destination", Type: field.TypeString},
+		{Name: "destination", Type: field.TypeString, Nullable: true},
 		{Name: "contact_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "sending_source", Type: field.TypeString, Nullable: true},
 		{Name: "sending_domain", Type: field.TypeString, Nullable: true},

@@ -5,6 +5,7 @@ namespace OneMail;
 enum ApiTokenScope {
   contactsRead: "contacts:read",
   contactsWrite: "contacts:write",
+  contactsErase: "contacts:erase",
   segmentsRead: "segments:read",
   segmentsWrite: "segments:write",
   eventsRead: "events:read",
