@@ -351,14 +351,54 @@ const (
 	GlobexOwnerMembershipID = 2
 	// GlobexSlug is from fixtures/workspaces.
 	GlobexSlug = "globex"
+	// InitechAdminAdaEmail is from fixtures/users.
+	InitechAdminAdaEmail = "ada@initech.test"
+	// InitechAdminAdaID is from fixtures/users.
+	InitechAdminAdaID = 7
+	// InitechAdminAdaName is from fixtures/users.
+	InitechAdminAdaName = "Ada"
+	// InitechAdminAdaPassword is from fixtures/users.
+	InitechAdminAdaPassword = "ada-test-password"
+	// InitechAdminMembershipID is from fixtures/memberships.
+	InitechAdminMembershipID = 7
+	// InitechCoOwnerMembershipID is from fixtures/memberships.
+	InitechCoOwnerMembershipID = 6
+	// InitechCoOwnerOwenEmail is from fixtures/users.
+	InitechCoOwnerOwenEmail = "owen@initech.test"
+	// InitechCoOwnerOwenID is from fixtures/users.
+	InitechCoOwnerOwenID = 6
+	// InitechCoOwnerOwenName is from fixtures/users.
+	InitechCoOwnerOwenName = "Owen"
+	// InitechCoOwnerOwenPassword is from fixtures/users.
+	InitechCoOwnerOwenPassword = "owen-test-password"
 	// InitechCollectKey is from fixtures/workspaces.
 	InitechCollectKey = "omck_test_initech_collect_key"
 	// InitechID is from fixtures/workspaces.
 	InitechID = 3
 	// InitechIngestKey is from fixtures/workspaces.
 	InitechIngestKey = "omik_test_initech_ingest_key"
+	// InitechMemberMaxEmail is from fixtures/users.
+	InitechMemberMaxEmail = "max@initech.test"
+	// InitechMemberMaxID is from fixtures/users.
+	InitechMemberMaxID = 8
+	// InitechMemberMaxName is from fixtures/users.
+	InitechMemberMaxName = "Max"
+	// InitechMemberMaxPassword is from fixtures/users.
+	InitechMemberMaxPassword = "max-test-password"
+	// InitechMemberMembershipID is from fixtures/memberships.
+	InitechMemberMembershipID = 8
 	// InitechName is from fixtures/workspaces.
 	InitechName = "Initech"
+	// InitechOwnerMembershipID is from fixtures/memberships.
+	InitechOwnerMembershipID = 5
+	// InitechOwnerOlgaEmail is from fixtures/users.
+	InitechOwnerOlgaEmail = "olga@initech.test"
+	// InitechOwnerOlgaID is from fixtures/users.
+	InitechOwnerOlgaID = 5
+	// InitechOwnerOlgaName is from fixtures/users.
+	InitechOwnerOlgaName = "Olga"
+	// InitechOwnerOlgaPassword is from fixtures/users.
+	InitechOwnerOlgaPassword = "olga-test-password"
 	// InitechSlug is from fixtures/workspaces.
 	InitechSlug = "initech"
 	// IntegrationAcmeDefaultID is from fixtures/integrations.

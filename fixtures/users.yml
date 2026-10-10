@@ -26,3 +26,29 @@
   password_hash: '{{argonHash "oscar-test-password"}}'
   created_at: '2026-01-01 00:00:00'
   updated_at: '2026-01-01 00:00:00'
+# Initech's roster for the Role invariant tests (internal/accounts): two owners, an admin and
+# a member. None of them logs in, so they add no audit rows anywhere.
+- id: 5 # fixture: InitechOwnerOlga
+  name: Olga
+  email: olga@initech.test
+  password_hash: '{{argonHash "olga-test-password"}}'
+  created_at: '2026-01-01 00:00:00'
+  updated_at: '2026-01-01 00:00:00'
+- id: 6 # fixture: InitechCoOwnerOwen
+  name: Owen
+  email: owen@initech.test
+  password_hash: '{{argonHash "owen-test-password"}}'
+  created_at: '2026-01-01 00:00:00'
+  updated_at: '2026-01-01 00:00:00'
+- id: 7 # fixture: InitechAdminAda
+  name: Ada
+  email: ada@initech.test
+  password_hash: '{{argonHash "ada-test-password"}}'
+  created_at: '2026-01-01 00:00:00'
+  updated_at: '2026-01-01 00:00:00'
+- id: 8 # fixture: InitechMemberMax
+  name: Max
+  email: max@initech.test
+  password_hash: '{{argonHash "max-test-password"}}'
+  created_at: '2026-01-01 00:00:00'
+  updated_at: '2026-01-01 00:00:00'
