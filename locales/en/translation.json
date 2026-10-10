@@ -170,6 +170,16 @@
     "nameLabel": "Name",
     "noRecords": "No broadcasts yet",
     "openedLabel": "Opened",
+    "progress": {
+      "almostDone": "almost done",
+      "remainingHours": "about {{count}} hour remaining",
+      "remainingHours_one": "about {{count}} hour remaining",
+      "remainingHours_other": "about {{count}} hours remaining",
+      "remainingMinutes": "about {{count}} minutes remaining",
+      "remainingMinutes_one": "about {{count}} minute remaining",
+      "remainingMinutes_other": "about {{count}} minutes remaining",
+      "summary": "Sent {{processed}} of {{total}}"
+    },
     "recipientsLabel": "Recipients",
     "report": "Report",
     "schedule": "Schedule",

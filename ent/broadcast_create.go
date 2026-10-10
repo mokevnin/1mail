@@ -316,6 +316,20 @@ func (_c *BroadcastCreate) SetNillableHoldReason(v *string) *BroadcastCreate {
 	return _c
 }
 
+// SetLastScheduledAt sets the "last_scheduled_at" field.
+func (_c *BroadcastCreate) SetLastScheduledAt(v time.Time) *BroadcastCreate {
+	_c.mutation.SetLastScheduledAt(v)
+	return _c
+}
+
+// SetNillableLastScheduledAt sets the "last_scheduled_at" field if the given value is not nil.
+func (_c *BroadcastCreate) SetNillableLastScheduledAt(v *time.Time) *BroadcastCreate {
+	if v != nil {
+		_c.SetLastScheduledAt(*v)
+	}
+	return _c
+}
+
 // SetID sets the "id" field.
 func (_c *BroadcastCreate) SetID(v int64) *BroadcastCreate {
 	_c.mutation.SetID(v)
@@ -642,6 +656,10 @@ func (_c *BroadcastCreate) createSpec() (*Broadcast, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.HoldReason(); ok {
 		_spec.SetField(broadcast.FieldHoldReason, field.TypeString, value)
 		_node.HoldReason = &value
+	}
+	if value, ok := _c.mutation.LastScheduledAt(); ok {
+		_spec.SetField(broadcast.FieldLastScheduledAt, field.TypeTime, value)
+		_node.LastScheduledAt = &value
 	}
 	if nodes := _c.mutation.WorkspaceIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -1073,6 +1091,24 @@ func (u *BroadcastUpsert) UpdateHoldReason() *BroadcastUpsert {
 // ClearHoldReason clears the value of the "hold_reason" field.
 func (u *BroadcastUpsert) ClearHoldReason() *BroadcastUpsert {
 	u.SetNull(broadcast.FieldHoldReason)
+	return u
+}
+
+// SetLastScheduledAt sets the "last_scheduled_at" field.
+func (u *BroadcastUpsert) SetLastScheduledAt(v time.Time) *BroadcastUpsert {
+	u.Set(broadcast.FieldLastScheduledAt, v)
+	return u
+}
+
+// UpdateLastScheduledAt sets the "last_scheduled_at" field to the value that was provided on create.
+func (u *BroadcastUpsert) UpdateLastScheduledAt() *BroadcastUpsert {
+	u.SetExcluded(broadcast.FieldLastScheduledAt)
+	return u
+}
+
+// ClearLastScheduledAt clears the value of the "last_scheduled_at" field.
+func (u *BroadcastUpsert) ClearLastScheduledAt() *BroadcastUpsert {
+	u.SetNull(broadcast.FieldLastScheduledAt)
 	return u
 }
 
@@ -1530,6 +1566,27 @@ func (u *BroadcastUpsertOne) UpdateHoldReason() *BroadcastUpsertOne {
 func (u *BroadcastUpsertOne) ClearHoldReason() *BroadcastUpsertOne {
 	return u.Update(func(s *BroadcastUpsert) {
 		s.ClearHoldReason()
+	})
+}
+
+// SetLastScheduledAt sets the "last_scheduled_at" field.
+func (u *BroadcastUpsertOne) SetLastScheduledAt(v time.Time) *BroadcastUpsertOne {
+	return u.Update(func(s *BroadcastUpsert) {
+		s.SetLastScheduledAt(v)
+	})
+}
+
+// UpdateLastScheduledAt sets the "last_scheduled_at" field to the value that was provided on create.
+func (u *BroadcastUpsertOne) UpdateLastScheduledAt() *BroadcastUpsertOne {
+	return u.Update(func(s *BroadcastUpsert) {
+		s.UpdateLastScheduledAt()
+	})
+}
+
+// ClearLastScheduledAt clears the value of the "last_scheduled_at" field.
+func (u *BroadcastUpsertOne) ClearLastScheduledAt() *BroadcastUpsertOne {
+	return u.Update(func(s *BroadcastUpsert) {
+		s.ClearLastScheduledAt()
 	})
 }
 
@@ -2153,6 +2210,27 @@ func (u *BroadcastUpsertBulk) UpdateHoldReason() *BroadcastUpsertBulk {
 func (u *BroadcastUpsertBulk) ClearHoldReason() *BroadcastUpsertBulk {
 	return u.Update(func(s *BroadcastUpsert) {
 		s.ClearHoldReason()
+	})
+}
+
+// SetLastScheduledAt sets the "last_scheduled_at" field.
+func (u *BroadcastUpsertBulk) SetLastScheduledAt(v time.Time) *BroadcastUpsertBulk {
+	return u.Update(func(s *BroadcastUpsert) {
+		s.SetLastScheduledAt(v)
+	})
+}
+
+// UpdateLastScheduledAt sets the "last_scheduled_at" field to the value that was provided on create.
+func (u *BroadcastUpsertBulk) UpdateLastScheduledAt() *BroadcastUpsertBulk {
+	return u.Update(func(s *BroadcastUpsert) {
+		s.UpdateLastScheduledAt()
+	})
+}
+
+// ClearLastScheduledAt clears the value of the "last_scheduled_at" field.
+func (u *BroadcastUpsertBulk) ClearLastScheduledAt() *BroadcastUpsertBulk {
+	return u.Update(func(s *BroadcastUpsert) {
+		s.ClearLastScheduledAt()
 	})
 }
 

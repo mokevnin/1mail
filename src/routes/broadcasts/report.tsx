@@ -9,6 +9,7 @@ import { siteBroadcastsGetOptions } from '../../generated/site/@tanstack/react-q
 import type { SiteBroadcastStats, SiteBroadcastStatus } from '../../generated/site/types.gen.ts'
 import { broadcastsReportRoute } from '../../router.tsx'
 import { BroadcastHoldAlert } from './BroadcastHold.tsx'
+import { BroadcastProgress } from './BroadcastProgress.tsx'
 
 const STATUS_COLORS: Record<SiteBroadcastStatus, string> = {
   draft: 'gray',
@@ -70,6 +71,7 @@ export function BroadcastReportPage() {
       </Group>
       <Text c="dimmed">{broadcast.subject}</Text>
       {broadcast.holdReason && <BroadcastHoldAlert reason={broadcast.holdReason} />}
+      {broadcast.progress && <BroadcastProgress progress={broadcast.progress} />}
 
       <SimpleGrid cols={{ base: 2, sm: 3 }}>
         {statEntries(t, broadcast.stats).map((entry) => (

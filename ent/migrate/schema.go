@@ -137,6 +137,7 @@ var (
 		{Name: "failed_count", Type: field.TypeInt, Default: 0},
 		{Name: "skipped_count", Type: field.TypeInt, Default: 0},
 		{Name: "hold_reason", Type: field.TypeString, Nullable: true},
+		{Name: "last_scheduled_at", Type: field.TypeTime, Nullable: true},
 		{Name: "workspace_id", Type: field.TypeInt64},
 	}
 	// BroadcastsTable holds the schema information for the "broadcasts" table.
@@ -147,7 +148,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "broadcasts_workspaces_broadcasts",
-				Columns:    []*schema.Column{BroadcastsColumns[22]},
+				Columns:    []*schema.Column{BroadcastsColumns[23]},
 				RefColumns: []*schema.Column{WorkspacesColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
@@ -156,7 +157,7 @@ var (
 			{
 				Name:    "broadcast_workspace_id",
 				Unique:  false,
-				Columns: []*schema.Column{BroadcastsColumns[22]},
+				Columns: []*schema.Column{BroadcastsColumns[23]},
 			},
 		},
 	}

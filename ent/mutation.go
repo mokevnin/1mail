@@ -2763,6 +2763,7 @@ type BroadcastMutation struct {
 	skipped_count         *int
 	addskipped_count      *int
 	hold_reason           *string
+	last_scheduled_at     *time.Time
 	clearedFields         map[string]struct{}
 	workspace             *int64
 	clearedworkspace      bool
@@ -3943,6 +3944,55 @@ func (m *BroadcastMutation) ResetHoldReason() {
 	delete(m.clearedFields, broadcast.FieldHoldReason)
 }
 
+// SetLastScheduledAt sets the "last_scheduled_at" field.
+func (m *BroadcastMutation) SetLastScheduledAt(t time.Time) {
+	m.last_scheduled_at = &t
+}
+
+// LastScheduledAt returns the value of the "last_scheduled_at" field in the mutation.
+func (m *BroadcastMutation) LastScheduledAt() (r time.Time, exists bool) {
+	v := m.last_scheduled_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldLastScheduledAt returns the old "last_scheduled_at" field's value of the Broadcast entity.
+// If the Broadcast object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *BroadcastMutation) OldLastScheduledAt(ctx context.Context) (v *time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldLastScheduledAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldLastScheduledAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldLastScheduledAt: %w", err)
+	}
+	return oldValue.LastScheduledAt, nil
+}
+
+// ClearLastScheduledAt clears the value of the "last_scheduled_at" field.
+func (m *BroadcastMutation) ClearLastScheduledAt() {
+	m.last_scheduled_at = nil
+	m.clearedFields[broadcast.FieldLastScheduledAt] = struct{}{}
+}
+
+// LastScheduledAtCleared returns if the "last_scheduled_at" field was cleared in this mutation.
+func (m *BroadcastMutation) LastScheduledAtCleared() bool {
+	_, ok := m.clearedFields[broadcast.FieldLastScheduledAt]
+	return ok
+}
+
+// ResetLastScheduledAt resets all changes to the "last_scheduled_at" field.
+func (m *BroadcastMutation) ResetLastScheduledAt() {
+	m.last_scheduled_at = nil
+	delete(m.clearedFields, broadcast.FieldLastScheduledAt)
+}
+
 // ClearWorkspace clears the "workspace" edge to the Workspace entity.
 func (m *BroadcastMutation) ClearWorkspace() {
 	m.clearedworkspace = true
@@ -4058,7 +4108,7 @@ func (m *BroadcastMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *BroadcastMutation) Fields() []string {
-	fields := make([]string, 0, 22)
+	fields := make([]string, 0, 23)
 	if m.created_at != nil {
 		fields = append(fields, broadcast.FieldCreatedAt)
 	}
@@ -4125,6 +4175,9 @@ func (m *BroadcastMutation) Fields() []string {
 	if m.hold_reason != nil {
 		fields = append(fields, broadcast.FieldHoldReason)
 	}
+	if m.last_scheduled_at != nil {
+		fields = append(fields, broadcast.FieldLastScheduledAt)
+	}
 	return fields
 }
 
@@ -4177,6 +4230,8 @@ func (m *BroadcastMutation) Field(name string) (ent.Value, bool) {
 		return m.SkippedCount()
 	case broadcast.FieldHoldReason:
 		return m.HoldReason()
+	case broadcast.FieldLastScheduledAt:
+		return m.LastScheduledAt()
 	}
 	return nil, false
 }
@@ -4230,6 +4285,8 @@ func (m *BroadcastMutation) OldField(ctx context.Context, name string) (ent.Valu
 		return m.OldSkippedCount(ctx)
 	case broadcast.FieldHoldReason:
 		return m.OldHoldReason(ctx)
+	case broadcast.FieldLastScheduledAt:
+		return m.OldLastScheduledAt(ctx)
 	}
 	return nil, fmt.Errorf("unknown Broadcast field %s", name)
 }
@@ -4393,6 +4450,13 @@ func (m *BroadcastMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetHoldReason(v)
 		return nil
+	case broadcast.FieldLastScheduledAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetLastScheduledAt(v)
+		return nil
 	}
 	return fmt.Errorf("unknown Broadcast field %s", name)
 }
@@ -4555,6 +4619,9 @@ func (m *BroadcastMutation) ClearedFields() []string {
 	if m.FieldCleared(broadcast.FieldHoldReason) {
 		fields = append(fields, broadcast.FieldHoldReason)
 	}
+	if m.FieldCleared(broadcast.FieldLastScheduledAt) {
+		fields = append(fields, broadcast.FieldLastScheduledAt)
+	}
 	return fields
 }
 
@@ -4589,6 +4656,9 @@ func (m *BroadcastMutation) ClearField(name string) error {
 		return nil
 	case broadcast.FieldHoldReason:
 		m.ClearHoldReason()
+		return nil
+	case broadcast.FieldLastScheduledAt:
+		m.ClearLastScheduledAt()
 		return nil
 	}
 	return fmt.Errorf("unknown Broadcast nullable field %s", name)
@@ -4663,6 +4733,9 @@ func (m *BroadcastMutation) ResetField(name string) error {
 		return nil
 	case broadcast.FieldHoldReason:
 		m.ResetHoldReason()
+		return nil
+	case broadcast.FieldLastScheduledAt:
+		m.ResetLastScheduledAt()
 		return nil
 	}
 	return fmt.Errorf("unknown Broadcast field %s", name)

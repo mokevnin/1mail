@@ -5573,6 +5573,33 @@
         "enum": ["email", "wait", "apply_tag", "remove_tag"],
         "description": "Kind of automation step"
       },
+      "SiteBroadcastProgress": {
+        "type": "object",
+        "required": ["processedCount", "remainingCount"],
+        "properties": {
+          "processedCount": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Recipients already decided: sent, skipped or failed"
+          },
+          "remainingCount": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Recipients still waiting to be sent"
+          },
+          "estimatedCompletionAt": {
+            "type": "string",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Timestamp"
+              }
+            ],
+            "nullable": true,
+            "description": "When the last remaining recipient is expected to be sent. Null when it is not\nknowable: the broadcast is on hold, or it is not paced by a Send rate limit."
+          }
+        },
+        "description": "How far a sending broadcast has got. A broadcast limited by its Integration's Send\nrate limit is paced: recipients go out at an even interval, so the estimate is\nderived on the server from the last scheduled time and the recipients remaining."
+      },
       "SiteBroadcastResource": {
         "type": "object",
         "required": [
@@ -5686,6 +5713,16 @@
               }
             ],
             "description": "Delivery counters"
+          },
+          "progress": {
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SiteBroadcastProgress"
+              }
+            ],
+            "nullable": true,
+            "description": "Progress and ETA while the broadcast is sending; null otherwise"
           },
           "createdAt": {
             "allOf": [

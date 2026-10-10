@@ -172,6 +172,12 @@ export default interface Resources {
       "nameLabel": "Name",
       "noRecords": "No broadcasts yet",
       "openedLabel": "Opened",
+      "progress": {
+        "almostDone": "almost done",
+        "remainingHours": "about {{count}} hour remaining" | "about {{count}} hour remaining" | "about {{count}} hours remaining",
+        "remainingMinutes": "about {{count}} minutes remaining" | "about {{count}} minute remaining" | "about {{count}} minutes remaining",
+        "summary": "Sent {{processed}} of {{total}}"
+      },
       "recipientsLabel": "Recipients",
       "report": "Report",
       "schedule": "Schedule",
