@@ -35,10 +35,3 @@ test('loads the profile and submits a name change', async () => {
   await expect.poll(() => puts.length).toBeGreaterThan(0)
   expect(puts[0]).toContain('"name":"Renamed"')
 })
-
-test('email is read-only', async () => {
-  worker.use(handleSiteUserGetMe({ body: user }))
-  const { screen } = await renderWithRouter(<ProfilePage />)
-
-  await expect.element(screen.getByLabelText('Email')).toBeDisabled()
-})

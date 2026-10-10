@@ -249,6 +249,9 @@ the gitignored `.env` (read by the app) or `.mise.local.toml`.
   `testhelper` abstraction for tables ent doesn't model (the domain-event outbox: `env.Outbox*`,
   `env.OutboxCount`). `forbidigo` in `.golangci.yml` rejects `*sql.DB` `Exec`/`Query`/`QueryRow` in
   `_test.go` files. Inject faults with ent hooks/interceptors, never DDL or triggers.
+- **No tests of built-in behaviour.** A test exercises 1mail's own code. One whose only subject is a
+  Mantine component, the standard library or another dependency (a copy button showing "Copied", a
+  library's defaults or retries) is deleted, and none is added.
 - **No custom CSS anywhere in the repo.** Style the frontend exclusively through Mantine — components, style
   props (`p`, `c`, `w`, responsive object syntax), the color system, the theme, and the
   configured breakpoints. Do not add custom `.css`/CSS-module files, inline `style={{…}}`,

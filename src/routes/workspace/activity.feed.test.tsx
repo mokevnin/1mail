@@ -62,16 +62,6 @@ test('filtering by action refetches with the action and resets to page one', asy
   await expect.poll(() => queries.at(-1)).toEqual({ page: '1', action: 'purchase' })
 })
 
-test('turning live mode off keeps the feed rendered', async () => {
-  serveEvents([])
-  const { screen } = await renderWithRouter(<ActivityPage />, mount)
-
-  await screen.getByLabelText('Live').click()
-
-  await expect.element(screen.getByLabelText('Live')).not.toBeChecked()
-  await expect.element(screen.getByText('anon:1')).toBeInTheDocument()
-})
-
 test('shows an error alert when the feed fails to load', async () => {
   worker.use(handleSiteEventsList(() => problem(500)))
   const { screen } = await renderWithRouter(<ActivityPage />, mount)

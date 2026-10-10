@@ -132,8 +132,7 @@ test('shows an error alert when the tokens fail to load', async () => {
     .toBeInTheDocument()
 })
 
-test('the one-time secret can be copied and dismissed', async () => {
-  vi.spyOn(navigator.clipboard, 'writeText').mockResolvedValue()
+test('the one-time secret can be dismissed', async () => {
   worker.use(
     listTokens([]),
     handleSiteTokensCreate({
@@ -146,9 +145,6 @@ test('the one-time secret can be copied and dismissed', async () => {
   await screen.getByLabelText(/^Token name/).fill('CI')
   await screen.getByRole('button', { name: 'Create token' }).click()
   await expect.element(screen.getByText('omtk_secret_value')).toBeInTheDocument()
-
-  await screen.getByRole('button', { name: 'Copy', exact: true }).click()
-  await expect.element(screen.getByRole('button', { name: 'Copied' })).toBeInTheDocument()
 
   await screen
     .getByRole('alert', { name: /Copy this token now/ })
