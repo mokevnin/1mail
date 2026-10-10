@@ -1,7 +1,14 @@
+import { HttpResponse } from 'msw'
 import { expect, test } from 'vitest'
 
-import { jsonResponse, mockClientFetch } from '../../test/mockFetch.ts'
+import {
+  handleSiteOAuthDecide,
+  handleSiteOAuthDescribe,
+  handleSiteWorkspacesList,
+} from '../../generated/site/msw.gen.ts'
+import { problem } from '../../test/problem.ts'
 import { renderWithRouter } from '../../test/renderWithRouter.tsx'
+import { worker } from '../../test/worker.ts'
 import { OAuthConsent } from './consent.tsx'
 
 const request = {
@@ -22,24 +29,26 @@ const workspace = {
   createdAt: '2026-01-01T00:00:00Z',
 }
 
-function mockConsentApi(onDecide: (body: unknown) => void) {
-  mockClientFetch(async (input) => {
-    const req = input instanceof Request ? input : new Request(String(input))
-    if (req.url.includes('/oauth/authorization')) {
-      if (req.method === 'POST') {
-        onDecide(await req.clone().json())
-        // Stay on the page: the test only inspects the decision that was sent.
-        return jsonResponse({ redirectUrl: '#done' })
-      }
-      return jsonResponse({
-        clientName: 'Fixture Connector',
-        redirectUri: request.redirectUri,
-        scopes: ['contacts:read'],
-        sendScopes: ['emails:send'],
-      })
-    }
-    return jsonResponse([workspace])
+const describeHandler = (sendScopes: string[]) =>
+  handleSiteOAuthDescribe({
+    body: {
+      clientName: 'Fixture Connector',
+      redirectUri: request.redirectUri,
+      scopes: ['contacts:read'],
+      sendScopes,
+    },
   })
+
+function mockConsentApi(onDecide: (body: unknown) => void) {
+  worker.use(
+    handleSiteWorkspacesList({ body: [workspace] }),
+    describeHandler(['emails:send']),
+    handleSiteOAuthDecide(async ({ request: req }) => {
+      onDecide(await req.json())
+      // Stay on the page: the test only inspects the decision that was sent.
+      return HttpResponse.json({ redirectUrl: '#done' })
+    }),
+  )
 }
 
 test('shows the client and its permissions, with sending off by default', async () => {
@@ -92,36 +101,23 @@ test('denying sends approve=false', async () => {
 })
 
 test('an invalid request shows an error instead of the form', async () => {
-  mockClientFetch((input) => {
-    const url = input instanceof Request ? input.url : String(input)
-    return url.includes('/oauth/authorization')
-      ? jsonResponse({ detail: 'bad' }, { status: 400 })
-      : jsonResponse([workspace])
-  })
+  worker.use(
+    handleSiteWorkspacesList({ body: [workspace] }),
+    handleSiteOAuthDescribe(() => problem(400, { detail: 'bad' })),
+  )
   const { screen } = await renderWithRouter(<OAuthConsent request={request} />)
 
   await expect.element(screen.getByText(/authorization request is invalid/)).toBeInTheDocument()
 })
 
 test('a plain member who is forbidden sees why, not a generic error', async () => {
-  mockClientFetch(async (input) => {
-    const req = input instanceof Request ? input : new Request(String(input))
-    if (req.url.includes('/oauth/authorization')) {
-      if (req.method === 'POST') {
-        return jsonResponse(
-          { status: 403, detail: 'only owners and admins can connect an application' },
-          { status: 403 },
-        )
-      }
-      return jsonResponse({
-        clientName: 'Fixture Connector',
-        redirectUri: request.redirectUri,
-        scopes: ['contacts:read'],
-        sendScopes: [],
-      })
-    }
-    return jsonResponse([workspace])
-  })
+  worker.use(
+    handleSiteWorkspacesList({ body: [workspace] }),
+    describeHandler([]),
+    handleSiteOAuthDecide(() =>
+      problem(403, { detail: 'only owners and admins can connect an application' }),
+    ),
+  )
   const { screen } = await renderWithRouter(<OAuthConsent request={request} />)
 
   await screen.getByRole('button', { name: 'Allow access' }).click()

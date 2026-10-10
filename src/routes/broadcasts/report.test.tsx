@@ -1,10 +1,12 @@
+import { HttpResponse } from 'msw'
 import { expect, test } from 'vitest'
 
-import type { SiteBroadcastsGetData } from '../../generated/site/types.gen.ts'
+import { handleSiteBroadcastsGet } from '../../generated/site/msw.gen.ts'
 import { broadcastsReportRoute } from '../../router.tsx'
-import { jsonResponse, mockClientRoutes, route } from '../../test/mockFetch.ts'
+import { problem } from '../../test/problem.ts'
 import { renderWithRouter } from '../../test/renderWithRouter.tsx'
 import { routeMount } from '../../test/routeMount.ts'
+import { worker } from '../../test/worker.ts'
 import { BroadcastReportPage } from './report.tsx'
 
 const REPORT_ROUTE = routeMount(broadcastsReportRoute, { slug: 'test', broadcastId: '5' })
@@ -24,19 +26,16 @@ const STATS = {
   failureRate: 0.05,
 }
 
-const BROADCAST = { id: '5', name: 'Big news', subject: 'Read this', status: 'sent', stats: STATS }
-
-function getRoute(respond: () => Response) {
-  return route<SiteBroadcastsGetData>(
-    'GET',
-    '/workspaces/{slug}/broadcasts/{id}',
-    { slug: 'test', id: '5' },
-    respond,
-  )
+const BROADCAST = {
+  id: '5',
+  name: 'Big news',
+  subject: 'Read this',
+  status: 'sent',
+  stats: STATS,
 }
 
 test('renders the broadcast header, counters and rates', async () => {
-  mockClientRoutes([getRoute(() => jsonResponse(BROADCAST))])
+  worker.use(handleSiteBroadcastsGet(() => HttpResponse.json(BROADCAST)))
 
   const { screen } = await renderWithRouter(<BroadcastReportPage />, REPORT_ROUTE)
 
@@ -50,9 +49,11 @@ test('renders the broadcast header, counters and rates', async () => {
 })
 
 test('shows the hold alert when the broadcast is on hold', async () => {
-  mockClientRoutes([
-    getRoute(() => jsonResponse({ ...BROADCAST, status: 'sending', holdReason: 'no_integration' })),
-  ])
+  worker.use(
+    handleSiteBroadcastsGet(() =>
+      HttpResponse.json({ ...BROADCAST, status: 'sending', holdReason: 'no_integration' }),
+    ),
+  )
 
   const { screen } = await renderWithRouter(<BroadcastReportPage />, REPORT_ROUTE)
 
@@ -61,7 +62,7 @@ test('shows the hold alert when the broadcast is on hold', async () => {
 })
 
 test('shows an error alert when the broadcast fails to load', async () => {
-  mockClientRoutes([getRoute(() => jsonResponse({ title: 'Boom', status: 500 }, { status: 500 }))])
+  worker.use(handleSiteBroadcastsGet(() => problem(500)))
 
   const { screen } = await renderWithRouter(<BroadcastReportPage />, REPORT_ROUTE)
 

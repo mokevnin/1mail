@@ -1,23 +1,23 @@
 import { useQuery } from '@tanstack/react-query'
+import { HttpResponse } from 'msw'
 import { expect, test } from 'vitest'
 
 import {
   siteContactsGetOptions,
   siteContactsListOptions,
 } from '../../generated/site/@tanstack/react-query.gen.ts'
-import type {
-  SiteContactsCreateData,
-  SiteContactsGetData,
-  SiteContactsListData,
-  SiteContactsUpdateData,
-} from '../../generated/site/types.gen.ts'
+import {
+  handleSiteContactsCreate,
+  handleSiteContactsGet,
+  handleSiteContactsList,
+  handleSiteContactsUpdate,
+} from '../../generated/site/msw.gen.ts'
 import { contactsCreateRoute, contactsEditRoute } from '../../router.tsx'
-import { jsonResponse, mockClientRoutes, route } from '../../test/mockFetch.ts'
+import { problem } from '../../test/problem.ts'
 import { renderWithRouter } from '../../test/renderWithRouter.tsx'
 import { routeMount } from '../../test/routeMount.ts'
+import { worker } from '../../test/worker.ts'
 import { ContactCreatePage, ContactEditPage } from './resource.tsx'
-
-const SLUG = { slug: 'test' }
 
 const CREATE_ROUTE = routeMount(contactsCreateRoute, { slug: 'test' })
 
@@ -31,16 +31,19 @@ function ListProbe() {
 test('creating a contact sends only the filled keys, refreshes the list and opens the edit page', async () => {
   const bodies: unknown[] = []
   let listFetches = 0
-  mockClientRoutes([
-    route<SiteContactsCreateData>('POST', '/workspaces/{slug}/contacts', SLUG, async (req) => {
-      bodies.push(await req.json())
-      return jsonResponse({ id: '42', email: 'ada@example.com', firstName: 'Ada' }, { status: 201 })
+  worker.use(
+    handleSiteContactsCreate(async ({ request }) => {
+      bodies.push(await request.json())
+      return HttpResponse.json(
+        { id: '42', email: 'ada@example.com', firstName: 'Ada' },
+        { status: 201 },
+      )
     }),
-    route<SiteContactsListData>('GET', '/workspaces/{slug}/contacts', SLUG, () => {
+    handleSiteContactsList(() => {
       listFetches++
-      return jsonResponse({ items: [], totalItems: 0 })
+      return HttpResponse.json({ items: [], totalItems: 0 })
     }),
-  ])
+  )
 
   const { screen, navigate } = await renderWithRouter(
     <>
@@ -66,12 +69,12 @@ test('creating a contact sends only the filled keys, refreshes the list and open
 
 test('a malformed email is rejected before anything is sent', async () => {
   const bodies: unknown[] = []
-  mockClientRoutes([
-    route<SiteContactsCreateData>('POST', '/workspaces/{slug}/contacts', SLUG, async (req) => {
-      bodies.push(await req.json())
-      return jsonResponse({ id: '1' }, { status: 201 })
+  worker.use(
+    handleSiteContactsCreate(async ({ request }) => {
+      bodies.push(await request.json())
+      return HttpResponse.json({ id: '1' }, { status: 201 })
     }),
-  ])
+  )
 
   const { screen } = await renderWithRouter(<ContactCreatePage />, CREATE_ROUTE)
 
@@ -81,8 +84,6 @@ test('a malformed email is rejected before anything is sent', async () => {
   await expect.element(screen.getByText('Invalid email address')).toBeVisible()
   expect(bodies).toEqual([])
 })
-
-const ID7 = { slug: 'test', id: '7' }
 
 const EDIT_ROUTE = routeMount(contactsEditRoute, { slug: 'test', contactId: '7' })
 
@@ -104,20 +105,20 @@ test('editing shows existing values with nulls as blanks; a cleared field is sen
   const bodies: unknown[] = []
   let detailFetches = 0
   let listFetches = 0
-  mockClientRoutes([
-    route<SiteContactsUpdateData>('PUT', '/workspaces/{slug}/contacts/{id}', ID7, async (req) => {
-      bodies.push(await req.json())
-      return jsonResponse({ id: '7', email: 'ada@example.com' })
+  worker.use(
+    handleSiteContactsUpdate(async ({ request }) => {
+      bodies.push(await request.json())
+      return HttpResponse.json({ id: '7', email: 'ada@example.com' })
     }),
-    route<SiteContactsListData>('GET', '/workspaces/{slug}/contacts', SLUG, () => {
+    handleSiteContactsList(() => {
       listFetches++
-      return jsonResponse({ items: [], totalItems: 0 })
+      return HttpResponse.json({ items: [], totalItems: 0 })
     }),
-    route<SiteContactsGetData>('GET', '/workspaces/{slug}/contacts/{id}', ID7, () => {
+    handleSiteContactsGet(() => {
       detailFetches++
-      return jsonResponse(LOADED_CONTACT)
+      return HttpResponse.json(LOADED_CONTACT)
     }),
-  ])
+  )
 
   const { screen } = await renderWithRouter(
     <>
@@ -153,11 +154,9 @@ test('editing shows existing values with nulls as blanks; a cleared field is sen
 })
 
 test('editing shows an error alert when the contact cannot be loaded', async () => {
-  mockClientRoutes([
-    route<SiteContactsGetData>('GET', '/workspaces/{slug}/contacts/{id}', ID7, () =>
-      jsonResponse({ title: 'Not Found', detail: 'contact not found' }, { status: 404 }),
-    ),
-  ])
+  worker.use(
+    handleSiteContactsGet(() => problem(404, { title: 'Not Found', detail: 'contact not found' })),
+  )
 
   const { screen } = await renderWithRouter(<ContactEditPage />, EDIT_ROUTE)
 
@@ -167,12 +166,12 @@ test('editing shows an error alert when the contact cannot be loaded', async () 
 
 test('editing shows no form while the contact loads, then the loaded values', async () => {
   const gate = Promise.withResolvers<void>()
-  mockClientRoutes([
-    route<SiteContactsGetData>('GET', '/workspaces/{slug}/contacts/{id}', ID7, async () => {
+  worker.use(
+    handleSiteContactsGet(async () => {
       await gate.promise
-      return jsonResponse(LOADED_CONTACT)
+      return HttpResponse.json(LOADED_CONTACT)
     }),
-  ])
+  )
 
   const { screen } = await renderWithRouter(<ContactEditPage />, EDIT_ROUTE)
 

@@ -1,14 +1,17 @@
-import { expect, test } from 'vitest'
+import { HttpResponse } from 'msw'
+import { beforeEach, expect, test } from 'vitest'
 
-import type {
-  SiteIntegrationResource,
-  SiteIntegrationsCreateData,
-  SiteIntegrationsDeleteData,
-  SiteIntegrationsListData,
-  SiteIntegrationsUpdateData,
-} from '../../generated/site/types.gen.ts'
-import { jsonResponse, mockClientRoutes, route } from '../../test/mockFetch.ts'
+import {
+  handleSiteAuditList,
+  handleSiteIntegrationsCreate,
+  handleSiteIntegrationsDelete,
+  handleSiteIntegrationsList,
+  handleSiteIntegrationsUpdate,
+} from '../../generated/site/msw.gen.ts'
+import type { SiteIntegrationResource } from '../../generated/site/types.gen.ts'
+import { problem } from '../../test/problem.ts'
 import { renderWithRouter } from '../../test/renderWithRouter.tsx'
+import { worker } from '../../test/worker.ts'
 import { IntegrationsSection } from './IntegrationsSection.tsx'
 
 const SLUG = 'test'
@@ -33,24 +36,21 @@ const smtp: SiteIntegrationResource = {
   updatedAt: '2026-01-01T00:00:00Z',
 }
 
-const list = (items: SiteIntegrationResource[]) =>
-  route<SiteIntegrationsListData>('GET', '/workspaces/{slug}/integrations', { slug: SLUG }, () =>
-    jsonResponse(items),
-  )
+const list = (items: SiteIntegrationResource[]) => handleSiteIntegrationsList({ body: items })
 
 const create = (bodies: unknown[]) =>
-  route<SiteIntegrationsCreateData>(
-    'POST',
-    '/workspaces/{slug}/integrations',
-    { slug: SLUG },
-    async (req) => {
-      bodies.push(await req.json())
-      return jsonResponse(smtp, { status: 201 })
-    },
-  )
+  handleSiteIntegrationsCreate(async ({ request }) => {
+    bodies.push(await request.json())
+    return HttpResponse.json(smtp, { status: 201 })
+  })
+
+// Without a license the change-history link probes the Audit log and hides itself.
+beforeEach(() => {
+  worker.use(handleSiteAuditList(() => problem(402)))
+})
 
 test('lists connected providers', async () => {
-  mockClientRoutes([list([smtp])])
+  worker.use(list([smtp]))
   const { screen } = await renderWithRouter(<IntegrationsSection slug={SLUG} />)
 
   await expect.element(screen.getByText('Primary SMTP')).toBeInTheDocument()
@@ -58,7 +58,7 @@ test('lists connected providers', async () => {
 
 test('connects an SMTP provider', async () => {
   const bodies: unknown[] = []
-  mockClientRoutes([list([]), create(bodies)])
+  worker.use(list([]), create(bodies))
   const { screen } = await renderWithRouter(<IntegrationsSection slug={SLUG} />)
 
   await screen.getByLabelText(/^Name/).fill(' Mailer ')
@@ -90,7 +90,7 @@ test('connects an SMTP provider', async () => {
 
 test('connects an Amazon SES provider', async () => {
   const bodies: unknown[] = []
-  mockClientRoutes([list([]), create(bodies)])
+  worker.use(list([]), create(bodies))
   const { screen } = await renderWithRouter(<IntegrationsSection slug={SLUG} />)
 
   await screen.getByRole('combobox', { name: 'Provider' }).click()
@@ -126,18 +126,13 @@ test('connects an Amazon SES provider', async () => {
 
 test('deletes a provider after confirmation', async () => {
   let deleted = false
-  mockClientRoutes([
+  worker.use(
     list([smtp]),
-    route<SiteIntegrationsDeleteData>(
-      'DELETE',
-      '/workspaces/{slug}/integrations/{id}',
-      { slug: SLUG, id: '1' },
-      () => {
-        deleted = true
-        return new Response(null, { status: 204 })
-      },
-    ),
-  ])
+    handleSiteIntegrationsDelete(() => {
+      deleted = true
+      return new HttpResponse(null, { status: 204 })
+    }),
+  )
   const { screen } = await renderWithRouter(<IntegrationsSection slug={SLUG} />)
 
   await screen.getByRole('button', { name: 'Delete' }).click()
@@ -147,26 +142,17 @@ test('deletes a provider after confirmation', async () => {
 })
 
 test('shows an error alert when providers fail to load', async () => {
-  mockClientRoutes([
-    route<SiteIntegrationsListData>('GET', '/workspaces/{slug}/integrations', { slug: SLUG }, () =>
-      jsonResponse({ status: 500, detail: 'boom' }, { status: 500 }),
-    ),
-  ])
+  worker.use(handleSiteIntegrationsList(() => problem(500, { detail: 'boom' })))
   const { screen } = await renderWithRouter(<IntegrationsSection slug={SLUG} />)
 
   await expect.element(screen.getByText('Failed to load providers').first()).toBeInTheDocument()
 })
 
 test('reports a create failure', async () => {
-  mockClientRoutes([
+  worker.use(
     list([]),
-    route<SiteIntegrationsCreateData>(
-      'POST',
-      '/workspaces/{slug}/integrations',
-      { slug: SLUG },
-      () => jsonResponse({ status: 422, detail: 'bad host' }, { status: 422 }),
-    ),
-  ])
+    handleSiteIntegrationsCreate(() => problem(422, { detail: 'bad host' })),
+  )
   const { screen } = await renderWithRouter(<IntegrationsSection slug={SLUG} />)
 
   await screen.getByLabelText(/^Name/).fill('X')
@@ -190,18 +176,13 @@ const limited: SiteIntegrationResource = {
 }
 
 const update = (bodies: unknown[]) =>
-  route<SiteIntegrationsUpdateData>(
-    'PUT',
-    '/workspaces/{slug}/integrations/{id}',
-    { slug: SLUG, id: '1' },
-    async (req) => {
-      bodies.push(await req.json())
-      return jsonResponse(limited)
-    },
-  )
+  handleSiteIntegrationsUpdate(async ({ request }) => {
+    bodies.push(await request.json())
+    return HttpResponse.json(limited)
+  })
 
 test('warns when an Integration has no send limit', async () => {
-  mockClientRoutes([list([smtp])])
+  worker.use(list([smtp]))
   const { screen } = await renderWithRouter(<IntegrationsSection slug={SLUG} />)
 
   await expect.element(screen.getByText('Primary SMTP has no send limit')).toBeInTheDocument()
@@ -214,7 +195,7 @@ test('warns when the provider send quota could not be read', async () => {
     name: 'Amazon SES',
     sendLimit: { ...limited.sendLimit, warnings: ['providerQuotaUnavailable'] },
   }
-  mockClientRoutes([list([ses])])
+  worker.use(list([ses]))
   const { screen } = await renderWithRouter(<IntegrationsSection slug={SLUG} />)
 
   await expect
@@ -226,7 +207,7 @@ test('warns when the provider send quota could not be read', async () => {
 })
 
 test('shows no quota warning when the provider quota is known', async () => {
-  mockClientRoutes([list([limited])])
+  worker.use(list([limited]))
   const { screen } = await renderWithRouter(<IntegrationsSection slug={SLUG} />)
 
   await expect.element(screen.getByText('Per second: 14')).toBeInTheDocument()
@@ -236,7 +217,7 @@ test('shows no quota warning when the provider quota is known', async () => {
 })
 
 test('shows the effective limit, its source and the 24-hour usage', async () => {
-  mockClientRoutes([list([limited])])
+  worker.use(list([limited]))
   const { screen } = await renderWithRouter(<IntegrationsSection slug={SLUG} />)
 
   await expect.element(screen.getByText('Per second: 14')).toBeInTheDocument()
@@ -250,7 +231,7 @@ test('shows the effective limit, its source and the 24-hour usage', async () => 
 
 test('connects a provider with send limits', async () => {
   const bodies: unknown[] = []
-  mockClientRoutes([list([]), create(bodies)])
+  worker.use(list([]), create(bodies))
   const { screen } = await renderWithRouter(<IntegrationsSection slug={SLUG} />)
 
   await screen.getByLabelText(/^Name/).fill('Mailer')
@@ -267,7 +248,7 @@ test('connects a provider with send limits', async () => {
 
 test('edits only the limits of an existing provider, and a blank clears one', async () => {
   const bodies: unknown[] = []
-  mockClientRoutes([list([limited]), update(bodies)])
+  worker.use(list([limited]), update(bodies))
   const { screen } = await renderWithRouter(<IntegrationsSection slug={SLUG} />)
 
   await screen.getByRole('button', { name: 'Limits' }).click()

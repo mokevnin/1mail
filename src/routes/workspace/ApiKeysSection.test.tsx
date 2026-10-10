@@ -1,13 +1,15 @@
+import { HttpResponse } from 'msw'
 import { afterEach, expect, test, vi } from 'vitest'
 
-import type {
-  SiteTokensCreateData,
-  SiteTokensDeleteData,
-  SiteTokensListData,
-  SiteApiTokenResource,
-} from '../../generated/site/types.gen.ts'
-import { jsonResponse, mockClientFetch, mockClientRoutes, route } from '../../test/mockFetch.ts'
+import {
+  handleSiteTokensCreate,
+  handleSiteTokensDelete,
+  handleSiteTokensList,
+} from '../../generated/site/msw.gen.ts'
+import type { SiteApiTokenResource } from '../../generated/site/types.gen.ts'
+import { problem } from '../../test/problem.ts'
 import { renderWithRouter } from '../../test/renderWithRouter.tsx'
+import { worker } from '../../test/worker.ts'
 import { ApiKeysSection } from './ApiKeysSection.tsx'
 
 afterEach(() => {
@@ -16,11 +18,10 @@ afterEach(() => {
 
 test('creates a token and reveals the one-time secret', async () => {
   let created = false
-  mockClientFetch((input) => {
-    const req = input instanceof Request ? input : new Request(String(input))
-    if (req.method === 'POST') {
+  worker.use(
+    handleSiteTokensCreate(() => {
       created = true
-      return jsonResponse(
+      return HttpResponse.json(
         {
           token: 'omtk_newprefix_supersecret',
           resource: {
@@ -33,22 +34,24 @@ test('creates a token and reveals the one-time secret', async () => {
         },
         { status: 201 },
       )
-    }
-    // GET list — empty before creation, the created token after.
-    return jsonResponse(
-      created
-        ? [
-            {
-              id: '2',
-              name: 'CI',
-              prefix: 'newprefix',
-              scopes: ['contacts:read'],
-              createdAt: '2026-06-01T00:00:00Z',
-            },
-          ]
-        : [],
-    )
-  })
+    }),
+    // GET list: empty before creation, the created token after.
+    handleSiteTokensList(() =>
+      HttpResponse.json(
+        created
+          ? [
+              {
+                id: '2',
+                name: 'CI',
+                prefix: 'newprefix',
+                scopes: ['contacts:read'],
+                createdAt: '2026-06-01T00:00:00Z',
+              },
+            ]
+          : [],
+      ),
+    ),
+  )
 
   const { screen } = await renderWithRouter(<ApiKeysSection slug="test" />)
 
@@ -60,16 +63,12 @@ test('creates a token and reveals the one-time secret', async () => {
 })
 
 test('a plain member who is forbidden to create a token sees why', async () => {
-  mockClientFetch((input) => {
-    const req = input instanceof Request ? input : new Request(String(input))
-    if (req.method === 'POST') {
-      return jsonResponse(
-        { status: 403, detail: 'only owners and admins can manage API tokens' },
-        { status: 403 },
-      )
-    }
-    return jsonResponse([])
-  })
+  worker.use(
+    handleSiteTokensCreate(() =>
+      problem(403, { detail: 'only owners and admins can manage API tokens' }),
+    ),
+    handleSiteTokensList({ body: [] }),
+  )
 
   const { screen } = await renderWithRouter(<ApiKeysSection slug="test" />)
 
@@ -81,7 +80,6 @@ test('a plain member who is forbidden to create a token sees why', async () => {
     .toBeInTheDocument()
 })
 
-const SLUG = { slug: 'test' }
 const REVOKE_FAILED = 'Failed to revoke token'
 
 const token: SiteApiTokenResource = {
@@ -92,26 +90,17 @@ const token: SiteApiTokenResource = {
   createdAt: '2026-06-01T00:00:00Z',
 }
 
-const listTokens = (items: SiteApiTokenResource[]) =>
-  route<SiteTokensListData>('GET', '/workspaces/{slug}/tokens', SLUG, () => jsonResponse(items))
-
-const deleteToken = (respond: () => Response) =>
-  route<SiteTokensDeleteData>(
-    'DELETE',
-    '/workspaces/{slug}/tokens/{id}',
-    { ...SLUG, id: '2' },
-    respond,
-  )
+const listTokens = (items: SiteApiTokenResource[]) => handleSiteTokensList({ body: items })
 
 test('revokes a token after confirmation', async () => {
   let revoked = false
-  mockClientRoutes([
+  worker.use(
     listTokens([token]),
-    deleteToken(() => {
+    handleSiteTokensDelete(() => {
       revoked = true
-      return new Response(null, { status: 204 })
+      return new HttpResponse(null, { status: 204 })
     }),
-  ])
+  )
   const { screen } = await renderWithRouter(<ApiKeysSection slug="test" />)
 
   await screen.getByRole('button', { name: 'Revoke' }).click()
@@ -122,10 +111,10 @@ test('revokes a token after confirmation', async () => {
 })
 
 test('a failed revoke shows the error toast', async () => {
-  mockClientRoutes([
+  worker.use(
     listTokens([token]),
-    deleteToken(() => jsonResponse({ status: 500, detail: 'boom' }, { status: 500 })),
-  ])
+    handleSiteTokensDelete(() => problem(500, { detail: 'boom' })),
+  )
   const { screen } = await renderWithRouter(<ApiKeysSection slug="test" />)
 
   await screen.getByRole('button', { name: 'Revoke' }).click()
@@ -135,11 +124,7 @@ test('a failed revoke shows the error toast', async () => {
 })
 
 test('shows an error alert when the tokens fail to load', async () => {
-  mockClientRoutes([
-    route<SiteTokensListData>('GET', '/workspaces/{slug}/tokens', SLUG, () =>
-      jsonResponse({ status: 500, detail: 'boom' }, { status: 500 }),
-    ),
-  ])
+  worker.use(handleSiteTokensList(() => problem(500, { detail: 'boom' })))
   const { screen } = await renderWithRouter(<ApiKeysSection slug="test" />)
 
   await expect
@@ -149,12 +134,13 @@ test('shows an error alert when the tokens fail to load', async () => {
 
 test('the one-time secret can be copied and dismissed', async () => {
   vi.spyOn(navigator.clipboard, 'writeText').mockResolvedValue()
-  mockClientRoutes([
+  worker.use(
     listTokens([]),
-    route<SiteTokensCreateData>('POST', '/workspaces/{slug}/tokens', SLUG, () =>
-      jsonResponse({ token: 'omtk_secret_value', resource: token }, { status: 201 }),
-    ),
-  ])
+    handleSiteTokensCreate({
+      body: { token: 'omtk_secret_value', resource: token },
+      status: 201,
+    }),
+  )
   const { screen } = await renderWithRouter(<ApiKeysSection slug="test" />)
 
   await screen.getByLabelText(/^Token name/).fill('CI')

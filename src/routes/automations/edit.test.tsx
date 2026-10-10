@@ -1,27 +1,25 @@
+import { HttpResponse } from 'msw'
 import { expect, test } from 'vitest'
 
-import type {
-  SiteAutomationsGetData,
-  SiteAutomationsUpdateData,
-} from '../../generated/site/types.gen.ts'
+import {
+  handleSiteAutomationsGet,
+  handleSiteAutomationsUpdate,
+} from '../../generated/site/msw.gen.ts'
+import type { SiteAutomationResource } from '../../generated/site/types.gen.ts'
 import { automationsEditRoute } from '../../router.tsx'
-import { jsonResponse, mockClientRoutes, route } from '../../test/mockFetch.ts'
+import { problem } from '../../test/problem.ts'
 import { renderWithRouter } from '../../test/renderWithRouter.tsx'
 import { routeMount } from '../../test/routeMount.ts'
+import { worker } from '../../test/worker.ts'
 import { AutomationEditPage } from './edit.tsx'
 
-const PATH = { slug: 'test', id: '5' }
 const EDIT_ROUTE = routeMount(automationsEditRoute, { slug: 'test', automationId: '5' })
 const NOW = '2026-01-01T00:00:00Z'
 
-function getRoute(respond: () => Response) {
-  return route<SiteAutomationsGetData>('GET', '/workspaces/{slug}/automations/{id}', PATH, respond)
-}
-
 test('loads the automation into the builder', async () => {
-  mockClientRoutes([
-    getRoute(() =>
-      jsonResponse({
+  worker.use(
+    handleSiteAutomationsGet({
+      body: {
         id: '5',
         name: 'Welcome flow',
         status: 'draft',
@@ -29,9 +27,9 @@ test('loads the automation into the builder', async () => {
         steps: [{ type: 'wait', seconds: 60 }],
         createdAt: NOW,
         updatedAt: NOW,
-      }),
-    ),
-  ])
+      },
+    }),
+  )
 
   const { screen } = await renderWithRouter(<AutomationEditPage />, EDIT_ROUTE)
 
@@ -43,14 +41,14 @@ test('loads the automation into the builder', async () => {
 })
 
 test('shows an error alert when the automation fails to load', async () => {
-  mockClientRoutes([getRoute(() => jsonResponse({ title: 'Gone', status: 404 }, { status: 404 }))])
+  worker.use(handleSiteAutomationsGet(() => problem(404, 'Gone')))
 
   const { screen } = await renderWithRouter(<AutomationEditPage />, EDIT_ROUTE)
 
   await expect.element(screen.getByText('Failed to load automations').first()).toBeInTheDocument()
 })
 
-const STORED = {
+const STORED: SiteAutomationResource = {
   id: '5',
   name: 'Welcome flow',
   status: 'draft',
@@ -63,24 +61,15 @@ const STORED = {
   updatedAt: NOW,
 }
 
-function updateRoute(respond: (req: Request) => Response | Promise<Response>) {
-  return route<SiteAutomationsUpdateData>(
-    'PUT',
-    '/workspaces/{slug}/automations/{id}',
-    PATH,
-    respond,
-  )
-}
-
 test('saving from the builder sends the edited name, trigger and the canvas steps', async () => {
   const bodies: unknown[] = []
-  mockClientRoutes([
-    getRoute(() => jsonResponse(STORED)),
-    updateRoute(async (req) => {
-      bodies.push(await req.json())
-      return jsonResponse(STORED)
+  worker.use(
+    handleSiteAutomationsGet({ body: STORED }),
+    handleSiteAutomationsUpdate(async ({ request }) => {
+      bodies.push(await request.json())
+      return HttpResponse.json(STORED)
     }),
-  ])
+  )
 
   const { screen } = await renderWithRouter(<AutomationEditPage />, EDIT_ROUTE)
   await screen.getByLabelText('Name', { exact: false }).fill('  Renamed  ')
@@ -102,10 +91,10 @@ test('saving from the builder sends the edited name, trigger and the canvas step
 })
 
 test('a failed save from the builder shows an error toast', async () => {
-  mockClientRoutes([
-    getRoute(() => jsonResponse(STORED)),
-    updateRoute(() => jsonResponse({ title: 'Boom', status: 500 }, { status: 500 })),
-  ])
+  worker.use(
+    handleSiteAutomationsGet({ body: STORED }),
+    handleSiteAutomationsUpdate(() => problem(500)),
+  )
 
   const { screen } = await renderWithRouter(<AutomationEditPage />, EDIT_ROUTE)
   await screen.getByRole('button', { name: 'Save' }).click()

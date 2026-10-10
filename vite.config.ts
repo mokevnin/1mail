@@ -1,7 +1,12 @@
+import { readFileSync } from 'node:fs'
+import { createRequire } from 'node:module'
+
 import react from '@vitejs/plugin-react'
 import { playwright } from '@vitest/browser-playwright'
 import type { Plugin } from 'vite'
 import { configDefaults, defineConfig } from 'vitest/config'
+
+const require = createRequire(import.meta.url)
 
 const SUPPORTED_LOCALES = ['en', 'ru', 'es']
 
@@ -21,11 +26,27 @@ function devLocalePlugin(): Plugin {
   }
 }
 
+// Test-only: serve MSW's service worker script at the origin root so the worker used by
+// src/test/setup.tsx gets scope `/` (it must not be a committed or public/ file: it would
+// ship in the production bundle). Applied only under Vitest.
+function mswWorkerPlugin(): Plugin {
+  return {
+    name: '1mail:msw-worker',
+    apply: () => Boolean(process.env.VITEST),
+    configureServer(server) {
+      server.middlewares.use('/mockServiceWorker.js', (_req, res) => {
+        res.setHeader('content-type', 'text/javascript')
+        res.end(readFileSync(require.resolve('msw/mockServiceWorker.js')))
+      })
+    },
+  }
+}
+
 // The app is reached via Caddy at https://1mail.localhost, which terminates TLS
 // and is the single place that routes API paths (/site, /collect, /auth, /mcp, /oauth, /.well-known,
 // /avatar, /api) to the Go backend. Vite serves only the SPA + HMR here.
 export default defineConfig({
-  plugins: [react(), devLocalePlugin()],
+  plugins: [react(), devLocalePlugin(), mswWorkerPlugin()],
   // Under Vitest browser mode the page loads @vite/client, which would try to open
   // the dev HMR websocket below (wss://1mail.localhost:443 — unreachable in CI) and
   // race the teardown with an unhandled "WebSocket closed without opened" rejection.

@@ -4,6 +4,8 @@ status: accepted
 
 # Billing boundary: metering in core, money in an external plane
 
+See ADR 0027 for the plane contract, the pricing metrics and Live usage.
+
 For the planned SaaS offering the core **measures** billable activity but never **prices** it.
 Rating, plans, invoices, payment, taxes, and dunning live in a separate billing control-plane
 built on a ready provider (Stripe / Lago / Paddle — provider left open); they never enter the

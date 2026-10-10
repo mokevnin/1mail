@@ -1,17 +1,18 @@
+import { HttpResponse } from 'msw'
 import { expect, test } from 'vitest'
 
-import type {
-  SiteBroadcastResource,
-  SiteBroadcastsScheduleData,
-  SiteBroadcastsTestSendData,
-} from '../../generated/site/types.gen.ts'
+import {
+  handleSiteBroadcastsSchedule,
+  handleSiteBroadcastsTestSend,
+} from '../../generated/site/msw.gen.ts'
+import type { SiteBroadcastResource } from '../../generated/site/types.gen.ts'
 import { broadcastsEditRoute, broadcastsReportRoute } from '../../router.tsx'
-import { jsonResponse, mockClientRoutes, route } from '../../test/mockFetch.ts'
+import { problem } from '../../test/problem.ts'
 import { renderWithRouter } from '../../test/renderWithRouter.tsx'
 import { routeMount } from '../../test/routeMount.ts'
+import { worker } from '../../test/worker.ts'
 import { DeliveryBlock } from './DeliveryBlock.tsx'
 
-const ID7 = { slug: 'test', id: '7' }
 const MOUNT = routeMount(broadcastsEditRoute, { slug: 'test', broadcastId: '7' })
 const SEND_FAILED = 'Failed to send broadcast'
 
@@ -42,17 +43,12 @@ const draft: SiteBroadcastResource = {
 
 test('scheduling a draft posts the chosen time as an ISO timestamp and opens the report', async () => {
   const bodies: unknown[] = []
-  mockClientRoutes([
-    route<SiteBroadcastsScheduleData>(
-      'POST',
-      '/workspaces/{slug}/broadcasts/{id}/schedule',
-      ID7,
-      async (req) => {
-        bodies.push(await req.json())
-        return jsonResponse(draft)
-      },
-    ),
-  ])
+  worker.use(
+    handleSiteBroadcastsSchedule(async ({ request }) => {
+      bodies.push(await request.json())
+      return HttpResponse.json(draft)
+    }),
+  )
   const { screen, navigate } = await renderWithRouter(<DeliveryBlock broadcast={draft} />, MOUNT)
 
   await screen.getByLabelText('Schedule for').fill('2030-05-06T07:08')
@@ -67,17 +63,12 @@ test('scheduling a draft posts the chosen time as an ISO timestamp and opens the
 
 test('a test send posts the typed address and confirms without navigating', async () => {
   const bodies: unknown[] = []
-  mockClientRoutes([
-    route<SiteBroadcastsTestSendData>(
-      'POST',
-      '/workspaces/{slug}/broadcasts/{id}/test-send',
-      ID7,
-      async (req) => {
-        bodies.push(await req.json())
-        return new Response(null, { status: 204 })
-      },
-    ),
-  ])
+  worker.use(
+    handleSiteBroadcastsTestSend(async ({ request }) => {
+      bodies.push(await request.json())
+      return new HttpResponse(null, { status: 204 })
+    }),
+  )
   const { screen, navigate } = await renderWithRouter(<DeliveryBlock broadcast={draft} />, MOUNT)
 
   await screen.getByLabelText('Send a test to').fill('qa@example.com')
@@ -89,14 +80,9 @@ test('a test send posts the typed address and confirms without navigating', asyn
 })
 
 test('a rejected test send shows the error toast', async () => {
-  mockClientRoutes([
-    route<SiteBroadcastsTestSendData>(
-      'POST',
-      '/workspaces/{slug}/broadcasts/{id}/test-send',
-      ID7,
-      () => jsonResponse({ title: 'Bad', detail: 'No integration' }, { status: 422 }),
-    ),
-  ])
+  worker.use(
+    handleSiteBroadcastsTestSend(() => problem(422, { title: 'Bad', detail: 'No integration' })),
+  )
   const { screen } = await renderWithRouter(<DeliveryBlock broadcast={draft} />, MOUNT)
 
   await screen.getByLabelText('Send a test to').fill('qa@example.com')

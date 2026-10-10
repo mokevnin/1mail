@@ -1,14 +1,16 @@
+import { HttpResponse } from 'msw'
 import { expect, test } from 'vitest'
 
-import type {
-  SiteUserEmailChangeData,
-  SiteUserGetMeData,
-  SiteUserResendVerificationData,
-  SiteUserResource,
-  SiteUserUpdateMeData,
-} from '../../generated/site/types.gen.ts'
-import { jsonResponse, mockClientFetch, mockClientRoutes, route } from '../../test/mockFetch.ts'
+import {
+  handleSiteUserEmailChange,
+  handleSiteUserGetMe,
+  handleSiteUserResendVerification,
+  handleSiteUserUpdateMe,
+} from '../../generated/site/msw.gen.ts'
+import type { SiteUserResource } from '../../generated/site/types.gen.ts'
+import { problem } from '../../test/problem.ts'
 import { renderWithRouter } from '../../test/renderWithRouter.tsx'
+import { worker } from '../../test/worker.ts'
 import { ProfilePage } from './profile.tsx'
 
 const user: SiteUserResource = {
@@ -40,27 +42,13 @@ function serveProfile(
       }
       return (overrides[op] ?? fallback)(req)
     }
-  mockClientRoutes([
-    route<SiteUserGetMeData>(
-      'GET',
-      '/me',
-      {},
-      serve('get', () => jsonResponse(me)),
-    ),
-    route<SiteUserUpdateMeData>(
-      'PUT',
-      '/me',
-      {},
-      serve('update', () => jsonResponse(me)),
-    ),
-    route<SiteUserEmailChangeData>('POST', '/me/email-change', {}, serve('emailChange', noContent)),
-    route<SiteUserResendVerificationData>(
-      'POST',
-      '/me/verification-email',
-      {},
-      serve('resend', noContent),
-    ),
-  ])
+  const json = () => HttpResponse.json(me)
+  worker.use(
+    handleSiteUserGetMe(({ request }) => serve('get', json)(request)),
+    handleSiteUserUpdateMe(({ request }) => serve('update', json)(request)),
+    handleSiteUserEmailChange(({ request }) => serve('emailChange', noContent)(request)),
+    handleSiteUserResendVerification(({ request }) => serve('resend', noContent)(request)),
+  )
 }
 
 test('an unverified user can ask for the verification email again', async () => {
@@ -85,7 +73,7 @@ test('a verified user sees the verified badge and no resend prompt', async () =>
 
 test('reports a failed verification resend', async () => {
   serveProfile([], {
-    resend: () => jsonResponse({ status: 429, detail: 'slow down' }, { status: 429 }),
+    resend: () => problem(429, { detail: 'slow down' }),
   })
   const { screen } = await renderWithRouter(<ProfilePage />)
 
@@ -114,7 +102,7 @@ test('changing the password sends the current and new password', async () => {
 
 test('reports a failed profile update', async () => {
   serveProfile([], {
-    update: () => jsonResponse({ status: 400, detail: 'wrong password' }, { status: 400 }),
+    update: () => problem(400, { detail: 'wrong password' }),
   })
   const { screen } = await renderWithRouter(<ProfilePage />)
 
@@ -148,7 +136,7 @@ test('requests an email change and clears the form', async () => {
 
 test('reports a failed email change', async () => {
   serveProfile([], {
-    emailChange: () => jsonResponse({ status: 409, detail: 'taken' }, { status: 409 }),
+    emailChange: () => problem(409, { detail: 'taken' }),
   })
   const { screen } = await renderWithRouter(<ProfilePage />)
 
@@ -163,7 +151,7 @@ test('reports a failed email change', async () => {
 })
 
 test('shows an error when the profile fails to load', async () => {
-  mockClientFetch(() => jsonResponse({ status: 500, detail: 'boom' }, { status: 500 }))
+  worker.use(handleSiteUserGetMe(() => problem(500, { detail: 'boom' })))
   const { screen } = await renderWithRouter(<ProfilePage />)
 
   await expect.element(screen.getByText('Failed to load profile').first()).toBeInTheDocument()

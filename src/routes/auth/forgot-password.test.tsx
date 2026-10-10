@@ -1,12 +1,15 @@
+import { HttpResponse } from 'msw'
 import { expect, test } from 'vitest'
 
-import { jsonResponse, mockClientFetch } from '../../test/mockFetch.ts'
+import { handleSiteAuthForgotPassword } from '../../generated/site/msw.gen.ts'
+import { problem } from '../../test/problem.ts'
 import { renderWithRouter } from '../../test/renderWithRouter.tsx'
+import { worker } from '../../test/worker.ts'
 import { ForgotPasswordPage } from './forgot-password.tsx'
 
 test('shows the confirmation state after submitting', async () => {
   // The API returns 202 whether or not the address exists.
-  mockClientFetch(() => jsonResponse({}, { status: 202 }))
+  worker.use(handleSiteAuthForgotPassword(() => HttpResponse.json({}, { status: 202 })))
   const { screen } = await renderWithRouter(<ForgotPasswordPage />)
 
   await screen.getByLabelText(/^Email/).fill('user@example.com')
@@ -16,7 +19,7 @@ test('shows the confirmation state after submitting', async () => {
 })
 
 test('tells how many minutes to wait when the 429 carries a retry time', async () => {
-  mockClientFetch(() => jsonResponse({ status: 429, retryAfter: 3600 }, { status: 429 }))
+  worker.use(handleSiteAuthForgotPassword(() => problem(429, { retryAfter: 3600 })))
   const { screen } = await renderWithRouter(<ForgotPasswordPage />)
 
   await screen.getByLabelText(/^Email/).fill('user@example.com')
@@ -26,7 +29,7 @@ test('tells how many minutes to wait when the 429 carries a retry time', async (
 })
 
 test('tells how many seconds to wait below a minute', async () => {
-  mockClientFetch(() => jsonResponse({ status: 429, retryAfter: 45 }, { status: 429 }))
+  worker.use(handleSiteAuthForgotPassword(() => problem(429, { retryAfter: 45 })))
   const { screen } = await renderWithRouter(<ForgotPasswordPage />)
 
   await screen.getByLabelText(/^Email/).fill('user@example.com')
@@ -36,7 +39,7 @@ test('tells how many seconds to wait below a minute', async () => {
 })
 
 test('falls back to the generic message when the 429 carries no retry time', async () => {
-  mockClientFetch(() => jsonResponse({ status: 429 }, { status: 429 }))
+  worker.use(handleSiteAuthForgotPassword(() => problem(429, {})))
   const { screen } = await renderWithRouter(<ForgotPasswordPage />)
 
   await screen.getByLabelText(/^Email/).fill('user@example.com')

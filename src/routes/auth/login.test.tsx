@@ -1,11 +1,14 @@
+import { HttpResponse } from 'msw'
 import { expect, test } from 'vitest'
 
-import { jsonResponse, mockClientFetch } from '../../test/mockFetch.ts'
+import { handleSiteAuthDirectLogin } from '../../generated/site/msw.gen.ts'
+import { problem } from '../../test/problem.ts'
 import { renderWithRouter } from '../../test/renderWithRouter.tsx'
+import { worker } from '../../test/worker.ts'
 import { LoginPage } from './login.tsx'
 
 test('navigates home after a successful login', async () => {
-  mockClientFetch(() => jsonResponse({}))
+  worker.use(handleSiteAuthDirectLogin(() => HttpResponse.json({})))
   const { screen, navigate } = await renderWithRouter(<LoginPage />)
 
   await screen.getByLabelText(/^Email/).fill('user@example.com')
@@ -17,7 +20,7 @@ test('navigates home after a successful login', async () => {
 })
 
 test('shows an error notification when login fails', async () => {
-  mockClientFetch(() => jsonResponse({ detail: 'Invalid credentials' }, { status: 401 }))
+  worker.use(handleSiteAuthDirectLogin(() => problem(401, { detail: 'Invalid credentials' })))
   const { screen, navigate } = await renderWithRouter(<LoginPage />)
 
   await screen.getByLabelText(/^Email/).fill('user@example.com')
@@ -30,7 +33,7 @@ test('shows an error notification when login fails', async () => {
 })
 
 test('shows how long to wait when login is rate limited', async () => {
-  mockClientFetch(() => jsonResponse({ status: 429, retryAfter: 90 }, { status: 429 }))
+  worker.use(handleSiteAuthDirectLogin(() => problem(429, { retryAfter: 90 })))
   const { screen } = await renderWithRouter(<LoginPage />)
 
   await screen.getByLabelText(/^Email/).fill('user@example.com')
@@ -41,7 +44,7 @@ test('shows how long to wait when login is rate limited', async () => {
 })
 
 test('shows the wait in seconds when it is under a minute', async () => {
-  mockClientFetch(() => jsonResponse({ status: 429, retryAfter: 4 }, { status: 429 }))
+  worker.use(handleSiteAuthDirectLogin(() => problem(429, { retryAfter: 4 })))
   const { screen } = await renderWithRouter(<LoginPage />)
 
   await screen.getByLabelText(/^Email/).fill('user@example.com')

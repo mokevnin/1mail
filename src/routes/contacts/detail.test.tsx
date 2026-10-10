@@ -5,26 +5,29 @@ import {
   createRouter,
   RouterProvider,
 } from '@tanstack/react-router'
-import { expect, test } from 'vitest'
+import { HttpResponse } from 'msw'
+import { beforeEach, expect, test } from 'vitest'
 
+import {
+  handleSiteContactsDelete,
+  handleSiteContactsGet,
+  handleSiteEventsList,
+  handleSiteMembershipsList,
+  handleSiteUserGetMe,
+} from '../../generated/site/msw.gen.ts'
 import type {
   SiteContactResource,
-  SiteContactsDeleteData,
-  SiteContactsGetData,
-  SiteEventsListData,
   SiteMembershipResource,
-  SiteMembershipsListData,
   SiteMembershipRole,
-  SiteUserGetMeData,
 } from '../../generated/site/types.gen.ts'
 import { contactsDetailRoute, contactsRoute } from '../../router.tsx'
-import { jsonResponse, mockClientRoutes, route } from '../../test/mockFetch.ts'
+import { problem } from '../../test/problem.ts'
 import { renderWithProviders } from '../../test/renderWithProviders.tsx'
 import { renderWithRouter } from '../../test/renderWithRouter.tsx'
 import { routeMount } from '../../test/routeMount.ts'
+import { worker } from '../../test/worker.ts'
 import { ContactDetailPage } from './detail.tsx'
 
-const SLUG = { slug: 'test' }
 const DETAIL_ROUTE = routeMount(contactsDetailRoute, { slug: 'test', contactId: '9' })
 const NOW = '2026-01-01T00:00:00Z'
 
@@ -38,24 +41,15 @@ const ADA: SiteContactResource = {
   updatedAt: NOW,
 }
 
-function contactRoute(respond: () => Response) {
-  return route<SiteContactsGetData>(
-    'GET',
-    '/workspaces/{slug}/contacts/{id}',
-    { ...SLUG, id: '9' },
-    respond,
-  )
-}
+// The page reads the current member's role on every render; tests that care override it.
+beforeEach(() => {
+  worker.use(...currentRoleRoutes('member'))
+})
 
-function eventsRoute(respond: () => Response) {
-  return route<SiteEventsListData>('GET', '/workspaces/{slug}/events', SLUG, respond)
-}
+const NO_EVENTS = handleSiteEventsList(() => HttpResponse.json({ items: [], totalItems: 0 }))
 
 test('shows the contact, its custom fields and its events', async () => {
-  mockClientRoutes([
-    contactRoute(() => jsonResponse(ADA)),
-    eventsRoute(() => jsonResponse({ items: [], totalItems: 0 })),
-  ])
+  worker.use(handleSiteContactsGet({ body: ADA }), NO_EVENTS)
 
   const { screen } = await renderWithRouter(<ContactDetailPage />, DETAIL_ROUTE)
 
@@ -69,16 +63,16 @@ test('shows the contact, its custom fields and its events', async () => {
 
 test('lists the contact events and filters them by contact id', async () => {
   let requestedContactId: string | null = null
-  mockClientRoutes([
-    contactRoute(() => jsonResponse({ ...ADA, customFields: null })),
-    route<SiteEventsListData>('GET', '/workspaces/{slug}/events', SLUG, (req) => {
-      requestedContactId = new URL(req.url).searchParams.get('contactId')
-      return jsonResponse({
+  worker.use(
+    handleSiteContactsGet({ body: { ...ADA, customFields: null } }),
+    handleSiteEventsList(({ request }) => {
+      requestedContactId = new URL(request.url).searchParams.get('contactId')
+      return HttpResponse.json({
         items: [{ id: 'e1', subjectId: 's1', action: 'page.viewed', createdAt: NOW }],
         totalItems: 1,
       })
     }),
-  ])
+  )
 
   const { screen } = await renderWithRouter(<ContactDetailPage />, DETAIL_ROUTE)
 
@@ -88,12 +82,12 @@ test('lists the contact events and filters them by contact id', async () => {
 })
 
 test('falls back to the subject id as the title when there is no email', async () => {
-  mockClientRoutes([
-    contactRoute(() =>
-      jsonResponse({ id: '9', subjectId: 'anon-1', createdAt: NOW, updatedAt: NOW }),
-    ),
-    eventsRoute(() => jsonResponse({ items: [], totalItems: 0 })),
-  ])
+  worker.use(
+    handleSiteContactsGet({
+      body: { id: '9', subjectId: 'anon-1', createdAt: NOW, updatedAt: NOW },
+    }),
+    NO_EVENTS,
+  )
 
   const { screen } = await renderWithRouter(<ContactDetailPage />, DETAIL_ROUTE)
 
@@ -101,10 +95,10 @@ test('falls back to the subject id as the title when there is no email', async (
 })
 
 test('shows an error alert when the contact fails to load', async () => {
-  mockClientRoutes([
-    contactRoute(() => jsonResponse({ title: 'Gone', status: 404 }, { status: 404 })),
-    eventsRoute(() => jsonResponse({ items: [], totalItems: 0 })),
-  ])
+  worker.use(
+    handleSiteContactsGet(() => problem(404, 'Gone')),
+    NO_EVENTS,
+  )
 
   const { screen } = await renderWithRouter(<ContactDetailPage />, DETAIL_ROUTE)
 
@@ -112,10 +106,10 @@ test('shows an error alert when the contact fails to load', async () => {
 })
 
 test('shows an activity error when the events fail to load', async () => {
-  mockClientRoutes([
-    contactRoute(() => jsonResponse(ADA)),
-    eventsRoute(() => jsonResponse({ title: 'Boom', status: 500 }, { status: 500 })),
-  ])
+  worker.use(
+    handleSiteContactsGet({ body: ADA }),
+    handleSiteEventsList(() => problem(500)),
+  )
 
   const { screen } = await renderWithRouter(<ContactDetailPage />, DETAIL_ROUTE)
 
@@ -124,31 +118,24 @@ test('shows an activity error when the events fail to load', async () => {
 
 test('moving to another contact resets the events page to the first', async () => {
   const eventRequests: { contactId: string | null; page: string | null }[] = []
-  mockClientRoutes([
-    route<SiteContactsGetData>(
-      'GET',
-      '/workspaces/{slug}/contacts/{id}',
-      { ...SLUG, id: '9' },
-      () => jsonResponse(ADA),
+  worker.use(
+    handleSiteContactsGet(({ params }) =>
+      HttpResponse.json(
+        params.id === '10' ? { ...ADA, id: '10', email: 'grace@example.com' } : ADA,
+      ),
     ),
-    route<SiteContactsGetData>(
-      'GET',
-      '/workspaces/{slug}/contacts/{id}',
-      { ...SLUG, id: '10' },
-      () => jsonResponse({ ...ADA, id: '10', email: 'grace@example.com' }),
-    ),
-    route<SiteEventsListData>('GET', '/workspaces/{slug}/events', SLUG, (req) => {
-      const { searchParams } = new URL(req.url)
+    handleSiteEventsList(({ request }) => {
+      const { searchParams } = new URL(request.url)
       eventRequests.push({
         contactId: searchParams.get('contactId'),
         page: searchParams.get('page'),
       })
-      return jsonResponse({
+      return HttpResponse.json({
         items: [{ id: 'e1', subjectId: 's1', action: 'page.viewed', createdAt: NOW }],
         totalItems: 25,
       })
     }),
-  ])
+  )
 
   // A real in-memory router (renderWithRouter stubs navigation) so the same page
   // instance sees its contactId param change.
@@ -190,19 +177,13 @@ function currentRoleRoutes(role: SiteMembershipRole) {
     createdAt: NOW,
   })
   return [
-    route<SiteUserGetMeData>('GET', '/me', {}, () => jsonResponse(me)),
-    route<SiteMembershipsListData>('GET', '/workspaces/{slug}/memberships', SLUG, () =>
-      jsonResponse([membership('1', 'owner'), membership('5', role)]),
-    ),
+    handleSiteUserGetMe({ body: me }),
+    handleSiteMembershipsList({ body: [membership('1', 'owner'), membership('5', role)] }),
   ]
 }
 
 test('a member can export a contact but is not offered Erase', async () => {
-  mockClientRoutes([
-    contactRoute(() => jsonResponse(ADA)),
-    eventsRoute(() => jsonResponse({ items: [], totalItems: 0 })),
-    ...currentRoleRoutes('member'),
-  ])
+  worker.use(handleSiteContactsGet({ body: ADA }), NO_EVENTS, ...currentRoleRoutes('member'))
 
   const { screen } = await renderWithRouter(<ContactDetailPage />, DETAIL_ROUTE)
 
@@ -212,20 +193,15 @@ test('a member can export a contact but is not offered Erase', async () => {
 
 test('an admin erases a contact only after confirming the irreversible action', async () => {
   const erased: string[] = []
-  mockClientRoutes([
-    contactRoute(() => jsonResponse(ADA)),
-    eventsRoute(() => jsonResponse({ items: [], totalItems: 0 })),
+  worker.use(
+    handleSiteContactsGet({ body: ADA }),
+    NO_EVENTS,
     ...currentRoleRoutes('admin'),
-    route<SiteContactsDeleteData>(
-      'DELETE',
-      '/workspaces/{slug}/contacts/{id}',
-      { ...SLUG, id: '9' },
-      () => {
-        erased.push('9')
-        return new Response(null, { status: 204 })
-      },
-    ),
-  ])
+    handleSiteContactsDelete(({ params }) => {
+      erased.push(params.id)
+      return new HttpResponse(null, { status: 204 })
+    }),
+  )
 
   const { screen, navigate } = await renderWithRouter(<ContactDetailPage />, DETAIL_ROUTE)
 

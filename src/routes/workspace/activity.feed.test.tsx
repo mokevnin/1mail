@@ -1,10 +1,12 @@
+import { HttpResponse } from 'msw'
 import { expect, test } from 'vitest'
 
-import type { SiteEventsListData } from '../../generated/site/types.gen.ts'
+import { handleSiteEventsList } from '../../generated/site/msw.gen.ts'
 import { activityRoute } from '../../router.tsx'
-import { jsonResponse, mockClientRoutes, route } from '../../test/mockFetch.ts'
+import { problem } from '../../test/problem.ts'
 import { renderWithRouter } from '../../test/renderWithRouter.tsx'
 import { routeMount } from '../../test/routeMount.ts'
+import { worker } from '../../test/worker.ts'
 import { ActivityPage } from './activity.tsx'
 
 const SLUG = 'test'
@@ -24,11 +26,11 @@ const event = (id: string, over: Record<string, unknown> = {}) => ({
 type Query = { page: string | null; action: string | null }
 
 function serveEvents(queries: Query[], totalItems = 1) {
-  mockClientRoutes([
-    route<SiteEventsListData>('GET', '/workspaces/{slug}/events', { slug: SLUG }, (req) => {
-      const params = new URL(req.url).searchParams
+  worker.use(
+    handleSiteEventsList(({ request }) => {
+      const params = new URL(request.url).searchParams
       queries.push({ page: params.get('page'), action: params.get('action') })
-      return jsonResponse({
+      return HttpResponse.json({
         items: [event('1')],
         page: Number(params.get('page') ?? 1),
         pageSize: 25,
@@ -36,7 +38,7 @@ function serveEvents(queries: Query[], totalItems = 1) {
         totalPages: Math.ceil(totalItems / 25),
       })
     }),
-  ])
+  )
 }
 
 test('an event without an email shows its subject id', async () => {
@@ -71,11 +73,7 @@ test('turning live mode off keeps the feed rendered', async () => {
 })
 
 test('shows an error alert when the feed fails to load', async () => {
-  mockClientRoutes([
-    route<SiteEventsListData>('GET', '/workspaces/{slug}/events', { slug: SLUG }, () =>
-      jsonResponse({ status: 500, detail: 'boom' }, { status: 500 }),
-    ),
-  ])
+  worker.use(handleSiteEventsList(() => problem(500)))
   const { screen } = await renderWithRouter(<ActivityPage />, mount)
 
   await expect.element(screen.getByText('Failed to load activity').first()).toBeInTheDocument()
