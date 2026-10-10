@@ -9,52 +9,50 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-type fakeOps struct {
-	suspended   []string // "slug|by|reason"
-	unsuspended []string
-	changed     bool
-}
-
-func (f *fakeOps) SuspendWorkspace(_ context.Context, slug, by, reason string) (bool, error) {
-	f.suspended = append(f.suspended, slug+"|"+by+"|"+reason)
-	return f.changed, nil
-}
-
-func (f *fakeOps) UnsuspendWorkspace(_ context.Context, slug string) (bool, error) {
-	f.unsuspended = append(f.unsuspended, slug)
-	return f.changed, nil
+// opsReporting is workspaceOps whose suspend and unsuspend both report changed.
+func opsReporting(changed bool) *workspaceOpsMock {
+	return &workspaceOpsMock{
+		SuspendWorkspaceFunc:   func(context.Context, string, string, string) (bool, error) { return changed, nil },
+		UnsuspendWorkspaceFunc: func(context.Context, string) (bool, error) { return changed, nil },
+	}
 }
 
 func TestWorkspaceSuspendJoinsTheReasonWords(t *testing.T) {
-	ops := &fakeOps{changed: true}
+	ops := opsReporting(true)
 	var out bytes.Buffer
 
 	require.NoError(t, runWorkspace(context.Background(), ops, []string{"suspend", "acme", "complaint", "rate", "too", "high"}, &out))
 
-	assert.Equal(t, []string{"acme|cli|complaint rate too high"}, ops.suspended)
+	calls := ops.SuspendWorkspaceCalls()
+	require.Len(t, calls, 1)
+	assert.Equal(t, "acme", calls[0].Slug)
+	assert.Equal(t, "cli", calls[0].By)
+	assert.Equal(t, "complaint rate too high", calls[0].Reason)
 	assert.Contains(t, out.String(), "suspended")
 }
 
 func TestWorkspaceSuspendNeedsASlugAndAReason(t *testing.T) {
-	ops := &fakeOps{}
+	ops := opsReporting(false)
 	for _, args := range [][]string{{"suspend"}, {"suspend", "acme"}} {
 		err := runWorkspace(context.Background(), ops, args, &bytes.Buffer{})
 		require.Error(t, err, "args %v", args)
 	}
-	assert.Empty(t, ops.suspended)
+	assert.Empty(t, ops.SuspendWorkspaceCalls())
 }
 
 func TestWorkspaceUnsuspendReportsNoChange(t *testing.T) {
-	ops := &fakeOps{changed: false}
+	ops := opsReporting(false)
 	var out bytes.Buffer
 
 	require.NoError(t, runWorkspace(context.Background(), ops, []string{"unsuspend", "acme"}, &out))
 
-	assert.Equal(t, []string{"acme"}, ops.unsuspended)
+	calls := ops.UnsuspendWorkspaceCalls()
+	require.Len(t, calls, 1)
+	assert.Equal(t, "acme", calls[0].Slug)
 	assert.Contains(t, out.String(), "not suspended")
 }
 
 func TestWorkspaceUnknownSubcommand(t *testing.T) {
-	require.Error(t, runWorkspace(context.Background(), &fakeOps{}, []string{"delete", "acme"}, &bytes.Buffer{}))
-	require.Error(t, runWorkspace(context.Background(), &fakeOps{}, nil, &bytes.Buffer{}))
+	require.Error(t, runWorkspace(context.Background(), opsReporting(false), []string{"delete", "acme"}, &bytes.Buffer{}))
+	require.Error(t, runWorkspace(context.Background(), opsReporting(false), nil, &bytes.Buffer{}))
 }

@@ -60,7 +60,7 @@ func TestAutomationEnrollAndRun(t *testing.T) {
 	assert.Empty(t, again)
 
 	fs := &fakeSender{}
-	drive(t, env, fakeResolver{sender: fs}, runIDs[0])
+	drive(t, env, resolvingTo(fs), runIDs[0])
 
 	// Two email steps fired (the wait step does not send).
 	assert.Len(t, fs.sent, 2)
@@ -107,7 +107,7 @@ func TestAutomationExitsOnUnsubscribe(t *testing.T) {
 	require.Len(t, runIDs, 1)
 
 	fs := &fakeSender{}
-	drive(t, env, fakeResolver{sender: fs}, runIDs[0])
+	drive(t, env, resolvingTo(fs), runIDs[0])
 
 	assert.Empty(t, fs.sent, "ineligible destination receives no email")
 	assert.Equal(t, automationrun.StatusExited, env.DB.AutomationRun.GetX(ctx, runIDs[0]).Status)
@@ -139,7 +139,7 @@ func TestAutomationExitsOnSuppression(t *testing.T) {
 	require.Len(t, runIDs, 1)
 
 	fs := &fakeSender{}
-	drive(t, env, fakeResolver{sender: fs}, runIDs[0])
+	drive(t, env, resolvingTo(fs), runIDs[0])
 
 	assert.Empty(t, fs.sent)
 	assert.Equal(t, automationrun.StatusExited, env.DB.AutomationRun.GetX(ctx, runIDs[0]).Status)
@@ -172,7 +172,7 @@ func TestAutomationUnaffectedByBroadcastUnsubscribe(t *testing.T) {
 	require.Len(t, runIDs, 1)
 
 	fs := &fakeSender{}
-	drive(t, env, fakeResolver{sender: fs}, runIDs[0])
+	drive(t, env, resolvingTo(fs), runIDs[0])
 
 	assert.Len(t, fs.sent, 1, "broadcasts opt-out must not block the automation")
 	assert.Equal(t, automationrun.StatusCompleted, env.DB.AutomationRun.GetX(ctx, runIDs[0]).Status)
@@ -197,7 +197,7 @@ func TestAutomationSendIncludesUnsubscribeFooter(t *testing.T) {
 	require.Len(t, runIDs, 1)
 
 	fs := &fakeSender{}
-	mod := outbound.New(env.Bus, fakeResolver{sender: fs}, tracking.New("secret", "https://app.test"))
+	mod := outbound.New(env.Bus, resolvingTo(fs), tracking.New("secret", "https://app.test"))
 	_, err = jobs.RunStep(ctx, env.DB, mod, runIDs[0])
 	require.NoError(t, err)
 
@@ -240,7 +240,7 @@ func TestAutomationWaitDefersNextStep(t *testing.T) {
 	require.Len(t, runIDs, 1)
 
 	// First step is a wait: it defers (ResumeAt set), no send yet.
-	res, err := jobs.RunStep(ctx, env.DB, newMod(env, fakeResolver{sender: &fakeSender{}}), runIDs[0])
+	res, err := jobs.RunStep(ctx, env.DB, newMod(env, resolvingTo(&fakeSender{})), runIDs[0])
 	require.NoError(t, err)
 	assert.False(t, res.Done)
 	require.NotNil(t, res.ResumeAt)
@@ -259,7 +259,7 @@ func TestAutomationHeldStepWaitsAndResumes(t *testing.T) {
 	require.Len(t, runIDs, 1)
 
 	fs := &fakeSender{}
-	mod := newMod(env, fakeResolver{sender: fs})
+	mod := newMod(env, resolvingTo(fs))
 	env.DB.Workspace.UpdateOneID(fixtures.AcmeID).SetSuspendedAt(time.Now()).ExecX(ctx)
 
 	res, err := jobs.RunStep(ctx, env.DB, mod, runIDs[0])
@@ -272,6 +272,6 @@ func TestAutomationHeldStepWaitsAndResumes(t *testing.T) {
 	assert.Empty(t, fs.sent)
 
 	env.DB.Workspace.UpdateOneID(fixtures.AcmeID).ClearSuspendedAt().ExecX(ctx)
-	drive(t, env, fakeResolver{sender: fs}, runIDs[0])
+	drive(t, env, resolvingTo(fs), runIDs[0])
 	assert.Len(t, fs.sent, 1, "after the unfreeze the step sends")
 }

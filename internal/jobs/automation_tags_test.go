@@ -21,7 +21,7 @@ func TestAutomationTagSteps(t *testing.T) {
 	ctx := context.Background()
 	fs := &fakeSender{}
 
-	drive(t, env, fakeResolver{sender: fs}, 1100)
+	drive(t, env, resolvingTo(fs), 1100)
 
 	assert.Empty(t, fs.sent)
 	names, err := env.DB.Tag.Query().

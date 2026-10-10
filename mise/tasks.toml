@@ -194,16 +194,27 @@ run = [
   "go tool goverter gen ./internal/api/site/resources ./internal/api/external/resources",
 ]
 
+["generate:mocks"]
+description = "Go interfaces -> test mocks (moq, *_gen_test.go next to the tests that use them)"
+run = [
+  "go tool moq -out internal/jobs/mocks_gen_test.go -pkg jobs_test ./internal/outbound Senders",
+  "go tool moq -out internal/messaging/mocks_gen_test.go -pkg messaging_test ./internal/messaging EmailSender",
+  "go tool moq -out internal/events/mocks_gen_test.go -pkg events ./internal/events Enroller WebhookDispatcher",
+  "go tool moq -out internal/events/mocks_ext_gen_test.go -pkg events_test ./internal/events Enroller WebhookDispatcher",
+  "go tool moq -out cmd/server/mocks_gen_test.go -pkg main ./cmd/server workspaceOps",
+]
+
 ["generate:fixtures"]
 description = "fixtures/*.yml -> Go (fixture catalog constants for `# fixture: Name` rows)"
 run = "go run ./cmd/fixturegen"
 
 [generate]
-description = "Full cycle: typespec -> openapi -> backend -> fixture catalog -> frontend -> i18n types -> format"
+description = "Full cycle: typespec -> openapi -> backend -> test mocks -> fixture catalog -> frontend -> i18n types -> format"
 run = [
   { task = "generate:typespec" },
   { task = "generate:openapi" },
   { task = "generate:backend" },
+  { task = "generate:mocks" },
   { task = "generate:fixtures" },
   { task = "fix" },
 ]

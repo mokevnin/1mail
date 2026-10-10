@@ -1,7 +1,6 @@
 package sendlimit_test
 
 import (
-	"context"
 	"errors"
 	"testing"
 
@@ -16,44 +15,6 @@ import (
 	"github.com/mokevnin/1mail/internal/sendlimit"
 	"github.com/mokevnin/1mail/internal/testhelper"
 )
-
-// fakeSES stands in for the SES account: its sender answers GetSendQuota with the
-// scripted quota or error. It is a catalog provider like the real one, so discovery
-// builds it from the stored, encrypted config exactly as it builds the real sender.
-type fakeSES struct {
-	quota messaging.Quota
-	err   error
-	calls int
-}
-
-func (f *fakeSES) Send(context.Context, messaging.EmailMessage) (messaging.Receipt, error) {
-	return messaging.Receipt{}, errors.New("fakeSES does not send")
-}
-
-func (f *fakeSES) SendQuota(context.Context) (messaging.Quota, error) {
-	f.calls++
-	return f.quota, f.err
-}
-
-func (f *fakeSES) catalog() *messaging.Catalog {
-	return messaging.NewCatalog(
-		messaging.ProviderDescriptor{
-			Channel: messaging.ChannelEmail, Provider: messaging.ProviderSES,
-			Build: func([]byte, messaging.Signer) (any, error) { return f, nil },
-		},
-		// smtp builds a sender that cannot report a quota.
-		messaging.ProviderDescriptor{
-			Channel: messaging.ChannelEmail, Provider: messaging.ProviderSMTP,
-			Build: func([]byte, messaging.Signer) (any, error) { return plainSender{}, nil },
-		},
-	)
-}
-
-type plainSender struct{}
-
-func (plainSender) Send(context.Context, messaging.EmailMessage) (messaging.Receipt, error) {
-	return messaging.Receipt{}, nil
-}
 
 func envCipher(t *testing.T) *secrets.Cipher {
 	t.Helper()
@@ -74,9 +35,10 @@ func reload(t *testing.T, s *ent.Scoped, id int64) *ent.Integration {
 func TestRefreshQuotaStoresTheProviderValuesAndFeedsTheCeiling(t *testing.T) {
 	env := testhelper.Setup(t)
 	s := env.DB.Scoped(fixtures.AcmeID)
-	ses := &fakeSES{quota: messaging.Quota{PerSecond: ptr(14), PerDay: ptr(50000)}}
+	ses := &testhelper.FakeSES{}
+	ses.SetQuota(messaging.Quota{PerSecond: ptr(14), PerDay: ptr(50000)})
 
-	require.NoError(t, sendlimit.RefreshQuota(t.Context(), s, envCipher(t), ses.catalog(), reload(t, s, fixtures.IntegrationAcmeSesID)))
+	require.NoError(t, sendlimit.RefreshQuota(t.Context(), s, envCipher(t), ses.Catalog(), reload(t, s, fixtures.IntegrationAcmeSesID)))
 
 	row := reload(t, s, fixtures.IntegrationAcmeSesID)
 	assert.Equal(t, ptr(14), row.ProviderMaxPerSecond)
@@ -95,10 +57,11 @@ func TestRefreshQuotaStoresTheProviderValuesAndFeedsTheCeiling(t *testing.T) {
 func TestRefreshQuotaFailureKeepsManualOrUnlimitedAndRecordsAWarning(t *testing.T) {
 	env := testhelper.Setup(t)
 	s := env.DB.Scoped(fixtures.AcmeID)
-	ses := &fakeSES{err: errors.New("AccessDenied: ses:GetSendQuota")}
+	ses := &testhelper.FakeSES{}
+	ses.SetQuotaErr(errors.New("AccessDenied: ses:GetSendQuota"))
 	require.NoError(t, s.Integration().UpdateOneID(fixtures.IntegrationAcmeSesID).SetMaxPerDay(1000).Exec(t.Context()))
 
-	err := sendlimit.RefreshQuota(t.Context(), s, envCipher(t), ses.catalog(), reload(t, s, fixtures.IntegrationAcmeSesID))
+	err := sendlimit.RefreshQuota(t.Context(), s, envCipher(t), ses.Catalog(), reload(t, s, fixtures.IntegrationAcmeSesID))
 	require.NoError(t, err, "a failed lookup is recorded, never returned: it must not fail a save or a job")
 
 	row := reload(t, s, fixtures.IntegrationAcmeSesID)
@@ -113,13 +76,14 @@ func TestRefreshQuotaFailureKeepsManualOrUnlimitedAndRecordsAWarning(t *testing.
 func TestRefreshQuotaSuccessAfterFailureClearsTheWarning(t *testing.T) {
 	env := testhelper.Setup(t)
 	s := env.DB.Scoped(fixtures.AcmeID)
-	ses := &fakeSES{err: errors.New("AccessDenied")}
-	cipher, catalog := envCipher(t), ses.catalog()
+	ses := &testhelper.FakeSES{}
+	ses.SetQuotaErr(errors.New("AccessDenied"))
+	cipher, catalog := envCipher(t), ses.Catalog()
 
 	require.NoError(t, sendlimit.RefreshQuota(t.Context(), s, cipher, catalog, reload(t, s, fixtures.IntegrationAcmeSesID)))
 	require.True(t, reload(t, s, fixtures.IntegrationAcmeSesID).ProviderQuotaUnavailable)
 
-	ses.err, ses.quota = nil, messaging.Quota{PerSecond: ptr(1)}
+	ses.SetQuota(messaging.Quota{PerSecond: ptr(1)})
 	require.NoError(t, sendlimit.RefreshQuota(t.Context(), s, cipher, catalog, reload(t, s, fixtures.IntegrationAcmeSesID)))
 
 	row := reload(t, s, fixtures.IntegrationAcmeSesID)
@@ -131,11 +95,12 @@ func TestRefreshQuotaSuccessAfterFailureClearsTheWarning(t *testing.T) {
 func TestRefreshQuotaFailureKeepsTheLastKnownProviderValues(t *testing.T) {
 	env := testhelper.Setup(t)
 	s := env.DB.Scoped(fixtures.AcmeID)
-	ses := &fakeSES{quota: messaging.Quota{PerSecond: ptr(14), PerDay: ptr(50000)}}
-	cipher, catalog := envCipher(t), ses.catalog()
+	ses := &testhelper.FakeSES{}
+	ses.SetQuota(messaging.Quota{PerSecond: ptr(14), PerDay: ptr(50000)})
+	cipher, catalog := envCipher(t), ses.Catalog()
 	require.NoError(t, sendlimit.RefreshQuota(t.Context(), s, cipher, catalog, reload(t, s, fixtures.IntegrationAcmeSesID)))
 
-	ses.err = errors.New("timeout")
+	ses.SetQuotaErr(errors.New("timeout"))
 	require.NoError(t, sendlimit.RefreshQuota(t.Context(), s, cipher, catalog, reload(t, s, fixtures.IntegrationAcmeSesID)))
 
 	row := reload(t, s, fixtures.IntegrationAcmeSesID)
@@ -146,12 +111,12 @@ func TestRefreshQuotaFailureKeepsTheLastKnownProviderValues(t *testing.T) {
 func TestRefreshQuotaIgnoresProvidersThatCannotReportOne(t *testing.T) {
 	env := testhelper.Setup(t)
 	s := env.DB.Scoped(fixtures.AcmeID)
-	ses := &fakeSES{}
+	ses := &testhelper.FakeSES{}
 
-	require.NoError(t, sendlimit.RefreshQuota(t.Context(), s, envCipher(t), ses.catalog(), reload(t, s, fixtures.IntegrationAcmeDefaultID)))
+	require.NoError(t, sendlimit.RefreshQuota(t.Context(), s, envCipher(t), ses.Catalog(), reload(t, s, fixtures.IntegrationAcmeDefaultID)))
 
 	row := reload(t, s, fixtures.IntegrationAcmeDefaultID)
 	assert.False(t, row.ProviderQuotaUnavailable, "SMTP has no quota to be unavailable")
 	assert.Nil(t, row.ProviderQuotaCheckedAt)
-	assert.Zero(t, ses.calls)
+	assert.Zero(t, ses.QuotaCalls())
 }

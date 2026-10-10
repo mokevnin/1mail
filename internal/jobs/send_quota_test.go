@@ -1,7 +1,6 @@
 package jobs_test
 
 import (
-	"context"
 	"errors"
 	"testing"
 
@@ -17,26 +16,6 @@ import (
 	"github.com/mokevnin/1mail/internal/sendlimit"
 	"github.com/mokevnin/1mail/internal/testhelper"
 )
-
-// fakeSES is the SES account: the catalog builds it for an "ses" Integration and it
-// answers GetSendQuota with the scripted quota or error.
-type fakeSES struct {
-	quota messaging.Quota
-	err   error
-}
-
-func (f *fakeSES) Send(context.Context, messaging.EmailMessage) (messaging.Receipt, error) {
-	return messaging.Receipt{}, errors.New("fakeSES does not send")
-}
-
-func (f *fakeSES) SendQuota(context.Context) (messaging.Quota, error) { return f.quota, f.err }
-
-func (f *fakeSES) catalog() *messaging.Catalog {
-	return messaging.NewCatalog(messaging.ProviderDescriptor{
-		Channel: messaging.ChannelEmail, Provider: messaging.ProviderSES,
-		Build: func([]byte, messaging.Signer) (any, error) { return f, nil },
-	})
-}
 
 // envCipher is the cipher over the test environment's ENCRYPTION_KEY, the key the
 // fixtures were sealed with, so a fixture Integration's config decrypts.
@@ -70,8 +49,9 @@ func TestRefreshIntegrationQuotaFollowsAccountGrowthAndRecovers(t *testing.T) {
 	env := testhelper.Setup(t)
 	ctx := t.Context()
 	s := env.DB.Scoped(fixtures.AcmeID)
-	fake := &fakeSES{err: errors.New("AccessDenied: ses:GetSendQuota")}
-	worker := jobs.NewRefreshIntegrationQuotaWorker(env.DB, envCipher(t), fake.catalog())
+	fake := &testhelper.FakeSES{}
+	fake.SetQuotaErr(errors.New("AccessDenied: ses:GetSendQuota"))
+	worker := jobs.NewRefreshIntegrationQuotaWorker(env.DB, envCipher(t), fake.Catalog())
 	run := func() {
 		require.NoError(t, worker.Work(ctx, job(jobs.RefreshIntegrationQuotaArgs{IntegrationID: fixtures.IntegrationAcmeSesID})))
 	}
@@ -87,13 +67,13 @@ func TestRefreshIntegrationQuotaFollowsAccountGrowthAndRecovers(t *testing.T) {
 	assert.True(t, effective().Unlimited())
 
 	// A sandbox account, then the account matures: each hourly run follows it.
-	fake.err, fake.quota = nil, messaging.Quota{PerSecond: intPtr(1), PerDay: intPtr(200)}
+	fake.SetQuota(messaging.Quota{PerSecond: intPtr(1), PerDay: intPtr(200)})
 	run()
 	eff := effective()
 	assert.False(t, eff.ProviderQuotaUnavailable, "a later success clears the warning")
 	assert.Equal(t, sendlimit.Value{Limit: intPtr(1), Source: sendlimit.SourceProvider}, eff.PerSecond)
 
-	fake.quota = messaging.Quota{PerSecond: intPtr(14), PerDay: intPtr(50000)}
+	fake.SetQuota(messaging.Quota{PerSecond: intPtr(14), PerDay: intPtr(50000)})
 	run()
 	assert.Equal(t, sendlimit.Value{Limit: intPtr(14), Source: sendlimit.SourceProvider}, effective().PerSecond)
 	assert.Equal(t, sendlimit.Value{Limit: intPtr(50000), Source: sendlimit.SourceProvider}, effective().PerDay)
@@ -101,7 +81,7 @@ func TestRefreshIntegrationQuotaFollowsAccountGrowthAndRecovers(t *testing.T) {
 
 func TestRefreshIntegrationQuotaOfADeletedIntegrationIsNothingToDo(t *testing.T) {
 	env := testhelper.Setup(t)
-	worker := jobs.NewRefreshIntegrationQuotaWorker(env.DB, envCipher(t), (&fakeSES{}).catalog())
+	worker := jobs.NewRefreshIntegrationQuotaWorker(env.DB, envCipher(t), (&testhelper.FakeSES{}).Catalog())
 	require.NoError(t, worker.Work(t.Context(), job(jobs.RefreshIntegrationQuotaArgs{IntegrationID: 424242})))
 }
 

@@ -19,7 +19,7 @@ every caller (regenerate afterwards), rather than layering the new design over t
 API contracts are **one-directional**: TypeSpec → OpenAPI → generated Go + TS. Never
 hand-edit anything under `openapi/`, `gen/`, `ent/` (except `ent/schema/`),
 `src/generated/` / `packages/analytics/src/generated/`, or the `*_gen.go` files in the
-`internal/api/{site,external}/resources` packages and `internal/fixtures/catalog_gen.go` — regenerate instead.
+`internal/api/{site,external}/resources` packages and `internal/fixtures/catalog_gen.go`, or any `*_gen_test.go` mock — regenerate instead.
 
 ```
 typespec/{site,external,collect}   ──tsp compile──▶  openapi/*.openapi.json
@@ -30,6 +30,7 @@ ent/schema/*.go     ──entc──▶ ent/*           (Go ORM)
 ent/schema/*.go + ent/template/scoped*.tmpl  ──entc──▶ ent/scoped.go, ent/scoped_registry.go  (scoped client: `client.Scoped(ws)`)
 ent + gen/{site,external}  ──goverter──▶ internal/api/{site,external}/resources/converter_gen.go
 fixtures/*.yml (`# fixture: Name` rows)  ──cmd/fixturegen──▶ internal/fixtures/catalog_gen.go (named test constants)
+Go interfaces (`mise run generate:mocks` task list)  ──moq──▶ <pkg>/mocks_gen_test.go (test mocks; add an interface to the task list)
 ```
 
 - **goverter** maps ent entities → ogen resource DTOs. The `Converter` interface and its
@@ -47,7 +48,7 @@ fixtures/*.yml (`# fixture: Name` rows)  ──cmd/fixturegen──▶ internal/
 Generated files carry a header (`Code generated … DO NOT EDIT`, or `// @ts-nocheck` on the
 frontend) and are flagged `linguist-generated` in `.gitattributes` (GitHub collapses them in
 diffs). Generated code lives in dedicated dirs — `internal/` is otherwise hand-written, its
-only generated files being the two `converter_gen.go` and `internal/fixtures/catalog_gen.go`.
+only generated files being the two `converter_gen.go`, `internal/fixtures/catalog_gen.go` and the moq `*_gen_test.go` mocks.
 
 ## Common commands
 

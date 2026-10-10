@@ -5,11 +5,13 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	siteapi "github.com/mokevnin/1mail/gen/site"
 	"github.com/mokevnin/1mail/internal/fixtures"
+	"github.com/mokevnin/1mail/internal/messaging"
 	"github.com/mokevnin/1mail/internal/testhelper"
 )
 
@@ -32,7 +34,7 @@ func TestSiteIntegrationsSaveDiscoversTheSESQuota(t *testing.T) {
 	env := testhelper.Setup(t)
 	c := env.SiteActor(t, fixtures.OwnerJohnEmail)
 	ctx := context.Background()
-	env.SES.SetQuota(14, 50000)
+	env.SES.SetQuota(messaging.Quota{PerSecond: lo.ToPtr(14), PerDay: lo.ToPtr(50000)})
 
 	created, err := c.SiteIntegrationsCreate(ctx, &siteapi.SiteCreateIntegrationInput{
 		Name: "SES", Config: sesInput("eu-west-1", "AKIA1234", "secret"),
@@ -84,7 +86,7 @@ func TestSiteIntegrationsFailedQuotaLookupWarnsAndLaterSuccessClearsIt(t *testin
 	resave := &siteapi.SiteUpdateIntegrationInput{
 		Config: siteapi.NewOptNilSiteIntegrationConfigInput(sesInput("eu-west-1", "AKIA1234", "")),
 	}
-	env.SES.SetQuota(14, 50000)
+	env.SES.SetQuota(messaging.Quota{PerSecond: lo.ToPtr(14), PerDay: lo.ToPtr(50000)})
 	_, err = c.SiteIntegrationsUpdate(ctx, resave, upd)
 	require.NoError(t, err)
 	status = reread(t, c, res.ID)

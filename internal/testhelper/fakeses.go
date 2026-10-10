@@ -2,6 +2,7 @@ package testhelper
 
 import (
 	"context"
+	"errors"
 	"sync"
 
 	"github.com/mokevnin/1mail/internal/messaging"
@@ -20,10 +21,10 @@ type FakeSES struct {
 }
 
 // SetQuota makes the next GetSendQuota calls report quota (and succeed).
-func (f *FakeSES) SetQuota(perSecond, perDay int) {
+func (f *FakeSES) SetQuota(quota messaging.Quota) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
-	f.quota, f.err = messaging.Quota{PerSecond: &perSecond, PerDay: &perDay}, nil
+	f.quota, f.err = quota, nil
 }
 
 // SetQuotaErr makes the next GetSendQuota calls fail with err (nil clears it): a
@@ -41,11 +42,39 @@ func (f *FakeSES) QuotaCalls() int {
 	return f.calls
 }
 
-func (f *FakeSES) sendQuota() (messaging.Quota, error) {
+// Send is never reached: the fake answers quota lookups only.
+func (f *FakeSES) Send(context.Context, messaging.EmailMessage) (messaging.Receipt, error) {
+	return messaging.Receipt{}, errors.New("FakeSES does not send")
+}
+
+// SendQuota answers the scripted quota or error and counts the lookup.
+func (f *FakeSES) SendQuota(context.Context) (messaging.Quota, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.calls++
 	return f.quota, f.err
+}
+
+// Catalog is a catalog whose "ses" provider builds the fake itself, so discovery
+// reaches it through the stored, encrypted Integration config exactly as it reaches
+// the real sender; "smtp" builds a sender that cannot report a quota.
+func (f *FakeSES) Catalog() *messaging.Catalog {
+	return messaging.NewCatalog(
+		messaging.ProviderDescriptor{
+			Channel: messaging.ChannelEmail, Provider: messaging.ProviderSES,
+			Build: func([]byte, messaging.Signer) (any, error) { return f, nil },
+		},
+		messaging.ProviderDescriptor{
+			Channel: messaging.ChannelEmail, Provider: messaging.ProviderSMTP,
+			Build: func([]byte, messaging.Signer) (any, error) { return plainSender{}, nil },
+		},
+	)
+}
+
+type plainSender struct{}
+
+func (plainSender) Send(context.Context, messaging.EmailMessage) (messaging.Receipt, error) {
+	return messaging.Receipt{}, nil
 }
 
 // quotaSender is the real SES sender with its quota lookup answered by the fake.
@@ -54,8 +83,8 @@ type quotaSender struct {
 	fake *FakeSES
 }
 
-func (s quotaSender) SendQuota(context.Context) (messaging.Quota, error) {
-	return s.fake.sendQuota()
+func (s quotaSender) SendQuota(ctx context.Context) (messaging.Quota, error) {
+	return s.fake.SendQuota(ctx)
 }
 
 // catalogWith is the built-in catalog with SES's quota lookup answered by fake.
