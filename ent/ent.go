@@ -30,6 +30,7 @@ import (
 	"github.com/mokevnin/1mail/ent/oauthclient"
 	"github.com/mokevnin/1mail/ent/oauthcode"
 	"github.com/mokevnin/1mail/ent/outboundmessage"
+	"github.com/mokevnin/1mail/ent/recoverycode"
 	"github.com/mokevnin/1mail/ent/segment"
 	"github.com/mokevnin/1mail/ent/sendingdomain"
 	"github.com/mokevnin/1mail/ent/sendlimiter"
@@ -118,6 +119,7 @@ func checkColumn(t, c string) error {
 			oauthclient.Table:        oauthclient.ValidColumn,
 			oauthcode.Table:          oauthcode.ValidColumn,
 			outboundmessage.Table:    outboundmessage.ValidColumn,
+			recoverycode.Table:       recoverycode.ValidColumn,
 			segment.Table:            segment.ValidColumn,
 			sendlimiter.Table:        sendlimiter.ValidColumn,
 			sendingdomain.Table:      sendingdomain.ValidColumn,

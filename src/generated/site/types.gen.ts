@@ -1688,6 +1688,26 @@ export type SitePreviewSegmentResult = {
   count: number;
 };
 
+/**
+ * A fresh set of Recovery codes. They are shown only in this response.
+ */
+export type SiteRecoveryCodes = {
+  /**
+   * Single-use codes, each one usable in place of a TOTP code
+   */
+  codes: Array<string>;
+};
+
+/**
+ * Proof of the User's password, for regenerating Recovery codes
+ */
+export type SiteRecoveryCodesInput = {
+  /**
+   * Current password
+   */
+  currentPassword: string;
+};
+
 export type SiteRegisterInput = {
   name: string;
   email: EmailAddress;
@@ -1717,6 +1737,67 @@ export type SiteScheduleBroadcastInput = {
    * When the broadcast should be sent
    */
   scheduledAt: Timestamp;
+};
+
+/**
+ * A code from the authenticator app
+ */
+export type SiteSecondFactorConfirmInput = {
+  /**
+   * The current 6-digit TOTP code
+   */
+  code: string;
+};
+
+/**
+ * Proof of password and possession, for disabling the Second factor
+ */
+export type SiteSecondFactorDisableInput = {
+  /**
+   * Current password
+   */
+  currentPassword: string;
+  /**
+   * A current TOTP code, or an unused Recovery code
+   */
+  code: string;
+};
+
+/**
+ * A pending enrollment: the TOTP secret to add to an authenticator app
+ */
+export type SiteSecondFactorEnrollment = {
+  /**
+   * The secret as a base32 key, for typing it into the app
+   */
+  secret: string;
+  /**
+   * The otpauth:// URI the QR code encodes
+   */
+  otpauthUri: string;
+  /**
+   * The QR code of the otpauth URI, as a PNG data URI
+   */
+  qrCode: string;
+};
+
+/**
+ * The authenticated User's Second factor (ADR 0020). Recovery codes are never
+ * readable here: only how many are left.
+ */
+export type SiteSecondFactorStatus = {
+  /**
+   * Whether a confirmed TOTP Second factor is active
+   */
+  enabled: boolean;
+  /**
+   * Whether an enrollment was started and still awaits its confirmation code
+   */
+  pending: boolean;
+  /**
+   * Unused Recovery codes left (0 without a Second factor)
+   */
+  recoveryCodesRemaining: number;
 };
 
 /**
@@ -2940,6 +3021,138 @@ export type SiteUserEmailChangeResponses = {
    */
   202: unknown;
 };
+
+export type SiteSecondFactorGetStatusData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: '/me/second-factor';
+};
+
+export type SiteSecondFactorGetStatusResponses = {
+  /**
+   * The request has succeeded.
+   */
+  200: SiteSecondFactorStatus;
+};
+
+export type SiteSecondFactorGetStatusResponse = SiteSecondFactorGetStatusResponses[keyof SiteSecondFactorGetStatusResponses];
+
+export type SiteSecondFactorDisableData = {
+  body: SiteSecondFactorDisableInput;
+  path?: never;
+  query?: never;
+  url: '/me/second-factor/disable';
+};
+
+export type SiteSecondFactorDisableErrors = {
+  /**
+   * RFC 7807 forbidden response
+   */
+  403: ProblemDetails;
+  /**
+   * RFC 7807 conflict response
+   */
+  409: ProblemDetails;
+  /**
+   * RFC 7807 validation response
+   */
+  422: ProblemDetails;
+};
+
+export type SiteSecondFactorDisableError = SiteSecondFactorDisableErrors[keyof SiteSecondFactorDisableErrors];
+
+export type SiteSecondFactorDisableResponses = {
+  /**
+   * There is no content to send for this request, but the headers may be useful.
+   */
+  204: void;
+};
+
+export type SiteSecondFactorDisableResponse = SiteSecondFactorDisableResponses[keyof SiteSecondFactorDisableResponses];
+
+export type SiteSecondFactorStartEnrollmentData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: '/me/second-factor/enrollment';
+};
+
+export type SiteSecondFactorStartEnrollmentErrors = {
+  /**
+   * RFC 7807 conflict response
+   */
+  409: ProblemDetails;
+};
+
+export type SiteSecondFactorStartEnrollmentError = SiteSecondFactorStartEnrollmentErrors[keyof SiteSecondFactorStartEnrollmentErrors];
+
+export type SiteSecondFactorStartEnrollmentResponses = {
+  /**
+   * The request has succeeded.
+   */
+  200: SiteSecondFactorEnrollment;
+};
+
+export type SiteSecondFactorStartEnrollmentResponse = SiteSecondFactorStartEnrollmentResponses[keyof SiteSecondFactorStartEnrollmentResponses];
+
+export type SiteSecondFactorConfirmEnrollmentData = {
+  body: SiteSecondFactorConfirmInput;
+  path?: never;
+  query?: never;
+  url: '/me/second-factor/enrollment/confirm';
+};
+
+export type SiteSecondFactorConfirmEnrollmentErrors = {
+  /**
+   * RFC 7807 conflict response
+   */
+  409: ProblemDetails;
+  /**
+   * RFC 7807 validation response
+   */
+  422: ProblemDetails;
+};
+
+export type SiteSecondFactorConfirmEnrollmentError = SiteSecondFactorConfirmEnrollmentErrors[keyof SiteSecondFactorConfirmEnrollmentErrors];
+
+export type SiteSecondFactorConfirmEnrollmentResponses = {
+  /**
+   * The request has succeeded.
+   */
+  200: SiteRecoveryCodes;
+};
+
+export type SiteSecondFactorConfirmEnrollmentResponse = SiteSecondFactorConfirmEnrollmentResponses[keyof SiteSecondFactorConfirmEnrollmentResponses];
+
+export type SiteSecondFactorRegenerateRecoveryCodesData = {
+  body: SiteRecoveryCodesInput;
+  path?: never;
+  query?: never;
+  url: '/me/second-factor/recovery-codes';
+};
+
+export type SiteSecondFactorRegenerateRecoveryCodesErrors = {
+  /**
+   * RFC 7807 forbidden response
+   */
+  403: ProblemDetails;
+  /**
+   * RFC 7807 conflict response
+   */
+  409: ProblemDetails;
+};
+
+export type SiteSecondFactorRegenerateRecoveryCodesError = SiteSecondFactorRegenerateRecoveryCodesErrors[keyof SiteSecondFactorRegenerateRecoveryCodesErrors];
+
+export type SiteSecondFactorRegenerateRecoveryCodesResponses = {
+  /**
+   * The request has succeeded.
+   */
+  200: SiteRecoveryCodes;
+};
+
+export type SiteSecondFactorRegenerateRecoveryCodesResponse = SiteSecondFactorRegenerateRecoveryCodesResponses[keyof SiteSecondFactorRegenerateRecoveryCodesResponses];
 
 export type SiteUserSignOutEverywhereData = {
   body?: never;

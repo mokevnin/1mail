@@ -31,6 +31,12 @@ type User struct {
 	EmailVerifiedAt *time.Time `json:"email_verified_at,omitempty"`
 	// SessionEpoch holds the value of the "session_epoch" field.
 	SessionEpoch int64 `json:"session_epoch,omitempty"`
+	// SecondFactorSecretEncrypted holds the value of the "second_factor_secret_encrypted" field.
+	SecondFactorSecretEncrypted string `json:"-"`
+	// SecondFactorConfirmedAt holds the value of the "second_factor_confirmed_at" field.
+	SecondFactorConfirmedAt *time.Time `json:"second_factor_confirmed_at,omitempty"`
+	// SecondFactorLastStep holds the value of the "second_factor_last_step" field.
+	SecondFactorLastStep int64 `json:"second_factor_last_step,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the UserQuery when eager-loading is set.
 	Edges        UserEdges `json:"edges"`
@@ -43,9 +49,11 @@ type UserEdges struct {
 	Memberships []*Membership `json:"memberships,omitempty"`
 	// SentInvitations holds the value of the sent_invitations edge.
 	SentInvitations []*Invitation `json:"sent_invitations,omitempty"`
+	// RecoveryCodes holds the value of the recovery_codes edge.
+	RecoveryCodes []*RecoveryCode `json:"recovery_codes,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [2]bool
+	loadedTypes [3]bool
 }
 
 // MembershipsOrErr returns the Memberships value or an error if the edge
@@ -66,16 +74,25 @@ func (e UserEdges) SentInvitationsOrErr() ([]*Invitation, error) {
 	return nil, &NotLoadedError{edge: "sent_invitations"}
 }
 
+// RecoveryCodesOrErr returns the RecoveryCodes value or an error if the edge
+// was not loaded in eager-loading.
+func (e UserEdges) RecoveryCodesOrErr() ([]*RecoveryCode, error) {
+	if e.loadedTypes[2] {
+		return e.RecoveryCodes, nil
+	}
+	return nil, &NotLoadedError{edge: "recovery_codes"}
+}
+
 // scanValues returns the types for scanning values from sql.Rows.
 func (*User) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case user.FieldID, user.FieldSessionEpoch:
+		case user.FieldID, user.FieldSessionEpoch, user.FieldSecondFactorLastStep:
 			values[i] = new(sql.NullInt64)
-		case user.FieldName, user.FieldEmail, user.FieldPasswordHash:
+		case user.FieldName, user.FieldEmail, user.FieldPasswordHash, user.FieldSecondFactorSecretEncrypted:
 			values[i] = new(sql.NullString)
-		case user.FieldCreatedAt, user.FieldUpdatedAt, user.FieldEmailVerifiedAt:
+		case user.FieldCreatedAt, user.FieldUpdatedAt, user.FieldEmailVerifiedAt, user.FieldSecondFactorConfirmedAt:
 			values[i] = new(sql.NullTime)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -141,6 +158,25 @@ func (_m *User) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				_m.SessionEpoch = value.Int64
 			}
+		case user.FieldSecondFactorSecretEncrypted:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field second_factor_secret_encrypted", values[i])
+			} else if value.Valid {
+				_m.SecondFactorSecretEncrypted = value.String
+			}
+		case user.FieldSecondFactorConfirmedAt:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field second_factor_confirmed_at", values[i])
+			} else if value.Valid {
+				_m.SecondFactorConfirmedAt = new(time.Time)
+				*_m.SecondFactorConfirmedAt = value.Time
+			}
+		case user.FieldSecondFactorLastStep:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field second_factor_last_step", values[i])
+			} else if value.Valid {
+				_m.SecondFactorLastStep = value.Int64
+			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
 		}
@@ -162,6 +198,11 @@ func (_m *User) QueryMemberships() *MembershipQuery {
 // QuerySentInvitations queries the "sent_invitations" edge of the User entity.
 func (_m *User) QuerySentInvitations() *InvitationQuery {
 	return NewUserClient(_m.config).QuerySentInvitations(_m)
+}
+
+// QueryRecoveryCodes queries the "recovery_codes" edge of the User entity.
+func (_m *User) QueryRecoveryCodes() *RecoveryCodeQuery {
+	return NewUserClient(_m.config).QueryRecoveryCodes(_m)
 }
 
 // Update returns a builder for updating this User.
@@ -208,6 +249,16 @@ func (_m *User) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("session_epoch=")
 	builder.WriteString(fmt.Sprintf("%v", _m.SessionEpoch))
+	builder.WriteString(", ")
+	builder.WriteString("second_factor_secret_encrypted=<sensitive>")
+	builder.WriteString(", ")
+	if v := _m.SecondFactorConfirmedAt; v != nil {
+		builder.WriteString("second_factor_confirmed_at=")
+		builder.WriteString(v.Format(time.ANSIC))
+	}
+	builder.WriteString(", ")
+	builder.WriteString("second_factor_last_step=")
+	builder.WriteString(fmt.Sprintf("%v", _m.SecondFactorLastStep))
 	builder.WriteByte(')')
 	return builder.String()
 }

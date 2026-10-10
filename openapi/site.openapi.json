@@ -30,6 +30,9 @@
       "name": "Site User"
     },
     {
+      "name": "Site Second Factor"
+    },
+    {
       "name": "Site Events"
     },
     {
@@ -835,6 +838,236 @@
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/SiteEmailChangeInput"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/me/second-factor": {
+      "get": {
+        "operationId": "SiteSecondFactor_getStatus",
+        "description": "The authenticated User's Second factor status",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "The request has succeeded.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SiteSecondFactorStatus"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Site Second Factor"]
+      }
+    },
+    "/me/second-factor/disable": {
+      "post": {
+        "operationId": "SiteSecondFactor_disable",
+        "description": "Disable the Second factor, proving the password and a current code. Every\nother session ends; the acting one continues under the cookie set here. 403 on\na wrong password, 422 on a wrong code, 409 without an active Second factor.",
+        "parameters": [],
+        "responses": {
+          "204": {
+            "description": "There is no content to send for this request, but the headers may be useful. ",
+            "headers": {
+              "Set-Cookie": {
+                "required": true,
+                "description": "The acting session reissued under the new session epoch",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "RFC 7807 forbidden response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "RFC 7807 conflict response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "RFC 7807 validation response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Site Second Factor"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SiteSecondFactorDisableInput"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/me/second-factor/enrollment": {
+      "post": {
+        "operationId": "SiteSecondFactor_startEnrollment",
+        "description": "Start enrolling a TOTP Second factor: creates a pending secret (replacing an\nearlier pending one). It counts as a Second factor only once confirmed. 409\nwhen a Second factor is already active.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "The request has succeeded.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SiteSecondFactorEnrollment"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "RFC 7807 conflict response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Site Second Factor"]
+      }
+    },
+    "/me/second-factor/enrollment/confirm": {
+      "post": {
+        "operationId": "SiteSecondFactor_confirmEnrollment",
+        "description": "Confirm the pending enrollment with a code from the app. On success the Second\nfactor is active, every other session ends and the acting one continues under\nthe cookie set here; the Recovery codes are returned once. 422 on a wrong code,\n409 without a pending enrollment.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "The request has succeeded.",
+            "headers": {
+              "Set-Cookie": {
+                "required": true,
+                "description": "The acting session reissued under the new session epoch",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SiteRecoveryCodes"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "RFC 7807 conflict response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "RFC 7807 validation response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Site Second Factor"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SiteSecondFactorConfirmInput"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/me/second-factor/recovery-codes": {
+      "post": {
+        "operationId": "SiteSecondFactor_regenerateRecoveryCodes",
+        "description": "Replace the Recovery codes with a fresh set (the previous set stops working).\nEvery other session ends; the acting one continues under the cookie set here.\n403 on a wrong password, 409 without an active Second factor.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "The request has succeeded.",
+            "headers": {
+              "Set-Cookie": {
+                "required": true,
+                "description": "The acting session reissued under the new session epoch",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SiteRecoveryCodes"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "RFC 7807 forbidden response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "RFC 7807 conflict response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Site Second Factor"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SiteRecoveryCodesInput"
               }
             }
           }
@@ -8412,6 +8645,31 @@
         },
         "description": "Result of a segment preview: how many deliverable contacts match"
       },
+      "SiteRecoveryCodes": {
+        "type": "object",
+        "required": ["codes"],
+        "properties": {
+          "codes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Single-use codes, each one usable in place of a TOTP code"
+          }
+        },
+        "description": "A fresh set of Recovery codes. They are shown only in this response."
+      },
+      "SiteRecoveryCodesInput": {
+        "type": "object",
+        "required": ["currentPassword"],
+        "properties": {
+          "currentPassword": {
+            "type": "string",
+            "description": "Current password"
+          }
+        },
+        "description": "Proof of the User's password, for regenerating Recovery codes"
+      },
       "SiteRegisterInput": {
         "type": "object",
         "required": ["name", "email", "password"],
@@ -8472,6 +8730,71 @@
           }
         },
         "description": "Site request body for scheduling a broadcast"
+      },
+      "SiteSecondFactorConfirmInput": {
+        "type": "object",
+        "required": ["code"],
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "The current 6-digit TOTP code"
+          }
+        },
+        "description": "A code from the authenticator app"
+      },
+      "SiteSecondFactorDisableInput": {
+        "type": "object",
+        "required": ["currentPassword", "code"],
+        "properties": {
+          "currentPassword": {
+            "type": "string",
+            "description": "Current password"
+          },
+          "code": {
+            "type": "string",
+            "description": "A current TOTP code, or an unused Recovery code"
+          }
+        },
+        "description": "Proof of password and possession, for disabling the Second factor"
+      },
+      "SiteSecondFactorEnrollment": {
+        "type": "object",
+        "required": ["secret", "otpauthUri", "qrCode"],
+        "properties": {
+          "secret": {
+            "type": "string",
+            "description": "The secret as a base32 key, for typing it into the app"
+          },
+          "otpauthUri": {
+            "type": "string",
+            "description": "The otpauth:// URI the QR code encodes"
+          },
+          "qrCode": {
+            "type": "string",
+            "description": "The QR code of the otpauth URI, as a PNG data URI"
+          }
+        },
+        "description": "A pending enrollment: the TOTP secret to add to an authenticator app"
+      },
+      "SiteSecondFactorStatus": {
+        "type": "object",
+        "required": ["enabled", "pending", "recoveryCodesRemaining"],
+        "properties": {
+          "enabled": {
+            "type": "boolean",
+            "description": "Whether a confirmed TOTP Second factor is active"
+          },
+          "pending": {
+            "type": "boolean",
+            "description": "Whether an enrollment was started and still awaits its confirmation code"
+          },
+          "recoveryCodesRemaining": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Unused Recovery codes left (0 without a Second factor)"
+          }
+        },
+        "description": "The authenticated User's Second factor (ADR 0020). Recovery codes are never\nreadable here: only how many are left."
       },
       "SiteSegmentResource": {
         "type": "object",

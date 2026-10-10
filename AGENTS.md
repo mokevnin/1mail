@@ -156,7 +156,9 @@ tenant row itself (the Workspace is the tenant root, so it has no wrapper).
   Workspace, invitation by token), `internal/api/auth` (credentials, token and key lookup),
   `internal/consent` (signed unsubscribe/confirm tokens: the Workspace comes from the token,
   so it works on the bus's raw transaction client and scopes from the token's Workspace),
-  `internal/oauthserver`, `internal/service` (suspension, slug resolution), `internal/events`
+  `internal/oauthserver`, `internal/secondfactor` (a User's TOTP Second factor and Recovery
+  codes, ADR 0020: they belong to the User, not a Workspace), `internal/service` (suspension,
+  slug resolution), `internal/events`
   (the bus and its subscribers), `internal/jobs` (job entry points), `internal/server`
   (tracking by recipient id, provider hooks, composition), `ee/audit` (the Audit log bus
   subscriber: its envelope carries only a Workspace id, ADR 0022), `ee/retention` (the

@@ -15,7 +15,8 @@
   },
   "account": {
     "backToDashboard": "Panel",
-    "profile": "Perfil"
+    "profile": "Perfil",
+    "security": "Seguridad"
   },
   "actions": {
     "back": "Atrás",
@@ -408,6 +409,43 @@
     "submitButton": "Establecer contraseña",
     "successMessage": "Tu contraseña se ha restablecido. Inicia sesión.",
     "title": "Establecer una nueva contraseña"
+  },
+  "security": {
+    "codeLabel": "Código de la aplicación",
+    "codesRemaining": "Quedan {{count}} códigos de recuperación",
+    "codesRemaining_one": "Queda {{count}} código de recuperación",
+    "codesRemaining_many": "Quedan {{count}} códigos de recuperación",
+    "codesRemaining_other": "Quedan {{count}} códigos de recuperación",
+    "confirmButton": "Activar",
+    "confirmErrorTitle": "No se pudo activar la autenticación en dos pasos",
+    "copied": "Copiado",
+    "copyCodes": "Copiar códigos",
+    "copyKey": "Copiar clave",
+    "disableButton": "Desactivar la autenticación en dos pasos",
+    "disableCodeLabel": "Código de la aplicación o código de recuperación",
+    "disabledMessage": "La autenticación en dos pasos está desactivada",
+    "disableErrorTitle": "No se pudo desactivar la autenticación en dos pasos",
+    "disableTitle": "Desactivar",
+    "enabledMessage": "La autenticación en dos pasos está activada",
+    "keyHint": "O introduce esta clave en la aplicación:",
+    "loadErrorTitle": "No se pudo cargar la configuración de seguridad",
+    "off": "Desactivada",
+    "offDescription": "Protege tu cuenta con un código de una aplicación de autenticación además de tu contraseña.",
+    "on": "Activada",
+    "passwordLabel": "Contraseña actual",
+    "qrAlt": "Código QR para la aplicación de autenticación",
+    "recoveryCodesHint": "Cada código sirve una vez en lugar de un código de la aplicación. Guárdalos en un lugar seguro: no se volverán a mostrar.",
+    "recoveryCodesTitle": "Guarda tus códigos de recuperación",
+    "regenerateButton": "Generar códigos nuevos",
+    "regenerateDescription": "Los códigos de recuperación actuales dejarán de funcionar.",
+    "regenerateErrorTitle": "No se pudieron generar los códigos de recuperación",
+    "regenerateTitle": "Códigos de recuperación",
+    "savedCodes": "Ya los guardé",
+    "scanHint": "Escanea este código QR con tu aplicación de autenticación.",
+    "setUpButton": "Configurar aplicación de autenticación",
+    "startErrorTitle": "No se pudo iniciar la configuración",
+    "title": "Seguridad",
+    "twoFactorTitle": "Autenticación en dos pasos"
   },
   "segments": {
     "addSegment": "Añadir segmento",

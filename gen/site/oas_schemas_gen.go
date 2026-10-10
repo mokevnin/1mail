@@ -2828,18 +2828,19 @@ func (s *ProblemDetails) SetRetryAfter(val OptInt32) {
 	s.RetryAfter = val
 }
 
-func (*ProblemDetails) siteAnalyticsOverviewRes()         {}
-func (*ProblemDetails) siteAuthLoginRes()                 {}
-func (*ProblemDetails) siteAuthResetPasswordRes()         {}
-func (*ProblemDetails) siteAuthVerifyEmailRes()           {}
-func (*ProblemDetails) siteEventsActionsRes()             {}
-func (*ProblemDetails) siteEventsListRes()                {}
-func (*ProblemDetails) siteIntegrationsListRes()          {}
-func (*ProblemDetails) siteInvitationsListRes()           {}
-func (*ProblemDetails) siteMembershipsListRes()           {}
-func (*ProblemDetails) sitePublicInvitationsLookupRes()   {}
-func (*ProblemDetails) sitePublicUnsubscribesPerformRes() {}
-func (*ProblemDetails) siteTokensListRes()                {}
+func (*ProblemDetails) siteAnalyticsOverviewRes()           {}
+func (*ProblemDetails) siteAuthLoginRes()                   {}
+func (*ProblemDetails) siteAuthResetPasswordRes()           {}
+func (*ProblemDetails) siteAuthVerifyEmailRes()             {}
+func (*ProblemDetails) siteEventsActionsRes()               {}
+func (*ProblemDetails) siteEventsListRes()                  {}
+func (*ProblemDetails) siteIntegrationsListRes()            {}
+func (*ProblemDetails) siteInvitationsListRes()             {}
+func (*ProblemDetails) siteMembershipsListRes()             {}
+func (*ProblemDetails) sitePublicInvitationsLookupRes()     {}
+func (*ProblemDetails) sitePublicUnsubscribesPerformRes()   {}
+func (*ProblemDetails) siteSecondFactorStartEnrollmentRes() {}
+func (*ProblemDetails) siteTokensListRes()                  {}
 
 // Validation errors grouped by field.
 type ProblemDetailsErrors map[string][]string
@@ -7630,6 +7631,69 @@ type SitePublicUnsubscribesPerformNoContent struct{}
 
 func (*SitePublicUnsubscribesPerformNoContent) sitePublicUnsubscribesPerformRes() {}
 
+// A fresh set of Recovery codes. They are shown only in this response.
+// Ref: #/components/schemas/SiteRecoveryCodes
+type SiteRecoveryCodes struct {
+	// Single-use codes, each one usable in place of a TOTP code.
+	Codes []string `json:"codes"`
+}
+
+// GetCodes returns the value of Codes.
+func (s *SiteRecoveryCodes) GetCodes() []string {
+	return s.Codes
+}
+
+// SetCodes sets the value of Codes.
+func (s *SiteRecoveryCodes) SetCodes(val []string) {
+	s.Codes = val
+}
+
+// SiteRecoveryCodesHeaders wraps SiteRecoveryCodes with response headers.
+type SiteRecoveryCodesHeaders struct {
+	SetCookie string
+	Response  SiteRecoveryCodes
+}
+
+// GetSetCookie returns the value of SetCookie.
+func (s *SiteRecoveryCodesHeaders) GetSetCookie() string {
+	return s.SetCookie
+}
+
+// GetResponse returns the value of Response.
+func (s *SiteRecoveryCodesHeaders) GetResponse() SiteRecoveryCodes {
+	return s.Response
+}
+
+// SetSetCookie sets the value of SetCookie.
+func (s *SiteRecoveryCodesHeaders) SetSetCookie(val string) {
+	s.SetCookie = val
+}
+
+// SetResponse sets the value of Response.
+func (s *SiteRecoveryCodesHeaders) SetResponse(val SiteRecoveryCodes) {
+	s.Response = val
+}
+
+func (*SiteRecoveryCodesHeaders) siteSecondFactorConfirmEnrollmentRes()       {}
+func (*SiteRecoveryCodesHeaders) siteSecondFactorRegenerateRecoveryCodesRes() {}
+
+// Proof of the User's password, for regenerating Recovery codes.
+// Ref: #/components/schemas/SiteRecoveryCodesInput
+type SiteRecoveryCodesInput struct {
+	// Current password.
+	CurrentPassword string `json:"currentPassword"`
+}
+
+// GetCurrentPassword returns the value of CurrentPassword.
+func (s *SiteRecoveryCodesInput) GetCurrentPassword() string {
+	return s.CurrentPassword
+}
+
+// SetCurrentPassword sets the value of CurrentPassword.
+func (s *SiteRecoveryCodesInput) SetCurrentPassword(val string) {
+	s.CurrentPassword = val
+}
+
 // Ref: #/components/schemas/SiteRegisterInput
 type SiteRegisterInput struct {
 	Name     string       `json:"name"`
@@ -7759,6 +7823,184 @@ func (s *SiteScheduleBroadcastInput) GetScheduledAt() Timestamp {
 // SetScheduledAt sets the value of ScheduledAt.
 func (s *SiteScheduleBroadcastInput) SetScheduledAt(val Timestamp) {
 	s.ScheduledAt = val
+}
+
+type SiteSecondFactorConfirmEnrollmentConflict ProblemDetails
+
+func (*SiteSecondFactorConfirmEnrollmentConflict) siteSecondFactorConfirmEnrollmentRes() {}
+
+type SiteSecondFactorConfirmEnrollmentUnprocessableEntity ProblemDetails
+
+func (*SiteSecondFactorConfirmEnrollmentUnprocessableEntity) siteSecondFactorConfirmEnrollmentRes() {}
+
+// A code from the authenticator app.
+// Ref: #/components/schemas/SiteSecondFactorConfirmInput
+type SiteSecondFactorConfirmInput struct {
+	// The current 6-digit TOTP code.
+	Code string `json:"code"`
+}
+
+// GetCode returns the value of Code.
+func (s *SiteSecondFactorConfirmInput) GetCode() string {
+	return s.Code
+}
+
+// SetCode sets the value of Code.
+func (s *SiteSecondFactorConfirmInput) SetCode(val string) {
+	s.Code = val
+}
+
+type SiteSecondFactorDisableConflict ProblemDetails
+
+func (*SiteSecondFactorDisableConflict) siteSecondFactorDisableRes() {}
+
+type SiteSecondFactorDisableForbidden ProblemDetails
+
+func (*SiteSecondFactorDisableForbidden) siteSecondFactorDisableRes() {}
+
+// Proof of password and possession, for disabling the Second factor.
+// Ref: #/components/schemas/SiteSecondFactorDisableInput
+type SiteSecondFactorDisableInput struct {
+	// Current password.
+	CurrentPassword string `json:"currentPassword"`
+	// A current TOTP code, or an unused Recovery code.
+	Code string `json:"code"`
+}
+
+// GetCurrentPassword returns the value of CurrentPassword.
+func (s *SiteSecondFactorDisableInput) GetCurrentPassword() string {
+	return s.CurrentPassword
+}
+
+// GetCode returns the value of Code.
+func (s *SiteSecondFactorDisableInput) GetCode() string {
+	return s.Code
+}
+
+// SetCurrentPassword sets the value of CurrentPassword.
+func (s *SiteSecondFactorDisableInput) SetCurrentPassword(val string) {
+	s.CurrentPassword = val
+}
+
+// SetCode sets the value of Code.
+func (s *SiteSecondFactorDisableInput) SetCode(val string) {
+	s.Code = val
+}
+
+// SiteSecondFactorDisableNoContent is response for SiteSecondFactorDisable operation.
+type SiteSecondFactorDisableNoContent struct {
+	SetCookie string
+}
+
+// GetSetCookie returns the value of SetCookie.
+func (s *SiteSecondFactorDisableNoContent) GetSetCookie() string {
+	return s.SetCookie
+}
+
+// SetSetCookie sets the value of SetCookie.
+func (s *SiteSecondFactorDisableNoContent) SetSetCookie(val string) {
+	s.SetCookie = val
+}
+
+func (*SiteSecondFactorDisableNoContent) siteSecondFactorDisableRes() {}
+
+type SiteSecondFactorDisableUnprocessableEntity ProblemDetails
+
+func (*SiteSecondFactorDisableUnprocessableEntity) siteSecondFactorDisableRes() {}
+
+// A pending enrollment: the TOTP secret to add to an authenticator app.
+// Ref: #/components/schemas/SiteSecondFactorEnrollment
+type SiteSecondFactorEnrollment struct {
+	// The secret as a base32 key, for typing it into the app.
+	Secret string `json:"secret"`
+	// The otpauth:// URI the QR code encodes.
+	OtpauthUri string `json:"otpauthUri"`
+	// The QR code of the otpauth URI, as a PNG data URI.
+	QrCode string `json:"qrCode"`
+}
+
+// GetSecret returns the value of Secret.
+func (s *SiteSecondFactorEnrollment) GetSecret() string {
+	return s.Secret
+}
+
+// GetOtpauthUri returns the value of OtpauthUri.
+func (s *SiteSecondFactorEnrollment) GetOtpauthUri() string {
+	return s.OtpauthUri
+}
+
+// GetQrCode returns the value of QrCode.
+func (s *SiteSecondFactorEnrollment) GetQrCode() string {
+	return s.QrCode
+}
+
+// SetSecret sets the value of Secret.
+func (s *SiteSecondFactorEnrollment) SetSecret(val string) {
+	s.Secret = val
+}
+
+// SetOtpauthUri sets the value of OtpauthUri.
+func (s *SiteSecondFactorEnrollment) SetOtpauthUri(val string) {
+	s.OtpauthUri = val
+}
+
+// SetQrCode sets the value of QrCode.
+func (s *SiteSecondFactorEnrollment) SetQrCode(val string) {
+	s.QrCode = val
+}
+
+func (*SiteSecondFactorEnrollment) siteSecondFactorStartEnrollmentRes() {}
+
+type SiteSecondFactorRegenerateRecoveryCodesConflict ProblemDetails
+
+func (*SiteSecondFactorRegenerateRecoveryCodesConflict) siteSecondFactorRegenerateRecoveryCodesRes() {
+}
+
+type SiteSecondFactorRegenerateRecoveryCodesForbidden ProblemDetails
+
+func (*SiteSecondFactorRegenerateRecoveryCodesForbidden) siteSecondFactorRegenerateRecoveryCodesRes() {
+}
+
+// The authenticated User's Second factor (ADR 0020). Recovery codes are never readable here: only how
+// many are left.
+// Ref: #/components/schemas/SiteSecondFactorStatus
+type SiteSecondFactorStatus struct {
+	// Whether a confirmed TOTP Second factor is active.
+	Enabled bool `json:"enabled"`
+	// Whether an enrollment was started and still awaits its confirmation code.
+	Pending bool `json:"pending"`
+	// Unused Recovery codes left (0 without a Second factor).
+	RecoveryCodesRemaining int32 `json:"recoveryCodesRemaining"`
+}
+
+// GetEnabled returns the value of Enabled.
+func (s *SiteSecondFactorStatus) GetEnabled() bool {
+	return s.Enabled
+}
+
+// GetPending returns the value of Pending.
+func (s *SiteSecondFactorStatus) GetPending() bool {
+	return s.Pending
+}
+
+// GetRecoveryCodesRemaining returns the value of RecoveryCodesRemaining.
+func (s *SiteSecondFactorStatus) GetRecoveryCodesRemaining() int32 {
+	return s.RecoveryCodesRemaining
+}
+
+// SetEnabled sets the value of Enabled.
+func (s *SiteSecondFactorStatus) SetEnabled(val bool) {
+	s.Enabled = val
+}
+
+// SetPending sets the value of Pending.
+func (s *SiteSecondFactorStatus) SetPending(val bool) {
+	s.Pending = val
+}
+
+// SetRecoveryCodesRemaining sets the value of RecoveryCodesRemaining.
+func (s *SiteSecondFactorStatus) SetRecoveryCodesRemaining(val int32) {
+	s.RecoveryCodesRemaining = val
 }
 
 // Segment resource used by the site UI.

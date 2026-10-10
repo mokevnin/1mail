@@ -339,6 +339,43 @@ type Handler interface {
 	//
 	// POST /unsubscribes/{token}
 	SitePublicUnsubscribesPerform(ctx context.Context, params SitePublicUnsubscribesPerformParams) (SitePublicUnsubscribesPerformRes, error)
+	// SiteSecondFactorConfirmEnrollment implements SiteSecondFactor_confirmEnrollment operation.
+	//
+	// Confirm the pending enrollment with a code from the app. On success the Second factor is active,
+	// every other session ends and the acting one continues under the cookie set here; the Recovery codes
+	// are returned once. 422 on a wrong code, 409 without a pending enrollment.
+	//
+	// POST /me/second-factor/enrollment/confirm
+	SiteSecondFactorConfirmEnrollment(ctx context.Context, req *SiteSecondFactorConfirmInput) (SiteSecondFactorConfirmEnrollmentRes, error)
+	// SiteSecondFactorDisable implements SiteSecondFactor_disable operation.
+	//
+	// Disable the Second factor, proving the password and a current code. Every other session ends; the
+	// acting one continues under the cookie set here. 403 on a wrong password, 422 on a wrong code, 409
+	// without an active Second factor.
+	//
+	// POST /me/second-factor/disable
+	SiteSecondFactorDisable(ctx context.Context, req *SiteSecondFactorDisableInput) (SiteSecondFactorDisableRes, error)
+	// SiteSecondFactorGetStatus implements SiteSecondFactor_getStatus operation.
+	//
+	// The authenticated User's Second factor status.
+	//
+	// GET /me/second-factor
+	SiteSecondFactorGetStatus(ctx context.Context) (*SiteSecondFactorStatus, error)
+	// SiteSecondFactorRegenerateRecoveryCodes implements SiteSecondFactor_regenerateRecoveryCodes operation.
+	//
+	// Replace the Recovery codes with a fresh set (the previous set stops working). Every other session
+	// ends; the acting one continues under the cookie set here. 403 on a wrong password, 409 without an
+	// active Second factor.
+	//
+	// POST /me/second-factor/recovery-codes
+	SiteSecondFactorRegenerateRecoveryCodes(ctx context.Context, req *SiteRecoveryCodesInput) (SiteSecondFactorRegenerateRecoveryCodesRes, error)
+	// SiteSecondFactorStartEnrollment implements SiteSecondFactor_startEnrollment operation.
+	//
+	// Start enrolling a TOTP Second factor: creates a pending secret (replacing an earlier pending one).
+	// It counts as a Second factor only once confirmed. 409 when a Second factor is already active.
+	//
+	// POST /me/second-factor/enrollment
+	SiteSecondFactorStartEnrollment(ctx context.Context) (SiteSecondFactorStartEnrollmentRes, error)
 	// SiteSegmentsCreate implements SiteSegments_create operation.
 	//
 	// Create a resource from the site UI.

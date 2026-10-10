@@ -349,6 +349,8 @@ const (
 	GlobexName = "Globex"
 	// GlobexOwnerMembershipID is from fixtures/memberships.
 	GlobexOwnerMembershipID = 2
+	// GlobexSamMembershipID is from fixtures/memberships.
+	GlobexSamMembershipID = 5
 	// GlobexSlug is from fixtures/workspaces.
 	GlobexSlug = "globex"
 	// InitechCollectKey is from fixtures/workspaces.
@@ -429,6 +431,24 @@ const (
 	OwnerJohnName = "John"
 	// OwnerJohnPassword is from fixtures/users.
 	OwnerJohnPassword = "password"
+	// SecondFactorSamEmail is from fixtures/users.
+	SecondFactorSamEmail = "sam@globex.test"
+	// SecondFactorSamID is from fixtures/users.
+	SecondFactorSamID = 5
+	// SecondFactorSamName is from fixtures/users.
+	SecondFactorSamName = "Sam"
+	// SecondFactorSamPassword is from fixtures/users.
+	SecondFactorSamPassword = "sam-test-password"
+	// SecondFactorSamRecoveryCode is from fixtures/recovery_codes.
+	SecondFactorSamRecoveryCode = "sam01-unusd"
+	// SecondFactorSamRecoveryID is from fixtures/recovery_codes.
+	SecondFactorSamRecoveryID = 1
+	// SecondFactorSamSpentRecoveryCode is from fixtures/recovery_codes.
+	SecondFactorSamSpentRecoveryCode = "sam02-spent"
+	// SecondFactorSamSpentRecoveryID is from fixtures/recovery_codes.
+	SecondFactorSamSpentRecoveryID = 2
+	// SecondFactorSamTotpSecret is from fixtures/users.
+	SecondFactorSamTotpSecret = "JBSWY3DPEHPK3PXP"
 	// SegmentActiveID is from fixtures/segments.
 	SegmentActiveID = 1
 	// SegmentActiveName is from fixtures/segments.

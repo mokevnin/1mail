@@ -9,7 +9,9 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+	"time"
 
+	"github.com/pquerna/otp/totp"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -222,6 +224,19 @@ func TestExplicitAuditPathsAreAllListed(t *testing.T) {
 	_, err = owner.SiteUserUpdateMe(ctx, &siteapi.SiteUpdateMeInput{                                // user.password_change
 		CurrentPassword: siteapi.NewOptString(fixtures.OwnerJohnPassword), NewPassword: siteapi.NewOptString("another-pass-1")})
 	require.NoError(t, err)
+	started, err := owner.SiteSecondFactorStartEnrollment(ctx)
+	require.NoError(t, err)
+	code, err := totp.GenerateCode(started.(*siteapi.SiteSecondFactorEnrollment).Secret, time.Now())
+	require.NoError(t, err)
+	_, err = owner.SiteSecondFactorConfirmEnrollment(ctx, &siteapi.SiteSecondFactorConfirmInput{Code: code}) // user.second_factor_enroll
+	require.NoError(t, err)
+	regenerated, err := owner.SiteSecondFactorRegenerateRecoveryCodes(ctx, // user.recovery_codes_regenerate
+		&siteapi.SiteRecoveryCodesInput{CurrentPassword: "another-pass-1"})
+	require.NoError(t, err)
+	disabled, err := owner.SiteSecondFactorDisable(ctx, &siteapi.SiteSecondFactorDisableInput{ // user.recovery_code_use, user.second_factor_disable
+		CurrentPassword: "another-pass-1", Code: regenerated.(*siteapi.SiteRecoveryCodesHeaders).Response.Codes[0]})
+	require.NoError(t, err)
+	require.IsType(t, &siteapi.SiteSecondFactorDisableNoContent{}, disabled)
 	_, err = owner.SiteWorkspacesUpdate(ctx, &siteapi.SiteUpdateWorkspaceInput{Name: "Acme Two"}, // workspace.update
 		siteapi.SiteWorkspacesUpdateParams{Slug: fixtures.AcmeSlug})
 	require.NoError(t, err)

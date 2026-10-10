@@ -44,11 +44,16 @@ const (
 	ActionInvitationRevoke   = "invitation.revoke"
 	ActionUserLogin          = "user.login"
 	ActionUserPasswordChange = "user.password_change"
-	ActionWorkspaceUpdate    = "workspace.update"
-	ActionWorkspaceSuspend   = "workspace.suspend"
-	ActionWorkspaceUnsuspend = "workspace.unsuspend"
-	ActionContactImport      = "contact.import"
-	ActionAuditLogExport     = "audit_log.export"
+	// The Second factor (ADR 0020).
+	ActionUserSecondFactorEnroll      = "user.second_factor_enroll"
+	ActionUserSecondFactorDisable     = "user.second_factor_disable"
+	ActionUserRecoveryCodesRegenerate = "user.recovery_codes_regenerate"
+	ActionUserRecoveryCodeUse         = "user.recovery_code_use"
+	ActionWorkspaceUpdate             = "workspace.update"
+	ActionWorkspaceSuspend            = "workspace.suspend"
+	ActionWorkspaceUnsuspend          = "workspace.unsuspend"
+	ActionContactImport               = "contact.import"
+	ActionAuditLogExport              = "audit_log.export"
 )
 
 // ExplicitAuditActions lists every action emitted by an explicit RecordAudit call.
@@ -59,6 +64,10 @@ var ExplicitAuditActions = []string{
 	ActionInvitationRevoke,
 	ActionUserLogin,
 	ActionUserPasswordChange,
+	ActionUserSecondFactorEnroll,
+	ActionUserSecondFactorDisable,
+	ActionUserRecoveryCodesRegenerate,
+	ActionUserRecoveryCodeUse,
 	ActionWorkspaceUpdate,
 	ActionWorkspaceSuspend,
 	ActionWorkspaceUnsuspend,

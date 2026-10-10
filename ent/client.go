@@ -33,6 +33,7 @@ import (
 	"github.com/mokevnin/1mail/ent/oauthclient"
 	"github.com/mokevnin/1mail/ent/oauthcode"
 	"github.com/mokevnin/1mail/ent/outboundmessage"
+	"github.com/mokevnin/1mail/ent/recoverycode"
 	"github.com/mokevnin/1mail/ent/segment"
 	"github.com/mokevnin/1mail/ent/sendingdomain"
 	"github.com/mokevnin/1mail/ent/sendlimiter"
@@ -86,6 +87,8 @@ type Client struct {
 	OAuthCode *OAuthCodeClient
 	// OutboundMessage is the client for interacting with the OutboundMessage builders.
 	OutboundMessage *OutboundMessageClient
+	// RecoveryCode is the client for interacting with the RecoveryCode builders.
+	RecoveryCode *RecoveryCodeClient
 	// Segment is the client for interacting with the Segment builders.
 	Segment *SegmentClient
 	// SendLimiter is the client for interacting with the SendLimiter builders.
@@ -135,6 +138,7 @@ func (c *Client) init() {
 	c.OAuthClient = NewOAuthClientClient(c.config)
 	c.OAuthCode = NewOAuthCodeClient(c.config)
 	c.OutboundMessage = NewOutboundMessageClient(c.config)
+	c.RecoveryCode = NewRecoveryCodeClient(c.config)
 	c.Segment = NewSegmentClient(c.config)
 	c.SendLimiter = NewSendLimiterClient(c.config)
 	c.SendingDomain = NewSendingDomainClient(c.config)
@@ -255,6 +259,7 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		OAuthClient:        NewOAuthClientClient(cfg),
 		OAuthCode:          NewOAuthCodeClient(cfg),
 		OutboundMessage:    NewOutboundMessageClient(cfg),
+		RecoveryCode:       NewRecoveryCodeClient(cfg),
 		Segment:            NewSegmentClient(cfg),
 		SendLimiter:        NewSendLimiterClient(cfg),
 		SendingDomain:      NewSendingDomainClient(cfg),
@@ -302,6 +307,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		OAuthClient:        NewOAuthClientClient(cfg),
 		OAuthCode:          NewOAuthCodeClient(cfg),
 		OutboundMessage:    NewOutboundMessageClient(cfg),
+		RecoveryCode:       NewRecoveryCodeClient(cfg),
 		Segment:            NewSegmentClient(cfg),
 		SendLimiter:        NewSendLimiterClient(cfg),
 		SendingDomain:      NewSendingDomainClient(cfg),
@@ -344,9 +350,9 @@ func (c *Client) Use(hooks ...Hook) {
 		c.ApiToken, c.AuditEntry, c.AuthAttempt, c.Automation, c.AutomationRun,
 		c.Broadcast, c.BroadcastRecipient, c.Confirmation, c.Contact, c.CustomField,
 		c.EmailTemplate, c.Event, c.Integration, c.Invitation, c.Membership,
-		c.OAuthClient, c.OAuthCode, c.OutboundMessage, c.Segment, c.SendLimiter,
-		c.SendingDomain, c.Suppression, c.Tag, c.Unsubscribe, c.User, c.Visitor,
-		c.WebhookEndpoint, c.Workspace,
+		c.OAuthClient, c.OAuthCode, c.OutboundMessage, c.RecoveryCode, c.Segment,
+		c.SendLimiter, c.SendingDomain, c.Suppression, c.Tag, c.Unsubscribe, c.User,
+		c.Visitor, c.WebhookEndpoint, c.Workspace,
 	} {
 		n.Use(hooks...)
 	}
@@ -359,9 +365,9 @@ func (c *Client) Intercept(interceptors ...Interceptor) {
 		c.ApiToken, c.AuditEntry, c.AuthAttempt, c.Automation, c.AutomationRun,
 		c.Broadcast, c.BroadcastRecipient, c.Confirmation, c.Contact, c.CustomField,
 		c.EmailTemplate, c.Event, c.Integration, c.Invitation, c.Membership,
-		c.OAuthClient, c.OAuthCode, c.OutboundMessage, c.Segment, c.SendLimiter,
-		c.SendingDomain, c.Suppression, c.Tag, c.Unsubscribe, c.User, c.Visitor,
-		c.WebhookEndpoint, c.Workspace,
+		c.OAuthClient, c.OAuthCode, c.OutboundMessage, c.RecoveryCode, c.Segment,
+		c.SendLimiter, c.SendingDomain, c.Suppression, c.Tag, c.Unsubscribe, c.User,
+		c.Visitor, c.WebhookEndpoint, c.Workspace,
 	} {
 		n.Intercept(interceptors...)
 	}
@@ -406,6 +412,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.OAuthCode.mutate(ctx, m)
 	case *OutboundMessageMutation:
 		return c.OutboundMessage.mutate(ctx, m)
+	case *RecoveryCodeMutation:
+		return c.RecoveryCode.mutate(ctx, m)
 	case *SegmentMutation:
 		return c.Segment.mutate(ctx, m)
 	case *SendLimiterMutation:
@@ -3241,6 +3249,155 @@ func (c *OutboundMessageClient) mutate(ctx context.Context, m *OutboundMessageMu
 	}
 }
 
+// RecoveryCodeClient is a client for the RecoveryCode schema.
+type RecoveryCodeClient struct {
+	config
+}
+
+// NewRecoveryCodeClient returns a client for the RecoveryCode from the given config.
+func NewRecoveryCodeClient(c config) *RecoveryCodeClient {
+	return &RecoveryCodeClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `recoverycode.Hooks(f(g(h())))`.
+func (c *RecoveryCodeClient) Use(hooks ...Hook) {
+	c.hooks.RecoveryCode = append(c.hooks.RecoveryCode, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `recoverycode.Intercept(f(g(h())))`.
+func (c *RecoveryCodeClient) Intercept(interceptors ...Interceptor) {
+	c.inters.RecoveryCode = append(c.inters.RecoveryCode, interceptors...)
+}
+
+// Create returns a builder for creating a RecoveryCode entity.
+func (c *RecoveryCodeClient) Create() *RecoveryCodeCreate {
+	mutation := newRecoveryCodeMutation(c.config, OpCreate)
+	return &RecoveryCodeCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of RecoveryCode entities.
+func (c *RecoveryCodeClient) CreateBulk(builders ...*RecoveryCodeCreate) *RecoveryCodeCreateBulk {
+	return &RecoveryCodeCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *RecoveryCodeClient) MapCreateBulk(slice any, setFunc func(*RecoveryCodeCreate, int)) *RecoveryCodeCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &RecoveryCodeCreateBulk{err: fmt.Errorf("calling to RecoveryCodeClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*RecoveryCodeCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &RecoveryCodeCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for RecoveryCode.
+func (c *RecoveryCodeClient) Update() *RecoveryCodeUpdate {
+	mutation := newRecoveryCodeMutation(c.config, OpUpdate)
+	return &RecoveryCodeUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *RecoveryCodeClient) UpdateOne(_m *RecoveryCode) *RecoveryCodeUpdateOne {
+	mutation := newRecoveryCodeMutation(c.config, OpUpdateOne, withRecoveryCode(_m))
+	return &RecoveryCodeUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *RecoveryCodeClient) UpdateOneID(id int64) *RecoveryCodeUpdateOne {
+	mutation := newRecoveryCodeMutation(c.config, OpUpdateOne, withRecoveryCodeID(id))
+	return &RecoveryCodeUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for RecoveryCode.
+func (c *RecoveryCodeClient) Delete() *RecoveryCodeDelete {
+	mutation := newRecoveryCodeMutation(c.config, OpDelete)
+	return &RecoveryCodeDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *RecoveryCodeClient) DeleteOne(_m *RecoveryCode) *RecoveryCodeDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *RecoveryCodeClient) DeleteOneID(id int64) *RecoveryCodeDeleteOne {
+	builder := c.Delete().Where(recoverycode.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &RecoveryCodeDeleteOne{builder}
+}
+
+// Query returns a query builder for RecoveryCode.
+func (c *RecoveryCodeClient) Query() *RecoveryCodeQuery {
+	return &RecoveryCodeQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeRecoveryCode},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a RecoveryCode entity by its id.
+func (c *RecoveryCodeClient) Get(ctx context.Context, id int64) (*RecoveryCode, error) {
+	return c.Query().Where(recoverycode.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *RecoveryCodeClient) GetX(ctx context.Context, id int64) *RecoveryCode {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryUser queries the user edge of a RecoveryCode.
+func (c *RecoveryCodeClient) QueryUser(_m *RecoveryCode) *UserQuery {
+	query := (&UserClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(recoverycode.Table, recoverycode.FieldID, id),
+			sqlgraph.To(user.Table, user.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, recoverycode.UserTable, recoverycode.UserColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *RecoveryCodeClient) Hooks() []Hook {
+	return c.hooks.RecoveryCode
+}
+
+// Interceptors returns the client interceptors.
+func (c *RecoveryCodeClient) Interceptors() []Interceptor {
+	return c.inters.RecoveryCode
+}
+
+func (c *RecoveryCodeClient) mutate(ctx context.Context, m *RecoveryCodeMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&RecoveryCodeCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&RecoveryCodeUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&RecoveryCodeUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&RecoveryCodeDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown RecoveryCode mutation op: %q", m.Op())
+	}
+}
+
 // SegmentClient is a client for the Segment schema.
 type SegmentClient struct {
 	config
@@ -4307,6 +4464,22 @@ func (c *UserClient) QuerySentInvitations(_m *User) *InvitationQuery {
 	return query
 }
 
+// QueryRecoveryCodes queries the recovery_codes edge of a User.
+func (c *UserClient) QueryRecoveryCodes(_m *User) *RecoveryCodeQuery {
+	query := (&RecoveryCodeClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, id),
+			sqlgraph.To(recoverycode.Table, recoverycode.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, user.RecoveryCodesTable, user.RecoveryCodesColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *UserClient) Hooks() []Hook {
 	return c.hooks.User
@@ -5153,14 +5326,14 @@ type (
 		ApiToken, AuditEntry, AuthAttempt, Automation, AutomationRun, Broadcast,
 		BroadcastRecipient, Confirmation, Contact, CustomField, EmailTemplate, Event,
 		Integration, Invitation, Membership, OAuthClient, OAuthCode, OutboundMessage,
-		Segment, SendLimiter, SendingDomain, Suppression, Tag, Unsubscribe, User,
-		Visitor, WebhookEndpoint, Workspace []ent.Hook
+		RecoveryCode, Segment, SendLimiter, SendingDomain, Suppression, Tag,
+		Unsubscribe, User, Visitor, WebhookEndpoint, Workspace []ent.Hook
 	}
 	inters struct {
 		ApiToken, AuditEntry, AuthAttempt, Automation, AutomationRun, Broadcast,
 		BroadcastRecipient, Confirmation, Contact, CustomField, EmailTemplate, Event,
 		Integration, Invitation, Membership, OAuthClient, OAuthCode, OutboundMessage,
-		Segment, SendLimiter, SendingDomain, Suppression, Tag, Unsubscribe, User,
-		Visitor, WebhookEndpoint, Workspace []ent.Interceptor
+		RecoveryCode, Segment, SendLimiter, SendingDomain, Suppression, Tag,
+		Unsubscribe, User, Visitor, WebhookEndpoint, Workspace []ent.Interceptor
 	}
 )

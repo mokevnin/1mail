@@ -7,6 +7,7 @@ import type { SiteWorkspaceResource } from './generated/site/types.gen.ts'
 import { AccountLayout } from './layouts/AccountLayout.tsx'
 import { WorkspaceLayout } from './layouts/WorkspaceLayout.tsx'
 import { ProfilePage } from './routes/account/profile.tsx'
+import { SecurityPage } from './routes/account/security.tsx'
 import { ConfirmEmailChangePage } from './routes/auth/confirm-email-change.tsx'
 import { ForgotPasswordPage } from './routes/auth/forgot-password.tsx'
 import { LoginPage } from './routes/auth/login.tsx'
@@ -339,6 +340,12 @@ export const profileRoute = createRoute({
   component: ProfilePage,
 })
 
+export const securityRoute = createRoute({
+  getParentRoute: () => accountRoute,
+  path: '/security',
+  component: SecurityPage,
+})
+
 const routeTree = rootRoute.addChildren([
   indexRoute,
   loginRoute,
@@ -352,7 +359,7 @@ const routeTree = rootRoute.addChildren([
   unsubscribedRoute,
   acceptInvitationRoute,
   oauthConsentRoute,
-  accountRoute.addChildren([profileRoute]),
+  accountRoute.addChildren([profileRoute, securityRoute]),
   workspaceRoute.addChildren([
     overviewRoute,
     contactsRoute,

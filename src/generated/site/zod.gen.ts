@@ -419,6 +419,20 @@ export const zSitePreviewSegmentResult = z.object({
   count: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' })
 });
 
+/**
+ * A fresh set of Recovery codes. They are shown only in this response.
+ */
+export const zSiteRecoveryCodes = z.object({
+  codes: z.array(z.string())
+});
+
+/**
+ * Proof of the User's password, for regenerating Recovery codes
+ */
+export const zSiteRecoveryCodesInput = z.object({
+  currentPassword: z.string()
+});
+
 export const zSiteRegisterInput = z.object({
   name: z.string(),
   email: zEmailAddress,
@@ -431,6 +445,40 @@ export const zSiteRegisterInput = z.object({
 export const zSiteResetPasswordInput = z.object({
   token: z.string(),
   password: z.string()
+});
+
+/**
+ * A code from the authenticator app
+ */
+export const zSiteSecondFactorConfirmInput = z.object({
+  code: z.string()
+});
+
+/**
+ * Proof of password and possession, for disabling the Second factor
+ */
+export const zSiteSecondFactorDisableInput = z.object({
+  currentPassword: z.string(),
+  code: z.string()
+});
+
+/**
+ * A pending enrollment: the TOTP secret to add to an authenticator app
+ */
+export const zSiteSecondFactorEnrollment = z.object({
+  secret: z.string(),
+  otpauthUri: z.string(),
+  qrCode: z.string()
+});
+
+/**
+ * The authenticated User's Second factor (ADR 0020). Recovery codes are never
+ * readable here: only how many are left.
+ */
+export const zSiteSecondFactorStatus = z.object({
+  enabled: z.boolean(),
+  pending: z.boolean(),
+  recoveryCodesRemaining: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' })
 });
 
 /**
@@ -1482,6 +1530,37 @@ export const zSiteUserUpdateMeBody = zSiteUpdateMeInput;
 export const zSiteUserUpdateMeResponse = zSiteUserResource;
 
 export const zSiteUserEmailChangeBody = zSiteEmailChangeInput;
+
+/**
+ * The request has succeeded.
+ */
+export const zSiteSecondFactorGetStatusResponse = zSiteSecondFactorStatus;
+
+export const zSiteSecondFactorDisableBody = zSiteSecondFactorDisableInput;
+
+/**
+ * There is no content to send for this request, but the headers may be useful.
+ */
+export const zSiteSecondFactorDisableResponse = z.void();
+
+/**
+ * The request has succeeded.
+ */
+export const zSiteSecondFactorStartEnrollmentResponse = zSiteSecondFactorEnrollment;
+
+export const zSiteSecondFactorConfirmEnrollmentBody = zSiteSecondFactorConfirmInput;
+
+/**
+ * The request has succeeded.
+ */
+export const zSiteSecondFactorConfirmEnrollmentResponse = zSiteRecoveryCodes;
+
+export const zSiteSecondFactorRegenerateRecoveryCodesBody = zSiteRecoveryCodesInput;
+
+/**
+ * The request has succeeded.
+ */
+export const zSiteSecondFactorRegenerateRecoveryCodesResponse = zSiteRecoveryCodes;
 
 /**
  * There is no content to send for this request, but the headers may be useful.

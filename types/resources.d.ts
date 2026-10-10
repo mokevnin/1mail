@@ -17,7 +17,8 @@ export default interface Resources {
     },
     "account": {
       "backToDashboard": "Dashboard",
-      "profile": "Profile"
+      "profile": "Profile",
+      "security": "Security"
     },
     "actions": {
       "back": "Back",
@@ -392,6 +393,40 @@ export default interface Resources {
       "submitButton": "Set password",
       "successMessage": "Your password has been reset. Please sign in.",
       "title": "Set a new password"
+    },
+    "security": {
+      "codeLabel": "Code from the app",
+      "codesRemaining": "{{count}} recovery codes left" | "{{count}} recovery code left" | "{{count}} recovery codes left",
+      "confirmButton": "Turn on",
+      "confirmErrorTitle": "Could not turn on two-factor authentication",
+      "copied": "Copied",
+      "copyCodes": "Copy codes",
+      "copyKey": "Copy key",
+      "disableButton": "Turn off two-factor authentication",
+      "disableCodeLabel": "Code from the app or a recovery code",
+      "disableErrorTitle": "Could not turn off two-factor authentication",
+      "disableTitle": "Turn off",
+      "disabledMessage": "Two-factor authentication is off",
+      "enabledMessage": "Two-factor authentication is on",
+      "keyHint": "Or enter this key in the app:",
+      "loadErrorTitle": "Failed to load security settings",
+      "off": "Off",
+      "offDescription": "Protect your account with a code from an authenticator app in addition to your password.",
+      "on": "On",
+      "passwordLabel": "Current password",
+      "qrAlt": "QR code for the authenticator app",
+      "recoveryCodesHint": "Each code works once in place of a code from the app. Store them somewhere safe: they will not be shown again.",
+      "recoveryCodesTitle": "Save your recovery codes",
+      "regenerateButton": "Generate new codes",
+      "regenerateDescription": "The current recovery codes stop working.",
+      "regenerateErrorTitle": "Could not generate recovery codes",
+      "regenerateTitle": "Recovery codes",
+      "savedCodes": "I have saved them",
+      "scanHint": "Scan this QR code with your authenticator app.",
+      "setUpButton": "Set up authenticator app",
+      "startErrorTitle": "Could not start setup",
+      "title": "Security",
+      "twoFactorTitle": "Two-factor authentication"
     },
     "segments": {
       "addSegment": "Add segment",

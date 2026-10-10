@@ -13,5 +13,6 @@ test('renders the brand, the account sidebar and the user menu', async () => {
 
   await expect.element(screen.getByText('Dashboard')).toBeInTheDocument()
   await expect.element(screen.getByText('Profile')).toBeInTheDocument()
+  await expect.element(screen.getByText('Security')).toBeInTheDocument()
   expect(navigate).not.toHaveBeenCalled()
 })

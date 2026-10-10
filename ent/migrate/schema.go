@@ -701,6 +701,36 @@ var (
 			},
 		},
 	}
+	// RecoveryCodesColumns holds the columns for the "recovery_codes" table.
+	RecoveryCodesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt64, Increment: true},
+		{Name: "created_at", Type: field.TypeTime, Default: "CURRENT_TIMESTAMP"},
+		{Name: "updated_at", Type: field.TypeTime, Default: "CURRENT_TIMESTAMP"},
+		{Name: "code_hash", Type: field.TypeString},
+		{Name: "used_at", Type: field.TypeTime, Nullable: true},
+		{Name: "user_id", Type: field.TypeInt64},
+	}
+	// RecoveryCodesTable holds the schema information for the "recovery_codes" table.
+	RecoveryCodesTable = &schema.Table{
+		Name:       "recovery_codes",
+		Columns:    RecoveryCodesColumns,
+		PrimaryKey: []*schema.Column{RecoveryCodesColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "recovery_codes_users_recovery_codes",
+				Columns:    []*schema.Column{RecoveryCodesColumns[5]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "recoverycode_user_id_code_hash",
+				Unique:  true,
+				Columns: []*schema.Column{RecoveryCodesColumns[5], RecoveryCodesColumns[3]},
+			},
+		},
+	}
 	// SegmentsColumns holds the columns for the "segments" table.
 	SegmentsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt64, Increment: true},
@@ -903,6 +933,9 @@ var (
 		{Name: "password_hash", Type: field.TypeString, Nullable: true},
 		{Name: "email_verified_at", Type: field.TypeTime, Nullable: true},
 		{Name: "session_epoch", Type: field.TypeInt64, Default: 0},
+		{Name: "second_factor_secret_encrypted", Type: field.TypeString, Nullable: true},
+		{Name: "second_factor_confirmed_at", Type: field.TypeTime, Nullable: true},
+		{Name: "second_factor_last_step", Type: field.TypeInt64, Default: 0},
 	}
 	// UsersTable holds the schema information for the "users" table.
 	UsersTable = &schema.Table{
@@ -1051,6 +1084,7 @@ var (
 		OauthClientsTable,
 		OauthCodesTable,
 		OutboundMessagesTable,
+		RecoveryCodesTable,
 		SegmentsTable,
 		SendLimitersTable,
 		SendingDomainsTable,
@@ -1139,6 +1173,10 @@ func init() {
 	OutboundMessagesTable.ForeignKeys[0].RefTable = WorkspacesTable
 	OutboundMessagesTable.Annotation = &entsql.Annotation{
 		Table: "outbound_messages",
+	}
+	RecoveryCodesTable.ForeignKeys[0].RefTable = UsersTable
+	RecoveryCodesTable.Annotation = &entsql.Annotation{
+		Table: "recovery_codes",
 	}
 	SegmentsTable.ForeignKeys[0].RefTable = WorkspacesTable
 	SegmentsTable.Annotation = &entsql.Annotation{

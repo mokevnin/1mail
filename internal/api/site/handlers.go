@@ -22,6 +22,7 @@ import (
 	"github.com/mokevnin/1mail/internal/integrations"
 	"github.com/mokevnin/1mail/internal/oauthserver"
 	"github.com/mokevnin/1mail/internal/outbound"
+	"github.com/mokevnin/1mail/internal/secondfactor"
 	"github.com/mokevnin/1mail/internal/secrets"
 	"github.com/mokevnin/1mail/internal/segments"
 	"github.com/mokevnin/1mail/internal/sendingdomains"
@@ -82,6 +83,7 @@ type Handlers struct {
 	oauth          *oauthserver.Service
 	audit          AuditLog
 	sessions       *auth.Sessions
+	secondFactor   *secondfactor.Module
 }
 
 // AuditLog is the read seam of the Enterprise Audit log (ADR 0022), implemented by
@@ -128,6 +130,8 @@ type Deps struct {
 	// Sessions issues the session cookie on login (ADR 0020). The composition
 	// root (server.New) builds it from the instance secret and SESSION_TTL.
 	Sessions *auth.Sessions
+	// SecondFactor enrolls and verifies a User's TOTP Second factor (ADR 0020).
+	SecondFactor *secondfactor.Module
 	// Clock is the time the site session's expiry is checked against (ADR 0020);
 	// nil means time.Now. Tests inject one to move past a session's lifetime.
 	Clock func() time.Time
@@ -139,7 +143,7 @@ func NewHandlers(d Deps) *Handlers {
 		segments: d.Segments, eventlog: d.EventLog, contacts: d.Contacts, erasure: d.Erasure, tags: d.Tags,
 		automations: d.Automations, broadcasts: d.Broadcasts, welcome: d.Welcome,
 		sysmail: d.SysMail, sendingDomains: d.SendingDomains, integrations: d.Integrations, tokens: d.Tokens, tracker: d.Tracker, appURL: d.AppURL,
-		oauth: d.OAuth, audit: d.Audit, sessions: d.Sessions,
+		oauth: d.OAuth, audit: d.Audit, sessions: d.Sessions, secondFactor: d.SecondFactor,
 	}
 }
 

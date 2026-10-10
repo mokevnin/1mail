@@ -304,6 +304,48 @@ func encodeSitePublicInvitationsAcceptRequest(
 	return nil
 }
 
+func encodeSiteSecondFactorConfirmEnrollmentRequest(
+	req *SiteSecondFactorConfirmInput,
+	r *http.Request,
+) error {
+	const contentType = "application/json"
+	e := new(jx.Encoder)
+	{
+		req.Encode(e)
+	}
+	encoded := e.Bytes()
+	ht.SetBody(r, bytes.NewReader(encoded), contentType)
+	return nil
+}
+
+func encodeSiteSecondFactorDisableRequest(
+	req *SiteSecondFactorDisableInput,
+	r *http.Request,
+) error {
+	const contentType = "application/json"
+	e := new(jx.Encoder)
+	{
+		req.Encode(e)
+	}
+	encoded := e.Bytes()
+	ht.SetBody(r, bytes.NewReader(encoded), contentType)
+	return nil
+}
+
+func encodeSiteSecondFactorRegenerateRecoveryCodesRequest(
+	req *SiteRecoveryCodesInput,
+	r *http.Request,
+) error {
+	const contentType = "application/json"
+	e := new(jx.Encoder)
+	{
+		req.Encode(e)
+	}
+	encoded := e.Bytes()
+	ht.SetBody(r, bytes.NewReader(encoded), contentType)
+	return nil
+}
+
 func encodeSiteSegmentsCreateRequest(
 	req *SiteCreateSegmentInput,
 	r *http.Request,

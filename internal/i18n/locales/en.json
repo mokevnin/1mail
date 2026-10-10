@@ -11,7 +11,6 @@
   "email.welcome.body": "Hi {{.Greeting}},\n\nWelcome to 1mail! Your account is ready.\n",
   "email.workspace_suspended.subject": "Outbound email sending is suspended for {{.Workspace}}",
   "email.workspace_suspended.body": "Outbound email sending for your 1mail workspace {{.Workspace}} has been suspended.\n\nReason: {{.Reason}}\nSet by: {{.Actor}}\n\nNothing is lost: scheduled broadcasts and automations pause and resume when the suspension is lifted. You can still sign in and view your data. To appeal, contact your 1mail administrator.\n",
-
   "errors.name_required": "name is required",
   "errors.email_required": "email is required",
   "errors.password_required": "password is required",
@@ -33,6 +32,10 @@
   "errors.retention_days_range": "retention must be between 1 and 3650 days",
   "errors.current_password_required": "current password is required",
   "errors.current_password_incorrect": "current password is incorrect",
+  "errors.second_factor_code_invalid": "the code is not valid",
+  "errors.second_factor_already_active": "a second factor is already active",
+  "errors.second_factor_no_pending": "start enrollment first",
+  "errors.second_factor_not_active": "no second factor is active",
   "errors.new_email_required": "new email is required",
   "errors.new_email_must_differ": "new email must differ from the current one",
   "errors.url_invalid": "invalid url",

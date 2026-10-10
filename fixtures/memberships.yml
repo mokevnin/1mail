@@ -28,3 +28,10 @@
   role: member
   created_at: '2026-01-01 00:00:00'
   updated_at: '2026-01-01 00:00:00'
+# Sam (with a Second factor) is a member of Globex.
+- id: 5 # fixture: GlobexSamMembership
+  user_id: 5
+  workspace_id: 2
+  role: member
+  created_at: '2026-01-01 00:00:00'
+  updated_at: '2026-01-01 00:00:00'

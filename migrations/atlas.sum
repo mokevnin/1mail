@@ -1,4 +1,4 @@
-h1:qLWUJGKQleJcOu9G1O+n+jE28u478ZdKXZsCfgJNRng=
+h1:59O6SEMUEZf4rZOM/MiuVSUV8AnBwYLveRmjfdrIkss=
 20260630101109_init.sql h1:Pgj3WXyEdlsbabERn8ue309EON5bAyWNV1X8O9IkKos=
 20260630175449_send_eligibility_model.sql h1:vEOs/vQyOdwj2FK2h5B0795pY2DVs3jbv3IpH5A/njw=
 20260630204007_transactional_email.sql h1:sotbb1MKWbZO2UzTf7TruRuFpMaXirns67+ithjM1Lc=
@@ -27,3 +27,4 @@ h1:qLWUJGKQleJcOu9G1O+n+jE28u478ZdKXZsCfgJNRng=
 20261010035450_audit_entries.sql h1:cJ8Ec/55xpcjmRG/sbmiojlc2Tf1FX8BPsXD7czNjvQ=
 20261010035451_workspace_retention_days.sql h1:hghzWpaOFS5EiSan9vyUa7SZV1w681n7A5LGisWsneY=
 20261010161356_user_session_epoch.sql h1:EA/YmeMcRtokVwWgTxLy1ChgIrXrs9vchznl44XrNVo=
+20261010171748_user_second_factor.sql h1:/HXHotxgBJPFCdRORYMwbTG8XrstHYJoHCyxohhkUsQ=

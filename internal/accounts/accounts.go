@@ -284,7 +284,7 @@ func (a *Accounts) UpdateProfile(ctx context.Context, id int64, name, passwordHa
 		if passwordHash == nil {
 			return nil
 		}
-		return recordUserAction(ctx, tx, pub, u, events.ActionUserPasswordChange, map[string]any{"password": "changed"})
+		return RecordUserAction(ctx, tx, pub, u, events.ActionUserPasswordChange, map[string]any{"password": "changed"})
 	})
 	return saved, err
 }
@@ -307,13 +307,13 @@ func (a *Accounts) EndSessions(ctx context.Context, id int64) error {
 // Workspace, so there is no account-level log).
 func (a *Accounts) RecordLogin(ctx context.Context, u *ent.User) error {
 	return a.bus.WithinTx(ctx, func(tx *ent.Client, pub events.Publisher) error {
-		return recordUserAction(ctx, tx, pub, u, events.ActionUserLogin, nil)
+		return RecordUserAction(ctx, tx, pub, u, events.ActionUserLogin, nil)
 	})
 }
 
-// recordUserAction publishes one Audit entry per Workspace the User holds a
+// RecordUserAction publishes one Audit entry per Workspace the User holds a
 // Membership in, and none anywhere else. The User is the actor and the target.
-func recordUserAction(ctx context.Context, tx *ent.Client, pub events.Publisher, u *ent.User, action string, diff map[string]any) error {
+func RecordUserAction(ctx context.Context, tx *ent.Client, pub events.Publisher, u *ent.User, action string, diff map[string]any) error {
 	memberships, err := tx.Membership.Query().Where(membership.UserID(u.ID)).All(ctx)
 	if err != nil {
 		return err

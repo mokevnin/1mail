@@ -209,6 +209,22 @@ type SitePublicUnsubscribesPerformRes interface {
 	sitePublicUnsubscribesPerformRes()
 }
 
+type SiteSecondFactorConfirmEnrollmentRes interface {
+	siteSecondFactorConfirmEnrollmentRes()
+}
+
+type SiteSecondFactorDisableRes interface {
+	siteSecondFactorDisableRes()
+}
+
+type SiteSecondFactorRegenerateRecoveryCodesRes interface {
+	siteSecondFactorRegenerateRecoveryCodesRes()
+}
+
+type SiteSecondFactorStartEnrollmentRes interface {
+	siteSecondFactorStartEnrollmentRes()
+}
+
 type SiteSegmentsCreateRes interface {
 	siteSegmentsCreateRes()
 }

@@ -57,6 +57,23 @@ func TestGenerateExtractsPlaintextOfCredentialTemplateCalls(t *testing.T) {
 	require.NotContains(t, out, "staticstatichash")
 }
 
+func TestGenerateExtractsTheSecondFactorSecretAndRecoveryCode(t *testing.T) {
+	dir := writeFixtures(t, map[string]string{
+		"users.yml": "- id: 1 # fixture: Sam\n  email: s@example.com\n" +
+			"  second_factor_secret_encrypted: '{{encrypt \"JBSWY3DPEHPK3PXP\"}}'\n",
+		"recovery_codes.yml": "- id: 1 # fixture: SamRecovery\n  user_id: 1\n  code_hash: '{{recoveryCodeHash \"abcde-fghij\"}}'\n",
+		"integrations.yml":   "- id: 1 # fixture: Smtp\n  config_encrypted: '{{encrypt \"{}\"}}'\n",
+	})
+
+	src, err := fixturegen.Generate(dir)
+	require.NoError(t, err)
+
+	out := string(src)
+	require.Contains(t, out, `SamTotpSecret = "JBSWY3DPEHPK3PXP"`)
+	require.Contains(t, out, `SamRecoveryCode = "abcde-fghij"`)
+	require.NotContains(t, out, "SmtpTotpSecret", "only the second factor column is lifted")
+}
+
 func TestGenerateFailsOnDuplicateName(t *testing.T) {
 	dir := writeFixtures(t, map[string]string{
 		"workspaces.yml": "- id: 1 # fixture: Dup\n  slug: a\n",

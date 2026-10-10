@@ -1,0 +1,13 @@
+# SecondFactorSam's Recovery codes, stored hashed (ADR 0020). The plaintext of the
+# annotated row is fixtures.SecondFactorSamRecoveryCode; the second row is already spent.
+- id: 1 # fixture: SecondFactorSamRecovery
+  user_id: 5
+  code_hash: '{{recoveryCodeHash "sam01-unusd"}}'
+  created_at: '2026-01-01 00:00:00'
+  updated_at: '2026-01-01 00:00:00'
+- id: 2 # fixture: SecondFactorSamSpentRecovery
+  user_id: 5
+  code_hash: '{{recoveryCodeHash "sam02-spent"}}'
+  used_at: '2026-01-02 00:00:00'
+  created_at: '2026-01-01 00:00:00'
+  updated_at: '2026-01-01 00:00:00'

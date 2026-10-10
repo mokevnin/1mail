@@ -26,3 +26,14 @@
   password_hash: '{{argonHash "oscar-test-password"}}'
   created_at: '2026-01-01 00:00:00'
   updated_at: '2026-01-01 00:00:00'
+# Sam has an active TOTP Second factor (ADR 0020): the secret is sealed at load time
+# and lifted into fixtures.SecondFactorSamTotpSecret; his Recovery codes are in
+# recovery_codes.yml. He is a member of Globex (Acme's member list stays exact).
+- id: 5 # fixture: SecondFactorSam
+  name: Sam
+  email: sam@globex.test
+  password_hash: '{{argonHash "sam-test-password"}}'
+  second_factor_secret_encrypted: '{{encrypt "JBSWY3DPEHPK3PXP"}}'
+  second_factor_confirmed_at: '2026-01-01 00:00:00'
+  created_at: '2026-01-01 00:00:00'
+  updated_at: '2026-01-01 00:00:00'
