@@ -197,13 +197,18 @@ func webhooksConsumer(client *ent.Client, dispatcher WebhookDispatcher) message.
 		if err != nil {
 			return err
 		}
-		if _, skip := ev.(Unprojected); skip {
-			return nil // administrative history is never fanned out as an Event (ADR 0022)
-		}
 		p := ev.Project()
+		// Filter/route on the semantic action (e.g. "page_view"), not the bus type. An
+		// unprojected event (an Audit entry) has no Event action: it is forwarded under
+		// its bus type, only to endpoints that select it, and the edition's dispatcher
+		// gates it by license (ADR 0022).
+		name := p.Action
+		if _, unprojected := ev.(Unprojected); unprojected {
+			name = env.Name
+		}
 		body, err := json.Marshal(webhookPayload{
 			ID:          env.ID,
-			Type:        p.Action,
+			Type:        name,
 			OccurredAt:  env.OccurredAt,
 			WorkspaceID: env.WorkspaceID,
 			Subject:     p.Subject,
@@ -213,8 +218,7 @@ func webhooksConsumer(client *ent.Client, dispatcher WebhookDispatcher) message.
 		if err != nil {
 			return fmt.Errorf("marshal webhook payload: %w", err)
 		}
-		// Filter/route on the semantic action (e.g. "page_view"), not the bus type.
-		return dispatcher.Dispatch(msg.Context(), client.Scoped(env.WorkspaceID), p.Action, env.ID, body)
+		return dispatcher.Dispatch(msg.Context(), client.Scoped(env.WorkspaceID), name, env.ID, body)
 	}
 }
 

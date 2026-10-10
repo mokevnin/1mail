@@ -15,6 +15,8 @@ import (
 
 // Edition is the Enterprise surface of one running instance.
 type Edition struct {
+	lic *licensekey.License
+
 	// Audit is the read side of the Audit log; unlicensed, it reports so and the
 	// /site page answers 402.
 	Audit *audit.Log
@@ -27,7 +29,14 @@ type Edition struct {
 // instance stores nothing.
 func New(client *ent.Client, lic *licensekey.License) *Edition {
 	return &Edition{
+		lic:       lic,
 		Audit:     audit.NewLog(lic),
 		Consumers: []events.Consumer{audit.Consumer(client, lic)},
 	}
+}
+
+// Webhooks gates the webhook dispatcher by license: `audit.entry` is forwarded to
+// Webhook endpoints only when the Audit feature is licensed.
+func (e *Edition) Webhooks(next events.WebhookDispatcher) events.WebhookDispatcher {
+	return audit.Forwarder(next, e.lic)
 }

@@ -26,8 +26,15 @@ import type { SiteWebhookEndpointResource } from '../../generated/site/types.gen
 import { useDeleteConfirmation } from '../../hooks/useDeleteConfirmation.tsx'
 import { useResourceMutation } from '../../hooks/useResourceMutation.ts'
 
-// The domain events an endpoint can subscribe to. An empty selection means all.
-const EVENT_OPTIONS = ['contact.created', 'email.opened', 'email.clicked', 'email.unsubscribed']
+// The domain events an endpoint can subscribe to. An empty selection means all customer
+// events; audit.entry (Enterprise) is never included and must be chosen explicitly.
+const EVENT_OPTIONS = [
+  'contact.created',
+  'email.opened',
+  'email.clicked',
+  'email.unsubscribed',
+  'audit.entry',
+]
 
 export function WebhooksSection({ slug }: { slug: string }) {
   const { t } = useTranslation()
