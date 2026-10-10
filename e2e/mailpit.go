@@ -43,6 +43,9 @@ type Mailpit struct {
 	poll time.Duration
 }
 
+// URL is the base URL of the Mailpit web UI and HTTP API.
+func (m *Mailpit) URL() string { return m.base }
+
 // NewMailpit builds a client for the Mailpit HTTP API at base ("http://127.0.0.1:8025").
 func NewMailpit(base string) *Mailpit {
 	return &Mailpit{base: strings.TrimRight(base, "/"), hc: &http.Client{Timeout: 10 * time.Second}, poll: 100 * time.Millisecond}
