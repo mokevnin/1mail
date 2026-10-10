@@ -1,7 +1,9 @@
 package jobs
 
 import (
+	"database/sql"
 	"log/slog"
+	"time"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/riverqueue/river"
@@ -49,6 +51,14 @@ func NewRefreshIntegrationQuotaWorker(client *ent.Client, cipher *secrets.Cipher
 	return &RefreshIntegrationQuotaWorker{ent: client, cipher: cipher, catalog: catalog}
 }
 
+func NewPruneOutboxWorker(db *sql.DB, floor time.Duration) *PruneOutboxWorker {
+	return &PruneOutboxWorker{db: db, floor: floor}
+}
+
+func NewPruneEventsWorker(db *sql.DB, retention time.Duration) *PruneEventsWorker {
+	return &PruneEventsWorker{db: db, retention: retention}
+}
+
 func NewEvaluateTriggerWorker(client *ent.Client) *EvaluateTriggerWorker {
 	return &EvaluateTriggerWorker{ent: client}
 }
@@ -70,3 +80,7 @@ func (c *Client) River() *river.Client[pgx.Tx] { return c.river }
 
 // NewErrorHandler builds river's error sink over logger.
 func NewErrorHandler(logger *slog.Logger) river.ErrorHandler { return &errorHandler{logger: logger} }
+
+func NewPurgeAuthAttemptsWorker(client *ent.Client) *PurgeAuthAttemptsWorker {
+	return &PurgeAuthAttemptsWorker{ent: client}
+}

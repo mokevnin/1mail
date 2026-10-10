@@ -10,6 +10,7 @@ import (
 	"github.com/mokevnin/1mail/internal/automations"
 	"github.com/mokevnin/1mail/internal/broadcasts"
 	"github.com/mokevnin/1mail/internal/contacts"
+	"github.com/mokevnin/1mail/internal/erasure"
 	"github.com/mokevnin/1mail/internal/eventlog"
 	"github.com/mokevnin/1mail/internal/events"
 	"github.com/mokevnin/1mail/internal/outbound"
@@ -33,6 +34,7 @@ type Handlers struct {
 	broadcasts     *broadcasts.Module
 	reputation     *reputation.Module
 	contacts       *contacts.Module
+	erasure        *erasure.Module
 	tags           *tags.Module
 	automations    *automations.Module
 	bootstrapToken string
@@ -49,6 +51,7 @@ type Deps struct {
 	Segments       *segments.Module
 	EventLog       *eventlog.Module
 	Contacts       *contacts.Module
+	Erasure        *erasure.Module
 	Tags           *tags.Module
 	Automations    *automations.Module
 	Broadcasts     *broadcasts.Module
@@ -59,7 +62,7 @@ type Deps struct {
 func NewHandlers(d Deps) *Handlers {
 	return &Handlers{
 		accounts: d.Accounts, bus: d.Bus, cipher: d.Cipher, outbound: d.Outbound, segments: d.Segments,
-		eventlog: d.EventLog, contacts: d.Contacts, tags: d.Tags, automations: d.Automations,
+		eventlog: d.EventLog, contacts: d.Contacts, erasure: d.Erasure, tags: d.Tags, automations: d.Automations,
 		broadcasts: d.Broadcasts, reputation: d.Reputation, bootstrapToken: d.BootstrapToken,
 	}
 }

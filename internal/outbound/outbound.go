@@ -27,6 +27,7 @@ import (
 	"github.com/samber/lo"
 
 	"github.com/mokevnin/1mail/ent"
+	"github.com/mokevnin/1mail/ent/contact"
 	"github.com/mokevnin/1mail/ent/outboundmessage"
 	"github.com/mokevnin/1mail/internal/eligibility"
 	"github.com/mokevnin/1mail/internal/emailrender"
@@ -76,6 +77,11 @@ func deferralBackoff(err error) time.Duration {
 		return 0
 	}
 }
+
+// SkipContactErased is the Skipped reason of a send whose Contact was erased after
+// the send was queued (ADR 0021). Nothing is recorded for it: the message row would
+// carry the erased person's address.
+const SkipContactErased = "contact_erased"
 
 // Reasons an Outbound send is Held.
 const (
@@ -250,6 +256,15 @@ func (m *Module) Send(ctx context.Context, s *ent.Scoped, req Request) (Result, 
 		return replayResult(existing), nil
 	}
 
+	// The Contact must still exist: a send queued before its Erasure is dropped here,
+	// the one chokepoint every worker passes (ADR 0021), before anything is claimed or
+	// recorded that would keep the erased person's address.
+	if gone, err := m.contactErased(ctx, s, req); err != nil {
+		return Result{}, err
+	} else if gone {
+		return Result{Outcome: Skipped, Reason: SkipContactErased}, nil
+	}
+
 	ws, err := m.workspace(ctx, s)
 	if err != nil {
 		return Result{}, err
@@ -322,6 +337,18 @@ func (m *Module) Send(ctx context.Context, s *ent.Scoped, req Request) (Result, 
 	}
 
 	return m.recordSent(ctx, s, req, msg, g, dest, receipt)
+}
+
+// contactErased reports whether the Request carries a Contact that no longer exists in
+// the Workspace. A send with no Contact (a Transactional address) is never erased here.
+func (m *Module) contactErased(ctx context.Context, s *ent.Scoped, req Request) (bool, error) {
+	c := req.Contact
+	if c == nil || c.WorkspaceID != s.WorkspaceID() {
+		// No Contact, or another Workspace's row (not "erased": the claim refuses it).
+		return false, nil
+	}
+	exists, err := s.Contact().Query().Where(contact.ID(c.ID)).Exist(ctx)
+	return !exists, err
 }
 
 // Preflight reports whether a Workspace could send right now from fromEmail (""

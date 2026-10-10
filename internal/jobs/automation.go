@@ -15,6 +15,7 @@ import (
 	"github.com/mokevnin/1mail/ent/outboundmessage"
 	"github.com/mokevnin/1mail/internal/automations"
 	"github.com/mokevnin/1mail/internal/eligibility"
+	"github.com/mokevnin/1mail/internal/jobkind"
 	"github.com/mokevnin/1mail/internal/outbound"
 	"github.com/mokevnin/1mail/internal/tags"
 )
@@ -27,7 +28,7 @@ type EvaluateTriggerArgs struct {
 	Action      string `json:"action"`
 }
 
-func (EvaluateTriggerArgs) Kind() string { return "automation_evaluate_trigger" }
+func (EvaluateTriggerArgs) Kind() string { return jobkind.EvaluateTrigger }
 
 type EvaluateTriggerWorker struct {
 	river.WorkerDefaults[EvaluateTriggerArgs]
@@ -77,26 +78,14 @@ func EvaluateTrigger(ctx context.Context, s *ent.Scoped, contactID int64, action
 
 	var runIDs []int64
 	for _, a := range autos {
-		// Check-then-insert so the common "already enrolled" path doesn't trip the
-		// unique constraint (a violation would poison the surrounding transaction).
-		// The unique index stays as a race safety net.
-		exists, err := s.AutomationRun().Query().
-			Where(automationrun.AutomationID(a.ID), automationrun.ContactID(contactID)).
-			Exist(ctx)
+		runID, enrolled, err := automations.Enroll(ctx, s, a.ID, contactID)
 		if err != nil {
 			return nil, err
 		}
-		if exists {
+		if !enrolled {
 			continue
 		}
-		run, err := s.AutomationRun().Create().
-			SetAutomationID(a.ID).
-			SetContactID(contactID).
-			Save(ctx)
-		if err != nil {
-			continue // lost an enrollment race; skip
-		}
-		runIDs = append(runIDs, run.ID)
+		runIDs = append(runIDs, runID)
 	}
 	return runIDs, nil
 }
@@ -107,7 +96,7 @@ type RunStepArgs struct {
 	RunID int64 `json:"run_id"`
 }
 
-func (RunStepArgs) Kind() string { return "automation_run_step" }
+func (RunStepArgs) Kind() string { return jobkind.RunStep }
 
 type RunStepWorker struct {
 	river.WorkerDefaults[RunStepArgs]
@@ -146,6 +135,9 @@ type StepResult struct {
 // RunStep only turns its Outcome into the enrollment's next state.
 func RunStep(ctx context.Context, client *ent.Client, mod *outbound.Module, runID int64) (StepResult, error) {
 	run, err := client.AutomationRun.Get(ctx, runID)
+	if ent.IsNotFound(err) {
+		return StepResult{Done: true}, nil // erased with its Contact (ADR 0021) after the job was queued
+	}
 	if err != nil {
 		return StepResult{}, fmt.Errorf("load run %d: %w", runID, err)
 	}
@@ -234,7 +226,7 @@ func RunStep(ctx context.Context, client *ent.Client, mod *outbound.Module, runI
 			// An ineligible destination (suppressed, or unsubscribed from this
 			// automation / from everything) exits the enrollment — a run never
 			// silently keeps walking steps while skipping every email.
-			_, _ = scoped.AutomationRun().UpdateOneID(run.ID).SetStatus(automationrun.StatusExited).ClearResumeAt().Save(ctx)
+			_ = automations.ExitRun(ctx, scoped, run.ID)
 			return StepResult{Done: true}, nil
 		case outbound.Failed:
 			_, _ = scoped.AutomationRun().UpdateOneID(run.ID).SetStatus(automationrun.StatusFailed).Save(ctx)

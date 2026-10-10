@@ -78,6 +78,12 @@ func (_u *OutboundMessageUpdate) SetNillableDestination(v *string) *OutboundMess
 	return _u
 }
 
+// ClearDestination clears the value of the "destination" field.
+func (_u *OutboundMessageUpdate) ClearDestination() *OutboundMessageUpdate {
+	_u.mutation.ClearDestination()
+	return _u
+}
+
 // SetContactID sets the "contact_id" field.
 func (_u *OutboundMessageUpdate) SetContactID(v int64) *OutboundMessageUpdate {
 	_u.mutation.ResetContactID()
@@ -481,11 +487,6 @@ func (_u *OutboundMessageUpdate) check() error {
 			return &ValidationError{Name: "channel", err: fmt.Errorf(`ent: validator failed for field "OutboundMessage.channel": %w`, err)}
 		}
 	}
-	if v, ok := _u.mutation.Destination(); ok {
-		if err := outboundmessage.DestinationValidator(v); err != nil {
-			return &ValidationError{Name: "destination", err: fmt.Errorf(`ent: validator failed for field "OutboundMessage.destination": %w`, err)}
-		}
-	}
 	if v, ok := _u.mutation.Status(); ok {
 		if err := outboundmessage.StatusValidator(v); err != nil {
 			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "OutboundMessage.status": %w`, err)}
@@ -523,6 +524,9 @@ func (_u *OutboundMessageUpdate) sqlSave(ctx context.Context) (_node int, err er
 	}
 	if value, ok := _u.mutation.Destination(); ok {
 		_spec.SetField(outboundmessage.FieldDestination, field.TypeString, value)
+	}
+	if _u.mutation.DestinationCleared() {
+		_spec.ClearField(outboundmessage.FieldDestination, field.TypeString)
 	}
 	if value, ok := _u.mutation.ContactID(); ok {
 		_spec.SetField(outboundmessage.FieldContactID, field.TypeInt64, value)
@@ -728,6 +732,12 @@ func (_u *OutboundMessageUpdateOne) SetNillableDestination(v *string) *OutboundM
 	if v != nil {
 		_u.SetDestination(*v)
 	}
+	return _u
+}
+
+// ClearDestination clears the value of the "destination" field.
+func (_u *OutboundMessageUpdateOne) ClearDestination() *OutboundMessageUpdateOne {
+	_u.mutation.ClearDestination()
 	return _u
 }
 
@@ -1147,11 +1157,6 @@ func (_u *OutboundMessageUpdateOne) check() error {
 			return &ValidationError{Name: "channel", err: fmt.Errorf(`ent: validator failed for field "OutboundMessage.channel": %w`, err)}
 		}
 	}
-	if v, ok := _u.mutation.Destination(); ok {
-		if err := outboundmessage.DestinationValidator(v); err != nil {
-			return &ValidationError{Name: "destination", err: fmt.Errorf(`ent: validator failed for field "OutboundMessage.destination": %w`, err)}
-		}
-	}
 	if v, ok := _u.mutation.Status(); ok {
 		if err := outboundmessage.StatusValidator(v); err != nil {
 			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "OutboundMessage.status": %w`, err)}
@@ -1206,6 +1211,9 @@ func (_u *OutboundMessageUpdateOne) sqlSave(ctx context.Context) (_node *Outboun
 	}
 	if value, ok := _u.mutation.Destination(); ok {
 		_spec.SetField(outboundmessage.FieldDestination, field.TypeString, value)
+	}
+	if _u.mutation.DestinationCleared() {
+		_spec.ClearField(outboundmessage.FieldDestination, field.TypeString)
 	}
 	if value, ok := _u.mutation.ContactID(); ok {
 		_spec.SetField(outboundmessage.FieldContactID, field.TypeInt64, value)

@@ -117,10 +117,13 @@ func TestRunStepOutcomes(t *testing.T) {
 		assert.Equal(t, automationrun.StatusActive, runStatus(ctx, t, env, id), "the enrollment is unchanged")
 	})
 
-	t.Run("an unknown run is an error", func(t *testing.T) {
+	// A run that is gone was erased with its Contact (ADR 0021) after its job was
+	// queued: the job is finished, not retried.
+	t.Run("an unknown run is finished", func(t *testing.T) {
 		env := testhelper.Setup(t)
-		_, err := jobs.RunStep(ctx, env.DB, newMod(env, fakeResolver{sender: &fakeSender{}}), 424242)
-		require.Error(t, err)
+		res, err := jobs.RunStep(ctx, env.DB, newMod(env, fakeResolver{sender: &fakeSender{}}), 424242)
+		require.NoError(t, err)
+		assert.True(t, res.Done)
 	})
 }
 
@@ -209,9 +212,11 @@ func TestSendToRecipientOutcomes(t *testing.T) {
 		assert.Equal(t, broadcastrecipient.StatusPending, status(env, ids[0]))
 	})
 
+	// A recipient that is gone was erased with its Contact (ADR 0021) after its job
+	// was queued: nothing to send, nothing to retry.
 	t.Run("unknown recipient", func(t *testing.T) {
 		env := testhelper.Setup(t)
-		require.Error(t, jobs.SendToRecipient(ctx, env.DB, newMod(env, fakeResolver{sender: &fakeSender{}}), 424242))
+		require.NoError(t, jobs.SendToRecipient(ctx, env.DB, newMod(env, fakeResolver{sender: &fakeSender{}}), 424242))
 	})
 }
 

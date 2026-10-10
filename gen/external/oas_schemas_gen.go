@@ -3,6 +3,7 @@
 package externalapi
 
 import (
+	"io"
 	"time"
 
 	"github.com/go-faster/errors"
@@ -126,6 +127,7 @@ type ApiTokenScope string
 const (
 	ApiTokenScopeContactsRead        ApiTokenScope = "contacts:read"
 	ApiTokenScopeContactsWrite       ApiTokenScope = "contacts:write"
+	ApiTokenScopeContactsErase       ApiTokenScope = "contacts:erase"
 	ApiTokenScopeSegmentsRead        ApiTokenScope = "segments:read"
 	ApiTokenScopeSegmentsWrite       ApiTokenScope = "segments:write"
 	ApiTokenScopeEventsRead          ApiTokenScope = "events:read"
@@ -154,6 +156,7 @@ func (ApiTokenScope) AllValues() []ApiTokenScope {
 	return []ApiTokenScope{
 		ApiTokenScopeContactsRead,
 		ApiTokenScopeContactsWrite,
+		ApiTokenScopeContactsErase,
 		ApiTokenScopeSegmentsRead,
 		ApiTokenScopeSegmentsWrite,
 		ApiTokenScopeEventsRead,
@@ -184,6 +187,8 @@ func (s ApiTokenScope) MarshalText() ([]byte, error) {
 	case ApiTokenScopeContactsRead:
 		return []byte(s), nil
 	case ApiTokenScopeContactsWrite:
+		return []byte(s), nil
+	case ApiTokenScopeContactsErase:
 		return []byte(s), nil
 	case ApiTokenScopeSegmentsRead:
 		return []byte(s), nil
@@ -240,6 +245,9 @@ func (s *ApiTokenScope) UnmarshalText(data []byte) error {
 		return nil
 	case ApiTokenScopeContactsWrite:
 		*s = ApiTokenScopeContactsWrite
+		return nil
+	case ApiTokenScopeContactsErase:
+		*s = ApiTokenScopeContactsErase
 		return nil
 	case ApiTokenScopeSegmentsRead:
 		*s = ApiTokenScopeSegmentsRead
@@ -1697,6 +1705,77 @@ func (*ContactsDeleteUnauthorized) contactsDeleteRes() {}
 type ContactsDeleteUnprocessableEntity ProblemDetails
 
 func (*ContactsDeleteUnprocessableEntity) contactsDeleteRes() {}
+
+type ContactsEraseByBadRequest ProblemDetails
+
+func (*ContactsEraseByBadRequest) contactsEraseByRes() {}
+
+// ContactsEraseByNoContent is response for ContactsEraseBy operation.
+type ContactsEraseByNoContent struct{}
+
+func (*ContactsEraseByNoContent) contactsEraseByRes() {}
+
+type ContactsEraseByNotFound ProblemDetails
+
+func (*ContactsEraseByNotFound) contactsEraseByRes() {}
+
+type ContactsEraseByUnauthorized ProblemDetails
+
+func (*ContactsEraseByUnauthorized) contactsEraseByRes() {}
+
+type ContactsExportBadRequest ProblemDetails
+
+func (*ContactsExportBadRequest) contactsExportRes() {}
+
+type ContactsExportNotFound ProblemDetails
+
+func (*ContactsExportNotFound) contactsExportRes() {}
+
+type ContactsExportOK struct {
+	Data io.Reader
+}
+
+// Read reads data from the Data reader.
+//
+// Kept to satisfy the io.Reader interface.
+func (s ContactsExportOK) Read(p []byte) (n int, err error) {
+	if s.Data == nil {
+		return 0, io.EOF
+	}
+	return s.Data.Read(p)
+}
+
+// ContactsExportOKHeaders wraps ContactsExportOK with response headers.
+type ContactsExportOKHeaders struct {
+	ContentDisposition string
+	Response           ContactsExportOK
+}
+
+// GetContentDisposition returns the value of ContentDisposition.
+func (s *ContactsExportOKHeaders) GetContentDisposition() string {
+	return s.ContentDisposition
+}
+
+// GetResponse returns the value of Response.
+func (s *ContactsExportOKHeaders) GetResponse() ContactsExportOK {
+	return s.Response
+}
+
+// SetContentDisposition sets the value of ContentDisposition.
+func (s *ContactsExportOKHeaders) SetContentDisposition(val string) {
+	s.ContentDisposition = val
+}
+
+// SetResponse sets the value of Response.
+func (s *ContactsExportOKHeaders) SetResponse(val ContactsExportOK) {
+	s.Response = val
+}
+
+func (*ContactsExportOKHeaders) contactsExportRes() {}
+
+type ContactsExportUnauthorized ProblemDetails
+
+func (*ContactsExportUnauthorized) contactsExportRes() {}
 
 type ContactsGetBadRequest ProblemDetails
 
@@ -4290,6 +4369,8 @@ type ProblemDetails struct {
 	Form OptString `json:"form"`
 	// Field validation errors.
 	Fields OptProblemDetailsFields `json:"fields"`
+	// Seconds to wait before retrying; set on a 429 so a client that only sees the body can show the wait.
+	RetryAfter OptInt32 `json:"retryAfter"`
 }
 
 // GetType returns the value of Type.
@@ -4332,6 +4413,11 @@ func (s *ProblemDetails) GetFields() OptProblemDetailsFields {
 	return s.Fields
 }
 
+// GetRetryAfter returns the value of RetryAfter.
+func (s *ProblemDetails) GetRetryAfter() OptInt32 {
+	return s.RetryAfter
+}
+
 // SetType sets the value of Type.
 func (s *ProblemDetails) SetType(val OptString) {
 	s.Type = val
@@ -4372,6 +4458,11 @@ func (s *ProblemDetails) SetFields(val OptProblemDetailsFields) {
 	s.Fields = val
 }
 
+// SetRetryAfter sets the value of RetryAfter.
+func (s *ProblemDetails) SetRetryAfter(val OptInt32) {
+	s.RetryAfter = val
+}
+
 func (*ProblemDetails) customFieldsListRes() {}
 
 // Validation errors grouped by field.
@@ -4397,6 +4488,123 @@ func (s *ProblemDetailsFields) init() ProblemDetailsFields {
 	}
 	return m
 }
+
+// ProblemDetailsHeaders wraps ProblemDetails with response headers.
+type ProblemDetailsHeaders struct {
+	RetryAfter          int32
+	XRateLimitLimit     int32
+	XRateLimitRemaining int32
+	XRateLimitReset     int64
+	Response            ProblemDetails
+}
+
+// GetRetryAfter returns the value of RetryAfter.
+func (s *ProblemDetailsHeaders) GetRetryAfter() int32 {
+	return s.RetryAfter
+}
+
+// GetXRateLimitLimit returns the value of XRateLimitLimit.
+func (s *ProblemDetailsHeaders) GetXRateLimitLimit() int32 {
+	return s.XRateLimitLimit
+}
+
+// GetXRateLimitRemaining returns the value of XRateLimitRemaining.
+func (s *ProblemDetailsHeaders) GetXRateLimitRemaining() int32 {
+	return s.XRateLimitRemaining
+}
+
+// GetXRateLimitReset returns the value of XRateLimitReset.
+func (s *ProblemDetailsHeaders) GetXRateLimitReset() int64 {
+	return s.XRateLimitReset
+}
+
+// GetResponse returns the value of Response.
+func (s *ProblemDetailsHeaders) GetResponse() ProblemDetails {
+	return s.Response
+}
+
+// SetRetryAfter sets the value of RetryAfter.
+func (s *ProblemDetailsHeaders) SetRetryAfter(val int32) {
+	s.RetryAfter = val
+}
+
+// SetXRateLimitLimit sets the value of XRateLimitLimit.
+func (s *ProblemDetailsHeaders) SetXRateLimitLimit(val int32) {
+	s.XRateLimitLimit = val
+}
+
+// SetXRateLimitRemaining sets the value of XRateLimitRemaining.
+func (s *ProblemDetailsHeaders) SetXRateLimitRemaining(val int32) {
+	s.XRateLimitRemaining = val
+}
+
+// SetXRateLimitReset sets the value of XRateLimitReset.
+func (s *ProblemDetailsHeaders) SetXRateLimitReset(val int64) {
+	s.XRateLimitReset = val
+}
+
+// SetResponse sets the value of Response.
+func (s *ProblemDetailsHeaders) SetResponse(val ProblemDetails) {
+	s.Response = val
+}
+
+func (*ProblemDetailsHeaders) authMeGetRes()              {}
+func (*ProblemDetailsHeaders) authTokensBootstrapRes()    {}
+func (*ProblemDetailsHeaders) authTokensCreateRes()       {}
+func (*ProblemDetailsHeaders) authTokensDeleteRes()       {}
+func (*ProblemDetailsHeaders) authTokensListRes()         {}
+func (*ProblemDetailsHeaders) automationsActivateRes()    {}
+func (*ProblemDetailsHeaders) automationsCreateRes()      {}
+func (*ProblemDetailsHeaders) automationsDeactivateRes()  {}
+func (*ProblemDetailsHeaders) automationsDeleteRes()      {}
+func (*ProblemDetailsHeaders) automationsGetRes()         {}
+func (*ProblemDetailsHeaders) automationsListRes()        {}
+func (*ProblemDetailsHeaders) automationsUpdateRes()      {}
+func (*ProblemDetailsHeaders) broadcastsCreateRes()       {}
+func (*ProblemDetailsHeaders) broadcastsDeleteRes()       {}
+func (*ProblemDetailsHeaders) broadcastsGetRes()          {}
+func (*ProblemDetailsHeaders) broadcastsListRes()         {}
+func (*ProblemDetailsHeaders) broadcastsReportRes()       {}
+func (*ProblemDetailsHeaders) broadcastsScheduleRes()     {}
+func (*ProblemDetailsHeaders) broadcastsSetAudienceRes()  {}
+func (*ProblemDetailsHeaders) broadcastsTestSendRes()     {}
+func (*ProblemDetailsHeaders) broadcastsUnscheduleRes()   {}
+func (*ProblemDetailsHeaders) broadcastsUpdateRes()       {}
+func (*ProblemDetailsHeaders) contactsBatchUpsertRes()    {}
+func (*ProblemDetailsHeaders) contactsCreateRes()         {}
+func (*ProblemDetailsHeaders) contactsDeleteRes()         {}
+func (*ProblemDetailsHeaders) contactsGetRes()            {}
+func (*ProblemDetailsHeaders) contactsListRes()           {}
+func (*ProblemDetailsHeaders) contactsUpdateRes()         {}
+func (*ProblemDetailsHeaders) customFieldsListRes()       {}
+func (*ProblemDetailsHeaders) emailsSendRes()             {}
+func (*ProblemDetailsHeaders) eventActionsListRes()       {}
+func (*ProblemDetailsHeaders) eventsBatchSubmitRes()      {}
+func (*ProblemDetailsHeaders) eventsCreateRes()           {}
+func (*ProblemDetailsHeaders) segmentsCreateRes()         {}
+func (*ProblemDetailsHeaders) segmentsDeleteRes()         {}
+func (*ProblemDetailsHeaders) segmentsGetRes()            {}
+func (*ProblemDetailsHeaders) segmentsListRes()           {}
+func (*ProblemDetailsHeaders) segmentsPreviewRes()        {}
+func (*ProblemDetailsHeaders) segmentsUpdateRes()         {}
+func (*ProblemDetailsHeaders) sendingDomainRatesListRes() {}
+func (*ProblemDetailsHeaders) sendingDomainsListRes()     {}
+func (*ProblemDetailsHeaders) suppressionsCreateRes()     {}
+func (*ProblemDetailsHeaders) tagsApplyRes()              {}
+func (*ProblemDetailsHeaders) tagsListForContactRes()     {}
+func (*ProblemDetailsHeaders) tagsListRes()               {}
+func (*ProblemDetailsHeaders) tagsRemoveRes()             {}
+func (*ProblemDetailsHeaders) templatesCreateRes()        {}
+func (*ProblemDetailsHeaders) templatesDeleteRes()        {}
+func (*ProblemDetailsHeaders) templatesGetRes()           {}
+func (*ProblemDetailsHeaders) templatesListRes()          {}
+func (*ProblemDetailsHeaders) templatesUpdateRes()        {}
+func (*ProblemDetailsHeaders) unsubscribesCreateRes()     {}
+func (*ProblemDetailsHeaders) webhooksCreateRes()         {}
+func (*ProblemDetailsHeaders) webhooksDeleteRes()         {}
+func (*ProblemDetailsHeaders) webhooksGetRes()            {}
+func (*ProblemDetailsHeaders) webhooksListRes()           {}
+func (*ProblemDetailsHeaders) webhooksUpdateRes()         {}
 
 // A rate as the (numerator, denominator, rate) triple (ADR 0011). The rate is null when the
 // denominator is zero: an undefined rate is never reported as 0.

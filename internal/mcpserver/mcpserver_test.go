@@ -63,7 +63,7 @@ var (
 	authoringTools = []string{
 		"segments_list", "segments_create", "segments_get", "segments_update", "segments_delete", "segments_preview",
 		"contacts_upsert_batch", "events_record_batch",
-		"contacts_list", "contacts_create", "contacts_get", "contacts_update", "contacts_delete",
+		"contacts_list", "contacts_create", "contacts_get", "contacts_update", "contacts_delete", "contacts_erase_by", "contacts_export",
 		"broadcasts_list", "broadcasts_create", "broadcasts_get", "broadcasts_update", "broadcasts_delete",
 		"broadcasts_set_audience", "broadcasts_test_send", "broadcasts_report",
 		"events_record", "events_actions_list", "whoami",
@@ -176,7 +176,7 @@ func TestMCPToolsAreTheContractMinusHiddenOperations(t *testing.T) {
 
 func TestMCPToolCallReturnsTheAPIResult(t *testing.T) {
 	env := testhelper.Setup(t)
-	s := env.MCPClient(t, env.ScopedBearer(t, "contacts:read", "contacts:write"))
+	s := env.MCPClient(t, env.ScopedBearer(t, "contacts:read", "contacts:write", "contacts:erase"))
 
 	res := call(t, s, "contacts_get", map[string]any{"id": strconv.Itoa(fixtures.ContactAliceID)})
 	require.False(t, res.IsError, text(t, res))
@@ -236,6 +236,22 @@ func TestMCPIntegrationsListReadsSendLimitAndUsage(t *testing.T) {
 	assert.Equal(t, 14, page.Items[0].SendLimit.PerSecond.Limit)
 	assert.Equal(t, "manual", page.Items[0].SendLimit.PerSecond.Source)
 	assert.Equal(t, 2, page.Items[0].SendLimit.SentLast24h)
+}
+
+// Erasure is irreversible: a token that can write Contacts cannot erase them through
+// MCP either, since every tool call is the /api call under the caller's own scopes.
+func TestMCPContactDeleteNeedsTheEraseScope(t *testing.T) {
+	env := testhelper.Setup(t)
+	s := env.MCPClient(t, env.ScopedBearer(t, "contacts:read", "contacts:write"))
+
+	id := strconv.Itoa(fixtures.ContactAliceID)
+	res := call(t, s, "contacts_delete", map[string]any{"id": id})
+	assert.True(t, res.IsError, "contacts:write is not contacts:erase")
+	res = call(t, s, "contacts_erase_by", map[string]any{"email": fixtures.ContactAliceEmail})
+	assert.True(t, res.IsError)
+
+	res = call(t, s, "contacts_get", map[string]any{"id": id})
+	require.False(t, res.IsError, text(t, res))
 }
 
 // Tags are tools: a name with a slash travels as a path parameter, and the contact id

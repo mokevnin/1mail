@@ -18,7 +18,8 @@ export const zProblemDetails = z.object({
   instance: z.exactOptional(z.string()),
   errors: z.exactOptional(z.record(z.string(), z.array(z.string()))),
   form: z.exactOptional(z.string()),
-  fields: z.exactOptional(z.record(z.string(), z.string()))
+  fields: z.exactOptional(z.record(z.string(), z.string())),
+  retryAfter: z.exactOptional(z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }))
 });
 
 /**
@@ -1499,6 +1500,20 @@ export const zSiteContactsCreatePath = z.object({
  * The request has succeeded and a new resource has been created as a result.
  */
 export const zSiteContactsCreateResponse = zSiteContactResource;
+
+export const zSiteContactsExportPath = z.object({
+  slug: z.string()
+});
+
+export const zSiteContactsExportQuery = z.object({
+  id: z.exactOptional(zEntityId),
+  email: z.exactOptional(zEmailAddress)
+});
+
+/**
+ * Streamed JSON download of everything held about one contact (subject access, GDPR Art. 15/20)
+ */
+export const zSiteContactsExportResponse = z.string();
 
 export const zSiteTagsListForContactPath = z.object({
   slug: z.string(),

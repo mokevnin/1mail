@@ -16,8 +16,10 @@ import (
 	"github.com/mokevnin/1mail/ent/contact"
 	"github.com/mokevnin/1mail/ent/outboundmessage"
 	"github.com/mokevnin/1mail/ent/segment"
+	"github.com/mokevnin/1mail/internal/broadcasts"
 	"github.com/mokevnin/1mail/internal/eligibility"
 	"github.com/mokevnin/1mail/internal/emailrender"
+	"github.com/mokevnin/1mail/internal/jobkind"
 	"github.com/mokevnin/1mail/internal/messaging"
 	"github.com/mokevnin/1mail/internal/outbound"
 	"github.com/mokevnin/1mail/internal/segments"
@@ -51,7 +53,7 @@ type SendRecipientArgs struct {
 	BroadcastID int64 `json:"broadcast_id"`
 }
 
-func (SendRecipientArgs) Kind() string { return "send_broadcast_recipient" }
+func (SendRecipientArgs) Kind() string { return jobkind.SendRecipient }
 
 // SendBroadcastWorker is the fan-out phase: it plans the audience and enqueues a
 // per-recipient job for each, so the send scales across workers instead of
@@ -345,6 +347,9 @@ func PlanBroadcast(ctx context.Context, client *ent.Client, mod *outbound.Module
 // deferred, not failed.
 func SendToRecipient(ctx context.Context, client *ent.Client, mod *outbound.Module, recipientID int64) error {
 	rec, err := client.BroadcastRecipient.Get(ctx, recipientID)
+	if ent.IsNotFound(err) {
+		return nil // erased with its Contact (ADR 0021) after the job was queued: nothing to send
+	}
 	if err != nil {
 		return fmt.Errorf("load recipient %d: %w", recipientID, err)
 	}
@@ -359,6 +364,9 @@ func SendToRecipient(ctx context.Context, client *ent.Client, mod *outbound.Modu
 		return fmt.Errorf("load broadcast %d: %w", rec.BroadcastID, err)
 	}
 	c, err := s.Contact().Get(ctx, rec.ContactID)
+	if ent.IsNotFound(err) {
+		return nil // the Contact was erased (ADR 0021): never send to it
+	}
 	if err != nil {
 		return fmt.Errorf("load contact %d: %w", rec.ContactID, err)
 	}
@@ -453,11 +461,8 @@ func markRecipientFailed(ctx context.Context, client *ent.Client, mod *outbound.
 		Exec(ctx)
 }
 
-// FinalizeBroadcast flips a broadcast to "sent" once none of its recipients are
-// still pending, deriving the aggregate counters from the recipient rows. The
-// conditional WHERE status=sending makes concurrent finalizers (one per
-// per-recipient job) a no-op after the first, so sent_at is set exactly once and
-// the counters self-heal against any retry drift.
+// FinalizeBroadcast loads the broadcast and settles it once none of its recipients
+// are pending (see broadcasts.Finalize).
 func FinalizeBroadcast(ctx context.Context, client *ent.Client, broadcastID int64) error {
 	b, err := client.Broadcast.Get(ctx, broadcastID)
 	if ent.IsNotFound(err) {
@@ -469,47 +474,5 @@ func FinalizeBroadcast(ctx context.Context, client *ent.Client, broadcastID int6
 	// Job entry point: the scoped client is built from the loaded row's Workspace.
 	s := client.Scoped(b.WorkspaceID)
 
-	pending, err := s.BroadcastRecipient().Query().
-		Where(broadcastrecipient.BroadcastID(broadcastID),
-			broadcastrecipient.StatusEQ(broadcastrecipient.StatusPending)).
-		Count(ctx)
-	if err != nil {
-		return err
-	}
-	if pending > 0 {
-		return nil // not all recipients resolved yet
-	}
-
-	sent, err := s.BroadcastRecipient().Query().
-		Where(broadcastrecipient.BroadcastID(broadcastID),
-			broadcastrecipient.StatusEQ(broadcastrecipient.StatusSent)).
-		Count(ctx)
-	if err != nil {
-		return err
-	}
-	failed, err := s.BroadcastRecipient().Query().
-		Where(broadcastrecipient.BroadcastID(broadcastID),
-			broadcastrecipient.StatusEQ(broadcastrecipient.StatusFailed)).
-		Count(ctx)
-	if err != nil {
-		return err
-	}
-	skipped, err := s.BroadcastRecipient().Query().
-		Where(broadcastrecipient.BroadcastID(broadcastID),
-			broadcastrecipient.StatusEQ(broadcastrecipient.StatusSkipped)).
-		Count(ctx)
-	if err != nil {
-		return err
-	}
-
-	_, err = s.Broadcast().Update().
-		Where(broadcast.IDEQ(broadcastID), broadcast.StatusEQ(broadcast.StatusSending)).
-		SetStatus(broadcast.StatusSent).
-		SetSentAt(time.Now()).
-		SetSentCount(sent).
-		SetFailedCount(failed).
-		SetSkippedCount(skipped).
-		ClearHoldReason().
-		Save(ctx)
-	return err
+	return broadcasts.Finalize(ctx, s, broadcastID)
 }

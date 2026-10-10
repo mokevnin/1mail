@@ -41,12 +41,13 @@ func (UnimplementedHandler) SiteAuthDirectLogin(ctx context.Context, req *SiteDi
 
 // SiteAuthForgotPassword implements SiteAuth_forgotPassword operation.
 //
-// Request a password-reset link. Always returns 202 regardless of whether the email matches an
-// account, to avoid leaking which addresses exist.
+// Request a password-reset link. Always returns 202 regardless of whether the email matches an account
+// and even when the address has used its hourly mail budget, to avoid leaking which addresses exist.
+// Answers 429 over the per-IP limit.
 //
 // POST /auth/forgot-password
-func (UnimplementedHandler) SiteAuthForgotPassword(ctx context.Context, req *SiteForgotPasswordInput) error {
-	return ht.ErrNotImplemented
+func (UnimplementedHandler) SiteAuthForgotPassword(ctx context.Context, req *SiteForgotPasswordInput) (r SiteAuthForgotPasswordRes, _ error) {
+	return r, ht.ErrNotImplemented
 }
 
 // SiteAuthRegister implements SiteAuth_register operation.
@@ -220,10 +221,21 @@ func (UnimplementedHandler) SiteContactsCreate(ctx context.Context, req *SiteCre
 
 // SiteContactsDelete implements SiteContacts_delete operation.
 //
-// Delete a resource from the site UI.
+// Erase a contact (GDPR Art. 17): its personal data is removed, delivery records are anonymized and
+// its opt-outs survive. Owner or admin only.
 //
 // DELETE /workspaces/{slug}/contacts/{id}
 func (UnimplementedHandler) SiteContactsDelete(ctx context.Context, params SiteContactsDeleteParams) (r SiteContactsDeleteRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// SiteContactsExport implements SiteContacts_export operation.
+//
+// Export everything held about one contact as a streamed JSON download. Identify the contact by
+// exactly one of `id` or `email`. Available to any Workspace member (contact read access).
+//
+// POST /workspaces/{slug}/contacts/export
+func (UnimplementedHandler) SiteContactsExport(ctx context.Context, params SiteContactsExportParams) (r SiteContactsExportRes, _ error) {
 	return r, ht.ErrNotImplemented
 }
 

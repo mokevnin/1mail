@@ -50,9 +50,11 @@ func (OutboundMessage) Fields() []ent.Field {
 		field.Enum("channel").
 			Values("email").
 			Default("email"),
-		// Normalized (lower-cased) channel-specific destination.
+		// Normalized (lower-cased) channel-specific destination. Cleared (NULL) when the
+		// Contact it belonged to is erased (ADR 0021): the row stays as an anonymous
+		// delivery record.
 		field.String("destination").
-			NotEmpty(),
+			Optional(),
 		// The Contact this destination resolved to, when one exists (a transactional
 		// destination may have none). Display and Event attribution only.
 		field.Int64("contact_id").

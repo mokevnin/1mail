@@ -31,6 +31,7 @@ import { formatDate } from '../../utils/datetime.ts'
 const SCOPE_OPTIONS = [
   'contacts:read',
   'contacts:write',
+  'contacts:erase',
   'events:read',
   'events:write',
   'segments:read',

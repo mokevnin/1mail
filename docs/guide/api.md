@@ -2,7 +2,7 @@
 
 1mail exposes three HTTP surfaces. All are described by OpenAPI documents generated from
 TypeSpec, which is the single source of truth; you will find them in the repository under
-`openapi/`.
+`openapi/`. Every operation of the external API is documented in the [API reference](/api/).
 
 | Surface      | Base path  | Used by                             | Auth                            |
 | ------------ | ---------- | ----------------------------------- | ------------------------------- |
@@ -18,7 +18,7 @@ collect APIs.
 Create an API token under **Settings → API keys**. Each token carries scopes, so you can hand an
 integration only what it needs, for example:
 
-- `contacts:read`, `contacts:write`
+- `contacts:read`, `contacts:write`, and the separate `contacts:erase` to delete (erase) a contact
 - `events:write`
 - `segments:read`, `segments:write`
 - `broadcasts:write`, and the separate `broadcasts:send` to actually send
@@ -26,7 +26,7 @@ integration only what it needs, for example:
 - `emails:send` for transactional mail
 - `webhooks:read`, `webhooks:write`
 
-Sending and activating have their own scopes, so a token that can edit drafts cannot send mail.
+Sending, activating and erasing have their own scopes, so a token that can edit drafts cannot send mail and a token that can write contacts cannot erase them.
 
 ## What the external API covers
 
@@ -53,14 +53,71 @@ curl https://1mail.example.com/api/contacts/batch \
   -d '{"contacts":[{"subjectId":"user_42","email":"ada@example.com","firstName":"Ada"}]}'
 ```
 
+## Pagination
+
+List endpoints take `page` (1-based, default 1) and `pageSize` (default 25) and return:
+
+```json
+{ "items": [], "page": 1, "pageSize": 25, "totalItems": 0, "totalPages": 0 }
+```
+
+## Batches
+
+`POST /contacts/batch` and `POST /events/batch` take up to 1000 items. Items are processed
+independently: one failure does not roll back the others. The response has one result per item,
+in request order, with its zero-based `index`:
+
+```json
+{
+  "results": [
+    { "index": 0, "status": "created", "contactId": 101 },
+    { "index": 1, "status": "failed", "error": "email is invalid" }
+  ]
+}
+```
+
+Contact items have the status `created`, `updated` or `failed`; event items `accepted` or
+`failed`. Contacts are matched by their alias keys (`subjectId`, `email`, `phone`), so a batch is
+safe to repeat.
+
+## Errors
+
+Errors are [RFC 7807](https://www.rfc-editor.org/rfc/rfc7807) `application/problem+json`:
+
+```json
+{
+  "status": 422,
+  "title": "Unprocessable Entity",
+  "detail": "…what went wrong…"
+}
+```
+
+`status` and `title` are always present, and `detail` for client errors. Server errors (`5xx`)
+carry no detail; quote the `X-Request-Id` response header when you report one.
+
+| Status | Meaning                                                              |
+| ------ | -------------------------------------------------------------------- |
+| `400`  | The request could not be parsed.                                     |
+| `401`  | The token is missing, invalid, revoked or expired.                   |
+| `403`  | The token lacks the required scope.                                  |
+| `404`  | The resource does not exist in this workspace.                       |
+| `413`  | The body is larger than the configured limit.                        |
+| `409`  | A request with the same `Idempotency-Key` is still in flight.        |
+| `422`  | Validation failed, or a reference points at another workspace's row. |
+
+## Idempotent sends
+
+`POST /emails` accepts an `Idempotency-Key` header. Repeating a request with the same key replays
+the original result without sending a second email, so it is safe to retry after a timeout. A
+repeat that arrives while the first is still running gets `409`.
+
 ## Operating 1mail with an agent
 
 The same binary serves an MCP endpoint at `/mcp`. Its tools are projected from the external API
 contract, so token scopes, workspace scoping and errors behave exactly as they do over `/api`.
-See [the design decision](/adr/0016-mcp-surface-projection-of-external-api).
+See [MCP for agents](/guide/mcp).
 
 ## Webhooks
 
-Register an endpoint with `POST /api/webhooks` to be notified when things happen. Leave the event
-list empty to receive everything, or name the events you want. Endpoints can be disabled without
-deleting them.
+Register an endpoint with `POST /api/webhooks` to be notified when things happen. See
+[Webhooks](/guide/webhooks) for the events, payload, signature check and retries.

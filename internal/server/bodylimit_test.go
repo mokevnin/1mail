@@ -12,7 +12,7 @@ import (
 )
 
 // An oversized JSON body is cut off before the ogen decoder buffers it, on the
-// public collect surface (own, smaller cap) and on the authenticated API.
+// public collect surface (own, smaller caps) and on the authenticated API.
 func TestOversizedBodiesAreRejectedThroughTheRealServer(t *testing.T) {
 	env := testhelper.Setup(t)
 	pad := func(n int) string { return `{"pad":"` + strings.Repeat("a", n) + `"}` }
@@ -27,7 +27,7 @@ func TestOversizedBodiesAreRejectedThroughTheRealServer(t *testing.T) {
 		return rec
 	}
 
-	collect := post("/collect/events", pad(64<<10), map[string]string{"x-collect-key": fixtures.AcmeCollectKey})
+	collect := post("/collect/events", pad(600<<10), map[string]string{"x-collect-key": fixtures.AcmeCollectKey})
 	assert.Equal(t, http.StatusRequestEntityTooLarge, collect.Code)
 	assert.Equal(t, "application/problem+json", collect.Header().Get("Content-Type"))
 

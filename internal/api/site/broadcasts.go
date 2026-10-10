@@ -8,8 +8,6 @@ import (
 	"time"
 
 	"github.com/mokevnin/1mail/ent"
-	"github.com/mokevnin/1mail/ent/broadcast"
-	"github.com/mokevnin/1mail/ent/broadcastrecipient"
 	siteapi "github.com/mokevnin/1mail/gen/site"
 	"github.com/mokevnin/1mail/internal/broadcasts"
 	"github.com/mokevnin/1mail/internal/convert"
@@ -73,17 +71,7 @@ func (h *Handlers) SiteBroadcastsList(ctx context.Context, params siteapi.SiteBr
 	}
 	page, pageSize := pagination.Normalize(pagePtr, pageSizePtr)
 
-	q := ws.Broadcast().Query()
-
-	total, err := q.Count(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	items, err := q.Order(ent.Desc(broadcast.FieldID)).
-		Limit(pageSize).
-		Offset(pagination.Offset(page, pageSize)).
-		All(ctx)
+	items, total, err := h.broadcasts.List(ctx, ws, pageSize, pagination.Offset(page, pageSize))
 	if err != nil {
 		return nil, err
 	}
@@ -124,19 +112,15 @@ func (h *Handlers) SiteBroadcastsCreate(ctx context.Context, req *siteapi.SiteCr
 		return &v, nil
 	}
 
-	q := ws.Broadcast().Create().
-		SetName(req.Name).
-		SetNillableFromName(convert.StringPtr(req.FromName)).
-		SetNillableFromEmail(convert.StringPtr(req.FromEmail)).
-		SetNillableSegmentID(segmentID).
-		SetNillableIntegrationID(integrationID)
-	if v, ok := req.Subject.Get(); ok {
-		q = q.SetSubject(v)
-	}
-	if v, ok := req.Body.Get(); ok {
-		q = q.SetBody(v)
-	}
-	b, err := q.Save(ctx)
+	b, err := h.broadcasts.Create(ctx, ws, broadcasts.Fields{
+		Name:          &req.Name,
+		Subject:       convert.StringPtr(req.Subject),
+		FromName:      convert.StringPtr(req.FromName),
+		FromEmail:     convert.StringPtr(req.FromEmail),
+		Body:          convert.StringPtr(req.Body),
+		SegmentID:     segmentID,
+		IntegrationID: integrationID,
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -159,10 +143,8 @@ func (h *Handlers) SiteBroadcastsGet(ctx context.Context, params siteapi.SiteBro
 		v := siteapi.SiteBroadcastsGetBadRequest(problem(http.StatusBadRequest, "invalid id"))
 		return &v, nil
 	}
-	b, err := ws.Broadcast().Query().
-		Where(broadcast.IDEQ(id)).
-		Only(ctx)
-	if ent.IsNotFound(err) {
+	b, err := h.broadcasts.Get(ctx, ws, id)
+	if errors.Is(err, broadcasts.ErrNotFound) {
 		v := siteapi.SiteBroadcastsGetNotFound(problem(http.StatusNotFound, "broadcast not found"))
 		return &v, nil
 	}
@@ -192,22 +174,6 @@ func (h *Handlers) SiteBroadcastsUpdate(ctx context.Context, req *siteapi.SiteUp
 		return &v, nil
 	}
 
-	// A broadcast can only be edited while it is still a draft.
-	current, err := ws.Broadcast().Query().
-		Where(broadcast.IDEQ(id)).
-		Only(ctx)
-	if ent.IsNotFound(err) {
-		v := siteapi.SiteBroadcastsUpdateNotFound(problem(http.StatusNotFound, "broadcast not found"))
-		return &v, nil
-	}
-	if err != nil {
-		return nil, err
-	}
-	if current.Status != broadcast.StatusDraft {
-		v := siteapi.SiteBroadcastsUpdateUnprocessableEntity(problem(http.StatusUnprocessableEntity, "only draft broadcasts can be edited"))
-		return &v, nil
-	}
-
 	segmentID, ok := optEntityID(req.SegmentId)
 	if !ok {
 		v := siteapi.SiteBroadcastsUpdateUnprocessableEntity(problem(http.StatusUnprocessableEntity, i18n.T("errors.segment_invalid", nil)))
@@ -219,33 +185,29 @@ func (h *Handlers) SiteBroadcastsUpdate(ctx context.Context, req *siteapi.SiteUp
 		return &v, nil
 	}
 
-	q := ws.Broadcast().UpdateOneID(id).
-		SetNillableName(convert.StringPtr(req.Name)).
-		SetNillableSubject(convert.StringPtr(req.Subject)).
-		SetNillableFromName(convert.StringPtr(req.FromName)).
-		SetNillableFromEmail(convert.StringPtr(req.FromEmail)).
-		SetNillableBody(convert.StringPtr(req.Body)).
-		SetNillableSegmentID(segmentID).
-		SetNillableIntegrationID(integrationID)
 	// JSON Merge Patch: an explicit null clears the field, an absent key keeps it.
-	if req.FromName.IsNull() {
-		q = q.ClearFromName()
-	}
-	if req.FromEmail.IsNull() {
-		q = q.ClearFromEmail()
-	}
-	if req.SegmentId.IsNull() {
-		q = q.ClearSegmentID()
-	}
-	if req.IntegrationId.IsNull() {
-		q = q.ClearIntegrationID()
-	}
-	b, err := q.Save(ctx)
-	if ent.IsNotFound(err) {
+	b, err := h.broadcasts.Update(ctx, ws, id, broadcasts.Fields{
+		Name:          convert.StringPtr(req.Name),
+		Subject:       convert.StringPtr(req.Subject),
+		FromName:      convert.StringPtr(req.FromName),
+		FromEmail:     convert.StringPtr(req.FromEmail),
+		Body:          convert.StringPtr(req.Body),
+		SegmentID:     segmentID,
+		IntegrationID: integrationID,
+
+		ClearFromName:    req.FromName.IsNull(),
+		ClearFromEmail:   req.FromEmail.IsNull(),
+		ClearSegment:     req.SegmentId.IsNull(),
+		ClearIntegration: req.IntegrationId.IsNull(),
+	})
+	switch {
+	case errors.Is(err, broadcasts.ErrNotFound):
 		v := siteapi.SiteBroadcastsUpdateNotFound(problem(http.StatusNotFound, "broadcast not found"))
 		return &v, nil
-	}
-	if err != nil {
+	case errors.Is(err, broadcasts.ErrNotDraft):
+		v := siteapi.SiteBroadcastsUpdateUnprocessableEntity(problem(http.StatusUnprocessableEntity, "only draft broadcasts can be edited"))
+		return &v, nil
+	case err != nil:
 		return nil, err
 	}
 	res := mapper.BroadcastToResource(b)
@@ -267,16 +229,8 @@ func (h *Handlers) SiteBroadcastsDelete(ctx context.Context, params siteapi.Site
 		v := siteapi.SiteBroadcastsDeleteBadRequest(problem(http.StatusBadRequest, "invalid id"))
 		return &v, nil
 	}
-	// Remove the per-recipient delivery rows first: they FK the broadcast, so a
-	// sent broadcast can't be deleted while they exist. (The engagement Event log
-	// keys on subject_id, not the broadcast, so it is unaffected.)
-	if _, err := ws.BroadcastRecipient().Delete().
-		Where(broadcastrecipient.BroadcastID(id)).
-		Exec(ctx); err != nil {
-		return nil, err
-	}
-	err = ws.Broadcast().DeleteOneID(id).Exec(ctx)
-	if ent.IsNotFound(err) {
+	err = h.broadcasts.Delete(ctx, ws, id)
+	if errors.Is(err, broadcasts.ErrNotFound) {
 		v := siteapi.SiteBroadcastsDeleteNotFound(problem(http.StatusNotFound, "broadcast not found"))
 		return &v, nil
 	}
@@ -372,10 +326,8 @@ func (h *Handlers) SiteBroadcastsTestSend(ctx context.Context, req *siteapi.Site
 		v := siteapi.SiteBroadcastsTestSendBadRequest(problem(http.StatusBadRequest, "invalid id"))
 		return &v, nil
 	}
-	b, err := ws.Broadcast().Query().
-		Where(broadcast.IDEQ(id)).
-		Only(ctx)
-	if ent.IsNotFound(err) {
+	b, err := h.broadcasts.Get(ctx, ws, id)
+	if errors.Is(err, broadcasts.ErrNotFound) {
 		v := siteapi.SiteBroadcastsTestSendNotFound(problem(http.StatusNotFound, "broadcast not found"))
 		return &v, nil
 	}

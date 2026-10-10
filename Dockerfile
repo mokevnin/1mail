@@ -1,6 +1,6 @@
 # Production image: builds the frontend, then a self-contained Go binary with
-# the SPA and tracker embedded, then a minimal runtime. Used for `docker build`
-# and docker-compose. Releases (GoReleaser) use Dockerfile.release instead,
+# the SPA and tracker embedded, then a minimal runtime. Used for `docker build`.
+# Releases (GoReleaser) use Dockerfile.release instead,
 # which just wraps the prebuilt binary.
 
 # --- Stage 1: frontend (SPA + tracker bundle) ---
@@ -27,9 +27,11 @@ RUN go build -tags embed_spa \
     -o /1mail ./cmd/server
 
 # --- Stage 3: runtime ---
-FROM alpine:3.23
+FROM alpine:3.24
 RUN apk add --no-cache ca-certificates tzdata
 COPY --from=gobuild /1mail /usr/local/bin/1mail
+# Containers are production deployments: enforce the strict secret checks by default.
+ENV APP_ENV=production
 EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
     CMD wget -qO- "http://localhost:${PORT:-3000}/healthz" || exit 1

@@ -1,5 +1,6 @@
 using TypeSpec.Http;
 using TypeSpec.Rest;
+using TypeSpec.Rest.Resource;
 using TypeSpec.OpenAPI;
 
 namespace OneMail;
@@ -91,13 +92,66 @@ model UpdateContactInput {
   customFields?: Record<unknown> | null;
 }
 
+/** Streamed JSON download of everything held about one contact (subject access, GDPR Art. 15/20) */
+model ContactExportDownload {
+  @header contentType: "application/octet-stream";
+  @header("Content-Disposition") contentDisposition: string;
+  @body body: bytes;
+}
+
 @tag("Contacts")
 interface Contacts
   extends ExternalCrudUnique<
       ContactResource,
       CreateContactInput,
       UpdateContactInput
-    > {}
+    > {
+  /**
+   * Export everything held about one contact as a streamed JSON download: the
+   * contact, its custom fields, tags, visitors, all events, its opt-outs
+   * (unsubscribes, suppressions, confirmations) and delivery metadata. Rendered
+   * message bodies are not included. Identify the contact by exactly one of
+   * `id` or `email`.
+   */
+  @collectionAction(ContactResource, "export")
+  @autoRoute
+  export(
+    ...ResourceCollectionParameters<ContactResource>,
+
+    /** The contact's id */
+    @query id?: EntityId,
+
+    /** The contact's email address */
+    @query email?: EmailAddress,
+  ):
+    | ContactExportDownload
+    | BadRequestProblem
+    | UnauthorizedProblem
+    | NotFoundProblem;
+
+  /**
+   * Erase by an identifier other than the contact id (GDPR Art. 17): by `email`
+   * (also anonymizes delivery records to an address that never had a contact) or
+   * by `visitorId` (an anonymous visitor and its events). Exactly one of the two.
+   * The same rules as deleting by id apply. Requires the contacts:erase scope.
+   */
+  @collectionAction(ContactResource, "erase")
+  @delete
+  @autoRoute
+  eraseBy(
+    ...ResourceCollectionParameters<ContactResource>,
+
+    /** The email address to erase */
+    @query email?: EmailAddress,
+
+    /** The anonymous visitor id to erase */
+    @query visitorId?: string,
+  ):
+    | NoContentResponse
+    | BadRequestProblem
+    | UnauthorizedProblem
+    | NotFoundProblem;
+}
 
 /** One contact to upsert, matched by its alias keys (subject id, email, phone) */
 model UpsertContactInput {
@@ -167,5 +221,11 @@ namespace ContactsBatch {
   op upsert(@body body: UpsertContactsInput):
     | UpsertContactsResult
     | UnauthorizedProblem
+    | TooManyRequestsProblem
     | UnprocessableEntityProblem;
 }
+
+@@doc(
+  Contacts.delete,
+  "Erase a contact (GDPR Art. 17): its personal data is removed, delivery records are anonymized and its opt-outs survive. Requires the contacts:erase scope."
+);

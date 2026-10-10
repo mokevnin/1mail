@@ -61,6 +61,7 @@ namespace Emails {
         @body body: SendTransactionalEmailResponse;
       }
     | UnauthorizedProblem
+    | TooManyRequestsProblem
     | NotFoundProblem
     | ConflictProblem
     | UnprocessableEntityProblem;

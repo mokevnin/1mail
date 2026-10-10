@@ -3,6 +3,7 @@
 package siteapi
 
 import (
+	"io"
 	"time"
 
 	"github.com/go-faster/errors"
@@ -168,6 +169,52 @@ func (o OptBool) Get() (v bool, ok bool) {
 
 // Or returns value if set, or given parameter if does not.
 func (o OptBool) Or(d bool) bool {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptEmailAddress returns new OptEmailAddress with value set to v.
+func NewOptEmailAddress(v EmailAddress) OptEmailAddress {
+	return OptEmailAddress{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptEmailAddress is optional EmailAddress.
+type OptEmailAddress struct {
+	Value EmailAddress
+	Set   bool
+}
+
+// IsSet returns true if OptEmailAddress was set.
+func (o OptEmailAddress) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptEmailAddress) Reset() {
+	var v EmailAddress
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptEmailAddress) SetTo(v EmailAddress) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptEmailAddress) Get() (v EmailAddress, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptEmailAddress) Or(d EmailAddress) EmailAddress {
 	if v, ok := o.Get(); ok {
 		return v
 	}
@@ -1445,6 +1492,8 @@ type ProblemDetails struct {
 	Form OptString `json:"form"`
 	// Field validation errors.
 	Fields OptProblemDetailsFields `json:"fields"`
+	// Seconds to wait before retrying; set on a 429 so a client that only sees the body can show the wait.
+	RetryAfter OptInt32 `json:"retryAfter"`
 }
 
 // GetType returns the value of Type.
@@ -1487,6 +1536,11 @@ func (s *ProblemDetails) GetFields() OptProblemDetailsFields {
 	return s.Fields
 }
 
+// GetRetryAfter returns the value of RetryAfter.
+func (s *ProblemDetails) GetRetryAfter() OptInt32 {
+	return s.RetryAfter
+}
+
 // SetType sets the value of Type.
 func (s *ProblemDetails) SetType(val OptString) {
 	s.Type = val
@@ -1527,6 +1581,11 @@ func (s *ProblemDetails) SetFields(val OptProblemDetailsFields) {
 	s.Fields = val
 }
 
+// SetRetryAfter sets the value of RetryAfter.
+func (s *ProblemDetails) SetRetryAfter(val OptInt32) {
+	s.RetryAfter = val
+}
+
 func (*ProblemDetails) siteAnalyticsOverviewRes()         {}
 func (*ProblemDetails) siteAuthDirectLoginRes()           {}
 func (*ProblemDetails) siteAuthResetPasswordRes()         {}
@@ -1563,6 +1622,71 @@ func (s *ProblemDetailsFields) init() ProblemDetailsFields {
 	}
 	return m
 }
+
+// ProblemDetailsHeaders wraps ProblemDetails with response headers.
+type ProblemDetailsHeaders struct {
+	RetryAfter          int32
+	XRateLimitLimit     int32
+	XRateLimitRemaining int32
+	XRateLimitReset     int64
+	Response            ProblemDetails
+}
+
+// GetRetryAfter returns the value of RetryAfter.
+func (s *ProblemDetailsHeaders) GetRetryAfter() int32 {
+	return s.RetryAfter
+}
+
+// GetXRateLimitLimit returns the value of XRateLimitLimit.
+func (s *ProblemDetailsHeaders) GetXRateLimitLimit() int32 {
+	return s.XRateLimitLimit
+}
+
+// GetXRateLimitRemaining returns the value of XRateLimitRemaining.
+func (s *ProblemDetailsHeaders) GetXRateLimitRemaining() int32 {
+	return s.XRateLimitRemaining
+}
+
+// GetXRateLimitReset returns the value of XRateLimitReset.
+func (s *ProblemDetailsHeaders) GetXRateLimitReset() int64 {
+	return s.XRateLimitReset
+}
+
+// GetResponse returns the value of Response.
+func (s *ProblemDetailsHeaders) GetResponse() ProblemDetails {
+	return s.Response
+}
+
+// SetRetryAfter sets the value of RetryAfter.
+func (s *ProblemDetailsHeaders) SetRetryAfter(val int32) {
+	s.RetryAfter = val
+}
+
+// SetXRateLimitLimit sets the value of XRateLimitLimit.
+func (s *ProblemDetailsHeaders) SetXRateLimitLimit(val int32) {
+	s.XRateLimitLimit = val
+}
+
+// SetXRateLimitRemaining sets the value of XRateLimitRemaining.
+func (s *ProblemDetailsHeaders) SetXRateLimitRemaining(val int32) {
+	s.XRateLimitRemaining = val
+}
+
+// SetXRateLimitReset sets the value of XRateLimitReset.
+func (s *ProblemDetailsHeaders) SetXRateLimitReset(val int64) {
+	s.XRateLimitReset = val
+}
+
+// SetResponse sets the value of Response.
+func (s *ProblemDetailsHeaders) SetResponse(val ProblemDetails) {
+	s.Response = val
+}
+
+func (*ProblemDetailsHeaders) siteAuthDirectLoginRes()            {}
+func (*ProblemDetailsHeaders) siteAuthForgotPasswordRes()         {}
+func (*ProblemDetailsHeaders) siteAuthRegisterRes()               {}
+func (*ProblemDetailsHeaders) sitePublicConfirmationsPerformRes() {}
+func (*ProblemDetailsHeaders) sitePublicInvitationsAcceptRes()    {}
 
 // Accept an invite. name + password are required only when the invitee has no account yet; ignored
 // otherwise.
@@ -2053,6 +2177,8 @@ func (*SiteAuthConfirmEmailChangeOK) siteAuthConfirmEmailChangeRes() {}
 
 // SiteAuthForgotPasswordAccepted is response for SiteAuthForgotPassword operation.
 type SiteAuthForgotPasswordAccepted struct{}
+
+func (*SiteAuthForgotPasswordAccepted) siteAuthForgotPasswordRes() {}
 
 type SiteAuthRegisterConflict ProblemDetails
 
@@ -3280,6 +3406,10 @@ type SiteContactsDeleteBadRequest ProblemDetails
 
 func (*SiteContactsDeleteBadRequest) siteContactsDeleteRes() {}
 
+type SiteContactsDeleteForbidden ProblemDetails
+
+func (*SiteContactsDeleteForbidden) siteContactsDeleteRes() {}
+
 // SiteContactsDeleteNoContent is response for SiteContactsDelete operation.
 type SiteContactsDeleteNoContent struct{}
 
@@ -3288,6 +3418,56 @@ func (*SiteContactsDeleteNoContent) siteContactsDeleteRes() {}
 type SiteContactsDeleteNotFound ProblemDetails
 
 func (*SiteContactsDeleteNotFound) siteContactsDeleteRes() {}
+
+type SiteContactsExportBadRequest ProblemDetails
+
+func (*SiteContactsExportBadRequest) siteContactsExportRes() {}
+
+type SiteContactsExportNotFound ProblemDetails
+
+func (*SiteContactsExportNotFound) siteContactsExportRes() {}
+
+type SiteContactsExportOK struct {
+	Data io.Reader
+}
+
+// Read reads data from the Data reader.
+//
+// Kept to satisfy the io.Reader interface.
+func (s SiteContactsExportOK) Read(p []byte) (n int, err error) {
+	if s.Data == nil {
+		return 0, io.EOF
+	}
+	return s.Data.Read(p)
+}
+
+// SiteContactsExportOKHeaders wraps SiteContactsExportOK with response headers.
+type SiteContactsExportOKHeaders struct {
+	ContentDisposition string
+	Response           SiteContactsExportOK
+}
+
+// GetContentDisposition returns the value of ContentDisposition.
+func (s *SiteContactsExportOKHeaders) GetContentDisposition() string {
+	return s.ContentDisposition
+}
+
+// GetResponse returns the value of Response.
+func (s *SiteContactsExportOKHeaders) GetResponse() SiteContactsExportOK {
+	return s.Response
+}
+
+// SetContentDisposition sets the value of ContentDisposition.
+func (s *SiteContactsExportOKHeaders) SetContentDisposition(val string) {
+	s.ContentDisposition = val
+}
+
+// SetResponse sets the value of Response.
+func (s *SiteContactsExportOKHeaders) SetResponse(val SiteContactsExportOK) {
+	s.Response = val
+}
+
+func (*SiteContactsExportOKHeaders) siteContactsExportRes() {}
 
 type SiteContactsGetBadRequest ProblemDetails
 

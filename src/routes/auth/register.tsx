@@ -7,11 +7,12 @@ import { useTranslation } from 'react-i18next'
 
 import { siteAuthRegisterMutation } from '../../generated/site/@tanstack/react-query.gen.ts'
 import type { SiteRegisterInput } from '../../generated/site/types.gen.ts'
+import { useApiErrorMessage } from '../../hooks/useApiErrorMessage.ts'
 import { indexRoute, loginRoute } from '../../router.tsx'
-import { getApiErrorMessage } from '../../utils/apiErrors.ts'
 
 export function RegisterPage() {
   const { t } = useTranslation()
+  const apiErrorMessage = useApiErrorMessage()
   const navigate = useNavigate()
 
   const form = useForm<SiteRegisterInput>({
@@ -38,7 +39,7 @@ export function RegisterPage() {
       notifications.show({
         color: 'red',
         title: t(($) => $.registration.errorTitle),
-        message: getApiErrorMessage(
+        message: apiErrorMessage(
           error,
           t(($) => $.registration.errorMessage),
         ),

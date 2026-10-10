@@ -410,6 +410,16 @@ func DestinationHasSuffix(v string) predicate.OutboundMessage {
 	return predicate.OutboundMessage(sql.FieldHasSuffix(FieldDestination, v))
 }
 
+// DestinationIsNil applies the IsNil predicate on the "destination" field.
+func DestinationIsNil() predicate.OutboundMessage {
+	return predicate.OutboundMessage(sql.FieldIsNull(FieldDestination))
+}
+
+// DestinationNotNil applies the NotNil predicate on the "destination" field.
+func DestinationNotNil() predicate.OutboundMessage {
+	return predicate.OutboundMessage(sql.FieldNotNull(FieldDestination))
+}
+
 // DestinationEqualFold applies the EqualFold predicate on the "destination" field.
 func DestinationEqualFold(v string) predicate.OutboundMessage {
 	return predicate.OutboundMessage(sql.FieldEqualFold(FieldDestination, v))

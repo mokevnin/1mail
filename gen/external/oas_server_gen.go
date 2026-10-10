@@ -147,10 +147,29 @@ type Handler interface {
 	ContactsCreate(ctx context.Context, req *CreateContactInput) (ContactsCreateRes, error)
 	// ContactsDelete implements Contacts_delete operation.
 	//
-	// Delete a resource.
+	// Erase a contact (GDPR Art. 17): its personal data is removed, delivery records are anonymized and
+	// its opt-outs survive. Requires the contacts:erase scope.
 	//
 	// DELETE /contacts/{id}
 	ContactsDelete(ctx context.Context, params ContactsDeleteParams) (ContactsDeleteRes, error)
+	// ContactsEraseBy implements Contacts_eraseBy operation.
+	//
+	// Erase by an identifier other than the contact id (GDPR Art. 17): by `email` (also anonymizes
+	// delivery records to an address that never had a contact) or by `visitorId` (an anonymous visitor and
+	// its events). Exactly one of the two. The same rules as deleting by id apply. Requires the
+	// contacts:erase scope.
+	//
+	// DELETE /contacts/erase
+	ContactsEraseBy(ctx context.Context, params ContactsEraseByParams) (ContactsEraseByRes, error)
+	// ContactsExport implements Contacts_export operation.
+	//
+	// Export everything held about one contact as a streamed JSON download: the contact, its custom
+	// fields, tags, visitors, all events, its opt-outs (unsubscribes, suppressions, confirmations) and
+	// delivery metadata. Rendered message bodies are not included. Identify the contact by exactly one of
+	// `id` or `email`.
+	//
+	// POST /contacts/export
+	ContactsExport(ctx context.Context, params ContactsExportParams) (ContactsExportRes, error)
 	// ContactsGet implements Contacts_get operation.
 	//
 	// Get a resource by ID.

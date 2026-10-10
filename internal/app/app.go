@@ -26,6 +26,7 @@ import (
 	"github.com/mokevnin/1mail/internal/broadcasts"
 	"github.com/mokevnin/1mail/internal/contacts"
 	"github.com/mokevnin/1mail/internal/db"
+	"github.com/mokevnin/1mail/internal/erasure"
 	"github.com/mokevnin/1mail/internal/eventlog"
 	"github.com/mokevnin/1mail/internal/events"
 	"github.com/mokevnin/1mail/internal/i18n"
@@ -45,6 +46,7 @@ import (
 	"github.com/mokevnin/1mail/internal/telemetry"
 	"github.com/mokevnin/1mail/internal/tracking"
 	"github.com/samber/do/v2"
+	"go.opentelemetry.io/otel/metric"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
@@ -114,9 +116,11 @@ type dkimLookup struct {
 // database/sql pool the ent client and pubsub use).
 type pgxPool struct {
 	*pgxpool.Pool
+	metrics metric.Registration
 }
 
 func (p *pgxPool) Shutdown() {
+	_ = p.metrics.Unregister()
 	p.Close()
 }
 
@@ -169,6 +173,27 @@ func New(env string) (*App, error) {
 
 	jobsCli, err := do.Invoke[*jobsClient](injector)
 	if err != nil {
+		_ = injector.Shutdown()
+		return nil, err
+	}
+
+	// Operational gauges (outbox lag, queue depth). They read on scrape through the
+	// shared pools and live for the process, so they are never unregistered.
+	database, err := do.Invoke[*sqlDB](injector)
+	if err != nil {
+		_ = injector.Shutdown()
+		return nil, err
+	}
+	pool, err := do.Invoke[*pgxPool](injector)
+	if err != nil {
+		_ = injector.Shutdown()
+		return nil, err
+	}
+	if _, err := events.RegisterLagGauge(database.DB); err != nil {
+		_ = injector.Shutdown()
+		return nil, err
+	}
+	if _, err := jobs.RegisterQueueMetrics(pool.Pool); err != nil {
 		_ = injector.Shutdown()
 		return nil, err
 	}
@@ -310,6 +335,8 @@ func register(injector do.Injector, env string) {
 			return nil, err
 		}
 
+		db.ConfigurePool(database, cfg.DBPool)
+
 		return &sqlDB{DB: database}, nil
 	})
 
@@ -427,11 +454,20 @@ func register(injector do.Injector, env string) {
 		if err != nil {
 			return nil, err
 		}
-		pool, err := pgxpool.New(context.Background(), cfg.DatabaseURL)
+		database, err := do.Invoke[*sqlDB](i)
 		if err != nil {
 			return nil, err
 		}
-		return &pgxPool{Pool: pool}, nil
+		pool, err := db.NewPGXPool(context.Background(), cfg.DatabaseURL, cfg.DBPool)
+		if err != nil {
+			return nil, err
+		}
+		reg, err := db.RegisterPoolMetrics(database.DB, pool)
+		if err != nil {
+			pool.Close()
+			return nil, err
+		}
+		return &pgxPool{Pool: pool, metrics: reg}, nil
 	})
 
 	do.Provide(injector, func(i do.Injector) (*jobsClient, error) {
@@ -468,7 +504,11 @@ func register(injector do.Injector, env string) {
 		if err != nil {
 			return nil, err
 		}
-		jc, err := jobs.NewClient(pool.Pool, client.Client, sender.Module, cipher, sys.EmailSender, lookup.TXTLookup, catalog, cfg.AppURL)
+		database, err := do.Invoke[*sqlDB](i)
+		if err != nil {
+			return nil, err
+		}
+		jc, err := jobs.NewClient(pool.Pool, client.Client, database.DB, sender.Module, cipher, sys.EmailSender, lookup.TXTLookup, catalog, cfg.AppURL, jobs.Retention{OutboxFloor: cfg.OutboxFloor, Events: cfg.EventsRetention})
 		if err != nil {
 			return nil, err
 		}
@@ -515,6 +555,19 @@ func register(injector do.Injector, env string) {
 		return accounts.New(client.Client, bus.Bus), nil
 	})
 
+	// Attempts counts failed logins per account (ADR 0025) over the raw client.
+	do.Provide(injector, func(i do.Injector) (*accounts.Attempts, error) {
+		cfg, err := do.Invoke[*config.Config](i)
+		if err != nil {
+			return nil, err
+		}
+		client, err := do.Invoke[*entClient](i)
+		if err != nil {
+			return nil, err
+		}
+		return accounts.NewAttempts(client.Client, accounts.WithRateLimits(cfg.RateLimits)), nil
+	})
+
 	// Domain modules: each built once and shared by /site, /api and /mcp, so the
 	// surfaces cannot diverge on how a module is constructed.
 	do.Provide(injector, func(do.Injector) (*segments.Module, error) {
@@ -527,6 +580,14 @@ func register(injector do.Injector, env string) {
 			return nil, err
 		}
 		return contacts.New(bus.Bus), nil
+	})
+
+	do.Provide(injector, func(i do.Injector) (*erasure.Module, error) {
+		bus, err := do.Invoke[*eventsBus](i)
+		if err != nil {
+			return nil, err
+		}
+		return erasure.New(bus.Bus), nil
 	})
 
 	do.Provide(injector, func(do.Injector) (*tags.Module, error) {
@@ -666,6 +727,10 @@ func externalDeps(i do.Injector) (apiexternal.Deps, error) {
 	if err != nil {
 		return apiexternal.Deps{}, err
 	}
+	er, err := do.Invoke[*erasure.Module](i)
+	if err != nil {
+		return apiexternal.Deps{}, err
+	}
 	tg, err := do.Invoke[*tags.Module](i)
 	if err != nil {
 		return apiexternal.Deps{}, err
@@ -684,7 +749,7 @@ func externalDeps(i do.Injector) (apiexternal.Deps, error) {
 	}
 	return apiexternal.Deps{
 		Accounts: acc, Bus: bus.Bus, Cipher: cipher, Outbound: sender.Module,
-		Segments: seg, EventLog: evlog, Contacts: con, Tags: tg, Automations: auto,
+		Segments: seg, EventLog: evlog, Contacts: con, Erasure: er, Tags: tg, Automations: auto,
 		Broadcasts: bc, Reputation: rep, BootstrapToken: cfg.BootstrapToken,
 	}, nil
 }
@@ -731,6 +796,10 @@ func siteDeps(i do.Injector) (apisite.Deps, error) {
 	if err != nil {
 		return apisite.Deps{}, err
 	}
+	er, err := do.Invoke[*erasure.Module](i)
+	if err != nil {
+		return apisite.Deps{}, err
+	}
 	tg, err := do.Invoke[*tags.Module](i)
 	if err != nil {
 		return apisite.Deps{}, err
@@ -758,9 +827,13 @@ func siteDeps(i do.Injector) (apisite.Deps, error) {
 	if err != nil {
 		return apisite.Deps{}, err
 	}
+	attempts, err := do.Invoke[*accounts.Attempts](i)
+	if err != nil {
+		return apisite.Deps{}, err
+	}
 	return apisite.Deps{
-		Accounts: acc, OAuth: oauthserver.NewService(client.Client), Bus: bus.Bus, Cipher: cipher, Catalog: catalog, Outbound: sender.Module,
-		Segments: seg, EventLog: evlog, Contacts: con, Tags: tg, Automations: auto,
+		Accounts: acc, Attempts: attempts, OAuth: oauthserver.NewService(client.Client), Bus: bus.Bus, Cipher: cipher, Catalog: catalog, Outbound: sender.Module,
+		Segments: seg, EventLog: evlog, Contacts: con, Erasure: er, Tags: tg, Automations: auto,
 		Broadcasts: bc, Welcome: jc.Client, SysMail: jc.Client, DomainVerify: jc.Client, QuotaRefresh: jc.Client,
 		Tokens: tokens, Tracker: tracker, AppURL: cfg.AppURL,
 	}, nil

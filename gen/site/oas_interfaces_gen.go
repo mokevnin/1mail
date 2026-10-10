@@ -13,6 +13,10 @@ type SiteAuthDirectLoginRes interface {
 	siteAuthDirectLoginRes()
 }
 
+type SiteAuthForgotPasswordRes interface {
+	siteAuthForgotPasswordRes()
+}
+
 type SiteAuthRegisterRes interface {
 	siteAuthRegisterRes()
 }
@@ -91,6 +95,10 @@ type SiteContactsCreateRes interface {
 
 type SiteContactsDeleteRes interface {
 	siteContactsDeleteRes()
+}
+
+type SiteContactsExportRes interface {
+	siteContactsExportRes()
 }
 
 type SiteContactsGetRes interface {

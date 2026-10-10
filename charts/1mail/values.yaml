@@ -1,0 +1,71 @@
+# Image. The tag defaults to the chart appVersion; pin an explicit version in production.
+image:
+  repository: ghcr.io/mokevnin/1mail
+  tag: ''
+  pullPolicy: IfNotPresent
+
+imagePullSecrets: []
+
+replicaCount: 2
+
+# REQUIRED. Name of an existing Secret with the keys DATABASE_URL, JWT_SECRET and
+# ENCRYPTION_KEY. The chart never creates it: the migrate hook Job runs before regular
+# resources, so the Secret must already exist.
+existingSecret: ''
+
+# Public base URL of the instance (APP_URL).
+appUrl: ''
+
+# Extra plain environment variables for the Deployment and the migrate Job
+# (name/value or valueFrom entries, e.g. SMTP_HOST, APP_LOCALE).
+extraEnv: []
+
+service:
+  type: ClusterIP
+  port: 80
+
+# Port the application listens on (PORT).
+containerPort: 3000
+
+# Opt-in internal Prometheus listener (METRICS_ADDR, ADR 0018). Off by default. It is never
+# exposed through the public Service or the Ingress.
+metrics:
+  enabled: false
+  port: 9090
+  serviceMonitor:
+    # Requires the Prometheus Operator CRDs. Needs metrics.enabled.
+    enabled: false
+    interval: 30s
+    labels: {}
+  # Example alerting rules (docs/operations/monitoring.md). Requires the Prometheus Operator
+  # CRDs and metrics.enabled. Off by default.
+  prometheusRule:
+    enabled: false
+    # Extra labels, e.g. the release label your Prometheus ruleSelector matches.
+    labels: {}
+    # Base URL of the runbook; each alert links to <runbookUrl>#<alertname>.
+    runbookUrl: https://mokevnin.github.io/1mail/operations/runbook
+
+migrate:
+  backoffLimit: 1
+  activeDeadlineSeconds: 300
+
+ingress:
+  enabled: false
+  className: ''
+  annotations: {}
+  host: 1mail.example.com
+  tls:
+    enabled: false
+    secretName: ''
+
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1
+
+resources: {}
+
+podAnnotations: {}
+nodeSelector: {}
+tolerations: []
+affinity: {}

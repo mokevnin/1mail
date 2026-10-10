@@ -1537,6 +1537,306 @@ func decodeContactsDeleteParams(args [1]string, argsEscaped bool, r *http.Reques
 	return params, nil
 }
 
+// ContactsEraseByParams is parameters of Contacts_eraseBy operation.
+type ContactsEraseByParams struct {
+	// The email address to erase.
+	Email OptEmailAddress `json:",omitempty,omitzero"`
+	// The anonymous visitor id to erase.
+	VisitorId OptString `json:",omitempty,omitzero"`
+}
+
+func unpackContactsEraseByParams(packed middleware.Parameters) (params ContactsEraseByParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "email",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.Email = v.(OptEmailAddress)
+		}
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "visitorId",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.VisitorId = v.(OptString)
+		}
+	}
+	return params
+}
+
+func decodeContactsEraseByParams(args [0]string, argsEscaped bool, r *http.Request) (params ContactsEraseByParams, _ error) {
+	q := uri.NewQueryDecoder(r.URL.Query())
+	// Decode query: email.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "email",
+			Style:   uri.QueryStyleForm,
+			Explode: false,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotEmailVal EmailAddress
+				if err := func() error {
+					var paramsDotEmailValVal string
+					if err := func() error {
+						val, err := d.DecodeValue()
+						if err != nil {
+							return err
+						}
+
+						c, err := conv.ToString(val)
+						if err != nil {
+							return err
+						}
+
+						paramsDotEmailValVal = c
+						return nil
+					}(); err != nil {
+						return err
+					}
+					paramsDotEmailVal = EmailAddress(paramsDotEmailValVal)
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.Email.SetTo(paramsDotEmailVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if value, ok := params.Email.Get(); ok {
+					if err := func() error {
+						if err := value.Validate(); err != nil {
+							return err
+						}
+						return nil
+					}(); err != nil {
+						return err
+					}
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "email",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	// Decode query: visitorId.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "visitorId",
+			Style:   uri.QueryStyleForm,
+			Explode: false,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotVisitorIdVal string
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToString(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotVisitorIdVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.VisitorId.SetTo(paramsDotVisitorIdVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "visitorId",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
+// ContactsExportParams is parameters of Contacts_export operation.
+type ContactsExportParams struct {
+	// The contact's id.
+	ID OptEntityId `json:",omitempty,omitzero"`
+	// The contact's email address.
+	Email OptEmailAddress `json:",omitempty,omitzero"`
+}
+
+func unpackContactsExportParams(packed middleware.Parameters) (params ContactsExportParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "id",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.ID = v.(OptEntityId)
+		}
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "email",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.Email = v.(OptEmailAddress)
+		}
+	}
+	return params
+}
+
+func decodeContactsExportParams(args [0]string, argsEscaped bool, r *http.Request) (params ContactsExportParams, _ error) {
+	q := uri.NewQueryDecoder(r.URL.Query())
+	// Decode query: id.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "id",
+			Style:   uri.QueryStyleForm,
+			Explode: false,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotIDVal EntityId
+				if err := func() error {
+					var paramsDotIDValVal string
+					if err := func() error {
+						val, err := d.DecodeValue()
+						if err != nil {
+							return err
+						}
+
+						c, err := conv.ToString(val)
+						if err != nil {
+							return err
+						}
+
+						paramsDotIDValVal = c
+						return nil
+					}(); err != nil {
+						return err
+					}
+					paramsDotIDVal = EntityId(paramsDotIDValVal)
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.ID.SetTo(paramsDotIDVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if value, ok := params.ID.Get(); ok {
+					if err := func() error {
+						if err := value.Validate(); err != nil {
+							return err
+						}
+						return nil
+					}(); err != nil {
+						return err
+					}
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "id",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	// Decode query: email.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "email",
+			Style:   uri.QueryStyleForm,
+			Explode: false,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotEmailVal EmailAddress
+				if err := func() error {
+					var paramsDotEmailValVal string
+					if err := func() error {
+						val, err := d.DecodeValue()
+						if err != nil {
+							return err
+						}
+
+						c, err := conv.ToString(val)
+						if err != nil {
+							return err
+						}
+
+						paramsDotEmailValVal = c
+						return nil
+					}(); err != nil {
+						return err
+					}
+					paramsDotEmailVal = EmailAddress(paramsDotEmailValVal)
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.Email.SetTo(paramsDotEmailVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if value, ok := params.Email.Get(); ok {
+					if err := func() error {
+						if err := value.Validate(); err != nil {
+							return err
+						}
+						return nil
+					}(); err != nil {
+						return err
+					}
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "email",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
 // ContactsGetParams is parameters of Contacts_get operation.
 type ContactsGetParams struct {
 	// Unique identifier.

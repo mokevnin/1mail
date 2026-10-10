@@ -1,0 +1,91 @@
+# MCP for agents
+
+1mail serves a [Model Context Protocol](https://modelcontextprotocol.io) endpoint at `/mcp`, so an
+AI agent (Claude, or any MCP client) can operate a workspace: read contacts, draft broadcasts,
+build segments, author automations. It is the same binary and the same data as `/api`.
+
+The tools are **projected from the external API contract**, not written by hand. Every operation
+in the [API reference](/api/) is a tool, named after its operation id in snake_case
+(`Contacts_list` becomes `contacts_list`). Token scopes, workspace scoping, validation and error
+bodies are the `/api` ones.
+
+## Connect
+
+The endpoint speaks Streamable HTTP and is stateless. Create an API token under
+**Settings → API keys** (see [scopes](/guide/api#tokens-and-scopes)), then point your client at
+`https://1mail.example.com/mcp` with the token as a Bearer credential.
+
+Claude Code:
+
+```sh
+claude mcp add --transport http 1mail https://1mail.example.com/mcp \
+  --header "Authorization: Bearer $ONEMAIL_TOKEN"
+```
+
+Any client that takes a JSON configuration:
+
+```json
+{
+  "mcpServers": {
+    "1mail": {
+      "type": "http",
+      "url": "https://1mail.example.com/mcp",
+      "headers": { "Authorization": "Bearer <token>" }
+    }
+  }
+}
+```
+
+### Connectors that sign in (OAuth)
+
+Clients that cannot hold a static header, such as claude.ai custom connectors, use OAuth 2.1:
+add `https://1mail.example.com/mcp` as the connector URL and approve the consent screen in the
+1mail app. 1mail serves the discovery metadata (RFC 9728 and RFC 8414), dynamic client
+registration and PKCE (S256 only).
+
+- Only a workspace **owner or admin** can approve, because approval mints a token.
+- The result is an ordinary API token named `<client> (MCP)`. It has no refresh token and does
+  not expire. List and revoke it in the workspace settings like any other token.
+- The consent screen lets you opt in to the send-class scopes. Token management scopes
+  (`tokens:*`) can never be granted to a connector.
+
+## What an agent can do
+
+| Area                | Tools (prefix)                                                                         |
+| ------------------- | -------------------------------------------------------------------------------------- |
+| Identity            | `whoami`                                                                               |
+| Contacts            | `contacts_*`, `contacts_upsert_batch`, `tags_*`                                        |
+| Events              | `events_record`, `events_record_batch`, `events_actions_list`                          |
+| Segments            | `segments_*`, `segments_preview`                                                       |
+| Templates           | `templates_*`                                                                          |
+| Broadcasts          | `broadcasts_*`, `broadcasts_set_audience`, `broadcasts_test_send`, `broadcasts_report` |
+| Automations         | `automations_*`, `automations_deactivate`                                              |
+| Reference and rates | `custom_fields_list`, `sending_domains_list`, `sending_domains_rates`                  |
+| Consent             | `unsubscribes_create`, `suppressions_create`                                           |
+| Webhooks            | `webhooks_*`                                                                           |
+
+API token management is never a tool. The live list for your token is whatever `tools/list`
+returns; it depends on the token's scopes.
+
+## Safety model
+
+- **Authoring, not sending, by default.** Broadcasts and automations are created as drafts.
+  The send-class tools (`emails_send`, `broadcasts_schedule`, `broadcasts_unschedule`,
+  `automations_activate`) need their own API scope (`emails:send`, `broadcasts:send`,
+  `automations:activate`) **and** the extra `mcp:send` scope on the token. Without `mcp:send`
+  they are not even listed.
+- **Consent only narrows.** An agent can suppress an address or record an unsubscribe. Resubscribing
+  and lifting a suppression are not available over `/api` or MCP at all.
+- **Contact text is data.** Contact names, custom field keys and values, event properties and tag
+  names come from outside the workspace. In tool results they are wrapped as
+  `{"untrusted_data": …}`, and the server instructions tell the model to treat them as data and
+  never as instructions.
+
+## Playbooks
+
+The server also publishes MCP prompts that walk an agent through common jobs, always leaving the
+final send to a human:
+
+- **welcome**: draft a welcome automation for new contacts.
+- **win-back**: draft a broadcast for contacts who went quiet.
+- **list-hygiene**: audit audience health and propose cleanup.

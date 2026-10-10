@@ -9,10 +9,15 @@ import { expect, test } from 'vitest'
 
 import type {
   SiteContactResource,
+  SiteContactsDeleteData,
   SiteContactsGetData,
   SiteEventsListData,
+  SiteMembershipResource,
+  SiteMembershipsListData,
+  SiteMembershipRole,
+  SiteUserGetMeData,
 } from '../../generated/site/types.gen.ts'
-import { contactsDetailRoute } from '../../router.tsx'
+import { contactsDetailRoute, contactsRoute } from '../../router.tsx'
 import { jsonResponse, mockClientRoutes, route } from '../../test/mockFetch.ts'
 import { renderWithProviders } from '../../test/renderWithProviders.tsx'
 import { renderWithRouter } from '../../test/renderWithRouter.tsx'
@@ -172,4 +177,66 @@ test('moving to another contact resets the events page to the first', async () =
     .element(screen.getByRole('heading', { name: 'grace@example.com' }))
     .toBeInTheDocument()
   await expect.poll(() => eventRequests.at(-1)).toEqual({ contactId: '10', page: '1' })
+})
+
+function currentRoleRoutes(role: SiteMembershipRole) {
+  const me = { id: '5', name: 'Me', email: 'me@example.com', emailVerified: true, createdAt: NOW }
+  const membership = (userId: string, memberRole: SiteMembershipRole): SiteMembershipResource => ({
+    id: `m${userId}`,
+    userId,
+    email: `u${userId}@example.com`,
+    name: `User ${userId}`,
+    role: memberRole,
+    createdAt: NOW,
+  })
+  return [
+    route<SiteUserGetMeData>('GET', '/me', {}, () => jsonResponse(me)),
+    route<SiteMembershipsListData>('GET', '/workspaces/{slug}/memberships', SLUG, () =>
+      jsonResponse([membership('1', 'owner'), membership('5', role)]),
+    ),
+  ]
+}
+
+test('a member can export a contact but is not offered Erase', async () => {
+  mockClientRoutes([
+    contactRoute(() => jsonResponse(ADA)),
+    eventsRoute(() => jsonResponse({ items: [], totalItems: 0 })),
+    ...currentRoleRoutes('member'),
+  ])
+
+  const { screen } = await renderWithRouter(<ContactDetailPage />, DETAIL_ROUTE)
+
+  await expect.element(screen.getByRole('button', { name: 'Export data' })).toBeInTheDocument()
+  await expect.element(screen.getByRole('button', { name: 'Erase' })).not.toBeInTheDocument()
+})
+
+test('an admin erases a contact only after confirming the irreversible action', async () => {
+  const erased: string[] = []
+  mockClientRoutes([
+    contactRoute(() => jsonResponse(ADA)),
+    eventsRoute(() => jsonResponse({ items: [], totalItems: 0 })),
+    ...currentRoleRoutes('admin'),
+    route<SiteContactsDeleteData>(
+      'DELETE',
+      '/workspaces/{slug}/contacts/{id}',
+      { ...SLUG, id: '9' },
+      () => {
+        erased.push('9')
+        return new Response(null, { status: 204 })
+      },
+    ),
+  ])
+
+  const { screen, navigate } = await renderWithRouter(<ContactDetailPage />, DETAIL_ROUTE)
+
+  await screen.getByRole('button', { name: 'Erase' }).click()
+  await expect.element(screen.getByRole('dialog').getByText(/cannot be undone/)).toBeInTheDocument()
+  expect(erased).toEqual([])
+
+  await screen.getByRole('dialog').getByRole('button', { name: 'Erase' }).click()
+
+  await expect.poll(() => erased).toEqual(['9'])
+  await expect
+    .poll(() => navigate.mock.calls.at(-1)?.[0])
+    .toMatchObject({ to: contactsRoute.to, params: { slug: 'test' } })
 })

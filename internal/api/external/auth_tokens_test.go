@@ -183,3 +183,51 @@ func TestExternalAuthTokensBootstrapDisabledWithoutConfiguredSecret(t *testing.T
 	require.NoError(t, err)
 	assert.IsType(t, &externalapi.AuthTokensBootstrapUnauthorized{}, res)
 }
+
+func TestExternalAuthTokensCreateCannotGrantAScopeTheCallerLacks(t *testing.T) {
+	env := testhelper.Setup(t)
+	ctx := context.Background()
+	c := env.ExternalScoped(t, "tokens:write", "contacts:read")
+
+	before, err := env.DB.ApiToken.Query().Count(ctx)
+	require.NoError(t, err)
+
+	res, err := c.AuthTokensCreate(ctx, &externalapi.CreateApiTokenInput{
+		Name:   "escalate",
+		Scopes: []externalapi.ApiTokenScope{externalapi.ApiTokenScopeContactsRead, externalapi.ApiTokenScopeEmailsSend},
+	})
+	require.NoError(t, err)
+	assert.IsType(t, &externalapi.AuthTokensCreateForbidden{}, res)
+
+	after, err := env.DB.ApiToken.Query().Count(ctx)
+	require.NoError(t, err)
+	assert.Equal(t, before, after, "a refused mint creates no token")
+}
+
+func TestExternalAuthTokensCreateRefusesABlankName(t *testing.T) {
+	env := testhelper.Setup(t)
+	res, err := env.ExternalAnchor(t).AuthTokensCreate(context.Background(), &externalapi.CreateApiTokenInput{
+		Name:   "   ",
+		Scopes: []externalapi.ApiTokenScope{externalapi.ApiTokenScopeContactsRead},
+	})
+	require.NoError(t, err)
+	assert.IsType(t, &externalapi.AuthTokensCreateBadRequest{}, res)
+}
+
+func TestExternalAuthTokensDeleteTwiceIsNotFound(t *testing.T) {
+	env := testhelper.Setup(t)
+	ctx := context.Background()
+	c := env.ExternalAnchor(t)
+	env.ScopedBearer(t, "contacts:read")
+	victim, err := env.DB.ApiToken.Query().Where(apitoken.WorkspaceID(fixtures.AcmeID), apitoken.Name("actor-token")).Only(ctx)
+	require.NoError(t, err)
+	id := entityIDString(victim.ID)
+
+	first, err := c.AuthTokensDelete(ctx, externalapi.AuthTokensDeleteParams{ID: id})
+	require.NoError(t, err)
+	assert.IsType(t, &externalapi.AuthTokensDeleteNoContent{}, first)
+
+	second, err := c.AuthTokensDelete(ctx, externalapi.AuthTokensDeleteParams{ID: id})
+	require.NoError(t, err)
+	assert.IsType(t, &externalapi.AuthTokensDeleteNotFound{}, second, "an already-revoked token is not found, as on /site")
+}

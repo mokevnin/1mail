@@ -13,6 +13,8 @@ import (
 	collectapi "github.com/mokevnin/1mail/gen/collect"
 	externalapi "github.com/mokevnin/1mail/gen/external"
 	siteapi "github.com/mokevnin/1mail/gen/site"
+	"github.com/mokevnin/1mail/internal/accounts"
+	"github.com/mokevnin/1mail/internal/ratelimit"
 	"github.com/mokevnin/1mail/internal/service"
 	"github.com/samber/lo"
 )
@@ -73,7 +75,50 @@ func NewExternalSecurityHandler(client *ent.Client) *ExternalSecurityHandler {
 
 var _ externalapi.SecurityHandler = (*ExternalSecurityHandler)(nil)
 
-func (h *ExternalSecurityHandler) HandleBearerAuth(ctx context.Context, _ externalapi.OperationName, t externalapi.BearerAuth) (context.Context, error) {
+// HandleBearerAuth authenticates the Bearer token and applies the rate limits that
+// need it (ADR 0025): a client address that spent its failed-authentication budget
+// is refused before the token is looked at, a failure counts against it, and a
+// success charges the Workspace's shared /api and /mcp budget. Rejections surface
+// as *ratelimit.LimitedError.
+func (h *ExternalSecurityHandler) HandleBearerAuth(ctx context.Context, op externalapi.OperationName, t externalapi.BearerAuth) (context.Context, error) {
+	authed, err := guardedAuth(ctx,
+		func() (context.Context, error) { return h.authenticate(ctx, op, t) },
+		func(limits *ratelimit.Exchange, authed context.Context) error {
+			return limits.ChargeWorkspace(GetTokenAuth(authed).WorkspaceID)
+		})
+	if err != nil {
+		return ctx, err
+	}
+	return authed, nil
+}
+
+// guardedAuth is the sequence both token surfaces share (ADR 0025): a client address
+// that spent its failed-authentication budget is refused before the credential is
+// looked at, an ErrUnauthorized counts against that budget, and a success is charged
+// by charge (the Workspace's budget of the surface).
+func guardedAuth[T any](ctx context.Context, authenticate func() (T, error), charge func(*ratelimit.Exchange, T) error) (T, error) {
+	var zero T
+	limits := ratelimit.FromContext(ctx)
+	if err := limits.AuthBlocked(ctx); err != nil {
+		return zero, err
+	}
+	authed, err := authenticate()
+	if errors.Is(err, ErrUnauthorized) {
+		if limited := limits.AuthFailed(ctx); limited != nil {
+			return zero, limited
+		}
+		return zero, err
+	}
+	if err != nil {
+		return zero, err
+	}
+	if err := charge(limits, authed); err != nil {
+		return zero, err
+	}
+	return authed, nil
+}
+
+func (h *ExternalSecurityHandler) authenticate(ctx context.Context, _ externalapi.OperationName, t externalapi.BearerAuth) (context.Context, error) {
 	parsed := service.ParseToken(t.Token)
 	if parsed == nil {
 		return ctx, ErrUnauthorized
@@ -151,18 +196,30 @@ func NewCollectSecurityHandler(client *ent.Client) *CollectSecurityHandler {
 
 var _ collectapi.SecurityHandler = (*CollectSecurityHandler)(nil)
 
+// HandleApiKeyAuth authenticates the collect key and applies the rate limits that
+// need it (ADR 0025): a client address that spent its failed-authentication budget
+// is refused before the key is looked at, a wrong key counts against it, and a
+// success charges the Workspace's /collect budget. Rejections surface as
+// *ratelimit.LimitedError.
 func (h *CollectSecurityHandler) HandleApiKeyAuth(ctx context.Context, _ collectapi.OperationName, t collectapi.ApiKeyAuth) (context.Context, error) {
-	if t.APIKey == "" {
-		return ctx, ErrUnauthorized
-	}
-	ws, err := h.ent.Workspace.Query().Where(workspace.CollectKey(t.APIKey)).Only(ctx)
-	if ent.IsNotFound(err) {
-		return ctx, ErrUnauthorized
-	}
+	ws, err := guardedAuth(ctx,
+		func() (*ent.Workspace, error) { return h.workspaceByKey(ctx, t.APIKey) },
+		func(limits *ratelimit.Exchange, ws *ent.Workspace) error { return limits.ChargeCollect(ws.ID) })
 	if err != nil {
 		return ctx, err
 	}
 	return WithCollectAuth(ctx, &CollectAuth{WorkspaceID: ws.ID, Scoped: h.ent.Scoped(ws.ID)}), nil
+}
+
+func (h *CollectSecurityHandler) workspaceByKey(ctx context.Context, key string) (*ent.Workspace, error) {
+	if key == "" {
+		return nil, ErrUnauthorized
+	}
+	ws, err := h.ent.Workspace.Query().Where(workspace.CollectKey(key)).Only(ctx)
+	if ent.IsNotFound(err) {
+		return nil, ErrUnauthorized
+	}
+	return ws, err
 }
 
 // SiteAuth holds the authenticated dashboard user resolved from the JWT cookie.
@@ -223,16 +280,34 @@ func (h *SiteSecurityHandler) HandleApiKeyAuth(ctx context.Context, _ siteapi.Op
 }
 
 // CredChecker verifies user credentials for go-pkgz/auth direct provider.
+//
+// It also feeds the per-account login throttle (ADR 0025): every failure is counted,
+// for unknown emails too, and a success resets the counter. It never answers 429
+// itself, because go-pkgz/auth turns a checker error into a 500; the login route's
+// HTTP wrapper in internal/server consults the same counters before the provider runs.
 type CredChecker struct {
-	ent *ent.Client
+	ent      *ent.Client
+	attempts *accounts.Attempts
 }
 
-func NewCredChecker(client *ent.Client) *CredChecker {
-	return &CredChecker{ent: client}
+func NewCredChecker(client *ent.Client, attempts *accounts.Attempts) *CredChecker {
+	return &CredChecker{ent: client, attempts: attempts}
 }
 
 func (c *CredChecker) Check(user, password string) (bool, error) {
-	u, err := c.ent.User.Query().Where(entuser.Email(user)).Only(context.Background())
+	ctx := context.Background()
+	ok, err := c.verify(ctx, user, password)
+	if err != nil {
+		return false, err
+	}
+	if ok {
+		return true, c.attempts.RecordSuccess(ctx, accounts.KindLogin, user)
+	}
+	return false, c.attempts.RecordFailure(ctx, accounts.KindLogin, user)
+}
+
+func (c *CredChecker) verify(ctx context.Context, user, password string) (bool, error) {
+	u, err := c.ent.User.Query().Where(entuser.Email(user)).Only(ctx)
 	if ent.IsNotFound(err) {
 		return false, nil
 	}

@@ -70,7 +70,7 @@ func TestExternalContactsAreWorkspaceScoped(t *testing.T) {
 	env := testhelper.Setup(t)
 	ctx := context.Background()
 	foreign := entityIDString(globexContact(t, env, "gil@globex.test"))
-	c := env.ExternalScoped(t, "contacts:read", "contacts:write")
+	c := env.ExternalScoped(t, "contacts:read", "contacts:write", "contacts:erase")
 
 	get, err := c.ContactsGet(ctx, externalapi.ContactsGetParams{ID: foreign})
 	require.NoError(t, err)
@@ -143,4 +143,27 @@ func TestItemErrorWordsDomainErrorsAndHidesTheRest(t *testing.T) {
 	assert.Equal(t, contacts.ErrIdentityRequired.Error(), external.ItemError(contacts.ErrIdentityRequired))
 	assert.Equal(t, eventlog.ErrInvalid.Error(), external.ItemError(eventlog.ErrInvalid))
 	assert.Equal(t, "internal error", external.ItemError(errors.New("pq: connection refused at 10.0.0.3")))
+}
+
+// JSON Merge Patch on update, as on /site: an explicit null clears an optional field
+// and an absent key leaves it unchanged. The contract declares every field nullable.
+func TestExternalContactsUpdateNullClearsAbsentKeeps(t *testing.T) {
+	env := testhelper.Setup(t)
+	ctx := context.Background()
+	c := env.ExternalScoped(t, "contacts:read", "contacts:write")
+
+	var null externalapi.OptNilString
+	null.SetToNull()
+	res, err := c.ContactsUpdate(ctx, &externalapi.UpdateContactInput{FirstName: null},
+		externalapi.ContactsUpdateParams{ID: entityIDString(fixtures.ContactAliceID)})
+	require.NoError(t, err)
+	got, ok := res.(*externalapi.ContactResource)
+	require.Truef(t, ok, "got %T", res)
+	assert.Empty(t, got.FirstName.Value, "first name cleared by explicit null")
+
+	stored, err := env.DB.Contact.Get(ctx, fixtures.ContactAliceID)
+	require.NoError(t, err)
+	assert.Nil(t, stored.FirstName, "the clear is persisted")
+	assert.Equal(t, "Smith", *stored.LastName, "an absent last name is kept")
+	assert.Equal(t, fixtures.ContactAliceEmail, *stored.Email, "an absent email is kept")
 }

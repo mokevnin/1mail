@@ -168,10 +168,29 @@ type Invoker interface {
 	ContactsCreate(ctx context.Context, request *CreateContactInput) (ContactsCreateRes, error)
 	// ContactsDelete invokes Contacts_delete operation.
 	//
-	// Delete a resource.
+	// Erase a contact (GDPR Art. 17): its personal data is removed, delivery records are anonymized and
+	// its opt-outs survive. Requires the contacts:erase scope.
 	//
 	// DELETE /contacts/{id}
 	ContactsDelete(ctx context.Context, params ContactsDeleteParams) (ContactsDeleteRes, error)
+	// ContactsEraseBy invokes Contacts_eraseBy operation.
+	//
+	// Erase by an identifier other than the contact id (GDPR Art. 17): by `email` (also anonymizes
+	// delivery records to an address that never had a contact) or by `visitorId` (an anonymous visitor and
+	// its events). Exactly one of the two. The same rules as deleting by id apply. Requires the
+	// contacts:erase scope.
+	//
+	// DELETE /contacts/erase
+	ContactsEraseBy(ctx context.Context, params ContactsEraseByParams) (ContactsEraseByRes, error)
+	// ContactsExport invokes Contacts_export operation.
+	//
+	// Export everything held about one contact as a streamed JSON download: the contact, its custom
+	// fields, tags, visitors, all events, its opt-outs (unsubscribes, suppressions, confirmations) and
+	// delivery metadata. Rendered message bodies are not included. Identify the contact by exactly one of
+	// `id` or `email`.
+	//
+	// POST /contacts/export
+	ContactsExport(ctx context.Context, params ContactsExportParams) (ContactsExportRes, error)
 	// ContactsGet invokes Contacts_get operation.
 	//
 	// Get a resource by ID.
@@ -3519,7 +3538,8 @@ func (c *Client) sendContactsCreate(ctx context.Context, request *CreateContactI
 
 // ContactsDelete invokes Contacts_delete operation.
 //
-// Delete a resource.
+// Erase a contact (GDPR Art. 17): its personal data is removed, delivery records are anonymized and
+// its opt-outs survive. Requires the contacts:erase scope.
 //
 // DELETE /contacts/{id}
 func (c *Client) ContactsDelete(ctx context.Context, params ContactsDeleteParams) (ContactsDeleteRes, error) {
@@ -3644,6 +3664,323 @@ func (c *Client) sendContactsDelete(ctx context.Context, params ContactsDeletePa
 
 	stage = "DecodeResponse"
 	result, err := decodeContactsDeleteResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// ContactsEraseBy invokes Contacts_eraseBy operation.
+//
+// Erase by an identifier other than the contact id (GDPR Art. 17): by `email` (also anonymizes
+// delivery records to an address that never had a contact) or by `visitorId` (an anonymous visitor and
+// its events). Exactly one of the two. The same rules as deleting by id apply. Requires the
+// contacts:erase scope.
+//
+// DELETE /contacts/erase
+func (c *Client) ContactsEraseBy(ctx context.Context, params ContactsEraseByParams) (ContactsEraseByRes, error) {
+	res, err := c.sendContactsEraseBy(ctx, params)
+	return res, err
+}
+
+func (c *Client) sendContactsEraseBy(ctx context.Context, params ContactsEraseByParams) (res ContactsEraseByRes, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("Contacts_eraseBy"),
+		semconv.HTTPRequestMethodKey.String("DELETE"),
+		semconv.URLTemplateKey.String("/contacts/erase"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, ContactsEraseByOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	stage = "BuildURL"
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [1]string
+	pathParts[0] = "/contacts/erase"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeQueryParams"
+	q := uri.NewQueryEncoder()
+	{
+		// Encode "email" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "email",
+			Style:   uri.QueryStyleForm,
+			Explode: false,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.Email.Get(); ok {
+				if unwrapped := string(val); true {
+					return e.EncodeValue(conv.StringToString(unwrapped))
+				}
+				return nil
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	{
+		// Encode "visitorId" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "visitorId",
+			Style:   uri.QueryStyleForm,
+			Explode: false,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.VisitorId.Get(); ok {
+				return e.EncodeValue(conv.StringToString(val))
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	u.RawQuery = q.Values().Encode()
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "DELETE", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+
+	{
+		type bitset = [1]uint8
+		var satisfied bitset
+		{
+			stage = "Security:BearerAuth"
+			switch err := c.securityBearerAuth(ctx, ContactsEraseByOperation, r); {
+			case err == nil: // if NO error
+				satisfied[0] |= 1 << 0
+			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
+				// Skip this security.
+			default:
+				return res, errors.Wrap(err, "security \"BearerAuth\"")
+			}
+		}
+
+		if ok := func() bool {
+		nextRequirement:
+			for _, requirement := range []bitset{
+				{0b00000001},
+			} {
+				for i, mask := range requirement {
+					if satisfied[i]&mask != mask {
+						continue nextRequirement
+					}
+				}
+				return true
+			}
+			return false
+		}(); !ok {
+			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
+		}
+	}
+
+	stage = "SendRequest"
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	body := resp.Body
+	defer func() {
+		// Drain the body to EOF before closing, so the underlying
+		// connection can be reused by the Transport regardless of the
+		// response status code. See https://github.com/ogen-go/ogen/issues/1670.
+		_, _ = io.Copy(io.Discard, body)
+		_ = body.Close()
+	}()
+
+	stage = "DecodeResponse"
+	result, err := decodeContactsEraseByResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// ContactsExport invokes Contacts_export operation.
+//
+// Export everything held about one contact as a streamed JSON download: the contact, its custom
+// fields, tags, visitors, all events, its opt-outs (unsubscribes, suppressions, confirmations) and
+// delivery metadata. Rendered message bodies are not included. Identify the contact by exactly one of
+// `id` or `email`.
+//
+// POST /contacts/export
+func (c *Client) ContactsExport(ctx context.Context, params ContactsExportParams) (ContactsExportRes, error) {
+	res, err := c.sendContactsExport(ctx, params)
+	return res, err
+}
+
+func (c *Client) sendContactsExport(ctx context.Context, params ContactsExportParams) (res ContactsExportRes, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("Contacts_export"),
+		semconv.HTTPRequestMethodKey.String("POST"),
+		semconv.URLTemplateKey.String("/contacts/export"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, ContactsExportOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	stage = "BuildURL"
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [1]string
+	pathParts[0] = "/contacts/export"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeQueryParams"
+	q := uri.NewQueryEncoder()
+	{
+		// Encode "id" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "id",
+			Style:   uri.QueryStyleForm,
+			Explode: false,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.ID.Get(); ok {
+				if unwrapped := string(val); true {
+					return e.EncodeValue(conv.StringToString(unwrapped))
+				}
+				return nil
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	{
+		// Encode "email" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "email",
+			Style:   uri.QueryStyleForm,
+			Explode: false,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.Email.Get(); ok {
+				if unwrapped := string(val); true {
+					return e.EncodeValue(conv.StringToString(unwrapped))
+				}
+				return nil
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	u.RawQuery = q.Values().Encode()
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "POST", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+
+	{
+		type bitset = [1]uint8
+		var satisfied bitset
+		{
+			stage = "Security:BearerAuth"
+			switch err := c.securityBearerAuth(ctx, ContactsExportOperation, r); {
+			case err == nil: // if NO error
+				satisfied[0] |= 1 << 0
+			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
+				// Skip this security.
+			default:
+				return res, errors.Wrap(err, "security \"BearerAuth\"")
+			}
+		}
+
+		if ok := func() bool {
+		nextRequirement:
+			for _, requirement := range []bitset{
+				{0b00000001},
+			} {
+				for i, mask := range requirement {
+					if satisfied[i]&mask != mask {
+						continue nextRequirement
+					}
+				}
+				return true
+			}
+			return false
+		}(); !ok {
+			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
+		}
+	}
+
+	stage = "SendRequest"
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	body := resp.Body
+	defer func() {
+		// Drain the body to EOF before closing, so the underlying
+		// connection can be reused by the Transport regardless of the
+		// response status code. See https://github.com/ogen-go/ogen/issues/1670.
+		_, _ = io.Copy(io.Discard, body)
+		_ = body.Close()
+	}()
+
+	stage = "DecodeResponse"
+	result, err := decodeContactsExportResponse(resp)
 	if err != nil {
 		return res, errors.Wrap(err, "decode response")
 	}

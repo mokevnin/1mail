@@ -6,32 +6,62 @@ embedded. The only external dependency at runtime is **PostgreSQL** (the backgro
 and pub/sub both ride on Postgres — no Redis, no object storage, no separate worker).
 
 - **PostgreSQL:** 14+ recommended.
-- Outbound email via SMTP or Amazon SES.
+- Outbound email via SMTP or any SES-compatible service (Amazon SES, Yandex Cloud Postbox and others).
 
 ## Configuration
 
 Configuration is read from environment variables (and, if present, `.env` files next to
 the binary). `APP_ENV` selects the environment (`development` by default; set it to
-`production` when self-hosting).
+`production` when self-hosting — the published Docker images already default to `production`).
 
-| Variable                                                            | Required        | Default                   | Description                                                                                                                                                                                                          |
-| ------------------------------------------------------------------- | --------------- | ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `DATABASE_URL`                                                      | **yes**         | —                         | PostgreSQL connection string (`postgres://user:pass@host:5432/db?sslmode=…`).                                                                                                                                        |
-| `JWT_SECRET`                                                        | **yes in prod** | —                         | Signing secret for auth tokens. The server refuses to boot outside `development`/`test` if this is empty.                                                                                                            |
-| `ENCRYPTION_KEY`                                                    | **yes**         | —                         | Base64 Tink keyset used to encrypt stored provider credentials. Generate one with `go run ./cmd/genkey` (or `1mail`-side tooling). Boot fails if missing.                                                            |
-| `APP_URL`                                                           | no              | `http://localhost:3000`   | Public base URL — used when issuing auth tokens and building tracking/unsubscribe links. Set to your real origin.                                                                                                    |
-| `PORT`                                                              | no              | `3000`                    | HTTP listen port.                                                                                                                                                                                                    |
-| `METRICS_ADDR`                                                      | no              | — (off)                   | `host:port` for the opt-in Prometheus listener. Must differ from `PORT`; see [Prometheus metrics](#prometheus-metrics).                                                                                              |
-| `AUTO_MIGRATE`                                                      | no              | `false`                   | Apply embedded migrations on startup. Convenient for single-replica; see below.                                                                                                                                      |
-| `CORS_ORIGINS`                                                      | no              | —                         | Comma/space-separated origins allowed credentialed CORS on the cookie-authenticated API (`/site`, `/auth`). Empty means same-origin only, which is what the bundled SPA needs; the bearer-token APIs are unaffected. |
-| `MAX_BODY_BYTES`                                                    | no              | `1048576`                 | Largest accepted request body (bytes) on every surface except `/collect`; larger bodies get `413`.                                                                                                                   |
-| `COLLECT_MAX_BODY_BYTES`                                            | no              | `65536`                   | Largest accepted request body (bytes) on `/collect`.                                                                                                                                                                 |
-| `SMTP_HOST` / `SMTP_PORT` / `SMTP_USER` / `SMTP_PASS` / `SMTP_FROM` | no              | `SMTP_PORT=1025`          | Outbound email over SMTP.                                                                                                                                                                                            |
-| `SYSTEM_EMAIL_PROVIDER`                                             | no              | `smtp`                    | Platform (system) email provider: `smtp` or `ses`.                                                                                                                                                                   |
-| `SYSTEM_EMAIL_FROM`                                                 | no              | `noreply@1mail.localhost` | From address for platform mail (e.g. welcome emails).                                                                                                                                                                |
-| `SES_REGION` / `SES_ACCESS_KEY_ID` / `SES_SECRET_ACCESS_KEY`        | no              | —                         | Amazon SES credentials when using the `ses` provider.                                                                                                                                                                |
-| `COLLECT_SITE_KEY`                                                  | no              | —                         | Tracker ingestion key.                                                                                                                                                                                               |
-| `BOOTSTRAP_TOKEN`                                                   | no              | —                         | External-API bootstrap token.                                                                                                                                                                                        |
+| Variable                                                            | Required        | Default                   | Description                                                                                                                                                                                                                                                                                                    |
+| ------------------------------------------------------------------- | --------------- | ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `DATABASE_URL`                                                      | **yes**         | —                         | PostgreSQL connection string (`postgres://user:pass@host:5432/db?sslmode=require`). Use `sslmode=verify-full` (with `sslrootcert`) to also verify the server certificate.                                                                                                                                      |
+| `JWT_SECRET`                                                        | **yes in prod** | —                         | Signing secret for auth tokens. Outside `development`/`test` the server refuses to boot if it is empty, shorter than 32 characters, or a known placeholder. Generate one with `openssl rand -hex 32`.                                                                                                          |
+| `ENCRYPTION_KEY`                                                    | **yes**         | —                         | Base64 Tink keyset used to encrypt stored provider credentials. Generate one with `go run ./cmd/genkey` (or `1mail`-side tooling). Boot fails if missing.                                                                                                                                                      |
+| `APP_URL`                                                           | no              | `http://localhost:3000`   | Public base URL — used when issuing auth tokens and building tracking/unsubscribe links. Set to your real origin.                                                                                                                                                                                              |
+| `PORT`                                                              | no              | `3000`                    | HTTP listen port.                                                                                                                                                                                                                                                                                              |
+| `METRICS_ADDR`                                                      | no              | — (off)                   | `host:port` for the opt-in Prometheus listener. Must differ from `PORT`; see [Prometheus metrics](#prometheus-metrics).                                                                                                                                                                                        |
+| `AUTO_MIGRATE`                                                      | no              | `false`                   | Apply embedded migrations on startup. Convenient for single-replica; see below.                                                                                                                                                                                                                                |
+| `CORS_ORIGINS`                                                      | no              | —                         | Comma/space-separated origins allowed credentialed CORS on the cookie-authenticated API (`/site`, `/auth`). Empty means same-origin only, which is what the bundled SPA needs; the bearer-token APIs are unaffected.                                                                                           |
+| `MAX_BODY_BYTES`                                                    | no              | `1048576`                 | Largest accepted request body (bytes) on every surface except `/collect`; larger bodies get `413`.                                                                                                                                                                                                             |
+| `COLLECT_MAX_BODY_BYTES`                                            | no              | `512000`                  | Largest accepted `/collect` batch (`POST /collect/events`, bytes); larger gets `413`.                                                                                                                                                                                                                          |
+| `COLLECT_MAX_EVENT_BYTES`                                           | no              | `32768`                   | Largest single `/collect` event (bytes): an identify body, or each event inside a batch; larger gets `413`.                                                                                                                                                                                                    |
+| `RATE_LIMIT_HUMAN_PER_MINUTE`                                       | no              | `60`                      | Requests per minute per IP and endpoint on signup, invitation accept and consent confirm; over it `429` with `Retry-After`; `0` disables.                                                                                                                                                                      |
+| `RATE_LIMIT_API_BURST_PER_SECOND`                                   | no              | `20`                      | Requests per second per Workspace on `/api` and `/mcp` (one shared budget); over it `429` with `Retry-After`; `0` disables                                                                                                                                                                                     |
+| `RATE_LIMIT_API_PER_MINUTE`                                         | no              | `600`                     | Requests per minute per Workspace on `/api` and `/mcp`, stacked on the burst limit; `0` disables                                                                                                                                                                                                               |
+| `RATE_LIMIT_FAILED_AUTH_PER_MINUTE`                                 | no              | `30`                      | Failed bearer-token authentications per minute per IP; over it `429`; successful ones are not counted; `0` disables                                                                                                                                                                                            |
+| `RATE_LIMIT_TRACKING_PER_MINUTE`                                    | no              | `600`                     | Open and click events recorded per minute per IP; over it the redirect or pixel is still served and only the recording is skipped (never a `429`); `0` disables.                                                                                                                                               |
+| `RATE_LIMIT_LOGIN_FAILURES`                                         | no              | `5`                       | Failed logins per account within 15 minutes before login answers `429` with `Retry-After` and a doubling delay (1 s up to 15 min, no lockout), even for a correct password; `0` disables.                                                                                                                      |
+| `RATE_LIMIT_LOGIN_IP_PER_MINUTE`                                    | no              | `20`                      | Login requests per minute per client IP; over it `429` with `Retry-After`; `0` disables.                                                                                                                                                                                                                       |
+| `RATE_LIMIT_COLLECT_PER_MINUTE`                                     | no              | `6000`                    | Requests per minute per Workspace on `/collect` (its own budget, apart from `/api`); over it `429` with `Retry-After`; `0` disables.                                                                                                                                                                           |
+| `RATE_LIMIT_COLLECT_IP_PER_MINUTE`                                  | no              | `300`                     | Requests per minute per client IP on `/collect`; over it `429` with `Retry-After`; `0` disables.                                                                                                                                                                                                               |
+| `RATE_LIMIT_FORGOT_PASSWORD_PER_ADDRESS_PER_HOUR`                   | no              | `3`                       | Password-reset mails sent per address per hour; over it forgot-password still answers `202` and sends nothing (the answer never reveals whether the account exists); `0` disables.                                                                                                                             |
+| `RATE_LIMIT_FORGOT_PASSWORD_IP_PER_HOUR`                            | no              | `10`                      | Forgot-password requests per client IP per hour; over it `429` with `Retry-After`; `0` disables.                                                                                                                                                                                                               |
+| `DB_MAX_OPEN_CONNS`                                                 | no              | `15`                      | Maximum open connections in the `database/sql` pool (API, ent, event bus).                                                                                                                                                                                                                                     |
+| `DB_MAX_IDLE_CONNS`                                                 | no              | `DB_MAX_OPEN_CONNS`       | Maximum idle connections kept in that pool. Must not exceed `DB_MAX_OPEN_CONNS`.                                                                                                                                                                                                                               |
+| `DB_CONN_MAX_LIFETIME`                                              | no              | `30m`                     | Maximum lifetime of a pooled connection (Go duration).                                                                                                                                                                                                                                                         |
+| `PGX_MAX_CONNS`                                                     | no              | `25`                      | Maximum connections in the river (job queue) pool. Must cover river's MaxWorkers sum (20) plus LISTEN and runtime services.                                                                                                                                                                                    |
+| `OUTBOX_RETENTION_FLOOR_DAYS`                                       | no              | `7`                       | Minimum age (days) before a domain-event outbox row that every consumer has processed is pruned. The prune job runs every 10 minutes.                                                                                                                                                                          |
+| `EVENTS_RETENTION_DAYS`                                             | no              | `400`                     | Age (days) after which analytical Events are deleted by a daily job at 03:00 UTC; `0` disables. Evidentiary Events (`marketing.confirmed`, `email.complained`, `email.unsubscribed`, permanent `email.bounced`) are never deleted by age. Segment conditions that look back past this window are capped by it. |
+| `SMTP_HOST` / `SMTP_PORT` / `SMTP_USER` / `SMTP_PASS` / `SMTP_FROM` | no              | `SMTP_PORT=1025`          | Outbound email over SMTP.                                                                                                                                                                                                                                                                                      |
+| `SYSTEM_EMAIL_PROVIDER`                                             | no              | `smtp`                    | Platform (system) email provider: `smtp` or `ses`.                                                                                                                                                                                                                                                             |
+| `SYSTEM_EMAIL_FROM`                                                 | no              | `noreply@1mail.localhost` | From address for platform mail (e.g. welcome emails).                                                                                                                                                                                                                                                          |
+| `SES_REGION` / `SES_ACCESS_KEY_ID` / `SES_SECRET_ACCESS_KEY`        | no              | —                         | Credentials of an SES-compatible service when using the `ses` provider.                                                                                                                                                                                                                                        |
+| `COLLECT_SITE_KEY`                                                  | no              | —                         | Tracker ingestion key.                                                                                                                                                                                                                                                                                         |
+| `BOOTSTRAP_TOKEN`                                                   | no              | —                         | External-API bootstrap token.                                                                                                                                                                                                                                                                                  |
+
+## Generate the keys
+
+Both secrets are random values you create once and keep:
+
+```sh
+openssl rand -hex 32          # JWT_SECRET
+docker run --rm ghcr.io/mokevnin/1mail:latest genkey   # ENCRYPTION_KEY (or: ./1mail genkey)
+```
+
+Back up `ENCRYPTION_KEY` with your database. It encrypts the stored SMTP and SES-compatible credentials, and
+without it they cannot be read again. Changing `JWT_SECRET` only signs everyone out.
 
 ## Database migrations
 
@@ -48,6 +78,9 @@ Migrations are embedded in the binary. You apply them one of two ways:
   Use it as a pre-deploy job or a Kubernetes init container, then start the servers
   without `AUTO_MIGRATE`.
 
+Before upgrading, take a database backup; see [Upgrading](./operations/upgrading) for the
+full procedure and [Backup and restore](./operations/backup) for what to protect.
+
 > The binary tracks applied migrations (via goose) in its own `goose_db_version` table. Don't point
 > it at a database previously managed by the Atlas dev-CLI flow (which uses
 > `atlas_schema_revisions`).
@@ -59,7 +92,7 @@ Migrations are embedded in the binary. You apply them one of two ways:
 ```sh
 docker run -p 3000:3000 \
   -e APP_ENV=production \
-  -e DATABASE_URL="postgres://user:pass@db:5432/1mail?sslmode=disable" \
+  -e DATABASE_URL="postgres://user:pass@db:5432/1mail?sslmode=require" \
   -e JWT_SECRET="$(openssl rand -hex 32)" \
   -e ENCRYPTION_KEY="<base64 tink keyset>" \
   -e APP_URL="https://mail.example.com" \
@@ -70,44 +103,11 @@ docker run -p 3000:3000 \
 The image declares a `HEALTHCHECK` against `/healthz`, so `docker ps` reports `healthy`
 once the process is serving.
 
-### docker-compose
-
-```yaml
-services:
-  app:
-    image: ghcr.io/mokevnin/1mail:latest
-    ports: ['3000:3000']
-    environment:
-      APP_ENV: production
-      DATABASE_URL: postgres://postgres:postgres@db:5432/1mail?sslmode=disable
-      JWT_SECRET: change-me
-      ENCRYPTION_KEY: <base64 tink keyset>
-      APP_URL: https://mail.example.com
-      AUTO_MIGRATE: 'true'
-    depends_on:
-      db:
-        condition: service_healthy
-  db:
-    image: postgres:16-alpine
-    environment:
-      POSTGRES_DB: 1mail
-      POSTGRES_PASSWORD: postgres
-    healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U postgres']
-      interval: 5s
-      timeout: 3s
-      retries: 10
-    volumes: ['pgdata:/var/lib/postgresql/data']
-
-volumes:
-  pgdata:
-```
-
 ### Binary
 
 ```sh
 export APP_ENV=production
-export DATABASE_URL="postgres://user:pass@host:5432/1mail?sslmode=disable"
+export DATABASE_URL="postgres://user:pass@host:5432/1mail?sslmode=require"
 export JWT_SECRET="$(openssl rand -hex 32)"
 export ENCRYPTION_KEY="<base64 tink keyset>"
 export APP_URL="https://mail.example.com"
@@ -115,6 +115,96 @@ export APP_URL="https://mail.example.com"
 ./1mail migrate   # apply migrations (or set AUTO_MIGRATE=true)
 ./1mail           # start the server
 ```
+
+### systemd
+
+For the bare binary, a unit keeps it running and restarts it on failure. Put the environment in a
+file only root can read:
+
+```ini
+# /etc/systemd/system/1mail.service
+[Unit]
+Description=1mail
+After=network-online.target postgresql.service
+Wants=network-online.target
+
+[Service]
+User=onemail
+EnvironmentFile=/etc/1mail/env
+ExecStartPre=/usr/local/bin/1mail migrate
+ExecStart=/usr/local/bin/1mail
+Restart=on-failure
+NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target
+```
+
+```sh
+sudo install -m 600 -o root /dev/null /etc/1mail/env   # then add KEY=value lines
+sudo systemctl enable --now 1mail
+```
+
+`ExecStartPre` runs the migrations before every start, so leave `AUTO_MIGRATE` unset.
+
+## HTTPS and reverse proxy
+
+1mail speaks plain HTTP on `PORT`. Put a reverse proxy in front for TLS, and set `APP_URL` to the
+public `https://` origin: tracking pixels, click links, unsubscribe links and OAuth metadata are
+built from it, so a wrong value breaks mail already sent.
+
+Caddy gets and renews certificates by itself:
+
+```caddyfile
+mail.example.com {
+  reverse_proxy 127.0.0.1:3000
+}
+```
+
+nginx:
+
+```nginx
+server {
+  listen 443 ssl;
+  server_name mail.example.com;
+  # ssl_certificate / ssl_certificate_key ...
+
+  client_max_body_size 1m;
+
+  location / {
+    proxy_pass http://127.0.0.1:3000;
+    proxy_set_header Host $host;
+    proxy_set_header X-Forwarded-For $remote_addr;
+    proxy_set_header X-Forwarded-Proto $scheme;
+  }
+}
+```
+
+Do not expose `METRICS_ADDR` through the proxy.
+
+The external API can also live on its own host, such as `api.example.com`, if the proxy rewrites
+`/*` to `/api/*` (`rewrite ^/(.*)$ /api/$1 break;` in nginx, `rewrite * /api{uri}` in Caddy). The
+binary itself stays path-based.
+
+## Backups and upgrades
+
+All state is in PostgreSQL, so a backup is a database backup plus your `ENCRYPTION_KEY`:
+
+```sh
+pg_dump --format=custom --file=1mail-$(date +%F).dump "$DATABASE_URL"
+```
+
+To upgrade, back up, then pull the new image (or replace the binary) and restart. Migrations are
+applied as described [above](#database-migrations). Pin a version tag rather than `latest` in
+production, and read the release notes before a major version. Migrations only move forward, so
+to roll back restore the backup taken before the upgrade.
+
+## Kubernetes
+
+There is no Helm chart yet. The image is a plain stateless container, so a Deployment needs only
+the environment above, `/healthz` as the liveness probe and `/readyz` as the readiness probe.
+Run `1mail migrate` as a pre-deploy Job or init container and keep `AUTO_MIGRATE` unset when you
+run more than one replica.
 
 ## Health checks
 
@@ -149,3 +239,8 @@ scrape_configs:
 ```
 
 OTLP push (`OTEL_EXPORTER_OTLP_*`) is independent of this and unchanged.
+
+## Operations
+
+Sizing, [backup and restore](./operations/backup) and [upgrading](./operations/upgrading)
+(including PostgreSQL major upgrades) are covered in the [Operations](./operations/) section.
