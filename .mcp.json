@@ -5,34 +5,6 @@
       "command": "npx",
       "args": ["-y", "@mantine/mcp-server"],
       "env": {}
-    },
-    "digitalocean-apps": {
-      "type": "http",
-      "url": "https://apps.mcp.digitalocean.com/mcp"
-    },
-    "digitalocean-databases": {
-      "type": "http",
-      "url": "https://databases.mcp.digitalocean.com/mcp"
-    },
-    "digitalocean-droplets": {
-      "type": "http",
-      "url": "https://droplets.mcp.digitalocean.com/mcp"
-    },
-    "digitalocean-spaces": {
-      "type": "http",
-      "url": "https://spaces.mcp.digitalocean.com/mcp"
-    },
-    "digitalocean-networking": {
-      "type": "http",
-      "url": "https://networking.mcp.digitalocean.com/mcp"
-    },
-    "digitalocean-insights": {
-      "type": "http",
-      "url": "https://insights.mcp.digitalocean.com/mcp"
-    },
-    "digitalocean-accounts": {
-      "type": "http",
-      "url": "https://accounts.mcp.digitalocean.com/mcp"
     }
   }
 }

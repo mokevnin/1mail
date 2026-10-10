@@ -15,7 +15,7 @@ variable "name" {
 variable "image_repository" {
   description = "Image repository on GHCR, as published by the release workflow (.goreleaser.yaml)."
   type        = string
-  default     = "ghcr.io/mokevnin/sphericon"
+  default     = "ghcr.io/getsphericon/sphericon"
 }
 
 variable "image_tag" {

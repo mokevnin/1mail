@@ -1,3 +1,7 @@
+---
+status: superseded by 0029
+---
+
 # The SaaS runs on DigitalOcean App Platform, provisioned only through Terraform
 
 The hosted offering (Sphericon, `getsphericon.com`) is described entirely in Terraform under

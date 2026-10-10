@@ -1,67 +1,62 @@
-# System email through Amazon SES (ADR 0028). The identity is the apex domain, so mail is sent from
-# an address such as noreply@<domain>. The records live in the DigitalOcean zone of dns.tf.
+# System email through Amazon SES in var.region. The identity is the apex domain, so mail is sent
+# from an address such as noreply@<domain>; its records live in the zone of dns.tf. The domain is
+# verified by its DKIM records (no separate _amazonses TXT). A new SES account starts in the
+# sandbox: production access is a manual request (README.md).
 
 locals {
-  mail_from_domain = "${var.mail_from_label}.${var.domain}"
+  mail_from_domain  = "${var.mail_from_label}.${var.domain}"
+  system_email_from = coalesce(var.system_email_from, "noreply@${var.domain}")
 }
 
-resource "aws_ses_domain_identity" "this" {
-  domain = var.domain
-}
+resource "aws_sesv2_email_identity" "this" {
+  email_identity = var.domain
 
-resource "aws_ses_domain_dkim" "this" {
-  domain = aws_ses_domain_identity.this.domain
+  dkim_signing_attributes {
+    next_signing_key_length = "RSA_2048_BIT"
+  }
 }
 
 # Bounces and SPF alignment use the MAIL FROM subdomain (envelope sender), not the apex.
-resource "aws_ses_domain_mail_from" "this" {
-  domain           = aws_ses_domain_identity.this.domain
-  mail_from_domain = local.mail_from_domain
-}
-
-resource "digitalocean_record" "ses_verification" {
-  domain = digitalocean_domain.this.id
-  type   = "TXT"
-  name   = "_amazonses"
-  value  = aws_ses_domain_identity.this.verification_token
-  ttl    = local.dns_ttl
+resource "aws_sesv2_email_identity_mail_from_attributes" "this" {
+  email_identity         = aws_sesv2_email_identity.this.email_identity
+  mail_from_domain       = local.mail_from_domain
+  behavior_on_mx_failure = "USE_DEFAULT_VALUE"
 }
 
 # Easy DKIM: three CNAMEs to <token>.dkim.amazonses.com.
-resource "digitalocean_record" "ses_dkim" {
+resource "aws_route53_record" "ses_dkim" {
   count = 3
 
-  domain = digitalocean_domain.this.id
-  type   = "CNAME"
-  name   = "${aws_ses_domain_dkim.this.dkim_tokens[count.index]}._domainkey"
-  value  = "${aws_ses_domain_dkim.this.dkim_tokens[count.index]}.dkim.amazonses.com."
-  ttl    = local.dns_ttl
+  zone_id = aws_route53_zone.this.zone_id
+  name    = "${aws_sesv2_email_identity.this.dkim_signing_attributes[0].tokens[count.index]}._domainkey.${var.domain}"
+  type    = "CNAME"
+  ttl     = local.dns_ttl
+  records = ["${aws_sesv2_email_identity.this.dkim_signing_attributes[0].tokens[count.index]}.dkim.amazonses.com"]
 }
 
-resource "digitalocean_record" "ses_mail_from_mx" {
-  domain   = digitalocean_domain.this.id
-  type     = "MX"
-  name     = var.mail_from_label
-  value    = "feedback-smtp.${var.ses_region}.amazonses.com."
-  priority = 10
-  ttl      = local.dns_ttl
+resource "aws_route53_record" "ses_mail_from_mx" {
+  zone_id = aws_route53_zone.this.zone_id
+  name    = local.mail_from_domain
+  type    = "MX"
+  ttl     = local.dns_ttl
+  records = ["10 feedback-smtp.${var.region}.amazonses.com"]
 }
 
 # SPF of the MAIL FROM subdomain only. The apex keeps the single Google Workspace SPF (dns.tf).
-resource "digitalocean_record" "ses_mail_from_spf" {
-  domain = digitalocean_domain.this.id
-  type   = "TXT"
-  name   = var.mail_from_label
-  value  = "v=spf1 include:amazonses.com ~all"
-  ttl    = local.dns_ttl
+resource "aws_route53_record" "ses_mail_from_spf" {
+  zone_id = aws_route53_zone.this.zone_id
+  name    = local.mail_from_domain
+  type    = "TXT"
+  ttl     = local.dns_ttl
+  records = ["v=spf1 include:amazonses.com ~all"]
 }
 
 # DMARC passes through aligned DKIM (the apex identity signs the From domain) or aligned SPF
 # (relaxed: the MAIL FROM subdomain shares the organizational domain).
-resource "digitalocean_record" "dmarc" {
-  domain = digitalocean_domain.this.id
-  type   = "TXT"
-  name   = "_dmarc"
-  value  = var.dmarc_rua != "" ? "v=DMARC1; p=none; rua=mailto:${var.dmarc_rua}" : "v=DMARC1; p=none"
-  ttl    = local.dns_ttl
+resource "aws_route53_record" "dmarc" {
+  zone_id = aws_route53_zone.this.zone_id
+  name    = "_dmarc.${var.domain}"
+  type    = "TXT"
+  ttl     = local.dns_ttl
+  records = [var.dmarc_rua != "" ? "v=DMARC1; p=none; rua=mailto:${var.dmarc_rua}" : "v=DMARC1; p=none"]
 }
