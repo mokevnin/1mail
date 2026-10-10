@@ -27,7 +27,7 @@ You can invite teammates later from **Settings**.
 
 ## 3. Connect a way to send
 
-In **Settings → Integrations** add an SMTP server or Amazon SES. Credentials are stored
+In **Settings → Integrations** add an SMTP server or an SES-compatible service. Credentials are stored
 encrypted with your `ENCRYPTION_KEY`.
 
 Then add a **sending domain** and publish the DKIM record 1mail shows you. Mail can only be sent

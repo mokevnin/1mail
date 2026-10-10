@@ -49,12 +49,6 @@ automation.
 
 ## Bounces and complaints
 
-Notifications from Amazon SES over SNS are ingested and written to the suppression list, so you
+Bounce and complaint notifications from an SES-compatible service over SNS are ingested and written to the suppression list, so you
 stop mailing an address after it bounces. The workspace also tracks bounce and complaint rates
 per sending domain; read them from `GET /api/sending-domains/rates`.
-
-For the reasoning behind these rules, see the architecture decisions on
-[send-eligibility](/adr/0001-send-eligibility-model),
-[sending domains](/adr/0010-sending-domains-native-dkim),
-[one-click unsubscribe](/adr/0012-bulk-sender-compliance-one-click-unsubscribe) and
-[double opt-in](/adr/0013-double-opt-in-confirmation).
